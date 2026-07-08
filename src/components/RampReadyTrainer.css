@@ -201,9 +201,13 @@ button {
 .rr-throttle {
   right: 16px;
   bottom: 22px;
+  width: 92px;
+  min-height: 292px;
   display: grid;
+  grid-template-rows: auto 1fr auto;
   justify-items: center;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
   padding: 12px 10px;
   border-radius: 22px;
   background: rgba(10, 13, 20, 0.76);
@@ -217,18 +221,24 @@ button {
 }
 
 .rr-throttle input[type="range"] {
-  writing-mode: vertical-lr;
-  direction: rtl;
-  width: 48px;
-  height: 210px;
+  width: 210px;
+  height: 46px;
+  transform: rotate(-90deg);
+  transform-origin: center;
   accent-color: #f4b000;
   touch-action: none;
+  cursor: grab;
+}
+
+.rr-throttle input[type="range"]:active {
+  cursor: grabbing;
 }
 
 .rr-throttle-label {
   font-size: 12px;
   font-weight: 900;
   color: rgba(247,243,234,0.76);
+  text-align: center;
 }
 
 @media (max-width: 820px) {
@@ -256,8 +266,8 @@ button {
 
   .rr-stage {
     left: 10px;
-    right: 104px;
-    bottom: calc(142px + env(safe-area-inset-bottom));
+    right: 112px;
+    bottom: calc(150px + env(safe-area-inset-bottom));
     width: auto;
     padding: 12px;
     border-radius: 18px;
@@ -275,8 +285,8 @@ button {
 
   .rr-metrics {
     left: 10px;
-    right: 104px;
-    bottom: calc(82px + env(safe-area-inset-bottom));
+    right: 112px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
     justify-content: space-between;
     padding: 8px 10px;
   }
@@ -290,15 +300,12 @@ button {
   }
 
   .rr-guidance {
-    left: 10px;
-    right: 104px;
-    bottom: calc(138px + env(safe-area-inset-bottom));
     display: none;
   }
 
   .rr-steer {
     left: 10px;
-    right: 104px;
+    right: 112px;
     transform: none;
     justify-content: space-between;
     bottom: calc(20px + env(safe-area-inset-bottom));
@@ -314,10 +321,12 @@ button {
   .rr-throttle {
     right: 10px;
     bottom: calc(20px + env(safe-area-inset-bottom));
+    width: 92px;
+    min-height: 260px;
     padding: 10px 8px;
   }
 
   .rr-throttle input[type="range"] {
-    height: 178px;
+    width: 178px;
   }
 }
