@@ -38,6 +38,8 @@ if (existsSync("src/components/RampReadyTrainer.jsx")) {
     "deviceorientation",
     "Request clearance",
     "Confirm brake released",
+    "rr-view-select",
+    "rr-slider-wrap",
   ];
 
   for (const snippet of requiredSnippets) {
@@ -51,7 +53,7 @@ if (existsSync("src/components/RampReadyTrainer.jsx")) {
 
 if (existsSync("src/components/RampReadyTrainer.css")) {
   const css = read("src/components/RampReadyTrainer.css");
-  const cssMarkers = [".rr-throttle", ".rr-direction", ".rr-steer", "transform: rotate(-90deg)"];
+  const cssMarkers = [".rr-throttle", ".rr-direction", ".rr-steer", ".rr-view-select", ".rr-slider-wrap", "transform: rotate(-90deg)"];
   for (const marker of cssMarkers) {
     if (!css.includes(marker)) failures.push(`CSS missing expected marker: ${marker}`);
   }
