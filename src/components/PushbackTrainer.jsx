@@ -15,7 +15,7 @@ const CRADLE_OFFSET = 2.84;
 const NOSE_START_Z = 8;
 const STOP_Z = 62;
 const CONNECT_DIST_TOL = 0.9;
-const CONNECT_ANGLE_TOL = 0.26;
+const CONNECT_ANGLE_TOL = 0.28;
 const CONNECT_SPEED_TOL = 0.45;
 const CENTERLINE_TOLERANCE = 3;
 const RECOMMENDED_MAX_SPEED = 1.6;
@@ -24,9 +24,9 @@ const MAX_TOW_SPEED = 1.8;
 const MAX_STEER = 0.52;
 
 const CAMERA_DEFAULTS = {
-  chase: { yaw: 0, pitch: -0.22, distance: 15, height: 5.2 },
-  driver: { yaw: 0, pitch: -0.08, distance: 0, height: 1.35 },
-  overhead: { yaw: 0, pitch: -1.18, distance: 40, height: 38 },
+  chase: { yaw: 0, pitch: 0.12, distance: 18, height: 4.4 },
+  driver: { yaw: 0, pitch: 0, distance: 0, height: 1.35 },
+  overhead: { yaw: 0, pitch: 1.2, distance: 38, height: 35 },
 };
 
 function clamp(value, min, max) {
@@ -41,7 +41,7 @@ function shortestAngle(a, b) {
   return Math.atan2(Math.sin(b - a), Math.cos(b - a));
 }
 
-function makeMaterial(color, options = {}) {
+function mat(color, options = {}) {
   return new THREE.MeshStandardMaterial({
     color,
     roughness: options.roughness ?? 0.58,
@@ -49,8 +49,8 @@ function makeMaterial(color, options = {}) {
   });
 }
 
-function makeBox(w, h, d, color, pos, options = {}) {
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), makeMaterial(color, options));
+function box(w, h, d, color, pos, options = {}) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color, options));
   mesh.position.set(...pos);
   if (options.rotation) mesh.rotation.set(...options.rotation);
   mesh.castShadow = true;
@@ -58,8 +58,17 @@ function makeBox(w, h, d, color, pos, options = {}) {
   return mesh;
 }
 
-function makeCylinder(radius, depth, color, pos, rot = [0, 0, 0]) {
-  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, depth, 24), makeMaterial(color, { roughness: 0.78 }));
+function cyl(radius, depth, color, pos, rot = [0, 0, 0], segments = 24) {
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, depth, segments), mat(color, { roughness: 0.78 }));
+  mesh.position.set(...pos);
+  mesh.rotation.set(...rot);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function capsule(radius, length, color, pos, rot = [0, 0, 0]) {
+  const mesh = new THREE.Mesh(new THREE.CapsuleGeometry(radius, length, 12, 32), mat(color, { roughness: 0.36, metalness: 0.06 }));
   mesh.position.set(...pos);
   mesh.rotation.set(...rot);
   mesh.castShadow = true;
@@ -74,78 +83,87 @@ function buildTug() {
   const dark = 0x17191f;
   const steel = 0xb8c0c8;
 
-  group.add(makeBox(2.05, 0.32, 5.28, red, [0, 0.35, 0], { metalness: 0.18 }));
-  group.add(makeBox(1.9, 0.18, 5.0, dark, [0, 0.15, 0]));
-  group.add(makeBox(1.35, 0.12, 1.0, dark, [0, 0.46, CRADLE_OFFSET]));
+  group.add(box(2.05, 0.32, 5.28, red, [0, 0.35, 0], { metalness: 0.18 }));
+  group.add(box(1.9, 0.18, 5.0, dark, [0, 0.15, 0]));
+  group.add(box(1.35, 0.12, 1.0, dark, [0, 0.46, CRADLE_OFFSET]));
 
   [-1, 1].forEach((side) => {
-    group.add(makeBox(0.15, 0.5, 1.0, yellow, [side * 0.72, 0.68, CRADLE_OFFSET], { rotation: [0, 0, side * -0.16] }));
-    group.add(makeBox(0.05, 0.45, 0.9, steel, [side * 0.45, 0.55, CRADLE_OFFSET - 0.65], { rotation: [0.8, 0, 0] }));
+    group.add(box(0.15, 0.5, 1.0, yellow, [side * 0.72, 0.68, CRADLE_OFFSET], { rotation: [0, 0, side * -0.16] }));
+    group.add(box(0.05, 0.45, 0.9, steel, [side * 0.45, 0.55, CRADLE_OFFSET - 0.65], { rotation: [0.8, 0, 0] }));
   });
 
-  group.add(makeBox(0.9, 0.55, 0.9, red, [0, 0.7, -1.45]));
-  group.add(makeBox(0.7, 0.12, 0.3, dark, [0, 1.0, -1.1]));
-  group.add(makeBox(0.5, 0.14, 0.5, 0x2a2d34, [0, 0.95, -1.72]));
-  group.add(makeBox(0.5, 0.55, 0.12, 0x2a2d34, [0, 1.22, -1.98], { rotation: [-0.18, 0, 0] }));
-  group.add(makeCylinder(0.17, 0.035, dark, [0, 1.32, -0.86], [Math.PI / 2.3, 0, 0]));
-  group.add(makeBox(1.0, 0.05, 0.6, yellow, [0, 2.02, -1.95]));
-  [-0.44, 0.44].forEach((x) => group.add(makeCylinder(0.035, 1.05, yellow, [x, 1.5, -1.95])));
+  group.add(box(0.9, 0.55, 0.9, red, [0, 0.7, -1.45]));
+  group.add(box(0.7, 0.12, 0.3, dark, [0, 1.0, -1.1]));
+  group.add(box(0.5, 0.14, 0.5, 0x2a2d34, [0, 0.95, -1.72]));
+  group.add(box(0.5, 0.55, 0.12, 0x2a2d34, [0, 1.22, -1.98], { rotation: [-0.18, 0, 0] }));
+  group.add(cyl(0.17, 0.035, dark, [0, 1.32, -0.86], [Math.PI / 2.3, 0, 0]));
+  group.add(box(1.0, 0.05, 0.6, yellow, [0, 2.02, -1.95]));
+  [-0.44, 0.44].forEach((x) => group.add(cyl(0.035, 1.05, yellow, [x, 1.5, -1.95])));
 
   const wheels = [];
   [-1.08, 1.08].forEach((x) => {
-    const wheel = makeCylinder(0.44, 0.36, 0x101114, [x, 0.44, 0.25], [0, 0, Math.PI / 2]);
+    const wheel = cyl(0.44, 0.36, 0x101114, [x, 0.44, 0.25], [0, 0, Math.PI / 2]);
     wheels.push(wheel);
     group.add(wheel);
-    group.add(makeCylinder(0.18, 0.39, steel, [x, 0.44, 0.25], [0, 0, Math.PI / 2]));
+    group.add(cyl(0.18, 0.39, steel, [x, 0.44, 0.25], [0, 0, Math.PI / 2]));
   });
 
   [[-0.72, -1.85], [0.72, -1.85], [-0.72, 2.05], [0.72, 2.05]].forEach(([x, z]) => {
-    const wheel = makeCylinder(0.23, 0.2, 0x101114, [x, 0.25, z], [0, 0, Math.PI / 2]);
+    const wheel = cyl(0.23, 0.2, 0x101114, [x, 0.25, z], [0, 0, Math.PI / 2]);
     wheels.push(wheel);
     group.add(wheel);
   });
 
-  group.add(makeBox(1.4, 0.12, 0.1, dark, [0, 0.55, -2.62]));
-  [-0.5, 0.5].forEach((x) => group.add(makeCylinder(0.07, 0.06, 0xff3b30, [x, 0.55, -2.69], [Math.PI / 2, 0, 0])));
-  group.add(makeCylinder(0.09, 0.1, 0xff9500, [0, 2.12, 1.95]));
+  group.add(box(1.4, 0.12, 0.1, dark, [0, 0.55, -2.62]));
+  [-0.5, 0.5].forEach((x) => group.add(cyl(0.07, 0.06, 0xff3b30, [x, 0.55, -2.69], [Math.PI / 2, 0, 0])));
+  group.add(cyl(0.09, 0.1, 0xff9500, [0, 2.12, 1.95]));
 
   return { group, wheels };
 }
 
 function buildAircraft() {
+  // Local origin is the nose gear contact point. This fixes the previous tug-under-plane alignment.
   const group = new THREE.Group();
-  const fuselage = new THREE.Mesh(new THREE.CapsuleGeometry(1.35, 25, 12, 24), makeMaterial(0xf1f4f7, { roughness: 0.36, metalness: 0.06 }));
-  fuselage.rotation.x = Math.PI / 2;
-  fuselage.position.set(0, 2.1, -10);
-  fuselage.castShadow = true;
-  group.add(fuselage);
+  group.name = "CRJ700 procedural stand-in";
 
-  group.add(makeBox(22, 0.16, 3.0, 0xf5f7fa, [0, 2.15, -10]));
-  group.add(makeBox(8.5, 0.14, 2.0, 0xf5f7fa, [0, 5.1, -24.5]));
-  group.add(makeBox(0.18, 4.2, 3.0, 0xf5f7fa, [0, 3.9, -25.2]));
-  group.add(makeBox(1.0, 0.7, 2.0, 0x20242b, [-1.85, 2.1, -21]));
-  group.add(makeBox(1.0, 0.7, 2.0, 0x20242b, [1.85, 2.1, -21]));
-  group.add(makeBox(0.08, 0.12, 21.5, 0x1d4e89, [0, 2.75, -10.2]));
+  group.add(capsule(1.22, 25.8, 0xf1f4f7, [0, 2.35, -10.4], [Math.PI / 2, 0, 0]));
+  group.add(box(0.9, 0.42, 0.55, 0x1f2937, [0, 2.55, 2.45]));
+  group.add(box(0.08, 0.14, 23.2, 0x1d4e89, [0, 2.9, -10.8]));
 
-  const noseGear = new THREE.Group();
-  noseGear.add(makeCylinder(0.08, 1.0, 0x555b65, [0, 0.8, 0]));
-  noseGear.add(makeCylinder(0.22, 0.16, 0x111214, [-0.16, 0.25, 0.25], [0, 0, Math.PI / 2]));
-  noseGear.add(makeCylinder(0.22, 0.16, 0x111214, [0.16, 0.25, 0.25], [0, 0, Math.PI / 2]));
-  group.add(noseGear);
+  // Wings are aft of the nose gear. They should never visually sit over the tug cradle.
+  group.add(box(22.8, 0.16, 3.4, 0xf5f7fa, [0, 2.25, -11.3], { rotation: [0, 0, -0.02] }));
+  group.add(box(8.4, 0.14, 2.2, 0xf5f7fa, [0, 5.25, -24.8]));
+  group.add(box(0.18, 4.2, 3.0, 0xf5f7fa, [0, 4.05, -25.3]));
+
+  group.add(cyl(0.48, 1.6, 0x20242b, [-1.75, 2.18, -21.0], [Math.PI / 2, 0, 0]));
+  group.add(cyl(0.48, 1.6, 0x20242b, [1.75, 2.18, -21.0], [Math.PI / 2, 0, 0]));
+
+  const gear = new THREE.Group();
+  gear.add(cyl(0.07, 0.95, 0x555b65, [0, 0.75, 0]));
+  gear.add(cyl(0.23, 0.16, 0x111214, [-0.16, 0.25, 0.2], [0, 0, Math.PI / 2]));
+  gear.add(cyl(0.23, 0.16, 0x111214, [0.16, 0.25, 0.2], [0, 0, Math.PI / 2]));
+  group.add(gear);
+
+  // Debug-only cradle target ring: subtle enough to not look like a game marker, visible enough for alignment.
+  const target = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.025, 8, 36), new THREE.MeshBasicMaterial({ color: 0xffd166 }));
+  target.rotation.x = Math.PI / 2;
+  target.position.set(0, 0.05, 0);
+  group.add(target);
+
   return group;
 }
 
 function buildRamp(scene) {
-  const ramp = new THREE.Mesh(new THREE.PlaneGeometry(120, 160), makeMaterial(0x3b3f46, { roughness: 0.92 }));
+  const ramp = new THREE.Mesh(new THREE.PlaneGeometry(120, 160), mat(0x3b3f46, { roughness: 0.92 }));
   ramp.rotation.x = -Math.PI / 2;
   ramp.position.z = 38;
   ramp.receiveShadow = true;
   scene.add(ramp);
 
-  scene.add(makeBox(85, 7, 1.2, 0x2a2e36, [0, 3.5, -7]));
-  scene.add(makeBox(18, 4, 6, 0x343944, [-8, 4.2, -2]));
-  scene.add(makeBox(7, 2.8, 22, 0x4a505c, [-8, 4, 9]));
-  scene.add(makeBox(5, 1, 9, 0x4a505c, [-8, 2.2, 23]));
+  scene.add(box(85, 7, 1.2, 0x2a2e36, [0, 3.5, -7]));
+  scene.add(box(18, 4, 6, 0x343944, [-8, 4.2, -2]));
+  scene.add(box(7, 2.8, 22, 0x4a505c, [-8, 4, 9]));
+  scene.add(box(5, 1, 9, 0x4a505c, [-8, 2.2, 23]));
 
   const center = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 96), new THREE.MeshBasicMaterial({ color: 0xffd400 }));
   center.rotation.x = -Math.PI / 2;
@@ -165,6 +183,16 @@ function buildRamp(scene) {
   }
 }
 
+function disposeObject(object) {
+  object.traverse((child) => {
+    if (child.geometry) child.geometry.dispose();
+    if (child.material) {
+      if (Array.isArray(child.material)) child.material.forEach((m) => m.dispose());
+      else child.material.dispose();
+    }
+  });
+}
+
 function calcScore(metrics) {
   let score = 100;
   score -= Math.min(25, metrics.centerlinePenalty * 1.8);
@@ -172,16 +200,6 @@ function calcScore(metrics) {
   score -= Math.min(20, metrics.bumpEvents * 10);
   score -= metrics.missedStop ? 20 : 0;
   return clamp(Math.round(score), 0, 100);
-}
-
-function disposeObject(object) {
-  object.traverse((child) => {
-    if (child.geometry) child.geometry.dispose();
-    if (child.material) {
-      if (Array.isArray(child.material)) child.material.forEach((mat) => mat.dispose());
-      else child.material.dispose();
-    }
-  });
 }
 
 function WebGLFallback({ error }) {
@@ -210,7 +228,7 @@ export default function PushbackTrainer() {
   const [gyroEnabled, setGyroEnabled] = useState(false);
   const gyroEnabledRef = useRef(false);
   const [score, setScore] = useState(null);
-  const [message, setMessage] = useState("Drag anywhere on the 3D view to look around. Use Gyro Look for phone/headset testing.");
+  const [message, setMessage] = useState("Drag the 3D view to look around. Up/down drag now changes camera pitch.");
   const [bootError, setBootError] = useState("");
 
   const stage = STAGES[stageIndex] ?? STAGES[STAGES.length - 1];
@@ -275,7 +293,7 @@ export default function PushbackTrainer() {
       const gamma = event.gamma ?? 0;
       const beta = event.beta ?? 0;
       cameraLookRef.current.gyroYaw = clamp(gamma / 45, -1, 1) * 0.9;
-      cameraLookRef.current.gyroPitch = clamp((beta - 55) / 55, -1, 1) * 0.45;
+      cameraLookRef.current.gyroPitch = clamp((beta - 55) / 55, -1, 1) * 0.75;
     };
     window.addEventListener("deviceorientation", onOrientation);
     return () => window.removeEventListener("deviceorientation", onOrientation);
@@ -289,6 +307,7 @@ export default function PushbackTrainer() {
     const onPointerDown = (event) => {
       if (event.target !== mount && event.target !== simRef.current?.renderer.domElement) return;
       pointerRef.current = { active: true, x: event.clientX, y: event.clientY };
+      mount.setPointerCapture?.(event.pointerId);
       event.preventDefault();
     };
     const onPointerMove = (event) => {
@@ -298,8 +317,9 @@ export default function PushbackTrainer() {
       pointerRef.current.x = event.clientX;
       pointerRef.current.y = event.clientY;
       const look = cameraLookRef.current;
-      look.manualYaw += dx * 0.006;
-      look.manualPitch = clamp(look.manualPitch + dy * 0.004, -0.7, 0.7);
+      look.manualYaw += dx * 0.007;
+      look.manualPitch = clamp(look.manualPitch - dy * 0.007, -0.95, 0.95);
+      event.preventDefault();
     };
     const onPointerUp = () => { pointerRef.current.active = false; };
 
@@ -317,7 +337,7 @@ export default function PushbackTrainer() {
       scene.background = new THREE.Color(0x99b7d7);
       scene.fog = new THREE.Fog(0x99b7d7, 55, 135);
       const camera = new THREE.PerspectiveCamera(62, width / height, 0.1, 500);
-      camera.position.set(0, 7, -15);
+      camera.position.set(0, 7, -18);
 
       scene.add(new THREE.HemisphereLight(0xffffff, 0x4b5563, 1.35));
       const sun = new THREE.DirectionalLight(0xffffff, 2.2);
@@ -340,6 +360,7 @@ export default function PushbackTrainer() {
       mount.addEventListener("pointerdown", onPointerDown, { passive: false });
       window.addEventListener("pointermove", onPointerMove, { passive: false });
       window.addEventListener("pointerup", onPointerUp);
+      window.addEventListener("pointercancel", onPointerUp);
 
       const onResize = () => {
         const nextWidth = Math.max(1, mount.clientWidth || window.innerWidth || 1);
@@ -424,27 +445,37 @@ export default function PushbackTrainer() {
         else if (stageIndexRef.current === 4 && noseZ > STOP_Z + 1) warning = "You passed the stop line.";
 
         const look = cameraLookRef.current;
-        const target = new THREE.Vector3(sim.connected ? sim.aircraft.position.x : sim.tug.position.x, 1.35, sim.connected ? sim.aircraft.position.z : sim.tug.position.z + 4);
+        const target = new THREE.Vector3(
+          sim.connected ? sim.aircraft.position.x : sim.tug.position.x,
+          sim.connected ? 1.45 : 0.9,
+          sim.connected ? sim.aircraft.position.z : sim.tug.position.z + 2.5
+        );
         const totalYaw = sim.tug.rotation.y + look.yaw + look.manualYaw + look.gyroYaw;
-        const totalPitch = look.pitch + look.manualPitch + look.gyroPitch;
+        const totalPitch = clamp(look.pitch + look.manualPitch + look.gyroPitch, -1.15, 1.15);
 
         if (cameraModeRef.current === "driver") {
-          const eye = new THREE.Vector3(0, 1.45, -1.15).applyMatrix4(sim.tug.matrixWorld);
-          const forward = new THREE.Vector3(Math.sin(totalYaw), Math.sin(-totalPitch) * 0.65, Math.cos(totalYaw));
+          const eye = new THREE.Vector3(0, 1.55, -1.15).applyMatrix4(sim.tug.matrixWorld);
+          const forward = new THREE.Vector3(
+            Math.sin(totalYaw) * Math.cos(totalPitch),
+            Math.sin(totalPitch),
+            Math.cos(totalYaw) * Math.cos(totalPitch)
+          );
           camera.position.lerp(eye, 0.35);
-          camera.lookAt(eye.clone().add(forward.multiplyScalar(20)));
+          camera.lookAt(eye.clone().add(forward.multiplyScalar(24)));
         } else if (cameraModeRef.current === "overhead") {
-          const orbit = new THREE.Vector3(Math.sin(totalYaw) * 8, look.height, Math.cos(totalYaw) * 8);
+          const horizontal = Math.cos(totalPitch) * look.distance;
+          const orbit = new THREE.Vector3(Math.sin(totalYaw) * horizontal, look.height + Math.sin(totalPitch) * look.distance, Math.cos(totalYaw) * horizontal);
           camera.position.lerp(target.clone().add(orbit), 0.12);
-          camera.lookAt(target.x, 0, target.z + 8);
+          camera.lookAt(target.x, target.y, target.z + 4);
         } else {
+          const horizontal = Math.cos(totalPitch) * look.distance;
           const orbit = new THREE.Vector3(
-            Math.sin(totalYaw) * look.distance,
-            look.height + Math.sin(-totalPitch) * 8,
-            -Math.cos(totalYaw) * look.distance
+            Math.sin(totalYaw) * horizontal,
+            look.height + Math.sin(totalPitch) * look.distance,
+            -Math.cos(totalYaw) * horizontal
           );
           camera.position.lerp(target.clone().add(orbit), 0.12);
-          camera.lookAt(target.x, target.y + 1, target.z + 5);
+          camera.lookAt(target.x, target.y + 1.2, target.z + 4.5);
         }
 
         setHud({ speed: Math.abs(sim.velocity), offset, distanceToStop: STOP_Z - noseZ, connected: sim.connected, warning });
@@ -460,6 +491,7 @@ export default function PushbackTrainer() {
         mount.removeEventListener("pointerdown", onPointerDown);
         window.removeEventListener("pointermove", onPointerMove);
         window.removeEventListener("pointerup", onPointerUp);
+        window.removeEventListener("pointercancel", onPointerUp);
         disposeObject(scene);
         renderer.dispose();
         if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
