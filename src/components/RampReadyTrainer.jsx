@@ -16,6 +16,8 @@ const STAGES = [
 const NOSE_START_Z = 9;
 const STOP_Z = 64;
 const CRADLE_Z = 3.1;
+const CONNECT_CAPTURE_DISTANCE = 1.35;
+const CONNECT_SPEED_LIMIT = 0.55;
 const MAX_FREE_SPEED = 4.2;
 const MAX_TOW_SPEED = 1.65;
 const MAX_STEER = 0.55;
@@ -53,7 +55,7 @@ function cyl(r, depth, color, x, y, z, rx = 0, ry = 0, rz = 0, segments = 28) {
 }
 
 function stageHelp(stageIndex, connected) {
-  if (stageIndex === 1) return "Use FWD and low power. Line the cradle up with the yellow nose-wheel ring and stop gently.";
+  if (stageIndex === 1) return "Approach slowly. When capture distance is green, stop and tap Connect nose gear.";
   if (stageIndex === 4) return "Use REV and small throttle changes. Hold centerline and stop on the red line.";
   if (connected) return "Nose gear captured. Keep the tug straight and wait for the next clearance step.";
   return "Tap and drag the scene to look around. Use the right-side power slider for movement.";
@@ -152,7 +154,7 @@ export default function RampReadyTrainer() {
   const [gyro, setGyro] = useState(false);
   const [direction, setDirection] = useState("FWD");
   const [throttle, setThrottle] = useState(0);
-  const [hud, setHud] = useState({ speed: 0, distance: STOP_Z - NOSE_START_Z, offset: 0, connected: false, warning: "" });
+  const [hud, setHud] = useState({ speed: 0, distance: STOP_Z - NOSE_START_Z, offset: 0, connected: false, warning: "", connectDistance: null, connectReady: false });
   const [message, setMessage] = useState("Clean test scene. Use the right-side power slider and FWD/REV toggle to verify movement.");
   const [finalScore, setFinalScore] = useState(null);
 
@@ -168,15 +170,46 @@ export default function RampReadyTrainer() {
   }, []);
 
   const setThrottleValue = useCallback((value) => {
-    const next = Number(value);
+    const next = clamp(Number(value), 0, 100);
     driveRef.current.throttle = next / 100;
     setThrottle(next);
   }, []);
+
+  const updateCustomThrottle = useCallback((event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const y = clamp(event.clientY - rect.top, 0, rect.height);
+    const next = Math.round((1 - y / rect.height) * 100);
+    setThrottleValue(next);
+    event.preventDefault();
+  }, [setThrottleValue]);
 
   const toggleDirection = useCallback(() => {
     const next = driveRef.current.direction === 1 ? -1 : 1;
     driveRef.current.direction = next;
     setDirection(next === 1 ? "FWD" : "REV");
+  }, []);
+
+  const connectNoseGear = useCallback(() => {
+    const sim = simRef.current;
+    if (!sim || sim.connected || stageRef.current !== 1) return;
+    sim.tug.updateMatrixWorld(true);
+    const cradle = new THREE.Vector3(0, 0, CRADLE_Z).applyMatrix4(sim.tug.matrixWorld);
+    const dist = cradle.distanceTo(sim.aircraft.position);
+    if (dist > CONNECT_CAPTURE_DISTANCE) {
+      setMessage(`Move closer before connecting. Capture distance: ${dist.toFixed(1)} m.`);
+      return;
+    }
+    if (Math.abs(sim.velocity) > CONNECT_SPEED_LIMIT) {
+      setMessage("Stop or slow almost to zero before connecting the nose gear.");
+      return;
+    }
+    sim.connected = true;
+    sim.velocity = 0;
+    driveRef.current.throttle = 0;
+    setThrottle(0);
+    setMessage("Nose wheels captured. Power returned to idle. Request clearance next.");
+    stageRef.current = 2;
+    setStageIndex(2);
   }, []);
 
   const reset = useCallback(() => {
@@ -198,6 +231,7 @@ export default function RampReadyTrainer() {
     setThrottle(0);
     setDirection("FWD");
     setFinalScore(null);
+    setHud((old) => ({ ...old, connected: false, connectDistance: null, connectReady: false }));
     setMessage("Scenario reset. Use the right-side power slider and FWD/REV toggle to test movement.");
   }, []);
 
@@ -309,15 +343,8 @@ export default function RampReadyTrainer() {
 
       const cradle = new THREE.Vector3(0, 0, CRADLE_Z).applyMatrix4(sim.tug.matrixWorld);
       const dist = cradle.distanceTo(sim.aircraft.position);
-      if (!sim.connected && stageRef.current === 1 && dist < 0.95 && Math.abs(sim.velocity) < 0.5) {
-        sim.connected = true;
-        sim.velocity = 0;
-        driveRef.current.throttle = 0;
-        setThrottle(0);
-        setMessage("Nose wheels captured. Power returned to idle. Request clearance next.");
-        stageRef.current = 2;
-        setStageIndex(2);
-      }
+      const connectReady = !sim.connected && stageRef.current === 1 && dist <= CONNECT_CAPTURE_DISTANCE && Math.abs(sim.velocity) <= CONNECT_SPEED_LIMIT;
+
       if (sim.connected) {
         sim.aircraft.position.x = cradle.x;
         sim.aircraft.position.z = cradle.z;
@@ -343,10 +370,12 @@ export default function RampReadyTrainer() {
       }
 
       let warning = stageHelp(stageRef.current, sim.connected);
-      if (stageRef.current === 4 && drive.direction !== -1) warning = "Direction should be REV for pushback. Tap the FWD/REV button, then add power slowly.";
+      if (stageRef.current === 1 && dist > CONNECT_CAPTURE_DISTANCE) warning = `Capture distance: ${dist.toFixed(1)} m. Move forward slowly.`;
+      else if (stageRef.current === 1 && Math.abs(sim.velocity) > CONNECT_SPEED_LIMIT) warning = "In capture range, but slow/stop before connecting.";
+      else if (stageRef.current === 1 && connectReady) warning = "Capture distance green. Tap Connect nose gear.";
+      else if (stageRef.current === 4 && drive.direction !== -1) warning = "Direction should be REV for pushback. Tap the FWD/REV button, then add power slowly.";
       else if (stageRef.current === 4 && offset > CENTERLINE_TOLERANCE) warning = "Correct back toward centerline.";
       else if (stageRef.current === 4 && Math.abs(sim.velocity) > RECOMMENDED_PUSH_SPEED) warning = "Ease off power. Pushback speed is high.";
-      else if (stageRef.current === 1 && Math.abs(sim.velocity) > 1.2) warning = "Approach slower before capturing the nose wheels.";
 
       const look = camRef.current;
       const target = new THREE.Vector3(sim.connected ? sim.aircraft.position.x : sim.tug.position.x, 1.1, sim.connected ? sim.aircraft.position.z : sim.tug.position.z + 2.5);
@@ -364,7 +393,7 @@ export default function RampReadyTrainer() {
         camera.lookAt(target.x, target.y + 1.2, target.z + 4.5);
       }
 
-      setHud({ speed: Math.abs(sim.velocity), distance: STOP_Z - noseZ, offset, connected: sim.connected, warning });
+      setHud({ speed: Math.abs(sim.velocity), distance: STOP_Z - noseZ, offset, connected: sim.connected, warning, connectDistance: dist, connectReady });
       renderer.render(scene, camera);
       raf = requestAnimationFrame(tick);
     };
@@ -435,6 +464,7 @@ export default function RampReadyTrainer() {
         <p>{message}</p>
         <div className="rr-hud-actions">
           {[0, 2, 3, 5].includes(stageIndex) && <button className="rr-primary" onClick={onStageAction}>{stageIndex === 0 ? "Ready" : stageIndex === 2 ? "Clearance" : stageIndex === 3 ? "Brake released" : "Release gear"}</button>}
+          {stageIndex === 1 && <button className={hud.connectReady ? "rr-primary" : "rr-primary rr-disabled"} disabled={!hud.connectReady} onClick={connectNoseGear}>{hud.connectReady ? "Connect nose gear" : `Align ${hud.connectDistance == null ? "--" : hud.connectDistance.toFixed(1)} m`}</button>}
           <button className="rr-secondary" onClick={reset}>Reset</button>
           <button className={gyro ? "rr-mini active" : "rr-mini"} onClick={toggleGyro}>Gyro</button>
         </div>
@@ -443,6 +473,7 @@ export default function RampReadyTrainer() {
       <aside className="rr-metrics">
         <span>Speed <b>{(hud.speed * 2.237).toFixed(1)} mph</b></span>
         <span>Stop <b>{Math.max(0, hud.distance).toFixed(1)} m</b></span>
+        <span>Capture <b>{hud.connected ? "Done" : stageIndex === 1 && hud.connectDistance != null ? `${hud.connectDistance.toFixed(1)} m` : "--"}</b></span>
         <span>Nose <b>{hud.connected ? "Captured" : "Free"}</b></span>
       </aside>
 
@@ -456,8 +487,9 @@ export default function RampReadyTrainer() {
 
       <div className="rr-throttle">
         <button className="rr-direction" onClick={toggleDirection}>{direction}</button>
-        <div className="rr-slider-wrap">
-          <input aria-label="Throttle" type="range" min="0" max="100" value={throttle} onChange={(e) => setThrottleValue(e.target.value)} />
+        <div className="rr-custom-slider" role="slider" aria-label="Throttle" aria-valuemin="0" aria-valuemax="100" aria-valuenow={throttle} onPointerDown={updateCustomThrottle} onPointerMove={(event) => { if (event.buttons === 1) updateCustomThrottle(event); }}>
+          <div className="rr-custom-fill" style={{ height: `${throttle}%` }} />
+          <div className="rr-custom-thumb" style={{ bottom: `calc(${throttle}% - 13px)` }} />
         </div>
         <div className="rr-throttle-label">Power {throttle}%</div>
       </div>
