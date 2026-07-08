@@ -18,6 +18,8 @@ const CRADLE_Z = 3.1;
 const MAX_FREE_SPEED = 4.2;
 const MAX_TOW_SPEED = 1.65;
 const MAX_STEER = 0.55;
+const CENTERLINE_TOLERANCE = 2.4;
+const RECOMMENDED_PUSH_SPEED = 1.25;
 
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
@@ -47,6 +49,13 @@ function cyl(r, depth, color, x, y, z, rx = 0, ry = 0, rz = 0, segments = 28) {
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   return mesh;
+}
+
+function stageHelp(stageIndex, connected) {
+  if (stageIndex === 1) return "Use FWD and low power. Line the cradle up with the yellow nose-wheel ring and stop gently.";
+  if (stageIndex === 4) return "Use REV and small throttle changes. Hold centerline and stop on the red line.";
+  if (connected) return "Nose gear captured. Keep the tug straight and wait for the next clearance step.";
+  return "Tap and drag the scene to look around. Use the right-side power slider for movement.";
 }
 
 function buildGround(scene) {
@@ -201,6 +210,9 @@ export default function RampReadyTrainer() {
     sim.velocity = 0;
     sim.steer = 0;
     sim.connected = false;
+    sim.centerPenalty = 0;
+    sim.speedPenalty = 0;
+    sim.missedStop = false;
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
     stageRef.current = 0;
     setStageIndex(0);
@@ -299,7 +311,9 @@ export default function RampReadyTrainer() {
       steerInput = clamp(steerInput, -1, 1);
 
       const keyboardThrottle = keys.has("w") || keys.has("arrowup") ? 1 : keys.has("s") || keys.has("arrowdown") ? -1 : 0;
-      const targetThrottle = keyboardThrottle || drive.throttle * drive.direction;
+      const towPhase = sim.connected && stageRef.current >= 4;
+      const effectiveDirection = towPhase ? -drive.direction : drive.direction;
+      const targetThrottle = keyboardThrottle || drive.throttle * effectiveDirection;
       const maxSpeed = sim.connected ? MAX_TOW_SPEED : MAX_FREE_SPEED;
       sim.steer = lerp(sim.steer, steerInput * MAX_STEER, 1 - Math.exp(-5 * dt));
       sim.velocity += targetThrottle * (sim.connected ? 0.55 : 1.85) * dt;
@@ -319,7 +333,9 @@ export default function RampReadyTrainer() {
       if (!sim.connected && stageRef.current === 1 && dist < 0.95 && Math.abs(sim.velocity) < 0.5) {
         sim.connected = true;
         sim.velocity = 0;
-        setMessage("Nose wheels captured. Request clearance next.");
+        driveRef.current.throttle = 0;
+        setThrottle(0);
+        setMessage("Nose wheels captured. Power returned to idle. Request clearance next.");
         stageRef.current = 2;
         setStageIndex(2);
       }
@@ -331,12 +347,27 @@ export default function RampReadyTrainer() {
 
       const noseZ = sim.aircraft.position.z;
       const offset = Math.abs(sim.aircraft.position.x);
+      if (stageRef.current === 4) {
+        if (offset > CENTERLINE_TOLERANCE) sim.centerPenalty += dt;
+        if (Math.abs(sim.velocity) > RECOMMENDED_PUSH_SPEED) sim.speedPenalty += dt;
+        if (noseZ > STOP_Z + 2) sim.missedStop = true;
+      }
       if (sim.connected && stageRef.current === 4 && noseZ >= STOP_Z - 0.5 && Math.abs(sim.velocity) < 0.14) {
         sim.velocity = 0;
-        setMessage("Good stop. Release the nose gear.");
+        driveRef.current.throttle = 0;
+        setThrottle(0);
+        const score = clamp(100 - Math.round(sim.centerPenalty * 8 + sim.speedPenalty * 6 + (sim.missedStop ? 20 : 0)), 60, 100);
+        setFinalScore(score);
+        setMessage(score >= 90 ? "Good controlled stop. Release the nose gear." : "Stopped at the line. Release the nose gear, then retry for a smoother score.");
         stageRef.current = 5;
         setStageIndex(5);
       }
+
+      let warning = stageHelp(stageRef.current, sim.connected);
+      if (stageRef.current === 4 && drive.direction !== -1) warning = "Direction should be REV for pushback. Tap the FWD/REV button, then add power slowly.";
+      else if (stageRef.current === 4 && offset > CENTERLINE_TOLERANCE) warning = "Correct back toward centerline.";
+      else if (stageRef.current === 4 && Math.abs(sim.velocity) > RECOMMENDED_PUSH_SPEED) warning = "Ease off power. Pushback speed is high.";
+      else if (stageRef.current === 1 && Math.abs(sim.velocity) > 1.2) warning = "Approach slower before capturing the nose wheels.";
 
       const look = camRef.current;
       const target = new THREE.Vector3(sim.connected ? sim.aircraft.position.x : sim.tug.position.x, 1.1, sim.connected ? sim.aircraft.position.z : sim.tug.position.z + 2.5);
@@ -354,7 +385,7 @@ export default function RampReadyTrainer() {
         camera.lookAt(target.x, target.y + 1.2, target.z + 4.5);
       }
 
-      setHud({ speed: Math.abs(sim.velocity), distance: STOP_Z - noseZ, offset, connected: sim.connected, warning: "" });
+      setHud({ speed: Math.abs(sim.velocity), distance: STOP_Z - noseZ, offset, connected: sim.connected, warning });
       renderer.render(scene, camera);
       raf = requestAnimationFrame(tick);
     };
@@ -385,8 +416,14 @@ export default function RampReadyTrainer() {
   const onStageAction = () => {
     if (stageIndex === 0) setMessage("Inspection complete. Approach slowly and straight ahead.");
     if (stageIndex === 2) setMessage("Clearance received. Confirm brake release.");
-    if (stageIndex === 3) setMessage("Brake released. Toggle REV and pull power in slowly for pushback.");
-    if (stageIndex === 5) { setFinalScore(100); setMessage("Scenario complete. Good controlled stop."); }
+    if (stageIndex === 3) {
+      driveRef.current.direction = -1;
+      driveRef.current.throttle = 0;
+      setDirection("REV");
+      setThrottle(0);
+      setMessage("Brake released. Direction set to REV for pushback. Add power slowly and stop at the red line.");
+    }
+    if (stageIndex === 5) { setMessage("Scenario complete. Good controlled stop."); }
     setStageIndex((idx) => { const next = clamp(idx + 1, 0, STAGES.length - 1); stageRef.current = next; return next; });
   };
 
@@ -424,14 +461,16 @@ export default function RampReadyTrainer() {
 
       <aside className="rr-metrics">
         <span>Speed <b>{(hud.speed * 2.237).toFixed(1)} mph</b></span>
-        <span>Stop <b>{hud.distance.toFixed(1)} m</b></span>
+        <span>Stop <b>{Math.max(0, hud.distance).toFixed(1)} m</b></span>
         <span>Nose <b>{hud.connected ? "Captured" : "Free"}</b></span>
       </aside>
 
+      <aside className="rr-guidance">{hud.warning}</aside>
+
       <div className="rr-steer">
-        <button onPointerDown={() => { driveRef.current.steer = 1; }} onPointerUp={() => { driveRef.current.steer = 0; }} onPointerCancel={() => { driveRef.current.steer = 0; }}>◀</button>
-        <button onPointerDown={() => { driveRef.current.brake = true; }} onPointerUp={() => { driveRef.current.brake = false; }} onPointerCancel={() => { driveRef.current.brake = false; }}>Brake</button>
-        <button onPointerDown={() => { driveRef.current.steer = -1; }} onPointerUp={() => { driveRef.current.steer = 0; }} onPointerCancel={() => { driveRef.current.steer = 0; }}>▶</button>
+        <button onPointerDown={() => { driveRef.current.steer = 1; }} onPointerUp={() => { driveRef.current.steer = 0; }} onPointerLeave={() => { driveRef.current.steer = 0; }} onPointerCancel={() => { driveRef.current.steer = 0; }}>◀</button>
+        <button onPointerDown={() => { driveRef.current.brake = true; }} onPointerUp={() => { driveRef.current.brake = false; }} onPointerLeave={() => { driveRef.current.brake = false; }} onPointerCancel={() => { driveRef.current.brake = false; }}>Brake</button>
+        <button onPointerDown={() => { driveRef.current.steer = -1; }} onPointerUp={() => { driveRef.current.steer = 0; }} onPointerLeave={() => { driveRef.current.steer = 0; }} onPointerCancel={() => { driveRef.current.steer = 0; }}>▶</button>
       </div>
 
       <div className="rr-throttle">
