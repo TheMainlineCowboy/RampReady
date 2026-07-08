@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { buildCRJ700Aircraft } from "./aircraft/crj700Model.js";
 import "./RampReadyTrainer.css";
 
 const STAGES = [
@@ -122,29 +123,7 @@ function buildLektro() {
 }
 
 function buildAircraft() {
-  const group = new THREE.Group();
-  const fuselage = new THREE.Mesh(new THREE.CapsuleGeometry(1.05, 25.5, 10, 30), mat(0xf4f6f8, 0.38, 0.04));
-  fuselage.rotation.x = Math.PI / 2;
-  fuselage.position.set(0, 2.95, 10.6);
-  fuselage.scale.set(1, 0.88, 1);
-  fuselage.castShadow = true;
-  group.add(fuselage);
-
-  group.add(box(0.95, 0.35, 0.65, 0x1f2937, 0, 3.05, -1.85));
-  group.add(box(0.06, 0.12, 22.8, 0x1d4e89, 0, 3.25, 10.6));
-  group.add(box(22, 0.12, 2.9, 0xf7f8fa, 0, 2.75, 11.8, 0, 0, -0.02));
-  group.add(box(8.2, 0.13, 2.0, 0xf7f8fa, 0, 5.55, 24.9));
-  group.add(box(0.16, 4.0, 2.7, 0xf7f8fa, 0, 4.35, 25.4));
-  group.add(cyl(0.43, 1.4, 0x20242b, -1.65, 2.42, 21, Math.PI / 2, 0, 0, 32));
-  group.add(cyl(0.43, 1.4, 0x20242b, 1.65, 2.42, 21, Math.PI / 2, 0, 0, 32));
-  group.add(cyl(0.055, 1.1, 0x5f6670, 0, 0.86, 0));
-  group.add(cyl(0.22, 0.17, 0x101114, -0.17, 0.25, -0.18, 0, 0, Math.PI / 2, 24));
-  group.add(cyl(0.22, 0.17, 0x101114, 0.17, 0.25, -0.18, 0, 0, Math.PI / 2, 24));
-  const target = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.025, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffd166 }));
-  target.rotation.x = Math.PI / 2;
-  target.position.y = 0.055;
-  group.add(target);
-  return group;
+  return buildCRJ700Aircraft(THREE, mat, cyl);
 }
 
 function dispose(object) {
