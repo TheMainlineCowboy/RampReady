@@ -125,21 +125,21 @@ function buildAircraft() {
   const group = new THREE.Group();
   const fuselage = new THREE.Mesh(new THREE.CapsuleGeometry(1.05, 25.5, 10, 30), mat(0xf4f6f8, 0.38, 0.04));
   fuselage.rotation.x = Math.PI / 2;
-  fuselage.position.set(0, 2.95, -10.6);
+  fuselage.position.set(0, 2.95, 10.6);
   fuselage.scale.set(1, 0.88, 1);
   fuselage.castShadow = true;
   group.add(fuselage);
 
-  group.add(box(0.95, 0.35, 0.65, 0x1f2937, 0, 3.05, 1.85));
-  group.add(box(0.06, 0.12, 22.8, 0x1d4e89, 0, 3.25, -10.6));
-  group.add(box(22, 0.12, 2.9, 0xf7f8fa, 0, 2.75, -11.8, 0, 0, -0.02));
-  group.add(box(8.2, 0.13, 2.0, 0xf7f8fa, 0, 5.55, -24.9));
-  group.add(box(0.16, 4.0, 2.7, 0xf7f8fa, 0, 4.35, -25.4));
-  group.add(cyl(0.43, 1.4, 0x20242b, -1.65, 2.42, -21, Math.PI / 2, 0, 0, 32));
-  group.add(cyl(0.43, 1.4, 0x20242b, 1.65, 2.42, -21, Math.PI / 2, 0, 0, 32));
+  group.add(box(0.95, 0.35, 0.65, 0x1f2937, 0, 3.05, -1.85));
+  group.add(box(0.06, 0.12, 22.8, 0x1d4e89, 0, 3.25, 10.6));
+  group.add(box(22, 0.12, 2.9, 0xf7f8fa, 0, 2.75, 11.8, 0, 0, -0.02));
+  group.add(box(8.2, 0.13, 2.0, 0xf7f8fa, 0, 5.55, 24.9));
+  group.add(box(0.16, 4.0, 2.7, 0xf7f8fa, 0, 4.35, 25.4));
+  group.add(cyl(0.43, 1.4, 0x20242b, -1.65, 2.42, 21, Math.PI / 2, 0, 0, 32));
+  group.add(cyl(0.43, 1.4, 0x20242b, 1.65, 2.42, 21, Math.PI / 2, 0, 0, 32));
   group.add(cyl(0.055, 1.1, 0x5f6670, 0, 0.86, 0));
-  group.add(cyl(0.22, 0.17, 0x101114, -0.17, 0.25, 0.18, 0, 0, Math.PI / 2, 24));
-  group.add(cyl(0.22, 0.17, 0x101114, 0.17, 0.25, 0.18, 0, 0, Math.PI / 2, 24));
+  group.add(cyl(0.22, 0.17, 0x101114, -0.17, 0.25, -0.18, 0, 0, Math.PI / 2, 24));
+  group.add(cyl(0.22, 0.17, 0x101114, 0.17, 0.25, -0.18, 0, 0, Math.PI / 2, 24));
   const target = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.025, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffd166 }));
   target.rotation.x = Math.PI / 2;
   target.position.y = 0.055;
@@ -174,7 +174,7 @@ export default function RampReadyTrainer() {
   const [direction, setDirection] = useState("FWD");
   const [throttle, setThrottle] = useState(0);
   const [hud, setHud] = useState({ speed: 0, distance: STOP_Z - NOSE_START_Z, offset: 0, connected: false, warning: "" });
-  const [message, setMessage] = useState("Clean test scene. Use the right throttle slider and FWD/REV toggle to verify movement.");
+  const [message, setMessage] = useState("Clean test scene. Use the right-side power slider and FWD/REV toggle to verify movement.");
   const [finalScore, setFinalScore] = useState(null);
 
   const setCameraMode = useCallback((mode) => {
@@ -219,7 +219,7 @@ export default function RampReadyTrainer() {
     setThrottle(0);
     setDirection("FWD");
     setFinalScore(null);
-    setMessage("Scenario reset. Use the right throttle slider and FWD/REV toggle to test movement.");
+    setMessage("Scenario reset. Use the right-side power slider and FWD/REV toggle to test movement.");
   }, []);
 
   useEffect(() => { stageRef.current = stageIndex; }, [stageIndex]);
@@ -442,22 +442,24 @@ export default function RampReadyTrainer() {
     <div className="rr-shell">
       <div ref={mountRef} className="rr-scene" />
       <section className="rr-hud">
-        <div className="rr-kicker">RampReady</div>
-        <h1>CRJ700 Pushback Trainer</h1>
+        <div className="rr-topline">
+          <div>
+            <div className="rr-kicker">Step {stageIndex + 1} / {STAGES.length}</div>
+            <h1>{STAGES[stageIndex]}</h1>
+          </div>
+          <select className="rr-view-select" value={cameraMode} onChange={(event) => setCameraMode(event.target.value)} aria-label="Camera view">
+            <option value="chase">Chase view</option>
+            <option value="driver">Driver view</option>
+            <option value="overhead">Overhead view</option>
+          </select>
+        </div>
         <p>{message}</p>
-        <div className="rr-cameras">
-          {["chase", "driver", "overhead"].map((mode) => <button key={mode} className={cameraMode === mode ? "active" : ""} onClick={() => setCameraMode(mode)}>{mode}</button>)}
-          <button className={gyro ? "active" : ""} onClick={toggleGyro}>Gyro</button>
+        <div className="rr-hud-actions">
+          {[0, 2, 3, 5].includes(stageIndex) && <button className="rr-primary" onClick={onStageAction}>{stageIndex === 0 ? "Ready" : stageIndex === 2 ? "Clearance" : stageIndex === 3 ? "Brake released" : "Release gear"}</button>}
+          <button className="rr-secondary" onClick={reset}>Reset</button>
+          <button className={gyro ? "rr-mini active" : "rr-mini"} onClick={toggleGyro}>Gyro</button>
         </div>
       </section>
-
-      <aside className="rr-stage">
-        <div className="rr-step">Step {stageIndex + 1} / {STAGES.length}</div>
-        <h2>{STAGES[stageIndex]}</h2>
-        {[0, 2, 3, 5].includes(stageIndex) && <button className="rr-primary" onClick={onStageAction}>{stageIndex === 0 ? "Confirm equipment ready" : stageIndex === 2 ? "Request clearance" : stageIndex === 3 ? "Confirm brake released" : "Release nose gear"}</button>}
-        <button className="rr-secondary" onClick={reset}>Reset</button>
-        {finalScore !== null && <div className="rr-score">Score: {finalScore}</div>}
-      </aside>
 
       <aside className="rr-metrics">
         <span>Speed <b>{(hud.speed * 2.237).toFixed(1)} mph</b></span>
@@ -475,9 +477,12 @@ export default function RampReadyTrainer() {
 
       <div className="rr-throttle">
         <button className="rr-direction" onClick={toggleDirection}>{direction}</button>
-        <input aria-label="Throttle" type="range" min="0" max="100" value={throttle} onChange={(e) => setThrottleValue(e.target.value)} orient="vertical" />
+        <div className="rr-slider-wrap">
+          <input aria-label="Throttle" type="range" min="0" max="100" value={throttle} onChange={(e) => setThrottleValue(e.target.value)} />
+        </div>
         <div className="rr-throttle-label">Power {throttle}%</div>
       </div>
+      {finalScore !== null && <div className="rr-score rr-score-float">Score: {finalScore}</div>}
     </div>
   );
 }
