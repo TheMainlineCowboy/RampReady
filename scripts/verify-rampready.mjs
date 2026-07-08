@@ -8,6 +8,7 @@ const requiredFiles = [
   "src/components/PushbackTrainer.jsx",
   "src/components/RampReadyTrainer.jsx",
   "src/components/RampReadyTrainer.css",
+  "src/components/aircraft/crj700Model.js",
   "netlify.toml",
 ];
 
@@ -29,6 +30,7 @@ if (existsSync("src/components/PushbackTrainer.jsx")) {
 if (existsSync("src/components/RampReadyTrainer.jsx")) {
   const trainer = read("src/components/RampReadyTrainer.jsx");
   const requiredSnippets = [
+    "buildCRJ700Aircraft",
     "buildLektro",
     "buildAircraft",
     "buildGround",
@@ -48,6 +50,14 @@ if (existsSync("src/components/RampReadyTrainer.jsx")) {
 
   if (trainer.includes("buildTerminal") || trainer.includes("jetBridge")) {
     failures.push("Clean trainer scene should not include terminal or jet bridge clutter yet");
+  }
+}
+
+if (existsSync("src/components/aircraft/crj700Model.js")) {
+  const aircraft = read("src/components/aircraft/crj700Model.js");
+  const aircraftMarkers = ["buildCRJ700Aircraft", "T-tail", "rear-mounted engines", "Window row dots", "Nose gear at origin"];
+  for (const marker of aircraftMarkers) {
+    if (!aircraft.includes(marker)) failures.push(`CRJ model missing expected marker: ${marker}`);
   }
 }
 
