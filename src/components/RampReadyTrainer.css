@@ -24,6 +24,7 @@
 .rr-hud,
 .rr-stage,
 .rr-metrics,
+.rr-guidance,
 .rr-steer,
 .rr-throttle {
   position: absolute;
@@ -109,7 +110,7 @@ button {
 
 .rr-stage {
   left: 18px;
-  bottom: 86px;
+  bottom: 102px;
   width: min(420px, calc(100vw - 132px));
   padding: 18px;
   border-radius: 24px;
@@ -163,6 +164,21 @@ button {
   display: block;
   color: #fff;
   font-size: 16px;
+}
+
+.rr-guidance {
+  left: 18px;
+  right: 128px;
+  bottom: 76px;
+  max-width: 620px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  color: #fff8db;
+  background: rgba(10, 13, 20, 0.74);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+  backdrop-filter: blur(14px);
+  font-size: 14px;
+  line-height: 1.25;
 }
 
 .rr-steer {
@@ -241,7 +257,7 @@ button {
   .rr-stage {
     left: 10px;
     right: 104px;
-    bottom: calc(78px + env(safe-area-inset-bottom));
+    bottom: calc(142px + env(safe-area-inset-bottom));
     width: auto;
     padding: 12px;
     border-radius: 18px;
@@ -260,7 +276,7 @@ button {
   .rr-metrics {
     left: 10px;
     right: 104px;
-    bottom: calc(20px + env(safe-area-inset-bottom));
+    bottom: calc(82px + env(safe-area-inset-bottom));
     justify-content: space-between;
     padding: 8px 10px;
   }
@@ -273,19 +289,26 @@ button {
     font-size: 13px;
   }
 
+  .rr-guidance {
+    left: 10px;
+    right: 104px;
+    bottom: calc(138px + env(safe-area-inset-bottom));
+    display: none;
+  }
+
   .rr-steer {
     left: 10px;
     right: 104px;
     transform: none;
     justify-content: space-between;
     bottom: calc(20px + env(safe-area-inset-bottom));
-    opacity: 0;
-    pointer-events: none;
   }
 
   .rr-steer button {
     min-width: 0;
+    min-height: 52px;
     flex: 1;
+    padding: 0 8px;
   }
 
   .rr-throttle {
