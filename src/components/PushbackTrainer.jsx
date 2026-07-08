@@ -11,8 +11,7 @@ const STAGES = [
   { key: "complete", label: "Scenario complete", cta: null },
 ];
 
-const TUG_HALF_LENGTH = 2.64;
-const CRADLE_OFFSET = TUG_HALF_LENGTH + 0.2;
+const CRADLE_OFFSET = 2.84;
 const NOSE_START_Z = 8;
 const STOP_Z = 62;
 const CONNECT_DIST_TOL = 0.9;
@@ -24,12 +23,22 @@ const MAX_FREE_SPEED = 4;
 const MAX_TOW_SPEED = 1.8;
 const MAX_STEER = 0.52;
 
+const CAMERA_DEFAULTS = {
+  chase: { yaw: 0, pitch: -0.22, distance: 15, height: 5.2 },
+  driver: { yaw: 0, pitch: -0.08, distance: 0, height: 1.35 },
+  overhead: { yaw: 0, pitch: -1.18, distance: 40, height: 38 },
+};
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
 function lerp(a, b, t) {
   return a + (b - a) * t;
+}
+
+function shortestAngle(a, b) {
+  return Math.atan2(Math.sin(b - a), Math.cos(b - a));
 }
 
 function makeMaterial(color, options = {}) {
@@ -67,12 +76,11 @@ function buildTug() {
 
   group.add(makeBox(2.05, 0.32, 5.28, red, [0, 0.35, 0], { metalness: 0.18 }));
   group.add(makeBox(1.9, 0.18, 5.0, dark, [0, 0.15, 0]));
+  group.add(makeBox(1.35, 0.12, 1.0, dark, [0, 0.46, CRADLE_OFFSET]));
 
-  const cradleZ = CRADLE_OFFSET;
-  group.add(makeBox(1.35, 0.12, 1.0, dark, [0, 0.46, cradleZ]));
   [-1, 1].forEach((side) => {
-    group.add(makeBox(0.15, 0.5, 1.0, yellow, [side * 0.72, 0.68, cradleZ], { rotation: [0, 0, side * -0.16] }));
-    group.add(makeBox(0.05, 0.45, 0.9, steel, [side * 0.45, 0.55, cradleZ - 0.65], { rotation: [0.8, 0, 0] }));
+    group.add(makeBox(0.15, 0.5, 1.0, yellow, [side * 0.72, 0.68, CRADLE_OFFSET], { rotation: [0, 0, side * -0.16] }));
+    group.add(makeBox(0.05, 0.45, 0.9, steel, [side * 0.45, 0.55, CRADLE_OFFSET - 0.65], { rotation: [0.8, 0, 0] }));
   });
 
   group.add(makeBox(0.9, 0.55, 0.9, red, [0, 0.7, -1.45]));
@@ -106,9 +114,7 @@ function buildTug() {
 
 function buildAircraft() {
   const group = new THREE.Group();
-  const fuselageMat = makeMaterial(0xf1f4f7, { roughness: 0.36, metalness: 0.06 });
-
-  const fuselage = new THREE.Mesh(new THREE.CapsuleGeometry(1.35, 25, 12, 24), fuselageMat);
+  const fuselage = new THREE.Mesh(new THREE.CapsuleGeometry(1.35, 25, 12, 24), makeMaterial(0xf1f4f7, { roughness: 0.36, metalness: 0.06 }));
   fuselage.rotation.x = Math.PI / 2;
   fuselage.position.set(0, 2.1, -10);
   fuselage.castShadow = true;
@@ -126,7 +132,6 @@ function buildAircraft() {
   noseGear.add(makeCylinder(0.22, 0.16, 0x111214, [-0.16, 0.25, 0.25], [0, 0, Math.PI / 2]));
   noseGear.add(makeCylinder(0.22, 0.16, 0x111214, [0.16, 0.25, 0.25], [0, 0, Math.PI / 2]));
   group.add(noseGear);
-
   return group;
 }
 
@@ -184,9 +189,8 @@ function WebGLFallback({ error }) {
     <div className="fallbackPanel">
       <div className="eyebrow">RampReady</div>
       <h1>Trainer loading issue</h1>
-      <p>The app opened, but the 3D scene did not start cleanly. This fallback confirms Netlify is serving the React app instead of a blank page.</p>
+      <p>The app opened, but the 3D scene did not start cleanly.</p>
       {error && <code>{error}</code>}
-      <p>Try refreshing once. If this stays visible, the next patch should target the displayed error instead of guessing from a black screen.</p>
     </div>
   );
 }
@@ -195,21 +199,45 @@ export default function PushbackTrainer() {
   const mountRef = useRef(null);
   const simRef = useRef(null);
   const cameraModeRef = useRef("chase");
+  const cameraLookRef = useRef({ ...CAMERA_DEFAULTS.chase, manualYaw: 0, manualPitch: 0, gyroYaw: 0, gyroPitch: 0 });
+  const pointerRef = useRef({ active: false, x: 0, y: 0 });
   const keysRef = useRef(new Set());
   const touchRef = useRef({ throttle: 0, steer: 0, brake: false });
   const [stageIndex, setStageIndex] = useState(0);
   const stageIndexRef = useRef(0);
   const [hud, setHud] = useState({ speed: 0, offset: 0, distanceToStop: STOP_Z - NOSE_START_Z, connected: false, warning: "" });
   const [cameraMode, setCameraModeState] = useState("chase");
+  const [gyroEnabled, setGyroEnabled] = useState(false);
+  const gyroEnabledRef = useRef(false);
   const [score, setScore] = useState(null);
-  const [message, setMessage] = useState("Follow the ramp procedure and keep the nose gear on the centerline.");
+  const [message, setMessage] = useState("Drag anywhere on the 3D view to look around. Use Gyro Look for phone/headset testing.");
   const [bootError, setBootError] = useState("");
 
   const stage = STAGES[stageIndex] ?? STAGES[STAGES.length - 1];
 
   const setCameraMode = useCallback((mode) => {
     cameraModeRef.current = mode;
+    cameraLookRef.current = { ...CAMERA_DEFAULTS[mode], manualYaw: 0, manualPitch: 0, gyroYaw: 0, gyroPitch: 0 };
     setCameraModeState(mode);
+  }, []);
+
+  const toggleGyro = useCallback(async () => {
+    const next = !gyroEnabledRef.current;
+    if (next && typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission !== "granted") {
+          setMessage("Gyro permission was not granted. Drag look still works.");
+          return;
+        }
+      } catch {
+        setMessage("Gyro permission failed. Drag look still works.");
+        return;
+      }
+    }
+    gyroEnabledRef.current = next;
+    setGyroEnabled(next);
+    setMessage(next ? "Gyro Look enabled. Move the phone/headset to look around." : "Gyro Look off. Drag on the scene to look around.");
   }, []);
 
   const advanceStage = useCallback(() => {
@@ -236,17 +264,44 @@ export default function PushbackTrainer() {
     stageIndexRef.current = 0;
     setStageIndex(0);
     setScore(null);
-    setMessage("Scenario reset. Start with the visual equipment check.");
+    setMessage("Scenario reset. Drag the 3D view to look around, then start the equipment check.");
   }, []);
 
+  useEffect(() => { stageIndexRef.current = stageIndex; }, [stageIndex]);
+
   useEffect(() => {
-    stageIndexRef.current = stageIndex;
-  }, [stageIndex]);
+    const onOrientation = (event) => {
+      if (!gyroEnabledRef.current) return;
+      const gamma = event.gamma ?? 0;
+      const beta = event.beta ?? 0;
+      cameraLookRef.current.gyroYaw = clamp(gamma / 45, -1, 1) * 0.9;
+      cameraLookRef.current.gyroPitch = clamp((beta - 55) / 55, -1, 1) * 0.45;
+    };
+    window.addEventListener("deviceorientation", onOrientation);
+    return () => window.removeEventListener("deviceorientation", onOrientation);
+  }, []);
 
   useEffect(() => {
     let raf = 0;
     const mount = mountRef.current;
     if (!mount) return undefined;
+
+    const onPointerDown = (event) => {
+      if (event.target !== mount && event.target !== simRef.current?.renderer.domElement) return;
+      pointerRef.current = { active: true, x: event.clientX, y: event.clientY };
+      event.preventDefault();
+    };
+    const onPointerMove = (event) => {
+      if (!pointerRef.current.active) return;
+      const dx = event.clientX - pointerRef.current.x;
+      const dy = event.clientY - pointerRef.current.y;
+      pointerRef.current.x = event.clientX;
+      pointerRef.current.y = event.clientY;
+      const look = cameraLookRef.current;
+      look.manualYaw += dx * 0.006;
+      look.manualPitch = clamp(look.manualPitch + dy * 0.004, -0.7, 0.7);
+    };
+    const onPointerUp = () => { pointerRef.current.active = false; };
 
     try {
       const width = Math.max(1, mount.clientWidth || window.innerWidth || 1);
@@ -255,20 +310,20 @@ export default function PushbackTrainer() {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.setSize(width, height, false);
       renderer.shadowMap.enabled = true;
+      renderer.domElement.className = "trainerCanvas";
       mount.replaceChildren(renderer.domElement);
 
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x99b7d7);
-      scene.fog = new THREE.Fog(0x99b7d7, 45, 120);
-
+      scene.fog = new THREE.Fog(0x99b7d7, 55, 135);
       const camera = new THREE.PerspectiveCamera(62, width / height, 0.1, 500);
-      camera.position.set(0, 6, -11);
+      camera.position.set(0, 7, -15);
 
       scene.add(new THREE.HemisphereLight(0xffffff, 0x4b5563, 1.35));
       const sun = new THREE.DirectionalLight(0xffffff, 2.2);
       sun.position.set(18, 35, 14);
       sun.castShadow = true;
-      sun.shadow.mapSize.set(2048, 2048);
+      sun.shadow.mapSize.set(1024, 1024);
       scene.add(sun);
 
       buildRamp(scene);
@@ -278,21 +333,13 @@ export default function PushbackTrainer() {
       aircraft.position.set(0, 0, NOSE_START_Z);
       scene.add(aircraft);
 
-      const sim = {
-        camera,
-        renderer,
-        scene,
-        tug,
-        wheels,
-        aircraft,
-        velocity: 0,
-        steer: 0,
-        connected: false,
-        lastTime: performance.now(),
-        metrics: { centerlinePenalty: 0, speedingPenalty: 0, bumpEvents: 0, missedStop: false },
-      };
+      const sim = { camera, renderer, scene, tug, wheels, aircraft, velocity: 0, steer: 0, connected: false, lastTime: performance.now(), metrics: { centerlinePenalty: 0, speedingPenalty: 0, bumpEvents: 0, missedStop: false } };
       simRef.current = sim;
       setBootError("");
+
+      mount.addEventListener("pointerdown", onPointerDown, { passive: false });
+      window.addEventListener("pointermove", onPointerMove, { passive: false });
+      window.addEventListener("pointerup", onPointerUp);
 
       const onResize = () => {
         const nextWidth = Math.max(1, mount.clientWidth || window.innerWidth || 1);
@@ -319,9 +366,7 @@ export default function PushbackTrainer() {
         throttle = clamp(throttle, -1, 1);
         steerInput = clamp(steerInput, -1, 1);
 
-        const targetSteer = steerInput * MAX_STEER;
-        sim.steer = lerp(sim.steer, targetSteer, 1 - Math.exp(-5 * dt));
-
+        sim.steer = lerp(sim.steer, steerInput * MAX_STEER, 1 - Math.exp(-5 * dt));
         const maxSpeed = sim.connected ? MAX_TOW_SPEED : MAX_FREE_SPEED;
         const accel = sim.connected ? 0.45 : 1.7;
         const drag = sim.connected ? 0.3 : 1.0;
@@ -337,13 +382,11 @@ export default function PushbackTrainer() {
         sim.tug.position.z += Math.cos(sim.tug.rotation.y) * sim.velocity * dt;
         sim.tug.position.z = clamp(sim.tug.position.z, -1, 85);
         sim.tug.updateMatrixWorld(true);
-        sim.wheels.forEach((wheel) => {
-          wheel.rotation.x += sim.velocity * dt * 4;
-        });
+        sim.wheels.forEach((wheel) => { wheel.rotation.x += sim.velocity * dt * 4; });
 
         const cradleWorld = new THREE.Vector3(0, 0, CRADLE_OFFSET).applyMatrix4(sim.tug.matrixWorld);
         const dist = cradleWorld.distanceTo(sim.aircraft.position);
-        const angleError = Math.abs(Math.atan2(Math.sin(sim.tug.rotation.y - sim.aircraft.rotation.y), Math.cos(sim.tug.rotation.y - sim.aircraft.rotation.y)));
+        const angleError = Math.abs(shortestAngle(sim.tug.rotation.y, sim.aircraft.rotation.y));
 
         if (!sim.connected && stageIndexRef.current === 1 && dist < CONNECT_DIST_TOL && angleError < CONNECT_ANGLE_TOL && Math.abs(sim.velocity) < CONNECT_SPEED_TOL) {
           sim.connected = true;
@@ -380,19 +423,28 @@ export default function PushbackTrainer() {
         else if (sim.connected && Math.abs(sim.velocity) > RECOMMENDED_MAX_SPEED) warning = "Reduce speed — loaded tug limit.";
         else if (stageIndexRef.current === 4 && noseZ > STOP_Z + 1) warning = "You passed the stop line.";
 
-        const cameraModeNow = cameraModeRef.current;
-        if (cameraModeNow === "driver") {
+        const look = cameraLookRef.current;
+        const target = new THREE.Vector3(sim.connected ? sim.aircraft.position.x : sim.tug.position.x, 1.35, sim.connected ? sim.aircraft.position.z : sim.tug.position.z + 4);
+        const totalYaw = sim.tug.rotation.y + look.yaw + look.manualYaw + look.gyroYaw;
+        const totalPitch = look.pitch + look.manualPitch + look.gyroPitch;
+
+        if (cameraModeRef.current === "driver") {
           const eye = new THREE.Vector3(0, 1.45, -1.15).applyMatrix4(sim.tug.matrixWorld);
-          const look = new THREE.Vector3(0, 1.15, 10).applyMatrix4(sim.tug.matrixWorld);
+          const forward = new THREE.Vector3(Math.sin(totalYaw), Math.sin(-totalPitch) * 0.65, Math.cos(totalYaw));
           camera.position.lerp(eye, 0.35);
-          camera.lookAt(look);
-        } else if (cameraModeNow === "overhead") {
-          camera.position.lerp(new THREE.Vector3(0, 42, sim.aircraft.position.z + 8), 0.08);
-          camera.lookAt(sim.aircraft.position.x, 0, sim.aircraft.position.z + 12);
+          camera.lookAt(eye.clone().add(forward.multiplyScalar(20)));
+        } else if (cameraModeRef.current === "overhead") {
+          const orbit = new THREE.Vector3(Math.sin(totalYaw) * 8, look.height, Math.cos(totalYaw) * 8);
+          camera.position.lerp(target.clone().add(orbit), 0.12);
+          camera.lookAt(target.x, 0, target.z + 8);
         } else {
-          const behind = new THREE.Vector3(0, 5.2, -11).applyMatrix4(sim.tug.matrixWorld);
-          camera.position.lerp(behind, 0.12);
-          camera.lookAt(new THREE.Vector3(sim.tug.position.x, 0.8, sim.tug.position.z + 5));
+          const orbit = new THREE.Vector3(
+            Math.sin(totalYaw) * look.distance,
+            look.height + Math.sin(-totalPitch) * 8,
+            -Math.cos(totalYaw) * look.distance
+          );
+          camera.position.lerp(target.clone().add(orbit), 0.12);
+          camera.lookAt(target.x, target.y + 1, target.z + 5);
         }
 
         setHud({ speed: Math.abs(sim.velocity), offset, distanceToStop: STOP_Z - noseZ, connected: sim.connected, warning });
@@ -405,6 +457,9 @@ export default function PushbackTrainer() {
       return () => {
         cancelAnimationFrame(raf);
         window.removeEventListener("resize", onResize);
+        mount.removeEventListener("pointerdown", onPointerDown);
+        window.removeEventListener("pointermove", onPointerMove);
+        window.removeEventListener("pointerup", onPointerUp);
         disposeObject(scene);
         renderer.dispose();
         if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
@@ -469,7 +524,7 @@ export default function PushbackTrainer() {
       <div ref={mountRef} className="sceneMount" />
       {bootError && <WebGLFallback error={bootError} />}
 
-      <section className="topHud">
+      <section className="topHud compactHud">
         <div>
           <div className="eyebrow">RampReady</div>
           <h1>CRJ700 Pushback Trainer</h1>
@@ -479,6 +534,7 @@ export default function PushbackTrainer() {
           {["chase", "driver", "overhead"].map((mode) => (
             <button key={mode} className={cameraMode === mode ? "active" : ""} onClick={() => setCameraMode(mode)}>{mode}</button>
           ))}
+          <button className={gyroEnabled ? "active" : ""} onClick={toggleGyro}>Gyro Look</button>
         </div>
       </section>
 
