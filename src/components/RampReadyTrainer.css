@@ -1,4 +1,5 @@
 @import "./throttle-visibility.css";
+@import "./throttle-force.css";
 
 .rr-shell {
   position: relative;
