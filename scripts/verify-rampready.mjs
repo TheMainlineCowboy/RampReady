@@ -8,6 +8,7 @@ const requiredFiles = [
   "src/components/PushbackTrainer.jsx",
   "src/components/RampReadyTrainer.jsx",
   "src/components/RampReadyTrainer.css",
+  "src/components/throttle-visibility.css",
   "src/components/aircraft/crj700Model.js",
   "netlify.toml",
 ];
@@ -36,12 +37,13 @@ if (existsSync("src/components/RampReadyTrainer.jsx")) {
     "buildGround",
     "FWD",
     "REV",
-    "type=\"range\"",
+    "rr-custom-slider",
+    "Connect nose gear",
+    "connectDistance",
     "deviceorientation",
     "Request clearance",
     "Confirm brake released",
     "rr-view-select",
-    "rr-slider-wrap",
   ];
 
   for (const snippet of requiredSnippets) {
@@ -63,9 +65,17 @@ if (existsSync("src/components/aircraft/crj700Model.js")) {
 
 if (existsSync("src/components/RampReadyTrainer.css")) {
   const css = read("src/components/RampReadyTrainer.css");
-  const cssMarkers = [".rr-throttle", ".rr-direction", ".rr-steer", ".rr-view-select", ".rr-slider-wrap", "transform: rotate(-90deg)"];
+  const cssMarkers = ["@import \"./throttle-visibility.css\"", ".rr-throttle", ".rr-direction", ".rr-steer", ".rr-view-select"];
   for (const marker of cssMarkers) {
     if (!css.includes(marker)) failures.push(`CSS missing expected marker: ${marker}`);
+  }
+}
+
+if (existsSync("src/components/throttle-visibility.css")) {
+  const throttleCss = read("src/components/throttle-visibility.css");
+  const throttleMarkers = [".rr-custom-slider", ".rr-custom-fill", ".rr-custom-thumb"];
+  for (const marker of throttleMarkers) {
+    if (!throttleCss.includes(marker)) failures.push(`Throttle CSS missing expected marker: ${marker}`);
   }
 }
 
