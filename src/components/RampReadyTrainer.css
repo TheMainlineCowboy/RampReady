@@ -1,3 +1,5 @@
+@import "./throttle-visibility.css";
+
 .rr-shell {
   position: relative;
   width: 100vw;
