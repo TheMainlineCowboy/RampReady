@@ -1,7 +1,7 @@
-const NOSE_START_Z = 10.8;
-const CRADLE_OFFSET_Z = 5.6;
-const MAX_FREE_SPEED = 4.0;
-const MAX_TOW_SPEED = 1.55;
+const NOSE_START_Z = 6.2;
+const CRADLE_Z = 3.45;
+const MAX_FREE_SPEED = 3.2;
+const MAX_TOW_SPEED = 1.25;
 
 const failures = [];
 const approx = (actual, expected, tolerance, label) => {
@@ -15,18 +15,18 @@ function lerp(a, b, t) {
 }
 
 function stepVelocity({ velocity, throttle, direction, connected, stage, dt = 0.016 }) {
-  const usefulThrottle = throttle > 0.02 ? 0.18 + throttle * 0.82 : 0;
+  const usefulThrottle = throttle > 0.02 ? 0.16 + throttle * 0.84 : 0;
   const connectedPushPhase = connected && stage >= 4;
   const signedDirection = connectedPushPhase ? (direction === -1 ? 1 : -1) : direction;
   const maxSpeed = connected ? MAX_TOW_SPEED : MAX_FREE_SPEED;
   const targetSpeed = usefulThrottle * signedDirection * maxSpeed;
-  const nextVelocity = lerp(velocity, targetSpeed, 1 - Math.exp((connected ? -3.0 : -4.2) * dt));
+  const nextVelocity = lerp(velocity, targetSpeed, 1 - Math.exp((connected ? -3.4 : -4.4) * dt));
   return { usefulThrottle, targetSpeed, nextVelocity };
 }
 
 // Partial throttle must create a visible movement command. This prevents the old 100%-only bug.
 const lowFree = stepVelocity({ velocity: 0, throttle: 0.12, direction: 1, connected: false, stage: 1 });
-if (lowFree.targetSpeed <= 0.25) failures.push(`Partial free-drive throttle too weak: ${lowFree.targetSpeed}`);
+if (lowFree.targetSpeed <= 0.22) failures.push(`Partial free-drive throttle too weak: ${lowFree.targetSpeed}`);
 if (lowFree.nextVelocity <= 0.01) failures.push(`Partial free-drive throttle does not move on first frame: ${lowFree.nextVelocity}`);
 
 // Connected pushback with REV selected must move the aircraft toward the red stop line.
@@ -38,10 +38,10 @@ if (connectedRev.nextVelocity <= 0.01) failures.push(`Connected REV should move 
 const connectedFwd = stepVelocity({ velocity: 0, throttle: 0.25, direction: 1, connected: true, stage: 4 });
 if (connectedFwd.targetSpeed >= 0) failures.push(`Connected FWD should be opposite/reverse from pushback path, got ${connectedFwd.targetSpeed}`);
 
-// Cradle geometry should be short and realistic, not the oversized 11.5 m extension.
-if (CRADLE_OFFSET_Z >= 7) failures.push(`Cradle offset too long: ${CRADLE_OFFSET_Z}`);
-if (CRADLE_OFFSET_Z <= 4.5) failures.push(`Cradle offset too short to reach nose gear from tug front: ${CRADLE_OFFSET_Z}`);
-approx(NOSE_START_Z - CRADLE_OFFSET_Z, 5.2, 0.8, "Initial tug-body-to-nose spacing");
+// Stable trainer uses a short integrated cradle, not a stretched bucket arm.
+if (CRADLE_Z >= 4.5) failures.push(`Cradle offset too long: ${CRADLE_Z}`);
+if (CRADLE_Z <= 2.8) failures.push(`Cradle offset too short to represent the pan: ${CRADLE_Z}`);
+approx(NOSE_START_Z - CRADLE_Z, 2.75, 0.55, "Initial tug-body-to-nose spacing");
 
 if (failures.length) {
   console.error("RampReady physics verification failed:");
