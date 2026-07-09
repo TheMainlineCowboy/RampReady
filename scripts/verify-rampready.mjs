@@ -24,6 +24,12 @@ const read = (file) => readFileSync(file, "utf8");
 const requireHard = (condition, message) => { if (!condition) hardFailures.push(message); };
 const warnIfMissing = (content, marker, label) => { if (!content.includes(marker)) warnings.push(`${label}: ${marker}`); };
 
+if (existsSync("package.json")) {
+  const pkg = read("package.json");
+  requireHard(pkg.includes('"build": "npm run verify && vite build"'), "Production build must run RampReady verification before Vite build");
+  requireHard(pkg.includes('"verify": "node scripts/verify-rampready.mjs && node scripts/verify-physics.mjs"'), "Verify script must run structural and physics checks");
+}
+
 if (existsSync("src/components/PushbackTrainer.jsx")) {
   const bridge = read("src/components/PushbackTrainer.jsx");
   requireHard(bridge.includes("RampReadyTrainerStable.jsx"), "PushbackTrainer.jsx must route to the stable trainer implementation");
@@ -41,14 +47,19 @@ if (existsSync("src/components/RampReadyTrainerStable.jsx")) {
   requireHard(trainer.includes("const usefulThrottle = throttleNorm > 0.02 ? 0.16 + throttleNorm * 0.84 : 0"), "Stable trainer must preserve minimum usable throttle behavior");
   requireHard(trainer.includes("const targetSpeed = usefulThrottle * signedDirection * maxSpeed"), "Stable trainer must map throttle to target speed");
   requireHard(trainer.includes("Connect nose gear"), "Stable trainer must keep explicit nose-gear connect workflow");
+  requireHard(trainer.includes("releaseNoseGear"), "Stable trainer must keep explicit nose-gear release workflow");
+  requireHard(trainer.includes("Nose gear released. Tug clear. Scenario complete."), "Release workflow must mark scenario completion");
   requireHard(trainer.includes("cameraModeRef.current"), "Camera changes should not recreate the renderer");
   requireHard(!trainer.includes("}, [cameraMode") && !trainer.includes("}, [cameraMode, message])"), "Renderer lifecycle must not depend on camera mode or live HUD message state");
   requireHard(!trainer.includes("buildTerminal") && !trainer.includes("jetBridge"), "Clean trainer scene should not include terminal or jet bridge clutter yet");
+  requireHard(trainer.includes("useMemo"), "Checklist state should be memoized instead of recalculated inside the render tree");
+  requireHard(trainer.includes("rr-checklist"), "Trainer must render the live procedure checklist");
+  requireHard(trainer.includes("rr-checkitem"), "Trainer must render checklist item states");
+  requireHard(trainer.includes("rr-idle") && trainer.includes("setIdle"), "Trainer must expose an explicit Idle control");
+  requireHard(trainer.includes("rr-guidance") && trainer.includes("Controls:"), "Trainer must show a plain-language controls guide");
+  requireHard(trainer.includes("showDiagnostics") && trainer.includes("Diagnostics"), "Diagnostics must be hidden behind an explicit toggle");
 
   const softMarkers = [
-    "releaseNoseGear",
-    "Nose gear released. Tug clear. Scenario complete.",
-    "rr-diagnostics",
     "cradleZ",
     "noseZ",
     "rr-view-select",
@@ -75,10 +86,10 @@ if (existsSync("src/components/aircraft/crj700Model.js")) {
 
 if (existsSync("src/components/RampReadyTrainer.css")) {
   const css = read("src/components/RampReadyTrainer.css");
-  const hardCssMarkers = [".rr-throttle", ".rr-direction", ".rr-steer", ".rr-view-select"];
+  const hardCssMarkers = [".rr-throttle", ".rr-direction", ".rr-steer", ".rr-view-select", ".rr-diagnostics", ".rr-checklist", ".rr-checkitem.active", ".rr-checknum", ".rr-guidance", ".rr-idle"];
   for (const marker of hardCssMarkers) requireHard(css.includes(marker), `CSS missing required marker: ${marker}`);
 
-  const softCssMarkers = ["@import \"./throttle-visibility.css\"", ".rr-diagnostics", ".rr-checklist", ".rr-checkitem.active", ".rr-checknum"];
+  const softCssMarkers = ["@import \"./throttle-visibility.css\"", ".rr-custom-slider", ".rr-custom-fill", ".rr-custom-thumb"];
   for (const marker of softCssMarkers) warnIfMissing(css, marker, "CSS marker missing");
 }
 
