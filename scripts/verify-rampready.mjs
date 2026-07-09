@@ -90,7 +90,22 @@ if (existsSync("src/components/aircraft/crj700Model.js")) {
 
 if (existsSync("src/components/RampReadyTrainer.css")) {
   const css = read("src/components/RampReadyTrainer.css");
-  const hardCssMarkers = [".rr-throttle", ".rr-direction", ".rr-steer", ".rr-view-select", ".rr-diagnostics", ".rr-checklist", ".rr-checkitem.active", ".rr-checknum", ".rr-guidance", ".rr-idle", ".rr-score-float"];
+  const hardCssMarkers = [
+    ".rr-throttle",
+    ".rr-direction",
+    ".rr-steer",
+    ".rr-view-select",
+    ".rr-diagnostics",
+    ".rr-checklist",
+    ".rr-checkitem.active",
+    ".rr-checknum",
+    ".rr-guidance",
+    ".rr-idle",
+    ".rr-score-float",
+    "max-height: min(50vh, 430px)",
+    "overscroll-behavior: contain",
+    "bottom: calc(188px + env(safe-area-inset-bottom))",
+  ];
   for (const marker of hardCssMarkers) requireHard(css.includes(marker), `CSS missing required marker: ${marker}`);
 
   const softCssMarkers = ["@import \"./throttle-visibility.css\"", ".rr-custom-slider", ".rr-custom-fill", ".rr-custom-thumb"];
