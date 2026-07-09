@@ -5,6 +5,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  max-width: 100%;
   margin-top: 8px;
   padding: 5px 9px;
   border-radius: 999px;
@@ -15,6 +16,9 @@
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rr-stage-gate b {
@@ -41,6 +45,69 @@
 .rr-shell .rr-hud-actions .rr-primary,
 .rr-shell .rr-hud-actions .rr-secondary {
   flex: 1 1 auto;
+}
+
+.rr-shell .rr-primary:not(.rr-disabled),
+.rr-shell .rr-secondary,
+.rr-shell .rr-mini,
+.rr-shell .rr-direction,
+.rr-shell .rr-idle {
+  transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+}
+
+.rr-shell .rr-primary:not(.rr-disabled):hover,
+.rr-shell .rr-secondary:hover,
+.rr-shell .rr-mini:hover,
+.rr-shell .rr-direction:hover,
+.rr-shell .rr-idle:hover {
+  filter: brightness(1.08);
+}
+
+.rr-shell .rr-primary:not(.rr-disabled):active,
+.rr-shell .rr-secondary:active,
+.rr-shell .rr-mini:active,
+.rr-shell .rr-direction:active,
+.rr-shell .rr-idle:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.rr-shell .rr-primary:not(.rr-disabled):focus-visible,
+.rr-shell .rr-secondary:focus-visible,
+.rr-shell .rr-mini:focus-visible,
+.rr-shell .rr-direction:focus-visible,
+.rr-shell .rr-idle:focus-visible,
+.rr-shell .rr-view-select:focus-visible {
+  outline: 3px solid rgba(255, 209, 102, 0.82);
+  outline-offset: 3px;
+}
+
+.rr-shell .rr-primary:not(.rr-disabled) {
+  position: relative;
+  overflow: hidden;
+}
+
+.rr-shell .rr-primary:not(.rr-disabled)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.28) 45%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 260ms ease;
+  pointer-events: none;
+}
+
+.rr-shell .rr-primary:not(.rr-disabled):hover::after,
+.rr-shell .rr-primary:not(.rr-disabled):focus-visible::after {
+  transform: translateX(120%);
+}
+
+.rr-metrics {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 12px 34px rgba(0, 0, 0, 0.24);
+}
+
+.rr-guidance {
+  max-height: 4.8em;
+  overflow: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -72,6 +139,7 @@
     right: 104px;
     bottom: calc(8px + env(safe-area-inset-bottom));
     max-width: none;
+    max-height: 3.75em;
     padding: 7px 9px;
     border-radius: 12px;
     font-size: 11px;
