@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { buildCRJ700Aircraft } from "./aircraft/crj700Model.js";
 import "./RampReadyTrainer.css";
@@ -129,6 +129,11 @@ export default function RampReadyTrainer() {
   const [message, setMessageState] = useState(messageRef.current);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [hud, setHud] = useState({ speed: 0, stop: STOP_Z - NOSE_START_Z, capture: null, ready: false, connected: false, debug: "" });
+
+  const checklist = useMemo(() => STAGES.map((label, index) => ({
+    label,
+    state: index < stageIndex ? "complete" : index === stageIndex ? "active" : "pending",
+  })), [stageIndex]);
 
   const setTrainerMessage = useCallback((value) => {
     messageRef.current = value;
@@ -383,6 +388,14 @@ export default function RampReadyTrainer() {
           </select>
         </div>
         <p>{message}</p>
+        <ol className="rr-checklist" aria-label="Pushback procedure checklist">
+          {checklist.map((item, index) => (
+            <li key={item.label} className={`rr-checkitem ${item.state}`}>
+              <span className="rr-checknum">{item.state === "complete" ? "✓" : index + 1}</span>
+              <span>{item.label}</span>
+            </li>
+          ))}
+        </ol>
         <div className="rr-hud-actions">
           {[0, 2, 3, 5].includes(stageIndex) && <button className="rr-primary" onClick={advance}>{stageIndex === 0 ? "Ready" : stageIndex === 2 ? "Clearance" : stageIndex === 3 ? "Brake released" : "Release gear"}</button>}
           {stageIndex === 1 && <button className={hud.ready ? "rr-primary" : "rr-primary rr-disabled"} disabled={!hud.ready} onClick={connectNoseGear}>{hud.ready ? "Connect nose gear" : `Align ${hud.capture == null ? "--" : hud.capture.toFixed(1)} m`}</button>}
