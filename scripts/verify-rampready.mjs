@@ -10,6 +10,7 @@ const requiredFiles = [
   "src/components/RampReadyTrainer.css",
   "src/components/throttle-visibility.css",
   "src/components/aircraft/crj700Model.js",
+  "scripts/verify-physics.mjs",
   "netlify.toml",
 ];
 
@@ -73,6 +74,19 @@ if (existsSync("src/components/RampReadyTrainer.jsx")) {
 
   if (trainer.includes("buildTerminal") || trainer.includes("jetBridge")) {
     failures.push("Clean trainer scene should not include terminal or jet bridge clutter yet");
+  }
+}
+
+if (existsSync("scripts/verify-physics.mjs")) {
+  const physics = read("scripts/verify-physics.mjs");
+  const physicsMarkers = [
+    "Partial free-drive throttle too weak",
+    "Connected REV should produce positive pushback speed",
+    "Cradle offset too long",
+    "Initial tug-body-to-nose spacing",
+  ];
+  for (const marker of physicsMarkers) {
+    if (!physics.includes(marker)) failures.push(`Physics verification missing expected marker: ${marker}`);
   }
 }
 
