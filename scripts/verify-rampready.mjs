@@ -8,6 +8,7 @@ const requiredFiles = [
   "src/components/PushbackTrainer.jsx",
   "src/components/RampReadyTrainerStable.jsx",
   "src/components/RampReadyTrainer.css",
+  "src/components/procedure-gates.css",
   "src/components/aircraft/crj700Model.js",
   "scripts/verify-physics.mjs",
   "netlify.toml",
@@ -61,6 +62,11 @@ if (existsSync("src/components/RampReadyTrainerStable.jsx")) {
   requireHard(trainer.includes("scoreRef") && trainer.includes("rr-score-float"), "Trainer must show live procedural scoring");
   requireHard(trainer.includes("CENTERLINE_CAUTION_OFFSET") && trainer.includes("TOW_SPEED_CAUTION"), "Trainer must coach centerline and connected tow speed quality");
   requireHard(trainer.includes("Stopped at the red line, but arrival was too fast"), "Trainer must catch hard red-line arrivals instead of letting the aircraft sail through");
+  requireHard(trainer.includes("STOP_REMAINING_CAUTION"), "Trainer must expose an early red-line braking caution distance");
+  requireHard(trainer.includes("wrongDirection") && trainer.includes("Power locked until REV is selected"), "Trainer must lock power and coach direction during connected pushback");
+  requireHard(trainer.includes("Release is locked until the aircraft is stopped at the red line"), "Trainer must prevent early nose-gear release");
+  requireHard(trainer.includes("rr-stage-gate") && trainer.includes("hud.gate"), "Trainer must render a live procedure gate indicator");
+  requireHard(trainer.includes("procedure-gates.css"), "Trainer must load procedure gate styling");
 
   const softMarkers = [
     "cradleZ",
@@ -110,6 +116,11 @@ if (existsSync("src/components/RampReadyTrainer.css")) {
 
   const softCssMarkers = ["@import \"./throttle-visibility.css\"", ".rr-custom-slider", ".rr-custom-fill", ".rr-custom-thumb"];
   for (const marker of softCssMarkers) warnIfMissing(css, marker, "CSS marker missing");
+}
+
+if (existsSync("src/components/procedure-gates.css")) {
+  const gateCss = read("src/components/procedure-gates.css");
+  for (const marker of [".rr-stage-gate", ".rr-stage-gate b", "@media (max-width: 820px)"]) requireHard(gateCss.includes(marker), `Procedure gate CSS missing expected marker: ${marker}`);
 }
 
 for (const optionalCss of ["src/components/throttle-visibility.css", "src/components/throttle-force.css"]) {
