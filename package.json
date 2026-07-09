@@ -1,14 +1,15 @@
 {
   "name": "rampready",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "description": "RampReady pushback training simulator prototype.",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "npm run verify && vite build",
+    "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "verify": "node scripts/verify-rampready.mjs && node scripts/verify-physics.mjs"
+    "verify": "node scripts/verify-rampready.mjs && node scripts/verify-physics.mjs",
+    "build:checked": "npm run verify && vite build"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
