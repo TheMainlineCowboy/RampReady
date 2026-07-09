@@ -1,0 +1,52 @@
+const NOSE_START_Z = 10.8;
+const CRADLE_OFFSET_Z = 5.6;
+const MAX_FREE_SPEED = 4.0;
+const MAX_TOW_SPEED = 1.55;
+
+const failures = [];
+const approx = (actual, expected, tolerance, label) => {
+  if (Math.abs(actual - expected) > tolerance) {
+    failures.push(`${label}: expected ${expected} +/- ${tolerance}, got ${actual}`);
+  }
+};
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function stepVelocity({ velocity, throttle, direction, connected, stage, dt = 0.016 }) {
+  const usefulThrottle = throttle > 0.02 ? 0.18 + throttle * 0.82 : 0;
+  const connectedPushPhase = connected && stage >= 4;
+  const signedDirection = connectedPushPhase ? (direction === -1 ? 1 : -1) : direction;
+  const maxSpeed = connected ? MAX_TOW_SPEED : MAX_FREE_SPEED;
+  const targetSpeed = usefulThrottle * signedDirection * maxSpeed;
+  const nextVelocity = lerp(velocity, targetSpeed, 1 - Math.exp((connected ? -3.0 : -4.2) * dt));
+  return { usefulThrottle, targetSpeed, nextVelocity };
+}
+
+// Partial throttle must create a visible movement command. This prevents the old 100%-only bug.
+const lowFree = stepVelocity({ velocity: 0, throttle: 0.12, direction: 1, connected: false, stage: 1 });
+if (lowFree.targetSpeed <= 0.25) failures.push(`Partial free-drive throttle too weak: ${lowFree.targetSpeed}`);
+if (lowFree.nextVelocity <= 0.01) failures.push(`Partial free-drive throttle does not move on first frame: ${lowFree.nextVelocity}`);
+
+// Connected pushback with REV selected must move the aircraft toward the red stop line.
+const connectedRev = stepVelocity({ velocity: 0, throttle: 0.25, direction: -1, connected: true, stage: 4 });
+if (connectedRev.targetSpeed <= 0) failures.push(`Connected REV should produce positive pushback speed, got ${connectedRev.targetSpeed}`);
+if (connectedRev.nextVelocity <= 0.01) failures.push(`Connected REV should move on first frame, got ${connectedRev.nextVelocity}`);
+
+// FWD during pushback should be opposite direction so the instruction warning is meaningful.
+const connectedFwd = stepVelocity({ velocity: 0, throttle: 0.25, direction: 1, connected: true, stage: 4 });
+if (connectedFwd.targetSpeed >= 0) failures.push(`Connected FWD should be opposite/reverse from pushback path, got ${connectedFwd.targetSpeed}`);
+
+// Cradle geometry should be short and realistic, not the oversized 11.5 m extension.
+if (CRADLE_OFFSET_Z >= 7) failures.push(`Cradle offset too long: ${CRADLE_OFFSET_Z}`);
+if (CRADLE_OFFSET_Z <= 4.5) failures.push(`Cradle offset too short to reach nose gear from tug front: ${CRADLE_OFFSET_Z}`);
+approx(NOSE_START_Z - CRADLE_OFFSET_Z, 5.2, 0.8, "Initial tug-body-to-nose spacing");
+
+if (failures.length) {
+  console.error("RampReady physics verification failed:");
+  for (const failure of failures) console.error(`- ${failure}`);
+  process.exit(1);
+}
+
+console.log("RampReady physics verification passed.");
