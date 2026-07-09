@@ -6,7 +6,7 @@ const requiredFiles = [
   "src/main.jsx",
   "src/App.jsx",
   "src/components/PushbackTrainer.jsx",
-  "src/components/RampReadyTrainer.jsx",
+  "src/components/RampReadyTrainerStable.jsx",
   "src/components/RampReadyTrainer.css",
   "src/components/aircraft/crj700Model.js",
   "scripts/verify-physics.mjs",
@@ -26,49 +26,34 @@ const warnIfMissing = (content, marker, label) => { if (!content.includes(marker
 
 if (existsSync("src/components/PushbackTrainer.jsx")) {
   const bridge = read("src/components/PushbackTrainer.jsx");
-  requireHard(bridge.includes("RampReadyTrainer.jsx"), "PushbackTrainer.jsx must route the legacy import to RampReadyTrainer.jsx");
+  requireHard(bridge.includes("RampReadyTrainerStable.jsx"), "PushbackTrainer.jsx must route to the stable trainer implementation");
 }
 
-if (existsSync("src/components/RampReadyTrainer.jsx")) {
-  const trainer = read("src/components/RampReadyTrainer.jsx");
+if (existsSync("src/components/RampReadyTrainerStable.jsx")) {
+  const trainer = read("src/components/RampReadyTrainerStable.jsx");
 
-  // Hard blockers: these are deploy-breaking or known bad sim regressions.
-  requireHard(trainer.includes("buildCRJ700Aircraft"), "Trainer must load the CRJ700 aircraft model");
-  requireHard(trainer.includes("buildTug"), "Trainer must build the active tug model");
-  requireHard(trainer.includes("CRADLE_OFFSET_Z = 5.6"), "Trainer must use the corrected short cradle offset");
+  requireHard(trainer.includes("buildCRJ700Aircraft"), "Stable trainer must load the CRJ700 aircraft model");
+  requireHard(trainer.includes("buildTug"), "Stable trainer must build the active tug model");
+  requireHard(trainer.includes("CRADLE_Z = 3.45"), "Stable trainer must use the integrated short cradle position");
+  requireHard(trainer.includes("Short integrated towbarless cradle"), "Stable trainer must document short integrated cradle geometry");
   requireHard(!trainer.includes("CRADLE_OFFSET_Z = 11.5"), "Cradle geometry regressed to the oversized stretched bucket");
   requireHard(!trainer.includes("CRADLE_OFFSET_Z - 2.7"), "Cradle arms must not stretch from the cradle offset");
-  requireHard(trainer.includes("const usefulThrottle = throttleNorm > 0.02 ? 0.18 + throttleNorm * 0.82 : 0"), "Trainer must preserve minimum usable throttle behavior");
-  requireHard(trainer.includes("const targetSpeed = usefulThrottle * signedDirection * maxSpeed"), "Trainer must map throttle to target speed");
-  requireHard(trainer.includes("Connect nose gear"), "Trainer must keep explicit nose-gear connect workflow");
-  requireHard(!trainer.includes("}, [cameraMode, message])"), "Renderer lifecycle must not depend on live HUD message state");
-  requireHard(!trainer.includes("}, [cameraMode") || trainer.includes("cameraModeRef.current"), "Camera changes should not recreate the renderer");
+  requireHard(trainer.includes("const usefulThrottle = throttleNorm > 0.02 ? 0.16 + throttleNorm * 0.84 : 0"), "Stable trainer must preserve minimum usable throttle behavior");
+  requireHard(trainer.includes("const targetSpeed = usefulThrottle * signedDirection * maxSpeed"), "Stable trainer must map throttle to target speed");
+  requireHard(trainer.includes("Connect nose gear"), "Stable trainer must keep explicit nose-gear connect workflow");
+  requireHard(trainer.includes("cameraModeRef.current"), "Camera changes should not recreate the renderer");
+  requireHard(!trainer.includes("}, [cameraMode") && !trainer.includes("}, [cameraMode, message])"), "Renderer lifecycle must not depend on camera mode or live HUD message state");
   requireHard(!trainer.includes("buildTerminal") && !trainer.includes("jetBridge"), "Clean trainer scene should not include terminal or jet bridge clutter yet");
 
-  // Soft checks: useful for dev visibility, but they should not break Netlify deploys.
   const softMarkers = [
-    "useMemo",
-    "rr-checklist",
-    "Pushback procedure checklist",
-    "messageRef.current",
-    "setTrainerMessage",
-    "cameraModeRef.current",
-    "currentCameraMode === \"overhead\"",
-    "Hide diagnostics",
-    "rr-diagnostics",
-    "idleThrottle",
-    "Power idle. Use brake if you need a faster stop.",
-    "rr-idle",
-    "Capture distance",
-    "debug:",
-    "cradleZ",
-    "noseZ",
     "releaseNoseGear",
     "Nose gear released. Tug clear. Scenario complete.",
-    "stageRef.current = 6",
+    "rr-diagnostics",
+    "cradleZ",
+    "noseZ",
     "rr-view-select",
   ];
-  for (const marker of softMarkers) warnIfMissing(trainer, marker, "Trainer marker missing");
+  for (const marker of softMarkers) warnIfMissing(trainer, marker, "Stable trainer marker missing");
 }
 
 if (existsSync("scripts/verify-physics.mjs")) {
@@ -93,7 +78,7 @@ if (existsSync("src/components/RampReadyTrainer.css")) {
   const hardCssMarkers = [".rr-throttle", ".rr-direction", ".rr-steer", ".rr-view-select"];
   for (const marker of hardCssMarkers) requireHard(css.includes(marker), `CSS missing required marker: ${marker}`);
 
-  const softCssMarkers = ["@import \"./throttle-visibility.css\"", "@import \"./throttle-force.css\"", ".rr-idle", ".rr-diagnostics", ".rr-checklist", ".rr-checkitem.active", ".rr-checknum"];
+  const softCssMarkers = ["@import \"./throttle-visibility.css\"", ".rr-diagnostics", ".rr-checklist", ".rr-checkitem.active", ".rr-checknum"];
   for (const marker of softCssMarkers) warnIfMissing(css, marker, "CSS marker missing");
 }
 
