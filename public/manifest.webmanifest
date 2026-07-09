@@ -1,0 +1,13 @@
+{
+  "name": "RampReady Pushback Trainer",
+  "short_name": "RampReady",
+  "description": "A browser-based aircraft pushback trainer for practicing tug alignment, connection, centerline control, and red-line stops.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#111318",
+  "theme_color": "#111318",
+  "categories": ["education", "simulation", "training"],
+  "lang": "en-US"
+}
