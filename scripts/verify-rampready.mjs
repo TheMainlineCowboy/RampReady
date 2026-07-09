@@ -43,7 +43,9 @@ if (existsSync("src/components/RampReadyTrainer.jsx")) {
     "rr-checkitem",
     "messageRef.current",
     "setTrainerMessage",
-    "cameraMode === \"overhead\"",
+    "cameraModeRef.current",
+    "const currentCameraMode = cameraModeRef.current",
+    "currentCameraMode === \"overhead\"",
     "Hide diagnostics",
     "const usefulThrottle = throttleNorm > 0.02 ? 0.18 + throttleNorm * 0.82 : 0",
     "const targetSpeed = usefulThrottle * signedDirection * maxSpeed",
@@ -68,8 +70,8 @@ if (existsSync("src/components/RampReadyTrainer.jsx")) {
     failures.push("Cradle geometry regressed to the oversized stretched bucket");
   }
 
-  if (trainer.includes("}, [cameraMode, message])")) {
-    failures.push("Renderer lifecycle must not depend on live HUD message state");
+  if (trainer.includes("}, [cameraMode") || trainer.includes("}, [cameraMode, message])")) {
+    failures.push("Renderer lifecycle must not depend on camera mode or live HUD message state");
   }
 
   if (trainer.includes("buildTerminal") || trainer.includes("jetBridge")) {
