@@ -140,6 +140,7 @@ if (existsSync("src/components/procedure-gates.css")) {
   for (const marker of ["pointer-events: none", "prefers-reduced-motion: reduce", "orientation: landscape", "max-width: min(560px, calc(100vw - 132px))"]) requireHard(gateCss.includes(marker), `Mobile HUD polish missing expected marker: ${marker}`);
   for (const marker of [".rr-shell .rr-hud-actions", "position: sticky", "linear-gradient(180deg"]) requireHard(gateCss.includes(marker), `Sticky procedure controls missing expected marker: ${marker}`);
   for (const marker of [".rr-stage-gate {", "top: -2px", "backdrop-filter: blur(14px)", ".rr-shell .rr-hud-actions .rr-primary"]) requireHard(gateCss.includes(marker), `Sticky gate polish missing expected marker: ${marker}`);
+  for (const marker of ["@media (max-width: 520px) and (orientation: portrait)", "max-height: min(58dvh, 420px)", "grid-template-columns: repeat(2, minmax(0, 1fr))"]) requireHard(gateCss.includes(marker), `Narrow portrait mobile polish missing expected marker: ${marker}`);
 }
 
 for (const optionalCss of ["src/components/throttle-visibility.css", "src/components/throttle-force.css"]) {
