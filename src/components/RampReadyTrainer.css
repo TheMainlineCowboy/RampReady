@@ -41,11 +41,23 @@
   left: 14px;
   right: 14px;
   max-width: 780px;
+  max-height: min(50vh, 430px);
+  overflow: auto;
+  overscroll-behavior: contain;
   padding: 14px 16px;
   border-radius: 22px;
   background: rgba(10, 13, 20, 0.72);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 18px 60px rgba(0,0,0,0.32);
   backdrop-filter: blur(18px);
+}
+
+.rr-hud::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rr-hud::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255,255,255,0.22);
 }
 
 .rr-topline {
@@ -198,12 +210,34 @@ select {
 }
 
 .rr-score-float {
-  left: 18px;
-  bottom: 150px;
+  right: 128px;
+  bottom: 148px;
+  min-width: 92px;
   padding: 9px 12px;
   border-radius: 14px;
+  text-align: center;
   background: rgba(10, 13, 20, 0.76);
   backdrop-filter: blur(14px);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+}
+
+.rr-score-float b,
+.rr-score-float span {
+  display: block;
+}
+
+.rr-score-float b {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.rr-score-float span {
+  margin-top: 2px;
+  color: rgba(247,243,234,0.72);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .rr-metrics {
@@ -230,7 +264,7 @@ select {
 
 .rr-guidance {
   left: 18px;
-  right: 128px;
+  right: 248px;
   bottom: 144px;
   max-width: 620px;
   padding: 10px 14px;
@@ -341,6 +375,7 @@ select {
     top: 8px;
     left: 8px;
     right: 8px;
+    max-height: min(42dvh, 300px);
     padding: 10px;
     border-radius: 18px;
   }
@@ -370,6 +405,7 @@ select {
     margin-top: 8px;
     max-height: 104px;
     overflow: auto;
+    overscroll-behavior: contain;
   }
 
   .rr-checkitem {
@@ -401,6 +437,22 @@ select {
     min-height: 34px;
     padding: 7px 10px;
     font-size: 13px;
+  }
+
+  .rr-score-float {
+    left: 8px;
+    right: auto;
+    bottom: calc(188px + env(safe-area-inset-bottom));
+    min-width: 76px;
+    padding: 7px 9px;
+  }
+
+  .rr-score-float b {
+    font-size: 18px;
+  }
+
+  .rr-score-float span {
+    font-size: 9px;
   }
 
   .rr-metrics {
