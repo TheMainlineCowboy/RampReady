@@ -21,6 +21,8 @@ const CONNECT_SPEED_LIMIT = 0.65;
 const MAX_FREE_SPEED = 3.2;
 const MAX_TOW_SPEED = 1.25;
 const MAX_STEER = 0.42;
+const CENTERLINE_CAUTION_OFFSET = 1.8;
+const TOW_SPEED_CAUTION = 1.05;
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -120,6 +122,7 @@ export default function RampReadyTrainerStable() {
   const keysRef = useRef(new Set());
   const dragThrottleRef = useRef(false);
   const camRef = useRef({ yaw: 0, pitch: 0.02, distance: 13, height: 4.2 });
+  const scoreRef = useRef({ score: 100, overspeed: false, offCenter: false, hardStop: false });
 
   const [stageIndex, setStageIndex] = useState(0);
   const [cameraMode, setCameraMode] = useState("chase");
@@ -127,7 +130,7 @@ export default function RampReadyTrainerStable() {
   const [throttle, setThrottle] = useState(0);
   const [message, setMessage] = useState(messageRef.current);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
-  const [hud, setHud] = useState({ speed: 0, stop: STOP_Z - NOSE_START_Z, capture: 0, ready: false, connected: false, debug: "" });
+  const [hud, setHud] = useState({ speed: 0, stop: STOP_Z - NOSE_START_Z, capture: 0, ready: false, connected: false, score: 100, quality: "Clean", crossline: 0, debug: "" });
 
   const checklist = useMemo(() => STAGES.map((label, index) => ({
     label,
@@ -171,6 +174,7 @@ export default function RampReadyTrainerStable() {
     sim.velocity = 0;
     sim.steer = 0;
     sim.connected = false;
+    scoreRef.current = { score: 100, overspeed: false, offCenter: false, hardStop: false };
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
     stageRef.current = 0;
     setStageIndex(0);
@@ -206,7 +210,8 @@ export default function RampReadyTrainerStable() {
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
     setThrottle(0);
     setDirection("FWD");
-    setTrainerMessage("Nose gear released. Tug clear. Scenario complete.");
+    const finalScore = scoreRef.current.score;
+    setTrainerMessage(`Nose gear released. Tug clear. Scenario complete. Score ${finalScore}/100.`);
     stageRef.current = 6;
     setStageIndex(6);
   }, [setTrainerMessage]);
@@ -316,11 +321,38 @@ export default function RampReadyTrainerStable() {
         sim.aircraft.rotation.y = lerp(sim.aircraft.rotation.y, sim.tug.rotation.y, 1 - Math.exp(-0.7 * dt));
       }
 
-      if (sim.connected && stageRef.current === 4 && sim.aircraft.position.z >= STOP_Z - 0.5 && Math.abs(sim.velocity) < 0.18) {
+      const towActive = sim.connected && stageRef.current === 4;
+      const crossline = Math.abs(sim.aircraft.position.x);
+      const scoreState = scoreRef.current;
+      if (towActive && Math.abs(sim.velocity) > TOW_SPEED_CAUTION) {
+        if (!scoreState.overspeed) {
+          scoreState.score = Math.max(0, scoreState.score - 8);
+          scoreState.overspeed = true;
+          setTrainerMessage("Too fast with aircraft connected. Reduce power and keep the pushback slow.");
+        }
+      } else {
+        scoreState.overspeed = false;
+      }
+      if (towActive && crossline > CENTERLINE_CAUTION_OFFSET) {
+        if (!scoreState.offCenter) {
+          scoreState.score = Math.max(0, scoreState.score - 8);
+          scoreState.offCenter = true;
+          setTrainerMessage("Aircraft drifting off centerline. Ease steering and correct slowly.");
+        }
+      } else {
+        scoreState.offCenter = false;
+      }
+
+      if (towActive && sim.aircraft.position.z >= STOP_Z - 0.5) {
+        const hardStop = Math.abs(sim.velocity) >= 0.18;
+        if (hardStop && !scoreState.hardStop) {
+          scoreState.score = Math.max(0, scoreState.score - 10);
+          scoreState.hardStop = true;
+        }
         sim.velocity = 0;
         driveRef.current.throttle = 0;
         setThrottle(0);
-        setTrainerMessage("Good stop. Release the nose gear.");
+        setTrainerMessage(hardStop ? "Stopped at the red line, but arrival was too fast. Release the nose gear." : "Good stop. Release the nose gear.");
         stageRef.current = 5;
         setStageIndex(5);
       }
@@ -345,6 +377,7 @@ export default function RampReadyTrainerStable() {
       }
 
       let liveMessage = messageRef.current;
+      const quality = scoreState.score >= 90 ? "Clean" : scoreState.score >= 75 ? "Caution" : "Needs reset";
       if (stageRef.current === 1) liveMessage = ready ? "Capture distance green. Tap Connect nose gear." : `Capture ${capture.toFixed(1)} m. Approach slowly.`;
       if (stageRef.current === 4 && drive.direction !== -1) liveMessage = "Direction should be REV for pushback.";
       setHud({
@@ -353,7 +386,10 @@ export default function RampReadyTrainerStable() {
         capture,
         ready,
         connected: sim.connected,
-        debug: `thr ${Math.round(drive.throttle * 100)} cmd ${targetSpeed.toFixed(2)} vel ${sim.velocity.toFixed(2)} tugZ ${sim.tug.position.z.toFixed(1)} cradleZ ${cradle.z.toFixed(1)} noseZ ${sim.aircraft.position.z.toFixed(1)}`,
+        score: scoreState.score,
+        quality,
+        crossline,
+        debug: `thr ${Math.round(drive.throttle * 100)} cmd ${targetSpeed.toFixed(2)} vel ${sim.velocity.toFixed(2)} tugZ ${sim.tug.position.z.toFixed(1)} cradleZ ${cradle.z.toFixed(1)} noseZ ${sim.aircraft.position.z.toFixed(1)} xline ${crossline.toFixed(1)} score ${scoreState.score}`,
       });
       if (liveMessage !== messageRef.current && (stageRef.current === 1 || stageRef.current === 4)) setTrainerMessage(liveMessage);
       renderer.render(scene, camera);
@@ -437,6 +473,7 @@ export default function RampReadyTrainerStable() {
         <span>Capture <b>{hud.connected ? "Done" : hud.capture == null ? "--" : `${hud.capture.toFixed(1)} m`}</b></span>
         <span>Nose <b>{hud.connected ? "Captured" : "Free"}</b></span>
       </aside>
+      <aside className="rr-score-float">Score <b>{hud.score}</b><span>{hud.quality}</span></aside>
       <aside className="rr-guidance">Controls: drag the Power slider for low-speed movement, tap REV/FWD for direction, use ◀ ▶ or A/D to steer, Brake or Space to stop, and drag the scene to adjust camera.</aside>
       {showDiagnostics && <aside className="rr-diagnostics">{hud.debug}</aside>}
 
