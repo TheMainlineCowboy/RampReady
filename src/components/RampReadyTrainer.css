@@ -30,7 +30,8 @@
 .rr-guidance,
 .rr-steer,
 .rr-throttle,
-.rr-score-float {
+.rr-score-float,
+.rr-diagnostics {
   position: absolute;
   z-index: 5;
 }
@@ -138,6 +139,7 @@ select {
 .rr-secondary,
 .rr-primary,
 .rr-mini,
+.rr-idle,
 .rr-steer button,
 .rr-direction {
   cursor: pointer;
@@ -181,6 +183,11 @@ select {
   background: #f4b000;
   color: #151515;
   font-weight: 900;
+}
+
+.rr-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .rr-score {
@@ -236,6 +243,19 @@ select {
   line-height: 1.25;
 }
 
+.rr-diagnostics {
+  left: 8px;
+  right: 104px;
+  bottom: calc(174px + env(safe-area-inset-bottom));
+  z-index: 6;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.58);
+  color: #d7ffb8;
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+}
+
 .rr-steer {
   left: 50%;
   bottom: 22px;
@@ -257,9 +277,9 @@ select {
   right: 16px;
   bottom: 22px;
   width: 92px;
-  height: 238px;
+  height: 276px;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr auto auto;
   justify-items: center;
   align-items: center;
   gap: 7px;
@@ -274,6 +294,16 @@ select {
 .rr-direction {
   min-width: 68px;
   min-height: 40px;
+}
+
+.rr-idle {
+  min-width: 66px;
+  min-height: 32px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.12);
+  color: rgba(247,243,234,0.9);
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .rr-slider-wrap {
@@ -412,13 +442,18 @@ select {
     right: 8px;
     bottom: calc(60px + env(safe-area-inset-bottom));
     width: 88px;
-    height: 224px;
+    height: 258px;
     padding: 8px 7px;
   }
 
   .rr-direction {
     min-width: 66px;
     min-height: 38px;
+  }
+
+  .rr-idle {
+    min-width: 64px;
+    min-height: 30px;
   }
 
   .rr-slider-wrap {
