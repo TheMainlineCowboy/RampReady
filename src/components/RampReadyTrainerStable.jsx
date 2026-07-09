@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { buildCRJ700Aircraft } from "./aircraft/crj700Model.js";
 import "./RampReadyTrainer.css";
@@ -126,7 +126,13 @@ export default function RampReadyTrainerStable() {
   const [direction, setDirection] = useState("FWD");
   const [throttle, setThrottle] = useState(0);
   const [message, setMessage] = useState(messageRef.current);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [hud, setHud] = useState({ speed: 0, stop: STOP_Z - NOSE_START_Z, capture: 0, ready: false, connected: false, debug: "" });
+
+  const checklist = useMemo(() => STAGES.map((label, index) => ({
+    label,
+    state: index < stageIndex ? "complete" : index === stageIndex ? "active" : "pending",
+  })), [stageIndex]);
 
   const setTrainerMessage = useCallback((value) => {
     messageRef.current = value;
@@ -138,6 +144,15 @@ export default function RampReadyTrainerStable() {
     driveRef.current.throttle = next / 100;
     setThrottle(next);
   }, []);
+
+  const setIdle = useCallback(() => {
+    const sim = simRef.current;
+    if (sim) sim.velocity = 0;
+    driveRef.current.throttle = 0;
+    driveRef.current.brake = false;
+    setThrottle(0);
+    setTrainerMessage("Power idle. Tug stopped and ready for the next command.");
+  }, [setTrainerMessage]);
 
   const updateThrottleFromPointer = useCallback((event) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -399,11 +414,20 @@ export default function RampReadyTrainerStable() {
           </select>
         </div>
         <p>{message}</p>
+        <ol className="rr-checklist" aria-label="Pushback procedure checklist">
+          {checklist.map((item, index) => (
+            <li key={item.label} className={`rr-checkitem ${item.state}`}>
+              <span className="rr-checknum">{index + 1}</span>
+              <span>{item.label}</span>
+            </li>
+          ))}
+        </ol>
         <div className="rr-hud-actions">
           {[0, 2, 3].includes(stageIndex) && <button className="rr-primary" onClick={advance}>{stageIndex === 0 ? "Ready" : stageIndex === 2 ? "Clearance" : "Brake released"}</button>}
           {stageIndex === 1 && <button className={hud.ready ? "rr-primary" : "rr-primary rr-disabled"} disabled={!hud.ready} onClick={connectNoseGear}>{hud.ready ? "Connect nose gear" : `Align ${hud.capture == null ? "--" : hud.capture.toFixed(1)} m`}</button>}
           {stageIndex === 5 && <button className="rr-primary" onClick={releaseNoseGear}>Release gear</button>}
           <button className="rr-secondary" onClick={reset}>Reset</button>
+          <button className={showDiagnostics ? "rr-mini active" : "rr-mini"} onClick={() => setShowDiagnostics((open) => !open)}>Diagnostics</button>
         </div>
       </section>
 
@@ -413,7 +437,8 @@ export default function RampReadyTrainerStable() {
         <span>Capture <b>{hud.connected ? "Done" : hud.capture == null ? "--" : `${hud.capture.toFixed(1)} m`}</b></span>
         <span>Nose <b>{hud.connected ? "Captured" : "Free"}</b></span>
       </aside>
-      <aside className="rr-diagnostics">{hud.debug}</aside>
+      <aside className="rr-guidance">Controls: drag the Power slider for low-speed movement, tap REV/FWD for direction, use ◀ ▶ or A/D to steer, Brake or Space to stop, and drag the scene to adjust camera.</aside>
+      {showDiagnostics && <aside className="rr-diagnostics">{hud.debug}</aside>}
 
       <div className="rr-steer">
         <button onPointerDown={() => { driveRef.current.steer = 1; }} onPointerUp={() => { driveRef.current.steer = 0; }} onPointerCancel={() => { driveRef.current.steer = 0; }}>◀</button>
@@ -435,6 +460,7 @@ export default function RampReadyTrainerStable() {
           <div className="rr-custom-fill" style={{ height: `${throttle}%` }} />
           <div className="rr-custom-thumb" style={{ bottom: `calc(${throttle}% - 13px)` }} />
         </div>
+        <button className="rr-idle" onClick={setIdle}>Idle</button>
         <div className="rr-throttle-label">Power {throttle}%</div>
       </div>
     </div>
