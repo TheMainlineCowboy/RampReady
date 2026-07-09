@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three";
 import { buildCRJ700Aircraft } from "./aircraft/crj700Model.js";
 import "./RampReadyTrainer.css";
+import "./procedure-gates.css";
 
 const STAGES = [
   "Complete visual equipment check",
