@@ -25,6 +25,15 @@
   pointer-events: none;
 }
 
+.rr-shell .rr-hud-actions {
+  position: sticky;
+  bottom: -4px;
+  z-index: 7;
+  padding-top: 8px;
+  padding-bottom: 2px;
+  background: linear-gradient(180deg, rgba(10, 13, 20, 0), rgba(10, 13, 20, 0.86) 36%, rgba(10, 13, 20, 0.92));
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rr-shell *,
   .rr-shell *::before,
@@ -40,6 +49,11 @@
     margin-top: 6px;
     padding: 4px 8px;
     font-size: 10px;
+  }
+
+  .rr-shell .rr-hud-actions {
+    bottom: -2px;
+    padding-top: 6px;
   }
 
   .rr-guidance {
