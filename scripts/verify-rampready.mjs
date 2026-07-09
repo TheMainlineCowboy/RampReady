@@ -140,6 +140,10 @@ if (existsSync("src/components/throttle-force.css")) {
     "REV/FWD changes direction",
     "Brake or Space stops",
     "A/D or arrows steer",
+    "touch-action: manipulation",
+    "-webkit-tap-highlight-color: transparent",
+    "transform: translateY(1px) scale(0.98)",
+    "@media (max-width: 520px) and (max-height: 740px)",
   ];
   for (const marker of forceMarkers) {
     if (!forceCss.includes(marker)) failures.push(`Control guide CSS missing expected marker: ${marker}`);
