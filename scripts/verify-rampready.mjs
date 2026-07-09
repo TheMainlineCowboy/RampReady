@@ -36,6 +36,10 @@ if (existsSync("src/components/RampReadyTrainer.jsx")) {
     "buildGround",
     "CRADLE_OFFSET_Z = 5.6",
     "Short realistic towbarless cradle arms",
+    "useMemo",
+    "rr-checklist",
+    "Pushback procedure checklist",
+    "rr-checkitem",
     "messageRef.current",
     "setTrainerMessage",
     "cameraMode === \"overhead\"",
@@ -82,7 +86,16 @@ if (existsSync("src/components/aircraft/crj700Model.js")) {
 
 if (existsSync("src/components/RampReadyTrainer.css")) {
   const css = read("src/components/RampReadyTrainer.css");
-  const cssMarkers = ["@import \"./throttle-visibility.css\"", ".rr-throttle", ".rr-direction", ".rr-steer", ".rr-view-select"];
+  const cssMarkers = [
+    "@import \"./throttle-visibility.css\"",
+    ".rr-throttle",
+    ".rr-direction",
+    ".rr-steer",
+    ".rr-view-select",
+    ".rr-checklist",
+    ".rr-checkitem.active",
+    ".rr-checknum",
+  ];
   for (const marker of cssMarkers) {
     if (!css.includes(marker)) failures.push(`CSS missing expected marker: ${marker}`);
   }
