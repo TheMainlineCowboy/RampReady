@@ -13,10 +13,10 @@ const STAGES = [
   "Scenario complete",
 ];
 
-const NOSE_START_Z = 16;
+const NOSE_START_Z = 10.8;
 const STOP_Z = 64;
-const CRADLE_OFFSET_Z = 11.5;
-const CONNECT_DISTANCE = 1.8;
+const CRADLE_OFFSET_Z = 5.6;
+const CONNECT_DISTANCE = 1.5;
 const CONNECT_SPEED_LIMIT = 0.7;
 const MAX_FREE_SPEED = 4.0;
 const MAX_TOW_SPEED = 1.55;
@@ -82,13 +82,14 @@ function buildTug() {
   group.add(cyl(0.23, 0.045, black, -0.58, 1.28, -1.48, Math.PI / 2.2, 0, 0, 36));
   group.add(cyl(0.09, 0.12, 0xff9900, 0, 1.37, -1.95));
 
-  group.add(box(0.34, 0.1, CRADLE_OFFSET_Z - 2.7, black, -0.46, 0.21, 4.45, -0.04));
-  group.add(box(0.34, 0.1, CRADLE_OFFSET_Z - 2.7, black, 0.46, 0.21, 4.45, -0.04));
+  // Short realistic towbarless cradle arms. Do not stretch this from the cradle offset.
+  group.add(box(0.34, 0.1, 2.4, black, -0.46, 0.21, 4.25, -0.04));
+  group.add(box(0.34, 0.1, 2.4, black, 0.46, 0.21, 4.25, -0.04));
   group.add(box(1.55, 0.12, 1.02, black, 0, 0.36, CRADLE_OFFSET_Z));
-  group.add(box(2.25, 0.08, 1.0, black, 0, 0.12, CRADLE_OFFSET_Z + 0.82, -0.18));
+  group.add(box(2.05, 0.08, 0.72, black, 0, 0.12, CRADLE_OFFSET_Z + 0.58, -0.18));
   [-1, 1].forEach((s) => {
-    group.add(box(0.14, 0.55, 1.2, yellow, s * 0.68, 0.54, CRADLE_OFFSET_Z, 0, 0, -s * 0.13));
-    group.add(box(0.12, 0.42, 0.9, black, s * 0.98, 0.42, CRADLE_OFFSET_Z + 0.2));
+    group.add(box(0.14, 0.55, 1.05, yellow, s * 0.68, 0.54, CRADLE_OFFSET_Z, 0, 0, -s * 0.13));
+    group.add(box(0.12, 0.42, 0.72, black, s * 0.98, 0.42, CRADLE_OFFSET_Z + 0.1));
   });
 
   [-1, 1].forEach((s) => {
