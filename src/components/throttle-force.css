@@ -109,6 +109,7 @@
   filter: brightness(1.12);
 }
 
+.rr-shell .rr-custom-slider:focus-visible,
 .rr-shell .rr-steer button:focus-visible,
 .rr-shell .rr-direction:focus-visible,
 .rr-shell .rr-idle:focus-visible,
@@ -129,6 +130,8 @@
 .rr-shell .rr-custom-slider {
   min-width: 54px;
   min-height: 136px;
+  cursor: ns-resize;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 10px 26px rgba(0,0,0,0.28);
 }
 
 .rr-shell .rr-throttle-label {
