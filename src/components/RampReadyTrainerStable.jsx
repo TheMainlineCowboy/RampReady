@@ -23,6 +23,7 @@ const MAX_TOW_SPEED = 1.25;
 const MAX_STEER = 0.42;
 const CENTERLINE_CAUTION_OFFSET = 1.8;
 const TOW_SPEED_CAUTION = 1.05;
+const STOP_REMAINING_CAUTION = 12;
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -122,7 +123,7 @@ export default function RampReadyTrainerStable() {
   const keysRef = useRef(new Set());
   const dragThrottleRef = useRef(false);
   const camRef = useRef({ yaw: 0, pitch: 0.02, distance: 13, height: 4.2 });
-  const scoreRef = useRef({ score: 100, overspeed: false, offCenter: false, hardStop: false });
+  const scoreRef = useRef({ score: 100, overspeed: false, offCenter: false, hardStop: false, wrongDirection: false, brakeLate: false });
 
   const [stageIndex, setStageIndex] = useState(0);
   const [cameraMode, setCameraMode] = useState("chase");
@@ -130,7 +131,7 @@ export default function RampReadyTrainerStable() {
   const [throttle, setThrottle] = useState(0);
   const [message, setMessage] = useState(messageRef.current);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
-  const [hud, setHud] = useState({ speed: 0, stop: STOP_Z - NOSE_START_Z, capture: 0, ready: false, connected: false, score: 100, quality: "Clean", crossline: 0, debug: "" });
+  const [hud, setHud] = useState({ speed: 0, stop: STOP_Z - NOSE_START_Z, capture: 0, ready: false, connected: false, score: 100, quality: "Clean", crossline: 0, gate: "Ready", debug: "" });
 
   const checklist = useMemo(() => STAGES.map((label, index) => ({
     label,
@@ -174,7 +175,7 @@ export default function RampReadyTrainerStable() {
     sim.velocity = 0;
     sim.steer = 0;
     sim.connected = false;
-    scoreRef.current = { score: 100, overspeed: false, offCenter: false, hardStop: false };
+    scoreRef.current = { score: 100, overspeed: false, offCenter: false, hardStop: false, wrongDirection: false, brakeLate: false };
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
     stageRef.current = 0;
     setStageIndex(0);
@@ -204,7 +205,10 @@ export default function RampReadyTrainerStable() {
 
   const releaseNoseGear = useCallback(() => {
     const sim = simRef.current;
-    if (!sim || !sim.connected) return;
+    if (!sim || !sim.connected || stageRef.current !== 5) {
+      setTrainerMessage("Release is locked until the aircraft is stopped at the red line.");
+      return;
+    }
     sim.connected = false;
     sim.velocity = 0;
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
@@ -323,6 +327,7 @@ export default function RampReadyTrainerStable() {
 
       const towActive = sim.connected && stageRef.current === 4;
       const crossline = Math.abs(sim.aircraft.position.x);
+      const stopRemaining = STOP_Z - sim.aircraft.position.z;
       const scoreState = scoreRef.current;
       if (towActive && Math.abs(sim.velocity) > TOW_SPEED_CAUTION) {
         if (!scoreState.overspeed) {
@@ -341,6 +346,25 @@ export default function RampReadyTrainerStable() {
         }
       } else {
         scoreState.offCenter = false;
+      }
+      if (towActive && drive.direction !== -1) {
+        if (!scoreState.wrongDirection) {
+          scoreState.score = Math.max(0, scoreState.score - 6);
+          scoreState.wrongDirection = true;
+        }
+        drive.throttle = 0;
+        setThrottle(0);
+      } else {
+        scoreState.wrongDirection = false;
+      }
+      if (towActive && stopRemaining <= STOP_REMAINING_CAUTION && Math.abs(sim.velocity) > 0.75) {
+        if (!scoreState.brakeLate) {
+          scoreState.score = Math.max(0, scoreState.score - 6);
+          scoreState.brakeLate = true;
+          setTrainerMessage("Approaching the red line too fast. Idle and brake early.");
+        }
+      } else if (!towActive || stopRemaining > STOP_REMAINING_CAUTION + 4) {
+        scoreState.brakeLate = false;
       }
 
       if (towActive && sim.aircraft.position.z >= STOP_Z - 0.5) {
@@ -378,18 +402,21 @@ export default function RampReadyTrainerStable() {
 
       let liveMessage = messageRef.current;
       const quality = scoreState.score >= 90 ? "Clean" : scoreState.score >= 75 ? "Caution" : "Needs reset";
+      const gate = stageRef.current === 1 && ready ? "Ready to connect" : stageRef.current === 4 && drive.direction !== -1 ? "REV required" : stageRef.current === 4 && stopRemaining <= STOP_REMAINING_CAUTION ? "Brake zone" : stageRef.current === 5 ? "Release ready" : "Training";
       if (stageRef.current === 1) liveMessage = ready ? "Capture distance green. Tap Connect nose gear." : `Capture ${capture.toFixed(1)} m. Approach slowly.`;
-      if (stageRef.current === 4 && drive.direction !== -1) liveMessage = "Direction should be REV for pushback.";
+      if (stageRef.current === 4 && drive.direction !== -1) liveMessage = "Direction should be REV for pushback. Power locked until REV is selected.";
+      if (stageRef.current === 4 && drive.direction === -1 && stopRemaining <= STOP_REMAINING_CAUTION) liveMessage = "Red line ahead. Idle power and brake smoothly.";
       setHud({
         speed: Math.abs(sim.velocity),
-        stop: STOP_Z - sim.aircraft.position.z,
+        stop: stopRemaining,
         capture,
         ready,
         connected: sim.connected,
         score: scoreState.score,
         quality,
         crossline,
-        debug: `thr ${Math.round(drive.throttle * 100)} cmd ${targetSpeed.toFixed(2)} vel ${sim.velocity.toFixed(2)} tugZ ${sim.tug.position.z.toFixed(1)} cradleZ ${cradle.z.toFixed(1)} noseZ ${sim.aircraft.position.z.toFixed(1)} xline ${crossline.toFixed(1)} score ${scoreState.score}`,
+        gate,
+        debug: `thr ${Math.round(drive.throttle * 100)} cmd ${targetSpeed.toFixed(2)} vel ${sim.velocity.toFixed(2)} tugZ ${sim.tug.position.z.toFixed(1)} cradleZ ${cradle.z.toFixed(1)} noseZ ${sim.aircraft.position.z.toFixed(1)} xline ${crossline.toFixed(1)} gate ${gate} score ${scoreState.score}`,
       });
       if (liveMessage !== messageRef.current && (stageRef.current === 1 || stageRef.current === 4)) setTrainerMessage(liveMessage);
       renderer.render(scene, camera);
@@ -418,6 +445,19 @@ export default function RampReadyTrainerStable() {
   }, []);
 
   const advance = () => {
+    const sim = simRef.current;
+    if (stageIndex === 0 && throttle > 0) {
+      setTrainerMessage("Set power to Idle before starting the visual equipment check.");
+      return;
+    }
+    if (stageIndex === 2 && !sim?.connected) {
+      setTrainerMessage("Clearance step is locked until the nose gear is connected.");
+      return;
+    }
+    if (stageIndex === 3 && (!sim?.connected || Math.abs(sim.velocity) > 0.05)) {
+      setTrainerMessage("Confirm brake release only after the tug is stopped and connected.");
+      return;
+    }
     if (stageIndex === 0) setTrainerMessage("Approach the nose gear slowly. Stop when capture distance is green.");
     if (stageIndex === 2) setTrainerMessage("Clearance received. Confirm brake release.");
     if (stageIndex === 3) {
@@ -450,6 +490,7 @@ export default function RampReadyTrainerStable() {
           </select>
         </div>
         <p>{message}</p>
+        <div className="rr-stage-gate">Gate: <b>{hud.gate}</b></div>
         <ol className="rr-checklist" aria-label="Pushback procedure checklist">
           {checklist.map((item, index) => (
             <li key={item.label} className={`rr-checkitem ${item.state}`}>
