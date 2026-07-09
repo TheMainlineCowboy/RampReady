@@ -48,7 +48,7 @@ if (existsSync("src/components/RampReadyTrainerStable.jsx")) {
   requireHard(trainer.includes("const targetSpeed = usefulThrottle * signedDirection * maxSpeed"), "Stable trainer must map throttle to target speed");
   requireHard(trainer.includes("Connect nose gear"), "Stable trainer must keep explicit nose-gear connect workflow");
   requireHard(trainer.includes("releaseNoseGear"), "Stable trainer must keep explicit nose-gear release workflow");
-  requireHard(trainer.includes("Nose gear released. Tug clear. Scenario complete."), "Release workflow must mark scenario completion");
+  requireHard(trainer.includes("Scenario complete. Score"), "Release workflow must mark scenario completion with final score");
   requireHard(trainer.includes("cameraModeRef.current"), "Camera changes should not recreate the renderer");
   requireHard(!trainer.includes("}, [cameraMode") && !trainer.includes("}, [cameraMode, message])"), "Renderer lifecycle must not depend on camera mode or live HUD message state");
   requireHard(!trainer.includes("buildTerminal") && !trainer.includes("jetBridge"), "Clean trainer scene should not include terminal or jet bridge clutter yet");
@@ -58,10 +58,14 @@ if (existsSync("src/components/RampReadyTrainerStable.jsx")) {
   requireHard(trainer.includes("rr-idle") && trainer.includes("setIdle"), "Trainer must expose an explicit Idle control");
   requireHard(trainer.includes("rr-guidance") && trainer.includes("Controls:"), "Trainer must show a plain-language controls guide");
   requireHard(trainer.includes("showDiagnostics") && trainer.includes("Diagnostics"), "Diagnostics must be hidden behind an explicit toggle");
+  requireHard(trainer.includes("scoreRef") && trainer.includes("rr-score-float"), "Trainer must show live procedural scoring");
+  requireHard(trainer.includes("CENTERLINE_CAUTION_OFFSET") && trainer.includes("TOW_SPEED_CAUTION"), "Trainer must coach centerline and connected tow speed quality");
+  requireHard(trainer.includes("Stopped at the red line, but arrival was too fast"), "Trainer must catch hard red-line arrivals instead of letting the aircraft sail through");
 
   const softMarkers = [
     "cradleZ",
     "noseZ",
+    "xline",
     "rr-view-select",
   ];
   for (const marker of softMarkers) warnIfMissing(trainer, marker, "Stable trainer marker missing");
@@ -86,7 +90,7 @@ if (existsSync("src/components/aircraft/crj700Model.js")) {
 
 if (existsSync("src/components/RampReadyTrainer.css")) {
   const css = read("src/components/RampReadyTrainer.css");
-  const hardCssMarkers = [".rr-throttle", ".rr-direction", ".rr-steer", ".rr-view-select", ".rr-diagnostics", ".rr-checklist", ".rr-checkitem.active", ".rr-checknum", ".rr-guidance", ".rr-idle"];
+  const hardCssMarkers = [".rr-throttle", ".rr-direction", ".rr-steer", ".rr-view-select", ".rr-diagnostics", ".rr-checklist", ".rr-checkitem.active", ".rr-checknum", ".rr-guidance", ".rr-idle", ".rr-score-float"];
   for (const marker of hardCssMarkers) requireHard(css.includes(marker), `CSS missing required marker: ${marker}`);
 
   const softCssMarkers = ["@import \"./throttle-visibility.css\"", ".rr-custom-slider", ".rr-custom-fill", ".rr-custom-thumb"];
