@@ -130,6 +130,9 @@ for (const optionalCss of ["src/components/throttle-visibility.css", "src/compon
     if (optionalCss.includes("throttle-visibility")) {
       for (const marker of [".rr-custom-slider", ".rr-custom-fill", ".rr-custom-thumb"]) requireHard(css.includes(marker), `Throttle CSS missing expected marker: ${marker}`);
     }
+    if (optionalCss.includes("throttle-force")) {
+      for (const marker of ["focus-visible", "min-height: 44px", "pointer-events: none", "touch-action: manipulation"]) requireHard(css.includes(marker), `Touch control polish missing expected marker: ${marker}`);
+    }
   }
 }
 
