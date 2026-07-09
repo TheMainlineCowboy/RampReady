@@ -122,6 +122,7 @@ if (existsSync("src/components/procedure-gates.css")) {
   const gateCss = read("src/components/procedure-gates.css");
   for (const marker of [".rr-stage-gate", ".rr-stage-gate b", "@media (max-width: 820px)"]) requireHard(gateCss.includes(marker), `Procedure gate CSS missing expected marker: ${marker}`);
   for (const marker of [".rr-guidance", "bottom: calc(8px + env(safe-area-inset-bottom))", "display: block"]) requireHard(gateCss.includes(marker), `Mobile guidance override missing expected marker: ${marker}`);
+  for (const marker of ["pointer-events: none", "prefers-reduced-motion: reduce", "orientation: landscape", "max-width: min(560px, calc(100vw - 132px))"]) requireHard(gateCss.includes(marker), `Mobile HUD polish missing expected marker: ${marker}`);
 }
 
 for (const optionalCss of ["src/components/throttle-visibility.css", "src/components/throttle-force.css"]) {
