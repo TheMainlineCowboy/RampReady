@@ -59,6 +59,9 @@ if (existsSync("src/components/RampReadyTrainer.jsx")) {
     "rr-custom-slider",
     "Request pushback clearance",
     "Confirm aircraft parking brake released",
+    "releaseNoseGear",
+    "Nose gear released. Tug clear. Scenario complete.",
+    "stageRef.current = 6",
     "rr-view-select",
   ];
 
