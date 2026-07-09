@@ -134,6 +134,7 @@ for (const optionalCss of ["src/components/throttle-visibility.css", "src/compon
     }
     if (optionalCss.includes("throttle-force")) {
       for (const marker of ["focus-visible", "min-height: 44px", "pointer-events: none", "touch-action: manipulation"]) requireHard(css.includes(marker), `Touch control polish missing expected marker: ${marker}`);
+      for (const marker of [".rr-custom-slider:focus-visible", "cursor: ns-resize", "box-shadow: inset 0 0 0 1px"]) requireHard(css.includes(marker), `Throttle focus polish missing expected marker: ${marker}`);
       requireHard(!css.includes(".rr-shell::after"), "Touch polish CSS must not add a duplicate pseudo-element controls guide");
     }
   }
