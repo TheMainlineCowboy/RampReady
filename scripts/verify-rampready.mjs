@@ -34,7 +34,8 @@ if (existsSync("src/components/RampReadyTrainer.jsx")) {
     "buildCRJ700Aircraft",
     "buildTug",
     "buildGround",
-    "CRADLE_OFFSET_Z = 11.5",
+    "CRADLE_OFFSET_Z = 5.6",
+    "Short realistic towbarless cradle arms",
     "const usefulThrottle = throttleNorm > 0.02 ? 0.18 + throttleNorm * 0.82 : 0",
     "const targetSpeed = usefulThrottle * signedDirection * maxSpeed",
     "Connect nose gear",
@@ -52,6 +53,10 @@ if (existsSync("src/components/RampReadyTrainer.jsx")) {
 
   for (const snippet of requiredSnippets) {
     if (!trainer.includes(snippet)) failures.push(`Trainer missing expected feature marker: ${snippet}`);
+  }
+
+  if (trainer.includes("CRADLE_OFFSET_Z = 11.5") || trainer.includes("CRADLE_OFFSET_Z - 2.7")) {
+    failures.push("Cradle geometry regressed to the oversized stretched bucket");
   }
 
   if (trainer.includes("buildTerminal") || trainer.includes("jetBridge")) {
