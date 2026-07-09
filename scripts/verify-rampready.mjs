@@ -9,6 +9,7 @@ const requiredFiles = [
   "src/components/RampReadyTrainer.jsx",
   "src/components/RampReadyTrainer.css",
   "src/components/throttle-visibility.css",
+  "src/components/throttle-force.css",
   "src/components/aircraft/crj700Model.js",
   "scripts/verify-physics.mjs",
   "netlify.toml",
@@ -115,6 +116,7 @@ if (existsSync("src/components/RampReadyTrainer.css")) {
   const css = read("src/components/RampReadyTrainer.css");
   const cssMarkers = [
     "@import \"./throttle-visibility.css\"",
+    "@import \"./throttle-force.css\"",
     ".rr-throttle",
     ".rr-direction",
     ".rr-idle",
@@ -127,6 +129,20 @@ if (existsSync("src/components/RampReadyTrainer.css")) {
   ];
   for (const marker of cssMarkers) {
     if (!css.includes(marker)) failures.push(`CSS missing expected marker: ${marker}`);
+  }
+}
+
+if (existsSync("src/components/throttle-force.css")) {
+  const forceCss = read("src/components/throttle-force.css");
+  const forceMarkers = [
+    ".rr-shell::after",
+    "Controls: drag the yellow power slider",
+    "REV/FWD changes direction",
+    "Brake or Space stops",
+    "A/D or arrows steer",
+  ];
+  for (const marker of forceMarkers) {
+    if (!forceCss.includes(marker)) failures.push(`Control guide CSS missing expected marker: ${marker}`);
   }
 }
 
