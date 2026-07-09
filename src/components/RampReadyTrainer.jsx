@@ -119,6 +119,7 @@ export default function RampReadyTrainer() {
   const keysRef = useRef(new Set());
   const pointerRef = useRef({ active: false, x: 0, y: 0 });
   const dragThrottleRef = useRef(false);
+  const cameraModeRef = useRef("chase");
   const camRef = useRef({ yaw: 0.14, pitch: 0.1, distance: 19, height: 5 });
   const messageRef = useRef("Use low power to approach. Watch capture distance, then connect nose gear.");
 
@@ -191,6 +192,7 @@ export default function RampReadyTrainer() {
   }, [setTrainerMessage]);
 
   useEffect(() => { stageRef.current = stageIndex; }, [stageIndex]);
+  useEffect(() => { cameraModeRef.current = cameraMode; }, [cameraMode]);
 
   useEffect(() => {
     let raf = 0;
@@ -299,14 +301,15 @@ export default function RampReadyTrainer() {
       }
 
       const look = camRef.current;
+      const currentCameraMode = cameraModeRef.current;
       const target = new THREE.Vector3(sim.connected ? sim.aircraft.position.x : sim.tug.position.x, 1.2, sim.connected ? sim.aircraft.position.z : sim.tug.position.z + 3);
-      if (cameraMode === "driver") {
+      if (currentCameraMode === "driver") {
         const eye = new THREE.Vector3(-0.52, 1.35, -2.25).applyMatrix4(sim.tug.matrixWorld);
         const yaw = sim.tug.rotation.y + look.yaw;
         const forward = new THREE.Vector3(Math.sin(yaw) * Math.cos(look.pitch), Math.sin(look.pitch), Math.cos(yaw) * Math.cos(look.pitch));
         camera.position.lerp(eye, 0.35);
         camera.lookAt(eye.clone().add(forward.multiplyScalar(24)));
-      } else if (cameraMode === "overhead") {
+      } else if (currentCameraMode === "overhead") {
         const overheadTarget = sim.connected ? sim.aircraft.position : cradle;
         camera.position.lerp(new THREE.Vector3(overheadTarget.x, 42, overheadTarget.z + 1), 0.16);
         camera.lookAt(overheadTarget.x, 0, overheadTarget.z + 6);
@@ -344,7 +347,7 @@ export default function RampReadyTrainer() {
       renderer.dispose();
       simRef.current = null;
     };
-  }, [cameraMode, setTrainerMessage]);
+  }, [setTrainerMessage]);
 
   useEffect(() => {
     const down = (event) => { keysRef.current.add(event.key.toLowerCase()); };
