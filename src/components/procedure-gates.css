@@ -108,3 +108,30 @@
     bottom: calc(62px + env(safe-area-inset-bottom));
   }
 }
+
+@media (max-width: 520px) and (orientation: portrait) {
+  .rr-hud {
+    max-width: calc(100vw - 16px);
+    max-height: min(58dvh, 420px);
+  }
+
+  .rr-metrics {
+    left: 8px;
+    right: 104px;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rr-score-float {
+    left: auto;
+    right: 8px;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+
+  .rr-guidance {
+    left: 8px;
+    right: 104px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+}
