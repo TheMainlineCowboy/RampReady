@@ -82,6 +82,52 @@
   line-height: 1.25;
 }
 
+.rr-checklist {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rr-checkitem {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  color: rgba(247,243,234,0.68);
+  background: rgba(255,255,255,0.07);
+  font-size: 12px;
+  line-height: 1.15;
+}
+
+.rr-checkitem.complete {
+  color: rgba(156,255,178,0.9);
+  background: rgba(52, 211, 153, 0.12);
+}
+
+.rr-checkitem.active {
+  color: #151515;
+  background: #ffd166;
+  font-weight: 900;
+}
+
+.rr-checknum {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.24);
+  color: currentColor;
+  font-size: 11px;
+  font-weight: 900;
+}
+
 button,
 select {
   font: inherit;
@@ -286,6 +332,26 @@ select {
     font-size: 12px;
     line-height: 1.18;
     margin-top: 6px;
+  }
+
+  .rr-checklist {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    margin-top: 8px;
+    max-height: 104px;
+    overflow: auto;
+  }
+
+  .rr-checkitem {
+    min-height: 26px;
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+
+  .rr-checknum {
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
   }
 
   .rr-view-select {
