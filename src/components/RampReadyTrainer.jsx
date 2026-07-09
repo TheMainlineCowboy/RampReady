@@ -15,8 +15,8 @@ const STAGES = [
 
 const NOSE_START_Z = 9;
 const STOP_Z = 64;
-const CRADLE_Z = 3.1;
-const CONNECT_CAPTURE_DISTANCE = 1.35;
+const CRADLE_Z = 4.85;
+const CONNECT_CAPTURE_DISTANCE = 1.55;
 const CONNECT_SPEED_LIMIT = 0.55;
 const MAX_FREE_SPEED = 4.2;
 const MAX_TOW_SPEED = 1.65;
@@ -106,6 +106,7 @@ function buildLektro() {
 
   group.add(box(1.55, 0.12, 1.02, black, 0, 0.36, CRADLE_Z));
   group.add(box(2.25, 0.08, 1.0, black, 0, 0.12, CRADLE_Z + 0.85, -0.18));
+  group.add(box(1.2, 0.1, 1.4, black, 0, 0.16, CRADLE_Z - 0.9, -0.08));
   [-1, 1].forEach((s) => {
     group.add(box(0.14, 0.55, 1.2, yellow, s * 0.68, 0.54, CRADLE_Z + 0.04, 0, 0, -s * 0.13));
     group.add(box(0.12, 0.42, 0.9, black, s * 0.98, 0.42, CRADLE_Z + 0.24));
@@ -147,6 +148,7 @@ export default function RampReadyTrainer() {
   const camModeRef = useRef("chase");
   const camRef = useRef({ yaw: 0.15, pitch: 0.1, distance: 18, height: 4.8, manualYaw: 0, manualPitch: 0, gyroYaw: 0, gyroPitch: 0 });
   const pointerRef = useRef({ active: false, x: 0, y: 0 });
+  const throttleDragRef = useRef(false);
   const gyroRef = useRef(false);
 
   const [stageIndex, setStageIndex] = useState(0);
@@ -182,6 +184,22 @@ export default function RampReadyTrainer() {
     setThrottleValue(next);
     event.preventDefault();
   }, [setThrottleValue]);
+
+  const beginThrottleDrag = useCallback((event) => {
+    throttleDragRef.current = true;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    updateCustomThrottle(event);
+  }, [updateCustomThrottle]);
+
+  const moveThrottleDrag = useCallback((event) => {
+    if (!throttleDragRef.current) return;
+    updateCustomThrottle(event);
+  }, [updateCustomThrottle]);
+
+  const endThrottleDrag = useCallback((event) => {
+    throttleDragRef.current = false;
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+  }, []);
 
   const toggleDirection = useCallback(() => {
     const next = driveRef.current.direction === 1 ? -1 : 1;
@@ -225,6 +243,7 @@ export default function RampReadyTrainer() {
     sim.centerPenalty = 0;
     sim.speedPenalty = 0;
     sim.missedStop = false;
+    throttleDragRef.current = false;
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
     stageRef.current = 0;
     setStageIndex(0);
@@ -326,14 +345,19 @@ export default function RampReadyTrainer() {
       const keyboardThrottle = keys.has("w") || keys.has("arrowup") ? 1 : keys.has("s") || keys.has("arrowdown") ? -1 : 0;
       const towPhase = sim.connected && stageRef.current >= 4;
       const effectiveDirection = towPhase ? -drive.direction : drive.direction;
-      const targetThrottle = keyboardThrottle || drive.throttle * effectiveDirection;
+      const commandedThrottle = keyboardThrottle || drive.throttle * effectiveDirection;
       const maxSpeed = sim.connected ? MAX_TOW_SPEED : MAX_FREE_SPEED;
-      sim.steer = lerp(sim.steer, steerInput * MAX_STEER, 1 - Math.exp(-5 * dt));
-      sim.velocity += targetThrottle * (sim.connected ? 0.55 : 1.85) * dt;
-      if (drive.brake || keys.has(" ")) sim.velocity -= Math.sign(sim.velocity) * 3.5 * dt;
-      sim.velocity -= Math.sign(sim.velocity) * Math.min(Math.abs(sim.velocity), 0.65 * dt);
+      const targetSpeed = commandedThrottle * maxSpeed;
+      const response = sim.connected ? 1 - Math.exp(-2.2 * dt) : 1 - Math.exp(-3.4 * dt);
+      sim.velocity = lerp(sim.velocity, targetSpeed, response);
+      if (drive.brake || keys.has(" ")) {
+        sim.velocity -= Math.sign(sim.velocity) * Math.min(Math.abs(sim.velocity), (sim.connected ? 2.2 : 4.2) * dt);
+      }
+      if (Math.abs(commandedThrottle) < 0.03) {
+        sim.velocity -= Math.sign(sim.velocity) * Math.min(Math.abs(sim.velocity), (sim.connected ? 0.22 : 0.55) * dt);
+      }
       sim.velocity = clamp(sim.velocity, -maxSpeed, maxSpeed);
-      if (Math.abs(sim.velocity) < 0.02) sim.velocity = 0;
+      if (Math.abs(sim.velocity) < 0.01) sim.velocity = 0;
 
       sim.tug.rotation.y += (sim.velocity / 2.34) * Math.tan(sim.steer) * dt;
       sim.tug.position.x += Math.sin(sim.tug.rotation.y) * sim.velocity * dt;
@@ -487,7 +511,7 @@ export default function RampReadyTrainer() {
 
       <div className="rr-throttle">
         <button className="rr-direction" onClick={toggleDirection}>{direction}</button>
-        <div className="rr-custom-slider" role="slider" aria-label="Throttle" aria-valuemin="0" aria-valuemax="100" aria-valuenow={throttle} onPointerDown={updateCustomThrottle} onPointerMove={(event) => { if (event.buttons === 1) updateCustomThrottle(event); }}>
+        <div className="rr-custom-slider" role="slider" aria-label="Throttle" aria-valuemin="0" aria-valuemax="100" aria-valuenow={throttle} onPointerDown={beginThrottleDrag} onPointerMove={moveThrottleDrag} onPointerUp={endThrottleDrag} onPointerCancel={endThrottleDrag} onPointerLeave={endThrottleDrag}>
           <div className="rr-custom-fill" style={{ height: `${throttle}%` }} />
           <div className="rr-custom-thumb" style={{ bottom: `calc(${throttle}% - 13px)` }} />
         </div>
