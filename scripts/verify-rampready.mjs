@@ -11,6 +11,7 @@ const requiredFiles = [
   "src/components/procedure-gates.css",
   "src/components/aircraft/crj700Model.js",
   "scripts/verify-physics.mjs",
+  "public/manifest.webmanifest",
   "netlify.toml",
 ];
 
@@ -29,6 +30,20 @@ if (existsSync("package.json")) {
   const pkg = read("package.json");
   requireHard(pkg.includes('"build": "npm run verify && vite build"'), "Production build must run RampReady verification before Vite build");
   requireHard(pkg.includes('"verify": "node scripts/verify-rampready.mjs && node scripts/verify-physics.mjs"'), "Verify script must run structural and physics checks");
+}
+
+if (existsSync("index.html")) {
+  const html = read("index.html");
+  for (const marker of ["viewport-fit=cover", "apple-mobile-web-app-capable", "apple-mobile-web-app-title", "black-translucent", "manifest.webmanifest"]) {
+    requireHard(html.includes(marker), `Index missing mobile install metadata marker: ${marker}`);
+  }
+}
+
+if (existsSync("public/manifest.webmanifest")) {
+  const manifest = read("public/manifest.webmanifest");
+  for (const marker of ['"display": "standalone"', '"orientation": "landscape"', '"theme_color": "#111318"', '"RampReady Pushback Trainer"']) {
+    requireHard(manifest.includes(marker), `Web app manifest missing expected marker: ${marker}`);
+  }
 }
 
 if (existsSync("src/components/PushbackTrainer.jsx")) {
