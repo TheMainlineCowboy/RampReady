@@ -47,6 +47,10 @@ if (existsSync("src/components/RampReadyTrainer.jsx")) {
     "const currentCameraMode = cameraModeRef.current",
     "currentCameraMode === \"overhead\"",
     "Hide diagnostics",
+    "rr-diagnostics",
+    "idleThrottle",
+    "Power idle. Use brake if you need a faster stop.",
+    "rr-idle",
     "const usefulThrottle = throttleNorm > 0.02 ? 0.18 + throttleNorm * 0.82 : 0",
     "const targetSpeed = usefulThrottle * signedDirection * maxSpeed",
     "Connect nose gear",
@@ -75,6 +79,10 @@ if (existsSync("src/components/RampReadyTrainer.jsx")) {
 
   if (trainer.includes("}, [cameraMode") || trainer.includes("}, [cameraMode, message])")) {
     failures.push("Renderer lifecycle must not depend on camera mode or live HUD message state");
+  }
+
+  if (trainer.includes("style={{position:\"absolute\"") || trainer.includes("style={{ position: \"absolute\"")) {
+    failures.push("Diagnostics panel should use the reusable rr-diagnostics class instead of inline absolute styles");
   }
 
   if (trainer.includes("buildTerminal") || trainer.includes("jetBridge")) {
@@ -109,6 +117,8 @@ if (existsSync("src/components/RampReadyTrainer.css")) {
     "@import \"./throttle-visibility.css\"",
     ".rr-throttle",
     ".rr-direction",
+    ".rr-idle",
+    ".rr-diagnostics",
     ".rr-steer",
     ".rr-view-select",
     ".rr-checklist",
