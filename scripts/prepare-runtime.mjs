@@ -5,6 +5,12 @@ const tempPath = new URL("../src/components/.RampReadyTrainerStable.jsx.tmp", im
 const source = await readFile(trainerPath, "utf8");
 const legacyDirectionLine = "const signedDirection = connectedPushPhase ? 1 : drive.direction;";
 const physicalDirectionLine = "const signedDirection = drive.direction;";
+const connectedLine = "sim.connected = true;";
+const connectedResetBlock = `sim.connected = true;
+    sim.lastAttachedNose = null;`;
+const disconnectedLine = "sim.connected = false;";
+const disconnectedResetBlock = `sim.connected = false;
+    sim.lastAttachedNose = null;`;
 const legacyAttachmentBlock = `if (sim.connected) {
         const towOffset = (sim.towOffsetLocal || new THREE.Vector3()).clone().applyAxisAngle(Y_AXIS, sim.tug.rotation.y);
         sim.aircraft.position.x = cradle.x + towOffset.x;
@@ -61,13 +67,34 @@ if (preparedAttachmentCount === 0) {
   process.exit(1);
 }
 
-if (count(prepared, physicalDirectionLine) !== 1 || count(prepared, preparedAttachmentBlock) !== 1 || prepared.includes(legacyDirectionLine) || prepared.includes(legacyAttachmentBlock)) {
+if (!prepared.includes(connectedResetBlock)) {
+  if (count(prepared, connectedLine) !== 1) {
+    console.error(`RampReady runtime preparation failed: expected one connection transition, found ${count(prepared, connectedLine)}.`);
+    process.exit(1);
+  }
+  prepared = prepared.replace(connectedLine, connectedResetBlock);
+}
+
+const disconnectCount = count(prepared, disconnectedLine);
+const disconnectResetCount = count(prepared, disconnectedResetBlock);
+if (disconnectResetCount === 0) {
+  if (disconnectCount !== 2) {
+    console.error(`RampReady runtime preparation failed: expected reset and release disconnection transitions, found ${disconnectCount}.`);
+    process.exit(1);
+  }
+  prepared = prepared.replaceAll(disconnectedLine, disconnectedResetBlock);
+} else if (disconnectResetCount !== 2 || disconnectCount !== 2) {
+  console.error(`RampReady runtime preparation failed: ambiguous disconnection history resets, found reset=${disconnectResetCount}, total=${disconnectCount}.`);
+  process.exit(1);
+}
+
+if (count(prepared, physicalDirectionLine) !== 1 || count(prepared, preparedAttachmentBlock) !== 1 || count(prepared, connectedResetBlock) !== 1 || count(prepared, disconnectedResetBlock) !== 2 || prepared.includes(legacyDirectionLine) || prepared.includes(legacyAttachmentBlock)) {
   console.error("RampReady runtime preparation failed: runtime transformations did not produce one clean implementation.");
   process.exit(1);
 }
 
 if (prepared === source) {
-  console.log("RampReady runtime preparation passed: reverse travel and wheelbase-constrained nose-gear towing already present.");
+  console.log("RampReady runtime preparation passed: reverse travel, wheelbase-constrained towing, and clean attachment history already present.");
   process.exit(0);
 }
 
@@ -79,4 +106,4 @@ if (persisted !== prepared) {
   process.exit(1);
 }
 
-console.log("RampReady runtime preparation applied and verified reverse travel with wheelbase-constrained nose-gear towing.");
+console.log("RampReady runtime preparation applied and verified reverse travel, wheelbase-constrained towing, and clean attachment history.");
