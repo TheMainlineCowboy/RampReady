@@ -55,6 +55,26 @@ function captureReady({ capture, lateral, heading, speed }) {
   return capture <= CONNECT_DISTANCE && lateral <= CONNECT_LATERAL_LIMIT && heading <= CONNECT_HEADING_LIMIT && speed <= CONNECT_SPEED_LIMIT;
 }
 
+function simulateCaptureCentering({ seconds = 1, dt }) {
+  let offset = CONNECT_DISTANCE;
+  for (let elapsed = 0; elapsed < seconds - 1e-9; elapsed += dt) {
+    offset = decayCaptureOffset(offset, Math.min(dt, seconds - elapsed));
+  }
+  return offset;
+}
+
+function simulateYawConvergence({ from, to, seconds = 2, dt }) {
+  let yaw = from;
+  let maxStep = 0;
+  for (let elapsed = 0; elapsed < seconds - 1e-9; elapsed += dt) {
+    const frameDt = Math.min(dt, seconds - elapsed);
+    const next = dampAngle(yaw, to, 0.7, frameDt);
+    maxStep = Math.max(maxStep, Math.abs(shortestAngleDelta(yaw, next)));
+    yaw = next;
+  }
+  return { error: Math.abs(shortestAngleDelta(yaw, to)), maxStep };
+}
+
 const lowFree = stepVelocity({ velocity: 0, throttle: 0.12, direction: 1, connected: false, stage: 1 });
 if (lowFree.targetSpeed <= 0.22) failures.push(`Partial free-drive throttle too weak: ${lowFree.targetSpeed}`);
 if (lowFree.nextVelocity <= 0.01) failures.push(`Partial free-drive throttle does not move on first frame: ${lowFree.nextVelocity}`);
@@ -101,6 +121,12 @@ if (captureOffset > 0.002) failures.push(`Capture offset did not center within o
 const firstCaptureStep = CONNECT_DISTANCE - decayCaptureOffset(CONNECT_DISTANCE, 0.016);
 if (firstCaptureStep > 0.05) failures.push(`Capture centering snaps too far in one frame: ${firstCaptureStep}`);
 
+const captureAt30 = simulateCaptureCentering({ dt: 1 / 30 });
+const captureAt60 = simulateCaptureCentering({ dt: 1 / 60 });
+const captureAt120 = simulateCaptureCentering({ dt: 1 / 120 });
+approx(captureAt30, captureAt60, 1e-9, "Capture centering 30/60 Hz equivalence");
+approx(captureAt120, captureAt60, 1e-9, "Capture centering 120/60 Hz equivalence");
+
 const seamFrom = Math.PI - 0.02;
 const seamTo = -Math.PI + 0.02;
 const seamDelta = shortestAngleDelta(seamFrom, seamTo);
@@ -117,6 +143,14 @@ for (let frame = 0; frame < 120; frame += 1) {
   previousError = error;
 }
 if (previousError >= 0.02) failures.push(`Aircraft yaw did not converge smoothly: ${previousError}`);
+
+const yaw30 = simulateYawConvergence({ from: seamFrom, to: seamTo, dt: 1 / 30 });
+const yaw60 = simulateYawConvergence({ from: seamFrom, to: seamTo, dt: 1 / 60 });
+const yaw120 = simulateYawConvergence({ from: seamFrom, to: seamTo, dt: 1 / 120 });
+approx(yaw30.error, yaw60.error, 0.0002, "Yaw convergence 30/60 Hz equivalence");
+approx(yaw120.error, yaw60.error, 0.0002, "Yaw convergence 120/60 Hz equivalence");
+if (yaw30.maxStep > MAX_AIRCRAFT_YAW_RATE / 30 + 1e-9) failures.push(`30 Hz yaw step exceeded articulation cap: ${yaw30.maxStep}`);
+if (yaw120.maxStep > MAX_AIRCRAFT_YAW_RATE / 120 + 1e-9) failures.push(`120 Hz yaw step exceeded articulation cap: ${yaw120.maxStep}`);
 
 const sharpTurnStart = 0;
 const sharpTurnTarget = Math.PI / 2;
