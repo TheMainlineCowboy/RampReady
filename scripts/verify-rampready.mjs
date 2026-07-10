@@ -10,6 +10,7 @@ const requiredFiles = [
   "src/components/RampReadyTrainer.css",
   "src/components/procedure-gates.css",
   "src/components/aircraft/crj700Model.js",
+  "scripts/prepare-runtime.mjs",
   "scripts/verify-physics.mjs",
   "public/manifest.webmanifest",
   "netlify.toml",
@@ -25,11 +26,11 @@ for (const file of requiredFiles) {
 const read = (file) => readFileSync(file, "utf8");
 const requireHard = (condition, message) => { if (!condition) hardFailures.push(message); };
 const warnIfMissing = (content, marker, label) => { if (!content.includes(marker)) warnings.push(`${label}: ${marker}`); };
-const countMatches = (content, marker) => content.split(marker).length - 1;
 
 if (existsSync("package.json")) {
   const pkg = read("package.json");
-  requireHard(pkg.includes('"build": "npm run verify && vite build"'), "Production build must run RampReady verification before Vite build");
+  requireHard(pkg.includes('"prepare:runtime": "node scripts/prepare-runtime.mjs"'), "Package scripts must expose deterministic runtime preparation");
+  requireHard(pkg.includes('"build": "npm run prepare:runtime && npm run verify && vite build"'), "Production build must prepare runtime, run RampReady verification, then invoke Vite");
   requireHard(pkg.includes('"verify": "node scripts/verify-rampready.mjs && node scripts/verify-physics.mjs"'), "Verify script must run structural and physics checks");
 }
 
@@ -91,59 +92,31 @@ if (existsSync("src/components/RampReadyTrainerStable.jsx")) {
   requireHard(trainer.includes("stopTouchInput") && trainer.includes("onPointerLeave={stopTouchInput}"), "Steer and brake controls must release when the pointer leaves the button");
   requireHard(trainer.includes("event.preventDefault()") && trainer.includes('"arrowleft"') && trainer.includes('"arrowright"'), "Keyboard driving controls must prevent page scrolling while training");
 
-  const softMarkers = [
-    "cradleZ",
-    "noseZ",
-    "xline",
-    "rr-view-select",
-  ];
-  for (const marker of softMarkers) warnIfMissing(trainer, marker, "Stable trainer marker missing");
+  for (const marker of ["cradleZ", "noseZ", "xline", "rr-view-select"]) warnIfMissing(trainer, marker, "Stable trainer marker missing");
 }
 
 if (existsSync("scripts/verify-physics.mjs")) {
   const physics = read("scripts/verify-physics.mjs");
-  const physicsMarkers = [
-    "Partial free-drive throttle too weak",
-    "Connected REV should produce positive pushback speed",
-    "Connected FWD power should be locked",
-    "Connected stage",
-    "Correctly aligned capture should be ready",
-    "Distant cradle must not capture",
-    "Cradle offset too long",
-    "Initial tug-body-to-nose spacing",
-  ];
-  for (const marker of physicsMarkers) requireHard(physics.includes(marker), `Physics verification missing expected marker: ${marker}`);
+  for (const marker of ["Partial free-drive throttle too weak", "Connected REV should produce positive pushback speed", "Connected FWD power should be locked", "Connected stage", "Correctly aligned capture should be ready", "Distant cradle must not capture", "Cradle offset too long", "Initial tug-body-to-nose spacing"]) {
+    requireHard(physics.includes(marker), `Physics verification missing expected marker: ${marker}`);
+  }
 }
 
 if (existsSync("src/components/aircraft/crj700Model.js")) {
   const aircraft = read("src/components/aircraft/crj700Model.js");
   const aircraftLower = aircraft.toLowerCase();
-  const aircraftMarkers = ["buildcrj700aircraft", "ring-lofted fuselage", "tapered nose and tail", "separate nacelles", "swept vertical fin", "window row dots", "nose gear at origin", "navigation and anti-collision lights"];
-  for (const marker of aircraftMarkers) requireHard(aircraftLower.includes(marker), `CRJ model missing expected marker: ${marker}`);
+  for (const marker of ["buildcrj700aircraft", "ring-lofted fuselage", "tapered nose and tail", "separate nacelles", "swept vertical fin", "window row dots", "nose gear at origin", "navigation and anti-collision lights"]) {
+    requireHard(aircraftLower.includes(marker), `CRJ model missing expected marker: ${marker}`);
+  }
 }
 
 if (existsSync("src/components/RampReadyTrainer.css")) {
   const css = read("src/components/RampReadyTrainer.css");
-  const hardCssMarkers = [
-    ".rr-throttle",
-    ".rr-direction",
-    ".rr-steer",
-    ".rr-view-select",
-    ".rr-diagnostics",
-    ".rr-checklist",
-    ".rr-checkitem.active",
-    ".rr-checknum",
-    ".rr-guidance",
-    ".rr-idle",
-    ".rr-score-float",
-    "max-height: min(50vh, 430px)",
-    "overscroll-behavior: contain",
-    "bottom: calc(188px + env(safe-area-inset-bottom))",
-  ];
-  for (const marker of hardCssMarkers) requireHard(css.includes(marker), `CSS missing required marker: ${marker}`);
+  for (const marker of [".rr-throttle", ".rr-direction", ".rr-steer", ".rr-view-select", ".rr-diagnostics", ".rr-checklist", ".rr-checkitem.active", ".rr-checknum", ".rr-guidance", ".rr-idle", ".rr-score-float", "max-height: min(50vh, 430px)", "overscroll-behavior: contain", "bottom: calc(188px + env(safe-area-inset-bottom))"]) {
+    requireHard(css.includes(marker), `CSS missing required marker: ${marker}`);
+  }
 
-  const softCssMarkers = ["@import \"./throttle-visibility.css\"", ".rr-custom-slider", ".rr-custom-fill", ".rr-custom-thumb"];
-  for (const marker of softCssMarkers) warnIfMissing(css, marker, "CSS marker missing");
+  for (const marker of ['@import "./throttle-visibility.css"', ".rr-custom-slider", ".rr-custom-fill", ".rr-custom-thumb"]) warnIfMissing(css, marker, "CSS marker missing");
 }
 
 if (existsSync("src/components/procedure-gates.css")) {
