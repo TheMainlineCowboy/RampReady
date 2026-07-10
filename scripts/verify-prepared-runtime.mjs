@@ -8,7 +8,10 @@ const requiredSnippets = [
   "const maxCaptureCorrection = 0.28 * dt;",
   "if (!sim.lastAttachedNose) sim.lastAttachedNose = new THREE.Vector3(attachedNoseX, 0, attachedNoseZ);",
   "const requestedYawStep = lateralNoseTravel / 11.2;",
-  "clamp(requestedYawStep, -THREE.MathUtils.degToRad(12) * dt, THREE.MathUtils.degToRad(12) * dt)",
+  "const yawRateStep = clamp(requestedYawStep, -THREE.MathUtils.degToRad(12) * dt, THREE.MathUtils.degToRad(12) * dt);",
+  "const currentArticulation = Math.atan2(Math.sin(articulationDelta), Math.cos(articulationDelta));",
+  "const boundedArticulation = clamp(currentArticulation + yawRateStep, -THREE.MathUtils.degToRad(70), THREE.MathUtils.degToRad(70));",
+  "sim.aircraft.rotation.y = sim.tug.rotation.y + boundedArticulation;",
   "sim.lastAttachedNose.set(attachedNoseX, 0, attachedNoseZ);",
 ];
 
@@ -37,4 +40,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("RampReady prepared runtime verified: physical reverse travel, bounded capture correction, constrained towing yaw, and clean reconnect history are active.");
+console.log("RampReady prepared runtime verified: physical reverse travel, bounded capture correction, rate-limited and envelope-constrained towing yaw, and clean reconnect history are active.");
