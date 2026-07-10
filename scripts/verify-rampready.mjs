@@ -114,7 +114,7 @@ if (existsSync("scripts/verify-physics.mjs")) {
 if (existsSync("src/components/aircraft/crj700Model.js")) {
   const aircraft = read("src/components/aircraft/crj700Model.js");
   const aircraftLower = aircraft.toLowerCase();
-  const aircraftMarkers = ["buildcrj700aircraft", "t-tail", "rear-mounted engines", "window row dots", "nose gear at origin"];
+  const aircraftMarkers = ["buildcrj700aircraft", "ring-lofted fuselage", "tapered nose and tail", "separate nacelles", "swept vertical fin", "window row dots", "nose gear at origin", "navigation and anti-collision lights"];
   for (const marker of aircraftMarkers) requireHard(aircraftLower.includes(marker), `CRJ model missing expected marker: ${marker}`);
 }
 

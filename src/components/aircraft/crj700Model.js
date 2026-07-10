@@ -22,12 +22,44 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
     return add(mesh);
   }
 
-  function capsule(radius, length, material, x, y, z) {
-    const mesh = new THREE.Mesh(new THREE.CapsuleGeometry(radius, length, 14, 36), material);
-    mesh.rotation.x = Math.PI / 2;
-    mesh.position.set(x, y, z);
-    mesh.scale.set(0.92, 0.78, 1);
-    return add(mesh);
+  function loftFuselage(profiles, material) {
+    const radialSegments = 32;
+    const vertices = [];
+    const indices = [];
+    for (const [z, radius, centerY = 2.64, verticalScale = 0.94] of profiles) {
+      for (let segment = 0; segment < radialSegments; segment += 1) {
+        const angle = (segment / radialSegments) * Math.PI * 2;
+        vertices.push(Math.cos(angle) * radius, centerY + Math.sin(angle) * radius * verticalScale, z);
+      }
+    }
+    for (let ring = 0; ring < profiles.length - 1; ring += 1) {
+      for (let segment = 0; segment < radialSegments; segment += 1) {
+        const next = (segment + 1) % radialSegments;
+        const a = ring * radialSegments + segment;
+        const b = ring * radialSegments + next;
+        const c = (ring + 1) * radialSegments + next;
+        const d = (ring + 1) * radialSegments + segment;
+        indices.push(a, b, c, a, c, d);
+      }
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    return add(new THREE.Mesh(geometry, material));
+  }
+
+  function verticalFin(material) {
+    const geometry = new THREE.BufferGeometry();
+    const vertices = new Float32Array([
+      -0.1, 2.9, 20.8, 0.1, 2.9, 20.8, -0.1, 6.35, 23.2, 0.1, 6.35, 23.2,
+      -0.1, 3.0, 24.3, 0.1, 3.0, 24.3,
+    ]);
+    const indices = [0, 2, 4, 1, 5, 3, 0, 1, 3, 0, 3, 2, 2, 3, 5, 2, 5, 4, 4, 5, 1, 4, 1, 0];
+    geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    return add(new THREE.Mesh(geometry, material));
   }
 
   function taperedWing(span, rootChord, tipChord, material, z, y, sweep, side) {
@@ -52,27 +84,50 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
   }
 
   // Local origin is nose gear contact point. Negative Z is aircraft nose, positive Z is tail.
-  capsule(0.92, 24.2, white, 0, 2.65, 9.4);
-  capsule(0.82, 6.2, white, 0, 2.7, -2.6);
+  // A ring-lofted fuselage avoids the old overlapping-capsule shape and gives the CRJ a tapered nose and tail.
+  loftFuselage([
+    [-5.25, 0.08, 2.58, 0.9], [-4.8, 0.48, 2.61, 0.92], [-3.9, 0.82, 2.65, 0.94],
+    [-2.5, 0.98], [0, 1.0], [16.8, 1.0], [19.2, 0.92], [21.2, 0.7, 2.72, 0.96],
+    [23.1, 0.34, 2.82, 1], [24.15, 0.08, 2.9, 1],
+  ], white);
 
-  box(1.36, 0.36, 1.0, glass, 0, 2.9, -2.7, -0.1);
-  box(0.08, 0.18, 19.8, mat(0x1d4e89, 0.42, 0.02), 0, 2.95, 8.1);
-  box(1.58, 0.16, 17.4, mat(0x225f9f, 0.5, 0.02), 0, 2.1, 9.6);
+  // Angled cockpit glazing, side livery stripe, doors, and lower belly color improve scale readability.
+  box(0.68, 0.34, 0.72, glass, -0.58, 3.05, -3.62, -0.08, -0.18, -0.08);
+  box(0.68, 0.34, 0.72, glass, 0.58, 3.05, -3.62, -0.08, 0.18, 0.08);
+  box(0.035, 0.13, 20.0, mat(0x1d4e89, 0.42, 0.02), -0.985, 2.86, 7.4);
+  box(0.035, 0.13, 20.0, mat(0x1d4e89, 0.42, 0.02), 0.985, 2.86, 7.4);
+  box(1.52, 0.12, 17.8, bellyBlue, 0, 1.76, 9.2);
+  for (const side of [-1, 1]) {
+    box(0.025, 0.92, 0.55, mat(0xd9dee4, 0.5, 0.02), side * 0.985, 2.58, -0.75);
+    box(0.025, 0.92, 0.55, mat(0xd9dee4, 0.5, 0.02), side * 0.985, 2.58, 17.45);
+  }
 
   // Main swept low wings.
   taperedWing(10.8, 3.6, 1.35, white, 10.7, 2.33, 1.2, 1);
   taperedWing(10.8, 3.6, 1.35, white, 10.7, 2.33, 1.2, -1);
   box(1.8, 0.22, 2.7, white, 0, 2.38, 10.9);
+  box(0.16, 0.92, 1.05, white, -10.55, 2.77, 12.0, 0.08, 0, -0.18);
+  box(0.16, 0.92, 1.05, white, 10.55, 2.77, 12.0, 0.08, 0, 0.18);
 
-  // Rear-mounted engines, closer to the real CRJ family silhouette.
-  const leftEngine = cyl(0.42, 1.45, 0x20242b, -1.15, 2.8, 20.8, Math.PI / 2, 0, 0, 36);
-  const rightEngine = cyl(0.42, 1.45, 0x20242b, 1.15, 2.8, 20.8, Math.PI / 2, 0, 0, 36);
-  group.add(leftEngine, rightEngine);
-  box(0.22, 0.1, 1.0, gearMetal, -0.74, 2.78, 20.7);
-  box(0.22, 0.1, 1.0, gearMetal, 0.74, 2.78, 20.7);
+  // Rear-mounted engines with separate nacelles, dark intakes, exhausts, and visible pylons.
+  for (const side of [-1, 1]) {
+    const nacelle = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.48, 2.25, 36), white);
+    nacelle.rotation.x = Math.PI / 2;
+    nacelle.position.set(side * 1.34, 2.72, 19.75);
+    add(nacelle);
+    const intake = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.08, 36), dark);
+    intake.rotation.x = Math.PI / 2;
+    intake.position.set(side * 1.34, 2.72, 18.61);
+    add(intake);
+    const exhaust = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 0.22, 28), dark);
+    exhaust.rotation.x = Math.PI / 2;
+    exhaust.position.set(side * 1.34, 2.72, 20.94);
+    add(exhaust);
+    box(0.34, 0.12, 1.18, gearMetal, side * 0.78, 2.78, 19.8, 0, 0, side * 0.08);
+  }
 
-  // T-tail.
-  box(0.18, 3.8, 2.4, white, 0, 4.25, 23.8, 0.04);
+  // T-tail with a swept vertical fin rather than a rectangular slab.
+  verticalFin(white);
   taperedWing(4.3, 1.7, 1.0, white, 24.3, 5.78, 0.15, 1);
   taperedWing(4.3, 1.7, 1.0, white, 24.3, 5.78, 0.15, -1);
 
@@ -93,6 +148,14 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
     box(0.035, 0.12, 0.22, glass, -0.92, 3.03, z, 0, 0.02, 0);
     box(0.035, 0.12, 0.22, glass, 0.92, 3.03, z, 0, -0.02, 0);
   }
+
+  // Navigation and anti-collision lights make the silhouette legible at trainer camera distances.
+  const redLight = new THREE.MeshBasicMaterial({ color: 0xff2d2d });
+  const greenLight = new THREE.MeshBasicMaterial({ color: 0x35ff79 });
+  const beacon = new THREE.MeshBasicMaterial({ color: 0xff5a2d });
+  add(new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), redLight)).position.set(-10.62, 2.78, 12.05);
+  add(new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), greenLight)).position.set(10.62, 2.78, 12.05);
+  add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 8), beacon)).position.set(0, 3.66, 8.5);
 
   const target = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.025, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffd166 }));
   target.rotation.x = Math.PI / 2;
