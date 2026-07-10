@@ -162,5 +162,11 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
   target.position.y = 0.055;
   group.add(target);
 
+  // The trainer scene applies a legacy 0.82 scale to the aircraft. Counter-scale here so the
+  // rendered model lands at CRJ700 dimensions (about 32.5 m long and 23.9 m wingspan) while
+  // preserving the nose-gear origin used by the capture and towing physics.
+  group.scale.setScalar(1.35);
+  group.userData.aircraftDimensionsMeters = { length: 32.5, wingspan: 23.9 };
+
   return group;
 }
