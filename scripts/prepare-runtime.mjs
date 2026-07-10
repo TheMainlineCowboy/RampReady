@@ -19,8 +19,10 @@ const legacyAttachmentBlock = `if (sim.connected) {
       }`;
 const preparedAttachmentBlock = `if (sim.connected) {
         if (sim.towOffsetLocal) {
-          sim.towOffsetLocal.multiplyScalar(Math.exp(-6 * dt));
-          if (sim.towOffsetLocal.lengthSq() < 0.000004) sim.towOffsetLocal.set(0, 0, 0);
+          const captureOffset = sim.towOffsetLocal.length();
+          const maxCaptureCorrection = 0.28 * dt;
+          if (captureOffset <= maxCaptureCorrection || captureOffset < 0.002) sim.towOffsetLocal.set(0, 0, 0);
+          else sim.towOffsetLocal.multiplyScalar((captureOffset - maxCaptureCorrection) / captureOffset);
         }
         const towOffset = (sim.towOffsetLocal || new THREE.Vector3()).clone().applyAxisAngle(Y_AXIS, sim.tug.rotation.y);
         const attachedNoseX = cradle.x + towOffset.x;
@@ -94,7 +96,7 @@ if (count(prepared, physicalDirectionLine) !== 1 || count(prepared, preparedAtta
 }
 
 if (prepared === source) {
-  console.log("RampReady runtime preparation passed: reverse travel, wheelbase-constrained towing, and clean attachment history already present.");
+  console.log("RampReady runtime preparation passed: reverse travel, bounded capture correction, wheelbase-constrained towing, and clean attachment history already present.");
   process.exit(0);
 }
 
@@ -106,4 +108,4 @@ if (persisted !== prepared) {
   process.exit(1);
 }
 
-console.log("RampReady runtime preparation applied and verified reverse travel, wheelbase-constrained towing, and clean attachment history.");
+console.log("RampReady runtime preparation applied and verified reverse travel, bounded capture correction, wheelbase-constrained towing, and clean attachment history.");
