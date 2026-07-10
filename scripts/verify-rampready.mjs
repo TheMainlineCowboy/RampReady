@@ -10,8 +10,11 @@ const requiredFiles = [
   "src/components/RampReadyTrainer.css",
   "src/components/procedure-gates.css",
   "src/components/aircraft/crj700Model.js",
+  "scripts/build-production.mjs",
   "scripts/prepare-runtime.mjs",
+  "scripts/verify-prepared-runtime.mjs",
   "scripts/verify-physics.mjs",
+  "scripts/verify-tow-kinematics.mjs",
   "public/manifest.webmanifest",
   "netlify.toml",
 ];
@@ -28,10 +31,12 @@ const requireHard = (condition, message) => { if (!condition) hardFailures.push(
 const warnIfMissing = (content, marker, label) => { if (!content.includes(marker)) warnings.push(`${label}: ${marker}`); };
 
 if (existsSync("package.json")) {
-  const pkg = read("package.json");
-  requireHard(pkg.includes('"prepare:runtime": "node scripts/prepare-runtime.mjs"'), "Package scripts must expose deterministic runtime preparation");
-  requireHard(pkg.includes('"build": "npm run prepare:runtime && npm run verify && vite build"'), "Production build must prepare runtime, run RampReady verification, then invoke Vite");
-  requireHard(pkg.includes('"verify": "node scripts/verify-rampready.mjs && node scripts/verify-physics.mjs"'), "Verify script must run structural and physics checks");
+  const pkg = JSON.parse(read("package.json"));
+  const scripts = pkg.scripts ?? {};
+  requireHard(scripts["prepare:runtime"] === "node scripts/prepare-runtime.mjs", "Package scripts must expose deterministic runtime preparation");
+  requireHard(scripts.build === "node scripts/build-production.mjs", "Production build must run through the restoring build wrapper");
+  requireHard(scripts.verify === "node scripts/verify-prepared-runtime.mjs && node scripts/verify-rampready.mjs && node scripts/verify-physics.mjs && node scripts/verify-tow-kinematics.mjs", "Verify script must run prepared-runtime, structural, physics, and tow-kinematics checks");
+  requireHard(scripts["build:checked"] === "npm run build", "Checked build alias must route through the production wrapper");
 }
 
 if (existsSync("index.html")) {
