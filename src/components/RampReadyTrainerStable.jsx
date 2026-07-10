@@ -166,6 +166,11 @@ export default function RampReadyTrainerStable() {
     event.preventDefault();
   }, [setThrottleValue]);
 
+  const stopTouchInput = useCallback(() => {
+    driveRef.current.steer = 0;
+    driveRef.current.brake = false;
+  }, []);
+
   const reset = useCallback(() => {
     const sim = simRef.current;
     if (!sim) return;
@@ -438,7 +443,11 @@ export default function RampReadyTrainerStable() {
   }, [setTrainerMessage]);
 
   useEffect(() => {
-    const down = (event) => { keysRef.current.add(event.key.toLowerCase()); };
+    const down = (event) => {
+      const key = event.key.toLowerCase();
+      if ([" ", "arrowleft", "arrowright", "a", "d"].includes(key)) event.preventDefault();
+      keysRef.current.add(key);
+    };
     const up = (event) => { keysRef.current.delete(event.key.toLowerCase()); };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
@@ -520,9 +529,9 @@ export default function RampReadyTrainerStable() {
       {showDiagnostics && <aside className="rr-diagnostics">{hud.debug}</aside>}
 
       <div className="rr-steer">
-        <button onPointerDown={() => { driveRef.current.steer = 1; }} onPointerUp={() => { driveRef.current.steer = 0; }} onPointerCancel={() => { driveRef.current.steer = 0; }}>◀</button>
-        <button onPointerDown={() => { driveRef.current.brake = true; }} onPointerUp={() => { driveRef.current.brake = false; }} onPointerCancel={() => { driveRef.current.brake = false; }}>Brake</button>
-        <button onPointerDown={() => { driveRef.current.steer = -1; }} onPointerUp={() => { driveRef.current.steer = 0; }} onPointerCancel={() => { driveRef.current.steer = 0; }}>▶</button>
+        <button onPointerDown={() => { driveRef.current.steer = 1; }} onPointerUp={stopTouchInput} onPointerLeave={stopTouchInput} onPointerCancel={stopTouchInput}>◀</button>
+        <button onPointerDown={() => { driveRef.current.brake = true; }} onPointerUp={stopTouchInput} onPointerLeave={stopTouchInput} onPointerCancel={stopTouchInput}>Brake</button>
+        <button onPointerDown={() => { driveRef.current.steer = -1; }} onPointerUp={stopTouchInput} onPointerLeave={stopTouchInput} onPointerCancel={stopTouchInput}>▶</button>
       </div>
 
       <div className="rr-throttle">

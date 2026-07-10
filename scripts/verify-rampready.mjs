@@ -25,6 +25,7 @@ for (const file of requiredFiles) {
 const read = (file) => readFileSync(file, "utf8");
 const requireHard = (condition, message) => { if (!condition) hardFailures.push(message); };
 const warnIfMissing = (content, marker, label) => { if (!content.includes(marker)) warnings.push(`${label}: ${marker}`); };
+const countMatches = (content, marker) => content.split(marker).length - 1;
 
 if (existsSync("package.json")) {
   const pkg = read("package.json");
@@ -66,7 +67,8 @@ if (existsSync("src/components/RampReadyTrainerStable.jsx")) {
   requireHard(trainer.includes("releaseNoseGear"), "Stable trainer must keep explicit nose-gear release workflow");
   requireHard(trainer.includes("Scenario complete. Score"), "Release workflow must mark scenario completion with final score");
   requireHard(trainer.includes("cameraModeRef.current"), "Camera changes should not recreate the renderer");
-  requireHard(!trainer.includes("}, [cameraMode") && !trainer.includes("}, [cameraMode, message])"), "Renderer lifecycle must not depend on camera mode or live HUD message state");
+  requireHard(!trainer.includes("}, [cameraMode, message])"), "Renderer lifecycle must not depend on live HUD message state");
+  requireHard(countMatches(trainer, "const capture = cradle.distanceTo(sim.aircraft.position);") === 2, "Stable trainer must keep exactly one capture distance declaration in connect workflow and one in the animation loop");
   requireHard(!trainer.includes("buildTerminal") && !trainer.includes("jetBridge"), "Clean trainer scene should not include terminal or jet bridge clutter yet");
   requireHard(trainer.includes("useMemo"), "Checklist state should be memoized instead of recalculated inside the render tree");
   requireHard(trainer.includes("rr-checklist"), "Trainer must render the live procedure checklist");
@@ -82,6 +84,8 @@ if (existsSync("src/components/RampReadyTrainerStable.jsx")) {
   requireHard(trainer.includes("Release is locked until the aircraft is stopped at the red line"), "Trainer must prevent early nose-gear release");
   requireHard(trainer.includes("rr-stage-gate") && trainer.includes("hud.gate"), "Trainer must render a live procedure gate indicator");
   requireHard(trainer.includes("procedure-gates.css"), "Trainer must load procedure gate styling");
+  requireHard(trainer.includes("stopTouchInput") && trainer.includes("onPointerLeave={stopTouchInput}"), "Steer and brake controls must release when the pointer leaves the button");
+  requireHard(trainer.includes("event.preventDefault()") && trainer.includes('"arrowleft"') && trainer.includes('"arrowright"'), "Keyboard driving controls must prevent page scrolling while training");
 
   const softMarkers = [
     "cradleZ",
@@ -105,8 +109,9 @@ if (existsSync("scripts/verify-physics.mjs")) {
 
 if (existsSync("src/components/aircraft/crj700Model.js")) {
   const aircraft = read("src/components/aircraft/crj700Model.js");
-  const aircraftMarkers = ["buildCRJ700Aircraft", "T-tail", "rear-mounted engines", "Window row dots", "Nose gear at origin"];
-  for (const marker of aircraftMarkers) requireHard(aircraft.includes(marker), `CRJ model missing expected marker: ${marker}`);
+  const aircraftLower = aircraft.toLowerCase();
+  const aircraftMarkers = ["buildcrj700aircraft", "t-tail", "rear-mounted engines", "window row dots", "nose gear at origin"];
+  for (const marker of aircraftMarkers) requireHard(aircraftLower.includes(marker), `CRJ model missing expected marker: ${marker}`);
 }
 
 if (existsSync("src/components/RampReadyTrainer.css")) {
