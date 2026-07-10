@@ -6,14 +6,19 @@ const CONNECT_DISTANCE = 0.42;
 const CONNECT_LATERAL_LIMIT = 0.2;
 const CONNECT_HEADING_LIMIT = 6;
 const CONNECT_SPEED_LIMIT = 0.12;
+const MAX_AIRCRAFT_YAW_RATE = 12 * Math.PI / 180;
 
 const failures = [];
 const approx = (actual, expected, tolerance, label) => {
   if (Math.abs(actual - expected) > tolerance) failures.push(`${label}: expected ${expected} +/- ${tolerance}, got ${actual}`);
 };
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const lerp = (a, b, t) => a + (b - a) * t;
 const shortestAngleDelta = (from, to) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
-const dampAngle = (from, to, response, dt) => from + shortestAngleDelta(from, to) * (1 - Math.exp(-response * dt));
+const dampAngle = (from, to, response, dt) => {
+  const requestedStep = shortestAngleDelta(from, to) * (1 - Math.exp(-response * dt));
+  return from + clamp(requestedStep, -MAX_AIRCRAFT_YAW_RATE * dt, MAX_AIRCRAFT_YAW_RATE * dt);
+};
 
 function stepVelocity({ velocity, throttle, direction, connected, stage, brake = false, dt = 0.016 }) {
   const usefulThrottle = throttle > 0.02 ? 0.16 + throttle * 0.84 : 0;
@@ -93,13 +98,20 @@ let previousError = Math.abs(shortestAngleDelta(aircraftYaw, seamTo));
 for (let frame = 0; frame < 120; frame += 1) {
   const nextYaw = dampAngle(aircraftYaw, seamTo, 0.7, 0.016);
   const frameDelta = Math.abs(shortestAngleDelta(aircraftYaw, nextYaw));
-  if (frameDelta > 0.01) failures.push(`Aircraft yaw jumped ${frameDelta} rad in one frame`);
+  if (frameDelta > MAX_AIRCRAFT_YAW_RATE * 0.016 + 1e-9) failures.push(`Aircraft yaw exceeded articulation rate: ${frameDelta} rad in one frame`);
   aircraftYaw = nextYaw;
   const error = Math.abs(shortestAngleDelta(aircraftYaw, seamTo));
   if (error > previousError + 1e-9) failures.push(`Aircraft yaw diverged across heading seam: ${error}`);
   previousError = error;
 }
 if (previousError >= 0.02) failures.push(`Aircraft yaw did not converge smoothly: ${previousError}`);
+
+// A sharp tug command must not whip the aircraft nose around faster than the tow articulation limit.
+const sharpTurnStart = 0;
+const sharpTurnTarget = Math.PI / 2;
+const sharpTurnNext = dampAngle(sharpTurnStart, sharpTurnTarget, 0.7, 0.04);
+const sharpTurnStep = Math.abs(shortestAngleDelta(sharpTurnStart, sharpTurnNext));
+approx(sharpTurnStep, MAX_AIRCRAFT_YAW_RATE * 0.04, 1e-9, "Sharp-turn yaw rate cap");
 
 if (failures.length) {
   console.error("RampReady physics verification failed:");
