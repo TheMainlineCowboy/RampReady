@@ -18,6 +18,8 @@ const centeredTowBlock = `if (sim.towOffsetLocal) {
         const towOffset = (sim.towOffsetLocal || new THREE.Vector3()).clone().applyAxisAngle(Y_AXIS, sim.tug.rotation.y);
         sim.aircraft.position.x = cradle.x + towOffset.x;
         sim.aircraft.position.z = cradle.z + towOffset.z;`;
+const forcedPushDirectionLine = "const signedDirection = connectedPushPhase ? 1 : drive.direction;";
+const physicalDirectionLine = "const signedDirection = drive.direction;";
 
 const count = (value, needle) => value.split(needle).length - 1;
 let prepared = source;
@@ -49,13 +51,26 @@ if (centeredTowCount === 0) {
   process.exit(1);
 }
 
-if (count(prepared, constrainedBlock) !== 1 || count(prepared, centeredTowBlock) !== 1 || prepared.includes(legacyLine) || prepared.includes(shortestPathLine) || prepared.includes(legacyTowBlock)) {
+const physicalDirectionCount = count(prepared, physicalDirectionLine);
+const forcedDirectionCount = count(prepared, forcedPushDirectionLine);
+if (physicalDirectionCount === 0) {
+  if (forcedDirectionCount !== 1) {
+    console.error(`RampReady runtime preparation failed: expected exactly one connected direction implementation, found physical=${physicalDirectionCount}, forced=${forcedDirectionCount}.`);
+    process.exit(1);
+  }
+  prepared = prepared.replace(forcedPushDirectionLine, physicalDirectionLine);
+} else if (physicalDirectionCount !== 1 || forcedDirectionCount !== 0) {
+  console.error(`RampReady runtime preparation failed: ambiguous connected direction implementation, found physical=${physicalDirectionCount}, forced=${forcedDirectionCount}.`);
+  process.exit(1);
+}
+
+if (count(prepared, constrainedBlock) !== 1 || count(prepared, centeredTowBlock) !== 1 || count(prepared, physicalDirectionLine) !== 1 || prepared.includes(legacyLine) || prepared.includes(shortestPathLine) || prepared.includes(legacyTowBlock) || prepared.includes(forcedPushDirectionLine)) {
   console.error("RampReady runtime preparation failed: runtime transformations did not produce one clean implementation.");
   process.exit(1);
 }
 
 if (prepared === source) {
-  console.log("RampReady runtime preparation passed: constrained articulation and smooth capture centering already present.");
+  console.log("RampReady runtime preparation passed: articulation, capture centering, and physical reverse travel already present.");
   process.exit(0);
 }
 
@@ -67,4 +82,4 @@ if (persisted !== prepared) {
   process.exit(1);
 }
 
-console.log("RampReady runtime preparation applied and verified constrained articulation with smooth capture centering.");
+console.log("RampReady runtime preparation applied and verified articulation, capture centering, and physical reverse travel.");
