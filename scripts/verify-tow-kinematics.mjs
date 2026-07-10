@@ -54,6 +54,18 @@ for (const [label, run, dt] of [["30 Hz", run30, 1 / 30], ["60 Hz", run60, 1 / 6
 if (Math.abs(run30.aircraftYaw - run60.aircraftYaw) > 0.01) failures.push(`30/60 Hz yaw divergence: ${run30.aircraftYaw} vs ${run60.aircraftYaw}`);
 if (Math.abs(run120.aircraftYaw - run60.aircraftYaw) > 0.01) failures.push(`120/60 Hz yaw divergence: ${run120.aircraftYaw} vs ${run60.aircraftYaw}`);
 
+const reverse30 = simulate({ dt: 1 / 30, speed: -0.8, turnRate: -7 * Math.PI / 180 });
+const reverse60 = simulate({ dt: 1 / 60, speed: -0.8, turnRate: -7 * Math.PI / 180 });
+const reverse120 = simulate({ dt: 1 / 120, speed: -0.8, turnRate: -7 * Math.PI / 180 });
+for (const [label, run, dt] of [["reverse 30 Hz", reverse30, 1 / 30], ["reverse 60 Hz", reverse60, 1 / 60], ["reverse 120 Hz", reverse120, 1 / 120]]) {
+  if (run.aircraftYaw <= 0) failures.push(`${label} aircraft yawed opposite the reverse cradle path`);
+  if (run.maxYawStep > MAX_YAW_RATE * dt + 1e-12) failures.push(`${label} exceeded yaw-rate cap: ${run.maxYawStep}`);
+  if (run.maxArticulation > 70 * Math.PI / 180) failures.push(`${label} articulation exceeded safe envelope: ${run.maxArticulation}`);
+  if (run.nose.z >= 0) failures.push(`${label} nose failed to travel in reverse: ${run.nose.z}`);
+}
+if (Math.abs(reverse30.aircraftYaw - reverse60.aircraftYaw) > 0.01) failures.push(`Reverse 30/60 Hz yaw divergence: ${reverse30.aircraftYaw} vs ${reverse60.aircraftYaw}`);
+if (Math.abs(reverse120.aircraftYaw - reverse60.aircraftYaw) > 0.01) failures.push(`Reverse 120/60 Hz yaw divergence: ${reverse120.aircraftYaw} vs ${reverse60.aircraftYaw}`);
+
 const sudden = stepAircraft({ yaw: 0, previousNose: { x: 0, z: 0 }, attachedNose: { x: 1, z: 0 }, dt: 0.016 });
 if (Math.abs(sudden.yawStep) > MAX_YAW_RATE * 0.016 + 1e-12) failures.push(`Sudden lateral cradle motion exceeded yaw cap: ${sudden.yawStep}`);
 
@@ -62,4 +74,4 @@ if (failures.length) {
   for (const failure of failures) console.error(`- ${failure}`);
   process.exit(1);
 }
-console.log(`RampReady tow-kinematics verification passed: 60 Hz aircraft yaw ${(run60.aircraftYaw * 180 / Math.PI).toFixed(2)}°, tug yaw ${(run60.tugYaw * 180 / Math.PI).toFixed(2)}°, max articulation ${(run60.maxArticulation * 180 / Math.PI).toFixed(2)}°.`);
+console.log(`RampReady tow-kinematics verification passed: forward yaw ${(run60.aircraftYaw * 180 / Math.PI).toFixed(2)}°, reverse yaw ${(reverse60.aircraftYaw * 180 / Math.PI).toFixed(2)}°, max forward articulation ${(run60.maxArticulation * 180 / Math.PI).toFixed(2)}°, max reverse articulation ${(reverse60.maxArticulation * 180 / Math.PI).toFixed(2)}°.`);
