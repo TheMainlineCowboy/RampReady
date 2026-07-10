@@ -7,6 +7,7 @@ const CONNECT_LATERAL_LIMIT = 0.2;
 const CONNECT_HEADING_LIMIT = 6;
 const CONNECT_SPEED_LIMIT = 0.12;
 const MAX_AIRCRAFT_YAW_RATE = 12 * Math.PI / 180;
+const CAPTURE_CENTERING_RESPONSE = 6;
 
 const failures = [];
 const approx = (actual, expected, tolerance, label) => {
@@ -19,6 +20,7 @@ const dampAngle = (from, to, response, dt) => {
   const requestedStep = shortestAngleDelta(from, to) * (1 - Math.exp(-response * dt));
   return from + clamp(requestedStep, -MAX_AIRCRAFT_YAW_RATE * dt, MAX_AIRCRAFT_YAW_RATE * dt);
 };
+const decayCaptureOffset = (offset, dt) => offset * Math.exp(-CAPTURE_CENTERING_RESPONSE * dt);
 
 function stepVelocity({ velocity, throttle, direction, connected, stage, brake = false, dt = 0.016 }) {
   const usefulThrottle = throttle > 0.02 ? 0.16 + throttle * 0.84 : 0;
@@ -88,7 +90,17 @@ for (const heading of [0, Math.PI / 6, -Math.PI / 3, Math.PI]) {
   approx(Math.hypot(worldX, worldZ), Math.hypot(capturedLocal.x, capturedLocal.z), 1e-9, `Tow offset length at heading ${heading}`);
 }
 
-// Turning through the +/-180 degree seam must follow the short arc without a visible snap.
+let captureOffset = CONNECT_DISTANCE;
+let previousCaptureOffset = captureOffset;
+for (let frame = 0; frame < 60; frame += 1) {
+  captureOffset = decayCaptureOffset(captureOffset, 0.016);
+  if (captureOffset >= previousCaptureOffset) failures.push(`Capture offset failed to decrease at frame ${frame}: ${captureOffset}`);
+  previousCaptureOffset = captureOffset;
+}
+if (captureOffset > 0.002) failures.push(`Capture offset did not center within one second: ${captureOffset}`);
+const firstCaptureStep = CONNECT_DISTANCE - decayCaptureOffset(CONNECT_DISTANCE, 0.016);
+if (firstCaptureStep > 0.05) failures.push(`Capture centering snaps too far in one frame: ${firstCaptureStep}`);
+
 const seamFrom = Math.PI - 0.02;
 const seamTo = -Math.PI + 0.02;
 const seamDelta = shortestAngleDelta(seamFrom, seamTo);
@@ -106,7 +118,6 @@ for (let frame = 0; frame < 120; frame += 1) {
 }
 if (previousError >= 0.02) failures.push(`Aircraft yaw did not converge smoothly: ${previousError}`);
 
-// A sharp tug command must not whip the aircraft nose around faster than the tow articulation limit.
 const sharpTurnStart = 0;
 const sharpTurnTarget = Math.PI / 2;
 const sharpTurnNext = dampAngle(sharpTurnStart, sharpTurnTarget, 0.7, 0.04);
