@@ -34,7 +34,11 @@ const preparedAttachmentBlock = `if (sim.connected) {
         const aircraftRightZ = -Math.sin(sim.aircraft.rotation.y);
         const lateralNoseTravel = noseDx * aircraftRightX + noseDz * aircraftRightZ;
         const requestedYawStep = lateralNoseTravel / 11.2;
-        sim.aircraft.rotation.y += clamp(requestedYawStep, -THREE.MathUtils.degToRad(12) * dt, THREE.MathUtils.degToRad(12) * dt);
+        const yawRateStep = clamp(requestedYawStep, -THREE.MathUtils.degToRad(12) * dt, THREE.MathUtils.degToRad(12) * dt);
+        const articulationDelta = sim.aircraft.rotation.y - sim.tug.rotation.y;
+        const currentArticulation = Math.atan2(Math.sin(articulationDelta), Math.cos(articulationDelta));
+        const boundedArticulation = clamp(currentArticulation + yawRateStep, -THREE.MathUtils.degToRad(70), THREE.MathUtils.degToRad(70));
+        sim.aircraft.rotation.y = sim.tug.rotation.y + boundedArticulation;
         sim.aircraft.position.x = attachedNoseX;
         sim.aircraft.position.z = attachedNoseZ;
         sim.lastAttachedNose.set(attachedNoseX, 0, attachedNoseZ);
@@ -96,7 +100,7 @@ if (count(prepared, physicalDirectionLine) !== 1 || count(prepared, preparedAtta
 }
 
 if (prepared === source) {
-  console.log("RampReady runtime preparation passed: reverse travel, bounded capture correction, wheelbase-constrained towing, and clean attachment history already present.");
+  console.log("RampReady runtime preparation passed: reverse travel, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history already present.");
   process.exit(0);
 }
 
@@ -108,4 +112,4 @@ if (persisted !== prepared) {
   process.exit(1);
 }
 
-console.log("RampReady runtime preparation applied and verified reverse travel, bounded capture correction, wheelbase-constrained towing, and clean attachment history.");
+console.log("RampReady runtime preparation applied and verified reverse travel, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history.");
