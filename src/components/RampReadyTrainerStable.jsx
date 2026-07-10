@@ -17,8 +17,10 @@ const STAGES = [
 const NOSE_START_Z = 6.2;
 const STOP_Z = 52;
 const CRADLE_Z = 3.45;
-const CONNECT_DISTANCE = 1.05;
-const CONNECT_SPEED_LIMIT = 0.65;
+const CONNECT_DISTANCE = 0.42;
+const CONNECT_LATERAL_LIMIT = 0.2;
+const CONNECT_HEADING_LIMIT = THREE.MathUtils.degToRad(6);
+const CONNECT_SPEED_LIMIT = 0.12;
 const MAX_FREE_SPEED = 3.2;
 const MAX_TOW_SPEED = 1.25;
 const MAX_STEER = 0.42;
@@ -28,6 +30,25 @@ const STOP_REMAINING_CAUTION = 12;
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const lerp = (a, b, t) => a + (b - a) * t;
+const Y_AXIS = new THREE.Vector3(0, 1, 0);
+
+function getCaptureState(sim) {
+  sim.tug.updateMatrixWorld(true);
+  const cradle = new THREE.Vector3(0, 0, CRADLE_Z).applyMatrix4(sim.tug.matrixWorld);
+  const delta = sim.aircraft.position.clone().sub(cradle);
+  const right = new THREE.Vector3(Math.cos(sim.tug.rotation.y), 0, -Math.sin(sim.tug.rotation.y));
+  const capture = delta.length();
+  const lateral = Math.abs(delta.dot(right));
+  const headingDelta = sim.aircraft.rotation.y - sim.tug.rotation.y;
+  const headingError = Math.abs(Math.atan2(Math.sin(headingDelta), Math.cos(headingDelta)));
+  const speed = Math.abs(sim.velocity);
+  const ready = capture <= CONNECT_DISTANCE && lateral <= CONNECT_LATERAL_LIMIT && headingError <= CONNECT_HEADING_LIMIT && speed <= CONNECT_SPEED_LIMIT;
+  let guidance = `Close to ${capture.toFixed(1)} m`;
+  if (speed > CONNECT_SPEED_LIMIT) guidance = "Stop tug";
+  else if (headingError > CONNECT_HEADING_LIMIT) guidance = "Straighten tug";
+  else if (lateral > CONNECT_LATERAL_LIMIT) guidance = "Center cradle";
+  return { cradle, delta, capture, lateral, headingError, ready, guidance };
+}
 
 function mat(color, roughness = 0.62, metalness = 0.05) {
   return new THREE.MeshStandardMaterial({ color, roughness, metalness });
@@ -181,6 +202,7 @@ export default function RampReadyTrainerStable() {
     sim.velocity = 0;
     sim.steer = 0;
     sim.connected = false;
+    sim.towOffsetLocal = null;
     scoreRef.current = { score: 100, overspeed: false, offCenter: false, hardStop: false, wrongDirection: false, brakeLate: false };
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
     stageRef.current = 0;
@@ -193,13 +215,12 @@ export default function RampReadyTrainerStable() {
   const connectNoseGear = useCallback(() => {
     const sim = simRef.current;
     if (!sim || sim.connected || stageRef.current !== 1) return;
-    sim.tug.updateMatrixWorld(true);
-    const cradle = new THREE.Vector3(0, 0, CRADLE_Z).applyMatrix4(sim.tug.matrixWorld);
-    const capture = cradle.distanceTo(sim.aircraft.position);
-    if (capture > CONNECT_DISTANCE || Math.abs(sim.velocity) > CONNECT_SPEED_LIMIT) {
-      setTrainerMessage(`Align closer and stop before connecting. Capture ${capture.toFixed(1)} m.`);
+    const captureState = getCaptureState(sim);
+    if (!captureState.ready) {
+      setTrainerMessage(`${captureState.guidance} before connecting. Capture ${captureState.capture.toFixed(1)} m.`);
       return;
     }
+    sim.towOffsetLocal = captureState.delta.clone().applyAxisAngle(Y_AXIS, -sim.tug.rotation.y);
     sim.connected = true;
     sim.velocity = 0;
     driveRef.current.throttle = 0;
@@ -216,6 +237,7 @@ export default function RampReadyTrainerStable() {
       return;
     }
     sim.connected = false;
+    sim.towOffsetLocal = null;
     sim.velocity = 0;
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
     setThrottle(0);
@@ -260,7 +282,7 @@ export default function RampReadyTrainerStable() {
     aircraft.scale.set(0.82, 0.82, 0.82);
     scene.add(tug, aircraft);
 
-    const sim = { scene, renderer, camera, tug, wheels, aircraft, velocity: 0, steer: 0, connected: false, last: performance.now(), lastHud: 0 };
+    const sim = { scene, renderer, camera, tug, wheels, aircraft, velocity: 0, steer: 0, connected: false, towOffsetLocal: null, last: performance.now(), lastHud: 0 };
     simRef.current = sim;
 
     const pointer = { active: false, x: 0, y: 0 };
@@ -323,13 +345,14 @@ export default function RampReadyTrainerStable() {
       sim.tug.updateMatrixWorld(true);
       sim.wheels.forEach((wheel) => { wheel.rotation.x += sim.velocity * dt * 4; });
 
-      const cradle = new THREE.Vector3(0, 0, CRADLE_Z).applyMatrix4(sim.tug.matrixWorld);
-      const capture = cradle.distanceTo(sim.aircraft.position);
-      const ready = !sim.connected && stageRef.current === 1 && capture <= CONNECT_DISTANCE && Math.abs(sim.velocity) <= CONNECT_SPEED_LIMIT;
+      const captureState = getCaptureState(sim);
+      const { cradle, capture } = captureState;
+      const ready = !sim.connected && stageRef.current === 1 && captureState.ready;
 
       if (sim.connected) {
-        sim.aircraft.position.x = cradle.x;
-        sim.aircraft.position.z = cradle.z;
+        const towOffset = (sim.towOffsetLocal || new THREE.Vector3()).clone().applyAxisAngle(Y_AXIS, sim.tug.rotation.y);
+        sim.aircraft.position.x = cradle.x + towOffset.x;
+        sim.aircraft.position.z = cradle.z + towOffset.z;
         sim.aircraft.rotation.y = lerp(sim.aircraft.rotation.y, sim.tug.rotation.y, 1 - Math.exp(-0.7 * dt));
       }
 
@@ -411,7 +434,7 @@ export default function RampReadyTrainerStable() {
       let liveMessage = messageRef.current;
       const quality = scoreState.score >= 90 ? "Clean" : scoreState.score >= 75 ? "Caution" : "Needs reset";
       const gate = stageRef.current === 1 && ready ? "Ready to connect" : [2, 3].includes(stageRef.current) ? "Power locked" : stageRef.current === 4 && drive.direction !== -1 ? "REV required" : stageRef.current === 4 && stopRemaining <= STOP_REMAINING_CAUTION ? "Brake zone" : stageRef.current === 5 ? "Release ready" : "Training";
-      if (stageRef.current === 1) liveMessage = ready ? "Capture distance green. Tap Connect nose gear." : `Capture ${capture.toFixed(1)} m. Approach slowly.`;
+      if (stageRef.current === 1) liveMessage = ready ? "Capture aligned and stopped. Tap Connect nose gear." : `${captureState.guidance}. Capture ${capture.toFixed(1)} m.`;
       if (stageRef.current === 4 && drive.direction !== -1) liveMessage = "Direction should be REV for pushback. Power locked until REV is selected.";
       if (stageRef.current === 4 && drive.direction === -1 && stopRemaining <= STOP_REMAINING_CAUTION) liveMessage = "Red line ahead. Idle power and brake smoothly.";
       if (now - sim.lastHud >= 100) {
@@ -420,13 +443,14 @@ export default function RampReadyTrainerStable() {
           speed: Math.abs(sim.velocity),
           stop: stopRemaining,
           capture,
+          captureHint: captureState.guidance,
           ready,
           connected: sim.connected,
           score: scoreState.score,
           quality,
           crossline,
           gate,
-          debug: `thr ${Math.round(drive.throttle * 100)} cmd ${targetSpeed.toFixed(2)} vel ${sim.velocity.toFixed(2)} tugZ ${sim.tug.position.z.toFixed(1)} cradleZ ${cradle.z.toFixed(1)} noseZ ${sim.aircraft.position.z.toFixed(1)} xline ${crossline.toFixed(1)} gate ${gate} score ${scoreState.score}`,
+          debug: `thr ${Math.round(drive.throttle * 100)} cmd ${targetSpeed.toFixed(2)} vel ${sim.velocity.toFixed(2)} tugZ ${sim.tug.position.z.toFixed(1)} cradleZ ${cradle.z.toFixed(1)} noseZ ${sim.aircraft.position.z.toFixed(1)} lat ${captureState.lateral.toFixed(2)} hdg ${THREE.MathUtils.radToDeg(captureState.headingError).toFixed(1)} xline ${crossline.toFixed(1)} gate ${gate} score ${scoreState.score}`,
         });
       }
       if (liveMessage !== messageRef.current && (stageRef.current === 1 || stageRef.current === 4)) setTrainerMessage(liveMessage);
@@ -516,7 +540,7 @@ export default function RampReadyTrainerStable() {
         </ol>
         <div className="rr-hud-actions">
           {[0, 2, 3].includes(stageIndex) && <button className="rr-primary" onClick={advance}>{stageIndex === 0 ? "Ready" : stageIndex === 2 ? "Clearance" : "Brake released"}</button>}
-          {stageIndex === 1 && <button className={hud.ready ? "rr-primary" : "rr-primary rr-disabled"} disabled={!hud.ready} onClick={connectNoseGear}>{hud.ready ? "Connect nose gear" : `Align ${hud.capture == null ? "--" : hud.capture.toFixed(1)} m`}</button>}
+          {stageIndex === 1 && <button className={hud.ready ? "rr-primary" : "rr-primary rr-disabled"} disabled={!hud.ready} onClick={connectNoseGear}>{hud.ready ? "Connect nose gear" : hud.captureHint || `Align ${hud.capture == null ? "--" : hud.capture.toFixed(1)} m`}</button>}
           {stageIndex === 5 && <button className="rr-primary" onClick={releaseNoseGear}>Release gear</button>}
           <button className="rr-secondary" onClick={reset}>Reset</button>
           <button className={showDiagnostics ? "rr-mini active" : "rr-mini"} onClick={() => setShowDiagnostics((open) => !open)}>Diagnostics</button>

@@ -58,6 +58,7 @@ if (existsSync("src/components/RampReadyTrainerStable.jsx")) {
   requireHard(trainer.includes("buildCRJ700Aircraft"), "Stable trainer must load the CRJ700 aircraft model");
   requireHard(trainer.includes("buildTug"), "Stable trainer must build the active tug model");
   requireHard(trainer.includes("CRADLE_Z = 3.45"), "Stable trainer must use the integrated short cradle position");
+  requireHard(trainer.includes("CONNECT_DISTANCE = 0.42") && trainer.includes("CONNECT_LATERAL_LIMIT = 0.2") && trainer.includes("CONNECT_HEADING_LIMIT"), "Stable trainer must require tight distance, lateral, and heading alignment before capture");
   requireHard(trainer.includes("Short integrated towbarless cradle"), "Stable trainer must document short integrated cradle geometry");
   requireHard(!trainer.includes("CRADLE_OFFSET_Z = 11.5"), "Cradle geometry regressed to the oversized stretched bucket");
   requireHard(!trainer.includes("CRADLE_OFFSET_Z - 2.7"), "Cradle arms must not stretch from the cradle offset");
@@ -68,7 +69,8 @@ if (existsSync("src/components/RampReadyTrainerStable.jsx")) {
   requireHard(trainer.includes("Scenario complete. Score"), "Release workflow must mark scenario completion with final score");
   requireHard(trainer.includes("cameraModeRef.current"), "Camera changes should not recreate the renderer");
   requireHard(!trainer.includes("}, [cameraMode, message])"), "Renderer lifecycle must not depend on live HUD message state");
-  requireHard(countMatches(trainer, "const capture = cradle.distanceTo(sim.aircraft.position);") === 2, "Stable trainer must keep exactly one capture distance declaration in connect workflow and one in the animation loop");
+  requireHard(trainer.includes("getCaptureState(sim)"), "Stable trainer must use one capture-state gate for connection and live coaching");
+  requireHard(trainer.includes("towOffsetLocal") && trainer.includes("applyAxisAngle(Y_AXIS"), "Nose-gear connection must preserve position without teleporting the aircraft");
   requireHard(!trainer.includes("buildTerminal") && !trainer.includes("jetBridge"), "Clean trainer scene should not include terminal or jet bridge clutter yet");
   requireHard(trainer.includes("useMemo"), "Checklist state should be memoized instead of recalculated inside the render tree");
   requireHard(trainer.includes("rr-checklist"), "Trainer must render the live procedure checklist");
@@ -105,6 +107,8 @@ if (existsSync("scripts/verify-physics.mjs")) {
     "Connected REV should produce positive pushback speed",
     "Connected FWD power should be locked",
     "Connected stage",
+    "Correctly aligned capture should be ready",
+    "Distant cradle must not capture",
     "Cradle offset too long",
     "Initial tug-body-to-nose spacing",
   ];

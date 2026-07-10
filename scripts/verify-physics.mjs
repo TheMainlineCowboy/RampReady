@@ -2,6 +2,10 @@ const NOSE_START_Z = 6.2;
 const CRADLE_Z = 3.45;
 const MAX_FREE_SPEED = 3.2;
 const MAX_TOW_SPEED = 1.25;
+const CONNECT_DISTANCE = 0.42;
+const CONNECT_LATERAL_LIMIT = 0.2;
+const CONNECT_HEADING_LIMIT = 6;
+const CONNECT_SPEED_LIMIT = 0.12;
 
 const failures = [];
 const approx = (actual, expected, tolerance, label) => {
@@ -26,6 +30,10 @@ function stepVelocity({ velocity, throttle, direction, connected, stage, dt = 0.
   return { usefulThrottle, targetSpeed, nextVelocity };
 }
 
+function captureReady({ capture, lateral, heading, speed }) {
+  return capture <= CONNECT_DISTANCE && lateral <= CONNECT_LATERAL_LIMIT && heading <= CONNECT_HEADING_LIMIT && speed <= CONNECT_SPEED_LIMIT;
+}
+
 // Partial throttle must create a visible movement command. This prevents the old 100%-only bug.
 const lowFree = stepVelocity({ velocity: 0, throttle: 0.12, direction: 1, connected: false, stage: 1 });
 if (lowFree.targetSpeed <= 0.22) failures.push(`Partial free-drive throttle too weak: ${lowFree.targetSpeed}`);
@@ -46,6 +54,13 @@ for (const stage of [2, 3, 5]) {
   if (locked.targetSpeed !== 0) failures.push(`Connected stage ${stage} should lock motion, got ${locked.targetSpeed}`);
   if (locked.nextVelocity !== 0) failures.push(`Connected stage ${stage} should remain stationary, got ${locked.nextVelocity}`);
 }
+
+// Nose-gear capture requires a tight, stopped, centered, straight approach.
+if (!captureReady({ capture: 0.2, lateral: 0.08, heading: 2, speed: 0.04 })) failures.push("Correctly aligned capture should be ready");
+if (captureReady({ capture: 0.6, lateral: 0.08, heading: 2, speed: 0.04 })) failures.push("Distant cradle must not capture");
+if (captureReady({ capture: 0.25, lateral: 0.24, heading: 2, speed: 0.04 })) failures.push("Off-center cradle must not capture");
+if (captureReady({ capture: 0.25, lateral: 0.08, heading: 9, speed: 0.04 })) failures.push("Angled tug must not capture");
+if (captureReady({ capture: 0.25, lateral: 0.08, heading: 2, speed: 0.2 })) failures.push("Moving tug must not capture");
 
 // Stable trainer uses a short integrated cradle, not a stretched bucket arm.
 if (CRADLE_Z >= 4.5) failures.push(`Cradle offset too long: ${CRADLE_Z}`);
