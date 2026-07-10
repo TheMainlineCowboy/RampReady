@@ -1,17 +1,21 @@
 const WHEELBASE = 11.2;
 const MAX_YAW_RATE = 12 * Math.PI / 180;
+const MAX_ARTICULATION = 70 * Math.PI / 180;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const shortestAngleDelta = (from, to) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
 
-function stepAircraft({ yaw, previousNose, attachedNose, dt }) {
+function stepAircraft({ yaw, tugYaw, previousNose, attachedNose, dt }) {
   const dx = attachedNose.x - previousNose.x;
   const dz = attachedNose.z - previousNose.z;
   const rightX = Math.cos(yaw);
   const rightZ = -Math.sin(yaw);
   const lateralTravel = dx * rightX + dz * rightZ;
   const requestedYawStep = lateralTravel / WHEELBASE;
-  const yawStep = clamp(requestedYawStep, -MAX_YAW_RATE * dt, MAX_YAW_RATE * dt);
-  return { yaw: yaw + yawStep, yawStep };
+  const yawRateStep = clamp(requestedYawStep, -MAX_YAW_RATE * dt, MAX_YAW_RATE * dt);
+  const currentArticulation = shortestAngleDelta(tugYaw, yaw);
+  const boundedArticulation = clamp(currentArticulation + yawRateStep, -MAX_ARTICULATION, MAX_ARTICULATION);
+  const nextYaw = tugYaw + boundedArticulation;
+  return { yaw: nextYaw, yawStep: shortestAngleDelta(yaw, nextYaw), articulation: boundedArticulation };
 }
 
 function simulate({ dt, seconds = 6, speed = 0.8, turnRate = 7 * Math.PI / 180 }) {
@@ -30,10 +34,10 @@ function simulate({ dt, seconds = 6, speed = 0.8, turnRate = 7 * Math.PI / 180 }
       x: nose.x + Math.sin(tugYaw) * speed * frameDt,
       z: nose.z + Math.cos(tugYaw) * speed * frameDt,
     };
-    const result = stepAircraft({ yaw: aircraftYaw, previousNose, attachedNose: nose, dt: frameDt });
+    const result = stepAircraft({ yaw: aircraftYaw, tugYaw, previousNose, attachedNose: nose, dt: frameDt });
     aircraftYaw = result.yaw;
     maxYawStep = Math.max(maxYawStep, Math.abs(result.yawStep));
-    maxArticulation = Math.max(maxArticulation, Math.abs(shortestAngleDelta(aircraftYaw, tugYaw)));
+    maxArticulation = Math.max(maxArticulation, Math.abs(result.articulation));
   }
   return { aircraftYaw, tugYaw, maxYawStep, maxArticulation, nose };
 }
@@ -49,7 +53,7 @@ for (const [label, run, dt] of [["30 Hz", run30, 1 / 30], ["60 Hz", run60, 1 / 6
   if (run.aircraftYaw <= 0) failures.push(`${label} aircraft failed to follow curved cradle path`);
   if (run.aircraftYaw >= run.tugYaw) failures.push(`${label} aircraft incorrectly snapped to tug heading`);
   if (run.maxYawStep > MAX_YAW_RATE * dt + 1e-12) failures.push(`${label} exceeded yaw-rate cap: ${run.maxYawStep}`);
-  if (run.maxArticulation > 70 * Math.PI / 180) failures.push(`${label} articulation exceeded safe envelope: ${run.maxArticulation}`);
+  if (run.maxArticulation > MAX_ARTICULATION + 1e-12) failures.push(`${label} articulation exceeded safe envelope: ${run.maxArticulation}`);
 }
 if (Math.abs(run30.aircraftYaw - run60.aircraftYaw) > 0.01) failures.push(`30/60 Hz yaw divergence: ${run30.aircraftYaw} vs ${run60.aircraftYaw}`);
 if (Math.abs(run120.aircraftYaw - run60.aircraftYaw) > 0.01) failures.push(`120/60 Hz yaw divergence: ${run120.aircraftYaw} vs ${run60.aircraftYaw}`);
@@ -60,14 +64,17 @@ const reverse120 = simulate({ dt: 1 / 120, speed: -0.8, turnRate: -7 * Math.PI /
 for (const [label, run, dt] of [["reverse 30 Hz", reverse30, 1 / 30], ["reverse 60 Hz", reverse60, 1 / 60], ["reverse 120 Hz", reverse120, 1 / 120]]) {
   if (run.aircraftYaw <= 0) failures.push(`${label} aircraft yawed opposite the reverse cradle path`);
   if (run.maxYawStep > MAX_YAW_RATE * dt + 1e-12) failures.push(`${label} exceeded yaw-rate cap: ${run.maxYawStep}`);
-  if (run.maxArticulation > 70 * Math.PI / 180) failures.push(`${label} articulation exceeded safe envelope: ${run.maxArticulation}`);
+  if (run.maxArticulation > MAX_ARTICULATION + 1e-12) failures.push(`${label} articulation exceeded safe envelope: ${run.maxArticulation}`);
   if (run.nose.z >= 0) failures.push(`${label} nose failed to travel in reverse: ${run.nose.z}`);
 }
 if (Math.abs(reverse30.aircraftYaw - reverse60.aircraftYaw) > 0.01) failures.push(`Reverse 30/60 Hz yaw divergence: ${reverse30.aircraftYaw} vs ${reverse60.aircraftYaw}`);
 if (Math.abs(reverse120.aircraftYaw - reverse60.aircraftYaw) > 0.01) failures.push(`Reverse 120/60 Hz yaw divergence: ${reverse120.aircraftYaw} vs ${reverse60.aircraftYaw}`);
 
-const sudden = stepAircraft({ yaw: 0, previousNose: { x: 0, z: 0 }, attachedNose: { x: 1, z: 0 }, dt: 0.016 });
+const sudden = stepAircraft({ yaw: 0, tugYaw: 0, previousNose: { x: 0, z: 0 }, attachedNose: { x: 1, z: 0 }, dt: 0.016 });
 if (Math.abs(sudden.yawStep) > MAX_YAW_RATE * 0.016 + 1e-12) failures.push(`Sudden lateral cradle motion exceeded yaw cap: ${sudden.yawStep}`);
+
+const envelope = stepAircraft({ yaw: 89 * Math.PI / 180, tugYaw: 0, previousNose: { x: 0, z: 0 }, attachedNose: { x: 1, z: 0 }, dt: 1 / 30 });
+if (Math.abs(envelope.articulation) > MAX_ARTICULATION + 1e-12) failures.push(`Articulation clamp failed from unsafe initial state: ${envelope.articulation}`);
 
 if (failures.length) {
   console.error("RampReady tow-kinematics verification failed:");
