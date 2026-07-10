@@ -260,7 +260,7 @@ export default function RampReadyTrainerStable() {
     aircraft.scale.set(0.82, 0.82, 0.82);
     scene.add(tug, aircraft);
 
-    const sim = { scene, renderer, camera, tug, wheels, aircraft, velocity: 0, steer: 0, connected: false, last: performance.now() };
+    const sim = { scene, renderer, camera, tug, wheels, aircraft, velocity: 0, steer: 0, connected: false, last: performance.now(), lastHud: 0 };
     simRef.current = sim;
 
     const pointer = { active: false, x: 0, y: 0 };
@@ -306,10 +306,12 @@ export default function RampReadyTrainerStable() {
 
       const throttleNorm = drive.throttle;
       const usefulThrottle = throttleNorm > 0.02 ? 0.16 + throttleNorm * 0.84 : 0;
-      const connectedPushPhase = sim.connected && stageRef.current >= 4;
-      const signedDirection = connectedPushPhase ? (drive.direction === -1 ? 1 : -1) : drive.direction;
+      const connectedPushPhase = sim.connected && stageRef.current === 4;
+      const connectedMotionLocked = sim.connected && !connectedPushPhase;
+      const pushDirectionLocked = connectedPushPhase && drive.direction !== -1;
+      const signedDirection = connectedPushPhase ? 1 : drive.direction;
       const maxSpeed = sim.connected ? MAX_TOW_SPEED : MAX_FREE_SPEED;
-      const targetSpeed = usefulThrottle * signedDirection * maxSpeed;
+      const targetSpeed = connectedMotionLocked || pushDirectionLocked ? 0 : usefulThrottle * signedDirection * maxSpeed;
       sim.velocity = lerp(sim.velocity, targetSpeed, 1 - Math.exp((sim.connected ? -3.4 : -4.4) * dt));
       if (drive.brake || keysRef.current.has(" ")) sim.velocity = lerp(sim.velocity, 0, 1 - Math.exp(-9 * dt));
       if (usefulThrottle === 0) sim.velocity = lerp(sim.velocity, 0, 1 - Math.exp(-1.7 * dt));
@@ -408,22 +410,25 @@ export default function RampReadyTrainerStable() {
 
       let liveMessage = messageRef.current;
       const quality = scoreState.score >= 90 ? "Clean" : scoreState.score >= 75 ? "Caution" : "Needs reset";
-      const gate = stageRef.current === 1 && ready ? "Ready to connect" : stageRef.current === 4 && drive.direction !== -1 ? "REV required" : stageRef.current === 4 && stopRemaining <= STOP_REMAINING_CAUTION ? "Brake zone" : stageRef.current === 5 ? "Release ready" : "Training";
+      const gate = stageRef.current === 1 && ready ? "Ready to connect" : [2, 3].includes(stageRef.current) ? "Power locked" : stageRef.current === 4 && drive.direction !== -1 ? "REV required" : stageRef.current === 4 && stopRemaining <= STOP_REMAINING_CAUTION ? "Brake zone" : stageRef.current === 5 ? "Release ready" : "Training";
       if (stageRef.current === 1) liveMessage = ready ? "Capture distance green. Tap Connect nose gear." : `Capture ${capture.toFixed(1)} m. Approach slowly.`;
       if (stageRef.current === 4 && drive.direction !== -1) liveMessage = "Direction should be REV for pushback. Power locked until REV is selected.";
       if (stageRef.current === 4 && drive.direction === -1 && stopRemaining <= STOP_REMAINING_CAUTION) liveMessage = "Red line ahead. Idle power and brake smoothly.";
-      setHud({
-        speed: Math.abs(sim.velocity),
-        stop: stopRemaining,
-        capture,
-        ready,
-        connected: sim.connected,
-        score: scoreState.score,
-        quality,
-        crossline,
-        gate,
-        debug: `thr ${Math.round(drive.throttle * 100)} cmd ${targetSpeed.toFixed(2)} vel ${sim.velocity.toFixed(2)} tugZ ${sim.tug.position.z.toFixed(1)} cradleZ ${cradle.z.toFixed(1)} noseZ ${sim.aircraft.position.z.toFixed(1)} xline ${crossline.toFixed(1)} gate ${gate} score ${scoreState.score}`,
-      });
+      if (now - sim.lastHud >= 100) {
+        sim.lastHud = now;
+        setHud({
+          speed: Math.abs(sim.velocity),
+          stop: stopRemaining,
+          capture,
+          ready,
+          connected: sim.connected,
+          score: scoreState.score,
+          quality,
+          crossline,
+          gate,
+          debug: `thr ${Math.round(drive.throttle * 100)} cmd ${targetSpeed.toFixed(2)} vel ${sim.velocity.toFixed(2)} tugZ ${sim.tug.position.z.toFixed(1)} cradleZ ${cradle.z.toFixed(1)} noseZ ${sim.aircraft.position.z.toFixed(1)} xline ${crossline.toFixed(1)} gate ${gate} score ${scoreState.score}`,
+        });
+      }
       if (liveMessage !== messageRef.current && (stageRef.current === 1 || stageRef.current === 4)) setTrainerMessage(liveMessage);
       renderer.render(scene, camera);
       raf = requestAnimationFrame(tick);

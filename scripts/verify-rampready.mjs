@@ -62,7 +62,7 @@ if (existsSync("src/components/RampReadyTrainerStable.jsx")) {
   requireHard(!trainer.includes("CRADLE_OFFSET_Z = 11.5"), "Cradle geometry regressed to the oversized stretched bucket");
   requireHard(!trainer.includes("CRADLE_OFFSET_Z - 2.7"), "Cradle arms must not stretch from the cradle offset");
   requireHard(trainer.includes("const usefulThrottle = throttleNorm > 0.02 ? 0.16 + throttleNorm * 0.84 : 0"), "Stable trainer must preserve minimum usable throttle behavior");
-  requireHard(trainer.includes("const targetSpeed = usefulThrottle * signedDirection * maxSpeed"), "Stable trainer must map throttle to target speed");
+  requireHard(trainer.includes("const targetSpeed = connectedMotionLocked || pushDirectionLocked ? 0 : usefulThrottle * signedDirection * maxSpeed"), "Stable trainer must map throttle to an interlocked target speed");
   requireHard(trainer.includes("Connect nose gear"), "Stable trainer must keep explicit nose-gear connect workflow");
   requireHard(trainer.includes("releaseNoseGear"), "Stable trainer must keep explicit nose-gear release workflow");
   requireHard(trainer.includes("Scenario complete. Score"), "Release workflow must mark scenario completion with final score");
@@ -81,6 +81,8 @@ if (existsSync("src/components/RampReadyTrainerStable.jsx")) {
   requireHard(trainer.includes("Stopped at the red line, but arrival was too fast"), "Trainer must catch hard red-line arrivals instead of letting the aircraft sail through");
   requireHard(trainer.includes("STOP_REMAINING_CAUTION"), "Trainer must expose an early red-line braking caution distance");
   requireHard(trainer.includes("wrongDirection") && trainer.includes("Power locked until REV is selected"), "Trainer must lock power and coach direction during connected pushback");
+  requireHard(trainer.includes("connectedMotionLocked") && trainer.includes("pushDirectionLocked"), "Trainer must lock connected motion outside the active pushback stage");
+  requireHard(trainer.includes("now - sim.lastHud >= 100"), "Trainer must throttle HUD state updates to protect animation smoothness");
   requireHard(trainer.includes("Release is locked until the aircraft is stopped at the red line"), "Trainer must prevent early nose-gear release");
   requireHard(trainer.includes("rr-stage-gate") && trainer.includes("hud.gate"), "Trainer must render a live procedure gate indicator");
   requireHard(trainer.includes("procedure-gates.css"), "Trainer must load procedure gate styling");
@@ -101,6 +103,8 @@ if (existsSync("scripts/verify-physics.mjs")) {
   const physicsMarkers = [
     "Partial free-drive throttle too weak",
     "Connected REV should produce positive pushback speed",
+    "Connected FWD power should be locked",
+    "Connected stage",
     "Cradle offset too long",
     "Initial tug-body-to-nose spacing",
   ];

@@ -16,10 +16,12 @@ function lerp(a, b, t) {
 
 function stepVelocity({ velocity, throttle, direction, connected, stage, dt = 0.016 }) {
   const usefulThrottle = throttle > 0.02 ? 0.16 + throttle * 0.84 : 0;
-  const connectedPushPhase = connected && stage >= 4;
-  const signedDirection = connectedPushPhase ? (direction === -1 ? 1 : -1) : direction;
+  const connectedPushPhase = connected && stage === 4;
+  const connectedMotionLocked = connected && !connectedPushPhase;
+  const pushDirectionLocked = connectedPushPhase && direction !== -1;
+  const signedDirection = connectedPushPhase ? 1 : direction;
   const maxSpeed = connected ? MAX_TOW_SPEED : MAX_FREE_SPEED;
-  const targetSpeed = usefulThrottle * signedDirection * maxSpeed;
+  const targetSpeed = connectedMotionLocked || pushDirectionLocked ? 0 : usefulThrottle * signedDirection * maxSpeed;
   const nextVelocity = lerp(velocity, targetSpeed, 1 - Math.exp((connected ? -3.4 : -4.4) * dt));
   return { usefulThrottle, targetSpeed, nextVelocity };
 }
@@ -34,9 +36,16 @@ const connectedRev = stepVelocity({ velocity: 0, throttle: 0.25, direction: -1, 
 if (connectedRev.targetSpeed <= 0) failures.push(`Connected REV should produce positive pushback speed, got ${connectedRev.targetSpeed}`);
 if (connectedRev.nextVelocity <= 0.01) failures.push(`Connected REV should move on first frame, got ${connectedRev.nextVelocity}`);
 
-// FWD during pushback should be opposite direction so the instruction warning is meaningful.
+// FWD during pushback must be interlocked rather than briefly moving the aircraft the wrong way.
 const connectedFwd = stepVelocity({ velocity: 0, throttle: 0.25, direction: 1, connected: true, stage: 4 });
-if (connectedFwd.targetSpeed >= 0) failures.push(`Connected FWD should be opposite/reverse from pushback path, got ${connectedFwd.targetSpeed}`);
+if (connectedFwd.targetSpeed !== 0) failures.push(`Connected FWD power should be locked, got ${connectedFwd.targetSpeed}`);
+
+// Connected equipment must remain stationary through clearance, brake confirmation, and release.
+for (const stage of [2, 3, 5]) {
+  const locked = stepVelocity({ velocity: 0, throttle: 1, direction: stage === 5 ? -1 : 1, connected: true, stage });
+  if (locked.targetSpeed !== 0) failures.push(`Connected stage ${stage} should lock motion, got ${locked.targetSpeed}`);
+  if (locked.nextVelocity !== 0) failures.push(`Connected stage ${stage} should remain stationary, got ${locked.nextVelocity}`);
+}
 
 // Stable trainer uses a short integrated cradle, not a stretched bucket arm.
 if (CRADLE_Z >= 4.5) failures.push(`Cradle offset too long: ${CRADLE_Z}`);
