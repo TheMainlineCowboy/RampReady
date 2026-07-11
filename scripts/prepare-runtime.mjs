@@ -1,4 +1,4 @@
-import { readFile, rename, writeFile } from "node:fs/promises";
+import { readFile, rename, rm, writeFile } from "node:fs/promises";
 
 const trainerPath = new URL("../src/components/RampReadyTrainerStable.jsx", import.meta.url);
 const tempPath = new URL("../src/components/.RampReadyTrainerStable.jsx.tmp", import.meta.url);
@@ -119,8 +119,13 @@ if (prepared === source) {
   process.exit(0);
 }
 
-await writeFile(tempPath, prepared, "utf8");
-await rename(tempPath, trainerPath);
+try {
+  await writeFile(tempPath, prepared, { encoding: "utf8", flag: "wx" });
+  await rename(tempPath, trainerPath);
+} finally {
+  await rm(tempPath, { force: true });
+}
+
 const persisted = await readFile(trainerPath, "utf8");
 if (persisted !== prepared) {
   console.error("RampReady runtime preparation failed: prepared trainer source did not persist exactly.");
