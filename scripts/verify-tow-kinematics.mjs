@@ -1,6 +1,7 @@
 const WHEELBASE = 11.2;
 const MAX_YAW_RATE = 12 * Math.PI / 180;
 const MAX_ARTICULATION = 70 * Math.PI / 180;
+const MAX_CAPTURE_CORRECTION_SPEED = 0.28;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const shortestAngleDelta = (from, to) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
 
@@ -16,6 +17,35 @@ function stepAircraft({ yaw, tugYaw, previousNose, attachedNose, dt }) {
   const boundedArticulation = clamp(currentArticulation + yawRateStep, -MAX_ARTICULATION, MAX_ARTICULATION);
   const nextYaw = tugYaw + boundedArticulation;
   return { yaw: nextYaw, yawStep: shortestAngleDelta(yaw, nextYaw), articulation: boundedArticulation };
+}
+
+function stepCaptureOffset(offset, dt) {
+  const distance = Math.hypot(offset.x, offset.z);
+  if (distance <= 1e-12) return { offset: { x: 0, z: 0 }, correction: 0 };
+  const correction = Math.min(distance, MAX_CAPTURE_CORRECTION_SPEED * dt);
+  const remainingScale = (distance - correction) / distance;
+  return {
+    offset: { x: offset.x * remainingScale, z: offset.z * remainingScale },
+    correction,
+  };
+}
+
+function simulateCapture({ dt, seconds = 2, initialOffset = { x: 0.36, z: 0.22 } }) {
+  let offset = { ...initialOffset };
+  let maxCorrection = 0;
+  let previousDistance = Math.hypot(offset.x, offset.z);
+  const frames = Math.ceil(seconds / dt);
+  for (let frame = 0; frame < frames; frame += 1) {
+    const frameDt = Math.min(dt, seconds - frame * dt);
+    if (frameDt <= 0) break;
+    const result = stepCaptureOffset(offset, frameDt);
+    offset = result.offset;
+    maxCorrection = Math.max(maxCorrection, result.correction);
+    const distance = Math.hypot(offset.x, offset.z);
+    if (distance > previousDistance + 1e-12) throw new Error(`Capture correction moved away from cradle: ${distance} > ${previousDistance}`);
+    previousDistance = distance;
+  }
+  return { remaining: Math.hypot(offset.x, offset.z), maxCorrection };
 }
 
 function simulate({ dt, seconds = 6, speed = 0.8, turnRate = 7 * Math.PI / 180 }) {
@@ -45,6 +75,19 @@ function simulate({ dt, seconds = 6, speed = 0.8, turnRate = 7 * Math.PI / 180 }
 const failures = [];
 const straight = simulate({ dt: 1 / 60, turnRate: 0 });
 if (Math.abs(straight.aircraftYaw) > 1e-12) failures.push(`Straight tow introduced aircraft yaw: ${straight.aircraftYaw}`);
+
+const capture30 = simulateCapture({ dt: 1 / 30 });
+const capture60 = simulateCapture({ dt: 1 / 60 });
+const capture120 = simulateCapture({ dt: 1 / 120 });
+for (const [label, run, dt] of [["capture 30 Hz", capture30, 1 / 30], ["capture 60 Hz", capture60, 1 / 60], ["capture 120 Hz", capture120, 1 / 120]]) {
+  if (run.maxCorrection > MAX_CAPTURE_CORRECTION_SPEED * dt + 1e-12) failures.push(`${label} exceeded capture correction rate: ${run.maxCorrection}`);
+  if (run.remaining > 1e-9) failures.push(`${label} failed to settle capture offset: ${run.remaining}`);
+}
+if (Math.abs(capture30.remaining - capture60.remaining) > 1e-9) failures.push(`Capture 30/60 Hz divergence: ${capture30.remaining} vs ${capture60.remaining}`);
+if (Math.abs(capture120.remaining - capture60.remaining) > 1e-9) failures.push(`Capture 120/60 Hz divergence: ${capture120.remaining} vs ${capture60.remaining}`);
+const oneFrameCapture = stepCaptureOffset({ x: 0.42, z: 0 }, 0.04);
+if (oneFrameCapture.correction > MAX_CAPTURE_CORRECTION_SPEED * 0.04 + 1e-12) failures.push(`Single-frame capture correction teleported: ${oneFrameCapture.correction}`);
+if (oneFrameCapture.offset.x < -1e-12) failures.push(`Single-frame capture correction overshot cradle: ${oneFrameCapture.offset.x}`);
 
 const run30 = simulate({ dt: 1 / 30 });
 const run60 = simulate({ dt: 1 / 60 });
@@ -81,4 +124,4 @@ if (failures.length) {
   for (const failure of failures) console.error(`- ${failure}`);
   process.exit(1);
 }
-console.log(`RampReady tow-kinematics verification passed: forward yaw ${(run60.aircraftYaw * 180 / Math.PI).toFixed(2)}°, reverse yaw ${(reverse60.aircraftYaw * 180 / Math.PI).toFixed(2)}°, max forward articulation ${(run60.maxArticulation * 180 / Math.PI).toFixed(2)}°, max reverse articulation ${(reverse60.maxArticulation * 180 / Math.PI).toFixed(2)}°.`);
+console.log(`RampReady tow-kinematics verification passed: capture correction <= ${MAX_CAPTURE_CORRECTION_SPEED.toFixed(2)} m/s, forward yaw ${(run60.aircraftYaw * 180 / Math.PI).toFixed(2)}°, reverse yaw ${(reverse60.aircraftYaw * 180 / Math.PI).toFixed(2)}°, max forward articulation ${(run60.maxArticulation * 180 / Math.PI).toFixed(2)}°, max reverse articulation ${(reverse60.maxArticulation * 180 / Math.PI).toFixed(2)}°.`);
