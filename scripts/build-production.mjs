@@ -25,6 +25,7 @@ try {
   await run(process.execPath, ["scripts/verify-prepared-runtime.mjs"]);
   await run(process.execPath, ["scripts/verify-lektro-clearance.mjs"]);
   await run(process.execPath, ["scripts/verify-nose-gear-seating.mjs"]);
+  await run(process.execPath, ["scripts/verify-capture-settling.mjs"]);
   await run(process.execPath, ["scripts/verify-training-route.mjs"]);
   await run(process.execPath, ["scripts/verify-physics.mjs"]);
   await run(process.execPath, ["scripts/verify-partial-throttle.mjs"]);
