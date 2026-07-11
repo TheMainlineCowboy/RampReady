@@ -28,7 +28,10 @@ try {
   await run(npmCommand, ["exec", "--", "vite", "build"]);
 } catch (error) {
   buildError = error;
-} finally {
+}
+
+let restorationError;
+try {
   await writeFile(trainerPath, originalSource, "utf8");
   const restoredSource = await readFile(trainerPath, "utf8");
   const currentPackage = await readFile(packagePath, "utf8");
@@ -38,7 +41,16 @@ try {
   if (currentPackage !== originalPackage) {
     throw new Error("RampReady production build unexpectedly modified package.json.");
   }
+} catch (error) {
+  restorationError = error;
 }
 
+if (buildError && restorationError) {
+  throw new AggregateError(
+    [buildError, restorationError],
+    "RampReady production build failed and source restoration also failed.",
+  );
+}
+if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 console.log("RampReady production build passed and restored the tracked trainer source exactly.");
