@@ -34,6 +34,7 @@ jobs:
         run: npm ci
 
       - name: Build verified production bundle
+        id: production-build
         shell: bash
         run: |
           set -o pipefail
@@ -49,8 +50,14 @@ jobs:
           retention-days: 7
 
       - name: Verify build left tracked source clean
+        if: always()
         shell: bash
-        run: git diff --exit-code -- . ':!dist'
+        run: |
+          if ! git diff --exit-code -- . ':!dist'; then
+            echo "Build left tracked files modified. The diff above identifies the leaked runtime transformation."
+            exit 1
+          fi
+          echo "Build left the tracked source tree clean."
 
       - name: Smoke-check deploy output
         shell: bash
