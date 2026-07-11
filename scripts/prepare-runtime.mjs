@@ -5,6 +5,8 @@ const tempPath = new URL("../src/components/.RampReadyTrainerStable.jsx.tmp", im
 const source = await readFile(trainerPath, "utf8");
 const legacyDirectionLine = "const signedDirection = connectedPushPhase ? 1 : drive.direction;";
 const physicalDirectionLine = "const signedDirection = drive.direction;";
+const legacyVelocityFloorLine = "if (Math.abs(sim.velocity) < 0.01) sim.velocity = 0;";
+const responsiveVelocityFloorLine = "if (Math.abs(sim.velocity) < 0.01 && usefulThrottle === 0) sim.velocity = 0;";
 const connectedLine = "sim.connected = true;";
 const connectedResetBlock = `sim.connected = true;
     sim.lastAttachedNose = null;`;
@@ -60,6 +62,19 @@ if (physicalDirectionCount === 0) {
   process.exit(1);
 }
 
+const responsiveVelocityFloorCount = count(prepared, responsiveVelocityFloorLine);
+const legacyVelocityFloorCount = count(prepared, legacyVelocityFloorLine);
+if (responsiveVelocityFloorCount === 0) {
+  if (legacyVelocityFloorCount !== 1) {
+    console.error(`RampReady runtime preparation failed: expected one velocity floor implementation, found responsive=${responsiveVelocityFloorCount}, legacy=${legacyVelocityFloorCount}.`);
+    process.exit(1);
+  }
+  prepared = prepared.replace(legacyVelocityFloorLine, responsiveVelocityFloorLine);
+} else if (responsiveVelocityFloorCount !== 1 || legacyVelocityFloorCount !== 0) {
+  console.error(`RampReady runtime preparation failed: ambiguous velocity floor implementation, found responsive=${responsiveVelocityFloorCount}, legacy=${legacyVelocityFloorCount}.`);
+  process.exit(1);
+}
+
 const preparedAttachmentCount = count(prepared, preparedAttachmentBlock);
 const legacyAttachmentCount = count(prepared, legacyAttachmentBlock);
 if (preparedAttachmentCount === 0) {
@@ -94,13 +109,13 @@ if (disconnectResetCount === 0) {
   process.exit(1);
 }
 
-if (count(prepared, physicalDirectionLine) !== 1 || count(prepared, preparedAttachmentBlock) !== 1 || count(prepared, connectedResetBlock) !== 1 || count(prepared, disconnectedResetBlock) !== 2 || prepared.includes(legacyDirectionLine) || prepared.includes(legacyAttachmentBlock)) {
+if (count(prepared, physicalDirectionLine) !== 1 || count(prepared, responsiveVelocityFloorLine) !== 1 || count(prepared, preparedAttachmentBlock) !== 1 || count(prepared, connectedResetBlock) !== 1 || count(prepared, disconnectedResetBlock) !== 2 || prepared.includes(legacyDirectionLine) || prepared.includes(legacyVelocityFloorLine) || prepared.includes(legacyAttachmentBlock)) {
   console.error("RampReady runtime preparation failed: runtime transformations did not produce one clean implementation.");
   process.exit(1);
 }
 
 if (prepared === source) {
-  console.log("RampReady runtime preparation passed: reverse travel, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history already present.");
+  console.log("RampReady runtime preparation passed: reverse travel, frame-rate-stable partial throttle, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history already present.");
   process.exit(0);
 }
 
@@ -112,4 +127,4 @@ if (persisted !== prepared) {
   process.exit(1);
 }
 
-console.log("RampReady runtime preparation applied and verified reverse travel, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history.");
+console.log("RampReady runtime preparation applied and verified reverse travel, frame-rate-stable partial throttle, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history.");
