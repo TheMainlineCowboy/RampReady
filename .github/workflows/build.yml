@@ -47,7 +47,14 @@ jobs:
           retention-days: 7
 
       - name: Verify build did not mutate tracked source
-        run: git diff --exit-code -- . ':!dist'
+        if: always()
+        shell: bash
+        run: |
+          if ! git diff --exit-code -- . ':!dist'; then
+            echo "Production build left tracked repository files modified."
+            echo "Runtime preparation must restore the trainer and all verification inputs even after failure."
+            exit 1
+          fi
 
       - name: Verify deploy artifact
         run: |
