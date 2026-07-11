@@ -23,6 +23,7 @@ try {
   await run(npmCommand, ["run", "prepare:runtime"]);
   await run(process.execPath, ["scripts/verify-rampready.mjs"]);
   await run(process.execPath, ["scripts/verify-prepared-runtime.mjs"]);
+  await run(process.execPath, ["scripts/verify-lektro-clearance.mjs"]);
   await run(process.execPath, ["scripts/verify-physics.mjs"]);
   await run(process.execPath, ["scripts/verify-partial-throttle.mjs"]);
   await run(process.execPath, ["scripts/verify-tow-kinematics.mjs"]);
