@@ -17,7 +17,7 @@ function stepVelocity({ velocity, throttle, direction, connected, stage, dt }) {
     : usefulThrottle * signedDirection * maxSpeed;
   let nextVelocity = lerp(velocity, targetSpeed, 1 - Math.exp((connected ? -3.4 : -4.4) * dt));
   if (usefulThrottle === 0) nextVelocity = lerp(nextVelocity, 0, 1 - Math.exp(-1.7 * dt));
-  if (Math.abs(nextVelocity) < 0.01) nextVelocity = 0;
+  if (Math.abs(nextVelocity) < 0.01 && usefulThrottle === 0) nextVelocity = 0;
   return { targetSpeed, nextVelocity };
 }
 
