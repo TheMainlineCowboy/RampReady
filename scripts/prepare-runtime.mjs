@@ -7,6 +7,14 @@ const legacyDirectionLine = "const signedDirection = connectedPushPhase ? 1 : dr
 const physicalDirectionLine = "const signedDirection = drive.direction;";
 const legacyVelocityFloorLine = "if (Math.abs(sim.velocity) < 0.01) sim.velocity = 0;";
 const responsiveVelocityFloorLine = "if (Math.abs(sim.velocity) < 0.01 && usefulThrottle === 0) sim.velocity = 0;";
+const legacyStopLine = "const STOP_Z = 52;";
+const physicalStopLine = "const STOP_Z = -39.6;";
+const legacyHudDistance = "stop: STOP_Z - NOSE_START_Z";
+const physicalHudDistance = "stop: NOSE_START_Z - STOP_Z";
+const legacyRemainingLine = "const stopRemaining = STOP_Z - sim.aircraft.position.z;";
+const physicalRemainingLine = "const stopRemaining = sim.aircraft.position.z - STOP_Z;";
+const legacyCompletionLine = "if (towActive && sim.aircraft.position.z >= STOP_Z - 0.5) {";
+const physicalCompletionLine = "if (towActive && sim.aircraft.position.z <= STOP_Z + 0.5) {";
 const connectedLine = "sim.connected = true;";
 const connectedResetBlock = `sim.connected = true;
     sim.lastAttachedNose = null;`;
@@ -55,31 +63,27 @@ async function reportRuntimeSourceState(state, detail) {
 const count = (value, needle) => value.split(needle).length - 1;
 let prepared = source;
 
-const physicalDirectionCount = count(prepared, physicalDirectionLine);
-const legacyDirectionCount = count(prepared, legacyDirectionLine);
-if (physicalDirectionCount === 0) {
-  if (legacyDirectionCount !== 1) {
-    console.error(`RampReady runtime preparation failed: expected one direction implementation, found physical=${physicalDirectionCount}, legacy=${legacyDirectionCount}.`);
+function replaceExactlyOne(legacy, physical, label) {
+  const physicalCount = count(prepared, physical);
+  const legacyCount = count(prepared, legacy);
+  if (physicalCount === 0) {
+    if (legacyCount !== 1) {
+      console.error(`RampReady runtime preparation failed: expected one ${label} implementation, found physical=${physicalCount}, legacy=${legacyCount}.`);
+      process.exit(1);
+    }
+    prepared = prepared.replace(legacy, physical);
+  } else if (physicalCount !== 1 || legacyCount !== 0) {
+    console.error(`RampReady runtime preparation failed: ambiguous ${label} implementation, found physical=${physicalCount}, legacy=${legacyCount}.`);
     process.exit(1);
   }
-  prepared = prepared.replace(legacyDirectionLine, physicalDirectionLine);
-} else if (physicalDirectionCount !== 1 || legacyDirectionCount !== 0) {
-  console.error(`RampReady runtime preparation failed: ambiguous direction implementation, found physical=${physicalDirectionCount}, legacy=${legacyDirectionCount}.`);
-  process.exit(1);
 }
 
-const responsiveVelocityFloorCount = count(prepared, responsiveVelocityFloorLine);
-const legacyVelocityFloorCount = count(prepared, legacyVelocityFloorLine);
-if (responsiveVelocityFloorCount === 0) {
-  if (legacyVelocityFloorCount !== 1) {
-    console.error(`RampReady runtime preparation failed: expected one velocity floor implementation, found responsive=${responsiveVelocityFloorCount}, legacy=${legacyVelocityFloorCount}.`);
-    process.exit(1);
-  }
-  prepared = prepared.replace(legacyVelocityFloorLine, responsiveVelocityFloorLine);
-} else if (responsiveVelocityFloorCount !== 1 || legacyVelocityFloorCount !== 0) {
-  console.error(`RampReady runtime preparation failed: ambiguous velocity floor implementation, found responsive=${responsiveVelocityFloorCount}, legacy=${legacyVelocityFloorCount}.`);
-  process.exit(1);
-}
+replaceExactlyOne(legacyDirectionLine, physicalDirectionLine, "direction");
+replaceExactlyOne(legacyVelocityFloorLine, responsiveVelocityFloorLine, "velocity floor");
+replaceExactlyOne(legacyStopLine, physicalStopLine, "reverse stop target");
+replaceExactlyOne(legacyHudDistance, physicalHudDistance, "initial stop distance");
+replaceExactlyOne(legacyRemainingLine, physicalRemainingLine, "remaining-distance calculation");
+replaceExactlyOne(legacyCompletionLine, physicalCompletionLine, "stop completion gate");
 
 const preparedAttachmentCount = count(prepared, preparedAttachmentBlock);
 const legacyAttachmentCount = count(prepared, legacyAttachmentBlock);
@@ -115,18 +119,20 @@ if (disconnectResetCount === 0) {
   process.exit(1);
 }
 
-if (count(prepared, physicalDirectionLine) !== 1 || count(prepared, responsiveVelocityFloorLine) !== 1 || count(prepared, preparedAttachmentBlock) !== 1 || count(prepared, connectedResetBlock) !== 1 || count(prepared, disconnectedResetBlock) !== 2 || prepared.includes(legacyDirectionLine) || prepared.includes(legacyVelocityFloorLine) || prepared.includes(legacyAttachmentBlock)) {
+const requiredPreparedLines = [physicalDirectionLine, responsiveVelocityFloorLine, physicalStopLine, physicalHudDistance, physicalRemainingLine, physicalCompletionLine];
+const forbiddenLegacyLines = [legacyDirectionLine, legacyVelocityFloorLine, legacyStopLine, legacyHudDistance, legacyRemainingLine, legacyCompletionLine];
+if (requiredPreparedLines.some((line) => count(prepared, line) !== 1) || count(prepared, preparedAttachmentBlock) !== 1 || count(prepared, connectedResetBlock) !== 1 || count(prepared, disconnectedResetBlock) !== 2 || forbiddenLegacyLines.some((line) => prepared.includes(line)) || prepared.includes(legacyAttachmentBlock)) {
   console.error("RampReady runtime preparation failed: runtime transformations did not produce one clean implementation.");
   process.exit(1);
 }
 
 if (prepared === source) {
-  await reportRuntimeSourceState("tracked implementation", "Verified towing behavior is committed directly in RampReadyTrainerStable.jsx; no source rewrite was required.");
-  console.log("RampReady runtime preparation passed: reverse travel, frame-rate-stable partial throttle, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history already present.");
+  await reportRuntimeSourceState("tracked implementation", "Verified towing behavior and reverse-route geometry are committed directly in RampReadyTrainerStable.jsx; no source rewrite was required.");
+  console.log("RampReady runtime preparation passed: reverse route, reverse travel, frame-rate-stable partial throttle, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history already present.");
   process.exit(0);
 }
 
-await reportRuntimeSourceState("build-time transformation required", "The tracked trainer still contains legacy towing code. The build is using a temporary verified rewrite and is not yet the final source architecture.");
+await reportRuntimeSourceState("build-time transformation required", "The tracked trainer still contains legacy towing or route code. The build is using a temporary verified rewrite and is not yet the final source architecture.");
 
 try {
   await writeFile(tempPath, prepared, { encoding: "utf8", flag: "wx" });
@@ -141,4 +147,4 @@ if (persisted !== prepared) {
   process.exit(1);
 }
 
-console.log("RampReady runtime preparation applied and verified reverse travel, frame-rate-stable partial throttle, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history.");
+console.log("RampReady runtime preparation applied and verified reverse route, reverse travel, frame-rate-stable partial throttle, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history.");
