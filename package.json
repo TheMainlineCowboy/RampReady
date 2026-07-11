@@ -9,7 +9,7 @@
     "dev": "npm run prepare:runtime && vite --host 0.0.0.0",
     "build": "node scripts/build-production.mjs",
     "preview": "vite preview --host 0.0.0.0",
-    "verify": "node scripts/report-source-architecture.mjs && node scripts/verify-prepared-runtime.mjs && node scripts/verify-rampready.mjs && node scripts/verify-lektro-clearance.mjs && node scripts/verify-nose-gear-seating.mjs && node scripts/verify-capture-settling.mjs && node scripts/verify-training-route.mjs && node scripts/verify-physics.mjs && node scripts/verify-partial-throttle.mjs && node scripts/verify-tow-kinematics.mjs",
+    "verify": "node scripts/report-source-architecture.mjs && node scripts/verify-prepared-runtime.mjs && node scripts/verify-runtime-idempotence.mjs && node scripts/verify-rampready.mjs && node scripts/verify-lektro-clearance.mjs && node scripts/verify-nose-gear-seating.mjs && node scripts/verify-capture-settling.mjs && node scripts/verify-training-route.mjs && node scripts/verify-physics.mjs && node scripts/verify-partial-throttle.mjs && node scripts/verify-tow-kinematics.mjs",
     "build:checked": "npm run build"
   },
   "dependencies": {
