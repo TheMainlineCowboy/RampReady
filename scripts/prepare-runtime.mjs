@@ -1,4 +1,4 @@
-import { readFile, rename, rm, writeFile } from "node:fs/promises";
+import { appendFile, readFile, rename, rm, writeFile } from "node:fs/promises";
 
 const trainerPath = new URL("../src/components/RampReadyTrainerStable.jsx", import.meta.url);
 const tempPath = new URL("../src/components/.RampReadyTrainerStable.jsx.tmp", import.meta.url);
@@ -45,6 +45,12 @@ const preparedAttachmentBlock = `if (sim.connected) {
         sim.aircraft.position.z = attachedNoseZ;
         sim.lastAttachedNose.set(attachedNoseX, 0, attachedNoseZ);
       }`;
+
+async function reportRuntimeSourceState(state, detail) {
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (!summaryPath) return;
+  await appendFile(summaryPath, `### RampReady runtime source\n- State: **${state}**\n- ${detail}\n`, "utf8");
+}
 
 const count = (value, needle) => value.split(needle).length - 1;
 let prepared = source;
@@ -115,9 +121,12 @@ if (count(prepared, physicalDirectionLine) !== 1 || count(prepared, responsiveVe
 }
 
 if (prepared === source) {
+  await reportRuntimeSourceState("tracked implementation", "Verified towing behavior is committed directly in RampReadyTrainerStable.jsx; no source rewrite was required.");
   console.log("RampReady runtime preparation passed: reverse travel, frame-rate-stable partial throttle, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history already present.");
   process.exit(0);
 }
+
+await reportRuntimeSourceState("build-time transformation required", "The tracked trainer still contains legacy towing code. The build is using a temporary verified rewrite and is not yet the final source architecture.");
 
 try {
   await writeFile(tempPath, prepared, { encoding: "utf8", flag: "wx" });
