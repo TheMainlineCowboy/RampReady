@@ -15,6 +15,14 @@ const legacyRemainingLine = "const stopRemaining = STOP_Z - sim.aircraft.positio
 const physicalRemainingLine = "const stopRemaining = sim.aircraft.position.z - STOP_Z;";
 const legacyCompletionLine = "if (towActive && sim.aircraft.position.z >= STOP_Z - 0.5) {";
 const physicalCompletionLine = "if (towActive && sim.aircraft.position.z <= STOP_Z + 0.5) {";
+const legacyRampGeometry = "new THREE.PlaneGeometry(90, 120)";
+const physicalRampGeometry = "new THREE.PlaneGeometry(90, 140)";
+const legacyRampPosition = "ramp.position.z = 28;";
+const physicalRampPosition = "ramp.position.z = 18;";
+const legacyCenterlineGeometry = "new THREE.PlaneGeometry(0.16, 86)";
+const physicalCenterlineGeometry = "new THREE.PlaneGeometry(0.16, 130)";
+const legacyCenterlinePosition = "center.position.set(0, 0.018, 28);";
+const physicalCenterlinePosition = "center.position.set(0, 0.018, 18);";
 const connectedLine = "sim.connected = true;";
 const connectedResetBlock = `sim.connected = true;
     sim.lastAttachedNose = null;`;
@@ -84,6 +92,10 @@ replaceExactlyOne(legacyStopLine, physicalStopLine, "reverse stop target");
 replaceExactlyOne(legacyHudDistance, physicalHudDistance, "initial stop distance");
 replaceExactlyOne(legacyRemainingLine, physicalRemainingLine, "remaining-distance calculation");
 replaceExactlyOne(legacyCompletionLine, physicalCompletionLine, "stop completion gate");
+replaceExactlyOne(legacyRampGeometry, physicalRampGeometry, "ramp length");
+replaceExactlyOne(legacyRampPosition, physicalRampPosition, "ramp position");
+replaceExactlyOne(legacyCenterlineGeometry, physicalCenterlineGeometry, "centerline length");
+replaceExactlyOne(legacyCenterlinePosition, physicalCenterlinePosition, "centerline position");
 
 const preparedAttachmentCount = count(prepared, preparedAttachmentBlock);
 const legacyAttachmentCount = count(prepared, legacyAttachmentBlock);
@@ -119,20 +131,42 @@ if (disconnectResetCount === 0) {
   process.exit(1);
 }
 
-const requiredPreparedLines = [physicalDirectionLine, responsiveVelocityFloorLine, physicalStopLine, physicalHudDistance, physicalRemainingLine, physicalCompletionLine];
-const forbiddenLegacyLines = [legacyDirectionLine, legacyVelocityFloorLine, legacyStopLine, legacyHudDistance, legacyRemainingLine, legacyCompletionLine];
+const requiredPreparedLines = [
+  physicalDirectionLine,
+  responsiveVelocityFloorLine,
+  physicalStopLine,
+  physicalHudDistance,
+  physicalRemainingLine,
+  physicalCompletionLine,
+  physicalRampGeometry,
+  physicalRampPosition,
+  physicalCenterlineGeometry,
+  physicalCenterlinePosition,
+];
+const forbiddenLegacyLines = [
+  legacyDirectionLine,
+  legacyVelocityFloorLine,
+  legacyStopLine,
+  legacyHudDistance,
+  legacyRemainingLine,
+  legacyCompletionLine,
+  legacyRampGeometry,
+  legacyRampPosition,
+  legacyCenterlineGeometry,
+  legacyCenterlinePosition,
+];
 if (requiredPreparedLines.some((line) => count(prepared, line) !== 1) || count(prepared, preparedAttachmentBlock) !== 1 || count(prepared, connectedResetBlock) !== 1 || count(prepared, disconnectedResetBlock) !== 2 || forbiddenLegacyLines.some((line) => prepared.includes(line)) || prepared.includes(legacyAttachmentBlock)) {
   console.error("RampReady runtime preparation failed: runtime transformations did not produce one clean implementation.");
   process.exit(1);
 }
 
 if (prepared === source) {
-  await reportRuntimeSourceState("tracked implementation", "Verified towing behavior and reverse-route geometry are committed directly in RampReadyTrainerStable.jsx; no source rewrite was required.");
-  console.log("RampReady runtime preparation passed: reverse route, reverse travel, frame-rate-stable partial throttle, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history already present.");
+  await reportRuntimeSourceState("tracked implementation", "Verified towing behavior, reverse-route geometry, and ramp coverage are committed directly in RampReadyTrainerStable.jsx; no source rewrite was required.");
+  console.log("RampReady runtime preparation passed: reverse route, full ramp coverage, reverse travel, frame-rate-stable partial throttle, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history already present.");
   process.exit(0);
 }
 
-await reportRuntimeSourceState("build-time transformation required", "The tracked trainer still contains legacy towing or route code. The build is using a temporary verified rewrite and is not yet the final source architecture.");
+await reportRuntimeSourceState("build-time transformation required", "The tracked trainer still contains legacy towing, route, or ramp-coverage code. The build is using a temporary verified rewrite and is not yet the final source architecture.");
 
 try {
   await writeFile(tempPath, prepared, { encoding: "utf8", flag: "wx" });
@@ -147,4 +181,4 @@ if (persisted !== prepared) {
   process.exit(1);
 }
 
-console.log("RampReady runtime preparation applied and verified reverse route, reverse travel, frame-rate-stable partial throttle, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history.");
+console.log("RampReady runtime preparation applied and verified reverse route, full ramp coverage, reverse travel, frame-rate-stable partial throttle, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history.");
