@@ -5,6 +5,7 @@ const source = await readFile(trainerPath, "utf8");
 
 const requiredSnippets = [
   "const signedDirection = drive.direction;",
+  "if (Math.abs(sim.velocity) < 0.01 && usefulThrottle === 0) sim.velocity = 0;",
   "const maxCaptureCorrection = 0.28 * dt;",
   "if (!sim.lastAttachedNose) sim.lastAttachedNose = new THREE.Vector3(attachedNoseX, 0, attachedNoseZ);",
   "const requestedYawStep = lateralNoseTravel / 11.2;",
@@ -17,6 +18,7 @@ const requiredSnippets = [
 
 const forbiddenSnippets = [
   "const signedDirection = connectedPushPhase ? 1 : drive.direction;",
+  "if (Math.abs(sim.velocity) < 0.01) sim.velocity = 0;",
   "sim.aircraft.rotation.y = lerp(sim.aircraft.rotation.y, sim.tug.rotation.y, 1 - Math.exp(-0.7 * dt));",
 ];
 
@@ -40,4 +42,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("RampReady prepared runtime verified: physical reverse travel, bounded capture correction, rate-limited and envelope-constrained towing yaw, and clean reconnect history are active.");
+console.log("RampReady prepared runtime verified: physical reverse travel, frame-rate-safe partial throttle, bounded capture correction, rate-limited and envelope-constrained towing yaw, and clean reconnect history are active.");
