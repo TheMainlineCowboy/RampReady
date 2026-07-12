@@ -67,17 +67,42 @@ function dimensionsFromAccessors(gltf) {
 
 const chunkNames = (await readdir(chunkDirectory))
   .filter((name) => /^chunk-\d+\.txt$/.test(name))
-  .sort();
+  .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
 if (chunkNames.length < 2) fail(`expected multiple payload chunks, found ${chunkNames.length}`);
 
-const encoded = (await Promise.all(chunkNames.map(async (name) => (await readFile(new URL(name, chunkDirectory), "utf8")).trim()))).join("");
-if (!/^[A-Za-z0-9+/=]+$/.test(encoded)) fail("payload contains non-base64 characters");
+const chunkContents = await Promise.all(chunkNames.map(async (name) => ({
+  name,
+  content: (await readFile(new URL(name, chunkDirectory), "utf8")).trim(),
+})));
+for (const chunk of chunkContents) {
+  if (!chunk.content.length) fail(`${chunk.name} is empty`);
+  if (!/^[A-Za-z0-9+/=]+$/.test(chunk.content)) fail(`${chunk.name} contains non-base64 characters`);
+}
+
+const encoded = chunkContents.map(({ content }) => content).join("");
+const encodedSha256 = createHash("sha256").update(encoded, "utf8").digest("hex");
+const chunkInventory = chunkContents.map(({ name, content }) => `${name}:${content.length}`).join(", ");
+console.log(`CRJ700 payload inventory: ${chunkInventory}; total=${encoded.length}; base64-sha256=${encodedSha256}.`);
+
+if (encoded.length % 4 === 1) {
+  fail(`base64 payload length ${encoded.length} is impossible (remainder 1); committed payload is truncated`);
+}
+
+const compressed = Buffer.from(encoded, "base64");
+if (compressed.length < 18) fail(`compressed payload is only ${compressed.length} bytes`);
+if (compressed[0] !== 0x1f || compressed[1] !== 0x8b || compressed[2] !== 0x08) {
+  fail("decoded payload does not start with a valid gzip header");
+}
 
 let glb;
 try {
-  glb = gunzipSync(Buffer.from(encoded, "base64"));
+  glb = gunzipSync(compressed);
 } catch (error) {
-  fail(`payload could not be base64-decoded and gunzipped: ${error.message}`);
+  const reason = error?.message || String(error);
+  const truncationHint = /unexpected end of file|unexpected end of data|buffer error/i.test(reason)
+    ? " The committed payload ends before the gzip stream is complete; restore the missing final chunk bytes from the CRJ700 export."
+    : "";
+  fail(`payload could not be gunzipped (${compressed.length} compressed bytes, ${encoded.length} base64 characters, sha256 ${encodedSha256}): ${reason}.${truncationHint}`);
 }
 
 const gltf = parseGlb(glb);
@@ -99,7 +124,9 @@ await writeFile(manifestPath, `${JSON.stringify({
   format: "glTF Binary 2.0",
   byteLength: glb.length,
   sha256,
+  encodedSha256,
   chunkCount: chunkNames.length,
+  chunks: chunkContents.map(({ name, content }) => ({ name, encodedCharacters: content.length })),
   dimensionsMeters: { length, wingspan, height: dimensions.y },
   noseGearOrigin: [0, 0, 0],
   forwardAxis: "-Z",
