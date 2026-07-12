@@ -1,0 +1,56 @@
+name: Verify GitHub Pages artifact
+
+on:
+  push:
+    branches:
+      - main
+      - dev/**
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run structural and physics verification
+        run: npm run verify
+
+      - name: Build production artifact
+        run: npm run build
+
+      - name: Assert Pages artifact
+        shell: bash
+        run: |
+          test -f dist/index.html
+          test -d dist/assets
+          grep -q '/RampReady/assets/' dist/index.html
+          if grep -q 'src="/assets/' dist/index.html; then
+            echo 'Root-relative asset path found; this artifact will fail on project Pages.' >&2
+            exit 1
+          fi
+
+      - name: Upload verified Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
