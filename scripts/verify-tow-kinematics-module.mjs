@@ -37,6 +37,32 @@ assert.equal(stationary.x, 0);
 assert.equal(stationary.z, -0.1);
 assert.ok(Math.abs(stationary.yaw) < 1e-12, "straight reverse towing introduced yaw");
 
+const initialized = updateAircraftTowPose({
+  aircraftYaw: 0.35,
+  tugYaw: 0.35,
+  previousNose: null,
+  attachedNose: { x: 1.2, z: -4.5 },
+  dt: 1 / 60,
+});
+assert.equal(initialized.x, 1.2, "first-frame initialization changed attached nose x");
+assert.equal(initialized.z, -4.5, "first-frame initialization changed attached nose z");
+assert.ok(Math.abs(initialized.yaw - 0.35) < 1e-12, "first-frame initialization injected yaw");
+assert.equal(initialized.lateralNoseTravel, 0, "first-frame initialization reported phantom lateral travel");
+
+const invalidInput = updateAircraftTowPose({
+  aircraftYaw: Number.NaN,
+  tugYaw: Number.POSITIVE_INFINITY,
+  previousNose: undefined,
+  attachedNose: undefined,
+  dt: Number.NaN,
+});
+assert.deepEqual(
+  { x: invalidInput.x, z: invalidInput.z, yaw: invalidInput.yaw, lateralNoseTravel: invalidInput.lateralNoseTravel },
+  { x: 0, z: 0, yaw: 0, lateralNoseTravel: 0 },
+  "invalid first-frame tow input did not fail closed",
+);
+assert.deepEqual(settleCaptureOffset(undefined, 1 / 60), { x: 0, z: 0 }, "missing capture offset did not fail closed");
+
 for (const fps of [30, 60, 120]) {
   const dt = 1 / fps;
   const left = updateAircraftTowPose({
@@ -80,4 +106,4 @@ assert.ok(Math.abs(articulated.articulation) <= MAX_ARTICULATION + 1e-12, "artic
 const zeroed = settleCaptureOffset({ x: 0.001, z: 0.001 }, 1 / 120);
 assert.deepEqual(zeroed, { x: 0, z: 0 }, "tiny capture offset did not settle cleanly");
 
-console.log(`Tow kinematics module passed capture, reverse steering, yaw-rate, wheelbase, and articulation checks at 30/60/120 fps; capture settles in ${settleTimes.map((v) => v.toFixed(3)).join(" / ")} seconds.`);
+console.log(`Tow kinematics module passed capture, first-frame initialization, invalid-input, reverse steering, yaw-rate, wheelbase, and articulation checks at 30/60/120 fps; capture settles in ${settleTimes.map((v) => v.toFixed(3)).join(" / ")} seconds.`);
