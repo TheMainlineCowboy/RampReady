@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import {
+  AIRCRAFT_WHEELBASE,
   CAPTURE_CORRECTION_RATE,
+  MAX_AIRCRAFT_YAW_RATE,
   MAX_ARTICULATION,
   settleCaptureOffset,
   updateAircraftTowPose,
@@ -33,7 +35,38 @@ const stationary = updateAircraftTowPose({
 });
 assert.equal(stationary.x, 0);
 assert.equal(stationary.z, -0.1);
-assert.ok(Math.abs(stationary.yaw) < 1e-12, "straight towing introduced yaw");
+assert.ok(Math.abs(stationary.yaw) < 1e-12, "straight reverse towing introduced yaw");
+
+for (const fps of [30, 60, 120]) {
+  const dt = 1 / fps;
+  const left = updateAircraftTowPose({
+    aircraftYaw: 0,
+    tugYaw: 0,
+    previousNose: { x: 0, z: 0 },
+    attachedNose: { x: 0.2, z: -0.1 },
+    dt,
+  });
+  const right = updateAircraftTowPose({
+    aircraftYaw: 0,
+    tugYaw: 0,
+    previousNose: { x: 0, z: 0 },
+    attachedNose: { x: -0.2, z: -0.1 },
+    dt,
+  });
+  assert.ok(left.yaw > 0, `left lateral nose travel produced wrong yaw sign at ${fps} fps`);
+  assert.ok(right.yaw < 0, `right lateral nose travel produced wrong yaw sign at ${fps} fps`);
+  assert.ok(Math.abs(left.yaw) <= MAX_AIRCRAFT_YAW_RATE * dt + 1e-12, `left yaw exceeded rate limit at ${fps} fps`);
+  assert.ok(Math.abs(right.yaw) <= MAX_AIRCRAFT_YAW_RATE * dt + 1e-12, `right yaw exceeded rate limit at ${fps} fps`);
+}
+
+const wheelbaseResponse = updateAircraftTowPose({
+  aircraftYaw: 0,
+  tugYaw: 0,
+  previousNose: { x: 0, z: 0 },
+  attachedNose: { x: AIRCRAFT_WHEELBASE * 0.01, z: -0.1 },
+  dt: 1,
+});
+assert.ok(Math.abs(wheelbaseResponse.yaw - 0.01) < 1e-12, "wheelbase-constrained yaw response drifted");
 
 const articulated = updateAircraftTowPose({
   aircraftYaw: Math.PI,
@@ -47,4 +80,4 @@ assert.ok(Math.abs(articulated.articulation) <= MAX_ARTICULATION + 1e-12, "artic
 const zeroed = settleCaptureOffset({ x: 0.001, z: 0.001 }, 1 / 120);
 assert.deepEqual(zeroed, { x: 0, z: 0 }, "tiny capture offset did not settle cleanly");
 
-console.log(`Tow kinematics module passed at 30/60/120 fps; capture settles in ${settleTimes.map((v) => v.toFixed(3)).join(" / ")} seconds.`);
+console.log(`Tow kinematics module passed capture, reverse steering, yaw-rate, wheelbase, and articulation checks at 30/60/120 fps; capture settles in ${settleTimes.map((v) => v.toFixed(3)).join(" / ")} seconds.`);
