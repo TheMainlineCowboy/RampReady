@@ -15,15 +15,21 @@ function positiveFinite(value, fallback) {
   return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
+function finitePoint(point, fallback = { x: 0, z: 0 }) {
+  if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.z)) return fallback;
+  return point;
+}
+
 export function settleCaptureOffset(offset, dt, correctionRate = CAPTURE_CORRECTION_RATE) {
   const safeDt = positiveFinite(dt, 0);
   const safeCorrectionRate = positiveFinite(correctionRate, CAPTURE_CORRECTION_RATE);
-  const distance = Math.hypot(offset.x, offset.z);
+  const safeOffset = finitePoint(offset);
+  const distance = Math.hypot(safeOffset.x, safeOffset.z);
   if (!Number.isFinite(distance) || distance < 0.002) return { x: 0, z: 0 };
   const maxCorrection = safeCorrectionRate * safeDt;
   if (distance <= maxCorrection) return { x: 0, z: 0 };
   const scale = (distance - maxCorrection) / distance;
-  return { x: offset.x * scale, z: offset.z * scale };
+  return { x: safeOffset.x * scale, z: safeOffset.z * scale };
 }
 
 export function updateAircraftTowPose({
@@ -40,19 +46,23 @@ export function updateAircraftTowPose({
   const safeWheelbase = positiveFinite(wheelbase, AIRCRAFT_WHEELBASE);
   const safeYawRate = positiveFinite(maxYawRate, MAX_AIRCRAFT_YAW_RATE);
   const safeArticulation = positiveFinite(maxArticulation, MAX_ARTICULATION);
-  const noseDx = attachedNose.x - previousNose.x;
-  const noseDz = attachedNose.z - previousNose.z;
-  const aircraftRightX = Math.cos(aircraftYaw);
-  const aircraftRightZ = -Math.sin(aircraftYaw);
+  const safeAttachedNose = finitePoint(attachedNose);
+  const safePreviousNose = finitePoint(previousNose, safeAttachedNose);
+  const safeAircraftYaw = Number.isFinite(aircraftYaw) ? aircraftYaw : 0;
+  const safeTugYaw = Number.isFinite(tugYaw) ? tugYaw : safeAircraftYaw;
+  const noseDx = safeAttachedNose.x - safePreviousNose.x;
+  const noseDz = safeAttachedNose.z - safePreviousNose.z;
+  const aircraftRightX = Math.cos(safeAircraftYaw);
+  const aircraftRightZ = -Math.sin(safeAircraftYaw);
   const lateralNoseTravel = noseDx * aircraftRightX + noseDz * aircraftRightZ;
   const requestedYawStep = lateralNoseTravel / safeWheelbase;
   const yawRateStep = clamp(requestedYawStep, -safeYawRate * safeDt, safeYawRate * safeDt);
-  const articulation = normalizeAngle(aircraftYaw - tugYaw);
+  const articulation = normalizeAngle(safeAircraftYaw - safeTugYaw);
   const boundedArticulation = clamp(articulation + yawRateStep, -safeArticulation, safeArticulation);
   return {
-    x: attachedNose.x,
-    z: attachedNose.z,
-    yaw: tugYaw + boundedArticulation,
+    x: safeAttachedNose.x,
+    z: safeAttachedNose.z,
+    yaw: safeTugYaw + boundedArticulation,
     articulation: boundedArticulation,
     lateralNoseTravel,
   };
