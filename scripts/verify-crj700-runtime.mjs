@@ -44,12 +44,16 @@ if (Math.abs(length - 32.5) > 1.25 || Math.abs(wingspan - 23.64) > 1.25) {
   console.error(`CRJ700 runtime verification failed: manifest dimensions are ${length} m x ${wingspan} m.`);
   process.exit(1);
 }
-if (manifest?.orientation?.up !== "+Y" || manifest?.orientation?.forward !== "-Z") {
+if (manifest?.upAxis !== "+Y" || manifest?.forwardAxis !== "-Z") {
   console.error("CRJ700 runtime verification failed: manifest orientation is not +Y up / -Z forward.");
   process.exit(1);
 }
-if (!Array.isArray(manifest?.noseGearCaptureOrigin) || manifest.noseGearCaptureOrigin.some((value) => value !== 0)) {
+if (!Array.isArray(manifest?.noseGearOrigin) || manifest.noseGearOrigin.some((value) => value !== 0)) {
   console.error("CRJ700 runtime verification failed: nose-gear capture origin is not [0,0,0].");
+  process.exit(1);
+}
+if (manifest?.source !== "CRJ700.stl" || manifest?.format !== "glTF Binary 2.0") {
+  console.error("CRJ700 runtime verification failed: manifest does not identify the STL-derived GLB payload.");
   process.exit(1);
 }
 
