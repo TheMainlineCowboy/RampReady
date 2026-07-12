@@ -22,6 +22,7 @@ let buildError;
 try {
   await run(process.execPath, ["scripts/report-source-architecture.mjs"]);
   await run(npmCommand, ["run", "prepare:runtime"]);
+  await run(process.execPath, ["scripts/verify-runtime-transform-scope.mjs"]);
   await run(process.execPath, ["scripts/verify-runtime-idempotence.mjs"]);
   await run(process.execPath, ["scripts/verify-rampready.mjs"]);
   await run(process.execPath, ["scripts/verify-prepared-runtime.mjs"]);
