@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import { readFile, stat, writeFile } from "node:fs/promises";
 
-const assetPath = new URL("../public/models/crj700/crj700-mobile.glb", import.meta.url);
-const manifestPath = new URL("../public/models/crj700/crj700-mobile.manifest.json", import.meta.url);
+const committedAssetPath = new URL("../public/models/crj700/crj700-mobile.glb", import.meta.url);
+const runtimeAssetPath = new URL("../public/models/crj700-mobile.glb", import.meta.url);
+const manifestPath = new URL("../public/models/crj700-mobile.manifest.json", import.meta.url);
 const EXPECTED_LENGTH_METERS = 32.5;
 const EXPECTED_WINGSPAN_METERS = 23.64;
 const DIMENSION_TOLERANCE_METERS = 0.9;
@@ -63,8 +64,8 @@ function dimensionsFromAccessors(gltf) {
   };
 }
 
-const glb = await readFile(assetPath);
-const assetStats = await stat(assetPath);
+const glb = await readFile(committedAssetPath);
+const assetStats = await stat(committedAssetPath);
 if (assetStats.size < 10_000) fail(`committed GLB is unexpectedly small (${assetStats.size} bytes)`);
 
 const gltf = parseGlb(glb);
@@ -79,6 +80,7 @@ if (Math.abs(wingspan - EXPECTED_WINGSPAN_METERS) > DIMENSION_TOLERANCE_METERS) 
 }
 
 const sha256 = createHash("sha256").update(glb).digest("hex");
+await writeFile(runtimeAssetPath, glb);
 await writeFile(manifestPath, `${JSON.stringify({
   source: "CRJ700.stl",
   format: "glTF Binary 2.0",
@@ -89,7 +91,8 @@ await writeFile(manifestPath, `${JSON.stringify({
   noseGearOrigin: [0, 0, 0],
   forwardAxis: "-Z",
   upAxis: "+Y",
-  renderedAssetPath: "models/crj700/crj700-mobile.glb",
+  committedAssetPath: "models/crj700/crj700-mobile.glb",
+  renderedAssetPath: "models/crj700-mobile.glb",
 }, null, 2)}\n`, "utf8");
 
-console.log(`Verified committed CRJ700 GLB: ${glb.length} bytes, ${length.toFixed(2)} m long, ${wingspan.toFixed(2)} m span, sha256 ${sha256}.`);
+console.log(`Verified committed CRJ700 GLB and prepared runtime copy: ${glb.length} bytes, ${length.toFixed(2)} m long, ${wingspan.toFixed(2)} m span, sha256 ${sha256}.`);
