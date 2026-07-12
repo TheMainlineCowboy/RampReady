@@ -18,7 +18,7 @@ jobs:
   verify:
     name: Verify and build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
 
     steps:
       - name: Check out repository
@@ -74,6 +74,34 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: rampready-dist-${{ github.sha }}
+          path: dist
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Build GitHub Pages bundle
+        shell: bash
+        env:
+          GITHUB_PAGES: "true"
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          npm run build
+
+      - name: Smoke-check GitHub Pages paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f dist/index.html
+          test -f dist/manifest.webmanifest
+          grep -q 'src="/RampReady/assets/' dist/index.html
+          grep -q 'href="/RampReady/manifest.webmanifest"' dist/index.html
+          find dist/assets -type f -size +0c | grep -q .
+          echo "GitHub Pages bundle uses the /RampReady/ project path and contains non-empty assets."
+
+      - name: Upload GitHub Pages candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: rampready-pages-${{ github.sha }}
           path: dist
           if-no-files-found: error
           retention-days: 7
