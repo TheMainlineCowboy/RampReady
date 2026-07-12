@@ -20,6 +20,7 @@ function run(command, args) {
 
 let buildError;
 try {
+  await run(process.execPath, ["scripts/prepare-crj700-model.mjs"]);
   await run(process.execPath, ["scripts/report-source-architecture.mjs"]);
   await run(npmCommand, ["run", "prepare:runtime"]);
   await run(process.execPath, ["scripts/verify-runtime-transform-scope.mjs"]);
