@@ -33,6 +33,8 @@ try {
   await run(process.execPath, ["scripts/verify-physics.mjs"]);
   await run(process.execPath, ["scripts/verify-partial-throttle.mjs"]);
   await run(process.execPath, ["scripts/verify-tow-kinematics.mjs"]);
+  await run(process.execPath, ["scripts/verify-tow-kinematics-module.mjs"]);
+  await run(process.execPath, ["scripts/verify-runtime-kinematics-parity.mjs"]);
   await run(npmCommand, ["exec", "--", "vite", "build"]);
 } catch (error) {
   buildError = error;
