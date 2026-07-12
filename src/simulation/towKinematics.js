@@ -11,10 +11,17 @@ export function normalizeAngle(angle) {
   return Math.atan2(Math.sin(angle), Math.cos(angle));
 }
 
+function positiveFinite(value, fallback) {
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
 export function settleCaptureOffset(offset, dt, correctionRate = CAPTURE_CORRECTION_RATE) {
+  const safeDt = positiveFinite(dt, 0);
+  const safeCorrectionRate = positiveFinite(correctionRate, CAPTURE_CORRECTION_RATE);
   const distance = Math.hypot(offset.x, offset.z);
-  const maxCorrection = correctionRate * dt;
-  if (distance <= maxCorrection || distance < 0.002) return { x: 0, z: 0 };
+  if (!Number.isFinite(distance) || distance < 0.002) return { x: 0, z: 0 };
+  const maxCorrection = safeCorrectionRate * safeDt;
+  if (distance <= maxCorrection) return { x: 0, z: 0 };
   const scale = (distance - maxCorrection) / distance;
   return { x: offset.x * scale, z: offset.z * scale };
 }
@@ -29,15 +36,19 @@ export function updateAircraftTowPose({
   maxYawRate = MAX_AIRCRAFT_YAW_RATE,
   maxArticulation = MAX_ARTICULATION,
 }) {
+  const safeDt = positiveFinite(dt, 0);
+  const safeWheelbase = positiveFinite(wheelbase, AIRCRAFT_WHEELBASE);
+  const safeYawRate = positiveFinite(maxYawRate, MAX_AIRCRAFT_YAW_RATE);
+  const safeArticulation = positiveFinite(maxArticulation, MAX_ARTICULATION);
   const noseDx = attachedNose.x - previousNose.x;
   const noseDz = attachedNose.z - previousNose.z;
   const aircraftRightX = Math.cos(aircraftYaw);
   const aircraftRightZ = -Math.sin(aircraftYaw);
   const lateralNoseTravel = noseDx * aircraftRightX + noseDz * aircraftRightZ;
-  const requestedYawStep = lateralNoseTravel / wheelbase;
-  const yawRateStep = clamp(requestedYawStep, -maxYawRate * dt, maxYawRate * dt);
+  const requestedYawStep = lateralNoseTravel / safeWheelbase;
+  const yawRateStep = clamp(requestedYawStep, -safeYawRate * safeDt, safeYawRate * safeDt);
   const articulation = normalizeAngle(aircraftYaw - tugYaw);
-  const boundedArticulation = clamp(articulation + yawRateStep, -maxArticulation, maxArticulation);
+  const boundedArticulation = clamp(articulation + yawRateStep, -safeArticulation, safeArticulation);
   return {
     x: attachedNose.x,
     z: attachedNose.z,
