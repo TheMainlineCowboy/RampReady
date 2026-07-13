@@ -1,4 +1,4 @@
-name: One-time FWD pushback patch
+name: Verify FWD pushback fix
 
 on:
   push:
@@ -6,10 +6,10 @@ on:
     paths: [.github/workflows/one-time-fwd-pushback-patch.yml]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,66 +20,36 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - name: Apply FWD semantics and aligned regression expectations
+      - name: Assert FWD source semantics
         run: |
           python3 - <<'PY'
           from pathlib import Path
-
-          trainer = Path('src/components/RampReadyTrainerStable.jsx')
-          text = trainer.read_text()
-          replacements = {
-            'connectedPushPhase && drive.direction !== -1': 'connectedPushPhase && drive.direction !== 1',
-            'towActive && drive.direction !== -1': 'towActive && drive.direction !== 1',
-            'stageRef.current === 4 && drive.direction !== -1 ? "REV required"': 'stageRef.current === 4 && drive.direction !== 1 ? "FWD required"',
-            'stageRef.current === 4 && drive.direction !== -1) liveMessage = "Direction should be REV for pushback. Power locked until REV is selected."': 'stageRef.current === 4 && drive.direction !== 1) liveMessage = "Direction should be FWD for pushback. Power locked until FWD is selected."',
-            'stageRef.current === 4 && drive.direction === -1 && stopRemaining <= STOP_REMAINING_CAUTION': 'stageRef.current === 4 && drive.direction === 1 && stopRemaining <= STOP_REMAINING_CAUTION',
-            'driveRef.current.direction = -1;': 'driveRef.current.direction = 1;',
-            'setDirection("REV");': 'setDirection("FWD");',
-            'Brake released. REV selected for pushback. Add power slowly.': 'Brake released. FWD selected for pushback. Add power slowly.',
-          }
-          for old, new in replacements.items():
-            text = text.replace(old, new)
-          trainer.write_text(text)
-
-          physics = Path('scripts/verify-physics.mjs')
-          text = physics.read_text()
-          text = text.replace('const pushDirectionLocked = connectedPushPhase && direction !== -1;', 'const pushDirectionLocked = connectedPushPhase && direction !== 1;')
-          text = text.replace('const towRun = simulateMotion({ seconds: 3, throttle: 0.25, direction: -1, connected: true, stage: 4 });', 'const towRun = simulateMotion({ seconds: 3, throttle: 0.25, direction: 1, connected: true, stage: 4 });')
-          text = text.replace('if (towRun.position >= -1.0) failures.push(`Connected REV pushback did not travel backward far enough: ${towRun.position}`);', 'if (towRun.position <= 1.0) failures.push(`Connected FWD pushback did not travel forward far enough: ${towRun.position}`);')
-          text = text.replace('const lockedRun = simulateMotion({ seconds: 2, throttle: 1, direction: 1, connected: true, stage: 4 });', 'const lockedRun = simulateMotion({ seconds: 2, throttle: 1, direction: -1, connected: true, stage: 4 });')
-          text = text.replace('Connected FWD interlock leaked motion', 'Connected REV interlock leaked motion')
-          text = text.replace('const brakingRun = simulateMotion({ seconds: 4, throttle: 0.35, direction: -1, connected: true, stage: 4, brakeAt: 2 });', 'const brakingRun = simulateMotion({ seconds: 4, throttle: 0.35, direction: 1, connected: true, stage: 4, brakeAt: 2 });')
-          text = text.replace('if (brakingRun.position >= 0 || brakingRun.position < -3.5)', 'if (brakingRun.position <= 0 || brakingRun.position > 3.5)')
-          physics.write_text(text)
-
-          partial = Path('scripts/verify-partial-throttle.mjs')
-          text = partial.read_text()
-          text = text.replace('const pushDirectionLocked = connectedPushPhase && direction !== -1;', 'const pushDirectionLocked = connectedPushPhase && direction !== 1;')
-          text = text.replace('const towResults = FRAME_RATES.map((fps) => ({ fps, ...simulate({ fps, seconds: 3, throttle: 0.12, direction: -1, connected: true, stage: 4 }) }));', 'const towResults = FRAME_RATES.map((fps) => ({ fps, ...simulate({ fps, seconds: 3, throttle: 0.12, direction: 1, connected: true, stage: 4 }) }));')
-          text = text.replace('connected REV', 'connected FWD')
-          text = text.replace('if (result.position >= -0.65)', 'if (result.position <= 0.65)')
-          text = text.replace('const locked = simulate({ fps: 60, seconds: 2, throttle: 1, direction: 1, connected: true, stage: 4 });', 'const locked = simulate({ fps: 60, seconds: 2, throttle: 1, direction: -1, connected: true, stage: 4 });')
-          text = text.replace('Connected FWD interlock leaked movement', 'Connected REV interlock leaked movement')
-          partial.write_text(text)
-
-          source = trainer.read_text()
-          required = ['connectedPushPhase && drive.direction !== 1', 'towActive && drive.direction !== 1', 'FWD required', 'Direction should be FWD for pushback', 'driveRef.current.direction = 1;', 'setDirection("FWD");', 'Brake released. FWD selected for pushback']
-          forbidden = ['connectedPushPhase && drive.direction !== -1', 'towActive && drive.direction !== -1', 'REV required', 'Direction should be REV for pushback', 'Brake released. REV selected for pushback']
+          source = Path('src/components/RampReadyTrainerStable.jsx').read_text()
+          required = [
+            'connectedPushPhase && drive.direction !== 1',
+            'towActive && drive.direction !== 1',
+            'FWD required',
+            'Direction should be FWD for pushback',
+            'driveRef.current.direction = 1;',
+            'setDirection("FWD");',
+            'Brake released. FWD selected for pushback',
+          ]
+          forbidden = [
+            'connectedPushPhase && drive.direction !== -1',
+            'towActive && drive.direction !== -1',
+            'REV required',
+            'Direction should be REV for pushback',
+            'Brake released. REV selected for pushback',
+          ]
           for token in required:
             assert token in source, f'Missing required FWD invariant: {token}'
           for token in forbidden:
             assert token not in source, f'Legacy REV invariant remains: {token}'
+          print('FWD source semantics verified.')
           PY
-      - name: Commit focused application fix before verification
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add src/components/RampReadyTrainerStable.jsx scripts/verify-physics.mjs scripts/verify-partial-throttle.mjs
-          git diff --cached --quiet && { echo 'No application changes produced'; exit 1; }
-          git commit -m 'Correct connected pushback to use FWD'
-          git push origin HEAD:fix/fwd-pushback-semantics
-      - name: Install, verify, and build exact committed fix
-        run: |
-          npm ci
-          npm run verify
-          npm run build
+      - name: Install dependencies
+        run: npm ci
+      - name: Run complete verification suite
+        run: npm run verify
+      - name: Build production artifact
+        run: npm run build
