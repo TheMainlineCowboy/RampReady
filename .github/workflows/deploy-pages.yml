@@ -61,7 +61,39 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify-live-site:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Wait for GitHub Pages propagation
+        run: sleep 15
+
+      - name: Verify live RampReady site and CRJ700 asset
+        shell: bash
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          : "${PAGE_URL:?GitHub Pages did not return a deployment URL}"
+          for attempt in {1..12}; do
+            status=$(curl -L -sS -o /tmp/rampready-index.html -w '%{http_code}' "${PAGE_URL}")
+            if [ "${status}" = "200" ] && grep -q '<div id="root"></div>' /tmp/rampready-index.html; then
+              break
+            fi
+            echo "Attempt ${attempt}: ${PAGE_URL} returned HTTP ${status}; retrying..."
+            sleep 10
+          done
+          test -s /tmp/rampready-index.html
+          grep -q '<div id="root"></div>' /tmp/rampready-index.html
+          asset_status=$(curl -L -sS -o /tmp/crj700-mobile.glb -w '%{http_code}' "${PAGE_URL}models/crj700-mobile.glb")
+          test "${asset_status}" = "200"
+          test "$(stat -c%s /tmp/crj700-mobile.glb)" -gt 10000
+          printf 'glTF' | cmp -n 4 - /tmp/crj700-mobile.glb
+          echo "Live GitHub Pages site and CRJ700 payload are reachable at ${PAGE_URL}"
