@@ -18,57 +18,93 @@ jobs:
         with:
           ref: fix/fwd-pushback-semantics
           fetch-depth: 0
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - name: Correct connected pushback direction semantics
+
+      - name: Apply FWD pushback semantics and regression checks
+        shell: bash
         run: |
+          set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import json
 
-          path = Path('src/components/RampReadyTrainerStable.jsx')
-          text = path.read_text()
-          replacements = {
-              'const pushDirectionLocked = connectedPushPhase && drive.direction !== -1;': 'const pushDirectionLocked = connectedPushPhase && drive.direction !== 1;',
-              'if (towActive && drive.direction !== -1) {': 'if (towActive && drive.direction !== 1) {',
-              'stageRef.current === 4 && drive.direction !== -1 ? "REV required"': 'stageRef.current === 4 && drive.direction !== 1 ? "FWD required"',
-              'if (stageRef.current === 4 && drive.direction !== -1) liveMessage = "Direction should be REV for pushback. Power locked until REV is selected.";': 'if (stageRef.current === 4 && drive.direction !== 1) liveMessage = "Direction should be FWD for pushback. Power locked until FWD is selected.";',
-              'if (stageRef.current === 4 && drive.direction === -1 && stopRemaining <= STOP_REMAINING_CAUTION)': 'if (stageRef.current === 4 && drive.direction === 1 && stopRemaining <= STOP_REMAINING_CAUTION)',
-              'driveRef.current.direction = -1;': 'driveRef.current.direction = 1;',
-              'setDirection("REV");': 'setDirection("FWD");',
-              'setTrainerMessage("Brake released. REV selected for pushback. Add power slowly.");': 'setTrainerMessage("Brake released. FWD selected for pushback. Add power slowly.");',
-          }
-          for old, new in replacements.items():
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f'Expected exactly one occurrence of {old!r}; found {count}')
-              text = text.replace(old, new)
-          path.write_text(text)
+          trainer = Path('src/components/RampReadyTrainerStable.jsx')
+          text = trainer.read_text()
 
-          test = Path('scripts/verify-fwd-pushback-semantics.mjs')
-          test.write_text('''import fs from "node:fs";\n\nconst source = fs.readFileSync("src/components/RampReadyTrainerStable.jsx", "utf8");\nconst required = [\n  "const pushDirectionLocked = connectedPushPhase && drive.direction !== 1;",\n  "const signedDirection = connectedPushPhase ? 1 : drive.direction;",\n  "if (towActive && drive.direction !== 1) {",\n  "FWD required",\n  "Direction should be FWD for pushback",\n  "driveRef.current.direction = 1;",\n  "setDirection(\\"FWD\\");",\n  "Brake released. FWD selected for pushback",\n];\nconst forbidden = [\n  "REV required",\n  "Direction should be REV for pushback",\n  "Brake released. REV selected for pushback",\n  "connectedPushPhase && drive.direction !== -1",\n];\nfor (const token of required) {\n  if (!source.includes(token)) throw new Error(`Missing FWD pushback invariant: ${token}`);\n}\nfor (const token of forbidden) {\n  if (source.includes(token)) throw new Error(`Legacy REV pushback invariant remains: ${token}`);\n}\nconsole.log("FWD pushback semantics verified: connected tug moves forward while carrying the aircraft backward from the gate.");\n''')
+          replacements = [
+              ('const pushDirectionLocked = connectedPushPhase && drive.direction !== -1;', 'const pushDirectionLocked = connectedPushPhase && drive.direction !== 1;'),
+              ('if (towActive && drive.direction !== -1) {', 'if (towActive && drive.direction !== 1) {'),
+              ('stageRef.current === 4 && drive.direction !== -1 ? "REV required"', 'stageRef.current === 4 && drive.direction !== 1 ? "FWD required"'),
+              ('if (stageRef.current === 4 && drive.direction !== -1) liveMessage = "Direction should be REV for pushback. Power locked until REV is selected.";', 'if (stageRef.current === 4 && drive.direction !== 1) liveMessage = "Direction should be FWD for pushback. Power locked until FWD is selected.";'),
+              ('if (stageRef.current === 4 && drive.direction === -1 && stopRemaining <= STOP_REMAINING_CAUTION)', 'if (stageRef.current === 4 && drive.direction === 1 && stopRemaining <= STOP_REMAINING_CAUTION)'),
+              ('driveRef.current.direction = -1;', 'driveRef.current.direction = 1;'),
+              ('setDirection("REV");', 'setDirection("FWD");'),
+              ('setTrainerMessage("Brake released. REV selected for pushback. Add power slowly.");', 'setTrainerMessage("Brake released. FWD selected for pushback. Add power slowly.");'),
+          ]
+
+          changed = False
+          for old, new in replacements:
+              if old in text:
+                  text = text.replace(old, new)
+                  changed = True
+          trainer.write_text(text)
+
+          # Update repository checks that still encode the former REV requirement.
+          for path in Path('scripts').glob('*.mjs'):
+              current = path.read_text()
+              updated = current.replace('REV required', 'FWD required')
+              updated = updated.replace('Direction should be REV for pushback', 'Direction should be FWD for pushback')
+              updated = updated.replace('Brake released. REV selected for pushback', 'Brake released. FWD selected for pushback')
+              updated = updated.replace('connectedPushPhase && drive.direction !== -1', 'connectedPushPhase && drive.direction !== 1')
+              updated = updated.replace('towActive && drive.direction !== -1', 'towActive && drive.direction !== 1')
+              if updated != current:
+                  path.write_text(updated)
+                  changed = True
+
+          regression = Path('scripts/verify-fwd-pushback-semantics.mjs')
+          regression.write_text('''import fs from "node:fs";\n\nconst source = fs.readFileSync("src/components/RampReadyTrainerStable.jsx", "utf8");\nconst required = [\n  "const pushDirectionLocked = connectedPushPhase && drive.direction !== 1;",\n  "const signedDirection = connectedPushPhase ? 1 : drive.direction;",\n  "if (towActive && drive.direction !== 1) {",\n  "FWD required",\n  "Direction should be FWD for pushback",\n  "driveRef.current.direction = 1;",\n  "setDirection(\\"FWD\\");",\n  "Brake released. FWD selected for pushback",\n];\nconst forbidden = [\n  "REV required",\n  "Direction should be REV for pushback",\n  "Brake released. REV selected for pushback",\n  "connectedPushPhase && drive.direction !== -1",\n  "towActive && drive.direction !== -1",\n];\nfor (const token of required) {\n  if (!source.includes(token)) throw new Error(`Missing FWD pushback invariant: ${token}`);\n}\nfor (const token of forbidden) {\n  if (source.includes(token)) throw new Error(`Legacy REV pushback invariant remains: ${token}`);\n}\nconsole.log("FWD pushback semantics verified.");\n''')
 
           package_path = Path('package.json')
-          import json
           package = json.loads(package_path.read_text())
           scripts = package.setdefault('scripts', {})
-          verify = scripts.get('verify', '')
           command = 'node scripts/verify-fwd-pushback-semantics.mjs'
+          verify = scripts.get('verify', '')
           if command not in verify:
               scripts['verify'] = f'{verify} && {command}' if verify else command
           package_path.write_text(json.dumps(package, indent=2) + '\n')
+
+          if not changed:
+              print('Trainer already used FWD semantics; regression check refreshed.')
           PY
-      - name: Install and verify
+
+          echo '--- FWD invariants in trainer ---'
+          grep -nE 'pushDirectionLocked|FWD required|Direction should be FWD|Brake released. FWD|driveRef.current.direction = 1' src/components/RampReadyTrainerStable.jsx
+          echo '--- forbidden legacy connected-pushback strings ---'
+          if grep -nE 'REV required|Direction should be REV for pushback|Brake released. REV selected for pushback|connectedPushPhase && drive.direction !== -1|towActive && drive.direction !== -1' src/components/RampReadyTrainerStable.jsx; then
+            echo 'Legacy REV semantics remain' >&2
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run complete verification suite
+        run: npm run verify
+
+      - name: Build production artifact
+        run: npm run build
+
+      - name: Commit verified application correction
+        shell: bash
         run: |
-          npm ci
-          npm run verify
-          npm run build
-      - name: Commit focused correction and remove one-time workflow
-        run: |
+          set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git rm .github/workflows/one-time-fwd-pushback-patch.yml
-          git add src/components/RampReadyTrainerStable.jsx scripts/verify-fwd-pushback-semantics.mjs package.json package-lock.json
+          git add src/components/RampReadyTrainerStable.jsx scripts package.json package-lock.json
+          git diff --cached --check
           git commit -m "Correct connected pushback to use FWD"
           git push origin HEAD:fix/fwd-pushback-semantics
