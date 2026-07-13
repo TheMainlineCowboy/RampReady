@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - integrate-crj700-model
+      - main
   workflow_dispatch:
 
 permissions:
@@ -16,6 +17,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run full trainer verification
+        run: npm run verify
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -31,11 +51,14 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Verify aircraft and trainer
-        run: npm run verify
+      - name: Prepare committed aircraft asset
+        run: npm run prepare:aircraft
 
-      - name: Build production site
-        run: npm run build
+      - name: Prepare runtime source
+        run: npm run prepare:runtime
+
+      - name: Build latest development site
+        run: npm exec -- vite build
 
       - name: Verify Pages artifact
         run: |
