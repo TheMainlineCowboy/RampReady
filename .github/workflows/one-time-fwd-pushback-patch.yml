@@ -20,11 +20,12 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - name: Apply FWD semantics and update matching checks
+      - name: Apply FWD semantics and aligned regression expectations
         run: |
           python3 - <<'PY'
           from pathlib import Path
 
+          files = [Path('src/components/RampReadyTrainerStable.jsx'), Path('scripts/verify-physics.mjs'), Path('scripts/verify-partial-throttle.mjs')]
           replacements = {
             'connectedPushPhase && drive.direction !== -1': 'connectedPushPhase && drive.direction !== 1',
             'towActive && drive.direction !== -1': 'towActive && drive.direction !== 1',
@@ -34,35 +35,31 @@ jobs:
             'driveRef.current.direction = -1;': 'driveRef.current.direction = 1;',
             'setDirection("REV");': 'setDirection("FWD");',
             'Brake released. REV selected for pushback. Add power slowly.': 'Brake released. FWD selected for pushback. Add power slowly.',
-            'Direction should be REV for pushback': 'Direction should be FWD for pushback',
-            'REV required': 'FWD required',
+            'const pushDirectionLocked = connectedPushPhase && direction !== -1;': 'const pushDirectionLocked = connectedPushPhase && direction !== 1;',
+            'const signedDirection = direction;': 'const signedDirection = connectedPushPhase ? 1 : direction;',
+            'direction: -1, connected: true, stage: 4': 'direction: 1, connected: true, stage: 4',
+            'direction: 1, connected: true, stage: 4 });\nif (lockedRun.position !== 0': 'direction: -1, connected: true, stage: 4 });\nif (lockedRun.position !== 0',
+            'Connected REV pushback did not travel backward far enough': 'Connected FWD pushback did not travel forward far enough',
+            'if (towRun.position >= -1.0)': 'if (towRun.position <= 1.0)',
+            'Connected FWD interlock leaked motion': 'Connected REV interlock leaked motion',
+            'brakingRun.position >= 0 || brakingRun.position < -3.5': 'brakingRun.position <= 0 || brakingRun.position > 3.5',
+            'direction: -1, connected: true, stage: 4, brakeAt: 2': 'direction: 1, connected: true, stage: 4, brakeAt: 2',
+            'connected REV did not respond promptly': 'connected FWD did not respond promptly',
+            'connected REV partial throttle travel too small': 'connected FWD partial throttle travel too small',
+            'connected REV partial throttle too aggressive': 'connected FWD partial throttle too aggressive',
+            'if (result.position >= -0.65)': 'if (result.position <= 0.65)',
+            'direction: 1, connected: true, stage: 4 });\nif (locked.position !== 0': 'direction: -1, connected: true, stage: 4 });\nif (locked.position !== 0',
           }
 
-          for path in [Path('src/components/RampReadyTrainerStable.jsx'), *Path('scripts').glob('*.mjs')]:
-            if not path.exists():
-              continue
+          for path in files:
             text = path.read_text()
             for old, new in replacements.items():
               text = text.replace(old, new)
             path.write_text(text)
 
-          source = Path('src/components/RampReadyTrainerStable.jsx').read_text()
-          required = [
-            'connectedPushPhase && drive.direction !== 1',
-            'towActive && drive.direction !== 1',
-            'FWD required',
-            'Direction should be FWD for pushback',
-            'driveRef.current.direction = 1;',
-            'setDirection("FWD");',
-            'Brake released. FWD selected for pushback',
-          ]
-          forbidden = [
-            'connectedPushPhase && drive.direction !== -1',
-            'towActive && drive.direction !== -1',
-            'REV required',
-            'Direction should be REV for pushback',
-            'Brake released. REV selected for pushback',
-          ]
+          source = files[0].read_text()
+          required = ['connectedPushPhase && drive.direction !== 1', 'towActive && drive.direction !== 1', 'FWD required', 'Direction should be FWD for pushback', 'driveRef.current.direction = 1;', 'setDirection("FWD");', 'Brake released. FWD selected for pushback']
+          forbidden = ['connectedPushPhase && drive.direction !== -1', 'towActive && drive.direction !== -1', 'REV required', 'Direction should be REV for pushback', 'Brake released. REV selected for pushback']
           for token in required:
             assert token in source, f'Missing required FWD invariant: {token}'
           for token in forbidden:
@@ -77,7 +74,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add src/components/RampReadyTrainerStable.jsx scripts
+          git add src/components/RampReadyTrainerStable.jsx scripts/verify-physics.mjs scripts/verify-partial-throttle.mjs
           git diff --cached --quiet && { echo 'No application changes produced'; exit 1; }
           git commit -m 'Correct connected pushback to use FWD'
           git push origin HEAD:fix/fwd-pushback-semantics
