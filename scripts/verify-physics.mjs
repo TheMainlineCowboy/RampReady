@@ -26,7 +26,7 @@ function stepVelocity({ velocity, throttle, direction, connected, stage, brake =
   const usefulThrottle = throttle > 0.02 ? 0.16 + throttle * 0.84 : 0;
   const connectedPushPhase = connected && stage === 4;
   const connectedMotionLocked = connected && !connectedPushPhase;
-  const pushDirectionLocked = connectedPushPhase && direction !== -1;
+  const pushDirectionLocked = connectedPushPhase && direction !== 1;
   const signedDirection = direction;
   const maxSpeed = connected ? MAX_TOW_SPEED : MAX_FREE_SPEED;
   const targetSpeed = connectedMotionLocked || pushDirectionLocked ? 0 : usefulThrottle * signedDirection * maxSpeed;
@@ -82,18 +82,18 @@ const lowFreeRun = simulateMotion({ seconds: 2, throttle: 0.12, direction: 1, co
 if (lowFreeRun.position <= 0.5) failures.push(`Partial throttle does not produce useful travel: ${lowFreeRun.position}`);
 if (lowFreeRun.peakSpeed >= MAX_FREE_SPEED * 0.5) failures.push(`Partial throttle accelerates too aggressively: ${lowFreeRun.peakSpeed}`);
 
-const towRun = simulateMotion({ seconds: 3, throttle: 0.25, direction: -1, connected: true, stage: 4 });
-if (towRun.position >= -1.0) failures.push(`Connected REV pushback did not travel backward far enough: ${towRun.position}`);
+const towRun = simulateMotion({ seconds: 3, throttle: 0.25, direction: 1, connected: true, stage: 4 });
+if (towRun.position <= 1.0) failures.push(`Connected FWD pushback did not travel forward far enough: ${towRun.position}`);
 if (towRun.peakSpeed > MAX_TOW_SPEED + 0.01) failures.push(`Connected push exceeds tow speed cap: ${towRun.peakSpeed}`);
-const lockedRun = simulateMotion({ seconds: 2, throttle: 1, direction: 1, connected: true, stage: 4 });
-if (lockedRun.position !== 0 || lockedRun.peakSpeed !== 0) failures.push(`Connected FWD interlock leaked motion: ${JSON.stringify(lockedRun)}`);
+const lockedRun = simulateMotion({ seconds: 2, throttle: 1, direction: -1, connected: true, stage: 4 });
+if (lockedRun.position !== 0 || lockedRun.peakSpeed !== 0) failures.push(`Connected REV interlock leaked motion: ${JSON.stringify(lockedRun)}`);
 for (const stage of [2, 3, 5]) {
   const locked = stepVelocity({ velocity: 0, throttle: 1, direction: stage === 5 ? -1 : 1, connected: true, stage });
   if (locked.targetSpeed !== 0 || locked.nextVelocity !== 0) failures.push(`Connected stage ${stage} should remain stationary`);
 }
-const brakingRun = simulateMotion({ seconds: 4, throttle: 0.35, direction: -1, connected: true, stage: 4, brakeAt: 2 });
+const brakingRun = simulateMotion({ seconds: 4, throttle: 0.35, direction: 1, connected: true, stage: 4, brakeAt: 2 });
 if (brakingRun.velocity !== 0) failures.push(`Brake should settle tow velocity to zero, got ${brakingRun.velocity}`);
-if (brakingRun.position >= 0 || brakingRun.position < -3.5) failures.push(`Tow braking distance invalid: ${brakingRun.position}`);
+if (brakingRun.position <= 0 || brakingRun.position > 3.5) failures.push(`Tow braking distance invalid: ${brakingRun.position}`);
 
 if (!captureReady({ capture: 0.2, lateral: 0.08, heading: 2, speed: 0.04 })) failures.push("Correctly aligned capture should be ready");
 if (captureReady({ capture: 0.6, lateral: 0.08, heading: 2, speed: 0.04 })) failures.push("Distant cradle must not capture");
