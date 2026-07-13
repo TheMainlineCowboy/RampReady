@@ -64,7 +64,45 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy exact verified artifact
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify-live-pages:
+    if: github.event_name != 'pull_request'
+    needs: deploy
+    runs-on: ubuntu-latest
+    env:
+      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+    steps:
+      - name: Checkout exact deployed commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Verify live Pages document and CRJ700 asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$PAGE_URL"
+          case "$PAGE_URL" in
+            */) ;;
+            *) PAGE_URL="$PAGE_URL/" ;;
+          esac
+
+          curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors \
+            --output live-index.html "$PAGE_URL"
+          test -s live-index.html
+          grep -qi '<div id="root"></div>' live-index.html
+
+          curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors \
+            --output live-crj700-mobile.glb \
+            "${PAGE_URL}models/crj700/crj700-mobile.glb"
+          test -s live-crj700-mobile.glb
+          cmp --silent public/models/crj700/crj700-mobile.glb live-crj700-mobile.glb
+
+          echo "Verified live Pages URL: $PAGE_URL"
+          echo "Verified live CRJ700 asset: ${PAGE_URL}models/crj700/crj700-mobile.glb"
