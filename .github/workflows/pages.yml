@@ -110,16 +110,53 @@ jobs:
       - name: Install Chromium browser runtime
         run: npx --yes playwright@1.55.0 install --with-deps chromium
 
-      - name: Open deployed trainer and capture end-user render
+      - name: Verify deployed trainer runtime and capture evidence
         shell: bash
         run: |
           set -euo pipefail
-          npx --yes playwright@1.55.0 screenshot \
-            --browser chromium \
-            --viewport-size "1440,900" \
-            --wait-for-timeout 15000 \
-            "$PAGE_URL" \
-            live-rampready.png
+          cat > live-pages.spec.js <<'EOF'
+          const { test, expect } = require('@playwright/test');
+
+          test('deployed RampReady loads the CRJ700 runtime without browser failures', async ({ page }) => {
+            const consoleErrors = [];
+            const pageErrors = [];
+            let crj700Response = null;
+
+            page.on('console', (message) => {
+              if (message.type() === 'error') consoleErrors.push(message.text());
+            });
+            page.on('pageerror', (error) => pageErrors.push(error.message));
+            page.on('response', (response) => {
+              if (response.url().includes('/models/crj700/crj700-mobile.glb')) {
+                crj700Response = {
+                  status: response.status(),
+                  contentType: response.headers()['content-type'] || '',
+                  url: response.url(),
+                };
+              }
+            });
+
+            await page.setViewportSize({ width: 1440, height: 900 });
+            await page.goto(process.env.PAGE_URL, { waitUntil: 'networkidle', timeout: 120000 });
+            await page.waitForTimeout(15000);
+
+            const canvas = page.locator('canvas').first();
+            await expect(canvas).toBeVisible();
+            const box = await canvas.boundingBox();
+            expect(box).not.toBeNull();
+            expect(box.width).toBeGreaterThan(300);
+            expect(box.height).toBeGreaterThan(200);
+
+            expect(crj700Response).not.toBeNull();
+            expect(crj700Response.status).toBe(200);
+            expect(consoleErrors).toEqual([]);
+            expect(pageErrors).toEqual([]);
+
+            await page.screenshot({ path: 'live-rampready.png', fullPage: true });
+          });
+          EOF
+
+          npx --yes --package=@playwright/test@1.55.0 playwright test live-pages.spec.js --reporter=line
           test -s live-rampready.png
           test "$(stat -c%s live-rampready.png)" -gt 10000
           file live-rampready.png | grep -q 'PNG image data'
@@ -131,5 +168,6 @@ jobs:
           path: |
             live-index.html
             live-rampready.png
+            test-results/
           if-no-files-found: error
           retention-days: 14
