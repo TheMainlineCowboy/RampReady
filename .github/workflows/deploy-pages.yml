@@ -5,6 +5,7 @@ on:
     branches:
       - integrate-crj700-model
       - main
+      - fix-crj700-runtime-copy
   workflow_dispatch:
 
 permissions:
@@ -32,6 +33,19 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Materialize verified CRJ700 runtime copy
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_asset="public/models/crj700/crj700-mobile.glb"
+          runtime_asset="public/models/crj700-mobile.glb"
+          test -s "${source_asset}"
+          test "$(stat -c%s "${source_asset}")" -gt 10000
+          printf 'glTF' | cmp -n 4 - "${source_asset}"
+          cp "${source_asset}" "${runtime_asset}"
+          cmp "${source_asset}" "${runtime_asset}"
+          echo "Verified and copied CRJ700 source asset to the exact Three.js runtime URL."
+
       - name: Build verified production site
         run: npm run build
 
@@ -45,7 +59,9 @@ jobs:
           test -d dist/assets
           find dist/assets -type f -size +0c | grep -q .
           grep -Eq 'src="/RampReady/assets/[^\"]+\.js"' dist/index.html
-          echo "Pages artifact contains the app shell, hashed assets, manifest, and real CRJ700 payload."
+          cmp public/models/crj700/crj700-mobile.glb dist/models/crj700-mobile.glb
+          printf 'glTF' | cmp -n 4 - dist/models/crj700-mobile.glb
+          echo "Pages artifact contains the app shell, hashed assets, manifest, and byte-identical real CRJ700 payload."
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
