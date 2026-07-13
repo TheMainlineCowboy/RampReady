@@ -20,11 +20,12 @@ function run(command, args) {
 
 let buildError;
 try {
+  await run(process.execPath, ["scripts/prepare-crj700-model.mjs"]);
   await run(process.execPath, ["scripts/report-source-architecture.mjs"]);
   await run(npmCommand, ["run", "prepare:runtime"]);
   await run(process.execPath, ["scripts/verify-runtime-transform-scope.mjs"]);
   await run(process.execPath, ["scripts/verify-runtime-idempotence.mjs"]);
-  await run(process.execPath, ["scripts/verify-rampready.mjs"]);
+  await run(process.execPath, ["scripts/verify-current-architecture.mjs"]);
   await run(process.execPath, ["scripts/verify-prepared-runtime.mjs"]);
   await run(process.execPath, ["scripts/verify-lektro-clearance.mjs"]);
   await run(process.execPath, ["scripts/verify-lektro-proportions.mjs"]);

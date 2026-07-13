@@ -12,7 +12,13 @@ function requireNumber(source, pattern, label) {
 }
 
 const sceneScale = requireNumber(trainer, /aircraft\.scale\.set\(([-\d.]+),\s*[-\d.]+,\s*[-\d.]+\)/, "scene aircraft scale");
-const modelScale = requireNumber(aircraft, /group\.scale\.setScalar\(([-\d.]+)\)/, "aircraft model scale");
+const modelScale = requireNumber(aircraft, /const PROCEDURAL_INTERNAL_SCALE = ([-\d.]+);/, "procedural landing-gear scale");
+if (!aircraft.includes("group.scale.setScalar(PROCEDURAL_INTERNAL_SCALE)")) {
+  throw new Error("Nose-gear seating verification failed: procedural landing gear is not using the declared internal scale.");
+}
+if (!aircraft.includes("retainedProceduralChildren.add") || !aircraft.includes("retainedProceduralChildren.has(child)")) {
+  throw new Error("Nose-gear seating verification failed: retained procedural landing-gear path is missing.");
+}
 const effectiveScale = sceneScale * modelScale;
 
 const deckMatch = trainer.match(/box\(([-\d.]+),\s*([-\d.]+),\s*([-\d.]+),\s*black,\s*0,\s*([-\d.]+),\s*CRADLE_Z\)\)/);
@@ -23,7 +29,7 @@ const deckCenterY = Number(deckMatch[4]);
 const deckTop = deckCenterY + deckHeight / 2;
 
 const wheelMatch = aircraft.match(/cyl\(([-\d.]+),\s*([-\d.]+),\s*0x101114,\s*-0\.16,\s*([-\d.]+),\s*-0\.16/);
-if (!wheelMatch) throw new Error("Nose-gear seating verification failed: CRJ nose-wheel geometry was not found.");
+if (!wheelMatch) throw new Error("Nose-gear seating verification failed: retained CRJ nose-wheel geometry was not found.");
 const wheelRadius = Number(wheelMatch[1]) * effectiveScale;
 const wheelDepth = Number(wheelMatch[2]) * effectiveScale;
 const wheelCenterY = Number(wheelMatch[3]) * effectiveScale;
@@ -54,4 +60,4 @@ if (guideArmClearance < 0.08 || guideArmClearance > 0.30) {
   throw new Error(`Nose-gear seating verification failed: guide-arm clearance ${guideArmClearance.toFixed(3)} m is outside the capture envelope.`);
 }
 
-console.log(`Nose-gear seating passed: effective scale ${effectiveScale.toFixed(3)}, wheel contact ${wheelBottom.toFixed(3)} m, deck engagement ${verticalEngagement.toFixed(3)} m, lateral margin ${lateralDeckMargin.toFixed(3)} m, guide clearance ${guideArmClearance.toFixed(3)} m.`);
+console.log(`Nose-gear seating passed for retained procedural gear: effective scale ${effectiveScale.toFixed(3)}, wheel contact ${wheelBottom.toFixed(3)} m, deck engagement ${verticalEngagement.toFixed(3)} m, lateral margin ${lateralDeckMargin.toFixed(3)} m, guide clearance ${guideArmClearance.toFixed(3)} m.`);

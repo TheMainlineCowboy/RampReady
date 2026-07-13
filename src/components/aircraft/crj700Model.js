@@ -1,6 +1,82 @@
+const EXPECTED_LENGTH_METERS = 32.5;
+const EXPECTED_WINGSPAN_METERS = 23.64;
+const DIMENSION_TOLERANCE_METERS = 1.25;
+const LEGACY_PARENT_SCALE = 0.82;
+const PROCEDURAL_INTERNAL_SCALE = 1.35;
+
+function dimensionWithinTolerance(actual, expected) {
+  return Number.isFinite(actual) && Math.abs(actual - expected) <= DIMENSION_TOLERANCE_METERS;
+}
+
+function getAssetUrl() {
+  return new URL("models/crj700-mobile.glb", document.baseURI).href;
+}
+
+async function loadRealCRJ700(THREE, aircraftRoot, retainedProceduralChildren) {
+  aircraftRoot.userData.aircraftAssetState = "loading";
+  aircraftRoot.userData.aircraftAssetUrl = getAssetUrl();
+  aircraftRoot.userData.renderedAircraftSource = "procedural-fallback";
+
+  try {
+    const { GLTFLoader } = await import("three/addons/loaders/GLTFLoader.js");
+    const loader = new GLTFLoader();
+    const gltf = await loader.loadAsync(aircraftRoot.userData.aircraftAssetUrl);
+    const realModel = gltf.scene;
+    realModel.name = "CRJ700 STL-derived mobile GLB";
+    realModel.updateMatrixWorld(true);
+
+    const rawBounds = new THREE.Box3().setFromObject(realModel);
+    const rawSize = rawBounds.getSize(new THREE.Vector3());
+    const rawLength = rawSize.z;
+    const rawWingspan = rawSize.x;
+    if (!dimensionWithinTolerance(rawLength, EXPECTED_LENGTH_METERS) || !dimensionWithinTolerance(rawWingspan, EXPECTED_WINGSPAN_METERS)) {
+      throw new Error(`Unexpected CRJ700 dimensions ${rawLength.toFixed(2)} m long x ${rawWingspan.toFixed(2)} m span`);
+    }
+
+    realModel.traverse((child) => {
+      if (!child.isMesh) return;
+      child.castShadow = true;
+      child.receiveShadow = true;
+      child.frustumCulled = true;
+      child.userData.aircraftAssetSource = "CRJ700.stl";
+    });
+
+    // The trainer retains a legacy 0.82 parent scale and this procedural root uses 1.35.
+    // Counter-scale only the real payload so its verified meter dimensions remain exact in world space.
+    realModel.scale.setScalar(1 / (LEGACY_PARENT_SCALE * PROCEDURAL_INTERNAL_SCALE));
+    realModel.userData.noseGearCaptureOrigin = [0, 0, 0];
+    realModel.userData.orientation = { up: "+Y", forward: "-Z" };
+    aircraftRoot.add(realModel);
+
+    for (const child of aircraftRoot.children) {
+      if (child !== realModel && !retainedProceduralChildren.has(child)) child.visible = false;
+    }
+
+    aircraftRoot.userData.aircraftAssetState = "ready";
+    aircraftRoot.userData.renderedAircraftSource = "CRJ700.stl";
+    aircraftRoot.userData.realAircraftObject = realModel;
+    aircraftRoot.userData.aircraftDimensionsMeters = {
+      length: Number(rawLength.toFixed(3)),
+      wingspan: Number(rawWingspan.toFixed(3)),
+    };
+    aircraftRoot.dispatchEvent({
+      type: "aircraft-model-ready",
+      source: "CRJ700.stl",
+      dimensions: aircraftRoot.userData.aircraftDimensionsMeters,
+    });
+  } catch (error) {
+    aircraftRoot.userData.aircraftAssetState = "error";
+    aircraftRoot.userData.renderedAircraftSource = "procedural-fallback";
+    aircraftRoot.userData.aircraftAssetError = error instanceof Error ? error.message : String(error);
+    aircraftRoot.dispatchEvent({ type: "aircraft-model-error", error });
+    console.error("RampReady CRJ700 asset load failed; procedural fallback remains visible.", error);
+  }
+}
+
 export function buildCRJ700Aircraft(THREE, mat, cyl) {
   const group = new THREE.Group();
-  group.name = "CRJ700 lightweight procedural model";
+  group.name = "CRJ700 aircraft root";
+  const retainedProceduralChildren = new Set();
 
   const white = mat(0xf4f6f8, 0.34, 0.04);
   const bellyBlue = mat(0x1e4777, 0.48, 0.03);
@@ -12,6 +88,11 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     group.add(mesh);
+    return mesh;
+  };
+
+  const retain = (mesh) => {
+    retainedProceduralChildren.add(mesh);
     return mesh;
   };
 
@@ -83,15 +164,13 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
     return add(new THREE.Mesh(geom, material));
   }
 
-  // Local origin is nose gear contact point. Negative Z is aircraft nose, positive Z is tail.
-  // A ring-lofted fuselage avoids the old overlapping-capsule shape and gives the CRJ a tapered nose and tail.
+  // Procedural body is a visible loading/error fallback only. Local origin remains the nose-gear capture point.
   loftFuselage([
     [-5.25, 0.08, 2.58, 0.9], [-4.8, 0.48, 2.61, 0.92], [-3.9, 0.82, 2.65, 0.94],
     [-2.5, 0.98], [0, 1.0], [16.8, 1.0], [19.2, 0.92], [21.2, 0.7, 2.72, 0.96],
     [23.1, 0.34, 2.82, 1], [24.15, 0.08, 2.9, 1],
   ], white);
 
-  // Angled cockpit glazing, side livery stripe, doors, and lower belly color improve scale readability.
   box(0.68, 0.34, 0.72, glass, -0.58, 3.05, -3.62, -0.08, -0.18, -0.08);
   box(0.68, 0.34, 0.72, glass, 0.58, 3.05, -3.62, -0.08, 0.18, 0.08);
   box(0.035, 0.13, 20.0, mat(0x1d4e89, 0.42, 0.02), -0.985, 2.86, 7.4);
@@ -102,14 +181,12 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
     box(0.025, 0.92, 0.55, mat(0xd9dee4, 0.5, 0.02), side * 0.985, 2.58, 17.45);
   }
 
-  // Main swept low wings.
   taperedWing(10.8, 3.6, 1.35, white, 10.7, 2.33, 1.2, 1);
   taperedWing(10.8, 3.6, 1.35, white, 10.7, 2.33, 1.2, -1);
   box(1.8, 0.22, 2.7, white, 0, 2.38, 10.9);
   box(0.16, 0.92, 1.05, white, -10.55, 2.77, 12.0, 0.08, 0, -0.18);
   box(0.16, 0.92, 1.05, white, 10.55, 2.77, 12.0, 0.08, 0, 0.18);
 
-  // Rear-mounted engines with separate nacelles, dark intakes, exhausts, and visible pylons.
   for (const side of [-1, 1]) {
     const nacelle = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.48, 2.25, 36), white);
     nacelle.rotation.x = Math.PI / 2;
@@ -126,30 +203,24 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
     box(0.34, 0.12, 1.18, gearMetal, side * 0.78, 2.78, 19.8, 0, 0, side * 0.08);
   }
 
-  // T-tail with a swept vertical fin rather than a rectangular slab.
   verticalFin(white);
   taperedWing(4.3, 1.7, 1.0, white, 24.3, 5.78, 0.15, 1);
   taperedWing(4.3, 1.7, 1.0, white, 24.3, 5.78, 0.15, -1);
 
-  // Nose gear at origin.
-  const strut = cyl(0.045, 1.05, 0x8b949e, 0, 0.78, 0, 0, 0, 0, 16);
-  group.add(strut);
-  group.add(cyl(0.2, 0.16, 0x101114, -0.16, 0.24, -0.16, 0, 0, Math.PI / 2, 24));
-  group.add(cyl(0.2, 0.16, 0x101114, 0.16, 0.24, -0.16, 0, 0, Math.PI / 2, 24));
+  // The STL source has no deployed landing gear, so only these procedural gear pieces remain after load.
+  retain(add(cyl(0.045, 1.05, 0x8b949e, 0, 0.78, 0, 0, 0, 0, 16)));
+  retain(add(cyl(0.2, 0.16, 0x101114, -0.16, 0.24, -0.16, 0, 0, Math.PI / 2, 24)));
+  retain(add(cyl(0.2, 0.16, 0x101114, 0.16, 0.24, -0.16, 0, 0, Math.PI / 2, 24)));
+  retain(add(cyl(0.26, 0.22, 0x101114, -1.9, 0.32, 12.1, 0, 0, Math.PI / 2, 28)));
+  retain(add(cyl(0.26, 0.22, 0x101114, 1.9, 0.32, 12.1, 0, 0, Math.PI / 2, 28)));
+  retain(box(0.08, 1.05, 0.08, gearMetal, -1.9, 0.9, 12.1));
+  retain(box(0.08, 1.05, 0.08, gearMetal, 1.9, 0.9, 12.1));
 
-  // Main landing gear.
-  group.add(cyl(0.26, 0.22, 0x101114, -1.9, 0.32, 12.1, 0, 0, Math.PI / 2, 28));
-  group.add(cyl(0.26, 0.22, 0x101114, 1.9, 0.32, 12.1, 0, 0, Math.PI / 2, 28));
-  box(0.08, 1.05, 0.08, gearMetal, -1.9, 0.9, 12.1);
-  box(0.08, 1.05, 0.08, gearMetal, 1.9, 0.9, 12.1);
-
-  // Window row dots.
   for (let z = 0.4; z < 18.8; z += 1.08) {
     box(0.035, 0.12, 0.22, glass, -0.92, 3.03, z, 0, 0.02, 0);
     box(0.035, 0.12, 0.22, glass, 0.92, 3.03, z, 0, -0.02, 0);
   }
 
-  // Navigation and anti-collision lights make the silhouette legible at trainer camera distances.
   const redLight = new THREE.MeshBasicMaterial({ color: 0xff2d2d });
   const greenLight = new THREE.MeshBasicMaterial({ color: 0x35ff79 });
   const beacon = new THREE.MeshBasicMaterial({ color: 0xff5a2d });
@@ -161,12 +232,13 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
   target.rotation.x = Math.PI / 2;
   target.position.y = 0.055;
   group.add(target);
+  retain(target);
 
-  // The trainer scene applies a legacy 0.82 scale to the aircraft. Counter-scale here so the
-  // rendered model lands at CRJ700 dimensions (about 32.5 m long and 23.9 m wingspan) while
-  // preserving the nose-gear origin used by the capture and towing physics.
-  group.scale.setScalar(1.35);
-  group.userData.aircraftDimensionsMeters = { length: 32.5, wingspan: 23.9 };
+  group.scale.setScalar(PROCEDURAL_INTERNAL_SCALE);
+  group.userData.aircraftDimensionsMeters = { length: EXPECTED_LENGTH_METERS, wingspan: EXPECTED_WINGSPAN_METERS };
+  group.userData.noseGearCaptureOrigin = [0, 0, 0];
+  group.userData.orientation = { up: "+Y", forward: "-Z" };
+  void loadRealCRJ700(THREE, group, retainedProceduralChildren);
 
   return group;
 }

@@ -18,7 +18,6 @@ const requiredSnippets = [
   "sim.towOffsetLocal = captureState.delta.clone().applyAxisAngle(Y_AXIS, -sim.tug.rotation.y);",
   "const captureOffset = sim.towOffsetLocal.length();",
   "else sim.towOffsetLocal.multiplyScalar((captureOffset - maxCaptureCorrection) / captureOffset);",
-  "const towOffset = sim.towOffsetLocal.clone().applyAxisAngle(Y_AXIS, sim.tug.rotation.y);",
 ];
 
 for (const snippet of requiredSnippets) {
@@ -26,6 +25,10 @@ for (const snippet of requiredSnippets) {
   if (count !== 1) {
     throw new Error(`Capture-settling verification failed: expected one runtime occurrence, found ${count}: ${snippet}`);
   }
+}
+
+if (!trainer.includes("towOffsetLocal") || !trainer.includes("applyAxisAngle(Y_AXIS")) {
+  throw new Error("Capture-settling verification failed: towing no longer applies the retained local nose-gear offset through tug heading.");
 }
 
 if (connectDistance <= 0 || connectDistance > 0.5) {

@@ -65,10 +65,11 @@ jobs:
           set -euo pipefail
           test -f dist/index.html
           test -f dist/manifest.webmanifest
-          grep -q 'src="/assets/' dist/index.html
-          grep -q 'rel="manifest"' dist/index.html
+          grep -q 'src="/RampReady/assets/' dist/index.html
+          grep -q 'href="/RampReady/manifest.webmanifest"' dist/index.html
           find dist/assets -type f -size +0c | grep -q .
-          echo "Production bundle contains index, manifest, and non-empty hashed assets."
+          test -s dist/models/crj700-mobile.glb
+          echo "Production bundle contains Pages-scoped index, manifest, non-empty hashed assets, and the CRJ700 GLB."
 
       - name: Upload production bundle
         uses: actions/upload-artifact@v4
