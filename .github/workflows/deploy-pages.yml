@@ -3,9 +3,7 @@ name: Deploy RampReady to GitHub Pages
 on:
   push:
     branches:
-      - integrate-crj700-model
       - main
-      - fix-crj700-runtime-copy
   workflow_dispatch:
 
 permissions:
@@ -33,6 +31,9 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Run complete RampReady verification suite
+        run: npm run verify
+
       - name: Materialize verified CRJ700 runtime copy
         shell: bash
         run: |
@@ -44,7 +45,8 @@ jobs:
           printf 'glTF' | cmp -n 4 - "${source_asset}"
           cp "${source_asset}" "${runtime_asset}"
           cmp "${source_asset}" "${runtime_asset}"
-          echo "Verified and copied CRJ700 source asset to the exact Three.js runtime URL."
+          printf '%s\n' "${GITHUB_SHA}" > public/release-commit.txt
+          echo "Verified CRJ700 source, runtime copy, and release commit marker."
 
       - name: Build verified production site
         run: npm run build
@@ -56,12 +58,14 @@ jobs:
           test -s dist/index.html
           test -s dist/manifest.webmanifest
           test -s dist/models/crj700-mobile.glb
+          test -s dist/release-commit.txt
           test -d dist/assets
           find dist/assets -type f -size +0c | grep -q .
           grep -Eq 'src="/RampReady/assets/[^\"]+\.js"' dist/index.html
           cmp public/models/crj700/crj700-mobile.glb dist/models/crj700-mobile.glb
           printf 'glTF' | cmp -n 4 - dist/models/crj700-mobile.glb
-          echo "Pages artifact contains the app shell, hashed assets, manifest, and byte-identical real CRJ700 payload."
+          test "$(tr -d '\r\n' < dist/release-commit.txt)" = "${GITHUB_SHA}"
+          echo "Pages artifact contains the app shell, verified assets, byte-identical CRJ700 payload, and exact release SHA."
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -91,25 +95,29 @@ jobs:
       - name: Wait for GitHub Pages propagation
         run: sleep 15
 
-      - name: Verify live RampReady site and CRJ700 asset
+      - name: Verify exact live release and CRJ700 asset
         shell: bash
         env:
           PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+          EXPECTED_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           : "${PAGE_URL:?GitHub Pages did not return a deployment URL}"
           for attempt in {1..12}; do
             status=$(curl -L -sS -o /tmp/rampready-index.html -w '%{http_code}' "${PAGE_URL}")
-            if [ "${status}" = "200" ] && grep -q '<div id="root"></div>' /tmp/rampready-index.html; then
+            marker_status=$(curl -L -sS -o /tmp/release-commit.txt -w '%{http_code}' "${PAGE_URL}release-commit.txt")
+            live_sha=$(tr -d '\r\n' < /tmp/release-commit.txt 2>/dev/null || true)
+            if [ "${status}" = "200" ] && [ "${marker_status}" = "200" ] && [ "${live_sha}" = "${EXPECTED_SHA}" ] && grep -q '<div id="root"></div>' /tmp/rampready-index.html; then
               break
             fi
-            echo "Attempt ${attempt}: ${PAGE_URL} returned HTTP ${status}; retrying..."
+            echo "Attempt ${attempt}: site=${status}, marker=${marker_status}, live_sha=${live_sha:-missing}; retrying..."
             sleep 10
           done
           test -s /tmp/rampready-index.html
           grep -q '<div id="root"></div>' /tmp/rampready-index.html
+          test "$(tr -d '\r\n' < /tmp/release-commit.txt)" = "${EXPECTED_SHA}"
           asset_status=$(curl -L -sS -o /tmp/crj700-mobile.glb -w '%{http_code}' "${PAGE_URL}models/crj700-mobile.glb")
           test "${asset_status}" = "200"
           test "$(stat -c%s /tmp/crj700-mobile.glb)" -gt 10000
           printf 'glTF' | cmp -n 4 - /tmp/crj700-mobile.glb
-          echo "Live GitHub Pages site and CRJ700 payload are reachable at ${PAGE_URL}"
+          echo "Exact commit ${EXPECTED_SHA} and its CRJ700 payload are live at ${PAGE_URL}"
