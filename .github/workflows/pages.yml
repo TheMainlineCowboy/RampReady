@@ -106,3 +106,30 @@ jobs:
 
           echo "Verified live Pages URL: $PAGE_URL"
           echo "Verified live CRJ700 asset: ${PAGE_URL}models/crj700/crj700-mobile.glb"
+
+      - name: Install Chromium browser runtime
+        run: npx --yes playwright@1.55.0 install --with-deps chromium
+
+      - name: Open deployed trainer and capture end-user render
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes playwright@1.55.0 screenshot \
+            --browser chromium \
+            --viewport-size "1440,900" \
+            --wait-for-timeout 15000 \
+            "$PAGE_URL" \
+            live-rampready.png
+          test -s live-rampready.png
+          test "$(stat -c%s live-rampready.png)" -gt 10000
+          file live-rampready.png | grep -q 'PNG image data'
+
+      - name: Upload live browser evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: rampready-live-browser-${{ github.sha }}
+          path: |
+            live-index.html
+            live-rampready.png
+          if-no-files-found: error
+          retention-days: 14
