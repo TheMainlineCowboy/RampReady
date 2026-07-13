@@ -73,15 +73,15 @@ function cyl(r, depth, color, x, y, z, rx = 0, ry = 0, rz = 0, segments = 28) {
 }
 
 function buildGround(scene) {
-  const ramp = new THREE.Mesh(new THREE.PlaneGeometry(90, 120), mat(0x50545a, 0.95, 0.02));
+  const ramp = new THREE.Mesh(new THREE.PlaneGeometry(90, 140), mat(0x50545a, 0.95, 0.02));
   ramp.rotation.x = -Math.PI / 2;
-  ramp.position.z = 28;
+  ramp.position.z = 18;
   ramp.receiveShadow = true;
   scene.add(ramp);
 
-  const center = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 86), new THREE.MeshBasicMaterial({ color: 0xffd400 }));
+  const center = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 130), new THREE.MeshBasicMaterial({ color: 0xffd400 }));
   center.rotation.x = -Math.PI / 2;
-  center.position.set(0, 0.018, 28);
+  center.position.set(0, 0.018, 18);
   scene.add(center);
 
   const stop = new THREE.Mesh(new THREE.PlaneGeometry(12, 0.32), new THREE.MeshBasicMaterial({ color: 0xff3434 }));
@@ -202,6 +202,7 @@ export default function RampReadyTrainerStable() {
     sim.velocity = 0;
     sim.steer = 0;
     sim.connected = false;
+    sim.lastAttachedNose = null;
     sim.towOffsetLocal = null;
     scoreRef.current = { score: 100, overspeed: false, offCenter: false, hardStop: false, wrongDirection: false, brakeLate: false };
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
@@ -222,6 +223,7 @@ export default function RampReadyTrainerStable() {
     }
     sim.towOffsetLocal = captureState.delta.clone().applyAxisAngle(Y_AXIS, -sim.tug.rotation.y);
     sim.connected = true;
+    sim.lastAttachedNose = null;
     sim.velocity = 0;
     driveRef.current.throttle = 0;
     setThrottle(0);
@@ -237,6 +239,7 @@ export default function RampReadyTrainerStable() {
       return;
     }
     sim.connected = false;
+    sim.lastAttachedNose = null;
     sim.towOffsetLocal = null;
     sim.velocity = 0;
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
@@ -330,14 +333,14 @@ export default function RampReadyTrainerStable() {
       const usefulThrottle = throttleNorm > 0.02 ? 0.16 + throttleNorm * 0.84 : 0;
       const connectedPushPhase = sim.connected && stageRef.current === 4;
       const connectedMotionLocked = sim.connected && !connectedPushPhase;
-      const pushDirectionLocked = connectedPushPhase && drive.direction !== -1;
-      const signedDirection = connectedPushPhase ? 1 : drive.direction;
+      const pushDirectionLocked = connectedPushPhase && drive.direction !== 1;
+      const signedDirection = drive.direction;
       const maxSpeed = sim.connected ? MAX_TOW_SPEED : MAX_FREE_SPEED;
       const targetSpeed = connectedMotionLocked || pushDirectionLocked ? 0 : usefulThrottle * signedDirection * maxSpeed;
       sim.velocity = lerp(sim.velocity, targetSpeed, 1 - Math.exp((sim.connected ? -3.4 : -4.4) * dt));
       if (drive.brake || keysRef.current.has(" ")) sim.velocity = lerp(sim.velocity, 0, 1 - Math.exp(-9 * dt));
       if (usefulThrottle === 0) sim.velocity = lerp(sim.velocity, 0, 1 - Math.exp(-1.7 * dt));
-      if (Math.abs(sim.velocity) < 0.01) sim.velocity = 0;
+      if (Math.abs(sim.velocity) < 0.01 && usefulThrottle === 0) sim.velocity = 0;
 
       sim.tug.rotation.y += (sim.velocity / 2.35) * Math.tan(sim.steer) * dt;
       sim.tug.position.x += Math.sin(sim.tug.rotation.y) * sim.velocity * dt;
@@ -350,10 +353,30 @@ export default function RampReadyTrainerStable() {
       const ready = !sim.connected && stageRef.current === 1 && captureState.ready;
 
       if (sim.connected) {
+        if (sim.towOffsetLocal) {
+          const captureOffset = sim.towOffsetLocal.length();
+          const maxCaptureCorrection = 0.28 * dt;
+          if (captureOffset <= maxCaptureCorrection || captureOffset < 0.002) sim.towOffsetLocal.set(0, 0, 0);
+          else sim.towOffsetLocal.multiplyScalar((captureOffset - maxCaptureCorrection) / captureOffset);
+        }
         const towOffset = (sim.towOffsetLocal || new THREE.Vector3()).clone().applyAxisAngle(Y_AXIS, sim.tug.rotation.y);
-        sim.aircraft.position.x = cradle.x + towOffset.x;
-        sim.aircraft.position.z = cradle.z + towOffset.z;
-        sim.aircraft.rotation.y = lerp(sim.aircraft.rotation.y, sim.tug.rotation.y, 1 - Math.exp(-0.7 * dt));
+        const attachedNoseX = cradle.x + towOffset.x;
+        const attachedNoseZ = cradle.z + towOffset.z;
+        if (!sim.lastAttachedNose) sim.lastAttachedNose = new THREE.Vector3(attachedNoseX, 0, attachedNoseZ);
+        const noseDx = attachedNoseX - sim.lastAttachedNose.x;
+        const noseDz = attachedNoseZ - sim.lastAttachedNose.z;
+        const aircraftRightX = Math.cos(sim.aircraft.rotation.y);
+        const aircraftRightZ = -Math.sin(sim.aircraft.rotation.y);
+        const lateralNoseTravel = noseDx * aircraftRightX + noseDz * aircraftRightZ;
+        const requestedYawStep = lateralNoseTravel / 11.2;
+        const yawRateStep = clamp(requestedYawStep, -THREE.MathUtils.degToRad(12) * dt, THREE.MathUtils.degToRad(12) * dt);
+        const articulationDelta = sim.aircraft.rotation.y - sim.tug.rotation.y;
+        const currentArticulation = Math.atan2(Math.sin(articulationDelta), Math.cos(articulationDelta));
+        const boundedArticulation = clamp(currentArticulation + yawRateStep, -THREE.MathUtils.degToRad(70), THREE.MathUtils.degToRad(70));
+        sim.aircraft.rotation.y = sim.tug.rotation.y + boundedArticulation;
+        sim.aircraft.position.x = attachedNoseX;
+        sim.aircraft.position.z = attachedNoseZ;
+        sim.lastAttachedNose.set(attachedNoseX, 0, attachedNoseZ);
       }
 
       const towActive = sim.connected && stageRef.current === 4;
@@ -378,7 +401,7 @@ export default function RampReadyTrainerStable() {
       } else {
         scoreState.offCenter = false;
       }
-      if (towActive && drive.direction !== -1) {
+      if (towActive && drive.direction !== 1) {
         if (!scoreState.wrongDirection) {
           scoreState.score = Math.max(0, scoreState.score - 6);
           scoreState.wrongDirection = true;
@@ -433,10 +456,10 @@ export default function RampReadyTrainerStable() {
 
       let liveMessage = messageRef.current;
       const quality = scoreState.score >= 90 ? "Clean" : scoreState.score >= 75 ? "Caution" : "Needs reset";
-      const gate = stageRef.current === 1 && ready ? "Ready to connect" : [2, 3].includes(stageRef.current) ? "Power locked" : stageRef.current === 4 && drive.direction !== -1 ? "REV required" : stageRef.current === 4 && stopRemaining <= STOP_REMAINING_CAUTION ? "Brake zone" : stageRef.current === 5 ? "Release ready" : "Training";
+      const gate = stageRef.current === 1 && ready ? "Ready to connect" : [2, 3].includes(stageRef.current) ? "Power locked" : stageRef.current === 4 && drive.direction !== 1 ? "FWD required" : stageRef.current === 4 && stopRemaining <= STOP_REMAINING_CAUTION ? "Brake zone" : stageRef.current === 5 ? "Release ready" : "Training";
       if (stageRef.current === 1) liveMessage = ready ? "Capture aligned and stopped. Tap Connect nose gear." : `${captureState.guidance}. Capture ${capture.toFixed(1)} m.`;
-      if (stageRef.current === 4 && drive.direction !== -1) liveMessage = "Direction should be REV for pushback. Power locked until REV is selected.";
-      if (stageRef.current === 4 && drive.direction === -1 && stopRemaining <= STOP_REMAINING_CAUTION) liveMessage = "Red line ahead. Idle power and brake smoothly.";
+      if (stageRef.current === 4 && drive.direction !== 1) liveMessage = "Direction should be FWD for pushback. Power locked until FWD is selected.";
+      if (stageRef.current === 4 && drive.direction === 1 && stopRemaining <= STOP_REMAINING_CAUTION) liveMessage = "Red line ahead. Idle power and brake smoothly.";
       if (now - sim.lastHud >= 100) {
         sim.lastHud = now;
         setHud({
@@ -500,11 +523,11 @@ export default function RampReadyTrainerStable() {
     if (stageIndex === 0) setTrainerMessage("Approach the nose gear slowly. Stop when capture distance is green.");
     if (stageIndex === 2) setTrainerMessage("Clearance received. Confirm brake release.");
     if (stageIndex === 3) {
-      driveRef.current.direction = -1;
+      driveRef.current.direction = 1;
       driveRef.current.throttle = 0;
-      setDirection("REV");
+      setDirection("FWD");
       setThrottle(0);
-      setTrainerMessage("Brake released. REV selected for pushback. Add power slowly.");
+      setTrainerMessage("Brake released. FWD selected for pushback. Add power slowly.");
     }
     setStageIndex((old) => {
       const next = clamp(old + 1, 0, STAGES.length - 1);

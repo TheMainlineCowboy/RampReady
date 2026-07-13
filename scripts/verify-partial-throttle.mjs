@@ -9,7 +9,7 @@ function stepVelocity({ velocity, throttle, direction, connected, stage, dt }) {
   const usefulThrottle = throttle > 0.02 ? 0.16 + throttle * 0.84 : 0;
   const connectedPushPhase = connected && stage === 4;
   const connectedMotionLocked = connected && !connectedPushPhase;
-  const pushDirectionLocked = connectedPushPhase && direction !== -1;
+  const pushDirectionLocked = connectedPushPhase && direction !== 1;
   const signedDirection = direction;
   const maxSpeed = connected ? MAX_TOW_SPEED : MAX_FREE_SPEED;
   const targetSpeed = connectedMotionLocked || pushDirectionLocked
@@ -36,7 +36,7 @@ function simulate({ fps, seconds, throttle, direction, connected, stage }) {
 }
 
 const freeResults = FRAME_RATES.map((fps) => ({ fps, ...simulate({ fps, seconds: 2, throttle: 0.08, direction: 1, connected: false, stage: 1 }) }));
-const towResults = FRAME_RATES.map((fps) => ({ fps, ...simulate({ fps, seconds: 3, throttle: 0.12, direction: -1, connected: true, stage: 4 }) }));
+const towResults = FRAME_RATES.map((fps) => ({ fps, ...simulate({ fps, seconds: 3, throttle: 0.12, direction: 1, connected: true, stage: 4 }) }));
 
 for (const result of freeResults) {
   if (result.firstMovingFrame === null || result.firstMovingFrame > 5) failures.push(`${result.fps} Hz free drive did not respond promptly: ${JSON.stringify(result)}`);
@@ -45,9 +45,9 @@ for (const result of freeResults) {
 }
 
 for (const result of towResults) {
-  if (result.firstMovingFrame === null || result.firstMovingFrame > 8) failures.push(`${result.fps} Hz connected REV did not respond promptly: ${JSON.stringify(result)}`);
-  if (result.position >= -0.65) failures.push(`${result.fps} Hz connected REV partial throttle travel too small: ${result.position}`);
-  if (Math.abs(result.velocity) >= MAX_TOW_SPEED * 0.5) failures.push(`${result.fps} Hz connected REV partial throttle too aggressive: ${result.velocity}`);
+  if (result.firstMovingFrame === null || result.firstMovingFrame > 8) failures.push(`${result.fps} Hz connected FWD did not respond promptly: ${JSON.stringify(result)}`);
+  if (result.position <= 0.65) failures.push(`${result.fps} Hz connected FWD partial throttle travel too small: ${result.position}`);
+  if (Math.abs(result.velocity) >= MAX_TOW_SPEED * 0.5) failures.push(`${result.fps} Hz connected FWD partial throttle too aggressive: ${result.velocity}`);
 }
 
 const freePositions = freeResults.map(({ position }) => position);
@@ -58,8 +58,8 @@ if (Math.max(...towPositions) - Math.min(...towPositions) > 0.025) failures.push
 const deadband = simulate({ fps: 60, seconds: 2, throttle: 0.02, direction: 1, connected: false, stage: 1 });
 if (deadband.position !== 0 || deadband.velocity !== 0) failures.push(`Throttle deadband leaked movement: ${JSON.stringify(deadband)}`);
 
-const locked = simulate({ fps: 60, seconds: 2, throttle: 1, direction: 1, connected: true, stage: 4 });
-if (locked.position !== 0 || locked.velocity !== 0) failures.push(`Connected FWD interlock leaked movement: ${JSON.stringify(locked)}`);
+const locked = simulate({ fps: 60, seconds: 2, throttle: 1, direction: -1, connected: true, stage: 4 });
+if (locked.position !== 0 || locked.velocity !== 0) failures.push(`Connected REV interlock leaked movement: ${JSON.stringify(locked)}`);
 
 if (failures.length) {
   console.error("RampReady partial-throttle verification failed:");

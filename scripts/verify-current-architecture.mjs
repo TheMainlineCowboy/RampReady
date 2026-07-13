@@ -60,8 +60,8 @@ if (existsSync("scripts/verify-physics.mjs")) {
   const physics = read("scripts/verify-physics.mjs");
   for (const marker of [
     "Partial free-drive throttle too weak",
-    "Connected REV pushback did not travel backward far enough",
-    "Connected FWD interlock leaked motion",
+    "Connected FWD pushback did not travel forward far enough",
+    "Connected REV interlock leaked motion",
     "Correctly aligned capture should be ready",
     "Distant cradle must not capture",
     "Cradle offset outside integrated-pan range",

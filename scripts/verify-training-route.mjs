@@ -26,7 +26,7 @@ const noseStartZ = numericConstant(source, "NOSE_START_Z");
 const trackedStopZ = numericConstant(source, "STOP_Z");
 const preparedStopMatch = preparation.match(/const physicalStopLine = "const STOP_Z = (-?\d+(?:\.\d+)?);";/);
 const effectiveStopZ = preparedStopMatch ? Number(preparedStopMatch[1]) : trackedStopZ;
-const reverseSelected = source.includes("driveRef.current.direction = -1;");
+const forwardSelected = source.includes("driveRef.current.direction = 1;");
 const trackedPhysicalDirection = source.includes("const signedDirection = drive.direction;");
 const preparesPhysicalDirection = preparation.includes('const physicalDirectionLine = "const signedDirection = drive.direction;";');
 const usesPositiveForwardAxis = source.includes("sim.tug.position.z += Math.cos(sim.tug.rotation.y) * sim.velocity * dt;");
@@ -43,29 +43,28 @@ const centerlineRange = planeRange(
   /center\.position\.set\(0,\s*0\.018,\s*(-?\d+(?:\.\d+)?)\);/,
 );
 
-const effectiveHudDistance = "stop: NOSE_START_Z - STOP_Z";
-const effectiveRemainingDistance = "const stopRemaining = sim.aircraft.position.z - STOP_Z;";
-const effectiveCompletionGate = "if (towActive && sim.aircraft.position.z <= STOP_Z + 0.5) {";
+const effectiveHudDistance = "stop: STOP_Z - NOSE_START_Z";
+const effectiveRemainingDistance = "const stopRemaining = STOP_Z - sim.aircraft.position.z;";
+const effectiveCompletionGate = "if (towActive && sim.aircraft.position.z >= STOP_Z - 0.5) {";
 const routeIsPrepared = preparedStopMatch !== null;
 
 const failures = [];
-if (!reverseSelected) failures.push("Pushback stage does not select REV.");
+if (!forwardSelected) failures.push("Pushback stage does not select FWD.");
 if (!usesPositiveForwardAxis) failures.push("Unable to confirm tug Z-axis movement convention.");
 if (!effectivePhysicalDirection) failures.push("Production runtime does not use the selected physical drive direction.");
 
-// With heading zero, REV produces negative Z travel. Validate the effective production
-// target, not only the legacy tracked value that prepare-runtime may replace before build.
-if (effectivePhysicalDirection && effectiveStopZ >= noseStartZ) {
-  failures.push(`REV pushback travels toward decreasing Z, but effective STOP_Z ${effectiveStopZ} is not below NOSE_START_Z ${noseStartZ}.`);
+// With heading zero, FWD produces positive Z travel. The aircraft faces -Z, so positive Z is backward from the gate.
+if (effectivePhysicalDirection && effectiveStopZ <= noseStartZ) {
+  failures.push(`FWD pushback travels toward increasing Z, but effective STOP_Z ${effectiveStopZ} is not above NOSE_START_Z ${noseStartZ}.`);
 }
 
 if (routeIsPrepared) {
-  if (!preparation.includes(effectiveHudDistance)) failures.push("Production preparation does not reverse the initial HUD stop distance.");
-  if (!preparation.includes(effectiveRemainingDistance)) failures.push("Production preparation does not reverse remaining-distance calculation.");
-  if (!preparation.includes(effectiveCompletionGate)) failures.push("Production preparation does not reverse the stop completion gate.");
+  if (!preparation.includes(effectiveHudDistance)) failures.push("Production preparation does not preserve the FWD HUD stop distance.");
+  if (!preparation.includes(effectiveRemainingDistance)) failures.push("Production preparation does not preserve FWD remaining-distance calculation.");
+  if (!preparation.includes(effectiveCompletionGate)) failures.push("Production preparation does not preserve the FWD stop completion gate.");
 }
 
-const routeDistance = noseStartZ - effectiveStopZ;
+const routeDistance = effectiveStopZ - noseStartZ;
 if (!Number.isFinite(routeDistance) || routeDistance <= 0) failures.push(`Effective route distance ${routeDistance} is invalid.`);
 if (routeDistance < 20 || routeDistance > 80) failures.push(`Effective route distance ${routeDistance.toFixed(1)} m is outside the supported training envelope.`);
 
@@ -87,4 +86,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`RampReady training-route verification passed: effective REV route runs ${routeDistance.toFixed(1)} m from nose Z ${noseStartZ} toward stop Z ${effectiveStopZ}${routeIsPrepared ? " after production preparation" : " in tracked source"}; ramp and centerline cover the full route.`);
+console.log(`RampReady training-route verification passed: effective FWD route runs ${routeDistance.toFixed(1)} m from nose Z ${noseStartZ} toward stop Z ${effectiveStopZ}${routeIsPrepared ? " after production preparation" : " in tracked source"}; ramp and centerline cover the full route.`);
