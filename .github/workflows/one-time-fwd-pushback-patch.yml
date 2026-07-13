@@ -1,4 +1,4 @@
-name: Verify FWD pushback fix
+name: Complete FWD pushback fix
 
 on:
   push:
@@ -6,10 +6,10 @@ on:
     paths: [.github/workflows/one-time-fwd-pushback-patch.yml]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  verify:
+  repair-and-verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,33 +20,73 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - name: Assert FWD source semantics
+      - name: Align FWD motion, route, and verification
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          source = Path('src/components/RampReadyTrainerStable.jsx').read_text()
-          required = [
-            'connectedPushPhase && drive.direction !== 1',
-            'towActive && drive.direction !== 1',
-            'FWD required',
-            'Direction should be FWD for pushback',
-            'driveRef.current.direction = 1;',
-            'setDirection("FWD");',
-            'Brake released. FWD selected for pushback',
-          ]
-          forbidden = [
-            'connectedPushPhase && drive.direction !== -1',
-            'towActive && drive.direction !== -1',
-            'REV required',
-            'Direction should be REV for pushback',
-            'Brake released. REV selected for pushback',
-          ]
-          for token in required:
-            assert token in source, f'Missing required FWD invariant: {token}'
-          for token in forbidden:
-            assert token not in source, f'Legacy REV invariant remains: {token}'
-          print('FWD source semantics verified.')
+
+          def replace(path, pairs):
+            p = Path(path)
+            text = p.read_text()
+            for old, new in pairs:
+              text = text.replace(old, new)
+            p.write_text(text)
+
+          replace('src/components/RampReadyTrainerStable.jsx', [
+            ('const STOP_Z = -39.6;', 'const STOP_Z = 52;'),
+            ('stop: NOSE_START_Z - STOP_Z', 'stop: STOP_Z - NOSE_START_Z'),
+            ('const stopRemaining = sim.aircraft.position.z - STOP_Z;', 'const stopRemaining = STOP_Z - sim.aircraft.position.z;'),
+            ('if (towActive && sim.aircraft.position.z <= STOP_Z + 0.5) {', 'if (towActive && sim.aircraft.position.z >= STOP_Z - 0.5) {'),
+          ])
+
+          replace('scripts/prepare-runtime.mjs', [
+            ('const legacyStopLine = "const STOP_Z = 52;";', 'const legacyStopLine = "const STOP_Z = -39.6;";'),
+            ('const physicalStopLine = "const STOP_Z = -39.6;";', 'const physicalStopLine = "const STOP_Z = 52;";'),
+            ('const legacyHudDistance = "stop: STOP_Z - NOSE_START_Z";', 'const legacyHudDistance = "stop: NOSE_START_Z - STOP_Z";'),
+            ('const physicalHudDistance = "stop: NOSE_START_Z - STOP_Z";', 'const physicalHudDistance = "stop: STOP_Z - NOSE_START_Z";'),
+            ('const legacyRemainingLine = "const stopRemaining = STOP_Z - sim.aircraft.position.z;";', 'const legacyRemainingLine = "const stopRemaining = sim.aircraft.position.z - STOP_Z;";'),
+            ('const physicalRemainingLine = "const stopRemaining = sim.aircraft.position.z - STOP_Z;";', 'const physicalRemainingLine = "const stopRemaining = STOP_Z - sim.aircraft.position.z;";'),
+            ('const legacyCompletionLine = "if (towActive && sim.aircraft.position.z >= STOP_Z - 0.5) {";', 'const legacyCompletionLine = "if (towActive && sim.aircraft.position.z <= STOP_Z + 0.5) {";'),
+            ('const physicalCompletionLine = "if (towActive && sim.aircraft.position.z <= STOP_Z + 0.5) {";', 'const physicalCompletionLine = "if (towActive && sim.aircraft.position.z >= STOP_Z - 0.5) {";'),
+          ])
+
+          replace('scripts/verify-runtime-transform-scope.mjs', [
+            ('["const STOP_Z = 52;", "const STOP_Z = -39.6;"]', '["const STOP_Z = -39.6;", "const STOP_Z = 52;"]'),
+            ('["stop: STOP_Z - NOSE_START_Z", "stop: NOSE_START_Z - STOP_Z"]', '["stop: NOSE_START_Z - STOP_Z", "stop: STOP_Z - NOSE_START_Z"]'),
+            ('["const stopRemaining = STOP_Z - sim.aircraft.position.z;", "const stopRemaining = sim.aircraft.position.z - STOP_Z;"]', '["const stopRemaining = sim.aircraft.position.z - STOP_Z;", "const stopRemaining = STOP_Z - sim.aircraft.position.z;"]'),
+            ('["if (towActive && sim.aircraft.position.z >= STOP_Z - 0.5) {", "if (towActive && sim.aircraft.position.z <= STOP_Z + 0.5) {"]', '["if (towActive && sim.aircraft.position.z <= STOP_Z + 0.5) {", "if (towActive && sim.aircraft.position.z >= STOP_Z - 0.5) {"]'),
+          ])
+
+          replace('scripts/report-source-architecture.mjs', [
+            ('["reverse stop target", "const STOP_Z = -39.6;"]', '["FWD pushback stop target", "const STOP_Z = 52;"]'),
+            ('["reverse remaining-distance calculation", "const stopRemaining = sim.aircraft.position.z - STOP_Z;"]', '["FWD remaining-distance calculation", "const stopRemaining = STOP_Z - sim.aircraft.position.z;"]'),
+            ('["reverse completion gate", "if (towActive && sim.aircraft.position.z <= STOP_Z + 0.5) {"]', '["FWD completion gate", "if (towActive && sim.aircraft.position.z >= STOP_Z - 0.5) {"]'),
+            ('["full reverse-route ramp",', '["full pushback-route ramp",'),
+            ('["full reverse-route centerline",', '["full pushback-route centerline",'),
+          ])
+
+          route = Path('scripts/verify-training-route.mjs')
+          text = route.read_text()
+          text = text.replace('const reverseSelected = source.includes("driveRef.current.direction = -1;");', 'const forwardSelected = source.includes("driveRef.current.direction = 1;");')
+          text = text.replace('if (!reverseSelected) failures.push("Pushback stage does not select REV.");', 'if (!forwardSelected) failures.push("Pushback stage does not select FWD.");')
+          text = text.replace('// With heading zero, REV produces negative Z travel. Validate the effective production\n// target, not only the legacy tracked value that prepare-runtime may replace before build.\nif (effectivePhysicalDirection && effectiveStopZ >= noseStartZ) {\n  failures.push(`REV pushback travels toward decreasing Z, but effective STOP_Z ${effectiveStopZ} is not below NOSE_START_Z ${noseStartZ}.`);\n}', '// With heading zero, FWD produces positive Z travel. The aircraft faces -Z, so positive Z is backward from the gate.\nif (effectivePhysicalDirection && effectiveStopZ <= noseStartZ) {\n  failures.push(`FWD pushback travels toward increasing Z, but effective STOP_Z ${effectiveStopZ} is not above NOSE_START_Z ${noseStartZ}.`);\n}')
+          text = text.replace('const effectiveHudDistance = "stop: NOSE_START_Z - STOP_Z";', 'const effectiveHudDistance = "stop: STOP_Z - NOSE_START_Z";')
+          text = text.replace('const effectiveRemainingDistance = "const stopRemaining = sim.aircraft.position.z - STOP_Z;";', 'const effectiveRemainingDistance = "const stopRemaining = STOP_Z - sim.aircraft.position.z;";')
+          text = text.replace('const effectiveCompletionGate = "if (towActive && sim.aircraft.position.z <= STOP_Z + 0.5) {";', 'const effectiveCompletionGate = "if (towActive && sim.aircraft.position.z >= STOP_Z - 0.5) {";')
+          text = text.replace('if (!preparation.includes(effectiveHudDistance)) failures.push("Production preparation does not reverse the initial HUD stop distance.");', 'if (!preparation.includes(effectiveHudDistance)) failures.push("Production preparation does not preserve the FWD HUD stop distance.");')
+          text = text.replace('if (!preparation.includes(effectiveRemainingDistance)) failures.push("Production preparation does not reverse remaining-distance calculation.");', 'if (!preparation.includes(effectiveRemainingDistance)) failures.push("Production preparation does not preserve FWD remaining-distance calculation.");')
+          text = text.replace('if (!preparation.includes(effectiveCompletionGate)) failures.push("Production preparation does not reverse the stop completion gate.");', 'if (!preparation.includes(effectiveCompletionGate)) failures.push("Production preparation does not preserve the FWD stop completion gate.");')
+          text = text.replace('const routeDistance = noseStartZ - effectiveStopZ;', 'const routeDistance = effectiveStopZ - noseStartZ;')
+          text = text.replace('effective REV route runs', 'effective FWD route runs')
+          route.write_text(text)
           PY
+      - name: Commit aligned FWD route
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/components/RampReadyTrainerStable.jsx scripts/prepare-runtime.mjs scripts/verify-runtime-transform-scope.mjs scripts/report-source-architecture.mjs scripts/verify-training-route.mjs
+          git diff --cached --quiet || git commit -m 'Align FWD pushback route and verification'
+          git push origin HEAD:fix/fwd-pushback-semantics
       - name: Install dependencies
         run: npm ci
       - name: Run complete verification suite
