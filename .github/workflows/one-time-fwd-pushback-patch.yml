@@ -70,37 +70,16 @@ jobs:
           for token in forbidden:
             assert token not in source, f'Legacy REV invariant remains: {token}'
           PY
-      - name: Verify and capture exact failure
-        run: |
-          set +e
-          npm ci > fwd-repair.log 2>&1
-          install_status=$?
-          if [ $install_status -eq 0 ]; then
-            npm run verify >> fwd-repair.log 2>&1
-            verify_status=$?
-          else
-            verify_status=99
-          fi
-          if [ $install_status -eq 0 ] && [ $verify_status -eq 0 ]; then
-            npm run build >> fwd-repair.log 2>&1
-            build_status=$?
-          else
-            build_status=99
-          fi
-          printf '\ninstall=%s verify=%s build=%s\n' "$install_status" "$verify_status" "$build_status" >> fwd-repair.log
-          cat fwd-repair.log
-          echo "INSTALL_STATUS=$install_status" >> "$GITHUB_ENV"
-          echo "VERIFY_STATUS=$verify_status" >> "$GITHUB_ENV"
-          echo "BUILD_STATUS=$build_status" >> "$GITHUB_ENV"
-      - name: Commit patch and diagnostics for direct inspection
+      - name: Commit focused application fix before verification
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add src/components/RampReadyTrainerStable.jsx scripts/verify-physics.mjs scripts/verify-partial-throttle.mjs fwd-repair.log
-          git commit -m "Apply FWD pushback fix and capture verification"
+          git add src/components/RampReadyTrainerStable.jsx scripts/verify-physics.mjs scripts/verify-partial-throttle.mjs
+          git diff --cached --quiet && { echo 'No application changes produced'; exit 1; }
+          git commit -m 'Correct connected pushback to use FWD'
           git push origin HEAD:fix/fwd-pushback-semantics
-      - name: Enforce verified result
+      - name: Install, verify, and build exact committed fix
         run: |
-          test "$INSTALL_STATUS" = "0"
-          test "$VERIFY_STATUS" = "0"
-          test "$BUILD_STATUS" = "0"
+          npm ci
+          npm run verify
+          npm run build
