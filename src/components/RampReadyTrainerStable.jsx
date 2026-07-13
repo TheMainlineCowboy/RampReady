@@ -15,7 +15,7 @@ const STAGES = [
 ];
 
 const NOSE_START_Z = 6.2;
-const STOP_Z = -39.6;
+const STOP_Z = 52;
 const CRADLE_Z = 3.45;
 const CONNECT_DISTANCE = 0.42;
 const CONNECT_LATERAL_LIMIT = 0.2;
@@ -153,7 +153,7 @@ export default function RampReadyTrainerStable() {
   const [throttle, setThrottle] = useState(0);
   const [message, setMessage] = useState(messageRef.current);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
-  const [hud, setHud] = useState({ speed: 0, stop: NOSE_START_Z - STOP_Z, capture: 0, ready: false, connected: false, score: 100, quality: "Clean", crossline: 0, gate: "Ready", debug: "" });
+  const [hud, setHud] = useState({ speed: 0, stop: STOP_Z - NOSE_START_Z, capture: 0, ready: false, connected: false, score: 100, quality: "Clean", crossline: 0, gate: "Ready", debug: "" });
 
   const checklist = useMemo(() => STAGES.map((label, index) => ({
     label,
@@ -381,7 +381,7 @@ export default function RampReadyTrainerStable() {
 
       const towActive = sim.connected && stageRef.current === 4;
       const crossline = Math.abs(sim.aircraft.position.x);
-      const stopRemaining = sim.aircraft.position.z - STOP_Z;
+      const stopRemaining = STOP_Z - sim.aircraft.position.z;
       const scoreState = scoreRef.current;
       if (towActive && Math.abs(sim.velocity) > TOW_SPEED_CAUTION) {
         if (!scoreState.overspeed) {
@@ -421,7 +421,7 @@ export default function RampReadyTrainerStable() {
         scoreState.brakeLate = false;
       }
 
-      if (towActive && sim.aircraft.position.z <= STOP_Z + 0.5) {
+      if (towActive && sim.aircraft.position.z >= STOP_Z - 0.5) {
         const hardStop = Math.abs(sim.velocity) >= 0.18;
         if (hardStop && !scoreState.hardStop) {
           scoreState.score = Math.max(0, scoreState.score - 10);
