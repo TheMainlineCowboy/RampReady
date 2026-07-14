@@ -8,12 +8,38 @@ function publishAircraftState(state) {
     aircraftAssetState: state.aircraftAssetState,
     renderedAircraftSource: state.renderedAircraftSource,
     dimensions: state.dimensions ?? null,
+    renderProof: state.renderProof ?? null,
     updatedAt: new Date().toISOString(),
   });
 
   window[RUNTIME_KEY] = nextState;
   document.documentElement.dataset.aircraftAssetState = nextState.aircraftAssetState;
   document.documentElement.dataset.aircraftSource = nextState.renderedAircraftSource;
+}
+
+function inspectAircraftReplacement(aircraftRoot) {
+  const realModel = aircraftRoot?.userData?.realAircraftObject;
+  let realMeshCount = 0;
+  let visibleRealMeshCount = 0;
+
+  realModel?.traverse((child) => {
+    if (!child.isMesh) return;
+    realMeshCount += 1;
+    if (child.visible) visibleRealMeshCount += 1;
+  });
+
+  const proceduralChildren = (aircraftRoot?.children ?? []).filter((child) => child !== realModel);
+  const hiddenProceduralChildCount = proceduralChildren.filter((child) => !child.visible).length;
+  const retainedVisibleChildCount = proceduralChildren.filter((child) => child.visible).length;
+
+  return Object.freeze({
+    realModelAttached: Boolean(realModel && realModel.parent === aircraftRoot),
+    realModelVisible: Boolean(realModel?.visible),
+    realMeshCount,
+    visibleRealMeshCount,
+    hiddenProceduralChildCount,
+    retainedVisibleChildCount,
+  });
 }
 
 if (!THREE.EventDispatcher.prototype[PATCH_KEY]) {
@@ -32,6 +58,7 @@ if (!THREE.EventDispatcher.prototype[PATCH_KEY]) {
         aircraftAssetState: "ready",
         renderedAircraftSource: "CRJ700.stl",
         dimensions: event.dimensions,
+        renderProof: inspectAircraftReplacement(this),
       });
     } else if (event?.type === "aircraft-model-error") {
       publishAircraftState({
