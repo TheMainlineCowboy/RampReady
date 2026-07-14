@@ -139,10 +139,28 @@ jobs:
           EOF
           echo "Exact commit ${EXPECTED_SHA} and its CRJ700 payload are live at ${PAGE_URL}"
 
-      - name: Upload live-site verification receipt
+      - name: Capture live browser rendering evidence
+        shell: bash
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          : "${PAGE_URL:?GitHub Pages did not return a deployment URL}"
+          npx --yes playwright@1.53.1 install --with-deps chromium
+          npx --yes playwright@1.53.1 screenshot \
+            --browser chromium \
+            --viewport-size "1440,900" \
+            --wait-for-timeout 12000 \
+            "${PAGE_URL}" \
+            live-verification/rampready-live.png
+          test -s live-verification/rampready-live.png
+          test "$(stat -c%s live-verification/rampready-live.png)" -gt 10000
+          echo "Captured live Chromium rendering evidence for the deployed Pages release."
+
+      - name: Upload live-site verification evidence
         uses: actions/upload-artifact@v4
         with:
           name: rampready-live-verification-${{ github.sha }}
-          path: live-verification/receipt.json
+          path: live-verification/
           if-no-files-found: error
           retention-days: 30
