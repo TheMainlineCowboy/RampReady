@@ -12,6 +12,30 @@ function getAssetUrl() {
   return new URL("models/crj700-mobile.glb", document.baseURI).href;
 }
 
+function applyVisibleBaseLivery(THREE, realModel) {
+  const airframeMaterial = new THREE.MeshStandardMaterial({
+    name: "RampReady CRJ700 visible base coat",
+    color: 0xf2f4f6,
+    roughness: 0.36,
+    metalness: 0.08,
+    side: THREE.DoubleSide,
+  });
+
+  let meshCount = 0;
+  realModel.traverse((child) => {
+    if (!child.isMesh) return;
+    meshCount += 1;
+    child.userData.originalMaterialName = Array.isArray(child.material)
+      ? child.material.map((material) => material?.name || "").join(",")
+      : child.material?.name || "";
+    child.material = airframeMaterial;
+    if (child.geometry && !child.geometry.getAttribute("normal")) child.geometry.computeVertexNormals();
+  });
+
+  realModel.userData.liveryState = "visible-base-coat-with-procedural-markings";
+  realModel.userData.liveryMeshCount = meshCount;
+}
+
 async function loadRealCRJ700(THREE, aircraftRoot, retainedProceduralChildren) {
   aircraftRoot.userData.aircraftAssetState = "loading";
   aircraftRoot.userData.aircraftAssetUrl = getAssetUrl();
@@ -33,6 +57,7 @@ async function loadRealCRJ700(THREE, aircraftRoot, retainedProceduralChildren) {
       throw new Error(`Unexpected CRJ700 dimensions ${rawLength.toFixed(2)} m long x ${rawWingspan.toFixed(2)} m span`);
     }
 
+    applyVisibleBaseLivery(THREE, realModel);
     realModel.traverse((child) => {
       if (!child.isMesh) return;
       child.castShadow = true;
@@ -55,6 +80,7 @@ async function loadRealCRJ700(THREE, aircraftRoot, retainedProceduralChildren) {
     aircraftRoot.userData.aircraftAssetState = "ready";
     aircraftRoot.userData.renderedAircraftSource = "CRJ700.stl";
     aircraftRoot.userData.realAircraftObject = realModel;
+    aircraftRoot.userData.liveryState = realModel.userData.liveryState;
     aircraftRoot.userData.aircraftDimensionsMeters = {
       length: Number(rawLength.toFixed(3)),
       wingspan: Number(rawWingspan.toFixed(3)),
@@ -63,6 +89,7 @@ async function loadRealCRJ700(THREE, aircraftRoot, retainedProceduralChildren) {
       type: "aircraft-model-ready",
       source: "CRJ700.stl",
       dimensions: aircraftRoot.userData.aircraftDimensionsMeters,
+      liveryState: aircraftRoot.userData.liveryState,
     });
   } catch (error) {
     aircraftRoot.userData.aircraftAssetState = "error";
@@ -171,14 +198,14 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
     [23.1, 0.34, 2.82, 1], [24.15, 0.08, 2.9, 1],
   ], white);
 
-  box(0.68, 0.34, 0.72, glass, -0.58, 3.05, -3.62, -0.08, -0.18, -0.08);
-  box(0.68, 0.34, 0.72, glass, 0.58, 3.05, -3.62, -0.08, 0.18, 0.08);
-  box(0.035, 0.13, 20.0, mat(0x1d4e89, 0.42, 0.02), -0.985, 2.86, 7.4);
-  box(0.035, 0.13, 20.0, mat(0x1d4e89, 0.42, 0.02), 0.985, 2.86, 7.4);
-  box(1.52, 0.12, 17.8, bellyBlue, 0, 1.76, 9.2);
+  retain(box(0.68, 0.34, 0.72, glass, -0.58, 3.05, -3.62, -0.08, -0.18, -0.08));
+  retain(box(0.68, 0.34, 0.72, glass, 0.58, 3.05, -3.62, -0.08, 0.18, 0.08));
+  retain(box(0.035, 0.13, 20.0, mat(0x1d4e89, 0.42, 0.02), -0.985, 2.86, 7.4));
+  retain(box(0.035, 0.13, 20.0, mat(0x1d4e89, 0.42, 0.02), 0.985, 2.86, 7.4));
+  retain(box(1.52, 0.12, 17.8, bellyBlue, 0, 1.76, 9.2));
   for (const side of [-1, 1]) {
-    box(0.025, 0.92, 0.55, mat(0xd9dee4, 0.5, 0.02), side * 0.985, 2.58, -0.75);
-    box(0.025, 0.92, 0.55, mat(0xd9dee4, 0.5, 0.02), side * 0.985, 2.58, 17.45);
+    retain(box(0.025, 0.92, 0.55, mat(0xd9dee4, 0.5, 0.02), side * 0.985, 2.58, -0.75));
+    retain(box(0.025, 0.92, 0.55, mat(0xd9dee4, 0.5, 0.02), side * 0.985, 2.58, 17.45));
   }
 
   taperedWing(10.8, 3.6, 1.35, white, 10.7, 2.33, 1.2, 1);
@@ -217,16 +244,16 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
   retain(box(0.08, 1.05, 0.08, gearMetal, 1.9, 0.9, 12.1));
 
   for (let z = 0.4; z < 18.8; z += 1.08) {
-    box(0.035, 0.12, 0.22, glass, -0.92, 3.03, z, 0, 0.02, 0);
-    box(0.035, 0.12, 0.22, glass, 0.92, 3.03, z, 0, -0.02, 0);
+    retain(box(0.035, 0.12, 0.22, glass, -0.92, 3.03, z, 0, 0.02, 0));
+    retain(box(0.035, 0.12, 0.22, glass, 0.92, 3.03, z, 0, -0.02, 0));
   }
 
   const redLight = new THREE.MeshBasicMaterial({ color: 0xff2d2d });
   const greenLight = new THREE.MeshBasicMaterial({ color: 0x35ff79 });
   const beacon = new THREE.MeshBasicMaterial({ color: 0xff5a2d });
-  add(new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), redLight)).position.set(-10.62, 2.78, 12.05);
-  add(new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), greenLight)).position.set(10.62, 2.78, 12.05);
-  add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 8), beacon)).position.set(0, 3.66, 8.5);
+  retain(add(new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), redLight))).position.set(-10.62, 2.78, 12.05);
+  retain(add(new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), greenLight))).position.set(10.62, 2.78, 12.05);
+  retain(add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 8), beacon))).position.set(0, 3.66, 8.5);
 
   const target = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.025, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffd166 }));
   target.rotation.x = Math.PI / 2;
