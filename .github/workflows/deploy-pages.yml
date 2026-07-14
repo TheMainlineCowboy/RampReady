@@ -120,4 +120,29 @@ jobs:
           test "${asset_status}" = "200"
           test "$(stat -c%s /tmp/crj700-mobile.glb)" -gt 10000
           printf 'glTF' | cmp -n 4 - /tmp/crj700-mobile.glb
+          mkdir -p live-verification
+          index_bytes=$(stat -c%s /tmp/rampready-index.html)
+          asset_bytes=$(stat -c%s /tmp/crj700-mobile.glb)
+          verified_at=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          cat > live-verification/receipt.json <<EOF
+          {
+            "commit": "${EXPECTED_SHA}",
+            "pageUrl": "${PAGE_URL}",
+            "verifiedAtUtc": "${verified_at}",
+            "indexStatus": 200,
+            "releaseMarkerStatus": 200,
+            "crj700Status": 200,
+            "indexBytes": ${index_bytes},
+            "crj700Bytes": ${asset_bytes},
+            "crj700Magic": "glTF"
+          }
+          EOF
           echo "Exact commit ${EXPECTED_SHA} and its CRJ700 payload are live at ${PAGE_URL}"
+
+      - name: Upload live-site verification receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: rampready-live-verification-${{ github.sha }}
+          path: live-verification/receipt.json
+          if-no-files-found: error
+          retention-days: 30
