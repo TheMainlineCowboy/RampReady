@@ -1,4 +1,5 @@
 import { buildCRJ700NoseGear } from "./crj700NoseGear.js";
+import { buildAmericanEagleMarkings } from "./crj700AmericanEagleMarkings.js";
 
 const EXPECTED_LENGTH_METERS = 32.5;
 const EXPECTED_WINGSPAN_METERS = 23.64;
@@ -34,7 +35,7 @@ function applyVisibleBaseLivery(THREE, realModel) {
     if (child.geometry && !child.geometry.getAttribute("normal")) child.geometry.computeVertexNormals();
   });
 
-  realModel.userData.liveryState = "visible-base-coat-with-procedural-markings";
+  realModel.userData.liveryState = "visible-base-coat-with-american-eagle-overlays";
   realModel.userData.liveryMeshCount = meshCount;
 }
 
@@ -252,6 +253,11 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
     retain(box(0.035, 0.12, 0.22, glass, -0.92, 3.03, z, 0, 0.02, 0));
     retain(box(0.035, 0.12, 0.22, glass, 0.92, 3.03, z, 0, -0.02, 0));
   }
+
+  const americanEagleMarkings = buildAmericanEagleMarkings(THREE);
+  group.add(americanEagleMarkings);
+  retain(americanEagleMarkings);
+  group.userData.liveryState = americanEagleMarkings.userData.liveryState;
 
   const redLight = new THREE.MeshBasicMaterial({ color: 0xff2d2d });
   const greenLight = new THREE.MeshBasicMaterial({ color: 0x35ff79 });
