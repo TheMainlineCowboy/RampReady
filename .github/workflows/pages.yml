@@ -117,7 +117,7 @@ jobs:
           cat > live-pages.spec.js <<'EOF'
           const { test, expect } = require('@playwright/test');
 
-          test('deployed RampReady renders the real CRJ700 without browser failures', async ({ page }) => {
+          test('deployed RampReady renders only the real CRJ700 body without browser failures', async ({ page }) => {
             const consoleErrors = [];
             const pageErrors = [];
             let crj700Response = null;
@@ -161,6 +161,18 @@ jobs:
               length: expect.any(Number),
               wingspan: expect.any(Number),
             }));
+            expect(runtimeState.renderProof).toEqual(expect.objectContaining({
+              realModelAttached: true,
+              realModelVisible: true,
+              realMeshCount: expect.any(Number),
+              visibleRealMeshCount: expect.any(Number),
+              hiddenProceduralChildCount: expect.any(Number),
+              retainedVisibleChildCount: expect.any(Number),
+            }));
+            expect(runtimeState.renderProof.realMeshCount).toBeGreaterThan(0);
+            expect(runtimeState.renderProof.visibleRealMeshCount).toBe(runtimeState.renderProof.realMeshCount);
+            expect(runtimeState.renderProof.hiddenProceduralChildCount).toBeGreaterThan(0);
+            expect(runtimeState.renderProof.retainedVisibleChildCount).toBeGreaterThan(0);
 
             expect(crj700Response).not.toBeNull();
             expect(crj700Response.status).toBe(200);
@@ -181,6 +193,8 @@ jobs:
           file live-rampready.png | grep -q 'PNG image data'
           test -s live-runtime-state.json
           grep -q '"renderedAircraftSource": "CRJ700.stl"' live-runtime-state.json
+          grep -q '"realModelAttached": true' live-runtime-state.json
+          grep -q '"realModelVisible": true' live-runtime-state.json
 
       - name: Upload live browser evidence
         uses: actions/upload-artifact@v4
