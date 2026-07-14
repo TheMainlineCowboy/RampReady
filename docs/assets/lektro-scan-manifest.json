@@ -1,0 +1,49 @@
+{
+  "asset": "KIRI Engine rough Lektro pushback scan",
+  "sourceArchive": "796e1b5927744346991cbe3b8a01bd98.zip",
+  "sourceFiles": [
+    "3DModel.obj",
+    "3DModel.mtl",
+    "3DModel.jpg"
+  ],
+  "source": {
+    "vertices": 39377,
+    "triangles": 78790,
+    "texture": {
+      "width": 4096,
+      "height": 4096,
+      "format": "JPEG"
+    },
+    "bounds": {
+      "min": [-1.216637, -0.10136, -0.622343],
+      "max": [1.002081, 0.339046, 1.460548],
+      "extents": [2.218718, 0.440406, 2.082891]
+    }
+  },
+  "intendedUse": [
+    "Lektro body silhouette",
+    "operator station placement",
+    "hood and deck proportions",
+    "wheel placement",
+    "towbarless cradle proportions"
+  ],
+  "notApprovedAsRuntimeAsset": true,
+  "knownCleanup": [
+    "remove pavement and scan background geometry",
+    "repair holes and blurred or missing texture regions",
+    "remove baked lighting and shadows",
+    "confirm forward axis and operator orientation",
+    "scale against known Lektro dimensions and reference photos",
+    "decimate for mobile and VR performance",
+    "convert the cleaned result to GLB",
+    "verify cradle and nose-gear alignment in the simulator"
+  ],
+  "provisionalNormalization": {
+    "groundAxis": "+Y",
+    "centerHorizontally": true,
+    "groundMinimumYAtZero": true,
+    "targetLongestHorizontalExtentMeters": 5.5,
+    "provisionalScaleFactor": 2.4789089915888365,
+    "warning": "The 5.5 m target is provisional and must be replaced by a confirmed physical dimension before the scan becomes production geometry."
+  }
+}
