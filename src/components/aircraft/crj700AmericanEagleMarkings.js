@@ -13,6 +13,51 @@ function addBox(THREE, group, material, size, position, rotation = [0, 0, 0], na
   return mesh;
 }
 
+function createAmericanEagleTitleTexture(THREE) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1536;
+  canvas.height = 256;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Unable to create CRJ700 livery decal canvas");
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.textBaseline = "middle";
+  context.textAlign = "left";
+  context.font = "700 146px Arial, Helvetica, sans-serif";
+  context.fillStyle = "#252a31";
+  context.fillText("American", 34, 128);
+
+  const americanWidth = context.measureText("American").width;
+  context.font = "italic 700 146px Arial, Helvetica, sans-serif";
+  context.fillStyle = "#173f73";
+  context.fillText("Eagle", 58 + americanWidth, 128);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  if ("colorSpace" in texture && THREE.SRGBColorSpace) texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function addTitleDecal(THREE, group, texture, side) {
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+    side: THREE.FrontSide,
+    toneMapped: false,
+  });
+  const decal = new THREE.Mesh(new THREE.PlaneGeometry(5.25, 0.88), material);
+  decal.position.set(side * 1.027, 3.24, 3.55);
+  decal.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
+  decal.name = `Readable American Eagle title ${side < 0 ? "left" : "right"}`;
+  decal.renderOrder = 4;
+  group.add(decal);
+  return decal;
+}
+
 export function buildAmericanEagleMarkings(THREE) {
   const group = new THREE.Group();
   group.name = "American Eagle CRJ700 exterior markings";
@@ -21,14 +66,12 @@ export function buildAmericanEagleMarkings(THREE) {
   const red = makeMaterial(THREE, 0xc62032, 0.4, 0.03);
   const silver = makeMaterial(THREE, 0xc7ccd2, 0.31, 0.22);
   const charcoal = makeMaterial(THREE, 0x252a31, 0.52, 0.04);
+  const titleTexture = createAmericanEagleTitleTexture(THREE);
 
   // Thin fuselage cheatline retained over the imported white airframe.
   for (const side of [-1, 1]) {
     addBox(THREE, group, blue, [0.028, 0.16, 19.4], [side * 1.015, 2.83, 7.2], [0, 0, 0], `American Eagle blue cheatline ${side < 0 ? "left" : "right"}`);
-
-    // Main title represented as a clean two-tone block treatment until UV text decals are available.
-    addBox(THREE, group, charcoal, [0.03, 0.30, 4.8], [side * 1.022, 3.22, 3.4], [0, 0, 0], `American title block ${side < 0 ? "left" : "right"}`);
-    addBox(THREE, group, silver, [0.032, 0.07, 4.45], [side * 1.024, 3.22, 3.4], [0, 0, 0], `American title highlight ${side < 0 ? "left" : "right"}`);
+    addTitleDecal(THREE, group, titleTexture, side);
   }
 
   // American tail motif: alternating red, silver and blue diagonal bands on both fin faces.
@@ -59,7 +102,7 @@ export function buildAmericanEagleMarkings(THREE) {
   }
   addBox(THREE, group, charcoal, [1.15, 0.035, 1.55], [0, 3.42, -3.36], [-0.10, 0, 0], "CRJ700 nose anti-glare panel");
 
-  group.userData.liveryState = "american-eagle-first-pass-markings";
-  group.userData.markingSystem = "retained procedural overlays on verified real GLB";
+  group.userData.liveryState = "american-eagle-readable-title-decals";
+  group.userData.markingSystem = "retained procedural overlays plus runtime canvas title decals on verified real GLB";
   return group;
 }
