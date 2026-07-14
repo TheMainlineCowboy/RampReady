@@ -1,3 +1,5 @@
+import { buildCRJ700NoseGear } from "./crj700NoseGear.js";
+
 const EXPECTED_LENGTH_METERS = 32.5;
 const EXPECTED_WINGSPAN_METERS = 23.64;
 const DIMENSION_TOLERANCE_METERS = 1.25;
@@ -234,10 +236,13 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
   taperedWing(4.3, 1.7, 1.0, white, 24.3, 5.78, 0.15, 1);
   taperedWing(4.3, 1.7, 1.0, white, 24.3, 5.78, 0.15, -1);
 
-  // The STL source has no deployed landing gear, so only these procedural gear pieces remain after load.
-  retain(add(cyl(0.045, 1.05, 0x8b949e, 0, 0.78, 0, 0, 0, 0, 16)));
-  retain(add(cyl(0.2, 0.16, 0x101114, -0.16, 0.24, -0.16, 0, 0, Math.PI / 2, 24)));
-  retain(add(cyl(0.2, 0.16, 0x101114, 0.16, 0.24, -0.16, 0, 0, Math.PI / 2, 24)));
+  // The source GLB has no deployed landing gear. Retain the detailed nose gear and simple mains after real-model load.
+  const detailedNoseGear = buildCRJ700NoseGear(THREE);
+  group.add(detailedNoseGear);
+  retain(detailedNoseGear);
+  group.userData.noseGearDetailState = detailedNoseGear.userData.detailState;
+  group.userData.noseGearCaptureOrigin = detailedNoseGear.userData.noseGearCaptureOrigin;
+
   retain(add(cyl(0.26, 0.22, 0x101114, -1.9, 0.32, 12.1, 0, 0, Math.PI / 2, 28)));
   retain(add(cyl(0.26, 0.22, 0x101114, 1.9, 0.32, 12.1, 0, 0, Math.PI / 2, 28)));
   retain(box(0.08, 1.05, 0.08, gearMetal, -1.9, 0.9, 12.1));
@@ -263,7 +268,6 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
 
   group.scale.setScalar(PROCEDURAL_INTERNAL_SCALE);
   group.userData.aircraftDimensionsMeters = { length: EXPECTED_LENGTH_METERS, wingspan: EXPECTED_WINGSPAN_METERS };
-  group.userData.noseGearCaptureOrigin = [0, 0, 0];
   group.userData.orientation = { up: "+Y", forward: "-Z" };
   void loadRealCRJ700(THREE, group, retainedProceduralChildren);
 
