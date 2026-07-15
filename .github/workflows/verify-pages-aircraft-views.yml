@@ -85,6 +85,7 @@ jobs:
 
           const pageUrl = process.env.PAGE_URL;
           const expectedSha = process.env.EXPECTED_SHA;
+          const modelSuffix = '/models/crj700-mobile.glb';
           const overlaySelectors = [
             '.rr-hud', '.rr-metrics', '.rr-score-float', '.rr-guidance',
             '.rr-steer', '.rr-throttle', '.rr-diagnostics'
@@ -116,15 +117,39 @@ jobs:
           }
 
           async function prepare(page) {
+            let modelResponse = null;
+            page.on('response', response => {
+              if (response.url().endsWith(modelSuffix)) {
+                modelResponse = {
+                  url: response.url(),
+                  status: response.status(),
+                  ok: response.ok()
+                };
+              }
+            });
+
             const response = await page.goto(pageUrl, { waitUntil: 'networkidle', timeout: 60000 });
             if (!response || !response.ok()) throw new Error(`Navigation failed: ${response?.status() || 'no response'}`);
             await page.waitForSelector('canvas', { state: 'visible', timeout: 30000 });
-            await page.waitForResponse(
-              response => response.url().endsWith('/models/crj700-mobile.glb') && response.ok(),
+            await page.waitForFunction(
+              suffix => performance.getEntriesByType('resource').some(entry => entry.name.endsWith(suffix)),
+              modelSuffix,
               { timeout: 30000 }
-            ).catch(() => null);
+            );
             await page.waitForTimeout(12000);
+
+            const resourceUrl = await page.evaluate(
+              suffix => performance.getEntriesByType('resource').find(entry => entry.name.endsWith(suffix))?.name || null,
+              modelSuffix
+            );
+            if (!resourceUrl) throw new Error('CRJ700 GLB is absent from browser resource timing entries');
+            if (!modelResponse) throw new Error('CRJ700 GLB response was not observed by Playwright');
+            if (!modelResponse.ok || modelResponse.status !== 200) {
+              throw new Error(`CRJ700 GLB request failed: ${modelResponse.status} ${modelResponse.url}`);
+            }
+
             await page.addStyleTag({ content: `${overlaySelectors.join(',')} { display: none !important; }` });
+            return { ...modelResponse, resourceUrl };
           }
 
           async function captureOrbit(browser, name, dragX) {
@@ -132,7 +157,7 @@ jobs:
             const errors = [];
             page.on('pageerror', error => errors.push(error.message));
             page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
-            await prepare(page);
+            const model = await prepare(page);
             await page.selectOption('.rr-view-select', 'chase');
             const canvas = page.locator('canvas').first();
             const box = await canvas.boundingBox();
@@ -148,7 +173,7 @@ jobs:
             await canvas.screenshot({ path });
             if (errors.length) throw new Error(`${name} browser errors: ${errors.join(' | ')}`);
             await page.close();
-            return analyze(path);
+            return { ...analyze(path), model };
           }
 
           async function captureOverhead(browser) {
@@ -156,14 +181,14 @@ jobs:
             const errors = [];
             page.on('pageerror', error => errors.push(error.message));
             page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
-            await prepare(page);
+            const model = await prepare(page);
             await page.selectOption('.rr-view-select', 'overhead');
             await page.waitForTimeout(2500);
             const path = 'aircraft-view-verification/crj700-overhead.png';
             await page.locator('canvas').first().screenshot({ path });
             if (errors.length) throw new Error(`overhead browser errors: ${errors.join(' | ')}`);
             await page.close();
-            return analyze(path);
+            return { ...analyze(path), model };
           }
 
           (async () => {
@@ -177,8 +202,10 @@ jobs:
               if (metrics.airframe < 220) throw new Error(`${name} airframe evidence too low: ${metrics.airframe}`);
               if (metrics.blue < 35) throw new Error(`${name} blue livery evidence too low: ${metrics.blue}`);
               if (metrics.red < 10) throw new Error(`${name} red livery evidence too low: ${metrics.red}`);
+              if (!metrics.model?.ok || metrics.model.status !== 200) throw new Error(`${name} lacks a successful CRJ700 GLB response`);
             }
             if (overhead.airframe < 180) throw new Error(`overhead airframe evidence too low: ${overhead.airframe}`);
+            if (!overhead.model?.ok || overhead.model.status !== 200) throw new Error('overhead view lacks a successful CRJ700 GLB response');
 
             const report = { expectedSha, pageUrl, capturedAtUtc: new Date().toISOString(), left, right, overhead };
             fs.writeFileSync('aircraft-view-verification/report.json', JSON.stringify(report, null, 2));
