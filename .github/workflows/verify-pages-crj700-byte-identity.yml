@@ -1,0 +1,112 @@
+name: Verify RampReady CRJ700 Production Byte Identity
+
+on:
+  workflow_run:
+    workflows:
+      - Deploy RampReady to GitHub Pages
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact deployed commit SHA to verify
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  PAGE_URL: https://themainlinecowboy.github.io/RampReady/
+  LIVE_MODEL_URL: https://themainlinecowboy.github.io/RampReady/models/crj700-mobile.glb
+  COMMITTED_MODEL_PATH: public/models/crj700/crj700-mobile.glb
+
+jobs:
+  verify-production-byte-identity:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Resolve exact deployed commit
+        id: release
+        shell: bash
+        env:
+          WORKFLOW_SHA: ${{ github.event.workflow_run.head_sha }}
+          DISPATCH_SHA: ${{ inputs.expected_sha }}
+        run: |
+          set -euo pipefail
+          expected_sha="${WORKFLOW_SHA:-${DISPATCH_SHA:-}}"
+          test -n "${expected_sha}"
+          echo "expected_sha=${expected_sha}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check out exact deployed commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.release.outputs.expected_sha }}
+
+      - name: Verify committed source asset exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "${COMMITTED_MODEL_PATH}"
+          file "${COMMITTED_MODEL_PATH}"
+
+      - name: Wait for exact GitHub Pages release
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ steps.release.outputs.expected_sha }}
+        run: |
+          set -euo pipefail
+          for attempt in {1..18}; do
+            status=$(curl -L -sS -o /tmp/release-commit.txt -w '%{http_code}' "${PAGE_URL}release-commit.txt")
+            live_sha=$(tr -d '\r\n' < /tmp/release-commit.txt 2>/dev/null || true)
+            if [ "${status}" = "200" ] && [ "${live_sha}" = "${EXPECTED_SHA}" ]; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "GitHub Pages did not serve exact commit ${EXPECTED_SHA}." >&2
+          exit 1
+
+      - name: Compare live and committed CRJ700 bytes
+        id: identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p crj700-byte-identity
+          cp "${COMMITTED_MODEL_PATH}" crj700-byte-identity/committed-crj700-mobile.glb
+
+          status=$(curl -L --fail-with-body -sS -o crj700-byte-identity/live-crj700-mobile.glb -w '%{http_code}' "${LIVE_MODEL_URL}")
+          test "${status}" = "200"
+          test -s crj700-byte-identity/live-crj700-mobile.glb
+
+          committed_size=$(stat -c '%s' crj700-byte-identity/committed-crj700-mobile.glb)
+          live_size=$(stat -c '%s' crj700-byte-identity/live-crj700-mobile.glb)
+          committed_sha256=$(sha256sum crj700-byte-identity/committed-crj700-mobile.glb | awk '{print $1}')
+          live_sha256=$(sha256sum crj700-byte-identity/live-crj700-mobile.glb | awk '{print $1}')
+
+          test "${committed_size}" -eq "${live_size}"
+          test "${committed_sha256}" = "${live_sha256}"
+          cmp --silent crj700-byte-identity/committed-crj700-mobile.glb crj700-byte-identity/live-crj700-mobile.glb
+
+          cat > crj700-byte-identity/report.json <<EOF
+          {
+            "expectedCommit": "${{ steps.release.outputs.expected_sha }}",
+            "committedPath": "${COMMITTED_MODEL_PATH}",
+            "liveUrl": "${LIVE_MODEL_URL}",
+            "httpStatus": ${status},
+            "committedBytes": ${committed_size},
+            "liveBytes": ${live_size},
+            "committedSha256": "${committed_sha256}",
+            "liveSha256": "${live_sha256}",
+            "byteIdentical": true
+          }
+          EOF
+
+      - name: Upload exact production byte evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: rampready-crj700-production-byte-identity-${{ steps.release.outputs.expected_sha }}
+          path: crj700-byte-identity/
+          if-no-files-found: error
+          retention-days: 30
