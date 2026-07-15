@@ -149,7 +149,44 @@ jobs:
           npx --yes playwright@1.53.1 install --with-deps chromium
           cat > /tmp/verify-rampready-live.cjs <<'EOF'
           const { chromium } = require('playwright');
+          const { PNG } = require('pngjs');
           const fs = require('node:fs');
+
+          function analyzeCanvasPng(filePath) {
+            const png = PNG.sync.read(fs.readFileSync(filePath));
+            const quantizedColors = new Set();
+            let luminanceSum = 0;
+            let luminanceSquaredSum = 0;
+            let sampleCount = 0;
+            const stride = Math.max(1, Math.floor(Math.min(png.width, png.height) / 180));
+
+            for (let y = 0; y < png.height; y += stride) {
+              for (let x = 0; x < png.width; x += stride) {
+                const offset = (png.width * y + x) * 4;
+                const r = png.data[offset];
+                const g = png.data[offset + 1];
+                const b = png.data[offset + 2];
+                const a = png.data[offset + 3];
+                if (a < 16) continue;
+                quantizedColors.add(`${r >> 4},${g >> 4},${b >> 4}`);
+                const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                luminanceSum += luminance;
+                luminanceSquaredSum += luminance * luminance;
+                sampleCount += 1;
+              }
+            }
+
+            const mean = sampleCount ? luminanceSum / sampleCount : 0;
+            const variance = sampleCount ? Math.max(0, luminanceSquaredSum / sampleCount - mean * mean) : 0;
+            return {
+              width: png.width,
+              height: png.height,
+              sampleCount,
+              quantizedColorCount: quantizedColors.size,
+              meanLuminance: Number(mean.toFixed(3)),
+              luminanceStdDev: Number(Math.sqrt(variance).toFixed(3)),
+            };
+          }
 
           (async () => {
             const pageUrl = process.env.PAGE_URL;
@@ -193,14 +230,20 @@ jobs:
               };
             });
 
+            const canvas = page.locator('canvas').first();
+            await canvas.screenshot({ path: 'live-verification/rampready-canvas.png' });
             await page.screenshot({ path: 'live-verification/rampready-live.png', fullPage: true });
-            const report = { pageUrl, runtime, crj700Response, consoleErrors, pageErrors, failedRequests };
+            const canvasVisual = analyzeCanvasPng('live-verification/rampready-canvas.png');
+            const report = { pageUrl, runtime, canvasVisual, crj700Response, consoleErrors, pageErrors, failedRequests };
             fs.writeFileSync('live-verification/browser-report.json', JSON.stringify(report, null, 2));
 
             if (runtime.rootChildren < 1) throw new Error('React root did not initialize');
             if (!runtime.canvasPresent) throw new Error('Three.js canvas is missing');
             if (runtime.canvasWidth < 640 || runtime.canvasHeight < 360) throw new Error(`Canvas backing size is too small: ${runtime.canvasWidth}x${runtime.canvasHeight}`);
             if (runtime.canvasCssWidth < 640 || runtime.canvasCssHeight < 360) throw new Error(`Visible canvas is too small: ${runtime.canvasCssWidth}x${runtime.canvasCssHeight}`);
+            if (canvasVisual.sampleCount < 1000) throw new Error(`Canvas visual sample is too small: ${canvasVisual.sampleCount}`);
+            if (canvasVisual.quantizedColorCount < 32) throw new Error(`Canvas appears visually blank or uniform: ${canvasVisual.quantizedColorCount} quantized colors`);
+            if (canvasVisual.luminanceStdDev < 4) throw new Error(`Canvas lacks meaningful rendered contrast: standard deviation ${canvasVisual.luminanceStdDev}`);
             if (!crj700Response || !crj700Response.ok) throw new Error(`Browser did not successfully load the CRJ700 GLB: ${JSON.stringify(crj700Response)}`);
             if (pageErrors.length) throw new Error(`Uncaught browser errors: ${pageErrors.join(' | ')}`);
             if (consoleErrors.length) throw new Error(`Console errors: ${consoleErrors.join(' | ')}`);
@@ -212,11 +255,13 @@ jobs:
             process.exit(1);
           });
           EOF
-          npm exec --yes --package=playwright@1.53.1 -- node /tmp/verify-rampready-live.cjs
+          npm exec --yes --package=playwright@1.53.1 --package=pngjs@7.0.0 -- node /tmp/verify-rampready-live.cjs
+          test -s live-verification/rampready-canvas.png
+          test "$(stat -c%s live-verification/rampready-canvas.png)" -gt 10000
           test -s live-verification/rampready-live.png
           test "$(stat -c%s live-verification/rampready-live.png)" -gt 10000
           test -s live-verification/browser-report.json
-          echo "Verified live React/Three.js runtime, successful browser CRJ700 load, clean browser errors, and captured rendering evidence."
+          echo "Verified live React/Three.js runtime, nonblank canvas rendering, successful browser CRJ700 load, clean browser errors, and captured rendering evidence."
 
       - name: Upload live-site verification evidence
         uses: actions/upload-artifact@v4
