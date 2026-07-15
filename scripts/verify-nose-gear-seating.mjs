@@ -20,8 +20,11 @@ if (!aircraft.includes("group.scale.setScalar(PROCEDURAL_INTERNAL_SCALE)")) {
 if (!aircraft.includes("retainedProceduralChildren.add") || !aircraft.includes("retainedProceduralChildren.has(child)")) {
   throw new Error("Nose-gear seating verification failed: retained procedural landing-gear path is missing.");
 }
-if (!aircraft.includes("buildCRJ700NoseGear(THREE)") || !aircraft.includes("retain(detailedNoseGear)")) {
-  throw new Error("Nose-gear seating verification failed: detailed CRJ700 nose gear is not retained after real-model load.");
+if (
+  !aircraft.includes("buildCRJ700NoseGear(THREE)") ||
+  !aircraft.includes('retain(detailedNoseGear, "supplemental-landing-gear")')
+) {
+  throw new Error("Nose-gear seating verification failed: detailed CRJ700 nose gear is not retained under the approved supplemental-landing-gear role.");
 }
 if (!noseGear.includes("preserveTowKinematics = true") || !noseGear.includes("noseGearCaptureOrigin = [0, 0, 0]")) {
   throw new Error("Nose-gear seating verification failed: detailed nose gear does not preserve the established tow-capture origin.");
