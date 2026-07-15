@@ -69,8 +69,6 @@ async function loadRealCRJ700(THREE, aircraftRoot, retainedProceduralChildren) {
       child.userData.aircraftAssetSource = "CRJ700.stl";
     });
 
-    // The trainer retains a legacy 0.82 parent scale and this procedural root uses 1.35.
-    // Counter-scale only the real payload so its verified meter dimensions remain exact in world space.
     realModel.scale.setScalar(1 / (LEGACY_PARENT_SCALE * PROCEDURAL_INTERNAL_SCALE));
     realModel.userData.noseGearCaptureOrigin = [0, 0, 0];
     realModel.userData.orientation = { up: "+Y", forward: "-Z" };
@@ -121,7 +119,8 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
     return mesh;
   };
 
-  const retain = (mesh) => {
+  const retain = (mesh, role) => {
+    mesh.userData.retainedProceduralRole = role;
     retainedProceduralChildren.add(mesh);
     return mesh;
   };
@@ -194,21 +193,21 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
     return add(new THREE.Mesh(geom, material));
   }
 
-  // Procedural body is a visible loading/error fallback only. Local origin remains the nose-gear capture point.
+  // Procedural body remains available only while the real model loads or if loading fails.
   loftFuselage([
     [-5.25, 0.08, 2.58, 0.9], [-4.8, 0.48, 2.61, 0.92], [-3.9, 0.82, 2.65, 0.94],
     [-2.5, 0.98], [0, 1.0], [16.8, 1.0], [19.2, 0.92], [21.2, 0.7, 2.72, 0.96],
     [23.1, 0.34, 2.82, 1], [24.15, 0.08, 2.9, 1],
   ], white);
 
-  retain(box(0.68, 0.34, 0.72, glass, -0.58, 3.05, -3.62, -0.08, -0.18, -0.08));
-  retain(box(0.68, 0.34, 0.72, glass, 0.58, 3.05, -3.62, -0.08, 0.18, 0.08));
-  retain(box(0.035, 0.13, 20.0, mat(0x1d4e89, 0.42, 0.02), -0.985, 2.86, 7.4));
-  retain(box(0.035, 0.13, 20.0, mat(0x1d4e89, 0.42, 0.02), 0.985, 2.86, 7.4));
-  retain(box(1.52, 0.12, 17.8, bellyBlue, 0, 1.76, 9.2));
+  box(0.68, 0.34, 0.72, glass, -0.58, 3.05, -3.62, -0.08, -0.18, -0.08);
+  box(0.68, 0.34, 0.72, glass, 0.58, 3.05, -3.62, -0.08, 0.18, 0.08);
+  box(0.035, 0.13, 20.0, mat(0x1d4e89, 0.42, 0.02), -0.985, 2.86, 7.4);
+  box(0.035, 0.13, 20.0, mat(0x1d4e89, 0.42, 0.02), 0.985, 2.86, 7.4);
+  box(1.52, 0.12, 17.8, bellyBlue, 0, 1.76, 9.2);
   for (const side of [-1, 1]) {
-    retain(box(0.025, 0.92, 0.55, mat(0xd9dee4, 0.5, 0.02), side * 0.985, 2.58, -0.75));
-    retain(box(0.025, 0.92, 0.55, mat(0xd9dee4, 0.5, 0.02), side * 0.985, 2.58, 17.45));
+    box(0.025, 0.92, 0.55, mat(0xd9dee4, 0.5, 0.02), side * 0.985, 2.58, -0.75);
+    box(0.025, 0.92, 0.55, mat(0xd9dee4, 0.5, 0.02), side * 0.985, 2.58, 17.45);
   }
 
   taperedWing(10.8, 3.6, 1.35, white, 10.7, 2.33, 1.2, 1);
@@ -237,44 +236,49 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
   taperedWing(4.3, 1.7, 1.0, white, 24.3, 5.78, 0.15, 1);
   taperedWing(4.3, 1.7, 1.0, white, 24.3, 5.78, 0.15, -1);
 
-  // The source GLB has no deployed landing gear. Retain the detailed nose gear and simple mains after real-model load.
   const detailedNoseGear = buildCRJ700NoseGear(THREE);
   group.add(detailedNoseGear);
-  retain(detailedNoseGear);
+  retain(detailedNoseGear, "supplemental-landing-gear");
   group.userData.noseGearDetailState = detailedNoseGear.userData.detailState;
   group.userData.noseGearCaptureOrigin = detailedNoseGear.userData.noseGearCaptureOrigin;
 
-  retain(add(cyl(0.26, 0.22, 0x101114, -1.9, 0.32, 12.1, 0, 0, Math.PI / 2, 28)));
-  retain(add(cyl(0.26, 0.22, 0x101114, 1.9, 0.32, 12.1, 0, 0, Math.PI / 2, 28)));
-  retain(box(0.08, 1.05, 0.08, gearMetal, -1.9, 0.9, 12.1));
-  retain(box(0.08, 1.05, 0.08, gearMetal, 1.9, 0.9, 12.1));
+  retain(add(cyl(0.26, 0.22, 0x101114, -1.9, 0.32, 12.1, 0, 0, Math.PI / 2, 28)), "supplemental-landing-gear");
+  retain(add(cyl(0.26, 0.22, 0x101114, 1.9, 0.32, 12.1, 0, 0, Math.PI / 2, 28)), "supplemental-landing-gear");
+  retain(box(0.08, 1.05, 0.08, gearMetal, -1.9, 0.9, 12.1), "supplemental-landing-gear");
+  retain(box(0.08, 1.05, 0.08, gearMetal, 1.9, 0.9, 12.1), "supplemental-landing-gear");
 
   for (let z = 0.4; z < 18.8; z += 1.08) {
-    retain(box(0.035, 0.12, 0.22, glass, -0.92, 3.03, z, 0, 0.02, 0));
-    retain(box(0.035, 0.12, 0.22, glass, 0.92, 3.03, z, 0, -0.02, 0));
+    box(0.035, 0.12, 0.22, glass, -0.92, 3.03, z, 0, 0.02, 0);
+    box(0.035, 0.12, 0.22, glass, 0.92, 3.03, z, 0, -0.02, 0);
   }
 
   const americanEagleMarkings = buildAmericanEagleMarkings(THREE);
   group.add(americanEagleMarkings);
-  retain(americanEagleMarkings);
+  retain(americanEagleMarkings, "intentional-livery-overlay");
   group.userData.liveryState = americanEagleMarkings.userData.liveryState;
 
   const redLight = new THREE.MeshBasicMaterial({ color: 0xff2d2d });
   const greenLight = new THREE.MeshBasicMaterial({ color: 0x35ff79 });
   const beacon = new THREE.MeshBasicMaterial({ color: 0xff5a2d });
-  retain(add(new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), redLight))).position.set(-10.62, 2.78, 12.05);
-  retain(add(new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), greenLight))).position.set(10.62, 2.78, 12.05);
-  retain(add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 8), beacon))).position.set(0, 3.66, 8.5);
+  retain(add(new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), redLight)), "operational-light").position.set(-10.62, 2.78, 12.05);
+  retain(add(new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), greenLight)), "operational-light").position.set(10.62, 2.78, 12.05);
+  retain(add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 8), beacon)), "operational-light").position.set(0, 3.66, 8.5);
 
   const target = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.025, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffd166 }));
   target.rotation.x = Math.PI / 2;
   target.position.y = 0.055;
   group.add(target);
-  retain(target);
+  retain(target, "training-capture-marker");
 
   group.scale.setScalar(PROCEDURAL_INTERNAL_SCALE);
   group.userData.aircraftDimensionsMeters = { length: EXPECTED_LENGTH_METERS, wingspan: EXPECTED_WINGSPAN_METERS };
   group.userData.orientation = { up: "+Y", forward: "-Z" };
+  group.userData.retainedProceduralRoles = [
+    "supplemental-landing-gear",
+    "intentional-livery-overlay",
+    "operational-light",
+    "training-capture-marker",
+  ];
   void loadRealCRJ700(THREE, group, retainedProceduralChildren);
 
   return group;
