@@ -24,8 +24,12 @@ if (markings.includes("American title block") || markings.includes("American tit
 
 requireSource(aircraft, 'import { buildAmericanEagleMarkings }', "livery module is not imported by the aircraft builder.");
 requireSource(aircraft, "buildAmericanEagleMarkings(THREE)", "livery group is not built at runtime.");
-requireSource(aircraft, "retain(americanEagleMarkings)", "livery is not retained after the real GLB replaces the procedural body.");
+requireSource(
+  aircraft,
+  'retain(americanEagleMarkings, "intentional-livery-overlay")',
+  "livery is not retained under the approved intentional-livery-overlay role after the real GLB replaces the procedural body.",
+);
 requireSource(aircraft, 'realModel.userData.liveryState = "visible-base-coat-with-american-eagle-overlays"', "real-model base-coat state is missing.");
 requireSource(aircraft, 'aircraftRoot.userData.renderedAircraftSource = "CRJ700.stl"', "real-aircraft runtime source marker is missing.");
 
-console.log("CRJ700 livery verification passed: real-model base coat, retained bilateral American Eagle decals, tail/engine overlays, and obsolete title-block removal are structurally confirmed.");
+console.log("CRJ700 livery verification passed: real-model base coat, role-tagged bilateral American Eagle decals, tail/engine overlays, and obsolete title-block removal are structurally confirmed.");
