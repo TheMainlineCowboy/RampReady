@@ -158,7 +158,14 @@ jobs:
             let luminanceSum = 0;
             let luminanceSquaredSum = 0;
             let sampleCount = 0;
+            let airframePixelCount = 0;
+            let blueLiveryPixelCount = 0;
+            let redLiveryPixelCount = 0;
             const stride = Math.max(1, Math.floor(Math.min(png.width, png.height) / 180));
+            const centerMinX = png.width * 0.18;
+            const centerMaxX = png.width * 0.82;
+            const centerMinY = png.height * 0.12;
+            const centerMaxY = png.height * 0.88;
 
             for (let y = 0; y < png.height; y += stride) {
               for (let x = 0; x < png.width; x += stride) {
@@ -173,6 +180,14 @@ jobs:
                 luminanceSum += luminance;
                 luminanceSquaredSum += luminance * luminance;
                 sampleCount += 1;
+
+                if (x < centerMinX || x > centerMaxX || y < centerMinY || y > centerMaxY) continue;
+                const max = Math.max(r, g, b);
+                const min = Math.min(r, g, b);
+                const saturationSpread = max - min;
+                if (r > 175 && g > 175 && b > 175 && saturationSpread < 38) airframePixelCount += 1;
+                if (b > 78 && b > r * 1.18 && b > g * 1.08) blueLiveryPixelCount += 1;
+                if (r > 120 && r > g * 1.35 && r > b * 1.25) redLiveryPixelCount += 1;
               }
             }
 
@@ -185,6 +200,9 @@ jobs:
               quantizedColorCount: quantizedColors.size,
               meanLuminance: Number(mean.toFixed(3)),
               luminanceStdDev: Number(Math.sqrt(variance).toFixed(3)),
+              airframePixelCount,
+              blueLiveryPixelCount,
+              redLiveryPixelCount,
             };
           }
 
@@ -244,6 +262,9 @@ jobs:
             if (canvasVisual.sampleCount < 1000) throw new Error(`Canvas visual sample is too small: ${canvasVisual.sampleCount}`);
             if (canvasVisual.quantizedColorCount < 32) throw new Error(`Canvas appears visually blank or uniform: ${canvasVisual.quantizedColorCount} quantized colors`);
             if (canvasVisual.luminanceStdDev < 4) throw new Error(`Canvas lacks meaningful rendered contrast: standard deviation ${canvasVisual.luminanceStdDev}`);
+            if (canvasVisual.airframePixelCount < 180) throw new Error(`Visible CRJ700 airframe signature is missing: ${canvasVisual.airframePixelCount} light neutral samples`);
+            if (canvasVisual.blueLiveryPixelCount < 35) throw new Error(`Visible American Eagle blue signature is missing: ${canvasVisual.blueLiveryPixelCount} blue samples`);
+            if (canvasVisual.redLiveryPixelCount < 12) throw new Error(`Visible American Eagle red signature is missing: ${canvasVisual.redLiveryPixelCount} red samples`);
             if (!crj700Response || !crj700Response.ok) throw new Error(`Browser did not successfully load the CRJ700 GLB: ${JSON.stringify(crj700Response)}`);
             if (pageErrors.length) throw new Error(`Uncaught browser errors: ${pageErrors.join(' | ')}`);
             if (consoleErrors.length) throw new Error(`Console errors: ${consoleErrors.join(' | ')}`);
@@ -261,7 +282,7 @@ jobs:
           test -s live-verification/rampready-live.png
           test "$(stat -c%s live-verification/rampready-live.png)" -gt 10000
           test -s live-verification/browser-report.json
-          echo "Verified live React/Three.js runtime, nonblank canvas rendering, successful browser CRJ700 load, clean browser errors, and captured rendering evidence."
+          echo "Verified live React/Three.js runtime, visible CRJ700 airframe and American Eagle color signatures, successful browser asset load, clean browser errors, and captured rendering evidence."
 
       - name: Upload live-site verification evidence
         uses: actions/upload-artifact@v4
