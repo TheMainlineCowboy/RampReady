@@ -87,31 +87,102 @@ jobs:
 
           function analyze(path) {
             const png = PNG.sync.read(fs.readFileSync(path));
-            let count = 0;
-            let minX = png.width;
-            let maxX = -1;
-            let minY = png.height;
-            let maxY = -1;
-            for (let y = 0; y < png.height; y += 2) {
-              for (let x = 0; x < png.width; x += 2) {
+            const stride = 2;
+            const cols = Math.ceil(png.width / stride);
+            const rows = Math.ceil(png.height / stride);
+            const mask = new Uint8Array(cols * rows);
+            const roi = {
+              minX: Math.floor(cols * 0.12),
+              maxX: Math.ceil(cols * 0.88),
+              minY: Math.floor(rows * 0.08),
+              maxY: Math.ceil(rows * 0.92),
+            };
+
+            for (let gy = roi.minY; gy < roi.maxY; gy += 1) {
+              for (let gx = roi.minX; gx < roi.maxX; gx += 1) {
+                const x = Math.min(png.width - 1, gx * stride);
+                const y = Math.min(png.height - 1, gy * stride);
                 const i = (y * png.width + x) * 4;
                 const r = png.data[i];
                 const g = png.data[i + 1];
                 const b = png.data[i + 2];
                 const a = png.data[i + 3];
                 const spread = Math.max(r, g, b) - Math.min(r, g, b);
-                const airframe = a > 16 && r > 165 && g > 165 && b > 165 && spread < 48;
-                if (!airframe) continue;
-                count += 1;
-                minX = Math.min(minX, x);
-                maxX = Math.max(maxX, x);
-                minY = Math.min(minY, y);
-                maxY = Math.max(maxY, y);
+                if (a > 16 && r > 165 && g > 165 && b > 165 && spread < 48) {
+                  mask[gy * cols + gx] = 1;
+                }
               }
             }
-            const width = maxX >= minX ? maxX - minX + 1 : 0;
-            const height = maxY >= minY ? maxY - minY + 1 : 0;
-            return { imageWidth: png.width, imageHeight: png.height, count, minX, maxX, minY, maxY, width, height };
+
+            const visited = new Uint8Array(mask.length);
+            const components = [];
+            const neighbors = [-1, 0, 1];
+            for (let gy = roi.minY; gy < roi.maxY; gy += 1) {
+              for (let gx = roi.minX; gx < roi.maxX; gx += 1) {
+                const start = gy * cols + gx;
+                if (!mask[start] || visited[start]) continue;
+                const queue = [start];
+                visited[start] = 1;
+                let head = 0;
+                let count = 0;
+                let minX = gx;
+                let maxX = gx;
+                let minY = gy;
+                let maxY = gy;
+                let sumX = 0;
+                let sumY = 0;
+                let touchesRoiEdge = false;
+
+                while (head < queue.length) {
+                  const index = queue[head++];
+                  const cy = Math.floor(index / cols);
+                  const cx = index - cy * cols;
+                  count += 1;
+                  sumX += cx;
+                  sumY += cy;
+                  minX = Math.min(minX, cx);
+                  maxX = Math.max(maxX, cx);
+                  minY = Math.min(minY, cy);
+                  maxY = Math.max(maxY, cy);
+                  if (cx <= roi.minX || cx >= roi.maxX - 1 || cy <= roi.minY || cy >= roi.maxY - 1) touchesRoiEdge = true;
+
+                  for (const dy of neighbors) {
+                    for (const dx of neighbors) {
+                      if (dx === 0 && dy === 0) continue;
+                      const nx = cx + dx;
+                      const ny = cy + dy;
+                      if (nx < roi.minX || nx >= roi.maxX || ny < roi.minY || ny >= roi.maxY) continue;
+                      const next = ny * cols + nx;
+                      if (!mask[next] || visited[next]) continue;
+                      visited[next] = 1;
+                      queue.push(next);
+                    }
+                  }
+                }
+
+                const width = (maxX - minX + 1) * stride;
+                const height = (maxY - minY + 1) * stride;
+                const centerX = (sumX / count) * stride;
+                const centerY = (sumY / count) * stride;
+                const fillRatio = count / ((maxX - minX + 1) * (maxY - minY + 1));
+                const centerDistance = Math.hypot(centerX - png.width / 2, centerY - png.height / 2);
+                components.push({ count, minX: minX * stride, maxX: maxX * stride, minY: minY * stride, maxY: maxY * stride, width, height, centerX, centerY, centerDistance, fillRatio, touchesRoiEdge });
+              }
+            }
+
+            const candidates = components
+              .filter(component => !component.touchesRoiEdge)
+              .filter(component => component.count >= 250)
+              .filter(component => component.fillRatio >= 0.025)
+              .sort((a, b) => (b.count - a.count) || (a.centerDistance - b.centerDistance));
+            const aircraft = candidates[0] || null;
+            return {
+              imageWidth: png.width,
+              imageHeight: png.height,
+              sampledComponentCount: components.length,
+              candidateCount: candidates.length,
+              aircraft,
+            };
           }
 
           (async () => {
@@ -138,9 +209,11 @@ jobs:
             const path = 'aircraft-extent-verification/crj700-overhead-extent.png';
             await page.locator('canvas').first().screenshot({ path });
             const metrics = analyze(path);
-            if (metrics.count < 900) throw new Error(`Airframe pixel evidence too low: ${metrics.count}`);
-            if (metrics.width < 260) throw new Error(`Aircraft visible width too small: ${metrics.width}px`);
-            if (metrics.height < 180) throw new Error(`Aircraft visible height too small: ${metrics.height}px`);
+            if (!metrics.aircraft) throw new Error('No isolated central CRJ700 airframe component was detected');
+            if (metrics.aircraft.count < 900) throw new Error(`Connected airframe pixel evidence too low: ${metrics.aircraft.count}`);
+            if (metrics.aircraft.width < 260) throw new Error(`Connected aircraft visible width too small: ${metrics.aircraft.width}px`);
+            if (metrics.aircraft.height < 180) throw new Error(`Connected aircraft visible height too small: ${metrics.aircraft.height}px`);
+            if (metrics.aircraft.centerDistance > 360) throw new Error(`Aircraft component is implausibly far from frame center: ${metrics.aircraft.centerDistance.toFixed(1)}px`);
             if (errors.length) throw new Error(`Browser errors: ${errors.join(' | ')}`);
 
             fs.writeFileSync('aircraft-extent-verification/report.json', JSON.stringify({ expectedSha, pageUrl, capturedAtUtc: new Date().toISOString(), modelResponse, metrics }, null, 2));
