@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 env:
   PAGE_URL: https://themainlinecowboy.github.io/RampReady/
@@ -110,3 +111,40 @@ jobs:
           path: crj700-byte-identity/
           if-no-files-found: error
           retention-days: 30
+
+  publish-production-status:
+    if: ${{ always() }}
+    needs:
+      - verify-production-byte-identity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish exact production byte-identity verdict
+        uses: actions/github-script@v7
+        env:
+          VERIFY_RESULT: ${{ needs.verify-production-byte-identity.result }}
+          WORKFLOW_SHA: ${{ github.event.workflow_run.head_sha }}
+          DISPATCH_SHA: ${{ inputs.expected_sha }}
+        with:
+          script: |
+            const sha = process.env.WORKFLOW_SHA || process.env.DISPATCH_SHA;
+            if (!sha) {
+              core.setFailed('Unable to resolve the deployed commit SHA for status publication.');
+              return;
+            }
+
+            const passed = process.env.VERIFY_RESULT === 'success';
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha,
+              state: passed ? 'success' : 'failure',
+              context: 'production/crj700-byte-identity',
+              description: passed
+                ? 'GitHub Pages serves the exact committed CRJ700 GLB bytes'
+                : `Production CRJ700 byte verification ${process.env.VERIFY_RESULT}`,
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });
+
+            if (!passed) {
+              core.setFailed(`Production CRJ700 byte verification result: ${process.env.VERIFY_RESULT}`);
+            }
