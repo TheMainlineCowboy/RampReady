@@ -151,7 +151,7 @@ jobs:
           set -euo pipefail
           npm install --no-save --package-lock=false playwright@1.53.1 pngjs@7.0.0
           npx playwright install --with-deps chromium
-          cat > /tmp/verify-rampready-live.cjs <<'EOF'
+          cat > verify-rampready-live.cjs <<'EOF'
           const { chromium } = require('playwright');
           const { PNG } = require('pngjs');
           const fs = require('node:fs');
@@ -251,7 +251,7 @@ jobs:
             await browser.close();
           })().catch(error => { console.error(error); process.exit(1); });
           EOF
-          node /tmp/verify-rampready-live.cjs
+          node verify-rampready-live.cjs
           test -s live-verification/rampready-canvas.png
           test "$(stat -c%s live-verification/rampready-canvas.png)" -gt 10000
           test -s live-verification/rampready-live.png
