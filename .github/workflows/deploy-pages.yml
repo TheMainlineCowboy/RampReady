@@ -149,7 +149,8 @@ jobs:
           EXPECTED_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          npm exec --yes --package=playwright@1.53.1 -- playwright install --with-deps chromium
+          npm install --no-save --package-lock=false playwright@1.53.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
           cat > /tmp/verify-rampready-live.cjs <<'EOF'
           const { chromium } = require('playwright');
           const { PNG } = require('pngjs');
@@ -250,7 +251,7 @@ jobs:
             await browser.close();
           })().catch(error => { console.error(error); process.exit(1); });
           EOF
-          npm exec --yes --package=playwright@1.53.1 --package=pngjs@7.0.0 -- node /tmp/verify-rampready-live.cjs
+          node /tmp/verify-rampready-live.cjs
           test -s live-verification/rampready-canvas.png
           test "$(stat -c%s live-verification/rampready-canvas.png)" -gt 10000
           test -s live-verification/rampready-live.png
