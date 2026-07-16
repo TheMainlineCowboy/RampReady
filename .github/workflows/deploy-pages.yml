@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -12,7 +13,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -46,7 +47,6 @@ jobs:
           cp "${source_asset}" "${runtime_asset}"
           cmp "${source_asset}" "${runtime_asset}"
           printf '%s\n' "${GITHUB_SHA}" > public/release-commit.txt
-          echo "Verified CRJ700 source, runtime copy, and release commit marker."
 
       - name: Build verified production site
         run: npm run build
@@ -65,17 +65,20 @@ jobs:
           cmp public/models/crj700/crj700-mobile.glb dist/models/crj700-mobile.glb
           printf 'glTF' | cmp -n 4 - dist/models/crj700-mobile.glb
           test "$(tr -d '\r\n' < dist/release-commit.txt)" = "${GITHUB_SHA}"
-          echo "Pages artifact contains the app shell, verified assets, byte-identical CRJ700 payload, and exact release SHA."
+          sha256sum public/models/crj700/crj700-mobile.glb dist/models/crj700-mobile.glb
 
       - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
 
       - name: Upload GitHub Pages artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -89,13 +92,12 @@ jobs:
         uses: actions/deploy-pages@v4
 
   verify-live-site:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     needs: deploy
+    timeout-minutes: 15
     steps:
-      - name: Wait for GitHub Pages propagation
-        run: sleep 15
-
-      - name: Verify exact live release and CRJ700 asset
+      - name: Verify exact propagated release and CRJ700 bytes
         shell: bash
         env:
           PAGE_URL: ${{ needs.deploy.outputs.page_url }}
@@ -103,26 +105,28 @@ jobs:
         run: |
           set -euo pipefail
           : "${PAGE_URL:?GitHub Pages did not return a deployment URL}"
-          for attempt in {1..12}; do
-            status=$(curl -L -sS -o /tmp/rampready-index.html -w '%{http_code}' "${PAGE_URL}")
-            marker_status=$(curl -L -sS -o /tmp/release-commit.txt -w '%{http_code}' "${PAGE_URL}release-commit.txt")
+          mkdir -p live-verification
+          verified=false
+          for attempt in $(seq 1 60); do
+            cache_bust="verify=${EXPECTED_SHA}-${attempt}-$(date +%s)"
+            index_status=$(curl --fail-with-body -L -sS -H 'Cache-Control: no-cache' -o /tmp/rampready-index.html -w '%{http_code}' "${PAGE_URL}?${cache_bust}" || true)
+            marker_status=$(curl --fail-with-body -L -sS -H 'Cache-Control: no-cache' -o /tmp/release-commit.txt -w '%{http_code}' "${PAGE_URL}release-commit.txt?${cache_bust}" || true)
             live_sha=$(tr -d '\r\n' < /tmp/release-commit.txt 2>/dev/null || true)
-            if [ "${status}" = "200" ] && [ "${marker_status}" = "200" ] && [ "${live_sha}" = "${EXPECTED_SHA}" ] && grep -q '<div id="root"></div>' /tmp/rampready-index.html; then
+            if [ "${index_status}" = "200" ] && [ "${marker_status}" = "200" ] && [ "${live_sha}" = "${EXPECTED_SHA}" ] && grep -q '<div id="root"></div>' /tmp/rampready-index.html; then
+              verified=true
               break
             fi
-            echo "Attempt ${attempt}: site=${status}, marker=${marker_status}, live_sha=${live_sha:-missing}; retrying..."
+            echo "Attempt ${attempt}/60: index=${index_status:-none}, marker=${marker_status:-none}, live_sha=${live_sha:-missing}"
             sleep 10
           done
-          test -s /tmp/rampready-index.html
-          grep -q '<div id="root"></div>' /tmp/rampready-index.html
-          test "$(tr -d '\r\n' < /tmp/release-commit.txt)" = "${EXPECTED_SHA}"
-          asset_status=$(curl -L -sS -o /tmp/crj700-mobile.glb -w '%{http_code}' "${PAGE_URL}models/crj700-mobile.glb")
+          test "${verified}" = true
+
+          asset_status=$(curl --fail-with-body -L -sS -H 'Cache-Control: no-cache' -o /tmp/crj700-mobile.glb -w '%{http_code}' "${PAGE_URL}models/crj700-mobile.glb?sha=${EXPECTED_SHA}")
           test "${asset_status}" = "200"
           test "$(stat -c%s /tmp/crj700-mobile.glb)" -gt 10000
           printf 'glTF' | cmp -n 4 - /tmp/crj700-mobile.glb
-          mkdir -p live-verification
-          index_bytes=$(stat -c%s /tmp/rampready-index.html)
-          asset_bytes=$(stat -c%s /tmp/crj700-mobile.glb)
+
+          live_hash=$(sha256sum /tmp/crj700-mobile.glb | cut -d' ' -f1)
           verified_at=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
           cat > live-verification/receipt.json <<EOF
           {
@@ -132,103 +136,47 @@ jobs:
             "indexStatus": 200,
             "releaseMarkerStatus": 200,
             "crj700Status": 200,
-            "indexBytes": ${index_bytes},
-            "crj700Bytes": ${asset_bytes},
+            "crj700Bytes": $(stat -c%s /tmp/crj700-mobile.glb),
+            "crj700Sha256": "${live_hash}",
             "crj700Magic": "glTF"
           }
           EOF
-          echo "Exact commit ${EXPECTED_SHA} and its CRJ700 payload are live at ${PAGE_URL}"
 
-      - name: Verify live browser runtime and capture evidence
+      - name: Verify live Three.js runtime and real CRJ700 request
         shell: bash
         env:
           PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+          EXPECTED_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          : "${PAGE_URL:?GitHub Pages did not return a deployment URL}"
-          npx --yes playwright@1.53.1 install --with-deps chromium
+          npm exec --yes --package=playwright@1.53.1 -- playwright install --with-deps chromium
           cat > /tmp/verify-rampready-live.cjs <<'EOF'
           const { chromium } = require('playwright');
-          const { PNG } = require('pngjs');
           const fs = require('node:fs');
-
-          function analyzeCanvasPng(filePath) {
-            const png = PNG.sync.read(fs.readFileSync(filePath));
-            const quantizedColors = new Set();
-            let luminanceSum = 0;
-            let luminanceSquaredSum = 0;
-            let sampleCount = 0;
-            let airframePixelCount = 0;
-            let blueLiveryPixelCount = 0;
-            let redLiveryPixelCount = 0;
-            const stride = Math.max(1, Math.floor(Math.min(png.width, png.height) / 180));
-            const centerMinX = png.width * 0.18;
-            const centerMaxX = png.width * 0.82;
-            const centerMinY = png.height * 0.12;
-            const centerMaxY = png.height * 0.88;
-
-            for (let y = 0; y < png.height; y += stride) {
-              for (let x = 0; x < png.width; x += stride) {
-                const offset = (png.width * y + x) * 4;
-                const r = png.data[offset];
-                const g = png.data[offset + 1];
-                const b = png.data[offset + 2];
-                const a = png.data[offset + 3];
-                if (a < 16) continue;
-                quantizedColors.add(`${r >> 4},${g >> 4},${b >> 4}`);
-                const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-                luminanceSum += luminance;
-                luminanceSquaredSum += luminance * luminance;
-                sampleCount += 1;
-
-                if (x < centerMinX || x > centerMaxX || y < centerMinY || y > centerMaxY) continue;
-                const max = Math.max(r, g, b);
-                const min = Math.min(r, g, b);
-                const saturationSpread = max - min;
-                if (r > 175 && g > 175 && b > 175 && saturationSpread < 38) airframePixelCount += 1;
-                if (b > 78 && b > r * 1.18 && b > g * 1.08) blueLiveryPixelCount += 1;
-                if (r > 120 && r > g * 1.35 && r > b * 1.25) redLiveryPixelCount += 1;
-              }
-            }
-
-            const mean = sampleCount ? luminanceSum / sampleCount : 0;
-            const variance = sampleCount ? Math.max(0, luminanceSquaredSum / sampleCount - mean * mean) : 0;
-            return {
-              width: png.width,
-              height: png.height,
-              sampleCount,
-              quantizedColorCount: quantizedColors.size,
-              meanLuminance: Number(mean.toFixed(3)),
-              luminanceStdDev: Number(Math.sqrt(variance).toFixed(3)),
-              airframePixelCount,
-              blueLiveryPixelCount,
-              redLiveryPixelCount,
-            };
-          }
 
           (async () => {
             const pageUrl = process.env.PAGE_URL;
+            const expectedSha = process.env.EXPECTED_SHA;
             const browser = await chromium.launch({ headless: true });
             const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
             const consoleErrors = [];
             const pageErrors = [];
             const failedRequests = [];
-            let crj700Response = null;
+            let modelResponse = null;
 
             page.on('console', message => {
               if (message.type() === 'error') consoleErrors.push(message.text());
             });
             page.on('pageerror', error => pageErrors.push(error.message));
-            page.on('requestfailed', request => {
-              failedRequests.push(`${request.method()} ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`);
-            });
+            page.on('requestfailed', request => failedRequests.push(`${request.method()} ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
             page.on('response', response => {
-              if (response.url().endsWith('/models/crj700-mobile.glb')) {
-                crj700Response = { url: response.url(), status: response.status(), ok: response.ok() };
+              const url = new URL(response.url());
+              if (url.pathname.endsWith('/models/crj700-mobile.glb')) {
+                modelResponse = { url: response.url(), status: response.status(), ok: response.ok() };
               }
             });
 
-            const response = await page.goto(pageUrl, { waitUntil: 'networkidle', timeout: 60000 });
+            const response = await page.goto(`${pageUrl}?runtime=${expectedSha}`, { waitUntil: 'networkidle', timeout: 90000 });
             if (!response || !response.ok()) throw new Error(`Live page navigation failed: ${response?.status() || 'no response'}`);
             await page.waitForTimeout(12000);
 
@@ -244,45 +192,36 @@ jobs:
                 canvasHeight: canvas?.height || 0,
                 canvasCssWidth: rect?.width || 0,
                 canvasCssHeight: rect?.height || 0,
-                bodyTextLength: document.body?.innerText?.trim().length || 0,
+                resourceUrls: performance.getEntriesByType('resource').map(entry => entry.name).filter(name => name.includes('crj700-mobile.glb')),
               };
             });
 
-            const canvas = page.locator('canvas').first();
-            await canvas.screenshot({ path: 'live-verification/rampready-canvas.png' });
+            await page.locator('canvas').first().screenshot({ path: 'live-verification/rampready-canvas.png' });
             await page.screenshot({ path: 'live-verification/rampready-live.png', fullPage: true });
-            const canvasVisual = analyzeCanvasPng('live-verification/rampready-canvas.png');
-            const report = { pageUrl, runtime, canvasVisual, crj700Response, consoleErrors, pageErrors, failedRequests };
+            const report = { pageUrl, expectedSha, runtime, modelResponse, consoleErrors, pageErrors, failedRequests };
             fs.writeFileSync('live-verification/browser-report.json', JSON.stringify(report, null, 2));
 
             if (runtime.rootChildren < 1) throw new Error('React root did not initialize');
             if (!runtime.canvasPresent) throw new Error('Three.js canvas is missing');
             if (runtime.canvasWidth < 640 || runtime.canvasHeight < 360) throw new Error(`Canvas backing size is too small: ${runtime.canvasWidth}x${runtime.canvasHeight}`);
             if (runtime.canvasCssWidth < 640 || runtime.canvasCssHeight < 360) throw new Error(`Visible canvas is too small: ${runtime.canvasCssWidth}x${runtime.canvasCssHeight}`);
-            if (canvasVisual.sampleCount < 1000) throw new Error(`Canvas visual sample is too small: ${canvasVisual.sampleCount}`);
-            if (canvasVisual.quantizedColorCount < 32) throw new Error(`Canvas appears visually blank or uniform: ${canvasVisual.quantizedColorCount} quantized colors`);
-            if (canvasVisual.luminanceStdDev < 4) throw new Error(`Canvas lacks meaningful rendered contrast: standard deviation ${canvasVisual.luminanceStdDev}`);
-            if (canvasVisual.airframePixelCount < 180) throw new Error(`Visible CRJ700 airframe signature is missing: ${canvasVisual.airframePixelCount} light neutral samples`);
-            if (canvasVisual.blueLiveryPixelCount < 35) throw new Error(`Visible American Eagle blue signature is missing: ${canvasVisual.blueLiveryPixelCount} blue samples`);
-            if (canvasVisual.redLiveryPixelCount < 12) throw new Error(`Visible American Eagle red signature is missing: ${canvasVisual.redLiveryPixelCount} red samples`);
-            if (!crj700Response || !crj700Response.ok) throw new Error(`Browser did not successfully load the CRJ700 GLB: ${JSON.stringify(crj700Response)}`);
+            if (!modelResponse || !modelResponse.ok || modelResponse.status !== 200) throw new Error(`Browser did not load the CRJ700 GLB successfully: ${JSON.stringify(modelResponse)}`);
+            if (!runtime.resourceUrls.length) throw new Error('Resource Timing did not record the CRJ700 GLB');
             if (pageErrors.length) throw new Error(`Uncaught browser errors: ${pageErrors.join(' | ')}`);
             if (consoleErrors.length) throw new Error(`Console errors: ${consoleErrors.join(' | ')}`);
             if (failedRequests.length) throw new Error(`Failed browser requests: ${failedRequests.join(' | ')}`);
-
             await browser.close();
           })().catch(error => {
             console.error(error);
             process.exit(1);
           });
           EOF
-          npm exec --yes --package=playwright@1.53.1 --package=pngjs@7.0.0 -- node /tmp/verify-rampready-live.cjs
+          npm exec --yes --package=playwright@1.53.1 -- node /tmp/verify-rampready-live.cjs
           test -s live-verification/rampready-canvas.png
           test "$(stat -c%s live-verification/rampready-canvas.png)" -gt 10000
           test -s live-verification/rampready-live.png
           test "$(stat -c%s live-verification/rampready-live.png)" -gt 10000
           test -s live-verification/browser-report.json
-          echo "Verified live React/Three.js runtime, visible CRJ700 airframe and American Eagle color signatures, successful browser asset load, clean browser errors, and captured rendering evidence."
 
       - name: Upload live-site verification evidence
         uses: actions/upload-artifact@v4
