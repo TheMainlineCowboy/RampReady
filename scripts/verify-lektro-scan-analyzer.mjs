@@ -47,12 +47,31 @@ try {
   assert.equal(report.topology.unreferencedVertices, 1);
   assert.deepEqual(report.topology.groups, ["body", "scan-noise"]);
   assert.deepEqual(report.topology.objects, ["tug"]);
+  assert.equal(report.topology.components[0].vertices, 4);
+  assert.equal(report.topology.components[0].faces, 1);
+  assert.equal(report.topology.components[0].triangles, 2);
+  assert.deepEqual(report.topology.components[0].bounds, {
+    min: [-1, 0, -2],
+    max: [1, 1, 2],
+    extents: [2, 1, 4],
+  });
+  assert.equal(report.topology.components[0].triangleShare, 2 / 3);
+  assert.equal(report.topology.components[1].vertices, 3);
+  assert.equal(report.topology.components[1].triangles, 1);
+  assert.deepEqual(report.topology.components[1].bounds, {
+    min: [5, 0, 5],
+    max: [6, 1, 5],
+    extents: [1, 1, 0],
+  });
+  assert.equal(report.topology.dominantComponent.triangles, 2);
+  assert.equal(report.topology.dominantComponent.vertexShare, 4 / 7);
+  assert.deepEqual(report.topology.cleanupCandidates, []);
   assert.deepEqual(report.material.definitions, ["material0"]);
   assert.deepEqual(report.material.usedByGeometry, ["material0"]);
   assert.deepEqual(report.material.diffuseTextureReferences, ["3DModel.jpg"]);
   assert.equal(report.textureBytes, 4);
 
-  console.log("Verified repeatable Lektro scan ingestion and topology analysis.");
+  console.log("Verified component-level Lektro scan cleanup reporting.");
 } finally {
   await rm(directory, { recursive: true, force: true });
 }
