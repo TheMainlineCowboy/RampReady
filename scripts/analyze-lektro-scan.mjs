@@ -36,6 +36,28 @@ function createUnionFind(size) {
   return { find, union };
 }
 
+function createEmptyBounds() {
+  return {
+    min: [Infinity, Infinity, Infinity],
+    max: [-Infinity, -Infinity, -Infinity],
+  };
+}
+
+function includePosition(bounds, position) {
+  for (let axis = 0; axis < 3; axis += 1) {
+    bounds.min[axis] = Math.min(bounds.min[axis], position[axis]);
+    bounds.max[axis] = Math.max(bounds.max[axis], position[axis]);
+  }
+}
+
+function finalizeBounds(bounds) {
+  return {
+    min: bounds.min,
+    max: bounds.max,
+    extents: bounds.max.map((value, axis) => value - bounds.min[axis]),
+  };
+}
+
 export async function analyzeLektroScan(inputDirectory) {
   const directory = path.resolve(inputDirectory);
   const [objPath, mtlPath, texturePath] = EXPECTED_FILES.map((name) => path.join(directory, name));
@@ -105,12 +127,40 @@ export async function analyzeLektroScan(inputDirectory) {
     for (const index of indices) referencedVertices.add(index);
     for (let index = 1; index < indices.length; index += 1) unionFind.union(first, indices[index]);
   }
-  const componentSizes = new Map();
-  for (const index of referencedVertices) {
-    const root = unionFind.find(index);
-    componentSizes.set(root, (componentSizes.get(root) ?? 0) + 1);
+
+  const componentsByRoot = new Map();
+  for (const vertexIndex of referencedVertices) {
+    const root = unionFind.find(vertexIndex);
+    let component = componentsByRoot.get(root);
+    if (!component) {
+      component = {
+        vertexIndices: [],
+        faces: 0,
+        triangles: 0,
+        bounds: createEmptyBounds(),
+      };
+      componentsByRoot.set(root, component);
+    }
+    component.vertexIndices.push(vertexIndex);
+    includePosition(component.bounds, positions[vertexIndex]);
   }
-  const connectedComponentVertexCounts = [...componentSizes.values()].sort((a, b) => b - a);
+  for (const indices of faceVertexSets) {
+    const component = componentsByRoot.get(unionFind.find(indices[0]));
+    component.faces += 1;
+    component.triangles += indices.length - 2;
+  }
+
+  const componentReports = [...componentsByRoot.values()]
+    .map((component) => ({
+      vertices: component.vertexIndices.length,
+      faces: component.faces,
+      triangles: component.triangles,
+      bounds: finalizeBounds(component.bounds),
+      vertexShare: component.vertexIndices.length / referencedVertices.size,
+      triangleShare: component.triangles / triangles,
+    }))
+    .sort((left, right) => right.triangles - left.triangles || right.vertices - left.vertices);
+  const dominantComponent = componentReports[0];
 
   const textureReferences = [...mtl.matchAll(/^\s*map_Kd\s+(.+)$/gimu)].map((match) => match[1].trim());
   const materialDefinitions = [...mtl.matchAll(/^\s*newmtl\s+(.+)$/gimu)].map((match) => match[1].trim());
@@ -130,11 +180,24 @@ export async function analyzeLektroScan(inputDirectory) {
     triangles,
     bounds: { min, max, extents },
     topology: {
-      connectedComponents: connectedComponentVertexCounts.length,
-      connectedComponentVertexCounts,
+      connectedComponents: componentReports.length,
+      connectedComponentVertexCounts: componentReports.map((component) => component.vertices),
       unreferencedVertices: vertices - referencedVertices.size,
       groups: [...groups],
       objects: [...objects],
+      components: componentReports,
+      dominantComponent: dominantComponent ? {
+        index: 0,
+        vertices: dominantComponent.vertices,
+        faces: dominantComponent.faces,
+        triangles: dominantComponent.triangles,
+        bounds: dominantComponent.bounds,
+        vertexShare: dominantComponent.vertexShare,
+        triangleShare: dominantComponent.triangleShare,
+      } : null,
+      cleanupCandidates: componentReports
+        .map((component, index) => ({ index, ...component }))
+        .filter((component) => component.triangleShare < 0.01 || component.vertexShare < 0.01),
     },
     material: {
       definitions: materialDefinitions,
