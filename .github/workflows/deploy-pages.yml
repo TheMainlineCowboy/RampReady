@@ -142,7 +142,7 @@ jobs:
           }
           EOF
 
-      - name: Verify live Three.js runtime and real CRJ700 request
+      - name: Verify live Three.js runtime and visible real CRJ700
         shell: bash
         env:
           PAGE_URL: ${{ needs.deploy.outputs.page_url }}
@@ -152,7 +152,43 @@ jobs:
           npm exec --yes --package=playwright@1.53.1 -- playwright install --with-deps chromium
           cat > /tmp/verify-rampready-live.cjs <<'EOF'
           const { chromium } = require('playwright');
+          const { PNG } = require('pngjs');
           const fs = require('node:fs');
+
+          function analyzeCanvas(filePath) {
+            const png = PNG.sync.read(fs.readFileSync(filePath));
+            let samples = 0;
+            let airframe = 0;
+            let blue = 0;
+            let red = 0;
+            const colors = new Set();
+            let lum = 0;
+            let lumSq = 0;
+            const stride = Math.max(1, Math.floor(Math.min(png.width, png.height) / 180));
+            for (let y = 0; y < png.height; y += stride) {
+              for (let x = 0; x < png.width; x += stride) {
+                const i = (y * png.width + x) * 4;
+                const r = png.data[i];
+                const g = png.data[i + 1];
+                const b = png.data[i + 2];
+                const a = png.data[i + 3];
+                if (a < 16) continue;
+                samples += 1;
+                colors.add(`${r >> 4},${g >> 4},${b >> 4}`);
+                const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                lum += l;
+                lumSq += l * l;
+                if (x < png.width * 0.18 || x > png.width * 0.82 || y < png.height * 0.12 || y > png.height * 0.88) continue;
+                const spread = Math.max(r, g, b) - Math.min(r, g, b);
+                if (r > 175 && g > 175 && b > 175 && spread < 38) airframe += 1;
+                if (b > 78 && b > r * 1.18 && b > g * 1.08) blue += 1;
+                if (r > 120 && r > g * 1.35 && r > b * 1.25) red += 1;
+              }
+            }
+            const mean = samples ? lum / samples : 0;
+            const variance = samples ? Math.max(0, lumSq / samples - mean * mean) : 0;
+            return { width: png.width, height: png.height, samples, quantizedColors: colors.size, luminanceStdDev: Math.sqrt(variance), airframe, blue, red };
+          }
 
           (async () => {
             const pageUrl = process.env.PAGE_URL;
@@ -164,16 +200,12 @@ jobs:
             const failedRequests = [];
             let modelResponse = null;
 
-            page.on('console', message => {
-              if (message.type() === 'error') consoleErrors.push(message.text());
-            });
+            page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
             page.on('pageerror', error => pageErrors.push(error.message));
             page.on('requestfailed', request => failedRequests.push(`${request.method()} ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
             page.on('response', response => {
               const url = new URL(response.url());
-              if (url.pathname.endsWith('/models/crj700-mobile.glb')) {
-                modelResponse = { url: response.url(), status: response.status(), ok: response.ok() };
-              }
+              if (url.pathname.endsWith('/models/crj700-mobile.glb')) modelResponse = { url: response.url(), status: response.status(), ok: response.ok() };
             });
 
             const response = await page.goto(`${pageUrl}?runtime=${expectedSha}`, { waitUntil: 'networkidle', timeout: 90000 });
@@ -198,7 +230,8 @@ jobs:
 
             await page.locator('canvas').first().screenshot({ path: 'live-verification/rampready-canvas.png' });
             await page.screenshot({ path: 'live-verification/rampready-live.png', fullPage: true });
-            const report = { pageUrl, expectedSha, runtime, modelResponse, consoleErrors, pageErrors, failedRequests };
+            const visual = analyzeCanvas('live-verification/rampready-canvas.png');
+            const report = { pageUrl, expectedSha, runtime, visual, modelResponse, consoleErrors, pageErrors, failedRequests };
             fs.writeFileSync('live-verification/browser-report.json', JSON.stringify(report, null, 2));
 
             if (runtime.rootChildren < 1) throw new Error('React root did not initialize');
@@ -207,16 +240,17 @@ jobs:
             if (runtime.canvasCssWidth < 640 || runtime.canvasCssHeight < 360) throw new Error(`Visible canvas is too small: ${runtime.canvasCssWidth}x${runtime.canvasCssHeight}`);
             if (!modelResponse || !modelResponse.ok || modelResponse.status !== 200) throw new Error(`Browser did not load the CRJ700 GLB successfully: ${JSON.stringify(modelResponse)}`);
             if (!runtime.resourceUrls.length) throw new Error('Resource Timing did not record the CRJ700 GLB');
+            if (visual.samples < 1000 || visual.quantizedColors < 32 || visual.luminanceStdDev < 4) throw new Error(`Canvas lacks meaningful rendered detail: ${JSON.stringify(visual)}`);
+            if (visual.airframe < 180) throw new Error(`Visible CRJ700 airframe signature is missing: ${visual.airframe}`);
+            if (visual.blue < 35) throw new Error(`Visible American Eagle blue signature is missing: ${visual.blue}`);
+            if (visual.red < 12) throw new Error(`Visible American Eagle red signature is missing: ${visual.red}`);
             if (pageErrors.length) throw new Error(`Uncaught browser errors: ${pageErrors.join(' | ')}`);
             if (consoleErrors.length) throw new Error(`Console errors: ${consoleErrors.join(' | ')}`);
             if (failedRequests.length) throw new Error(`Failed browser requests: ${failedRequests.join(' | ')}`);
             await browser.close();
-          })().catch(error => {
-            console.error(error);
-            process.exit(1);
-          });
+          })().catch(error => { console.error(error); process.exit(1); });
           EOF
-          npm exec --yes --package=playwright@1.53.1 -- node /tmp/verify-rampready-live.cjs
+          npm exec --yes --package=playwright@1.53.1 --package=pngjs@7.0.0 -- node /tmp/verify-rampready-live.cjs
           test -s live-verification/rampready-canvas.png
           test "$(stat -c%s live-verification/rampready-canvas.png)" -gt 10000
           test -s live-verification/rampready-live.png
