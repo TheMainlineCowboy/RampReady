@@ -58,16 +58,16 @@ jobs:
             const { x, y } = await canvasCenter(page, canvas);
             await page.mouse.move(x, y);
             await page.mouse.down();
-            await page.mouse.move(x + dx, y, { steps: 36 });
+            await page.mouse.move(x + dx, y, { steps: 72 });
             await page.mouse.up();
-            await page.waitForTimeout(2200);
+            await page.waitForTimeout(2600);
           }
 
           async function zoomOut(page, canvas) {
             const { x, y } = await canvasCenter(page, canvas);
             await page.mouse.move(x, y);
-            await page.mouse.wheel(0, 1900);
-            await page.waitForTimeout(2200);
+            await page.mouse.wheel(0, 5200);
+            await page.waitForTimeout(2600);
           }
 
           async function hideNonCanvasUi(page) {
@@ -119,10 +119,10 @@ jobs:
             await zoomOut(page, canvas);
             await canvas.screenshot({ path: 'crj700-side-view-evidence/crj700-front.png' });
 
-            await orbit(page, canvas, 610);
+            await orbit(page, canvas, 1250);
             await canvas.screenshot({ path: 'crj700-side-view-evidence/crj700-left-profile.png' });
 
-            await orbit(page, canvas, -1220);
+            await orbit(page, canvas, -2500);
             await canvas.screenshot({ path: 'crj700-side-view-evidence/crj700-right-profile.png' });
 
             const evidence = {
@@ -134,8 +134,8 @@ jobs:
               failedRequests,
               viewport: { width: 1600, height: 1000 },
               uiHidden: true,
-              zoomOutDeltaY: 1900,
-              orbitDragPixels: 610,
+              zoomOutDeltaY: 5200,
+              orbitDragPixels: 1250,
               files: ['crj700-front.png', 'crj700-left-profile.png', 'crj700-right-profile.png'],
             };
             fs.writeFileSync('crj700-side-view-evidence/report.json', JSON.stringify(evidence, null, 2));
@@ -183,7 +183,7 @@ jobs:
 
             const passed = process.env.VERIFY_RESULT === 'success';
             const description = passed
-              ? 'Unobstructed live CRJ700 front and side evidence captured'
+              ? 'Full-airframe live CRJ700 front and side evidence captured'
               : `CRJ700 side-view verification ${process.env.VERIFY_RESULT}`;
 
             await github.rest.repos.createCommitStatus({
