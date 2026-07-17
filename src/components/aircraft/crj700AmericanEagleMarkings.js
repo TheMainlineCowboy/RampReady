@@ -69,12 +69,13 @@ export function buildAmericanEagleMarkings(THREE) {
   const titleTexture = createAmericanEagleTitleTexture(THREE);
 
   // American Eagle fuselage treatment: readable title plus visible red/blue lower-body striping.
-  // The earlier single blue line left the imported model looking largely unpainted from normal views.
+  // Keep the stripe stack on the same verified outer-side plane as the readable title; the earlier
+  // lower Y / inset X placement buried the strips inside the imported fuselage and made them invisible.
   for (const side of [-1, 1]) {
-    addBox(THREE, group, blue, [0.028, 0.16, 19.4], [side * 1.015, 2.83, 7.2], [0, 0, 0], `American Eagle blue cheatline ${side < 0 ? "left" : "right"}`);
-    addBox(THREE, group, blue, [0.032, 0.18, 18.2], [side * 0.985, 2.18, 7.85], [0, 0, 0], `American Eagle lower blue stripe ${side < 0 ? "left" : "right"}`);
-    addBox(THREE, group, silver, [0.034, 0.10, 18.0], [side * 0.988, 2.05, 7.9], [0, 0, 0], `American Eagle lower silver separator ${side < 0 ? "left" : "right"}`);
-    addBox(THREE, group, red, [0.036, 0.14, 17.6], [side * 0.992, 1.93, 8.1], [0, 0, 0], `American Eagle lower red stripe ${side < 0 ? "left" : "right"}`);
+    addBox(THREE, group, blue, [0.028, 0.16, 19.4], [side * 1.035, 2.83, 7.2], [0, 0, 0], `American Eagle blue cheatline ${side < 0 ? "left" : "right"}`);
+    addBox(THREE, group, blue, [0.032, 0.19, 18.2], [side * 1.04, 2.64, 7.85], [0, 0, 0], `American Eagle lower blue stripe ${side < 0 ? "left" : "right"}`);
+    addBox(THREE, group, silver, [0.034, 0.10, 18.0], [side * 1.043, 2.49, 7.9], [0, 0, 0], `American Eagle lower silver separator ${side < 0 ? "left" : "right"}`);
+    addBox(THREE, group, red, [0.036, 0.15, 17.6], [side * 1.046, 2.36, 8.1], [0, 0, 0], `American Eagle lower red stripe ${side < 0 ? "left" : "right"}`);
     addTitleDecal(THREE, group, titleTexture, side);
   }
 
