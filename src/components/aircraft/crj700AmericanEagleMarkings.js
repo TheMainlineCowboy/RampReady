@@ -58,6 +58,24 @@ function addTitleDecal(THREE, group, texture, side) {
   return decal;
 }
 
+function addStripeDecal(THREE, group, color, width, height, position, side, name) {
+  const material = new THREE.MeshBasicMaterial({
+    color,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -3,
+    side: THREE.FrontSide,
+    toneMapped: false,
+  });
+  const decal = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
+  decal.position.set(side * position[0], position[1], position[2]);
+  decal.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
+  decal.name = `${name} ${side < 0 ? "left" : "right"}`;
+  decal.renderOrder = 3;
+  group.add(decal);
+  return decal;
+}
+
 export function buildAmericanEagleMarkings(THREE) {
   const group = new THREE.Group();
   group.name = "American Eagle CRJ700 exterior markings";
@@ -68,14 +86,14 @@ export function buildAmericanEagleMarkings(THREE) {
   const charcoal = makeMaterial(THREE, 0x252a31, 0.52, 0.04);
   const titleTexture = createAmericanEagleTitleTexture(THREE);
 
-  // American Eagle fuselage treatment: readable title plus visible red/blue lower-body striping.
-  // Keep the stripe stack on the same verified outer-side plane as the readable title; the earlier
-  // lower Y / inset X placement buried the strips inside the imported fuselage and made them invisible.
+  // Use flat side decals rather than narrow box meshes. The production evidence proved the previous
+  // boxes remained inside the lower fuselage even after being moved outward, while the title decal
+  // on the same imported airframe renders reliably. Keep the stripes shallow and slightly outboard.
   for (const side of [-1, 1]) {
-    addBox(THREE, group, blue, [0.028, 0.16, 19.4], [side * 1.035, 2.83, 7.2], [0, 0, 0], `American Eagle blue cheatline ${side < 0 ? "left" : "right"}`);
-    addBox(THREE, group, blue, [0.032, 0.19, 18.2], [side * 1.04, 2.64, 7.85], [0, 0, 0], `American Eagle lower blue stripe ${side < 0 ? "left" : "right"}`);
-    addBox(THREE, group, silver, [0.034, 0.10, 18.0], [side * 1.043, 2.49, 7.9], [0, 0, 0], `American Eagle lower silver separator ${side < 0 ? "left" : "right"}`);
-    addBox(THREE, group, red, [0.036, 0.15, 17.6], [side * 1.046, 2.36, 8.1], [0, 0, 0], `American Eagle lower red stripe ${side < 0 ? "left" : "right"}`);
+    addStripeDecal(THREE, group, 0x173f73, 19.4, 0.16, [1.16, 2.83, 7.2], side, "American Eagle blue cheatline");
+    addStripeDecal(THREE, group, 0x173f73, 18.2, 0.19, [1.17, 2.64, 7.85], side, "American Eagle lower blue stripe");
+    addStripeDecal(THREE, group, 0xc7ccd2, 18.0, 0.10, [1.175, 2.49, 7.9], side, "American Eagle lower silver separator");
+    addStripeDecal(THREE, group, 0xc62032, 17.6, 0.15, [1.18, 2.36, 8.1], side, "American Eagle lower red stripe");
     addTitleDecal(THREE, group, titleTexture, side);
   }
 
@@ -107,7 +125,7 @@ export function buildAmericanEagleMarkings(THREE) {
   }
   addBox(THREE, group, charcoal, [1.15, 0.035, 1.55], [0, 3.42, -3.36], [-0.10, 0, 0], "CRJ700 nose anti-glare panel");
 
-  group.userData.liveryState = "american-eagle-readable-title-tail-and-lower-fuselage-stripes";
-  group.userData.markingSystem = "retained procedural overlays plus runtime canvas title decals on verified real GLB";
+  group.userData.liveryState = "american-eagle-readable-title-tail-and-lower-fuselage-stripe-decals";
+  group.userData.markingSystem = "retained procedural overlays plus runtime canvas and plane decals on verified real GLB";
   return group;
 }

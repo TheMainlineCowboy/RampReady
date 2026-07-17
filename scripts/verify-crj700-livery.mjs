@@ -14,6 +14,7 @@ requireSource(markings, "texture.colorSpace = THREE.SRGBColorSpace", "sRGB decal
 requireSource(markings, "transparent: true", "transparent decal material is missing.");
 requireSource(markings, "depthWrite: false", "decal depth-write protection is missing.");
 requireSource(markings, "polygonOffset: true", "decal z-fighting protection is missing.");
+requireSource(markings, "new THREE.PlaneGeometry(width, height)", "lower-fuselage stripe decals are not using visible side-facing plane geometry.");
 requireSource(markings, "for (const side of [-1, 1])", "two-sided marking construction is missing.");
 requireSource(markings, 'side > 0 ? Math.PI / 2 : -Math.PI / 2', "outward-facing left/right decal orientation is missing.");
 requireSource(markings, "American Eagle lower blue stripe", "bilateral lower blue fuselage stripe is missing.");
@@ -21,8 +22,8 @@ requireSource(markings, "American Eagle lower silver separator", "bilateral silv
 requireSource(markings, "American Eagle lower red stripe", "bilateral lower red fuselage stripe is missing.");
 requireSource(
   markings,
-  'liveryState = "american-eagle-readable-title-tail-and-lower-fuselage-stripes"',
-  "current livery state marker is missing.",
+  'liveryState = "american-eagle-readable-title-tail-and-lower-fuselage-stripe-decals"',
+  "current decal-based livery state marker is missing.",
 );
 
 if (markings.includes("American title block") || markings.includes("American title highlight")) {
@@ -39,4 +40,4 @@ requireSource(
 requireSource(aircraft, 'realModel.userData.liveryState = "visible-base-coat-with-american-eagle-overlays"', "real-model base-coat state is missing.");
 requireSource(aircraft, 'aircraftRoot.userData.renderedAircraftSource = "CRJ700.stl"', "real-aircraft runtime source marker is missing.");
 
-console.log("CRJ700 livery verification passed: real-model base coat, bilateral American Eagle titles, tail/engine overlays, lower red-silver-blue fuselage striping, and obsolete title-block removal are structurally confirmed.");
+console.log("CRJ700 livery verification passed: real-model base coat, bilateral American Eagle title and stripe decals, tail/engine overlays, and obsolete title-block removal are structurally confirmed.");
