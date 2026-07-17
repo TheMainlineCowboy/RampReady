@@ -39,14 +39,21 @@ export function buildCRJ700NoseGear(THREE, materials = {}) {
   const cylinder = (radiusTop, radiusBottom, length, material, radialSegments = 24) =>
     new THREE.Mesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, length, radialSegments), material);
 
-  const mainStrut = add(cylinder(0.07, 0.082, 0.78, metal, 24), "nose gear outer strut");
-  mainStrut.position.set(0, 0.82, 0.02);
+  // The prior retained gear stopped well below the imported fuselage, making the
+  // nose assembly appear detached. Extend the upper shock strut to the belly while
+  // keeping the wheel contact point and tow-capture origin unchanged.
+  const mainStrut = add(cylinder(0.07, 0.082, 0.96, metal, 24), "nose gear outer strut");
+  mainStrut.position.set(0, 0.94, 0.02);
 
-  const chromePiston = add(cylinder(0.048, 0.048, 0.42, hydraulic, 20), "nose gear chrome piston");
-  chromePiston.position.set(0, 0.32, 0.02);
+  const upperTrunnion = add(cylinder(0.13, 0.13, 0.34, darkMetal, 24), "nose gear upper trunnion");
+  upperTrunnion.rotation.z = Math.PI / 2;
+  upperTrunnion.position.set(0, 1.39, 0.02);
+
+  const chromePiston = add(cylinder(0.048, 0.048, 0.46, hydraulic, 20), "nose gear chrome piston");
+  chromePiston.position.set(0, 0.39, 0.02);
 
   const steeringCollar = add(cylinder(0.115, 0.115, 0.12, darkMetal, 24), "nose gear steering collar");
-  steeringCollar.position.set(0, 0.62, 0.02);
+  steeringCollar.position.set(0, 0.64, 0.02);
 
   const axle = add(cylinder(0.045, 0.045, 0.48, hub, 20), "nose gear axle");
   axle.rotation.z = Math.PI / 2;
@@ -60,21 +67,25 @@ export function buildCRJ700NoseGear(THREE, materials = {}) {
     const wheelHub = add(cylinder(0.09, 0.09, 0.158, hub, 24), `nose wheel hub ${side < 0 ? "left" : "right"}`);
     wheelHub.rotation.z = Math.PI / 2;
     wheelHub.position.copy(wheel.position);
+
+    const forkArm = add(new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.42, 0.055), darkMetal), `nose gear fork arm ${side < 0 ? "left" : "right"}`);
+    forkArm.position.set(side * 0.145, 0.39, -0.13);
+    forkArm.rotation.z = side * 0.08;
   }
 
-  const dragBrace = add(new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.78, 0.075), darkMetal), "nose gear drag brace");
-  dragBrace.position.set(0, 0.69, 0.29);
+  const dragBrace = add(new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.88, 0.075), darkMetal), "nose gear drag brace");
+  dragBrace.position.set(0, 0.82, 0.31);
   dragBrace.rotation.x = -0.42;
 
   const upperFork = add(new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.07, 0.09), metal), "nose gear upper fork");
-  upperFork.position.set(0, 0.31, -0.11);
+  upperFork.position.set(0, 0.34, -0.11);
 
   const lowerFork = add(new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.06, 0.08), darkMetal), "nose gear lower fork");
   lowerFork.position.set(0, 0.18, -0.16);
 
   for (const side of [-1, 1]) {
-    const torqueLink = add(new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.34, 0.045), darkMetal), `nose gear torque link ${side < 0 ? "left" : "right"}`);
-    torqueLink.position.set(side * 0.07, 0.39, -0.02);
+    const torqueLink = add(new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.36, 0.045), darkMetal), `nose gear torque link ${side < 0 ? "left" : "right"}`);
+    torqueLink.position.set(side * 0.07, 0.43, -0.02);
     torqueLink.rotation.z = side * 0.16;
   }
 
@@ -82,13 +93,13 @@ export function buildCRJ700NoseGear(THREE, materials = {}) {
   towFitting.position.set(0, 0.22, -0.39);
 
   const captureMarker = new THREE.Object3D();
-  captureMarker.name = "nose gear axle capture origin";
+  captureMarker.name = "nose gear ground capture origin";
   captureMarker.position.set(0, 0, 0);
   captureMarker.userData.isTowCaptureOrigin = true;
   group.add(captureMarker);
 
   group.userData.noseGearCaptureOrigin = [0, 0, 0];
   group.userData.preserveTowKinematics = true;
-  group.userData.detailState = "detailed-procedural-crj700-nose-gear";
+  group.userData.detailState = "detailed-procedural-crj700-nose-gear-connected-strut";
   return group;
 }
