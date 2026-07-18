@@ -17,8 +17,6 @@ const requiredMarkers = [
   `sim.aircraft.position.z + Math.cos(sim.aircraft.rotation.y) * ${AIRCRAFT_WHEELBASE}`,
   `const desiredAircraftYaw = Math.atan2(axleX / axleDistance, axleZ / axleDistance);`,
   `const yawRateStep = clamp(yawDelta, -THREE.MathUtils.degToRad(${deg(MAX_AIRCRAFT_YAW_RATE)}) * dt, THREE.MathUtils.degToRad(${deg(MAX_AIRCRAFT_YAW_RATE)}) * dt);`,
-  `-THREE.MathUtils.degToRad(${deg(MAX_ARTICULATION)}),`,
-  `THREE.MathUtils.degToRad(${deg(MAX_ARTICULATION)}),`,
   `attachedNoseX + Math.sin(nextAircraftYaw) * ${AIRCRAFT_WHEELBASE}`,
   `attachedNoseZ + Math.cos(nextAircraftYaw) * ${AIRCRAFT_WHEELBASE}`,
 ];
@@ -27,6 +25,13 @@ for (const marker of requiredMarkers) {
   const count = source.split(marker).length - 1;
   assert.equal(count, 1, `prepared runtime kinematics drifted from shared module: expected one marker, found ${count}: ${marker}`);
 }
+
+const articulationBlock = `const boundedArticulation = clamp(\n          Math.atan2(Math.sin(articulationDelta), Math.cos(articulationDelta)),\n          -THREE.MathUtils.degToRad(${deg(MAX_ARTICULATION)}),\n          THREE.MathUtils.degToRad(${deg(MAX_ARTICULATION)}),\n        );`;
+assert.equal(
+  source.split(articulationBlock).length - 1,
+  1,
+  "prepared runtime articulation bounds drifted from the shared module",
+);
 
 assert.ok(source.includes("sim.mainGearCenter = null;"), "prepared runtime no longer resets main-gear history on attachment changes");
 assert.ok(source.includes("sim.lastAttachedNose.set(attachedNoseX, 0, attachedNoseZ);"), "prepared runtime no longer records the last attached nose pose");
