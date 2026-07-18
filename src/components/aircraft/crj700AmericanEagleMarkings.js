@@ -41,7 +41,7 @@ export function createAmericanEagleSurfaceMaterial(THREE) {
 
   material.userData.liveryState = "american-eagle-surface-shader-no-floating-overlays";
   material.userData.titleTexture = titleTexture;
-  material.customProgramCacheKey = () => "rampready-crj700-american-eagle-surface-v2";
+  material.customProgramCacheKey = () => "rampready-crj700-american-eagle-surface-v3";
   material.onBeforeCompile = (shader) => {
     shader.uniforms.americanEagleTitle = { value: titleTexture };
     shader.vertexShader = shader.vertexShader
@@ -91,10 +91,10 @@ diffuseColor.rgb = mix(diffuseColor.rgb, rrBlue, max(rrUpperBlue, rrLowerBlue));
 diffuseColor.rgb = mix(diffuseColor.rgb, rrSilver, rrSeparator);
 diffuseColor.rgb = mix(diffuseColor.rgb, rrRed, rrLowerRed);
 
-// Project the readable title through object coordinates onto each actual fuselage side.
+// The two physical fuselage sides need opposite object-space U directions so both titles read normally.
 float rrTitleDomain = rrSideSkin * rrRange(rrP.z, -0.20, 6.65, 0.12) * rrRange(rrP.y, 2.93, 3.70, 0.05);
 float rrTitleU = clamp((rrP.z + 0.20) / 6.85, 0.0, 1.0);
-if (rrP.x < 0.0) rrTitleU = 1.0 - rrTitleU;
+if (rrP.x > 0.0) rrTitleU = 1.0 - rrTitleU;
 float rrTitleV = clamp((rrP.y - 2.93) / 0.77, 0.0, 1.0);
 vec4 rrTitle = texture2D(americanEagleTitle, vec2(rrTitleU, rrTitleV));
 diffuseColor.rgb = mix(diffuseColor.rgb, rrTitle.rgb, rrTitle.a * rrTitleDomain);
