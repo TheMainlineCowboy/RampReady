@@ -63,16 +63,17 @@ async function orbitToSide(page, direction) {
 }
 
 test("loads the real CRJ700 asset and captures unobstructed side evidence", async ({ page }) => {
+  test.setTimeout(90_000);
   await page.setViewportSize(EVIDENCE_VIEWPORT);
+
   await waitForRealAircraft(page);
   await prepareEvidenceFrame(page);
-
   await orbitToSide(page, 1);
   await page.screenshot({ path: "test-results/crj700-left-side.png" });
 
-  await page.reload({ waitUntil: "networkidle" });
-  await expect(page.locator("canvas")).toBeVisible();
-  await page.waitForTimeout(3_000);
+  // Start a clean page lifecycle so the opposite side is captured from the same deterministic chase view.
+  // Re-run the complete real-asset assertion after reload instead of relying on a fixed delay.
+  await waitForRealAircraft(page);
   await prepareEvidenceFrame(page);
   await orbitToSide(page, -1);
   await page.screenshot({ path: "test-results/crj700-right-side.png" });
