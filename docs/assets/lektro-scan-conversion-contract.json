@@ -68,6 +68,6 @@
     "cleaned geometry is visibly compared against the scan and supplied photos",
     "scale and orientation have documentary evidence",
     "browser runtime loads the GLB without falling back to guessed procedural body geometry",
-    "capture, steering, wheel placement, and cradle clearances pass automated and rendered checks"
+    "nose-gear capture origin, steering, wheel placement, and cradle clearances pass automated and rendered checks"
   ]
 }
