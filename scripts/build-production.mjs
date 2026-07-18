@@ -28,6 +28,7 @@ try {
   await run(process.execPath, ["scripts/verify-current-architecture.mjs"]);
   await run(process.execPath, ["scripts/verify-prepared-runtime.mjs"]);
   await run(process.execPath, ["scripts/verify-lektro-scan-conversion-contract.mjs"]);
+  await run(process.execPath, ["scripts/verify-terminal4-source-inventory.mjs"]);
   await run(process.execPath, ["scripts/verify-lektro-clearance.mjs"]);
   await run(process.execPath, ["scripts/verify-lektro-proportions.mjs"]);
   await run(process.execPath, ["scripts/verify-nose-gear-seating.mjs"]);
