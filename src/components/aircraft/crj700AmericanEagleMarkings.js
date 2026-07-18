@@ -77,10 +77,16 @@ function addStripeDecal(THREE, group, color, width, height, position, side, name
 }
 
 function addContouredStripe(THREE, group, color, height, y, zOffset, side, name) {
+  // Short, deliberately overlapping panels track the changing fuselage radius. The overlap prevents
+  // window/door-sized holes when adjacent planes sit at slightly different outboard distances.
   const segments = [
-    { width: 4.8, x: 1.10, z: -0.1 },
-    { width: 8.8, x: 1.32, z: 6.7 },
-    { width: 5.8, x: 1.18, z: 14.0 },
+    { width: 3.25, x: 1.12, z: -0.95 },
+    { width: 3.25, x: 1.24, z: 2.05 },
+    { width: 3.25, x: 1.34, z: 5.05 },
+    { width: 3.25, x: 1.39, z: 8.05 },
+    { width: 3.25, x: 1.37, z: 11.05 },
+    { width: 3.25, x: 1.29, z: 14.05 },
+    { width: 3.25, x: 1.19, z: 17.05 },
   ];
 
   for (const [index, segment] of segments.entries()) {
@@ -107,8 +113,8 @@ export function buildAmericanEagleMarkings(THREE) {
   const charcoal = makeMaterial(THREE, 0x252a31, 0.52, 0.04);
   const titleTexture = createAmericanEagleTitleTexture(THREE);
 
-  // Follow the imported fuselage contour with separate fore, center, and aft planes. This keeps
-  // the livery close to the real GLB skin instead of using one oversized floating rectangle.
+  // Follow the imported fuselage contour with overlapping short planes so the markings read as a
+  // continuous painted band while remaining close to the real GLB skin.
   for (const side of [-1, 1]) {
     addContouredStripe(THREE, group, 0x173f73, 0.16, 2.83, 0, side, "American Eagle blue cheatline");
     addContouredStripe(THREE, group, 0x173f73, 0.19, 2.68, 0.05, side, "American Eagle lower blue stripe");
@@ -145,7 +151,7 @@ export function buildAmericanEagleMarkings(THREE) {
   }
   addBox(THREE, group, charcoal, [1.15, 0.035, 1.55], [0, 3.42, -3.36], [-0.10, 0, 0], "CRJ700 nose anti-glare panel");
 
-  group.userData.liveryState = "american-eagle-readable-title-tail-and-lower-fuselage-stripe-decals";
-  group.userData.markingSystem = "retained procedural overlays plus runtime canvas and contoured plane decals on verified real GLB";
+  group.userData.liveryState = "american-eagle-readable-title-tail-and-continuous-lower-fuselage-stripe-decals";
+  group.userData.markingSystem = "retained procedural overlays plus runtime canvas and overlapping contoured plane decals on verified real GLB";
   return group;
 }
