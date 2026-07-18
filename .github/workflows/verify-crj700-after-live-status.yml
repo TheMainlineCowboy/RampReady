@@ -1,28 +1,32 @@
 name: Recover CRJ700 Side-View Verification
 
 on:
-  status:
+  workflow_run:
+    workflows:
+      - Verify RampReady CRJ700 Production Byte Identity
+    types:
+      - completed
 
 permissions:
   contents: read
   statuses: write
 
 concurrency:
-  group: crj700-side-view-recovery-${{ github.event.sha }}
+  group: crj700-side-view-recovery-${{ github.event.workflow_run.head_sha }}
   cancel-in-progress: true
 
 jobs:
   verify-side-views:
     if: >-
-      github.event.context == 'production/crj700-byte-identity' &&
-      github.event.state == 'success'
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Check out verified live commit
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.sha }}
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -37,7 +41,7 @@ jobs:
       - name: Capture exact live CRJ700 side views
         env:
           PAGE_URL: https://themainlinecowboy.github.io/RampReady/
-          EXPECTED_SHA: ${{ github.event.sha }}
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           mkdir -p crj700-side-view-evidence
@@ -153,7 +157,7 @@ jobs:
       - name: Upload recovered CRJ700 side-view evidence
         uses: actions/upload-artifact@v4
         with:
-          name: recovered-crj700-side-views-${{ github.event.sha }}
+          name: recovered-crj700-side-views-${{ github.event.workflow_run.head_sha }}
           path: crj700-side-view-evidence/
           if-no-files-found: error
           retention-days: 30
@@ -161,8 +165,8 @@ jobs:
   publish-side-view-status:
     if: >-
       always() &&
-      github.event.context == 'production/crj700-byte-identity' &&
-      github.event.state == 'success'
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
     needs:
       - verify-side-views
     runs-on: ubuntu-latest
@@ -171,7 +175,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           VERIFY_RESULT: ${{ needs.verify-side-views.result }}
-          DEPLOYED_SHA: ${{ github.event.sha }}
+          DEPLOYED_SHA: ${{ github.event.workflow_run.head_sha }}
         with:
           script: |
             const sha = process.env.DEPLOYED_SHA;
