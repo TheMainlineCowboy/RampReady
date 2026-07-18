@@ -1,7 +1,7 @@
 export const CAPTURE_CORRECTION_RATE = 0.28;
 export const AIRCRAFT_WHEELBASE = 11.2;
-export const MAX_AIRCRAFT_YAW_RATE = Math.PI / 15;
-export const MAX_ARTICULATION = (70 * Math.PI) / 180;
+export const MAX_AIRCRAFT_YAW_RATE = (8 * Math.PI) / 180;
+export const MAX_ARTICULATION = (65 * Math.PI) / 180;
 
 export function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -18,6 +18,13 @@ function positiveFinite(value, fallback) {
 function finitePoint(point, fallback = { x: 0, z: 0 }) {
   if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.z)) return fallback;
   return point;
+}
+
+function mainGearFromPose(nose, yaw, wheelbase) {
+  return {
+    x: nose.x + Math.sin(yaw) * wheelbase,
+    z: nose.z + Math.cos(yaw) * wheelbase,
+  };
 }
 
 export function settleCaptureOffset(offset, dt, correctionRate = CAPTURE_CORRECTION_RATE) {
@@ -37,6 +44,7 @@ export function updateAircraftTowPose({
   tugYaw,
   previousNose,
   attachedNose,
+  mainGear,
   dt,
   wheelbase = AIRCRAFT_WHEELBASE,
   maxYawRate = MAX_AIRCRAFT_YAW_RATE,
@@ -50,20 +58,43 @@ export function updateAircraftTowPose({
   const safePreviousNose = finitePoint(previousNose, safeAttachedNose);
   const safeAircraftYaw = Number.isFinite(aircraftYaw) ? aircraftYaw : 0;
   const safeTugYaw = Number.isFinite(tugYaw) ? tugYaw : safeAircraftYaw;
+  const safeMainGear = finitePoint(mainGear, mainGearFromPose(safePreviousNose, safeAircraftYaw, safeWheelbase));
+
   const noseDx = safeAttachedNose.x - safePreviousNose.x;
   const noseDz = safeAttachedNose.z - safePreviousNose.z;
   const aircraftRightX = Math.cos(safeAircraftYaw);
   const aircraftRightZ = -Math.sin(safeAircraftYaw);
   const lateralNoseTravel = noseDx * aircraftRightX + noseDz * aircraftRightZ;
-  const requestedYawStep = lateralNoseTravel / safeWheelbase;
-  const yawRateStep = clamp(requestedYawStep, -safeYawRate * safeDt, safeYawRate * safeDt);
-  const articulation = normalizeAngle(safeAircraftYaw - safeTugYaw);
-  const boundedArticulation = clamp(articulation + yawRateStep, -safeArticulation, safeArticulation);
+
+  // Treat the aircraft as a long trailer. The tug controls the nose point, while the main-gear axle
+  // follows behind and cannot instantly copy the tug heading. Projecting the previous axle onto the
+  // wheelbase circle produces the delayed, opposite-sign aircraft response seen in real pushbacks.
+  let axleX = safeMainGear.x - safeAttachedNose.x;
+  let axleZ = safeMainGear.z - safeAttachedNose.z;
+  let axleDistance = Math.hypot(axleX, axleZ);
+  if (!Number.isFinite(axleDistance) || axleDistance < 1e-6) {
+    axleX = Math.sin(safeAircraftYaw) * safeWheelbase;
+    axleZ = Math.cos(safeAircraftYaw) * safeWheelbase;
+    axleDistance = safeWheelbase;
+  }
+
+  const desiredYaw = Math.atan2(axleX / axleDistance, axleZ / axleDistance);
+  const requestedYawDelta = normalizeAngle(desiredYaw - safeAircraftYaw);
+  const yawRateLimit = safeYawRate * safeDt;
+  let nextYaw = safeAircraftYaw + clamp(requestedYawDelta, -yawRateLimit, yawRateLimit);
+
+  let articulation = normalizeAngle(nextYaw - safeTugYaw);
+  articulation = clamp(articulation, -safeArticulation, safeArticulation);
+  nextYaw = safeTugYaw + articulation;
+
+  const nextMainGear = mainGearFromPose(safeAttachedNose, nextYaw, safeWheelbase);
   return {
     x: safeAttachedNose.x,
     z: safeAttachedNose.z,
-    yaw: safeTugYaw + boundedArticulation,
-    articulation: boundedArticulation,
+    yaw: nextYaw,
+    articulation,
     lateralNoseTravel,
+    mainGearX: nextMainGear.x,
+    mainGearZ: nextMainGear.z,
   };
 }

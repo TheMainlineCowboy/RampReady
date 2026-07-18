@@ -1,5 +1,5 @@
 import { buildCRJ700NoseGear } from "./crj700NoseGear.js";
-import { buildAmericanEagleMarkings } from "./crj700AmericanEagleMarkings.js";
+import { createAmericanEagleSurfaceMaterial } from "./crj700AmericanEagleMarkings.js";
 
 const EXPECTED_LENGTH_METERS = 32.5;
 const EXPECTED_WINGSPAN_METERS = 23.64;
@@ -16,14 +16,7 @@ function getAssetUrl() {
 }
 
 function applyVisibleBaseLivery(THREE, realModel) {
-  const airframeMaterial = new THREE.MeshStandardMaterial({
-    name: "RampReady CRJ700 visible base coat",
-    color: 0xf2f4f6,
-    roughness: 0.36,
-    metalness: 0.08,
-    side: THREE.DoubleSide,
-  });
-
+  const airframeMaterial = createAmericanEagleSurfaceMaterial(THREE);
   let meshCount = 0;
   realModel.traverse((child) => {
     if (!child.isMesh) return;
@@ -35,8 +28,9 @@ function applyVisibleBaseLivery(THREE, realModel) {
     if (child.geometry && !child.geometry.getAttribute("normal")) child.geometry.computeVertexNormals();
   });
 
-  realModel.userData.liveryState = "visible-base-coat-with-american-eagle-overlays";
+  realModel.userData.liveryState = airframeMaterial.userData.liveryState;
   realModel.userData.liveryMeshCount = meshCount;
+  realModel.userData.liveryAttachment = "real-model-material";
 }
 
 async function loadRealCRJ700(THREE, aircraftRoot, retainedProceduralChildren) {
@@ -252,11 +246,6 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
     box(0.035, 0.12, 0.22, glass, 0.92, 3.03, z, 0, -0.02, 0);
   }
 
-  const americanEagleMarkings = buildAmericanEagleMarkings(THREE);
-  group.add(americanEagleMarkings);
-  retain(americanEagleMarkings, "intentional-livery-overlay");
-  group.userData.liveryState = americanEagleMarkings.userData.liveryState;
-
   const redLight = new THREE.MeshBasicMaterial({ color: 0xff2d2d });
   const greenLight = new THREE.MeshBasicMaterial({ color: 0x35ff79 });
   const beacon = new THREE.MeshBasicMaterial({ color: 0xff5a2d });
@@ -273,9 +262,9 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
   group.scale.setScalar(PROCEDURAL_INTERNAL_SCALE);
   group.userData.aircraftDimensionsMeters = { length: EXPECTED_LENGTH_METERS, wingspan: EXPECTED_WINGSPAN_METERS };
   group.userData.orientation = { up: "+Y", forward: "-Z" };
+  group.userData.liveryState = "procedural-fallback-only-until-real-model-loads";
   group.userData.retainedProceduralRoles = [
     "supplemental-landing-gear",
-    "intentional-livery-overlay",
     "operational-light",
     "training-capture-marker",
   ];

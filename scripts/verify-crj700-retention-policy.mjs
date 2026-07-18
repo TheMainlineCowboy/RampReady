@@ -5,7 +5,6 @@ const source = await readFile(modelPath, "utf8");
 
 const requiredRoles = [
   "supplemental-landing-gear",
-  "intentional-livery-overlay",
   "operational-light",
   "training-capture-marker",
 ];
@@ -14,6 +13,10 @@ for (const role of requiredRoles) {
   if (!source.includes(`\"${role}\"`)) {
     throw new Error(`CRJ700 retention verification failed: missing approved role ${role}.`);
   }
+}
+
+if (source.includes('"intentional-livery-overlay"') || source.includes("buildAmericanEagleMarkings")) {
+  throw new Error("CRJ700 retention verification failed: livery overlay geometry is still retained outside the real model.");
 }
 
 const forbiddenRetainedBodyMarkers = [
@@ -38,4 +41,8 @@ if (!source.includes("if (child !== realModel && !retainedProceduralChildren.has
   throw new Error("CRJ700 retention verification failed: procedural fallback hiding logic changed unexpectedly.");
 }
 
-console.log("CRJ700 retention policy passed: only supplemental gear, intentional livery, operational lights, and the training marker remain after real-model load.");
+if (!source.includes('realModel.userData.liveryAttachment = "real-model-material"')) {
+  throw new Error("CRJ700 retention verification failed: livery is not attached directly to the real model material.");
+}
+
+console.log("CRJ700 retention policy passed: only supplemental gear, operational lights, and the training marker remain after real-model load; all livery is on the GLB material.");

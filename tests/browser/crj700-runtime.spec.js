@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const EVIDENCE_VIEWPORT = { width: 1920, height: 1080 };
+const MOBILE_VIEWPORT = { width: 690, height: 1536 };
 const ORBIT_DRAG_PX = 262;
 
 async function waitForRealAircraft(page) {
@@ -18,12 +19,10 @@ async function waitForRealAircraft(page) {
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(page.locator("canvas")).toBeVisible();
   await expect.poll(() => modelResponse?.status() ?? 0, { timeout: 20_000 }).toBe(200);
-
-  // Give GLTFLoader time to parse, validate dimensions, add the real mesh, and hide the fallback body.
   await page.waitForTimeout(3_000);
 
   const relevantErrors = runtimeErrors.filter((message) =>
-    /CRJ700 asset load failed|Unexpected CRJ700 dimensions|GLTFLoader|crj700-mobile\.glb/i.test(message),
+    /CRJ700 asset load failed|Unexpected CRJ700 dimensions|GLTFLoader|crj700-mobile\.glb|WebGL.*shader|VALIDATE_STATUS/i.test(message),
   );
   expect(relevantErrors).toEqual([]);
 
@@ -71,10 +70,31 @@ test("loads the real CRJ700 asset and captures unobstructed side evidence", asyn
   await orbitToSide(page, 1);
   await page.screenshot({ path: "test-results/crj700-left-side.png" });
 
-  // Start a clean page lifecycle so the opposite side is captured from the same deterministic chase view.
-  // Re-run the complete real-asset assertion after reload instead of relying on a fixed delay.
   await waitForRealAircraft(page);
   await prepareEvidenceFrame(page);
   await orbitToSide(page, -1);
   await page.screenshot({ path: "test-results/crj700-right-side.png" });
+});
+
+test("mobile controls preserve a clear simulator viewport", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize(MOBILE_VIEWPORT);
+  await waitForRealAircraft(page);
+
+  const hud = page.locator(".rr-hud");
+  const hudBox = await hud.boundingBox();
+  expect(hudBox).not.toBeNull();
+  expect(hudBox.height).toBeLessThan(180);
+  await expect(page.locator(".rr-checklist")).toBeHidden();
+  await expect(page.locator(".rr-view-select")).toBeVisible();
+  await expect(page.locator(".rr-hud-actions .rr-primary")).toBeVisible();
+  await expect(page.locator(".rr-throttle")).toBeVisible();
+  await expect(page.locator(".rr-steer")).toBeVisible();
+
+  const canvasBox = await page.locator("canvas").boundingBox();
+  expect(canvasBox).not.toBeNull();
+  expect(canvasBox.height).toBeGreaterThan(1200);
+  expect(hudBox.height / canvasBox.height).toBeLessThan(0.14);
+
+  await page.screenshot({ path: "test-results/mobile-simulator-layout.png", fullPage: true });
 });

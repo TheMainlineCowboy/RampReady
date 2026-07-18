@@ -14,13 +14,14 @@ const requiredSnippets = [
   "const attachedNoseX = cradle.x + towOffset.x;",
   "const attachedNoseZ = cradle.z + towOffset.z;",
   "if (!sim.lastAttachedNose) sim.lastAttachedNose = new THREE.Vector3(attachedNoseX, 0, attachedNoseZ);",
-  "const requestedYawStep = lateralNoseTravel / 11.2;",
-  "const yawRateStep = clamp(requestedYawStep, -THREE.MathUtils.degToRad(12) * dt, THREE.MathUtils.degToRad(12) * dt);",
-  "const currentArticulation = Math.atan2(Math.sin(articulationDelta), Math.cos(articulationDelta));",
-  "const boundedArticulation = clamp(currentArticulation + yawRateStep, -THREE.MathUtils.degToRad(70), THREE.MathUtils.degToRad(70));",
-  "sim.aircraft.rotation.y = sim.tug.rotation.y + boundedArticulation;",
-  "sim.aircraft.position.x = attachedNoseX;",
-  "sim.aircraft.position.z = attachedNoseZ;",
+  "if (!sim.mainGearCenter) {",
+  "const desiredAircraftYaw = Math.atan2(axleX / axleDistance, axleZ / axleDistance);",
+  "const yawDelta = Math.atan2(",
+  "const yawRateStep = clamp(yawDelta, -THREE.MathUtils.degToRad(8) * dt, THREE.MathUtils.degToRad(8) * dt);",
+  "nextAircraftYaw = sim.tug.rotation.y + boundedArticulation;",
+  "sim.mainGearCenter.set(",
+  "attachedNoseX + Math.sin(nextAircraftYaw) * 11.2,",
+  "attachedNoseZ + Math.cos(nextAircraftYaw) * 11.2,",
   "sim.lastAttachedNose.set(attachedNoseX, 0, attachedNoseZ);",
 ];
 
@@ -28,6 +29,8 @@ const forbiddenSnippets = [
   "const signedDirection = connectedPushPhase ? 1 : drive.direction;",
   "if (Math.abs(sim.velocity) < 0.01) sim.velocity = 0;",
   "sim.aircraft.rotation.y = lerp(sim.aircraft.rotation.y, sim.tug.rotation.y, 1 - Math.exp(-0.7 * dt));",
+  "const requestedYawStep = lateralNoseTravel / 11.2;",
+  "const boundedArticulation = clamp(currentArticulation + yawRateStep",
   "sim.towOffsetLocal.set(0, 0, 0);\n    sim.connected = true;",
   "sim.aircraft.position.copy(cradle);",
   "sim.aircraft.position.set(cradle.x, 0, cradle.z);",
@@ -42,10 +45,10 @@ for (const snippet of forbiddenSnippets) {
   if (source.includes(snippet)) failures.push(`unsafe or legacy runtime snippet is still present: ${snippet}`);
 }
 
-const connectedResetCount = source.split("sim.connected = true;\n    sim.lastAttachedNose = null;").length - 1;
-const disconnectedResetCount = source.split("sim.connected = false;\n    sim.lastAttachedNose = null;").length - 1;
-if (connectedResetCount !== 1) failures.push(`expected one connection-history reset, found ${connectedResetCount}`);
-if (disconnectedResetCount !== 2) failures.push(`expected two disconnection-history resets, found ${disconnectedResetCount}`);
+const connectedResetCount = source.split("sim.connected = true;\n    sim.lastAttachedNose = null;\n    sim.mainGearCenter = null;").length - 1;
+const disconnectedResetCount = source.split("sim.connected = false;\n    sim.lastAttachedNose = null;\n    sim.mainGearCenter = null;").length - 1;
+if (connectedResetCount !== 1) failures.push(`expected one connection main-gear-history reset, found ${connectedResetCount}`);
+if (disconnectedResetCount !== 2) failures.push(`expected two disconnection main-gear-history resets, found ${disconnectedResetCount}`);
 
 const correctionRateMatch = source.match(/const maxCaptureCorrection = ([0-9.]+) \* dt;/);
 if (!correctionRateMatch) {
@@ -63,4 +66,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("RampReady prepared runtime verified: physical reverse travel, frame-rate-safe partial throttle, bounded non-teleporting nose-gear capture, rate-limited and envelope-constrained towing yaw, and clean reconnect history are active.");
+console.log("RampReady prepared runtime verified: captured nose follows the tug while the aircraft pivots around a fixed wheelbase main-gear axle with delayed opposite-sign yaw, bounded articulation, and clean reconnect history.");

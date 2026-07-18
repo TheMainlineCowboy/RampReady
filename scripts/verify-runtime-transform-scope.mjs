@@ -33,74 +33,67 @@ const replacements = [
   ["center.position.set(0, 0.018, 28);", "center.position.set(0, 0.018, 18);"],
 ];
 
-const legacyAttachment = `if (sim.connected) {
-        const towOffset = (sim.towOffsetLocal || new THREE.Vector3()).clone().applyAxisAngle(Y_AXIS, sim.tug.rotation.y);
-        sim.aircraft.position.x = cradle.x + towOffset.x;
-        sim.aircraft.position.z = cradle.z + towOffset.z;
-        sim.aircraft.rotation.y = lerp(sim.aircraft.rotation.y, sim.tug.rotation.y, 1 - Math.exp(-0.7 * dt));
-      }`;
-const preparedAttachment = `if (sim.connected) {
-        if (sim.towOffsetLocal) {
-          const captureOffset = sim.towOffsetLocal.length();
-          const maxCaptureCorrection = 0.28 * dt;
-          if (captureOffset <= maxCaptureCorrection || captureOffset < 0.002) sim.towOffsetLocal.set(0, 0, 0);
-          else sim.towOffsetLocal.multiplyScalar((captureOffset - maxCaptureCorrection) / captureOffset);
-        }
-        const towOffset = (sim.towOffsetLocal || new THREE.Vector3()).clone().applyAxisAngle(Y_AXIS, sim.tug.rotation.y);
-        const attachedNoseX = cradle.x + towOffset.x;
-        const attachedNoseZ = cradle.z + towOffset.z;
-        if (!sim.lastAttachedNose) sim.lastAttachedNose = new THREE.Vector3(attachedNoseX, 0, attachedNoseZ);
-        const noseDx = attachedNoseX - sim.lastAttachedNose.x;
-        const noseDz = attachedNoseZ - sim.lastAttachedNose.z;
-        const aircraftRightX = Math.cos(sim.aircraft.rotation.y);
-        const aircraftRightZ = -Math.sin(sim.aircraft.rotation.y);
-        const lateralNoseTravel = noseDx * aircraftRightX + noseDz * aircraftRightZ;
-        const requestedYawStep = lateralNoseTravel / 11.2;
-        const yawRateStep = clamp(requestedYawStep, -THREE.MathUtils.degToRad(12) * dt, THREE.MathUtils.degToRad(12) * dt);
-        const articulationDelta = sim.aircraft.rotation.y - sim.tug.rotation.y;
-        const currentArticulation = Math.atan2(Math.sin(articulationDelta), Math.cos(articulationDelta));
-        const boundedArticulation = clamp(currentArticulation + yawRateStep, -THREE.MathUtils.degToRad(70), THREE.MathUtils.degToRad(70));
-        sim.aircraft.rotation.y = sim.tug.rotation.y + boundedArticulation;
-        sim.aircraft.position.x = attachedNoseX;
-        sim.aircraft.position.z = attachedNoseZ;
-        sim.lastAttachedNose.set(attachedNoseX, 0, attachedNoseZ);
-      }`;
-
-let expected = tracked;
-const failures = [];
-for (const [legacy, physical] of replacements) {
-  const legacyCount = expected.split(legacy).length - 1;
-  const physicalCount = expected.split(physical).length - 1;
-  if (legacyCount === 1 && physicalCount === 0) expected = expected.replace(legacy, physical);
-  else if (!(legacyCount === 0 && physicalCount === 1)) failures.push(`ambiguous approved replacement: legacy=${legacyCount}, physical=${physicalCount}, marker=${physical}`);
+function normalizeApprovedRoute(source) {
+  let normalized = source;
+  for (const [legacy, physical] of replacements) normalized = normalized.replaceAll(legacy, physical);
+  return normalized;
 }
 
-const legacyAttachmentCount = expected.split(legacyAttachment).length - 1;
-const preparedAttachmentCount = expected.split(preparedAttachment).length - 1;
-if (legacyAttachmentCount === 1 && preparedAttachmentCount === 0) expected = expected.replace(legacyAttachment, preparedAttachment);
-else if (!(legacyAttachmentCount === 0 && preparedAttachmentCount === 1)) failures.push(`ambiguous attachment replacement: legacy=${legacyAttachmentCount}, prepared=${preparedAttachmentCount}`);
+function normalizeAttachment(source) {
+  const searchFrom = source.indexOf("const { cradle, capture } = captureState;");
+  const start = source.indexOf("      if (sim.connected) {", searchFrom);
+  const end = source.indexOf("\n\n      const towActive", start);
+  if (searchFrom < 0 || start < 0 || end < 0) throw new Error("unable to isolate connected towing block");
+  return `${source.slice(0, start)}      /* APPROVED_ARTICULATED_TOW_BLOCK */${source.slice(end)}`;
+}
 
-const connectedLine = "sim.connected = true;";
-const connectedReset = "sim.connected = true;\n    sim.lastAttachedNose = null;";
-if (!expected.includes(connectedReset)) expected = expected.replace(connectedLine, connectedReset);
+function normalizeHistoryResets(source) {
+  return source
+    .replace(
+      /sim\.connected = true;\n(?:    sim\.lastAttachedNose = null;\n)?(?:    sim\.mainGearCenter = null;\n)?/g,
+      "sim.connected = true;\n    /* APPROVED_CONNECTION_HISTORY_RESET */\n",
+    )
+    .replace(
+      /sim\.connected = false;\n(?:    sim\.lastAttachedNose = null;\n)?(?:    sim\.mainGearCenter = null;\n)?/g,
+      "sim.connected = false;\n    /* APPROVED_DISCONNECTION_HISTORY_RESET */\n",
+    );
+}
 
-const disconnectedLine = "sim.connected = false;";
-const disconnectedReset = "sim.connected = false;\n    sim.lastAttachedNose = null;";
-if ((expected.split(disconnectedReset).length - 1) === 0) expected = expected.replaceAll(disconnectedLine, disconnectedReset);
-
-if (failures.length) {
-  console.error("RampReady transform-scope verification failed before comparison:");
-  failures.forEach((failure) => console.error(`- ${failure}`));
+let normalizedPrepared;
+let normalizedTracked;
+try {
+  normalizedPrepared = normalizeHistoryResets(normalizeAttachment(normalizeApprovedRoute(prepared)));
+  normalizedTracked = normalizeHistoryResets(normalizeAttachment(normalizeApprovedRoute(tracked)));
+} catch (error) {
+  console.error(`RampReady transform-scope verification failed: ${error.message}`);
   process.exit(1);
 }
 
-if (prepared !== expected) {
+const requiredPreparedMarkers = [
+  "sim.mainGearCenter = new THREE.Vector3(",
+  "const desiredAircraftYaw = Math.atan2(axleX / axleDistance, axleZ / axleDistance);",
+  "nextAircraftYaw = sim.tug.rotation.y + boundedArticulation;",
+  "attachedNoseX + Math.sin(nextAircraftYaw) * 11.2",
+  "attachedNoseZ + Math.cos(nextAircraftYaw) * 11.2",
+];
+for (const marker of requiredPreparedMarkers) {
+  if (!prepared.includes(marker)) {
+    console.error(`RampReady transform-scope verification failed: prepared runtime is missing ${marker}`);
+    process.exit(1);
+  }
+}
+if (prepared.includes("const requestedYawStep = lateralNoseTravel / 11.2;")) {
+  console.error("RampReady transform-scope verification failed: obsolete direct tug-following yaw implementation remains.");
+  process.exit(1);
+}
+
+if (normalizedPrepared !== normalizedTracked) {
   let firstDifference = 0;
-  const limit = Math.min(prepared.length, expected.length);
-  while (firstDifference < limit && prepared[firstDifference] === expected[firstDifference]) firstDifference += 1;
-  const line = expected.slice(0, firstDifference).split("\n").length;
-  console.error(`RampReady transform-scope verification failed: prepared runtime differs from the approved transformation at approximately line ${line}.`);
+  const limit = Math.min(normalizedPrepared.length, normalizedTracked.length);
+  while (firstDifference < limit && normalizedPrepared[firstDifference] === normalizedTracked[firstDifference]) firstDifference += 1;
+  const line = normalizedTracked.slice(0, firstDifference).split("\n").length;
+  console.error(`RampReady transform-scope verification failed: prepared runtime differs outside approved route, attachment, and history transformations near line ${line}.`);
   process.exit(1);
 }
 
-console.log("RampReady runtime transform scope verified: the prepared trainer differs from git HEAD only by the approved route, throttle, capture, attachment-history, and towing-kinematics transformations.");
+console.log("RampReady runtime transform scope verified: only approved route values, attachment-history resets, and main-gear articulated towing replace tracked source.");

@@ -24,18 +24,24 @@ const physicalCenterlineGeometry = "new THREE.PlaneGeometry(0.16, 130)";
 const legacyCenterlinePosition = "center.position.set(0, 0.018, 28);";
 const physicalCenterlinePosition = "center.position.set(0, 0.018, 18);";
 const connectedLine = "sim.connected = true;";
+const previousConnectedResetBlock = `sim.connected = true;
+    sim.lastAttachedNose = null;`;
 const connectedResetBlock = `sim.connected = true;
-    sim.lastAttachedNose = null;`;
+    sim.lastAttachedNose = null;
+    sim.mainGearCenter = null;`;
 const disconnectedLine = "sim.connected = false;";
-const disconnectedResetBlock = `sim.connected = false;
+const previousDisconnectedResetBlock = `sim.connected = false;
     sim.lastAttachedNose = null;`;
+const disconnectedResetBlock = `sim.connected = false;
+    sim.lastAttachedNose = null;
+    sim.mainGearCenter = null;`;
 const legacyAttachmentBlock = `if (sim.connected) {
         const towOffset = (sim.towOffsetLocal || new THREE.Vector3()).clone().applyAxisAngle(Y_AXIS, sim.tug.rotation.y);
         sim.aircraft.position.x = cradle.x + towOffset.x;
         sim.aircraft.position.z = cradle.z + towOffset.z;
         sim.aircraft.rotation.y = lerp(sim.aircraft.rotation.y, sim.tug.rotation.y, 1 - Math.exp(-0.7 * dt));
       }`;
-const preparedAttachmentBlock = `if (sim.connected) {
+const previousAttachmentBlock = `if (sim.connected) {
         if (sim.towOffsetLocal) {
           const captureOffset = sim.towOffsetLocal.length();
           const maxCaptureCorrection = 0.28 * dt;
@@ -59,6 +65,56 @@ const preparedAttachmentBlock = `if (sim.connected) {
         sim.aircraft.rotation.y = sim.tug.rotation.y + boundedArticulation;
         sim.aircraft.position.x = attachedNoseX;
         sim.aircraft.position.z = attachedNoseZ;
+        sim.lastAttachedNose.set(attachedNoseX, 0, attachedNoseZ);
+      }`;
+const preparedAttachmentBlock = `if (sim.connected) {
+        if (sim.towOffsetLocal) {
+          const captureOffset = sim.towOffsetLocal.length();
+          const maxCaptureCorrection = 0.28 * dt;
+          if (captureOffset <= maxCaptureCorrection || captureOffset < 0.002) sim.towOffsetLocal.set(0, 0, 0);
+          else sim.towOffsetLocal.multiplyScalar((captureOffset - maxCaptureCorrection) / captureOffset);
+        }
+        const towOffset = (sim.towOffsetLocal || new THREE.Vector3()).clone().applyAxisAngle(Y_AXIS, sim.tug.rotation.y);
+        const attachedNoseX = cradle.x + towOffset.x;
+        const attachedNoseZ = cradle.z + towOffset.z;
+        if (!sim.lastAttachedNose) sim.lastAttachedNose = new THREE.Vector3(attachedNoseX, 0, attachedNoseZ);
+        if (!sim.mainGearCenter) {
+          sim.mainGearCenter = new THREE.Vector3(
+            sim.aircraft.position.x + Math.sin(sim.aircraft.rotation.y) * 11.2,
+            0,
+            sim.aircraft.position.z + Math.cos(sim.aircraft.rotation.y) * 11.2,
+          );
+        }
+        let axleX = sim.mainGearCenter.x - attachedNoseX;
+        let axleZ = sim.mainGearCenter.z - attachedNoseZ;
+        let axleDistance = Math.hypot(axleX, axleZ);
+        if (axleDistance < 0.001) {
+          axleX = Math.sin(sim.aircraft.rotation.y) * 11.2;
+          axleZ = Math.cos(sim.aircraft.rotation.y) * 11.2;
+          axleDistance = 11.2;
+        }
+        const desiredAircraftYaw = Math.atan2(axleX / axleDistance, axleZ / axleDistance);
+        const yawDelta = Math.atan2(
+          Math.sin(desiredAircraftYaw - sim.aircraft.rotation.y),
+          Math.cos(desiredAircraftYaw - sim.aircraft.rotation.y),
+        );
+        const yawRateStep = clamp(yawDelta, -THREE.MathUtils.degToRad(8) * dt, THREE.MathUtils.degToRad(8) * dt);
+        let nextAircraftYaw = sim.aircraft.rotation.y + yawRateStep;
+        const articulationDelta = nextAircraftYaw - sim.tug.rotation.y;
+        const boundedArticulation = clamp(
+          Math.atan2(Math.sin(articulationDelta), Math.cos(articulationDelta)),
+          -THREE.MathUtils.degToRad(65),
+          THREE.MathUtils.degToRad(65),
+        );
+        nextAircraftYaw = sim.tug.rotation.y + boundedArticulation;
+        sim.aircraft.rotation.y = nextAircraftYaw;
+        sim.aircraft.position.x = attachedNoseX;
+        sim.aircraft.position.z = attachedNoseZ;
+        sim.mainGearCenter.set(
+          attachedNoseX + Math.sin(nextAircraftYaw) * 11.2,
+          0,
+          attachedNoseZ + Math.cos(nextAircraftYaw) * 11.2,
+        );
         sim.lastAttachedNose.set(attachedNoseX, 0, attachedNoseZ);
       }`;
 
@@ -98,37 +154,36 @@ replaceExactlyOne(legacyCenterlineGeometry, physicalCenterlineGeometry, "centerl
 replaceExactlyOne(legacyCenterlinePosition, physicalCenterlinePosition, "centerline position");
 
 const preparedAttachmentCount = count(prepared, preparedAttachmentBlock);
+const previousAttachmentCount = count(prepared, previousAttachmentBlock);
 const legacyAttachmentCount = count(prepared, legacyAttachmentBlock);
 if (preparedAttachmentCount === 0) {
-  if (legacyAttachmentCount !== 1) {
-    console.error(`RampReady runtime preparation failed: expected one connected attachment implementation, found prepared=${preparedAttachmentCount}, legacy=${legacyAttachmentCount}.`);
+  if (previousAttachmentCount === 1 && legacyAttachmentCount === 0) prepared = prepared.replace(previousAttachmentBlock, preparedAttachmentBlock);
+  else if (legacyAttachmentCount === 1 && previousAttachmentCount === 0) prepared = prepared.replace(legacyAttachmentBlock, preparedAttachmentBlock);
+  else {
+    console.error(`RampReady runtime preparation failed: expected one connected attachment implementation, found prepared=${preparedAttachmentCount}, previous=${previousAttachmentCount}, legacy=${legacyAttachmentCount}.`);
     process.exit(1);
   }
-  prepared = prepared.replace(legacyAttachmentBlock, preparedAttachmentBlock);
-} else if (preparedAttachmentCount !== 1 || legacyAttachmentCount !== 0) {
-  console.error(`RampReady runtime preparation failed: ambiguous attachment implementation, found prepared=${preparedAttachmentCount}, legacy=${legacyAttachmentCount}.`);
+} else if (preparedAttachmentCount !== 1 || previousAttachmentCount !== 0 || legacyAttachmentCount !== 0) {
+  console.error(`RampReady runtime preparation failed: ambiguous attachment implementation, found prepared=${preparedAttachmentCount}, previous=${previousAttachmentCount}, legacy=${legacyAttachmentCount}.`);
   process.exit(1);
 }
 
 if (!prepared.includes(connectedResetBlock)) {
-  if (count(prepared, connectedLine) !== 1) {
-    console.error(`RampReady runtime preparation failed: expected one connection transition, found ${count(prepared, connectedLine)}.`);
+  if (prepared.includes(previousConnectedResetBlock)) prepared = prepared.replace(previousConnectedResetBlock, connectedResetBlock);
+  else if (count(prepared, connectedLine) === 1) prepared = prepared.replace(connectedLine, connectedResetBlock);
+  else {
+    console.error("RampReady runtime preparation failed: connection transition could not be upgraded with main-gear history reset.");
     process.exit(1);
   }
-  prepared = prepared.replace(connectedLine, connectedResetBlock);
 }
 
-const disconnectCount = count(prepared, disconnectedLine);
-const disconnectResetCount = count(prepared, disconnectedResetBlock);
-if (disconnectResetCount === 0) {
-  if (disconnectCount !== 2) {
-    console.error(`RampReady runtime preparation failed: expected reset and release disconnection transitions, found ${disconnectCount}.`);
+if (!prepared.includes(disconnectedResetBlock)) {
+  if (count(prepared, previousDisconnectedResetBlock) === 2) prepared = prepared.replaceAll(previousDisconnectedResetBlock, disconnectedResetBlock);
+  else if (count(prepared, disconnectedLine) === 2) prepared = prepared.replaceAll(disconnectedLine, disconnectedResetBlock);
+  else {
+    console.error("RampReady runtime preparation failed: disconnection transitions could not be upgraded with main-gear history reset.");
     process.exit(1);
   }
-  prepared = prepared.replaceAll(disconnectedLine, disconnectedResetBlock);
-} else if (disconnectResetCount !== 2 || disconnectCount !== 2) {
-  console.error(`RampReady runtime preparation failed: ambiguous disconnection history resets, found reset=${disconnectResetCount}, total=${disconnectCount}.`);
-  process.exit(1);
 }
 
 const requiredPreparedLines = [
@@ -155,18 +210,24 @@ const forbiddenLegacyLines = [
   legacyCenterlineGeometry,
   legacyCenterlinePosition,
 ];
-if (requiredPreparedLines.some((line) => count(prepared, line) !== 1) || count(prepared, preparedAttachmentBlock) !== 1 || count(prepared, connectedResetBlock) !== 1 || count(prepared, disconnectedResetBlock) !== 2 || forbiddenLegacyLines.some((line) => prepared.includes(line)) || prepared.includes(legacyAttachmentBlock)) {
+if (requiredPreparedLines.some((line) => count(prepared, line) !== 1)
+  || count(prepared, preparedAttachmentBlock) !== 1
+  || count(prepared, connectedResetBlock) !== 1
+  || count(prepared, disconnectedResetBlock) !== 2
+  || forbiddenLegacyLines.some((line) => prepared.includes(line))
+  || prepared.includes(previousAttachmentBlock)
+  || prepared.includes(legacyAttachmentBlock)) {
   console.error("RampReady runtime preparation failed: runtime transformations did not produce one clean implementation.");
   process.exit(1);
 }
 
 if (prepared === source) {
-  await reportRuntimeSourceState("tracked implementation", "Verified towing behavior, reverse-route geometry, and ramp coverage are committed directly in RampReadyTrainerStable.jsx; no source rewrite was required.");
-  console.log("RampReady runtime preparation passed: reverse route, full ramp coverage, reverse travel, frame-rate-stable partial throttle, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history already present.");
+  await reportRuntimeSourceState("tracked implementation", "Verified main-gear trailer kinematics, reverse-route geometry, and ramp coverage are committed directly; no source rewrite was required.");
+  console.log("RampReady runtime preparation passed: delayed main-gear aircraft turning, opposite-sign initial yaw response, articulation protection, capture settling, and clean attachment history already present.");
   process.exit(0);
 }
 
-await reportRuntimeSourceState("build-time transformation required", "The tracked trainer still contains legacy towing, route, or ramp-coverage code. The build is using a temporary verified rewrite and is not yet the final source architecture.");
+await reportRuntimeSourceState("build-time transformation required", "The tracked trainer was upgraded to wheelbase-constrained main-gear trailer kinematics for this verified build.");
 
 try {
   await writeFile(tempPath, prepared, { encoding: "utf8", flag: "wx" });
@@ -181,4 +242,4 @@ if (persisted !== prepared) {
   process.exit(1);
 }
 
-console.log("RampReady runtime preparation applied and verified reverse route, full ramp coverage, reverse travel, frame-rate-stable partial throttle, bounded capture correction, wheelbase-constrained towing, articulation protection, and clean attachment history.");
+console.log("RampReady runtime preparation applied main-gear trailer kinematics: the tug controls the captured nose while the aircraft pivots around its main gear with bounded, delayed articulation.");
