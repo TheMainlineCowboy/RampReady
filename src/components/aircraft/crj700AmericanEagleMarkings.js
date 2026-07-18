@@ -77,16 +77,16 @@ function addStripeDecal(THREE, group, color, width, height, position, side, name
 }
 
 function addContouredStripe(THREE, group, color, height, y, zOffset, side, name) {
-  // Short, deliberately overlapping panels track the changing fuselage radius. The overlap prevents
-  // window/door-sized holes when adjacent planes sit at slightly different outboard distances.
+  // Short, deliberately overlapping panels track the changing fuselage radius. Each panel remains
+  // slightly outboard of the skin so doors and window recesses cannot punch holes through the band.
   const segments = [
-    { width: 3.25, x: 1.12, z: -0.95 },
-    { width: 3.25, x: 1.24, z: 2.05 },
-    { width: 3.25, x: 1.34, z: 5.05 },
-    { width: 3.25, x: 1.39, z: 8.05 },
-    { width: 3.25, x: 1.37, z: 11.05 },
-    { width: 3.25, x: 1.29, z: 14.05 },
-    { width: 3.25, x: 1.19, z: 17.05 },
+    { width: 3.25, x: 1.22, z: -0.95 },
+    { width: 3.25, x: 1.34, z: 2.05 },
+    { width: 3.25, x: 1.42, z: 5.05 },
+    { width: 3.25, x: 1.45, z: 8.05 },
+    { width: 3.25, x: 1.43, z: 11.05 },
+    { width: 3.25, x: 1.35, z: 14.05 },
+    { width: 3.25, x: 1.23, z: 17.05 },
   ];
 
   for (const [index, segment] of segments.entries()) {
