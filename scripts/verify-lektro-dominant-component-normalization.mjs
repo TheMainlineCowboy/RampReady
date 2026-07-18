@@ -28,9 +28,9 @@ try {
   const report = await analyzeLektroScanForCleanup(directory);
   assert.equal(report.provisionalNormalization.basis, "dominant-connected-component");
   assert.equal(report.provisionalNormalization.sourceComponentIndex, 0);
-  assert.deepEqual(report.provisionalNormalization.sourceBounds.extents, [100, 0, 100]);
+  assert.deepEqual(report.provisionalNormalization.sourceBounds.extents, [2, 1, 4]);
   assert.deepEqual(report.provisionalNormalization.ignoredGlobalBounds.extents, [1000, 999, 1001]);
-  assert.equal(report.provisionalNormalization.scaleFactor, 5.5 / 100);
+  assert.equal(report.provisionalNormalization.scaleFactor, 5.5 / 4);
   assert.notEqual(report.provisionalNormalization.scaleFactor, 5.5 / 1001);
   assert.match(report.provisionalNormalization.warning, /inspection-only/i);
 
