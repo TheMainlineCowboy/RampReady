@@ -19,11 +19,15 @@ requireSource(markings, "rrLowerBlue", "lower blue fuselage stripe mask is missi
 requireSource(markings, "rrSeparator", "silver separator mask is missing.");
 requireSource(markings, "rrLowerRed", "red fuselage stripe mask is missing.");
 requireSource(markings, "rrTitleDomain", "bilateral title surface projection is missing.");
+requireSource(markings, "if (rrP.x > 0.0) rrTitleU = 1.0 - rrTitleU;", "left/right title orientation correction is missing.");
 requireSource(markings, "rrTail", "surface-projected tail treatment is missing.");
 requireSource(markings, "rrEngine", "surface-projected engine treatment is missing.");
 requireSource(markings, "rrAntiGlare", "surface-projected nose anti-glare treatment is missing.");
 requireSource(markings, 'liveryState = "american-eagle-surface-shader-no-floating-overlays"', "surface livery state marker is missing.");
 
+if (markings.includes("if (rrP.x < 0.0) rrTitleU = 1.0 - rrTitleU;")) {
+  throw new Error("CRJ700 livery verification failed: mirrored bilateral title mapping remains.");
+}
 for (const forbidden of ["new THREE.PlaneGeometry", "new THREE.BoxGeometry", "continuous contour ribbon", "intentional-livery-overlay"]) {
   if (markings.includes(forbidden)) throw new Error(`CRJ700 livery verification failed: floating overlay implementation remains: ${forbidden}`);
 }
@@ -36,4 +40,4 @@ if (aircraft.includes('retain(americanEagleMarkings, "intentional-livery-overlay
   throw new Error("CRJ700 livery verification failed: retained floating livery group still exists.");
 }
 
-console.log("CRJ700 livery verification passed: titles, stripes, tail, engines, and nose anti-glare are painted by one object-space material on the real GLB with no retained floating planes or boxes.");
+console.log("CRJ700 livery verification passed: readable bilateral titles, stripes, tail, engines, and nose anti-glare are painted by one object-space material on the real GLB with no retained floating planes or boxes.");
