@@ -53,12 +53,8 @@ async function prepareEvidenceFrame(page) {
 }
 
 async function orbitToSide(page, direction) {
-  const canvas = page.locator("canvas");
-  const bounds = await canvas.boundingBox();
-  expect(bounds).not.toBeNull();
-
-  const startX = bounds.x + bounds.width / 2;
-  const startY = bounds.y + bounds.height / 2;
+  const startX = EVIDENCE_VIEWPORT.width / 2;
+  const startY = EVIDENCE_VIEWPORT.height / 2;
   await page.mouse.move(startX, startY);
   await page.mouse.down();
   await page.mouse.move(startX + direction * ORBIT_DRAG_PX, startY, { steps: 24 });
@@ -72,11 +68,12 @@ test("loads the real CRJ700 asset and captures unobstructed side evidence", asyn
   await prepareEvidenceFrame(page);
 
   await orbitToSide(page, 1);
-  await page.locator("canvas").screenshot({ path: "test-results/crj700-left-side.png" });
+  await page.screenshot({ path: "test-results/crj700-left-side.png" });
 
   await page.reload({ waitUntil: "networkidle" });
+  await expect(page.locator("canvas")).toBeVisible();
   await page.waitForTimeout(3_000);
   await prepareEvidenceFrame(page);
   await orbitToSide(page, -1);
-  await page.locator("canvas").screenshot({ path: "test-results/crj700-right-side.png" });
+  await page.screenshot({ path: "test-results/crj700-right-side.png" });
 });
