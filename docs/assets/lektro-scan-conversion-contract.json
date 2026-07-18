@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "asset": "KIRI Engine rough Lektro pushback scan",
+  "sourceManifest": "docs/assets/lektro-scan-manifest.json",
+  "status": "reference-only",
+  "runtimeUseAllowed": false,
+  "coordinateContract": {
+    "upAxis": "+Y",
+    "forwardAxis": "unresolved",
+    "rightAxis": "unresolved",
+    "origin": "grounded horizontal bounds center",
+    "units": "meters after verified physical calibration",
+    "provisionalScaleAllowedForInspectionOnly": true
+  },
+  "requiredStages": [
+    {
+      "id": "inventory",
+      "state": "complete",
+      "outputs": ["vertex/triangle counts", "raw bounds", "texture inventory", "connected-component report"]
+    },
+    {
+      "id": "isolate-tug",
+      "state": "blocked-on-source-files",
+      "outputs": ["tug-only mesh", "discarded ground/background mesh report"],
+      "acceptance": ["no pavement retained", "no disconnected scan debris above 0.5 percent triangle share without explicit approval"]
+    },
+    {
+      "id": "orient-and-scale",
+      "state": "pending",
+      "outputs": ["confirmed forward/right axes", "physical calibration dimension", "meters-per-source-unit"],
+      "acceptance": ["scale derived from documented Lektro or photo dimension", "provisional 5.5 meter normalization removed"]
+    },
+    {
+      "id": "repair-and-retopologize",
+      "state": "pending",
+      "outputs": ["clean high-detail reference mesh", "mobile mesh", "VR mesh"],
+      "acceptance": ["operator station silhouette preserved", "hood/deck proportions preserved", "wheel centers preserved", "cradle envelope preserved"]
+    },
+    {
+      "id": "materials",
+      "state": "pending",
+      "outputs": ["de-lit base color", "normal map when justified", "roughness/metalness maps"],
+      "acceptance": ["baked shadows removed", "missing or blurred texture regions repaired", "texture dimensions power-of-two"]
+    },
+    {
+      "id": "convert",
+      "state": "pending",
+      "outputs": ["public/models/lektro/lektro-reference.glb", "public/models/lektro/lektro-mobile.glb"],
+      "acceptance": ["GLB validates", "no external texture dependencies", "deterministic production copy"]
+    },
+    {
+      "id": "simulator-fit",
+      "state": "pending",
+      "outputs": ["wheel-center anchors", "operator-eye anchor", "cradle pivot/capture anchors", "collision envelope"],
+      "acceptance": ["nose-gear capture origin preserved", "CRJ700 clearance verified", "partial-throttle and towing tests pass"]
+    }
+  ],
+  "budgets": {
+    "referenceTrianglesMaximum": 120000,
+    "mobileTrianglesMaximum": 35000,
+    "vrTrianglesMaximum": 55000,
+    "mobileTextureMaximum": 2048,
+    "vrTextureMaximum": 2048,
+    "drawCallsMaximum": 8
+  },
+  "releaseGates": [
+    "source files are preserved outside generated runtime output",
+    "cleaned geometry is visibly compared against the scan and supplied photos",
+    "scale and orientation have documentary evidence",
+    "browser runtime loads the GLB without falling back to guessed procedural body geometry",
+    "capture, steering, wheel placement, and cradle clearances pass automated and rendered checks"
+  ]
+}
