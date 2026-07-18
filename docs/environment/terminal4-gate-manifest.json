@@ -1,0 +1,26 @@
+{
+  "$schema": "./terminal4-gate-manifest.schema.json",
+  "schemaVersion": 1,
+  "status": "blocked-pending-adex-extraction",
+  "corridor": {
+    "startGate": "B15",
+    "endGate": "A1",
+    "sourceRepository": "TheMainlineCowboy/SkyHarborPhx",
+    "sourceAuthority": "scenery/KPHX_ADEX.BGL"
+  },
+  "coordinateSystem": {
+    "world": "ADEX airport coordinates; exact datum and projection must be recorded by extractor",
+    "local": "RampReady +X right, +Y up, -Z forward, meters",
+    "headingConvention": "degrees true north clockwise",
+    "manualCorrectionsSeparated": true
+  },
+  "extractionState": {
+    "gateIdentifiersDerived": false,
+    "parkingPlacementsDerived": false,
+    "headingsDerived": false,
+    "terminalGeometryCrossChecked": false,
+    "runtimeSelectionAllowed": false,
+    "blocker": "KPHX_ADEX.BGL has not yet been decoded into machine-readable parking and placement records. Gate entries remain empty to prevent guessed coordinates."
+  },
+  "gates": []
+}
