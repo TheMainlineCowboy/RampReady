@@ -163,7 +163,10 @@ jobs:
           retention-days: 30
 
   publish-side-view-status:
-    if: ${{ always() }}
+    if: >-
+      always() &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
     needs:
       - verify-side-views
     runs-on: ubuntu-latest
