@@ -58,49 +58,80 @@ function addTitleDecal(THREE, group, texture, side) {
   return decal;
 }
 
-function addStripeDecal(THREE, group, color, width, height, position, side, name) {
+function interpolateRibbonProfile(profile, subdivisions = 6) {
+  const samples = [];
+  for (let index = 0; index < profile.length - 1; index += 1) {
+    const start = profile[index];
+    const end = profile[index + 1];
+    const firstStep = index === 0 ? 0 : 1;
+    for (let step = firstStep; step <= subdivisions; step += 1) {
+      const t = step / subdivisions;
+      samples.push({
+        x: start.x + (end.x - start.x) * t,
+        z: start.z + (end.z - start.z) * t,
+        taper: start.taper + (end.taper - start.taper) * t,
+      });
+    }
+  }
+  return samples;
+}
+
+function addContouredStripeRibbon(THREE, group, color, height, y, zOffset, side, name) {
+  // One connected ribbon follows the changing fuselage radius. The tapered ends and shared vertices
+  // eliminate the rectangular slab edges, seams, and buried gaps visible in the prior panel system.
+  const profile = interpolateRibbonProfile([
+    { x: 0.96, z: -2.55, taper: 0.16 },
+    { x: 1.16, z: -1.75, taper: 0.72 },
+    { x: 1.30, z: -0.55, taper: 1.0 },
+    { x: 1.40, z: 1.55, taper: 1.0 },
+    { x: 1.47, z: 4.55, taper: 1.0 },
+    { x: 1.50, z: 8.05, taper: 1.0 },
+    { x: 1.48, z: 11.55, taper: 1.0 },
+    { x: 1.40, z: 14.55, taper: 1.0 },
+    { x: 1.28, z: 17.25, taper: 0.90 },
+    { x: 1.15, z: 18.70, taper: 0.22 },
+  ]);
+
+  const positions = [];
+  const indices = [];
+  for (const point of profile) {
+    const halfHeight = (height * point.taper) / 2;
+    const x = side * point.x;
+    const z = point.z + zOffset;
+    positions.push(x, y - halfHeight, z, x, y + halfHeight, z);
+  }
+
+  for (let index = 0; index < profile.length - 1; index += 1) {
+    const lowerStart = index * 2;
+    const upperStart = lowerStart + 1;
+    const lowerEnd = lowerStart + 2;
+    const upperEnd = lowerStart + 3;
+    if (side > 0) {
+      indices.push(lowerStart, lowerEnd, upperStart, upperStart, lowerEnd, upperEnd);
+    } else {
+      indices.push(lowerStart, upperStart, lowerEnd, upperStart, upperEnd, lowerEnd);
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  geometry.computeBoundingSphere();
+
   const material = new THREE.MeshBasicMaterial({
     color,
     depthWrite: false,
     polygonOffset: true,
     polygonOffsetFactor: -3,
-    side: THREE.FrontSide,
+    side: THREE.DoubleSide,
     toneMapped: false,
   });
-  const decal = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
-  decal.position.set(side * position[0], position[1], position[2]);
-  decal.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
-  decal.name = `${name} ${side < 0 ? "left" : "right"}`;
-  decal.renderOrder = 3;
-  group.add(decal);
-  return decal;
-}
-
-function addContouredStripe(THREE, group, color, height, y, zOffset, side, name) {
-  // Short, deliberately overlapping panels track the changing fuselage radius. Each panel remains
-  // slightly outboard of the skin so doors and window recesses cannot punch holes through the band.
-  const segments = [
-    { width: 3.25, x: 1.22, z: -0.95 },
-    { width: 3.25, x: 1.34, z: 2.05 },
-    { width: 3.25, x: 1.42, z: 5.05 },
-    { width: 3.25, x: 1.45, z: 8.05 },
-    { width: 3.25, x: 1.43, z: 11.05 },
-    { width: 3.25, x: 1.35, z: 14.05 },
-    { width: 3.25, x: 1.23, z: 17.05 },
-  ];
-
-  for (const [index, segment] of segments.entries()) {
-    addStripeDecal(
-      THREE,
-      group,
-      color,
-      segment.width,
-      height,
-      [segment.x, y, segment.z + zOffset],
-      side,
-      `${name} segment ${index + 1}`,
-    );
-  }
+  const ribbon = new THREE.Mesh(geometry, material);
+  ribbon.name = `${name} continuous contour ribbon ${side < 0 ? "left" : "right"}`;
+  ribbon.renderOrder = 3;
+  group.add(ribbon);
+  return ribbon;
 }
 
 export function buildAmericanEagleMarkings(THREE) {
@@ -113,13 +144,11 @@ export function buildAmericanEagleMarkings(THREE) {
   const charcoal = makeMaterial(THREE, 0x252a31, 0.52, 0.04);
   const titleTexture = createAmericanEagleTitleTexture(THREE);
 
-  // Follow the imported fuselage contour with overlapping short planes so the markings read as a
-  // continuous painted band while remaining close to the real GLB skin.
   for (const side of [-1, 1]) {
-    addContouredStripe(THREE, group, 0x173f73, 0.16, 2.83, 0, side, "American Eagle blue cheatline");
-    addContouredStripe(THREE, group, 0x173f73, 0.19, 2.68, 0.05, side, "American Eagle lower blue stripe");
-    addContouredStripe(THREE, group, 0xc7ccd2, 0.10, 2.56, 0.08, side, "American Eagle lower silver separator");
-    addContouredStripe(THREE, group, 0xc62032, 0.15, 2.43, 0.12, side, "American Eagle lower red stripe");
+    addContouredStripeRibbon(THREE, group, 0x173f73, 0.16, 2.83, 0, side, "American Eagle blue cheatline");
+    addContouredStripeRibbon(THREE, group, 0x173f73, 0.19, 2.68, 0.05, side, "American Eagle lower blue stripe");
+    addContouredStripeRibbon(THREE, group, 0xc7ccd2, 0.10, 2.56, 0.08, side, "American Eagle lower silver separator");
+    addContouredStripeRibbon(THREE, group, 0xc62032, 0.15, 2.43, 0.12, side, "American Eagle lower red stripe");
     addTitleDecal(THREE, group, titleTexture, side);
   }
 
@@ -151,7 +180,7 @@ export function buildAmericanEagleMarkings(THREE) {
   }
   addBox(THREE, group, charcoal, [1.15, 0.035, 1.55], [0, 3.42, -3.36], [-0.10, 0, 0], "CRJ700 nose anti-glare panel");
 
-  group.userData.liveryState = "american-eagle-readable-title-tail-and-continuous-lower-fuselage-stripe-decals";
-  group.userData.markingSystem = "retained procedural overlays plus runtime canvas and overlapping contoured plane decals on verified real GLB";
+  group.userData.liveryState = "american-eagle-readable-title-tail-and-continuous-contour-ribbon-decals";
+  group.userData.markingSystem = "retained procedural overlays plus runtime canvas title and connected contour-ribbon decals on verified real GLB";
   return group;
 }
