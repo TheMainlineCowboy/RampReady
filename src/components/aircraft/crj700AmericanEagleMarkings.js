@@ -86,13 +86,14 @@ export function buildAmericanEagleMarkings(THREE) {
   const charcoal = makeMaterial(THREE, 0x252a31, 0.52, 0.04);
   const titleTexture = createAmericanEagleTitleTexture(THREE);
 
-  // Production side views showed the blue stripe but the silver/red decals remained below the
-  // visible fuselage skin. Keep the full tricolor stack tightly grouped around the proven blue band.
+  // The imported fuselage is wider below the title band. Production screenshots showed the lower
+  // decals repeatedly intersecting the skin and breaking into dashes, so keep the tricolor planes
+  // on one continuous outboard side plane while preserving their verified vertical placement.
   for (const side of [-1, 1]) {
-    addStripeDecal(THREE, group, 0x173f73, 19.4, 0.16, [1.16, 2.83, 7.2], side, "American Eagle blue cheatline");
-    addStripeDecal(THREE, group, 0x173f73, 18.2, 0.19, [1.17, 2.68, 7.85], side, "American Eagle lower blue stripe");
-    addStripeDecal(THREE, group, 0xc7ccd2, 18.0, 0.10, [1.18, 2.56, 7.9], side, "American Eagle lower silver separator");
-    addStripeDecal(THREE, group, 0xc62032, 17.6, 0.15, [1.19, 2.43, 8.1], side, "American Eagle lower red stripe");
+    addStripeDecal(THREE, group, 0x173f73, 19.4, 0.16, [1.34, 2.83, 7.2], side, "American Eagle blue cheatline");
+    addStripeDecal(THREE, group, 0x173f73, 18.2, 0.19, [1.35, 2.68, 7.85], side, "American Eagle lower blue stripe");
+    addStripeDecal(THREE, group, 0xc7ccd2, 18.0, 0.10, [1.36, 2.56, 7.9], side, "American Eagle lower silver separator");
+    addStripeDecal(THREE, group, 0xc62032, 17.6, 0.15, [1.37, 2.43, 8.1], side, "American Eagle lower red stripe");
     addTitleDecal(THREE, group, titleTexture, side);
   }
 
