@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "workstream": "PHX Terminal 4 B15-to-A1 operational corridor",
+  "status": "source-inventory",
+  "sourceRepository": {
+    "repository": "TheMainlineCowboy/SkyHarborPhx",
+    "repositoryId": 1304606198,
+    "defaultBranch": "main",
+    "hostingUse": "source-only",
+    "runtimeImportAllowed": false
+  },
+  "corridor": {
+    "startGate": "B15",
+    "endGate": "A1",
+    "gateListState": "must-be-derived-from-ADEX-placement-data",
+    "finalCoordinatesMayBeEyeballed": false
+  },
+  "requiredSourceArtifacts": [
+    {
+      "path": "scenery/term4.BGL",
+      "role": "Terminal 4 primary geometry and/or placement source",
+      "state": "identified-not-extracted"
+    },
+    {
+      "path": "scenery/KPHX_ADEX.BGL",
+      "role": "airport layout, parking, heading, taxi and placement authority",
+      "state": "identified-not-extracted"
+    },
+    {
+      "pathPattern": "scenery/*term4*.BGL",
+      "role": "Terminal 4 support geometry and object placements",
+      "state": "inventory-required"
+    },
+    {
+      "pathPattern": "scenery/*gate*.BGL",
+      "role": "gate and stand support objects",
+      "state": "inventory-required"
+    },
+    {
+      "pathPattern": "scenery/*jetway*.BGL",
+      "role": "jetway geometry and placement",
+      "state": "inventory-required"
+    },
+    {
+      "pathPattern": "texture/*.{BMP,DDS,bmp,dds}",
+      "role": "Terminal 4 materials, light maps and support textures",
+      "state": "dependency-scan-required"
+    }
+  ],
+  "extractionRules": [
+    "deep-inventory source package before conversion",
+    "extract only assets required for the B15-to-A1 corridor",
+    "preserve source-derived scale, orientation and placement provenance",
+    "record every manual correction separately from source-derived values",
+    "convert only cleaned corridor assets to browser-ready GLB or glTF",
+    "partition geometry into loadable sectors and levels of detail",
+    "do not copy raw BGL, BMP or DDS files into the production runtime"
+  ],
+  "gateManifestRequirements": [
+    "gate identifier",
+    "source-derived world coordinates",
+    "RampReady local coordinates",
+    "aircraft parking reference point",
+    "aircraft nose heading",
+    "nose-gear starting location",
+    "tug approach and capture spawn",
+    "initial tug heading",
+    "safe pushback start direction",
+    "stop and turn reference points",
+    "terminal sector",
+    "clearance and geometry constraints",
+    "coordinate provenance",
+    "manual correction history"
+  ],
+  "releaseGates": [
+    "ADEX-derived gate identifiers and placements are recorded before scenario selection is enabled",
+    "debug markers expose every gate point, heading, path and clearance envelope",
+    "converted assets validate and stay within documented browser budgets",
+    "the live simulator loads only the selected Terminal 4 sector",
+    "GitHub Pages remains the sole production host"
+  ]
+}
