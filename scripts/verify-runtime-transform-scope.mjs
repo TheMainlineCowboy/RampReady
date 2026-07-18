@@ -49,12 +49,14 @@ function normalizeAttachment(source) {
 
 function normalizeHistoryResets(source) {
   return source
-    .replaceAll("sim.connected = true;\n    sim.lastAttachedNose = null;\n    sim.mainGearCenter = null;", "sim.connected = true;\n    /* APPROVED_CONNECTION_HISTORY_RESET */")
-    .replaceAll("sim.connected = true;\n    sim.lastAttachedNose = null;", "sim.connected = true;\n    /* APPROVED_CONNECTION_HISTORY_RESET */")
-    .replaceAll("sim.connected = true;", "sim.connected = true;\n    /* APPROVED_CONNECTION_HISTORY_RESET */")
-    .replaceAll("sim.connected = false;\n    sim.lastAttachedNose = null;\n    sim.mainGearCenter = null;", "sim.connected = false;\n    /* APPROVED_DISCONNECTION_HISTORY_RESET */")
-    .replaceAll("sim.connected = false;\n    sim.lastAttachedNose = null;", "sim.connected = false;\n    /* APPROVED_DISCONNECTION_HISTORY_RESET */")
-    .replaceAll("sim.connected = false;", "sim.connected = false;\n    /* APPROVED_DISCONNECTION_HISTORY_RESET */");
+    .replace(
+      /sim\.connected = true;\n(?:    sim\.lastAttachedNose = null;\n)?(?:    sim\.mainGearCenter = null;\n)?/g,
+      "sim.connected = true;\n    /* APPROVED_CONNECTION_HISTORY_RESET */\n",
+    )
+    .replace(
+      /sim\.connected = false;\n(?:    sim\.lastAttachedNose = null;\n)?(?:    sim\.mainGearCenter = null;\n)?/g,
+      "sim.connected = false;\n    /* APPROVED_DISCONNECTION_HISTORY_RESET */\n",
+    );
 }
 
 let normalizedPrepared;
