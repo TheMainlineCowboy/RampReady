@@ -20,10 +20,11 @@ requireSource(markings, 'side > 0 ? Math.PI / 2 : -Math.PI / 2', "outward-facing
 requireSource(markings, "American Eagle lower blue stripe", "bilateral lower blue fuselage stripe is missing.");
 requireSource(markings, "American Eagle lower silver separator", "bilateral silver separator stripe is missing.");
 requireSource(markings, "American Eagle lower red stripe", "bilateral lower red fuselage stripe is missing.");
+requireSource(markings, "deliberately overlapping panels", "contoured stripe panels are not explicitly overlap-protected.");
 requireSource(
   markings,
-  'liveryState = "american-eagle-readable-title-tail-and-lower-fuselage-stripe-decals"',
-  "current decal-based livery state marker is missing.",
+  'liveryState = "american-eagle-readable-title-tail-and-continuous-lower-fuselage-stripe-decals"',
+  "current continuous contoured decal-based livery state marker is missing.",
 );
 
 if (markings.includes("American title block") || markings.includes("American title highlight")) {
@@ -40,4 +41,4 @@ requireSource(
 requireSource(aircraft, 'realModel.userData.liveryState = "visible-base-coat-with-american-eagle-overlays"', "real-model base-coat state is missing.");
 requireSource(aircraft, 'aircraftRoot.userData.renderedAircraftSource = "CRJ700.stl"', "real-aircraft runtime source marker is missing.");
 
-console.log("CRJ700 livery verification passed: real-model base coat, bilateral American Eagle title and stripe decals, tail/engine overlays, and obsolete title-block removal are structurally confirmed.");
+console.log("CRJ700 livery verification passed: real-model base coat, bilateral American Eagle title, overlap-protected contoured stripe decals, tail/engine overlays, and obsolete title-block removal are structurally confirmed.");

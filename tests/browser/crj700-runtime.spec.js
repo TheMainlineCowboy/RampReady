@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-test("loads the real CRJ700 asset without falling back", async ({ page }) => {
+const EVIDENCE_VIEWPORT = { width: 1920, height: 1080 };
+const ORBIT_DRAG_PX = 262;
+
+async function waitForRealAircraft(page) {
   const runtimeErrors = [];
   let modelResponse = null;
 
@@ -31,6 +34,47 @@ test("loads the real CRJ700 asset without falling back", async ({ page }) => {
   });
   expect(assetEntry).not.toBeNull();
   expect(Math.max(assetEntry.decodedBodySize, assetEntry.transferSize)).toBeGreaterThan(10_000);
+}
 
-  await page.screenshot({ path: "test-results/crj700-runtime.png", fullPage: true });
+async function prepareEvidenceFrame(page) {
+  await page.addStyleTag({
+    content: `
+      .rr-hud,
+      .rr-metrics,
+      .rr-score-float,
+      .rr-guidance,
+      .rr-diagnostics,
+      .rr-steer,
+      .rr-throttle { display: none !important; }
+      .rr-shell, .rr-scene, canvas { width: 100vw !important; height: 100vh !important; }
+    `,
+  });
+  await page.waitForTimeout(500);
+}
+
+async function orbitToSide(page, direction) {
+  const startX = EVIDENCE_VIEWPORT.width / 2;
+  const startY = EVIDENCE_VIEWPORT.height / 2;
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(startX + direction * ORBIT_DRAG_PX, startY, { steps: 24 });
+  await page.mouse.up();
+  await page.waitForTimeout(1_500);
+}
+
+test("loads the real CRJ700 asset and captures unobstructed side evidence", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize(EVIDENCE_VIEWPORT);
+
+  await waitForRealAircraft(page);
+  await prepareEvidenceFrame(page);
+  await orbitToSide(page, 1);
+  await page.screenshot({ path: "test-results/crj700-left-side.png" });
+
+  // Start a clean page lifecycle so the opposite side is captured from the same deterministic chase view.
+  // Re-run the complete real-asset assertion after reload instead of relying on a fixed delay.
+  await waitForRealAircraft(page);
+  await prepareEvidenceFrame(page);
+  await orbitToSide(page, -1);
+  await page.screenshot({ path: "test-results/crj700-right-side.png" });
 });
