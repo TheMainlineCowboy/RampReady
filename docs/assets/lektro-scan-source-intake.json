@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "asset": "KIRI Engine rough Lektro pushback scan",
+  "status": "awaiting-source-bytes",
+  "sourceArchive": "796e1b5927744346991cbe3b8a01bd98.zip",
+  "preservationDirectory": "source-assets/lektro/kiri-raw/",
+  "runtimeDirectory": "public/models/lektro/",
+  "requiredFiles": [
+    {
+      "name": "3DModel.obj",
+      "role": "geometry",
+      "required": true,
+      "minimumBytes": 1000000
+    },
+    {
+      "name": "3DModel.mtl",
+      "role": "material-library",
+      "required": true,
+      "minimumBytes": 32
+    },
+    {
+      "name": "3DModel.jpg",
+      "role": "source-texture",
+      "required": true,
+      "minimumBytes": 100000
+    }
+  ],
+  "expectedInspection": {
+    "vertices": 39377,
+    "triangles": 78790,
+    "textureWidth": 4096,
+    "textureHeight": 4096,
+    "rawExtents": [2.218718, 0.440406, 2.082891],
+    "numericTolerance": {
+      "meshCountsPercent": 0.5,
+      "boundsPercent": 1.0
+    }
+  },
+  "intakeRules": [
+    "preserve the original archive and extracted files outside generated runtime output",
+    "reject incomplete OBJ packages",
+    "reject MTL files that do not reference 3DModel.jpg",
+    "record cryptographic digests after source bytes are staged",
+    "run connected-component analysis before any geometry deletion",
+    "do not copy raw OBJ, MTL, JPEG, or uncleaned conversions into public runtime assets",
+    "do not mark isolate-tug unblocked until the staged package passes intake verification"
+  ],
+  "requiredOutputsAfterStaging": [
+    "source-assets/lektro/kiri-raw/SHA256SUMS",
+    "artifacts/lektro-scan/source-intake-report.json",
+    "artifacts/lektro-scan/connected-components.json"
+  ],
+  "runtimeUseAllowed": false
+}
