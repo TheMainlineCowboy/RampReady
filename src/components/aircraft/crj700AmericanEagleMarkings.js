@@ -76,6 +76,27 @@ function addStripeDecal(THREE, group, color, width, height, position, side, name
   return decal;
 }
 
+function addContouredStripe(THREE, group, color, height, y, zOffset, side, name) {
+  const segments = [
+    { width: 4.8, x: 1.10, z: -0.1 },
+    { width: 8.8, x: 1.32, z: 6.7 },
+    { width: 5.8, x: 1.18, z: 14.0 },
+  ];
+
+  for (const [index, segment] of segments.entries()) {
+    addStripeDecal(
+      THREE,
+      group,
+      color,
+      segment.width,
+      height,
+      [segment.x, y, segment.z + zOffset],
+      side,
+      `${name} segment ${index + 1}`,
+    );
+  }
+}
+
 export function buildAmericanEagleMarkings(THREE) {
   const group = new THREE.Group();
   group.name = "American Eagle CRJ700 exterior markings";
@@ -86,14 +107,13 @@ export function buildAmericanEagleMarkings(THREE) {
   const charcoal = makeMaterial(THREE, 0x252a31, 0.52, 0.04);
   const titleTexture = createAmericanEagleTitleTexture(THREE);
 
-  // The imported fuselage is wider below the title band. Production screenshots showed the lower
-  // decals repeatedly intersecting the skin and breaking into dashes, so keep the tricolor planes
-  // on one continuous outboard side plane while preserving their verified vertical placement.
+  // Follow the imported fuselage contour with separate fore, center, and aft planes. This keeps
+  // the livery close to the real GLB skin instead of using one oversized floating rectangle.
   for (const side of [-1, 1]) {
-    addStripeDecal(THREE, group, 0x173f73, 19.4, 0.16, [1.34, 2.83, 7.2], side, "American Eagle blue cheatline");
-    addStripeDecal(THREE, group, 0x173f73, 18.2, 0.19, [1.35, 2.68, 7.85], side, "American Eagle lower blue stripe");
-    addStripeDecal(THREE, group, 0xc7ccd2, 18.0, 0.10, [1.36, 2.56, 7.9], side, "American Eagle lower silver separator");
-    addStripeDecal(THREE, group, 0xc62032, 17.6, 0.15, [1.37, 2.43, 8.1], side, "American Eagle lower red stripe");
+    addContouredStripe(THREE, group, 0x173f73, 0.16, 2.83, 0, side, "American Eagle blue cheatline");
+    addContouredStripe(THREE, group, 0x173f73, 0.19, 2.68, 0.05, side, "American Eagle lower blue stripe");
+    addContouredStripe(THREE, group, 0xc7ccd2, 0.10, 2.56, 0.08, side, "American Eagle lower silver separator");
+    addContouredStripe(THREE, group, 0xc62032, 0.15, 2.43, 0.12, side, "American Eagle lower red stripe");
     addTitleDecal(THREE, group, titleTexture, side);
   }
 
@@ -126,6 +146,6 @@ export function buildAmericanEagleMarkings(THREE) {
   addBox(THREE, group, charcoal, [1.15, 0.035, 1.55], [0, 3.42, -3.36], [-0.10, 0, 0], "CRJ700 nose anti-glare panel");
 
   group.userData.liveryState = "american-eagle-readable-title-tail-and-lower-fuselage-stripe-decals";
-  group.userData.markingSystem = "retained procedural overlays plus runtime canvas and plane decals on verified real GLB";
+  group.userData.markingSystem = "retained procedural overlays plus runtime canvas and contoured plane decals on verified real GLB";
   return group;
 }
