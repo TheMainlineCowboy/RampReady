@@ -26,16 +26,18 @@ for (const time of settleTimes) {
 }
 assert.ok(Math.max(...settleTimes) - Math.min(...settleTimes) <= 1 / 30, "capture settling is frame-rate dependent");
 
-const stationary = updateAircraftTowPose({
+const straight = updateAircraftTowPose({
   aircraftYaw: 0,
   tugYaw: 0,
   previousNose: { x: 0, z: 0 },
-  attachedNose: { x: 0, z: -0.1 },
+  attachedNose: { x: 0, z: 0.1 },
+  mainGear: { x: 0, z: AIRCRAFT_WHEELBASE },
   dt: 1 / 60,
 });
-assert.equal(stationary.x, 0);
-assert.equal(stationary.z, -0.1);
-assert.ok(Math.abs(stationary.yaw) < 1e-12, "straight reverse towing introduced yaw");
+assert.equal(straight.x, 0);
+assert.equal(straight.z, 0.1);
+assert.ok(Math.abs(straight.yaw) < 1e-12, "straight pushback introduced yaw");
+assert.ok(Math.abs(Math.hypot(straight.mainGearX - straight.x, straight.mainGearZ - straight.z) - AIRCRAFT_WHEELBASE) < 1e-9, "straight pushback broke wheelbase");
 
 const initialized = updateAircraftTowPose({
   aircraftYaw: 0.35,
@@ -54,6 +56,7 @@ const invalidInput = updateAircraftTowPose({
   tugYaw: Number.POSITIVE_INFINITY,
   previousNose: undefined,
   attachedNose: undefined,
+  mainGear: undefined,
   dt: Number.NaN,
 });
 assert.deepEqual(
@@ -65,40 +68,38 @@ assert.deepEqual(settleCaptureOffset(undefined, 1 / 60), { x: 0, z: 0 }, "missin
 
 for (const fps of [30, 60, 120]) {
   const dt = 1 / fps;
-  const left = updateAircraftTowPose({
+  const noseRight = updateAircraftTowPose({
     aircraftYaw: 0,
-    tugYaw: 0,
+    tugYaw: 0.02,
     previousNose: { x: 0, z: 0 },
-    attachedNose: { x: 0.2, z: -0.1 },
+    attachedNose: { x: 0.2, z: 0.1 },
+    mainGear: { x: 0, z: AIRCRAFT_WHEELBASE },
     dt,
   });
-  const right = updateAircraftTowPose({
+  const noseLeft = updateAircraftTowPose({
     aircraftYaw: 0,
-    tugYaw: 0,
+    tugYaw: -0.02,
     previousNose: { x: 0, z: 0 },
-    attachedNose: { x: -0.2, z: -0.1 },
+    attachedNose: { x: -0.2, z: 0.1 },
+    mainGear: { x: 0, z: AIRCRAFT_WHEELBASE },
     dt,
   });
-  assert.ok(left.yaw > 0, `left lateral nose travel produced wrong yaw sign at ${fps} fps`);
-  assert.ok(right.yaw < 0, `right lateral nose travel produced wrong yaw sign at ${fps} fps`);
-  assert.ok(Math.abs(left.yaw) <= MAX_AIRCRAFT_YAW_RATE * dt + 1e-12, `left yaw exceeded rate limit at ${fps} fps`);
-  assert.ok(Math.abs(right.yaw) <= MAX_AIRCRAFT_YAW_RATE * dt + 1e-12, `right yaw exceeded rate limit at ${fps} fps`);
+  assert.ok(noseRight.yaw < 0, `right-moving captured nose did not rotate aircraft opposite the tug at ${fps} fps`);
+  assert.ok(noseLeft.yaw > 0, `left-moving captured nose did not rotate aircraft opposite the tug at ${fps} fps`);
+  assert.ok(Math.abs(noseRight.yaw) <= MAX_AIRCRAFT_YAW_RATE * dt + 1e-12, `right yaw exceeded rate limit at ${fps} fps`);
+  assert.ok(Math.abs(noseLeft.yaw) <= MAX_AIRCRAFT_YAW_RATE * dt + 1e-12, `left yaw exceeded rate limit at ${fps} fps`);
+  for (const pose of [noseRight, noseLeft]) {
+    const measuredWheelbase = Math.hypot(pose.mainGearX - pose.x, pose.mainGearZ - pose.z);
+    assert.ok(Math.abs(measuredWheelbase - AIRCRAFT_WHEELBASE) < 1e-9, `main-gear wheelbase drifted at ${fps} fps`);
+  }
 }
-
-const wheelbaseResponse = updateAircraftTowPose({
-  aircraftYaw: 0,
-  tugYaw: 0,
-  previousNose: { x: 0, z: 0 },
-  attachedNose: { x: AIRCRAFT_WHEELBASE * 0.01, z: -0.1 },
-  dt: 1,
-});
-assert.ok(Math.abs(wheelbaseResponse.yaw - 0.01) < 1e-12, "wheelbase-constrained yaw response drifted");
 
 const articulated = updateAircraftTowPose({
   aircraftYaw: Math.PI,
   tugYaw: 0,
   previousNose: { x: 0, z: 0 },
   attachedNose: { x: 10, z: 0 },
+  mainGear: { x: 0, z: AIRCRAFT_WHEELBASE },
   dt: 1,
 });
 assert.ok(Math.abs(articulated.articulation) <= MAX_ARTICULATION + 1e-12, "articulation exceeded safety bound");
@@ -106,4 +107,4 @@ assert.ok(Math.abs(articulated.articulation) <= MAX_ARTICULATION + 1e-12, "artic
 const zeroed = settleCaptureOffset({ x: 0.001, z: 0.001 }, 1 / 120);
 assert.deepEqual(zeroed, { x: 0, z: 0 }, "tiny capture offset did not settle cleanly");
 
-console.log(`Tow kinematics module passed capture, first-frame initialization, invalid-input, reverse steering, yaw-rate, wheelbase, and articulation checks at 30/60/120 fps; capture settles in ${settleTimes.map((v) => v.toFixed(3)).join(" / ")} seconds.`);
+console.log(`Tow kinematics module passed capture settling, main-gear wheelbase, opposite-sign initial turn response, yaw-rate, invalid-input, and articulation checks at 30/60/120 fps; capture settles in ${settleTimes.map((v) => v.toFixed(3)).join(" / ")} seconds.`);
