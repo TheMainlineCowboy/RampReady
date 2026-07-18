@@ -3,9 +3,10 @@
   "$id": "https://themainlinecowboy.github.io/RampReady/schemas/terminal4-gate-manifest.schema.json",
   "title": "RampReady PHX Terminal 4 Gate Manifest",
   "type": "object",
-  "required": ["schemaVersion", "corridor", "coordinateSystem", "gates"],
+  "required": ["schemaVersion", "status", "corridor", "coordinateSystem", "extractionState", "gates"],
   "properties": {
     "schemaVersion": { "const": 1 },
+    "status": { "enum": ["blocked-pending-adex-extraction", "source-derived-draft", "verified"] },
     "corridor": {
       "type": "object",
       "required": ["startGate", "endGate", "sourceRepository", "sourceAuthority"],
@@ -28,20 +29,27 @@
       },
       "additionalProperties": false
     },
-    "gates": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/gate" }
-    }
+    "extractionState": {
+      "type": "object",
+      "required": ["gateIdentifiersDerived", "parkingPlacementsDerived", "headingsDerived", "terminalGeometryCrossChecked", "runtimeSelectionAllowed", "blocker"],
+      "properties": {
+        "gateIdentifiersDerived": { "type": "boolean" },
+        "parkingPlacementsDerived": { "type": "boolean" },
+        "headingsDerived": { "type": "boolean" },
+        "terminalGeometryCrossChecked": { "type": "boolean" },
+        "runtimeSelectionAllowed": { "type": "boolean" },
+        "blocker": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "gates": { "type": "array", "items": { "$ref": "#/$defs/gate" } }
   },
   "additionalProperties": false,
   "$defs": {
     "vector2": {
       "type": "object",
       "required": ["x", "z"],
-      "properties": {
-        "x": { "type": "number" },
-        "z": { "type": "number" }
-      },
+      "properties": { "x": { "type": "number" }, "z": { "type": "number" } },
       "additionalProperties": false
     },
     "provenance": {
@@ -66,21 +74,7 @@
     },
     "gate": {
       "type": "object",
-      "required": [
-        "id",
-        "terminalSector",
-        "worldCoordinates",
-        "aircraftParkingReference",
-        "aircraftNoseHeadingDeg",
-        "noseGearStart",
-        "tugApproachSpawn",
-        "tugCaptureSpawn",
-        "initialTugHeadingDeg",
-        "safePushbackStartDirectionDeg",
-        "stopTurnReferences",
-        "clearanceConstraints",
-        "provenance"
-      ],
+      "required": ["id", "terminalSector", "worldCoordinates", "aircraftParkingReference", "aircraftNoseHeadingDeg", "noseGearStart", "tugApproachSpawn", "tugCaptureSpawn", "initialTugHeadingDeg", "safePushbackStartDirectionDeg", "stopTurnReferences", "clearanceConstraints", "provenance"],
       "properties": {
         "id": { "type": "string", "pattern": "^[AB][0-9]{1,2}$" },
         "terminalSector": { "type": "string", "minLength": 1 },
