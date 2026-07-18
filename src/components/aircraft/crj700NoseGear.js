@@ -27,6 +27,11 @@ export function buildCRJ700NoseGear(THREE, materials = {}) {
     roughness: 0.2,
     metalness: 0.82,
   });
+  const hose = materials.hose || new THREE.MeshStandardMaterial({
+    color: 0x151719,
+    roughness: 0.78,
+    metalness: 0.08,
+  });
 
   const add = (mesh, name) => {
     mesh.name = name;
@@ -39,9 +44,13 @@ export function buildCRJ700NoseGear(THREE, materials = {}) {
   const cylinder = (radiusTop, radiusBottom, length, material, radialSegments = 24) =>
     new THREE.Mesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, length, radialSegments), material);
 
-  // The prior retained gear stopped well below the imported fuselage, making the
-  // nose assembly appear detached. Extend the upper shock strut to the belly while
-  // keeping the wheel contact point and tow-capture origin unchanged.
+  const addHose = (points, name) => {
+    const curve = new THREE.CatmullRomCurve3(points.map(([x, y, z]) => new THREE.Vector3(x, y, z)));
+    return add(new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.012, 8, false), hose), name);
+  };
+
+  // Keep the upper shock strut connected to the imported fuselage while preserving
+  // the established wheel contact point and [0,0,0] tow-capture origin.
   const mainStrut = add(cylinder(0.07, 0.082, 0.96, metal, 24), "nose gear outer strut");
   mainStrut.position.set(0, 0.94, 0.02);
 
@@ -60,22 +69,49 @@ export function buildCRJ700NoseGear(THREE, materials = {}) {
   axle.position.set(0, 0.2, -0.16);
 
   for (const side of [-1, 1]) {
-    const wheel = add(cylinder(0.215, 0.215, 0.15, tire, 28), `nose wheel ${side < 0 ? "left" : "right"}`);
+    const sideName = side < 0 ? "left" : "right";
+    const wheel = add(cylinder(0.215, 0.215, 0.15, tire, 32), `nose wheel ${sideName}`);
     wheel.rotation.z = Math.PI / 2;
     wheel.position.set(side * 0.17, 0.2, -0.16);
 
-    const wheelHub = add(cylinder(0.09, 0.09, 0.158, hub, 24), `nose wheel hub ${side < 0 ? "left" : "right"}`);
+    const wheelHub = add(cylinder(0.09, 0.09, 0.158, hub, 24), `nose wheel hub ${sideName}`);
     wheelHub.rotation.z = Math.PI / 2;
     wheelHub.position.copy(wheel.position);
 
-    const forkArm = add(new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.42, 0.055), darkMetal), `nose gear fork arm ${side < 0 ? "left" : "right"}`);
+    const axleRetainer = add(cylinder(0.035, 0.035, 0.025, darkMetal, 18), `nose wheel axle retainer ${sideName}`);
+    axleRetainer.rotation.z = Math.PI / 2;
+    axleRetainer.position.set(side * 0.255, 0.2, -0.16);
+
+    for (let treadIndex = 0; treadIndex < 10; treadIndex += 1) {
+      const tread = add(new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.055, 0.018), tire), `nose wheel tread ${sideName} ${treadIndex + 1}`);
+      const angle = (treadIndex / 10) * Math.PI * 2;
+      tread.position.set(side * 0.248, 0.2 + Math.cos(angle) * 0.208, -0.16 + Math.sin(angle) * 0.208);
+      tread.rotation.x = angle;
+    }
+
+    const forkArm = add(new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.42, 0.055), darkMetal), `nose gear fork arm ${sideName}`);
     forkArm.position.set(side * 0.145, 0.39, -0.13);
     forkArm.rotation.z = side * 0.08;
+
+    const steeringActuator = add(cylinder(0.026, 0.026, 0.36, hydraulic, 16), `nose gear steering actuator ${sideName}`);
+    steeringActuator.rotation.z = Math.PI / 2;
+    steeringActuator.position.set(side * 0.16, 0.61, -0.02);
+
+    addHose([
+      [side * 0.055, 1.17, 0.08],
+      [side * 0.09, 0.84, 0.13],
+      [side * 0.13, 0.58, 0.02],
+      [side * 0.18, 0.34, -0.12],
+    ], `nose gear hydraulic hose ${sideName}`);
   }
 
   const dragBrace = add(new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.88, 0.075), darkMetal), "nose gear drag brace");
   dragBrace.position.set(0, 0.82, 0.31);
   dragBrace.rotation.x = -0.42;
+
+  const dragBracePivot = add(cylinder(0.055, 0.055, 0.16, hub, 18), "nose gear drag brace pivot");
+  dragBracePivot.rotation.z = Math.PI / 2;
+  dragBracePivot.position.set(0, 0.53, 0.14);
 
   const upperFork = add(new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.07, 0.09), metal), "nose gear upper fork");
   upperFork.position.set(0, 0.34, -0.11);
@@ -100,6 +136,6 @@ export function buildCRJ700NoseGear(THREE, materials = {}) {
 
   group.userData.noseGearCaptureOrigin = [0, 0, 0];
   group.userData.preserveTowKinematics = true;
-  group.userData.detailState = "detailed-procedural-crj700-nose-gear-connected-strut";
+  group.userData.detailState = "detailed-procedural-crj700-nose-gear-steering-hydraulics-and-tread";
   return group;
 }

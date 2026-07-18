@@ -12,6 +12,10 @@ function requireNumber(source, pattern, label) {
   return value;
 }
 
+function requireSource(source, token, label) {
+  if (!source.includes(token)) throw new Error(`Nose-gear seating verification failed: ${label}.`);
+}
+
 const sceneScale = requireNumber(trainer, /aircraft\.scale\.set\(([-\d.]+),\s*[-\d.]+,\s*[-\d.]+\)/, "scene aircraft scale");
 const modelScale = requireNumber(aircraft, /const PROCEDURAL_INTERNAL_SCALE = ([-\d.]+);/, "procedural landing-gear scale");
 if (!aircraft.includes("group.scale.setScalar(PROCEDURAL_INTERNAL_SCALE)")) {
@@ -29,6 +33,17 @@ if (
 if (!noseGear.includes("preserveTowKinematics = true") || !noseGear.includes("noseGearCaptureOrigin = [0, 0, 0]")) {
   throw new Error("Nose-gear seating verification failed: detailed nose gear does not preserve the established tow-capture origin.");
 }
+requireSource(noseGear, "new THREE.TubeGeometry", "hydraulic hose geometry is missing");
+requireSource(noseGear, "nose gear steering actuator", "bilateral steering actuators are missing");
+requireSource(noseGear, "nose wheel axle retainer", "wheel axle retainers are missing");
+requireSource(noseGear, "nose wheel tread", "wheel tread detail is missing");
+requireSource(noseGear, "nose gear drag brace pivot", "drag-brace pivot detail is missing");
+requireSource(
+  noseGear,
+  'detailState = "detailed-procedural-crj700-nose-gear-steering-hydraulics-and-tread"',
+  "current detailed nose-gear state marker is missing",
+);
+
 const effectiveScale = sceneScale * modelScale;
 
 const deckMatch = trainer.match(/box\(([-\d.]+),\s*([-\d.]+),\s*([-\d.]+),\s*black,\s*0,\s*([-\d.]+),\s*CRADLE_Z\)\)/);
@@ -70,4 +85,4 @@ if (guideArmClearance < 0.08 || guideArmClearance > 0.30) {
   throw new Error(`Nose-gear seating verification failed: guide-arm clearance ${guideArmClearance.toFixed(3)} m is outside the capture envelope.`);
 }
 
-console.log(`Nose-gear seating passed for retained detailed gear: effective scale ${effectiveScale.toFixed(3)}, wheel contact ${wheelBottom.toFixed(3)} m, deck engagement ${verticalEngagement.toFixed(3)} m, lateral margin ${lateralDeckMargin.toFixed(3)} m, guide clearance ${guideArmClearance.toFixed(3)} m.`);
+console.log(`Nose-gear seating passed for retained detailed gear: effective scale ${effectiveScale.toFixed(3)}, wheel contact ${wheelBottom.toFixed(3)} m, deck engagement ${verticalEngagement.toFixed(3)} m, lateral margin ${lateralDeckMargin.toFixed(3)} m, guide clearance ${guideArmClearance.toFixed(3)} m, steering/hydraulic/tread detail retained.`);
