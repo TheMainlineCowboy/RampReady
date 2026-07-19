@@ -5,6 +5,10 @@ import path from 'node:path';
 const EXPECTED_BLOB_SHA = 'fa185427e154eb92058e755b9fbdb1ad799317ed';
 const PRINTABLE_MIN = 4;
 const TERMINAL4_GATE_LABEL = /(?:^|[^A-Z0-9])([AB](?:[1-9]|1[0-9]|2[0-9]|30))(?![A-Z0-9])/gi;
+export const REQUIRED_TERMINAL4_CORRIDOR_LABELS = [
+  ...Array.from({ length: 15 }, (_, index) => `B${15 - index}`),
+  'A1',
+];
 
 export function calculateGitBlobSha(buffer) {
   const header = Buffer.from(`blob ${buffer.length}\0`, 'utf8');
@@ -60,6 +64,44 @@ export function extractGateLabelEvidence(printableStrings) {
   );
 }
 
+export function summarizeGateLabelEvidence(
+  evidence,
+  requiredLabels = REQUIRED_TERMINAL4_CORRIDOR_LABELS,
+) {
+  const occurrencesByLabel = new Map();
+  for (const record of evidence) {
+    const offsets = occurrencesByLabel.get(record.label) ?? [];
+    offsets.push(record.sourceByteOffset);
+    occurrencesByLabel.set(record.label, offsets);
+  }
+
+  const labels = [...occurrencesByLabel.entries()]
+    .map(([label, sourceByteOffsets]) => ({
+      label,
+      occurrenceCount: sourceByteOffsets.length,
+      sourceByteOffsets,
+      status: 'candidate-label-occurrences-only-not-linked-to-parking-record',
+    }))
+    .sort((left, right) => left.label.localeCompare(right.label, undefined, { numeric: true }));
+
+  const requiredCoverage = requiredLabels.map((label) => ({
+    label,
+    candidateOccurrenceCount: occurrencesByLabel.get(label)?.length ?? 0,
+    candidateLabelPresent: occurrencesByLabel.has(label),
+    status: 'candidate-label-presence-only-not-parking-record-coverage',
+  }));
+
+  return {
+    uniqueCandidateLabelCount: labels.length,
+    totalCandidateOccurrenceCount: evidence.length,
+    labels,
+    requiredCorridorLabels: [...requiredLabels],
+    requiredCoverage,
+    allRequiredCandidateLabelsPresent: requiredCoverage.every(({ candidateLabelPresent }) => candidateLabelPresent),
+    interpretation: 'Presence only confirms printable label evidence; it does not prove a parking-record relationship.',
+  };
+}
+
 export function readHeaderEvidence(buffer) {
   if (buffer.length < 64) throw new Error('ADEX source is too small to contain a BGL header.');
 
@@ -101,7 +143,7 @@ export function buildEvidence(buffer, sourcePath) {
   const candidateGateLabelEvidence = extractGateLabelEvidence(strings);
 
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     status: 'byte-evidence-only-not-decoded',
     source: {
       path: sourcePath,
@@ -115,10 +157,13 @@ export function buildEvidence(buffer, sourcePath) {
     printableStrings: strings,
     airportIdentityEvidence: identityEvidence,
     candidateGateLabelEvidence,
+    candidateGateLabelSummary: summarizeGateLabelEvidence(candidateGateLabelEvidence),
     interpretationLimits: [
       'raw descriptors are preserved as unsigned little-endian integers without semantic labels',
       'printable strings and candidate gate labels are evidence only and are not parking records',
       'candidate gate labels are not linked to coordinates, headings, radii or parking-record byte structures',
+      'candidate corridor-label coverage reports printable evidence presence only, not parking-record completeness',
+      'duplicate label occurrences remain preserved and must not be collapsed into a single parking stand',
       'no gate coordinates, headings, taxi paths or object placements are emitted',
       'a format-aware decoder is still required before populating the Terminal 4 gate manifest',
     ],
