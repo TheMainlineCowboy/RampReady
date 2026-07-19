@@ -4,6 +4,7 @@ import path from 'node:path';
 
 const EXPECTED_BLOB_SHA = 'fa185427e154eb92058e755b9fbdb1ad799317ed';
 const PRINTABLE_MIN = 4;
+const TERMINAL4_GATE_LABEL = /(?:^|[^A-Z0-9])([AB](?:[1-9]|1[0-9]|2[0-9]|30))(?![A-Z0-9])/gi;
 
 export function extractPrintableStrings(buffer, minimumLength = PRINTABLE_MIN) {
   const records = [];
@@ -28,6 +29,30 @@ export function extractPrintableStrings(buffer, minimumLength = PRINTABLE_MIN) {
   }
 
   return records;
+}
+
+export function extractGateLabelEvidence(printableStrings) {
+  const evidence = [];
+
+  for (const record of printableStrings) {
+    TERMINAL4_GATE_LABEL.lastIndex = 0;
+    let match;
+    while ((match = TERMINAL4_GATE_LABEL.exec(record.value)) !== null) {
+      const label = match[1].toUpperCase();
+      const labelIndex = match.index + match[0].lastIndexOf(match[1]);
+      evidence.push({
+        label,
+        sourceByteOffset: record.sourceByteOffset + labelIndex,
+        sourceStringOffset: record.sourceByteOffset,
+        sourceString: record.value,
+        status: 'candidate-label-only-not-linked-to-parking-record',
+      });
+    }
+  }
+
+  return evidence.sort((left, right) =>
+    left.sourceByteOffset - right.sourceByteOffset || left.label.localeCompare(right.label),
+  );
 }
 
 export function readHeaderEvidence(buffer) {
@@ -67,9 +92,10 @@ export function buildEvidence(buffer, sourcePath) {
   const identityEvidence = strings.filter(({ value }) =>
     /KPHX|Phoenix Sky Harbor|PHOENIX/i.test(value),
   );
+  const candidateGateLabelEvidence = extractGateLabelEvidence(strings);
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     status: 'byte-evidence-only-not-decoded',
     source: {
       path: sourcePath,
@@ -80,9 +106,11 @@ export function buildEvidence(buffer, sourcePath) {
     headerEvidence: readHeaderEvidence(buffer),
     printableStrings: strings,
     airportIdentityEvidence: identityEvidence,
+    candidateGateLabelEvidence,
     interpretationLimits: [
       'raw descriptors are preserved as unsigned little-endian integers without semantic labels',
-      'printable strings are evidence only and are not parking or gate records',
+      'printable strings and candidate gate labels are evidence only and are not parking records',
+      'candidate gate labels are not linked to coordinates, headings, radii or parking-record byte structures',
       'no gate coordinates, headings, taxi paths or object placements are emitted',
       'a format-aware decoder is still required before populating the Terminal 4 gate manifest',
     ],
