@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "workstream": "PHX Terminal 4 B15-to-A1 gate placement extraction",
+  "status": "source-identified-extraction-blocked",
+  "source": {
+    "repository": "TheMainlineCowboy/SkyHarborPhx",
+    "path": "scenery/KPHX_ADEX.BGL",
+    "gitBlobSha": "fa185427e154eb92058e755b9fbdb1ad799317ed",
+    "airportIdentityEvidence": [
+      "Phoenix Sky Harbor Intl",
+      "KPHX"
+    ],
+    "authority": "parking, heading, taxiway and placement source"
+  },
+  "corridor": {
+    "startGate": "B15",
+    "endGate": "A1",
+    "coordinatesMayBeGuessed": false,
+    "headingsMayBeGuessed": false,
+    "manualCorrectionsRequireSeparateProvenance": true
+  },
+  "requiredExtractionOutput": {
+    "format": "json",
+    "records": [
+      "all decoded parking records with source byte offsets",
+      "parking identifier components before gate-name normalization",
+      "latitude and longitude in source precision",
+      "source heading and radius",
+      "parking type and airline codes when present",
+      "taxiway paths and nodes needed to validate pushback clearance",
+      "object placements affecting B15-through-A1 stands"
+    ],
+    "provenanceFields": [
+      "sourcePath",
+      "sourceGitBlobSha",
+      "sourceByteOffset",
+      "decoderName",
+      "decoderVersion",
+      "extractedAtUtc",
+      "manualCorrectionHistory"
+    ]
+  },
+  "validationRules": [
+    "reject extraction if the source blob SHA differs",
+    "reject records without source byte offsets",
+    "retain raw source latitude, longitude and heading before local-coordinate conversion",
+    "do not normalize parking identifiers to B15-through-A1 until raw identifiers are retained",
+    "do not populate aircraft, tug, stop or turn poses from visual estimation",
+    "exclude gates outside the B15-through-A1 corridor only after authoritative identifier mapping",
+    "cross-check decoded stands against current reliable PHX Terminal 4 references and record discrepancies separately"
+  ],
+  "derivedManifestSequence": [
+    "decode authoritative ADEX parking records",
+    "map source parking identifiers to Terminal 4 gate identifiers",
+    "select the inclusive B15-through-A1 corridor",
+    "establish a documented geodetic-to-local origin and transform",
+    "derive aircraft parking and nose-gear poses from source coordinates and aircraft geometry",
+    "derive tug capture spawn and pushback references from source taxi geometry and clearance analysis",
+    "render developer markers for points, headings, paths and clearance envelopes",
+    "record every manual correction without overwriting source-derived values"
+  ],
+  "releaseBlocks": [
+    "scenario gate selection remains disabled until all corridor gates have source-backed poses",
+    "Terminal 4 runtime export remains blocked until corridor geometry and dependency recovery are complete",
+    "GitHub Pages remains the only production host"
+  ]
+}
