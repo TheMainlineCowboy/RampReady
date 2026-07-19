@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "sourceRepository": "TheMainlineCowboy/SkyHarborPhx",
+  "sourceRef": "main",
+  "sourceArtifact": {
+    "path": "scenery/term4.BGL",
+    "gitBlobSha": "c2c6cefe0fc2e7b2dc222d59386b7e4cfa7e6449",
+    "inspectionMethod": "direct GitHub blob inspection",
+    "runtimeImportAllowed": false
+  },
+  "modelIdentity": {
+    "embeddedName": "phx_term400",
+    "formatMarkers": ["RIFF", "MDLX", "MDLH", "MDLG", "TEXT", "MATE", "INDE"],
+    "status": "source-inspected-not-converted"
+  },
+  "embeddedTextureReferences": [
+    "BGATE1.BMP",
+    "BGATE1_LM.BMP",
+    "DGATE4.BMP",
+    "DGATE4_LM.BMP",
+    "DGATE5.BMP",
+    "DGATE5_LM.BMP",
+    "PARKRAMP1.BMP",
+    "PARKRAMP1_LM.BMP",
+    "PARKRAMPS.BMP",
+    "PARKRAMPS_LM.BMP",
+    "PARKRAMPS2.BMP",
+    "PARKRAMPS2_LM.BMP",
+    "BGATE3.BMP",
+    "BGATE3_LM.BMP",
+    "PHX_TERM400_0.DDS",
+    "PHX_TERM400_0_LM.DDS",
+    "PHX_TERM400_1.DDS",
+    "PHX_TERM400_1_LM.DDS",
+    "PHXRAMPLIGHT.BMP",
+    "PHXRAMPLIGHT_LM.BMP",
+    "RW.BMP",
+    "SUPPORTS.BMP",
+    "SUPPORTS_LM.BMP",
+    "T4_WALK.BMP",
+    "T4_WALK_LM.BMP",
+    "T4_WALK2.BMP",
+    "T4_WALK2_LM.BMP",
+    "DGATE1.BMP",
+    "DGATE1_LM.BMP",
+    "DGATE2.BMP",
+    "DGATE2_LM.BMP",
+    "DGATE3.BMP",
+    "DGATE3_LM.BMP"
+  ],
+  "dependencyRules": {
+    "caseInsensitiveLookupRequired": true,
+    "lightMapsRemainPaired": true,
+    "missingReferencesBlockConversion": true,
+    "corridorFilterRequiredBeforeRuntimeExport": true,
+    "rawLegacyAssetsAllowedInPublic": false
+  },
+  "nextExtractionStage": {
+    "required": [
+      "resolve every embedded texture reference against the SkyHarborPhx texture tree",
+      "record file hashes and dimensions",
+      "decode model and placement records",
+      "separate B15-to-A1 corridor geometry from unrelated Terminal 4 geometry",
+      "convert cleaned sectors to optimized GLB or glTF"
+    ],
+    "gateCoordinatesMayBePopulated": false,
+    "reason": "KPHX_ADEX.BGL parking and placement records are not yet decoded"
+  }
+}
