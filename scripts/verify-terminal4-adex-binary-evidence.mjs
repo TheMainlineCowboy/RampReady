@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import {
   buildEvidence,
+  calculateGitBlobSha,
   extractGateLabelEvidence,
   extractPrintableStrings,
   readHeaderEvidence,
@@ -33,13 +35,21 @@ assert.equal(header.rawDescriptors.length, 1);
 assert.equal(header.rawDescriptors[0].sourceByteOffset, 24);
 assert.deepEqual(header.rawDescriptors[0].rawUint32.slice(0, 2), [0x11223344, 0x55667788]);
 
+const expectedFixtureBlobSha = createHash('sha1')
+  .update(Buffer.from(`blob ${fixture.length}\0`, 'utf8'))
+  .update(fixture)
+  .digest('hex');
+assert.equal(calculateGitBlobSha(fixture), expectedFixtureBlobSha);
+
 const evidence = buildEvidence(fixture, 'scenery/KPHX_ADEX.BGL');
-assert.equal(evidence.schemaVersion, 2);
+assert.equal(evidence.schemaVersion, 3);
 assert.equal(evidence.status, 'byte-evidence-only-not-decoded');
 assert.equal(evidence.airportIdentityEvidence.length, 2);
 assert.equal(evidence.candidateGateLabelEvidence.length, 3);
 assert.equal(evidence.source.byteLength, fixture.length);
 assert.equal(evidence.source.sha256.length, 64);
+assert.equal(evidence.source.actualGitBlobSha, expectedFixtureBlobSha);
+assert.equal(evidence.source.matchesExpectedGitBlobSha, false);
 assert(!('parkingRecords' in evidence));
 assert(!('gateManifest' in evidence));
 assert(evidence.interpretationLimits.some((rule) => rule.includes('not linked to coordinates')));
@@ -47,4 +57,4 @@ assert(evidence.interpretationLimits.some((rule) => rule.includes('no gate coord
 
 assert.throws(() => readHeaderEvidence(Buffer.alloc(12)), /too small/);
 
-console.log('Terminal 4 ADEX byte and gate-label evidence extractor verified.');
+console.log('Terminal 4 ADEX byte, Git blob and gate-label evidence extractor verified.');

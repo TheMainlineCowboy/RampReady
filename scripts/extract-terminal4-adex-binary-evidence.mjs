@@ -6,6 +6,11 @@ const EXPECTED_BLOB_SHA = 'fa185427e154eb92058e755b9fbdb1ad799317ed';
 const PRINTABLE_MIN = 4;
 const TERMINAL4_GATE_LABEL = /(?:^|[^A-Z0-9])([AB](?:[1-9]|1[0-9]|2[0-9]|30))(?![A-Z0-9])/gi;
 
+export function calculateGitBlobSha(buffer) {
+  const header = Buffer.from(`blob ${buffer.length}\0`, 'utf8');
+  return createHash('sha1').update(header).update(buffer).digest('hex');
+}
+
 export function extractPrintableStrings(buffer, minimumLength = PRINTABLE_MIN) {
   const records = [];
   let start = -1;
@@ -88,6 +93,7 @@ export function readHeaderEvidence(buffer) {
 
 export function buildEvidence(buffer, sourcePath) {
   const sha256 = createHash('sha256').update(buffer).digest('hex');
+  const actualGitBlobSha = calculateGitBlobSha(buffer);
   const strings = extractPrintableStrings(buffer);
   const identityEvidence = strings.filter(({ value }) =>
     /KPHX|Phoenix Sky Harbor|PHOENIX/i.test(value),
@@ -95,11 +101,13 @@ export function buildEvidence(buffer, sourcePath) {
   const candidateGateLabelEvidence = extractGateLabelEvidence(strings);
 
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     status: 'byte-evidence-only-not-decoded',
     source: {
       path: sourcePath,
       expectedGitBlobSha: EXPECTED_BLOB_SHA,
+      actualGitBlobSha,
+      matchesExpectedGitBlobSha: actualGitBlobSha === EXPECTED_BLOB_SHA,
       byteLength: buffer.length,
       sha256,
     },
@@ -126,6 +134,11 @@ async function main() {
 
   const buffer = await readFile(source);
   const evidence = buildEvidence(buffer, source);
+  if (!evidence.source.matchesExpectedGitBlobSha) {
+    throw new Error(
+      `ADEX source Git blob SHA mismatch: expected ${EXPECTED_BLOB_SHA}, received ${evidence.source.actualGitBlobSha}.`,
+    );
+  }
   await mkdir(path.dirname(output), { recursive: true });
   await writeFile(output, `${JSON.stringify(evidence, null, 2)}\n`);
   console.log(`Wrote byte-level ADEX evidence to ${output}`);
