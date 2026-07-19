@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "sourceRepository": "TheMainlineCowboy/SkyHarborPhx",
+  "sourceCommit": "7422b5bdaa2112db70072bfd01a802dd42e86f6a",
+  "inspectionMethod": "authoritative file list from the source upload commit, matched case-insensitively against term4.BGL embedded references",
+  "embeddedReferenceCount": 33,
+  "resolvedCount": 24,
+  "missingCount": 9,
+  "resolved": [
+    { "reference": "BGATE1.BMP", "sourcePath": "bgate1.bmp" },
+    { "reference": "BGATE1_LM.BMP", "sourcePath": "bgate1_lm.bmp" },
+    { "reference": "DGATE4.BMP", "sourcePath": "dgate4.bmp" },
+    { "reference": "DGATE4_LM.BMP", "sourcePath": "dgate4_lm.bmp" },
+    { "reference": "DGATE5.BMP", "sourcePath": "dgate5.bmp" },
+    { "reference": "DGATE5_LM.BMP", "sourcePath": "dgate5_lm.bmp" },
+    { "reference": "PARKRAMP1.BMP", "sourcePath": "parkramp1.bmp" },
+    { "reference": "PARKRAMP1_LM.BMP", "sourcePath": "parkramp1_lm.bmp" },
+    { "reference": "PARKRAMPS.BMP", "sourcePath": "parkramps.bmp" },
+    { "reference": "BGATE3.BMP", "sourcePath": "bgate3.bmp" },
+    { "reference": "BGATE3_LM.BMP", "sourcePath": "bgate3_lm.bmp" },
+    { "reference": "RW.BMP", "sourcePath": "rw.bmp" },
+    { "reference": "SUPPORTS.BMP", "sourcePath": "supports.bmp" },
+    { "reference": "SUPPORTS_LM.BMP", "sourcePath": "supports_lm.bmp" },
+    { "reference": "T4_WALK.BMP", "sourcePath": "t4_walk.bmp" },
+    { "reference": "T4_WALK_LM.BMP", "sourcePath": "t4_walk_lm.bmp" },
+    { "reference": "T4_WALK2.BMP", "sourcePath": "t4_walk2.bmp" },
+    { "reference": "T4_WALK2_LM.BMP", "sourcePath": "t4_walk2_lm.bmp" },
+    { "reference": "DGATE1.BMP", "sourcePath": "dgate1.bmp" },
+    { "reference": "DGATE1_LM.BMP", "sourcePath": "dgate1_lm.bmp" },
+    { "reference": "DGATE2.BMP", "sourcePath": "dgate2.bmp" },
+    { "reference": "DGATE2_LM.BMP", "sourcePath": "dgate2_lm.bmp" },
+    { "reference": "DGATE3.BMP", "sourcePath": "dgate3.bmp" },
+    { "reference": "DGATE3_LM.BMP", "sourcePath": "dgate3_lm.bmp" }
+  ],
+  "missing": [
+    { "reference": "PARKRAMPS_LM.BMP", "impact": "night/light-map pair incomplete" },
+    { "reference": "PARKRAMPS2.BMP", "impact": "base texture absent" },
+    { "reference": "PARKRAMPS2_LM.BMP", "impact": "base and light-map pair absent" },
+    { "reference": "PHX_TERM400_0.DDS", "impact": "primary Terminal 4 material absent" },
+    { "reference": "PHX_TERM400_0_LM.DDS", "impact": "primary Terminal 4 light map absent" },
+    { "reference": "PHX_TERM400_1.DDS", "impact": "secondary Terminal 4 material absent" },
+    { "reference": "PHX_TERM400_1_LM.DDS", "impact": "secondary Terminal 4 light map absent" },
+    { "reference": "PHXRAMPLIGHT.BMP", "impact": "ramp-light material absent" },
+    { "reference": "PHXRAMPLIGHT_LM.BMP", "impact": "ramp-light light map absent" }
+  ],
+  "conversionGate": {
+    "status": "blocked-missing-source-dependencies",
+    "runtimeExportAllowed": false,
+    "rawLegacyAssetsAllowedInPublic": false,
+    "gateCoordinatesMayBePopulated": false,
+    "requiredNextActions": [
+      "recover the nine missing texture files from the original scenery package or another source-authorized copy",
+      "record byte sizes, dimensions, formats, and SHA-256 hashes for every resolved dependency",
+      "decode KPHX_ADEX.BGL before populating B15-to-A1 gate coordinates or headings",
+      "filter converted geometry to the B15-to-A1 corridor before browser export"
+    ]
+  }
+}
