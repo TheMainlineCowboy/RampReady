@@ -1,9 +1,30 @@
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { analyzeLektroScanForCleanup } from "./analyze-lektro-scan-clean.mjs";
 
 const DEFAULT_REMOVE_TRIANGLE_SHARE = 0.0025;
 const DEFAULT_REVIEW_TRIANGLE_SHARE = 0.02;
+
+function roundEvidenceNumber(value) {
+  return Number.isFinite(value) ? Number(value.toFixed(9)) : value;
+}
+
+export function buildLektroComponentId(component) {
+  const evidence = {
+    vertices: component.vertices,
+    faces: component.faces,
+    triangles: component.triangles,
+    bounds: {
+      min: component.bounds?.min?.map(roundEvidenceNumber),
+      max: component.bounds?.max?.map(roundEvidenceNumber),
+      extents: component.bounds?.extents?.map(roundEvidenceNumber),
+    },
+  };
+
+  const digest = createHash("sha256").update(JSON.stringify(evidence)).digest("hex").slice(0, 16);
+  return `lektro-component-${digest}`;
+}
 
 export function buildLektroCleanupPlan(report, options = {}) {
   const removeTriangleShare = options.removeTriangleShare ?? DEFAULT_REMOVE_TRIANGLE_SHARE;
@@ -35,6 +56,7 @@ export function buildLektroCleanupPlan(report, options = {}) {
     }
 
     return {
+      componentId: buildLektroComponentId(component),
       componentIndex: index,
       action,
       reason,
@@ -48,10 +70,11 @@ export function buildLektroCleanupPlan(report, options = {}) {
   });
 
   return {
-    version: 1,
+    version: 2,
     sourceFiles: report.sourceFiles,
     normalizationBasis: report.provisionalNormalization?.basis,
     dominantComponentIndex: dominantIndex,
+    dominantComponentId: dispositions[dominantIndex].componentId,
     thresholds: {
       removeTriangleShare,
       reviewTriangleShare,
@@ -62,9 +85,21 @@ export function buildLektroCleanupPlan(report, options = {}) {
       review: dispositions.filter((entry) => entry.action === "review").length,
       removeCandidates: dispositions.filter((entry) => entry.action === "remove-candidate").length,
     },
+    reviewQueue: dispositions
+      .filter((entry) => entry.action === "retain-candidate" || entry.action === "review")
+      .map((entry) => ({
+        componentId: entry.componentId,
+        componentIndex: entry.componentIndex,
+        action: entry.action,
+        reason: entry.reason,
+        triangles: entry.triangles,
+        triangleShare: entry.triangleShare,
+        bounds: entry.bounds,
+      })),
     dispositions,
     safeguards: [
       "No geometry is deleted automatically.",
+      "Stable component IDs must be used to carry visual-review decisions across repeated scan analyses.",
       "Retain-candidate and review components require textured visual inspection.",
       "A documented physical Lektro dimension is required before runtime scaling.",
       "The procedural runtime tug remains active until the scan-derived GLB passes clearance and towing checks.",
