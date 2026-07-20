@@ -4,6 +4,7 @@ import path from 'node:path';
 
 const EXPECTED_BLOB_SHA = 'fa185427e154eb92058e755b9fbdb1ad799317ed';
 const PRINTABLE_MIN = 4;
+const GATE_LABEL_CONTEXT_RADIUS_BYTES = 24;
 const TERMINAL4_GATE_LABEL = /(?:^|[^A-Z0-9])([AB](?:[1-9]|1[0-9]|2[0-9]|30))(?![A-Z0-9])/gi;
 export const REQUIRED_TERMINAL4_CORRIDOR_LABELS = [
   ...Array.from({ length: 15 }, (_, index) => `B${15 - index}`),
@@ -40,7 +41,28 @@ export function extractPrintableStrings(buffer, minimumLength = PRINTABLE_MIN) {
   return records;
 }
 
-export function extractGateLabelEvidence(printableStrings) {
+function buildByteContext(buffer, sourceByteOffset, byteLength) {
+  if (!buffer) return null;
+  const startByteOffset = Math.max(0, sourceByteOffset - GATE_LABEL_CONTEXT_RADIUS_BYTES);
+  const endByteOffsetExclusive = Math.min(
+    buffer.length,
+    sourceByteOffset + byteLength + GATE_LABEL_CONTEXT_RADIUS_BYTES,
+  );
+  const bytes = buffer.subarray(startByteOffset, endByteOffsetExclusive);
+
+  return {
+    startByteOffset,
+    endByteOffsetExclusive,
+    byteLength: bytes.length,
+    labelOffsetWithinContext: sourceByteOffset - startByteOffset,
+    hex: bytes.toString('hex'),
+    ascii: [...bytes]
+      .map((byte) => (byte >= 0x20 && byte <= 0x7e ? String.fromCharCode(byte) : '.'))
+      .join(''),
+  };
+}
+
+export function extractGateLabelEvidence(printableStrings, sourceBuffer = null) {
   const evidence = [];
 
   for (const record of printableStrings) {
@@ -49,11 +71,19 @@ export function extractGateLabelEvidence(printableStrings) {
     while ((match = TERMINAL4_GATE_LABEL.exec(record.value)) !== null) {
       const label = match[1].toUpperCase();
       const labelIndex = match.index + match[0].lastIndexOf(match[1]);
+      const sourceByteOffset = record.sourceByteOffset + labelIndex;
       evidence.push({
         label,
-        sourceByteOffset: record.sourceByteOffset + labelIndex,
+        labelByteLength: Buffer.byteLength(label, 'ascii'),
+        sourceByteOffset,
         sourceStringOffset: record.sourceByteOffset,
+        sourceStringIndex: labelIndex,
         sourceString: record.value,
+        byteContext: buildByteContext(
+          sourceBuffer,
+          sourceByteOffset,
+          Buffer.byteLength(label, 'ascii'),
+        ),
         status: 'candidate-label-only-not-linked-to-parking-record',
       });
     }
@@ -140,10 +170,10 @@ export function buildEvidence(buffer, sourcePath) {
   const identityEvidence = strings.filter(({ value }) =>
     /KPHX|Phoenix Sky Harbor|PHOENIX/i.test(value),
   );
-  const candidateGateLabelEvidence = extractGateLabelEvidence(strings);
+  const candidateGateLabelEvidence = extractGateLabelEvidence(strings, buffer);
 
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     status: 'byte-evidence-only-not-decoded',
     source: {
       path: sourcePath,
@@ -161,6 +191,7 @@ export function buildEvidence(buffer, sourcePath) {
     interpretationLimits: [
       'raw descriptors are preserved as unsigned little-endian integers without semantic labels',
       'printable strings and candidate gate labels are evidence only and are not parking records',
+      'candidate gate labels include bounded raw-byte context for decoder research, not inferred record relationships',
       'candidate gate labels are not linked to coordinates, headings, radii or parking-record byte structures',
       'candidate corridor-label coverage reports printable evidence presence only, not parking-record completeness',
       'duplicate label occurrences remain preserved and must not be collapsed into a single parking stand',
