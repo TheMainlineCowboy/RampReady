@@ -1,4 +1,4 @@
-import { readdir, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -84,6 +84,7 @@ async function main() {
     found: matches.length > 0,
     generatedAt: new Date().toISOString(),
   };
+  await mkdir(path.dirname(path.resolve(options.output)), { recursive: true });
   await writeFile(options.output, `${JSON.stringify(report, null, 2)}\n`, { flag: "w" });
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   if (!report.found && !options.allowMissing) {
