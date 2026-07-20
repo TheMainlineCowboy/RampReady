@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { createReadStream } from "node:fs";
 import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +14,17 @@ async function isDirectory(candidate) {
   }
 }
 
+async function sha256File(filePath) {
+  const hash = createHash("sha256");
+  await new Promise((resolve, reject) => {
+    const stream = createReadStream(filePath);
+    stream.on("data", (chunk) => hash.update(chunk));
+    stream.on("error", reject);
+    stream.on("end", resolve);
+  });
+  return hash.digest("hex");
+}
+
 async function inspectDirectory(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const names = new Set(entries.filter((entry) => entry.isFile()).map((entry) => entry.name));
@@ -19,8 +32,12 @@ async function inspectDirectory(directory) {
 
   const files = {};
   for (const name of REQUIRED_LEKTRO_SCAN_FILES) {
-    const info = await stat(path.join(directory, name));
-    files[name] = { bytes: info.size };
+    const filePath = path.join(directory, name);
+    const info = await stat(filePath);
+    files[name] = {
+      bytes: info.size,
+      sha256: await sha256File(filePath),
+    };
   }
   return { directory: path.resolve(directory), files };
 }
@@ -76,7 +93,8 @@ async function main() {
   }
   const matches = await locateLektroScanSources(options.roots, { maxDepth: options.maxDepth });
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
+    hashAlgorithm: "sha256",
     requiredFiles: REQUIRED_LEKTRO_SCAN_FILES,
     searchedRoots: options.roots.map((value) => path.resolve(value)),
     maxDepth: options.maxDepth,

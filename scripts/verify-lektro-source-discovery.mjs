@@ -26,6 +26,13 @@ assert.deepEqual(Object.keys(matches[0].files).sort(), [...REQUIRED_LEKTRO_SCAN_
 assert.equal(matches[0].files["3DModel.obj"].bytes, 11);
 assert.equal(matches[0].files["3DModel.mtl"].bytes, 12);
 assert.equal(matches[0].files["3DModel.jpg"].bytes, 13);
+assert.equal(matches[0].files["3DModel.obj"].sha256, "71b6c1d53832f789a7f2435a7c629245fa3761ad8487775ebf4957330213a706");
+assert.equal(matches[0].files["3DModel.mtl"].sha256, "15ec7bf0b50732b49f8228e07d24365338f9e3ab994b00af08e5a3bffe55fd8b");
+assert.equal(matches[0].files["3DModel.jpg"].sha256, "dd46c3eebb1884ff3b5258c0a2fc9398e560a29e0780d4b53869b6254aa46a96");
+assert.match(matches[0].files["3DModel.obj"].sha256, /^[a-f0-9]{64}$/);
+
+const repeatedMatches = await locateLektroScanSources([root], { maxDepth: 4 });
+assert.deepEqual(repeatedMatches, matches, "file fingerprints must remain deterministic across repeated discovery");
 
 const shallowMatches = await locateLektroScanSources([root], { maxDepth: 1 });
 assert.equal(shallowMatches.length, 0, "maxDepth must bound recursive discovery");
