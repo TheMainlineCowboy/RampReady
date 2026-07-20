@@ -24,11 +24,23 @@ const strings = extractPrintableStrings(fixture);
 assert(strings.some((record) => record.value === 'Phoenix Sky Harbor Intl' && record.sourceByteOffset === 64));
 assert(strings.some((record) => record.value === 'KPHX' && record.sourceByteOffset === 96));
 
-const labels = extractGateLabelEvidence(strings);
+const labels = extractGateLabelEvidence(strings, fixture);
 assert.deepEqual(labels.map(({ label }) => label), ['A1', 'A10', 'B15', 'B15']);
 assert.deepEqual(labels.map(({ sourceByteOffset }) => sourceByteOffset), [129, 132, 136, 140]);
+assert.deepEqual(labels.map(({ sourceStringIndex }) => sourceStringIndex), [17, 20, 24, 28]);
+assert.deepEqual(labels.map(({ labelByteLength }) => labelByteLength), [2, 3, 3, 3]);
 assert(labels.every(({ status }) => status === 'candidate-label-only-not-linked-to-parking-record'));
+assert(labels.every(({ byteContext }) => byteContext?.hex.length === byteContext.byteLength * 2));
+assert(labels.every(({ byteContext }) => byteContext?.ascii.length === byteContext.byteLength));
+assert(labels.every(({ byteContext, sourceByteOffset }) =>
+  byteContext.startByteOffset + byteContext.labelOffsetWithinContext === sourceByteOffset));
+assert.equal(labels[0].byteContext.startByteOffset, 105);
+assert.equal(labels[0].byteContext.endByteOffsetExclusive, 155);
+assert.equal(labels[0].byteContext.ascii.slice(labels[0].byteContext.labelOffsetWithinContext, labels[0].byteContext.labelOffsetWithinContext + 2), 'A1');
 assert(!labels.some(({ label }) => label === 'A100'));
+
+const labelsWithoutBuffer = extractGateLabelEvidence(strings);
+assert(labelsWithoutBuffer.every(({ byteContext }) => byteContext === null));
 
 const summary = summarizeGateLabelEvidence(labels, ['B15', 'B14', 'A1']);
 assert.equal(summary.uniqueCandidateLabelCount, 3);
@@ -58,10 +70,11 @@ const expectedFixtureBlobSha = createHash('sha1')
 assert.equal(calculateGitBlobSha(fixture), expectedFixtureBlobSha);
 
 const evidence = buildEvidence(fixture, 'scenery/KPHX_ADEX.BGL');
-assert.equal(evidence.schemaVersion, 4);
+assert.equal(evidence.schemaVersion, 5);
 assert.equal(evidence.status, 'byte-evidence-only-not-decoded');
 assert.equal(evidence.airportIdentityEvidence.length, 2);
 assert.equal(evidence.candidateGateLabelEvidence.length, 4);
+assert(evidence.candidateGateLabelEvidence.every(({ byteContext }) => byteContext !== null));
 assert.equal(evidence.candidateGateLabelSummary.totalCandidateOccurrenceCount, 4);
 assert.equal(evidence.source.byteLength, fixture.length);
 assert.equal(evidence.source.sha256.length, 64);
@@ -69,6 +82,7 @@ assert.equal(evidence.source.actualGitBlobSha, expectedFixtureBlobSha);
 assert.equal(evidence.source.matchesExpectedGitBlobSha, false);
 assert(!('parkingRecords' in evidence));
 assert(!('gateManifest' in evidence));
+assert(evidence.interpretationLimits.some((rule) => rule.includes('bounded raw-byte context')));
 assert(evidence.interpretationLimits.some((rule) => rule.includes('not linked to coordinates')));
 assert(evidence.interpretationLimits.some((rule) => rule.includes('coverage reports printable evidence presence only')));
 assert(evidence.interpretationLimits.some((rule) => rule.includes('duplicate label occurrences remain preserved')));
@@ -76,4 +90,4 @@ assert(evidence.interpretationLimits.some((rule) => rule.includes('no gate coord
 
 assert.throws(() => readHeaderEvidence(Buffer.alloc(12)), /too small/);
 
-console.log('Terminal 4 ADEX byte, Git blob and gate-label coverage evidence extractor verified.');
+console.log('Terminal 4 ADEX byte, Git blob, gate-label coverage and bounded byte-context evidence extractor verified.');
