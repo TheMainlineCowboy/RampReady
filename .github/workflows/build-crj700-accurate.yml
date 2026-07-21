@@ -92,6 +92,7 @@ jobs:
           python tools/crj700/apply_visual_refinement_v3.py
           python tools/crj700/apply_tailcone_fit_v5.py
           python tools/crj700/apply_reference_alignment_v6.py
+          python tools/crj700/apply_fin_conformity_v7.py
 
       - name: Build and structurally validate the actual GLB
         run: |
