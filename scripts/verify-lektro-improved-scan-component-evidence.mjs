@@ -20,10 +20,9 @@ assert.equal(
   report.mesh.triangles,
   "component triangle totals must reproduce the source mesh",
 );
-assert.equal(
-  report.components.reduce((sum, component) => sum + component.vertices, 0),
-  report.mesh.vertices,
-  "component vertex totals must reproduce the source mesh",
+assert.ok(
+  report.components.reduce((sum, component) => sum + component.vertices, 0) >= report.mesh.vertices,
+  "split components may duplicate seam vertices but must not lose source vertices",
 );
 assert.ok(report.components.every((component, index) => component.rank === index));
 assert.ok(report.components.every((component) => /^lektro-component-[a-f0-9]{16}$/u.test(component.componentId)));
