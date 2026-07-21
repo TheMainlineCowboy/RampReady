@@ -89,6 +89,7 @@ jobs:
           path.write_text(source, encoding='utf-8')
           PY
           python tools/crj700/apply_livery_patch.py
+          python tools/crj700/apply_visual_refinement_v3.py
 
       - name: Build and structurally validate the actual GLB
         run: |
