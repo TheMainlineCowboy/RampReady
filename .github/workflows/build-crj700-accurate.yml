@@ -94,6 +94,7 @@ jobs:
           python tools/crj700/apply_reference_alignment_v6.py
           python tools/crj700/apply_fin_conformity_v7.py
           python tools/crj700/apply_embedded_tail_livery_v8.py
+          python tools/crj700/apply_uv_tail_livery_v9.py
 
       - name: Build and structurally validate the actual GLB
         run: |
