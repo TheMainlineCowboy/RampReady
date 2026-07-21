@@ -50,6 +50,35 @@ jobs:
           git clone --depth 1 https://github.com/YoRyan/FlightGear-CRJ700-family.git upstream-crj700
           git -C upstream-crj700 rev-parse HEAD
 
+      - name: Correct FlightGear XML-to-AC3D axis mapping
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tools/crj700/build_accurate_crj700.py')
+          source = path.read_text(encoding='utf-8')
+          source = source.replace(
+              'matrix[:3, :3] = [[cosine, -sine, 0], [sine, cosine, 0], [0, 0, 1]]',
+              'matrix[:3, :3] = [[cosine, 0, sine], [0, 1, 0], [-sine, 0, cosine]]'
+          )
+          source = source.replace(
+              'matrix[:3, :3] = np.array([[0, 1, 0], [0, 0, 1], [-1, 0, 0]], dtype=float)',
+              'matrix[:3, :3] = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]], dtype=float)'
+          )
+          source = source.replace(
+              'append_scene(assembled, scene_copy_with_transform(engine, translation(*offset) @ rotation_source_heading(heading), label))',
+              'append_scene(assembled, scene_copy_with_transform(engine, translation(offset[0], offset[2], offset[1]) @ rotation_source_heading(heading), label))'
+          )
+          source = source.replace(
+              'scene_copy_with_transform(nosegear, translation(-14.232, 0, -3.201), "NoseGear")',
+              'scene_copy_with_transform(nosegear, translation(-14.232, -3.201, 0), "NoseGear")'
+          )
+          source = source.replace(
+              'scene_copy_with_transform(maingear, translation(0.986, 0, -3.357), "MainGear")',
+              'scene_copy_with_transform(maingear, translation(0.986, -3.357, 0), "MainGear")'
+          )
+          path.write_text(source, encoding='utf-8')
+          PY
+
       - name: Build, validate, and render the final GLB
         run: |
           mkdir -p dist/crj700
