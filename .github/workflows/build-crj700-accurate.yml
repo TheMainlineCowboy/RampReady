@@ -90,6 +90,7 @@ jobs:
           PY
           python tools/crj700/apply_livery_patch.py
           python tools/crj700/apply_visual_refinement_v3.py
+          python tools/crj700/apply_tailcone_fit_v5.py
 
       - name: Build and structurally validate the actual GLB
         run: |
