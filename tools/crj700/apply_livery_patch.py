@@ -2,9 +2,9 @@
 """Apply deterministic livery corrections to the CRJ700 build source.
 
 The base builder is kept readable while this patch captures the exact fixes that
-must be applied before export: opaque-white texture factors, outward-facing decal
-normals, glTF-correct vertical UV orientation, lower fuselage title placement,
-and a swept full-fin American tail treatment.
+must be applied before export: visible texture factors, outward-facing decal
+normals, glTF-correct UV orientation, readable two-sided branding, lower title
+placement, and a swept full-fin American tail treatment.
 """
 from __future__ import annotations
 
@@ -15,7 +15,6 @@ path = Path("tools/crj700/build_accurate_crj700.py")
 source = path.read_text(encoding="utf-8")
 
 # Trimesh interprets integer [1,1,1,1] as 8-bit color and exports 1/255 opacity.
-# Force floating-point white so the livery is actually visible in Three.js.
 source = source.replace(
     "baseColorFactor=[1, 1, 1, 1]",
     "baseColorFactor=[1.0, 1.0, 1.0, 1.0]",
@@ -27,7 +26,7 @@ source = source.replace(
     "uv.append((1.0 - u if mirror_uv else u, v))",
 )
 
-# The curved fuselage decals were wound inward, so the visible side was the
+# The curved fuselage decals were wound inward, so their visible side was the
 # mirrored back face. Reverse the winding for outward normals.
 source = source.replace(
     "faces.extend([(a, c, d), (a, d, b)] if side > 0 else [(a, d, c), (a, b, d)])\n"
@@ -37,6 +36,62 @@ source = source.replace(
     "    material = PBRMaterial(name=name, baseColorTexture=texture, baseColorFactor=[1.0, 1.0, 1.0, 1.0],\n"
     "                           metallicFactor=0.05, roughnessFactor=0.34",
 )
+
+# Build separate readable artwork for each side. A whole-image mirror reverses
+# the letters; the port side instead needs normal lettering with the flight mark
+# moved to the forward/right end of the title.
+start = source.index("def create_wordmark_texture(")
+end = source.index("\n\ndef create_tail_texture", start)
+source = source[:start] + '''def _draw_flight_symbol(draw: ImageDraw.ImageDraw, x: float, y: float, scale: float = 1.0) -> None:
+    draw.polygon([(x + 47 * scale, y), (x + 192 * scale, y),
+                  (x + 114 * scale, y + 125 * scale), (x, y + 125 * scale)],
+                 fill=(28, 117, 181, 255))
+    draw.polygon([(x + 92 * scale, y + 145 * scale), (x + 240 * scale, y + 145 * scale),
+                  (x + 137 * scale, y + 310 * scale), (x + 2 * scale, y + 310 * scale)],
+                 fill=(188, 28, 43, 255))
+
+
+def create_wordmark_texture(path: Path, mirrored: bool = False) -> Image.Image:
+    image = Image.new("RGBA", (2400, 520), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    title_font = font(230)
+    if mirrored:
+        draw.text((35, 90), "American Eagle", font=title_font,
+                  fill=(65, 69, 73, 255), stroke_width=1)
+        _draw_flight_symbol(draw, 2110, 115, 1.0)
+    else:
+        _draw_flight_symbol(draw, 18, 115, 1.0)
+        draw.text((295, 90), "American Eagle", font=title_font,
+                  fill=(65, 69, 73, 255), stroke_width=1)
+    image.save(path)
+    return image
+
+
+def _draw_us_flag(draw: ImageDraw.ImageDraw, x: float, y: float, width: float, height: float) -> None:
+    draw.rectangle((x, y, x + width, y + height), fill=(245, 245, 245, 255))
+    stripe_height = height / 13
+    for index in range(13):
+        if index % 2 == 0:
+            draw.rectangle((x, y + index * stripe_height,
+                            x + width, y + (index + 1) * stripe_height),
+                           fill=(181, 30, 45, 255))
+    draw.rectangle((x, y, x + width * 0.42, y + stripe_height * 7),
+                   fill=(25, 55, 105, 255))
+
+
+def create_registration_texture(path: Path, mirrored: bool = False) -> Image.Image:
+    image = Image.new("RGBA", (1000, 240), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    reg_font = font(125)
+    if mirrored:
+        draw.text((35, 34), "N466AW", font=reg_font, fill=(62, 67, 72, 255))
+        _draw_us_flag(draw, 755, 62, 190, 108)
+    else:
+        _draw_us_flag(draw, 35, 62, 190, 108)
+        draw.text((270, 34), "N466AW", font=reg_font, fill=(62, 67, 72, 255))
+    image.save(path)
+    return image
+''' + source[end:]
 
 start = source.index("def create_tail_texture(")
 end = source.index("\n\ndef curved_decal_mesh", start)
@@ -73,7 +128,6 @@ source = source[:start] + '''def flat_tail_decal(texture: Image.Image, name: str
     for row in range(ny + 1):
         v = row / ny
         y = y_bottom + (y_top - y_bottom) * v
-        # The CRJ700 fin sweeps aft and narrows toward the cap.
         row_front = z_front - 3.05 * v
         row_rear = z_rear - 1.25 * v
         x = side * (x_offset * (1.0 - 0.18 * v) + 0.018)
@@ -119,4 +173,4 @@ source = source.replace(
 )
 
 path.write_text(source, encoding="utf-8")
-print("Applied visible, upright, outward-facing American Eagle livery corrections")
+print("Applied readable, visible, upright American Eagle livery corrections")
