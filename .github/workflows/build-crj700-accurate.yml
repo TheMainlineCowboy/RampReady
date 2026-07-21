@@ -60,7 +60,7 @@ jobs:
           git clone --depth 1 https://github.com/YoRyan/FlightGear-CRJ700-family.git upstream-crj700
           git -C upstream-crj700 rev-parse HEAD
 
-      - name: Correct source mapping and livery export factors
+      - name: Correct source mapping and livery geometry
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -86,12 +86,9 @@ jobs:
               'scene_copy_with_transform(maingear, translation(0.986, 0, -3.357), "MainGear")',
               'scene_copy_with_transform(maingear, translation(0.986, -3.357, 0), "MainGear")'
           )
-          source = source.replace(
-              'baseColorFactor=[1, 1, 1, 1]',
-              'baseColorFactor=[1.0, 1.0, 1.0, 1.0]'
-          )
           path.write_text(source, encoding='utf-8')
           PY
+          python tools/crj700/apply_livery_patch.py
 
       - name: Build and structurally validate the actual GLB
         run: |
