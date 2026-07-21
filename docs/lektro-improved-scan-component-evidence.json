@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "archiveSha256": "5956a8d5257d19ce876e9223f085270cd2e37bbfb5e5b6fe033eda094e9ae233",
+    "objSha256": "5fdb31888f697d7ef1dfacd9f02a9c5d14fe4659bebb89720560242b297beddb"
+  },
+  "mesh": {
+    "vertices": 63007,
+    "triangles": 126113,
+    "rawBounds": {
+      "min": [-0.921896, -0.214738, -0.754895],
+      "max": [0.893106, 0.126644, 0.54658],
+      "extents": [1.815002, 0.341382, 1.301475]
+    },
+    "connectedComponents": 10,
+    "watertight": false,
+    "eulerNumber": -23,
+    "bodyCount": 4
+  },
+  "components": [
+    {
+      "rank": 0,
+      "componentId": "lektro-component-8879bbe0c46ff888",
+      "vertices": 62893,
+      "triangles": 125848,
+      "triangleShare": 0.9978987098871647,
+      "bounds": {
+        "min": [-0.913105, -0.214738, -0.754895],
+        "max": [0.893106, 0.126644, 0.54658],
+        "extents": [1.806211, 0.341382, 1.301475]
+      },
+      "surfaceArea": 3.5953256853897626,
+      "watertight": true,
+      "disposition": "retain"
+    },
+    {
+      "rank": 1,
+      "componentId": "lektro-component-d7cadf3a14d2d710",
+      "vertices": 75,
+      "triangles": 146,
+      "triangleShare": 0.001157691911222475,
+      "bounds": {
+        "min": [-0.554165, -0.146022, -0.695432],
+        "max": [-0.498992, -0.114962, -0.658863],
+        "extents": [0.05517300000000003, 0.031060000000000018, 0.036569000000000074]
+      },
+      "surfaceArea": 0.001476448845648662,
+      "watertight": true,
+      "disposition": "review"
+    },
+    {
+      "rank": 2,
+      "componentId": "lektro-component-0663eda1767f6525",
+      "vertices": 29,
+      "triangles": 27,
+      "triangleShare": 0.0002140937096096358,
+      "bounds": {
+        "min": [-0.647799, -0.214654, -0.088299],
+        "max": [-0.533313, -0.214654, -0.071348],
+        "extents": [0.11448599999999998, 0.0, 0.016951000000000008]
+      },
+      "surfaceArea": 0.0009912705870000007,
+      "watertight": false,
+      "disposition": "review"
+    },
+    {
+      "rank": 3,
+      "componentId": "lektro-component-b2371687edb3ed77",
+      "vertices": 14,
+      "triangles": 24,
+      "triangleShare": 0.0001903055196530096,
+      "bounds": {
+        "min": [-0.920898, -0.214736, -0.468845],
+        "max": [-0.91208, -0.21444, -0.460204],
+        "extents": [0.008817999999999993, 0.00029600000000001847, 0.00864100000000001]
+      },
+      "surfaceArea": 0.00007317808698089639,
+      "watertight": true,
+      "disposition": "review"
+    },
+    {
+      "rank": 4,
+      "componentId": "lektro-component-008246bef1c82804",
+      "vertices": 13,
+      "triangles": 22,
+      "triangleShare": 0.00017444672634859214,
+      "bounds": {
+        "min": [-0.921896, -0.214654, -0.432676],
+        "max": [-0.913178, -0.214253, -0.422989],
+        "extents": [0.008718000000000004, 0.00040100000000001246, 0.009687000000000001]
+      },
+      "surfaceArea": 0.00011256735873154507,
+      "watertight": true,
+      "disposition": "review"
+    },
+    {
+      "rank": 5,
+      "componentId": "lektro-component-2dfdc1423d2c4299",
+      "vertices": 13,
+      "triangles": 22,
+      "triangleShare": 0.00017444672634859214,
+      "bounds": {
+        "min": [-0.91208, -0.214724, -0.464165],
+        "max": [-0.903132, -0.214148, -0.456055],
+        "extents": [0.008947999999999956, 0.0005759999999999932, 0.008110000000000006]
+      },
+      "surfaceArea": 0.00005419523349297361,
+      "watertight": true,
+      "disposition": "review"
+    },
+    {
+      "rank": 6,
+      "componentId": "lektro-component-a2ebdff843c25f60",
+      "vertices": 19,
+      "triangles": 17,
+      "triangleShare": 0.00013479974308754848,
+      "bounds": {
+        "min": [0.069557, -0.214654, 0.308786],
+        "max": [0.16164, -0.214654, 0.315097],
+        "extents": [0.09208300000000001, 0.0, 0.006311000000000011]
+      },
+      "surfaceArea": 0.0002911478600000007,
+      "watertight": false,
+      "disposition": "remove-candidate"
+    },
+    {
+      "rank": 7,
+      "componentId": "lektro-component-affcbdeb80203422",
+      "vertices": 6,
+      "triangles": 4,
+      "triangleShare": 0.000031717586608834934,
+      "bounds": {
+        "min": [-0.871979, -0.214654, -0.496561],
+        "max": [-0.865075, -0.214562, -0.488487],
+        "extents": [0.00690399999999991, 0.00009200000000000874, 0.00807399999999997]
+      },
+      "surfaceArea": 0.00003425021207870797,
+      "watertight": false,
+      "disposition": "remove-candidate"
+    },
+    {
+      "rank": 8,
+      "componentId": "lektro-component-fd311f240cc94307",
+      "vertices": 4,
+      "triangles": 2,
+      "triangleShare": 0.000015858793304417467,
+      "bounds": {
+        "min": [-0.916697, -0.214724, -0.464165],
+        "max": [-0.911181, -0.214586, -0.459737],
+        "extents": [0.005515999999999965, 0.00013799999999999923, 0.0044279999999999875]
+      },
+      "surfaceArea": 0.00001662368960826839,
+      "watertight": false,
+      "disposition": "remove-candidate"
+    },
+    {
+      "rank": 9,
+      "componentId": "lektro-component-fed532594bce6be9",
+      "vertices": 3,
+      "triangles": 1,
+      "triangleShare": 0.000007929396652208733,
+      "bounds": {
+        "min": [-0.696636, -0.214654, -0.262888],
+        "max": [-0.690579, -0.214654, -0.262737],
+        "extents": [0.006056999999999979, 0.0, 0.00015100000000001224]
+      },
+      "surfaceArea": 0.00000036513649999999816,
+      "watertight": false,
+      "disposition": "remove-candidate"
+    }
+  ],
+  "findings": [
+    "The dominant component contains 125848 of 126113 triangles (99.7899%), so the Lektro and most captured ground/background geometry are fused into one connected shell.",
+    "Nine disconnected fragments contain 265 triangles total and can be isolated for textured review before removal.",
+    "The dominant component reports watertight after component splitting, but the complete imported mesh is not watertight because several small planar fragments remain.",
+    "Rear-wall holes and the clipped lifting plate cannot be repaired safely by connected-component deletion; they require localized hard-surface reconstruction on the dominant shell."
+  ],
+  "nextRepairTargets": [
+    "generate textured orthographic renders of dominant shell",
+    "mark rear-wall hole boundary loops",
+    "mark clipped lifting-plate boundary and reference-photo dimensions",
+    "remove only confirmed disconnected debris",
+    "preserve untouched source and UVs"
+  ]
+}
