@@ -56,8 +56,8 @@ source = source[:start] + '''def create_wordmark_texture(path: Path, mirrored: b
     return image
 ''' + source[end:]
 
-# Six broad feather rows with a continuous swept center division. This eliminates
-# the saw-tooth white wedge and overly dense barcode appearance of the prior pass.
+# Six broad feather rows with a continuous swept center division. The alpha mask clips
+# every stripe to the real fin silhouette so no colored blades can float beyond its edges.
 start = source.index("def create_tail_texture(")
 end = source.index("\n\ndef curved_decal_mesh", start)
 source = source[:start] + '''def create_tail_texture(path: Path, mirrored: bool = False) -> Image.Image:
@@ -68,7 +68,6 @@ source = source[:start] + '''def create_tail_texture(path: Path, mirrored: bool 
     blue = (18, 68, 120, 255)
     dark_cap = (49, 51, 54, 255)
 
-    # Dark cap directly beneath the horizontal stabilizer.
     draw.polygon([(170, 62), (2420, 62), (2320, 238), (250, 350)], fill=dark_cap)
 
     centers = [360, 840, 1320, 1800, 2280, 2760]
@@ -90,19 +89,27 @@ source = source[:start] + '''def create_tail_texture(path: Path, mirrored: bool 
         right = width + 260.0
         red_edge = split - gap
         blue_edge = split + gap
-
         draw.polygon([
-            (left, band_y(top, left)),
-            (red_edge, band_y(top, red_edge)),
-            (red_edge, band_y(bottom, red_edge)),
-            (left, band_y(bottom, left)),
+            (left, band_y(top, left)), (red_edge, band_y(top, red_edge)),
+            (red_edge, band_y(bottom, red_edge)), (left, band_y(bottom, left)),
         ], fill=red)
         draw.polygon([
-            (blue_edge, band_y(top, blue_edge)),
-            (right, band_y(top, right)),
-            (right, band_y(bottom, right)),
-            (blue_edge, band_y(bottom, blue_edge)),
+            (blue_edge, band_y(top, blue_edge)), (right, band_y(top, right)),
+            (right, band_y(bottom, right)), (blue_edge, band_y(bottom, blue_edge)),
         ], fill=blue)
+
+    # UV-space silhouette of the swept CRJ700 fin: broad root, narrow cap, aft sweep.
+    # This is intentionally inset so no decal edge protrudes beyond the actual geometry.
+    fin_mask = Image.new("L", (width, height), 0)
+    ImageDraw.Draw(fin_mask).polygon([
+        (300, 2940), (2325, 2940), (2180, 2530),
+        (1980, 1960), (1770, 1390), (1540, 820),
+        (1290, 150), (720, 150), (640, 520),
+        (560, 980), (485, 1460), (420, 1980), (355, 2500),
+    ], fill=255)
+    clipped = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    clipped.paste(image, (0, 0), fin_mask)
+    image = clipped
 
     if mirrored:
         image = image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
@@ -110,8 +117,6 @@ source = source[:start] + '''def create_tail_texture(path: Path, mirrored: bool 
     return image
 ''' + source[end:]
 
-# Transparent silver gaps reveal the actual fin material instead of a flat opaque
-# billboard. Preserve a cutout material so the decal never hides the fin geometry.
 source = source.replace(
     'metallicFactor=0.12,\n                           roughnessFactor=0.25, alphaMode="OPAQUE", doubleSided=False',
     'metallicFactor=0.08,\n                           roughnessFactor=0.28, alphaMode="MASK", alphaCutoff=0.04, doubleSided=False',
@@ -124,25 +129,19 @@ source = source[:start] + '''def create_aft_sweep_texture(path: Path, mirrored: 
     image = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
     red = (197, 30, 46, 255)
-
-    # Broad upper root wedge, confined to the aft tailcone as in the references.
     draw.polygon([
         (760, 270), (1160, 220), (width, 58),
         (width, 292), (1480, 390), (680, 376)
     ], fill=red)
-    # One clean lower stripe; no duplicate rails or extension beyond the tail tip.
     draw.polygon([
         (120, 612), (width, 442), (width, 622), (80, 718)
     ], fill=red)
-
     if mirrored:
         image = image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     image.save(path)
     return image
 ''' + source[end:]
 
-# Tight curved placement keeps the aft sweep on the physical tailcone. The increased
-# height makes the upper wedge visible while the reduced length/radius removes rails.
 source = source.replace(
     "minimum[2] + 5.85, minimum[2] + 0.88,",
     "minimum[2] + 4.65, minimum[2] + 1.48,",
@@ -157,4 +156,4 @@ source = source.replace(
 )
 
 path.write_text(source, encoding="utf-8")
-print("Applied v4 visual refinement: continuous six-row tail and fuselage-hugging aft sweep")
+print("Applied v5 refinement: fin-clipped tail bands and fuselage-hugging aft sweep")
