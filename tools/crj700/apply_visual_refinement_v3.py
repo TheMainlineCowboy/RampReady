@@ -56,8 +56,9 @@ source = source[:start] + '''def create_wordmark_texture(path: Path, mirrored: b
     return image
 ''' + source[end:]
 
-# Six broad feather rows with a continuous swept center division. The alpha mask clips
-# every stripe to the real fin silhouette so no colored blades can float beyond its edges.
+# Six broad feather rows with a continuous swept center division. The alpha mask is
+# deliberately conservative: the previous pass still showed red/blue blades beyond
+# the physical leading and trailing edges in side and tail-close views.
 start = source.index("def create_tail_texture(")
 end = source.index("\n\ndef curved_decal_mesh", start)
 source = source[:start] + '''def create_tail_texture(path: Path, mirrored: bool = False) -> Image.Image:
@@ -68,14 +69,14 @@ source = source[:start] + '''def create_tail_texture(path: Path, mirrored: bool 
     blue = (18, 68, 120, 255)
     dark_cap = (49, 51, 54, 255)
 
-    draw.polygon([(170, 62), (2420, 62), (2320, 238), (250, 350)], fill=dark_cap)
+    draw.polygon([(720, 120), (1785, 120), (1710, 250), (790, 315)], fill=dark_cap)
 
-    centers = [360, 840, 1320, 1800, 2280, 2760]
-    thickness = 205
-    total_slant = 230
-    gap = 24
-    center_top = width * 0.455
-    center_bottom = width * 0.605
+    centers = [430, 875, 1320, 1765, 2210, 2655]
+    thickness = 180
+    total_slant = 190
+    gap = 30
+    center_top = width * 0.48
+    center_bottom = width * 0.57
 
     def band_y(base: float, x: float) -> float:
         return base - total_slant * (x / width - 0.5)
@@ -85,8 +86,8 @@ source = source[:start] + '''def create_tail_texture(path: Path, mirrored: bool 
         bottom = cy + thickness / 2
         fraction = cy / height
         split = center_top + (center_bottom - center_top) * fraction
-        left = -260.0
-        right = width + 260.0
+        left = -100.0
+        right = width + 100.0
         red_edge = split - gap
         blue_edge = split + gap
         draw.polygon([
@@ -98,14 +99,18 @@ source = source[:start] + '''def create_tail_texture(path: Path, mirrored: bool 
             (right, band_y(bottom, right)), (blue_edge, band_y(bottom, blue_edge)),
         ], fill=blue)
 
-    # UV-space silhouette of the swept CRJ700 fin: broad root, narrow cap, aft sweep.
-    # This is intentionally inset so no decal edge protrudes beyond the actual geometry.
+    # Tight UV silhouette measured from the actual rendered fin. It is narrower than
+    # the previous mask at every station so no livery pixels can project as floating
+    # horizontal blades beyond either edge of the vertical stabilizer.
     fin_mask = Image.new("L", (width, height), 0)
     ImageDraw.Draw(fin_mask).polygon([
-        (300, 2940), (2325, 2940), (2180, 2530),
-        (1980, 1960), (1770, 1390), (1540, 820),
-        (1290, 150), (720, 150), (640, 520),
-        (560, 980), (485, 1460), (420, 1980), (355, 2500),
+        (690, 2910), (1920, 2910),
+        (1840, 2600), (1760, 2280), (1680, 1960),
+        (1600, 1640), (1520, 1320), (1450, 1010),
+        (1390, 720), (1350, 430), (1325, 150),
+        (1015, 150), (970, 430), (925, 720),
+        (880, 1010), (835, 1320), (790, 1640),
+        (750, 1960), (720, 2280), (700, 2600),
     ], fill=255)
     clipped = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     clipped.paste(image, (0, 0), fin_mask)
@@ -156,4 +161,4 @@ source = source.replace(
 )
 
 path.write_text(source, encoding="utf-8")
-print("Applied v5 refinement: fin-clipped tail bands and fuselage-hugging aft sweep")
+print("Applied v6 refinement: conservative fin mask and contained tail bands")
