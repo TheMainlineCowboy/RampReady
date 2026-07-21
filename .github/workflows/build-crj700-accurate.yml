@@ -1,0 +1,67 @@
+name: Build accurate American Eagle CRJ700
+
+on:
+  push:
+    branches:
+      - asset/crj700-accurate-model
+    paths:
+      - tools/crj700/**
+      - .github/workflows/build-crj700-accurate.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-crj700:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out RampReady build source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install system rendering dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            git xvfb libgl1 libegl1 libxrender1 libxkbcommon-x11-0 \
+            libsm6 libxext6 fonts-dejavu-core fonts-liberation
+
+      - name: Install Python mesh and rendering stack
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            "numpy<2.3" pillow trimesh pyvista vtk scipy networkx shapely rtree pygltflib
+
+      - name: Fetch GPL CRJ700 source geometry
+        run: |
+          git clone --depth 1 https://github.com/YoRyan/FlightGear-CRJ700-family.git upstream-crj700
+          git -C upstream-crj700 rev-parse HEAD
+
+      - name: Build, validate, and render the final GLB
+        run: |
+          mkdir -p dist/crj700
+          xvfb-run -a python tools/crj700/build_accurate_crj700.py \
+            --source upstream-crj700 \
+            --output dist/crj700
+
+      - name: Show generated files
+        if: always()
+        run: |
+          find dist/crj700 -maxdepth 3 -type f -printf '%p %k KB\n' | sort || true
+
+      - name: Upload model and QA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: american-eagle-crj700-rampready-accurate
+          path: dist/crj700/
+          if-no-files-found: error
+          compression-level: 6
+          retention-days: 30
