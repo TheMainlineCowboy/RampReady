@@ -60,7 +60,7 @@ jobs:
           git clone --depth 1 https://github.com/YoRyan/FlightGear-CRJ700-family.git upstream-crj700
           git -C upstream-crj700 rev-parse HEAD
 
-      - name: Correct FlightGear XML-to-AC3D axis mapping
+      - name: Correct source mapping and livery export factors
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -85,6 +85,10 @@ jobs:
           source = source.replace(
               'scene_copy_with_transform(maingear, translation(0.986, 0, -3.357), "MainGear")',
               'scene_copy_with_transform(maingear, translation(0.986, -3.357, 0), "MainGear")'
+          )
+          source = source.replace(
+              'baseColorFactor=[1, 1, 1, 1]',
+              'baseColorFactor=[1.0, 1.0, 1.0, 1.0]'
           )
           path.write_text(source, encoding='utf-8')
           PY
