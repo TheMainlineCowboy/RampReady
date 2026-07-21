@@ -97,21 +97,29 @@ jobs:
             --output dist/crj700
 
       - name: Render the actual exported GLB through Three.js and verify livery visibility
+        id: threejs_qa
+        continue-on-error: true
         run: |
           node tools/crj700/render_threejs_qa.mjs dist/crj700
 
       - name: Combine true Three.js QA views
+        if: always()
         run: |
           python - <<'PY'
           from pathlib import Path
           from PIL import Image, ImageDraw, ImageFont
           root = Path('dist/crj700')
           views = ['front-left','front-right','left-side','right-side','rear','top-oblique','ramp-close']
-          images = [Image.open(root / f'threejs_{view}.png').convert('RGB') for view in views]
-          width, height = images[0].size
-          canvas = Image.new('RGB', (width * 2, height * 4), (238, 241, 244))
+          existing = [(view, root / f'threejs_{view}.png') for view in views if (root / f'threejs_{view}.png').exists()]
+          if not existing:
+              print('No Three.js screenshots were produced; preserving other diagnostics only.')
+              raise SystemExit(0)
+          images = [(view, Image.open(path).convert('RGB')) for view, path in existing]
+          width, height = images[0][1].size
+          rows = (len(images) + 1) // 2
+          canvas = Image.new('RGB', (width * 2, height * rows), (238, 241, 244))
           font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 28)
-          for index, (view, image) in enumerate(zip(views, images)):
+          for index, (view, image) in enumerate(images):
               x, y = (index % 2) * width, (index // 2) * height
               canvas.paste(image, (x, y))
               draw = ImageDraw.Draw(canvas)
@@ -127,6 +135,7 @@ jobs:
           find dist/crj700 -maxdepth 3 -type f -printf '%p %k KB\n' | sort || true
 
       - name: Upload model and QA artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: american-eagle-crj700-rampready-accurate
@@ -134,3 +143,11 @@ jobs:
           if-no-files-found: error
           compression-level: 6
           retention-days: 30
+
+      - name: Enforce Three.js visual QA gate
+        if: always()
+        run: |
+          if [ "${{ steps.threejs_qa.outcome }}" != "success" ]; then
+            echo "Three.js visual QA failed. Artifact was preserved for inspection."
+            exit 1
+          fi
