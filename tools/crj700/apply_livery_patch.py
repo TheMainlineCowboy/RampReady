@@ -3,7 +3,7 @@
 
 This patch enforces visible textures, outward-facing decals, readable two-sided
 branding, a slender modern American flight symbol, accurate title placement,
-and the split blue/red feather treatment visible in the supplied reference set.
+and the blue-left/red-right striped tail visible in the supplied reference set.
 """
 from __future__ import annotations
 
@@ -29,53 +29,42 @@ source = source.replace(
     "                           metallicFactor=0.05, roughnessFactor=0.34",
 )
 
-# Create readable artwork independently for each side. The mark is deliberately
-# narrow and swept, matching the reference aircraft rather than a block icon.
+# Draw the modern American flight symbol as two slender swept feathers with a
+# transparent white channel between them. This avoids the prior chunky block icon.
 start = source.index("def create_wordmark_texture(")
 end = source.index("\n\ndef create_tail_texture", start)
 source = source[:start] + '''def _draw_flight_symbol(draw: ImageDraw.ImageDraw, x: float, y: float, scale: float = 1.0) -> None:
-    blue = (23, 111, 176, 255)
+    blue = (17, 103, 166, 255)
     red = (194, 31, 47, 255)
-    # Upper blue feather: narrow leading edge, swept shoulder and pointed tail.
+    # Upper feather: slim leading edge, broad swept shoulder, pointed trailing tip.
     draw.polygon([
-        (x + 72 * scale, y + 8 * scale),
-        (x + 196 * scale, y + 8 * scale),
-        (x + 143 * scale, y + 65 * scale),
-        (x + 82 * scale, y + 118 * scale),
-        (x + 18 * scale, y + 118 * scale),
+        (x + 54 * scale, y + 6 * scale),
+        (x + 201 * scale, y + 6 * scale),
+        (x + 157 * scale, y + 48 * scale),
+        (x + 102 * scale, y + 98 * scale),
+        (x + 18 * scale, y + 98 * scale),
     ], fill=blue)
-    # Lower red feather with a larger downward sweep.
+    # Lower feather sits below with a clean open channel rather than a painted notch.
     draw.polygon([
-        (x + 93 * scale, y + 154 * scale),
-        (x + 225 * scale, y + 154 * scale),
-        (x + 163 * scale, y + 221 * scale),
-        (x + 91 * scale, y + 307 * scale),
-        (x + 15 * scale, y + 307 * scale),
+        (x + 76 * scale, y + 136 * scale),
+        (x + 224 * scale, y + 136 * scale),
+        (x + 171 * scale, y + 190 * scale),
+        (x + 112 * scale, y + 272 * scale),
+        (x + 15 * scale, y + 272 * scale),
     ], fill=red)
-    # Crisp white negative-space eagle channel between the two feathers.
-    draw.polygon([
-        (x + 83 * scale, y + 118 * scale),
-        (x + 154 * scale, y + 65 * scale),
-        (x + 132 * scale, y + 126 * scale),
-        (x + 198 * scale, y + 126 * scale),
-        (x + 150 * scale, y + 160 * scale),
-        (x + 90 * scale, y + 160 * scale),
-        (x + 39 * scale, y + 202 * scale),
-        (x + 67 * scale, y + 143 * scale),
-    ], fill=(255, 255, 255, 255))
 
 
 def create_wordmark_texture(path: Path, mirrored: bool = False) -> Image.Image:
-    image = Image.new("RGBA", (2700, 520), (0, 0, 0, 0))
+    image = Image.new("RGBA", (2800, 520), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
     title_font = font(224)
     if mirrored:
         draw.text((30, 92), "American Eagle", font=title_font,
                   fill=(67, 70, 73, 255), stroke_width=1)
-        _draw_flight_symbol(draw, 2370, 104, 1.0)
+        _draw_flight_symbol(draw, 2450, 112, 0.96)
     else:
-        _draw_flight_symbol(draw, 22, 104, 1.0)
-        draw.text((286, 92), "American Eagle", font=title_font,
+        _draw_flight_symbol(draw, 22, 112, 0.96)
+        draw.text((270, 92), "American Eagle", font=title_font,
                   fill=(67, 70, 73, 255), stroke_width=1)
     image.save(path)
     return image
@@ -107,45 +96,47 @@ def create_registration_texture(path: Path, mirrored: bool = False) -> Image.Ima
     return image
 ''' + source[end:]
 
-# Reference tail: silver base, blue feathers on the forward half, red feathers
-# on the aft half, separated by a narrow irregular white channel. The bands are
-# numerous, slim and diagonal rather than full-width alternating stripes.
+# Reference tail: narrow diagonal bands spanning each half of the fin. Blue bands
+# occupy the forward half and red bands the aft half; silver bands alternate between
+# them. The center division is narrow, not the oversized white wedge from the prior pass.
 start = source.index("def create_tail_texture(")
 end = source.index("\n\ndef curved_decal_mesh", start)
 source = source[:start] + '''def create_tail_texture(path: Path, mirrored: bool = False) -> Image.Image:
-    width, height = 2200, 2600
-    image = Image.new("RGBA", (width, height), (232, 234, 236, 255))
+    width, height = 2400, 2800
+    silver = (224, 227, 230, 255)
+    white = (244, 245, 246, 255)
+    blue = (22, 74, 126, 255)
+    red = (194, 31, 47, 255)
+    image = Image.new("RGBA", (width, height), silver)
     draw = ImageDraw.Draw(image)
-    blue = (20, 69, 120, 255)
-    red = (192, 31, 46, 255)
-    white = (247, 248, 249, 255)
-    center = width * 0.515
-    band_pitch = 178
-    band_thickness = 92
-    slant = 270
+    center = width * 0.505
+    pitch = 218
+    thickness = 112
+    slant = 255
 
-    for index in range(16):
-        y0 = index * band_pitch - 130
-        y1 = y0 + band_thickness
-        # Forward blue feather segments.
+    # Alternate colored and bright-silver bands, matching the striped rhythm in the
+    # supplied side and rear references. Colored bands are continuous up each half.
+    for index in range(14):
+        y0 = index * pitch - 165
+        y1 = y0 + thickness
+        shift = 18 * (index % 2)
         draw.polygon([
-            (-260, y0 + slant),
-            (center + 36, y0 - 10),
-            (center - 12, y1 - 10),
-            (-260, y1 + slant),
+            (-300, y0 + slant + shift),
+            (center + 18, y0 - 8 + shift),
+            (center + 18, y1 - 8 + shift),
+            (-300, y1 + slant + shift),
         ], fill=blue)
-        # Aft red feather segments.
         draw.polygon([
-            (center + 8, y0 - 10),
-            (width + 280, y0 - slant),
-            (width + 280, y1 - slant),
-            (center + 62, y1 - 10),
+            (center - 18, y0 - 8 + shift),
+            (width + 300, y0 - slant + shift),
+            (width + 300, y1 - slant + shift),
+            (center - 18, y1 - 8 + shift),
         ], fill=red)
 
-    # Slightly swept white separator/eagle channel.
+    # Narrow swept white separator down the fin center.
     draw.polygon([
-        (center - 34, -100), (center + 96, -100),
-        (center + 30, height + 100), (center - 122, height + 100)
+        (center - 12, -100), (center + 20, -100),
+        (center + 8, height + 100), (center - 30, height + 100)
     ], fill=white)
 
     if mirrored:
@@ -157,8 +148,8 @@ source = source[:start] + '''def create_tail_texture(path: Path, mirrored: bool 
 start = source.index("def flat_tail_decal(")
 end = source.index("\n\ndef add_livery", start)
 source = source[:start] + '''def flat_tail_decal(texture: Image.Image, name: str, side: int, z_front: float, z_rear: float,
-                      y_bottom: float, y_top: float, x_offset: float, mirror_uv: bool) -> trimesh.Trimesh:
-    nz, ny = 34, 42
+                       y_bottom: float, y_top: float, x_offset: float, mirror_uv: bool) -> trimesh.Trimesh:
+    nz, ny = 40, 48
     vertices, uv = [], []
     for row in range(ny + 1):
         v = row / ny
@@ -179,7 +170,7 @@ source = source[:start] + '''def flat_tail_decal(texture: Image.Image, name: str
             faces.extend([(a, d, c), (a, b, d)] if side > 0 else [(a, c, d), (a, d, b)])
     material = PBRMaterial(name=name, baseColorTexture=texture,
                            baseColorFactor=[1.0, 1.0, 1.0, 1.0],
-                           metallicFactor=0.08, roughnessFactor=0.29,
+                           metallicFactor=0.10, roughnessFactor=0.27,
                            alphaMode="OPAQUE", doubleSided=False)
     mesh = trimesh.Trimesh(vertices=np.asarray(vertices), faces=np.asarray(faces), process=False)
     mesh.visual = TextureVisuals(uv=np.asarray(uv), material=material)
@@ -188,15 +179,15 @@ source = source[:start] + '''def flat_tail_decal(texture: Image.Image, name: str
 
 source = source.replace(
     "title_z_nose, title_z_tail = maximum[2] - 5.0, maximum[2] - 13.0",
-    "title_z_nose, title_z_tail = maximum[2] - 4.20, maximum[2] - 13.55",
+    "title_z_nose, title_z_tail = maximum[2] - 4.15, maximum[2] - 13.65",
 )
 source = source.replace(
     "center_y + 0.12, radius_x, 1.00, mirror_uv=mirror_uv",
-    "center_y - 0.64, radius_x, 0.88, mirror_uv=mirror_uv",
+    "center_y - 0.62, radius_x, 0.86, mirror_uv=mirror_uv",
 )
 source = source.replace(
     "center_y + 0.05, radius_x, 0.42, 24, 8, mirror_uv=mirror_uv",
-    "center_y - 0.50, radius_x, 0.33, 24, 8, mirror_uv=mirror_uv",
+    "center_y - 0.50, radius_x, 0.32, 24, 8, mirror_uv=mirror_uv",
 )
 source = source.replace(
     "mesh = flat_tail_decal(texture, f\"Tail_Livery_{label}\", side, minimum[2] + 0.10,\n"
@@ -208,4 +199,4 @@ source = source.replace(
 )
 
 path.write_text(source, encoding="utf-8")
-print("Applied reference-matched American symbol and split feather tail livery")
+print("Applied refined American symbol and blue-left/red-right tail bands")
