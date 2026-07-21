@@ -7,6 +7,12 @@ on:
     paths:
       - tools/crj700/**
       - .github/workflows/build-crj700-accurate.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - tools/crj700/**
+      - .github/workflows/build-crj700-accurate.yml
   workflow_dispatch:
 
 permissions:
