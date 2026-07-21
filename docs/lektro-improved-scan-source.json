@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "sourceRole": "preferred-high-detail-lektro-reference",
+  "supersedes": "earlier rough KIRI scan where geometry quality is better",
+  "archive": {
+    "filename": "b2ec109e708a44108192adc455e77be6.zip",
+    "sizeBytes": 6928332,
+    "sha256": "5956a8d5257d19ce876e9223f085270cd2e37bbfb5e5b6fe033eda094e9ae233"
+  },
+  "files": {
+    "3DModel.obj": {
+      "sizeBytes": 14425349,
+      "sha256": "5fdb31888f697d7ef1dfacd9f02a9c5d14fe4659bebb89720560242b297beddb"
+    },
+    "3DModel.mtl": {
+      "sizeBytes": 217,
+      "sha256": "b958e8dc559ea9f83ed298ec647bd721d532e32b130fe7634ec6c3f402d9732c"
+    },
+    "3DModel.jpg": {
+      "sizeBytes": 2832027,
+      "sha256": "d3fc03c8d24eb0a6c8feb34359a738134d62434981a4753253de9b3d5b43e7da",
+      "width": 4096,
+      "height": 4096,
+      "colorMode": "RGB"
+    }
+  },
+  "measuredGeometry": {
+    "vertices": 63007,
+    "triangles": 126113,
+    "textureCoordinates": 68783,
+    "normals": 157840,
+    "rawMinimum": [-0.921896, -0.214738, -0.754895],
+    "rawMaximum": [0.893106, 0.126644, 0.54658],
+    "rawBounds": [1.815002, 0.341382, 1.301475],
+    "units": "unknown-source-model-units"
+  },
+  "knownDefects": [
+    "two holes in the rear wall",
+    "partially clipped lifting plate",
+    "ground/background scan geometry",
+    "floating fragments and ragged boundary triangles",
+    "thin or broken wheel-well, seat-back, body-edge, underside, and hidden surfaces",
+    "baked lighting and blurred or missing texture regions",
+    "unknown physical scale and source orientation"
+  ],
+  "repairPriorities": [
+    "preserve untouched source package and fingerprints",
+    "remove ground/background and disconnected debris",
+    "close rear-wall holes with clean hard-surface geometry",
+    "rebuild lifting plate and nose-wheel capture hardware from reference photos",
+    "establish physical scale, orientation, wheel-ground plane, and component pivots",
+    "separate body, steering wheels, lift assembly, and cradle/capture hardware",
+    "create collision and physics proxies",
+    "retopologize and generate browser/VR LODs",
+    "convert verified repaired asset to GLB and validate in Three.js"
+  ],
+  "runtimeRule": "Do not replace the functional procedural tug until the improved scan-derived GLB passes visual, clearance, pivot, wheel-contact, towing, production-build, and live-site verification."
+}
