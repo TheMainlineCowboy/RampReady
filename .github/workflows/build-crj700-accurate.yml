@@ -21,7 +21,7 @@ permissions:
 jobs:
   build-crj700:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Check out RampReady build source
@@ -31,6 +31,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Set up Node for real Three.js QA
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
       - name: Install system rendering dependencies
         run: |
@@ -44,6 +49,11 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install \
             "numpy<2.3" pillow trimesh pyvista vtk scipy networkx shapely rtree pygltflib
+
+      - name: Install Three.js browser QA stack
+        run: |
+          npm install --no-save --no-package-lock three@0.178.0 playwright@1.54.1
+          npx playwright install --with-deps chromium
 
       - name: Fetch GPL CRJ700 source geometry
         run: |
@@ -79,12 +89,37 @@ jobs:
           path.write_text(source, encoding='utf-8')
           PY
 
-      - name: Build, validate, and render the final GLB
+      - name: Build and structurally validate the actual GLB
         run: |
           mkdir -p dist/crj700
           xvfb-run -a python tools/crj700/build_accurate_crj700.py \
             --source upstream-crj700 \
             --output dist/crj700
+
+      - name: Render the actual exported GLB through Three.js and verify livery visibility
+        run: |
+          node tools/crj700/render_threejs_qa.mjs dist/crj700
+
+      - name: Combine true Three.js QA views
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw, ImageFont
+          root = Path('dist/crj700')
+          views = ['front-left','front-right','left-side','right-side','rear','top-oblique','ramp-close']
+          images = [Image.open(root / f'threejs_{view}.png').convert('RGB') for view in views]
+          width, height = images[0].size
+          canvas = Image.new('RGB', (width * 2, height * 4), (238, 241, 244))
+          font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 28)
+          for index, (view, image) in enumerate(zip(views, images)):
+              x, y = (index % 2) * width, (index // 2) * height
+              canvas.paste(image, (x, y))
+              draw = ImageDraw.Draw(canvas)
+              draw.rounded_rectangle((x + 18, y + 16, x + 310, y + 62), radius=10,
+                                     fill=(255, 255, 255), outline=(150, 158, 166), width=2)
+              draw.text((x + 34, y + 24), view.replace('-', ' ').title(), font=font, fill=(35, 40, 46))
+          canvas.save(root / 'american_eagle_crj700_actual_threejs_QA_views.png', quality=95)
+          PY
 
       - name: Show generated files
         if: always()
