@@ -52,6 +52,7 @@ camera.position.fromArray(selected.p);camera.lookAt(...selected.t);
 if(selected.floor===false){floor.visible=false;grid.visible=false;}
 document.getElementById('status').textContent=label.replaceAll('-',' ');
 const loader=new GLTFLoader();
+const liveryPattern=/American_Eagle_Title|Registration|Aft_Sweep|Vstab|Rudder_Default/;
 loader.load('/${modelRelative}',gltf=>{
  const model=gltf.scene;scene.add(model);const livery=[];const materials=[];
  model.traverse(o=>{
@@ -60,15 +61,13 @@ loader.load('/${modelRelative}',gltf=>{
   for(const m of ms){
    if(!m)continue;
    if(m.map){m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=8;m.map.needsUpdate=true;}
-   if(/American_Eagle_Title|Registration|Tail_Livery|Aft_Sweep/.test(o.name)){
-    m.alphaTest=Math.max(m.alphaTest||0,0.015);m.depthWrite=true;m.side=THREE.DoubleSide;m.needsUpdate=true;
-   }
+   if(liveryPattern.test(o.name)){m.alphaTest=Math.max(m.alphaTest||0,0.015);m.depthWrite=true;m.side=THREE.DoubleSide;m.needsUpdate=true;}
    materials.push({object:o.name,material:m.name||'',hasMap:!!m.map,transparent:!!m.transparent,alphaTest:m.alphaTest||0});
   }
-  if(/American_Eagle_Title|Registration|Tail_Livery|Aft_Sweep/.test(o.name))livery.push(o.name);
+  if(liveryPattern.test(o.name))livery.push(o.name);
  });
  const box=new THREE.Box3().setFromObject(model);const size=box.getSize(new THREE.Vector3());
- window.__QA_REPORT__={view:label,liveryNodes:livery,materials:materials.filter(x=>/American_Eagle_Title|Registration|Tail_Livery|Aft_Sweep/.test(x.object)),dimensions:{x:size.x,y:size.y,z:size.z}};
+ window.__QA_REPORT__={view:label,liveryNodes:livery,materials:materials.filter(x=>liveryPattern.test(x.object)),dimensions:{x:size.x,y:size.y,z:size.z}};
  renderer.render(scene,camera);renderer.getContext().finish();
  const ctx=document.createElement('canvas').getContext('2d');ctx.canvas.width=1200;ctx.canvas.height=800;ctx.drawImage(canvas,0,0);
  const data=ctx.getImageData(0,0,1200,800).data;let red=0,blue=0,dark=0;
@@ -99,10 +98,12 @@ const mapped=reports[0].materials.filter(m=>m.hasMap).length;
 const maxRed=Math.max(...reports.map(r=>r.pixelEvidence.red));
 const maxBlue=Math.max(...reports.map(r=>r.pixelEvidence.blue));
 const failures=[];
-for(const required of ['American_Eagle_Title_Right','American_Eagle_Title_Left','Registration_Right','Registration_Left','Tail_Livery_Right','Tail_Livery_Left','Aft_Sweep_Right','Aft_Sweep_Left'])if(!liveryNames.has(required))failures.push(`missing ${required}`);
+for(const required of ['American_Eagle_Title_Right','American_Eagle_Title_Left','Registration_Right','Registration_Left','Aft_Sweep_Right','Aft_Sweep_Left'])if(!liveryNames.has(required))failures.push(`missing ${required}`);
+const embeddedTail=[...liveryNames].filter(name=>/Vstab|Rudder_Default/.test(name));
+if(embeddedTail.length<2)failures.push(`only ${embeddedTail.length}/2 embedded tail geometry nodes found`);
 if(mapped<8)failures.push(`only ${mapped}/8 livery materials have texture maps`);
 if(maxRed<500||maxBlue<500)failures.push(`insufficient visible livery color evidence red=${maxRed} blue=${maxBlue}`);
-const summary={passed:failures.length===0,failures,maxRed,maxBlue,reports};
+const summary={passed:failures.length===0,failures,maxRed,maxBlue,embeddedTail,reports};
 fs.writeFileSync(path.join(outputDir,'threejs_livery_QA.json'),JSON.stringify(summary,null,2));
 if(failures.length)throw new Error(`Three.js livery QA failed: ${failures.join('; ')}`);
 console.log(`Three.js livery QA passed. Visible pixels red=${maxRed}, blue=${maxBlue}; mapped livery materials=${mapped}/8`);
