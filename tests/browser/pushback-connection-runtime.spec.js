@@ -1,0 +1,85 @@
+import { expect, test } from "@playwright/test";
+
+test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/", { waitUntil: "networkidle" });
+
+  await expect(page.locator("canvas.trainerCanvas")).toBeVisible();
+  await expect(page.locator(".rr-metrics")).toContainText("Connection");
+  await expect(page.locator(".rr-metrics")).toContainText("approach");
+
+  const result = await page.evaluate(async () => {
+    const connection = await import("/src/simulation/noseGearConnection.js");
+    const dynamics = await import("/src/simulation/pushbackDynamics.js");
+    const aligned = { distance: 0.18, lateral: 0.04, heading: 0.01, speed: 0, fromFront: true };
+    const phases = [];
+    let state = connection.createConnectionState();
+
+    state = connection.stepConnection(state, { metrics: aligned, speed: 0 }, 1 / 60);
+    phases.push(state.phase);
+    state = connection.requestCapture(state, aligned);
+    phases.push(state.phase);
+    for (let i = 0; i < 90; i += 1) state = connection.stepConnection(state, { metrics: aligned, speed: 0 }, 1 / 60);
+    phases.push(state.phase);
+    state = connection.beginTow(state);
+    phases.push(state.phase);
+
+    let motion = dynamics.createPushbackState();
+    for (let i = 0; i < 360; i += 1) {
+      motion = dynamics.stepPushbackDynamics(motion, {
+        connected: true,
+        throttle: 0.65,
+        direction: 1,
+        steer: i > 120 ? 0.45 : 0,
+        brake: false,
+        cradleOffset: 3.45,
+      }, 1 / 60);
+    }
+
+    for (let i = 0; i < 180; i += 1) {
+      motion = dynamics.stepPushbackDynamics(motion, {
+        connected: true,
+        throttle: 0,
+        direction: 1,
+        steer: 0,
+        brake: true,
+        cradleOffset: 3.45,
+      }, 1 / 60);
+    }
+
+    state = connection.requestLower(state, motion.speed, motion.articulation);
+    phases.push(state.phase);
+    for (let i = 0; i < 90; i += 1) state = connection.stepConnection(state, { speed: 0 }, 1 / 60);
+    phases.push(state.phase);
+
+    state = connection.stepConnection(state, { speed: 0, clearDistance: 3.45 }, 1 / 60);
+    const baselinePhase = state.phase;
+    state = connection.stepConnection(state, { speed: 0.4, clearDistance: 2.2 }, 1 / 60);
+    const unsafePhase = state.phase;
+    const unsafeReason = state.reason;
+    state = connection.stepConnection(state, { speed: 0.4, clearDistance: 5.75 }, 1 / 60);
+    phases.push(state.phase);
+
+    return {
+      phases,
+      baselinePhase,
+      unsafePhase,
+      unsafeReason,
+      speedAfterBrake: motion.speed,
+      articulation: motion.articulation,
+      tugYaw: motion.tugYaw,
+      aircraftYaw: motion.aircraftYaw,
+    };
+  });
+
+  expect(result.phases).toEqual(["aligned", "capturing", "secured", "towing", "lowering", "released", "clear"]);
+  expect(result.baselinePhase).toBe("released");
+  expect(result.unsafePhase).toBe("released");
+  expect(result.unsafeReason).toContain("Unsafe direction");
+  expect(Math.abs(result.speedAfterBrake)).toBeLessThan(0.015);
+  expect(Math.abs(result.aircraftYaw)).toBeLessThan(Math.abs(result.tugYaw));
+  expect(Math.abs(result.articulation)).toBeLessThanOrEqual(65 * Math.PI / 180);
+
+  await page.screenshot({ path: "test-results/pushback-connection-runtime.png", fullPage: true });
+});
