@@ -104,6 +104,7 @@ jobs:
           python tools/crj700/apply_reference_tail_v16.py
           python tools/crj700/apply_reference_tail_v17.py
           python tools/crj700/apply_tail_flag_v18.py
+          python tools/crj700/apply_tail_flag_v19.py
 
       - name: Build and structurally validate the actual GLB
         run: |
