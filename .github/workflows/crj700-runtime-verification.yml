@@ -39,8 +39,8 @@ jobs:
           npm install --no-save @playwright/test@1.52.0
           npx playwright install --with-deps chromium
 
-      - name: Verify CRJ700 in a real browser runtime
-        run: npx playwright test tests/browser/crj700-runtime.spec.js
+      - name: Verify aircraft and pushback lifecycle in a real browser runtime
+        run: npx playwright test tests/browser/crj700-runtime.spec.js tests/browser/pushback-connection-runtime.spec.js
 
       - name: Upload runtime evidence
         if: always()
