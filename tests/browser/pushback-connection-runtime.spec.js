@@ -10,8 +10,9 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
   await expect(page.locator(".rr-metrics")).toContainText("approach");
 
   const result = await page.evaluate(async () => {
-    const connection = await import("/src/simulation/noseGearConnection.js");
-    const dynamics = await import("/src/simulation/pushbackDynamics.js");
+    const moduleUrl = (path) => new URL(path, document.baseURI).href;
+    const connection = await import(moduleUrl("src/simulation/noseGearConnection.js"));
+    const dynamics = await import(moduleUrl("src/simulation/pushbackDynamics.js"));
     const aligned = { distance: 0.18, lateral: 0.04, heading: 0.01, speed: 0, fromFront: true };
     const phases = [];
     let state = connection.createConnectionState();
