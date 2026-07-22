@@ -114,8 +114,10 @@ export function stepConnection(state, input = {}, dt = 1 / 60, limits = CONNECTI
   }
 
   if (state.phase === CONNECTION_PHASES.RELEASED) {
-    const separation = Math.abs(finite(input.clearDistance));
-    if (!Number.isFinite(state.releaseBaselineDistance)) {
+    const rawSeparation = input.clearDistance;
+    if (!Number.isFinite(rawSeparation)) return state;
+    const separation = Math.abs(rawSeparation);
+    if (state.releaseBaselineDistance == null || !Number.isFinite(state.releaseBaselineDistance)) {
       return {
         ...state,
         releaseBaselineDistance: separation,
