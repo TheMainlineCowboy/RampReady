@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "archiveName": "Standup Pushback GLB.zip",
+    "modelName": "Aircraft_Tug.glb",
+    "modelBytes": 26243284,
+    "sha256": "6f2e9da495e407cb95ad677a9110b1767139fbc69e2e9e62b4bcd059aece5504"
+  },
+  "inspection": {
+    "meshPrimitives": 7,
+    "retainedTugPrimitives": 4,
+    "removedDetachedPrimitives": 3,
+    "retainedRawBounds": {
+      "min": [-3.61415005, -0.132282, -2.3787601],
+      "max": [3.46634603, 8.22810364, 20.54867744]
+    },
+    "detachedAssembly": "polySurface487_dash_handle",
+    "embeddedTextures": ["tug_tow.tga", "tug01.tga", "tug_NRM.png", "tug_SPEC.png"]
+  },
+  "normalization": {
+    "targetLengthMeters": 4.5854875,
+    "targetWidthMeters": 1.4160992,
+    "targetHeightMeters": 1.6720771,
+    "capturePlaneZ": 3.45,
+    "groundPlaneY": 0,
+    "orientation": "Y-up, capture end toward +Z",
+    "requiredAnchors": [
+      "RR_CAPTURE_ANCHOR",
+      "RR_OPERATOR_EYE",
+      "RR_OPERATOR_LOOK",
+      "RR_CRADLE_LIFT",
+      "RR_STEER_LEFT",
+      "RR_STEER_RIGHT"
+    ]
+  },
+  "releaseGate": {
+    "runtimeReplacementAllowed": false,
+    "requirements": [
+      "Run the deterministic GLB normalizer against the exact source hash",
+      "Commit or otherwise materialize the normalized GLB through the approved asset path",
+      "Inspect left, right, front, rear, operator, and cradle-close browser renders",
+      "Preserve the verified tug rig anchors and pushback lifecycle",
+      "Pass full verification, production build, and Playwright pushback runtime"
+    ]
+  }
+}
