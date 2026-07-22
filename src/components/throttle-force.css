@@ -1,72 +1,9 @@
 .rr-shell .rr-throttle {
-  background: rgba(10, 13, 20, 0.92);
-  box-shadow: inset 0 0 0 2px rgba(244, 176, 0, 0.32), 0 18px 60px rgba(0,0,0,0.45);
+  background: rgba(10, 13, 20, 0.9);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), 0 18px 60px rgba(0,0,0,0.42);
   overflow: visible;
   touch-action: none;
   user-select: none;
-}
-
-.rr-shell .rr-slider-wrap {
-  width: 58px;
-  min-height: 132px;
-  overflow: visible;
-  border-radius: 999px;
-  background: rgba(244, 176, 0, 0.22);
-  box-shadow: inset 0 0 0 2px rgba(244, 176, 0, 0.56), inset 0 0 18px rgba(244, 176, 0, 0.2);
-}
-
-.rr-shell .rr-slider-wrap::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 10px;
-  bottom: 10px;
-  width: 12px;
-  transform: translateX(-50%);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.26);
-}
-
-.rr-shell .rr-throttle input[type="range"] {
-  position: relative;
-  z-index: 2;
-  appearance: none;
-  -webkit-appearance: none;
-  background: transparent;
-  opacity: 1;
-}
-
-.rr-shell .rr-throttle input[type="range"]::-webkit-slider-runnable-track {
-  height: 18px;
-  border-radius: 999px;
-  background: #f4b000;
-  box-shadow: 0 0 0 2px rgba(0,0,0,0.44), 0 0 16px rgba(244,176,0,0.46);
-}
-
-.rr-shell .rr-throttle input[type="range"]::-webkit-slider-thumb {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 36px;
-  height: 36px;
-  margin-top: -9px;
-  border-radius: 50%;
-  background: #fff6d0;
-  border: 5px solid #f4b000;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.58);
-}
-
-.rr-shell .rr-throttle input[type="range"]::-moz-range-track {
-  height: 18px;
-  border-radius: 999px;
-  background: #f4b000;
-}
-
-.rr-shell .rr-throttle input[type="range"]::-moz-range-thumb {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #fff6d0;
-  border: 5px solid #f4b000;
 }
 
 .rr-shell .rr-custom-slider,
@@ -128,10 +65,52 @@
 }
 
 .rr-shell .rr-custom-slider {
+  position: relative;
+  width: 54px;
   min-width: 54px;
+  height: 136px;
   min-height: 136px;
+  overflow: hidden;
+  border-radius: 999px;
   cursor: ns-resize;
+  background: rgba(255,255,255,0.1);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 10px 26px rgba(0,0,0,0.28);
+}
+
+.rr-shell .rr-custom-slider::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  bottom: 10px;
+  width: 8px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.22);
+  pointer-events: none;
+}
+
+.rr-shell .rr-custom-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 0;
+  background: linear-gradient(180deg, #ffd166, #f4b000);
+  pointer-events: none;
+}
+
+.rr-shell .rr-custom-thumb {
+  position: absolute;
+  left: 50%;
+  width: 34px;
+  height: 26px;
+  transform: translateX(-50%);
+  border: 4px solid #f4b000;
+  border-radius: 999px;
+  background: #fff6d0;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.58);
+  pointer-events: none;
 }
 
 .rr-shell .rr-throttle-label {
@@ -159,33 +138,219 @@
   pointer-events: none;
 }
 
-.rr-shell .rr-throttle::before {
-  content: "Power / Direction";
-}
+.rr-shell .rr-throttle::before { content: "Power / Direction"; }
+.rr-shell .rr-steer::before { content: "Steer / Brake"; }
 
-.rr-shell .rr-steer::before {
-  content: "Steer / Brake";
-}
-
+/* Narrow-screen cockpit layout: reserve a single bottom control deck and keep the scene visible. */
 @media (max-width: 820px) {
-  .rr-shell .rr-steer button,
-  .rr-shell .rr-direction,
-  .rr-shell .rr-idle,
+  .rr-shell {
+    --rr-safe-left: max(8px, env(safe-area-inset-left));
+    --rr-safe-right: max(8px, env(safe-area-inset-right));
+    --rr-safe-bottom: max(8px, env(safe-area-inset-bottom));
+    --rr-control-height: 104px;
+    --rr-throttle-width: 82px;
+  }
+
+  .rr-shell .rr-hud {
+    top: max(8px, env(safe-area-inset-top));
+    left: var(--rr-safe-left);
+    right: var(--rr-safe-right);
+    width: auto;
+    max-width: none;
+    max-height: 168px;
+    overflow: hidden;
+    padding: 9px 10px;
+    border-radius: 16px;
+    background: rgba(10, 13, 20, 0.68);
+  }
+
+  .rr-shell .rr-hud h1 {
+    max-width: calc(100vw - 150px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rr-shell .rr-hud p {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .rr-shell .rr-checklist {
+    display: none;
+  }
+
+  .rr-shell .rr-hud-actions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .rr-shell .rr-hud-actions::-webkit-scrollbar {
+    display: none;
+  }
+
   .rr-shell .rr-primary,
   .rr-shell .rr-secondary,
   .rr-shell .rr-mini {
-    min-height: 44px;
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 7px 11px;
+    white-space: nowrap;
+  }
+
+  .rr-shell .rr-view-select {
+    max-width: 112px;
+    min-width: 96px;
+  }
+
+  .rr-shell .rr-score-float {
+    top: 178px;
+    left: var(--rr-safe-left);
+    right: auto;
+    bottom: auto;
+    min-width: 68px;
+    padding: 6px 8px;
+  }
+
+  .rr-shell .rr-metrics {
+    top: 178px;
+    left: calc(var(--rr-safe-left) + 76px);
+    right: var(--rr-safe-right);
+    bottom: auto;
+    min-height: 46px;
+    overflow-x: auto;
+    justify-content: flex-start;
+    gap: 14px;
+    padding: 7px 9px;
+    scrollbar-width: none;
+  }
+
+  .rr-shell .rr-metrics::-webkit-scrollbar {
+    display: none;
+  }
+
+  .rr-shell .rr-metrics span {
+    flex: 0 0 auto;
+  }
+
+  .rr-shell .rr-guidance,
+  .rr-shell .rr-diagnostics {
+    display: none;
+  }
+
+  .rr-shell .rr-steer {
+    left: var(--rr-safe-left);
+    right: calc(var(--rr-safe-right) + var(--rr-throttle-width) + 8px);
+    bottom: var(--rr-safe-bottom);
+    height: var(--rr-control-height);
+    transform: none;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    align-items: end;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 20px;
+    background: rgba(10, 13, 20, 0.78);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 16px 44px rgba(0,0,0,0.38);
+    backdrop-filter: blur(16px);
+  }
+
+  .rr-shell .rr-steer button {
+    min-width: 0;
+    min-height: 64px;
+    padding: 0 8px;
+    font-size: 16px;
+  }
+
+  .rr-shell .rr-throttle {
+    right: var(--rr-safe-right);
+    bottom: var(--rr-safe-bottom);
+    width: var(--rr-throttle-width);
+    height: var(--rr-control-height);
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 42px 42px;
+    gap: 6px;
+    padding: 8px;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .rr-shell .rr-direction,
+  .rr-shell .rr-idle {
+    min-width: 0;
+    min-height: 42px;
+    padding: 0 4px;
   }
 
   .rr-shell .rr-custom-slider {
-    min-height: 142px;
+    position: absolute;
+    inset: 8px;
+    z-index: 0;
+    width: auto;
+    height: auto;
+    min-width: 0;
+    min-height: 0;
+    opacity: 0.001;
+  }
+
+  .rr-shell .rr-direction,
+  .rr-shell .rr-idle,
+  .rr-shell .rr-throttle-label {
+    position: relative;
+    z-index: 1;
+  }
+
+  .rr-shell .rr-direction {
+    grid-column: 1 / -1;
+  }
+
+  .rr-shell .rr-idle {
+    grid-column: 1;
+  }
+
+  .rr-shell .rr-throttle-label {
+    grid-column: 2;
+    display: grid;
+    place-items: center;
+    min-height: 42px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.1);
+    font-size: 10px;
   }
 
   .rr-shell .rr-throttle::before,
   .rr-shell .rr-steer::before {
-    top: -20px;
-    padding: 3px 7px;
-    font-size: 9px;
-    letter-spacing: 0.09em;
+    display: none;
+  }
+}
+
+/* Extra-short landscape screens: compress telemetry further instead of covering the tug. */
+@media (max-width: 820px) and (max-height: 520px) {
+  .rr-shell .rr-hud {
+    max-height: 112px;
+  }
+
+  .rr-shell .rr-hud p,
+  .rr-shell .rr-stage-gate {
+    display: none;
+  }
+
+  .rr-shell .rr-score-float,
+  .rr-shell .rr-metrics {
+    top: 120px;
+  }
+
+  .rr-shell .rr-steer,
+  .rr-shell .rr-throttle {
+    --rr-control-height: 88px;
+  }
+
+  .rr-shell .rr-steer button {
+    min-height: 56px;
   }
 }
