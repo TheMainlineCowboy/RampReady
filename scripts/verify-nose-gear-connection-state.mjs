@@ -43,10 +43,17 @@ if (connectionAllowsMotion(state)) failures.push("movement remained enabled whil
 
 for (let i = 0; i < 70; i += 1) state = stepConnection(state, { speed: 0 }, 1 / 60);
 if (state.phase !== CONNECTION_PHASES.RELEASED || state.locked) failures.push("lowering did not finish in released/unlocked state");
-state = stepConnection(state, { speed: 0, clearDistance: 1.2 }, 1 / 60);
-if (state.phase !== CONNECTION_PHASES.RELEASED) failures.push("clear state triggered too early");
-state = stepConnection(state, { speed: 0, clearDistance: 2.5 }, 1 / 60);
-if (state.phase !== CONNECTION_PHASES.CLEAR) failures.push("clear state did not trigger after safe separation");
+
+// The tug is already several metres from the aircraft nose when the cradle releases.
+// That existing separation must become the baseline, not instant proof that the tug drove clear.
+state = stepConnection(state, { speed: 0, clearDistance: 3.45 }, 1 / 60);
+if (state.phase !== CONNECTION_PHASES.RELEASED) failures.push("release separation incorrectly completed the scenario immediately");
+if (state.clearTravel !== 0) failures.push(`release baseline did not start at zero travel: ${state.clearTravel}`);
+state = stepConnection(state, { speed: 0.4, clearDistance: 4.65 }, 1 / 60);
+if (state.phase !== CONNECTION_PHASES.RELEASED) failures.push("clear state triggered before 2.2 m of post-release tug travel");
+if (Math.abs(state.clearTravel - 1.2) > 1e-9) failures.push(`post-release travel measured incorrectly: ${state.clearTravel}`);
+state = stepConnection(state, { speed: 0.4, clearDistance: 5.75 }, 1 / 60);
+if (state.phase !== CONNECTION_PHASES.CLEAR) failures.push("clear state did not trigger after 2.2 m of actual post-release travel");
 
 let abort = requestCapture(createConnectionState(), aligned);
 abort = stepConnection(abort, { metrics: { ...aligned, lateral: 0.5 }, speed: 0 }, 1 / 60);
@@ -58,4 +65,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("RampReady nose-gear connection verification passed: front-only approach, timed capture, secure tow interlock, stopped/straight release, and clear-distance gate all enforced.");
+console.log("RampReady nose-gear connection verification passed: front-only approach, timed capture, secure tow interlock, stopped/straight release, post-release travel baseline, and clear gate all enforced.");
