@@ -3,9 +3,8 @@
 
 Replace the earlier repeating stripe field with a finite, tapered American Eagle
 flight-symbol layout mapped directly onto the real fin and rudder UV material.
-The artwork deliberately extends beyond the texture edges so UV compression does
-not expose an unpainted lower fin, while keeping the visible stripe count and
-spacing close to the modern American tail rather than a dense barcode.
+The decal background and inter-feather gaps remain transparent so the actual
+metallic fin is visible and the overlay cannot create a floating rectangular panel.
 """
 from pathlib import Path
 
@@ -16,19 +15,19 @@ start = source.index("def create_tail_texture(")
 end = source.index("\n\ndef curved_decal_mesh", start)
 source = source[:start] + r'''def create_tail_texture(path: Path, mirrored: bool = False) -> Image.Image:
     width, height = 3200, 3600
-    silver = (205, 210, 216, 255)
-    highlight = (236, 239, 242, 255)
+    transparent = (0, 0, 0, 0)
     red = (190, 28, 46, 255)
     blue = (25, 79, 139, 255)
     navy = (17, 48, 89, 255)
 
-    image = Image.new("RGBA", (width, height), silver)
+    # The real fin material supplies the polished metallic silver.  Keeping the
+    # decal transparent everywhere except the colored feathers prevents the old
+    # opaque rectangular "billboard" from showing beyond the fin/rudder silhouette.
+    image = Image.new("RGBA", (width, height), transparent)
     draw = ImageDraw.Draw(image)
 
-    # A finite set of broad, tapered feathers.  The source fin UVs shear and
-    # compress the artwork, so the polygons intentionally overscan all edges.
-    # Each feather narrows toward the leading/lower end and broadens toward the
-    # aft/upper edge, matching the visual rhythm of the modern AA flight symbol.
+    # Finite broad, tapered feathers.  The source fin UVs shear and compress the
+    # artwork, so polygons intentionally overscan the texture edges.
     feathers = [
         # (center_y, thickness_left, thickness_right, color)
         (-430, 150, 270, navy),
@@ -56,9 +55,8 @@ source = source[:start] + r'''def create_tail_texture(path: Path, mirrored: bool
             (left_x, left_center + left_thickness),
         ], fill=color)
 
-        # Keep a polished aluminum separator between feathers.  The separator
-        # follows the exact sweep and taper so it reads as part of the livery,
-        # not as a floating white stripe.
+        # Cut a transparent gap after each feather.  The underlying polished fin,
+        # rather than an opaque white texture, becomes the separator.
         separator_left = max(46, int(left_thickness * 0.34))
         separator_right = max(72, int(right_thickness * 0.34))
         draw.polygon([
@@ -66,10 +64,9 @@ source = source[:start] + r'''def create_tail_texture(path: Path, mirrored: bool
             (right_x, right_center + right_thickness + 40),
             (right_x, right_center + right_thickness + 40 + separator_right),
             (left_x, left_center + left_thickness + 34 + separator_left),
-        ], fill=highlight)
+        ], fill=transparent)
 
-    # Mirroring is performed once at texture generation time so left and right
-    # materials remain consistent and text/decal geometry is not double-mirrored.
+    # Mirror once at texture generation time; do not double-mirror decal geometry.
     if mirrored:
         image = image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     image.save(path)
@@ -83,4 +80,4 @@ source = source.replace(
 )
 
 path.write_text(source, encoding="utf-8")
-print("Applied consolidated tapered American Eagle tail texture")
+print("Applied transparent consolidated American Eagle tail texture")
