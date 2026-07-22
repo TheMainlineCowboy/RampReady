@@ -39,6 +39,10 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
     }
 
     const peakArticulation = Math.abs(motion.articulation);
+    const turnTugYaw = motion.tugYaw;
+    const turnAircraftYaw = motion.aircraftYaw;
+    const turnYawLag = Math.abs(turnTugYaw) - Math.abs(turnAircraftYaw);
+
     let straightenFrames = 0;
     while (Math.abs(motion.articulation) > 5 * Math.PI / 180 && straightenFrames < 600) {
       const command = (steer) => ({
@@ -93,8 +97,11 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
       articulation: motion.articulation,
       peakArticulation,
       straightenFrames,
-      tugYaw: motion.tugYaw,
-      aircraftYaw: motion.aircraftYaw,
+      turnTugYaw,
+      turnAircraftYaw,
+      turnYawLag,
+      finalTugYaw: motion.tugYaw,
+      finalAircraftYaw: motion.aircraftYaw,
     };
   });
 
@@ -106,7 +113,8 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
   expect(result.straightenFrames).toBeLessThan(600);
   expect(Math.abs(result.speedAfterBrake)).toBeLessThan(0.015);
   expect(Math.abs(result.articulation)).toBeLessThan(8 * Math.PI / 180);
-  expect(Math.abs(result.aircraftYaw)).toBeLessThan(Math.abs(result.tugYaw));
+  expect(Math.sign(result.turnAircraftYaw)).toBe(Math.sign(result.turnTugYaw));
+  expect(result.turnYawLag).toBeGreaterThan(0);
   expect(Math.abs(result.articulation)).toBeLessThanOrEqual(65 * Math.PI / 180);
 
   await page.screenshot({ path: "test-results/pushback-connection-runtime.png", fullPage: true });
