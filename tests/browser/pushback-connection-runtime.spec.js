@@ -27,6 +27,8 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
     phases.push(state.phase);
 
     let motion = dynamics.createPushbackState();
+    let peakArticulation = 0;
+    let turnSample = null;
     for (let i = 0; i < 360; i += 1) {
       motion = dynamics.stepPushbackDynamics(motion, {
         connected: true,
@@ -36,11 +38,19 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
         brake: false,
         cradleOffset: 3.45,
       }, 1 / 60);
+      const articulationMagnitude = Math.abs(motion.articulation);
+      if (articulationMagnitude > peakArticulation) {
+        peakArticulation = articulationMagnitude;
+        turnSample = {
+          tugYaw: motion.tugYaw,
+          aircraftYaw: motion.aircraftYaw,
+          articulation: motion.articulation,
+        };
+      }
     }
 
-    const peakArticulation = Math.abs(motion.articulation);
-    const turnTugYaw = motion.tugYaw;
-    const turnAircraftYaw = motion.aircraftYaw;
+    const turnTugYaw = turnSample?.tugYaw ?? motion.tugYaw;
+    const turnAircraftYaw = turnSample?.aircraftYaw ?? motion.aircraftYaw;
     const turnYawLag = Math.abs(turnTugYaw) - Math.abs(turnAircraftYaw);
 
     let straightenFrames = 0;
@@ -113,7 +123,10 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
   expect(result.straightenFrames).toBeLessThan(600);
   expect(Math.abs(result.speedAfterBrake)).toBeLessThan(0.015);
   expect(Math.abs(result.articulation)).toBeLessThan(8 * Math.PI / 180);
-  expect(Math.sign(result.turnAircraftYaw)).toBe(Math.sign(result.turnTugYaw));
+  // During a backwards push, steering the tug nose one way initially pivots the aircraft
+  // around its main gear in the opposite yaw direction. The aircraft must lag rather than
+  // copy the tug heading, which is the failure mode this runtime regression protects.
+  expect(Math.sign(result.turnAircraftYaw)).toBe(-Math.sign(result.turnTugYaw));
   expect(result.turnYawLag).toBeGreaterThan(0);
   expect(Math.abs(result.articulation)).toBeLessThanOrEqual(65 * Math.PI / 180);
 
