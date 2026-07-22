@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import RampReadyPhysicsTrainer from "./RampReadyPhysicsTrainer.jsx";
+import RampReadyStandupTrainer from "./RampReadyStandupTrainer.jsx";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -62,7 +62,7 @@ export default function PushbackTrainer() {
 
   return (
     <>
-      <RampReadyPhysicsTrainer />
+      <RampReadyStandupTrainer />
       {gyroAvailable && (
         <button type="button" aria-pressed={gyroEnabled} onClick={gyroEnabled ? stopGyro : startGyro} style={{ position: "fixed", right: "max(12px, env(safe-area-inset-right))", bottom: "max(12px, env(safe-area-inset-bottom))", zIndex: 40, minWidth: 104, minHeight: 44, border: "1px solid rgba(255,255,255,0.45)", borderRadius: 10, background: gyroEnabled ? "rgba(20,110,58,0.92)" : "rgba(17,24,39,0.88)", color: "white", fontWeight: 700, padding: "10px 14px", backdropFilter: "blur(8px)" }}>
           Gyro {gyroEnabled ? "On" : "Off"}
