@@ -1,5 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
+const webServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || "npm run dev -- --port 4173";
+
 export default defineConfig({
   testDir: "./tests/browser",
   timeout: 45_000,
@@ -12,7 +14,7 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   webServer: {
-    command: "npm run dev -- --port 4173",
+    command: webServerCommand,
     url: "http://127.0.0.1:4173",
     reuseExistingServer: false,
     timeout: 120_000,
