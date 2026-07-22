@@ -123,14 +123,20 @@ export function stepConnection(state, input = {}, dt = 1 / 60, limits = CONNECTI
         reason: `Nose gear released. Drive ${limits.clearDistance.toFixed(1)} m clear.`,
       };
     }
-    const clearTravel = Math.abs(separation - state.releaseBaselineDistance);
+
+    // Clearance must increase separation from the aircraft. Using an absolute delta here
+    // would let movement back toward the nose gear incorrectly satisfy the clear gate.
+    const clearTravel = Math.max(0, separation - state.releaseBaselineDistance);
     if (clearTravel >= limits.clearDistance) {
       return { ...state, phase: CONNECTION_PHASES.CLEAR, clearTravel, reason: "Tug clear of aircraft." };
     }
+    const movedTowardAircraft = separation < state.releaseBaselineDistance - 0.05;
     return {
       ...state,
       clearTravel,
-      reason: `Drive another ${Math.max(0, limits.clearDistance - clearTravel).toFixed(1)} m clear.`,
+      reason: movedTowardAircraft
+        ? "Unsafe direction. Increase separation from the aircraft."
+        : `Drive another ${Math.max(0, limits.clearDistance - clearTravel).toFixed(1)} m clear.`,
     };
   }
 
