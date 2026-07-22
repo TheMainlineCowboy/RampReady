@@ -41,14 +41,20 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
     const peakArticulation = Math.abs(motion.articulation);
     let straightenFrames = 0;
     while (Math.abs(motion.articulation) > 5 * Math.PI / 180 && straightenFrames < 600) {
-      motion = dynamics.stepPushbackDynamics(motion, {
+      const command = (steer) => ({
         connected: true,
         throttle: 0.32,
         direction: 1,
-        steer: -Math.sign(motion.articulation) * 0.42,
+        steer,
         brake: false,
         cradleOffset: 3.45,
-      }, 1 / 60);
+      });
+      const left = dynamics.stepPushbackDynamics(motion, command(-0.42), 1 / 60);
+      const right = dynamics.stepPushbackDynamics(motion, command(0.42), 1 / 60);
+      const straight = dynamics.stepPushbackDynamics(motion, command(0), 1 / 60);
+      motion = [left, right, straight].reduce((best, candidate) => (
+        Math.abs(candidate.articulation) < Math.abs(best.articulation) ? candidate : best
+      ));
       straightenFrames += 1;
     }
 
@@ -64,6 +70,7 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
     }
 
     state = connection.requestLower(state, motion.speed, motion.articulation);
+    const lowerReason = state.reason;
     phases.push(state.phase);
     for (let i = 0; i < 90; i += 1) state = connection.stepConnection(state, { speed: 0 }, 1 / 60);
     phases.push(state.phase);
@@ -78,6 +85,7 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
 
     return {
       phases,
+      lowerReason,
       baselinePhase,
       unsafePhase,
       unsafeReason,
@@ -90,7 +98,7 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
     };
   });
 
-  expect(result.phases).toEqual(["aligned", "capturing", "secured", "towing", "lowering", "released", "clear"]);
+  expect(result.phases, result.lowerReason).toEqual(["aligned", "capturing", "secured", "towing", "lowering", "released", "clear"]);
   expect(result.baselinePhase).toBe("released");
   expect(result.unsafePhase).toBe("released");
   expect(result.unsafeReason).toContain("Unsafe direction");
