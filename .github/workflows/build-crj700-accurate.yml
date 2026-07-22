@@ -60,7 +60,7 @@ jobs:
           git clone --depth 1 https://github.com/YoRyan/FlightGear-CRJ700-family.git upstream-crj700
           git -C upstream-crj700 rev-parse HEAD
 
-      - name: Correct source mapping and livery geometry
+      - name: Correct source mapping and build one consolidated livery
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -93,18 +93,6 @@ jobs:
           python tools/crj700/apply_tailcone_fit_v5.py
           python tools/crj700/apply_reference_alignment_v6.py
           python tools/crj700/apply_fin_conformity_v7.py
-          python tools/crj700/apply_embedded_tail_livery_v8.py
-          python tools/crj700/apply_uv_tail_livery_v9.py
-          python tools/crj700/apply_reference_cleanup_v10.py
-          python tools/crj700/apply_reference_cleanup_v11.py
-          python tools/crj700/apply_tail_fidelity_v12.py
-          python tools/crj700/apply_reference_tail_v13.py
-          python tools/crj700/apply_reference_tail_v14.py
-          python tools/crj700/apply_reference_tail_v15.py
-          python tools/crj700/apply_reference_tail_v16.py
-          python tools/crj700/apply_reference_tail_v17.py
-          python tools/crj700/apply_tail_flag_v18.py
-          python tools/crj700/apply_tail_flag_v19.py
           python tools/crj700/apply_tail_flag_v20.py
 
       - name: Build and structurally validate the actual GLB
