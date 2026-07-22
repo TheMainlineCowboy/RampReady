@@ -38,6 +38,20 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
       }, 1 / 60);
     }
 
+    const peakArticulation = Math.abs(motion.articulation);
+    let straightenFrames = 0;
+    while (Math.abs(motion.articulation) > 5 * Math.PI / 180 && straightenFrames < 600) {
+      motion = dynamics.stepPushbackDynamics(motion, {
+        connected: true,
+        throttle: 0.32,
+        direction: 1,
+        steer: -Math.sign(motion.articulation) * 0.42,
+        brake: false,
+        cradleOffset: 3.45,
+      }, 1 / 60);
+      straightenFrames += 1;
+    }
+
     for (let i = 0; i < 180; i += 1) {
       motion = dynamics.stepPushbackDynamics(motion, {
         connected: true,
@@ -69,6 +83,8 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
       unsafeReason,
       speedAfterBrake: motion.speed,
       articulation: motion.articulation,
+      peakArticulation,
+      straightenFrames,
       tugYaw: motion.tugYaw,
       aircraftYaw: motion.aircraftYaw,
     };
@@ -78,7 +94,10 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
   expect(result.baselinePhase).toBe("released");
   expect(result.unsafePhase).toBe("released");
   expect(result.unsafeReason).toContain("Unsafe direction");
+  expect(result.peakArticulation).toBeGreaterThan(8 * Math.PI / 180);
+  expect(result.straightenFrames).toBeLessThan(600);
   expect(Math.abs(result.speedAfterBrake)).toBeLessThan(0.015);
+  expect(Math.abs(result.articulation)).toBeLessThan(8 * Math.PI / 180);
   expect(Math.abs(result.aircraftYaw)).toBeLessThan(Math.abs(result.tugYaw));
   expect(Math.abs(result.articulation)).toBeLessThanOrEqual(65 * Math.PI / 180);
 
