@@ -27,6 +27,8 @@ export function createConnectionState(overrides = {}) {
     phase: CONNECTION_PHASES.APPROACH,
     progress: 0,
     locked: false,
+    releaseBaselineDistance: null,
+    clearTravel: 0,
     reason: "Approach and align with the nose gear.",
     ...overrides,
   };
@@ -97,13 +99,39 @@ export function stepConnection(state, input = {}, dt = 1 / 60, limits = CONNECTI
   if (state.phase === CONNECTION_PHASES.LOWERING) {
     if (speed > 0.05) return { ...state, reason: "Movement detected. Stop before continuing release." };
     const progress = clamp(state.progress + safeDt / limits.lowerSeconds, 0, 1);
-    if (progress >= 1) return { ...state, phase: CONNECTION_PHASES.RELEASED, progress: 1, locked: false, reason: "Nose gear released. Drive clear." };
+    if (progress >= 1) {
+      return {
+        ...state,
+        phase: CONNECTION_PHASES.RELEASED,
+        progress: 1,
+        locked: false,
+        releaseBaselineDistance: null,
+        clearTravel: 0,
+        reason: "Nose gear released. Drive clear.",
+      };
+    }
     return { ...state, progress };
   }
 
   if (state.phase === CONNECTION_PHASES.RELEASED) {
-    const clearDistance = Math.abs(finite(input.clearDistance));
-    if (clearDistance >= limits.clearDistance) return { ...state, phase: CONNECTION_PHASES.CLEAR, reason: "Tug clear of aircraft." };
+    const separation = Math.abs(finite(input.clearDistance));
+    if (!Number.isFinite(state.releaseBaselineDistance)) {
+      return {
+        ...state,
+        releaseBaselineDistance: separation,
+        clearTravel: 0,
+        reason: `Nose gear released. Drive ${limits.clearDistance.toFixed(1)} m clear.`,
+      };
+    }
+    const clearTravel = Math.abs(separation - state.releaseBaselineDistance);
+    if (clearTravel >= limits.clearDistance) {
+      return { ...state, phase: CONNECTION_PHASES.CLEAR, clearTravel, reason: "Tug clear of aircraft." };
+    }
+    return {
+      ...state,
+      clearTravel,
+      reason: `Drive another ${Math.max(0, limits.clearDistance - clearTravel).toFixed(1)} m clear.`,
+    };
   }
 
   return state;
