@@ -132,3 +132,45 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
 
   await page.screenshot({ path: "test-results/pushback-connection-runtime.png", fullPage: true });
 });
+
+test("shows equipment selection first and keeps portrait mobile telemetry off the scene", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 412, height: 915 });
+  await page.goto("/", { waitUntil: "networkidle" });
+
+  await expect(page.getByRole("heading", { name: "Choose pushback equipment" })).toBeVisible();
+  await expect(page.getByRole("radio")).toHaveCount(2);
+  await expect(page.locator("canvas.trainerCanvas")).toHaveCount(0);
+
+  const launchButton = page.getByRole("button", { name: "Start training" });
+  await expect(launchButton).toBeEnabled();
+  await launchButton.click();
+
+  await expect(page.locator("canvas.trainerCanvas")).toBeVisible();
+  await expect(page.locator(".rr-metrics")).toBeVisible();
+
+  const layout = await page.evaluate(() => {
+    const rect = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const box = element.getBoundingClientRect();
+      return { top: box.top, right: box.right, bottom: box.bottom, left: box.left, width: box.width, height: box.height };
+    };
+    return {
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      hud: rect(".rr-hud"),
+      metrics: rect(".rr-metrics"),
+      steer: rect(".rr-steer"),
+      canvas: rect("canvas.trainerCanvas"),
+    };
+  });
+
+  expect(layout.canvas?.width).toBeGreaterThanOrEqual(400);
+  expect(layout.canvas?.height).toBeGreaterThanOrEqual(890);
+  expect(layout.metrics?.height).toBeLessThanOrEqual(70);
+  expect(layout.metrics?.top).toBeGreaterThan(layout.viewport.height * 0.65);
+  expect(layout.metrics?.top).toBeGreaterThan(layout.hud?.bottom ?? 0);
+  expect(layout.metrics?.bottom).toBeLessThanOrEqual((layout.steer?.top ?? layout.viewport.height) + 8);
+
+  await page.screenshot({ path: "test-results/mobile-equipment-layout.png", fullPage: true });
+});
