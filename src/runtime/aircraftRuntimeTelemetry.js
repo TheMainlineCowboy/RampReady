@@ -58,19 +58,25 @@ function dimensionsAreAuthoredAircraft(size) {
     && Math.abs(size.y - EXPECTED_HEIGHT_METERS) <= DIMENSION_TOLERANCE_METERS;
 }
 
+async function readAuthoredMetadata(metadataUrl) {
+  const response = await fetch(metadataUrl, { cache: "no-store" });
+  const contentType = response.headers.get("content-type") || "";
+  if (!response.ok || !/application\/(?:json|[^;]+\+json)/i.test(contentType)) return null;
+  return response.json();
+}
+
 async function upgradeToAuthoredAircraft(aircraftRoot) {
   if (!aircraftRoot || aircraftRoot[AUTHORED_UPGRADE_KEY]) return;
   aircraftRoot[AUTHORED_UPGRADE_KEY] = "probing";
 
   try {
     const metadataUrl = new URL("models/crj700-user.asset.json", document.baseURI).href;
-    const metadataResponse = await fetch(metadataUrl, { cache: "no-store" });
-    if (!metadataResponse.ok) {
+    const metadata = await readAuthoredMetadata(metadataUrl);
+    if (!metadata) {
       aircraftRoot[AUTHORED_UPGRADE_KEY] = "unavailable";
       return;
     }
 
-    const metadata = await metadataResponse.json();
     const validation = validateAircraftAssetMetadata(metadata);
     if (!validation.valid) throw new Error(`Authored aircraft metadata rejected: ${validation.failures.join("; ")}`);
 
