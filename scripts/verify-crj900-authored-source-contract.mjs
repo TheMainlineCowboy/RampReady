@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const contractUrl = new URL("../docs/crj900-authored-aircraft-source.json", import.meta.url);
+const converterUrl = new URL("../tools/aircraft/convert-authored-crj900.mjs", import.meta.url);
 const contract = JSON.parse(await readFile(contractUrl, "utf8"));
+const converter = await readFile(converterUrl, "utf8");
 
 assert.equal(contract.contractVersion, 1);
 assert.equal(contract.status, "preferred-authored-aircraft-source");
@@ -38,6 +40,26 @@ assert.equal(contract.validatedCandidate.vertexCount, 44784);
 assert.equal(contract.validatedCandidate.triangleCount, 41035);
 assert.equal(contract.validatedCandidate.embeddedImages, true);
 
+for (const required of [
+  "American+Eagle+CRJ+900.obj",
+  "American+Eagle+CRJ+900.mtl",
+  "123105",
+  "32484",
+  "41035",
+  "23.64",
+  "32.5",
+  "7.5",
+  "noseGearCaptureOrigin: [0,0,0]",
+  "preserveMaterials: true",
+]) {
+  assert.ok(converter.includes(required), `authored aircraft converter missing ${required}`);
+}
+assert.ok(converter.includes("-(source[0] - NOSE[0])"), "converter must rotate source 180 degrees around +Y");
+assert.ok(converter.includes("-(source[2] - NOSE[2])"), "converter must set -Z forward orientation");
+assert.ok(converter.includes("(source[1] - GROUND_Y)"), "converter must place the aircraft on the ground plane");
+assert.ok(converter.includes("baseColorTexture"), "converter must preserve authored texture assignments");
+assert.ok(converter.includes("image/png"), "converter must embed the nine supplied PNG textures");
+
 for (const requiredView of [
   "front-left",
   "front-right",
@@ -59,4 +81,4 @@ for (const forbidden of [
   assert.ok(contract.acceptance.forbiddenRuntimeFallbacks.includes(forbidden), `missing forbidden runtime fallback ${forbidden}`);
 }
 
-console.log("Authored CRJ900 source contract passed: exact source identity, normalized dimensions/orientation, material preservation, candidate topology, and required Three.js QA views are locked.");
+console.log("Authored CRJ900 source contract passed: exact source identity, deterministic conversion, normalized dimensions/orientation, material preservation, candidate topology, and required Three.js QA views are locked.");
