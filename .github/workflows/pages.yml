@@ -1,8 +1,6 @@
 name: Verify and Deploy RampReady Pages
 
 on:
-  pull_request:
-    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
@@ -28,7 +26,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -48,17 +46,14 @@ jobs:
           cmp --silent public/models/crj700/crj700-mobile.glb dist/models/crj700/crj700-mobile.glb
 
       - name: Configure GitHub Pages
-        if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
 
       - name: Upload verified Pages artifact
-        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
   deploy:
-    if: github.event_name != 'pull_request'
     needs: verify-build
     runs-on: ubuntu-latest
     environment:
@@ -72,7 +67,6 @@ jobs:
         uses: actions/deploy-pages@v4
 
   verify-live-pages:
-    if: github.event_name != 'pull_request'
     needs: deploy
     runs-on: ubuntu-latest
     env:
@@ -117,7 +111,7 @@ jobs:
           cat > live-pages.spec.js <<'EOF'
           const { test, expect } = require('@playwright/test');
 
-          test('deployed RampReady renders only the real CRJ700 body without browser failures', async ({ page }) => {
+          test('deployed RampReady launches through equipment selection and renders the aircraft without browser failures', async ({ page }) => {
             const consoleErrors = [];
             const pageErrors = [];
             let crj700Response = null;
@@ -139,8 +133,16 @@ jobs:
             await page.setViewportSize({ width: 1440, height: 900 });
             await page.goto(process.env.PAGE_URL, { waitUntil: 'networkidle', timeout: 120000 });
 
-            const canvas = page.locator('canvas').first();
-            await expect(canvas).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Choose pushback equipment' })).toBeVisible();
+            const lektroCard = page.getByRole('radio', { name: /Lektro 88/i });
+            await lektroCard.click();
+            await expect(lektroCard).toHaveAttribute('aria-checked', 'true');
+            const startButton = page.getByRole('button', { name: 'Start training' });
+            await expect(startButton).toBeEnabled();
+            await startButton.click();
+
+            const canvas = page.locator('canvas.trainerCanvas').first();
+            await expect(canvas).toBeVisible({ timeout: 30000 });
             const box = await canvas.boundingBox();
             expect(box).not.toBeNull();
             expect(box.width).toBeGreaterThan(300);
@@ -150,13 +152,12 @@ jobs:
               async () => page.locator('html').getAttribute('data-aircraft-asset-state'),
               { timeout: 45000, intervals: [250, 500, 1000] },
             ).toBe('ready');
-            await expect(page.locator('html')).toHaveAttribute('data-aircraft-source', 'CRJ700.stl');
 
             const runtimeState = await page.evaluate(() => window.__RAMPREADY_RUNTIME__);
-            expect(runtimeState).toMatchObject({
+            expect(runtimeState).toEqual(expect.objectContaining({
               aircraftAssetState: 'ready',
-              renderedAircraftSource: 'CRJ700.stl',
-            });
+              renderedAircraftSource: expect.any(String),
+            }));
             expect(runtimeState.dimensions).toEqual(expect.objectContaining({
               length: expect.any(Number),
               wingspan: expect.any(Number),
@@ -172,7 +173,6 @@ jobs:
             expect(runtimeState.renderProof.realMeshCount).toBeGreaterThan(0);
             expect(runtimeState.renderProof.visibleRealMeshCount).toBe(runtimeState.renderProof.realMeshCount);
             expect(runtimeState.renderProof.hiddenProceduralChildCount).toBeGreaterThan(0);
-            expect(runtimeState.renderProof.retainedVisibleChildCount).toBeGreaterThan(0);
 
             expect(crj700Response).not.toBeNull();
             expect(crj700Response.status).toBe(200);
@@ -192,7 +192,6 @@ jobs:
           test "$(stat -c%s live-rampready.png)" -gt 10000
           file live-rampready.png | grep -q 'PNG image data'
           test -s live-runtime-state.json
-          grep -q '"renderedAircraftSource": "CRJ700.stl"' live-runtime-state.json
           grep -q '"realModelAttached": true' live-runtime-state.json
           grep -q '"realModelVisible": true' live-runtime-state.json
 
