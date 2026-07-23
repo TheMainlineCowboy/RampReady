@@ -5,6 +5,7 @@ const EVIDENCE_VIEWPORT = { width: 1440, height: 900 };
 const MOBILE_VIEWPORT = { width: 412, height: 915 };
 const ORBIT_DRAG_PX = 220;
 const MODEL_SUFFIXES = ["/models/crj700-user.glb", "/models/crj700-mobile.glb"];
+const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
 
 async function waitForRealAircraft(page) {
   const runtimeErrors = [];
@@ -19,7 +20,7 @@ async function waitForRealAircraft(page) {
     if (MODEL_SUFFIXES.some((suffix) => pathname.endsWith(suffix))) modelResponses.push(response);
   });
 
-  await page.goto("/", { waitUntil: "networkidle" });
+  await page.goto(TARGET_URL, { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "Choose pushback equipment" })).toBeVisible();
 
   const lektro = page.getByRole("radio", { name: /Lektro 88/i });
@@ -53,7 +54,7 @@ async function waitForRealAircraft(page) {
   await page.waitForTimeout(1_200);
 
   const relevantErrors = runtimeErrors.filter((message) =>
-    /CRJ700 asset load failed|Unexpected CRJ700 dimensions|GLTFLoader|crj700-(?:user|mobile)\.glb|WebGL.*shader|VALIDATE_STATUS/i.test(message),
+    /CRJ700 asset load failed|Unexpected CRJ700 dimensions|GLTFLoader|WebGL.*shader|VALIDATE_STATUS|ReferenceError|TypeError|SyntaxError/i.test(message),
   );
   expect(relevantErrors).toEqual([]);
 
