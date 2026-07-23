@@ -40,7 +40,12 @@ jobs:
           npm run verify 2>&1 | tee release-verify.log
 
       - name: Stamp exact release commit
-        run: printf '%s\n' "${GITHUB_SHA}" > public/release-commit.txt
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s\n' "${GITHUB_SHA}" > public/release-commit.txt
+          mkdir -p public/releases
+          printf '%s\n' "${GITHUB_SHA}" > "public/releases/${GITHUB_SHA}.txt"
 
       - name: Build verified production site
         run: npm run build
@@ -53,6 +58,8 @@ jobs:
           test -s dist/manifest.webmanifest
           test -s dist/release-commit.txt
           test "$(tr -d '\r\n' < dist/release-commit.txt)" = "${GITHUB_SHA}"
+          test -s "dist/releases/${GITHUB_SHA}.txt"
+          test "$(tr -d '\r\n' < "dist/releases/${GITHUB_SHA}.txt")" = "${GITHUB_SHA}"
           test -s dist/models/crj700-mobile.glb
           printf 'glTF' | cmp -n 4 - dist/models/crj700-mobile.glb
           grep -Eq 'src="/RampReady/assets/[^\"]+\.js"' dist/index.html
@@ -104,22 +111,23 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: Verify propagated release marker and aircraft assets
+      - name: Verify immutable release marker and aircraft assets
         shell: bash
         run: |
           set -euo pipefail
           : "${PAGE_URL:?GitHub Pages did not return a deployment URL}"
           case "${PAGE_URL}" in */) ;; *) PAGE_URL="${PAGE_URL}/" ;; esac
+          marker_url="${PAGE_URL}releases/${EXPECTED_SHA}.txt"
           verified=false
           for attempt in $(seq 1 120); do
-            marker_status=$(curl --fail-with-body -L -sS -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' -o /tmp/release-commit.txt -w '%{http_code}' "${PAGE_URL}release-commit.txt?verify=${EXPECTED_SHA}-${attempt}" || true)
-            live_sha=$(tr -d '\r\n' < /tmp/release-commit.txt 2>/dev/null || true)
+            marker_status=$(curl --fail-with-body -L -sS -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' -o /tmp/release-marker.txt -w '%{http_code}' "${marker_url}?attempt=${attempt}" || true)
+            live_sha=$(tr -d '\r\n' < /tmp/release-marker.txt 2>/dev/null || true)
             if [ "${marker_status}" = "200" ] && [ "${live_sha}" = "${EXPECTED_SHA}" ]; then
-              echo "Exact release marker appeared after attempt ${attempt}."
+              echo "Immutable release marker appeared after attempt ${attempt}."
               verified=true
               break
             fi
-            echo "Attempt ${attempt}: marker=${marker_status}, live_sha=${live_sha:-missing}"
+            echo "Attempt ${attempt}: marker=${marker_status}, body=${live_sha:-missing}, url=${marker_url}"
             sleep 10
           done
           test "${verified}" = true
