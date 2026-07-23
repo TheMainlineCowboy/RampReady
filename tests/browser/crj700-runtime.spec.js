@@ -51,14 +51,16 @@ async function prepareEvidenceFrame(page) {
   await page.waitForTimeout(500);
 }
 
-async function orbitToSide(page, direction) {
+async function orbitBy(page, dragMultiplier) {
   const startX = EVIDENCE_VIEWPORT.width / 2;
   const startY = EVIDENCE_VIEWPORT.height / 2;
   await page.mouse.move(startX, startY);
   await page.mouse.down();
-  await page.mouse.move(startX + direction * ORBIT_DRAG_PX, startY, { steps: 24 });
+  // Keep pointer-event volume low: the Terminal 4 scene is intentionally larger and
+  // does not need 24 synthetic drag frames to produce deterministic evidence views.
+  await page.mouse.move(startX + dragMultiplier * ORBIT_DRAG_PX, startY, { steps: 3 });
   await page.mouse.up();
-  await page.waitForTimeout(1_500);
+  await page.waitForTimeout(1_000);
 }
 
 test("loads the real CRJ700 asset and captures unobstructed side evidence", async ({ page }) => {
@@ -67,12 +69,13 @@ test("loads the real CRJ700 asset and captures unobstructed side evidence", asyn
 
   await waitForRealAircraft(page);
   await prepareEvidenceFrame(page);
-  await orbitToSide(page, 1);
+
+  await orbitBy(page, 1);
   await page.screenshot({ path: "test-results/crj700-left-side.png" });
 
-  await waitForRealAircraft(page);
-  await prepareEvidenceFrame(page);
-  await orbitToSide(page, -1);
+  // Cross the original camera heading in one continuous loaded scene instead of
+  // rebuilding the aircraft and Terminal 4 environment a second time.
+  await orbitBy(page, -2);
   await page.screenshot({ path: "test-results/crj700-right-side.png" });
 });
 
