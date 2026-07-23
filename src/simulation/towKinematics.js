@@ -93,13 +93,17 @@ export function updateAircraftTowPose({
     motionYawLimit = Math.atan2(noseTravel, safeWheelbase);
     const yawLimit = Math.min(timeYawLimit, motionYawLimit);
     nextYaw = safeAircraftYaw + clamp(requestedYawDelta, -yawLimit, yawLimit);
-
-    let articulation = normalizeAngle(nextYaw - safeTugYaw);
-    articulation = clamp(articulation, -safeArticulation, safeArticulation);
-    nextYaw = safeTugYaw + articulation;
   }
 
-  const articulation = normalizeAngle(nextYaw - safeTugYaw);
+  // Clamp the final normalized articulation once, then derive yaw from that exact value.
+  // This avoids tiny floating-point overshoots at the hard limit across different frame rates.
+  const articulation = clamp(
+    normalizeAngle(nextYaw - safeTugYaw),
+    -safeArticulation,
+    safeArticulation,
+  );
+  nextYaw = safeTugYaw + articulation;
+
   const nextMainGear = mainGearFromPose(safeAttachedNose, nextYaw, safeWheelbase);
   const expectedMainGear = mainGearFromPose(safeAttachedNose, safeAircraftYaw, safeWheelbase);
   const mainGearLateralSlip = Math.hypot(
