@@ -1,6 +1,8 @@
 name: Verify RampReady Live Experience
 
 on:
+  push:
+    branches: [main]
   workflow_run:
     workflows:
       - Deploy RampReady to GitHub Pages
@@ -23,6 +25,7 @@ env:
 jobs:
   verify-live-experience:
     if: >-
+      github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
@@ -32,11 +35,12 @@ jobs:
         id: release
         shell: bash
         env:
+          PUSH_SHA: ${{ github.sha }}
           WORKFLOW_SHA: ${{ github.event.workflow_run.head_sha }}
           DISPATCH_SHA: ${{ inputs.expected_sha }}
         run: |
           set -euo pipefail
-          expected_sha="${WORKFLOW_SHA:-${DISPATCH_SHA:-}}"
+          expected_sha="${PUSH_SHA:-${WORKFLOW_SHA:-${DISPATCH_SHA:-}}}"
           test -n "${expected_sha}"
           echo "expected_sha=${expected_sha}" >> "${GITHUB_OUTPUT}"
 
@@ -298,7 +302,7 @@ jobs:
   publish-live-experience-status:
     if: >-
       always() &&
-      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.head_branch == 'main')
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.head_branch == 'main')
     needs:
       - verify-live-experience
     runs-on: ubuntu-latest
@@ -307,11 +311,12 @@ jobs:
         uses: actions/github-script@v7
         env:
           VERIFY_RESULT: ${{ needs.verify-live-experience.result }}
+          PUSH_SHA: ${{ github.sha }}
           WORKFLOW_SHA: ${{ github.event.workflow_run.head_sha }}
           DISPATCH_SHA: ${{ inputs.expected_sha }}
         with:
           script: |
-            const sha = process.env.WORKFLOW_SHA || process.env.DISPATCH_SHA;
+            const sha = process.env.PUSH_SHA || process.env.WORKFLOW_SHA || process.env.DISPATCH_SHA;
             if (!sha) {
               core.setFailed('Unable to resolve deployed commit SHA.');
               return;
