@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import RampReadyLektroPrototypeTrainer from "./RampReadyStandupTrainerTerminal4.jsx";
+import RampReadyStandupTrainer from "./RampReadyStandupTrainerTerminal4.jsx";
 import {
   DEFAULT_EQUIPMENT_ID,
   EQUIPMENT_PROFILES,
@@ -8,6 +8,7 @@ import {
 } from "../config/equipmentProfiles.js";
 import "./equipment-selection.css";
 
+const RampReadyLektroPrototypeTrainer = RampReadyStandupTrainer;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 export default function PushbackTrainer() {
