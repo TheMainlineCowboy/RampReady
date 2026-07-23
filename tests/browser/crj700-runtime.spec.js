@@ -1,3 +1,4 @@
+import { writeFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 
 const EVIDENCE_VIEWPORT = { width: 1920, height: 1080 };
@@ -49,7 +50,7 @@ async function waitForRealAircraft(page) {
     () => modelResponses.some((response) => response.status() === 200),
     { timeout: 20_000 },
   ).toBe(true);
-  await page.waitForTimeout(2_000);
+  await page.waitForTimeout(1_200);
 
   const relevantErrors = runtimeErrors.filter((message) =>
     /CRJ700 asset load failed|Unexpected CRJ700 dimensions|GLTFLoader|crj700-(?:user|mobile)\.glb|WebGL.*shader|VALIDATE_STATUS/i.test(message),
@@ -80,7 +81,7 @@ async function prepareEvidenceFrame(page) {
       .rr-shell, .rr-scene, canvas { width: 100vw !important; height: 100vh !important; }
     `,
   });
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(250);
 }
 
 async function orbitBy(page, canvas, dragMultiplier) {
@@ -92,7 +93,18 @@ async function orbitBy(page, canvas, dragMultiplier) {
   await page.mouse.down();
   await page.mouse.move(startX + dragMultiplier * ORBIT_DRAG_PX, startY, { steps: 12 });
   await page.mouse.up();
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(450);
+}
+
+async function writeCanvasEvidence(page, canvas, path) {
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const dataUrl = await canvas.evaluate((element) => element.toDataURL("image/png"));
+  const marker = "base64,";
+  const markerIndex = dataUrl.indexOf(marker);
+  if (markerIndex < 0) throw new Error("Canvas evidence did not return a PNG data URL");
+  const payload = Buffer.from(dataUrl.slice(markerIndex + marker.length), "base64");
+  expect(payload.byteLength).toBeGreaterThan(10_000);
+  await writeFile(path, payload);
 }
 
 function expectInsideViewport(name, box, viewport) {
@@ -104,18 +116,18 @@ function expectInsideViewport(name, box, viewport) {
 }
 
 test("loads the real CRJ700 asset and captures unobstructed side evidence", async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(90_000);
   await page.setViewportSize(EVIDENCE_VIEWPORT);
   const canvas = await waitForRealAircraft(page);
   await prepareEvidenceFrame(page);
   await orbitBy(page, canvas, 1);
-  await canvas.screenshot({ path: "test-results/crj700-left-side.png", timeout: 20_000 });
+  await writeCanvasEvidence(page, canvas, "test-results/crj700-left-side.png");
   await orbitBy(page, canvas, -2);
-  await canvas.screenshot({ path: "test-results/crj700-right-side.png", timeout: 20_000 });
+  await writeCanvasEvidence(page, canvas, "test-results/crj700-right-side.png");
 });
 
 test("mobile controls preserve a clear simulator viewport", async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(90_000);
   await page.setViewportSize(MOBILE_VIEWPORT);
   const canvas = await waitForRealAircraft(page);
 
@@ -166,7 +178,7 @@ test("mobile controls preserve a clear simulator viewport", async ({ page }) => 
   await page.mouse.down();
   await page.mouse.move(startX + 120, startY - 30, { steps: 16 });
   await page.mouse.up();
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(350);
   const afterYaw = Number(await canvas.getAttribute("data-camera-yaw"));
   expect(Number.isFinite(beforeYaw)).toBe(true);
   expect(Number.isFinite(afterYaw)).toBe(true);
