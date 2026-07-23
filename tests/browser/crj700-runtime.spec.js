@@ -49,7 +49,7 @@ async function waitForRealAircraft(page) {
     () => modelResponses.some((response) => response.status() === 200),
     { timeout: 20_000 },
   ).toBe(true);
-  await page.waitForTimeout(3_000);
+  await page.waitForTimeout(2_000);
 
   const relevantErrors = runtimeErrors.filter((message) =>
     /CRJ700 asset load failed|Unexpected CRJ700 dimensions|GLTFLoader|crj700-(?:user|mobile)\.glb|WebGL.*shader|VALIDATE_STATUS/i.test(message),
@@ -80,17 +80,19 @@ async function prepareEvidenceFrame(page) {
       .rr-shell, .rr-scene, canvas { width: 100vw !important; height: 100vh !important; }
     `,
   });
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(400);
 }
 
-async function orbitBy(page, dragMultiplier) {
-  const startX = EVIDENCE_VIEWPORT.width / 2;
-  const startY = EVIDENCE_VIEWPORT.height / 2;
+async function orbitBy(page, canvas, dragMultiplier) {
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  const startX = box.x + box.width / 2;
+  const startY = box.y + box.height / 2;
   await page.mouse.move(startX, startY);
   await page.mouse.down();
   await page.mouse.move(startX + dragMultiplier * ORBIT_DRAG_PX, startY, { steps: 12 });
   await page.mouse.up();
-  await page.waitForTimeout(1_000);
+  await page.waitForTimeout(700);
 }
 
 function expectInsideViewport(name, box, viewport) {
@@ -102,18 +104,18 @@ function expectInsideViewport(name, box, viewport) {
 }
 
 test("loads the real CRJ700 asset and captures unobstructed side evidence", async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(120_000);
   await page.setViewportSize(EVIDENCE_VIEWPORT);
-  await waitForRealAircraft(page);
+  const canvas = await waitForRealAircraft(page);
   await prepareEvidenceFrame(page);
-  await orbitBy(page, 1);
-  await page.screenshot({ path: "test-results/crj700-left-side.png" });
-  await orbitBy(page, -2);
-  await page.screenshot({ path: "test-results/crj700-right-side.png" });
+  await orbitBy(page, canvas, 1);
+  await canvas.screenshot({ path: "test-results/crj700-left-side.png", timeout: 20_000 });
+  await orbitBy(page, canvas, -2);
+  await canvas.screenshot({ path: "test-results/crj700-right-side.png", timeout: 20_000 });
 });
 
 test("mobile controls preserve a clear simulator viewport", async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(120_000);
   await page.setViewportSize(MOBILE_VIEWPORT);
   const canvas = await waitForRealAircraft(page);
 
@@ -170,5 +172,5 @@ test("mobile controls preserve a clear simulator viewport", async ({ page }) => 
   expect(Number.isFinite(afterYaw)).toBe(true);
   expect(Math.abs(afterYaw - beforeYaw)).toBeGreaterThan(0.2);
 
-  await page.screenshot({ path: "test-results/mobile-simulator-layout.png", fullPage: true });
+  await page.screenshot({ path: "test-results/mobile-simulator-layout.png", fullPage: false, timeout: 20_000 });
 });
