@@ -1,9 +1,9 @@
 import { writeFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 
-const EVIDENCE_VIEWPORT = { width: 1920, height: 1080 };
+const EVIDENCE_VIEWPORT = { width: 1440, height: 900 };
 const MOBILE_VIEWPORT = { width: 412, height: 915 };
-const ORBIT_DRAG_PX = 262;
+const ORBIT_DRAG_PX = 220;
 const MODEL_SUFFIXES = ["/models/crj700-user.glb", "/models/crj700-mobile.glb"];
 
 async function waitForRealAircraft(page) {
@@ -84,16 +84,19 @@ async function prepareEvidenceFrame(page) {
   await page.waitForTimeout(250);
 }
 
-async function orbitBy(page, canvas, dragMultiplier) {
-  const box = await canvas.boundingBox();
-  expect(box).not.toBeNull();
-  const startX = box.x + box.width / 2;
-  const startY = box.y + box.height / 2;
-  await page.mouse.move(startX, startY);
-  await page.mouse.down();
-  await page.mouse.move(startX + dragMultiplier * ORBIT_DRAG_PX, startY, { steps: 12 });
-  await page.mouse.up();
-  await page.waitForTimeout(450);
+async function orbitBy(page, dragX, dragY = 0) {
+  await page.evaluate(({ dx, dy }) => {
+    const canvas = document.querySelector("canvas.trainerCanvas");
+    if (!canvas) throw new Error("Three.js canvas is missing");
+    const box = canvas.getBoundingClientRect();
+    const startX = box.left + box.width / 2;
+    const startY = box.top + box.height / 2;
+    const held = { bubbles: true, cancelable: true, pointerId: 73, pointerType: "mouse", button: 0, buttons: 1 };
+    canvas.dispatchEvent(new PointerEvent("pointerdown", { ...held, clientX: startX, clientY: startY }));
+    window.dispatchEvent(new PointerEvent("pointermove", { ...held, clientX: startX + dx, clientY: startY + dy }));
+    window.dispatchEvent(new PointerEvent("pointerup", { ...held, clientX: startX + dx, clientY: startY + dy, buttons: 0 }));
+  }, { dx: dragX, dy: dragY });
+  await page.waitForTimeout(350);
 }
 
 async function writeCanvasEvidence(page, canvas, path) {
@@ -120,9 +123,9 @@ test("loads the real CRJ700 asset and captures unobstructed side evidence", asyn
   await page.setViewportSize(EVIDENCE_VIEWPORT);
   const canvas = await waitForRealAircraft(page);
   await prepareEvidenceFrame(page);
-  await orbitBy(page, canvas, 1);
+  await orbitBy(page, ORBIT_DRAG_PX);
   await writeCanvasEvidence(page, canvas, "test-results/crj700-left-side.png");
-  await orbitBy(page, canvas, -2);
+  await orbitBy(page, -ORBIT_DRAG_PX * 2);
   await writeCanvasEvidence(page, canvas, "test-results/crj700-right-side.png");
 });
 
@@ -171,18 +174,11 @@ test("mobile controls preserve a clear simulator viewport", async ({ page }) => 
   await expect(slider).toHaveValue("55");
 
   const beforeYaw = Number(await canvas.getAttribute("data-camera-yaw"));
-  const canvasBox = await canvas.boundingBox();
-  const startX = canvasBox.x + canvasBox.width * 0.55;
-  const startY = canvasBox.y + canvasBox.height * 0.45;
-  await page.mouse.move(startX, startY);
-  await page.mouse.down();
-  await page.mouse.move(startX + 120, startY - 30, { steps: 16 });
-  await page.mouse.up();
-  await page.waitForTimeout(350);
+  await orbitBy(page, 120, -30);
   const afterYaw = Number(await canvas.getAttribute("data-camera-yaw"));
   expect(Number.isFinite(beforeYaw)).toBe(true);
   expect(Number.isFinite(afterYaw)).toBe(true);
   expect(Math.abs(afterYaw - beforeYaw)).toBeGreaterThan(0.2);
 
-  await page.screenshot({ path: "test-results/mobile-simulator-layout.png", fullPage: false, timeout: 20_000 });
+  await writeCanvasEvidence(page, canvas, "test-results/mobile-simulator-layout.png");
 });
