@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import RampReadyStandupTrainer from "./RampReadyStandupTrainer.jsx";
+import RampReadyStandupTrainer from "./RampReadyStandupTrainerTerminal4.jsx";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
