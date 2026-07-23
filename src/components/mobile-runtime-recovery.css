@@ -141,11 +141,20 @@
 
   .rr-shell .rr-topline {
     align-items: flex-start;
-    gap: 8px;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .rr-shell .rr-topline > div:first-child {
+    min-width: 0;
+    flex: 1 1 auto;
   }
 
   .rr-shell .rr-top-tools {
     gap: 4px;
+    min-width: 0;
+    max-width: calc(100vw - 36px);
+    margin-right: 4px;
   }
 
   .rr-shell .rr-view-select {
@@ -156,15 +165,23 @@
     font-size: 12px;
   }
 
+  .rr-shell .rr-session-menu {
+    flex: 0 0 auto;
+    max-width: 48px;
+  }
+
   .rr-shell .rr-session-menu summary {
-    min-width: 48px;
+    min-width: 44px;
+    width: 44px;
     min-height: 36px;
-    padding: 0 8px;
-    font-size: 11px;
+    padding: 0 5px;
+    font-size: 10px;
+    box-sizing: border-box;
   }
 
   .rr-shell .rr-session-menu-popover {
     min-width: 168px;
+    max-width: calc(100vw - 24px);
   }
 
   .rr-shell .rr-hud h1 {
