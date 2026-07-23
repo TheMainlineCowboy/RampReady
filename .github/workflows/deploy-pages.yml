@@ -94,7 +94,7 @@ jobs:
   verify-live-site:
     needs: deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     env:
       PAGE_URL: ${{ needs.deploy.outputs.page_url }}
       EXPECTED_SHA: ${{ github.sha }}
@@ -111,21 +111,23 @@ jobs:
           : "${PAGE_URL:?GitHub Pages did not return a deployment URL}"
           case "${PAGE_URL}" in */) ;; *) PAGE_URL="${PAGE_URL}/" ;; esac
           verified=false
-          for attempt in $(seq 1 60); do
-            marker_status=$(curl --fail-with-body -L -sS -H 'Cache-Control: no-cache' -o /tmp/release-commit.txt -w '%{http_code}' "${PAGE_URL}release-commit.txt?verify=${EXPECTED_SHA}-${attempt}" || true)
+          for attempt in $(seq 1 120); do
+            marker_status=$(curl --fail-with-body -L -sS -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' -o /tmp/release-commit.txt -w '%{http_code}' "${PAGE_URL}release-commit.txt?verify=${EXPECTED_SHA}-${attempt}" || true)
             live_sha=$(tr -d '\r\n' < /tmp/release-commit.txt 2>/dev/null || true)
             if [ "${marker_status}" = "200" ] && [ "${live_sha}" = "${EXPECTED_SHA}" ]; then
+              echo "Exact release marker appeared after attempt ${attempt}."
               verified=true
               break
             fi
+            echo "Attempt ${attempt}: marker=${marker_status}, live_sha=${live_sha:-missing}"
             sleep 10
           done
           test "${verified}" = true
-          curl --fail --location --retry 6 --retry-delay 5 --output /tmp/crj700-mobile.glb "${PAGE_URL}models/crj700-mobile.glb?sha=${EXPECTED_SHA}"
+          curl --fail --location --retry 6 --retry-delay 5 -H 'Cache-Control: no-cache' --output /tmp/crj700-mobile.glb "${PAGE_URL}models/crj700-mobile.glb?sha=${EXPECTED_SHA}"
           test -s /tmp/crj700-mobile.glb
           printf 'glTF' | cmp -n 4 - /tmp/crj700-mobile.glb
           if [ -f public/models/crj700-user.asset.json ]; then
-            curl --fail --location --retry 6 --retry-delay 5 --output /tmp/crj700-user.glb "${PAGE_URL}models/crj700-user.glb?sha=${EXPECTED_SHA}"
+            curl --fail --location --retry 6 --retry-delay 5 -H 'Cache-Control: no-cache' --output /tmp/crj700-user.glb "${PAGE_URL}models/crj700-user.glb?sha=${EXPECTED_SHA}"
             cmp public/models/crj700-user.glb /tmp/crj700-user.glb
           fi
           echo "Verified exact live RampReady release ${EXPECTED_SHA} at ${PAGE_URL}"
