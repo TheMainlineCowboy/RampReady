@@ -1,6 +1,10 @@
 import { defineConfig } from "@playwright/test";
 
-const webServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || "npm run dev -- --port 4173";
+const requestedWebServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || "npm run dev -- --port 4173";
+const terminal4Preparation = "npm run prepare:terminal4-runtime";
+const webServerCommand = requestedWebServerCommand.includes("prepare:terminal4-runtime")
+  ? requestedWebServerCommand
+  : `${terminal4Preparation} && ${requestedWebServerCommand}`;
 
 export default defineConfig({
   testDir: "./tests/browser",
