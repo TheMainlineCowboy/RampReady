@@ -1,0 +1,131 @@
+name: Deploy RampReady to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: rampready-pages-main
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out exact release commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run complete RampReady verification suite
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run verify 2>&1 | tee release-verify.log
+
+      - name: Stamp exact release commit
+        run: printf '%s\n' "${GITHUB_SHA}" > public/release-commit.txt
+
+      - name: Build verified production site
+        run: npm run build
+
+      - name: Verify GitHub Pages artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          test -s dist/manifest.webmanifest
+          test -s dist/release-commit.txt
+          test "$(tr -d '\r\n' < dist/release-commit.txt)" = "${GITHUB_SHA}"
+          test -s dist/models/crj700-mobile.glb
+          printf 'glTF' | cmp -n 4 - dist/models/crj700-mobile.glb
+          grep -Eq 'src="/RampReady/assets/[^\"]+\.js"' dist/index.html
+          if [ -f dist/models/crj700-user.asset.json ]; then
+            test -s dist/models/crj700-user.glb
+            printf 'glTF' | cmp -n 4 - dist/models/crj700-user.glb
+          fi
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload verified Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Upload release diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rampready-release-diagnostics-${{ github.sha }}
+          path: release-verify.log
+          if-no-files-found: warn
+          retention-days: 14
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy exact verified artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  verify-live-site:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+      EXPECTED_SHA: ${{ github.sha }}
+    steps:
+      - name: Check out exact deployed commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Verify propagated release marker and aircraft assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${PAGE_URL:?GitHub Pages did not return a deployment URL}"
+          case "${PAGE_URL}" in */) ;; *) PAGE_URL="${PAGE_URL}/" ;; esac
+          verified=false
+          for attempt in $(seq 1 60); do
+            marker_status=$(curl --fail-with-body -L -sS -H 'Cache-Control: no-cache' -o /tmp/release-commit.txt -w '%{http_code}' "${PAGE_URL}release-commit.txt?verify=${EXPECTED_SHA}-${attempt}" || true)
+            live_sha=$(tr -d '\r\n' < /tmp/release-commit.txt 2>/dev/null || true)
+            if [ "${marker_status}" = "200" ] && [ "${live_sha}" = "${EXPECTED_SHA}" ]; then
+              verified=true
+              break
+            fi
+            sleep 10
+          done
+          test "${verified}" = true
+          curl --fail --location --retry 6 --retry-delay 5 --output /tmp/crj700-mobile.glb "${PAGE_URL}models/crj700-mobile.glb?sha=${EXPECTED_SHA}"
+          test -s /tmp/crj700-mobile.glb
+          printf 'glTF' | cmp -n 4 - /tmp/crj700-mobile.glb
+          if [ -f public/models/crj700-user.asset.json ]; then
+            curl --fail --location --retry 6 --retry-delay 5 --output /tmp/crj700-user.glb "${PAGE_URL}models/crj700-user.glb?sha=${EXPECTED_SHA}"
+            cmp public/models/crj700-user.glb /tmp/crj700-user.glb
+          fi
+          echo "Verified exact live RampReady release ${EXPECTED_SHA} at ${PAGE_URL}"
