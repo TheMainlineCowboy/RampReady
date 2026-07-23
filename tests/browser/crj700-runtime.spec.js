@@ -17,6 +17,10 @@ async function waitForRealAircraft(page) {
   });
 
   await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.getByRole("heading", { name: "Choose pushback equipment" })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Stand-up pushback/ })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("radio", { name: /Lektro 88/ })).toContainText("In preparation");
+  await page.getByRole("button", { name: "Start training" }).click();
   await expect(page.locator("canvas")).toBeVisible();
   await expect.poll(() => modelResponse?.status() ?? 0, { timeout: 20_000 }).toBe(200);
   await page.waitForTimeout(3_000);
@@ -56,8 +60,6 @@ async function orbitBy(page, dragMultiplier) {
   const startY = EVIDENCE_VIEWPORT.height / 2;
   await page.mouse.move(startX, startY);
   await page.mouse.down();
-  // Keep pointer-event volume low: the Terminal 4 scene is intentionally larger and
-  // does not need 24 synthetic drag frames to produce deterministic evidence views.
   await page.mouse.move(startX + dragMultiplier * ORBIT_DRAG_PX, startY, { steps: 3 });
   await page.mouse.up();
   await page.waitForTimeout(1_000);
@@ -66,15 +68,10 @@ async function orbitBy(page, dragMultiplier) {
 test("loads the real CRJ700 asset and captures unobstructed side evidence", async ({ page }) => {
   test.setTimeout(90_000);
   await page.setViewportSize(EVIDENCE_VIEWPORT);
-
   await waitForRealAircraft(page);
   await prepareEvidenceFrame(page);
-
   await orbitBy(page, 1);
   await page.screenshot({ path: "test-results/crj700-left-side.png" });
-
-  // Cross the original camera heading in one continuous loaded scene instead of
-  // rebuilding the aircraft and Terminal 4 environment a second time.
   await orbitBy(page, -2);
   await page.screenshot({ path: "test-results/crj700-right-side.png" });
 });
@@ -83,7 +80,6 @@ test("mobile controls preserve a clear simulator viewport", async ({ page }) => 
   test.setTimeout(90_000);
   await page.setViewportSize(MOBILE_VIEWPORT);
   await waitForRealAircraft(page);
-
   const hud = page.locator(".rr-hud");
   const hudBox = await hud.boundingBox();
   expect(hudBox).not.toBeNull();
@@ -93,11 +89,9 @@ test("mobile controls preserve a clear simulator viewport", async ({ page }) => 
   await expect(page.locator(".rr-hud-actions .rr-primary")).toBeVisible();
   await expect(page.locator(".rr-throttle")).toBeVisible();
   await expect(page.locator(".rr-steer")).toBeVisible();
-
   const canvasBox = await page.locator("canvas").boundingBox();
   expect(canvasBox).not.toBeNull();
   expect(canvasBox.height).toBeGreaterThan(1200);
   expect(hudBox.height / canvasBox.height).toBeLessThan(0.14);
-
   await page.screenshot({ path: "test-results/mobile-simulator-layout.png", fullPage: true });
 });

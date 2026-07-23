@@ -82,13 +82,18 @@
   }
 
   .rr-shell .rr-metrics {
+    top: auto;
     left: 8px;
     right: 88px;
-    bottom: calc(74px + env(safe-area-inset-bottom));
+    bottom: calc(128px + env(safe-area-inset-bottom));
+    height: auto;
+    min-height: 0;
+    max-height: 64px;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 3px 8px;
     padding: 6px 8px;
+    overflow: hidden;
     border-radius: 12px;
     background: rgba(10, 13, 20, 0.66);
   }
