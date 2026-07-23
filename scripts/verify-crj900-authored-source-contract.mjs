@@ -31,14 +31,16 @@ assert.equal(contract.normalizationContract.preserveAuthoredMaterials, true);
 assert.equal(contract.normalizationContract.runtimePath, "public/models/crj700-user.glb");
 assert.equal(contract.normalizationContract.metadataPath, "public/models/crj700-user.asset.json");
 
-assert.equal(contract.validatedCandidate.byteLength, 1018952);
-assert.match(contract.validatedCandidate.sha256, /^[a-f0-9]{64}$/);
+assert.equal(contract.validatedCandidate.byteLength, 1873128);
+assert.equal(contract.validatedCandidate.sha256, "01383b502fa9a5e0aca3b5cc4a90b5ffe82d52160778bc309e2de73579b1056b");
 assert.equal(contract.validatedCandidate.meshCount, 106);
 assert.equal(contract.validatedCandidate.materialCount, 106);
 assert.equal(contract.validatedCandidate.textureCount, 9);
 assert.equal(contract.validatedCandidate.vertexCount, 44784);
 assert.equal(contract.validatedCandidate.triangleCount, 41035);
 assert.equal(contract.validatedCandidate.embeddedImages, true);
+assert.equal(contract.validatedCandidate.quantized, false);
+assert.equal(contract.validatedCandidate.normalsGeneratedAtRuntime, true);
 
 for (const required of [
   "American+Eagle+CRJ+900.obj",
@@ -46,19 +48,24 @@ for (const required of [
   "123105",
   "32484",
   "41035",
+  "44784",
   "23.64",
   "32.5",
   "7.5",
-  "noseGearCaptureOrigin: [0,0,0]",
+  "noseGearCaptureOrigin: [0, 0, 0]",
   "preserveMaterials: true",
+  "normalsGeneratedAtRuntime: true",
+  "Unexpected optimized vertex count",
 ]) {
   assert.ok(converter.includes(required), `authored aircraft converter missing ${required}`);
 }
-assert.ok(converter.includes("-(source[0] - NOSE[0])"), "converter must rotate source 180 degrees around +Y");
-assert.ok(converter.includes("-(source[2] - NOSE[2])"), "converter must set -Z forward orientation");
-assert.ok(converter.includes("(source[1] - GROUND_Y)"), "converter must place the aircraft on the ground plane");
+assert.ok(converter.includes("-(sourcePosition[0] - NOSE[0])"), "converter must rotate source 180 degrees around +Y");
+assert.ok(converter.includes("-(sourcePosition[2] - NOSE[2])"), "converter must set -Z forward orientation");
+assert.ok(converter.includes("(sourcePosition[1] - GROUND_Y)"), "converter must place the aircraft on the ground plane");
 assert.ok(converter.includes("baseColorTexture"), "converter must preserve authored texture assignments");
 assert.ok(converter.includes("image/png"), "converter must embed the nine supplied PNG textures");
+assert.ok(converter.includes("value.toFixed(6)"), "converter must deduplicate equivalent position/UV vertices deterministically");
+assert.ok(!converter.includes("attributes.NORMAL"), "converter must not preserve source index-fragmented normals after position/UV deduplication");
 
 for (const requiredView of [
   "front-left",
@@ -81,4 +88,4 @@ for (const forbidden of [
   assert.ok(contract.acceptance.forbiddenRuntimeFallbacks.includes(forbidden), `missing forbidden runtime fallback ${forbidden}`);
 }
 
-console.log("Authored CRJ900 source contract passed: exact source identity, deterministic conversion, normalized dimensions/orientation, material preservation, candidate topology, and required Three.js QA views are locked.");
+console.log("Authored CRJ900 source contract passed: exact source identity, deterministic 44,784-vertex conversion, normalized dimensions/orientation, material preservation, and required Three.js QA views are locked.");
