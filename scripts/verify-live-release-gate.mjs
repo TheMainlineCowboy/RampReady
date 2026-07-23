@@ -23,17 +23,27 @@ for (const path of obsoleteWorkflows) assert.equal(await exists(path), false, `$
 
 const workflow = await read(".github/workflows/verify-rampready-live-experience.yml");
 for (const required of [
+  "scripts/verify-live-experience-browser.cjs",
+  "continue-on-error: true",
+  "live-experience-evidence/error.txt",
+  "production/rampready-live-experience",
+  "production/crj700-side-views",
+  "Enforce live-experience verdict",
+]) assert.ok(workflow.includes(required), `live workflow missing ${required}`);
+
+const browserVerifier = await read("scripts/verify-live-experience-browser.cjs");
+for (const required of [
   "Choose pushback equipment",
   "Start training",
   "Stand-up model is launchable",
   "canvas.trainerCanvas",
   "data-camera-yaw",
   ".rr-power-slider",
-  "production/rampready-live-experience",
-  "production/crj700-side-views",
   "/models/crj700-user.glb",
   "/models/crj700-mobile.glb",
-]) assert.ok(workflow.includes(required), `live workflow missing ${required}`);
+  "mobile-layout.json",
+  "error.txt",
+]) assert.ok(browserVerifier.includes(required), `live browser verifier missing ${required}`);
 
 const selection = await read("src/components/PushbackTrainer.jsx");
 assert.ok(selection.includes("useState(null)"), "equipment screen must be the real initial route");
@@ -69,4 +79,4 @@ for (const required of [
   "bottom: var(--rr-recovery-safe) !important",
 ]) assert.ok(css.includes(required), `mobile recovery CSS missing ${required}`);
 
-console.log("RampReady live release gate verified: honest equipment gating, real launch flow, touch camera orbit, visible mobile controls, and consolidated production evidence are enforced.");
+console.log("RampReady live release gate verified: authoritative checked-in browser verification, honest equipment gating, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");

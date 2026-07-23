@@ -1,5 +1,6 @@
 import { defineConfig } from "@playwright/test";
 
+const externalBaseURL = process.env.PLAYWRIGHT_BASE_URL || "";
 const requestedWebServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || "npm run dev -- --port 4173";
 const terminal4Preparation = "npm run prepare:terminal4-runtime";
 const webServerCommand = requestedWebServerCommand.includes("prepare:terminal4-runtime")
@@ -12,15 +13,17 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   retries: 1,
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: externalBaseURL || "http://127.0.0.1:4173",
     viewport: { width: 1280, height: 720 },
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  webServer: {
-    command: webServerCommand,
-    url: "http://127.0.0.1:4173",
-    reuseExistingServer: false,
-    timeout: 120_000,
-  },
+  webServer: externalBaseURL
+    ? undefined
+    : {
+        command: webServerCommand,
+        url: "http://127.0.0.1:4173",
+        reuseExistingServer: false,
+        timeout: 120_000,
+      },
 });
