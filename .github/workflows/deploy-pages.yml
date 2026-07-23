@@ -142,7 +142,7 @@ jobs:
           }
           EOF
 
-      - name: Verify live Three.js runtime and visible real CRJ700
+      - name: Verify live equipment launch, Three.js runtime, and visible real CRJ700
         shell: bash
         env:
           PAGE_URL: ${{ needs.deploy.outputs.page_url }}
@@ -200,6 +200,8 @@ jobs:
             const pageErrors = [];
             const failedRequests = [];
             let modelResponse = null;
+            let equipmentSelectionHandled = false;
+            let equipmentOptionCount = 0;
 
             page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
             page.on('pageerror', error => pageErrors.push(error.message));
@@ -211,6 +213,18 @@ jobs:
 
             const response = await page.goto(`${pageUrl}?runtime=${expectedSha}`, { waitUntil: 'networkidle', timeout: 90000 });
             if (!response || !response.ok()) throw new Error(`Live page navigation failed: ${response?.status() || 'no response'}`);
+
+            const equipmentHeading = page.getByRole('heading', { name: 'Choose pushback equipment' });
+            if (await equipmentHeading.isVisible().catch(() => false)) {
+              equipmentOptionCount = await page.getByRole('radio').count();
+              if (equipmentOptionCount < 2) throw new Error(`Equipment selection did not expose both equipment choices: ${equipmentOptionCount}`);
+              const startButton = page.getByRole('button', { name: 'Start training' });
+              if (!(await startButton.isEnabled())) throw new Error('Default verified equipment cannot launch');
+              await startButton.click();
+              equipmentSelectionHandled = true;
+            }
+
+            await page.locator('canvas.trainerCanvas').waitFor({ state: 'visible', timeout: 90000 });
             await page.waitForTimeout(12000);
 
             const runtime = await page.evaluate(() => {
@@ -232,9 +246,10 @@ jobs:
             await page.locator('canvas').first().screenshot({ path: 'live-verification/rampready-canvas.png' });
             await page.screenshot({ path: 'live-verification/rampready-live.png', fullPage: true });
             const visual = analyzeCanvas('live-verification/rampready-canvas.png');
-            const report = { pageUrl, expectedSha, runtime, visual, modelResponse, consoleErrors, pageErrors, failedRequests };
+            const report = { pageUrl, expectedSha, equipmentSelectionHandled, equipmentOptionCount, runtime, visual, modelResponse, consoleErrors, pageErrors, failedRequests };
             fs.writeFileSync('live-verification/browser-report.json', JSON.stringify(report, null, 2));
 
+            if (!equipmentSelectionHandled) throw new Error('Live release did not present the equipment-selection launch screen');
             if (runtime.rootChildren < 1) throw new Error('React root did not initialize');
             if (!runtime.canvasPresent) throw new Error('Three.js canvas is missing');
             if (runtime.canvasWidth < 640 || runtime.canvasHeight < 360) throw new Error(`Canvas backing size is too small: ${runtime.canvasWidth}x${runtime.canvasHeight}`);
