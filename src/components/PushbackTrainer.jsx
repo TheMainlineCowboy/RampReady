@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import RampReadyStandupTrainer from "./RampReadyStandupTrainerTerminal4.jsx";
+import RampReadyLektroPrototypeTrainer from "./RampReadyStandupTrainerTerminal4.jsx";
 import {
   DEFAULT_EQUIPMENT_ID,
   EQUIPMENT_PROFILES,
@@ -10,18 +10,11 @@ import "./equipment-selection.css";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-function getInitialActiveEquipmentId() {
-  const params = new URLSearchParams(window.location.search);
-  return params.has("side-view-verification") || params.has("extent-verification")
-    ? DEFAULT_EQUIPMENT_ID
-    : null;
-}
-
 export default function PushbackTrainer() {
   const [gyroEnabled, setGyroEnabled] = useState(false);
   const [gyroAvailable, setGyroAvailable] = useState(true);
   const [selectedEquipmentId, setSelectedEquipmentId] = useState(DEFAULT_EQUIPMENT_ID);
-  const [activeEquipmentId, setActiveEquipmentId] = useState(getInitialActiveEquipmentId);
+  const [activeEquipmentId, setActiveEquipmentId] = useState(null);
   const baselineRef = useRef(null);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
   const selectedEquipment = getEquipmentProfile(selectedEquipmentId);
@@ -142,7 +135,7 @@ export default function PushbackTrainer() {
   }
 
   return (
-    <RampReadyStandupTrainer
+    <RampReadyLektroPrototypeTrainer
       key={activeEquipmentId}
       equipmentId={activeEquipmentId}
       onChangeEquipment={changeEquipment}
