@@ -1,0 +1,59 @@
+{
+  "contractVersion": 1,
+  "status": "preferred-authored-aircraft-source",
+  "sourceArchive": {
+    "fileName": "American-Eagle-CRJ-900 (1).zip",
+    "byteLength": 3655196,
+    "sha256": "5987a2b1d29617ff1f1941ec57d5aa655c70d51058d2086439e4cc5523e2633e"
+  },
+  "sourceModel": {
+    "aircraftType": "CRJ900",
+    "objFileName": "American+Eagle+CRJ+900.obj",
+    "objByteLength": 18286347,
+    "mtlFileName": "American+Eagle+CRJ+900.mtl",
+    "mtlByteLength": 16120,
+    "vertexRecords": 123105,
+    "normalRecords": 123105,
+    "texcoordRecords": 32484,
+    "objectCount": 190,
+    "triangleCount": 41035,
+    "materialCount": 106,
+    "textureCount": 9,
+    "sourceBoundsMeters": {
+      "min": [0.5911669731140137, -0.0013887891545891762, -37.15769958496094],
+      "max": [25.877761840820312, 7.74951696395874, -0.10738572478294373],
+      "extent": [25.2865948677063, 7.750905753113329, 37.050313860177994]
+    },
+    "sourceNoseWheelCenter": [13.234288454055786, 0.27719337795861065, -2.3652495741844177],
+    "sourceGroundY": -0.0013887891545891762
+  },
+  "normalizationContract": {
+    "runtimeAircraftType": "CRJ700",
+    "orientation": { "up": "+Y", "forward": "-Z" },
+    "rotationDegreesY": 180,
+    "noseGearCaptureOrigin": [0, 0, 0],
+    "dimensionsMeters": { "length": 32.5, "wingspan": 23.64, "height": 7.5 },
+    "scaleFactors": { "x": 0.9348826966888619, "y": 0.9676288473753474, "z": 0.8771855515893832 },
+    "preserveAuthoredMaterials": true,
+    "runtimePath": "public/models/crj700-user.glb",
+    "metadataPath": "public/models/crj700-user.asset.json"
+  },
+  "validatedCandidate": {
+    "fileName": "crj700-user.glb",
+    "byteLength": 1873128,
+    "sha256": "01383b502fa9a5e0aca3b5cc4a90b5ffe82d52160778bc309e2de73579b1056b",
+    "meshCount": 106,
+    "materialCount": 106,
+    "textureCount": 9,
+    "vertexCount": 44784,
+    "triangleCount": 41035,
+    "embeddedImages": true,
+    "quantized": false,
+    "normalsGeneratedAtRuntime": true
+  },
+  "acceptance": {
+    "requiredViews": ["front-left", "front-right", "left-side", "right-side", "rear", "top", "nose-gear-close-up"],
+    "mustPreserve": ["bilateral American Eagle titles", "tail stripes", "windows", "doors", "engine textures", "landing gear", "wheel detail"],
+    "forbiddenRuntimeFallbacks": ["floating livery planes", "floating livery boxes", "procedural aircraft body after successful authored-model load", "fallback livery shader on authored materials"]
+  }
+}
