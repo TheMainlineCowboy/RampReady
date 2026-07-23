@@ -7,6 +7,7 @@
   "scripts": {
     "prepare:aircraft": "node scripts/prepare-crj700-model.mjs",
     "stage:aircraft": "node scripts/stage-user-aircraft.mjs",
+    "convert:authored-aircraft": "node tools/aircraft/convert-authored-crj900.mjs",
     "prepare:runtime": "node scripts/prepare-runtime.mjs",
     "prepare:terminal4-runtime": "node scripts/prepare-terminal4-runtime.mjs",
     "prepare:standup-tug": "node scripts/standup-tug-glb-normalizer.mjs",
