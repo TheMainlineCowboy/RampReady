@@ -1,30 +1,31 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const css = await readFile(new URL("../src/components/throttle-force.css", import.meta.url), "utf8");
+const css = await readFile(new URL("../src/components/mobile-runtime-recovery.css", import.meta.url), "utf8");
 
 for (const required of [
-  "--rr-safe-left",
-  "--rr-safe-right",
-  "--rr-safe-bottom",
-  "env(safe-area-inset-left)",
-  "env(safe-area-inset-right)",
+  "--rr-recovery-safe",
   "env(safe-area-inset-bottom)",
+  "grid-template-columns: 76px minmax(0, 1fr) 58px",
   "grid-template-columns: 1fr 1.2fr 1fr",
-  "right: calc(var(--rr-safe-right) + var(--rr-throttle-width) + 8px)",
-  "max-height: 168px",
-  ".rr-shell .rr-checklist",
-  "display: none",
-  "@media (max-width: 820px) and (max-height: 520px)",
+  "bottom: calc(var(--rr-recovery-safe) + 66px)",
+  "bottom: var(--rr-recovery-safe)",
+  ".rr-shell .rr-throttle input[type=\"range\"]",
+  "transform: none !important",
+  "opacity: 1 !important",
+  ".rr-session-menu-popover",
+  ".rr-equipment-actions",
+  "position: sticky",
+  "@media (max-width: 820px) and (max-height: 560px)",
 ]) {
-  assert.ok(css.includes(required), `mobile control surface missing required contract: ${required}`);
+  assert.ok(css.includes(required), `mobile recovery surface missing required contract: ${required}`);
 }
 
 const mobileBlock = css.slice(css.indexOf("@media (max-width: 820px)"));
-assert.ok(mobileBlock.includes("bottom: var(--rr-safe-bottom)"), "mobile controls must remain inside the bottom safe area");
-assert.ok(mobileBlock.includes("overflow: hidden"), "mobile throttle deck must prevent viewport overflow");
-assert.ok(mobileBlock.includes("min-height: 64px"), "primary steering and braking controls must remain large touch targets");
-assert.ok(mobileBlock.includes("opacity: 0.001"), "full throttle deck must remain an active drag target without obscuring compact buttons");
-assert.ok(!mobileBlock.includes("right: 104px;\n    bottom: calc(60px"), "legacy fixed mobile offsets must not remain in the force override");
+assert.ok(mobileBlock.includes("height: 56px !important"), "mobile throttle must be a visible compact horizontal deck");
+assert.ok(mobileBlock.includes("height: 58px !important"), "mobile steering controls must remain visible above the safe area");
+assert.ok(mobileBlock.includes("min-height: 46px !important"), "steering and braking controls must remain large touch targets");
+assert.ok(mobileBlock.includes("overflow: hidden !important"), "mobile decks must not extend beyond the viewport");
+assert.ok(!mobileBlock.includes("opacity: 0.001"), "the power slider must not be hidden behind an invisible drag layer");
 
-console.log("RampReady mobile control-surface verification passed: safe-area aware compact HUD, non-overlapping bottom control deck, large touch targets, and short-landscape compression are enforced.");
+console.log("RampReady mobile control-surface verification passed: horizontal power, visible steering/brake controls, safe-area containment, compact telemetry, and non-blocking session menu are enforced.");

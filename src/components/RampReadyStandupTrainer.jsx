@@ -15,6 +15,7 @@ import {
 import { createProceduralLektroRig, validateTugRig } from "../tug/lektroRig.js";
 import "./RampReadyTrainer.css";
 import "./procedure-gates.css";
+import "./mobile-runtime-recovery.css";
 
 const NOSE_START_Z = 6.2;
 const STOP_Z = 52;
@@ -34,6 +35,7 @@ const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 function material(color, roughness = 0.62, metalness = 0.05) {
   return new THREE.MeshStandardMaterial({ color, roughness, metalness });
 }
+
 function cylinder(radius, depth, color, x, y, z, rx = 0, ry = 0, rz = 0) {
   const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, depth, 32), material(color, 0.78, 0.04));
   mesh.position.set(x, y, z);
@@ -42,6 +44,7 @@ function cylinder(radius, depth, color, x, y, z, rx = 0, ry = 0, rz = 0) {
   mesh.receiveShadow = true;
   return mesh;
 }
+
 function buildGround(scene) {
   const ramp = new THREE.Mesh(new THREE.PlaneGeometry(90, 140), material(0x50545a, 0.95, 0.02));
   ramp.rotation.x = -Math.PI / 2;
@@ -57,6 +60,7 @@ function buildGround(scene) {
   stop.position.set(0, 0.022, STOP_Z);
   scene.add(stop);
 }
+
 function connectionMetrics(sim) {
   const cradle = sim.rig.getCaptureWorld(new THREE.Vector3());
   const delta = sim.aircraft.position.clone().sub(cradle);
@@ -75,6 +79,7 @@ function connectionMetrics(sim) {
     fromFront: delta.dot(forward) >= -0.05,
   };
 }
+
 function dispose(object) {
   object.traverse((child) => {
     child.geometry?.dispose?.();
@@ -83,11 +88,25 @@ function dispose(object) {
   });
 }
 
-export default function RampReadyStandupTrainer() {
+export default function RampReadyStandupTrainer({
+  equipmentId = "lektro-88",
+  onChangeEquipment,
+  gyroAvailable = true,
+  gyroEnabled = false,
+  onToggleGyro,
+}) {
   const mountRef = useRef(null);
   const simRef = useRef(null);
   const stageRef = useRef(0);
   const cameraRef = useRef("chase");
+  const orbitRef = useRef({
+    yaw: 2.5,
+    pitch: 0.38,
+    distance: 16,
+    pointerId: null,
+    lastX: 0,
+    lastY: 0,
+  });
   const driveRef = useRef({ throttle: 0, steer: 0, brake: false, direction: 1 });
   const keysRef = useRef(new Set());
   const scoreRef = useRef(100);
@@ -96,7 +115,20 @@ export default function RampReadyStandupTrainer() {
   const [direction, setDirection] = useState("FWD");
   const [throttle, setThrottle] = useState(0);
   const [message, setMessage] = useState("Complete the equipment check, then approach at idle speed.");
-  const [hud, setHud] = useState({ speed: 0, stop: STOP_Z - NOSE_START_Z, capture: 0, ready: false, articulation: 0, warning: false, score: 100, phase: CONNECTION_PHASES.APPROACH, progress: 0, tug: "Lektro rig" });
+  const [hud, setHud] = useState({
+    speed: 0,
+    stop: STOP_Z - NOSE_START_Z,
+    capture: 0,
+    ready: false,
+    articulation: 0,
+    warning: false,
+    score: 100,
+    phase: CONNECTION_PHASES.APPROACH,
+    progress: 0,
+    tug: equipmentId,
+    aircraft: "loading",
+  });
+
   useEffect(() => { stageRef.current = stage; }, [stage]);
   useEffect(() => { cameraRef.current = cameraMode; }, [cameraMode]);
 
@@ -112,6 +144,9 @@ export default function RampReadyStandupTrainer() {
     sim.aircraft.position.set(0, 0, NOSE_START_Z);
     sim.aircraft.rotation.y = 0;
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
+    orbitRef.current.yaw = 2.5;
+    orbitRef.current.pitch = 0.38;
+    orbitRef.current.distance = 16;
     scoreRef.current = 100;
     stageRef.current = 0;
     setStage(0);
@@ -124,12 +159,18 @@ export default function RampReadyStandupTrainer() {
     const sim = simRef.current;
     if (!sim) return;
     if (stageRef.current === 0) {
-      stageRef.current = 1; setStage(1); setMessage("Approach directly from the front and stop inside the capture envelope.");
+      stageRef.current = 1;
+      setStage(1);
+      setMessage("Approach directly from the front and stop inside the capture envelope.");
     } else if (stageRef.current === 3 && sim.connection.phase === CONNECTION_PHASES.SECURED) {
-      stageRef.current = 4; setStage(4); setMessage("Clearance received. Confirm aircraft parking brake release.");
+      stageRef.current = 4;
+      setStage(4);
+      setMessage("Clearance received. Confirm aircraft parking brake release.");
     } else if (stageRef.current === 4 && sim.connection.phase === CONNECTION_PHASES.SECURED) {
       sim.connection = beginTow(sim.connection);
-      stageRef.current = 5; setStage(5); setMessage("Brake released. Add power gradually and steer smoothly.");
+      stageRef.current = 5;
+      setStage(5);
+      setMessage("Brake released. Add power gradually and steer smoothly.");
     }
   }, []);
 
@@ -140,7 +181,8 @@ export default function RampReadyStandupTrainer() {
     driveRef.current.throttle = 0;
     setThrottle(0);
     if (sim.connection.phase === CONNECTION_PHASES.CAPTURING) {
-      stageRef.current = 2; setStage(2);
+      stageRef.current = 2;
+      setStage(2);
     }
     setMessage(sim.connection.reason);
   }, []);
@@ -154,14 +196,27 @@ export default function RampReadyStandupTrainer() {
     setMessage(sim.connection.reason);
   }, []);
 
+  const setPower = useCallback((value) => {
+    const normalized = clamp(Number(value) || 0, 0, 100);
+    setThrottle(normalized);
+    driveRef.current.throttle = normalized / 100;
+  }, []);
+
   useEffect(() => {
+    if (equipmentId !== "lektro-88") throw new Error(`Unsupported runtime equipment: ${equipmentId}`);
     const mount = mountRef.current;
     if (!mount) return undefined;
+
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true;
     renderer.domElement.className = "trainerCanvas";
+    renderer.domElement.dataset.cameraYaw = orbitRef.current.yaw.toFixed(4);
+    renderer.domElement.dataset.cameraPitch = orbitRef.current.pitch.toFixed(4);
+    renderer.domElement.dataset.cameraDistance = orbitRef.current.distance.toFixed(3);
+    renderer.domElement.dataset.equipmentId = equipmentId;
     mount.replaceChildren(renderer.domElement);
+
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x9fc4e6);
     scene.fog = new THREE.Fog(0x9fc4e6, 70, 140);
@@ -171,16 +226,63 @@ export default function RampReadyStandupTrainer() {
     sun.castShadow = true;
     scene.add(sun);
     buildGround(scene);
+
     const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 500);
     const rig = createProceduralLektroRig(THREE);
+    rig.root.userData.equipmentId = equipmentId;
     const rigFailures = validateTugRig(rig);
     if (rigFailures.length) throw new Error(`Invalid tug rig: ${rigFailures.join(", ")}`);
     const aircraft = buildCRJ700Aircraft(THREE, material, cylinder);
     aircraft.position.set(0, 0, NOSE_START_Z);
     aircraft.scale.setScalar(0.82);
     scene.add(rig.root, aircraft);
+
     const sim = { renderer, scene, camera, rig, aircraft, connection: createConnectionState(), dynamics: createPushbackState(), last: performance.now(), lastHud: 0 };
     simRef.current = sim;
+
+    const canvas = renderer.domElement;
+    const syncCameraDataset = () => {
+      canvas.dataset.cameraYaw = orbitRef.current.yaw.toFixed(4);
+      canvas.dataset.cameraPitch = orbitRef.current.pitch.toFixed(4);
+      canvas.dataset.cameraDistance = orbitRef.current.distance.toFixed(3);
+    };
+    const handlePointerDown = (event) => {
+      if (cameraRef.current !== "chase") return;
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      orbitRef.current.pointerId = event.pointerId;
+      orbitRef.current.lastX = event.clientX;
+      orbitRef.current.lastY = event.clientY;
+      canvas.setPointerCapture?.(event.pointerId);
+      event.preventDefault();
+    };
+    const handlePointerMove = (event) => {
+      if (orbitRef.current.pointerId !== event.pointerId || cameraRef.current !== "chase") return;
+      const dx = event.clientX - orbitRef.current.lastX;
+      const dy = event.clientY - orbitRef.current.lastY;
+      orbitRef.current.lastX = event.clientX;
+      orbitRef.current.lastY = event.clientY;
+      orbitRef.current.yaw -= dx * 0.006;
+      orbitRef.current.pitch = clamp(orbitRef.current.pitch + dy * 0.0045, 0.08, 1.18);
+      syncCameraDataset();
+      event.preventDefault();
+    };
+    const handlePointerUp = (event) => {
+      if (orbitRef.current.pointerId !== event.pointerId) return;
+      orbitRef.current.pointerId = null;
+      canvas.releasePointerCapture?.(event.pointerId);
+    };
+    const handleWheel = (event) => {
+      if (cameraRef.current !== "chase") return;
+      orbitRef.current.distance = clamp(orbitRef.current.distance + event.deltaY * 0.012, 7, 34);
+      syncCameraDataset();
+      event.preventDefault();
+    };
+    canvas.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("pointermove", handlePointerMove, { passive: false });
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
+    canvas.addEventListener("wheel", handleWheel, { passive: false });
+
     const resize = () => {
       const width = Math.max(1, mount.clientWidth || window.innerWidth);
       const height = Math.max(1, mount.clientHeight || window.innerHeight);
@@ -190,6 +292,9 @@ export default function RampReadyStandupTrainer() {
     };
     resize();
     window.addEventListener("resize", resize);
+
+    const cameraTarget = new THREE.Vector3();
+    const desiredCamera = new THREE.Vector3();
     let frame = 0;
     const tick = (now) => {
       const dt = Math.min(0.04, Math.max(0.001, (now - sim.last) / 1000));
@@ -197,16 +302,33 @@ export default function RampReadyStandupTrainer() {
       const before = connectionMetrics(sim);
       const clearDistance = Math.hypot(rig.root.position.x - aircraft.position.x, rig.root.position.z - aircraft.position.z);
       sim.connection = stepConnection(sim.connection, { metrics: before, speed: sim.dynamics.speed, clearDistance }, dt);
+
       if (stageRef.current === 2 && sim.connection.phase === CONNECTION_PHASES.SECURED) {
-        sim.dynamics = createPushbackState({ tugX: rig.root.position.x, tugZ: rig.root.position.z, tugYaw: rig.root.rotation.y, aircraftX: aircraft.position.x, aircraftZ: aircraft.position.z, aircraftYaw: aircraft.rotation.y });
-        stageRef.current = 3; setStage(3); setMessage("Nose gear lifted and secured. Request pushback clearance.");
+        sim.dynamics = createPushbackState({
+          tugX: rig.root.position.x,
+          tugZ: rig.root.position.z,
+          tugYaw: rig.root.rotation.y,
+          aircraftX: aircraft.position.x,
+          aircraftZ: aircraft.position.z,
+          aircraftYaw: aircraft.rotation.y,
+        });
+        stageRef.current = 3;
+        setStage(3);
+        setMessage("Nose gear lifted and secured. Request pushback clearance.");
       }
       if (stageRef.current === 6 && sim.connection.phase === CONNECTION_PHASES.RELEASED) {
-        stageRef.current = 7; setStage(7); setMessage("Nose gear released. Select REV and drive at least 2.2 m clear.");
+        stageRef.current = 7;
+        setStage(7);
+        setMessage("Nose gear released. Select REV and drive at least 2.2 m clear.");
       }
       if (stageRef.current === 7 && sim.connection.phase === CONNECTION_PHASES.CLEAR) {
-        driveRef.current.throttle = 0; setThrottle(0); stageRef.current = 8; setStage(8); setMessage(`Tug clear. Scenario complete. Score ${Math.round(scoreRef.current)}/100.`);
+        driveRef.current.throttle = 0;
+        setThrottle(0);
+        stageRef.current = 8;
+        setStage(8);
+        setMessage(`Tug clear. Scenario complete. Score ${Math.round(scoreRef.current)}/100.`);
       }
+
       const drive = driveRef.current;
       let steer = drive.steer;
       if (keysRef.current.has("a") || keysRef.current.has("arrowleft")) steer += 1;
@@ -221,6 +343,7 @@ export default function RampReadyStandupTrainer() {
         brake: drive.brake || keysRef.current.has(" ") || !motionAllowed,
         cradleOffset: rig.profile.cradleOffset,
       }, dt);
+
       const state = sim.dynamics;
       rig.root.position.set(state.tugX, 0, state.tugZ);
       rig.root.rotation.y = state.tugYaw;
@@ -230,8 +353,13 @@ export default function RampReadyStandupTrainer() {
         aircraft.position.set(state.aircraftX, 0, state.aircraftZ);
         aircraft.rotation.y = state.aircraftYaw;
       }
-      const lift = sim.connection.phase === CONNECTION_PHASES.CAPTURING ? sim.connection.progress : sim.connection.phase === CONNECTION_PHASES.LOWERING ? 1 - sim.connection.progress : connectionHasAircraft(sim.connection) ? 1 : 0;
+      const lift = sim.connection.phase === CONNECTION_PHASES.CAPTURING
+        ? sim.connection.progress
+        : sim.connection.phase === CONNECTION_PHASES.LOWERING
+          ? 1 - sim.connection.progress
+          : connectionHasAircraft(sim.connection) ? 1 : 0;
       rig.setLiftProgress(lift);
+
       const metrics = connectionMetrics(sim);
       const stopRemaining = STOP_Z - state.aircraftZ;
       if (towing && state.jackknifeWarning) setMessage("Articulation limit approaching. Reduce power and steer toward alignment.");
@@ -239,8 +367,14 @@ export default function RampReadyStandupTrainer() {
       if (towing && state.aircraftZ >= STOP_Z - 0.5) {
         const hard = Math.abs(state.speed) >= 0.18;
         if (hard) scoreRef.current = Math.max(0, scoreRef.current - 10);
-        sim.dynamics.speed = 0; driveRef.current.throttle = 0; setThrottle(0); stageRef.current = 6; setStage(6); setMessage(hard ? "Stopped too hard. Straighten, then lower." : "Good stop. Straighten, then lower.");
+        sim.dynamics.speed = 0;
+        driveRef.current.throttle = 0;
+        setThrottle(0);
+        stageRef.current = 6;
+        setStage(6);
+        setMessage(hard ? "Stopped too hard. Straighten, then lower." : "Good stop. Straighten, then lower.");
       }
+
       const target = connectionHasAircraft(sim.connection) ? aircraft.position : rig.root.position;
       if (cameraRef.current === "driver") {
         camera.position.lerp(rig.getOperatorEyeWorld(new THREE.Vector3()), 0.28);
@@ -249,32 +383,92 @@ export default function RampReadyStandupTrainer() {
         camera.position.lerp(new THREE.Vector3(target.x, 34, target.z + 2), 0.16);
         camera.lookAt(target.x, 0, target.z + 5);
       } else {
-        camera.position.lerp(new THREE.Vector3(rig.root.position.x + 9, 6, rig.root.position.z - 12), 0.12);
-        camera.lookAt(rig.root.position.x, 1, rig.root.position.z + 3);
+        const orbit = orbitRef.current;
+        cameraTarget.set(target.x, 1.3, target.z + (connectionHasAircraft(sim.connection) ? 0 : 2.5));
+        const horizontal = Math.cos(orbit.pitch) * orbit.distance;
+        desiredCamera.set(
+          cameraTarget.x + Math.sin(orbit.yaw) * horizontal,
+          cameraTarget.y + Math.sin(orbit.pitch) * orbit.distance,
+          cameraTarget.z + Math.cos(orbit.yaw) * horizontal,
+        );
+        camera.position.lerp(desiredCamera, 0.16);
+        camera.lookAt(cameraTarget);
       }
+
+      const aircraftSource = aircraft.userData.renderedAircraftSource || aircraft.userData.aircraftAssetCandidateId || aircraft.userData.aircraftAssetState || "loading";
+      canvas.dataset.aircraftSource = aircraftSource;
       if (now - sim.lastHud > 100) {
         sim.lastHud = now;
-        setHud({ speed: Math.abs(state.speed), stop: stopRemaining, capture: metrics.distance, ready: sim.connection.phase === CONNECTION_PHASES.ALIGNED, articulation: Math.abs(THREE.MathUtils.radToDeg(state.articulation)), warning: Math.abs(state.articulation) >= JACKKNIFE_WARNING, score: Math.round(scoreRef.current), phase: sim.connection.phase, progress: sim.connection.progress, tug: rig.profile.id });
+        setHud({
+          speed: Math.abs(state.speed),
+          stop: stopRemaining,
+          capture: metrics.distance,
+          ready: sim.connection.phase === CONNECTION_PHASES.ALIGNED,
+          articulation: Math.abs(THREE.MathUtils.radToDeg(state.articulation)),
+          warning: Math.abs(state.articulation) >= JACKKNIFE_WARNING,
+          score: Math.round(scoreRef.current),
+          phase: sim.connection.phase,
+          progress: sim.connection.progress,
+          tug: equipmentId,
+          aircraft: aircraftSource,
+        });
       }
       renderer.render(scene, camera);
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", resize); dispose(scene); renderer.dispose(); simRef.current = null; };
-  }, []);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", resize);
+      canvas.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
+      canvas.removeEventListener("wheel", handleWheel);
+      dispose(scene);
+      renderer.dispose();
+      simRef.current = null;
+    };
+  }, [equipmentId]);
 
   useEffect(() => {
     const down = (event) => keysRef.current.add(event.key.toLowerCase());
     const up = (event) => keysRef.current.delete(event.key.toLowerCase());
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
-    return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); };
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+    };
   }, []);
 
-  return <div className="rr-shell">
+  const releaseSteer = () => { driveRef.current.steer = 0; };
+  const releaseBrake = () => { driveRef.current.brake = false; };
+
+  return <div className="rr-shell" data-equipment-id={equipmentId}>
     <div ref={mountRef} className="rr-scene" />
     <section className="rr-hud">
-      <div className="rr-topline"><div><div className="rr-kicker">Step {stage + 1} / {STAGES.length}</div><h1>{STAGES[stage]}</h1></div><select className="rr-view-select" value={cameraMode} onChange={(event) => setCameraMode(event.target.value)}><option value="chase">Chase view</option><option value="driver">Operator view</option><option value="overhead">Overhead view</option></select></div>
+      <div className="rr-topline">
+        <div>
+          <div className="rr-kicker">Step {stage + 1} / {STAGES.length}</div>
+          <h1>{STAGES[stage]}</h1>
+        </div>
+        <div className="rr-top-tools">
+          <select className="rr-view-select" value={cameraMode} onChange={(event) => setCameraMode(event.target.value)} aria-label="Camera view">
+            <option value="chase">Chase view</option>
+            <option value="driver">Operator view</option>
+            <option value="overhead">Overhead view</option>
+          </select>
+          <details className="rr-session-menu">
+            <summary aria-label="Simulator menu">Menu</summary>
+            <div className="rr-session-menu-popover">
+              <button type="button" onClick={onChangeEquipment}>Change equipment</button>
+              {gyroAvailable && <button type="button" aria-pressed={gyroEnabled} onClick={onToggleGyro}>Gyro {gyroEnabled ? "on" : "off"}</button>}
+            </div>
+          </details>
+        </div>
+      </div>
       <p>{message}</p>
       <div className="rr-hud-actions">
         {[0, 3, 4].includes(stage) && <button className="rr-primary" onClick={advance}>{stage === 0 ? "Ready" : stage === 3 ? "Clearance" : "Brake released"}</button>}
@@ -283,9 +477,60 @@ export default function RampReadyStandupTrainer() {
         <button className="rr-secondary" onClick={reset}>Reset</button>
       </div>
     </section>
-    <aside className="rr-metrics"><span>Tug <b>{hud.tug}</b></span><span>Speed <b>{(hud.speed * 2.237).toFixed(1)} mph</b></span><span>Stop <b>{Math.max(0, hud.stop).toFixed(1)} m</b></span><span>Articulation <b>{hud.articulation.toFixed(1)}°</b></span><span>Connection <b>{hud.phase}</b></span>{[CONNECTION_PHASES.CAPTURING, CONNECTION_PHASES.LOWERING].includes(hud.phase) && <span>Cycle <b>{Math.round(hud.progress * 100)}%</b></span>}</aside>
+    <aside className="rr-metrics">
+      <span>Tug <b>{hud.tug}</b></span>
+      <span>Speed <b>{(hud.speed * 2.237).toFixed(1)} mph</b></span>
+      <span>Stop <b>{Math.max(0, hud.stop).toFixed(1)} m</b></span>
+      <span>Articulation <b>{hud.articulation.toFixed(1)}°</b></span>
+      <span>Connection <b>{hud.phase}</b></span>
+      <span>Aircraft <b>{hud.aircraft}</b></span>
+      {[CONNECTION_PHASES.CAPTURING, CONNECTION_PHASES.LOWERING].includes(hud.phase) && <span>Cycle <b>{Math.round(hud.progress * 100)}%</b></span>}
+    </aside>
     <aside className="rr-score-float">Score <b>{hud.score}</b><span>{hud.warning ? "JACKKNIFE" : "Stable"}</span></aside>
-    <div className="rr-steer"><button onPointerDown={() => { driveRef.current.steer = 1; }} onPointerUp={() => { driveRef.current.steer = 0; }}>◀</button><button onPointerDown={() => { driveRef.current.brake = true; }} onPointerUp={() => { driveRef.current.brake = false; }}>Brake</button><button onPointerDown={() => { driveRef.current.steer = -1; }} onPointerUp={() => { driveRef.current.steer = 0; }}>▶</button></div>
-    <div className="rr-throttle"><button className="rr-direction" onClick={() => { const next = driveRef.current.direction === 1 ? -1 : 1; driveRef.current.direction = next; setDirection(next === 1 ? "FWD" : "REV"); }}>{direction}</button><input aria-label="Power" type="range" min="0" max="100" value={throttle} onChange={(event) => { const value = Number(event.target.value); setThrottle(value); driveRef.current.throttle = value / 100; }} /><button className="rr-idle" onClick={() => { driveRef.current.throttle = 0; setThrottle(0); }}>Idle</button><div className="rr-throttle-label">Power {throttle}%</div></div>
+    <div className="rr-steer">
+      <button
+        type="button"
+        aria-label="Steer left"
+        onPointerDown={() => { driveRef.current.steer = 1; }}
+        onPointerUp={releaseSteer}
+        onPointerCancel={releaseSteer}
+        onPointerLeave={releaseSteer}
+      >◀</button>
+      <button
+        type="button"
+        onPointerDown={() => { driveRef.current.brake = true; }}
+        onPointerUp={releaseBrake}
+        onPointerCancel={releaseBrake}
+        onPointerLeave={releaseBrake}
+      >Brake</button>
+      <button
+        type="button"
+        aria-label="Steer right"
+        onPointerDown={() => { driveRef.current.steer = -1; }}
+        onPointerUp={releaseSteer}
+        onPointerCancel={releaseSteer}
+        onPointerLeave={releaseSteer}
+      >▶</button>
+    </div>
+    <div className="rr-throttle">
+      <button className="rr-direction" type="button" onClick={() => {
+        const next = driveRef.current.direction === 1 ? -1 : 1;
+        driveRef.current.direction = next;
+        setDirection(next === 1 ? "FWD" : "REV");
+      }}>{direction}</button>
+      <input
+        className="rr-power-slider"
+        aria-label="Power"
+        type="range"
+        min="0"
+        max="100"
+        step="1"
+        value={throttle}
+        onInput={(event) => setPower(event.currentTarget.value)}
+        onChange={(event) => setPower(event.currentTarget.value)}
+      />
+      <button className="rr-idle" type="button" onClick={() => setPower(0)}>Idle</button>
+      <div className="rr-throttle-label">Power {throttle}%</div>
+    </div>
   </div>;
 }

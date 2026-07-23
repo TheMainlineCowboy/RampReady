@@ -1,0 +1,318 @@
+name: Verify RampReady Live Experience
+
+on:
+  workflow_run:
+    workflows:
+      - Deploy RampReady to GitHub Pages
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact deployed commit SHA to verify
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  statuses: write
+
+env:
+  PAGE_URL: https://themainlinecowboy.github.io/RampReady/
+
+jobs:
+  verify-live-experience:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Resolve exact deployed commit
+        id: release
+        shell: bash
+        env:
+          WORKFLOW_SHA: ${{ github.event.workflow_run.head_sha }}
+          DISPATCH_SHA: ${{ inputs.expected_sha }}
+        run: |
+          set -euo pipefail
+          expected_sha="${WORKFLOW_SHA:-${DISPATCH_SHA:-}}"
+          test -n "${expected_sha}"
+          echo "expected_sha=${expected_sha}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check out exact deployed commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.release.outputs.expected_sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies and browser
+        run: |
+          npm ci
+          npm install --no-save --package-lock=false playwright@1.53.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+
+      - name: Wait for exact GitHub Pages release
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ steps.release.outputs.expected_sha }}
+        run: |
+          set -euo pipefail
+          for attempt in {1..24}; do
+            status=$(curl -L -sS -o /tmp/release-commit.txt -w '%{http_code}' "${PAGE_URL}release-commit.txt?verify=${EXPECTED_SHA}")
+            live_sha=$(tr -d '\r\n' < /tmp/release-commit.txt 2>/dev/null || true)
+            if [ "${status}" = "200" ] && [ "${live_sha}" = "${EXPECTED_SHA}" ]; then
+              echo "Exact release ${EXPECTED_SHA} is live."
+              exit 0
+            fi
+            echo "Attempt ${attempt}: marker=${status}, live_sha=${live_sha:-missing}; retrying..."
+            sleep 10
+          done
+          echo "GitHub Pages did not serve exact commit ${EXPECTED_SHA}." >&2
+          exit 1
+
+      - name: Verify equipment launch, mobile controls, camera, and aircraft views
+        env:
+          EXPECTED_SHA: ${{ steps.release.outputs.expected_sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p live-experience-evidence
+          cat > /tmp/verify-live-experience.cjs <<'EOF'
+          const { chromium } = require('playwright');
+          const { PNG } = require('pngjs');
+          const fs = require('node:fs');
+
+          const pageUrl = process.env.PAGE_URL;
+          const expectedSha = process.env.EXPECTED_SHA;
+          const modelSuffixes = ['/models/crj700-user.glb', '/models/crj700-mobile.glb'];
+
+          function analyzeImage(filePath) {
+            const png = PNG.sync.read(fs.readFileSync(filePath));
+            let sampled = 0;
+            let variation = 0;
+            let prior = null;
+            const stride = Math.max(2, Math.floor(Math.min(png.width, png.height) / 180));
+            for (let y = 0; y < png.height; y += stride) {
+              for (let x = 0; x < png.width; x += stride) {
+                const offset = (y * png.width + x) * 4;
+                const sample = [png.data[offset], png.data[offset + 1], png.data[offset + 2]];
+                sampled += 1;
+                if (prior && Math.abs(sample[0] - prior[0]) + Math.abs(sample[1] - prior[1]) + Math.abs(sample[2] - prior[2]) > 42) variation += 1;
+                prior = sample;
+              }
+            }
+            return { width: png.width, height: png.height, sampled, variation };
+          }
+
+          function attachDiagnostics(page) {
+            const diagnostics = { consoleErrors: [], pageErrors: [], failedRequests: [], modelResponses: [] };
+            page.on('console', message => { if (message.type() === 'error') diagnostics.consoleErrors.push(message.text()); });
+            page.on('pageerror', error => diagnostics.pageErrors.push(error.message));
+            page.on('requestfailed', request => diagnostics.failedRequests.push(`${request.method()} ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
+            page.on('response', response => {
+              const pathname = new URL(response.url()).pathname;
+              if (modelSuffixes.some(suffix => pathname.endsWith(suffix))) diagnostics.modelResponses.push({ url: response.url(), status: response.status(), ok: response.ok() });
+            });
+            return diagnostics;
+          }
+
+          async function launchTraining(page) {
+            await page.getByRole('heading', { name: 'Choose pushback equipment' }).waitFor({ state: 'visible', timeout: 30000 });
+            const radios = page.getByRole('radio');
+            if (await radios.count() !== 2) throw new Error(`Expected two equipment choices, found ${await radios.count()}`);
+            const lektro = page.getByRole('radio', { name: /Lektro 88/i });
+            const standup = page.getByRole('radio', { name: /Stand-up pushback/i });
+            if (await lektro.getAttribute('aria-checked') !== 'true') await lektro.click();
+            const launch = page.getByRole('button', { name: 'Start training' });
+            if (await launch.isDisabled()) throw new Error('Lektro runtime is not launchable');
+            await standup.click();
+            await page.waitForTimeout(100);
+            if (!(await launch.isDisabled())) throw new Error('Stand-up model is launchable even though its runtime GLB is not integrated');
+            await lektro.click();
+            await page.waitForTimeout(100);
+            if (await launch.isDisabled()) throw new Error('Lektro launch did not re-enable');
+            await launch.click();
+            const canvas = page.locator('canvas.trainerCanvas');
+            await canvas.waitFor({ state: 'visible', timeout: 30000 });
+            await page.waitForFunction(() => {
+              const element = document.querySelector('canvas.trainerCanvas');
+              return element?.dataset.equipmentId === 'lektro-88' && element?.dataset.aircraftSource && element.dataset.aircraftSource !== 'loading';
+            }, null, { timeout: 45000 });
+            return canvas;
+          }
+
+          async function verifyCameraDrag(page, canvas) {
+            const before = Number(await canvas.getAttribute('data-camera-yaw'));
+            const box = await canvas.boundingBox();
+            if (!box) throw new Error('Canvas has no bounding box');
+            const x = box.x + box.width * 0.55;
+            const y = box.y + box.height * 0.52;
+            await page.mouse.move(x, y);
+            await page.mouse.down();
+            await page.mouse.move(x + 180, y - 45, { steps: 24 });
+            await page.mouse.up();
+            await page.waitForTimeout(1000);
+            const after = Number(await canvas.getAttribute('data-camera-yaw'));
+            if (!Number.isFinite(before) || !Number.isFinite(after) || Math.abs(after - before) < 0.25) throw new Error(`Camera orbit did not respond to drag: ${before} -> ${after}`);
+            return { before, after };
+          }
+
+          async function verifyDesktop(browser) {
+            const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+            const diagnostics = attachDiagnostics(page);
+            const response = await page.goto(pageUrl, { waitUntil: 'networkidle', timeout: 90000 });
+            if (!response?.ok()) throw new Error(`Desktop navigation failed: ${response?.status() || 'no response'}`);
+            const canvas = await launchTraining(page);
+            await page.waitForTimeout(10000);
+            const cameraDrag = await verifyCameraDrag(page, canvas);
+            await page.addStyleTag({ content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-steer,.rr-throttle { display:none !important; }' });
+            const chasePath = 'live-experience-evidence/aircraft-chase.png';
+            await canvas.screenshot({ path: chasePath });
+            const box = await canvas.boundingBox();
+            const x = box.x + box.width * 0.5;
+            const y = box.y + box.height * 0.55;
+            await page.mouse.move(x, y);
+            await page.mouse.down();
+            await page.mouse.move(x + 620, y, { steps: 48 });
+            await page.mouse.up();
+            await page.waitForTimeout(1600);
+            const sidePath = 'live-experience-evidence/aircraft-side.png';
+            await canvas.screenshot({ path: sidePath });
+            await page.selectOption('.rr-view-select', 'overhead');
+            await page.waitForTimeout(1800);
+            const overheadPath = 'live-experience-evidence/aircraft-overhead.png';
+            await canvas.screenshot({ path: overheadPath });
+            const source = await canvas.getAttribute('data-aircraft-source');
+            if (!diagnostics.modelResponses.some(entry => entry.ok && entry.status === 200)) throw new Error('No successful aircraft GLB response was observed');
+            if (diagnostics.consoleErrors.length) throw new Error(`Desktop console errors: ${diagnostics.consoleErrors.join(' | ')}`);
+            if (diagnostics.pageErrors.length) throw new Error(`Desktop page errors: ${diagnostics.pageErrors.join(' | ')}`);
+            if (diagnostics.failedRequests.length) throw new Error(`Desktop failed requests: ${diagnostics.failedRequests.join(' | ')}`);
+            const images = Object.fromEntries([chasePath, sidePath, overheadPath].map(path => [path, analyzeImage(path)]));
+            for (const [path, metrics] of Object.entries(images)) {
+              if (fs.statSync(path).size < 10000) throw new Error(`${path} is unexpectedly small`);
+              if (metrics.variation < 500) throw new Error(`${path} lacks useful rendered variation: ${metrics.variation}`);
+            }
+            await page.close();
+            return { source, cameraDrag, diagnostics, images };
+          }
+
+          async function verifyMobile(browser) {
+            const page = await browser.newPage({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
+            const diagnostics = attachDiagnostics(page);
+            const response = await page.goto(pageUrl, { waitUntil: 'networkidle', timeout: 90000 });
+            if (!response?.ok()) throw new Error(`Mobile navigation failed: ${response?.status() || 'no response'}`);
+            const canvas = await launchTraining(page);
+            await page.waitForTimeout(5000);
+            const layout = await page.evaluate(() => {
+              const rect = selector => {
+                const element = document.querySelector(selector);
+                if (!element) return null;
+                const box = element.getBoundingClientRect();
+                return { top: box.top, right: box.right, bottom: box.bottom, left: box.left, width: box.width, height: box.height };
+              };
+              return {
+                viewport: { width: innerWidth, height: innerHeight },
+                canvas: rect('canvas.trainerCanvas'),
+                hud: rect('.rr-hud'),
+                metrics: rect('.rr-metrics'),
+                throttle: rect('.rr-throttle'),
+                steer: rect('.rr-steer'),
+                slider: rect('.rr-power-slider'),
+                menu: rect('.rr-session-menu'),
+              };
+            });
+            for (const name of ['canvas', 'hud', 'metrics', 'throttle', 'steer', 'slider', 'menu']) if (!layout[name]) throw new Error(`Missing mobile layout element: ${name}`);
+            if (layout.canvas.width < 400 || layout.canvas.height < 890) throw new Error(`Canvas does not fill mobile viewport: ${JSON.stringify(layout.canvas)}`);
+            for (const name of ['hud', 'metrics', 'throttle', 'steer']) {
+              const box = layout[name];
+              if (box.left < -1 || box.right > layout.viewport.width + 1 || box.top < -1 || box.bottom > layout.viewport.height + 1) throw new Error(`${name} is outside mobile viewport: ${JSON.stringify(box)}`);
+            }
+            if (layout.metrics.height > 58) throw new Error(`Metrics overlay is too tall: ${layout.metrics.height}`);
+            if (layout.metrics.bottom > layout.throttle.top + 2) throw new Error('Metrics overlap throttle controls');
+            if (Math.abs(layout.throttle.bottom - layout.steer.top) > 12) throw new Error('Throttle and steering decks are not stacked compactly');
+            if (layout.slider.width < 120 || layout.slider.height < 40) throw new Error(`Throttle slider is not visibly usable: ${JSON.stringify(layout.slider)}`);
+            const slider = page.locator('.rr-power-slider');
+            await slider.evaluate(element => {
+              element.value = '55';
+              element.dispatchEvent(new Event('input', { bubbles: true }));
+              element.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            await page.waitForTimeout(300);
+            if (await slider.inputValue() !== '55') throw new Error(`Throttle slider did not accept input: ${await slider.inputValue()}`);
+            const cameraDrag = await verifyCameraDrag(page, canvas);
+            const screenshot = 'live-experience-evidence/mobile-runtime.png';
+            await page.screenshot({ path: screenshot, fullPage: true });
+            if (fs.statSync(screenshot).size < 15000) throw new Error('Mobile runtime screenshot is unexpectedly small');
+            if (diagnostics.consoleErrors.length) throw new Error(`Mobile console errors: ${diagnostics.consoleErrors.join(' | ')}`);
+            if (diagnostics.pageErrors.length) throw new Error(`Mobile page errors: ${diagnostics.pageErrors.join(' | ')}`);
+            if (diagnostics.failedRequests.length) throw new Error(`Mobile failed requests: ${diagnostics.failedRequests.join(' | ')}`);
+            await page.close();
+            return { layout, cameraDrag, diagnostics, screenshot };
+          }
+
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const desktop = await verifyDesktop(browser);
+            const mobile = await verifyMobile(browser);
+            await browser.close();
+            fs.writeFileSync('live-experience-evidence/report.json', JSON.stringify({ expectedSha, pageUrl, capturedAtUtc: new Date().toISOString(), desktop, mobile }, null, 2));
+          })().catch(error => {
+            fs.writeFileSync('live-experience-evidence/error.txt', `${error.stack || error}\n`);
+            console.error(error);
+            process.exit(1);
+          });
+          EOF
+          node /tmp/verify-live-experience.cjs
+          test -s live-experience-evidence/report.json
+
+      - name: Upload live-experience evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rampready-live-experience-${{ steps.release.outputs.expected_sha }}
+          path: live-experience-evidence/
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-live-experience-status:
+    if: >-
+      always() &&
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.head_branch == 'main')
+    needs:
+      - verify-live-experience
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish exact live-experience verdict
+        uses: actions/github-script@v7
+        env:
+          VERIFY_RESULT: ${{ needs.verify-live-experience.result }}
+          WORKFLOW_SHA: ${{ github.event.workflow_run.head_sha }}
+          DISPATCH_SHA: ${{ inputs.expected_sha }}
+        with:
+          script: |
+            const sha = process.env.WORKFLOW_SHA || process.env.DISPATCH_SHA;
+            if (!sha) {
+              core.setFailed('Unable to resolve deployed commit SHA.');
+              return;
+            }
+            const passed = process.env.VERIFY_RESULT === 'success';
+            const description = passed
+              ? 'Equipment launch, mobile controls, camera and aircraft views verified'
+              : `RampReady live experience ${process.env.VERIFY_RESULT}`;
+            for (const statusContext of ['production/rampready-live-experience', 'production/crj700-side-views']) {
+              await github.rest.repos.createCommitStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha,
+                state: passed ? 'success' : 'failure',
+                context: statusContext,
+                description,
+                target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              });
+            }
+            if (!passed) core.setFailed(description);
