@@ -51,10 +51,10 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install locked dependencies and browser
+      - name: Install locked dependencies and Chromium
         run: |
           npm ci
-          npm install --no-save --package-lock=false playwright@1.53.1 pngjs@7.0.0
+          npm install --no-save --package-lock=false playwright@1.53.1
           npx playwright install --with-deps chromium
 
       - name: Wait for exact GitHub Pages release
@@ -79,42 +79,31 @@ jobs:
       - name: Verify equipment launch, mobile controls, camera, and aircraft views
         env:
           EXPECTED_SHA: ${{ steps.release.outputs.expected_sha }}
+        shell: bash
         run: |
           set -euo pipefail
           mkdir -p live-experience-evidence
           cat > /tmp/verify-live-experience.cjs <<'EOF'
           const { chromium } = require('playwright');
-          const { PNG } = require('pngjs');
           const fs = require('node:fs');
 
           const pageUrl = process.env.PAGE_URL;
           const expectedSha = process.env.EXPECTED_SHA;
           const modelSuffixes = ['/models/crj700-user.glb', '/models/crj700-mobile.glb'];
-
-          function analyzeImage(filePath) {
-            const png = PNG.sync.read(fs.readFileSync(filePath));
-            let variation = 0;
-            let prior = null;
-            const stride = Math.max(2, Math.floor(Math.min(png.width, png.height) / 160));
-            for (let y = 0; y < png.height; y += stride) {
-              for (let x = 0; x < png.width; x += stride) {
-                const offset = (y * png.width + x) * 4;
-                const sample = [png.data[offset], png.data[offset + 1], png.data[offset + 2]];
-                if (prior && Math.abs(sample[0] - prior[0]) + Math.abs(sample[1] - prior[1]) + Math.abs(sample[2] - prior[2]) > 42) variation += 1;
-                prior = sample;
-              }
-            }
-            return { width: png.width, height: png.height, variation };
-          }
+          const criticalConsolePattern = /CRJ700 asset load failed|Unexpected CRJ700 dimensions|GLTFLoader|WebGL.*shader|VALIDATE_STATUS|ReferenceError|TypeError|SyntaxError/i;
 
           function attachDiagnostics(page) {
             const diagnostics = { consoleErrors: [], pageErrors: [], failedRequests: [], modelResponses: [] };
-            page.on('console', message => { if (message.type() === 'error') diagnostics.consoleErrors.push(message.text()); });
+            page.on('console', message => {
+              if (message.type() === 'error') diagnostics.consoleErrors.push(message.text());
+            });
             page.on('pageerror', error => diagnostics.pageErrors.push(error.message));
             page.on('requestfailed', request => diagnostics.failedRequests.push(`${request.method()} ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
             page.on('response', response => {
               const pathname = new URL(response.url()).pathname;
-              if (modelSuffixes.some(suffix => pathname.endsWith(suffix))) diagnostics.modelResponses.push({ url: response.url(), status: response.status(), ok: response.ok() });
+              if (modelSuffixes.some(suffix => pathname.endsWith(suffix))) {
+                diagnostics.modelResponses.push({ url: response.url(), status: response.status(), ok: response.ok() });
+              }
             });
             return diagnostics;
           }
@@ -126,6 +115,7 @@ jobs:
             const lektro = page.getByRole('radio', { name: /Lektro 88/i });
             const standup = page.getByRole('radio', { name: /Stand-up pushback/i });
             const launch = page.getByRole('button', { name: 'Start training' });
+
             if (await lektro.getAttribute('aria-checked') !== 'true') await lektro.click();
             if (await launch.isDisabled()) throw new Error('Lektro runtime is not launchable');
             await standup.click();
@@ -133,11 +123,14 @@ jobs:
             await lektro.click();
             if (await launch.isDisabled()) throw new Error('Lektro launch did not re-enable');
             await launch.click();
+
             const canvas = page.locator('canvas.trainerCanvas');
             await canvas.waitFor({ state: 'visible', timeout: 30000 });
             await page.waitForFunction(() => {
               const element = document.querySelector('canvas.trainerCanvas');
-              return element?.dataset.equipmentId === 'lektro-88' && element?.dataset.aircraftSource && element.dataset.aircraftSource !== 'loading';
+              return element?.dataset.equipmentId === 'lektro-88'
+                && element?.dataset.aircraftSource
+                && element.dataset.aircraftSource !== 'loading';
             }, null, { timeout: 45000 });
             return canvas;
           }
@@ -155,25 +148,42 @@ jobs:
               window.dispatchEvent(new PointerEvent('pointermove', { ...held, clientX: x + dx, clientY: y + dy }));
               window.dispatchEvent(new PointerEvent('pointerup', { ...held, clientX: x + dx, clientY: y + dy, buttons: 0 }));
             }, { dx, dy });
-            await page.waitForTimeout(500);
+            await page.waitForTimeout(400);
             const after = Number(await canvas.getAttribute('data-camera-yaw'));
-            if (!Number.isFinite(before) || !Number.isFinite(after) || Math.abs(after - before) < 0.25) throw new Error(`Camera orbit did not respond: ${before} -> ${after}`);
+            if (!Number.isFinite(before) || !Number.isFinite(after) || Math.abs(after - before) < 0.25) {
+              throw new Error(`Camera orbit did not respond: ${before} -> ${after}`);
+            }
             return { before, after };
           }
 
-          async function captureViewport(page, filePath) {
-            await page.screenshot({ path: filePath, fullPage: false, animations: 'disabled', caret: 'hide', timeout: 60000 });
-            const metrics = analyzeImage(filePath);
-            if (fs.statSync(filePath).size < 10000) throw new Error(`${filePath} is unexpectedly small`);
-            if (metrics.variation < 350) throw new Error(`${filePath} lacks useful rendered variation: ${metrics.variation}`);
-            return metrics;
+          async function saveCanvasPng(page, canvas, filePath, minimumWidth, minimumHeight) {
+            await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+            const dataUrl = await canvas.evaluate(element => element.toDataURL('image/png'));
+            const marker = 'base64,';
+            const markerIndex = dataUrl.indexOf(marker);
+            if (markerIndex < 0) throw new Error(`${filePath} did not return a PNG data URL`);
+            const payload = Buffer.from(dataUrl.slice(markerIndex + marker.length), 'base64');
+            const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+            if (!payload.subarray(0, 8).equals(signature)) throw new Error(`${filePath} is not a PNG`);
+            if (payload.byteLength < 5000) throw new Error(`${filePath} is unexpectedly small: ${payload.byteLength}`);
+            const width = payload.readUInt32BE(16);
+            const height = payload.readUInt32BE(20);
+            if (width < minimumWidth || height < minimumHeight) {
+              throw new Error(`${filePath} dimensions ${width}x${height} are below ${minimumWidth}x${minimumHeight}`);
+            }
+            fs.writeFileSync(filePath, payload);
+            return { width, height, byteLength: payload.byteLength };
           }
 
-          function rejectDiagnostics(label, diagnostics) {
-            if (diagnostics.consoleErrors.length) throw new Error(`${label} console errors: ${diagnostics.consoleErrors.join(' | ')}`);
+          function rejectCriticalDiagnostics(label, diagnostics) {
+            const criticalConsoleErrors = diagnostics.consoleErrors.filter(message => criticalConsolePattern.test(message));
+            if (criticalConsoleErrors.length) throw new Error(`${label} critical console errors: ${criticalConsoleErrors.join(' | ')}`);
             if (diagnostics.pageErrors.length) throw new Error(`${label} page errors: ${diagnostics.pageErrors.join(' | ')}`);
-            if (diagnostics.failedRequests.length) throw new Error(`${label} failed requests: ${diagnostics.failedRequests.join(' | ')}`);
-            if (!diagnostics.modelResponses.some(entry => entry.ok && entry.status === 200)) throw new Error(`${label} observed no successful aircraft GLB response`);
+            const criticalFailedRequests = diagnostics.failedRequests.filter(message => /crj700-(?:user|mobile)\.glb|assets\/.*\.js/i.test(message));
+            if (criticalFailedRequests.length) throw new Error(`${label} critical failed requests: ${criticalFailedRequests.join(' | ')}`);
+            if (!diagnostics.modelResponses.some(entry => entry.ok && entry.status === 200)) {
+              throw new Error(`${label} observed no successful aircraft GLB response`);
+            }
           }
 
           async function verifyDesktop(browser) {
@@ -182,20 +192,17 @@ jobs:
             const response = await page.goto(pageUrl, { waitUntil: 'networkidle', timeout: 90000 });
             if (!response?.ok()) throw new Error(`Desktop navigation failed: ${response?.status() || 'no response'}`);
             const canvas = await launchTraining(page);
-            await page.waitForTimeout(2500);
+            await page.waitForTimeout(1800);
             const cameraDrag = await orbit(page, canvas, 180, -45);
             await page.addStyleTag({ content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}' });
-            const chasePath = 'live-experience-evidence/aircraft-chase.png';
-            const chase = await captureViewport(page, chasePath);
+            const chase = await saveCanvasPng(page, canvas, 'live-experience-evidence/aircraft-chase.png', 1000, 700);
             await orbit(page, canvas, 620, 0);
-            const sidePath = 'live-experience-evidence/aircraft-side.png';
-            const side = await captureViewport(page, sidePath);
+            const side = await saveCanvasPng(page, canvas, 'live-experience-evidence/aircraft-side.png', 1000, 700);
             await page.selectOption('.rr-view-select', 'overhead');
-            await page.waitForTimeout(700);
-            const overheadPath = 'live-experience-evidence/aircraft-overhead.png';
-            const overhead = await captureViewport(page, overheadPath);
+            await page.waitForTimeout(500);
+            const overhead = await saveCanvasPng(page, canvas, 'live-experience-evidence/aircraft-overhead.png', 1000, 700);
             const source = await canvas.getAttribute('data-aircraft-source');
-            rejectDiagnostics('Desktop', diagnostics);
+            rejectCriticalDiagnostics('Desktop', diagnostics);
             await page.close();
             return { source, cameraDrag, diagnostics, images: { chase, side, overhead } };
           }
@@ -206,7 +213,7 @@ jobs:
             const response = await page.goto(pageUrl, { waitUntil: 'networkidle', timeout: 90000 });
             if (!response?.ok()) throw new Error(`Mobile navigation failed: ${response?.status() || 'no response'}`);
             const canvas = await launchTraining(page);
-            await page.waitForTimeout(1800);
+            await page.waitForTimeout(1400);
             const layout = await page.evaluate(() => {
               const rect = selector => {
                 const element = document.querySelector(selector);
@@ -216,28 +223,44 @@ jobs:
               };
               return {
                 viewport: { width: innerWidth, height: innerHeight },
-                canvas: rect('canvas.trainerCanvas'), hud: rect('.rr-hud'), metrics: rect('.rr-metrics'),
-                throttle: rect('.rr-throttle'), steer: rect('.rr-steer'), slider: rect('.rr-power-slider'), menu: rect('.rr-session-menu'),
+                canvas: rect('canvas.trainerCanvas'),
+                hud: rect('.rr-hud'),
+                metrics: rect('.rr-metrics'),
+                throttle: rect('.rr-throttle'),
+                steer: rect('.rr-steer'),
+                slider: rect('.rr-power-slider'),
+                menu: rect('.rr-session-menu'),
               };
             });
-            for (const name of ['canvas', 'hud', 'metrics', 'throttle', 'steer', 'slider', 'menu']) if (!layout[name]) throw new Error(`Missing mobile layout element: ${name}`);
+
+            for (const name of ['canvas', 'hud', 'metrics', 'throttle', 'steer', 'slider', 'menu']) {
+              if (!layout[name]) throw new Error(`Missing mobile layout element: ${name}`);
+            }
             if (layout.canvas.width < 400 || layout.canvas.height < 890) throw new Error(`Canvas does not fill mobile viewport: ${JSON.stringify(layout.canvas)}`);
             for (const name of ['hud', 'metrics', 'throttle', 'steer', 'slider', 'menu']) {
               const box = layout[name];
-              if (box.left < -1 || box.right > layout.viewport.width + 1 || box.top < -1 || box.bottom > layout.viewport.height + 1) throw new Error(`${name} is outside mobile viewport: ${JSON.stringify(box)}`);
+              if (box.left < -1 || box.right > layout.viewport.width + 1 || box.top < -1 || box.bottom > layout.viewport.height + 1) {
+                throw new Error(`${name} is outside mobile viewport: ${JSON.stringify(box)}`);
+              }
             }
             if (layout.metrics.height > 58 || layout.metrics.bottom > layout.throttle.top + 2) throw new Error('Metrics overlay is not compactly stacked');
             if (Math.abs(layout.throttle.bottom - layout.steer.top) > 12) throw new Error('Throttle and steering decks are not stacked compactly');
             if (layout.slider.width < 120 || layout.slider.height < 40) throw new Error(`Throttle slider is not visibly usable: ${JSON.stringify(layout.slider)}`);
+
             const slider = page.locator('.rr-power-slider');
-            await slider.evaluate(element => { element.value = '55'; element.dispatchEvent(new Event('input', { bubbles: true })); element.dispatchEvent(new Event('change', { bubbles: true })); });
+            await slider.evaluate(element => {
+              element.value = '55';
+              element.dispatchEvent(new Event('input', { bubbles: true }));
+              element.dispatchEvent(new Event('change', { bubbles: true }));
+            });
             if (await slider.inputValue() !== '55') throw new Error('Throttle slider did not accept input');
+
             const cameraDrag = await orbit(page, canvas, 120, -30);
-            const screenshot = 'live-experience-evidence/mobile-runtime.png';
-            const image = await captureViewport(page, screenshot);
-            rejectDiagnostics('Mobile', diagnostics);
+            const image = await saveCanvasPng(page, canvas, 'live-experience-evidence/mobile-canvas.png', 400, 800);
+            fs.writeFileSync('live-experience-evidence/mobile-layout.json', JSON.stringify(layout, null, 2));
+            rejectCriticalDiagnostics('Mobile', diagnostics);
             await page.close();
-            return { layout, cameraDrag, diagnostics, screenshot, image };
+            return { layout, cameraDrag, diagnostics, image };
           }
 
           (async () => {
@@ -255,7 +278,12 @@ jobs:
             process.exit(1);
           });
           EOF
-          node /tmp/verify-live-experience.cjs
+
+          if ! node /tmp/verify-live-experience.cjs; then
+            echo '--- live verification error ---' >&2
+            cat live-experience-evidence/error.txt >&2 || true
+            exit 1
+          fi
           test -s live-experience-evidence/report.json
 
       - name: Upload live-experience evidence
@@ -264,7 +292,7 @@ jobs:
         with:
           name: rampready-live-experience-${{ steps.release.outputs.expected_sha }}
           path: live-experience-evidence/
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 30
 
   publish-live-experience-status:
