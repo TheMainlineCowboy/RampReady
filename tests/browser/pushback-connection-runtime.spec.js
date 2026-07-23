@@ -5,6 +5,9 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/", { waitUntil: "networkidle" });
 
+  await expect(page.getByRole("heading", { name: "Choose pushback equipment" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start training" })).toBeEnabled();
+  await page.getByRole("button", { name: "Start training" }).click();
   await expect(page.locator("canvas.trainerCanvas")).toBeVisible();
   await expect(page.locator(".rr-metrics")).toContainText("Connection");
   await expect(page.locator(".rr-metrics")).toContainText("approach");
@@ -123,9 +126,6 @@ test("runs the full nose-gear lifecycle in the browser runtime", async ({ page }
   expect(result.straightenFrames).toBeLessThan(600);
   expect(Math.abs(result.speedAfterBrake)).toBeLessThan(0.015);
   expect(Math.abs(result.articulation)).toBeLessThan(8 * Math.PI / 180);
-  // During a backwards push, steering the tug nose one way initially pivots the aircraft
-  // around its main gear in the opposite yaw direction. The aircraft must lag rather than
-  // copy the tug heading, which is the failure mode this runtime regression protects.
   expect(Math.sign(result.turnAircraftYaw)).toBe(-Math.sign(result.turnTugYaw));
   expect(result.turnYawLag).toBeGreaterThan(0);
   expect(Math.abs(result.articulation)).toBeLessThanOrEqual(65 * Math.PI / 180);
