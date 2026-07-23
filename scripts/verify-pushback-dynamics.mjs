@@ -1,4 +1,5 @@
 import {
+  CRADLE_CAPTURE_OFFSET,
   JACKKNIFE_LIMIT,
   TOW_MAX_SPEED,
   createPushbackState,
@@ -22,11 +23,26 @@ function simulate(dt, seconds, commandFactory) {
 }
 
 const failures = [];
+const initial = createPushbackState();
+if (Math.abs(initial.aircraftX) > 1e-12 || Math.abs(initial.aircraftZ - CRADLE_CAPTURE_OFFSET) > 1e-12) {
+  failures.push(`default connected state is not seated on the cradle: (${initial.aircraftX}, ${initial.aircraftZ})`);
+}
+const firstAttachedFrame = stepPushbackDynamics(
+  initial,
+  { connected: true, throttle: 0, direction: 1, steer: 0, brake: true },
+  1 / 60,
+);
+const firstFrameJump = Math.hypot(
+  firstAttachedFrame.aircraftX - initial.aircraftX,
+  firstAttachedFrame.aircraftZ - initial.aircraftZ,
+);
+if (firstFrameJump > 1e-12) failures.push(`attachment initialization teleported the aircraft by ${firstFrameJump} m`);
+
 for (const dt of [1 / 30, 1 / 60, 1 / 120]) {
   const straight = simulate(dt, 8, () => ({ connected: true, throttle: 0.8, direction: 1, steer: 0, brake: false }));
   if (Math.abs(straight.state.aircraftYaw) > 1e-4) failures.push(`${dt}s straight tow introduced yaw ${straight.state.aircraftYaw}`);
   if (straight.maxSpeed > TOW_MAX_SPEED + 1e-9) failures.push(`${dt}s exceeded tow speed ${straight.maxSpeed}`);
-  if (straight.state.aircraftZ <= 6.2) failures.push(`${dt}s aircraft did not move during straight tow`);
+  if (straight.state.aircraftZ <= CRADLE_CAPTURE_OFFSET + 3) failures.push(`${dt}s aircraft did not move during straight tow`);
 
   const turn = simulate(dt, 12, (t) => ({ connected: true, throttle: 0.72, direction: 1, steer: t < 2 ? 0 : 0.78, brake: false }));
   if (Math.abs(turn.state.tugYaw) < 0.08) failures.push(`${dt}s tug failed to turn`);
@@ -51,4 +67,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`RampReady pushback dynamics verification passed: tow speed ${run60.maxSpeed.toFixed(2)} m/s, tug yaw ${(run60.state.tugYaw * 180 / Math.PI).toFixed(1)}°, aircraft yaw ${(run60.state.aircraftYaw * 180 / Math.PI).toFixed(1)}°, articulation ${(run60.maxArticulation * 180 / Math.PI).toFixed(1)}°.`);
+console.log(`RampReady pushback dynamics verification passed without attachment teleport: tow speed ${run60.maxSpeed.toFixed(2)} m/s, tug yaw ${(run60.state.tugYaw * 180 / Math.PI).toFixed(1)}°, aircraft yaw ${(run60.state.aircraftYaw * 180 / Math.PI).toFixed(1)}°, articulation ${(run60.maxArticulation * 180 / Math.PI).toFixed(1)}°.`);
