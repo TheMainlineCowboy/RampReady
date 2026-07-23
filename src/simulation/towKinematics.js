@@ -2,6 +2,7 @@ export const CAPTURE_CORRECTION_RATE = 0.28;
 export const AIRCRAFT_WHEELBASE = 11.2;
 export const MAX_AIRCRAFT_YAW_RATE = (8 * Math.PI) / 180;
 export const MAX_ARTICULATION = (65 * Math.PI) / 180;
+export const MIN_TOW_MOTION = 0.0005;
 
 export function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -62,38 +63,65 @@ export function updateAircraftTowPose({
 
   const noseDx = safeAttachedNose.x - safePreviousNose.x;
   const noseDz = safeAttachedNose.z - safePreviousNose.z;
+  const noseTravel = Math.hypot(noseDx, noseDz);
   const aircraftRightX = Math.cos(safeAircraftYaw);
   const aircraftRightZ = -Math.sin(safeAircraftYaw);
   const lateralNoseTravel = noseDx * aircraftRightX + noseDz * aircraftRightZ;
 
-  // Treat the aircraft as a long trailer. The tug controls the nose point, while the main-gear axle
-  // follows behind and cannot instantly copy the tug heading. Projecting the previous axle onto the
-  // wheelbase circle produces the delayed, opposite-sign aircraft response seen in real pushbacks.
-  let axleX = safeMainGear.x - safeAttachedNose.x;
-  let axleZ = safeMainGear.z - safeAttachedNose.z;
-  let axleDistance = Math.hypot(axleX, axleZ);
-  if (!Number.isFinite(axleDistance) || axleDistance < 1e-6) {
-    axleX = Math.sin(safeAircraftYaw) * safeWheelbase;
-    axleZ = Math.cos(safeAircraftYaw) * safeWheelbase;
-    axleDistance = safeWheelbase;
+  // Treat the aircraft as a long trailer. The captured nose point moves with the tug,
+  // while the main-gear axle remains the rotation center and cannot teleport sideways.
+  // Yaw is therefore limited by both elapsed time and actual nose displacement. This
+  // prevents steering input at zero speed from rotating the aircraft in place and keeps
+  // reversal behavior tied to the distance the tug really moved.
+  let nextYaw = safeAircraftYaw;
+  let requestedYawDelta = 0;
+  let motionYawLimit = 0;
+
+  if (noseTravel >= MIN_TOW_MOTION) {
+    let axleX = safeMainGear.x - safeAttachedNose.x;
+    let axleZ = safeMainGear.z - safeAttachedNose.z;
+    let axleDistance = Math.hypot(axleX, axleZ);
+    if (!Number.isFinite(axleDistance) || axleDistance < 1e-6) {
+      axleX = Math.sin(safeAircraftYaw) * safeWheelbase;
+      axleZ = Math.cos(safeAircraftYaw) * safeWheelbase;
+      axleDistance = safeWheelbase;
+    }
+
+    const desiredYaw = Math.atan2(axleX / axleDistance, axleZ / axleDistance);
+    requestedYawDelta = normalizeAngle(desiredYaw - safeAircraftYaw);
+    const timeYawLimit = safeYawRate * safeDt;
+    motionYawLimit = Math.atan2(noseTravel, safeWheelbase);
+    const yawLimit = Math.min(timeYawLimit, motionYawLimit);
+    nextYaw = safeAircraftYaw + clamp(requestedYawDelta, -yawLimit, yawLimit);
   }
 
-  const desiredYaw = Math.atan2(axleX / axleDistance, axleZ / axleDistance);
-  const requestedYawDelta = normalizeAngle(desiredYaw - safeAircraftYaw);
-  const yawRateLimit = safeYawRate * safeDt;
-  let nextYaw = safeAircraftYaw + clamp(requestedYawDelta, -yawRateLimit, yawRateLimit);
-
-  let articulation = normalizeAngle(nextYaw - safeTugYaw);
-  articulation = clamp(articulation, -safeArticulation, safeArticulation);
+  // Clamp the final normalized articulation once, then derive yaw from that exact value.
+  // This avoids tiny floating-point overshoots at the hard limit across different frame rates.
+  const articulation = clamp(
+    normalizeAngle(nextYaw - safeTugYaw),
+    -safeArticulation,
+    safeArticulation,
+  );
   nextYaw = safeTugYaw + articulation;
 
   const nextMainGear = mainGearFromPose(safeAttachedNose, nextYaw, safeWheelbase);
+  const expectedMainGear = mainGearFromPose(safeAttachedNose, safeAircraftYaw, safeWheelbase);
+  const mainGearLateralSlip = Math.hypot(
+    nextMainGear.x - expectedMainGear.x,
+    nextMainGear.z - expectedMainGear.z,
+  );
+
   return {
     x: safeAttachedNose.x,
     z: safeAttachedNose.z,
     yaw: nextYaw,
+    yawDelta: normalizeAngle(nextYaw - safeAircraftYaw),
+    requestedYawDelta,
+    motionYawLimit,
     articulation,
+    noseTravel,
     lateralNoseTravel,
+    mainGearLateralSlip,
     mainGearX: nextMainGear.x,
     mainGearZ: nextMainGear.z,
   };
