@@ -26,10 +26,21 @@ for (const required of [
   "scripts/verify-live-experience-browser.cjs",
   "continue-on-error: true",
   "live-experience-evidence/error.txt",
+  "live-experience-evidence/release-marker.log",
+  "releases/${EXPECTED_SHA}.txt",
   "production/rampready-live-experience",
   "production/crj700-side-views",
   "Enforce live-experience verdict",
 ]) assert.ok(workflow.includes(required), `live workflow missing ${required}`);
+
+const deployWorkflow = await read(".github/workflows/deploy-pages.yml");
+for (const required of [
+  "public/releases/${GITHUB_SHA}.txt",
+  "dist/releases/${GITHUB_SHA}.txt",
+  "releases/${EXPECTED_SHA}.txt",
+  "Immutable release marker appeared",
+]) assert.ok(deployWorkflow.includes(required), `Pages deployment workflow missing ${required}`);
+assert.ok(!deployWorkflow.includes("release-commit.txt?verify="), "production verification must not rely on a mutable cached marker path");
 
 const browserVerifier = await read("scripts/verify-live-experience-browser.cjs");
 for (const required of [
@@ -79,4 +90,4 @@ for (const required of [
   "bottom: var(--rr-recovery-safe) !important",
 ]) assert.ok(css.includes(required), `mobile recovery CSS missing ${required}`);
 
-console.log("RampReady live release gate verified: authoritative checked-in browser verification, honest equipment gating, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");
+console.log("RampReady live release gate verified: immutable commit-specific Pages markers, authoritative browser verification, honest equipment gating, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");
