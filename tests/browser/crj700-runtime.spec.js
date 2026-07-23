@@ -101,12 +101,34 @@ async function orbitBy(page, dragX, dragY = 0) {
 
 async function writeCanvasEvidence(page, canvas, path) {
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-  const dataUrl = await canvas.evaluate((element) => element.toDataURL("image/png"));
+  const evidence = await canvas.evaluate((element) => {
+    const dataUrl = element.toDataURL("image/png");
+    const gl = element.getContext("webgl2") || element.getContext("webgl");
+    if (!gl) throw new Error("Rendered canvas has no WebGL context");
+    const sampled = new Set();
+    let minLuma = 255;
+    let maxLuma = 0;
+    const pixel = new Uint8Array(4);
+    for (let gy = 1; gy <= 8; gy += 1) {
+      for (let gx = 1; gx <= 8; gx += 1) {
+        const x = Math.min(element.width - 1, Math.floor((gx / 9) * element.width));
+        const y = Math.min(element.height - 1, Math.floor((gy / 9) * element.height));
+        gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+        sampled.add(`${pixel[0]},${pixel[1]},${pixel[2]},${pixel[3]}`);
+        const luma = Math.round(pixel[0] * 0.2126 + pixel[1] * 0.7152 + pixel[2] * 0.0722);
+        minLuma = Math.min(minLuma, luma);
+        maxLuma = Math.max(maxLuma, luma);
+      }
+    }
+    return { dataUrl, uniqueColors: sampled.size, lumaRange: maxLuma - minLuma };
+  });
   const marker = "base64,";
-  const markerIndex = dataUrl.indexOf(marker);
+  const markerIndex = evidence.dataUrl.indexOf(marker);
   if (markerIndex < 0) throw new Error("Canvas evidence did not return a PNG data URL");
-  const payload = Buffer.from(dataUrl.slice(markerIndex + marker.length), "base64");
-  expect(payload.byteLength).toBeGreaterThan(10_000);
+  const payload = Buffer.from(evidence.dataUrl.slice(markerIndex + marker.length), "base64");
+  expect(payload.byteLength).toBeGreaterThan(5_000);
+  expect(evidence.uniqueColors).toBeGreaterThan(8);
+  expect(evidence.lumaRange).toBeGreaterThan(20);
   await writeFile(path, payload);
 }
 
