@@ -85,7 +85,7 @@
     top: auto;
     left: 8px;
     right: 88px;
-    bottom: calc(74px + env(safe-area-inset-bottom));
+    bottom: calc(128px + env(safe-area-inset-bottom));
     height: auto;
     min-height: 0;
     max-height: 64px;
