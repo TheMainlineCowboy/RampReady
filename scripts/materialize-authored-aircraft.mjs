@@ -15,41 +15,56 @@ function normalizeBase64(text) {
   return text.replace(/\s+/g, "");
 }
 
-async function readExactPart(part, index) {
+async function inspectExactPart(part, index) {
   const partUrl = new URL(part.path, repoRoot);
+  const directProblems = [];
   try {
     const direct = normalizeBase64(await readFile(partUrl, "utf8"));
-    if (direct.length === part.charLength && sha256(Buffer.from(direct, "utf8")) === part.sha256) {
-      return direct;
+    const directHash = sha256(Buffer.from(direct, "utf8"));
+    if (direct.length === part.charLength && directHash === part.sha256) {
+      return { ok: true, text: direct, mode: "direct" };
     }
-  } catch {
-    // Fall through to repository-safe shards.
+    if (direct.length !== part.charLength) directProblems.push(`direct length ${direct.length}/${part.charLength}`);
+    if (directHash !== part.sha256) directProblems.push(`direct sha256 ${directHash}/${part.sha256}`);
+  } catch (error) {
+    directProblems.push(`direct missing (${error.code || error.message})`);
   }
 
   const shardBase = `${part.path}.shards/`;
   const shards = [];
+  const shardProblems = [];
   for (let shardIndex = 0; shardIndex < 8; shardIndex += 1) {
     const shardPath = `${shardBase}shard-${String(shardIndex).padStart(3, "0")}.b64`;
     try {
       const shard = normalizeBase64(await readFile(new URL(shardPath, repoRoot), "utf8"));
-      if (!shard) throw new Error(`empty shard ${shardPath}`);
+      if (!shard) {
+        shardProblems.push(`${shardPath} is empty`);
+        break;
+      }
       shards.push(shard);
     } catch (error) {
-      if (shardIndex === 0) {
-        throw new Error(`Missing or invalid authored-aircraft part ${index}: ${part.path}; no verified shards found`, { cause: error });
-      }
+      if (shardIndex === 0) shardProblems.push(`no shards (${error.code || error.message})`);
       break;
     }
   }
 
   const reconstructed = shards.join("");
-  if (reconstructed.length !== part.charLength) {
-    throw new Error(`Authored-aircraft part ${index} reconstructed to ${reconstructed.length} characters; expected ${part.charLength}`);
+  if (reconstructed.length === part.charLength) {
+    const reconstructedHash = sha256(Buffer.from(reconstructed, "utf8"));
+    if (reconstructedHash === part.sha256) {
+      return { ok: true, text: reconstructed, mode: `shards:${shards.length}` };
+    }
+    shardProblems.push(`shard sha256 ${reconstructedHash}/${part.sha256}`);
+  } else if (shards.length > 0) {
+    shardProblems.push(`shard length ${reconstructed.length}/${part.charLength}`);
   }
-  if (sha256(Buffer.from(reconstructed, "utf8")) !== part.sha256) {
-    throw new Error(`Authored-aircraft part ${index} reconstructed hash mismatch`);
-  }
-  return reconstructed;
+
+  return {
+    ok: false,
+    index,
+    path: part.path,
+    error: [...directProblems, ...shardProblems].join("; "),
+  };
 }
 
 const manifest = JSON.parse(await readFile(manifestUrl, "utf8"));
@@ -60,12 +75,14 @@ if (!Array.isArray(manifest.parts) || manifest.parts.length !== manifest.partCou
   throw new Error(`Authored aircraft requires 79 repository parts; found ${manifest.parts?.length ?? 0}`);
 }
 
-const encodedParts = [];
-for (const [index, part] of manifest.parts.entries()) {
-  encodedParts.push(await readExactPart(part, index));
+const inspections = await Promise.all(manifest.parts.map((part, index) => inspectExactPart(part, index)));
+const failures = inspections.filter((entry) => !entry.ok);
+if (failures.length) {
+  const lines = failures.map((entry) => `part ${String(entry.index).padStart(3, "0")} ${entry.path}: ${entry.error}`);
+  throw new Error(`Authored-aircraft repository payload is incomplete or invalid (${failures.length}/${manifest.partCount} parts):\n${lines.join("\n")}`);
 }
 
-const encoded = encodedParts.join("");
+const encoded = inspections.map((entry) => entry.text).join("");
 if (encoded.length !== manifest.totalBase64Characters) {
   throw new Error(`Authored-aircraft base64 stream has ${encoded.length} characters; expected ${manifest.totalBase64Characters}`);
 }
@@ -92,4 +109,9 @@ if (metadata.preserveMaterials !== true || metadata.materialCount !== 106 || met
 
 await mkdir(new URL("public/models/", repoRoot), { recursive: true });
 await writeFile(outputUrl, glb);
+const modes = inspections.reduce((counts, entry) => {
+  counts[entry.mode] = (counts[entry.mode] || 0) + 1;
+  return counts;
+}, {});
+console.log(`Authored aircraft payload audit passed: ${manifest.partCount} exact parts (${JSON.stringify(modes)}).`);
 console.log(`Materialized authored American Eagle aircraft: ${glb.byteLength} bytes, sha256 ${manifest.glbSha256}`);
