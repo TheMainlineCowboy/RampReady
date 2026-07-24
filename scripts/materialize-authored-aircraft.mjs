@@ -11,10 +11,14 @@ function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
+function normalizeBase64(text) {
+  return text.replace(/\s+/g, "");
+}
+
 async function readExactPart(part, index) {
   const partUrl = new URL(part.path, repoRoot);
   try {
-    const direct = (await readFile(partUrl, "utf8")).trim();
+    const direct = normalizeBase64(await readFile(partUrl, "utf8"));
     if (direct.length === part.charLength && sha256(Buffer.from(direct, "utf8")) === part.sha256) {
       return direct;
     }
@@ -27,7 +31,7 @@ async function readExactPart(part, index) {
   for (let shardIndex = 0; shardIndex < 8; shardIndex += 1) {
     const shardPath = `${shardBase}shard-${String(shardIndex).padStart(3, "0")}.b64`;
     try {
-      const shard = (await readFile(new URL(shardPath, repoRoot), "utf8")).trim();
+      const shard = normalizeBase64(await readFile(new URL(shardPath, repoRoot), "utf8"));
       if (!shard) throw new Error(`empty shard ${shardPath}`);
       shards.push(shard);
     } catch (error) {
