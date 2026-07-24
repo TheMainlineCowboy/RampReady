@@ -10,7 +10,7 @@ const EXPECTED = Object.freeze({
   byteLength: 1873128,
   sha256: "01383b502fa9a5e0aca3b5cc4a90b5ffe82d52160778bc309e2de73579b1056b",
   compressedByteLength: 939980,
-  compressedSha256: "b8f28ef253a6c49ca851ff57ade7d652e5c22e2eb2f0b445c2cff248040320d8",
+  compressedSha256: "f4124a1ca343b6aaeb961f6bfcd970d09de3945088b08b06052f333f3ac788ae",
 });
 
 function sha256(bytes) {
