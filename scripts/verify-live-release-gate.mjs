@@ -56,11 +56,20 @@ for (const required of [
   "canvas.trainerCanvas",
   "data-camera-yaw",
   ".rr-power-slider",
+  ".rr-view-select",
+  "view: rect('.rr-view-select')",
+  "setCameraView",
+  "page.screenshot",
+  "inspectCompositedPng",
+  "uniqueColorBuckets",
+  "blank or visually flat",
   "/models/crj700-user.glb",
   "/models/crj700-mobile.glb",
   "mobile-layout.json",
   "error.txt",
 ]) assert.ok(browserVerifier.includes(required), `live browser verifier missing ${required}`);
+assert.ok(!browserVerifier.includes("toDataURL('image/png')"), "live render evidence must not use the cleared default WebGL framebuffer");
+assert.ok(!browserVerifier.includes("page.selectOption('.rr-view-select'"), "camera verification must not depend on Playwright visibility after evidence overlays are hidden");
 
 const selection = await read("src/components/PushbackTrainer.jsx");
 assert.ok(selection.includes("useState(null)"), "equipment screen must be the real initial route");
@@ -96,4 +105,4 @@ for (const required of [
   "bottom: var(--rr-recovery-safe) !important",
 ]) assert.ok(css.includes(required), `mobile recovery CSS missing ${required}`);
 
-console.log("RampReady live release gate verified: exactly one main-only Pages deployer, immutable commit-specific release markers, authoritative browser verification, honest equipment gating, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");
+console.log("RampReady live release gate verified: exactly one main-only Pages deployer, immutable commit-specific release markers, compositor-backed nonblank aircraft evidence, camera-selector bounds and events, authoritative browser verification, honest equipment gating, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");
