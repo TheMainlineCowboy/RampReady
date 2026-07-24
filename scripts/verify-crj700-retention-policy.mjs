@@ -10,13 +10,13 @@ const requiredRoles = [
 ];
 
 for (const role of requiredRoles) {
-  if (!source.includes(`\"${role}\"`)) {
+  if (!source.includes(`"${role}"`)) {
     throw new Error(`CRJ700 retention verification failed: missing approved role ${role}.`);
   }
 }
 
 if (source.includes('"intentional-livery-overlay"') || source.includes("buildAmericanEagleMarkings")) {
-  throw new Error("CRJ700 retention verification failed: livery overlay geometry is still retained outside the real model.");
+  throw new Error("CRJ700 retention verification failed: livery overlay geometry is still retained outside the selected model.");
 }
 
 const forbiddenRetainedBodyMarkers = [
@@ -37,12 +37,22 @@ if (!source.includes("mesh.userData.retainedProceduralRole = role;")) {
   throw new Error("CRJ700 retention verification failed: retained meshes are not role-tagged.");
 }
 
-if (!source.includes("if (child !== realModel && !retainedProceduralChildren.has(child)) child.visible = false;")) {
-  throw new Error("CRJ700 retention verification failed: procedural fallback hiding logic changed unexpectedly.");
+for (const marker of [
+  "if (child === realModel) continue;",
+  'role === "operational-light"',
+  'role === "training-capture-marker"',
+  'role === "supplemental-landing-gear"',
+  "!result.preserveMaterials",
+  "child.visible = keep;",
+]) {
+  if (!source.includes(marker)) throw new Error(`CRJ700 retention verification failed: selected-aircraft hiding policy missing ${marker}.`);
 }
 
-if (!source.includes('realModel.userData.liveryAttachment = "real-model-material"')) {
-  throw new Error("CRJ700 retention verification failed: livery is not attached directly to the real model material.");
+if (source.includes("retainedProceduralChildren.has(child)")) {
+  throw new Error("CRJ700 retention verification failed: obsolete all-real-model retention logic remains.");
+}
+if (!source.includes('"authored-materials-preserved"')) {
+  throw new Error("CRJ700 retention verification failed: authored-material state marker is missing.");
 }
 
-console.log("CRJ700 retention policy passed: only supplemental gear, operational lights, and the training marker remain after real-model load; all livery is on the GLB material.");
+console.log("CRJ700 retention policy passed: authored aircraft keeps its own body, livery and landing gear; only operational lights and the training marker remain, while supplemental procedural gear is retained solely for the fallback asset.");

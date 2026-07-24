@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { loadSelectedAircraftRuntime } from "../src/components/aircraft/aircraftRuntimeLoader.js";
 
 class Vector3 {
@@ -90,4 +91,18 @@ try {
 }
 if (!rejected) throw new Error("invalid runtime dimensions were accepted");
 
-console.log("RampReady aircraft runtime loader verification passed: user materials preserved, fallback livery isolated, capture metadata propagated, dimensions enforced.");
+const activeModelSource = await readFile(new URL("../src/components/aircraft/crj700Model.js", import.meta.url), "utf8");
+for (const required of [
+  'import { loadSelectedAircraftRuntime } from "./aircraftRuntimeLoader.js"',
+  "loadSelectedAircraftRuntime({",
+  "result.preserveMaterials",
+  'role === "operational-light"',
+  'role === "training-capture-marker"',
+  'source: sourceId',
+]) {
+  if (!activeModelSource.includes(required)) throw new Error(`active CRJ runtime integration missing: ${required}`);
+}
+if (activeModelSource.includes('new URL("models/crj700-mobile.glb"')) throw new Error("active CRJ runtime still hardcodes the fallback GLB");
+if (activeModelSource.includes("applyVisibleBaseLivery(THREE, realModel);")) throw new Error("active CRJ runtime still repaints every selected model");
+
+console.log("RampReady aircraft runtime loader verification passed: active trainer prefers the authored aircraft, preserves its materials and gear, isolates fallback livery, propagates capture metadata, and enforces dimensions.");

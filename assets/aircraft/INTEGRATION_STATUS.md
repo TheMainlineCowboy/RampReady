@@ -1,0 +1,1 @@
+The binary Git blob `800ea25e341f025085eeab59a1d57c56169b700e` must be attached at `assets/aircraft/crj700-user.glb.br` before this branch may merge. The materializer and verifier reject any other compressed or decompressed identity.
