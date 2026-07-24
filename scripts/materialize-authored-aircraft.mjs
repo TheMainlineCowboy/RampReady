@@ -2,48 +2,66 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { brotliDecompressSync } from "node:zlib";
 
-const compressedUrl = new URL("../assets/aircraft/crj700-user.glb.br", import.meta.url);
-const outputUrl = new URL("../public/models/crj700-user.glb", import.meta.url);
-const metadataUrl = new URL("../public/models/crj700-user.asset.json", import.meta.url);
-
-const EXPECTED = Object.freeze({
-  byteLength: 1873128,
-  sha256: "01383b502fa9a5e0aca3b5cc4a90b5ffe82d52160778bc309e2de73579b1056b",
-  compressedByteLength: 939980,
-  compressedSha256: "f4124a1ca343b6aaeb961f6bfcd970d09de3945088b08b06052f333f3ac788ae",
-});
+const repoRoot = new URL("../", import.meta.url);
+const manifestUrl = new URL("assets/aircraft/crj700-user.parts.json", repoRoot);
+const outputUrl = new URL("public/models/crj700-user.glb", repoRoot);
+const metadataUrl = new URL("public/models/crj700-user.asset.json", repoRoot);
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-const compressed = await readFile(compressedUrl);
-if (compressed.byteLength !== EXPECTED.compressedByteLength) {
-  throw new Error(`Authored aircraft source is ${compressed.byteLength} bytes; expected ${EXPECTED.compressedByteLength}`);
+const manifest = JSON.parse(await readFile(manifestUrl, "utf8"));
+if (manifest.version !== 1 || manifest.encoding !== "base64-concatenated-brotli") {
+  throw new Error("Unsupported authored-aircraft repository manifest");
 }
-if (sha256(compressed) !== EXPECTED.compressedSha256) {
-  throw new Error("Authored aircraft compressed source hash mismatch");
+if (!Array.isArray(manifest.parts) || manifest.parts.length !== manifest.partCount || manifest.partCount !== 79) {
+  throw new Error(`Authored aircraft requires 79 repository parts; found ${manifest.parts?.length ?? 0}`);
+}
+
+const encodedParts = [];
+for (const [index, part] of manifest.parts.entries()) {
+  const partUrl = new URL(part.path, repoRoot);
+  let text;
+  try {
+    text = (await readFile(partUrl, "utf8")).trim();
+  } catch (error) {
+    throw new Error(`Missing authored-aircraft repository part ${index}: ${part.path}`, { cause: error });
+  }
+  if (text.length !== part.charLength) {
+    throw new Error(`Authored-aircraft part ${index} has ${text.length} characters; expected ${part.charLength}`);
+  }
+  if (sha256(Buffer.from(text, "utf8")) !== part.sha256) {
+    throw new Error(`Authored-aircraft part ${index} hash mismatch`);
+  }
+  encodedParts.push(text);
+}
+
+const encoded = encodedParts.join("");
+if (encoded.length !== manifest.totalBase64Characters) {
+  throw new Error(`Authored-aircraft base64 stream has ${encoded.length} characters; expected ${manifest.totalBase64Characters}`);
+}
+const compressed = Buffer.from(encoded, "base64");
+if (compressed.byteLength !== manifest.compressedByteLength || sha256(compressed) !== manifest.compressedSha256) {
+  throw new Error("Authored-aircraft compressed stream identity mismatch");
 }
 
 const glb = brotliDecompressSync(compressed);
-if (glb.byteLength !== EXPECTED.byteLength) {
-  throw new Error(`Authored aircraft GLB is ${glb.byteLength} bytes; expected ${EXPECTED.byteLength}`);
-}
-if (sha256(glb) !== EXPECTED.sha256) {
-  throw new Error("Authored aircraft GLB hash mismatch");
+if (glb.byteLength !== manifest.glbByteLength || sha256(glb) !== manifest.glbSha256) {
+  throw new Error("Authored-aircraft GLB identity mismatch");
 }
 if (glb.toString("ascii", 0, 4) !== "glTF" || glb.readUInt32LE(4) !== 2 || glb.readUInt32LE(8) !== glb.byteLength) {
   throw new Error("Authored aircraft payload is not a valid GLB 2.0 file");
 }
 
 const metadata = JSON.parse(await readFile(metadataUrl, "utf8"));
-if (metadata.sha256 !== EXPECTED.sha256 || metadata.byteLength !== EXPECTED.byteLength) {
-  throw new Error("Authored aircraft metadata does not match the verified GLB");
+if (metadata.sha256 !== manifest.glbSha256 || metadata.byteLength !== manifest.glbByteLength) {
+  throw new Error("Authored-aircraft metadata does not match the verified GLB");
 }
 if (metadata.preserveMaterials !== true || metadata.materialCount !== 106 || metadata.textureCount !== 9) {
-  throw new Error("Authored aircraft material/texture contract is incomplete");
+  throw new Error("Authored-aircraft material and texture contract is incomplete");
 }
 
-await mkdir(new URL("../public/models/", import.meta.url), { recursive: true });
+await mkdir(new URL("public/models/", repoRoot), { recursive: true });
 await writeFile(outputUrl, glb);
-console.log(`Materialized authored American Eagle aircraft: ${glb.byteLength} bytes, sha256 ${EXPECTED.sha256}`);
+console.log(`Materialized authored American Eagle aircraft: ${glb.byteLength} bytes, sha256 ${manifest.glbSha256}`);
