@@ -73,12 +73,77 @@ async function orbit(page, canvas, dx, dy = 0) {
   return { before, after };
 }
 
+async function setCameraView(page, value) {
+  const result = await page.locator('.rr-view-select').evaluate((element, nextValue) => {
+    const style = getComputedStyle(element);
+    const box = element.getBoundingClientRect();
+    element.value = nextValue;
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+    return {
+      value: element.value,
+      display: style.display,
+      visibility: style.visibility,
+      width: box.width,
+      height: box.height,
+    };
+  }, value);
+  if (result.value !== value) throw new Error(`Camera view did not accept ${value}: ${JSON.stringify(result)}`);
+  await page.waitForFunction(expected => document.querySelector('.rr-view-select')?.value === expected, value, { timeout: 5000 });
+  await page.waitForTimeout(700);
+  return result;
+}
+
+async function inspectCompositedPng(page, payload) {
+  return page.evaluate(async base64 => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${base64}`;
+    await image.decode();
+    const sample = document.createElement('canvas');
+    sample.width = 64;
+    sample.height = 64;
+    const context = sample.getContext('2d', { willReadFrequently: true });
+    context.drawImage(image, 0, 0, sample.width, sample.height);
+    const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+    let minimum = 255;
+    let maximum = 0;
+    let nonBlack = 0;
+    let sum = 0;
+    let sumSquares = 0;
+    const buckets = new Set();
+    const count = pixels.length / 4;
+    for (let index = 0; index < pixels.length; index += 4) {
+      const luma = Math.round(0.2126 * pixels[index] + 0.7152 * pixels[index + 1] + 0.0722 * pixels[index + 2]);
+      minimum = Math.min(minimum, luma);
+      maximum = Math.max(maximum, luma);
+      if (luma > 12) nonBlack += 1;
+      sum += luma;
+      sumSquares += luma * luma;
+      buckets.add(`${pixels[index] >> 4}:${pixels[index + 1] >> 4}:${pixels[index + 2] >> 4}`);
+    }
+    const mean = sum / count;
+    const variance = Math.max(0, sumSquares / count - mean * mean);
+    return {
+      mean,
+      standardDeviation: Math.sqrt(variance),
+      nonBlackRatio: nonBlack / count,
+      dynamicRange: maximum - minimum,
+      uniqueColorBuckets: buckets.size,
+    };
+  }, payload.toString('base64'));
+}
+
 async function saveCanvasPng(page, canvas, filePath, minimumWidth, minimumHeight) {
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-  const dataUrl = await canvas.evaluate(element => element.toDataURL('image/png'));
-  const markerIndex = dataUrl.indexOf('base64,');
-  if (markerIndex < 0) throw new Error(`${filePath} did not return a PNG data URL`);
-  const payload = Buffer.from(dataUrl.slice(markerIndex + 7), 'base64');
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error(`${filePath} canvas has no rendered bounds`);
+  const clip = {
+    x: Math.max(0, Math.floor(box.x)),
+    y: Math.max(0, Math.floor(box.y)),
+    width: Math.floor(box.width),
+    height: Math.floor(box.height),
+  };
+  const payload = await page.screenshot({ type: 'png', clip, animations: 'disabled', caret: 'hide' });
   const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
   if (!payload.subarray(0, 8).equals(signature)) throw new Error(`${filePath} is not a PNG`);
   if (payload.byteLength < 5000) throw new Error(`${filePath} is unexpectedly small: ${payload.byteLength}`);
@@ -87,8 +152,12 @@ async function saveCanvasPng(page, canvas, filePath, minimumWidth, minimumHeight
   if (width < minimumWidth || height < minimumHeight) {
     throw new Error(`${filePath} dimensions ${width}x${height} are below ${minimumWidth}x${minimumHeight}`);
   }
+  const pixelStats = await inspectCompositedPng(page, payload);
+  if (pixelStats.nonBlackRatio < 0.3 || pixelStats.dynamicRange < 24 || pixelStats.standardDeviation < 6 || pixelStats.uniqueColorBuckets < 12) {
+    throw new Error(`${filePath} is blank or visually flat: ${JSON.stringify(pixelStats)}`);
+  }
   fs.writeFileSync(filePath, payload);
-  return { width, height, byteLength: payload.byteLength };
+  return { width, height, byteLength: payload.byteLength, pixelStats };
 }
 
 function rejectCriticalDiagnostics(label, diagnostics) {
@@ -109,18 +178,21 @@ async function verifyDesktop(browser) {
   if (!response?.ok()) throw new Error(`Desktop navigation failed: ${response?.status() || 'no response'}`);
   const canvas = await launchTraining(page);
   await page.waitForTimeout(1800);
+  const view = page.locator('.rr-view-select');
+  await view.waitFor({ state: 'visible', timeout: 10000 });
+  const viewBounds = await view.boundingBox();
+  if (!viewBounds || viewBounds.width < 90 || viewBounds.height < 36) throw new Error(`Desktop camera selector is not visibly usable: ${JSON.stringify(viewBounds)}`);
   const cameraDrag = await orbit(page, canvas, 180, -45);
   await page.addStyleTag({ content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}' });
   const chase = await saveCanvasPng(page, canvas, `${evidenceDir}/aircraft-chase.png`, 1000, 700);
   await orbit(page, canvas, 620, 0);
   const side = await saveCanvasPng(page, canvas, `${evidenceDir}/aircraft-side.png`, 1000, 700);
-  await page.selectOption('.rr-view-select', 'overhead');
-  await page.waitForTimeout(500);
+  const overheadView = await setCameraView(page, 'overhead');
   const overhead = await saveCanvasPng(page, canvas, `${evidenceDir}/aircraft-overhead.png`, 1000, 700);
   const source = await canvas.getAttribute('data-aircraft-source');
   rejectCriticalDiagnostics('Desktop', diagnostics);
   await page.close();
-  return { source, cameraDrag, diagnostics, images: { chase, side, overhead } };
+  return { source, cameraDrag, viewBounds, overheadView, diagnostics, images: { chase, side, overhead } };
 }
 
 async function verifyMobile(browser) {
@@ -145,15 +217,16 @@ async function verifyMobile(browser) {
       throttle: rect('.rr-throttle'),
       steer: rect('.rr-steer'),
       slider: rect('.rr-power-slider'),
+      view: rect('.rr-view-select'),
       menu: rect('.rr-session-menu'),
     };
   });
 
-  for (const name of ['canvas', 'hud', 'metrics', 'throttle', 'steer', 'slider', 'menu']) {
+  for (const name of ['canvas', 'hud', 'metrics', 'throttle', 'steer', 'slider', 'view', 'menu']) {
     if (!layout[name]) throw new Error(`Missing mobile layout element: ${name}`);
   }
   if (layout.canvas.width < 400 || layout.canvas.height < 890) throw new Error(`Canvas does not fill mobile viewport: ${JSON.stringify(layout.canvas)}`);
-  for (const name of ['hud', 'metrics', 'throttle', 'steer', 'slider', 'menu']) {
+  for (const name of ['hud', 'metrics', 'throttle', 'steer', 'slider', 'view', 'menu']) {
     const box = layout[name];
     if (box.left < -1 || box.right > layout.viewport.width + 1 || box.top < -1 || box.bottom > layout.viewport.height + 1) {
       throw new Error(`${name} is outside mobile viewport: ${JSON.stringify(box)}`);
@@ -162,6 +235,7 @@ async function verifyMobile(browser) {
   if (layout.metrics.height > 58 || layout.metrics.bottom > layout.throttle.top + 2) throw new Error('Metrics overlay is not compactly stacked');
   if (Math.abs(layout.throttle.bottom - layout.steer.top) > 12) throw new Error('Throttle and steering decks are not stacked compactly');
   if (layout.slider.width < 120 || layout.slider.height < 40) throw new Error(`Throttle slider is not visibly usable: ${JSON.stringify(layout.slider)}`);
+  if (layout.view.width < 90 || layout.view.height < 36) throw new Error(`Camera selector is not visibly usable: ${JSON.stringify(layout.view)}`);
 
   const slider = page.locator('.rr-power-slider');
   await slider.evaluate(element => {
@@ -172,8 +246,9 @@ async function verifyMobile(browser) {
   if (await slider.inputValue() !== '55') throw new Error('Throttle slider did not accept input');
 
   const cameraDrag = await orbit(page, canvas, 120, -30);
-  const image = await saveCanvasPng(page, canvas, `${evidenceDir}/mobile-canvas.png`, 400, 800);
   fs.writeFileSync(`${evidenceDir}/mobile-layout.json`, JSON.stringify(layout, null, 2));
+  await page.addStyleTag({ content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}' });
+  const image = await saveCanvasPng(page, canvas, `${evidenceDir}/mobile-canvas.png`, 400, 800);
   rejectCriticalDiagnostics('Mobile', diagnostics);
   await page.close();
   return { layout, cameraDrag, diagnostics, image };
