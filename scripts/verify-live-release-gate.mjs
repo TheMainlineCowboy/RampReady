@@ -14,6 +14,7 @@ const exists = async (path) => {
 };
 
 const obsoleteWorkflows = [
+  ".github/workflows/pages.yml",
   ".github/workflows/verify-crj700-side-views.yml",
   ".github/workflows/verify-pages-aircraft-extent.yml",
   ".github/workflows/verify-pages-aircraft-views.yml",
@@ -35,11 +36,16 @@ for (const required of [
 
 const deployWorkflow = await read(".github/workflows/deploy-pages.yml");
 for (const required of [
+  "push:",
+  "branches: [main]",
+  "actions/upload-pages-artifact@v3",
+  "actions/deploy-pages@v4",
   "public/releases/${GITHUB_SHA}.txt",
   "dist/releases/${GITHUB_SHA}.txt",
   "releases/${EXPECTED_SHA}.txt",
   "Immutable release marker appeared",
 ]) assert.ok(deployWorkflow.includes(required), `Pages deployment workflow missing ${required}`);
+assert.ok(!deployWorkflow.includes("pull_request:"), "feature branches must never deploy GitHub Pages");
 assert.ok(!deployWorkflow.includes("release-commit.txt?verify="), "production verification must not rely on a mutable cached marker path");
 
 const browserVerifier = await read("scripts/verify-live-experience-browser.cjs");
@@ -90,4 +96,4 @@ for (const required of [
   "bottom: var(--rr-recovery-safe) !important",
 ]) assert.ok(css.includes(required), `mobile recovery CSS missing ${required}`);
 
-console.log("RampReady live release gate verified: immutable commit-specific Pages markers, authoritative browser verification, honest equipment gating, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");
+console.log("RampReady live release gate verified: exactly one main-only Pages deployer, immutable commit-specific release markers, authoritative browser verification, honest equipment gating, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");
