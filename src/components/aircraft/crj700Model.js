@@ -1,19 +1,11 @@
 import { buildCRJ700NoseGear } from "./crj700NoseGear.js";
 import { createAmericanEagleSurfaceMaterial } from "./crj700AmericanEagleMarkings.js";
+import { loadSelectedAircraftRuntime } from "./aircraftRuntimeLoader.js";
 
 const EXPECTED_LENGTH_METERS = 32.5;
 const EXPECTED_WINGSPAN_METERS = 23.64;
-const DIMENSION_TOLERANCE_METERS = 1.25;
 const LEGACY_PARENT_SCALE = 0.82;
 const PROCEDURAL_INTERNAL_SCALE = 1.35;
-
-function dimensionWithinTolerance(actual, expected) {
-  return Number.isFinite(actual) && Math.abs(actual - expected) <= DIMENSION_TOLERANCE_METERS;
-}
-
-function getAssetUrl() {
-  return new URL("models/crj700-mobile.glb", document.baseURI).href;
-}
 
 function applyVisibleBaseLivery(THREE, realModel) {
   const airframeMaterial = createAmericanEagleSurfaceMaterial(THREE);
@@ -33,58 +25,51 @@ function applyVisibleBaseLivery(THREE, realModel) {
   realModel.userData.liveryAttachment = "real-model-material";
 }
 
-async function loadRealCRJ700(THREE, aircraftRoot, retainedProceduralChildren) {
+async function loadRealCRJ700(THREE, aircraftRoot) {
   aircraftRoot.userData.aircraftAssetState = "loading";
-  aircraftRoot.userData.aircraftAssetUrl = getAssetUrl();
   aircraftRoot.userData.renderedAircraftSource = "procedural-fallback";
 
   try {
     const { GLTFLoader } = await import("three/addons/loaders/GLTFLoader.js");
-    const loader = new GLTFLoader();
-    const gltf = await loader.loadAsync(aircraftRoot.userData.aircraftAssetUrl);
-    const realModel = gltf.scene;
-    realModel.name = "CRJ700 STL-derived mobile GLB";
-    realModel.updateMatrixWorld(true);
-
-    const rawBounds = new THREE.Box3().setFromObject(realModel);
-    const rawSize = rawBounds.getSize(new THREE.Vector3());
-    const rawLength = rawSize.z;
-    const rawWingspan = rawSize.x;
-    if (!dimensionWithinTolerance(rawLength, EXPECTED_LENGTH_METERS) || !dimensionWithinTolerance(rawWingspan, EXPECTED_WINGSPAN_METERS)) {
-      throw new Error(`Unexpected CRJ700 dimensions ${rawLength.toFixed(2)} m long x ${rawWingspan.toFixed(2)} m span`);
-    }
-
-    applyVisibleBaseLivery(THREE, realModel);
-    realModel.traverse((child) => {
-      if (!child.isMesh) return;
-      child.castShadow = true;
-      child.receiveShadow = true;
-      child.frustumCulled = true;
-      child.userData.aircraftAssetSource = "CRJ700.stl";
+    const result = await loadSelectedAircraftRuntime({
+      THREE,
+      loader: new GLTFLoader(),
+      applyFallbackMaterial: (model) => applyVisibleBaseLivery(THREE, model),
     });
-
+    const realModel = result.model;
+    const sourceId = result.candidate.id;
+    realModel.name = result.preserveMaterials
+      ? "User-authored American Eagle CRJ"
+      : "Prepared CRJ700 fallback";
     realModel.scale.setScalar(1 / (LEGACY_PARENT_SCALE * PROCEDURAL_INTERNAL_SCALE));
-    realModel.userData.noseGearCaptureOrigin = [0, 0, 0];
-    realModel.userData.orientation = { up: "+Y", forward: "-Z" };
     aircraftRoot.add(realModel);
 
     for (const child of aircraftRoot.children) {
-      if (child !== realModel && !retainedProceduralChildren.has(child)) child.visible = false;
+      if (child === realModel) continue;
+      const role = child.userData.retainedProceduralRole;
+      const keep = role === "operational-light"
+        || role === "training-capture-marker"
+        || (!result.preserveMaterials && role === "supplemental-landing-gear");
+      child.visible = keep;
     }
 
     aircraftRoot.userData.aircraftAssetState = "ready";
-    aircraftRoot.userData.renderedAircraftSource = "CRJ700.stl";
+    aircraftRoot.userData.aircraftAssetUrl = result.candidate.resolvedUrl;
+    aircraftRoot.userData.renderedAircraftSource = sourceId;
     aircraftRoot.userData.realAircraftObject = realModel;
-    aircraftRoot.userData.liveryState = realModel.userData.liveryState;
-    aircraftRoot.userData.aircraftDimensionsMeters = {
-      length: Number(rawLength.toFixed(3)),
-      wingspan: Number(rawWingspan.toFixed(3)),
-    };
+    aircraftRoot.userData.liveryState = result.preserveMaterials
+      ? "authored-materials-preserved"
+      : realModel.userData.liveryState;
+    aircraftRoot.userData.aircraftDimensionsMeters = result.dimensions;
+    aircraftRoot.userData.noseGearCaptureOrigin = [...result.captureOrigin];
+    aircraftRoot.userData.aircraftAssetAttempts = result.attempts;
+    aircraftRoot.userData.authoredMaterialsPreserved = result.preserveMaterials;
     aircraftRoot.dispatchEvent({
       type: "aircraft-model-ready",
-      source: "CRJ700.stl",
-      dimensions: aircraftRoot.userData.aircraftDimensionsMeters,
+      source: sourceId,
+      dimensions: result.dimensions,
       liveryState: aircraftRoot.userData.liveryState,
+      preserveMaterials: result.preserveMaterials,
     });
   } catch (error) {
     aircraftRoot.userData.aircraftAssetState = "error";
@@ -187,7 +172,7 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
     return add(new THREE.Mesh(geom, material));
   }
 
-  // Procedural body remains available only while the real model loads or if loading fails.
+  // Procedural body remains available only while the selected GLB loads or if loading fails.
   loftFuselage([
     [-5.25, 0.08, 2.58, 0.9], [-4.8, 0.48, 2.61, 0.92], [-3.9, 0.82, 2.65, 0.94],
     [-2.5, 0.98], [0, 1.0], [16.8, 1.0], [19.2, 0.92], [21.2, 0.7, 2.72, 0.96],
@@ -262,13 +247,13 @@ export function buildCRJ700Aircraft(THREE, mat, cyl) {
   group.scale.setScalar(PROCEDURAL_INTERNAL_SCALE);
   group.userData.aircraftDimensionsMeters = { length: EXPECTED_LENGTH_METERS, wingspan: EXPECTED_WINGSPAN_METERS };
   group.userData.orientation = { up: "+Y", forward: "-Z" };
-  group.userData.liveryState = "procedural-fallback-only-until-real-model-loads";
+  group.userData.liveryState = "procedural-fallback-only-until-selected-model-loads";
   group.userData.retainedProceduralRoles = [
     "supplemental-landing-gear",
     "operational-light",
     "training-capture-marker",
   ];
-  void loadRealCRJ700(THREE, group, retainedProceduralChildren);
+  void loadRealCRJ700(THREE, group);
 
   return group;
 }
