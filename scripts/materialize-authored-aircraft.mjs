@@ -11,6 +11,43 @@ function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
+async function readExactPart(part, index) {
+  const partUrl = new URL(part.path, repoRoot);
+  try {
+    const direct = (await readFile(partUrl, "utf8")).trim();
+    if (direct.length === part.charLength && sha256(Buffer.from(direct, "utf8")) === part.sha256) {
+      return direct;
+    }
+  } catch {
+    // Fall through to repository-safe shards.
+  }
+
+  const shardBase = `${part.path}.shards/`;
+  const shards = [];
+  for (let shardIndex = 0; shardIndex < 8; shardIndex += 1) {
+    const shardPath = `${shardBase}shard-${String(shardIndex).padStart(3, "0")}.b64`;
+    try {
+      const shard = (await readFile(new URL(shardPath, repoRoot), "utf8")).trim();
+      if (!shard) throw new Error(`empty shard ${shardPath}`);
+      shards.push(shard);
+    } catch (error) {
+      if (shardIndex === 0) {
+        throw new Error(`Missing or invalid authored-aircraft part ${index}: ${part.path}; no verified shards found`, { cause: error });
+      }
+      break;
+    }
+  }
+
+  const reconstructed = shards.join("");
+  if (reconstructed.length !== part.charLength) {
+    throw new Error(`Authored-aircraft part ${index} reconstructed to ${reconstructed.length} characters; expected ${part.charLength}`);
+  }
+  if (sha256(Buffer.from(reconstructed, "utf8")) !== part.sha256) {
+    throw new Error(`Authored-aircraft part ${index} reconstructed hash mismatch`);
+  }
+  return reconstructed;
+}
+
 const manifest = JSON.parse(await readFile(manifestUrl, "utf8"));
 if (manifest.version !== 1 || manifest.encoding !== "base64-concatenated-brotli") {
   throw new Error("Unsupported authored-aircraft repository manifest");
@@ -21,20 +58,7 @@ if (!Array.isArray(manifest.parts) || manifest.parts.length !== manifest.partCou
 
 const encodedParts = [];
 for (const [index, part] of manifest.parts.entries()) {
-  const partUrl = new URL(part.path, repoRoot);
-  let text;
-  try {
-    text = (await readFile(partUrl, "utf8")).trim();
-  } catch (error) {
-    throw new Error(`Missing authored-aircraft repository part ${index}: ${part.path}`, { cause: error });
-  }
-  if (text.length !== part.charLength) {
-    throw new Error(`Authored-aircraft part ${index} has ${text.length} characters; expected ${part.charLength}`);
-  }
-  if (sha256(Buffer.from(text, "utf8")) !== part.sha256) {
-    throw new Error(`Authored-aircraft part ${index} hash mismatch`);
-  }
-  encodedParts.push(text);
+  encodedParts.push(await readExactPart(part, index));
 }
 
 const encoded = encodedParts.join("");
