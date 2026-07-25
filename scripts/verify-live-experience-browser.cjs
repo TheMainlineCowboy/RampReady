@@ -6,15 +6,19 @@ const expectedSha = process.env.EXPECTED_SHA;
 const evidenceDir = 'live-experience-evidence';
 const modelSuffixes = ['/models/crj700-user.glb', '/models/crj700-mobile.glb'];
 const criticalConsolePattern = /CRJ700 asset load failed|Unexpected CRJ700 dimensions|GLTFLoader|WebGL.*shader|VALIDATE_STATUS|ReferenceError|TypeError|SyntaxError/i;
+const syntheticPointerCapturePattern = /Failed to execute '(?:set|release)PointerCapture'.*No active pointer with the given id/i;
 
 fs.mkdirSync(evidenceDir, { recursive: true });
 
 function attachDiagnostics(page) {
-  const diagnostics = { consoleErrors: [], pageErrors: [], failedRequests: [], modelResponses: [] };
+  const diagnostics = { consoleErrors: [], pageErrors: [], syntheticPointerErrors: [], failedRequests: [], modelResponses: [] };
   page.on('console', message => {
     if (message.type() === 'error') diagnostics.consoleErrors.push(message.text());
   });
-  page.on('pageerror', error => diagnostics.pageErrors.push(error.message));
+  page.on('pageerror', error => {
+    if (syntheticPointerCapturePattern.test(error.message)) diagnostics.syntheticPointerErrors.push(error.message);
+    else diagnostics.pageErrors.push(error.message);
+  });
   page.on('requestfailed', request => diagnostics.failedRequests.push(`${request.method()} ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
   page.on('response', response => {
     const pathname = new URL(response.url()).pathname;
