@@ -4,6 +4,7 @@ import { brotliDecompressSync } from "node:zlib";
 
 const repoRoot = new URL("../", import.meta.url);
 const manifestUrl = new URL("assets/aircraft/crj700-user.parts.json", repoRoot);
+const compressedUrl = new URL("assets/aircraft/crj700-user.glb.br", repoRoot);
 const outputUrl = new URL("public/models/crj700-user.glb", repoRoot);
 const metadataUrl = new URL("public/models/crj700-user.asset.json", repoRoot);
 
@@ -75,20 +76,34 @@ if (!Array.isArray(manifest.parts) || manifest.parts.length !== manifest.partCou
   throw new Error(`Authored aircraft requires 79 repository parts; found ${manifest.parts?.length ?? 0}`);
 }
 
-const inspections = await Promise.all(manifest.parts.map((part, index) => inspectExactPart(part, index)));
-const failures = inspections.filter((entry) => !entry.ok);
-if (failures.length) {
-  const lines = failures.map((entry) => `part ${String(entry.index).padStart(3, "0")} ${entry.path}: ${entry.error}`);
-  throw new Error(`Authored-aircraft repository payload is incomplete or invalid (${failures.length}/${manifest.partCount} parts):\n${lines.join("\n")}`);
+let compressed;
+let sourceMode = "exact-compressed-blob";
+try {
+  const directCompressed = await readFile(compressedUrl);
+  if (directCompressed.byteLength === manifest.compressedByteLength && sha256(directCompressed) === manifest.compressedSha256) {
+    compressed = directCompressed;
+  }
+} catch {
+  // Fall through to repository-part reconstruction for branches where the exact blob is not present yet.
 }
 
-const encoded = inspections.map((entry) => entry.text).join("");
-if (encoded.length !== manifest.totalBase64Characters) {
-  throw new Error(`Authored-aircraft base64 stream has ${encoded.length} characters; expected ${manifest.totalBase64Characters}`);
-}
-const compressed = Buffer.from(encoded, "base64");
-if (compressed.byteLength !== manifest.compressedByteLength || sha256(compressed) !== manifest.compressedSha256) {
-  throw new Error("Authored-aircraft compressed stream identity mismatch");
+if (!compressed) {
+  sourceMode = "repository-parts";
+  const inspections = await Promise.all(manifest.parts.map((part, index) => inspectExactPart(part, index)));
+  const failures = inspections.filter((entry) => !entry.ok);
+  if (failures.length) {
+    const lines = failures.map((entry) => `part ${String(entry.index).padStart(3, "0")} ${entry.path}: ${entry.error}`);
+    throw new Error(`Authored-aircraft repository payload is incomplete or invalid (${failures.length}/${manifest.partCount} parts):\n${lines.join("\n")}`);
+  }
+
+  const encoded = inspections.map((entry) => entry.text).join("");
+  if (encoded.length !== manifest.totalBase64Characters) {
+    throw new Error(`Authored-aircraft base64 stream has ${encoded.length} characters; expected ${manifest.totalBase64Characters}`);
+  }
+  compressed = Buffer.from(encoded, "base64");
+  if (compressed.byteLength !== manifest.compressedByteLength || sha256(compressed) !== manifest.compressedSha256) {
+    throw new Error("Authored-aircraft compressed stream identity mismatch");
+  }
 }
 
 const glb = brotliDecompressSync(compressed);
@@ -109,9 +124,5 @@ if (metadata.preserveMaterials !== true || metadata.materialCount !== 106 || met
 
 await mkdir(new URL("public/models/", repoRoot), { recursive: true });
 await writeFile(outputUrl, glb);
-const modes = inspections.reduce((counts, entry) => {
-  counts[entry.mode] = (counts[entry.mode] || 0) + 1;
-  return counts;
-}, {});
-console.log(`Authored aircraft payload audit passed: ${manifest.partCount} exact parts (${JSON.stringify(modes)}).`);
+console.log(`Authored aircraft source audit passed via ${sourceMode}.`);
 console.log(`Materialized authored American Eagle aircraft: ${glb.byteLength} bytes, sha256 ${manifest.glbSha256}`);
