@@ -9,6 +9,13 @@ const v4PartsBase = "assets/aircraft/crj700-user-v4.glb.br.parts/";
 const outputUrl = new URL("public/models/crj700-user.glb", repoRoot);
 const metadataUrl = new URL("public/models/crj700-user.asset.json", repoRoot);
 
+const recoveryGroups = [
+  { start: 59, end: 63, path: "assets/aircraft/recovery-tail-059-063.b64" },
+  { start: 64, end: 68, path: "assets/aircraft/recovery-tail-064-068.b64" },
+  { start: 69, end: 73, path: "assets/aircraft/recovery-tail-069-073.b64" },
+  { start: 74, end: 78, path: "assets/aircraft/recovery-tail-074-078.b64" },
+];
+
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
 }
@@ -17,7 +24,34 @@ function normalizeBase64(text) {
   return text.replace(/\s+/g, "");
 }
 
-async function inspectExactPart(part, index) {
+async function inspectRecoveryGroup(part, index, manifest) {
+  const group = recoveryGroups.find((entry) => index >= entry.start && index <= entry.end);
+  if (!group) return null;
+  try {
+    const encoded = normalizeBase64(await readFile(new URL(group.path, repoRoot), "utf8"));
+    const expectedLength = manifest.parts
+      .slice(group.start, group.end + 1)
+      .reduce((sum, entry) => sum + entry.charLength, 0);
+    if (encoded.length !== expectedLength) {
+      return { ok: false, error: `recovery group ${group.path} length ${encoded.length}/${expectedLength}` };
+    }
+    let offset = 0;
+    for (let cursor = group.start; cursor <= group.end; cursor += 1) {
+      const current = manifest.parts[cursor];
+      const text = encoded.slice(offset, offset + current.charLength);
+      if (text.length !== current.charLength || sha256(Buffer.from(text, "utf8")) !== current.sha256) {
+        return { ok: false, error: `recovery group ${group.path} failed exact validation at part ${String(cursor).padStart(3, "0")}` };
+      }
+      if (cursor === index) return { ok: true, text, mode: `recovery-group:${group.path}` };
+      offset += current.charLength;
+    }
+  } catch (error) {
+    return { ok: false, error: `recovery group ${group.path} missing (${error.code || error.message})` };
+  }
+  return null;
+}
+
+async function inspectExactPart(part, index, manifest) {
   const partUrl = new URL(part.path, repoRoot);
   const directProblems = [];
   try {
@@ -60,6 +94,10 @@ async function inspectExactPart(part, index) {
   } else if (shards.length > 0) {
     shardProblems.push(`shard length ${reconstructed.length}/${part.charLength}`);
   }
+
+  const recovered = await inspectRecoveryGroup(part, index, manifest);
+  if (recovered?.ok) return recovered;
+  if (recovered?.error) shardProblems.push(recovered.error);
 
   return {
     ok: false,
@@ -135,10 +173,20 @@ if (!compressed) {
 }
 
 if (!compressed) {
-  sourceMode = "legacy-repository-parts";
-  const inspections = await Promise.all(manifest.parts.map((part, index) => inspectExactPart(part, index)));
+  sourceMode = "legacy-and-recovery-parts";
+  const inspections = await Promise.all(manifest.parts.map((part, index) => inspectExactPart(part, index, manifest)));
   const failures = inspections.filter((entry) => !entry.ok);
   if (failures.length) {
+    const debugParts = new Set([22, 29, 48, 53, 56]);
+    for (const entry of failures) {
+      if (!debugParts.has(entry.index)) continue;
+      try {
+        const debugText = normalizeBase64(await readFile(new URL(entry.path, repoRoot), "utf8"));
+        console.log(`AIRCRAFT_DEBUG_PART_${String(entry.index).padStart(3, "0")}_BEGIN`);
+        console.log(debugText);
+        console.log(`AIRCRAFT_DEBUG_PART_${String(entry.index).padStart(3, "0")}_END`);
+      } catch {}
+    }
     const lines = failures.map((entry) => `part ${String(entry.index).padStart(3, "0")} ${entry.path}: ${entry.error}`);
     throw new Error(`Authored-aircraft payload could not be reconstructed. Source attempts: ${sourceProblems.join(" | ")}. Legacy payload is incomplete or invalid (${failures.length}/${manifest.partCount} parts):\n${lines.join("\n")}`);
   }
