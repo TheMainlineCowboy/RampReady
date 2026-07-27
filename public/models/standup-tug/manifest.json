@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "archive": "Standup Pushback GLB.zip",
+    "model": "Aircraft_Tug.glb",
+    "bytes": 26243284,
+    "sha256": "6f2e9da495e407cb95ad677a9110b1767139fbc69e2e9e62b4bcd059aece5504"
+  },
+  "runtime": {
+    "glbBytes": 1400512,
+    "glbSha256": "b015f45557f68eef5cc07078a4323dec15214dc33c144e8fff9233034a74cd31",
+    "gzipBytes": 738450,
+    "gzipSha256": "8fe87c07e006cd67551d6a9a5540d0984efe81e8ea8dc00ef260621eefc5844f",
+    "base64Chars": 984600,
+    "chunkChars": 100000,
+    "chunkCount": 10,
+    "chunkPath": "public/models/standup-tug/parts/part-{index}.b64"
+  },
+  "profile": {
+    "lengthMeters": 4.5854875,
+    "widthMeters": 1.41609921,
+    "heightMeters": 1.67207713,
+    "capturePlaneZ": 3.45,
+    "orientation": "Y-up, capture end toward +Z"
+  },
+  "optimization": {
+    "geometry": "Exact retained four source Tug meshes and UVs; normals and tangents regenerated at runtime",
+    "textures": "Two painted source base-color textures retained and resized to 640px for the web runtime",
+    "detachedAssembly": "polySurface487_dash_handle removed"
+  }
+}
