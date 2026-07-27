@@ -12,8 +12,8 @@
     "brotliBytes": 533184,
     "brotliSha256": "cb0bc0c569e0d7537a4b92994a203f82d80317c8cb7f5885f32d53877815c3f6",
     "base64Chars": 710912,
-    "chunkChars": 80000,
-    "chunkCount": 9,
+    "chunkChars": 100000,
+    "chunkCount": 8,
     "chunkPath": "public/models/standup-tug/verified/part-{index}.b64"
   },
   "profile": {
