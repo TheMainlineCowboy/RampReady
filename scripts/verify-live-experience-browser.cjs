@@ -5,13 +5,14 @@ const pageUrl = process.env.PAGE_URL;
 const expectedSha = process.env.EXPECTED_SHA;
 const evidenceDir = 'live-experience-evidence';
 const modelSuffixes = ['/models/crj700-user.glb', '/models/crj700-mobile.glb'];
-const criticalConsolePattern = /CRJ700 asset load failed|Unexpected CRJ700 dimensions|GLTFLoader|WebGL.*shader|VALIDATE_STATUS|ReferenceError|TypeError|SyntaxError/i;
+const standupSuffix = '/models/standup-tug.glb';
+const criticalConsolePattern = /CRJ700 asset load failed|Equipment model failed to load|Unexpected CRJ700 dimensions|GLTFLoader|WebGL.*shader|VALIDATE_STATUS|ReferenceError|TypeError|SyntaxError/i;
 const syntheticPointerCapturePattern = /Failed to execute '(?:set|release)PointerCapture'.*No active pointer with the given id/i;
 
 fs.mkdirSync(evidenceDir, { recursive: true });
 
 function attachDiagnostics(page) {
-  const diagnostics = { consoleErrors: [], pageErrors: [], syntheticPointerErrors: [], failedRequests: [], modelResponses: [] };
+  const diagnostics = { consoleErrors: [], pageErrors: [], syntheticPointerErrors: [], failedRequests: [], modelResponses: [], standupResponses: [] };
   page.on('console', message => {
     if (message.type() === 'error') diagnostics.consoleErrors.push(message.text());
   });
@@ -24,6 +25,9 @@ function attachDiagnostics(page) {
     const pathname = new URL(response.url()).pathname;
     if (modelSuffixes.some(suffix => pathname.endsWith(suffix))) {
       diagnostics.modelResponses.push({ url: response.url(), status: response.status(), ok: response.ok() });
+    }
+    if (pathname.endsWith(standupSuffix)) {
+      diagnostics.standupResponses.push({ url: response.url(), status: response.status(), ok: response.ok() });
     }
   });
   return diagnostics;
@@ -39,17 +43,18 @@ async function launchTraining(page) {
 
   if (await lektro.getAttribute('aria-checked') !== 'true') await lektro.click();
   if (await launch.isDisabled()) throw new Error('Lektro runtime is not launchable');
+  const standupText = await standup.textContent();
+  if (!standupText?.includes('Verified runtime')) throw new Error(`Stand-up runtime status is not verified: ${standupText || 'missing text'}`);
   await standup.click();
-  if (!(await launch.isDisabled())) throw new Error('Stand-up model is launchable without its runtime GLB');
-  await lektro.click();
-  if (await launch.isDisabled()) throw new Error('Lektro launch did not re-enable');
+  if (await launch.isDisabled()) throw new Error('Verified stand-up runtime is not launchable');
   await launch.click();
 
   const canvas = page.locator('canvas.trainerCanvas');
   await canvas.waitFor({ state: 'visible', timeout: 30000 });
   await page.waitForFunction(() => {
     const element = document.querySelector('canvas.trainerCanvas');
-    return element?.dataset.equipmentId === 'lektro-88'
+    return element?.dataset.equipmentId === 'standup-tug'
+      && element?.dataset.tugSource === 'authored-standup'
       && element?.dataset.aircraftSource
       && element.dataset.aircraftSource !== 'loading';
   }, null, { timeout: 45000 });
@@ -168,10 +173,13 @@ function rejectCriticalDiagnostics(label, diagnostics) {
   const criticalConsoleErrors = diagnostics.consoleErrors.filter(message => criticalConsolePattern.test(message));
   if (criticalConsoleErrors.length) throw new Error(`${label} critical console errors: ${criticalConsoleErrors.join(' | ')}`);
   if (diagnostics.pageErrors.length) throw new Error(`${label} page errors: ${diagnostics.pageErrors.join(' | ')}`);
-  const criticalFailedRequests = diagnostics.failedRequests.filter(message => /crj700-(?:user|mobile)\.glb|assets\/.*\.js/i.test(message));
+  const criticalFailedRequests = diagnostics.failedRequests.filter(message => /crj700-(?:user|mobile)\.glb|standup-tug\.glb|assets\/.*\.js/i.test(message));
   if (criticalFailedRequests.length) throw new Error(`${label} critical failed requests: ${criticalFailedRequests.join(' | ')}`);
   if (!diagnostics.modelResponses.some(entry => entry.ok && entry.status === 200)) {
     throw new Error(`${label} observed no successful aircraft GLB response`);
+  }
+  if (!diagnostics.standupResponses.some(entry => entry.ok && entry.status === 200)) {
+    throw new Error(`${label} observed no successful stand-up GLB response`);
   }
 }
 
@@ -194,9 +202,10 @@ async function verifyDesktop(browser) {
   const overheadView = await setCameraView(page, 'overhead');
   const overhead = await saveCanvasPng(page, canvas, `${evidenceDir}/aircraft-overhead.png`, 1000, 700);
   const source = await canvas.getAttribute('data-aircraft-source');
+  const tugSource = await canvas.getAttribute('data-tug-source');
   rejectCriticalDiagnostics('Desktop', diagnostics);
   await page.close();
-  return { source, cameraDrag, viewBounds, overheadView, diagnostics, images: { chase, side, overhead } };
+  return { source, tugSource, cameraDrag, viewBounds, overheadView, diagnostics, images: { chase, side, overhead } };
 }
 
 async function verifyMobile(browser) {
@@ -253,9 +262,10 @@ async function verifyMobile(browser) {
   fs.writeFileSync(`${evidenceDir}/mobile-layout.json`, JSON.stringify(layout, null, 2));
   await page.addStyleTag({ content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}' });
   const image = await saveCanvasPng(page, canvas, `${evidenceDir}/mobile-canvas.png`, 400, 800);
+  const tugSource = await canvas.getAttribute('data-tug-source');
   rejectCriticalDiagnostics('Mobile', diagnostics);
   await page.close();
-  return { layout, cameraDrag, diagnostics, image };
+  return { layout, cameraDrag, tugSource, diagnostics, image };
 }
 
 (async () => {
