@@ -14,7 +14,7 @@
     "base64Chars": 710912,
     "chunkChars": 80000,
     "chunkCount": 9,
-    "chunkPath": "public/models/standup-tug/parts/part-{index}.b64"
+    "chunkPath": "public/models/standup-tug/verified/part-{index}.b64"
   },
   "profile": {
     "lengthMeters": 4.5854875,
