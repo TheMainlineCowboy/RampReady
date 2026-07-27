@@ -1,0 +1,24 @@
+name: Export Aircraft Parts
+
+on:
+  push:
+    branches: [fix/authored-aircraft-live]
+    paths:
+      - .github/workflows/export-aircraft-parts.yml
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/authored-aircraft-live
+      - name: Package aircraft transfer inputs
+        run: |
+          tar -czf /tmp/aircraft-parts.tgz assets/aircraft scripts/materialize-authored-aircraft.mjs public/models/crj700-user.asset.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aircraft-parts-export
+          path: /tmp/aircraft-parts.tgz
+          if-no-files-found: error

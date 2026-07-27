@@ -1,0 +1,118 @@
+name: Recover Authored Aircraft Git API
+
+on:
+  push:
+    branches: [fix/authored-aircraft-live]
+    paths:
+      - .github/workflows/recover-authored-aircraft-git-api.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  recover-git-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      COMPRESSED_SHA256: f4124a1ca343b6aaeb961f6bfcd970d09de3945088b08b06052f333f3ac788ae
+      COMPRESSED_BYTES: '939980'
+      GLB_SHA256: 01383b502fa9a5e0aca3b5cc4a90b5ffe82d52160778bc309e2de73579b1056b
+      GLB_BYTES: '1873128'
+    steps:
+      - name: Check out active aircraft branch with history
+        uses: actions/checkout@v4
+        with:
+          ref: fix/authored-aircraft-live
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fetch every reachable RampReady ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --force origin '+refs/heads/*:refs/remotes/origin/*'
+          git fetch --force origin '+refs/pull/*/head:refs/remotes/pull/*' || true
+
+      - name: Search all reachable Git blobs for exact authored aircraft bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets/aircraft public/models /tmp/rampready-recovery
+          found_compressed=''
+          found_glb=''
+          git rev-list --objects --all | awk '{print $1}' | sort -u > /tmp/rampready-recovery/oids.txt
+          while read -r oid; do
+            type=$(git cat-file -t "$oid" 2>/dev/null || true)
+            [ "$type" = blob ] || continue
+            size=$(git cat-file -s "$oid" 2>/dev/null || true)
+            if [ "$size" = "${COMPRESSED_BYTES}" ]; then
+              git cat-file blob "$oid" > /tmp/rampready-recovery/candidate.br
+              hash=$(sha256sum /tmp/rampready-recovery/candidate.br | awk '{print $1}')
+              if [ "$hash" = "${COMPRESSED_SHA256}" ]; then
+                found_compressed="$oid"
+                cp /tmp/rampready-recovery/candidate.br assets/aircraft/crj700-user.glb.br
+                echo "FOUND exact compressed aircraft blob $oid"
+                break
+              fi
+            fi
+          done < /tmp/rampready-recovery/oids.txt
+          if [ -z "$found_compressed" ]; then
+            while read -r oid; do
+              type=$(git cat-file -t "$oid" 2>/dev/null || true)
+              [ "$type" = blob ] || continue
+              size=$(git cat-file -s "$oid" 2>/dev/null || true)
+              if [ "$size" = "${GLB_BYTES}" ]; then
+                git cat-file blob "$oid" > /tmp/rampready-recovery/candidate.glb
+                hash=$(sha256sum /tmp/rampready-recovery/candidate.glb | awk '{print $1}')
+                if [ "$hash" = "${GLB_SHA256}" ]; then
+                  found_glb="$oid"
+                  cp /tmp/rampready-recovery/candidate.glb public/models/crj700-user.glb
+                  echo "FOUND exact authored GLB blob $oid"
+                  break
+                fi
+              fi
+            done < /tmp/rampready-recovery/oids.txt
+          fi
+          if [ -z "$found_compressed" ] && [ -z "$found_glb" ]; then
+            echo 'Exact aircraft is not reachable from any fetched branch or PR ref.' >&2
+            exit 2
+          fi
+          if [ -n "$found_compressed" ]; then
+            test "$(stat -c%s assets/aircraft/crj700-user.glb.br)" = "${COMPRESSED_BYTES}"
+            test "$(sha256sum assets/aircraft/crj700-user.glb.br | awk '{print $1}')" = "${COMPRESSED_SHA256}"
+            node scripts/materialize-authored-aircraft.mjs
+          fi
+          test -s public/models/crj700-user.glb
+          test "$(stat -c%s public/models/crj700-user.glb)" = "${GLB_BYTES}"
+          test "$(sha256sum public/models/crj700-user.glb | awk '{print $1}')" = "${GLB_SHA256}"
+          printf glTF | cmp -n 4 - public/models/crj700-user.glb
+
+      - name: Commit exact recovered aircraft immediately
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'RampReady aircraft recovery'
+          git config user.email 'actions@users.noreply.github.com'
+          git add assets/aircraft/crj700-user.glb.br public/models/crj700-user.glb public/models/crj700-user.asset.json || true
+          if git diff --cached --quiet; then
+            echo 'Exact authored aircraft already committed.'
+            exit 0
+          fi
+          git commit -m 'Recover exact authored American Eagle aircraft from Git history'
+          git push origin HEAD:fix/authored-aircraft-live
+
+      - name: Verify recovered aircraft and production build
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run verify
+          npm run build
+          test -s dist/models/crj700-user.glb
+          test "$(stat -c%s dist/models/crj700-user.glb)" = "${GLB_BYTES}"
+          test "$(sha256sum dist/models/crj700-user.glb | awk '{print $1}')" = "${GLB_SHA256}"
