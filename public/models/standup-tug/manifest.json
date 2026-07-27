@@ -7,25 +7,26 @@
     "sha256": "6f2e9da495e407cb95ad677a9110b1767139fbc69e2e9e62b4bcd059aece5504"
   },
   "runtime": {
-    "glbBytes": 1400512,
-    "glbSha256": "b015f45557f68eef5cc07078a4323dec15214dc33c144e8fff9233034a74cd31",
-    "brotliBytes": 533184,
-    "brotliSha256": "cb0bc0c569e0d7537a4b92994a203f82d80317c8cb7f5885f32d53877815c3f6",
-    "base64Chars": 710912,
+    "glbBytes": 1092092,
+    "glbSha256": "745f379405a85ed887b943e489a42844d8170b5768ae6a9566d75cfdb6f74f2e",
+    "brotliBytes": 401134,
+    "brotliSha256": "52a0f1be54fa43cf53555d8dd6149f354ba9a808ef01a9e06c33f00e554c4fde",
+    "base64Chars": 534848,
     "chunkChars": 100000,
-    "chunkCount": 8,
+    "chunkCount": 6,
     "chunkPath": "public/models/standup-tug/verified/part-{index}.b64"
   },
   "profile": {
     "lengthMeters": 4.5854875,
-    "widthMeters": 1.41609921,
-    "heightMeters": 1.67207713,
+    "widthMeters": 1.41609926,
+    "heightMeters": 1.67207718,
     "capturePlaneZ": 3.45,
     "orientation": "Y-up, capture end toward +Z"
   },
   "optimization": {
-    "geometry": "Four authored Tug mesh primitives and source UVs retained; normals and tangents regenerated at runtime",
-    "textures": "Two painted embedded web textures retained",
+    "geometry": "Stride-aware extraction of the four authored Tug mesh primitives; duplicate vertex streams shared; normals regenerated at runtime",
+    "uv": "Authored UVs retained as normalized 16-bit coordinates with maximum quantization error below 0.000008",
+    "textures": "Two painted authored base-color textures retained as web-sized embedded textures",
     "detachedAssembly": "polySurface487_dash_handle removed"
   }
 }
