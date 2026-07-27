@@ -27,12 +27,12 @@ if (encoded.length !== manifest.runtime.base64Chars) {
   throw new Error(`Stand-up base64 length ${encoded.length} != ${manifest.runtime.base64Chars}`);
 }
 const compressed = Buffer.from(encoded, "base64");
-if (compressed.length !== manifest.runtime.gzipBytes) {
-  throw new Error(`Stand-up gzip length ${compressed.length} != ${manifest.runtime.gzipBytes}`);
+if (compressed.length !== manifest.runtime.brotliBytes) {
+  throw new Error(`Stand-up Brotli length ${compressed.length} != ${manifest.runtime.brotliBytes}`);
 }
-if (sha256(compressed) !== manifest.runtime.gzipSha256) throw new Error("Stand-up gzip SHA-256 mismatch");
+if (sha256(compressed) !== manifest.runtime.brotliSha256) throw new Error("Stand-up Brotli SHA-256 mismatch");
 
-const glb = zlib.gunzipSync(compressed);
+const glb = zlib.brotliDecompressSync(compressed);
 if (glb.length !== manifest.runtime.glbBytes) throw new Error(`Stand-up GLB length ${glb.length} != ${manifest.runtime.glbBytes}`);
 if (sha256(glb) !== manifest.runtime.glbSha256) throw new Error("Stand-up GLB SHA-256 mismatch");
 if (glb.subarray(0, 4).toString("ascii") !== "glTF") throw new Error("Materialized stand-up asset is not GLB");
