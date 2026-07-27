@@ -1,6 +1,7 @@
 import { clamp, normalizeAngle, updateAircraftTowPose } from "./towKinematics.js";
 
 export const TUG_WHEELBASE = 2.35;
+export const CRADLE_CAPTURE_OFFSET = 3.45;
 export const FREE_MAX_SPEED = 3.2;
 export const TOW_MAX_SPEED = 1.25;
 export const FREE_ACCELERATION = 1.9;
@@ -22,16 +23,32 @@ function moveToward(value, target, maxDelta) {
   return value;
 }
 
-export function createPushbackState({ tugX = 0, tugZ = 0, tugYaw = 0, aircraftX = 0, aircraftZ = 6.2, aircraftYaw = 0 } = {}) {
+export function createPushbackState({
+  tugX = 0,
+  tugZ = 0,
+  tugYaw = 0,
+  aircraftX,
+  aircraftZ,
+  aircraftYaw = 0,
+  cradleOffset = CRADLE_CAPTURE_OFFSET,
+} = {}) {
+  const safeCradleOffset = finite(cradleOffset, CRADLE_CAPTURE_OFFSET);
+  const initialAircraftX = Number.isFinite(aircraftX)
+    ? aircraftX
+    : tugX + Math.sin(tugYaw) * safeCradleOffset;
+  const initialAircraftZ = Number.isFinite(aircraftZ)
+    ? aircraftZ
+    : tugZ + Math.cos(tugYaw) * safeCradleOffset;
+
   return {
     tugX,
     tugZ,
     tugYaw,
-    aircraftX,
-    aircraftZ,
+    aircraftX: initialAircraftX,
+    aircraftZ: initialAircraftZ,
     aircraftYaw,
-    mainGearX: aircraftX + Math.sin(aircraftYaw) * 11.2,
-    mainGearZ: aircraftZ + Math.cos(aircraftYaw) * 11.2,
+    mainGearX: initialAircraftX + Math.sin(aircraftYaw) * 11.2,
+    mainGearZ: initialAircraftZ + Math.cos(aircraftYaw) * 11.2,
     speed: 0,
     steerAngle: 0,
     articulation: normalizeAngle(aircraftYaw - tugYaw),
@@ -90,9 +107,10 @@ export function stepPushbackDynamics(state, command, dt) {
   }
 
   const previousNose = { x: finite(state.aircraftX), z: finite(state.aircraftZ) };
+  const cradleOffset = finite(command.cradleOffset, CRADLE_CAPTURE_OFFSET);
   const attachedNose = {
-    x: tugX + Math.sin(tugYaw) * finite(command.cradleOffset, 3.45),
-    z: tugZ + Math.cos(tugYaw) * finite(command.cradleOffset, 3.45),
+    x: tugX + Math.sin(tugYaw) * cradleOffset,
+    z: tugZ + Math.cos(tugYaw) * cradleOffset,
   };
   const pose = updateAircraftTowPose({
     aircraftYaw: finite(state.aircraftYaw),
