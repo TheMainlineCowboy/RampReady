@@ -52,7 +52,10 @@ const browserVerifier = await read("scripts/verify-live-experience-browser.cjs")
 for (const required of [
   "Choose pushback equipment",
   "Start training",
-  "Stand-up model is launchable",
+  "Verified stand-up runtime is not launchable",
+  "standupResponses",
+  "/models/standup-tug.glb",
+  "authored-standup",
   "canvas.trainerCanvas",
   "data-camera-yaw",
   ".rr-power-slider",
@@ -68,6 +71,7 @@ for (const required of [
   "mobile-layout.json",
   "error.txt",
 ]) assert.ok(browserVerifier.includes(required), `live browser verifier missing ${required}`);
+assert.ok(!browserVerifier.includes("Stand-up model is launchable without its runtime GLB"), "production verifier must not preserve the obsolete pending-asset gate");
 assert.ok(!browserVerifier.includes("toDataURL('image/png')"), "live render evidence must not use the cleared default WebGL framebuffer");
 assert.ok(!browserVerifier.includes("page.selectOption('.rr-view-select'"), "camera verification must not depend on Playwright visibility after evidence overlays are hidden");
 
