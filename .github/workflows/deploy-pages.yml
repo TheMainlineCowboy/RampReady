@@ -152,7 +152,7 @@ jobs:
 
             echo "Attempt ${attempt}: marker=${marker_status}/${live_sha:-missing}; aircraft=${aircraft_status}, bytes=${live_size}, sha256=${live_hash:-missing}"
             if [ "${marker_verified}" = true ] && [ "${aircraft_verified}" = true ]; then
-              echo "Exact live release marker and aircraft appeared after attempt ${attempt}."
+              echo "Immutable release marker appeared; exact live aircraft matched after attempt ${attempt}."
               break
             fi
             sleep 5
