@@ -5,11 +5,13 @@ const EVIDENCE_VIEWPORT = { width: 1440, height: 900 };
 const MOBILE_VIEWPORT = { width: 412, height: 915 };
 const ORBIT_DRAG_PX = 220;
 const MODEL_SUFFIXES = ["/models/crj700-user.glb", "/models/crj700-mobile.glb"];
+const STANDUP_SUFFIX = "/models/standup-tug.glb";
 const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
 
 async function waitForRealAircraft(page) {
   const runtimeErrors = [];
   const modelResponses = [];
+  const standupResponses = [];
 
   page.on("console", (message) => {
     if (message.type() === "error") runtimeErrors.push(message.text());
@@ -18,6 +20,7 @@ async function waitForRealAircraft(page) {
   page.on("response", (response) => {
     const pathname = new URL(response.url()).pathname;
     if (MODEL_SUFFIXES.some((suffix) => pathname.endsWith(suffix))) modelResponses.push(response);
+    if (pathname.endsWith(STANDUP_SUFFIX)) standupResponses.push(response);
   });
 
   await page.goto(TARGET_URL, { waitUntil: "networkidle" });
@@ -29,24 +32,28 @@ async function waitForRealAircraft(page) {
 
   await expect(lektro).toHaveAttribute("aria-checked", "true");
   await expect(lektro).toContainText("Prototype ready");
-  await expect(standup).toContainText("Asset not loaded");
+  await expect(standup).toContainText("Verified runtime");
   await expect(launch).toBeEnabled();
 
   await standup.click();
   await expect(standup).toHaveAttribute("aria-checked", "true");
-  await expect(launch).toBeDisabled();
-
-  await lektro.click();
-  await expect(lektro).toHaveAttribute("aria-checked", "true");
   await expect(launch).toBeEnabled();
   await launch.click();
 
   const canvas = page.locator("canvas.trainerCanvas");
   await expect(canvas).toBeVisible();
   await expect.poll(
+    async () => canvas.getAttribute("data-tug-source"),
+    { timeout: 30_000, intervals: [250, 500, 1_000] },
+  ).toBe("authored-standup");
+  await expect.poll(
     async () => canvas.getAttribute("data-aircraft-source"),
     { timeout: 30_000, intervals: [250, 500, 1_000] },
   ).not.toBe("loading");
+  await expect.poll(
+    () => standupResponses.some((response) => response.status() === 200),
+    { timeout: 20_000 },
+  ).toBe(true);
   await expect.poll(
     () => modelResponses.some((response) => response.status() === 200),
     { timeout: 20_000 },
@@ -54,7 +61,7 @@ async function waitForRealAircraft(page) {
   await page.waitForTimeout(1_200);
 
   const relevantErrors = runtimeErrors.filter((message) =>
-    /CRJ700 asset load failed|Unexpected CRJ700 dimensions|GLTFLoader|WebGL.*shader|VALIDATE_STATUS|ReferenceError|TypeError|SyntaxError/i.test(message),
+    /CRJ700 asset load failed|Equipment model failed to load|Unexpected CRJ700 dimensions|GLTFLoader|WebGL.*shader|VALIDATE_STATUS|ReferenceError|TypeError|SyntaxError/i.test(message),
   );
   expect(relevantErrors).toEqual([]);
 
@@ -65,6 +72,14 @@ async function waitForRealAircraft(page) {
   }, MODEL_SUFFIXES);
   expect(assetEntry).not.toBeNull();
   expect(Math.max(assetEntry.decodedBodySize, assetEntry.transferSize)).toBeGreaterThan(10_000);
+
+  const standupEntry = await page.evaluate((suffix) => {
+    const entry = performance.getEntriesByType("resource")
+      .find((resource) => new URL(resource.name).pathname.endsWith(suffix));
+    return entry ? { name: entry.name, decodedBodySize: entry.decodedBodySize, transferSize: entry.transferSize } : null;
+  }, STANDUP_SUFFIX);
+  expect(standupEntry).not.toBeNull();
+  expect(Math.max(standupEntry.decodedBodySize, standupEntry.transferSize)).toBeGreaterThan(10_000);
 
   return canvas;
 }
