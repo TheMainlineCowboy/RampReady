@@ -135,6 +135,7 @@ jobs:
           test -s /tmp/crj700-mobile.glb
           printf 'glTF' | cmp -n 4 - /tmp/crj700-mobile.glb
           if [ -f public/models/crj700-user.asset.json ]; then
+            node scripts/materialize-authored-aircraft-clean.mjs
             curl --fail --location --retry 6 --retry-delay 5 -H 'Cache-Control: no-cache' --output /tmp/crj700-user.glb "${PAGE_URL}models/crj700-user.glb?sha=${EXPECTED_SHA}"
             cmp public/models/crj700-user.glb /tmp/crj700-user.glb
           fi
