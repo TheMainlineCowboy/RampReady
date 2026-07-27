@@ -17,11 +17,11 @@ export const EQUIPMENT_PROFILES = Object.freeze([
     label: "Stand-up pushback",
     shortLabel: "Stand-up",
     manufacturer: "Uploaded reference model",
-    status: "runtime-asset-pending",
-    statusLabel: "Asset not loaded",
-    available: false,
-    description: "The uploaded stand-up source has a normalization contract, but its verified runtime GLB is not committed or connected to the simulator yet.",
-    capabilities: Object.freeze(["Source profile recorded", "Normalization tooling ready", "Runtime integration pending"]),
+    status: "verified-runtime",
+    statusLabel: "Verified runtime",
+    available: true,
+    description: "The exact uploaded stand-up pushback model is normalized, web-optimized, cryptographically verified and connected to the RampReady towing runtime.",
+    capabilities: Object.freeze(["Real uploaded model", "Nose-gear pushback training", "Operator and chase views"]),
   }),
 ]);
 
