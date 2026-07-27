@@ -7,14 +7,14 @@
     "sha256": "6f2e9da495e407cb95ad677a9110b1767139fbc69e2e9e62b4bcd059aece5504"
   },
   "runtime": {
-    "glbBytes": 586680,
-    "glbSha256": "084b3af80783eb9cb04ea7392c2ee5e8b517ca100fd53a40a5c01f7bde2bd592",
-    "brotliBytes": 178909,
-    "brotliSha256": "53c89727fd010207aa4ea7a2b47a8af83d6257f2d603d02cc38a5db4058275bd",
-    "base64Chars": 238548,
-    "chunkChars": 80000,
-    "chunkCount": 3,
-    "chunkPath": "public/models/standup-tug/payload/part-{index}.b64"
+    "glbBytes": 121472,
+    "glbSha256": "7f9faf6437a4ba3a5ba4216263590d1d4b16c5f585e129472f424719e8887aa4",
+    "brotliBytes": 83286,
+    "brotliSha256": "97e584a253476f5c3f76568b75cef9f8e768313d38c892c1a8ef5cbdd331b07b",
+    "base64Chars": 111048,
+    "chunkChars": 12000,
+    "chunkCount": 10,
+    "chunkPath": "public/models/standup-tug/livepayload/part-{index}.b64"
   },
   "profile": {
     "lengthMeters": 4.5854875,
@@ -24,9 +24,9 @@
     "orientation": "Y-up, capture end toward +Z"
   },
   "optimization": {
-    "geometry": "All four authored Tug mesh primitives retained; source positions clustered to approximately 1 cm in runtime scale, degenerate/duplicate triangles removed, normals regenerated at runtime",
-    "uv": "Authored UVs retained at 1/1024 sampling precision",
-    "textures": "Two authored painted base-color textures retained as 256px embedded web textures",
+    "geometry": "Real uploaded stand-up tug web runtime; four authored Tug mesh primitives retained with coarse geometry clustering for the first live integration; normals regenerated at runtime",
+    "uv": "Authored UV mapping retained at reduced web sampling precision",
+    "textures": "Two authored painted base-color textures retained as 64px embedded web textures",
     "detachedAssembly": "polySurface487_dash_handle removed"
   }
 }
