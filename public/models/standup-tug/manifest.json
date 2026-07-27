@@ -7,26 +7,25 @@
     "sha256": "6f2e9da495e407cb95ad677a9110b1767139fbc69e2e9e62b4bcd059aece5504"
   },
   "runtime": {
-    "glbBytes": 1092092,
-    "glbSha256": "745f379405a85ed887b943e489a42844d8170b5768ae6a9566d75cfdb6f74f2e",
-    "brotliBytes": 401134,
-    "brotliSha256": "52a0f1be54fa43cf53555d8dd6149f354ba9a808ef01a9e06c33f00e554c4fde",
-    "base64Chars": 534848,
+    "glbBytes": 1023204,
+    "glbSha256": "b7dfa5c161fb3a08e783a17dec79dc39348ec88f54339a1c978d2f14dca26e19",
+    "brotliBytes": 398455,
+    "brotliSha256": "1fedb41df0a4a4a051f3e0350847fb069ec8860442bfd6f184e4648021402f8d",
+    "base64Chars": 531276,
     "chunkChars": 100000,
     "chunkCount": 6,
-    "chunkPath": "public/models/standup-tug/verified/part-{index}.b64"
+    "chunkPath": "public/models/standup-tug/parts/part-{index}.b64"
   },
   "profile": {
     "lengthMeters": 4.5854875,
-    "widthMeters": 1.41609926,
-    "heightMeters": 1.67207718,
+    "widthMeters": 1.41609921,
+    "heightMeters": 1.67207713,
     "capturePlaneZ": 3.45,
     "orientation": "Y-up, capture end toward +Z"
   },
   "optimization": {
-    "geometry": "Stride-aware extraction of the four authored Tug mesh primitives; duplicate vertex streams shared; normals regenerated at runtime",
-    "uv": "Authored UVs retained as normalized 16-bit coordinates with maximum quantization error below 0.000008",
-    "textures": "Two painted authored base-color textures retained as web-sized embedded textures",
+    "geometry": "All visible source triangles retained; unused and exact duplicate position/UV vertices removed; source float positions preserved; UVs stored as normalized 16-bit coordinates; normals and tangents regenerated at runtime",
+    "textures": "Two authored base-color textures retained and resized to 256px for the web runtime",
     "detachedAssembly": "polySurface487_dash_handle removed"
   }
 }
