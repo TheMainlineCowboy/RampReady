@@ -101,7 +101,7 @@ jobs:
   verify-live-site:
     needs: deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     env:
       PAGE_URL: ${{ needs.deploy.outputs.page_url }}
       EXPECTED_SHA: ${{ github.sha }}
@@ -111,32 +111,54 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: Verify immutable release marker and aircraft assets
+      - name: Verify live aircraft bytes and immutable release marker
         shell: bash
         run: |
           set -euo pipefail
           : "${PAGE_URL:?GitHub Pages did not return a deployment URL}"
           case "${PAGE_URL}" in */) ;; *) PAGE_URL="${PAGE_URL}/" ;; esac
+
           marker_url="${PAGE_URL}releases/${EXPECTED_SHA}.txt"
-          verified=false
-          for attempt in $(seq 1 120); do
+          marker_verified=false
+          aircraft_verified=false
+
+          authored=false
+          if [ -f public/models/crj700-user.asset.json ]; then
+            authored=true
+            node scripts/materialize-authored-aircraft-clean.mjs
+            expected_aircraft="public/models/crj700-user.glb"
+            live_aircraft_url="${PAGE_URL}models/crj700-user.glb"
+          else
+            expected_aircraft="public/models/crj700-mobile.glb"
+            live_aircraft_url="${PAGE_URL}models/crj700-mobile.glb"
+          fi
+          expected_size=$(stat -c%s "${expected_aircraft}")
+          expected_hash=$(sha256sum "${expected_aircraft}" | awk '{print $1}')
+          echo "Expected live aircraft: authored=${authored}, bytes=${expected_size}, sha256=${expected_hash}"
+
+          for attempt in $(seq 1 60); do
             marker_status=$(curl --fail-with-body -L -sS -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' -o /tmp/release-marker.txt -w '%{http_code}' "${marker_url}?attempt=${attempt}" || true)
             live_sha=$(tr -d '\r\n' < /tmp/release-marker.txt 2>/dev/null || true)
             if [ "${marker_status}" = "200" ] && [ "${live_sha}" = "${EXPECTED_SHA}" ]; then
-              echo "Immutable release marker appeared after attempt ${attempt}."
-              verified=true
+              marker_verified=true
+            fi
+
+            aircraft_status=$(curl --fail-with-body -L -sS -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' -o /tmp/live-aircraft.glb -w '%{http_code}' "${live_aircraft_url}?sha=${EXPECTED_SHA}&attempt=${attempt}" || true)
+            live_size=$(stat -c%s /tmp/live-aircraft.glb 2>/dev/null || echo 0)
+            live_hash=$(sha256sum /tmp/live-aircraft.glb 2>/dev/null | awk '{print $1}' || true)
+            if [ "${aircraft_status}" = "200" ] && [ "${live_size}" = "${expected_size}" ] && [ "${live_hash}" = "${expected_hash}" ] && cmp --silent "${expected_aircraft}" /tmp/live-aircraft.glb; then
+              aircraft_verified=true
+            fi
+
+            echo "Attempt ${attempt}: marker=${marker_status}/${live_sha:-missing}; aircraft=${aircraft_status}, bytes=${live_size}, sha256=${live_hash:-missing}"
+            if [ "${marker_verified}" = true ] && [ "${aircraft_verified}" = true ]; then
+              echo "Exact live release marker and aircraft appeared after attempt ${attempt}."
               break
             fi
-            echo "Attempt ${attempt}: marker=${marker_status}, body=${live_sha:-missing}, url=${marker_url}"
-            sleep 10
+            sleep 5
           done
-          test "${verified}" = true
-          curl --fail --location --retry 6 --retry-delay 5 -H 'Cache-Control: no-cache' --output /tmp/crj700-mobile.glb "${PAGE_URL}models/crj700-mobile.glb?sha=${EXPECTED_SHA}"
-          test -s /tmp/crj700-mobile.glb
-          printf 'glTF' | cmp -n 4 - /tmp/crj700-mobile.glb
-          if [ -f public/models/crj700-user.asset.json ]; then
-            node scripts/materialize-authored-aircraft-clean.mjs
-            curl --fail --location --retry 6 --retry-delay 5 -H 'Cache-Control: no-cache' --output /tmp/crj700-user.glb "${PAGE_URL}models/crj700-user.glb?sha=${EXPECTED_SHA}"
-            cmp public/models/crj700-user.glb /tmp/crj700-user.glb
-          fi
+
+          test "${marker_verified}" = true
+          test "${aircraft_verified}" = true
+          printf 'glTF' | cmp -n 4 - /tmp/live-aircraft.glb
           echo "Verified exact live RampReady release ${EXPECTED_SHA} at ${PAGE_URL}"
