@@ -7,12 +7,12 @@
     "sha256": "6f2e9da495e407cb95ad677a9110b1767139fbc69e2e9e62b4bcd059aece5504"
   },
   "runtime": {
-    "glbBytes": 1096116,
-    "glbSha256": "86c7f9695b459884b955ed83b9004081ef8a79330def95e0c56e39e2b38e07d3",
-    "brotliBytes": 399736,
-    "brotliSha256": "ef3f6835ebd8858cfb0973403c7e3dcbf6ff5e6fe2b1369f7d424eb9750e77e5",
-    "base64Chars": 532984,
-    "chunkChars": 60000,
+    "glbBytes": 1400512,
+    "glbSha256": "b015f45557f68eef5cc07078a4323dec15214dc33c144e8fff9233034a74cd31",
+    "brotliBytes": 533184,
+    "brotliSha256": "cb0bc0c569e0d7537a4b92994a203f82d80317c8cb7f5885f32d53877815c3f6",
+    "base64Chars": 710912,
+    "chunkChars": 80000,
     "chunkCount": 9,
     "chunkPath": "public/models/standup-tug/parts/part-{index}.b64"
   },
@@ -24,8 +24,8 @@
     "orientation": "Y-up, capture end toward +Z"
   },
   "optimization": {
-    "geometry": "Exact source float positions and four retained Tug meshes; UVs stored losslessly enough for web display as normalized 16-bit coordinates; normals and tangents regenerated at runtime",
-    "textures": "Two painted source base-color textures retained and resized to 256px for the web runtime",
+    "geometry": "Four authored Tug mesh primitives and source UVs retained; normals and tangents regenerated at runtime",
+    "textures": "Two painted embedded web textures retained",
     "detachedAssembly": "polySurface487_dash_handle removed"
   }
 }
