@@ -5,7 +5,7 @@
   "description": "RampReady pushback training simulator prototype.",
   "type": "module",
   "scripts": {
-    "materialize:authored-aircraft": "node scripts/materialize-authored-aircraft.mjs",
+    "materialize:authored-aircraft": "node scripts/materialize-authored-aircraft-clean.mjs",
     "prepare:aircraft": "node scripts/prepare-crj700-model.mjs",
     "stage:aircraft": "node scripts/stage-user-aircraft.mjs",
     "convert:authored-aircraft": "node tools/aircraft/convert-authored-crj900.mjs",
