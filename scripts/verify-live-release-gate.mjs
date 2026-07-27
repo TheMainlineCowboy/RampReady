@@ -75,13 +75,29 @@ const selection = await read("src/components/PushbackTrainer.jsx");
 assert.ok(selection.includes("useState(null)"), "equipment screen must be the real initial route");
 assert.ok(!selection.includes("side-view-verification"), "production verification must not bypass equipment selection");
 assert.ok(!selection.includes("extent-verification"), "extent verification must not bypass equipment selection");
-assert.ok(selection.includes("RampReadyLektroPrototypeTrainer"), "runtime must not be presented as a loaded stand-up model");
+assert.ok(selection.includes("RampReadyLektroPrototypeTrainer"), "active pushback trainer route must remain connected");
 
 const profiles = await read("src/config/equipmentProfiles.js");
-assert.ok(profiles.includes('DEFAULT_EQUIPMENT_ID = "lektro-88"'), "Lektro prototype must be the honest default runtime");
+assert.ok(profiles.includes('DEFAULT_EQUIPMENT_ID = "lektro-88"'), "Lektro must remain the default runtime");
 assert.ok(profiles.includes('id: "standup-tug"'), "stand-up option must remain visible");
-assert.ok(profiles.includes('statusLabel: "Asset not loaded"'), "stand-up pending state must be explicit");
-assert.match(profiles, /id: "standup-tug"[\s\S]*?available: false/, "stand-up model must remain gated until integrated");
+assert.ok(profiles.includes('statusLabel: "Verified runtime"'), "stand-up verified runtime state must be explicit");
+assert.match(profiles, /id: "standup-tug"[\s\S]*?available: true/, "verified stand-up model must remain launchable");
+
+const equipmentVisual = await read("src/tug/runtimeEquipmentVisual.js");
+for (const required of [
+  '"standup-tug"',
+  "GLTFLoader",
+  "models/standup-tug.glb",
+  'rig.visual.visible = false',
+  'runtimeVisualSource = "authored-standup"',
+]) assert.ok(equipmentVisual.includes(required), `authored stand-up runtime loader missing ${required}`);
+
+const terminal4Preparation = await read("scripts/prepare-terminal4-runtime.mjs");
+for (const required of [
+  "installRuntimeEquipmentVisual",
+  "supportsRuntimeEquipmentVisual(equipmentId)",
+  'dataset.tugSource = equipmentId === "standup-tug" ? "loading" : "procedural-lektro"',
+]) assert.ok(terminal4Preparation.includes(required), `active Terminal 4 equipment routing missing ${required}`);
 
 const trainer = await read("src/components/RampReadyStandupTrainer.jsx");
 for (const required of [
@@ -105,4 +121,4 @@ for (const required of [
   "bottom: var(--rr-recovery-safe) !important",
 ]) assert.ok(css.includes(required), `mobile recovery CSS missing ${required}`);
 
-console.log("RampReady live release gate verified: exactly one main-only Pages deployer, immutable commit-specific release markers, compositor-backed nonblank aircraft evidence, camera-selector bounds and events, authoritative browser verification, honest equipment gating, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");
+console.log("RampReady live release gate verified: main-only Pages deployment, immutable release markers, compositor-backed browser evidence, verified authored stand-up equipment routing, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");
