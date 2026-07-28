@@ -16,6 +16,8 @@ const groundEnd = source.indexOf(groundEndMarker, groundStart);
 if (!source.includes(importAnchor)) throw new Error("Stand-up tug import anchor not found in active trainer source");
 if (groundStart < 0 || groundEnd < 0) throw new Error("Legacy buildGround block not found in active trainer source");
 if (!source.includes("    buildGround(scene);")) throw new Error("Legacy buildGround call not found in active trainer source");
+if (!source.includes("    const rig = createProceduralLektroRig(THREE);")) throw new Error("Equipment rig creation anchor not found");
+if (!source.includes("        cradleOffset: rig.profile.cradleOffset,")) throw new Error("Pushback dynamics profile anchor not found");
 
 const replacementGround = `function buildGround(scene) {
   const environment = buildTerminal4RampEnvironment(THREE);
@@ -30,6 +32,7 @@ const preparedGroundEnd = prepared.indexOf(groundEndMarker, preparedGroundStart)
 prepared = prepared.slice(0, preparedGroundStart) + replacementGround + prepared.slice(preparedGroundEnd);
 prepared = prepared
   .replace("    buildGround(scene);", "    const environment = buildGround(scene);")
+  .replace("    const rig = createProceduralLektroRig(THREE);", "    const rig = createProceduralLektroRig(THREE, equipmentId);")
   .replace(
     "const sim = { renderer, scene, camera, rig, aircraft,",
     "const sim = { renderer, scene, camera, environment, rig, aircraft,",
@@ -37,6 +40,12 @@ prepared = prepared
   .replace(
     '    if (equipmentId !== "lektro-88") throw new Error(`Unsupported runtime equipment: ${equipmentId}`);',
     '    if (!supportsRuntimeEquipmentVisual(equipmentId)) throw new Error(`Unsupported runtime equipment: ${equipmentId}`);',
+  )
+  .replace(
+    "        cradleOffset: rig.profile.cradleOffset,",
+    `        cradleOffset: rig.profile.cradleOffset,
+        steeringMode: rig.profile.steeringMode,
+        wheelbase: rig.profile.wheelbase,`,
   )
   .replace(
     "    rig.root.userData.equipmentId = equipmentId;",
@@ -55,6 +64,9 @@ if (!prepared.includes(environmentImport)) throw new Error("Terminal 4 environme
 if (!prepared.includes(equipmentImport)) throw new Error("Runtime equipment visual import was not injected");
 if (!prepared.includes("supportsRuntimeEquipmentVisual(equipmentId)")) throw new Error("Stand-up runtime support guard was not injected");
 if (!prepared.includes('dataset.tugSource = equipmentId === "standup-tug" ? "loading" : "procedural-lektro"')) throw new Error("Runtime tug visual loader was not injected");
+if (!prepared.includes("createProceduralLektroRig(THREE, equipmentId)")) throw new Error("Equipment-specific rig profile was not injected");
+if (!prepared.includes("steeringMode: rig.profile.steeringMode")) throw new Error("Equipment-specific steering mode was not injected");
+if (!prepared.includes("wheelbase: rig.profile.wheelbase")) throw new Error("Equipment-specific wheelbase was not injected");
 if (!prepared.includes("const environment = buildGround(scene);")) throw new Error("Terminal 4 environment was not connected to the active scene");
 if (!prepared.includes("camera, environment, rig")) throw new Error("Environment reference was not retained by simulator state");
 if (prepared.includes("new THREE.PlaneGeometry(90, 140)")) throw new Error("Legacy flat ramp geometry remains in active generated trainer");
