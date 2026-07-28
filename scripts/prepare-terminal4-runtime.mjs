@@ -11,6 +11,7 @@ const equipmentImport = 'import { installRuntimeEquipmentVisual, supportsRuntime
 const environmentImport = 'import { buildTerminal4RampEnvironment } from "../environment/terminal4RampEnvironment.js";';
 const authoredEnvironmentImport = 'import { installAuthoredTerminal4Visual } from "../environment/authoredTerminal4Visual.js";';
 const authoredGroundImport = 'import { installAuthoredKphxGround } from "../environment/authoredKphxGround.js";';
+const authoredPhotoGroundImport = 'import { installAuthoredKphxPhotoGround } from "../environment/authoredKphxPhotoGround.js";';
 const groundStart = source.indexOf("function buildGround(scene) {");
 const groundEndMarker = "\nfunction connectionMetrics(sim)";
 const groundEnd = source.indexOf(groundEndMarker, groundStart);
@@ -30,7 +31,7 @@ const replacementGround = `function buildGround(scene) {
 
 let prepared = source.replace(
   importAnchor,
-  `${importAnchor}\n${equipmentImport}\n${environmentImport}\n${authoredEnvironmentImport}\n${authoredGroundImport}`,
+  `${importAnchor}\n${equipmentImport}\n${environmentImport}\n${authoredEnvironmentImport}\n${authoredGroundImport}\n${authoredPhotoGroundImport}`,
 );
 const preparedGroundStart = prepared.indexOf("function buildGround(scene) {");
 const preparedGroundEnd = prepared.indexOf(groundEndMarker, preparedGroundStart);
@@ -51,8 +52,15 @@ prepared = prepared
     `    const environment = buildGround(scene);
     renderer.domElement.dataset.environmentSource = "loading-authored-phx-terminal4-textured";
     renderer.domElement.dataset.groundSource = "loading-authored-kphx-v181";
+    renderer.domElement.dataset.photoGroundSource = "loading-source-authored-phx-photo";
     renderer.domElement.dataset.kphxVersion = "loading";
     renderer.domElement.dataset.kphxDetailLevel = "loading";
+    renderer.domElement.dataset.photoDetailLevel = "loading";
+    renderer.domElement.dataset.photoTileCount = "loading";
+    renderer.domElement.dataset.photoWidth = "loading";
+    renderer.domElement.dataset.photoHeight = "loading";
+    renderer.domElement.dataset.photoBytes = "loading";
+    renderer.domElement.dataset.hiddenAdexSurfaceMaterials = "loading";
     renderer.domElement.dataset.b15Anchors = "loading";
     renderer.domElement.dataset.b15CorridorMeters = "loading";
     renderer.domElement.dataset.terminal4TextureCount = "loading";
@@ -102,10 +110,35 @@ prepared = prepared
         setMessage(\`PHX airport ground failed to load: \${error.message}\`);
         throw error;
       });
-    void Promise.all([terminalLoad, groundLoad])
+    const photoGroundLoad = groundLoad
+      .then(() => installAuthoredKphxPhotoGround(THREE, environment))
+      .then((photoGround) => {
+        renderer.domElement.dataset.photoGroundSource = environment.userData.photoGroundSource;
+        renderer.domElement.dataset.photoDetailLevel = environment.userData.authoredPhotoDetailLevel;
+        renderer.domElement.dataset.photoTileCount = String(environment.userData.authoredPhotoTileCount);
+        renderer.domElement.dataset.photoWidth = String(environment.userData.authoredPhotoWidth);
+        renderer.domElement.dataset.photoHeight = String(environment.userData.authoredPhotoHeight);
+        renderer.domElement.dataset.photoBytes = String(environment.userData.authoredPhotoBytes);
+        renderer.domElement.dataset.hiddenAdexSurfaceMaterials = String(environment.userData.hiddenADEXSurfaceMaterialCount);
+        return photoGround;
+      })
+      .catch((error) => {
+        renderer.domElement.dataset.photoGroundSource = "load-error";
+        renderer.domElement.dataset.photoDetailLevel = "load-error";
+        renderer.domElement.dataset.photoTileCount = "load-error";
+        renderer.domElement.dataset.photoWidth = "load-error";
+        renderer.domElement.dataset.photoHeight = "load-error";
+        renderer.domElement.dataset.photoBytes = "load-error";
+        renderer.domElement.dataset.hiddenAdexSurfaceMaterials = "load-error";
+        console.error("RampReady PHX source aerial load failed", error);
+        setMessage(\`PHX source aerial failed to load: \${error.message}\`);
+        throw error;
+      });
+    void Promise.all([terminalLoad, groundLoad, photoGroundLoad])
       .then(() => {
         renderer.domElement.dataset.environmentSource = environment.userData.environmentSource;
         renderer.domElement.dataset.groundSource = environment.userData.groundSource;
+        renderer.domElement.dataset.photoGroundSource = environment.userData.photoGroundSource;
       })
       .catch(() => {
         renderer.domElement.dataset.environmentSource = "load-error";
@@ -149,10 +182,15 @@ prepared = prepared
   );
 
 if (!prepared.includes(authoredGroundImport)) throw new Error("Authored KPHX ground loader import was not injected");
+if (!prepared.includes(authoredPhotoGroundImport)) throw new Error("Source-authored KPHX aerial loader import was not injected");
 if (!prepared.includes('dataset.tugSource = equipmentId === "standup-tug" ? "loading" : "procedural-lektro"')) throw new Error("Runtime tug visual loader was not injected");
 if (!prepared.includes('dataset.environmentSource = "loading-authored-phx-terminal4-textured"')) throw new Error("Textured authored PHX environment loading evidence was not injected");
 if (!prepared.includes('dataset.groundSource = "loading-authored-kphx-v181"')) throw new Error("Updated KPHX loading evidence was not injected");
+if (!prepared.includes('dataset.photoGroundSource = "loading-source-authored-phx-photo"')) throw new Error("Full-airport PHX aerial loading evidence was not injected");
 if (!prepared.includes('dataset.kphxDetailLevel = environment.userData.kphxDetailLevel')) throw new Error("Authored KPHX detail evidence was not injected");
+if (!prepared.includes('dataset.photoDetailLevel = environment.userData.authoredPhotoDetailLevel')) throw new Error("PHX aerial detail evidence was not injected");
+if (!prepared.includes('dataset.photoTileCount = String(environment.userData.authoredPhotoTileCount)')) throw new Error("PHX aerial tile evidence was not injected");
+if (!prepared.includes('dataset.hiddenAdexSurfaceMaterials = String(environment.userData.hiddenADEXSurfaceMaterialCount)')) throw new Error("ADEX surface replacement evidence was not injected");
 if (!prepared.includes('dataset.terminal4TextureCount = String(environment.userData.authoredTerminal4TextureCount)')) throw new Error("Terminal 4 source texture evidence was not injected");
 if (!prepared.includes('dataset.terminal4TexturedMaterialCount = String(environment.userData.authoredTerminal4TexturedMaterialCount)')) throw new Error("Terminal 4 material evidence was not injected");
 if (!prepared.includes('dataset.terminal4Position = environment.userData.authoredTerminal4Position')) throw new Error("Exact Terminal 4 position evidence was not injected");
@@ -161,7 +199,8 @@ if (!prepared.includes('dataset.terminal4Placement = environment.userData.author
 if (!prepared.includes('dataset.b15CorridorMeters = environment.userData.trainingCorridor')) throw new Error("B15 corridor distance evidence was not injected");
 if (!prepared.includes("installAuthoredTerminal4Visual(THREE, environment)")) throw new Error("Authored PHX Terminal 4 runtime loader was not connected");
 if (!prepared.includes("installAuthoredKphxGround(THREE, environment)")) throw new Error("Updated KPHX ground runtime loader was not connected");
-if (!prepared.includes("Promise.all([terminalLoad, groundLoad])")) throw new Error("Combined PHX terminal/ground readiness gate was not injected");
+if (!prepared.includes("installAuthoredKphxPhotoGround(THREE, environment)")) throw new Error("Full-airport PHX aerial runtime loader was not connected");
+if (!prepared.includes("Promise.all([terminalLoad, groundLoad, photoGroundLoad])")) throw new Error("Combined PHX terminal/ground/aerial readiness gate was not injected");
 if (!prepared.includes('dataset.b15Anchors = environment.userData.b15Anchors?.length === 2 ? "ready" : "missing"')) throw new Error("B15 runtime evidence was not injected");
 if (!prepared.includes("new THREE.PerspectiveCamera(58, 1, 0.1, 8000)")) throw new Error("Airport-wide camera far plane was not injected");
 if (!prepared.includes("new THREE.Fog(0x9fc4e6, 2400, 6500)")) throw new Error("Airport-wide fog range was not injected");
@@ -178,4 +217,4 @@ if (prepared.includes("new THREE.PlaneGeometry(90, 140)")) throw new Error("Lega
 
 const banner = "// GENERATED by scripts/prepare-terminal4-runtime.mjs. Do not edit directly.\n";
 fs.writeFileSync(outputPath, banner + prepared, "utf8");
-console.log(`Prepared active trainer with the source-authored textured PHX Terminal 4, exact ADEX A1 registration, unrotated airport ground and equipment routing: ${path.relative(root, outputPath)}`);
+console.log(`Prepared active trainer with the source-authored textured PHX Terminal 4, full-airport source aerial, exact ADEX A1 registration, unrotated airport ground and equipment routing: ${path.relative(root, outputPath)}`);
