@@ -1,0 +1,28 @@
+name: Inspect exact KPHX A1 source
+
+on:
+  push:
+    branches:
+      - agent/install-authored-phx-airport
+    paths:
+      - 'src/environment/kphxExactA1/**'
+      - 'scripts/inspect-kphx-exact-a1-payload.mjs'
+      - '.github/workflows/inspect-kphx-exact-a1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-exact-a1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/install-authored-phx-airport
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Decode and inspect exact supplied A1 payload
+        run: node scripts/inspect-kphx-exact-a1-payload.mjs
