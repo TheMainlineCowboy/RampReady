@@ -148,8 +148,8 @@ function addInstances(THREE, group, geometry, material, transforms, name, shadow
   return mesh;
 }
 
-function addTerminalConnectors(THREE, group, jetways, material) {
-  const transforms = [];
+function addTerminalConnectors(THREE, group, jetways, materials) {
+  const transforms = { lower: [], upper: [], glass: [], roof: [] };
   const used = new Set();
   for (let i = 0; i < jetways.length; i += 1) {
     let nearest = -1;
@@ -165,13 +165,19 @@ function addTerminalConnectors(THREE, group, jetways, material) {
     used.add(key);
     const a = jetways[i]; const b = jetways[nearest];
     const dx = b.x - a.x; const dz = b.z - a.z;
-    transforms.push({
-      position: [(a.x + b.x) / 2, 5.2, (a.z + b.z) / 2],
-      yaw: Math.atan2(dx, dz),
-      scale: [13.2, 8.2, Math.max(5, nearestDistance + 3)],
-    });
+    const position = [(a.x + b.x) / 2, 0, (a.z + b.z) / 2];
+    const yaw = Math.atan2(dx, dz);
+    const length = Math.max(5, nearestDistance + 3);
+    transforms.lower.push({ position: [position[0], 1.7, position[2]], yaw, scale: [13.4, 3.4, length] });
+    transforms.glass.push({ position: [position[0], 4.15, position[2]], yaw, scale: [13.7, 1.35, length + 0.2] });
+    transforms.upper.push({ position: [position[0], 6.15, position[2]], yaw, scale: [13.25, 2.7, length] });
+    transforms.roof.push({ position: [position[0], 7.72, position[2]], yaw, scale: [13.8, 0.32, length + 0.4] });
   }
-  return addInstances(THREE, group, new THREE.BoxGeometry(1, 1, 1), material, transforms, "KPHX_Terminal4_ConnectedConcourse");
+  const box = new THREE.BoxGeometry(1, 1, 1);
+  addInstances(THREE, group, box, materials.lower, transforms.lower, "KPHX_Terminal4_ConcourseLower");
+  addInstances(THREE, group, box, materials.glass, transforms.glass, "KPHX_Terminal4_ConcourseGlassBand");
+  addInstances(THREE, group, box, materials.upper, transforms.upper, "KPHX_Terminal4_ConcourseUpper");
+  addInstances(THREE, group, box, materials.roof, transforms.roof, "KPHX_Terminal4_ConcourseRoof");
 }
 
 export function buildKphxV181Terminal4(THREE) {
@@ -189,7 +195,7 @@ export function buildKphxV181Terminal4(THREE) {
   const wallTexture = makePanelTexture(THREE, "#9b8975", "rgba(70,59,49,0.42)", "rgba(45,38,33,0.24)");
   const shellTexture = makePanelTexture(THREE, "#bfc3c4", "rgba(69,74,77,0.34)", "rgba(45,48,50,0.18)");
   const warmWall = new THREE.MeshStandardMaterial({ map: wallTexture, color: 0xb09a82, roughness: 0.82, metalness: 0.02 });
-  const lowerWall = new THREE.MeshStandardMaterial({ color: 0x75685b, roughness: 0.9, metalness: 0.01 });
+  const lowerWall = new THREE.MeshStandardMaterial({ map: wallTexture, color: 0x806f5e, roughness: 0.9, metalness: 0.01 });
   const glass = new THREE.MeshStandardMaterial({ color: 0x29475a, roughness: 0.16, metalness: 0.12, transparent: true, opacity: 0.78 });
   const jetShell = new THREE.MeshStandardMaterial({ map: shellTexture, color: 0xd0d3d2, roughness: 0.58, metalness: 0.18 });
   const jetShellDark = new THREE.MeshStandardMaterial({ color: 0x8f9598, roughness: 0.62, metalness: 0.28 });
@@ -278,7 +284,7 @@ export function buildKphxV181Terminal4(THREE) {
     }
   }
 
-  addTerminalConnectors(THREE, group, data.jetways, lowerWall);
+  addTerminalConnectors(THREE, group, data.jetways, { lower: lowerWall, upper: warmWall, glass, roof });
   const box = new THREE.BoxGeometry(1, 1, 1);
   addInstances(THREE, group, box, lowerWall, transforms.lower, "KPHX_Terminal4_LowerGateModules");
   addInstances(THREE, group, box, warmWall, transforms.upper, "KPHX_Terminal4_UpperGateModules");
