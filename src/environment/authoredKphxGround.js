@@ -15,7 +15,7 @@ export const AUTHORED_KPHX_GROUND_PROFILE = Object.freeze({
   coordinateFrame: "A1-local; X=north, Y=up, Z=east; authored A1 heading faces scene -Z",
   sceneOffset: Object.freeze([0, 0, 6.2]),
   packageVersion: "1.8.1",
-  detailLevel: "terminal4-authored-textured-v1",
+  detailLevel: "terminal4-authored-textured-v2-exact-a1",
   sourceJetwayCount: 112,
   terminal4JetwayCount: TERMINAL4_JETWAYS.length,
   terminal4ParkingCount: TERMINAL4_PARKINGS.length,
