@@ -49,23 +49,30 @@ prepared = prepared
     `    const environment = buildGround(scene);
     renderer.domElement.dataset.environmentSource = "loading-authored-phx-terminal4";
     renderer.domElement.dataset.groundSource = "loading-authored-kphx-ground";
-    void installAuthoredTerminal4Visual(THREE, environment)
-      .then(() => {
-        renderer.domElement.dataset.environmentSource = environment.userData.environmentSource;
-      })
+    const terminalLoad = installAuthoredTerminal4Visual(THREE, environment)
       .catch((error) => {
-        renderer.domElement.dataset.environmentSource = "load-error";
         console.error("RampReady PHX Terminal 4 visual load failed", error);
         setMessage(\`PHX Terminal 4 failed to load: \${error.message}\`);
+        throw error;
       });
-    void installAuthoredKphxGround(environment)
-      .then(() => {
+    const groundLoad = installAuthoredKphxGround(environment)
+      .then((ground) => {
         renderer.domElement.dataset.groundSource = environment.userData.groundSource;
+        return ground;
       })
       .catch((error) => {
         renderer.domElement.dataset.groundSource = "load-error";
         console.error("RampReady KPHX ground load failed", error);
         setMessage(\`PHX airport ground failed to load: \${error.message}\`);
+        throw error;
+      });
+    void Promise.all([terminalLoad, groundLoad])
+      .then(() => {
+        renderer.domElement.dataset.environmentSource = environment.userData.environmentSource;
+        renderer.domElement.dataset.groundSource = environment.userData.groundSource;
+      })
+      .catch(() => {
+        renderer.domElement.dataset.environmentSource = "load-error";
       });`,
   )
   .replace("    const rig = createProceduralLektroRig(THREE);", "    const rig = createProceduralLektroRig(THREE, equipmentId);")
@@ -115,6 +122,7 @@ if (!prepared.includes('dataset.environmentSource = "loading-authored-phx-termin
 if (!prepared.includes('dataset.groundSource = "loading-authored-kphx-ground"')) throw new Error("Authored KPHX ground loading evidence was not injected");
 if (!prepared.includes("installAuthoredTerminal4Visual(THREE, environment)")) throw new Error("Authored PHX Terminal 4 runtime loader was not connected");
 if (!prepared.includes("installAuthoredKphxGround(environment)")) throw new Error("Authored KPHX ground runtime loader was not connected");
+if (!prepared.includes("Promise.all([terminalLoad, groundLoad])")) throw new Error("Combined PHX terminal/ground readiness gate was not injected");
 if (!prepared.includes("new THREE.PerspectiveCamera(58, 1, 0.1, 8000)")) throw new Error("Airport-wide camera far plane was not injected");
 if (!prepared.includes("new THREE.Fog(0x9fc4e6, 2400, 6500)")) throw new Error("Airport-wide fog range was not injected");
 if (!prepared.includes("dataset.steeringMode = rig.profile.steeringMode")) throw new Error("Runtime steering-mode evidence was not injected");
