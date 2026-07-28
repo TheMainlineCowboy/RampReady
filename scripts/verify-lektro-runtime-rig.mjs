@@ -60,8 +60,9 @@ failures.push(...validateTugRig(standup).map((failure) => `stand-up ${failure}`)
 if (standup.root.name !== "RampReady_StandupPhysicsRig") failures.push(`unexpected stand-up root name ${standup.root.name}`);
 if (standup.profile !== STANDUP_RIG_PROFILE) failures.push("stand-up rig did not select the stand-up profile");
 if (standup.profile.steeringMode !== "rear") failures.push("stand-up steering mode is not rear-wheel steering");
-if (standup.operatorEye.position.x <= 0) failures.push("stand-up operator eye is not on the right-hand platform");
-if (standup.operatorEye.position.z <= -1) failures.push("stand-up operator eye is still positioned at the obsolete rear camera location");
+if (standup.operatorEye.position.x < 0.4) failures.push("stand-up operator eye is not on the right-hand platform");
+if (standup.operatorEye.position.y < 1.55) failures.push("stand-up operator eye is too low for the standing driving position");
+if (standup.operatorEye.position.z < -1.3 || standup.operatorEye.position.z > -0.7) failures.push("stand-up operator eye is outside the calibrated standing-platform depth");
 standup.setSteering(0.31);
 for (const pivot of standup.steeringPivots) {
   if (!pivot.name.startsWith("RearSteer_")) failures.push(`${pivot.name} is not a rear steering pivot`);
