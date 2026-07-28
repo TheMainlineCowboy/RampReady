@@ -10,9 +10,28 @@ const files = {
   photoBuilder: fs.readFileSync("scripts/build-phx-photo-mosaic.py", "utf8"),
   materialize: fs.readFileSync("scripts/materialize-phx-terminal4.mjs", "utf8"),
   prepare: fs.readFileSync("scripts/prepare-terminal4-runtime.mjs", "utf8"),
+  package: fs.readFileSync("package.json", "utf8"),
+  browserTest: fs.readFileSync("tests/browser/kphx-ground-runtime.spec.js", "utf8"),
 };
 const photoManifest = JSON.parse(fs.readFileSync("public/models/kphx-photo/photo-manifest.json", "utf8"));
 const photoImage = fs.statSync("public/models/kphx-photo/phx-airport-photo.webp");
+
+for (const forbiddenPath of [
+  "src/environment/kphxSimulatorDetail.js",
+  "scripts/inject-kphx-simulator-detail.mjs",
+]) {
+  if (fs.existsSync(forbiddenPath)) throw new Error(`Generated KPHX replacement must not exist: ${forbiddenPath}`);
+}
+for (const forbiddenToken of [
+  "inject-kphx-simulator-detail.mjs",
+  "buildKphxSimulatorDetail",
+  "simulator-detail-a1-v1",
+  "a1FineDetailMeshes",
+]) {
+  if ((files.package + files.prepare + files.browserTest).includes(forbiddenToken)) {
+    throw new Error(`Procedural KPHX detail path remains active: ${forbiddenToken}`);
+  }
+}
 
 for (const token of ['"g":"A1"', '"g":"B15L"', '"g":"B15M"']) {
   if (!(files.a + files.b).includes(token)) throw new Error(`KPHX gate source missing ${token}`);
@@ -125,4 +144,4 @@ for (const token of [
 ]) {
   if (!files.prepare.includes(token)) throw new Error(`KPHX browser evidence missing ${token}`);
 }
-console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} jetways, exact original ADEX A1 placement, real MDLX geometry, pinned source textures, 199-tile full-airport aerial and unrotated A1-local ground.`);
+console.log(`Verified source-only KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source jetway placements, exact original ADEX A1 placement, real MDLX geometry, pinned source textures, 199-tile full-airport aerial, unrotated A1-local ground and no generated airport overlay.`);
