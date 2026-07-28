@@ -1,21 +1,23 @@
-name: Debug PHX source placement
+name: Build PHX source aerial
 
 on:
   pull_request:
     paths:
       - '.github/workflows/debug-phx-source.yml'
-      - 'scripts/materialize-phx-terminal4.mjs'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  package-source:
+  build-source-aerial:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: agent/install-authored-phx-airport
+          fetch-depth: 0
       - uses: actions/checkout@v4
         with:
           repository: TheMainlineCowboy/SkyHarborPhx
@@ -26,31 +28,62 @@ jobs:
           repository: seanisom/flightsimlib
           ref: fc17bec8e20770da3344eea10f25ecac281ee09f
           path: flightsimlib-source
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-python@v5
         with:
-          node-version: 24
-      - name: Materialize source
-        run: node scripts/materialize-phx-terminal4.mjs
-      - name: Inventory terrain decoder source
+          python-version: '3.12'
+      - name: Build terrain-photo decoder
         shell: bash
         run: |
           set -euo pipefail
-          find flightsimlib-source -maxdepth 4 -type f -printf '%P\n' | sort > flightsimlib-files.txt
-          grep -RIl --exclude-dir=.git -E 'int main|BGLDEC|Bitmap|TerrainPhoto|TerrainTexture|Decompress' flightsimlib-source > flightsimlib-candidates.txt || true
-          sed -n '1,240p' flightsimlib-files.txt
-          echo '--- candidate decoder files ---'
-          cat flightsimlib-candidates.txt
-      - name: Upload PHX and terrain decoder sources
+          mkdir -p .cache/phx-photo/objects .cache/phx-photo/tiles
+          for source in flightsimlib-source/external/PTC/*.c; do
+            gcc -O2 -fPIC -Iflightsimlib-source/external/PTC -c "$source" \
+              -o ".cache/phx-photo/objects/$(basename "${source%.c}").o"
+          done
+          g++ -std=c++20 -O2 \
+            -Iflightsimlib-source/include \
+            -Iflightsimlib-source/external \
+            -Iflightsimlib-source/external/PTC \
+            scripts/extract-phx-photo.cpp \
+            flightsimlib-source/src/BglDecompressor.cpp \
+            .cache/phx-photo/objects/*.o \
+            -o .cache/phx-photo/extract-phx-photo
+      - name: Decode full-resolution PHX airport imagery
+        shell: bash
+        run: |
+          set -euo pipefail
+          .cache/phx-photo/extract-phx-photo \
+            skyharbor-source/scenery/PHXPhoto.bgl \
+            .cache/phx-photo/tiles
+      - name: Build browser aerial mosaic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check pillow==11.3.0
+          rm -rf public/models/kphx-photo
+          python scripts/build-phx-photo-mosaic.py \
+            .cache/phx-photo/tiles \
+            skyharbor-source/scenery/PHXPhoto.bgl \
+            public/models/kphx-photo
+          ls -lh public/models/kphx-photo
+      - name: Commit generated source aerial
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'RampReady Airport Builder'
+          git config user.email 'actions@users.noreply.github.com'
+          git add public/models/kphx-photo
+          if git diff --cached --quiet; then
+            echo 'PHX source aerial is already current.'
+          else
+            git commit -m 'Add full-resolution PHX source aerial ground'
+            git push origin HEAD:agent/install-authored-phx-airport
+          fi
+      - name: Upload aerial evidence
         uses: actions/upload-artifact@v4
         with:
-          name: phx-source-placement-${{ github.sha }}
+          name: phx-source-aerial-${{ github.sha }}
           path: |
-            skyharbor-source/scenery/
-            skyharbor-source/*.bmp
-            skyharbor-source/*.dds
-            .cache/phx-terminal4-source/term4.BGL
-            public/models/phx-terminal4/
-            flightsimlib-source/
-            flightsimlib-files.txt
-            flightsimlib-candidates.txt
+            public/models/kphx-photo/
+            .cache/phx-photo/tiles/tiles.csv
           retention-days: 2
