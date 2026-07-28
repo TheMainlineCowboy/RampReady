@@ -52,7 +52,7 @@ async function captureCanvas(page, canvas, fileName) {
   await writeFile(`test-results/${fileName}`, image);
 }
 
-test("loads the full source-authored PHX airport and simulator-detail Gate A1", async ({ page }) => {
+test("loads only source-authored PHX scenery at exact Gate A1", async ({ page }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const assetResponses = [];
@@ -70,11 +70,6 @@ test("loads the full source-authored PHX airport and simulator-detail Gate A1", 
   await expectRuntimeValue(canvas, "data-environment-source", "authored-phx-terminal4-textured");
   await expectRuntimeValue(canvas, "data-ground-source", "authored-kphx-v181");
   await expectRuntimeValue(canvas, "data-photo-ground-source", "source-authored-phx-photo");
-  await expectRuntimeValue(canvas, "data-simulator-detail-source", "kphx-simulator-detail");
-  await expectRuntimeValue(canvas, "data-simulator-detail-level", "simulator-detail-a1-v1");
-  await expectRuntimeValue(canvas, "data-simulator-jetway-count", "58");
-  await expectRuntimeValue(canvas, "data-a1-ramp-texture-resolution", "2048");
-  await expectRuntimeValue(canvas, "data-a1-ramp-coverage-meters", "300,390");
   await expectRuntimeValue(canvas, "data-kphx-version", "1.8.1");
   await expectRuntimeValue(canvas, "data-kphx-detail-level", "terminal4-authored-textured-v2-exact-a1");
   await expectRuntimeValue(canvas, "data-photo-detail-level", "full-airport-source-aerial-1.2m-v1");
@@ -99,8 +94,9 @@ test("loads the full source-authored PHX airport and simulator-detail Gate A1", 
   await expectRuntimeValue(canvas, "data-b15-anchors", "ready");
   await expectRuntimeValue(canvas, "data-b15-corridor-meters", "515,542");
 
-  const a1FineDetailMeshes = Number(await canvas.getAttribute("data-a1-fine-detail-meshes"));
-  expect(a1FineDetailMeshes).toBeGreaterThan(50);
+  expect(await canvas.getAttribute("data-simulator-detail-source")).toBeNull();
+  expect(await canvas.getAttribute("data-a1-ramp-texture-resolution")).toBeNull();
+
   const nearestGeometryMeters = Number(await canvas.getAttribute("data-terminal4-a1-nearest-geometry-meters"));
   expect(nearestGeometryMeters).toBeGreaterThan(28);
   expect(nearestGeometryMeters).toBeLessThan(29.2);
@@ -138,12 +134,12 @@ test("loads the full source-authored PHX airport and simulator-detail Gate A1", 
     `,
   });
   await page.waitForTimeout(1_200);
-  await captureCanvas(page, canvas, "kphx-a1-simulator-detail-chase.png");
+  await captureCanvas(page, canvas, "kphx-a1-source-authored-chase.png");
 
   await page.evaluate(() => {
     const element = document.querySelector("canvas.trainerCanvas");
     element?.dispatchEvent(new WheelEvent("wheel", { deltaY: 1350, bubbles: true, cancelable: true }));
   });
   await page.waitForTimeout(1_000);
-  await captureCanvas(page, canvas, "kphx-a1-simulator-detail-overview.png");
+  await captureCanvas(page, canvas, "kphx-a1-source-authored-overview.png");
 });
