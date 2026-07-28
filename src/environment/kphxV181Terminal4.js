@@ -209,7 +209,7 @@ export function buildKphxV181Terminal4(THREE) {
   const roof = new THREE.MeshStandardMaterial({ color: 0x837b72, roughness: 0.88, metalness: 0.03 });
   const yellow = new THREE.MeshBasicMaterial({ color: 0xffc400 });
   const white = new THREE.MeshBasicMaterial({ color: 0xf2f0e8 });
-  const black = new THREE.MeshStandardMaterial({ color: 0x202427, roughness: 0.72, metalness: 0.20 });
+  const black = new THREE.MeshStandardMaterial({ color: 0x30363a, roughness: 0.68, metalness: 0.22 });
 
   const ramp = new THREE.Mesh(new THREE.PlaneGeometry(590, 1080), concrete);
   ramp.name = "KPHX_v181_Terminal4_TexturedRamp";
@@ -220,7 +220,7 @@ export function buildKphxV181Terminal4(THREE) {
 
   const transforms = {
     lower: [], upper: [], roof: [], roofUnits: [], glass: [], rotunda: [],
-    bridgeOuter: [], bridgeInner: [], bridgeGlass: [], cabin: [], collars: [],
+    bridgeOuter: [], bridgeInner: [], bridgeGlass: [], cabin: [], collarFrames: [], collars: [],
     supports: [], wheelBogie: [], lines: [], stopTees: [], safety: [],
   };
 
@@ -317,7 +317,8 @@ export function buildKphxV181Terminal4(THREE) {
     const endx = jetway.x + ux * endDistance;
     const endz = jetway.z + uz * endDistance;
     transforms.cabin.push({ position: [endx, cabinY, endz], yaw, scale: [3.15, 2.65, 2.85] });
-    transforms.collars.push({ position: [endx + ux * 1.48, cabinY, endz + uz * 1.48], yaw, scale: [2.65, 2.35, 0.42] });
+    transforms.collarFrames.push({ position: [endx + ux * 1.46, cabinY, endz + uz * 1.46], yaw, scale: [2.55, 2.22, 0.30] });
+    transforms.collars.push({ position: [endx + ux * 1.64, cabinY, endz + uz * 1.64], yaw, scale: [2.15, 1.82, 0.16] });
     transforms.supports.push({
       position: [endx - ux * 0.9, cabinY / 2 - 0.15, endz - uz * 0.9],
       yaw: 0,
@@ -370,6 +371,7 @@ export function buildKphxV181Terminal4(THREE) {
   addInstances(THREE, group, box, jetShellDark, transforms.bridgeInner, "KPHX_Terminal4_JetwayInnerSections");
   addInstances(THREE, group, box, glass, transforms.bridgeGlass, "KPHX_Terminal4_JetwayGlass");
   addInstances(THREE, group, box, jetShell, transforms.cabin, "KPHX_Terminal4_JetwayCabins");
+  addInstances(THREE, group, box, jetShell, transforms.collarFrames, "KPHX_Terminal4_JetwayDoorFrames");
   addInstances(THREE, group, box, black, transforms.collars, "KPHX_Terminal4_JetwayDoorCollars");
   addInstances(THREE, group, new THREE.CylinderGeometry(1, 1, 1, 12), metal, transforms.supports, "KPHX_Terminal4_JetwaySupports");
   addInstances(THREE, group, box, metal, transforms.wheelBogie, "KPHX_Terminal4_JetwayWheelBogies");
