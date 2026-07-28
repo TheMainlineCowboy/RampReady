@@ -6,10 +6,15 @@ import part03 from "../src/environment/kphxExactA1/part03.js";
 import part04 from "../src/environment/kphxExactA1/part04.js";
 import part05 from "../src/environment/kphxExactA1/part05.js";
 
-const encoded = [part00, part01, part02, part03, part04, part05].join("");
+const parts = [part00, part01, part02, part03, part04, part05];
+const encoded = parts.join("");
 const compressed = Buffer.from(encoded, "base64");
-const decoded = gunzipSync(compressed);
-const payload = JSON.parse(decoded.toString("utf8"));
+
+console.log("KPHX_EXACT_A1_PART_LENGTHS", parts.map((part) => part.length).join(","));
+console.log("KPHX_EXACT_A1_BASE64_CHARS", encoded.length);
+console.log("KPHX_EXACT_A1_COMPRESSED_BYTES", compressed.length);
+console.log("KPHX_EXACT_A1_GZIP_HEADER", compressed.subarray(0, 10).toString("hex"));
+console.log("KPHX_EXACT_A1_GZIP_TRAILER", compressed.subarray(-8).toString("hex"));
 
 function describe(value, depth = 0) {
   if (depth > 3) return typeof value;
@@ -23,10 +28,18 @@ function describe(value, depth = 0) {
   return { type: typeof value, value };
 }
 
-console.log("KPHX_EXACT_A1_PAYLOAD_BYTES", decoded.length);
-console.log("KPHX_EXACT_A1_TOP_LEVEL_KEYS", Object.keys(payload).join(","));
-console.log("KPHX_EXACT_A1_SCHEMA", JSON.stringify(describe(payload), null, 2));
-
-for (const [key, value] of Object.entries(payload)) {
-  if (Array.isArray(value)) console.log(`KPHX_EXACT_A1_ARRAY ${key} ${value.length}`);
+try {
+  const decoded = gunzipSync(compressed);
+  const payload = JSON.parse(decoded.toString("utf8"));
+  console.log("KPHX_EXACT_A1_PAYLOAD_STATUS complete");
+  console.log("KPHX_EXACT_A1_PAYLOAD_BYTES", decoded.length);
+  console.log("KPHX_EXACT_A1_TOP_LEVEL_KEYS", Object.keys(payload).join(","));
+  console.log("KPHX_EXACT_A1_SCHEMA", JSON.stringify(describe(payload), null, 2));
+  for (const [key, value] of Object.entries(payload)) {
+    if (Array.isArray(value)) console.log(`KPHX_EXACT_A1_ARRAY ${key} ${value.length}`);
+  }
+} catch (error) {
+  console.log("KPHX_EXACT_A1_PAYLOAD_STATUS incomplete");
+  console.log("KPHX_EXACT_A1_PAYLOAD_ERROR", error.message);
+  console.log("KPHX_EXACT_A1_REPAIR_REQUIRED true");
 }
