@@ -16,12 +16,20 @@ const jetwayCount = (files.a.match(/"px":/g) || []).length + (files.b.match(/"px
 if (parkingCount !== 58 || jetwayCount !== 58) throw new Error(`KPHX Terminal 4 counts ${parkingCount}/${jetwayCount}`);
 
 for (const token of [
-  'position: Object.freeze([-60, 0.035, 71.2])',
+  'modelGuid: "{7f197eb0-33ea-419f-9658-a29c9046d87f}"',
+  "recordOffset: 146014",
+  "latitude: 33.435617946088314",
+  "longitude: -111.99794411659241",
+  "parkingIndex: 32",
+  "latitude: 33.43653056770563",
+  "longitude: -111.99864059686661",
+  'position: Object.freeze([-101.59257372668444, 0.035, 70.90086550233441])',
   "rotationYDegrees: 90",
   'scale: Object.freeze([-1, 1, 1])',
   "texture-manifest.json",
   "pinned-authored-source-textures-v1",
-  "terminal4-authored-textured-v1",
+  "terminal4-authored-textured-v2-exact-a1",
+  "nearestHorizontalVertexDistance",
   'environmentSource = "authored-phx-terminal4-textured"',
 ]) {
   if (!files.terminal.includes(token)) throw new Error(`Authored Terminal 4 contract missing ${token}`);
@@ -49,7 +57,7 @@ for (const token of [
   "b15Anchors",
   "trainingCorridor",
   "kphxDetailLevel",
-  'detailLevel: "terminal4-authored-textured-v1"',
+  'detailLevel: "terminal4-authored-textured-v2-exact-a1"',
 ]) {
   if (!files.ground.includes(token)) throw new Error(`KPHX runtime contract missing ${token}`);
 }
@@ -66,7 +74,10 @@ for (const token of [
   "dataset.terminal4ExactTextureCount",
   "dataset.terminal4FallbackTextureCount",
   "dataset.terminal4TexturedMaterialCount",
+  "dataset.terminal4Position",
+  "dataset.terminal4A1NearestGeometryMeters",
+  "dataset.terminal4Placement",
 ]) {
   if (!files.prepare.includes(token)) throw new Error(`KPHX browser evidence missing ${token}`);
 }
-console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} jetways, real MDLX geometry, pinned source textures and unrotated A1-local ground.`);
+console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} jetways, exact original ADEX A1 placement, real MDLX geometry, pinned source textures and unrotated A1-local ground.`);
