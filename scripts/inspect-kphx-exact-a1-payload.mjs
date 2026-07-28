@@ -1,4 +1,4 @@
-import { gunzipSync } from "node:zlib";
+import { constants, gunzipSync } from "node:zlib";
 import part00 from "../src/environment/kphxExactA1/part00.js";
 import part01 from "../src/environment/kphxExactA1/part01.js";
 import part02 from "../src/environment/kphxExactA1/part02.js";
@@ -42,4 +42,16 @@ try {
   console.log("KPHX_EXACT_A1_PAYLOAD_STATUS incomplete");
   console.log("KPHX_EXACT_A1_PAYLOAD_ERROR", error.message);
   console.log("KPHX_EXACT_A1_REPAIR_REQUIRED true");
+  try {
+    const partial = gunzipSync(compressed, { finishFlush: constants.Z_SYNC_FLUSH }).toString("utf8");
+    console.log("KPHX_EXACT_A1_PARTIAL_BYTES", Buffer.byteLength(partial));
+    console.log("KPHX_EXACT_A1_PARTIAL_PREFIX", JSON.stringify(partial.slice(0, 1200)));
+    console.log("KPHX_EXACT_A1_PARTIAL_SUFFIX", JSON.stringify(partial.slice(-2400)));
+    for (const key of ["meshes", "materials", "lines", "paintedLines", "projectedMeshes", "textures", "manifest", "counts"]) {
+      const match = partial.match(new RegExp(`\\"${key}\\"\\s*:`));
+      if (match) console.log("KPHX_EXACT_A1_PARTIAL_KEY", key, match.index);
+    }
+  } catch (partialError) {
+    console.log("KPHX_EXACT_A1_PARTIAL_ERROR", partialError.message);
+  }
 }
