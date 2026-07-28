@@ -122,12 +122,12 @@ async function attemptSource(source) {
 }
 
 try {
+  let downloaded = null;
   for (const source of SOURCES) {
-    const downloaded = await attemptSource(source);
-    if (downloaded) process.exitCode = 0;
+    downloaded = await attemptSource(source);
     if (downloaded) break;
   }
-  if (!process.exitCode && !(await import("node:fs").then(({ existsSync }) => SOURCES.some((source) => existsSync(path.join(OUTPUT_DIR, source.expectedName)))))) {
+  if (!downloaded) {
     throw new Error("Neither exact PHX source page emitted a downloadable archive; complete browser and network evidence was preserved");
   }
 } finally {
