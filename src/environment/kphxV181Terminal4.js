@@ -222,6 +222,9 @@ export function buildKphxV181Terminal4(THREE) {
 
   for (const jetway of data.jetways) {
     const parking = parkingByGate.get(jetway.g);
+    const parkingHeading = THREE.MathUtils.degToRad(parking?.h ?? jetway.h);
+    const parkingDx = Math.sin(parkingHeading);
+    const parkingDz = Math.cos(parkingHeading);
     let dx = jetway.px - jetway.x; let dz = jetway.pz - jetway.z;
     let distance = Math.hypot(dx, dz);
     if (distance < 1) {
@@ -268,9 +271,9 @@ export function buildKphxV181Terminal4(THREE) {
     if (parking && (parking.g === "A1" || KPHX_V181_PROFILE.b15Gates.includes(parking.g))) {
       const label = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 2.8), new THREE.MeshBasicMaterial({ map: gateTexture(THREE, parking.g), transparent: true, side: THREE.DoubleSide }));
       label.name = `KPHX_RampLabel_${parking.g}`;
-      label.position.set(parking.x - dx * 9, 0.075, parking.z - dz * 9);
+      label.position.set(parking.x - parkingDx * 9, 0.075, parking.z - parkingDz * 9);
       label.rotation.x = -Math.PI / 2;
-      label.rotation.z = -heading;
+      label.rotation.z = -parkingHeading;
       group.add(label);
     }
   }
