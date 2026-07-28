@@ -51,10 +51,19 @@ prepared = prepared
     "    rig.root.userData.equipmentId = equipmentId;",
     `    rig.root.userData.equipmentId = equipmentId;
     renderer.domElement.dataset.tugSource = equipmentId === "standup-tug" ? "loading" : "procedural-lektro";
+    renderer.domElement.dataset.steeringMode = rig.profile.steeringMode;
+    renderer.domElement.dataset.operatorSide = rig.profile.operatorEye[0] > 0 ? "right" : "left";
+    renderer.domElement.dataset.operatorControls = equipmentId === "standup-tug" ? "loading" : "not-applicable";
     void installRuntimeEquipmentVisual(rig, equipmentId)
-      .then((source) => { renderer.domElement.dataset.tugSource = source; })
+      .then((source) => {
+        renderer.domElement.dataset.tugSource = source;
+        if (equipmentId === "standup-tug") {
+          renderer.domElement.dataset.operatorControls = rig.root.userData.standupSteeringWheel && rig.root.userData.standupBatteryGauge ? "ready" : "missing";
+        }
+      })
       .catch((error) => {
         renderer.domElement.dataset.tugSource = "load-error";
+        renderer.domElement.dataset.operatorControls = "load-error";
         console.error("RampReady equipment visual load failed", error);
         setMessage(\`Equipment model failed to load: \${error.message}\`);
       });`,
@@ -64,6 +73,8 @@ if (!prepared.includes(environmentImport)) throw new Error("Terminal 4 environme
 if (!prepared.includes(equipmentImport)) throw new Error("Runtime equipment visual import was not injected");
 if (!prepared.includes("supportsRuntimeEquipmentVisual(equipmentId)")) throw new Error("Stand-up runtime support guard was not injected");
 if (!prepared.includes('dataset.tugSource = equipmentId === "standup-tug" ? "loading" : "procedural-lektro"')) throw new Error("Runtime tug visual loader was not injected");
+if (!prepared.includes("dataset.steeringMode = rig.profile.steeringMode")) throw new Error("Runtime steering-mode evidence was not injected");
+if (!prepared.includes('dataset.operatorControls = rig.root.userData.standupSteeringWheel')) throw new Error("Runtime operator-control evidence was not injected");
 if (!prepared.includes("createProceduralLektroRig(THREE, equipmentId)")) throw new Error("Equipment-specific rig profile was not injected");
 if (!prepared.includes("steeringMode: rig.profile.steeringMode")) throw new Error("Equipment-specific steering mode was not injected");
 if (!prepared.includes("wheelbase: rig.profile.wheelbase")) throw new Error("Equipment-specific wheelbase was not injected");
