@@ -11,18 +11,111 @@ export const AUTHORED_TERMINAL4_PROFILE = Object.freeze({
   }),
   provisionalOffset: Object.freeze([0, 0, 300]),
   placementAuthority: "legacy Terminal 4 massing retained behind exact KPHX 1.8.1 A/B gate modules",
+  materialPass: "procedural-terminal4-source-materials-v2",
 });
 
-function fallbackColorFor(materialName = "") {
+const textureCache = new Map();
+
+function textureKind(materialName = "") {
   const name = materialName.toUpperCase();
-  if (name.includes("PHX_TERM400")) return 0x9f896f;
-  if (name.includes("BGATE") || name.includes("DGATE")) return 0x4e6678;
-  if (name.includes("PARKRAMP")) return 0x555a5e;
-  if (name.includes("SUPPORT")) return 0x4d5155;
-  if (name.includes("T4_WALK")) return 0xb0a18b;
-  if (name.includes("RAMPLIGHT")) return 0x666c71;
-  if (name.includes("RW.")) return 0x494d52;
-  return 0x9b9287;
+  if (name.includes("PHX_TERM400")) return "terminal";
+  if (name.includes("BGATE") || name.includes("DGATE")) return "gate";
+  if (name.includes("PARKRAMP")) return "ramp";
+  if (name.includes("SUPPORT")) return "support";
+  if (name.includes("T4_WALK")) return "walkway";
+  if (name.includes("RAMPLIGHT")) return "light";
+  if (name.includes("RW.")) return "road";
+  return "terminal";
+}
+
+function createTexture(THREE, kind) {
+  if (textureCache.has(kind)) return textureCache.get(kind);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 512;
+  const ctx = canvas.getContext("2d");
+
+  if (kind === "terminal") {
+    ctx.fillStyle = "#9b8975";
+    ctx.fillRect(0, 0, 512, 512);
+    for (let y = 0; y < 512; y += 128) {
+      ctx.fillStyle = y % 256 === 0 ? "#a79580" : "#96816c";
+      ctx.fillRect(0, y, 512, 128);
+      ctx.fillStyle = "#263846";
+      ctx.fillRect(0, y + 35, 512, 34);
+      ctx.fillStyle = "rgba(175,205,220,0.24)";
+      for (let x = 8; x < 512; x += 42) ctx.fillRect(x, y + 39, 29, 25);
+    }
+    ctx.strokeStyle = "rgba(72,59,47,0.48)";
+    ctx.lineWidth = 3;
+    for (let x = 0; x <= 512; x += 64) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
+    }
+  } else if (kind === "gate") {
+    ctx.fillStyle = "#78858d";
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.fillStyle = "#273b49";
+    ctx.fillRect(0, 96, 512, 122);
+    ctx.fillStyle = "rgba(188,216,228,0.34)";
+    for (let x = 8; x < 512; x += 55) ctx.fillRect(x, 106, 39, 100);
+    ctx.strokeStyle = "rgba(45,51,55,0.55)";
+    ctx.lineWidth = 4;
+    for (let y = 0; y < 512; y += 64) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+    }
+  } else if (kind === "ramp") {
+    ctx.fillStyle = "#696d6e";
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.strokeStyle = "rgba(45,48,50,0.62)";
+    ctx.lineWidth = 5;
+    for (let p = 0; p <= 512; p += 128) {
+      ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, 512); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(512, p); ctx.stroke();
+    }
+  } else if (kind === "support") {
+    ctx.fillStyle = "#42484c";
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.strokeStyle = "#778086";
+    ctx.lineWidth = 16;
+    for (let x = -256; x < 768; x += 96) {
+      ctx.beginPath(); ctx.moveTo(x, 512); ctx.lineTo(x + 320, 0); ctx.stroke();
+    }
+  } else if (kind === "walkway") {
+    ctx.fillStyle = "#ada291";
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.strokeStyle = "rgba(79,70,62,0.4)";
+    ctx.lineWidth = 4;
+    for (let x = 0; x <= 512; x += 64) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
+    }
+    for (let y = 0; y <= 512; y += 96) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+    }
+  } else if (kind === "light") {
+    ctx.fillStyle = "#596067";
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.fillStyle = "#f0c869";
+    ctx.fillRect(96, 96, 320, 320);
+  } else {
+    ctx.fillStyle = "#3f4549";
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.strokeStyle = "rgba(220,220,210,0.55)";
+    ctx.lineWidth = 12;
+    ctx.beginPath(); ctx.moveTo(0, 256); ctx.lineTo(512, 256); ctx.stroke();
+  }
+
+  const grime = ctx.createLinearGradient(0, 0, 0, 512);
+  grime.addColorStop(0, "rgba(255,255,255,0.10)");
+  grime.addColorStop(0.62, "rgba(255,255,255,0)");
+  grime.addColorStop(1, "rgba(25,28,30,0.25)");
+  ctx.fillStyle = grime;
+  ctx.fillRect(0, 0, 512, 512);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(kind === "terminal" ? 2.5 : 1.5, 1.5);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  textureCache.set(kind, texture);
+  return texture;
 }
 
 function hideCalibrationTerminal(environment) {
@@ -38,9 +131,15 @@ function applyReadableSourceMaterials(THREE, scene) {
     const replacements = originals.map((source) => {
       if (!source?.clone) return source;
       const material = source.clone();
-      if (material.color) material.color.setHex(fallbackColorFor(material.name));
-      material.roughness = Math.max(0.58, material.roughness ?? 0.8);
-      material.metalness = Math.min(0.16, material.metalness ?? 0);
+      const kind = textureKind(material.name);
+      material.map = createTexture(THREE, kind);
+      if (material.color) material.color.setHex(0xffffff);
+      material.roughness = kind === "gate" ? 0.52 : 0.8;
+      material.metalness = kind === "support" || kind === "light" ? 0.42 : 0.04;
+      if (kind === "gate") {
+        material.transparent = true;
+        material.opacity = 0.94;
+      }
       material.side = THREE.DoubleSide;
       material.needsUpdate = true;
       return material;
@@ -68,6 +167,7 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.environmentSource = "authored-phx-terminal4";
   environment.userData.authoredTerminal4Url = url;
   environment.userData.authoredTerminal4 = authored;
+  environment.userData.authoredTerminal4MaterialPass = AUTHORED_TERMINAL4_PROFILE.materialPass;
   environment.userData.authoredTerminal4TriangleCount = AUTHORED_TERMINAL4_PROFILE.triangleCount;
   environment.userData.authoredTerminal4PartCount = AUTHORED_TERMINAL4_PROFILE.partCount;
   return authored;

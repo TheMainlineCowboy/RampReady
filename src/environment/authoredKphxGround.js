@@ -56,8 +56,6 @@ export async function installAuthoredKphxGround(THREE, environment) {
   });
 
   const terminal4Detail = buildKphxV181Terminal4(THREE);
-  terminal4Detail.rotation.y += Math.PI;
-  terminal4Detail.userData.registration = "A1 source heading corrected to CRJ nose axis (-Z)";
   environment.add(authored, terminal4Detail);
   hideCalibrationGround(environment);
 
@@ -66,10 +64,12 @@ export async function installAuthoredKphxGround(THREE, environment) {
   environment.userData.authoredGround = authored;
   environment.userData.kphxV181Detail = terminal4Detail;
   environment.userData.kphxVersion = KPHX_V181_PROFILE.packageVersion;
+  environment.userData.kphxDetailLevel = terminal4Detail.userData.detailLevel;
   environment.userData.sourceJetwayCount = KPHX_V181_PROFILE.sourceJetwayCount;
   environment.userData.terminal4JetwayCount = terminal4Detail.userData.terminal4JetwayCount;
   environment.userData.terminal4ParkingCount = terminal4Detail.userData.terminal4ParkingCount;
   environment.userData.b15Anchors = terminal4Detail.userData.b15Anchors;
+  environment.userData.trainingCorridor = terminal4Detail.userData.trainingCorridor;
   environment.userData.authoredGroundCounts = {
     taxiwayPoints: AUTHORED_KPHX_GROUND_PROFILE.taxiwayPoints,
     taxiwayPaths: AUTHORED_KPHX_GROUND_PROFILE.taxiwayPaths,
