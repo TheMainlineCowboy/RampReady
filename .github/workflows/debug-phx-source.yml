@@ -7,6 +7,10 @@ on:
     paths:
       - '.github/workflows/debug-phx-source.yml'
       - 'scripts/fetch-phx-freeware-source.mjs'
+  pull_request:
+    paths:
+      - '.github/workflows/debug-phx-source.yml'
+      - 'scripts/fetch-phx-freeware-source.mjs'
   workflow_dispatch:
 
 permissions:
