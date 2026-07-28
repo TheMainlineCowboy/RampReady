@@ -27,7 +27,7 @@ if (payload.bglSha256 !== "1ea4978b5a89ecf5efebe522c9837e9d89de6f7a45dc4e99bfe16
 }
 if (payload.projectedMeshes?.length !== 73) throw new Error(`Exact A1 projected meshes ${payload.projectedMeshes?.length} != 73`);
 if (payload.paintedLines?.length !== 214) throw new Error(`Exact A1 painted lines ${payload.paintedLines?.length} != 214`);
-if (payload.materials?.length !== 7) throw new Error(`Exact A1 source materials ${payload.materials?.length} != 7`);
+if (payload.counts?.textureMaterials !== 7) throw new Error(`Exact A1 source materials ${payload.counts?.textureMaterials} != 7`);
 
 console.log(JSON.stringify({
   status: "verified-exact-supplied-source",
@@ -39,5 +39,5 @@ console.log(JSON.stringify({
   bglSha256: payload.bglSha256,
   projectedMeshes: payload.projectedMeshes.length,
   paintedLines: payload.paintedLines.length,
-  sourceMaterials: payload.materials.length,
+  sourceMaterials: payload.counts.textureMaterials,
 }, null, 2));
