@@ -50,6 +50,8 @@ jobs:
           path: |
             rampready-build.log
             rampready-source-diff.patch
+            src/environment/kphxExactA1/
+            scripts/inspect-kphx-exact-a1-payload.mjs
           if-no-files-found: warn
           retention-days: 7
 
