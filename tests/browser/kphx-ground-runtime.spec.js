@@ -17,7 +17,14 @@ async function launchStandup(page) {
   return canvas;
 }
 
-test("loads the authored airport-wide KPHX ADEX ground", async ({ page }) => {
+async function expectRuntimeValue(canvas, attribute, expected) {
+  await expect.poll(
+    async () => canvas.getAttribute(attribute),
+    { timeout: 30_000, intervals: [250, 500, 1_000] },
+  ).toBe(expected);
+}
+
+test("loads KPHX v1.8.1 Terminal 4 detail over the airport-wide ground", async ({ page }) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const groundResponses = [];
@@ -32,10 +39,12 @@ test("loads the authored airport-wide KPHX ADEX ground", async ({ page }) => {
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
 
   const canvas = await launchStandup(page);
-  await expect.poll(
-    async () => canvas.getAttribute("data-ground-source"),
-    { timeout: 30_000, intervals: [250, 500, 1_000] },
-  ).toBe("authored-kphx-adex-ground");
+  await expectRuntimeValue(canvas, "data-ground-source", "authored-kphx-v181");
+  await expectRuntimeValue(canvas, "data-kphx-version", "1.8.1");
+  await expectRuntimeValue(canvas, "data-source-jetway-count", "112");
+  await expectRuntimeValue(canvas, "data-terminal4-jetway-count", "58");
+  await expectRuntimeValue(canvas, "data-terminal4-parking-count", "58");
+  await expectRuntimeValue(canvas, "data-b15-anchors", "ready");
 
   for (const suffix of GROUND_SUFFIXES) {
     await expect.poll(
@@ -69,7 +78,7 @@ test("loads the authored airport-wide KPHX ADEX ground", async ({ page }) => {
     const element = document.querySelector("canvas.trainerCanvas");
     element?.dispatchEvent(new WheelEvent("wheel", { deltaY: 1800, bubbles: true, cancelable: true }));
   });
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(900);
   const bounds = await canvas.boundingBox();
   expect(bounds).not.toBeNull();
   const image = await page.screenshot({
@@ -83,5 +92,5 @@ test("loads the authored airport-wide KPHX ADEX ground", async ({ page }) => {
     animations: "disabled",
   });
   expect(image.byteLength).toBeGreaterThan(5_000);
-  await writeFile("test-results/kphx-ground-authored.png", image);
+  await writeFile("test-results/kphx-v181-terminal4.png", image);
 });

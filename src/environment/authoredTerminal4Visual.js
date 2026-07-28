@@ -9,23 +9,20 @@ export const AUTHORED_TERMINAL4_PROFILE = Object.freeze({
     min: Object.freeze([-361.947998046875, 0, -213.22799682617188]),
     max: Object.freeze([488.2799987792969, 30.215999603271484, 266.8240051269531]),
   }),
-  // Preserve the existing training origin while bringing the nearest authored Terminal 4
-  // structure to approximately the same setback as the old calibration facade. Exact gate
-  // registration remains blocked on KPHX_ADEX.BGL extraction and is not claimed here.
   provisionalOffset: Object.freeze([0, 0, 300]),
-  placementAuthority: "provisional-visible-placement; KPHX_ADEX gate registration pending",
+  placementAuthority: "legacy Terminal 4 massing retained behind exact KPHX 1.8.1 A/B gate modules",
 });
 
 function fallbackColorFor(materialName = "") {
   const name = materialName.toUpperCase();
-  if (name.includes("PHX_TERM400")) return 0xb7b2aa;
-  if (name.includes("BGATE") || name.includes("DGATE")) return 0xa7adb1;
-  if (name.includes("PARKRAMP")) return 0x747a80;
-  if (name.includes("SUPPORT")) return 0x656a70;
-  if (name.includes("T4_WALK")) return 0x969da3;
-  if (name.includes("RAMPLIGHT")) return 0x777d82;
-  if (name.includes("RW.")) return 0x5e6267;
-  return 0xa3a7aa;
+  if (name.includes("PHX_TERM400")) return 0x9f896f;
+  if (name.includes("BGATE") || name.includes("DGATE")) return 0x4e6678;
+  if (name.includes("PARKRAMP")) return 0x555a5e;
+  if (name.includes("SUPPORT")) return 0x4d5155;
+  if (name.includes("T4_WALK")) return 0xb0a18b;
+  if (name.includes("RAMPLIGHT")) return 0x666c71;
+  if (name.includes("RW.")) return 0x494d52;
+  return 0x9b9287;
 }
 
 function hideCalibrationTerminal(environment) {
@@ -42,8 +39,8 @@ function applyReadableSourceMaterials(THREE, scene) {
       if (!source?.clone) return source;
       const material = source.clone();
       if (material.color) material.color.setHex(fallbackColorFor(material.name));
-      material.roughness = Math.max(0.62, material.roughness ?? 0.82);
-      material.metalness = Math.min(0.18, material.metalness ?? 0);
+      material.roughness = Math.max(0.58, material.roughness ?? 0.8);
+      material.metalness = Math.min(0.16, material.metalness ?? 0);
       material.side = THREE.DoubleSide;
       material.needsUpdate = true;
       return material;

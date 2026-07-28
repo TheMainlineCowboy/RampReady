@@ -1,0 +1,60 @@
+name: Verify KPHX v1.8.1 Runtime
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/verify-kphx-v181.yml'
+      - 'src/environment/**'
+      - 'scripts/prepare-terminal4-runtime.mjs'
+      - 'tests/browser/kphx-ground-runtime.spec.js'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kphx-v181-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-kphx-v181-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact PR head commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build updated PHX runtime
+        run: npm run build
+
+      - name: Install browser verifier and Chromium
+        run: |
+          npm install --no-save @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Verify A1, B15 and Terminal 4 gates in browser
+        run: npx playwright test tests/browser/kphx-ground-runtime.spec.js --reporter=line
+
+      - name: Upload updated KPHX runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kphx-v181-runtime-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
