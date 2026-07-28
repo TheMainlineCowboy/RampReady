@@ -7,3 +7,4 @@ dist
 .cache
 public/models/standup-tug.glb
 public/models/phx-terminal4/
+public/models/kphx-ground/
