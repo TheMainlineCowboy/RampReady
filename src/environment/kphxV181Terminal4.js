@@ -11,7 +11,7 @@ export const KPHX_V181_PROFILE = Object.freeze({
   b15Gates: Object.freeze(["B15L", "B15M"]),
   sourceHeadingDegrees: 270.4908752441406,
   sceneOffset: Object.freeze([0, 0, 6.2]),
-  detailLevel: "terminal4-refined-v2",
+  detailLevel: "terminal4-refined-v3",
 });
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -25,55 +25,38 @@ function makeConcreteTexture(THREE) {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 512;
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#a5a7a5";
+  ctx.fillStyle = "#aeb0ad";
   ctx.fillRect(0, 0, 512, 512);
 
   for (let y = 0; y < 512; y += 4) {
     for (let x = 0; x < 512; x += 4) {
-      const shade = 145 + Math.floor(seededNoise(x, y) * 30);
-      ctx.fillStyle = `rgba(${shade},${shade},${shade - 2},0.24)`;
+      const shade = 150 + Math.floor(seededNoise(x, y) * 25);
+      ctx.fillStyle = `rgba(${shade},${shade},${shade - 3},0.22)`;
       ctx.fillRect(x, y, 4, 4);
     }
   }
 
   ctx.lineWidth = 3;
-  ctx.strokeStyle = "rgba(54,58,61,0.5)";
+  ctx.strokeStyle = "rgba(58,61,63,0.46)";
   for (const p of [0, 128, 256, 384, 512]) {
     ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, 512); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(512, p); ctx.stroke();
   }
   ctx.lineWidth = 1;
-  ctx.strokeStyle = "rgba(224,224,215,0.28)";
+  ctx.strokeStyle = "rgba(235,235,228,0.30)";
   for (const p of [64, 192, 320, 448]) {
     ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, 512); ctx.stroke();
   }
 
-  for (let i = 0; i < 44; i += 1) {
+  for (let i = 0; i < 38; i += 1) {
     const x = (i * 149) % 512;
     const y = (i * 233) % 512;
-    const rx = 8 + (i % 7) * 5;
-    const ry = 3 + (i % 5) * 3;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate((i % 9) * 0.24);
-    const gradient = ctx.createRadialGradient(0, 0, 1, 0, 0, rx);
-    gradient.addColorStop(0, "rgba(28,31,33,0.20)");
-    gradient.addColorStop(1, "rgba(28,31,33,0)");
+    const radius = 8 + (i % 6) * 4;
+    const gradient = ctx.createRadialGradient(x, y, 1, x, y, radius);
+    gradient.addColorStop(0, "rgba(38,40,42,0.16)");
+    gradient.addColorStop(1, "rgba(38,40,42,0)");
     ctx.fillStyle = gradient;
-    ctx.scale(1, ry / rx);
-    ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  }
-
-  for (let i = 0; i < 12; i += 1) {
-    const x = 36 + (i * 83) % 448;
-    const y = 40 + (i * 137) % 432;
-    ctx.strokeStyle = "rgba(48,51,53,0.25)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x - 34, y);
-    ctx.bezierCurveTo(x - 8, y - 10, x + 10, y + 8, x + 38, y - 4);
-    ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
   }
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -90,22 +73,22 @@ function makePanelTexture(THREE, base, seam, grime) {
   ctx.fillStyle = base;
   ctx.fillRect(0, 0, 256, 256);
   ctx.strokeStyle = seam;
-  ctx.lineWidth = 3;
-  for (let x = 0; x <= 256; x += 64) {
+  ctx.lineWidth = 2;
+  for (let x = 0; x <= 256; x += 48) {
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 256); ctx.stroke();
   }
-  for (let y = 0; y <= 256; y += 96) {
+  for (let y = 0; y <= 256; y += 64) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke();
   }
   const gradient = ctx.createLinearGradient(0, 0, 0, 256);
-  gradient.addColorStop(0, "rgba(255,255,255,0.12)");
-  gradient.addColorStop(0.65, "rgba(255,255,255,0)");
+  gradient.addColorStop(0, "rgba(255,255,255,0.13)");
+  gradient.addColorStop(0.62, "rgba(255,255,255,0)");
   gradient.addColorStop(1, grime);
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 256, 256);
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(3, 1.5);
+  texture.repeat.set(2.2, 1.25);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }
@@ -149,8 +132,9 @@ function addInstances(THREE, group, geometry, material, transforms, name, shadow
 }
 
 function addTerminalConnectors(THREE, group, jetways, materials) {
-  const transforms = { lower: [], upper: [], glass: [], roof: [] };
+  const transforms = { lower: [], upper: [], glass: [], roof: [], mullions: [] };
   const used = new Set();
+
   for (let i = 0; i < jetways.length; i += 1) {
     let nearest = -1;
     let nearestDistance = Infinity;
@@ -159,25 +143,41 @@ function addTerminalConnectors(THREE, group, jetways, materials) {
       const distance = Math.hypot(jetways[j].x - jetways[i].x, jetways[j].z - jetways[i].z);
       if (distance < nearestDistance) { nearestDistance = distance; nearest = j; }
     }
-    if (nearest < 0 || nearestDistance > 58) continue;
+    if (nearest < 0 || nearestDistance > 52) continue;
+
     const key = [i, nearest].sort((a, b) => a - b).join(":");
     if (used.has(key)) continue;
     used.add(key);
+
     const a = jetways[i]; const b = jetways[nearest];
     const dx = b.x - a.x; const dz = b.z - a.z;
-    const position = [(a.x + b.x) / 2, 0, (a.z + b.z) / 2];
+    const midX = (a.x + b.x) / 2;
+    const midZ = (a.z + b.z) / 2;
     const yaw = Math.atan2(dx, dz);
-    const length = Math.max(5, nearestDistance + 3);
-    transforms.lower.push({ position: [position[0], 1.7, position[2]], yaw, scale: [13.4, 3.4, length] });
-    transforms.glass.push({ position: [position[0], 4.15, position[2]], yaw, scale: [13.7, 1.35, length + 0.2] });
-    transforms.upper.push({ position: [position[0], 6.15, position[2]], yaw, scale: [13.25, 2.7, length] });
-    transforms.roof.push({ position: [position[0], 7.72, position[2]], yaw, scale: [13.8, 0.32, length + 0.4] });
+    const length = Math.max(8, nearestDistance + 2);
+
+    transforms.lower.push({ position: [midX, 1.45, midZ], yaw, scale: [9.6, 2.9, length] });
+    transforms.glass.push({ position: [midX, 3.55, midZ], yaw, scale: [9.85, 1.15, length + 0.15] });
+    transforms.upper.push({ position: [midX, 5.45, midZ], yaw, scale: [9.55, 2.65, length] });
+    transforms.roof.push({ position: [midX, 6.95, midZ], yaw, scale: [10.1, 0.28, length + 0.25] });
+
+    const mullionCount = Math.max(2, Math.floor(length / 8));
+    for (let m = 1; m < mullionCount; m += 1) {
+      const t = m / mullionCount - 0.5;
+      transforms.mullions.push({
+        position: [midX + Math.sin(yaw) * length * t, 3.55, midZ + Math.cos(yaw) * length * t],
+        yaw,
+        scale: [10.05, 1.22, 0.12],
+      });
+    }
   }
+
   const box = new THREE.BoxGeometry(1, 1, 1);
   addInstances(THREE, group, box, materials.lower, transforms.lower, "KPHX_Terminal4_ConcourseLower");
   addInstances(THREE, group, box, materials.glass, transforms.glass, "KPHX_Terminal4_ConcourseGlassBand");
   addInstances(THREE, group, box, materials.upper, transforms.upper, "KPHX_Terminal4_ConcourseUpper");
   addInstances(THREE, group, box, materials.roof, transforms.roof, "KPHX_Terminal4_ConcourseRoof");
+  addInstances(THREE, group, box, materials.metal, transforms.mullions, "KPHX_Terminal4_WindowMullions");
 }
 
 export function buildKphxV181Terminal4(THREE) {
@@ -191,19 +191,25 @@ export function buildKphxV181Terminal4(THREE) {
   group.position.fromArray(KPHX_V181_PROFILE.sceneOffset);
   group.rotation.y = THREE.MathUtils.degToRad(180 - KPHX_V181_PROFILE.sourceHeadingDegrees);
 
-  const concrete = new THREE.MeshStandardMaterial({ map: makeConcreteTexture(THREE), color: 0xd1d1cc, roughness: 0.98, metalness: 0 });
-  const wallTexture = makePanelTexture(THREE, "#9b8975", "rgba(70,59,49,0.42)", "rgba(45,38,33,0.24)");
-  const shellTexture = makePanelTexture(THREE, "#bfc3c4", "rgba(69,74,77,0.34)", "rgba(45,48,50,0.18)");
-  const warmWall = new THREE.MeshStandardMaterial({ map: wallTexture, color: 0xb09a82, roughness: 0.82, metalness: 0.02 });
-  const lowerWall = new THREE.MeshStandardMaterial({ map: wallTexture, color: 0x806f5e, roughness: 0.9, metalness: 0.01 });
-  const glass = new THREE.MeshStandardMaterial({ color: 0x29475a, roughness: 0.16, metalness: 0.12, transparent: true, opacity: 0.78 });
-  const jetShell = new THREE.MeshStandardMaterial({ map: shellTexture, color: 0xd0d3d2, roughness: 0.58, metalness: 0.18 });
-  const jetShellDark = new THREE.MeshStandardMaterial({ color: 0x8f9598, roughness: 0.62, metalness: 0.28 });
-  const metal = new THREE.MeshStandardMaterial({ color: 0x3f464b, roughness: 0.46, metalness: 0.58 });
-  const roof = new THREE.MeshStandardMaterial({ color: 0x6e6963, roughness: 0.88, metalness: 0.04 });
+  const concrete = new THREE.MeshStandardMaterial({
+    map: makeConcreteTexture(THREE),
+    color: 0xffffff,
+    roughness: 0.98,
+    metalness: 0,
+  });
+  const wallTexture = makePanelTexture(THREE, "#b7aa98", "rgba(91,79,66,0.34)", "rgba(55,47,40,0.18)");
+  const lowerTexture = makePanelTexture(THREE, "#948778", "rgba(61,55,49,0.34)", "rgba(36,33,30,0.20)");
+  const shellTexture = makePanelTexture(THREE, "#c4c7c8", "rgba(69,74,77,0.30)", "rgba(45,48,50,0.14)");
+  const warmWall = new THREE.MeshStandardMaterial({ map: wallTexture, color: 0xffffff, roughness: 0.84, metalness: 0.01 });
+  const lowerWall = new THREE.MeshStandardMaterial({ map: lowerTexture, color: 0xffffff, roughness: 0.92, metalness: 0.01 });
+  const glass = new THREE.MeshStandardMaterial({ color: 0x426b82, roughness: 0.18, metalness: 0.12, transparent: true, opacity: 0.74 });
+  const jetShell = new THREE.MeshStandardMaterial({ map: shellTexture, color: 0xffffff, roughness: 0.56, metalness: 0.18 });
+  const jetShellDark = new THREE.MeshStandardMaterial({ color: 0x8c9498, roughness: 0.60, metalness: 0.28 });
+  const metal = new THREE.MeshStandardMaterial({ color: 0x40484d, roughness: 0.46, metalness: 0.58 });
+  const roof = new THREE.MeshStandardMaterial({ color: 0x837b72, roughness: 0.88, metalness: 0.03 });
   const yellow = new THREE.MeshBasicMaterial({ color: 0xffc400 });
-  const red = new THREE.MeshBasicMaterial({ color: 0xc12721 });
   const white = new THREE.MeshBasicMaterial({ color: 0xf2f0e8 });
+  const black = new THREE.MeshStandardMaterial({ color: 0x30363a, roughness: 0.68, metalness: 0.22 });
 
   const ramp = new THREE.Mesh(new THREE.PlaneGeometry(590, 1080), concrete);
   ramp.name = "KPHX_v181_Terminal4_TexturedRamp";
@@ -214,16 +220,32 @@ export function buildKphxV181Terminal4(THREE) {
 
   const transforms = {
     lower: [], upper: [], roof: [], roofUnits: [], glass: [], rotunda: [],
-    bridgeOuter: [], bridgeInner: [], bridgeGlass: [], cabin: [], supports: [],
-    wheelBogie: [], lines: [], stops: [], safety: [],
+    bridgeOuter: [], bridgeInner: [], bridgeGlass: [], cabin: [], collarFrames: [], collars: [],
+    supports: [], wheelBogie: [], lines: [], stopTees: [], safety: [],
   };
 
   for (const parking of data.parkings) {
     const heading = THREE.MathUtils.degToRad(parking.h);
     const dx = Math.sin(heading); const dz = Math.cos(heading);
-    transforms.lines.push({ position: [parking.x + dx * 18, 0.055, parking.z + dz * 18], yaw: heading, scale: [0.16, 0.035, 36] });
-    transforms.stops.push({ position: [parking.x, 0.064, parking.z], yaw: heading, scale: [5.2, 0.04, 0.24] });
-    transforms.safety.push({ position: [parking.x - dx * 5, 0.058, parking.z - dz * 5], yaw: heading, scale: [6.8, 0.028, 0.14] });
+
+    transforms.lines.push({
+      position: [parking.x + dx * 22, 0.052, parking.z + dz * 22],
+      yaw: heading,
+      scale: [0.15, 0.028, 44],
+    });
+
+    if (parking.g !== "A1") {
+      transforms.stopTees.push({
+        position: [parking.x - dx * 1.8, 0.060, parking.z - dz * 1.8],
+        yaw: heading,
+        scale: [4.4, 0.026, 0.16],
+      });
+      transforms.safety.push({
+        position: [parking.x - dx * 7.5, 0.058, parking.z - dz * 7.5],
+        yaw: heading,
+        scale: [6.2, 0.024, 0.12],
+      });
+    }
   }
 
   for (const jetway of data.jetways) {
@@ -231,60 +253,113 @@ export function buildKphxV181Terminal4(THREE) {
     const parkingHeading = THREE.MathUtils.degToRad(parking?.h ?? jetway.h);
     const parkingDx = Math.sin(parkingHeading);
     const parkingDz = Math.cos(parkingHeading);
-    let dx = jetway.px - jetway.x; let dz = jetway.pz - jetway.z;
+
+    let dx = jetway.px - jetway.x;
+    let dz = jetway.pz - jetway.z;
     let distance = Math.hypot(dx, dz);
     if (distance < 1) {
       const heading = THREE.MathUtils.degToRad(jetway.h);
-      dx = Math.sin(heading); dz = Math.cos(heading); distance = 22;
+      dx = Math.sin(heading);
+      dz = Math.cos(heading);
+      distance = 22;
     }
-    const ux = dx / distance; const uz = dz / distance;
-    const px = -uz; const pz = ux;
+
+    const ux = dx / distance;
+    const uz = dz / distance;
+    const px = -uz;
+    const pz = ux;
     const yaw = Math.atan2(ux, uz);
-    const doorInset = jetway.g === "A1" ? 8.5 : 6.8;
-    const usableDistance = Math.max(10, distance - doorInset);
-    const bridgeLength = clamp(usableDistance - 5.5, 7, 18.5);
-    const baseX = jetway.x - ux * 4.4; const baseZ = jetway.z - uz * 4.4;
 
-    transforms.lower.push({ position: [baseX, 2.35, baseZ], yaw, scale: [17.5, 4.7, 8.5] });
-    transforms.upper.push({ position: [baseX, 6.15, baseZ], yaw, scale: [16.8, 3.7, 8] });
-    transforms.roof.push({ position: [baseX, 8.25, baseZ], yaw, scale: [18, 0.35, 9] });
-    transforms.roofUnits.push({ position: [baseX + px * 3.6, 8.75, baseZ + pz * 3.6], yaw, scale: [3.2, 0.8, 2.4] });
-    transforms.glass.push({ position: [jetway.x - ux * 0.9, 6.1, jetway.z - uz * 0.9], yaw, scale: [13.6, 1.75, 0.24] });
-    transforms.rotunda.push({ position: [jetway.x, 4.75, jetway.z], yaw, scale: [2.4, 3.2, 2.4] });
+    const isA1 = jetway.g === "A1";
+    const doorInset = isA1 ? 10.8 : 8.0;
+    const targetDistance = clamp(distance - doorInset, 12, 19);
+    const bridgeStart = 2.0;
+    const bridgeLength = clamp(targetDistance - bridgeStart, 8.5, 17);
+    const rotundaY = 4.55;
+    const cabinY = isA1 ? 2.95 : 3.25;
+    const drop = rotundaY - cabinY;
+    const pitch = Math.atan2(drop, bridgeLength);
 
-    const halfLength = bridgeLength / 2;
-    const firstLength = halfLength + 0.7;
-    const secondLength = halfLength + 0.7;
-    const firstCenter = 2.2 + firstLength / 2;
-    const secondCenter = 2.2 + firstLength + secondLength / 2 - 0.7;
-    transforms.bridgeOuter.push({ position: [jetway.x + ux * firstCenter, 4.85, jetway.z + uz * firstCenter], yaw, scale: [2.85, 2.65, firstLength] });
-    transforms.bridgeInner.push({ position: [jetway.x + ux * secondCenter, 4.72, jetway.z + uz * secondCenter], yaw, scale: [2.58, 2.42, secondLength] });
-    transforms.bridgeGlass.push({ position: [jetway.x + ux * (2.2 + bridgeLength / 2) + px * 1.42, 4.95, jetway.z + uz * (2.2 + bridgeLength / 2) + pz * 1.42], yaw, scale: [0.12, 1.06, bridgeLength * 0.88] });
+    const baseX = jetway.x - ux * 2.8;
+    const baseZ = jetway.z - uz * 2.8;
+    transforms.lower.push({ position: [baseX, 1.55, baseZ], yaw, scale: [9.2, 3.1, 5.4] });
+    transforms.upper.push({ position: [baseX, 5.1, baseZ], yaw, scale: [8.8, 2.55, 5] });
+    transforms.roof.push({ position: [baseX, 6.55, baseZ], yaw, scale: [9.4, 0.28, 5.6] });
+    transforms.roofUnits.push({ position: [baseX + px * 2.3, 7.02, baseZ + pz * 2.3], yaw, scale: [2.1, 0.65, 1.7] });
+    transforms.glass.push({ position: [baseX + ux * 2.45, 3.55, baseZ + uz * 2.45], yaw, scale: [8.9, 1.05, 0.18] });
+    transforms.rotunda.push({ position: [jetway.x, rotundaY, jetway.z], yaw, scale: [2.25, 2.85, 2.25] });
 
-    const endDistance = Math.min(usableDistance, 2.2 + bridgeLength + 0.4);
-    const endx = jetway.x + ux * endDistance; const endz = jetway.z + uz * endDistance;
-    transforms.cabin.push({ position: [endx, 4.25, endz], yaw, scale: [3.45, 3.05, 3.2] });
-    transforms.supports.push({ position: [jetway.x, 2.15, jetway.z], yaw: 0, scale: [0.3, 4.3, 0.3] });
-    transforms.supports.push({ position: [endx - ux * 1.2, 1.65, endz - uz * 1.2], yaw: 0, scale: [0.24, 2.9, 0.24] });
-    transforms.wheelBogie.push({ position: [endx - ux * 1.2, 0.62, endz - uz * 1.2], yaw, scale: [2.6, 0.72, 1.15] });
+    const firstLength = bridgeLength * 0.56;
+    const secondLength = bridgeLength * 0.50;
+    const firstCenterDistance = bridgeStart + firstLength / 2;
+    const secondCenterDistance = bridgeStart + firstLength + secondLength / 2 - 0.65;
+    const firstY = rotundaY - drop * (firstCenterDistance / bridgeLength);
+    const secondY = rotundaY - drop * (secondCenterDistance / bridgeLength);
 
-    const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.18), new THREE.MeshBasicMaterial({ map: gateTexture(THREE, jetway.g), transparent: true, side: THREE.DoubleSide }));
+    transforms.bridgeOuter.push({
+      position: [jetway.x + ux * firstCenterDistance, firstY, jetway.z + uz * firstCenterDistance],
+      yaw, pitch, scale: [2.75, 2.45, firstLength],
+    });
+    transforms.bridgeInner.push({
+      position: [jetway.x + ux * secondCenterDistance, secondY, jetway.z + uz * secondCenterDistance],
+      yaw, pitch, scale: [2.48, 2.22, secondLength],
+    });
+    transforms.bridgeGlass.push({
+      position: [
+        jetway.x + ux * (bridgeStart + bridgeLength / 2) + px * 1.36,
+        rotundaY - drop * 0.5 + 0.08,
+        jetway.z + uz * (bridgeStart + bridgeLength / 2) + pz * 1.36,
+      ],
+      yaw, pitch, scale: [0.11, 0.92, bridgeLength * 0.84],
+    });
+
+    const endDistance = bridgeStart + bridgeLength;
+    const endx = jetway.x + ux * endDistance;
+    const endz = jetway.z + uz * endDistance;
+    transforms.cabin.push({ position: [endx, cabinY, endz], yaw, scale: [3.15, 2.65, 2.85] });
+    transforms.collarFrames.push({ position: [endx + ux * 1.46, cabinY, endz + uz * 1.46], yaw, scale: [2.55, 2.22, 0.30] });
+    transforms.collars.push({ position: [endx + ux * 1.64, cabinY, endz + uz * 1.64], yaw, scale: [2.15, 1.82, 0.16] });
+    transforms.supports.push({
+      position: [endx - ux * 0.9, cabinY / 2 - 0.15, endz - uz * 0.9],
+      yaw: 0,
+      scale: [0.22, Math.max(1.8, cabinY - 0.45), 0.22],
+    });
+    transforms.wheelBogie.push({
+      position: [endx - ux * 0.9, 0.55, endz - uz * 0.9],
+      yaw,
+      scale: [2.3, 0.62, 1.0],
+    });
+
+    const sign = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.5, 1.05),
+      new THREE.MeshBasicMaterial({ map: gateTexture(THREE, jetway.g), transparent: true, side: THREE.DoubleSide }),
+    );
     sign.name = `KPHX_GateSign_${jetway.g}`;
-    sign.position.set(jetway.x - ux * 2.8, 7.1, jetway.z - uz * 2.8);
+    sign.position.set(baseX - ux * 1.3, 5.9, baseZ - uz * 1.3);
     sign.rotation.y = yaw;
     group.add(sign);
 
     if (parking && (parking.g === "A1" || KPHX_V181_PROFILE.b15Gates.includes(parking.g))) {
-      const label = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 2.8), new THREE.MeshBasicMaterial({ map: gateTexture(THREE, parking.g), transparent: true, side: THREE.DoubleSide }));
+      const label = new THREE.Mesh(
+        new THREE.PlaneGeometry(6.4, 2.35),
+        new THREE.MeshBasicMaterial({ map: gateTexture(THREE, parking.g), transparent: true, side: THREE.DoubleSide }),
+      );
       label.name = `KPHX_RampLabel_${parking.g}`;
-      label.position.set(parking.x - parkingDx * 9, 0.075, parking.z - parkingDz * 9);
+      label.position.set(parking.x - parkingDx * 12, 0.074, parking.z - parkingDz * 12);
       label.rotation.x = -Math.PI / 2;
       label.rotation.z = -parkingHeading;
       group.add(label);
     }
   }
 
-  addTerminalConnectors(THREE, group, data.jetways, { lower: lowerWall, upper: warmWall, glass, roof });
+  addTerminalConnectors(THREE, group, data.jetways, {
+    lower: lowerWall,
+    upper: warmWall,
+    glass,
+    roof,
+    metal,
+  });
+
   const box = new THREE.BoxGeometry(1, 1, 1);
   addInstances(THREE, group, box, lowerWall, transforms.lower, "KPHX_Terminal4_LowerGateModules");
   addInstances(THREE, group, box, warmWall, transforms.upper, "KPHX_Terminal4_UpperGateModules");
@@ -296,10 +371,12 @@ export function buildKphxV181Terminal4(THREE) {
   addInstances(THREE, group, box, jetShellDark, transforms.bridgeInner, "KPHX_Terminal4_JetwayInnerSections");
   addInstances(THREE, group, box, glass, transforms.bridgeGlass, "KPHX_Terminal4_JetwayGlass");
   addInstances(THREE, group, box, jetShell, transforms.cabin, "KPHX_Terminal4_JetwayCabins");
+  addInstances(THREE, group, box, jetShell, transforms.collarFrames, "KPHX_Terminal4_JetwayDoorFrames");
+  addInstances(THREE, group, box, black, transforms.collars, "KPHX_Terminal4_JetwayDoorCollars");
   addInstances(THREE, group, new THREE.CylinderGeometry(1, 1, 1, 12), metal, transforms.supports, "KPHX_Terminal4_JetwaySupports");
   addInstances(THREE, group, box, metal, transforms.wheelBogie, "KPHX_Terminal4_JetwayWheelBogies");
   addInstances(THREE, group, box, yellow, transforms.lines, "KPHX_Terminal4_GateLeadIns", false);
-  addInstances(THREE, group, box, red, transforms.stops, "KPHX_Terminal4_StopBars", false);
+  addInstances(THREE, group, box, yellow, transforms.stopTees, "KPHX_Terminal4_StopTees", false);
   addInstances(THREE, group, box, white, transforms.safety, "KPHX_Terminal4_SafetyBars", false);
 
   group.userData.environmentSource = "authored-kphx-v181-terminal4";

@@ -19,8 +19,10 @@ for (const token of [
   "KPHX_Terminal4_JetwayOuterSections",
   "KPHX_Terminal4_JetwayInnerSections",
   "KPHX_Terminal4_JetwayRotundas",
+  "KPHX_Terminal4_JetwayDoorFrames",
+  "KPHX_Terminal4_JetwayDoorCollars",
   "KPHX_Terminal4_GateLeadIns",
-  "terminal4-refined-v2",
+  "terminal4-refined-v3",
 ]) {
   if (!files.builder.includes(token)) throw new Error(`KPHX builder contract missing ${token}`);
 }
@@ -30,4 +32,4 @@ for (const token of ['groundSource = "authored-kphx-v181"', "sourceJetwayCount",
 for (const token of ['dataset.kphxVersion', 'dataset.kphxDetailLevel', 'dataset.sourceJetwayCount', 'dataset.b15Anchors', 'dataset.b15CorridorMeters']) {
   if (!files.prepare.includes(token)) throw new Error(`KPHX browser evidence missing ${token}`);
 }
-console.log(`Verified refined KPHX v1.8.1 source contract: ${parkingCount} Terminal 4 stands and ${jetwayCount} telescoping jetways.`);
+console.log(`Verified refined KPHX v1.8.1 source contract: ${parkingCount} Terminal 4 stands and ${jetwayCount} telescoping jetways with framed door collars.`);
