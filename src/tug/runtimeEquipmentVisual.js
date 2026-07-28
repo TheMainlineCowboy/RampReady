@@ -19,25 +19,34 @@ function makeGaugeTexture(initialPercent = 100) {
   const render = (percent) => {
     const value = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
     context.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Round black GE-style battery gauge with the illuminated rectangular LCD seen in the PHX tug.
     context.beginPath();
     context.arc(128, 128, 118, 0, Math.PI * 2);
-    context.fillStyle = "#101615";
+    context.fillStyle = "#171b1a";
     context.fill();
-    context.lineWidth = 10;
-    context.strokeStyle = "#343b39";
+    context.lineWidth = 9;
+    context.strokeStyle = "#555b58";
     context.stroke();
 
-    context.fillStyle = "#9cff8b";
-    context.shadowColor = "#64ff62";
-    context.shadowBlur = 18;
-    context.font = "700 62px monospace";
+    context.shadowColor = "#9cbf72";
+    context.shadowBlur = 14;
+    context.fillStyle = "#9cbf72";
+    context.fillRect(55, 88, 146, 66);
+    context.shadowBlur = 0;
+    context.strokeStyle = "#657951";
+    context.lineWidth = 4;
+    context.strokeRect(55, 88, 146, 66);
+
+    context.fillStyle = "#172016";
+    context.font = "700 43px monospace";
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.fillText(`${value}%`, 128, 132);
-    context.shadowBlur = 0;
-    context.font = "700 22px sans-serif";
-    context.fillStyle = "#a7b4ad";
-    context.fillText("BATTERY", 128, 188);
+    context.fillText(`${value}%`, 128, 121);
+
+    context.font = "700 20px sans-serif";
+    context.fillStyle = "#aeb7b0";
+    context.fillText("BATTERY", 128, 190);
     texture.needsUpdate = true;
   };
 
@@ -70,51 +79,52 @@ function makeStandupControls(rig) {
 
   const panel = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.36, 0.035), silver);
   panel.name = "Standup_DashboardPanel";
-  panel.position.set(0.57, 1.12, -0.095);
+  panel.position.set(0.61, 1.17, -0.095);
   panel.castShadow = true;
   panel.receiveShadow = true;
   group.add(panel);
 
   const wheel = new THREE.Group();
   wheel.name = "Standup_SteeringWheel";
-  wheel.position.set(0.65, 1.15, -0.155);
+  wheel.position.set(0.63, 1.16, -0.155);
 
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.295, 0.022, 12, 48), dark);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.235, 0.019, 12, 48), dark);
   ring.castShadow = true;
   wheel.add(ring);
 
   for (const angle of [Math.PI / 2, Math.PI / 2 + (Math.PI * 2) / 3, Math.PI / 2 + (Math.PI * 4) / 3]) {
-    const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.023, 0.265, 0.023), dark);
-    spoke.position.set(Math.cos(angle) * 0.132, Math.sin(angle) * 0.132, 0);
+    const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.019, 0.205, 0.019), dark);
+    spoke.position.set(Math.cos(angle) * 0.102, Math.sin(angle) * 0.102, 0);
     spoke.rotation.z = angle - Math.PI / 2;
     spoke.castShadow = true;
     wheel.add(spoke);
   }
 
-  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.07, 24), dark);
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.043, 0.043, 0.064, 24), dark);
   hub.rotation.x = Math.PI / 2;
   hub.position.z = -0.012;
   hub.castShadow = true;
   wheel.add(hub);
 
-  const knobAngle = -Math.PI / 2.7;
+  // The real spinner sits near six o'clock in the supplied close-up reference.
+  const knobAngle = -Math.PI / 2;
   const knob = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.027, 0.027, 0.105, 18),
+    new THREE.CylinderGeometry(0.025, 0.025, 0.102, 18),
     new THREE.MeshStandardMaterial({ color: 0x24272a, roughness: 0.68, metalness: 0.18 }),
   );
   knob.rotation.x = Math.PI / 2;
-  knob.position.set(Math.cos(knobAngle) * 0.248, Math.sin(knobAngle) * 0.248, -0.06);
+  knob.position.set(Math.cos(knobAngle) * 0.198, Math.sin(knobAngle) * 0.198, -0.055);
   knob.castShadow = true;
   wheel.add(knob);
   group.add(wheel);
 
   const gauge = makeGaugeTexture(100);
   const gaugeMesh = new THREE.Mesh(
-    new THREE.CircleGeometry(0.077, 40),
+    new THREE.CircleGeometry(0.070, 40),
     new THREE.MeshBasicMaterial({ map: gauge.texture, transparent: true, toneMapped: false }),
   );
   gaugeMesh.name = "Standup_BatteryGauge";
-  gaugeMesh.position.set(0.79, 1.05, -0.118);
+  gaugeMesh.position.set(0.90, 1.12, -0.118);
   group.add(gaugeMesh);
 
   // The right-hand standing platform and padded guard are visible at the edge of the
@@ -144,6 +154,7 @@ function makeStandupControls(rig) {
   rig.root.userData.standupControlGroup = group;
   rig.root.userData.standupSteeringWheel = wheel;
   rig.root.userData.standupBatteryGauge = gaugeMesh;
+  rig.root.userData.batteryPercent = 100;
   return group;
 }
 
