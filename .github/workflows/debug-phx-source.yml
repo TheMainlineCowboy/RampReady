@@ -8,6 +8,11 @@ on:
       - '.github/workflows/debug-phx-source.yml'
       - 'scripts/fetch-phx-freeware-source.mjs'
       - 'tools/kphx/build_exact_unmlobo_kphx.py'
+  pull_request:
+    paths:
+      - '.github/workflows/debug-phx-source.yml'
+      - 'scripts/fetch-phx-freeware-source.mjs'
+      - 'tools/kphx/build_exact_unmlobo_kphx.py'
   workflow_dispatch:
 
 concurrency:
