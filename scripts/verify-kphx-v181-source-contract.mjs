@@ -5,6 +5,7 @@ const files = {
   b: fs.readFileSync("src/environment/kphxV181/concourseB.js", "utf8"),
   terminal: fs.readFileSync("src/environment/authoredTerminal4Visual.js", "utf8"),
   ground: fs.readFileSync("src/environment/authoredKphxGround.js", "utf8"),
+  exactGround: fs.readFileSync("src/environment/authoredUnmloboKphxGround.js", "utf8"),
   photo: fs.readFileSync("src/environment/authoredKphxPhotoGround.js", "utf8"),
   photoExtractor: fs.readFileSync("scripts/extract-phx-photo.cpp", "utf8"),
   photoBuilder: fs.readFileSync("scripts/build-phx-photo-mosaic.py", "utf8"),
@@ -48,15 +49,23 @@ for (const token of [
   "recordOffset: 146014",
   "latitude: 33.435617946088314",
   "longitude: -111.99794411659241",
+  "legacySourceA1",
   "parkingIndex: 32",
   "latitude: 33.43653056770563",
   "longitude: -111.99864059686661",
-  'position: Object.freeze([-101.59257372668444, 0.035, 70.90086550233441])',
+  "modernSourceA1",
+  "parkingIndex: 43",
+  "latitude: 33.436546325683594",
+  "longitude: -111.99876129627228",
+  "headingDegrees: 270.4908752441406",
+  "north: -1.7541700827164473",
+  "east: 11.212459754837063",
+  'position: Object.freeze([-103.34674380940088, 0.035, 82.11332525717148])',
   "rotationYDegrees: 90",
   'scale: Object.freeze([-1, 1, 1])',
   "texture-manifest.json",
   "pinned-authored-source-textures-v1",
-  "terminal4-authored-textured-v2-exact-a1",
+  "terminal4-authored-textured-v3-modern-a1",
   "nearestHorizontalVertexDistance",
   'environmentSource = "authored-phx-terminal4-textured"',
 ]) {
@@ -87,10 +96,34 @@ for (const token of [
   "kphxDetailLevel",
   'detailLevel: "terminal4-authored-textured-v2-exact-a1"',
 ]) {
-  if (!files.ground.includes(token)) throw new Error(`KPHX runtime contract missing ${token}`);
+  if (!files.ground.includes(token)) throw new Error(`Current KPHX ground contract missing ${token}`);
 }
 if (files.ground.includes("buildKphxV181Terminal4")) throw new Error("Procedural box-built Terminal 4 must not be installed over the authored airport");
 if (files.ground.includes("trainingAircraftHeadingDegrees -")) throw new Error("A1-local ground must not be rotated a second time");
+
+for (const token of [
+  'sourceArchive: "unmlobo-kphx1-8-1_Mu9aq.zip"',
+  'sourceArchiveSha256: "d118f396081b5faabc81daf3786a0c56e3c0f7b4c9b7d6cbe7ce13c10efe05bc"',
+  'sourceBglSha256: "1ea4978b5a89ecf5efebe522c9837e9d89de6f7a45dc4e99bfe161a8343ed2a2"',
+  'anchorParkingIndex: 43',
+  'anchorLongitude: -111.99876129627228',
+  'anchorLatitude: 33.436546325683594',
+  'anchorHeadingDegrees: 270.4908752441406',
+  'detailLevel: "unmlobo-v181-exact-ground-markings-modern-a1"',
+  'sourceAprons: 927',
+  'sourcePaintedLines: 1184',
+  'sourceJetways: 112',
+  'sourceLibraryObjectPlacements: 364',
+  'sourceMaterials: 86',
+  'models/kphx-v181-exact/',
+  'authored.rotation.y = 0',
+  'groundSource = "unmlobo-kphx-v181-exact"',
+]) {
+  if (!files.exactGround.includes(token)) throw new Error(`Exact unmlobo ground loader missing ${token}`);
+}
+if (files.exactGround.includes("BoxGeometry") || files.exactGround.includes("PlaneGeometry")) {
+  throw new Error("Exact unmlobo ground loader must not generate substitute geometry");
+}
 
 for (const token of [
   "phx-airport-photo.webp",
@@ -147,4 +180,4 @@ for (const token of [
 ]) {
   if (!files.prepare.includes(token)) throw new Error(`KPHX browser evidence missing ${token}`);
 }
-console.log(`Verified source-only KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source jetway placements, exact original ADEX A1 placement, real MDLX geometry, pinned source textures, 199-tile full-airport aerial, unrotated A1-local ground and no generated airport overlay.`);
+console.log(`Verified source-only KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source jetway placements, modern A1 registration, real MDLX geometry, exact unmlobo ground-loader identity, pinned source textures, 199-tile full-airport aerial and no generated airport overlay.`);
