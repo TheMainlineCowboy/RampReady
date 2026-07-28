@@ -28,9 +28,12 @@ for (const forbiddenToken of [
   "simulator-detail-a1-v1",
   "a1FineDetailMeshes",
 ]) {
-  if ((files.package + files.prepare + files.browserTest).includes(forbiddenToken)) {
+  if ((files.package + files.prepare).includes(forbiddenToken)) {
     throw new Error(`Procedural KPHX detail path remains active: ${forbiddenToken}`);
   }
+}
+if (!files.browserTest.includes("simulatorDetailSource: null") || !files.browserTest.includes("fineDetailMeshes: null")) {
+  throw new Error("Browser verification must explicitly reject the generated KPHX detail overlay");
 }
 
 for (const token of ['"g":"A1"', '"g":"B15L"', '"g":"B15M"']) {
