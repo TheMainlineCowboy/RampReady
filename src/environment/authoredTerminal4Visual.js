@@ -3,6 +3,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 export const AUTHORED_TERMINAL4_PROFILE = Object.freeze({
   source: "TheMainlineCowboy/SkyHarborPhx@2e6642778c9c88eac6a82b21063763cc78be7cfe/scenery/term4.BGL",
   placementSource: "TheMainlineCowboy/SkyHarborPhx@2e6642778c9c88eac6a82b21063763cc78be7cfe/scenery/KPHX_ADEX.BGL",
+  modernAnchorSource: "unmlobo-kphx1-8-1_Mu9aq.zip/scenery/world/scenery/kphx-airport.bgl",
   modelName: "phx_term400",
   modelGuid: "{7f197eb0-33ea-419f-9658-a29c9046d87f}",
   triangleCount: 11138,
@@ -18,22 +19,32 @@ export const AUTHORED_TERMINAL4_PROFILE = Object.freeze({
     headingDegrees: 0,
     scale: 1,
   }),
-  sourceA1: Object.freeze({
+  legacySourceA1: Object.freeze({
     parkingIndex: 32,
     latitude: 33.43653056770563,
     longitude: -111.99864059686661,
     headingDegrees: 269.975341796875,
   }),
-  // Decoded from the original KPHX_ADEX placement record relative to its
-  // authored Gate A1 parking position. The airport ground adds 6.2 m on Z so
-  // the model receives the same offset. FSX model X=east and Z=north become
-  // browser Z=east and X=north through the reflected 90-degree axis swap.
-  position: Object.freeze([-101.59257372668444, 0.035, 70.90086550233441]),
+  modernSourceA1: Object.freeze({
+    parkingIndex: 43,
+    latitude: 33.436546325683594,
+    longitude: -111.99876129627228,
+    headingDegrees: 270.4908752441406,
+  }),
+  sourceAnchorDeltaMeters: Object.freeze({
+    north: -1.7541700827164473,
+    east: 11.212459754837063,
+  }),
+  // The terminal mesh and its original library-object placement are retained
+  // byte-for-byte. Only the coordinate origin changes: the legacy A1-relative
+  // placement is translated by the measured legacy-A1 to modern-A1 delta. The
+  // 6.2 m scene Z offset remains identical to the aircraft/ground registration.
+  position: Object.freeze([-103.34674380940088, 0.035, 82.11332525717148]),
   rotationYDegrees: 90,
   scale: Object.freeze([-1, 1, 1]),
-  placementAuthority: "decoded original KPHX_ADEX library-object placement relative to decoded original Gate A1",
+  placementAuthority: "decoded legacy Terminal 4 library-object placement translated to the exact unmlobo v1.8.1 Gate A1 coordinate",
   materialPass: "pinned-authored-source-textures-v1",
-  detailLevel: "terminal4-authored-textured-v2-exact-a1",
+  detailLevel: "terminal4-authored-textured-v3-modern-a1",
 });
 
 function textureReference(material) {
