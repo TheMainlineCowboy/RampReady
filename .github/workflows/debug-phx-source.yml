@@ -13,7 +13,7 @@ permissions:
 jobs:
   package-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
@@ -21,12 +21,26 @@ jobs:
           repository: TheMainlineCowboy/SkyHarborPhx
           ref: 2e6642778c9c88eac6a82b21063763cc78be7cfe
           path: skyharbor-source
+      - uses: actions/checkout@v4
+        with:
+          repository: seanisom/flightsimlib
+          ref: fc17bec8e20770da3344eea10f25ecac281ee09f
+          path: flightsimlib-source
       - uses: actions/setup-node@v4
         with:
           node-version: 24
       - name: Materialize source
         run: node scripts/materialize-phx-terminal4.mjs
-      - name: Upload complete PHX source and browser assets
+      - name: Inventory terrain decoder source
+        shell: bash
+        run: |
+          set -euo pipefail
+          find flightsimlib-source -maxdepth 4 -type f -printf '%P\n' | sort > flightsimlib-files.txt
+          grep -RIl --exclude-dir=.git -E 'int main|BGLDEC|Bitmap|TerrainPhoto|TerrainTexture|Decompress' flightsimlib-source > flightsimlib-candidates.txt || true
+          sed -n '1,240p' flightsimlib-files.txt
+          echo '--- candidate decoder files ---'
+          cat flightsimlib-candidates.txt
+      - name: Upload PHX and terrain decoder sources
         uses: actions/upload-artifact@v4
         with:
           name: phx-source-placement-${{ github.sha }}
@@ -36,4 +50,7 @@ jobs:
             skyharbor-source/*.dds
             .cache/phx-terminal4-source/term4.BGL
             public/models/phx-terminal4/
+            flightsimlib-source/
+            flightsimlib-files.txt
+            flightsimlib-candidates.txt
           retention-days: 2
