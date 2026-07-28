@@ -6,12 +6,14 @@ const MOBILE_VIEWPORT = { width: 412, height: 915 };
 const ORBIT_DRAG_PX = 220;
 const MODEL_SUFFIXES = ["/models/crj700-user.glb", "/models/crj700-mobile.glb"];
 const STANDUP_SUFFIX = "/models/standup-tug.glb";
+const TERMINAL4_SUFFIXES = ["/models/phx-terminal4/terminal4.gltf", "/models/phx-terminal4/terminal4.bin"];
 const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
 
 async function waitForRealAircraft(page) {
   const runtimeErrors = [];
   const modelResponses = [];
   const standupResponses = [];
+  const terminal4Responses = [];
 
   page.on("console", (message) => {
     if (message.type() === "error") runtimeErrors.push(message.text());
@@ -21,6 +23,7 @@ async function waitForRealAircraft(page) {
     const pathname = new URL(response.url()).pathname;
     if (MODEL_SUFFIXES.some((suffix) => pathname.endsWith(suffix))) modelResponses.push(response);
     if (pathname.endsWith(STANDUP_SUFFIX)) standupResponses.push(response);
+    if (TERMINAL4_SUFFIXES.some((suffix) => pathname.endsWith(suffix))) terminal4Responses.push(response);
   });
 
   await page.goto(TARGET_URL, { waitUntil: "networkidle" });
@@ -43,6 +46,10 @@ async function waitForRealAircraft(page) {
   const canvas = page.locator("canvas.trainerCanvas");
   await expect(canvas).toBeVisible();
   await expect.poll(
+    async () => canvas.getAttribute("data-environment-source"),
+    { timeout: 30_000, intervals: [250, 500, 1_000] },
+  ).toBe("authored-phx-terminal4");
+  await expect.poll(
     async () => canvas.getAttribute("data-tug-source"),
     { timeout: 30_000, intervals: [250, 500, 1_000] },
   ).toBe("authored-standup");
@@ -64,10 +71,16 @@ async function waitForRealAircraft(page) {
     () => modelResponses.some((response) => response.status() === 200),
     { timeout: 20_000 },
   ).toBe(true);
+  for (const suffix of TERMINAL4_SUFFIXES) {
+    await expect.poll(
+      () => terminal4Responses.some((response) => new URL(response.url()).pathname.endsWith(suffix) && response.status() === 200),
+      { timeout: 20_000 },
+    ).toBe(true);
+  }
   await page.waitForTimeout(1_200);
 
   const relevantErrors = runtimeErrors.filter((message) =>
-    /CRJ700 asset load failed|Equipment model failed to load|Unexpected CRJ700 dimensions|GLTFLoader|WebGL.*shader|VALIDATE_STATUS|ReferenceError|TypeError|SyntaxError/i.test(message),
+    /CRJ700 asset load failed|Equipment model failed to load|PHX Terminal 4 failed to load|RampReady PHX Terminal 4 visual load failed|Unexpected CRJ700 dimensions|GLTFLoader|WebGL.*shader|VALIDATE_STATUS|ReferenceError|TypeError|SyntaxError/i.test(message),
   );
   expect(relevantErrors).toEqual([]);
 
@@ -86,6 +99,15 @@ async function waitForRealAircraft(page) {
   }, STANDUP_SUFFIX);
   expect(standupEntry).not.toBeNull();
   expect(Math.max(standupEntry.decodedBodySize, standupEntry.transferSize)).toBeGreaterThan(10_000);
+
+  const terminalEntries = await page.evaluate((suffixes) => suffixes.map((suffix) => {
+    const entry = performance.getEntriesByType("resource")
+      .find((resource) => new URL(resource.name).pathname.endsWith(suffix));
+    return entry ? { suffix, name: entry.name, decodedBodySize: entry.decodedBodySize, transferSize: entry.transferSize } : null;
+  }), TERMINAL4_SUFFIXES);
+  expect(terminalEntries.every(Boolean)).toBe(true);
+  expect(Math.max(terminalEntries[0].decodedBodySize, terminalEntries[0].transferSize)).toBeGreaterThan(1_000);
+  expect(Math.max(terminalEntries[1].decodedBodySize, terminalEntries[1].transferSize)).toBeGreaterThan(1_000_000);
 
   return canvas;
 }
@@ -119,6 +141,15 @@ async function orbitBy(page, dragX, dragY = 0) {
     window.dispatchEvent(new PointerEvent("pointerup", { ...held, clientX: startX + dx, clientY: startY + dy, buttons: 0 }));
   }, { dx: dragX, dy: dragY });
   await page.waitForTimeout(350);
+}
+
+async function zoomChaseOut(page) {
+  await page.evaluate(() => {
+    const canvas = document.querySelector("canvas.trainerCanvas");
+    if (!canvas) throw new Error("Three.js canvas is missing");
+    canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: 1800, bubbles: true, cancelable: true }));
+  });
+  await page.waitForTimeout(450);
 }
 
 async function inspectCompositedPng(page, payload) {
@@ -205,6 +236,15 @@ test("loads the real CRJ700 asset and captures unobstructed side evidence", asyn
   await writeCanvasEvidence(page, canvas, "test-results/crj700-left-side.png");
   await orbitBy(page, -ORBIT_DRAG_PX * 2);
   await writeCanvasEvidence(page, canvas, "test-results/crj700-right-side.png");
+});
+
+test("authored PHX Terminal 4 renders in the live chase scene", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize(EVIDENCE_VIEWPORT);
+  const canvas = await waitForRealAircraft(page);
+  await zoomChaseOut(page);
+  await prepareEvidenceFrame(page);
+  await writeCanvasEvidence(page, canvas, "test-results/phx-terminal4-authored.png");
 });
 
 test("stand-up operator view renders the dedicated wheel and battery station", async ({ page }) => {
