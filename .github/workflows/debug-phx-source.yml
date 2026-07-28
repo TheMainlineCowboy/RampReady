@@ -1,0 +1,31 @@
+name: Debug PHX source placement
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/debug-phx-source.yml'
+      - 'scripts/materialize-phx-terminal4.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Materialize source
+        run: node scripts/materialize-phx-terminal4.mjs
+      - name: Upload BGL and browser assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: phx-source-placement-${{ github.sha }}
+          path: |
+            .cache/phx-terminal4-source/term4.BGL
+            public/models/phx-terminal4/
+          retention-days: 2
