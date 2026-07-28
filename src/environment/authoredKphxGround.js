@@ -7,7 +7,8 @@ export const AUTHORED_KPHX_GROUND_PROFILE = Object.freeze({
   anchorGate: "A1",
   anchorParkingIndex: 32,
   anchorHeadingDegrees: 269.975341796875,
-  coordinateFrame: "A1-local; X=north, Y=up, Z=east",
+  trainingAircraftHeadingDegrees: 180,
+  coordinateFrame: "A1-local; X=north, Y=up, Z=east; training aircraft nose toward -Z",
   sceneOffset: Object.freeze([0, 0, 6.2]),
   taxiwayPoints: 870,
   taxiwayPaths: 1302,
@@ -39,7 +40,9 @@ export async function installAuthoredKphxGround(THREE, environment) {
   const authored = gltf.scene;
   authored.name = "PHX_KPHX_AuthoredAirportWideGround";
   authored.position.fromArray(AUTHORED_KPHX_GROUND_PROFILE.sceneOffset);
-  authored.rotation.y = THREE.MathUtils.degToRad(-AUTHORED_KPHX_GROUND_PROFILE.anchorHeadingDegrees);
+  authored.rotation.y = THREE.MathUtils.degToRad(
+    AUTHORED_KPHX_GROUND_PROFILE.trainingAircraftHeadingDegrees - AUTHORED_KPHX_GROUND_PROFILE.anchorHeadingDegrees,
+  );
   authored.traverse((node) => {
     if (!node.isMesh) return;
     node.castShadow = false;
@@ -53,6 +56,8 @@ export async function installAuthoredKphxGround(THREE, environment) {
   });
 
   const terminal4Detail = buildKphxV181Terminal4(THREE);
+  terminal4Detail.rotation.y += Math.PI;
+  terminal4Detail.userData.registration = "A1 source heading corrected to CRJ nose axis (-Z)";
   environment.add(authored, terminal4Detail);
   hideCalibrationGround(environment);
 
