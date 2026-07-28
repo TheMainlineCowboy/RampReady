@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "uploadedArchive": "unmlobo-kphx1-8-1_Mu9aq.zip",
+    "archiveBytes": 4542407,
+    "archiveSha256": "d118f396081b5faabc81daf3786a0c56e3c0f7b4c9b7d6cbe7ce13c10efe05bc",
+    "packageTitle": "KPHX - Phoenix Sky Harbor",
+    "creator": "unmlobo",
+    "packageVersion": "1.8.1",
+    "minimumGameVersion": "1.37.18",
+    "declaredDependencies": [],
+    "archiveFileCount": 275
+  },
+  "airportBgl": {
+    "path": "unmlobo-kphx/scenery/world/scenery/kphx-airport.bgl",
+    "bytes": 1050277,
+    "sha256": "1ea4978b5a89ecf5efebe522c9837e9d89de6f7a45dc4e99bfe161a8343ed2a2",
+    "airport": "KPHX",
+    "origin": {
+      "longitude": -112.01184913516045,
+      "latitude": 33.433584831655025,
+      "altitudeMeters": 104.19
+    },
+    "recordCounts": {
+      "0x11": 6,
+      "0x19": 1,
+      "0x1a": 1,
+      "0x1d": 1,
+      "0x33": 1,
+      "0x66": 1,
+      "0xce": 3,
+      "0xcf": 1184,
+      "0xd0": 927,
+      "0xd4": 1,
+      "0xd8": 10,
+      "0xd9": 666,
+      "0xde": 112,
+      "0xe7": 1
+    },
+    "decoded": {
+      "apronPolygons": 927,
+      "paintedLines": 1184,
+      "jetways": 112,
+      "airportObjectPlacements": 364,
+      "parkingStands": 186
+    },
+    "a1Anchor": {
+      "gate": "A1",
+      "longitude": -111.99876129627228,
+      "latitude": 33.436546325683594,
+      "headingDegrees": 270.4908752441406
+    }
+  },
+  "packageMaterials": {
+    "count": 86,
+    "ddsTextureCount": 87
+  },
+  "packageModelLibrary": {
+    "path": "unmlobo-kphx/scenery/kphx/KPHX-ModelLib/KPHX-ModelLib.BGL",
+    "bytes": 26954,
+    "sha256": "9569854a9905ab5010ca06c9a842954626afff0d547196f9cf403e5dfade54e0",
+    "embeddedModelCount": 1,
+    "models": [
+      {
+        "name": "KPHX-D-2",
+        "guid": "ab6fb835-1387-4823-94cb-48737a060f0c",
+        "glbBytes": 26568,
+        "vertices": 614,
+        "triangles": 360,
+        "texture": "KPHX-D-2.PNG.DDS",
+        "textureDimensions": [4096, 4096],
+        "role": "low-resolution D-concourse placeholder"
+      }
+    ]
+  },
+  "libraryObjectPlacements": {
+    "count": 364,
+    "uniqueGuids": 17,
+    "packageContainedGuids": [
+      "ab6fb835-1387-4823-94cb-48737a060f0c"
+    ],
+    "unresolvedBaseSimulatorGuids": [
+      { "guid": "0ee2004c-188a-4bb4-9675-820c0760836c", "placementCount": 2 },
+      { "guid": "1def7401-e51c-44de-b545-c7b2002e289e", "placementCount": 5 },
+      { "guid": "25486b7c-2448-4ba3-adec-5306c24d3933", "placementCount": 21 },
+      { "guid": "3bd8bd9c-e194-45d8-bcb4-5a3f2834102c", "placementCount": 96 },
+      { "guid": "3d1e2d33-090d-4cbd-91d5-9cf62fd30505", "placementCount": 1 },
+      { "guid": "43d4e862-3c41-4e16-802c-75cf609a74c2", "placementCount": 16 },
+      { "guid": "47240712-c247-4dab-b02c-1d6f779cd7e0", "placementCount": 55 },
+      { "guid": "541bb742-d6e7-43c8-837b-64562cfd5d38", "placementCount": 46 },
+      { "guid": "6d503eb6-f902-4249-951c-608989e705b6", "placementCount": 2 },
+      { "guid": "8ccca24b-825f-402d-8d62-af62d35db4f4", "placementCount": 13 },
+      { "guid": "b90a0bfc-d065-4dfa-88e7-0b73f2ca32d0", "placementCount": 44 },
+      { "guid": "c233e165-298f-4606-97ab-4f22dd8eb1b2", "placementCount": 5 },
+      { "guid": "d8115312-6367-4512-a0a6-1a5cbefbca66", "placementCount": 12 },
+      { "guid": "da5a4fbd-80b7-4fea-9728-10dce4d2ef5f", "placementCount": 1 },
+      { "guid": "dd5801b6-dfaf-4b88-bc77-cfd13c542c9a", "placementCount": 40 },
+      { "guid": "f40f2068-8fed-4c63-9a50-d796353ffe28", "placementCount": 4 }
+    ]
+  },
+  "fidelityGate": {
+    "proceduralReplacementAllowed": false,
+    "guessedGeometryAllowed": false,
+    "providedArchiveContainsTerminal4Mesh": false,
+    "providedArchiveContainsA1JetwayMesh": false,
+    "providedArchiveContainsFullAirportBuildingSet": false,
+    "exactlyImportableNow": [
+      "all compiled airport vector geometry",
+      "all 86 custom decal materials and textures",
+      "all 1184 painted-line paths",
+      "all 927 apron/polygon records",
+      "all 112 jetway placement records",
+      "all 364 library-object placements",
+      "the single embedded KPHX-D-2 custom model"
+    ],
+    "missingForSameSimulatorVisuals": [
+      "Microsoft Flight Simulator base/default KPHX building assets",
+      "Microsoft Flight Simulator stock jetway model used by ASO_Jetway",
+      "Microsoft Flight Simulator stock library-object meshes for 16 referenced GUIDs",
+      "base-simulator material assets referenced by the compiled airport"
+    ],
+    "status": "blocked-on-base-simulator-assets; no substitute may be published"
+  }
+}
