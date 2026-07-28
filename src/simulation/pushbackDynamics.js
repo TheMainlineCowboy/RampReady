@@ -47,6 +47,8 @@ export function stepPushbackDynamics(state, command, dt) {
   const direction = command.direction === -1 ? -1 : 1;
   const brake = Boolean(command.brake);
   const steerInput = clamp(finite(command.steer, 0), -1, 1);
+  const steeringMode = command.steeringMode === "rear" ? "rear" : "front";
+  const wheelbase = Math.max(0.5, finite(command.wheelbase, TUG_WHEELBASE));
   const maxSpeed = connected ? TOW_MAX_SPEED : FREE_MAX_SPEED;
   const acceleration = connected ? TOW_ACCELERATION : FREE_ACCELERATION;
 
@@ -71,9 +73,21 @@ export function stepPushbackDynamics(state, command, dt) {
 
   if (limited && Math.sign(speed) === Math.sign(targetSpeed)) speed = moveToward(speed, 0, SERVICE_BRAKE_DECELERATION * 0.65 * safeDt);
 
-  const tugYaw = normalizeAngle(finite(state.tugYaw) + (speed / TUG_WHEELBASE) * Math.tan(steerAngle) * safeDt);
-  const tugX = finite(state.tugX) + Math.sin(tugYaw) * speed * safeDt;
-  const tugZ = finite(state.tugZ) + Math.cos(tugYaw) * speed * safeDt;
+  let tugYaw;
+  let travelYaw;
+  if (steeringMode === "rear") {
+    const rearAxleAngle = -steerAngle;
+    const slipAngle = Math.atan(0.5 * Math.tan(rearAxleAngle));
+    const yawRate = -(speed / wheelbase) * Math.cos(slipAngle) * Math.tan(rearAxleAngle);
+    tugYaw = normalizeAngle(finite(state.tugYaw) + yawRate * safeDt);
+    travelYaw = tugYaw + slipAngle;
+  } else {
+    tugYaw = normalizeAngle(finite(state.tugYaw) + (speed / wheelbase) * Math.tan(steerAngle) * safeDt);
+    travelYaw = tugYaw;
+  }
+
+  const tugX = finite(state.tugX) + Math.sin(travelYaw) * speed * safeDt;
+  const tugZ = finite(state.tugZ) + Math.cos(travelYaw) * speed * safeDt;
 
   if (!connected) {
     return {

@@ -1,5 +1,10 @@
 import * as THREE from "three";
-import { LEKTRO_RIG_PROFILE, createProceduralLektroRig, validateTugRig } from "../src/tug/lektroRig.js";
+import {
+  LEKTRO_RIG_PROFILE,
+  STANDUP_RIG_PROFILE,
+  createProceduralLektroRig,
+  validateTugRig,
+} from "../src/tug/lektroRig.js";
 
 const rig = createProceduralLektroRig(THREE);
 const failures = validateTugRig(rig);
@@ -50,10 +55,24 @@ for (const required of ["CaptureAnchor", "OperatorEye", "OperatorLook", "FrontSt
   if (!anchorNames.has(required)) failures.push(`missing required named node ${required}`);
 }
 
+const standup = createProceduralLektroRig(THREE, "standup-tug");
+failures.push(...validateTugRig(standup).map((failure) => `stand-up ${failure}`));
+if (standup.root.name !== "RampReady_StandupPhysicsRig") failures.push(`unexpected stand-up root name ${standup.root.name}`);
+if (standup.profile !== STANDUP_RIG_PROFILE) failures.push("stand-up rig did not select the stand-up profile");
+if (standup.profile.steeringMode !== "rear") failures.push("stand-up steering mode is not rear-wheel steering");
+if (standup.operatorEye.position.x < 0.4) failures.push("stand-up operator eye is not on the right-hand platform");
+if (standup.operatorEye.position.y < 1.55) failures.push("stand-up operator eye is too low for the standing driving position");
+if (standup.operatorEye.position.z < -1.3 || standup.operatorEye.position.z > -0.7) failures.push("stand-up operator eye is outside the calibrated standing-platform depth");
+standup.setSteering(0.31);
+for (const pivot of standup.steeringPivots) {
+  if (!pivot.name.startsWith("RearSteer_")) failures.push(`${pivot.name} is not a rear steering pivot`);
+  if (Math.abs(pivot.rotation.y + 0.31) > 1e-9) failures.push(`${pivot.name} did not counter-steer the rear axle`);
+}
+
 if (failures.length) {
-  console.error("RampReady Lektro runtime-rig verification failed:");
+  console.error("RampReady equipment runtime-rig verification failed:");
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exit(1);
 }
 
-console.log(`RampReady Lektro runtime-rig verification passed: ${rig.rollingWheels.length} wheels, ${rig.steeringPivots.length} steering pivots, capture ${rig.profile.cradleOffset.toFixed(2)} m, lift ${rig.profile.liftTravel.toFixed(2)} m.`);
+console.log(`RampReady equipment runtime-rig verification passed: Lektro front-steer and stand-up rear-steer profiles both expose validated wheels, anchors, operator positions and capture geometry.`);

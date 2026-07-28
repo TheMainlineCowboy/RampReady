@@ -47,6 +47,12 @@ async function waitForRealAircraft(page) {
     { timeout: 30_000, intervals: [250, 500, 1_000] },
   ).toBe("authored-standup");
   await expect.poll(
+    async () => canvas.getAttribute("data-operator-controls"),
+    { timeout: 30_000, intervals: [250, 500, 1_000] },
+  ).toBe("ready");
+  await expect(canvas).toHaveAttribute("data-steering-mode", "rear");
+  await expect(canvas).toHaveAttribute("data-operator-side", "right");
+  await expect.poll(
     async () => canvas.getAttribute("data-aircraft-source"),
     { timeout: 30_000, intervals: [250, 500, 1_000] },
   ).not.toBe("loading");
@@ -115,19 +121,70 @@ async function orbitBy(page, dragX, dragY = 0) {
   await page.waitForTimeout(350);
 }
 
+async function inspectCompositedPng(page, payload) {
+  return page.evaluate(async (base64) => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${base64}`;
+    await image.decode();
+    const sample = document.createElement("canvas");
+    sample.width = 64;
+    sample.height = 64;
+    const context = sample.getContext("2d", { willReadFrequently: true });
+    context.drawImage(image, 0, 0, sample.width, sample.height);
+    const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+    let minimum = 255;
+    let maximum = 0;
+    let nonBlack = 0;
+    let sum = 0;
+    let sumSquares = 0;
+    const buckets = new Set();
+    const count = pixels.length / 4;
+    for (let index = 0; index < pixels.length; index += 4) {
+      const luma = Math.round(0.2126 * pixels[index] + 0.7152 * pixels[index + 1] + 0.0722 * pixels[index + 2]);
+      minimum = Math.min(minimum, luma);
+      maximum = Math.max(maximum, luma);
+      if (luma > 12) nonBlack += 1;
+      sum += luma;
+      sumSquares += luma * luma;
+      buckets.add(`${pixels[index] >> 4}:${pixels[index + 1] >> 4}:${pixels[index + 2] >> 4}`);
+    }
+    const mean = sum / count;
+    const variance = Math.max(0, sumSquares / count - mean * mean);
+    return {
+      nonBlackRatio: nonBlack / count,
+      dynamicRange: maximum - minimum,
+      standardDeviation: Math.sqrt(variance),
+      uniqueColorBuckets: buckets.size,
+    };
+  }, payload.toString("base64"));
+}
+
 async function writeCanvasEvidence(page, canvas, path) {
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-  const dataUrl = await canvas.evaluate((element) => element.toDataURL("image/png"));
-  const marker = "base64,";
-  const markerIndex = dataUrl.indexOf(marker);
-  if (markerIndex < 0) throw new Error("Canvas evidence did not return a PNG data URL");
-  const payload = Buffer.from(dataUrl.slice(markerIndex + marker.length), "base64");
+  const box = await canvas.boundingBox();
+  expect(box, `${path} canvas must have bounds`).not.toBeNull();
+  const payload = await page.screenshot({
+    type: "png",
+    clip: {
+      x: Math.max(0, Math.floor(box.x)),
+      y: Math.max(0, Math.floor(box.y)),
+      width: Math.floor(box.width),
+      height: Math.floor(box.height),
+    },
+    animations: "disabled",
+    caret: "hide",
+  });
   expect(payload.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
   expect(payload.byteLength).toBeGreaterThan(5_000);
   const width = payload.readUInt32BE(16);
   const height = payload.readUInt32BE(20);
   expect(width).toBeGreaterThanOrEqual(400);
   expect(height).toBeGreaterThanOrEqual(800);
+  const pixelStats = await inspectCompositedPng(page, payload);
+  expect(pixelStats.nonBlackRatio).toBeGreaterThan(0.3);
+  expect(pixelStats.dynamicRange).toBeGreaterThan(24);
+  expect(pixelStats.standardDeviation).toBeGreaterThan(6);
+  expect(pixelStats.uniqueColorBuckets).toBeGreaterThan(12);
   await writeFile(path, payload);
 }
 
@@ -148,6 +205,18 @@ test("loads the real CRJ700 asset and captures unobstructed side evidence", asyn
   await writeCanvasEvidence(page, canvas, "test-results/crj700-left-side.png");
   await orbitBy(page, -ORBIT_DRAG_PX * 2);
   await writeCanvasEvidence(page, canvas, "test-results/crj700-right-side.png");
+});
+
+test("stand-up operator view renders the dedicated wheel and battery station", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize(EVIDENCE_VIEWPORT);
+  const canvas = await waitForRealAircraft(page);
+  const view = page.locator(".rr-view-select");
+  await view.selectOption("driver");
+  await expect(view).toHaveValue("driver");
+  await page.waitForTimeout(900);
+  await prepareEvidenceFrame(page);
+  await writeCanvasEvidence(page, canvas, "test-results/standup-operator-view.png");
 });
 
 test("mobile controls preserve a clear simulator viewport", async ({ page }) => {

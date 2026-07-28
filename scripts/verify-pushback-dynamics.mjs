@@ -33,6 +33,28 @@ for (const dt of [1 / 30, 1 / 60, 1 / 120]) {
   if (Math.abs(turn.state.aircraftYaw) >= Math.abs(turn.state.tugYaw)) failures.push(`${dt}s aircraft copied or exceeded tug heading`);
   if (turn.maxArticulation > JACKKNIFE_LIMIT + 1e-9) failures.push(`${dt}s articulation exceeded hard limit`);
 
+  const rearTurn = simulate(dt, 8, (t) => ({
+    connected: false,
+    throttle: 0.6,
+    direction: 1,
+    steer: t < 1 ? 0 : 0.72,
+    brake: false,
+    steeringMode: "rear",
+    wheelbase: 2.7,
+  }));
+  const frontTurn = simulate(dt, 8, (t) => ({
+    connected: false,
+    throttle: 0.6,
+    direction: 1,
+    steer: t < 1 ? 0 : 0.72,
+    brake: false,
+    steeringMode: "front",
+    wheelbase: 2.7,
+  }));
+  if (Math.sign(rearTurn.state.tugYaw) !== Math.sign(frontTurn.state.tugYaw)) failures.push(`${dt}s rear steering reversed the driver's steering-wheel sense`);
+  if (Math.abs(rearTurn.state.tugX - frontTurn.state.tugX) < 0.15) failures.push(`${dt}s rear steering did not produce a distinct lateral path`);
+  if (Math.abs(rearTurn.state.tugYaw) < 0.08) failures.push(`${dt}s rear-steer tug failed to turn`);
+
   const stop = simulate(dt, 9, (t) => ({ connected: true, throttle: t < 5 ? 1 : 0, direction: 1, steer: 0, brake: t >= 5 }));
   if (Math.abs(stop.state.speed) > 0.015) failures.push(`${dt}s service brake failed to stop: ${stop.state.speed}`);
 }
@@ -51,4 +73,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`RampReady pushback dynamics verification passed: tow speed ${run60.maxSpeed.toFixed(2)} m/s, tug yaw ${(run60.state.tugYaw * 180 / Math.PI).toFixed(1)}°, aircraft yaw ${(run60.state.aircraftYaw * 180 / Math.PI).toFixed(1)}°, articulation ${(run60.maxArticulation * 180 / Math.PI).toFixed(1)}°.`);
+console.log(`RampReady pushback dynamics verification passed: front-steer towing remains stable and stand-up rear-steer handling produces its own lateral path while preserving intuitive steering-wheel direction.`);
