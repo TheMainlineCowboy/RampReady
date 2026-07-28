@@ -2,22 +2,38 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 export const AUTHORED_TERMINAL4_PROFILE = Object.freeze({
   source: "TheMainlineCowboy/SkyHarborPhx@2e6642778c9c88eac6a82b21063763cc78be7cfe/scenery/term4.BGL",
+  placementSource: "TheMainlineCowboy/SkyHarborPhx@2e6642778c9c88eac6a82b21063763cc78be7cfe/scenery/KPHX_ADEX.BGL",
   modelName: "phx_term400",
+  modelGuid: "{7f197eb0-33ea-419f-9658-a29c9046d87f}",
   triangleCount: 11138,
   partCount: 19,
   sourceBounds: Object.freeze({
     min: Object.freeze([-361.947998046875, 0, -213.22799682617188]),
     max: Object.freeze([488.2799987792969, 30.215999603271484, 266.8240051269531]),
   }),
-  // The legacy MDLX uses X=east/west and Z=north/south in the opposite
-  // handedness from the extracted A1-local browser ground. This transform
-  // registers the real source terminal to A1 without rebuilding it from boxes.
-  position: Object.freeze([-60, 0.035, 71.2]),
+  sourcePlacement: Object.freeze({
+    recordOffset: 146014,
+    latitude: 33.435617946088314,
+    longitude: -111.99794411659241,
+    headingDegrees: 0,
+    scale: 1,
+  }),
+  sourceA1: Object.freeze({
+    parkingIndex: 32,
+    latitude: 33.43653056770563,
+    longitude: -111.99864059686661,
+    headingDegrees: 269.975341796875,
+  }),
+  // Decoded from the original KPHX_ADEX placement record relative to its
+  // authored Gate A1 parking position. The airport ground adds 6.2 m on Z so
+  // the model receives the same offset. FSX model X=east and Z=north become
+  // browser Z=east and X=north through the reflected 90-degree axis swap.
+  position: Object.freeze([-101.59257372668444, 0.035, 70.90086550233441]),
   rotationYDegrees: 90,
   scale: Object.freeze([-1, 1, 1]),
-  placementAuthority: "registered directly to decoded KPHX ADEX A1-local coordinates",
+  placementAuthority: "decoded original KPHX_ADEX library-object placement relative to decoded original Gate A1",
   materialPass: "pinned-authored-source-textures-v1",
-  detailLevel: "terminal4-authored-textured-v1",
+  detailLevel: "terminal4-authored-textured-v2-exact-a1",
 });
 
 function textureReference(material) {
@@ -127,6 +143,11 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   authored.updateMatrixWorld(true);
   environment.add(authored);
 
+  const terminalBounds = new THREE.Box3().setFromObject(authored);
+  const a1Point = new THREE.Vector3(0, 0, 6.2);
+  const nearestTerminalPoint = terminalBounds.clampPoint(a1Point, new THREE.Vector3());
+  const a1BoundsDistance = nearestTerminalPoint.distanceTo(a1Point);
+
   environment.userData.environmentSource = "authored-phx-terminal4-textured";
   environment.userData.authoredTerminal4Url = `${baseUrl}terminal4.gltf`;
   environment.userData.authoredTerminal4 = authored;
@@ -138,5 +159,11 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4ExactTextureCount = manifest.exactTextureCount;
   environment.userData.authoredTerminal4FallbackTextureCount = manifest.fallbackTextureCount;
   environment.userData.authoredTerminal4TexturedMaterialCount = texturedMaterialCount;
+  environment.userData.authoredTerminal4Position = [...AUTHORED_TERMINAL4_PROFILE.position];
+  environment.userData.authoredTerminal4A1BoundsDistance = a1BoundsDistance;
+  environment.userData.authoredTerminal4Bounds = {
+    min: terminalBounds.min.toArray(),
+    max: terminalBounds.max.toArray(),
+  };
   return authored;
 }
