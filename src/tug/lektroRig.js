@@ -4,9 +4,25 @@ export const LEKTRO_RIG_PROFILE = Object.freeze({
   trackWidth: 2.28,
   cradleOffset: 3.45,
   operatorEye: Object.freeze([-0.45, 1.35, -2.15]),
+  operatorLook: Object.freeze([-0.45, 1.2, 8]),
   captureAnchor: Object.freeze([0, 0.34, 3.45]),
   liftTravel: 0.24,
   bodyBounds: Object.freeze([2.35, 1.45, 5.5]),
+  steeringMode: "front",
+});
+
+export const STANDUP_RIG_PROFILE = Object.freeze({
+  id: "standup-authored-reference",
+  wheelbase: 2.7,
+  trackWidth: 1.32,
+  cradleOffset: 3.45,
+  // Operator stands on the right-hand platform, just aft of the dash, facing the capture end.
+  operatorEye: Object.freeze([0.46, 1.52, -0.38]),
+  operatorLook: Object.freeze([0.38, 1.16, 3.2]),
+  captureAnchor: Object.freeze([0, 0.34, 3.45]),
+  liftTravel: 0.24,
+  bodyBounds: Object.freeze([1.4161, 1.6721, 4.5855]),
+  steeringMode: "rear",
 });
 
 function makeMaterial(THREE, color, roughness = 0.62, metalness = 0.05) {
@@ -43,9 +59,14 @@ function namedAnchor(THREE, name, position) {
   return anchor;
 }
 
-export function createProceduralLektroRig(THREE) {
+export function getTugRigProfile(equipmentId) {
+  return equipmentId === "standup-tug" ? STANDUP_RIG_PROFILE : LEKTRO_RIG_PROFILE;
+}
+
+export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
+  const profile = getTugRigProfile(equipmentId);
   const root = new THREE.Group();
-  root.name = "RampReady_LektroRig";
+  root.name = equipmentId === "standup-tug" ? "RampReady_StandupPhysicsRig" : "RampReady_LektroRig";
 
   const visual = new THREE.Group();
   visual.name = "TugVisual";
@@ -58,38 +79,45 @@ export function createProceduralLektroRig(THREE) {
   const cradleLift = new THREE.Group();
   cradleLift.name = "CradleLift";
   cradleLift.add(box(THREE, 1.8, 0.1, 0.95, 0x111318, 0, 0.22, 2.75));
-  cradleLift.add(box(THREE, 1.7, 0.12, 0.9, 0x111318, 0, 0.34, LEKTRO_RIG_PROFILE.cradleOffset));
+  cradleLift.add(box(THREE, 1.7, 0.12, 0.9, 0x111318, 0, 0.34, profile.cradleOffset));
   for (const side of [-1, 1]) {
-    cradleLift.add(box(THREE, 0.16, 0.56, 0.85, 0xffcc00, side * 0.62, 0.55, LEKTRO_RIG_PROFILE.cradleOffset));
+    cradleLift.add(box(THREE, 0.16, 0.56, 0.85, 0xffcc00, side * 0.62, 0.55, profile.cradleOffset));
   }
   visual.add(cradleLift);
 
   const rollingWheels = [];
   const steeringPivots = [];
   for (const side of [-1, 1]) {
-    const rear = cylinder(THREE, 0.55, 0.42, 0x0c0d0f, side * 1.14, 0.48, -1.65);
+    const rearPivot = new THREE.Group();
+    rearPivot.name = side < 0 ? "RearSteer_L" : "RearSteer_R";
+    rearPivot.position.set(side * 1.14, 0.48, -1.65);
+    const rear = cylinder(THREE, 0.55, 0.42, 0x0c0d0f, 0, 0, 0);
     rear.name = side < 0 ? "RearWheel_L" : "RearWheel_R";
+    rearPivot.add(rear);
     rollingWheels.push(rear);
-    visual.add(rear);
+    visual.add(rearPivot);
 
-    const steeringPivot = new THREE.Group();
-    steeringPivot.name = side < 0 ? "FrontSteer_L" : "FrontSteer_R";
-    steeringPivot.position.set(side * 1.12, 0.47, 1.95);
+    const frontPivot = new THREE.Group();
+    frontPivot.name = side < 0 ? "FrontSteer_L" : "FrontSteer_R";
+    frontPivot.position.set(side * 1.12, 0.47, 1.95);
     const front = cylinder(THREE, 0.5, 0.38, 0x0c0d0f, 0, 0, 0);
     front.name = side < 0 ? "FrontWheel_L" : "FrontWheel_R";
-    steeringPivot.add(front);
-    steeringPivots.push(steeringPivot);
+    frontPivot.add(front);
     rollingWheels.push(front);
-    visual.add(steeringPivot);
+    visual.add(frontPivot);
+
+    steeringPivots.push(profile.steeringMode === "rear" ? rearPivot : frontPivot);
   }
 
-  const captureAnchor = namedAnchor(THREE, "CaptureAnchor", LEKTRO_RIG_PROFILE.captureAnchor);
-  const operatorEye = namedAnchor(THREE, "OperatorEye", LEKTRO_RIG_PROFILE.operatorEye);
-  const forwardLook = namedAnchor(THREE, "OperatorLook", [-0.45, 1.2, 8]);
+  const captureAnchor = namedAnchor(THREE, "CaptureAnchor", profile.captureAnchor);
+  const operatorEye = namedAnchor(THREE, "OperatorEye", profile.operatorEye);
+  const forwardLook = namedAnchor(THREE, "OperatorLook", profile.operatorLook);
   root.add(captureAnchor, operatorEye, forwardLook);
 
   function setSteering(angle) {
-    for (const pivot of steeringPivots) pivot.rotation.y = angle;
+    // A left steering-wheel command turns a rear-steer axle the opposite physical direction.
+    const physicalWheelAngle = profile.steeringMode === "rear" ? -angle : angle;
+    for (const pivot of steeringPivots) pivot.rotation.y = physicalWheelAngle;
   }
 
   function rotateWheels(distance) {
@@ -99,7 +127,7 @@ export function createProceduralLektroRig(THREE) {
 
   function setLiftProgress(progress) {
     const normalized = Math.max(0, Math.min(1, progress));
-    cradleLift.position.y = normalized * LEKTRO_RIG_PROFILE.liftTravel;
+    cradleLift.position.y = normalized * profile.liftTravel;
   }
 
   function getWorldAnchor(anchor, target = new THREE.Vector3()) {
@@ -116,7 +144,7 @@ export function createProceduralLektroRig(THREE) {
     forwardLook,
     rollingWheels,
     steeringPivots,
-    profile: LEKTRO_RIG_PROFILE,
+    profile,
     setSteering,
     rotateWheels,
     setLiftProgress,
@@ -135,5 +163,7 @@ export function validateTugRig(rig) {
   if (rig?.rollingWheels?.length !== 4) failures.push("expected four rolling wheels");
   if (rig?.steeringPivots?.length !== 2) failures.push("expected two steering pivots");
   if (!Number.isFinite(rig?.profile?.cradleOffset) || rig.profile.cradleOffset <= 0) failures.push("invalid cradle offset");
+  if (!Number.isFinite(rig?.profile?.wheelbase) || rig.profile.wheelbase <= 0) failures.push("invalid wheelbase");
+  if (!["front", "rear"].includes(rig?.profile?.steeringMode)) failures.push("invalid steering mode");
   return failures;
 }
