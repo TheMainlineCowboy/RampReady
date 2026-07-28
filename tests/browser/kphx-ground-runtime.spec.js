@@ -24,7 +24,7 @@ async function expectRuntimeValue(canvas, attribute, expected) {
   ).toBe(expected);
 }
 
-test("loads KPHX v1.8.1 Terminal 4 detail over the airport-wide ground", async ({ page }) => {
+test("loads refined KPHX v1.8.1 Terminal 4 detail over the airport-wide ground", async ({ page }) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const groundResponses = [];
@@ -41,10 +41,12 @@ test("loads KPHX v1.8.1 Terminal 4 detail over the airport-wide ground", async (
   const canvas = await launchStandup(page);
   await expectRuntimeValue(canvas, "data-ground-source", "authored-kphx-v181");
   await expectRuntimeValue(canvas, "data-kphx-version", "1.8.1");
+  await expectRuntimeValue(canvas, "data-kphx-detail-level", "terminal4-refined-v2");
   await expectRuntimeValue(canvas, "data-source-jetway-count", "112");
   await expectRuntimeValue(canvas, "data-terminal4-jetway-count", "58");
   await expectRuntimeValue(canvas, "data-terminal4-parking-count", "58");
   await expectRuntimeValue(canvas, "data-b15-anchors", "ready");
+  await expectRuntimeValue(canvas, "data-b15-corridor-meters", "515,542");
 
   for (const suffix of GROUND_SUFFIXES) {
     await expect.poll(
@@ -76,7 +78,7 @@ test("loads KPHX v1.8.1 Terminal 4 detail over the airport-wide ground", async (
   });
   await page.evaluate(() => {
     const element = document.querySelector("canvas.trainerCanvas");
-    element?.dispatchEvent(new WheelEvent("wheel", { deltaY: 1800, bubbles: true, cancelable: true }));
+    element?.dispatchEvent(new WheelEvent("wheel", { deltaY: 1350, bubbles: true, cancelable: true }));
   });
   await page.waitForTimeout(900);
   const bounds = await canvas.boundingBox();
@@ -91,6 +93,6 @@ test("loads KPHX v1.8.1 Terminal 4 detail over the airport-wide ground", async (
     },
     animations: "disabled",
   });
-  expect(image.byteLength).toBeGreaterThan(5_000);
-  await writeFile("test-results/kphx-v181-terminal4.png", image);
+  expect(image.byteLength).toBeGreaterThan(8_000);
+  await writeFile("test-results/kphx-v181-terminal4-refined.png", image);
 });
