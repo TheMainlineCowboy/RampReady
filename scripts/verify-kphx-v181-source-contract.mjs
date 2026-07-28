@@ -20,7 +20,7 @@ for (const token of [
   "KPHX_Terminal4_JetwayInnerSections",
   "KPHX_Terminal4_JetwayRotundas",
   "KPHX_Terminal4_GateLeadIns",
-  "terminal4-refined-v2",
+  "terminal4-refined-v3",
 ]) {
   if (!files.builder.includes(token)) throw new Error(`KPHX builder contract missing ${token}`);
 }
