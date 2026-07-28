@@ -17,8 +17,8 @@ export const STANDUP_RIG_PROFILE = Object.freeze({
   trackWidth: 1.32,
   cradleOffset: 3.45,
   // Operator stands on the right-hand platform behind the wheel, facing the capture end.
-  operatorEye: Object.freeze([0.58, 1.64, -1.08]),
-  operatorLook: Object.freeze([0.52, 1.24, 3.2]),
+  operatorEye: Object.freeze([0.58, 1.64, -1.28]),
+  operatorLook: Object.freeze([0.52, 1.15, 3.2]),
   captureAnchor: Object.freeze([0, 0.34, 3.45]),
   liftTravel: 0.24,
   bodyBounds: Object.freeze([1.4161, 1.6721, 4.5855]),
