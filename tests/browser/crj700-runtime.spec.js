@@ -47,6 +47,12 @@ async function waitForRealAircraft(page) {
     { timeout: 30_000, intervals: [250, 500, 1_000] },
   ).toBe("authored-standup");
   await expect.poll(
+    async () => canvas.getAttribute("data-operator-controls"),
+    { timeout: 30_000, intervals: [250, 500, 1_000] },
+  ).toBe("ready");
+  await expect(canvas).toHaveAttribute("data-steering-mode", "rear");
+  await expect(canvas).toHaveAttribute("data-operator-side", "right");
+  await expect.poll(
     async () => canvas.getAttribute("data-aircraft-source"),
     { timeout: 30_000, intervals: [250, 500, 1_000] },
   ).not.toBe("loading");
@@ -148,6 +154,18 @@ test("loads the real CRJ700 asset and captures unobstructed side evidence", asyn
   await writeCanvasEvidence(page, canvas, "test-results/crj700-left-side.png");
   await orbitBy(page, -ORBIT_DRAG_PX * 2);
   await writeCanvasEvidence(page, canvas, "test-results/crj700-right-side.png");
+});
+
+test("stand-up operator view renders the dedicated wheel and battery station", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize(EVIDENCE_VIEWPORT);
+  const canvas = await waitForRealAircraft(page);
+  const view = page.locator(".rr-view-select");
+  await view.selectOption("driver");
+  await expect(view).toHaveValue("driver");
+  await page.waitForTimeout(900);
+  await prepareEvidenceFrame(page);
+  await writeCanvasEvidence(page, canvas, "test-results/standup-operator-view.png");
 });
 
 test("mobile controls preserve a clear simulator viewport", async ({ page }) => {
