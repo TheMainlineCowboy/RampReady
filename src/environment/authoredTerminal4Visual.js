@@ -2,120 +2,146 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 export const AUTHORED_TERMINAL4_PROFILE = Object.freeze({
   source: "TheMainlineCowboy/SkyHarborPhx@2e6642778c9c88eac6a82b21063763cc78be7cfe/scenery/term4.BGL",
+  placementSource: "TheMainlineCowboy/SkyHarborPhx@2e6642778c9c88eac6a82b21063763cc78be7cfe/scenery/KPHX_ADEX.BGL",
+  modernAnchorSource: "unmlobo-kphx1-8-1_Mu9aq.zip/scenery/world/scenery/kphx-airport.bgl",
   modelName: "phx_term400",
+  modelGuid: "{7f197eb0-33ea-419f-9658-a29c9046d87f}",
   triangleCount: 11138,
   partCount: 19,
   sourceBounds: Object.freeze({
     min: Object.freeze([-361.947998046875, 0, -213.22799682617188]),
     max: Object.freeze([488.2799987792969, 30.215999603271484, 266.8240051269531]),
   }),
-  provisionalOffset: Object.freeze([0, 0, 300]),
-  placementAuthority: "legacy Terminal 4 massing retained behind exact KPHX 1.8.1 A/B gate modules",
-  materialPass: "procedural-terminal4-source-materials-v2",
+  sourcePlacement: Object.freeze({
+    recordOffset: 146014,
+    latitude: 33.435617946088314,
+    longitude: -111.99794411659241,
+    headingDegrees: 0,
+    scale: 1,
+  }),
+  legacySourceA1: Object.freeze({
+    parkingIndex: 32,
+    latitude: 33.43653056770563,
+    longitude: -111.99864059686661,
+    headingDegrees: 269.975341796875,
+  }),
+  modernSourceA1: Object.freeze({
+    parkingIndex: 43,
+    latitude: 33.436546325683594,
+    longitude: -111.99876129627228,
+    headingDegrees: 270.4908752441406,
+  }),
+  sourceAnchorDeltaMeters: Object.freeze({
+    north: -1.7541700827164473,
+    east: 11.212459754837063,
+  }),
+  // The terminal mesh and its original library-object placement are retained
+  // byte-for-byte. Only the coordinate origin changes: the legacy A1-relative
+  // placement is translated by the measured legacy-A1 to modern-A1 delta. The
+  // 6.2 m scene Z offset remains identical to the aircraft/ground registration.
+  position: Object.freeze([-103.34674380940088, 0.035, 82.11332525717148]),
+  rotationYDegrees: 90,
+  scale: Object.freeze([-1, 1, 1]),
+  placementAuthority: "decoded legacy Terminal 4 library-object placement translated to the exact unmlobo v1.8.1 Gate A1 coordinate",
+  materialPass: "pinned-authored-source-textures-v1",
+  detailLevel: "terminal4-authored-textured-v3-modern-a1",
 });
 
-const textureCache = new Map();
-
-function textureKind(materialName = "") {
-  const name = materialName.toUpperCase();
-  if (name.includes("PHX_TERM400")) return "terminal";
-  if (name.includes("BGATE") || name.includes("DGATE")) return "gate";
-  if (name.includes("PARKRAMP")) return "ramp";
-  if (name.includes("SUPPORT")) return "support";
-  if (name.includes("T4_WALK")) return "walkway";
-  if (name.includes("RAMPLIGHT")) return "light";
-  if (name.includes("RW.")) return "road";
-  return "terminal";
+function textureReference(material) {
+  if (material?.userData?.diffuseTexture) return material.userData.diffuseTexture;
+  const match = material?.name?.match(/material-\d+-(.+)$/i);
+  return match?.[1] ?? null;
 }
 
-function createTexture(THREE, kind) {
-  if (textureCache.has(kind)) return textureCache.get(kind);
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = 512;
-  const ctx = canvas.getContext("2d");
-
-  if (kind === "terminal") {
-    ctx.fillStyle = "#9b8975";
-    ctx.fillRect(0, 0, 512, 512);
-    for (let y = 0; y < 512; y += 128) {
-      ctx.fillStyle = y % 256 === 0 ? "#a79580" : "#96816c";
-      ctx.fillRect(0, y, 512, 128);
-      ctx.fillStyle = "#263846";
-      ctx.fillRect(0, y + 35, 512, 34);
-      ctx.fillStyle = "rgba(175,205,220,0.24)";
-      for (let x = 8; x < 512; x += 42) ctx.fillRect(x, y + 39, 29, 25);
-    }
-    ctx.strokeStyle = "rgba(72,59,47,0.48)";
-    ctx.lineWidth = 3;
-    for (let x = 0; x <= 512; x += 64) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
-    }
-  } else if (kind === "gate") {
-    ctx.fillStyle = "#78858d";
-    ctx.fillRect(0, 0, 512, 512);
-    ctx.fillStyle = "#273b49";
-    ctx.fillRect(0, 96, 512, 122);
-    ctx.fillStyle = "rgba(188,216,228,0.34)";
-    for (let x = 8; x < 512; x += 55) ctx.fillRect(x, 106, 39, 100);
-    ctx.strokeStyle = "rgba(45,51,55,0.55)";
-    ctx.lineWidth = 4;
-    for (let y = 0; y < 512; y += 64) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
-    }
-  } else if (kind === "ramp") {
-    ctx.fillStyle = "#696d6e";
-    ctx.fillRect(0, 0, 512, 512);
-    ctx.strokeStyle = "rgba(45,48,50,0.62)";
-    ctx.lineWidth = 5;
-    for (let p = 0; p <= 512; p += 128) {
-      ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, 512); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(512, p); ctx.stroke();
-    }
-  } else if (kind === "support") {
-    ctx.fillStyle = "#42484c";
-    ctx.fillRect(0, 0, 512, 512);
-    ctx.strokeStyle = "#778086";
-    ctx.lineWidth = 16;
-    for (let x = -256; x < 768; x += 96) {
-      ctx.beginPath(); ctx.moveTo(x, 512); ctx.lineTo(x + 320, 0); ctx.stroke();
-    }
-  } else if (kind === "walkway") {
-    ctx.fillStyle = "#ada291";
-    ctx.fillRect(0, 0, 512, 512);
-    ctx.strokeStyle = "rgba(79,70,62,0.4)";
-    ctx.lineWidth = 4;
-    for (let x = 0; x <= 512; x += 64) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
-    }
-    for (let y = 0; y <= 512; y += 96) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
-    }
-  } else if (kind === "light") {
-    ctx.fillStyle = "#596067";
-    ctx.fillRect(0, 0, 512, 512);
-    ctx.fillStyle = "#f0c869";
-    ctx.fillRect(96, 96, 320, 320);
-  } else {
-    ctx.fillStyle = "#3f4549";
-    ctx.fillRect(0, 0, 512, 512);
-    ctx.strokeStyle = "rgba(220,220,210,0.55)";
-    ctx.lineWidth = 12;
-    ctx.beginPath(); ctx.moveTo(0, 256); ctx.lineTo(512, 256); ctx.stroke();
+function materialCharacter(reference = "") {
+  const name = reference.toUpperCase();
+  if (name.includes("SUPPORT") || name.includes("RAMPLIGHT")) {
+    return { roughness: 0.55, metalness: 0.34 };
   }
+  if (name.includes("PARKRAMP") || name === "RW.BMP") {
+    return { roughness: 0.94, metalness: 0.01 };
+  }
+  if (name.includes("GATE") || name.includes("TERM400") || name.includes("T4_WALK")) {
+    return { roughness: 0.76, metalness: 0.03 };
+  }
+  return { roughness: 0.82, metalness: 0.02 };
+}
 
-  const grime = ctx.createLinearGradient(0, 0, 0, 512);
-  grime.addColorStop(0, "rgba(255,255,255,0.10)");
-  grime.addColorStop(0.62, "rgba(255,255,255,0)");
-  grime.addColorStop(1, "rgba(25,28,30,0.25)");
-  ctx.fillStyle = grime;
-  ctx.fillRect(0, 0, 512, 512);
+async function loadTextureManifest(baseUrl) {
+  const manifestUrl = `${baseUrl}texture-manifest.json`;
+  const response = await fetch(manifestUrl, { cache: "force-cache" });
+  if (!response.ok) throw new Error(`Terminal 4 texture manifest returned HTTP ${response.status}`);
+  const manifest = await response.json();
+  if (manifest.schemaVersion !== 2 || !manifest.materials) throw new Error("Terminal 4 texture manifest is invalid");
+  return { manifest, manifestUrl: new URL(manifestUrl, window.location.href) };
+}
 
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(kind === "terminal" ? 2.5 : 1.5, 1.5);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  textureCache.set(kind, texture);
-  return texture;
+async function loadSourceTextures(THREE, baseUrl) {
+  const { manifest, manifestUrl } = await loadTextureManifest(baseUrl);
+  const loader = new THREE.TextureLoader();
+  const textures = new Map();
+  await Promise.all(Object.entries(manifest.materials).map(async ([reference, entry]) => {
+    const url = new URL(entry.url, manifestUrl).href;
+    const texture = await loader.loadAsync(url);
+    texture.name = `PHX source ${reference}`;
+    texture.flipY = false;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.anisotropy = 8;
+    texture.needsUpdate = true;
+    textures.set(reference.toUpperCase(), texture);
+  }));
+  return { textures, manifest };
+}
+
+function applySourceMaterials(THREE, scene, textures) {
+  let texturedMaterialCount = 0;
+  scene.traverse((node) => {
+    if (!node.isMesh) return;
+    const originals = Array.isArray(node.material) ? node.material : [node.material];
+    const replacements = originals.map((source) => {
+      if (!source?.clone) return source;
+      const material = source.clone();
+      const reference = textureReference(material);
+      const texture = reference ? textures.get(reference.toUpperCase()) : null;
+      if (!texture) throw new Error(`Terminal 4 material texture is missing at runtime: ${reference || material.name}`);
+      const character = materialCharacter(reference);
+      material.map = texture;
+      material.color?.setHex(0xffffff);
+      material.roughness = character.roughness;
+      material.metalness = character.metalness;
+      material.transparent = false;
+      material.opacity = 1;
+      material.side = THREE.DoubleSide;
+      material.depthWrite = true;
+      material.needsUpdate = true;
+      texturedMaterialCount += 1;
+      return material;
+    });
+    node.material = Array.isArray(node.material) ? replacements : replacements[0];
+    node.castShadow = true;
+    node.receiveShadow = true;
+    node.frustumCulled = true;
+  });
+  return texturedMaterialCount;
+}
+
+function nearestHorizontalVertexDistance(THREE, scene, point) {
+  let nearest = Number.POSITIVE_INFINITY;
+  const vertex = new THREE.Vector3();
+  scene.traverse((node) => {
+    if (!node.isMesh) return;
+    const position = node.geometry?.getAttribute?.("position");
+    if (!position) return;
+    for (let index = 0; index < position.count; index += 1) {
+      vertex.fromBufferAttribute(position, index);
+      node.localToWorld(vertex);
+      nearest = Math.min(nearest, Math.hypot(vertex.x - point.x, vertex.z - point.z));
+    }
+  });
+  return nearest;
 }
 
 function hideCalibrationTerminal(environment) {
@@ -124,51 +150,47 @@ function hideCalibrationTerminal(environment) {
   });
 }
 
-function applyReadableSourceMaterials(THREE, scene) {
-  scene.traverse((node) => {
-    if (!node.isMesh) return;
-    const originals = Array.isArray(node.material) ? node.material : [node.material];
-    const replacements = originals.map((source) => {
-      if (!source?.clone) return source;
-      const material = source.clone();
-      const kind = textureKind(material.name);
-      material.map = createTexture(THREE, kind);
-      if (material.color) material.color.setHex(0xffffff);
-      material.roughness = kind === "gate" ? 0.52 : 0.8;
-      material.metalness = kind === "support" || kind === "light" ? 0.42 : 0.04;
-      if (kind === "gate") {
-        material.transparent = true;
-        material.opacity = 0.94;
-      }
-      material.side = THREE.DoubleSide;
-      material.needsUpdate = true;
-      return material;
-    });
-    node.material = Array.isArray(node.material) ? replacements : replacements[0];
-    node.castShadow = true;
-    node.receiveShadow = true;
-  });
-}
-
 export async function installAuthoredTerminal4Visual(THREE, environment) {
   if (!environment?.isGroup) throw new Error("Terminal 4 environment group is required");
   hideCalibrationTerminal(environment);
-  environment.userData.environmentSource = "loading-authored-phx-terminal4";
+  environment.userData.environmentSource = "loading-authored-phx-terminal4-textured";
   environment.userData.authoredTerminal4Placement = AUTHORED_TERMINAL4_PROFILE.placementAuthority;
 
-  const url = `${import.meta.env.BASE_URL}models/phx-terminal4/terminal4.gltf`;
-  const gltf = await new GLTFLoader().loadAsync(url);
-  const authored = gltf.scene;
-  authored.name = "PHX_Terminal4_AuthoredVisual";
-  authored.position.fromArray(AUTHORED_TERMINAL4_PROFILE.provisionalOffset);
-  applyReadableSourceMaterials(THREE, authored);
-  environment.add(authored);
+  const baseUrl = `${import.meta.env.BASE_URL}models/phx-terminal4/`;
+  const [{ scene: authored }, { textures, manifest }] = await Promise.all([
+    new GLTFLoader().loadAsync(`${baseUrl}terminal4.gltf`),
+    loadSourceTextures(THREE, baseUrl),
+  ]);
 
-  environment.userData.environmentSource = "authored-phx-terminal4";
-  environment.userData.authoredTerminal4Url = url;
+  authored.name = "PHX_Terminal4_AuthoredTexturedVisual";
+  authored.position.fromArray(AUTHORED_TERMINAL4_PROFILE.position);
+  authored.rotation.y = THREE.MathUtils.degToRad(AUTHORED_TERMINAL4_PROFILE.rotationYDegrees);
+  authored.scale.fromArray(AUTHORED_TERMINAL4_PROFILE.scale);
+  const texturedMaterialCount = applySourceMaterials(THREE, authored, textures);
+  environment.add(authored);
+  authored.updateMatrixWorld(true);
+
+  const terminalBounds = new THREE.Box3().setFromObject(authored);
+  const a1Point = new THREE.Vector3(0, 0, 6.2);
+  const a1NearestGeometryDistance = nearestHorizontalVertexDistance(THREE, authored, a1Point);
+
+  environment.userData.environmentSource = "authored-phx-terminal4-textured";
+  environment.userData.authoredTerminal4Url = `${baseUrl}terminal4.gltf`;
   environment.userData.authoredTerminal4 = authored;
+  environment.userData.authoredTerminal4Placement = AUTHORED_TERMINAL4_PROFILE.placementAuthority;
   environment.userData.authoredTerminal4MaterialPass = AUTHORED_TERMINAL4_PROFILE.materialPass;
+  environment.userData.authoredTerminal4DetailLevel = AUTHORED_TERMINAL4_PROFILE.detailLevel;
   environment.userData.authoredTerminal4TriangleCount = AUTHORED_TERMINAL4_PROFILE.triangleCount;
   environment.userData.authoredTerminal4PartCount = AUTHORED_TERMINAL4_PROFILE.partCount;
+  environment.userData.authoredTerminal4TextureCount = manifest.diffuseReferenceCount;
+  environment.userData.authoredTerminal4ExactTextureCount = manifest.exactTextureCount;
+  environment.userData.authoredTerminal4FallbackTextureCount = manifest.fallbackTextureCount;
+  environment.userData.authoredTerminal4TexturedMaterialCount = texturedMaterialCount;
+  environment.userData.authoredTerminal4Position = [...AUTHORED_TERMINAL4_PROFILE.position];
+  environment.userData.authoredTerminal4A1NearestGeometryDistance = a1NearestGeometryDistance;
+  environment.userData.authoredTerminal4Bounds = {
+    min: terminalBounds.min.toArray(),
+    max: terminalBounds.max.toArray(),
+  };
   return authored;
 }
