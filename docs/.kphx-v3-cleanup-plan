@@ -1,1 +1,0 @@
-Remove the three temporary v3 marker files before merge; retain only the Terminal 4 implementation and browser test changes.
