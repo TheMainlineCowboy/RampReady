@@ -4,4 +4,6 @@ dist
 .env
 .env.local
 .vite
+.cache
 public/models/standup-tug.glb
+public/models/phx-terminal4/
