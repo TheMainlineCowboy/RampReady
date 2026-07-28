@@ -1,4 +1,4 @@
-name: Audit exact PHX source package
+name: Materialize exact PHX source package
 
 on:
   push:
@@ -7,35 +7,99 @@ on:
     paths:
       - '.github/workflows/debug-phx-source.yml'
       - 'scripts/fetch-phx-freeware-source.mjs'
-  pull_request:
-    paths:
-      - '.github/workflows/debug-phx-source.yml'
-      - 'scripts/fetch-phx-freeware-source.mjs'
+      - 'tools/kphx/build_exact_unmlobo_kphx.py'
   workflow_dispatch:
 
+concurrency:
+  group: exact-phx-source-materialization
+  cancel-in-progress: false
+
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  audit-source-package:
+  materialize-source-package:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out the exact source branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/exact-skyharbor-source-only
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Install Chromium tooling
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install Chromium and source translators
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Resolve the public freeware package and preserve diagnostics
+          python -m pip install --disable-pip-version-check pillow
+      - name: Resolve the exact public source archive
         run: node scripts/fetch-phx-freeware-source.mjs source-download
-      - name: Upload source audit evidence
+      - name: Select the exact unmlobo 1.8.1 archive
+        id: source
+        shell: bash
+        run: |
+          expected=d118f396081b5faabc81daf3786a0c56e3c0f7b4c9b7d6cbe7ce13c10efe05bc
+          selected=""
+          while IFS= read -r -d '' candidate; do
+            actual=$(sha256sum "$candidate" | cut -d' ' -f1)
+            echo "$actual  $candidate"
+            if [[ "$actual" == "$expected" ]]; then selected="$candidate"; break; fi
+          done < <(find source-download -type f -name '*.zip' -print0)
+          if [[ -z "$selected" ]]; then
+            echo "The exact unmlobo KPHX 1.8.1 archive was not recovered" >&2
+            exit 1
+          fi
+          echo "archive=$selected" >> "$GITHUB_OUTPUT"
+      - name: Translate exact airport polygons, markings and materials
+        run: |
+          python tools/kphx/build_exact_unmlobo_kphx.py \
+            "${{ steps.source.outputs.archive }}" \
+            public/models/kphx-v181-exact
+      - name: Verify source identities and generated asset sizes
+        run: |
+          python - <<'PY'
+          import hashlib, json, pathlib
+          root = pathlib.Path('public/models/kphx-v181-exact')
+          manifest = json.loads((root / 'exact-ground-manifest.json').read_text())
+          assert manifest['sourceArchiveSha256'] == 'd118f396081b5faabc81daf3786a0c56e3c0f7b4c9b7d6cbe7ce13c10efe05bc'
+          assert manifest['airportBglSha256'] == '1ea4978b5a89ecf5efebe522c9837e9d89de6f7a45dc4e99bfe161a8343ed2a2'
+          assert manifest['counts']['sourceAprons'] == 927
+          assert manifest['counts']['sourcePaintedLines'] == 1184
+          assert manifest['counts']['sourceJetways'] == 112
+          assert manifest['counts']['sourceLibraryObjectPlacements'] == 364
+          assert manifest['proceduralReplacement'] is False
+          for key in ('gltf', 'bin', 'atlas'):
+              record = manifest['outputs'][key]
+              data = (root / record['path']).read_bytes()
+              assert len(data) == record['bytes']
+              assert hashlib.sha256(data).hexdigest() == record['sha256']
+          print(json.dumps(manifest['counts'], indent=2))
+          PY
+      - name: Commit exact source-authored browser assets
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add public/models/kphx-v181-exact
+          if git diff --cached --quiet; then
+            echo 'Exact KPHX source assets are already current.'
+            exit 0
+          fi
+          git commit -m 'Materialize exact unmlobo KPHX 1.8.1 ground and markings'
+          git push origin HEAD:agent/exact-skyharbor-source-only
+      - name: Upload source and generated evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: exact-phx-source-audit-${{ github.sha }}
-          path: source-download/
+          name: exact-phx-source-materialization-${{ github.sha }}
+          path: |
+            source-download/
+            public/models/kphx-v181-exact/
           if-no-files-found: warn
           retention-days: 7
