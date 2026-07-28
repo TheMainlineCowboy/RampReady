@@ -2,8 +2,12 @@ import { gunzipSync } from "node:zlib";
 import part00 from "../src/environment/kphxExactA1/part00.js";
 import part01 from "../src/environment/kphxExactA1/part01.js";
 import part02 from "../src/environment/kphxExactA1/part02.js";
+import part03 from "../src/environment/kphxExactA1/part03.js";
+import part04 from "../src/environment/kphxExactA1/part04.js";
+import part05 from "../src/environment/kphxExactA1/part05.js";
+import part06 from "../src/environment/kphxExactA1/part06.js";
 
-const parts = [part00, part01, part02];
+const parts = [part00, part01, part02, part03, part04, part05, part06];
 const encoded = parts.join("");
 if (encoded.length !== 61_652) throw new Error(`Exact A1 Base64 length ${encoded.length} != 61652`);
 if (encoded.length % 4 !== 0) throw new Error("Exact A1 Base64 payload is not four-byte aligned");
