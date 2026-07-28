@@ -26,12 +26,14 @@ jobs:
           node-version: 24
       - name: Materialize source
         run: node scripts/materialize-phx-terminal4.mjs
-      - name: Upload BGL, textures and browser assets
+      - name: Upload complete PHX source and browser assets
         uses: actions/upload-artifact@v4
         with:
           name: phx-source-placement-${{ github.sha }}
           path: |
             skyharbor-source/scenery/
+            skyharbor-source/*.bmp
+            skyharbor-source/*.dds
             .cache/phx-terminal4-source/term4.BGL
             public/models/phx-terminal4/
           retention-days: 2
