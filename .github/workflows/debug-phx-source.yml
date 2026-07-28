@@ -79,11 +79,15 @@ jobs:
             git commit -m 'Add full-resolution PHX source aerial ground'
             git push origin HEAD:agent/install-authored-phx-airport
           fi
-      - name: Upload aerial evidence
+      - name: Upload airport source kit
         uses: actions/upload-artifact@v4
         with:
-          name: phx-source-aerial-${{ github.sha }}
+          name: phx-source-kit-${{ github.sha }}
           path: |
             public/models/kphx-photo/
             .cache/phx-photo/tiles/tiles.csv
+            skyharbor-source/scripts/
+            skyharbor-source/scenery/
+            skyharbor-source/*.bmp
+            skyharbor-source/*.dds
           retention-days: 2
