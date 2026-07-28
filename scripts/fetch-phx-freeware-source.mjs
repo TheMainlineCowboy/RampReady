@@ -8,24 +8,11 @@ const SOURCES = Object.freeze([
     name: "unmlobo-flightsim-to",
     url: "https://flightsim.to/addon/9074/kphx-phoenix-sky-harbor",
     expectedName: "unmlobo-kphx.zip",
-    selectors: [
-      'a:has-text("Download")',
-      'button:has-text("Download")',
-      '[data-testid*="download"]',
-      '[class*="download"] a',
-      '[class*="download"] button',
-    ],
   },
   {
     name: "legacy-phx-freeware",
     url: "https://flyawaysimulation.com/downloads/files/9028/fsx-phoenix-sky-harbor-international-scenery/",
     expectedName: "phx_sky_harbor.zip",
-    selectors: [
-      'button:has-text("Download Free")',
-      'a:has-text("Download Free")',
-      'input[type="submit"][value*="Download"]',
-      'form:has-text("Download Free") button',
-    ],
   },
 ]);
 const OUTPUT_DIR = path.resolve(process.argv[2] || "source-download");
@@ -38,83 +25,109 @@ const context = await browser.newContext({
   userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36",
 });
 
+const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
 async function saveDownload(download, source, network) {
   const suggested = download.suggestedFilename() || source.expectedName;
   const destination = path.join(OUTPUT_DIR, suggested);
   await download.saveAs(destination);
   const bytes = await readFile(destination);
   const sha256 = createHash("sha256").update(bytes).digest("hex");
-  const result = {
-    source: source.name,
-    sourcePage: source.url,
-    suggestedFilename: suggested,
-    bytes: bytes.length,
-    sha256,
-    network,
-  };
-  await writeFile(path.join(OUTPUT_DIR, `${source.name}-download.json`), `${JSON.stringify(result, null, 2)}\n`);
+  await writeFile(
+    path.join(OUTPUT_DIR, `${source.name}-download.json`),
+    `${JSON.stringify({ source: source.name, sourcePage: source.url, suggestedFilename: suggested, bytes: bytes.length, sha256, network }, null, 2)}\n`,
+  );
   console.log(JSON.stringify({ downloaded: destination, bytes: bytes.length, sha256, source: source.name }, null, 2));
   return destination;
+}
+
+async function snapshot(page, source, stage) {
+  await page.screenshot({ path: path.join(OUTPUT_DIR, `${source.name}-${stage}.png`), fullPage: true }).catch(() => {});
+  await writeFile(path.join(OUTPUT_DIR, `${source.name}-${stage}.html`), await page.content(), "utf8").catch(() => {});
+}
+
+async function firstVisible(page, selectors) {
+  for (const selector of selectors) {
+    const matches = page.locator(selector);
+    const count = await matches.count();
+    for (let index = 0; index < count; index += 1) {
+      const candidate = matches.nth(index);
+      if (await candidate.isVisible().catch(() => false)) return candidate;
+    }
+  }
+  return null;
 }
 
 async function attemptSource(source) {
   const page = await context.newPage();
   const requests = [];
   const responses = [];
+  let downloaded = null;
+  page.on("download", (download) => { downloaded ??= download; });
   page.on("request", (request) => {
-    if (/download|9074|9028|kphx|phoenix|harbor/i.test(request.url())) {
+    if (/download|9074|9028|kphx|phoenix|harbor|\.zip/i.test(request.url())) {
       requests.push({ method: request.method(), url: request.url(), postData: request.postData() });
     }
   });
   page.on("response", (response) => {
     const headers = response.headers();
-    if (/download|9074|9028|kphx|phoenix|harbor/i.test(response.url()) || /attachment/i.test(headers["content-disposition"] || "")) {
+    if (/download|9074|9028|kphx|phoenix|harbor|\.zip/i.test(response.url()) || /attachment/i.test(headers["content-disposition"] || "")) {
       responses.push({ status: response.status(), url: response.url(), headers });
     }
   });
 
   try {
-    await page.goto(source.url, { waitUntil: "domcontentloaded", timeout: 120_000 });
-    await page.waitForTimeout(5_000);
-    await page.screenshot({ path: path.join(OUTPUT_DIR, `${source.name}-initial.png`), fullPage: true });
-    await writeFile(path.join(OUTPUT_DIR, `${source.name}-initial.html`), await page.content(), "utf8");
+    await page.goto(source.url, { waitUntil: "domcontentloaded", timeout: 90_000 });
+    await page.waitForTimeout(3_000);
+    await snapshot(page, source, "round-00");
 
-    for (const selector of source.selectors) {
-      const candidates = page.locator(selector);
-      const count = await candidates.count();
-      for (let index = 0; index < count; index += 1) {
-        const candidate = candidates.nth(index);
-        if (!(await candidate.isVisible().catch(() => false))) continue;
-        const downloadPromise = page.waitForEvent("download", { timeout: 180_000 }).catch(() => null);
-        const popupPromise = page.waitForEvent("popup", { timeout: 20_000 }).catch(() => null);
+    const selectors = [
+      'form:has(input[name="d_op"]) button[type="submit"]',
+      'button:has-text("Download Free")',
+      'button:has-text("Download now")',
+      'button:has-text("Download")',
+      'a:has-text("Download now")',
+      'a:has-text("Download")',
+      'a[href$=".zip"]',
+      'a[href*="download"]',
+      '[data-testid*="download"]',
+    ];
+
+    for (let round = 1; round <= 18 && !downloaded; round += 1) {
+      const title = await page.title();
+      const url = page.url();
+      const loginWall = /log[ -]?in|sign[ -]?in/i.test(title)
+        && await page.locator('input[type="password"]').count();
+      if (loginWall) break;
+
+      const candidate = await firstVisible(page, selectors);
+      if (candidate) {
         await candidate.scrollIntoViewIfNeeded().catch(() => {});
-        await candidate.click({ timeout: 30_000 }).catch(() => null);
-        const popup = await popupPromise;
-        if (popup) {
-          await popup.waitForLoadState("domcontentloaded", { timeout: 60_000 }).catch(() => {});
-          await popup.screenshot({ path: path.join(OUTPUT_DIR, `${source.name}-popup.png`), fullPage: true }).catch(() => {});
-          await writeFile(path.join(OUTPUT_DIR, `${source.name}-popup.html`), await popup.content(), "utf8").catch(() => {});
-        }
-        const download = await downloadPromise;
-        if (download) return saveDownload(download, source, { requests, responses });
+        await Promise.all([
+          page.waitForLoadState("domcontentloaded", { timeout: 15_000 }).catch(() => {}),
+          candidate.click({ timeout: 20_000 }).catch(() => {}),
+        ]);
+      }
 
-        await page.waitForTimeout(3_000);
-        await page.screenshot({ path: path.join(OUTPUT_DIR, `${source.name}-after-click.png`), fullPage: true }).catch(() => {});
-        await writeFile(path.join(OUTPUT_DIR, `${source.name}-after-click.html`), await page.content(), "utf8").catch(() => {});
-
-        const directLinks = await page.locator('a[href]').evaluateAll((links) => links
-          .map((link) => ({ href: link.href, text: link.textContent?.trim() || "", download: link.getAttribute("download") }))
-          .filter((entry) => /download|\.zip(?:$|\?)/i.test(`${entry.href} ${entry.text}`)));
-        for (const entry of directLinks) {
-          const directPromise = page.waitForEvent("download", { timeout: 120_000 }).catch(() => null);
-          await page.goto(entry.href, { waitUntil: "domcontentloaded", timeout: 120_000 }).catch(() => {});
-          const directDownload = await directPromise;
-          if (directDownload) return saveDownload(directDownload, source, { requests, responses, directLinks });
+      for (let tick = 0; tick < 8 && !downloaded; tick += 1) {
+        await delay(1_000);
+        const direct = await page.locator('a[href$=".zip"], a[href*="download"]').evaluateAll((links) => links
+          .map((link) => ({ href: link.href, text: link.textContent?.trim() || "" }))
+          .filter((entry) => /\.zip(?:$|\?)/i.test(entry.href) || /download/i.test(entry.text)));
+        if (direct.length) {
+          const target = direct.find((entry) => /\.zip(?:$|\?)/i.test(entry.href)) || direct[0];
+          await page.goto(target.href, { waitUntil: "domcontentloaded", timeout: 30_000 }).catch(() => {});
         }
       }
+      await snapshot(page, source, `round-${String(round).padStart(2, "0")}`);
+      requests.push({ method: "STATE", url, postData: JSON.stringify({ title }) });
     }
 
-    await writeFile(path.join(OUTPUT_DIR, `${source.name}-network.json`), `${JSON.stringify({ url: page.url(), title: await page.title(), requests, responses }, null, 2)}\n`);
+    if (downloaded) return saveDownload(downloaded, source, { requests, responses });
+    await writeFile(
+      path.join(OUTPUT_DIR, `${source.name}-network.json`),
+      `${JSON.stringify({ url: page.url(), title: await page.title(), requests, responses }, null, 2)}\n`,
+    );
     return null;
   } finally {
     await page.close().catch(() => {});
