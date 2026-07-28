@@ -88,19 +88,19 @@ function makeStandupControls(rig) {
   wheel.name = "Standup_SteeringWheel";
   wheel.position.set(0.63, 1.16, -0.155);
 
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.235, 0.019, 12, 48), dark);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.215, 0.018, 12, 48), dark);
   ring.castShadow = true;
   wheel.add(ring);
 
   for (const angle of [Math.PI / 2, Math.PI / 2 + (Math.PI * 2) / 3, Math.PI / 2 + (Math.PI * 4) / 3]) {
-    const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.019, 0.205, 0.019), dark);
-    spoke.position.set(Math.cos(angle) * 0.102, Math.sin(angle) * 0.102, 0);
+    const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.188, 0.018), dark);
+    spoke.position.set(Math.cos(angle) * 0.094, Math.sin(angle) * 0.094, 0);
     spoke.rotation.z = angle - Math.PI / 2;
     spoke.castShadow = true;
     wheel.add(spoke);
   }
 
-  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.043, 0.043, 0.064, 24), dark);
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.041, 0.041, 0.060, 24), dark);
   hub.rotation.x = Math.PI / 2;
   hub.position.z = -0.012;
   hub.castShadow = true;
@@ -109,11 +109,11 @@ function makeStandupControls(rig) {
   // The real spinner sits near six o'clock in the supplied close-up reference.
   const knobAngle = -Math.PI / 2;
   const knob = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.025, 0.025, 0.102, 18),
+    new THREE.CylinderGeometry(0.024, 0.024, 0.098, 18),
     new THREE.MeshStandardMaterial({ color: 0x24272a, roughness: 0.68, metalness: 0.18 }),
   );
   knob.rotation.x = Math.PI / 2;
-  knob.position.set(Math.cos(knobAngle) * 0.198, Math.sin(knobAngle) * 0.198, -0.055);
+  knob.position.set(Math.cos(knobAngle) * 0.182, Math.sin(knobAngle) * 0.182, -0.052);
   knob.castShadow = true;
   wheel.add(knob);
   group.add(wheel);
@@ -125,21 +125,23 @@ function makeStandupControls(rig) {
   );
   gaugeMesh.name = "Standup_BatteryGauge";
   gaugeMesh.position.set(0.90, 1.12, -0.118);
+  // CircleGeometry faces +Z by default; the operator camera is behind it on -Z.
+  gaugeMesh.rotation.y = Math.PI;
   group.add(gaugeMesh);
 
-  // The right-hand standing platform and padded guard are visible at the edge of the
-  // real driver's peripheral view without blocking the forward sightline.
+  // The right-hand standing platform and padded guard stay at the edge of the real driver's
+  // peripheral view without becoming a large foreground block.
   const platform = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.05, 0.72), dark);
   platform.position.set(0.18, 0.20, -0.43);
   platform.receiveShadow = true;
   group.add(platform);
 
-  const guardPost = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.88, 0.055), redPaint);
-  guardPost.position.set(-0.10, 0.83, -0.30);
+  const guardPost = new THREE.Mesh(new THREE.BoxGeometry(0.050, 0.76, 0.050), redPaint);
+  guardPost.position.set(-0.08, 0.78, -0.08);
   guardPost.castShadow = true;
   group.add(guardPost);
-  const guardPad = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.075, 0.10), dark);
-  guardPad.position.set(0.08, 1.18, -0.30);
+  const guardPad = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.060, 0.080), dark);
+  guardPad.position.set(0.00, 1.15, -0.02);
   guardPad.castShadow = true;
   group.add(guardPad);
 
