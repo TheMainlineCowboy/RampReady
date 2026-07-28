@@ -44,6 +44,8 @@ prepared = prepared
     "    const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 500);",
     "    const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 8000);",
   )
+  .replace("    yaw: 2.5,", "    yaw: -0.64,")
+  .replace("    orbitRef.current.yaw = 2.5;", "    orbitRef.current.yaw = -0.64;")
   .replace(
     "    buildGround(scene);",
     `    const environment = buildGround(scene);
@@ -130,6 +132,8 @@ if (!prepared.includes("Promise.all([terminalLoad, groundLoad])")) throw new Err
 if (!prepared.includes('dataset.b15Anchors = environment.userData.b15Anchors?.length === 2 ? "ready" : "missing"')) throw new Error("B15 runtime evidence was not injected");
 if (!prepared.includes("new THREE.PerspectiveCamera(58, 1, 0.1, 8000)")) throw new Error("Airport-wide camera far plane was not injected");
 if (!prepared.includes("new THREE.Fog(0x9fc4e6, 2400, 6500)")) throw new Error("Airport-wide fog range was not injected");
+if (!prepared.includes("yaw: -0.64")) throw new Error("Open-ramp chase camera yaw was not injected");
+if (!prepared.includes("orbitRef.current.yaw = -0.64")) throw new Error("Open-ramp reset camera yaw was not injected");
 if (!prepared.includes("dataset.steeringMode = rig.profile.steeringMode")) throw new Error("Runtime steering-mode evidence was not injected");
 if (!prepared.includes('dataset.operatorControls = rig.root.userData.standupSteeringWheel')) throw new Error("Runtime operator-control evidence was not injected");
 if (!prepared.includes("createProceduralLektroRig(THREE, equipmentId)")) throw new Error("Equipment-specific rig profile was not injected");
