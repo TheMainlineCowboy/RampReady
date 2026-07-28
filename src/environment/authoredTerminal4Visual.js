@@ -117,6 +117,22 @@ function applySourceMaterials(THREE, scene, textures) {
   return texturedMaterialCount;
 }
 
+function nearestHorizontalVertexDistance(THREE, scene, point) {
+  let nearest = Number.POSITIVE_INFINITY;
+  const vertex = new THREE.Vector3();
+  scene.traverse((node) => {
+    if (!node.isMesh) return;
+    const position = node.geometry?.getAttribute?.("position");
+    if (!position) return;
+    for (let index = 0; index < position.count; index += 1) {
+      vertex.fromBufferAttribute(position, index);
+      node.localToWorld(vertex);
+      nearest = Math.min(nearest, Math.hypot(vertex.x - point.x, vertex.z - point.z));
+    }
+  });
+  return nearest;
+}
+
 function hideCalibrationTerminal(environment) {
   environment.traverse((node) => {
     if (node.name === "TerminalFacadeModule" || node.name === "TerminalFacadeGlass") node.visible = false;
@@ -140,17 +156,17 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   authored.rotation.y = THREE.MathUtils.degToRad(AUTHORED_TERMINAL4_PROFILE.rotationYDegrees);
   authored.scale.fromArray(AUTHORED_TERMINAL4_PROFILE.scale);
   const texturedMaterialCount = applySourceMaterials(THREE, authored, textures);
-  authored.updateMatrixWorld(true);
   environment.add(authored);
+  authored.updateMatrixWorld(true);
 
   const terminalBounds = new THREE.Box3().setFromObject(authored);
   const a1Point = new THREE.Vector3(0, 0, 6.2);
-  const nearestTerminalPoint = terminalBounds.clampPoint(a1Point, new THREE.Vector3());
-  const a1BoundsDistance = nearestTerminalPoint.distanceTo(a1Point);
+  const a1NearestGeometryDistance = nearestHorizontalVertexDistance(THREE, authored, a1Point);
 
   environment.userData.environmentSource = "authored-phx-terminal4-textured";
   environment.userData.authoredTerminal4Url = `${baseUrl}terminal4.gltf`;
   environment.userData.authoredTerminal4 = authored;
+  environment.userData.authoredTerminal4Placement = AUTHORED_TERMINAL4_PROFILE.placementAuthority;
   environment.userData.authoredTerminal4MaterialPass = AUTHORED_TERMINAL4_PROFILE.materialPass;
   environment.userData.authoredTerminal4DetailLevel = AUTHORED_TERMINAL4_PROFILE.detailLevel;
   environment.userData.authoredTerminal4TriangleCount = AUTHORED_TERMINAL4_PROFILE.triangleCount;
@@ -160,7 +176,7 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4FallbackTextureCount = manifest.fallbackTextureCount;
   environment.userData.authoredTerminal4TexturedMaterialCount = texturedMaterialCount;
   environment.userData.authoredTerminal4Position = [...AUTHORED_TERMINAL4_PROFILE.position];
-  environment.userData.authoredTerminal4A1BoundsDistance = a1BoundsDistance;
+  environment.userData.authoredTerminal4A1NearestGeometryDistance = a1NearestGeometryDistance;
   environment.userData.authoredTerminal4Bounds = {
     min: terminalBounds.min.toArray(),
     max: terminalBounds.max.toArray(),
