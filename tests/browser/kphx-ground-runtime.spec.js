@@ -39,6 +39,7 @@ test("loads refined KPHX v1.8.1 Terminal 4 detail over the airport-wide ground",
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
 
   const canvas = await launchStandup(page);
+  await expectRuntimeValue(canvas, "data-environment-source", "authored-phx-terminal4");
   await expectRuntimeValue(canvas, "data-ground-source", "authored-kphx-v181");
   await expectRuntimeValue(canvas, "data-kphx-version", "1.8.1");
   await expectRuntimeValue(canvas, "data-kphx-detail-level", "terminal4-refined-v2");
