@@ -29,7 +29,7 @@ function hideCalibrationGround(environment) {
   });
 }
 
-export async function installAuthoredKphxGround(environment) {
+export async function installAuthoredKphxGround(THREE, environment) {
   if (!environment?.isGroup) throw new Error("KPHX environment group is required");
   environment.userData.groundSource = "loading-authored-kphx-v181";
   environment.userData.groundCoordinateFrame = AUTHORED_KPHX_GROUND_PROFILE.coordinateFrame;
