@@ -13,19 +13,25 @@ permissions:
 jobs:
   package-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: TheMainlineCowboy/SkyHarborPhx
+          ref: 2e6642778c9c88eac6a82b21063763cc78be7cfe
+          path: skyharbor-source
       - uses: actions/setup-node@v4
         with:
           node-version: 24
       - name: Materialize source
         run: node scripts/materialize-phx-terminal4.mjs
-      - name: Upload BGL and browser assets
+      - name: Upload BGL, textures and browser assets
         uses: actions/upload-artifact@v4
         with:
           name: phx-source-placement-${{ github.sha }}
           path: |
+            skyharbor-source/scenery/
             .cache/phx-terminal4-source/term4.BGL
             public/models/phx-terminal4/
           retention-days: 2
