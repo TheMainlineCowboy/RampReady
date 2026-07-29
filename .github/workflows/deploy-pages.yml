@@ -62,11 +62,25 @@ jobs:
           test "$(tr -d '\r\n' < "dist/releases/${GITHUB_SHA}.txt")" = "${GITHUB_SHA}"
           test -s dist/models/crj700-mobile.glb
           printf 'glTF' | cmp -n 4 - dist/models/crj700-mobile.glb
-          grep -Eq 'src="/RampReady/assets/[^\"]+\.js"' dist/index.html
+          grep -Eq 'src="/RampReady/assets/[^"]+\.js"' dist/index.html
           if [ -f dist/models/crj700-user.asset.json ]; then
             test -s dist/models/crj700-user.glb
             printf 'glTF' | cmp -n 4 - dist/models/crj700-user.glb
           fi
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const root = 'dist/models/kphx-photo';
+          const manifest = JSON.parse(fs.readFileSync(path.join(root, 'photo-manifest.json'), 'utf8'));
+          if (manifest.schemaVersion !== 2) throw new Error(`Deployed PHX manifest schema ${manifest.schemaVersion}`);
+          if (manifest.runtimeTiling?.mode !== 'tiled-native-source-resolution-v2') throw new Error('Deployed PHX tiling mode is wrong');
+          if (manifest.runtimeTiling?.tileCount !== 21 || manifest.tiles?.length !== 21) throw new Error('Deployed PHX tile count is wrong');
+          for (const tile of manifest.tiles) {
+            const file = path.join(root, tile.file);
+            if (!fs.existsSync(file) || fs.statSync(file).size !== tile.bytes) throw new Error(`Deployed PHX tile is missing or changed: ${tile.file}`);
+          }
+          console.log(`Verified Pages artifact contains ${manifest.tiles.length} native-resolution PHX ground tiles.`);
+          NODE
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -83,7 +97,7 @@ jobs:
           name: rampready-release-diagnostics-${{ github.sha }}
           path: release-verify.log
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 1
 
   deploy:
     needs: build
@@ -111,7 +125,7 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: Verify live aircraft bytes and immutable release marker
+      - name: Verify live aircraft, PHX ground tiles, and immutable release marker
         shell: bash
         run: |
           set -euo pipefail
@@ -161,4 +175,30 @@ jobs:
           test "${marker_verified}" = true
           test "${aircraft_verified}" = true
           printf 'glTF' | cmp -n 4 - /tmp/live-aircraft.glb
+
+          curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors \
+            -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' \
+            -o /tmp/live-phx-manifest.json \
+            "${PAGE_URL}models/kphx-photo/photo-manifest.json?sha=${EXPECTED_SHA}"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const source = JSON.parse(fs.readFileSync('public/models/kphx-photo/photo-manifest.json', 'utf8'));
+          const live = JSON.parse(fs.readFileSync('/tmp/live-phx-manifest.json', 'utf8'));
+          if (live.schemaVersion !== 2 || live.runtimeTiling?.mode !== 'tiled-native-source-resolution-v2') throw new Error('Live PHX ground is not using native-resolution tiling');
+          if (live.runtimeTiling?.tileCount !== 21 || live.tiles?.length !== 21) throw new Error('Live PHX ground tile count is wrong');
+          if (JSON.stringify(live) !== JSON.stringify(source)) throw new Error('Live PHX manifest does not match the deployed source commit');
+          fs.writeFileSync('/tmp/phx-live-tile-list.txt', live.tiles.map((tile) => tile.file).join('\n') + '\n');
+          NODE
+
+          while IFS= read -r tile; do
+            test -n "${tile}"
+            expected="public/models/kphx-photo/${tile}"
+            live_file="/tmp/$(basename "${tile}")"
+            curl --fail --location --retry 8 --retry-delay 3 --retry-all-errors \
+              -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' \
+              -o "${live_file}" "${PAGE_URL}models/kphx-photo/${tile}?sha=${EXPECTED_SHA}"
+            cmp --silent "${expected}" "${live_file}"
+          done < /tmp/phx-live-tile-list.txt
+
           echo "Verified exact live RampReady release ${EXPECTED_SHA} at ${PAGE_URL}"
+          echo "Verified all 21 native-resolution Sky Harbor ground tiles live and byte-identical."
