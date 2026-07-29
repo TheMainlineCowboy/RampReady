@@ -28,13 +28,6 @@ async function launchStandup(page) {
   return canvas;
 }
 
-async function expectRuntimeValue(canvas, attribute, expected) {
-  await expect.poll(
-    async () => canvas.getAttribute(attribute),
-    { timeout: 40_000, intervals: [250, 500, 1_000] },
-  ).toBe(expected);
-}
-
 async function captureCanvas(page, canvas, fileName) {
   const bounds = await canvas.boundingBox();
   expect(bounds).not.toBeNull();
@@ -53,7 +46,7 @@ async function captureCanvas(page, canvas, fileName) {
 }
 
 test("loads source-authored PHX scenery with detailed Terminal 4 jetways at exact Gate A1", async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const assetResponses = [];
   const runtimeErrors = [];
@@ -67,37 +60,43 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways at exac
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
 
   const canvas = await launchStandup(page);
-  await expectRuntimeValue(canvas, "data-environment-source", "authored-phx-terminal4-textured-source-jetways");
-  await expectRuntimeValue(canvas, "data-ground-source", "authored-kphx-v181");
-  await expectRuntimeValue(canvas, "data-photo-ground-source", "source-authored-phx-photo");
-  await expectRuntimeValue(canvas, "data-kphx-version", "1.8.1");
-  await expectRuntimeValue(canvas, "data-kphx-detail-level", "terminal4-authored-textured-v2-exact-a1");
-  await expectRuntimeValue(canvas, "data-photo-detail-level", "full-airport-source-aerial-1.2m-v1");
-  await expectRuntimeValue(canvas, "data-photo-tile-count", "199");
-  await expectRuntimeValue(canvas, "data-photo-width", "6400");
-  await expectRuntimeValue(canvas, "data-photo-height", "2304");
-  await expectRuntimeValue(canvas, "data-photo-bytes", "2698886");
-  await expectRuntimeValue(canvas, "data-hidden-adex-surface-materials", "4");
-  await expectRuntimeValue(canvas, "data-source-jetway-count", "112");
-  await expectRuntimeValue(canvas, "data-terminal4-jetway-count", "58");
-  await expectRuntimeValue(canvas, "data-terminal4-parking-count", "58");
-  await expectRuntimeValue(canvas, "data-terminal4-texture-count", "17");
-  await expectRuntimeValue(canvas, "data-terminal4-exact-texture-count", "13");
-  await expectRuntimeValue(canvas, "data-terminal4-fallback-texture-count", "4");
-  await expectRuntimeValue(canvas, "data-terminal4-textured-material-count", "19");
-  await expectRuntimeValue(canvas, "data-terminal4-position", "-101.593,0.035,70.901");
-  await expectRuntimeValue(
-    canvas,
-    "data-terminal4-placement",
+  await expect.poll(
+    async () => canvas.getAttribute("data-environment-source"),
+    { timeout: 90_000, intervals: [500, 1_000, 2_000] },
+  ).toBe("authored-phx-terminal4-textured-source-jetways");
+
+  // Read all runtime evidence in one browser round-trip. The simulator is
+  // intentionally rendering a large source airport scene, so serial DOM calls
+  // distort the performance measurement and can consume the whole test timeout.
+  const runtime = await canvas.evaluate((element) => ({ ...element.dataset }));
+  expect(runtime.environmentSource).toBe("authored-phx-terminal4-textured-source-jetways");
+  expect(runtime.groundSource).toBe("authored-kphx-v181");
+  expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
+  expect(runtime.kphxVersion).toBe("1.8.1");
+  expect(runtime.kphxDetailLevel).toBe("terminal4-authored-textured-v2-exact-a1");
+  expect(runtime.photoDetailLevel).toBe("full-airport-source-aerial-1.2m-v1");
+  expect(runtime.photoTileCount).toBe("199");
+  expect(runtime.photoWidth).toBe("6400");
+  expect(runtime.photoHeight).toBe("2304");
+  expect(runtime.photoBytes).toBe("2698886");
+  expect(runtime.hiddenAdexSurfaceMaterials).toBe("4");
+  expect(runtime.sourceJetwayCount).toBe("112");
+  expect(runtime.terminal4JetwayCount).toBe("58");
+  expect(runtime.terminal4ParkingCount).toBe("58");
+  expect(runtime.terminal4TextureCount).toBe("17");
+  expect(runtime.terminal4ExactTextureCount).toBe("13");
+  expect(runtime.terminal4FallbackTextureCount).toBe("4");
+  expect(runtime.terminal4TexturedMaterialCount).toBe("19");
+  expect(runtime.terminal4Position).toBe("-101.593,0.035,70.901");
+  expect(runtime.terminal4Placement).toBe(
     "decoded original KPHX_ADEX library-object placement relative to decoded original Gate A1",
   );
-  await expectRuntimeValue(canvas, "data-b15-anchors", "ready");
-  await expectRuntimeValue(canvas, "data-b15-corridor-meters", "515,542");
+  expect(runtime.b15Anchors).toBe("ready");
+  expect(runtime.b15CorridorMeters).toBe("515,542");
+  expect(runtime.simulatorDetailSource).toBeUndefined();
+  expect(runtime.a1RampTextureResolution).toBeUndefined();
 
-  expect(await canvas.getAttribute("data-simulator-detail-source")).toBeNull();
-  expect(await canvas.getAttribute("data-a1-ramp-texture-resolution")).toBeNull();
-
-  const nearestGeometryMeters = Number(await canvas.getAttribute("data-terminal4-a1-nearest-geometry-meters"));
+  const nearestGeometryMeters = Number(runtime.terminal4A1NearestGeometryMeters);
   expect(nearestGeometryMeters).toBeGreaterThan(28);
   expect(nearestGeometryMeters).toBeLessThan(29.2);
 
