@@ -80,65 +80,74 @@ function buildSourceConcreteNearfieldTextures(THREE, sourceTexture) {
 
   const sourceWidth = Math.min(192, image.width);
   const sourceHeight = Math.min(34, image.height);
-  const albedoCanvas = document.createElement("canvas");
-  albedoCanvas.width = 256;
-  albedoCanvas.height = 256;
-  const context = albedoCanvas.getContext("2d", { willReadFrequently: true });
-  if (!context) throw new Error("PHX source-detail canvas is unavailable");
-  context.imageSmoothingEnabled = true;
+  const sourceCanvas = document.createElement("canvas");
+  sourceCanvas.width = 256;
+  sourceCanvas.height = 256;
+  const sourceContext = sourceCanvas.getContext("2d", { willReadFrequently: true });
+  if (!sourceContext) throw new Error("PHX source-detail canvas is unavailable");
+  sourceContext.imageSmoothingEnabled = true;
 
   // PARKRAMPS is an atlas. Its upper-left strip is the package's clean authored
   // concrete: real slab edges and fine variation, without the jetway rotundas or
   // black atlas separators. Repeat only that exact strip across the detail tile.
   const rowHeight = 32;
-  for (let y = 0; y < albedoCanvas.height; y += rowHeight) {
-    context.drawImage(image, 0, 1, sourceWidth, sourceHeight, 0, y, albedoCanvas.width, rowHeight);
+  for (let y = 0; y < sourceCanvas.height; y += rowHeight) {
+    sourceContext.drawImage(image, 0, 1, sourceWidth, sourceHeight, 0, y, sourceCanvas.width, rowHeight);
   }
 
-  const pixels = context.getImageData(0, 0, albedoCanvas.width, albedoCanvas.height);
+  const sourcePixels = sourceContext.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
   let luminanceTotal = 0;
-  const pixelCount = pixels.data.length / 4;
-  for (let index = 0; index < pixels.data.length; index += 4) {
-    luminanceTotal += pixels.data[index] * 0.2126 + pixels.data[index + 1] * 0.7152 + pixels.data[index + 2] * 0.0722;
+  const pixelCount = sourcePixels.data.length / 4;
+  for (let index = 0; index < sourcePixels.data.length; index += 4) {
+    luminanceTotal += sourcePixels.data[index] * 0.2126 + sourcePixels.data[index + 1] * 0.7152 + sourcePixels.data[index + 2] * 0.0722;
   }
   const meanLuminance = luminanceTotal / pixelCount;
-  for (let index = 0; index < pixels.data.length; index += 4) {
-    const red = pixels.data[index];
-    const green = pixels.data[index + 1];
-    const blue = pixels.data[index + 2];
-    const luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722;
-    // Preserve the authored slab pattern while normalizing the atlas crop into a
-    // subtle neutral ramp layer that can blend over the georeferenced aerial.
-    const detailed = Math.max(62, Math.min(210, 158 + (luminance - meanLuminance) * 1.9));
-    pixels.data[index] = Math.min(255, detailed + 5);
-    pixels.data[index + 1] = Math.min(255, detailed + 3);
-    pixels.data[index + 2] = Math.max(0, detailed - 3);
-    pixels.data[index + 3] = 255;
-  }
-  context.putImageData(pixels, 0, 0);
+
+  const detailCanvas = document.createElement("canvas");
+  detailCanvas.width = sourceCanvas.width;
+  detailCanvas.height = sourceCanvas.height;
+  const detailContext = detailCanvas.getContext("2d", { willReadFrequently: true });
+  if (!detailContext) throw new Error("PHX source-detail decal canvas is unavailable");
+  const detailPixels = detailContext.createImageData(detailCanvas.width, detailCanvas.height);
 
   const bumpCanvas = document.createElement("canvas");
-  bumpCanvas.width = albedoCanvas.width;
-  bumpCanvas.height = albedoCanvas.height;
+  bumpCanvas.width = sourceCanvas.width;
+  bumpCanvas.height = sourceCanvas.height;
   const bumpContext = bumpCanvas.getContext("2d", { willReadFrequently: true });
   if (!bumpContext) throw new Error("PHX source-bump canvas is unavailable");
-  bumpContext.drawImage(albedoCanvas, 0, 0);
-  const bumpPixels = bumpContext.getImageData(0, 0, bumpCanvas.width, bumpCanvas.height);
-  for (let index = 0; index < bumpPixels.data.length; index += 4) {
-    const luminance = bumpPixels.data[index] * 0.2126 + bumpPixels.data[index + 1] * 0.7152 + bumpPixels.data[index + 2] * 0.0722;
-    const detailed = Math.max(0, Math.min(255, 128 + (luminance - 158) * 2.35));
-    bumpPixels.data[index] = detailed;
-    bumpPixels.data[index + 1] = detailed;
-    bumpPixels.data[index + 2] = detailed;
+  const bumpPixels = bumpContext.createImageData(bumpCanvas.width, bumpCanvas.height);
+
+  for (let index = 0; index < sourcePixels.data.length; index += 4) {
+    const red = sourcePixels.data[index];
+    const green = sourcePixels.data[index + 1];
+    const blue = sourcePixels.data[index + 2];
+    const luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722;
+    const darkness = Math.max(0, meanLuminance - luminance);
+
+    // Use the exact source strip as a transparent detail decal. Slab faces stay
+    // almost clear so the georeferenced aerial remains visible; the authored dark
+    // joints receive strong alpha and stay crisp at tug height.
+    const detail = Math.max(45, Math.min(135, 90 + (luminance - meanLuminance) * 0.7));
+    const alpha = Math.max(10, Math.min(235, 14 + darkness * 6));
+    detailPixels.data[index] = Math.min(255, detail + 3);
+    detailPixels.data[index + 1] = Math.min(255, detail + 2);
+    detailPixels.data[index + 2] = detail;
+    detailPixels.data[index + 3] = alpha;
+
+    const bump = Math.max(0, Math.min(255, 128 + (luminance - meanLuminance) * 2.4));
+    bumpPixels.data[index] = bump;
+    bumpPixels.data[index + 1] = bump;
+    bumpPixels.data[index + 2] = bump;
     bumpPixels.data[index + 3] = 255;
   }
+  detailContext.putImageData(detailPixels, 0, 0);
   bumpContext.putImageData(bumpPixels, 0, 0);
 
   return {
     albedo: configureNearfieldTexture(
       THREE,
-      new THREE.CanvasTexture(albedoCanvas),
-      "PHX supplied PARKRAMPS near-field concrete albedo",
+      new THREE.CanvasTexture(detailCanvas),
+      "PHX supplied PARKRAMPS transparent near-field joint decal",
       THREE.SRGBColorSpace,
     ),
     bump: configureNearfieldTexture(
@@ -223,16 +232,18 @@ function applyAuthoredSurfaceMaterials(THREE, authored, textures) {
         material.visible = true;
         material.color.setHex(0xffffff);
         material.transparent = true;
-        material.opacity = 0.30;
+        material.opacity = 0.72;
+        material.alphaTest = 0.01;
         material.depthWrite = false;
         material.map = textures.concrete.albedo;
         material.bumpMap = textures.concrete.bump;
         material.bumpScale = 0.022;
-        material.roughness = 0.94;
+        material.roughness = 0.95;
         material.metalness = 0;
         material.polygonOffset = true;
         material.polygonOffsetFactor = -1;
         material.polygonOffsetUnits = -1;
+        material.userData.nearfieldBlendMode = "transparent-source-joint-decal-over-aerial";
         node.renderOrder = Math.max(node.renderOrder || 0, 30);
         sourceDetailedSurfaceMaterialCount += 1;
       } else if (material.name === "asphalt") {
@@ -249,7 +260,8 @@ function applyAuthoredSurfaceMaterials(THREE, authored, textures) {
         material.visible = true;
         material.color.setHex(0x777976);
         material.transparent = true;
-        material.opacity = 0.13;
+        material.opacity = 0.42;
+        material.alphaTest = 0.01;
         material.depthWrite = false;
         material.map = textures.concrete.albedo;
         material.bumpMap = textures.concrete.bump;
