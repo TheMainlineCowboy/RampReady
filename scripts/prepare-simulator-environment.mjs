@@ -11,16 +11,26 @@ const staticImport = 'import { installStaticGateAircraft } from "../environment/
 const objectImport = 'import { installSourceAuthoredAirportObjects } from "../environment/sourceAuthoredAirportObjects.js";';
 const datasetAnchor = '    renderer.domElement.dataset.terminal4Placement = "loading";';
 const promiseAnchor = "    void Promise.all([terminalLoad, groundLoad, photoGroundLoad])";
+const rendererAnchor = "    renderer.shadowMap.enabled = true;";
+const sunAnchor = "    sun.castShadow = true;";
 
 if (!generated.startsWith(generatedBanner)) throw new Error("Simulator environment patch requires the prepared Terminal 4 trainer");
-if (!generated.includes(importAnchor)) throw new Error("Simulator environment import anchor is missing");
-if (!generated.includes(datasetAnchor)) throw new Error("Simulator environment dataset anchor is missing");
-if (!generated.includes(promiseAnchor)) throw new Error("Simulator environment readiness anchor is missing");
+for (const [anchor, label] of [[importAnchor, "import"], [datasetAnchor, "dataset"], [promiseAnchor, "readiness"], [rendererAnchor, "renderer"], [sunAnchor, "sun"]]) {
+  if (!generated.includes(anchor)) throw new Error(`Simulator environment ${label} anchor is missing`);
+}
 
 generated = generated.replace(importAnchor, `${importAnchor}\n${staticImport}\n${objectImport}`);
 generated = generated.replace(
+  rendererAnchor,
+  `${rendererAnchor}\n    renderer.shadowMap.type = THREE.PCFSoftShadowMap;\n    renderer.outputColorSpace = THREE.SRGBColorSpace;\n    renderer.toneMapping = THREE.ACESFilmicToneMapping;\n    renderer.toneMappingExposure = 1.08;`,
+);
+generated = generated.replace(
+  sunAnchor,
+  `${sunAnchor}\n    sun.shadow.mapSize.set(2048, 2048);\n    sun.shadow.camera.left = -190;\n    sun.shadow.camera.right = 190;\n    sun.shadow.camera.top = 190;\n    sun.shadow.camera.bottom = -190;\n    sun.shadow.camera.near = 1;\n    sun.shadow.camera.far = 520;\n    sun.shadow.bias = -0.00035;\n    sun.shadow.normalBias = 0.025;`,
+);
+generated = generated.replace(
   datasetAnchor,
-  `${datasetAnchor}\n    renderer.domElement.dataset.staticAircraftCount = "loading";\n    renderer.domElement.dataset.staticAircraftGates = "loading";\n    renderer.domElement.dataset.staticAircraftDetailLevel = "loading";\n    renderer.domElement.dataset.sourceObjectPlacementCount = "loading";\n    renderer.domElement.dataset.sourceObjectModelCount = "loading";\n    renderer.domElement.dataset.sourceObjectTextureCount = "loading";\n    renderer.domElement.dataset.sourceObjectTexturedMaterialCount = "loading";\n    renderer.domElement.dataset.sourceObjectDetailLevel = "loading";`,
+  `${datasetAnchor}\n    renderer.domElement.dataset.visualQuality = "simulator-rendering-v1";\n    renderer.domElement.dataset.staticAircraftCount = "loading";\n    renderer.domElement.dataset.staticAircraftGates = "loading";\n    renderer.domElement.dataset.staticAircraftDetailLevel = "loading";\n    renderer.domElement.dataset.sourceObjectPlacementCount = "loading";\n    renderer.domElement.dataset.sourceObjectModelCount = "loading";\n    renderer.domElement.dataset.sourceObjectTextureCount = "loading";\n    renderer.domElement.dataset.sourceObjectTexturedMaterialCount = "loading";\n    renderer.domElement.dataset.sourceObjectDetailLevel = "loading";`,
 );
 
 const populatedLoads = `    const staticAircraftLoad = installStaticGateAircraft(THREE, environment)
@@ -64,6 +74,10 @@ generated = generated.replace(promiseAnchor, populatedLoads);
 for (const required of [
   staticImport,
   objectImport,
+  'dataset.visualQuality = "simulator-rendering-v1"',
+  'renderer.toneMapping = THREE.ACESFilmicToneMapping',
+  'renderer.shadowMap.type = THREE.PCFSoftShadowMap',
+  'sun.shadow.mapSize.set(2048, 2048)',
   'dataset.staticAircraftCount = "loading"',
   'dataset.sourceObjectPlacementCount = "loading"',
   'dataset.sourceObjectTextureCount = "loading"',
@@ -78,4 +92,4 @@ for (const required of [
 }
 
 fs.writeFileSync(generatedPath, generated);
-console.log("RampReady simulator environment prepared with A2-A8 static aircraft and textured source-authored airport object placements.");
+console.log("RampReady simulator environment prepared with soft airport-wide shadows, ACES rendering, A2-A8 aircraft and textured source objects.");
