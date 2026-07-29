@@ -50,10 +50,8 @@ jobs:
           path: |
             rampready-build.log
             rampready-source-diff.patch
-            src/environment/kphxExactA1/
-            scripts/inspect-kphx-exact-a1-payload.mjs
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 1
 
       - name: Verify build did not mutate tracked source
         if: always()
@@ -78,4 +76,4 @@ jobs:
           name: rampready-production-${{ github.sha }}
           path: dist/
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 1
