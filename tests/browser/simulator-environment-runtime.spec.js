@@ -75,7 +75,7 @@ test("populates source-decoded Terminal 4 with simulator rendering, aircraft, ra
   expect(runtime.staticRampEquipmentObjectCount).toBe("58");
   expect(runtime.staticRampEquipmentDetailLevel).toBe("authored-and-procedural-terminal4-ramp-equipment-v2");
   expect(runtime.staticRampApronDetailLevel).toBe("a1-a8-normalized-source-aerial-pbr-apron-v3");
-  expect(runtime.staticRampApronTextureResolution).toBe("2048x1024");
+  expect(runtime.staticRampApronTextureResolution).toBe("1024x2048");
   expect(runtime.environmentSource).toBe("authored-phx-terminal4-textured-source-jetways");
   expect(runtime.groundSource).toBe("authored-kphx-v181-source-textured");
   expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
