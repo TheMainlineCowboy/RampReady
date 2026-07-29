@@ -1,4 +1,5 @@
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { installA1SimulatorApron } from "./a1SimulatorApron.js";
 import concourseA from "./kphxV181/concourseA.js";
 
 export const STATIC_RAMP_EQUIPMENT_PROFILE = Object.freeze({
@@ -77,7 +78,7 @@ function addGateCones(THREE, group, gate) {
     const cone = buildSafetyCone(THREE);
     cone.position.set(
       gate.x + forward.x * offset.forward + right.x * offset.right,
-      0.02,
+      0.045,
       gate.z + STATIC_RAMP_EQUIPMENT_PROFILE.sceneOffsetZ + forward.z * offset.forward + right.z * offset.right,
     );
     cone.rotation.y = yaw;
@@ -89,19 +90,22 @@ function addGateCones(THREE, group, gate) {
 export async function installStaticRampEquipment(THREE, environment) {
   if (!environment?.isGroup) throw new Error("KPHX environment group is required for static ramp equipment");
   const url = `${import.meta.env.BASE_URL}${STATIC_RAMP_EQUIPMENT_PROFILE.tugSource}`;
-  const gltf = await new GLTFLoader().loadAsync(url);
-  applyPiedmontFinish(THREE, gltf.scene);
+  const [{ scene: tugTemplate }, apron] = await Promise.all([
+    new GLTFLoader().loadAsync(url),
+    installA1SimulatorApron(THREE, environment),
+  ]);
+  applyPiedmontFinish(THREE, tugTemplate);
 
   const group = new THREE.Group();
   group.name = "PHX_StaticRampEquipmentPopulation";
   for (const gateName of STATIC_RAMP_EQUIPMENT_PROFILE.tugGates) {
     const gate = gateByName(gateName);
     const { yaw, forward, right } = gateFrame(gate);
-    const tug = gltf.scene.clone(true);
+    const tug = tugTemplate.clone(true);
     const distanceFromRoot = 12.5;
     tug.position.set(
       gate.x + forward.x * distanceFromRoot + right.x * 2.4,
-      0.025,
+      0.04,
       gate.z + STATIC_RAMP_EQUIPMENT_PROFILE.sceneOffsetZ + forward.z * distanceFromRoot + right.z * 2.4,
     );
     tug.rotation.y = yaw + Math.PI;
@@ -116,11 +120,15 @@ export async function installStaticRampEquipment(THREE, environment) {
   group.userData.safetyConeCount = STATIC_RAMP_EQUIPMENT_PROFILE.conedGates.length * 4;
   group.userData.totalObjectCount = group.children.length;
   group.userData.detailLevel = STATIC_RAMP_EQUIPMENT_PROFILE.detailLevel;
+  group.userData.apronDetailLevel = apron.userData.detailLevel;
+  group.userData.apronTextureResolution = apron.userData.textureResolution;
   environment.add(group);
   environment.userData.staticRampEquipment = group;
   environment.userData.staticRampAuthoredTugCount = group.userData.authoredTugCount;
   environment.userData.staticRampSafetyConeCount = group.userData.safetyConeCount;
   environment.userData.staticRampEquipmentObjectCount = group.userData.totalObjectCount;
   environment.userData.staticRampEquipmentDetailLevel = group.userData.detailLevel;
+  environment.userData.staticRampApronDetailLevel = group.userData.apronDetailLevel;
+  environment.userData.staticRampApronTextureResolution = group.userData.apronTextureResolution;
   return group;
 }
