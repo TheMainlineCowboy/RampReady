@@ -42,6 +42,30 @@ function hideFlatADEXSurfaceColors(environment) {
   return hiddenMaterialCount;
 }
 
+function blendExactProjectedSurfacesWithAerial(exactA1) {
+  let blendedMaterialCount = 0;
+  exactA1.traverse((node) => {
+    if (!node.isMesh || !node.name.startsWith("KPHX_A1_ExactProjected_")) return;
+    const priority = Number(node.userData.sourcePriority) || 0;
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    for (const material of materials) {
+      if (!material || material.opacity <= 0) continue;
+      // These exact records define the surface boundaries and source ordering,
+      // but their BGL colors are classification tints rather than photographic
+      // ramp textures. Preserve those exact shapes without hiding the supplied
+      // georeferenced airport imagery underneath them.
+      material.opacity *= priority > 0 ? 0.62 : 0.14;
+      material.transparent = true;
+      material.depthWrite = false;
+      material.roughness = 0.96;
+      material.needsUpdate = true;
+      blendedMaterialCount += 1;
+    }
+  });
+  exactA1.userData.blendedProjectedMaterialCount = blendedMaterialCount;
+  return blendedMaterialCount;
+}
+
 async function fetchManifest(url) {
   const response = await fetch(url, { cache: "force-cache" });
   if (!response.ok) throw new Error(`PHX aerial manifest returned HTTP ${response.status}`);
@@ -127,11 +151,9 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
 
   const hiddenSurfaceMaterialCount = hideFlatADEXSurfaceColors(environment);
   environment.add(photoGround);
-  // The exact unmlobo A1 projected meshes and all 214 authored painted lines
-  // sit above the field-wide aerial. This is the supplied airport data itself,
-  // not a hand-drawn gate or guessed push line.
   const exactA1 = await installExactKphxA1(THREE, environment);
   exactA1.position.set(0, 0, 6.2);
+  const blendedProjectedMaterialCount = blendExactProjectedSurfacesWithAerial(exactA1);
 
   environment.userData.photoGroundSource = "source-authored-phx-photo";
   environment.userData.authoredPhotoGround = photoGround;
@@ -145,5 +167,6 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
   environment.userData.authoredPhotoSha256 = manifest.image.sha256;
   environment.userData.authoredPhotoDetailLevel = AUTHORED_KPHX_PHOTO_PROFILE.detailLevel;
   environment.userData.hiddenADEXSurfaceMaterialCount = hiddenSurfaceMaterialCount;
+  environment.userData.exactA1BlendedProjectedMaterialCount = blendedProjectedMaterialCount;
   return photoGround;
 }
