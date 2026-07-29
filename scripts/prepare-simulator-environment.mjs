@@ -20,7 +20,7 @@ if (!generated.includes(promiseAnchor)) throw new Error("Simulator environment r
 generated = generated.replace(importAnchor, `${importAnchor}\n${staticImport}\n${objectImport}`);
 generated = generated.replace(
   datasetAnchor,
-  `${datasetAnchor}\n    renderer.domElement.dataset.staticAircraftCount = "loading";\n    renderer.domElement.dataset.staticAircraftGates = "loading";\n    renderer.domElement.dataset.staticAircraftDetailLevel = "loading";\n    renderer.domElement.dataset.sourceObjectPlacementCount = "loading";\n    renderer.domElement.dataset.sourceObjectModelCount = "loading";\n    renderer.domElement.dataset.sourceObjectDetailLevel = "loading";`,
+  `${datasetAnchor}\n    renderer.domElement.dataset.staticAircraftCount = "loading";\n    renderer.domElement.dataset.staticAircraftGates = "loading";\n    renderer.domElement.dataset.staticAircraftDetailLevel = "loading";\n    renderer.domElement.dataset.sourceObjectPlacementCount = "loading";\n    renderer.domElement.dataset.sourceObjectModelCount = "loading";\n    renderer.domElement.dataset.sourceObjectTextureCount = "loading";\n    renderer.domElement.dataset.sourceObjectTexturedMaterialCount = "loading";\n    renderer.domElement.dataset.sourceObjectDetailLevel = "loading";`,
 );
 
 const populatedLoads = `    const staticAircraftLoad = installStaticGateAircraft(THREE, environment)
@@ -42,12 +42,16 @@ const populatedLoads = `    const staticAircraftLoad = installStaticGateAircraft
       .then((objects) => {
         renderer.domElement.dataset.sourceObjectPlacementCount = String(environment.userData.sourceAuthoredAirportObjectPlacementCount);
         renderer.domElement.dataset.sourceObjectModelCount = String(environment.userData.sourceAuthoredAirportObjectModelCount);
+        renderer.domElement.dataset.sourceObjectTextureCount = String(environment.userData.sourceAuthoredAirportObjectTextureCount);
+        renderer.domElement.dataset.sourceObjectTexturedMaterialCount = String(environment.userData.sourceAuthoredAirportObjectTexturedMaterialCount);
         renderer.domElement.dataset.sourceObjectDetailLevel = environment.userData.sourceAuthoredAirportObjectDetailLevel;
         return objects;
       })
       .catch((error) => {
         renderer.domElement.dataset.sourceObjectPlacementCount = "load-error";
         renderer.domElement.dataset.sourceObjectModelCount = "load-error";
+        renderer.domElement.dataset.sourceObjectTextureCount = "load-error";
+        renderer.domElement.dataset.sourceObjectTexturedMaterialCount = "load-error";
         renderer.domElement.dataset.sourceObjectDetailLevel = "load-error";
         console.error("RampReady PHX source object load failed", error);
         setMessage(\`PHX source objects failed to load: \${error.message}\`);
@@ -62,14 +66,16 @@ for (const required of [
   objectImport,
   'dataset.staticAircraftCount = "loading"',
   'dataset.sourceObjectPlacementCount = "loading"',
+  'dataset.sourceObjectTextureCount = "loading"',
   "installStaticGateAircraft(THREE, environment)",
   "installSourceAuthoredAirportObjects(THREE, environment)",
   "environment.userData.authoredStaticAircraftCount",
   "environment.userData.sourceAuthoredAirportObjectPlacementCount",
+  "environment.userData.sourceAuthoredAirportObjectTextureCount",
   "Promise.all([terminalLoad, groundLoad, photoGroundLoad, staticAircraftLoad, sourceObjectLoad])",
 ]) {
   if (!generated.includes(required)) throw new Error(`Simulator environment preparation missing ${required}`);
 }
 
 fs.writeFileSync(generatedPath, generated);
-console.log("RampReady simulator environment prepared with A2-A8 static aircraft and exact source-authored airport object placements.");
+console.log("RampReady simulator environment prepared with A2-A8 static aircraft and textured source-authored airport object placements.");
