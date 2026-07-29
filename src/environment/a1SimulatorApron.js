@@ -72,8 +72,6 @@ function drawPavementDetailCanvases() {
   const { minX, maxX, minZ, maxZ } = A1_SIMULATOR_APRON_PROFILE.bounds;
   const { pxForX, pxForZ } = apronPixelTransform(size);
 
-  // Source-aligned concrete slab joints. A dark recessed joint plus a faint sunward
-  // lip gives the close-range pavement depth without replacing the source aerial.
   for (const context of [bumpContext, wearContext]) context.save();
   for (let x = Math.ceil(minX / 11.5) * 11.5; x <= maxX; x += 11.5) {
     const px = pxForX(x);
@@ -118,8 +116,6 @@ function drawPavementDetailCanvases() {
     wearContext.stroke();
   }
 
-  // Fine aggregate and repaired concrete patches remain deliberately subtle so
-  // decoded stand markings and the supplied aerial remain the location authority.
   for (let speck = 0; speck < 16_000; speck += 1) {
     const x = random() * size;
     const y = random() * size;
@@ -168,8 +164,6 @@ function drawPavementDetailCanvases() {
     bumpContext.stroke();
   }
 
-  // Tire scuffing follows the decoded A-gate parking row instead of being spread
-  // randomly through the airport.
   wearContext.strokeStyle = "rgba(24,25,25,0.14)";
   wearContext.lineCap = "round";
   wearContext.lineWidth = 7;
@@ -214,7 +208,8 @@ function configureCanvasTexture(THREE, canvas, name, colorSpace) {
 }
 
 function buildApronGeometry(THREE, useAerialUvs) {
-  const { minX, maxX, minZ, maxZ, photoSceneBounds } = A1_SIMULATOR_APRON_PROFILE;
+  const { minX, maxX, minZ, maxZ } = A1_SIMULATOR_APRON_PROFILE.bounds;
+  const { photoSceneBounds } = A1_SIMULATOR_APRON_PROFILE;
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.Float32BufferAttribute([
     maxX, 0, minZ,
@@ -253,7 +248,8 @@ function buildApronGeometry(THREE, useAerialUvs) {
 }
 
 function mapDetailTextureToApron(texture) {
-  const { minX, maxX, minZ, maxZ, photoSceneBounds } = A1_SIMULATOR_APRON_PROFILE;
+  const { minX, maxX, minZ, maxZ } = A1_SIMULATOR_APRON_PROFILE.bounds;
+  const { photoSceneBounds } = A1_SIMULATOR_APRON_PROFILE;
   const uWest = (minZ - photoSceneBounds.west) / (photoSceneBounds.east - photoSceneBounds.west);
   const uEast = (maxZ - photoSceneBounds.west) / (photoSceneBounds.east - photoSceneBounds.west);
   const vSouth = (minX - photoSceneBounds.south) / (photoSceneBounds.north - photoSceneBounds.south);
