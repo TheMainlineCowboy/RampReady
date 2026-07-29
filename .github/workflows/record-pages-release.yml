@@ -1,0 +1,72 @@
+name: Record RampReady Pages release result
+
+on:
+  workflow_run:
+    workflows: ["Deploy RampReady to GitHub Pages"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rampready-pages-release-receipt
+  cancel-in-progress: false
+
+jobs:
+  record-release-result:
+    if: ${{ github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Write immutable release receipt
+        env:
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_NUMBER: ${{ github.event.workflow_run.run_number }}
+          RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          COMPLETED_AT: ${{ github.event.workflow_run.updated_at }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin main
+          mkdir -p reports/pages-releases
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const receipt = {
+            schemaVersion: 1,
+            workflow: 'Deploy RampReady to GitHub Pages',
+            releaseSha: process.env.RELEASE_SHA,
+            conclusion: process.env.CONCLUSION,
+            runId: Number(process.env.RUN_ID),
+            runNumber: Number(process.env.RUN_NUMBER),
+            runAttempt: Number(process.env.RUN_ATTEMPT),
+            runUrl: process.env.RUN_URL,
+            completedAt: process.env.COMPLETED_AT,
+            phxGroundContract: {
+              textureMode: 'tiled-native-source-resolution-v2',
+              sourceDimensions: [6400, 2304],
+              runtimeTileCount: 21,
+              maximumTextureDimension: 1024,
+            },
+          };
+          fs.writeFileSync('reports/latest-pages-release.json', `${JSON.stringify(receipt, null, 2)}\n`);
+          fs.writeFileSync(`reports/pages-releases/${receipt.releaseSha}.json`, `${JSON.stringify(receipt, null, 2)}\n`);
+          NODE
+
+          git config user.name 'RampReady Release Verifier'
+          git config user.email 'actions@users.noreply.github.com'
+          git add reports/latest-pages-release.json "reports/pages-releases/${RELEASE_SHA}.json"
+          if git diff --cached --quiet; then
+            echo "Release receipt already recorded for ${RELEASE_SHA}."
+          else
+            git commit -m "Record Pages release ${CONCLUSION} for ${RELEASE_SHA}"
+            git push origin HEAD:main
+          fi
