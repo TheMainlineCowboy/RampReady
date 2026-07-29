@@ -1,0 +1,107 @@
+name: Verify live Sky Harbor simulator render
+
+on:
+  workflow_run:
+    workflows: ["Deploy RampReady to GitHub Pages"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rampready-live-phx-render
+  cancel-in-progress: true
+
+jobs:
+  verify-live-render:
+    if: ${{ github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact deployed release
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Chromium runtime
+        run: npx --yes playwright@1.55.0 install --with-deps chromium
+
+      - name: Render and verify live Sky Harbor
+        id: browser
+        continue-on-error: true
+        env:
+          PAGE_URL: https://themainlinecowboy.github.io/RampReady/
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: npx --yes --package=@playwright/test@1.55.0 playwright test scripts/verify-live-phx-render.spec.cjs --reporter=line
+
+      - name: Upload live render evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rampready-live-phx-render-${{ github.event.workflow_run.head_sha }}
+          path: |
+            live-phx-render-evidence/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Record live render result
+        if: always()
+        env:
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+          BROWSER_OUTCOME: ${{ steps.browser.outcome }}
+          DEPLOY_RUN_ID: ${{ github.event.workflow_run.id }}
+          COMPLETED_AT: ${{ github.event.workflow_run.updated_at }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout -B main origin/main
+          git pull --rebase origin main
+          mkdir -p reports/phx-renders
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          let browserReport = null;
+          let error = null;
+          try {
+            browserReport = JSON.parse(fs.readFileSync('live-phx-render-evidence/report.json', 'utf8'));
+          } catch {
+            try { error = fs.readFileSync('live-phx-render-evidence/error.txt', 'utf8'); } catch {}
+          }
+          const receipt = {
+            schemaVersion: 1,
+            releaseSha: process.env.RELEASE_SHA,
+            conclusion: process.env.BROWSER_OUTCOME === 'success' ? 'success' : 'failure',
+            deployRunId: Number(process.env.DEPLOY_RUN_ID),
+            completedAt: process.env.COMPLETED_AT,
+            phxGroundContract: {
+              textureMode: 'tiled-native-source-resolution-v2',
+              sourceDimensions: [6400, 2304],
+              runtimeTileCount: 21,
+              maximumTextureDimension: 1024,
+            },
+            browserReport,
+            error,
+          };
+          fs.writeFileSync('reports/latest-phx-render.json', `${JSON.stringify(receipt, null, 2)}\n`);
+          fs.writeFileSync(`reports/phx-renders/${receipt.releaseSha}.json`, `${JSON.stringify(receipt, null, 2)}\n`);
+          NODE
+          git config user.name 'RampReady Browser Verifier'
+          git config user.email 'actions@users.noreply.github.com'
+          git add reports/latest-phx-render.json "reports/phx-renders/${RELEASE_SHA}.json"
+          if ! git diff --cached --quiet; then
+            git commit -m "Record PHX live render ${BROWSER_OUTCOME} for ${RELEASE_SHA} [skip ci]"
+            git push origin HEAD:main
+          fi
+
+      - name: Require simulator render success
+        if: always()
+        env:
+          BROWSER_OUTCOME: ${{ steps.browser.outcome }}
+        run: test "${BROWSER_OUTCOME}" = "success"
