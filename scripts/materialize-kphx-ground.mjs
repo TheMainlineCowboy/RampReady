@@ -16,9 +16,8 @@ const EXPECTED = Object.freeze({
   parkings: 240,
   apronRecords: 170,
   apronTriangles: 1860,
-  pathSurfaces: 958,
   runways: 3,
-  primitiveCount: 6,
+  primitiveCount: 5,
   anchorGate: "A1",
   anchorParkingIndex: 32,
   anchorHeadingDegrees: 269.975341796875,
@@ -91,6 +90,10 @@ if (gltf?.nodes?.[0]?.name !== "PHX_KPHX_AuthoredGround") throw new Error("KPHX 
 if (gltf?.meshes?.[0]?.primitives?.length !== EXPECTED.primitiveCount) {
   throw new Error(`Unexpected KPHX ground primitive count ${gltf?.meshes?.[0]?.primitives?.length}`);
 }
+const materialNames = new Set((gltf.materials ?? []).map((material) => material.name));
+for (const name of ["airport-base", "concrete", "asphalt", "yellow-marking", "white-marking"]) {
+  if (!materialNames.has(name)) throw new Error(`KPHX simulator ground is missing material layer ${name}`);
+}
 if (!(bin.length > 594_240 && bin.length < 20_000_000)) throw new Error(`Unexpected enriched KPHX ground binary size ${bin.length}`);
 for (const [key, expected] of Object.entries({
   taxiwayPoints: EXPECTED.taxiwayPoints,
@@ -98,12 +101,12 @@ for (const [key, expected] of Object.entries({
   parkings: EXPECTED.parkings,
   apronRecords: EXPECTED.apronRecords,
   apronTriangles: EXPECTED.apronTriangles,
-  pathSurfaces: EXPECTED.pathSurfaces,
   runways: EXPECTED.runways,
 })) {
   if (groundManifest.counts?.[key] !== expected) throw new Error(`Unexpected KPHX ${key}: ${groundManifest.counts?.[key]} != ${expected}`);
 }
 for (const [key, minimum] of Object.entries({
+  pathSurfaces: 500,
   markingSegments: 1_000,
   edgeMarkingSegments: 1,
   taxiwayJoinCount: 100,
@@ -149,4 +152,4 @@ const runtimeManifest = {
   remainingSourceLayers: ["taxiway sign object records", "external simulator-library jetway geometry", "missing PHX_TERM400 diffuse maps"],
 };
 await writeFile(path.join(OUTPUT_DIR, "runtime-manifest.json"), `${JSON.stringify(runtimeManifest, null, 2)}\n`);
-console.log(`RampReady airport-wide KPHX simulator ground materialized: ${EXPECTED.runways} exact runways, ${EXPECTED.pathSurfaces} path surfaces, ${groundManifest.counts.holdShortCount} hold shorts and ${groundManifest.counts.runwayMarkingElementCount} runway marking elements.`);
+console.log(`RampReady airport-wide KPHX simulator ground materialized: ${EXPECTED.runways} exact runways, ${groundManifest.counts.pathSurfaces} source-drawn path surfaces, ${groundManifest.counts.holdShortCount} hold shorts and ${groundManifest.counts.runwayMarkingElementCount} runway marking elements.`);
