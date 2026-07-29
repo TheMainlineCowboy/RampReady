@@ -1,0 +1,744 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-07-29T22:46:26.549Z",
+  "source": {
+    "repository": "TheMainlineCowboy/SkyHarborPhx",
+    "commit": "2e6642778c9c88eac6a82b21063763cc78be7cfe",
+    "archiveUnderReview": "unmlobo-kphx1-8-1_Mu9aq.zip"
+  },
+  "currentRuntimeDiagnosis": {
+    "terminalShellSource": "scenery/term4.BGL from the pinned SkyHarborPhx repository",
+    "placementSource": "unmlobo KPHX 1.8.1 airport records",
+    "jetwayGeometrySource": "procedural Three.js geometry",
+    "usesProceduralJetwayGeometry": true,
+    "fallbackTerminalTextureCount": 4,
+    "fallbackTerminalTextures": [
+      {
+        "requestedTexture": "PARKRAMPS2.BMP",
+        "suppliedTexture": "parkramps.bmp",
+        "fidelity": "authored-source-fallback"
+      },
+      {
+        "requestedTexture": "PHX_TERM400_0.DDS",
+        "suppliedTexture": "bgate1.bmp",
+        "fidelity": "authored-source-fallback"
+      },
+      {
+        "requestedTexture": "PHX_TERM400_1.DDS",
+        "suppliedTexture": "bgate3.bmp",
+        "fidelity": "authored-source-fallback"
+      },
+      {
+        "requestedTexture": "PHXRAMPLIGHT.BMP",
+        "suppliedTexture": "supports2.bmp",
+        "fidelity": "authored-source-fallback"
+      }
+    ],
+    "mixedSourceRuntime": true
+  },
+  "inventory": {
+    "bglCount": 40,
+    "embeddedMdlxModelCount": 14,
+    "likelyJetwayOrGateModelCount": 3,
+    "bglFiles": [
+      {
+        "path": "scenery/backhoe.BGL",
+        "byteLength": 13308,
+        "sha256": "c0fbf85eba74ac43ab415fb4fbebb51d6293a8ffb4211203ce6594813ec61956",
+        "embeddedMdlxCount": 1,
+        "modelNames": [
+          "backhoe00"
+        ]
+      },
+      {
+        "path": "scenery/blastshield.BGL",
+        "byteLength": 1760,
+        "sha256": "639182693c22c306c7e51ebab97f4c52bb1b391ede98cf7ab86652e48b38084a",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/bridgerailphx1.BGL",
+        "byteLength": 1408,
+        "sha256": "e9fef479279f3774ed9c009556dd89cbc3aaf284b8927f6c3d8ae4ad6339382e",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/bridgerailphx2.BGL",
+        "byteLength": 3928,
+        "sha256": "cb26104ef1c8b1bbb72f8a54e06d83b825b48e6b05c1e9ff77508b1daf2afc0b",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/bridgerailphx3.BGL",
+        "byteLength": 3928,
+        "sha256": "4d5fd896821a8e82d0ec1346c4507be557272a470563457ee1bc356d8d219b3f",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/bridgerailphx4.BGL",
+        "byteLength": 9808,
+        "sha256": "655099d7dfc7afdec5f204cf9c9d0f8a4a45609ebceffa72d31e85e34b055926",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/cone.BGL",
+        "byteLength": 2995,
+        "sha256": "1da46aaa8687171780cf3942eecd1d835079ad833a15e6d57e9927fa64e06b93",
+        "embeddedMdlxCount": 1,
+        "modelNames": [
+          "cone00"
+        ]
+      },
+      {
+        "path": "scenery/constrailer.BGL",
+        "byteLength": 3720,
+        "sha256": "904431a60731f975986326cf9a2d0b1465b6c48fad2d42375cf47e6294b3cf84",
+        "embeddedMdlxCount": 1,
+        "modelNames": [
+          "constrailer00"
+        ]
+      },
+      {
+        "path": "scenery/constzone.BGL",
+        "byteLength": 8246,
+        "sha256": "4b5d4a61cabd08b035abe8ed99d273318bbe74e6cb31f39a92381d11153b21bf",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/CVX_cartraffic.BGL",
+        "byteLength": 674,
+        "sha256": "fd14981d4ec355bc38701844f5ed4c82afe100a9d6407014631e9803c3c231fa",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/helibcn.BGL",
+        "byteLength": 370,
+        "sha256": "16a41697563a1e60e951b145ea7eeeedd43d259d5783761d9677e4a0927f31f7",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/KPHX_ADEX_CVX.bgl",
+        "byteLength": 1159,
+        "sha256": "cff194eda517f506c4441371c8bb97674d753ba273da19b62702ed77615d2ff6",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/KPHX_ADEX.BGL",
+        "byteLength": 183319,
+        "sha256": "bfd8b2b141f1f4161eac7c7f0daa873e673c4c4a3a94c758489f1bc3a2d8b4c4",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/kphx_exc3.BGL",
+        "byteLength": 112,
+        "sha256": "405cae557b12ad8a502fc74d4b3110f7b14afa1292b4ed60ad1f7fda9cf0dec5",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/kphx_exc4.BGL",
+        "byteLength": 112,
+        "sha256": "b350ba13d946524d9c120ed9ad59fa4576a32c75efffa088012427fbf8321061",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/kphx_exc5.BGL",
+        "byteLength": 112,
+        "sha256": "8cfa2acdde8070bf68871c59542a2273e7284a3e41e6f368e3b0121d81a63505",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/kphx_exc6.BGL",
+        "byteLength": 112,
+        "sha256": "649a3959e1c0ff2a1014eadcf23a2257eacf27278c99406e73c5c4178684601a",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/kphx_exc7.BGL",
+        "byteLength": 112,
+        "sha256": "85b30f42b28752a3de66d721f24cfb6bbd4636b789b787c658e472cb77a8d2b8",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/kphx_exc8.BGL",
+        "byteLength": 112,
+        "sha256": "2cfc926cbd808a2f2f04a3bee645edf565713248fb27d947342da9df9dcffda7",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/kphx_exc9.BGL",
+        "byteLength": 112,
+        "sha256": "a756fc8eb2c8218875cb61bf23e55beb1313a22cf21c3a3bc7f2afa556879057",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/phx_outline.BGL",
+        "byteLength": 736,
+        "sha256": "a322a4c7e45eeed5c0dc55f322079d74187f6b4296b2b8cadc03530d42c2b4d7",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/PHX_Scenery.BGL",
+        "byteLength": 27900,
+        "sha256": "a8185f0dd2d7a698c3614a3a911ff87ee7ce066373f02851128ebc53af8d66ce",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/phx_t2_gar.BGL",
+        "byteLength": 7235,
+        "sha256": "474695a1715958dfbca31944088cae0ee11a1ca018dd6953b9be91666e1ab415",
+        "embeddedMdlxCount": 1,
+        "modelNames": [
+          "phx_t2_gar00"
+        ]
+      },
+      {
+        "path": "scenery/phx_t4_gar.BGL",
+        "byteLength": 8383,
+        "sha256": "9ae89cd68198d21cf40ea64c64f31b2c2869d09e28a0efd84d2ba3383c4785cd",
+        "embeddedMdlxCount": 1,
+        "modelNames": [
+          "phx_t4_gar00"
+        ]
+      },
+      {
+        "path": "scenery/PHX_Vehicles.BGL",
+        "byteLength": 20348,
+        "sha256": "ecda8e420d728c9fa5971ea4ff5c7a0d7f9391bd04bbbcf6c3bdbc4d2400c108",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/phxglo23.BGL",
+        "byteLength": 736,
+        "sha256": "f20f96092fc4ac89c486ab9083bcd40db9e8557ea9c58a84cb4fcba13a9c21b0",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/phxglo4.BGL",
+        "byteLength": 736,
+        "sha256": "34d67ad30ee6ede077336b2f363e186ba1196d681040d4cb7f3888b9fb54c69c",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/PHXPhoto.bgl",
+        "byteLength": 8278549,
+        "sha256": "57eba2d16153c84c775f23c1749c6ad85a9c01685cce1eb63bd52280eb368cf0",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/phxprkgrg.BGL",
+        "byteLength": 3718,
+        "sha256": "1b9e1bca46a0b3f969645ba168977a6a045e6f17c55da31e7b65a35c6a20a5c9",
+        "embeddedMdlxCount": 1,
+        "modelNames": [
+          "phxprkgrg00"
+        ]
+      },
+      {
+        "path": "scenery/phxtermlink.BGL",
+        "byteLength": 13812,
+        "sha256": "827b3fc191e1b299e52884a977227a7085bd5f1f17df27093db41eaf5eba5a5f",
+        "embeddedMdlxCount": 1,
+        "modelNames": [
+          "phxtermlink00"
+        ]
+      },
+      {
+        "path": "scenery/phxtwr.BGL",
+        "byteLength": 68531,
+        "sha256": "d43e09f64463cd7ca91cf6e3b50825c30ec5e124b9365c42691ed37b169abae2",
+        "embeddedMdlxCount": 1,
+        "modelNames": [
+          "phxtwr00"
+        ]
+      },
+      {
+        "path": "scenery/phxtwrrdlt.BGL",
+        "byteLength": 1222,
+        "sha256": "0dd44a0d6114fd469fd2802ac27295bd0412101d02d944607773c848986058b7",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/pvdbb.BGL",
+        "byteLength": 2528,
+        "sha256": "0b13cc8733a6f6d9b1508edfc55cd159c1b3ba2f52ce207b888224984072f65d",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/term2.BGL",
+        "byteLength": 78036,
+        "sha256": "2d658150c8a9518ff0d320a7945b05f7d154bb7593589bedc8b0bf1da9e32592",
+        "embeddedMdlxCount": 1,
+        "modelNames": [
+          "term2"
+        ]
+      },
+      {
+        "path": "scenery/term3.BGL",
+        "byteLength": 105876,
+        "sha256": "ff134d43baddf83839e84b5b2bfdd7c2c48fb5b859467dcc276e6172c42f9f0d",
+        "embeddedMdlxCount": 1,
+        "modelNames": [
+          "term3"
+        ]
+      },
+      {
+        "path": "scenery/term4.BGL",
+        "byteLength": 690258,
+        "sha256": "57140405cac64a0ce7f73a875d490307cf44f74f47b996441666dd0abad37df9",
+        "embeddedMdlxCount": 1,
+        "modelNames": [
+          "phx_term400"
+        ]
+      },
+      {
+        "path": "scenery/tmarks.BGL",
+        "byteLength": 656,
+        "sha256": "2e09f05e6750308eff8a21e6ab5a68a0449df2b39674e461cd9335e3a4962b61",
+        "embeddedMdlxCount": 0,
+        "modelNames": []
+      },
+      {
+        "path": "scenery/ushngr.BGL",
+        "byteLength": 4839,
+        "sha256": "54291204a9305abcf6c82d4cdfab51513a7b2eaee4d1362a4ff94fa8c16ad806",
+        "embeddedMdlxCount": 1,
+        "modelNames": [
+          "ushngr00"
+        ]
+      },
+      {
+        "path": "scenery/wncater.BGL",
+        "byteLength": 4772,
+        "sha256": "46e84e5c3a2d0cbdb3f38443528c615649648eabbd175eec700566c2e0a8f4d6",
+        "embeddedMdlxCount": 1,
+        "modelNames": [
+          "wncater00"
+        ]
+      },
+      {
+        "path": "scenery/wnhngr.BGL",
+        "byteLength": 6647,
+        "sha256": "99b2549818ed0fa66325fb121d99058f58e0afaae418df4a07897b61ddd7a6bf",
+        "embeddedMdlxCount": 1,
+        "modelNames": [
+          "wnhngr00"
+        ]
+      }
+    ],
+    "models": [
+      {
+        "sourcePath": "scenery/backhoe.BGL",
+        "offset": 116,
+        "byteLength": 13192,
+        "sha256": "64fd115acb025a6542159f1c6d3fa70ff6b644f04f3e10762312ac5ff93405ce",
+        "name": "backhoe00",
+        "textures": [
+          "BACKHOE.BMP",
+          "BACKHOE00_0.DDS"
+        ],
+        "highestLod": 100,
+        "partCount": 2,
+        "candidateMatches": [],
+        "likelyJetwayOrGateModel": false
+      },
+      {
+        "sourcePath": "scenery/cone.BGL",
+        "offset": 116,
+        "byteLength": 2879,
+        "sha256": "860bd6d274a59a35d0a796997fb24e09611eb1e711107444c59fc24e255ab073",
+        "name": "cone00",
+        "textures": [],
+        "highestLod": null,
+        "partCount": 0,
+        "candidateMatches": [],
+        "likelyJetwayOrGateModel": false
+      },
+      {
+        "sourcePath": "scenery/constrailer.BGL",
+        "offset": 116,
+        "byteLength": 3604,
+        "sha256": "bb06f9cae5fa0380b1e4de61377bf04aafb49ca41fac08e5fc551b0891579f8e",
+        "name": "constrailer00",
+        "textures": [
+          "TRAILER.BMP",
+          "TRAILER_LM.BMP"
+        ],
+        "highestLod": 100,
+        "partCount": 1,
+        "candidateMatches": [],
+        "likelyJetwayOrGateModel": false
+      },
+      {
+        "sourcePath": "scenery/phx_t2_gar.BGL",
+        "offset": 116,
+        "byteLength": 7119,
+        "sha256": "3406352690bb7bc4a5f20ddc93165d88a27e334763186d7e83ea13187db188ad",
+        "name": "phx_t2_gar00",
+        "textures": [],
+        "highestLod": null,
+        "partCount": 0,
+        "candidateMatches": [],
+        "likelyJetwayOrGateModel": false
+      },
+      {
+        "sourcePath": "scenery/phx_t4_gar.BGL",
+        "offset": 116,
+        "byteLength": 8267,
+        "sha256": "7bfb786a4f44145fda70cc4ca198674caae93c0125a442c1d23c0183f639cce2",
+        "name": "phx_t4_gar00",
+        "textures": [],
+        "highestLod": null,
+        "partCount": 0,
+        "candidateMatches": [],
+        "likelyJetwayOrGateModel": false
+      },
+      {
+        "sourcePath": "scenery/phxprkgrg.BGL",
+        "offset": 116,
+        "byteLength": 3602,
+        "sha256": "8f45fca546b74868b01388dd0b7a317b65b651b42849d1a4637e6429f3179f0d",
+        "name": "phxprkgrg00",
+        "textures": [
+          "PRKGRG.BMP",
+          "PRKGRG_LM.BMP"
+        ],
+        "highestLod": 100,
+        "partCount": 1,
+        "candidateMatches": [],
+        "likelyJetwayOrGateModel": false
+      },
+      {
+        "sourcePath": "scenery/phxtermlink.BGL",
+        "offset": 116,
+        "byteLength": 13696,
+        "sha256": "b848da37ac034af22e7e1602a8ca3fc43e240ad6af3ff23587b74799ee55a9b3",
+        "name": "phxtermlink00",
+        "textures": [
+          "PHXLINK1.BMP",
+          "PHXLINK1_LM.BMP",
+          "PHXLINK2.BMP",
+          "PHXLINK2_LM.BMP",
+          "TRAILER.BMP",
+          "TRAILER_LM.BMP"
+        ],
+        "highestLod": 100,
+        "partCount": 3,
+        "candidateMatches": [],
+        "likelyJetwayOrGateModel": false
+      },
+      {
+        "sourcePath": "scenery/phxtwr.BGL",
+        "offset": 116,
+        "byteLength": 68415,
+        "sha256": "0f0b02d4b5c2fc23bcb349a9a0a9bb6086033298f5cd5355490f8827f5dfd377",
+        "name": "phxtwr00",
+        "textures": [],
+        "highestLod": null,
+        "partCount": 0,
+        "candidateMatches": [],
+        "likelyJetwayOrGateModel": false
+      },
+      {
+        "sourcePath": "scenery/term2.BGL",
+        "offset": 116,
+        "byteLength": 77920,
+        "sha256": "bc567e289a92dd11ae7a9396e51c488e0c92c2eeca9f6fe7336286ad42b8cc36",
+        "name": "term2",
+        "textures": [
+          "PHXGATE_T2.BMP",
+          "PHXGATE_T2_LM.BMP",
+          "T2_3.BMP",
+          "T2_3_LM.BMP",
+          "T2_4.BMP",
+          "T2_4_LM.BMP",
+          "T2_BC.BMP",
+          "T2_BC_LM.BMP",
+          "T2_WALK.BMP",
+          "T2_WALK_LM.BMP",
+          "PHXRAM~1.BMP",
+          "PHXRAMPLIGHT_LM.BMP",
+          "SUPPORTS2.BMP",
+          "SUPPORTS2_LM.BMP",
+          "T2_1.BMP",
+          "T2_1_LM.BMP",
+          "T2_2.BMP",
+          "T2_2_LM.BMP"
+        ],
+        "highestLod": 100,
+        "partCount": 10,
+        "candidateMatches": [
+          "gate"
+        ],
+        "likelyJetwayOrGateModel": true
+      },
+      {
+        "sourcePath": "scenery/term3.BGL",
+        "offset": 116,
+        "byteLength": 105760,
+        "sha256": "1b7993ee677384f1661ceda73c779706700945539d9a2f731006d5d397d77572",
+        "name": "term3",
+        "textures": [
+          "BGATE3.BMP",
+          "BGATE3_LM.BMP",
+          "T3_1.BMP",
+          "T3_1_LM.BMP",
+          "T3_2.BMP",
+          "T3_2_LM.BMP",
+          "T3_GAR.BMP",
+          "T3_GAR_LM.BMP",
+          "T4_WALK.BMP",
+          "T4_WALK_LM.BMP",
+          "DGATE2.BMP",
+          "DGATE2_LM.BMP",
+          "PHXGATE_T3.BMP",
+          "PHXGATE_T3_LM.BMP",
+          "PHXRAM~1.BMP",
+          "PHXRAMPLIGHT_LM.BMP",
+          "ROOFJUNK.BMP",
+          "ROOFJUNK_LM.BMP"
+        ],
+        "highestLod": 100,
+        "partCount": 9,
+        "candidateMatches": [
+          "gate"
+        ],
+        "likelyJetwayOrGateModel": true
+      },
+      {
+        "sourcePath": "scenery/term4.BGL",
+        "offset": 116,
+        "byteLength": 690142,
+        "sha256": "9df9e6a8cba3725a8d588ce27c90a1b9adff6a6568610cddd7655a10fc58edc6",
+        "name": "phx_term400",
+        "textures": [
+          "BGATE1.BMP",
+          "BGATE1_LM.BMP",
+          "DGATE4.BMP",
+          "DGATE4_LM.BMP",
+          "DGATE5.BMP",
+          "DGATE5_LM.BMP",
+          "PARKRAMP1.BMP",
+          "PARKRAMP1_LM.BMP",
+          "PARKRAMPS.BMP",
+          "PARKRAMPS_LM.BMP",
+          "PARKRAMPS2.BMP",
+          "PARKRAMPS2_LM.BMP",
+          "BGATE3.BMP",
+          "PHX_TERM400_0.DDS",
+          "PHX_TERM400_0_LM.DDS",
+          "PHX_TERM400_1.DDS",
+          "PHX_TERM400_1_LM.DDS",
+          "PHXRAMPLIGHT.BMP",
+          "PHXRAMPLIGHT_LM.BMP",
+          "RW.BMP",
+          "SUPPORTS.BMP",
+          "SUPPORTS_LM.BMP",
+          "T4_WALK.BMP",
+          "BGATE3_LM.BMP",
+          "T4_WALK_LM.BMP",
+          "T4_WALK2.BMP",
+          "T4_WALK2_LM.BMP",
+          "DGATE1.BMP",
+          "DGATE1_LM.BMP",
+          "DGATE2.BMP",
+          "DGATE2_LM.BMP",
+          "DGATE3.BMP",
+          "DGATE3_LM.BMP"
+        ],
+        "highestLod": 100,
+        "partCount": 19,
+        "candidateMatches": [
+          "gate"
+        ],
+        "likelyJetwayOrGateModel": true
+      },
+      {
+        "sourcePath": "scenery/ushngr.BGL",
+        "offset": 116,
+        "byteLength": 4723,
+        "sha256": "f442dfaaecb4ed10f99a311cf45803ffd6d522df83c511c28e94227983e34d72",
+        "name": "ushngr00",
+        "textures": [],
+        "highestLod": null,
+        "partCount": 0,
+        "candidateMatches": [],
+        "likelyJetwayOrGateModel": false
+      },
+      {
+        "sourcePath": "scenery/wncater.BGL",
+        "offset": 116,
+        "byteLength": 4656,
+        "sha256": "bad3916d7e6fa09bc062f4b9fbb93a5bc78c0d35576537dfda53042a1274ea74",
+        "name": "wncater00",
+        "textures": [
+          "WN_CATER.BMP",
+          "WN_CATER_LM.BMP"
+        ],
+        "highestLod": 100,
+        "partCount": 1,
+        "candidateMatches": [],
+        "likelyJetwayOrGateModel": false
+      },
+      {
+        "sourcePath": "scenery/wnhngr.BGL",
+        "offset": 116,
+        "byteLength": 6531,
+        "sha256": "feca84ce51ef74a54cf2c1488f775f726a457cfe7c3b42135a24448558a9fefa",
+        "name": "wnhngr00",
+        "textures": [],
+        "highestLod": null,
+        "partCount": 0,
+        "candidateMatches": [],
+        "likelyJetwayOrGateModel": false
+      }
+    ],
+    "likelyJetwayOrGateModels": [
+      {
+        "sourcePath": "scenery/term2.BGL",
+        "offset": 116,
+        "byteLength": 77920,
+        "sha256": "bc567e289a92dd11ae7a9396e51c488e0c92c2eeca9f6fe7336286ad42b8cc36",
+        "name": "term2",
+        "textures": [
+          "PHXGATE_T2.BMP",
+          "PHXGATE_T2_LM.BMP",
+          "T2_3.BMP",
+          "T2_3_LM.BMP",
+          "T2_4.BMP",
+          "T2_4_LM.BMP",
+          "T2_BC.BMP",
+          "T2_BC_LM.BMP",
+          "T2_WALK.BMP",
+          "T2_WALK_LM.BMP",
+          "PHXRAM~1.BMP",
+          "PHXRAMPLIGHT_LM.BMP",
+          "SUPPORTS2.BMP",
+          "SUPPORTS2_LM.BMP",
+          "T2_1.BMP",
+          "T2_1_LM.BMP",
+          "T2_2.BMP",
+          "T2_2_LM.BMP"
+        ],
+        "highestLod": 100,
+        "partCount": 10,
+        "candidateMatches": [
+          "gate"
+        ],
+        "likelyJetwayOrGateModel": true
+      },
+      {
+        "sourcePath": "scenery/term3.BGL",
+        "offset": 116,
+        "byteLength": 105760,
+        "sha256": "1b7993ee677384f1661ceda73c779706700945539d9a2f731006d5d397d77572",
+        "name": "term3",
+        "textures": [
+          "BGATE3.BMP",
+          "BGATE3_LM.BMP",
+          "T3_1.BMP",
+          "T3_1_LM.BMP",
+          "T3_2.BMP",
+          "T3_2_LM.BMP",
+          "T3_GAR.BMP",
+          "T3_GAR_LM.BMP",
+          "T4_WALK.BMP",
+          "T4_WALK_LM.BMP",
+          "DGATE2.BMP",
+          "DGATE2_LM.BMP",
+          "PHXGATE_T3.BMP",
+          "PHXGATE_T3_LM.BMP",
+          "PHXRAM~1.BMP",
+          "PHXRAMPLIGHT_LM.BMP",
+          "ROOFJUNK.BMP",
+          "ROOFJUNK_LM.BMP"
+        ],
+        "highestLod": 100,
+        "partCount": 9,
+        "candidateMatches": [
+          "gate"
+        ],
+        "likelyJetwayOrGateModel": true
+      },
+      {
+        "sourcePath": "scenery/term4.BGL",
+        "offset": 116,
+        "byteLength": 690142,
+        "sha256": "9df9e6a8cba3725a8d588ce27c90a1b9adff6a6568610cddd7655a10fc58edc6",
+        "name": "phx_term400",
+        "textures": [
+          "BGATE1.BMP",
+          "BGATE1_LM.BMP",
+          "DGATE4.BMP",
+          "DGATE4_LM.BMP",
+          "DGATE5.BMP",
+          "DGATE5_LM.BMP",
+          "PARKRAMP1.BMP",
+          "PARKRAMP1_LM.BMP",
+          "PARKRAMPS.BMP",
+          "PARKRAMPS_LM.BMP",
+          "PARKRAMPS2.BMP",
+          "PARKRAMPS2_LM.BMP",
+          "BGATE3.BMP",
+          "PHX_TERM400_0.DDS",
+          "PHX_TERM400_0_LM.DDS",
+          "PHX_TERM400_1.DDS",
+          "PHX_TERM400_1_LM.DDS",
+          "PHXRAMPLIGHT.BMP",
+          "PHXRAMPLIGHT_LM.BMP",
+          "RW.BMP",
+          "SUPPORTS.BMP",
+          "SUPPORTS_LM.BMP",
+          "T4_WALK.BMP",
+          "BGATE3_LM.BMP",
+          "T4_WALK_LM.BMP",
+          "T4_WALK2.BMP",
+          "T4_WALK2_LM.BMP",
+          "DGATE1.BMP",
+          "DGATE1_LM.BMP",
+          "DGATE2.BMP",
+          "DGATE2_LM.BMP",
+          "DGATE3.BMP",
+          "DGATE3_LM.BMP"
+        ],
+        "highestLod": 100,
+        "partCount": 19,
+        "candidateMatches": [
+          "gate"
+        ],
+        "likelyJetwayOrGateModel": true
+      }
+    ]
+  },
+  "decision": "Extract and validate the matching supplied jetway/gate models before replacing the procedural runtime.",
+  "nextActions": [
+    "Stop treating procedural jetway geometry as simulator-quality source geometry.",
+    "Replace the mixed old-terminal/new-placement runtime with one consistent source package.",
+    "Eliminate every terminal material fallback or explicitly mask unsupported source parts.",
+    "After the terminal/jetways are source-correct, materialize full-field taxiways, runways, centerlines, hold-short markings, and signs from the airport records."
+  ]
+}
