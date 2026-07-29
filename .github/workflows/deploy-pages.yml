@@ -115,7 +115,7 @@ jobs:
   verify-live-site:
     needs: deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     env:
       PAGE_URL: ${{ needs.deploy.outputs.page_url }}
       EXPECTED_SHA: ${{ github.sha }}
@@ -202,3 +202,32 @@ jobs:
 
           echo "Verified exact live RampReady release ${EXPECTED_SHA} at ${PAGE_URL}"
           echo "Verified all 21 native-resolution Sky Harbor ground tiles live and byte-identical."
+
+      - name: Set up Node.js for live simulator render
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install live render test runner
+        run: npm install --no-save --package-lock=false @playwright/test@1.55.0
+
+      - name: Install Chromium for live simulator render
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify the rendered Sky Harbor simulator scene
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p live-phx-render-evidence
+          npx playwright test scripts/verify-live-phx-render.spec.js --reporter=line 2>&1 | tee live-phx-render-evidence/workflow.log
+
+      - name: Upload simulator render evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rampready-live-phx-render-${{ github.sha }}
+          path: |
+            live-phx-render-evidence/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 1
