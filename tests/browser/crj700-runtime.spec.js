@@ -33,11 +33,11 @@ async function launchRuntime(page) {
   await expect.poll(
     () => canvas.getAttribute("data-environment-source"),
     { timeout: 40_000, intervals: [250, 500, 1_000] },
-  ).toBe("authored-phx-terminal4-textured");
+  ).toBe("authored-phx-terminal4-textured-source-jetways");
   await expect.poll(
     () => canvas.getAttribute("data-ground-source"),
     { timeout: 40_000, intervals: [250, 500, 1_000] },
-  ).toBe("authored-kphx-v181");
+  ).toBe("authored-kphx-v181-source-textured");
   await expect.poll(
     () => canvas.getAttribute("data-photo-ground-source"),
     { timeout: 40_000, intervals: [250, 500, 1_000] },
