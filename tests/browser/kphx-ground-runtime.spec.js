@@ -102,8 +102,8 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways and sim
   expect(runtime.staticRampChockPairCount).toBe("7");
   expect(runtime.staticRampEquipmentObjectCount).toBe("58");
   expect(runtime.staticRampEquipmentDetailLevel).toBe("authored-and-procedural-terminal4-ramp-equipment-v2");
-  expect(runtime.staticRampApronDetailLevel).toBe("a1-a8-source-aerial-pbr-close-range-apron-v2");
-  expect(runtime.staticRampApronTextureResolution).toBe("2048");
+  expect(runtime.staticRampApronDetailLevel).toBe("a1-a8-normalized-source-aerial-pbr-apron-v3");
+  expect(runtime.staticRampApronTextureResolution).toBe("2048x1024");
   expect(runtime.simulatorDetailSource).toBeUndefined();
   expect(runtime.a1RampTextureResolution).toBeUndefined();
 
