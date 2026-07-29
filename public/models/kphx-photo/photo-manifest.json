@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "sourceRepository": "TheMainlineCowboy/SkyHarborPhx",
   "sourceCommit": "2e6642778c9c88eac6a82b21063763cc78be7cfe",
   "sourcePath": "scenery/PHXPhoto.bgl",
@@ -25,6 +25,247 @@
     "sha256": "3f898ff2f238c7a9280acaed43f8da6cf8bd28ef2f4f6512d5c0ea8043181161",
     "quality": 88
   },
+  "runtimeTiling": {
+    "mode": "tiled-native-source-resolution-v2",
+    "tileSizePixels": 1024,
+    "quality": 95,
+    "tileCount": 21,
+    "maxTextureDimension": 1024,
+    "totalBytes": 4570026
+  },
+  "tiles": [
+    {
+      "file": "tiles/phx-00-00.webp",
+      "column": 0,
+      "row": 0,
+      "x": 0,
+      "y": 0,
+      "width": 1024,
+      "height": 1024,
+      "bytes": 355770,
+      "sha256": "5d57ef8607eeb8ed84ae753de248425ddc354a114b5de3af3e584ebc3690b751"
+    },
+    {
+      "file": "tiles/phx-01-00.webp",
+      "column": 1,
+      "row": 0,
+      "x": 1024,
+      "y": 0,
+      "width": 1024,
+      "height": 1024,
+      "bytes": 450252,
+      "sha256": "f143dd240ce6de3179c09a9bfd142ba1dbea13cc85197166408c12acc16c6b10"
+    },
+    {
+      "file": "tiles/phx-02-00.webp",
+      "column": 2,
+      "row": 0,
+      "x": 2048,
+      "y": 0,
+      "width": 1024,
+      "height": 1024,
+      "bytes": 456020,
+      "sha256": "4cdc7750990bf981cb55bd803d8f5368a368463fa00aa8ff30940ca2a27e1c7c"
+    },
+    {
+      "file": "tiles/phx-03-00.webp",
+      "column": 3,
+      "row": 0,
+      "x": 3072,
+      "y": 0,
+      "width": 1024,
+      "height": 1024,
+      "bytes": 425606,
+      "sha256": "7e1de5a521f4755cb97f191e3ba927c4e4773edf4decca22a5a6206df9b81870"
+    },
+    {
+      "file": "tiles/phx-04-00.webp",
+      "column": 4,
+      "row": 0,
+      "x": 4096,
+      "y": 0,
+      "width": 1024,
+      "height": 1024,
+      "bytes": 372064,
+      "sha256": "1253ce6e1405dcc6cc24c31b06a86305b8613d2b4ea1f26f054a954ad23caaaa"
+    },
+    {
+      "file": "tiles/phx-05-00.webp",
+      "column": 5,
+      "row": 0,
+      "x": 5120,
+      "y": 0,
+      "width": 1024,
+      "height": 1024,
+      "bytes": 371026,
+      "sha256": "454a515102ac64557bc4de517578e7a7b5a5f1eba7737d65c39dbe887e6cab60"
+    },
+    {
+      "file": "tiles/phx-06-00.webp",
+      "column": 6,
+      "row": 0,
+      "x": 6144,
+      "y": 0,
+      "width": 256,
+      "height": 1024,
+      "bytes": 85264,
+      "sha256": "196ec2da38e4653d5d3f25c611845ef0676d733a812fe75874e85a8c75b4ecaa"
+    },
+    {
+      "file": "tiles/phx-00-01.webp",
+      "column": 0,
+      "row": 1,
+      "x": 0,
+      "y": 1024,
+      "width": 1024,
+      "height": 1024,
+      "bytes": 285654,
+      "sha256": "ba48b6fa0d60d6b353a542c76c0c3ff9b2e6f532d02b69695128ca7f11dbb390"
+    },
+    {
+      "file": "tiles/phx-01-01.webp",
+      "column": 1,
+      "row": 1,
+      "x": 1024,
+      "y": 1024,
+      "width": 1024,
+      "height": 1024,
+      "bytes": 428858,
+      "sha256": "85f92d3df7c0762654f6f685026a72fdb66876477d79993bda5eedf2b05b5118"
+    },
+    {
+      "file": "tiles/phx-02-01.webp",
+      "column": 2,
+      "row": 1,
+      "x": 2048,
+      "y": 1024,
+      "width": 1024,
+      "height": 1024,
+      "bytes": 395784,
+      "sha256": "3f9ec0c9eb14beb4f58919685626ddeb02a64710814255462259ffba7fa48887"
+    },
+    {
+      "file": "tiles/phx-03-01.webp",
+      "column": 3,
+      "row": 1,
+      "x": 3072,
+      "y": 1024,
+      "width": 1024,
+      "height": 1024,
+      "bytes": 360054,
+      "sha256": "226120ba0fb05d62dc8cac945f49629e9ef5d694e9c4c6a5e3a62371f7b7926a"
+    },
+    {
+      "file": "tiles/phx-04-01.webp",
+      "column": 4,
+      "row": 1,
+      "x": 4096,
+      "y": 1024,
+      "width": 1024,
+      "height": 1024,
+      "bytes": 222838,
+      "sha256": "9c89dc0c7c128287b31465e966f34a24e5efa88e4e7558101159e05f7340b22c"
+    },
+    {
+      "file": "tiles/phx-05-01.webp",
+      "column": 5,
+      "row": 1,
+      "x": 5120,
+      "y": 1024,
+      "width": 1024,
+      "height": 1024,
+      "bytes": 217610,
+      "sha256": "5dbec7d57dda1ac2290b39126e5af33b478d3c90500de910aa8e8c2b57dee50e"
+    },
+    {
+      "file": "tiles/phx-06-01.webp",
+      "column": 6,
+      "row": 1,
+      "x": 6144,
+      "y": 1024,
+      "width": 256,
+      "height": 1024,
+      "bytes": 42118,
+      "sha256": "4d0fc6e19c4c62c2c28ad739f1c04e410391285d461d1be2c93a4493dcb3aca7"
+    },
+    {
+      "file": "tiles/phx-00-02.webp",
+      "column": 0,
+      "row": 2,
+      "x": 0,
+      "y": 2048,
+      "width": 1024,
+      "height": 256,
+      "bytes": 1126,
+      "sha256": "463a29d8acc22e2b7128282f4f51dec0f54c4f1f91923f90ca613d9c93a6b2ac"
+    },
+    {
+      "file": "tiles/phx-01-02.webp",
+      "column": 1,
+      "row": 2,
+      "x": 1024,
+      "y": 2048,
+      "width": 1024,
+      "height": 256,
+      "bytes": 68614,
+      "sha256": "056c3fe1dc5d46455479ef50583f39eff40a0eec6a2507bb98a97da5ec9d64ba"
+    },
+    {
+      "file": "tiles/phx-02-02.webp",
+      "column": 2,
+      "row": 2,
+      "x": 2048,
+      "y": 2048,
+      "width": 1024,
+      "height": 256,
+      "bytes": 27684,
+      "sha256": "6979b576c8e0df33ccf756851c49b511b841b51b959a82563d32cc617f389fd0"
+    },
+    {
+      "file": "tiles/phx-03-02.webp",
+      "column": 3,
+      "row": 2,
+      "x": 3072,
+      "y": 2048,
+      "width": 1024,
+      "height": 256,
+      "bytes": 2312,
+      "sha256": "4ba252689e3aa2736f3205bcc47bbce1f5d188bc8efe693f6244e58d9eac9273"
+    },
+    {
+      "file": "tiles/phx-04-02.webp",
+      "column": 4,
+      "row": 2,
+      "x": 4096,
+      "y": 2048,
+      "width": 1024,
+      "height": 256,
+      "bytes": 580,
+      "sha256": "02d782c6edec36eab68f118ba9a8db21d1b8e72be031fa487e2168da2ebeb97a"
+    },
+    {
+      "file": "tiles/phx-05-02.webp",
+      "column": 5,
+      "row": 2,
+      "x": 5120,
+      "y": 2048,
+      "width": 1024,
+      "height": 256,
+      "bytes": 580,
+      "sha256": "02d782c6edec36eab68f118ba9a8db21d1b8e72be031fa487e2168da2ebeb97a"
+    },
+    {
+      "file": "tiles/phx-06-02.webp",
+      "column": 6,
+      "row": 2,
+      "x": 6144,
+      "y": 2048,
+      "width": 256,
+      "height": 256,
+      "bytes": 212,
+      "sha256": "51a587b41e7ff56d2430558456cfc4f67852b82804b75ec04479e36e133ce61f"
+    }
+  ],
   "geographicBounds": {
     "west": -112.03857421875,
     "south": 33.42041015625,
@@ -66,5 +307,6 @@
       4801.396159291422
     ]
   },
-  "surfaceState": "source-authored 1.2-meter-class aerial airport imagery covering the full PHX field"
+  "legacySurfaceState": "source-authored 1.2-meter-class aerial airport imagery covering the full PHX field",
+  "surfaceState": "source-authored 1.2-meter-class aerial preserved as native-resolution WebGL tiles across the full PHX field"
 }
