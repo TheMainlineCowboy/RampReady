@@ -64,10 +64,11 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways and sim
   ).toBe("authored-phx-terminal4-textured-source-jetways");
   await expect.poll(
     async () => canvas.getAttribute("data-static-ramp-equipment-object-count"),
-    { timeout: 90_000, intervals: [500, 1_000, 2_000] },
-  ).toBe("31");
+    { timeout: 150_000, intervals: [500, 1_000, 2_000] },
+  ).toBe("58");
 
   const runtime = await canvas.evaluate((element) => ({ ...element.dataset }));
+  expect(runtime.visualQuality).toBe("simulator-rendering-v2");
   expect(runtime.environmentSource).toBe("authored-phx-terminal4-textured-source-jetways");
   expect(runtime.groundSource).toBe("authored-kphx-v181-source-textured");
   expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
@@ -92,7 +93,17 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways and sim
   );
   expect(runtime.b15Anchors).toBe("ready");
   expect(runtime.b15CorridorMeters).toBe("515,542");
-  expect(runtime.staticRampEquipmentObjectCount).toBe("31");
+  expect(runtime.staticRampAuthoredTugCount).toBe("3");
+  expect(runtime.staticRampSafetyConeCount).toBe("28");
+  expect(runtime.staticRampBeltLoaderCount).toBe("5");
+  expect(runtime.staticRampBaggageCartTrainCount).toBe("8");
+  expect(runtime.staticRampGpuCount).toBe("4");
+  expect(runtime.staticRampTowbarCount).toBe("3");
+  expect(runtime.staticRampChockPairCount).toBe("7");
+  expect(runtime.staticRampEquipmentObjectCount).toBe("58");
+  expect(runtime.staticRampEquipmentDetailLevel).toBe("authored-and-procedural-terminal4-ramp-equipment-v2");
+  expect(runtime.staticRampApronDetailLevel).toBe("a1-a8-source-aerial-pbr-close-range-apron-v2");
+  expect(runtime.staticRampApronTextureResolution).toBe("2048");
   expect(runtime.simulatorDetailSource).toBeUndefined();
   expect(runtime.a1RampTextureResolution).toBeUndefined();
 
@@ -124,7 +135,7 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways and sim
   expect(measuredSize("/models/phx-terminal4/textures/RW.png")).toBeGreaterThan(1_000);
 
   const relevantErrors = runtimeErrors.filter((message) =>
-    /KPHX ground load failed|PHX airport ground failed to load|PHX source aerial load failed|source aerial failed to load|Terminal 4 visual load failed|material texture is missing|GLTFLoader|WebGL.*shader|ReferenceError|TypeError|SyntaxError/i.test(message),
+    /KPHX ground load failed|PHX airport ground failed to load|PHX source aerial load failed|source aerial failed to load|Terminal 4 visual load failed|material texture is missing|static ramp equipment load failed|GLTFLoader|WebGL.*shader|ReferenceError|TypeError|SyntaxError/i.test(message),
   );
   expect(relevantErrors).toEqual([]);
 
