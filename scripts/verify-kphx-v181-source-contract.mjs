@@ -4,6 +4,7 @@ const files = {
   a: fs.readFileSync("src/environment/kphxV181/concourseA.js", "utf8"),
   b: fs.readFileSync("src/environment/kphxV181/concourseB.js", "utf8"),
   terminal: fs.readFileSync("src/environment/authoredTerminal4Visual.js", "utf8"),
+  jetways: fs.readFileSync("src/environment/sourcePlacedTerminal4Jetways.js", "utf8"),
   ground: fs.readFileSync("src/environment/authoredKphxGround.js", "utf8"),
   photo: fs.readFileSync("src/environment/authoredKphxPhotoGround.js", "utf8"),
   photoExtractor: fs.readFileSync("scripts/extract-phx-photo.cpp", "utf8"),
@@ -33,14 +34,38 @@ for (const token of [
   "rotationYDegrees: 90",
   'scale: Object.freeze([-1, 1, 1])',
   "texture-manifest.json",
-  "pinned-authored-source-textures-v1",
-  "terminal4-authored-textured-v2-exact-a1",
+  "pinned-authored-source-textures-v2-repeat-corrected",
+  "terminal4-authored-textured-v3-source-jetways-exact-a1",
   "nearestHorizontalVertexDistance",
-  'environmentSource = "authored-phx-terminal4-textured"',
+  'environmentSource = "authored-phx-terminal4-textured-source-jetways"',
+  "buildSourcePlacedTerminal4Jetways",
+  "sourceWrapMode",
+  "THREE.RepeatWrapping",
+  "texture.anisotropy = 16",
 ]) {
   if (!files.terminal.includes(token)) throw new Error(`Authored Terminal 4 contract missing ${token}`);
 }
 if (files.terminal.includes("CanvasTexture")) throw new Error("Authored Terminal 4 runtime must not replace source materials with generated canvas textures");
+
+for (const token of [
+  'sourceArchive: "unmlobo-kphx1-8-1_Mu9aq.zip"',
+  'placementSource: "scenery/world/scenery/kphx-airport.bgl"',
+  "terminal4JetwayCount: 58",
+  "concourseA.jetways",
+  "concourseB.jetways",
+  "KPHX_SourcePlaced_JetwayRotundas",
+  "KPHX_SourcePlaced_JetwayOuterTunnels",
+  "KPHX_SourcePlaced_JetwayInnerTunnels",
+  "KPHX_SourcePlaced_JetwayCabins",
+  "KPHX_SourcePlaced_JetwayBellowsHorizontal",
+  "KPHX_SourcePlaced_JetwayWheels",
+  "KPHX_SourcePlaced_JetwayServiceSteps",
+  "group.position.fromArray(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset)",
+  "highDetailRadiusMeters: 180",
+]) {
+  if (!files.jetways.includes(token)) throw new Error(`Terminal 4 jetway visual contract missing ${token}`);
+}
+if (files.jetways.includes("CanvasTexture")) throw new Error("Terminal 4 jetways must reuse supplied source textures instead of generated canvas textures");
 
 for (const token of [
   "decodeDxt1Bmp",
@@ -57,13 +82,21 @@ for (const token of [
 }
 
 for (const token of [
-  'groundSource = "authored-kphx-v181"',
+  'groundSource = "authored-kphx-v181-source-textured"',
   "authored.rotation.y = 0",
   "sourceJetwayCount",
   "b15Anchors",
   "trainingCorridor",
   "kphxDetailLevel",
-  'detailLevel: "terminal4-authored-textured-v2-exact-a1"',
+  'detailLevel: "terminal4-authored-textured-v3-source-ramp-exact-a1"',
+  'concrete: "models/phx-terminal4/textures/PARKRAMPS.png"',
+  'serviceRoad: "models/phx-terminal4/textures/PARKRAMP1.png"',
+  'asphalt: "models/phx-terminal4/textures/RW.png"',
+  "loadAuthoredSurfaceTextures",
+  "applyAuthoredSurfaceMaterials",
+  "material.bumpMap = textures.concrete",
+  "material.bumpMap = textures.asphalt",
+  "texture.anisotropy = 16",
 ]) {
   if (!files.ground.includes(token)) throw new Error(`KPHX runtime contract missing ${token}`);
 }
@@ -75,8 +108,9 @@ for (const token of [
   "photo-manifest.json",
   "full-airport-source-aerial-1.2m-v1",
   'photoGroundSource = "source-authored-phx-photo"',
-  "OPAQUE_ADEX_SURFACES",
+  'const OPAQUE_ADEX_SURFACES = new Set(["airport-base"])',
   "hideFlatADEXSurfaceColors",
+  "source-textured and must stay visible above the aerial",
   "6400",
   "2304",
   "199",
@@ -125,4 +159,4 @@ for (const token of [
 ]) {
   if (!files.prepare.includes(token)) throw new Error(`KPHX browser evidence missing ${token}`);
 }
-console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} jetways, exact original ADEX A1 placement, real MDLX geometry, pinned source textures, 199-tile full-airport aerial and unrotated A1-local ground.`);
+console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source placements, exact original ADEX A1 placement, real MDLX terminal geometry, repeat-corrected supplied textures, detailed source-placed jetway visuals, supplied concrete/asphalt/service-road materials above the full-airport aerial, and unrotated A1-local ground.`);

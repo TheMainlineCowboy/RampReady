@@ -18,12 +18,10 @@ export const AUTHORED_KPHX_PHOTO_PROFILE = Object.freeze({
   detailLevel: "full-airport-source-aerial-1.2m-v1",
 });
 
-const OPAQUE_ADEX_SURFACES = new Set([
-  "airport-base",
-  "concrete",
-  "asphalt",
-  "service-road",
-]);
+// The broad airport-base is hidden so the supplied aerial remains visible
+// between authored surfaces. Concrete, asphalt and service-road materials are
+// now source-textured and must stay visible above the aerial at close range.
+const OPAQUE_ADEX_SURFACES = new Set(["airport-base"]);
 
 function hideFlatADEXSurfaceColors(environment) {
   const authoredGround = environment.userData.authoredGround;

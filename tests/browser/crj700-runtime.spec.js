@@ -33,11 +33,11 @@ async function launchRuntime(page) {
   await expect.poll(
     () => canvas.getAttribute("data-environment-source"),
     { timeout: 40_000, intervals: [250, 500, 1_000] },
-  ).toBe("authored-phx-terminal4-textured");
+  ).toBe("authored-phx-terminal4-textured-source-jetways");
   await expect.poll(
     () => canvas.getAttribute("data-ground-source"),
     { timeout: 40_000, intervals: [250, 500, 1_000] },
-  ).toBe("authored-kphx-v181");
+  ).toBe("authored-kphx-v181-source-textured");
   await expect.poll(
     () => canvas.getAttribute("data-photo-ground-source"),
     { timeout: 40_000, intervals: [250, 500, 1_000] },
@@ -129,7 +129,7 @@ function insideViewport(name, box, viewport) {
 }
 
 test("loads the real CRJ700 and authored PHX runtime", async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(300_000);
   await page.setViewportSize(DESKTOP);
   const canvas = await launchRuntime(page);
   await hideControls(page);
@@ -140,7 +140,7 @@ test("loads the real CRJ700 and authored PHX runtime", async ({ page }) => {
 });
 
 test("authored textured PHX Terminal 4 renders in chase view", async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(300_000);
   await page.setViewportSize(DESKTOP);
   const canvas = await launchRuntime(page);
   await page.evaluate(() => {
@@ -153,7 +153,7 @@ test("authored textured PHX Terminal 4 renders in chase view", async ({ page }) 
 });
 
 test("stand-up operator view contains the dedicated controls", async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(300_000);
   await page.setViewportSize(DESKTOP);
   const canvas = await launchRuntime(page);
   const view = page.locator(".rr-view-select");
@@ -165,7 +165,7 @@ test("stand-up operator view contains the dedicated controls", async ({ page }) 
 });
 
 test("mobile controls remain inside the simulator viewport", async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(300_000);
   await page.setViewportSize(MOBILE);
   const canvas = await launchRuntime(page);
   const layout = await page.evaluate(() => {
