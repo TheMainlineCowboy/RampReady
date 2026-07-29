@@ -12,6 +12,9 @@ const TERMINAL_SUFFIXES = [
   "/models/phx-terminal4/terminal4.bin",
   "/models/phx-terminal4/texture-manifest.json",
   "/models/phx-terminal4/textures/BGATE1.png",
+  "/models/phx-terminal4/textures/PARKRAMPS.png",
+  "/models/phx-terminal4/textures/PARKRAMP1.png",
+  "/models/phx-terminal4/textures/RW.png",
 ];
 const SOURCE_ASSETS = [...GROUND_SUFFIXES, ...PHOTO_SUFFIXES, ...TERMINAL_SUFFIXES];
 
@@ -45,7 +48,7 @@ async function captureCanvas(page, canvas, fileName) {
   await writeFile(`test-results/${fileName}`, image);
 }
 
-test("loads source-authored PHX scenery with detailed Terminal 4 jetways at exact Gate A1", async ({ page }) => {
+test("loads source-authored PHX scenery with detailed Terminal 4 jetways and textured A1 ramp", async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const assetResponses = [];
@@ -65,21 +68,18 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways at exac
     { timeout: 90_000, intervals: [500, 1_000, 2_000] },
   ).toBe("authored-phx-terminal4-textured-source-jetways");
 
-  // Read all runtime evidence in one browser round-trip. The simulator is
-  // intentionally rendering a large source airport scene, so serial DOM calls
-  // distort the performance measurement and can consume the whole test timeout.
   const runtime = await canvas.evaluate((element) => ({ ...element.dataset }));
   expect(runtime.environmentSource).toBe("authored-phx-terminal4-textured-source-jetways");
-  expect(runtime.groundSource).toBe("authored-kphx-v181");
+  expect(runtime.groundSource).toBe("authored-kphx-v181-source-textured");
   expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
   expect(runtime.kphxVersion).toBe("1.8.1");
-  expect(runtime.kphxDetailLevel).toBe("terminal4-authored-textured-v2-exact-a1");
+  expect(runtime.kphxDetailLevel).toBe("terminal4-authored-textured-v3-source-ramp-exact-a1");
   expect(runtime.photoDetailLevel).toBe("full-airport-source-aerial-1.2m-v1");
   expect(runtime.photoTileCount).toBe("199");
   expect(runtime.photoWidth).toBe("6400");
   expect(runtime.photoHeight).toBe("2304");
   expect(runtime.photoBytes).toBe("2698886");
-  expect(runtime.hiddenAdexSurfaceMaterials).toBe("4");
+  expect(runtime.hiddenAdexSurfaceMaterials).toBe("1");
   expect(runtime.sourceJetwayCount).toBe("112");
   expect(runtime.terminal4JetwayCount).toBe("58");
   expect(runtime.terminal4ParkingCount).toBe("58");
@@ -119,6 +119,9 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways at exac
   expect(measuredSize("/models/kphx-photo/phx-airport-photo.webp")).toBeGreaterThan(2_500_000);
   expect(measuredSize("/models/phx-terminal4/terminal4.bin")).toBeGreaterThan(1_000_000);
   expect(measuredSize("/models/phx-terminal4/textures/BGATE1.png")).toBeGreaterThan(10_000);
+  expect(measuredSize("/models/phx-terminal4/textures/PARKRAMPS.png")).toBeGreaterThan(1_000);
+  expect(measuredSize("/models/phx-terminal4/textures/PARKRAMP1.png")).toBeGreaterThan(1_000);
+  expect(measuredSize("/models/phx-terminal4/textures/RW.png")).toBeGreaterThan(1_000);
 
   const relevantErrors = runtimeErrors.filter((message) =>
     /KPHX ground load failed|PHX airport ground failed to load|PHX source aerial load failed|source aerial failed to load|Terminal 4 visual load failed|material texture is missing|GLTFLoader|WebGL.*shader|ReferenceError|TypeError|SyntaxError/i.test(message),
@@ -133,12 +136,12 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways at exac
     `,
   });
   await page.waitForTimeout(1_200);
-  await captureCanvas(page, canvas, "kphx-a1-source-authored-jetways-chase.png");
+  await captureCanvas(page, canvas, "kphx-a1-source-textured-ramp-jetways-chase.png");
 
   await page.evaluate(() => {
     const element = document.querySelector("canvas.trainerCanvas");
     element?.dispatchEvent(new WheelEvent("wheel", { deltaY: 1350, bubbles: true, cancelable: true }));
   });
   await page.waitForTimeout(1_000);
-  await captureCanvas(page, canvas, "kphx-a1-source-authored-jetways-overview.png");
+  await captureCanvas(page, canvas, "kphx-a1-source-textured-ramp-jetways-overview.png");
 });
