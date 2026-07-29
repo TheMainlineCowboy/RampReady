@@ -49,7 +49,7 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
       && element?.dataset.photoDetailLevel === 'full-airport-source-aerial-tiled-1.2m-v2'
       && element?.dataset.environmentSource === 'authored-phx-terminal4-textured-source-jetways'
       && element?.dataset.groundSource === 'authored-kphx-v181-source-textured-nearfield'
-      && element?.dataset.kphxDetailLevel === 'terminal4-authored-textured-v4-source-ramp-exact-a1-nearfield';
+      && element?.dataset.kphxDetailLevel === 'terminal4-authored-pavement-v5-source-ramp-stand-markings';
   }, null, { timeout: 90000 });
 
   await page.waitForFunction(() => {
@@ -113,5 +113,5 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
     failedRequests,
   };
   fs.writeFileSync(`${evidenceDirectory}/report.json`, `${JSON.stringify(report, null, 2)}\n`);
-  console.log(`Verified live simulator render: tiled PHX ground=${runtime.photoTextureMode}, near-field ground=${runtime.groundSource}, runtime tiles=${runtime.photoRuntimeTileCount}, Terminal 4=${runtime.environmentSource}, chase=${chaseBytes} bytes, overhead=${overheadBytes} bytes.`);
+  console.log(`Verified live simulator render: tiled PHX ground=${runtime.photoTextureMode}, near-field ground=${runtime.groundSource}, detail=${runtime.kphxDetailLevel}, runtime tiles=${runtime.photoRuntimeTileCount}, Terminal 4=${runtime.environmentSource}, chase=${chaseBytes} bytes, overhead=${overheadBytes} bytes.`);
 });
