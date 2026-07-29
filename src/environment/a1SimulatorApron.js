@@ -9,9 +9,9 @@ export const A1_SIMULATOR_APRON_PROFILE = Object.freeze({
     east: 4801.396159291422,
   }),
   surfaceY: 0.021,
-  textureWidth: 2048,
-  textureHeight: 1024,
-  textureResolution: "2048x1024",
+  textureWidth: 1024,
+  textureHeight: 2048,
+  textureResolution: "1024x2048",
   detailLevel: "a1-a8-normalized-source-aerial-pbr-apron-v3",
 });
 
@@ -31,8 +31,8 @@ const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, v
 function worldToCanvas(width, height) {
   const { minX, maxX, minZ, maxZ } = A1_SIMULATOR_APRON_PROFILE.bounds;
   return {
-    x: (worldX) => (worldX - minX) / (maxX - minX) * width,
-    z: (worldZ) => height - (worldZ - minZ) / (maxZ - minZ) * height,
+    horizontalFromZ: (worldZ) => (worldZ - minZ) / (maxZ - minZ) * width,
+    verticalFromX: (worldX) => height - (worldX - minX) / (maxX - minX) * height,
   };
 }
 
@@ -61,9 +61,6 @@ function normalizeSourceAerial(context, image, width, height) {
     const green = pixels.data[index + 1];
     const blue = pixels.data[index + 2];
     const luminance = Math.max(1, red * 0.2126 + green * 0.7152 + blue * 0.0722);
-
-    // Compress the baked aerial's extreme black aircraft/jetway shadows and white
-    // missing-tile smears while retaining its exact local color and spatial grain.
     let normalizedLuminance = 142 + (luminance - 142) * 0.23;
     if (luminance < 72) normalizedLuminance = 118 + luminance * 0.16;
     if (luminance > 205) normalizedLuminance = 160 + (luminance - 205) * 0.04;
@@ -88,52 +85,50 @@ function drawConcreteDetails(diffuseContext, bumpContext, roughnessContext, widt
   roughnessContext.fillStyle = "rgb(232,232,232)";
   roughnessContext.fillRect(0, 0, width, height);
 
-  // Concrete slab joints use real-world spacing and consistent meter scale.
+  // World X runs vertically in the exact aerial UV frame; world Z runs horizontally.
   for (let x = Math.ceil(minX / 11.5) * 11.5; x <= maxX; x += 11.5) {
-    const px = transform.x(x);
+    const py = transform.verticalFromX(x);
     diffuseContext.strokeStyle = "rgba(38,40,40,0.28)";
-    diffuseContext.lineWidth = 1.25;
-    diffuseContext.beginPath();
-    diffuseContext.moveTo(px, 0);
-    diffuseContext.lineTo(px, height);
-    diffuseContext.stroke();
-    diffuseContext.strokeStyle = "rgba(225,224,217,0.08)";
-    diffuseContext.lineWidth = 0.7;
-    diffuseContext.beginPath();
-    diffuseContext.moveTo(px + 1.5, 0);
-    diffuseContext.lineTo(px + 1.5, height);
-    diffuseContext.stroke();
-    bumpContext.strokeStyle = "rgb(72,72,72)";
-    bumpContext.lineWidth = 1.6;
-    bumpContext.beginPath();
-    bumpContext.moveTo(px, 0);
-    bumpContext.lineTo(px, height);
-    bumpContext.stroke();
-  }
-  for (let z = Math.ceil(minZ / 9.5) * 9.5; z <= maxZ; z += 9.5) {
-    const py = transform.z(z);
-    diffuseContext.strokeStyle = "rgba(38,40,40,0.26)";
     diffuseContext.lineWidth = 1.25;
     diffuseContext.beginPath();
     diffuseContext.moveTo(0, py);
     diffuseContext.lineTo(width, py);
     diffuseContext.stroke();
-    diffuseContext.strokeStyle = "rgba(225,224,217,0.075)";
+    diffuseContext.strokeStyle = "rgba(225,224,217,0.08)";
     diffuseContext.lineWidth = 0.7;
     diffuseContext.beginPath();
     diffuseContext.moveTo(0, py - 1.5);
     diffuseContext.lineTo(width, py - 1.5);
     diffuseContext.stroke();
-    bumpContext.strokeStyle = "rgb(75,75,75)";
+    bumpContext.strokeStyle = "rgb(72,72,72)";
     bumpContext.lineWidth = 1.6;
     bumpContext.beginPath();
     bumpContext.moveTo(0, py);
     bumpContext.lineTo(width, py);
     bumpContext.stroke();
   }
+  for (let z = Math.ceil(minZ / 9.5) * 9.5; z <= maxZ; z += 9.5) {
+    const px = transform.horizontalFromZ(z);
+    diffuseContext.strokeStyle = "rgba(38,40,40,0.26)";
+    diffuseContext.lineWidth = 1.25;
+    diffuseContext.beginPath();
+    diffuseContext.moveTo(px, 0);
+    diffuseContext.lineTo(px, height);
+    diffuseContext.stroke();
+    diffuseContext.strokeStyle = "rgba(225,224,217,0.075)";
+    diffuseContext.lineWidth = 0.7;
+    diffuseContext.beginPath();
+    diffuseContext.moveTo(px + 1.5, 0);
+    diffuseContext.lineTo(px + 1.5, height);
+    diffuseContext.stroke();
+    bumpContext.strokeStyle = "rgb(75,75,75)";
+    bumpContext.lineWidth = 1.6;
+    bumpContext.beginPath();
+    bumpContext.moveTo(px, 0);
+    bumpContext.lineTo(px, height);
+    bumpContext.stroke();
+  }
 
-  // High-frequency aggregate, repairs and hairline cracking remove the blurry
-  // browser-ground appearance at driver height without obscuring decoded markings.
   for (let speck = 0; speck < 24_000; speck += 1) {
     const x = random() * width;
     const y = random() * height;
@@ -186,7 +181,6 @@ function drawConcreteDetails(diffuseContext, bumpContext, roughnessContext, widt
     bumpContext.stroke();
   }
 
-  // Tire arcs and localized fluid staining follow the decoded A-gate stand row.
   diffuseContext.strokeStyle = "rgba(25,27,27,0.12)";
   diffuseContext.lineCap = "round";
   diffuseContext.lineWidth = 5.5;
@@ -194,8 +188,8 @@ function drawConcreteDetails(diffuseContext, bumpContext, roughnessContext, widt
     [0, 6.2], [86.3, -51.7], [86.3, 6.2], [172.5, -51.7],
     [172.5, 6.2], [258.8, -51.7], [258.8, 6.2],
   ]) {
-    const x = transform.x(gate[0]);
-    const y = transform.z(gate[1]);
+    const x = transform.horizontalFromZ(gate[1]);
+    const y = transform.verticalFromX(gate[0]);
     for (const radius of [28, 35]) {
       diffuseContext.beginPath();
       diffuseContext.arc(x, y, radius, Math.PI * 0.16, Math.PI * 0.84);
@@ -233,7 +227,7 @@ function configureCanvasTexture(THREE, canvas, name, colorSpace) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.name = name;
   texture.colorSpace = colorSpace;
-  texture.flipY = false;
+  texture.flipY = true;
   texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
