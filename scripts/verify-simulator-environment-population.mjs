@@ -3,6 +3,7 @@ import fs from "node:fs";
 const staticSource = fs.readFileSync("src/environment/staticGateAircraft.js", "utf8");
 const objectSource = fs.readFileSync("src/environment/sourceAuthoredAirportObjects.js", "utf8");
 const materializer = fs.readFileSync("scripts/materialize-kphx-source-objects.mjs", "utf8");
+const converter = fs.readFileSync("scripts/lib/legacyBmpPng.mjs", "utf8");
 const patchSource = fs.readFileSync("scripts/prepare-simulator-environment.mjs", "utf8");
 const generated = fs.readFileSync("src/components/RampReadyStandupTrainerTerminal4.jsx", "utf8");
 const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
@@ -21,10 +22,13 @@ requireText(staticSource, "authored-crj700-static-gate-population-v1", "static a
 
 for (const token of [
   "58115954e8d8294448e6e06d1be24d81a8e22764",
-  "source-authored-airport-object-population-v1",
+  "source-authored-textured-airport-object-population-v2",
   "sourceAuthoredAirportObjectPlacementCount",
   "sourceAuthoredAirportObjectModelCount",
+  "sourceAuthoredAirportObjectTextureCount",
+  "sourceAuthoredAirportObjectTexturedMaterialCount",
   "90 - placement.headingDegrees",
+  "texture.anisotropy = 16",
 ]) requireText(objectSource, token, `source object runtime ${token}`);
 for (const token of [
   'expectedPlacements: 3',
@@ -32,12 +36,16 @@ for (const token of [
   'expectedPlacements: 1',
   "inspection.libraryObjectPlacementCount !== 579",
   "placements.length !== 19",
-  "modelCount: Object.keys(modelManifest).length",
+  "textureCount: Object.keys(textureManifest).length",
+  '"BACKHOE.BMP"',
+  '"TRAILER.BMP"',
 ]) requireText(materializer, token, `source object materializer ${token}`);
+for (const token of ["decodeLegacyBmp", "decodeDxt1", "encodePng", "pngChunk"]) requireText(converter, token, `legacy texture converter ${token}`);
 
 requireText(patchSource, "installStaticGateAircraft", "static aircraft preparation import");
 requireText(patchSource, "installSourceAuthoredAirportObjects", "source object preparation import");
 requireText(patchSource, "sourceObjectLoad", "source object readiness promise");
+requireText(patchSource, "sourceObjectTextureCount", "source object texture browser evidence");
 requireText(generated, 'import { installStaticGateAircraft } from "../environment/staticGateAircraft.js";', "generated static aircraft import");
 requireText(generated, 'import { installSourceAuthoredAirportObjects } from "../environment/sourceAuthoredAirportObjects.js";', "generated source object import");
 requireText(generated, "installStaticGateAircraft(THREE, environment)", "generated static aircraft loader");
@@ -57,4 +65,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Simulator environment population verified: seven authored CRJ700s at A2-A8 plus five source models across nineteen exact KPHX placements participate in browser readiness.");
+console.log("Simulator environment population verified: seven authored CRJ700s at A2-A8 plus five textured source models across nineteen exact KPHX placements participate in browser readiness.");
