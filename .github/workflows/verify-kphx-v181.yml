@@ -7,6 +7,7 @@ on:
       - 'src/environment/**'
       - 'scripts/prepare-terminal4-runtime.mjs'
       - 'scripts/prepare-simulator-environment.mjs'
+      - 'scripts/materialize-phx-terminal4-lightmaps.mjs'
       - 'scripts/materialize-kphx-source-objects.mjs'
       - 'scripts/lib/legacyBmpPng.mjs'
       - 'scripts/verify-simulator-environment-population.mjs'
