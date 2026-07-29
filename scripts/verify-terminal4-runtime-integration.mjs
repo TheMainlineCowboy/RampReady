@@ -23,7 +23,8 @@ requireText('const environment = buildGround(scene);', "live scene environment c
 requireText('camera, environment, rig, aircraft', "environment retention in simulator state");
 requireText('Terminal4RampEnvironment', "environment runtime group");
 requireText('installStaticGateAircraft', "static gate aircraft installer");
-requireText('Promise.all([terminalLoad, groundLoad, photoGroundLoad, staticAircraftLoad])', "populated environment readiness gate");
+requireText('installSourceAuthoredAirportObjects', "source-authored airport object installer");
+requireText('Promise.all([terminalLoad, groundLoad, photoGroundLoad, staticAircraftLoad, sourceObjectLoad])', "fully populated environment readiness gate");
 
 if (generated.includes("new THREE.PlaneGeometry(90, 140)")) failures.push("legacy 90 x 140 flat ramp remains in active generated trainer");
 if (!entry.includes('import RampReadyStandupTrainer from "./RampReadyStandupTrainerTerminal4.jsx";')) failures.push("PushbackTrainer does not route to prepared Terminal 4 trainer");
@@ -43,4 +44,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("RampReady Terminal 4 runtime integration verified: authored airport, aerial, static A2-A8 aircraft and training environment prepare deterministically.");
+console.log("RampReady Terminal 4 runtime integration verified: authored airport, aerial, A2-A8 aircraft and nineteen exact source-object placements prepare deterministically.");
