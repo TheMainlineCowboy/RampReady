@@ -5,8 +5,9 @@ export const SOURCE_AUTHORED_AIRPORT_OBJECT_PROFILE = Object.freeze({
   placementSource: "scenery/PHX_Scenery.BGL",
   placementCount: 19,
   modelCount: 5,
+  textureCount: 5,
   coordinateFrame: "A1-local; X=north, Y=up, Z=east",
-  detailLevel: "source-authored-airport-object-population-v1",
+  detailLevel: "source-authored-textured-airport-object-population-v2",
 });
 
 const A1 = Object.freeze({ latitude: 33.43653056770563, longitude: -111.99864059686661 });
@@ -27,18 +28,52 @@ function modelColor(modelId) {
   return 0x898d91;
 }
 
-function configureModel(THREE, modelId, root) {
-  const color = modelColor(modelId);
+function textureReference(material) {
+  if (material?.userData?.diffuseTexture) return material.userData.diffuseTexture;
+  return material?.name?.match(/material-\d+-(.+)$/i)?.[1] ?? null;
+}
+
+async function loadSourceTextures(THREE, baseUrl, manifest) {
+  const loader = new THREE.TextureLoader();
+  const textures = new Map();
+  await Promise.all(Object.entries(manifest.textures).map(async ([reference, entry]) => {
+    const texture = await loader.loadAsync(`${baseUrl}${entry.url}`);
+    texture.name = `PHX source object ${reference}`;
+    texture.flipY = false;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.anisotropy = 16;
+    texture.generateMipmaps = true;
+    texture.needsUpdate = true;
+    textures.set(reference.toUpperCase(), texture);
+  }));
+  return textures;
+}
+
+function configureModel(THREE, modelId, root, textures) {
+  const fallbackColor = modelColor(modelId);
+  let texturedMaterialCount = 0;
   root.traverse((node) => {
     if (!node.isMesh) return;
     const originals = Array.isArray(node.material) ? node.material : [node.material];
     const configured = originals.map((original) => {
       const material = original?.clone?.() ?? new THREE.MeshStandardMaterial();
-      material.color?.setHex(color);
+      const reference = textureReference(material);
+      const texture = reference ? textures.get(reference.toUpperCase()) : null;
+      material.map = texture ?? null;
+      material.color?.setHex(texture ? 0xffffff : fallbackColor);
       material.roughness = modelId === "phxtermlink" ? 0.72 : 0.86;
       material.metalness = modelId === "backhoe" ? 0.16 : 0.04;
       material.side = THREE.DoubleSide;
+      material.userData = {
+        ...(material.userData || {}),
+        sourceTextureReference: reference,
+        sourceTextureApplied: Boolean(texture),
+      };
       material.needsUpdate = true;
+      if (texture) texturedMaterialCount += 1;
       return material;
     });
     node.material = Array.isArray(node.material) ? configured : configured[0];
@@ -47,16 +82,19 @@ function configureModel(THREE, modelId, root) {
     node.frustumCulled = true;
     node.userData.sourceAuthoredAirportObject = modelId;
   });
+  root.userData.sourceTexturedMaterialCount = texturedMaterialCount;
+  return texturedMaterialCount;
 }
 
 async function fetchManifest(url) {
   const response = await fetch(url, { cache: "force-cache" });
   if (!response.ok) throw new Error(`KPHX source object manifest returned HTTP ${response.status}`);
   const manifest = await response.json();
-  if (manifest.schemaVersion !== 1
+  if (manifest.schemaVersion !== 2
     || manifest.sourceCommit !== "58115954e8d8294448e6e06d1be24d81a8e22764"
     || manifest.placementCount !== SOURCE_AUTHORED_AIRPORT_OBJECT_PROFILE.placementCount
-    || manifest.modelCount !== SOURCE_AUTHORED_AIRPORT_OBJECT_PROFILE.modelCount) {
+    || manifest.modelCount !== SOURCE_AUTHORED_AIRPORT_OBJECT_PROFILE.modelCount
+    || manifest.textureCount !== SOURCE_AUTHORED_AIRPORT_OBJECT_PROFILE.textureCount) {
     throw new Error("KPHX source object manifest does not match the pinned simulator population");
   }
   return manifest;
@@ -66,11 +104,13 @@ export async function installSourceAuthoredAirportObjects(THREE, environment) {
   if (!environment?.isGroup) throw new Error("KPHX environment group is required for source objects");
   const baseUrl = `${import.meta.env.BASE_URL}models/kphx-source-objects/`;
   const manifest = await fetchManifest(`${baseUrl}source-object-manifest.json`);
+  const textures = await loadSourceTextures(THREE, baseUrl, manifest);
   const loader = new GLTFLoader();
   const templates = new Map();
+  let texturedMaterialCount = 0;
   await Promise.all(Object.entries(manifest.models).map(async ([modelId, entry]) => {
     const gltf = await loader.loadAsync(`${baseUrl}${entry.gltf}`);
-    configureModel(THREE, modelId, gltf.scene);
+    texturedMaterialCount += configureModel(THREE, modelId, gltf.scene, textures);
     templates.set(modelId, gltf.scene);
   }));
 
@@ -94,12 +134,16 @@ export async function installSourceAuthoredAirportObjects(THREE, environment) {
   group.userData.sourceRepository = SOURCE_AUTHORED_AIRPORT_OBJECT_PROFILE.sourceRepository;
   group.userData.placementCount = group.children.length;
   group.userData.modelCount = templates.size;
+  group.userData.textureCount = textures.size;
+  group.userData.texturedMaterialCount = texturedMaterialCount;
   group.userData.counts = counts;
   group.userData.detailLevel = SOURCE_AUTHORED_AIRPORT_OBJECT_PROFILE.detailLevel;
   environment.add(group);
   environment.userData.sourceAuthoredAirportObjects = group;
   environment.userData.sourceAuthoredAirportObjectPlacementCount = group.children.length;
   environment.userData.sourceAuthoredAirportObjectModelCount = templates.size;
+  environment.userData.sourceAuthoredAirportObjectTextureCount = textures.size;
+  environment.userData.sourceAuthoredAirportObjectTexturedMaterialCount = texturedMaterialCount;
   environment.userData.sourceAuthoredAirportObjectDetailLevel = group.userData.detailLevel;
   return group;
 }
