@@ -151,8 +151,15 @@ jobs:
           echo "Expected live aircraft: authored=${authored}, bytes=${expected_size}, sha256=${expected_hash}"
 
           for attempt in $(seq 1 60); do
-            marker_status=$(curl --fail-with-body -L -sS -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' -o /tmp/release-marker.txt -w '%{http_code}' "${marker_url}?attempt=${attempt}" || true)
-            live_sha=$(tr -d '\r\n' < /tmp/release-marker.txt 2>/dev/null || true)
+            rm -f /tmp/release-marker.txt
+            marker_status=$(curl -L -sS \
+              -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' \
+              -o /tmp/release-marker.txt -w '%{http_code}' \
+              "${marker_url}?attempt=${attempt}" || true)
+            live_sha="not-served"
+            if [ "${marker_status}" = "200" ] && [ -s /tmp/release-marker.txt ]; then
+              live_sha=$(head -c 128 /tmp/release-marker.txt | tr -d '\r\n')
+            fi
             if [ "${marker_status}" = "200" ] && [ "${live_sha}" = "${EXPECTED_SHA}" ]; then
               marker_verified=true
             fi
@@ -164,7 +171,7 @@ jobs:
               aircraft_verified=true
             fi
 
-            echo "Attempt ${attempt}: marker=${marker_status}/${live_sha:-missing}; aircraft=${aircraft_status}, bytes=${live_size}, sha256=${live_hash:-missing}"
+            echo "Attempt ${attempt}: marker=${marker_status}/${live_sha}; aircraft=${aircraft_status}, bytes=${live_size}, sha256=${live_hash:-missing}"
             if [ "${marker_verified}" = true ] && [ "${aircraft_verified}" = true ]; then
               echo "Immutable release marker appeared; exact live aircraft matched after attempt ${attempt}."
               break
@@ -219,7 +226,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p live-phx-render-evidence
-          npx playwright test scripts/verify-live-phx-render.spec.js --reporter=line 2>&1 | tee live-phx-render-evidence/workflow.log
+          npx playwright test --config=playwright.live-phx.config.js --reporter=line 2>&1 | tee live-phx-render-evidence/workflow.log
 
       - name: Upload simulator render evidence
         if: always()
