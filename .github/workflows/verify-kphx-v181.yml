@@ -6,7 +6,11 @@ on:
       - '.github/workflows/verify-kphx-v181.yml'
       - 'src/environment/**'
       - 'scripts/prepare-terminal4-runtime.mjs'
+      - 'scripts/prepare-simulator-environment.mjs'
+      - 'scripts/verify-simulator-environment-population.mjs'
       - 'tests/browser/kphx-ground-runtime.spec.js'
+      - 'tests/browser/simulator-environment-runtime.spec.js'
+      - 'playwright.config.js'
       - 'package.json'
       - 'package-lock.json'
   workflow_dispatch:
@@ -45,8 +49,8 @@ jobs:
           npm install --no-save @playwright/test@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Verify A1, B15 and Terminal 4 gates in browser
-        run: npx playwright test tests/browser/kphx-ground-runtime.spec.js --reporter=line
+      - name: Verify A1, B15, Terminal 4 and populated stands in browser
+        run: npx playwright test tests/browser/kphx-ground-runtime.spec.js tests/browser/simulator-environment-runtime.spec.js --reporter=line
 
       - name: Upload updated KPHX runtime evidence
         if: always()
