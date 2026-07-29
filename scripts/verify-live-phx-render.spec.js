@@ -79,10 +79,20 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
   expect(bounds.width).toBeGreaterThanOrEqual(1000);
   expect(bounds.height).toBeGreaterThanOrEqual(700);
 
-  const screenshotPath = `${evidenceDirectory}/sky-harbor-live.png`;
-  await canvas.screenshot({ path: screenshotPath, type: 'png', animations: 'disabled' });
-  const screenshotBytes = fs.statSync(screenshotPath).size;
-  expect(screenshotBytes).toBeGreaterThan(100000);
+  const chasePath = `${evidenceDirectory}/sky-harbor-live.png`;
+  await canvas.screenshot({ path: chasePath, type: 'png', animations: 'disabled' });
+  const chaseBytes = fs.statSync(chasePath).size;
+  expect(chaseBytes).toBeGreaterThan(100000);
+
+  const viewSelect = page.locator('.rr-view-select');
+  await expect(viewSelect).toBeVisible();
+  await viewSelect.selectOption('overhead');
+  await page.waitForTimeout(1000);
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const overheadPath = `${evidenceDirectory}/sky-harbor-overhead.png`;
+  await canvas.screenshot({ path: overheadPath, type: 'png', animations: 'disabled' });
+  const overheadBytes = fs.statSync(overheadPath).size;
+  expect(overheadBytes).toBeGreaterThan(100000);
 
   const report = {
     releaseSha: expectedSha,
@@ -91,11 +101,11 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
     runtime,
     observedTileResponses: tileResponses.size,
     tileResponses: [...tileResponses.values()],
-    screenshotBytes,
+    screenshots: { chaseBytes, overheadBytes },
     consoleErrors,
     pageErrors,
     failedRequests,
   };
   fs.writeFileSync(`${evidenceDirectory}/report.json`, `${JSON.stringify(report, null, 2)}\n`);
-  console.log(`Verified live simulator render: tiled PHX ground=${runtime.photoTextureMode}, near-field ground=${runtime.groundSource}, runtime tiles=${runtime.photoRuntimeTileCount}, Terminal 4=${runtime.environmentSource}, screenshot=${screenshotBytes} bytes.`);
+  console.log(`Verified live simulator render: tiled PHX ground=${runtime.photoTextureMode}, near-field ground=${runtime.groundSource}, runtime tiles=${runtime.photoRuntimeTileCount}, Terminal 4=${runtime.environmentSource}, chase=${chaseBytes} bytes, overhead=${overheadBytes} bytes.`);
 });
