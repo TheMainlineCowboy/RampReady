@@ -22,7 +22,7 @@ export const AUTHORED_KPHX_PHOTO_PROFILE = Object.freeze({
 
 // The broad airport-base is hidden so the supplied aerial remains visible
 // between authored surfaces. Concrete, asphalt and service-road materials are
-// source-classification overlays and stay visible above the aerial.
+// source-textured and must stay visible above the aerial as classification overlays.
 const OPAQUE_ADEX_SURFACES = new Set(["airport-base"]);
 
 function hideFlatADEXSurfaceColors(environment) {
@@ -61,7 +61,6 @@ async function fetchManifest(url) {
 function buildPhotoGeometry(THREE) {
   const { north, south, west, east } = AUTHORED_KPHX_PHOTO_PROFILE.sceneBounds;
   const geometry = new THREE.BufferGeometry();
-  // Source mosaic rows run north-to-south and columns west-to-east.
   geometry.setAttribute("position", new THREE.Float32BufferAttribute([
     north, -0.018, west,
     south, -0.018, west,
