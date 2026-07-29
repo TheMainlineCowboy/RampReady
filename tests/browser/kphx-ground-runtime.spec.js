@@ -48,7 +48,7 @@ async function captureCanvas(page, canvas, fileName) {
   await writeFile(`test-results/${fileName}`, image);
 }
 
-test("loads source-authored PHX scenery with detailed Terminal 4 jetways and textured A1 ramp", async ({ page }) => {
+test("loads source-authored PHX scenery with detailed Terminal 4 jetways and simulator pavement", async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const assetResponses = [];
@@ -73,7 +73,7 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways and tex
   expect(runtime.groundSource).toBe("authored-kphx-v181-source-textured");
   expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
   expect(runtime.kphxVersion).toBe("1.8.1");
-  expect(runtime.kphxDetailLevel).toBe("terminal4-authored-textured-v3-source-ramp-exact-a1");
+  expect(runtime.kphxDetailLevel).toBe("terminal4-authored-textured-v4-source-ramp-exact-a1");
   expect(runtime.photoDetailLevel).toBe("full-airport-source-aerial-1.2m-v1");
   expect(runtime.photoTileCount).toBe("199");
   expect(runtime.photoWidth).toBe("6400");
