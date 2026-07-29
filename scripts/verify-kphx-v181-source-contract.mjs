@@ -146,7 +146,9 @@ for (const token of [
   '"width": 6_400',
   '"height": 2_304',
   'mosaic.save(image_path, "WEBP", quality=88',
-  '"surfaceState": "source-authored 1.2-meter-class aerial airport imagery covering the full PHX field"',
+  '"legacySurfaceState": "source-authored 1.2-meter-class aerial airport imagery covering the full PHX field"',
+  '"surfaceState": "source-authored 1.2-meter-class aerial preserved as native-resolution WebGL tiles across the full PHX field"',
+  '"mode": "tiled-native-source-resolution-v2"',
 ]) {
   if (!files.photoBuilder.includes(token)) throw new Error(`PHX source-aerial builder contract missing ${token}`);
 }
@@ -180,4 +182,4 @@ for (const token of [
 ]) {
   if (!files.prepare.includes(token)) throw new Error(`KPHX browser evidence missing ${token}`);
 }
-console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source placements, exact original ADEX A1 placement, real MDLX terminal geometry, exact source lightmaps, detailed source-placed jetway visuals, faint source-atlas microdetail over the full-airport aerial, hidden nonphotographic projected-surface tints, and unrotated A1-local ground.`);
+console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source placements, exact original ADEX A1 placement, real MDLX terminal geometry, exact source lightmaps, detailed source-placed jetway visuals, native-resolution tiled full-airport aerial ground, hidden nonphotographic projected-surface tints, and unrotated A1-local ground.`);
