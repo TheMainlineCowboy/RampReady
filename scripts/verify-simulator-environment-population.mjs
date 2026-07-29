@@ -3,6 +3,7 @@ import fs from "node:fs";
 const staticSource = fs.readFileSync("src/environment/staticGateAircraft.js", "utf8");
 const apronSource = fs.readFileSync("src/environment/a1SimulatorApron.js", "utf8");
 const equipmentSource = fs.readFileSync("src/environment/staticRampEquipment.js", "utf8");
+const gateDetailsSource = fs.readFileSync("src/environment/terminal4GateDetails.js", "utf8");
 const objectSource = fs.readFileSync("src/environment/sourceAuthoredAirportObjects.js", "utf8");
 const materializer = fs.readFileSync("scripts/materialize-kphx-source-objects.mjs", "utf8");
 const converter = fs.readFileSync("scripts/lib/legacyBmpPng.mjs", "utf8");
@@ -73,6 +74,22 @@ for (const token of [
   "authored-and-procedural-terminal4-ramp-equipment-v2",
 ]) requireText(equipmentSource, token, `static ramp equipment ${token}`);
 
+for (const gate of ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8"]) requireText(gateDetailsSource, `"${gate}"`, `Terminal 4 detail gate ${gate}`);
+for (const token of [
+  "createGateSignTexture",
+  "buildGateSign",
+  "buildServiceBay",
+  "buildFireCabinet",
+  "buildBollard",
+  "buildWheelStop",
+  "installTerminal4GateDetails",
+  "terminal4GateDetailGateCount",
+  "terminal4GateDetailMeshCount",
+  "terminal4GateDetailLevel",
+  "terminal4-gate-signage-service-bays-and-safety-fixtures-v1",
+  "decoded KPHX jetway root and parking vector",
+]) requireText(gateDetailsSource, token, `Terminal 4 gate detail ${token}`);
+
 for (const token of [
   "58115954e8d8294448e6e06d1be24d81a8e22764",
   "source-authored-textured-airport-object-population-v2",
@@ -99,8 +116,10 @@ for (const [token, label] of [
   ["installStaticGateAircraft", "static aircraft preparation import"],
   ["installSourceAuthoredAirportObjects", "source object preparation import"],
   ["installStaticRampEquipment", "static ramp equipment preparation import"],
+  ["installTerminal4GateDetails", "Terminal 4 gate detail preparation import"],
   ["sourceObjectLoad", "source object readiness promise"],
   ["rampEquipmentLoad", "ramp equipment readiness promise"],
+  ["gateDetailsLoad", "gate detail readiness promise"],
   ["sourceObjectTextureCount", "source object texture browser evidence"],
   ["staticRampAuthoredTugCount", "ramp tug browser evidence"],
   ["staticRampBeltLoaderCount", "belt loader browser evidence"],
@@ -108,6 +127,8 @@ for (const [token, label] of [
   ["staticRampGpuCount", "GPU browser evidence"],
   ["staticRampTowbarCount", "towbar browser evidence"],
   ["staticRampChockPairCount", "chock browser evidence"],
+  ["terminal4GateDetailGateCount", "gate detail count browser evidence"],
+  ["terminal4GateDetailMeshCount", "gate detail mesh browser evidence"],
   ["THREE.ACESFilmicToneMapping", "ACES tone mapping"],
   ["THREE.PCFSoftShadowMap", "soft shadow filtering"],
   ["sun.shadow.mapSize.set(2048, 2048)", "high-resolution sun shadow map"],
@@ -116,9 +137,11 @@ for (const [token, label] of [
 requireText(generated, 'import { installStaticGateAircraft } from "../environment/staticGateAircraft.js";', "generated static aircraft import");
 requireText(generated, 'import { installSourceAuthoredAirportObjects } from "../environment/sourceAuthoredAirportObjects.js";', "generated source object import");
 requireText(generated, 'import { installStaticRampEquipment } from "../environment/staticRampEquipment.js";', "generated static ramp equipment import");
+requireText(generated, 'import { installTerminal4GateDetails } from "../environment/terminal4GateDetails.js";', "generated Terminal 4 gate detail import");
 requireText(generated, "installStaticGateAircraft(THREE, environment)", "generated static aircraft loader");
 requireText(generated, "installSourceAuthoredAirportObjects(THREE, environment)", "generated source object loader");
 requireText(generated, "installStaticRampEquipment(THREE, environment)", "generated static ramp equipment loader");
+requireText(generated, "installTerminal4GateDetails(THREE, environment)", "generated gate detail loader");
 requireText(generated, "renderer.toneMapping = THREE.ACESFilmicToneMapping", "generated ACES rendering");
 requireText(generated, "sun.shadow.camera.left = -190", "generated airport-wide shadow camera");
 requireText(generated, 'renderer.domElement.dataset.staticRampBeltLoaderCount = String(environment.userData.staticRampBeltLoaderCount)', "generated belt loader readiness evidence");
@@ -126,7 +149,9 @@ requireText(generated, 'renderer.domElement.dataset.staticRampBaggageCartTrainCo
 requireText(generated, 'renderer.domElement.dataset.staticRampGpuCount = String(environment.userData.staticRampGpuCount)', "generated GPU readiness evidence");
 requireText(generated, 'renderer.domElement.dataset.staticRampTowbarCount = String(environment.userData.staticRampTowbarCount)', "generated towbar readiness evidence");
 requireText(generated, 'renderer.domElement.dataset.staticRampChockPairCount = String(environment.userData.staticRampChockPairCount)', "generated chock readiness evidence");
-requireText(generated, "Promise.all([terminalLoad, groundLoad, photoGroundLoad, staticAircraftLoad, sourceObjectLoad, rampEquipmentLoad])", "combined simulator readiness gate");
+requireText(generated, 'renderer.domElement.dataset.terminal4GateDetailGateCount = String(environment.userData.terminal4GateDetailGateCount)', "generated gate detail count readiness evidence");
+requireText(generated, 'renderer.domElement.dataset.terminal4GateDetailMeshCount = String(environment.userData.terminal4GateDetailMeshCount)', "generated gate detail mesh readiness evidence");
+requireText(generated, "Promise.all([terminalLoad, groundLoad, photoGroundLoad, staticAircraftLoad, sourceObjectLoad, rampEquipmentLoad, gateDetailsLoad])", "combined simulator readiness gate");
 
 if (packageJson.scripts?.["materialize:kphx-source-objects"] !== "node scripts/materialize-kphx-source-objects.mjs") failures.push("package source object materializer script is incorrect");
 if (packageJson.scripts?.["prepare:simulator-environment"] !== "node scripts/prepare-simulator-environment.mjs") failures.push("package simulator preparation script is incorrect");
@@ -141,4 +166,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Simulator environment population verified: normalized source-aerial PBR A1-A8 apron, seven aircraft, three authored stand-up tugs, twenty-eight cones, five belt loaders, eight baggage-cart trains, four GPUs, three towbars, seven chock pairs and nineteen exact source placements participate in browser readiness.");
+console.log("Simulator environment population verified: normalized source-aerial PBR A1-A8 apron, seven aircraft, complete GSE, eight source-aligned gate signs and service bays, safety fixtures and nineteen exact source placements participate in browser readiness.");
