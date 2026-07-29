@@ -103,7 +103,7 @@ jobs:
           name: rampready-live-experience-${{ steps.release.outputs.expected_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: live-experience-evidence/
           if-no-files-found: warn
-          retention-days: 30
+          retention-days: 1
 
       - name: Publish exact live-experience verdict
         if: always()
