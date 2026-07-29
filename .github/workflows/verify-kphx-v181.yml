@@ -46,13 +46,22 @@ jobs:
       - name: Build updated PHX runtime
         run: npm run build
 
-      - name: Install browser verifier and Chromium
-        run: |
-          npm install --no-save @playwright/test@1.55.0
-          npx playwright install --with-deps chromium
+      - name: Install browser verifier
+        run: npm install --no-save @playwright/test@1.55.0
+
+      - name: Cache Chromium runtime
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-1.55.0-chromium
+
+      - name: Install Chromium without repeated OS package provisioning
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
 
       - name: Verify A1, B15, Terminal 4 and populated stands in browser
-        run: npx playwright test tests/browser/kphx-ground-runtime.spec.js tests/browser/simulator-environment-runtime.spec.js --reporter=line --workers=1
+        run: npx playwright test tests/browser/kphx-ground-runtime.spec.js tests/browser/simulator-environment-runtime.spec.js --reporter=line --workers=1 --retries=0
 
       - name: Upload updated KPHX runtime evidence
         if: always()
