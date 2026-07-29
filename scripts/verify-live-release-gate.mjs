@@ -62,7 +62,7 @@ const phxPlaywrightConfig = await read("playwright.live-phx.config.js");
 for (const required of [
   'testDir: "./scripts"',
   'testMatch: "verify-live-phx-render.spec.js"',
-  "timeout: 180_000",
+  "timeout: 240_000",
   "workers: 1",
 ]) assert.ok(phxPlaywrightConfig.includes(required), `live PHX Playwright config missing ${required}`);
 assert.ok(!phxPlaywrightConfig.includes("webServer"), "live PHX verification must target the deployed site rather than starting a local server");
