@@ -26,15 +26,23 @@ for (const token of [
   'sourceAerial: "models/kphx-photo/phx-airport-photo.webp"',
   'sourceMaterialReference: "models/phx-terminal4/textures/PARKRAMPS.png"',
   'bounds: Object.freeze({ minX: -35, maxX: 300, minZ: -92, maxZ: 38 })',
-  "textureResolution: 2048",
-  "drawPavementDetailCanvases",
+  "textureWidth: 2048",
+  "textureHeight: 1024",
+  'textureResolution: "2048x1024"',
+  "sourceCrop",
+  "normalizeSourceAerial",
+  "drawConcreteDetails",
+  "buildPavementTextures",
   "buildApronGeometry",
-  "mapDetailTextureToApron",
   "apron.receiveShadow = true",
-  "a1-a8-source-aerial-pbr-close-range-apron-v2",
-  '"source-aerial-diffuse"',
-  '"procedural-pbr-microdetail"',
+  "a1-a8-normalized-source-aerial-pbr-apron-v3",
+  '"normalized-source-aerial-diffuse"',
+  '"pbr-bump-and-roughness"',
+  "A1_SIMULATOR_APRON_PROFILE.bounds",
 ]) requireText(apronSource, token, `close-range apron ${token}`);
+if (apronSource.includes("const { minX, maxX, minZ, maxZ, photoSceneBounds } = A1_SIMULATOR_APRON_PROFILE")) {
+  failures.push("close-range apron incorrectly reads nested bounds from the profile root");
+}
 
 for (const token of [
   'tugGates: Object.freeze(["A2", "A4", "A6"])',
@@ -133,4 +141,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Simulator environment population verified: source-aerial PBR A1-A8 apron, seven aircraft, three authored stand-up tugs, twenty-eight cones, five belt loaders, eight baggage-cart trains, four GPUs, three towbars, seven chock pairs and nineteen exact source placements participate in browser readiness.");
+console.log("Simulator environment population verified: normalized source-aerial PBR A1-A8 apron, seven aircraft, three authored stand-up tugs, twenty-eight cones, five belt loaders, eight baggage-cart trains, four GPUs, three towbars, seven chock pairs and nineteen exact source placements participate in browser readiness.");
