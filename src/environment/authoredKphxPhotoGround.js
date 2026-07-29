@@ -1,3 +1,5 @@
+import { installExactKphxA1 } from "./kphxExactA1/index.js";
+
 export const AUTHORED_KPHX_PHOTO_PROFILE = Object.freeze({
   source: "TheMainlineCowboy/SkyHarborPhx@2e6642778c9c88eac6a82b21063763cc78be7cfe/scenery/PHXPhoto.bgl",
   decoder: "seanisom/flightsimlib@fc17bec8e20770da3344eea10f25ecac281ee09f",
@@ -20,7 +22,7 @@ export const AUTHORED_KPHX_PHOTO_PROFILE = Object.freeze({
 
 // The broad airport-base is hidden so the supplied aerial remains visible
 // between authored surfaces. Concrete, asphalt and service-road materials are
-// now source-textured and must stay visible above the aerial at close range.
+// source-classification overlays and stay visible above the aerial.
 const OPAQUE_ADEX_SURFACES = new Set(["airport-base"]);
 
 function hideFlatADEXSurfaceColors(environment) {
@@ -45,11 +47,11 @@ async function fetchManifest(url) {
   if (!response.ok) throw new Error(`PHX aerial manifest returned HTTP ${response.status}`);
   const manifest = await response.json();
   if (
-    manifest.schemaVersion !== 1 ||
-    manifest.tileCount !== AUTHORED_KPHX_PHOTO_PROFILE.tileCount ||
-    manifest.image?.width !== AUTHORED_KPHX_PHOTO_PROFILE.width ||
-    manifest.image?.height !== AUTHORED_KPHX_PHOTO_PROFILE.height ||
-    manifest.image?.bytes !== AUTHORED_KPHX_PHOTO_PROFILE.bytes
+    manifest.schemaVersion !== 1
+    || manifest.tileCount !== AUTHORED_KPHX_PHOTO_PROFILE.tileCount
+    || manifest.image?.width !== AUTHORED_KPHX_PHOTO_PROFILE.width
+    || manifest.image?.height !== AUTHORED_KPHX_PHOTO_PROFILE.height
+    || manifest.image?.bytes !== AUTHORED_KPHX_PHOTO_PROFILE.bytes
   ) {
     throw new Error("PHX aerial manifest does not match the pinned full-airport source image");
   }
@@ -126,6 +128,11 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
 
   const hiddenSurfaceMaterialCount = hideFlatADEXSurfaceColors(environment);
   environment.add(photoGround);
+  // The exact unmlobo A1 projected meshes and all 214 authored painted lines
+  // sit above the field-wide aerial. This is the supplied airport data itself,
+  // not a hand-drawn gate or guessed push line.
+  const exactA1 = await installExactKphxA1(THREE, environment);
+  exactA1.position.set(0, 0, 6.2);
 
   environment.userData.photoGroundSource = "source-authored-phx-photo";
   environment.userData.authoredPhotoGround = photoGround;
