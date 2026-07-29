@@ -29,8 +29,11 @@ jobs:
         with:
           node-version: 24
 
+      - name: Install Playwright test runner
+        run: npm install --no-save --package-lock=false @playwright/test@1.55.0
+
       - name: Install Chromium runtime
-        run: npx --yes playwright@1.55.0 install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Render and verify live Sky Harbor
         id: browser
@@ -42,7 +45,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p live-phx-render-evidence
-          npx --yes --package=@playwright/test@1.55.0 playwright test scripts/verify-live-phx-render.spec.js --reporter=line 2>&1 | tee live-phx-render-evidence/workflow.log
+          npx playwright test scripts/verify-live-phx-render.spec.js --reporter=line 2>&1 | tee live-phx-render-evidence/workflow.log
 
       - name: Upload live render evidence
         if: always()
