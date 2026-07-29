@@ -27,7 +27,10 @@ function addInstances(THREE, group, geometry, material, transforms, name, castSh
     mesh.setMatrixAt(index, dummy.matrix);
   });
   mesh.instanceMatrix.needsUpdate = true;
-  mesh.castShadow = castShadow;
+  // Airport-wide instanced jetbridge shadows overwhelm software WebGL and mobile
+  // GPUs. Only tiny local instance groups may cast; every group still receives
+  // the terminal and aircraft shadows for consistent visual grounding.
+  mesh.castShadow = castShadow && transforms.length <= 20;
   mesh.receiveShadow = true;
   mesh.frustumCulled = true;
   group.add(mesh);
@@ -75,14 +78,13 @@ function createMaterials(THREE, textures) {
       roughness: 0.98,
       metalness: 0,
     }),
-    glass: new THREE.MeshPhysicalMaterial({
+    glass: new THREE.MeshStandardMaterial({
       name: "PHX jetway glazing",
       color: 0x54798d,
       roughness: 0.16,
       metalness: 0.04,
       transparent: true,
       opacity: 0.42,
-      transmission: 0.08,
       depthWrite: false,
       side: THREE.DoubleSide,
     }),
