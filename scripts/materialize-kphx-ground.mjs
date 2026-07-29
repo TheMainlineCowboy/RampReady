@@ -17,9 +17,8 @@ const EXPECTED = Object.freeze({
   apronRecords: 170,
   apronTriangles: 1860,
   pathSurfaces: 958,
-  markingSegments: 1208,
+  runways: 3,
   primitiveCount: 6,
-  binBytes: 594_240,
   anchorGate: "A1",
   anchorParkingIndex: 32,
   anchorHeadingDegrees: 269.975341796875,
@@ -46,10 +45,9 @@ await rm(OUTPUT_DIR, { recursive: true, force: true });
 await mkdir(CACHE_DIR, { recursive: true });
 await mkdir(OUTPUT_DIR, { recursive: true });
 
-const [bgl, inspector, builder] = await Promise.all([
+const [bgl, inspector] = await Promise.all([
   download(SOURCE_BGL_PATH),
   download("scripts/inspect-kphx-adex.mjs"),
-  download("scripts/build-kphx-ground-gltf.mjs"),
 ]);
 if (bgl.length !== SOURCE_BGL_BYTES) throw new Error(`Unexpected KPHX ADEX source size ${bgl.length}`);
 const sourceBlobSha = gitBlobSha1(bgl);
@@ -59,17 +57,15 @@ if (sourceBlobSha !== SOURCE_BGL_GIT_BLOB_SHA1) {
 
 const bglPath = path.join(CACHE_DIR, "KPHX_ADEX.BGL");
 const inspectorPath = path.join(CACHE_DIR, "inspect-kphx-adex.mjs");
-const builderPath = path.join(CACHE_DIR, "build-kphx-ground-gltf.mjs");
 const inspectionPath = path.join(CACHE_DIR, "inspection.json");
 await writeFile(bglPath, bgl);
 await writeFile(inspectorPath, inspector);
-await writeFile(builderPath, builder);
 
 function run(script, args, label) {
   const result = spawnSync(process.execPath, [script, ...args], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
-    timeout: 60_000,
+    timeout: 120_000,
   });
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error(`${label} failed (${result.status}):\n${result.stderr || result.stdout}`);
@@ -77,7 +73,8 @@ function run(script, args, label) {
 }
 
 run(inspectorPath, [bglPath, inspectionPath], "KPHX ADEX inspection");
-run(builderPath, [inspectionPath, OUTPUT_DIR], "KPHX ground build");
+run(path.resolve("scripts/decode-kphx-runways.mjs"), [bglPath, inspectionPath], "KPHX runway decoding");
+run(path.resolve("scripts/build-kphx-simulator-ground.mjs"), [inspectionPath, OUTPUT_DIR], "KPHX simulator ground build");
 
 const inspection = JSON.parse(await readFile(inspectionPath, "utf8"));
 const gltfPath = path.join(OUTPUT_DIR, "kphx-ground.gltf");
@@ -89,11 +86,12 @@ const bin = await readFile(binPath);
 const groundManifest = JSON.parse(await readFile(groundManifestPath, "utf8"));
 
 if (inspection.selectedAirport !== "KPHX") throw new Error(`Decoded airport is ${inspection.selectedAirport}`);
+if (inspection.selected.runways?.length !== EXPECTED.runways) throw new Error(`Decoded runway count is ${inspection.selected.runways?.length}`);
 if (gltf?.nodes?.[0]?.name !== "PHX_KPHX_AuthoredGround") throw new Error("KPHX ground glTF root identity is missing");
 if (gltf?.meshes?.[0]?.primitives?.length !== EXPECTED.primitiveCount) {
   throw new Error(`Unexpected KPHX ground primitive count ${gltf?.meshes?.[0]?.primitives?.length}`);
 }
-if (bin.length !== EXPECTED.binBytes) throw new Error(`Unexpected KPHX ground binary size ${bin.length}`);
+if (!(bin.length > 594_240 && bin.length < 20_000_000)) throw new Error(`Unexpected enriched KPHX ground binary size ${bin.length}`);
 for (const [key, expected] of Object.entries({
   taxiwayPoints: EXPECTED.taxiwayPoints,
   taxiwayPaths: EXPECTED.taxiwayPaths,
@@ -101,9 +99,18 @@ for (const [key, expected] of Object.entries({
   apronRecords: EXPECTED.apronRecords,
   apronTriangles: EXPECTED.apronTriangles,
   pathSurfaces: EXPECTED.pathSurfaces,
-  markingSegments: EXPECTED.markingSegments,
+  runways: EXPECTED.runways,
 })) {
   if (groundManifest.counts?.[key] !== expected) throw new Error(`Unexpected KPHX ${key}: ${groundManifest.counts?.[key]} != ${expected}`);
+}
+for (const [key, minimum] of Object.entries({
+  markingSegments: 1_000,
+  edgeMarkingSegments: 1,
+  taxiwayJoinCount: 100,
+  holdShortCount: 1,
+  runwayMarkingElementCount: 20,
+})) {
+  if (!(groundManifest.counts?.[key] >= minimum)) throw new Error(`KPHX ${key} ${groundManifest.counts?.[key]} is below ${minimum}`);
 }
 if (groundManifest.anchor?.gate !== EXPECTED.anchorGate || groundManifest.anchor?.parkingIndex !== EXPECTED.anchorParkingIndex) {
   throw new Error("KPHX A1 ground anchor identity is wrong");
@@ -113,9 +120,14 @@ for (let axis = 0; axis < 2; axis += 1) {
   if (!nearlyEqual(groundManifest.bounds.min[axis], EXPECTED.boundsMin[axis])) throw new Error(`KPHX ground minimum bound ${axis} drifted`);
   if (!nearlyEqual(groundManifest.bounds.max[axis], EXPECTED.boundsMax[axis])) throw new Error(`KPHX ground maximum bound ${axis} drifted`);
 }
+for (const runway of groundManifest.runways ?? []) {
+  if (!(runway.lengthMeters > 2_000 && runway.widthMeters >= 30 && runway.labels?.length === 2)) {
+    throw new Error(`KPHX runway ${runway.primary}/${runway.secondary} runtime detail is incomplete`);
+  }
+}
 
 const runtimeManifest = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   sourceRepository: "TheMainlineCowboy/SkyHarborPhx",
   sourceCommit: SOURCE_COMMIT,
   sourcePath: SOURCE_BGL_PATH,
@@ -123,15 +135,18 @@ const runtimeManifest = {
   sourceGitBlobSha1: sourceBlobSha,
   sourceSha256: sha256(bgl),
   coordinateFrame: groundManifest.coordinateFrame,
+  detailLevel: groundManifest.detailLevel,
   anchor: groundManifest.anchor,
   counts: groundManifest.counts,
   bounds: groundManifest.bounds,
+  runways: groundManifest.runways,
+  taxiwayNames: groundManifest.taxiwayNames,
   gltfBytes: gltfBytes.length,
   gltfSha256: sha256(gltfBytes),
   binBytes: bin.length,
   binSha256: sha256(bin),
-  surfaceState: "authoritative ADEX apron/taxiway/runway/service-road geometry with source markings",
-  missingSourceLayers: ["PHXPhoto.bgl payload", "PHX_TERM400 DDS texture maps"],
+  surfaceState: "source-driven KPHX apron, joined taxiway, runway, edge, centerline and hold-short geometry",
+  remainingSourceLayers: ["taxiway sign object records", "external simulator-library jetway geometry", "missing PHX_TERM400 diffuse maps"],
 };
 await writeFile(path.join(OUTPUT_DIR, "runtime-manifest.json"), `${JSON.stringify(runtimeManifest, null, 2)}\n`);
-console.log(`RampReady airport-wide KPHX ground materialized: ${EXPECTED.apronTriangles} apron triangles, ${EXPECTED.pathSurfaces} path surfaces, ${EXPECTED.markingSegments} marking segments.`);
+console.log(`RampReady airport-wide KPHX simulator ground materialized: ${EXPECTED.runways} exact runways, ${EXPECTED.pathSurfaces} path surfaces, ${groundManifest.counts.holdShortCount} hold shorts and ${groundManifest.counts.runwayMarkingElementCount} runway marking elements.`);
