@@ -79,6 +79,10 @@ for (const token of [
   "createGateSignTexture",
   "buildGateSign",
   "buildServiceBay",
+  "service-bay-facade",
+  "service-bay-interior-depth",
+  "service-bay-interior-floor",
+  "service-personnel-door",
   "buildFireCabinet",
   "buildBollard",
   "buildWheelStop",
@@ -86,7 +90,7 @@ for (const token of [
   "terminal4GateDetailGateCount",
   "terminal4GateDetailMeshCount",
   "terminal4GateDetailLevel",
-  "terminal4-gate-signage-service-bays-and-safety-fixtures-v1",
+  "terminal4-gate-signage-service-bays-and-safety-fixtures-v2",
   "decoded KPHX jetway root and parking vector",
 ]) requireText(gateDetailsSource, token, `Terminal 4 gate detail ${token}`);
 
@@ -166,4 +170,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Simulator environment population verified: normalized source-aerial PBR A1-A8 apron, seven aircraft, complete GSE, eight source-aligned gate signs and service bays, safety fixtures and nineteen exact source placements participate in browser readiness.");
+console.log("Simulator environment population verified: normalized source-aerial PBR A1-A8 apron, seven aircraft, complete GSE, eight source-aligned gate signs, enclosed service bays, safety fixtures and nineteen exact source placements participate in browser readiness.");
