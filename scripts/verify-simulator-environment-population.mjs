@@ -23,13 +23,17 @@ requireText(staticSource, "root.rotation.y = (270 - gate.h)", "source aircraft h
 requireText(staticSource, "authored-crj700-static-gate-population-v1", "static aircraft detail level");
 
 for (const token of [
-  'sourceTexture: "models/phx-terminal4/textures/PARKRAMPS.png"',
+  'sourceAerial: "models/kphx-photo/phx-airport-photo.webp"',
+  'sourceMaterialReference: "models/phx-terminal4/textures/PARKRAMPS.png"',
   'bounds: Object.freeze({ minX: -35, maxX: 300, minZ: -92, maxZ: 38 })',
-  "textureResolution: 1024",
-  "drawApronCanvas",
-  "sampleSourceAverage",
-  "apron.receiveShadow = false",
-  "a1-a8-source-derived-close-range-apron-v1",
+  "textureResolution: 2048",
+  "drawPavementDetailCanvases",
+  "buildApronGeometry",
+  "mapDetailTextureToApron",
+  "apron.receiveShadow = true",
+  "a1-a8-source-aerial-pbr-close-range-apron-v2",
+  '"source-aerial-diffuse"',
+  '"procedural-pbr-microdetail"',
 ]) requireText(apronSource, token, `close-range apron ${token}`);
 
 for (const token of [
@@ -104,4 +108,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Simulator environment population verified: close-range A1-A8 apron, ACES rendering, airport-wide soft shadows, seven aircraft, three authored stand-up tugs, twenty-eight cones and nineteen textured source placements participate in browser readiness.");
+console.log("Simulator environment population verified: source-aerial PBR A1-A8 apron, dynamic contact shadows, ACES rendering, airport-wide soft shadows, seven aircraft, three authored stand-up tugs, twenty-eight cones and nineteen textured source placements participate in browser readiness.");
