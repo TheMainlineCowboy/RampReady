@@ -66,6 +66,10 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways and sim
     async () => canvas.getAttribute("data-static-ramp-equipment-object-count"),
     { timeout: 150_000, intervals: [500, 1_000, 2_000] },
   ).toBe("58");
+  await expect.poll(
+    async () => canvas.getAttribute("data-terminal4-gate-detail-gate-count"),
+    { timeout: 150_000, intervals: [500, 1_000, 2_000] },
+  ).toBe("8");
 
   const runtime = await canvas.evaluate((element) => ({ ...element.dataset }));
   expect(runtime.visualQuality).toBe("simulator-rendering-v2");
@@ -104,6 +108,9 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways and sim
   expect(runtime.staticRampEquipmentDetailLevel).toBe("authored-and-procedural-terminal4-ramp-equipment-v2");
   expect(runtime.staticRampApronDetailLevel).toBe("a1-a8-normalized-source-aerial-pbr-apron-v3");
   expect(runtime.staticRampApronTextureResolution).toBe("1024x2048");
+  expect(runtime.terminal4GateDetailGateCount).toBe("8");
+  expect(Number(runtime.terminal4GateDetailMeshCount)).toBeGreaterThan(300);
+  expect(runtime.terminal4GateDetailLevel).toBe("terminal4-gate-signage-service-bays-and-safety-fixtures-v1");
   expect(runtime.simulatorDetailSource).toBeUndefined();
   expect(runtime.a1RampTextureResolution).toBeUndefined();
 
@@ -135,7 +142,7 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways and sim
   expect(measuredSize("/models/phx-terminal4/textures/RW.png")).toBeGreaterThan(1_000);
 
   const relevantErrors = runtimeErrors.filter((message) =>
-    /KPHX ground load failed|PHX airport ground failed to load|PHX source aerial load failed|source aerial failed to load|Terminal 4 visual load failed|material texture is missing|static ramp equipment load failed|GLTFLoader|WebGL.*shader|ReferenceError|TypeError|SyntaxError/i.test(message),
+    /KPHX ground load failed|PHX airport ground failed to load|PHX source aerial load failed|source aerial failed to load|Terminal 4 visual load failed|material texture is missing|static ramp equipment load failed|gate details load failed|GLTFLoader|WebGL.*shader|ReferenceError|TypeError|SyntaxError/i.test(message),
   );
   expect(relevantErrors).toEqual([]);
 
