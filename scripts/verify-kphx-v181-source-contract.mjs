@@ -106,6 +106,7 @@ for (const token of [
   "trainingCorridor",
   "kphxDetailLevel",
   'detailLevel: "terminal4-authored-textured-v3-source-ramp-exact-a1"',
+  'surfaceMaterialMode: "source-aerial-diffuse-with-faint-source-atlas-microdetail"',
   'concrete: "models/phx-terminal4/textures/PARKRAMPS.png"',
   'serviceRoad: "models/phx-terminal4/textures/PARKRAMP1.png"',
   'asphalt: "models/phx-terminal4/textures/RW.png"',
@@ -127,7 +128,10 @@ for (const token of [
   'photoGroundSource = "source-authored-phx-photo"',
   'const OPAQUE_ADEX_SURFACES = new Set(["airport-base"])',
   "hideFlatADEXSurfaceColors",
-  "source-textured and must stay visible above the aerial",
+  "source aerial is the diffuse authority",
+  "hidden-nonphotographic-bgl-classification-tint",
+  "exactA1HiddenProjectedMaterialCount",
+  "texture.anisotropy = 16",
   "6400",
   "2304",
   "199",
@@ -176,4 +180,4 @@ for (const token of [
 ]) {
   if (!files.prepare.includes(token)) throw new Error(`KPHX browser evidence missing ${token}`);
 }
-console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source placements, exact original ADEX A1 placement, real MDLX terminal geometry, repeat-corrected supplied textures with 11 exact source lightmaps, detailed source-placed jetway visuals, supplied concrete/asphalt/service-road materials above the full-airport aerial, and unrotated A1-local ground.`);
+console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source placements, exact original ADEX A1 placement, real MDLX terminal geometry, exact source lightmaps, detailed source-placed jetway visuals, faint source-atlas microdetail over the full-airport aerial, hidden nonphotographic projected-surface tints, and unrotated A1-local ground.`);

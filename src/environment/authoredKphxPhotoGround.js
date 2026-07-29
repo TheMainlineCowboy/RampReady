@@ -21,9 +21,9 @@ export const AUTHORED_KPHX_PHOTO_PROFILE = Object.freeze({
   detailLevel: "full-airport-source-aerial-1.2m-v1",
 });
 
-// The broad airport-base is hidden so the supplied aerial remains visible
-// between authored surfaces. Concrete, asphalt and service-road materials are
-// source-textured and must stay visible above the aerial as classification overlays.
+// The source aerial is the diffuse authority. The airport-wide ADEX surface
+// shells remain available for markings and metadata but must not cover the
+// photographic ramp with flat simulator classification colors.
 const OPAQUE_ADEX_SURFACES = new Set(["airport-base"]);
 
 function hideFlatADEXSurfaceColors(environment) {
@@ -44,27 +44,29 @@ function hideFlatADEXSurfaceColors(environment) {
 }
 
 function blendExactProjectedSurfacesWithAerial(exactA1) {
-  let blendedMaterialCount = 0;
+  let hiddenProjectedMaterialCount = 0;
   exactA1.traverse((node) => {
     if (!node.isMesh || !node.name.startsWith("KPHX_A1_ExactProjected_")) return;
-    const priority = Number(node.userData.sourcePriority) || 0;
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     for (const material of materials) {
-      if (!material || material.opacity <= 0) continue;
-      // These exact records define the surface boundaries and source ordering,
-      // but their BGL colors are classification tints rather than photographic
-      // ramp textures. Preserve those exact shapes without hiding the supplied
-      // georeferenced airport imagery underneath them.
-      material.opacity *= priority > 0 ? 0.62 : 0.14;
-      material.transparent = true;
+      if (!material) continue;
+      // The decoded projected records preserve exact boundaries and ordering,
+      // but their colors are BGL classification tints, not the supplied apron
+      // photography. Keep the records in the scene contract while rendering the
+      // source aerial and exact painted-line records instead of gray overlays.
+      material.visible = false;
       material.depthWrite = false;
-      material.roughness = 0.96;
+      material.userData = {
+        ...(material.userData || {}),
+        visibilityAuthority: "hidden-nonphotographic-bgl-classification-tint",
+      };
       material.needsUpdate = true;
-      blendedMaterialCount += 1;
+      hiddenProjectedMaterialCount += 1;
     }
   });
-  exactA1.userData.blendedProjectedMaterialCount = blendedMaterialCount;
-  return blendedMaterialCount;
+  exactA1.userData.blendedProjectedMaterialCount = 0;
+  exactA1.userData.hiddenProjectedMaterialCount = hiddenProjectedMaterialCount;
+  return hiddenProjectedMaterialCount;
 }
 
 async function fetchManifest(url) {
@@ -128,7 +130,7 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
   texture.wrapT = THREE.ClampToEdgeWrapping;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
-  texture.anisotropy = 8;
+  texture.anisotropy = 16;
   texture.generateMipmaps = true;
   texture.needsUpdate = true;
 
@@ -136,7 +138,7 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
     name: "PHX source aerial ground",
     map: texture,
     color: 0xffffff,
-    roughness: 0.97,
+    roughness: 0.98,
     metalness: 0,
     transparent: true,
     alphaTest: 0.02,
@@ -154,7 +156,7 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
   environment.add(photoGround);
   const exactA1 = await installExactKphxA1(THREE, environment);
   exactA1.position.set(0, 0, 6.2);
-  const blendedProjectedMaterialCount = blendExactProjectedSurfacesWithAerial(exactA1);
+  const hiddenProjectedMaterialCount = blendExactProjectedSurfacesWithAerial(exactA1);
   const sourceLights = installExactKphxA1SourceLights(THREE, exactA1);
 
   environment.userData.photoGroundSource = "source-authored-phx-photo";
@@ -169,7 +171,8 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
   environment.userData.authoredPhotoSha256 = manifest.image.sha256;
   environment.userData.authoredPhotoDetailLevel = AUTHORED_KPHX_PHOTO_PROFILE.detailLevel;
   environment.userData.hiddenADEXSurfaceMaterialCount = hiddenSurfaceMaterialCount;
-  environment.userData.exactA1BlendedProjectedMaterialCount = blendedProjectedMaterialCount;
+  environment.userData.exactA1BlendedProjectedMaterialCount = 0;
+  environment.userData.exactA1HiddenProjectedMaterialCount = hiddenProjectedMaterialCount;
   environment.userData.exactA1SourceLightFixtureCount = sourceLights.userData.fixtureCount;
   environment.userData.exactA1PhysicalLightCount = sourceLights.userData.physicalLightCount;
   environment.userData.exactA1SourceLightingDetailLevel = sourceLights.userData.detailLevel;
