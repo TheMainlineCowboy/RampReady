@@ -3,7 +3,7 @@ import concourseA from "./kphxV181/concourseA.js";
 export const TERMINAL4_GATE_DETAIL_PROFILE = Object.freeze({
   gates: Object.freeze(["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8"]),
   sceneOffsetZ: 6.2,
-  detailLevel: "terminal4-gate-signage-service-bays-and-safety-fixtures-v1",
+  detailLevel: "terminal4-gate-signage-service-bays-and-safety-fixtures-v2",
 });
 
 function jetwayByGate(gateName) {
@@ -28,8 +28,7 @@ function createGateSignTexture(THREE, gateName) {
   context.textBaseline = "middle";
   context.font = "700 142px Arial, sans-serif";
   context.fillText(gateName, 256, 108);
-  context.font = "700 30px Arial, sans-serif";
-  context.letterSpacing = "4px";
+  context.font = "700 29px Arial, sans-serif";
   context.fillText("AMERICAN EAGLE", 256, 210);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -43,7 +42,10 @@ function createGateSignTexture(THREE, gateName) {
 
 function createMaterials(THREE) {
   return {
-    concrete: new THREE.MeshStandardMaterial({ color: 0x9a9690, roughness: 0.9, metalness: 0.01 }),
+    terminal: new THREE.MeshStandardMaterial({ color: 0xa49c91, roughness: 0.88, metalness: 0.015 }),
+    terminalAccent: new THREE.MeshStandardMaterial({ color: 0x77736e, roughness: 0.84, metalness: 0.04 }),
+    interior: new THREE.MeshStandardMaterial({ color: 0x343536, roughness: 0.93, metalness: 0.01 }),
+    floor: new THREE.MeshStandardMaterial({ color: 0x676766, roughness: 0.94, metalness: 0.01 }),
     door: new THREE.MeshStandardMaterial({ color: 0x73787a, roughness: 0.78, metalness: 0.24 }),
     doorSlat: new THREE.MeshStandardMaterial({ color: 0x4d5255, roughness: 0.74, metalness: 0.28 }),
     frame: new THREE.MeshStandardMaterial({ color: 0xc4c7c6, roughness: 0.5, metalness: 0.46 }),
@@ -51,6 +53,14 @@ function createMaterials(THREE) {
     black: new THREE.MeshStandardMaterial({ color: 0x17191b, roughness: 0.92, metalness: 0.02 }),
     red: new THREE.MeshStandardMaterial({ color: 0xc8212b, roughness: 0.66, metalness: 0.08 }),
     white: new THREE.MeshStandardMaterial({ color: 0xf2f1eb, roughness: 0.76, metalness: 0.04 }),
+    glass: new THREE.MeshStandardMaterial({
+      color: 0x567887,
+      roughness: 0.22,
+      metalness: 0.08,
+      transparent: true,
+      opacity: 0.62,
+      depthWrite: false,
+    }),
     light: new THREE.MeshStandardMaterial({
       color: 0xffe4a3,
       emissive: 0xffc766,
@@ -72,15 +82,15 @@ function finishMesh(mesh, detailType) {
 function buildGateSign(THREE, gateName, materials) {
   const group = new THREE.Group();
   group.name = `PHX_${gateName}_GateSign`;
-  const backing = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(3.45, 1.72, 0.16), materials.black), "gate-sign-backing");
+  const backing = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(4.1, 2.04, 0.18), materials.black), "gate-sign-backing");
   backing.position.z = -0.05;
   group.add(backing);
   const signMaterial = new THREE.MeshBasicMaterial({ map: createGateSignTexture(THREE, gateName), toneMapped: false });
-  const face = finishMesh(new THREE.Mesh(new THREE.PlaneGeometry(3.25, 1.52), signMaterial), "gate-sign-face");
-  face.position.z = 0.045;
+  const face = finishMesh(new THREE.Mesh(new THREE.PlaneGeometry(3.86, 1.8), signMaterial), "gate-sign-face");
+  face.position.z = 0.055;
   group.add(face);
-  const bracket = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.0, 0.16), materials.frame), "gate-sign-bracket");
-  bracket.position.set(0, -1.32, -0.05);
+  const bracket = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.12, 0.18), materials.frame), "gate-sign-bracket");
+  bracket.position.set(0, -1.56, -0.05);
   group.add(bracket);
   return group;
 }
@@ -88,25 +98,62 @@ function buildGateSign(THREE, gateName, materials) {
 function buildServiceBay(THREE, materials) {
   const group = new THREE.Group();
   group.name = "PHX_TerminalServiceBay";
-  const surround = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(5.15, 3.55, 0.28), materials.concrete), "service-bay-surround");
-  group.add(surround);
-  const door = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(4.55, 3.02, 0.12), materials.door), "service-bay-door");
-  door.position.z = 0.16;
+
+  // A full lower-facade module sits directly in the previously empty terminal bay.
+  // Its shallow interior, back wall and floor prevent the browser from rendering a
+  // featureless black void while keeping believable service depth.
+  const facade = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(10.4, 4.0, 0.42), materials.terminal), "service-bay-facade");
+  facade.position.z = -0.42;
+  group.add(facade);
+
+  const interior = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(6.55, 3.2, 3.0), materials.interior), "service-bay-interior-depth");
+  interior.position.set(-1.15, -0.18, 1.2);
+  group.add(interior);
+  const interiorFloor = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(6.7, 0.12, 3.25), materials.floor), "service-bay-interior-floor");
+  interiorFloor.position.set(-1.15, -1.72, 1.3);
+  group.add(interiorFloor);
+
+  const doorFrame = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(6.5, 3.35, 0.32), materials.frame), "service-bay-door-frame");
+  doorFrame.position.set(-1.15, -0.08, 0.11);
+  group.add(doorFrame);
+  const door = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(5.95, 2.92, 0.12), materials.door), "service-bay-door");
+  door.position.set(-1.15, -0.13, 0.31);
   group.add(door);
   for (let slat = -7; slat <= 7; slat += 1) {
-    const rib = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(4.42, 0.025, 0.035), materials.doorSlat), "service-bay-door-slat");
-    rib.position.set(0, slat * 0.19, 0.24);
+    const rib = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.025, 0.035), materials.doorSlat), "service-bay-door-slat");
+    rib.position.set(-1.15, slat * 0.185 - 0.13, 0.39);
     group.add(rib);
   }
-  const curb = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(5.45, 0.22, 0.72), materials.concrete), "service-bay-curb");
-  curb.position.set(0, -1.76, 0.22);
+
+  const personnelDoorFrame = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(1.65, 3.0, 0.28), materials.frame), "service-personnel-door-frame");
+  personnelDoorFrame.position.set(3.7, -0.25, 0.12);
+  group.add(personnelDoorFrame);
+  const personnelDoor = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(1.35, 2.72, 0.12), materials.terminalAccent), "service-personnel-door");
+  personnelDoor.position.set(3.7, -0.27, 0.31);
+  group.add(personnelDoor);
+  const window = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.58, 0.035), materials.glass), "service-personnel-door-window");
+  window.position.set(3.7, 0.35, 0.39);
+  group.add(window);
+  const handle = finishMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.22, 12), materials.frame), "service-personnel-door-handle");
+  handle.rotation.x = Math.PI / 2;
+  handle.position.set(4.15, -0.28, 0.43);
+  group.add(handle);
+
+  const curb = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(10.75, 0.24, 0.78), materials.terminal), "service-bay-curb");
+  curb.position.set(0, -2.02, 0.22);
   group.add(curb);
-  const lightHousing = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.18, 0.26), materials.black), "service-bay-light-housing");
-  lightHousing.position.set(0, 1.98, 0.2);
-  group.add(lightHousing);
-  const light = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.08, 0.08), materials.light), "service-bay-light");
-  light.position.set(0, 1.93, 0.38);
-  group.add(light);
+  const canopy = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(10.6, 0.22, 0.92), materials.terminalAccent), "service-bay-canopy");
+  canopy.position.set(0, 2.05, 0.22);
+  group.add(canopy);
+
+  for (const x of [-3.25, 0.95, 3.7]) {
+    const lightHousing = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.18, 0.26), materials.black), "service-bay-light-housing");
+    lightHousing.position.set(x, 1.87, 0.43);
+    group.add(lightHousing);
+    const light = finishMesh(new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.08, 0.08), materials.light), "service-bay-light");
+    light.position.set(x, 1.81, 0.59);
+    group.add(light);
+  }
   return group;
 }
 
@@ -166,16 +213,16 @@ function placeGateDetails(THREE, gateName, jetway, materials) {
   group.userData.gate = gateName;
   group.userData.placementAuthority = "decoded KPHX jetway root and parking vector";
 
-  const sign = buildGateSign(THREE, gateName, materials);
-  sign.position.set(-3.8, 5.15, 1.15);
-  group.add(sign);
-
   const serviceBay = buildServiceBay(THREE, materials);
-  serviceBay.position.set(5.7, 1.92, -2.1);
+  serviceBay.position.set(0, 2.02, -1.3);
   group.add(serviceBay);
 
+  const sign = buildGateSign(THREE, gateName, materials);
+  sign.position.set(-3.2, 5.45, 0.82);
+  group.add(sign);
+
   const cabinet = buildFireCabinet(THREE, materials);
-  cabinet.position.set(-5.2, 1.05, -0.7);
+  cabinet.position.set(-5.0, 1.08, 0.1);
   group.add(cabinet);
 
   for (const x of [-1.55, 1.55]) {
