@@ -1,6 +1,8 @@
 import fs from "node:fs";
 
 const staticSource = fs.readFileSync("src/environment/staticGateAircraft.js", "utf8");
+const objectSource = fs.readFileSync("src/environment/sourceAuthoredAirportObjects.js", "utf8");
+const materializer = fs.readFileSync("scripts/materialize-kphx-source-objects.mjs", "utf8");
 const patchSource = fs.readFileSync("scripts/prepare-simulator-environment.mjs", "utf8");
 const generated = fs.readFileSync("src/components/RampReadyStandupTrainerTerminal4.jsx", "utf8");
 const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
@@ -10,28 +12,44 @@ const requireText = (source, token, label) => {
   if (!source.includes(token)) failures.push(`${label} is missing`);
 };
 
-for (const gate of ["A2", "A3", "A4", "A5", "A6", "A7", "A8"]) {
-  requireText(staticSource, `"${gate}"`, `static gate ${gate}`);
-}
+for (const gate of ["A2", "A3", "A4", "A5", "A6", "A7", "A8"]) requireText(staticSource, `"${gate}"`, `static gate ${gate}`);
 requireText(staticSource, "loadSelectedAircraftRuntime", "authored aircraft loader");
 requireText(staticSource, "result.preserveMaterials", "authored livery preservation gate");
-requireText(staticSource, "decoded KPHX ADEX parking position and heading", "source placement authority");
-requireText(staticSource, "root.rotation.y = (270 - gate.h)", "source heading transform");
-requireText(staticSource, "authoredStaticAircraftCount", "static aircraft runtime count");
+requireText(staticSource, "decoded KPHX ADEX parking position and heading", "source aircraft placement authority");
+requireText(staticSource, "root.rotation.y = (270 - gate.h)", "source aircraft heading transform");
 requireText(staticSource, "authored-crj700-static-gate-population-v1", "static aircraft detail level");
 
-requireText(patchSource, "installStaticGateAircraft", "static aircraft preparation import");
-requireText(patchSource, "staticAircraftLoad", "static aircraft readiness promise");
-requireText(patchSource, "dataset.staticAircraftCount", "static aircraft browser evidence");
-requireText(generated, 'import { installStaticGateAircraft } from "../environment/staticGateAircraft.js";', "generated static aircraft import");
-requireText(generated, "installStaticGateAircraft(THREE, environment)", "generated static aircraft loader");
-requireText(generated, "Promise.all([terminalLoad, groundLoad, photoGroundLoad, staticAircraftLoad])", "combined simulator readiness gate");
+for (const token of [
+  "58115954e8d8294448e6e06d1be24d81a8e22764",
+  "source-authored-airport-object-population-v1",
+  "sourceAuthoredAirportObjectPlacementCount",
+  "sourceAuthoredAirportObjectModelCount",
+  "90 - placement.headingDegrees",
+]) requireText(objectSource, token, `source object runtime ${token}`);
+for (const token of [
+  'expectedPlacements: 3',
+  'expectedPlacements: 13',
+  'expectedPlacements: 1',
+  "inspection.libraryObjectPlacementCount !== 579",
+  "placements.length !== 19",
+  "modelCount: Object.keys(modelManifest).length",
+]) requireText(materializer, token, `source object materializer ${token}`);
 
-if (packageJson.scripts?.["prepare:simulator-environment"] !== "node scripts/prepare-simulator-environment.mjs") {
-  failures.push("package prepare:simulator-environment script is incorrect");
+requireText(patchSource, "installStaticGateAircraft", "static aircraft preparation import");
+requireText(patchSource, "installSourceAuthoredAirportObjects", "source object preparation import");
+requireText(patchSource, "sourceObjectLoad", "source object readiness promise");
+requireText(generated, 'import { installStaticGateAircraft } from "../environment/staticGateAircraft.js";', "generated static aircraft import");
+requireText(generated, 'import { installSourceAuthoredAirportObjects } from "../environment/sourceAuthoredAirportObjects.js";', "generated source object import");
+requireText(generated, "installStaticGateAircraft(THREE, environment)", "generated static aircraft loader");
+requireText(generated, "installSourceAuthoredAirportObjects(THREE, environment)", "generated source object loader");
+requireText(generated, "Promise.all([terminalLoad, groundLoad, photoGroundLoad, staticAircraftLoad, sourceObjectLoad])", "combined simulator readiness gate");
+
+if (packageJson.scripts?.["materialize:kphx-source-objects"] !== "node scripts/materialize-kphx-source-objects.mjs") failures.push("package source object materializer script is incorrect");
+if (packageJson.scripts?.["prepare:simulator-environment"] !== "node scripts/prepare-simulator-environment.mjs") failures.push("package simulator preparation script is incorrect");
+for (const scriptName of ["build", "dev", "verify"]) {
+  if (!packageJson.scripts?.[scriptName]?.includes("materialize:kphx-source-objects")) failures.push(`${scriptName} skips source object materialization`);
+  if (!packageJson.scripts?.[scriptName]?.includes("prepare:simulator-environment")) failures.push(`${scriptName} skips simulator environment preparation`);
 }
-if (!packageJson.scripts?.build?.includes("prepare:simulator-environment")) failures.push("production build skips simulator environment preparation");
-if (!packageJson.scripts?.dev?.includes("prepare:simulator-environment")) failures.push("development server skips simulator environment preparation");
 
 if (failures.length) {
   console.error("Simulator environment population verification failed:");
@@ -39,4 +57,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Simulator environment population verified: seven authored CRJ700s occupy source-decoded A2-A8 stands and participate in the browser readiness gate.");
+console.log("Simulator environment population verified: seven authored CRJ700s at A2-A8 plus five source models across nineteen exact KPHX placements participate in browser readiness.");
