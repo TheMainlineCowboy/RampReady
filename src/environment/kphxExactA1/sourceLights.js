@@ -2,7 +2,7 @@ const LIGHTED_LINE_PREFIX = "KPHX_A1_ExactPaintedLineType_";
 const SAMPLE_SPACING_METERS = 5.5;
 const DEDUPE_GRID_METERS = 1.35;
 const MAX_VISIBLE_LIGHTS = 900;
-const MAX_PHYSICAL_LIGHTS = 36;
+const MAX_PHYSICAL_LIGHTS = 8;
 
 function materialFor(node) {
   return Array.isArray(node.material) ? node.material[0] : node.material;
@@ -120,8 +120,8 @@ export function installExactKphxA1SourceLights(THREE, exactA1) {
     addInstancedLights(THREE, root, entries, color, fixtureGeometry, haloGeometry);
   }
 
-  // A small nearest-to-A1 subset contributes real light to nearby equipment.
-  // The full source set remains inexpensive emissive instancing.
+  // Keep real illumination deliberately small so the exact source fixture field
+  // remains mobile-safe; all fixtures still render through inexpensive instancing.
   for (const point of points.slice(0, MAX_PHYSICAL_LIGHTS)) {
     const light = new THREE.PointLight(point.color, 0.42, 8, 2);
     light.name = "KPHX_A1_SourcePhotometricLight";
