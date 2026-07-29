@@ -1,5 +1,10 @@
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { buildKphxV181Terminal4, KPHX_V181_PROFILE } from "./kphxV181Terminal4.js";
+import concourseA from "./kphxV181/concourseA.js";
+import concourseB from "./kphxV181/concourseB.js";
+
+const TERMINAL4_PARKINGS = Object.freeze([...concourseA.parkings, ...concourseB.parkings]);
+const TERMINAL4_JETWAYS = Object.freeze([...concourseA.jetways, ...concourseB.jetways]);
+const B15_GATE_NAMES = new Set(["B15L", "B15M"]);
 
 export const AUTHORED_KPHX_GROUND_PROFILE = Object.freeze({
   source: "TheMainlineCowboy/SkyHarborPhx@7ee8f9b4712f842706f00aa5a307e8861b601620/scenery/KPHX_ADEX.BGL",
@@ -7,9 +12,13 @@ export const AUTHORED_KPHX_GROUND_PROFILE = Object.freeze({
   anchorGate: "A1",
   anchorParkingIndex: 32,
   anchorHeadingDegrees: 269.975341796875,
-  trainingAircraftHeadingDegrees: 180,
-  coordinateFrame: "A1-local; X=north, Y=up, Z=east; training aircraft nose toward -Z",
+  coordinateFrame: "A1-local; X=north, Y=up, Z=east; authored A1 heading faces scene -Z",
   sceneOffset: Object.freeze([0, 0, 6.2]),
+  packageVersion: "1.8.1",
+  detailLevel: "terminal4-authored-textured-v2-exact-a1",
+  sourceJetwayCount: 112,
+  terminal4JetwayCount: TERMINAL4_JETWAYS.length,
+  terminal4ParkingCount: TERMINAL4_PARKINGS.length,
   taxiwayPoints: 870,
   taxiwayPaths: 1302,
   parkingStands: 240,
@@ -30,6 +39,28 @@ function hideCalibrationGround(environment) {
   });
 }
 
+function buildGateMetadata() {
+  const offsetZ = AUTHORED_KPHX_GROUND_PROFILE.sceneOffset[2];
+  const b15Anchors = TERMINAL4_PARKINGS
+    .filter((parking) => B15_GATE_NAMES.has(parking.g))
+    .map((parking) => ({
+      gate: parking.g,
+      x: parking.x,
+      z: parking.z + offsetZ,
+      headingDegrees: parking.h,
+      distanceMeters: Math.hypot(parking.x, parking.z),
+    }));
+  return {
+    b15Anchors,
+    trainingCorridor: {
+      startGate: "A1",
+      endGates: b15Anchors.map((anchor) => anchor.gate),
+      distanceMeters: b15Anchors.map((anchor) => anchor.distanceMeters),
+      coordinateFrame: AUTHORED_KPHX_GROUND_PROFILE.coordinateFrame,
+    },
+  };
+}
+
 export async function installAuthoredKphxGround(THREE, environment) {
   if (!environment?.isGroup) throw new Error("KPHX environment group is required");
   environment.userData.groundSource = "loading-authored-kphx-v181";
@@ -40,9 +71,10 @@ export async function installAuthoredKphxGround(THREE, environment) {
   const authored = gltf.scene;
   authored.name = "PHX_KPHX_AuthoredAirportWideGround";
   authored.position.fromArray(AUTHORED_KPHX_GROUND_PROFILE.sceneOffset);
-  authored.rotation.y = THREE.MathUtils.degToRad(
-    AUTHORED_KPHX_GROUND_PROFILE.trainingAircraftHeadingDegrees - AUTHORED_KPHX_GROUND_PROFILE.anchorHeadingDegrees,
-  );
+  // The ADEX extractor already emits A1-local X=north/Z=east coordinates and
+  // explicitly registers the authored A1 heading to scene -Z. Rotating it a
+  // second time was the cause of the wrong gate and wrong aircraft orientation.
+  authored.rotation.y = 0;
   authored.traverse((node) => {
     if (!node.isMesh) return;
     node.castShadow = false;
@@ -51,25 +83,25 @@ export async function installAuthoredKphxGround(THREE, environment) {
     for (const material of materials) {
       if (!material) continue;
       material.depthWrite = true;
+      material.side = THREE.DoubleSide;
       material.needsUpdate = true;
     }
   });
 
-  const terminal4Detail = buildKphxV181Terminal4(THREE);
-  environment.add(authored, terminal4Detail);
+  environment.add(authored);
   hideCalibrationGround(environment);
+  const metadata = buildGateMetadata();
 
   environment.userData.groundSource = "authored-kphx-v181";
   environment.userData.authoredGroundUrl = url;
   environment.userData.authoredGround = authored;
-  environment.userData.kphxV181Detail = terminal4Detail;
-  environment.userData.kphxVersion = KPHX_V181_PROFILE.packageVersion;
-  environment.userData.kphxDetailLevel = terminal4Detail.userData.detailLevel;
-  environment.userData.sourceJetwayCount = KPHX_V181_PROFILE.sourceJetwayCount;
-  environment.userData.terminal4JetwayCount = terminal4Detail.userData.terminal4JetwayCount;
-  environment.userData.terminal4ParkingCount = terminal4Detail.userData.terminal4ParkingCount;
-  environment.userData.b15Anchors = terminal4Detail.userData.b15Anchors;
-  environment.userData.trainingCorridor = terminal4Detail.userData.trainingCorridor;
+  environment.userData.kphxVersion = AUTHORED_KPHX_GROUND_PROFILE.packageVersion;
+  environment.userData.kphxDetailLevel = AUTHORED_KPHX_GROUND_PROFILE.detailLevel;
+  environment.userData.sourceJetwayCount = AUTHORED_KPHX_GROUND_PROFILE.sourceJetwayCount;
+  environment.userData.terminal4JetwayCount = AUTHORED_KPHX_GROUND_PROFILE.terminal4JetwayCount;
+  environment.userData.terminal4ParkingCount = AUTHORED_KPHX_GROUND_PROFILE.terminal4ParkingCount;
+  environment.userData.b15Anchors = metadata.b15Anchors;
+  environment.userData.trainingCorridor = metadata.trainingCorridor;
   environment.userData.authoredGroundCounts = {
     taxiwayPoints: AUTHORED_KPHX_GROUND_PROFILE.taxiwayPoints,
     taxiwayPaths: AUTHORED_KPHX_GROUND_PROFILE.taxiwayPaths,
@@ -78,5 +110,5 @@ export async function installAuthoredKphxGround(THREE, environment) {
     pathSurfaces: AUTHORED_KPHX_GROUND_PROFILE.pathSurfaces,
     markingSegments: AUTHORED_KPHX_GROUND_PROFILE.markingSegments,
   };
-  return terminal4Detail;
+  return authored;
 }

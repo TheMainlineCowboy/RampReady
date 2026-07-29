@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "sourceRepository": "TheMainlineCowboy/SkyHarborPhx",
+  "sourceCommit": "2e6642778c9c88eac6a82b21063763cc78be7cfe",
+  "sourcePath": "scenery/PHXPhoto.bgl",
+  "sourceBytes": 8278549,
+  "sourceSha256": "57eba2d16153c84c775f23c1749c6ad85a9c01685cce1eb63bd52280eb368cf0",
+  "decoderRepository": "seanisom/flightsimlib",
+  "decoderCommit": "fc17bec8e20770da3344eea10f25ecac281ee09f",
+  "layer": "TerrainPhotoJan (0x8C; shared daytime source)",
+  "qmidLevel": 17,
+  "tileCount": 199,
+  "grid": {
+    "min_u": 18558,
+    "max_u": 18582,
+    "min_v": 20591,
+    "max_v": 20599
+  },
+  "image": {
+    "file": "phx-airport-photo.webp",
+    "format": "WebP",
+    "width": 6400,
+    "height": 2304,
+    "bytes": 2698886,
+    "sha256": "3f898ff2f238c7a9280acaed43f8da6cf8bd28ef2f4f6512d5c0ea8043181161",
+    "quality": 88
+  },
+  "geographicBounds": {
+    "west": -112.03857421875,
+    "south": 33.42041015625,
+    "east": -111.947021484375,
+    "north": 33.44512939453125
+  },
+  "coordinateFrame": "A1-local; X=north, Y=up, Z=east",
+  "anchor": {
+    "gate": "A1",
+    "latitude": 33.43653056770563,
+    "longitude": -111.99864059686661,
+    "groundZOffsetMeters": 6.2
+  },
+  "sceneBounds": {
+    "north": 957.2170236474195,
+    "south": -1794.5159946189253,
+    "west": -3703.4637473759662,
+    "east": 4801.396159291422,
+    "centerX": -418.6494854857529,
+    "centerZ": 548.9662059577279,
+    "widthMeters": 8504.859906667389,
+    "heightMeters": 2751.733018266345
+  },
+  "corners": {
+    "northwest": [
+      957.2170236474195,
+      -3703.4637473759662
+    ],
+    "northeast": [
+      957.2170236474195,
+      4801.396159291422
+    ],
+    "southwest": [
+      -1794.5159946189253,
+      -3703.4637473759662
+    ],
+    "southeast": [
+      -1794.5159946189253,
+      4801.396159291422
+    ]
+  },
+  "surfaceState": "source-authored 1.2-meter-class aerial airport imagery covering the full PHX field"
+}
