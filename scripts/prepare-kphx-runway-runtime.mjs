@@ -10,8 +10,8 @@ const operations = [
   },
   {
     marker: "const runwayVisuals = await installKphxRunwayVisuals(THREE, authored);",
-    oldText: `  const materialState = applyAuthoredSurfaceMaterials(THREE, authored, surfaceTextures);\n\n  environment.add(authored);`,
-    newText: `  const materialState = applyAuthoredSurfaceMaterials(THREE, authored, surfaceTextures);\n  const runwayVisuals = await installKphxRunwayVisuals(THREE, authored);\n\n  environment.add(authored);`,
+    oldText: "  const materialState = applyAuthoredSurfaceMaterials(THREE, authored, surfaceTextures);",
+    newText: "  const materialState = applyAuthoredSurfaceMaterials(THREE, authored, surfaceTextures);\n  const runwayVisuals = await installKphxRunwayVisuals(THREE, authored);",
   },
   {
     marker: "environment.userData.kphxRunwayVisualDetailLevel",
