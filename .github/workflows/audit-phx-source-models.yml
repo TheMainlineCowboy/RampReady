@@ -1,0 +1,48 @@
+name: Audit PHX Source Models
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/audit-phx-source-model-library.mjs
+      - .github/workflows/audit-phx-source-models.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: audit-phx-source-models
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out RampReady
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Audit supplied PHX BGL model libraries
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/audit-phx-source-model-library.mjs
+
+      - name: Commit source-model audit report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/phx-source-model-audit.json
+          if git diff --cached --quiet; then
+            echo "PHX source-model audit report is unchanged."
+            exit 0
+          fi
+          git commit -m "Record PHX source-model audit [skip ci]"
+          git push origin HEAD:main
