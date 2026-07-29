@@ -43,7 +43,7 @@ for (const token of [
   "sourceWrapMode",
   "THREE.RepeatWrapping",
   "texture.anisotropy = 16",
-  "emissiveTextureCount !== 11",
+  "manifest.emissiveTextureCount !== 11",
   "material.emissiveMap = emissiveMap",
   "authoredTerminal4LightmappedMaterialCount",
 ]) {
