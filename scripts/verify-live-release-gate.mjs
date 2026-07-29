@@ -24,15 +24,22 @@ for (const path of obsoleteWorkflows) assert.equal(await exists(path), false, `$
 
 const workflow = await read(".github/workflows/verify-rampready-live-experience.yml");
 for (const required of [
+  "workflow_run:",
+  'workflows: ["Deploy RampReady to GitHub Pages"]',
+  "github.event.workflow_run.head_sha",
+  "github.event.workflow_run.conclusion == 'success'",
   "scripts/verify-live-experience-browser.cjs",
   "continue-on-error: true",
   "live-experience-evidence/error.txt",
   "live-experience-evidence/release-marker.log",
   "releases/${EXPECTED_SHA}.txt",
+  "for attempt in $(seq 1 60)",
+  "Pages deployment succeeded but immutable marker",
   "production/rampready-live-experience",
   "production/crj700-side-views",
   "Enforce live-experience verdict",
 ]) assert.ok(workflow.includes(required), `live workflow missing ${required}`);
+assert.ok(!workflow.includes("\n  push:\n"), "live experience verification must not start for commits whose Pages deployment may be cancelled");
 
 const deployWorkflow = await read(".github/workflows/deploy-pages.yml");
 for (const required of [
@@ -125,4 +132,4 @@ for (const required of [
   "bottom: var(--rr-recovery-safe) !important",
 ]) assert.ok(css.includes(required), `mobile recovery CSS missing ${required}`);
 
-console.log("RampReady live release gate verified: main-only Pages deployment, immutable release markers, compositor-backed browser evidence, verified authored stand-up equipment routing, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");
+console.log("RampReady live release gate verified: successful-deploy-only live verification, immutable release markers, compositor-backed browser evidence, verified authored stand-up equipment routing, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");
