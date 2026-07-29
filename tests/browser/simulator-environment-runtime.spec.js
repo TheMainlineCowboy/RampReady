@@ -24,7 +24,7 @@ async function launchStandup(page) {
   return canvas;
 }
 
-test("populates source-decoded Terminal 4 stands and textured authored airport objects", async ({ page }) => {
+test("populates source-decoded Terminal 4 with simulator rendering, aircraft and textured objects", async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const runtimeErrors = [];
@@ -49,6 +49,7 @@ test("populates source-decoded Terminal 4 stands and textured authored airport o
   ).toBe("19");
 
   const runtime = await canvas.evaluate((element) => ({ ...element.dataset }));
+  expect(runtime.visualQuality).toBe("simulator-rendering-v1");
   expect(runtime.staticAircraftCount).toBe("7");
   expect(runtime.staticAircraftGates).toBe("A2,A3,A4,A5,A6,A7,A8");
   expect(runtime.staticAircraftDetailLevel).toBe("authored-crj700-static-gate-population-v1");
