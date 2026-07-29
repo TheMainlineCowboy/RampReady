@@ -181,27 +181,29 @@ function drawConcreteDetails(diffuseContext, bumpContext, roughnessContext, widt
     bumpContext.stroke();
   }
 
-  diffuseContext.strokeStyle = "rgba(25,27,27,0.12)";
+  // Localized tire scuffing is deliberately restrained so it reads as ramp wear,
+  // not as a painted ring around each parked aircraft.
+  diffuseContext.strokeStyle = "rgba(25,27,27,0.065)";
   diffuseContext.lineCap = "round";
-  diffuseContext.lineWidth = 5.5;
+  diffuseContext.lineWidth = 2.2;
   for (const gate of [
     [0, 6.2], [86.3, -51.7], [86.3, 6.2], [172.5, -51.7],
     [172.5, 6.2], [258.8, -51.7], [258.8, 6.2],
   ]) {
     const x = transform.horizontalFromZ(gate[1]);
     const y = transform.verticalFromX(gate[0]);
-    for (const radius of [28, 35]) {
+    for (const radius of [10, 14]) {
       diffuseContext.beginPath();
       diffuseContext.arc(x, y, radius, Math.PI * 0.16, Math.PI * 0.84);
       diffuseContext.stroke();
     }
-    const stain = diffuseContext.createRadialGradient(x, y + 14, 0, x, y + 14, 38);
-    stain.addColorStop(0, "rgba(32,30,27,0.095)");
-    stain.addColorStop(0.5, "rgba(42,39,34,0.038)");
+    const stain = diffuseContext.createRadialGradient(x, y + 8, 0, x, y + 8, 20);
+    stain.addColorStop(0, "rgba(32,30,27,0.055)");
+    stain.addColorStop(0.5, "rgba(42,39,34,0.022)");
     stain.addColorStop(1, "rgba(42,39,34,0)");
     diffuseContext.fillStyle = stain;
     diffuseContext.beginPath();
-    diffuseContext.ellipse(x, y + 14, 38, 15, 0, 0, Math.PI * 2);
+    diffuseContext.ellipse(x, y + 8, 20, 7.5, 0, 0, Math.PI * 2);
     diffuseContext.fill();
   }
 }
