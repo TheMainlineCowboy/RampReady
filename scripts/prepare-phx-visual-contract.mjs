@@ -3,8 +3,18 @@ import fs from "node:fs";
 const path = "scripts/verify-kphx-v181-source-contract.mjs";
 let source = fs.readFileSync(path, "utf8");
 
+const exactLightmapToken = '"exactLightmapCount !== 11"';
+if (!source.includes(exactLightmapToken)) {
+  const historicalLightmapTokens = [
+    '"manifest.emissiveTextureCount !== 11"',
+    '"emissiveTextureCount !== 11"',
+  ];
+  const historical = historicalLightmapTokens.find((token) => source.includes(token));
+  if (!historical) throw new Error("PHX visual contract migration cannot find a historical lightmap guard");
+  source = source.replace(historical, exactLightmapToken);
+}
+
 const replacements = [
-  ['"emissiveTextureCount !== 11"', '"exactLightmapCount !== 11"'],
   ['\'detailLevel: "terminal4-authored-textured-v4-source-ramp-exact-a1-nearfield"\'', '\'detailLevel: "terminal4-authored-pavement-v5-source-ramp-stand-markings"\''],
   ['\'surfaceMaterialMode: "source-aerial-diffuse-with-source-atlas-nearfield-concrete"\'', '\'surfaceMaterialMode: "authored-pavement-nearfield-over-source-aerial-background"\''],
   ['"material.bumpScale = 0.022"', '"material.bumpScale = 0.028"'],
