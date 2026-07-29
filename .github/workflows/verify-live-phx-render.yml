@@ -38,7 +38,11 @@ jobs:
         env:
           PAGE_URL: https://themainlinecowboy.github.io/RampReady/
           EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
-        run: npx --yes --package=@playwright/test@1.55.0 playwright test scripts/verify-live-phx-render.spec.cjs --reporter=line
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p live-phx-render-evidence
+          npx --yes --package=@playwright/test@1.55.0 playwright test scripts/verify-live-phx-render.spec.js --reporter=line 2>&1 | tee live-phx-render-evidence/workflow.log
 
       - name: Upload live render evidence
         if: always()
@@ -57,6 +61,7 @@ jobs:
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
           BROWSER_OUTCOME: ${{ steps.browser.outcome }}
           DEPLOY_RUN_ID: ${{ github.event.workflow_run.id }}
+          RENDER_RUN_ID: ${{ github.run_id }}
           COMPLETED_AT: ${{ github.event.workflow_run.updated_at }}
         shell: bash
         run: |
@@ -73,12 +78,16 @@ jobs:
             browserReport = JSON.parse(fs.readFileSync('live-phx-render-evidence/report.json', 'utf8'));
           } catch {
             try { error = fs.readFileSync('live-phx-render-evidence/error.txt', 'utf8'); } catch {}
+            if (!error) {
+              try { error = fs.readFileSync('live-phx-render-evidence/workflow.log', 'utf8'); } catch {}
+            }
           }
           const receipt = {
             schemaVersion: 1,
             releaseSha: process.env.RELEASE_SHA,
             conclusion: process.env.BROWSER_OUTCOME === 'success' ? 'success' : 'failure',
             deployRunId: Number(process.env.DEPLOY_RUN_ID),
+            renderRunId: Number(process.env.RENDER_RUN_ID),
             completedAt: process.env.COMPLETED_AT,
             phxGroundContract: {
               textureMode: 'tiled-native-source-resolution-v2',
