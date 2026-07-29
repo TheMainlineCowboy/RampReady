@@ -35,6 +35,7 @@ export const AUTHORED_TERMINAL4_PROFILE = Object.freeze({
   placementAuthority: "decoded original KPHX_ADEX library-object placement relative to decoded original Gate A1",
   materialPass: "pinned-authored-source-textures-v2-repeat-corrected",
   detailLevel: "terminal4-authored-textured-v3-source-jetways-exact-a1",
+  groundCleanupPass: "legacy-terminal-ground-atlases-suppressed-v1",
 });
 
 function textureReference(material) {
@@ -107,6 +108,7 @@ async function loadSourceTextures(THREE, baseUrl) {
 
 function applySourceMaterials(THREE, scene, textures) {
   let texturedMaterialCount = 0;
+  let hiddenLegacyGroundMaterialCount = 0;
   scene.traverse((node) => {
     if (!node.isMesh) return;
     const originals = Array.isArray(node.material) ? node.material : [node.material];
@@ -117,6 +119,7 @@ function applySourceMaterials(THREE, scene, textures) {
       const texture = reference ? textures.get(reference.toUpperCase()) : null;
       if (!texture) throw new Error(`Terminal 4 material texture is missing at runtime: ${reference || material.name}`);
       const character = materialCharacter(reference);
+      const legacyGroundAtlas = /PARKRAMP|RW\.BMP/i.test(reference || "");
       material.map = texture;
       material.color?.setHex(0xffffff);
       material.roughness = character.roughness;
@@ -124,7 +127,16 @@ function applySourceMaterials(THREE, scene, textures) {
       material.transparent = false;
       material.opacity = 1;
       material.side = THREE.DoubleSide;
-      material.depthWrite = true;
+      material.depthWrite = !legacyGroundAtlas;
+      material.visible = !legacyGroundAtlas;
+      material.userData = {
+        ...(material.userData || {}),
+        legacyGroundAtlas,
+        visibilityAuthority: legacyGroundAtlas
+          ? "suppressed-old-terminal-ground-so-authoritative-aerial-and-adex-remain-visible"
+          : "source-authored-terminal-material",
+      };
+      if (legacyGroundAtlas) hiddenLegacyGroundMaterialCount += 1;
       material.needsUpdate = true;
       texturedMaterialCount += 1;
       return material;
@@ -134,7 +146,7 @@ function applySourceMaterials(THREE, scene, textures) {
     node.receiveShadow = true;
     node.frustumCulled = true;
   });
-  return texturedMaterialCount;
+  return { texturedMaterialCount, hiddenLegacyGroundMaterialCount };
 }
 
 function nearestHorizontalVertexDistance(THREE, scene, point) {
@@ -175,7 +187,7 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   authored.position.fromArray(AUTHORED_TERMINAL4_PROFILE.position);
   authored.rotation.y = THREE.MathUtils.degToRad(AUTHORED_TERMINAL4_PROFILE.rotationYDegrees);
   authored.scale.fromArray(AUTHORED_TERMINAL4_PROFILE.scale);
-  const texturedMaterialCount = applySourceMaterials(THREE, authored, textures);
+  const { texturedMaterialCount, hiddenLegacyGroundMaterialCount } = applySourceMaterials(THREE, authored, textures);
   const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, textures);
   environment.add(authored, sourcePlacedJetways);
   authored.updateMatrixWorld(true);
@@ -191,6 +203,7 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4Jetways = sourcePlacedJetways;
   environment.userData.authoredTerminal4Placement = AUTHORED_TERMINAL4_PROFILE.placementAuthority;
   environment.userData.authoredTerminal4MaterialPass = AUTHORED_TERMINAL4_PROFILE.materialPass;
+  environment.userData.authoredTerminal4GroundCleanupPass = AUTHORED_TERMINAL4_PROFILE.groundCleanupPass;
   environment.userData.authoredTerminal4DetailLevel = AUTHORED_TERMINAL4_PROFILE.detailLevel;
   environment.userData.authoredTerminal4TriangleCount = AUTHORED_TERMINAL4_PROFILE.triangleCount;
   environment.userData.authoredTerminal4PartCount = AUTHORED_TERMINAL4_PROFILE.partCount;
@@ -198,6 +211,7 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4ExactTextureCount = manifest.exactTextureCount;
   environment.userData.authoredTerminal4FallbackTextureCount = manifest.fallbackTextureCount;
   environment.userData.authoredTerminal4TexturedMaterialCount = texturedMaterialCount;
+  environment.userData.authoredTerminal4HiddenLegacyGroundMaterialCount = hiddenLegacyGroundMaterialCount;
   environment.userData.authoredTerminal4JetwayVisualCount = sourcePlacedJetways.userData.jetwayCount;
   environment.userData.authoredTerminal4JetwayDetailLevel = sourcePlacedJetways.userData.detailLevel;
   environment.userData.authoredTerminal4Position = [...AUTHORED_TERMINAL4_PROFILE.position];
