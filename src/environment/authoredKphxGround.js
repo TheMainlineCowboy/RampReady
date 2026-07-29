@@ -21,7 +21,7 @@ export const AUTHORED_KPHX_GROUND_PROFILE = Object.freeze({
   sceneOffset: Object.freeze([0, 0, 6.2]),
   packageVersion: "1.8.1",
   detailLevel: "terminal4-authored-textured-v3-source-ramp-exact-a1",
-  surfaceMaterialMode: "source-aerial-diffuse-with-source-atlas-detail-only",
+  surfaceMaterialMode: "source-aerial-diffuse-with-faint-source-atlas-microdetail",
   sourceJetwayCount: 112,
   terminal4JetwayCount: TERMINAL4_JETWAYS.length,
   terminal4ParkingCount: TERMINAL4_PARKINGS.length,
@@ -144,20 +144,20 @@ function applyAuthoredSurfaceMaterials(THREE, authored, textures) {
         material.visible = false;
       } else if (material.name === "concrete") {
         material.visible = true;
-        material.color.setHex(0xc8c5bd);
+        material.color.setHex(0xffffff);
         material.transparent = true;
-        material.opacity = 0.24;
+        material.opacity = 0.055;
         material.depthWrite = false;
         material.bumpMap = textures.concrete;
-        material.bumpScale = 0.018;
-        material.roughness = 0.96;
+        material.bumpScale = 0.006;
+        material.roughness = 0.98;
         material.metalness = 0;
         sourceDetailedSurfaceMaterialCount += 1;
       } else if (material.name === "asphalt") {
         material.visible = true;
-        material.color.setHex(0x4a4d50);
+        material.color.setHex(0xffffff);
         material.transparent = true;
-        material.opacity = 0.34;
+        material.opacity = 0.025;
         material.depthWrite = false;
         material.bumpMap = textures.asphalt;
         material.bumpScale = 0;
@@ -166,13 +166,13 @@ function applyAuthoredSurfaceMaterials(THREE, authored, textures) {
         sourceDetailedSurfaceMaterialCount += 1;
       } else if (material.name === "service-road") {
         material.visible = true;
-        material.color.setHex(0x6d6d69);
+        material.color.setHex(0xffffff);
         material.transparent = true;
-        material.opacity = 0.28;
+        material.opacity = 0.035;
         material.depthWrite = false;
         material.bumpMap = textures.concrete;
-        material.bumpScale = 0.005;
-        material.roughness = 0.98;
+        material.bumpScale = 0.002;
+        material.roughness = 0.99;
         material.metalness = 0;
         sourceDetailedSurfaceMaterialCount += 1;
       }
