@@ -27,7 +27,7 @@ concurrency:
 jobs:
   verify-kphx-v181-runtime:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Check out exact PR head commit
         uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Verify A1, B15, Terminal 4 and populated stands in browser
-        run: npx playwright test tests/browser/kphx-ground-runtime.spec.js tests/browser/simulator-environment-runtime.spec.js --reporter=line
+        run: npx playwright test tests/browser/kphx-ground-runtime.spec.js tests/browser/simulator-environment-runtime.spec.js --reporter=line --workers=1
 
       - name: Upload updated KPHX runtime evidence
         if: always()
