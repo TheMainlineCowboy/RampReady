@@ -1,13 +1,21 @@
 name: Build PHX source aerial
 
 on:
-  pull_request:
+  push:
+    branches:
+      - main
     paths:
+      - 'scripts/build-phx-photo-mosaic.py'
+      - 'scripts/extract-phx-photo.cpp'
       - '.github/workflows/debug-phx-source.yml'
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: build-phx-source-aerial-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-source-aerial:
@@ -16,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/install-authored-phx-airport
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
       - uses: actions/checkout@v4
         with:
@@ -55,7 +63,7 @@ jobs:
           .cache/phx-photo/extract-phx-photo \
             skyharbor-source/scenery/PHXPhoto.bgl \
             .cache/phx-photo/tiles
-      - name: Build browser aerial mosaic
+      - name: Build native-resolution browser aerial tiles
         shell: bash
         run: |
           set -euo pipefail
@@ -65,29 +73,19 @@ jobs:
             .cache/phx-photo/tiles \
             skyharbor-source/scenery/PHXPhoto.bgl \
             public/models/kphx-photo
-          ls -lh public/models/kphx-photo
-      - name: Commit generated source aerial
+          find public/models/kphx-photo -maxdepth 2 -type f -printf '%p %s bytes\n' | sort
+      - name: Commit generated source aerial tiles
         shell: bash
+        env:
+          TARGET_BRANCH: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           git config user.name 'RampReady Airport Builder'
           git config user.email 'actions@users.noreply.github.com'
           git add public/models/kphx-photo
           if git diff --cached --quiet; then
-            echo 'PHX source aerial is already current.'
+            echo 'PHX source aerial tiles are already current.'
           else
-            git commit -m 'Add full-resolution PHX source aerial ground'
-            git push origin HEAD:agent/install-authored-phx-airport
+            git commit -m 'Tile PHX source aerial at native WebGL resolution'
+            git push origin "HEAD:${TARGET_BRANCH}"
           fi
-      - name: Upload airport source kit
-        uses: actions/upload-artifact@v4
-        with:
-          name: phx-source-kit-${{ github.sha }}
-          path: |
-            public/models/kphx-photo/
-            .cache/phx-photo/tiles/tiles.csv
-            skyharbor-source/scripts/
-            skyharbor-source/scenery/
-            skyharbor-source/*.bmp
-            skyharbor-source/*.dds
-          retention-days: 1
