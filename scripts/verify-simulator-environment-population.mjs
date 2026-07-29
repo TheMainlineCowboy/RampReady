@@ -42,14 +42,22 @@ for (const token of [
 ]) requireText(materializer, token, `source object materializer ${token}`);
 for (const token of ["decodeLegacyBmp", "decodeDxt1", "encodePng", "pngChunk"]) requireText(converter, token, `legacy texture converter ${token}`);
 
-requireText(patchSource, "installStaticGateAircraft", "static aircraft preparation import");
-requireText(patchSource, "installSourceAuthoredAirportObjects", "source object preparation import");
-requireText(patchSource, "sourceObjectLoad", "source object readiness promise");
-requireText(patchSource, "sourceObjectTextureCount", "source object texture browser evidence");
+for (const [token, label] of [
+  ["installStaticGateAircraft", "static aircraft preparation import"],
+  ["installSourceAuthoredAirportObjects", "source object preparation import"],
+  ["sourceObjectLoad", "source object readiness promise"],
+  ["sourceObjectTextureCount", "source object texture browser evidence"],
+  ["THREE.ACESFilmicToneMapping", "ACES tone mapping"],
+  ["THREE.PCFSoftShadowMap", "soft shadow filtering"],
+  ["sun.shadow.mapSize.set(2048, 2048)", "high-resolution sun shadow map"],
+  ['dataset.visualQuality = "simulator-rendering-v1"', "visual quality browser evidence"],
+]) requireText(patchSource, token, label);
 requireText(generated, 'import { installStaticGateAircraft } from "../environment/staticGateAircraft.js";', "generated static aircraft import");
 requireText(generated, 'import { installSourceAuthoredAirportObjects } from "../environment/sourceAuthoredAirportObjects.js";', "generated source object import");
 requireText(generated, "installStaticGateAircraft(THREE, environment)", "generated static aircraft loader");
 requireText(generated, "installSourceAuthoredAirportObjects(THREE, environment)", "generated source object loader");
+requireText(generated, "renderer.toneMapping = THREE.ACESFilmicToneMapping", "generated ACES rendering");
+requireText(generated, "sun.shadow.camera.left = -190", "generated airport-wide shadow camera");
 requireText(generated, "Promise.all([terminalLoad, groundLoad, photoGroundLoad, staticAircraftLoad, sourceObjectLoad])", "combined simulator readiness gate");
 
 if (packageJson.scripts?.["materialize:kphx-source-objects"] !== "node scripts/materialize-kphx-source-objects.mjs") failures.push("package source object materializer script is incorrect");
@@ -65,4 +73,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Simulator environment population verified: seven authored CRJ700s at A2-A8 plus five textured source models across nineteen exact KPHX placements participate in browser readiness.");
+console.log("Simulator environment population verified: ACES rendering, airport-wide soft shadows, seven authored CRJ700s and nineteen textured source-object placements participate in browser readiness.");
