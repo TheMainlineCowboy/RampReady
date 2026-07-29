@@ -1,4 +1,5 @@
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { buildSourcePlacedTerminal4Jetways } from "./sourcePlacedTerminal4Jetways.js";
 
 export const AUTHORED_TERMINAL4_PROFILE = Object.freeze({
   source: "TheMainlineCowboy/SkyHarborPhx@2e6642778c9c88eac6a82b21063763cc78be7cfe/scenery/term4.BGL",
@@ -32,8 +33,8 @@ export const AUTHORED_TERMINAL4_PROFILE = Object.freeze({
   rotationYDegrees: 90,
   scale: Object.freeze([-1, 1, 1]),
   placementAuthority: "decoded original KPHX_ADEX library-object placement relative to decoded original Gate A1",
-  materialPass: "pinned-authored-source-textures-v1",
-  detailLevel: "terminal4-authored-textured-v2-exact-a1",
+  materialPass: "pinned-authored-source-textures-v2-repeat-corrected",
+  detailLevel: "terminal4-authored-textured-v3-source-jetways-exact-a1",
 });
 
 function textureReference(material) {
@@ -56,6 +57,23 @@ function materialCharacter(reference = "") {
   return { roughness: 0.82, metalness: 0.02 };
 }
 
+function sourceWrapMode(THREE, reference = "") {
+  const name = reference.toUpperCase();
+  // The legacy Sky Harbor materials use UVs outside 0..1. Clamp-to-edge was
+  // stretching a few edge texels across the entire ramp and terminal facade,
+  // which produced the blurry streaks visible on mobile.
+  if (
+    name.includes("PARKRAMP") ||
+    name.includes("GATE") ||
+    name.includes("SUPPORT") ||
+    name.includes("T4_WALK") ||
+    name === "RW.BMP"
+  ) {
+    return THREE.RepeatWrapping;
+  }
+  return THREE.ClampToEdgeWrapping;
+}
+
 async function loadTextureManifest(baseUrl) {
   const manifestUrl = `${baseUrl}texture-manifest.json`;
   const response = await fetch(manifestUrl, { cache: "force-cache" });
@@ -75,10 +93,12 @@ async function loadSourceTextures(THREE, baseUrl) {
     texture.name = `PHX source ${reference}`;
     texture.flipY = false;
     texture.colorSpace = THREE.SRGBColorSpace;
-    texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
+    const wrapping = sourceWrapMode(THREE, reference);
+    texture.wrapS = texture.wrapT = wrapping;
     texture.minFilter = THREE.LinearMipmapLinearFilter;
     texture.magFilter = THREE.LinearFilter;
-    texture.anisotropy = 8;
+    texture.anisotropy = 16;
+    texture.generateMipmaps = true;
     texture.needsUpdate = true;
     textures.set(reference.toUpperCase(), texture);
   }));
@@ -156,16 +176,19 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   authored.rotation.y = THREE.MathUtils.degToRad(AUTHORED_TERMINAL4_PROFILE.rotationYDegrees);
   authored.scale.fromArray(AUTHORED_TERMINAL4_PROFILE.scale);
   const texturedMaterialCount = applySourceMaterials(THREE, authored, textures);
-  environment.add(authored);
+  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, textures);
+  environment.add(authored, sourcePlacedJetways);
   authored.updateMatrixWorld(true);
+  sourcePlacedJetways.updateMatrixWorld(true);
 
   const terminalBounds = new THREE.Box3().setFromObject(authored);
   const a1Point = new THREE.Vector3(0, 0, 6.2);
   const a1NearestGeometryDistance = nearestHorizontalVertexDistance(THREE, authored, a1Point);
 
-  environment.userData.environmentSource = "authored-phx-terminal4-textured";
+  environment.userData.environmentSource = "authored-phx-terminal4-textured-source-jetways";
   environment.userData.authoredTerminal4Url = `${baseUrl}terminal4.gltf`;
   environment.userData.authoredTerminal4 = authored;
+  environment.userData.authoredTerminal4Jetways = sourcePlacedJetways;
   environment.userData.authoredTerminal4Placement = AUTHORED_TERMINAL4_PROFILE.placementAuthority;
   environment.userData.authoredTerminal4MaterialPass = AUTHORED_TERMINAL4_PROFILE.materialPass;
   environment.userData.authoredTerminal4DetailLevel = AUTHORED_TERMINAL4_PROFILE.detailLevel;
@@ -175,6 +198,8 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4ExactTextureCount = manifest.exactTextureCount;
   environment.userData.authoredTerminal4FallbackTextureCount = manifest.fallbackTextureCount;
   environment.userData.authoredTerminal4TexturedMaterialCount = texturedMaterialCount;
+  environment.userData.authoredTerminal4JetwayVisualCount = sourcePlacedJetways.userData.jetwayCount;
+  environment.userData.authoredTerminal4JetwayDetailLevel = sourcePlacedJetways.userData.detailLevel;
   environment.userData.authoredTerminal4Position = [...AUTHORED_TERMINAL4_PROFILE.position];
   environment.userData.authoredTerminal4A1NearestGeometryDistance = a1NearestGeometryDistance;
   environment.userData.authoredTerminal4Bounds = {
