@@ -10,6 +10,7 @@ const files = {
   photoExtractor: fs.readFileSync("scripts/extract-phx-photo.cpp", "utf8"),
   photoBuilder: fs.readFileSync("scripts/build-phx-photo-mosaic.py", "utf8"),
   materialize: fs.readFileSync("scripts/materialize-phx-terminal4.mjs", "utf8"),
+  materializeLightmaps: fs.readFileSync("scripts/materialize-phx-terminal4-lightmaps.mjs", "utf8"),
   prepare: fs.readFileSync("scripts/prepare-terminal4-runtime.mjs", "utf8"),
 };
 const photoManifest = JSON.parse(fs.readFileSync("public/models/kphx-photo/photo-manifest.json", "utf8"));
@@ -34,14 +35,17 @@ for (const token of [
   "rotationYDegrees: 90",
   'scale: Object.freeze([-1, 1, 1])',
   "texture-manifest.json",
-  "pinned-authored-source-textures-v2-repeat-corrected",
-  "terminal4-authored-textured-v3-source-jetways-exact-a1",
+  "pinned-authored-source-textures-and-exact-lightmaps-v3",
+  "terminal4-authored-textured-lightmapped-v4-source-jetways-exact-a1",
   "nearestHorizontalVertexDistance",
   'environmentSource = "authored-phx-terminal4-textured-source-jetways"',
   "buildSourcePlacedTerminal4Jetways",
   "sourceWrapMode",
   "THREE.RepeatWrapping",
   "texture.anisotropy = 16",
+  "emissiveTextureCount !== 11",
+  "material.emissiveMap = emissiveMap",
+  "authoredTerminal4LightmappedMaterialCount",
 ]) {
   if (!files.terminal.includes(token)) throw new Error(`Authored Terminal 4 contract missing ${token}`);
 }
@@ -79,6 +83,19 @@ for (const token of [
   'textureStatus: "pinned-authored-source-textures-active"',
 ]) {
   if (!files.materialize.includes(token)) throw new Error(`Terminal 4 materializer contract missing ${token}`);
+}
+
+for (const token of [
+  "EXACT_LIGHTMAP_SOURCES",
+  '"BGATE1.BMP": "bgate1_lm.bmp"',
+  '"DGATE5.BMP": "dgate5_lm.bmp"',
+  '"T4_WALK2.BMP": "t4_walk2_lm.bmp"',
+  'emissiveFidelity: "exact"',
+  'manifest.emissiveTextureCount = emitted',
+  'pinned-exact-source-lightmaps-active-no-invented-missing-maps',
+  "missing package dependencies remain unfilled",
+]) {
+  if (!files.materializeLightmaps.includes(token)) throw new Error(`Terminal 4 exact-lightmap materializer contract missing ${token}`);
 }
 
 for (const token of [
@@ -159,4 +176,4 @@ for (const token of [
 ]) {
   if (!files.prepare.includes(token)) throw new Error(`KPHX browser evidence missing ${token}`);
 }
-console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source placements, exact original ADEX A1 placement, real MDLX terminal geometry, repeat-corrected supplied textures, detailed source-placed jetway visuals, supplied concrete/asphalt/service-road materials above the full-airport aerial, and unrotated A1-local ground.`);
+console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source placements, exact original ADEX A1 placement, real MDLX terminal geometry, repeat-corrected supplied textures with 11 exact source lightmaps, detailed source-placed jetway visuals, supplied concrete/asphalt/service-road materials above the full-airport aerial, and unrotated A1-local ground.`);

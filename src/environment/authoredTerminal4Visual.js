@@ -33,8 +33,8 @@ export const AUTHORED_TERMINAL4_PROFILE = Object.freeze({
   rotationYDegrees: 90,
   scale: Object.freeze([-1, 1, 1]),
   placementAuthority: "decoded original KPHX_ADEX library-object placement relative to decoded original Gate A1",
-  materialPass: "pinned-authored-source-textures-v2-repeat-corrected",
-  detailLevel: "terminal4-authored-textured-v3-source-jetways-exact-a1",
+  materialPass: "pinned-authored-source-textures-and-exact-lightmaps-v3",
+  detailLevel: "terminal4-authored-textured-lightmapped-v4-source-jetways-exact-a1",
   groundCleanupPass: "legacy-terminal-ground-atlases-suppressed-v1",
 });
 
@@ -64,15 +64,28 @@ function sourceWrapMode(THREE, reference = "") {
   // stretching a few edge texels across the entire ramp and terminal facade,
   // which produced the blurry streaks visible on mobile.
   if (
-    name.includes("PARKRAMP") ||
-    name.includes("GATE") ||
-    name.includes("SUPPORT") ||
-    name.includes("T4_WALK") ||
-    name === "RW.BMP"
+    name.includes("PARKRAMP")
+    || name.includes("GATE")
+    || name.includes("SUPPORT")
+    || name.includes("T4_WALK")
+    || name === "RW.BMP"
   ) {
     return THREE.RepeatWrapping;
   }
   return THREE.ClampToEdgeWrapping;
+}
+
+function configureRuntimeTexture(THREE, texture, name, wrapping) {
+  texture.name = name;
+  texture.flipY = false;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = texture.wrapT = wrapping;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 16;
+  texture.generateMipmaps = true;
+  texture.needsUpdate = true;
+  return texture;
 }
 
 async function loadTextureManifest(baseUrl) {
@@ -81,6 +94,7 @@ async function loadTextureManifest(baseUrl) {
   if (!response.ok) throw new Error(`Terminal 4 texture manifest returned HTTP ${response.status}`);
   const manifest = await response.json();
   if (manifest.schemaVersion !== 2 || !manifest.materials) throw new Error("Terminal 4 texture manifest is invalid");
+  if (manifest.emissiveTextureCount !== 11) throw new Error(`Terminal 4 exact lightmap count is ${manifest.emissiveTextureCount}`);
   return { manifest, manifestUrl: new URL(manifestUrl, window.location.href) };
 }
 
@@ -88,26 +102,34 @@ async function loadSourceTextures(THREE, baseUrl) {
   const { manifest, manifestUrl } = await loadTextureManifest(baseUrl);
   const loader = new THREE.TextureLoader();
   const textures = new Map();
+  const emissiveTextures = new Map();
   await Promise.all(Object.entries(manifest.materials).map(async ([reference, entry]) => {
-    const url = new URL(entry.url, manifestUrl).href;
-    const texture = await loader.loadAsync(url);
-    texture.name = `PHX source ${reference}`;
-    texture.flipY = false;
-    texture.colorSpace = THREE.SRGBColorSpace;
     const wrapping = sourceWrapMode(THREE, reference);
-    texture.wrapS = texture.wrapT = wrapping;
-    texture.minFilter = THREE.LinearMipmapLinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    texture.anisotropy = 16;
-    texture.generateMipmaps = true;
-    texture.needsUpdate = true;
-    textures.set(reference.toUpperCase(), texture);
+    const diffuseUrl = new URL(entry.url, manifestUrl).href;
+    const [diffuse, emissive] = await Promise.all([
+      loader.loadAsync(diffuseUrl),
+      entry.emissiveUrl ? loader.loadAsync(new URL(entry.emissiveUrl, manifestUrl).href) : Promise.resolve(null),
+    ]);
+    textures.set(
+      reference.toUpperCase(),
+      configureRuntimeTexture(THREE, diffuse, `PHX source ${reference}`, wrapping),
+    );
+    if (emissive) {
+      emissiveTextures.set(
+        reference.toUpperCase(),
+        configureRuntimeTexture(THREE, emissive, `PHX exact source lightmap ${reference}`, wrapping),
+      );
+    }
   }));
-  return { textures, manifest };
+  if (emissiveTextures.size !== manifest.emissiveTextureCount) {
+    throw new Error(`Terminal 4 loaded ${emissiveTextures.size} of ${manifest.emissiveTextureCount} exact lightmaps`);
+  }
+  return { textures, emissiveTextures, manifest };
 }
 
-function applySourceMaterials(THREE, scene, textures) {
+function applySourceMaterials(THREE, scene, textures, emissiveTextures) {
   let texturedMaterialCount = 0;
+  let lightmappedMaterialCount = 0;
   let hiddenLegacyGroundMaterialCount = 0;
   scene.traverse((node) => {
     if (!node.isMesh) return;
@@ -116,11 +138,16 @@ function applySourceMaterials(THREE, scene, textures) {
       if (!source?.clone) return source;
       const material = source.clone();
       const reference = textureReference(material);
-      const texture = reference ? textures.get(reference.toUpperCase()) : null;
+      const key = reference?.toUpperCase();
+      const texture = key ? textures.get(key) : null;
+      const emissiveMap = key ? emissiveTextures.get(key) : null;
       if (!texture) throw new Error(`Terminal 4 material texture is missing at runtime: ${reference || material.name}`);
       const character = materialCharacter(reference);
       const legacyGroundAtlas = /PARKRAMP|RW\.BMP/i.test(reference || "");
       material.map = texture;
+      material.emissiveMap = emissiveMap ?? null;
+      material.emissive?.setHex(emissiveMap ? 0xffffff : 0x000000);
+      material.emissiveIntensity = emissiveMap ? 0.68 : 0;
       material.color?.setHex(0xffffff);
       material.roughness = character.roughness;
       material.metalness = character.metalness;
@@ -132,11 +159,13 @@ function applySourceMaterials(THREE, scene, textures) {
       material.userData = {
         ...(material.userData || {}),
         legacyGroundAtlas,
+        sourceLightmap: emissiveMap ? `${reference} exact _lm source` : null,
         visibilityAuthority: legacyGroundAtlas
           ? "suppressed-old-terminal-ground-so-authoritative-aerial-and-adex-remain-visible"
           : "source-authored-terminal-material",
       };
       if (legacyGroundAtlas) hiddenLegacyGroundMaterialCount += 1;
+      if (emissiveMap) lightmappedMaterialCount += 1;
       material.needsUpdate = true;
       texturedMaterialCount += 1;
       return material;
@@ -146,7 +175,7 @@ function applySourceMaterials(THREE, scene, textures) {
     node.receiveShadow = true;
     node.frustumCulled = true;
   });
-  return { texturedMaterialCount, hiddenLegacyGroundMaterialCount };
+  return { texturedMaterialCount, lightmappedMaterialCount, hiddenLegacyGroundMaterialCount };
 }
 
 function nearestHorizontalVertexDistance(THREE, scene, point) {
@@ -178,7 +207,7 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4Placement = AUTHORED_TERMINAL4_PROFILE.placementAuthority;
 
   const baseUrl = `${import.meta.env.BASE_URL}models/phx-terminal4/`;
-  const [{ scene: authored }, { textures, manifest }] = await Promise.all([
+  const [{ scene: authored }, { textures, emissiveTextures, manifest }] = await Promise.all([
     new GLTFLoader().loadAsync(`${baseUrl}terminal4.gltf`),
     loadSourceTextures(THREE, baseUrl),
   ]);
@@ -187,8 +216,12 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   authored.position.fromArray(AUTHORED_TERMINAL4_PROFILE.position);
   authored.rotation.y = THREE.MathUtils.degToRad(AUTHORED_TERMINAL4_PROFILE.rotationYDegrees);
   authored.scale.fromArray(AUTHORED_TERMINAL4_PROFILE.scale);
-  const { texturedMaterialCount, hiddenLegacyGroundMaterialCount } = applySourceMaterials(THREE, authored, textures);
-  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, textures);
+  const {
+    texturedMaterialCount,
+    lightmappedMaterialCount,
+    hiddenLegacyGroundMaterialCount,
+  } = applySourceMaterials(THREE, authored, textures, emissiveTextures);
+  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, textures, emissiveTextures);
   environment.add(authored, sourcePlacedJetways);
   authored.updateMatrixWorld(true);
   sourcePlacedJetways.updateMatrixWorld(true);
@@ -210,7 +243,9 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4TextureCount = manifest.diffuseReferenceCount;
   environment.userData.authoredTerminal4ExactTextureCount = manifest.exactTextureCount;
   environment.userData.authoredTerminal4FallbackTextureCount = manifest.fallbackTextureCount;
+  environment.userData.authoredTerminal4EmissiveTextureCount = manifest.emissiveTextureCount;
   environment.userData.authoredTerminal4TexturedMaterialCount = texturedMaterialCount;
+  environment.userData.authoredTerminal4LightmappedMaterialCount = lightmappedMaterialCount;
   environment.userData.authoredTerminal4HiddenLegacyGroundMaterialCount = hiddenLegacyGroundMaterialCount;
   environment.userData.authoredTerminal4JetwayVisualCount = sourcePlacedJetways.userData.jetwayCount;
   environment.userData.authoredTerminal4JetwayDetailLevel = sourcePlacedJetways.userData.detailLevel;
