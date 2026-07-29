@@ -12,6 +12,7 @@ const POPULATION_ASSET_SUFFIXES = [
   "/models/kphx-source-objects/textures/TRAILER.png",
   "/models/standup-tug.glb",
   "/models/kphx-photo/phx-airport-photo.webp",
+  "/models/phx-terminal4/textures/PARKRAMPS.png",
 ];
 
 async function launchStandup(page) {
