@@ -99,27 +99,33 @@ for (const token of [
 }
 
 for (const token of [
-  'groundSource = "authored-kphx-v181-source-textured"',
+  'groundSource = "authored-kphx-v181-source-textured-nearfield"',
   "authored.rotation.y = 0",
   "sourceJetwayCount",
   "b15Anchors",
   "trainingCorridor",
   "kphxDetailLevel",
-  'detailLevel: "terminal4-authored-textured-v3-source-ramp-exact-a1"',
-  'surfaceMaterialMode: "source-aerial-diffuse-with-faint-source-atlas-microdetail"',
+  'detailLevel: "terminal4-authored-textured-v4-source-ramp-exact-a1-nearfield"',
+  'surfaceMaterialMode: "source-aerial-diffuse-with-source-atlas-nearfield-concrete"',
   'concrete: "models/phx-terminal4/textures/PARKRAMPS.png"',
   'serviceRoad: "models/phx-terminal4/textures/PARKRAMP1.png"',
   'asphalt: "models/phx-terminal4/textures/RW.png"',
-  "loadAuthoredSurfaceTextures",
-  "applyAuthoredSurfaceMaterials",
-  "material.bumpMap = textures.concrete",
-  "material.bumpMap = textures.asphalt",
+  "buildSourceConcreteNearfieldTextures",
+  "crop-clean-source-concrete-strip-never-repeat-entire-atlas",
+  "material.map = textures.concrete.albedo",
+  "material.bumpMap = textures.concrete.bump",
+  "material.bumpScale = 0.022",
+  "configureAuthoredMarkingMaterial",
+  'markingAuthority: "source-authored-kphx-adex"',
+  'visibilityMode: "high-contrast-nearfield"',
+  "authoredGroundEnhancedMarkingMaterialCount",
   "texture.anisotropy = 16",
 ]) {
   if (!files.ground.includes(token)) throw new Error(`KPHX runtime contract missing ${token}`);
 }
 if (files.ground.includes("buildKphxV181Terminal4")) throw new Error("Procedural box-built Terminal 4 must not be installed over the authored airport");
 if (files.ground.includes("trainingAircraftHeadingDegrees -")) throw new Error("A1-local ground must not be rotated a second time");
+if (files.ground.includes("material.opacity = 0.055")) throw new Error("PHX concrete must not regress to the nearly invisible bump-only layer");
 
 for (const token of [
   "phx-airport-photo.webp",
@@ -182,4 +188,4 @@ for (const token of [
 ]) {
   if (!files.prepare.includes(token)) throw new Error(`KPHX browser evidence missing ${token}`);
 }
-console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source placements, exact original ADEX A1 placement, real MDLX terminal geometry, exact source lightmaps, detailed source-placed jetway visuals, native-resolution tiled full-airport aerial ground, hidden nonphotographic projected-surface tints, and unrotated A1-local ground.`);
+console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source placements, exact original ADEX A1 placement, real MDLX terminal geometry, exact source lightmaps, detailed source-placed jetway visuals, native-resolution tiled full-airport aerial ground, source-authored near-field concrete, enhanced ADEX stand markings, hidden nonphotographic projected-surface tints, and unrotated A1-local ground.`);
