@@ -11,6 +11,7 @@ const POPULATION_ASSET_SUFFIXES = [
   "/models/kphx-source-objects/textures/BACKHOE.png",
   "/models/kphx-source-objects/textures/TRAILER.png",
   "/models/standup-tug.glb",
+  "/models/kphx-photo/phx-airport-photo.webp",
 ];
 
 async function launchStandup(page) {
@@ -26,7 +27,7 @@ async function launchStandup(page) {
 }
 
 test("populates source-decoded Terminal 4 with simulator rendering, aircraft, ramp equipment and textured objects", async ({ page }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(300_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const runtimeErrors = [];
   const assetResponses = new Map();
@@ -43,15 +44,15 @@ test("populates source-decoded Terminal 4 with simulator rendering, aircraft, ra
   const canvas = await launchStandup(page);
   await expect.poll(
     async () => canvas.getAttribute("data-static-aircraft-count"),
-    { timeout: 120_000, intervals: [500, 1_000, 2_000] },
+    { timeout: 150_000, intervals: [500, 1_000, 2_000] },
   ).toBe("7");
   await expect.poll(
     async () => canvas.getAttribute("data-source-object-placement-count"),
-    { timeout: 120_000, intervals: [500, 1_000, 2_000] },
+    { timeout: 150_000, intervals: [500, 1_000, 2_000] },
   ).toBe("19");
   await expect.poll(
     async () => canvas.getAttribute("data-static-ramp-equipment-object-count"),
-    { timeout: 120_000, intervals: [500, 1_000, 2_000] },
+    { timeout: 150_000, intervals: [500, 1_000, 2_000] },
   ).toBe("31");
 
   const runtime = await canvas.evaluate((element) => ({ ...element.dataset }));
@@ -68,8 +69,8 @@ test("populates source-decoded Terminal 4 with simulator rendering, aircraft, ra
   expect(runtime.staticRampSafetyConeCount).toBe("28");
   expect(runtime.staticRampEquipmentObjectCount).toBe("31");
   expect(runtime.staticRampEquipmentDetailLevel).toBe("authored-standup-ramp-equipment-and-cones-v1");
-  expect(runtime.staticRampApronDetailLevel).toBe("a1-a8-source-derived-close-range-apron-v1");
-  expect(runtime.staticRampApronTextureResolution).toBe("1024");
+  expect(runtime.staticRampApronDetailLevel).toBe("a1-a8-source-aerial-pbr-close-range-apron-v2");
+  expect(runtime.staticRampApronTextureResolution).toBe("2048");
   expect(runtime.environmentSource).toBe("authored-phx-terminal4-textured-source-jetways");
   expect(runtime.groundSource).toBe("authored-kphx-v181-source-textured");
   expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
