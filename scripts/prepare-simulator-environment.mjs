@@ -31,7 +31,7 @@ generated = generated.replace(
 );
 generated = generated.replace(
   datasetAnchor,
-  `${datasetAnchor}\n    renderer.domElement.dataset.visualQuality = "simulator-rendering-v1";\n    renderer.domElement.dataset.staticAircraftCount = "loading";\n    renderer.domElement.dataset.staticAircraftGates = "loading";\n    renderer.domElement.dataset.staticAircraftDetailLevel = "loading";\n    renderer.domElement.dataset.sourceObjectPlacementCount = "loading";\n    renderer.domElement.dataset.sourceObjectModelCount = "loading";\n    renderer.domElement.dataset.sourceObjectTextureCount = "loading";\n    renderer.domElement.dataset.sourceObjectTexturedMaterialCount = "loading";\n    renderer.domElement.dataset.sourceObjectDetailLevel = "loading";\n    renderer.domElement.dataset.staticRampAuthoredTugCount = "loading";\n    renderer.domElement.dataset.staticRampSafetyConeCount = "loading";\n    renderer.domElement.dataset.staticRampEquipmentObjectCount = "loading";\n    renderer.domElement.dataset.staticRampEquipmentDetailLevel = "loading";`,
+  `${datasetAnchor}\n    renderer.domElement.dataset.visualQuality = "simulator-rendering-v1";\n    renderer.domElement.dataset.staticAircraftCount = "loading";\n    renderer.domElement.dataset.staticAircraftGates = "loading";\n    renderer.domElement.dataset.staticAircraftDetailLevel = "loading";\n    renderer.domElement.dataset.sourceObjectPlacementCount = "loading";\n    renderer.domElement.dataset.sourceObjectModelCount = "loading";\n    renderer.domElement.dataset.sourceObjectTextureCount = "loading";\n    renderer.domElement.dataset.sourceObjectTexturedMaterialCount = "loading";\n    renderer.domElement.dataset.sourceObjectDetailLevel = "loading";\n    renderer.domElement.dataset.staticRampAuthoredTugCount = "loading";\n    renderer.domElement.dataset.staticRampSafetyConeCount = "loading";\n    renderer.domElement.dataset.staticRampEquipmentObjectCount = "loading";\n    renderer.domElement.dataset.staticRampEquipmentDetailLevel = "loading";\n    renderer.domElement.dataset.staticRampApronDetailLevel = "loading";\n    renderer.domElement.dataset.staticRampApronTextureResolution = "loading";`,
 );
 
 const populatedLoads = `    const staticAircraftLoad = installStaticGateAircraft(THREE, environment)
@@ -74,6 +74,8 @@ const populatedLoads = `    const staticAircraftLoad = installStaticGateAircraft
         renderer.domElement.dataset.staticRampSafetyConeCount = String(environment.userData.staticRampSafetyConeCount);
         renderer.domElement.dataset.staticRampEquipmentObjectCount = String(environment.userData.staticRampEquipmentObjectCount);
         renderer.domElement.dataset.staticRampEquipmentDetailLevel = environment.userData.staticRampEquipmentDetailLevel;
+        renderer.domElement.dataset.staticRampApronDetailLevel = environment.userData.staticRampApronDetailLevel;
+        renderer.domElement.dataset.staticRampApronTextureResolution = String(environment.userData.staticRampApronTextureResolution);
         return equipment;
       })
       .catch((error) => {
@@ -81,6 +83,8 @@ const populatedLoads = `    const staticAircraftLoad = installStaticGateAircraft
         renderer.domElement.dataset.staticRampSafetyConeCount = "load-error";
         renderer.domElement.dataset.staticRampEquipmentObjectCount = "load-error";
         renderer.domElement.dataset.staticRampEquipmentDetailLevel = "load-error";
+        renderer.domElement.dataset.staticRampApronDetailLevel = "load-error";
+        renderer.domElement.dataset.staticRampApronTextureResolution = "load-error";
         console.error("RampReady PHX static ramp equipment load failed", error);
         setMessage(\`PHX ramp equipment failed to load: \${error.message}\`);
         throw error;
@@ -101,6 +105,7 @@ for (const required of [
   'dataset.sourceObjectPlacementCount = "loading"',
   'dataset.sourceObjectTextureCount = "loading"',
   'dataset.staticRampAuthoredTugCount = "loading"',
+  'dataset.staticRampApronDetailLevel = "loading"',
   "installStaticGateAircraft(THREE, environment)",
   "installSourceAuthoredAirportObjects(THREE, environment)",
   "installStaticRampEquipment(THREE, environment)",
@@ -108,10 +113,11 @@ for (const required of [
   "environment.userData.sourceAuthoredAirportObjectPlacementCount",
   "environment.userData.sourceAuthoredAirportObjectTextureCount",
   "environment.userData.staticRampAuthoredTugCount",
+  "environment.userData.staticRampApronDetailLevel",
   "Promise.all([terminalLoad, groundLoad, photoGroundLoad, staticAircraftLoad, sourceObjectLoad, rampEquipmentLoad])",
 ]) {
   if (!generated.includes(required)) throw new Error(`Simulator environment preparation missing ${required}`);
 }
 
 fs.writeFileSync(generatedPath, generated);
-console.log("RampReady simulator environment prepared with soft airport-wide shadows, ACES rendering, A2-A8 aircraft, textured source objects and authored ramp equipment.");
+console.log("RampReady simulator environment prepared with soft airport-wide shadows, ACES rendering, A2-A8 aircraft, textured source objects, authored ramp equipment and the close-range A-gate apron.");
