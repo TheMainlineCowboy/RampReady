@@ -21,6 +21,7 @@ export const AUTHORED_KPHX_GROUND_PROFILE = Object.freeze({
   sceneOffset: Object.freeze([0, 0, 6.2]),
   packageVersion: "1.8.1",
   detailLevel: "terminal4-authored-textured-v3-source-ramp-exact-a1",
+  surfaceMaterialMode: "source-aerial-diffuse-with-source-atlas-detail-only",
   sourceJetwayCount: 112,
   terminal4JetwayCount: TERMINAL4_JETWAYS.length,
   terminal4ParkingCount: TERMINAL4_PARKINGS.length,
@@ -44,16 +45,59 @@ function hideCalibrationGround(environment) {
   });
 }
 
-function configureSurfaceTexture(THREE, texture, name) {
+function configureSourceTexture(THREE, texture, name) {
   texture.name = name;
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
   texture.anisotropy = 16;
   texture.generateMipmaps = true;
   texture.needsUpdate = true;
   return texture;
+}
+
+function buildSourceConcreteDetailTexture(THREE, sourceTexture) {
+  const image = sourceTexture.image;
+  if (!image?.width || !image?.height) throw new Error("PHX supplied concrete source texture did not decode");
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 64;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) throw new Error("PHX source-detail canvas is unavailable");
+
+  // PARKRAMPS is an authored atlas rather than a seamless ramp texture. The
+  // earlier pass repeated the entire atlas, duplicating giant jetway circles and
+  // black strips across the airport. Use only its clean concrete slab strip as
+  // a subtle bump source; the exact photo mosaic remains the diffuse authority.
+  const sourceWidth = Math.min(192, image.width);
+  const sourceHeight = Math.min(34, image.height);
+  context.drawImage(image, 0, 2, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+  for (let index = 0; index < pixels.data.length; index += 4) {
+    const red = pixels.data[index];
+    const green = pixels.data[index + 1];
+    const blue = pixels.data[index + 2];
+    const luminance = Math.round(red * 0.2126 + green * 0.7152 + blue * 0.0722);
+    const detailed = Math.max(0, Math.min(255, (luminance - 128) * 1.7 + 128));
+    pixels.data[index] = detailed;
+    pixels.data[index + 1] = detailed;
+    pixels.data[index + 2] = detailed;
+    pixels.data[index + 3] = 255;
+  }
+  context.putImageData(pixels, 0, 0);
+
+  const detail = new THREE.CanvasTexture(canvas);
+  detail.name = "PHX supplied PARKRAMPS concrete detail crop";
+  detail.colorSpace = THREE.NoColorSpace;
+  detail.wrapS = detail.wrapT = THREE.RepeatWrapping;
+  detail.repeat.set(8, 8);
+  detail.minFilter = THREE.LinearMipmapLinearFilter;
+  detail.magFilter = THREE.LinearFilter;
+  detail.anisotropy = 16;
+  detail.generateMipmaps = true;
+  detail.needsUpdate = true;
+  return detail;
 }
 
 async function loadAuthoredSurfaceTextures(THREE) {
@@ -64,15 +108,19 @@ async function loadAuthoredSurfaceTextures(THREE) {
     loader.loadAsync(`${baseUrl}${AUTHORED_KPHX_GROUND_PROFILE.surfaceTextures.serviceRoad}`),
     loader.loadAsync(`${baseUrl}${AUTHORED_KPHX_GROUND_PROFILE.surfaceTextures.asphalt}`),
   ]);
+  const concreteSource = configureSourceTexture(THREE, concrete, "PHX supplied PARKRAMPS atlas source");
   return {
-    concrete: configureSurfaceTexture(THREE, concrete, "PHX supplied concrete ramp texture"),
-    serviceRoad: configureSurfaceTexture(THREE, serviceRoad, "PHX supplied service-road texture"),
-    asphalt: configureSurfaceTexture(THREE, asphalt, "PHX supplied asphalt texture"),
+    concreteSource,
+    serviceRoadSource: configureSourceTexture(THREE, serviceRoad, "PHX supplied PARKRAMP1 atlas source"),
+    asphaltSource: configureSourceTexture(THREE, asphalt, "PHX supplied RW atlas source"),
+    concrete: buildSourceConcreteDetailTexture(THREE, concreteSource),
+    serviceRoad: null,
+    asphalt: null,
   };
 }
 
 function applyAuthoredSurfaceMaterials(THREE, authored, textures) {
-  let texturedSurfaceMaterialCount = 0;
+  let sourceDetailedSurfaceMaterialCount = 0;
   authored.traverse((node) => {
     if (!node.isMesh) return;
     node.castShadow = false;
@@ -80,42 +128,58 @@ function applyAuthoredSurfaceMaterials(THREE, authored, textures) {
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     for (const material of materials) {
       if (!material) continue;
-      material.depthWrite = true;
       material.side = THREE.DoubleSide;
+      material.map = null;
+      material.bumpMap = null;
+      material.transparent = false;
+      material.opacity = 1;
+      material.depthWrite = true;
+      material.userData = {
+        ...(material.userData || {}),
+        diffuseAuthority: "source-authored-phx-photo",
+        sourceAtlasPolicy: "never-repeat-entire-terminal-ground-atlas",
+      };
+
       if (material.name === "airport-base") {
         material.visible = false;
       } else if (material.name === "concrete") {
         material.visible = true;
-        material.map = textures.concrete;
+        material.color.setHex(0xc8c5bd);
+        material.transparent = true;
+        material.opacity = 0.24;
+        material.depthWrite = false;
         material.bumpMap = textures.concrete;
-        material.bumpScale = 0.012;
-        material.color.setHex(0xffffff);
-        material.roughness = 0.95;
-        material.metalness = 0;
-        texturedSurfaceMaterialCount += 1;
-      } else if (material.name === "asphalt") {
-        material.visible = true;
-        material.map = textures.asphalt;
-        material.bumpMap = textures.asphalt;
-        material.bumpScale = 0.009;
-        material.color.setHex(0xffffff);
-        material.roughness = 0.98;
-        material.metalness = 0;
-        texturedSurfaceMaterialCount += 1;
-      } else if (material.name === "service-road") {
-        material.visible = true;
-        material.map = textures.serviceRoad;
-        material.bumpMap = textures.serviceRoad;
-        material.bumpScale = 0.008;
-        material.color.setHex(0xffffff);
+        material.bumpScale = 0.018;
         material.roughness = 0.96;
         material.metalness = 0;
-        texturedSurfaceMaterialCount += 1;
+        sourceDetailedSurfaceMaterialCount += 1;
+      } else if (material.name === "asphalt") {
+        material.visible = true;
+        material.color.setHex(0x4a4d50);
+        material.transparent = true;
+        material.opacity = 0.34;
+        material.depthWrite = false;
+        material.bumpMap = textures.asphalt;
+        material.bumpScale = 0;
+        material.roughness = 0.99;
+        material.metalness = 0;
+        sourceDetailedSurfaceMaterialCount += 1;
+      } else if (material.name === "service-road") {
+        material.visible = true;
+        material.color.setHex(0x6d6d69);
+        material.transparent = true;
+        material.opacity = 0.28;
+        material.depthWrite = false;
+        material.bumpMap = textures.concrete;
+        material.bumpScale = 0.005;
+        material.roughness = 0.98;
+        material.metalness = 0;
+        sourceDetailedSurfaceMaterialCount += 1;
       }
       material.needsUpdate = true;
     }
   });
-  return texturedSurfaceMaterialCount;
+  return sourceDetailedSurfaceMaterialCount;
 }
 
 function buildGateMetadata() {
@@ -157,7 +221,7 @@ export async function installAuthoredKphxGround(THREE, environment) {
   // explicitly registers the authored A1 heading to scene -Z. Rotating it a
   // second time was the cause of the wrong gate and wrong aircraft orientation.
   authored.rotation.y = 0;
-  const texturedSurfaceMaterialCount = applyAuthoredSurfaceMaterials(THREE, authored, surfaceTextures);
+  const sourceDetailedSurfaceMaterialCount = applyAuthoredSurfaceMaterials(THREE, authored, surfaceTextures);
 
   environment.add(authored);
   hideCalibrationGround(environment);
@@ -167,7 +231,8 @@ export async function installAuthoredKphxGround(THREE, environment) {
   environment.userData.authoredGroundUrl = url;
   environment.userData.authoredGround = authored;
   environment.userData.authoredGroundSurfaceTextures = surfaceTextures;
-  environment.userData.authoredGroundTexturedSurfaceMaterialCount = texturedSurfaceMaterialCount;
+  environment.userData.authoredGroundTexturedSurfaceMaterialCount = sourceDetailedSurfaceMaterialCount;
+  environment.userData.authoredGroundSurfaceMaterialMode = AUTHORED_KPHX_GROUND_PROFILE.surfaceMaterialMode;
   environment.userData.kphxVersion = AUTHORED_KPHX_GROUND_PROFILE.packageVersion;
   environment.userData.kphxDetailLevel = AUTHORED_KPHX_GROUND_PROFILE.detailLevel;
   environment.userData.sourceJetwayCount = AUTHORED_KPHX_GROUND_PROFILE.sourceJetwayCount;
