@@ -53,10 +53,10 @@ test("populates source-decoded Terminal 4 with simulator rendering, aircraft, ra
   await expect.poll(
     async () => canvas.getAttribute("data-static-ramp-equipment-object-count"),
     { timeout: 150_000, intervals: [500, 1_000, 2_000] },
-  ).toBe("31");
+  ).toBe("58");
 
   const runtime = await canvas.evaluate((element) => ({ ...element.dataset }));
-  expect(runtime.visualQuality).toBe("simulator-rendering-v1");
+  expect(runtime.visualQuality).toBe("simulator-rendering-v2");
   expect(runtime.staticAircraftCount).toBe("7");
   expect(runtime.staticAircraftGates).toBe("A2,A3,A4,A5,A6,A7,A8");
   expect(runtime.staticAircraftDetailLevel).toBe("authored-crj700-static-gate-population-v1");
@@ -67,8 +67,13 @@ test("populates source-decoded Terminal 4 with simulator rendering, aircraft, ra
   expect(runtime.sourceObjectDetailLevel).toBe("source-authored-textured-airport-object-population-v2");
   expect(runtime.staticRampAuthoredTugCount).toBe("3");
   expect(runtime.staticRampSafetyConeCount).toBe("28");
-  expect(runtime.staticRampEquipmentObjectCount).toBe("31");
-  expect(runtime.staticRampEquipmentDetailLevel).toBe("authored-standup-ramp-equipment-and-cones-v1");
+  expect(runtime.staticRampBeltLoaderCount).toBe("5");
+  expect(runtime.staticRampBaggageCartTrainCount).toBe("8");
+  expect(runtime.staticRampGpuCount).toBe("4");
+  expect(runtime.staticRampTowbarCount).toBe("3");
+  expect(runtime.staticRampChockPairCount).toBe("7");
+  expect(runtime.staticRampEquipmentObjectCount).toBe("58");
+  expect(runtime.staticRampEquipmentDetailLevel).toBe("authored-and-procedural-terminal4-ramp-equipment-v2");
   expect(runtime.staticRampApronDetailLevel).toBe("a1-a8-source-aerial-pbr-close-range-apron-v2");
   expect(runtime.staticRampApronTextureResolution).toBe("2048");
   expect(runtime.environmentSource).toBe("authored-phx-terminal4-textured-source-jetways");
