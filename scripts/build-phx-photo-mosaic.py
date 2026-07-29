@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the browser-ready full-airport PHX aerial mosaic from decoded tiles."""
+"""Build browser-ready full-airport PHX aerial assets from decoded source tiles."""
 
 from __future__ import annotations
 
@@ -21,6 +21,8 @@ A1_LATITUDE = 33.43653056770563
 A1_LONGITUDE = -111.99864059686661
 GROUND_Z_OFFSET_METERS = 6.2
 EARTH_RADIUS_METERS = 6_378_137.0
+TILE_SIZE = 1024
+TILE_QUALITY = 95
 EXPECTED = {
     "tile_count": 199,
     "min_u": 18_558,
@@ -49,6 +51,36 @@ def to_scene(longitude: float, latitude: float) -> tuple[float, float]:
     east = math.radians(longitude - A1_LONGITUDE) * EARTH_RADIUS_METERS * math.cos(latitude_radians)
     north = math.radians(latitude - A1_LATITUDE) * EARTH_RADIUS_METERS
     return north, east + GROUND_Z_OFFSET_METERS
+
+
+def build_runtime_tiles(mosaic: Image.Image, output_directory: Path) -> list[dict[str, object]]:
+    tiles_directory = output_directory / "tiles"
+    tiles_directory.mkdir(parents=True, exist_ok=True)
+    entries: list[dict[str, object]] = []
+    width, height = mosaic.size
+
+    for row, top in enumerate(range(0, height, TILE_SIZE)):
+        for column, left in enumerate(range(0, width, TILE_SIZE)):
+            right = min(left + TILE_SIZE, width)
+            bottom = min(top + TILE_SIZE, height)
+            tile = mosaic.crop((left, top, right, bottom))
+            file_name = f"phx-{column:02d}-{row:02d}.webp"
+            tile_path = tiles_directory / file_name
+            tile.save(tile_path, "WEBP", quality=TILE_QUALITY, method=6, exact=True)
+            entries.append(
+                {
+                    "file": f"tiles/{file_name}",
+                    "column": column,
+                    "row": row,
+                    "x": left,
+                    "y": top,
+                    "width": right - left,
+                    "height": bottom - top,
+                    "bytes": tile_path.stat().st_size,
+                    "sha256": sha256(tile_path),
+                }
+            )
+    return entries
 
 
 def main() -> int:
@@ -106,6 +138,7 @@ def main() -> int:
 
     image_path = output_directory / "phx-airport-photo.webp"
     mosaic.save(image_path, "WEBP", quality=88, method=6, exact=True)
+    runtime_tiles = build_runtime_tiles(mosaic, output_directory)
 
     west = EXPECTED["west"]
     south = EXPECTED["south"]
@@ -127,7 +160,7 @@ def main() -> int:
     }
 
     manifest = {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "sourceRepository": SOURCE_REPOSITORY,
         "sourceCommit": SOURCE_COMMIT,
         "sourcePath": SOURCE_PATH,
@@ -148,6 +181,15 @@ def main() -> int:
             "sha256": sha256(image_path),
             "quality": 88,
         },
+        "runtimeTiling": {
+            "mode": "tiled-native-source-resolution-v2",
+            "tileSizePixels": TILE_SIZE,
+            "quality": TILE_QUALITY,
+            "tileCount": len(runtime_tiles),
+            "maxTextureDimension": max(max(int(tile["width"]), int(tile["height"])) for tile in runtime_tiles),
+            "totalBytes": sum(int(tile["bytes"]) for tile in runtime_tiles),
+        },
+        "tiles": runtime_tiles,
         "geographicBounds": {"west": west, "south": south, "east": east, "north": north},
         "coordinateFrame": "A1-local; X=north, Y=up, Z=east",
         "anchor": {
@@ -163,12 +205,13 @@ def main() -> int:
             "southwest": [southwest[0], southwest[1]],
             "southeast": [southeast[0], southeast[1]],
         },
-        "surfaceState": "source-authored 1.2-meter-class aerial airport imagery covering the full PHX field",
+        "legacySurfaceState": "source-authored 1.2-meter-class aerial airport imagery covering the full PHX field",
+        "surfaceState": "source-authored 1.2-meter-class aerial preserved as native-resolution WebGL tiles across the full PHX field",
     }
     (output_directory / "photo-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(
-        f"Built {width}x{height} PHX airport aerial mosaic from {len(rows)} source tiles "
-        f"({image_path.stat().st_size} bytes)."
+        f"Built {width}x{height} PHX airport aerial from {len(rows)} source tiles as "
+        f"{len(runtime_tiles)} WebGL-safe runtime tiles ({sum(int(tile['bytes']) for tile in runtime_tiles)} bytes)."
     )
     return 0
 
