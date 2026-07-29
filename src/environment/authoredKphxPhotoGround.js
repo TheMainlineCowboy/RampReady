@@ -1,4 +1,5 @@
 import { installExactKphxA1 } from "./kphxExactA1/index.js";
+import { installExactKphxA1SourceLights } from "./kphxExactA1/sourceLights.js";
 
 export const AUTHORED_KPHX_PHOTO_PROFILE = Object.freeze({
   source: "TheMainlineCowboy/SkyHarborPhx@2e6642778c9c88eac6a82b21063763cc78be7cfe/scenery/PHXPhoto.bgl",
@@ -154,6 +155,7 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
   const exactA1 = await installExactKphxA1(THREE, environment);
   exactA1.position.set(0, 0, 6.2);
   const blendedProjectedMaterialCount = blendExactProjectedSurfacesWithAerial(exactA1);
+  const sourceLights = installExactKphxA1SourceLights(THREE, exactA1);
 
   environment.userData.photoGroundSource = "source-authored-phx-photo";
   environment.userData.authoredPhotoGround = photoGround;
@@ -168,5 +170,8 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
   environment.userData.authoredPhotoDetailLevel = AUTHORED_KPHX_PHOTO_PROFILE.detailLevel;
   environment.userData.hiddenADEXSurfaceMaterialCount = hiddenSurfaceMaterialCount;
   environment.userData.exactA1BlendedProjectedMaterialCount = blendedProjectedMaterialCount;
+  environment.userData.exactA1SourceLightFixtureCount = sourceLights.userData.fixtureCount;
+  environment.userData.exactA1PhysicalLightCount = sourceLights.userData.physicalLightCount;
+  environment.userData.exactA1SourceLightingDetailLevel = sourceLights.userData.detailLevel;
   return photoGround;
 }
