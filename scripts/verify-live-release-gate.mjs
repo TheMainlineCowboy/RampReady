@@ -51,9 +51,21 @@ for (const required of [
   "dist/releases/${GITHUB_SHA}.txt",
   "releases/${EXPECTED_SHA}.txt",
   "Immutable release marker appeared",
+  "Verify the rendered Sky Harbor simulator scene",
+  "npx playwright test --config=playwright.live-phx.config.js",
 ]) assert.ok(deployWorkflow.includes(required), `Pages deployment workflow missing ${required}`);
 assert.ok(!deployWorkflow.includes("pull_request:"), "feature branches must never deploy GitHub Pages");
 assert.ok(!deployWorkflow.includes("release-commit.txt?verify="), "production verification must not rely on a mutable cached marker path");
+assert.ok(!deployWorkflow.includes("playwright test scripts/verify-live-phx-render.spec.js"), "PHX render verification must not be filtered out by the default browser test directory");
+
+const phxPlaywrightConfig = await read("playwright.live-phx.config.js");
+for (const required of [
+  'testDir: "./scripts"',
+  'testMatch: "verify-live-phx-render.spec.js"',
+  "timeout: 180_000",
+  "workers: 1",
+]) assert.ok(phxPlaywrightConfig.includes(required), `live PHX Playwright config missing ${required}`);
+assert.ok(!phxPlaywrightConfig.includes("webServer"), "live PHX verification must target the deployed site rather than starting a local server");
 
 const browserVerifier = await read("scripts/verify-live-experience-browser.cjs");
 for (const required of [
@@ -132,4 +144,4 @@ for (const required of [
   "bottom: var(--rr-recovery-safe) !important",
 ]) assert.ok(css.includes(required), `mobile recovery CSS missing ${required}`);
 
-console.log("RampReady live release gate verified: successful-deploy-only live verification, immutable release markers, compositor-backed browser evidence, verified authored stand-up equipment routing, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");
+console.log("RampReady live release gate verified: successful-deploy-only live experience verification, one authoritative PHX browser render gate, immutable release markers, compositor-backed evidence, verified authored stand-up equipment routing, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");
