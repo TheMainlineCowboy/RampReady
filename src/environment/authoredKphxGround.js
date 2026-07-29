@@ -62,9 +62,10 @@ function configureNearfieldTexture(THREE, texture, name, colorSpace) {
   texture.name = name;
   texture.colorSpace = colorSpace;
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  // The ADEX glTF uses one UV repeat per 64 meters. Eight repeats makes this
-  // exact source strip an 8-meter near-field tile instead of an airport-wide atlas.
-  texture.repeat.set(8, 8);
+  // The ADEX glTF uses one UV repeat per 64 meters. Two repeats makes this
+  // source strip a 32-meter tile: roughly 4-meter rows and 5-meter slab bays,
+  // matching apron concrete instead of the sidewalk-scale first pass.
+  texture.repeat.set(2, 2);
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
   texture.anisotropy = 16;
@@ -222,7 +223,7 @@ function applyAuthoredSurfaceMaterials(THREE, authored, textures) {
         material.visible = true;
         material.color.setHex(0xffffff);
         material.transparent = true;
-        material.opacity = 0.38;
+        material.opacity = 0.30;
         material.depthWrite = false;
         material.map = textures.concrete.albedo;
         material.bumpMap = textures.concrete.bump;
@@ -248,7 +249,7 @@ function applyAuthoredSurfaceMaterials(THREE, authored, textures) {
         material.visible = true;
         material.color.setHex(0x777976);
         material.transparent = true;
-        material.opacity = 0.16;
+        material.opacity = 0.13;
         material.depthWrite = false;
         material.map = textures.concrete.albedo;
         material.bumpMap = textures.concrete.bump;
