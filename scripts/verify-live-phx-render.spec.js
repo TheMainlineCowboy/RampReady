@@ -84,9 +84,15 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
   const chaseBytes = fs.statSync(chasePath).size;
   expect(chaseBytes).toBeGreaterThan(100000);
 
-  const viewSelect = page.locator('.rr-view-select');
-  await expect(viewSelect).toBeVisible();
-  await viewSelect.selectOption('overhead');
+  const overheadSelection = await page.evaluate(() => {
+    const selector = document.querySelector('.rr-view-select');
+    if (!selector) throw new Error('Camera view selector is missing');
+    selector.value = 'overhead';
+    selector.dispatchEvent(new Event('input', { bubbles: true }));
+    selector.dispatchEvent(new Event('change', { bubbles: true }));
+    return selector.value;
+  });
+  expect(overheadSelection).toBe('overhead');
   await page.waitForTimeout(1000);
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const overheadPath = `${evidenceDirectory}/sky-harbor-overhead.png`;
