@@ -18,7 +18,10 @@ export const AUTHORED_KPHX_PHOTO_PROFILE = Object.freeze({
     west: -3703.4637473759662,
     east: 4801.396159291422,
   }),
-  detailLevel: "full-airport-source-aerial-1.2m-v1",
+  detailLevel: "full-airport-source-aerial-tiled-1.2m-v2",
+  fallbackDetailLevel: "full-airport-source-aerial-1.2m-v1",
+  textureMode: "tiled-native-source-resolution-v2",
+  maxRuntimeTextureDimension: 1024,
 });
 
 // The source aerial is the diffuse authority. The airport-wide ADEX surface
@@ -74,7 +77,7 @@ async function fetchManifest(url) {
   if (!response.ok) throw new Error(`PHX aerial manifest returned HTTP ${response.status}`);
   const manifest = await response.json();
   if (
-    manifest.schemaVersion !== 1
+    ![1, 2].includes(manifest.schemaVersion)
     || manifest.tileCount !== AUTHORED_KPHX_PHOTO_PROFILE.tileCount
     || manifest.image?.width !== AUTHORED_KPHX_PHOTO_PROFILE.width
     || manifest.image?.height !== AUTHORED_KPHX_PHOTO_PROFILE.height
@@ -82,11 +85,35 @@ async function fetchManifest(url) {
   ) {
     throw new Error("PHX aerial manifest does not match the pinned full-airport source image");
   }
+  if (manifest.schemaVersion === 2) {
+    if (
+      manifest.runtimeTiling?.mode !== AUTHORED_KPHX_PHOTO_PROFILE.textureMode
+      || !Array.isArray(manifest.tiles)
+      || manifest.tiles.length !== manifest.runtimeTiling.tileCount
+      || manifest.runtimeTiling.maxTextureDimension > AUTHORED_KPHX_PHOTO_PROFILE.maxRuntimeTextureDimension
+    ) {
+      throw new Error("PHX aerial tiled runtime manifest is incomplete");
+    }
+  }
   return manifest;
 }
 
-function buildPhotoGeometry(THREE) {
-  const { north, south, west, east } = AUTHORED_KPHX_PHOTO_PROFILE.sceneBounds;
+function configurePhotoTexture(THREE, texture, name, useMipmaps = true) {
+  texture.name = name;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.flipY = true;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.minFilter = useMipmaps ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 16;
+  texture.generateMipmaps = useMipmaps;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function buildPhotoGeometry(THREE, bounds) {
+  const { north, south, west, east } = bounds;
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.Float32BufferAttribute([
     north, -0.018, west,
@@ -111,31 +138,9 @@ function buildPhotoGeometry(THREE) {
   return geometry;
 }
 
-export async function installAuthoredKphxPhotoGround(THREE, environment) {
-  if (!environment?.isGroup) throw new Error("KPHX environment group is required");
-  environment.userData.photoGroundSource = "loading-source-authored-phx-photo";
-
-  const baseUrl = `${import.meta.env.BASE_URL}models/kphx-photo/`;
-  const manifestUrl = `${baseUrl}photo-manifest.json`;
-  const imageUrl = `${baseUrl}phx-airport-photo.webp`;
-  const [manifest, texture] = await Promise.all([
-    fetchManifest(manifestUrl),
-    new THREE.TextureLoader().loadAsync(imageUrl),
-  ]);
-
-  texture.name = "PHX full-airport source aerial";
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.flipY = true;
-  texture.wrapS = THREE.ClampToEdgeWrapping;
-  texture.wrapT = THREE.ClampToEdgeWrapping;
-  texture.minFilter = THREE.LinearMipmapLinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  texture.anisotropy = 16;
-  texture.generateMipmaps = true;
-  texture.needsUpdate = true;
-
-  const material = new THREE.MeshStandardMaterial({
-    name: "PHX source aerial ground",
+function buildPhotoMaterial(THREE, texture, name) {
+  return new THREE.MeshStandardMaterial({
+    name,
     map: texture,
     color: 0xffffff,
     roughness: 0.98,
@@ -145,12 +150,81 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
     depthWrite: true,
     side: THREE.DoubleSide,
   });
-  const photoGround = new THREE.Mesh(buildPhotoGeometry(THREE), material);
+}
+
+function sceneBoundsForTile(tile, manifest) {
+  const full = manifest.sceneBounds;
+  const image = manifest.image;
+  const northSpan = full.north - full.south;
+  const eastSpan = full.east - full.west;
+  const north = full.north - (tile.y / image.height) * northSpan;
+  const south = full.north - ((tile.y + tile.height) / image.height) * northSpan;
+  const west = full.west + (tile.x / image.width) * eastSpan;
+  const east = full.west + ((tile.x + tile.width) / image.width) * eastSpan;
+  return { north, south, west, east };
+}
+
+async function buildTiledPhotoGround(THREE, baseUrl, manifest) {
+  const group = new THREE.Group();
+  group.name = "PHX_KPHX_SourceAuthoredPhotoGround_Tiled";
+  const textureLoader = new THREE.TextureLoader();
+  const loadedTiles = await Promise.all(manifest.tiles.map(async (tile, index) => {
+    const texture = await textureLoader.loadAsync(`${baseUrl}${tile.file}`);
+    configurePhotoTexture(THREE, texture, `PHX source aerial tile ${tile.column}:${tile.row}`);
+    const material = buildPhotoMaterial(THREE, texture, `PHX source aerial tile material ${index}`);
+    const mesh = new THREE.Mesh(buildPhotoGeometry(THREE, sceneBoundsForTile(tile, manifest)), material);
+    mesh.name = `PHX_KPHX_SourceAerialTile_${tile.column}_${tile.row}`;
+    mesh.receiveShadow = true;
+    mesh.castShadow = false;
+    mesh.frustumCulled = true;
+    mesh.renderOrder = -20;
+    mesh.userData.sourcePixelBounds = { x: tile.x, y: tile.y, width: tile.width, height: tile.height };
+    return mesh;
+  }));
+  group.add(...loadedTiles);
+  group.userData.textureMode = AUTHORED_KPHX_PHOTO_PROFILE.textureMode;
+  group.userData.runtimeTileCount = loadedTiles.length;
+  group.userData.maxTextureDimension = manifest.runtimeTiling.maxTextureDimension;
+  return group;
+}
+
+async function buildFallbackPhotoGround(THREE, imageUrl, manifest) {
+  const texture = await new THREE.TextureLoader().loadAsync(imageUrl);
+  configurePhotoTexture(THREE, texture, "PHX full-airport source aerial fallback");
+  const photoGround = new THREE.Mesh(
+    buildPhotoGeometry(THREE, manifest.sceneBounds),
+    buildPhotoMaterial(THREE, texture, "PHX source aerial ground fallback"),
+  );
   photoGround.name = "PHX_KPHX_SourceAuthoredPhotoGround";
   photoGround.receiveShadow = true;
   photoGround.castShadow = false;
   photoGround.frustumCulled = true;
   photoGround.renderOrder = -20;
+  photoGround.userData.textureMode = "single-texture-fallback-v1";
+  photoGround.userData.runtimeTileCount = 1;
+  return photoGround;
+}
+
+async function buildBestAvailablePhotoGround(THREE, baseUrl, imageUrl, manifest) {
+  if (manifest.schemaVersion === 2 && manifest.tiles?.length) {
+    try {
+      return await buildTiledPhotoGround(THREE, baseUrl, manifest);
+    } catch (error) {
+      console.warn("PHX tiled aerial failed; using the pinned full-airport fallback texture", error);
+    }
+  }
+  return buildFallbackPhotoGround(THREE, imageUrl, manifest);
+}
+
+export async function installAuthoredKphxPhotoGround(THREE, environment) {
+  if (!environment?.isGroup) throw new Error("KPHX environment group is required");
+  environment.userData.photoGroundSource = "loading-source-authored-phx-photo";
+
+  const baseUrl = `${import.meta.env.BASE_URL}models/kphx-photo/`;
+  const manifestUrl = `${baseUrl}photo-manifest.json`;
+  const imageUrl = `${baseUrl}phx-airport-photo.webp`;
+  const manifest = await fetchManifest(manifestUrl);
+  const photoGround = await buildBestAvailablePhotoGround(THREE, baseUrl, imageUrl, manifest);
 
   const hiddenSurfaceMaterialCount = hideFlatADEXSurfaceColors(environment);
   environment.add(photoGround);
@@ -159,17 +233,22 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
   const hiddenProjectedMaterialCount = blendExactProjectedSurfacesWithAerial(exactA1);
   const sourceLights = installExactKphxA1SourceLights(THREE, exactA1);
 
+  const tiled = photoGround.userData.textureMode === AUTHORED_KPHX_PHOTO_PROFILE.textureMode;
   environment.userData.photoGroundSource = "source-authored-phx-photo";
   environment.userData.authoredPhotoGround = photoGround;
   environment.userData.authoredPhotoGroundUrl = imageUrl;
   environment.userData.authoredPhotoManifestUrl = manifestUrl;
+  environment.userData.authoredPhotoTextureMode = photoGround.userData.textureMode;
+  environment.userData.authoredPhotoRuntimeTileCount = photoGround.userData.runtimeTileCount;
   environment.userData.authoredPhotoTileCount = manifest.tileCount;
   environment.userData.authoredPhotoQmidLevel = manifest.qmidLevel;
   environment.userData.authoredPhotoWidth = manifest.image.width;
   environment.userData.authoredPhotoHeight = manifest.image.height;
   environment.userData.authoredPhotoBytes = manifest.image.bytes;
   environment.userData.authoredPhotoSha256 = manifest.image.sha256;
-  environment.userData.authoredPhotoDetailLevel = AUTHORED_KPHX_PHOTO_PROFILE.detailLevel;
+  environment.userData.authoredPhotoDetailLevel = tiled
+    ? AUTHORED_KPHX_PHOTO_PROFILE.detailLevel
+    : AUTHORED_KPHX_PHOTO_PROFILE.fallbackDetailLevel;
   environment.userData.hiddenADEXSurfaceMaterialCount = hiddenSurfaceMaterialCount;
   environment.userData.exactA1BlendedProjectedMaterialCount = 0;
   environment.userData.exactA1HiddenProjectedMaterialCount = hiddenProjectedMaterialCount;
