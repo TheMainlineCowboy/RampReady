@@ -67,6 +67,10 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways and sim
     async () => canvas.getAttribute("data-environment-source"),
     { timeout: 90_000, intervals: [500, 1_000, 2_000] },
   ).toBe("authored-phx-terminal4-textured-source-jetways");
+  await expect.poll(
+    async () => canvas.getAttribute("data-static-ramp-equipment-object-count"),
+    { timeout: 90_000, intervals: [500, 1_000, 2_000] },
+  ).toBe("31");
 
   const runtime = await canvas.evaluate((element) => ({ ...element.dataset }));
   expect(runtime.environmentSource).toBe("authored-phx-terminal4-textured-source-jetways");
@@ -93,6 +97,7 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways and sim
   );
   expect(runtime.b15Anchors).toBe("ready");
   expect(runtime.b15CorridorMeters).toBe("515,542");
+  expect(runtime.staticRampEquipmentObjectCount).toBe("31");
   expect(runtime.simulatorDetailSource).toBeUndefined();
   expect(runtime.a1RampTextureResolution).toBeUndefined();
 
