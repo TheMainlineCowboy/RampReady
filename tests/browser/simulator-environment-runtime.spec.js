@@ -54,6 +54,10 @@ test("populates source-decoded Terminal 4 with simulator rendering, aircraft, ra
     async () => canvas.getAttribute("data-static-ramp-equipment-object-count"),
     { timeout: 150_000, intervals: [500, 1_000, 2_000] },
   ).toBe("58");
+  await expect.poll(
+    async () => canvas.getAttribute("data-terminal4-gate-detail-gate-count"),
+    { timeout: 150_000, intervals: [500, 1_000, 2_000] },
+  ).toBe("8");
 
   const runtime = await canvas.evaluate((element) => ({ ...element.dataset }));
   expect(runtime.visualQuality).toBe("simulator-rendering-v2");
@@ -76,6 +80,9 @@ test("populates source-decoded Terminal 4 with simulator rendering, aircraft, ra
   expect(runtime.staticRampEquipmentDetailLevel).toBe("authored-and-procedural-terminal4-ramp-equipment-v2");
   expect(runtime.staticRampApronDetailLevel).toBe("a1-a8-normalized-source-aerial-pbr-apron-v3");
   expect(runtime.staticRampApronTextureResolution).toBe("1024x2048");
+  expect(runtime.terminal4GateDetailGateCount).toBe("8");
+  expect(Number(runtime.terminal4GateDetailMeshCount)).toBeGreaterThan(300);
+  expect(runtime.terminal4GateDetailLevel).toBe("terminal4-gate-signage-service-bays-and-safety-fixtures-v1");
   expect(runtime.environmentSource).toBe("authored-phx-terminal4-textured-source-jetways");
   expect(runtime.groundSource).toBe("authored-kphx-v181-source-textured");
   expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
@@ -89,7 +96,7 @@ test("populates source-decoded Terminal 4 with simulator rendering, aircraft, ra
   ).toEqual([]);
 
   const relevantErrors = runtimeErrors.filter((message) =>
-    /static aircraft load failed|source object load failed|static ramp equipment load failed|failed to load|Unexpected CRJ700 dimensions|No aircraft asset candidate|GLTFLoader|ReferenceError|TypeError|SyntaxError/i.test(message),
+    /static aircraft load failed|source object load failed|static ramp equipment load failed|gate details load failed|failed to load|Unexpected CRJ700 dimensions|No aircraft asset candidate|GLTFLoader|ReferenceError|TypeError|SyntaxError/i.test(message),
   );
   expect(relevantErrors).toEqual([]);
 });
