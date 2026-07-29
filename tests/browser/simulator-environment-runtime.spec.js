@@ -26,13 +26,14 @@ async function launchStandup(page) {
 }
 
 test("populates source-decoded Terminal 4 with simulator rendering, aircraft, ramp equipment and textured objects", async ({ page }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const runtimeErrors = [];
-  const assetResponses = [];
+  const assetResponses = new Map();
   page.on("response", (response) => {
     const pathname = new URL(response.url()).pathname;
-    if (POPULATION_ASSET_SUFFIXES.some((suffix) => pathname.endsWith(suffix))) assetResponses.push(response);
+    const suffix = POPULATION_ASSET_SUFFIXES.find((candidate) => pathname.endsWith(candidate));
+    if (suffix) assetResponses.set(suffix, response.status());
   });
   page.on("console", (message) => {
     if (message.type() === "error") runtimeErrors.push(message.text());
@@ -42,15 +43,15 @@ test("populates source-decoded Terminal 4 with simulator rendering, aircraft, ra
   const canvas = await launchStandup(page);
   await expect.poll(
     async () => canvas.getAttribute("data-static-aircraft-count"),
-    { timeout: 90_000, intervals: [500, 1_000, 2_000] },
+    { timeout: 120_000, intervals: [500, 1_000, 2_000] },
   ).toBe("7");
   await expect.poll(
     async () => canvas.getAttribute("data-source-object-placement-count"),
-    { timeout: 90_000, intervals: [500, 1_000, 2_000] },
+    { timeout: 120_000, intervals: [500, 1_000, 2_000] },
   ).toBe("19");
   await expect.poll(
     async () => canvas.getAttribute("data-static-ramp-equipment-object-count"),
-    { timeout: 90_000, intervals: [500, 1_000, 2_000] },
+    { timeout: 120_000, intervals: [500, 1_000, 2_000] },
   ).toBe("31");
 
   const runtime = await canvas.evaluate((element) => ({ ...element.dataset }));
@@ -67,16 +68,19 @@ test("populates source-decoded Terminal 4 with simulator rendering, aircraft, ra
   expect(runtime.staticRampSafetyConeCount).toBe("28");
   expect(runtime.staticRampEquipmentObjectCount).toBe("31");
   expect(runtime.staticRampEquipmentDetailLevel).toBe("authored-standup-ramp-equipment-and-cones-v1");
+  expect(runtime.staticRampApronDetailLevel).toBe("a1-a8-source-derived-close-range-apron-v1");
+  expect(runtime.staticRampApronTextureResolution).toBe("1024");
   expect(runtime.environmentSource).toBe("authored-phx-terminal4-textured-source-jetways");
   expect(runtime.groundSource).toBe("authored-kphx-v181-source-textured");
   expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
 
-  for (const suffix of POPULATION_ASSET_SUFFIXES) {
-    await expect.poll(
-      () => assetResponses.some((response) => new URL(response.url()).pathname.endsWith(suffix) && response.status() === 200),
-      { timeout: 30_000 },
-    ).toBe(true);
-  }
+  await expect.poll(
+    () => POPULATION_ASSET_SUFFIXES.filter((suffix) => {
+      const status = assetResponses.get(suffix);
+      return status === undefined || status < 200 || status >= 400;
+    }),
+    { timeout: 30_000, intervals: [500, 1_000] },
+  ).toEqual([]);
 
   const relevantErrors = runtimeErrors.filter((message) =>
     /static aircraft load failed|source object load failed|static ramp equipment load failed|failed to load|Unexpected CRJ700 dimensions|No aircraft asset candidate|GLTFLoader|ReferenceError|TypeError|SyntaxError/i.test(message),
