@@ -8,6 +8,8 @@ const SOURCE_OBJECT_SUFFIXES = [
   "/models/kphx-source-objects/phxprkgrg/terminal4.gltf",
   "/models/kphx-source-objects/phxtermlink/terminal4.gltf",
   "/models/kphx-source-objects/wncater/terminal4.gltf",
+  "/models/kphx-source-objects/textures/BACKHOE.png",
+  "/models/kphx-source-objects/textures/TRAILER.png",
 ];
 
 async function launchStandup(page) {
@@ -22,7 +24,7 @@ async function launchStandup(page) {
   return canvas;
 }
 
-test("populates source-decoded Terminal 4 stands and authored airport objects", async ({ page }) => {
+test("populates source-decoded Terminal 4 stands and textured authored airport objects", async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const runtimeErrors = [];
@@ -52,7 +54,9 @@ test("populates source-decoded Terminal 4 stands and authored airport objects", 
   expect(runtime.staticAircraftDetailLevel).toBe("authored-crj700-static-gate-population-v1");
   expect(runtime.sourceObjectPlacementCount).toBe("19");
   expect(runtime.sourceObjectModelCount).toBe("5");
-  expect(runtime.sourceObjectDetailLevel).toBe("source-authored-airport-object-population-v1");
+  expect(runtime.sourceObjectTextureCount).toBe("5");
+  expect(Number(runtime.sourceObjectTexturedMaterialCount)).toBeGreaterThanOrEqual(3);
+  expect(runtime.sourceObjectDetailLevel).toBe("source-authored-textured-airport-object-population-v2");
   expect(runtime.environmentSource).toBe("authored-phx-terminal4-textured-source-jetways");
   expect(runtime.groundSource).toBe("authored-kphx-v181-source-textured");
   expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
