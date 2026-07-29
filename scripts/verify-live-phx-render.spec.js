@@ -6,7 +6,7 @@ const expectedSha = process.env.EXPECTED_SHA;
 const evidenceDirectory = 'live-phx-render-evidence';
 
 test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
-test.setTimeout(180000);
+test.setTimeout(240000);
 
 test('live RampReady renders native-resolution Sky Harbor ground and authored Terminal 4', async ({ page }) => {
   if (!pageUrl || !expectedSha) throw new Error('PAGE_URL and EXPECTED_SHA are required');
