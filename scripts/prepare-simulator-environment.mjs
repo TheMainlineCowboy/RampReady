@@ -10,6 +10,7 @@ const importAnchor = 'import { installAuthoredKphxPhotoGround } from "../environ
 const staticImport = 'import { installStaticGateAircraft } from "../environment/staticGateAircraft.js";';
 const objectImport = 'import { installSourceAuthoredAirportObjects } from "../environment/sourceAuthoredAirportObjects.js";';
 const equipmentImport = 'import { installStaticRampEquipment } from "../environment/staticRampEquipment.js";';
+const gateDetailsImport = 'import { installTerminal4GateDetails } from "../environment/terminal4GateDetails.js";';
 const datasetAnchor = '    renderer.domElement.dataset.terminal4Placement = "loading";';
 const promiseAnchor = "    void Promise.all([terminalLoad, groundLoad, photoGroundLoad])";
 const rendererAnchor = "    renderer.shadowMap.enabled = true;";
@@ -20,7 +21,7 @@ for (const [anchor, label] of [[importAnchor, "import"], [datasetAnchor, "datase
   if (!generated.includes(anchor)) throw new Error(`Simulator environment ${label} anchor is missing`);
 }
 
-generated = generated.replace(importAnchor, `${importAnchor}\n${staticImport}\n${objectImport}\n${equipmentImport}`);
+generated = generated.replace(importAnchor, `${importAnchor}\n${staticImport}\n${objectImport}\n${equipmentImport}\n${gateDetailsImport}`);
 generated = generated.replace(
   rendererAnchor,
   `${rendererAnchor}\n    renderer.shadowMap.type = THREE.PCFSoftShadowMap;\n    renderer.outputColorSpace = THREE.SRGBColorSpace;\n    renderer.toneMapping = THREE.ACESFilmicToneMapping;\n    renderer.toneMappingExposure = 1.08;`,
@@ -31,7 +32,7 @@ generated = generated.replace(
 );
 generated = generated.replace(
   datasetAnchor,
-  `${datasetAnchor}\n    renderer.domElement.dataset.visualQuality = "simulator-rendering-v2";\n    renderer.domElement.dataset.staticAircraftCount = "loading";\n    renderer.domElement.dataset.staticAircraftGates = "loading";\n    renderer.domElement.dataset.staticAircraftDetailLevel = "loading";\n    renderer.domElement.dataset.sourceObjectPlacementCount = "loading";\n    renderer.domElement.dataset.sourceObjectModelCount = "loading";\n    renderer.domElement.dataset.sourceObjectTextureCount = "loading";\n    renderer.domElement.dataset.sourceObjectTexturedMaterialCount = "loading";\n    renderer.domElement.dataset.sourceObjectDetailLevel = "loading";\n    renderer.domElement.dataset.staticRampAuthoredTugCount = "loading";\n    renderer.domElement.dataset.staticRampSafetyConeCount = "loading";\n    renderer.domElement.dataset.staticRampBeltLoaderCount = "loading";\n    renderer.domElement.dataset.staticRampBaggageCartTrainCount = "loading";\n    renderer.domElement.dataset.staticRampGpuCount = "loading";\n    renderer.domElement.dataset.staticRampTowbarCount = "loading";\n    renderer.domElement.dataset.staticRampChockPairCount = "loading";\n    renderer.domElement.dataset.staticRampEquipmentObjectCount = "loading";\n    renderer.domElement.dataset.staticRampEquipmentDetailLevel = "loading";\n    renderer.domElement.dataset.staticRampApronDetailLevel = "loading";\n    renderer.domElement.dataset.staticRampApronTextureResolution = "loading";`,
+  `${datasetAnchor}\n    renderer.domElement.dataset.visualQuality = "simulator-rendering-v2";\n    renderer.domElement.dataset.staticAircraftCount = "loading";\n    renderer.domElement.dataset.staticAircraftGates = "loading";\n    renderer.domElement.dataset.staticAircraftDetailLevel = "loading";\n    renderer.domElement.dataset.sourceObjectPlacementCount = "loading";\n    renderer.domElement.dataset.sourceObjectModelCount = "loading";\n    renderer.domElement.dataset.sourceObjectTextureCount = "loading";\n    renderer.domElement.dataset.sourceObjectTexturedMaterialCount = "loading";\n    renderer.domElement.dataset.sourceObjectDetailLevel = "loading";\n    renderer.domElement.dataset.staticRampAuthoredTugCount = "loading";\n    renderer.domElement.dataset.staticRampSafetyConeCount = "loading";\n    renderer.domElement.dataset.staticRampBeltLoaderCount = "loading";\n    renderer.domElement.dataset.staticRampBaggageCartTrainCount = "loading";\n    renderer.domElement.dataset.staticRampGpuCount = "loading";\n    renderer.domElement.dataset.staticRampTowbarCount = "loading";\n    renderer.domElement.dataset.staticRampChockPairCount = "loading";\n    renderer.domElement.dataset.staticRampEquipmentObjectCount = "loading";\n    renderer.domElement.dataset.staticRampEquipmentDetailLevel = "loading";\n    renderer.domElement.dataset.staticRampApronDetailLevel = "loading";\n    renderer.domElement.dataset.staticRampApronTextureResolution = "loading";\n    renderer.domElement.dataset.terminal4GateDetailGateCount = "loading";\n    renderer.domElement.dataset.terminal4GateDetailMeshCount = "loading";\n    renderer.domElement.dataset.terminal4GateDetailLevel = "loading";`,
 );
 
 const populatedLoads = `    const staticAircraftLoad = installStaticGateAircraft(THREE, environment)
@@ -99,7 +100,22 @@ const populatedLoads = `    const staticAircraftLoad = installStaticGateAircraft
         setMessage(\`PHX ramp equipment failed to load: \${error.message}\`);
         throw error;
       });
-    void Promise.all([terminalLoad, groundLoad, photoGroundLoad, staticAircraftLoad, sourceObjectLoad, rampEquipmentLoad])`;
+    const gateDetailsLoad = installTerminal4GateDetails(THREE, environment)
+      .then((details) => {
+        renderer.domElement.dataset.terminal4GateDetailGateCount = String(environment.userData.terminal4GateDetailGateCount);
+        renderer.domElement.dataset.terminal4GateDetailMeshCount = String(environment.userData.terminal4GateDetailMeshCount);
+        renderer.domElement.dataset.terminal4GateDetailLevel = environment.userData.terminal4GateDetailLevel;
+        return details;
+      })
+      .catch((error) => {
+        renderer.domElement.dataset.terminal4GateDetailGateCount = "load-error";
+        renderer.domElement.dataset.terminal4GateDetailMeshCount = "load-error";
+        renderer.domElement.dataset.terminal4GateDetailLevel = "load-error";
+        console.error("RampReady PHX Terminal 4 gate details load failed", error);
+        setMessage(\`PHX gate details failed to load: \${error.message}\`);
+        throw error;
+      });
+    void Promise.all([terminalLoad, groundLoad, photoGroundLoad, staticAircraftLoad, sourceObjectLoad, rampEquipmentLoad, gateDetailsLoad])`;
 
 generated = generated.replace(promiseAnchor, populatedLoads);
 
@@ -107,6 +123,7 @@ for (const required of [
   staticImport,
   objectImport,
   equipmentImport,
+  gateDetailsImport,
   'dataset.visualQuality = "simulator-rendering-v2"',
   'renderer.toneMapping = THREE.ACESFilmicToneMapping',
   'renderer.shadowMap.type = THREE.PCFSoftShadowMap',
@@ -121,9 +138,12 @@ for (const required of [
   'dataset.staticRampTowbarCount = "loading"',
   'dataset.staticRampChockPairCount = "loading"',
   'dataset.staticRampApronDetailLevel = "loading"',
+  'dataset.terminal4GateDetailGateCount = "loading"',
+  'dataset.terminal4GateDetailMeshCount = "loading"',
   "installStaticGateAircraft(THREE, environment)",
   "installSourceAuthoredAirportObjects(THREE, environment)",
   "installStaticRampEquipment(THREE, environment)",
+  "installTerminal4GateDetails(THREE, environment)",
   "environment.userData.authoredStaticAircraftCount",
   "environment.userData.sourceAuthoredAirportObjectPlacementCount",
   "environment.userData.sourceAuthoredAirportObjectTextureCount",
@@ -134,10 +154,12 @@ for (const required of [
   "environment.userData.staticRampTowbarCount",
   "environment.userData.staticRampChockPairCount",
   "environment.userData.staticRampApronDetailLevel",
-  "Promise.all([terminalLoad, groundLoad, photoGroundLoad, staticAircraftLoad, sourceObjectLoad, rampEquipmentLoad])",
+  "environment.userData.terminal4GateDetailGateCount",
+  "environment.userData.terminal4GateDetailMeshCount",
+  "Promise.all([terminalLoad, groundLoad, photoGroundLoad, staticAircraftLoad, sourceObjectLoad, rampEquipmentLoad, gateDetailsLoad])",
 ]) {
   if (!generated.includes(required)) throw new Error(`Simulator environment preparation missing ${required}`);
 }
 
 fs.writeFileSync(generatedPath, generated);
-console.log("RampReady simulator environment prepared with source-aerial PBR pavement, detailed Terminal 4 GSE population, soft airport-wide shadows, ACES rendering, A2-A8 aircraft and exact source objects.");
+console.log("RampReady simulator environment prepared with normalized PBR pavement, full Terminal 4 GSE, gate signage and service fixtures, soft airport-wide shadows, ACES rendering, A2-A8 aircraft and exact source objects.");
