@@ -39,15 +39,30 @@ for (const token of [
 for (const token of [
   'tugGates: Object.freeze(["A2", "A4", "A6"])',
   'conedGates: Object.freeze(["A2", "A3", "A4", "A5", "A6", "A7", "A8"])',
+  'beltLoaderGates: Object.freeze(["A1", "A2", "A4", "A6", "A8"])',
+  'baggageCartGates: Object.freeze(["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8"])',
+  'gpuGates: Object.freeze(["A1", "A3", "A5", "A7"])',
+  'towbarGates: Object.freeze(["A2", "A6", "A8"])',
+  'chockedGates: Object.freeze(["A2", "A3", "A4", "A5", "A6", "A7", "A8"])',
   "models/standup-tug.glb",
   "installA1SimulatorApron",
   "applyPiedmontFinish",
   "buildSafetyCone",
+  "buildBaggageCartTrain",
+  "buildBeltLoader",
+  "buildGpuCart",
+  "buildTowbar",
+  "buildChockPair",
   "staticRampAuthoredTugCount",
   "staticRampSafetyConeCount",
+  "staticRampBeltLoaderCount",
+  "staticRampBaggageCartTrainCount",
+  "staticRampGpuCount",
+  "staticRampTowbarCount",
+  "staticRampChockPairCount",
   "staticRampApronDetailLevel",
   "staticRampApronTextureResolution",
-  "authored-standup-ramp-equipment-and-cones-v1",
+  "authored-and-procedural-terminal4-ramp-equipment-v2",
 ]) requireText(equipmentSource, token, `static ramp equipment ${token}`);
 
 for (const token of [
@@ -80,10 +95,15 @@ for (const [token, label] of [
   ["rampEquipmentLoad", "ramp equipment readiness promise"],
   ["sourceObjectTextureCount", "source object texture browser evidence"],
   ["staticRampAuthoredTugCount", "ramp tug browser evidence"],
+  ["staticRampBeltLoaderCount", "belt loader browser evidence"],
+  ["staticRampBaggageCartTrainCount", "baggage cart browser evidence"],
+  ["staticRampGpuCount", "GPU browser evidence"],
+  ["staticRampTowbarCount", "towbar browser evidence"],
+  ["staticRampChockPairCount", "chock browser evidence"],
   ["THREE.ACESFilmicToneMapping", "ACES tone mapping"],
   ["THREE.PCFSoftShadowMap", "soft shadow filtering"],
   ["sun.shadow.mapSize.set(2048, 2048)", "high-resolution sun shadow map"],
-  ['dataset.visualQuality = "simulator-rendering-v1"', "visual quality browser evidence"],
+  ['dataset.visualQuality = "simulator-rendering-v2"', "visual quality browser evidence"],
 ]) requireText(patchSource, token, label);
 requireText(generated, 'import { installStaticGateAircraft } from "../environment/staticGateAircraft.js";', "generated static aircraft import");
 requireText(generated, 'import { installSourceAuthoredAirportObjects } from "../environment/sourceAuthoredAirportObjects.js";', "generated source object import");
@@ -93,6 +113,11 @@ requireText(generated, "installSourceAuthoredAirportObjects(THREE, environment)"
 requireText(generated, "installStaticRampEquipment(THREE, environment)", "generated static ramp equipment loader");
 requireText(generated, "renderer.toneMapping = THREE.ACESFilmicToneMapping", "generated ACES rendering");
 requireText(generated, "sun.shadow.camera.left = -190", "generated airport-wide shadow camera");
+requireText(generated, 'renderer.domElement.dataset.staticRampBeltLoaderCount = String(environment.userData.staticRampBeltLoaderCount)', "generated belt loader readiness evidence");
+requireText(generated, 'renderer.domElement.dataset.staticRampBaggageCartTrainCount = String(environment.userData.staticRampBaggageCartTrainCount)', "generated baggage cart readiness evidence");
+requireText(generated, 'renderer.domElement.dataset.staticRampGpuCount = String(environment.userData.staticRampGpuCount)', "generated GPU readiness evidence");
+requireText(generated, 'renderer.domElement.dataset.staticRampTowbarCount = String(environment.userData.staticRampTowbarCount)', "generated towbar readiness evidence");
+requireText(generated, 'renderer.domElement.dataset.staticRampChockPairCount = String(environment.userData.staticRampChockPairCount)', "generated chock readiness evidence");
 requireText(generated, "Promise.all([terminalLoad, groundLoad, photoGroundLoad, staticAircraftLoad, sourceObjectLoad, rampEquipmentLoad])", "combined simulator readiness gate");
 
 if (packageJson.scripts?.["materialize:kphx-source-objects"] !== "node scripts/materialize-kphx-source-objects.mjs") failures.push("package source object materializer script is incorrect");
@@ -108,4 +133,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Simulator environment population verified: source-aerial PBR A1-A8 apron, dynamic contact shadows, ACES rendering, airport-wide soft shadows, seven aircraft, three authored stand-up tugs, twenty-eight cones and nineteen textured source placements participate in browser readiness.");
+console.log("Simulator environment population verified: source-aerial PBR A1-A8 apron, seven aircraft, three authored stand-up tugs, twenty-eight cones, five belt loaders, eight baggage-cart trains, four GPUs, three towbars, seven chock pairs and nineteen exact source placements participate in browser readiness.");
