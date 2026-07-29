@@ -1,8 +1,9 @@
 name: Verify RampReady Live Experience
 
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: ["Deploy RampReady to GitHub Pages"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       expected_sha:
@@ -19,60 +20,101 @@ env:
 
 jobs:
   verify-live-experience:
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        (github.event.workflow_run.head_branch == 'main' &&
+         github.event.workflow_run.conclusion == 'success')
+      }}
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 20
     steps:
       - name: Resolve exact deployed commit
         id: release
         shell: bash
         env:
-          PUSH_SHA: ${{ github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          DEPLOYED_SHA: ${{ github.event.workflow_run.head_sha }}
           DISPATCH_SHA: ${{ inputs.expected_sha }}
         run: |
           set -euo pipefail
-          expected_sha="${DISPATCH_SHA:-${PUSH_SHA:-}}"
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            expected_sha="${DISPATCH_SHA:-}"
+          else
+            expected_sha="${DEPLOYED_SHA:-}"
+          fi
           test -n "${expected_sha}"
           echo "expected_sha=${expected_sha}" >> "${GITHUB_OUTPUT}"
 
+      - name: Wait for immutable GitHub Pages release marker
+        id: marker
+        continue-on-error: true
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ steps.release.outputs.expected_sha }}
+        run: |
+          set +e
+          marker_url="${PAGE_URL}releases/${EXPECTED_SHA}.txt"
+          mkdir -p live-experience-evidence
+          : > live-experience-evidence/release-marker.log
+
+          for attempt in $(seq 1 60); do
+            rm -f /tmp/release-marker.txt
+            status=$(curl -L -sS \
+              -H 'Cache-Control: no-cache' \
+              -H 'Pragma: no-cache' \
+              -o /tmp/release-marker.txt \
+              -w '%{http_code}' \
+              "${marker_url}?attempt=${attempt}" \
+              2>> live-experience-evidence/release-marker.log || true)
+
+            live_sha="not-served"
+            if [ "${status}" = "200" ] && [ -s /tmp/release-marker.txt ]; then
+              live_sha=$(head -c 128 /tmp/release-marker.txt | tr -d '\r\n')
+            fi
+
+            printf 'attempt=%s status=%s marker=%s url=%s\n' \
+              "${attempt}" "${status:-curl-error}" "${live_sha}" "${marker_url}" \
+              | tee -a live-experience-evidence/release-marker.log
+
+            if [ "${status}" = "200" ] && [ "${live_sha}" = "${EXPECTED_SHA}" ]; then
+              summary="Exact immutable Pages release ${EXPECTED_SHA} is live"
+              echo "exit_code=0" >> "${GITHUB_OUTPUT}"
+              echo "summary=${summary}" >> "${GITHUB_OUTPUT}"
+              echo "${summary} after attempt ${attempt}."
+              exit 0
+            fi
+            sleep 5
+          done
+
+          summary="Pages deployment succeeded but immutable marker ${EXPECTED_SHA} was not served within five minutes"
+          printf '%s\n' "${summary}" | tee live-experience-evidence/error.txt >&2
+          echo "exit_code=1" >> "${GITHUB_OUTPUT}"
+          echo "summary=${summary}" >> "${GITHUB_OUTPUT}"
+          exit 1
+
       - name: Check out exact deployed commit
+        if: steps.marker.outputs.exit_code == '0'
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.release.outputs.expected_sha }}
 
       - name: Set up Node.js
+        if: steps.marker.outputs.exit_code == '0'
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
 
       - name: Install locked dependencies and Chromium
+        if: steps.marker.outputs.exit_code == '0'
         run: |
           npm ci
           npm install --no-save --package-lock=false playwright@1.53.1
           npx playwright install --with-deps chromium
 
-      - name: Wait for immutable GitHub Pages release marker
-        shell: bash
-        env:
-          EXPECTED_SHA: ${{ steps.release.outputs.expected_sha }}
-        run: |
-          set -euo pipefail
-          marker_url="${PAGE_URL}releases/${EXPECTED_SHA}.txt"
-          mkdir -p live-experience-evidence
-          for attempt in {1..120}; do
-            status=$(curl --fail-with-body -L -sS -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' -o /tmp/release-marker.txt -w '%{http_code}' "${marker_url}?attempt=${attempt}" || true)
-            live_sha=$(tr -d '\r\n' < /tmp/release-marker.txt 2>/dev/null || true)
-            printf 'attempt=%s status=%s body=%s url=%s\n' "${attempt}" "${status}" "${live_sha:-missing}" "${marker_url}" | tee -a live-experience-evidence/release-marker.log
-            if [ "${status}" = "200" ] && [ "${live_sha}" = "${EXPECTED_SHA}" ]; then
-              echo "Exact immutable release ${EXPECTED_SHA} is live after attempt ${attempt}."
-              exit 0
-            fi
-            sleep 10
-          done
-          printf 'GitHub Pages did not serve immutable marker for %s within 20 minutes.\n' "${EXPECTED_SHA}" | tee live-experience-evidence/error.txt >&2
-          exit 1
-
       - name: Verify live equipment, controls, camera, and aircraft
+        if: steps.marker.outputs.exit_code == '0'
         id: browser
         continue-on-error: true
         shell: bash
@@ -110,12 +152,20 @@ jobs:
         uses: actions/github-script@v7
         env:
           EXPECTED_SHA: ${{ steps.release.outputs.expected_sha }}
-          EXIT_CODE: ${{ steps.browser.outputs.exit_code }}
-          ERROR_SUMMARY: ${{ steps.browser.outputs.summary }}
+          MARKER_EXIT_CODE: ${{ steps.marker.outputs.exit_code }}
+          MARKER_SUMMARY: ${{ steps.marker.outputs.summary }}
+          BROWSER_EXIT_CODE: ${{ steps.browser.outputs.exit_code }}
+          BROWSER_SUMMARY: ${{ steps.browser.outputs.summary }}
         with:
           script: |
-            const passed = process.env.EXIT_CODE === '0';
-            const description = (process.env.ERROR_SUMMARY || 'Live release marker or browser verification failed').slice(0, 140);
+            const markerPassed = process.env.MARKER_EXIT_CODE === '0';
+            const browserPassed = process.env.BROWSER_EXIT_CODE === '0';
+            const passed = markerPassed && browserPassed;
+            const description = (
+              markerPassed
+                ? (process.env.BROWSER_SUMMARY || 'Live browser verification did not complete')
+                : (process.env.MARKER_SUMMARY || 'Immutable Pages release marker was not available')
+            ).slice(0, 140);
             for (const statusContext of ['production/rampready-live-experience', 'production/crj700-side-views']) {
               await github.rest.repos.createCommitStatus({
                 owner: context.repo.owner,
@@ -132,10 +182,16 @@ jobs:
         if: always()
         shell: bash
         env:
-          EXIT_CODE: ${{ steps.browser.outputs.exit_code }}
-          ERROR_SUMMARY: ${{ steps.browser.outputs.summary }}
+          MARKER_EXIT_CODE: ${{ steps.marker.outputs.exit_code }}
+          MARKER_SUMMARY: ${{ steps.marker.outputs.summary }}
+          BROWSER_EXIT_CODE: ${{ steps.browser.outputs.exit_code }}
+          BROWSER_SUMMARY: ${{ steps.browser.outputs.summary }}
         run: |
-          if [ "${EXIT_CODE:-1}" -ne 0 ]; then
-            echo "${ERROR_SUMMARY:-Live release verification failed}" >&2
+          if [ "${MARKER_EXIT_CODE:-1}" -ne 0 ]; then
+            echo "${MARKER_SUMMARY:-Immutable Pages release marker verification failed}" >&2
+            exit 1
+          fi
+          if [ "${BROWSER_EXIT_CODE:-1}" -ne 0 ]; then
+            echo "${BROWSER_SUMMARY:-Live browser verification failed}" >&2
             exit 1
           fi
