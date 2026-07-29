@@ -31,25 +31,20 @@ async function launchStandup(page) {
   return canvas;
 }
 
-async function captureCanvas(page, canvas, fileName) {
-  const bounds = await canvas.boundingBox();
-  expect(bounds).not.toBeNull();
+async function captureViewport(page, fileName) {
+  const canvasPresent = await page.evaluate(() => Boolean(document.querySelector("canvas.trainerCanvas")));
+  expect(canvasPresent).toBe(true);
   const image = await page.screenshot({
     type: "png",
-    clip: {
-      x: Math.max(0, Math.floor(bounds.x)),
-      y: Math.max(0, Math.floor(bounds.y)),
-      width: Math.floor(bounds.width),
-      height: Math.floor(bounds.height),
-    },
+    fullPage: false,
     animations: "disabled",
   });
   expect(image.byteLength).toBeGreaterThan(50_000);
   await writeFile(`test-results/${fileName}`, image);
 }
 
-test("loads source-authored PHX scenery with detailed Terminal 4 jetways and textured A1 ramp", async ({ page }) => {
-  test.setTimeout(180_000);
+test("loads source-authored PHX scenery with detailed Terminal 4 jetways and simulator pavement", async ({ page }) => {
+  test.setTimeout(360_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const assetResponses = [];
   const runtimeErrors = [];
@@ -67,13 +62,22 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways and tex
     async () => canvas.getAttribute("data-environment-source"),
     { timeout: 90_000, intervals: [500, 1_000, 2_000] },
   ).toBe("authored-phx-terminal4-textured-source-jetways");
+  await expect.poll(
+    async () => canvas.getAttribute("data-static-ramp-equipment-object-count"),
+    { timeout: 150_000, intervals: [500, 1_000, 2_000] },
+  ).toBe("58");
+  await expect.poll(
+    async () => canvas.getAttribute("data-terminal4-gate-detail-gate-count"),
+    { timeout: 150_000, intervals: [500, 1_000, 2_000] },
+  ).toBe("8");
 
   const runtime = await canvas.evaluate((element) => ({ ...element.dataset }));
+  expect(runtime.visualQuality).toBe("simulator-rendering-v2");
   expect(runtime.environmentSource).toBe("authored-phx-terminal4-textured-source-jetways");
   expect(runtime.groundSource).toBe("authored-kphx-v181-source-textured");
   expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
   expect(runtime.kphxVersion).toBe("1.8.1");
-  expect(runtime.kphxDetailLevel).toBe("terminal4-authored-textured-v3-source-ramp-exact-a1");
+  expect(runtime.kphxDetailLevel).toBe("terminal4-authored-textured-v4-source-ramp-exact-a1");
   expect(runtime.photoDetailLevel).toBe("full-airport-source-aerial-1.2m-v1");
   expect(runtime.photoTileCount).toBe("199");
   expect(runtime.photoWidth).toBe("6400");
@@ -93,6 +97,20 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways and tex
   );
   expect(runtime.b15Anchors).toBe("ready");
   expect(runtime.b15CorridorMeters).toBe("515,542");
+  expect(runtime.staticRampAuthoredTugCount).toBe("3");
+  expect(runtime.staticRampSafetyConeCount).toBe("28");
+  expect(runtime.staticRampBeltLoaderCount).toBe("5");
+  expect(runtime.staticRampBaggageCartTrainCount).toBe("8");
+  expect(runtime.staticRampGpuCount).toBe("4");
+  expect(runtime.staticRampTowbarCount).toBe("3");
+  expect(runtime.staticRampChockPairCount).toBe("7");
+  expect(runtime.staticRampEquipmentObjectCount).toBe("58");
+  expect(runtime.staticRampEquipmentDetailLevel).toBe("authored-and-procedural-terminal4-ramp-equipment-v2");
+  expect(runtime.staticRampApronDetailLevel).toBe("a1-a8-normalized-source-aerial-pbr-apron-v3");
+  expect(runtime.staticRampApronTextureResolution).toBe("1024x2048");
+  expect(runtime.terminal4GateDetailGateCount).toBe("8");
+  expect(Number(runtime.terminal4GateDetailMeshCount)).toBeGreaterThan(300);
+  expect(runtime.terminal4GateDetailLevel).toBe("terminal4-gate-signage-service-bays-and-safety-fixtures-v1");
   expect(runtime.simulatorDetailSource).toBeUndefined();
   expect(runtime.a1RampTextureResolution).toBeUndefined();
 
@@ -124,7 +142,7 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways and tex
   expect(measuredSize("/models/phx-terminal4/textures/RW.png")).toBeGreaterThan(1_000);
 
   const relevantErrors = runtimeErrors.filter((message) =>
-    /KPHX ground load failed|PHX airport ground failed to load|PHX source aerial load failed|source aerial failed to load|Terminal 4 visual load failed|material texture is missing|GLTFLoader|WebGL.*shader|ReferenceError|TypeError|SyntaxError/i.test(message),
+    /KPHX ground load failed|PHX airport ground failed to load|PHX source aerial load failed|source aerial failed to load|Terminal 4 visual load failed|material texture is missing|static ramp equipment load failed|gate details load failed|GLTFLoader|WebGL.*shader|ReferenceError|TypeError|SyntaxError/i.test(message),
   );
   expect(relevantErrors).toEqual([]);
 
@@ -136,12 +154,12 @@ test("loads source-authored PHX scenery with detailed Terminal 4 jetways and tex
     `,
   });
   await page.waitForTimeout(1_200);
-  await captureCanvas(page, canvas, "kphx-a1-source-textured-ramp-jetways-chase.png");
+  await captureViewport(page, "kphx-a1-source-textured-ramp-jetways-chase.png");
 
   await page.evaluate(() => {
     const element = document.querySelector("canvas.trainerCanvas");
     element?.dispatchEvent(new WheelEvent("wheel", { deltaY: 1350, bubbles: true, cancelable: true }));
   });
   await page.waitForTimeout(1_000);
-  await captureCanvas(page, canvas, "kphx-a1-source-textured-ramp-jetways-overview.png");
+  await captureViewport(page, "kphx-a1-source-textured-ramp-jetways-overview.png");
 });

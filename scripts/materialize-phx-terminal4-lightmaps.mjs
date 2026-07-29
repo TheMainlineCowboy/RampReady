@@ -28,13 +28,36 @@ const EXACT_LIGHTMAP_SOURCES = Object.freeze({
 });
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
+const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 async function download(relativePath) {
-  const response = await fetch(`${SOURCE_ROOT}/${relativePath}`, {
-    headers: { "User-Agent": "RampReady-Terminal4-Lightmap-Materializer" },
-  });
-  if (!response.ok) throw new Error(`Failed to download exact Terminal 4 lightmap ${relativePath}: HTTP ${response.status}`);
-  return Buffer.from(await response.arrayBuffer());
+  const url = `${SOURCE_ROOT}/${relativePath}`;
+  const maximumAttempts = 5;
+  let lastError = null;
+  for (let attempt = 1; attempt <= maximumAttempts; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
+    try {
+      const response = await fetch(url, {
+        headers: { "User-Agent": "RampReady-Terminal4-Lightmap-Materializer" },
+        signal: controller.signal,
+      });
+      if (response.ok) return Buffer.from(await response.arrayBuffer());
+      const retryable = response.status === 408 || response.status === 429 || response.status >= 500;
+      const error = new Error(`Failed to download exact Terminal 4 lightmap ${relativePath}: HTTP ${response.status}`);
+      if (!retryable || attempt === maximumAttempts) throw error;
+      lastError = error;
+    } catch (error) {
+      lastError = error;
+      if (attempt === maximumAttempts) break;
+    } finally {
+      clearTimeout(timeout);
+    }
+    const delay = 500 * (2 ** (attempt - 1));
+    console.warn(`Terminal 4 lightmap download retry ${attempt}/${maximumAttempts - 1} for ${relativePath} after ${lastError?.message || "network failure"}`);
+    await sleep(delay);
+  }
+  throw new Error(`Failed to download exact Terminal 4 lightmap ${relativePath} after ${maximumAttempts} attempts`, { cause: lastError });
 }
 
 function rgb565(value) {

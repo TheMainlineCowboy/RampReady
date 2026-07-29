@@ -2,8 +2,8 @@ import { defineConfig } from "@playwright/test";
 
 const externalBaseURL = process.env.PLAYWRIGHT_BASE_URL || "";
 const requestedWebServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || "npm run dev -- --port 4173";
-const terminal4Preparation = "npm run prepare:terminal4-runtime";
-const webServerCommand = requestedWebServerCommand.includes("prepare:terminal4-runtime")
+const terminal4Preparation = "npm run prepare:terminal4-runtime && npm run prepare:simulator-environment";
+const webServerCommand = requestedWebServerCommand.includes("prepare:simulator-environment")
   ? requestedWebServerCommand
   : `${terminal4Preparation} && ${requestedWebServerCommand}`;
 
