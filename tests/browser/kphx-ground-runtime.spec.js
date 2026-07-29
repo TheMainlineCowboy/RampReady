@@ -52,7 +52,7 @@ async function captureCanvas(page, canvas, fileName) {
   await writeFile(`test-results/${fileName}`, image);
 }
 
-test("loads only source-authored PHX scenery at exact Gate A1", async ({ page }) => {
+test("loads source-authored PHX scenery with detailed Terminal 4 jetways at exact Gate A1", async ({ page }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const assetResponses = [];
@@ -67,7 +67,7 @@ test("loads only source-authored PHX scenery at exact Gate A1", async ({ page })
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
 
   const canvas = await launchStandup(page);
-  await expectRuntimeValue(canvas, "data-environment-source", "authored-phx-terminal4-textured");
+  await expectRuntimeValue(canvas, "data-environment-source", "authored-phx-terminal4-textured-source-jetways");
   await expectRuntimeValue(canvas, "data-ground-source", "authored-kphx-v181");
   await expectRuntimeValue(canvas, "data-photo-ground-source", "source-authored-phx-photo");
   await expectRuntimeValue(canvas, "data-kphx-version", "1.8.1");
@@ -134,12 +134,12 @@ test("loads only source-authored PHX scenery at exact Gate A1", async ({ page })
     `,
   });
   await page.waitForTimeout(1_200);
-  await captureCanvas(page, canvas, "kphx-a1-source-authored-chase.png");
+  await captureCanvas(page, canvas, "kphx-a1-source-authored-jetways-chase.png");
 
   await page.evaluate(() => {
     const element = document.querySelector("canvas.trainerCanvas");
     element?.dispatchEvent(new WheelEvent("wheel", { deltaY: 1350, bubbles: true, cancelable: true }));
   });
   await page.waitForTimeout(1_000);
-  await captureCanvas(page, canvas, "kphx-a1-source-authored-overview.png");
+  await captureCanvas(page, canvas, "kphx-a1-source-authored-jetways-overview.png");
 });
