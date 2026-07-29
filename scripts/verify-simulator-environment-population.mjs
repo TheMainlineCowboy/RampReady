@@ -1,6 +1,7 @@
 import fs from "node:fs";
 
 const staticSource = fs.readFileSync("src/environment/staticGateAircraft.js", "utf8");
+const apronSource = fs.readFileSync("src/environment/a1SimulatorApron.js", "utf8");
 const equipmentSource = fs.readFileSync("src/environment/staticRampEquipment.js", "utf8");
 const objectSource = fs.readFileSync("src/environment/sourceAuthoredAirportObjects.js", "utf8");
 const materializer = fs.readFileSync("scripts/materialize-kphx-source-objects.mjs", "utf8");
@@ -22,13 +23,26 @@ requireText(staticSource, "root.rotation.y = (270 - gate.h)", "source aircraft h
 requireText(staticSource, "authored-crj700-static-gate-population-v1", "static aircraft detail level");
 
 for (const token of [
+  'sourceTexture: "models/phx-terminal4/textures/PARKRAMPS.png"',
+  'bounds: Object.freeze({ minX: -35, maxX: 300, minZ: -92, maxZ: 38 })',
+  "textureResolution: 1024",
+  "drawApronCanvas",
+  "sampleSourceAverage",
+  "apron.receiveShadow = false",
+  "a1-a8-source-derived-close-range-apron-v1",
+]) requireText(apronSource, token, `close-range apron ${token}`);
+
+for (const token of [
   'tugGates: Object.freeze(["A2", "A4", "A6"])',
   'conedGates: Object.freeze(["A2", "A3", "A4", "A5", "A6", "A7", "A8"])',
   "models/standup-tug.glb",
+  "installA1SimulatorApron",
   "applyPiedmontFinish",
   "buildSafetyCone",
   "staticRampAuthoredTugCount",
   "staticRampSafetyConeCount",
+  "staticRampApronDetailLevel",
+  "staticRampApronTextureResolution",
   "authored-standup-ramp-equipment-and-cones-v1",
 ]) requireText(equipmentSource, token, `static ramp equipment ${token}`);
 
@@ -90,4 +104,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Simulator environment population verified: ACES rendering, airport-wide soft shadows, seven aircraft, three authored stand-up tugs, twenty-eight cones and nineteen textured source placements participate in browser readiness.");
+console.log("Simulator environment population verified: close-range A1-A8 apron, ACES rendering, airport-wide soft shadows, seven aircraft, three authored stand-up tugs, twenty-eight cones and nineteen textured source placements participate in browser readiness.");
