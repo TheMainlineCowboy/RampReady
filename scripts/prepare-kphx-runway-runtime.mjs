@@ -15,8 +15,8 @@ const operations = [
   },
   {
     marker: "environment.userData.kphxRunwayVisualDetailLevel",
-    oldText: `  environment.userData.authoredGroundEnhancedMarkingMaterialCount = materialState.enhancedMarkingMaterialCount;\n  environment.userData.authoredGroundSurfaceMaterialMode = AUTHORED_KPHX_GROUND_PROFILE.surfaceMaterialMode;`,
-    newText: `  environment.userData.authoredGroundEnhancedMarkingMaterialCount = materialState.enhancedMarkingMaterialCount;\n  environment.userData.kphxRunwayCount = runwayVisuals.userData.runwayCount;\n  environment.userData.kphxRunwayIdentifierCount = runwayVisuals.userData.identifierCount;\n  environment.userData.kphxRunwayLightCount = runwayVisuals.userData.lightCount;\n  environment.userData.kphxRunwayVisualDetailLevel = runwayVisuals.userData.detailLevel;\n  environment.userData.authoredGroundSurfaceMaterialMode = AUTHORED_KPHX_GROUND_PROFILE.surfaceMaterialMode;`,
+    oldText: "  environment.userData.authoredGroundEnhancedMarkingMaterialCount = materialState.enhancedMarkingMaterialCount;",
+    newText: `  environment.userData.authoredGroundEnhancedMarkingMaterialCount = materialState.enhancedMarkingMaterialCount;\n  environment.userData.kphxRunwayCount = runwayVisuals.userData.runwayCount;\n  environment.userData.kphxRunwayIdentifierCount = runwayVisuals.userData.identifierCount;\n  environment.userData.kphxRunwayLightCount = runwayVisuals.userData.lightCount;\n  environment.userData.kphxRunwayVisualDetailLevel = runwayVisuals.userData.detailLevel;`,
   },
 ];
 for (const operation of operations) {
