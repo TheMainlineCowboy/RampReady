@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "fc349940dba9ce31440d2af388c91db8123d3097",
+  "generatedAtUtc": "2026-07-30T00:38:44.095Z",
+  "conclusion": "success",
+  "exitCode": 0,
+  "validationError": null,
+  "summary": {
+    "jetwayRecords": 101,
+    "embeddedLibraryObjects": 101,
+    "modelGuidCounts": {
+      "{bfcdf52b-9142-415c-8318-03c1b92ca9d9}": 101
+    },
+    "terminalPrimitives": 19,
+    "fallbackPrimitives": 5
+  }
+}
