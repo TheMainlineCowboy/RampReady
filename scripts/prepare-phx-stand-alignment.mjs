@@ -7,12 +7,20 @@ const ground = fs.readFileSync(groundPath, "utf8");
 
 for (const token of [
   "parkingByGate",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35",
+  "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.55",
+  "sourceDimensionsMeters: Object.freeze([37.92, 8.77, 26.51])",
+]) {
+  if (!jetways.includes(token)) throw new Error(`${jetwayPath}: PHX source-scale stand alignment is missing ${token}`);
+}
+
+for (const forbidden of [
   "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
   "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.28",
-  "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.55",
-  "a1DoorContactErrorMeters",
+  "createArchedTunnelGeometry(THREE, 2.08, 2.02, 0.18)",
 ]) {
-  if (!jetways.includes(token)) throw new Error(`${jetwayPath}: PHX v5 stand alignment is missing ${token}`);
+  if (jetways.includes(forbidden)) throw new Error(`${jetwayPath}: aircraft-specific jetway shrink returned: ${forbidden}`);
 }
 
 for (const token of [
@@ -27,4 +35,4 @@ for (const token of [
   if (!ground.includes(token)) throw new Error(`${groundPath}: PHX stand geometry is missing ${token}`);
 }
 
-console.log("Verified PHX stand alignment without rewriting runtime source: v5 CRJ door-targeted jetways, realistic stand-line scale, visible gate labels, and non-repeating pavement wear.");
+console.log("Verified PHX stand alignment without resizing the airport: scale-1.00 AIR_Jetway01 placement, realistic stand-line scale, visible gate labels, and non-repeating pavement wear.");
