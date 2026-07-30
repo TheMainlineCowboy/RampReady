@@ -12,13 +12,11 @@ if (!ground.includes('contactMode: "pavement-relative-millimeter-offset"')) {
   ground = ground.replace(oldText, newText);
 }
 if (!ground.includes("authoredGroundMarkingContactMode")) {
-  const oldText = `  environment.userData.authoredGroundEnhancedMarkingMaterialCount = materialState.enhancedMarkingMaterialCount;
-  environment.userData.authoredGroundSurfaceMaterialMode`;
-  const newText = `  environment.userData.authoredGroundEnhancedMarkingMaterialCount = materialState.enhancedMarkingMaterialCount;
-  environment.userData.authoredGroundMarkingContactMode = "pavement-relative-millimeter-offset";
-  environment.userData.authoredGroundSurfaceMaterialMode`;
-  if (!ground.includes(oldText)) throw new Error("KPHX environment marking evidence anchor is missing");
-  ground = ground.replace(oldText, newText);
+  const anchor = "  environment.userData.authoredGroundEnhancedMarkingMaterialCount = materialState.enhancedMarkingMaterialCount;";
+  const replacement = `${anchor}
+  environment.userData.authoredGroundMarkingContactMode = "pavement-relative-millimeter-offset";`;
+  if (!ground.includes(anchor)) throw new Error("KPHX environment marking evidence anchor is missing");
+  ground = ground.replace(anchor, replacement);
 }
 fs.writeFileSync(groundPath, ground, "utf8");
 
