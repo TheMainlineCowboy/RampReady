@@ -76,6 +76,9 @@ prepared = prepared
     renderer.domElement.dataset.terminal4FacadeInfillCount = "loading";
     renderer.domElement.dataset.terminal4OpenServiceBayCount = "loading";
     renderer.domElement.dataset.terminal4JetwayDetailLevel = "loading";
+    renderer.domElement.dataset.terminal4LowerFacadeFitCount = "loading";
+    renderer.domElement.dataset.terminal4JetwayTextureAuthority = "loading";
+    renderer.domElement.dataset.terminal4ExactJetwayTextureActive = "loading";
     renderer.domElement.dataset.groundMarkingContactMode = "loading";
     const terminalLoad = installAuthoredTerminal4Visual(THREE, environment)
       .then((terminal) => {
@@ -94,6 +97,9 @@ prepared = prepared
         renderer.domElement.dataset.terminal4FacadeInfillCount = String(environment.userData.authoredTerminal4FacadeInfillCount ?? 0);
         renderer.domElement.dataset.terminal4OpenServiceBayCount = String(environment.userData.authoredTerminal4OpenServiceBayCount ?? 0);
         renderer.domElement.dataset.terminal4JetwayDetailLevel = environment.userData.authoredTerminal4JetwayDetailLevel || "missing";
+        renderer.domElement.dataset.terminal4LowerFacadeFitCount = String(environment.userData.authoredTerminal4LowerFacadeFitCount ?? 0);
+        renderer.domElement.dataset.terminal4JetwayTextureAuthority = environment.userData.authoredTerminal4JetwayTextureAuthority || "missing";
+        renderer.domElement.dataset.terminal4ExactJetwayTextureActive = String(environment.userData.authoredTerminal4ExactJetwayTextureActive === true);
         return terminal;
       })
       .catch((error) => {
@@ -106,6 +112,9 @@ prepared = prepared
         renderer.domElement.dataset.terminal4FacadeInfillCount = "load-error";
         renderer.domElement.dataset.terminal4OpenServiceBayCount = "load-error";
         renderer.domElement.dataset.terminal4JetwayDetailLevel = "load-error";
+        renderer.domElement.dataset.terminal4LowerFacadeFitCount = "load-error";
+        renderer.domElement.dataset.terminal4JetwayTextureAuthority = "load-error";
+        renderer.domElement.dataset.terminal4ExactJetwayTextureActive = "load-error";
         console.error("RampReady PHX Terminal 4 visual load failed", error);
         setMessage(\`PHX Terminal 4 failed to load: \${error.message}\`);
         throw error;

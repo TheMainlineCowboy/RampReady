@@ -106,6 +106,19 @@ async function loadTextureManifest(baseUrl) {
   return { manifest, manifestUrl };
 }
 
+async function loadExactJetwayTextures(THREE, baseUrl) {
+  const loader = new THREE.TextureLoader();
+  const [diffuse, emissive] = await Promise.all([
+    loader.loadAsync(`${baseUrl}textures/M1DGJETWAY.png`),
+    loader.loadAsync(`${baseUrl}textures/M1DGJETWAY_LM.png`),
+  ]);
+  return {
+    diffuse: configureRuntimeTexture(THREE, diffuse, "M1DGJETWAY exact recovered source", THREE.RepeatWrapping),
+    emissive: configureRuntimeTexture(THREE, emissive, "M1DGJETWAY_LM exact recovered source", THREE.RepeatWrapping),
+    authority: "exact-recovered-original-freeware-archive",
+  };
+}
+
 async function loadSourceTextures(THREE, baseUrl) {
   const { manifest, manifestUrl } = await loadTextureManifest(baseUrl);
   const loader = new THREE.TextureLoader();
@@ -227,9 +240,10 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4Placement = AUTHORED_TERMINAL4_PROFILE.placementAuthority;
 
   const baseUrl = `${import.meta.env.BASE_URL}models/phx-terminal4/`;
-  const [{ scene: authored }, { textures, emissiveTextures, manifest }] = await Promise.all([
+  const [{ scene: authored }, { textures, emissiveTextures, manifest }, jetwayTextures] = await Promise.all([
     new GLTFLoader().loadAsync(`${baseUrl}terminal4.gltf`),
     loadSourceTextures(THREE, baseUrl),
+    loadExactJetwayTextures(THREE, baseUrl),
   ]);
 
   authored.name = "PHX_Terminal4_AuthoredTexturedVisual";
@@ -243,7 +257,7 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
     sourceCutoutMaterialCount,
   } = applySourceMaterials(THREE, authored, textures, emissiveTextures);
   authored.updateMatrixWorld(true);
-  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, authored);
+  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, authored, jetwayTextures);
   environment.add(authored, sourcePlacedJetways);
   authored.updateMatrixWorld(true);
   sourcePlacedJetways.updateMatrixWorld(true);
@@ -275,6 +289,10 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4TerminalConnectedJetwayCount = sourcePlacedJetways.userData.terminalConnectedJetwayCount;
   environment.userData.authoredTerminal4A1JetwayWallDistance = sourcePlacedJetways.userData.a1TerminalWallDistance;
   environment.userData.authoredTerminal4FacadeInfillCount = sourcePlacedJetways.userData.facadeInfillCount;
+  environment.userData.authoredTerminal4LowerFacadeFitCount = sourcePlacedJetways.userData.lowerFacadeFitCount;
+  environment.userData.authoredTerminal4JetwayTextureAuthority = sourcePlacedJetways.userData.jetwayTextureAuthority;
+  environment.userData.authoredTerminal4ExactJetwayTextureActive = sourcePlacedJetways.userData.usesExactRecoveredJetwayTexture;
+  environment.userData.authoredTerminal4ExactJetwayLightmapActive = sourcePlacedJetways.userData.usesExactRecoveredJetwayLightmap;
   environment.userData.authoredTerminal4OpenServiceBayCount = sourcePlacedJetways.userData.openServiceBayCount;
   environment.userData.authoredTerminal4FacadeInfillAuthority = sourcePlacedJetways.userData.facadeInfillAuthority;
   environment.userData.authoredTerminal4JetwayTerminalConnectionAuthority = sourcePlacedJetways.userData.terminalConnectionAuthority;

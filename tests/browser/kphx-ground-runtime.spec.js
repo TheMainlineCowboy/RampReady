@@ -14,6 +14,8 @@ const TERMINAL_SUFFIXES = [
   "/models/phx-terminal4/textures/PHX_TERM400_0.png",
   "/models/phx-terminal4/textures/PHX_TERM400_1.png",
   "/models/phx-terminal4/textures/RW.png",
+  "/models/phx-terminal4/textures/M1DGJETWAY.png",
+  "/models/phx-terminal4/textures/M1DGJETWAY_LM.png",
 ];
 const SOURCE_ASSETS = [...GROUND_SUFFIXES, ...PHOTO_SUFFIXES, ...TERMINAL_SUFFIXES];
 
@@ -112,7 +114,10 @@ test("loads source-correct PHX scenery with connected Terminal 4 jetways and pav
   expect(Number(runtime.terminal4SourceCutoutMaterialCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4FacadeInfillCount)).toBeGreaterThan(45);
   expect(Number(runtime.terminal4OpenServiceBayCount)).toBe(6);
-  expect(runtime.terminal4JetwayDetailLevel).toBe("fsx-air-jetway01-crj-scale-articulated-v3");
+  expect(Number(runtime.terminal4LowerFacadeFitCount)).toBeGreaterThan(45);
+  expect(runtime.terminal4ExactJetwayTextureActive).toBe("true");
+  expect(runtime.terminal4JetwayTextureAuthority).toContain("M1DGJETWAY exact recovered");
+  expect(runtime.terminal4JetwayDetailLevel).toBe("fsx-air-jetway01-exact-textured-crj-scale-v4");
 
   for (const suffix of SOURCE_ASSETS) {
     await expect.poll(

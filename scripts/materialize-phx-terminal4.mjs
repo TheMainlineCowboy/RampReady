@@ -125,6 +125,58 @@ function decodeDxt1Bmp(bytes, width, height, dataOffset, bottomUp) {
   return rgba;
 }
 
+function decodeDxt3Bmp(bytes, width, height, dataOffset, bottomUp) {
+  const rgba = Buffer.alloc(width * height * 4);
+  const blocksWide = Math.ceil(width / 4);
+  const blocksHigh = Math.ceil(height / 4);
+  let offset = dataOffset;
+  for (let blockY = 0; blockY < blocksHigh; blockY += 1) {
+    for (let blockX = 0; blockX < blocksWide; blockX += 1) {
+      if (offset + 16 > bytes.length) throw new Error("DXT3 bitmap ended inside a compression block");
+      const alphaBytes = bytes.subarray(offset, offset + 8);
+      const color0 = bytes.readUInt16LE(offset + 8);
+      const color1 = bytes.readUInt16LE(offset + 10);
+      const lookup = bytes.readUInt32LE(offset + 12);
+      offset += 16;
+      const c0 = rgb565(color0);
+      const c1 = rgb565(color1);
+      const colors = [
+        c0,
+        c1,
+        [
+          Math.round((2 * c0[0] + c1[0]) / 3),
+          Math.round((2 * c0[1] + c1[1]) / 3),
+          Math.round((2 * c0[2] + c1[2]) / 3),
+          255,
+        ],
+        [
+          Math.round((c0[0] + 2 * c1[0]) / 3),
+          Math.round((c0[1] + 2 * c1[1]) / 3),
+          Math.round((c0[2] + 2 * c1[2]) / 3),
+          255,
+        ],
+      ];
+      for (let pixelY = 0; pixelY < 4; pixelY += 1) {
+        const alphaRow = alphaBytes.readUInt16LE(pixelY * 2);
+        for (let pixelX = 0; pixelX < 4; pixelX += 1) {
+          const x = blockX * 4 + pixelX;
+          const encodedY = blockY * 4 + pixelY;
+          if (x >= width || encodedY >= height) continue;
+          const y = bottomUp ? height - 1 - encodedY : encodedY;
+          const paletteIndex = (lookup >>> (2 * (pixelY * 4 + pixelX))) & 0x3;
+          const target = (y * width + x) * 4;
+          const color = colors[paletteIndex];
+          rgba[target] = color[0];
+          rgba[target + 1] = color[1];
+          rgba[target + 2] = color[2];
+          rgba[target + 3] = ((alphaRow >>> (pixelX * 4)) & 0x0f) * 17;
+        }
+      }
+    }
+  }
+  return rgba;
+}
+
 function decodeUncompressedBmp(bytes, width, height, dataOffset, bitsPerPixel, bottomUp) {
   if (![24, 32].includes(bitsPerPixel)) throw new Error(`Unsupported uncompressed BMP depth ${bitsPerPixel}`);
   const rgba = Buffer.alloc(width * height * 4);
@@ -158,11 +210,18 @@ function decodeLegacyBmp(bytes) {
   if (!(width > 0 && height > 0)) throw new Error(`Invalid bitmap dimensions ${signedWidth} x ${signedHeight}`);
 
   const DXT1 = 0x31545844;
+  const DXT3 = 0x33545844;
   let rgba;
   if (compression === DXT1) rgba = decodeDxt1Bmp(bytes, width, height, dataOffset, bottomUp);
+  else if (compression === DXT3) rgba = decodeDxt3Bmp(bytes, width, height, dataOffset, bottomUp);
   else if (compression === 0) rgba = decodeUncompressedBmp(bytes, width, height, dataOffset, bitsPerPixel, bottomUp);
   else throw new Error(`Unsupported bitmap compression 0x${compression.toString(16)}`);
-  return { width, height, rgba, compression: compression === DXT1 ? "DXT1" : "BI_RGB" };
+  return {
+    width,
+    height,
+    rgba,
+    compression: compression === DXT1 ? "DXT1" : compression === DXT3 ? "DXT3" : "BI_RGB",
+  };
 }
 
 function decodeDdsDxt1(bytes) {
@@ -365,6 +424,33 @@ for (const reference of diffuseReferences) {
   };
 }
 
+const JETWAY_TEXTURE_SOURCE = Object.freeze({
+  diffuse: { file: "M1DGJETWAY.BMP", sha256: "6f7b4e3a91020e1f1db54667a0cbe1152c6f6b99497ce39e135aa1312a3df41f" },
+  emissive: { file: "M1DGJETWAY_LM.BMP", sha256: "7681fa27310661358a059ece3bd861a7a0c5fa1878e626adbc92650755de04f0" },
+});
+const emitJetwayTexture = async (entry, outputName) => {
+  const sourceBytes = await readFile(path.join(EXACT_TEXTURE_DIR, entry.file));
+  const sourceHash = sha256(sourceBytes);
+  if (sourceHash !== entry.sha256) throw new Error(`Exact recovered jetway texture identity mismatch for ${entry.file}`);
+  const decoded = decodeSourceTexture(sourceBytes);
+  const png = encodePng(decoded.width, decoded.height, decoded.rgba);
+  await writeFile(path.join(TEXTURE_DIR, outputName), png);
+  return {
+    url: `textures/${outputName}`,
+    sourceFile: entry.file,
+    sourceSha256: sourceHash,
+    pngSha256: sha256(png),
+    width: decoded.width,
+    height: decoded.height,
+    compression: decoded.compression,
+    fidelity: "exact-recovered-original-freeware",
+  };
+};
+const exactJetwayTextures = {
+  diffuse: await emitJetwayTexture(JETWAY_TEXTURE_SOURCE.diffuse, "M1DGJETWAY.png"),
+  emissive: await emitJetwayTexture(JETWAY_TEXTURE_SOURCE.emissive, "M1DGJETWAY_LM.png"),
+};
+
 const exactTextureCount = Object.values(materialTextures).filter((entry) => entry.fidelity.startsWith("exact")).length;
 const fallbackTextureCount = Object.values(materialTextures).length - exactTextureCount;
 const textureManifest = {
@@ -378,6 +464,7 @@ const textureManifest = {
   fallbackTextureCount,
   outputFormat: "PNG converted deterministically from pinned FSX DXT1/bitmap sources",
   materials: materialTextures,
+  jetway: exactJetwayTextures,
 };
 await writeFile(path.join(OUTPUT_DIR, "texture-manifest.json"), `${JSON.stringify(textureManifest, null, 2)}\n`);
 
@@ -401,6 +488,8 @@ const runtimeManifest = {
   fallbackTextureCount,
   textureStatus: "all-exact-source-textures-active-no-fallbacks",
   exactRecoveredArchiveSha256: "0cc4d2eac2249f4b477b9d1cb273b845b9dab08a17d60aa53f9c16d76f0861f5",
+  jetwayTextureStatus: "exact-M1DGJETWAY-day-and-night-active",
+  jetwayTextures: exactJetwayTextures,
 };
 await writeFile(path.join(OUTPUT_DIR, "runtime-manifest.json"), `${JSON.stringify(runtimeManifest, null, 2)}\n`);
 if (fallbackTextureCount !== 0) throw new Error(`Terminal 4 still has ${fallbackTextureCount} fallback textures`);

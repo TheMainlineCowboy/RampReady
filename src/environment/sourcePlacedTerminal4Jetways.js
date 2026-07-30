@@ -12,7 +12,7 @@ export const SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE = Object.freeze({
   coordinateFrame: "A1-local; X=north, Y=up, Z=east",
   sceneOffset: Object.freeze([0, 0, 6.2]),
   highDetailRadiusMeters: 240,
-  detailLevel: "fsx-air-jetway01-crj-scale-articulated-v3",
+  detailLevel: "fsx-air-jetway01-exact-textured-crj-scale-v4",
 });
 
 const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
@@ -49,12 +49,12 @@ function findTerminalWallDistance(THREE, terminal, originX, originZ, towardX, to
   return Number.isFinite(nearest) ? nearest : null;
 }
 
-const CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 5.35;
+const CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25;
 const CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35;
 // The cabin and seven bellows folds extend 2.61 meters beyond bridgeEnd.
 // Keep that assembly just outside the aircraft skin instead of driving it
 // through the cockpit/fuselage centerline.
-const AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.65;
+const AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.55;
 
 // Keep only a limited set of deliberate ground-service openings. The legacy
 // gate atlas repeats the same black bay at nearly every module, which is not
@@ -104,7 +104,7 @@ function createArchedTunnelGeometry(THREE, width, height, roofRise) {
   return geometry;
 }
 
-function createMaterials(THREE) {
+function createMaterials(THREE, sourceTextures = {}) {
   const standard = (name, color, roughness, metalness) => new THREE.MeshStandardMaterial({
     name,
     color,
@@ -112,10 +112,37 @@ function createMaterials(THREE) {
     metalness,
     side: THREE.DoubleSide,
   });
+  const withExactJetwayTexture = (material, repeatX, repeatY, emissiveIntensity = 0.16) => {
+    if (!sourceTextures.diffuse) return material;
+    const map = sourceTextures.diffuse.clone();
+    map.name = `M1DGJETWAY exact source for ${material.name}`;
+    map.wrapS = map.wrapT = THREE.RepeatWrapping;
+    map.repeat.set(repeatX, repeatY);
+    map.needsUpdate = true;
+    material.map = map;
+    if (sourceTextures.emissive) {
+      const emissiveMap = sourceTextures.emissive.clone();
+      emissiveMap.name = `M1DGJETWAY_LM exact source for ${material.name}`;
+      emissiveMap.wrapS = emissiveMap.wrapT = THREE.RepeatWrapping;
+      emissiveMap.repeat.set(repeatX, repeatY);
+      emissiveMap.needsUpdate = true;
+      material.emissiveMap = emissiveMap;
+      material.emissive.setHex(0xffffff);
+      material.emissiveIntensity = emissiveIntensity;
+    }
+    material.color.setHex(0xffffff);
+    material.userData = {
+      ...(material.userData || {}),
+      exactJetwayTexture: "M1DGJETWAY.BMP",
+      exactJetwayLightmap: sourceTextures.emissive ? "M1DGJETWAY_LM.BMP" : null,
+      textureAuthority: "exact-recovered-original-freeware-archive",
+    };
+    return material;
+  };
   return {
-    shell: standard("AIR_Jetway01 warm-gray outer shell", 0xb6b8b8, 0.66, 0.16),
-    innerShell: standard("AIR_Jetway01 telescoping inner shell", 0xa4a8aa, 0.62, 0.2),
-    cabin: standard("AIR_Jetway01 aircraft cabin", 0xc0c1bf, 0.64, 0.15),
+    shell: withExactJetwayTexture(standard("AIR_Jetway01 exact-source outer shell", 0xffffff, 0.68, 0.1), 1.15, 2.6, 0.12),
+    innerShell: withExactJetwayTexture(standard("AIR_Jetway01 exact-source telescoping shell", 0xffffff, 0.64, 0.12), 1.0, 2.25, 0.12),
+    cabin: withExactJetwayTexture(standard("AIR_Jetway01 exact-source aircraft cabin", 0xffffff, 0.66, 0.08), 0.9, 1.35, 0.18),
     trim: standard("AIR_Jetway01 structural trim", 0x454b50, 0.52, 0.5),
     metal: standard("AIR_Jetway01 galvanized structure", 0x72787b, 0.48, 0.58),
     stair: standard("AIR_Jetway01 service stair", 0x8d9293, 0.58, 0.42),
@@ -198,7 +225,7 @@ function addServiceStairs(transforms, origin, yaw, direction, perpendicular) {
   }
 }
 
-export function buildSourcePlacedTerminal4Jetways(THREE, terminal) {
+export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTextures = {}) {
   const jetways = [...concourseA.jetways, ...concourseB.jetways];
   if (jetways.length !== SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.terminal4JetwayCount) {
     throw new Error(`Expected 58 Terminal 4 jetways, received ${jetways.length}`);
@@ -208,7 +235,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal) {
   group.name = "PHX_Terminal4_AIR_Jetway01_SourcePlaced";
   group.position.fromArray(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset);
 
-  const materials = createMaterials(THREE);
+  const materials = createMaterials(THREE, sourceTextures);
   const transforms = {
     wallCollar: [], rotundaBody: [], rotundaWindow: [], rotundaRoof: [], pivotCap: [],
     outer: [], inner: [], cabin: [], cabinFrontWindow: [], cabinSideWindow: [],
@@ -225,6 +252,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal) {
   let terminalConnectedCount = 0;
   let a1TerminalWallDistance = null;
   let terminal4FacadeInfillCount = 0;
+  let terminal4LowerFacadeFitCount = 0;
 
   for (const jetway of jetways) {
     const parking = parkingByGate.get(jetway.g);
@@ -273,29 +301,43 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal) {
       rotundaY,
     );
     const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 18);
+    const lowerFacadeWallDistance = findTerminalWallDistance(
+      THREE,
+      terminal,
+      jetway.x,
+      jetway.z + sourceOffsetZ,
+      -ux,
+      -uz,
+      1.25,
+    );
     if (terminalWallDistance != null) terminalConnectedCount += 1;
     if (jetway.g === "A1") a1TerminalWallDistance = terminalWallDistance;
 
     const gateNumber = Number.parseInt(jetway.g.slice(1), 10);
     const keepServiceBayOpen = OPEN_SERVICE_BAY_GATES.has(jetway.g);
-    if (terminalWallDistance != null && !keepServiceBayOpen) {
-      const facadeX = jetway.x - ux * Math.max(0.08, terminalWallDistance - 0.06);
-      const facadeZ = jetway.z - uz * Math.max(0.08, terminalWallDistance - 0.06);
+    const lowerWallFit = lowerFacadeWallDistance ?? terminalWallDistance;
+    if (lowerWallFit != null && !keepServiceBayOpen) {
+      // Measure the wall at ramp level rather than reusing the elevated rotunda
+      // intersection. Place the closure toward the ramp so it visibly covers the
+      // legacy repeated bay instead of landing behind the authored facade.
+      const facadeX = jetway.x - ux * lowerWallFit + ux * 0.35;
+      const facadeZ = jetway.z - uz * lowerWallFit + uz * 0.35;
       transforms.facadeInfill.push({
-        position: [facadeX, 1.12, facadeZ],
+        position: [facadeX, 1.32, facadeZ],
         yaw,
-        scale: [5.55, 2.18, 0.16],
+        scale: [5.72, 2.58, 0.42],
       });
+      terminal4LowerFacadeFitCount += 1;
       if (Number.isInteger(gateNumber) && gateNumber % 3 === 0) {
         transforms.facadeDoor.push({
-          position: [facadeX + px * 1.35 + ux * 0.1, 0.94, facadeZ + pz * 1.35 + uz * 0.1],
+          position: [facadeX + px * 1.35 + ux * 0.56, 0.94, facadeZ + pz * 1.35 + uz * 0.56],
           yaw,
           scale: [1.05, 1.78, 0.12],
         });
       }
       if (Number.isInteger(gateNumber) && gateNumber % 2 === 0) {
         transforms.facadeVent.push({
-          position: [facadeX - px * 1.45 + ux * 0.1, 1.54, facadeZ - pz * 1.45 + uz * 0.1],
+          position: [facadeX - px * 1.45 + ux * 0.56, 1.54, facadeZ - pz * 1.45 + uz * 0.56],
           yaw,
           scale: [1.16, 0.32, 0.12],
         });
@@ -524,6 +566,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal) {
   group.userData.terminalConnectedJetwayCount = terminalConnectedCount;
   group.userData.a1TerminalWallDistance = a1TerminalWallDistance;
   group.userData.facadeInfillCount = terminal4FacadeInfillCount;
+  group.userData.lowerFacadeFitCount = terminal4LowerFacadeFitCount;
   group.userData.openServiceBayCount = OPEN_SERVICE_BAY_GATES.size;
   group.userData.facadeInfillAuthority = "source-positioned-gate-module-closures-with-limited-service-openings";
   group.userData.terminalConnectionAuthority = "raycast-and-source-vertex-fit-to-authored-terminal-mesh";
@@ -531,6 +574,11 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal) {
   group.userData.coordinateFrame = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.coordinateFrame;
   group.userData.visualAuthority = "faithful-reconstruction-of-referenced-fsx-air-jetway01-library-object";
   group.userData.usesTerminalBuildingTextures = false;
+  group.userData.usesExactRecoveredJetwayTexture = Boolean(sourceTextures.diffuse);
+  group.userData.usesExactRecoveredJetwayLightmap = Boolean(sourceTextures.emissive);
+  group.userData.jetwayTextureAuthority = sourceTextures.diffuse
+    ? "M1DGJETWAY exact recovered original freeware texture and lightmap"
+    : "missing";
   group.userData.proceduralBuildingBoxReuse = false;
   return group;
 }
