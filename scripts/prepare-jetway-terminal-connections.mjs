@@ -51,7 +51,7 @@ function findTerminalWallDistance(THREE, terminal, originX, originZ, towardX, to
 replaceJetway(
   "export function buildSourcePlacedTerminal4Jetways(THREE) {",
   "export function buildSourcePlacedTerminal4Jetways(THREE, terminal) {",
-  "buildSourcePlacedTerminal4Jetways(THREE, terminal)",
+  "buildSourcePlacedTerminal4Jetways(THREE, terminal",
   "terminal-aware jetway builder signature",
 );
 
@@ -116,7 +116,9 @@ fs.writeFileSync(jetwayPath, jetways, "utf8");
 
 const terminalPath = "src/environment/authoredTerminal4Visual.js";
 let terminal = fs.readFileSync(terminalPath, "utf8");
-if (!terminal.includes("buildSourcePlacedTerminal4Jetways(THREE, authored)")) {
+const terminalAwareCallPresent = terminal.includes("buildSourcePlacedTerminal4Jetways(THREE, authored, jetwayTextures)")
+  || terminal.includes("buildSourcePlacedTerminal4Jetways(THREE, authored)");
+if (!terminalAwareCallPresent) {
   const legacyCalls = [
     "  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, textures, emissiveTextures);",
     "  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE);",
@@ -144,13 +146,13 @@ fs.writeFileSync(terminalPath, terminal, "utf8");
 for (const [path, tokens] of Object.entries({
   [jetwayPath]: [
     "function findTerminalWallDistance",
-    "buildSourcePlacedTerminal4Jetways(THREE, terminal)",
+    "buildSourcePlacedTerminal4Jetways(THREE, terminal",
     "const terminalWallDistance = findTerminalWallDistance",
     "wallConnectorLength / 2",
     "terminalConnectionAuthority",
   ],
   [terminalPath]: [
-    "buildSourcePlacedTerminal4Jetways(THREE, authored)",
+    "buildSourcePlacedTerminal4Jetways(THREE, authored",
     "authoredTerminal4A1JetwayWallDistance",
     "authoredTerminal4TerminalConnectedJetwayCount",
   ],
@@ -159,4 +161,4 @@ for (const [path, tokens] of Object.entries({
   for (const token of tokens) if (!prepared.includes(token)) throw new Error(`${path}: terminal-connected jetway preparation is missing ${token}`);
 }
 
-console.log("Prepared Terminal 4 jetways with measured terminal-wall connectors and explicit A1 connection evidence.");
+console.log("Prepared Terminal 4 jetways with measured terminal-wall connectors, textured builder compatibility and explicit A1 connection evidence.");
