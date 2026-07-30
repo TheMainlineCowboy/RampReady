@@ -200,5 +200,28 @@ inspection.selected.taxiwaySigns = decoded;
 inspection.selected.taxiwaySignEvidence = evidence;
 inspection.decodedCounts = { ...(inspection.decodedCounts || {}), taxiwaySignRecords: records.length, taxiwaySigns: decoded.length };
 fs.writeFileSync(inspectionPath, `${JSON.stringify(inspection, null, 2)}\n`, "utf8");
-if (!decoded.length) throw new Error(`KPHX taxiway sign decoder could not validate any of ${records.length} source records`);
+if (!decoded.length) {
+  const compactEvidence = evidence.map(({ offset, size, rawHex, candidates }) => ({
+    offset,
+    size,
+    rawHex,
+    candidates: candidates.map((candidate) => ({
+      variant: candidate.variant,
+      valid: candidate.valid,
+      reason: candidate.reason,
+      originLongitude: candidate.originLongitude,
+      originLatitude: candidate.originLatitude,
+      count: candidate.count,
+      longitude: candidate.longitude,
+      latitude: candidate.latitude,
+      headingDegrees: candidate.headingDegrees,
+      size: candidate.size,
+      justification: candidate.justification,
+      label: candidate.label,
+      signs: candidate.signs,
+    })),
+  }));
+  console.error(`KPHX_SIGN_EVIDENCE=${JSON.stringify(compactEvidence)}`);
+  throw new Error(`KPHX taxiway sign decoder could not validate any of ${records.length} source records`);
+}
 console.log(JSON.stringify({ sourceRecords: records.length, decodedSigns: decoded.length, formats: [...new Set(decoded.map((sign) => sign.sourceFormat))], labels: decoded.map((sign) => sign.label) }, null, 2));
