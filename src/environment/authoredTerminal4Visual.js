@@ -124,6 +124,7 @@ async function loadSourceTextures(THREE, baseUrl) {
       sourceHasAlpha: entry.hasAlpha === true,
       sourceAlphaCoverage: Number(entry.alphaCoverage || 0),
       sourceTransparentPixelCount: Number(entry.transparentPixelCount || 0),
+      sourceAtlasCutoutAuthority: entry.sourceAtlasCutoutAuthority || "none",
     };
     textures.set(reference.toUpperCase(), configuredDiffuse);
     if (emissive) {
@@ -177,6 +178,7 @@ function applySourceMaterials(THREE, scene, textures, emissiveTextures) {
         sourceLightmap: emissiveMap ? `${reference} exact _lm source` : null,
         sourceCutout,
         sourceAlphaCoverage: Number(texture?.userData?.sourceAlphaCoverage || 0),
+        sourceAtlasCutoutAuthority: texture?.userData?.sourceAtlasCutoutAuthority || "none",
         visibilityAuthority: legacyGroundAtlas
           ? "suppressed-old-terminal-ground-so-authoritative-aerial-and-adex-remain-visible"
           : "source-authored-terminal-material",
@@ -268,7 +270,7 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4LightmappedMaterialCount = lightmappedMaterialCount;
   environment.userData.authoredTerminal4HiddenLegacyGroundMaterialCount = hiddenLegacyGroundMaterialCount;
   environment.userData.authoredTerminal4SourceCutoutMaterialCount = sourceCutoutMaterialCount;
-  environment.userData.authoredTerminal4SourceAlphaAuthority = "exact-recovered-dxt1-alpha-coverage";
+  environment.userData.authoredTerminal4SourceAlphaAuthority = "recovered-source-atlas-unused-quadrant-cutout";
   environment.userData.authoredTerminal4JetwayVisualCount = sourcePlacedJetways.userData.jetwayCount;
   environment.userData.authoredTerminal4TerminalConnectedJetwayCount = sourcePlacedJetways.userData.terminalConnectedJetwayCount;
   environment.userData.authoredTerminal4A1JetwayWallDistance = sourcePlacedJetways.userData.a1TerminalWallDistance;

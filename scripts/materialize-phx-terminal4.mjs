@@ -199,6 +199,35 @@ function inspectAlpha(rgba) {
   };
 }
 
+function applySourceAtlasCutout(reference, width, height, rgba) {
+  if (reference.toUpperCase() !== "PHX_TERM400_1.DDS") {
+    return { applied: false, transparentPixelCount: 0, authority: "none" };
+  }
+  // The recovered source atlas has no encoded DXT1 alpha, but its lower-right
+  // quadrant is a single unused pure-black allocation. Exactly 120 extracted
+  // Terminal 4 triangles sample this quadrant, producing the standalone black
+  // block and repeated false lower-level boxes seen in the trainer. Preserve the
+  // separate left-side stairwell imagery and all dark windows; mask only pixels
+  // inside the unused quadrant that are actually pure black.
+  const startX = Math.floor(width / 2);
+  const startY = Math.floor(height / 2);
+  let transparentPixelCount = 0;
+  for (let y = startY; y < height; y += 1) {
+    for (let x = startX; x < width; x += 1) {
+      const offset = (y * width + x) * 4;
+      if (rgba[offset] > 4 || rgba[offset + 1] > 4 || rgba[offset + 2] > 4) continue;
+      if (rgba[offset + 3] !== 0) transparentPixelCount += 1;
+      rgba[offset + 3] = 0;
+    }
+  }
+  if (!(transparentPixelCount > 0)) throw new Error("PHX_TERM400_1 unused source-atlas quadrant contained no maskable pixels");
+  return {
+    applied: true,
+    transparentPixelCount,
+    authority: "recovered-phx-term400-1-unused-lower-right-atlas-quadrant",
+  };
+}
+
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
   for (let index = 0; index < 256; index += 1) {
@@ -311,6 +340,7 @@ for (const reference of diffuseReferences) {
     sourceCache.set(sourceIdentity, sourceBytes);
   }
   const decoded = decodeSourceTexture(sourceBytes);
+  const atlasCutout = applySourceAtlasCutout(reference, decoded.width, decoded.height, decoded.rgba);
   const alpha = inspectAlpha(decoded.rgba);
   const png = encodePng(decoded.width, decoded.height, decoded.rgba);
   const fileName = `${reference.replace(/\.[^.]+$/, "").replace(/[^A-Za-z0-9_-]/g, "_")}.png`;
@@ -328,6 +358,9 @@ for (const reference of diffuseReferences) {
     transparentPixelCount: alpha.transparentPixelCount,
     partialAlphaPixelCount: alpha.partialAlphaPixelCount,
     alphaCoverage: alpha.alphaCoverage,
+    sourceAtlasCutoutApplied: atlasCutout.applied,
+    sourceAtlasCutoutTransparentPixelCount: atlasCutout.transparentPixelCount,
+    sourceAtlasCutoutAuthority: atlasCutout.authority,
     fidelity: mapping.fidelity,
   };
 }
