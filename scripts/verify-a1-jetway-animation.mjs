@@ -25,6 +25,17 @@ requireTokens("src/environment/sourcePlacedTerminal4Jetways.js", [
   "group.userData.a1JetwayController",
   "group.userData.a1JetwayAnimationAuthority",
 ]);
+requireTokens("src/environment/animatedA1Jetway.js", [
+  "createTunnelRib",
+  "outer tunnel structural ribs",
+  "inner tunnel structural ribs",
+  "source-textured cabin service door",
+  "underbridge service cable segment",
+  "bogie diagonal brace",
+  "source-scale-ribs-panel-structure-service-cable-door-stair-bogie-v8",
+  "root.userData.structuralRibCount",
+  "root.userData.serviceCableSegmentCount",
+]);
 requireTokens("src/environment/authoredTerminal4Visual.js", [
   "authoredTerminal4A1JetwayController",
   "authoredTerminal4A1JetwayAnimationAuthority",
@@ -44,6 +55,7 @@ const materials = {
   shell: material(),
   innerShell: material(),
   cabin: material(),
+  cabinDoor: material(),
   trim: material(),
   glass: material(),
   light: material(),
@@ -65,6 +77,8 @@ const animated = buildAnimatedA1Jetway(THREE, materials, {
 const controller = animated.userData.controller;
 if (!controller) throw new Error("Animated A1 controller was not created");
 if (animated.userData.sourceScale !== 1) throw new Error("Animated A1 bridge must remain at source scale 1.00");
+if (animated.userData.structuralRibCount !== 20) throw new Error(`Animated A1 has ${animated.userData.structuralRibCount} structural ribs, expected 20`);
+if (animated.userData.serviceCableSegmentCount !== 8) throw new Error(`Animated A1 has ${animated.userData.serviceCableSegmentCount} cable segments, expected 8`);
 
 const samples = [];
 for (const deployment of [1, 0.7, 0.5, 0.15, 0]) {
@@ -87,8 +101,11 @@ if (controller.getDeployment() !== 0) throw new Error("A1 controller did not ret
 
 console.log(JSON.stringify({
   animationAuthority: animated.userData.animationAuthority,
+  detailAuthority: animated.userData.detailAuthority,
   sourceScale: animated.userData.sourceScale,
+  structuralRibCount: animated.userData.structuralRibCount,
+  serviceCableSegmentCount: animated.userData.serviceCableSegmentCount,
   contactTravelMeters: Number(travel.toFixed(3)),
   samples,
 }, null, 2));
-console.log("Verified animated A1 departure sequence: attached, hood clear, telescope in, rotate to park, then release tug approach.");
+console.log("Verified detailed animated A1 departure sequence: source-scale ribs and service equipment remain attached through hood clear, telescope, rotation and parked states.");
