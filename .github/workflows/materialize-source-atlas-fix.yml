@@ -1,0 +1,51 @@
+name: Materialize Terminal 4 atlas fix
+
+on:
+  push:
+    branches:
+      - work/simulator-quality-inspection-pass
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rampready-terminal4-atlas-materialize
+  cancel-in-progress: true
+
+jobs:
+  materialize:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out exact branch head
+        uses: actions/checkout@v4
+        with:
+          ref: work/simulator-quality-inspection-pass
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run deterministic preparation
+        run: npm run verify
+
+      - name: Commit prepared source-atlas runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -u
+          if git diff --cached --quiet; then
+            echo "Prepared atlas runtime is already committed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Commit targeted Terminal 4 atlas runtime [skip ci]"
+          git push origin HEAD:work/simulator-quality-inspection-pass
