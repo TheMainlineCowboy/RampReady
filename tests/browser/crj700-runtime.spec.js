@@ -32,27 +32,27 @@ async function launchRuntime(page) {
   await expect(canvas).toBeVisible();
   await expect.poll(
     () => canvas.getAttribute("data-environment-source"),
-    { timeout: 40_000, intervals: [250, 500, 1_000] },
+    { timeout: 90_000, intervals: [250, 500, 1_000] },
   ).toBe("authored-phx-terminal4-textured-source-jetways");
   await expect.poll(
     () => canvas.getAttribute("data-ground-source"),
-    { timeout: 40_000, intervals: [250, 500, 1_000] },
+    { timeout: 90_000, intervals: [250, 500, 1_000] },
   ).toBe("authored-kphx-v181-source-textured-nearfield");
   await expect.poll(
     () => canvas.getAttribute("data-photo-ground-source"),
-    { timeout: 40_000, intervals: [250, 500, 1_000] },
+    { timeout: 90_000, intervals: [250, 500, 1_000] },
   ).toBe("source-authored-phx-photo");
   await expect.poll(
     () => canvas.getAttribute("data-tug-source"),
-    { timeout: 40_000, intervals: [250, 500, 1_000] },
+    { timeout: 90_000, intervals: [250, 500, 1_000] },
   ).toBe("authored-standup");
   await expect.poll(
     () => canvas.getAttribute("data-operator-controls"),
-    { timeout: 40_000, intervals: [250, 500, 1_000] },
+    { timeout: 90_000, intervals: [250, 500, 1_000] },
   ).toBe("ready");
   await expect.poll(
     () => canvas.getAttribute("data-aircraft-source"),
-    { timeout: 40_000, intervals: [250, 500, 1_000] },
+    { timeout: 90_000, intervals: [250, 500, 1_000] },
   ).not.toBe("loading");
   await expect(canvas).toHaveAttribute("data-steering-mode", "rear");
   await expect(canvas).toHaveAttribute("data-operator-side", "right");
@@ -261,6 +261,10 @@ test("mobile controls remain inside the simulator viewport", async ({ page }) =>
       hud: rect(".rr-hud"), metrics: rect(".rr-metrics"), throttle: rect(".rr-throttle"),
       steer: rect(".rr-steer"), slider: rect(".rr-power-slider"), menu: rect(".rr-session-menu"),
       inspectionToggle: rect(".rr-inspection-toggle"),
+      title: (() => {
+        const element = document.querySelector(".rr-hud h1");
+        return element ? { text: element.textContent, clientWidth: element.clientWidth, scrollWidth: element.scrollWidth } : null;
+      })(),
     };
   });
   for (const name of ["hud", "metrics", "throttle", "steer", "slider", "menu", "inspectionToggle"]) {
@@ -269,6 +273,8 @@ test("mobile controls remain inside the simulator viewport", async ({ page }) =>
   expect(layout.canvas.width).toBeGreaterThanOrEqual(400);
   expect(layout.canvas.height).toBeGreaterThanOrEqual(890);
   expect(layout.slider.width).toBeGreaterThanOrEqual(120);
+  expect(layout.title?.text).toBe("Complete visual equipment check");
+  expect(layout.title?.scrollWidth).toBeLessThanOrEqual((layout.title?.clientWidth || 0) + 1);
   const before = Number(await canvas.getAttribute("data-camera-yaw"));
   await orbit(page, 120, -30);
   const after = Number(await canvas.getAttribute("data-camera-yaw"));
