@@ -106,14 +106,21 @@ const newDiffuseLoad = `  const mapping = TEXTURE_SOURCES[reference];
   }
   const decoded = decodeSourceTexture(sourceBytes);`;
 diffuse = replaceOnce(diffuse, oldDiffuseLoad, newDiffuseLoad, "const sourceIdentity = mapping.localFile", "Terminal 4 exact diffuse loader");
-diffuse = diffuse.replace('    sourcePath: mapping.sourcePath,', '    sourcePath: mapping.sourcePath,\n    sourceOrigin: mapping.localFile ? "exact-recovered-original-freeware-archive" : "pinned-skyharbor-source-repository",');
+if (!diffuse.includes('sourceOrigin: mapping.localFile ? "exact-recovered-original-freeware-archive"')) {
+  diffuse = diffuse.replace(
+    '    sourcePath: mapping.sourcePath,',
+    '    sourcePath: mapping.sourcePath,\n    sourceOrigin: mapping.localFile ? "exact-recovered-original-freeware-archive" : "pinned-skyharbor-source-repository",',
+  );
+}
 diffuse = diffuse.replace('  textureStatus: "pinned-authored-source-textures-active",', '  textureStatus: "all-exact-source-textures-active-no-fallbacks",\n  exactRecoveredArchiveSha256: "0cc4d2eac2249f4b477b9d1cb273b845b9dab08a17d60aa53f9c16d76f0861f5",');
 diffuse = diffuse.replace('console.log(`RampReady real PHX Terminal 4 materialized: ${EXPECTED.triangleCount} triangles, ${EXPECTED.partCount} parts, ${exactTextureCount} exact and ${fallbackTextureCount} source-authored fallback textures.`);', 'if (fallbackTextureCount !== 0) throw new Error(`Terminal 4 still has ${fallbackTextureCount} fallback textures`);\nconsole.log(`RampReady real PHX Terminal 4 materialized: ${EXPECTED.triangleCount} triangles, ${EXPECTED.partCount} parts, ${exactTextureCount} exact textures and zero fallbacks.`);');
 for (const token of [
   "EXACT_TEXTURE_DIR",
   'fidelity: "exact-recovered-original-freeware"',
   "function decodeDdsDxt1",
+  "function decodeSourceTexture",
   "decodeSourceTexture(sourceBytes)",
+  'sourceOrigin: mapping.localFile ? "exact-recovered-original-freeware-archive"',
   'textureStatus: "all-exact-source-textures-active-no-fallbacks"',
   "fallbackTextureCount !== 0",
 ]) if (!diffuse.includes(token)) throw new Error(`Prepared Terminal 4 exact diffuse materializer is missing ${token}`);
@@ -149,7 +156,7 @@ lightmaps = replaceOnce(
 lightmaps = replaceOnce(
   lightmaps,
   'const CRC_TABLE = (() => {',
-  `${ddsDecoder.replaceAll("Texture", "Lightmap")}\nconst CRC_TABLE = (() => {`,
+  `${ddsDecoder}\nconst CRC_TABLE = (() => {`,
   "function decodeDdsDxt1",
   "Terminal 4 lightmap DDS decoder",
 );
@@ -182,6 +189,7 @@ lightmaps = lightmaps.replace('console.log(`RampReady Terminal 4 exact source li
 for (const token of [
   "EXACT_RECOVERED_LIGHTMAP_SOURCES",
   "const lightmapSources = [",
+  "function decodeSourceTexture",
   "decodeSourceTexture(sourceBytes)",
   "emitted !== 15",
   'all-15-exact-source-lightmaps-active-no-missing-dependencies',
