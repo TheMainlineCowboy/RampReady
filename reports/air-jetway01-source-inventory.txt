@@ -1,0 +1,82 @@
+RampReady AIR_Jetway01 source inventory
+generated_utc=2026-07-30T07:17:51Z
+rampready_head=00fd61a38e5da17536769ead369cef268187e62f
+skyharbor_commit=2e6642778c9c88eac6a82b21063763cc78be7cfe
+
+== RampReady candidate files ==
+./.github/workflows/audit-kphx-jetways-terminal.yml|7141 bytes
+./public/models/crj700-mobile.glb|661688 bytes
+./public/models/crj700-user.glb|1873128 bytes
+./public/models/crj700/crj700-mobile.glb|661688 bytes
+./reports/air-jetway01-source-inventory.txt|222 bytes
+./reports/kphx-jetway-terminal-audit-status.json|950 bytes
+./reports/kphx-jetway-terminal-audit.json|86620 bytes
+./reports/kphx-jetway-terminal-audit.log|193 bytes
+./scripts/audit-kphx-jetways-and-terminal-primitives.mjs|11483 bytes
+./scripts/prepare-air-jetway01-contract.mjs|2183 bytes
+./scripts/prepare-air-jetway01-door-alignment.mjs|1269 bytes
+./scripts/prepare-jetway-terminal-connections.mjs|7357 bytes
+./scripts/prepare-terminal4-jetway-crj-v5.mjs|6228 bytes
+./scripts/prepare-terminal4-jetway-dxt3.mjs|4155 bytes
+./scripts/prepare-terminal4-jetway-facade-v4.mjs|17625 bytes
+./scripts/verify-terminal4-jetway-crj-v5.mjs|3470 bytes
+./source-assets/kphx-exact-terminal4/M1DGJETWAY.BMP|349626 bytes
+./source-assets/kphx-exact-terminal4/M1DGJETWAY_LM.BMP|349626 bytes
+./src/environment/sourcePlacedTerminal4Jetways.js|27569 bytes
+
+== SkyHarborPhx candidate files ==
+.cache/source-inventory/SkyHarborPhx/m1dgjetway.bmp|349626 bytes
+.cache/source-inventory/SkyHarborPhx/m1dgjetway_lm.bmp|349626 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/CVX_cartraffic.BGL|674 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/KPHX_ADEX.BGL|183319 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/KPHX_ADEX_CVX.bgl|1159 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/PHXPhoto.bgl|8278549 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/PHX_Scenery.BGL|27900 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/PHX_Vehicles.BGL|20348 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/backhoe.BGL|13308 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/blastshield.BGL|1760 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/bridgerailphx1.BGL|1408 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/bridgerailphx2.BGL|3928 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/bridgerailphx3.BGL|3928 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/bridgerailphx4.BGL|9808 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/cone.BGL|2995 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/constrailer.BGL|3720 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/constzone.BGL|8246 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/helibcn.BGL|370 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/kphx_exc3.BGL|112 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/kphx_exc4.BGL|112 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/kphx_exc5.BGL|112 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/kphx_exc6.BGL|112 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/kphx_exc7.BGL|112 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/kphx_exc8.BGL|112 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/kphx_exc9.BGL|112 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/phx_outline.BGL|736 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/phx_t2_gar.BGL|7235 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/phx_t4_gar.BGL|8383 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/phxglo23.BGL|736 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/phxglo4.BGL|736 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/phxprkgrg.BGL|3718 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/phxtermlink.BGL|13812 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/phxtwr.BGL|68531 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/phxtwrrdlt.BGL|1222 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/pvdbb.BGL|2528 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/term2.BGL|78036 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/term3.BGL|105876 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/term4.BGL|690258 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/tmarks.BGL|656 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/ushngr.BGL|4839 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/wncater.BGL|4772 bytes
+.cache/source-inventory/SkyHarborPhx/scenery/wnhngr.BGL|6647 bytes
+
+== AIR_Jetway01 / GUID string matches ==
+-- .cache/source-inventory/SkyHarborPhx/.git/index
+m1dgjetway.bmp
+m1dgjetway_lm.bmp
+
+== Exact texture identity ==
+6f7b4e3a91020e1f1db54667a0cbe1152c6f6b99497ce39e135aa1312a3df41f  ./.cache/source-inventory/SkyHarborPhx/m1dgjetway.bmp
+7681fa27310661358a059ece3bd861a7a0c5fa1878e626adbc92650755de04f0  ./.cache/source-inventory/SkyHarborPhx/m1dgjetway_lm.bmp
+6f7b4e3a91020e1f1db54667a0cbe1152c6f6b99497ce39e135aa1312a3df41f  ./source-assets/kphx-exact-terminal4/M1DGJETWAY.BMP
+7681fa27310661358a059ece3bd861a7a0c5fa1878e626adbc92650755de04f0  ./source-assets/kphx-exact-terminal4/M1DGJETWAY_LM.BMP
+6f7b4e3a91020e1f1db54667a0cbe1152c6f6b99497ce39e135aa1312a3df41f  .cache/source-inventory/SkyHarborPhx/m1dgjetway.bmp
+7681fa27310661358a059ece3bd861a7a0c5fa1878e626adbc92650755de04f0  .cache/source-inventory/SkyHarborPhx/m1dgjetway_lm.bmp
