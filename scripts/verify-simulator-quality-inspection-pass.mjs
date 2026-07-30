@@ -36,13 +36,14 @@ for (const token of [
   "prepare-terminal4-jetway-crj-v5.mjs",
   "prepare-simulator-quality-runtime-evidence.mjs",
   "prepare-terminal4-runtime.mjs",
+  "prepare-terminal4-crj-runtime-evidence.mjs",
   "prepare-terminal4-inspection-controls.mjs",
 ]) if (!runtimePreparation.includes(token)) throw new Error(`Terminal 4 runtime preparation wiring is missing ${token}`);
 if (!verifyCommand.includes("verify-simulator-quality-inspection-pass.mjs")) {
   throw new Error("Full verification suite does not include the simulator-quality inspection contract");
 }
 if (!verifyCommand.includes("verify-terminal4-jetway-crj-v5.mjs")) {
-  throw new Error("Full verification suite does not include the CRJ v5 visual contract");
+  throw new Error("Full verification suite does not include the source-scale jetway contract");
 }
 
 const trainerTokens = [
@@ -115,20 +116,33 @@ const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js",
   "wallConnectorLength / 2",
   "terminalConnectedJetwayCount",
   "a1TerminalWallDistance",
-  "a1DoorContactErrorMeters",
   "lowerFacadeFitCount",
   "CLOSED_SERVICE_DOOR_GATES.has(jetway.g)",
   "FACADE_VENT_GATES.has(jetway.g)",
   "raycast-and-source-vertex-fit-to-authored-terminal-mesh",
   "M1DGJETWAY exact recovered original freeware texture and lightmap",
   "usesExactRecoveredJetwayTexture",
-  'fsx-air-jetway01-exact-textured-crj-scale-v5',
+  'fsx-air-jetway01-exact-textured-source-scale-articulated-v5',
+  "sourceDimensionsMeters: Object.freeze([37.92, 8.77, 26.51])",
+  "sourceScaleAuthority",
+  "sourceGeometryMode",
+  "requiresOriginalSourceMesh",
+  "jetwayMotionLimits",
+  'initialJetwayState = "attached-to-aircraft-door"',
+  "requiredPrePushSequence",
 ]);
 if (jetways.includes("scale: [3.6, 3.1, 1.4]")) {
   throw new Error("Jetways still use the fixed detached 1.4-meter terminal collar");
 }
-for (const forbidden of ["gateNumber % 3", "gateNumber % 2", "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25"]) {
-  if (jetways.includes(forbidden)) throw new Error(`Superseded repetitive or misaligned jetway token remains: ${forbidden}`);
+for (const forbidden of [
+  "gateNumber % 3",
+  "gateNumber % 2",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.28",
+  "createArchedTunnelGeometry(THREE, 2.08, 2.02, 0.18)",
+  "scale: [2.24, 2.12, wallConnectorLength]",
+]) {
+  if (jetways.includes(forbidden)) throw new Error(`Repetitive facade or aircraft-specific jetway shrink remains: ${forbidden}`);
 }
 
 requireTokens("scripts/materialize-phx-terminal4.mjs", [
@@ -151,6 +165,9 @@ const terminalRuntime = requireTokens("src/environment/authoredTerminal4Visual.j
   "authoredTerminal4A1JetwayWallDistance",
   "authoredTerminal4LowerFacadeFitCount",
   "authoredTerminal4JetwayTextureAuthority",
+  "authoredTerminal4JetwaySourceScaleAuthority",
+  "authoredTerminal4RequiresOriginalJetwayMesh",
+  "authoredTerminal4JetwayRequiredPrePushSequence",
 ]);
 if (terminalRuntime.includes("material.transparent = false;\n      material.opacity = 1;\n      material.side")) {
   throw new Error("Terminal runtime still forces every source-alpha material opaque");
@@ -166,9 +183,14 @@ const generatedRuntime = requireTokens("src/components/RampReadyStandupTrainerTe
   "dataset.groundMarkingContactMode",
   "dataset.inspectionMode",
   'className="rr-inspection-toggle"',
+  "dataset.terminal4JetwaySourceScaleAuthority",
+  "dataset.terminal4JetwaySourceGeometryMode",
+  "dataset.terminal4RequiresOriginalJetwayMesh",
+  "dataset.terminal4JetwayInitialState",
+  "dataset.terminal4JetwayPrePushSequence",
 ]);
 if (!generatedRuntime.includes('dataset.inspectionMode = inspectionRef.current ? "active" : "training"')) {
   throw new Error("Generated PHX runtime does not expose initial inspection mode state");
 }
 
-console.log("RampReady simulator-quality inspection pass verified: visible unrestricted tug inspection, pavement-coincident markings, source-qualified service bays, irregular lower-wall facade fits, and CRJ700-scale terminal-connected AIR_Jetway01 geometry are active.");
+console.log("RampReady PHX inspection pass verified for draft validation: unrestricted tug inspection, pavement-coincident markings, source-qualified service bays, irregular lower-wall facade fits, stock-scale AIR_Jetway01 placement and exact textures are active. Promotion remains blocked while the original stock skinned mesh is unavailable and fallback geometry is disclosed.");
