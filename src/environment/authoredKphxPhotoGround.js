@@ -26,19 +26,40 @@ export const AUTHORED_KPHX_PHOTO_PROFILE = Object.freeze({
   fullCoverageUnderlayMode: "full-airport-neutral-underlay-below-all-source-tiles-v2",
   colorRepairMode: "source-aerial-dark-neutral-artifact-lift-v1",
   shadowLiftMode: "source-aerial-hue-preserving-shadow-lift-v2",
+  asphaltDisplayMode: "source-matched-charcoal-asphalt-with-shadow-floor-v1",
 });
 
 const OPAQUE_ADEX_SURFACES = new Set(["airport-base"]);
+const SOURCE_MATCHED_ADEX_SURFACES = new Set(["asphalt"]);
 
-function hideFlatADEXSurfaceColors(environment) {
+function configureAdexSurfaceDisplay(environment) {
   const authoredGround = environment.userData.authoredGround;
   if (!authoredGround) throw new Error("KPHX ADEX ground must load before its photo layer");
   let hiddenMaterialCount = 0;
+  let sourceMatchedAsphaltMaterialCount = 0;
   authoredGround.traverse((node) => {
     if (!node.isMesh) return;
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     for (const material of materials) {
-      if (!material || !OPAQUE_ADEX_SURFACES.has(material.name)) continue;
+      if (!material) continue;
+      if (SOURCE_MATCHED_ADEX_SURFACES.has(material.name)) {
+        material.visible = true;
+        material.color?.setHex?.(0x666a6c);
+        material.emissive?.setHex?.(0x202426);
+        material.emissiveIntensity = 0.65;
+        material.roughness = 0.98;
+        material.metalness = 0;
+        material.toneMapped = false;
+        material.depthWrite = true;
+        material.userData = {
+          ...(material.userData || {}),
+          displayAuthority: AUTHORED_KPHX_PHOTO_PROFILE.asphaltDisplayMode,
+        };
+        material.needsUpdate = true;
+        sourceMatchedAsphaltMaterialCount += 1;
+        continue;
+      }
+      if (!OPAQUE_ADEX_SURFACES.has(material.name)) continue;
       material.visible = false;
       material.depthWrite = false;
       material.userData = {
@@ -49,7 +70,7 @@ function hideFlatADEXSurfaceColors(environment) {
       hiddenMaterialCount += 1;
     }
   });
-  return hiddenMaterialCount;
+  return { hiddenMaterialCount, sourceMatchedAsphaltMaterialCount };
 }
 
 function buildAirportBaseUnderlay(THREE, environment) {
@@ -265,6 +286,7 @@ async function buildTiledPhotoGround(THREE, baseUrl, manifest) {
   group.userData.fullCoverageUnderlayMode = AUTHORED_KPHX_PHOTO_PROFILE.fullCoverageUnderlayMode;
   group.userData.colorRepairMode = AUTHORED_KPHX_PHOTO_PROFILE.colorRepairMode;
   group.userData.shadowLiftMode = AUTHORED_KPHX_PHOTO_PROFILE.shadowLiftMode;
+  group.userData.asphaltDisplayMode = AUTHORED_KPHX_PHOTO_PROFILE.asphaltDisplayMode;
   return group;
 }
 
@@ -286,6 +308,7 @@ async function buildFallbackPhotoGround(THREE, imageUrl, manifest) {
   photoGround.userData.fullCoverageUnderlayMode = AUTHORED_KPHX_PHOTO_PROFILE.fullCoverageUnderlayMode;
   photoGround.userData.colorRepairMode = AUTHORED_KPHX_PHOTO_PROFILE.colorRepairMode;
   photoGround.userData.shadowLiftMode = AUTHORED_KPHX_PHOTO_PROFILE.shadowLiftMode;
+  photoGround.userData.asphaltDisplayMode = AUTHORED_KPHX_PHOTO_PROFILE.asphaltDisplayMode;
   return photoGround;
 }
 
@@ -309,7 +332,7 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
   const manifest = await fetchManifest(manifestUrl);
   const photoGround = await buildBestAvailablePhotoGround(THREE, baseUrl, imageUrl, manifest);
   const underlayMaterialCount = buildAirportBaseUnderlay(THREE, environment);
-  const hiddenSurfaceMaterialCount = hideFlatADEXSurfaceColors(environment);
+  const adexSurfaceState = configureAdexSurfaceDisplay(environment);
   environment.add(photoGround);
   const exactA1 = await installExactKphxA1(THREE, environment);
   exactA1.position.set(0, 0, 6.2);
@@ -337,7 +360,9 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
   environment.userData.authoredPhotoUnderlayMaterialCount = underlayMaterialCount;
   environment.userData.authoredPhotoColorRepairMode = AUTHORED_KPHX_PHOTO_PROFILE.colorRepairMode;
   environment.userData.authoredPhotoShadowLiftMode = AUTHORED_KPHX_PHOTO_PROFILE.shadowLiftMode;
-  environment.userData.hiddenADEXSurfaceMaterialCount = hiddenSurfaceMaterialCount;
+  environment.userData.authoredPhotoAsphaltDisplayMode = AUTHORED_KPHX_PHOTO_PROFILE.asphaltDisplayMode;
+  environment.userData.sourceMatchedADEXAsphaltMaterialCount = adexSurfaceState.sourceMatchedAsphaltMaterialCount;
+  environment.userData.hiddenADEXSurfaceMaterialCount = adexSurfaceState.hiddenMaterialCount;
   environment.userData.exactA1BlendedProjectedMaterialCount = 0;
   environment.userData.exactA1HiddenProjectedMaterialCount = hiddenProjectedMaterialCount;
   environment.userData.exactA1SourceLightFixtureCount = sourceLights.userData.fixtureCount;
