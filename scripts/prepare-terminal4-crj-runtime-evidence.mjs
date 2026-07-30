@@ -12,48 +12,70 @@ const terminalPath = "src/environment/authoredTerminal4Visual.js";
 insertAfter(
   terminalPath,
   "  environment.userData.authoredTerminal4A1JetwayWallDistance = sourcePlacedJetways.userData.a1TerminalWallDistance;",
-  "  environment.userData.authoredTerminal4A1DoorContactErrorMeters = sourcePlacedJetways.userData.a1DoorContactErrorMeters;",
-  "authoredTerminal4A1DoorContactErrorMeters",
-  "A1 door-contact runtime evidence",
+  `  environment.userData.authoredTerminal4JetwaySourceScaleAuthority = sourcePlacedJetways.userData.sourceScaleAuthority;
+  environment.userData.authoredTerminal4JetwaySourceGeometryMode = sourcePlacedJetways.userData.sourceGeometryMode;
+  environment.userData.authoredTerminal4RequiresOriginalJetwayMesh = sourcePlacedJetways.userData.requiresOriginalSourceMesh === true;
+  environment.userData.authoredTerminal4JetwayInitialState = sourcePlacedJetways.userData.initialJetwayState;
+  environment.userData.authoredTerminal4JetwayRequiredPrePushSequence = sourcePlacedJetways.userData.requiredPrePushSequence;
+  environment.userData.authoredTerminal4JetwayMotionLimits = sourcePlacedJetways.userData.jetwayMotionLimits;`,
+  "authoredTerminal4JetwaySourceScaleAuthority",
+  "source-scale jetway runtime evidence",
 );
 
 const runtimePath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 insertAfter(
   runtimePath,
   '    renderer.domElement.dataset.terminal4A1JetwayWallDistance = "loading";',
-  '    renderer.domElement.dataset.terminal4A1DoorContactErrorMeters = "loading";',
-  "dataset.terminal4A1DoorContactErrorMeters = \"loading\"",
-  "A1 door-contact dataset initialization",
+  `    renderer.domElement.dataset.terminal4JetwaySourceScaleAuthority = "loading";
+    renderer.domElement.dataset.terminal4JetwaySourceGeometryMode = "loading";
+    renderer.domElement.dataset.terminal4RequiresOriginalJetwayMesh = "loading";
+    renderer.domElement.dataset.terminal4JetwayInitialState = "loading";
+    renderer.domElement.dataset.terminal4JetwayPrePushSequence = "loading";`,
+  'dataset.terminal4JetwaySourceScaleAuthority = "loading"',
+  "source-scale dataset initialization",
 );
 insertAfter(
   runtimePath,
   `        renderer.domElement.dataset.terminal4A1JetwayWallDistance = Number.isFinite(environment.userData.authoredTerminal4A1JetwayWallDistance)
           ? environment.userData.authoredTerminal4A1JetwayWallDistance.toFixed(3)
           : "missing";`,
-  `        renderer.domElement.dataset.terminal4A1DoorContactErrorMeters = Number.isFinite(environment.userData.authoredTerminal4A1DoorContactErrorMeters)
-          ? environment.userData.authoredTerminal4A1DoorContactErrorMeters.toFixed(3)
-          : "missing";`,
-  "dataset.terminal4A1DoorContactErrorMeters = Number.isFinite",
-  "A1 door-contact dataset value",
+  `        renderer.domElement.dataset.terminal4JetwaySourceScaleAuthority = environment.userData.authoredTerminal4JetwaySourceScaleAuthority || "missing";
+        renderer.domElement.dataset.terminal4JetwaySourceGeometryMode = environment.userData.authoredTerminal4JetwaySourceGeometryMode || "missing";
+        renderer.domElement.dataset.terminal4RequiresOriginalJetwayMesh = String(environment.userData.authoredTerminal4RequiresOriginalJetwayMesh === true);
+        renderer.domElement.dataset.terminal4JetwayInitialState = environment.userData.authoredTerminal4JetwayInitialState || "missing";
+        renderer.domElement.dataset.terminal4JetwayPrePushSequence = environment.userData.authoredTerminal4JetwayRequiredPrePushSequence || "missing";`,
+  "dataset.terminal4JetwaySourceScaleAuthority = environment.userData",
+  "source-scale dataset values",
 );
 insertAfter(
   runtimePath,
   '        renderer.domElement.dataset.terminal4A1JetwayWallDistance = "load-error";',
-  '        renderer.domElement.dataset.terminal4A1DoorContactErrorMeters = "load-error";',
-  "dataset.terminal4A1DoorContactErrorMeters = \"load-error\"",
-  "A1 door-contact dataset error state",
+  `        renderer.domElement.dataset.terminal4JetwaySourceScaleAuthority = "load-error";
+        renderer.domElement.dataset.terminal4JetwaySourceGeometryMode = "load-error";
+        renderer.domElement.dataset.terminal4RequiresOriginalJetwayMesh = "load-error";
+        renderer.domElement.dataset.terminal4JetwayInitialState = "load-error";
+        renderer.domElement.dataset.terminal4JetwayPrePushSequence = "load-error";`,
+  'dataset.terminal4JetwaySourceScaleAuthority = "load-error"',
+  "source-scale dataset error state",
 );
 
 for (const [path, tokens] of [
-  [terminalPath, ["authoredTerminal4A1DoorContactErrorMeters", "sourcePlacedJetways.userData.a1DoorContactErrorMeters"]],
+  [terminalPath, [
+    "authoredTerminal4JetwaySourceScaleAuthority",
+    "sourcePlacedJetways.userData.sourceScaleAuthority",
+    "authoredTerminal4RequiresOriginalJetwayMesh",
+    "authoredTerminal4JetwayRequiredPrePushSequence",
+  ]],
   [runtimePath, [
-    'dataset.terminal4A1DoorContactErrorMeters = "loading"',
-    "dataset.terminal4A1DoorContactErrorMeters = Number.isFinite",
-    'dataset.terminal4A1DoorContactErrorMeters = "load-error"',
+    'dataset.terminal4JetwaySourceScaleAuthority = "loading"',
+    "dataset.terminal4JetwaySourceScaleAuthority = environment.userData",
+    'dataset.terminal4JetwaySourceScaleAuthority = "load-error"',
+    "dataset.terminal4RequiresOriginalJetwayMesh",
+    "dataset.terminal4JetwayPrePushSequence",
   ]],
 ]) {
   const source = fs.readFileSync(path, "utf8");
-  for (const token of tokens) if (!source.includes(token)) throw new Error(`${path}: missing CRJ runtime evidence ${token}`);
+  for (const token of tokens) if (!source.includes(token)) throw new Error(`${path}: missing source-scale jetway runtime evidence ${token}`);
 }
 
-console.log("Prepared measured A1 CRJ door-contact runtime evidence in the terminal environment and browser dataset.");
+console.log("Prepared honest Terminal 4 jetway runtime evidence: stock scale preserved, exact textures active, fallback geometry disclosed, and the required attached-to-retracted pre-push sequence exposed.");
