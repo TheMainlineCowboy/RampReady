@@ -9,26 +9,24 @@ const webServerCommand = requestedWebServerCommand.includes("prepare:terminal4-r
   ? requestedWebServerCommand
   : `${terminal4Preparation} && ${requestedWebServerCommand}`;
 
-async function applyKphxAuthoredGroundIsolationBeforeServer() {
+async function applyKphxConcreteIsolationBeforeServer() {
   const isKphxDiagnostic = process.argv.some((argument) => argument.includes("kphx-ground-runtime.spec.js"));
   if (!isKphxDiagnostic || externalBaseURL) return;
 
   const sourcePath = path.resolve("src/environment/authoredKphxGround.js");
   let source = await readFile(sourcePath, "utf8");
-  const anchor = "  environment.add(authored);";
+  const anchor = `      } else if (material.name === "concrete") {\n        material.visible = true;`;
+  const replacement = `      } else if (material.name === "concrete") {\n        material.visible = false;\n        material.userData.diagnosticVisibilityAuthority = "hidden-concrete-before-vite";`;
   const occurrences = source.split(anchor).length - 1;
   if (occurrences !== 1) {
-    throw new Error(`KPHX authored-ground source isolation expected 1 anchor, found ${occurrences}`);
+    throw new Error(`KPHX concrete source isolation expected 1 anchor, found ${occurrences}`);
   }
 
-  source = source.replace(
-    anchor,
-    `  authored.visible = false;\n  authored.userData.diagnosticVisibilityAuthority = "hidden-complete-authored-adex-ground-before-vite";\n\n${anchor}`,
-  );
+  source = source.replace(anchor, replacement);
   await writeFile(sourcePath, source, "utf8");
 }
 
-await applyKphxAuthoredGroundIsolationBeforeServer();
+await applyKphxConcreteIsolationBeforeServer();
 
 export default defineConfig({
   testDir: "./tests/browser",
