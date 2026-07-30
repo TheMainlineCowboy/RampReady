@@ -3,7 +3,7 @@ import fs from "node:fs";
 function replaceOnce(path, oldText, newText, marker, label) {
   let source = fs.readFileSync(path, "utf8");
   if (source.includes(marker)) return;
-  if (!source.includes(oldText)) throw new Error(`${path}: source-alpha anchor is missing for ${label}`);
+  if (!source.includes(oldText)) throw new Error(`${path}: source-atlas anchor is missing for ${label}`);
   source = source.replace(oldText, newText);
   fs.writeFileSync(path, source, "utf8");
 }
@@ -34,26 +34,63 @@ const CRC_TABLE = (() => {`,
 );
 replaceOnce(
   materializerPath,
-  `  const decoded = decodeSourceTexture(sourceBytes);
-  const png = encodePng(decoded.width, decoded.height, decoded.rgba);`,
-  `  const decoded = decodeSourceTexture(sourceBytes);
-  const alpha = inspectAlpha(decoded.rgba);
-  const png = encodePng(decoded.width, decoded.height, decoded.rgba);`,
-  "const alpha = inspectAlpha(decoded.rgba)",
-  "per-texture alpha evidence",
+  "const CRC_TABLE = (() => {",
+  `function applySourceAtlasCutout(reference, width, height, rgba) {
+  if (reference.toUpperCase() !== "PHX_TERM400_1.DDS") {
+    return { applied: false, transparentPixelCount: 0, authority: "none" };
+  }
+  // The recovered source atlas has no encoded DXT1 alpha, but its lower-right
+  // quadrant is a single unused pure-black allocation. Exactly 120 extracted
+  // Terminal 4 triangles sample this quadrant, producing the standalone black
+  // block and repeated false lower-level boxes seen in the trainer. Preserve the
+  // separate left-side stairwell imagery and all dark windows; mask only pixels
+  // inside the unused quadrant that are actually pure black.
+  const startX = Math.floor(width / 2);
+  const startY = Math.floor(height / 2);
+  let transparentPixelCount = 0;
+  for (let y = startY; y < height; y += 1) {
+    for (let x = startX; x < width; x += 1) {
+      const offset = (y * width + x) * 4;
+      if (rgba[offset] > 4 || rgba[offset + 1] > 4 || rgba[offset + 2] > 4) continue;
+      if (rgba[offset + 3] !== 0) transparentPixelCount += 1;
+      rgba[offset + 3] = 0;
+    }
+  }
+  if (!(transparentPixelCount > 0)) throw new Error("PHX_TERM400_1 unused source-atlas quadrant contained no maskable pixels");
+  return {
+    applied: true,
+    transparentPixelCount,
+    authority: "recovered-phx-term400-1-unused-lower-right-atlas-quadrant",
+  };
+}
+
+const CRC_TABLE = (() => {`,
+  "function applySourceAtlasCutout(reference, width, height, rgba)",
+  "source atlas cutout helper",
 );
 replaceOnce(
   materializerPath,
-  `    sourceCompression: decoded.compression,
+  `  const decoded = decodeSourceTexture(sourceBytes);
+  const alpha = inspectAlpha(decoded.rgba);
+  const png = encodePng(decoded.width, decoded.height, decoded.rgba);`,
+  `  const decoded = decodeSourceTexture(sourceBytes);
+  const atlasCutout = applySourceAtlasCutout(reference, decoded.width, decoded.height, decoded.rgba);
+  const alpha = inspectAlpha(decoded.rgba);
+  const png = encodePng(decoded.width, decoded.height, decoded.rgba);`,
+  "const atlasCutout = applySourceAtlasCutout(reference",
+  "per-texture source-atlas cutout",
+);
+replaceOnce(
+  materializerPath,
+  `    alphaCoverage: alpha.alphaCoverage,
     fidelity: mapping.fidelity,`,
-  `    sourceCompression: decoded.compression,
-    hasAlpha: alpha.hasAlpha,
-    transparentPixelCount: alpha.transparentPixelCount,
-    partialAlphaPixelCount: alpha.partialAlphaPixelCount,
-    alphaCoverage: alpha.alphaCoverage,
+  `    alphaCoverage: alpha.alphaCoverage,
+    sourceAtlasCutoutApplied: atlasCutout.applied,
+    sourceAtlasCutoutTransparentPixelCount: atlasCutout.transparentPixelCount,
+    sourceAtlasCutoutAuthority: atlasCutout.authority,
     fidelity: mapping.fidelity,`,
-  "transparentPixelCount: alpha.transparentPixelCount",
-  "texture manifest alpha fields",
+  "sourceAtlasCutoutAuthority: atlasCutout.authority",
+  "texture manifest source-atlas fields",
 );
 
 const runtimePath = "src/environment/authoredTerminal4Visual.js";
@@ -69,10 +106,11 @@ replaceOnce(
       sourceHasAlpha: entry.hasAlpha === true,
       sourceAlphaCoverage: Number(entry.alphaCoverage || 0),
       sourceTransparentPixelCount: Number(entry.transparentPixelCount || 0),
+      sourceAtlasCutoutAuthority: entry.sourceAtlasCutoutAuthority || "none",
     };
     textures.set(reference.toUpperCase(), configuredDiffuse);`,
   "sourceHasAlpha: entry.hasAlpha === true",
-  "runtime texture alpha metadata",
+  "runtime texture source-atlas metadata",
 );
 replaceOnce(
   runtimePath,
@@ -110,9 +148,10 @@ replaceOnce(
   `        sourceLightmap: emissiveMap ? \`${"${reference}"} exact _lm source\` : null,
         sourceCutout,
         sourceAlphaCoverage: Number(texture?.userData?.sourceAlphaCoverage || 0),
+        sourceAtlasCutoutAuthority: texture?.userData?.sourceAtlasCutoutAuthority || "none",
         visibilityAuthority: legacyGroundAtlas`,
-  "sourceAlphaCoverage: Number(texture?.userData?.sourceAlphaCoverage",
-  "material alpha provenance",
+  "sourceAtlasCutoutAuthority: texture?.userData?.sourceAtlasCutoutAuthority",
+  "material source-atlas provenance",
 );
 replaceOnce(
   runtimePath,
@@ -151,28 +190,35 @@ replaceOnce(
   environment.userData.authoredTerminal4JetwayVisualCount`,
   `  environment.userData.authoredTerminal4HiddenLegacyGroundMaterialCount = hiddenLegacyGroundMaterialCount;
   environment.userData.authoredTerminal4SourceCutoutMaterialCount = sourceCutoutMaterialCount;
-  environment.userData.authoredTerminal4SourceAlphaAuthority = "exact-recovered-dxt1-alpha-coverage";
+  environment.userData.authoredTerminal4SourceAlphaAuthority = "recovered-source-atlas-unused-quadrant-cutout";
   environment.userData.authoredTerminal4JetwayVisualCount`,
   "authoredTerminal4SourceAlphaAuthority",
-  "terminal alpha runtime evidence",
+  "terminal source-atlas runtime evidence",
 );
+
+let runtime = fs.readFileSync(runtimePath, "utf8");
+runtime = runtime.replaceAll(
+  'environment.userData.authoredTerminal4SourceAlphaAuthority = "exact-recovered-dxt1-alpha-coverage";',
+  'environment.userData.authoredTerminal4SourceAlphaAuthority = "recovered-source-atlas-unused-quadrant-cutout";',
+);
+fs.writeFileSync(runtimePath, runtime, "utf8");
 
 for (const [path, tokens] of Object.entries({
   [materializerPath]: [
     "function inspectAlpha(rgba)",
-    "const alpha = inspectAlpha(decoded.rgba)",
-    "transparentPixelCount: alpha.transparentPixelCount",
-    "alphaCoverage: alpha.alphaCoverage",
+    "function applySourceAtlasCutout(reference, width, height, rgba)",
+    "const atlasCutout = applySourceAtlasCutout(reference",
+    "sourceAtlasCutoutAuthority: atlasCutout.authority",
   ],
   [runtimePath]: [
     "sourceHasAlpha: entry.hasAlpha === true",
     "const sourceCutout = texture?.userData?.sourceHasAlpha === true",
     "material.alphaTest = sourceCutout ? 0.42 : 0",
-    "authoredTerminal4SourceAlphaAuthority",
+    "recovered-source-atlas-unused-quadrant-cutout",
   ],
 })) {
   const prepared = fs.readFileSync(path, "utf8");
-  for (const token of tokens) if (!prepared.includes(token)) throw new Error(`${path}: exact source alpha preparation is missing ${token}`);
+  for (const token of tokens) if (!prepared.includes(token)) throw new Error(`${path}: source-atlas preparation is missing ${token}`);
 }
 
-console.log("Prepared exact Terminal 4 DXT1 cutout alpha: transparent atlas regions no longer render as opaque black architecture.");
+console.log("Prepared Terminal 4 source-atlas cutout: only PHX_TERM400_1's unused pure-black lower-right quadrant is transparent; dark windows and stair imagery remain intact.");
