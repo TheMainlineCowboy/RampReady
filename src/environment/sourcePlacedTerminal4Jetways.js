@@ -337,18 +337,18 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
       : 0;
     const keepServiceBayOpen = OPEN_SERVICE_BAY_GATES.has(jetway.g) && sourceFacadeRecessMeters >= 1.4;
     if (keepServiceBayOpen) terminal4OpenServiceBayCount += 1;
-    const lowerWallFit = lowerFacadeWallDistance ?? terminalWallDistance;
-    if (lowerWallFit != null && !keepServiceBayOpen) {
-      // Measure the wall at ramp level rather than reusing the elevated rotunda
-      // intersection. Place the closure toward the ramp so it visibly covers the
-      // legacy repeated bay instead of landing behind the authored facade.
-      const facadeRampOffset = 0.95;
-      const facadeX = jetway.x - ux * lowerWallFit + ux * facadeRampOffset;
-      const facadeZ = jetway.z - uz * lowerWallFit + uz * facadeRampOffset;
+    // A recessed lower bay must be closed at the outer facade plane, not at the
+    // dark rear wall returned by the ramp-height raycast. Keep only source-qualified
+    // service bays open; every other module receives a flush outer-wall closure.
+    const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance;
+    if (facadeOuterWallFit != null && !keepServiceBayOpen) {
+      const facadeRampOffset = 0.28;
+      const facadeX = jetway.x - ux * facadeOuterWallFit + ux * facadeRampOffset;
+      const facadeZ = jetway.z - uz * facadeOuterWallFit + uz * facadeRampOffset;
       transforms.facadeInfill.push({
-        position: [facadeX, 1.72, facadeZ],
+        position: [facadeX, 1.74, facadeZ],
         yaw,
-        scale: [6.4, 3.36, 0.68],
+        scale: [7.0, 3.42, 0.5],
       });
       terminal4LowerFacadeFitCount += 1;
       if (CLOSED_SERVICE_DOOR_GATES.has(jetway.g)) {
