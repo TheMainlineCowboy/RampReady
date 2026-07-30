@@ -5,6 +5,51 @@ export const KPHX_RUNWAY_VISUAL_PROFILE = Object.freeze({
   coordinateFrame: "A1-local; X=north, Y=up, Z=east",
 });
 
+function stabilizeAuthoredConcreteMaterial(THREE, authoredGround) {
+  let stabilizedConcreteMaterialCount = 0;
+  authoredGround.traverse((node) => {
+    if (!node.isMesh) return;
+    const sourceMaterials = Array.isArray(node.material) ? node.material : [node.material];
+    let changed = false;
+    const stabilizedMaterials = sourceMaterials.map((material) => {
+      if (!material || material.name !== "concrete") return material;
+      if (!material.map) throw new Error("KPHX concrete stabilization requires the generated source slab texture");
+      const replacement = new THREE.MeshBasicMaterial({
+        name: material.name,
+        map: material.map,
+        color: 0xffffff,
+        side: THREE.DoubleSide,
+        transparent: false,
+        opacity: 1,
+        alphaTest: 0,
+        depthWrite: true,
+        depthTest: true,
+        toneMapped: false,
+        polygonOffset: true,
+        polygonOffsetFactor: material.polygonOffsetFactor ?? -0.25,
+        polygonOffsetUnits: material.polygonOffsetUnits ?? -0.5,
+      });
+      replacement.userData = {
+        ...(material.userData || {}),
+        concreteRenderingAuthority: "source-textured-unlit-concrete-v1-no-black-lighting-polygons",
+      };
+      replacement.needsUpdate = true;
+      changed = true;
+      stabilizedConcreteMaterialCount += 1;
+      return replacement;
+    });
+    if (!changed) return;
+    node.material = Array.isArray(node.material) ? stabilizedMaterials : stabilizedMaterials[0];
+    node.receiveShadow = false;
+  });
+  if (stabilizedConcreteMaterialCount < 1) {
+    throw new Error("KPHX concrete stabilization did not find the authored concrete material");
+  }
+  authoredGround.userData.stabilizedConcreteMaterialCount = stabilizedConcreteMaterialCount;
+  authoredGround.userData.concreteRenderingAuthority = "source-textured-unlit-concrete-v1-no-black-lighting-polygons";
+  return stabilizedConcreteMaterialCount;
+}
+
 async function loadManifest() {
   const url = new URL(`${import.meta.env.BASE_URL}${KPHX_RUNWAY_VISUAL_PROFILE.source}`, window.location.href);
   url.searchParams.set("detail", KPHX_RUNWAY_VISUAL_PROFILE.detailLevel);
@@ -149,6 +194,7 @@ function buildLightMeshes(THREE, runways) {
 
 export async function installKphxRunwayVisuals(THREE, authoredGround) {
   if (!authoredGround?.isObject3D) throw new Error("KPHX authored ground is required for runway visuals");
+  if (!authoredGround.userData.concreteRenderingAuthority) stabilizeAuthoredConcreteMaterial(THREE, authoredGround);
   if (authoredGround.userData.kphxRunwayVisuals) return authoredGround.userData.kphxRunwayVisuals;
   const manifest = await loadManifest();
   const group = new THREE.Group();
@@ -158,10 +204,12 @@ export async function installKphxRunwayVisuals(THREE, authoredGround) {
   }
   const lights = buildLightMeshes(THREE, manifest.runways);
   group.add(lights);
+  group.userData.lightCount = lights.userData.lightCount;
   group.userData.runwayCount = manifest.runways.length;
   group.userData.identifierCount = manifest.runways.length * 2;
-  group.userData.lightCount = lights.userData.lightCount;
   group.userData.detailLevel = KPHX_RUNWAY_VISUAL_PROFILE.detailLevel;
+  group.userData.concreteRenderingAuthority = authoredGround.userData.concreteRenderingAuthority;
+  group.userData.stabilizedConcreteMaterialCount = authoredGround.userData.stabilizedConcreteMaterialCount;
   group.userData.runways = manifest.runways.map(({ primary, secondary, lengthMeters, widthMeters, headingDegrees }) => ({ primary, secondary, lengthMeters, widthMeters, headingDegrees }));
   authoredGround.add(group);
   authoredGround.userData.kphxRunwayVisuals = group;
