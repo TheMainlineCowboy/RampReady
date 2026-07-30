@@ -131,7 +131,7 @@ replaceRequired(
 );
 insertAfter(
   runtimePath,
-  '    renderer.domElement.dataset.terminal4JetwayPrePushSequence = "loading";',
+  '    renderer.domElement.dataset.terminal4Placement = "loading";',
   `    renderer.domElement.dataset.a1JetwayDeployment = "loading";
     renderer.domElement.dataset.a1JetwayState = "loading";
     renderer.domElement.dataset.a1JetwayAnimationAuthority = "loading";`,
@@ -140,7 +140,7 @@ insertAfter(
 );
 insertAfter(
   runtimePath,
-  '        renderer.domElement.dataset.terminal4JetwayPrePushSequence = environment.userData.authoredTerminal4JetwayRequiredPrePushSequence || "missing";',
+  "        renderer.domElement.dataset.terminal4Placement = environment.userData.authoredTerminal4Placement;",
   `        const a1JetwayController = environment.userData.authoredTerminal4A1JetwayController || null;
         jetwayRef.current.controller = a1JetwayController;
         a1JetwayController?.setDeployment(jetwayRef.current.target);
@@ -152,7 +152,7 @@ insertAfter(
 );
 insertAfter(
   runtimePath,
-  '        renderer.domElement.dataset.terminal4JetwayPrePushSequence = "load-error";',
+  '        renderer.domElement.dataset.terminal4Placement = "load-error";',
   `        renderer.domElement.dataset.a1JetwayDeployment = "load-error";
         renderer.domElement.dataset.a1JetwayState = "load-error";
         renderer.domElement.dataset.a1JetwayAnimationAuthority = "load-error";`,
