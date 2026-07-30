@@ -30,9 +30,9 @@ replaceOnce(
   const parkingByGate = new Map(
     [...concourseA.parkings, ...concourseB.parkings].map((parking) => [parking.g, parking]),
   );
-  const CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 5.35;
-  const CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35;
-  const AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.65;
+  const CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25;
+  const CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.3;
+  const AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.55;
   let highDetailCount = 0;
 
   for (const jetway of jetways) {
@@ -46,7 +46,7 @@ replaceOnce(
     const targetZ = jetway.pz - forwardZ * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS + leftZ * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
     let dx = targetX - jetway.x;
     let dz = targetZ - jetway.z;`,
-  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 5.35",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
 );
 
 replaceOnce(
@@ -139,9 +139,9 @@ replaceOnce(
 for (const [path, tokens] of Object.entries({
   "src/environment/sourcePlacedTerminal4Jetways.js": [
     "parkingByGate",
-    "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 5.35",
-    "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35",
-    "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.65",
+    "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
+    "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.3",
+    "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.55",
   ],
   "src/environment/authoredKphxGround.js": [
     "const broadWear = Math.sin(pixelX * 0.041)",
@@ -157,4 +157,4 @@ for (const [path, tokens] of Object.entries({
   }
 }
 
-console.log("Prepared PHX stand alignment: CRJ-scale v3 door-targeted jetways, realistic stand-line scale, visible gate labels, and non-repeating pavement wear.");
+console.log("Prepared PHX stand alignment: exact-textured v4 CRJ door-targeted jetways, realistic stand-line scale, visible gate labels, and non-repeating pavement wear.");
