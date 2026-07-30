@@ -74,8 +74,18 @@ async function frameA1Chase(page, canvas) {
 }
 
 test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and pavement-coincident markings", async ({ page }) => {
-  test.setTimeout(600_000);
+  test.setTimeout(300_000);
   await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route("**/assets/*.js", async (route) => {
+    const response = await route.fetch();
+    let body = await response.text();
+    const shadowOn = "s.castShadow=!1,s.receiveShadow=!0;const a=Array.isArray(s.material)?s.material:[s.material]";
+    const shadowOff = "s.castShadow=!1,s.receiveShadow=!1;const a=Array.isArray(s.material)?s.material:[s.material]";
+    if (!body.includes(shadowOn)) throw new Error("KPHX ground shadow diagnostic could not locate the authored-ground receiveShadow assignment");
+    body = body.replace(shadowOn, shadowOff);
+    await route.fulfill({ response, body });
+  });
+
   const assetResponses = [];
   const tileResponses = new Map();
   const runtimeErrors = [];
@@ -181,27 +191,7 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
   expect(relevantErrors).toEqual([]);
 
   await frameA1Chase(page, canvas);
-  await captureCanvas(page, canvas, "kphx-a1-source-scale-jetway-chase.png");
-
-  const diagnosticPage = await page.context().newPage();
-  await diagnosticPage.setViewportSize({ width: 1440, height: 900 });
-  await diagnosticPage.route("**/assets/*.js", async (route) => {
-    const response = await route.fetch();
-    let body = await response.text();
-    const shadowOn = "s.castShadow=!1,s.receiveShadow=!0;const a=Array.isArray(s.material)?s.material:[s.material]";
-    const shadowOff = "s.castShadow=!1,s.receiveShadow=!1;const a=Array.isArray(s.material)?s.material:[s.material]";
-    if (!body.includes(shadowOn)) throw new Error("KPHX ground shadow diagnostic could not locate the authored-ground receiveShadow assignment");
-    body = body.replace(shadowOn, shadowOff);
-    await route.fulfill({ response, body });
-  });
-  const diagnosticCanvas = await launchStandup(diagnosticPage);
-  await expect.poll(
-    async () => diagnosticCanvas.getAttribute("data-environment-source"),
-    { timeout: 90_000, intervals: [500, 1_000, 2_000] },
-  ).toBe("authored-phx-terminal4-textured-source-jetways");
-  await frameA1Chase(diagnosticPage, diagnosticCanvas);
-  await captureCanvas(diagnosticPage, diagnosticCanvas, "kphx-ground-diagnostic-receive-shadow-off.png");
-  await diagnosticPage.close();
+  await captureCanvas(page, canvas, "kphx-ground-diagnostic-receive-shadow-off.png");
 
   await page.evaluate(() => {
     const select = document.querySelector("select.rr-view-select");
@@ -211,5 +201,5 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
     select.dispatchEvent(new Event("change", { bubbles: true }));
   });
   await page.waitForTimeout(1_200);
-  await captureCanvas(page, canvas, "kphx-a1-source-scale-jetway-overhead.png");
+  await captureCanvas(page, canvas, "kphx-ground-diagnostic-receive-shadow-off-overhead.png");
 });
