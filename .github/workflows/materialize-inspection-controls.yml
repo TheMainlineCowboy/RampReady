@@ -1,0 +1,52 @@
+name: Materialize Inspection Controls
+
+on:
+  push:
+    branches: [work/simulator-quality-inspection-pass]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rampready-materialize-inspection-controls
+  cancel-in-progress: true
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out draft branch
+        uses: actions/checkout@v4
+        with:
+          ref: work/simulator-quality-inspection-pass
+          fetch-depth: 0
+
+      - name: Apply inspection controls
+        run: node scripts/prepare-terminal4-inspection-controls.mjs
+
+      - name: Verify generated scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only)"
+          printf '%s\n' "$changed"
+          unexpected="$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev '^(src/components/RampReadyStandupTrainer\.jsx|src/components/RampReadyStandupTrainerTerminal4\.jsx|src/components/RampReadyTrainer\.css)$' || true)"
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected generated files:"
+            printf '%s\n' "$unexpected"
+            exit 1
+          fi
+          test -n "$changed"
+
+      - name: Commit generated controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/RampReadyStandupTrainer.jsx src/components/RampReadyStandupTrainerTerminal4.jsx src/components/RampReadyTrainer.css
+          git commit -m "Materialize free-drive inspection controls"
+          git push origin HEAD:work/simulator-quality-inspection-pass
