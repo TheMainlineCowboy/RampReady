@@ -25,41 +25,79 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
-          fetch-depth: 1
+          fetch-depth: 20
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Decode exact jetway and terminal source evidence
-        run: node scripts/audit-kphx-jetways-and-terminal-primitives.mjs reports/kphx-jetway-terminal-audit.json
-
-      - name: Verify actionable audit evidence
+      - name: Decode and preserve exact source evidence
+        id: audit
+        shell: bash
         run: |
-          node --input-type=module <<'NODE'
+          mkdir -p reports
+          set +e
+          node scripts/audit-kphx-jetways-and-terminal-primitives.mjs reports/kphx-jetway-terminal-audit.json > reports/kphx-jetway-terminal-audit.log 2>&1
+          audit_exit=$?
+          set -e
+
+          AUDIT_EXIT="$audit_exit" node --input-type=module <<'NODE'
           import fs from "node:fs";
-          const report = JSON.parse(fs.readFileSync("reports/kphx-jetway-terminal-audit.json", "utf8"));
-          if (!(report.jetways?.recordCount > 0)) throw new Error("No KPHX jetway records were decoded");
-          if (!(report.terminal?.primitiveCount > 0)) throw new Error("No Terminal 4 primitives were decoded");
-          if (!Array.isArray(report.terminal?.fallbackPrimitives)) throw new Error("Terminal fallback primitive evidence is missing");
-          console.log(JSON.stringify({
-            jetwayRecords: report.jetways.recordCount,
-            embeddedLibraryObjects: report.jetways.embeddedLibraryObjectCount,
-            modelGuidCounts: report.jetways.modelGuidCounts,
-            terminalPrimitives: report.terminal.primitiveCount,
-            fallbackPrimitives: report.terminal.fallbackPrimitiveCount,
-          }, null, 2));
+          const exitCode = Number(process.env.AUDIT_EXIT ?? 1);
+          let valid = false;
+          let summary = null;
+          let validationError = null;
+          try {
+            const report = JSON.parse(fs.readFileSync("reports/kphx-jetway-terminal-audit.json", "utf8"));
+            if (!(report.jetways?.recordCount > 0)) throw new Error("No KPHX jetway records were decoded");
+            if (!(report.terminal?.primitiveCount > 0)) throw new Error("No Terminal 4 primitives were decoded");
+            if (!Array.isArray(report.terminal?.fallbackPrimitives)) throw new Error("Terminal fallback primitive evidence is missing");
+            summary = {
+              jetwayRecords: report.jetways.recordCount,
+              embeddedLibraryObjects: report.jetways.embeddedLibraryObjectCount,
+              modelGuidCounts: report.jetways.modelGuidCounts,
+              terminalPrimitives: report.terminal.primitiveCount,
+              fallbackPrimitives: report.terminal.fallbackPrimitiveCount,
+            };
+            valid = exitCode === 0;
+          } catch (error) {
+            validationError = error instanceof Error ? error.message : String(error);
+          }
+          const status = {
+            schemaVersion: 1,
+            sourceSha: process.env.GITHUB_SHA,
+            generatedAtUtc: new Date().toISOString(),
+            conclusion: valid ? "success" : "failure",
+            exitCode,
+            validationError,
+            summary,
+          };
+          fs.writeFileSync("reports/kphx-jetway-terminal-audit-status.json", `${JSON.stringify(status, null, 2)}\n`);
+          console.log(JSON.stringify(status, null, 2));
           NODE
 
-      - name: Commit exact audit report without redeploying
-        run: |
-          if git diff --quiet -- reports/kphx-jetway-terminal-audit.json; then
-            echo "Audit report is unchanged."
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports/kphx-jetway-terminal-audit.json
-          git commit -m "Record exact KPHX jetway and terminal audit [skip ci]"
-          git push origin HEAD:main
+          git add -f reports/kphx-jetway-terminal-audit.log reports/kphx-jetway-terminal-audit-status.json
+          if [ -f reports/kphx-jetway-terminal-audit.json ]; then
+            git add -f reports/kphx-jetway-terminal-audit.json
+          fi
+
+          if ! git diff --cached --quiet; then
+            git commit -m "Record exact KPHX jetway and terminal audit [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          else
+            echo "Audit evidence is unchanged."
+          fi
+
+          if [ "$audit_exit" -ne 0 ]; then
+            echo "KPHX source audit failed with exit code $audit_exit"
+            exit "$audit_exit"
+          fi
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const status = JSON.parse(fs.readFileSync("reports/kphx-jetway-terminal-audit-status.json", "utf8"));
+          if (status.conclusion !== "success") throw new Error(status.validationError || "KPHX source audit validation failed");
+          NODE
