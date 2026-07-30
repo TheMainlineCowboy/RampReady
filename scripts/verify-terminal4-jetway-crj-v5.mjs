@@ -11,10 +11,15 @@ for (const scriptName of ["materialize:phx-terminal4", "verify:kphx-v181", "prep
   const command = packageJson.scripts?.[scriptName] || "";
   if (!command.includes("prepare-terminal4-jetway-crj-v5.mjs")) throw new Error(`${scriptName} does not run the source-scale jetway protection pass`);
   if (!command.includes("prepare-terminal4-jetway-visual-v6.mjs")) throw new Error(`${scriptName} does not run the non-striped source-atlas visual pass`);
+  if (!command.includes("prepare-terminal4-facade-visual-v7.mjs")) throw new Error(`${scriptName} does not run the outer-plane facade closure pass`);
   if (command.includes("prepare-terminal4-jetway-facade-v4.mjs")) throw new Error(`${scriptName} still runs the superseded v4 facade pass`);
 }
 const runtimePreparation = packageJson.scripts?.["prepare:terminal4-runtime"] || "";
-for (const token of ["prepare-terminal4-crj-runtime-evidence.mjs", "prepare-terminal4-inspection-controls.mjs"]) {
+for (const token of [
+  "prepare-terminal4-crj-runtime-evidence.mjs",
+  "prepare-terminal4-inspection-controls.mjs",
+  "prepare-mobile-inspection-hud.mjs",
+]) {
   if (!runtimePreparation.includes(token)) throw new Error(`Terminal 4 runtime does not apply ${token}`);
 }
 
@@ -38,8 +43,9 @@ const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js",
   "exactJetwayAtlasRegions",
   "group.userData.jetwayTextureMappingAuthority",
   "THREE.ClampToEdgeWrapping",
-  "const facadeRampOffset = 0.95",
-  "scale: [6.4, 3.36, 0.68]",
+  "const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance",
+  "const facadeRampOffset = 0.28",
+  "scale: [7.0, 3.42, 0.5]",
 ]);
 for (const forbidden of [
   "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
@@ -50,8 +56,11 @@ for (const forbidden of [
   "scale: [2.24, 2.12, wallConnectorLength]",
   "map.repeat.set(repeatX, repeatY)",
   "map.wrapS = map.wrapT = THREE.RepeatWrapping",
+  "const lowerWallFit = lowerFacadeWallDistance ?? terminalWallDistance",
+  "const facadeRampOffset = 0.95",
+  "scale: [6.4, 3.36, 0.68]",
   "scale: [5.72, 2.58, 0.42]",
-]) if (jetways.includes(forbidden)) throw new Error(`Aircraft-specific jetway shrink, whole-atlas repetition, or undersized facade remains: ${forbidden}`);
+]) if (jetways.includes(forbidden)) throw new Error(`Aircraft-specific jetway shrink, whole-atlas repetition, or recessed facade closure remains: ${forbidden}`);
 
 requireTokens("src/environment/authoredTerminal4Visual.js", [
   "authoredTerminal4JetwaySourceScaleAuthority",
@@ -76,6 +85,13 @@ requireTokens("src/components/RampReadyStandupTrainerTerminal4.jsx", [
   "dataset.terminal4RequiresOriginalJetwayMesh",
   "dataset.terminal4JetwayPrePushSequence",
 ]);
+requireTokens("src/components/RampReadyTrainer.css", [
+  "RampReady mobile inspection HUD title polish",
+  "flex-direction: column",
+  ".rr-topline > div:first-child",
+  "white-space: normal",
+  "text-overflow: clip",
+]);
 
 const markings = requireTokens("scripts/build-kphx-simulator-ground.mjs", [
   "const markingY = taxiwayPath.type === 3 ? 0.0018",
@@ -87,4 +103,4 @@ for (const forbidden of ["0.0135", "0.0255", "0.0137", "0.0138", "0.0258"]) {
   if (markings.includes(forbidden)) throw new Error(`Raised marking token remains: ${forbidden}`);
 }
 
-console.log("Terminal 4 jetway source authority verified: stock scale 1.00 is protected, exact atlas regions and placement remain active without whole-sheet repetition, full-height facade closures are enforced, fallback geometry is disclosed, animation requirements are explicit, markings are pavement-coincident, and free-drive inspection controls are visible.");
+console.log("Terminal 4 jetway source authority verified: stock scale 1.00 is protected, exact atlas regions remain active without whole-sheet repetition, recessed bays close at the outer facade plane, fallback geometry is disclosed, animation requirements are explicit, markings are pavement-coincident, free-drive controls are visible, and the mobile step title remains readable.");
