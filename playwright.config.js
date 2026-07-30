@@ -9,32 +9,32 @@ const webServerCommand = requestedWebServerCommand.includes("prepare:terminal4-r
   ? requestedWebServerCommand
   : `${terminal4Preparation} && ${requestedWebServerCommand}`;
 
-async function applyKphxGroundShadowIsolationBeforeServer() {
+async function applyKphxSourceAerialIsolationBeforeServer() {
   const isKphxDiagnostic = process.argv.some((argument) => argument.includes("kphx-ground-runtime.spec.js"));
   if (!isKphxDiagnostic || externalBaseURL) return;
 
   const assetsDirectory = path.resolve("dist/assets");
   const files = (await readdir(assetsDirectory)).filter((file) => file.endsWith(".js"));
-  const receiveShadowAssignment = /([A-Za-z_$][\w$]*)\.castShadow=!1,\1\.receiveShadow=!0;const ([A-Za-z_$][\w$]*)=Array\.isArray\(\1\.material\)\?\1\.material:\[\1\.material\]/;
+  const sourceAerialGroup = /(return ([A-Za-z_$][\w$]*)\.add\(\.\.\.[A-Za-z_$][\w$]*\),)\2\.userData\.textureMode=/;
   let patchCount = 0;
 
   for (const file of files) {
     const filePath = path.join(assetsDirectory, file);
     let body = await readFile(filePath, "utf8");
-    if (receiveShadowAssignment.test(body)) {
-      body = body.replace(receiveShadowAssignment, (statement, nodeName) =>
-        statement.replace(`${nodeName}.receiveShadow=!0`, `${nodeName}.receiveShadow=!1`));
+    if (sourceAerialGroup.test(body) && body.includes("PHX_KPHX_SourceAuthoredPhotoGround_Tiled")) {
+      body = body.replace(sourceAerialGroup, (_statement, prefix, groupName) =>
+        `${prefix}${groupName}.visible=!1,${groupName}.userData.textureMode=`);
       patchCount += 1;
     }
     await writeFile(filePath, body, "utf8");
   }
 
   if (patchCount !== 1) {
-    throw new Error(`KPHX pre-server shadow isolation expected 1 patch, found ${patchCount}`);
+    throw new Error(`KPHX pre-server source-aerial isolation expected 1 patch, found ${patchCount}`);
   }
 }
 
-await applyKphxGroundShadowIsolationBeforeServer();
+await applyKphxSourceAerialIsolationBeforeServer();
 
 export default defineConfig({
   testDir: "./tests/browser",
