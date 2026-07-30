@@ -11,7 +11,7 @@ export default defineConfig({
   testDir: "./tests/browser",
   timeout: 45_000,
   expect: { timeout: 15_000 },
-  retries: 1,
+  retries: 0,
   fullyParallel: true,
   workers: process.env.CI ? 2 : undefined,
   use: {
