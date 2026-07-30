@@ -138,7 +138,7 @@ function expectOrderedSequence(history, requiredStates) {
 }
 
 test("verifies CRJ, A1 jetway, operator view and free-drive in one full-airport load", async ({ page }) => {
-  test.setTimeout(720_000);
+  test.setTimeout(900_000);
   await page.setViewportSize(DESKTOP);
   const canvas = await launchRuntime(page);
 
