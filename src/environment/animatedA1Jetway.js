@@ -25,6 +25,13 @@ function createArchedTunnelGeometry(THREE, width, height, roofRise) {
   });
   geometry.translate(0, 0, -0.5);
   geometry.computeVertexNormals();
+  const position = geometry.getAttribute("position");
+  const normalizedUv = new Float32Array(position.count * 2);
+  for (let index = 0; index < position.count; index += 1) {
+    normalizedUv[index * 2] = clamp(position.getX(index) / width + 0.5, 0, 1);
+    normalizedUv[index * 2 + 1] = clamp(position.getY(index) / height + 0.5, 0, 1);
+  }
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(normalizedUv, 2));
   return geometry;
 }
 
