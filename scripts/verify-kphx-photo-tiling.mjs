@@ -48,7 +48,18 @@ for (const token of [
   'fullCoverageUnderlayMode: "full-airport-neutral-underlay-below-all-source-tiles-v2"',
   'colorRepairMode: "source-aerial-dark-neutral-artifact-lift-v1"',
   'shadowLiftMode: "source-aerial-hue-preserving-shadow-lift-v2"',
+  'asphaltDisplayMode: "source-matched-charcoal-asphalt-with-shadow-floor-v1"',
   'const OPAQUE_ADEX_SURFACES = new Set(["airport-base"])',
+  'const SOURCE_MATCHED_ADEX_SURFACES = new Set(["asphalt"])',
+  "configureAdexSurfaceDisplay",
+  "material.color?.setHex?.(0x666a6c)",
+  "material.emissive?.setHex?.(0x202426)",
+  "material.emissiveIntensity = 0.65",
+  "material.roughness = 0.98",
+  "material.toneMapped = false",
+  "sourceMatchedAsphaltMaterialCount",
+  "authoredPhotoAsphaltDisplayMode",
+  "sourceMatchedADEXAsphaltMaterialCount",
   "buildTiledPhotoGround",
   "sceneBoundsForTile",
   "manifest.tiles.map",
@@ -65,6 +76,7 @@ for (const token of [
   "photoGround.userData.fullCoverageUnderlayMode",
   "photoGround.userData.colorRepairMode",
   "photoGround.userData.shadowLiftMode",
+  "photoGround.userData.asphaltDisplayMode",
   "authoredPhotoUnderlayMaterialCount",
   "authoredPhotoFullCoverageUnderlayMode",
   "authoredPhotoColorRepairMode",
@@ -92,4 +104,4 @@ for (const forbidden of [
   if (runtime.includes(forbidden)) throw new Error(`PHX source aerial or ADEX visibility regressed: ${forbidden}`);
 }
 
-console.log(`Verified PHX native-resolution tiled ground: ${manifest.tiles.length} WebGL-safe tiles, ${totalBytes} bytes, full 6400x2304 source coverage, unlit authored color, continuous full-airport pavement beneath every tile, preserved ADEX asphalt geometry, and a hue-preserving low-luminance source-aerial shadow lift.`);
+console.log(`Verified PHX native-resolution tiled ground: ${manifest.tiles.length} WebGL-safe tiles, ${totalBytes} bytes, full 6400x2304 source coverage, unlit authored color, continuous pavement beneath every tile, hue-preserving source shadows, and a source-matched charcoal floor on the opaque ADEX asphalt primitive.`);
