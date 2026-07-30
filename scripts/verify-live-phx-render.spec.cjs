@@ -54,7 +54,7 @@ test('live RampReady renders simulator-quality Sky Harbor and supports free-driv
       && element?.dataset.photoRuntimeTileCount === '21'
       && element?.dataset.photoDetailLevel === 'full-airport-source-aerial-tiled-1.2m-v2'
       && element?.dataset.environmentSource === 'authored-phx-terminal4-textured-source-jetways'
-      && element?.dataset.groundSource === 'authored-kphx-v181-source-textured';
+      && element?.dataset.groundSource === 'authored-kphx-v181-source-textured-nearfield';
   }, null, { timeout: 90000 });
 
   await page.waitForFunction(() => {
