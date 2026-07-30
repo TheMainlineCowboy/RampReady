@@ -21,6 +21,8 @@ const verifyCommand = packageJson.scripts?.verify || "";
 
 for (const token of [
   "prepare-terminal4-source-alpha.mjs",
+  "prepare-terminal4-jetway-dxt3.mjs",
+  "prepare-terminal4-jetway-facade-v4.mjs",
   "materialize-phx-terminal4.mjs",
 ]) if (!terminalMaterializer.includes(token)) throw new Error(`Terminal 4 materializer wiring is missing ${token}`);
 for (const token of [
@@ -31,6 +33,7 @@ for (const token of [
   "prepare-inspection-drive-mode.mjs",
   "prepare-inspection-motion-evidence.mjs",
   "prepare-jetway-terminal-connections.mjs",
+  "prepare-terminal4-jetway-facade-v4.mjs",
   "prepare-simulator-quality-runtime-evidence.mjs",
   "prepare-terminal4-runtime.mjs",
 ]) if (!runtimePreparation.includes(token)) throw new Error(`Terminal 4 runtime preparation wiring is missing ${token}`);
@@ -92,12 +95,16 @@ for (const forbidden of ["y = 0.135", "0.137,", "0.145, z", "renderOrder = 460",
 
 const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js", [
   "function findTerminalWallDistance",
-  "buildSourcePlacedTerminal4Jetways(THREE, terminal)",
+  "buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTextures = {})",
   "const terminalWallDistance = findTerminalWallDistance",
+  "const lowerFacadeWallDistance = findTerminalWallDistance",
   "wallConnectorLength / 2",
   "terminalConnectedJetwayCount",
   "a1TerminalWallDistance",
+  "lowerFacadeFitCount",
   "raycast-and-source-vertex-fit-to-authored-terminal-mesh",
+  "M1DGJETWAY exact recovered original freeware texture and lightmap",
+  "usesExactRecoveredJetwayTexture",
 ]);
 if (jetways.includes("scale: [3.6, 3.1, 1.4]")) {
   throw new Error("Jetways still use the fixed detached 1.4-meter terminal collar");
@@ -105,9 +112,12 @@ if (jetways.includes("scale: [3.6, 3.1, 1.4]")) {
 
 requireTokens("scripts/materialize-phx-terminal4.mjs", [
   "function inspectAlpha(rgba)",
+  "function decodeDxt3Bmp",
   "const alpha = inspectAlpha(decoded.rgba)",
   "transparentPixelCount: alpha.transparentPixelCount",
   "alphaCoverage: alpha.alphaCoverage",
+  'emitJetwayTexture(JETWAY_TEXTURE_SOURCE.diffuse, "M1DGJETWAY.png")',
+  'emitJetwayTexture(JETWAY_TEXTURE_SOURCE.emissive, "M1DGJETWAY_LM.png")',
 ]);
 const terminalRuntime = requireTokens("src/environment/authoredTerminal4Visual.js", [
   "sourceHasAlpha: entry.hasAlpha === true",
@@ -115,8 +125,11 @@ const terminalRuntime = requireTokens("src/environment/authoredTerminal4Visual.j
   "material.alphaTest = sourceCutout ? 0.42 : 0",
   "authoredTerminal4SourceCutoutMaterialCount",
   "authoredTerminal4SourceAlphaAuthority",
-  "buildSourcePlacedTerminal4Jetways(THREE, authored)",
+  "loadExactJetwayTextures",
+  "buildSourcePlacedTerminal4Jetways(THREE, authored, jetwayTextures)",
   "authoredTerminal4A1JetwayWallDistance",
+  "authoredTerminal4LowerFacadeFitCount",
+  "authoredTerminal4JetwayTextureAuthority",
 ]);
 if (terminalRuntime.includes("material.transparent = false;\n      material.opacity = 1;\n      material.side")) {
   throw new Error("Terminal runtime still forces every source-alpha material opaque");
@@ -126,6 +139,9 @@ const generatedRuntime = requireTokens("src/components/RampReadyStandupTrainerTe
   "dataset.terminal4A1JetwayWallDistance",
   "dataset.terminal4TerminalConnectedJetwayCount",
   "dataset.terminal4SourceCutoutMaterialCount",
+  "dataset.terminal4LowerFacadeFitCount",
+  "dataset.terminal4JetwayTextureAuthority",
+  "dataset.terminal4ExactJetwayTextureActive",
   "dataset.groundMarkingContactMode",
   "dataset.inspectionMode",
 ]);
@@ -133,4 +149,4 @@ if (!generatedRuntime.includes('dataset.inspectionMode = inspectionRef.current ?
   throw new Error("Generated PHX runtime does not expose initial inspection mode state");
 }
 
-console.log("RampReady simulator-quality inspection pass verified: unrestricted tug inspection, pavement-contact markings, exact DXT1 cutouts, and terminal-connected AIR_Jetway01 geometry are active.");
+console.log("RampReady simulator-quality inspection pass verified: unrestricted tug inspection, pavement-contact markings, targeted terminal cutouts, lower-wall facade fits, and exact-textured terminal-connected AIR_Jetway01 geometry are active.");
