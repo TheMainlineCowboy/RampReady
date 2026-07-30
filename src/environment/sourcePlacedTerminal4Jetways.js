@@ -635,6 +635,9 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   group.userData.jetwayTextureMappingAuthority = sourceTextures.diffuse
     ? "normalized-fallback-geometry-uvs-with-exact-atlas-subregions-never-whole-atlas-repeat"
     : "missing";
+  group.userData.jetwayTextureSourceIdentity = sourceTextures.diffuse
+    ? "M1DGJETWAY exact recovered original freeware texture and lightmap"
+    : "missing";
   group.userData.proceduralBuildingBoxReuse = false;
   return group;
 }
