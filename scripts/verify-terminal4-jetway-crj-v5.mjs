@@ -2,15 +2,15 @@ import fs from "node:fs";
 
 const requireTokens = (path, tokens) => {
   const source = fs.readFileSync(path, "utf8");
-  for (const token of tokens) if (!source.includes(token)) throw new Error(`${path}: missing CRJ v5 token ${token}`);
+  for (const token of tokens) if (!source.includes(token)) throw new Error(`${path}: missing source-scale jetway token ${token}`);
   return source;
 };
 
 const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
 for (const scriptName of ["materialize:phx-terminal4", "verify:kphx-v181", "prepare:terminal4-runtime"]) {
   const command = packageJson.scripts?.[scriptName] || "";
-  if (!command.includes("prepare-terminal4-jetway-crj-v5.mjs")) throw new Error(`${scriptName} does not run the CRJ v5 jetway pass`);
-  if (command.includes("prepare-terminal4-jetway-facade-v4.mjs")) throw new Error(`${scriptName} still runs the superseded v4 jetway pass`);
+  if (!command.includes("prepare-terminal4-jetway-crj-v5.mjs")) throw new Error(`${scriptName} does not run the source-scale jetway protection pass`);
+  if (command.includes("prepare-terminal4-jetway-facade-v4.mjs")) throw new Error(`${scriptName} still runs the superseded v4 facade pass`);
 }
 const runtimePreparation = packageJson.scripts?.["prepare:terminal4-runtime"] || "";
 for (const token of ["prepare-terminal4-crj-runtime-evidence.mjs", "prepare-terminal4-inspection-controls.mjs"]) {
@@ -18,27 +18,37 @@ for (const token of ["prepare-terminal4-crj-runtime-evidence.mjs", "prepare-term
 }
 
 const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js", [
-  'detailLevel: "fsx-air-jetway01-exact-textured-crj-scale-v5"',
-  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
-  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.28",
+  'detailLevel: "fsx-air-jetway01-exact-textured-source-scale-articulated-v5"',
+  'sourceDimensionsMeters: Object.freeze([37.92, 8.77, 26.51])',
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35",
   "const sourceFacadeRecessMeters",
   "CLOSED_SERVICE_DOOR_GATES.has(jetway.g)",
   "FACADE_VENT_GATES.has(jetway.g)",
-  "createArchedTunnelGeometry(THREE, 2.18, 2.12, 0.24)",
-  "createArchedTunnelGeometry(THREE, 1.96, 2.02, 0.2)",
-  "createArchedTunnelGeometry(THREE, 2.08, 2.02, 0.18)",
-  "group.userData.a1DoorContactErrorMeters",
+  "createArchedTunnelGeometry(THREE, 2.44, 2.34, 0.28)",
+  "createArchedTunnelGeometry(THREE, 2.18, 2.18, 0.24)",
+  "createArchedTunnelGeometry(THREE, 2.42, 2.3, 0.22)",
+  "group.userData.sourceScaleAuthority",
+  "group.userData.sourceGeometryMode",
+  "group.userData.requiresOriginalSourceMesh",
+  "group.userData.jetwayMotionLimits",
+  'group.userData.initialJetwayState = "attached-to-aircraft-door"',
+  "group.userData.requiredPrePushSequence",
 ]);
 for (const forbidden of [
-  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.28",
   "gateNumber % 3",
   "gateNumber % 2",
-  "createArchedTunnelGeometry(THREE, 2.42, 2.3, 0.22)",
-]) if (jetways.includes(forbidden)) throw new Error(`Superseded jetway implementation remains: ${forbidden}`);
+  "createArchedTunnelGeometry(THREE, 2.08, 2.02, 0.18)",
+  "scale: [2.24, 2.12, wallConnectorLength]",
+]) if (jetways.includes(forbidden)) throw new Error(`Aircraft-specific jetway shrink or repetitive facade remains: ${forbidden}`);
 
 requireTokens("src/environment/authoredTerminal4Visual.js", [
-  "authoredTerminal4A1DoorContactErrorMeters",
-  "sourcePlacedJetways.userData.a1DoorContactErrorMeters",
+  "authoredTerminal4JetwaySourceScaleAuthority",
+  "sourcePlacedJetways.userData.sourceScaleAuthority",
+  "authoredTerminal4RequiresOriginalJetwayMesh",
+  "authoredTerminal4JetwayRequiredPrePushSequence",
 ]);
 
 for (const path of ["src/components/RampReadyStandupTrainer.jsx", "src/components/RampReadyStandupTrainerTerminal4.jsx"]) {
@@ -51,9 +61,11 @@ for (const path of ["src/components/RampReadyStandupTrainer.jsx", "src/component
   ]);
 }
 requireTokens("src/components/RampReadyStandupTrainerTerminal4.jsx", [
-  'dataset.terminal4A1DoorContactErrorMeters = "loading"',
-  "dataset.terminal4A1DoorContactErrorMeters = Number.isFinite",
-  'dataset.terminal4A1DoorContactErrorMeters = "load-error"',
+  'dataset.terminal4JetwaySourceScaleAuthority = "loading"',
+  "dataset.terminal4JetwaySourceScaleAuthority = environment.userData",
+  'dataset.terminal4JetwaySourceScaleAuthority = "load-error"',
+  "dataset.terminal4RequiresOriginalJetwayMesh",
+  "dataset.terminal4JetwayPrePushSequence",
 ]);
 
 const markings = requireTokens("scripts/build-kphx-simulator-ground.mjs", [
@@ -66,4 +78,4 @@ for (const forbidden of ["0.0135", "0.0255", "0.0137", "0.0138", "0.0258"]) {
   if (markings.includes(forbidden)) throw new Error(`Raised marking token remains: ${forbidden}`);
 }
 
-console.log("Terminal 4 CRJ v5 verified: CRJ-scale jetways, measured A1 browser contact evidence, source-qualified service bays, irregular lower facade, pavement-coincident markings, and visible free-drive inspection controls.");
+console.log("Terminal 4 jetway source authority verified: stock scale 1.00 is protected, exact textures and placement remain active, fallback geometry is disclosed, animation requirements are explicit, facade repetition is reduced, markings are pavement-coincident, and free-drive inspection controls are visible.");
