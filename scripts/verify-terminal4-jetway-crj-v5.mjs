@@ -85,10 +85,10 @@ requireTokens("src/components/RampReadyStandupTrainerTerminal4.jsx", [
   "dataset.terminal4RequiresOriginalJetwayMesh",
   "dataset.terminal4JetwayPrePushSequence",
 ]);
-requireTokens("src/components/RampReadyTrainer.css", [
+requireTokens("src/components/throttle-force.css", [
   "RampReady mobile inspection HUD title polish",
   "flex-direction: column",
-  ".rr-topline > div:first-child",
+  ".rr-shell .rr-topline > div:first-child",
   "white-space: normal",
   "text-overflow: clip",
 ]);
