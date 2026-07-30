@@ -90,8 +90,8 @@ if (!materializer.includes("taxiwaySignRecords: inspection.selected.taxiwaySignR
   materializer = materializer.replace(anchor, replacement);
 }
 if (!materializer.includes("  taxiwaySigns: groundManifest.taxiwaySigns,")) {
-  const anchor = "  taxiwayNames: groundManifest.taxiwayNames,\n  runways: groundManifest.runways,";
-  const replacement = "  taxiwayNames: groundManifest.taxiwayNames,\n  taxiwaySigns: groundManifest.taxiwaySigns,\n  runways: groundManifest.runways,";
+  const anchor = "  runways: groundManifest.runways,\n  taxiwayNames: groundManifest.taxiwayNames,";
+  const replacement = "  runways: groundManifest.runways,\n  taxiwayNames: groundManifest.taxiwayNames,\n  taxiwaySigns: groundManifest.taxiwaySigns,";
   if (!materializer.includes(anchor)) throw new Error("KPHX runtime sign manifest anchor is missing");
   materializer = materializer.replace(anchor, replacement);
 }
