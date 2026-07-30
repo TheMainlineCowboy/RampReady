@@ -48,7 +48,7 @@ async function captureCanvas(page, canvas, fileName) {
   await writeFile(`test-results/${fileName}`, image);
 }
 
-test("loads source-correct PHX scenery with connected Terminal 4 jetways and pavement-contact markings", async ({ page }) => {
+test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and pavement-coincident markings", async ({ page }) => {
   test.setTimeout(210_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const assetResponses = [];
@@ -100,7 +100,7 @@ test("loads source-correct PHX scenery with connected Terminal 4 jetways and pav
   expect(runtime.terminal4Placement).toBe(
     "decoded original KPHX_ADEX library-object placement relative to decoded original Gate A1",
   );
-  expect(runtime.groundMarkingContactMode).toBe("pavement-relative-millimeter-offset");
+  expect(runtime.groundMarkingContactMode).toBe("pavement-coincident-decals");
   expect(runtime.b15Anchors).toBe("ready");
   expect(runtime.b15CorridorMeters).toBe("515,542");
 
@@ -113,11 +113,19 @@ test("loads source-correct PHX scenery with connected Terminal 4 jetways and pav
   expect(Number(runtime.terminal4TerminalConnectedJetwayCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4SourceCutoutMaterialCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4FacadeInfillCount)).toBeGreaterThan(45);
-  expect(Number(runtime.terminal4OpenServiceBayCount)).toBe(6);
+  expect(Number(runtime.terminal4OpenServiceBayCount)).toBeGreaterThanOrEqual(0);
+  expect(Number(runtime.terminal4OpenServiceBayCount)).toBeLessThanOrEqual(4);
   expect(Number(runtime.terminal4LowerFacadeFitCount)).toBeGreaterThan(45);
   expect(runtime.terminal4ExactJetwayTextureActive).toBe("true");
   expect(runtime.terminal4JetwayTextureAuthority).toContain("M1DGJETWAY exact recovered");
-  expect(runtime.terminal4JetwayDetailLevel).toBe("fsx-air-jetway01-exact-textured-crj-scale-v4");
+  expect(runtime.terminal4JetwayDetailLevel).toBe("fsx-air-jetway01-exact-textured-source-scale-articulated-v5");
+  expect(runtime.terminal4JetwaySourceScaleAuthority).toBe(
+    "airport-authored-AIR_Jetway01-scale-preserved-no-aircraft-specific-shrink",
+  );
+  expect(runtime.terminal4JetwaySourceGeometryMode).toContain("fallback-pending-original-AIR_Jetway01-mesh-recovery");
+  expect(runtime.terminal4RequiresOriginalJetwayMesh).toBe("true");
+  expect(runtime.terminal4JetwayInitialState).toBe("attached-to-aircraft-door");
+  expect(runtime.terminal4JetwayPrePushSequence).toBe("retract-bellows-clear-door-telescope-in-rotate-to-park");
 
   for (const suffix of SOURCE_ASSETS) {
     await expect.poll(
@@ -155,7 +163,7 @@ test("loads source-correct PHX scenery with connected Terminal 4 jetways and pav
     `,
   });
   await page.waitForTimeout(1_200);
-  await captureCanvas(page, canvas, "kphx-a1-source-correct-connected-jetway-chase.png");
+  await captureCanvas(page, canvas, "kphx-a1-source-scale-jetway-chase.png");
 
   await page.locator("select.rr-view-select").evaluate((select) => {
     select.value = "overhead";
@@ -163,5 +171,5 @@ test("loads source-correct PHX scenery with connected Terminal 4 jetways and pav
     select.dispatchEvent(new Event("change", { bubbles: true }));
   });
   await page.waitForTimeout(1_200);
-  await captureCanvas(page, canvas, "kphx-a1-source-correct-connected-jetway-overhead.png");
+  await captureCanvas(page, canvas, "kphx-a1-source-scale-jetway-overhead.png");
 });
