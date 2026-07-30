@@ -187,7 +187,7 @@ export default function RampReadyStandupTrainer({
     setDirection("FWD");
     setCameraMode("chase");
     setMessage(next
-      ? "Free-drive airport inspection active. Procedure gates are disabled; drive anywhere and use the camera views to inspect scenery."
+      ? "Free-drive airport inspection active. Use W/S or the power slider, A/D to steer, and the camera views to inspect the entire airport."
       : "Training mode restored. Complete the equipment check, then approach at idle speed.");
   }, []);
 
@@ -528,10 +528,14 @@ export default function RampReadyStandupTrainer({
       if (keysRef.current.has("d") || keysRef.current.has("arrowright")) steer -= 1;
       const motionAllowed = inspectionActive || (connectionAllowsMotion(sim.connection) && ![3, 4, 8].includes(stageRef.current));
       const towing = !inspectionActive && sim.connection.phase === CONNECTION_PHASES.TOWING;
+      const keyboardForward = inspectionActive && (keysRef.current.has("w") || keysRef.current.has("arrowup"));
+      const keyboardReverse = inspectionActive && (keysRef.current.has("s") || keysRef.current.has("arrowdown"));
+      const inspectionDirection = keyboardReverse ? -1 : keyboardForward ? 1 : drive.direction;
+      const inspectionThrottle = keyboardForward || keyboardReverse ? Math.max(drive.throttle, 0.55) : drive.throttle;
       sim.dynamics = stepPushbackDynamics(sim.dynamics, {
         connected: towing,
-        throttle: motionAllowed && (!towing || drive.direction === 1) ? drive.throttle : 0,
-        direction: drive.direction,
+        throttle: motionAllowed && (!towing || inspectionDirection === 1) ? inspectionThrottle : 0,
+        direction: inspectionDirection,
         steer: clamp(steer, -1, 1),
         brake: drive.brake || keysRef.current.has(" ") || !motionAllowed,
         cradleOffset: rig.profile.cradleOffset,
@@ -644,7 +648,7 @@ export default function RampReadyStandupTrainer({
   const releaseSteer = () => { driveRef.current.steer = 0; };
   const releaseBrake = () => { driveRef.current.brake = false; };
 
-  return <div className="rr-shell" data-equipment-id={equipmentId}>
+  return <div className="rr-shell" data-equipment-id={equipmentId} data-inspection-mode={inspectionMode ? "active" : "training"}>
     <div ref={mountRef} className="rr-scene" />
     <section className="rr-hud">
       <div className="rr-topline">
@@ -653,6 +657,12 @@ export default function RampReadyStandupTrainer({
           <h1>{inspectionMode ? "Airport inspection mode" : STAGES[stage]}</h1>
         </div>
         <div className="rr-top-tools">
+          <button
+            className="rr-inspection-toggle"
+            type="button"
+            aria-pressed={inspectionMode}
+            onClick={toggleInspectionDrive}
+          >{inspectionMode ? "Return to training" : "Free-drive inspection"}</button>
           <select className="rr-view-select" value={cameraMode} onChange={(event) => setCameraMode(event.target.value)} aria-label="Camera view">
             <option value="chase">Chase view</option>
             <option value="driver">Operator view</option>
