@@ -52,7 +52,8 @@ async function applyKphxFlatConcreteIsolationBeforeServer() {
         material.polygonOffset = true;
         material.polygonOffsetFactor = -0.25;
         material.polygonOffsetUnits = -0.5;
-        material.userData.nearfieldBlendMode = "diagnostic-unlit-flat-concrete-before-vite";
+        material.userData.nearfieldBlendMode = "opaque-authored-pavement-over-aerial-background";
+        material.userData.diagnosticMaterialAuthority = "unlit-flat-concrete-before-vite";
         node.receiveShadow = false;
         node.renderOrder = Math.max(node.renderOrder || 0, 30);
         sourceDetailedSurfaceMaterialCount += 1;`;
