@@ -114,6 +114,16 @@ replaceOnce(
 );
 replaceOnce(
   runtimePath,
+  `      sourceTransparentPixelCount: Number(entry.transparentPixelCount || 0),
+    };`,
+  `      sourceTransparentPixelCount: Number(entry.transparentPixelCount || 0),
+      sourceAtlasCutoutAuthority: entry.sourceAtlasCutoutAuthority || "none",
+    };`,
+  "sourceAtlasCutoutAuthority: entry.sourceAtlasCutoutAuthority",
+  "prepared runtime texture source-atlas authority",
+);
+replaceOnce(
+  runtimePath,
   `  let texturedMaterialCount = 0;
   let lightmappedMaterialCount = 0;
   let hiddenLegacyGroundMaterialCount = 0;`,
@@ -143,11 +153,9 @@ replaceOnce(
 );
 replaceOnce(
   runtimePath,
-  `        sourceLightmap: emissiveMap ? \`${"${reference}"} exact _lm source\` : null,
+  `        sourceAlphaCoverage: Number(texture?.userData?.sourceAlphaCoverage || 0),
         visibilityAuthority: legacyGroundAtlas`,
-  `        sourceLightmap: emissiveMap ? \`${"${reference}"} exact _lm source\` : null,
-        sourceCutout,
-        sourceAlphaCoverage: Number(texture?.userData?.sourceAlphaCoverage || 0),
+  `        sourceAlphaCoverage: Number(texture?.userData?.sourceAlphaCoverage || 0),
         sourceAtlasCutoutAuthority: texture?.userData?.sourceAtlasCutoutAuthority || "none",
         visibilityAuthority: legacyGroundAtlas`,
   "sourceAtlasCutoutAuthority: texture?.userData?.sourceAtlasCutoutAuthority",
@@ -212,6 +220,7 @@ for (const [path, tokens] of Object.entries({
   ],
   [runtimePath]: [
     "sourceHasAlpha: entry.hasAlpha === true",
+    "sourceAtlasCutoutAuthority: entry.sourceAtlasCutoutAuthority",
     "const sourceCutout = texture?.userData?.sourceHasAlpha === true",
     "material.alphaTest = sourceCutout ? 0.42 : 0",
     "recovered-source-atlas-unused-quadrant-cutout",
