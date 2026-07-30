@@ -1,24 +1,7 @@
-import { readFile, readdir, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { writeFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 
 const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
-
-async function hideBuiltSourceAerialTiles() {
-  const assetsDirectory = path.resolve("dist/assets");
-  const files = (await readdir(assetsDirectory)).filter((file) => file.endsWith(".js"));
-  const tileMeshAssignment = /(\.name=`PHX_KPHX_SourceAerialTile_\$\{[^`]+\}`,)([A-Za-z_$][\w$]*)\.receiveShadow=!1/;
-  let patchCount = 0;
-  for (const file of files) {
-    const filePath = path.join(assetsDirectory, file);
-    let body = await readFile(filePath, "utf8");
-    if (!tileMeshAssignment.test(body)) continue;
-    body = body.replace(tileMeshAssignment, "$1$2.visible=!1,$2.receiveShadow=!1");
-    await writeFile(filePath, body, "utf8");
-    patchCount += 1;
-  }
-  expect(patchCount).toBe(1);
-}
 
 async function launchStandup(page) {
   await page.goto(TARGET_URL, { waitUntil: "domcontentloaded" });
@@ -74,10 +57,9 @@ async function captureCanvas(page, canvas, fileName) {
   await writeFile(`test-results/${fileName}`, image);
 }
 
-test("isolates the PHX source aerial tile layer in the A1 chase view", async ({ page }) => {
+test("isolates the pre-server PHX source aerial tile layer in the A1 chase view", async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
-  await hideBuiltSourceAerialTiles();
 
   const runtimeErrors = [];
   page.on("console", (message) => {
@@ -101,5 +83,5 @@ test("isolates the PHX source aerial tile layer in the A1 chase view", async ({ 
   expect(relevantErrors).toEqual([]);
 
   await frameA1Chase(page, canvas);
-  await captureCanvas(page, canvas, "kphx-ground-diagnostic-source-aerial-hidden.png");
+  await captureCanvas(page, canvas, "kphx-ground-diagnostic-source-aerial-hidden-pre-server.png");
 });
