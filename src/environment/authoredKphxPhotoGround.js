@@ -23,6 +23,7 @@ export const AUTHORED_KPHX_PHOTO_PROFILE = Object.freeze({
   textureMode: "tiled-native-source-resolution-v2",
   maxRuntimeTextureDimension: 1024,
   underlayMode: "neutral-airport-base-below-source-aerial-alpha",
+  fullCoverageUnderlayMode: "full-airport-neutral-underlay-below-all-source-tiles-v2",
   colorRepairMode: "source-aerial-dark-neutral-artifact-lift-v1",
 });
 
@@ -85,7 +86,31 @@ function buildAirportBaseUnderlay(THREE, environment) {
     additions.push({ parent: node.parent, underlay });
   });
   for (const { parent, underlay } of additions) parent?.add(underlay);
-  return additions.length;
+
+  // The decoded ADEX airport-base mesh does not span every transparent or
+  // missing pixel in the full 6400x2304 source aerial. Keep a continuous,
+  // neutral pavement layer below the entire photo footprint so distant tile
+  // cutouts never expose the renderer clear color as black ramp voids.
+  const fullGeometry = buildPhotoGeometry(THREE, AUTHORED_KPHX_PHOTO_PROFILE.sceneBounds);
+  fullGeometry.translate(0, -0.052, 0);
+  const fullMaterial = new THREE.MeshBasicMaterial({
+    name: "PHX full-airport source-aerial safety underlay",
+    color: 0x737779,
+    side: THREE.DoubleSide,
+    toneMapped: false,
+    depthWrite: true,
+    depthTest: true,
+  });
+  const fullUnderlay = new THREE.Mesh(fullGeometry, fullMaterial);
+  fullUnderlay.name = "PHX_KPHX_FullAirportPhotoUnderlay";
+  fullUnderlay.castShadow = false;
+  fullUnderlay.receiveShadow = false;
+  fullUnderlay.frustumCulled = true;
+  fullUnderlay.renderOrder = -40;
+  fullUnderlay.userData.underlayAuthority = AUTHORED_KPHX_PHOTO_PROFILE.fullCoverageUnderlayMode;
+  environment.add(fullUnderlay);
+  environment.userData.authoredPhotoFullCoverageUnderlay = fullUnderlay;
+  return additions.length + 1;
 }
 
 function blendExactProjectedSurfacesWithAerial(exactA1) {
@@ -230,6 +255,7 @@ async function buildTiledPhotoGround(THREE, baseUrl, manifest) {
   group.userData.runtimeTileCount = loadedTiles.length;
   group.userData.maxTextureDimension = manifest.runtimeTiling.maxTextureDimension;
   group.userData.underlayMode = AUTHORED_KPHX_PHOTO_PROFILE.underlayMode;
+  group.userData.fullCoverageUnderlayMode = AUTHORED_KPHX_PHOTO_PROFILE.fullCoverageUnderlayMode;
   group.userData.colorRepairMode = AUTHORED_KPHX_PHOTO_PROFILE.colorRepairMode;
   return group;
 }
@@ -249,6 +275,7 @@ async function buildFallbackPhotoGround(THREE, imageUrl, manifest) {
   photoGround.userData.textureMode = "single-texture-fallback-v1";
   photoGround.userData.runtimeTileCount = 1;
   photoGround.userData.underlayMode = AUTHORED_KPHX_PHOTO_PROFILE.underlayMode;
+  photoGround.userData.fullCoverageUnderlayMode = AUTHORED_KPHX_PHOTO_PROFILE.fullCoverageUnderlayMode;
   photoGround.userData.colorRepairMode = AUTHORED_KPHX_PHOTO_PROFILE.colorRepairMode;
   return photoGround;
 }
@@ -297,6 +324,7 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
     ? AUTHORED_KPHX_PHOTO_PROFILE.detailLevel
     : AUTHORED_KPHX_PHOTO_PROFILE.fallbackDetailLevel;
   environment.userData.authoredPhotoUnderlayMode = AUTHORED_KPHX_PHOTO_PROFILE.underlayMode;
+  environment.userData.authoredPhotoFullCoverageUnderlayMode = AUTHORED_KPHX_PHOTO_PROFILE.fullCoverageUnderlayMode;
   environment.userData.authoredPhotoUnderlayMaterialCount = underlayMaterialCount;
   environment.userData.authoredPhotoColorRepairMode = AUTHORED_KPHX_PHOTO_PROFILE.colorRepairMode;
   environment.userData.hiddenADEXSurfaceMaterialCount = hiddenSurfaceMaterialCount;
