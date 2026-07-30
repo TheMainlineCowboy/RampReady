@@ -82,9 +82,9 @@ if (!materializer.includes('if (!(inspection.selected.taxiwaySigns?.length > 0))
   materializer = materializer.replace(anchor, replacement);
 }
 if (!materializer.includes("taxiwaySignRecords: inspection.selected.taxiwaySignRecordCount,")) {
-  const anchor = "    runways: EXPECTED.runways,\n";
-  const replacement = `${anchor}    taxiwaySignRecords: inspection.selected.taxiwaySignRecordCount,
-    taxiwaySigns: inspection.selected.taxiwaySigns.length,
+  const anchor = "  runways: EXPECTED.runways,\n";
+  const replacement = `${anchor}  taxiwaySignRecords: inspection.selected.taxiwaySignRecordCount,
+  taxiwaySigns: inspection.selected.taxiwaySigns.length,
 `;
   if (!materializer.includes(anchor)) throw new Error("KPHX sign count contract anchor is missing");
   materializer = materializer.replace(anchor, replacement);
