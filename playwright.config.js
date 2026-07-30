@@ -9,24 +9,24 @@ const webServerCommand = requestedWebServerCommand.includes("prepare:terminal4-r
   ? requestedWebServerCommand
   : `${terminal4Preparation} && ${requestedWebServerCommand}`;
 
-async function applyKphxConcreteIsolationBeforeServer() {
+async function applyKphxShadowIsolationBeforeServer() {
   const isKphxDiagnostic = process.argv.some((argument) => argument.includes("kphx-ground-runtime.spec.js"));
   if (!isKphxDiagnostic || externalBaseURL) return;
 
   const sourcePath = path.resolve("src/environment/authoredKphxGround.js");
   let source = await readFile(sourcePath, "utf8");
-  const anchor = `      } else if (material.name === "concrete") {\n        material.visible = true;`;
-  const replacement = `      } else if (material.name === "concrete") {\n        material.visible = false;\n        material.userData.diagnosticVisibilityAuthority = "hidden-concrete-before-vite";`;
+  const anchor = "    node.receiveShadow = true;";
+  const replacement = "    node.receiveShadow = false;\n    node.userData.diagnosticShadowAuthority = \"disabled-authored-adex-ground-shadow-reception-before-vite\";";
   const occurrences = source.split(anchor).length - 1;
   if (occurrences !== 1) {
-    throw new Error(`KPHX concrete source isolation expected 1 anchor, found ${occurrences}`);
+    throw new Error(`KPHX shadow source isolation expected 1 anchor, found ${occurrences}`);
   }
 
   source = source.replace(anchor, replacement);
   await writeFile(sourcePath, source, "utf8");
 }
 
-await applyKphxConcreteIsolationBeforeServer();
+await applyKphxShadowIsolationBeforeServer();
 
 export default defineConfig({
   testDir: "./tests/browser",
