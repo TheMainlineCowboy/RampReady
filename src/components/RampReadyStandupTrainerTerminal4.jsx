@@ -96,6 +96,12 @@ export default function RampReadyStandupTrainer({
   const stageRef = useRef(0);
   const cameraRef = useRef("chase");
   const inspectionRef = useRef(false);
+  const jetwayRef = useRef({
+    controller: null,
+    deployment: 1,
+    target: 1,
+    retractionRequested: false,
+  });
   const orbitRef = useRef({
     yaw: -0.64,
     pitch: 0.38,
@@ -146,6 +152,11 @@ export default function RampReadyStandupTrainer({
     sim.rig.setLiftProgress(0);
     sim.aircraft.position.set(0, 0, NOSE_START_Z);
     sim.aircraft.rotation.y = 0;
+    const resetJetwayDeployment = inspectionRef.current ? 0 : 1;
+    jetwayRef.current.target = resetJetwayDeployment;
+    jetwayRef.current.deployment = resetJetwayDeployment;
+    jetwayRef.current.retractionRequested = false;
+    jetwayRef.current.controller?.setDeployment(resetJetwayDeployment);
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
     orbitRef.current.yaw = -0.64;
     orbitRef.current.pitch = 0.38;
@@ -175,6 +186,11 @@ export default function RampReadyStandupTrainer({
       sim.aircraft.position.set(0, 0, NOSE_START_Z);
       sim.aircraft.rotation.y = 0;
       sim.renderer.domElement.dataset.inspectionMode = next ? "active" : "training";
+      const inspectionJetwayDeployment = next ? 0 : 1;
+      jetwayRef.current.target = inspectionJetwayDeployment;
+      jetwayRef.current.deployment = inspectionJetwayDeployment;
+      jetwayRef.current.retractionRequested = false;
+      jetwayRef.current.controller?.setDeployment(inspectionJetwayDeployment);
     }
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
     orbitRef.current.yaw = -0.64;
@@ -195,9 +211,10 @@ export default function RampReadyStandupTrainer({
     const sim = simRef.current;
     if (!sim || inspectionRef.current) return;
     if (stageRef.current === 0) {
-      stageRef.current = 1;
-      setStage(1);
-      setMessage("Approach directly from the front and stop inside the capture envelope.");
+      if (jetwayRef.current.retractionRequested) return;
+      jetwayRef.current.target = 0;
+      jetwayRef.current.retractionRequested = true;
+      setMessage("Jetway departure sequence active: hood clear, telescope in, then rotate to park before tug approach.");
     } else if (stageRef.current === 3 && sim.connection.phase === CONNECTION_PHASES.SECURED) {
       stageRef.current = 4;
       setStage(4);
@@ -292,6 +309,9 @@ export default function RampReadyStandupTrainer({
     renderer.domElement.dataset.terminal4RequiresOriginalJetwayMesh = "loading";
     renderer.domElement.dataset.terminal4JetwayInitialState = "loading";
     renderer.domElement.dataset.terminal4JetwayPrePushSequence = "loading";
+    renderer.domElement.dataset.a1JetwayDeployment = "loading";
+    renderer.domElement.dataset.a1JetwayState = "loading";
+    renderer.domElement.dataset.a1JetwayAnimationAuthority = "loading";
     renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = "loading";
     renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = "loading";
     renderer.domElement.dataset.terminal4FacadeInfillCount = "loading";
@@ -318,6 +338,12 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.terminal4RequiresOriginalJetwayMesh = String(environment.userData.authoredTerminal4RequiresOriginalJetwayMesh === true);
         renderer.domElement.dataset.terminal4JetwayInitialState = environment.userData.authoredTerminal4JetwayInitialState || "missing";
         renderer.domElement.dataset.terminal4JetwayPrePushSequence = environment.userData.authoredTerminal4JetwayRequiredPrePushSequence || "missing";
+        const a1JetwayController = environment.userData.authoredTerminal4A1JetwayController || null;
+        jetwayRef.current.controller = a1JetwayController;
+        a1JetwayController?.setDeployment(jetwayRef.current.target);
+        renderer.domElement.dataset.a1JetwayDeployment = jetwayRef.current.deployment.toFixed(3);
+        renderer.domElement.dataset.a1JetwayState = a1JetwayController?.getState?.() || "missing";
+        renderer.domElement.dataset.a1JetwayAnimationAuthority = environment.userData.authoredTerminal4A1JetwayAnimationAuthority || "missing";
         renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = String(environment.userData.authoredTerminal4TerminalConnectedJetwayCount ?? 0);
         renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = String(environment.userData.authoredTerminal4SourceCutoutMaterialCount ?? 0);
         renderer.domElement.dataset.terminal4FacadeInfillCount = String(environment.userData.authoredTerminal4FacadeInfillCount ?? 0);
@@ -338,6 +364,9 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.terminal4RequiresOriginalJetwayMesh = "load-error";
         renderer.domElement.dataset.terminal4JetwayInitialState = "load-error";
         renderer.domElement.dataset.terminal4JetwayPrePushSequence = "load-error";
+        renderer.domElement.dataset.a1JetwayDeployment = "load-error";
+        renderer.domElement.dataset.a1JetwayState = "load-error";
+        renderer.domElement.dataset.a1JetwayAnimationAuthority = "load-error";
         renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = "load-error";
         renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = "load-error";
         renderer.domElement.dataset.terminal4FacadeInfillCount = "load-error";
@@ -503,6 +532,23 @@ export default function RampReadyStandupTrainer({
       const dt = Math.min(0.04, Math.max(0.001, (now - sim.last) / 1000));
       sim.last = now;
       const inspectionActive = inspectionRef.current;
+      const jetway = jetwayRef.current;
+      if (jetway.controller) {
+        const difference = jetway.target - jetway.deployment;
+        if (Math.abs(difference) > 0.0005) {
+          const step = Math.min(Math.abs(difference), dt * 0.34);
+          jetway.deployment += Math.sign(difference) * step;
+          jetway.controller.setDeployment(jetway.deployment);
+        }
+        renderer.domElement.dataset.a1JetwayDeployment = jetway.deployment.toFixed(3);
+        renderer.domElement.dataset.a1JetwayState = jetway.controller.getState?.() || "unknown";
+        if (!inspectionActive && jetway.retractionRequested && jetway.deployment <= 0.005 && stageRef.current === 0) {
+          jetway.retractionRequested = false;
+          stageRef.current = 1;
+          setStage(1);
+          setMessage("Jetway parked clear. Approach directly from the front and stop inside the capture envelope.");
+        }
+      }
       const before = connectionMetrics(sim);
       const clearDistance = Math.hypot(rig.root.position.x - aircraft.position.x, rig.root.position.z - aircraft.position.z);
       if (inspectionActive) {

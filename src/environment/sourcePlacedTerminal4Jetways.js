@@ -1,5 +1,6 @@
 import concourseA from "./kphxV181/concourseA.js";
 import concourseB from "./kphxV181/concourseB.js";
+import { buildAnimatedA1Jetway } from "./animatedA1Jetway.js";
 
 export const SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE = Object.freeze({
   sourceArchive: "unmlobo-kphx1-8-1_Mu9aq.zip",
@@ -256,6 +257,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   let terminal4FacadeInfillCount = 0;
   let terminal4LowerFacadeFitCount = 0;
   let terminal4OpenServiceBayCount = 0;
+  let a1AnimatedLayout = null;
 
   for (const jetway of jetways) {
     const parking = parkingByGate.get(jetway.g);
@@ -367,6 +369,19 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
     transforms.supportColumns.push({ position: [jetway.x, 2.0, jetway.z], scale: [0.34, 4.0, 0.34] });
     transforms.liftSleeves.push({ position: [jetway.x, 1.45, jetway.z], scale: [0.54, 2.4, 0.54] });
     transforms.supportFeet.push({ position: [jetway.x, 0.16, jetway.z], yaw, scale: [1.3, 0.22, 1.3] });
+
+    if (jetway.g === "A1") {
+      a1AnimatedLayout = {
+        x: jetway.x,
+        z: jetway.z,
+        yaw,
+        bridgeStart,
+        bridgeEnd,
+        rotundaY,
+        cabinY,
+      };
+      continue;
+    }
 
     const outerLength = clamp(bridgeLength * 0.62, 8.5, 18.8);
     const innerStart = bridgeStart + outerLength * 0.48;
@@ -529,6 +544,10 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   cable.rotateX(Math.PI / 2);
   const marker = new THREE.SphereGeometry(1, 10, 7);
 
+  if (!a1AnimatedLayout) throw new Error("Gate A1 animated jetway layout was not decoded");
+  const animatedA1Jetway = buildAnimatedA1Jetway(THREE, materials, a1AnimatedLayout);
+  group.add(animatedA1Jetway);
+
   addInstances(THREE, group, box, materials.facadeWall, transforms.facadeInfill, "Terminal4_LowerFacadeInfillPanels");
   addInstances(THREE, group, box, materials.facadeDoor, transforms.facadeDoor, "Terminal4_ClosedServiceDoors");
   addInstances(THREE, group, box, materials.facadeVent, transforms.facadeVent, "Terminal4_FacadeVentGrilles");
@@ -577,6 +596,9 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   group.userData.sourceScaleAuthority = "airport-authored-AIR_Jetway01-scale-preserved-no-aircraft-specific-shrink";
   group.userData.sourceGeometryMode = "procedural-articulated-fallback-pending-original-AIR_Jetway01-mesh-recovery";
   group.userData.requiresOriginalSourceMesh = true;
+  group.userData.a1JetwayController = animatedA1Jetway.userData.controller;
+  group.userData.a1JetwayAnimationAuthority = animatedA1Jetway.userData.animationAuthority;
+  group.userData.a1JetwayRuntimeState = animatedA1Jetway.userData.state;
   group.userData.jetwayMotionLimits = Object.freeze({
     rotundaYawDegrees: Object.freeze([-92, 92]),
     cabinHeightMeters: Object.freeze([2.35, 5.75]),

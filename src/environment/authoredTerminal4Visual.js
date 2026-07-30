@@ -270,6 +270,8 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4Url = `${baseUrl}terminal4.gltf`;
   environment.userData.authoredTerminal4 = authored;
   environment.userData.authoredTerminal4Jetways = sourcePlacedJetways;
+  environment.userData.authoredTerminal4A1JetwayController = sourcePlacedJetways.userData.a1JetwayController;
+  environment.userData.authoredTerminal4A1JetwayAnimationAuthority = sourcePlacedJetways.userData.a1JetwayAnimationAuthority;
   environment.userData.authoredTerminal4Placement = AUTHORED_TERMINAL4_PROFILE.placementAuthority;
   environment.userData.authoredTerminal4MaterialPass = AUTHORED_TERMINAL4_PROFILE.materialPass;
   environment.userData.authoredTerminal4GroundCleanupPass = AUTHORED_TERMINAL4_PROFILE.groundCleanupPass;
