@@ -9,30 +9,39 @@ const webServerCommand = requestedWebServerCommand.includes("prepare:terminal4-r
   ? requestedWebServerCommand
   : `${terminal4Preparation} && ${requestedWebServerCommand}`;
 
-async function applyKphxAerialIsolationBeforeServer() {
+async function applyKphxAsphaltIsolationBeforeServer() {
   const isKphxDiagnostic = process.argv.some((argument) => argument.includes("kphx-ground-runtime.spec.js"));
   if (!isKphxDiagnostic || externalBaseURL) return;
 
   const assetsDirectory = path.resolve("dist/assets");
   const files = (await readdir(assetsDirectory)).filter((file) => file.endsWith(".js"));
-  const tileAssignment = /(\.name=`PHX_KPHX_SourceAerialTile_\$\{[^`]+\}`,)([A-Za-z_$][\w$]*)\.receiveShadow=!1,\2\.castShadow=!1/;
-  let patchCount = 0;
+  const initialAsphalt = /([A-Za-z_$][\w$]*)\.name==="asphalt"\?\(\1\.visible=!0,/;
+  const photoAsphalt = /if\(([A-Za-z_$][\w$]*)\.has\(([A-Za-z_$][\w$]*)\.name\)\)\{\2\.visible=!0,/;
+  let initialPatchCount = 0;
+  let photoPatchCount = 0;
 
   for (const file of files) {
     const filePath = path.join(assetsDirectory, file);
     let body = await readFile(filePath, "utf8");
-    if (!tileAssignment.test(body)) continue;
-    body = body.replace(tileAssignment, "$1$2.visible=!1,$2.receiveShadow=!1,$2.castShadow=!1");
+    if (initialAsphalt.test(body)) {
+      body = body.replace(initialAsphalt, (statement, materialName) =>
+        statement.replace(`${materialName}.visible=!0`, `${materialName}.visible=!1`));
+      initialPatchCount += 1;
+    }
+    if (photoAsphalt.test(body) && body.includes("source-matched-charcoal-asphalt-with-shadow-floor-v1")) {
+      body = body.replace(photoAsphalt, (statement, _setName, materialName) =>
+        statement.replace(`${materialName}.visible=!0`, `${materialName}.visible=!1`));
+      photoPatchCount += 1;
+    }
     await writeFile(filePath, body, "utf8");
-    patchCount += 1;
   }
 
-  if (patchCount !== 1) {
-    throw new Error(`KPHX pre-server aerial isolation expected one production bundle patch, found ${patchCount}`);
+  if (initialPatchCount !== 1 || photoPatchCount !== 1) {
+    throw new Error(`KPHX pre-server asphalt isolation expected 1+1 patches, found ${initialPatchCount}+${photoPatchCount}`);
   }
 }
 
-await applyKphxAerialIsolationBeforeServer();
+await applyKphxAsphaltIsolationBeforeServer();
 
 export default defineConfig({
   testDir: "./tests/browser",
