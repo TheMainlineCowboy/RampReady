@@ -1,0 +1,33 @@
+head=5800317f96d219a24b305fca7e67f425b2d1aa7f
+started_utc=2026-07-30T09:49:31Z
+Prepared Terminal 4 jetways without shrinking the airport asset: source scale retained, service bays source-qualified, and articulation requirements exposed while the original AIR_Jetway01 mesh is recovered.
+Prepared KPHX pavement-coincident markings: 1.8-3.4 mm surface offsets, minimal depth bias, and normal object occlusion.
+Prepared always-visible free-drive inspection controls with unrestricted WASD/arrow and touch-slider tug motion in both runtimes.
+Verified AIR_Jetway01 source authority: original airport dimensions and textures are preserved, aircraft-specific shrinking is forbidden, and articulation requirements remain explicit while the original mesh is recovered.
+Verified AIR_Jetway01 source-scale alignment: airport geometry remains scale 1.00, while aircraft door calibration and future articulation are handled independently.
+Verified PHX stand alignment without resizing the airport: scale-1.00 AIR_Jetway01 placement, realistic stand-line scale, visible gate labels, and non-repeating pavement wear.
+file:///home/runner/work/RampReady/RampReady/scripts/verify-terminal4-jetway-crj-v5.mjs:5
+  for (const token of tokens) if (!source.includes(token)) throw new Error(`${path}: missing source-scale jetway token ${token}`);
+                                                                 ^
+
+Error: src/environment/authoredTerminal4Visual.js: missing source-scale jetway token authoredTerminal4JetwaySourceScaleAuthority
+    at requireTokens (file:///home/runner/work/RampReady/RampReady/scripts/verify-terminal4-jetway-crj-v5.mjs:5:66)
+    at file:///home/runner/work/RampReady/RampReady/scripts/verify-terminal4-jetway-crj-v5.mjs:47:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.1
+file:///home/runner/work/RampReady/RampReady/scripts/verify-simulator-quality-inspection-pass.mjs:11
+    if (!source.includes(token)) throw new Error(`${path} is missing simulator-quality token: ${token}`);
+                                       ^
+
+Error: src/environment/authoredTerminal4Visual.js is missing simulator-quality token: authoredTerminal4JetwaySourceScaleAuthority
+    at requireTokens (file:///home/runner/work/RampReady/RampReady/scripts/verify-simulator-quality-inspection-pass.mjs:11:40)
+    at file:///home/runner/work/RampReady/RampReady/scripts/verify-simulator-quality-inspection-pass.mjs:157:25
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.1
+exit_code=1
