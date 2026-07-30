@@ -164,6 +164,44 @@ test("stand-up operator view contains the dedicated controls", async ({ page }) 
   await capture(page, canvas, "standup-operator-view.png");
 });
 
+test("A1 jetway starts attached and parks before tug approach", async ({ page }) => {
+  test.setTimeout(300_000);
+  await page.setViewportSize(DESKTOP);
+  const canvas = await launchRuntime(page);
+
+  await expect.poll(
+    async () => Number(await canvas.getAttribute("data-a1-jetway-deployment")),
+    { timeout: 20_000, intervals: [100, 250, 500] },
+  ).toBeGreaterThanOrEqual(0.995);
+  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "attached");
+  await expect.poll(
+    () => canvas.getAttribute("data-a1-jetway-animation-authority"),
+    { timeout: 20_000 },
+  ).toContain("independent-source-scale");
+  await capture(page, canvas, "a1-jetway-attached.png");
+
+  const ready = page.getByRole("button", { name: "Ready" });
+  await expect(ready).toBeVisible();
+  await ready.click();
+  await expect(page.getByText(/Jetway departure sequence active/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Complete visual equipment check" })).toBeVisible();
+
+  const observedStates = new Set(["attached"]);
+  await expect.poll(
+    async () => {
+      const state = await canvas.getAttribute("data-a1-jetway-state");
+      if (state) observedStates.add(state);
+      return Number(await canvas.getAttribute("data-a1-jetway-deployment"));
+    },
+    { timeout: 20_000, intervals: [50, 75, 100] },
+  ).toBeLessThanOrEqual(0.005);
+  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "parked");
+  await expect(page.getByText(/Jetway parked clear/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Align the capture head with the nose gear" })).toBeVisible();
+  expect([...observedStates].some((state) => ["hood-clear", "telescoping", "rotating-to-park", "retracting"].includes(state))).toBe(true);
+  await capture(page, canvas, "a1-jetway-parked.png");
+});
+
 test("free-drive inspection toggle moves the tug forward and reverse without procedure gates", async ({ page }) => {
   test.setTimeout(300_000);
   await page.setViewportSize(DESKTOP);
@@ -174,6 +212,11 @@ test("free-drive inspection toggle moves the tug forward and reverse without pro
   await expect(toggle).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".rr-shell")).toHaveAttribute("data-inspection-mode", "active");
   await expect(canvas).toHaveAttribute("data-inspection-mode", "active");
+  await expect.poll(
+    async () => Number(await canvas.getAttribute("data-a1-jetway-deployment")),
+    { timeout: 10_000 },
+  ).toBeLessThanOrEqual(0.005);
+  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "parked");
 
   const start = await canvas.evaluate((element) => ({
     x: Number(element.dataset.inspectionTugX),
