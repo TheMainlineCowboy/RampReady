@@ -2,6 +2,7 @@ import { writeFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 
 const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
+test.use({ serviceWorkers: "block" });
 
 async function captureCanvas(page, canvas, fileName) {
   const bounds = await canvas.boundingBox();
@@ -61,7 +62,12 @@ test("isolates authored KPHX ground shadow receiving in the A1 chase view", asyn
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   let shadowPatchCount = 0;
-  await page.route(/\/assets\/[^/?]+\.js(?:\?.*)?$/, async (route) => {
+  await page.route("**/*", async (route) => {
+    const request = route.request();
+    if (request.resourceType() !== "script") {
+      await route.continue();
+      return;
+    }
     const response = await route.fetch();
     let body = await response.text();
     const shadowOn = "s.castShadow=!1,s.receiveShadow=!0;const a=Array.isArray(s.material)?s.material:[s.material]";
