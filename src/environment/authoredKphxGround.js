@@ -459,7 +459,7 @@ export async function installAuthoredKphxGround(THREE, environment) {
   environment.userData.authoredGroundSurfaceTextures = surfaceTextures;
   environment.userData.authoredGroundTexturedSurfaceMaterialCount = materialState.sourceDetailedSurfaceMaterialCount;
   environment.userData.authoredGroundEnhancedMarkingMaterialCount = materialState.enhancedMarkingMaterialCount;
-  environment.userData.authoredGroundMarkingContactMode = "pavement-relative-millimeter-offset";
+  environment.userData.authoredGroundMarkingContactMode = "pavement-coincident-decals";
   environment.userData.kphxRunwayCount = runwayVisuals.userData.runwayCount;
   environment.userData.kphxRunwayIdentifierCount = runwayVisuals.userData.identifierCount;
   environment.userData.kphxRunwayLightCount = runwayVisuals.userData.lightCount;
