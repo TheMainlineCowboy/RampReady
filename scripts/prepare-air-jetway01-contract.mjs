@@ -8,45 +8,51 @@ const jetways = fs.readFileSync(jetwayPath, "utf8");
 for (const token of [
   'sourceLibraryModel: "AIR_Jetway01"',
   'sourceLibraryGuid: "{bfcdf52b-9142-415c-8318-03c1b92ca9d9}"',
+  'sourceDimensionsMeters: Object.freeze([37.92, 8.77, 26.51])',
   "AIR_Jetway01_OuterTelescopingTunnels",
   "AIR_Jetway01_InnerTelescopingTunnels",
   "AIR_Jetway01_AircraftCabins",
   "AIR_Jetway01_WheelBogies",
   "usesTerminalBuildingTextures = false",
   "proceduralBuildingBoxReuse = false",
-  'detailLevel: "fsx-air-jetway01-exact-textured-crj-scale-v5"',
-  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
-  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.28",
+  'detailLevel: "fsx-air-jetway01-exact-textured-source-scale-articulated-v5"',
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35",
   "sourceFacadeRecessMeters",
-  "a1DoorContactErrorMeters",
+  "group.userData.sourceScaleAuthority",
+  "group.userData.requiresOriginalSourceMesh",
+  "group.userData.jetwayMotionLimits",
+  'group.userData.initialJetwayState = "attached-to-aircraft-door"',
 ]) {
-  if (!jetways.includes(token)) throw new Error(`AIR_Jetway01 v5 source contract is missing ${token}`);
+  if (!jetways.includes(token)) throw new Error(`AIR_Jetway01 source-scale contract is missing ${token}`);
 }
 
 for (const token of [
   'sourceLibraryModel: "AIR_Jetway01"',
   'sourceLibraryGuid: "{bfcdf52b-9142-415c-8318-03c1b92ca9d9}"',
-  'detailLevel: "fsx-air-jetway01-exact-textured-crj-scale-v5"',
-  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
-  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.28",
+  'sourceDimensionsMeters: Object.freeze([37.92, 8.77, 26.51])',
+  'detailLevel: "fsx-air-jetway01-exact-textured-source-scale-articulated-v5"',
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35",
   "CLOSED_SERVICE_DOOR_GATES",
   "FACADE_VENT_GATES",
   "sourceFacadeRecessMeters",
-  "a1DoorContactErrorMeters",
-  "Obsolete box-built, repetitive-facade, or misaligned jetway returned",
+  "sourceScaleAuthority",
+  "requiresOriginalSourceMesh",
+  "jetwayMotionLimits",
+  "aircraft-specific jetway shrink",
 ]) {
-  if (!verifier.includes(token)) throw new Error(`Prepared AIR_Jetway01 v5 verifier contract is missing ${token}`);
+  if (!verifier.includes(token)) throw new Error(`AIR_Jetway01 source-scale verifier contract is missing ${token}`);
 }
 
 for (const forbidden of [
-  'detailLevel: "fsx-air-jetway01-faithful-articulated-v2"',
-  'detailLevel: "fsx-air-jetway01-exact-textured-crj-scale-v4"',
-  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
-  "const targetX = jetway.px - forwardX * 5.6",
-  "gateNumber % 3",
-  "gateNumber % 2",
+  'detailLevel: "fsx-air-jetway01-exact-textured-crj-scale-v5"',
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.28",
+  "createArchedTunnelGeometry(THREE, 2.08, 2.02, 0.18)",
+  "scale: [2.24, 2.12, wallConnectorLength]",
 ]) {
-  if (jetways.includes(forbidden)) throw new Error(`Obsolete AIR_Jetway01 runtime token remains ${forbidden}`);
+  if (jetways.includes(forbidden)) throw new Error(`AIR_Jetway01 runtime contains forbidden aircraft-specific jetway shrink ${forbidden}`);
 }
 
-console.log("Prepared AIR_Jetway01 v5 source contract: exact source GUID and textures, CRJ700 proportions and door station, terminal attachment, and non-repetitive lower facade.");
+console.log("Verified AIR_Jetway01 source authority: original airport dimensions and textures are preserved, aircraft-specific shrinking is forbidden, and articulation requirements remain explicit while the original mesh is recovered.");
