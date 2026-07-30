@@ -9,39 +9,32 @@ const webServerCommand = requestedWebServerCommand.includes("prepare:terminal4-r
   ? requestedWebServerCommand
   : `${terminal4Preparation} && ${requestedWebServerCommand}`;
 
-async function applyKphxAsphaltIsolationBeforeServer() {
+async function applyKphxGroundShadowIsolationBeforeServer() {
   const isKphxDiagnostic = process.argv.some((argument) => argument.includes("kphx-ground-runtime.spec.js"));
   if (!isKphxDiagnostic || externalBaseURL) return;
 
   const assetsDirectory = path.resolve("dist/assets");
   const files = (await readdir(assetsDirectory)).filter((file) => file.endsWith(".js"));
-  const initialAsphalt = /([A-Za-z_$][\w$]*)\.name==="asphalt"\?\(\1\.visible=!0,/;
-  const photoAsphalt = /if\(([A-Za-z_$][\w$]*)\.has\(([A-Za-z_$][\w$]*)\.name\)\)\{\2\.visible=!0,/;
-  let initialPatchCount = 0;
-  let photoPatchCount = 0;
+  const receiveShadowAssignment = /([A-Za-z_$][\w$]*)\.castShadow=!1,\1\.receiveShadow=!0;const ([A-Za-z_$][\w$]*)=Array\.isArray\(\1\.material\)\?\1\.material:\[\1\.material\]/;
+  let patchCount = 0;
 
   for (const file of files) {
     const filePath = path.join(assetsDirectory, file);
     let body = await readFile(filePath, "utf8");
-    if (initialAsphalt.test(body)) {
-      body = body.replace(initialAsphalt, (statement, materialName) =>
-        statement.replace(`${materialName}.visible=!0`, `${materialName}.visible=!1`));
-      initialPatchCount += 1;
-    }
-    if (photoAsphalt.test(body) && body.includes("source-matched-charcoal-asphalt-with-shadow-floor-v1")) {
-      body = body.replace(photoAsphalt, (statement, _setName, materialName) =>
-        statement.replace(`${materialName}.visible=!0`, `${materialName}.visible=!1`));
-      photoPatchCount += 1;
+    if (receiveShadowAssignment.test(body)) {
+      body = body.replace(receiveShadowAssignment, (statement, nodeName) =>
+        statement.replace(`${nodeName}.receiveShadow=!0`, `${nodeName}.receiveShadow=!1`));
+      patchCount += 1;
     }
     await writeFile(filePath, body, "utf8");
   }
 
-  if (initialPatchCount !== 1 || photoPatchCount !== 1) {
-    throw new Error(`KPHX pre-server asphalt isolation expected 1+1 patches, found ${initialPatchCount}+${photoPatchCount}`);
+  if (patchCount !== 1) {
+    throw new Error(`KPHX pre-server shadow isolation expected 1 patch, found ${patchCount}`);
   }
 }
 
-await applyKphxAsphaltIsolationBeforeServer();
+await applyKphxGroundShadowIsolationBeforeServer();
 
 export default defineConfig({
   testDir: "./tests/browser",
