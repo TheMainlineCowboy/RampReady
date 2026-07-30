@@ -11,7 +11,7 @@
     "materialize:kphx-ground": "node scripts/prepare-kphx-simulator-ground-builder.mjs && node scripts/materialize-kphx-ground.mjs",
     "inspect:kphx-exact-a1": "node scripts/inspect-kphx-exact-a1-payload.mjs",
     "verify:kphx-source-lights": "node scripts/verify-kphx-source-lights.mjs",
-    "verify:kphx-v181": "npm run inspect:kphx-exact-a1 && npm run verify:kphx-source-lights && node scripts/verify-kphx-v181-source-contract.mjs && node scripts/verify-kphx-photo-tiling.mjs",
+    "verify:kphx-v181": "node scripts/prepare-air-jetway01-contract.mjs && npm run inspect:kphx-exact-a1 && npm run verify:kphx-source-lights && node scripts/verify-kphx-v181-source-contract.mjs && node scripts/verify-kphx-photo-tiling.mjs",
     "prepare:aircraft": "node scripts/prepare-crj700-model.mjs",
     "stage:aircraft": "node scripts/stage-user-aircraft.mjs",
     "convert:authored-aircraft": "node tools/aircraft/convert-authored-crj900.mjs",
