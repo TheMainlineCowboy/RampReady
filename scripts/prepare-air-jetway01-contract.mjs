@@ -46,7 +46,7 @@ for (const forbidden of [
   "gateNumber % 3",
   "gateNumber % 2",
 ]) {
-  if (verifier.includes(forbidden)) throw new Error(`Obsolete AIR_Jetway01 verifier token remains ${forbidden}`);
+  if (jetways.includes(forbidden)) throw new Error(`Obsolete AIR_Jetway01 runtime token remains ${forbidden}`);
 }
 
 console.log("Prepared AIR_Jetway01 v5 source contract: exact source GUID and textures, CRJ700 proportions and door station, terminal attachment, and non-repetitive lower facade.");
