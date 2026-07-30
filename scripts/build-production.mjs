@@ -2,8 +2,10 @@ import { readFile, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 
 const trainerPath = new URL("../src/components/RampReadyTrainerStable.jsx", import.meta.url);
+const terminal4TrainerPath = new URL("../src/components/RampReadyStandupTrainerTerminal4.jsx", import.meta.url);
 const packagePath = new URL("../package.json", import.meta.url);
 const originalSource = await readFile(trainerPath, "utf8");
+const originalTerminal4Source = await readFile(terminal4TrainerPath, "utf8");
 const originalPackage = await readFile(packagePath, "utf8");
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
@@ -48,10 +50,15 @@ try {
 let restorationError;
 try {
   await writeFile(trainerPath, originalSource, "utf8");
+  await writeFile(terminal4TrainerPath, originalTerminal4Source, "utf8");
   const restoredSource = await readFile(trainerPath, "utf8");
+  const restoredTerminal4Source = await readFile(terminal4TrainerPath, "utf8");
   const currentPackage = await readFile(packagePath, "utf8");
   if (restoredSource !== originalSource) {
     throw new Error("RampReady production build failed to restore the tracked trainer source exactly.");
+  }
+  if (restoredTerminal4Source !== originalTerminal4Source) {
+    throw new Error("RampReady production build failed to restore the generated Terminal 4 trainer source exactly.");
   }
   if (currentPackage !== originalPackage) {
     throw new Error("RampReady production build unexpectedly modified package.json.");
@@ -68,4 +75,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady production build passed and restored the tracked trainer source exactly.");
+console.log("RampReady production build passed and restored both tracked trainer sources exactly.");
