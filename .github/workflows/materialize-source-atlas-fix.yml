@@ -33,7 +33,7 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Run deterministic preparation
+      - name: Run deterministic preparation for targeted source-atlas cutout
         run: npm run verify
 
       - name: Commit prepared source-atlas runtime
