@@ -8,6 +8,15 @@ function insertAfter(path, anchor, addition, marker, label) {
   fs.writeFileSync(path, source, "utf8");
 }
 
+function insertAfterAny(path, anchors, addition, marker, label) {
+  let source = fs.readFileSync(path, "utf8");
+  if (source.includes(marker)) return;
+  const anchor = anchors.find((candidate) => source.includes(candidate));
+  if (!anchor) throw new Error(`${path}: missing ${label} anchors`);
+  source = source.replace(anchor, `${anchor}\n${addition}`);
+  fs.writeFileSync(path, source, "utf8");
+}
+
 function replaceRequired(path, anchor, replacement, marker, label) {
   let source = fs.readFileSync(path, "utf8");
   if (source.includes(marker)) return;
@@ -129,18 +138,24 @@ replaceRequired(
   "Jetway departure sequence active",
   "stage-zero jetway retraction",
 );
-insertAfter(
+insertAfterAny(
   runtimePath,
-  '    renderer.domElement.dataset.terminal4Placement = "loading";',
+  [
+    '    renderer.domElement.dataset.terminal4JetwayPrePushSequence = "loading";',
+    '    renderer.domElement.dataset.terminal4Placement = "loading";',
+  ],
   `    renderer.domElement.dataset.a1JetwayDeployment = "loading";
     renderer.domElement.dataset.a1JetwayState = "loading";
     renderer.domElement.dataset.a1JetwayAnimationAuthority = "loading";`,
   'dataset.a1JetwayDeployment = "loading"',
   "jetway dataset initialization",
 );
-insertAfter(
+insertAfterAny(
   runtimePath,
-  "        renderer.domElement.dataset.terminal4Placement = environment.userData.authoredTerminal4Placement;",
+  [
+    '        renderer.domElement.dataset.terminal4JetwayPrePushSequence = environment.userData.authoredTerminal4JetwayRequiredPrePushSequence || "missing";',
+    "        renderer.domElement.dataset.terminal4Placement = environment.userData.authoredTerminal4Placement;",
+  ],
   `        const a1JetwayController = environment.userData.authoredTerminal4A1JetwayController || null;
         jetwayRef.current.controller = a1JetwayController;
         a1JetwayController?.setDeployment(jetwayRef.current.target);
@@ -150,9 +165,12 @@ insertAfter(
   "const a1JetwayController = environment.userData.authoredTerminal4A1JetwayController",
   "jetway controller installation",
 );
-insertAfter(
+insertAfterAny(
   runtimePath,
-  '        renderer.domElement.dataset.terminal4Placement = "load-error";',
+  [
+    '        renderer.domElement.dataset.terminal4JetwayPrePushSequence = "load-error";',
+    '        renderer.domElement.dataset.terminal4Placement = "load-error";',
+  ],
   `        renderer.domElement.dataset.a1JetwayDeployment = "load-error";
         renderer.domElement.dataset.a1JetwayState = "load-error";
         renderer.domElement.dataset.a1JetwayAnimationAuthority = "load-error";`,
