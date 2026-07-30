@@ -1,6 +1,6 @@
 RampReady AIR_Jetway01 source inventory
-generated_utc=2026-07-30T07:24:02Z
-rampready_head=a32af592865f6c129c4f1749b62d0b2a443f8b86
+generated_utc=2026-07-30T07:24:22Z
+rampready_head=424c45585e6655a23ba51f5b454851742ae3336d
 skyharbor_commit=2e6642778c9c88eac6a82b21063763cc78be7cfe
 
 == RampReady candidate files ==
@@ -19,7 +19,7 @@ skyharbor_commit=2e6642778c9c88eac6a82b21063763cc78be7cfe
 ./scripts/prepare-terminal4-jetway-crj-v5.mjs|6228 bytes
 ./scripts/prepare-terminal4-jetway-dxt3.mjs|4155 bytes
 ./scripts/prepare-terminal4-jetway-facade-v4.mjs|17625 bytes
-./scripts/verify-terminal4-jetway-crj-v5.mjs|3470 bytes
+./scripts/verify-terminal4-jetway-crj-v5.mjs|4226 bytes
 ./source-assets/kphx-exact-terminal4/M1DGJETWAY.BMP|349626 bytes
 ./source-assets/kphx-exact-terminal4/M1DGJETWAY_LM.BMP|349626 bytes
 ./src/environment/sourcePlacedTerminal4Jetways.js|27569 bytes
