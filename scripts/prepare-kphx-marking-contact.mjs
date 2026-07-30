@@ -75,6 +75,7 @@ normalizeAll(runtimePath, [
   ["lines.renderOrder = 460", "lines.renderOrder = 26"],
   ["lines.renderOrder = 85", "lines.renderOrder = 26"],
   ['contactMode: "pavement-relative-millimeter-offset"', 'contactMode: "pavement-coincident-decals"'],
+  ['authoredGroundMarkingContactMode = "pavement-relative-millimeter-offset"', 'authoredGroundMarkingContactMode = "pavement-coincident-decals"'],
 ]);
 
 const authorityPath = "scripts/prepare-phx-visual-authority.mjs";
@@ -122,7 +123,8 @@ for (const [path, tokens, forbidden] of [
     "material.polygonOffsetUnits = -0.5",
     "Math.max(node.renderOrder || 0, 24)",
     'contactMode: "pavement-coincident-decals"',
-  ], ["polygonOffsetFactor = -12", "polygonOffsetUnits = -12", "renderOrder || 0, 420"]],
+    'authoredGroundMarkingContactMode = "pavement-coincident-decals"',
+  ], ["polygonOffsetFactor = -12", "polygonOffsetUnits = -12", "renderOrder || 0, 420", "pavement-relative-millimeter-offset"]],
   [authorityPath, [
     "y = 0.0022",
     "mesh.position.set(x, 0.0028, z)",
@@ -134,4 +136,4 @@ for (const [path, tokens, forbidden] of [
   for (const token of forbidden) if (prepared.includes(token)) throw new Error(`${path}: obsolete floating marking token remains ${token}`);
 }
 
-console.log("Prepared KPHX pavement-coincident markings: 1.8-3.4 mm surface offsets, minimal depth bias, and normal object occlusion.");
+console.log("Prepared KPHX pavement-coincident markings: 1.8-3.4 mm surface offsets, minimal depth bias, normal object occlusion, and idempotent environment evidence.");
