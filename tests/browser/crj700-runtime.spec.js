@@ -187,9 +187,11 @@ test("verifies CRJ, A1 jetway, operator view and free-drive in one full-airport 
   ]);
   await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-parked.png"));
 
-  const toggle = page.getByRole("button", { name: "Free-drive inspection" });
+  const toggle = page.locator("button.rr-inspection-toggle");
+  await expect(toggle).toHaveText("Free-drive inspection");
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await expect(toggle).toHaveText("Return to training");
   const start = await canvas.evaluate((element) => ({ x: Number(element.dataset.inspectionTugX), z: Number(element.dataset.inspectionTugZ) }));
   await page.keyboard.down("w");
   await page.waitForTimeout(1_200);
