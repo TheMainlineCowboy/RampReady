@@ -4,18 +4,16 @@ import { expect, test } from "@playwright/test";
 
 const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
 
-async function patchBuiltGroundShadowReceiving() {
+async function hideBuiltSourceAerialTiles() {
   const assetsDirectory = path.resolve("dist/assets");
   const files = (await readdir(assetsDirectory)).filter((file) => file.endsWith(".js"));
-  const assignment = /([A-Za-z_$][\w$]*)\.castShadow=!1,\1\.receiveShadow=!0;const ([A-Za-z_$][\w$]*)=Array\.isArray\(\1\.material\)\?\1\.material:\[\1\.material\]/;
+  const tileMeshAssignment = /(\.name=`PHX_KPHX_SourceAerialTile_\$\{[^`]+\}`,)([A-Za-z_$][\w$]*)\.receiveShadow=!1/;
   let patchCount = 0;
   for (const file of files) {
     const filePath = path.join(assetsDirectory, file);
     let body = await readFile(filePath, "utf8");
-    const match = body.match(assignment);
-    if (!match) continue;
-    body = body.replace(assignment, (statement, meshName) =>
-      statement.replace(`${meshName}.receiveShadow=!0`, `${meshName}.receiveShadow=!1`));
+    if (!tileMeshAssignment.test(body)) continue;
+    body = body.replace(tileMeshAssignment, "$1$2.visible=!1,$2.receiveShadow=!1");
     await writeFile(filePath, body, "utf8");
     patchCount += 1;
   }
@@ -76,10 +74,10 @@ async function captureCanvas(page, canvas, fileName) {
   await writeFile(`test-results/${fileName}`, image);
 }
 
-test("isolates authored KPHX ground shadow receiving in the A1 chase view", async ({ page }) => {
+test("isolates the PHX source aerial tile layer in the A1 chase view", async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
-  await patchBuiltGroundShadowReceiving();
+  await hideBuiltSourceAerialTiles();
 
   const runtimeErrors = [];
   page.on("console", (message) => {
@@ -103,5 +101,5 @@ test("isolates authored KPHX ground shadow receiving in the A1 chase view", asyn
   expect(relevantErrors).toEqual([]);
 
   await frameA1Chase(page, canvas);
-  await captureCanvas(page, canvas, "kphx-ground-diagnostic-receive-shadow-off.png");
+  await captureCanvas(page, canvas, "kphx-ground-diagnostic-source-aerial-hidden.png");
 });
