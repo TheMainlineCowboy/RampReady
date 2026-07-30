@@ -30,6 +30,9 @@ replaceOnce(
   const parkingByGate = new Map(
     [...concourseA.parkings, ...concourseB.parkings].map((parking) => [parking.g, parking]),
   );
+  const CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 4.1;
+  const CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.55;
+  const AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.78;
   let highDetailCount = 0;
 
   for (const jetway of jetways) {
@@ -39,15 +42,11 @@ replaceOnce(
     const forwardZ = Math.sin(parkingHeading);
     const leftX = forwardZ;
     const leftZ = -forwardX;
-    // Source parking coordinates describe the nose-gear stop point. A passenger
-    // boarding bridge must terminate at the forward-left cabin door instead of
-    // extending across the nose gear. CRJ-scale offsets keep the A1 bridge clear
-    // of the nose while remaining useful for the other Terminal 4 stands.
-    const targetX = jetway.px - forwardX * 5.6 + leftX * 1.25;
-    const targetZ = jetway.pz - forwardZ * 5.6 + leftZ * 1.25;
+    const targetX = jetway.px - forwardX * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS + leftX * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
+    const targetZ = jetway.pz - forwardZ * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS + leftZ * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
     let dx = targetX - jetway.x;
     let dz = targetZ - jetway.z;`,
-  "const targetX = jetway.px - forwardX * 5.6",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 4.1",
 );
 
 replaceOnce(
@@ -140,8 +139,9 @@ replaceOnce(
 for (const [path, tokens] of Object.entries({
   "src/environment/sourcePlacedTerminal4Jetways.js": [
     "parkingByGate",
-    "const targetX = jetway.px - forwardX * 5.6",
-    "const targetZ = jetway.pz - forwardZ * 5.6",
+    "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 4.1",
+    "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.55",
+    "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.78",
   ],
   "src/environment/authoredKphxGround.js": [
     "const broadWear = Math.sin(pixelX * 0.041)",
@@ -157,4 +157,4 @@ for (const [path, tokens] of Object.entries({
   }
 }
 
-console.log("Prepared PHX stand alignment: door-targeted jetways, realistic stand-line scale, visible gate labels, and non-repeating pavement wear.");
+console.log("Prepared PHX stand alignment: corrected CRJ door-targeted jetways, realistic stand-line scale, visible gate labels, and non-repeating pavement wear.");
