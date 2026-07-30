@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - scripts/audit-kphx-jetways-and-terminal-primitives.mjs
+      - scripts/discover-kphx-freeware-archive.mjs
       - .github/workflows/audit-kphx-jetways-terminal.yml
 
 permissions:
@@ -19,7 +20,7 @@ concurrency:
 jobs:
   audit-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - name: Check out exact source commit
         uses: actions/checkout@v4
@@ -40,11 +41,14 @@ jobs:
           set +e
           node scripts/audit-kphx-jetways-and-terminal-primitives.mjs reports/kphx-jetway-terminal-audit.json > reports/kphx-jetway-terminal-audit.log 2>&1
           audit_exit=$?
+          node scripts/discover-kphx-freeware-archive.mjs reports/kphx-freeware-download-discovery.json > reports/kphx-freeware-download-discovery.log 2>&1
+          discovery_exit=$?
           set -e
 
-          AUDIT_EXIT="$audit_exit" node --input-type=module <<'NODE'
+          AUDIT_EXIT="$audit_exit" DISCOVERY_EXIT="$discovery_exit" node --input-type=module <<'NODE'
           import fs from "node:fs";
           const exitCode = Number(process.env.AUDIT_EXIT ?? 1);
+          const discoveryExitCode = Number(process.env.DISCOVERY_EXIT ?? 1);
           let valid = false;
           let summary = null;
           let validationError = null;
@@ -64,14 +68,29 @@ jobs:
           } catch (error) {
             validationError = error instanceof Error ? error.message : String(error);
           }
+          let discoverySummary = null;
+          if (fs.existsSync("reports/kphx-freeware-download-discovery.json")) {
+            const discovery = JSON.parse(fs.readFileSync("reports/kphx-freeware-download-discovery.json", "utf8"));
+            discoverySummary = {
+              forms: discovery.forms?.length ?? 0,
+              candidateUrls: discovery.candidateUrls?.length ?? 0,
+              scriptsWithEvidence: discovery.scriptEvidence?.length ?? 0,
+              exactFilesConfirmed: discovery.exactFilesConfirmedByPublishedInventory?.length ?? 0,
+            };
+          }
           const status = {
-            schemaVersion: 1,
+            schemaVersion: 2,
             sourceSha: process.env.GITHUB_SHA,
             generatedAtUtc: new Date().toISOString(),
             conclusion: valid ? "success" : "failure",
             exitCode,
             validationError,
             summary,
+            freewareDiscovery: {
+              exitCode: discoveryExitCode,
+              conclusion: discoveryExitCode === 0 ? "success" : "failure",
+              summary: discoverySummary,
+            },
           };
           fs.writeFileSync("reports/kphx-jetway-terminal-audit-status.json", `${JSON.stringify(status, null, 2)}\n`);
           console.log(JSON.stringify(status, null, 2));
@@ -80,12 +99,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f reports/kphx-jetway-terminal-audit.log reports/kphx-jetway-terminal-audit-status.json
-          if [ -f reports/kphx-jetway-terminal-audit.json ]; then
-            git add -f reports/kphx-jetway-terminal-audit.json
-          fi
+          git add -f reports/kphx-freeware-download-discovery.log
+          for file in reports/kphx-jetway-terminal-audit.json reports/kphx-freeware-download-discovery.json; do
+            if [ -f "$file" ]; then git add -f "$file"; fi
+          done
 
           if ! git diff --cached --quiet; then
-            git commit -m "Record exact KPHX jetway and terminal audit [skip ci]"
+            git commit -m "Record exact KPHX source recovery evidence [skip ci]"
             git pull --rebase origin main
             git push origin HEAD:main
           else
