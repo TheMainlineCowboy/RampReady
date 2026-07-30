@@ -93,6 +93,12 @@ function restoreClockedA1Motion(source) {
         }
         renderer.domElement.dataset.a1JetwayDeployment = jetway.deployment.toFixed(3);`,
     ],
+    [
+      `        const currentA1JetwayState = jetway.controller.getState?.() || "unknown";
+        renderer.domElement.dataset.a1JetwayState = currentA1JetwayState;
+        renderer.domElement.dataset.a1JetwayStateHistory = jetway.controller.getStateHistory?.().join(",") || currentA1JetwayState;`,
+      `        renderer.domElement.dataset.a1JetwayState = jetway.controller.getState?.() || "unknown";`,
+    ],
   ];
   let restored = source;
   for (const [prepared, baseline] of replacements) {
@@ -160,6 +166,7 @@ try {
     restoredTerminal4Source !== originalTerminal4Source
     || restoredTerminal4Source.includes(generatedMobileImport)
     || restoredTerminal4Source.includes("transitionDurationMs: 4200")
+    || restoredTerminal4Source.includes("dataset.a1JetwayStateHistory")
   ) {
     throw new Error("RampReady production build failed to restore the committed Terminal 4 trainer baseline exactly.");
   }
