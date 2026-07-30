@@ -1,0 +1,73 @@
+name: Materialize PHX Inspection Pass
+
+on:
+  push:
+    branches: [work/simulator-quality-inspection-pass]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rampready-materialize-phx-inspection-pass
+  cancel-in-progress: true
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check out draft branch
+        uses: actions/checkout@v4
+        with:
+          ref: work/simulator-quality-inspection-pass
+          fetch-depth: 0
+
+      - name: Materialize source-scale PHX pass
+        run: |
+          node scripts/prepare-terminal4-jetway-crj-v5.mjs
+          node scripts/prepare-kphx-marking-contact.mjs
+          node scripts/prepare-terminal4-inspection-controls.mjs
+
+      - name: Verify focused contracts
+        run: |
+          node scripts/prepare-air-jetway01-contract.mjs
+          node scripts/prepare-air-jetway01-door-alignment.mjs
+          node scripts/prepare-phx-stand-alignment.mjs
+          node scripts/verify-terminal4-jetway-crj-v5.mjs
+          node scripts/verify-simulator-quality-inspection-pass.mjs
+
+      - name: Validate generated-file scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only)"
+          printf '%s\n' "$changed"
+          unexpected="$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev '^(scripts/build-kphx-simulator-ground\.mjs|scripts/prepare-phx-stand-alignment\.mjs|scripts/prepare-phx-visual-authority\.mjs|src/environment/authoredKphxGround\.js|src/environment/kphxRunwayVisuals\.js|src/environment/sourcePlacedTerminal4Jetways\.js|src/components/RampReadyStandupTrainer\.jsx|src/components/RampReadyStandupTrainerTerminal4\.jsx|src/components/RampReadyTrainer\.css)$' || true)"
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected generated files:"
+            printf '%s\n' "$unexpected"
+            exit 1
+          fi
+          test -n "$changed"
+
+      - name: Commit verified runtime files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            scripts/build-kphx-simulator-ground.mjs \
+            scripts/prepare-phx-stand-alignment.mjs \
+            scripts/prepare-phx-visual-authority.mjs \
+            src/environment/authoredKphxGround.js \
+            src/environment/kphxRunwayVisuals.js \
+            src/environment/sourcePlacedTerminal4Jetways.js \
+            src/components/RampReadyStandupTrainer.jsx \
+            src/components/RampReadyStandupTrainerTerminal4.jsx \
+            src/components/RampReadyTrainer.css
+          git diff --cached --quiet && exit 0
+          git commit -m "Materialize source-scale PHX inspection pass"
+          git push origin HEAD:work/simulator-quality-inspection-pass
