@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 1,
-  "sourceSha": "fc349940dba9ce31440d2af388c91db8123d3097",
-  "generatedAtUtc": "2026-07-30T00:38:44.095Z",
+  "schemaVersion": 2,
+  "sourceSha": "2a5797e9c20691aecd0d1ea8cc339ee815e7dc3a",
+  "generatedAtUtc": "2026-07-30T00:44:41.898Z",
   "conclusion": "success",
   "exitCode": 0,
   "validationError": null,
@@ -13,5 +13,15 @@
     },
     "terminalPrimitives": 19,
     "fallbackPrimitives": 5
+  },
+  "freewareDiscovery": {
+    "exitCode": 0,
+    "conclusion": "success",
+    "summary": {
+      "forms": 5,
+      "candidateUrls": 353,
+      "scriptsWithEvidence": 3,
+      "exactFilesConfirmed": 10
+    }
   }
 }
