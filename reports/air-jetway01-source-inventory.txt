@@ -1,6 +1,6 @@
 RampReady AIR_Jetway01 source inventory
-generated_utc=2026-07-30T07:17:51Z
-rampready_head=00fd61a38e5da17536769ead369cef268187e62f
+generated_utc=2026-07-30T07:18:48Z
+rampready_head=fe346aef5b5c201b09580556f6e921b995b328c5
 skyharbor_commit=2e6642778c9c88eac6a82b21063763cc78be7cfe
 
 == RampReady candidate files ==
@@ -13,7 +13,7 @@ skyharbor_commit=2e6642778c9c88eac6a82b21063763cc78be7cfe
 ./reports/kphx-jetway-terminal-audit.json|86620 bytes
 ./reports/kphx-jetway-terminal-audit.log|193 bytes
 ./scripts/audit-kphx-jetways-and-terminal-primitives.mjs|11483 bytes
-./scripts/prepare-air-jetway01-contract.mjs|2183 bytes
+./scripts/prepare-air-jetway01-contract.mjs|2622 bytes
 ./scripts/prepare-air-jetway01-door-alignment.mjs|1269 bytes
 ./scripts/prepare-jetway-terminal-connections.mjs|7357 bytes
 ./scripts/prepare-terminal4-jetway-crj-v5.mjs|6228 bytes
