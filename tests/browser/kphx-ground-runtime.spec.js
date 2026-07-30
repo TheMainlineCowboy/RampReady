@@ -1,24 +1,25 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, readdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { expect, test } from "@playwright/test";
 
 const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
-test.use({ serviceWorkers: "block" });
 
-async function captureCanvas(page, canvas, fileName) {
-  const bounds = await canvas.boundingBox();
-  expect(bounds).not.toBeNull();
-  const image = await page.screenshot({
-    type: "png",
-    clip: {
-      x: Math.max(0, Math.floor(bounds.x)),
-      y: Math.max(0, Math.floor(bounds.y)),
-      width: Math.floor(bounds.width),
-      height: Math.floor(bounds.height),
-    },
-    animations: "disabled",
-  });
-  expect(image.byteLength).toBeGreaterThan(50_000);
-  await writeFile(`test-results/${fileName}`, image);
+async function patchBuiltGroundShadowReceiving() {
+  const assetsDirectory = path.resolve("dist/assets");
+  const files = (await readdir(assetsDirectory)).filter((file) => file.endsWith(".js"));
+  const assignment = /([A-Za-z_$][\w$]*)\.castShadow=!1,\1\.receiveShadow=!0;const ([A-Za-z_$][\w$]*)=Array\.isArray\(\1\.material\)\?\1\.material:\[\1\.material\]/;
+  let patchCount = 0;
+  for (const file of files) {
+    const filePath = path.join(assetsDirectory, file);
+    let body = await readFile(filePath, "utf8");
+    const match = body.match(assignment);
+    if (!match) continue;
+    body = body.replace(assignment, (statement, meshName) =>
+      statement.replace(`${meshName}.receiveShadow=!0`, `${meshName}.receiveShadow=!1`));
+    await writeFile(filePath, body, "utf8");
+    patchCount += 1;
+  }
+  expect(patchCount).toBe(1);
 }
 
 async function launchStandup(page) {
@@ -58,26 +59,27 @@ async function frameA1Chase(page, canvas) {
   await expect(canvas).toBeVisible();
 }
 
+async function captureCanvas(page, canvas, fileName) {
+  const bounds = await canvas.boundingBox();
+  expect(bounds).not.toBeNull();
+  const image = await page.screenshot({
+    type: "png",
+    clip: {
+      x: Math.max(0, Math.floor(bounds.x)),
+      y: Math.max(0, Math.floor(bounds.y)),
+      width: Math.floor(bounds.width),
+      height: Math.floor(bounds.height),
+    },
+    animations: "disabled",
+  });
+  expect(image.byteLength).toBeGreaterThan(50_000);
+  await writeFile(`test-results/${fileName}`, image);
+}
+
 test("isolates authored KPHX ground shadow receiving in the A1 chase view", async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
-  let shadowPatchCount = 0;
-  await page.route("**/*", async (route) => {
-    const request = route.request();
-    if (request.resourceType() !== "script") {
-      await route.continue();
-      return;
-    }
-    const response = await route.fetch();
-    let body = await response.text();
-    const shadowOn = "s.castShadow=!1,s.receiveShadow=!0;const a=Array.isArray(s.material)?s.material:[s.material]";
-    const shadowOff = "s.castShadow=!1,s.receiveShadow=!1;const a=Array.isArray(s.material)?s.material:[s.material]";
-    if (body.includes(shadowOn)) {
-      body = body.replace(shadowOn, shadowOff);
-      shadowPatchCount += 1;
-    }
-    await route.fulfill({ response, body });
-  });
+  await patchBuiltGroundShadowReceiving();
 
   const runtimeErrors = [];
   page.on("console", (message) => {
@@ -86,7 +88,6 @@ test("isolates authored KPHX ground shadow receiving in the A1 chase view", asyn
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
 
   const canvas = await launchStandup(page);
-  expect(shadowPatchCount).toBe(1);
   await expect.poll(
     async () => canvas.getAttribute("data-environment-source"),
     { timeout: 90_000, intervals: [500, 1_000, 2_000] },
