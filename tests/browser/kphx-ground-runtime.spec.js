@@ -57,7 +57,7 @@ async function captureCanvas(page, canvas, fileName) {
   await writeFile(`test-results/${fileName}`, image);
 }
 
-test("isolates the pre-server PHX asphalt layer in the A1 chase view", async ({ page }) => {
+test("isolates pre-server KPHX ground shadow receiving in the A1 chase view", async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
 
@@ -83,5 +83,5 @@ test("isolates the pre-server PHX asphalt layer in the A1 chase view", async ({ 
   expect(relevantErrors).toEqual([]);
 
   await frameA1Chase(page, canvas);
-  await captureCanvas(page, canvas, "kphx-ground-diagnostic-asphalt-hidden-pre-server.png");
+  await captureCanvas(page, canvas, "kphx-ground-diagnostic-receive-shadow-off-pre-server.png");
 });
