@@ -22,7 +22,7 @@ const verifyCommand = packageJson.scripts?.verify || "";
 for (const token of [
   "prepare-terminal4-source-alpha.mjs",
   "prepare-terminal4-jetway-dxt3.mjs",
-  "prepare-terminal4-jetway-facade-v4.mjs",
+  "prepare-terminal4-jetway-crj-v5.mjs",
   "materialize-phx-terminal4.mjs",
 ]) if (!terminalMaterializer.includes(token)) throw new Error(`Terminal 4 materializer wiring is missing ${token}`);
 for (const token of [
@@ -33,12 +33,16 @@ for (const token of [
   "prepare-inspection-drive-mode.mjs",
   "prepare-inspection-motion-evidence.mjs",
   "prepare-jetway-terminal-connections.mjs",
-  "prepare-terminal4-jetway-facade-v4.mjs",
+  "prepare-terminal4-jetway-crj-v5.mjs",
   "prepare-simulator-quality-runtime-evidence.mjs",
   "prepare-terminal4-runtime.mjs",
+  "prepare-terminal4-inspection-controls.mjs",
 ]) if (!runtimePreparation.includes(token)) throw new Error(`Terminal 4 runtime preparation wiring is missing ${token}`);
 if (!verifyCommand.includes("verify-simulator-quality-inspection-pass.mjs")) {
   throw new Error("Full verification suite does not include the simulator-quality inspection contract");
+}
+if (!verifyCommand.includes("verify-terminal4-jetway-crj-v5.mjs")) {
+  throw new Error("Full verification suite does not include the CRJ v5 visual contract");
 }
 
 const trainerTokens = [
@@ -54,28 +58,37 @@ const trainerTokens = [
   "canvas.dataset.inspectionTugZ",
   "canvas.dataset.inspectionSpeed",
   "Inspection <b>FREE</b>",
+  'className="rr-inspection-toggle"',
+  'data-inspection-mode={inspectionMode ? "active" : "training"}',
+  "const keyboardForward = inspectionActive",
+  "const keyboardReverse = inspectionActive",
 ];
 requireTokens("src/components/RampReadyStandupTrainer.jsx", trainerTokens);
 requireTokens("src/components/RampReadyStandupTrainerTerminal4.jsx", trainerTokens);
 
 const groundBuilder = requireTokens("scripts/build-kphx-simulator-ground.mjs", [
-  "const markingY = taxiwayPath.type === 3 ? 0.0065",
-  'addStrip("yellow-marking", a, b, 0.16, 0.0137)',
-  "lineWidth, 0.0138",
-  "stripeWidth, 0.0258",
+  "const markingY = taxiwayPath.type === 3 ? 0.0018",
+  'addStrip("yellow-marking", a, b, 0.16, 0.0025)',
+  "lineWidth, 0.0026",
+  "stripeWidth, 0.0034",
 ]);
 for (const forbidden of [
   "width, 30, 20, 0.045",
   "width, 0.045",
   "lineWidth, 0.055",
   "stripeWidth, 0.066",
+  "0.0135",
+  "0.0255",
+  "0.0137",
+  "0.0138",
+  "0.0258",
 ]) if (groundBuilder.includes(forbidden)) throw new Error(`Floating marking elevation remains in KPHX builder: ${forbidden}`);
 
 const authoredGround = requireTokens("src/environment/authoredKphxGround.js", [
-  "material.polygonOffsetFactor = -1",
-  "material.polygonOffsetUnits = -1",
-  "Math.max(node.renderOrder || 0, 80)",
-  'contactMode: "pavement-relative-millimeter-offset"',
+  "material.polygonOffsetFactor = -0.25",
+  "material.polygonOffsetUnits = -0.5",
+  "Math.max(node.renderOrder || 0, 24)",
+  'contactMode: "pavement-coincident-decals"',
   "authoredGroundMarkingContactMode",
 ]);
 for (const forbidden of [
@@ -85,9 +98,9 @@ for (const forbidden of [
 ]) if (authoredGround.includes(forbidden)) throw new Error(`Aggressive marking depth override remains: ${forbidden}`);
 
 const visualAuthority = requireTokens("scripts/prepare-phx-visual-authority.mjs", [
-  "y = 0.0075",
-  "mesh.position.set(x, 0.0085, z)",
-  "lines.renderOrder = 85",
+  "y = 0.0022",
+  "mesh.position.set(x, 0.0028, z)",
+  "lines.renderOrder = 26",
 ]);
 for (const forbidden of ["y = 0.135", "0.137,", "0.145, z", "renderOrder = 460", "renderOrder = 470"]) {
   if (visualAuthority.includes(forbidden)) throw new Error(`Floating stand-marking implementation remains: ${forbidden}`);
@@ -98,16 +111,24 @@ const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js",
   "buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTextures = {})",
   "const terminalWallDistance = findTerminalWallDistance",
   "const lowerFacadeWallDistance = findTerminalWallDistance",
+  "const sourceFacadeRecessMeters",
   "wallConnectorLength / 2",
   "terminalConnectedJetwayCount",
   "a1TerminalWallDistance",
+  "a1DoorContactErrorMeters",
   "lowerFacadeFitCount",
+  "CLOSED_SERVICE_DOOR_GATES.has(jetway.g)",
+  "FACADE_VENT_GATES.has(jetway.g)",
   "raycast-and-source-vertex-fit-to-authored-terminal-mesh",
   "M1DGJETWAY exact recovered original freeware texture and lightmap",
   "usesExactRecoveredJetwayTexture",
+  'fsx-air-jetway01-exact-textured-crj-scale-v5',
 ]);
 if (jetways.includes("scale: [3.6, 3.1, 1.4]")) {
   throw new Error("Jetways still use the fixed detached 1.4-meter terminal collar");
+}
+for (const forbidden of ["gateNumber % 3", "gateNumber % 2", "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25"]) {
+  if (jetways.includes(forbidden)) throw new Error(`Superseded repetitive or misaligned jetway token remains: ${forbidden}`);
 }
 
 requireTokens("scripts/materialize-phx-terminal4.mjs", [
@@ -144,9 +165,10 @@ const generatedRuntime = requireTokens("src/components/RampReadyStandupTrainerTe
   "dataset.terminal4ExactJetwayTextureActive",
   "dataset.groundMarkingContactMode",
   "dataset.inspectionMode",
+  'className="rr-inspection-toggle"',
 ]);
 if (!generatedRuntime.includes('dataset.inspectionMode = inspectionRef.current ? "active" : "training"')) {
   throw new Error("Generated PHX runtime does not expose initial inspection mode state");
 }
 
-console.log("RampReady simulator-quality inspection pass verified: unrestricted tug inspection, pavement-contact markings, targeted terminal cutouts, lower-wall facade fits, and exact-textured terminal-connected AIR_Jetway01 geometry are active.");
+console.log("RampReady simulator-quality inspection pass verified: visible unrestricted tug inspection, pavement-coincident markings, source-qualified service bays, irregular lower-wall facade fits, and CRJ700-scale terminal-connected AIR_Jetway01 geometry are active.");
