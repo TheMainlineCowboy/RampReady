@@ -4,13 +4,16 @@ on:
   push:
     branches:
       - work/simulator-quality-inspection-pass
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: rampready-simulator-quality-branch
+  group: rampready-simulator-quality-branch-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
