@@ -1,0 +1,72 @@
+name: Materialize Simulator Quality Branch
+
+on:
+  push:
+    branches: [work/simulator-quality-inspection-pass]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rampready-materialize-simulator-quality
+  cancel-in-progress: true
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out draft branch
+        uses: actions/checkout@v4
+        with:
+          ref: work/simulator-quality-inspection-pass
+          fetch-depth: 0
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Materialize production runtime
+        run: npm run build
+
+      - name: Validate generated-file scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          allowed='^(scripts/build-kphx-simulator-ground\.mjs|scripts/prepare-phx-stand-alignment\.mjs|scripts/prepare-phx-visual-authority\.mjs|src/environment/authoredKphxGround\.js|src/environment/kphxRunwayVisuals\.js|src/environment/sourcePlacedTerminal4Jetways\.js|src/environment/authoredTerminal4Visual\.js|src/components/RampReadyStandupTrainer\.jsx|src/components/RampReadyStandupTrainerTerminal4\.jsx)$'
+          changed="$(git diff --name-only -- . ':!dist')"
+          printf '%s\n' "$changed"
+          unexpected="$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev "$allowed" || true)"
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected tracked files changed during materialization:"
+            printf '%s\n' "$unexpected"
+            exit 1
+          fi
+          test -n "$changed"
+
+      - name: Commit exact generated runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            scripts/build-kphx-simulator-ground.mjs \
+            scripts/prepare-phx-stand-alignment.mjs \
+            scripts/prepare-phx-visual-authority.mjs \
+            src/environment/authoredKphxGround.js \
+            src/environment/kphxRunwayVisuals.js \
+            src/environment/sourcePlacedTerminal4Jetways.js \
+            src/environment/authoredTerminal4Visual.js \
+            src/components/RampReadyStandupTrainer.jsx \
+            src/components/RampReadyStandupTrainerTerminal4.jsx
+          git diff --cached --quiet && exit 0
+          git commit -m "Materialize simulator-quality PHX runtime"
+          git push origin HEAD:work/simulator-quality-inspection-pass
