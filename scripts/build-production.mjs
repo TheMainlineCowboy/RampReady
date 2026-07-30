@@ -7,7 +7,102 @@ const packagePath = new URL("../package.json", import.meta.url);
 const originalSource = await readFile(trainerPath, "utf8");
 const generatedMobileImport = 'import "./mobile-hud-v9.css";';
 const preparedTerminal4Source = await readFile(terminal4TrainerPath, "utf8");
-const originalTerminal4Source = preparedTerminal4Source
+
+function restoreClockedA1Motion(source) {
+  const replacements = [
+    [
+      `  const jetwayRef = useRef({
+    controller: null,
+    deployment: 1,
+    target: 1,
+    retractionRequested: false,
+    transitionStartDeployment: 1,
+    transitionStartedAt: 0,
+    transitionDurationMs: 4200,
+  });`,
+      `  const jetwayRef = useRef({
+    controller: null,
+    deployment: 1,
+    target: 1,
+    retractionRequested: false,
+  });`,
+    ],
+    [
+      `    jetwayRef.current.target = resetJetwayDeployment;
+    jetwayRef.current.deployment = resetJetwayDeployment;
+    jetwayRef.current.transitionStartDeployment = resetJetwayDeployment;
+    jetwayRef.current.transitionStartedAt = 0;
+    jetwayRef.current.retractionRequested = false;
+    jetwayRef.current.controller?.setDeployment(resetJetwayDeployment);`,
+      `    jetwayRef.current.target = resetJetwayDeployment;
+    jetwayRef.current.deployment = resetJetwayDeployment;
+    jetwayRef.current.retractionRequested = false;
+    jetwayRef.current.controller?.setDeployment(resetJetwayDeployment);`,
+    ],
+    [
+      `      jetwayRef.current.target = inspectionJetwayDeployment;
+      jetwayRef.current.deployment = inspectionJetwayDeployment;
+      jetwayRef.current.transitionStartDeployment = inspectionJetwayDeployment;
+      jetwayRef.current.transitionStartedAt = 0;
+      jetwayRef.current.retractionRequested = false;
+      jetwayRef.current.controller?.setDeployment(inspectionJetwayDeployment);`,
+      `      jetwayRef.current.target = inspectionJetwayDeployment;
+      jetwayRef.current.deployment = inspectionJetwayDeployment;
+      jetwayRef.current.retractionRequested = false;
+      jetwayRef.current.controller?.setDeployment(inspectionJetwayDeployment);`,
+    ],
+    [
+      `      jetwayRef.current.transitionStartDeployment = jetwayRef.current.deployment;
+      jetwayRef.current.transitionStartedAt = performance.now();
+      jetwayRef.current.target = 0;
+      jetwayRef.current.retractionRequested = true;`,
+      `      jetwayRef.current.target = 0;
+      jetwayRef.current.retractionRequested = true;`,
+    ],
+    [
+      `      const jetway = jetwayRef.current;
+      if (jetway.controller) {
+        const difference = jetway.target - jetway.deployment;
+        if (Math.abs(difference) > 0.0005) {
+          if (!(jetway.transitionStartedAt > 0)) {
+            jetway.transitionStartDeployment = jetway.deployment;
+            jetway.transitionStartedAt = now;
+          }
+          const transitionElapsedMs = Math.max(0, now - jetway.transitionStartedAt);
+          const transitionDistance = Math.max(0.001, Math.abs(jetway.target - jetway.transitionStartDeployment));
+          const transitionDurationMs = Math.max(900, jetway.transitionDurationMs * transitionDistance);
+          const transitionProgress = Math.min(1, transitionElapsedMs / transitionDurationMs);
+          const easedProgress = transitionProgress * transitionProgress * (3 - 2 * transitionProgress);
+          jetway.deployment = jetway.transitionStartDeployment
+            + (jetway.target - jetway.transitionStartDeployment) * easedProgress;
+          if (transitionProgress >= 1) {
+            jetway.deployment = jetway.target;
+            jetway.transitionStartDeployment = jetway.target;
+            jetway.transitionStartedAt = 0;
+          }
+          jetway.controller.setDeployment(jetway.deployment);
+        }
+        renderer.domElement.dataset.a1JetwayDeployment = jetway.deployment.toFixed(3);`,
+      `      const jetway = jetwayRef.current;
+      if (jetway.controller) {
+        const difference = jetway.target - jetway.deployment;
+        if (Math.abs(difference) > 0.0005) {
+          const step = Math.min(Math.abs(difference), dt * 0.34);
+          jetway.deployment += Math.sign(difference) * step;
+          jetway.controller.setDeployment(jetway.deployment);
+        }
+        renderer.domElement.dataset.a1JetwayDeployment = jetway.deployment.toFixed(3);`,
+    ],
+  ];
+  let restored = source;
+  for (const [prepared, baseline] of replacements) {
+    if (restored.includes(prepared)) restored = restored.replace(prepared, baseline);
+    else if (!restored.includes(baseline)) throw new Error("RampReady production build could not identify the A1 clocked-motion restoration contract.");
+  }
+  return restored;
+}
+
+const originalTerminal4Source = restoreClockedA1Motion(preparedTerminal4Source)
   .replace(`${generatedMobileImport}\n`, "")
   .replace(`\n${generatedMobileImport}`, "");
 const originalPackage = await readFile(packagePath, "utf8");
@@ -61,7 +156,11 @@ try {
   if (restoredSource !== originalSource) {
     throw new Error("RampReady production build failed to restore the tracked trainer source exactly.");
   }
-  if (restoredTerminal4Source !== originalTerminal4Source || restoredTerminal4Source.includes(generatedMobileImport)) {
+  if (
+    restoredTerminal4Source !== originalTerminal4Source
+    || restoredTerminal4Source.includes(generatedMobileImport)
+    || restoredTerminal4Source.includes("transitionDurationMs: 4200")
+  ) {
     throw new Error("RampReady production build failed to restore the committed Terminal 4 trainer baseline exactly.");
   }
   if (currentPackage !== originalPackage) {
