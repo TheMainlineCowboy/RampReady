@@ -6,9 +6,15 @@ const expectedSha = process.env.EXPECTED_SHA;
 const evidenceDirectory = 'live-phx-render-evidence';
 
 test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
-test.setTimeout(180000);
+test.setTimeout(240000);
 
-test('live RampReady renders native-resolution Sky Harbor ground and authored Terminal 4', async ({ page }) => {
+function numericDataset(runtime, key) {
+  const value = Number(runtime[key]);
+  if (!Number.isFinite(value)) throw new Error(`Live PHX runtime dataset ${key} is not numeric: ${runtime[key]}`);
+  return value;
+}
+
+test('live RampReady renders simulator-quality Sky Harbor and supports free-drive inspection', async ({ page }) => {
   if (!pageUrl || !expectedSha) throw new Error('PAGE_URL and EXPECTED_SHA are required');
   fs.mkdirSync(evidenceDirectory, { recursive: true });
 
@@ -57,12 +63,69 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
       && element.dataset.terminal4TextureCount !== 'loading'
       && element?.dataset.terminal4TexturedMaterialCount
       && element.dataset.terminal4TexturedMaterialCount !== 'loading'
+      && element?.dataset.terminal4A1JetwayWallDistance
+      && element.dataset.terminal4A1JetwayWallDistance !== 'loading'
+      && element?.dataset.terminal4TerminalConnectedJetwayCount
+      && element.dataset.terminal4TerminalConnectedJetwayCount !== 'loading'
+      && element?.dataset.terminal4SourceCutoutMaterialCount
+      && element.dataset.terminal4SourceCutoutMaterialCount !== 'loading'
+      && element?.dataset.groundMarkingContactMode === 'pavement-relative-millimeter-offset'
       && element?.dataset.b15Anchors === 'ready';
   }, null, { timeout: 30000 });
 
   await page.waitForTimeout(2500);
   expect(tileResponses.size).toBe(21);
   expect([...tileResponses.values()].filter(entry => !entry.ok || entry.status !== 200)).toEqual([]);
+
+  const loadedRuntime = await canvas.evaluate(element => ({ ...element.dataset }));
+  const a1WallDistance = numericDataset(loadedRuntime, 'terminal4A1JetwayWallDistance');
+  const connectedJetways = numericDataset(loadedRuntime, 'terminal4TerminalConnectedJetwayCount');
+  const cutoutMaterials = numericDataset(loadedRuntime, 'terminal4SourceCutoutMaterialCount');
+  expect(a1WallDistance).toBeGreaterThan(0.05);
+  expect(a1WallDistance).toBeLessThan(18);
+  expect(connectedJetways).toBeGreaterThan(0);
+  expect(cutoutMaterials).toBeGreaterThan(0);
+  expect(loadedRuntime.groundMarkingContactMode).toBe('pavement-relative-millimeter-offset');
+
+  // Prove the requested inspection feature is a real unrestricted drive state,
+  // not a camera shortcut or a procedure stage masquerading as free drive.
+  await page.locator('details.rr-session-menu summary').click();
+  await page.getByRole('button', { name: 'Free-drive inspection' }).click();
+  await page.waitForFunction(() => document.querySelector('canvas.trainerCanvas')?.dataset.inspectionMode === 'active');
+  await expect(page.getByRole('heading', { name: 'Airport inspection mode' })).toBeVisible();
+
+  const beforeDrive = await canvas.evaluate(element => ({
+    x: Number(element.dataset.inspectionTugX),
+    z: Number(element.dataset.inspectionTugZ),
+  }));
+  const power = page.locator('input[aria-label="Power"]');
+  await power.evaluate(input => {
+    input.value = '35';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page.waitForFunction(({ x, z }) => {
+    const element = document.querySelector('canvas.trainerCanvas');
+    const nextX = Number(element?.dataset.inspectionTugX);
+    const nextZ = Number(element?.dataset.inspectionTugZ);
+    return Number.isFinite(nextX) && Number.isFinite(nextZ) && Math.hypot(nextX - x, nextZ - z) > 0.35;
+  }, beforeDrive, { timeout: 12000 });
+  await power.evaluate(input => {
+    input.value = '0';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  const afterDrive = await canvas.evaluate(element => ({
+    x: Number(element.dataset.inspectionTugX),
+    z: Number(element.dataset.inspectionTugZ),
+    speed: Number(element.dataset.inspectionSpeed),
+  }));
+  expect(Math.hypot(afterDrive.x - beforeDrive.x, afterDrive.z - beforeDrive.z)).toBeGreaterThan(0.35);
+
+  await page.locator('details.rr-session-menu summary').click();
+  await page.getByRole('button', { name: 'Return to training' }).click();
+  await page.waitForFunction(() => document.querySelector('canvas.trainerCanvas')?.dataset.inspectionMode === 'training');
+  await expect(page.getByRole('heading', { name: 'Complete visual equipment check' })).toBeVisible();
 
   const runtime = await canvas.evaluate(element => ({ ...element.dataset }));
   const criticalErrors = consoleErrors.filter(message => /PHX|KPHX|Terminal 4|GLTFLoader|WebGL|ReferenceError|TypeError|SyntaxError/i.test(message));
@@ -83,6 +146,13 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
   const screenshotBytes = fs.statSync(screenshotPath).size;
   expect(screenshotBytes).toBeGreaterThan(100000);
 
+  await page.locator('select.rr-view-select').selectOption('overhead');
+  await page.waitForTimeout(1600);
+  const overheadPath = `${evidenceDirectory}/sky-harbor-overhead.png`;
+  await canvas.screenshot({ path: overheadPath, type: 'png', animations: 'disabled' });
+  const overheadBytes = fs.statSync(overheadPath).size;
+  expect(overheadBytes).toBeGreaterThan(100000);
+
   const report = {
     releaseSha: expectedSha,
     pageUrl,
@@ -90,11 +160,16 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
     runtime,
     observedTileResponses: tileResponses.size,
     tileResponses: [...tileResponses.values()],
+    inspectionDrive: { before: beforeDrive, after: afterDrive },
+    a1WallDistance,
+    connectedJetways,
+    cutoutMaterials,
     screenshotBytes,
+    overheadBytes,
     consoleErrors,
     pageErrors,
     failedRequests,
   };
   fs.writeFileSync(`${evidenceDirectory}/report.json`, `${JSON.stringify(report, null, 2)}\n`);
-  console.log(`Verified live simulator render: tiled PHX ground=${runtime.photoTextureMode}, runtime tiles=${runtime.photoRuntimeTileCount}, Terminal 4=${runtime.environmentSource}, screenshot=${screenshotBytes} bytes.`);
+  console.log(`Verified live simulator-quality PHX: inspection moved=${Math.hypot(afterDrive.x - beforeDrive.x, afterDrive.z - beforeDrive.z).toFixed(2)}m, A1 wall=${a1WallDistance.toFixed(2)}m, terminal-connected jetways=${connectedJetways}, source cutouts=${cutoutMaterials}, markings=${runtime.groundMarkingContactMode}.`);
 });
