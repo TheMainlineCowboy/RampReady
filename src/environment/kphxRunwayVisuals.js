@@ -1,7 +1,9 @@
+import { buildKphxTaxiwaySigns } from "./kphxTaxiwaySigns.js";
+
 export const KPHX_RUNWAY_VISUAL_PROFILE = Object.freeze({
   source: "models/kphx-ground/runtime-manifest.json",
   expectedRunwayCount: 3,
-  detailLevel: "source-runway-identifiers-threshold-and-lighting-v1",
+  detailLevel: "source-runway-identifiers-lighting-and-derived-signage-v2",
   coordinateFrame: "A1-local; X=north, Y=up, Z=east",
 });
 
@@ -16,6 +18,9 @@ async function loadManifest() {
   const manifest = await response.json();
   if (manifest.schemaVersion !== 2 || manifest.runways?.length !== KPHX_RUNWAY_VISUAL_PROFILE.expectedRunwayCount) {
     throw new Error("KPHX runway manifest is incomplete");
+  }
+  if (!Array.isArray(manifest.derivedTaxiwaySigns) || !manifest.derivedTaxiwaySigns.length) {
+    throw new Error("KPHX graph-derived taxiway sign manifest is incomplete");
   }
   return manifest;
 }
@@ -152,15 +157,21 @@ export async function installKphxRunwayVisuals(THREE, authoredGround) {
   if (authoredGround.userData.kphxRunwayVisuals) return authoredGround.userData.kphxRunwayVisuals;
   const manifest = await loadManifest();
   const group = new THREE.Group();
-  group.name = "KPHX_SourceRunwayIdentifiersAndLights";
+  group.name = "KPHX_SourceRunwayIdentifiersLightsAndDerivedSigns";
   for (const runway of manifest.runways) {
     for (const label of runway.labels) group.add(buildIdentifier(THREE, label, runway.widthMeters));
   }
   const lights = buildLightMeshes(THREE, manifest.runways);
   group.add(lights);
+  const signs = buildKphxTaxiwaySigns(THREE, manifest.derivedTaxiwaySigns);
+  group.add(signs);
   group.userData.runwayCount = manifest.runways.length;
   group.userData.identifierCount = manifest.runways.length * 2;
   group.userData.lightCount = lights.userData.lightCount;
+  group.userData.signCount = signs.userData.signCount;
+  group.userData.runwayHoldSignCount = signs.userData.runwayHoldSignCount;
+  group.userData.ilsHoldSignCount = signs.userData.ilsHoldSignCount;
+  group.userData.signageProvenance = signs.userData.provenance;
   group.userData.detailLevel = KPHX_RUNWAY_VISUAL_PROFILE.detailLevel;
   group.userData.runways = manifest.runways.map(({ primary, secondary, lengthMeters, widthMeters, headingDegrees }) => ({ primary, secondary, lengthMeters, widthMeters, headingDegrees }));
   authoredGround.add(group);
