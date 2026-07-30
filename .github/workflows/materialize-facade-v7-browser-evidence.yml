@@ -23,15 +23,20 @@ jobs:
           ref: work/simulator-quality-inspection-pass
           fetch-depth: 0
 
-      - name: Materialize facade and mobile HUD
-        run: |
-          node scripts/prepare-terminal4-facade-visual-v7.mjs
-          node scripts/prepare-mobile-inspection-hud.mjs
-
-      - name: Update browser evidence timing and framing
+      - name: Run materialization with diagnostics
+        id: materialize
         shell: bash
         run: |
-          node --input-type=module <<'NODE'
+          set +e
+          mkdir -p reports
+          log="reports/materialize-facade-v7-browser-evidence.log"
+          : > "$log"
+          {
+            echo "head=$(git rev-parse HEAD)"
+            echo "started_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            node scripts/prepare-terminal4-facade-visual-v7.mjs
+            node scripts/prepare-mobile-inspection-hud.mjs
+            node --input-type=module <<'NODE'
           import fs from "node:fs";
 
           const crjPath = "tests/browser/crj700-runtime.spec.js";
@@ -83,27 +88,35 @@ ${captureAnchor}`;
           }
           fs.writeFileSync(kphxPath, kphx, "utf8");
           NODE
+            changed="$(git diff --name-only -- . ':!reports/materialize-facade-v7-browser-evidence.log')"
+            echo "changed files:"
+            printf '%s\n' "$changed"
+            expected=$'src/components/RampReadyTrainer.css\nsrc/environment/sourcePlacedTerminal4Jetways.js\ntests/browser/crj700-runtime.spec.js\ntests/browser/kphx-ground-runtime.spec.js'
+            test "$changed" = "$expected"
+            node --check src/environment/sourcePlacedTerminal4Jetways.js
+            node --check tests/browser/crj700-runtime.spec.js
+            node --check tests/browser/kphx-ground-runtime.spec.js
+            grep -q 'facadeOuterWallFit' src/environment/sourcePlacedTerminal4Jetways.js
+            grep -q 'mobile inspection HUD title polish' src/components/RampReadyTrainer.css
+          } 2>&1 | tee -a "$log"
+          status=${PIPESTATUS[0]}
+          echo "exit_code=$status" | tee -a "$log"
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
 
-      - name: Verify exact generated scope
-        shell: bash
-        run: |
-          set -euo pipefail
-          changed="$(git diff --name-only)"
-          printf '%s\n' "$changed"
-          expected=$'src/components/RampReadyTrainer.css\nsrc/environment/sourcePlacedTerminal4Jetways.js\ntests/browser/crj700-runtime.spec.js\ntests/browser/kphx-ground-runtime.spec.js'
-          test "$changed" = "$expected"
-          node --check src/environment/sourcePlacedTerminal4Jetways.js
-          node --check tests/browser/crj700-runtime.spec.js
-          node --check tests/browser/kphx-ground-runtime.spec.js
-          grep -q 'facadeOuterWallFit' src/environment/sourcePlacedTerminal4Jetways.js
-          grep -q 'mobile inspection HUD title polish' src/components/RampReadyTrainer.css
-
-      - name: Commit facade v7 and browser evidence
+      - name: Commit materialized result or diagnostic
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/components/RampReadyTrainer.css src/environment/sourcePlacedTerminal4Jetways.js tests/browser/crj700-runtime.spec.js tests/browser/kphx-ground-runtime.spec.js
-          git commit -m "Materialize outer-plane facade and stable visual evidence"
+          git add reports/materialize-facade-v7-browser-evidence.log
+          if [ "${{ steps.materialize.outputs.status }}" = "0" ]; then
+            git add src/components/RampReadyTrainer.css src/environment/sourcePlacedTerminal4Jetways.js tests/browser/crj700-runtime.spec.js tests/browser/kphx-ground-runtime.spec.js
+            message="Materialize outer-plane facade and stable visual evidence"
+          else
+            message="Record facade v7 materialization failure"
+          fi
+          git diff --cached --quiet && exit 0
+          git commit -m "$message"
           git push origin HEAD:work/simulator-quality-inspection-pass
