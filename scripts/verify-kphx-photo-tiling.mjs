@@ -45,6 +45,7 @@ if (coveredPixels.size !== 25 * 9) {
 for (const token of [
   'textureMode: "tiled-native-source-resolution-v2"',
   'underlayMode: "neutral-airport-base-below-source-aerial-alpha"',
+  'fullCoverageUnderlayMode: "full-airport-neutral-underlay-below-all-source-tiles-v2"',
   'colorRepairMode: "source-aerial-dark-neutral-artifact-lift-v1"',
   "buildTiledPhotoGround",
   "sceneBoundsForTile",
@@ -53,11 +54,16 @@ for (const token of [
   "authoredPhotoRuntimeTileCount",
   "buildAirportBaseUnderlay",
   "PHX_KPHX_AirportBasePhotoUnderlay",
+  "PHX_KPHX_FullAirportPhotoUnderlay",
+  "PHX full-airport source-aerial safety underlay",
+  "fullGeometry.translate(0, -0.052, 0)",
   "PHX source-aerial transparent-cutout pavement underlay",
   "new THREE.MeshBasicMaterial",
   "photoGround.userData.underlayMode",
+  "photoGround.userData.fullCoverageUnderlayMode",
   "photoGround.userData.colorRepairMode",
   "authoredPhotoUnderlayMaterialCount",
+  "authoredPhotoFullCoverageUnderlayMode",
   "authoredPhotoColorRepairMode",
   "material.onBeforeCompile",
   "rrPhotoLuma",
@@ -76,4 +82,4 @@ for (const forbidden of [
   if (runtime.includes(forbidden)) throw new Error(`PHX source aerial returned to shadow-darkened rendering: ${forbidden}`);
 }
 
-console.log(`Verified PHX native-resolution tiled ground: ${manifest.tiles.length} WebGL-safe tiles, ${totalBytes} bytes, full 6400x2304 source coverage, unlit authored color, neutral pavement below source alpha, and a narrowly scoped near-black neutral-pixel display repair.`);
+console.log(`Verified PHX native-resolution tiled ground: ${manifest.tiles.length} WebGL-safe tiles, ${totalBytes} bytes, full 6400x2304 source coverage, unlit authored color, continuous full-airport pavement beneath every tile, and a narrowly scoped near-black neutral-pixel display repair.`);
