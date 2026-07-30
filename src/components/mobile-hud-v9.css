@@ -1,0 +1,24 @@
+/* RampReady mobile HUD hard containment v9 */
+@media (max-width: 620px) {
+  .rr-shell .rr-topline > div:first-child {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .rr-shell .rr-hud h1 {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    font-size: clamp(16px, 4.2vw, 20px);
+    line-height: 1.12;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    overflow: hidden;
+    text-overflow: clip;
+  }
+}
