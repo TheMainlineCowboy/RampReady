@@ -1,0 +1,43 @@
+name: Materialize Jetway Source Identity
+
+on:
+  push:
+    branches: [work/simulator-quality-inspection-pass]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rampready-materialize-jetway-source-identity
+  cancel-in-progress: true
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/simulator-quality-inspection-pass
+          fetch-depth: 0
+      - run: node scripts/prepare-jetway-source-texture-identity.mjs
+      - name: Verify exact scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only)"
+          printf '%s\n' "$changed"
+          test "$changed" = "src/environment/sourcePlacedTerminal4Jetways.js"
+          grep -q 'jetwayTextureSourceIdentity' src/environment/sourcePlacedTerminal4Jetways.js
+          grep -q 'jetwayTextureMappingAuthority' src/environment/sourcePlacedTerminal4Jetways.js
+      - name: Commit source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/environment/sourcePlacedTerminal4Jetways.js
+          git commit -m "Separate jetway texture identity from atlas mapping"
+          git push origin HEAD:work/simulator-quality-inspection-pass
