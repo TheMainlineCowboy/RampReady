@@ -23,11 +23,9 @@ export const AUTHORED_KPHX_PHOTO_PROFILE = Object.freeze({
   textureMode: "tiled-native-source-resolution-v2",
   maxRuntimeTextureDimension: 1024,
   underlayMode: "neutral-airport-base-below-source-aerial-alpha",
+  colorRepairMode: "source-aerial-dark-neutral-artifact-lift-v1",
 });
 
-// The source aerial is the diffuse authority. The airport-wide ADEX surface
-// shells remain available for markings and metadata but must not cover the
-// photographic ramp with flat simulator classification colors.
 const OPAQUE_ADEX_SURFACES = new Set(["airport-base"]);
 
 function hideFlatADEXSurfaceColors(environment) {
@@ -58,7 +56,6 @@ function buildAirportBaseUnderlay(THREE, environment) {
       .map((material, index) => material?.name === "airport-base" ? index : -1)
       .filter((index) => index >= 0);
     if (!airportBaseIndices.length) return;
-
     const geometry = node.geometry.clone();
     if (materials.length > 1) {
       const baseGroups = node.geometry.groups.filter((group) => airportBaseIndices.includes(group.materialIndex));
@@ -98,10 +95,6 @@ function blendExactProjectedSurfacesWithAerial(exactA1) {
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     for (const material of materials) {
       if (!material) continue;
-      // The decoded projected records preserve exact boundaries and ordering,
-      // but their colors are BGL classification tints, not the supplied apron
-      // photography. Keep the records in the scene contract while rendering the
-      // source aerial and exact painted-line records instead of gray overlays.
       material.visible = false;
       material.depthWrite = false;
       material.userData = {
@@ -132,19 +125,13 @@ async function fetchManifest(url) {
     || manifest.image?.width !== AUTHORED_KPHX_PHOTO_PROFILE.width
     || manifest.image?.height !== AUTHORED_KPHX_PHOTO_PROFILE.height
     || manifest.image?.bytes !== AUTHORED_KPHX_PHOTO_PROFILE.bytes
-  ) {
-    throw new Error("PHX aerial manifest does not match the pinned full-airport source image");
-  }
-  if (manifest.schemaVersion === 2) {
-    if (
-      manifest.runtimeTiling?.mode !== AUTHORED_KPHX_PHOTO_PROFILE.textureMode
-      || !Array.isArray(manifest.tiles)
-      || manifest.tiles.length !== manifest.runtimeTiling.tileCount
-      || manifest.runtimeTiling.maxTextureDimension > AUTHORED_KPHX_PHOTO_PROFILE.maxRuntimeTextureDimension
-    ) {
-      throw new Error("PHX aerial tiled runtime manifest is incomplete");
-    }
-  }
+  ) throw new Error("PHX aerial manifest does not match the pinned full-airport source image");
+  if (manifest.schemaVersion === 2 && (
+    manifest.runtimeTiling?.mode !== AUTHORED_KPHX_PHOTO_PROFILE.textureMode
+    || !Array.isArray(manifest.tiles)
+    || manifest.tiles.length !== manifest.runtimeTiling.tileCount
+    || manifest.runtimeTiling.maxTextureDimension > AUTHORED_KPHX_PHOTO_PROFILE.maxRuntimeTextureDimension
+  )) throw new Error("PHX aerial tiled runtime manifest is incomplete");
   return manifest;
 }
 
@@ -166,30 +153,19 @@ function buildPhotoGeometry(THREE, bounds) {
   const { north, south, west, east } = bounds;
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.Float32BufferAttribute([
-    north, -0.018, west,
-    south, -0.018, west,
-    south, -0.018, east,
-    north, -0.018, east,
+    north, -0.018, west, south, -0.018, west, south, -0.018, east, north, -0.018, east,
   ], 3));
   geometry.setAttribute("normal", new THREE.Float32BufferAttribute([
-    0, 1, 0,
-    0, 1, 0,
-    0, 1, 0,
-    0, 1, 0,
+    0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
   ], 3));
-  geometry.setAttribute("uv", new THREE.Float32BufferAttribute([
-    0, 1,
-    0, 0,
-    1, 0,
-    1, 1,
-  ], 2));
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute([0, 1, 0, 0, 1, 0, 1, 1], 2));
   geometry.setIndex([0, 1, 2, 0, 2, 3]);
   geometry.computeBoundingSphere();
   return geometry;
 }
 
 function buildPhotoMaterial(THREE, texture, name) {
-  return new THREE.MeshBasicMaterial({
+  const material = new THREE.MeshBasicMaterial({
     name,
     map: texture,
     color: 0xffffff,
@@ -200,6 +176,22 @@ function buildPhotoMaterial(THREE, texture, name) {
     side: THREE.DoubleSide,
     toneMapped: false,
   });
+  material.userData.colorRepairMode = AUTHORED_KPHX_PHOTO_PROFILE.colorRepairMode;
+  material.onBeforeCompile = (shader) => {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      "#include <map_fragment>",
+      `#include <map_fragment>
+      float rrPhotoLuma = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+      float rrPhotoChroma = max(max(diffuseColor.r, diffuseColor.g), diffuseColor.b)
+        - min(min(diffuseColor.r, diffuseColor.g), diffuseColor.b);
+      float rrPhotoNeutral = 1.0 - smoothstep(0.045, 0.14, rrPhotoChroma);
+      float rrPhotoDark = 1.0 - smoothstep(0.012, 0.085, rrPhotoLuma);
+      float rrPhotoRepair = rrPhotoNeutral * rrPhotoDark * step(0.02, diffuseColor.a);
+      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.075, 0.079, 0.081), rrPhotoRepair * 0.82);`,
+    );
+  };
+  material.customProgramCacheKey = () => AUTHORED_KPHX_PHOTO_PROFILE.colorRepairMode;
+  return material;
 }
 
 function sceneBoundsForTile(tile, manifest) {
@@ -207,11 +199,12 @@ function sceneBoundsForTile(tile, manifest) {
   const image = manifest.image;
   const northSpan = full.north - full.south;
   const eastSpan = full.east - full.west;
-  const north = full.north - (tile.y / image.height) * northSpan;
-  const south = full.north - ((tile.y + tile.height) / image.height) * northSpan;
-  const west = full.west + (tile.x / image.width) * eastSpan;
-  const east = full.west + ((tile.x + tile.width) / image.width) * eastSpan;
-  return { north, south, west, east };
+  return {
+    north: full.north - (tile.y / image.height) * northSpan,
+    south: full.north - ((tile.y + tile.height) / image.height) * northSpan,
+    west: full.west + (tile.x / image.width) * eastSpan,
+    east: full.west + ((tile.x + tile.width) / image.width) * eastSpan,
+  };
 }
 
 async function buildTiledPhotoGround(THREE, baseUrl, manifest) {
@@ -237,6 +230,7 @@ async function buildTiledPhotoGround(THREE, baseUrl, manifest) {
   group.userData.runtimeTileCount = loadedTiles.length;
   group.userData.maxTextureDimension = manifest.runtimeTiling.maxTextureDimension;
   group.userData.underlayMode = AUTHORED_KPHX_PHOTO_PROFILE.underlayMode;
+  group.userData.colorRepairMode = AUTHORED_KPHX_PHOTO_PROFILE.colorRepairMode;
   return group;
 }
 
@@ -255,6 +249,7 @@ async function buildFallbackPhotoGround(THREE, imageUrl, manifest) {
   photoGround.userData.textureMode = "single-texture-fallback-v1";
   photoGround.userData.runtimeTileCount = 1;
   photoGround.userData.underlayMode = AUTHORED_KPHX_PHOTO_PROFILE.underlayMode;
+  photoGround.userData.colorRepairMode = AUTHORED_KPHX_PHOTO_PROFILE.colorRepairMode;
   return photoGround;
 }
 
@@ -272,13 +267,11 @@ async function buildBestAvailablePhotoGround(THREE, baseUrl, imageUrl, manifest)
 export async function installAuthoredKphxPhotoGround(THREE, environment) {
   if (!environment?.isGroup) throw new Error("KPHX environment group is required");
   environment.userData.photoGroundSource = "loading-source-authored-phx-photo";
-
   const baseUrl = `${import.meta.env.BASE_URL}models/kphx-photo/`;
   const manifestUrl = `${baseUrl}photo-manifest.json`;
   const imageUrl = `${baseUrl}phx-airport-photo.webp`;
   const manifest = await fetchManifest(manifestUrl);
   const photoGround = await buildBestAvailablePhotoGround(THREE, baseUrl, imageUrl, manifest);
-
   const underlayMaterialCount = buildAirportBaseUnderlay(THREE, environment);
   const hiddenSurfaceMaterialCount = hideFlatADEXSurfaceColors(environment);
   environment.add(photoGround);
@@ -305,6 +298,7 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
     : AUTHORED_KPHX_PHOTO_PROFILE.fallbackDetailLevel;
   environment.userData.authoredPhotoUnderlayMode = AUTHORED_KPHX_PHOTO_PROFILE.underlayMode;
   environment.userData.authoredPhotoUnderlayMaterialCount = underlayMaterialCount;
+  environment.userData.authoredPhotoColorRepairMode = AUTHORED_KPHX_PHOTO_PROFILE.colorRepairMode;
   environment.userData.hiddenADEXSurfaceMaterialCount = hiddenSurfaceMaterialCount;
   environment.userData.exactA1BlendedProjectedMaterialCount = 0;
   environment.userData.exactA1HiddenProjectedMaterialCount = hiddenProjectedMaterialCount;
