@@ -47,12 +47,8 @@ for (const token of [
   'underlayMode: "neutral-airport-base-below-source-aerial-alpha"',
   'fullCoverageUnderlayMode: "full-airport-neutral-underlay-below-all-source-tiles-v2"',
   'colorRepairMode: "source-aerial-dark-neutral-artifact-lift-v1"',
-  'hiddenClassificationMode: "hide-airport-base-and-asphalt-over-source-aerial-v1"',
-  'const NONPHOTOGRAPHIC_ADEX_OVERLAYS = new Set(["asphalt"])',
-  "hidden-nonphotographic-adex-asphalt-over-source-aerial",
-  "hiddenAsphaltMaterialCount",
-  "authoredPhotoHiddenClassificationMode",
-  "hiddenADEXAsphaltMaterialCount",
+  'shadowLiftMode: "source-aerial-hue-preserving-shadow-lift-v2"',
+  'const OPAQUE_ADEX_SURFACES = new Set(["airport-base"])',
   "buildTiledPhotoGround",
   "sceneBoundsForTile",
   "manifest.tiles.map",
@@ -68,25 +64,32 @@ for (const token of [
   "photoGround.userData.underlayMode",
   "photoGround.userData.fullCoverageUnderlayMode",
   "photoGround.userData.colorRepairMode",
-  "photoGround.userData.hiddenClassificationMode",
+  "photoGround.userData.shadowLiftMode",
   "authoredPhotoUnderlayMaterialCount",
   "authoredPhotoFullCoverageUnderlayMode",
   "authoredPhotoColorRepairMode",
+  "authoredPhotoShadowLiftMode",
   "material.onBeforeCompile",
   "rrPhotoLuma",
   "rrPhotoChroma",
   "rrPhotoNeutral",
   "rrPhotoDark",
+  "rrPhotoShadow",
+  "rrPhotoOpaque",
+  "rrPhotoHue",
+  "rrPhotoLifted",
   "rrPhotoRepair",
   "material.customProgramCacheKey",
 ]) {
   if (!runtime.includes(token)) throw new Error(`PHX tiled runtime contract missing ${token}`);
 }
 for (const forbidden of [
+  "NONPHOTOGRAPHIC_ADEX_OVERLAYS",
+  "hidden-nonphotographic-adex-asphalt-over-source-aerial",
   "mesh.receiveShadow = true",
   "new THREE.MeshStandardMaterial({\n    name,\n    map: texture",
 ]) {
-  if (runtime.includes(forbidden)) throw new Error(`PHX source aerial returned to shadow-darkened rendering: ${forbidden}`);
+  if (runtime.includes(forbidden)) throw new Error(`PHX source aerial or ADEX visibility regressed: ${forbidden}`);
 }
 
-console.log(`Verified PHX native-resolution tiled ground: ${manifest.tiles.length} WebGL-safe tiles, ${totalBytes} bytes, full 6400x2304 source coverage, unlit authored color, continuous full-airport pavement beneath every tile, hidden opaque ADEX asphalt classification, and a narrowly scoped near-black neutral-pixel display repair.`);
+console.log(`Verified PHX native-resolution tiled ground: ${manifest.tiles.length} WebGL-safe tiles, ${totalBytes} bytes, full 6400x2304 source coverage, unlit authored color, continuous full-airport pavement beneath every tile, preserved ADEX asphalt geometry, and a hue-preserving low-luminance source-aerial shadow lift.`);
