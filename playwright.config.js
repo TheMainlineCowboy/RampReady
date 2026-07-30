@@ -1,4 +1,4 @@
-import { readFile, readdir, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { defineConfig } from "@playwright/test";
 
@@ -9,32 +9,26 @@ const webServerCommand = requestedWebServerCommand.includes("prepare:terminal4-r
   ? requestedWebServerCommand
   : `${terminal4Preparation} && ${requestedWebServerCommand}`;
 
-async function applyKphxConcreteIsolationBeforeServer() {
+async function applyKphxAuthoredGroundIsolationBeforeServer() {
   const isKphxDiagnostic = process.argv.some((argument) => argument.includes("kphx-ground-runtime.spec.js"));
   if (!isKphxDiagnostic || externalBaseURL) return;
 
-  const assetsDirectory = path.resolve("dist/assets");
-  const files = (await readdir(assetsDirectory)).filter((file) => file.endsWith(".js"));
-  const initialConcrete = /([A-Za-z_$][\w$]*)\.name==="concrete"\?\(\1\.visible=!0,/;
-  let patchCount = 0;
-
-  for (const file of files) {
-    const filePath = path.join(assetsDirectory, file);
-    let body = await readFile(filePath, "utf8");
-    if (initialConcrete.test(body)) {
-      body = body.replace(initialConcrete, (statement, materialName) =>
-        statement.replace(`${materialName}.visible=!0`, `${materialName}.visible=!1`));
-      patchCount += 1;
-    }
-    await writeFile(filePath, body, "utf8");
+  const sourcePath = path.resolve("src/environment/authoredKphxGround.js");
+  let source = await readFile(sourcePath, "utf8");
+  const anchor = "  environment.add(authored);";
+  const occurrences = source.split(anchor).length - 1;
+  if (occurrences !== 1) {
+    throw new Error(`KPHX authored-ground source isolation expected 1 anchor, found ${occurrences}`);
   }
 
-  if (patchCount !== 1) {
-    throw new Error(`KPHX pre-server concrete isolation expected 1 patch, found ${patchCount}`);
-  }
+  source = source.replace(
+    anchor,
+    `  authored.visible = false;\n  authored.userData.diagnosticVisibilityAuthority = "hidden-complete-authored-adex-ground-before-vite";\n\n${anchor}`,
+  );
+  await writeFile(sourcePath, source, "utf8");
 }
 
-await applyKphxConcreteIsolationBeforeServer();
+await applyKphxAuthoredGroundIsolationBeforeServer();
 
 export default defineConfig({
   testDir: "./tests/browser",
