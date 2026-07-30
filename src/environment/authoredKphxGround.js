@@ -1,4 +1,5 @@
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { installKphxRunwayVisuals } from "./kphxRunwayVisuals.js";
 import concourseA from "./kphxV181/concourseA.js";
 import concourseB from "./kphxV181/concourseB.js";
 
@@ -21,8 +22,8 @@ export const AUTHORED_KPHX_GROUND_PROFILE = Object.freeze({
   coordinateFrame: "A1-local; X=north, Y=up, Z=east; authored A1 heading faces scene -Z",
   sceneOffset: Object.freeze([0, 0, 6.2]),
   packageVersion: "1.8.1",
-  detailLevel: "terminal4-authored-textured-v4-source-ramp-exact-a1-nearfield",
-  surfaceMaterialMode: "source-aerial-diffuse-with-source-atlas-nearfield-concrete",
+  detailLevel: "terminal4-authored-pavement-v5-source-ramp-stand-markings",
+  surfaceMaterialMode: "authored-pavement-nearfield-over-source-aerial-background",
   sourceJetwayCount: 112,
   terminal4JetwayCount: TERMINAL4_JETWAYS.length,
   terminal4ParkingCount: TERMINAL4_PARKINGS.length,
@@ -124,15 +125,25 @@ function buildSourceConcreteNearfieldTextures(THREE, sourceTexture) {
     const luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722;
     const darkness = Math.max(0, meanLuminance - luminance);
 
-    // Use the exact source strip as a transparent detail decal. Slab faces stay
-    // almost clear so the georeferenced aerial remains visible; the authored dark
-    // joints receive strong alpha and stay crisp at tug height.
-    const detail = Math.max(45, Math.min(135, 90 + (luminance - meanLuminance) * 0.7));
-    const alpha = Math.max(10, Math.min(235, 14 + darkness * 6));
-    detailPixels.data[index] = Math.min(255, detail + 3);
-    detailPixels.data[index + 1] = Math.min(255, detail + 2);
-    detailPixels.data[index + 2] = detail;
-    detailPixels.data[index + 3] = alpha;
+    // Tug-height pavement must not depend on the airport-wide aerial, which is
+    // only about one source pixel per 1.2-1.3 meters. Convert the supplied clean
+    // concrete strip into an opaque apron tile, then add deterministic broad wear
+    // and fine grain so the same slab atlas does not read as a repeated grid.
+    const pixel = index / 4;
+    const pixelX = pixel % sourceCanvas.width;
+    const pixelY = Math.floor(pixel / sourceCanvas.width);
+    const broadWear = Math.sin(pixelX * 0.041) * 7.5
+      + Math.cos(pixelY * 0.033) * 6
+      + Math.sin((pixelX + pixelY) * 0.017) * 4;
+    const hash = ((pixelX * 374761393 + pixelY * 668265263) ^ ((pixelX + pixelY) * 1274126177)) >>> 0;
+    const grain = (hash % 19) - 9;
+    const detail = Math.max(104, Math.min(202,
+      156 + (luminance - meanLuminance) * 0.68 - darkness * 0.10 + broadWear + grain * 0.38,
+    ));
+    detailPixels.data[index] = Math.min(255, detail + 5);
+    detailPixels.data[index + 1] = Math.min(255, detail + 4);
+    detailPixels.data[index + 2] = Math.min(255, detail + 1);
+    detailPixels.data[index + 3] = 255;
 
     const bump = Math.max(0, Math.min(255, 128 + (luminance - meanLuminance) * 2.4));
     bumpPixels.data[index] = bump;
@@ -147,7 +158,7 @@ function buildSourceConcreteNearfieldTextures(THREE, sourceTexture) {
     albedo: configureNearfieldTexture(
       THREE,
       new THREE.CanvasTexture(detailCanvas),
-      "PHX supplied PARKRAMPS transparent near-field joint decal",
+      "PHX supplied PARKRAMPS opaque near-field concrete",
       THREE.SRGBColorSpace,
     ),
     bump: configureNearfieldTexture(
@@ -190,17 +201,18 @@ function configureAuthoredMarkingMaterial(material, node) {
   material.metalness = 0;
   material.toneMapped = false;
   material.polygonOffset = true;
-  material.polygonOffsetFactor = -12;
-  material.polygonOffsetUnits = -12;
+  material.polygonOffsetFactor = -1;
+  material.polygonOffsetUnits = -1;
   if (material.emissive?.setHex) {
     material.emissive.setHex(yellow ? 0x392d00 : 0x252522);
     material.emissiveIntensity = 0.22;
   }
-  node.renderOrder = Math.max(node.renderOrder || 0, 420);
+  node.renderOrder = Math.max(node.renderOrder || 0, 80);
   material.userData = {
     ...(material.userData || {}),
     markingAuthority: "source-authored-kphx-adex",
     visibilityMode: "high-contrast-nearfield",
+    contactMode: "pavement-relative-millimeter-offset",
   };
 }
 
@@ -222,7 +234,7 @@ function applyAuthoredSurfaceMaterials(THREE, authored, textures) {
       material.depthWrite = true;
       material.userData = {
         ...(material.userData || {}),
-        diffuseAuthority: "source-authored-phx-photo",
+        diffuseAuthority: "authored-kphx-pavement-nearfield",
         sourceAtlasPolicy: "crop-clean-source-concrete-strip-never-repeat-entire-atlas",
       };
 
@@ -231,43 +243,45 @@ function applyAuthoredSurfaceMaterials(THREE, authored, textures) {
       } else if (material.name === "concrete") {
         material.visible = true;
         material.color.setHex(0xffffff);
-        material.transparent = true;
-        material.opacity = 0.72;
-        material.alphaTest = 0.01;
-        material.depthWrite = false;
+        material.transparent = false;
+        material.opacity = 1;
+        material.alphaTest = 0;
+        material.depthWrite = true;
         material.map = textures.concrete.albedo;
         material.bumpMap = textures.concrete.bump;
-        material.bumpScale = 0.022;
-        material.roughness = 0.95;
+        material.bumpScale = 0.028;
+        material.roughness = 0.96;
         material.metalness = 0;
         material.polygonOffset = true;
         material.polygonOffsetFactor = -1;
         material.polygonOffsetUnits = -1;
-        material.userData.nearfieldBlendMode = "transparent-source-joint-decal-over-aerial";
+        material.userData.nearfieldBlendMode = "opaque-authored-pavement-over-aerial-background";
         node.renderOrder = Math.max(node.renderOrder || 0, 30);
         sourceDetailedSurfaceMaterialCount += 1;
       } else if (material.name === "asphalt") {
         material.visible = true;
-        material.color.setHex(0x555a5e);
-        material.transparent = true;
-        material.opacity = 0.10;
-        material.depthWrite = false;
+        material.color.setHex(0x4f5456);
+        material.transparent = false;
+        material.opacity = 1;
+        material.depthWrite = true;
         material.roughness = 0.98;
         material.metalness = 0;
+        material.userData.nearfieldBlendMode = "opaque-authored-asphalt-over-aerial-background";
         node.renderOrder = Math.max(node.renderOrder || 0, 20);
         sourceDetailedSurfaceMaterialCount += 1;
       } else if (material.name === "service-road") {
         material.visible = true;
         material.color.setHex(0x777976);
-        material.transparent = true;
-        material.opacity = 0.42;
-        material.alphaTest = 0.01;
-        material.depthWrite = false;
+        material.transparent = false;
+        material.opacity = 1;
+        material.alphaTest = 0;
+        material.depthWrite = true;
         material.map = textures.concrete.albedo;
         material.bumpMap = textures.concrete.bump;
-        material.bumpScale = 0.010;
+        material.bumpScale = 0.014;
         material.roughness = 0.97;
         material.metalness = 0;
+        material.userData.nearfieldBlendMode = "opaque-authored-service-road-over-aerial-background";
         node.renderOrder = Math.max(node.renderOrder || 0, 35);
         sourceDetailedSurfaceMaterialCount += 1;
       } else if (MARKING_MATERIALS.has(material.name)) {
@@ -278,6 +292,117 @@ function applyAuthoredSurfaceMaterials(THREE, authored, textures) {
     }
   });
   return { sourceDetailedSurfaceMaterialCount, enhancedMarkingMaterialCount };
+}
+
+function appendGroundStrip(positions, indices, a, b, width, y = 0.0075) {
+  const dx = b[0] - a[0];
+  const dz = b[1] - a[1];
+  const length = Math.hypot(dx, dz);
+  if (length < 0.01) return;
+  const nx = -dz / length * width / 2;
+  const nz = dx / length * width / 2;
+  const base = positions.length / 3;
+  positions.push(
+    a[0] + nx, y, a[1] + nz,
+    b[0] + nx, y, b[1] + nz,
+    b[0] - nx, y, b[1] - nz,
+    a[0] - nx, y, a[1] - nz,
+  );
+  indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+}
+
+function buildGateLabel(THREE, gate, x, z, heading) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 128;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("PHX gate-label canvas is unavailable");
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "rgba(20, 22, 20, 0.88)";
+  context.fillRect(4, 4, 248, 120);
+  context.strokeStyle = "#f4c500";
+  context.lineWidth = 12;
+  context.strokeRect(8, 8, 240, 112);
+  context.fillStyle = "#f4c500";
+  context.font = "bold 72px Arial, sans-serif";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(gate, 128, 67);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 16;
+  texture.generateMipmaps = true;
+  const geometry = new THREE.PlaneGeometry(4.6, 2.3);
+  geometry.rotateX(-Math.PI / 2);
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false,
+    toneMapped: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.name = `PHX_T4_GateLabel_${gate}`;
+  mesh.position.set(x, 0.0085, z);
+  mesh.rotation.y = Math.PI / 2 - heading;
+  mesh.renderOrder = 90;
+  return mesh;
+}
+
+function buildTerminal4StandMarkings(THREE) {
+  const group = new THREE.Group();
+  group.name = "PHX_T4_SourcePositionedStandMarkings";
+  const positions = [];
+  const indices = [];
+  for (const parking of TERMINAL4_PARKINGS) {
+    const heading = THREE.MathUtils.degToRad(parking.h);
+    const hx = Math.cos(heading);
+    const hz = Math.sin(heading);
+    const px = parking.x;
+    const pz = parking.z;
+    const approach = [px + hx * 24, pz + hz * 24];
+    const gateEnd = [px - hx * 14, pz - hz * 14];
+    appendGroundStrip(positions, indices, approach, gateEnd, 0.20);
+    const stopCenter = [px, pz];
+    const sx = -hz * 3.2;
+    const sz = hx * 3.2;
+    appendGroundStrip(
+      positions,
+      indices,
+      [stopCenter[0] - sx, stopCenter[1] - sz],
+      [stopCenter[0] + sx, stopCenter[1] + sz],
+      0.24,
+      0.0078,
+    );
+    const labelX = px + hx * 18;
+    const labelZ = pz + hz * 18;
+    group.add(buildGateLabel(THREE, parking.g, labelX, labelZ, heading));
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  geometry.computeBoundingSphere();
+  const material = new THREE.MeshBasicMaterial({
+    color: 0xf4c500,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    toneMapped: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1,
+  });
+  const lines = new THREE.Mesh(geometry, material);
+  lines.name = "PHX_T4_StandCenterlinesAndStopBars";
+  lines.renderOrder = 85;
+  group.add(lines);
+  group.userData.gateMarkingCount = TERMINAL4_PARKINGS.length;
+  group.userData.detailLevel = "source-positioned-terminal4-stand-centerlines-labels-v2-door-aligned";
+  return group;
 }
 
 function buildGateMetadata() {
@@ -320,6 +445,9 @@ export async function installAuthoredKphxGround(THREE, environment) {
   // second time was the cause of the wrong gate and wrong aircraft orientation.
   authored.rotation.y = 0;
   const materialState = applyAuthoredSurfaceMaterials(THREE, authored, surfaceTextures);
+  const runwayVisuals = await installKphxRunwayVisuals(THREE, authored);
+  const standMarkings = buildTerminal4StandMarkings(THREE);
+  authored.add(standMarkings);
 
   environment.add(authored);
   hideCalibrationGround(environment);
@@ -331,6 +459,13 @@ export async function installAuthoredKphxGround(THREE, environment) {
   environment.userData.authoredGroundSurfaceTextures = surfaceTextures;
   environment.userData.authoredGroundTexturedSurfaceMaterialCount = materialState.sourceDetailedSurfaceMaterialCount;
   environment.userData.authoredGroundEnhancedMarkingMaterialCount = materialState.enhancedMarkingMaterialCount;
+  environment.userData.authoredGroundMarkingContactMode = "pavement-relative-millimeter-offset";
+  environment.userData.kphxRunwayCount = runwayVisuals.userData.runwayCount;
+  environment.userData.kphxRunwayIdentifierCount = runwayVisuals.userData.identifierCount;
+  environment.userData.kphxRunwayLightCount = runwayVisuals.userData.lightCount;
+  environment.userData.kphxRunwayVisualDetailLevel = runwayVisuals.userData.detailLevel;
+  environment.userData.authoredGroundGateMarkingCount = standMarkings.userData.gateMarkingCount;
+  environment.userData.authoredGroundStandMarkingDetailLevel = standMarkings.userData.detailLevel;
   environment.userData.authoredGroundSurfaceMaterialMode = AUTHORED_KPHX_GROUND_PROFILE.surfaceMaterialMode;
   environment.userData.kphxVersion = AUTHORED_KPHX_GROUND_PROFILE.packageVersion;
   environment.userData.kphxDetailLevel = AUTHORED_KPHX_GROUND_PROFILE.detailLevel;

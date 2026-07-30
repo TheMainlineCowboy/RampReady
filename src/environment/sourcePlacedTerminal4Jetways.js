@@ -17,6 +17,45 @@ export const SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE = Object.freeze({
 
 const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
 
+function findTerminalWallDistance(THREE, terminal, originX, originZ, towardX, towardZ, height) {
+  if (!terminal?.isObject3D) return null;
+  terminal.updateMatrixWorld(true);
+  const direction = new THREE.Vector3(towardX, 0, towardZ).normalize();
+  const origin = new THREE.Vector3(originX, height, originZ);
+  const raycaster = new THREE.Raycaster(origin, direction, 0.05, 24);
+  const hit = raycaster.intersectObject(terminal, true).find((entry) => entry.object?.visible !== false);
+  if (hit?.distance > 0.05) return hit.distance;
+
+  // Some legacy terminal pieces are single-sided or contain no ray-facing triangle.
+  // Fall back to the nearest source vertex inside a narrow rearward corridor.
+  let nearest = Number.POSITIVE_INFINITY;
+  const vertex = new THREE.Vector3();
+  terminal.traverse((node) => {
+    if (!node.isMesh || node.visible === false) return;
+    const position = node.geometry?.getAttribute?.("position");
+    if (!position) return;
+    for (let index = 0; index < position.count; index += 1) {
+      vertex.fromBufferAttribute(position, index);
+      node.localToWorld(vertex);
+      if (Math.abs(vertex.y - height) > 4.8) continue;
+      const dx = vertex.x - originX;
+      const dz = vertex.z - originZ;
+      const longitudinal = dx * towardX + dz * towardZ;
+      if (!(longitudinal > 0.05 && longitudinal <= 24)) continue;
+      const lateral = Math.abs(dx * -towardZ + dz * towardX);
+      if (lateral <= 4.5) nearest = Math.min(nearest, longitudinal);
+    }
+  });
+  return Number.isFinite(nearest) ? nearest : null;
+}
+
+const CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 4.1;
+const CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.55;
+// The cabin and seven bellows folds extend 2.61 meters beyond bridgeEnd.
+// Keep that assembly just outside the aircraft skin instead of driving it
+// through the cockpit/fuselage centerline.
+const AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.78;
+
 function addInstances(THREE, group, geometry, material, transforms, name, castShadow = true) {
   if (!transforms.length) return null;
   const mesh = new THREE.InstancedMesh(geometry, material, transforms.length);
@@ -151,7 +190,7 @@ function addServiceStairs(transforms, origin, yaw, direction, perpendicular) {
   }
 }
 
-export function buildSourcePlacedTerminal4Jetways(THREE) {
+export function buildSourcePlacedTerminal4Jetways(THREE, terminal) {
   const jetways = [...concourseA.jetways, ...concourseB.jetways];
   if (jetways.length !== SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.terminal4JetwayCount) {
     throw new Error(`Expected 58 Terminal 4 jetways, received ${jetways.length}`);
@@ -174,6 +213,8 @@ export function buildSourcePlacedTerminal4Jetways(THREE) {
     [...concourseA.parkings, ...concourseB.parkings].map((parking) => [parking.g, parking]),
   );
   let highDetailCount = 0;
+  let terminalConnectedCount = 0;
+  let a1TerminalWallDistance = null;
 
   for (const jetway of jetways) {
     const parking = parkingByGate.get(jetway.g);
@@ -184,8 +225,8 @@ export function buildSourcePlacedTerminal4Jetways(THREE) {
     const leftZ = -forwardX;
     // Source parking coordinates describe the nose-gear stop point. A passenger
     // boarding bridge terminates at the CRJ forward-left cabin door.
-    const targetX = jetway.px - forwardX * 5.6 + leftX * 1.25;
-    const targetZ = jetway.pz - forwardZ * 5.6 + leftZ * 1.25;
+    const targetX = jetway.px - forwardX * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS + leftX * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
+    const targetZ = jetway.pz - forwardZ * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS + leftZ * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
     let dx = targetX - jetway.x;
     let dz = targetZ - jetway.z;
     let distance = Math.hypot(dx, dz);
@@ -202,7 +243,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE) {
     const pz = ux;
     const yaw = Math.atan2(ux, uz);
     const bridgeStart = 2.35;
-    const bridgeEnd = clamp(distance - 2.0, 14.5, 31.5);
+    const bridgeEnd = clamp(distance - AIR_JETWAY01_CONTACT_CLEARANCE_METERS, 13.5, 30.5);
     const bridgeLength = bridgeEnd - bridgeStart;
     const rotundaY = 4.62;
     const cabinY = jetway.g === "A1" ? 3.05 : 3.2;
@@ -211,10 +252,27 @@ export function buildSourcePlacedTerminal4Jetways(THREE) {
     const highDetail = Math.hypot(jetway.x, jetway.z) <= SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.highDetailRadiusMeters;
     if (highDetail) highDetailCount += 1;
 
+    const sourceOffsetZ = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset[2];
+    const terminalWallDistance = findTerminalWallDistance(
+      THREE,
+      terminal,
+      jetway.x,
+      jetway.z + sourceOffsetZ,
+      -ux,
+      -uz,
+      rotundaY,
+    );
+    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 18);
+    if (terminalWallDistance != null) terminalConnectedCount += 1;
+    if (jetway.g === "A1") a1TerminalWallDistance = terminalWallDistance;
     transforms.wallCollar.push({
-      position: [jetway.x - ux * 1.7, rotundaY, jetway.z - uz * 1.7],
+      position: [
+        jetway.x - ux * wallConnectorLength / 2,
+        rotundaY,
+        jetway.z - uz * wallConnectorLength / 2,
+      ],
       yaw,
-      scale: [3.6, 3.1, 1.4],
+      scale: [3.6, 3.1, wallConnectorLength],
     });
     transforms.rotundaBody.push({ position: [jetway.x, rotundaY - 0.05, jetway.z], yaw, scale: [2.1, 2.75, 2.1] });
     transforms.rotundaWindow.push({ position: [jetway.x, rotundaY + 0.25, jetway.z], yaw, scale: [2.13, 0.78, 2.13] });
@@ -299,7 +357,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE) {
     });
     for (const side of [-1, 1]) {
       transforms.cabinSideWindow.push({
-        position: [endX + px * side * 1.7, cabinY + 0.25, endZ + pz * side * 1.7],
+        position: [endX + px * side * 1.49, cabinY + 0.25, endZ + pz * side * 1.49],
         yaw,
         scale: [0.055, 0.72, 1.75],
       });
@@ -373,7 +431,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE) {
   const box = new THREE.BoxGeometry(1, 1, 1);
   const outerTunnel = createArchedTunnelGeometry(THREE, 3.2, 2.56, 0.36);
   const innerTunnel = createArchedTunnelGeometry(THREE, 2.9, 2.36, 0.32);
-  const cabin = createArchedTunnelGeometry(THREE, 3.45, 2.82, 0.3);
+  const cabin = createArchedTunnelGeometry(THREE, 3.05, 2.72, 0.28);
   const rotunda = new THREE.CylinderGeometry(1, 1, 1, 28, 1, false);
   const rotundaBand = new THREE.CylinderGeometry(1, 1, 1, 28, 1, true);
   const column = new THREE.CylinderGeometry(1, 1, 1, 16, 1, false);
@@ -422,6 +480,9 @@ export function buildSourcePlacedTerminal4Jetways(THREE) {
   group.userData.sourceDimensionsMeters = [...SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceDimensionsMeters];
   group.userData.jetwayCount = jetways.length;
   group.userData.highDetailJetwayCount = highDetailCount;
+  group.userData.terminalConnectedJetwayCount = terminalConnectedCount;
+  group.userData.a1TerminalWallDistance = a1TerminalWallDistance;
+  group.userData.terminalConnectionAuthority = "raycast-and-source-vertex-fit-to-authored-terminal-mesh";
   group.userData.detailLevel = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.detailLevel;
   group.userData.coordinateFrame = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.coordinateFrame;
   group.userData.visualAuthority = "faithful-reconstruction-of-referenced-fsx-air-jetway01-library-object";

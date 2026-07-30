@@ -221,7 +221,10 @@ for (const [oldToken, newToken] of [
   ['\'textureStatus: "pinned-authored-source-textures-active"\'', '\'textureStatus: "all-exact-source-textures-active-no-fallbacks"\''],
   ['"missing package dependencies remain unfilled"', '"all recovered dependencies are active"'],
 ]) verifier = verifier.replace(oldToken, newToken);
-if (!verifier.includes('"manifest.emissiveTextureCount !== 15"')) throw new Error("Terminal 4 exact verifier lightmap count was not upgraded to 15");
+if (![
+  '"manifest.emissiveTextureCount !== 15"',
+  '"exactLightmapCount !== 15"',
+].some((token) => verifier.includes(token))) throw new Error("Terminal 4 exact verifier lightmap count was not upgraded to 15");
 for (const token of [
   '"PARKRAMPS2.BMP": { localFile: "PARKRAMPS2.BMP"',
   '"PHX_TERM400_0.DDS": { localFile: "PHX_TERM400_0.DDS"',

@@ -43,7 +43,9 @@ for (const token of [
   "sourceWrapMode",
   "THREE.RepeatWrapping",
   "texture.anisotropy = 16",
-  "manifest.emissiveTextureCount !== 11",
+  'manifestUrl.searchParams.set("materialPass"',
+  'cache: "no-store"',
+  "exactLightmapCount !== 15",
   "material.emissiveMap = emissiveMap",
   "authoredTerminal4LightmappedMaterialCount",
 ]) {
@@ -54,33 +56,59 @@ if (files.terminal.includes("CanvasTexture")) throw new Error("Authored Terminal
 for (const token of [
   'sourceArchive: "unmlobo-kphx1-8-1_Mu9aq.zip"',
   'placementSource: "scenery/world/scenery/kphx-airport.bgl"',
+  'sourceLibraryModel: "AIR_Jetway01"',
+  'sourceLibraryGuid: "{bfcdf52b-9142-415c-8318-03c1b92ca9d9}"',
+  "sourceAirportJetwayRecordCount: 101",
   "terminal4JetwayCount: 58",
+  "sourceDimensionsMeters: Object.freeze([37.92, 8.77, 26.51])",
   "concourseA.jetways",
   "concourseB.jetways",
-  "KPHX_SourcePlaced_JetwayRotundas",
+  "createArchedTunnelGeometry",
+  "AIR_Jetway01_OuterTelescopingTunnels",
+  "AIR_Jetway01_InnerTelescopingTunnels",
+  "AIR_Jetway01_AircraftCabins",
+  "AIR_Jetway01_RotundaWindowBands",
+  "AIR_Jetway01_BellowsHorizontal",
+  "AIR_Jetway01_LiftColumns",
+  "AIR_Jetway01_WheelBogies",
+  "AIR_Jetway01_ServiceSteps",
+  "AIR_Jetway01_UnderbridgeServiceCable",
+  "group.position.fromArray(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset)",
+  "highDetailRadiusMeters: 240",
+  'detailLevel: "fsx-air-jetway01-faithful-articulated-v2"',
+  'visualAuthority = "faithful-reconstruction-of-referenced-fsx-air-jetway01-library-object"',
+  "usesTerminalBuildingTextures = false",
+  "proceduralBuildingBoxReuse = false",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 4.1",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.55",
+  "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.78",
+  "distance - AIR_JETWAY01_CONTACT_CLEARANCE_METERS",
+]) {
+  if (!files.jetways.includes(token)) throw new Error(`AIR_Jetway01 visual contract missing ${token}`);
+}
+for (const forbidden of [
   "KPHX_SourcePlaced_JetwayOuterTunnels",
   "KPHX_SourcePlaced_JetwayInnerTunnels",
   "KPHX_SourcePlaced_JetwayCabins",
-  "KPHX_SourcePlaced_JetwayBellowsHorizontal",
-  "KPHX_SourcePlaced_JetwayWheels",
-  "KPHX_SourcePlaced_JetwayServiceSteps",
-  "group.position.fromArray(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset)",
-  "highDetailRadiusMeters: 180",
+  "PHX source jetway outer shell",
+  "PHX source jetway cabin",
+  "function sourceTexture",
+  "textures.get(reference.toUpperCase())",
 ]) {
-  if (!files.jetways.includes(token)) throw new Error(`Terminal 4 jetway visual contract missing ${token}`);
+  if (files.jetways.includes(forbidden)) throw new Error(`Obsolete box-built or terminal-textured jetway returned: ${forbidden}`);
 }
-if (files.jetways.includes("CanvasTexture")) throw new Error("Terminal 4 jetways must reuse supplied source textures instead of generated canvas textures");
+if (files.jetways.includes("CanvasTexture")) throw new Error("AIR_Jetway01 must not depend on generated canvas textures");
 
 for (const token of [
   "decodeDxt1Bmp",
   "encodePng",
   "TEXTURE_SOURCES",
-  '"PARKRAMPS2.BMP": { sourcePath: "parkramps.bmp"',
-  '"PHX_TERM400_0.DDS": { sourcePath: "bgate1.bmp"',
-  '"PHX_TERM400_1.DDS": { sourcePath: "bgate3.bmp"',
-  '"PHXRAMPLIGHT.BMP": { sourcePath: "supports2.bmp"',
+  '"PARKRAMPS2.BMP": { localFile: "PARKRAMPS2.BMP"',
+  '"PHX_TERM400_0.DDS": { localFile: "PHX_TERM400_0.DDS"',
+  '"PHX_TERM400_1.DDS": { localFile: "PHX_TERM400_1.DDS"',
+  '"PHXRAMPLIGHT.BMP": { localFile: "PHXRAMPLIGHT.BMP"',
   "texture-manifest.json",
-  'textureStatus: "pinned-authored-source-textures-active"',
+  'textureStatus: "all-exact-source-textures-active-no-fallbacks"',
 ]) {
   if (!files.materialize.includes(token)) throw new Error(`Terminal 4 materializer contract missing ${token}`);
 }
@@ -92,8 +120,8 @@ for (const token of [
   '"T4_WALK2.BMP": "t4_walk2_lm.bmp"',
   'emissiveFidelity: "exact"',
   'manifest.emissiveTextureCount = emitted',
-  'pinned-exact-source-lightmaps-active-no-invented-missing-maps',
-  "missing package dependencies remain unfilled",
+  'all-15-exact-source-lightmaps-active-no-missing-dependencies',
+  "all recovered dependencies are active",
 ]) {
   if (!files.materializeLightmaps.includes(token)) throw new Error(`Terminal 4 exact-lightmap materializer contract missing ${token}`);
 }
@@ -105,8 +133,8 @@ for (const token of [
   "b15Anchors",
   "trainingCorridor",
   "kphxDetailLevel",
-  'detailLevel: "terminal4-authored-textured-v4-source-ramp-exact-a1-nearfield"',
-  'surfaceMaterialMode: "source-aerial-diffuse-with-source-atlas-nearfield-concrete"',
+  'detailLevel: "terminal4-authored-pavement-v5-source-ramp-stand-markings"',
+  'surfaceMaterialMode: "authored-pavement-nearfield-over-source-aerial-background"',
   'concrete: "models/phx-terminal4/textures/PARKRAMPS.png"',
   'serviceRoad: "models/phx-terminal4/textures/PARKRAMP1.png"',
   'asphalt: "models/phx-terminal4/textures/RW.png"',
@@ -114,11 +142,14 @@ for (const token of [
   "crop-clean-source-concrete-strip-never-repeat-entire-atlas",
   "material.map = textures.concrete.albedo",
   "material.bumpMap = textures.concrete.bump",
-  "material.bumpScale = 0.022",
+  "material.bumpScale = 0.028",
   "configureAuthoredMarkingMaterial",
   'markingAuthority: "source-authored-kphx-adex"',
   'visibilityMode: "high-contrast-nearfield"',
   "authoredGroundEnhancedMarkingMaterialCount",
+  "authoredGroundGateMarkingCount",
+  "buildTerminal4StandMarkings",
+  "opaque-authored-pavement-over-aerial-background",
   "texture.anisotropy = 16",
 ]) {
   if (!files.ground.includes(token)) throw new Error(`KPHX runtime contract missing ${token}`);
@@ -138,6 +169,8 @@ for (const token of [
   "hidden-nonphotographic-bgl-classification-tint",
   "exactA1HiddenProjectedMaterialCount",
   "texture.anisotropy = 16",
+  'manifestUrl.searchParams.set("textureMode"',
+  "tileVersion = encodeURIComponent",
   "6400",
   "2304",
   "199",

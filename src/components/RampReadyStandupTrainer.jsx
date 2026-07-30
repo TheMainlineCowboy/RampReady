@@ -99,6 +99,7 @@ export default function RampReadyStandupTrainer({
   const simRef = useRef(null);
   const stageRef = useRef(0);
   const cameraRef = useRef("chase");
+  const inspectionRef = useRef(false);
   const orbitRef = useRef({
     yaw: 2.5,
     pitch: 0.38,
@@ -112,6 +113,7 @@ export default function RampReadyStandupTrainer({
   const scoreRef = useRef(100);
   const [stage, setStage] = useState(0);
   const [cameraMode, setCameraMode] = useState("chase");
+  const [inspectionMode, setInspectionMode] = useState(false);
   const [direction, setDirection] = useState("FWD");
   const [throttle, setThrottle] = useState(0);
   const [message, setMessage] = useState("Complete the equipment check, then approach at idle speed.");
@@ -131,6 +133,11 @@ export default function RampReadyStandupTrainer({
 
   useEffect(() => { stageRef.current = stage; }, [stage]);
   useEffect(() => { cameraRef.current = cameraMode; }, [cameraMode]);
+  useEffect(() => {
+    inspectionRef.current = inspectionMode;
+    const canvas = simRef.current?.renderer?.domElement;
+    if (canvas) canvas.dataset.inspectionMode = inspectionMode ? "active" : "training";
+  }, [inspectionMode]);
 
   const reset = useCallback(() => {
     const sim = simRef.current;
@@ -152,12 +159,45 @@ export default function RampReadyStandupTrainer({
     setStage(0);
     setThrottle(0);
     setDirection("FWD");
-    setMessage("Complete the equipment check, then approach at idle speed.");
+    setMessage(inspectionRef.current
+      ? "Free-drive inspection reset at A1. Use the tug to inspect any part of the airport."
+      : "Complete the equipment check, then approach at idle speed.");
+  }, []);
+
+  const toggleInspectionDrive = useCallback(() => {
+    const next = !inspectionRef.current;
+    inspectionRef.current = next;
+    setInspectionMode(next);
+    const sim = simRef.current;
+    if (sim) {
+      sim.connection = createConnectionState();
+      sim.dynamics = createPushbackState();
+      sim.rig.root.position.set(0, 0, 0);
+      sim.rig.root.rotation.y = 0;
+      sim.rig.setSteering(0);
+      sim.rig.setLiftProgress(0);
+      sim.aircraft.position.set(0, 0, NOSE_START_Z);
+      sim.aircraft.rotation.y = 0;
+      sim.renderer.domElement.dataset.inspectionMode = next ? "active" : "training";
+    }
+    driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
+    orbitRef.current.yaw = -0.64;
+    orbitRef.current.pitch = 0.38;
+    orbitRef.current.distance = next ? 20 : 16;
+    scoreRef.current = 100;
+    stageRef.current = 0;
+    setStage(0);
+    setThrottle(0);
+    setDirection("FWD");
+    setCameraMode("chase");
+    setMessage(next
+      ? "Free-drive airport inspection active. Procedure gates are disabled; drive anywhere and use the camera views to inspect scenery."
+      : "Training mode restored. Complete the equipment check, then approach at idle speed.");
   }, []);
 
   const advance = useCallback(() => {
     const sim = simRef.current;
-    if (!sim) return;
+    if (!sim || inspectionRef.current) return;
     if (stageRef.current === 0) {
       stageRef.current = 1;
       setStage(1);
@@ -176,7 +216,7 @@ export default function RampReadyStandupTrainer({
 
   const capture = useCallback(() => {
     const sim = simRef.current;
-    if (!sim || stageRef.current !== 1) return;
+    if (!sim || inspectionRef.current || stageRef.current !== 1) return;
     sim.connection = requestCapture(sim.connection, connectionMetrics(sim));
     driveRef.current.throttle = 0;
     setThrottle(0);
@@ -189,7 +229,7 @@ export default function RampReadyStandupTrainer({
 
   const lower = useCallback(() => {
     const sim = simRef.current;
-    if (!sim || stageRef.current !== 6) return;
+    if (!sim || inspectionRef.current || stageRef.current !== 6) return;
     sim.connection = requestLower(sim.connection, sim.dynamics.speed, sim.dynamics.articulation);
     driveRef.current.throttle = 0;
     setThrottle(0);
@@ -215,6 +255,7 @@ export default function RampReadyStandupTrainer({
     renderer.domElement.dataset.cameraPitch = orbitRef.current.pitch.toFixed(4);
     renderer.domElement.dataset.cameraDistance = orbitRef.current.distance.toFixed(3);
     renderer.domElement.dataset.equipmentId = equipmentId;
+    renderer.domElement.dataset.inspectionMode = inspectionRef.current ? "active" : "training";
     mount.replaceChildren(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -299,11 +340,16 @@ export default function RampReadyStandupTrainer({
     const tick = (now) => {
       const dt = Math.min(0.04, Math.max(0.001, (now - sim.last) / 1000));
       sim.last = now;
+      const inspectionActive = inspectionRef.current;
       const before = connectionMetrics(sim);
       const clearDistance = Math.hypot(rig.root.position.x - aircraft.position.x, rig.root.position.z - aircraft.position.z);
-      sim.connection = stepConnection(sim.connection, { metrics: before, speed: sim.dynamics.speed, clearDistance }, dt);
+      if (inspectionActive) {
+        if (sim.connection.phase !== CONNECTION_PHASES.APPROACH) sim.connection = createConnectionState();
+      } else {
+        sim.connection = stepConnection(sim.connection, { metrics: before, speed: sim.dynamics.speed, clearDistance }, dt);
+      }
 
-      if (stageRef.current === 2 && sim.connection.phase === CONNECTION_PHASES.SECURED) {
+      if (!inspectionActive && stageRef.current === 2 && sim.connection.phase === CONNECTION_PHASES.SECURED) {
         sim.dynamics = createPushbackState({
           tugX: rig.root.position.x,
           tugZ: rig.root.position.z,
@@ -316,12 +362,12 @@ export default function RampReadyStandupTrainer({
         setStage(3);
         setMessage("Nose gear lifted and secured. Request pushback clearance.");
       }
-      if (stageRef.current === 6 && sim.connection.phase === CONNECTION_PHASES.RELEASED) {
+      if (!inspectionActive && stageRef.current === 6 && sim.connection.phase === CONNECTION_PHASES.RELEASED) {
         stageRef.current = 7;
         setStage(7);
         setMessage("Nose gear released. Select REV and drive at least 2.2 m clear.");
       }
-      if (stageRef.current === 7 && sim.connection.phase === CONNECTION_PHASES.CLEAR) {
+      if (!inspectionActive && stageRef.current === 7 && sim.connection.phase === CONNECTION_PHASES.CLEAR) {
         driveRef.current.throttle = 0;
         setThrottle(0);
         stageRef.current = 8;
@@ -333,8 +379,8 @@ export default function RampReadyStandupTrainer({
       let steer = drive.steer;
       if (keysRef.current.has("a") || keysRef.current.has("arrowleft")) steer += 1;
       if (keysRef.current.has("d") || keysRef.current.has("arrowright")) steer -= 1;
-      const motionAllowed = connectionAllowsMotion(sim.connection) && ![3, 4, 8].includes(stageRef.current);
-      const towing = sim.connection.phase === CONNECTION_PHASES.TOWING;
+      const motionAllowed = inspectionActive || (connectionAllowsMotion(sim.connection) && ![3, 4, 8].includes(stageRef.current));
+      const towing = !inspectionActive && sim.connection.phase === CONNECTION_PHASES.TOWING;
       sim.dynamics = stepPushbackDynamics(sim.dynamics, {
         connected: towing,
         throttle: motionAllowed && (!towing || drive.direction === 1) ? drive.throttle : 0,
@@ -375,7 +421,7 @@ export default function RampReadyStandupTrainer({
         setMessage(hard ? "Stopped too hard. Straighten, then lower." : "Good stop. Straighten, then lower.");
       }
 
-      const target = connectionHasAircraft(sim.connection) ? aircraft.position : rig.root.position;
+      const target = inspectionActive ? rig.root.position : connectionHasAircraft(sim.connection) ? aircraft.position : rig.root.position;
       if (cameraRef.current === "driver") {
         camera.position.lerp(rig.getOperatorEyeWorld(new THREE.Vector3()), 0.28);
         camera.lookAt(rig.getOperatorLookWorld(new THREE.Vector3()));
@@ -397,6 +443,9 @@ export default function RampReadyStandupTrainer({
 
       const aircraftSource = aircraft.userData.renderedAircraftSource || aircraft.userData.aircraftAssetCandidateId || aircraft.userData.aircraftAssetState || "loading";
       canvas.dataset.aircraftSource = aircraftSource;
+      canvas.dataset.inspectionTugX = rig.root.position.x.toFixed(3);
+      canvas.dataset.inspectionTugZ = rig.root.position.z.toFixed(3);
+      canvas.dataset.inspectionSpeed = Math.abs(state.speed).toFixed(3);
       if (now - sim.lastHud > 100) {
         sim.lastHud = now;
         setHud({
@@ -407,7 +456,7 @@ export default function RampReadyStandupTrainer({
           articulation: Math.abs(THREE.MathUtils.radToDeg(state.articulation)),
           warning: Math.abs(state.articulation) >= JACKKNIFE_WARNING,
           score: Math.round(scoreRef.current),
-          phase: sim.connection.phase,
+          phase: inspectionActive ? "inspection" : sim.connection.phase,
           progress: sim.connection.progress,
           tug: equipmentId,
           aircraft: aircraftSource,
@@ -451,8 +500,8 @@ export default function RampReadyStandupTrainer({
     <section className="rr-hud">
       <div className="rr-topline">
         <div>
-          <div className="rr-kicker">Step {stage + 1} / {STAGES.length}</div>
-          <h1>{STAGES[stage]}</h1>
+          <div className="rr-kicker">{inspectionMode ? "Free drive" : `Step ${stage + 1} / ${STAGES.length}`}</div>
+          <h1>{inspectionMode ? "Airport inspection mode" : STAGES[stage]}</h1>
         </div>
         <div className="rr-top-tools">
           <select className="rr-view-select" value={cameraMode} onChange={(event) => setCameraMode(event.target.value)} aria-label="Camera view">
@@ -471,9 +520,9 @@ export default function RampReadyStandupTrainer({
       </div>
       <p>{message}</p>
       <div className="rr-hud-actions">
-        {[0, 3, 4].includes(stage) && <button className="rr-primary" onClick={advance}>{stage === 0 ? "Ready" : stage === 3 ? "Clearance" : "Brake released"}</button>}
-        {stage === 1 && <button className={hud.ready ? "rr-primary" : "rr-primary rr-disabled"} disabled={!hud.ready} onClick={capture}>{hud.ready ? "Capture nose gear" : `Align ${hud.capture.toFixed(1)} m`}</button>}
-        {stage === 6 && <button className="rr-primary" onClick={lower}>Lower cradle</button>}
+        {!inspectionMode && [0, 3, 4].includes(stage) && <button className="rr-primary" onClick={advance}>{stage === 0 ? "Ready" : stage === 3 ? "Clearance" : "Brake released"}</button>}
+        {!inspectionMode && stage === 1 && <button className={hud.ready ? "rr-primary" : "rr-primary rr-disabled"} disabled={!hud.ready} onClick={capture}>{hud.ready ? "Capture nose gear" : `Align ${hud.capture.toFixed(1)} m`}</button>}
+        {!inspectionMode && stage === 6 && <button className="rr-primary" onClick={lower}>Lower cradle</button>}
         <button className="rr-secondary" onClick={reset}>Reset</button>
       </div>
     </section>
@@ -486,7 +535,7 @@ export default function RampReadyStandupTrainer({
       <span>Aircraft <b>{hud.aircraft}</b></span>
       {[CONNECTION_PHASES.CAPTURING, CONNECTION_PHASES.LOWERING].includes(hud.phase) && <span>Cycle <b>{Math.round(hud.progress * 100)}%</b></span>}
     </aside>
-    <aside className="rr-score-float">Score <b>{hud.score}</b><span>{hud.warning ? "JACKKNIFE" : "Stable"}</span></aside>
+    <aside className="rr-score-float">{inspectionMode ? <>Inspection <b>FREE</b><span>Airport drive</span></> : <>Score <b>{hud.score}</b><span>{hud.warning ? "JACKKNIFE" : "Stable"}</span></>}</aside>
     <div className="rr-steer">
       <button
         type="button"

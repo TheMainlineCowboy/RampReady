@@ -17,7 +17,7 @@ const EXPECTED = Object.freeze({
   apronRecords: 170,
   apronTriangles: 1860,
   runways: 3,
-  primitiveCount: 5,
+  primitiveCount: 6,
   anchorGate: "A1",
   anchorParkingIndex: 32,
   anchorHeadingDegrees: 269.975341796875,
@@ -149,7 +149,7 @@ const runtimeManifest = {
   binBytes: bin.length,
   binSha256: sha256(bin),
   surfaceState: "source-driven KPHX apron, joined taxiway, runway, edge, centerline and hold-short geometry",
-  remainingSourceLayers: ["taxiway sign object records", "external simulator-library jetway geometry", "missing PHX_TERM400 diffuse maps"],
+  remainingSourceLayers: ["derived taxiway signage from source graph", "source boundary-fence visualization"],
 };
 await writeFile(path.join(OUTPUT_DIR, "runtime-manifest.json"), `${JSON.stringify(runtimeManifest, null, 2)}\n`);
 console.log(`RampReady airport-wide KPHX simulator ground materialized: ${EXPECTED.runways} exact runways, ${groundManifest.counts.pathSurfaces} source-drawn path surfaces, ${groundManifest.counts.holdShortCount} hold shorts and ${groundManifest.counts.runwayMarkingElementCount} runway marking elements.`);

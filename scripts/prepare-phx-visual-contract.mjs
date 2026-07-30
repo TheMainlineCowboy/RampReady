@@ -3,11 +3,11 @@ import fs from "node:fs";
 const path = "scripts/verify-kphx-v181-source-contract.mjs";
 let source = fs.readFileSync(path, "utf8");
 
-const exactLightmapToken = '"exactLightmapCount !== 11"';
+const exactLightmapToken = '"exactLightmapCount !== 15"';
 if (!source.includes(exactLightmapToken)) {
   const historicalLightmapTokens = [
-    '"manifest.emissiveTextureCount !== 11"',
-    '"emissiveTextureCount !== 11"',
+    '"manifest.emissiveTextureCount !== 15"',
+    '"emissiveTextureCount !== 15"',
   ];
   const historical = historicalLightmapTokens.find((token) => source.includes(token));
   if (!historical) throw new Error("PHX visual contract migration cannot find a historical lightmap guard");
@@ -33,8 +33,8 @@ if (!source.includes('"authoredGroundGateMarkingCount"')) {
   source = source.replace(markingAnchor, markingReplacement);
 }
 
-const terminalAnchor = '  "texture.anisotropy = 16",\n  "exactLightmapCount !== 11",';
-const terminalReplacement = '  "texture.anisotropy = 16",\n  \'manifestUrl.searchParams.set("materialPass"\',\n  \'cache: "no-store"\',\n  "exactLightmapCount !== 11",';
+const terminalAnchor = '  "texture.anisotropy = 16",\n  "exactLightmapCount !== 15",';
+const terminalReplacement = '  "texture.anisotropy = 16",\n  \'manifestUrl.searchParams.set("materialPass"\',\n  \'cache: "no-store"\',\n  "exactLightmapCount !== 15",';
 if (!source.includes('manifestUrl.searchParams.set("materialPass"')) {
   if (!source.includes(terminalAnchor)) throw new Error("PHX non-stale Terminal 4 verification anchor is missing");
   source = source.replace(terminalAnchor, terminalReplacement);

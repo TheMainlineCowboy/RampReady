@@ -9,6 +9,7 @@ const OUTPUT_DIR = path.resolve("public/models/phx-terminal4");
 const TEXTURE_DIR = path.join(OUTPUT_DIR, "textures");
 const MANIFEST_PATH = path.join(OUTPUT_DIR, "texture-manifest.json");
 const RUNTIME_MANIFEST_PATH = path.join(OUTPUT_DIR, "runtime-manifest.json");
+const EXACT_TEXTURE_DIR = path.resolve("source-assets/kphx-exact-terminal4");
 
 // Only case-insensitive exact matches from the pinned uploaded source package
 // are accepted here. The four existing diffuse fallbacks remain deliberately
@@ -25,6 +26,13 @@ const EXACT_LIGHTMAP_SOURCES = Object.freeze({
   "SUPPORTS.BMP": "supports_lm.bmp",
   "T4_WALK.BMP": "t4_walk_lm.bmp",
   "T4_WALK2.BMP": "t4_walk2_lm.bmp",
+});
+
+const EXACT_RECOVERED_LIGHTMAP_SOURCES = Object.freeze({
+  "PARKRAMPS2.BMP": { localFile: "PARKRAMPS2_LM.BMP", sourcePath: "PHX Sky Harbor/PHXSkyHarbor2011/texture/parkramps2_lm.bmp", expectedSha256: "d8971314d6c90512c86e404bc7ede19df743418832582dc15c403a234935d8f0" },
+  "PHX_TERM400_0.DDS": { localFile: "PHX_TERM400_0_LM.DDS", sourcePath: "PHX Sky Harbor/PHXSkyHarbor2011/texture/phx_term400_0_lm.dds", expectedSha256: "0ca32e89ed68a2cb90e9cb3091ef5c6f72ec8def835150a4b44be4e1fd2a56b5" },
+  "PHX_TERM400_1.DDS": { localFile: "PHX_TERM400_1_LM.DDS", sourcePath: "PHX Sky Harbor/PHXSkyHarbor2011/texture/phx_term400_1_lm.dds", expectedSha256: "c6e1fdceaee9c9bea6d6c95e0f1dd5280a2c37ee6c4ff89c13417136196004d8" },
+  "PHXRAMPLIGHT.BMP": { localFile: "PHXRAMPLIGHT_LM.BMP", sourcePath: "PHX Sky Harbor/PHXSkyHarbor2011/texture/phxramplight_lm.bmp", expectedSha256: "029f6622b872ec01076c170099684b0527b6c676af725f56e863fda1a0a890d2" },
 });
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -148,6 +156,24 @@ function decodeLegacyBmp(bytes) {
   throw new Error(`Unsupported lightmap bitmap compression 0x${compression.toString(16)}`);
 }
 
+function decodeDdsDxt1(bytes) {
+  if (bytes.length < 128 || bytes.toString("ascii", 0, 4) !== "DDS ") throw new Error("Texture is not a DDS file");
+  if (bytes.readUInt32LE(4) !== 124) throw new Error(`Unexpected DDS header size ${bytes.readUInt32LE(4)}`);
+  const height = bytes.readUInt32LE(12);
+  const width = bytes.readUInt32LE(16);
+  const fourCc = bytes.toString("ascii", 84, 88);
+  if (fourCc !== "DXT1") throw new Error(`Unsupported DDS compression ${fourCc}`);
+  if (!(width > 0 && height > 0)) throw new Error(`Invalid DDS dimensions ${width} x ${height}`);
+  return { width, height, rgba: decodeDxt1Bmp(bytes, width, height, 128, false), compression: "DDS-DXT1" };
+}
+
+function decodeSourceTexture(bytes) {
+  const magic = bytes.toString("ascii", 0, 4);
+  if (magic.startsWith("BM")) return decodeLegacyBmp(bytes);
+  if (magic === "DDS ") return decodeDdsDxt1(bytes);
+  throw new Error(`Unsupported exact Terminal 4 texture magic ${magic}`);
+}
+
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
   for (let index = 0; index < 256; index += 1) {
@@ -196,12 +222,22 @@ function encodePng(width, height, rgba) {
 const manifest = JSON.parse(await readFile(MANIFEST_PATH, "utf8"));
 if (manifest.schemaVersion !== 2 || !manifest.materials) throw new Error("Terminal 4 diffuse manifest must exist before exact lightmaps are materialized");
 
+const lightmapSources = [
+  ...Object.entries(EXACT_LIGHTMAP_SOURCES).map(([reference, sourcePath]) => [reference, { sourcePath }]),
+  ...Object.entries(EXACT_RECOVERED_LIGHTMAP_SOURCES),
+];
 let emitted = 0;
-for (const [reference, sourcePath] of Object.entries(EXACT_LIGHTMAP_SOURCES)) {
+for (const [reference, mapping] of lightmapSources) {
   const material = manifest.materials[reference];
   if (!material) throw new Error(`Terminal 4 exact lightmap target is absent from the diffuse manifest: ${reference}`);
-  const sourceBytes = await download(sourcePath);
-  const decoded = decodeLegacyBmp(sourceBytes);
+  const sourceBytes = mapping.localFile
+    ? await readFile(path.join(EXACT_TEXTURE_DIR, mapping.localFile))
+    : await download(mapping.sourcePath);
+  if (mapping.expectedSha256 && sha256(sourceBytes) !== mapping.expectedSha256) {
+    throw new Error(`Exact recovered Terminal 4 lightmap identity mismatch for ${mapping.localFile}`);
+  }
+  const decoded = decodeSourceTexture(sourceBytes);
+  const sourcePath = mapping.sourcePath;
   const png = encodePng(decoded.width, decoded.height, decoded.rgba);
   const fileName = `${reference.replace(/\.[^.]+$/, "").replace(/[^A-Za-z0-9_-]/g, "_")}_LM.png`;
   await writeFile(path.join(TEXTURE_DIR, fileName), png);
@@ -218,9 +254,9 @@ for (const [reference, sourcePath] of Object.entries(EXACT_LIGHTMAP_SOURCES)) {
   emitted += 1;
 }
 
-if (emitted !== Object.keys(EXACT_LIGHTMAP_SOURCES).length) throw new Error(`Terminal 4 exact lightmap count drifted: ${emitted}`);
+if (emitted !== lightmapSources.length || emitted !== 15) throw new Error(`Terminal 4 exact lightmap count drifted: ${emitted}`);
 manifest.emissiveTextureCount = emitted;
-manifest.lightmapStatus = "pinned-exact-source-lightmaps-active-no-invented-missing-maps";
+manifest.lightmapStatus = "all-15-exact-source-lightmaps-active-no-missing-dependencies";
 manifest.lightmapSourceCommit = SOURCE_COMMIT;
 await writeFile(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`);
 
@@ -230,4 +266,4 @@ runtimeManifest.lightmapStatus = manifest.lightmapStatus;
 runtimeManifest.lightmapSourceCommit = SOURCE_COMMIT;
 await writeFile(RUNTIME_MANIFEST_PATH, `${JSON.stringify(runtimeManifest, null, 2)}\n`);
 
-console.log(`RampReady Terminal 4 exact source lightmaps materialized: ${emitted} emissive textures; missing package dependencies remain unfilled.`);
+console.log(`RampReady Terminal 4 exact source lightmaps materialized: ${emitted} emissive textures; all recovered dependencies are active.`);

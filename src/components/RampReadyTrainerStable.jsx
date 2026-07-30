@@ -203,6 +203,7 @@ export default function RampReadyTrainerStable() {
     sim.steer = 0;
     sim.connected = false;
     sim.lastAttachedNose = null;
+    sim.mainGearCenter = null;
     sim.towOffsetLocal = null;
     scoreRef.current = { score: 100, overspeed: false, offCenter: false, hardStop: false, wrongDirection: false, brakeLate: false };
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
@@ -224,6 +225,7 @@ export default function RampReadyTrainerStable() {
     sim.towOffsetLocal = captureState.delta.clone().applyAxisAngle(Y_AXIS, -sim.tug.rotation.y);
     sim.connected = true;
     sim.lastAttachedNose = null;
+    sim.mainGearCenter = null;
     sim.velocity = 0;
     driveRef.current.throttle = 0;
     setThrottle(0);
@@ -240,6 +242,7 @@ export default function RampReadyTrainerStable() {
     }
     sim.connected = false;
     sim.lastAttachedNose = null;
+    sim.mainGearCenter = null;
     sim.towOffsetLocal = null;
     sim.velocity = 0;
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
@@ -363,19 +366,43 @@ export default function RampReadyTrainerStable() {
         const attachedNoseX = cradle.x + towOffset.x;
         const attachedNoseZ = cradle.z + towOffset.z;
         if (!sim.lastAttachedNose) sim.lastAttachedNose = new THREE.Vector3(attachedNoseX, 0, attachedNoseZ);
-        const noseDx = attachedNoseX - sim.lastAttachedNose.x;
-        const noseDz = attachedNoseZ - sim.lastAttachedNose.z;
-        const aircraftRightX = Math.cos(sim.aircraft.rotation.y);
-        const aircraftRightZ = -Math.sin(sim.aircraft.rotation.y);
-        const lateralNoseTravel = noseDx * aircraftRightX + noseDz * aircraftRightZ;
-        const requestedYawStep = lateralNoseTravel / 11.2;
-        const yawRateStep = clamp(requestedYawStep, -THREE.MathUtils.degToRad(12) * dt, THREE.MathUtils.degToRad(12) * dt);
-        const articulationDelta = sim.aircraft.rotation.y - sim.tug.rotation.y;
-        const currentArticulation = Math.atan2(Math.sin(articulationDelta), Math.cos(articulationDelta));
-        const boundedArticulation = clamp(currentArticulation + yawRateStep, -THREE.MathUtils.degToRad(70), THREE.MathUtils.degToRad(70));
-        sim.aircraft.rotation.y = sim.tug.rotation.y + boundedArticulation;
+        if (!sim.mainGearCenter) {
+          sim.mainGearCenter = new THREE.Vector3(
+            sim.aircraft.position.x + Math.sin(sim.aircraft.rotation.y) * 11.2,
+            0,
+            sim.aircraft.position.z + Math.cos(sim.aircraft.rotation.y) * 11.2,
+          );
+        }
+        let axleX = sim.mainGearCenter.x - attachedNoseX;
+        let axleZ = sim.mainGearCenter.z - attachedNoseZ;
+        let axleDistance = Math.hypot(axleX, axleZ);
+        if (axleDistance < 0.001) {
+          axleX = Math.sin(sim.aircraft.rotation.y) * 11.2;
+          axleZ = Math.cos(sim.aircraft.rotation.y) * 11.2;
+          axleDistance = 11.2;
+        }
+        const desiredAircraftYaw = Math.atan2(axleX / axleDistance, axleZ / axleDistance);
+        const yawDelta = Math.atan2(
+          Math.sin(desiredAircraftYaw - sim.aircraft.rotation.y),
+          Math.cos(desiredAircraftYaw - sim.aircraft.rotation.y),
+        );
+        const yawRateStep = clamp(yawDelta, -THREE.MathUtils.degToRad(8) * dt, THREE.MathUtils.degToRad(8) * dt);
+        let nextAircraftYaw = sim.aircraft.rotation.y + yawRateStep;
+        const articulationDelta = nextAircraftYaw - sim.tug.rotation.y;
+        const boundedArticulation = clamp(
+          Math.atan2(Math.sin(articulationDelta), Math.cos(articulationDelta)),
+          -THREE.MathUtils.degToRad(65),
+          THREE.MathUtils.degToRad(65),
+        );
+        nextAircraftYaw = sim.tug.rotation.y + boundedArticulation;
+        sim.aircraft.rotation.y = nextAircraftYaw;
         sim.aircraft.position.x = attachedNoseX;
         sim.aircraft.position.z = attachedNoseZ;
+        sim.mainGearCenter.set(
+          attachedNoseX + Math.sin(nextAircraftYaw) * 11.2,
+          0,
+          attachedNoseZ + Math.cos(nextAircraftYaw) * 11.2,
+        );
         sim.lastAttachedNose.set(attachedNoseX, 0, attachedNoseZ);
       }
 

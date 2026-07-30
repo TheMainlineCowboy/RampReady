@@ -117,12 +117,12 @@ replaceOnce(
 replaceOnce(
   "src/environment/authoredKphxGround.js",
   `      0.32,
-      0.137,
+      0.0078,
     );
     const labelX = px - hx * 19;
     const labelZ = pz - hz * 19;`,
   `      0.24,
-      0.137,
+      0.0078,
     );
     const labelX = px + hx * 18;
     const labelZ = pz + hz * 18;`,

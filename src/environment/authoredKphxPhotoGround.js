@@ -73,7 +73,12 @@ function blendExactProjectedSurfacesWithAerial(exactA1) {
 }
 
 async function fetchManifest(url) {
-  const response = await fetch(url, { cache: "force-cache" });
+  const manifestUrl = new URL(url, window.location.href);
+  manifestUrl.searchParams.set("textureMode", AUTHORED_KPHX_PHOTO_PROFILE.textureMode);
+  const response = await fetch(manifestUrl.href, {
+    cache: "no-store",
+    headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+  });
   if (!response.ok) throw new Error(`PHX aerial manifest returned HTTP ${response.status}`);
   const manifest = await response.json();
   if (
@@ -168,8 +173,9 @@ async function buildTiledPhotoGround(THREE, baseUrl, manifest) {
   const group = new THREE.Group();
   group.name = "PHX_KPHX_SourceAuthoredPhotoGround_Tiled";
   const textureLoader = new THREE.TextureLoader();
+  const tileVersion = encodeURIComponent(manifest.image.sha256.slice(0, 16));
   const loadedTiles = await Promise.all(manifest.tiles.map(async (tile, index) => {
-    const texture = await textureLoader.loadAsync(`${baseUrl}${tile.file}`);
+    const texture = await textureLoader.loadAsync(`${baseUrl}${tile.file}?v=${tileVersion}`);
     configurePhotoTexture(THREE, texture, `PHX source aerial tile ${tile.column}:${tile.row}`);
     const material = buildPhotoMaterial(THREE, texture, `PHX source aerial tile material ${index}`);
     const mesh = new THREE.Mesh(buildPhotoGeometry(THREE, sceneBoundsForTile(tile, manifest)), material);

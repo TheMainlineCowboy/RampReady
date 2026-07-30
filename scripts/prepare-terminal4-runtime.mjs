@@ -70,6 +70,10 @@ prepared = prepared
     renderer.domElement.dataset.terminal4Position = "loading";
     renderer.domElement.dataset.terminal4A1NearestGeometryMeters = "loading";
     renderer.domElement.dataset.terminal4Placement = "loading";
+    renderer.domElement.dataset.terminal4A1JetwayWallDistance = "loading";
+    renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = "loading";
+    renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = "loading";
+    renderer.domElement.dataset.groundMarkingContactMode = "loading";
     const terminalLoad = installAuthoredTerminal4Visual(THREE, environment)
       .then((terminal) => {
         renderer.domElement.dataset.terminal4TextureCount = String(environment.userData.authoredTerminal4TextureCount);
@@ -79,12 +83,20 @@ prepared = prepared
         renderer.domElement.dataset.terminal4Position = environment.userData.authoredTerminal4Position.map((value) => value.toFixed(3)).join(",");
         renderer.domElement.dataset.terminal4A1NearestGeometryMeters = environment.userData.authoredTerminal4A1NearestGeometryDistance.toFixed(3);
         renderer.domElement.dataset.terminal4Placement = environment.userData.authoredTerminal4Placement;
+        renderer.domElement.dataset.terminal4A1JetwayWallDistance = Number.isFinite(environment.userData.authoredTerminal4A1JetwayWallDistance)
+          ? environment.userData.authoredTerminal4A1JetwayWallDistance.toFixed(3)
+          : "missing";
+        renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = String(environment.userData.authoredTerminal4TerminalConnectedJetwayCount ?? 0);
+        renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = String(environment.userData.authoredTerminal4SourceCutoutMaterialCount ?? 0);
         return terminal;
       })
       .catch((error) => {
         renderer.domElement.dataset.terminal4Position = "load-error";
         renderer.domElement.dataset.terminal4A1NearestGeometryMeters = "load-error";
         renderer.domElement.dataset.terminal4Placement = "load-error";
+        renderer.domElement.dataset.terminal4A1JetwayWallDistance = "load-error";
+        renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = "load-error";
+        renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = "load-error";
         console.error("RampReady PHX Terminal 4 visual load failed", error);
         setMessage(\`PHX Terminal 4 failed to load: \${error.message}\`);
         throw error;
@@ -99,6 +111,7 @@ prepared = prepared
         renderer.domElement.dataset.terminal4ParkingCount = String(environment.userData.terminal4ParkingCount);
         renderer.domElement.dataset.b15Anchors = environment.userData.b15Anchors?.length === 2 ? "ready" : "missing";
         renderer.domElement.dataset.b15CorridorMeters = environment.userData.trainingCorridor?.distanceMeters?.map((value) => Math.round(value)).join(",") || "missing";
+        renderer.domElement.dataset.groundMarkingContactMode = environment.userData.authoredGroundMarkingContactMode || "missing";
         return ground;
       })
       .catch((error) => {
@@ -106,6 +119,7 @@ prepared = prepared
         renderer.domElement.dataset.kphxDetailLevel = "load-error";
         renderer.domElement.dataset.b15Anchors = "load-error";
         renderer.domElement.dataset.b15CorridorMeters = "load-error";
+        renderer.domElement.dataset.groundMarkingContactMode = "load-error";
         console.error("RampReady KPHX ground load failed", error);
         setMessage(\`PHX airport ground failed to load: \${error.message}\`);
         throw error;

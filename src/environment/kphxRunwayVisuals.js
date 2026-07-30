@@ -55,12 +55,12 @@ function buildIdentifier(THREE, label, runwayWidth) {
     depthWrite: false,
     toneMapped: false,
     polygonOffset: true,
-    polygonOffsetFactor: -22,
-    polygonOffsetUnits: -22,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1,
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = `KPHX_RunwayIdentifier_${label.ident}`;
-  mesh.position.set(label.x, 0.082, label.z);
+  mesh.position.set(label.x, 0.027, label.z);
   mesh.rotation.y = -THREE.MathUtils.degToRad(label.headingDegrees) - Math.PI / 2;
   mesh.renderOrder = 520;
   mesh.userData.sourceRunwayIdentifier = label.ident;

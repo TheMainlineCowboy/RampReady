@@ -143,7 +143,7 @@ for (const taxiwayPath of airport.taxiwayPaths) {
   const uz = dz / length;
   const right = [-uz, ux];
 
-  if (taxiwayPath.type !== 3 && taxiwayPath.widthMeters > 0.5 && taxiwayPath.drawSurface !== false) {
+  if (taxiwayPath.type !== 3 && taxiwayPath.widthMeters > 0.5) {
     const material = surfaceName(taxiwayPath.surface, taxiwayPath.type);
     addStrip(material, start, end, taxiwayPath.widthMeters, 0.012);
     pathSurfaces += 1;
@@ -156,8 +156,9 @@ for (const taxiwayPath of airport.taxiwayPaths) {
   if (taxiwayPath.centerline || taxiwayPath.type === 2 || taxiwayPath.type === 3 || taxiwayPath.type === 6) {
     const materialName = taxiwayPath.type === 2 || taxiwayPath.type === 6 ? "white-marking" : "yellow-marking";
     const width = taxiwayPath.type === 2 ? 0.3 : taxiwayPath.type === 6 ? 0.12 : 0.18;
-    if (taxiwayPath.type === 2) addDashedStrip(materialName, start, end, width, 30, 20, 0.045);
-    else addStrip(materialName, start, end, width, 0.045);
+    const markingY = taxiwayPath.type === 3 ? 0.0065 : taxiwayPath.type === 2 ? 0.0255 : 0.0135;
+    if (taxiwayPath.type === 2) addDashedStrip(materialName, start, end, width, 30, 20, markingY);
+    else addStrip(materialName, start, end, width, markingY);
     markingSegments += 1;
   }
   if (taxiwayPath.centerlineLighted) centerlineLightSegments += 1;
@@ -167,8 +168,8 @@ for (const taxiwayPath of airport.taxiwayPaths) {
     if (!style) return;
     const a = [start[0] + right[0] * offset * sign, start[1] + right[1] * offset * sign];
     const b = [end[0] + right[0] * offset * sign, end[1] + right[1] * offset * sign];
-    if (style === 2) addDashedStrip("yellow-marking", a, b, 0.16, 4, 4, 0.047);
-    else addStrip("yellow-marking", a, b, 0.16, 0.047);
+    if (style === 2) addDashedStrip("yellow-marking", a, b, 0.16, 4, 4, 0.0137);
+    else addStrip("yellow-marking", a, b, 0.16, 0.0137);
     edgeMarkingSegments += 1;
   };
   addEdge(taxiwayPath.leftEdge, 1);
@@ -198,12 +199,12 @@ for (const point of airport.taxiwayPoints) {
   const width = Math.max(8, connected[0].width * 0.88);
   const lineWidth = 0.22;
   for (const distance of [-0.9, -0.3]) {
-    addOrientedRect("yellow-marking", pointAlong(center, along, across, distance), across, along, width, lineWidth, 0.055);
+    addOrientedRect("yellow-marking", pointAlong(center, along, across, distance), across, along, width, lineWidth, 0.0138);
   }
   for (const distance of [0.3, 0.9]) {
     const dashWidth = Math.max(1.2, width / 8);
     for (let lateral = -width / 2 + dashWidth / 2; lateral < width / 2; lateral += dashWidth * 2) {
-      addOrientedRect("yellow-marking", pointAlong(center, along, across, distance, lateral), across, along, dashWidth, lineWidth, 0.055);
+      addOrientedRect("yellow-marking", pointAlong(center, along, across, distance, lateral), across, along, dashWidth, lineWidth, 0.0138);
     }
   }
   if (point.type === 4) ilsHoldShortCount += 1;
@@ -229,12 +230,12 @@ for (const runway of airport.runways) {
   if (runway.markingFlags & FLAG.EDGES) {
     for (const side of [-1, 1]) {
       const lateral = side * (width / 2 - 0.45);
-      addStrip("white-marking", pointAlong(center, along, across, -length / 2, lateral), pointAlong(center, along, across, length / 2, lateral), 0.32, 0.061);
+      addStrip("white-marking", pointAlong(center, along, across, -length / 2, lateral), pointAlong(center, along, across, length / 2, lateral), 0.32, 0.0255);
       runwayMarkingElementCount += 1;
     }
   }
   if (runway.markingFlags & FLAG.DASHES) {
-    addDashedStrip("white-marking", pointAlong(primaryThreshold, along, across, 55), pointAlong(secondaryThreshold, along, across, -55), 0.42, 30, 20, 0.063);
+    addDashedStrip("white-marking", pointAlong(primaryThreshold, along, across, 55), pointAlong(secondaryThreshold, along, across, -55), 0.42, 30, 20, 0.0257);
     runwayMarkingElementCount += 1;
   }
 
@@ -247,13 +248,13 @@ for (const runway of airport.runways) {
       const step = available / stripeCount;
       for (let index = 0; index < stripeCount; index += 1) {
         const lateral = -available / 2 + step * (index + 0.5);
-        addOrientedRect("white-marking", pointAlong(threshold, inward, across, 7, lateral), inward, across, 14, stripeWidth, 0.066);
+        addOrientedRect("white-marking", pointAlong(threshold, inward, across, 7, lateral), inward, across, 14, stripeWidth, 0.0258);
         runwayMarkingElementCount += 1;
       }
     }
     if (runway.markingFlags & FLAG.FIXED_DISTANCE) {
       for (const side of [-1, 1]) {
-        addOrientedRect("white-marking", pointAlong(threshold, inward, across, 300, side * Math.min(10.5, width * 0.27)), inward, across, 45, 2.8, 0.066);
+        addOrientedRect("white-marking", pointAlong(threshold, inward, across, 300, side * Math.min(10.5, width * 0.27)), inward, across, 45, 2.8, 0.0258);
         runwayMarkingElementCount += 1;
       }
     }
@@ -263,7 +264,7 @@ for (const runway of airport.runways) {
         for (let pair = 0; pair < pairs; pair += 1) {
           const lateral = 7.5 + pair * 4;
           for (const side of [-1, 1]) {
-            addOrientedRect("white-marking", pointAlong(threshold, inward, across, distance, side * lateral), inward, across, 22, 1.4, 0.066);
+            addOrientedRect("white-marking", pointAlong(threshold, inward, across, distance, side * lateral), inward, across, 22, 1.4, 0.0258);
             runwayMarkingElementCount += 1;
           }
         }

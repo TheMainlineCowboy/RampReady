@@ -89,13 +89,21 @@ function configureRuntimeTexture(THREE, texture, name, wrapping) {
 }
 
 async function loadTextureManifest(baseUrl) {
-  const manifestUrl = `${baseUrl}texture-manifest.json`;
-  const response = await fetch(manifestUrl, { cache: "force-cache" });
+  const manifestUrl = new URL(`${baseUrl}texture-manifest.json`, window.location.href);
+  manifestUrl.searchParams.set("materialPass", AUTHORED_TERMINAL4_PROFILE.materialPass);
+  const response = await fetch(manifestUrl.href, {
+    cache: "no-store",
+    headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+  });
   if (!response.ok) throw new Error(`Terminal 4 texture manifest returned HTTP ${response.status}`);
   const manifest = await response.json();
   if (manifest.schemaVersion !== 2 || !manifest.materials) throw new Error("Terminal 4 texture manifest is invalid");
-  if (manifest.emissiveTextureCount !== 11) throw new Error(`Terminal 4 exact lightmap count is ${manifest.emissiveTextureCount}`);
-  return { manifest, manifestUrl: new URL(manifestUrl, window.location.href) };
+  const exactLightmapCount = Number.isInteger(manifest.emissiveTextureCount)
+    ? manifest.emissiveTextureCount
+    : Object.values(manifest.materials).filter((entry) => entry?.emissiveUrl).length;
+  if (exactLightmapCount !== 15) throw new Error(`Terminal 4 exact lightmap count is ${exactLightmapCount}`);
+  manifest.emissiveTextureCount = exactLightmapCount;
+  return { manifest, manifestUrl };
 }
 
 async function loadSourceTextures(THREE, baseUrl) {
@@ -110,10 +118,14 @@ async function loadSourceTextures(THREE, baseUrl) {
       loader.loadAsync(diffuseUrl),
       entry.emissiveUrl ? loader.loadAsync(new URL(entry.emissiveUrl, manifestUrl).href) : Promise.resolve(null),
     ]);
-    textures.set(
-      reference.toUpperCase(),
-      configureRuntimeTexture(THREE, diffuse, `PHX source ${reference}`, wrapping),
-    );
+    const configuredDiffuse = configureRuntimeTexture(THREE, diffuse, `PHX source ${reference}`, wrapping);
+    configuredDiffuse.userData = {
+      ...(configuredDiffuse.userData || {}),
+      sourceHasAlpha: entry.hasAlpha === true,
+      sourceAlphaCoverage: Number(entry.alphaCoverage || 0),
+      sourceTransparentPixelCount: Number(entry.transparentPixelCount || 0),
+    };
+    textures.set(reference.toUpperCase(), configuredDiffuse);
     if (emissive) {
       emissiveTextures.set(
         reference.toUpperCase(),
@@ -131,6 +143,7 @@ function applySourceMaterials(THREE, scene, textures, emissiveTextures) {
   let texturedMaterialCount = 0;
   let lightmappedMaterialCount = 0;
   let hiddenLegacyGroundMaterialCount = 0;
+  let sourceCutoutMaterialCount = 0;
   scene.traverse((node) => {
     if (!node.isMesh) return;
     const originals = Array.isArray(node.material) ? node.material : [node.material];
@@ -151,8 +164,10 @@ function applySourceMaterials(THREE, scene, textures, emissiveTextures) {
       material.color?.setHex(0xffffff);
       material.roughness = character.roughness;
       material.metalness = character.metalness;
-      material.transparent = false;
+      const sourceCutout = texture?.userData?.sourceHasAlpha === true;
+      material.transparent = sourceCutout;
       material.opacity = 1;
+      material.alphaTest = sourceCutout ? 0.42 : 0;
       material.side = THREE.DoubleSide;
       material.depthWrite = !legacyGroundAtlas;
       material.visible = !legacyGroundAtlas;
@@ -160,11 +175,14 @@ function applySourceMaterials(THREE, scene, textures, emissiveTextures) {
         ...(material.userData || {}),
         legacyGroundAtlas,
         sourceLightmap: emissiveMap ? `${reference} exact _lm source` : null,
+        sourceCutout,
+        sourceAlphaCoverage: Number(texture?.userData?.sourceAlphaCoverage || 0),
         visibilityAuthority: legacyGroundAtlas
           ? "suppressed-old-terminal-ground-so-authoritative-aerial-and-adex-remain-visible"
           : "source-authored-terminal-material",
       };
       if (legacyGroundAtlas) hiddenLegacyGroundMaterialCount += 1;
+      if (sourceCutout && !legacyGroundAtlas) sourceCutoutMaterialCount += 1;
       if (emissiveMap) lightmappedMaterialCount += 1;
       material.needsUpdate = true;
       texturedMaterialCount += 1;
@@ -175,7 +193,7 @@ function applySourceMaterials(THREE, scene, textures, emissiveTextures) {
     node.receiveShadow = true;
     node.frustumCulled = true;
   });
-  return { texturedMaterialCount, lightmappedMaterialCount, hiddenLegacyGroundMaterialCount };
+  return { texturedMaterialCount, lightmappedMaterialCount, hiddenLegacyGroundMaterialCount, sourceCutoutMaterialCount };
 }
 
 function nearestHorizontalVertexDistance(THREE, scene, point) {
@@ -220,8 +238,10 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
     texturedMaterialCount,
     lightmappedMaterialCount,
     hiddenLegacyGroundMaterialCount,
+    sourceCutoutMaterialCount,
   } = applySourceMaterials(THREE, authored, textures, emissiveTextures);
-  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, textures, emissiveTextures);
+  authored.updateMatrixWorld(true);
+  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, authored);
   environment.add(authored, sourcePlacedJetways);
   authored.updateMatrixWorld(true);
   sourcePlacedJetways.updateMatrixWorld(true);
@@ -247,7 +267,12 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4TexturedMaterialCount = texturedMaterialCount;
   environment.userData.authoredTerminal4LightmappedMaterialCount = lightmappedMaterialCount;
   environment.userData.authoredTerminal4HiddenLegacyGroundMaterialCount = hiddenLegacyGroundMaterialCount;
+  environment.userData.authoredTerminal4SourceCutoutMaterialCount = sourceCutoutMaterialCount;
+  environment.userData.authoredTerminal4SourceAlphaAuthority = "exact-recovered-dxt1-alpha-coverage";
   environment.userData.authoredTerminal4JetwayVisualCount = sourcePlacedJetways.userData.jetwayCount;
+  environment.userData.authoredTerminal4TerminalConnectedJetwayCount = sourcePlacedJetways.userData.terminalConnectedJetwayCount;
+  environment.userData.authoredTerminal4A1JetwayWallDistance = sourcePlacedJetways.userData.a1TerminalWallDistance;
+  environment.userData.authoredTerminal4JetwayTerminalConnectionAuthority = sourcePlacedJetways.userData.terminalConnectionAuthority;
   environment.userData.authoredTerminal4JetwayDetailLevel = sourcePlacedJetways.userData.detailLevel;
   environment.userData.authoredTerminal4Position = [...AUTHORED_TERMINAL4_PROFILE.position];
   environment.userData.authoredTerminal4A1NearestGeometryDistance = a1NearestGeometryDistance;

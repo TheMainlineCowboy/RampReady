@@ -19,7 +19,7 @@ update("src/environment/authoredTerminal4Visual.js", [
   if (!response.ok) throw new Error(\`Terminal 4 texture manifest returned HTTP ${"${response.status}"}\`);
   const manifest = await response.json();
   if (manifest.schemaVersion !== 2 || !manifest.materials) throw new Error("Terminal 4 texture manifest is invalid");
-  if (manifest.emissiveTextureCount !== 11) throw new Error(\`Terminal 4 exact lightmap count is ${"${manifest.emissiveTextureCount}"}\`);
+  if (manifest.emissiveTextureCount !== 15) throw new Error(\`Terminal 4 exact lightmap count is ${"${manifest.emissiveTextureCount}"}\`);
   return { manifest, manifestUrl: new URL(manifestUrl, window.location.href) };
 }`,
     newText: `async function loadTextureManifest(baseUrl) {
@@ -35,7 +35,7 @@ update("src/environment/authoredTerminal4Visual.js", [
   const exactLightmapCount = Number.isInteger(manifest.emissiveTextureCount)
     ? manifest.emissiveTextureCount
     : Object.values(manifest.materials).filter((entry) => entry?.emissiveUrl).length;
-  if (exactLightmapCount !== 11) throw new Error(\`Terminal 4 exact lightmap count is ${"${exactLightmapCount}"}\`);
+  if (exactLightmapCount !== 15) throw new Error(\`Terminal 4 exact lightmap count is ${"${exactLightmapCount}"}\`);
   manifest.emissiveTextureCount = exactLightmapCount;
   return { manifest, manifestUrl };
 }`,
@@ -209,7 +209,7 @@ update("src/environment/authoredKphxGround.js", [
   {
     marker: "function buildTerminal4StandMarkings(THREE)",
     oldText: `function buildGateMetadata() {`,
-    newText: `function appendGroundStrip(positions, indices, a, b, width, y = 0.135) {
+    newText: `function appendGroundStrip(positions, indices, a, b, width, y = 0.0075) {
   const dx = b[0] - a[0];
   const dz = b[1] - a[1];
   const length = Math.hypot(dx, dz);
@@ -257,14 +257,14 @@ function buildGateLabel(THREE, gate, x, z, heading) {
     depthWrite: false,
     toneMapped: false,
     polygonOffset: true,
-    polygonOffsetFactor: -18,
-    polygonOffsetUnits: -18,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1,
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = \`PHX_T4_GateLabel_${"${gate}"}\`;
-  mesh.position.set(x, 0.145, z);
+  mesh.position.set(x, 0.0085, z);
   mesh.rotation.y = -heading;
-  mesh.renderOrder = 470;
+  mesh.renderOrder = 90;
   return mesh;
 }
 
@@ -291,7 +291,7 @@ function buildTerminal4StandMarkings(THREE) {
       [stopCenter[0] - sx, stopCenter[1] - sz],
       [stopCenter[0] + sx, stopCenter[1] + sz],
       0.32,
-      0.137,
+      0.0078,
     );
     const labelX = px - hx * 19;
     const labelZ = pz - hz * 19;
@@ -308,12 +308,12 @@ function buildTerminal4StandMarkings(THREE) {
     depthWrite: false,
     toneMapped: false,
     polygonOffset: true,
-    polygonOffsetFactor: -16,
-    polygonOffsetUnits: -16,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1,
   });
   const lines = new THREE.Mesh(geometry, material);
   lines.name = "PHX_T4_StandCenterlinesAndStopBars";
-  lines.renderOrder = 460;
+  lines.renderOrder = 85;
   group.add(lines);
   group.userData.gateMarkingCount = TERMINAL4_PARKINGS.length;
   group.userData.detailLevel = "source-positioned-terminal4-stand-centerlines-labels-v1";
@@ -348,7 +348,7 @@ for (const [path, tokens] of Object.entries({
   "src/environment/authoredTerminal4Visual.js": [
     'cache: "no-store"',
     'manifestUrl.searchParams.set("materialPass"',
-    "exactLightmapCount !== 11",
+    "exactLightmapCount !== 15",
   ],
   "src/environment/authoredKphxPhotoGround.js": [
     'manifestUrl.searchParams.set("textureMode"',

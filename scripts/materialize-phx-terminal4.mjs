@@ -12,6 +12,7 @@ const EXTRACTOR_URL = `${SOURCE_ROOT}/scripts/extract-terminal4-mdlx.mjs`;
 const OUTPUT_DIR = path.resolve("public/models/phx-terminal4");
 const TEXTURE_DIR = path.join(OUTPUT_DIR, "textures");
 const CACHE_DIR = path.resolve(".cache/phx-terminal4-source");
+const EXACT_TEXTURE_DIR = path.resolve("source-assets/kphx-exact-terminal4");
 const EXPECTED = Object.freeze({
   modelName: "phx_term400",
   triangleCount: 11138,
@@ -33,10 +34,10 @@ const TEXTURE_SOURCES = Object.freeze({
   "DGATE5.BMP": { sourcePath: "dgate5.bmp", fidelity: "exact" },
   "PARKRAMP1.BMP": { sourcePath: "parkramp1.bmp", fidelity: "exact" },
   "PARKRAMPS.BMP": { sourcePath: "parkramps.bmp", fidelity: "exact" },
-  "PARKRAMPS2.BMP": { sourcePath: "parkramps.bmp", fidelity: "authored-source-fallback" },
-  "PHX_TERM400_0.DDS": { sourcePath: "bgate1.bmp", fidelity: "authored-source-fallback" },
-  "PHX_TERM400_1.DDS": { sourcePath: "bgate3.bmp", fidelity: "authored-source-fallback" },
-  "PHXRAMPLIGHT.BMP": { sourcePath: "supports2.bmp", fidelity: "authored-source-fallback" },
+  "PARKRAMPS2.BMP": { localFile: "PARKRAMPS2.BMP", sourcePath: "PHX Sky Harbor/PHXSkyHarbor2011/texture/parkramps2.bmp", expectedSha256: "c511e7e0dae50b97d80d5b79a3db277919682db18061af72d851e78589dec823", fidelity: "exact-recovered-original-freeware" },
+  "PHX_TERM400_0.DDS": { localFile: "PHX_TERM400_0.DDS", sourcePath: "PHX Sky Harbor/PHXSkyHarbor2011/texture/phx_term400_0.dds", expectedSha256: "95c839aa452373bc63f66ffda638f4997f4e8719de8cfaac6b28684d13f9119b", fidelity: "exact-recovered-original-freeware" },
+  "PHX_TERM400_1.DDS": { localFile: "PHX_TERM400_1.DDS", sourcePath: "PHX Sky Harbor/PHXSkyHarbor2011/texture/phx_term400_1.dds", expectedSha256: "0cb2a4f3c3b8971b3b96051f8982aa8e9b6df45887671d8ec913fff83196788e", fidelity: "exact-recovered-original-freeware" },
+  "PHXRAMPLIGHT.BMP": { localFile: "PHXRAMPLIGHT.BMP", sourcePath: "PHX Sky Harbor/PHXSkyHarbor2011/texture/phxramplight.bmp", expectedSha256: "f7409b182d397221f79e5cff107747189e307adc0bc1371beb8996add2f4e225", fidelity: "exact-recovered-original-freeware" },
   "RW.BMP": { sourcePath: "rw.bmp", fidelity: "exact" },
   "SUPPORTS.BMP": { sourcePath: "supports.bmp", fidelity: "exact" },
   "T4_WALK.BMP": { sourcePath: "t4_walk.bmp", fidelity: "exact" },
@@ -164,6 +165,40 @@ function decodeLegacyBmp(bytes) {
   return { width, height, rgba, compression: compression === DXT1 ? "DXT1" : "BI_RGB" };
 }
 
+function decodeDdsDxt1(bytes) {
+  if (bytes.length < 128 || bytes.toString("ascii", 0, 4) !== "DDS ") throw new Error("Texture is not a DDS file");
+  if (bytes.readUInt32LE(4) !== 124) throw new Error(`Unexpected DDS header size ${bytes.readUInt32LE(4)}`);
+  const height = bytes.readUInt32LE(12);
+  const width = bytes.readUInt32LE(16);
+  const fourCc = bytes.toString("ascii", 84, 88);
+  if (fourCc !== "DXT1") throw new Error(`Unsupported DDS compression ${fourCc}`);
+  if (!(width > 0 && height > 0)) throw new Error(`Invalid DDS dimensions ${width} x ${height}`);
+  return { width, height, rgba: decodeDxt1Bmp(bytes, width, height, 128, false), compression: "DDS-DXT1" };
+}
+
+function decodeSourceTexture(bytes) {
+  const magic = bytes.toString("ascii", 0, 4);
+  if (magic.startsWith("BM")) return decodeLegacyBmp(bytes);
+  if (magic === "DDS ") return decodeDdsDxt1(bytes);
+  throw new Error(`Unsupported exact Terminal 4 texture magic ${magic}`);
+}
+
+function inspectAlpha(rgba) {
+  let transparentPixelCount = 0;
+  let partialAlphaPixelCount = 0;
+  for (let index = 3; index < rgba.length; index += 4) {
+    const alpha = rgba[index];
+    if (alpha < 255) transparentPixelCount += 1;
+    if (alpha > 0 && alpha < 255) partialAlphaPixelCount += 1;
+  }
+  return {
+    hasAlpha: transparentPixelCount > 0,
+    transparentPixelCount,
+    partialAlphaPixelCount,
+    alphaCoverage: rgba.length ? transparentPixelCount / (rgba.length / 4) : 0,
+  };
+}
+
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
   for (let index = 0; index < 256; index += 1) {
@@ -264,28 +299,40 @@ const sourceCache = new Map();
 const materialTextures = {};
 for (const reference of diffuseReferences) {
   const mapping = TEXTURE_SOURCES[reference];
-  let sourceBytes = sourceCache.get(mapping.sourcePath);
+  const sourceIdentity = mapping.localFile ? `local:${mapping.localFile}` : `pinned:${mapping.sourcePath}`;
+  let sourceBytes = sourceCache.get(sourceIdentity);
   if (!sourceBytes) {
-    sourceBytes = await download(`${SOURCE_ROOT}/${mapping.sourcePath}`);
-    sourceCache.set(mapping.sourcePath, sourceBytes);
+    sourceBytes = mapping.localFile
+      ? await readFile(path.join(EXACT_TEXTURE_DIR, mapping.localFile))
+      : await download(`${SOURCE_ROOT}/${mapping.sourcePath}`);
+    if (mapping.expectedSha256 && sha256(sourceBytes) !== mapping.expectedSha256) {
+      throw new Error(`Exact recovered Terminal 4 texture identity mismatch for ${mapping.localFile}`);
+    }
+    sourceCache.set(sourceIdentity, sourceBytes);
   }
-  const decoded = decodeLegacyBmp(sourceBytes);
+  const decoded = decodeSourceTexture(sourceBytes);
+  const alpha = inspectAlpha(decoded.rgba);
   const png = encodePng(decoded.width, decoded.height, decoded.rgba);
   const fileName = `${reference.replace(/\.[^.]+$/, "").replace(/[^A-Za-z0-9_-]/g, "_")}.png`;
   await writeFile(path.join(TEXTURE_DIR, fileName), png);
   materialTextures[reference] = {
     url: `textures/${fileName}`,
     sourcePath: mapping.sourcePath,
+    sourceOrigin: mapping.localFile ? "exact-recovered-original-freeware-archive" : "pinned-skyharbor-source-repository",
     sourceSha256: sha256(sourceBytes),
     pngSha256: sha256(png),
     width: decoded.width,
     height: decoded.height,
     sourceCompression: decoded.compression,
+    hasAlpha: alpha.hasAlpha,
+    transparentPixelCount: alpha.transparentPixelCount,
+    partialAlphaPixelCount: alpha.partialAlphaPixelCount,
+    alphaCoverage: alpha.alphaCoverage,
     fidelity: mapping.fidelity,
   };
 }
 
-const exactTextureCount = Object.values(materialTextures).filter((entry) => entry.fidelity === "exact").length;
+const exactTextureCount = Object.values(materialTextures).filter((entry) => entry.fidelity.startsWith("exact")).length;
 const fallbackTextureCount = Object.values(materialTextures).length - exactTextureCount;
 const textureManifest = {
   schemaVersion: 2,
@@ -319,7 +366,9 @@ const runtimeManifest = {
   activeDiffuseTextures: diffuseReferences,
   exactTextureCount,
   fallbackTextureCount,
-  textureStatus: "pinned-authored-source-textures-active",
+  textureStatus: "all-exact-source-textures-active-no-fallbacks",
+  exactRecoveredArchiveSha256: "0cc4d2eac2249f4b477b9d1cb273b845b9dab08a17d60aa53f9c16d76f0861f5",
 };
 await writeFile(path.join(OUTPUT_DIR, "runtime-manifest.json"), `${JSON.stringify(runtimeManifest, null, 2)}\n`);
-console.log(`RampReady real PHX Terminal 4 materialized: ${EXPECTED.triangleCount} triangles, ${EXPECTED.partCount} parts, ${exactTextureCount} exact and ${fallbackTextureCount} source-authored fallback textures.`);
+if (fallbackTextureCount !== 0) throw new Error(`Terminal 4 still has ${fallbackTextureCount} fallback textures`);
+console.log(`RampReady real PHX Terminal 4 materialized: ${EXPECTED.triangleCount} triangles, ${EXPECTED.partCount} parts, ${exactTextureCount} exact textures and zero fallbacks.`);
