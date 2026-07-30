@@ -108,12 +108,22 @@ replaceRequired(
   "frame-rate-independent transition",
 );
 
+replaceRequired(
+  `        renderer.domElement.dataset.a1JetwayState = jetway.controller.getState?.() || "unknown";`,
+  `        const currentA1JetwayState = jetway.controller.getState?.() || "unknown";
+        renderer.domElement.dataset.a1JetwayState = currentA1JetwayState;
+        renderer.domElement.dataset.a1JetwayStateHistory = jetway.controller.getStateHistory?.().join(",") || currentA1JetwayState;`,
+  "dataset.a1JetwayStateHistory",
+  "persistent sequence dataset",
+);
+
 const prepared = fs.readFileSync(runtimePath, "utf8");
 for (const token of [
   "transitionDurationMs: 4200",
   "transitionStartedAt = performance.now()",
   "const transitionElapsedMs = Math.max(0, now - jetway.transitionStartedAt)",
   "jetway.deployment = jetway.target",
+  "dataset.a1JetwayStateHistory",
 ]) {
   if (!prepared.includes(token)) throw new Error(`${runtimePath}: clocked A1 motion is missing ${token}`);
 }
@@ -121,4 +131,4 @@ if (prepared.includes("const step = Math.min(Math.abs(difference), dt * 0.34)"))
   throw new Error(`${runtimePath}: obsolete frame-capped A1 movement remains`);
 }
 
-console.log("Prepared clock-based A1 jetway motion: elapsed wall time drives hood, telescope, lift, bogie and parked-state completion even under a loaded airport render.");
+console.log("Prepared clock-based A1 jetway motion with persistent attached, hood-clear, telescoping, rotating and parked sequence evidence.");
