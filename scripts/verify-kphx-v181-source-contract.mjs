@@ -188,7 +188,17 @@ for (const token of [
   'photoGroundSource = "source-authored-phx-photo"',
   'const OPAQUE_ADEX_SURFACES = new Set(["airport-base"])',
   "hideFlatADEXSurfaceColors",
-  "source aerial is the diffuse authority",
+  'underlayMode: "neutral-airport-base-below-source-aerial-alpha"',
+  'colorRepairMode: "source-aerial-dark-neutral-artifact-lift-v1"',
+  "buildAirportBaseUnderlay",
+  "PHX_KPHX_AirportBasePhotoUnderlay",
+  "new THREE.MeshBasicMaterial",
+  "material.onBeforeCompile",
+  "rrPhotoLuma",
+  "rrPhotoChroma",
+  "rrPhotoRepair",
+  "material.customProgramCacheKey",
+  "authoredPhotoColorRepairMode",
   "hidden-nonphotographic-bgl-classification-tint",
   "exactA1HiddenProjectedMaterialCount",
   "texture.anisotropy = 16",
@@ -244,4 +254,4 @@ for (const token of [
 ]) {
   if (!files.prepare.includes(token)) throw new Error(`KPHX browser evidence missing ${token}`);
 }
-console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} scale-1.00 stock AIR_Jetway01 placements, exact original ADEX A1 placement, real MDLX terminal geometry, exact source lightmaps, source-scale jetway textures and articulation contract, source-qualified service bays, irregular lower-facade details, native-resolution tiled full-airport aerial ground, source-authored near-field concrete, pavement-coincident ADEX stand markings, hidden nonphotographic projected-surface tints, and unrotated A1-local ground. Original stock AIR_Jetway01 mesh recovery remains required before simulator-quality promotion.`);
+console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} scale-1.00 stock AIR_Jetway01 placements, exact original ADEX A1 placement, real MDLX terminal geometry, exact source lightmaps, source-scale jetway textures and articulation contract, source-qualified service bays, irregular lower-facade details, native-resolution tiled full-airport aerial ground with neutral alpha underlay and dark-neutral artifact repair, source-authored near-field concrete, pavement-coincident ADEX stand markings, hidden nonphotographic projected-surface tints, and unrotated A1-local ground. Original stock AIR_Jetway01 mesh recovery remains required before simulator-quality promotion.`);
