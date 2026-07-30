@@ -25,25 +25,39 @@ export const AUTHORED_KPHX_PHOTO_PROFILE = Object.freeze({
   underlayMode: "neutral-airport-base-below-source-aerial-alpha",
   fullCoverageUnderlayMode: "full-airport-neutral-underlay-below-all-source-tiles-v2",
   colorRepairMode: "source-aerial-dark-neutral-artifact-lift-v1",
+  hiddenClassificationMode: "hide-airport-base-and-asphalt-over-source-aerial-v1",
 });
 
 const OPAQUE_ADEX_SURFACES = new Set(["airport-base"]);
+const NONPHOTOGRAPHIC_ADEX_OVERLAYS = new Set(["asphalt"]);
 
 function hideFlatADEXSurfaceColors(environment) {
   const authoredGround = environment.userData.authoredGround;
   if (!authoredGround) throw new Error("KPHX ADEX ground must load before its photo layer");
   let hiddenMaterialCount = 0;
+  let hiddenAsphaltMaterialCount = 0;
   authoredGround.traverse((node) => {
     if (!node.isMesh) return;
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     for (const material of materials) {
-      if (!material || !OPAQUE_ADEX_SURFACES.has(material.name)) continue;
+      if (!material) continue;
+      const hideBase = OPAQUE_ADEX_SURFACES.has(material.name);
+      const hideAsphalt = NONPHOTOGRAPHIC_ADEX_OVERLAYS.has(material.name);
+      if (!hideBase && !hideAsphalt) continue;
       material.visible = false;
+      material.depthWrite = false;
+      material.userData = {
+        ...(material.userData || {}),
+        visibilityAuthority: hideAsphalt
+          ? "hidden-nonphotographic-adex-asphalt-over-source-aerial"
+          : "hidden-flat-adex-airport-base-under-source-aerial",
+      };
       material.needsUpdate = true;
       hiddenMaterialCount += 1;
+      if (hideAsphalt) hiddenAsphaltMaterialCount += 1;
     }
   });
-  return hiddenMaterialCount;
+  return { hiddenMaterialCount, hiddenAsphaltMaterialCount };
 }
 
 function buildAirportBaseUnderlay(THREE, environment) {
@@ -87,10 +101,6 @@ function buildAirportBaseUnderlay(THREE, environment) {
   });
   for (const { parent, underlay } of additions) parent?.add(underlay);
 
-  // The decoded ADEX airport-base mesh does not span every transparent or
-  // missing pixel in the full 6400x2304 source aerial. Keep a continuous,
-  // neutral pavement layer below the entire photo footprint so distant tile
-  // cutouts never expose the renderer clear color as black ramp voids.
   const fullGeometry = buildPhotoGeometry(THREE, AUTHORED_KPHX_PHOTO_PROFILE.sceneBounds);
   fullGeometry.translate(0, -0.052, 0);
   const fullMaterial = new THREE.MeshBasicMaterial({
@@ -257,6 +267,7 @@ async function buildTiledPhotoGround(THREE, baseUrl, manifest) {
   group.userData.underlayMode = AUTHORED_KPHX_PHOTO_PROFILE.underlayMode;
   group.userData.fullCoverageUnderlayMode = AUTHORED_KPHX_PHOTO_PROFILE.fullCoverageUnderlayMode;
   group.userData.colorRepairMode = AUTHORED_KPHX_PHOTO_PROFILE.colorRepairMode;
+  group.userData.hiddenClassificationMode = AUTHORED_KPHX_PHOTO_PROFILE.hiddenClassificationMode;
   return group;
 }
 
@@ -277,6 +288,7 @@ async function buildFallbackPhotoGround(THREE, imageUrl, manifest) {
   photoGround.userData.underlayMode = AUTHORED_KPHX_PHOTO_PROFILE.underlayMode;
   photoGround.userData.fullCoverageUnderlayMode = AUTHORED_KPHX_PHOTO_PROFILE.fullCoverageUnderlayMode;
   photoGround.userData.colorRepairMode = AUTHORED_KPHX_PHOTO_PROFILE.colorRepairMode;
+  photoGround.userData.hiddenClassificationMode = AUTHORED_KPHX_PHOTO_PROFILE.hiddenClassificationMode;
   return photoGround;
 }
 
@@ -300,7 +312,7 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
   const manifest = await fetchManifest(manifestUrl);
   const photoGround = await buildBestAvailablePhotoGround(THREE, baseUrl, imageUrl, manifest);
   const underlayMaterialCount = buildAirportBaseUnderlay(THREE, environment);
-  const hiddenSurfaceMaterialCount = hideFlatADEXSurfaceColors(environment);
+  const hiddenSurfaceState = hideFlatADEXSurfaceColors(environment);
   environment.add(photoGround);
   const exactA1 = await installExactKphxA1(THREE, environment);
   exactA1.position.set(0, 0, 6.2);
@@ -327,7 +339,9 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
   environment.userData.authoredPhotoFullCoverageUnderlayMode = AUTHORED_KPHX_PHOTO_PROFILE.fullCoverageUnderlayMode;
   environment.userData.authoredPhotoUnderlayMaterialCount = underlayMaterialCount;
   environment.userData.authoredPhotoColorRepairMode = AUTHORED_KPHX_PHOTO_PROFILE.colorRepairMode;
-  environment.userData.hiddenADEXSurfaceMaterialCount = hiddenSurfaceMaterialCount;
+  environment.userData.authoredPhotoHiddenClassificationMode = AUTHORED_KPHX_PHOTO_PROFILE.hiddenClassificationMode;
+  environment.userData.hiddenADEXSurfaceMaterialCount = hiddenSurfaceState.hiddenMaterialCount;
+  environment.userData.hiddenADEXAsphaltMaterialCount = hiddenSurfaceState.hiddenAsphaltMaterialCount;
   environment.userData.exactA1BlendedProjectedMaterialCount = 0;
   environment.userData.exactA1HiddenProjectedMaterialCount = hiddenProjectedMaterialCount;
   environment.userData.exactA1SourceLightFixtureCount = sourceLights.userData.fixtureCount;
