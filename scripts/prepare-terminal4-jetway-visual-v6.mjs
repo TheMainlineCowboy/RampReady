@@ -111,16 +111,21 @@ replaceRequired(
   '"AIR_Jetway01 aircraft bellows", 0xffffff, 0.92, 0.02), "bellows"',
   "bellows atlas region",
 );
-replaceRequired(
-  jetwayPath,
-  `      const facadeX = jetway.x - ux * lowerWallFit + ux * 0.35;
+
+// Visual v7 supersedes only the facade placement from v6. If the v7 outer-plane
+// closure is already present, preserve it rather than demanding the intermediate
+// v6 ramp-forward panel or trying to move it back into the recessed bay.
+if (!fs.readFileSync(jetwayPath, "utf8").includes("const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance")) {
+  replaceRequired(
+    jetwayPath,
+    `      const facadeX = jetway.x - ux * lowerWallFit + ux * 0.35;
       const facadeZ = jetway.z - uz * lowerWallFit + uz * 0.35;
       transforms.facadeInfill.push({
         position: [facadeX, 1.32, facadeZ],
         yaw,
         scale: [5.72, 2.58, 0.42],
       });`,
-  `      const facadeRampOffset = 0.95;
+    `      const facadeRampOffset = 0.95;
       const facadeX = jetway.x - ux * lowerWallFit + ux * facadeRampOffset;
       const facadeZ = jetway.z - uz * lowerWallFit + uz * facadeRampOffset;
       transforms.facadeInfill.push({
@@ -128,9 +133,10 @@ replaceRequired(
         yaw,
         scale: [6.4, 3.36, 0.68],
       });`,
-  "const facadeRampOffset = 0.95",
-  "forward full-height facade closure",
-);
+    "const facadeRampOffset = 0.95",
+    "forward full-height facade closure",
+  );
+}
 replaceRequired(
   jetwayPath,
   `          position: [facadeX + px * 1.35 + ux * 0.56, 0.94, facadeZ + pz * 1.35 + uz * 0.56],
@@ -195,8 +201,6 @@ for (const [path, tokens, forbidden] of [
     '"shell", 0.12',
     '"cabin", 0.12',
     '"bellows", 0.04',
-    "const facadeRampOffset = 0.95",
-    "scale: [6.4, 3.36, 0.68]",
     "jetwayTextureMappingAuthority",
   ], [
     "map.wrapS = map.wrapT = THREE.RepeatWrapping",
@@ -212,5 +216,11 @@ for (const [path, tokens, forbidden] of [
   for (const token of tokens) if (!source.includes(token)) throw new Error(`${path}: jetway visual v6 is missing ${token}`);
   for (const token of forbidden) if (source.includes(token)) throw new Error(`${path}: obsolete jetway visual token remains ${token}`);
 }
+const preparedJetways = fs.readFileSync(jetwayPath, "utf8");
+const hasV6Facade = preparedJetways.includes("const facadeRampOffset = 0.95")
+  && preparedJetways.includes("scale: [6.4, 3.36, 0.68]");
+const hasV7Facade = preparedJetways.includes("const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance")
+  && preparedJetways.includes("scale: [7.0, 3.42, 0.5]");
+if (!hasV6Facade && !hasV7Facade) throw new Error("Jetway visual preparation has neither the v6 nor superseding v7 facade contract");
 
-console.log("Prepared Terminal 4 jetway visual v6: normalized source-scale UVs, exact atlas subregions, non-striped shell/cabin/bellows materials, and full-height ramp-forward facade closures.");
+console.log("Prepared Terminal 4 jetway visual v6: normalized source-scale UVs, exact atlas subregions, non-striped shell/cabin/bellows materials, and a v6-or-newer facade closure.");
