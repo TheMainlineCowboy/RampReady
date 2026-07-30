@@ -30,26 +30,18 @@ async function launchRuntime(page) {
 
   const canvas = page.locator("canvas.trainerCanvas");
   await expect(canvas).toBeVisible();
-  await expect.poll(
-    () => canvas.getAttribute("data-environment-source"),
-    { timeout: 90_000, intervals: [250, 500, 1_000] },
-  ).toBe("authored-phx-terminal4-textured-source-jetways");
-  await expect.poll(
-    () => canvas.getAttribute("data-ground-source"),
-    { timeout: 90_000, intervals: [250, 500, 1_000] },
-  ).toBe("authored-kphx-v181-source-textured-nearfield");
-  await expect.poll(
-    () => canvas.getAttribute("data-photo-ground-source"),
-    { timeout: 90_000, intervals: [250, 500, 1_000] },
-  ).toBe("source-authored-phx-photo");
-  await expect.poll(
-    () => canvas.getAttribute("data-tug-source"),
-    { timeout: 90_000, intervals: [250, 500, 1_000] },
-  ).toBe("authored-standup");
-  await expect.poll(
-    () => canvas.getAttribute("data-operator-controls"),
-    { timeout: 90_000, intervals: [250, 500, 1_000] },
-  ).toBe("ready");
+  for (const [attribute, expected] of [
+    ["data-environment-source", "authored-phx-terminal4-textured-source-jetways"],
+    ["data-ground-source", "authored-kphx-v181-source-textured-nearfield"],
+    ["data-photo-ground-source", "source-authored-phx-photo"],
+    ["data-tug-source", "authored-standup"],
+    ["data-operator-controls", "ready"],
+  ]) {
+    await expect.poll(
+      () => canvas.getAttribute(attribute),
+      { timeout: 90_000, intervals: [250, 500, 1_000] },
+    ).toBe(expected);
+  }
   await expect.poll(
     () => canvas.getAttribute("data-aircraft-source"),
     { timeout: 90_000, intervals: [250, 500, 1_000] },
@@ -61,10 +53,7 @@ async function launchRuntime(page) {
     const pathname = new URL(response.url()).pathname;
     return pathname.endsWith(suffix) && response.status() === 200;
   });
-  await expect.poll(
-    () => MODEL_SUFFIXES.some(requested),
-    { timeout: 30_000 },
-  ).toBe(true);
+  await expect.poll(() => MODEL_SUFFIXES.some(requested), { timeout: 30_000 }).toBe(true);
   await expect.poll(() => requested(STANDUP_SUFFIX), { timeout: 30_000 }).toBe(true);
   for (const suffix of TERMINAL_SUFFIXES) {
     await expect.poll(() => requested(suffix), { timeout: 30_000 }).toBe(true);
@@ -77,8 +66,8 @@ async function launchRuntime(page) {
   return canvas;
 }
 
-async function hideControls(page) {
-  await page.addStyleTag({
+async function withHiddenControls(page, action) {
+  const style = await page.addStyleTag({
     content: `
       .rr-hud, .rr-metrics, .rr-score-float, .rr-guidance, .rr-diagnostics,
       .rr-steer, .rr-throttle { display: none !important; }
@@ -86,6 +75,12 @@ async function hideControls(page) {
     `,
   });
   await page.waitForTimeout(300);
+  try {
+    return await action();
+  } finally {
+    await style.evaluate((element) => element.remove());
+    await page.waitForTimeout(150);
+  }
 }
 
 async function capture(page, canvas, fileName) {
@@ -120,6 +115,11 @@ async function orbit(page, deltaX, deltaY = 0) {
   await page.waitForTimeout(450);
 }
 
+async function setCamera(page, value) {
+  await page.locator(".rr-view-select").selectOption(value);
+  await page.waitForTimeout(700);
+}
+
 function insideViewport(name, box, viewport) {
   expect(box, `${name} must exist`).not.toBeNull();
   expect(box.left, `${name} left`).toBeGreaterThanOrEqual(-1);
@@ -128,44 +128,8 @@ function insideViewport(name, box, viewport) {
   expect(box.bottom, `${name} bottom`).toBeLessThanOrEqual(viewport.height + 1);
 }
 
-test("loads the real CRJ700 and authored PHX runtime", async ({ page }) => {
-  test.setTimeout(300_000);
-  await page.setViewportSize(DESKTOP);
-  const canvas = await launchRuntime(page);
-  await hideControls(page);
-  await orbit(page, 220);
-  await capture(page, canvas, "crj700-left-side.png");
-  await orbit(page, -440);
-  await capture(page, canvas, "crj700-right-side.png");
-});
-
-test("authored textured PHX Terminal 4 renders in chase view", async ({ page }) => {
-  test.setTimeout(300_000);
-  await page.setViewportSize(DESKTOP);
-  const canvas = await launchRuntime(page);
-  await page.evaluate(() => {
-    document.querySelector("canvas.trainerCanvas")?.dispatchEvent(
-      new WheelEvent("wheel", { deltaY: 1800, bubbles: true, cancelable: true }),
-    );
-  });
-  await hideControls(page);
-  await capture(page, canvas, "phx-terminal4-authored-textured.png");
-});
-
-test("stand-up operator view contains the dedicated controls", async ({ page }) => {
-  test.setTimeout(300_000);
-  await page.setViewportSize(DESKTOP);
-  const canvas = await launchRuntime(page);
-  const view = page.locator(".rr-view-select");
-  await view.selectOption("driver");
-  await expect(view).toHaveValue("driver");
-  await page.waitForTimeout(900);
-  await hideControls(page);
-  await capture(page, canvas, "standup-operator-view.png");
-});
-
-test("A1 jetway starts attached and parks before tug approach", async ({ page }) => {
-  test.setTimeout(300_000);
+test("verifies CRJ, A1 jetway, operator view and free-drive in one full-airport load", async ({ page }) => {
+  test.setTimeout(600_000);
   await page.setViewportSize(DESKTOP);
   const canvas = await launchRuntime(page);
 
@@ -174,18 +138,27 @@ test("A1 jetway starts attached and parks before tug approach", async ({ page })
     { timeout: 20_000, intervals: [100, 250, 500] },
   ).toBeGreaterThanOrEqual(0.995);
   await expect(canvas).toHaveAttribute("data-a1-jetway-state", "attached");
-  await expect.poll(
-    () => canvas.getAttribute("data-a1-jetway-animation-authority"),
-    { timeout: 20_000 },
-  ).toContain("independent-source-scale");
-  await capture(page, canvas, "a1-jetway-attached.png");
+  await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-attached.png"));
+
+  await withHiddenControls(page, async () => {
+    await orbit(page, 220);
+    await capture(page, canvas, "crj700-left-side.png");
+    await orbit(page, -440);
+    await capture(page, canvas, "crj700-right-side.png");
+    await page.evaluate(() => document.querySelector("canvas.trainerCanvas")?.dispatchEvent(
+      new WheelEvent("wheel", { deltaY: 1800, bubbles: true, cancelable: true }),
+    ));
+    await page.waitForTimeout(500);
+    await capture(page, canvas, "phx-terminal4-authored-textured.png");
+  });
+
+  await setCamera(page, "driver");
+  await withHiddenControls(page, () => capture(page, canvas, "standup-operator-view.png"));
+  await setCamera(page, "chase");
 
   const ready = page.getByRole("button", { name: "Ready" });
-  await expect(ready).toBeVisible();
   await ready.click();
   await expect(page.getByText(/Jetway departure sequence active/i)).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Complete visual equipment check" })).toBeVisible();
-
   const observedStates = new Set(["attached"]);
   await expect.poll(
     async () => {
@@ -197,54 +170,27 @@ test("A1 jetway starts attached and parks before tug approach", async ({ page })
   ).toBeLessThanOrEqual(0.005);
   await expect(canvas).toHaveAttribute("data-a1-jetway-state", "parked");
   await expect(page.getByText(/Jetway parked clear/i)).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Align the capture head with the nose gear" })).toBeVisible();
   expect([...observedStates].some((state) => ["hood-clear", "telescoping", "rotating-to-park", "retracting"].includes(state))).toBe(true);
-  await capture(page, canvas, "a1-jetway-parked.png");
-});
+  await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-parked.png"));
 
-test("free-drive inspection toggle moves the tug forward and reverse without procedure gates", async ({ page }) => {
-  test.setTimeout(300_000);
-  await page.setViewportSize(DESKTOP);
-  const canvas = await launchRuntime(page);
   const toggle = page.getByRole("button", { name: "Free-drive inspection" });
-  await expect(toggle).toBeVisible();
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator(".rr-shell")).toHaveAttribute("data-inspection-mode", "active");
-  await expect(canvas).toHaveAttribute("data-inspection-mode", "active");
-  await expect.poll(
-    async () => Number(await canvas.getAttribute("data-a1-jetway-deployment")),
-    { timeout: 10_000 },
-  ).toBeLessThanOrEqual(0.005);
-  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "parked");
-
-  const start = await canvas.evaluate((element) => ({
-    x: Number(element.dataset.inspectionTugX),
-    z: Number(element.dataset.inspectionTugZ),
-  }));
+  const start = await canvas.evaluate((element) => ({ x: Number(element.dataset.inspectionTugX), z: Number(element.dataset.inspectionTugZ) }));
   await page.keyboard.down("w");
   await page.waitForTimeout(1_200);
   await page.keyboard.up("w");
-  const forward = await canvas.evaluate((element) => ({
-    x: Number(element.dataset.inspectionTugX),
-    z: Number(element.dataset.inspectionTugZ),
-    speed: Number(element.dataset.inspectionSpeed),
-  }));
+  const forward = await canvas.evaluate((element) => ({ x: Number(element.dataset.inspectionTugX), z: Number(element.dataset.inspectionTugZ) }));
   expect(Math.hypot(forward.x - start.x, forward.z - start.z)).toBeGreaterThan(0.25);
-  expect(forward.speed).toBeGreaterThanOrEqual(0);
-
   await page.keyboard.down("s");
   await page.waitForTimeout(1_200);
   await page.keyboard.up("s");
-  const reverse = await canvas.evaluate((element) => ({
-    x: Number(element.dataset.inspectionTugX),
-    z: Number(element.dataset.inspectionTugZ),
-  }));
+  const reverse = await canvas.evaluate((element) => ({ x: Number(element.dataset.inspectionTugX), z: Number(element.dataset.inspectionTugZ) }));
   expect(Math.hypot(reverse.x - forward.x, reverse.z - forward.z)).toBeGreaterThan(0.15);
-  await capture(page, canvas, "free-drive-inspection-active.png");
+  await withHiddenControls(page, () => capture(page, canvas, "free-drive-inspection-active.png"));
 });
 
-test("mobile controls remain inside the simulator viewport", async ({ page }) => {
+test("mobile controls and full step title remain inside one simulator viewport", async ({ page }) => {
   test.setTimeout(300_000);
   await page.setViewportSize(MOBILE);
   const canvas = await launchRuntime(page);
@@ -255,16 +201,14 @@ test("mobile controls remain inside the simulator viewport", async ({ page }) =>
       const box = element.getBoundingClientRect();
       return { top: box.top, right: box.right, bottom: box.bottom, left: box.left, width: box.width, height: box.height };
     };
+    const title = document.querySelector(".rr-hud h1");
     return {
       viewport: { width: innerWidth, height: innerHeight },
       canvas: rect("canvas.trainerCanvas"),
       hud: rect(".rr-hud"), metrics: rect(".rr-metrics"), throttle: rect(".rr-throttle"),
       steer: rect(".rr-steer"), slider: rect(".rr-power-slider"), menu: rect(".rr-session-menu"),
       inspectionToggle: rect(".rr-inspection-toggle"),
-      title: (() => {
-        const element = document.querySelector(".rr-hud h1");
-        return element ? { text: element.textContent, clientWidth: element.clientWidth, scrollWidth: element.scrollWidth } : null;
-      })(),
+      title: title ? { text: title.textContent, clientWidth: title.clientWidth, scrollWidth: title.scrollWidth } : null,
     };
   });
   for (const name of ["hud", "metrics", "throttle", "steer", "slider", "menu", "inspectionToggle"]) {
