@@ -10,6 +10,7 @@ const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
 for (const scriptName of ["materialize:phx-terminal4", "verify:kphx-v181", "prepare:terminal4-runtime"]) {
   const command = packageJson.scripts?.[scriptName] || "";
   if (!command.includes("prepare-terminal4-jetway-crj-v5.mjs")) throw new Error(`${scriptName} does not run the source-scale jetway protection pass`);
+  if (!command.includes("prepare-terminal4-jetway-visual-v6.mjs")) throw new Error(`${scriptName} does not run the non-striped source-atlas visual pass`);
   if (command.includes("prepare-terminal4-jetway-facade-v4.mjs")) throw new Error(`${scriptName} still runs the superseded v4 facade pass`);
 }
 const runtimePreparation = packageJson.scripts?.["prepare:terminal4-runtime"] || "";
@@ -34,6 +35,11 @@ const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js",
   "group.userData.jetwayMotionLimits",
   'group.userData.initialJetwayState = "attached-to-aircraft-door"',
   "group.userData.requiredPrePushSequence",
+  "exactJetwayAtlasRegions",
+  "group.userData.jetwayTextureMappingAuthority",
+  "THREE.ClampToEdgeWrapping",
+  "const facadeRampOffset = 0.95",
+  "scale: [6.4, 3.36, 0.68]",
 ]);
 for (const forbidden of [
   "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
@@ -42,7 +48,10 @@ for (const forbidden of [
   "gateNumber % 2",
   "createArchedTunnelGeometry(THREE, 2.08, 2.02, 0.18)",
   "scale: [2.24, 2.12, wallConnectorLength]",
-]) if (jetways.includes(forbidden)) throw new Error(`Aircraft-specific jetway shrink or repetitive facade remains: ${forbidden}`);
+  "map.repeat.set(repeatX, repeatY)",
+  "map.wrapS = map.wrapT = THREE.RepeatWrapping",
+  "scale: [5.72, 2.58, 0.42]",
+]) if (jetways.includes(forbidden)) throw new Error(`Aircraft-specific jetway shrink, whole-atlas repetition, or undersized facade remains: ${forbidden}`);
 
 requireTokens("src/environment/authoredTerminal4Visual.js", [
   "authoredTerminal4JetwaySourceScaleAuthority",
@@ -78,4 +87,4 @@ for (const forbidden of ["0.0135", "0.0255", "0.0137", "0.0138", "0.0258"]) {
   if (markings.includes(forbidden)) throw new Error(`Raised marking token remains: ${forbidden}`);
 }
 
-console.log("Terminal 4 jetway source authority verified: stock scale 1.00 is protected, exact textures and placement remain active, fallback geometry is disclosed, animation requirements are explicit, facade repetition is reduced, markings are pavement-coincident, and free-drive inspection controls are visible.");
+console.log("Terminal 4 jetway source authority verified: stock scale 1.00 is protected, exact atlas regions and placement remain active without whole-sheet repetition, full-height facade closures are enforced, fallback geometry is disclosed, animation requirements are explicit, markings are pavement-coincident, and free-drive inspection controls are visible.");
