@@ -22,6 +22,7 @@ export const AUTHORED_KPHX_PHOTO_PROFILE = Object.freeze({
   fallbackDetailLevel: "full-airport-source-aerial-1.2m-v1",
   textureMode: "tiled-native-source-resolution-v2",
   maxRuntimeTextureDimension: 1024,
+  underlayMode: "neutral-airport-base-below-source-aerial-alpha",
 });
 
 // The source aerial is the diffuse authority. The airport-wide ADEX surface
@@ -44,6 +45,50 @@ function hideFlatADEXSurfaceColors(environment) {
     }
   });
   return hiddenMaterialCount;
+}
+
+function buildAirportBaseUnderlay(THREE, environment) {
+  const authoredGround = environment.userData.authoredGround;
+  if (!authoredGround) throw new Error("KPHX ADEX ground must load before its aerial underlay");
+  const additions = [];
+  authoredGround.traverse((node) => {
+    if (!node.isMesh || !node.geometry) return;
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    const airportBaseIndices = materials
+      .map((material, index) => material?.name === "airport-base" ? index : -1)
+      .filter((index) => index >= 0);
+    if (!airportBaseIndices.length) return;
+
+    const geometry = node.geometry.clone();
+    if (materials.length > 1) {
+      const baseGroups = node.geometry.groups.filter((group) => airportBaseIndices.includes(group.materialIndex));
+      if (!baseGroups.length) return;
+      geometry.clearGroups();
+      for (const group of baseGroups) geometry.addGroup(group.start, group.count, 0);
+    }
+    const material = new THREE.MeshBasicMaterial({
+      name: "PHX source-aerial transparent-cutout pavement underlay",
+      color: 0x737779,
+      side: THREE.DoubleSide,
+      toneMapped: false,
+      depthWrite: true,
+      depthTest: true,
+    });
+    const underlay = new THREE.Mesh(geometry, material);
+    underlay.name = "PHX_KPHX_AirportBasePhotoUnderlay";
+    underlay.position.copy(node.position);
+    underlay.quaternion.copy(node.quaternion);
+    underlay.scale.copy(node.scale);
+    underlay.matrixAutoUpdate = node.matrixAutoUpdate;
+    if (!node.matrixAutoUpdate) underlay.matrix.copy(node.matrix);
+    underlay.castShadow = false;
+    underlay.receiveShadow = false;
+    underlay.renderOrder = -30;
+    underlay.userData.underlayAuthority = AUTHORED_KPHX_PHOTO_PROFILE.underlayMode;
+    additions.push({ parent: node.parent, underlay });
+  });
+  for (const { parent, underlay } of additions) parent?.add(underlay);
+  return additions.length;
 }
 
 function blendExactProjectedSurfacesWithAerial(exactA1) {
@@ -144,16 +189,16 @@ function buildPhotoGeometry(THREE, bounds) {
 }
 
 function buildPhotoMaterial(THREE, texture, name) {
-  return new THREE.MeshStandardMaterial({
+  return new THREE.MeshBasicMaterial({
     name,
     map: texture,
     color: 0xffffff,
-    roughness: 0.98,
-    metalness: 0,
     transparent: true,
     alphaTest: 0.02,
     depthWrite: true,
+    depthTest: true,
     side: THREE.DoubleSide,
+    toneMapped: false,
   });
 }
 
@@ -180,7 +225,7 @@ async function buildTiledPhotoGround(THREE, baseUrl, manifest) {
     const material = buildPhotoMaterial(THREE, texture, `PHX source aerial tile material ${index}`);
     const mesh = new THREE.Mesh(buildPhotoGeometry(THREE, sceneBoundsForTile(tile, manifest)), material);
     mesh.name = `PHX_KPHX_SourceAerialTile_${tile.column}_${tile.row}`;
-    mesh.receiveShadow = true;
+    mesh.receiveShadow = false;
     mesh.castShadow = false;
     mesh.frustumCulled = true;
     mesh.renderOrder = -20;
@@ -191,6 +236,7 @@ async function buildTiledPhotoGround(THREE, baseUrl, manifest) {
   group.userData.textureMode = AUTHORED_KPHX_PHOTO_PROFILE.textureMode;
   group.userData.runtimeTileCount = loadedTiles.length;
   group.userData.maxTextureDimension = manifest.runtimeTiling.maxTextureDimension;
+  group.userData.underlayMode = AUTHORED_KPHX_PHOTO_PROFILE.underlayMode;
   return group;
 }
 
@@ -202,12 +248,13 @@ async function buildFallbackPhotoGround(THREE, imageUrl, manifest) {
     buildPhotoMaterial(THREE, texture, "PHX source aerial ground fallback"),
   );
   photoGround.name = "PHX_KPHX_SourceAuthoredPhotoGround";
-  photoGround.receiveShadow = true;
+  photoGround.receiveShadow = false;
   photoGround.castShadow = false;
   photoGround.frustumCulled = true;
   photoGround.renderOrder = -20;
   photoGround.userData.textureMode = "single-texture-fallback-v1";
   photoGround.userData.runtimeTileCount = 1;
+  photoGround.userData.underlayMode = AUTHORED_KPHX_PHOTO_PROFILE.underlayMode;
   return photoGround;
 }
 
@@ -232,6 +279,7 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
   const manifest = await fetchManifest(manifestUrl);
   const photoGround = await buildBestAvailablePhotoGround(THREE, baseUrl, imageUrl, manifest);
 
+  const underlayMaterialCount = buildAirportBaseUnderlay(THREE, environment);
   const hiddenSurfaceMaterialCount = hideFlatADEXSurfaceColors(environment);
   environment.add(photoGround);
   const exactA1 = await installExactKphxA1(THREE, environment);
@@ -255,6 +303,8 @@ export async function installAuthoredKphxPhotoGround(THREE, environment) {
   environment.userData.authoredPhotoDetailLevel = tiled
     ? AUTHORED_KPHX_PHOTO_PROFILE.detailLevel
     : AUTHORED_KPHX_PHOTO_PROFILE.fallbackDetailLevel;
+  environment.userData.authoredPhotoUnderlayMode = AUTHORED_KPHX_PHOTO_PROFILE.underlayMode;
+  environment.userData.authoredPhotoUnderlayMaterialCount = underlayMaterialCount;
   environment.userData.hiddenADEXSurfaceMaterialCount = hiddenSurfaceMaterialCount;
   environment.userData.exactA1BlendedProjectedMaterialCount = 0;
   environment.userData.exactA1HiddenProjectedMaterialCount = hiddenProjectedMaterialCount;
