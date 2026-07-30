@@ -2,22 +2,26 @@ import fs from "node:fs";
 
 const groundPath = "src/environment/authoredKphxGround.js";
 let ground = fs.readFileSync(groundPath, "utf8");
-if (!ground.includes('contactMode: "pavement-relative-millimeter-offset"')) {
+if (!ground.includes('contactMode: "pavement-coincident-decals"')) {
   const oldText = `    markingAuthority: "source-authored-kphx-adex",
     visibilityMode: "high-contrast-nearfield",`;
   const newText = `    markingAuthority: "source-authored-kphx-adex",
     visibilityMode: "high-contrast-nearfield",
-    contactMode: "pavement-relative-millimeter-offset",`;
+    contactMode: "pavement-coincident-decals",`;
   if (!ground.includes(oldText)) throw new Error("KPHX marking contact evidence anchor is missing");
   ground = ground.replace(oldText, newText);
 }
 if (!ground.includes("authoredGroundMarkingContactMode")) {
   const anchor = "  environment.userData.authoredGroundEnhancedMarkingMaterialCount = materialState.enhancedMarkingMaterialCount;";
   const replacement = `${anchor}
-  environment.userData.authoredGroundMarkingContactMode = "pavement-relative-millimeter-offset";`;
+  environment.userData.authoredGroundMarkingContactMode = "pavement-coincident-decals";`;
   if (!ground.includes(anchor)) throw new Error("KPHX environment marking evidence anchor is missing");
   ground = ground.replace(anchor, replacement);
 }
+ground = ground.replaceAll(
+  'environment.userData.authoredGroundMarkingContactMode = "pavement-relative-millimeter-offset";',
+  'environment.userData.authoredGroundMarkingContactMode = "pavement-coincident-decals";',
+);
 fs.writeFileSync(groundPath, ground, "utf8");
 
 const generatorPath = "scripts/prepare-terminal4-runtime.mjs";
@@ -80,7 +84,7 @@ fs.writeFileSync(generatorPath, generator, "utf8");
 
 for (const [path, tokens] of Object.entries({
   [groundPath]: [
-    'contactMode: "pavement-relative-millimeter-offset"',
+    'contactMode: "pavement-coincident-decals"',
     "authoredGroundMarkingContactMode",
   ],
   [generatorPath]: [
@@ -95,4 +99,4 @@ for (const [path, tokens] of Object.entries({
   for (const token of tokens) if (!prepared.includes(token)) throw new Error(`${path}: simulator-quality runtime evidence is missing ${token}`);
 }
 
-console.log("Prepared live simulator-quality evidence for inspection mode, marking contact, source alpha and terminal-connected jetways.");
+console.log("Prepared live simulator-quality evidence for inspection mode, pavement-coincident marking contact, source alpha and terminal-connected jetways.");
