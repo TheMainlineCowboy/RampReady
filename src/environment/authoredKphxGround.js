@@ -201,18 +201,18 @@ function configureAuthoredMarkingMaterial(material, node) {
   material.metalness = 0;
   material.toneMapped = false;
   material.polygonOffset = true;
-  material.polygonOffsetFactor = -1;
-  material.polygonOffsetUnits = -1;
+  material.polygonOffsetFactor = -0.25;
+  material.polygonOffsetUnits = -0.5;
   if (material.emissive?.setHex) {
     material.emissive.setHex(yellow ? 0x392d00 : 0x252522);
     material.emissiveIntensity = 0.22;
   }
-  node.renderOrder = Math.max(node.renderOrder || 0, 80);
+  node.renderOrder = Math.max(node.renderOrder || 0, 24);
   material.userData = {
     ...(material.userData || {}),
     markingAuthority: "source-authored-kphx-adex",
     visibilityMode: "high-contrast-nearfield",
-    contactMode: "pavement-relative-millimeter-offset",
+    contactMode: "pavement-coincident-decals",
   };
 }
 
@@ -253,8 +253,8 @@ function applyAuthoredSurfaceMaterials(THREE, authored, textures) {
         material.roughness = 0.96;
         material.metalness = 0;
         material.polygonOffset = true;
-        material.polygonOffsetFactor = -1;
-        material.polygonOffsetUnits = -1;
+        material.polygonOffsetFactor = -0.25;
+        material.polygonOffsetUnits = -0.5;
         material.userData.nearfieldBlendMode = "opaque-authored-pavement-over-aerial-background";
         node.renderOrder = Math.max(node.renderOrder || 0, 30);
         sourceDetailedSurfaceMaterialCount += 1;
@@ -294,7 +294,7 @@ function applyAuthoredSurfaceMaterials(THREE, authored, textures) {
   return { sourceDetailedSurfaceMaterialCount, enhancedMarkingMaterialCount };
 }
 
-function appendGroundStrip(positions, indices, a, b, width, y = 0.0075) {
+function appendGroundStrip(positions, indices, a, b, width, y = 0.0022) {
   const dx = b[0] - a[0];
   const dz = b[1] - a[1];
   const length = Math.hypot(dx, dz);
@@ -342,14 +342,14 @@ function buildGateLabel(THREE, gate, x, z, heading) {
     depthWrite: false,
     toneMapped: false,
     polygonOffset: true,
-    polygonOffsetFactor: -1,
-    polygonOffsetUnits: -1,
+    polygonOffsetFactor: -0.25,
+    polygonOffsetUnits: -0.5,
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = `PHX_T4_GateLabel_${gate}`;
-  mesh.position.set(x, 0.0085, z);
+  mesh.position.set(x, 0.0028, z);
   mesh.rotation.y = Math.PI / 2 - heading;
-  mesh.renderOrder = 90;
+  mesh.renderOrder = 28;
   return mesh;
 }
 
@@ -376,7 +376,7 @@ function buildTerminal4StandMarkings(THREE) {
       [stopCenter[0] - sx, stopCenter[1] - sz],
       [stopCenter[0] + sx, stopCenter[1] + sz],
       0.24,
-      0.0078,
+      0.0024,
     );
     const labelX = px + hx * 18;
     const labelZ = pz + hz * 18;
@@ -393,12 +393,12 @@ function buildTerminal4StandMarkings(THREE) {
     depthWrite: false,
     toneMapped: false,
     polygonOffset: true,
-    polygonOffsetFactor: -1,
-    polygonOffsetUnits: -1,
+    polygonOffsetFactor: -0.25,
+    polygonOffsetUnits: -0.5,
   });
   const lines = new THREE.Mesh(geometry, material);
   lines.name = "PHX_T4_StandCenterlinesAndStopBars";
-  lines.renderOrder = 85;
+  lines.renderOrder = 26;
   group.add(lines);
   group.userData.gateMarkingCount = TERMINAL4_PARKINGS.length;
   group.userData.detailLevel = "source-positioned-terminal4-stand-centerlines-labels-v2-door-aligned";

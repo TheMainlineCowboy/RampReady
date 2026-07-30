@@ -209,7 +209,7 @@ update("src/environment/authoredKphxGround.js", [
   {
     marker: "function buildTerminal4StandMarkings(THREE)",
     oldText: `function buildGateMetadata() {`,
-    newText: `function appendGroundStrip(positions, indices, a, b, width, y = 0.0075) {
+    newText: `function appendGroundStrip(positions, indices, a, b, width, y = 0.0022) {
   const dx = b[0] - a[0];
   const dz = b[1] - a[1];
   const length = Math.hypot(dx, dz);
@@ -257,14 +257,14 @@ function buildGateLabel(THREE, gate, x, z, heading) {
     depthWrite: false,
     toneMapped: false,
     polygonOffset: true,
-    polygonOffsetFactor: -1,
-    polygonOffsetUnits: -1,
+    polygonOffsetFactor: -0.25,
+    polygonOffsetUnits: -0.5,
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = \`PHX_T4_GateLabel_${"${gate}"}\`;
-  mesh.position.set(x, 0.0085, z);
+  mesh.position.set(x, 0.0028, z);
   mesh.rotation.y = -heading;
-  mesh.renderOrder = 90;
+  mesh.renderOrder = 28;
   return mesh;
 }
 
@@ -291,7 +291,7 @@ function buildTerminal4StandMarkings(THREE) {
       [stopCenter[0] - sx, stopCenter[1] - sz],
       [stopCenter[0] + sx, stopCenter[1] + sz],
       0.32,
-      0.0078,
+      0.0024,
     );
     const labelX = px - hx * 19;
     const labelZ = pz - hz * 19;
@@ -308,12 +308,12 @@ function buildTerminal4StandMarkings(THREE) {
     depthWrite: false,
     toneMapped: false,
     polygonOffset: true,
-    polygonOffsetFactor: -1,
-    polygonOffsetUnits: -1,
+    polygonOffsetFactor: -0.25,
+    polygonOffsetUnits: -0.5,
   });
   const lines = new THREE.Mesh(geometry, material);
   lines.name = "PHX_T4_StandCenterlinesAndStopBars";
-  lines.renderOrder = 85;
+  lines.renderOrder = 26;
   group.add(lines);
   group.userData.gateMarkingCount = TERMINAL4_PARKINGS.length;
   group.userData.detailLevel = "source-positioned-terminal4-stand-centerlines-labels-v1";

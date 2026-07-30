@@ -287,6 +287,11 @@ export default function RampReadyStandupTrainer({
     renderer.domElement.dataset.terminal4A1NearestGeometryMeters = "loading";
     renderer.domElement.dataset.terminal4Placement = "loading";
     renderer.domElement.dataset.terminal4A1JetwayWallDistance = "loading";
+    renderer.domElement.dataset.terminal4JetwaySourceScaleAuthority = "loading";
+    renderer.domElement.dataset.terminal4JetwaySourceGeometryMode = "loading";
+    renderer.domElement.dataset.terminal4RequiresOriginalJetwayMesh = "loading";
+    renderer.domElement.dataset.terminal4JetwayInitialState = "loading";
+    renderer.domElement.dataset.terminal4JetwayPrePushSequence = "loading";
     renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = "loading";
     renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = "loading";
     renderer.domElement.dataset.terminal4FacadeInfillCount = "loading";
@@ -308,6 +313,11 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.terminal4A1JetwayWallDistance = Number.isFinite(environment.userData.authoredTerminal4A1JetwayWallDistance)
           ? environment.userData.authoredTerminal4A1JetwayWallDistance.toFixed(3)
           : "missing";
+        renderer.domElement.dataset.terminal4JetwaySourceScaleAuthority = environment.userData.authoredTerminal4JetwaySourceScaleAuthority || "missing";
+        renderer.domElement.dataset.terminal4JetwaySourceGeometryMode = environment.userData.authoredTerminal4JetwaySourceGeometryMode || "missing";
+        renderer.domElement.dataset.terminal4RequiresOriginalJetwayMesh = String(environment.userData.authoredTerminal4RequiresOriginalJetwayMesh === true);
+        renderer.domElement.dataset.terminal4JetwayInitialState = environment.userData.authoredTerminal4JetwayInitialState || "missing";
+        renderer.domElement.dataset.terminal4JetwayPrePushSequence = environment.userData.authoredTerminal4JetwayRequiredPrePushSequence || "missing";
         renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = String(environment.userData.authoredTerminal4TerminalConnectedJetwayCount ?? 0);
         renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = String(environment.userData.authoredTerminal4SourceCutoutMaterialCount ?? 0);
         renderer.domElement.dataset.terminal4FacadeInfillCount = String(environment.userData.authoredTerminal4FacadeInfillCount ?? 0);
@@ -323,6 +333,11 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.terminal4A1NearestGeometryMeters = "load-error";
         renderer.domElement.dataset.terminal4Placement = "load-error";
         renderer.domElement.dataset.terminal4A1JetwayWallDistance = "load-error";
+        renderer.domElement.dataset.terminal4JetwaySourceScaleAuthority = "load-error";
+        renderer.domElement.dataset.terminal4JetwaySourceGeometryMode = "load-error";
+        renderer.domElement.dataset.terminal4RequiresOriginalJetwayMesh = "load-error";
+        renderer.domElement.dataset.terminal4JetwayInitialState = "load-error";
+        renderer.domElement.dataset.terminal4JetwayPrePushSequence = "load-error";
         renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = "load-error";
         renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = "load-error";
         renderer.domElement.dataset.terminal4FacadeInfillCount = "load-error";

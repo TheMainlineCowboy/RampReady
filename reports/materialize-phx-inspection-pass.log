@@ -1,33 +1,12 @@
-head=5800317f96d219a24b305fca7e67f425b2d1aa7f
-started_utc=2026-07-30T09:49:31Z
+head=61b3b9b71b31bb5ef408dcf11f4e37d32f250f16
+started_utc=2026-07-30T09:50:45Z
 Prepared Terminal 4 jetways without shrinking the airport asset: source scale retained, service bays source-qualified, and articulation requirements exposed while the original AIR_Jetway01 mesh is recovered.
 Prepared KPHX pavement-coincident markings: 1.8-3.4 mm surface offsets, minimal depth bias, and normal object occlusion.
 Prepared always-visible free-drive inspection controls with unrestricted WASD/arrow and touch-slider tug motion in both runtimes.
+Prepared honest Terminal 4 jetway runtime evidence: stock scale preserved, exact textures active, fallback geometry disclosed, and the required attached-to-retracted pre-push sequence exposed.
 Verified AIR_Jetway01 source authority: original airport dimensions and textures are preserved, aircraft-specific shrinking is forbidden, and articulation requirements remain explicit while the original mesh is recovered.
 Verified AIR_Jetway01 source-scale alignment: airport geometry remains scale 1.00, while aircraft door calibration and future articulation are handled independently.
 Verified PHX stand alignment without resizing the airport: scale-1.00 AIR_Jetway01 placement, realistic stand-line scale, visible gate labels, and non-repeating pavement wear.
-file:///home/runner/work/RampReady/RampReady/scripts/verify-terminal4-jetway-crj-v5.mjs:5
-  for (const token of tokens) if (!source.includes(token)) throw new Error(`${path}: missing source-scale jetway token ${token}`);
-                                                                 ^
-
-Error: src/environment/authoredTerminal4Visual.js: missing source-scale jetway token authoredTerminal4JetwaySourceScaleAuthority
-    at requireTokens (file:///home/runner/work/RampReady/RampReady/scripts/verify-terminal4-jetway-crj-v5.mjs:5:66)
-    at file:///home/runner/work/RampReady/RampReady/scripts/verify-terminal4-jetway-crj-v5.mjs:47:1
-    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
-    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
-
-Node.js v22.23.1
-file:///home/runner/work/RampReady/RampReady/scripts/verify-simulator-quality-inspection-pass.mjs:11
-    if (!source.includes(token)) throw new Error(`${path} is missing simulator-quality token: ${token}`);
-                                       ^
-
-Error: src/environment/authoredTerminal4Visual.js is missing simulator-quality token: authoredTerminal4JetwaySourceScaleAuthority
-    at requireTokens (file:///home/runner/work/RampReady/RampReady/scripts/verify-simulator-quality-inspection-pass.mjs:11:40)
-    at file:///home/runner/work/RampReady/RampReady/scripts/verify-simulator-quality-inspection-pass.mjs:157:25
-    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
-    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
-
-Node.js v22.23.1
-exit_code=1
+Terminal 4 jetway source authority verified: stock scale 1.00 is protected, exact textures and placement remain active, fallback geometry is disclosed, animation requirements are explicit, facade repetition is reduced, markings are pavement-coincident, and free-drive inspection controls are visible.
+RampReady PHX inspection pass verified for draft validation: unrestricted tug inspection, pavement-coincident markings, source-qualified service bays, irregular lower-wall facade fits, stock-scale AIR_Jetway01 placement and exact textures are active. Promotion remains blocked while the original stock skinned mesh is unavailable and fallback geometry is disclosed.
+exit_code=0

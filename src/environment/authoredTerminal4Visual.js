@@ -288,6 +288,12 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4JetwayVisualCount = sourcePlacedJetways.userData.jetwayCount;
   environment.userData.authoredTerminal4TerminalConnectedJetwayCount = sourcePlacedJetways.userData.terminalConnectedJetwayCount;
   environment.userData.authoredTerminal4A1JetwayWallDistance = sourcePlacedJetways.userData.a1TerminalWallDistance;
+  environment.userData.authoredTerminal4JetwaySourceScaleAuthority = sourcePlacedJetways.userData.sourceScaleAuthority;
+  environment.userData.authoredTerminal4JetwaySourceGeometryMode = sourcePlacedJetways.userData.sourceGeometryMode;
+  environment.userData.authoredTerminal4RequiresOriginalJetwayMesh = sourcePlacedJetways.userData.requiresOriginalSourceMesh === true;
+  environment.userData.authoredTerminal4JetwayInitialState = sourcePlacedJetways.userData.initialJetwayState;
+  environment.userData.authoredTerminal4JetwayRequiredPrePushSequence = sourcePlacedJetways.userData.requiredPrePushSequence;
+  environment.userData.authoredTerminal4JetwayMotionLimits = sourcePlacedJetways.userData.jetwayMotionLimits;
   environment.userData.authoredTerminal4FacadeInfillCount = sourcePlacedJetways.userData.facadeInfillCount;
   environment.userData.authoredTerminal4LowerFacadeFitCount = sourcePlacedJetways.userData.lowerFacadeFitCount;
   environment.userData.authoredTerminal4JetwayTextureAuthority = sourcePlacedJetways.userData.jetwayTextureAuthority;

@@ -12,7 +12,7 @@ export const SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE = Object.freeze({
   coordinateFrame: "A1-local; X=north, Y=up, Z=east",
   sceneOffset: Object.freeze([0, 0, 6.2]),
   highDetailRadiusMeters: 240,
-  detailLevel: "fsx-air-jetway01-exact-textured-crj-scale-v4",
+  detailLevel: "fsx-air-jetway01-exact-textured-source-scale-articulated-v5",
 });
 
 const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
@@ -59,7 +59,9 @@ const AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.55;
 // Keep only a limited set of deliberate ground-service openings. The legacy
 // gate atlas repeats the same black bay at nearly every module, which is not
 // representative of the Terminal 4 ramp facade.
-const OPEN_SERVICE_BAY_GATES = new Set(["A5", "A13", "A21", "B5", "B13", "B21"]);
+const OPEN_SERVICE_BAY_GATES = new Set(["A13", "A21", "B13", "B21"]);
+const CLOSED_SERVICE_DOOR_GATES = new Set(["A3", "A8", "A17", "A24", "B2", "B7", "B14", "B19", "B26"]);
+const FACADE_VENT_GATES = new Set(["A6", "A11", "A19", "A27", "B4", "B10", "B17", "B24"]);
 
 function addInstances(THREE, group, geometry, material, transforms, name, castShadow = true) {
   if (!transforms.length) return null;
@@ -253,6 +255,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   let a1TerminalWallDistance = null;
   let terminal4FacadeInfillCount = 0;
   let terminal4LowerFacadeFitCount = 0;
+  let terminal4OpenServiceBayCount = 0;
 
   for (const jetway of jetways) {
     const parking = parkingByGate.get(jetway.g);
@@ -313,8 +316,11 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
     if (terminalWallDistance != null) terminalConnectedCount += 1;
     if (jetway.g === "A1") a1TerminalWallDistance = terminalWallDistance;
 
-    const gateNumber = Number.parseInt(jetway.g.slice(1), 10);
-    const keepServiceBayOpen = OPEN_SERVICE_BAY_GATES.has(jetway.g);
+    const sourceFacadeRecessMeters = lowerFacadeWallDistance != null && terminalWallDistance != null
+      ? lowerFacadeWallDistance - terminalWallDistance
+      : 0;
+    const keepServiceBayOpen = OPEN_SERVICE_BAY_GATES.has(jetway.g) && sourceFacadeRecessMeters >= 1.4;
+    if (keepServiceBayOpen) terminal4OpenServiceBayCount += 1;
     const lowerWallFit = lowerFacadeWallDistance ?? terminalWallDistance;
     if (lowerWallFit != null && !keepServiceBayOpen) {
       // Measure the wall at ramp level rather than reusing the elevated rotunda
@@ -328,14 +334,14 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
         scale: [5.72, 2.58, 0.42],
       });
       terminal4LowerFacadeFitCount += 1;
-      if (Number.isInteger(gateNumber) && gateNumber % 3 === 0) {
+      if (CLOSED_SERVICE_DOOR_GATES.has(jetway.g)) {
         transforms.facadeDoor.push({
           position: [facadeX + px * 1.35 + ux * 0.56, 0.94, facadeZ + pz * 1.35 + uz * 0.56],
           yaw,
           scale: [1.05, 1.78, 0.12],
         });
       }
-      if (Number.isInteger(gateNumber) && gateNumber % 2 === 0) {
+      if (FACADE_VENT_GATES.has(jetway.g)) {
         transforms.facadeVent.push({
           position: [facadeX - px * 1.45 + ux * 0.56, 1.54, facadeZ - pz * 1.45 + uz * 0.56],
           yaw,
@@ -567,12 +573,22 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   group.userData.a1TerminalWallDistance = a1TerminalWallDistance;
   group.userData.facadeInfillCount = terminal4FacadeInfillCount;
   group.userData.lowerFacadeFitCount = terminal4LowerFacadeFitCount;
-  group.userData.openServiceBayCount = OPEN_SERVICE_BAY_GATES.size;
-  group.userData.facadeInfillAuthority = "source-positioned-gate-module-closures-with-limited-service-openings";
+  group.userData.openServiceBayCount = terminal4OpenServiceBayCount;
+  group.userData.sourceScaleAuthority = "airport-authored-AIR_Jetway01-scale-preserved-no-aircraft-specific-shrink";
+  group.userData.sourceGeometryMode = "procedural-articulated-fallback-pending-original-AIR_Jetway01-mesh-recovery";
+  group.userData.requiresOriginalSourceMesh = true;
+  group.userData.jetwayMotionLimits = Object.freeze({
+    rotundaYawDegrees: Object.freeze([-92, 92]),
+    cabinHeightMeters: Object.freeze([2.35, 5.75]),
+    telescopingExtensionMeters: Object.freeze([11.5, 29.5]),
+  });
+  group.userData.initialJetwayState = "attached-to-aircraft-door";
+  group.userData.requiredPrePushSequence = "retract-bellows-clear-door-telescope-in-rotate-to-park";
+  group.userData.facadeInfillAuthority = "source-recess-qualified-service-bays-with-irregular-closed-facade-details";
   group.userData.terminalConnectionAuthority = "raycast-and-source-vertex-fit-to-authored-terminal-mesh";
   group.userData.detailLevel = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.detailLevel;
   group.userData.coordinateFrame = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.coordinateFrame;
-  group.userData.visualAuthority = "faithful-reconstruction-of-referenced-fsx-air-jetway01-library-object";
+  group.userData.visualAuthority = "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered";
   group.userData.usesTerminalBuildingTextures = false;
   group.userData.usesExactRecoveredJetwayTexture = Boolean(sourceTextures.diffuse);
   group.userData.usesExactRecoveredJetwayLightmap = Boolean(sourceTextures.emissive);
