@@ -1,6 +1,6 @@
 RampReady AIR_Jetway01 source inventory
-generated_utc=2026-07-30T07:21:21Z
-rampready_head=12b86acda747e9bfb43ef1a530df2b294d0c1c73
+generated_utc=2026-07-30T07:22:59Z
+rampready_head=58d5db6e05f6bb98f0c9b091e44739bd83984b14
 skyharbor_commit=2e6642778c9c88eac6a82b21063763cc78be7cfe
 
 == RampReady candidate files ==
