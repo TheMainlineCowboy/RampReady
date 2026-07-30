@@ -9,32 +9,32 @@ const webServerCommand = requestedWebServerCommand.includes("prepare:terminal4-r
   ? requestedWebServerCommand
   : `${terminal4Preparation} && ${requestedWebServerCommand}`;
 
-async function applyKphxSourceAerialIsolationBeforeServer() {
+async function applyKphxConcreteIsolationBeforeServer() {
   const isKphxDiagnostic = process.argv.some((argument) => argument.includes("kphx-ground-runtime.spec.js"));
   if (!isKphxDiagnostic || externalBaseURL) return;
 
   const assetsDirectory = path.resolve("dist/assets");
   const files = (await readdir(assetsDirectory)).filter((file) => file.endsWith(".js"));
-  const sourceAerialGroup = /(return ([A-Za-z_$][\w$]*)\.add\(\.\.\.[A-Za-z_$][\w$]*\),)\2\.userData\.textureMode=/;
+  const initialConcrete = /([A-Za-z_$][\w$]*)\.name==="concrete"\?\(\1\.visible=!0,/;
   let patchCount = 0;
 
   for (const file of files) {
     const filePath = path.join(assetsDirectory, file);
     let body = await readFile(filePath, "utf8");
-    if (sourceAerialGroup.test(body) && body.includes("PHX_KPHX_SourceAuthoredPhotoGround_Tiled")) {
-      body = body.replace(sourceAerialGroup, (_statement, prefix, groupName) =>
-        `${prefix}${groupName}.visible=!1,${groupName}.userData.textureMode=`);
+    if (initialConcrete.test(body)) {
+      body = body.replace(initialConcrete, (statement, materialName) =>
+        statement.replace(`${materialName}.visible=!0`, `${materialName}.visible=!1`));
       patchCount += 1;
     }
     await writeFile(filePath, body, "utf8");
   }
 
   if (patchCount !== 1) {
-    throw new Error(`KPHX pre-server source-aerial isolation expected 1 patch, found ${patchCount}`);
+    throw new Error(`KPHX pre-server concrete isolation expected 1 patch, found ${patchCount}`);
   }
 }
 
-await applyKphxSourceAerialIsolationBeforeServer();
+await applyKphxConcreteIsolationBeforeServer();
 
 export default defineConfig({
   testDir: "./tests/browser",
