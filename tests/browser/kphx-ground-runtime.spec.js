@@ -76,13 +76,16 @@ async function frameA1Chase(page, canvas) {
 test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and pavement-coincident markings", async ({ page }) => {
   test.setTimeout(300_000);
   await page.setViewportSize({ width: 1440, height: 900 });
+  let shadowPatchCount = 0;
   await page.route("**/assets/*.js", async (route) => {
     const response = await route.fetch();
     let body = await response.text();
     const shadowOn = "s.castShadow=!1,s.receiveShadow=!0;const a=Array.isArray(s.material)?s.material:[s.material]";
     const shadowOff = "s.castShadow=!1,s.receiveShadow=!1;const a=Array.isArray(s.material)?s.material:[s.material]";
-    if (!body.includes(shadowOn)) throw new Error("KPHX ground shadow diagnostic could not locate the authored-ground receiveShadow assignment");
-    body = body.replace(shadowOn, shadowOff);
+    if (body.includes(shadowOn)) {
+      body = body.replace(shadowOn, shadowOff);
+      shadowPatchCount += 1;
+    }
     await route.fulfill({ response, body });
   });
 
@@ -100,6 +103,7 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
 
   const canvas = await launchStandup(page);
+  expect(shadowPatchCount).toBe(1);
   await expect.poll(
     async () => canvas.getAttribute("data-environment-source"),
     { timeout: 90_000, intervals: [500, 1_000, 2_000] },
