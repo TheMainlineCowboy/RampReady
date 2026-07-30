@@ -8,6 +8,7 @@ on:
     paths:
       - scripts/audit-kphx-jetways-and-terminal-primitives.mjs
       - scripts/discover-kphx-freeware-archive.mjs
+      - scripts/recover-kphx-exact-freeware-textures.mjs
       - .github/workflows/audit-kphx-jetways-terminal.yml
 
 permissions:
@@ -20,35 +21,38 @@ concurrency:
 jobs:
   audit-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - name: Check out exact source commit
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
-          fetch-depth: 20
+          fetch-depth: 30
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Decode and preserve exact source evidence
+      - name: Decode, recover and preserve exact source evidence
         id: audit
         shell: bash
         run: |
-          mkdir -p reports
+          mkdir -p reports source-assets/kphx-exact-terminal4
           set +e
           node scripts/audit-kphx-jetways-and-terminal-primitives.mjs reports/kphx-jetway-terminal-audit.json > reports/kphx-jetway-terminal-audit.log 2>&1
           audit_exit=$?
           node scripts/discover-kphx-freeware-archive.mjs reports/kphx-freeware-download-discovery.json > reports/kphx-freeware-download-discovery.log 2>&1
           discovery_exit=$?
+          node scripts/recover-kphx-exact-freeware-textures.mjs source-assets/kphx-exact-terminal4 reports/kphx-exact-texture-recovery.json > reports/kphx-exact-texture-recovery.log 2>&1
+          recovery_exit=$?
           set -e
 
-          AUDIT_EXIT="$audit_exit" DISCOVERY_EXIT="$discovery_exit" node --input-type=module <<'NODE'
+          AUDIT_EXIT="$audit_exit" DISCOVERY_EXIT="$discovery_exit" RECOVERY_EXIT="$recovery_exit" node --input-type=module <<'NODE'
           import fs from "node:fs";
           const exitCode = Number(process.env.AUDIT_EXIT ?? 1);
           const discoveryExitCode = Number(process.env.DISCOVERY_EXIT ?? 1);
+          const recoveryExitCode = Number(process.env.RECOVERY_EXIT ?? 1);
           let valid = false;
           let summary = null;
           let validationError = null;
@@ -78,8 +82,21 @@ jobs:
               exactFilesConfirmed: discovery.exactFilesConfirmedByPublishedInventory?.length ?? 0,
             };
           }
+          let recoverySummary = null;
+          if (fs.existsSync("reports/kphx-exact-texture-recovery.json")) {
+            const recovery = JSON.parse(fs.readFileSync("reports/kphx-exact-texture-recovery.json", "utf8"));
+            recoverySummary = recovery.manifest ? {
+              sourceArchiveBytes: recovery.manifest.sourceArchiveBytes,
+              sourceArchiveSha256: recovery.manifest.sourceArchiveSha256,
+              sourceArchiveEntryCount: recovery.manifest.sourceArchiveEntryCount,
+              exactRecoveredFileCount: recovery.manifest.exactRecoveredFileCount,
+            } : {
+              conclusion: recovery.conclusion,
+              httpSteps: recovery.steps?.length ?? 0,
+            };
+          }
           const status = {
-            schemaVersion: 2,
+            schemaVersion: 3,
             sourceSha: process.env.GITHUB_SHA,
             generatedAtUtc: new Date().toISOString(),
             conclusion: valid ? "success" : "failure",
@@ -91,6 +108,11 @@ jobs:
               conclusion: discoveryExitCode === 0 ? "success" : "failure",
               summary: discoverySummary,
             },
+            exactTextureRecovery: {
+              exitCode: recoveryExitCode,
+              conclusion: recoveryExitCode === 0 ? "success" : "failure",
+              summary: recoverySummary,
+            },
           };
           fs.writeFileSync("reports/kphx-jetway-terminal-audit-status.json", `${JSON.stringify(status, null, 2)}\n`);
           console.log(JSON.stringify(status, null, 2));
@@ -99,10 +121,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f reports/kphx-jetway-terminal-audit.log reports/kphx-jetway-terminal-audit-status.json
-          git add -f reports/kphx-freeware-download-discovery.log
-          for file in reports/kphx-jetway-terminal-audit.json reports/kphx-freeware-download-discovery.json; do
+          git add -f reports/kphx-freeware-download-discovery.log reports/kphx-exact-texture-recovery.log
+          for file in reports/kphx-jetway-terminal-audit.json reports/kphx-freeware-download-discovery.json reports/kphx-exact-texture-recovery.json; do
             if [ -f "$file" ]; then git add -f "$file"; fi
           done
+          if [ -f source-assets/kphx-exact-terminal4/manifest.json ]; then
+            git add -f source-assets/kphx-exact-terminal4
+          fi
 
           if ! git diff --cached --quiet; then
             git commit -m "Record exact KPHX source recovery evidence [skip ci]"
@@ -116,8 +141,13 @@ jobs:
             echo "KPHX source audit failed with exit code $audit_exit"
             exit "$audit_exit"
           fi
+          if [ "$recovery_exit" -ne 0 ]; then
+            echo "KPHX exact texture recovery failed with exit code $recovery_exit"
+            exit "$recovery_exit"
+          fi
           node --input-type=module <<'NODE'
           import fs from "node:fs";
           const status = JSON.parse(fs.readFileSync("reports/kphx-jetway-terminal-audit-status.json", "utf8"));
           if (status.conclusion !== "success") throw new Error(status.validationError || "KPHX source audit validation failed");
+          if (status.exactTextureRecovery?.conclusion !== "success") throw new Error("KPHX exact texture recovery did not succeed");
           NODE
