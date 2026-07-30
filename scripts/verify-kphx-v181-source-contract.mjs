@@ -75,8 +75,8 @@ for (const token of [
   "AIR_Jetway01_UnderbridgeServiceCable",
   "group.position.fromArray(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset)",
   "highDetailRadiusMeters: 240",
-  'detailLevel: "fsx-air-jetway01-exact-textured-crj-scale-v5"',
-  'visualAuthority = "CRJ700-scaled-reconstruction-of-referenced-fsx-air-jetway01-library-object"',
+  'detailLevel: "fsx-air-jetway01-exact-textured-source-scale-articulated-v5"',
+  'visualAuthority = "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered"',
   "usesTerminalBuildingTextures = false",
   "proceduralBuildingBoxReuse = false",
   "Terminal4_LowerFacadeInfillPanels",
@@ -88,15 +88,20 @@ for (const token of [
   "sourceFacadeRecessMeters",
   "facadeInfillCount",
   "lowerFacadeFitCount",
-  "a1DoorContactErrorMeters",
   "M1DGJETWAY exact recovered original freeware texture and lightmap",
   "usesExactRecoveredJetwayTexture",
-  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
-  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.28",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35",
   "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.55",
   "distance - AIR_JETWAY01_CONTACT_CLEARANCE_METERS",
+  "sourceScaleAuthority",
+  "sourceGeometryMode",
+  "requiresOriginalSourceMesh",
+  "jetwayMotionLimits",
+  'initialJetwayState = "attached-to-aircraft-door"',
+  "requiredPrePushSequence",
 ]) {
-  if (!files.jetways.includes(token)) throw new Error(`AIR_Jetway01 visual contract missing ${token}`);
+  if (!files.jetways.includes(token)) throw new Error(`AIR_Jetway01 source-scale contract missing ${token}`);
 }
 for (const forbidden of [
   "KPHX_SourcePlaced_JetwayOuterTunnels",
@@ -106,11 +111,14 @@ for (const forbidden of [
   "PHX source jetway cabin",
   "function sourceTexture",
   "textures.get(reference.toUpperCase())",
-  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
   "gateNumber % 3",
   "gateNumber % 2",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.28",
+  "createArchedTunnelGeometry(THREE, 2.08, 2.02, 0.18)",
+  "scale: [2.24, 2.12, wallConnectorLength]",
 ]) {
-  if (files.jetways.includes(forbidden)) throw new Error(`Obsolete box-built, repetitive-facade, or misaligned jetway returned: ${forbidden}`);
+  if (files.jetways.includes(forbidden)) throw new Error(`Obsolete box-built, repetitive-facade, or aircraft-specific jetway shrink returned: ${forbidden}`);
 }
 if (files.jetways.includes("CanvasTexture")) throw new Error("AIR_Jetway01 must not depend on generated canvas textures");
 
@@ -236,4 +244,4 @@ for (const token of [
 ]) {
   if (!files.prepare.includes(token)) throw new Error(`KPHX browser evidence missing ${token}`);
 }
-console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source placements, exact original ADEX A1 placement, real MDLX terminal geometry, exact source lightmaps, CRJ700-scale source-placed jetways, source-qualified service bays, irregular lower-facade details, native-resolution tiled full-airport aerial ground, source-authored near-field concrete, pavement-coincident ADEX stand markings, hidden nonphotographic projected-surface tints, and unrotated A1-local ground.`);
+console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} scale-1.00 stock AIR_Jetway01 placements, exact original ADEX A1 placement, real MDLX terminal geometry, exact source lightmaps, source-scale jetway textures and articulation contract, source-qualified service bays, irregular lower-facade details, native-resolution tiled full-airport aerial ground, source-authored near-field concrete, pavement-coincident ADEX stand markings, hidden nonphotographic projected-surface tints, and unrotated A1-local ground. Original stock AIR_Jetway01 mesh recovery remains required before simulator-quality promotion.`);
