@@ -5,7 +5,11 @@ const trainerPath = new URL("../src/components/RampReadyTrainerStable.jsx", impo
 const terminal4TrainerPath = new URL("../src/components/RampReadyStandupTrainerTerminal4.jsx", import.meta.url);
 const packagePath = new URL("../package.json", import.meta.url);
 const originalSource = await readFile(trainerPath, "utf8");
-const originalTerminal4Source = await readFile(terminal4TrainerPath, "utf8");
+const generatedMobileImport = 'import "./mobile-hud-v9.css";';
+const preparedTerminal4Source = await readFile(terminal4TrainerPath, "utf8");
+const originalTerminal4Source = preparedTerminal4Source
+  .replace(`${generatedMobileImport}\n`, "")
+  .replace(`\n${generatedMobileImport}`, "");
 const originalPackage = await readFile(packagePath, "utf8");
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
@@ -57,8 +61,8 @@ try {
   if (restoredSource !== originalSource) {
     throw new Error("RampReady production build failed to restore the tracked trainer source exactly.");
   }
-  if (restoredTerminal4Source !== originalTerminal4Source) {
-    throw new Error("RampReady production build failed to restore the generated Terminal 4 trainer source exactly.");
+  if (restoredTerminal4Source !== originalTerminal4Source || restoredTerminal4Source.includes(generatedMobileImport)) {
+    throw new Error("RampReady production build failed to restore the committed Terminal 4 trainer baseline exactly.");
   }
   if (currentPackage !== originalPackage) {
     throw new Error("RampReady production build unexpectedly modified package.json.");
