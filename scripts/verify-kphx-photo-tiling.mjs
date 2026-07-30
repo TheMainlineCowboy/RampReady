@@ -44,13 +44,26 @@ if (coveredPixels.size !== 25 * 9) {
 
 for (const token of [
   'textureMode: "tiled-native-source-resolution-v2"',
+  'underlayMode: "neutral-airport-base-below-source-aerial-alpha"',
   "buildTiledPhotoGround",
   "sceneBoundsForTile",
   "manifest.tiles.map",
   "maxRuntimeTextureDimension: 1024",
   "authoredPhotoRuntimeTileCount",
+  "buildAirportBaseUnderlay",
+  "PHX_KPHX_AirportBasePhotoUnderlay",
+  "PHX source-aerial transparent-cutout pavement underlay",
+  "new THREE.MeshBasicMaterial",
+  "photoGround.userData.underlayMode",
+  "authoredPhotoUnderlayMaterialCount",
 ]) {
   if (!runtime.includes(token)) throw new Error(`PHX tiled runtime contract missing ${token}`);
 }
+for (const forbidden of [
+  "mesh.receiveShadow = true",
+  "new THREE.MeshStandardMaterial({\n    name,\n    map: texture",
+]) {
+  if (runtime.includes(forbidden)) throw new Error(`PHX source aerial returned to shadow-darkened rendering: ${forbidden}`);
+}
 
-console.log(`Verified PHX native-resolution tiled ground: ${manifest.tiles.length} WebGL-safe tiles, ${totalBytes} bytes, full 6400x2304 source coverage.`);
+console.log(`Verified PHX native-resolution tiled ground: ${manifest.tiles.length} WebGL-safe tiles, ${totalBytes} bytes, full 6400x2304 source coverage, unlit authored color, and a neutral pavement underlay beneath source alpha cutouts.`);
