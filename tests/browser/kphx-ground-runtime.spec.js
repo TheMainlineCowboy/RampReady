@@ -110,6 +110,9 @@ test("loads source-correct PHX scenery with connected Terminal 4 jetways and pav
   expect(a1WallDistance).toBeLessThan(18);
   expect(Number(runtime.terminal4TerminalConnectedJetwayCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4SourceCutoutMaterialCount)).toBeGreaterThan(0);
+  expect(Number(runtime.terminal4FacadeInfillCount)).toBeGreaterThan(45);
+  expect(Number(runtime.terminal4OpenServiceBayCount)).toBe(6);
+  expect(runtime.terminal4JetwayDetailLevel).toBe("fsx-air-jetway01-crj-scale-articulated-v3");
 
   for (const suffix of SOURCE_ASSETS) {
     await expect.poll(

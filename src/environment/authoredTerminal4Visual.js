@@ -274,6 +274,9 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4JetwayVisualCount = sourcePlacedJetways.userData.jetwayCount;
   environment.userData.authoredTerminal4TerminalConnectedJetwayCount = sourcePlacedJetways.userData.terminalConnectedJetwayCount;
   environment.userData.authoredTerminal4A1JetwayWallDistance = sourcePlacedJetways.userData.a1TerminalWallDistance;
+  environment.userData.authoredTerminal4FacadeInfillCount = sourcePlacedJetways.userData.facadeInfillCount;
+  environment.userData.authoredTerminal4OpenServiceBayCount = sourcePlacedJetways.userData.openServiceBayCount;
+  environment.userData.authoredTerminal4FacadeInfillAuthority = sourcePlacedJetways.userData.facadeInfillAuthority;
   environment.userData.authoredTerminal4JetwayTerminalConnectionAuthority = sourcePlacedJetways.userData.terminalConnectionAuthority;
   environment.userData.authoredTerminal4JetwayDetailLevel = sourcePlacedJetways.userData.detailLevel;
   environment.userData.authoredTerminal4Position = [...AUTHORED_TERMINAL4_PROFILE.position];

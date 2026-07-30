@@ -73,6 +73,9 @@ prepared = prepared
     renderer.domElement.dataset.terminal4A1JetwayWallDistance = "loading";
     renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = "loading";
     renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = "loading";
+    renderer.domElement.dataset.terminal4FacadeInfillCount = "loading";
+    renderer.domElement.dataset.terminal4OpenServiceBayCount = "loading";
+    renderer.domElement.dataset.terminal4JetwayDetailLevel = "loading";
     renderer.domElement.dataset.groundMarkingContactMode = "loading";
     const terminalLoad = installAuthoredTerminal4Visual(THREE, environment)
       .then((terminal) => {
@@ -88,6 +91,9 @@ prepared = prepared
           : "missing";
         renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = String(environment.userData.authoredTerminal4TerminalConnectedJetwayCount ?? 0);
         renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = String(environment.userData.authoredTerminal4SourceCutoutMaterialCount ?? 0);
+        renderer.domElement.dataset.terminal4FacadeInfillCount = String(environment.userData.authoredTerminal4FacadeInfillCount ?? 0);
+        renderer.domElement.dataset.terminal4OpenServiceBayCount = String(environment.userData.authoredTerminal4OpenServiceBayCount ?? 0);
+        renderer.domElement.dataset.terminal4JetwayDetailLevel = environment.userData.authoredTerminal4JetwayDetailLevel || "missing";
         return terminal;
       })
       .catch((error) => {
@@ -97,6 +103,9 @@ prepared = prepared
         renderer.domElement.dataset.terminal4A1JetwayWallDistance = "load-error";
         renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = "load-error";
         renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = "load-error";
+        renderer.domElement.dataset.terminal4FacadeInfillCount = "load-error";
+        renderer.domElement.dataset.terminal4OpenServiceBayCount = "load-error";
+        renderer.domElement.dataset.terminal4JetwayDetailLevel = "load-error";
         console.error("RampReady PHX Terminal 4 visual load failed", error);
         setMessage(\`PHX Terminal 4 failed to load: \${error.message}\`);
         throw error;
