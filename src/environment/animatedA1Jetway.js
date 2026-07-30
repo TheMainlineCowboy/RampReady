@@ -154,7 +154,7 @@ export function buildAnimatedA1Jetway(THREE, materials, layout) {
   const bridgeStart = layout.bridgeStart;
   const attachedCabinY = layout.cabinY;
   const rotundaY = layout.rotundaY;
-  const retractedBridgeEnd = Math.min(attachedBridgeEnd - 1.5, 11.5);
+  const retractedBridgeEnd = Math.min(attachedBridgeEnd, 11.5);
   const parkedCabinY = clamp(attachedCabinY + 0.72, 2.35, 5.75);
   const parkedYawOffset = -0.54;
   const attachedBridgeLength = attachedBridgeEnd - bridgeStart;
