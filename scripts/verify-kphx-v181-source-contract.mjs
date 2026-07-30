@@ -75,19 +75,24 @@ for (const token of [
   "AIR_Jetway01_UnderbridgeServiceCable",
   "group.position.fromArray(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset)",
   "highDetailRadiusMeters: 240",
-  'detailLevel: "fsx-air-jetway01-exact-textured-crj-scale-v4"',
-  'visualAuthority = "faithful-reconstruction-of-referenced-fsx-air-jetway01-library-object"',
+  'detailLevel: "fsx-air-jetway01-exact-textured-crj-scale-v5"',
+  'visualAuthority = "CRJ700-scaled-reconstruction-of-referenced-fsx-air-jetway01-library-object"',
   "usesTerminalBuildingTextures = false",
   "proceduralBuildingBoxReuse = false",
   "Terminal4_LowerFacadeInfillPanels",
   "Terminal4_ClosedServiceDoors",
+  "Terminal4_FacadeVentGrilles",
   "OPEN_SERVICE_BAY_GATES",
+  "CLOSED_SERVICE_DOOR_GATES",
+  "FACADE_VENT_GATES",
+  "sourceFacadeRecessMeters",
   "facadeInfillCount",
   "lowerFacadeFitCount",
+  "a1DoorContactErrorMeters",
   "M1DGJETWAY exact recovered original freeware texture and lightmap",
   "usesExactRecoveredJetwayTexture",
-  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
-  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.3",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.28",
   "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.55",
   "distance - AIR_JETWAY01_CONTACT_CLEARANCE_METERS",
 ]) {
@@ -101,8 +106,11 @@ for (const forbidden of [
   "PHX source jetway cabin",
   "function sourceTexture",
   "textures.get(reference.toUpperCase())",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
+  "gateNumber % 3",
+  "gateNumber % 2",
 ]) {
-  if (files.jetways.includes(forbidden)) throw new Error(`Obsolete box-built or terminal-textured jetway returned: ${forbidden}`);
+  if (files.jetways.includes(forbidden)) throw new Error(`Obsolete box-built, repetitive-facade, or misaligned jetway returned: ${forbidden}`);
 }
 if (files.jetways.includes("CanvasTexture")) throw new Error("AIR_Jetway01 must not depend on generated canvas textures");
 
@@ -228,4 +236,4 @@ for (const token of [
 ]) {
   if (!files.prepare.includes(token)) throw new Error(`KPHX browser evidence missing ${token}`);
 }
-console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source placements, exact original ADEX A1 placement, real MDLX terminal geometry, exact source lightmaps, detailed source-placed jetway visuals, native-resolution tiled full-airport aerial ground, source-authored near-field concrete, enhanced ADEX stand markings, hidden nonphotographic projected-surface tints, and unrotated A1-local ground.`);
+console.log(`Verified source-authored KPHX contract: ${parkingCount} Terminal 4 stands, ${jetwayCount} source placements, exact original ADEX A1 placement, real MDLX terminal geometry, exact source lightmaps, CRJ700-scale source-placed jetways, source-qualified service bays, irregular lower-facade details, native-resolution tiled full-airport aerial ground, source-authored near-field concrete, pavement-coincident ADEX stand markings, hidden nonphotographic projected-surface tints, and unrotated A1-local ground.`);
