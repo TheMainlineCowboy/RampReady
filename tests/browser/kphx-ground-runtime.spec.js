@@ -165,7 +165,9 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
   await page.waitForTimeout(1_200);
   await captureCanvas(page, canvas, "kphx-a1-source-scale-jetway-chase.png");
 
-  await page.locator("select.rr-view-select").evaluate((select) => {
+  await page.evaluate(() => {
+    const select = document.querySelector("select.rr-view-select");
+    if (!select) throw new Error("Camera view selector is missing");
     select.value = "overhead";
     select.dispatchEvent(new Event("input", { bubbles: true }));
     select.dispatchEvent(new Event("change", { bubbles: true }));
