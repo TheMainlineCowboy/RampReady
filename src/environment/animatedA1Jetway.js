@@ -50,6 +50,38 @@ function cylinder(THREE, material, name, radius = 1, height = 1, segments = 18) 
   return configureMesh(new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, height, segments), material), name);
 }
 
+function createTunnelRib(THREE, material, name, width, height, roofRise) {
+  const rib = new THREE.Group();
+  rib.name = name;
+  const halfWidth = width / 2;
+  const shoulder = height / 2 - roofRise * 0.5;
+  const postHeight = height - roofRise * 0.36;
+  for (const side of [-1, 1]) {
+    const post = box(THREE, material, `${name} side post ${side}`, 0.065, postHeight, 0.065);
+    post.position.set(side * halfWidth, -roofRise * 0.16, 0);
+    rib.add(post);
+  }
+  const floor = box(THREE, material, `${name} floor crossmember`, width, 0.065, 0.065);
+  floor.position.y = -height / 2;
+  rib.add(floor);
+  const shoulderBar = box(THREE, material, `${name} roof shoulder`, width * 0.82, 0.06, 0.065);
+  shoulderBar.position.y = shoulder;
+  rib.add(shoulderBar);
+  const crown = box(THREE, material, `${name} roof crown`, width * 0.38, 0.055, 0.065);
+  crown.position.y = height / 2;
+  rib.add(crown);
+  return rib;
+}
+
+function positionTunnelRibs(ribs, length, margin) {
+  const usable = Math.max(0.1, length - margin * 2);
+  ribs.forEach((rib, index) => {
+    const t = ribs.length === 1 ? 0.5 : index / (ribs.length - 1);
+    rib.position.set(0, 0, -length / 2 + margin + usable * t);
+    rib.visible = length > margin * 2;
+  });
+}
+
 export function buildAnimatedA1Jetway(THREE, materials, layout) {
   if (!layout) throw new Error("A1 animated jetway layout is required");
   const root = new THREE.Group();
@@ -66,6 +98,20 @@ export function buildAnimatedA1Jetway(THREE, materials, layout) {
   );
   root.add(outer, inner);
 
+  const outerDetailRoot = new THREE.Group();
+  outerDetailRoot.name = "A1 AIR_Jetway01 outer tunnel structural ribs";
+  const outerRibs = Array.from({ length: 11 }, (_, index) =>
+    createTunnelRib(THREE, materials.trim, `A1 outer tunnel rib ${index + 1}`, 2.48, 2.38, 0.28));
+  outerDetailRoot.add(...outerRibs);
+  root.add(outerDetailRoot);
+
+  const innerDetailRoot = new THREE.Group();
+  innerDetailRoot.name = "A1 AIR_Jetway01 inner tunnel structural ribs";
+  const innerRibs = Array.from({ length: 9 }, (_, index) =>
+    createTunnelRib(THREE, materials.trim, `A1 inner tunnel rib ${index + 1}`, 2.22, 2.22, 0.24));
+  innerDetailRoot.add(...innerRibs);
+  root.add(innerDetailRoot);
+
   const overlapBand = box(THREE, materials.trim, "A1 AIR_Jetway01 telescoping overlap band");
   root.add(overlapBand);
 
@@ -77,6 +123,17 @@ export function buildAnimatedA1Jetway(THREE, materials, layout) {
   );
   cabin.scale.set(1, 1, 2.15);
   cabinRoot.add(cabin);
+
+  const cabinDoor = box(
+    THREE,
+    materials.cabinDoor || materials.cabin,
+    "A1 AIR_Jetway01 source-textured cabin service door",
+    0.045,
+    1.86,
+    0.82,
+  );
+  cabinDoor.position.set(-1.225, -0.03, -0.12);
+  cabinRoot.add(cabinDoor);
 
   const frontWindow = box(THREE, materials.glass, "A1 AIR_Jetway01 cabin front window", 1.94, 0.68, 0.05);
   frontWindow.position.set(0, 0.34, 1.1);
@@ -131,12 +188,19 @@ export function buildAnimatedA1Jetway(THREE, materials, layout) {
     const sleeve = cylinder(THREE, materials.innerShell, `A1 lift sleeve ${side}`, 0.32, 1.7, 16);
     sleeve.position.set(side * 0.52, 1.25, 0);
     bogieRoot.add(sleeve);
+    const brace = box(THREE, materials.metal, `A1 bogie diagonal brace ${side}`, 0.09, 1.45, 0.09);
+    brace.position.set(side * 0.78, 1.12, -0.22);
+    brace.rotation.z = side * -0.42;
+    bogieRoot.add(brace);
     for (const fore of [-0.38, 0.38]) {
       const wheel = cylinder(THREE, materials.tire, `A1 wheel ${side} ${fore}`, 0.36, 0.24, 18);
       wheel.rotation.z = Math.PI / 2;
       wheel.position.set(side * 0.9, 0.42, fore);
       bogieRoot.add(wheel);
     }
+    const marker = box(THREE, materials.warning, `A1 bogie safety marker ${side}`, 0.22, 0.22, 0.08);
+    marker.position.set(side * 1.16, 0.88, 0.22);
+    bogieRoot.add(marker);
   }
   root.add(bogieRoot);
 
@@ -154,8 +218,15 @@ export function buildAnimatedA1Jetway(THREE, materials, layout) {
     rail.position.set(side * 0.52, 0.92, 1.1);
     rail.rotation.x = -0.48;
     stairRoot.add(rail);
+    const landingRail = box(THREE, materials.metal, `A1 stair landing rail ${side}`, 0.045, 0.78, 0.045);
+    landingRail.position.set(side * 0.52, 1.62, 2.08);
+    stairRoot.add(landingRail);
   }
   cabinRoot.add(stairRoot);
+
+  const cableSegments = Array.from({ length: 8 }, (_, index) =>
+    box(THREE, materials.warning, `A1 underbridge service cable segment ${index + 1}`, 0.055, 0.055, 1));
+  root.add(...cableSegments);
 
   const attachedBridgeEnd = layout.bridgeEnd;
   const bridgeStart = layout.bridgeStart;
@@ -189,9 +260,17 @@ export function buildAnimatedA1Jetway(THREE, materials, layout) {
     outer.position.set(0, bridgeY(outerCenter), outerCenter);
     outer.rotation.x = pitch;
     outer.scale.set(1, 1, outerLength);
+    outerDetailRoot.position.copy(outer.position);
+    outerDetailRoot.rotation.x = pitch;
+    positionTunnelRibs(outerRibs, outerLength, 0.65);
+
     inner.position.set(0, bridgeY(innerCenter), innerCenter);
     inner.rotation.x = pitch;
     inner.scale.set(1, 1, innerLength);
+    innerDetailRoot.position.copy(inner.position);
+    innerDetailRoot.rotation.x = pitch;
+    positionTunnelRibs(innerRibs, innerLength, 0.55);
+
     overlapBand.position.set(0, bridgeY(innerStart + 0.16), innerStart + 0.16);
     overlapBand.rotation.x = pitch;
     overlapBand.scale.set(2.34, 2.2, 0.18);
@@ -204,6 +283,17 @@ export function buildAnimatedA1Jetway(THREE, materials, layout) {
       column.position.y = cabinY / 2;
       column.scale.y = Math.max(0.5, cabinY - 0.48);
     }
+
+    const cableStart = bridgeStart + 1.5;
+    const cableEnd = Math.max(cableStart + 1, bridgeEnd - 2.1);
+    const segmentLength = Math.max(0.7, (cableEnd - cableStart) / cableSegments.length);
+    cableSegments.forEach((segment, index) => {
+      const along = cableStart + segmentLength * (index + 0.5);
+      segment.position.set(-1.34, bridgeY(along) - 1.22, along);
+      segment.rotation.x = pitch;
+      segment.scale.z = segmentLength * 0.94;
+      segment.visible = along < bridgeEnd - 1.2;
+    });
 
     const state = deployment >= 0.995
       ? "attached"
@@ -233,6 +323,9 @@ export function buildAnimatedA1Jetway(THREE, materials, layout) {
   };
   root.userData.controller = controller;
   root.userData.animationAuthority = "independent-source-scale-rotunda-telescope-lift-hood-bogie-runtime-assembly";
+  root.userData.detailAuthority = "source-scale-ribs-panel-structure-service-cable-door-stair-bogie-v8";
+  root.userData.structuralRibCount = outerRibs.length + innerRibs.length;
+  root.userData.serviceCableSegmentCount = cableSegments.length;
   root.userData.requiredSequence = "hood-clear-telescope-in-rotate-to-park";
   root.userData.sourceScale = 1;
   setDeployment(1);
