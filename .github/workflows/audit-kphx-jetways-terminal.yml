@@ -1,0 +1,65 @@
+name: Audit exact KPHX jetways and terminal source
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - scripts/audit-kphx-jetways-and-terminal-primitives.mjs
+      - .github/workflows/audit-kphx-jetways-terminal.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: audit-kphx-jetways-terminal
+  cancel-in-progress: true
+
+jobs:
+  audit-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact source commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Decode exact jetway and terminal source evidence
+        run: node scripts/audit-kphx-jetways-and-terminal-primitives.mjs reports/kphx-jetway-terminal-audit.json
+
+      - name: Verify actionable audit evidence
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const report = JSON.parse(fs.readFileSync("reports/kphx-jetway-terminal-audit.json", "utf8"));
+          if (!(report.jetways?.recordCount > 0)) throw new Error("No KPHX jetway records were decoded");
+          if (!(report.terminal?.primitiveCount > 0)) throw new Error("No Terminal 4 primitives were decoded");
+          if (!Array.isArray(report.terminal?.fallbackPrimitives)) throw new Error("Terminal fallback primitive evidence is missing");
+          console.log(JSON.stringify({
+            jetwayRecords: report.jetways.recordCount,
+            embeddedLibraryObjects: report.jetways.embeddedLibraryObjectCount,
+            modelGuidCounts: report.jetways.modelGuidCounts,
+            terminalPrimitives: report.terminal.primitiveCount,
+            fallbackPrimitives: report.terminal.fallbackPrimitiveCount,
+          }, null, 2));
+          NODE
+
+      - name: Commit exact audit report without redeploying
+        run: |
+          if git diff --quiet -- reports/kphx-jetway-terminal-audit.json; then
+            echo "Audit report is unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-jetway-terminal-audit.json
+          git commit -m "Record exact KPHX jetway and terminal audit [skip ci]"
+          git push origin HEAD:main
