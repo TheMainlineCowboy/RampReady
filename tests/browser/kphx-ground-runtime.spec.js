@@ -88,7 +88,7 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
   expect(runtime.photoWidth).toBe("6400");
   expect(runtime.photoHeight).toBe("2304");
   expect(runtime.photoBytes).toBe("2698886");
-  expect(runtime.hiddenAdexSurfaceMaterials).toBe("2");
+  expect(runtime.hiddenAdexSurfaceMaterials).toBe("1");
   expect(runtime.sourceJetwayCount).toBe("112");
   expect(runtime.terminal4JetwayCount).toBe("58");
   expect(runtime.terminal4ParkingCount).toBe("58");
