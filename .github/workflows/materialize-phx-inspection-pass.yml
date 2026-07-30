@@ -38,6 +38,7 @@ jobs:
             node scripts/prepare-terminal4-jetway-crj-v5.mjs
             node scripts/prepare-kphx-marking-contact.mjs
             node scripts/prepare-terminal4-inspection-controls.mjs
+            node scripts/prepare-terminal4-crj-runtime-evidence.mjs
             node scripts/prepare-air-jetway01-contract.mjs
             node scripts/prepare-air-jetway01-door-alignment.mjs
             node scripts/prepare-phx-stand-alignment.mjs
@@ -56,7 +57,7 @@ jobs:
           set -euo pipefail
           changed="$(git diff --name-only -- . ':!reports/materialize-phx-inspection-pass.log')"
           printf '%s\n' "$changed"
-          unexpected="$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev '^(scripts/build-kphx-simulator-ground\.mjs|scripts/prepare-phx-stand-alignment\.mjs|scripts/prepare-phx-visual-authority\.mjs|src/environment/authoredKphxGround\.js|src/environment/kphxRunwayVisuals\.js|src/environment/sourcePlacedTerminal4Jetways\.js|src/components/RampReadyStandupTrainer\.jsx|src/components/RampReadyStandupTrainerTerminal4\.jsx|src/components/RampReadyTrainer\.css)$' || true)"
+          unexpected="$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev '^(scripts/build-kphx-simulator-ground\.mjs|scripts/prepare-phx-stand-alignment\.mjs|scripts/prepare-phx-visual-authority\.mjs|src/environment/authoredKphxGround\.js|src/environment/authoredTerminal4Visual\.js|src/environment/kphxRunwayVisuals\.js|src/environment/sourcePlacedTerminal4Jetways\.js|src/components/RampReadyStandupTrainer\.jsx|src/components/RampReadyStandupTrainerTerminal4\.jsx|src/components/RampReadyTrainer\.css)$' || true)"
           if [ -n "$unexpected" ]; then
             echo "Unexpected generated files:"
             printf '%s\n' "$unexpected"
@@ -77,6 +78,7 @@ jobs:
               scripts/prepare-phx-stand-alignment.mjs \
               scripts/prepare-phx-visual-authority.mjs \
               src/environment/authoredKphxGround.js \
+              src/environment/authoredTerminal4Visual.js \
               src/environment/kphxRunwayVisuals.js \
               src/environment/sourcePlacedTerminal4Jetways.js \
               src/components/RampReadyStandupTrainer.jsx \
