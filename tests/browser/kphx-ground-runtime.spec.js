@@ -149,7 +149,11 @@ test("loads source-correct PHX scenery with connected Terminal 4 jetways and pav
   await page.waitForTimeout(1_200);
   await captureCanvas(page, canvas, "kphx-a1-source-correct-connected-jetway-chase.png");
 
-  await page.locator("select.rr-view-select").selectOption("overhead");
+  await page.locator("select.rr-view-select").evaluate((select) => {
+    select.value = "overhead";
+    select.dispatchEvent(new Event("input", { bubbles: true }));
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
   await page.waitForTimeout(1_200);
   await captureCanvas(page, canvas, "kphx-a1-source-correct-connected-jetway-overhead.png");
 });
