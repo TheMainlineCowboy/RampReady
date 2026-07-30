@@ -128,8 +128,17 @@ function insideViewport(name, box, viewport) {
   expect(box.bottom, `${name} bottom`).toBeLessThanOrEqual(viewport.height + 1);
 }
 
+function expectOrderedSequence(history, requiredStates) {
+  let previousIndex = -1;
+  for (const state of requiredStates) {
+    const index = history.indexOf(state);
+    expect(index, `A1 sequence must include ${state}`).toBeGreaterThan(previousIndex);
+    previousIndex = index;
+  }
+}
+
 test("verifies CRJ, A1 jetway, operator view and free-drive in one full-airport load", async ({ page }) => {
-  test.setTimeout(600_000);
+  test.setTimeout(720_000);
   await page.setViewportSize(DESKTOP);
   const canvas = await launchRuntime(page);
 
@@ -138,6 +147,7 @@ test("verifies CRJ, A1 jetway, operator view and free-drive in one full-airport 
     { timeout: 20_000, intervals: [100, 250, 500] },
   ).toBeGreaterThanOrEqual(0.995);
   await expect(canvas).toHaveAttribute("data-a1-jetway-state", "attached");
+  await expect(canvas).toHaveAttribute("data-a1-jetway-animation-authority", /v10$/);
   await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-attached.png"));
 
   await withHiddenControls(page, async () => {
@@ -158,19 +168,23 @@ test("verifies CRJ, A1 jetway, operator view and free-drive in one full-airport 
 
   const ready = page.getByRole("button", { name: "Ready" });
   await ready.click();
-  await expect(page.getByText(/Jetway departure sequence active/i)).toBeVisible();
-  const observedStates = new Set(["attached"]);
   await expect.poll(
-    async () => {
-      const state = await canvas.getAttribute("data-a1-jetway-state");
-      if (state) observedStates.add(state);
-      return Number(await canvas.getAttribute("data-a1-jetway-deployment"));
-    },
-    { timeout: 20_000, intervals: [50, 75, 100] },
+    async () => Number(await canvas.getAttribute("data-a1-jetway-deployment")),
+    { timeout: 30_000, intervals: [50, 75, 100, 250] },
   ).toBeLessThanOrEqual(0.005);
   await expect(canvas).toHaveAttribute("data-a1-jetway-state", "parked");
   await expect(page.getByText(/Jetway parked clear/i)).toBeVisible();
-  expect([...observedStates].some((state) => ["hood-clear", "telescoping", "rotating-to-park", "retracting"].includes(state))).toBe(true);
+  const sequenceHistory = (await canvas.getAttribute("data-a1-jetway-state-history") || "")
+    .split(",")
+    .filter(Boolean);
+  expectOrderedSequence(sequenceHistory, [
+    "attached",
+    "retracting",
+    "hood-clear",
+    "telescoping",
+    "rotating-to-park",
+    "parked",
+  ]);
   await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-parked.png"));
 
   const toggle = page.getByRole("button", { name: "Free-drive inspection" });
