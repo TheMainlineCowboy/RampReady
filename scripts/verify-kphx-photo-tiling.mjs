@@ -45,6 +45,7 @@ if (coveredPixels.size !== 25 * 9) {
 for (const token of [
   'textureMode: "tiled-native-source-resolution-v2"',
   'underlayMode: "neutral-airport-base-below-source-aerial-alpha"',
+  'colorRepairMode: "source-aerial-dark-neutral-artifact-lift-v1"',
   "buildTiledPhotoGround",
   "sceneBoundsForTile",
   "manifest.tiles.map",
@@ -55,7 +56,16 @@ for (const token of [
   "PHX source-aerial transparent-cutout pavement underlay",
   "new THREE.MeshBasicMaterial",
   "photoGround.userData.underlayMode",
+  "photoGround.userData.colorRepairMode",
   "authoredPhotoUnderlayMaterialCount",
+  "authoredPhotoColorRepairMode",
+  "material.onBeforeCompile",
+  "rrPhotoLuma",
+  "rrPhotoChroma",
+  "rrPhotoNeutral",
+  "rrPhotoDark",
+  "rrPhotoRepair",
+  "material.customProgramCacheKey",
 ]) {
   if (!runtime.includes(token)) throw new Error(`PHX tiled runtime contract missing ${token}`);
 }
@@ -66,4 +76,4 @@ for (const forbidden of [
   if (runtime.includes(forbidden)) throw new Error(`PHX source aerial returned to shadow-darkened rendering: ${forbidden}`);
 }
 
-console.log(`Verified PHX native-resolution tiled ground: ${manifest.tiles.length} WebGL-safe tiles, ${totalBytes} bytes, full 6400x2304 source coverage, unlit authored color, and a neutral pavement underlay beneath source alpha cutouts.`);
+console.log(`Verified PHX native-resolution tiled ground: ${manifest.tiles.length} WebGL-safe tiles, ${totalBytes} bytes, full 6400x2304 source coverage, unlit authored color, neutral pavement below source alpha, and a narrowly scoped near-black neutral-pixel display repair.`);
