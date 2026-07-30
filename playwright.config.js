@@ -12,8 +12,8 @@ export default defineConfig({
   timeout: 45_000,
   expect: { timeout: 15_000 },
   retries: 0,
-  fullyParallel: true,
-  workers: process.env.CI ? 2 : undefined,
+  fullyParallel: false,
+  workers: 1,
   use: {
     baseURL: externalBaseURL || "http://127.0.0.1:4173",
     viewport: { width: 1280, height: 720 },
