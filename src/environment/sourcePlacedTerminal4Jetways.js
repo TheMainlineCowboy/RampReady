@@ -4,16 +4,20 @@ import concourseB from "./kphxV181/concourseB.js";
 export const SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE = Object.freeze({
   sourceArchive: "unmlobo-kphx1-8-1_Mu9aq.zip",
   placementSource: "scenery/world/scenery/kphx-airport.bgl",
+  sourceLibraryModel: "AIR_Jetway01",
+  sourceLibraryGuid: "{bfcdf52b-9142-415c-8318-03c1b92ca9d9}",
+  sourceAirportJetwayRecordCount: 101,
   terminal4JetwayCount: 58,
+  sourceDimensionsMeters: Object.freeze([37.92, 8.77, 26.51]),
   coordinateFrame: "A1-local; X=north, Y=up, Z=east",
   sceneOffset: Object.freeze([0, 0, 6.2]),
-  highDetailRadiusMeters: 180,
-  detailLevel: "source-placed-detailed-terminal4-jetways-v1",
+  highDetailRadiusMeters: 240,
+  detailLevel: "fsx-air-jetway01-faithful-articulated-v2",
 });
 
 const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
 
-function addInstances(THREE, group, geometry, material, transforms, name, castShadow = false) {
+function addInstances(THREE, group, geometry, material, transforms, name, castShadow = true) {
   if (!transforms.length) return null;
   const mesh = new THREE.InstancedMesh(geometry, material, transforms.length);
   mesh.name = name;
@@ -22,7 +26,7 @@ function addInstances(THREE, group, geometry, material, transforms, name, castSh
   transforms.forEach((entry, index) => {
     dummy.position.set(...entry.position);
     dummy.rotation.set(entry.pitch || 0, entry.yaw || 0, entry.roll || 0);
-    dummy.scale.set(...entry.scale);
+    dummy.scale.set(...(entry.scale || [1, 1, 1]));
     dummy.updateMatrix();
     mesh.setMatrixAt(index, dummy.matrix);
   });
@@ -34,123 +38,156 @@ function addInstances(THREE, group, geometry, material, transforms, name, castSh
   return mesh;
 }
 
-function sourceTexture(textures, ...references) {
-  for (const reference of references) {
-    const texture = textures.get(reference.toUpperCase());
-    if (texture) return texture;
-  }
-  return null;
+function createArchedTunnelGeometry(THREE, width, height, roofRise) {
+  const shape = new THREE.Shape();
+  const halfWidth = width / 2;
+  const halfHeight = height / 2;
+  const shoulder = halfHeight - roofRise;
+  shape.moveTo(-halfWidth, -halfHeight);
+  shape.lineTo(-halfWidth, shoulder);
+  shape.quadraticCurveTo(-halfWidth * 0.82, halfHeight, 0, halfHeight);
+  shape.quadraticCurveTo(halfWidth * 0.82, halfHeight, halfWidth, shoulder);
+  shape.lineTo(halfWidth, -halfHeight);
+  shape.closePath();
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: 1,
+    steps: 1,
+    bevelEnabled: false,
+    curveSegments: 8,
+  });
+  geometry.translate(0, 0, -0.5);
+  geometry.computeVertexNormals();
+  return geometry;
 }
 
-function createMaterials(THREE, textures) {
-  const shellMap = sourceTexture(textures, "T4_WALK.BMP", "SUPPORTS.BMP", "BGATE1.BMP");
-  const cabinMap = sourceTexture(textures, "BGATE1.BMP", "BGATE3.BMP", "DGATE1.BMP");
-  const rotundaMap = sourceTexture(textures, "BGATE3.BMP", "T4_WALK2.BMP", "SUPPORTS.BMP");
-  const supportMap = sourceTexture(textures, "SUPPORTS.BMP", "PHXRAMPLIGHT.BMP");
-
-  const make = (name, map, roughness, metalness) => new THREE.MeshStandardMaterial({
+function createMaterials(THREE) {
+  const standard = (name, color, roughness, metalness) => new THREE.MeshStandardMaterial({
     name,
-    map,
-    color: 0xffffff,
+    color,
     roughness,
     metalness,
     side: THREE.DoubleSide,
   });
-
   return {
-    outer: make("PHX source jetway outer shell", shellMap, 0.58, 0.18),
-    inner: make("PHX source jetway inner shell", cabinMap, 0.62, 0.15),
-    cabin: make("PHX source jetway cabin", cabinMap, 0.57, 0.19),
-    rotunda: make("PHX source jetway rotunda", rotundaMap, 0.61, 0.16),
-    frame: make("PHX source jetway frame", supportMap, 0.48, 0.45),
-    metal: make("PHX source jetway supports", supportMap, 0.44, 0.52),
-    bellows: new THREE.MeshStandardMaterial({
-      name: "PHX jetway aircraft bellows",
-      color: 0x252a2e,
-      roughness: 0.92,
-      metalness: 0.02,
-      side: THREE.DoubleSide,
-    }),
-    tire: new THREE.MeshStandardMaterial({
-      name: "PHX jetway bogie tires",
-      color: 0x17191b,
-      roughness: 0.96,
-      metalness: 0.01,
-    }),
+    shell: standard("AIR_Jetway01 warm-gray outer shell", 0xb6b8b8, 0.66, 0.16),
+    innerShell: standard("AIR_Jetway01 telescoping inner shell", 0xa4a8aa, 0.62, 0.2),
+    cabin: standard("AIR_Jetway01 aircraft cabin", 0xc0c1bf, 0.64, 0.15),
+    trim: standard("AIR_Jetway01 structural trim", 0x454b50, 0.52, 0.5),
+    metal: standard("AIR_Jetway01 galvanized structure", 0x72787b, 0.48, 0.58),
+    stair: standard("AIR_Jetway01 service stair", 0x8d9293, 0.58, 0.42),
+    warning: standard("AIR_Jetway01 safety yellow", 0xd7a820, 0.62, 0.12),
+    tire: standard("AIR_Jetway01 bogie tire", 0x151719, 0.96, 0.01),
+    bellows: standard("AIR_Jetway01 aircraft bellows", 0x1b1e21, 0.92, 0.02),
     glass: new THREE.MeshStandardMaterial({
-      name: "PHX jetway glazing",
-      color: 0x698b9c,
-      roughness: 0.2,
-      metalness: 0.08,
+      name: "AIR_Jetway01 smoked glazing",
+      color: 0x25343d,
+      roughness: 0.22,
+      metalness: 0.1,
       transparent: true,
-      opacity: 0.52,
-      depthWrite: false,
+      opacity: 0.78,
+      depthWrite: true,
       side: THREE.DoubleSide,
     }),
     light: new THREE.MeshStandardMaterial({
-      name: "PHX jetway work lights",
-      color: 0xfff0bf,
-      emissive: 0xffd27a,
-      emissiveIntensity: 1.35,
-      roughness: 0.38,
+      name: "AIR_Jetway01 work light",
+      color: 0xffe9b0,
+      emissive: 0xffcf72,
+      emissiveIntensity: 1.6,
+      roughness: 0.32,
+      metalness: 0.1,
+    }),
+    marker: new THREE.MeshStandardMaterial({
+      name: "AIR_Jetway01 red safety marker",
+      color: 0x9c2723,
+      roughness: 0.68,
       metalness: 0.08,
     }),
-    stair: make("PHX jetway service stairs", supportMap, 0.54, 0.36),
   };
 }
 
-function addFrame(transforms, center, yaw, pitch, perpendicular, width, height, depth) {
+function addTunnelFrame(transforms, center, yaw, pitch, perpendicular, width, height, roofRise, depth = 0.065) {
   const [cx, cy, cz] = center;
   const [px, pz] = perpendicular;
-  const sideInset = width / 2;
-  transforms.frameHorizontal.push({ position: [cx, cy + height / 2, cz], yaw, pitch, scale: [width, 0.07, depth] });
-  transforms.frameHorizontal.push({ position: [cx, cy - height / 2, cz], yaw, pitch, scale: [width, 0.07, depth] });
-  transforms.frameVertical.push({ position: [cx + px * sideInset, cy, cz + pz * sideInset], yaw, pitch, scale: [0.07, height, depth] });
-  transforms.frameVertical.push({ position: [cx - px * sideInset, cy, cz - pz * sideInset], yaw, pitch, scale: [0.07, height, depth] });
+  const halfWidth = width / 2;
+  const shoulderY = height / 2 - roofRise * 0.48;
+  for (const side of [-1, 1]) {
+    transforms.frameVertical.push({
+      position: [cx + px * side * halfWidth, cy - roofRise * 0.18, cz + pz * side * halfWidth],
+      yaw,
+      pitch,
+      scale: [depth, height - roofRise * 0.35, depth],
+    });
+  }
+  transforms.frameHorizontal.push({ position: [cx, cy - height / 2, cz], yaw, pitch, scale: [width, depth, depth] });
+  transforms.frameHorizontal.push({ position: [cx, cy + shoulderY, cz], yaw, pitch, scale: [width * 0.82, depth, depth] });
+  transforms.frameHorizontal.push({ position: [cx, cy + height / 2, cz], yaw, pitch, scale: [width * 0.38, depth, depth] });
 }
 
-function addServiceStairs(transforms, origin, yaw, perpendicular) {
+function addServiceStairs(transforms, origin, yaw, direction, perpendicular) {
   const [ox, oz] = origin;
+  const [ux, uz] = direction;
   const [px, pz] = perpendicular;
-  for (let index = 0; index < 6; index += 1) {
-    const height = 0.2 + index * 0.22;
+  for (let index = 0; index < 8; index += 1) {
+    const height = 0.16 + index * 0.21;
+    const along = index * 0.32;
     transforms.steps.push({
-      position: [ox + px + Math.sin(yaw) * index * 0.34, height / 2, oz + pz + Math.cos(yaw) * index * 0.34],
+      position: [ox + ux * along, height / 2, oz + uz * along],
       yaw,
-      scale: [1.3, height, 0.34],
+      scale: [1.28, height, 0.34],
     });
   }
-  for (const railSide of [-1, 1]) {
+  for (const side of [-1, 1]) {
     transforms.rails.push({
-      position: [ox + px * (1 + railSide * 0.7) + Math.sin(yaw) * 0.92, 0.78, oz + pz * (1 + railSide * 0.7) + Math.cos(yaw) * 0.92],
+      position: [ox + ux * 1.1 + px * side * 0.68, 0.92, oz + uz * 1.1 + pz * side * 0.68],
       yaw,
-      pitch: -0.47,
-      scale: [0.05, 0.05, 2.4],
+      pitch: -0.48,
+      scale: [0.045, 0.045, 2.8],
+    });
+    transforms.rails.push({
+      position: [ox + ux * 2.1 + px * side * 0.68, 1.55, oz + uz * 2.1 + pz * side * 0.68],
+      yaw,
+      scale: [0.045, 0.045, 1.45],
     });
   }
 }
 
-export function buildSourcePlacedTerminal4Jetways(THREE, textures) {
+export function buildSourcePlacedTerminal4Jetways(THREE) {
   const jetways = [...concourseA.jetways, ...concourseB.jetways];
   if (jetways.length !== SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.terminal4JetwayCount) {
     throw new Error(`Expected 58 Terminal 4 jetways, received ${jetways.length}`);
   }
 
   const group = new THREE.Group();
-  group.name = "PHX_Terminal4_SourcePlacedDetailedJetways";
+  group.name = "PHX_Terminal4_AIR_Jetway01_SourcePlaced";
   group.position.fromArray(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset);
 
-  const materials = createMaterials(THREE, textures);
+  const materials = createMaterials(THREE);
   const transforms = {
-    rotunda: [], rotundaRoof: [], outer: [], inner: [], cabin: [], cabinRoof: [], glass: [],
-    frameHorizontal: [], frameVertical: [], bellowsHorizontal: [], bellowsVertical: [],
-    supportColumns: [], supportFeet: [], bogies: [], wheels: [], lights: [], steps: [], rails: [],
+    wallCollar: [], rotundaBody: [], rotundaWindow: [], rotundaRoof: [], pivotCap: [],
+    outer: [], inner: [], cabin: [], cabinFrontWindow: [], cabinSideWindow: [],
+    frameHorizontal: [], frameVertical: [], overlapBand: [], panelSeam: [],
+    bellowsHorizontal: [], bellowsVertical: [], bumper: [],
+    supportColumns: [], liftSleeves: [], supportFeet: [], bogies: [], axles: [], wheels: [],
+    lights: [], markers: [], steps: [], rails: [], cableSegments: [],
   };
+  const parkingByGate = new Map(
+    [...concourseA.parkings, ...concourseB.parkings].map((parking) => [parking.g, parking]),
+  );
   let highDetailCount = 0;
 
   for (const jetway of jetways) {
-    let dx = jetway.px - jetway.x;
-    let dz = jetway.pz - jetway.z;
+    const parking = parkingByGate.get(jetway.g);
+    const parkingHeading = THREE.MathUtils.degToRad(parking?.h ?? 0);
+    const forwardX = Math.cos(parkingHeading);
+    const forwardZ = Math.sin(parkingHeading);
+    const leftX = forwardZ;
+    const leftZ = -forwardX;
+    // Source parking coordinates describe the nose-gear stop point. A passenger
+    // boarding bridge terminates at the CRJ forward-left cabin door.
+    const targetX = jetway.px - forwardX * 5.6 + leftX * 1.25;
+    const targetZ = jetway.pz - forwardZ * 5.6 + leftZ * 1.25;
+    let dx = targetX - jetway.x;
+    let dz = targetZ - jetway.z;
     let distance = Math.hypot(dx, dz);
     if (distance < 2) {
       const heading = THREE.MathUtils.degToRad(jetway.h);
@@ -164,147 +201,231 @@ export function buildSourcePlacedTerminal4Jetways(THREE, textures) {
     const px = -uz;
     const pz = ux;
     const yaw = Math.atan2(ux, uz);
-    const bridgeStart = 2.4;
-    const bridgeEnd = clamp(distance - 3.1, 14, 24.5);
+    const bridgeStart = 2.35;
+    const bridgeEnd = clamp(distance - 2.0, 14.5, 31.5);
     const bridgeLength = bridgeEnd - bridgeStart;
-    const rotundaY = 4.72;
-    const cabinY = jetway.g === "A1" ? 3.02 : 3.24;
+    const rotundaY = 4.62;
+    const cabinY = jetway.g === "A1" ? 3.05 : 3.2;
     const drop = rotundaY - cabinY;
     const pitch = Math.atan2(drop, bridgeLength);
     const highDetail = Math.hypot(jetway.x, jetway.z) <= SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.highDetailRadiusMeters;
     if (highDetail) highDetailCount += 1;
 
-    transforms.rotunda.push({ position: [jetway.x, rotundaY, jetway.z], yaw, scale: [2.4, 2.75, 2.4] });
-    transforms.rotundaRoof.push({ position: [jetway.x, rotundaY + 1.55, jetway.z], yaw, scale: [2.7, 0.18, 2.7] });
+    transforms.wallCollar.push({
+      position: [jetway.x - ux * 1.7, rotundaY, jetway.z - uz * 1.7],
+      yaw,
+      scale: [3.6, 3.1, 1.4],
+    });
+    transforms.rotundaBody.push({ position: [jetway.x, rotundaY - 0.05, jetway.z], yaw, scale: [2.1, 2.75, 2.1] });
+    transforms.rotundaWindow.push({ position: [jetway.x, rotundaY + 0.25, jetway.z], yaw, scale: [2.13, 0.78, 2.13] });
+    transforms.rotundaRoof.push({ position: [jetway.x, rotundaY + 1.48, jetway.z], yaw, scale: [2.28, 0.18, 2.28] });
+    transforms.pivotCap.push({ position: [jetway.x, rotundaY + 1.67, jetway.z], yaw, scale: [0.62, 0.18, 0.62] });
     transforms.supportColumns.push({ position: [jetway.x, 2.0, jetway.z], scale: [0.34, 4.0, 0.34] });
-    transforms.supportFeet.push({ position: [jetway.x, 0.18, jetway.z], yaw, scale: [1.75, 0.28, 1.75] });
+    transforms.liftSleeves.push({ position: [jetway.x, 1.45, jetway.z], scale: [0.54, 2.4, 0.54] });
+    transforms.supportFeet.push({ position: [jetway.x, 0.16, jetway.z], yaw, scale: [1.8, 0.26, 1.8] });
 
-    const outerLength = bridgeLength * 0.60;
-    const innerLength = bridgeLength * 0.53;
+    const outerLength = clamp(bridgeLength * 0.62, 8.5, 18.8);
+    const innerStart = bridgeStart + outerLength * 0.48;
+    const innerLength = Math.max(7.2, bridgeEnd - innerStart);
     const outerCenter = bridgeStart + outerLength / 2;
-    const innerCenter = bridgeStart + outerLength + innerLength / 2 - 0.95;
+    const innerCenter = innerStart + innerLength / 2;
     const bridgeY = (along) => rotundaY - drop * (along / bridgeLength);
 
     transforms.outer.push({
       position: [jetway.x + ux * outerCenter, bridgeY(outerCenter), jetway.z + uz * outerCenter],
-      yaw, pitch, scale: [2.82, 2.52, outerLength],
+      yaw,
+      pitch,
+      scale: [1, 1, outerLength],
     });
     transforms.inner.push({
       position: [jetway.x + ux * innerCenter, bridgeY(innerCenter), jetway.z + uz * innerCenter],
-      yaw, pitch, scale: [2.52, 2.28, innerLength],
+      yaw,
+      pitch,
+      scale: [1, 1, innerLength],
+    });
+    transforms.overlapBand.push({
+      position: [jetway.x + ux * (innerStart + 0.16), bridgeY(innerStart + 0.16), jetway.z + uz * (innerStart + 0.16)],
+      yaw,
+      pitch,
+      scale: [3.12, 2.52, 0.22],
     });
 
     if (highDetail) {
-      for (const section of [
-        { start: bridgeStart + 0.5, length: outerLength - 1, width: 2.94, height: 2.63 },
-        { start: bridgeStart + outerLength - 0.2, length: innerLength - 0.7, width: 2.63, height: 2.38 },
-      ]) {
-        const ribCount = 5;
-        for (let rib = 0; rib <= ribCount; rib += 1) {
-          const along = section.start + section.length * (rib / ribCount);
-          addFrame(
-            transforms,
-            [jetway.x + ux * along, bridgeY(along), jetway.z + uz * along],
+      const ribSpacing = 1.35;
+      for (let along = bridgeStart + 0.65; along < bridgeStart + outerLength - 0.35; along += ribSpacing) {
+        addTunnelFrame(
+          transforms,
+          [jetway.x + ux * along, bridgeY(along), jetway.z + uz * along],
+          yaw,
+          pitch,
+          [px, pz],
+          3.25,
+          2.62,
+          0.36,
+        );
+      }
+      for (let along = innerStart + 0.55; along < bridgeEnd - 0.7; along += ribSpacing) {
+        addTunnelFrame(
+          transforms,
+          [jetway.x + ux * along, bridgeY(along), jetway.z + uz * along],
+          yaw,
+          pitch,
+          [px, pz],
+          2.94,
+          2.42,
+          0.32,
+        );
+      }
+      for (const side of [-1, 1]) {
+        const sideOffset = side * 1.55;
+        for (let along = bridgeStart + 1.15; along < bridgeEnd - 1.1; along += 2.7) {
+          transforms.panelSeam.push({
+            position: [jetway.x + ux * along + px * sideOffset, bridgeY(along), jetway.z + uz * along + pz * sideOffset],
             yaw,
             pitch,
-            [px, pz],
-            section.width,
-            section.height,
-            0.075,
-          );
+            scale: [0.035, 2.15, 0.055],
+          });
         }
-      }
-
-      const glassCenter = bridgeStart + bridgeLength * 0.49;
-      for (const side of [-1, 1]) {
-        transforms.glass.push({
-          position: [
-            jetway.x + ux * glassCenter + px * side * 1.38,
-            bridgeY(glassCenter) + 0.08,
-            jetway.z + uz * glassCenter + pz * side * 1.38,
-          ],
-          yaw, pitch, scale: [0.055, 0.82, bridgeLength * 0.78],
-        });
       }
     }
 
     const endX = jetway.x + ux * bridgeEnd;
     const endZ = jetway.z + uz * bridgeEnd;
-    transforms.cabin.push({ position: [endX, cabinY, endZ], yaw, scale: [3.25, 2.72, 3.05] });
-    transforms.cabinRoof.push({ position: [endX, cabinY + 1.49, endZ], yaw, scale: [3.52, 0.16, 3.32] });
-
-    if (highDetail) {
-      for (let fold = 0; fold < 5; fold += 1) {
-        const along = bridgeEnd + 1.55 + fold * 0.17;
-        const center = [jetway.x + ux * along, cabinY, jetway.z + uz * along];
-        const width = 2.55 - fold * 0.06;
-        const height = 2.12 - fold * 0.04;
-        const sideInset = width / 2;
-        transforms.bellowsHorizontal.push({ position: [center[0], center[1] + height / 2, center[2]], yaw, scale: [width, 0.09, 0.12] });
-        transforms.bellowsHorizontal.push({ position: [center[0], center[1] - height / 2, center[2]], yaw, scale: [width, 0.09, 0.12] });
-        transforms.bellowsVertical.push({ position: [center[0] + px * sideInset, center[1], center[2] + pz * sideInset], yaw, scale: [0.09, height, 0.12] });
-        transforms.bellowsVertical.push({ position: [center[0] - px * sideInset, center[1], center[2] - pz * sideInset], yaw, scale: [0.09, height, 0.12] });
-      }
+    transforms.cabin.push({ position: [endX, cabinY, endZ], yaw, scale: [1, 1, 3.15] });
+    transforms.cabinFrontWindow.push({
+      position: [endX + ux * 1.61, cabinY + 0.34, endZ + uz * 1.61],
+      yaw,
+      scale: [2.48, 0.82, 0.055],
+    });
+    for (const side of [-1, 1]) {
+      transforms.cabinSideWindow.push({
+        position: [endX + px * side * 1.7, cabinY + 0.25, endZ + pz * side * 1.7],
+        yaw,
+        scale: [0.055, 0.72, 1.75],
+      });
+      transforms.lights.push({
+        position: [endX + ux * 1.72 + px * side * 1.12, cabinY + 0.88, endZ + uz * 1.72 + pz * side * 1.12],
+        yaw,
+        scale: [0.17, 0.12, 0.08],
+      });
     }
 
-    const bogieAlong = bridgeEnd - 1.2;
+    const bellowsStart = bridgeEnd + 1.48;
+    for (let fold = 0; fold < 7; fold += 1) {
+      const along = bellowsStart + fold * 0.15;
+      const center = [jetway.x + ux * along, cabinY, jetway.z + uz * along];
+      const width = 2.62 - fold * 0.045;
+      const height = 2.15 - fold * 0.035;
+      const halfWidth = width / 2;
+      transforms.bellowsHorizontal.push({ position: [center[0], center[1] + height / 2, center[2]], yaw, scale: [width, 0.085, 0.105] });
+      transforms.bellowsHorizontal.push({ position: [center[0], center[1] - height / 2, center[2]], yaw, scale: [width, 0.085, 0.105] });
+      transforms.bellowsVertical.push({ position: [center[0] + px * halfWidth, center[1], center[2] + pz * halfWidth], yaw, scale: [0.085, height, 0.105] });
+      transforms.bellowsVertical.push({ position: [center[0] - px * halfWidth, center[1], center[2] - pz * halfWidth], yaw, scale: [0.085, height, 0.105] });
+    }
+    transforms.bumper.push({
+      position: [jetway.x + ux * (bellowsStart + 1.04), cabinY - 0.83, jetway.z + uz * (bellowsStart + 1.04)],
+      yaw,
+      scale: [2.15, 0.18, 0.18],
+    });
+
+    const bogieAlong = bridgeEnd - 3.15;
     const bogieX = jetway.x + ux * bogieAlong;
     const bogieZ = jetway.z + uz * bogieAlong;
-    transforms.supportColumns.push({ position: [bogieX + px * 0.72, cabinY / 2, bogieZ + pz * 0.72], scale: [0.18, cabinY - 0.42, 0.18] });
-    transforms.supportColumns.push({ position: [bogieX - px * 0.72, cabinY / 2, bogieZ - pz * 0.72], scale: [0.18, cabinY - 0.42, 0.18] });
-    transforms.bogies.push({ position: [bogieX, 0.56, bogieZ], yaw, scale: [2.65, 0.42, 1.15] });
+    for (const side of [-1, 1]) {
+      transforms.supportColumns.push({
+        position: [bogieX + px * side * 0.68, cabinY / 2, bogieZ + pz * side * 0.68],
+        scale: [0.2, cabinY - 0.48, 0.2],
+      });
+      transforms.liftSleeves.push({
+        position: [bogieX + px * side * 0.68, 1.25, bogieZ + pz * side * 0.68],
+        scale: [0.32, 1.7, 0.32],
+      });
+    }
+    transforms.bogies.push({ position: [bogieX, 0.55, bogieZ], yaw, scale: [2.75, 0.4, 1.18] });
+    transforms.axles.push({ position: [bogieX, 0.42, bogieZ], yaw, scale: [2.95, 0.15, 0.15] });
     for (const side of [-1, 1]) {
       for (const fore of [-0.38, 0.38]) {
         transforms.wheels.push({
-          position: [bogieX + px * side * 1.18 + ux * fore, 0.42, bogieZ + pz * side * 1.18 + uz * fore],
+          position: [bogieX + px * side * 1.2 + ux * fore, 0.42, bogieZ + pz * side * 1.2 + uz * fore],
           yaw,
-          scale: [0.42, 0.26, 0.42],
+          scale: [0.43, 0.27, 0.43],
         });
       }
     }
 
     if (highDetail) {
-      for (const side of [-1, 1]) {
-        transforms.lights.push({
-          position: [endX + px * side * 1.15 + ux * 1.45, cabinY + 0.72, endZ + pz * side * 1.15 + uz * 1.45],
+      const stairOrigin = [endX - ux * 1.8 - px * 3.1, endZ - uz * 1.8 - pz * 3.1];
+      addServiceStairs(transforms, stairOrigin, yaw, [ux, uz], [px, pz]);
+      for (let segment = 0; segment < 8; segment += 1) {
+        const along = bridgeStart + 1.5 + segment * (Math.max(4, bridgeLength - 4) / 7);
+        transforms.cableSegments.push({
+          position: [jetway.x + ux * along - px * 1.34, bridgeY(along) - 1.22, jetway.z + uz * along - pz * 1.34],
           yaw,
-          scale: [0.16, 0.12, 0.08],
+          pitch,
+          scale: [0.055, 0.055, Math.max(0.8, bridgeLength / 8)],
         });
       }
-      addServiceStairs(transforms, [jetway.x - ux * 2.2 - px * 3.2, jetway.z - uz * 2.2 - pz * 3.2], yaw, [px, pz]);
+      transforms.markers.push({ position: [bogieX + px * 1.38, 0.88, bogieZ + pz * 1.38], yaw, scale: [0.22, 0.22, 0.22] });
+      transforms.markers.push({ position: [bogieX - px * 1.38, 0.88, bogieZ - pz * 1.38], yaw, scale: [0.22, 0.22, 0.22] });
     }
   }
 
   const box = new THREE.BoxGeometry(1, 1, 1);
-  const rotunda = new THREE.CylinderGeometry(1, 1, 1, 20, 1, false);
-  const column = new THREE.CylinderGeometry(1, 1, 1, 12, 1, false);
-  const wheel = new THREE.CylinderGeometry(1, 1, 1, 14, 1, false);
+  const outerTunnel = createArchedTunnelGeometry(THREE, 3.2, 2.56, 0.36);
+  const innerTunnel = createArchedTunnelGeometry(THREE, 2.9, 2.36, 0.32);
+  const cabin = createArchedTunnelGeometry(THREE, 3.45, 2.82, 0.3);
+  const rotunda = new THREE.CylinderGeometry(1, 1, 1, 28, 1, false);
+  const rotundaBand = new THREE.CylinderGeometry(1, 1, 1, 28, 1, true);
+  const column = new THREE.CylinderGeometry(1, 1, 1, 16, 1, false);
+  const wheel = new THREE.CylinderGeometry(1, 1, 1, 18, 1, false);
   wheel.rotateZ(Math.PI / 2);
+  const axle = new THREE.CylinderGeometry(1, 1, 1, 12, 1, false);
+  axle.rotateZ(Math.PI / 2);
+  const cable = new THREE.CylinderGeometry(1, 1, 1, 8, 1, false);
+  cable.rotateX(Math.PI / 2);
+  const marker = new THREE.SphereGeometry(1, 10, 7);
 
-  addInstances(THREE, group, rotunda, materials.rotunda, transforms.rotunda, "KPHX_SourcePlaced_JetwayRotundas");
-  addInstances(THREE, group, box, materials.frame, transforms.rotundaRoof, "KPHX_SourcePlaced_JetwayRotundaRoofs");
-  addInstances(THREE, group, box, materials.outer, transforms.outer, "KPHX_SourcePlaced_JetwayOuterTunnels");
-  addInstances(THREE, group, box, materials.inner, transforms.inner, "KPHX_SourcePlaced_JetwayInnerTunnels");
-  addInstances(THREE, group, box, materials.cabin, transforms.cabin, "KPHX_SourcePlaced_JetwayCabins");
-  addInstances(THREE, group, box, materials.frame, transforms.cabinRoof, "KPHX_SourcePlaced_JetwayCabinRoofs");
-  addInstances(THREE, group, box, materials.glass, transforms.glass, "KPHX_SourcePlaced_JetwaySideGlass");
-  addInstances(THREE, group, box, materials.frame, transforms.frameHorizontal, "KPHX_SourcePlaced_JetwayHorizontalRibs");
-  addInstances(THREE, group, box, materials.frame, transforms.frameVertical, "KPHX_SourcePlaced_JetwayVerticalRibs");
-  addInstances(THREE, group, box, materials.bellows, transforms.bellowsHorizontal, "KPHX_SourcePlaced_JetwayBellowsHorizontal");
-  addInstances(THREE, group, box, materials.bellows, transforms.bellowsVertical, "KPHX_SourcePlaced_JetwayBellowsVertical");
-  addInstances(THREE, group, column, materials.metal, transforms.supportColumns, "KPHX_SourcePlaced_JetwaySupportColumns");
-  addInstances(THREE, group, box, materials.metal, transforms.supportFeet, "KPHX_SourcePlaced_JetwaySupportFeet");
-  addInstances(THREE, group, box, materials.metal, transforms.bogies, "KPHX_SourcePlaced_JetwayBogies");
-  addInstances(THREE, group, wheel, materials.tire, transforms.wheels, "KPHX_SourcePlaced_JetwayWheels");
-  addInstances(THREE, group, box, materials.light, transforms.lights, "KPHX_SourcePlaced_JetwayWorkLights");
-  addInstances(THREE, group, box, materials.stair, transforms.steps, "KPHX_SourcePlaced_JetwayServiceSteps");
-  addInstances(THREE, group, box, materials.metal, transforms.rails, "KPHX_SourcePlaced_JetwayServiceRails");
+  addInstances(THREE, group, box, materials.shell, transforms.wallCollar, "AIR_Jetway01_WallCollars");
+  addInstances(THREE, group, rotunda, materials.shell, transforms.rotundaBody, "AIR_Jetway01_Rotundas");
+  addInstances(THREE, group, rotundaBand, materials.glass, transforms.rotundaWindow, "AIR_Jetway01_RotundaWindowBands");
+  addInstances(THREE, group, column, materials.trim, transforms.rotundaRoof, "AIR_Jetway01_RotundaRoofs");
+  addInstances(THREE, group, column, materials.metal, transforms.pivotCap, "AIR_Jetway01_PivotCaps");
+  addInstances(THREE, group, outerTunnel, materials.shell, transforms.outer, "AIR_Jetway01_OuterTelescopingTunnels");
+  addInstances(THREE, group, innerTunnel, materials.innerShell, transforms.inner, "AIR_Jetway01_InnerTelescopingTunnels");
+  addInstances(THREE, group, cabin, materials.cabin, transforms.cabin, "AIR_Jetway01_AircraftCabins");
+  addInstances(THREE, group, box, materials.glass, transforms.cabinFrontWindow, "AIR_Jetway01_CabinFrontWindows");
+  addInstances(THREE, group, box, materials.glass, transforms.cabinSideWindow, "AIR_Jetway01_CabinSideWindows");
+  addInstances(THREE, group, box, materials.trim, transforms.frameHorizontal, "AIR_Jetway01_HorizontalRibs");
+  addInstances(THREE, group, box, materials.trim, transforms.frameVertical, "AIR_Jetway01_VerticalRibs");
+  addInstances(THREE, group, box, materials.trim, transforms.overlapBand, "AIR_Jetway01_TelescopingOverlapBands");
+  addInstances(THREE, group, box, materials.trim, transforms.panelSeam, "AIR_Jetway01_PanelSeams");
+  addInstances(THREE, group, box, materials.bellows, transforms.bellowsHorizontal, "AIR_Jetway01_BellowsHorizontal");
+  addInstances(THREE, group, box, materials.bellows, transforms.bellowsVertical, "AIR_Jetway01_BellowsVertical");
+  addInstances(THREE, group, box, materials.warning, transforms.bumper, "AIR_Jetway01_AircraftBumpers");
+  addInstances(THREE, group, column, materials.metal, transforms.supportColumns, "AIR_Jetway01_LiftColumns");
+  addInstances(THREE, group, column, materials.innerShell, transforms.liftSleeves, "AIR_Jetway01_LiftSleeves");
+  addInstances(THREE, group, box, materials.metal, transforms.supportFeet, "AIR_Jetway01_SupportFeet");
+  addInstances(THREE, group, box, materials.metal, transforms.bogies, "AIR_Jetway01_WheelBogies");
+  addInstances(THREE, group, axle, materials.metal, transforms.axles, "AIR_Jetway01_Axles");
+  addInstances(THREE, group, wheel, materials.tire, transforms.wheels, "AIR_Jetway01_Wheels");
+  addInstances(THREE, group, box, materials.light, transforms.lights, "AIR_Jetway01_WorkLights");
+  addInstances(THREE, group, marker, materials.marker, transforms.markers, "AIR_Jetway01_SafetyMarkers");
+  addInstances(THREE, group, box, materials.stair, transforms.steps, "AIR_Jetway01_ServiceSteps");
+  addInstances(THREE, group, box, materials.metal, transforms.rails, "AIR_Jetway01_ServiceRails");
+  addInstances(THREE, group, cable, materials.warning, transforms.cableSegments, "AIR_Jetway01_UnderbridgeServiceCable");
 
   group.userData.sourceArchive = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceArchive;
   group.userData.placementSource = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.placementSource;
+  group.userData.sourceLibraryModel = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceLibraryModel;
+  group.userData.sourceLibraryGuid = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceLibraryGuid;
+  group.userData.sourceAirportJetwayRecordCount = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceAirportJetwayRecordCount;
+  group.userData.sourceDimensionsMeters = [...SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceDimensionsMeters];
   group.userData.jetwayCount = jetways.length;
   group.userData.highDetailJetwayCount = highDetailCount;
   group.userData.detailLevel = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.detailLevel;
   group.userData.coordinateFrame = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.coordinateFrame;
+  group.userData.visualAuthority = "faithful-reconstruction-of-referenced-fsx-air-jetway01-library-object";
+  group.userData.usesTerminalBuildingTextures = false;
+  group.userData.proceduralBuildingBoxReuse = false;
   return group;
 }
