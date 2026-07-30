@@ -7,7 +7,7 @@
   "scripts": {
     "materialize:authored-aircraft": "node scripts/materialize-authored-aircraft-clean.mjs",
     "materialize:standup-tug": "node scripts/materialize-standup-tug-runtime.mjs",
-    "materialize:phx-terminal4": "node scripts/prepare-exact-terminal4-second-pass.mjs && node scripts/prepare-exact-terminal4-textures.mjs && node scripts/prepare-exact-terminal4-accounting.mjs && node scripts/prepare-terminal4-source-alpha.mjs && node scripts/prepare-terminal4-jetway-facade-v4.mjs && node scripts/materialize-phx-terminal4.mjs && node scripts/materialize-phx-terminal4-lightmaps.mjs",
+    "materialize:phx-terminal4": "node scripts/prepare-exact-terminal4-second-pass.mjs && node scripts/prepare-exact-terminal4-textures.mjs && node scripts/prepare-exact-terminal4-accounting.mjs && node scripts/prepare-terminal4-source-alpha.mjs && node scripts/prepare-terminal4-jetway-dxt3.mjs && node scripts/prepare-terminal4-jetway-facade-v4.mjs && node scripts/materialize-phx-terminal4.mjs && node scripts/materialize-phx-terminal4-lightmaps.mjs",
     "materialize:kphx-ground": "node scripts/prepare-kphx-marking-contact.mjs && node scripts/prepare-kphx-simulator-ground-builder.mjs && node scripts/materialize-kphx-ground.mjs",
     "inspect:kphx-exact-a1": "node scripts/inspect-kphx-exact-a1-payload.mjs",
     "verify:kphx-source-lights": "node scripts/verify-kphx-source-lights.mjs",
