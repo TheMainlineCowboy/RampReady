@@ -37,7 +37,7 @@ async function launchRuntime(page) {
   await expect.poll(
     () => canvas.getAttribute("data-ground-source"),
     { timeout: 40_000, intervals: [250, 500, 1_000] },
-  ).toBe("authored-kphx-v181-source-textured");
+  ).toBe("authored-kphx-v181-source-textured-nearfield");
   await expect.poll(
     () => canvas.getAttribute("data-photo-ground-source"),
     { timeout: 40_000, intervals: [250, 500, 1_000] },
@@ -164,6 +164,43 @@ test("stand-up operator view contains the dedicated controls", async ({ page }) 
   await capture(page, canvas, "standup-operator-view.png");
 });
 
+test("free-drive inspection toggle moves the tug forward and reverse without procedure gates", async ({ page }) => {
+  test.setTimeout(300_000);
+  await page.setViewportSize(DESKTOP);
+  const canvas = await launchRuntime(page);
+  const toggle = page.getByRole("button", { name: "Free-drive inspection" });
+  await expect(toggle).toBeVisible();
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".rr-shell")).toHaveAttribute("data-inspection-mode", "active");
+  await expect(canvas).toHaveAttribute("data-inspection-mode", "active");
+
+  const start = await canvas.evaluate((element) => ({
+    x: Number(element.dataset.inspectionTugX),
+    z: Number(element.dataset.inspectionTugZ),
+  }));
+  await page.keyboard.down("w");
+  await page.waitForTimeout(1_200);
+  await page.keyboard.up("w");
+  const forward = await canvas.evaluate((element) => ({
+    x: Number(element.dataset.inspectionTugX),
+    z: Number(element.dataset.inspectionTugZ),
+    speed: Number(element.dataset.inspectionSpeed),
+  }));
+  expect(Math.hypot(forward.x - start.x, forward.z - start.z)).toBeGreaterThan(0.25);
+  expect(forward.speed).toBeGreaterThanOrEqual(0);
+
+  await page.keyboard.down("s");
+  await page.waitForTimeout(1_200);
+  await page.keyboard.up("s");
+  const reverse = await canvas.evaluate((element) => ({
+    x: Number(element.dataset.inspectionTugX),
+    z: Number(element.dataset.inspectionTugZ),
+  }));
+  expect(Math.hypot(reverse.x - forward.x, reverse.z - forward.z)).toBeGreaterThan(0.15);
+  await capture(page, canvas, "free-drive-inspection-active.png");
+});
+
 test("mobile controls remain inside the simulator viewport", async ({ page }) => {
   test.setTimeout(300_000);
   await page.setViewportSize(MOBILE);
@@ -180,9 +217,10 @@ test("mobile controls remain inside the simulator viewport", async ({ page }) =>
       canvas: rect("canvas.trainerCanvas"),
       hud: rect(".rr-hud"), metrics: rect(".rr-metrics"), throttle: rect(".rr-throttle"),
       steer: rect(".rr-steer"), slider: rect(".rr-power-slider"), menu: rect(".rr-session-menu"),
+      inspectionToggle: rect(".rr-inspection-toggle"),
     };
   });
-  for (const name of ["hud", "metrics", "throttle", "steer", "slider", "menu"]) {
+  for (const name of ["hud", "metrics", "throttle", "steer", "slider", "menu", "inspectionToggle"]) {
     insideViewport(name, layout[name], layout.viewport);
   }
   expect(layout.canvas.width).toBeGreaterThanOrEqual(400);
