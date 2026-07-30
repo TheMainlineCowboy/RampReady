@@ -5,42 +5,50 @@ const targets = [
   "src/components/RampReadyStandupTrainerTerminal4.jsx",
 ];
 
+function replaceRequired(source, anchor, replacement, path, label) {
+  if (source.includes(replacement)) return source;
+  if (!source.includes(anchor)) throw new Error(`${path}: inspection ${label} anchor is missing`);
+  return source.replace(anchor, replacement);
+}
+
 for (const path of targets) {
   let source = fs.readFileSync(path, "utf8");
 
   if (!source.includes('className="rr-inspection-toggle"')) {
-    const anchor = '        <div className="rr-top-tools">';
-    const replacement = `${anchor}\n          <button className="rr-secondary rr-inspection-toggle" type="button" aria-pressed={inspectionMode} onClick={toggleInspectionDrive}>{inspectionMode ? "Return to training" : "Free-drive inspection"}</button>`;
-    if (!source.includes(anchor)) throw new Error(`${path}: inspection control anchor is missing`);
-    source = source.replace(anchor, replacement);
+    const anchor = '<div className="rr-top-tools">';
+    source = replaceRequired(
+      source,
+      anchor,
+      `${anchor}\n          <button\n            className="rr-inspection-toggle"\n            type="button"\n            aria-pressed={inspectionMode}\n            onClick={toggleInspectionDrive}\n          >{inspectionMode ? "Return to training" : "Free-drive inspection"}</button>`,
+      path,
+      "control",
+    );
   }
 
-  if (!source.includes('data-inspection-mode={inspectionMode ? "active" : "training"}')) {
-    const anchor = '  return <div className="rr-shell" data-equipment-id={equipmentId}>';
-    const replacement = '  return <div className="rr-shell" data-equipment-id={equipmentId} data-inspection-mode={inspectionMode ? "active" : "training"}>';
-    if (!source.includes(anchor)) throw new Error(`${path}: inspection shell anchor is missing`);
-    source = source.replace(anchor, replacement);
-  }
+  source = replaceRequired(
+    source,
+    'return <div className="rr-shell" data-equipment-id={equipmentId}>',
+    'return <div className="rr-shell" data-equipment-id={equipmentId} data-inspection-mode={inspectionMode ? "active" : "training"}>',
+    path,
+    "shell state",
+  );
 
   if (!source.includes("const keyboardForward = inspectionActive")) {
-    const anchor = `      const motionAllowed = inspectionActive || (connectionAllowsMotion(sim.connection) && ![3, 4, 8].includes(stageRef.current));
-      const towing = !inspectionActive && sim.connection.phase === CONNECTION_PHASES.TOWING;
-      sim.dynamics = stepPushbackDynamics(sim.dynamics, {
-        connected: towing,
-        throttle: motionAllowed && (!towing || drive.direction === 1) ? drive.throttle : 0,
-        direction: drive.direction,`;
-    const replacement = `      const motionAllowed = inspectionActive || (connectionAllowsMotion(sim.connection) && ![3, 4, 8].includes(stageRef.current));
-      const towing = !inspectionActive && sim.connection.phase === CONNECTION_PHASES.TOWING;
-      const keyboardForward = inspectionActive && (keysRef.current.has("w") || keysRef.current.has("arrowup"));
-      const keyboardReverse = inspectionActive && (keysRef.current.has("s") || keysRef.current.has("arrowdown"));
-      const inspectionDirection = keyboardReverse ? -1 : keyboardForward ? 1 : drive.direction;
-      const inspectionThrottle = keyboardForward || keyboardReverse ? Math.max(drive.throttle, 0.55) : drive.throttle;
-      sim.dynamics = stepPushbackDynamics(sim.dynamics, {
-        connected: towing,
-        throttle: motionAllowed && (!towing || inspectionDirection === 1) ? inspectionThrottle : 0,
-        direction: inspectionDirection,`;
-    if (!source.includes(anchor)) throw new Error(`${path}: inspection keyboard-motion anchor is missing`);
-    source = source.replace(anchor, replacement);
+    const towingAnchor = "      const towing = !inspectionActive && sim.connection.phase === CONNECTION_PHASES.TOWING;";
+    source = replaceRequired(
+      source,
+      towingAnchor,
+      `${towingAnchor}\n      const keyboardForward = inspectionActive && (keysRef.current.has("w") || keysRef.current.has("arrowup"));\n      const keyboardReverse = inspectionActive && (keysRef.current.has("s") || keysRef.current.has("arrowdown"));\n      const inspectionDirection = keyboardReverse ? -1 : keyboardForward ? 1 : drive.direction;\n      const inspectionThrottle = keyboardForward || keyboardReverse ? Math.max(drive.throttle, 0.55) : drive.throttle;`,
+      path,
+      "keyboard motion",
+    );
+    source = replaceRequired(
+      source,
+      "        throttle: motionAllowed && (!towing || drive.direction === 1) ? drive.throttle : 0,\n        direction: drive.direction,",
+      "        throttle: motionAllowed && (!towing || inspectionDirection === 1) ? inspectionThrottle : 0,\n        direction: inspectionDirection,",
+      path,
+      "keyboard throttle",
+    );
   }
 
   source = source.replaceAll(
@@ -56,6 +64,14 @@ for (const path of targets) {
   ]) if (!source.includes(token)) throw new Error(`${path}: completed inspection mode is missing ${token}`);
 
   fs.writeFileSync(path, source, "utf8");
+}
+
+const cssPath = "src/components/RampReadyTrainer.css";
+let css = fs.readFileSync(cssPath, "utf8");
+const cssMarker = "/* RampReady free-drive inspection control */";
+if (!css.includes(cssMarker)) {
+  css += `\n\n${cssMarker}\n.rr-top-tools {\n  display: flex;\n  align-items: center;\n  justify-content: flex-end;\n  gap: 8px;\n  flex-wrap: wrap;\n}\n\n.rr-inspection-toggle {\n  min-height: 40px;\n  padding: 9px 14px;\n  border-radius: 999px;\n  cursor: pointer;\n  color: #fff;\n  background: rgba(13, 15, 21, 0.82);\n  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18), 0 10px 30px rgba(0,0,0,0.28);\n  backdrop-filter: blur(14px);\n  font-weight: 900;\n}\n\n.rr-inspection-toggle[aria-pressed=\"true\"] {\n  color: #151515;\n  background: #9cffb2;\n}\n\n.rr-shell[data-inspection-mode=\"active\"] .rr-hud {\n  box-shadow: inset 0 0 0 1px rgba(156,255,178,0.44), 0 18px 60px rgba(0,0,0,0.32);\n}\n\n@media (max-width: 820px) {\n  .rr-top-tools {\n    gap: 5px;\n  }\n\n  .rr-inspection-toggle {\n    min-height: 34px;\n    padding: 7px 10px;\n    font-size: 12px;\n  }\n}\n`;
+  fs.writeFileSync(cssPath, css, "utf8");
 }
 
 console.log("Prepared always-visible free-drive inspection controls with unrestricted WASD/arrow and touch-slider tug motion in both runtimes.");
