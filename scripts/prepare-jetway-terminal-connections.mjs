@@ -117,21 +117,16 @@ fs.writeFileSync(jetwayPath, jetways, "utf8");
 const terminalPath = "src/environment/authoredTerminal4Visual.js";
 let terminal = fs.readFileSync(terminalPath, "utf8");
 if (!terminal.includes("buildSourcePlacedTerminal4Jetways(THREE, authored)")) {
-  const oldText = `  const {
-    texturedMaterialCount,
-    lightmappedMaterialCount,
-    hiddenLegacyGroundMaterialCount,
-  } = applySourceMaterials(THREE, authored, textures, emissiveTextures);
-  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, textures, emissiveTextures);`;
-  const newText = `  const {
-    texturedMaterialCount,
-    lightmappedMaterialCount,
-    hiddenLegacyGroundMaterialCount,
-  } = applySourceMaterials(THREE, authored, textures, emissiveTextures);
-  authored.updateMatrixWorld(true);
-  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, authored);`;
-  if (!terminal.includes(oldText)) throw new Error("Authored Terminal 4 jetway-builder call anchor is missing");
-  terminal = terminal.replace(oldText, newText);
+  const legacyCalls = [
+    "  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, textures, emissiveTextures);",
+    "  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE);",
+  ];
+  const legacyCall = legacyCalls.find((candidate) => terminal.includes(candidate));
+  if (!legacyCall) throw new Error("Authored Terminal 4 jetway-builder call anchor is missing");
+  terminal = terminal.replace(
+    legacyCall,
+    "  authored.updateMatrixWorld(true);\n  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, authored);",
+  );
 }
 if (!terminal.includes("authoredTerminal4A1JetwayWallDistance")) {
   const oldText = `  environment.userData.authoredTerminal4JetwayVisualCount = sourcePlacedJetways.userData.jetwayCount;
