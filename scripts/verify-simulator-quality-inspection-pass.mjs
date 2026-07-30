@@ -98,6 +98,22 @@ for (const forbidden of [
   "renderOrder || 0, 420",
 ]) if (authoredGround.includes(forbidden)) throw new Error(`Aggressive marking depth override remains: ${forbidden}`);
 
+const runwayVisuals = requireTokens("src/environment/kphxRunwayVisuals.js", [
+  "function stabilizeAuthoredConcreteMaterial(THREE, authoredGround)",
+  "new THREE.MeshBasicMaterial",
+  "map: material.map",
+  "toneMapped: false",
+  'concreteRenderingAuthority: "source-textured-unlit-concrete-v1-no-black-lighting-polygons"',
+  "node.receiveShadow = false",
+  "stabilizeAuthoredConcreteMaterial(THREE, authoredGround)",
+  "stabilizedConcreteMaterialCount",
+]);
+for (const forbidden of [
+  "diagnosticMaterialAuthority",
+  "hidden-concrete-before-vite",
+  "hidden-complete-authored-adex-ground-before-vite",
+]) if (runwayVisuals.includes(forbidden)) throw new Error(`Temporary KPHX concrete diagnostic remains: ${forbidden}`);
+
 const visualAuthority = requireTokens("scripts/prepare-phx-visual-authority.mjs", [
   "y = 0.0022",
   "mesh.position.set(x, 0.0028, z)",
@@ -193,4 +209,4 @@ if (!generatedRuntime.includes('dataset.inspectionMode = inspectionRef.current ?
   throw new Error("Generated PHX runtime does not expose initial inspection mode state");
 }
 
-console.log("RampReady PHX inspection pass verified for draft validation: unrestricted tug inspection, pavement-coincident markings, source-qualified service bays, irregular lower-wall facade fits, stock-scale AIR_Jetway01 placement and exact textures are active. Promotion remains blocked while the original stock skinned mesh is unavailable and fallback geometry is disclosed.");
+console.log("RampReady PHX inspection pass verified for draft validation: unrestricted tug inspection, pavement-coincident markings, source-qualified service bays, irregular lower-wall facade fits, stabilized unlit source-textured KPHX concrete, stock-scale AIR_Jetway01 placement and exact textures are active. Promotion remains blocked while the original stock skinned mesh is unavailable and fallback geometry is disclosed.");
