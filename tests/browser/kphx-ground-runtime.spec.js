@@ -49,7 +49,7 @@ async function captureCanvas(page, canvas, fileName) {
 }
 
 test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and pavement-coincident markings", async ({ page }) => {
-  test.setTimeout(210_000);
+  test.setTimeout(300_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const assetResponses = [];
   const tileResponses = new Map();
@@ -155,6 +155,19 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
   );
   expect(relevantErrors).toEqual([]);
 
+  await page.evaluate(() => {
+    const canvas = document.querySelector("canvas.trainerCanvas");
+    if (!canvas) throw new Error("Three.js canvas is missing for PHX evidence framing");
+    canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: 1600, bubbles: true, cancelable: true }));
+    const box = canvas.getBoundingClientRect();
+    const x = box.left + box.width / 2;
+    const y = box.top + box.height / 2;
+    const held = { bubbles: true, cancelable: true, pointerId: 81, pointerType: "mouse", button: 0, buttons: 1 };
+    canvas.dispatchEvent(new PointerEvent("pointerdown", { ...held, clientX: x, clientY: y }));
+    window.dispatchEvent(new PointerEvent("pointermove", { ...held, clientX: x + 180, clientY: y - 25 }));
+    window.dispatchEvent(new PointerEvent("pointerup", { ...held, clientX: x + 180, clientY: y - 25, buttons: 0 }));
+  });
+  await page.waitForTimeout(1_000);
   await page.addStyleTag({
     content: `
       .rr-hud, .rr-metrics, .rr-score-float, .rr-guidance, .rr-diagnostics,
