@@ -122,11 +122,6 @@ if (!source.includes(marker)) {
   source = `${source.slice(0, start)}${replacement}${source.slice(end)}`;
 }
 
-source = source.replace(
-  /group\.userData\.terminalConnectionAuthority = "[^"]+";/,
-  'group.userData.terminalConnectionAuthority = "nearest-structural-wall-triangle-surface-v14";',
-);
-
 for (const token of [
   marker,
   "Terminal attachment must land on a facade",
