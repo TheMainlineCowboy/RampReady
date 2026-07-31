@@ -44,7 +44,7 @@ requireTokens("src/environment/animatedA1JetwayV11.js", [
 ]);
 requireTokens("src/environment/animatedA1JetwayV12.js", [
   "A1 PHX light corrugated outer shell V12",
-  "A1 PHX corrugated cladding detail V12",
+  "PHX corrugated cladding detail V12",
   "A1 PHX cabin raised roof cap",
   "A1 PHX compact yellow handrail",
   "A1 PHX hydraulic hose segment",
