@@ -48,8 +48,8 @@ replaceRequired(
 );
 replaceRequired(
   "  group.userData.terminalConnectionAuthority = \"raycast-and-source-vertex-fit-to-authored-terminal-mesh\";",
-  "  group.userData.terminalConnectionAuthority = \"48m-structural-facade-raycast-and-source-vertex-fit-v12\";",
-  "48m-structural-facade-raycast-and-source-vertex-fit-v12",
+  "  group.userData.terminalConnectionAuthority = \"48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11\";",
+  "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
   "terminal connector authority",
 );
 
@@ -59,7 +59,7 @@ for (const token of [
   "longitudinal <= 48",
   "lateral <= 5.5",
   "1.25, 44",
-  "48m-structural-facade-raycast-and-source-vertex-fit-v12",
+  "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
 ]) {
   if (!source.includes(token)) throw new Error(`${jetwayPath}: A1 terminal connector v12 is missing ${token}`);
 }
