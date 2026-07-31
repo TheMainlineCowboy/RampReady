@@ -4,10 +4,10 @@ import { expect, test } from "@playwright/test";
 const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
 const VIEWPORT = { width: 1440, height: 900 };
 const PRESETS = [
-  { id: "a1", x: 0, z: 0, file: "inspection-a1-ramp.png" },
+  { id: "a1", x: 0, z: 0, file: "inspection-a1-ramp.png", groundFile: "inspection-a1-operator-ground.png" },
   { id: "a14", x: 218.45, z: -86.52, file: "inspection-a-concourse-midpoint.png" },
   { id: "b14", x: 216.4, z: 150.35, file: "inspection-b-concourse-midpoint.png" },
-  { id: "b15", x: 10.6, z: 534.7, file: "inspection-b15-ramp.png" },
+  { id: "b15", x: 10.6, z: 534.7, file: "inspection-b15-ramp.png", groundFile: "inspection-b15-operator-ground.png" },
 ];
 
 async function launchRuntime(page) {
@@ -100,14 +100,28 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
   );
 
   const location = page.getByLabel("Inspection location");
+  const camera = page.getByLabel("Camera view");
   await expect(location).toBeVisible();
+  await expect(camera).toBeVisible();
 
   for (const preset of PRESETS) {
     await location.selectOption(preset.id);
     await expect(canvas).toHaveAttribute("data-inspection-preset", preset.id);
     await expectPresetPosition(canvas, preset);
+    await camera.selectOption("chase");
     await page.waitForTimeout(900);
     await captureScene(page, canvas, preset.file);
+
+    // A tug-height operator view is mandatory at both ends of the inspection
+    // route. Elevated chase shots alone can hide floating markings, coarse
+    // pavement, detached portal seals and facade intersections.
+    if (preset.groundFile) {
+      await camera.selectOption("driver");
+      await page.waitForTimeout(900);
+      await captureScene(page, canvas, preset.groundFile);
+      await camera.selectOption("chase");
+      await page.waitForTimeout(350);
+    }
   }
 
   await location.selectOption("b15");
@@ -130,7 +144,7 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
   expect(Number.isFinite(reverse.x) && Number.isFinite(reverse.z)).toBe(true);
   expect(distance(reverse, forward)).toBeGreaterThan(0.15);
 
-  await page.getByLabel("Camera view").selectOption("overhead");
+  await camera.selectOption("overhead");
   await page.waitForTimeout(1_000);
   await captureScene(page, canvas, "inspection-b15-overhead-after-drive.png");
 });
