@@ -1,15 +1,23 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { execFileSync, spawn } from "node:child_process";
 
-const terminalTrainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
-const terminalTrainer = new URL(`../${terminalTrainerPath}`, import.meta.url);
-const committedTerminalTrainer = execFileSync(
-  "git",
-  ["show", `HEAD:${terminalTrainerPath}`],
-  { encoding: "utf8" },
-);
-if (!committedTerminalTrainer.includes("export default function RampReadyStandupTrainer")) {
+const protectedSourcePaths = Object.freeze([
+  "src/components/RampReadyStandupTrainerTerminal4.jsx",
+  "src/environment/sourcePlacedTerminal4Jetways.js",
+  "src/environment/authoredTerminal4Visual.js",
+]);
+const committedSources = new Map(protectedSourcePaths.map((sourcePath) => [
+  sourcePath,
+  execFileSync("git", ["show", `HEAD:${sourcePath}`], { encoding: "utf8" }),
+]));
+if (!committedSources.get(protectedSourcePaths[0])?.includes("export default function RampReadyStandupTrainer")) {
   throw new Error("Could not read the committed Terminal 4 trainer baseline from HEAD.");
+}
+if (!committedSources.get(protectedSourcePaths[1])?.includes("buildSourcePlacedTerminal4Jetways")) {
+  throw new Error("Could not read the committed Terminal 4 jetway baseline from HEAD.");
+}
+if (!committedSources.get(protectedSourcePaths[2])?.includes("installAuthoredTerminal4Visual")) {
+  throw new Error("Could not read the committed authored Terminal 4 baseline from HEAD.");
 }
 
 function runNode(script) {
@@ -38,10 +46,14 @@ try {
 
 let restorationError;
 try {
-  await writeFile(terminalTrainer, committedTerminalTrainer, "utf8");
-  const restored = await readFile(terminalTrainer, "utf8");
-  if (restored !== committedTerminalTrainer) {
-    throw new Error("Simulator-quality production wrapper failed to restore the committed Terminal 4 trainer exactly.");
+  for (const [sourcePath, committedSource] of committedSources) {
+    await writeFile(new URL(`../${sourcePath}`, import.meta.url), committedSource, "utf8");
+  }
+  for (const [sourcePath, committedSource] of committedSources) {
+    const restored = await readFile(new URL(`../${sourcePath}`, import.meta.url), "utf8");
+    if (restored !== committedSource) {
+      throw new Error(`Simulator-quality production wrapper failed to restore ${sourcePath} exactly.`);
+    }
   }
 } catch (error) {
   restorationError = error;
@@ -50,9 +62,9 @@ try {
 if (buildError && restorationError) {
   throw new AggregateError(
     [buildError, restorationError],
-    "Simulator-quality production build failed and Terminal 4 trainer restoration also failed.",
+    "Simulator-quality production build failed and protected source restoration also failed.",
   );
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the framed A1 terminal attachment, surgically removed the three exact authored A1 legacy boxes, retained the source-shaped facade pass, applied the Terminal 4 jetway simulator polish, added full-airport A1-to-B15 inspection routing with synchronous preset telemetry and balanced rendering, then restored the exact committed trainer and authored-terminal baselines.");
+console.log("RampReady simulator-quality production build preserved the framed A1 terminal attachment, surgically removed the three exact authored A1 legacy boxes, retained the source-shaped facade pass, applied the Terminal 4 jetway simulator polish, added full-airport A1-to-B15 inspection routing with synchronous preset telemetry and balanced rendering, then restored the exact committed trainer, jetway and authored-terminal baselines.");
