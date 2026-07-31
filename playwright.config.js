@@ -1,11 +1,12 @@
 import { defineConfig } from "@playwright/test";
 
 const externalBaseURL = process.env.PLAYWRIGHT_BASE_URL || "";
-const requestedWebServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || "npm run dev -- --port 4173";
-const terminal4Preparation = "npm run prepare:terminal4-runtime";
-const webServerCommand = requestedWebServerCommand.includes("prepare:terminal4-runtime")
-  ? requestedWebServerCommand
-  : `${terminal4Preparation} && ${requestedWebServerCommand}`;
+// Browser evidence must judge the exact production artifact, never a fresh
+// development compilation of source that the clean build has already restored.
+// Rebuilding here is intentional: it makes every direct Playwright invocation
+// self-contained and then serves the immutable dist output through Vite preview.
+const webServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND
+  || "npm run build && npm run preview -- --port 4173 --strictPort";
 
 export default defineConfig({
   testDir: "./tests/browser",
@@ -26,6 +27,6 @@ export default defineConfig({
         command: webServerCommand,
         url: "http://127.0.0.1:4173",
         reuseExistingServer: false,
-        timeout: 120_000,
+        timeout: 240_000,
       },
 });
