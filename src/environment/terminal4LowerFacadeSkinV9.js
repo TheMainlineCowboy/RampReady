@@ -2,11 +2,10 @@ const LOWER_FACADE_SOURCE_MATERIAL = /BGATE1|BGATE3|DGATE2|DGATE3|DGATE4|DGATE5|
 const LOWER_FACADE_MINIMUM_Y = 0;
 const LOWER_FACADE_MAXIMUM_Y = 4.55;
 // V9 is a cosmetic skin over the structural V8 facade. Legacy terminal meshes
-// contain a few enormous corner-spanning triangles that are valid source
-// topology but become visible ramp wedges when copied as a second surface.
-// Keep local facade panels and reject any triangle whose horizontal footprint
-// is wider than two normal gate modules.
-const LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS = 18;
+// contain broad gate-corridor and corner-spanning triangles that are valid
+// source topology but become detached ramp panels when copied as a second
+// opaque surface. Keep only localized, single-module facade faces.
+const LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS = 10;
 
 function buildConcreteTexture(THREE) {
   const size = 64;
@@ -196,6 +195,6 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   skin.userData.maximumHorizontalSpanLimitMeters = LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS;
   skin.userData.maximumHeightMeters = LOWER_FACADE_MAXIMUM_Y;
   skin.userData.authority = "source-shaped-low-vertical-BGATE-DGATE-terminal-face-skin-v9-clipped-to-ramp-height";
-  skin.userData.qualityPass = "oversized-corner-triangle-rejection-v10";
+  skin.userData.qualityPass = "localized-single-module-facade-triangle-rejection-v11";
   return skin;
 }
