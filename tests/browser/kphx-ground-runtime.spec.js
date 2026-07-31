@@ -48,6 +48,27 @@ async function captureCanvas(page, canvas, fileName) {
   await writeFile(`test-results/${fileName}`, image);
 }
 
+async function captureCanvasRegion(page, canvas, fileName, region) {
+  const bounds = await canvas.boundingBox();
+  expect(bounds).not.toBeNull();
+  const x = bounds.x + bounds.width * region.left;
+  const y = bounds.y + bounds.height * region.top;
+  const width = bounds.width * region.width;
+  const height = bounds.height * region.height;
+  const image = await page.screenshot({
+    type: "png",
+    clip: {
+      x: Math.max(0, Math.floor(x)),
+      y: Math.max(0, Math.floor(y)),
+      width: Math.max(1, Math.floor(width)),
+      height: Math.max(1, Math.floor(height)),
+    },
+    animations: "disabled",
+  });
+  expect(image.byteLength).toBeGreaterThan(20_000);
+  await writeFile(`test-results/${fileName}`, image);
+}
+
 async function frameA1Chase(page, canvas) {
   await page.evaluate(() => {
     const liveCanvas = document.querySelector("canvas.trainerCanvas");
@@ -181,6 +202,12 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
 
   await frameA1Chase(page, canvas);
   await captureCanvas(page, canvas, "kphx-a1-source-scale-jetway-chase.png");
+  await captureCanvasRegion(page, canvas, "kphx-a1-terminal-connection-close.png", {
+    left: 0,
+    top: 0.13,
+    width: 0.5,
+    height: 0.72,
+  });
 
   await page.evaluate(() => {
     const select = document.querySelector("select.rr-view-select");
