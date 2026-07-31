@@ -81,9 +81,21 @@ const facadeContinuityConstruction = `  const terminal4FacadeContinuity = buildT
     materials,
     SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset,
   );
+  const syntheticFacadeChildren = [...terminal4FacadeContinuity.children]
+    .filter((child) => child.name !== "Terminal4_A3_SourceWallArchitecturalDetail_V11");
+  for (const child of syntheticFacadeChildren) terminal4FacadeContinuity.remove(child);
+  terminal4FacadeContinuity.userData.suppressedSyntheticChildCount = syntheticFacadeChildren.length;
+  terminal4FacadeContinuity.userData.suppressedSyntheticPanelCount = terminal4FacadeContinuity.userData.panelCount;
+  terminal4FacadeContinuity.userData.panelCount = 0;
+  terminal4FacadeContinuity.userData.doorCount = 0;
+  terminal4FacadeContinuity.userData.ventCount = 0;
+  terminal4FacadeContinuity.userData.authority = "source-wall-plus-localized-skin-no-synthetic-span-panels-v12";
+  transforms.facadeInfill.length = 0;
+  transforms.facadeDoor.length = 0;
+  transforms.facadeVent.length = 0;
+  terminal4FacadeInfillCount = 0;
+  terminal4LowerFacadeFitCount = 0;
   group.add(terminal4FacadeContinuity);
-  terminal4FacadeInfillCount += terminal4FacadeContinuity.userData.panelCount;
-  terminal4LowerFacadeFitCount += terminal4FacadeContinuity.userData.panelCount;
   terminal4OpenServiceBayCount = 0;`;
 const lowerFacadeSkinConstruction = `  const terminal4LowerFacadeSkin = buildTerminal4LowerFacadeSkin(THREE, terminal, materials);
   group.add(terminal4LowerFacadeSkin);
@@ -164,6 +176,9 @@ function restoreGeneratedSourcePasses() {
     "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12",
     "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
     "buildTerminal4FacadeContinuity",
+    "source-wall-plus-localized-skin-no-synthetic-span-panels-v12",
+    "syntheticFacadeChildren",
+    "transforms.facadeInfill.length = 0",
     "terminal4FacadeContinuity.userData.panelCount",
     "buildTerminal4LowerFacadeSkin",
     "terminal4LowerFacadeSkin.userData.sourceTriangleCount",
@@ -213,4 +228,4 @@ try {
   restoreGeneratedSourcePasses();
 }
 
-console.log("RampReady production wrapper preserved the structural A1 wall fit, framed arched fixed walkway, A1/A3 synthetic-infill exclusion, continuous Terminal 4 spans and V9 lower-facade skin in the artifact, then restored all temporary source transforms exactly.");
+console.log("RampReady production wrapper preserved the structural A1 wall fit, framed arched fixed walkway and source-shaped lower facade while suppressing stacked synthetic facade slabs, then restored all temporary source transforms exactly.");
