@@ -6,14 +6,14 @@ const LOWER_FACADE_MAXIMUM_Y = 4.55;
 // source topology but become detached ramp panels when copied as a second
 // opaque surface. Keep only localized, single-module facade faces.
 const LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS = 10;
-// This exact source block sits in the A1 terminal-connection footprint. When
-// the bounded authored-geometry filter is active, these faces have already
-// been removed before V9 runs. The exclusion remains as a safe fallback for
-// any unfiltered development runtime.
+// These exact source blocks sit in the A1 terminal-connection footprint. When
+// the bounded authored-geometry filter is active, both aligned boxes have
+// already been removed before V9 runs. The exclusion remains as a safe
+// fallback for any unfiltered development runtime.
 const A1_COSMETIC_SKIN_EXCLUSION = Object.freeze({
   minimumX: -22.5,
   maximumX: -12.5,
-  minimumZ: -35,
+  minimumZ: -52,
   maximumZ: -25,
 });
 
@@ -185,15 +185,15 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
     }
   });
 
-  const authoredA1BlockRemoved = Number(terminal.userData?.a1LegacyBlockRemovedTriangles) === 12;
+  const authoredA1BlocksRemoved = Number(terminal.userData?.a1LegacyBlockRemovedTriangles) === 24;
   if (sourceTriangleCount < 120) {
     throw new Error(`Terminal 4 lower-facade skin found only ${sourceTriangleCount} source triangles`);
   }
   if (rejectedOversizedTriangleCount < 1) {
     throw new Error("Terminal 4 lower-facade skin did not reject any oversized legacy triangles");
   }
-  if (!authoredA1BlockRemoved && rejectedA1CosmeticTriangleCount < 4) {
-    throw new Error(`Terminal 4 lower-facade skin rejected only ${rejectedA1CosmeticTriangleCount} A1 cosmetic triangles without the authored filter`);
+  if (!authoredA1BlocksRemoved && rejectedA1CosmeticTriangleCount < 4) {
+    throw new Error(`Terminal 4 lower-facade skin rejected only ${rejectedA1CosmeticTriangleCount} A1 cosmetic triangles without the authored two-box filter`);
   }
 
   const geometry = new THREE.BufferGeometry();
@@ -224,14 +224,14 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   skin.userData.renderedTriangleCount = renderedTriangleCount;
   skin.userData.rejectedOversizedTriangleCount = rejectedOversizedTriangleCount;
   skin.userData.rejectedA1CosmeticTriangleCount = rejectedA1CosmeticTriangleCount;
-  skin.userData.authoredA1BlockRemoved = authoredA1BlockRemoved;
+  skin.userData.authoredA1BlocksRemoved = authoredA1BlocksRemoved;
   skin.userData.a1CosmeticExclusion = { ...A1_COSMETIC_SKIN_EXCLUSION };
   skin.userData.maximumAcceptedHorizontalSpanMeters = maximumAcceptedHorizontalSpanMeters;
   skin.userData.maximumHorizontalSpanLimitMeters = LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS;
   skin.userData.maximumHeightMeters = LOWER_FACADE_MAXIMUM_Y;
   skin.userData.authority = "source-shaped-low-vertical-BGATE-DGATE-terminal-face-skin-v9-clipped-to-ramp-height";
-  skin.userData.qualityPass = authoredA1BlockRemoved
-    ? "authored-a1-block-removed-before-localized-facade-skin-v10"
-    : "localized-a1-cosmetic-exclusion-fallback-v10";
+  skin.userData.qualityPass = authoredA1BlocksRemoved
+    ? "authored-a1-two-boxes-removed-before-localized-facade-skin-v11"
+    : "localized-a1-cosmetic-exclusion-fallback-v11";
   return skin;
 }
