@@ -1,117 +1,19 @@
 import fs from "node:fs";
+import { execFileSync } from "node:child_process";
 
 const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
+const committedSource = execFileSync(
+  "git",
+  ["show", `HEAD:${jetwayPath}`],
+  { encoding: "utf8" },
+);
+if (!committedSource.includes("buildSourcePlacedTerminal4Jetways")) {
+  throw new Error("Could not read the committed Terminal 4 jetway baseline from HEAD.");
+}
 
-const legacyStructuralFacadeFilter = `  const hit = raycaster.intersectObject(terminal, true).find((entry) => {
-    if (entry.object?.visible === false) return false;
-    const materials = Array.isArray(entry.object?.material)
-      ? entry.object.material
-      : [entry.object?.material];
-    const material = materials[entry.face?.materialIndex ?? 0] ?? materials[0];
-    return /BGATE|DGATE|PHX_TERM400/i.test(material?.name || "");
-  });`;
-const legacyCommittedHitSelection = "  const hit = raycaster.intersectObject(terminal, true).find((entry) => entry.object?.visible !== false);";
-
-const radialStructuralFacadeFilter = `    const hit = raycaster.intersectObject(terminal, true).find((entry) => {
-      if (entry.object?.visible === false) return false;
-      const materials = Array.isArray(entry.object?.material)
-        ? entry.object.material
-        : [entry.object?.material];
-      const material = materials[entry.face?.materialIndex ?? 0] ?? materials[0];
-      return /BGATE|DGATE|PHX_TERM400/i.test(material?.name || "");
-    });`;
-const radialCommittedHitSelection = "    const hit = raycaster.intersectObject(terminal, true).find((entry) => entry.object?.visible !== false);";
-const radialStructuralVertexFilter = `    const materials = Array.isArray(node.material) ? node.material : [node.material];
-    if (!materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test(material?.name || ""))) return;
-`;
-
-const preparedFixedWalkwayCollar = `    transforms.wallCollar.push({
-      position: [
-        jetway.x + connectorTowardX * wallConnectorLength / 2,
-        rotundaY,
-        jetway.z + connectorTowardZ * wallConnectorLength / 2,
-      ],
-      yaw: connectorYaw,
-      scale: [1, 1, wallConnectorLength],
-    });
-    const connectorPerpendicular = [-connectorTowardZ, connectorTowardX];
-    for (let along = 0.72; along < wallConnectorLength - 0.3; along += 1.65) {
-      addTunnelFrame(
-        transforms,
-        [
-          jetway.x + connectorTowardX * along,
-          rotundaY,
-          jetway.z + connectorTowardZ * along,
-        ],
-        connectorYaw,
-        0,
-        connectorPerpendicular,
-        2.48,
-        2.34,
-        0.22,
-        0.055,
-      );
-    }`;
-const committedFixedWalkwayCollar = `    transforms.wallCollar.push({
-      position: [
-        jetway.x + connectorTowardX * wallConnectorLength / 2,
-        rotundaY,
-        jetway.z + connectorTowardZ * wallConnectorLength / 2,
-      ],
-      yaw: connectorYaw,
-      scale: [2.62, 2.48, wallConnectorLength],
-    });`;
-const preparedFixedWalkwayGeometry = `  const box = new THREE.BoxGeometry(1, 1, 1);
-  const wallConnectorTunnel = createArchedTunnelGeometry(THREE, 2.48, 2.34, 0.22);
-  const outerTunnel = createArchedTunnelGeometry(THREE, 2.44, 2.34, 0.28);`;
-const committedFixedWalkwayGeometry = `  const box = new THREE.BoxGeometry(1, 1, 1);
-  const outerTunnel = createArchedTunnelGeometry(THREE, 2.44, 2.34, 0.28);`;
-const preparedFixedWalkwayInstances = `  addInstances(THREE, group, wallConnectorTunnel, materials.shell, transforms.wallCollar, "AIR_Jetway01_FixedTerminalWalkways_V13");`;
-const committedFixedWalkwayInstances = `  addInstances(THREE, group, box, materials.shell, transforms.wallCollar, "AIR_Jetway01_WallCollars");`;
-const preparedCornerFacadeGuard = 'if (!["A1", "A3"].includes(jetway.g) && facadeOuterWallFit != null && !keepServiceBayOpen) {';
-const committedCornerFacadeGuard = "if (facadeOuterWallFit != null && !keepServiceBayOpen) {";
-
-const facadeContinuityImport = 'import { buildTerminal4FacadeContinuity } from "./terminal4FacadeContinuityV8.js";';
-const lowerFacadeSkinImport = 'import { buildTerminal4LowerFacadeSkin } from "./terminal4LowerFacadeSkinV9.js";';
-const facadeContinuityConstruction = `  const terminal4FacadeContinuity = buildTerminal4FacadeContinuity(
-    THREE,
-    terminal,
-    jetways,
-    parkingByGate,
-    materials,
-    SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset,
-  );
-  const syntheticFacadeChildren = [...terminal4FacadeContinuity.children]
-    .filter((child) => child.name !== "Terminal4_A3_SourceWallArchitecturalDetail_V11");
-  for (const child of syntheticFacadeChildren) terminal4FacadeContinuity.remove(child);
-  terminal4FacadeContinuity.userData.suppressedSyntheticChildCount = syntheticFacadeChildren.length;
-  terminal4FacadeContinuity.userData.suppressedSyntheticPanelCount = terminal4FacadeContinuity.userData.panelCount;
-  terminal4FacadeContinuity.userData.panelCount = 0;
-  terminal4FacadeContinuity.userData.doorCount = 0;
-  terminal4FacadeContinuity.userData.ventCount = 0;
-  terminal4FacadeContinuity.userData.authority = "source-wall-plus-localized-skin-no-synthetic-span-panels-v12";
-  transforms.facadeInfill.length = 0;
-  transforms.facadeDoor.length = 0;
-  transforms.facadeVent.length = 0;
-  terminal4FacadeInfillCount = 0;
-  terminal4LowerFacadeFitCount = 0;
-  group.add(terminal4FacadeContinuity);
-  terminal4OpenServiceBayCount = 0;`;
-const lowerFacadeSkinConstruction = `  const terminal4LowerFacadeSkin = buildTerminal4LowerFacadeSkin(THREE, terminal, materials);
-  group.add(terminal4LowerFacadeSkin);
-  terminal4FacadeInfillCount += terminal4LowerFacadeSkin.userData.sourceTriangleCount;
-  terminal4LowerFacadeFitCount += terminal4LowerFacadeSkin.userData.sourceTriangleCount;`;
-const skinAuthority = '  group.userData.facadeInfillAuthority = "source-shaped-lower-facade-skin-v9-over-continuous-structural-spans";';
-const continuityAuthority = '  group.userData.facadeInfillAuthority = "structural-facade-neighbor-span-continuity-v8-no-repeated-black-bays";';
-const committedFacadeAuthority = '  group.userData.facadeInfillAuthority = "source-recess-qualified-service-bays-with-irregular-closed-facade-details";';
-const generatedRadialAuthority = '  group.userData.terminalConnectionAuthority = "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12";';
-const committedRadialAuthority = '  group.userData.terminalConnectionAuthority = "independent-rotunda-collar-fit-to-authored-terminal-wall";';
-const generatedLegacyAuthority = '  group.userData.terminalConnectionAuthority = "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11";';
-const committedLegacyAuthority = '  group.userData.terminalConnectionAuthority = "raycast-and-source-vertex-fit-to-authored-terminal-mesh";';
-
-// build-production.mjs still recognizes the legacy collinear connector tokens.
-// This comment supplies only its baseline identity checks; the actual prepared
-// source remains the independent radial structural-wall connector used by A1.
+// build-production.mjs still recognizes these legacy baseline tokens while the
+// production source uses the independent structural connector and framed fixed
+// walkway. The marker is build-only and is removed by the exact restoration.
 const buildRestorerCompatibilityMarker = `/* A1_RESTORER_BASELINE_COMPATIBILITY
   const raycaster = new THREE.Raycaster(origin, direction, 0.05, 24);
       if (!(longitudinal > 0.05 && longitudinal <= 24)) continue;
@@ -119,113 +21,37 @@ const buildRestorerCompatibilityMarker = `/* A1_RESTORER_BASELINE_COMPATIBILITY
   group.userData.terminalConnectionAuthority = "raycast-and-source-vertex-fit-to-authored-terminal-mesh";
 */`;
 
-function installBuildRestorerCompatibility() {
-  let source = fs.readFileSync(jetwayPath, "utf8");
-  if (!source.includes("A1_RESTORER_BASELINE_COMPATIBILITY")) {
-    source = `${source.trimEnd()}\n\n${buildRestorerCompatibilityMarker}\n`;
-    fs.writeFileSync(jetwayPath, source, "utf8");
-  }
+let preparedSource = fs.readFileSync(jetwayPath, "utf8");
+if (!preparedSource.includes("A1_RESTORER_BASELINE_COMPATIBILITY")) {
+  preparedSource = `${preparedSource.trimEnd()}\n\n${buildRestorerCompatibilityMarker}\n`;
+  fs.writeFileSync(jetwayPath, preparedSource, "utf8");
 }
 
-function restoreGeneratedSourcePasses() {
-  let source = fs.readFileSync(jetwayPath, "utf8");
-
-  source = source
-    .replace(`${buildRestorerCompatibilityMarker}\n`, "")
-    .replace(`\n${buildRestorerCompatibilityMarker}`, "")
-    .replace(buildRestorerCompatibilityMarker, "")
-    .replace(preparedCornerFacadeGuard, committedCornerFacadeGuard)
-    .replace(preparedFixedWalkwayCollar, committedFixedWalkwayCollar)
-    .replace(preparedFixedWalkwayGeometry, committedFixedWalkwayGeometry)
-    .replace(preparedFixedWalkwayInstances, committedFixedWalkwayInstances)
-    .replace(legacyStructuralFacadeFilter, legacyCommittedHitSelection)
-    .replace(radialStructuralFacadeFilter, radialCommittedHitSelection)
-    .replace(radialStructuralVertexFilter, "")
-    .replace("  const cast = (direction, far = 48) => {", "  const cast = (direction, far = 24) => {")
-    .replace("      if (distance > 0.05 && distance <= 48 && distance < nearestDistance) {", "      if (distance > 0.05 && distance <= 24 && distance < nearestDistance) {")
-    .replace("      if (!(longitudinal > 0.05 && longitudinal <= 48)) continue;", "      if (!(longitudinal > 0.05 && longitudinal <= 24)) continue;")
-    .replace("      if (lateral <= 5.5) nearest = Math.min(nearest, longitudinal);", "      if (lateral <= 4.5) nearest = Math.min(nearest, longitudinal);")
-    .replace("    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 44);", "    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 18);")
-    .replace(generatedRadialAuthority, committedRadialAuthority)
-    .replace(generatedLegacyAuthority, committedLegacyAuthority)
-    .replace(`${lowerFacadeSkinImport}\n`, "")
-    .replace(`\n${lowerFacadeSkinImport}`, "")
-    .replace(`${facadeContinuityImport}\n`, "")
-    .replace(`\n${facadeContinuityImport}`, "")
-    .replace(`${lowerFacadeSkinConstruction}\n`, "")
-    .replace(`\n${lowerFacadeSkinConstruction}`, "")
-    .replace(`${facadeContinuityConstruction}\n`, "")
-    .replace(`\n${facadeContinuityConstruction}`, "")
-    .replace(skinAuthority, continuityAuthority)
-    .replace(continuityAuthority, committedFacadeAuthority);
-
-  for (const forbidden of [
-    "A1_RESTORER_BASELINE_COMPATIBILITY",
-    preparedCornerFacadeGuard,
-    "AIR_Jetway01_FixedTerminalWalkways_V13",
-    "const wallConnectorTunnel = createArchedTunnelGeometry",
-    "const connectorPerpendicular = [-connectorTowardZ, connectorTowardX]",
-    "scale: [1, 1, wallConnectorLength]",
-    "return /BGATE|DGATE|PHX_TERM400/i.test",
-    "materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test",
-    "const cast = (direction, far = 48)",
-    "distance <= 48",
-    "longitudinal <= 48",
-    "lateral <= 5.5",
-    "1.25, 44",
-    "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12",
-    "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
-    "buildTerminal4FacadeContinuity",
-    "source-wall-plus-localized-skin-no-synthetic-span-panels-v12",
-    "syntheticFacadeChildren",
-    "transforms.facadeInfill.length = 0",
-    "terminal4FacadeContinuity.userData.panelCount",
-    "buildTerminal4LowerFacadeSkin",
-    "terminal4LowerFacadeSkin.userData.sourceTriangleCount",
-    "source-shaped-lower-facade-skin-v9-over-continuous-structural-spans",
-    "structural-facade-neighbor-span-continuity-v8-no-repeated-black-bays",
-  ]) {
-    if (source.includes(forbidden)) throw new Error(`RampReady production cleanup left generated source token ${forbidden}`);
-  }
-
-  const radialBaselineRestored = [
-    "function findTerminalWallConnection",
-    "const cast = (direction, far = 24)",
-    radialCommittedHitSelection,
-    "distance <= 24",
-    "1.25, 18",
-    committedRadialAuthority,
-  ].every((token) => source.includes(token));
-  const legacyBaselineRestored = [
-    "function findTerminalWallDistance",
-    legacyCommittedHitSelection,
-    "longitudinal <= 24",
-    "lateral <= 4.5",
-    "1.25, 18",
-    committedLegacyAuthority,
-  ].every((token) => source.includes(token));
-  const fixedWalkwayBaselineRestored = [
-    "scale: [2.62, 2.48, wallConnectorLength]",
-    'addInstances(THREE, group, box, materials.shell, transforms.wallCollar, "AIR_Jetway01_WallCollars")',
-  ].every((token) => source.includes(token));
-  const cornerFacadeBaselineRestored = source.includes(committedCornerFacadeGuard);
-
-  if (
-    (!radialBaselineRestored && !legacyBaselineRestored)
-    || !fixedWalkwayBaselineRestored
-    || !cornerFacadeBaselineRestored
-    || !source.includes(committedFacadeAuthority)
-  ) {
-    throw new Error("RampReady production cleanup failed to restore the committed jetway/facade baseline.");
-  }
-  fs.writeFileSync(jetwayPath, `${source.trimEnd()}\n`, "utf8");
-}
-
-installBuildRestorerCompatibility();
+let buildError;
 try {
   await import("./build-production.mjs");
-} finally {
-  restoreGeneratedSourcePasses();
+} catch (error) {
+  buildError = error;
 }
 
-console.log("RampReady production wrapper preserved the structural A1 wall fit, framed arched fixed walkway and source-shaped lower facade while suppressing stacked synthetic facade slabs, then restored all temporary source transforms exactly.");
+let restorationError;
+try {
+  fs.writeFileSync(jetwayPath, committedSource, "utf8");
+  const restoredSource = fs.readFileSync(jetwayPath, "utf8");
+  if (restoredSource !== committedSource) {
+    throw new Error("RampReady failed to restore the committed jetway source byte-for-byte.");
+  }
+} catch (error) {
+  restorationError = error;
+}
+
+if (buildError && restorationError) {
+  throw new AggregateError(
+    [buildError, restorationError],
+    "RampReady production build failed and exact jetway source restoration also failed.",
+  );
+}
+if (restorationError) throw restorationError;
+if (buildError) throw buildError;
+
+console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, then restored the committed jetway source byte-for-byte.");
