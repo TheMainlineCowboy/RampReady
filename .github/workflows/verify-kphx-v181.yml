@@ -9,6 +9,7 @@ on:
       - 'scripts/prepare-full-airport-inspection-route.mjs'
       - 'scripts/build-production-simulator-quality.mjs'
       - 'scripts/run-production-with-a1-cleanup.mjs'
+      - 'scripts/verify-terminal4-runtime-integration.mjs'
       - 'tests/browser/kphx-ground-runtime.spec.js'
       - 'tests/browser/full-airport-inspection.spec.js'
       - 'playwright.config.js'
