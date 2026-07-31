@@ -7,6 +7,8 @@ const removalEvidence = `  environment.userData.authoredTerminal4A1LegacyBlockRe
   environment.userData.authoredTerminal4A1LegacyBlockSourceTriangles = a1LegacyBlockRemoval.sourceTriangleCount;
   environment.userData.authoredTerminal4A1LegacyBlockRetainedTriangles = a1LegacyBlockRemoval.retainedTriangleCount;
   environment.userData.authoredTerminal4A1LegacyBlockAuthority = authored.userData.a1LegacyBlockAuthority;`;
+const polishImport = 'import { applyTerminal4JetwaySimulatorPolish } from "./terminal4JetwaySimulatorPolishV13.js";';
+const polishCall = "  applyTerminal4JetwaySimulatorPolish(sourcePlacedJetways);";
 
 function restoreCommittedAuthoredTerminalSource(source) {
   return source
@@ -15,13 +17,17 @@ function restoreCommittedAuthoredTerminalSource(source) {
     .replace(`${filterCall}\n`, "")
     .replace(`\n${filterCall}`, "")
     .replace(`${removalEvidence}\n`, "")
-    .replace(`\n${removalEvidence}`, "");
+    .replace(`\n${removalEvidence}`, "")
+    .replace(`${polishImport}\n`, "")
+    .replace(`\n${polishImport}`, "")
+    .replace(`${polishCall}\n`, "")
+    .replace(`\n${polishCall}`, "");
 }
 
 const preparedSource = fs.readFileSync(authoredTerminalPath, "utf8");
-for (const token of [filterImport, filterCall, removalEvidence]) {
+for (const token of [filterImport, filterCall, removalEvidence, polishImport, polishCall]) {
   if (!preparedSource.includes(token)) {
-    throw new Error(`RampReady authored Terminal 4 wrapper is missing prepared A1 filter token ${token}`);
+    throw new Error(`RampReady authored Terminal 4 wrapper is missing prepared token ${token}`);
   }
 }
 const committedSource = restoreCommittedAuthoredTerminalSource(preparedSource);
@@ -29,6 +35,8 @@ if (
   committedSource.includes(filterImport)
   || committedSource.includes(filterCall)
   || committedSource.includes("authoredTerminal4A1LegacyBlockRemovedTriangles")
+  || committedSource.includes(polishImport)
+  || committedSource.includes(polishCall)
 ) {
   throw new Error("RampReady could not derive the committed authored Terminal 4 baseline before building");
 }
@@ -54,6 +62,8 @@ try {
     "authoredTerminal4A1LegacyBlockSourceTriangles",
     "authoredTerminal4A1LegacyBlockRetainedTriangles",
     "authoredTerminal4A1LegacyBlockAuthority",
+    polishImport,
+    polishCall,
   ]) {
     if (restoredSource.includes(forbidden)) {
       throw new Error(`RampReady authored Terminal 4 cleanup left generated token ${forbidden}`);
@@ -72,4 +82,4 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log("RampReady production artifact preserved the exact three-box, 36-triangle A1 authored cleanup, then restored authoredTerminal4Visual.js byte-for-byte.");
+console.log("RampReady production artifact preserved the exact three-box, 36-triangle A1 authored cleanup and Terminal 4 jetway simulator polish, then restored authoredTerminal4Visual.js byte-for-byte.");
