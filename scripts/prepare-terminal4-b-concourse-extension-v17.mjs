@@ -48,9 +48,10 @@ for (const token of [
   extensionImport,
   extensionCall,
   "terminal4BConcourseExtensionAuthority",
+  "terminal4BConcourseDisclosure = terminal4BConcourseExtension.userData.syntheticEquivalentDisclosure",
   "authoredTerminal4BConcourseExtensionAuthority",
   "authoredTerminal4B15AttachedRotundas",
-  "package-aerial-and-gate-aligned-building-equivalent-for-missing-term4.BGL-extension",
+  "authoredTerminal4BConcourseDisclosure",
 ]) {
   if (!source.includes(token)) throw new Error(`${authoredPath}: B-concourse extension preparation is missing ${token}`);
 }
