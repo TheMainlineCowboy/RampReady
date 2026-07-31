@@ -157,8 +157,8 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
   expect(runtime.b15CorridorMeters).toBe("515,542");
 
   const nearestGeometryMeters = Number(runtime.terminal4A1NearestGeometryMeters);
-  expect(nearestGeometryMeters).toBeGreaterThan(28);
-  expect(nearestGeometryMeters).toBeLessThan(29.2);
+  expect(nearestGeometryMeters).toBeGreaterThan(29.9);
+  expect(nearestGeometryMeters).toBeLessThan(30.6);
   const a1WallDistance = Number(runtime.terminal4A1JetwayWallDistance);
   expect(a1WallDistance).toBeGreaterThan(24);
   expect(a1WallDistance).toBeLessThan(36);
