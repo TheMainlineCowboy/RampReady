@@ -34,11 +34,13 @@ if (!source.includes(marker)) {
   source = source.replace(oldText, newText);
 }
 
-const a1FacadeGuard = 'if (jetway.g !== "A1" && facadeOuterWallFit != null && !keepServiceBayOpen) {';
-if (!source.includes(a1FacadeGuard)) {
+const cornerFacadeGuard = 'if (!["A1", "A3"].includes(jetway.g) && facadeOuterWallFit != null && !keepServiceBayOpen) {';
+if (!source.includes(cornerFacadeGuard)) {
+  const previousA1Guard = 'if (jetway.g !== "A1" && facadeOuterWallFit != null && !keepServiceBayOpen) {';
   const unguardedFacade = "if (facadeOuterWallFit != null && !keepServiceBayOpen) {";
-  if (!source.includes(unguardedFacade)) throw new Error("Terminal 4 A1 facade exclusion anchor is missing");
-  source = source.replace(unguardedFacade, a1FacadeGuard);
+  const anchor = source.includes(previousA1Guard) ? previousA1Guard : unguardedFacade;
+  if (!source.includes(anchor)) throw new Error("Terminal 4 A1/A3 facade exclusion anchor is missing");
+  source = source.replace(anchor, cornerFacadeGuard);
 }
 
 const walkwayMarker = "AIR_Jetway01_FixedTerminalWalkways_V13";
@@ -100,7 +102,7 @@ fs.writeFileSync(path, source, "utf8");
 const prepared = fs.readFileSync(path, "utf8");
 for (const token of [
   "const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance",
-  a1FacadeGuard,
+  cornerFacadeGuard,
   "const facadeRampOffset = 0.28",
   "scale: [7.0, 3.42, 0.5]",
   "service bays open; every other module receives a flush outer-wall closure",
@@ -113,8 +115,9 @@ for (const forbidden of [
   "const lowerWallFit = lowerFacadeWallDistance ?? terminalWallDistance",
   "const facadeRampOffset = 0.95",
   "scale: [6.4, 3.36, 0.68]",
+  'if (jetway.g !== "A1" && facadeOuterWallFit != null && !keepServiceBayOpen) {',
   "if (facadeOuterWallFit != null && !keepServiceBayOpen) {",
   'addInstances(THREE, group, box, materials.shell, transforms.wallCollar, "AIR_Jetway01_WallCollars")',
 ]) if (prepared.includes(forbidden)) throw new Error(`Terminal 4 facade/walkway visual v7-v13 still contains ${forbidden}`);
 
-console.log("Prepared Terminal 4 facade visual v7 and fixed walkway v13: A1 synthetic infill excluded, flush lower facade elsewhere, and source-textured arched terminal connectors with structural ribs.");
+console.log("Prepared Terminal 4 facade visual v7 and fixed walkway v13: A1/A3 corner synthetic infill excluded, flush lower facade elsewhere, and source-textured arched terminal connectors with structural ribs.");
