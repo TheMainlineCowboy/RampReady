@@ -125,7 +125,7 @@ const committedA1Connection = `    const terminalConnection = findTerminalWallCo
       -uz,
       rotundaY,
     );`;
-const exactA1Connection = `    let terminalConnection = findTerminalWallConnection(
+const exactA1Connection = `    const terminalConnection = findTerminalWallConnection(
       THREE,
       terminal,
       jetway.x,
@@ -133,19 +133,19 @@ const exactA1Connection = `    let terminalConnection = findTerminalWallConnecti
       -ux,
       -uz,
       rotundaY,
-    );
+    ) || {};
     if (jetway.g === "A1") {
       const exactWallX = -3.55299146;
       const exactWallZ = -40.60699866;
       const exactDx = exactWallX - jetway.x;
       const exactDz = exactWallZ - jetway.z;
       const exactDistance = Math.hypot(exactDx, exactDz);
-      terminalConnection = {
+      Object.assign(terminalConnection, {
         distance: exactDistance,
         towardX: exactDx / exactDistance,
         towardZ: exactDz / exactDistance,
         authority: "exact-BGATE1-A1-terminal-wall-plane-v14",
-      };
+      });
     }`;
 replaceRequired(
   committedA1Connection,
