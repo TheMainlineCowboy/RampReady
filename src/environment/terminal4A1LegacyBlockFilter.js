@@ -1,13 +1,14 @@
 const TARGET_MATERIAL_NAME = /^material-13-PHX_TERM400_1\.DDS$/i;
 const EXPECTED_SOURCE_TRIANGLES = 280;
 const EXPECTED_TRIANGLES_PER_BOX = 12;
-const EXPECTED_REMOVED_TRIANGLES = 24;
-const EXPECTED_RETAINED_TRIANGLES = 256;
+const EXPECTED_REMOVED_TRIANGLES = 36;
+const EXPECTED_RETAINED_TRIANGLES = 244;
 
-// Two isolated authored boxes share the same A1-side footprint and sit one
-// behind the other. Removing only the nearer 12-triangle box exposed the
-// identical rear box in the same camera line. These exact local-space bounds
-// target both standalone boxes without touching the surrounding terminal.
+// Three isolated authored boxes sit around the A1 corner and read as detached
+// beige walls in the ramp camera. The first two overlap one another behind the
+// rotunda; the third is a narrow 2 x 8.6 x 6.9 m panel east of the stand. These
+// exact local-space bounds remove only those standalone 12-triangle boxes and
+// preserve the surrounding connected Terminal 4 geometry.
 const TARGET_LOCAL_BOXES = Object.freeze([
   Object.freeze({
     id: "A1-near-legacy-box",
@@ -18,6 +19,11 @@ const TARGET_LOCAL_BOXES = Object.freeze([
     id: "A1-rear-legacy-box",
     minimum: Object.freeze([-122.27, -0.05, 80.0]),
     maximum: Object.freeze([-117.05, 9.6, 88.22]),
+  }),
+  Object.freeze({
+    id: "A1-east-freestanding-panel",
+    minimum: Object.freeze([-95.15, -0.05, 105.15]),
+    maximum: Object.freeze([-92.95, 8.7, 112.25]),
   }),
 ]);
 
@@ -104,7 +110,7 @@ function filterGeometry(THREE, geometry) {
   }
   filtered.userData = {
     ...(geometry.userData || {}),
-    a1LegacyBlockFilter: "exact-two-box-24-triangle-PHX_TERM400_1-removal-v2",
+    a1LegacyBlockFilter: "exact-three-box-36-triangle-PHX_TERM400_1-removal-v3",
     a1LegacyBlockRemovedByTarget: Object.fromEntries(
       TARGET_LOCAL_BOXES.map((box, index) => [box.id, removedByTarget[index]]),
     ),
@@ -141,7 +147,7 @@ export function removeTerminal4A1LegacyBlock(THREE, terminal) {
       a1LegacyBlockRemovedByTarget: Object.fromEntries(
         TARGET_LOCAL_BOXES.map((box, index) => [box.id, result.removedByTarget[index]]),
       ),
-      a1LegacyBlockAuthority: "exact-authored-PHX_TERM400_1-two-box-bounds-v2",
+      a1LegacyBlockAuthority: "exact-authored-PHX_TERM400_1-three-box-bounds-v3",
     };
   });
 
@@ -173,7 +179,7 @@ export function removeTerminal4A1LegacyBlock(THREE, terminal) {
     a1LegacyBlockSourceTriangles: sourceTriangleCount,
     a1LegacyBlockRetainedTriangles: retainedTriangleCount,
     a1LegacyBlockBounds: TARGET_LOCAL_BOXES,
-    a1LegacyBlockAuthority: "surgical-exact-two-box-24-triangle-authored-removal-v2",
+    a1LegacyBlockAuthority: "surgical-exact-three-box-36-triangle-authored-removal-v3",
   };
 
   return {
