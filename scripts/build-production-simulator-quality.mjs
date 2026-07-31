@@ -1,8 +1,16 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 
-const terminalTrainer = new URL("../src/components/RampReadyStandupTrainerTerminal4.jsx", import.meta.url);
-const originalTerminalTrainer = await readFile(terminalTrainer, "utf8");
+const terminalTrainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
+const terminalTrainer = new URL(`../${terminalTrainerPath}`, import.meta.url);
+const committedTerminalTrainer = execFileSync(
+  "git",
+  ["show", `HEAD:${terminalTrainerPath}`],
+  { encoding: "utf8" },
+);
+if (!committedTerminalTrainer.includes("export default function RampReadyStandupTrainer")) {
+  throw new Error("Could not read the committed Terminal 4 trainer baseline from HEAD.");
+}
 
 function runNode(script) {
   return new Promise((resolve, reject) => {
@@ -25,10 +33,10 @@ try {
 
 let restorationError;
 try {
-  await writeFile(terminalTrainer, originalTerminalTrainer, "utf8");
+  await writeFile(terminalTrainer, committedTerminalTrainer, "utf8");
   const restored = await readFile(terminalTrainer, "utf8");
-  if (restored !== originalTerminalTrainer) {
-    throw new Error("Simulator-quality production wrapper failed to restore the generated Terminal 4 trainer exactly.");
+  if (restored !== committedTerminalTrainer) {
+    throw new Error("Simulator-quality production wrapper failed to restore the committed Terminal 4 trainer exactly.");
   }
 } catch (error) {
   restorationError = error;
@@ -42,4 +50,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the framed A1 terminal attachment and facade passes, added full-airport A1-to-B15 inspection routing, then restored tracked source exactly.");
+console.log("RampReady simulator-quality production build preserved the framed A1 terminal attachment and facade passes, added full-airport A1-to-B15 inspection routing, then restored the exact committed trainer baseline.");
