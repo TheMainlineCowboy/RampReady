@@ -61,11 +61,20 @@ async function captureScene(page, canvas, fileName) {
   }
 }
 
+async function numericAttribute(canvas, attribute) {
+  const value = await canvas.getAttribute(attribute);
+  return Number(value);
+}
+
 async function tugPosition(canvas) {
-  return canvas.evaluate((element) => ({
-    x: Number(element.dataset.inspectionTugX),
-    z: Number(element.dataset.inspectionTugZ),
-  }));
+  const x = await numericAttribute(canvas, "data-inspection-tug-x");
+  const z = await numericAttribute(canvas, "data-inspection-tug-z");
+  return { x, z };
+}
+
+async function expectPresetPosition(canvas, preset) {
+  await expect(canvas).toHaveAttribute("data-inspection-tug-x", preset.x.toFixed(3), { timeout: 30_000 });
+  await expect(canvas).toHaveAttribute("data-inspection-tug-z", preset.z.toFixed(3), { timeout: 30_000 });
 }
 
 function distance(a, b) {
@@ -85,6 +94,10 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
     "data-inspection-route-authority",
     "source-gate-apron-presets-a1-a14-b14-b15-v1",
   );
+  await expect(canvas).toHaveAttribute(
+    "data-inspection-telemetry-authority",
+    "synchronous-preset-placement-v2",
+  );
 
   const location = page.getByLabel("Inspection location");
   await expect(location).toBeVisible();
@@ -92,30 +105,29 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
   for (const preset of PRESETS) {
     await location.selectOption(preset.id);
     await expect(canvas).toHaveAttribute("data-inspection-preset", preset.id);
-    await expect.poll(async () => {
-      const position = await tugPosition(canvas);
-      return Number.isFinite(position.x) && Number.isFinite(position.z);
-    }, { timeout: 15_000 }).toBe(true);
-    const position = await tugPosition(canvas);
-    expect(Math.abs(position.x - preset.x), `${preset.id} X placement`).toBeLessThan(0.08);
-    expect(Math.abs(position.z - preset.z), `${preset.id} Z placement`).toBeLessThan(0.08);
+    await expectPresetPosition(canvas, preset);
     await page.waitForTimeout(900);
     await captureScene(page, canvas, preset.file);
   }
 
   await location.selectOption("b15");
   await expect(canvas).toHaveAttribute("data-inspection-preset", "b15");
+  await expectPresetPosition(canvas, PRESETS.at(-1));
   const start = await tugPosition(canvas);
+  expect(Number.isFinite(start.x) && Number.isFinite(start.z)).toBe(true);
+
   await page.keyboard.down("w");
   await page.waitForTimeout(1_200);
   await page.keyboard.up("w");
   const forward = await tugPosition(canvas);
+  expect(Number.isFinite(forward.x) && Number.isFinite(forward.z)).toBe(true);
   expect(distance(forward, start)).toBeGreaterThan(0.25);
 
   await page.keyboard.down("s");
   await page.waitForTimeout(1_200);
   await page.keyboard.up("s");
   const reverse = await tugPosition(canvas);
+  expect(Number.isFinite(reverse.x) && Number.isFinite(reverse.z)).toBe(true);
   expect(distance(reverse, forward)).toBeGreaterThan(0.15);
 
   await page.getByLabel("Camera view").selectOption("overhead");
