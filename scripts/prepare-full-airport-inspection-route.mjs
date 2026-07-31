@@ -99,7 +99,7 @@ replaceOnce(
       sim.renderer.domElement.dataset.inspectionPreset = next ? "a1" : "training";
       sim.renderer.domElement.dataset.inspectionPresetLabel = next ? INSPECTION_PRESETS.a1.label : "Training";
       sim.renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY;`,
-  "dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY",
+  'sim.renderer.domElement.dataset.inspectionPreset = next ? "a1" : "training"',
   "inspection route runtime evidence",
 );
 
@@ -121,7 +121,7 @@ replaceOnce(
       ? (INSPECTION_PRESETS[inspectionPresetRef.current] || INSPECTION_PRESETS.a1).label
       : "Training";
     renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY;`,
-  "renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY",
+  "renderer.domElement.dataset.inspectionPreset = inspectionRef.current ? inspectionPresetRef.current",
   "initial inspection route evidence",
 );
 
@@ -155,10 +155,14 @@ for (const token of [
   "const moveInspectionToPreset = useCallback",
   'aria-label="Inspection location"',
   "dataset.inspectionPreset = preset.id",
+  'sim.renderer.domElement.dataset.inspectionPreset = next ? "a1" : "training"',
+  "renderer.domElement.dataset.inspectionPreset = inspectionRef.current ? inspectionPresetRef.current",
+  "sim.renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY",
+  "renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY",
   "data-inspection-preset={inspectionMode ? inspectionPreset",
 ]) {
   if (!source.includes(token)) throw new Error(`${trainerPath}: completed full-airport inspection route is missing ${token}`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared full-airport free-drive inspection presets from A1 through B15 with source-gate apron positions.");
+console.log("Prepared full-airport free-drive inspection presets from A1 through B15 with explicit initial and toggle lifecycle evidence.");
