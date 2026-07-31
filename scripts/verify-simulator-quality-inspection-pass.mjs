@@ -124,18 +124,22 @@ for (const forbidden of ["y = 0.135", "0.137,", "0.145, z", "renderOrder = 460",
 }
 
 const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js", [
+  "function findTerminalWallConnection",
   "function findTerminalWallDistance",
   "buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTextures = {})",
-  "const terminalWallDistance = findTerminalWallDistance",
+  "const terminalConnection = findTerminalWallConnection",
+  "const terminalWallDistance = terminalConnection?.distance ?? null",
+  "const connectorYaw = Math.atan2(connectorTowardX, connectorTowardZ)",
   "const lowerFacadeWallDistance = findTerminalWallDistance",
   "const sourceFacadeRecessMeters",
   "wallConnectorLength / 2",
   "terminalConnectedJetwayCount",
   "a1TerminalWallDistance",
+  "a1TerminalConnectionAuthority",
+  "a1TerminalConnectionDirection",
   "lowerFacadeFitCount",
   "CLOSED_SERVICE_DOOR_GATES.has(jetway.g)",
   "FACADE_VENT_GATES.has(jetway.g)",
-  "raycast-and-source-vertex-fit-to-authored-terminal-mesh",
   "M1DGJETWAY exact recovered original freeware texture and lightmap",
   "usesExactRecoveredJetwayTexture",
   'fsx-air-jetway01-exact-textured-source-scale-articulated-v5',
@@ -147,6 +151,23 @@ const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js",
   'initialJetwayState = "attached-to-aircraft-door"',
   "requiredPrePushSequence",
 ]);
+const committedRadialConnector = [
+  "const cast = (direction, far = 24)",
+  "distance <= 24",
+  "1.25, 18",
+  "independent-rotunda-collar-fit-to-authored-terminal-wall",
+].every((token) => jetways.includes(token));
+const preparedStructuralConnector = [
+  "const cast = (direction, far = 48)",
+  "return /BGATE|DGATE|PHX_TERM400/i.test",
+  "materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test",
+  "distance <= 48",
+  "1.25, 44",
+  "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12",
+].every((token) => jetways.includes(token));
+if (!committedRadialConnector && !preparedStructuralConnector) {
+  throw new Error("A1 does not contain either the committed radial connector or the prepared structural-wall v12 connector");
+}
 if (jetways.includes("scale: [3.6, 3.1, 1.4]")) {
   throw new Error("Jetways still use the fixed detached 1.4-meter terminal collar");
 }
@@ -209,4 +230,4 @@ if (!generatedRuntime.includes('dataset.inspectionMode = inspectionRef.current ?
   throw new Error("Generated PHX runtime does not expose initial inspection mode state");
 }
 
-console.log("RampReady PHX inspection pass verified for draft validation: unrestricted tug inspection, pavement-coincident markings, source-qualified service bays, irregular lower-wall facade fits, stabilized unlit source-textured KPHX concrete, stock-scale AIR_Jetway01 placement and exact textures are active. Promotion remains blocked while the original stock skinned mesh is unavailable and fallback geometry is disclosed.");
+console.log("RampReady PHX inspection pass verified for draft validation: unrestricted tug inspection, pavement-coincident markings, source-qualified service bays, irregular lower-wall facade fits, stabilized unlit source-textured KPHX concrete, stock-scale AIR_Jetway01 placement, exact textures and an independent A1 terminal-wall connector are active. Promotion remains blocked while the original stock skinned mesh is unavailable and fallback geometry is disclosed.");
