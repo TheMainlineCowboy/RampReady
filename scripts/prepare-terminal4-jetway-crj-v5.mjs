@@ -3,14 +3,18 @@ import fs from "node:fs";
 const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(jetwayPath, "utf8");
 
+function hasMarker(marker) {
+  return (Array.isArray(marker) ? marker : [marker]).some((candidate) => source.includes(candidate));
+}
+
 function replaceOnce(oldText, newText, marker, label) {
-  if (source.includes(marker)) return;
+  if (hasMarker(marker)) return;
   if (!source.includes(oldText)) throw new Error(`${jetwayPath}: source-scale jetway anchor is missing for ${label}`);
   source = source.replace(oldText, newText);
 }
 
 function replaceAny(candidates, newText, marker, label) {
-  if (source.includes(marker)) return;
+  if (hasMarker(marker)) return;
   const oldText = candidates.find((candidate) => source.includes(candidate));
   if (!oldText) throw new Error(`${jetwayPath}: source-scale jetway token is missing for ${label}`);
   source = source.replace(oldText, newText);
@@ -95,7 +99,10 @@ replaceAny(
     '  group.userData.facadeInfillAuthority = "source-recess-qualified-service-bays-with-irregular-closed-facade-details";',
   ],
   '  group.userData.facadeInfillAuthority = "source-recess-qualified-service-bays-with-irregular-closed-facade-details";',
-  "source-recess-qualified-service-bays-with-irregular-closed-facade-details",
+  [
+    "source-recess-qualified-service-bays-with-irregular-closed-facade-details",
+    "structural-facade-neighbor-span-continuity-v8-no-repeated-black-bays",
+  ],
   "facade authority",
 );
 
@@ -134,4 +141,4 @@ for (const token of [
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
-console.log("Prepared Terminal 4 jetways without shrinking the airport asset: source scale retained, service bays source-qualified, and articulation requirements exposed while the original AIR_Jetway01 mesh is recovered.");
+console.log("Prepared Terminal 4 jetways idempotently: source scale retained, V8 facade continuity preserved when already active, and articulation requirements exposed while the original AIR_Jetway01 mesh is recovered.");
