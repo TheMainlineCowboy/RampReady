@@ -11,6 +11,7 @@ on:
       - 'scripts/run-production-with-a1-cleanup.mjs'
       - 'tests/browser/kphx-ground-runtime.spec.js'
       - 'tests/browser/full-airport-inspection.spec.js'
+      - 'playwright.config.js'
       - 'package.json'
       - 'package-lock.json'
   workflow_dispatch:
@@ -25,7 +26,7 @@ concurrency:
 jobs:
   verify-kphx-v181-runtime:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - name: Check out exact PR head commit
         uses: actions/checkout@v4
@@ -49,7 +50,7 @@ jobs:
           npm install --no-save @playwright/test@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Verify A1, B15, Terminal 4 and full-airport free drive in browser
+      - name: Verify A1, B15, Terminal 4 and full-airport free drive in exact production artifact
         run: npx playwright test tests/browser/kphx-ground-runtime.spec.js tests/browser/full-airport-inspection.spec.js --reporter=line --workers=1
 
       - name: Upload updated KPHX runtime evidence
