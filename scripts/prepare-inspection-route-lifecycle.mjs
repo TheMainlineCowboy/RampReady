@@ -31,14 +31,31 @@ replaceRequired(
   "initial inspection route evidence",
 );
 
+replaceRequired(
+  `      const inspectionActive = inspectionRef.current;
+      const jetway = jetwayRef.current;`,
+  `      const inspectionActive = inspectionRef.current;
+      const liveInspectionPreset = inspectionActive
+        ? (INSPECTION_PRESETS[inspectionPresetRef.current] || INSPECTION_PRESETS.a1)
+        : null;
+      canvas.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY;
+      canvas.dataset.inspectionPreset = liveInspectionPreset?.id || "training";
+      canvas.dataset.inspectionPresetLabel = liveInspectionPreset?.label || "Training";
+      const jetway = jetwayRef.current;`,
+  "const liveInspectionPreset = inspectionActive",
+  "persistent per-frame inspection route evidence",
+);
+
 for (const token of [
   'sim.renderer.domElement.dataset.inspectionPreset = next ? "a1" : "training"',
   "renderer.domElement.dataset.inspectionPreset = inspectionRef.current ? inspectionPresetRef.current",
   "sim.renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY",
   "renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY",
+  "const liveInspectionPreset = inspectionActive",
+  "canvas.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY",
 ]) {
   if (!source.includes(token)) throw new Error(`${trainerPath}: inspection lifecycle is missing ${token}`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared inspection route authority and A1 preset evidence for initial load and free-drive entry.");
+console.log("Prepared persistent inspection route authority and preset evidence across initialization, free-drive entry and every rendered frame.");
