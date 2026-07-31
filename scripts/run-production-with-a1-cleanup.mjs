@@ -11,6 +11,7 @@ const structuralFacadeFilter = `  const hit = raycaster.intersectObject(terminal
   });`;
 const committedHitSelection = "  const hit = raycaster.intersectObject(terminal, true).find((entry) => entry.object?.visible !== false);";
 const facadeContinuityImport = 'import { buildTerminal4FacadeContinuity } from "./terminal4FacadeContinuityV8.js";';
+const lowerFacadeSkinImport = 'import { buildTerminal4LowerFacadeSkin } from "./terminal4LowerFacadeSkinV9.js";';
 const facadeContinuityConstruction = `  const terminal4FacadeContinuity = buildTerminal4FacadeContinuity(
     THREE,
     terminal,
@@ -23,6 +24,11 @@ const facadeContinuityConstruction = `  const terminal4FacadeContinuity = buildT
   terminal4FacadeInfillCount += terminal4FacadeContinuity.userData.panelCount;
   terminal4LowerFacadeFitCount += terminal4FacadeContinuity.userData.panelCount;
   terminal4OpenServiceBayCount = 0;`;
+const lowerFacadeSkinConstruction = `  const terminal4LowerFacadeSkin = buildTerminal4LowerFacadeSkin(THREE, terminal, materials);
+  group.add(terminal4LowerFacadeSkin);
+  terminal4FacadeInfillCount += terminal4LowerFacadeSkin.userData.sourceTriangleCount;
+  terminal4LowerFacadeFitCount += terminal4LowerFacadeSkin.userData.sourceTriangleCount;`;
+const skinAuthority = '  group.userData.facadeInfillAuthority = "source-shaped-lower-facade-skin-v9-over-continuous-structural-spans";';
 const continuityAuthority = '  group.userData.facadeInfillAuthority = "structural-facade-neighbor-span-continuity-v8-no-repeated-black-bays";';
 const committedFacadeAuthority = '  group.userData.facadeInfillAuthority = "source-recess-qualified-service-bays-with-irregular-closed-facade-details";';
 
@@ -30,16 +36,24 @@ function restoreGeneratedSourcePasses() {
   let source = fs.readFileSync(jetwayPath, "utf8");
   if (source.includes(structuralFacadeFilter)) source = source.replace(structuralFacadeFilter, committedHitSelection);
   source = source
+    .replace(`${lowerFacadeSkinImport}\n`, "")
+    .replace(`\n${lowerFacadeSkinImport}`, "")
     .replace(`${facadeContinuityImport}\n`, "")
     .replace(`\n${facadeContinuityImport}`, "")
+    .replace(`${lowerFacadeSkinConstruction}\n`, "")
+    .replace(`\n${lowerFacadeSkinConstruction}`, "")
     .replace(`${facadeContinuityConstruction}\n`, "")
     .replace(`\n${facadeContinuityConstruction}`, "")
+    .replace(skinAuthority, continuityAuthority)
     .replace(continuityAuthority, committedFacadeAuthority);
 
   for (const forbidden of [
     "return /BGATE|DGATE|PHX_TERM400/i.test",
     "buildTerminal4FacadeContinuity",
     "terminal4FacadeContinuity.userData.panelCount",
+    "buildTerminal4LowerFacadeSkin",
+    "terminal4LowerFacadeSkin.userData.sourceTriangleCount",
+    "source-shaped-lower-facade-skin-v9-over-continuous-structural-spans",
     "structural-facade-neighbor-span-continuity-v8-no-repeated-black-bays",
   ]) {
     if (source.includes(forbidden)) throw new Error(`RampReady production cleanup left generated source token ${forbidden}`);
@@ -56,4 +70,4 @@ try {
   restoreGeneratedSourcePasses();
 }
 
-console.log("RampReady production wrapper preserved structural A1 fitting and continuous Terminal 4 facade spans in the artifact, then restored their temporary source patches exactly.");
+console.log("RampReady production wrapper preserved structural A1 fitting, continuous Terminal 4 spans and the source-shaped V9 lower-facade skin in the artifact, then restored all temporary source patches exactly.");
