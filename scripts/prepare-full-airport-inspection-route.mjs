@@ -15,10 +15,14 @@ replaceOnce(
   // Each chase camera is placed on the apron side of its tug and looks back
   // toward the actual source jetway/terminal position instead of across an
   // empty taxiway. Positions remain source-gate apron locations.
-  a1: Object.freeze({ id: "a1", label: "A1 ramp", x: 0, z: 0, yaw: 0, cameraYaw: 0.92 }),
-  a14: Object.freeze({ id: "a14", label: "A concourse midpoint", x: 218.45, z: -86.52, yaw: 2.88, cameraYaw: 2.19 }),
-  b14: Object.freeze({ id: "b14", label: "B concourse midpoint", x: 216.4, z: 150.35, yaw: 2.8, cameraYaw: 2.10 }),
-  b15: Object.freeze({ id: "b15", label: "B15 ramp", x: 10.6, z: 534.7, yaw: 3.15, cameraYaw: 1.38 }),
+  a1: Object.freeze({ id: "a1", label: "A1 ramp", x: 0, z: 0, yaw: 0, cameraYaw: 0.92, cameraDistance: 25 }),
+  a14: Object.freeze({ id: "a14", label: "A concourse midpoint", x: 218.45, z: -86.52, yaw: 2.88, cameraYaw: 2.19, cameraDistance: 32 }),
+  b14: Object.freeze({ id: "b14", label: "B concourse midpoint", x: 216.4, z: 150.35, yaw: 2.8, cameraYaw: 2.10, cameraDistance: 32 }),
+  // B15 sits on the east face of the north-south pier. The former inspection
+  // pose faced south toward the distant main concourse and could not verify the
+  // B15L/B15M terminal portals. This pose is on the actual B15 apron, 21.85 m
+  // east of the facade, and points the operator view directly west at both gates.
+  b15: Object.freeze({ id: "b15", label: "B15 ramp", x: -5.5, z: 539.2, yaw: -1.5708, cameraYaw: 1.38, cameraDistance: 25 }),
 });
 const INSPECTION_ROUTE_AUTHORITY = "source-gate-apron-presets-facing-terminal-a1-a14-b14-b15-v2";
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));`,
@@ -74,7 +78,7 @@ replaceOnce(
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
     orbitRef.current.yaw = preset.cameraYaw;
     orbitRef.current.pitch = 0.38;
-    orbitRef.current.distance = 34;
+    orbitRef.current.distance = preset.cameraDistance || 30;
     scoreRef.current = 100;
     setThrottle(0);
     setDirection("FWD");
@@ -163,9 +167,11 @@ for (const token of [
   "sim.renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY",
   "renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY",
   "data-inspection-preset={inspectionMode ? inspectionPreset",
+  "x: -5.5, z: 539.2, yaw: -1.5708",
+  "orbitRef.current.distance = preset.cameraDistance || 30",
 ]) {
   if (!source.includes(token)) throw new Error(`${trainerPath}: completed full-airport inspection route is missing ${token}`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared full-airport free-drive inspection presets from A1 through B15 with each chase camera facing its source Terminal 4 gate.");
+console.log("Prepared full-airport free-drive inspection presets from A1 through B15, including a close B15 operator pose facing the exact B15L/B15M terminal facade.");
