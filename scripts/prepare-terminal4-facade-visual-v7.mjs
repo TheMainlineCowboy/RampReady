@@ -32,20 +32,80 @@ if (!source.includes(marker)) {
       });`;
   if (!source.includes(oldText)) throw new Error("Terminal 4 facade visual v7 anchor is missing");
   source = source.replace(oldText, newText);
-  fs.writeFileSync(path, source, "utf8");
 }
 
+const walkwayMarker = "AIR_Jetway01_FixedTerminalWalkways_V13";
+if (!source.includes(walkwayMarker)) {
+  const oldCollar = `    transforms.wallCollar.push({
+      position: [
+        jetway.x + connectorTowardX * wallConnectorLength / 2,
+        rotundaY,
+        jetway.z + connectorTowardZ * wallConnectorLength / 2,
+      ],
+      yaw: connectorYaw,
+      scale: [2.62, 2.48, wallConnectorLength],
+    });`;
+  const newCollar = `    transforms.wallCollar.push({
+      position: [
+        jetway.x + connectorTowardX * wallConnectorLength / 2,
+        rotundaY,
+        jetway.z + connectorTowardZ * wallConnectorLength / 2,
+      ],
+      yaw: connectorYaw,
+      scale: [1, 1, wallConnectorLength],
+    });
+    const connectorPerpendicular = [-connectorTowardZ, connectorTowardX];
+    for (let along = 0.72; along < wallConnectorLength - 0.3; along += 1.65) {
+      addTunnelFrame(
+        transforms,
+        [
+          jetway.x + connectorTowardX * along,
+          rotundaY,
+          jetway.z + connectorTowardZ * along,
+        ],
+        connectorYaw,
+        0,
+        connectorPerpendicular,
+        2.48,
+        2.34,
+        0.22,
+        0.055,
+      );
+    }`;
+  if (!source.includes(oldCollar)) throw new Error("Terminal 4 fixed walkway v13 collar anchor is missing");
+  source = source.replace(oldCollar, newCollar);
+
+  const oldGeometry = `  const box = new THREE.BoxGeometry(1, 1, 1);
+  const outerTunnel = createArchedTunnelGeometry(THREE, 2.44, 2.34, 0.28);`;
+  const newGeometry = `  const box = new THREE.BoxGeometry(1, 1, 1);
+  const wallConnectorTunnel = createArchedTunnelGeometry(THREE, 2.48, 2.34, 0.22);
+  const outerTunnel = createArchedTunnelGeometry(THREE, 2.44, 2.34, 0.28);`;
+  if (!source.includes(oldGeometry)) throw new Error("Terminal 4 fixed walkway v13 geometry anchor is missing");
+  source = source.replace(oldGeometry, newGeometry);
+
+  const oldInstances = `  addInstances(THREE, group, box, materials.shell, transforms.wallCollar, "AIR_Jetway01_WallCollars");`;
+  const newInstances = `  addInstances(THREE, group, wallConnectorTunnel, materials.shell, transforms.wallCollar, "AIR_Jetway01_FixedTerminalWalkways_V13");`;
+  if (!source.includes(oldInstances)) throw new Error("Terminal 4 fixed walkway v13 instance anchor is missing");
+  source = source.replace(oldInstances, newInstances);
+}
+
+fs.writeFileSync(path, source, "utf8");
 const prepared = fs.readFileSync(path, "utf8");
 for (const token of [
   "const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance",
   "const facadeRampOffset = 0.28",
   "scale: [7.0, 3.42, 0.5]",
   "service bays open; every other module receives a flush outer-wall closure",
-]) if (!prepared.includes(token)) throw new Error(`Terminal 4 facade visual v7 is missing ${token}`);
+  "const connectorPerpendicular = [-connectorTowardZ, connectorTowardX]",
+  "const wallConnectorTunnel = createArchedTunnelGeometry(THREE, 2.48, 2.34, 0.22)",
+  "AIR_Jetway01_FixedTerminalWalkways_V13",
+  "scale: [1, 1, wallConnectorLength]",
+]) if (!prepared.includes(token)) throw new Error(`Terminal 4 facade/walkway visual v7-v13 is missing ${token}`);
 for (const forbidden of [
   "const lowerWallFit = lowerFacadeWallDistance ?? terminalWallDistance",
   "const facadeRampOffset = 0.95",
   "scale: [6.4, 3.36, 0.68]",
-]) if (prepared.includes(forbidden)) throw new Error(`Terminal 4 facade visual v7 still contains ${forbidden}`);
+  'addInstances(THREE, group, box, materials.shell, transforms.wallCollar, "AIR_Jetway01_WallCollars")',
+]) if (prepared.includes(forbidden)) throw new Error(`Terminal 4 facade/walkway visual v7-v13 still contains ${forbidden}`);
 
-console.log("Prepared Terminal 4 facade visual v7: non-service lower bays close at the outer terminal plane instead of the recessed dark rear wall.");
+console.log("Prepared Terminal 4 facade visual v7 and fixed walkway v13: flush lower facade plus source-textured arched terminal connectors with structural ribs.");
