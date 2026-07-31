@@ -58,4 +58,5 @@ for (const token of [
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared Terminal 4 facade continuity v8: neighboring structural wall fits determine overlapping lower-facade spans, eliminating repeated black bays while retaining irregular doors and vents.");
+await import("./prepare-terminal4-lower-facade-skin-v9.mjs");
+console.log("Prepared Terminal 4 facade continuity v8 plus source-shaped lower-facade skin v9: structural spans close gaps and the original low dark texture faces receive subtle concrete coverage.");
