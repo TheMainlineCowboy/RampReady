@@ -39,6 +39,18 @@ function addBeamBetween(parent, name, sourceMaterial, start, end, width, height)
   );
 }
 
+function connectorFrame(start, end) {
+  const a = new THREE.Vector3(...start);
+  const b = new THREE.Vector3(...end);
+  const forward = b.clone().sub(a).setY(0).normalize();
+  return {
+    start: a,
+    end: b,
+    forward,
+    right: new THREE.Vector3(-forward.z, 0, forward.x),
+  };
+}
+
 export function installTerminal4BConcourseExtensionV17(group) {
   if (!group?.isGroup) throw new Error("Terminal 4 B-concourse extension requires the source-placed jetway group");
   const existing = group.getObjectByName("Terminal4_BConcourse_SourceAerialExtension_V17");
@@ -49,8 +61,8 @@ export function installTerminal4BConcourseExtensionV17(group) {
   // The package aerial clearly shows the missing T-shaped pier. Coordinates
   // below are in the jetway group's A1-local frame (the group adds +6.2 m Z):
   //   main pier: gate-derived opposing rotunda rows at Z 373-450 m
-  //   B15 pier: north facade fixed by B15L/M rotundas at X ≈-27.4 m
-  //   connector: joins the supplied terminal's eastern wall near world Z 334 m.
+  //   B15 pier: east facade fixed by B15L/M rotundas at X ≈-27.4 m
+  //   connector: joins the supplied terminal's eastern wall near world Z 337 m.
   const root = new THREE.Group();
   root.name = "Terminal4_BConcourse_SourceAerialExtension_V17";
 
@@ -73,7 +85,7 @@ export function installTerminal4BConcourseExtensionV17(group) {
   const vent = material("Terminal 4 B-concourse sparse ventilation grille", 0x4e5558, 0.64, 0.3);
   const support = material("Terminal 4 B-concourse connector support", 0x737a7d, 0.68, 0.28);
 
-  // Main north-south pier visible in the source aerial. It is bounded by the
+  // Main east-west pier visible in the source aerial. It is bounded by the
   // opposing source jetway rows rather than invented terminal spans.
   const mainXMin = -63.0;
   const mainXMax = 211.0;
@@ -97,8 +109,8 @@ export function installTerminal4BConcourseExtensionV17(group) {
     }
   }
 
-  // B15 east-west pier. Its north facade intersects both exact B15 source
-  // rotundas, eliminating the detached bridges without moving either gate.
+  // B15 north-south pier. Its east facade intersects both exact B15 source
+  // rotundas, eliminating detached bridges without moving either source gate.
   const b15XMin = -64.0;
   const b15XMax = -27.35;
   const b15ZMin = 326.5;
@@ -129,33 +141,65 @@ export function installTerminal4BConcourseExtensionV17(group) {
     ["B17", 18, mainZMax + 0.28],
     ["B15L", b15XMax + 0.28, 516.0],
   ]) {
-    const alongMain = z < mainZMin || z > mainZMax;
+    const onB15EastFacade = name === "B15L";
     addBox(
       root,
       `Terminal4_BConcourse_ServiceDoor_${name}`,
       door,
       [x, 1.08, z],
-      alongMain ? [0.16, 2.08, 1.32] : [1.32, 2.08, 0.16],
+      onB15EastFacade ? [0.16, 2.08, 1.32] : [1.32, 2.08, 0.16],
     );
   }
   addBox(root, "Terminal4_BConcourse_Vent_B24", vent, [112, 2.08, mainZMin - 0.3], [1.7, 0.46, 0.16]);
   addBox(root, "Terminal4_B15Pier_Vent", vent, [b15XMax + 0.3, 2.08, 548], [0.16, 0.46, 1.7]);
 
   // Windowed connector to the edge of the supplied terminal mesh. This follows
-  // the source aerial corridor and is supported from the ramp instead of floating.
+  // the source aerial corridor and is supported from both sides of the ramp.
   const connectorStart = [205.0, 4.45, 425.5];
   const connectorEnd = [226.0, 4.45, 331.0];
-  const connector = addBeamBetween(root, "Terminal4_BConcourse_ToSuppliedTerminalConnector", upperWall, connectorStart, connectorEnd, 12.8, 3.15);
-  const connectorGlassLeft = addBeamBetween(root, "Terminal4_BConcourse_ConnectorGlassLeft", glass, connectorStart, connectorEnd, 13.05, 1.06);
-  connectorGlassLeft.position.y = 4.55;
-  const connectorRoof = addBeamBetween(root, "Terminal4_BConcourse_ConnectorRoof", roof, [connectorStart[0], 6.15, connectorStart[2]], [connectorEnd[0], 6.15, connectorEnd[2]], 13.3, 0.22);
-  connectorRoof.castShadow = false;
-  const startVector = new THREE.Vector3(connectorStart[0], 0, connectorStart[2]);
-  const endVector = new THREE.Vector3(connectorEnd[0], 0, connectorEnd[2]);
+  const frame = connectorFrame(connectorStart, connectorEnd);
+  addBeamBetween(root, "Terminal4_BConcourse_ToSuppliedTerminalConnector", upperWall, connectorStart, connectorEnd, 12.5, 3.15);
+  for (const side of [-1, 1]) {
+    const sideOffset = frame.right.clone().multiplyScalar(side * 6.28);
+    const glassStart = frame.start.clone().add(sideOffset).setY(4.58);
+    const glassEnd = frame.end.clone().add(sideOffset).setY(4.58);
+    addBeamBetween(
+      root,
+      `Terminal4_BConcourse_ConnectorGlass_${side < 0 ? "Left" : "Right"}`,
+      glass,
+      glassStart.toArray(),
+      glassEnd.toArray(),
+      0.16,
+      1.06,
+    );
+    const beltStart = frame.start.clone().add(sideOffset).setY(3.78);
+    const beltEnd = frame.end.clone().add(sideOffset).setY(3.78);
+    addBeamBetween(
+      root,
+      `Terminal4_BConcourse_ConnectorLowerBelt_${side < 0 ? "Left" : "Right"}`,
+      trim,
+      beltStart.toArray(),
+      beltEnd.toArray(),
+      0.18,
+      0.18,
+    );
+  }
+  addBeamBetween(
+    root,
+    "Terminal4_BConcourse_ConnectorRoof",
+    roof,
+    [connectorStart[0], 6.15, connectorStart[2]],
+    [connectorEnd[0], 6.15, connectorEnd[2]],
+    13.2,
+    0.22,
+  );
   for (let t = 0.12; t < 0.92; t += 0.12) {
-    const point = startVector.clone().lerp(endVector, t);
-    addBox(root, `Terminal4_BConcourse_ConnectorSupport_${t.toFixed(2)}`, support, [point.x, 1.58, point.z], [0.38, 3.16, 0.38]);
-    addBox(root, `Terminal4_BConcourse_ConnectorFoot_${t.toFixed(2)}`, support, [point.x, 0.12, point.z], [0.9, 0.24, 0.9]);
+    const center = frame.start.clone().lerp(frame.end, t).setY(0);
+    for (const side of [-1, 1]) {
+      const point = center.clone().addScaledVector(frame.right, side * 4.75);
+      addBox(root, `Terminal4_BConcourse_ConnectorSupport_${side}_${t.toFixed(2)}`, support, [point.x, 1.58, point.z], [0.38, 3.16, 0.38]);
+      addBox(root, `Terminal4_BConcourse_ConnectorFoot_${side}_${t.toFixed(2)}`, support, [point.x, 0.12, point.z], [0.9, 0.24, 0.9]);
+    }
   }
 
   root.userData.authority = "source-gate-and-source-aerial-aligned-terminal4-B-concourse-v17";
