@@ -74,5 +74,6 @@ if (!css.includes(cssMarker)) {
   fs.writeFileSync(cssPath, css, "utf8");
 }
 
+await import("./prepare-a1-terminal-connector-v11.mjs");
 await import("./prepare-inspection-elapsed-motion.mjs");
-console.log("Prepared always-visible free-drive inspection controls with unrestricted WASD/arrow and touch-slider tug motion in both runtimes.");
+console.log("Prepared always-visible free-drive inspection controls, elapsed-motion integration and the measured A1 Terminal 4 wall connector.");
