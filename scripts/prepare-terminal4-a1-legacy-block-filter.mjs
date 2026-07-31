@@ -39,4 +39,4 @@ for (const token of [
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared surgical Terminal 4 A1 authored-block removal: exact PHX_TERM400_1 primitive, 12 triangles, and bounded runtime evidence.");
+console.log("Prepared surgical Terminal 4 A1 authored cleanup: three exact isolated PHX_TERM400_1 boxes, 36 triangles total, with bounded runtime evidence.");
