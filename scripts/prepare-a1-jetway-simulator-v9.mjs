@@ -9,7 +9,7 @@ function requireTokens(path, tokens) {
 }
 
 requireTokens("src/environment/animatedA1Jetway.js", [
-  'export { buildAnimatedA1Jetway } from "./animatedA1JetwayV10.js"',
+  'export { buildAnimatedA1Jetway } from "./animatedA1JetwayV11.js"',
 ]);
 requireTokens("src/environment/animatedA1JetwayV9.js", [
   "A1 service tread",
@@ -24,13 +24,19 @@ requireTokens("src/environment/animatedA1JetwayV9.js", [
   "root.userData.structuralDetailCount",
 ]);
 requireTokens("src/environment/animatedA1JetwayV10.js", [
-  "A1 ramp-anchored service stair tread",
-  "A1 service stair anti-slip edge",
-  "A1 cabin-side service stair landing",
   "dynamic-cabin-height-to-ramp-zero-v10",
   "persistent-controller-threshold-history-v10",
-  "ramp-anchored-open-service-stair-v10",
   "controller.getStateHistory",
+]);
+requireTokens("src/environment/animatedA1JetwayV11.js", [
+  "A1 clean open stair tread",
+  "A1 clean continuous handrail",
+  "A1 clean stair stringer",
+  "A1 compact cabin-side stair landing",
+  "dynamic-open-tread-cabin-threshold-fit-v11",
+  "clean-dynamic-open-tread-round-rail-service-stair-v11",
+  "thresholdGapMeters",
+  "currentCabinHeightMeters",
 ]);
 requireTokens("scripts/prepare-a1-jetway-clocked-motion.mjs", [
   "transitionDurationMs: 4200",
@@ -72,8 +78,8 @@ console.log(JSON.stringify({
   parkingHeadingDegrees: parking.h,
   calculatedForwardLeftDoorTarget: [Number(targetX.toFixed(3)), Number(targetZ.toFixed(3))],
   contactErrorMeters: Number(contactError.toFixed(3)),
-  geometryAuthority: "committed detailed A1 v10 runtime module with ramp-anchored service stair",
+  geometryAuthority: "committed detailed A1 v11 runtime module with clean dynamic open-tread service stair",
   sequenceAuthority: "clocked motion plus persistent ordered controller history",
   browserAuthority: "single-worker full-airport evidence with zero retries",
 }, null, 2));
-console.log(`Validated committed A1 simulator-quality v10 detail, ramp contact and ${contactError.toFixed(3)} m CRJ door-contact error without mutating tracked source.`);
+console.log(`Validated committed A1 simulator-quality v11 detail, clean ramp contact and ${contactError.toFixed(3)} m CRJ door-contact error without mutating tracked source.`);
