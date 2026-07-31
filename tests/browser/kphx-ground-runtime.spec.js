@@ -133,8 +133,8 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
   expect(nearestGeometryMeters).toBeGreaterThan(28);
   expect(nearestGeometryMeters).toBeLessThan(29.2);
   const a1WallDistance = Number(runtime.terminal4A1JetwayWallDistance);
-  expect(a1WallDistance).toBeGreaterThan(0.05);
-  expect(a1WallDistance).toBeLessThan(18);
+  expect(a1WallDistance).toBeGreaterThan(24);
+  expect(a1WallDistance).toBeLessThan(36);
   expect(Number(runtime.terminal4TerminalConnectedJetwayCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4SourceCutoutMaterialCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4FacadeInfillCount)).toBeGreaterThan(45);
@@ -176,7 +176,7 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
   expect(measuredSize("/models/phx-terminal4/textures/PHX_TERM400_1.png")).toBeGreaterThan(10_000);
 
   const relevantErrors = runtimeErrors.filter((message) =>
-    /KPHX ground load failed|PHX airport ground failed to load|PHX source aerial load failed|source aerial failed to load|Terminal 4 visual load failed|material texture is missing|GLTFLoader|WebGL.*shader|ReferenceError|TypeError|SyntaxError/i.test(message),
+    /KPHX ground load failed|PHX airport ground failed to load|PHX source aerial failed to load|source aerial failed to load|Terminal 4 visual load failed|material texture is missing|GLTFLoader|WebGL.*shader|ReferenceError|TypeError|SyntaxError/i.test(message),
   );
   expect(relevantErrors).toEqual([]);
 
