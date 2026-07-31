@@ -201,19 +201,23 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   geometry.computeVertexNormals();
   geometry.computeBoundingSphere();
 
+  // Temporary one-pass diagnostic: V9 is vivid blue so the A1 close-up can
+  // identify whether the remaining panel belongs to this layer.
   const material = materials.facadeWall.clone();
-  material.name = "Terminal 4 source-shaped lower-facade concrete skin v9";
-  material.map = buildConcreteTexture(THREE);
-  material.color?.setHex(0xffffff);
-  material.roughness = 0.88;
-  material.metalness = 0.015;
+  material.name = "Terminal 4 source-shaped lower-facade diagnostic V9 blue";
+  material.map = null;
+  material.color?.setHex(0x156dff);
+  material.emissive?.setHex(0x156dff);
+  material.emissiveIntensity = 0.35;
+  material.roughness = 0.68;
+  material.metalness = 0.01;
   material.side = THREE.DoubleSide;
   material.polygonOffset = true;
   material.polygonOffsetFactor = -1;
   material.polygonOffsetUnits = -1;
 
   const skin = new THREE.Mesh(geometry, material);
-  skin.name = "Terminal4_SourceShapedLowerFacadeSkin_V9";
+  skin.name = "Terminal4_SourceShapedLowerFacadeSkin_V9_DIAGNOSTIC_BLUE";
   skin.castShadow = true;
   skin.receiveShadow = true;
   skin.frustumCulled = true;
@@ -225,7 +229,7 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   skin.userData.maximumAcceptedHorizontalSpanMeters = maximumAcceptedHorizontalSpanMeters;
   skin.userData.maximumHorizontalSpanLimitMeters = LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS;
   skin.userData.maximumHeightMeters = LOWER_FACADE_MAXIMUM_Y;
-  skin.userData.authority = "source-shaped-low-vertical-BGATE-DGATE-terminal-face-skin-v9-clipped-to-ramp-height";
-  skin.userData.qualityPass = "localized-facade-v12-with-a1-alpha-block-exclusion";
+  skin.userData.authority = "source-shaped-low-vertical-BGATE-DGATE-terminal-face-skin-v9-diagnostic-blue";
+  skin.userData.qualityPass = "one-pass-layer-identification-v9-blue";
   return skin;
 }
