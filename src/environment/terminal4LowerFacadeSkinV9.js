@@ -6,10 +6,10 @@ const LOWER_FACADE_MAXIMUM_Y = 4.55;
 // source topology but become detached ramp panels when copied as a second
 // opaque surface. Keep only localized, single-module facade faces.
 const LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS = 10;
-// This exact source block sits in the A1 terminal-connection footprint. Its
-// PHX_TERM400_1 alpha is meaningful in the authored terminal, but V9's opaque
-// cosmetic duplicate turns it into the detached beige panel visible beside A1.
-// The original textured geometry and measured fixed walkway remain active.
+// This exact source block sits in the A1 terminal-connection footprint. When
+// the bounded authored-geometry filter is active, these faces have already
+// been removed before V9 runs. The exclusion remains as a safe fallback for
+// any unfiltered development runtime.
 const A1_COSMETIC_SKIN_EXCLUSION = Object.freeze({
   minimumX: -22.5,
   maximumX: -12.5,
@@ -185,14 +185,15 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
     }
   });
 
+  const authoredA1BlockRemoved = Number(terminal.userData?.a1LegacyBlockRemovedTriangles) === 12;
   if (sourceTriangleCount < 120) {
     throw new Error(`Terminal 4 lower-facade skin found only ${sourceTriangleCount} source triangles`);
   }
   if (rejectedOversizedTriangleCount < 1) {
     throw new Error("Terminal 4 lower-facade skin did not reject any oversized legacy triangles");
   }
-  if (rejectedA1CosmeticTriangleCount < 4) {
-    throw new Error(`Terminal 4 lower-facade skin rejected only ${rejectedA1CosmeticTriangleCount} A1 cosmetic triangles`);
+  if (!authoredA1BlockRemoved && rejectedA1CosmeticTriangleCount < 4) {
+    throw new Error(`Terminal 4 lower-facade skin rejected only ${rejectedA1CosmeticTriangleCount} A1 cosmetic triangles without the authored filter`);
   }
 
   const geometry = new THREE.BufferGeometry();
@@ -201,23 +202,21 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   geometry.computeVertexNormals();
   geometry.computeBoundingSphere();
 
-  // Temporary one-pass diagnostic: V9 is vivid blue so the A1 close-up can
-  // identify whether the remaining panel belongs to this layer.
   const material = materials.facadeWall.clone();
-  material.name = "Terminal 4 source-shaped lower-facade diagnostic V9 blue";
-  material.map = null;
-  material.color?.setHex(0x156dff);
-  material.emissive?.setHex(0x156dff);
-  material.emissiveIntensity = 0.35;
-  material.roughness = 0.68;
-  material.metalness = 0.01;
+  material.name = "Terminal 4 source-shaped lower-facade concrete skin v9";
+  material.map = buildConcreteTexture(THREE);
+  material.color?.setHex(0xffffff);
+  material.emissive?.setHex(0x000000);
+  material.emissiveIntensity = 0;
+  material.roughness = 0.88;
+  material.metalness = 0.015;
   material.side = THREE.DoubleSide;
   material.polygonOffset = true;
   material.polygonOffsetFactor = -1;
   material.polygonOffsetUnits = -1;
 
   const skin = new THREE.Mesh(geometry, material);
-  skin.name = "Terminal4_SourceShapedLowerFacadeSkin_V9_DIAGNOSTIC_BLUE";
+  skin.name = "Terminal4_SourceShapedLowerFacadeSkin_V9";
   skin.castShadow = true;
   skin.receiveShadow = true;
   skin.frustumCulled = true;
@@ -225,11 +224,14 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   skin.userData.renderedTriangleCount = renderedTriangleCount;
   skin.userData.rejectedOversizedTriangleCount = rejectedOversizedTriangleCount;
   skin.userData.rejectedA1CosmeticTriangleCount = rejectedA1CosmeticTriangleCount;
+  skin.userData.authoredA1BlockRemoved = authoredA1BlockRemoved;
   skin.userData.a1CosmeticExclusion = { ...A1_COSMETIC_SKIN_EXCLUSION };
   skin.userData.maximumAcceptedHorizontalSpanMeters = maximumAcceptedHorizontalSpanMeters;
   skin.userData.maximumHorizontalSpanLimitMeters = LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS;
   skin.userData.maximumHeightMeters = LOWER_FACADE_MAXIMUM_Y;
-  skin.userData.authority = "source-shaped-low-vertical-BGATE-DGATE-terminal-face-skin-v9-diagnostic-blue";
-  skin.userData.qualityPass = "one-pass-layer-identification-v9-blue";
+  skin.userData.authority = "source-shaped-low-vertical-BGATE-DGATE-terminal-face-skin-v9-clipped-to-ramp-height";
+  skin.userData.qualityPass = authoredA1BlockRemoved
+    ? "authored-a1-block-removed-before-localized-facade-skin-v10"
+    : "localized-a1-cosmetic-exclusion-fallback-v10";
   return skin;
 }
