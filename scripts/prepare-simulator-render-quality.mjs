@@ -38,12 +38,10 @@ if (!source.includes(authority)) {
   if (!source.includes(sunAnchor)) throw new Error(`${trainerPath}: missing directional light anchor`);
   source = source.replace(sunAnchor, sunReplacement);
 
-  const toggleAnchor = `      sim.renderer.domElement.dataset.inspectionMode = next ? "active" : "training";
-      const defaultInspectionPreset = INSPECTION_PRESETS.a1;`;
-  const toggleReplacement = `      sim.renderer.domElement.dataset.inspectionMode = next ? "active" : "training";
+  const toggleAnchor = '      sim.renderer.domElement.dataset.inspectionMode = next ? "active" : "training";';
+  const toggleReplacement = `${toggleAnchor}
       sim.renderer.shadowMap.enabled = !next;
-      sim.renderer.domElement.dataset.shadowMode = next ? "inspection-ambient" : "training-dynamic";
-      const defaultInspectionPreset = INSPECTION_PRESETS.a1;`;
+      sim.renderer.domElement.dataset.shadowMode = next ? "inspection-ambient" : "training-dynamic";`;
   if (!source.includes(toggleAnchor)) throw new Error(`${trainerPath}: missing inspection shadow-mode anchor`);
   source = source.replace(toggleAnchor, toggleReplacement);
 }
