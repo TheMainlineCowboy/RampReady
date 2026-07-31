@@ -5,6 +5,7 @@ const protectedSourcePaths = Object.freeze([
   "src/components/RampReadyStandupTrainerTerminal4.jsx",
   "src/environment/sourcePlacedTerminal4Jetways.js",
   "src/environment/authoredTerminal4Visual.js",
+  "src/environment/authoredKphxGround.js",
 ]);
 const committedSources = new Map(protectedSourcePaths.map((sourcePath) => [
   sourcePath,
@@ -18,6 +19,9 @@ if (!committedSources.get(protectedSourcePaths[1])?.includes("buildSourcePlacedT
 }
 if (!committedSources.get(protectedSourcePaths[2])?.includes("installAuthoredTerminal4Visual")) {
   throw new Error("Could not read the committed authored Terminal 4 baseline from HEAD.");
+}
+if (!committedSources.get(protectedSourcePaths[3])?.includes("installAuthoredKphxGround")) {
+  throw new Error("Could not read the committed authored KPHX ground baseline from HEAD.");
 }
 
 function runNode(script) {
@@ -37,6 +41,7 @@ try {
   await runNode("scripts/prepare-inspection-route-lifecycle.mjs");
   await runNode("scripts/prepare-inspection-preset-telemetry.mjs");
   await runNode("scripts/prepare-simulator-render-quality.mjs");
+  await runNode("scripts/prepare-kphx-nearfield-pavement-v6.mjs");
   await runNode("scripts/prepare-terminal4-a1-legacy-block-filter.mjs");
   await runNode("scripts/prepare-terminal4-jetway-simulator-polish.mjs");
   await runNode("scripts/prepare-a1-terminal-attachment-v14.mjs");
@@ -68,4 +73,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the framed A1 terminal attachment, anchored A1 to the nearest real vertical Terminal 4 wall surface, surgically removed the three exact authored A1 legacy boxes, retained the source-shaped facade pass, applied the Terminal 4 jetway simulator polish, added full-airport A1-to-B15 inspection routing with synchronous preset telemetry and balanced rendering, then restored the exact committed trainer, jetway and authored-terminal baselines.");
+console.log("RampReady simulator-quality production build preserved the framed and grounded A1 terminal attachment, anchored A1 to the exact supplied BGATE1 wall plane, replaced the repeated nearfield grid with a large source-derived pavement field, surgically removed the three exact authored A1 legacy boxes, retained the source-shaped facade pass, applied Terminal 4 jetway simulator polish, added terminal-facing A1-to-B15 inspection routing with synchronous telemetry and balanced rendering, then restored every protected committed source exactly.");
