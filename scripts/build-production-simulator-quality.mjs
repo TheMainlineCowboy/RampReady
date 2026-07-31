@@ -7,6 +7,7 @@ const protectedSourcePaths = Object.freeze([
   "src/environment/authoredTerminal4Visual.js",
   "src/environment/authoredKphxGround.js",
   "src/environment/terminal4LowerFacadeSkinV9.js",
+  "scripts/build-production.mjs",
 ]);
 const committedSources = new Map(protectedSourcePaths.map((sourcePath) => [
   sourcePath,
@@ -26,6 +27,9 @@ if (!committedSources.get(protectedSourcePaths[3])?.includes("installAuthoredKph
 }
 if (!committedSources.get(protectedSourcePaths[4])?.includes("buildTerminal4LowerFacadeSkin")) {
   throw new Error("Could not read the committed Terminal 4 lower-facade baseline from HEAD.");
+}
+if (!committedSources.get(protectedSourcePaths[5])?.includes("restoreA1TerminalConnectorV11")) {
+  throw new Error("Could not read the committed production restorer baseline from HEAD.");
 }
 
 function runNode(script) {
@@ -54,6 +58,7 @@ try {
   await runNode("scripts/prepare-terminal4-static-jetway-parking-v15.mjs");
   await runNode("scripts/prepare-terminal4-ramp-facade-v16.mjs");
   await runNode("scripts/prepare-terminal4-attachment-evidence-v14.mjs");
+  await runNode("scripts/prepare-production-b15-restoration-v16.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
   buildError = error;
