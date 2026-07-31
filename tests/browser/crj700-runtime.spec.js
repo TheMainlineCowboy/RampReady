@@ -138,7 +138,10 @@ function expectOrderedSequence(history, requiredStates) {
 }
 
 test("verifies CRJ, A1 jetway, operator view and free-drive in one full-airport load", async ({ page }) => {
-  test.setTimeout(900_000);
+  // The exact-production full-airport render reached the final screenshot at
+  // 896.7 seconds on GitHub's software renderer. Keep every assertion and give
+  // screenshot encoding/cleanup enough room to finish without a false timeout.
+  test.setTimeout(1_080_000);
   await page.setViewportSize(DESKTOP);
   const canvas = await launchRuntime(page);
 
