@@ -23,7 +23,25 @@ function addBox(parent, name, material, position, size, quaternion) {
   return mesh;
 }
 
-function addGateSign(parent, wall, normal, quaternion) {
+function hideLegacyA1FacadePatch(group) {
+  const names = [
+    "Terminal4_A1_SolidLowerFacadePanels",
+    "Terminal4_A1_LowerFacadeCurbs",
+    "Terminal4_A1_ServiceDoor",
+    "Terminal4_A1_VentilationGrille",
+  ];
+  let hidden = 0;
+  for (const name of names) {
+    const object = group.getObjectByName(name);
+    if (!object) continue;
+    object.visible = false;
+    object.castShadow = false;
+    hidden += 1;
+  }
+  return hidden;
+}
+
+function addGateSign(parent, anchor, normal, quaternion) {
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 128;
@@ -45,9 +63,9 @@ function addGateSign(parent, wall, normal, quaternion) {
   const material = new THREE.MeshBasicMaterial({ map: texture, toneMapped: false, side: THREE.DoubleSide });
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.45, 0.72), material);
   sign.name = "Terminal4_A1_GateIdentifier_V19";
-  sign.position.copy(wall).addScaledVector(normal, -0.52).setY(5.55);
+  sign.position.copy(anchor).addScaledVector(normal, 0.12).setY(5.44);
   sign.quaternion.copy(quaternion);
-  sign.renderOrder = 3;
+  sign.renderOrder = 4;
   parent.add(sign);
   return sign;
 }
@@ -57,19 +75,27 @@ export function installTerminal4A1FacadeDetailV19(group) {
   const existing = group.getObjectByName("Terminal4_A1_RampFacadeDetail_V19");
   if (existing) return existing;
 
+  const legacyFacadeObjectCount = hideLegacyA1FacadePatch(group);
   const root = new THREE.Group();
   root.name = "Terminal4_A1_RampFacadeDetail_V19";
 
-  // Exact BGATE1 wall authority already used by the A1 connector. All detail is
-  // shallow and lies on that same plane; nothing moves the terminal or jetway.
+  // Exact BGATE1 wall plane already used by the measured A1 connector. The
+  // legacy emergency closure was centered 0.24 m behind this plane and exposed
+  // its blank front face. These replacement bays sit on the exact plane, while
+  // every door, grille and sign is offset toward the ramp-facing normal.
   const normal = new THREE.Vector3(0.580968, 0, -0.813927);
   const tangent = new THREE.Vector3(-normal.z, 0, normal.x);
-  const wall = new THREE.Vector3(-3.55299146, 0, -40.60699866).addScaledVector(normal, -0.52);
+  const exactWall = new THREE.Vector3(-3.55299146, 0, -40.60699866);
+  const facadeCenter = exactWall.clone().addScaledVector(normal, -0.08);
+  const frontPlane = exactWall.clone().addScaledVector(normal, 0.08);
   const yaw = Math.atan2(normal.x, normal.z);
   const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0));
 
-  const joint = standard("Terminal 4 A1 concrete panel joint", 0x746b62, 0.9, 0.02);
+  const facade = standard("Terminal 4 A1 precast concrete facade", 0xbfb19e, 0.9, 0.015);
+  const facadeAlternate = standard("Terminal 4 A1 alternate precast bay", 0xb4a694, 0.9, 0.015);
+  const joint = standard("Terminal 4 A1 concrete panel joint", 0x71685e, 0.9, 0.02);
   const frame = standard("Terminal 4 A1 galvanized portal frame", 0x596165, 0.62, 0.35);
+  const portal = standard("Terminal 4 A1 dark portal recess", 0x171c1f, 0.84, 0.08);
   const door = standard("Terminal 4 A1 recessed service door", 0x596267, 0.68, 0.2);
   const doorInset = standard("Terminal 4 A1 service door inset", 0x2d3437, 0.74, 0.18);
   const vent = standard("Terminal 4 A1 louvered ventilation grille", 0x343b3e, 0.64, 0.36);
@@ -85,81 +111,117 @@ export function installTerminal4A1FacadeDetailV19(group) {
   });
   const conduit = standard("Terminal 4 A1 electrical conduit", 0x777d7e, 0.58, 0.42);
 
-  // Vertical joints divide the former monolithic wall into irregular precast bays.
-  for (const [index, offset] of [-9.1, -6.25, -3.55, 3.35, 6.15, 8.85].entries()) {
-    const position = wall.clone().addScaledVector(tangent, offset).setY(1.73);
-    addBox(root, `Terminal4_A1_PanelJoint_${index}_V19`, joint, position, [0.095, 3.25, 0.08], quaternion);
-  }
-  for (const side of [-1, 1]) {
-    const position = wall.clone().addScaledVector(tangent, side * 6.05).setY(0.46);
-    addBox(root, `Terminal4_A1_DarkPlinth_${side}_V19`, plinth, position, [8.9, 0.72, 0.14], quaternion);
-    const railPosition = wall.clone().addScaledVector(tangent, side * 6.0).addScaledVector(normal, -0.18).setY(1.14);
-    addBox(root, `Terminal4_A1_ProtectionRail_${side}_V19`, bumper, railPosition, [8.7, 0.13, 0.14], quaternion);
+  // Two compact 6.8 m bays replace the former 21.2 m monolithic wall. The
+  // 3.2 m center opening remains clear for the measured bridge portal.
+  for (const [index, side] of [-1, 1].entries()) {
+    const center = facadeCenter.clone().addScaledVector(tangent, side * 5.0).setY(1.72);
+    addBox(
+      root,
+      `Terminal4_A1_CompactFacadeBay_${index}_V19`,
+      index === 0 ? facade : facadeAlternate,
+      center,
+      [6.8, 3.36, 0.24],
+      quaternion,
+    );
+    addBox(
+      root,
+      `Terminal4_A1_CompactFacadePlinth_${index}_V19`,
+      plinth,
+      frontPlane.clone().addScaledVector(tangent, side * 5.0).setY(0.43),
+      [6.8, 0.68, 0.13],
+      quaternion,
+    );
+    addBox(
+      root,
+      `Terminal4_A1_CompactProtectionRail_${index}_V19`,
+      bumper,
+      frontPlane.clone().addScaledVector(tangent, side * 5.0).addScaledVector(normal, 0.09).setY(1.14),
+      [6.45, 0.13, 0.13],
+      quaternion,
+    );
   }
 
-  // Two differently sized recessed ramp doors avoid a repeated row of openings.
+  // Irregular precast joints make the wall read as a real terminal elevation.
+  for (const [index, offset] of [-7.75, -5.25, -2.55, 2.55, 5.25, 7.75].entries()) {
+    addBox(
+      root,
+      `Terminal4_A1_PanelJoint_${index}_V19`,
+      joint,
+      frontPlane.clone().addScaledVector(tangent, offset).addScaledVector(normal, 0.09).setY(1.73),
+      [0.085, 3.2, 0.07],
+      quaternion,
+    );
+  }
+
   const doors = [
-    { offset: 6.55, width: 1.38, height: 2.18 },
-    { offset: -7.25, width: 1.12, height: 2.02 },
+    { offset: 6.35, width: 1.34, height: 2.16 },
+    { offset: -6.45, width: 1.10, height: 2.02 },
   ];
   for (const [index, entry] of doors.entries()) {
-    const base = wall.clone().addScaledVector(tangent, entry.offset).addScaledVector(normal, -0.19);
+    const base = frontPlane.clone().addScaledVector(tangent, entry.offset).addScaledVector(normal, 0.12);
     addBox(root, `Terminal4_A1_ServiceDoorFrame_${index}_V19`, frame, base.clone().setY(entry.height / 2 + 0.06), [entry.width + 0.22, entry.height + 0.22, 0.13], quaternion);
-    addBox(root, `Terminal4_A1_ServiceDoor_${index}_V19`, door, base.clone().addScaledVector(normal, -0.08).setY(entry.height / 2 + 0.06), [entry.width, entry.height, 0.08], quaternion);
-    addBox(root, `Terminal4_A1_ServiceDoorInset_${index}_V19`, doorInset, base.clone().addScaledVector(tangent, entry.width * 0.32).addScaledVector(normal, -0.14).setY(1.1), [0.07, 0.18, 0.04], quaternion);
+    addBox(root, `Terminal4_A1_ServiceDoor_${index}_V19`, door, base.clone().addScaledVector(normal, 0.08).setY(entry.height / 2 + 0.06), [entry.width, entry.height, 0.08], quaternion);
+    addBox(root, `Terminal4_A1_ServiceDoorInset_${index}_V19`, doorInset, base.clone().addScaledVector(tangent, entry.width * 0.32).addScaledVector(normal, 0.14).setY(1.1), [0.07, 0.18, 0.04], quaternion);
   }
 
-  // Unequal vents and cabinets create real ramp-side utility rhythm.
   for (const [index, entry] of [
-    { offset: -4.85, y: 2.02, width: 1.65, height: 0.52 },
-    { offset: 4.25, y: 2.28, width: 1.18, height: 0.42 },
+    { offset: -4.15, y: 2.02, width: 1.58, height: 0.5 },
+    { offset: 4.05, y: 2.24, width: 1.16, height: 0.42 },
   ].entries()) {
-    const base = wall.clone().addScaledVector(tangent, entry.offset).addScaledVector(normal, -0.21).setY(entry.y);
+    const base = frontPlane.clone().addScaledVector(tangent, entry.offset).addScaledVector(normal, 0.13).setY(entry.y);
     addBox(root, `Terminal4_A1_VentFrame_${index}_V19`, frame, base, [entry.width + 0.16, entry.height + 0.14, 0.11], quaternion);
-    addBox(root, `Terminal4_A1_Vent_${index}_V19`, vent, base.clone().addScaledVector(normal, -0.08), [entry.width, entry.height, 0.07], quaternion);
+    addBox(root, `Terminal4_A1_Vent_${index}_V19`, vent, base.clone().addScaledVector(normal, 0.08), [entry.width, entry.height, 0.07], quaternion);
     for (let slat = -0.34; slat <= 0.34; slat += 0.17) {
       addBox(
         root,
         `Terminal4_A1_VentSlat_${index}_${slat.toFixed(2)}_V19`,
         frame,
-        base.clone().addScaledVector(tangent, slat * entry.width).addScaledVector(normal, -0.13),
+        base.clone().addScaledVector(tangent, slat * entry.width).addScaledVector(normal, 0.13),
         [0.035, entry.height * 0.78, 0.025],
         quaternion,
       );
     }
   }
 
-  for (const [index, offset] of [-2.65, 2.45].entries()) {
-    const base = wall.clone().addScaledVector(tangent, offset).addScaledVector(normal, -0.28);
-    addBox(root, `Terminal4_A1_UtilityCabinet_${index}_V19`, cabinet, base.clone().setY(0.96), [0.86, 1.46, 0.42], quaternion);
-    addBox(root, `Terminal4_A1_UtilityCabinetDoor_${index}_V19`, cabinetDoor, base.clone().addScaledVector(normal, -0.23).setY(0.96), [0.67, 1.18, 0.04], quaternion);
+  for (const [index, offset] of [-2.35, 2.32].entries()) {
+    const base = frontPlane.clone().addScaledVector(tangent, offset).addScaledVector(normal, 0.28);
+    addBox(root, `Terminal4_A1_UtilityCabinet_${index}_V19`, cabinet, base.clone().setY(0.96), [0.82, 1.42, 0.4], quaternion);
+    addBox(root, `Terminal4_A1_UtilityCabinetDoor_${index}_V19`, cabinetDoor, base.clone().addScaledVector(normal, 0.23).setY(0.96), [0.63, 1.14, 0.04], quaternion);
   }
 
-  // Frame the elevated boarding-bridge penetration so it reads as an authored
-  // terminal portal rather than a walkway passing through an undetailed wall.
+  // Real recessed bridge penetration and trim on the ramp-facing side.
+  addBox(root, "Terminal4_A1_PortalRecess_V19", portal, frontPlane.clone().addScaledVector(normal, 0.06).setY(4.36), [3.18, 2.94, 0.16], quaternion);
   for (const side of [-1, 1]) {
-    const post = wall.clone().addScaledVector(tangent, side * 1.72).addScaledVector(normal, -0.24).setY(4.38);
-    addBox(root, `Terminal4_A1_PortalPost_${side}_V19`, frame, post, [0.22, 3.2, 0.24], quaternion);
+    addBox(
+      root,
+      `Terminal4_A1_PortalPost_${side}_V19`,
+      frame,
+      frontPlane.clone().addScaledVector(tangent, side * 1.7).addScaledVector(normal, 0.18).setY(4.38),
+      [0.22, 3.18, 0.22],
+      quaternion,
+    );
   }
-  addBox(root, "Terminal4_A1_PortalHeader_V19", frame, wall.clone().addScaledVector(normal, -0.24).setY(5.92), [3.66, 0.22, 0.24], quaternion);
-  addBox(root, "Terminal4_A1_PortalSill_V19", frame, wall.clone().addScaledVector(normal, -0.24).setY(2.84), [3.66, 0.16, 0.24], quaternion);
+  addBox(root, "Terminal4_A1_PortalHeader_V19", frame, frontPlane.clone().addScaledVector(normal, 0.18).setY(5.91), [3.62, 0.22, 0.22], quaternion);
+  addBox(root, "Terminal4_A1_PortalSill_V19", frame, frontPlane.clone().addScaledVector(normal, 0.18).setY(2.84), [3.62, 0.16, 0.22], quaternion);
 
-  // Wall lamps, conduits and protected bollards provide scale at tug height.
-  for (const [index, offset] of [-8.1, -4.0, 4.05, 8.05].entries()) {
-    const lampBase = wall.clone().addScaledVector(tangent, offset).addScaledVector(normal, -0.3);
-    addBox(root, `Terminal4_A1_WallLampHousing_${index}_V19`, lampHousing, lampBase.clone().setY(2.98), [0.48, 0.26, 0.28], quaternion);
-    addBox(root, `Terminal4_A1_WallLampLens_${index}_V19`, lampLens, lampBase.clone().addScaledVector(normal, -0.17).setY(2.96), [0.34, 0.13, 0.045], quaternion);
-    addBox(root, `Terminal4_A1_Conduit_${index}_V19`, conduit, lampBase.clone().addScaledVector(tangent, -0.34).setY(1.74), [0.055, 2.25, 0.055], quaternion);
+  for (const [index, offset] of [-7.55, -3.85, 3.82, 7.5].entries()) {
+    const lampBase = frontPlane.clone().addScaledVector(tangent, offset).addScaledVector(normal, 0.24);
+    addBox(root, `Terminal4_A1_WallLampHousing_${index}_V19`, lampHousing, lampBase.clone().setY(2.98), [0.46, 0.25, 0.26], quaternion);
+    addBox(root, `Terminal4_A1_WallLampLens_${index}_V19`, lampLens, lampBase.clone().addScaledVector(normal, 0.16).setY(2.96), [0.32, 0.13, 0.045], quaternion);
+    addBox(root, `Terminal4_A1_Conduit_${index}_V19`, conduit, lampBase.clone().addScaledVector(tangent, -0.3).setY(1.74), [0.05, 2.22, 0.05], quaternion);
   }
-  for (const [index, offset] of [-2.05, 2.0, 5.75, 7.45].entries()) {
-    const post = wall.clone().addScaledVector(tangent, offset).addScaledVector(normal, -1.0).setY(0.58);
+  for (const [index, offset] of [-2.0, 1.98, 5.55, 7.15].entries()) {
+    const post = frontPlane.clone().addScaledVector(tangent, offset).addScaledVector(normal, 0.92).setY(0.58);
     addBox(root, `Terminal4_A1_Bollard_${index}_V19`, bollard, post, [0.22, 1.05, 0.22], quaternion);
     addBox(root, `Terminal4_A1_BollardFoot_${index}_V19`, plinth, post.clone().setY(0.08), [0.5, 0.16, 0.5], quaternion);
   }
 
-  addGateSign(root, wall, normal, quaternion);
+  addGateSign(root, frontPlane, normal, quaternion);
 
-  root.userData.authority = "exact-BGATE1-wall-ramp-facade-panel-doors-vents-portal-sign-v19";
+  root.userData.authority = "exact-BGATE1-ramp-facing-compact-facade-doors-vents-portal-sign-v19";
+  root.userData.legacyFacadeObjectCountHidden = legacyFacadeObjectCount;
+  root.userData.compactFacadePanelCount = 2;
+  root.userData.portalClearWidthMeters = 3.2;
   root.userData.panelJointCount = 6;
   root.userData.serviceDoorCount = doors.length;
   root.userData.wallLampCount = 4;
