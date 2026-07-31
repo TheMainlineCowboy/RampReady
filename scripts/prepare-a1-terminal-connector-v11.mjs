@@ -16,6 +16,19 @@ replaceRequired(
   "terminal ray reach",
 );
 replaceRequired(
+  "  const hit = raycaster.intersectObject(terminal, true).find((entry) => entry.object?.visible !== false);",
+  `  const hit = raycaster.intersectObject(terminal, true).find((entry) => {
+    if (entry.object?.visible === false) return false;
+    const materials = Array.isArray(entry.object?.material)
+      ? entry.object.material
+      : [entry.object?.material];
+    const material = materials[entry.face?.materialIndex ?? 0] ?? materials[0];
+    return /BGATE|DGATE|PHX_TERM400/i.test(material?.name || "");
+  });`,
+  "return /BGATE|DGATE|PHX_TERM400/i.test",
+  "structural terminal facade filtering",
+);
+replaceRequired(
   "      if (!(longitudinal > 0.05 && longitudinal <= 24)) continue;",
   "      if (!(longitudinal > 0.05 && longitudinal <= 48)) continue;",
   "longitudinal <= 48",
@@ -35,20 +48,21 @@ replaceRequired(
 );
 replaceRequired(
   "  group.userData.terminalConnectionAuthority = \"raycast-and-source-vertex-fit-to-authored-terminal-mesh\";",
-  "  group.userData.terminalConnectionAuthority = \"48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11\";",
-  "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
+  "  group.userData.terminalConnectionAuthority = \"48m-structural-facade-raycast-and-source-vertex-fit-v12\";",
+  "48m-structural-facade-raycast-and-source-vertex-fit-v12",
   "terminal connector authority",
 );
 
 for (const token of [
   "new THREE.Raycaster(origin, direction, 0.05, 48)",
+  "return /BGATE|DGATE|PHX_TERM400/i.test",
   "longitudinal <= 48",
   "lateral <= 5.5",
   "1.25, 44",
-  "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
+  "48m-structural-facade-raycast-and-source-vertex-fit-v12",
 ]) {
-  if (!source.includes(token)) throw new Error(`${jetwayPath}: A1 terminal connector v11 is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${jetwayPath}: A1 terminal connector v12 is missing ${token}`);
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
-console.log("Prepared A1 terminal connector v11: the authored Terminal 4 mesh is searched to 48 m and the source-textured collar can span the measured 28-29 m wall distance instead of falling back to a detached 1.25 m stub.");
+console.log("Prepared A1 terminal connector v12: a 48 m ray ignores walkway, ramp and support surfaces and fits the source-textured collar to the structural BGATE/DGATE/PHX_TERM400 facade, measured near 32.4 m for A1.");
