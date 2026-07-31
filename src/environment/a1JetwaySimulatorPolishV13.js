@@ -9,7 +9,10 @@ const DENSITY_RULES = Object.freeze([
 ]);
 
 function ordinal(name) {
-  const match = String(name || "").match(/(-?\d+(?:\.\d+)?)\s*$/);
+  const label = String(name || "");
+  const indexedFeature = label.match(/(?:tunnel rib|panel seam|corrugation(?: ridge)?|crossmember)\s+(-?\d+(?:\.\d+)?)/i);
+  const trailingNumber = label.match(/(-?\d+(?:\.\d+)?)\s*$/);
+  const match = indexedFeature || trailingNumber;
   if (!match) return 1;
   const value = Math.abs(Math.round(Number(match[1])));
   return Number.isFinite(value) && value > 0 ? value : 1;
@@ -17,7 +20,6 @@ function ordinal(name) {
 
 function applyDetailDensity(root) {
   root.traverse((entry) => {
-    if (!entry.isMesh) return;
     const rule = DENSITY_RULES.find(({ pattern }) => pattern.test(entry.name || ""));
     if (!rule) return;
     entry.visible = ordinal(entry.name) % rule.keepEvery === 1;
