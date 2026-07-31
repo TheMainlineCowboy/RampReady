@@ -9,9 +9,11 @@
 // V12 adds PHX-reference light corrugated cladding, yellow safety/undercarriage treatment,
 // compact open-tread stairs, cabin roof rails and a dynamic hydraulic hose bundle.
 import { buildAnimatedA1Jetway as buildV12 } from "./animatedA1JetwayV12.js";
+import { applyA1JetwaySimulatorPolish } from "./a1JetwaySimulatorPolishV13.js";
 
 export function buildAnimatedA1Jetway(THREE, materials, layout) {
   const root = buildV12(THREE, materials, layout);
+  applyA1JetwaySimulatorPolish(root);
   // The v12 pass is visual only. The v11 controller, ordered state history and
   // clocked departure sequence remain the animation authority tested in CI.
   root.userData.animationAuthority = "independent-source-scale-rotunda-telescope-lift-hood-bogie-runtime-assembly-v11";
