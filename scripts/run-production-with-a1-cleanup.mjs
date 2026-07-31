@@ -1,7 +1,8 @@
 import fs from "node:fs";
 
 const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
-const structuralFacadeFilter = `  const hit = raycaster.intersectObject(terminal, true).find((entry) => {
+
+const legacyStructuralFacadeFilter = `  const hit = raycaster.intersectObject(terminal, true).find((entry) => {
     if (entry.object?.visible === false) return false;
     const materials = Array.isArray(entry.object?.material)
       ? entry.object.material
@@ -9,7 +10,21 @@ const structuralFacadeFilter = `  const hit = raycaster.intersectObject(terminal
     const material = materials[entry.face?.materialIndex ?? 0] ?? materials[0];
     return /BGATE|DGATE|PHX_TERM400/i.test(material?.name || "");
   });`;
-const committedHitSelection = "  const hit = raycaster.intersectObject(terminal, true).find((entry) => entry.object?.visible !== false);";
+const legacyCommittedHitSelection = "  const hit = raycaster.intersectObject(terminal, true).find((entry) => entry.object?.visible !== false);";
+
+const radialStructuralFacadeFilter = `    const hit = raycaster.intersectObject(terminal, true).find((entry) => {
+      if (entry.object?.visible === false) return false;
+      const materials = Array.isArray(entry.object?.material)
+        ? entry.object.material
+        : [entry.object?.material];
+      const material = materials[entry.face?.materialIndex ?? 0] ?? materials[0];
+      return /BGATE|DGATE|PHX_TERM400/i.test(material?.name || "");
+    });`;
+const radialCommittedHitSelection = "    const hit = raycaster.intersectObject(terminal, true).find((entry) => entry.object?.visible !== false);";
+const radialStructuralVertexFilter = `    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    if (!materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test(material?.name || ""))) return;
+`;
+
 const facadeContinuityImport = 'import { buildTerminal4FacadeContinuity } from "./terminal4FacadeContinuityV8.js";';
 const lowerFacadeSkinImport = 'import { buildTerminal4LowerFacadeSkin } from "./terminal4LowerFacadeSkinV9.js";';
 const facadeContinuityConstruction = `  const terminal4FacadeContinuity = buildTerminal4FacadeContinuity(
@@ -31,11 +46,28 @@ const lowerFacadeSkinConstruction = `  const terminal4LowerFacadeSkin = buildTer
 const skinAuthority = '  group.userData.facadeInfillAuthority = "source-shaped-lower-facade-skin-v9-over-continuous-structural-spans";';
 const continuityAuthority = '  group.userData.facadeInfillAuthority = "structural-facade-neighbor-span-continuity-v8-no-repeated-black-bays";';
 const committedFacadeAuthority = '  group.userData.facadeInfillAuthority = "source-recess-qualified-service-bays-with-irregular-closed-facade-details";';
+const generatedRadialAuthority = '  group.userData.terminalConnectionAuthority = "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12";';
+const committedRadialAuthority = '  group.userData.terminalConnectionAuthority = "independent-rotunda-collar-fit-to-authored-terminal-wall";';
+const generatedLegacyAuthority = '  group.userData.terminalConnectionAuthority = "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11";';
+const committedLegacyAuthority = '  group.userData.terminalConnectionAuthority = "raycast-and-source-vertex-fit-to-authored-terminal-mesh";';
 
 function restoreGeneratedSourcePasses() {
   let source = fs.readFileSync(jetwayPath, "utf8");
-  if (source.includes(structuralFacadeFilter)) source = source.replace(structuralFacadeFilter, committedHitSelection);
+
+  // Restore either supported terminal-connector implementation to the exact
+  // committed source form after the prepared production artifact has captured
+  // the 48 m structural-wall fit.
   source = source
+    .replace(legacyStructuralFacadeFilter, legacyCommittedHitSelection)
+    .replace(radialStructuralFacadeFilter, radialCommittedHitSelection)
+    .replace(radialStructuralVertexFilter, "")
+    .replace("  const cast = (direction, far = 48) => {", "  const cast = (direction, far = 24) => {")
+    .replace("      if (distance > 0.05 && distance <= 48 && distance < nearestDistance) {", "      if (distance > 0.05 && distance <= 24 && distance < nearestDistance) {")
+    .replace("      if (!(longitudinal > 0.05 && longitudinal <= 48)) continue;", "      if (!(longitudinal > 0.05 && longitudinal <= 24)) continue;")
+    .replace("      if (lateral <= 5.5) nearest = Math.min(nearest, longitudinal);", "      if (lateral <= 4.5) nearest = Math.min(nearest, longitudinal);")
+    .replace("    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 44);", "    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 18);")
+    .replace(generatedRadialAuthority, committedRadialAuthority)
+    .replace(generatedLegacyAuthority, committedLegacyAuthority)
     .replace(`${lowerFacadeSkinImport}\n`, "")
     .replace(`\n${lowerFacadeSkinImport}`, "")
     .replace(`${facadeContinuityImport}\n`, "")
@@ -49,6 +81,14 @@ function restoreGeneratedSourcePasses() {
 
   for (const forbidden of [
     "return /BGATE|DGATE|PHX_TERM400/i.test",
+    "materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test",
+    "const cast = (direction, far = 48)",
+    "distance <= 48",
+    "longitudinal <= 48",
+    "lateral <= 5.5",
+    "1.25, 44",
+    "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12",
+    "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
     "buildTerminal4FacadeContinuity",
     "terminal4FacadeContinuity.userData.panelCount",
     "buildTerminal4LowerFacadeSkin",
@@ -58,7 +98,25 @@ function restoreGeneratedSourcePasses() {
   ]) {
     if (source.includes(forbidden)) throw new Error(`RampReady production cleanup left generated source token ${forbidden}`);
   }
-  if (!source.includes(committedHitSelection) || !source.includes(committedFacadeAuthority)) {
+
+  const radialBaselineRestored = [
+    "function findTerminalWallConnection",
+    "const cast = (direction, far = 24)",
+    radialCommittedHitSelection,
+    "distance <= 24",
+    "1.25, 18",
+    committedRadialAuthority,
+  ].every((token) => source.includes(token));
+  const legacyBaselineRestored = [
+    "function findTerminalWallDistance",
+    legacyCommittedHitSelection,
+    "longitudinal <= 24",
+    "lateral <= 4.5",
+    "1.25, 18",
+    committedLegacyAuthority,
+  ].every((token) => source.includes(token));
+
+  if ((!radialBaselineRestored && !legacyBaselineRestored) || !source.includes(committedFacadeAuthority)) {
     throw new Error("RampReady production cleanup failed to restore the committed jetway/facade baseline.");
   }
   fs.writeFileSync(jetwayPath, source, "utf8");
@@ -70,4 +128,4 @@ try {
   restoreGeneratedSourcePasses();
 }
 
-console.log("RampReady production wrapper preserved structural A1 fitting, continuous Terminal 4 spans and the source-shaped V9 lower-facade skin in the artifact, then restored all temporary source patches exactly.");
+console.log("RampReady production wrapper preserved the structural A1 wall fit, continuous Terminal 4 spans and V9 lower-facade skin in the artifact, then restored all temporary source transforms exactly.");
