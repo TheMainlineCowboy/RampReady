@@ -91,12 +91,17 @@ export function buildTerminal4FacadeContinuity(THREE, terminal, jetways, parking
     });
   }
 
-  const wallVariants = [0xc7b8a3, 0xbeb2a2, 0xd0c1ad].map((color, index) => {
+  // Temporary one-pass diagnostic: V8 is vivid green so the A1 close-up can
+  // identify whether the remaining panel belongs to this layer.
+  const wallVariants = [0x16ff3a, 0x00d92f, 0x68ff7b].map((color, index) => {
     const material = materials.facadeWall.clone();
-    material.name = `Terminal 4 structural lower facade variation ${index + 1}`;
+    material.name = `Terminal 4 structural lower facade diagnostic V8 ${index + 1}`;
+    material.map = null;
     material.color?.setHex(color);
-    material.roughness = 0.82;
-    material.metalness = 0.025;
+    material.emissive?.setHex(color);
+    material.emissiveIntensity = 0.35;
+    material.roughness = 0.72;
+    material.metalness = 0.01;
     return material;
   });
   const doorMaterial = materials.facadeDoor.clone();
@@ -186,6 +191,6 @@ export function buildTerminal4FacadeContinuity(THREE, terminal, jetways, parking
   group.userData.widestPanelMeters = widestPanelMeters;
   group.userData.maximumAlignedGapMeters = maximumAlignedGapMeters;
   group.userData.excludedGates = [...FACADE_CONTINUITY_EXCLUDED_GATES];
-  group.userData.authority = "structural-facade-neighbor-span-continuity-v8-no-repeated-black-bays";
+  group.userData.authority = "structural-facade-neighbor-span-continuity-v8-diagnostic-green";
   return group;
 }
