@@ -7,15 +7,16 @@ const LOWER_FACADE_MAXIMUM_Y = 4.55;
 // opaque surface. Keep only localized, single-module facade faces.
 const LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS = 10;
 const AUTHORED_A1_BLOCK_REMOVAL_TRIANGLES = 36;
-// These exact source blocks sit in the A1 terminal-connection footprint. When
-// the bounded authored-geometry filter is active, all three isolated boxes have
-// already been removed before V9 runs. The exclusion remains as a safe
-// fallback for any unfiltered development runtime.
+// Do not cover the A1 corner or the complete fixed-corridor footprint with the
+// generic daylight-concrete skin. The supplied BGATE1/PHX_TERM400 source
+// materials underneath contain the actual Terminal 4 facade and walkway detail.
+// The previous narrow exclusion covered only the terminal portal and allowed a
+// broad copied source face to become the giant blank beige slab beside A1.
 const A1_COSMETIC_SKIN_EXCLUSION = Object.freeze({
-  minimumX: -22.5,
-  maximumX: -12.5,
-  minimumZ: -52,
-  maximumZ: -25,
+  minimumX: -30,
+  maximumX: 10,
+  minimumZ: -58,
+  maximumZ: -7,
 });
 
 function buildConcreteTexture(THREE) {
@@ -234,7 +235,7 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   skin.userData.maximumHeightMeters = LOWER_FACADE_MAXIMUM_Y;
   skin.userData.authority = "source-shaped-low-vertical-BGATE-DGATE-terminal-face-skin-v9-clipped-to-ramp-height";
   skin.userData.qualityPass = authoredA1BlocksRemoved
-    ? "authored-a1-three-boxes-removed-before-localized-facade-skin-v12"
-    : "localized-a1-cosmetic-exclusion-fallback-v11";
+    ? "authored-a1-three-boxes-removed-plus-complete-a1-corridor-skin-exclusion-v24"
+    : "complete-a1-corridor-cosmetic-exclusion-fallback-v24";
   return skin;
 }
