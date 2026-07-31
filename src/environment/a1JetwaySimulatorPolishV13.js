@@ -1,12 +1,15 @@
 const DENSITY_RULES = Object.freeze([
-  Object.freeze({ pattern: /outer tunnel rib/i, keepEvery: 2 }),
-  Object.freeze({ pattern: /inner tunnel rib/i, keepEvery: 2 }),
-  Object.freeze({ pattern: /outer shell panel seam/i, keepEvery: 2 }),
-  Object.freeze({ pattern: /inner shell panel seam/i, keepEvery: 2 }),
-  Object.freeze({ pattern: /corrugation ridge/i, keepEvery: 2 }),
-  Object.freeze({ pattern: /roof corrugation/i, keepEvery: 2 }),
+  Object.freeze({ pattern: /outer tunnel rib/i, keepEvery: 3 }),
+  Object.freeze({ pattern: /inner tunnel rib/i, keepEvery: 3 }),
+  Object.freeze({ pattern: /outer shell panel seam/i, keepEvery: 3 }),
+  Object.freeze({ pattern: /inner shell panel seam/i, keepEvery: 3 }),
+  Object.freeze({ pattern: /corrugation ridge/i, keepEvery: 3 }),
+  Object.freeze({ pattern: /roof corrugation/i, keepEvery: 3 }),
   Object.freeze({ pattern: /underbridge crossmember/i, keepEvery: 2 }),
 ]);
+
+const HIDDEN_DECORATIVE_DETAIL = /roof cable tray|cabin roof safety rail|cabin roof rail post/i;
+const CORE_SHADOW_CASTER = /outer telescoping tunnel$|inner telescoping tunnel$|aircraft cabin$|rotunda body|wheel bogie|lift column/i;
 
 function ordinal(name) {
   const label = String(name || "");
@@ -20,34 +23,46 @@ function ordinal(name) {
 
 function applyDetailDensity(root) {
   root.traverse((entry) => {
-    const rule = DENSITY_RULES.find(({ pattern }) => pattern.test(entry.name || ""));
+    const name = entry.name || "";
+    if (HIDDEN_DECORATIVE_DETAIL.test(name)) {
+      entry.visible = false;
+      return;
+    }
+    const rule = DENSITY_RULES.find(({ pattern }) => pattern.test(name));
     if (!rule) return;
-    entry.visible = ordinal(entry.name) % rule.keepEvery === 1;
+    entry.visible = ordinal(name) % rule.keepEvery === 1;
   });
 }
 
 function tuneMaterial(material, name) {
   if (!material) return;
   const label = `${name || ""} ${material.name || ""}`;
-  if (/panel frame|structural rib|panel seam|corrugation|crossmember/i.test(label)) {
-    material.color?.setHex(0x858c8f);
-    material.roughness = 0.68;
-    material.metalness = 0.28;
+  if (/panel frame|structural rib|panel seam|corrugation|crossmember|structural trim/i.test(label)) {
+    material.color?.setHex(0xa2a6a7);
+    material.roughness = 0.74;
+    material.metalness = 0.2;
   }
-  if (/outer shell|inner shell|aircraft cabin shell|roof cap/i.test(label)) {
-    material.color?.setHex(0xe7e6e0);
-    material.roughness = 0.76;
-    material.metalness = 0.06;
+  if (/outer shell|inner shell|aircraft cabin shell|roof cap|exact-source/i.test(label)) {
+    material.color?.setHex(0xffffff);
+    material.emissive?.setHex(0x202020);
+    material.emissiveIntensity = Math.max(Number(material.emissiveIntensity) || 0, 0.32);
+    material.roughness = 0.78;
+    material.metalness = 0.04;
+  }
+  if (/galvanized|lift column|axle|bogie/i.test(label)) {
+    material.color?.setHex(0x8e9496);
+    material.roughness = 0.64;
+    material.metalness = 0.34;
   }
   if (/glass|window/i.test(label)) {
-    material.color?.setHex(0x23343d);
-    material.roughness = 0.22;
-    material.metalness = 0.08;
+    material.color?.setHex(0x29404b);
+    material.roughness = 0.24;
+    material.metalness = 0.06;
   }
   material.needsUpdate = true;
 }
 
-function tuneMaterials(root) {
+function tuneMaterialsAndShadows(root) {
   const visited = new Set();
   root.traverse((entry) => {
     if (!entry.isMesh) return;
@@ -57,7 +72,7 @@ function tuneMaterials(root) {
       visited.add(material.uuid);
       tuneMaterial(material, entry.name);
     }
-    entry.castShadow = true;
+    entry.castShadow = CORE_SHADOW_CASTER.test(entry.name || "");
     entry.receiveShadow = true;
     entry.frustumCulled = true;
   });
@@ -68,7 +83,7 @@ export function applyA1JetwaySimulatorPolish(root) {
   const controller = root.userData?.controller;
   if (!controller?.setDeployment) throw new Error("A1 simulator polish requires the animated jetway controller");
 
-  tuneMaterials(root);
+  tuneMaterialsAndShadows(root);
   applyDetailDensity(root);
 
   const setDeployment = controller.setDeployment.bind(controller);
@@ -77,9 +92,10 @@ export function applyA1JetwaySimulatorPolish(root) {
     applyDetailDensity(root);
   };
 
-  root.userData.simulatorPolishAuthority = "reduced-repetition-soft-galvanized-structural-detail-v13";
-  root.userData.simulatorPolishDensity = "alternating-structural-ribs-seams-and-corrugation";
-  root.userData.simulatorPolishMaterial = "soft-galvanized-frame-warm-light-shell";
+  root.userData.simulatorPolishAuthority = "clean-enclosed-soft-galvanized-low-repetition-v13";
+  root.userData.simulatorPolishDensity = "one-in-three-ribs-seams-and-corrugation";
+  root.userData.simulatorPolishMaterial = "ambient-lifted-exact-source-shell-soft-galvanized-frame";
+  root.userData.simulatorPolishHiddenDetail = "overscale-roof-cable-tray-and-cabin-roof-rails";
   controller.setDeployment(controller.getDeployment());
   return root;
 }
