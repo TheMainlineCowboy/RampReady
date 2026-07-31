@@ -147,7 +147,7 @@ test("verifies CRJ, A1 jetway, operator view and free-drive in one full-airport 
     { timeout: 20_000, intervals: [100, 250, 500] },
   ).toBeGreaterThanOrEqual(0.995);
   await expect(canvas).toHaveAttribute("data-a1-jetway-state", "attached");
-  await expect(canvas).toHaveAttribute("data-a1-jetway-animation-authority", /v10$/);
+  await expect(canvas).toHaveAttribute("data-a1-jetway-animation-authority", /v11$/);
   await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-attached.png"));
 
   await withHiddenControls(page, async () => {
