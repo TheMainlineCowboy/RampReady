@@ -74,4 +74,5 @@ if (!css.includes(cssMarker)) {
   fs.writeFileSync(cssPath, css, "utf8");
 }
 
+await import("./prepare-inspection-elapsed-motion.mjs");
 console.log("Prepared always-visible free-drive inspection controls with unrestricted WASD/arrow and touch-slider tug motion in both runtimes.");
