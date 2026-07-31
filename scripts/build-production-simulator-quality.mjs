@@ -54,11 +54,10 @@ try {
   await runNode("scripts/prepare-terminal4-floating-roof-filter.mjs");
   await runNode("scripts/prepare-terminal4-jetway-simulator-polish.mjs");
   await runNode("scripts/prepare-a1-terminal-attachment-v14.mjs");
-  await runNode("scripts/prepare-b15-terminal-connectors-v16.mjs");
   await runNode("scripts/prepare-terminal4-static-jetway-parking-v15.mjs");
   await runNode("scripts/prepare-terminal4-ramp-facade-v16.mjs");
+  await runNode("scripts/prepare-terminal4-b-concourse-extension-v17.mjs");
   await runNode("scripts/prepare-terminal4-attachment-evidence-v14.mjs");
-  await runNode("scripts/prepare-production-b15-restoration-v16.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
   buildError = error;
@@ -87,4 +86,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the framed, windowed and grounded A1 terminal attachment, anchored A1 to the exact supplied BGATE1 wall plane, removed the two exact floating black Terminal 4 roof slabs, connected both B15 regional rotundas to the supplied BGATE3 wall with supported fixed walkways, parked all remaining unoccupied Terminal 4 jetways in varied retracted positions, replaced the repeated nearfield grid with a large source-derived pavement field, replaced repeated dark ramp bays with broad supplied wall geometry and sparse doors/vents, surgically removed the three exact authored A1 legacy boxes, applied Terminal 4 jetway simulator polish, added terminal-facing A1-to-B15 inspection routing with synchronous telemetry and balanced rendering, then restored every protected committed source exactly.");
+console.log("RampReady simulator-quality production build preserved the framed, windowed and grounded A1 terminal attachment, anchored A1 to the exact supplied BGATE1 wall plane, removed the two exact floating black Terminal 4 roof slabs, restored the missing Terminal 4 B-concourse from the supplied PHX aerial and B15-B28 source gate coordinates so both B15 regional rotundas intersect a real pier facade rather than 88-112 m apron tunnels, parked all remaining unoccupied jetways in varied retracted positions, replaced the repeated nearfield grid with a large source-derived pavement field, replaced repeated dark ramp bays with broad supplied wall geometry and sparse doors/vents, surgically removed the three exact authored A1 legacy boxes, applied Terminal 4 jetway simulator polish, added terminal-facing A1-to-B15 inspection routing with synchronous telemetry and balanced rendering, then restored every protected committed source exactly.");
