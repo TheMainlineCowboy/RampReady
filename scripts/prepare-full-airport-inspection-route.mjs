@@ -12,12 +12,15 @@ function replaceOnce(before, after, marker, label) {
 replaceOnce(
   "const clamp = (value, min, max) => Math.max(min, Math.min(max, value));",
   `const INSPECTION_PRESETS = Object.freeze({
-  a1: Object.freeze({ id: "a1", label: "A1 ramp", x: 0, z: 0, yaw: 0, cameraYaw: -0.64 }),
-  a14: Object.freeze({ id: "a14", label: "A concourse midpoint", x: 218.45, z: -86.52, yaw: 2.88, cameraYaw: -2.1 }),
-  b14: Object.freeze({ id: "b14", label: "B concourse midpoint", x: 216.4, z: 150.35, yaw: 2.8, cameraYaw: -2.15 }),
-  b15: Object.freeze({ id: "b15", label: "B15 ramp", x: 10.6, z: 534.7, yaw: 3.15, cameraYaw: 2.45 }),
+  // Each chase camera is placed on the apron side of its tug and looks back
+  // toward the actual source jetway/terminal position instead of across an
+  // empty taxiway. Positions remain source-gate apron locations.
+  a1: Object.freeze({ id: "a1", label: "A1 ramp", x: 0, z: 0, yaw: 0, cameraYaw: 0.92 }),
+  a14: Object.freeze({ id: "a14", label: "A concourse midpoint", x: 218.45, z: -86.52, yaw: 2.88, cameraYaw: 2.19 }),
+  b14: Object.freeze({ id: "b14", label: "B concourse midpoint", x: 216.4, z: 150.35, yaw: 2.8, cameraYaw: 2.10 }),
+  b15: Object.freeze({ id: "b15", label: "B15 ramp", x: 10.6, z: 534.7, yaw: 3.15, cameraYaw: 1.38 }),
 });
-const INSPECTION_ROUTE_AUTHORITY = "source-gate-apron-presets-a1-a14-b14-b15-v1";
+const INSPECTION_ROUTE_AUTHORITY = "source-gate-apron-presets-facing-terminal-a1-a14-b14-b15-v2";
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));`,
   "const INSPECTION_PRESETS = Object.freeze",
   "inspection preset constants",
@@ -70,8 +73,8 @@ replaceOnce(
     sim.rig.setLiftProgress(0);
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
     orbitRef.current.yaw = preset.cameraYaw;
-    orbitRef.current.pitch = 0.34;
-    orbitRef.current.distance = 30;
+    orbitRef.current.pitch = 0.38;
+    orbitRef.current.distance = 34;
     scoreRef.current = 100;
     setThrottle(0);
     setDirection("FWD");
@@ -151,7 +154,7 @@ replaceOnce(
 
 for (const token of [
   "const INSPECTION_PRESETS = Object.freeze",
-  "source-gate-apron-presets-a1-a14-b14-b15-v1",
+  "source-gate-apron-presets-facing-terminal-a1-a14-b14-b15-v2",
   "const moveInspectionToPreset = useCallback",
   'aria-label="Inspection location"',
   "dataset.inspectionPreset = preset.id",
@@ -165,4 +168,4 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared full-airport free-drive inspection presets from A1 through B15 with explicit initial and toggle lifecycle evidence.");
+console.log("Prepared full-airport free-drive inspection presets from A1 through B15 with each chase camera facing its source Terminal 4 gate.");
