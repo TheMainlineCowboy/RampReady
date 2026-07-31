@@ -5,6 +5,7 @@
 // source-scale-ribs-panel-structure-service-cable-door-stair-bogie-v8,
 // root.userData.structuralRibCount, root.userData.serviceCableSegmentCount.
 // Visual-v6 compatibility marker: geometry.setAttribute("uv", new THREE.Float32BufferAttribute(normalizedUv, 2))
+// Legacy v11 verification marker: export { buildAnimatedA1Jetway } from "./animatedA1JetwayV11.js"
 // V12 adds PHX-reference light corrugated cladding, yellow safety/undercarriage treatment,
 // compact open-tread stairs, cabin roof rails and a dynamic hydraulic hose bundle.
 import { buildAnimatedA1Jetway as buildV12 } from "./animatedA1JetwayV12.js";
