@@ -9,7 +9,11 @@ function requireTokens(path, tokens) {
 }
 
 requireTokens("src/environment/animatedA1Jetway.js", [
-  'export { buildAnimatedA1Jetway } from "./animatedA1JetwayV11.js"',
+  'import { buildAnimatedA1Jetway as buildV12 } from "./animatedA1JetwayV12.js"',
+  "const root = buildV12(THREE, materials, layout)",
+  "independent-source-scale-rotunda-telescope-lift-hood-bogie-runtime-assembly-v11",
+  "phx-reference-light-corrugated-metal-yellow-safety-undercarriage-v12",
+  "root.userData.visualModelVersion = 12",
 ]);
 requireTokens("src/environment/animatedA1JetwayV9.js", [
   "A1 service tread",
@@ -37,6 +41,16 @@ requireTokens("src/environment/animatedA1JetwayV11.js", [
   "clean-dynamic-open-tread-round-rail-service-stair-v11",
   "thresholdGapMeters",
   "currentCabinHeightMeters",
+]);
+requireTokens("src/environment/animatedA1JetwayV12.js", [
+  "A1 PHX light corrugated outer shell V12",
+  "A1 PHX corrugated cladding detail V12",
+  "A1 PHX cabin raised roof cap",
+  "A1 PHX compact yellow handrail",
+  "A1 PHX hydraulic hose segment",
+  "phx-light-corrugated-shell-yellow-undercarriage-compact-stair-cabin-roof-rail-hose-bundle-v12",
+  "phx-reference-light-corrugated-metal-yellow-safety-undercarriage-v12",
+  "compact-phx-open-tread-yellow-rail-v12",
 ]);
 requireTokens("scripts/prepare-a1-jetway-clocked-motion.mjs", [
   "transitionDurationMs: 4200",
@@ -78,8 +92,8 @@ console.log(JSON.stringify({
   parkingHeadingDegrees: parking.h,
   calculatedForwardLeftDoorTarget: [Number(targetX.toFixed(3)), Number(targetZ.toFixed(3))],
   contactErrorMeters: Number(contactError.toFixed(3)),
-  geometryAuthority: "committed detailed A1 v11 runtime module with clean dynamic open-tread service stair",
-  sequenceAuthority: "clocked motion plus persistent ordered controller history",
-  browserAuthority: "single-worker full-airport evidence with zero retries",
+  geometryAuthority: "committed PHX-reference A1 v12 visual module with light corrugated shells, yellow safety undercarriage, compact open-tread stairs and hydraulic detail",
+  animationAuthority: "v11 clocked motion plus persistent ordered controller history",
+  browserAuthority: "single-worker exact-production full-airport evidence with zero retries",
 }, null, 2));
-console.log(`Validated committed A1 simulator-quality v11 detail, clean ramp contact and ${contactError.toFixed(3)} m CRJ door-contact error without mutating tracked source.`);
+console.log(`Validated committed A1 simulator visual v12, preserved v11 motion, clean ramp contact and ${contactError.toFixed(3)} m CRJ door-contact error without mutating tracked source.`);
