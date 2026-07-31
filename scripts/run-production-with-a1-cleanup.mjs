@@ -25,6 +25,50 @@ const radialStructuralVertexFilter = `    const materials = Array.isArray(node.m
     if (!materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test(material?.name || ""))) return;
 `;
 
+const preparedFixedWalkwayCollar = `    transforms.wallCollar.push({
+      position: [
+        jetway.x + connectorTowardX * wallConnectorLength / 2,
+        rotundaY,
+        jetway.z + connectorTowardZ * wallConnectorLength / 2,
+      ],
+      yaw: connectorYaw,
+      scale: [1, 1, wallConnectorLength],
+    });
+    const connectorPerpendicular = [-connectorTowardZ, connectorTowardX];
+    for (let along = 0.72; along < wallConnectorLength - 0.3; along += 1.65) {
+      addTunnelFrame(
+        transforms,
+        [
+          jetway.x + connectorTowardX * along,
+          rotundaY,
+          jetway.z + connectorTowardZ * along,
+        ],
+        connectorYaw,
+        0,
+        connectorPerpendicular,
+        2.48,
+        2.34,
+        0.22,
+        0.055,
+      );
+    }`;
+const committedFixedWalkwayCollar = `    transforms.wallCollar.push({
+      position: [
+        jetway.x + connectorTowardX * wallConnectorLength / 2,
+        rotundaY,
+        jetway.z + connectorTowardZ * wallConnectorLength / 2,
+      ],
+      yaw: connectorYaw,
+      scale: [2.62, 2.48, wallConnectorLength],
+    });`;
+const preparedFixedWalkwayGeometry = `  const box = new THREE.BoxGeometry(1, 1, 1);
+  const wallConnectorTunnel = createArchedTunnelGeometry(THREE, 2.48, 2.34, 0.22);
+  const outerTunnel = createArchedTunnelGeometry(THREE, 2.44, 2.34, 0.28);`;
+const committedFixedWalkwayGeometry = `  const box = new THREE.BoxGeometry(1, 1, 1);
+  const outerTunnel = createArchedTunnelGeometry(THREE, 2.44, 2.34, 0.28);`;
+const preparedFixedWalkwayInstances = `  addInstances(THREE, group, wallConnectorTunnel, materials.shell, transforms.wallCollar, "AIR_Jetway01_FixedTerminalWalkways_V13");`;
+const committedFixedWalkwayInstances = `  addInstances(THREE, group, box, materials.shell, transforms.wallCollar, "AIR_Jetway01_WallCollars");`;
+
 const facadeContinuityImport = 'import { buildTerminal4FacadeContinuity } from "./terminal4FacadeContinuityV8.js";';
 const lowerFacadeSkinImport = 'import { buildTerminal4LowerFacadeSkin } from "./terminal4LowerFacadeSkinV9.js";';
 const facadeContinuityConstruction = `  const terminal4FacadeContinuity = buildTerminal4FacadeContinuity(
@@ -76,6 +120,9 @@ function restoreGeneratedSourcePasses() {
     .replace(`${buildRestorerCompatibilityMarker}\n`, "")
     .replace(`\n${buildRestorerCompatibilityMarker}`, "")
     .replace(buildRestorerCompatibilityMarker, "")
+    .replace(preparedFixedWalkwayCollar, committedFixedWalkwayCollar)
+    .replace(preparedFixedWalkwayGeometry, committedFixedWalkwayGeometry)
+    .replace(preparedFixedWalkwayInstances, committedFixedWalkwayInstances)
     .replace(legacyStructuralFacadeFilter, legacyCommittedHitSelection)
     .replace(radialStructuralFacadeFilter, radialCommittedHitSelection)
     .replace(radialStructuralVertexFilter, "")
@@ -99,6 +146,10 @@ function restoreGeneratedSourcePasses() {
 
   for (const forbidden of [
     "A1_RESTORER_BASELINE_COMPATIBILITY",
+    "AIR_Jetway01_FixedTerminalWalkways_V13",
+    "const wallConnectorTunnel = createArchedTunnelGeometry",
+    "const connectorPerpendicular = [-connectorTowardZ, connectorTowardX]",
+    "scale: [1, 1, wallConnectorLength]",
     "return /BGATE|DGATE|PHX_TERM400/i.test",
     "materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test",
     "const cast = (direction, far = 48)",
@@ -134,8 +185,16 @@ function restoreGeneratedSourcePasses() {
     "1.25, 18",
     committedLegacyAuthority,
   ].every((token) => source.includes(token));
+  const fixedWalkwayBaselineRestored = [
+    "scale: [2.62, 2.48, wallConnectorLength]",
+    'addInstances(THREE, group, box, materials.shell, transforms.wallCollar, "AIR_Jetway01_WallCollars")',
+  ].every((token) => source.includes(token));
 
-  if ((!radialBaselineRestored && !legacyBaselineRestored) || !source.includes(committedFacadeAuthority)) {
+  if (
+    (!radialBaselineRestored && !legacyBaselineRestored)
+    || !fixedWalkwayBaselineRestored
+    || !source.includes(committedFacadeAuthority)
+  ) {
     throw new Error("RampReady production cleanup failed to restore the committed jetway/facade baseline.");
   }
   fs.writeFileSync(jetwayPath, `${source.trimEnd()}\n`, "utf8");
@@ -148,4 +207,4 @@ try {
   restoreGeneratedSourcePasses();
 }
 
-console.log("RampReady production wrapper preserved the structural A1 wall fit, continuous Terminal 4 spans and V9 lower-facade skin in the artifact, then removed the compatibility marker and restored all temporary source transforms exactly.");
+console.log("RampReady production wrapper preserved the structural A1 wall fit, framed arched fixed walkway, continuous Terminal 4 spans and V9 lower-facade skin in the artifact, then restored all temporary source transforms exactly.");
