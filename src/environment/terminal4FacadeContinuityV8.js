@@ -1,5 +1,6 @@
 const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
 const STRUCTURAL_FACADE_MATERIAL = /BGATE|DGATE|PHX_TERM400/i;
+const FACADE_CONTINUITY_EXCLUDED_GATES = new Set(["A1"]);
 
 function structuralFacadeDistance(THREE, terminal, originX, originZ, towardX, towardZ, height) {
   terminal.updateMatrixWorld(true);
@@ -41,6 +42,12 @@ export function buildTerminal4FacadeContinuity(THREE, terminal, jetways, parking
   const records = [];
 
   for (const jetway of jetways) {
+    // A1 is a corner gate with a long fixed terminal walkway. A generic
+    // minimum-width continuity panel projects into the ramp at this location
+    // and obscures the authored corner. The measured walkway and localized V9
+    // source skin provide the connection here; V8 remains active elsewhere.
+    if (FACADE_CONTINUITY_EXCLUDED_GATES.has(jetway.g)) continue;
+
     const parking = parkingByGate.get(jetway.g);
     const heading = THREE.MathUtils.degToRad(parking?.h ?? 0);
     const forwardX = Math.cos(heading);
@@ -178,6 +185,7 @@ export function buildTerminal4FacadeContinuity(THREE, terminal, jetways, parking
   group.userData.ventCount = ventCount;
   group.userData.widestPanelMeters = widestPanelMeters;
   group.userData.maximumAlignedGapMeters = maximumAlignedGapMeters;
+  group.userData.excludedGates = [...FACADE_CONTINUITY_EXCLUDED_GATES];
   group.userData.authority = "structural-facade-neighbor-span-continuity-v8-no-repeated-black-bays";
   return group;
 }
