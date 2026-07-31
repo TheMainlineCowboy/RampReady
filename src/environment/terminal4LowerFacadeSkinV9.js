@@ -6,8 +6,9 @@ const LOWER_FACADE_MAXIMUM_Y = 4.55;
 // source topology but become detached ramp panels when copied as a second
 // opaque surface. Keep only localized, single-module facade faces.
 const LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS = 10;
+const AUTHORED_A1_BLOCK_REMOVAL_TRIANGLES = 36;
 // These exact source blocks sit in the A1 terminal-connection footprint. When
-// the bounded authored-geometry filter is active, both aligned boxes have
+// the bounded authored-geometry filter is active, all three isolated boxes have
 // already been removed before V9 runs. The exclusion remains as a safe
 // fallback for any unfiltered development runtime.
 const A1_COSMETIC_SKIN_EXCLUSION = Object.freeze({
@@ -185,7 +186,8 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
     }
   });
 
-  const authoredA1BlocksRemoved = Number(terminal.userData?.a1LegacyBlockRemovedTriangles) === 24;
+  const authoredA1BlocksRemoved = Number(terminal.userData?.a1LegacyBlockRemovedTriangles)
+    === AUTHORED_A1_BLOCK_REMOVAL_TRIANGLES;
   if (sourceTriangleCount < 120) {
     throw new Error(`Terminal 4 lower-facade skin found only ${sourceTriangleCount} source triangles`);
   }
@@ -193,7 +195,7 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
     throw new Error("Terminal 4 lower-facade skin did not reject any oversized legacy triangles");
   }
   if (!authoredA1BlocksRemoved && rejectedA1CosmeticTriangleCount < 4) {
-    throw new Error(`Terminal 4 lower-facade skin rejected only ${rejectedA1CosmeticTriangleCount} A1 cosmetic triangles without the authored two-box filter`);
+    throw new Error(`Terminal 4 lower-facade skin rejected only ${rejectedA1CosmeticTriangleCount} A1 cosmetic triangles without the authored three-box filter`);
   }
 
   const geometry = new THREE.BufferGeometry();
@@ -225,13 +227,14 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   skin.userData.rejectedOversizedTriangleCount = rejectedOversizedTriangleCount;
   skin.userData.rejectedA1CosmeticTriangleCount = rejectedA1CosmeticTriangleCount;
   skin.userData.authoredA1BlocksRemoved = authoredA1BlocksRemoved;
+  skin.userData.authoredA1BlockRemovalTriangleCount = Number(terminal.userData?.a1LegacyBlockRemovedTriangles || 0);
   skin.userData.a1CosmeticExclusion = { ...A1_COSMETIC_SKIN_EXCLUSION };
   skin.userData.maximumAcceptedHorizontalSpanMeters = maximumAcceptedHorizontalSpanMeters;
   skin.userData.maximumHorizontalSpanLimitMeters = LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS;
   skin.userData.maximumHeightMeters = LOWER_FACADE_MAXIMUM_Y;
   skin.userData.authority = "source-shaped-low-vertical-BGATE-DGATE-terminal-face-skin-v9-clipped-to-ramp-height";
   skin.userData.qualityPass = authoredA1BlocksRemoved
-    ? "authored-a1-two-boxes-removed-before-localized-facade-skin-v11"
+    ? "authored-a1-three-boxes-removed-before-localized-facade-skin-v12"
     : "localized-a1-cosmetic-exclusion-fallback-v11";
   return skin;
 }
