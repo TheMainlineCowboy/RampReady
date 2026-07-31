@@ -92,10 +92,10 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
   for (const preset of PRESETS) {
     await location.selectOption(preset.id);
     await expect(canvas).toHaveAttribute("data-inspection-preset", preset.id);
-    await expect.poll(() => tugPosition(canvas), { timeout: 15_000 }).toMatchObject({
-      x: expect.any(Number),
-      z: expect.any(Number),
-    });
+    await expect.poll(async () => {
+      const position = await tugPosition(canvas);
+      return Number.isFinite(position.x) && Number.isFinite(position.z);
+    }, { timeout: 15_000 }).toBe(true);
     const position = await tugPosition(canvas);
     expect(Math.abs(position.x - preset.x), `${preset.id} X placement`).toBeLessThan(0.08);
     expect(Math.abs(position.z - preset.z), `${preset.id} Z placement`).toBeLessThan(0.08);
