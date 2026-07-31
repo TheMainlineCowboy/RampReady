@@ -64,7 +64,74 @@ if (!source.includes(marker)) {
   wash.addColorStop(0.48, "rgba(110, 113, 114, 0.035)");
   wash.addColorStop(1, "rgba(235, 231, 221, 0.06)");
   sourceContext.fillStyle = wash;
-  sourceContext.fillRect(0, 0, sourceCanvas.width, sourceCanvas.height);`,
+  sourceContext.fillRect(0, 0, sourceCanvas.width, sourceCanvas.height);
+
+  // High-resolution, irregular expansion joints and restrained ramp wear make
+  // the tug-height surface read as poured concrete rather than a blurred gray
+  // sheet. The seam spacing varies across the 89-meter field, so this cannot
+  // recreate the former small checkerboard/repeated-grid failure.
+  const slabSeamsX = [91, 216, 351, 493, 641, 786, 932];
+  const slabSeamsY = [72, 188, 319, 457, 608, 758, 901];
+  sourceContext.save();
+  sourceContext.lineCap = "round";
+  for (const x of slabSeamsX) {
+    sourceContext.strokeStyle = "rgba(55, 58, 58, 0.24)";
+    sourceContext.lineWidth = 2.4;
+    sourceContext.beginPath();
+    sourceContext.moveTo(x, 0);
+    sourceContext.bezierCurveTo(x - 4, 280, x + 5, 690, x - 2, sourceCanvas.height);
+    sourceContext.stroke();
+    sourceContext.strokeStyle = "rgba(235, 232, 224, 0.13)";
+    sourceContext.lineWidth = 1.1;
+    sourceContext.beginPath();
+    sourceContext.moveTo(x + 2.2, 0);
+    sourceContext.bezierCurveTo(x - 1.8, 280, x + 7.2, 690, x + 0.2, sourceCanvas.height);
+    sourceContext.stroke();
+  }
+  for (const y of slabSeamsY) {
+    sourceContext.strokeStyle = "rgba(58, 60, 60, 0.22)";
+    sourceContext.lineWidth = 2.2;
+    sourceContext.beginPath();
+    sourceContext.moveTo(0, y);
+    sourceContext.bezierCurveTo(310, y + 4, 690, y - 5, sourceCanvas.width, y + 2);
+    sourceContext.stroke();
+    sourceContext.strokeStyle = "rgba(239, 236, 227, 0.12)";
+    sourceContext.lineWidth = 1;
+    sourceContext.beginPath();
+    sourceContext.moveTo(0, y + 2.1);
+    sourceContext.bezierCurveTo(310, y + 6.1, 690, y - 2.9, sourceCanvas.width, y + 4.1);
+    sourceContext.stroke();
+  }
+
+  const repairPatches = [
+    [118, 126, 136, 82, -0.035],
+    [566, 104, 176, 96, 0.027],
+    [760, 442, 124, 182, -0.018],
+    [265, 668, 210, 112, 0.022],
+    [604, 812, 194, 78, -0.031],
+  ];
+  for (const [x, y, width, height, rotation] of repairPatches) {
+    sourceContext.save();
+    sourceContext.translate(x + width / 2, y + height / 2);
+    sourceContext.rotate(rotation);
+    sourceContext.fillStyle = "rgba(72, 76, 76, 0.035)";
+    sourceContext.fillRect(-width / 2, -height / 2, width, height);
+    sourceContext.strokeStyle = "rgba(62, 65, 65, 0.08)";
+    sourceContext.lineWidth = 1.5;
+    sourceContext.strokeRect(-width / 2, -height / 2, width, height);
+    sourceContext.restore();
+  }
+
+  sourceContext.strokeStyle = "rgba(45, 48, 48, 0.055)";
+  sourceContext.lineWidth = 11;
+  sourceContext.beginPath();
+  sourceContext.ellipse(282, 356, 178, 78, -0.42, 0.12, 2.52);
+  sourceContext.stroke();
+  sourceContext.lineWidth = 7;
+  sourceContext.beginPath();
+  sourceContext.ellipse(724, 704, 214, 91, 0.34, 3.42, 5.98);
+  sourceContext.stroke();
+  sourceContext.restore();`,
     "source concrete field generation",
   );
 
@@ -72,10 +139,10 @@ if (!source.includes(marker)) {
     `    const broadWear = Math.sin(pixelX * 0.041) * 7.5
       + Math.cos(pixelY * 0.033) * 6
       + Math.sin((pixelX + pixelY) * 0.017) * 4;`,
-    `    const broadWear = Math.sin(pixelX * 0.0127) * 7.2
-      + Math.cos(pixelY * 0.0091) * 5.8
-      + Math.sin((pixelX + pixelY) * 0.0049) * 4.4
-      + Math.cos((pixelX - pixelY) * 0.0031) * 3.1;`,
+    `    const broadWear = Math.sin(pixelX * 0.0127) * 4.2
+      + Math.cos(pixelY * 0.0091) * 3.6
+      + Math.sin((pixelX + pixelY) * 0.0049) * 2.8
+      + Math.cos((pixelX - pixelY) * 0.0031) * 1.9;`,
     "broad pavement wear",
   );
 
@@ -83,8 +150,8 @@ if (!source.includes(marker)) {
     `    const detail = Math.max(104, Math.min(202,
       156 + (luminance - meanLuminance) * 0.68 - darkness * 0.10 + broadWear + grain * 0.38,
     ));`,
-    `    const detail = Math.max(116, Math.min(198,
-      158 + (luminance - meanLuminance) * 0.28 - darkness * 0.04 + broadWear + grain * 0.32,
+    `    const detail = Math.max(120, Math.min(194,
+      158 + (luminance - meanLuminance) * 0.34 - darkness * 0.05 + broadWear + grain * 0.3,
     ));`,
     "nearfield albedo contrast",
   );
@@ -108,6 +175,9 @@ for (const token of [
   "sourceCanvas.width = 1024",
   "sourceCanvas.height = 1024",
   "sourceContext.createLinearGradient",
+  "const slabSeamsX",
+  "const repairPatches",
+  "sourceContext.ellipse(282, 356",
   "material.bumpScale = 0.012",
 ]) {
   if (!source.includes(token)) throw new Error(`${groundPath}: missing nearfield pavement v6 token ${token}`);
@@ -123,4 +193,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(groundPath, source, "utf8");
-console.log("Prepared PHX nonrepeating nearfield pavement v6: 1024px source-derived field, ~89m repeat, broad wear and softened bump without atlas bands.");
+console.log("Prepared PHX nonrepeating nearfield pavement v6: 1024px source-derived field, ~89m repeat, irregular slab joints, restrained tire wear, repair patches and softened bump without atlas bands.");
