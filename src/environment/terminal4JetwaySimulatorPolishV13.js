@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 const HIDDEN_REPETITIVE_DETAIL = /AIR_Jetway01_(?:HorizontalRibs|VerticalRibs|PanelSeams)/i;
-const LARGE_SHADOW_CASTER = /AIR_Jetway01_(?:OuterTelescopingTunnels|InnerTelescopingTunnels|AircraftCabins|Rotundas|WallCollars|FixedTerminalWalkways)/i;
+const LARGE_SHADOW_CASTER = /AIR_Jetway01_(?:OuterTelescopingTunnels|InnerTelescopingTunnels|AircraftCabins|Rotundas|WallCollars)/i;
 
 function tuneSharedMaterial(material, labels) {
   if (!material) return;
@@ -130,7 +130,10 @@ function installFixedWalkwayGroundSupports(group) {
 
   for (const mesh of [columns, feet, crossbeams]) {
     mesh.instanceMatrix.needsUpdate = true;
-    mesh.castShadow = true;
+    // These are static visual supports. Receiving ambient/shadow variation is
+    // sufficient; casting hundreds of dynamic software-rendered shadows made
+    // inspection sluggish without improving their grounded appearance.
+    mesh.castShadow = false;
     mesh.receiveShadow = true;
     mesh.frustumCulled = true;
     root.add(mesh);
