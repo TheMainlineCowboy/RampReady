@@ -3,10 +3,12 @@ import { spawn } from "node:child_process";
 
 const trainerPath = new URL("../src/components/RampReadyTrainerStable.jsx", import.meta.url);
 const terminal4TrainerPath = new URL("../src/components/RampReadyStandupTrainerTerminal4.jsx", import.meta.url);
+const sourcePlacedJetwayPath = new URL("../src/environment/sourcePlacedTerminal4Jetways.js", import.meta.url);
 const packagePath = new URL("../package.json", import.meta.url);
 const originalSource = await readFile(trainerPath, "utf8");
 const generatedMobileImport = 'import "./mobile-hud-v9.css";';
 const preparedTerminal4Source = await readFile(terminal4TrainerPath, "utf8");
+const preparedSourcePlacedJetwaySource = await readFile(sourcePlacedJetwayPath, "utf8");
 
 function restoreClockedA1Motion(source) {
   const replacements = [
@@ -170,9 +172,41 @@ function restoreInspectionElapsedMotion(source) {
   return restored;
 }
 
+function restoreA1TerminalConnectorV11(source) {
+  const replacements = [
+    [
+      "  const raycaster = new THREE.Raycaster(origin, direction, 0.05, 48);",
+      "  const raycaster = new THREE.Raycaster(origin, direction, 0.05, 24);",
+    ],
+    [
+      "      if (!(longitudinal > 0.05 && longitudinal <= 48)) continue;",
+      "      if (!(longitudinal > 0.05 && longitudinal <= 24)) continue;",
+    ],
+    [
+      "      if (lateral <= 5.5) nearest = Math.min(nearest, longitudinal);",
+      "      if (lateral <= 4.5) nearest = Math.min(nearest, longitudinal);",
+    ],
+    [
+      "    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 44);",
+      "    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 18);",
+    ],
+    [
+      "  group.userData.terminalConnectionAuthority = \"48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11\";",
+      "  group.userData.terminalConnectionAuthority = \"raycast-and-source-vertex-fit-to-authored-terminal-mesh\";",
+    ],
+  ];
+  let restored = source;
+  for (const [prepared, baseline] of replacements) {
+    if (restored.includes(prepared)) restored = restored.replace(prepared, baseline);
+    else if (!restored.includes(baseline)) throw new Error("RampReady production build could not identify the A1 Terminal 4 connector v11 restoration contract.");
+  }
+  return restored;
+}
+
 const originalTerminal4Source = restoreInspectionElapsedMotion(restoreClockedA1Motion(preparedTerminal4Source))
   .replace(`${generatedMobileImport}\n`, "")
   .replace(`\n${generatedMobileImport}`, "");
+const originalSourcePlacedJetwaySource = restoreA1TerminalConnectorV11(preparedSourcePlacedJetwaySource);
 const originalPackage = await readFile(packagePath, "utf8");
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
@@ -218,8 +252,10 @@ let restorationError;
 try {
   await writeFile(trainerPath, originalSource, "utf8");
   await writeFile(terminal4TrainerPath, originalTerminal4Source, "utf8");
+  await writeFile(sourcePlacedJetwayPath, originalSourcePlacedJetwaySource, "utf8");
   const restoredSource = await readFile(trainerPath, "utf8");
   const restoredTerminal4Source = await readFile(terminal4TrainerPath, "utf8");
+  const restoredSourcePlacedJetwaySource = await readFile(sourcePlacedJetwayPath, "utf8");
   const currentPackage = await readFile(packagePath, "utf8");
   if (restoredSource !== originalSource) {
     throw new Error("RampReady production build failed to restore the tracked trainer source exactly.");
@@ -233,6 +269,14 @@ try {
     || restoredTerminal4Source.includes("inspectionTimeIntegration")
   ) {
     throw new Error("RampReady production build failed to restore the committed Terminal 4 trainer baseline exactly.");
+  }
+  if (
+    restoredSourcePlacedJetwaySource !== originalSourcePlacedJetwaySource
+    || restoredSourcePlacedJetwaySource.includes("new THREE.Raycaster(origin, direction, 0.05, 48)")
+    || restoredSourcePlacedJetwaySource.includes("1.25, 44")
+    || restoredSourcePlacedJetwaySource.includes("Terminal 4 connector v11")
+  ) {
+    throw new Error("RampReady production build failed to restore the committed source-placed jetway baseline exactly.");
   }
   if (currentPackage !== originalPackage) {
     throw new Error("RampReady production build unexpectedly modified package.json.");
@@ -249,4 +293,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady production build passed and restored both tracked trainer sources exactly.");
+console.log("RampReady production build passed and restored both trainer sources and the source-placed jetway baseline exactly.");
