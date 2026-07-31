@@ -20,6 +20,33 @@ for (const [anchor, replacement, label] of [
   source = source.replace(anchor, replacement);
 }
 
+const terminalLoadingAnchor = '    renderer.domElement.dataset.terminal4ExactTextureCount = "loading";';
+const terminalLoadingReplacement = `${terminalLoadingAnchor}
+    renderer.domElement.dataset.terminal4A1LegacyBlockRemovedTriangles = "loading";
+    renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = "loading";`;
+if (!source.includes('dataset.terminal4A1LegacyBlockRemovedTriangles = "loading"')) {
+  if (!source.includes(terminalLoadingAnchor)) throw new Error("PHX runtime A1 authored-cleanup loading anchor is missing");
+  source = source.replace(terminalLoadingAnchor, terminalLoadingReplacement);
+}
+
+const terminalReadyAnchor = '        renderer.domElement.dataset.terminal4ExactTextureCount = String(environment.userData.authoredTerminal4ExactTextureCount);';
+const terminalReadyReplacement = `${terminalReadyAnchor}
+        renderer.domElement.dataset.terminal4A1LegacyBlockRemovedTriangles = String(environment.userData.authoredTerminal4A1LegacyBlockRemovedTriangles ?? 0);
+        renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = environment.userData.authoredTerminal4A1LegacyBlockAuthority || "missing";`;
+if (!source.includes("dataset.terminal4A1LegacyBlockRemovedTriangles = String(environment.userData.authoredTerminal4A1LegacyBlockRemovedTriangles")) {
+  if (!source.includes(terminalReadyAnchor)) throw new Error("PHX runtime A1 authored-cleanup ready anchor is missing");
+  source = source.replace(terminalReadyAnchor, terminalReadyReplacement);
+}
+
+const terminalErrorAnchor = '        renderer.domElement.dataset.terminal4Position = "load-error";';
+const terminalErrorReplacement = `        renderer.domElement.dataset.terminal4A1LegacyBlockRemovedTriangles = "load-error";
+        renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = "load-error";
+${terminalErrorAnchor}`;
+if (!source.includes('dataset.terminal4A1LegacyBlockRemovedTriangles = "load-error"')) {
+  if (!source.includes(terminalErrorAnchor)) throw new Error("PHX runtime A1 authored-cleanup error anchor is missing");
+  source = source.replace(terminalErrorAnchor, terminalErrorReplacement);
+}
+
 for (const token of [
   'dataset.photoTextureMode = "loading"',
   'dataset.photoRuntimeTileCount = "loading"',
@@ -27,9 +54,13 @@ for (const token of [
   'dataset.photoTextureMode = environment.userData.authoredPhotoTextureMode',
   'dataset.photoRuntimeTileCount = String(environment.userData.authoredPhotoRuntimeTileCount)',
   'dataset.photoMaxTextureDimension = String(environment.userData.authoredPhotoGround?.userData?.maxTextureDimension ?? "missing")',
+  'dataset.terminal4A1LegacyBlockRemovedTriangles = "loading"',
+  "dataset.terminal4A1LegacyBlockRemovedTriangles = String(environment.userData.authoredTerminal4A1LegacyBlockRemovedTriangles",
+  "dataset.terminal4A1LegacyBlockAuthority = environment.userData.authoredTerminal4A1LegacyBlockAuthority",
+  'dataset.terminal4A1LegacyBlockRemovedTriangles = "load-error"',
 ]) {
   if (!source.includes(token)) throw new Error(`PHX runtime evidence missing ${token}`);
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared live PHX runtime evidence for native-resolution ground tiling and maximum texture dimension.");
+console.log("Prepared live PHX runtime evidence for native-resolution ground tiling, maximum texture dimension and the exact 36-triangle A1 authored-block cleanup.");
