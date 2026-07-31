@@ -122,7 +122,42 @@ if (!source.includes(marker)) {
     sourceContext.restore();
   }
 
-  sourceContext.strokeStyle = "rgba(45, 48, 48, 0.055)";
+  // Localized hydraulic/oil spotting is concentrated around a few equipment
+  // work zones instead of uniformly dirtying every square meter of the airport.
+  const oilSpots = [
+    [146, 248, 18, 0.2], [174, 274, 9, 0.15], [211, 231, 6, 0.13],
+    [482, 532, 24, 0.18], [515, 557, 11, 0.14], [548, 515, 7, 0.12],
+    [792, 192, 16, 0.17], [821, 219, 8, 0.13],
+    [702, 834, 21, 0.17], [742, 812, 10, 0.12],
+    [324, 876, 14, 0.14], [354, 852, 6, 0.11],
+  ];
+  for (const [x, y, radius, opacity] of oilSpots) {
+    const stain = sourceContext.createRadialGradient(x, y, 0, x, y, radius);
+    stain.addColorStop(0, \`rgba(26, 30, 29, \${opacity})\`);
+    stain.addColorStop(0.38, \`rgba(35, 39, 38, \${opacity * 0.62})\`);
+    stain.addColorStop(1, "rgba(42, 44, 43, 0)");
+    sourceContext.fillStyle = stain;
+    sourceContext.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+  }
+
+  // A few non-orthogonal hairline cracks cross individual slabs. Their low
+  // opacity avoids the painted-on black-line look seen in early ground passes.
+  const crackPaths = [
+    [[58, 622], [84, 612], [109, 616], [131, 602], [157, 607]],
+    [[408, 146], [426, 158], [451, 151], [470, 169], [497, 163]],
+    [[836, 602], [817, 619], [828, 643], [807, 661], [814, 688]],
+    [[584, 906], [604, 889], [626, 895], [645, 878], [673, 882]],
+  ];
+  sourceContext.strokeStyle = "rgba(43, 46, 45, 0.16)";
+  sourceContext.lineWidth = 1.25;
+  for (const points of crackPaths) {
+    sourceContext.beginPath();
+    sourceContext.moveTo(points[0][0], points[0][1]);
+    for (let index = 1; index < points.length; index += 1) sourceContext.lineTo(points[index][0], points[index][1]);
+    sourceContext.stroke();
+  }
+
+  sourceContext.strokeStyle = "rgba(45, 48, 48, 0.065)";
   sourceContext.lineWidth = 11;
   sourceContext.beginPath();
   sourceContext.ellipse(282, 356, 178, 78, -0.42, 0.12, 2.52);
@@ -177,6 +212,9 @@ for (const token of [
   "sourceContext.createLinearGradient",
   "const slabSeamsX",
   "const repairPatches",
+  "const oilSpots",
+  "const crackPaths",
+  "sourceContext.createRadialGradient",
   "sourceContext.ellipse(282, 356",
   "material.bumpScale = 0.012",
 ]) {
@@ -193,4 +231,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(groundPath, source, "utf8");
-console.log("Prepared PHX nonrepeating nearfield pavement v6: 1024px source-derived field, ~89m repeat, irregular slab joints, restrained tire wear, repair patches and softened bump without atlas bands.");
+console.log("Prepared PHX nonrepeating nearfield pavement v6: 1024px source-derived field, ~89m repeat, irregular slab joints, localized equipment stains, hairline cracks, repair patches and softened bump without atlas bands.");
