@@ -28,6 +28,7 @@ try {
   await runNode("scripts/prepare-full-airport-inspection-route.mjs");
   await runNode("scripts/prepare-inspection-route-lifecycle.mjs");
   await runNode("scripts/prepare-inspection-preset-telemetry.mjs");
+  await runNode("scripts/prepare-simulator-render-quality.mjs");
   await runNode("scripts/prepare-terminal4-a1-legacy-block-filter.mjs");
   await runNode("scripts/prepare-terminal4-jetway-simulator-polish.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
@@ -54,4 +55,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the framed A1 terminal attachment, surgically removed the three exact authored A1 legacy boxes, retained the source-shaped facade pass, applied the Terminal 4 jetway simulator polish, added full-airport A1-to-B15 inspection routing with synchronous preset telemetry, then restored the exact committed trainer and authored-terminal baselines.");
+console.log("RampReady simulator-quality production build preserved the framed A1 terminal attachment, surgically removed the three exact authored A1 legacy boxes, retained the source-shaped facade pass, applied the Terminal 4 jetway simulator polish, added full-airport A1-to-B15 inspection routing with synchronous preset telemetry and balanced rendering, then restored the exact committed trainer and authored-terminal baselines.");
