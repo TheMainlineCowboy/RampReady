@@ -18,18 +18,46 @@ export const SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE = Object.freeze({
 
 const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
 
-function findTerminalWallDistance(THREE, terminal, originX, originZ, towardX, towardZ, height) {
+function findTerminalWallConnection(THREE, terminal, originX, originZ, preferredX, preferredZ, height) {
   if (!terminal?.isObject3D) return null;
   terminal.updateMatrixWorld(true);
-  const direction = new THREE.Vector3(towardX, 0, towardZ).normalize();
   const origin = new THREE.Vector3(originX, height, originZ);
-  const raycaster = new THREE.Raycaster(origin, direction, 0.05, 24);
-  const hit = raycaster.intersectObject(terminal, true).find((entry) => entry.object?.visible !== false);
-  if (hit?.distance > 0.05) return hit.distance;
+  const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();
+  const cast = (direction, far = 24) => {
+    const raycaster = new THREE.Raycaster(origin, direction, 0.05, far);
+    const hit = raycaster.intersectObject(terminal, true).find((entry) => entry.object?.visible !== false);
+    if (!(hit?.distance > 0.05)) return null;
+    return {
+      distance: hit.distance,
+      towardX: direction.x,
+      towardZ: direction.z,
+      authority: "preferred-axis-raycast",
+    };
+  };
 
-  // Some legacy terminal pieces are single-sided or contain no ray-facing triangle.
-  // Fall back to the nearest source vertex inside a narrow rearward corridor.
-  let nearest = Number.POSITIVE_INFINITY;
+  const preferredHit = cast(preferred);
+  if (preferredHit) return preferredHit;
+
+  // The fixed terminal collar does not have to be collinear with the movable
+  // bridge. At corner gates such as A1, search radially around the rotunda and
+  // fit the shortest real intersection with the authored terminal mesh.
+  let nearestHit = null;
+  const radialSamples = 72;
+  for (let sample = 0; sample < radialSamples; sample += 1) {
+    const angle = (sample / radialSamples) * Math.PI * 2;
+    const direction = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle));
+    const hit = cast(direction);
+    if (hit && (!nearestHit || hit.distance < nearestHit.distance)) {
+      nearestHit = { ...hit, authority: "radial-authored-wall-raycast" };
+    }
+  }
+  if (nearestHit) return nearestHit;
+
+  // Last-resort source fit for single-sided legacy pieces: select the nearest
+  // authored vertex around the rotunda instead of fabricating a short collar.
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  let nearestX = 0;
+  let nearestZ = 0;
   const vertex = new THREE.Vector3();
   terminal.traverse((node) => {
     if (!node.isMesh || node.visible === false) return;
@@ -41,13 +69,21 @@ function findTerminalWallDistance(THREE, terminal, originX, originZ, towardX, to
       if (Math.abs(vertex.y - height) > 4.8) continue;
       const dx = vertex.x - originX;
       const dz = vertex.z - originZ;
-      const longitudinal = dx * towardX + dz * towardZ;
-      if (!(longitudinal > 0.05 && longitudinal <= 24)) continue;
-      const lateral = Math.abs(dx * -towardZ + dz * towardX);
-      if (lateral <= 4.5) nearest = Math.min(nearest, longitudinal);
+      const distance = Math.hypot(dx, dz);
+      if (distance > 0.05 && distance <= 24 && distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestX = dx / distance;
+        nearestZ = dz / distance;
+      }
     }
   });
-  return Number.isFinite(nearest) ? nearest : null;
+  return Number.isFinite(nearestDistance)
+    ? { distance: nearestDistance, towardX: nearestX, towardZ: nearestZ, authority: "nearest-authored-wall-vertex" }
+    : null;
+}
+
+function findTerminalWallDistance(THREE, terminal, originX, originZ, towardX, towardZ, height) {
+  return findTerminalWallConnection(THREE, terminal, originX, originZ, towardX, towardZ, height)?.distance ?? null;
 }
 
 const CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25;
@@ -268,6 +304,8 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   let highDetailCount = 0;
   let terminalConnectedCount = 0;
   let a1TerminalWallDistance = null;
+  let a1TerminalConnectionAuthority = null;
+  let a1TerminalConnectionDirection = null;
   let terminal4FacadeInfillCount = 0;
   let terminal4LowerFacadeFitCount = 0;
   let terminal4OpenServiceBayCount = 0;
@@ -310,7 +348,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
     if (highDetail) highDetailCount += 1;
 
     const sourceOffsetZ = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset[2];
-    const terminalWallDistance = findTerminalWallDistance(
+    const terminalConnection = findTerminalWallConnection(
       THREE,
       terminal,
       jetway.x,
@@ -319,6 +357,10 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
       -uz,
       rotundaY,
     );
+    const terminalWallDistance = terminalConnection?.distance ?? null;
+    const connectorTowardX = terminalConnection?.towardX ?? -ux;
+    const connectorTowardZ = terminalConnection?.towardZ ?? -uz;
+    const connectorYaw = Math.atan2(connectorTowardX, connectorTowardZ);
     const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 18);
     const lowerFacadeWallDistance = findTerminalWallDistance(
       THREE,
@@ -330,7 +372,13 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
       1.25,
     );
     if (terminalWallDistance != null) terminalConnectedCount += 1;
-    if (jetway.g === "A1") a1TerminalWallDistance = terminalWallDistance;
+    if (jetway.g === "A1") {
+      a1TerminalWallDistance = terminalWallDistance;
+      a1TerminalConnectionAuthority = terminalConnection?.authority ?? null;
+      a1TerminalConnectionDirection = terminalConnection
+        ? [terminalConnection.towardX, terminalConnection.towardZ]
+        : null;
+    }
 
     const sourceFacadeRecessMeters = lowerFacadeWallDistance != null && terminalWallDistance != null
       ? lowerFacadeWallDistance - terminalWallDistance
@@ -370,11 +418,11 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
 
     transforms.wallCollar.push({
       position: [
-        jetway.x - ux * wallConnectorLength / 2,
+        jetway.x + connectorTowardX * wallConnectorLength / 2,
         rotundaY,
-        jetway.z - uz * wallConnectorLength / 2,
+        jetway.z + connectorTowardZ * wallConnectorLength / 2,
       ],
-      yaw,
+      yaw: connectorYaw,
       scale: [2.62, 2.48, wallConnectorLength],
     });
     transforms.rotundaBody.push({ position: [jetway.x, rotundaY - 0.05, jetway.z], yaw, scale: [1.62, 2.34, 1.62] });
@@ -605,6 +653,8 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   group.userData.highDetailJetwayCount = highDetailCount;
   group.userData.terminalConnectedJetwayCount = terminalConnectedCount;
   group.userData.a1TerminalWallDistance = a1TerminalWallDistance;
+  group.userData.a1TerminalConnectionAuthority = a1TerminalConnectionAuthority;
+  group.userData.a1TerminalConnectionDirection = a1TerminalConnectionDirection;
   group.userData.facadeInfillCount = terminal4FacadeInfillCount;
   group.userData.lowerFacadeFitCount = terminal4LowerFacadeFitCount;
   group.userData.openServiceBayCount = terminal4OpenServiceBayCount;
@@ -622,7 +672,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   group.userData.initialJetwayState = "attached-to-aircraft-door";
   group.userData.requiredPrePushSequence = "retract-bellows-clear-door-telescope-in-rotate-to-park";
   group.userData.facadeInfillAuthority = "source-recess-qualified-service-bays-with-irregular-closed-facade-details";
-  group.userData.terminalConnectionAuthority = "raycast-and-source-vertex-fit-to-authored-terminal-mesh";
+  group.userData.terminalConnectionAuthority = "independent-rotunda-collar-fit-to-authored-terminal-wall";
   group.userData.detailLevel = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.detailLevel;
   group.userData.coordinateFrame = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.coordinateFrame;
   group.userData.visualAuthority = "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered";
