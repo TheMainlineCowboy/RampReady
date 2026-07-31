@@ -108,7 +108,69 @@ function restoreClockedA1Motion(source) {
   return restored;
 }
 
-const originalTerminal4Source = restoreClockedA1Motion(preparedTerminal4Source)
+function restoreInspectionElapsedMotion(source) {
+  const replacements = [
+    [
+      `      const rawFrameDt = Math.max(0.001, (now - sim.last) / 1000);
+      const dt = Math.min(0.04, rawFrameDt);
+      sim.last = now;`,
+      `      const dt = Math.min(0.04, Math.max(0.001, (now - sim.last) / 1000));
+      sim.last = now;`,
+    ],
+    [
+      `      const dynamicsCommand = {
+        connected: towing,
+        throttle: motionAllowed && (!towing || inspectionDirection === 1) ? inspectionThrottle : 0,
+        direction: inspectionDirection,
+        steer: clamp(steer, -1, 1),
+        brake: drive.brake || keysRef.current.has(" ") || !motionAllowed,
+        cradleOffset: rig.profile.cradleOffset,
+        steeringMode: rig.profile.steeringMode,
+        wheelbase: rig.profile.wheelbase,
+      };
+      if (inspectionActive) {
+        let remainingInspectionDt = Math.min(0.5, rawFrameDt);
+        while (remainingInspectionDt > 0.000001) {
+          const inspectionStepDt = Math.min(0.04, remainingInspectionDt);
+          sim.dynamics = stepPushbackDynamics(sim.dynamics, dynamicsCommand, inspectionStepDt);
+          remainingInspectionDt -= inspectionStepDt;
+        }
+      } else {
+        sim.dynamics = stepPushbackDynamics(sim.dynamics, dynamicsCommand, dt);
+      }`,
+      `      sim.dynamics = stepPushbackDynamics(sim.dynamics, {
+        connected: towing,
+        throttle: motionAllowed && (!towing || inspectionDirection === 1) ? inspectionThrottle : 0,
+        direction: inspectionDirection,
+        steer: clamp(steer, -1, 1),
+        brake: drive.brake || keysRef.current.has(" ") || !motionAllowed,
+        cradleOffset: rig.profile.cradleOffset,
+        steeringMode: rig.profile.steeringMode,
+        wheelbase: rig.profile.wheelbase,
+      }, dt);`,
+    ],
+    [
+      `      rig.setSteering(state.steerAngle || 0);
+      const visualMotionDt = inspectionActive ? Math.min(0.5, rawFrameDt) : dt;
+      rig.rotateWheels(state.speed * visualMotionDt);`,
+      `      rig.setSteering(state.steerAngle || 0);
+      rig.rotateWheels(state.speed * dt);`,
+    ],
+    [
+      `      canvas.dataset.inspectionSpeed = Math.abs(state.speed).toFixed(3);
+      canvas.dataset.inspectionTimeIntegration = inspectionActive ? "elapsed-substep-40ms" : "training-frame-capped";`,
+      `      canvas.dataset.inspectionSpeed = Math.abs(state.speed).toFixed(3);`,
+    ],
+  ];
+  let restored = source;
+  for (const [prepared, baseline] of replacements) {
+    if (restored.includes(prepared)) restored = restored.replace(prepared, baseline);
+    else if (!restored.includes(baseline)) throw new Error("RampReady production build could not identify the elapsed inspection-motion restoration contract.");
+  }
+  return restored;
+}
+
+const originalTerminal4Source = restoreInspectionElapsedMotion(restoreClockedA1Motion(preparedTerminal4Source))
   .replace(`${generatedMobileImport}\n`, "")
   .replace(`\n${generatedMobileImport}`, "");
 const originalPackage = await readFile(packagePath, "utf8");
@@ -167,6 +229,8 @@ try {
     || restoredTerminal4Source.includes(generatedMobileImport)
     || restoredTerminal4Source.includes("transitionDurationMs: 4200")
     || restoredTerminal4Source.includes("dataset.a1JetwayStateHistory")
+    || restoredTerminal4Source.includes("remainingInspectionDt")
+    || restoredTerminal4Source.includes("inspectionTimeIntegration")
   ) {
     throw new Error("RampReady production build failed to restore the committed Terminal 4 trainer baseline exactly.");
   }
