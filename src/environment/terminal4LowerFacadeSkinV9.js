@@ -1,4 +1,6 @@
 const LOWER_FACADE_SOURCE_MATERIAL = /BGATE1|BGATE3|DGATE2|DGATE3|DGATE4|DGATE5|PHX_TERM400_1/i;
+const LOWER_FACADE_MINIMUM_Y = 0;
+const LOWER_FACADE_MAXIMUM_Y = 4.55;
 
 function buildConcreteTexture(THREE) {
   const size = 64;
@@ -32,7 +34,40 @@ function buildConcreteTexture(THREE) {
 
 function sourceMaterialName(mesh) {
   const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-  return materials.map((material) => material?.name || "").join(" ");
+  return materials.flatMap((material) => [
+    material?.name || "",
+    material?.map?.name || "",
+    material?.userData?.diffuseTexture || "",
+    material?.userData?.sourceLightmap || "",
+  ]).join(" ");
+}
+
+function clipAgainstYPlane(THREE, polygon, limit, keepAbove) {
+  if (!polygon.length) return [];
+  const clipped = [];
+  const inside = (point) => keepAbove ? point.y >= limit - 1e-6 : point.y <= limit + 1e-6;
+  for (let index = 0; index < polygon.length; index += 1) {
+    const current = polygon[index];
+    const next = polygon[(index + 1) % polygon.length];
+    const currentInside = inside(current);
+    const nextInside = inside(next);
+    if (currentInside) clipped.push(current.clone());
+    if (currentInside === nextInside) continue;
+    const denominator = next.y - current.y;
+    if (Math.abs(denominator) < 1e-8) continue;
+    const interpolation = (limit - current.y) / denominator;
+    clipped.push(new THREE.Vector3(
+      current.x + (next.x - current.x) * interpolation,
+      limit,
+      current.z + (next.z - current.z) * interpolation,
+    ));
+  }
+  return clipped;
+}
+
+function clipLowerFacadeTriangle(THREE, triangle) {
+  const aboveRamp = clipAgainstYPlane(THREE, triangle, LOWER_FACADE_MINIMUM_Y, true);
+  return clipAgainstYPlane(THREE, aboveRamp, LOWER_FACADE_MAXIMUM_Y, false);
 }
 
 export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
@@ -43,8 +78,8 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   const edgeA = new THREE.Vector3();
   const edgeB = new THREE.Vector3();
   const normal = new THREE.Vector3();
-  const centroid = new THREE.Vector3();
   let sourceTriangleCount = 0;
+  let renderedTriangleCount = 0;
 
   terminal.traverse((node) => {
     if (!node.isMesh || node.visible === false || !LOWER_FACADE_SOURCE_MATERIAL.test(sourceMaterialName(node))) return;
@@ -58,9 +93,9 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
         vertex[corner].fromBufferAttribute(position, sourceIndex);
         node.localToWorld(vertex[corner]);
       }
-      centroid.copy(vertex[0]).add(vertex[1]).add(vertex[2]).multiplyScalar(1 / 3);
+      const minimumY = Math.min(vertex[0].y, vertex[1].y, vertex[2].y);
       const maximumY = Math.max(vertex[0].y, vertex[1].y, vertex[2].y);
-      if (centroid.y < 0 || centroid.y > 4.05 || maximumY > 4.55) continue;
+      if (maximumY < LOWER_FACADE_MINIMUM_Y || minimumY > LOWER_FACADE_MAXIMUM_Y) continue;
       edgeA.copy(vertex[1]).sub(vertex[0]);
       edgeB.copy(vertex[2]).sub(vertex[0]);
       normal.crossVectors(edgeA, edgeB);
@@ -71,18 +106,23 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
       if (normal.lengthSq() < 1e-8) continue;
       normal.normalize();
 
-      for (const side of [-1, 1]) {
-        for (let corner = 0; corner < 3; corner += 1) {
-          const point = vertex[corner];
-          positions.push(
-            point.x + normal.x * side * 0.065,
-            point.y,
-            point.z + normal.z * side * 0.065,
-          );
-          uvs.push(point.x * 0.055 + point.z * 0.027, point.y * 0.24);
+      const clippedPolygon = clipLowerFacadeTriangle(THREE, vertex);
+      if (clippedPolygon.length < 3) continue;
+      sourceTriangleCount += 1;
+      for (let polygonIndex = 1; polygonIndex < clippedPolygon.length - 1; polygonIndex += 1) {
+        const clippedTriangle = [clippedPolygon[0], clippedPolygon[polygonIndex], clippedPolygon[polygonIndex + 1]];
+        for (const side of [-1, 1]) {
+          for (const point of clippedTriangle) {
+            positions.push(
+              point.x + normal.x * side * 0.065,
+              point.y,
+              point.z + normal.z * side * 0.065,
+            );
+            uvs.push(point.x * 0.055 + point.z * 0.027, point.y * 0.24);
+          }
+          renderedTriangleCount += 1;
         }
       }
-      sourceTriangleCount += 1;
     }
   });
 
@@ -113,8 +153,8 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   skin.receiveShadow = true;
   skin.frustumCulled = true;
   skin.userData.sourceTriangleCount = sourceTriangleCount;
-  skin.userData.renderedTriangleCount = sourceTriangleCount * 2;
-  skin.userData.maximumHeightMeters = 4.55;
-  skin.userData.authority = "source-shaped-low-vertical-BGATE-DGATE-terminal-face-skin-v9";
+  skin.userData.renderedTriangleCount = renderedTriangleCount;
+  skin.userData.maximumHeightMeters = LOWER_FACADE_MAXIMUM_Y;
+  skin.userData.authority = "source-shaped-low-vertical-BGATE-DGATE-terminal-face-skin-v9-clipped-to-ramp-height";
   return skin;
 }
