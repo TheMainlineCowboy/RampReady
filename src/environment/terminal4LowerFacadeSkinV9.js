@@ -1,6 +1,12 @@
 const LOWER_FACADE_SOURCE_MATERIAL = /BGATE1|BGATE3|DGATE2|DGATE3|DGATE4|DGATE5|PHX_TERM400_1/i;
 const LOWER_FACADE_MINIMUM_Y = 0;
 const LOWER_FACADE_MAXIMUM_Y = 4.55;
+// V9 is a cosmetic skin over the structural V8 facade. Legacy terminal meshes
+// contain a few enormous corner-spanning triangles that are valid source
+// topology but become visible ramp wedges when copied as a second surface.
+// Keep local facade panels and reject any triangle whose horizontal footprint
+// is wider than two normal gate modules.
+const LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS = 18;
 
 function buildConcreteTexture(THREE) {
   const size = 64;
@@ -42,6 +48,19 @@ function sourceMaterialName(mesh) {
   ]).join(" ");
 }
 
+function horizontalSpan(points) {
+  let maximum = 0;
+  for (let first = 0; first < points.length; first += 1) {
+    for (let second = first + 1; second < points.length; second += 1) {
+      maximum = Math.max(
+        maximum,
+        Math.hypot(points[second].x - points[first].x, points[second].z - points[first].z),
+      );
+    }
+  }
+  return maximum;
+}
+
 function clipAgainstYPlane(THREE, polygon, limit, keepAbove) {
   if (!polygon.length) return [];
   const clipped = [];
@@ -80,6 +99,8 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   const normal = new THREE.Vector3();
   let sourceTriangleCount = 0;
   let renderedTriangleCount = 0;
+  let rejectedOversizedTriangleCount = 0;
+  let maximumAcceptedHorizontalSpanMeters = 0;
 
   terminal.traverse((node) => {
     if (!node.isMesh || node.visible === false || !LOWER_FACADE_SOURCE_MATERIAL.test(sourceMaterialName(node))) return;
@@ -96,6 +117,13 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
       const minimumY = Math.min(vertex[0].y, vertex[1].y, vertex[2].y);
       const maximumY = Math.max(vertex[0].y, vertex[1].y, vertex[2].y);
       if (maximumY < LOWER_FACADE_MINIMUM_Y || minimumY > LOWER_FACADE_MAXIMUM_Y) continue;
+
+      const sourceHorizontalSpan = horizontalSpan(vertex);
+      if (sourceHorizontalSpan > LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS) {
+        rejectedOversizedTriangleCount += 1;
+        continue;
+      }
+
       edgeA.copy(vertex[1]).sub(vertex[0]);
       edgeB.copy(vertex[2]).sub(vertex[0]);
       normal.crossVectors(edgeA, edgeB);
@@ -108,6 +136,12 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
 
       const clippedPolygon = clipLowerFacadeTriangle(THREE, vertex);
       if (clippedPolygon.length < 3) continue;
+      const clippedHorizontalSpan = horizontalSpan(clippedPolygon);
+      if (clippedHorizontalSpan > LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS) {
+        rejectedOversizedTriangleCount += 1;
+        continue;
+      }
+      maximumAcceptedHorizontalSpanMeters = Math.max(maximumAcceptedHorizontalSpanMeters, clippedHorizontalSpan);
       sourceTriangleCount += 1;
       for (let polygonIndex = 1; polygonIndex < clippedPolygon.length - 1; polygonIndex += 1) {
         const clippedTriangle = [clippedPolygon[0], clippedPolygon[polygonIndex], clippedPolygon[polygonIndex + 1]];
@@ -128,6 +162,9 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
 
   if (sourceTriangleCount < 120) {
     throw new Error(`Terminal 4 lower-facade skin found only ${sourceTriangleCount} source triangles`);
+  }
+  if (rejectedOversizedTriangleCount < 1) {
+    throw new Error("Terminal 4 lower-facade skin did not reject any oversized legacy triangles");
   }
 
   const geometry = new THREE.BufferGeometry();
@@ -154,7 +191,11 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   skin.frustumCulled = true;
   skin.userData.sourceTriangleCount = sourceTriangleCount;
   skin.userData.renderedTriangleCount = renderedTriangleCount;
+  skin.userData.rejectedOversizedTriangleCount = rejectedOversizedTriangleCount;
+  skin.userData.maximumAcceptedHorizontalSpanMeters = maximumAcceptedHorizontalSpanMeters;
+  skin.userData.maximumHorizontalSpanLimitMeters = LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS;
   skin.userData.maximumHeightMeters = LOWER_FACADE_MAXIMUM_Y;
   skin.userData.authority = "source-shaped-low-vertical-BGATE-DGATE-terminal-face-skin-v9-clipped-to-ramp-height";
+  skin.userData.qualityPass = "oversized-corner-triangle-rejection-v10";
   return skin;
 }
