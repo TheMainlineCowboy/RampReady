@@ -112,6 +112,48 @@ if (!independentStructuralFit && source.includes("function findTerminalWallConne
   );
 }
 
+// Gate A1 sits at a Terminal 4 corner where a radial search can select a valid
+// but visually unrelated structural face. Use the exact BGATE1 wall plane from
+// the supplied Terminal 4 mesh at the jetway elevation. Coordinates are in the
+// source-placed jetway group's A1-local frame after its +6.2 m Z scene offset.
+const committedA1Connection = `    const terminalConnection = findTerminalWallConnection(
+      THREE,
+      terminal,
+      jetway.x,
+      jetway.z + sourceOffsetZ,
+      -ux,
+      -uz,
+      rotundaY,
+    );`;
+const exactA1Connection = `    let terminalConnection = findTerminalWallConnection(
+      THREE,
+      terminal,
+      jetway.x,
+      jetway.z + sourceOffsetZ,
+      -ux,
+      -uz,
+      rotundaY,
+    );
+    if (jetway.g === "A1") {
+      const exactWallX = -3.55299146;
+      const exactWallZ = -40.60699866;
+      const exactDx = exactWallX - jetway.x;
+      const exactDz = exactWallZ - jetway.z;
+      const exactDistance = Math.hypot(exactDx, exactDz);
+      terminalConnection = {
+        distance: exactDistance,
+        towardX: exactDx / exactDistance,
+        towardZ: exactDz / exactDistance,
+        authority: "exact-BGATE1-A1-terminal-wall-plane-v14",
+      };
+    }`;
+replaceRequired(
+  committedA1Connection,
+  exactA1Connection,
+  "exact-BGATE1-A1-terminal-wall-plane-v14",
+  "exact A1 Terminal 4 wall-plane connection",
+);
+
 const independentPrepared = [
   "function findTerminalWallConnection",
   "const cast = (direction, far = 48)",
@@ -128,11 +170,11 @@ const legacyPrepared = [
   "1.25, 44",
   "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
 ].every((token) => source.includes(token));
-if (!independentPrepared && !legacyPrepared) {
+if ((!independentPrepared && !legacyPrepared) || !source.includes("exact-BGATE1-A1-terminal-wall-plane-v14")) {
   throw new Error(`${jetwayPath}: structural A1 terminal connector preparation is incomplete`);
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
 console.log(independentPrepared
-  ? "Prepared A1 terminal connector v12 with independent radial structural-wall fitting, 48 m reach and support/walkway rejection."
-  : "Prepared legacy A1 terminal connector v12 with 48 m structural-facade fitting.");
+  ? "Prepared A1 terminal connector v14 at the exact supplied BGATE1 wall plane, with radial structural fitting retained for every other gate."
+  : "Prepared legacy A1 terminal connector v14 at the exact supplied BGATE1 wall plane.");
