@@ -4,12 +4,22 @@ const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 const terminalPath = "src/environment/authoredTerminal4Visual.js";
 
 const jetways = fs.readFileSync(jetwayPath, "utf8");
-const independentRotundaFit = [
+const independentRotundaBaseline = [
   "function findTerminalWallConnection",
   "const terminalConnection = findTerminalWallConnection",
   "const connectorYaw = Math.atan2(connectorTowardX, connectorTowardZ)",
   "a1TerminalConnectionAuthority",
   "independent-rotunda-collar-fit-to-authored-terminal-wall",
+].every((token) => jetways.includes(token));
+const independentStructuralFit = [
+  "function findTerminalWallConnection",
+  "const terminalConnection = findTerminalWallConnection",
+  "const connectorYaw = Math.atan2(connectorTowardX, connectorTowardZ)",
+  "a1TerminalConnectionAuthority",
+  "const cast = (direction, far = 48)",
+  "return /BGATE|DGATE|PHX_TERM400/i.test",
+  "materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test",
+  "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12",
 ].every((token) => jetways.includes(token));
 const legacyMeasuredFit = [
   "function findTerminalWallDistance",
@@ -21,7 +31,7 @@ const legacyMeasuredFit = [
 if (!jetways.includes("buildSourcePlacedTerminal4Jetways(THREE, terminal")) {
   throw new Error("Terminal-aware jetway builder signature is missing");
 }
-if (!independentRotundaFit && !legacyMeasuredFit) {
+if (!independentRotundaBaseline && !independentStructuralFit && !legacyMeasuredFit) {
   throw new Error("Terminal 4 jetways do not contain a measured terminal-wall connection implementation");
 }
 
@@ -66,6 +76,9 @@ for (const token of [
   }
 }
 
-console.log(independentRotundaFit
-  ? "Validated independent rotunda-to-authored-wall jetway connectors and explicit A1 connection evidence."
-  : "Validated legacy measured terminal-wall jetway connectors and explicit A1 connection evidence.");
+const connectorMode = independentStructuralFit
+  ? "prepared structural v12 radial"
+  : independentRotundaBaseline
+    ? "committed radial"
+    : "legacy measured";
+console.log(`Validated ${connectorMode} rotunda-to-authored-wall jetway connectors and explicit A1 connection evidence.`);
