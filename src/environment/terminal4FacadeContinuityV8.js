@@ -4,14 +4,15 @@ const FACADE_CONTINUITY_EXCLUDED_GATES = new Set(["A1", "A3"]);
 
 // Exact authored BGATE1 wall plane near A3. Coordinates are expressed in the
 // source-placed jetway group before its +6.2 m Z scene offset. This adds only
-// architectural detail in front of the valid source wall; it does not replace,
-// move, or delete Terminal 4 geometry.
+// architectural detail on the ramp-facing side of the valid source wall; it
+// does not replace, move, or delete Terminal 4 geometry.
 const A3_CORNER_WALL = Object.freeze({
   centerX: 25.0,
   planeZ: -30.343,
   width: 24.0,
   height: 8.2,
   jetwayCenterX: 20.38,
+  rampFacingZSign: 1,
 });
 
 function structuralFacadeDistance(THREE, terminal, originX, originZ, towardX, towardZ, height) {
@@ -50,7 +51,7 @@ function addBox(THREE, parent, material, name, position, yaw, size) {
 
 function buildA3CornerDetail(THREE, group, materials) {
   const detail = new THREE.Group();
-  detail.name = "Terminal4_A3_SourceWallArchitecturalDetail_V10";
+  detail.name = "Terminal4_A3_SourceWallArchitecturalDetail_V11";
 
   const frameMaterial = materials.facadeDoor.clone();
   frameMaterial.name = "Terminal 4 A3 galvanized facade framing";
@@ -88,7 +89,7 @@ function buildA3CornerDetail(THREE, group, materials) {
   ventMaterial.roughness = 0.63;
   ventMaterial.metalness = 0.32;
 
-  const z = A3_CORNER_WALL.planeZ - 0.12;
+  const z = A3_CORNER_WALL.planeZ + 0.12;
   addBox(
     THREE,
     detail,
@@ -105,7 +106,7 @@ function buildA3CornerDetail(THREE, group, materials) {
       detail,
       frameMaterial,
       `Terminal 4 A3 vertical facade pilaster ${x.toFixed(1)}`,
-      [x, A3_CORNER_WALL.height / 2, z - 0.02],
+      [x, A3_CORNER_WALL.height / 2, z + 0.02],
       0,
       [0.22, A3_CORNER_WALL.height, 0.18],
     );
@@ -117,7 +118,7 @@ function buildA3CornerDetail(THREE, group, materials) {
       detail,
       frameMaterial,
       `Terminal 4 A3 horizontal facade beam ${y.toFixed(2)}`,
-      [A3_CORNER_WALL.centerX, y, z - 0.03],
+      [A3_CORNER_WALL.centerX, y, z + 0.03],
       0,
       [A3_CORNER_WALL.width, 0.16, 0.17],
     );
@@ -128,7 +129,7 @@ function buildA3CornerDetail(THREE, group, materials) {
     detail,
     doorMaterial,
     "Terminal 4 A3 closed ramp service door",
-    [28.9, 1.16, z - 0.12],
+    [28.9, 1.16, z + 0.12],
     0,
     [1.52, 2.24, 0.14],
   );
@@ -137,7 +138,7 @@ function buildA3CornerDetail(THREE, group, materials) {
     detail,
     frameMaterial,
     "Terminal 4 A3 service-door header",
-    [28.9, 2.34, z - 0.15],
+    [28.9, 2.34, z + 0.15],
     0,
     [1.76, 0.14, 0.17],
   );
@@ -146,7 +147,7 @@ function buildA3CornerDetail(THREE, group, materials) {
     detail,
     ventMaterial,
     "Terminal 4 A3 ventilation grille",
-    [33.2, 2.18, z - 0.13],
+    [33.2, 2.18, z + 0.13],
     0,
     [1.86, 0.48, 0.14],
   );
@@ -160,7 +161,7 @@ function buildA3CornerDetail(THREE, group, materials) {
       detail,
       frameMaterial,
       `Terminal 4 A3 jetway portal post ${side < 0 ? "left" : "right"}`,
-      [A3_CORNER_WALL.jetwayCenterX + side * portalHalfWidth, portalCenterY, z - 0.18],
+      [A3_CORNER_WALL.jetwayCenterX + side * portalHalfWidth, portalCenterY, z + 0.18],
       0,
       [0.24, portalHeight, 0.22],
     );
@@ -171,7 +172,7 @@ function buildA3CornerDetail(THREE, group, materials) {
       detail,
       frameMaterial,
       `Terminal 4 A3 jetway portal ${name}`,
-      [A3_CORNER_WALL.jetwayCenterX, y, z - 0.18],
+      [A3_CORNER_WALL.jetwayCenterX, y, z + 0.18],
       0,
       [portalHalfWidth * 2 + 0.24, 0.22, 0.22],
     );
@@ -183,15 +184,16 @@ function buildA3CornerDetail(THREE, group, materials) {
       detail,
       curbMaterial,
       `Terminal 4 A3 service-door bollard ${x.toFixed(2)}`,
-      [x, 0.56, z - 0.62],
+      [x, 0.56, z + 0.62],
       0,
       [0.16, 1.12, 0.16],
     );
   }
 
-  detail.userData.authority = "exact-BGATE1-source-wall-plane-A3-architectural-detail-v10";
+  detail.userData.authority = "exact-BGATE1-source-wall-plane-ramp-facing-A3-architectural-detail-v11";
   detail.userData.sourceWallWorldPlaneZ = A3_CORNER_WALL.planeZ + 6.2;
   detail.userData.sourceWallLocalPlaneZ = A3_CORNER_WALL.planeZ;
+  detail.userData.detailRampFaceWorldZ = z + 6.2;
   detail.userData.jetwayCenterX = A3_CORNER_WALL.jetwayCenterX;
   detail.userData.detailObjectCount = detail.children.length;
   group.add(detail);
@@ -207,7 +209,7 @@ export function buildTerminal4FacadeContinuity(THREE, terminal, jetways, parking
     // A1 and adjacent A3 form the Terminal 4 corner around the long fixed A1
     // walkway. Generic minimum-width panels from either gate overlap that
     // corner. Their valid authored wall remains active; A3 receives dedicated
-    // source-plane detailing below instead of another opaque replacement wall.
+    // ramp-facing source-plane detailing below instead of another opaque wall.
     if (FACADE_CONTINUITY_EXCLUDED_GATES.has(jetway.g)) continue;
 
     const parking = parkingByGate.get(jetway.g);
@@ -353,6 +355,6 @@ export function buildTerminal4FacadeContinuity(THREE, terminal, jetways, parking
   group.userData.excludedGates = [...FACADE_CONTINUITY_EXCLUDED_GATES];
   group.userData.a3CornerDetailCount = a3CornerDetail.userData.detailObjectCount;
   group.userData.a3CornerDetailAuthority = a3CornerDetail.userData.authority;
-  group.userData.authority = "structural-facade-neighbor-span-continuity-v8-with-source-anchored-A3-detail-v10";
+  group.userData.authority = "structural-facade-neighbor-span-continuity-v8-with-ramp-facing-source-anchored-A3-detail-v11";
   return group;
 }
