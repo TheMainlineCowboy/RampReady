@@ -6,6 +6,16 @@ const LOWER_FACADE_MAXIMUM_Y = 4.55;
 // source topology but become detached ramp panels when copied as a second
 // opaque surface. Keep only localized, single-module facade faces.
 const LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS = 10;
+// This exact source block sits in the A1 terminal-connection footprint. Its
+// PHX_TERM400_1 alpha is meaningful in the authored terminal, but V9's opaque
+// cosmetic duplicate turns it into the detached beige panel visible beside A1.
+// The original textured geometry and measured fixed walkway remain active.
+const A1_COSMETIC_SKIN_EXCLUSION = Object.freeze({
+  minimumX: -22.5,
+  maximumX: -12.5,
+  minimumZ: -35,
+  maximumZ: -25,
+});
 
 function buildConcreteTexture(THREE) {
   const size = 64;
@@ -60,6 +70,17 @@ function horizontalSpan(points) {
   return maximum;
 }
 
+function intersectsA1CosmeticExclusion(points) {
+  const minimumX = Math.min(...points.map((point) => point.x));
+  const maximumX = Math.max(...points.map((point) => point.x));
+  const minimumZ = Math.min(...points.map((point) => point.z));
+  const maximumZ = Math.max(...points.map((point) => point.z));
+  return maximumX >= A1_COSMETIC_SKIN_EXCLUSION.minimumX
+    && minimumX <= A1_COSMETIC_SKIN_EXCLUSION.maximumX
+    && maximumZ >= A1_COSMETIC_SKIN_EXCLUSION.minimumZ
+    && minimumZ <= A1_COSMETIC_SKIN_EXCLUSION.maximumZ;
+}
+
 function clipAgainstYPlane(THREE, polygon, limit, keepAbove) {
   if (!polygon.length) return [];
   const clipped = [];
@@ -99,6 +120,7 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   let sourceTriangleCount = 0;
   let renderedTriangleCount = 0;
   let rejectedOversizedTriangleCount = 0;
+  let rejectedA1CosmeticTriangleCount = 0;
   let maximumAcceptedHorizontalSpanMeters = 0;
 
   terminal.traverse((node) => {
@@ -140,6 +162,10 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
         rejectedOversizedTriangleCount += 1;
         continue;
       }
+      if (intersectsA1CosmeticExclusion(clippedPolygon)) {
+        rejectedA1CosmeticTriangleCount += 1;
+        continue;
+      }
       maximumAcceptedHorizontalSpanMeters = Math.max(maximumAcceptedHorizontalSpanMeters, clippedHorizontalSpan);
       sourceTriangleCount += 1;
       for (let polygonIndex = 1; polygonIndex < clippedPolygon.length - 1; polygonIndex += 1) {
@@ -164,6 +190,9 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   }
   if (rejectedOversizedTriangleCount < 1) {
     throw new Error("Terminal 4 lower-facade skin did not reject any oversized legacy triangles");
+  }
+  if (rejectedA1CosmeticTriangleCount < 4) {
+    throw new Error(`Terminal 4 lower-facade skin rejected only ${rejectedA1CosmeticTriangleCount} A1 cosmetic triangles`);
   }
 
   const geometry = new THREE.BufferGeometry();
@@ -191,10 +220,12 @@ export function buildTerminal4LowerFacadeSkin(THREE, terminal, materials) {
   skin.userData.sourceTriangleCount = sourceTriangleCount;
   skin.userData.renderedTriangleCount = renderedTriangleCount;
   skin.userData.rejectedOversizedTriangleCount = rejectedOversizedTriangleCount;
+  skin.userData.rejectedA1CosmeticTriangleCount = rejectedA1CosmeticTriangleCount;
+  skin.userData.a1CosmeticExclusion = { ...A1_COSMETIC_SKIN_EXCLUSION };
   skin.userData.maximumAcceptedHorizontalSpanMeters = maximumAcceptedHorizontalSpanMeters;
   skin.userData.maximumHorizontalSpanLimitMeters = LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS;
   skin.userData.maximumHeightMeters = LOWER_FACADE_MAXIMUM_Y;
   skin.userData.authority = "source-shaped-low-vertical-BGATE-DGATE-terminal-face-skin-v9-clipped-to-ramp-height";
-  skin.userData.qualityPass = "localized-single-module-facade-triangle-rejection-v11";
+  skin.userData.qualityPass = "localized-facade-v12-with-a1-alpha-block-exclusion";
   return skin;
 }
