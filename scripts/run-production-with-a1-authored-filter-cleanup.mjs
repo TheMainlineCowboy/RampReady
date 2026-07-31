@@ -72,4 +72,4 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log("RampReady production artifact preserved the exact 12-triangle A1 authored-block filter, then restored authoredTerminal4Visual.js byte-for-byte.");
+console.log("RampReady production artifact preserved the exact three-box, 36-triangle A1 authored cleanup, then restored authoredTerminal4Visual.js byte-for-byte.");
