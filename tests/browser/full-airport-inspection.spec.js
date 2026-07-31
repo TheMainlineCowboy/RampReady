@@ -7,7 +7,7 @@ const PRESETS = [
   { id: "a1", x: 0, z: 0, file: "inspection-a1-ramp.png", groundFile: "inspection-a1-operator-ground.png" },
   { id: "a14", x: 218.45, z: -86.52, file: "inspection-a-concourse-midpoint.png" },
   { id: "b14", x: 216.4, z: 150.35, file: "inspection-b-concourse-midpoint.png" },
-  { id: "b15", x: 10.6, z: 534.7, file: "inspection-b15-ramp.png", groundFile: "inspection-b15-operator-ground.png" },
+  { id: "b15", x: -5.5, z: 539.2, file: "inspection-b15-ramp.png", groundFile: "inspection-b15-operator-ground.png" },
 ];
 
 async function launchRuntime(page) {
@@ -82,7 +82,10 @@ function distance(a, b) {
 }
 
 test("free-drive inspection covers the full Terminal 4 route from A1 through B15", async ({ page }) => {
-  test.setTimeout(600_000);
+  // Full source airport loading plus nine lossless WebGL evidence captures can
+  // exceed ten minutes on the hosted software renderer. The prior 600 s limit
+  // expired during screenshot cleanup even though the runtime remained healthy.
+  test.setTimeout(900_000);
   const canvas = await launchRuntime(page);
 
   const toggle = page.locator("button.rr-inspection-toggle");
