@@ -4,6 +4,7 @@ const entry = fs.readFileSync("src/components/PushbackTrainer.jsx", "utf8");
 const facade = fs.readFileSync("scripts/prepare-terminal4-facade-visual-v7.mjs", "utf8");
 const continuity = fs.readFileSync("scripts/prepare-terminal4-facade-continuity-v8.mjs", "utf8");
 const facadeSelection = fs.readFileSync("scripts/prepare-terminal4-source-facade-selection-v27.mjs", "utf8");
+const facadeRuntime = fs.readFileSync("scripts/prepare-terminal4-facade-splitter-runtime-v33.mjs", "utf8");
 const directInspection = fs.readFileSync("scripts/prepare-direct-inspection-launch-v28.mjs", "utf8");
 const compactInspectionCss = fs.readFileSync("src/components/inspection-compact-v30.css", "utf8");
 const connector = fs.readFileSync("scripts/prepare-a1-terminal-connector-v11.mjs", "utf8");
@@ -36,6 +37,7 @@ for (const token of [
   '"buildTerminal4FacadeContinuity"',
   '"buildTerminal4LowerFacadeSkin"',
   'await import("./prepare-terminal4-source-facade-selection-v27.mjs")',
+  'await import("./prepare-terminal4-facade-splitter-runtime-v33.mjs")',
 ]) {
   if (!continuity.includes(token)) throw new Error(`Source-only continuity cleanup is missing ${token}`);
 }
@@ -55,6 +57,13 @@ for (const token of [
   "source-authored-A1-lower-facade-no-rejected-BGATE1-overlay-v31",
 ]) {
   if (!facadeSelection.includes(token)) throw new Error(`Package-native facade variation is missing ${token}`);
+}
+for (const token of [
+  'const splitterMarker = "source-package-facade-cell-variation-v31";',
+  "function splitRepeatedBGATE1Facade",
+  "sourceFacadeVariationAuthority: splitterMarker",
+]) {
+  if (!facadeRuntime.includes(token)) throw new Error(`Facade runtime binding is missing ${token}`);
 }
 for (const forbidden of ["CanvasTexture", "sourceKey === \"BGATE1.BMP\" ? \"BGATE3.BMP\""]) {
   if (facadeSelection.includes(forbidden)) throw new Error(`Facade variation retained a synthetic/global replacement: ${forbidden}`);
@@ -92,4 +101,4 @@ if (connector.includes("const exactWallX = -3.55299146")) {
   throw new Error("The detached diagonal BGATE A1 target remains");
 }
 
-console.log("Source-first A1, varied package facade and direct compact tug inspection contracts verified.");
+console.log("Source-first A1, varied package facade, runtime binding and direct compact tug inspection contracts verified.");
