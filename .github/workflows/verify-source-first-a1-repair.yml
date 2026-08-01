@@ -11,6 +11,7 @@ on:
       - 'scripts/prepare-terminal4-facade-visual-v7.mjs'
       - 'scripts/prepare-terminal4-facade-continuity-v8.mjs'
       - 'scripts/prepare-terminal4-source-facade-selection-v27.mjs'
+      - 'scripts/prepare-terminal4-facade-splitter-runtime-v33.mjs'
       - 'scripts/prepare-direct-inspection-launch-v28.mjs'
       - 'scripts/prepare-phx-runtime-evidence.mjs'
       - 'tests/source-first-a1-repair-contract.test.mjs'
