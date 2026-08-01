@@ -1,3 +1,5 @@
+import { addUploadedAirportJetwayTerminalConnector } from "./uploadedAirportJetwayTerminalConnector.js";
+
 const PART_COUNT = 5;
 const MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1";
 // Replace only the movable fallback jetway. The source-positioned fixed walkway
@@ -76,9 +78,9 @@ function buildPrototype(THREE, payload) {
   const { metadata, binary } = payload;
   const body = new THREE.MeshStandardMaterial({
     name: "Uploaded airport jetway body",
-    color: 0xd7d8d5,
-    roughness: 0.7,
-    metalness: 0.12,
+    color: 0xc4c5c2,
+    roughness: 0.76,
+    metalness: 0.09,
     side: THREE.DoubleSide,
   });
   const glass = new THREE.MeshStandardMaterial({
@@ -93,7 +95,7 @@ function buildPrototype(THREE, payload) {
   });
   const darkMetal = new THREE.MeshStandardMaterial({
     name: "Uploaded airport jetway structure",
-    color: 0x555b5f,
+    color: 0x4a5054,
     roughness: 0.58,
     metalness: 0.48,
     side: THREE.DoubleSide,
@@ -232,12 +234,14 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements) {
         model.name = `UploadedAirportJetwayModel_${placement.gate}`;
         anchor.add(model);
         fleet.add(anchor);
+        addUploadedAirportJetwayTerminalConnector(THREE, fleet, placement);
         if (placement.gate === "A1") controller.bind(anchor);
       }
       group.add(fleet);
       const hiddenGeneratedObjectCount = hideGeneratedJetways(group);
       group.userData.uploadedJetwayLoadState = "ready";
       group.userData.uploadedJetwayCount = placements.length;
+      group.userData.uploadedJetwayMeasuredTerminalConnectorCount = placements.length;
       group.userData.uploadedJetwayHiddenGeneratedObjectCount = hiddenGeneratedObjectCount;
       group.userData.uploadedJetwayTerminalConnectorPreserved = true;
       group.userData.sourceGeometryMode = MODEL_AUTHORITY;
