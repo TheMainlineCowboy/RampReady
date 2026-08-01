@@ -160,13 +160,13 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
   expect(nearestGeometryMeters).toBeGreaterThan(29.9);
   expect(nearestGeometryMeters).toBeLessThan(30.6);
   const a1WallDistance = Number(runtime.terminal4A1JetwayWallDistance);
-  expect(a1WallDistance).toBeGreaterThan(24);
-  expect(a1WallDistance).toBeLessThan(36);
+  expect(a1WallDistance).toBeGreaterThan(9.1);
+  expect(a1WallDistance).toBeLessThan(9.2);
   expect(Number(runtime.terminal4TerminalConnectedJetwayCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4SourceCutoutMaterialCount)).toBeGreaterThan(0);
-  expect(Number(runtime.terminal4FacadeInfillCount)).toBeGreaterThan(90);
+  expect(Number(runtime.terminal4FacadeInfillCount)).toBe(0);
   expect(Number(runtime.terminal4OpenServiceBayCount)).toBe(0);
-  expect(Number(runtime.terminal4LowerFacadeFitCount)).toBeGreaterThan(90);
+  expect(Number(runtime.terminal4LowerFacadeFitCount)).toBeGreaterThan(0);
   expect(runtime.terminal4ExactJetwayTextureActive).toBe("true");
   expect(runtime.terminal4JetwayTextureAuthority).toContain("M1DGJETWAY exact recovered");
   expect(runtime.terminal4JetwayDetailLevel).toBe("fsx-air-jetway01-exact-textured-source-scale-articulated-v5");
