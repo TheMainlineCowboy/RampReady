@@ -2,6 +2,8 @@ import fs from "node:fs";
 
 const moduleSource = fs.readFileSync("src/environment/terminal4JetwayVisualUpgradeV35.js", "utf8");
 const preparation = fs.readFileSync("scripts/prepare-terminal4-jetway-visual-upgrade-v35.mjs", "utf8");
+const uploadedFleet = fs.readFileSync("src/environment/uploadedAirportJetwayFleet.js", "utf8");
+const uploadedPreparation = fs.readFileSync("scripts/prepare-uploaded-airport-jetway-fleet.mjs", "utf8");
 const uvPreparation = fs.readFileSync("scripts/prepare-terminal4-jetway-source-uv-v36.mjs", "utf8");
 const continuity = fs.readFileSync("scripts/prepare-terminal4-facade-continuity-v8.mjs", "utf8");
 
@@ -31,12 +33,36 @@ for (const forbidden of [
   if (moduleSource.includes(forbidden)) throw new Error(`Procedural jetway dressing remains: ${forbidden}`);
 }
 
+// The old V35 module remains audited as a zero-geometry compatibility pass,
+// but production must use the uploaded authored model rather than call V35.
 for (const token of [
   'import { enhanceTerminal4JetwayVisuals } from "./terminal4JetwayVisualUpgradeV35.js";',
   "const jetwayVisualUpgrade = enhanceTerminal4JetwayVisuals(THREE, group);",
   "group.userData.jetwayVisualUpgradeDetailInstanceCount = jetwayVisualUpgrade.detailInstanceCount;",
 ]) {
-  if (!preparation.includes(token)) throw new Error(`Terminal 4 jetway preparation is missing ${token}`);
+  if (!preparation.includes(token)) throw new Error(`Terminal 4 legacy visual compatibility preparation is missing ${token}`);
+}
+
+for (const token of [
+  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1",
+  "Tunnel_B",
+  "Tunnel_C",
+  "Cab",
+  "UploadedAirportJetwayFleet",
+  "proceduralJetwayStairCount = 0",
+  "hiddenGeneratedObjectCount",
+  "PART_COUNT = 5",
+]) {
+  if (!uploadedFleet.includes(token)) throw new Error(`Uploaded Terminal 4 jetway fleet is missing ${token}`);
+}
+for (const token of [
+  "uploadedJetwayPlacements",
+  "installUploadedAirportJetwayFleet",
+  "requiresOriginalSourceMesh = false",
+  "a1JetwayController = uploadedJetwayController",
+  "supersededFallbackDisclosure",
+]) {
+  if (!uploadedPreparation.includes(token)) throw new Error(`Uploaded Terminal 4 jetway preparation is missing ${token}`);
 }
 
 for (const token of [
@@ -50,14 +76,16 @@ for (const token of [
 
 for (const token of [
   'await import("./prepare-terminal4-jetway-source-uv-v36.mjs")',
-  'await import("./prepare-terminal4-jetway-visual-upgrade-v35.mjs")',
+  'await import("./prepare-uploaded-airport-jetway-fleet.mjs")',
 ]) {
   if (!continuity.includes(token)) throw new Error(`Terminal 4 runtime preparation is missing ${token}`);
+}
+if (continuity.includes('await import("./prepare-terminal4-jetway-visual-upgrade-v35.mjs")')) {
+  throw new Error("Obsolete V35 procedural jetway pass returned to the production runtime chain");
 }
 
 for (const forbidden of [
   "usesTerminalBuildingTextures = true",
-  "requiresOriginalSourceMesh = false",
   "CanvasTexture",
 ]) {
   if (moduleSource.includes(forbidden) || preparation.includes(forbidden) || uvPreparation.includes(forbidden)) {
@@ -65,4 +93,4 @@ for (const forbidden of [
   }
 }
 
-console.log("Terminal 4 package-native jetway material pass and exact source-atlas UV projection contracts verified with zero procedural dressing geometry.");
+console.log("Uploaded Tunnel_A/B/C/Rotunda/Cab fleet is the production jetway authority at all 58 gates; V35 remains audit-only and no procedural dressing is wired into runtime.");
