@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-const AUTHORITY = "package-native-fixed-walkway-source-geometry-v52";
+const AUTHORITY = "package-native-fixed-walkway-source-geometry-v54";
 
 function tunePackageMaterial(material) {
   if (!material) return;
@@ -15,6 +15,20 @@ function tunePackageMaterial(material) {
     entry.dithering = true;
     entry.needsUpdate = true;
   }
+}
+
+function hideProceduralGroup(group, name) {
+  const object = group.getObjectByName(name);
+  if (!object) return false;
+  object.visible = false;
+  object.traverse((node) => {
+    node.visible = false;
+    if (node.isMesh) {
+      node.castShadow = false;
+      node.receiveShadow = false;
+    }
+  });
+  return true;
 }
 
 export function installTerminal4FixedWalkwayV20(group) {
@@ -32,16 +46,9 @@ export function installTerminal4FixedWalkwayV20(group) {
   source.receiveShadow = true;
   tunePackageMaterial(source.material);
 
-  const legacyOverlay = group.getObjectByName("Terminal4_FixedWalkwayArchitecturalDetail_V15");
-  if (legacyOverlay) {
-    legacyOverlay.visible = false;
-    legacyOverlay.traverse((node) => {
-      if (node.isMesh) {
-        node.visible = false;
-        node.castShadow = false;
-      }
-    });
-  }
+  const hiddenArchitecturalOverlay = hideProceduralGroup(group, "Terminal4_FixedWalkwayArchitecturalDetail_V15");
+  const hiddenGroundSupports = hideProceduralGroup(group, "Terminal4_FixedWalkwayGroundSupports_V14");
+  const hiddenObsoleteA1Facade = hideProceduralGroup(group, "Terminal4_A1_LowerFacadePortal_V15");
 
   const marker = new THREE.Group();
   marker.name = "Terminal4_GlassFixedWalkways_V20";
@@ -50,8 +57,10 @@ export function installTerminal4FixedWalkwayV20(group) {
   marker.userData.sourceGeometryVisible = true;
   marker.userData.sourceGeometryUnmoved = true;
   marker.userData.proceduralReplacementMeshCount = 0;
-  marker.userData.legacyOverlayHidden = Boolean(legacyOverlay);
   marker.userData.packageWalkwayIsSoleGeometryAuthority = true;
+  marker.userData.hiddenProceduralArchitecturalOverlay = hiddenArchitecturalOverlay;
+  marker.userData.hiddenProceduralGroundSupports = hiddenGroundSupports;
+  marker.userData.hiddenObsoleteA1Facade = hiddenObsoleteA1Facade;
   group.add(marker);
 
   group.userData.fixedWalkwayAuthority = AUTHORITY;
@@ -59,5 +68,8 @@ export function installTerminal4FixedWalkwayV20(group) {
   group.userData.fixedWalkwayProceduralReplacementMeshCount = 0;
   group.userData.fixedWalkwaySourceGeometryVisible = true;
   group.userData.fixedWalkwaySourceGeometryUnmoved = true;
+  group.userData.fixedWalkwayProceduralGroundSupportsHidden = hiddenGroundSupports;
+  group.userData.fixedWalkwayProceduralArchitecturalOverlayHidden = hiddenArchitecturalOverlay;
+  group.userData.obsoleteA1LowerFacadePortalHidden = hiddenObsoleteA1Facade;
   return marker;
 }
