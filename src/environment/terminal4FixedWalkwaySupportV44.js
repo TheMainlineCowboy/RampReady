@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-const AUTHORITY = "source-transform-fixed-walkway-structural-support-v45";
+const AUTHORITY = "source-transform-fixed-walkway-coherent-portal-frame-v46";
 
 function extractRecords(source) {
   if (!source?.isInstancedMesh || source.count < 1) return [];
@@ -17,7 +17,7 @@ function extractRecords(source) {
       quaternion: quaternion.clone(),
       right: new THREE.Vector3(1, 0, 0).applyQuaternion(quaternion).normalize(),
       forward: new THREE.Vector3(0, 0, 1).applyQuaternion(quaternion).normalize(),
-      length: Math.abs(scale.z),
+      length: Math.max(3.2, Math.abs(scale.z)),
     });
   }
   return records;
@@ -48,8 +48,9 @@ function addInstances(parent, name, geometry, surface, records) {
 
 export function installTerminal4FixedWalkwaySupportV44(group) {
   if (!group?.isGroup) throw new Error("Terminal 4 walkway support upgrade requires the source jetway group");
-  const existing = group.getObjectByName("Terminal4_FixedWalkway_SupportUpgrade_V44")
-    || group.getObjectByName("Terminal4_FixedWalkway_SupportUpgrade_V45");
+  const existing = group.getObjectByName("Terminal4_FixedWalkway_SupportUpgrade_V46")
+    || group.getObjectByName("Terminal4_FixedWalkway_SupportUpgrade_V45")
+    || group.getObjectByName("Terminal4_FixedWalkway_SupportUpgrade_V44");
   if (existing) return existing;
 
   const source = group.getObjectByName("AIR_Jetway01_FixedTerminalWalkways_V13");
@@ -57,110 +58,105 @@ export function installTerminal4FixedWalkwaySupportV44(group) {
   if (!records.length) throw new Error("Terminal 4 walkway support upgrade recovered zero source transforms");
 
   const root = new THREE.Group();
-  root.name = "Terminal4_FixedWalkway_SupportUpgrade_V45";
-  const steel = material("Terminal 4 fixed walkway galvanized frames V45", 0x747b7e, 0.58, 0.34);
-  const darkSteel = material("Terminal 4 fixed walkway structural brace reveals V45", 0x303639, 0.7, 0.24);
-  const concrete = material("Terminal 4 fixed walkway formed concrete footings V45", 0x85837d, 0.92, 0.01);
-  const service = material("Terminal 4 fixed walkway utility riser V45", 0x4a5053, 0.76, 0.18);
+  root.name = "Terminal4_FixedWalkway_SupportUpgrade_V46";
+  const galvanized = material("Terminal 4 fixed walkway galvanized portal frames V46", 0x687176, 0.56, 0.38);
+  const darkSteel = material("Terminal 4 fixed walkway dark structural reveals V46", 0x252b2f, 0.68, 0.28);
+  const concrete = material("Terminal 4 fixed walkway formed concrete piers V46", 0x888680, 0.92, 0.01);
+  const service = material("Terminal 4 fixed walkway compact service cabinets V46", 0x454c50, 0.78, 0.16);
 
-  const columns = [];
+  const longitudinalBeams = [];
   const crossheads = [];
+  const columns = [];
+  const kneeBraces = [];
   const footings = [];
-  const braces = [];
-  const tieBeams = [];
-  const utilityRisers = [];
-  const utilityCaps = [];
-  const baseQuaternion = new THREE.Quaternion();
-  const braceLeft = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, 0.59));
-  const braceRight = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.59));
+  const cabinets = [];
+  const cabinetCaps = [];
+  const braceLeft = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, 0.72));
+  const braceRight = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.72));
 
   for (const record of records) {
-    const undersideY = record.position.y - 1.28;
-    const columnHeight = Math.max(1.55, undersideY - 0.42);
-    const supportCenter = record.position.clone();
-    supportCenter.y = columnHeight / 2 + 0.24;
-    const pairOffset = 0.72;
+    const undersideY = record.position.y - 1.26;
+    const columnHeight = Math.max(1.65, undersideY - 0.34);
+    const pairOffset = 1.02;
+
+    // One deep beam follows the exact source walkway axis and visually carries
+    // the entire corridor. It is structural dressing only: source transforms,
+    // dimensions and airport placement remain untouched.
+    longitudinalBeams.push({
+      position: new THREE.Vector3(record.position.x, undersideY - 0.18, record.position.z),
+      quaternion: record.quaternion.clone(),
+      scale: new THREE.Vector3(2.56, 0.34, Math.max(3.4, record.length * 0.82)),
+    });
+    crossheads.push({
+      position: new THREE.Vector3(record.position.x, undersideY - 0.42, record.position.z),
+      quaternion: record.quaternion.clone(),
+      scale: new THREE.Vector3(2.72, 0.28, 0.48),
+    });
 
     for (const side of [-1, 1]) {
       const lateral = record.right.clone().multiplyScalar(side * pairOffset);
+      const columnCenter = new THREE.Vector3(record.position.x, columnHeight / 2 + 0.22, record.position.z)
+        .add(lateral);
       columns.push({
-        position: supportCenter.clone().add(lateral),
+        position: columnCenter,
         quaternion: record.quaternion.clone(),
-        scale: new THREE.Vector3(0.28, columnHeight, 0.28),
+        scale: new THREE.Vector3(0.34, columnHeight, 0.34),
       });
       footings.push({
-        position: new THREE.Vector3(supportCenter.x, 0.17, supportCenter.z).add(lateral),
+        position: new THREE.Vector3(record.position.x, 0.16, record.position.z).add(lateral),
         quaternion: record.quaternion.clone(),
-        scale: new THREE.Vector3(0.82, 0.34, 0.92),
+        scale: new THREE.Vector3(0.88, 0.32, 0.94),
       });
-      braces.push({
-        position: new THREE.Vector3(record.position.x, undersideY - 0.68, record.position.z)
-          .addScaledVector(record.right, side * 0.73),
+      kneeBraces.push({
+        position: new THREE.Vector3(record.position.x, undersideY - 0.92, record.position.z)
+          .addScaledVector(record.right, side * 0.76),
         quaternion: record.quaternion.clone().multiply(side < 0 ? braceLeft : braceRight),
-        scale: new THREE.Vector3(0.13, 1.85, 0.13),
+        scale: new THREE.Vector3(0.14, 1.34, 0.14),
       });
     }
 
-    crossheads.push({
-      position: new THREE.Vector3(record.position.x, undersideY - 0.05, record.position.z),
+    // Keep service equipment believable and low. The prior tall enclosure made
+    // the original center post more conspicuous and read as stacked placeholder
+    // geometry. This compact cabinet masks only the base area.
+    cabinets.push({
+      position: new THREE.Vector3(record.position.x, 0.58, record.position.z)
+        .addScaledVector(record.forward, 0.2),
       quaternion: record.quaternion.clone(),
-      scale: new THREE.Vector3(2.78, 0.3, 0.54),
+      scale: new THREE.Vector3(0.76, 1.02, 0.58),
     });
-    tieBeams.push({
-      position: new THREE.Vector3(record.position.x, 1.15, record.position.z),
+    cabinetCaps.push({
+      position: new THREE.Vector3(record.position.x, 1.12, record.position.z)
+        .addScaledVector(record.forward, 0.2),
       quaternion: record.quaternion.clone(),
-      scale: new THREE.Vector3(1.72, 0.18, 0.3),
-    });
-
-    // Enclose the legacy pencil-thin center post as a believable electrical /
-    // hydraulic riser instead of leaving it exposed. This does not move or
-    // resize the source corridor; it only finishes the support assembly around
-    // the source-derived transform.
-    utilityRisers.push({
-      position: new THREE.Vector3(record.position.x, Math.min(1.35, columnHeight / 2), record.position.z)
-        .addScaledVector(record.forward, 0.08),
-      quaternion: record.quaternion.clone(),
-      scale: new THREE.Vector3(0.68, Math.min(2.3, columnHeight - 0.22), 0.58),
-    });
-    utilityCaps.push({
-      position: new THREE.Vector3(record.position.x, Math.min(2.56, columnHeight + 0.1), record.position.z)
-        .addScaledVector(record.forward, 0.08),
-      quaternion: record.quaternion.clone(),
-      scale: new THREE.Vector3(0.82, 0.16, 0.72),
-    });
-    footings.push({
-      position: new THREE.Vector3(record.position.x, 0.09, record.position.z),
-      quaternion: baseQuaternion,
-      scale: new THREE.Vector3(2.18, 0.18, 1.34),
+      scale: new THREE.Vector3(0.84, 0.12, 0.66),
     });
   }
 
   const box = new THREE.BoxGeometry(1, 1, 1);
-  const columnGeometry = new THREE.CylinderGeometry(0.5, 0.56, 1, 16);
-  const columnCount = addInstances(root, "Terminal4_FixedWalkway_TwinColumns_V45", columnGeometry, steel, columns);
-  const crossheadCount = addInstances(root, "Terminal4_FixedWalkway_Crossheads_V45", box, steel, crossheads);
-  const footingCount = addInstances(root, "Terminal4_FixedWalkway_Footings_V45", box, concrete, footings);
-  const braceCount = addInstances(root, "Terminal4_FixedWalkway_DiagonalBraces_V45", box, darkSteel, braces);
-  const tieBeamCount = addInstances(root, "Terminal4_FixedWalkway_LowerTieBeams_V45", box, darkSteel, tieBeams);
-  const riserCount = addInstances(root, "Terminal4_FixedWalkway_UtilityRisers_V45", box, service, utilityRisers);
-  const capCount = addInstances(root, "Terminal4_FixedWalkway_UtilityCaps_V45", box, steel, utilityCaps);
+  const beamCount = addInstances(root, "Terminal4_FixedWalkway_LongitudinalBeams_V46", box, darkSteel, longitudinalBeams);
+  const crossheadCount = addInstances(root, "Terminal4_FixedWalkway_Crossheads_V46", box, galvanized, crossheads);
+  const columnCount = addInstances(root, "Terminal4_FixedWalkway_RectangularColumns_V46", box, galvanized, columns);
+  const braceCount = addInstances(root, "Terminal4_FixedWalkway_KneeBraces_V46", box, darkSteel, kneeBraces);
+  const footingCount = addInstances(root, "Terminal4_FixedWalkway_Footings_V46", box, concrete, footings);
+  const cabinetCount = addInstances(root, "Terminal4_FixedWalkway_ServiceCabinets_V46", box, service, cabinets);
+  const capCount = addInstances(root, "Terminal4_FixedWalkway_ServiceCabinetCaps_V46", box, galvanized, cabinetCaps);
 
   root.userData.authority = AUTHORITY;
   root.userData.sourceGeometryUnmoved = true;
   root.userData.sourceTransformCount = records.length;
-  root.userData.columnCount = columnCount;
+  root.userData.longitudinalBeamCount = beamCount;
   root.userData.crossheadCount = crossheadCount;
-  root.userData.footingCount = footingCount;
+  root.userData.columnCount = columnCount;
   root.userData.braceCount = braceCount;
-  root.userData.tieBeamCount = tieBeamCount;
-  root.userData.utilityRiserCount = riserCount;
-  root.userData.utilityCapCount = capCount;
+  root.userData.footingCount = footingCount;
+  root.userData.serviceCabinetCount = cabinetCount;
+  root.userData.serviceCabinetCapCount = capCount;
   group.add(root);
 
   group.userData.fixedWalkwaySupportAuthority = AUTHORITY;
   group.userData.fixedWalkwaySupportSourceTransformCount = records.length;
-  group.userData.fixedWalkwaySupportDetailCount = columnCount + crossheadCount + footingCount
-    + braceCount + tieBeamCount + riserCount + capCount;
+  group.userData.fixedWalkwaySupportDetailCount = beamCount + crossheadCount + columnCount
+    + braceCount + footingCount + cabinetCount + capCount;
   group.userData.fixedWalkwaySupportSourceGeometryUnmoved = true;
   return root;
 }
