@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const moduleSource = fs.readFileSync("src/environment/terminal4JetwayVisualUpgradeV35.js", "utf8");
 const preparation = fs.readFileSync("scripts/prepare-terminal4-jetway-visual-upgrade-v35.mjs", "utf8");
+const uvPreparation = fs.readFileSync("scripts/prepare-terminal4-jetway-source-uv-v36.mjs", "utf8");
 const continuity = fs.readFileSync("scripts/prepare-terminal4-facade-continuity-v8.mjs", "utf8");
 
 for (const token of [
@@ -27,8 +28,20 @@ for (const token of [
   if (!preparation.includes(token)) throw new Error(`Terminal 4 jetway preparation is missing ${token}`);
 }
 
-if (!continuity.includes('await import("./prepare-terminal4-jetway-visual-upgrade-v35.mjs")')) {
-  throw new Error("Terminal 4 runtime preparation does not invoke the full jetway visual upgrade");
+for (const token of [
+  "source-length-height-shell-projection-v36",
+  "const longitudinalShell = nz < 0.72",
+  "clamp(z + 0.5, 0, 1)",
+  "M1DGJETWAY's recovered shell strip",
+]) {
+  if (!uvPreparation.includes(token)) throw new Error(`Terminal 4 exact jetway UV preparation is missing ${token}`);
+}
+
+for (const token of [
+  'await import("./prepare-terminal4-jetway-source-uv-v36.mjs")',
+  'await import("./prepare-terminal4-jetway-visual-upgrade-v35.mjs")',
+]) {
+  if (!continuity.includes(token)) throw new Error(`Terminal 4 runtime preparation is missing ${token}`);
 }
 
 for (const forbidden of [
@@ -36,9 +49,9 @@ for (const forbidden of [
   "requiresOriginalSourceMesh = false",
   "CanvasTexture",
 ]) {
-  if (moduleSource.includes(forbidden) || preparation.includes(forbidden)) {
+  if (moduleSource.includes(forbidden) || preparation.includes(forbidden) || uvPreparation.includes(forbidden)) {
     throw new Error(`Terminal 4 jetway visual upgrade contains forbidden source claim: ${forbidden}`);
   }
 }
 
-console.log("Terminal 4 full jetway visual upgrade contract verified.");
+console.log("Terminal 4 full jetway visual and exact source-atlas UV projection contracts verified.");
