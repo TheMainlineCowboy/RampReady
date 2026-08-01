@@ -16,8 +16,20 @@ if (presetStart < 0 || presetEnd < 0 || presetEnd <= presetStart) {
 }
 
 let presetBlock = source.slice(presetStart, presetEnd);
+const tugXLine = '    x: 7.5,';
+const tugZLine = '    z: 8.5,';
+const tugYawLine = '    yaw: -0.35,';
 const cameraPositionLine = '    cameraPosition: Object.freeze([-12.0, 10.5, 28.0]),';
 const cameraTargetLine = '    cameraTarget: Object.freeze([-27.5, 4.1, -16.15]),';
+
+for (const [pattern, line, label] of [
+  [/\n\s+x:\s*-?\d+(?:\.\d+)?,/, tugXLine, "inspection tug x"],
+  [/\n\s+z:\s*-?\d+(?:\.\d+)?,/, tugZLine, "inspection tug z"],
+  [/\n\s+yaw:\s*-?\d+(?:\.\d+)?,/, tugYawLine, "inspection tug yaw"],
+]) {
+  if (!pattern.test(presetBlock)) throw new Error(`${path}: A1 connection preset is missing ${label}`);
+  presetBlock = presetBlock.replace(pattern, `\n${line}`);
+}
 
 if (/\s+cameraPosition:\s*Object\.freeze\(\[[^\]]+\]\),?/.test(presetBlock)) {
   presetBlock = presetBlock.replace(
@@ -43,18 +55,21 @@ if (/\s+cameraTarget:\s*Object\.freeze\(\[[^\]]+\]\),?/.test(presetBlock)) {
 source = `${source.slice(0, presetStart)}${presetBlock}${source.slice(presetEnd)}`;
 source = source.replace(
   /source-gate-apron-presets-with-[^"\n]+-a1-a14-b14-b15-v\d+/g,
-  'source-gate-apron-presets-with-wide-diagonal-a1-connection-a1-a14-b14-b15-v5',
+  'source-gate-apron-presets-with-wide-diagonal-a1-connection-a1-a14-b14-b15-v6',
 );
 source = source.replace(
   /(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+/g,
-  'wide-diagonal-a1-terminal-joint-v5',
+  'wide-diagonal-a1-terminal-joint-v6-clear-tug',
 );
 
 for (const token of [
+  tugXLine,
+  tugZLine,
+  tugYawLine,
   cameraPositionLine,
   cameraTargetLine,
-  'source-gate-apron-presets-with-wide-diagonal-a1-connection-a1-a14-b14-b15-v5',
-  'wide-diagonal-a1-terminal-joint-v5',
+  'source-gate-apron-presets-with-wide-diagonal-a1-connection-a1-a14-b14-b15-v6',
+  'wide-diagonal-a1-terminal-joint-v6-clear-tug',
 ]) {
   if (!source.includes(token)) throw new Error(`${path}: wide A1 camera preparation is missing ${token}`);
 }
@@ -66,4 +81,4 @@ if ((source.match(/cameraTarget:\s*Object\.freeze/g) || []).length !== 1) {
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared the full-airport inspection route when absent and normalized an idempotent wide diagonal A1 terminal-connection camera that frames the authored wall, fixed connector, rotunda and uploaded bridge without clipping into the model.");
+console.log("Prepared the full-airport inspection route when absent, normalized a wide diagonal A1 terminal-connection camera and moved the inspection tug clear of the jetway stair/support footprint.");
