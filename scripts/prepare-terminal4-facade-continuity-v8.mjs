@@ -60,4 +60,5 @@ fs.writeFileSync(path, source, "utf8");
 await import("./prepare-terminal4-source-facade-selection-v27.mjs");
 await import("./prepare-terminal4-facade-splitter-runtime-v33.mjs");
 await import("./prepare-terminal4-facade-variant-safety-v34.mjs");
-console.log("Prepared Terminal 4 source-only facade v34: package geometry remains authoritative, long BGATE1 faces vary across safe package-native facade textures, occasional real service bays remain, and no generated continuity mesh or atlas is installed.");
+await import("./prepare-terminal4-jetway-visual-upgrade-v35.mjs");
+console.log("Prepared Terminal 4 source-only facade and full jetway visual v35: package geometry remains authoritative, facade cells use safe source variants, and all source-placed jetways receive exact-texture-preserving structural detail without a generated terminal overlay.");
