@@ -84,6 +84,15 @@ if ((jetways.match(/uploadedAirportJetwayFleetReadyV2\.js/g) || []).length !== 1
   throw new Error("Source-placed Terminal 4 jetways must contain exactly one awaited fleet import");
 }
 
+requireTokens("src/environment/uploadedAirportJetwayTerminalConnector.js", [
+  'CONNECTOR_AUTHORITY = "measured-authored-terminal-wall-to-uploaded-rotunda-v3-a1-deep-overlap-terminal-frame"',
+  'const terminalOverlap = placement.gate === "A1" ? 1.45 : 0.55',
+  'connector.userData.a1TerminalPortalFrame = "deep-overlap-open-framed-terminal-end-v3"',
+  "UploadedAirportJetwayTerminalPortalHeader_A1",
+  "UploadedAirportJetwayTerminalPortalThreshold_A1",
+  "UploadedAirportJetwayTerminalPortalJamb_A1",
+]);
+
 requireTokens("src/environment/authoredTerminal4Visual.js", [
   "await sourcePlacedJetways.userData.uploadedJetwayReady",
   'uploadedJetwayLoadState !== "ready"',
@@ -108,9 +117,12 @@ requireTokens("src/components/RampReadyStandupTrainerTerminal4.jsx", [
 ]);
 
 requireTokens("scripts/prepare-a1-connection-camera-v5.mjs", [
+  "x: 7.5",
+  "z: 8.5",
+  "yaw: -0.35",
   "cameraPosition: Object.freeze([-12.0, 10.5, 28.0])",
   "cameraTarget: Object.freeze([-27.5, 4.1, -16.15])",
-  "wide-diagonal-a1-terminal-joint-v5",
+  "wide-diagonal-a1-terminal-joint-v6-clear-tug",
 ]);
 requireTokens("tests/browser/source-first-a1-repair.spec.js", [
   '"data-terminal4-uploaded-jetway-load-state"',
@@ -118,7 +130,7 @@ requireTokens("tests/browser/source-first-a1-repair.spec.js", [
   '"data-terminal4-uploaded-jetway-connector-count"',
   '"data-terminal4-uploaded-jetway-verified-model-count"',
   "uploaded-airport-jetway-fleet-complete-58-gates-v6-instanced-source-textured",
-  "wide-diagonal-a1-terminal-joint-v5",
+  "wide-diagonal-a1-terminal-joint-v6-clear-tug",
 ]);
 requireTokens("tests/browser/kphx-ground-runtime.spec.js", [
   '"data-terminal4-uploaded-jetway-load-state"',
@@ -131,4 +143,4 @@ requireTokens("tests/browser/kphx-ground-runtime.spec.js", [
   "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v4-instanced-static-source-textured",
 ]);
 
-console.log("Verified the exact-source-textured supplied Tunnel_A/B/C/Rotunda/Cab fleet as 57 instanced static gates plus one individually animated A1, with all 58 gate records, all 58 measured terminal connectors, one jetway shadow caster, zero global edge overlays and an unclipped A1 inspection frame.");
+console.log("Verified the exact-source-textured supplied Tunnel_A/B/C/Rotunda/Cab fleet as 57 instanced static gates plus one individually animated A1, with all 58 gate records, all 58 measured terminal connectors, a deep-overlap framed A1 terminal end, a clear inspection-tug position, one jetway shadow caster and zero global edge overlays.");
