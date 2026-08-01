@@ -31,41 +31,61 @@ async function launchStandup(page) {
   return canvas;
 }
 
-async function captureCanvas(page, canvas, fileName) {
-  const bounds = await canvas.boundingBox();
-  expect(bounds).not.toBeNull();
-  const image = await page.screenshot({
-    type: "png",
-    clip: {
-      x: Math.max(0, Math.floor(bounds.x)),
-      y: Math.max(0, Math.floor(bounds.y)),
-      width: Math.floor(bounds.width),
-      height: Math.floor(bounds.height),
-    },
-    animations: "disabled",
+async function getCanvasBounds(canvas) {
+  return canvas.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
   });
-  expect(image.byteLength).toBeGreaterThan(50_000);
+}
+
+async function captureCompositedPng(page, clip, minimumBytes) {
+  const client = await page.context().newCDPSession(page);
+  try {
+    const capture = client.send("Page.captureScreenshot", {
+      format: "png",
+      fromSurface: true,
+      captureBeyondViewport: false,
+      clip: {
+        x: Math.max(0, clip.x),
+        y: Math.max(0, clip.y),
+        width: Math.max(1, Math.min(clip.width, 1440 - Math.max(0, clip.x))),
+        height: Math.max(1, Math.min(clip.height, 900 - Math.max(0, clip.y))),
+        scale: 1,
+      },
+    });
+    const timeout = new Promise((_, reject) => setTimeout(
+      () => reject(new Error("Chromium compositor capture exceeded 30 seconds")),
+      30_000,
+    ));
+    const { data } = await Promise.race([capture, timeout]);
+    const image = Buffer.from(data, "base64");
+    expect(image.byteLength).toBeGreaterThan(minimumBytes);
+    return image;
+  } finally {
+    await client.detach();
+  }
+}
+
+async function captureCanvas(page, canvas, fileName) {
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const bounds = await getCanvasBounds(canvas);
+  expect(bounds.width).toBeGreaterThan(64);
+  expect(bounds.height).toBeGreaterThan(64);
+  const image = await captureCompositedPng(page, bounds, 50_000);
   await writeFile(`test-results/${fileName}`, image);
 }
 
 async function captureCanvasRegion(page, canvas, fileName, region) {
-  const bounds = await canvas.boundingBox();
-  expect(bounds).not.toBeNull();
-  const x = bounds.x + bounds.width * region.left;
-  const y = bounds.y + bounds.height * region.top;
-  const width = bounds.width * region.width;
-  const height = bounds.height * region.height;
-  const image = await page.screenshot({
-    type: "png",
-    clip: {
-      x: Math.max(0, Math.floor(x)),
-      y: Math.max(0, Math.floor(y)),
-      width: Math.max(1, Math.floor(width)),
-      height: Math.max(1, Math.floor(height)),
-    },
-    animations: "disabled",
-  });
-  expect(image.byteLength).toBeGreaterThan(20_000);
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const bounds = await getCanvasBounds(canvas);
+  expect(bounds.width).toBeGreaterThan(64);
+  expect(bounds.height).toBeGreaterThan(64);
+  const image = await captureCompositedPng(page, {
+    x: bounds.x + bounds.width * region.left,
+    y: bounds.y + bounds.height * region.top,
+    width: bounds.width * region.width,
+    height: bounds.height * region.height,
+  }, 20_000);
   await writeFile(`test-results/${fileName}`, image);
 }
 
