@@ -63,4 +63,5 @@ for (const token of [
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared live PHX runtime evidence for native-resolution ground tiling, maximum texture dimension and the exact 36-triangle A1 authored-block cleanup.");
+await import("./prepare-direct-inspection-launch-v28.mjs");
+console.log("Prepared live PHX runtime evidence for native-resolution ground tiling, maximum texture dimension, the exact A1 authored-block cleanup and direct tug inspection launch.");
