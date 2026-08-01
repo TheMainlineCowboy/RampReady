@@ -16,6 +16,7 @@ export default function PushbackTrainer() {
   const [gyroAvailable, setGyroAvailable] = useState(true);
   const [selectedEquipmentId, setSelectedEquipmentId] = useState(DEFAULT_EQUIPMENT_ID);
   const [activeEquipmentId, setActiveEquipmentId] = useState(null);
+  const [launchMode, setLaunchMode] = useState("training");
   const baselineRef = useRef(null);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
   const selectedEquipment = getEquipmentProfile(selectedEquipmentId);
@@ -48,8 +49,30 @@ export default function PushbackTrainer() {
 
   const changeEquipment = useCallback(() => {
     stopGyro();
+    setLaunchMode("training");
     setActiveEquipmentId(null);
   }, [stopGyro]);
+
+  const launch = useCallback((mode) => {
+    setLaunchMode(mode);
+    setActiveEquipmentId(selectedEquipmentId);
+  }, [selectedEquipmentId]);
+
+  useEffect(() => {
+    if (!activeEquipmentId || launchMode !== "inspection") return undefined;
+    let attempts = 0;
+    const timer = window.setInterval(() => {
+      attempts += 1;
+      const inspectionButton = document.querySelector(".rr-inspection-toggle");
+      if (inspectionButton instanceof HTMLButtonElement) {
+        if (inspectionButton.getAttribute("aria-pressed") !== "true") inspectionButton.click();
+        window.clearInterval(timer);
+      } else if (attempts >= 120) {
+        window.clearInterval(timer);
+      }
+    }, 50);
+    return () => window.clearInterval(timer);
+  }, [activeEquipmentId, launchMode]);
 
   useEffect(() => {
     if (!gyroEnabled || !activeEquipmentId) return undefined;
@@ -96,12 +119,13 @@ export default function PushbackTrainer() {
   }, [gyroEnabled, activeEquipmentId]);
 
   if (!activeEquipmentId) {
+    const launchable = isEquipmentLaunchable(selectedEquipmentId);
     return (
       <main className="rr-equipment-setup" aria-labelledby="equipment-heading">
         <section className="rr-equipment-panel">
           <p className="rr-equipment-kicker">RampReady · PHX Terminal 4</p>
           <h1 id="equipment-heading">Choose pushback equipment</h1>
-          <p className="rr-equipment-intro">Only equipment that is honestly connected to the current simulator runtime can launch.</p>
+          <p className="rr-equipment-intro">Train the pushback procedure, or launch directly into an unrestricted tug inspection of the airport.</p>
           <div className="rr-equipment-grid" role="radiogroup" aria-label="Pushback equipment">
             {EQUIPMENT_PROFILES.map((profile) => {
               const selected = profile.id === selectedEquipmentId;
@@ -126,9 +150,12 @@ export default function PushbackTrainer() {
           <div className="rr-equipment-actions">
             <div>
               <b>Selected:</b> {selectedEquipment.label}<br />
-              <span>{selectedEquipment.available ? "Available in the current training runtime." : "Cannot launch until its actual runtime model is committed and verified."}</span>
+              <span>{selectedEquipment.available ? "Available in the current simulator runtime." : "Cannot launch until its actual runtime model is committed and verified."}</span>
             </div>
-            <button type="button" disabled={!isEquipmentLaunchable(selectedEquipmentId)} onClick={() => setActiveEquipmentId(selectedEquipmentId)}>Start training</button>
+            <div className="rr-launch-actions">
+              <button type="button" disabled={!launchable} onClick={() => launch("training")}>Start training</button>
+              <button type="button" disabled={!launchable} onClick={() => launch("inspection")}>Drive tug / inspect airport</button>
+            </div>
           </div>
         </section>
       </main>
@@ -137,7 +164,7 @@ export default function PushbackTrainer() {
 
   return (
     <RampReadyLektroPrototypeTrainer
-      key={activeEquipmentId}
+      key={`${activeEquipmentId}-${launchMode}`}
       equipmentId={activeEquipmentId}
       onChangeEquipment={changeEquipment}
       gyroAvailable={gyroAvailable}
