@@ -9,7 +9,7 @@ export function installTerminal4FixedWalkwaySupportV44(group) {
   if (existing) return existing;
 
   const source = group.getObjectByName("AIR_Jetway01_FixedTerminalWalkways_V13");
-  if (!source?.isInstancedMesh || source.count < 1) {
+  if (!source || source.count < 1) {
     throw new Error("Terminal 4 package fixed walkways are missing");
   }
 
