@@ -31,33 +31,38 @@ async function launchRuntime(page) {
   return canvas;
 }
 
-async function captureScene(page, canvas, fileName) {
-  const style = await page.addStyleTag({
-    content: `
-      .rr-hud, .rr-metrics, .rr-score-float, .rr-guidance, .rr-diagnostics,
-      .rr-steer, .rr-throttle { display: none !important; }
-      .rr-shell, .rr-scene, canvas { width: 100vw !important; height: 100vh !important; }
-    `,
+async function captureScene(page, fileName) {
+  const box = await page.evaluate(() => {
+    const canvas = document.querySelector("canvas.trainerCanvas");
+    if (!canvas) throw new Error("Three.js canvas is missing for airport evidence capture");
+    const rect = canvas.getBoundingClientRect();
+    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   });
-  await page.waitForTimeout(700);
+  expect(box.width).toBeGreaterThan(64);
+  expect(box.height).toBeGreaterThan(64);
+  const client = await page.context().newCDPSession(page);
   try {
-    const bounds = await canvas.boundingBox();
-    expect(bounds).not.toBeNull();
-    const image = await page.screenshot({
-      type: "png",
-      clip: {
-        x: Math.max(0, Math.floor(bounds.x)),
-        y: Math.max(0, Math.floor(bounds.y)),
-        width: Math.floor(bounds.width),
-        height: Math.floor(bounds.height),
-      },
-      animations: "disabled",
-    });
+    await client.send("Page.bringToFront");
+    const { data } = await Promise.race([
+      client.send("Page.captureScreenshot", {
+        format: "png",
+        fromSurface: true,
+        captureBeyondViewport: false,
+        clip: {
+          x: Math.max(0, box.x),
+          y: Math.max(0, box.y),
+          width: Math.min(box.width, VIEWPORT.width - Math.max(0, box.x)),
+          height: Math.min(box.height, VIEWPORT.height - Math.max(0, box.y)),
+          scale: 1,
+        },
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Airport compositor capture exceeded 45 seconds")), 45_000)),
+    ]);
+    const image = Buffer.from(data, "base64");
     expect(image.byteLength).toBeGreaterThan(50_000);
     await writeFile(`test-results/${fileName}`, image);
   } finally {
-    await style.evaluate((element) => element.remove());
-    await page.waitForTimeout(250);
+    await client.detach();
   }
 }
 
@@ -82,10 +87,7 @@ function distance(a, b) {
 }
 
 test("free-drive inspection covers the full Terminal 4 route from A1 through B15", async ({ page }) => {
-  // Full source airport loading plus nine lossless WebGL evidence captures can
-  // exceed ten minutes on the hosted software renderer. The prior 600 s limit
-  // expired during screenshot cleanup even though the runtime remained healthy.
-  test.setTimeout(900_000);
+  test.setTimeout(600_000);
   const canvas = await launchRuntime(page);
 
   const toggle = page.locator("button.rr-inspection-toggle");
@@ -113,15 +115,12 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
     await expectPresetPosition(canvas, preset);
     await camera.selectOption("chase");
     await page.waitForTimeout(900);
-    await captureScene(page, canvas, preset.file);
+    await captureScene(page, preset.file);
 
-    // A tug-height operator view is mandatory at both ends of the inspection
-    // route. Elevated chase shots alone can hide floating markings, coarse
-    // pavement, detached portal seals and facade intersections.
     if (preset.groundFile) {
       await camera.selectOption("driver");
       await page.waitForTimeout(900);
-      await captureScene(page, canvas, preset.groundFile);
+      await captureScene(page, preset.groundFile);
       await camera.selectOption("chase");
       await page.waitForTimeout(350);
     }
@@ -149,5 +148,5 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
 
   await camera.selectOption("overhead");
   await page.waitForTimeout(1_000);
-  await captureScene(page, canvas, "inspection-b15-overhead-after-drive.png");
+  await captureScene(page, "inspection-b15-overhead-after-drive.png");
 });
