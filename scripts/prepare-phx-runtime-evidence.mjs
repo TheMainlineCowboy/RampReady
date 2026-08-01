@@ -20,6 +20,36 @@ for (const [anchor, replacement, label] of [
   source = source.replace(anchor, replacement);
 }
 
+const pavementLoadingAnchor = '    renderer.domElement.dataset.groundMarkingContactMode = "loading";';
+const pavementLoadingReplacement = `${pavementLoadingAnchor}
+    renderer.domElement.dataset.groundPavementAuthority = "loading";
+    renderer.domElement.dataset.groundSourceAerialPriority = "loading";
+    renderer.domElement.dataset.groundNearfieldDetailOpacity = "loading";`;
+if (!source.includes('dataset.groundPavementAuthority = "loading"')) {
+  if (!source.includes(pavementLoadingAnchor)) throw new Error("PHX runtime pavement loading anchor is missing");
+  source = source.replace(pavementLoadingAnchor, pavementLoadingReplacement);
+}
+
+const pavementReadyAnchor = '        renderer.domElement.dataset.groundMarkingContactMode = environment.userData.authoredGroundMarkingContactMode || "missing";';
+const pavementReadyReplacement = `${pavementReadyAnchor}
+        renderer.domElement.dataset.groundPavementAuthority = environment.userData.authoredGroundPavementAuthority || "missing";
+        renderer.domElement.dataset.groundSourceAerialPriority = String(environment.userData.authoredGroundSourceAerialPriority === true);
+        renderer.domElement.dataset.groundNearfieldDetailOpacity = String(environment.userData.authoredGroundNearfieldDetailOpacity ?? "missing");`;
+if (!source.includes("dataset.groundPavementAuthority = environment.userData.authoredGroundPavementAuthority")) {
+  if (!source.includes(pavementReadyAnchor)) throw new Error("PHX runtime pavement ready anchor is missing");
+  source = source.replace(pavementReadyAnchor, pavementReadyReplacement);
+}
+
+const pavementErrorAnchor = '        renderer.domElement.dataset.groundMarkingContactMode = "load-error";';
+const pavementErrorReplacement = `${pavementErrorAnchor}
+        renderer.domElement.dataset.groundPavementAuthority = "load-error";
+        renderer.domElement.dataset.groundSourceAerialPriority = "load-error";
+        renderer.domElement.dataset.groundNearfieldDetailOpacity = "load-error";`;
+if (!source.includes('dataset.groundPavementAuthority = "load-error"')) {
+  if (!source.includes(pavementErrorAnchor)) throw new Error("PHX runtime pavement error anchor is missing");
+  source = source.replace(pavementErrorAnchor, pavementErrorReplacement);
+}
+
 const terminalLoadingAnchor = '    renderer.domElement.dataset.terminal4ExactTextureCount = "loading";';
 const terminalLoadingReplacement = `${terminalLoadingAnchor}
     renderer.domElement.dataset.terminal4A1LegacyBlockRemovedTriangles = "loading";
@@ -54,6 +84,11 @@ for (const token of [
   'dataset.photoTextureMode = environment.userData.authoredPhotoTextureMode',
   'dataset.photoRuntimeTileCount = String(environment.userData.authoredPhotoRuntimeTileCount)',
   'dataset.photoMaxTextureDimension = String(environment.userData.authoredPhotoGround?.userData?.maxTextureDimension ?? "missing")',
+  'dataset.groundPavementAuthority = "loading"',
+  "dataset.groundPavementAuthority = environment.userData.authoredGroundPavementAuthority",
+  "dataset.groundSourceAerialPriority = String(environment.userData.authoredGroundSourceAerialPriority === true)",
+  "dataset.groundNearfieldDetailOpacity = String(environment.userData.authoredGroundNearfieldDetailOpacity",
+  'dataset.groundPavementAuthority = "load-error"',
   'dataset.terminal4A1LegacyBlockRemovedTriangles = "loading"',
   "dataset.terminal4A1LegacyBlockRemovedTriangles = String(environment.userData.authoredTerminal4A1LegacyBlockRemovedTriangles",
   "dataset.terminal4A1LegacyBlockAuthority = environment.userData.authoredTerminal4A1LegacyBlockAuthority",
@@ -64,4 +99,4 @@ for (const token of [
 
 fs.writeFileSync(path, source, "utf8");
 await import("./prepare-direct-inspection-launch-v28.mjs");
-console.log("Prepared live PHX runtime evidence for native-resolution ground tiling, maximum texture dimension, the exact A1 authored-block cleanup and direct tug inspection launch.");
+console.log("Prepared live PHX runtime evidence for native-resolution aerial tiling, source-aerial pavement priority, exact A1 cleanup and direct tug inspection launch.");
