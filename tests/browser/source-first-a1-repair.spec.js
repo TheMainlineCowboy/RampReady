@@ -96,7 +96,7 @@ test("direct tug inspection proves the visible A1 terminal connection over sourc
   await inspectionLocation.selectOption("a1Connection");
   await expect(canvas).toHaveAttribute("data-inspection-preset", "a1Connection");
   await expect(canvas).toHaveAttribute("data-inspection-preset-label", "A1 terminal connection");
-  await expect(canvas).toHaveAttribute("data-inspection-camera-authority", "wide-diagonal-a1-terminal-joint-v5");
+  await expect(canvas).toHaveAttribute("data-inspection-camera-authority", "wide-diagonal-a1-terminal-joint-v6-clear-tug");
   await page.waitForTimeout(1800);
 
   await saveCompositedCanvasPng(page, "test-results/source-first-a1-terminal-connection.png");
