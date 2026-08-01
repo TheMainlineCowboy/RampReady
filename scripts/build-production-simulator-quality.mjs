@@ -44,7 +44,7 @@ function runNode(script) {
 
 let buildError;
 try {
-  await runNode("scripts/prepare-full-airport-inspection-route.mjs");
+  await runNode("scripts/prepare-a1-connection-camera-v5.mjs");
   await runNode("scripts/prepare-inspection-route-lifecycle.mjs");
   await runNode("scripts/prepare-inspection-preset-telemetry.mjs");
   await runNode("scripts/prepare-simulator-render-quality.mjs");
