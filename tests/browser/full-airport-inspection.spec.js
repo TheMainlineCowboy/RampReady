@@ -87,7 +87,10 @@ function distance(a, b) {
 }
 
 test("free-drive inspection covers the full Terminal 4 route from A1 through B15", async ({ page }) => {
-  test.setTimeout(600_000);
+  // Hosted software WebGL can spend several minutes flushing seven full-size
+  // compositor captures. Keep every required A1/A14/B14/B15 and tug-height
+  // evidence frame, but allow the final forward/reverse motion gate to finish.
+  test.setTimeout(900_000);
   const canvas = await launchRuntime(page);
 
   const toggle = page.locator("button.rr-inspection-toggle");
@@ -114,15 +117,14 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
     await expect(canvas).toHaveAttribute("data-inspection-preset", preset.id);
     await expectPresetPosition(canvas, preset);
     await camera.selectOption("chase");
-    await page.waitForTimeout(900);
+    await page.waitForTimeout(500);
     await captureScene(page, preset.file);
 
     if (preset.groundFile) {
       await camera.selectOption("driver");
-      await page.waitForTimeout(900);
+      await page.waitForTimeout(500);
       await captureScene(page, preset.groundFile);
       await camera.selectOption("chase");
-      await page.waitForTimeout(350);
     }
   }
 
@@ -147,6 +149,6 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
   expect(distance(reverse, forward)).toBeGreaterThan(0.15);
 
   await camera.selectOption("overhead");
-  await page.waitForTimeout(1_000);
+  await page.waitForTimeout(500);
   await captureScene(page, "inspection-b15-overhead-after-drive.png");
 });
