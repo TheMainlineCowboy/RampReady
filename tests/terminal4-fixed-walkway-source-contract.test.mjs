@@ -22,14 +22,16 @@ for (const token of [
 }
 
 for (const token of [
-  "source-transform-fixed-walkway-integrated-portal-frame-v47",
-  "Terminal4_FixedWalkway_SupportUpgrade_V47",
-  "Terminal4_FixedWalkway_LongitudinalGirders_V47",
-  "Terminal4_FixedWalkway_PortalCrossheads_V47",
-  "Terminal4_FixedWalkway_PortalColumns_V47",
-  "Terminal4_FixedWalkway_KneeBraces_V47",
-  "Terminal4_FixedWalkway_FormedPierBases_V47",
-  "Terminal4_FixedWalkway_LowerTies_V47",
+  "source-transform-fixed-walkway-integrated-portal-frame-v48",
+  "Terminal4_FixedWalkway_SupportUpgrade_V48",
+  "Terminal4_FixedWalkway_LongitudinalGirders_V48",
+  "Terminal4_FixedWalkway_PortalCrossheads_V48",
+  "Terminal4_FixedWalkway_PortalColumns_V48",
+  "Terminal4_FixedWalkway_KneeBraces_V48",
+  "Terminal4_FixedWalkway_FormedPierBases_V48",
+  "Terminal4_FixedWalkway_LowerTies_V48",
+  "Terminal4_FixedWalkway_LongitudinalBraces_V48",
+  "portalStationsPerWalkway = 2",
   "removedDecorativeServiceCabinets = true",
   "sourceGeometryUnmoved = true",
 ]) {
@@ -69,4 +71,4 @@ for (const token of [
   if (!rendering.includes(token)) throw new Error(`High-fidelity renderer contract is missing ${token}`);
 }
 
-console.log("Verified exact T4_WALK translucent fixed-corridor backing, integrated source-transform portal supports, daylight-balanced package lightmaps, apron-side lighting, unmoved source transforms and persistent 2K/4K dynamic shadows.");
+console.log("Verified exact T4_WALK translucent fixed-corridor backing, two-station integrated source-transform portal supports, longitudinal bracing, daylight-balanced package lightmaps, apron-side lighting, unmoved source transforms and persistent 2K/4K dynamic shadows.");
