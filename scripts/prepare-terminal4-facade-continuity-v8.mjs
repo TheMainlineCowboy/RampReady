@@ -62,4 +62,5 @@ await import("./prepare-terminal4-facade-splitter-runtime-v33.mjs");
 await import("./prepare-terminal4-facade-variant-safety-v34.mjs");
 await import("./prepare-terminal4-jetway-source-uv-v36.mjs");
 await import("./prepare-terminal4-jetway-visual-upgrade-v35.mjs");
-console.log("Prepared Terminal 4 source-only facade and full jetway visual v36: package geometry remains authoritative, facade cells use safe source variants, exact M1DGJETWAY corrugation projects along each bridge, and all source-placed jetways receive structural detail without a generated terminal overlay.");
+await import("./prepare-a1-terminal-portal-seal-v37.mjs");
+console.log("Prepared Terminal 4 source-only facade and full jetway visual v37: package geometry remains authoritative, facade cells use safe source variants, exact M1DGJETWAY corrugation projects along each bridge, all jetways receive structural detail, and A1 visibly overlaps the measured T4_WALK terminal portal.");
