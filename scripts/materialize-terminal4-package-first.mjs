@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -7,6 +7,10 @@ import { fileURLToPath } from "node:url";
 const SOURCE_OWNER = "TheMainlineCowboy";
 const SOURCE_REPOSITORY = "SkyHarborPhx";
 const SOURCE_COMMIT = "2e6642778c9c88eac6a82b21063763cc78be7cfe";
+const ARCHIVE_URL = `https://codeload.github.com/${SOURCE_OWNER}/${SOURCE_REPOSITORY}/zip/${SOURCE_COMMIT}`;
+const ARCHIVE_ROOT = path.resolve(`.cache/skyharborphx-source-archive/${SOURCE_COMMIT}`);
+const ARCHIVE_PATH = path.join(ARCHIVE_ROOT, "source.zip");
+const EXTRACT_ROOT = path.join(ARCHIVE_ROOT, "extracted");
 const PACKAGE_ROOT = path.resolve(`.cache/skyharborphx-package/${SOURCE_COMMIT}`);
 const MANIFEST_PATH = path.join(PACKAGE_ROOT, "rampready-package-manifest.json");
 const REQUIRED_PACKAGE_FILES = Object.freeze([
@@ -15,31 +19,8 @@ const REQUIRED_PACKAGE_FILES = Object.freeze([
 ]);
 const PACKAGE_FILE_PATTERN = /\.(?:bgl|bmp|dds|agn|mdl|xml|fx|ini)$/i;
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
-
-function rawUrl(relativePath) {
-  const encoded = relativePath.split("/").map(encodeURIComponent).join("/");
-  return `https://raw.githubusercontent.com/${SOURCE_OWNER}/${SOURCE_REPOSITORY}/${SOURCE_COMMIT}/${encoded}`;
-}
-
-async function fetchJson(url) {
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      "User-Agent": "RampReady-Terminal4-Package-Mirror",
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-  });
-  if (!response.ok) throw new Error(`Terminal 4 package tree request failed: HTTP ${response.status}`);
-  return response.json();
-}
-
-async function download(relativePath) {
-  const response = await fetch(rawUrl(relativePath), {
-    headers: { "User-Agent": "RampReady-Terminal4-Package-Mirror" },
-  });
-  if (!response.ok) throw new Error(`Terminal 4 package download failed for ${relativePath}: HTTP ${response.status}`);
-  return Buffer.from(await response.arrayBuffer());
-}
+const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+const normalizeRelative = (value) => value.split(path.sep).join("/");
 
 async function existingSize(filePath) {
   try {
@@ -50,12 +31,86 @@ async function existingSize(filePath) {
   }
 }
 
-const treeUrl = `https://api.github.com/repos/${SOURCE_OWNER}/${SOURCE_REPOSITORY}/git/trees/${SOURCE_COMMIT}?recursive=1`;
-const treeResponse = await fetchJson(treeUrl);
-if (treeResponse.truncated) throw new Error("Terminal 4 source tree response was truncated");
+async function downloadPinnedArchive() {
+  await mkdir(ARCHIVE_ROOT, { recursive: true });
+  const cachedSize = await existingSize(ARCHIVE_PATH);
+  if (cachedSize > 1_000_000) return readFile(ARCHIVE_PATH);
 
-const packageEntries = (treeResponse.tree || [])
-  .filter((entry) => entry.type === "blob")
+  let finalError;
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      const response = await fetch(ARCHIVE_URL, {
+        headers: {
+          Accept: "application/zip",
+          "User-Agent": "RampReady-Terminal4-Pinned-Archive-Mirror",
+        },
+        redirect: "follow",
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const bytes = Buffer.from(await response.arrayBuffer());
+      if (bytes.length <= 1_000_000) {
+        throw new Error(`archive was unexpectedly small (${bytes.length} bytes)`);
+      }
+      await writeFile(ARCHIVE_PATH, bytes);
+      return bytes;
+    } catch (error) {
+      finalError = error;
+      if (attempt < 4) await sleep(attempt * 1_250);
+    }
+  }
+  throw new Error(`Pinned Terminal 4 source archive download failed after retries: ${finalError?.message || finalError}`);
+}
+
+function extractArchive() {
+  const extractors = [
+    ["unzip", ["-q", "-o", ARCHIVE_PATH, "-d", EXTRACT_ROOT]],
+    ["tar", ["-xf", ARCHIVE_PATH, "-C", EXTRACT_ROOT]],
+  ];
+  for (const [command, args] of extractors) {
+    const result = spawnSync(command, args, { encoding: "utf8" });
+    if (!result.error && result.status === 0) return;
+  }
+  throw new Error("Could not extract the pinned Sky Harbor source ZIP with unzip or tar");
+}
+
+async function walkFiles(root) {
+  const results = [];
+  async function visit(directory) {
+    const entries = await readdir(directory, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) await visit(fullPath);
+      else if (entry.isFile()) results.push(fullPath);
+    }
+  }
+  await visit(root);
+  return results;
+}
+
+function locatePackageRoot(extractedFiles) {
+  const term4 = extractedFiles.find((filePath) => normalizeRelative(filePath).toLowerCase().endsWith("/scenery/term4.bgl"));
+  if (!term4) throw new Error("Pinned Sky Harbor source archive is missing scenery/term4.BGL");
+  const packageRoot = path.dirname(path.dirname(term4));
+  for (const required of REQUIRED_PACKAGE_FILES) {
+    const requiredPath = path.resolve(packageRoot, ...required.split("/"));
+    const found = extractedFiles.some((candidate) => path.resolve(candidate).toLowerCase() === requiredPath.toLowerCase());
+    if (!found) throw new Error(`Pinned Sky Harbor source archive is missing ${required}`);
+  }
+  return packageRoot;
+}
+
+const archiveBytes = await downloadPinnedArchive();
+await rm(EXTRACT_ROOT, { recursive: true, force: true });
+await mkdir(EXTRACT_ROOT, { recursive: true });
+extractArchive();
+
+const extractedFiles = await walkFiles(EXTRACT_ROOT);
+const packageSourceRoot = locatePackageRoot(extractedFiles);
+const packageEntries = extractedFiles
+  .map((sourcePath) => ({
+    sourcePath,
+    path: normalizeRelative(path.relative(packageSourceRoot, sourcePath)),
+  }))
   .filter((entry) => (
     entry.path.startsWith("scenery/")
     || entry.path.startsWith("texture/")
@@ -63,12 +118,7 @@ const packageEntries = (treeResponse.tree || [])
   ))
   .sort((a, b) => a.path.localeCompare(b.path));
 
-if (!packageEntries.length) throw new Error("Pinned Sky Harbor package contains no mirrorable scenery or texture assets");
-for (const required of REQUIRED_PACKAGE_FILES) {
-  if (!packageEntries.some((entry) => entry.path.toLowerCase() === required.toLowerCase())) {
-    throw new Error(`Pinned Sky Harbor package is missing ${required}`);
-  }
-}
+if (!packageEntries.length) throw new Error("Pinned Sky Harbor source archive contains no mirrorable scenery or texture assets");
 
 await mkdir(PACKAGE_ROOT, { recursive: true });
 const mirrored = new Array(packageEntries.length);
@@ -81,25 +131,22 @@ async function worker() {
     nextIndex += 1;
     if (index >= packageEntries.length) return;
     const entry = packageEntries[index];
-    const outputPath = path.resolve(PACKAGE_ROOT, entry.path);
+    const outputPath = path.resolve(PACKAGE_ROOT, ...entry.path.split("/"));
     if (outputPath !== PACKAGE_ROOT && !outputPath.startsWith(`${PACKAGE_ROOT}${path.sep}`)) {
       throw new Error(`Terminal 4 package path escaped cache root: ${entry.path}`);
     }
     await mkdir(path.dirname(outputPath), { recursive: true });
-    let bytes;
-    if (await existingSize(outputPath) === entry.size) bytes = await readFile(outputPath);
+    const sourceBytes = await readFile(entry.sourcePath);
+    if (await existingSize(outputPath) !== sourceBytes.length) await copyFile(entry.sourcePath, outputPath);
     else {
-      bytes = await download(entry.path);
-      if (bytes.length !== entry.size) {
-        throw new Error(`Terminal 4 package size mismatch for ${entry.path}: ${bytes.length} != ${entry.size}`);
-      }
-      await writeFile(outputPath, bytes);
+      const existingBytes = await readFile(outputPath);
+      if (sha256(existingBytes) !== sha256(sourceBytes)) await copyFile(entry.sourcePath, outputPath);
     }
     mirrored[index] = {
       path: entry.path,
-      sizeBytes: bytes.length,
-      gitBlobSha: entry.sha,
-      sha256: sha256(bytes),
+      sizeBytes: sourceBytes.length,
+      sha256: sha256(sourceBytes),
+      archiveSourcePath: normalizeRelative(path.relative(EXTRACT_ROOT, entry.sourcePath)),
     };
   }
 }
@@ -107,10 +154,12 @@ async function worker() {
 await Promise.all(Array.from({ length: workerCount }, () => worker()));
 const totalBytes = mirrored.reduce((sum, entry) => sum + entry.sizeBytes, 0);
 const packageManifest = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   sourceRepository: `${SOURCE_OWNER}/${SOURCE_REPOSITORY}`,
   sourceCommit: SOURCE_COMMIT,
-  authority: "complete-pinned-scenery-and-texture-package-mirror-before-browser-conversion-v1",
+  sourceArchiveUrl: ARCHIVE_URL,
+  sourceArchiveSha256: sha256(archiveBytes),
+  authority: "complete-pinned-source-archive-package-mirror-before-browser-conversion-v2",
   requiredFiles: REQUIRED_PACKAGE_FILES,
   fileCount: mirrored.length,
   totalBytes,
@@ -138,9 +187,10 @@ const runtimeManifestPath = path.resolve("public/models/phx-terminal4/runtime-ma
 const runtimeManifest = JSON.parse(await readFile(runtimeManifestPath, "utf8"));
 runtimeManifest.packageImportAuthority = packageManifest.authority;
 runtimeManifest.packageManifestSha256 = sha256(Buffer.from(manifestText));
+runtimeManifest.packageSourceArchiveSha256 = packageManifest.sourceArchiveSha256;
 runtimeManifest.packageFileCount = packageManifest.fileCount;
 runtimeManifest.packageTotalBytes = packageManifest.totalBytes;
 runtimeManifest.packageRequiredFiles = [...REQUIRED_PACKAGE_FILES];
 await writeFile(runtimeManifestPath, `${JSON.stringify(runtimeManifest, null, 2)}\n`, "utf8");
 
-console.log(`RampReady mirrored ${packageManifest.fileCount} pinned Sky Harbor package assets (${packageManifest.totalBytes} bytes) before converting Terminal 4.`);
+console.log(`RampReady extracted and mirrored ${packageManifest.fileCount} pinned Sky Harbor package assets (${packageManifest.totalBytes} bytes) from the exact source ZIP before converting Terminal 4.`);
