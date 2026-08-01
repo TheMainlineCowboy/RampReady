@@ -5,6 +5,7 @@ const facade = fs.readFileSync("scripts/prepare-terminal4-facade-visual-v7.mjs",
 const continuity = fs.readFileSync("scripts/prepare-terminal4-facade-continuity-v8.mjs", "utf8");
 const facadeSelection = fs.readFileSync("scripts/prepare-terminal4-source-facade-selection-v27.mjs", "utf8");
 const directInspection = fs.readFileSync("scripts/prepare-direct-inspection-launch-v28.mjs", "utf8");
+const compactInspectionCss = fs.readFileSync("src/components/inspection-compact-v30.css", "utf8");
 const connector = fs.readFileSync("scripts/prepare-a1-terminal-connector-v11.mjs", "utf8");
 
 for (const token of [
@@ -43,18 +44,24 @@ if (continuity.includes('await import("./prepare-terminal4-lower-facade-skin-v9.
 }
 
 for (const token of [
-  'sourceKey === "BGATE1.BMP" ? "BGATE3.BMP"',
-  "source-BGATE3-closed-bay-variant-replaces-repeated-BGATE1-open-bay-v27",
+  "source-package-facade-cell-variation-v31",
+  "splitRepeatedBGATE1Facade",
+  '"BGATE3.BMP"',
+  '"DGATE3.BMP"',
+  '"DGATE4.BMP"',
+  '"BGATE1.BMP"',
+  "clipFacadePolygonByU",
   "const a1LowerFacadePanelCount = 0;",
-  "source-authored-A1-lower-facade-no-rejected-BGATE1-overlay-v27",
+  "source-authored-A1-lower-facade-no-rejected-BGATE1-overlay-v31",
 ]) {
-  if (!facadeSelection.includes(token)) throw new Error(`Package-native facade selection is missing ${token}`);
+  if (!facadeSelection.includes(token)) throw new Error(`Package-native facade variation is missing ${token}`);
 }
-if (facadeSelection.includes("CanvasTexture")) {
-  throw new Error("The facade selection recreated a generated texture atlas");
+for (const forbidden of ["CanvasTexture", "sourceKey === \"BGATE1.BMP\" ? \"BGATE3.BMP\""]) {
+  if (facadeSelection.includes(forbidden)) throw new Error(`Facade variation retained a synthetic/global replacement: ${forbidden}`);
 }
 
 for (const token of [
+  'import "./inspection-compact-v30.css";',
   "initialInspectionMode = false,",
   "toggleInspectionDrive();",
   "window.requestAnimationFrame(activate)",
@@ -64,6 +71,13 @@ for (const token of [
 }
 if (directInspection.includes("querySelector")) {
   throw new Error("Direct inspection runtime preparation still queries the DOM");
+}
+for (const token of [
+  '.rr-shell[data-inspection-mode="active"] .rr-hud',
+  '.rr-shell[data-inspection-mode="active"] .rr-hud > p',
+  "right: 126px",
+]) {
+  if (!compactInspectionCss.includes(token)) throw new Error(`Compact inspection HUD is missing ${token}`);
 }
 
 for (const token of [
@@ -78,4 +92,4 @@ if (connector.includes("const exactWallX = -3.55299146")) {
   throw new Error("The detached diagonal BGATE A1 target remains");
 }
 
-console.log("Source-first A1, package-native facade and direct tug inspection contracts verified.");
+console.log("Source-first A1, varied package facade and direct compact tug inspection contracts verified.");
