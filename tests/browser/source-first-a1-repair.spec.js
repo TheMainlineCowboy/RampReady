@@ -44,8 +44,8 @@ test("equipment selection exposes a direct compact tug inspection launch", async
   expect(hudBounds?.height ?? Number.POSITIVE_INFINITY).toBeLessThan(110);
 });
 
-test("A1 uses the source walkway and varied package-native facade cells", async ({ page }) => {
-  test.setTimeout(180_000);
+test("A1 uses the source walkway, varied facade cells and exact jetway shell projection", async ({ page }) => {
+  test.setTimeout(210_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   await page.getByRole("button", { name: "Drive tug / inspect airport" }).click();
@@ -64,4 +64,8 @@ test("A1 uses the source walkway and varied package-native facade cells", async 
   expect(variation.closed).toBeGreaterThan(variation.open * 3);
   expect(variation.variants).toBeGreaterThanOrEqual(4);
   await saveCompositedCanvasPng(page, canvas, "test-results/source-first-a1-attached.png");
+
+  await page.getByLabel("Camera view").selectOption("driver");
+  await page.waitForTimeout(1500);
+  await saveCompositedCanvasPng(page, canvas, "test-results/source-first-a1-operator-view.png");
 });
