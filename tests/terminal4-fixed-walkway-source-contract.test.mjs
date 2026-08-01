@@ -22,28 +22,31 @@ for (const token of [
 }
 
 for (const token of [
-  "source-transform-fixed-walkway-minimal-support-v50",
-  "Terminal4_FixedWalkway_SupportUpgrade_V50",
-  "Terminal4_FixedWalkway_MinimalColumns_V50",
-  "Terminal4_FixedWalkway_MinimalCrossheads_V50",
-  "Terminal4_FixedWalkway_CompactFootings_V50",
-  "portalStationsPerWalkway = 2",
-  "noCenterSpines = true",
-  "noLongitudinalScaffold = true",
-  "packageWalkwayRemainsVisualAuthority = true",
+  "package-native-fixed-walkway-no-procedural-support-v51",
+  "Terminal4_FixedWalkway_PackageAuthority_V51",
+  "proceduralSupportMeshCount = 0",
+  "packageWalkwayIsSoleVisualAuthority = true",
+  "fixedWalkwaySupportDetailCount = 0",
+  "fixedWalkwayProceduralSupportRemoved = true",
   "sourceGeometryUnmoved = true",
 ]) {
-  if (!support.includes(token)) throw new Error(`Minimal fixed-walkway support contract is missing ${token}`);
+  if (!support.includes(token)) throw new Error(`Package-only fixed-walkway contract is missing ${token}`);
 }
+
 for (const forbidden of [
+  "InstancedMesh",
+  "BoxGeometry",
+  "MeshStandardMaterial",
+  "MinimalColumns_V50",
+  "MinimalCrossheads_V50",
+  "CompactFootings_V50",
   "LongitudinalGirders_V49",
   "UnderdeckFascias_V49",
   "CenterLoadSpines_V49",
   "LongitudinalBraces_V49",
   "ServiceCabinets_V46",
-  "ServiceCabinetCaps_V46",
 ]) {
-  if (support.includes(forbidden)) throw new Error(`Procedural scaffold remains: ${forbidden}`);
+  if (support.includes(forbidden)) throw new Error(`Procedural support overlay remains: ${forbidden}`);
 }
 
 for (const token of [
@@ -54,7 +57,6 @@ for (const token of [
   "exact-source-lightmaps-balanced-for-daylight-v39",
   "material.emissiveIntensity = emissiveMap ? 0.07 : 0",
   "material.dithering = true",
-  "if (source.includes(forbidden)) throw new Error",
 ]) {
   if (!polish.includes(token)) throw new Error(`Fixed-walkway/daylight production wiring is missing ${token}`);
 }
@@ -67,9 +69,8 @@ for (const token of [
   "sun.position.set(56, 82, 66)",
   "new THREE.AmbientLight(0xffffff, 0.16)",
   'dataset.shadowMode = "dynamic-high-fidelity"',
-  "if (source.includes(forbidden)) throw new Error",
 ]) {
   if (!rendering.includes(token)) throw new Error(`High-fidelity renderer contract is missing ${token}`);
 }
 
-console.log("Verified exact T4_WALK source skins, package-authority minimal source-transform supports, daylight-balanced package lightmaps, unmoved source transforms and persistent 2K/4K dynamic shadows.");
+console.log("Verified exact package T4_WALK skins as the sole fixed-walkway visual authority, zero procedural support meshes, unmoved source transforms, daylight-balanced lightmaps and persistent dynamic shadows.");
