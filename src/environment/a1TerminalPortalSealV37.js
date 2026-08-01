@@ -71,15 +71,43 @@ function makeMesh(name, material, scale, position) {
   return mesh;
 }
 
+function findExactRecoveredJetwayShellMaterial(jetwayGroup) {
+  let exactMaterial = null;
+  jetwayGroup.traverse((entry) => {
+    if (exactMaterial || !entry.isMesh) return;
+    const materials = Array.isArray(entry.material) ? entry.material : [entry.material];
+    for (const material of materials) {
+      if (!material?.map) continue;
+      const exactTexture = material.userData?.exactJetwayTexture;
+      const exactAuthority = material.userData?.textureAuthority;
+      const shellIdentity = /exact-source (?:outer|telescoping) shell/i.test(material.name || "")
+        || /OuterTelescopingTunnels|InnerTelescopingTunnels/i.test(entry.name || "");
+      if (
+        exactTexture === "M1DGJETWAY.BMP"
+        && exactAuthority === "exact-recovered-original-freeware-atlas-region"
+        && shellIdentity
+      ) {
+        exactMaterial = material;
+        break;
+      }
+    }
+  });
+  return exactMaterial;
+}
+
 export function installA1TerminalPortalSealV37(jetwayGroup) {
   if (!jetwayGroup?.isGroup) throw new Error("A1 terminal portal seal requires the Terminal 4 jetway group");
   const existing = jetwayGroup.getObjectByName("A1_T4_WALK_TerminalPortalSeal_V37");
   if (existing) return existing;
 
-  const wallCollars = jetwayGroup.getObjectByName("AIR_Jetway01_WallCollars")
-    || jetwayGroup.getObjectByName("AIR_Jetway01_FixedTerminalWalkways_V13");
-  const sourceMaterial = Array.isArray(wallCollars?.material) ? wallCollars.material[0] : wallCollars?.material;
-  if (!sourceMaterial) throw new Error("A1 terminal portal seal could not find the exact-source fixed-corridor material");
+  // The fixed corridor material is intentionally converted to an untextured
+  // light architectural shell later in the preparation pipeline. The portal
+  // seal must therefore clone a mapped moving-shell material directly rather
+  // than inheriting whichever material happens to remain on WallCollars.
+  const sourceMaterial = findExactRecoveredJetwayShellMaterial(jetwayGroup);
+  if (!sourceMaterial) {
+    throw new Error("A1 terminal portal seal could not find a mapped exact M1DGJETWAY shell material");
+  }
 
   const root = new THREE.Group();
   root.name = "A1_T4_WALK_TerminalPortalSeal_V37";
@@ -102,6 +130,15 @@ export function installA1TerminalPortalSealV37(jetwayGroup) {
     sourcePortal: "T4_WALK",
     hollowPortalShell: true,
   };
+  const exactTextureActive = Boolean(
+    shellMaterial.map
+    && shellMaterial.userData?.exactJetwayTexture === "M1DGJETWAY.BMP"
+    && shellMaterial.userData?.textureAuthority === "exact-recovered-original-freeware-atlas-region"
+  );
+  if (!exactTextureActive) {
+    throw new Error("A1 terminal portal seal lost the exact recovered M1DGJETWAY texture while cloning");
+  }
+
   const shell = new THREE.Mesh(createArchedPortalGeometry(2.72, 2.54, 0.3, sealDepth), shellMaterial);
   shell.name = "A1_T4_WALK_SourceTexturedOverlapShell_V37";
   shell.position.copy(sealCenter);
@@ -147,12 +184,15 @@ export function installA1TerminalPortalSealV37(jetwayGroup) {
   root.userData.rotundaPosition = [A1_ROTUNDA.x, A1_ROTUNDA.y, A1_ROTUNDA.z];
   root.userData.portalOverlapMeters = PORTAL_OVERLAP_METERS;
   root.userData.hollowPortalShell = true;
-  root.userData.usesExactRecoveredJetwayTexture = Boolean(shellMaterial.map);
+  root.userData.usesExactRecoveredJetwayTexture = exactTextureActive;
+  root.userData.exactRecoveredJetwayTexture = shellMaterial.userData.exactJetwayTexture;
+  root.userData.exactRecoveredJetwayTextureAuthority = shellMaterial.userData.textureAuthority;
   jetwayGroup.add(root);
 
   jetwayGroup.userData.a1TerminalPortalSealAuthority = AUTHORITY;
   jetwayGroup.userData.a1TerminalPortalSealOverlapMeters = PORTAL_OVERLAP_METERS;
-  jetwayGroup.userData.a1TerminalPortalSealExactTexture = Boolean(shellMaterial.map);
+  jetwayGroup.userData.a1TerminalPortalSealExactTexture = exactTextureActive;
+  jetwayGroup.userData.a1TerminalPortalSealTextureIdentity = shellMaterial.userData.exactJetwayTexture;
   jetwayGroup.userData.a1TerminalPortalSealHollow = true;
   return root;
 }
