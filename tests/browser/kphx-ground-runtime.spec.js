@@ -195,7 +195,12 @@ test("loads source-correct PHX scenery with the complete uploaded Terminal 4 jet
   expect(Number(runtime.terminal4SourceCutoutMaterialCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4FacadeInfillCount)).toBe(0);
   expect(Number(runtime.terminal4OpenServiceBayCount)).toBe(0);
-  expect(Number(runtime.terminal4LowerFacadeFitCount)).toBeGreaterThan(0);
+  expect(Number(runtime.terminal4LowerFacadeFitCount)).toBe(0);
+  const openFacadeCells = Number(runtime.terminal4SourceFacadeOpenCellCount);
+  const closedFacadeCells = Number(runtime.terminal4SourceFacadeClosedCellCount);
+  expect(openFacadeCells).toBeGreaterThan(0);
+  expect(closedFacadeCells).toBeGreaterThan(openFacadeCells * 3);
+  expect(Number(runtime.terminal4SourceFacadeVariantMaterialCount)).toBeGreaterThanOrEqual(4);
   expect(runtime.terminal4ExactJetwayTextureActive).toBe("true");
   expect(runtime.terminal4JetwayTextureAuthority).toContain("M1DGJETWAY exact recovered");
   expect(runtime.terminal4JetwayDetailLevel).toBe("fsx-air-jetway01-exact-textured-source-scale-articulated-v5");
