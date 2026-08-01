@@ -7,12 +7,17 @@ const polish = fs.readFileSync("scripts/prepare-terminal4-jetway-simulator-polis
 const rendering = fs.readFileSync("scripts/prepare-simulator-render-quality.mjs", "utf8");
 
 for (const token of [
-  "package-native-fixed-walkway-source-geometry-v52",
+  "package-native-fixed-walkway-source-geometry-v54",
   "AIR_Jetway01_FixedTerminalWalkways_V13",
   "source.visible = true",
   "proceduralReplacementMeshCount = 0",
   "packageWalkwayIsSoleGeometryAuthority = true",
   "sourceGeometryUnmoved = true",
+  'hideProceduralGroup(group, "Terminal4_FixedWalkwayArchitecturalDetail_V15")',
+  'hideProceduralGroup(group, "Terminal4_FixedWalkwayGroundSupports_V14")',
+  'hideProceduralGroup(group, "Terminal4_A1_LowerFacadePortal_V15")',
+  "fixedWalkwayProceduralGroundSupportsHidden",
+  "obsoleteA1LowerFacadePortalHidden",
 ]) {
   if (!geometry.includes(token)) throw new Error(`Package fixed-walkway geometry contract is missing ${token}`);
 }
@@ -100,4 +105,4 @@ for (const token of [
   if (!rendering.includes(token)) throw new Error(`High-fidelity renderer contract is missing ${token}`);
 }
 
-console.log("Verified the supplied Terminal 4 fixed-walkway mesh as sole geometry authority, exact package materials applied directly, zero procedural corridor/support meshes, unmoved source transforms and dynamic shadows.");
+console.log("Verified the supplied Terminal 4 fixed-walkway mesh as sole geometry authority, exact package materials applied directly, generated center-post supports and obsolete facade hidden, zero procedural corridor/support meshes, unmoved source transforms and dynamic shadows.");
