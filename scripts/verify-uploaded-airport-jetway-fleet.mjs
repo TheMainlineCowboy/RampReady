@@ -78,17 +78,21 @@ requireTokens("src/components/RampReadyStandupTrainerTerminal4.jsx", [
   'dataset.terminal4UploadedJetwayLoadState = "load-error"',
 ]);
 
-for (const testPath of [
-  "tests/browser/source-first-a1-repair.spec.js",
-  "tests/browser/kphx-ground-runtime.spec.js",
-]) {
-  requireTokens(testPath, [
-    '"data-terminal4-uploaded-jetway-load-state"',
-    '"data-terminal4-uploaded-jetway-count"',
-    '"data-terminal4-uploaded-jetway-connector-count"',
-    '"data-terminal4-uploaded-jetway-verified-model-count"',
-    "uploaded-airport-jetway-fleet-complete-58-gates-v3",
-  ]);
-}
+requireTokens("tests/browser/source-first-a1-repair.spec.js", [
+  '"data-terminal4-uploaded-jetway-load-state"',
+  '"data-terminal4-uploaded-jetway-count"',
+  '"data-terminal4-uploaded-jetway-connector-count"',
+  '"data-terminal4-uploaded-jetway-verified-model-count"',
+  "uploaded-airport-jetway-fleet-complete-58-gates-v3",
+]);
+requireTokens("tests/browser/kphx-ground-runtime.spec.js", [
+  '"data-terminal4-uploaded-jetway-load-state"',
+  "terminal4UploadedJetwayLoadState",
+  "terminal4UploadedJetwayCount",
+  "terminal4UploadedJetwayConnectorCount",
+  "terminal4UploadedJetwayVerifiedModelCount",
+  "terminal4UploadedJetwayReadyAuthority",
+  "uploaded-airport-jetway-fleet-complete-58-gates-v3",
+]);
 
 console.log("Verified the user-supplied Tunnel_A/B/C/Rotunda/Cab airport jetway as the awaited production authority at all 58 Terminal 4 gates, with 58 measured terminal connectors and exact gate-name accounting.");
