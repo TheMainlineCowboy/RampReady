@@ -14,6 +14,7 @@ on:
       - 'scripts/normalize-terminal4-source-alpha-input-v29.mjs'
       - 'scripts/prepare-a1-terminal-connector-v11.mjs'
       - 'scripts/prepare-a1-terminal-portal-seal-v37.mjs'
+      - 'scripts/prepare-full-airport-inspection-route.mjs'
       - 'scripts/prepare-terminal4-facade-visual-v7.mjs'
       - 'scripts/prepare-terminal4-facade-continuity-v8.mjs'
       - 'scripts/prepare-terminal4-source-facade-selection-v27.mjs'
