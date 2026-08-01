@@ -63,4 +63,5 @@ await import("./prepare-terminal4-facade-variant-safety-v34.mjs");
 await import("./prepare-terminal4-jetway-source-uv-v36.mjs");
 await import("./prepare-a1-terminal-portal-seal-v37.mjs");
 await import("./prepare-uploaded-airport-jetway-fleet.mjs");
-console.log("Prepared Terminal 4 source-only facade and the user-supplied airport jetway replacement at all 58 package-authored gates. V35 procedural dressing is absent from production; airport placement remains authoritative and unchanged.");
+await import("./prepare-uploaded-airport-jetway-readiness-v2.mjs");
+console.log("Prepared Terminal 4 source-only facade and the fully awaited user-supplied airport jetway replacement at all 58 package-authored gates. V35 procedural dressing is absent from production; airport placement remains authoritative and unchanged.");
