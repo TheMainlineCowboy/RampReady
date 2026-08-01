@@ -1,6 +1,6 @@
 import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";
 
-const READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v5-source-textured-optimized";
+const READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v6-instanced-source-textured";
 const EXPECTED_GATE_COUNT = 58;
 const LOAD_TIMEOUT_MS = 120_000;
 
@@ -31,17 +31,23 @@ function waitForFleet(group, placements) {
         const performanceAuthority = group.userData.uploadedJetwayPerformanceAuthority || "missing";
         const shadowCasterGateCount = Number(group.userData.uploadedJetwayShadowCasterGateCount ?? -1);
         const globalEdgeOverlayCount = Number(group.userData.uploadedJetwayGlobalEdgeOverlayCount ?? -1);
+        const staticInstancedGateCount = Number(group.userData.uploadedJetwayStaticInstancedGateCount ?? -1);
+        const animatedIndividualGateCount = Number(group.userData.uploadedJetwayAnimatedIndividualGateCount ?? -1);
+        const staticPrimitiveBatchCount = Number(group.userData.uploadedJetwayStaticPrimitiveBatchCount ?? -1);
         if (
           count !== EXPECTED_GATE_COUNT
           || connectorCount !== EXPECTED_GATE_COUNT
           || modelCount !== EXPECTED_GATE_COUNT
           || !materialAuthority.includes("exact-M1DGJETWAY")
-          || performanceAuthority !== "shared-geometry-single-a1-shadow-caster-no-global-edge-overlays-v3"
+          || performanceAuthority !== "57-static-gates-instanced-plus-1-animated-a1-source-geometry-v4"
           || shadowCasterGateCount !== 1
           || globalEdgeOverlayCount !== 0
+          || staticInstancedGateCount !== 57
+          || animatedIndividualGateCount !== 1
+          || staticPrimitiveBatchCount < 1
         ) {
           reject(new Error(
-            `Uploaded airport jetway fleet reported ready with ${count} placements, ${connectorCount} connectors, ${modelCount} models, material ${materialAuthority}, performance ${performanceAuthority}, ${shadowCasterGateCount} shadow-casting gates and ${globalEdgeOverlayCount} global edge overlays${missingModels.length ? `; missing ${missingModels.join(", ")}` : ""}`,
+            `Uploaded airport jetway fleet reported ready with ${count} placements, ${connectorCount} connectors, ${modelCount} gate records, material ${materialAuthority}, performance ${performanceAuthority}, ${shadowCasterGateCount} shadow-casting gates, ${globalEdgeOverlayCount} edge overlays, ${staticInstancedGateCount} instanced static gates, ${animatedIndividualGateCount} animated gates and ${staticPrimitiveBatchCount} primitive batches${missingModels.length ? `; missing ${missingModels.join(", ")}` : ""}`,
           ));
           return;
         }
@@ -56,6 +62,9 @@ function waitForFleet(group, placements) {
           performanceAuthority,
           shadowCasterGateCount,
           globalEdgeOverlayCount,
+          staticInstancedGateCount,
+          animatedIndividualGateCount,
+          staticPrimitiveBatchCount,
           authority: READY_AUTHORITY,
         });
         return;
@@ -76,7 +85,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
   const controller = installUploadedAirportJetwayFleetBase(THREE, group, placements, sourceTextures);
   const ready = waitForFleet(group, placements);
   group.userData.uploadedJetwayReady = ready;
-  group.userData.uploadedJetwayReadyAuthority = "waiting-for-complete-58-gate-source-textured-optimized-fleet";
+  group.userData.uploadedJetwayReadyAuthority = "waiting-for-complete-58-gate-instanced-source-textured-fleet";
   controller.ready = ready;
   return controller;
 }
