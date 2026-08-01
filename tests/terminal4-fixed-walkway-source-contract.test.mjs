@@ -21,8 +21,14 @@ for (const token of [
 for (const token of [
   'import { installTerminal4FixedWalkwaySourceSkinV38 } from "./terminal4FixedWalkwaySourceSkinV38.js";',
   "installTerminal4FixedWalkwaySourceSkinV38(sourcePlacedJetways, authored);",
+  "exact-source-lightmaps-balanced-for-daylight-v39",
+  "material.emissiveIntensity = emissiveMap ? 0.07 : 0",
+  "material.dithering = true",
 ]) {
-  if (!polish.includes(token)) throw new Error(`Fixed-walkway production wiring is missing ${token}`);
+  if (!polish.includes(token)) throw new Error(`Fixed-walkway/daylight production wiring is missing ${token}`);
+}
+if (polish.includes("material.emissiveIntensity = emissiveMap ? 0.68 : 0")) {
+  throw new Error("Terminal 4 still applies nighttime source lightmaps at the washed-out daylight intensity");
 }
 
 for (const token of [
@@ -42,4 +48,4 @@ for (const forbidden of [
   if (rendering.includes(forbidden)) throw new Error(`Inspection still downgrades rendering: ${forbidden}`);
 }
 
-console.log("Verified exact T4_WALK fixed-corridor source skins, unmoved source transforms and persistent 2K/4K dynamic shadows.");
+console.log("Verified exact T4_WALK fixed-corridor source skins, daylight-balanced package lightmaps, unmoved source transforms and persistent 2K/4K dynamic shadows.");
