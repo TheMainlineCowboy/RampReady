@@ -16,6 +16,9 @@ replaceOnce(
   // toward the actual source jetway/terminal position instead of across an
   // empty taxiway. Positions remain source-gate apron locations.
   a1: Object.freeze({ id: "a1", label: "A1 ramp", x: 0, z: 0, yaw: 0, cameraYaw: 0.92, cameraDistance: 25 }),
+  // Close, unobstructed ramp-side view of the measured A1 rotunda-to-T4_WALK
+  // joint. This is also a normal free-drive start, not a locked photo camera.
+  a1Connection: Object.freeze({ id: "a1Connection", label: "A1 terminal connection", x: -12, z: -3, yaw: 0, cameraYaw: 0.92, cameraDistance: 15 }),
   a14: Object.freeze({ id: "a14", label: "A concourse midpoint", x: 218.45, z: -86.52, yaw: 2.88, cameraYaw: 2.19, cameraDistance: 32 }),
   b14: Object.freeze({ id: "b14", label: "B concourse midpoint", x: 216.4, z: 150.35, yaw: 2.8, cameraYaw: 2.10, cameraDistance: 32 }),
   // B15 sits on the east face of the north-south pier. The former inspection
@@ -24,7 +27,7 @@ replaceOnce(
   // east of the facade, and points the operator view directly west at both gates.
   b15: Object.freeze({ id: "b15", label: "B15 ramp", x: -5.5, z: 539.2, yaw: -1.5708, cameraYaw: 1.38, cameraDistance: 25 }),
 });
-const INSPECTION_ROUTE_AUTHORITY = "source-gate-apron-presets-facing-terminal-a1-a14-b14-b15-v2";
+const INSPECTION_ROUTE_AUTHORITY = "source-gate-apron-presets-with-close-a1-connection-a1-a14-b14-b15-v3";
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));`,
   "const INSPECTION_PRESETS = Object.freeze",
   "inspection preset constants",
@@ -158,7 +161,8 @@ replaceOnce(
 
 for (const token of [
   "const INSPECTION_PRESETS = Object.freeze",
-  "source-gate-apron-presets-facing-terminal-a1-a14-b14-b15-v2",
+  "source-gate-apron-presets-with-close-a1-connection-a1-a14-b14-b15-v3",
+  'a1Connection: Object.freeze({ id: "a1Connection", label: "A1 terminal connection", x: -12, z: -3',
   "const moveInspectionToPreset = useCallback",
   'aria-label="Inspection location"',
   "dataset.inspectionPreset = preset.id",
@@ -174,4 +178,4 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared full-airport free-drive inspection presets from A1 through B15, including a close B15 operator pose facing the exact B15L/B15M terminal facade.");
+console.log("Prepared full-airport free-drive inspection presets from a close A1 terminal-connection view through B15, while keeping every position freely drivable.");
