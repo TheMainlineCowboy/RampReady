@@ -7,6 +7,7 @@ const protectedSourcePaths = Object.freeze([
   "src/environment/authoredTerminal4Visual.js",
   "src/environment/authoredKphxGround.js",
   "src/environment/terminal4LowerFacadeSkinV9.js",
+  "src/environment/terminal4JetwaySimulatorPolishV13.js",
   "scripts/build-production.mjs",
 ]);
 const committedSources = new Map(protectedSourcePaths.map((sourcePath) => [
@@ -28,7 +29,10 @@ if (!committedSources.get(protectedSourcePaths[3])?.includes("installAuthoredKph
 if (!committedSources.get(protectedSourcePaths[4])?.includes("buildTerminal4LowerFacadeSkin")) {
   throw new Error("Could not read the committed Terminal 4 lower-facade baseline from HEAD.");
 }
-if (!committedSources.get(protectedSourcePaths[5])?.includes("restoreA1TerminalConnectorV11")) {
+if (!committedSources.get(protectedSourcePaths[5])?.includes("applyTerminal4JetwaySimulatorPolish")) {
+  throw new Error("Could not read the committed Terminal 4 jetway-polish baseline from HEAD.");
+}
+if (!committedSources.get(protectedSourcePaths[6])?.includes("restoreA1TerminalConnectorV11")) {
   throw new Error("Could not read the committed production restorer baseline from HEAD.");
 }
 
@@ -86,4 +90,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the framed, windowed and grounded A1 terminal attachment, anchored A1 to the exact supplied BGATE1 wall plane, removed the two exact floating black Terminal 4 roof slabs, restored the missing Terminal 4 B-concourse from the supplied PHX aerial and B15-B28 source gate coordinates so both B15 regional rotundas intersect a real pier facade rather than 88-112 m apron tunnels, parked all remaining unoccupied jetways in varied retracted positions, replaced the repeated nearfield grid with a large source-derived pavement field, replaced repeated dark ramp bays with broad supplied wall geometry and sparse doors/vents, surgically removed the three exact authored A1 legacy boxes, applied Terminal 4 jetway simulator polish, added terminal-facing A1-to-B15 inspection routing with synchronous telemetry and balanced rendering, then restored every protected committed source exactly.");
+console.log("RampReady simulator-quality production build preserved the framed, windowed and grounded A1 terminal attachment, connected A1 to the measured T4_WALK source portal, removed the rejected BGATE1 overlay, selected the package-native BGATE3 closed facade variant instead of repeating open bays, removed the exact floating Terminal 4 roof slabs, retained the missing-B-concourse reconstruction and varied parked jetways, applied the source-derived nearfield pavement and Terminal 4 jetway polish, added terminal-facing A1-to-B15 inspection routing with synchronous telemetry and balanced rendering, then restored every protected committed source exactly.");
