@@ -2,45 +2,34 @@ import fs from "node:fs";
 
 const path = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(path, "utf8");
-const marker = "const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance";
-if (!source.includes(marker)) {
-  const oldText = `    const lowerWallFit = lowerFacadeWallDistance ?? terminalWallDistance;
-    if (lowerWallFit != null && !keepServiceBayOpen) {
-      // Measure the wall at ramp level rather than reusing the elevated rotunda
-      // intersection. Place the closure toward the ramp so it visibly covers the
-      // legacy repeated bay instead of landing behind the authored facade.
-      const facadeRampOffset = 0.95;
-      const facadeX = jetway.x - ux * lowerWallFit + ux * facadeRampOffset;
-      const facadeZ = jetway.z - uz * lowerWallFit + uz * facadeRampOffset;
-      transforms.facadeInfill.push({
-        position: [facadeX, 1.72, facadeZ],
-        yaw,
-        scale: [6.4, 3.36, 0.68],
-      });`;
-  const newText = `    // A recessed lower bay must be closed at the outer facade plane, not at the
-    // dark rear wall returned by the ramp-height raycast. Keep only source-qualified
-    // service bays open; every other module receives a flush outer-wall closure.
-    const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance;
-    if (facadeOuterWallFit != null && !keepServiceBayOpen) {
-      const facadeRampOffset = 0.28;
-      const facadeX = jetway.x - ux * facadeOuterWallFit + ux * facadeRampOffset;
-      const facadeZ = jetway.z - uz * facadeOuterWallFit + uz * facadeRampOffset;
-      transforms.facadeInfill.push({
-        position: [facadeX, 1.74, facadeZ],
-        yaw,
-        scale: [7.0, 3.42, 0.5],
-      });`;
-  if (!source.includes(oldText)) throw new Error("Terminal 4 facade visual v7 anchor is missing");
-  source = source.replace(oldText, newText);
-}
 
-const cornerFacadeGuard = 'if (!["A1", "A3"].includes(jetway.g) && facadeOuterWallFit != null && !keepServiceBayOpen) {';
-if (!source.includes(cornerFacadeGuard)) {
-  const previousA1Guard = 'if (jetway.g !== "A1" && facadeOuterWallFit != null && !keepServiceBayOpen) {';
-  const unguardedFacade = "if (facadeOuterWallFit != null && !keepServiceBayOpen) {";
-  const anchor = source.includes(previousA1Guard) ? previousA1Guard : unguardedFacade;
-  if (!source.includes(anchor)) throw new Error("Terminal 4 A1/A3 facade exclusion anchor is missing");
-  source = source.replace(anchor, cornerFacadeGuard);
+// The previous pass stamped one generic seven-metre wall panel at nearly every
+// jetway. That hid the converted Terminal 4 source and created the obvious
+// repeated lower-building pattern visible from the ramp. Keep the source model
+// as the only lower-facade authority; this pass may measure source recesses for
+// evidence, but it must not manufacture replacement bays, doors or vents.
+const sourceFacadeMarker = "source-authored-lower-facade-authority-v25";
+if (!source.includes(sourceFacadeMarker)) {
+  const start = source.indexOf("    const sourceFacadeRecessMeters =");
+  const end = source.indexOf("\n    transforms.wallCollar.push({", start);
+  if (start < 0 || end < 0) throw new Error("Terminal 4 source-facade replacement anchors are missing");
+  const replacement = `    const sourceFacadeRecessMeters = lowerFacadeWallDistance != null && terminalWallDistance != null
+      ? lowerFacadeWallDistance - terminalWallDistance
+      : 0;
+    const keepServiceBayOpen = OPEN_SERVICE_BAY_GATES.has(jetway.g) && sourceFacadeRecessMeters >= 1.4;
+    if (keepServiceBayOpen) terminal4OpenServiceBayCount += 1;
+
+    // source-authored-lower-facade-authority-v25
+    // Do not stamp generic infill modules over the supplied Terminal 4 model.
+    // Door and vent sets remain source-audit references only; the browser scene
+    // is now driven by the converted authored geometry and original materials.
+    const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance;
+    if (facadeOuterWallFit != null) terminal4LowerFacadeFitCount += 1;
+    const sourceDoorReference = CLOSED_SERVICE_DOOR_GATES.has(jetway.g);
+    const sourceVentReference = FACADE_VENT_GATES.has(jetway.g);
+    if (sourceDoorReference || sourceVentReference) terminal4FacadeInfillCount += 0;
+`;
+  source = `${source.slice(0, start)}${replacement}${source.slice(end)}`;
 }
 
 const walkwayMarker = "AIR_Jetway01_FixedTerminalWalkways_V13";
@@ -98,26 +87,24 @@ if (!source.includes(walkwayMarker)) {
   source = source.replace(oldInstances, newInstances);
 }
 
-fs.writeFileSync(path, source, "utf8");
-const prepared = fs.readFileSync(path, "utf8");
-for (const token of [
-  "const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance",
-  cornerFacadeGuard,
-  "const facadeRampOffset = 0.28",
-  "scale: [7.0, 3.42, 0.5]",
-  "service bays open; every other module receives a flush outer-wall closure",
-  "const connectorPerpendicular = [-connectorTowardZ, connectorTowardX]",
-  "const wallConnectorTunnel = createArchedTunnelGeometry(THREE, 2.48, 2.34, 0.22)",
-  "AIR_Jetway01_FixedTerminalWalkways_V13",
-  "scale: [1, 1, wallConnectorLength]",
-]) if (!prepared.includes(token)) throw new Error(`Terminal 4 facade/walkway visual v7-v13 is missing ${token}`);
 for (const forbidden of [
-  "const lowerWallFit = lowerFacadeWallDistance ?? terminalWallDistance",
-  "const facadeRampOffset = 0.95",
-  "scale: [6.4, 3.36, 0.68]",
-  'if (jetway.g !== "A1" && facadeOuterWallFit != null && !keepServiceBayOpen) {',
-  "if (facadeOuterWallFit != null && !keepServiceBayOpen) {",
-  'addInstances(THREE, group, box, materials.shell, transforms.wallCollar, "AIR_Jetway01_WallCollars")',
-]) if (prepared.includes(forbidden)) throw new Error(`Terminal 4 facade/walkway visual v7-v13 still contains ${forbidden}`);
+  "transforms.facadeInfill.push",
+  "transforms.facadeDoor.push",
+  "transforms.facadeVent.push",
+  "scale: [7.0, 3.42, 0.5]",
+  "every other module receives a flush outer-wall closure",
+]) {
+  if (source.includes(forbidden)) throw new Error(`Synthetic repeated Terminal 4 facade remains: ${forbidden}`);
+}
+for (const required of [
+  sourceFacadeMarker,
+  "const sourceFacadeRecessMeters",
+  "CLOSED_SERVICE_DOOR_GATES.has(jetway.g)",
+  "FACADE_VENT_GATES.has(jetway.g)",
+  walkwayMarker,
+]) {
+  if (!source.includes(required)) throw new Error(`Terminal 4 source-first facade pass is missing ${required}`);
+}
 
-console.log("Prepared Terminal 4 facade visual v7 and fixed walkway v13: A1/A3 corner synthetic infill excluded, flush lower facade elsewhere, and source-textured arched terminal connectors with structural ribs.");
+fs.writeFileSync(path, source, "utf8");
+console.log("Prepared source-first Terminal 4 facade v25: removed cloned lower-building modules and retained authored source geometry with source-fitted terminal walkways.");
