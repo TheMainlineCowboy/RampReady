@@ -5,8 +5,10 @@ let source = fs.readFileSync(authoredTerminalPath, "utf8");
 
 const polishImport = 'import { applyTerminal4JetwaySimulatorPolish } from "./terminal4JetwaySimulatorPolishV13.js";';
 const fixedWalkwayImport = 'import { installTerminal4FixedWalkwayV20 } from "./terminal4FixedWalkwayV20.js";';
+const sourceSkinImport = 'import { installTerminal4FixedWalkwaySourceSkinV38 } from "./terminal4FixedWalkwaySourceSkinV38.js";';
 const polishCall = "  applyTerminal4JetwaySimulatorPolish(sourcePlacedJetways);";
 const fixedWalkwayCall = "  installTerminal4FixedWalkwayV20(sourcePlacedJetways);";
+const sourceSkinCall = "  installTerminal4FixedWalkwaySourceSkinV38(sourcePlacedJetways, authored);";
 
 if (!source.includes(polishImport)) {
   const importAnchor = 'import { buildSourcePlacedTerminal4Jetways } from "./sourcePlacedTerminal4Jetways.js";';
@@ -16,6 +18,10 @@ if (!source.includes(polishImport)) {
 if (!source.includes(fixedWalkwayImport)) {
   if (!source.includes(polishImport)) throw new Error(`${authoredTerminalPath}: missing simulator polish import anchor`);
   source = source.replace(polishImport, `${polishImport}\n${fixedWalkwayImport}`);
+}
+if (!source.includes(sourceSkinImport)) {
+  if (!source.includes(fixedWalkwayImport)) throw new Error(`${authoredTerminalPath}: missing fixed-walkway import anchor`);
+  source = source.replace(fixedWalkwayImport, `${fixedWalkwayImport}\n${sourceSkinImport}`);
 }
 
 // Earlier emergency passes added invented A1 facade panels on the wrong side of
@@ -42,8 +48,12 @@ if (!source.includes(fixedWalkwayCall)) {
   if (!source.includes(polishCall)) throw new Error(`${authoredTerminalPath}: missing simulator polish call anchor`);
   source = source.replace(polishCall, `${polishCall}\n${fixedWalkwayCall}`);
 }
+if (!source.includes(sourceSkinCall)) {
+  if (!source.includes(fixedWalkwayCall)) throw new Error(`${authoredTerminalPath}: missing fixed-walkway call anchor`);
+  source = source.replace(fixedWalkwayCall, `${fixedWalkwayCall}\n${sourceSkinCall}`);
+}
 
-for (const token of [polishImport, fixedWalkwayImport, polishCall, fixedWalkwayCall]) {
+for (const token of [polishImport, fixedWalkwayImport, sourceSkinImport, polishCall, fixedWalkwayCall, sourceSkinCall]) {
   if (!source.includes(token)) throw new Error(`${authoredTerminalPath}: missing Terminal 4 simulator polish token ${token}`);
 }
 for (const forbidden of [
@@ -55,4 +65,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(authoredTerminalPath, source, "utf8");
-console.log("Prepared Terminal 4 source-placed jetways with galvanized moving bridges, source-transform glass fixed corridors and grounded supports. A1 now relies on the supplied BGATE1/PHX_TERM400 facade revealed by the complete corridor skin exclusion rather than invented overlay walls.");
+console.log("Prepared Terminal 4 source-placed jetways with galvanized moving bridges, exact T4_WALK/T4_WALK2 source skins on fixed corridors and grounded supports. A1 relies on supplied terminal materials rather than invented facade overlays.");
