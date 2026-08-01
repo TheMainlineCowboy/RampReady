@@ -57,6 +57,13 @@ source = source
     '  group.userData.visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1";',
   );
 
+const supersededDisclosure = '  group.userData.supersededFallbackDisclosure = \'visualAuthority = "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered"\';';
+if (!source.includes(supersededDisclosure)) {
+  const authority = '  group.userData.visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1";';
+  if (!source.includes(authority)) throw new Error(`${path}: uploaded visual authority anchor missing`);
+  source = source.replace(authority, `${authority}\n${supersededDisclosure}`);
+}
+
 for (const token of [
   importLine,
   placementDeclaration,
@@ -66,9 +73,10 @@ for (const token of [
   "requiresOriginalSourceMesh = false",
   "a1JetwayController = uploadedJetwayController",
   'visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1"',
+  "supersededFallbackDisclosure",
 ]) {
   if (!source.includes(token)) throw new Error(`${path}: uploaded airport jetway integration missing ${token}`);
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared all 58 Terminal 4 gate transforms for the uploaded Tunnel_A/Tunnel_B/Tunnel_C/Rotunda/Cab jetway replacement. Airport placement remains unchanged.");
+console.log("Prepared all 58 Terminal 4 gate transforms for the uploaded Tunnel_A/Tunnel_B/Tunnel_C/Rotunda/Cab jetway replacement. Airport placement remains unchanged; the former fallback authority is retained only as superseded audit text.");
