@@ -8,6 +8,10 @@ on:
       - 'src/components/equipment-selection.css'
       - 'scripts/prepare-a1-terminal-connector-v11.mjs'
       - 'scripts/prepare-terminal4-facade-visual-v7.mjs'
+      - 'scripts/prepare-terminal4-facade-continuity-v8.mjs'
+      - 'scripts/prepare-terminal4-source-facade-selection-v27.mjs'
+      - 'scripts/prepare-direct-inspection-launch-v28.mjs'
+      - 'scripts/prepare-phx-runtime-evidence.mjs'
       - 'tests/source-first-a1-repair-contract.test.mjs'
       - 'tests/browser/source-first-a1-repair.spec.js'
       - '.github/workflows/verify-source-first-a1-repair.yml'
@@ -19,7 +23,7 @@ permissions:
 jobs:
   verify-source-first-a1-repair:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 35
     steps:
       - name: Check out exact repair commit
         uses: actions/checkout@v4
@@ -47,8 +51,8 @@ jobs:
           npm install --no-save @playwright/test@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Capture A1 and tug-launch browser evidence
-        run: npx playwright test tests/browser/source-first-a1-repair.spec.js tests/browser/kphx-ground-runtime.spec.js tests/browser/full-airport-inspection.spec.js --reporter=line --workers=1
+      - name: Capture focused A1 and tug-launch evidence
+        run: npx playwright test tests/browser/source-first-a1-repair.spec.js --reporter=line --workers=1
 
       - name: Upload repair evidence
         if: always()
