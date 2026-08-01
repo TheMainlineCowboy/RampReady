@@ -9,6 +9,7 @@ on:
       - 'src/components/inspection-compact-v30.css'
       - 'src/environment/a1TerminalPortalSealV37.js'
       - 'src/environment/terminal4JetwayVisualUpgradeV35.js'
+      - 'src/environment/terminal4FixedWalkwaySourceSkinV38.js'
       - 'scripts/materialize-terminal4-package-first.mjs'
       - 'scripts/verify-package-first-simulator-quality.mjs'
       - 'scripts/normalize-terminal4-source-alpha-input-v29.mjs'
@@ -22,10 +23,13 @@ on:
       - 'scripts/prepare-terminal4-facade-variant-safety-v34.mjs'
       - 'scripts/prepare-terminal4-jetway-source-uv-v36.mjs'
       - 'scripts/prepare-terminal4-jetway-visual-upgrade-v35.mjs'
+      - 'scripts/prepare-terminal4-jetway-simulator-polish.mjs'
+      - 'scripts/prepare-simulator-render-quality.mjs'
       - 'scripts/prepare-direct-inspection-launch-v28.mjs'
       - 'scripts/prepare-phx-runtime-evidence.mjs'
       - 'tests/source-first-a1-repair-contract.test.mjs'
       - 'tests/terminal4-jetway-visual-upgrade-contract.test.mjs'
+      - 'tests/terminal4-fixed-walkway-source-contract.test.mjs'
       - 'tests/browser/source-first-a1-repair.spec.js'
       - '.github/workflows/verify-source-first-a1-repair.yml'
   workflow_dispatch:
@@ -54,6 +58,7 @@ jobs:
         run: |
           node tests/source-first-a1-repair-contract.test.mjs
           node tests/terminal4-jetway-visual-upgrade-contract.test.mjs
+          node tests/terminal4-fixed-walkway-source-contract.test.mjs
 
       - name: Run complete source verification
         run: npm run verify
