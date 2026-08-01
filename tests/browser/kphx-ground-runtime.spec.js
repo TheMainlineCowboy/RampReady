@@ -183,7 +183,7 @@ test("loads source-correct PHX scenery with the complete uploaded Terminal 4 jet
   expect(runtime.terminal4UploadedJetwayCount).toBe("58");
   expect(runtime.terminal4UploadedJetwayConnectorCount).toBe("58");
   expect(runtime.terminal4UploadedJetwayVerifiedModelCount).toBe("58");
-  expect(runtime.terminal4UploadedJetwayReadyAuthority).toBe("uploaded-airport-jetway-fleet-complete-58-gates-v3");
+  expect(runtime.terminal4UploadedJetwayReadyAuthority).toBe("uploaded-airport-jetway-fleet-complete-58-gates-v4-source-textured");
 
   const nearestGeometryMeters = Number(runtime.terminal4A1NearestGeometryMeters);
   expect(nearestGeometryMeters).toBeGreaterThan(29.9);
@@ -202,7 +202,7 @@ test("loads source-correct PHX scenery with the complete uploaded Terminal 4 jet
   expect(runtime.terminal4JetwaySourceScaleAuthority).toBe(
     "airport-authored-AIR_Jetway01-scale-preserved-no-aircraft-specific-shrink",
   );
-  expect(runtime.terminal4JetwaySourceGeometryMode).toBe("user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1");
+  expect(runtime.terminal4JetwaySourceGeometryMode).toBe("user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured");
   expect(runtime.terminal4RequiresOriginalJetwayMesh).toBe("false");
   expect(runtime.terminal4JetwayInitialState).toBe("attached-to-aircraft-door");
   expect(runtime.terminal4JetwayPrePushSequence).toBe("retract-bellows-clear-door-telescope-in-rotate-to-park");
