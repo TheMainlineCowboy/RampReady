@@ -44,11 +44,15 @@ for (const token of [
 }
 
 for (const token of [
-  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1",
+  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured",
+  "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2",
   "Tunnel_B",
   "Tunnel_C",
   "Cab",
   "UploadedAirportJetwayFleet",
+  "addProjectedUvs",
+  "cloneCorrugatedAtlasBand",
+  "addStructuralEdges",
   "proceduralJetwayStairCount = 0",
   "hiddenGeneratedObjectCount",
   "PART_COUNT = 5",
@@ -58,6 +62,7 @@ for (const token of [
 for (const token of [
   "uploadedJetwayPlacements",
   "installUploadedAirportJetwayFleet",
+  "sourceTextures",
   "requiresOriginalSourceMesh = false",
   "a1JetwayController = uploadedJetwayController",
   "supersededFallbackDisclosure",
@@ -93,4 +98,4 @@ for (const forbidden of [
   }
 }
 
-console.log("Uploaded Tunnel_A/B/C/Rotunda/Cab fleet is the production jetway authority at all 58 gates; V35 remains audit-only and no procedural dressing is wired into runtime.");
+console.log("Source-textured uploaded Tunnel_A/B/C/Rotunda/Cab fleet is the production jetway authority at all 58 gates; exact M1DGJETWAY surface detail is projected onto the supplied geometry, V35 remains audit-only and no replacement box/cylinder dressing is wired into runtime.");
