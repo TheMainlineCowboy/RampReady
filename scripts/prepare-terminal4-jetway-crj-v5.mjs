@@ -103,6 +103,7 @@ replaceAny(
     "source-recess-qualified-service-bays-with-irregular-closed-facade-details",
     "structural-facade-neighbor-span-continuity-v8-no-repeated-black-bays",
     "source-shaped-lower-facade-skin-v9-over-continuous-structural-spans",
+    "source-authored-terminal4-lower-facade-v25-no-overlay",
   ],
   "facade authority",
 );
@@ -142,4 +143,4 @@ for (const token of [
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
-console.log("Prepared Terminal 4 jetways idempotently: source scale retained, V8/V9 facade treatments preserved when active, and articulation requirements exposed while the original AIR_Jetway01 mesh is recovered.");
+console.log("Prepared Terminal 4 jetways idempotently: source scale retained, source-only facade authority preserved when active, and articulation requirements exposed while the original AIR_Jetway01 mesh is recovered.");
