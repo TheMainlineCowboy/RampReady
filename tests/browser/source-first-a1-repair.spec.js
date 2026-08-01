@@ -33,7 +33,7 @@ async function saveCompositedCanvasPng(page, canvas, path) {
   }
 }
 
-test("direct tug inspection proves the visible A1 terminal connection in one close frame", async ({ page }) => {
+test("direct tug inspection proves the visible A1 terminal connection in one close side-on frame", async ({ page }) => {
   test.setTimeout(210_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
@@ -71,7 +71,8 @@ test("direct tug inspection proves the visible A1 terminal connection in one clo
   await inspectionLocation.selectOption("a1Connection");
   await expect(canvas).toHaveAttribute("data-inspection-preset", "a1Connection");
   await expect(canvas).toHaveAttribute("data-inspection-preset-label", "A1 terminal connection");
-  await page.waitForTimeout(1500);
+  await expect(canvas).toHaveAttribute("data-inspection-camera-authority", "side-on-fixed-a1-terminal-joint-v4");
+  await page.waitForTimeout(1800);
 
   await saveCompositedCanvasPng(page, canvas, "test-results/source-first-a1-terminal-connection.png");
 });
