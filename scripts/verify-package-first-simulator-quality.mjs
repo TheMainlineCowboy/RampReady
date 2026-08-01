@@ -10,14 +10,22 @@ if (!materializeCommand.includes("materialize-terminal4-package-first.mjs")) {
 
 const packageMirror = fs.readFileSync("scripts/materialize-terminal4-package-first.mjs", "utf8");
 for (const token of [
-  "complete-pinned-scenery-and-texture-package-mirror-before-browser-conversion-v1",
+  "complete-pinned-source-archive-package-mirror-before-browser-conversion-v2",
   '"scenery/term4.BGL"',
   '"scenery/KPHX_ADEX.BGL"',
-  "git/trees/${SOURCE_COMMIT}?recursive=1",
+  "https://codeload.github.com/${SOURCE_OWNER}/${SOURCE_REPOSITORY}/zip/${SOURCE_COMMIT}",
+  "sourceArchiveSha256",
+  "locatePackageRoot",
   "materialize-phx-terminal4.mjs",
   "packageImportAuthority",
 ]) {
   if (!packageMirror.includes(token)) throw new Error(`Package-first Terminal 4 mirror is missing ${token}`);
+}
+for (const forbidden of [
+  "api.github.com/repos/${SOURCE_OWNER}/${SOURCE_REPOSITORY}/git/trees",
+  "git/trees/${SOURCE_COMMIT}?recursive=1",
+]) {
+  if (packageMirror.includes(forbidden)) throw new Error(`Package-first Terminal 4 mirror still depends on rate-limited tree enumeration: ${forbidden}`);
 }
 
 const fetchHook = fs.readFileSync("scripts/install-terminal4-package-fetch-hook.mjs", "utf8");
@@ -48,4 +56,4 @@ try {
   fs.rmSync(temporaryVerifier, { force: true });
 }
 
-console.log("RampReady package-first simulator-quality verification passed: complete pinned package mirroring is mandatory before the existing Terminal 4 geometry, texture, ground, tug and A1 contracts run.");
+console.log("RampReady package-first simulator-quality verification passed: the exact pinned source ZIP is extracted and mirrored completely before the existing Terminal 4 geometry, texture, ground, tug and A1 contracts run.");
