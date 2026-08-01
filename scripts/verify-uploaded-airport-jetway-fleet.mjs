@@ -14,33 +14,42 @@ function requireTokens(path, tokens) {
 }
 
 const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
-  'MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured"',
+  'MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v3-source-textured-optimized"',
   'MATERIAL_AUTHORITY = "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2"',
+  'PERFORMANCE_AUTHORITY = "shared-geometry-single-a1-shadow-caster-no-global-edge-overlays-v3"',
   "geometry.part",
   "DecompressionStream(\"gzip\")",
   "addProjectedUvs",
   "cloneCorrugatedAtlasBand",
-  "addStructuralEdges",
   'fleet.name = "UploadedAirportJetwayFleet"',
   'anchor.name = `UploadedAirportJetway_${placement.gate}`',
   'uploadedJetwayLoadState = "ready"',
   "uploadedJetwayCount = placements.length",
   "uploadedJetwayMeasuredTerminalConnectorCount = placements.length",
   "uploadedJetwayMaterialAuthority = prototype.userData.materialAuthority",
-  "uploadedJetwayStructuralEdgeMeshCount = prototype.userData.structuralEdgeMeshCount",
+  "uploadedJetwayPerformanceAuthority = prototype.userData.performanceAuthority",
+  "uploadedJetwayShadowCasterGateCount = shadowCasterGateCount",
+  "uploadedJetwayGlobalEdgeOverlayCount = 0",
   "sourceGeometryMode = MODEL_AUTHORITY",
 ]);
-if (fleet.includes("procedural-articulated-fallback-pending-original-AIR_Jetway01-mesh-recovery")) {
-  throw new Error("Uploaded jetway fleet module must not advertise the retired procedural fallback");
+for (const forbidden of [
+  "procedural-articulated-fallback-pending-original-AIR_Jetway01-mesh-recovery",
+  "addStructuralEdges",
+  "new THREE.EdgesGeometry",
+  "new THREE.LineSegments",
+]) {
+  if (fleet.includes(forbidden)) throw new Error(`Uploaded jetway fleet contains retired global rendering work: ${forbidden}`);
 }
 
 requireTokens("src/environment/uploadedAirportJetwayFleetReadyV2.js", [
-  'READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v4-source-textured"',
+  'READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v5-source-textured-optimized"',
   "EXPECTED_GATE_COUNT = 58",
   "placements.map((placement) => `UploadedAirportJetway_${placement.gate}`)",
   "missingModels",
   'materialAuthority.includes("exact-M1DGJETWAY")',
-  "structuralEdgeMeshCount < 5",
+  'performanceAuthority !== "shared-geometry-single-a1-shadow-caster-no-global-edge-overlays-v3"',
+  "shadowCasterGateCount !== 1",
+  "globalEdgeOverlayCount !== 0",
   "uploadedJetwayVerifiedModelCount = modelCount",
   "uploadedJetwayVerifiedGateNames",
   "waitForFleet(group, placements)",
@@ -97,7 +106,7 @@ requireTokens("tests/browser/source-first-a1-repair.spec.js", [
   '"data-terminal4-uploaded-jetway-count"',
   '"data-terminal4-uploaded-jetway-connector-count"',
   '"data-terminal4-uploaded-jetway-verified-model-count"',
-  "uploaded-airport-jetway-fleet-complete-58-gates-v4-source-textured",
+  "uploaded-airport-jetway-fleet-complete-58-gates-v5-source-textured-optimized",
   "wide-diagonal-a1-terminal-joint-v5",
 ]);
 requireTokens("tests/browser/kphx-ground-runtime.spec.js", [
@@ -107,8 +116,8 @@ requireTokens("tests/browser/kphx-ground-runtime.spec.js", [
   "terminal4UploadedJetwayConnectorCount",
   "terminal4UploadedJetwayVerifiedModelCount",
   "terminal4UploadedJetwayReadyAuthority",
-  "uploaded-airport-jetway-fleet-complete-58-gates-v4-source-textured",
-  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured",
+  "uploaded-airport-jetway-fleet-complete-58-gates-v5-source-textured-optimized",
+  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v3-source-textured-optimized",
 ]);
 
-console.log("Verified the exact-source-textured user-supplied Tunnel_A/B/C/Rotunda/Cab airport jetway as the awaited production authority at all 58 Terminal 4 gates, with 58 measured terminal connectors, projected M1DGJETWAY materials, structural edge definition and an unclipped A1 inspection frame.");
+console.log("Verified the optimized exact-source-textured user-supplied Tunnel_A/B/C/Rotunda/Cab airport jetway as the awaited production authority at all 58 Terminal 4 gates, with 58 measured terminal connectors, shared geometry, one A1 shadow caster, zero global edge overlays and an unclipped A1 inspection frame.");
