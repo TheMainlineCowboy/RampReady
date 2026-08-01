@@ -10,12 +10,14 @@ on:
       - 'src/environment/a1TerminalPortalSealV37.js'
       - 'src/environment/terminal4JetwayVisualUpgradeV35.js'
       - 'src/environment/terminal4FixedWalkwaySourceSkinV38.js'
+      - 'scripts/build-production-simulator-quality.mjs'
       - 'scripts/materialize-terminal4-package-first.mjs'
       - 'scripts/verify-package-first-simulator-quality.mjs'
       - 'scripts/normalize-terminal4-source-alpha-input-v29.mjs'
       - 'scripts/prepare-a1-terminal-connector-v11.mjs'
       - 'scripts/prepare-a1-terminal-portal-seal-v37.mjs'
       - 'scripts/prepare-full-airport-inspection-route.mjs'
+      - 'scripts/prepare-kphx-source-aerial-priority-v41.mjs'
       - 'scripts/prepare-terminal4-facade-visual-v7.mjs'
       - 'scripts/prepare-terminal4-facade-continuity-v8.mjs'
       - 'scripts/prepare-terminal4-source-facade-selection-v27.mjs'
@@ -30,6 +32,7 @@ on:
       - 'tests/source-first-a1-repair-contract.test.mjs'
       - 'tests/terminal4-jetway-visual-upgrade-contract.test.mjs'
       - 'tests/terminal4-fixed-walkway-source-contract.test.mjs'
+      - 'tests/kphx-source-aerial-priority-contract.test.mjs'
       - 'tests/browser/source-first-a1-repair.spec.js'
       - '.github/workflows/verify-source-first-a1-repair.yml'
   workflow_dispatch:
@@ -59,6 +62,7 @@ jobs:
           node tests/source-first-a1-repair-contract.test.mjs
           node tests/terminal4-jetway-visual-upgrade-contract.test.mjs
           node tests/terminal4-fixed-walkway-source-contract.test.mjs
+          node tests/kphx-source-aerial-priority-contract.test.mjs
 
       - name: Run complete source verification
         run: npm run verify
