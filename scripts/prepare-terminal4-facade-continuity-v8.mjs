@@ -59,4 +59,5 @@ if (!source.includes("source-authored-terminal4-lower-facade-v25-no-overlay")) {
 fs.writeFileSync(path, source, "utf8");
 await import("./prepare-terminal4-source-facade-selection-v27.mjs");
 await import("./prepare-terminal4-facade-splitter-runtime-v33.mjs");
-console.log("Prepared Terminal 4 source-only facade v33: package geometry remains authoritative, long BGATE1 faces are split at source UV cells and vary across package-native facade textures, while no generated continuity mesh or atlas is installed.");
+await import("./prepare-terminal4-facade-variant-safety-v34.mjs");
+console.log("Prepared Terminal 4 source-only facade v34: package geometry remains authoritative, long BGATE1 faces vary across safe package-native facade textures, occasional real service bays remain, and no generated continuity mesh or atlas is installed.");
