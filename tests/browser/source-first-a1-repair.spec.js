@@ -33,7 +33,7 @@ async function saveCompositedCanvasPng(page, canvas, path) {
   }
 }
 
-test("direct tug inspection proves the visible A1 terminal connection in one close side-on frame", async ({ page }) => {
+test("direct tug inspection proves the visible A1 terminal connection over source-aerial pavement", async ({ page }) => {
   test.setTimeout(210_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
@@ -49,6 +49,16 @@ test("direct tug inspection proves the visible A1 terminal connection in one clo
   expect(hudBounds?.height ?? Number.POSITIVE_INFINITY).toBeLessThan(110);
 
   await expect(canvas).toHaveAttribute("data-environment-source", /authored-phx-terminal4/, { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-photo-ground-source", "source-authored-phx-photo", { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute(
+    "data-ground-pavement-authority",
+    "full-source-aerial-primary-with-subtle-package-surface-detail-v41",
+    { timeout: 120_000 },
+  );
+  await expect(canvas).toHaveAttribute("data-ground-source-aerial-priority", "true", { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-ground-nearfield-detail-opacity", "0.18", { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-render-quality-authority", "srgb-aces-apron-daylight-dynamic-shadows-v3");
+  await expect(canvas).toHaveAttribute("data-shadow-mode", "dynamic-high-fidelity");
   await expect(canvas).toHaveAttribute("data-terminal4-facade-infill-count", "0", { timeout: 120_000 });
   await expect(canvas).toHaveAttribute("data-terminal4-a1-jetway-wall-distance", /9\.(1|2)/, { timeout: 120_000 });
   await expect(canvas).toHaveAttribute("data-terminal4-a1-portal-seal-authority", "exact-T4_WALK-source-shell-overlap-and-framed-portal-v37", { timeout: 120_000 });
