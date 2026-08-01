@@ -153,7 +153,7 @@ test("loads source-correct PHX scenery with the complete uploaded Terminal 4 jet
   expect(runtime.groundSource).toBe("authored-kphx-v181-source-textured-nearfield");
   expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
   expect(runtime.kphxVersion).toBe("1.8.1");
-  expect(runtime.kphxDetailLevel).toBe("terminal4-authored-pavement-v5-source-ramp-stand-markings");
+  expect(runtime.kphxDetailLevel).toBe("terminal44-authored-pavement-v5-source-ramp-stand-markings");
   expect(runtime.photoDetailLevel).toBe("full-airport-source-aerial-tiled-1.2m-v2");
   expect(runtime.photoTextureMode).toBe("tiled-native-source-resolution-v2");
   expect(runtime.photoRuntimeTileCount).toBe("21");
@@ -183,7 +183,7 @@ test("loads source-correct PHX scenery with the complete uploaded Terminal 4 jet
   expect(runtime.terminal4UploadedJetwayCount).toBe("58");
   expect(runtime.terminal4UploadedJetwayConnectorCount).toBe("58");
   expect(runtime.terminal4UploadedJetwayVerifiedModelCount).toBe("58");
-  expect(runtime.terminal4UploadedJetwayReadyAuthority).toBe("uploaded-airport-jetway-fleet-complete-58-gates-v4-source-textured");
+  expect(runtime.terminal4UploadedJetwayReadyAuthority).toBe("uploaded-airport-jetway-fleet-complete-58-gates-v5-source-textured-optimized");
 
   const nearestGeometryMeters = Number(runtime.terminal4A1NearestGeometryMeters);
   expect(nearestGeometryMeters).toBeGreaterThan(29.9);
@@ -202,7 +202,7 @@ test("loads source-correct PHX scenery with the complete uploaded Terminal 4 jet
   expect(runtime.terminal4JetwaySourceScaleAuthority).toBe(
     "airport-authored-AIR_Jetway01-scale-preserved-no-aircraft-specific-shrink",
   );
-  expect(runtime.terminal4JetwaySourceGeometryMode).toBe("user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured");
+  expect(runtime.terminal4JetwaySourceGeometryMode).toBe("user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v3-source-textured-optimized");
   expect(runtime.terminal4RequiresOriginalJetwayMesh).toBe("false");
   expect(runtime.terminal4JetwayInitialState).toBe("attached-to-aircraft-door");
   expect(runtime.terminal4JetwayPrePushSequence).toBe("retract-bellows-clear-door-telescope-in-rotate-to-park");
