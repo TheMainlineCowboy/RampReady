@@ -61,7 +61,7 @@ test("direct tug inspection proves the visible A1 terminal connection over sourc
   await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-verified-model-count", "58", { timeout: 120_000 });
   await expect(canvas).toHaveAttribute(
     "data-terminal4-uploaded-jetway-ready-authority",
-    "uploaded-airport-jetway-fleet-complete-58-gates-v3",
+    "uploaded-airport-jetway-fleet-complete-58-gates-v4-source-textured",
     { timeout: 120_000 },
   );
   await expect(canvas).toHaveAttribute("data-photo-ground-source", "source-authored-phx-photo", { timeout: 120_000 });
@@ -96,7 +96,7 @@ test("direct tug inspection proves the visible A1 terminal connection over sourc
   await inspectionLocation.selectOption("a1Connection");
   await expect(canvas).toHaveAttribute("data-inspection-preset", "a1Connection");
   await expect(canvas).toHaveAttribute("data-inspection-preset-label", "A1 terminal connection");
-  await expect(canvas).toHaveAttribute("data-inspection-camera-authority", "side-on-fixed-a1-terminal-joint-v4");
+  await expect(canvas).toHaveAttribute("data-inspection-camera-authority", "wide-diagonal-a1-terminal-joint-v5");
   await page.waitForTimeout(1800);
 
   await saveCompositedCanvasPng(page, "test-results/source-first-a1-terminal-connection.png");
