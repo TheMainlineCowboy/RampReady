@@ -87,9 +87,6 @@ function distance(a, b) {
 }
 
 test("free-drive inspection covers the full Terminal 4 route from A1 through B15", async ({ page }) => {
-  // Hosted software WebGL can spend several minutes flushing seven full-size
-  // compositor captures. Keep every required A1/A14/B14/B15 and tug-height
-  // evidence frame, but allow the final forward/reverse motion gate to finish.
   test.setTimeout(900_000);
   const canvas = await launchRuntime(page);
 
@@ -100,7 +97,7 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
   await expect(toggle).toHaveText("Return to training");
   await expect(canvas).toHaveAttribute(
     "data-inspection-route-authority",
-    "source-gate-apron-presets-with-side-on-a1-connection-a1-a14-b14-b15-v4",
+    "source-gate-apron-presets-with-wide-diagonal-a1-connection-a1-a14-b14-b15-v6",
   );
   await expect(canvas).toHaveAttribute(
     "data-inspection-telemetry-authority",
