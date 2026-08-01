@@ -45,7 +45,7 @@ function terminal4TextureImage(texture, label) {
   const width = Number(image?.naturalWidth || image?.videoWidth || image?.width || 0);
   const height = Number(image?.naturalHeight || image?.videoHeight || image?.height || 0);
   if (!image || width < 1 || height < 1) {
-    throw new Error(`Terminal 4 source facade image is unavailable for ${label}`);
+    throw new Error("Terminal 4 source facade image is unavailable for " + label);
   }
   return { image, width, height };
 }
@@ -115,7 +115,7 @@ function buildTerminal4SourceFacadeAtlas(THREE, textureMap, lightmap = false) {
   atlas.repeat.set(1 / TERMINAL4_SOURCE_FACADE_PATTERN.length, 1);
   atlas.userData = {
     ...(baseTexture.userData || {}),
-    sourceFacadeVariationAuthority: marker,
+    sourceFacadeVariationAuthority: "${marker}",
     sourceFacadeVariationPattern: [...TERMINAL4_SOURCE_FACADE_PATTERN],
     sourceFacadeOpenBayFrequency: 1 / TERMINAL4_SOURCE_FACADE_PATTERN.length,
     sourceFacadeAtlasColumns: TERMINAL4_SOURCE_FACADE_PATTERN.length,
@@ -138,7 +138,7 @@ function buildTerminal4SourceFacadeAtlas(THREE, textureMap, lightmap = false) {
   }
   textures.set("BGATE1.BMP", buildTerminal4SourceFacadeAtlas(THREE, textures, false));
   emissiveTextures.set("BGATE1.BMP", buildTerminal4SourceFacadeAtlas(THREE, emissiveTextures, true));
-  manifest.sourceFacadeVariationAuthority = marker;
+  manifest.sourceFacadeVariationAuthority = "${marker}";
   manifest.sourceFacadeVariationPattern = [...TERMINAL4_SOURCE_FACADE_PATTERN];
   return { textures, emissiveTextures, manifest };`;
   source = source.replace(loadAnchor, loadReplacement);
