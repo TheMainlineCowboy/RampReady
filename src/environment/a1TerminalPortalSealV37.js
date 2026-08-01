@@ -16,6 +16,22 @@ function createArchedPortalGeometry(width, height, roofRise, depth) {
   shape.quadraticCurveTo(halfWidth * 0.82, halfHeight, halfWidth, shoulder);
   shape.lineTo(halfWidth, -halfHeight);
   shape.closePath();
+
+  const shellThickness = 0.13;
+  const innerHalfWidth = halfWidth - shellThickness;
+  const innerHalfHeight = halfHeight - shellThickness;
+  const innerShoulder = innerHalfHeight - Math.max(0.16, roofRise - shellThickness * 0.35);
+  const opening = new THREE.Path();
+  // Reverse the winding from the outer arch so ExtrudeGeometry creates a real
+  // hollow corridor shell rather than a solid cap at the Terminal 4 doorway.
+  opening.moveTo(-innerHalfWidth, -innerHalfHeight);
+  opening.lineTo(innerHalfWidth, -innerHalfHeight);
+  opening.lineTo(innerHalfWidth, innerShoulder);
+  opening.quadraticCurveTo(innerHalfWidth * 0.82, innerHalfHeight, 0, innerHalfHeight);
+  opening.quadraticCurveTo(-innerHalfWidth * 0.82, innerHalfHeight, -innerHalfWidth, innerShoulder);
+  opening.closePath();
+  shape.holes.push(opening);
+
   const geometry = new THREE.ExtrudeGeometry(shape, {
     depth,
     steps: 1,
@@ -40,6 +56,8 @@ function createArchedPortalGeometry(width, height, roofRise, depth) {
   }
   geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
   geometry.userData.sourceAuthority = AUTHORITY;
+  geometry.userData.hollowPortalShell = true;
+  geometry.userData.shellThicknessMeters = shellThickness;
   return geometry;
 }
 
@@ -76,11 +94,12 @@ export function installA1TerminalPortalSealV37(jetwayGroup) {
     .addScaledVector(towardTerminal, PORTAL_OVERLAP_METERS - sealDepth / 2);
 
   const shellMaterial = sourceMaterial.clone();
-  shellMaterial.name = "A1 exact M1DGJETWAY terminal portal overlap shell V37";
+  shellMaterial.name = "A1 exact M1DGJETWAY hollow terminal portal overlap shell V37";
   shellMaterial.userData = {
     ...(shellMaterial.userData || {}),
     a1TerminalPortalAuthority: AUTHORITY,
     sourcePortal: "T4_WALK",
+    hollowPortalShell: true,
   };
   const shell = new THREE.Mesh(createArchedPortalGeometry(2.72, 2.54, 0.3, sealDepth), shellMaterial);
   shell.name = "A1_T4_WALK_SourceTexturedOverlapShell_V37";
@@ -126,11 +145,13 @@ export function installA1TerminalPortalSealV37(jetwayGroup) {
   root.userData.sourcePortalPosition = [A1_SOURCE_PORTAL.x, A1_SOURCE_PORTAL.y, A1_SOURCE_PORTAL.z];
   root.userData.rotundaPosition = [A1_ROTUNDA.x, A1_ROTUNDA.y, A1_ROTUNDA.z];
   root.userData.portalOverlapMeters = PORTAL_OVERLAP_METERS;
+  root.userData.hollowPortalShell = true;
   root.userData.usesExactRecoveredJetwayTexture = Boolean(shellMaterial.map);
   jetwayGroup.add(root);
 
   jetwayGroup.userData.a1TerminalPortalSealAuthority = AUTHORITY;
   jetwayGroup.userData.a1TerminalPortalSealOverlapMeters = PORTAL_OVERLAP_METERS;
   jetwayGroup.userData.a1TerminalPortalSealExactTexture = Boolean(shellMaterial.map);
+  jetwayGroup.userData.a1TerminalPortalSealHollow = true;
   return root;
 }
