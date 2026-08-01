@@ -5,15 +5,17 @@ const polish = fs.readFileSync("scripts/prepare-terminal4-jetway-simulator-polis
 const rendering = fs.readFileSync("scripts/prepare-simulator-render-quality.mjs", "utf8");
 
 for (const token of [
-  "exact-terminal4-T4_WALK-source-skin-and-roof-v38",
+  "exact-terminal4-T4_WALK-translucent-backing-and-roof-v40",
   "findSourceMaterial",
   '"T4_WALK.BMP"',
   '"T4_WALK2.BMP"',
-  "Terminal4_FixedWalkway_ExactSourceSideSkins_V38",
-  "Terminal4_FixedWalkway_ExactSourceRoofSkins_V38",
+  "Terminal4_FixedWalkway_ExactSourceBackings_V40",
+  "Terminal4_FixedWalkway_ExactSourceRoofSkins_V40",
   "sourceGeometryUnmoved: true",
+  "translucentBehindGlazing",
   "fixedWalkwayExactWallTexture",
   "fixedWalkwayExactRoofTexture",
+  "fixedWalkwayTranslucentBacking",
 ]) {
   if (!walkway.includes(token)) throw new Error(`Exact fixed-walkway source contract is missing ${token}`);
 }
@@ -30,14 +32,16 @@ for (const token of [
 }
 
 for (const token of [
-  "srgb-aces-high-fidelity-dynamic-shadows-v2",
+  "srgb-aces-apron-daylight-dynamic-shadows-v3",
   "renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))",
   "renderer.shadowMap.type = THREE.PCFSoftShadowMap",
   "const shadowMapSize = coarsePointer ? 2048 : 4096",
+  "sun.position.set(56, 82, 66)",
+  "new THREE.AmbientLight(0xffffff, 0.16)",
   'dataset.shadowMode = "dynamic-high-fidelity"',
   "if (source.includes(forbidden)) throw new Error",
 ]) {
   if (!rendering.includes(token)) throw new Error(`High-fidelity renderer contract is missing ${token}`);
 }
 
-console.log("Verified exact T4_WALK fixed-corridor source skins, daylight-balanced package lightmaps, unmoved source transforms and persistent 2K/4K dynamic shadows.");
+console.log("Verified exact T4_WALK translucent fixed-corridor backing, daylight-balanced package lightmaps, apron-side lighting, unmoved source transforms and persistent 2K/4K dynamic shadows.");
