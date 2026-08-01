@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-const AUTHORITY = "source-transform-fixed-walkway-integrated-portal-frame-v48";
+const AUTHORITY = "source-transform-fixed-walkway-integrated-load-frame-v49";
 
 function extractRecords(source) {
   if (!source?.isInstancedMesh || source.count < 1) return [];
@@ -48,7 +48,8 @@ function addInstances(parent, name, geometry, surface, records) {
 
 export function installTerminal4FixedWalkwaySupportV44(group) {
   if (!group?.isGroup) throw new Error("Terminal 4 walkway support upgrade requires the source jetway group");
-  const existing = group.getObjectByName("Terminal4_FixedWalkway_SupportUpgrade_V48")
+  const existing = group.getObjectByName("Terminal4_FixedWalkway_SupportUpgrade_V49")
+    || group.getObjectByName("Terminal4_FixedWalkway_SupportUpgrade_V48")
     || group.getObjectByName("Terminal4_FixedWalkway_SupportUpgrade_V47")
     || group.getObjectByName("Terminal4_FixedWalkway_SupportUpgrade_V46")
     || group.getObjectByName("Terminal4_FixedWalkway_SupportUpgrade_V45")
@@ -60,14 +61,16 @@ export function installTerminal4FixedWalkwaySupportV44(group) {
   if (!records.length) throw new Error("Terminal 4 walkway support upgrade recovered zero source transforms");
 
   const root = new THREE.Group();
-  root.name = "Terminal4_FixedWalkway_SupportUpgrade_V48";
-  const galvanized = material("Terminal 4 fixed walkway galvanized portal frames V48", 0x667176, 0.52, 0.4);
-  const darkSteel = material("Terminal 4 fixed walkway dark structural beams V48", 0x20272b, 0.66, 0.32);
-  const concrete = material("Terminal 4 fixed walkway formed concrete piers V48", 0x85837e, 0.95, 0.01);
+  root.name = "Terminal4_FixedWalkway_SupportUpgrade_V49";
+  const galvanized = material("Terminal 4 fixed walkway galvanized load frames V49", 0x626d72, 0.54, 0.38);
+  const darkSteel = material("Terminal 4 fixed walkway dark transfer steel V49", 0x20272b, 0.68, 0.3);
+  const concrete = material("Terminal 4 fixed walkway formed concrete foundations V49", 0x85837e, 0.96, 0.01);
 
   const longitudinalBeams = [];
-  const crossheads = [];
+  const underdeckFascias = [];
+  const transferCrossheads = [];
   const columns = [];
+  const centerSpines = [];
   const pierBases = [];
   const kneeBraces = [];
   const lowerTies = [];
@@ -78,28 +81,41 @@ export function installTerminal4FixedWalkwaySupportV44(group) {
   for (const record of records) {
     const undersideY = record.position.y - 1.12;
     const columnHeight = Math.max(2.2, undersideY - 0.3);
-    const pairOffset = 1.52;
-    const stationOffset = Math.max(1.05, Math.min(record.length * 0.28, 2.4));
+    const pairOffset = 1.38;
+    const stationOffset = Math.max(1.0, Math.min(record.length * 0.27, 2.25));
 
     longitudinalBeams.push({
-      position: new THREE.Vector3(record.position.x, undersideY - 0.14, record.position.z),
+      position: new THREE.Vector3(record.position.x, undersideY - 0.16, record.position.z),
       quaternion: record.quaternion.clone(),
-      scale: new THREE.Vector3(3.35, 0.48, Math.max(4.0, record.length * 0.96)),
+      scale: new THREE.Vector3(3.42, 0.5, Math.max(4.0, record.length * 0.97)),
+    });
+    underdeckFascias.push({
+      position: new THREE.Vector3(record.position.x, undersideY - 0.48, record.position.z),
+      quaternion: record.quaternion.clone(),
+      scale: new THREE.Vector3(3.5, 0.22, Math.max(4.0, record.length * 0.94)),
+    });
+    centerSpines.push({
+      position: new THREE.Vector3(record.position.x, columnHeight / 2 + 0.3, record.position.z),
+      quaternion: record.quaternion.clone(),
+      scale: new THREE.Vector3(0.72, columnHeight, 0.82),
+    });
+    pierBases.push({
+      position: new THREE.Vector3(record.position.x, 0.3, record.position.z),
+      quaternion: record.quaternion.clone(),
+      scale: new THREE.Vector3(1.45, 0.6, 1.55),
     });
 
     for (const station of [-1, 1]) {
-      const stationCenter = record.position.clone()
-        .addScaledVector(record.forward, station * stationOffset);
-
-      crossheads.push({
-        position: new THREE.Vector3(stationCenter.x, undersideY - 0.42, stationCenter.z),
+      const stationCenter = record.position.clone().addScaledVector(record.forward, station * stationOffset);
+      transferCrossheads.push({
+        position: new THREE.Vector3(stationCenter.x, undersideY - 0.43, stationCenter.z),
         quaternion: record.quaternion.clone(),
-        scale: new THREE.Vector3(3.55, 0.4, 0.66),
+        scale: new THREE.Vector3(3.62, 0.42, 0.72),
       });
       lowerTies.push({
         position: new THREE.Vector3(stationCenter.x, 1.08, stationCenter.z),
         quaternion: record.quaternion.clone(),
-        scale: new THREE.Vector3(3.0, 0.22, 0.42),
+        scale: new THREE.Vector3(2.88, 0.24, 0.46),
       });
 
       for (const side of [-1, 1]) {
@@ -107,18 +123,18 @@ export function installTerminal4FixedWalkwaySupportV44(group) {
         columns.push({
           position: new THREE.Vector3(stationCenter.x, columnHeight / 2 + 0.3, stationCenter.z).add(lateral),
           quaternion: record.quaternion.clone(),
-          scale: new THREE.Vector3(0.58, columnHeight, 0.64),
+          scale: new THREE.Vector3(0.68, columnHeight, 0.72),
         });
         pierBases.push({
           position: new THREE.Vector3(stationCenter.x, 0.3, stationCenter.z).add(lateral),
           quaternion: record.quaternion.clone(),
-          scale: new THREE.Vector3(1.18, 0.6, 1.28),
+          scale: new THREE.Vector3(1.28, 0.6, 1.38),
         });
         kneeBraces.push({
-          position: new THREE.Vector3(stationCenter.x, undersideY - 0.98, stationCenter.z)
-            .addScaledVector(record.right, side * 1.02),
+          position: new THREE.Vector3(stationCenter.x, undersideY - 1.0, stationCenter.z)
+            .addScaledVector(record.right, side * 0.98),
           quaternion: record.quaternion.clone().multiply(side < 0 ? braceLeft : braceRight),
-          scale: new THREE.Vector3(0.2, 1.58, 0.2),
+          scale: new THREE.Vector3(0.22, 1.62, 0.22),
         });
       }
     }
@@ -128,33 +144,31 @@ export function installTerminal4FixedWalkwaySupportV44(group) {
       longitudinalBraces.push({
         position: new THREE.Vector3(record.position.x, 1.72, record.position.z).add(lateral),
         quaternion: record.quaternion.clone(),
-        scale: new THREE.Vector3(0.2, 0.2, stationOffset * 2.18),
+        scale: new THREE.Vector3(0.22, 0.22, stationOffset * 2.15),
       });
     }
   }
 
   const box = new THREE.BoxGeometry(1, 1, 1);
-  const beamCount = addInstances(root, "Terminal4_FixedWalkway_LongitudinalGirders_V48", box, darkSteel, longitudinalBeams);
-  const crossheadCount = addInstances(root, "Terminal4_FixedWalkway_PortalCrossheads_V48", box, galvanized, crossheads);
-  const columnCount = addInstances(root, "Terminal4_FixedWalkway_PortalColumns_V48", box, galvanized, columns);
-  const braceCount = addInstances(root, "Terminal4_FixedWalkway_KneeBraces_V48", box, darkSteel, kneeBraces);
-  const baseCount = addInstances(root, "Terminal4_FixedWalkway_FormedPierBases_V48", box, concrete, pierBases);
-  const tieCount = addInstances(root, "Terminal4_FixedWalkway_LowerTies_V48", box, darkSteel, lowerTies);
-  const longitudinalBraceCount = addInstances(
-    root,
-    "Terminal4_FixedWalkway_LongitudinalBraces_V48",
-    box,
-    darkSteel,
-    longitudinalBraces,
-  );
+  const beamCount = addInstances(root, "Terminal4_FixedWalkway_LongitudinalGirders_V49", box, darkSteel, longitudinalBeams);
+  const fasciaCount = addInstances(root, "Terminal4_FixedWalkway_UnderdeckFascias_V49", box, galvanized, underdeckFascias);
+  const crossheadCount = addInstances(root, "Terminal4_FixedWalkway_TransferCrossheads_V49", box, galvanized, transferCrossheads);
+  const columnCount = addInstances(root, "Terminal4_FixedWalkway_LoadColumns_V49", box, galvanized, columns);
+  const centerSpineCount = addInstances(root, "Terminal4_FixedWalkway_CenterLoadSpines_V49", box, darkSteel, centerSpines);
+  const braceCount = addInstances(root, "Terminal4_FixedWalkway_KneeBraces_V49", box, darkSteel, kneeBraces);
+  const baseCount = addInstances(root, "Terminal4_FixedWalkway_FormedFoundations_V49", box, concrete, pierBases);
+  const tieCount = addInstances(root, "Terminal4_FixedWalkway_LowerTies_V49", box, darkSteel, lowerTies);
+  const longitudinalBraceCount = addInstances(root, "Terminal4_FixedWalkway_LongitudinalBraces_V49", box, darkSteel, longitudinalBraces);
 
   root.userData.authority = AUTHORITY;
   root.userData.sourceGeometryUnmoved = true;
   root.userData.sourceTransformCount = records.length;
   root.userData.portalStationsPerWalkway = 2;
   root.userData.longitudinalBeamCount = beamCount;
+  root.userData.underdeckFasciaCount = fasciaCount;
   root.userData.crossheadCount = crossheadCount;
   root.userData.columnCount = columnCount;
+  root.userData.centerLoadSpineCount = centerSpineCount;
   root.userData.braceCount = braceCount;
   root.userData.pierBaseCount = baseCount;
   root.userData.lowerTieCount = tieCount;
@@ -165,8 +179,8 @@ export function installTerminal4FixedWalkwaySupportV44(group) {
   group.userData.fixedWalkwaySupportAuthority = AUTHORITY;
   group.userData.fixedWalkwaySupportSourceTransformCount = records.length;
   group.userData.fixedWalkwaySupportPortalStationsPerWalkway = 2;
-  group.userData.fixedWalkwaySupportDetailCount = beamCount + crossheadCount + columnCount
-    + braceCount + baseCount + tieCount + longitudinalBraceCount;
+  group.userData.fixedWalkwaySupportDetailCount = beamCount + fasciaCount + crossheadCount + columnCount
+    + centerSpineCount + braceCount + baseCount + tieCount + longitudinalBraceCount;
   group.userData.fixedWalkwaySupportSourceGeometryUnmoved = true;
   return root;
 }
