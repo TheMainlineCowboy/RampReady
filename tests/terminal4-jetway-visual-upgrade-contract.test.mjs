@@ -44,20 +44,29 @@ for (const token of [
 }
 
 for (const token of [
-  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured",
+  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v3-source-textured-optimized",
   "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2",
+  "shared-geometry-single-a1-shadow-caster-no-global-edge-overlays-v3",
   "Tunnel_B",
   "Tunnel_C",
   "Cab",
   "UploadedAirportJetwayFleet",
   "addProjectedUvs",
   "cloneCorrugatedAtlasBand",
-  "addStructuralEdges",
+  "uploadedJetwayShadowCasterGateCount = shadowCasterGateCount",
+  "uploadedJetwayGlobalEdgeOverlayCount = 0",
   "proceduralJetwayStairCount = 0",
   "hiddenGeneratedObjectCount",
   "PART_COUNT = 5",
 ]) {
   if (!uploadedFleet.includes(token)) throw new Error(`Uploaded Terminal 4 jetway fleet is missing ${token}`);
+}
+for (const forbidden of [
+  "addStructuralEdges",
+  "new THREE.EdgesGeometry",
+  "new THREE.LineSegments",
+]) {
+  if (uploadedFleet.includes(forbidden)) throw new Error(`Uploaded Terminal 4 jetway fleet retained an all-gate rendering cost: ${forbidden}`);
 }
 for (const token of [
   "uploadedJetwayPlacements",
@@ -98,4 +107,4 @@ for (const forbidden of [
   }
 }
 
-console.log("Source-textured uploaded Tunnel_A/B/C/Rotunda/Cab fleet is the production jetway authority at all 58 gates; exact M1DGJETWAY surface detail is projected onto the supplied geometry, V35 remains audit-only and no replacement box/cylinder dressing is wired into runtime.");
+console.log("Optimized source-textured uploaded Tunnel_A/B/C/Rotunda/Cab fleet is the production jetway authority at all 58 gates; exact M1DGJETWAY surface detail is projected onto shared supplied geometry, only A1 casts a dynamic jetway shadow, V35 remains audit-only and no replacement box/cylinder or all-gate edge dressing is wired into runtime.");
