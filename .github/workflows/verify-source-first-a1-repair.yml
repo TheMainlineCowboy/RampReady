@@ -8,6 +8,8 @@ on:
       - 'src/components/equipment-selection.css'
       - 'src/components/inspection-compact-v30.css'
       - 'src/environment/terminal4JetwayVisualUpgradeV35.js'
+      - 'scripts/materialize-terminal4-package-first.mjs'
+      - 'scripts/verify-package-first-simulator-quality.mjs'
       - 'scripts/normalize-terminal4-source-alpha-input-v29.mjs'
       - 'scripts/prepare-a1-terminal-connector-v11.mjs'
       - 'scripts/prepare-terminal4-facade-visual-v7.mjs'
