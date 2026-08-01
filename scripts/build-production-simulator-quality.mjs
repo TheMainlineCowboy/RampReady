@@ -51,6 +51,7 @@ try {
   await runNode("scripts/prepare-kphx-nearfield-pavement-v6.mjs");
   await runNode("scripts/prepare-kphx-source-aerial-priority-v41.mjs");
   await runNode("scripts/prepare-kphx-aerial-underlay-depth-v42.mjs");
+  await runNode("scripts/prepare-kphx-source-pavement-underlay-v43.mjs");
   await runNode("scripts/prepare-terminal4-a1-legacy-block-filter.mjs");
   await runNode("scripts/prepare-terminal4-floating-roof-filter.mjs");
   await runNode("scripts/prepare-terminal4-jetway-simulator-polish.mjs");
@@ -87,4 +88,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, connected A1 to the measured T4_WALK source portal, retained package-native facade variants and exact corridor skins, made the pinned full-airport aerial the visible pavement by lowering its neutral safety underlay, kept subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly.");
+console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, connected A1 to the measured T4_WALK source portal, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly.");
