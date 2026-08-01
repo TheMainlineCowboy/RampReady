@@ -53,7 +53,7 @@ source = source
     "  group.userData.a1JetwayController = uploadedJetwayController;",
   )
   .replace(
-    '  group.userData.visualAuthority = "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered";',
+    /  group\.userData\.visualAuthority = "source-scale articulated fallback[^\n]*";/,
     '  group.userData.visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1";',
   );
 
