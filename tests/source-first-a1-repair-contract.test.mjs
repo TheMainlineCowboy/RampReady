@@ -59,7 +59,8 @@ for (const token of [
   if (!facadeSelection.includes(token)) throw new Error(`Package-native facade variation is missing ${token}`);
 }
 for (const token of [
-  'const splitterMarker = "source-package-facade-cell-variation-v31";',
+  'const authority = "source-package-facade-cell-variation-v31";',
+  "const declaration = `const splitterMarker =",
   "function splitRepeatedBGATE1Facade",
   "sourceFacadeVariationAuthority: splitterMarker",
 ]) {
