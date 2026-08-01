@@ -54,6 +54,7 @@ try {
   await runNode("scripts/prepare-inspection-preset-telemetry.mjs");
   await runNode("scripts/prepare-simulator-render-quality.mjs");
   await runNode("scripts/prepare-kphx-nearfield-pavement-v6.mjs");
+  await runNode("scripts/prepare-kphx-source-aerial-priority-v41.mjs");
   await runNode("scripts/prepare-terminal4-a1-legacy-block-filter.mjs");
   await runNode("scripts/prepare-terminal4-floating-roof-filter.mjs");
   await runNode("scripts/prepare-terminal4-jetway-simulator-polish.mjs");
@@ -90,4 +91,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the framed, windowed and grounded A1 terminal attachment, connected A1 to the measured T4_WALK source portal, removed the rejected BGATE1 overlay, selected the package-native BGATE3 closed facade variant instead of repeating open bays, removed the exact floating Terminal 4 roof slabs, retained the missing-B-concourse reconstruction and varied parked jetways, applied the source-derived nearfield pavement and Terminal 4 jetway polish, added terminal-facing A1-to-B15 inspection routing with synchronous telemetry and balanced rendering, then restored every protected committed source exactly.");
+console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, connected A1 to the measured T4_WALK source portal, retained package-native facade variants, exact corridor source skins and daylight-balanced lightmaps, made the full source aerial the visible pavement authority beneath subtle surface detail, kept 2K/4K dynamic shadows, and restored every protected committed source exactly.");
