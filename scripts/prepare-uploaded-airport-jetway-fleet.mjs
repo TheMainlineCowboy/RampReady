@@ -29,8 +29,7 @@ const placementPush = `    uploadedJetwayPlacements.push({
       connectorTowardZ,
       wallConnectorLength,
     });`;
-if (!source.includes(placementPush)) {
-  const oldPlacementPush = `    uploadedJetwayPlacements.push({
+const oldPlacementPush = `    uploadedJetwayPlacements.push({
       gate: jetway.g,
       x: jetway.x,
       z: jetway.z,
@@ -39,14 +38,12 @@ if (!source.includes(placementPush)) {
       bridgeEnd,
       cabinY,
     });`;
-  if (source.includes(oldPlacementPush)) {
-    source = source.replace(oldPlacementPush, placementPush);
-  } else {
-    const anchor = "    const highDetail = Math.hypot(jetway.x, jetway.z) <= SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.highDetailRadiusMeters;";
-    if (!source.includes(anchor)) throw new Error(`${path}: per-gate placement anchor missing`);
-    source = source.replace(anchor, `${placementPush}\n${anchor}`);
-  }
-}
+// The measured connector values are declared after the old high-detail anchor.
+// Always place the fleet record immediately after the wall measurement block.
+source = source.replace(`${placementPush}\n`, "").replace(`${oldPlacementPush}\n`, "");
+const placementAnchor = "    const sourceFacadeRecessMeters = lowerFacadeWallDistance != null && terminalWallDistance != null";
+if (!source.includes(placementAnchor)) throw new Error(`${path}: measured wall placement anchor missing`);
+source = source.replace(placementAnchor, `${placementPush}\n\n${placementAnchor}`);
 
 const installLine = "  const uploadedJetwayController = installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements);";
 if (!source.includes(installLine)) {
@@ -96,6 +93,9 @@ for (const token of [
 ]) {
   if (!source.includes(token)) throw new Error(`${path}: uploaded airport jetway integration missing ${token}`);
 }
+if (source.indexOf(placementPush) < source.indexOf("const connectorTowardX")) {
+  throw new Error(`${path}: uploaded placement is created before measured connector values`);
+}
 
 fs.writeFileSync(path, source, "utf8");
 
@@ -120,4 +120,4 @@ for (const token of [connectorImport, connectorCall, connectorEvidence]) {
 }
 fs.writeFileSync(fleetPath, fleet, "utf8");
 
-console.log("Prepared all 58 Terminal 4 gate transforms for the uploaded Tunnel_A/Tunnel_B/Tunnel_C/Rotunda/Cab jetway replacement with measured authored-wall connectors. Airport placement remains unchanged; the former fallback authority is retained only as superseded audit text.");
+console.log("Prepared all 58 Terminal 4 gate transforms for the uploaded Tunnel_A/Tunnel_B/Tunnel_C/Rotunda/Cab jetway replacement with measured authored-wall connectors. Placement records are created only after wall measurements; airport placement remains unchanged.");
