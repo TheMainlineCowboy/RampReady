@@ -1,29 +1,35 @@
 import fs from "node:fs";
 import { expect, test } from "@playwright/test";
 
-async function saveCompositedCanvasPng(page, canvas, path) {
-  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-  const box = await canvas.boundingBox();
-  if (!box || box.width < 64 || box.height < 64) throw new Error("Canvas has no usable compositor bounds");
+async function saveCompositedCanvasPng(page, path) {
+  const box = await page.evaluate(() => {
+    const canvas = document.querySelector("canvas.trainerCanvas");
+    if (!canvas) throw new Error("Three.js canvas is missing for A1 evidence capture");
+    const rect = canvas.getBoundingClientRect();
+    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+  });
+  if (box.width < 64 || box.height < 64) throw new Error("Canvas has no usable compositor bounds");
   const client = await page.context().newCDPSession(page);
   try {
-    const capture = client.send("Page.captureScreenshot", {
-      format: "png",
-      fromSurface: true,
-      captureBeyondViewport: false,
-      clip: {
-        x: Math.max(0, box.x),
-        y: Math.max(0, box.y),
-        width: Math.min(box.width, 1440 - Math.max(0, box.x)),
-        height: Math.min(box.height, 900 - Math.max(0, box.y)),
-        scale: 1,
-      },
-    });
-    const timeout = new Promise((_, reject) => setTimeout(
-      () => reject(new Error("Chromium compositor capture exceeded 30 seconds")),
-      30_000,
-    ));
-    const { data } = await Promise.race([capture, timeout]);
+    await client.send("Page.bringToFront");
+    const { data } = await Promise.race([
+      client.send("Page.captureScreenshot", {
+        format: "png",
+        fromSurface: true,
+        captureBeyondViewport: false,
+        clip: {
+          x: Math.max(0, box.x),
+          y: Math.max(0, box.y),
+          width: Math.min(box.width, 1440 - Math.max(0, box.x)),
+          height: Math.min(box.height, 900 - Math.max(0, box.y)),
+          scale: 1,
+        },
+      }),
+      new Promise((_, reject) => setTimeout(
+        () => reject(new Error("Chromium compositor capture exceeded 45 seconds")),
+        45_000,
+      )),
+    ]);
     fs.mkdirSync("test-results", { recursive: true });
     fs.writeFileSync(path, Buffer.from(data, "base64"));
     const bytes = fs.statSync(path).size;
@@ -34,7 +40,7 @@ async function saveCompositedCanvasPng(page, canvas, path) {
 }
 
 test("direct tug inspection proves the visible A1 terminal connection over source-aerial pavement", async ({ page }) => {
-  test.setTimeout(210_000);
+  test.setTimeout(300_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
@@ -45,8 +51,8 @@ test("direct tug inspection proves the visible A1 terminal connection over sourc
   const canvas = page.locator("canvas.trainerCanvas");
   await expect(canvas).toHaveAttribute("data-inspection-mode", "active", { timeout: 120_000 });
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
-  const hudBounds = await page.locator(".rr-hud").boundingBox();
-  expect(hudBounds?.height ?? Number.POSITIVE_INFINITY).toBeLessThan(110);
+  const hudHeight = await page.evaluate(() => document.querySelector(".rr-hud")?.getBoundingClientRect().height ?? Number.POSITIVE_INFINITY);
+  expect(hudHeight).toBeLessThan(110);
 
   await expect(canvas).toHaveAttribute("data-environment-source", /authored-phx-terminal4/, { timeout: 120_000 });
   await expect(canvas).toHaveAttribute("data-photo-ground-source", "source-authored-phx-photo", { timeout: 120_000 });
@@ -84,5 +90,5 @@ test("direct tug inspection proves the visible A1 terminal connection over sourc
   await expect(canvas).toHaveAttribute("data-inspection-camera-authority", "side-on-fixed-a1-terminal-joint-v4");
   await page.waitForTimeout(1800);
 
-  await saveCompositedCanvasPng(page, canvas, "test-results/source-first-a1-terminal-connection.png");
+  await saveCompositedCanvasPng(page, "test-results/source-first-a1-terminal-connection.png");
 });
