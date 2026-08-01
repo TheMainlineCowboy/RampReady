@@ -28,6 +28,18 @@ if (source.includes(extendedDestructuring)) {
 }
 
 if (normalized) fs.writeFileSync(path, source, "utf8");
-console.log(normalized
-  ? "Normalized the prepared Terminal 4 facade accounting before the legacy source-alpha idempotence pass; v27 will restore closed-bay accounting during runtime preparation."
-  : "Terminal 4 source-alpha input already has a compatible accounting shape.");
+
+const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
+let jetways = fs.readFileSync(jetwayPath, "utf8");
+let jetwayNormalized = false;
+const upgradedAuthority = '  group.userData.visualAuthority = "source-scale articulated fallback with full-terminal structural-detail upgrade while original AIR_Jetway01 mesh is recovered";';
+const legacyAuthority = '  group.userData.visualAuthority = "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered";';
+if (jetways.includes(upgradedAuthority)) {
+  jetways = jetways.replace(upgradedAuthority, legacyAuthority);
+  jetwayNormalized = true;
+}
+if (jetwayNormalized) fs.writeFileSync(jetwayPath, jetways, "utf8");
+
+console.log(normalized || jetwayNormalized
+  ? "Normalized prepared Terminal 4 facade accounting and upgraded jetway authority before legacy idempotence passes; v27-v35 restore the final runtime state."
+  : "Terminal 4 source-alpha and jetway inputs already have compatible idempotence shapes.");
