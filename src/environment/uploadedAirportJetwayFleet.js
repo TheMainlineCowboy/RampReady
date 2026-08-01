@@ -1,6 +1,8 @@
 const PART_COUNT = 5;
 const MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1";
-const HIDE_REPLACED = /^(?:AIR_Jetway01_|Terminal4_FixedWalkway|Terminal4_LowerFacadeInfillPanels|Terminal4_ClosedServiceDoors|Terminal4_FacadeVentGrilles)/i;
+// Replace only the movable fallback jetway. The source-positioned fixed walkway
+// and wall collar are the physical terminal connection and must remain visible.
+const HIDE_REPLACED = /^(?:AIR_Jetway01_(?!WallCollars)|Terminal4_LowerFacadeInfillPanels|Terminal4_ClosedServiceDoors|Terminal4_FacadeVentGrilles)/i;
 
 function clamp(value, minimum, maximum) {
   return Math.max(minimum, Math.min(maximum, Number(value) || 0));
@@ -89,7 +91,26 @@ function buildPrototype(THREE, payload) {
     depthWrite: false,
     side: THREE.DoubleSide,
   });
-  const materials = metadata.materials.map((name) => /glass/i.test(name) ? glass : body);
+  const darkMetal = new THREE.MeshStandardMaterial({
+    name: "Uploaded airport jetway structure",
+    color: 0x555b5f,
+    roughness: 0.58,
+    metalness: 0.48,
+    side: THREE.DoubleSide,
+  });
+  const rubber = new THREE.MeshStandardMaterial({
+    name: "Uploaded airport jetway rubber",
+    color: 0x202225,
+    roughness: 0.94,
+    metalness: 0.01,
+    side: THREE.DoubleSide,
+  });
+  const materials = metadata.materials.map((name) => {
+    if (/glass|window/i.test(name)) return glass;
+    if (/rubber|tire|wheel|bellows/i.test(name)) return rubber;
+    if (/metal|frame|rail|support|column|bogie|stair/i.test(name)) return darkMetal;
+    return body;
+  });
   const meshes = metadata.meshes.map((meshDefinition) => {
     const root = new THREE.Group();
     root.name = meshDefinition.name;
@@ -218,6 +239,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements) {
       group.userData.uploadedJetwayLoadState = "ready";
       group.userData.uploadedJetwayCount = placements.length;
       group.userData.uploadedJetwayHiddenGeneratedObjectCount = hiddenGeneratedObjectCount;
+      group.userData.uploadedJetwayTerminalConnectorPreserved = true;
       group.userData.sourceGeometryMode = MODEL_AUTHORITY;
       group.userData.visualAuthority = MODEL_AUTHORITY;
       group.userData.requiresOriginalSourceMesh = false;
