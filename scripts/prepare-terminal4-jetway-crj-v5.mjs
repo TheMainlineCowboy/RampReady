@@ -114,7 +114,10 @@ replaceAny(
     '  group.userData.visualAuthority = "CRJ700-scaled-reconstruction-of-referenced-fsx-air-jetway01-library-object";',
   ],
   '  group.userData.visualAuthority = "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered";',
-  "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered",
+  [
+    "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered",
+    "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1",
+  ],
   "honest visual authority",
 );
 
@@ -143,4 +146,4 @@ for (const token of [
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
-console.log("Prepared Terminal 4 jetways idempotently: source scale retained, source-only facade authority preserved when active, and articulation requirements exposed while the original AIR_Jetway01 mesh is recovered.");
+console.log("Prepared Terminal 4 jetways idempotently: source scale retained, source-only facade authority preserved, and either the legacy fallback or uploaded Tunnel_A/B/C/Rotunda/Cab model remains authoritative.");
