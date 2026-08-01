@@ -1,6 +1,6 @@
 import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";
 
-const READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v3";
+const READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v4-source-textured";
 const EXPECTED_GATE_COUNT = 58;
 const LOAD_TIMEOUT_MS = 120_000;
 
@@ -27,16 +27,31 @@ function waitForFleet(group, placements) {
         );
         const modelCount = loadedModelNames.size;
         const missingModels = [...expectedModelNames].filter((name) => !loadedModelNames.has(name));
-        if (count !== EXPECTED_GATE_COUNT || connectorCount !== EXPECTED_GATE_COUNT || modelCount !== EXPECTED_GATE_COUNT) {
+        const materialAuthority = group.userData.uploadedJetwayMaterialAuthority || "missing";
+        const structuralEdgeMeshCount = Number(group.userData.uploadedJetwayStructuralEdgeMeshCount || 0);
+        if (
+          count !== EXPECTED_GATE_COUNT
+          || connectorCount !== EXPECTED_GATE_COUNT
+          || modelCount !== EXPECTED_GATE_COUNT
+          || !materialAuthority.includes("exact-M1DGJETWAY")
+          || structuralEdgeMeshCount < 5
+        ) {
           reject(new Error(
-            `Uploaded airport jetway fleet reported ready with ${count} placements, ${connectorCount} connectors and ${modelCount} models${missingModels.length ? `; missing ${missingModels.join(", ")}` : ""}`,
+            `Uploaded airport jetway fleet reported ready with ${count} placements, ${connectorCount} connectors, ${modelCount} models, material ${materialAuthority}, and ${structuralEdgeMeshCount} edged meshes${missingModels.length ? `; missing ${missingModels.join(", ")}` : ""}`,
           ));
           return;
         }
         group.userData.uploadedJetwayReadyAuthority = READY_AUTHORITY;
         group.userData.uploadedJetwayVerifiedModelCount = modelCount;
         group.userData.uploadedJetwayVerifiedGateNames = [...loadedModelNames].sort().join(",");
-        resolve({ count, connectorCount, modelCount, authority: READY_AUTHORITY });
+        resolve({
+          count,
+          connectorCount,
+          modelCount,
+          materialAuthority,
+          structuralEdgeMeshCount,
+          authority: READY_AUTHORITY,
+        });
         return;
       }
       if (performance.now() - startedAt >= LOAD_TIMEOUT_MS) {
@@ -51,11 +66,11 @@ function waitForFleet(group, placements) {
   });
 }
 
-export function installUploadedAirportJetwayFleet(THREE, group, placements) {
-  const controller = installUploadedAirportJetwayFleetBase(THREE, group, placements);
+export function installUploadedAirportJetwayFleet(THREE, group, placements, sourceTextures = {}) {
+  const controller = installUploadedAirportJetwayFleetBase(THREE, group, placements, sourceTextures);
   const ready = waitForFleet(group, placements);
   group.userData.uploadedJetwayReady = ready;
-  group.userData.uploadedJetwayReadyAuthority = "waiting-for-complete-58-gate-fleet";
+  group.userData.uploadedJetwayReadyAuthority = "waiting-for-complete-58-gate-source-textured-fleet";
   controller.ready = ready;
   return controller;
 }
