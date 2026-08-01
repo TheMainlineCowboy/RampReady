@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-const AUTHORITY = "exact-terminal4-T4_WALK-source-skin-and-roof-v38";
+const AUTHORITY = "exact-terminal4-T4_WALK-translucent-backing-and-roof-v40";
 
 function materialReference(material) {
   return `${material?.userData?.diffuseTexture || material?.name || ""}`.toUpperCase();
@@ -24,7 +24,11 @@ function findSourceMaterial(terminal, references) {
   return match;
 }
 
-function cloneExactMaterial(source, name, { roughness, metalness, emissiveIntensity, roofCrop = false }) {
+function cloneExactMaterial(
+  source,
+  name,
+  { roughness, metalness, emissiveIntensity, roofCrop = false, opacity = 1 },
+) {
   if (!source?.map) throw new Error(`Terminal 4 fixed walkway source skin is missing mapped material ${name}`);
   const material = source.clone();
   material.name = name;
@@ -32,10 +36,10 @@ function cloneExactMaterial(source, name, { roughness, metalness, emissiveIntens
   material.roughness = roughness;
   material.metalness = metalness;
   material.side = THREE.DoubleSide;
-  material.transparent = false;
-  material.opacity = 1;
+  material.transparent = opacity < 0.999;
+  material.opacity = opacity;
   material.alphaTest = 0;
-  material.depthWrite = true;
+  material.depthWrite = opacity >= 0.999;
   material.dithering = true;
   material.map = source.map.clone();
   material.map.name = `${name} exact diffuse`;
@@ -63,6 +67,7 @@ function cloneExactMaterial(source, name, { roughness, metalness, emissiveIntens
     fixedWalkwaySourceSkinAuthority: AUTHORITY,
     exactTerminal4SourceTexture: materialReference(source),
     sourceGeometryUnmoved: true,
+    translucentBehindGlazing: opacity < 0.999,
   };
   material.needsUpdate = true;
   return material;
@@ -88,7 +93,7 @@ function extractRecords(source) {
   return records;
 }
 
-function addInstancedBoxes(parent, name, material, records) {
+function addInstancedBoxes(parent, name, material, records, castShadow = true) {
   if (!records.length) return null;
   const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), material, records.length);
   mesh.name = name;
@@ -101,7 +106,7 @@ function addInstancedBoxes(parent, name, material, records) {
     mesh.setMatrixAt(index, dummy.matrix);
   }
   mesh.instanceMatrix.needsUpdate = true;
-  mesh.castShadow = true;
+  mesh.castShadow = castShadow;
   mesh.receiveShadow = true;
   mesh.frustumCulled = true;
   parent.add(mesh);
@@ -111,7 +116,7 @@ function addInstancedBoxes(parent, name, material, records) {
 export function installTerminal4FixedWalkwaySourceSkinV38(group, terminal) {
   if (!group?.isGroup) throw new Error("Terminal 4 fixed walkway source skin requires the source jetway group");
   if (!terminal?.isObject3D) throw new Error("Terminal 4 fixed walkway source skin requires the authored terminal");
-  const existing = group.getObjectByName("Terminal4_FixedWalkway_SourceSkin_V38");
+  const existing = group.getObjectByName("Terminal4_FixedWalkway_SourceSkin_V40");
   if (existing) return existing;
 
   const fixedWalkway = group.getObjectByName("Terminal4_GlassFixedWalkways_V20");
@@ -131,17 +136,17 @@ export function installTerminal4FixedWalkwaySourceSkinV38(group, terminal) {
 
   const wallMaterial = cloneExactMaterial(
     wallSource,
-    "Terminal 4 fixed walkway exact T4_WALK side skin V38",
-    { roughness: 0.5, metalness: 0.04, emissiveIntensity: 0.055 },
+    "Terminal 4 fixed walkway exact T4_WALK translucent backing V40",
+    { roughness: 0.56, metalness: 0.025, emissiveIntensity: 0.02, opacity: 0.34 },
   );
   const roofMaterial = cloneExactMaterial(
     roofSource,
-    "Terminal 4 fixed walkway exact T4_WALK2 roof skin V38",
-    { roughness: 0.78, metalness: 0.025, emissiveIntensity: 0.035, roofCrop: true },
+    "Terminal 4 fixed walkway exact T4_WALK2 roof skin V40",
+    { roughness: 0.78, metalness: 0.025, emissiveIntensity: 0.025, roofCrop: true },
   );
 
   const root = new THREE.Group();
-  root.name = "Terminal4_FixedWalkway_SourceSkin_V38";
+  root.name = "Terminal4_FixedWalkway_SourceSkin_V40";
   const sides = [];
   const roofs = [];
   for (const record of records) {
@@ -149,10 +154,10 @@ export function installTerminal4FixedWalkwaySourceSkinV38(group, terminal) {
     for (const side of [-1, 1]) {
       sides.push({
         position: record.position.clone()
-          .addScaledVector(record.right, side * 1.225)
+          .addScaledVector(record.right, side * 1.145)
           .add(new THREE.Vector3(0, 0.08, 0)),
         quaternion: record.quaternion,
-        scale: new THREE.Vector3(0.028, 2.08, length),
+        scale: new THREE.Vector3(0.018, 1.92, length),
       });
     }
     roofs.push({
@@ -162,8 +167,20 @@ export function installTerminal4FixedWalkwaySourceSkinV38(group, terminal) {
     });
   }
 
-  const sideMesh = addInstancedBoxes(root, "Terminal4_FixedWalkway_ExactSourceSideSkins_V38", wallMaterial, sides);
-  const roofMesh = addInstancedBoxes(root, "Terminal4_FixedWalkway_ExactSourceRoofSkins_V38", roofMaterial, roofs);
+  const sideMesh = addInstancedBoxes(
+    root,
+    "Terminal4_FixedWalkway_ExactSourceBackings_V40",
+    wallMaterial,
+    sides,
+    false,
+  );
+  const roofMesh = addInstancedBoxes(
+    root,
+    "Terminal4_FixedWalkway_ExactSourceRoofSkins_V40",
+    roofMaterial,
+    roofs,
+    true,
+  );
   root.userData.authority = AUTHORITY;
   root.userData.walkwayCount = records.length;
   root.userData.sideSkinCount = sideMesh?.count ?? 0;
@@ -171,6 +188,7 @@ export function installTerminal4FixedWalkwaySourceSkinV38(group, terminal) {
   root.userData.exactWallTexture = materialReference(wallSource);
   root.userData.exactRoofTexture = materialReference(roofSource);
   root.userData.sourceGeometryUnmoved = true;
+  root.userData.translucentBackingBehindGlazing = true;
   group.add(root);
 
   group.userData.fixedWalkwaySourceSkinAuthority = AUTHORITY;
@@ -178,5 +196,6 @@ export function installTerminal4FixedWalkwaySourceSkinV38(group, terminal) {
   group.userData.fixedWalkwaySourceRoofCount = root.userData.roofSkinCount;
   group.userData.fixedWalkwayExactWallTexture = root.userData.exactWallTexture;
   group.userData.fixedWalkwayExactRoofTexture = root.userData.exactRoofTexture;
+  group.userData.fixedWalkwayTranslucentBacking = true;
   return root;
 }
