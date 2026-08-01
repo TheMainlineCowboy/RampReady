@@ -1,5 +1,7 @@
 import fs from "node:fs";
 
+await import("./prepare-full-airport-inspection-route.mjs");
+
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(path, "utf8");
 
@@ -62,4 +64,4 @@ if ((source.match(/cameraTarget:\s*Object\.freeze/g) || []).length !== 1) {
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared an idempotent wide diagonal A1 terminal-connection camera that frames the authored wall, fixed connector, rotunda and uploaded bridge without clipping into the model.");
+console.log("Prepared the full-airport inspection route and normalized an idempotent wide diagonal A1 terminal-connection camera that frames the authored wall, fixed connector, rotunda and uploaded bridge without clipping into the model.");
