@@ -90,9 +90,21 @@ for (const token of [
   "PORTAL_OVERLAP_METERS = 0.8",
   "A1_T4_WALK_SourceTexturedOverlapShell_V37",
   "A1_T4_WALK_PortalFrame_V37",
+  "findExactRecoveredJetwayShellMaterial",
+  'exactTexture === "M1DGJETWAY.BMP"',
+  'exactAuthority === "exact-recovered-original-freeware-atlas-region"',
+  "A1 terminal portal seal could not find a mapped exact M1DGJETWAY shell material",
   "usesExactRecoveredJetwayTexture",
+  "a1TerminalPortalSealTextureIdentity",
 ]) {
   if (!portalSeal.includes(token)) throw new Error(`A1 visible portal seal is missing ${token}`);
+}
+for (const forbidden of [
+  'getObjectByName("AIR_Jetway01_WallCollars")',
+  'getObjectByName("AIR_Jetway01_FixedTerminalWalkways_V13")',
+  "Boolean(shellMaterial.map);",
+]) {
+  if (portalSeal.includes(forbidden)) throw new Error(`A1 portal seal still permits an unverified material shortcut: ${forbidden}`);
 }
 for (const token of [
   'installA1TerminalPortalSealV37 } from "./a1TerminalPortalSealV37.js"',
@@ -139,4 +151,4 @@ if (connector.includes("const exactWallX = -3.55299146")) {
   throw new Error("The detached diagonal BGATE A1 target remains");
 }
 
-console.log("Source-first A1, visible exact-source portal seal, varied safe package facade and direct compact tug inspection contracts verified.");
+console.log("Source-first A1, mapped exact-source portal seal, varied safe package facade and direct compact tug inspection contracts verified.");
