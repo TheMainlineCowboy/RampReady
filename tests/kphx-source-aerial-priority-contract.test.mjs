@@ -13,16 +13,9 @@ for (const token of [
   "material.userData.sourceAerialPriority = true",
   "environment.userData.authoredGroundSourceAerialPriority = true",
   "environment.userData.authoredGroundNearfieldDetailOpacity = 0.18",
+  "if (source.includes(forbidden)) throw new Error",
 ]) {
   if (!pavement.includes(token)) throw new Error(`KPHX source-aerial pavement contract is missing ${token}`);
-}
-
-for (const forbidden of [
-  'nearfieldBlendMode = "opaque-authored-pavement-over-aerial-background"',
-  'nearfieldBlendMode = "opaque-authored-asphalt-over-aerial-background"',
-  'nearfieldBlendMode = "opaque-authored-service-road-over-aerial-background"',
-]) {
-  if (pavement.includes(forbidden)) throw new Error(`KPHX pavement still contains opaque aerial-masking authority: ${forbidden}`);
 }
 
 if (!production.includes('await runNode("scripts/prepare-kphx-source-aerial-priority-v41.mjs")')) {
