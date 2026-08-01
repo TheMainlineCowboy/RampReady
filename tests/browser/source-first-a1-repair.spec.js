@@ -30,7 +30,7 @@ async function saveCompositedCanvasPng(page, canvas, path) {
   if (bytes < 30_000) throw new Error(`Composited A1 evidence is suspiciously small: ${bytes} bytes`);
 }
 
-test("equipment selection exposes a direct tug inspection launch", async ({ page }) => {
+test("equipment selection exposes a direct compact tug inspection launch", async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
@@ -40,9 +40,11 @@ test("equipment selection exposes a direct tug inspection launch", async ({ page
   const canvas = page.locator("canvas.trainerCanvas");
   await expect(canvas).toHaveAttribute("data-inspection-mode", "active", { timeout: 120_000 });
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
+  const hudBounds = await page.locator(".rr-hud").boundingBox();
+  expect(hudBounds?.height ?? Number.POSITIVE_INFINITY).toBeLessThan(110);
 });
 
-test("A1 uses the source walkway and package-native closed facade", async ({ page }) => {
+test("A1 uses the source walkway and varied package-native facade cells", async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
@@ -52,5 +54,14 @@ test("A1 uses the source walkway and package-native closed facade", async ({ pag
   await expect(canvas).toHaveAttribute("data-terminal4-facade-infill-count", "0", { timeout: 120_000 });
   await expect(canvas).toHaveAttribute("data-terminal4-a1-jetway-wall-distance", /9\.(1|2)/, { timeout: 120_000 });
   await expect(canvas).toHaveAttribute("data-terminal4-source-closed-bay-material-count", /^[1-9]\d*$/, { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-terminal4-source-facade-variant-material-count", /^[4-9]\d*$/, { timeout: 120_000 });
+  const variation = await canvas.evaluate((element) => ({
+    open: Number(element.dataset.terminal4SourceFacadeOpenCellCount || 0),
+    closed: Number(element.dataset.terminal4SourceFacadeClosedCellCount || 0),
+    variants: Number(element.dataset.terminal4SourceFacadeVariantMaterialCount || 0),
+  }));
+  expect(variation.open).toBeGreaterThan(0);
+  expect(variation.closed).toBeGreaterThan(variation.open * 3);
+  expect(variation.variants).toBeGreaterThanOrEqual(4);
   await saveCompositedCanvasPng(page, canvas, "test-results/source-first-a1-attached.png");
 });
