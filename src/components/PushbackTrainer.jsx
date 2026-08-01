@@ -59,22 +59,6 @@ export default function PushbackTrainer() {
   }, [selectedEquipmentId]);
 
   useEffect(() => {
-    if (!activeEquipmentId || launchMode !== "inspection") return undefined;
-    let attempts = 0;
-    const timer = window.setInterval(() => {
-      attempts += 1;
-      const inspectionButton = document.querySelector(".rr-inspection-toggle");
-      if (inspectionButton instanceof HTMLButtonElement) {
-        if (inspectionButton.getAttribute("aria-pressed") !== "true") inspectionButton.click();
-        window.clearInterval(timer);
-      } else if (attempts >= 120) {
-        window.clearInterval(timer);
-      }
-    }, 50);
-    return () => window.clearInterval(timer);
-  }, [activeEquipmentId, launchMode]);
-
-  useEffect(() => {
     if (!gyroEnabled || !activeEquipmentId) return undefined;
     const handleOrientation = (event) => {
       if (event.alpha == null || event.beta == null || event.gamma == null) return;
@@ -166,6 +150,7 @@ export default function PushbackTrainer() {
     <RampReadyLektroPrototypeTrainer
       key={`${activeEquipmentId}-${launchMode}`}
       equipmentId={activeEquipmentId}
+      initialInspectionMode={launchMode === "inspection"}
       onChangeEquipment={changeEquipment}
       gyroAvailable={gyroAvailable}
       gyroEnabled={gyroEnabled}
