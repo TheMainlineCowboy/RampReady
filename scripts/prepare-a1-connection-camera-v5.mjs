@@ -3,38 +3,63 @@ import fs from "node:fs";
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(path, "utf8");
 
-const replacements = [
-  [
-    "cameraPosition: Object.freeze([-25.59, 7.4, 5.5])",
-    "cameraPosition: Object.freeze([-12.0, 10.5, 28.0])",
-  ],
-  [
-    "cameraTarget: Object.freeze([-25.59, 4.2, -16.15])",
-    "cameraTarget: Object.freeze([-27.5, 4.1, -16.15])",
-  ],
-  [
-    "source-gate-apron-presets-with-side-on-a1-connection-a1-a14-b14-b15-v4",
-    "source-gate-apron-presets-with-wide-diagonal-a1-connection-a1-a14-b14-b15-v5",
-  ],
-  [
-    "side-on-fixed-a1-terminal-joint-v4",
-    "wide-diagonal-a1-terminal-joint-v5",
-  ],
-];
-
-for (const [before, after] of replacements) {
-  if (source.includes(before)) source = source.split(before).join(after);
-  if (!source.includes(after)) throw new Error(`${path}: missing A1 connection camera token ${after}`);
+const presetStartToken = '  a1Connection: Object.freeze({';
+const presetEndToken = '  a14: Object.freeze({';
+const presetStart = source.indexOf(presetStartToken);
+const presetEnd = source.indexOf(presetEndToken, presetStart + presetStartToken.length);
+if (presetStart < 0 || presetEnd < 0 || presetEnd <= presetStart) {
+  throw new Error(`${path}: generated A1 connection inspection preset block is missing`);
 }
 
+let presetBlock = source.slice(presetStart, presetEnd);
+const cameraPositionLine = '    cameraPosition: Object.freeze([-12.0, 10.5, 28.0]),';
+const cameraTargetLine = '    cameraTarget: Object.freeze([-27.5, 4.1, -16.15]),';
+
+if (/\s+cameraPosition:\s*Object\.freeze\(\[[^\]]+\]\),?/.test(presetBlock)) {
+  presetBlock = presetBlock.replace(
+    /\s+cameraPosition:\s*Object\.freeze\(\[[^\]]+\]\),?/,
+    `\n${cameraPositionLine}`,
+  );
+} else {
+  const close = presetBlock.lastIndexOf('  }),');
+  if (close < 0) throw new Error(`${path}: A1 connection preset closing anchor is missing`);
+  presetBlock = `${presetBlock.slice(0, close)}${cameraPositionLine}\n${presetBlock.slice(close)}`;
+}
+
+if (/\s+cameraTarget:\s*Object\.freeze\(\[[^\]]+\]\),?/.test(presetBlock)) {
+  presetBlock = presetBlock.replace(
+    /\s+cameraTarget:\s*Object\.freeze\(\[[^\]]+\]\),?/,
+    `\n${cameraTargetLine}`,
+  );
+} else {
+  const positionEnd = presetBlock.indexOf(cameraPositionLine) + cameraPositionLine.length;
+  presetBlock = `${presetBlock.slice(0, positionEnd)}\n${cameraTargetLine}${presetBlock.slice(positionEnd)}`;
+}
+
+source = `${source.slice(0, presetStart)}${presetBlock}${source.slice(presetEnd)}`;
+source = source.replace(
+  /source-gate-apron-presets-with-[^"\n]+-a1-a14-b14-b15-v\d+/g,
+  'source-gate-apron-presets-with-wide-diagonal-a1-connection-a1-a14-b14-b15-v5',
+);
+source = source.replace(
+  /(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+/g,
+  'wide-diagonal-a1-terminal-joint-v5',
+);
+
 for (const token of [
-  "cameraPosition: Object.freeze([-12.0, 10.5, 28.0])",
-  "cameraTarget: Object.freeze([-27.5, 4.1, -16.15])",
-  "source-gate-apron-presets-with-wide-diagonal-a1-connection-a1-a14-b14-b15-v5",
-  "wide-diagonal-a1-terminal-joint-v5",
+  cameraPositionLine,
+  cameraTargetLine,
+  'source-gate-apron-presets-with-wide-diagonal-a1-connection-a1-a14-b14-b15-v5',
+  'wide-diagonal-a1-terminal-joint-v5',
 ]) {
   if (!source.includes(token)) throw new Error(`${path}: wide A1 camera preparation is missing ${token}`);
 }
+if ((source.match(/cameraPosition:\s*Object\.freeze/g) || []).length !== 1) {
+  throw new Error(`${path}: A1 inspection route must expose exactly one fixed camera position`);
+}
+if ((source.match(/cameraTarget:\s*Object\.freeze/g) || []).length !== 1) {
+  throw new Error(`${path}: A1 inspection route must expose exactly one fixed camera target`);
+}
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared a wide diagonal A1 terminal-connection camera that frames the authored wall, fixed connector, rotunda and uploaded bridge without clipping into the model.");
+console.log("Prepared an idempotent wide diagonal A1 terminal-connection camera that frames the authored wall, fixed connector, rotunda and uploaded bridge without clipping into the model.");
