@@ -76,9 +76,10 @@ export function installA1TerminalPortalSealV37(jetwayGroup) {
   const existing = jetwayGroup.getObjectByName("A1_T4_WALK_TerminalPortalSeal_V37");
   if (existing) return existing;
 
-  const wallCollars = jetwayGroup.getObjectByName("AIR_Jetway01_WallCollars");
+  const wallCollars = jetwayGroup.getObjectByName("AIR_Jetway01_WallCollars")
+    || jetwayGroup.getObjectByName("AIR_Jetway01_FixedTerminalWalkways_V13");
   const sourceMaterial = Array.isArray(wallCollars?.material) ? wallCollars.material[0] : wallCollars?.material;
-  if (!sourceMaterial) throw new Error("A1 terminal portal seal could not find the exact-source wall-collar material");
+  if (!sourceMaterial) throw new Error("A1 terminal portal seal could not find the exact-source fixed-corridor material");
 
   const root = new THREE.Group();
   root.name = "A1_T4_WALK_TerminalPortalSeal_V37";
