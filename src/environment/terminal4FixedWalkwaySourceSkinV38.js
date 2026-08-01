@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-const AUTHORITY = "exact-terminal4-T4_WALK-translucent-backing-and-roof-v40";
+const AUTHORITY = "exact-terminal4-T4_WALK-package-mesh-material-authority-v53";
 
 function materialReference(material) {
   return `${material?.userData?.diffuseTexture || material?.name || ""}`.toUpperCase();
@@ -24,40 +24,29 @@ function findSourceMaterial(terminal, references) {
   return match;
 }
 
-function cloneExactMaterial(
-  source,
-  name,
-  { roughness, metalness, emissiveIntensity, roofCrop = false, opacity = 1 },
-) {
-  if (!source?.map) throw new Error(`Terminal 4 fixed walkway source skin is missing mapped material ${name}`);
+function cloneExactMaterial(source, name) {
+  if (!source?.map) throw new Error(`Terminal 4 fixed walkway source material is missing ${name}`);
   const material = source.clone();
   material.name = name;
   material.color?.setHex(0xffffff);
-  material.roughness = roughness;
-  material.metalness = metalness;
+  material.roughness = 0.7;
+  material.metalness = 0.025;
   material.side = THREE.DoubleSide;
-  material.transparent = opacity < 0.999;
-  material.opacity = opacity;
-  material.alphaTest = 0;
-  material.depthWrite = opacity >= 0.999;
+  material.transparent = false;
+  material.opacity = 1;
+  material.depthWrite = true;
   material.dithering = true;
   material.map = source.map.clone();
   material.map.name = `${name} exact diffuse`;
   material.map.wrapS = THREE.RepeatWrapping;
   material.map.wrapT = THREE.ClampToEdgeWrapping;
-  material.map.offset.set(0, roofCrop ? 0.72 : 0);
-  material.map.repeat.set(1, roofCrop ? 0.26 : 1);
   material.map.needsUpdate = true;
   if (source.emissiveMap) {
     material.emissiveMap = source.emissiveMap.clone();
     material.emissiveMap.name = `${name} exact lightmap`;
-    material.emissiveMap.wrapS = THREE.RepeatWrapping;
-    material.emissiveMap.wrapT = THREE.ClampToEdgeWrapping;
-    material.emissiveMap.offset.copy(material.map.offset);
-    material.emissiveMap.repeat.copy(material.map.repeat);
     material.emissiveMap.needsUpdate = true;
     material.emissive?.setHex(0xffffff);
-    material.emissiveIntensity = emissiveIntensity;
+    material.emissiveIntensity = 0.02;
   } else {
     material.emissive?.setHex(0x000000);
     material.emissiveIntensity = 0;
@@ -67,135 +56,56 @@ function cloneExactMaterial(
     fixedWalkwaySourceSkinAuthority: AUTHORITY,
     exactTerminal4SourceTexture: materialReference(source),
     sourceGeometryUnmoved: true,
-    translucentBehindGlazing: opacity < 0.999,
   };
   material.needsUpdate = true;
   return material;
 }
 
-function extractRecords(source) {
-  if (!source?.isInstancedMesh || source.count < 1) return [];
-  const records = [];
-  const matrix = new THREE.Matrix4();
-  const position = new THREE.Vector3();
-  const quaternion = new THREE.Quaternion();
-  const scale = new THREE.Vector3();
-  for (let instance = 0; instance < source.count; instance += 1) {
-    source.getMatrixAt(instance, matrix);
-    matrix.decompose(position, quaternion, scale);
-    records.push({
-      position: position.clone(),
-      quaternion: quaternion.clone(),
-      right: new THREE.Vector3(1, 0, 0).applyQuaternion(quaternion).normalize(),
-      length: Math.abs(scale.z),
-    });
-  }
-  return records;
-}
-
-function addInstancedBoxes(parent, name, material, records, castShadow = true) {
-  if (!records.length) return null;
-  const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), material, records.length);
-  mesh.name = name;
-  const dummy = new THREE.Object3D();
-  for (const [index, record] of records.entries()) {
-    dummy.position.copy(record.position);
-    dummy.quaternion.copy(record.quaternion);
-    dummy.scale.copy(record.scale);
-    dummy.updateMatrix();
-    mesh.setMatrixAt(index, dummy.matrix);
-  }
-  mesh.instanceMatrix.needsUpdate = true;
-  mesh.castShadow = castShadow;
-  mesh.receiveShadow = true;
-  mesh.frustumCulled = true;
-  parent.add(mesh);
-  return mesh;
-}
-
 export function installTerminal4FixedWalkwaySourceSkinV38(group, terminal) {
   if (!group?.isGroup) throw new Error("Terminal 4 fixed walkway source skin requires the source jetway group");
   if (!terminal?.isObject3D) throw new Error("Terminal 4 fixed walkway source skin requires the authored terminal");
-  const existing = group.getObjectByName("Terminal4_FixedWalkway_SourceSkin_V40");
+  const existing = group.getObjectByName("Terminal4_FixedWalkway_SourceSkin_V53");
   if (existing) return existing;
 
-  const fixedWalkway = group.getObjectByName("Terminal4_GlassFixedWalkways_V20");
-  const sourceTransforms = group.getObjectByName("AIR_Jetway01_FixedTerminalWalkways_V13");
-  if (!fixedWalkway || !sourceTransforms) {
-    throw new Error("Terminal 4 fixed walkway source skin requires the V20 walkway and exact source transforms");
+  const source = group.getObjectByName("AIR_Jetway01_FixedTerminalWalkways_V13");
+  if (!source?.isInstancedMesh || source.count < 1) {
+    throw new Error("Terminal 4 package fixed walkway source mesh is missing");
   }
-  const records = extractRecords(sourceTransforms);
-  if (!records.length) throw new Error("Terminal 4 fixed walkway source skin recovered zero corridor transforms");
 
   const wallSource = findSourceMaterial(terminal, ["T4_WALK.BMP", "T4_WALK.PNG"]);
-  const roofSource = findSourceMaterial(terminal, ["T4_WALK2.BMP", "T4_WALK2.PNG"])
-    || wallSource;
+  const roofSource = findSourceMaterial(terminal, ["T4_WALK2.BMP", "T4_WALK2.PNG"]) || wallSource;
   if (!wallSource || !roofSource) {
-    throw new Error("Terminal 4 fixed walkway source skin could not find exact T4_WALK/T4_WALK2 terminal materials");
+    throw new Error("Terminal 4 fixed walkway source skin could not find exact T4_WALK/T4_WALK2 materials");
   }
 
-  const wallMaterial = cloneExactMaterial(
+  const exactMaterial = cloneExactMaterial(
     wallSource,
-    "Terminal 4 fixed walkway exact T4_WALK translucent backing V40",
-    { roughness: 0.56, metalness: 0.025, emissiveIntensity: 0.02, opacity: 0.34 },
+    "Terminal 4 package fixed walkway exact T4_WALK material V53",
   );
-  const roofMaterial = cloneExactMaterial(
-    roofSource,
-    "Terminal 4 fixed walkway exact T4_WALK2 roof skin V40",
-    { roughness: 0.78, metalness: 0.025, emissiveIntensity: 0.025, roofCrop: true },
-  );
+  source.material = exactMaterial;
+  source.visible = true;
+  source.castShadow = true;
+  source.receiveShadow = true;
 
-  const root = new THREE.Group();
-  root.name = "Terminal4_FixedWalkway_SourceSkin_V40";
-  const sides = [];
-  const roofs = [];
-  for (const record of records) {
-    const length = Math.max(1.15, record.length - 0.38);
-    for (const side of [-1, 1]) {
-      sides.push({
-        position: record.position.clone()
-          .addScaledVector(record.right, side * 1.145)
-          .add(new THREE.Vector3(0, 0.08, 0)),
-        quaternion: record.quaternion,
-        scale: new THREE.Vector3(0.018, 1.92, length),
-      });
-    }
-    roofs.push({
-      position: record.position.clone().add(new THREE.Vector3(0, 1.295, 0)),
-      quaternion: record.quaternion,
-      scale: new THREE.Vector3(2.54, 0.035, length),
-    });
-  }
-
-  const sideMesh = addInstancedBoxes(
-    root,
-    "Terminal4_FixedWalkway_ExactSourceBackings_V40",
-    wallMaterial,
-    sides,
-    false,
-  );
-  const roofMesh = addInstancedBoxes(
-    root,
-    "Terminal4_FixedWalkway_ExactSourceRoofSkins_V40",
-    roofMaterial,
-    roofs,
-    true,
-  );
-  root.userData.authority = AUTHORITY;
-  root.userData.walkwayCount = records.length;
-  root.userData.sideSkinCount = sideMesh?.count ?? 0;
-  root.userData.roofSkinCount = roofMesh?.count ?? 0;
-  root.userData.exactWallTexture = materialReference(wallSource);
-  root.userData.exactRoofTexture = materialReference(roofSource);
-  root.userData.sourceGeometryUnmoved = true;
-  root.userData.translucentBackingBehindGlazing = true;
-  group.add(root);
+  const marker = new THREE.Group();
+  marker.name = "Terminal4_FixedWalkway_SourceSkin_V53";
+  marker.userData.authority = AUTHORITY;
+  marker.userData.walkwayCount = source.count;
+  marker.userData.exactWallTexture = materialReference(wallSource);
+  marker.userData.exactRoofTexture = materialReference(roofSource);
+  marker.userData.sourceGeometryUnmoved = true;
+  marker.userData.proceduralSkinMeshCount = 0;
+  marker.userData.packageMeshMaterialOnly = true;
+  marker.userData.packageWalkwayIsSoleVisualAuthority = true;
+  group.add(marker);
 
   group.userData.fixedWalkwaySourceSkinAuthority = AUTHORITY;
-  group.userData.fixedWalkwaySourceSkinCount = root.userData.sideSkinCount;
-  group.userData.fixedWalkwaySourceRoofCount = root.userData.roofSkinCount;
-  group.userData.fixedWalkwayExactWallTexture = root.userData.exactWallTexture;
-  group.userData.fixedWalkwayExactRoofTexture = root.userData.exactRoofTexture;
-  group.userData.fixedWalkwayTranslucentBacking = true;
-  return root;
+  group.userData.fixedWalkwaySourceSkinCount = source.count;
+  group.userData.fixedWalkwaySourceRoofCount = source.count;
+  group.userData.fixedWalkwayExactWallTexture = marker.userData.exactWallTexture;
+  group.userData.fixedWalkwayExactRoofTexture = marker.userData.exactRoofTexture;
+  group.userData.fixedWalkwayTranslucentBacking = false;
+  group.userData.fixedWalkwayProceduralSkinMeshCount = 0;
+  group.userData.fixedWalkwayPackageMeshMaterialOnly = true;
+  return marker;
 }
