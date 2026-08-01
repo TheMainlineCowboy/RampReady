@@ -11,6 +11,14 @@ let source = fs.readFileSync(path, "utf8");
 
 source = replaceRequired(
   source,
+  'import "./mobile-runtime-recovery.css";',
+  'import "./mobile-runtime-recovery.css";\nimport "./inspection-compact-v30.css";',
+  'import "./inspection-compact-v30.css";',
+  "compact inspection HUD import",
+);
+
+source = replaceRequired(
+  source,
   `export default function RampReadyStandupTrainer({
   equipmentId = "lektro-88",
   onChangeEquipment,`,
@@ -88,6 +96,7 @@ source = replaceRequired(
 );
 
 for (const token of [
+  'import "./inspection-compact-v30.css";',
   "initialInspectionMode = false,",
   "attempts < 600) frameId = window.requestAnimationFrame(activate);",
   'dataset.terminal4SourceClosedBayMaterialCount = "loading"',
@@ -97,4 +106,4 @@ for (const token of [
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared direct tug inspection v28 without DOM polling and exposed package-native closed-bay facade evidence.");
+console.log("Prepared direct tug inspection v30 without DOM polling, with compact controls and package-native facade evidence.");
