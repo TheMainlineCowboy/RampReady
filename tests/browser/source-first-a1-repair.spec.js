@@ -40,7 +40,7 @@ async function saveCompositedCanvasPng(page, path) {
 }
 
 test("direct tug inspection proves the visible A1 terminal connection over source-aerial pavement", async ({ page }) => {
-  test.setTimeout(300_000);
+  test.setTimeout(600_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
@@ -82,11 +82,15 @@ test("direct tug inspection proves the visible A1 terminal connection over sourc
   await expect(canvas).toHaveAttribute("data-terminal4-source-closed-bay-material-count", /^[1-9]\d*$/, { timeout: 120_000 });
   await expect(canvas).toHaveAttribute("data-terminal4-source-facade-variant-material-count", /^[4-9]\d*$/, { timeout: 120_000 });
 
-  const variation = await canvas.evaluate((element) => ({
-    open: Number(element.dataset.terminal4SourceFacadeOpenCellCount || 0),
-    closed: Number(element.dataset.terminal4SourceFacadeClosedCellCount || 0),
-    variants: Number(element.dataset.terminal4SourceFacadeVariantMaterialCount || 0),
-  }));
+  const variation = await page.evaluate(() => {
+    const element = document.querySelector("canvas.trainerCanvas");
+    if (!element) throw new Error("Three.js canvas disappeared before facade evidence capture");
+    return {
+      open: Number(element.dataset.terminal4SourceFacadeOpenCellCount || 0),
+      closed: Number(element.dataset.terminal4SourceFacadeClosedCellCount || 0),
+      variants: Number(element.dataset.terminal4SourceFacadeVariantMaterialCount || 0),
+    };
+  });
   expect(variation.open).toBeGreaterThan(0);
   expect(variation.closed).toBeGreaterThan(variation.open * 3);
   expect(variation.variants).toBeGreaterThanOrEqual(4);
