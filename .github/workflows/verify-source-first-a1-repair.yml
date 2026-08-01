@@ -1,0 +1,61 @@
+name: Verify source-first A1 repair
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/components/PushbackTrainer.jsx'
+      - 'src/components/equipment-selection.css'
+      - 'scripts/prepare-a1-terminal-connector-v11.mjs'
+      - 'scripts/prepare-terminal4-facade-visual-v7.mjs'
+      - 'tests/source-first-a1-repair-contract.test.mjs'
+      - '.github/workflows/verify-source-first-a1-repair.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-source-first-a1-repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out exact repair commit
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Verify repair contract
+        run: node tests/source-first-a1-repair-contract.test.mjs
+
+      - name: Run complete source verification
+        run: npm run verify
+
+      - name: Build exact production artifact
+        run: npm run build
+
+      - name: Install browser verifier
+        run: |
+          npm install --no-save @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Capture A1 and tug-launch browser evidence
+        run: npx playwright test tests/browser/kphx-ground-runtime.spec.js tests/browser/full-airport-inspection.spec.js --reporter=line --workers=1
+
+      - name: Upload repair evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-first-a1-repair-${{ github.sha }}
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 3
