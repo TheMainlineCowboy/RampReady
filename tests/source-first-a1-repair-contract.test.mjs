@@ -6,6 +6,8 @@ const continuity = fs.readFileSync("scripts/prepare-terminal4-facade-continuity-
 const facadeSelection = fs.readFileSync("scripts/prepare-terminal4-source-facade-selection-v27.mjs", "utf8");
 const facadeRuntime = fs.readFileSync("scripts/prepare-terminal4-facade-splitter-runtime-v33.mjs", "utf8");
 const facadeSafety = fs.readFileSync("scripts/prepare-terminal4-facade-variant-safety-v34.mjs", "utf8");
+const portalSeal = fs.readFileSync("src/environment/a1TerminalPortalSealV37.js", "utf8");
+const portalSealPreparation = fs.readFileSync("scripts/prepare-a1-terminal-portal-seal-v37.mjs", "utf8");
 const directInspection = fs.readFileSync("scripts/prepare-direct-inspection-launch-v28.mjs", "utf8");
 const compactInspectionCss = fs.readFileSync("src/components/inspection-compact-v30.css", "utf8");
 const connector = fs.readFileSync("scripts/prepare-a1-terminal-connector-v11.mjs", "utf8");
@@ -40,6 +42,7 @@ for (const token of [
   'await import("./prepare-terminal4-source-facade-selection-v27.mjs")',
   'await import("./prepare-terminal4-facade-splitter-runtime-v33.mjs")',
   'await import("./prepare-terminal4-facade-variant-safety-v34.mjs")',
+  'await import("./prepare-a1-terminal-portal-seal-v37.mjs")',
 ]) {
   if (!continuity.includes(token)) throw new Error(`Source-only continuity cleanup is missing ${token}`);
 }
@@ -82,11 +85,34 @@ for (const forbidden of ["CanvasTexture", "sourceKey === \"BGATE1.BMP\" ? \"BGAT
 }
 
 for (const token of [
+  "exact-T4_WALK-source-shell-overlap-and-framed-portal-v37",
+  "A1_SOURCE_PORTAL",
+  "PORTAL_OVERLAP_METERS = 0.8",
+  "A1_T4_WALK_SourceTexturedOverlapShell_V37",
+  "A1_T4_WALK_PortalFrame_V37",
+  "usesExactRecoveredJetwayTexture",
+]) {
+  if (!portalSeal.includes(token)) throw new Error(`A1 visible portal seal is missing ${token}`);
+}
+for (const token of [
+  'installA1TerminalPortalSealV37 } from "./a1TerminalPortalSealV37.js"',
+  "const a1TerminalPortalSeal = installA1TerminalPortalSealV37(group);",
+  "authoredTerminal4A1TerminalPortalSealAuthority",
+  "authoredTerminal4A1TerminalPortalSealOverlapMeters",
+  "authoredTerminal4A1TerminalPortalSealExactTexture",
+]) {
+  if (!portalSealPreparation.includes(token)) throw new Error(`A1 portal seal preparation is missing ${token}`);
+}
+
+for (const token of [
   'import "./inspection-compact-v30.css";',
   "initialInspectionMode = false,",
   "toggleInspectionDrive();",
   "window.requestAnimationFrame(activate)",
   "terminal4SourceClosedBayMaterialCount",
+  "terminal4A1PortalSealAuthority",
+  "terminal4A1PortalSealOverlapMeters",
+  "terminal4A1PortalSealExactTexture",
 ]) {
   if (!directInspection.includes(token)) throw new Error(`Direct inspection runtime preparation is missing ${token}`);
 }
@@ -113,4 +139,4 @@ if (connector.includes("const exactWallX = -3.55299146")) {
   throw new Error("The detached diagonal BGATE A1 target remains");
 }
 
-console.log("Source-first A1, varied safe package facade, runtime binding and direct compact tug inspection contracts verified.");
+console.log("Source-first A1, visible exact-source portal seal, varied safe package facade and direct compact tug inspection contracts verified.");
