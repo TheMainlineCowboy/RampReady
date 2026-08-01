@@ -9,6 +9,7 @@ on:
       - 'scripts/prepare-a1-terminal-connector-v11.mjs'
       - 'scripts/prepare-terminal4-facade-visual-v7.mjs'
       - 'tests/source-first-a1-repair-contract.test.mjs'
+      - 'tests/browser/source-first-a1-repair.spec.js'
       - '.github/workflows/verify-source-first-a1-repair.yml'
   workflow_dispatch:
 
@@ -47,7 +48,7 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Capture A1 and tug-launch browser evidence
-        run: npx playwright test tests/browser/kphx-ground-runtime.spec.js tests/browser/full-airport-inspection.spec.js --reporter=line --workers=1
+        run: npx playwright test tests/browser/source-first-a1-repair.spec.js tests/browser/kphx-ground-runtime.spec.js tests/browser/full-airport-inspection.spec.js --reporter=line --workers=1
 
       - name: Upload repair evidence
         if: always()
