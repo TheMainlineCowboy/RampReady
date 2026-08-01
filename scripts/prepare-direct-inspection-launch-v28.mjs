@@ -95,6 +95,30 @@ source = replaceRequired(
   "facade variation error evidence",
 );
 
+source = replaceRequired(
+  source,
+  '    renderer.domElement.dataset.terminal4SourceFacadeVariantMaterialCount = "loading";',
+  '    renderer.domElement.dataset.terminal4SourceFacadeVariantMaterialCount = "loading";\n    renderer.domElement.dataset.terminal4A1PortalSealAuthority = "loading";\n    renderer.domElement.dataset.terminal4A1PortalSealOverlapMeters = "loading";\n    renderer.domElement.dataset.terminal4A1PortalSealExactTexture = "loading";',
+  'dataset.terminal4A1PortalSealAuthority = "loading"',
+  "A1 portal seal loading evidence",
+);
+
+source = replaceRequired(
+  source,
+  "        renderer.domElement.dataset.terminal4SourceFacadeVariantMaterialCount = String(environment.userData.authoredTerminal4SourceFacadeVariantMaterialCount ?? 0);",
+  "        renderer.domElement.dataset.terminal4SourceFacadeVariantMaterialCount = String(environment.userData.authoredTerminal4SourceFacadeVariantMaterialCount ?? 0);\n        renderer.domElement.dataset.terminal4A1PortalSealAuthority = environment.userData.authoredTerminal4A1TerminalPortalSealAuthority || \"missing\";\n        renderer.domElement.dataset.terminal4A1PortalSealOverlapMeters = String(environment.userData.authoredTerminal4A1TerminalPortalSealOverlapMeters ?? 0);\n        renderer.domElement.dataset.terminal4A1PortalSealExactTexture = environment.userData.authoredTerminal4A1TerminalPortalSealExactTexture === true ? \"true\" : \"false\";",
+  "dataset.terminal4A1PortalSealAuthority = environment.userData.authoredTerminal4A1TerminalPortalSealAuthority",
+  "A1 portal seal ready evidence",
+);
+
+source = replaceRequired(
+  source,
+  '        renderer.domElement.dataset.terminal4SourceFacadeVariantMaterialCount = "load-error";',
+  '        renderer.domElement.dataset.terminal4SourceFacadeVariantMaterialCount = "load-error";\n        renderer.domElement.dataset.terminal4A1PortalSealAuthority = "load-error";\n        renderer.domElement.dataset.terminal4A1PortalSealOverlapMeters = "load-error";\n        renderer.domElement.dataset.terminal4A1PortalSealExactTexture = "load-error";',
+  'dataset.terminal4A1PortalSealAuthority = "load-error"',
+  "A1 portal seal error evidence",
+);
+
 for (const token of [
   'import "./inspection-compact-v30.css";',
   "initialInspectionMode = false,",
@@ -103,9 +127,12 @@ for (const token of [
   "dataset.terminal4SourceFacadeOpenCellCount = String(environment.userData.authoredTerminal4SourceFacadeOpenCellCount",
   "dataset.terminal4SourceFacadeClosedCellCount = String(environment.userData.authoredTerminal4SourceFacadeClosedCellCount",
   "dataset.terminal4SourceFacadeVariantMaterialCount = String(environment.userData.authoredTerminal4SourceFacadeVariantMaterialCount",
+  'dataset.terminal4A1PortalSealAuthority = "loading"',
+  "dataset.terminal4A1PortalSealOverlapMeters = String(environment.userData.authoredTerminal4A1TerminalPortalSealOverlapMeters",
+  "dataset.terminal4A1PortalSealExactTexture = environment.userData.authoredTerminal4A1TerminalPortalSealExactTexture",
 ]) {
   if (!source.includes(token)) throw new Error(`Direct inspection preparation missing ${token}`);
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared direct tug inspection v32 without DOM polling, with compact controls and package-native varied facade evidence.");
+console.log("Prepared direct tug inspection v37 without DOM polling, with compact controls, varied source facade evidence and exact A1 portal-seal evidence.");
