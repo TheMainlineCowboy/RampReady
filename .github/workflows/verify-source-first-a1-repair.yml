@@ -15,6 +15,7 @@ on:
       - 'scripts/prepare-terminal4-source-facade-selection-v27.mjs'
       - 'scripts/prepare-terminal4-facade-splitter-runtime-v33.mjs'
       - 'scripts/prepare-terminal4-facade-variant-safety-v34.mjs'
+      - 'scripts/prepare-terminal4-jetway-source-uv-v36.mjs'
       - 'scripts/prepare-terminal4-jetway-visual-upgrade-v35.mjs'
       - 'scripts/prepare-direct-inspection-launch-v28.mjs'
       - 'scripts/prepare-phx-runtime-evidence.mjs'
