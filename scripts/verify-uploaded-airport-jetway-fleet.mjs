@@ -19,7 +19,7 @@ const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
   "DecompressionStream(\"gzip\")",
   'fleet.name = "UploadedAirportJetwayFleet"',
   'anchor.name = `UploadedAirportJetway_${placement.gate}`',
-  "uploadedJetwayLoadState = \"ready\"",
+  'uploadedJetwayLoadState = "ready"',
   "uploadedJetwayCount = placements.length",
   "uploadedJetwayMeasuredTerminalConnectorCount = placements.length",
   "sourceGeometryMode = MODEL_AUTHORITY",
@@ -83,10 +83,10 @@ for (const testPath of [
   "tests/browser/kphx-ground-runtime.spec.js",
 ]) {
   requireTokens(testPath, [
-    'data-terminal4-uploaded-jetway-load-state",
-    'data-terminal4-uploaded-jetway-count",
-    'data-terminal4-uploaded-jetway-connector-count",
-    'data-terminal4-uploaded-jetway-verified-model-count",
+    '"data-terminal4-uploaded-jetway-load-state"',
+    '"data-terminal4-uploaded-jetway-count"',
+    '"data-terminal4-uploaded-jetway-connector-count"',
+    '"data-terminal4-uploaded-jetway-verified-model-count"',
     "uploaded-airport-jetway-fleet-complete-58-gates-v3",
   ]);
 }
