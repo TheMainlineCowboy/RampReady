@@ -25,11 +25,27 @@ const placementPush = `    uploadedJetwayPlacements.push({
       rotundaY,
       bridgeEnd,
       cabinY,
+      connectorTowardX,
+      connectorTowardZ,
+      wallConnectorLength,
     });`;
 if (!source.includes(placementPush)) {
-  const anchor = "    const highDetail = Math.hypot(jetway.x, jetway.z) <= SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.highDetailRadiusMeters;";
-  if (!source.includes(anchor)) throw new Error(`${path}: per-gate placement anchor missing`);
-  source = source.replace(anchor, `${placementPush}\n${anchor}`);
+  const oldPlacementPush = `    uploadedJetwayPlacements.push({
+      gate: jetway.g,
+      x: jetway.x,
+      z: jetway.z,
+      yaw,
+      rotundaY,
+      bridgeEnd,
+      cabinY,
+    });`;
+  if (source.includes(oldPlacementPush)) {
+    source = source.replace(oldPlacementPush, placementPush);
+  } else {
+    const anchor = "    const highDetail = Math.hypot(jetway.x, jetway.z) <= SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.highDetailRadiusMeters;";
+    if (!source.includes(anchor)) throw new Error(`${path}: per-gate placement anchor missing`);
+    source = source.replace(anchor, `${placementPush}\n${anchor}`);
+  }
 }
 
 const installLine = "  const uploadedJetwayController = installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements);";
@@ -69,6 +85,9 @@ for (const token of [
   placementDeclaration,
   placementPush,
   installLine,
+  "connectorTowardX",
+  "connectorTowardZ",
+  "wallConnectorLength",
   'sourceGeometryMode = "user-supplied-airport-jetway-loading"',
   "requiresOriginalSourceMesh = false",
   "a1JetwayController = uploadedJetwayController",
@@ -79,4 +98,26 @@ for (const token of [
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared all 58 Terminal 4 gate transforms for the uploaded Tunnel_A/Tunnel_B/Tunnel_C/Rotunda/Cab jetway replacement. Airport placement remains unchanged; the former fallback authority is retained only as superseded audit text.");
+
+const fleetPath = "src/environment/uploadedAirportJetwayFleet.js";
+let fleet = fs.readFileSync(fleetPath, "utf8");
+const connectorImport = 'import { addUploadedAirportJetwayTerminalConnector } from "./uploadedAirportJetwayTerminalConnector.js";';
+if (!fleet.includes(connectorImport)) fleet = `${connectorImport}\n${fleet}`;
+const connectorCall = "        addUploadedAirportJetwayTerminalConnector(THREE, fleet, placement);";
+if (!fleet.includes(connectorCall)) {
+  const anchor = "        fleet.add(anchor);";
+  if (!fleet.includes(anchor)) throw new Error(`${fleetPath}: uploaded connector call anchor missing`);
+  fleet = fleet.replace(anchor, `${anchor}\n${connectorCall}`);
+}
+const connectorEvidence = "      group.userData.uploadedJetwayMeasuredTerminalConnectorCount = placements.length;";
+if (!fleet.includes(connectorEvidence)) {
+  const anchor = "      group.userData.uploadedJetwayCount = placements.length;";
+  if (!fleet.includes(anchor)) throw new Error(`${fleetPath}: uploaded connector evidence anchor missing`);
+  fleet = fleet.replace(anchor, `${anchor}\n${connectorEvidence}`);
+}
+for (const token of [connectorImport, connectorCall, connectorEvidence]) {
+  if (!fleet.includes(token)) throw new Error(`${fleetPath}: measured terminal connector wiring missing ${token}`);
+}
+fs.writeFileSync(fleetPath, fleet, "utf8");
+
+console.log("Prepared all 58 Terminal 4 gate transforms for the uploaded Tunnel_A/Tunnel_B/Tunnel_C/Rotunda/Cab jetway replacement with measured authored-wall connectors. Airport placement remains unchanged; the former fallback authority is retained only as superseded audit text.");
