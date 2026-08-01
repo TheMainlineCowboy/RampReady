@@ -153,7 +153,7 @@ replaceOnce(
           camera.lookAt(cameraTarget);
         }
       }`,
-  "side-on-fixed-a1-terminal-joint-v4",
+  "const inspectionPresetConfig = inspectionActive",
   "side-on A1 connection chase framing",
 );
 
