@@ -55,6 +55,15 @@ test("direct tug inspection proves the visible A1 terminal connection over sourc
   expect(hudHeight).toBeLessThan(110);
 
   await expect(canvas).toHaveAttribute("data-environment-source", /authored-phx-terminal4/, { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-load-state", "ready", { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-count", "58", { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-connector-count", "58", { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-verified-model-count", "58", { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute(
+    "data-terminal4-uploaded-jetway-ready-authority",
+    "uploaded-airport-jetway-fleet-complete-58-gates-v3",
+    { timeout: 120_000 },
+  );
   await expect(canvas).toHaveAttribute("data-photo-ground-source", "source-authored-phx-photo", { timeout: 120_000 });
   await expect(canvas).toHaveAttribute(
     "data-ground-pavement-authority",
