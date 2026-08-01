@@ -57,4 +57,5 @@ if (!source.includes("source-authored-terminal4-lower-facade-v25-no-overlay")) {
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared Terminal 4 source-only facade v25: no continuity mesh, copied skin, cloned bay, generated door or generated vent overlays remain.");
+await import(`./prepare-terminal4-source-facade-atlas-v26.mjs?source-package=${Date.now()}`);
+console.log("Prepared Terminal 4 source-only facade v25 plus source-package variation atlas v26: no continuity mesh, copied skin, cloned bay, generated door or generated vent overlays remain.");
