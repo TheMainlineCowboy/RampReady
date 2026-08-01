@@ -6,9 +6,11 @@ let source = fs.readFileSync(authoredTerminalPath, "utf8");
 const polishImport = 'import { applyTerminal4JetwaySimulatorPolish } from "./terminal4JetwaySimulatorPolishV13.js";';
 const fixedWalkwayImport = 'import { installTerminal4FixedWalkwayV20 } from "./terminal4FixedWalkwayV20.js";';
 const sourceSkinImport = 'import { installTerminal4FixedWalkwaySourceSkinV38 } from "./terminal4FixedWalkwaySourceSkinV38.js";';
+const supportImport = 'import { installTerminal4FixedWalkwaySupportV44 } from "./terminal4FixedWalkwaySupportV44.js";';
 const polishCall = "  applyTerminal4JetwaySimulatorPolish(sourcePlacedJetways);";
 const fixedWalkwayCall = "  installTerminal4FixedWalkwayV20(sourcePlacedJetways);";
 const sourceSkinCall = "  installTerminal4FixedWalkwaySourceSkinV38(sourcePlacedJetways, authored);";
+const supportCall = "  installTerminal4FixedWalkwaySupportV44(sourcePlacedJetways);";
 const daylightAuthority = "exact-source-lightmaps-balanced-for-daylight-v39";
 
 if (!source.includes(polishImport)) {
@@ -24,11 +26,11 @@ if (!source.includes(sourceSkinImport)) {
   if (!source.includes(fixedWalkwayImport)) throw new Error(`${authoredTerminalPath}: missing fixed-walkway import anchor`);
   source = source.replace(fixedWalkwayImport, `${fixedWalkwayImport}\n${sourceSkinImport}`);
 }
+if (!source.includes(supportImport)) {
+  if (!source.includes(sourceSkinImport)) throw new Error(`${authoredTerminalPath}: missing fixed-walkway source-skin import anchor`);
+  source = source.replace(sourceSkinImport, `${sourceSkinImport}\n${supportImport}`);
+}
 
-// Earlier emergency passes added invented A1 facade panels on the wrong side of
-// the supplied terminal/corridor geometry. Remove those generated imports and
-// calls so the expanded lower-facade exclusion can reveal the original BGATE1
-// and PHX_TERM400 source materials instead of stacking procedural architecture.
 for (const importLine of [
   'import { installTerminal4A1FacadeDetailV19 } from "./terminal4A1FacadeDetailV19.js";\n',
   'import { installTerminal4A1ExtendedFacadeV22 } from "./terminal4A1ExtendedFacadeV22.js";\n',
@@ -63,14 +65,20 @@ if (!source.includes(sourceSkinCall)) {
   if (!source.includes(fixedWalkwayCall)) throw new Error(`${authoredTerminalPath}: missing fixed-walkway call anchor`);
   source = source.replace(fixedWalkwayCall, `${fixedWalkwayCall}\n${sourceSkinCall}`);
 }
+if (!source.includes(supportCall)) {
+  if (!source.includes(sourceSkinCall)) throw new Error(`${authoredTerminalPath}: missing fixed-walkway source-skin call anchor`);
+  source = source.replace(sourceSkinCall, `${sourceSkinCall}\n${supportCall}`);
+}
 
 for (const token of [
   polishImport,
   fixedWalkwayImport,
   sourceSkinImport,
+  supportImport,
   polishCall,
   fixedWalkwayCall,
   sourceSkinCall,
+  supportCall,
   daylightAuthority,
   "material.emissiveIntensity = emissiveMap ? 0.07 : 0",
   "material.dithering = true",
@@ -87,4 +95,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(authoredTerminalPath, source, "utf8");
-console.log("Prepared Terminal 4 with exact T4_WALK/T4_WALK2 fixed-corridor skins, grounded jetway structure and daylight-balanced exact source lightmaps. No terminal or gate geometry was moved.");
+console.log("Prepared Terminal 4 with exact T4_WALK/T4_WALK2 fixed-corridor skins, source-transform structural supports, grounded jetway structure and daylight-balanced exact source lightmaps. No terminal or gate geometry was moved.");
