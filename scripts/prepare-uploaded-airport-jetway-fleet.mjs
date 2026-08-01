@@ -38,14 +38,14 @@ const oldPlacementPush = `    uploadedJetwayPlacements.push({
       bridgeEnd,
       cabinY,
     });`;
-// The measured connector values are declared after the old high-detail anchor.
-// Always place the fleet record immediately after the wall measurement block.
 source = source.replace(`${placementPush}\n`, "").replace(`${oldPlacementPush}\n`, "");
 const placementAnchor = "    const sourceFacadeRecessMeters = lowerFacadeWallDistance != null && terminalWallDistance != null";
 if (!source.includes(placementAnchor)) throw new Error(`${path}: measured wall placement anchor missing`);
 source = source.replace(placementAnchor, `${placementPush}\n\n${placementAnchor}`);
 
-const installLine = "  const uploadedJetwayController = installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements);";
+const oldInstallLine = "  const uploadedJetwayController = installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements);";
+const installLine = "  const uploadedJetwayController = installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements, sourceTextures);";
+source = source.replace(oldInstallLine, installLine);
 if (!source.includes(installLine)) {
   const anchor = "  group.userData.sourceArchive = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceArchive;";
   if (!source.includes(anchor)) throw new Error(`${path}: uploaded fleet installation anchor missing`);
@@ -67,12 +67,16 @@ source = source
   )
   .replace(
     /  group\.userData\.visualAuthority = "source-scale articulated fallback[^\n]*";/,
+    '  group.userData.visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured";',
+  )
+  .replace(
     '  group.userData.visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1";',
+    '  group.userData.visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured";',
   );
 
 const supersededDisclosure = '  group.userData.supersededFallbackDisclosure = \'visualAuthority = "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered"\';';
 if (!source.includes(supersededDisclosure)) {
-  const authority = '  group.userData.visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1";';
+  const authority = '  group.userData.visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured";';
   if (!source.includes(authority)) throw new Error(`${path}: uploaded visual authority anchor missing`);
   source = source.replace(authority, `${authority}\n${supersededDisclosure}`);
 }
@@ -88,7 +92,7 @@ for (const token of [
   'sourceGeometryMode = "user-supplied-airport-jetway-loading"',
   "requiresOriginalSourceMesh = false",
   "a1JetwayController = uploadedJetwayController",
-  'visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1"',
+  'visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured"',
   "supersededFallbackDisclosure",
 ]) {
   if (!source.includes(token)) throw new Error(`${path}: uploaded airport jetway integration missing ${token}`);
@@ -120,4 +124,4 @@ for (const token of [connectorImport, connectorCall, connectorEvidence]) {
 }
 fs.writeFileSync(fleetPath, fleet, "utf8");
 
-console.log("Prepared all 58 Terminal 4 gate transforms for the uploaded Tunnel_A/Tunnel_B/Tunnel_C/Rotunda/Cab jetway replacement with measured authored-wall connectors. Placement records are created only after wall measurements; airport placement remains unchanged.");
+console.log("Prepared all 58 Terminal 4 gate transforms for the source-textured uploaded Tunnel_A/Tunnel_B/Tunnel_C/Rotunda/Cab jetway replacement with measured authored-wall connectors. Placement records are created only after wall measurements; airport placement remains unchanged.");
