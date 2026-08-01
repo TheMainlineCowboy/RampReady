@@ -9,6 +9,13 @@ function replaceRequired(source, oldText, newText, marker, label) {
 const path = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(path, "utf8");
 
+const uploadedAuthority = 'group.userData.visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1"';
+const uploadedInstaller = "installUploadedAirportJetwayFleet";
+if (source.includes(uploadedAuthority) && source.includes(uploadedInstaller)) {
+  console.log("Skipped obsolete V35 procedural jetway dressing because the user-supplied Tunnel_A/Tunnel_B/Tunnel_C/Rotunda/Cab fleet is authoritative.");
+  process.exit(0);
+}
+
 source = replaceRequired(
   source,
   'import { buildAnimatedA1Jetway } from "./animatedA1Jetway.js";',
