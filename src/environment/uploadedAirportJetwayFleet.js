@@ -1,8 +1,9 @@
 import { addUploadedAirportJetwayTerminalConnector } from "./uploadedAirportJetwayTerminalConnector.js";
 
 const PART_COUNT = 5;
-const MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured";
+const MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v3-source-textured-optimized";
 const MATERIAL_AUTHORITY = "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2";
+const PERFORMANCE_AUTHORITY = "shared-geometry-single-a1-shadow-caster-no-global-edge-overlays-v3";
 // Replace only the movable fallback jetway. The source-positioned fixed walkway
 // and wall collar are the physical terminal connection and must remain visible.
 const HIDE_REPLACED = /^(?:AIR_Jetway01_(?!WallCollars)|Terminal4_LowerFacadeInfillPanels|Terminal4_ClosedServiceDoors|Terminal4_FacadeVentGrilles)/i;
@@ -145,7 +146,10 @@ function decodePrimitive(THREE, primitive, binary, materials) {
   const geometry = addProjectedUvs(THREE, indexed);
   indexed.dispose();
   const mesh = new THREE.Mesh(geometry, materials[primitive.material] || materials[0]);
-  mesh.castShadow = true;
+  // All 58 gates share these exact geometries and materials. Only A1 casts a
+  // dynamic shadow; distant gates receive light/shadow without multiplying the
+  // 4K shadow-map draw cost across the entire concourse.
+  mesh.castShadow = false;
   mesh.receiveShadow = true;
   return mesh;
 }
@@ -159,29 +163,6 @@ function applyNodeTransform(THREE, object, node) {
   if (node.translation) object.position.fromArray(node.translation);
   if (node.rotation) object.quaternion.fromArray(node.rotation);
   if (node.scale) object.scale.fromArray(node.scale);
-}
-
-function addStructuralEdges(THREE, model) {
-  const edgeMaterial = new THREE.LineBasicMaterial({
-    name: "Uploaded airport jetway structural edge definition",
-    color: 0x4a5053,
-    transparent: true,
-    opacity: 0.28,
-    depthWrite: false,
-    toneMapped: false,
-  });
-  const meshes = [];
-  model.traverse((entry) => {
-    if (entry.isMesh && !entry.material?.transparent) meshes.push(entry);
-  });
-  for (const mesh of meshes) {
-    const edgeGeometry = new THREE.EdgesGeometry(mesh.geometry, 34);
-    const edges = new THREE.LineSegments(edgeGeometry, edgeMaterial);
-    edges.name = `${mesh.name || "UploadedJetwayMesh"}_StructuralEdges`;
-    edges.renderOrder = 3;
-    mesh.add(edges);
-  }
-  return meshes.length;
 }
 
 function buildPrototype(THREE, payload, sourceTextures = {}) {
@@ -209,7 +190,6 @@ function buildPrototype(THREE, payload, sourceTextures = {}) {
   };
 
   const model = buildNode(metadata.rootNode ?? 1);
-  const structuralEdgeMeshCount = addStructuralEdges(THREE, model);
   const aligned = new THREE.Group();
   aligned.name = "UploadedAirportJetway_AlignedPrototype";
   // The supplied model's rotunda pivot is at approximately (-0.652, 4.12, -15.12).
@@ -218,7 +198,7 @@ function buildPrototype(THREE, payload, sourceTextures = {}) {
   aligned.add(model);
   aligned.userData.modelAuthority = MODEL_AUTHORITY;
   aligned.userData.materialAuthority = sourceMaterials.body.userData.materialAuthority;
-  aligned.userData.structuralEdgeMeshCount = structuralEdgeMeshCount;
+  aligned.userData.performanceAuthority = PERFORMANCE_AUTHORITY;
   return aligned;
 }
 
@@ -301,6 +281,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
   group.userData.uploadedJetwayMaterialAuthority = sourceTextures.diffuse?.isTexture
     ? MATERIAL_AUTHORITY
     : "uploaded-model-neutral-material-fallback";
+  group.userData.uploadedJetwayPerformanceAuthority = PERFORMANCE_AUTHORITY;
   group.userData.uploadedJetwayExpectedCount = placements.length;
 
   readPayload()
@@ -308,6 +289,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
       const prototype = buildPrototype(THREE, payload, sourceTextures);
       const fleet = new THREE.Group();
       fleet.name = "UploadedAirportJetwayFleet";
+      let shadowCasterGateCount = 0;
       for (const placement of placements) {
         const anchor = new THREE.Group();
         anchor.name = `UploadedAirportJetway_${placement.gate}`;
@@ -315,6 +297,12 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
         anchor.rotation.y = placement.yaw;
         const model = prototype.clone(true);
         model.name = `UploadedAirportJetwayModel_${placement.gate}`;
+        if (placement.gate === "A1") {
+          model.traverse((entry) => {
+            if (entry.isMesh && !entry.material?.transparent) entry.castShadow = true;
+          });
+          shadowCasterGateCount += 1;
+        }
         anchor.add(model);
         fleet.add(anchor);
         addUploadedAirportJetwayTerminalConnector(THREE, fleet, placement);
@@ -328,7 +316,9 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
       group.userData.uploadedJetwayHiddenGeneratedObjectCount = hiddenGeneratedObjectCount;
       group.userData.uploadedJetwayTerminalConnectorPreserved = true;
       group.userData.uploadedJetwayMaterialAuthority = prototype.userData.materialAuthority;
-      group.userData.uploadedJetwayStructuralEdgeMeshCount = prototype.userData.structuralEdgeMeshCount;
+      group.userData.uploadedJetwayPerformanceAuthority = prototype.userData.performanceAuthority;
+      group.userData.uploadedJetwayShadowCasterGateCount = shadowCasterGateCount;
+      group.userData.uploadedJetwayGlobalEdgeOverlayCount = 0;
       group.userData.sourceGeometryMode = MODEL_AUTHORITY;
       group.userData.visualAuthority = MODEL_AUTHORITY;
       group.userData.requiresOriginalSourceMesh = false;
