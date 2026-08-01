@@ -1,6 +1,7 @@
 import fs from "node:fs";
 
 const walkway = fs.readFileSync("src/environment/terminal4FixedWalkwaySourceSkinV38.js", "utf8");
+const support = fs.readFileSync("src/environment/terminal4FixedWalkwaySupportV44.js", "utf8");
 const polish = fs.readFileSync("scripts/prepare-terminal4-jetway-simulator-polish.mjs", "utf8");
 const rendering = fs.readFileSync("scripts/prepare-simulator-render-quality.mjs", "utf8");
 
@@ -21,8 +22,32 @@ for (const token of [
 }
 
 for (const token of [
+  "source-transform-fixed-walkway-integrated-portal-frame-v47",
+  "Terminal4_FixedWalkway_SupportUpgrade_V47",
+  "Terminal4_FixedWalkway_LongitudinalGirders_V47",
+  "Terminal4_FixedWalkway_PortalCrossheads_V47",
+  "Terminal4_FixedWalkway_PortalColumns_V47",
+  "Terminal4_FixedWalkway_KneeBraces_V47",
+  "Terminal4_FixedWalkway_FormedPierBases_V47",
+  "Terminal4_FixedWalkway_LowerTies_V47",
+  "removedDecorativeServiceCabinets = true",
+  "sourceGeometryUnmoved = true",
+]) {
+  if (!support.includes(token)) throw new Error(`Integrated fixed-walkway support contract is missing ${token}`);
+}
+for (const forbidden of [
+  "ServiceCabinets_V46",
+  "ServiceCabinetCaps_V46",
+  "compact service cabinets V46",
+]) {
+  if (support.includes(forbidden)) throw new Error(`Detached decorative support treatment remains: ${forbidden}`);
+}
+
+for (const token of [
   'import { installTerminal4FixedWalkwaySourceSkinV38 } from "./terminal4FixedWalkwaySourceSkinV38.js";',
+  'import { installTerminal4FixedWalkwaySupportV44 } from "./terminal4FixedWalkwaySupportV44.js";',
   "installTerminal4FixedWalkwaySourceSkinV38(sourcePlacedJetways, authored);",
+  "installTerminal4FixedWalkwaySupportV44(sourcePlacedJetways);",
   "exact-source-lightmaps-balanced-for-daylight-v39",
   "material.emissiveIntensity = emissiveMap ? 0.07 : 0",
   "material.dithering = true",
@@ -44,4 +69,4 @@ for (const token of [
   if (!rendering.includes(token)) throw new Error(`High-fidelity renderer contract is missing ${token}`);
 }
 
-console.log("Verified exact T4_WALK translucent fixed-corridor backing, daylight-balanced package lightmaps, apron-side lighting, unmoved source transforms and persistent 2K/4K dynamic shadows.");
+console.log("Verified exact T4_WALK translucent fixed-corridor backing, integrated source-transform portal supports, daylight-balanced package lightmaps, apron-side lighting, unmoved source transforms and persistent 2K/4K dynamic shadows.");
