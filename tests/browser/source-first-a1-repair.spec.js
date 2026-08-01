@@ -44,7 +44,7 @@ test("equipment selection exposes a direct compact tug inspection launch", async
   expect(hudBounds?.height ?? Number.POSITIVE_INFINITY).toBeLessThan(110);
 });
 
-test("A1 uses the source walkway, varied facade cells and exact jetway shell projection", async ({ page }) => {
+test("A1 visibly overlaps the exact source walkway with varied facade cells and corrected jetway shell projection", async ({ page }) => {
   test.setTimeout(210_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
@@ -53,6 +53,9 @@ test("A1 uses the source walkway, varied facade cells and exact jetway shell pro
   await expect(canvas).toHaveAttribute("data-environment-source", /authored-phx-terminal4/, { timeout: 120_000 });
   await expect(canvas).toHaveAttribute("data-terminal4-facade-infill-count", "0", { timeout: 120_000 });
   await expect(canvas).toHaveAttribute("data-terminal4-a1-jetway-wall-distance", /9\.(1|2)/, { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-terminal4-a1-portal-seal-authority", "exact-T4_WALK-source-shell-overlap-and-framed-portal-v37", { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-terminal4-a1-portal-seal-overlap-meters", "0.8", { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-terminal4-a1-portal-seal-exact-texture", "true", { timeout: 120_000 });
   await expect(canvas).toHaveAttribute("data-terminal4-source-closed-bay-material-count", /^[1-9]\d*$/, { timeout: 120_000 });
   await expect(canvas).toHaveAttribute("data-terminal4-source-facade-variant-material-count", /^[4-9]\d*$/, { timeout: 120_000 });
   const variation = await canvas.evaluate((element) => ({
