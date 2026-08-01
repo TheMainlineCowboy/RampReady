@@ -33,8 +33,6 @@ for (const forbidden of [
   if (moduleSource.includes(forbidden)) throw new Error(`Procedural jetway dressing remains: ${forbidden}`);
 }
 
-// The old V35 module remains audited as a zero-geometry compatibility pass,
-// but production must use the uploaded authored model rather than call V35.
 for (const token of [
   'import { enhanceTerminal4JetwayVisuals } from "./terminal4JetwayVisualUpgradeV35.js";',
   "const jetwayVisualUpgrade = enhanceTerminal4JetwayVisuals(THREE, group);",
@@ -47,15 +45,21 @@ for (const token of [
   "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v4-instanced-static-source-textured",
   "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2",
   "57-static-gates-instanced-plus-1-animated-a1-source-geometry-v4",
-  "shared-geometry-single-a1-shadow-caster-no-global-edge-overlays-v3",
   "Tunnel_B",
   "Tunnel_C",
   "Cab",
   "UploadedAirportJetwayFleet",
+  "UploadedAirportJetwayStaticInstancedBatches",
   "addProjectedUvs",
   "cloneCorrugatedAtlasBand",
+  "collectPrototypeMeshes",
+  "buildStaticInstancedFleet",
+  "new THREE.InstancedMesh",
   "uploadedJetwayShadowCasterGateCount = shadowCasterGateCount",
   "uploadedJetwayGlobalEdgeOverlayCount = 0",
+  "uploadedJetwayStaticInstancedGateCount = staticFleet.staticGateCount",
+  "uploadedJetwayAnimatedIndividualGateCount = 1",
+  "uploadedJetwayStaticPrimitiveBatchCount = staticFleet.primitiveBatchCount",
   "proceduralJetwayStairCount = 0",
   "hiddenGeneratedObjectCount",
   "PART_COUNT = 5",
@@ -108,4 +112,4 @@ for (const forbidden of [
   }
 }
 
-console.log("Optimized source-textured uploaded Tunnel_A/B/C/Rotunda/Cab fleet is the production jetway authority at all 58 gates; exact M1DGJETWAY surface detail is projected onto shared supplied geometry, only A1 casts a dynamic jetway shadow, V35 remains audit-only and no replacement box/cylinder or all-gate edge dressing is wired into runtime.");
+console.log("The supplied source-textured Tunnel_A/B/C/Rotunda/Cab fleet is the production authority at all 58 gates: 57 static gates are batched from the exact shared geometry and materials, A1 remains an individual animated model and no procedural replacement or all-gate edge dressing is wired into runtime.");
