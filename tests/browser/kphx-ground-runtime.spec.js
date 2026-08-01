@@ -115,7 +115,11 @@ async function frameA1Chase(page, canvas) {
 }
 
 test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and pavement-coincident markings", async ({ page }) => {
-  test.setTimeout(300_000);
+  // The exact source airport, 21 aerial tiles, full runtime accounting and three
+  // lossless compositor captures can exceed five minutes on GitHub's software
+  // renderer. Keep every visual and source assertion, but give this independent
+  // acceptance gate enough time to finish rather than timing out after success.
+  test.setTimeout(600_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const assetResponses = [];
   const tileResponses = new Map();
