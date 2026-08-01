@@ -7,17 +7,28 @@ const continuity = fs.readFileSync("scripts/prepare-terminal4-facade-continuity-
 
 for (const token of [
   "enhanceTerminal4JetwayVisuals",
+  "package-native-terminal4-jetway-material-pass-no-procedural-detail-v52",
+  "jetwayVisualUpgradeDetailInstanceCount = 0",
+  "jetwayVisualUpgradeProceduralGeometryRemoved = true",
+  "jetwayVisualUpgradePackageMeshIsSoleGeometryAuthority = true",
+  "jetwayVisualUpgradeExactTexturePreserved = true",
+  "jetwayVisualUpgradeMissingSourceMeshDisclosure = true",
+]) {
+  if (!moduleSource.includes(token)) throw new Error(`Package-native Terminal 4 jetway visual module is missing ${token}`);
+}
+
+for (const forbidden of [
+  "new THREE.InstancedMesh",
+  "new THREE.BoxGeometry",
+  "new THREE.CylinderGeometry",
   "AIR_Jetway01_OuterLowerSkirts_V35",
   "AIR_Jetway01_OuterRoofAndUnderbridgeStructure_V35",
   "AIR_Jetway01_InnerSafetyBands_V35",
   "AIR_Jetway01_CabinFramesAndSkirts_V35",
   "AIR_Jetway01_CabinThresholds_V35",
   "AIR_Jetway01_RotundaStructuralBands_V35",
-  "full-terminal4-jetway-structural-detail-and-material-contrast-v35",
-  "jetwayVisualUpgradeDetailInstanceCount",
-  "jetwayVisualUpgradeMissingSourceMeshDisclosure",
 ]) {
-  if (!moduleSource.includes(token)) throw new Error(`Terminal 4 jetway visual module is missing ${token}`);
+  if (moduleSource.includes(forbidden)) throw new Error(`Procedural jetway dressing remains: ${forbidden}`);
 }
 
 for (const token of [
@@ -50,8 +61,8 @@ for (const forbidden of [
   "CanvasTexture",
 ]) {
   if (moduleSource.includes(forbidden) || preparation.includes(forbidden) || uvPreparation.includes(forbidden)) {
-    throw new Error(`Terminal 4 jetway visual upgrade contains forbidden source claim: ${forbidden}`);
+    throw new Error(`Terminal 4 jetway visual pass contains forbidden source claim: ${forbidden}`);
   }
 }
 
-console.log("Terminal 4 full jetway visual and exact source-atlas UV projection contracts verified.");
+console.log("Terminal 4 package-native jetway material pass and exact source-atlas UV projection contracts verified with zero procedural dressing geometry.");
