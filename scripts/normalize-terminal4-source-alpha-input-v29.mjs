@@ -34,10 +34,7 @@ let jetways = fs.readFileSync(jetwayPath, "utf8");
 let jetwayNormalized = false;
 const upgradeImport = 'import { enhanceTerminal4JetwayVisuals } from "./terminal4JetwayVisualUpgradeV35.js";\n';
 const upgradeCall = "  const jetwayVisualUpgrade = enhanceTerminal4JetwayVisuals(THREE, group);\n\n";
-const upgradedAuthorityBlock = `  group.userData.visualAuthority = "source-scale articulated fallback with full-terminal structural-detail upgrade while original AIR_Jetway01 mesh is recovered";
-  group.userData.jetwayVisualUpgradeAuthority = jetwayVisualUpgrade.authority;
-  group.userData.jetwayVisualUpgradeDetailInstanceCount = jetwayVisualUpgrade.detailInstanceCount;
-  group.userData.jetwayVisualUpgradeStaticJetwayCount = jetwayVisualUpgrade.staticJetwayCount;`;
+const upgradedAuthority = '  group.userData.visualAuthority = "source-scale articulated fallback with full-terminal structural-detail upgrade while original AIR_Jetway01 mesh is recovered";';
 const legacyAuthority = '  group.userData.visualAuthority = "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered";';
 
 for (const preparedToken of [upgradeImport, upgradeCall]) {
@@ -46,10 +43,24 @@ for (const preparedToken of [upgradeImport, upgradeCall]) {
     jetwayNormalized = true;
   }
 }
-if (jetways.includes(upgradedAuthorityBlock)) {
-  jetways = jetways.replace(upgradedAuthorityBlock, legacyAuthority);
+
+if (jetways.includes(upgradedAuthority)) {
+  const uploadedAuthorityPresent = jetways.includes("user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1");
+  jetways = jetways.replace(upgradedAuthority, uploadedAuthorityPresent ? "" : legacyAuthority);
   jetwayNormalized = true;
 }
+
+for (const metadataPattern of [
+  /^  group\.userData\.jetwayVisualUpgradeAuthority = .*;\n?/m,
+  /^  group\.userData\.jetwayVisualUpgradeDetailInstanceCount = .*;\n?/m,
+  /^  group\.userData\.jetwayVisualUpgradeStaticJetwayCount = .*;\n?/m,
+]) {
+  if (metadataPattern.test(jetways)) {
+    jetways = jetways.replace(metadataPattern, "");
+    jetwayNormalized = true;
+  }
+}
+
 if (jetwayNormalized) fs.writeFileSync(jetwayPath, jetways, "utf8");
 
 for (const forbidden of [
@@ -57,11 +68,11 @@ for (const forbidden of [
   "jetwayVisualUpgradeDetailInstanceCount",
   "full-terminal structural-detail upgrade",
 ]) {
-  if (jetwayNormalized && jetways.includes(forbidden)) {
+  if (jetways.includes(forbidden)) {
     throw new Error(`Terminal 4 jetway normalization left prepared token ${forbidden}`);
   }
 }
 
 console.log(normalized || jetwayNormalized
-  ? "Normalized prepared Terminal 4 facade accounting and full jetway V35 wiring before legacy idempotence passes; v27-v35 restore the final runtime state."
+  ? "Normalized prepared Terminal 4 facade accounting and removed obsolete V35 procedural jetway wiring before rebuilding the uploaded-model runtime."
   : "Terminal 4 source-alpha and jetway inputs already have compatible idempotence shapes.");
