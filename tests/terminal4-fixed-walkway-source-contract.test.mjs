@@ -22,29 +22,28 @@ for (const token of [
 }
 
 for (const token of [
-  "source-transform-fixed-walkway-integrated-load-frame-v49",
-  "Terminal4_FixedWalkway_SupportUpgrade_V49",
-  "Terminal4_FixedWalkway_LongitudinalGirders_V49",
-  "Terminal4_FixedWalkway_UnderdeckFascias_V49",
-  "Terminal4_FixedWalkway_TransferCrossheads_V49",
-  "Terminal4_FixedWalkway_LoadColumns_V49",
-  "Terminal4_FixedWalkway_CenterLoadSpines_V49",
-  "Terminal4_FixedWalkway_KneeBraces_V49",
-  "Terminal4_FixedWalkway_FormedFoundations_V49",
-  "Terminal4_FixedWalkway_LowerTies_V49",
-  "Terminal4_FixedWalkway_LongitudinalBraces_V49",
+  "source-transform-fixed-walkway-minimal-support-v50",
+  "Terminal4_FixedWalkway_SupportUpgrade_V50",
+  "Terminal4_FixedWalkway_MinimalColumns_V50",
+  "Terminal4_FixedWalkway_MinimalCrossheads_V50",
+  "Terminal4_FixedWalkway_CompactFootings_V50",
   "portalStationsPerWalkway = 2",
-  "removedDecorativeServiceCabinets = true",
+  "noCenterSpines = true",
+  "noLongitudinalScaffold = true",
+  "packageWalkwayRemainsVisualAuthority = true",
   "sourceGeometryUnmoved = true",
 ]) {
-  if (!support.includes(token)) throw new Error(`Integrated fixed-walkway support contract is missing ${token}`);
+  if (!support.includes(token)) throw new Error(`Minimal fixed-walkway support contract is missing ${token}`);
 }
 for (const forbidden of [
+  "LongitudinalGirders_V49",
+  "UnderdeckFascias_V49",
+  "CenterLoadSpines_V49",
+  "LongitudinalBraces_V49",
   "ServiceCabinets_V46",
   "ServiceCabinetCaps_V46",
-  "compact service cabinets V46",
 ]) {
-  if (support.includes(forbidden)) throw new Error(`Detached decorative support treatment remains: ${forbidden}`);
+  if (support.includes(forbidden)) throw new Error(`Procedural scaffold remains: ${forbidden}`);
 }
 
 for (const token of [
@@ -73,4 +72,4 @@ for (const token of [
   if (!rendering.includes(token)) throw new Error(`High-fidelity renderer contract is missing ${token}`);
 }
 
-console.log("Verified exact T4_WALK translucent fixed-corridor backing, integrated source-transform V49 load frames with underdeck fascia and center load spine, daylight-balanced package lightmaps, apron-side lighting, unmoved source transforms and persistent 2K/4K dynamic shadows.");
+console.log("Verified exact T4_WALK source skins, package-authority minimal source-transform supports, daylight-balanced package lightmaps, unmoved source transforms and persistent 2K/4K dynamic shadows.");
