@@ -95,7 +95,7 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
   await expect(toggle).toHaveText("Return to training");
   await expect(canvas).toHaveAttribute(
     "data-inspection-route-authority",
-    "source-gate-apron-presets-facing-terminal-a1-a14-b14-b15-v2",
+    "source-gate-apron-presets-with-close-a1-connection-a1-a14-b14-b15-v3",
   );
   await expect(canvas).toHaveAttribute(
     "data-inspection-telemetry-authority",
