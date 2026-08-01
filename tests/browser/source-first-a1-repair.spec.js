@@ -5,17 +5,27 @@ async function saveCompositedCanvasPng(page, canvas, path) {
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const box = await canvas.boundingBox();
   if (!box || box.width < 64 || box.height < 64) throw new Error("Canvas has no usable compositor bounds");
-  fs.mkdirSync("test-results", { recursive: true });
-  await page.screenshot({
-    path,
-    animations: "disabled",
+  const client = await page.context().newCDPSession(page);
+  const capture = client.send("Page.captureScreenshot", {
+    format: "png",
+    fromSurface: true,
+    captureBeyondViewport: false,
     clip: {
       x: Math.max(0, box.x),
       y: Math.max(0, box.y),
       width: Math.min(box.width, 1440 - Math.max(0, box.x)),
       height: Math.min(box.height, 900 - Math.max(0, box.y)),
+      scale: 1,
     },
   });
+  const timeout = new Promise((_, reject) => setTimeout(
+    () => reject(new Error("Chromium compositor capture exceeded 30 seconds")),
+    30_000,
+  ));
+  const { data } = await Promise.race([capture, timeout]);
+  fs.mkdirSync("test-results", { recursive: true });
+  fs.writeFileSync(path, Buffer.from(data, "base64"));
+  await client.detach();
   const bytes = fs.statSync(path).size;
   if (bytes < 30_000) throw new Error(`Composited A1 evidence is suspiciously small: ${bytes} bytes`);
 }
