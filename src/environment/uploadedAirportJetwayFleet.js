@@ -1,7 +1,8 @@
 import { addUploadedAirportJetwayTerminalConnector } from "./uploadedAirportJetwayTerminalConnector.js";
 
 const PART_COUNT = 5;
-const MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1";
+const MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured";
+const MATERIAL_AUTHORITY = "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2";
 // Replace only the movable fallback jetway. The source-positioned fixed walkway
 // and wall collar are the physical terminal connection and must remain visible.
 const HIDE_REPLACED = /^(?:AIR_Jetway01_(?!WallCollars)|Terminal4_LowerFacadeInfillPanels|Terminal4_ClosedServiceDoors|Terminal4_FacadeVentGrilles)/i;
@@ -30,6 +31,93 @@ async function readPayload() {
   return { metadata, binary: payload.subarray(4 + metadataLength) };
 }
 
+function addProjectedUvs(THREE, indexedGeometry) {
+  const geometry = indexedGeometry.index ? indexedGeometry.toNonIndexed() : indexedGeometry.clone();
+  geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
+  const position = geometry.getAttribute("position");
+  const normal = geometry.getAttribute("normal");
+  const bounds = geometry.boundingBox;
+  const spanX = Math.max(0.001, bounds.max.x - bounds.min.x);
+  const spanY = Math.max(0.001, bounds.max.y - bounds.min.y);
+  const spanZ = Math.max(0.001, bounds.max.z - bounds.min.z);
+  const uv = new Float32Array(position.count * 2);
+
+  for (let vertex = 0; vertex < position.count; vertex += 1) {
+    const x = position.getX(vertex);
+    const y = position.getY(vertex);
+    const z = position.getZ(vertex);
+    const nx = Math.abs(normal.getX(vertex));
+    const ny = Math.abs(normal.getY(vertex));
+    const nz = Math.abs(normal.getZ(vertex));
+    let u;
+    let v;
+    if (ny >= nx && ny >= nz) {
+      u = (x - bounds.min.x) / spanX;
+      v = (z - bounds.min.z) / spanZ;
+    } else if (nx >= nz) {
+      u = (z - bounds.min.z) / spanZ;
+      v = (y - bounds.min.y) / spanY;
+    } else {
+      u = (x - bounds.min.x) / spanX;
+      v = (y - bounds.min.y) / spanY;
+    }
+    uv[vertex * 2] = u;
+    uv[vertex * 2 + 1] = v;
+  }
+  geometry.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  geometry.computeBoundingSphere();
+  return geometry;
+}
+
+function cloneCorrugatedAtlasBand(THREE, texture, name) {
+  if (!texture?.isTexture) return null;
+  const clone = texture.clone();
+  clone.name = name;
+  clone.wrapS = THREE.ClampToEdgeWrapping;
+  clone.wrapT = THREE.ClampToEdgeWrapping;
+  // The exact M1DGJETWAY atlas stores the long corrugated tunnel skin in the
+  // bottom 28.5 percent. Project only that authored band across the uploaded
+  // model instead of stretching the complete door/bellows atlas over it.
+  clone.offset.set(0, 0.715);
+  clone.repeat.set(1, 0.285);
+  clone.anisotropy = 16;
+  clone.needsUpdate = true;
+  return clone;
+}
+
+function createMaterials(THREE, sourceTextures = {}) {
+  const bodyMap = cloneCorrugatedAtlasBand(
+    THREE,
+    sourceTextures.diffuse,
+    "Uploaded jetway exact M1DGJETWAY corrugated shell",
+  );
+  const body = new THREE.MeshStandardMaterial({
+    name: "Uploaded airport jetway exact-source body",
+    color: bodyMap ? 0xffffff : 0xc4c5c2,
+    map: bodyMap,
+    roughness: 0.7,
+    metalness: 0.08,
+    side: THREE.DoubleSide,
+  });
+  const glass = new THREE.MeshPhysicalMaterial({
+    name: "Uploaded airport jetway glazing",
+    color: 0x294550,
+    roughness: 0.17,
+    metalness: 0.06,
+    transmission: 0.12,
+    clearcoat: 0.28,
+    clearcoatRoughness: 0.2,
+    transparent: true,
+    opacity: 0.66,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  body.userData.materialAuthority = bodyMap ? MATERIAL_AUTHORITY : "uploaded-model-neutral-material-fallback";
+  glass.userData.materialAuthority = "uploaded-model-physical-blue-gray-glass-v2";
+  return { body, glass };
+}
+
 function decodePrimitive(THREE, primitive, binary, materials) {
   const positionView = new DataView(binary.buffer, binary.byteOffset + primitive.pos[0], primitive.pos[1]);
   const positions = new Float32Array(primitive.count * 3);
@@ -51,12 +139,11 @@ function decodePrimitive(THREE, primitive, binary, materials) {
       : indexView.getUint16(index * bytesPerIndex, true);
   }
 
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-  geometry.computeVertexNormals();
-  geometry.computeBoundingBox();
-  geometry.computeBoundingSphere();
+  const indexed = new THREE.BufferGeometry();
+  indexed.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  indexed.setIndex(new THREE.BufferAttribute(indices, 1));
+  const geometry = addProjectedUvs(THREE, indexed);
+  indexed.dispose();
   const mesh = new THREE.Mesh(geometry, materials[primitive.material] || materials[0]);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
@@ -74,45 +161,35 @@ function applyNodeTransform(THREE, object, node) {
   if (node.scale) object.scale.fromArray(node.scale);
 }
 
-function buildPrototype(THREE, payload) {
-  const { metadata, binary } = payload;
-  const body = new THREE.MeshStandardMaterial({
-    name: "Uploaded airport jetway body",
-    color: 0xc4c5c2,
-    roughness: 0.76,
-    metalness: 0.09,
-    side: THREE.DoubleSide,
-  });
-  const glass = new THREE.MeshStandardMaterial({
-    name: "Uploaded airport jetway glass",
-    color: 0x203740,
-    roughness: 0.2,
-    metalness: 0.08,
+function addStructuralEdges(THREE, model) {
+  const edgeMaterial = new THREE.LineBasicMaterial({
+    name: "Uploaded airport jetway structural edge definition",
+    color: 0x4a5053,
     transparent: true,
-    opacity: 0.76,
+    opacity: 0.28,
     depthWrite: false,
-    side: THREE.DoubleSide,
+    toneMapped: false,
   });
-  const darkMetal = new THREE.MeshStandardMaterial({
-    name: "Uploaded airport jetway structure",
-    color: 0x4a5054,
-    roughness: 0.58,
-    metalness: 0.48,
-    side: THREE.DoubleSide,
+  const meshes = [];
+  model.traverse((entry) => {
+    if (entry.isMesh && !entry.material?.transparent) meshes.push(entry);
   });
-  const rubber = new THREE.MeshStandardMaterial({
-    name: "Uploaded airport jetway rubber",
-    color: 0x202225,
-    roughness: 0.94,
-    metalness: 0.01,
-    side: THREE.DoubleSide,
-  });
-  const materials = metadata.materials.map((name) => {
-    if (/glass|window/i.test(name)) return glass;
-    if (/rubber|tire|wheel|bellows/i.test(name)) return rubber;
-    if (/metal|frame|rail|support|column|bogie|stair/i.test(name)) return darkMetal;
-    return body;
-  });
+  for (const mesh of meshes) {
+    const edgeGeometry = new THREE.EdgesGeometry(mesh.geometry, 34);
+    const edges = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+    edges.name = `${mesh.name || "UploadedJetwayMesh"}_StructuralEdges`;
+    edges.renderOrder = 3;
+    mesh.add(edges);
+  }
+  return meshes.length;
+}
+
+function buildPrototype(THREE, payload, sourceTextures = {}) {
+  const { metadata, binary } = payload;
+  const sourceMaterials = createMaterials(THREE, sourceTextures);
+  const materials = metadata.materials.map((name) => /glass|window/i.test(name)
+    ? sourceMaterials.glass
+    : sourceMaterials.body);
   const meshes = metadata.meshes.map((meshDefinition) => {
     const root = new THREE.Group();
     root.name = meshDefinition.name;
@@ -132,6 +209,7 @@ function buildPrototype(THREE, payload) {
   };
 
   const model = buildNode(metadata.rootNode ?? 1);
+  const structuralEdgeMeshCount = addStructuralEdges(THREE, model);
   const aligned = new THREE.Group();
   aligned.name = "UploadedAirportJetway_AlignedPrototype";
   // The supplied model's rotunda pivot is at approximately (-0.652, 4.12, -15.12).
@@ -139,6 +217,8 @@ function buildPrototype(THREE, payload) {
   model.position.set(0.651626, 0.23, 15.12);
   aligned.add(model);
   aligned.userData.modelAuthority = MODEL_AUTHORITY;
+  aligned.userData.materialAuthority = sourceMaterials.body.userData.materialAuthority;
+  aligned.userData.structuralEdgeMeshCount = structuralEdgeMeshCount;
   return aligned;
 }
 
@@ -210,7 +290,7 @@ function hideGeneratedJetways(group) {
   return hidden;
 }
 
-export function installUploadedAirportJetwayFleet(THREE, group, placements) {
+export function installUploadedAirportJetwayFleet(THREE, group, placements, sourceTextures = {}) {
   if (!group?.isGroup) throw new Error("Uploaded airport jetway replacement requires the Terminal 4 jetway group");
   if (!Array.isArray(placements) || placements.length !== 58) {
     throw new Error(`Uploaded airport jetway replacement expected 58 placements, received ${placements?.length ?? 0}`);
@@ -218,11 +298,14 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements) {
   const controller = createController();
   group.userData.uploadedJetwayLoadState = "loading";
   group.userData.uploadedJetwayModelAuthority = MODEL_AUTHORITY;
+  group.userData.uploadedJetwayMaterialAuthority = sourceTextures.diffuse?.isTexture
+    ? MATERIAL_AUTHORITY
+    : "uploaded-model-neutral-material-fallback";
   group.userData.uploadedJetwayExpectedCount = placements.length;
 
   readPayload()
     .then((payload) => {
-      const prototype = buildPrototype(THREE, payload);
+      const prototype = buildPrototype(THREE, payload, sourceTextures);
       const fleet = new THREE.Group();
       fleet.name = "UploadedAirportJetwayFleet";
       for (const placement of placements) {
@@ -244,6 +327,8 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements) {
       group.userData.uploadedJetwayMeasuredTerminalConnectorCount = placements.length;
       group.userData.uploadedJetwayHiddenGeneratedObjectCount = hiddenGeneratedObjectCount;
       group.userData.uploadedJetwayTerminalConnectorPreserved = true;
+      group.userData.uploadedJetwayMaterialAuthority = prototype.userData.materialAuthority;
+      group.userData.uploadedJetwayStructuralEdgeMeshCount = prototype.userData.structuralEdgeMeshCount;
       group.userData.sourceGeometryMode = MODEL_AUTHORITY;
       group.userData.visualAuthority = MODEL_AUTHORITY;
       group.userData.requiresOriginalSourceMesh = false;
