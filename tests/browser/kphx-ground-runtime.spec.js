@@ -147,7 +147,7 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
   expect(runtime.terminal4A1LegacyBlockRemovedTriangles).toBe("36");
   expect(runtime.terminal4A1LegacyBlockAuthority).toBe("surgical-exact-three-box-36-triangle-authored-removal-v3");
   expect(runtime.terminal4FallbackTextureCount).toBe("0");
-  expect(runtime.terminal4TexturedMaterialCount).toBe("19");
+  expect(runtime.terminal4TexturedMaterialCount).toBe("22");
   expect(runtime.terminal4Position).toBe("-101.593,0.035,70.901");
   expect(runtime.terminal4Placement).toBe(
     "decoded original KPHX_ADEX library-object placement relative to decoded original Gate A1",
