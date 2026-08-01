@@ -22,15 +22,17 @@ for (const token of [
 }
 
 for (const token of [
-  "source-transform-fixed-walkway-integrated-portal-frame-v48",
-  "Terminal4_FixedWalkway_SupportUpgrade_V48",
-  "Terminal4_FixedWalkway_LongitudinalGirders_V48",
-  "Terminal4_FixedWalkway_PortalCrossheads_V48",
-  "Terminal4_FixedWalkway_PortalColumns_V48",
-  "Terminal4_FixedWalkway_KneeBraces_V48",
-  "Terminal4_FixedWalkway_FormedPierBases_V48",
-  "Terminal4_FixedWalkway_LowerTies_V48",
-  "Terminal4_FixedWalkway_LongitudinalBraces_V48",
+  "source-transform-fixed-walkway-integrated-load-frame-v49",
+  "Terminal4_FixedWalkway_SupportUpgrade_V49",
+  "Terminal4_FixedWalkway_LongitudinalGirders_V49",
+  "Terminal4_FixedWalkway_UnderdeckFascias_V49",
+  "Terminal4_FixedWalkway_TransferCrossheads_V49",
+  "Terminal4_FixedWalkway_LoadColumns_V49",
+  "Terminal4_FixedWalkway_CenterLoadSpines_V49",
+  "Terminal4_FixedWalkway_KneeBraces_V49",
+  "Terminal4_FixedWalkway_FormedFoundations_V49",
+  "Terminal4_FixedWalkway_LowerTies_V49",
+  "Terminal4_FixedWalkway_LongitudinalBraces_V49",
   "portalStationsPerWalkway = 2",
   "removedDecorativeServiceCabinets = true",
   "sourceGeometryUnmoved = true",
@@ -71,4 +73,4 @@ for (const token of [
   if (!rendering.includes(token)) throw new Error(`High-fidelity renderer contract is missing ${token}`);
 }
 
-console.log("Verified exact T4_WALK translucent fixed-corridor backing, two-station integrated source-transform portal supports, longitudinal bracing, daylight-balanced package lightmaps, apron-side lighting, unmoved source transforms and persistent 2K/4K dynamic shadows.");
+console.log("Verified exact T4_WALK translucent fixed-corridor backing, integrated source-transform V49 load frames with underdeck fascia and center load spine, daylight-balanced package lightmaps, apron-side lighting, unmoved source transforms and persistent 2K/4K dynamic shadows.");
