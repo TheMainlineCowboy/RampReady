@@ -1,6 +1,6 @@
-const CONNECTOR_AUTHORITY = "measured-authored-terminal-wall-to-uploaded-rotunda-v2-framed-glazed";
+const CONNECTOR_AUTHORITY = "measured-authored-terminal-wall-to-uploaded-rotunda-v3-a1-deep-overlap-terminal-frame";
 
-function addBox(THREE, parent, geometry, material, name, position, yaw, castShadow = true) {
+function addBox(THREE, parent, geometry, material, name, position, yaw, castShadow = false) {
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = name;
   mesh.position.set(...position);
@@ -12,7 +12,9 @@ function addBox(THREE, parent, geometry, material, name, position, yaw, castShad
 }
 
 export function addUploadedAirportJetwayTerminalConnector(THREE, fleet, placement) {
-  const length = Math.max(1.25, Math.min(18, Number(placement.wallConnectorLength) || 1.25));
+  const measuredLength = Math.max(1.25, Math.min(18, Number(placement.wallConnectorLength) || 1.25));
+  const terminalOverlap = placement.gate === "A1" ? 1.45 : 0.55;
+  const length = Math.max(1.8, Math.min(19.5, measuredLength + terminalOverlap));
   const towardX = Number(placement.connectorTowardX) || 0;
   const towardZ = Number(placement.connectorTowardZ) || 0;
   const magnitude = Math.hypot(towardX, towardZ) || 1;
@@ -22,28 +24,32 @@ export function addUploadedAirportJetwayTerminalConnector(THREE, fleet, placemen
   connector.name = `UploadedAirportJetwayTerminalConnector_${placement.gate}`;
   connector.userData.connectorAuthority = CONNECTOR_AUTHORITY;
   connector.userData.connectorLengthMeters = length;
+  connector.userData.measuredWallLengthMeters = measuredLength;
+  connector.userData.terminalOverlapMeters = terminalOverlap;
 
   const shellMaterial = new THREE.MeshStandardMaterial({
     name: `Uploaded airport jetway fixed terminal connector ${placement.gate}`,
-    color: 0xc9c7c1,
-    roughness: 0.72,
-    metalness: 0.08,
+    color: 0xd4d2cc,
+    roughness: 0.7,
+    metalness: 0.07,
     side: THREE.DoubleSide,
   });
   const frameMaterial = new THREE.MeshStandardMaterial({
     name: `Uploaded airport jetway fixed connector frame ${placement.gate}`,
-    color: 0x5b6062,
-    roughness: 0.58,
-    metalness: 0.42,
+    color: 0x555b5e,
+    roughness: 0.56,
+    metalness: 0.38,
     side: THREE.DoubleSide,
   });
-  const glassMaterial = new THREE.MeshStandardMaterial({
+  const glassMaterial = new THREE.MeshPhysicalMaterial({
     name: `Uploaded airport jetway fixed connector glazing ${placement.gate}`,
-    color: 0x263c46,
-    roughness: 0.22,
-    metalness: 0.08,
+    color: 0x597784,
+    roughness: 0.28,
+    metalness: 0.04,
+    transmission: 0.08,
+    clearcoat: 0.18,
     transparent: true,
-    opacity: 0.72,
+    opacity: 0.58,
     depthWrite: false,
     side: THREE.DoubleSide,
   });
@@ -54,8 +60,9 @@ export function addUploadedAirportJetwayTerminalConnector(THREE, fleet, placemen
   const yaw = Math.atan2(ux, uz);
   const sideX = Math.cos(yaw);
   const sideZ = -Math.sin(yaw);
-  const span = length + 0.5;
+  const span = length + 0.35;
   const halfWidth = 1.31;
+  const castDynamicShadow = placement.gate === "A1";
 
   addBox(
     THREE,
@@ -65,6 +72,7 @@ export function addUploadedAirportJetwayTerminalConnector(THREE, fleet, placemen
     `UploadedAirportJetwayTerminalConnectorRoof_${placement.gate}`,
     [centerX, centerY + 1.19, centerZ],
     yaw,
+    castDynamicShadow,
   );
   addBox(
     THREE,
@@ -74,6 +82,7 @@ export function addUploadedAirportJetwayTerminalConnector(THREE, fleet, placemen
     `UploadedAirportJetwayTerminalConnectorFloor_${placement.gate}`,
     [centerX, centerY - 1.17, centerZ],
     yaw,
+    castDynamicShadow,
   );
 
   for (const side of [-1, 1]) {
@@ -87,11 +96,12 @@ export function addUploadedAirportJetwayTerminalConnector(THREE, fleet, placemen
       `UploadedAirportJetwayTerminalConnectorLowerPanel_${placement.gate}_${side}`,
       [centerX + sideOffsetX, centerY - 0.66, centerZ + sideOffsetZ],
       yaw,
+      castDynamicShadow,
     );
     addBox(
       THREE,
       connector,
-      new THREE.BoxGeometry(0.035, 1.0, Math.max(0.8, length - 0.22)),
+      new THREE.BoxGeometry(0.035, 1.0, Math.max(0.8, length - 0.12)),
       glassMaterial,
       `UploadedAirportJetwayTerminalConnectorWindow_${placement.gate}_${side}`,
       [centerX + sideOffsetX * 1.008, centerY + 0.31, centerZ + sideOffsetZ * 1.008],
@@ -106,6 +116,7 @@ export function addUploadedAirportJetwayTerminalConnector(THREE, fleet, placemen
       `UploadedAirportJetwayTerminalConnectorUpperRail_${placement.gate}_${side}`,
       [centerX + sideOffsetX, centerY + 0.86, centerZ + sideOffsetZ],
       yaw,
+      castDynamicShadow,
     );
   }
 
@@ -125,8 +136,72 @@ export function addUploadedAirportJetwayTerminalConnector(THREE, fleet, placemen
           centerZ + alongZ + sideZ * side * halfWidth,
         ],
         yaw,
+        castDynamicShadow,
       );
     }
+  }
+
+  if (placement.gate === "A1") {
+    for (const fraction of [0.24, 0.5, 0.76]) {
+      const alongX = ux * (fraction - 0.5) * length;
+      const alongZ = uz * (fraction - 0.5) * length;
+      for (const side of [-1, 1]) {
+        addBox(
+          THREE,
+          connector,
+          new THREE.BoxGeometry(0.09, 2.1, 0.09),
+          frameMaterial,
+          `UploadedAirportJetwayTerminalConnectorMullion_A1_${fraction}_${side}`,
+          [
+            centerX + alongX + sideX * side * halfWidth,
+            centerY + 0.03,
+            centerZ + alongZ + sideZ * side * halfWidth,
+          ],
+          yaw,
+          true,
+        );
+      }
+    }
+
+    const terminalX = placement.x + ux * length;
+    const terminalZ = placement.z + uz * length;
+    addBox(
+      THREE,
+      connector,
+      new THREE.BoxGeometry(2.96, 0.24, 0.52),
+      frameMaterial,
+      "UploadedAirportJetwayTerminalPortalHeader_A1",
+      [terminalX, centerY + 1.12, terminalZ],
+      yaw,
+      true,
+    );
+    addBox(
+      THREE,
+      connector,
+      new THREE.BoxGeometry(2.9, 0.16, 0.62),
+      frameMaterial,
+      "UploadedAirportJetwayTerminalPortalThreshold_A1",
+      [terminalX, centerY - 1.14, terminalZ],
+      yaw,
+      true,
+    );
+    for (const side of [-1, 1]) {
+      addBox(
+        THREE,
+        connector,
+        new THREE.BoxGeometry(0.2, 2.45, 0.56),
+        frameMaterial,
+        `UploadedAirportJetwayTerminalPortalJamb_A1_${side}`,
+        [
+          terminalX + sideX * side * 1.38,
+          centerY,
+          terminalZ + sideZ * side * 1.38,
+        ],
+        yaw,
+        true,
+      );
+    }
+    connector.userData.a1TerminalPortalFrame = "deep-overlap-open-framed-terminal-end-v3";
   }
 
   fleet.add(connector);
