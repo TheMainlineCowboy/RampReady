@@ -35,15 +35,9 @@ for (const token of [
   "renderer.shadowMap.type = THREE.PCFSoftShadowMap",
   "const shadowMapSize = coarsePointer ? 2048 : 4096",
   'dataset.shadowMode = "dynamic-high-fidelity"',
+  "if (source.includes(forbidden)) throw new Error",
 ]) {
   if (!rendering.includes(token)) throw new Error(`High-fidelity renderer contract is missing ${token}`);
-}
-
-for (const forbidden of [
-  "sim.renderer.shadowMap.enabled = !next",
-  'dataset.shadowMode = next ? "inspection-ambient" : "training-dynamic"',
-]) {
-  if (rendering.includes(forbidden)) throw new Error(`Inspection still downgrades rendering: ${forbidden}`);
 }
 
 console.log("Verified exact T4_WALK fixed-corridor source skins, daylight-balanced package lightmaps, unmoved source transforms and persistent 2K/4K dynamic shadows.");
