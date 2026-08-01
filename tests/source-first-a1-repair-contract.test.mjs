@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const entry = fs.readFileSync("src/components/PushbackTrainer.jsx", "utf8");
 const facade = fs.readFileSync("scripts/prepare-terminal4-facade-visual-v7.mjs", "utf8");
+const continuity = fs.readFileSync("scripts/prepare-terminal4-facade-continuity-v8.mjs", "utf8");
 const connector = fs.readFileSync("scripts/prepare-a1-terminal-connector-v11.mjs", "utf8");
 
 for (const token of [
@@ -19,6 +20,17 @@ for (const token of [
   '"transforms.facadeVent.push"',
 ]) {
   if (!facade.includes(token)) throw new Error(`Source-first facade contract is missing ${token}`);
+}
+
+for (const token of [
+  "source-authored-terminal4-lower-facade-v25-no-overlay",
+  '"buildTerminal4FacadeContinuity"',
+  '"buildTerminal4LowerFacadeSkin"',
+]) {
+  if (!continuity.includes(token)) throw new Error(`Source-only continuity cleanup is missing ${token}`);
+}
+if (continuity.includes('await import("./prepare-terminal4-lower-facade-skin-v9.mjs")')) {
+  throw new Error("The copied lower-facade skin is still invoked");
 }
 
 for (const token of [
