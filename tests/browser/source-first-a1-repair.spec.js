@@ -45,7 +45,7 @@ test("equipment selection exposes a direct compact tug inspection launch", async
 });
 
 test("A1 visibly overlaps the exact source walkway with varied facade cells and corrected jetway shell projection", async ({ page }) => {
-  test.setTimeout(210_000);
+  test.setTimeout(240_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   await page.getByRole("button", { name: "Drive tug / inspect airport" }).click();
@@ -67,6 +67,14 @@ test("A1 visibly overlaps the exact source walkway with varied facade cells and 
   expect(variation.closed).toBeGreaterThan(variation.open * 3);
   expect(variation.variants).toBeGreaterThanOrEqual(4);
   await saveCompositedCanvasPng(page, canvas, "test-results/source-first-a1-attached.png");
+
+  const inspectionLocation = page.getByLabel("Inspection location");
+  await expect(inspectionLocation).toHaveValue("a1");
+  await inspectionLocation.selectOption("a1Connection");
+  await expect(canvas).toHaveAttribute("data-inspection-preset", "a1Connection");
+  await expect(canvas).toHaveAttribute("data-inspection-preset-label", "A1 terminal connection");
+  await page.waitForTimeout(1500);
+  await saveCompositedCanvasPng(page, canvas, "test-results/source-first-a1-terminal-connection.png");
 
   await page.getByLabel("Camera view").selectOption("driver");
   await page.waitForTimeout(1500);
