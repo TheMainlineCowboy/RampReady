@@ -44,8 +44,9 @@ for (const token of [
 }
 
 for (const token of [
-  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v3-source-textured-optimized",
+  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v4-instanced-static-source-textured",
   "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2",
+  "57-static-gates-instanced-plus-1-animated-a1-source-geometry-v4",
   "shared-geometry-single-a1-shadow-caster-no-global-edge-overlays-v3",
   "Tunnel_B",
   "Tunnel_C",
