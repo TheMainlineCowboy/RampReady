@@ -57,4 +57,5 @@ if (!source.includes("source-authored-terminal4-lower-facade-v25-no-overlay")) {
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared Terminal 4 source-only facade v25: package geometry and decoded package materials remain authoritative; no generated continuity mesh, copied skin or CanvasTexture facade atlas is installed.");
+await import("./prepare-terminal4-source-facade-selection-v27.mjs");
+console.log("Prepared Terminal 4 source-only facade v27: package geometry remains authoritative, repeated BGATE1 open bays use the package-native BGATE3 closed variant, and no generated continuity mesh or atlas is installed.");
