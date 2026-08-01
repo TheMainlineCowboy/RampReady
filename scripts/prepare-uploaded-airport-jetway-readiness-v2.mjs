@@ -4,9 +4,17 @@ const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let jetwaySource = fs.readFileSync(jetwayPath, "utf8");
 const oldImport = 'import { installUploadedAirportJetwayFleet } from "./uploadedAirportJetwayFleet.js";';
 const readyImport = 'import { installUploadedAirportJetwayFleet } from "./uploadedAirportJetwayFleetReadyV2.js";';
-if (jetwaySource.includes(oldImport)) jetwaySource = jetwaySource.replace(oldImport, readyImport);
-if (!jetwaySource.includes(readyImport)) {
-  throw new Error(`${jetwayPath}: uploaded jetway readiness wrapper import is missing`);
+const importAnchor = 'import { buildAnimatedA1Jetway } from "./animatedA1Jetway.js";';
+jetwaySource = jetwaySource
+  .split("\n")
+  .filter((line) => line !== oldImport && line !== readyImport)
+  .join("\n");
+if (!jetwaySource.includes(importAnchor)) {
+  throw new Error(`${jetwayPath}: uploaded jetway readiness import anchor is missing`);
+}
+jetwaySource = jetwaySource.replace(importAnchor, `${importAnchor}\n${readyImport}`);
+if ((jetwaySource.match(/uploadedAirportJetwayFleetReadyV2\.js/g) || []).length !== 1) {
+  throw new Error(`${jetwayPath}: uploaded jetway readiness import is not unique`);
 }
 fs.writeFileSync(jetwayPath, jetwaySource, "utf8");
 
@@ -59,4 +67,4 @@ for (const token of [
 }
 fs.writeFileSync(terminalPath, terminalSource, "utf8");
 
-console.log("Prepared awaited uploaded-airport jetway readiness: all 58 source placements, measured terminal connectors and decoded model clones must complete before Terminal 4 becomes ready.");
+console.log("Prepared awaited uploaded-airport jetway readiness: one canonical loader import and all 58 source placements, measured terminal connectors and decoded model clones must complete before Terminal 4 becomes ready.");
