@@ -1,6 +1,13 @@
 import fs from "node:fs";
 import { expect, test } from "@playwright/test";
 
+const UPLOADED_JETWAY_ATTRIBUTES = Object.freeze([
+  "data-terminal4-uploaded-jetway-load-state",
+  "data-terminal4-uploaded-jetway-count",
+  "data-terminal4-uploaded-jetway-connector-count",
+  "data-terminal4-uploaded-jetway-verified-model-count",
+]);
+
 async function saveCompositedCanvasPng(page, path) {
   const box = await page.evaluate(() => {
     const canvas = document.querySelector("canvas.trainerCanvas");
@@ -64,19 +71,20 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   await directInspection.click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction(() => {
+  await page.waitForFunction((attributeNames) => {
     const canvas = document.querySelector("canvas.trainerCanvas");
     const data = canvas?.dataset;
+    const uploaded = attributeNames.map((name) => canvas?.getAttribute(name));
     return data?.inspectionMode === "active"
       && data?.environmentSource?.includes("authored-phx-terminal4")
-      && data?.terminal4UploadedJetwayLoadState === "ready"
-      && data?.terminal4UploadedJetwayCount === "58"
-      && data?.terminal4UploadedJetwayConnectorCount === "58"
-      && data?.terminal4UploadedJetwayVerifiedModelCount === "58"
+      && uploaded[0] === "ready"
+      && uploaded[1] === "58"
+      && uploaded[2] === "58"
+      && uploaded[3] === "58"
       && data?.photoGroundSource === "source-authored-phx-photo"
       && data?.airportCollisionReady === "true"
       && data?.airportCollisionTargetCount === "2";
-  }, null, { timeout: 180_000, polling: 250 });
+  }, UPLOADED_JETWAY_ATTRIBUTES, { timeout: 180_000, polling: 250 });
 
   const hudHeight = await page.evaluate(() => document.querySelector(".rr-hud")?.getBoundingClientRect().height ?? Number.POSITIVE_INFINITY);
   expect(hudHeight).toBeLessThan(110);
