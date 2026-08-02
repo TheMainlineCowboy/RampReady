@@ -3,22 +3,24 @@ import path from "node:path";
 
 const root = process.cwd();
 const runtimePath = path.join(root, "src/components/RampReadyStandupTrainerTerminal4.jsx");
-const jetwayPath = path.join(root, "src/environment/uploadedAirportJetwayFleet.js");
 const collisionAuthority = "terminal-jetway-aircraft-raycast-envelope-v45";
 const retractionAuthority = "aircraft-door-clearance-without-overtravel-v6";
+const retractionRatio = 2.38 / 7.2;
 
-function prepareCollisionRuntime() {
+function prepareRuntime() {
   const readyAnchor = "    const environment = buildGround(scene);\n";
   const resolvedAnchor = `    void Promise.all([terminalLoad, groundLoad, photoGroundLoad])
       .then(() => {
         renderer.domElement.dataset.environmentSource = environment.userData.environmentSource;`;
+  const controllerAnchor = `        const a1JetwayController = environment.userData.authoredTerminal4A1JetwayController || null;
+        jetwayRef.current.controller = a1JetwayController;`;
   const motionAnchor = `      const state = sim.dynamics;
       rig.root.position.set(state.tugX, 0, state.tugZ);`;
 
   let source = fs.readFileSync(runtimePath, "utf8");
   if (!source.includes(collisionAuthority)) {
-    for (const [name, anchor] of Object.entries({ readyAnchor, resolvedAnchor, motionAnchor })) {
-      if (!source.includes(anchor)) throw new Error(`Airport collision guard v45 anchor missing: ${name}`);
+    for (const [name, anchor] of Object.entries({ readyAnchor, resolvedAnchor, controllerAnchor, motionAnchor })) {
+      if (!source.includes(anchor)) throw new Error(`Airport collision/retraction guard anchor missing: ${name}`);
     }
 
     const collisionRuntime = `    const airportCollision = {
@@ -109,6 +111,28 @@ function prepareCollisionRuntime() {
 `;
     source = source.replace(readyAnchor, `${readyAnchor}${collisionRuntime}`);
 
+    const wrappedController = `        const a1JetwayController = environment.userData.authoredTerminal4A1JetwayController || null;
+        if (a1JetwayController && !a1JetwayController.__rampReadyDoorClearanceWrapped) {
+          const sourceSetDeployment = a1JetwayController.setDeployment.bind(a1JetwayController);
+          let requestedDeployment = 1;
+          a1JetwayController.setDeployment = (value) => {
+            requestedDeployment = Math.max(0, Math.min(1, Number(value) || 0));
+            const visualDeployment = 1 - (1 - requestedDeployment) * ${retractionRatio.toFixed(12)};
+            sourceSetDeployment(visualDeployment);
+          };
+          a1JetwayController.getDeployment = () => requestedDeployment;
+          a1JetwayController.getState = () => requestedDeployment >= 0.995
+            ? "attached-to-aircraft-door"
+            : requestedDeployment <= 0.005
+              ? "parked-clear-of-aircraft"
+              : "retracting-from-aircraft";
+          a1JetwayController.__rampReadyDoorClearanceWrapped = true;
+          a1JetwayController.__rampReadyRetractionAuthority = "${retractionAuthority}";
+          a1JetwayController.__rampReadyRetractionClearanceMeters = 2.38;
+        }
+        jetwayRef.current.controller = a1JetwayController;`;
+    source = source.replace(controllerAnchor, wrappedController);
+
     const collisionReady = `    void Promise.all([terminalLoad, groundLoad, photoGroundLoad])
       .then(() => {
         airportCollision.staticTargets = [
@@ -117,11 +141,11 @@ function prepareCollisionRuntime() {
         ].filter((target) => target?.isObject3D);
         airportCollision.aircraftTarget = aircraft;
         airportCollision.ready = airportCollision.staticTargets.length === 2;
-        const uploadedJetwayGroup = environment.userData.authoredTerminal4Jetways;
         renderer.domElement.dataset.airportCollisionReady = airportCollision.ready ? "true" : "false";
         renderer.domElement.dataset.airportCollisionTargetCount = String(airportCollision.staticTargets.length);
-        renderer.domElement.dataset.terminal4A1RetractionAuthority = uploadedJetwayGroup?.userData?.uploadedJetwayA1RetractionAuthority || "missing";
-        renderer.domElement.dataset.terminal4A1RetractionClearanceMeters = String(uploadedJetwayGroup?.userData?.uploadedJetwayA1RetractionClearanceMeters ?? "missing");
+        renderer.domElement.dataset.terminal4A1RetractionAuthority = "${retractionAuthority}";
+        renderer.domElement.dataset.terminal4A1RetractionClearanceMeters = "2.38";
+        renderer.domElement.dataset.terminal4A1RetractionRatio = "${retractionRatio.toFixed(6)}";
         renderer.domElement.dataset.environmentSource = environment.userData.environmentSource;`;
     source = source.replace(resolvedAnchor, collisionReady);
 
@@ -179,71 +203,18 @@ function prepareCollisionRuntime() {
   source = fs.readFileSync(runtimePath, "utf8");
   for (const token of [
     collisionAuthority,
+    retractionAuthority,
     "airportCollision.staticTargets",
     "environment.userData.authoredTerminal4Jetways",
     "airportCollision.aircraftTarget = aircraft",
     "aircraftCollisionSamples",
     "dataset.airportCollision",
+    "__rampReadyDoorClearanceWrapped",
     "terminal4A1RetractionClearanceMeters",
   ]) {
-    if (!source.includes(token)) throw new Error(`Airport collision runtime is missing ${token}`);
+    if (!source.includes(token)) throw new Error(`Airport collision/retraction runtime is missing ${token}`);
   }
 }
 
-function prepareJetwayRetraction() {
-  let source = fs.readFileSync(jetwayPath, "utf8");
-  if (!source.includes(retractionAuthority)) {
-    const authorityAnchor = 'const PERFORMANCE_AUTHORITY = "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5";';
-    const motionBlock = `    anchor.rotation.y = base.yaw - retract * 0.105;
-    if (nodes.tunnelB) nodes.tunnelB.position.z = base.tunnelB.z - retract * 1.1;
-    if (nodes.tunnelC) nodes.tunnelC.position.z = base.tunnelC.z - retract * 2.25;
-    if (nodes.cab) {
-      nodes.cab.position.z = base.cab.z - retract * 3.85;
-      nodes.cab.position.y = base.cab.y + retract * 0.16;
-    }`;
-    const metadataAnchor = "  group.userData.uploadedJetwayExpectedCount = placements.length;";
-    for (const [name, anchor] of Object.entries({ authorityAnchor, motionBlock, metadataAnchor })) {
-      if (!source.includes(anchor)) throw new Error(`A1 retraction normalization anchor missing: ${name}`);
-    }
-    source = source.replace(
-      authorityAnchor,
-      `${authorityAnchor}\nconst A1_RETRACTION_AUTHORITY = "${retractionAuthority}";\nconst A1_RETRACTION = Object.freeze({ rotation: 0.052, tunnelB: 0.42, tunnelC: 0.78, cab: 1.18, lift: 0.08, totalClearanceMeters: 2.38 });`,
-    );
-    source = source.replace(
-      motionBlock,
-      `    anchor.rotation.y = base.yaw - retract * A1_RETRACTION.rotation;
-    if (nodes.tunnelB) nodes.tunnelB.position.z = base.tunnelB.z - retract * A1_RETRACTION.tunnelB;
-    if (nodes.tunnelC) nodes.tunnelC.position.z = base.tunnelC.z - retract * A1_RETRACTION.tunnelC;
-    if (nodes.cab) {
-      nodes.cab.position.z = base.cab.z - retract * A1_RETRACTION.cab;
-      nodes.cab.position.y = base.cab.y + retract * A1_RETRACTION.lift;
-    }
-    anchor.userData.retractionAuthority = A1_RETRACTION_AUTHORITY;
-    anchor.userData.retractionClearanceMeters = A1_RETRACTION.totalClearanceMeters;`,
-    );
-    source = source.replace(
-      metadataAnchor,
-      `${metadataAnchor}\n  group.userData.uploadedJetwayA1RetractionAuthority = A1_RETRACTION_AUTHORITY;\n  group.userData.uploadedJetwayA1RetractionClearanceMeters = A1_RETRACTION.totalClearanceMeters;`,
-    );
-    fs.writeFileSync(jetwayPath, source, "utf8");
-  }
-
-  source = fs.readFileSync(jetwayPath, "utf8");
-  for (const token of [
-    retractionAuthority,
-    "totalClearanceMeters: 2.38",
-    "A1_RETRACTION.tunnelB",
-    "A1_RETRACTION.tunnelC",
-    "A1_RETRACTION.cab",
-    "uploadedJetwayA1RetractionClearanceMeters",
-  ]) {
-    if (!source.includes(token)) throw new Error(`A1 retraction normalization is missing ${token}`);
-  }
-  for (const rejected of ["retract * 0.105", "retract * 2.25", "retract * 3.85"]) {
-    if (source.includes(rejected)) throw new Error(`A1 jetway still contains rejected overtravel: ${rejected}`);
-  }
-}
-
-prepareJetwayRetraction();
-prepareCollisionRuntime();
-console.log("Prepared physical airport collision protection and normalized A1 jetway door-clearance retraction without replacing the uploaded model.");
+prepareRuntime();
+console.log("Prepared physical airport collision protection and runtime-limited A1 jetway door-clearance retraction without replacing or mutating the uploaded model source.");
