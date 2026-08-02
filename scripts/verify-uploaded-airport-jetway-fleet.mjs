@@ -14,7 +14,7 @@ function requireTokens(path, tokens) {
 }
 
 const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
-  'MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v6-source-detail-material-split"',
+  'MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured"',
   'MATERIAL_AUTHORITY = "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2"',
   'DETAIL_MATERIAL_AUTHORITY = "source-triangle-stair-and-bogie-material-split-v1"',
   'PERFORMANCE_AUTHORITY = "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5"',
@@ -68,7 +68,7 @@ for (const forbidden of [
 }
 
 requireTokens("src/environment/uploadedAirportJetwayFleetReadyV2.js", [
-  'READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v8-source-detail-materials-and-facade-portal"',
+  'READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured"',
   "EXPECTED_GATE_COUNT = 58",
   "placements.map((placement) => `UploadedAirportJetway_${placement.gate}`)",
   "missingModels",
@@ -168,7 +168,7 @@ requireTokens("tests/browser/source-first-a1-repair.spec.js", [
   '"data-terminal4-uploaded-jetway-count"',
   '"data-terminal4-uploaded-jetway-connector-count"',
   '"data-terminal4-uploaded-jetway-verified-model-count"',
-  "uploaded-airport-jetway-fleet-complete-58-gates-v8-source-detail-materials-and-facade-portal",
+  "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured",
   "wide-diagonal-a1-terminal-joint-v6-clear-tug",
 ]);
 requireTokens("tests/browser/kphx-ground-runtime.spec.js", [
@@ -178,8 +178,8 @@ requireTokens("tests/browser/kphx-ground-runtime.spec.js", [
   "terminal4UploadedJetwayConnectorCount",
   "terminal4UploadedJetwayVerifiedModelCount",
   "terminal4UploadedJetwayReadyAuthority",
-  "uploaded-airport-jetway-fleet-complete-58-gates-v8-source-detail-materials-and-facade-portal",
-  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v6-source-detail-material-split",
+  "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured",
+  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured",
 ]);
 
 console.log("Verified the supplied Tunnel_A/B/C/Rotunda/Cab fleet with exact shell texture, source-triangle galvanized stair and dark bogie materials, 57 instanced static jetways, three instanced static connector batches, and one individually animated A1 with a facade-plane dark portal reveal plus hidden 1.45 m terminal overlap.");
