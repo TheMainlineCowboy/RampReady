@@ -64,8 +64,10 @@ for (const token of ["installStaticJetwayPortalClosures", "polishUploadedA1Jetwa
 }
 
 requireToken(authoredVisual, "buildSourcePlacedTerminal4Jetways", "authored Terminal 4 visual");
-requireToken(packageMaterializer, "unmlobo-kphx1-8-1_Mu9aq.zip", "supplied Terminal 4 materializer");
-requireToken(packageMaterializer, "EXPECTED_ARCHIVE_SHA256", "supplied Terminal 4 materializer");
+requireToken(packageMaterializer, 'SOURCE_REPOSITORY = "SkyHarborPhx"', "supplied Terminal 4 materializer");
+requireToken(packageMaterializer, 'SOURCE_COMMIT = "2e6642778c9c88eac6a82b21063763cc78be7cfe"', "supplied Terminal 4 materializer");
+requireToken(packageMaterializer, '"scenery/term4.BGL"', "supplied Terminal 4 materializer");
+requireToken(packageMaterializer, '"scenery/KPHX_ADEX.BGL"', "supplied Terminal 4 materializer");
 requireToken(groundMaterializer, "KPHX_ADEX.BGL", "supplied airport ground materializer");
 requireToken(groundMaterializer, "markingSegments", "supplied airport ground materializer");
 
