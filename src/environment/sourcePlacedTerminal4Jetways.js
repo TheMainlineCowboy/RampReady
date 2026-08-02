@@ -10,11 +10,19 @@ export const SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE = Object.freeze({
   coordinateFrame: "A1-local; X=north, Y=up, Z=east; BGL heading clockwise from source north",
   sceneOffset: Object.freeze([0, 0, 6.2]),
   headingConversion: "three-yaw-radians = PI - source-heading-radians",
-  detailLevel: "user-supplied-jetway-source-geometry-at-source-bgl-transforms-v2",
+  detailLevel: "user-supplied-jetway-source-geometry-at-source-bgl-transforms-v3",
 });
 
 function sourceHeadingToThreeYaw(THREE, headingDegrees) {
   return Math.PI - THREE.MathUtils.degToRad(Number(headingDegrees));
+}
+
+function placementFacesAssignedParking(placement) {
+  const toParkingX = placement.parkingX - placement.x;
+  const toParkingZ = placement.parkingZ - placement.z;
+  const forwardX = Math.sin(placement.yaw);
+  const forwardZ = Math.cos(placement.yaw);
+  return toParkingX * forwardX + toParkingZ * forwardZ > 0;
 }
 
 /**
@@ -38,9 +46,16 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
     gate: jetway.g,
     x: Number(jetway.x),
     z: Number(jetway.z),
+    parkingX: Number(jetway.px),
+    parkingZ: Number(jetway.pz),
     sourceHeadingDegrees: Number(jetway.h),
     yaw: sourceHeadingToThreeYaw(THREE, jetway.h),
   }));
+  const parkingFacingCount = placements.filter(placementFacesAssignedParking).length;
+  if (parkingFacingCount !== placements.length) {
+    const reversed = placements.filter((placement) => !placementFacesAssignedParking(placement)).map((placement) => placement.gate);
+    throw new Error(`Supplied BGL jetway heading conversion points away from assigned parking at: ${reversed.join(", ")}`);
+  }
 
   const controller = installUploadedAirportJetwayFleet(THREE, group, placements, sourceTextures);
 
@@ -48,6 +63,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   group.userData.placementSource = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.placementSource;
   group.userData.sourceLibraryModel = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceLibraryModel;
   group.userData.headingConversion = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.headingConversion;
+  group.userData.parkingFacingJetwayCount = parkingFacingCount;
   group.userData.jetwayCount = placements.length;
   group.userData.terminalConnectedJetwayCount = placements.length;
   group.userData.a1TerminalWallDistance = null;
