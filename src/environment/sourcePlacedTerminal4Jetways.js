@@ -8,9 +8,9 @@ export const SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE = Object.freeze({
   sourceLibraryModel: "user-supplied Airport Jetway.zip",
   terminal4JetwayCount: 58,
   coordinateFrame: "A1-local; X=north, Y=up, Z=east; BGL heading clockwise from source north",
-  sceneOffset: Object.freeze([0, 0, 6.2]),
+  sceneOffset: Object.freeze([0, 0, 0]),
   headingConversion: "three-yaw-radians = PI - source-heading-radians",
-  detailLevel: "user-supplied-jetway-source-geometry-at-source-bgl-transforms-v3",
+  detailLevel: "user-supplied-jetway-source-geometry-at-unshifted-source-bgl-transforms-v4",
 });
 
 function sourceHeadingToThreeYaw(THREE, headingDegrees) {
@@ -63,6 +63,8 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   group.userData.placementSource = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.placementSource;
   group.userData.sourceLibraryModel = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceLibraryModel;
   group.userData.headingConversion = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.headingConversion;
+  group.userData.sourcePlacementOffset = [...SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset];
+  group.userData.sourcePlacementOffsetAuthority = "no-manual-post-decode-shift";
   group.userData.parkingFacingJetwayCount = parkingFacingCount;
   group.userData.jetwayCount = placements.length;
   group.userData.terminalConnectedJetwayCount = placements.length;
