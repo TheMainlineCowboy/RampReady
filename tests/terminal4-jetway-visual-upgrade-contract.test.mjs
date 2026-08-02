@@ -43,7 +43,7 @@ for (const token of [
 }
 
 for (const token of [
-  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v6-source-detail-material-split",
+  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured",
   "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2",
   "source-triangle-stair-and-bogie-material-split-v1",
   "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5",
