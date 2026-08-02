@@ -53,9 +53,15 @@ if (/\s+cameraTarget:\s*Object\.freeze\(\[[^\]]+\]\),?/.test(presetBlock)) {
 }
 
 source = `${source.slice(0, presetStart)}${presetBlock}${source.slice(presetEnd)}`;
+const b15InspectionPattern = /b15: Object\.freeze\(\{ id: "b15", label: "B15 ramp", x: -?\d+(?:\.\d+)?, z: 539\.2, yaw: -1\.5708, cameraYaw: 1\.38, cameraDistance: 25 \}\),/;
+const b15InspectionPreset = 'b15: Object.freeze({ id: "b15", label: "B15 ramp", x: -18.5, z: 539.2, yaw: -1.5708, cameraYaw: 1.38, cameraDistance: 25 }),';
+if (!b15InspectionPattern.test(source)) {
+  throw new Error(`${path}: generated B15 inspection preset is missing`);
+}
+source = source.replace(b15InspectionPattern, b15InspectionPreset);
 source = source.replace(
   /source-gate-apron-presets-with-[^"\n]+-a1-a14-b14-b15-v\d+/g,
-  'source-gate-apron-presets-with-wide-diagonal-a1-connection-a1-a14-b14-b15-v6',
+  'source-gate-apron-presets-with-wide-diagonal-a1-connection-near-wall-b15-a1-a14-b14-b15-v7',
 );
 source = source.replace(
   /(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*/g,
@@ -68,10 +74,11 @@ for (const token of [
   tugYawLine,
   cameraPositionLine,
   cameraTargetLine,
-  'source-gate-apron-presets-with-wide-diagonal-a1-connection-a1-a14-b14-b15-v6',
+  b15InspectionPreset,
+  'source-gate-apron-presets-with-wide-diagonal-a1-connection-near-wall-b15-a1-a14-b14-b15-v7',
   'wide-diagonal-a1-terminal-joint-v6-clear-tug',
 ]) {
-  if (!source.includes(token)) throw new Error(`${path}: wide A1 camera preparation is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${path}: wide A1/B15 inspection preparation is missing ${token}`);
 }
 if ((source.match(/cameraPosition:\s*Object\.freeze/g) || []).length !== 1) {
   throw new Error(`${path}: A1 inspection route must expose exactly one fixed camera position`);
@@ -82,4 +89,4 @@ if ((source.match(/cameraTarget:\s*Object\.freeze/g) || []).length !== 1) {
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared the full-airport inspection route when absent, normalized a wide diagonal A1 terminal-connection camera, moved the inspection tug clear of the jetway stair/support footprint, added physical airport collision protection and limited A1 bridge retraction to door-clearance travel.");
+console.log("Prepared the full-airport inspection route when absent, normalized a wide diagonal A1 terminal-connection camera, moved A1 clear of the jetway support footprint, placed B15 close enough for a fast physical-contact check, added airport collision protection and limited A1 bridge retraction to door-clearance travel.");
