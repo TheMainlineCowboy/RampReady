@@ -14,9 +14,9 @@ function requireTokens(path, tokens) {
 }
 
 const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
-  'MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v4-instanced-static-source-textured"',
+  'MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured"',
   'MATERIAL_AUTHORITY = "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2"',
-  'PERFORMANCE_AUTHORITY = "57-static-gates-instanced-plus-1-animated-a1-source-geometry-v4"',
+  'PERFORMANCE_AUTHORITY = "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5"',
   "geometry.part",
   "DecompressionStream(\"gzip\")",
   "addProjectedUvs",
@@ -25,6 +25,7 @@ const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
   "buildStaticInstancedFleet",
   "new THREE.InstancedMesh",
   'batches.name = "UploadedAirportJetwayStaticInstancedBatches"',
+  "addUploadedAirportJetwayStaticTerminalConnectors",
   'fleet.name = "UploadedAirportJetwayFleet"',
   'anchor.name = `UploadedAirportJetway_${placement.gate}`',
   'anchor.userData.renderMode = placement.gate === "A1" ? "individual-animated" : "static-instanced-marker"',
@@ -38,6 +39,11 @@ const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
   "uploadedJetwayStaticInstancedGateCount = staticFleet.staticGateCount",
   "uploadedJetwayAnimatedIndividualGateCount = 1",
   "uploadedJetwayStaticPrimitiveBatchCount = staticFleet.primitiveBatchCount",
+  "uploadedJetwayStaticConnectorGateCount = staticConnectors.staticGateCount",
+  "uploadedJetwayStaticConnectorBatchCount = staticConnectors.batchCount",
+  "uploadedJetwayStaticConnectorInstanceCount = staticConnectors.instanceCount",
+  "uploadedJetwayStaticConnectorBatchAuthority = staticConnectors.authority",
+  "uploadedJetwayIndividualConnectorGateCount = 1",
   "sourceGeometryMode = MODEL_AUTHORITY",
 ]);
 for (const forbidden of [
@@ -50,17 +56,22 @@ for (const forbidden of [
 }
 
 requireTokens("src/environment/uploadedAirportJetwayFleetReadyV2.js", [
-  'READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v6-instanced-source-textured"',
+  'READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured"',
   "EXPECTED_GATE_COUNT = 58",
   "placements.map((placement) => `UploadedAirportJetway_${placement.gate}`)",
   "missingModels",
   'materialAuthority.includes("exact-M1DGJETWAY")',
-  'performanceAuthority !== "57-static-gates-instanced-plus-1-animated-a1-source-geometry-v4"',
+  'performanceAuthority !== "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5"',
   "shadowCasterGateCount !== 1",
   "globalEdgeOverlayCount !== 0",
   "staticInstancedGateCount !== 57",
   "animatedIndividualGateCount !== 1",
   "staticPrimitiveBatchCount < 1",
+  "staticConnectorGateCount !== 57",
+  "staticConnectorBatchCount !== 3",
+  "staticConnectorInstanceCount < 1",
+  'staticConnectorBatchAuthority !== "57-static-terminal-connectors-three-instanced-box-batches-v1"',
+  "individualConnectorGateCount !== 1",
   "uploadedJetwayVerifiedModelCount = modelCount",
   "uploadedJetwayVerifiedGateNames",
   "waitForFleet(group, placements)",
@@ -85,8 +96,16 @@ if ((jetways.match(/uploadedAirportJetwayFleetReadyV2\.js/g) || []).length !== 1
 }
 
 requireTokens("src/environment/uploadedAirportJetwayTerminalConnector.js", [
-  'CONNECTOR_AUTHORITY = "measured-authored-terminal-wall-to-uploaded-rotunda-v3-a1-deep-overlap-terminal-frame"',
+  'CONNECTOR_AUTHORITY = "measured-authored-terminal-wall-to-uploaded-rotunda-v4-static-instanced-a1-deep-overlap"',
+  'STATIC_CONNECTOR_BATCH_AUTHORITY = "57-static-terminal-connectors-three-instanced-box-batches-v1"',
   'const terminalOverlap = placement.gate === "A1" ? 1.45 : 0.55',
+  "addUploadedAirportJetwayStaticTerminalConnectors",
+  'group.name = "UploadedAirportJetwayStaticTerminalConnectorBatches"',
+  'buildInstancedBatch(THREE, "UploadedAirportJetwayStaticConnectorShells"',
+  'buildInstancedBatch(THREE, "UploadedAirportJetwayStaticConnectorFrames"',
+  'buildInstancedBatch(THREE, "UploadedAirportJetwayStaticConnectorGlass"',
+  "group.userData.staticGateCount = staticPlacements.length",
+  "group.userData.batchCount = group.children.length",
   'connector.userData.a1TerminalPortalFrame = "deep-overlap-open-framed-terminal-end-v3"',
   "UploadedAirportJetwayTerminalPortalHeader_A1",
   "UploadedAirportJetwayTerminalPortalThreshold_A1",
@@ -129,7 +148,7 @@ requireTokens("tests/browser/source-first-a1-repair.spec.js", [
   '"data-terminal4-uploaded-jetway-count"',
   '"data-terminal4-uploaded-jetway-connector-count"',
   '"data-terminal4-uploaded-jetway-verified-model-count"',
-  "uploaded-airport-jetway-fleet-complete-58-gates-v6-instanced-source-textured",
+  "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured",
   "wide-diagonal-a1-terminal-joint-v6-clear-tug",
 ]);
 requireTokens("tests/browser/kphx-ground-runtime.spec.js", [
@@ -139,8 +158,8 @@ requireTokens("tests/browser/kphx-ground-runtime.spec.js", [
   "terminal4UploadedJetwayConnectorCount",
   "terminal4UploadedJetwayVerifiedModelCount",
   "terminal4UploadedJetwayReadyAuthority",
-  "uploaded-airport-jetway-fleet-complete-58-gates-v6-instanced-source-textured",
-  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v4-instanced-static-source-textured",
+  "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured",
+  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured",
 ]);
 
-console.log("Verified the exact-source-textured supplied Tunnel_A/B/C/Rotunda/Cab fleet as 57 instanced static gates plus one individually animated A1, with all 58 gate records, all 58 measured terminal connectors, a deep-overlap framed A1 terminal end, a clear inspection-tug position, one jetway shadow caster and zero global edge overlays.");
+console.log("Verified the exact-source-textured supplied Tunnel_A/B/C/Rotunda/Cab fleet as 57 instanced static jetways and three instanced static connector batches plus one individually animated A1 with a deep-overlap framed connector, all 58 gate records, all 58 measured terminal connections, one jetway shadow caster and zero global edge overlays.");
