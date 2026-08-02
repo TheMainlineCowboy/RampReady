@@ -7,10 +7,15 @@ export const SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE = Object.freeze({
   placementSource: "scenery/world/scenery/kphx-airport.bgl",
   sourceLibraryModel: "user-supplied Airport Jetway.zip",
   terminal4JetwayCount: 58,
-  coordinateFrame: "A1-local; X=north, Y=up, Z=east",
+  coordinateFrame: "A1-local; X=north, Y=up, Z=east; BGL heading clockwise from source north",
   sceneOffset: Object.freeze([0, 0, 6.2]),
-  detailLevel: "user-supplied-jetway-source-geometry-at-source-bgl-transforms-v1",
+  headingConversion: "three-yaw-radians = PI - source-heading-radians",
+  detailLevel: "user-supplied-jetway-source-geometry-at-source-bgl-transforms-v2",
 });
+
+function sourceHeadingToThreeYaw(THREE, headingDegrees) {
+  return Math.PI - THREE.MathUtils.degToRad(Number(headingDegrees));
+}
 
 /**
  * Install only the supplied jetway geometry at the jetway transforms decoded
@@ -34,7 +39,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
     x: Number(jetway.x),
     z: Number(jetway.z),
     sourceHeadingDegrees: Number(jetway.h),
-    yaw: THREE.MathUtils.degToRad(Number(jetway.h)),
+    yaw: sourceHeadingToThreeYaw(THREE, jetway.h),
   }));
 
   const controller = installUploadedAirportJetwayFleet(THREE, group, placements, sourceTextures);
@@ -42,6 +47,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   group.userData.sourceArchive = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceArchive;
   group.userData.placementSource = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.placementSource;
   group.userData.sourceLibraryModel = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceLibraryModel;
+  group.userData.headingConversion = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.headingConversion;
   group.userData.jetwayCount = placements.length;
   group.userData.terminalConnectedJetwayCount = placements.length;
   group.userData.a1TerminalWallDistance = null;
