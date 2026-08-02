@@ -1,8 +1,12 @@
-const PART_COUNT = 5;
-const MODEL_AUTHORITY = "user-supplied-airport-jetway-source-geometry-v1";
-const MATERIAL_AUTHORITY = "supplied-material-slots-no-projected-terminal-texture";
-const PERFORMANCE_AUTHORITY = "57-static-source-instances-plus-1-animated-source-model";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+
+const MODEL_AUTHORITY = "user-supplied-airport-jetway-complete-glb-v2";
+const MATERIAL_AUTHORITY = "supplied-embedded-webp-materials-source-uvs-and-tangents";
+const PERFORMANCE_AUTHORITY = "57-static-textured-source-instances-plus-1-animated-source-model";
 const A1_RETRACTION_AUTHORITY = "supplied-tunnel-node-native-z-axis-retraction";
+const SOURCE_FILE = "Airport_Jetway.source-web.glb";
+const SOURCE_SHA256 = "6a28f499d6a590f9b4a62e0588dbd0215d130224459757cf5e9775b93aa36f92";
+const SOURCE_BYTES = 2413912;
 const A1_RETRACTION = Object.freeze({ tunnelB: 0.42, tunnelC: 0.78, cab: 1.18, lift: 0.08, totalClearanceMeters: 2.38 });
 const GENERATED_OBJECT_PATTERN = /(?:AIR_Jetway01|Terminal4_(?:LowerFacade|ClosedService|FacadeVent)|FixedWalkway|PortalSeal|TerminalConnector|GeneratedJetway|ProceduralJetway|A1.*Animated.*Jetway)/i;
 
@@ -10,174 +14,98 @@ function clamp(value, minimum, maximum) {
   return Math.max(minimum, Math.min(maximum, Number(value) || 0));
 }
 
-async function readPayload() {
-  const base = `${import.meta.env.BASE_URL || "/"}models/airport-jetway/`;
-  const parts = await Promise.all(Array.from({ length: PART_COUNT }, async (_, index) => {
-    const response = await fetch(`${base}geometry.part${index}`, { cache: "force-cache" });
-    if (!response.ok) throw new Error(`Supplied jetway geometry part ${index} failed: ${response.status}`);
-    return (await response.text()).trim();
-  }));
-  const encoded = parts.join("");
-  const compressed = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
-  if (typeof DecompressionStream !== "function") {
-    throw new Error("This browser cannot decode the supplied jetway geometry payload");
-  }
-  const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream("gzip"));
-  const payload = new Uint8Array(await new Response(stream).arrayBuffer());
-  const view = new DataView(payload.buffer, payload.byteOffset, payload.byteLength);
-  const metadataLength = view.getUint32(0, true);
-  const metadata = JSON.parse(new TextDecoder().decode(payload.subarray(4, 4 + metadataLength)));
-  return { metadata, binary: payload.subarray(4 + metadataLength) };
-}
-
-function sourceMaterialForName(THREE, name = "") {
-  const label = String(name);
-  if (/glass|window/i.test(label)) {
-    const material = new THREE.MeshPhysicalMaterial({
-      name: `Supplied jetway material: ${label}`,
-      color: 0x243840,
-      roughness: 0.2,
-      metalness: 0.04,
-      transmission: 0.08,
-      clearcoat: 0.18,
-      transparent: true,
-      opacity: 0.72,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-    });
-    material.userData.materialAuthority = MATERIAL_AUTHORITY;
-    return material;
-  }
-  if (/tire|rubber|wheel/i.test(label)) {
-    const material = new THREE.MeshStandardMaterial({
-      name: `Supplied jetway material: ${label}`,
-      color: 0x17191a,
-      roughness: 0.94,
-      metalness: 0.01,
-      side: THREE.DoubleSide,
-    });
-    material.userData.materialAuthority = MATERIAL_AUTHORITY;
-    return material;
-  }
-  if (/stair|rail|bogie|lift|metal|frame|support/i.test(label)) {
-    const material = new THREE.MeshStandardMaterial({
-      name: `Supplied jetway material: ${label}`,
-      color: 0x777d80,
-      roughness: 0.5,
-      metalness: 0.48,
-      side: THREE.DoubleSide,
-    });
-    material.userData.materialAuthority = MATERIAL_AUTHORITY;
-    return material;
-  }
-  const material = new THREE.MeshStandardMaterial({
-    name: `Supplied jetway material: ${label || "body"}`,
-    color: 0xd0d0cc,
-    roughness: 0.72,
-    metalness: 0.06,
-    side: THREE.DoubleSide,
-  });
-  material.userData.materialAuthority = MATERIAL_AUTHORITY;
-  return material;
-}
-
-function createGeometry(THREE, primitive, binary) {
-  const positionView = new DataView(binary.buffer, binary.byteOffset + primitive.pos[0], primitive.pos[1]);
-  const positions = new Float32Array(primitive.count * 3);
-  for (let vertex = 0; vertex < primitive.count; vertex += 1) {
-    for (let axis = 0; axis < 3; axis += 1) {
-      const quantized = positionView.getUint16((vertex * 3 + axis) * 2, true);
-      positions[vertex * 3 + axis] = primitive.min[axis] + (quantized / 65535) * primitive.span[axis];
-    }
-  }
-
-  const indexView = new DataView(binary.buffer, binary.byteOffset + primitive.idx[0], primitive.idx[1]);
-  const IndexArray = primitive.indexType === "u32" ? Uint32Array : Uint16Array;
-  const indices = new IndexArray(primitive.indexCount);
-  const bytesPerIndex = primitive.indexType === "u32" ? 4 : 2;
-  for (let index = 0; index < primitive.indexCount; index += 1) {
-    indices[index] = bytesPerIndex === 4
-      ? indexView.getUint32(index * bytesPerIndex, true)
-      : indexView.getUint16(index * bytesPerIndex, true);
-  }
-
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-  geometry.computeVertexNormals();
-  geometry.computeBoundingBox();
-  geometry.computeBoundingSphere();
-  geometry.userData.sourceGeometryAuthority = MODEL_AUTHORITY;
-  geometry.userData.generatedUvs = false;
-  return geometry;
-}
-
-function applyNodeTransform(object, node) {
-  if (Array.isArray(node.matrix) && node.matrix.length === 16) {
-    object.matrix.fromArray(node.matrix);
-    object.matrix.decompose(object.position, object.quaternion, object.scale);
-    return;
-  }
-  if (node.translation) object.position.fromArray(node.translation);
-  if (node.rotation) object.quaternion.fromArray(node.rotation);
-  if (node.scale) object.scale.fromArray(node.scale);
+function sourceAssetUrl() {
+  return `${import.meta.env.BASE_URL || "/"}models/airport-jetway/${SOURCE_FILE}`;
 }
 
 function objectBySourceName(root, wanted) {
   let found = null;
   root.traverse((entry) => {
-    if (!found && String(entry.name || "").toLowerCase().startsWith(wanted.toLowerCase())) found = entry;
+    const name = String(entry.name || "").toLowerCase();
+    const target = wanted.toLowerCase();
+    if (!found && (name === target || name.startsWith(`${target}_`))) found = entry;
   });
   return found;
 }
 
-function buildPrototype(THREE, payload) {
-  const { metadata, binary } = payload;
-  const materials = (metadata.materials || []).map((name) => sourceMaterialForName(THREE, name));
-  if (!materials.length) materials.push(sourceMaterialForName(THREE, "body"));
+function verifySourceModel(model) {
+  const requiredNodes = ["Tunnel_A", "Tunnel_B", "Tunnel_C", "Rotunda", "Cab"];
+  for (const nodeName of requiredNodes) {
+    if (!objectBySourceName(model, nodeName)) throw new Error(`Complete supplied jetway GLB is missing ${nodeName}`);
+  }
 
-  const meshes = metadata.meshes.map((meshDefinition) => {
-    const root = new THREE.Group();
-    root.name = meshDefinition.name;
-    meshDefinition.primitives.forEach((primitive, primitiveIndex) => {
-      const mesh = new THREE.Mesh(
-        createGeometry(THREE, primitive, binary),
-        materials[primitive.material] || materials[0],
-      );
-      mesh.name = `${meshDefinition.name}_Primitive_${primitiveIndex}`;
-      mesh.castShadow = false;
-      mesh.receiveShadow = true;
-      root.add(mesh);
-    });
-    return root;
+  let meshCount = 0;
+  let texturedMeshCount = 0;
+  let uvMeshCount = 0;
+  let tangentMeshCount = 0;
+  const materialNames = new Set();
+  model.traverse((entry) => {
+    if (!entry.isMesh) return;
+    meshCount += 1;
+    if (entry.geometry?.getAttribute("uv")) uvMeshCount += 1;
+    if (entry.geometry?.getAttribute("tangent")) tangentMeshCount += 1;
+    const materials = Array.isArray(entry.material) ? entry.material : [entry.material];
+    for (const material of materials) {
+      if (!material) continue;
+      materialNames.add(material.name || "unnamed");
+      if (material.map || material.normalMap || material.aoMap || material.emissiveMap || material.metalnessMap || material.roughnessMap) {
+        texturedMeshCount += 1;
+      }
+    }
   });
 
-  const buildNode = (index) => {
-    const definition = metadata.nodes[index];
-    const object = definition.mesh == null ? new THREE.Group() : meshes[definition.mesh].clone(true);
-    object.name = definition.name || `SuppliedJetwayNode_${index}`;
-    applyNodeTransform(object, definition);
-    for (const child of definition.children || []) object.add(buildNode(child));
-    return object;
-  };
+  if (meshCount < 7) throw new Error(`Complete supplied jetway GLB has only ${meshCount} meshes`);
+  if (uvMeshCount !== meshCount) throw new Error(`Complete supplied jetway GLB lost UVs on ${meshCount - uvMeshCount} meshes`);
+  if (tangentMeshCount !== meshCount) throw new Error(`Complete supplied jetway GLB lost tangents on ${meshCount - tangentMeshCount} meshes`);
+  if (texturedMeshCount < meshCount) throw new Error(`Complete supplied jetway GLB has only ${texturedMeshCount}/${meshCount} textured meshes`);
+  if (![...materialNames].some((name) => /jetway/i.test(name)) || ![...materialNames].some((name) => /glass/i.test(name))) {
+    throw new Error(`Complete supplied jetway GLB material set is wrong: ${[...materialNames].join(", ")}`);
+  }
+  return { meshCount, texturedMeshCount, uvMeshCount, tangentMeshCount, materialNames: [...materialNames] };
+}
 
-  const model = buildNode(metadata.rootNode ?? 1);
-  model.name = "SuppliedAirportJetway_SourceModel";
+async function loadPrototype(THREE) {
+  const loader = new GLTFLoader();
+  const gltf = await loader.loadAsync(sourceAssetUrl());
+  const sourceRoot = gltf.scene.getObjectByName("RootNode");
+  if (!sourceRoot) throw new Error("Complete supplied jetway GLB is missing its RootNode hierarchy");
+
+  // The Sketchfab scene wrapper contains only presentation transforms. The
+  // authored RootNode is the actual model hierarchy supplied by the user.
+  const model = sourceRoot.clone(true);
+  model.name = "SuppliedAirportJetway_CompleteSourceModel";
   model.updateMatrixWorld(true);
+  const verification = verifySourceModel(model);
+
+  model.traverse((entry) => {
+    if (!entry.isMesh) return;
+    entry.castShadow = false;
+    entry.receiveShadow = true;
+    entry.geometry.userData.sourceGeometryAuthority = MODEL_AUTHORITY;
+    entry.geometry.userData.sourceUvsPreserved = Boolean(entry.geometry.getAttribute("uv"));
+    entry.geometry.userData.sourceTangentsPreserved = Boolean(entry.geometry.getAttribute("tangent"));
+    const materials = Array.isArray(entry.material) ? entry.material : [entry.material];
+    for (const material of materials) {
+      if (!material) continue;
+      material.userData.materialAuthority = MATERIAL_AUTHORITY;
+      material.userData.sourceMapsPreserved = true;
+    }
+  });
 
   const rotunda = objectBySourceName(model, "Rotunda");
   const cab = objectBySourceName(model, "Cab");
-  if (!rotunda || !cab) throw new Error("Supplied jetway is missing its Rotunda or Cab source node");
-
   const modelBounds = new THREE.Box3().setFromObject(model);
   const rotundaCenter = new THREE.Box3().setFromObject(rotunda).getCenter(new THREE.Vector3());
   const cabCenter = new THREE.Box3().setFromObject(cab).getCenter(new THREE.Vector3());
   const sourceDirection = cabCenter.clone().sub(rotundaCenter);
   sourceDirection.y = 0;
   const rotundaToCabMeters = sourceDirection.length();
-  if (rotundaToCabMeters < 0.1) throw new Error("Supplied jetway source axis could not be measured");
+  if (rotundaToCabMeters < 0.1) throw new Error("Complete supplied jetway source axis could not be measured");
   sourceDirection.normalize();
 
+  // BGL placements represent the fixed terminal-side pivot. Move the supplied
+  // rotunda to that pivot, preserve native model scale, and point the cab along
+  // local +Z before applying each package-authored heading.
   model.position.add(new THREE.Vector3(-rotundaCenter.x, -modelBounds.min.y, -rotundaCenter.z));
   const aligned = new THREE.Group();
   aligned.name = "SuppliedAirportJetway_RotundaOrigin_CabForward";
@@ -187,12 +115,20 @@ function buildPrototype(THREE, payload) {
   aligned.userData.modelAuthority = MODEL_AUTHORITY;
   aligned.userData.materialAuthority = MATERIAL_AUTHORITY;
   aligned.userData.performanceAuthority = PERFORMANCE_AUTHORITY;
+  aligned.userData.sourceFile = SOURCE_FILE;
+  aligned.userData.sourceSha256 = SOURCE_SHA256;
+  aligned.userData.sourceBytes = SOURCE_BYTES;
   aligned.userData.sourceAxis = [sourceDirection.x, sourceDirection.y, sourceDirection.z];
   aligned.userData.sourceRotundaCenter = rotundaCenter.toArray();
   aligned.userData.sourceCabCenter = cabCenter.toArray();
   aligned.userData.sourceRotundaToCabMeters = rotundaToCabMeters;
   aligned.userData.sourceBoundsMin = modelBounds.min.toArray();
   aligned.userData.sourceBoundsMax = modelBounds.max.toArray();
+  aligned.userData.sourceMeshCount = verification.meshCount;
+  aligned.userData.sourceTexturedMeshCount = verification.texturedMeshCount;
+  aligned.userData.sourceUvMeshCount = verification.uvMeshCount;
+  aligned.userData.sourceTangentMeshCount = verification.tangentMeshCount;
+  aligned.userData.sourceMaterialNames = verification.materialNames;
   aligned.userData.generatedGeometryCount = 0;
   aligned.userData.generatedUvCount = 0;
   return aligned;
@@ -217,7 +153,7 @@ function buildStaticInstancedFleet(THREE, prototype, placements) {
   const staticPlacements = placements.filter((placement) => placement.gate !== "A1");
   const prototypeMeshes = collectPrototypeMeshes(prototype);
   const batches = new THREE.Group();
-  batches.name = "SuppliedAirportJetway_StaticSourceInstances";
+  batches.name = "SuppliedAirportJetway_StaticTexturedSourceInstances";
   const placementMatrix = new THREE.Matrix4();
   const finalMatrix = new THREE.Matrix4();
 
@@ -245,7 +181,7 @@ function buildStaticInstancedFleet(THREE, prototype, placements) {
 function createController() {
   let deployment = 1;
   let visual = null;
-  let state = "loading-supplied-model";
+  let state = "loading-complete-supplied-model";
 
   const apply = () => {
     if (!visual) return;
@@ -286,7 +222,7 @@ function createController() {
           cab: nodes.cab?.position.clone() || { z: 0, y: 0 },
         },
       };
-      state = "supplied-model-ready";
+      state = "complete-supplied-model-ready";
       apply();
     },
   };
@@ -322,13 +258,17 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
   group.userData.uploadedJetwayExpectedCount = placements.length;
   group.userData.uploadedJetwayA1RetractionAuthority = A1_RETRACTION_AUTHORITY;
   group.userData.uploadedJetwayA1RetractionClearanceMeters = A1_RETRACTION.totalClearanceMeters;
+  group.userData.uploadedJetwaySourceFile = SOURCE_FILE;
+  group.userData.uploadedJetwaySourceSha256 = SOURCE_SHA256;
+  group.userData.uploadedJetwaySourceBytes = SOURCE_BYTES;
 
-  const ready = readPayload()
-    .then((payload) => {
-      const prototype = buildPrototype(THREE, payload);
+  const ready = loadPrototype(THREE)
+    .then((prototype) => {
       const fleet = new THREE.Group();
       fleet.name = "UploadedAirportJetwayFleet";
-      fleet.userData.sourceGeometryOnly = true;
+      fleet.userData.completeSuppliedSource = true;
+      fleet.userData.sourceUvsPreserved = true;
+      fleet.userData.sourceMaterialsPreserved = true;
       fleet.userData.generatedConnectorCount = 0;
       fleet.userData.generatedPortalCount = 0;
       fleet.userData.generatedFacadeCount = 0;
@@ -344,7 +284,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
         anchor.rotation.y = placement.yaw;
         anchor.userData.gate = placement.gate;
         anchor.userData.sourceHeadingDegrees = placement.sourceHeadingDegrees;
-        anchor.userData.renderMode = placement.gate === "A1" ? "individual-source-model" : "static-source-instance-marker";
+        anchor.userData.renderMode = placement.gate === "A1" ? "individual-complete-source-model" : "static-complete-source-instance-marker";
         if (placement.gate === "A1") {
           const model = prototype.clone(true);
           model.name = "UploadedAirportJetwayModel_A1";
@@ -373,10 +313,15 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
       group.userData.uploadedJetwayStaticInstancedGateCount = staticFleet.staticGateCount;
       group.userData.uploadedJetwayAnimatedIndividualGateCount = individualModelCount;
       group.userData.uploadedJetwayStaticPrimitiveBatchCount = staticFleet.primitiveBatchCount;
+      group.userData.uploadedJetwaySourceMeshCount = prototype.userData.sourceMeshCount;
+      group.userData.uploadedJetwaySourceTexturedMeshCount = prototype.userData.sourceTexturedMeshCount;
+      group.userData.uploadedJetwaySourceUvMeshCount = prototype.userData.sourceUvMeshCount;
+      group.userData.uploadedJetwaySourceTangentMeshCount = prototype.userData.sourceTangentMeshCount;
+      group.userData.uploadedJetwaySourceMaterialNames = prototype.userData.sourceMaterialNames.join(",");
       group.userData.uploadedJetwayGlobalEdgeOverlayCount = 0;
       group.userData.sourceGeometryMode = MODEL_AUTHORITY;
       group.userData.visualAuthority = MODEL_AUTHORITY;
-      group.userData.requiresOriginalSourceMesh = false;
+      group.userData.requiresOriginalSourceMesh = true;
       group.userData.facadeInfillCount = 0;
       group.userData.lowerFacadeFitCount = 0;
       group.userData.proceduralJetwayStairCount = 0;
@@ -385,15 +330,17 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
         count: placements.length,
         modelCount: placements.length,
         authority: MODEL_AUTHORITY,
+        materialAuthority: MATERIAL_AUTHORITY,
         staticGateCount: staticFleet.staticGateCount,
         individualModelCount,
         primitiveBatchCount: staticFleet.primitiveBatchCount,
+        sourceMeshCount: prototype.userData.sourceMeshCount,
       };
     })
     .catch((error) => {
       group.userData.uploadedJetwayLoadState = "error";
       group.userData.uploadedJetwayLoadError = error.message;
-      console.error("Supplied airport jetway fleet failed to load", error);
+      console.error("Complete supplied airport jetway fleet failed to load", error);
       throw error;
     });
 
