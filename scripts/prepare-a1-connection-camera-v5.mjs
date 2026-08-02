@@ -58,7 +58,7 @@ source = source.replace(
   'source-gate-apron-presets-with-wide-diagonal-a1-connection-a1-a14-b14-b15-v6',
 );
 source = source.replace(
-  /(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+/g,
+  /(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*/g,
   'wide-diagonal-a1-terminal-joint-v6-clear-tug',
 );
 
