@@ -61,7 +61,7 @@ test("direct tug inspection proves the visible A1 terminal connection over sourc
   await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-verified-model-count", "58", { timeout: 120_000 });
   await expect(canvas).toHaveAttribute(
     "data-terminal4-uploaded-jetway-ready-authority",
-    "uploaded-airport-jetway-fleet-complete-58-gates-v6-instanced-source-textured",
+    "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured",
     { timeout: 120_000 },
   );
   await expect(canvas).toHaveAttribute("data-photo-ground-source", "source-authored-phx-photo", { timeout: 120_000 });
