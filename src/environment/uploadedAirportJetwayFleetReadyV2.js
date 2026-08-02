@@ -1,6 +1,6 @@
 import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";
 
-const READY_AUTHORITY = "supplied-airport-jetway-source-only-58-gates-v1";
+const READY_AUTHORITY = "complete-supplied-airport-jetway-glb-58-gates-v2";
 const EXPECTED_GATE_COUNT = 58;
 const LOAD_TIMEOUT_MS = 120_000;
 
@@ -32,6 +32,10 @@ function waitForFleet(group, placements) {
         const performanceAuthority = group.userData.uploadedJetwayPerformanceAuthority || "missing";
         const staticGateCount = Number(group.userData.uploadedJetwayStaticInstancedGateCount ?? -1);
         const animatedGateCount = Number(group.userData.uploadedJetwayAnimatedIndividualGateCount ?? -1);
+        const sourceMeshCount = Number(group.userData.uploadedJetwaySourceMeshCount ?? -1);
+        const sourceTexturedMeshCount = Number(group.userData.uploadedJetwaySourceTexturedMeshCount ?? -1);
+        const sourceUvMeshCount = Number(group.userData.uploadedJetwaySourceUvMeshCount ?? -1);
+        const sourceTangentMeshCount = Number(group.userData.uploadedJetwaySourceTangentMeshCount ?? -1);
         const a1Model = fleet?.getObjectByName("UploadedAirportJetwayModel_A1");
 
         if (
@@ -43,14 +47,18 @@ function waitForFleet(group, placements) {
           || generatedPortalCount !== 0
           || generatedFacadeCount !== 0
           || proceduralObjectCount !== 0
-          || geometryAuthority !== "user-supplied-airport-jetway-source-geometry-v1"
-          || materialAuthority !== "supplied-material-slots-no-projected-terminal-texture"
-          || performanceAuthority !== "57-static-source-instances-plus-1-animated-source-model"
+          || geometryAuthority !== "user-supplied-airport-jetway-complete-glb-v2"
+          || materialAuthority !== "supplied-embedded-webp-materials-source-uvs-and-tangents"
+          || performanceAuthority !== "57-static-textured-source-instances-plus-1-animated-source-model"
           || staticGateCount !== 57
           || animatedGateCount !== 1
+          || sourceMeshCount < 7
+          || sourceTexturedMeshCount !== sourceMeshCount
+          || sourceUvMeshCount !== sourceMeshCount
+          || sourceTangentMeshCount !== sourceMeshCount
         ) {
           reject(new Error(
-            `Supplied jetway readiness failed: placements=${count}, models=${modelCount}, missing=${missingModels.join(",") || "none"}, A1=${Boolean(a1Model)}, connectors=${generatedConnectorCount}, portals=${generatedPortalCount}, facades=${generatedFacadeCount}, procedural=${proceduralObjectCount}, geometry=${geometryAuthority}, material=${materialAuthority}, performance=${performanceAuthority}, static=${staticGateCount}, animated=${animatedGateCount}`,
+            `Supplied jetway readiness failed: placements=${count}, models=${modelCount}, missing=${missingModels.join(",") || "none"}, A1=${Boolean(a1Model)}, connectors=${generatedConnectorCount}, portals=${generatedPortalCount}, facades=${generatedFacadeCount}, procedural=${proceduralObjectCount}, geometry=${geometryAuthority}, material=${materialAuthority}, performance=${performanceAuthority}, static=${staticGateCount}, animated=${animatedGateCount}, meshes=${sourceMeshCount}, textured=${sourceTexturedMeshCount}, uv=${sourceUvMeshCount}, tangent=${sourceTangentMeshCount}`,
           ));
           return;
         }
@@ -70,6 +78,10 @@ function waitForFleet(group, placements) {
           performanceAuthority,
           staticGateCount,
           animatedGateCount,
+          sourceMeshCount,
+          sourceTexturedMeshCount,
+          sourceUvMeshCount,
+          sourceTangentMeshCount,
           authority: READY_AUTHORITY,
         });
         return;
@@ -91,7 +103,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
   const controller = installUploadedAirportJetwayFleetBase(THREE, group, placements, sourceTextures);
   const ready = waitForFleet(group, placements);
   group.userData.uploadedJetwayReady = ready;
-  group.userData.uploadedJetwayReadyAuthority = "waiting-for-supplied-source-only-fleet";
+  group.userData.uploadedJetwayReadyAuthority = "waiting-for-complete-supplied-source-fleet";
   controller.ready = ready;
   return controller;
 }
