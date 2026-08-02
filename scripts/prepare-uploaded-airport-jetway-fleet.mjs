@@ -103,25 +103,27 @@ if (source.indexOf(placementPush) < source.indexOf("const connectorTowardX")) {
 
 fs.writeFileSync(path, source, "utf8");
 
+// The fleet module is committed as the canonical runtime implementation. This
+// preparation step must validate it without inserting compatibility imports or
+// per-gate connector calls, because static jetways and connectors are already
+// batched while A1 remains the single detailed individual assembly.
 const fleetPath = "src/environment/uploadedAirportJetwayFleet.js";
-let fleet = fs.readFileSync(fleetPath, "utf8");
-const connectorImport = 'import { addUploadedAirportJetwayTerminalConnector } from "./uploadedAirportJetwayTerminalConnector.js";';
-if (!fleet.includes(connectorImport)) fleet = `${connectorImport}\n${fleet}`;
-const connectorCall = "        addUploadedAirportJetwayTerminalConnector(THREE, fleet, placement);";
-if (!fleet.includes(connectorCall)) {
-  const anchor = "        fleet.add(anchor);";
-  if (!fleet.includes(anchor)) throw new Error(`${fleetPath}: uploaded connector call anchor missing`);
-  fleet = fleet.replace(anchor, `${anchor}\n${connectorCall}`);
+const fleet = fs.readFileSync(fleetPath, "utf8");
+for (const token of [
+  "addUploadedAirportJetwayStaticTerminalConnectors",
+  "addUploadedAirportJetwayTerminalConnector",
+  "const staticConnectors = addUploadedAirportJetwayStaticTerminalConnectors(THREE, fleet, placements);",
+  "addUploadedAirportJetwayTerminalConnector(THREE, fleet, placement);",
+  "if (placement.gate === \"A1\")",
+  "uploadedJetwayMeasuredTerminalConnectorCount = placements.length",
+  "uploadedJetwayStaticConnectorGateCount = staticConnectors.staticGateCount",
+  "uploadedJetwayStaticConnectorBatchCount = staticConnectors.batchCount",
+  "uploadedJetwayIndividualConnectorGateCount = 1",
+]) {
+  if (!fleet.includes(token)) throw new Error(`${fleetPath}: canonical batched terminal connector wiring missing ${token}`);
 }
-const connectorEvidence = "      group.userData.uploadedJetwayMeasuredTerminalConnectorCount = placements.length;";
-if (!fleet.includes(connectorEvidence)) {
-  const anchor = "      group.userData.uploadedJetwayCount = placements.length;";
-  if (!fleet.includes(anchor)) throw new Error(`${fleetPath}: uploaded connector evidence anchor missing`);
-  fleet = fleet.replace(anchor, `${anchor}\n${connectorEvidence}`);
+if ((fleet.match(/from "\.\/uploadedAirportJetwayTerminalConnector\.js"/g) || []).length !== 1) {
+  throw new Error(`${fleetPath}: terminal connector module must have exactly one canonical import`);
 }
-for (const token of [connectorImport, connectorCall, connectorEvidence]) {
-  if (!fleet.includes(token)) throw new Error(`${fleetPath}: measured terminal connector wiring missing ${token}`);
-}
-fs.writeFileSync(fleetPath, fleet, "utf8");
 
-console.log("Prepared all 58 Terminal 4 gate transforms for the source-textured uploaded Tunnel_A/Tunnel_B/Tunnel_C/Rotunda/Cab jetway replacement with measured authored-wall connectors. Placement records are created only after wall measurements; airport placement remains unchanged.");
+console.log("Prepared all 58 Terminal 4 gate transforms and validated the committed batched uploaded-jetway runtime: 57 static jetways and connectors are instanced, A1 remains individual, measured wall placement is preserved and tracked source is not mutated.");
