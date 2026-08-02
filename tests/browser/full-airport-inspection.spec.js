@@ -22,7 +22,7 @@ async function launchRuntime(page) {
     ["data-environment-source", "authored-phx-terminal4-textured-source-jetways"],
     ["data-ground-source", "authored-kphx-v181-source-textured-nearfield"],
     ["data-photo-ground-source", "source-authored-phx-photo"],
-    ["data-terminal4-jetway-source-geometry-mode", "user-supplied-jetway-geometry-only"],
+    ["data-terminal4-jetway-source-geometry-mode", "user-supplied-airport-jetway-source-geometry-v1"],
     ["data-steering-mode", "rear"],
   ]) {
     await expect.poll(
