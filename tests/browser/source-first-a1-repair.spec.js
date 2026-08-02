@@ -141,7 +141,7 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   await page.waitForFunction(() => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionPreset === "b15"
-      && data?.inspectionTugX === "-5.500"
+      && data?.inspectionTugX === "-18.500"
       && data?.inspectionTugZ === "539.200";
   }, null, { timeout: 30_000, polling: 100 });
 
@@ -151,7 +151,7 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   try {
     await expect.poll(
       () => numericCanvasAttribute(page, "data-airport-collision-count"),
-      { timeout: 75_000, intervals: [500, 1_000, 2_000] },
+      { timeout: 50_000, intervals: [250, 500, 1_000] },
     ).toBeGreaterThan(startCount);
   } finally {
     await page.keyboard.up("w");
@@ -160,8 +160,8 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
 
   const stoppedX = await numericCanvasAttribute(page, "data-inspection-tug-x");
   const stoppedState = await page.evaluate(() => document.querySelector("canvas.trainerCanvas")?.dataset.airportCollisionState);
-  expect(stoppedX).toBeLessThan(startX - 12);
-  expect(stoppedX).toBeGreaterThan(-48);
+  expect(stoppedX).toBeLessThan(startX - 5);
+  expect(stoppedX).toBeGreaterThan(-27.35);
   expect(["blocked", "clear"]).toContain(stoppedState);
   await saveCompositedCanvasPng(page, "test-results/source-first-b15-physical-collision-stop.png");
 });
