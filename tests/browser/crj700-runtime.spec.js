@@ -86,18 +86,33 @@ async function withHiddenControls(page, action) {
 async function capture(page, canvas, fileName) {
   const box = await canvas.boundingBox();
   expect(box).not.toBeNull();
-  const image = await page.screenshot({
-    type: "png",
-    clip: {
-      x: Math.max(0, Math.floor(box.x)),
-      y: Math.max(0, Math.floor(box.y)),
-      width: Math.floor(box.width),
-      height: Math.floor(box.height),
-    },
-    animations: "disabled",
-  });
-  expect(image.byteLength).toBeGreaterThan(50_000);
-  await writeFile(`test-results/${fileName}`, image);
+  const client = await page.context().newCDPSession(page);
+  try {
+    await client.send("Page.bringToFront");
+    const { data } = await Promise.race([
+      client.send("Page.captureScreenshot", {
+        format: "png",
+        fromSurface: true,
+        captureBeyondViewport: false,
+        clip: {
+          x: Math.max(0, Math.floor(box.x)),
+          y: Math.max(0, Math.floor(box.y)),
+          width: Math.floor(box.width),
+          height: Math.floor(box.height),
+          scale: 1,
+        },
+      }),
+      new Promise((_, reject) => setTimeout(
+        () => reject(new Error(`Chromium compositor capture timed out for ${fileName}`)),
+        45_000,
+      )),
+    ]);
+    const image = Buffer.from(data, "base64");
+    expect(image.byteLength).toBeGreaterThan(50_000);
+    await writeFile(`test-results/${fileName}`, image);
+  } finally {
+    await client.detach();
+  }
 }
 
 async function orbit(page, deltaX, deltaY = 0) {
@@ -138,9 +153,6 @@ function expectOrderedSequence(history, requiredStates) {
 }
 
 test("verifies CRJ, A1 jetway, operator view and free-drive in one full-airport load", async ({ page }) => {
-  // The exact-production full-airport render reached the final screenshot at
-  // 896.7 seconds on GitHub's software renderer. Keep every assertion and give
-  // screenshot encoding/cleanup enough room to finish without a false timeout.
   test.setTimeout(1_080_000);
   await page.setViewportSize(DESKTOP);
   const canvas = await launchRuntime(page);
