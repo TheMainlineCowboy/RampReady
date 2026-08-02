@@ -105,7 +105,7 @@ test("renders supplied Terminal 4 and all 58 source-placed supplied jetways with
     ["data-environment-source", "authored-phx-terminal4-textured-source-jetways"],
     ["data-ground-source", "authored-kphx-v181-source-textured-nearfield"],
     ["data-photo-ground-source", "source-authored-phx-photo"],
-    ["data-terminal4-jetway-source-geometry-mode", "user-supplied-jetway-geometry-only"],
+    ["data-terminal4-jetway-source-geometry-mode", "user-supplied-airport-jetway-source-geometry-v1"],
     ["data-terminal4-jetway-source-scale-authority", "supplied-model-native-scale-no-runtime-rescaling"],
     ["data-terminal4-jetway-texture-authority", "supplied-material-slots-no-projected-terminal-atlas"],
     ["data-terminal4-exact-jetway-texture-active", "false"],
