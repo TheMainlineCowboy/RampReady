@@ -4,8 +4,9 @@ import {
 } from "./uploadedAirportJetwayTerminalConnector.js";
 
 const PART_COUNT = 5;
-const MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured";
+const MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v6-source-detail-material-split";
 const MATERIAL_AUTHORITY = "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2";
+const DETAIL_MATERIAL_AUTHORITY = "source-triangle-stair-and-bogie-material-split-v1";
 const PERFORMANCE_AUTHORITY = "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5";
 // Replace only the movable fallback jetway. The source-positioned fixed walkway
 // and wall collar are the physical terminal connection and must remain visible.
@@ -114,12 +115,121 @@ function createMaterials(THREE, sourceTextures = {}) {
     depthWrite: false,
     side: THREE.DoubleSide,
   });
+  const stair = new THREE.MeshStandardMaterial({
+    name: "Uploaded airport jetway galvanized stair and rail",
+    color: 0x8d9294,
+    roughness: 0.48,
+    metalness: 0.46,
+    side: THREE.DoubleSide,
+  });
+  const mechanical = new THREE.MeshStandardMaterial({
+    name: "Uploaded airport jetway dark bogie and lift structure",
+    color: 0x4f5659,
+    roughness: 0.56,
+    metalness: 0.38,
+    side: THREE.DoubleSide,
+  });
   body.userData.materialAuthority = bodyMap ? MATERIAL_AUTHORITY : "uploaded-model-neutral-material-fallback";
   glass.userData.materialAuthority = "uploaded-model-physical-blue-gray-glass-v2";
-  return { body, glass };
+  stair.userData.materialAuthority = DETAIL_MATERIAL_AUTHORITY;
+  mechanical.userData.materialAuthority = DETAIL_MATERIAL_AUTHORITY;
+  return { body, glass, stair, mechanical };
 }
 
-function decodePrimitive(THREE, primitive, binary, materials) {
+function createIndexedGeometry(THREE, positions, indexValues, projectUvs) {
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions.slice(), 3));
+  const IndexArray = positions.length / 3 > 65535 ? Uint32Array : Uint16Array;
+  geometry.setIndex(new THREE.BufferAttribute(new IndexArray(indexValues), 1));
+  if (projectUvs) {
+    const projected = addProjectedUvs(THREE, geometry);
+    geometry.dispose();
+    return projected;
+  }
+  geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  return geometry;
+}
+
+function createPrimitiveMesh(THREE, geometry, material, name) {
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.name = name;
+  mesh.castShadow = false;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function splitTunnelCSourceDetail(THREE, positions, indices, sourceMaterials) {
+  const bodyIndices = [];
+  const stairIndices = [];
+  const mechanicalIndices = [];
+
+  for (let index = 0; index < indices.length; index += 3) {
+    const a = indices[index];
+    const b = indices[index + 1];
+    const c = indices[index + 2];
+    const ax = positions[a * 3];
+    const ay = positions[a * 3 + 1];
+    const az = positions[a * 3 + 2];
+    const bx = positions[b * 3];
+    const by = positions[b * 3 + 1];
+    const bz = positions[b * 3 + 2];
+    const cx = positions[c * 3];
+    const cy = positions[c * 3 + 1];
+    const cz = positions[c * 3 + 2];
+    const centerX = (ax + bx + cx) / 3;
+    const centerY = (ay + by + cy) / 3;
+    const centerZ = (az + bz + cz) / 3;
+
+    // These bounds are measured directly from the supplied Tunnel_C primitive.
+    // They isolate the authored diagonal service stair/rails and bogie/lift
+    // structure without replacing, moving or procedurally rebuilding either.
+    const isStair = centerX > 16.4 && centerY < -1.55 && centerZ < 4.8;
+    const isMechanical = !isStair
+      && centerX >= 15.0
+      && centerX < 16.8
+      && centerZ < 1.3;
+    const target = isStair ? stairIndices : isMechanical ? mechanicalIndices : bodyIndices;
+    target.push(a, b, c);
+  }
+
+  if (!bodyIndices.length || !stairIndices.length || !mechanicalIndices.length) {
+    throw new Error(
+      `Uploaded Tunnel_C detail split failed: ${bodyIndices.length / 3} body, ${stairIndices.length / 3} stair and ${mechanicalIndices.length / 3} mechanical triangles`,
+    );
+  }
+
+  const root = new THREE.Group();
+  root.name = "Tunnel_C_SourceDetailMaterialSplit";
+  root.userData.detailMaterialAuthority = DETAIL_MATERIAL_AUTHORITY;
+  root.userData.bodyTriangleCount = bodyIndices.length / 3;
+  root.userData.stairTriangleCount = stairIndices.length / 3;
+  root.userData.mechanicalTriangleCount = mechanicalIndices.length / 3;
+  root.add(
+    createPrimitiveMesh(
+      THREE,
+      createIndexedGeometry(THREE, positions, bodyIndices, true),
+      sourceMaterials.body,
+      "Tunnel_C_CorrugatedShell_SourceTriangles",
+    ),
+    createPrimitiveMesh(
+      THREE,
+      createIndexedGeometry(THREE, positions, stairIndices, false),
+      sourceMaterials.stair,
+      "Tunnel_C_GalvanizedServiceStair_SourceTriangles",
+    ),
+    createPrimitiveMesh(
+      THREE,
+      createIndexedGeometry(THREE, positions, mechanicalIndices, false),
+      sourceMaterials.mechanical,
+      "Tunnel_C_DarkBogieLift_SourceTriangles",
+    ),
+  );
+  return root;
+}
+
+function decodePrimitive(THREE, primitive, binary, materials, meshName, sourceMaterials) {
   const positionView = new DataView(binary.buffer, binary.byteOffset + primitive.pos[0], primitive.pos[1]);
   const positions = new Float32Array(primitive.count * 3);
   for (let vertex = 0; vertex < primitive.count; vertex += 1) {
@@ -140,15 +250,17 @@ function decodePrimitive(THREE, primitive, binary, materials) {
       : indexView.getUint16(index * bytesPerIndex, true);
   }
 
-  const indexed = new THREE.BufferGeometry();
-  indexed.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  indexed.setIndex(new THREE.BufferAttribute(indices, 1));
-  const geometry = addProjectedUvs(THREE, indexed);
-  indexed.dispose();
-  const mesh = new THREE.Mesh(geometry, materials[primitive.material] || materials[0]);
-  mesh.castShadow = false;
-  mesh.receiveShadow = true;
-  return mesh;
+  if (meshName === "Tunnel_C_Jetway_0" && primitive.material === 0) {
+    return splitTunnelCSourceDetail(THREE, positions, indices, sourceMaterials);
+  }
+
+  const geometry = createIndexedGeometry(THREE, positions, indices, true);
+  return createPrimitiveMesh(
+    THREE,
+    geometry,
+    materials[primitive.material] || materials[0],
+    `${meshName}_Primitive`,
+  );
 }
 
 function applyNodeTransform(THREE, object, node) {
@@ -172,7 +284,14 @@ function buildPrototype(THREE, payload, sourceTextures = {}) {
     const root = new THREE.Group();
     root.name = meshDefinition.name;
     for (const primitive of meshDefinition.primitives) {
-      root.add(decodePrimitive(THREE, primitive, binary, materials));
+      root.add(decodePrimitive(
+        THREE,
+        primitive,
+        binary,
+        materials,
+        meshDefinition.name,
+        sourceMaterials,
+      ));
     }
     return root;
   });
@@ -194,6 +313,7 @@ function buildPrototype(THREE, payload, sourceTextures = {}) {
   aligned.updateMatrixWorld(true);
   aligned.userData.modelAuthority = MODEL_AUTHORITY;
   aligned.userData.materialAuthority = sourceMaterials.body.userData.materialAuthority;
+  aligned.userData.detailMaterialAuthority = DETAIL_MATERIAL_AUTHORITY;
   aligned.userData.performanceAuthority = PERFORMANCE_AUTHORITY;
   return aligned;
 }
@@ -328,6 +448,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
   group.userData.uploadedJetwayMaterialAuthority = sourceTextures.diffuse?.isTexture
     ? MATERIAL_AUTHORITY
     : "uploaded-model-neutral-material-fallback";
+  group.userData.uploadedJetwayDetailMaterialAuthority = DETAIL_MATERIAL_AUTHORITY;
   group.userData.uploadedJetwayPerformanceAuthority = PERFORMANCE_AUTHORITY;
   group.userData.uploadedJetwayExpectedCount = placements.length;
 
@@ -369,6 +490,8 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
       group.userData.uploadedJetwayHiddenGeneratedObjectCount = hiddenGeneratedObjectCount;
       group.userData.uploadedJetwayTerminalConnectorPreserved = true;
       group.userData.uploadedJetwayMaterialAuthority = prototype.userData.materialAuthority;
+      group.userData.uploadedJetwayDetailMaterialAuthority = prototype.userData.detailMaterialAuthority;
+      group.userData.uploadedJetwayStairMaterialSplitActive = true;
       group.userData.uploadedJetwayPerformanceAuthority = prototype.userData.performanceAuthority;
       group.userData.uploadedJetwayShadowCasterGateCount = shadowCasterGateCount;
       group.userData.uploadedJetwayGlobalEdgeOverlayCount = 0;
