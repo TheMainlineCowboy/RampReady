@@ -9,8 +9,9 @@
     "materialize:standup-tug": "node scripts/materialize-standup-tug-runtime.mjs",
     "materialize:phx-terminal4": "node scripts/materialize-terminal4-package-first.mjs",
     "materialize:kphx-ground": "node scripts/materialize-kphx-ground.mjs",
+    "materialize:source-runtime": "npm run materialize:authored-aircraft && npm run materialize:standup-tug && npm run materialize:phx-terminal4 && npm run materialize:kphx-ground",
     "dev": "vite --host 0.0.0.0",
-    "build": "vite build",
+    "build": "npm run materialize:source-runtime && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "verify": "node scripts/verify-source-assets-only.mjs",
     "build:checked": "npm run verify && npm run build"
