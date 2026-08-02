@@ -1,4 +1,4 @@
-const CONNECTOR_AUTHORITY = "measured-authored-terminal-wall-to-uploaded-rotunda-v4-static-instanced-a1-deep-overlap";
+const CONNECTOR_AUTHORITY = "measured-authored-terminal-wall-to-uploaded-rotunda-v5-facade-plane-portal-static-instanced";
 const STATIC_CONNECTOR_BATCH_AUTHORITY = "57-static-terminal-connectors-three-instanced-box-batches-v1";
 
 function createConnectorMaterials(THREE) {
@@ -28,7 +28,14 @@ function createConnectorMaterials(THREE) {
     depthWrite: false,
     side: THREE.DoubleSide,
   });
-  return { shell, frame, glass };
+  const portalInterior = new THREE.MeshStandardMaterial({
+    name: "Uploaded airport jetway terminal portal interior",
+    color: 0x151c1f,
+    roughness: 0.9,
+    metalness: 0.02,
+    side: THREE.DoubleSide,
+  });
+  return { shell, frame, glass, portalInterior };
 }
 
 function measureConnector(placement) {
@@ -257,25 +264,42 @@ export function addUploadedAirportJetwayTerminalConnector(THREE, fleet, placemen
       }
     }
 
-    const terminalX = placement.x + ux * length;
-    const terminalZ = placement.z + uz * length;
+    // The connector shell continues 1.45 m inside the authored terminal to
+    // eliminate daylight gaps. The visible portal collar belongs at the
+    // measured facade plane, not at the hidden end of that overlap.
+    const facadeDistance = Math.max(0.8, frame.measuredLength - 0.08);
+    const facadeX = placement.x + ux * facadeDistance;
+    const facadeZ = placement.z + uz * facadeDistance;
+    const interiorX = facadeX + ux * 0.09;
+    const interiorZ = facadeZ + uz * 0.09;
+
     addBox(
       THREE,
       connector,
-      new THREE.BoxGeometry(2.96, 0.24, 0.52),
-      materials.frame,
-      "UploadedAirportJetwayTerminalPortalHeader_A1",
-      [terminalX, centerY + 1.12, terminalZ],
+      new THREE.BoxGeometry(2.44, 2.08, 0.12),
+      materials.portalInterior,
+      "UploadedAirportJetwayTerminalPortalInterior_A1",
+      [interiorX, centerY - 0.02, interiorZ],
+      yaw,
+      false,
+    );
+    addBox(
+      THREE,
+      connector,
+      new THREE.BoxGeometry(3.16, 0.28, 0.5),
+      materials.shell,
+      "UploadedAirportJetwayTerminalPortalOuterHeader_A1",
+      [facadeX, centerY + 1.2, facadeZ],
       yaw,
       true,
     );
     addBox(
       THREE,
       connector,
-      new THREE.BoxGeometry(2.9, 0.16, 0.62),
-      materials.frame,
-      "UploadedAirportJetwayTerminalPortalThreshold_A1",
-      [terminalX, centerY - 1.14, terminalZ],
+      new THREE.BoxGeometry(3.1, 0.18, 0.54),
+      materials.shell,
+      "UploadedAirportJetwayTerminalPortalOuterThreshold_A1",
+      [facadeX, centerY - 1.17, facadeZ],
       yaw,
       true,
     );
@@ -283,19 +307,56 @@ export function addUploadedAirportJetwayTerminalConnector(THREE, fleet, placemen
       addBox(
         THREE,
         connector,
-        new THREE.BoxGeometry(0.2, 2.45, 0.56),
-        materials.frame,
-        `UploadedAirportJetwayTerminalPortalJamb_A1_${side}`,
+        new THREE.BoxGeometry(0.28, 2.48, 0.52),
+        materials.shell,
+        `UploadedAirportJetwayTerminalPortalOuterJamb_A1_${side}`,
         [
-          terminalX + sideX * side * 1.38,
+          facadeX + sideX * side * 1.44,
           centerY,
-          terminalZ + sideZ * side * 1.38,
+          facadeZ + sideZ * side * 1.44,
+        ],
+        yaw,
+        true,
+      );
+      addBox(
+        THREE,
+        connector,
+        new THREE.BoxGeometry(0.12, 2.16, 0.58),
+        materials.frame,
+        `UploadedAirportJetwayTerminalPortalInnerJamb_A1_${side}`,
+        [
+          facadeX + sideX * side * 1.27,
+          centerY - 0.02,
+          facadeZ + sideZ * side * 1.27,
         ],
         yaw,
         true,
       );
     }
-    connector.userData.a1TerminalPortalFrame = "deep-overlap-open-framed-terminal-end-v3";
+    addBox(
+      THREE,
+      connector,
+      new THREE.BoxGeometry(2.66, 0.12, 0.58),
+      materials.frame,
+      "UploadedAirportJetwayTerminalPortalInnerHeader_A1",
+      [facadeX, centerY + 1.06, facadeZ],
+      yaw,
+      true,
+    );
+    addBox(
+      THREE,
+      connector,
+      new THREE.BoxGeometry(2.64, 0.1, 0.58),
+      materials.frame,
+      "UploadedAirportJetwayTerminalPortalInnerThreshold_A1",
+      [facadeX, centerY - 1.08, facadeZ],
+      yaw,
+      true,
+    );
+
+    connector.userData.a1TerminalPortalFrame = "facade-plane-dark-reveal-with-hidden-deep-overlap-v4";
+    connector.userData.a1FacadePortalDistanceMeters = facadeDistance;
+    connector.userData.a1HiddenOverlapMeters = frame.terminalOverlap;
   }
 
   fleet.add(connector);
