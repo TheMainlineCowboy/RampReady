@@ -125,7 +125,9 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
     }
   }
 
-  await location.selectOption("b15");
+  // The loop ends at B15. Re-selecting the already-selected option can leave
+  // Chromium waiting on a redundant React change while the WebGL scene is
+  // continuously rendering, so verify the existing state and drive from it.
   await expect(canvas).toHaveAttribute("data-inspection-preset", "b15");
   await expectPresetPosition(canvas, PRESETS.at(-1));
   const start = await tugPosition(canvas);
