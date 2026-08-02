@@ -4,7 +4,7 @@ import {
 } from "./uploadedAirportJetwayTerminalConnector.js";
 
 const PART_COUNT = 5;
-const MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v6-source-detail-material-split";
+const MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured";
 const MATERIAL_AUTHORITY = "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2";
 const DETAIL_MATERIAL_AUTHORITY = "source-triangle-stair-and-bogie-material-split-v1";
 const PERFORMANCE_AUTHORITY = "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5";
