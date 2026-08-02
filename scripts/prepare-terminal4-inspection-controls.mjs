@@ -1,7 +1,6 @@
 import fs from "node:fs";
 
 const targets = [
-  "src/components/RampReadyStandupTrainer.jsx",
   "src/components/RampReadyStandupTrainerTerminal4.jsx",
 ];
 
@@ -51,7 +50,7 @@ for (const path of targets) {
     );
   }
 
-  // Normalize existing prepared trainers too. W/S are binary keyboard controls;
+  // Normalize the active PHX trainer too. W/S are binary keyboard controls;
   // partial power remains available through the visible slider.
   source = source.replaceAll(
     "Math.max(drive.throttle, 0.55)",
@@ -83,4 +82,4 @@ if (!css.includes(cssMarker)) {
 
 await import("./prepare-a1-terminal-connector-v11.mjs");
 await import("./prepare-inspection-elapsed-motion.mjs");
-console.log("Prepared always-visible free-drive inspection controls with full keyboard power, elapsed-motion integration and the measured A1 Terminal 4 wall connector.");
+console.log("Prepared the active Terminal 4 free-drive controls with full keyboard power, elapsed-motion integration and the measured A1 wall connector.");
