@@ -2,12 +2,14 @@ import { readFile, stat } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-const [rig, placements, fleet, ready, authoredVisual] = await Promise.all([
+const [rig, placements, fleet, ready, authoredVisual, packageMaterializer, groundMaterializer] = await Promise.all([
   read("src/tug/lektroRig.js"),
   read("src/environment/sourcePlacedTerminal4Jetways.js"),
   read("src/environment/uploadedAirportJetwayFleet.js"),
   read("src/environment/uploadedAirportJetwayFleetReadyV2.js"),
   read("src/environment/authoredTerminal4Visual.js"),
+  read("scripts/materialize-terminal4-package-first.mjs"),
+  read("scripts/materialize-kphx-ground.mjs"),
 ]);
 
 function requireToken(source, token, label) {
@@ -62,19 +64,15 @@ for (const token of ["installStaticJetwayPortalClosures", "polishUploadedA1Jetwa
 }
 
 requireToken(authoredVisual, "buildSourcePlacedTerminal4Jetways", "authored Terminal 4 visual");
+requireToken(packageMaterializer, "unmlobo-kphx1-8-1_Mu9aq.zip", "supplied Terminal 4 materializer");
+requireToken(packageMaterializer, "EXPECTED_ARCHIVE_SHA256", "supplied Terminal 4 materializer");
+requireToken(groundMaterializer, "KPHX_ADEX.BGL", "supplied airport ground materializer");
+requireToken(groundMaterializer, "markingSegments", "supplied airport ground materializer");
 
 for (let index = 0; index < 5; index += 1) {
   const file = new URL(`../public/models/airport-jetway/geometry.part${index}`, import.meta.url);
   const details = await stat(file);
   if (details.size < 1000) throw new Error(`Supplied jetway geometry part ${index} is missing or too small`);
 }
-for (const path of [
-  "public/models/phx-terminal4/terminal4.gltf",
-  "public/models/kphx-ground/kphx-ground.gltf",
-  "public/models/kphx-photo/photo-manifest.json",
-]) {
-  const details = await stat(new URL(`../${path}`, import.meta.url));
-  if (details.size < 100) throw new Error(`Required supplied airport runtime asset is missing: ${path}`);
-}
 
-console.log("RampReady source-only verification passed: Lektro rear steering, 58 source BGL jetway transforms, supplied jetway geometry, zero generated connectors/portals/facades, no projected corrugated fill, and committed Sky Harbor assets present.");
+console.log("RampReady source-only verification passed: Lektro rear steering, 58 source BGL jetway transforms, supplied jetway geometry, zero generated connectors/portals/facades, no projected corrugated fill, and pinned source materializers ready.");
