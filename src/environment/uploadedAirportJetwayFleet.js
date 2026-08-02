@@ -2,7 +2,7 @@ const PART_COUNT = 5;
 const MODEL_AUTHORITY = "user-supplied-airport-jetway-source-geometry-v1";
 const MATERIAL_AUTHORITY = "supplied-material-slots-no-projected-terminal-texture";
 const PERFORMANCE_AUTHORITY = "57-static-source-instances-plus-1-animated-source-model";
-const A1_RETRACTION_AUTHORITY = "supplied-tunnel-node-native-x-axis-retraction";
+const A1_RETRACTION_AUTHORITY = "supplied-tunnel-node-native-z-axis-retraction";
 const A1_RETRACTION = Object.freeze({ tunnelB: 0.42, tunnelC: 0.78, cab: 1.18, lift: 0.08, totalClearanceMeters: 2.38 });
 const GENERATED_OBJECT_PATTERN = /(?:AIR_Jetway01|Terminal4_(?:LowerFacade|ClosedService|FacadeVent)|FixedWalkway|PortalSeal|TerminalConnector|GeneratedJetway|ProceduralJetway|A1.*Animated.*Jetway)/i;
 
@@ -174,7 +174,8 @@ function buildPrototype(THREE, payload) {
   const cabCenter = new THREE.Box3().setFromObject(cab).getCenter(new THREE.Vector3());
   const sourceDirection = cabCenter.clone().sub(rotundaCenter);
   sourceDirection.y = 0;
-  if (sourceDirection.lengthSq() < 0.01) throw new Error("Supplied jetway source axis could not be measured");
+  const rotundaToCabMeters = sourceDirection.length();
+  if (rotundaToCabMeters < 0.1) throw new Error("Supplied jetway source axis could not be measured");
   sourceDirection.normalize();
 
   model.position.add(new THREE.Vector3(-rotundaCenter.x, -modelBounds.min.y, -rotundaCenter.z));
@@ -189,6 +190,7 @@ function buildPrototype(THREE, payload) {
   aligned.userData.sourceAxis = [sourceDirection.x, sourceDirection.y, sourceDirection.z];
   aligned.userData.sourceRotundaCenter = rotundaCenter.toArray();
   aligned.userData.sourceCabCenter = cabCenter.toArray();
+  aligned.userData.sourceRotundaToCabMeters = rotundaToCabMeters;
   aligned.userData.sourceBoundsMin = modelBounds.min.toArray();
   aligned.userData.sourceBoundsMax = modelBounds.max.toArray();
   aligned.userData.generatedGeometryCount = 0;
@@ -249,10 +251,10 @@ function createController() {
     if (!visual) return;
     const retract = 1 - deployment;
     const { nodes, base, anchor } = visual;
-    if (nodes.tunnelB) nodes.tunnelB.position.x = base.tunnelB.x - retract * A1_RETRACTION.tunnelB;
-    if (nodes.tunnelC) nodes.tunnelC.position.x = base.tunnelC.x - retract * A1_RETRACTION.tunnelC;
+    if (nodes.tunnelB) nodes.tunnelB.position.z = base.tunnelB.z - retract * A1_RETRACTION.tunnelB;
+    if (nodes.tunnelC) nodes.tunnelC.position.z = base.tunnelC.z - retract * A1_RETRACTION.tunnelC;
     if (nodes.cab) {
-      nodes.cab.position.x = base.cab.x - retract * A1_RETRACTION.cab;
+      nodes.cab.position.z = base.cab.z - retract * A1_RETRACTION.cab;
       nodes.cab.position.y = base.cab.y + retract * A1_RETRACTION.lift;
     }
     anchor.userData.retractionAuthority = A1_RETRACTION_AUTHORITY;
@@ -279,9 +281,9 @@ function createController() {
         anchor,
         nodes,
         base: {
-          tunnelB: nodes.tunnelB?.position.clone() || { x: 0 },
-          tunnelC: nodes.tunnelC?.position.clone() || { x: 0 },
-          cab: nodes.cab?.position.clone() || { x: 0, y: 0 },
+          tunnelB: nodes.tunnelB?.position.clone() || { z: 0 },
+          tunnelC: nodes.tunnelC?.position.clone() || { z: 0 },
+          cab: nodes.cab?.position.clone() || { z: 0, y: 0 },
         },
       };
       state = "supplied-model-ready";
@@ -330,6 +332,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
       fleet.userData.generatedConnectorCount = 0;
       fleet.userData.generatedPortalCount = 0;
       fleet.userData.generatedFacadeCount = 0;
+      fleet.userData.sourceRotundaToCabMeters = prototype.userData.sourceRotundaToCabMeters;
       const staticFleet = buildStaticInstancedFleet(THREE, prototype, placements);
       fleet.add(staticFleet.batches);
 
