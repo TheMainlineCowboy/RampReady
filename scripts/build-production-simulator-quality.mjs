@@ -3,6 +3,7 @@ import { execFileSync, spawn } from "node:child_process";
 
 const protectedSourcePaths = Object.freeze([
   "src/components/RampReadyStandupTrainerTerminal4.jsx",
+  "src/components/RampReadyStandupTrainer.jsx",
   "src/environment/sourcePlacedTerminal4Jetways.js",
   "src/environment/authoredTerminal4Visual.js",
   "src/environment/authoredKphxGround.js",
@@ -16,14 +17,15 @@ const committedSources = new Map(protectedSourcePaths.map((sourcePath) => [
   execFileSync("git", ["show", `HEAD:${sourcePath}`], { encoding: "utf8" }),
 ]));
 const requiredBaselines = Object.freeze([
-  [protectedSourcePaths[0], "export default function RampReadyStandupTrainer", "Terminal 4 trainer"],
-  [protectedSourcePaths[1], "buildSourcePlacedTerminal4Jetways", "Terminal 4 jetway"],
-  [protectedSourcePaths[2], "installAuthoredTerminal4Visual", "authored Terminal 4"],
-  [protectedSourcePaths[3], "installAuthoredKphxGround", "authored KPHX ground"],
-  [protectedSourcePaths[4], "installAuthoredKphxPhotoGround", "authored KPHX source aerial"],
-  [protectedSourcePaths[5], "buildTerminal4LowerFacadeSkin", "Terminal 4 lower-facade"],
-  [protectedSourcePaths[6], "applyTerminal4JetwaySimulatorPolish", "Terminal 4 jetway-polish"],
-  [protectedSourcePaths[7], "restoreA1TerminalConnectorV11", "production restorer"],
+  ["src/components/RampReadyStandupTrainerTerminal4.jsx", "export default function RampReadyStandupTrainer", "Terminal 4 trainer"],
+  ["src/components/RampReadyStandupTrainer.jsx", "export default function RampReadyStandupTrainer", "secondary trainer"],
+  ["src/environment/sourcePlacedTerminal4Jetways.js", "buildSourcePlacedTerminal4Jetways", "Terminal 4 jetway"],
+  ["src/environment/authoredTerminal4Visual.js", "installAuthoredTerminal4Visual", "authored Terminal 4"],
+  ["src/environment/authoredKphxGround.js", "installAuthoredKphxGround", "authored KPHX ground"],
+  ["src/environment/authoredKphxPhotoGround.js", "installAuthoredKphxPhotoGround", "authored KPHX source aerial"],
+  ["src/environment/terminal4LowerFacadeSkinV9.js", "buildTerminal4LowerFacadeSkin", "Terminal 4 lower-facade"],
+  ["src/environment/terminal4JetwaySimulatorPolishV13.js", "applyTerminal4JetwaySimulatorPolish", "Terminal 4 jetway-polish"],
+  ["scripts/build-production.mjs", "restoreA1TerminalConnectorV11", "production restorer"],
 ]);
 for (const [sourcePath, token, label] of requiredBaselines) {
   if (!committedSources.get(sourcePath)?.includes(token)) {
@@ -88,4 +90,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, connected A1 to the measured T4_WALK source portal, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly.");
+console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, connected A1 to the measured T4_WALK source portal, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including both trainer sources.");
