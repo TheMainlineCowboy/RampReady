@@ -23,14 +23,16 @@ requireToken(placements, "sourceHeadingDegrees", "source jetway placement");
 requireToken(placements, "THREE.MathUtils.degToRad(Number(jetway.h))", "source jetway placement");
 requireToken(placements, 'sourceGeometryMode = "user-supplied-jetway-geometry-only"', "source jetway placement");
 requireToken(placements, "generatedTerminalConnectorCount = 0", "source jetway placement");
+requireToken(placements, "facadeInfillCount = 0", "source jetway placement");
+requireToken(placements, "lowerFacadeFitCount = 0", "source jetway placement");
 
 for (const token of [
-  "createArchedTunnelGeometry",
-  "addServiceStairs",
-  "facadeInfill",
-  "facadeDoor",
-  "facadeVent",
-  "wallCollar",
+  "function createArchedTunnelGeometry",
+  "function addServiceStairs",
+  "transforms.facadeInfill",
+  "transforms.facadeDoor",
+  "transforms.facadeVent",
+  "transforms.wallCollar",
 ]) forbidToken(placements, token, "source jetway placement");
 
 requireToken(fleet, 'MODEL_AUTHORITY = "user-supplied-airport-jetway-source-geometry-v1"', "supplied jetway fleet");
@@ -44,8 +46,8 @@ requireToken(fleet, "nodes.tunnelC.position.x", "supplied jetway A1 animation");
 requireToken(fleet, "nodes.cab.position.x", "supplied jetway A1 animation");
 
 for (const token of [
-  "addProjectedUvs",
-  "cloneCorrugatedAtlasBand",
+  "function addProjectedUvs",
+  "function cloneCorrugatedAtlasBand",
   "M1DGJETWAY-corrugated-band-projected",
   "addUploadedAirportJetwayTerminalConnector",
   "addUploadedAirportJetwayStaticTerminalConnectors",
