@@ -4,10 +4,10 @@ import { expect, test } from "@playwright/test";
 const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
 const VIEWPORT = { width: 1440, height: 900 };
 const PRESETS = [
-  { id: "a1", x: 0, z: 0, file: "inspection-a1-ramp.png", groundFile: "inspection-a1-operator-ground.png" },
-  { id: "a14", x: 218.45, z: -86.52, file: "inspection-a-concourse-midpoint.png" },
-  { id: "b14", x: 216.4, z: 150.35, file: "inspection-b-concourse-midpoint.png" },
-  { id: "b15", x: -18.5, z: 539.2, file: "inspection-b15-ramp.png", groundFile: "inspection-b15-operator-ground.png" },
+  { id: "a1", x: 0, z: 0 },
+  { id: "a14", x: 218.45, z: -86.52 },
+  { id: "b14", x: 216.4, z: 150.35 },
+  { id: "b15", x: -18.5, z: 539.2 },
 ];
 
 async function launchRuntime(page) {
@@ -109,25 +109,15 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
   await expect(location).toBeVisible();
   await expect(camera).toBeVisible();
 
+  // Exercise every source-derived route preset. Focused A1 and B15 visual
+  // evidence is captured by the source-first browser gate, so this test stays
+  // dedicated to full-route reachability and live free-drive motion.
   for (const preset of PRESETS) {
     await location.selectOption(preset.id);
     await expect(canvas).toHaveAttribute("data-inspection-preset", preset.id);
     await expectPresetPosition(canvas, preset);
-    await camera.selectOption("chase");
-    await page.waitForTimeout(500);
-    await captureScene(page, preset.file);
-
-    if (preset.groundFile) {
-      await camera.selectOption("driver");
-      await page.waitForTimeout(500);
-      await captureScene(page, preset.groundFile);
-      await camera.selectOption("chase");
-    }
   }
 
-  // The loop ends at B15. Re-selecting the already-selected option can leave
-  // Chromium waiting on a redundant React change while the WebGL scene is
-  // continuously rendering, so verify the existing state and drive from it.
   await expect(canvas).toHaveAttribute("data-inspection-preset", "b15");
   await expectPresetPosition(canvas, PRESETS.at(-1));
   const start = await tugPosition(canvas);
