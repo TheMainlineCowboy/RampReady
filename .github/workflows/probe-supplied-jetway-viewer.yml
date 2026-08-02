@@ -15,52 +15,46 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Request the downloadable archive for the supplied model
+      - name: Capture public viewer metadata and source texture URLs
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json, pathlib, urllib.error, urllib.request
+          import json, pathlib, urllib.request
           uid = '6067e855917e498abee3d98076293cc6'
-          headers = {'User-Agent': 'RampReady source verification/1.0'}
-          endpoints = [
-              f'https://api.sketchfab.com/v3/models/{uid}',
-              f'https://api.sketchfab.com/v3/models/{uid}/download',
-          ]
-          for endpoint in endpoints:
-              request = urllib.request.Request(endpoint, headers=headers)
-              try:
-                  with urllib.request.urlopen(request, timeout=45) as response:
-                      payload = response.read()
-                      print(endpoint, 'status=', response.status, 'bytes=', len(payload))
-                      pathlib.Path('response-' + endpoint.rsplit('/', 1)[-1] + '.json').write_bytes(payload)
-                      if endpoint.endswith('/download'):
-                          data = json.loads(payload)
-                          print('download keys=', sorted(data))
-                          for archive_type in ('gltf', 'source', 'glb'):
-                              archive = data.get(archive_type)
-                              if not archive or not archive.get('url'):
-                                  continue
-                              print('selected archive=', archive_type, archive.get('size'), archive['url'])
-                              archive_request = urllib.request.Request(archive['url'], headers=headers)
-                              with urllib.request.urlopen(archive_request, timeout=120) as archive_response:
-                                  archive_bytes = archive_response.read()
-                              pathlib.Path(f'supplied-jetway-{archive_type}.zip').write_bytes(archive_bytes)
-                              print('archive bytes=', len(archive_bytes))
-                              break
-              except urllib.error.HTTPError as error:
-                  body = error.read()
-                  print(endpoint, 'HTTP', error.code, body[:500])
-              except Exception as error:
-                  print(endpoint, 'ERROR', repr(error))
+          headers = {
+              'User-Agent': 'Mozilla/5.0',
+              'Referer': f'https://sketchfab.com/models/{uid}/embed',
+          }
+          request = urllib.request.Request(f'https://sketchfab.com/i/models/{uid}', headers=headers)
+          with urllib.request.urlopen(request, timeout=45) as response:
+              data = json.load(response)
+          pathlib.Path('viewer-model.json').write_text(json.dumps(data, indent=2, sort_keys=True))
+
+          urls = []
+          def walk(value, path='root'):
+              if isinstance(value, dict):
+                  for key, child in value.items():
+                      walk(child, f'{path}.{key}')
+              elif isinstance(value, list):
+                  for index, child in enumerate(value):
+                      walk(child, f'{path}[{index}]')
+              elif isinstance(value, str) and value.startswith('http'):
+                  if 'media.sketchfab.com' in value or 'media.sketchfabusercontent.com' in value:
+                      urls.append({'path': path, 'url': value})
+          walk(data)
+          pathlib.Path('viewer-media-urls.json').write_text(json.dumps(urls, indent=2, sort_keys=True))
+          print('viewer metadata bytes=', pathlib.Path('viewer-model.json').stat().st_size)
+          print('media URL count=', len(urls))
+          for entry in urls:
+              print(entry['path'], entry['url'])
           PY
-          ls -lh response-*.json supplied-jetway-*.zip 2>/dev/null || true
-      - name: Upload any recovered official archive
+      - name: Upload viewer source metadata
         uses: actions/upload-artifact@v4
         with:
-          name: supplied-jetway-official-download
+          name: supplied-jetway-viewer-metadata
           path: |
-            response-*.json
-            supplied-jetway-*.zip
-          if-no-files-found: warn
+            viewer-model.json
+            viewer-media-urls.json
+          if-no-files-found: error
           retention-days: 1
