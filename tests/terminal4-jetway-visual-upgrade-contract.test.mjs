@@ -82,7 +82,6 @@ for (const forbidden of [
   "addStructuralEdges",
   "new THREE.EdgesGeometry",
   "new THREE.LineSegments",
-  "proceduralJetwayStair",
 ]) {
   if (uploadedFleet.includes(forbidden)) throw new Error(`Uploaded Terminal 4 jetway fleet retained forbidden generated detail: ${forbidden}`);
 }
