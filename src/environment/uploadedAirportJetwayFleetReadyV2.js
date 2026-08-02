@@ -1,10 +1,12 @@
 import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";
 import { polishUploadedA1JetwayDetail } from "./a1UploadedJetwayDetailPolish.js";
+import { installStaticJetwayPortalClosures } from "./staticJetwayPortalClosures.js";
 
 const READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured";
 const EXPECTED_GATE_COUNT = 58;
 const LOAD_TIMEOUT_MS = 120_000;
 const A1_DETAIL_POLISH_AUTHORITY = "a1-original-stair-bogie-readable-metal-and-sharp-edges-v1";
+const STATIC_PORTAL_AUTHORITY = "57-static-terminal-portals-paired-vestibule-doors-v1";
 // Compatibility token retained for the established source verifier: waitForFleet(group, placements)
 
 function waitForFleet(THREE, group, placements) {
@@ -44,6 +46,7 @@ function waitForFleet(THREE, group, placements) {
             geometryReplaced: a1Model.userData.a1SourceDetailGeometryReplaced === true,
           }
           : polishUploadedA1JetwayDetail(THREE, a1Model);
+        const staticPortalClosures = installStaticJetwayPortalClosures(THREE, fleet, placements);
         const materialAuthority = group.userData.uploadedJetwayMaterialAuthority || "missing";
         const detailMaterialAuthority = group.userData.uploadedJetwayDetailMaterialAuthority || "missing";
         const stairMaterialSplitActive = group.userData.uploadedJetwayStairMaterialSplitActive === true;
@@ -81,9 +84,14 @@ function waitForFleet(THREE, group, placements) {
           || a1DetailPolish.bogieMeshCount !== 1
           || a1DetailPolish.edgeOverlayCount !== 2
           || a1DetailPolish.geometryReplaced
+          || staticPortalClosures.authority !== STATIC_PORTAL_AUTHORITY
+          || staticPortalClosures.gateCount !== 57
+          || staticPortalClosures.batchCount !== 2
+          || staticPortalClosures.panelCount !== 114
+          || staticPortalClosures.windowCount !== 114
         ) {
           reject(new Error(
-            `Uploaded airport jetway fleet reported ready with ${count} placements, ${connectorCount} connectors, ${modelCount} gate records, shell material ${materialAuthority}, detail material ${detailMaterialAuthority}, stair split ${stairMaterialSplitActive}, performance ${performanceAuthority}, ${shadowCasterGateCount} shadow-casting gates, ${globalEdgeOverlayCount} global edge overlays, ${staticInstancedGateCount} instanced static jetways, ${animatedIndividualGateCount} animated jetways, ${staticPrimitiveBatchCount} jetway primitive batches, ${staticConnectorGateCount} static connector gates, ${staticConnectorBatchCount} connector batches, ${staticConnectorInstanceCount} connector instances, connector authority ${staticConnectorBatchAuthority}, ${individualConnectorGateCount} individual connectors, and A1 detail ${a1DetailPolish.authority}/${a1DetailPolish.stairMeshCount}/${a1DetailPolish.bogieMeshCount}/${a1DetailPolish.edgeOverlayCount}/${a1DetailPolish.geometryReplaced}${missingModels.length ? `; missing ${missingModels.join(", ")}` : ""}`,
+            `Uploaded airport jetway fleet reported ready with ${count} placements, ${connectorCount} connectors, ${modelCount} gate records, shell material ${materialAuthority}, detail material ${detailMaterialAuthority}, stair split ${stairMaterialSplitActive}, performance ${performanceAuthority}, ${shadowCasterGateCount} shadow-casting gates, ${globalEdgeOverlayCount} global edge overlays, ${staticInstancedGateCount} instanced static jetways, ${animatedIndividualGateCount} animated jetways, ${staticPrimitiveBatchCount} jetway primitive batches, ${staticConnectorGateCount} static connector gates, ${staticConnectorBatchCount} connector batches, ${staticConnectorInstanceCount} connector instances, connector authority ${staticConnectorBatchAuthority}, ${individualConnectorGateCount} individual connectors, A1 detail ${a1DetailPolish.authority}/${a1DetailPolish.stairMeshCount}/${a1DetailPolish.bogieMeshCount}/${a1DetailPolish.edgeOverlayCount}/${a1DetailPolish.geometryReplaced}, and static portals ${staticPortalClosures.authority}/${staticPortalClosures.gateCount}/${staticPortalClosures.batchCount}/${staticPortalClosures.panelCount}/${staticPortalClosures.windowCount}${missingModels.length ? `; missing ${missingModels.join(", ")}` : ""}`,
           ));
           return;
         }
@@ -95,6 +103,11 @@ function waitForFleet(THREE, group, placements) {
         group.userData.uploadedJetwayA1SourceBogieMeshCount = a1DetailPolish.bogieMeshCount;
         group.userData.uploadedJetwayA1DetailEdgeOverlayCount = a1DetailPolish.edgeOverlayCount;
         group.userData.uploadedJetwayA1SourceGeometryReplaced = a1DetailPolish.geometryReplaced;
+        group.userData.uploadedJetwayStaticPortalClosureAuthority = staticPortalClosures.authority;
+        group.userData.uploadedJetwayStaticPortalClosureGateCount = staticPortalClosures.gateCount;
+        group.userData.uploadedJetwayStaticPortalClosureBatchCount = staticPortalClosures.batchCount;
+        group.userData.uploadedJetwayStaticPortalClosurePanelCount = staticPortalClosures.panelCount;
+        group.userData.uploadedJetwayStaticPortalClosureWindowCount = staticPortalClosures.windowCount;
         resolve({
           count,
           connectorCount,
@@ -114,6 +127,7 @@ function waitForFleet(THREE, group, placements) {
           staticConnectorBatchAuthority,
           individualConnectorGateCount,
           a1DetailPolish,
+          staticPortalClosures,
           authority: READY_AUTHORITY,
         });
         return;
@@ -134,7 +148,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
   const controller = installUploadedAirportJetwayFleetBase(THREE, group, placements, sourceTextures);
   const ready = waitForFleet(THREE, group, placements);
   group.userData.uploadedJetwayReady = ready;
-  group.userData.uploadedJetwayReadyAuthority = "waiting-for-source-detail-material-facade-portal-and-a1-readability";
+  group.userData.uploadedJetwayReadyAuthority = "waiting-for-source-detail-material-facade-portal-a1-readability-and-static-closures";
   controller.ready = ready;
   return controller;
 }
