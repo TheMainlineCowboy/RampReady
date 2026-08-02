@@ -15,12 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Capture public viewer metadata and source texture URLs
+      - name: Download and inspect the supplied model viewer source
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json, pathlib, urllib.request
+          import base64, json, pathlib, urllib.request
           uid = '6067e855917e498abee3d98076293cc6'
           headers = {
               'User-Agent': 'Mozilla/5.0',
@@ -30,31 +30,33 @@ jobs:
           with urllib.request.urlopen(request, timeout=45) as response:
               data = json.load(response)
           pathlib.Path('viewer-model.json').write_text(json.dumps(data, indent=2, sort_keys=True))
-
-          urls = []
-          def walk(value, path='root'):
-              if isinstance(value, dict):
-                  for key, child in value.items():
-                      walk(child, f'{path}.{key}')
-              elif isinstance(value, list):
-                  for index, child in enumerate(value):
-                      walk(child, f'{path}[{index}]')
-              elif isinstance(value, str) and value.startswith('http'):
-                  if 'media.sketchfab.com' in value or 'media.sketchfabusercontent.com' in value:
-                      urls.append({'path': path, 'url': value})
-          walk(data)
-          pathlib.Path('viewer-media-urls.json').write_text(json.dumps(urls, indent=2, sort_keys=True))
-          print('viewer metadata bytes=', pathlib.Path('viewer-model.json').stat().st_size)
-          print('media URL count=', len(urls))
-          for entry in urls:
-              print(entry['path'], entry['url'])
+          source = data['files'][0]
+          source_url = source['osgjsUrl']
+          source_request = urllib.request.Request(source_url, headers=headers)
+          with urllib.request.urlopen(source_request, timeout=120) as response:
+              payload = response.read()
+          pathlib.Path('file.binz').write_bytes(payload)
+          pathlib.Path('file-probe.json').write_text(json.dumps({
+              'uid': uid,
+              'url': source_url,
+              'bytes': len(payload),
+              'first64Hex': payload[:64].hex(),
+              'metadata': source,
+          }, indent=2, sort_keys=True))
+          print('viewer source bytes=', len(payload))
+          print('first 64 bytes=', payload[:64].hex())
+          print('file metadata=', json.dumps(source, indent=2))
           PY
-      - name: Upload viewer source metadata
+          file file.binz || true
+          xxd -l 256 file.binz || true
+          strings -n 8 file.binz | head -100 || true
+      - name: Upload exact viewer source for local inspection
         uses: actions/upload-artifact@v4
         with:
-          name: supplied-jetway-viewer-metadata
+          name: supplied-jetway-viewer-source
           path: |
             viewer-model.json
-            viewer-media-urls.json
+            file.binz
+            file-probe.json
           if-no-files-found: error
           retention-days: 1
