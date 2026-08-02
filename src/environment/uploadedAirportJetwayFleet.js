@@ -8,6 +8,8 @@ const MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v
 const MATERIAL_AUTHORITY = "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2";
 const DETAIL_MATERIAL_AUTHORITY = "source-triangle-stair-and-bogie-material-split-v1";
 const PERFORMANCE_AUTHORITY = "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5";
+const A1_RETRACTION_AUTHORITY = "aircraft-door-clearance-without-overtravel-v6";
+const A1_RETRACTION = Object.freeze({ rotation: 0.052, tunnelB: 0.42, tunnelC: 0.78, cab: 1.18, lift: 0.08, totalClearanceMeters: 2.38 });
 // Replace only the movable fallback jetway. The source-positioned fixed walkway
 // and wall collar are the physical terminal connection and must remain visible.
 const HIDE_REPLACED = /^(?:AIR_Jetway01_(?!WallCollars)|Terminal4_LowerFacadeInfillPanels|Terminal4_ClosedServiceDoors|Terminal4_FacadeVentGrilles)/i;
@@ -378,13 +380,15 @@ function createController() {
     if (!visual) return;
     const retract = 1 - deployment;
     const { anchor, nodes, base } = visual;
-    anchor.rotation.y = base.yaw - retract * 0.105;
-    if (nodes.tunnelB) nodes.tunnelB.position.z = base.tunnelB.z - retract * 1.1;
-    if (nodes.tunnelC) nodes.tunnelC.position.z = base.tunnelC.z - retract * 2.25;
+    anchor.rotation.y = base.yaw - retract * A1_RETRACTION.rotation;
+    if (nodes.tunnelB) nodes.tunnelB.position.z = base.tunnelB.z - retract * A1_RETRACTION.tunnelB;
+    if (nodes.tunnelC) nodes.tunnelC.position.z = base.tunnelC.z - retract * A1_RETRACTION.tunnelC;
     if (nodes.cab) {
-      nodes.cab.position.z = base.cab.z - retract * 3.85;
-      nodes.cab.position.y = base.cab.y + retract * 0.16;
+      nodes.cab.position.z = base.cab.z - retract * A1_RETRACTION.cab;
+      nodes.cab.position.y = base.cab.y + retract * A1_RETRACTION.lift;
     }
+    anchor.userData.retractionAuthority = A1_RETRACTION_AUTHORITY;
+    anchor.userData.retractionClearanceMeters = A1_RETRACTION.totalClearanceMeters;
     state = deployment >= 0.995 ? "attached-to-aircraft-door"
       : deployment <= 0.005 ? "parked-clear-of-aircraft"
         : "retracting-from-aircraft";
@@ -451,6 +455,8 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
   group.userData.uploadedJetwayDetailMaterialAuthority = DETAIL_MATERIAL_AUTHORITY;
   group.userData.uploadedJetwayPerformanceAuthority = PERFORMANCE_AUTHORITY;
   group.userData.uploadedJetwayExpectedCount = placements.length;
+  group.userData.uploadedJetwayA1RetractionAuthority = A1_RETRACTION_AUTHORITY;
+  group.userData.uploadedJetwayA1RetractionClearanceMeters = A1_RETRACTION.totalClearanceMeters;
 
   readPayload()
     .then((payload) => {
