@@ -43,8 +43,9 @@ for (const token of [
 }
 
 for (const token of [
-  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured",
+  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v6-source-detail-material-split",
   "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2",
+  "source-triangle-stair-and-bogie-material-split-v1",
   "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5",
   "Tunnel_B",
   "Tunnel_C",
@@ -54,9 +55,15 @@ for (const token of [
   "addUploadedAirportJetwayStaticTerminalConnectors",
   "addProjectedUvs",
   "cloneCorrugatedAtlasBand",
+  "splitTunnelCSourceDetail",
+  "Tunnel_C_SourceDetailMaterialSplit",
+  "Tunnel_C_GalvanizedServiceStair_SourceTriangles",
+  "Tunnel_C_DarkBogieLift_SourceTriangles",
   "collectPrototypeMeshes",
   "buildStaticInstancedFleet",
   "new THREE.InstancedMesh",
+  "uploadedJetwayDetailMaterialAuthority = prototype.userData.detailMaterialAuthority",
+  "uploadedJetwayStairMaterialSplitActive = true",
   "uploadedJetwayShadowCasterGateCount = shadowCasterGateCount",
   "uploadedJetwayGlobalEdgeOverlayCount = 0",
   "uploadedJetwayStaticInstancedGateCount = staticFleet.staticGateCount",
@@ -75,11 +82,13 @@ for (const forbidden of [
   "addStructuralEdges",
   "new THREE.EdgesGeometry",
   "new THREE.LineSegments",
+  "proceduralJetwayStair",
 ]) {
-  if (uploadedFleet.includes(forbidden)) throw new Error(`Uploaded Terminal 4 jetway fleet retained an all-gate rendering cost: ${forbidden}`);
+  if (uploadedFleet.includes(forbidden)) throw new Error(`Uploaded Terminal 4 jetway fleet retained forbidden generated detail: ${forbidden}`);
 }
 
 for (const token of [
+  "measured-authored-terminal-wall-to-uploaded-rotunda-v5-facade-plane-portal-static-instanced",
   "57-static-terminal-connectors-three-instanced-box-batches-v1",
   "addUploadedAirportJetwayStaticTerminalConnectors",
   "UploadedAirportJetwayStaticTerminalConnectorBatches",
@@ -89,7 +98,13 @@ for (const token of [
   "new THREE.InstancedMesh",
   "staticGateCount: staticPlacements.length",
   "batchCount: group.children.length",
-  "deep-overlap-open-framed-terminal-end-v3",
+  "facade-plane-dark-reveal-with-hidden-deep-overlap-v4",
+  "UploadedAirportJetwayTerminalPortalInterior_A1",
+  "UploadedAirportJetwayTerminalPortalOuterHeader_A1",
+  "UploadedAirportJetwayTerminalPortalOuterJamb_A1",
+  "UploadedAirportJetwayTerminalPortalInnerJamb_A1",
+  "a1FacadePortalDistanceMeters",
+  "a1HiddenOverlapMeters",
 ]) {
   if (!uploadedConnectors.includes(token)) throw new Error(`Uploaded Terminal 4 connector batching is missing ${token}`);
 }
@@ -133,4 +148,4 @@ for (const forbidden of [
   }
 }
 
-console.log("The supplied source-textured Tunnel_A/B/C/Rotunda/Cab fleet is the production authority at all 58 gates: 57 static jetways and their terminal connectors are batched, A1 remains an individual animated model with a detailed deep-overlap connector, and no procedural replacement or all-gate edge dressing is wired into runtime.");
+console.log("The supplied Tunnel_A/B/C/Rotunda/Cab fleet remains the production authority at all 58 gates: exact corrugated shell texture stays on the bridge body, supplied stair and bogie triangles receive readable metal materials, 57 static jetways/connectors remain batched, and A1 keeps an individual animated model with a facade-plane doorway reveal plus hidden terminal overlap.");
