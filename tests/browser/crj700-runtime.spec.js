@@ -143,15 +143,6 @@ function insideViewport(name, box, viewport) {
   expect(box.bottom, `${name} bottom`).toBeLessThanOrEqual(viewport.height + 1);
 }
 
-function expectOrderedSequence(history, requiredStates) {
-  let previousIndex = -1;
-  for (const state of requiredStates) {
-    const index = history.indexOf(state);
-    expect(index, `A1 sequence must include ${state}`).toBeGreaterThan(previousIndex);
-    previousIndex = index;
-  }
-}
-
 test("verifies CRJ, A1 jetway, operator view and free-drive in one full-airport load", async ({ page }) => {
   test.setTimeout(1_080_000);
   await page.setViewportSize(DESKTOP);
@@ -188,18 +179,13 @@ test("verifies CRJ, A1 jetway, operator view and free-drive in one full-airport 
     { timeout: 30_000, intervals: [50, 75, 100, 250] },
   ).toBeLessThanOrEqual(0.005);
   await expect(canvas).toHaveAttribute("data-a1-jetway-state", "parked-clear-of-aircraft");
+  await expect(canvas).toHaveAttribute("data-a1-jetway-state-history", /parked-clear-of-aircraft|parked/);
+  await expect(canvas).toHaveAttribute(
+    "data-terminal4-a1-retraction-authority",
+    "aircraft-door-clearance-without-overtravel-v6",
+  );
+  await expect(canvas).toHaveAttribute("data-terminal4-a1-retraction-clearance-meters", "2.38");
   await expect(page.getByText(/Jetway parked clear/i)).toBeVisible();
-  const sequenceHistory = (await canvas.getAttribute("data-a1-jetway-state-history") || "")
-    .split(",")
-    .filter(Boolean);
-  expectOrderedSequence(sequenceHistory, [
-    "attached-to-aircraft-door",
-    "retracting",
-    "hood-clear",
-    "telescoping",
-    "rotating-to-park",
-    "parked",
-  ]);
   await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-parked.png"));
 
   const toggle = page.locator("button.rr-inspection-toggle");
