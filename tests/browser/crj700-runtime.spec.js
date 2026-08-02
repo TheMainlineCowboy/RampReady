@@ -48,7 +48,7 @@ async function launchRuntime(page) {
   ).not.toBe("loading");
   await expect(canvas).toHaveAttribute("data-steering-mode", "rear");
   await expect(canvas).toHaveAttribute("data-operator-side", "right");
-  await expect(canvas).toHaveAttribute("data-terminal4-jetway-source-geometry-mode", "user-supplied-jetway-geometry-only");
+  await expect(canvas).toHaveAttribute("data-terminal4-jetway-source-geometry-mode", "user-supplied-airport-jetway-source-geometry-v1");
   await expect(canvas).toHaveAttribute("data-terminal4-facade-infill-count", "0");
   await expect(canvas).toHaveAttribute("data-terminal4-lower-facade-fit-count", "0");
   await expect(canvas).toHaveAttribute("data-terminal4-exact-jetway-texture-active", "false");
