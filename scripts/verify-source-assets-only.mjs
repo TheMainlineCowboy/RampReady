@@ -23,7 +23,8 @@ function forbidToken(source, token, label) {
 
 requireToken(rig, 'steeringMode: "rear"', "Lektro rig");
 requireToken(placements, "sourceHeadingDegrees", "source jetway placement");
-requireToken(placements, "THREE.MathUtils.degToRad(Number(jetway.h))", "source jetway placement");
+requireToken(placements, "Math.PI - THREE.MathUtils.degToRad", "source jetway heading conversion");
+requireToken(placements, 'headingConversion: "three-yaw-radians = PI - source-heading-radians"', "source jetway heading conversion");
 requireToken(placements, 'sourceGeometryMode = "user-supplied-jetway-geometry-only"', "source jetway placement");
 requireToken(placements, "generatedTerminalConnectorCount = 0", "source jetway placement");
 requireToken(placements, "facadeInfillCount = 0", "source jetway placement");
@@ -81,4 +82,4 @@ for (let index = 0; index < 5; index += 1) {
   if (details.size < 1000) throw new Error(`Supplied jetway geometry part ${index} is missing or too small`);
 }
 
-console.log("RampReady source-only verification passed: Lektro rear steering, 58 source BGL jetway transforms, supplied jetway geometry, zero generated connectors/portals/facades, no projected corrugated fill, pavement-coincident exact A1 markings, and pinned source materializers ready.");
+console.log("RampReady source-only verification passed: Lektro rear steering, 58 corrected source BGL jetway transforms, supplied jetway geometry, zero generated connectors/portals/facades, no projected corrugated fill, pavement-coincident exact A1 markings, and pinned source materializers ready.");
