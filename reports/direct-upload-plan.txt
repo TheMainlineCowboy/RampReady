@@ -1,0 +1,1 @@
+Use git blob/tree API for complete supplied jetway binary if supported.
