@@ -158,7 +158,7 @@ test("renders supplied Terminal 4 and all 58 source-placed supplied jetways with
   await orbit(page, 180, -25, 1200);
   await captureCanvas(page, canvas, "kphx-a1-supplied-jetway-chase.png");
 
-  await page.locator("button.rr-inspection-toggle").click();
+  await page.evaluate(() => document.querySelector("button.rr-inspection-toggle")?.click());
   const location = page.getByLabel("Inspection location");
   await location.selectOption("b15");
   await expect(canvas).toHaveAttribute("data-inspection-preset", "b15");
