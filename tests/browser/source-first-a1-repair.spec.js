@@ -39,8 +39,12 @@ async function saveCompositedCanvasPng(page, path) {
   }
 }
 
-test("direct tug inspection proves the visible A1 terminal connection over source-aerial pavement", async ({ page }) => {
-  test.setTimeout(600_000);
+async function numericCanvasAttribute(canvas, name) {
+  return Number(await canvas.getAttribute(name));
+}
+
+test("direct tug inspection proves the visible A1 terminal connection, realistic retraction and physical airport collision protection", async ({ page }) => {
+  test.setTimeout(660_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
@@ -81,6 +85,12 @@ test("direct tug inspection proves the visible A1 terminal connection over sourc
   await expect(canvas).toHaveAttribute("data-terminal4-a1-portal-seal-exact-texture", "true", { timeout: 120_000 });
   await expect(canvas).toHaveAttribute("data-terminal4-source-closed-bay-material-count", /^[1-9]\d*$/, { timeout: 120_000 });
   await expect(canvas).toHaveAttribute("data-terminal4-source-facade-variant-material-count", /^[4-9]\d*$/, { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-airport-collision-authority", "terminal-jetway-aircraft-raycast-envelope-v45", { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-airport-collision-ready", "true", { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-airport-collision-target-count", "2", { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-airport-collision-aircraft-envelope", "nose-center-tail-wing-sweep-v2", { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-terminal4-a1-retraction-authority", "aircraft-door-clearance-without-overtravel-v6", { timeout: 120_000 });
+  await expect(canvas).toHaveAttribute("data-terminal4-a1-retraction-clearance-meters", "2.38", { timeout: 120_000 });
 
   const variation = await page.evaluate(() => {
     const element = document.querySelector("canvas.trainerCanvas");
@@ -104,4 +114,24 @@ test("direct tug inspection proves the visible A1 terminal connection over sourc
   await page.waitForTimeout(1800);
 
   await saveCompositedCanvasPng(page, "test-results/source-first-a1-terminal-connection.png");
+
+  await inspectionLocation.selectOption("b15");
+  await expect(canvas).toHaveAttribute("data-inspection-preset", "b15");
+  await expect(canvas).toHaveAttribute("data-inspection-tug-x", "-5.500", { timeout: 30_000 });
+  await expect(canvas).toHaveAttribute("data-inspection-tug-z", "539.200", { timeout: 30_000 });
+  const startX = await numericCanvasAttribute(canvas, "data-inspection-tug-x");
+  const startCount = await numericCanvasAttribute(canvas, "data-airport-collision-count");
+
+  await page.keyboard.down("w");
+  await page.waitForTimeout(11_000);
+  await page.keyboard.up("w");
+  await expect.poll(
+    () => numericCanvasAttribute(canvas, "data-airport-collision-count"),
+    { timeout: 15_000, intervals: [250, 500, 1_000] },
+  ).toBeGreaterThan(startCount);
+
+  const stoppedX = await numericCanvasAttribute(canvas, "data-inspection-tug-x");
+  expect(stoppedX).toBeLessThan(startX - 4);
+  expect(stoppedX).toBeGreaterThan(-32);
+  await saveCompositedCanvasPng(page, "test-results/source-first-b15-physical-collision-stop.png");
 });
