@@ -1,6 +1,6 @@
 import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";
 
-const READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v6-instanced-source-textured";
+const READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured";
 const EXPECTED_GATE_COUNT = 58;
 const LOAD_TIMEOUT_MS = 120_000;
 
@@ -34,20 +34,30 @@ function waitForFleet(group, placements) {
         const staticInstancedGateCount = Number(group.userData.uploadedJetwayStaticInstancedGateCount ?? -1);
         const animatedIndividualGateCount = Number(group.userData.uploadedJetwayAnimatedIndividualGateCount ?? -1);
         const staticPrimitiveBatchCount = Number(group.userData.uploadedJetwayStaticPrimitiveBatchCount ?? -1);
+        const staticConnectorGateCount = Number(group.userData.uploadedJetwayStaticConnectorGateCount ?? -1);
+        const staticConnectorBatchCount = Number(group.userData.uploadedJetwayStaticConnectorBatchCount ?? -1);
+        const staticConnectorInstanceCount = Number(group.userData.uploadedJetwayStaticConnectorInstanceCount ?? -1);
+        const staticConnectorBatchAuthority = group.userData.uploadedJetwayStaticConnectorBatchAuthority || "missing";
+        const individualConnectorGateCount = Number(group.userData.uploadedJetwayIndividualConnectorGateCount ?? -1);
         if (
           count !== EXPECTED_GATE_COUNT
           || connectorCount !== EXPECTED_GATE_COUNT
           || modelCount !== EXPECTED_GATE_COUNT
           || !materialAuthority.includes("exact-M1DGJETWAY")
-          || performanceAuthority !== "57-static-gates-instanced-plus-1-animated-a1-source-geometry-v4"
+          || performanceAuthority !== "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5"
           || shadowCasterGateCount !== 1
           || globalEdgeOverlayCount !== 0
           || staticInstancedGateCount !== 57
           || animatedIndividualGateCount !== 1
           || staticPrimitiveBatchCount < 1
+          || staticConnectorGateCount !== 57
+          || staticConnectorBatchCount !== 3
+          || staticConnectorInstanceCount < 1
+          || staticConnectorBatchAuthority !== "57-static-terminal-connectors-three-instanced-box-batches-v1"
+          || individualConnectorGateCount !== 1
         ) {
           reject(new Error(
-            `Uploaded airport jetway fleet reported ready with ${count} placements, ${connectorCount} connectors, ${modelCount} gate records, material ${materialAuthority}, performance ${performanceAuthority}, ${shadowCasterGateCount} shadow-casting gates, ${globalEdgeOverlayCount} edge overlays, ${staticInstancedGateCount} instanced static gates, ${animatedIndividualGateCount} animated gates and ${staticPrimitiveBatchCount} primitive batches${missingModels.length ? `; missing ${missingModels.join(", ")}` : ""}`,
+            `Uploaded airport jetway fleet reported ready with ${count} placements, ${connectorCount} connectors, ${modelCount} gate records, material ${materialAuthority}, performance ${performanceAuthority}, ${shadowCasterGateCount} shadow-casting gates, ${globalEdgeOverlayCount} edge overlays, ${staticInstancedGateCount} instanced static jetways, ${animatedIndividualGateCount} animated jetways, ${staticPrimitiveBatchCount} jetway primitive batches, ${staticConnectorGateCount} static connector gates, ${staticConnectorBatchCount} connector batches, ${staticConnectorInstanceCount} connector instances, connector authority ${staticConnectorBatchAuthority}, and ${individualConnectorGateCount} individual connectors${missingModels.length ? `; missing ${missingModels.join(", ")}` : ""}`,
           ));
           return;
         }
@@ -65,6 +75,11 @@ function waitForFleet(group, placements) {
           staticInstancedGateCount,
           animatedIndividualGateCount,
           staticPrimitiveBatchCount,
+          staticConnectorGateCount,
+          staticConnectorBatchCount,
+          staticConnectorInstanceCount,
+          staticConnectorBatchAuthority,
+          individualConnectorGateCount,
           authority: READY_AUTHORITY,
         });
         return;
@@ -85,7 +100,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
   const controller = installUploadedAirportJetwayFleetBase(THREE, group, placements, sourceTextures);
   const ready = waitForFleet(group, placements);
   group.userData.uploadedJetwayReady = ready;
-  group.userData.uploadedJetwayReadyAuthority = "waiting-for-complete-58-gate-instanced-source-textured-fleet";
+  group.userData.uploadedJetwayReadyAuthority = "waiting-for-complete-58-gate-instanced-jetway-and-connector-fleet";
   controller.ready = ready;
   return controller;
 }
