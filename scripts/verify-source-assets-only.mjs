@@ -45,9 +45,13 @@ requireToken(fleet, "sourceCabCenter", "supplied jetway fleet");
 requireToken(fleet, "generatedConnectorCount = 0", "supplied jetway fleet");
 requireToken(fleet, "generatedPortalCount = 0", "supplied jetway fleet");
 requireToken(fleet, "generatedFacadeCount = 0", "supplied jetway fleet");
-requireToken(fleet, "nodes.tunnelB.position.x", "supplied jetway A1 animation");
-requireToken(fleet, "nodes.tunnelC.position.x", "supplied jetway A1 animation");
-requireToken(fleet, "nodes.cab.position.x", "supplied jetway A1 animation");
+requireToken(fleet, "nodes.tunnelB.position.z", "supplied jetway A1 animation");
+requireToken(fleet, "nodes.tunnelC.position.z", "supplied jetway A1 animation");
+requireToken(fleet, "nodes.cab.position.z", "supplied jetway A1 animation");
+requireToken(fleet, 'A1_RETRACTION_AUTHORITY = "supplied-tunnel-node-native-z-axis-retraction"', "supplied jetway A1 animation");
+forbidToken(fleet, "nodes.tunnelB.position.x", "supplied jetway A1 animation");
+forbidToken(fleet, "nodes.tunnelC.position.x", "supplied jetway A1 animation");
+forbidToken(fleet, "nodes.cab.position.x", "supplied jetway A1 animation");
 
 for (const token of [
   "function addProjectedUvs",
@@ -82,4 +86,4 @@ for (let index = 0; index < 5; index += 1) {
   if (details.size < 1000) throw new Error(`Supplied jetway geometry part ${index} is missing or too small`);
 }
 
-console.log("RampReady source-only verification passed: Lektro rear steering, 58 corrected source BGL jetway transforms, supplied jetway geometry, zero generated connectors/portals/facades, no projected corrugated fill, pavement-coincident exact A1 markings, and pinned source materializers ready.");
+console.log("RampReady source-only verification passed: Lektro rear steering, 58 corrected source BGL jetway transforms, supplied jetway geometry, longitudinal source-node retraction, zero generated connectors/portals/facades, no projected corrugated fill, pavement-coincident exact A1 markings, and pinned source materializers ready.");
