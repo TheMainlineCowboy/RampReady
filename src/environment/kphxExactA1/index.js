@@ -19,7 +19,8 @@ export const EXACT_KPHX_A1_PROFILE = Object.freeze({
   radiusMeters: 450,
   projectedMeshCount: 73,
   paintedLineCount: 214,
-  detailLevel: "unmlobo-kphx-v181-exact-a1-source-v2",
+  detailLevel: "unmlobo-kphx-v181-exact-a1-source-v3-pavement-coincident",
+  paintedLineBaseHeightMeters: 0.004,
 });
 
 const LIGHTED_OFFSET = 21;
@@ -177,7 +178,7 @@ function buildPaintedLines(THREE, payload) {
     const key = JSON.stringify(style);
     if (!groups.has(key)) groups.set(key, { style, positions: [], indices: [], lineCount: 0 });
     const target = groups.get(key);
-    const y = 0.091 + lineIndex * 0.000002;
+    const y = EXACT_KPHX_A1_PROFILE.paintedLineBaseHeightMeters + lineIndex * 0.0000005;
     for (let index = 1; index < source.v.length; index += 1) {
       const a = source.v[index - 1];
       const b = source.v[index];
@@ -207,10 +208,13 @@ function buildPaintedLines(THREE, payload) {
     mesh.name = `KPHX_A1_ExactPaintedLineType_${renderOrder}`;
     mesh.renderOrder = renderOrder++;
     mesh.userData.sourceLineCount = lineCount;
+    mesh.userData.pavementOffsetMeters = EXACT_KPHX_A1_PROFILE.paintedLineBaseHeightMeters;
     root.add(mesh);
   }
   root.userData.sourceLineRecords = payload.paintedLines.length;
   root.userData.renderMeshCount = root.children.length;
+  root.userData.paintedLineBaseHeightMeters = EXACT_KPHX_A1_PROFILE.paintedLineBaseHeightMeters;
+  root.userData.contactMode = "pavement-coincident-decals";
   return root;
 }
 
@@ -227,6 +231,8 @@ export async function installExactKphxA1(THREE, environment) {
   root.userData.detailLevel = EXACT_KPHX_A1_PROFILE.detailLevel;
   root.userData.projectedMeshCount = payload.projectedMeshes.length;
   root.userData.paintedLineCount = payload.paintedLines.length;
+  root.userData.paintedLineBaseHeightMeters = EXACT_KPHX_A1_PROFILE.paintedLineBaseHeightMeters;
+  root.userData.markingContactMode = "pavement-coincident-decals";
   root.userData.anchor = payload.anchor;
   root.userData.radiusMeters = payload.selection.radiusMeters;
   environment.add(root);
@@ -234,6 +240,8 @@ export async function installExactKphxA1(THREE, environment) {
   environment.userData.exactA1DetailLevel = EXACT_KPHX_A1_PROFILE.detailLevel;
   environment.userData.exactA1ProjectedMeshCount = payload.projectedMeshes.length;
   environment.userData.exactA1PaintedLineCount = payload.paintedLines.length;
+  environment.userData.exactA1PaintedLineBaseHeightMeters = EXACT_KPHX_A1_PROFILE.paintedLineBaseHeightMeters;
+  environment.userData.exactA1MarkingContactMode = "pavement-coincident-decals";
   environment.userData.exactA1ArchiveSha256 = EXACT_KPHX_A1_PROFILE.archiveSha256;
   environment.userData.exactA1Root = root;
   return root;
