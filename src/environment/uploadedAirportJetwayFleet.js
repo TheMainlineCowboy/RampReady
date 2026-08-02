@@ -1,9 +1,12 @@
-import { addUploadedAirportJetwayTerminalConnector } from "./uploadedAirportJetwayTerminalConnector.js";
+import {
+  addUploadedAirportJetwayStaticTerminalConnectors,
+  addUploadedAirportJetwayTerminalConnector,
+} from "./uploadedAirportJetwayTerminalConnector.js";
 
 const PART_COUNT = 5;
-const MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v4-instanced-static-source-textured";
+const MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured";
 const MATERIAL_AUTHORITY = "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2";
-const PERFORMANCE_AUTHORITY = "57-static-gates-instanced-plus-1-animated-a1-source-geometry-v4";
+const PERFORMANCE_AUTHORITY = "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5";
 // Replace only the movable fallback jetway. The source-positioned fixed walkway
 // and wall collar are the physical terminal connection and must remain visible.
 const HIDE_REPLACED = /^(?:AIR_Jetway01_(?!WallCollars)|Terminal4_LowerFacadeInfillPanels|Terminal4_ClosedServiceDoors|Terminal4_FacadeVentGrilles)/i;
@@ -335,6 +338,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
       fleet.name = "UploadedAirportJetwayFleet";
       const staticFleet = buildStaticInstancedFleet(THREE, prototype, placements);
       fleet.add(staticFleet.batches);
+      const staticConnectors = addUploadedAirportJetwayStaticTerminalConnectors(THREE, fleet, placements);
       let shadowCasterGateCount = 0;
 
       for (const placement of placements) {
@@ -352,9 +356,9 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
           anchor.add(model);
           controller.bind(anchor);
           shadowCasterGateCount += 1;
+          addUploadedAirportJetwayTerminalConnector(THREE, fleet, placement);
         }
         fleet.add(anchor);
-        addUploadedAirportJetwayTerminalConnector(THREE, fleet, placement);
       }
 
       group.add(fleet);
@@ -371,6 +375,11 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
       group.userData.uploadedJetwayStaticInstancedGateCount = staticFleet.staticGateCount;
       group.userData.uploadedJetwayAnimatedIndividualGateCount = 1;
       group.userData.uploadedJetwayStaticPrimitiveBatchCount = staticFleet.primitiveBatchCount;
+      group.userData.uploadedJetwayStaticConnectorGateCount = staticConnectors.staticGateCount;
+      group.userData.uploadedJetwayStaticConnectorBatchCount = staticConnectors.batchCount;
+      group.userData.uploadedJetwayStaticConnectorInstanceCount = staticConnectors.instanceCount;
+      group.userData.uploadedJetwayStaticConnectorBatchAuthority = staticConnectors.authority;
+      group.userData.uploadedJetwayIndividualConnectorGateCount = 1;
       group.userData.sourceGeometryMode = MODEL_AUTHORITY;
       group.userData.visualAuthority = MODEL_AUTHORITY;
       group.userData.requiresOriginalSourceMesh = false;
