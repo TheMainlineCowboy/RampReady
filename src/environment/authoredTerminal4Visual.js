@@ -25,16 +25,12 @@ export const AUTHORED_TERMINAL4_PROFILE = Object.freeze({
     longitude: -111.99864059686661,
     headingDegrees: 269.975341796875,
   }),
-  // Decoded from the original KPHX_ADEX placement record relative to its
-  // authored Gate A1 parking position. The airport ground adds 6.2 m on Z so
-  // the model receives the same offset. FSX model X=east and Z=north become
-  // browser Z=east and X=north through the reflected 90-degree axis swap.
   position: Object.freeze([-101.59257372668444, 0.035, 70.90086550233441]),
   rotationYDegrees: 90,
   scale: Object.freeze([-1, 1, 1]),
   placementAuthority: "decoded original KPHX_ADEX library-object placement relative to decoded original Gate A1",
-  materialPass: "pinned-authored-source-textures-and-exact-lightmaps-v3",
-  detailLevel: "terminal4-authored-textured-lightmapped-v4-source-jetways-exact-a1",
+  materialPass: "pinned-authored-source-textures-available-lightmaps-v4",
+  detailLevel: "terminal4-authored-textured-v5-source-only-jetways",
   groundCleanupPass: "legacy-terminal-ground-atlases-suppressed-v1",
 });
 
@@ -60,9 +56,6 @@ function materialCharacter(reference = "") {
 
 function sourceWrapMode(THREE, reference = "") {
   const name = reference.toUpperCase();
-  // The legacy Sky Harbor materials use UVs outside 0..1. Clamp-to-edge was
-  // stretching a few edge texels across the entire ramp and terminal facade,
-  // which produced the blurry streaks visible on mobile.
   if (
     name.includes("PARKRAMP")
     || name.includes("GATE")
@@ -98,25 +91,13 @@ async function loadTextureManifest(baseUrl) {
   if (!response.ok) throw new Error(`Terminal 4 texture manifest returned HTTP ${response.status}`);
   const manifest = await response.json();
   if (manifest.schemaVersion !== 2 || !manifest.materials) throw new Error("Terminal 4 texture manifest is invalid");
-  const exactLightmapCount = Number.isInteger(manifest.emissiveTextureCount)
+  const availableLightmapCount = Number.isInteger(manifest.emissiveTextureCount)
     ? manifest.emissiveTextureCount
     : Object.values(manifest.materials).filter((entry) => entry?.emissiveUrl).length;
-  if (exactLightmapCount !== 15) throw new Error(`Terminal 4 exact lightmap count is ${exactLightmapCount}`);
-  manifest.emissiveTextureCount = exactLightmapCount;
+  if (availableLightmapCount < 0) throw new Error(`Terminal 4 lightmap count is invalid: ${availableLightmapCount}`);
+  manifest.emissiveTextureCount = availableLightmapCount;
+  manifest.lightmapPolicy = "load-source-lightmaps-when-present-never-block-source-terminal";
   return { manifest, manifestUrl };
-}
-
-async function loadExactJetwayTextures(THREE, baseUrl) {
-  const loader = new THREE.TextureLoader();
-  const [diffuse, emissive] = await Promise.all([
-    loader.loadAsync(`${baseUrl}textures/M1DGJETWAY.png`),
-    loader.loadAsync(`${baseUrl}textures/M1DGJETWAY_LM.png`),
-  ]);
-  return {
-    diffuse: configureRuntimeTexture(THREE, diffuse, "M1DGJETWAY exact recovered source", THREE.RepeatWrapping),
-    emissive: configureRuntimeTexture(THREE, emissive, "M1DGJETWAY_LM exact recovered source", THREE.RepeatWrapping),
-    authority: "exact-recovered-original-freeware-archive",
-  };
 }
 
 async function loadSourceTextures(THREE, baseUrl) {
@@ -143,12 +124,12 @@ async function loadSourceTextures(THREE, baseUrl) {
     if (emissive) {
       emissiveTextures.set(
         reference.toUpperCase(),
-        configureRuntimeTexture(THREE, emissive, `PHX exact source lightmap ${reference}`, wrapping),
+        configureRuntimeTexture(THREE, emissive, `PHX source lightmap ${reference}`, wrapping),
       );
     }
   }));
   if (emissiveTextures.size !== manifest.emissiveTextureCount) {
-    throw new Error(`Terminal 4 loaded ${emissiveTextures.size} of ${manifest.emissiveTextureCount} exact lightmaps`);
+    throw new Error(`Terminal 4 loaded ${emissiveTextures.size} of ${manifest.emissiveTextureCount} declared source lightmaps`);
   }
   return { textures, emissiveTextures, manifest };
 }
@@ -188,7 +169,7 @@ function applySourceMaterials(THREE, scene, textures, emissiveTextures) {
       material.userData = {
         ...(material.userData || {}),
         legacyGroundAtlas,
-        sourceLightmap: emissiveMap ? `${reference} exact _lm source` : null,
+        sourceLightmap: emissiveMap ? `${reference} source lightmap` : null,
         sourceCutout,
         sourceAlphaCoverage: Number(texture?.userData?.sourceAlphaCoverage || 0),
         sourceAtlasCutoutAuthority: texture?.userData?.sourceAtlasCutoutAuthority || "none",
@@ -240,10 +221,9 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4Placement = AUTHORED_TERMINAL4_PROFILE.placementAuthority;
 
   const baseUrl = `${import.meta.env.BASE_URL}models/phx-terminal4/`;
-  const [{ scene: authored }, { textures, emissiveTextures, manifest }, jetwayTextures] = await Promise.all([
+  const [{ scene: authored }, { textures, emissiveTextures, manifest }] = await Promise.all([
     new GLTFLoader().loadAsync(`${baseUrl}terminal4.gltf`),
     loadSourceTextures(THREE, baseUrl),
-    loadExactJetwayTextures(THREE, baseUrl),
   ]);
 
   authored.name = "PHX_Terminal4_AuthoredTexturedVisual";
@@ -257,8 +237,24 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
     sourceCutoutMaterialCount,
   } = applySourceMaterials(THREE, authored, textures, emissiveTextures);
   authored.updateMatrixWorld(true);
-  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, authored, jetwayTextures);
+
+  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, authored);
   environment.add(authored, sourcePlacedJetways);
+  if (!sourcePlacedJetways.userData.uploadedJetwayReady) {
+    throw new Error("Supplied Terminal 4 jetway fleet did not expose a readiness promise");
+  }
+  await sourcePlacedJetways.userData.uploadedJetwayReady;
+  if (
+    sourcePlacedJetways.userData.uploadedJetwayLoadState !== "ready"
+    || Number(sourcePlacedJetways.userData.uploadedJetwayCount) !== 58
+    || Number(sourcePlacedJetways.userData.uploadedJetwayVerifiedModelCount) !== 58
+    || Number(sourcePlacedJetways.userData.uploadedJetwayGeneratedConnectorCount) !== 0
+    || Number(sourcePlacedJetways.userData.uploadedJetwayGeneratedPortalCount) !== 0
+    || Number(sourcePlacedJetways.userData.uploadedJetwayGeneratedFacadeCount) !== 0
+  ) {
+    throw new Error("Supplied Terminal 4 source-only jetway fleet did not complete all 58 placements");
+  }
+
   authored.updateMatrixWorld(true);
   sourcePlacedJetways.updateMatrixWorld(true);
 
@@ -282,6 +278,7 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4ExactTextureCount = manifest.exactTextureCount;
   environment.userData.authoredTerminal4FallbackTextureCount = manifest.fallbackTextureCount;
   environment.userData.authoredTerminal4EmissiveTextureCount = manifest.emissiveTextureCount;
+  environment.userData.authoredTerminal4LightmapPolicy = manifest.lightmapPolicy;
   environment.userData.authoredTerminal4TexturedMaterialCount = texturedMaterialCount;
   environment.userData.authoredTerminal4LightmappedMaterialCount = lightmappedMaterialCount;
   environment.userData.authoredTerminal4HiddenLegacyGroundMaterialCount = hiddenLegacyGroundMaterialCount;
@@ -305,6 +302,12 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4FacadeInfillAuthority = sourcePlacedJetways.userData.facadeInfillAuthority;
   environment.userData.authoredTerminal4JetwayTerminalConnectionAuthority = sourcePlacedJetways.userData.terminalConnectionAuthority;
   environment.userData.authoredTerminal4JetwayDetailLevel = sourcePlacedJetways.userData.detailLevel;
+  environment.userData.authoredTerminal4UploadedJetwayLoadState = sourcePlacedJetways.userData.uploadedJetwayLoadState;
+  environment.userData.authoredTerminal4UploadedJetwayCount = sourcePlacedJetways.userData.uploadedJetwayCount;
+  environment.userData.authoredTerminal4UploadedJetwayVerifiedModelCount = sourcePlacedJetways.userData.uploadedJetwayVerifiedModelCount;
+  environment.userData.authoredTerminal4UploadedJetwayGeneratedConnectorCount = sourcePlacedJetways.userData.uploadedJetwayGeneratedConnectorCount;
+  environment.userData.authoredTerminal4UploadedJetwayGeneratedPortalCount = sourcePlacedJetways.userData.uploadedJetwayGeneratedPortalCount;
+  environment.userData.authoredTerminal4UploadedJetwayGeneratedFacadeCount = sourcePlacedJetways.userData.uploadedJetwayGeneratedFacadeCount;
   environment.userData.authoredTerminal4Position = [...AUTHORED_TERMINAL4_PROFILE.position];
   environment.userData.authoredTerminal4A1NearestGeometryDistance = a1NearestGeometryDistance;
   environment.userData.authoredTerminal4Bounds = {
