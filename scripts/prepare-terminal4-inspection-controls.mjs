@@ -38,7 +38,7 @@ for (const path of targets) {
     source = replaceRequired(
       source,
       towingAnchor,
-      `${towingAnchor}\n      const keyboardForward = inspectionActive && (keysRef.current.has("w") || keysRef.current.has("arrowup"));\n      const keyboardReverse = inspectionActive && (keysRef.current.has("s") || keysRef.current.has("arrowdown"));\n      const inspectionDirection = keyboardReverse ? -1 : keyboardForward ? 1 : drive.direction;\n      const inspectionThrottle = keyboardForward || keyboardReverse ? Math.max(drive.throttle, 0.55) : drive.throttle;`,
+      `${towingAnchor}\n      const keyboardForward = inspectionActive && (keysRef.current.has("w") || keysRef.current.has("arrowup"));\n      const keyboardReverse = inspectionActive && (keysRef.current.has("s") || keysRef.current.has("arrowdown"));\n      const inspectionDirection = keyboardReverse ? -1 : keyboardForward ? 1 : drive.direction;\n      const inspectionThrottle = keyboardForward || keyboardReverse ? Math.max(drive.throttle, 1) : drive.throttle;`,
       path,
       "keyboard motion",
     );
@@ -51,6 +51,13 @@ for (const path of targets) {
     );
   }
 
+  // Normalize existing prepared trainers too. W/S are binary keyboard controls;
+  // partial power remains available through the visible slider.
+  source = source.replaceAll(
+    "Math.max(drive.throttle, 0.55)",
+    "Math.max(drive.throttle, 1)",
+  );
+
   source = source.replaceAll(
     "Free-drive airport inspection active. Procedure gates are disabled; drive anywhere and use the camera views to inspect scenery.",
     "Free-drive airport inspection active. Use W/S or the power slider, A/D to steer, and the camera views to inspect the entire airport.",
@@ -60,7 +67,7 @@ for (const path of targets) {
     'className="rr-inspection-toggle"',
     'data-inspection-mode={inspectionMode ? "active" : "training"}',
     "const keyboardForward = inspectionActive",
-    "const inspectionThrottle = keyboardForward || keyboardReverse",
+    "const inspectionThrottle = keyboardForward || keyboardReverse ? Math.max(drive.throttle, 1)",
   ]) if (!source.includes(token)) throw new Error(`${path}: completed inspection mode is missing ${token}`);
 
   fs.writeFileSync(path, source, "utf8");
@@ -76,4 +83,4 @@ if (!css.includes(cssMarker)) {
 
 await import("./prepare-a1-terminal-connector-v11.mjs");
 await import("./prepare-inspection-elapsed-motion.mjs");
-console.log("Prepared always-visible free-drive inspection controls, elapsed-motion integration and the measured A1 Terminal 4 wall connector.");
+console.log("Prepared always-visible free-drive inspection controls with full keyboard power, elapsed-motion integration and the measured A1 Terminal 4 wall connector.");
