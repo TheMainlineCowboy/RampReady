@@ -20,20 +20,24 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json, urllib.request
+          import json, urllib.request, pathlib, gzip, zlib
           uid='6067e855917e498abee3d98076293cc6'
           req=urllib.request.Request(f'https://sketchfab.com/i/models/{uid}', headers={'User-Agent':'Mozilla/5.0'})
           with urllib.request.urlopen(req, timeout=30) as r:
               data=json.load(r)
-          print('top-level keys:', sorted(data.keys()))
-          def walk(value, path='root'):
-              if isinstance(value, dict):
-                  for key, child in value.items():
-                      lower=key.lower()
-                      if any(token in lower for token in ('url','file','archive','model')) and isinstance(child, (str,int,float,bool,type(None))):
-                          print(f'{path}.{key}={child}')
-                      walk(child, f'{path}.{key}')
-              elif isinstance(value, list):
-                  for i, child in enumerate(value[:50]): walk(child, f'{path}[{i}]')
-          walk(data)
+          print('files=', json.dumps(data.get('files'), indent=2, sort_keys=True))
+          file_url=data['files'][0]['osgjsUrl']
+          req=urllib.request.Request(file_url, headers={'User-Agent':'Mozilla/5.0','Referer':f'https://sketchfab.com/models/{uid}/embed'})
+          with urllib.request.urlopen(req, timeout=30) as r:
+              payload=r.read()
+          pathlib.Path('file.binz').write_bytes(payload)
+          print('file.binz bytes=',len(payload),'head=',payload[:32].hex())
+          for name, decoder in [('gzip',gzip.decompress),('zlib',zlib.decompress)]:
+              try:
+                  decoded=decoder(payload)
+                  print(name,'decoded bytes=',len(decoded),'head=',decoded[:200])
+              except Exception as e:
+                  print(name,'decode failed=',repr(e))
           PY
+          file file.binz || true
+          strings file.binz | head -50 || true
