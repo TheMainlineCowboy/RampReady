@@ -9,6 +9,9 @@ function replaceRequired(path, oldText, newText, marker, label) {
 }
 
 const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
+const sourceFirstFacadeActive = () => fs.readFileSync(jetwayPath, "utf8")
+  .includes("source-authored-lower-facade-authority-v25");
+
 replaceRequired(
   jetwayPath,
   `  geometry.translate(0, 0, -0.5);
@@ -112,10 +115,11 @@ replaceRequired(
   "bellows atlas region",
 );
 
-// Visual v7 supersedes only the facade placement from v6. If the v7 outer-plane
-// closure is already present, preserve it rather than demanding the intermediate
-// v6 ramp-forward panel or trying to move it back into the recessed bay.
-if (!fs.readFileSync(jetwayPath, "utf8").includes("const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance")) {
+// Facade visual changes are legacy-only. The source-first v25 pass intentionally
+// removes every generated facade panel, door and vent, so rerunning v6 must not
+// demand or recreate those deleted procedural anchors.
+if (!sourceFirstFacadeActive()
+    && !fs.readFileSync(jetwayPath, "utf8").includes("const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance")) {
   replaceRequired(
     jetwayPath,
     `      const facadeX = jetway.x - ux * lowerWallFit + ux * 0.35;
@@ -137,28 +141,30 @@ if (!fs.readFileSync(jetwayPath, "utf8").includes("const facadeOuterWallFit = te
     "forward full-height facade closure",
   );
 }
-replaceRequired(
-  jetwayPath,
-  `          position: [facadeX + px * 1.35 + ux * 0.56, 0.94, facadeZ + pz * 1.35 + uz * 0.56],
+if (!sourceFirstFacadeActive()) {
+  replaceRequired(
+    jetwayPath,
+    `          position: [facadeX + px * 1.35 + ux * 0.56, 0.94, facadeZ + pz * 1.35 + uz * 0.56],
           yaw,
           scale: [1.05, 1.78, 0.12],`,
-  `          position: [facadeX + px * 1.45 + ux * 0.4, 1.06, facadeZ + pz * 1.45 + uz * 0.4],
+    `          position: [facadeX + px * 1.45 + ux * 0.4, 1.06, facadeZ + pz * 1.45 + uz * 0.4],
           yaw,
           scale: [1.12, 2.02, 0.14],`,
-  "scale: [1.12, 2.02, 0.14]",
-  "closed service door fit",
-);
-replaceRequired(
-  jetwayPath,
-  `          position: [facadeX - px * 1.45 + ux * 0.56, 1.54, facadeZ - pz * 1.45 + uz * 0.56],
+    "scale: [1.12, 2.02, 0.14]",
+    "closed service door fit",
+  );
+  replaceRequired(
+    jetwayPath,
+    `          position: [facadeX - px * 1.45 + ux * 0.56, 1.54, facadeZ - pz * 1.45 + uz * 0.56],
           yaw,
           scale: [1.16, 0.32, 0.12],`,
-  `          position: [facadeX - px * 1.55 + ux * 0.4, 1.88, facadeZ - pz * 1.55 + uz * 0.4],
+    `          position: [facadeX - px * 1.55 + ux * 0.4, 1.88, facadeZ - pz * 1.55 + uz * 0.4],
           yaw,
           scale: [1.24, 0.36, 0.14],`,
-  "scale: [1.24, 0.36, 0.14]",
-  "facade vent fit",
-);
+    "scale: [1.24, 0.36, 0.14]",
+    "facade vent fit",
+  );
+}
 replaceRequired(
   jetwayPath,
   `  group.userData.jetwayTextureAuthority = sourceTextures.diffuse
@@ -221,6 +227,14 @@ const hasV6Facade = preparedJetways.includes("const facadeRampOffset = 0.95")
   && preparedJetways.includes("scale: [6.4, 3.36, 0.68]");
 const hasV7Facade = preparedJetways.includes("const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance")
   && preparedJetways.includes("scale: [7.0, 3.42, 0.5]");
-if (!hasV6Facade && !hasV7Facade) throw new Error("Jetway visual preparation has neither the v6 nor superseding v7 facade contract");
+const hasSourceFirstFacade = preparedJetways.includes("source-authored-lower-facade-authority-v25")
+  && !preparedJetways.includes("transforms.facadeInfill.push")
+  && !preparedJetways.includes("transforms.facadeDoor.push")
+  && !preparedJetways.includes("transforms.facadeVent.push");
+if (!hasV6Facade && !hasV7Facade && !hasSourceFirstFacade) {
+  throw new Error("Jetway visual preparation has neither a legacy facade contract nor the source-first v25 contract");
+}
 
-console.log("Prepared Terminal 4 jetway visual v6: normalized source-scale UVs, exact atlas subregions, non-striped shell/cabin/bellows materials, and a v6-or-newer facade closure.");
+console.log(hasSourceFirstFacade
+  ? "Prepared Terminal 4 jetway visual v6 with source-first v25 facade authority preserved."
+  : "Prepared Terminal 4 jetway visual v6: normalized source-scale UVs, exact atlas subregions, non-striped shell/cabin/bellows materials, and a v6-or-newer facade closure.");

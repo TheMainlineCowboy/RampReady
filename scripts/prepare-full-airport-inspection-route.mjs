@@ -16,6 +16,21 @@ replaceOnce(
   // toward the actual source jetway/terminal position instead of across an
   // empty taxiway. Positions remain source-gate apron locations.
   a1: Object.freeze({ id: "a1", label: "A1 ramp", x: 0, z: 0, yaw: 0, cameraYaw: 0.92, cameraDistance: 25 }),
+  // A true side-on architectural view of the measured A1 rotunda-to-T4_WALK
+  // corridor. The tug remains freely drivable and the driver/overhead views
+  // remain available, while chase mode starts by looking directly at the joint
+  // rather than hiding it behind the rotunda.
+  a1Connection: Object.freeze({
+    id: "a1Connection",
+    label: "A1 terminal connection",
+    x: -14,
+    z: -4,
+    yaw: 0,
+    cameraYaw: 0,
+    cameraDistance: 22,
+    cameraPosition: Object.freeze([-25.59, 7.4, 5.5]),
+    cameraTarget: Object.freeze([-25.59, 4.2, -16.15]),
+  }),
   a14: Object.freeze({ id: "a14", label: "A concourse midpoint", x: 218.45, z: -86.52, yaw: 2.88, cameraYaw: 2.19, cameraDistance: 32 }),
   b14: Object.freeze({ id: "b14", label: "B concourse midpoint", x: 216.4, z: 150.35, yaw: 2.8, cameraYaw: 2.10, cameraDistance: 32 }),
   // B15 sits on the east face of the north-south pier. The former inspection
@@ -24,7 +39,7 @@ replaceOnce(
   // east of the facade, and points the operator view directly west at both gates.
   b15: Object.freeze({ id: "b15", label: "B15 ramp", x: -5.5, z: 539.2, yaw: -1.5708, cameraYaw: 1.38, cameraDistance: 25 }),
 });
-const INSPECTION_ROUTE_AUTHORITY = "source-gate-apron-presets-facing-terminal-a1-a14-b14-b15-v2";
+const INSPECTION_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-connection-a1-a14-b14-b15-v4";
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));`,
   "const INSPECTION_PRESETS = Object.freeze",
   "inspection preset constants",
@@ -92,12 +107,54 @@ replaceOnce(
     canvas.dataset.cameraYaw = preset.cameraYaw.toFixed(4);
     canvas.dataset.cameraPitch = orbitRef.current.pitch.toFixed(4);
     canvas.dataset.cameraDistance = orbitRef.current.distance.toFixed(3);
+    canvas.dataset.inspectionCameraAuthority = preset.cameraPosition
+      ? "side-on-fixed-a1-terminal-joint-v4"
+      : "free-orbit-follow-tug";
     setMessage(\`Inspection position: \${preset.label}. Drive freely with W/S or the power slider and use A/D to steer.\`);
   }, []);
 
   const toggleInspectionDrive = useCallback(() => {`,
   "const moveInspectionToPreset = useCallback",
   "inspection preset movement callback",
+);
+
+replaceOnce(
+  `      } else {
+        const orbit = orbitRef.current;
+        cameraTarget.set(target.x, 1.3, target.z + (connectionHasAircraft(sim.connection) ? 0 : 2.5));
+        const horizontal = Math.cos(orbit.pitch) * orbit.distance;
+        desiredCamera.set(
+          cameraTarget.x + Math.sin(orbit.yaw) * horizontal,
+          cameraTarget.y + Math.sin(orbit.pitch) * orbit.distance,
+          cameraTarget.z + Math.cos(orbit.yaw) * horizontal,
+        );
+        camera.position.lerp(desiredCamera, 0.16);
+        camera.lookAt(cameraTarget);
+      }`,
+  `      } else {
+        const inspectionPresetConfig = inspectionActive
+          ? INSPECTION_PRESETS[inspectionPresetRef.current]
+          : null;
+        if (inspectionPresetConfig?.cameraPosition && inspectionPresetConfig?.cameraTarget) {
+          desiredCamera.fromArray(inspectionPresetConfig.cameraPosition);
+          cameraTarget.fromArray(inspectionPresetConfig.cameraTarget);
+          camera.position.lerp(desiredCamera, 0.16);
+          camera.lookAt(cameraTarget);
+        } else {
+          const orbit = orbitRef.current;
+          cameraTarget.set(target.x, 1.3, target.z + (connectionHasAircraft(sim.connection) ? 0 : 2.5));
+          const horizontal = Math.cos(orbit.pitch) * orbit.distance;
+          desiredCamera.set(
+            cameraTarget.x + Math.sin(orbit.yaw) * horizontal,
+            cameraTarget.y + Math.sin(orbit.pitch) * orbit.distance,
+            cameraTarget.z + Math.cos(orbit.yaw) * horizontal,
+          );
+          camera.position.lerp(desiredCamera, 0.16);
+          camera.lookAt(cameraTarget);
+        }
+      }`,
+  "const inspectionPresetConfig = inspectionActive",
+  "side-on A1 connection chase framing",
 );
 
 replaceOnce(
@@ -158,7 +215,11 @@ replaceOnce(
 
 for (const token of [
   "const INSPECTION_PRESETS = Object.freeze",
-  "source-gate-apron-presets-facing-terminal-a1-a14-b14-b15-v2",
+  "source-gate-apron-presets-with-side-on-a1-connection-a1-a14-b14-b15-v4",
+  'cameraPosition: Object.freeze([-25.59, 7.4, 5.5])',
+  'cameraTarget: Object.freeze([-25.59, 4.2, -16.15])',
+  "side-on-fixed-a1-terminal-joint-v4",
+  "inspectionPresetConfig?.cameraPosition && inspectionPresetConfig?.cameraTarget",
   "const moveInspectionToPreset = useCallback",
   'aria-label="Inspection location"',
   "dataset.inspectionPreset = preset.id",
@@ -174,4 +235,4 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared full-airport free-drive inspection presets from A1 through B15, including a close B15 operator pose facing the exact B15L/B15M terminal facade.");
+console.log("Prepared full-airport free-drive inspection presets from a side-on A1 terminal-joint view through B15, while keeping every position freely drivable.");

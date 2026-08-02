@@ -30,9 +30,14 @@ insertAfter(
     renderer.domElement.dataset.terminal4JetwaySourceGeometryMode = "loading";
     renderer.domElement.dataset.terminal4RequiresOriginalJetwayMesh = "loading";
     renderer.domElement.dataset.terminal4JetwayInitialState = "loading";
-    renderer.domElement.dataset.terminal4JetwayPrePushSequence = "loading";`,
-  'dataset.terminal4JetwaySourceScaleAuthority = "loading"',
-  "source-scale dataset initialization",
+    renderer.domElement.dataset.terminal4JetwayPrePushSequence = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayLoadState = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayCount = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayConnectorCount = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayVerifiedModelCount = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayReadyAuthority = "loading";`,
+  'dataset.terminal4UploadedJetwayLoadState = "loading"',
+  "source-scale and uploaded-fleet dataset initialization",
 );
 insertAfter(
   runtimePath,
@@ -43,9 +48,14 @@ insertAfter(
         renderer.domElement.dataset.terminal4JetwaySourceGeometryMode = environment.userData.authoredTerminal4JetwaySourceGeometryMode || "missing";
         renderer.domElement.dataset.terminal4RequiresOriginalJetwayMesh = String(environment.userData.authoredTerminal4RequiresOriginalJetwayMesh === true);
         renderer.domElement.dataset.terminal4JetwayInitialState = environment.userData.authoredTerminal4JetwayInitialState || "missing";
-        renderer.domElement.dataset.terminal4JetwayPrePushSequence = environment.userData.authoredTerminal4JetwayRequiredPrePushSequence || "missing";`,
-  "dataset.terminal4JetwaySourceScaleAuthority = environment.userData",
-  "source-scale dataset values",
+        renderer.domElement.dataset.terminal4JetwayPrePushSequence = environment.userData.authoredTerminal4JetwayRequiredPrePushSequence || "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayLoadState = environment.userData.authoredTerminal4UploadedJetwayLoadState || "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayCount = String(environment.userData.authoredTerminal4UploadedJetwayCount ?? "missing");
+        renderer.domElement.dataset.terminal4UploadedJetwayConnectorCount = String(environment.userData.authoredTerminal4UploadedJetwayConnectorCount ?? "missing");
+        renderer.domElement.dataset.terminal4UploadedJetwayVerifiedModelCount = String(environment.userData.authoredTerminal4UploadedJetwayVerifiedModelCount ?? "missing");
+        renderer.domElement.dataset.terminal4UploadedJetwayReadyAuthority = environment.userData.authoredTerminal4UploadedJetwayReadyAuthority || "missing";`,
+  "dataset.terminal4UploadedJetwayLoadState = environment.userData",
+  "source-scale and uploaded-fleet dataset values",
 );
 insertAfter(
   runtimePath,
@@ -54,9 +64,14 @@ insertAfter(
         renderer.domElement.dataset.terminal4JetwaySourceGeometryMode = "load-error";
         renderer.domElement.dataset.terminal4RequiresOriginalJetwayMesh = "load-error";
         renderer.domElement.dataset.terminal4JetwayInitialState = "load-error";
-        renderer.domElement.dataset.terminal4JetwayPrePushSequence = "load-error";`,
-  'dataset.terminal4JetwaySourceScaleAuthority = "load-error"',
-  "source-scale dataset error state",
+        renderer.domElement.dataset.terminal4JetwayPrePushSequence = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayLoadState = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayCount = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayConnectorCount = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayVerifiedModelCount = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayReadyAuthority = "load-error";`,
+  'dataset.terminal4UploadedJetwayLoadState = "load-error"',
+  "source-scale and uploaded-fleet dataset error state",
 );
 
 for (const [path, tokens] of [
@@ -72,10 +87,15 @@ for (const [path, tokens] of [
     'dataset.terminal4JetwaySourceScaleAuthority = "load-error"',
     "dataset.terminal4RequiresOriginalJetwayMesh",
     "dataset.terminal4JetwayPrePushSequence",
+    'dataset.terminal4UploadedJetwayLoadState = "loading"',
+    "dataset.terminal4UploadedJetwayLoadState = environment.userData",
+    'dataset.terminal4UploadedJetwayLoadState = "load-error"',
+    "dataset.terminal4UploadedJetwayVerifiedModelCount",
+    "dataset.terminal4UploadedJetwayReadyAuthority",
   ]],
 ]) {
   const source = fs.readFileSync(path, "utf8");
   for (const token of tokens) if (!source.includes(token)) throw new Error(`${path}: missing source-scale jetway runtime evidence ${token}`);
 }
 
-console.log("Prepared honest Terminal 4 jetway runtime evidence: stock scale preserved, exact textures active, fallback geometry disclosed, and the required attached-to-retracted pre-push sequence exposed.");
+console.log("Prepared honest Terminal 4 jetway runtime evidence: stock scale is preserved and the uploaded replacement must report ready with 58 decoded models and 58 measured terminal connectors.");

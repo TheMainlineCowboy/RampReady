@@ -5,6 +5,21 @@ const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let skin = fs.readFileSync(skinPath, "utf8");
 let jetways = fs.readFileSync(jetwayPath, "utf8");
 
+// Source-first v25 supersedes this legacy production overlay. Do not recolor
+// copied triangles, widen a generated skin to 220 metres, or retain generated
+// door/vent details when the converted source terminal is authoritative.
+if (jetways.includes("source-authored-terminal4-lower-facade-v25-no-overlay")) {
+  for (const forbidden of [
+    "source-shaped-broad-lower-facade-skin-v16",
+    "source-wall-plus-broad-skin-sparse-doors-vents-no-synthetic-panels-v16",
+    "source-shaped-broad-lower-facade-skin-v16-with-sparse-ramp-details",
+  ]) {
+    if (jetways.includes(forbidden)) throw new Error(`${jetwayPath}: legacy v16 facade overlay remains: ${forbidden}`);
+  }
+  console.log("Skipped Terminal 4 ramp facade v16 because source-only facade v25 is authoritative.");
+  process.exit(0);
+}
+
 const skinMarker = "source-shaped-broad-lower-facade-skin-v16";
 if (!skin.includes(skinMarker)) {
   const spanAnchor = "const LOWER_FACADE_MAXIMUM_HORIZONTAL_SPAN_METERS = 10;";

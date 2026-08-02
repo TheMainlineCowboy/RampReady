@@ -3,33 +3,34 @@ import { execFileSync, spawn } from "node:child_process";
 
 const protectedSourcePaths = Object.freeze([
   "src/components/RampReadyStandupTrainerTerminal4.jsx",
+  "src/components/RampReadyStandupTrainer.jsx",
   "src/environment/sourcePlacedTerminal4Jetways.js",
   "src/environment/authoredTerminal4Visual.js",
   "src/environment/authoredKphxGround.js",
+  "src/environment/authoredKphxPhotoGround.js",
   "src/environment/terminal4LowerFacadeSkinV9.js",
+  "src/environment/terminal4JetwaySimulatorPolishV13.js",
   "scripts/build-production.mjs",
 ]);
 const committedSources = new Map(protectedSourcePaths.map((sourcePath) => [
   sourcePath,
   execFileSync("git", ["show", `HEAD:${sourcePath}`], { encoding: "utf8" }),
 ]));
-if (!committedSources.get(protectedSourcePaths[0])?.includes("export default function RampReadyStandupTrainer")) {
-  throw new Error("Could not read the committed Terminal 4 trainer baseline from HEAD.");
-}
-if (!committedSources.get(protectedSourcePaths[1])?.includes("buildSourcePlacedTerminal4Jetways")) {
-  throw new Error("Could not read the committed Terminal 4 jetway baseline from HEAD.");
-}
-if (!committedSources.get(protectedSourcePaths[2])?.includes("installAuthoredTerminal4Visual")) {
-  throw new Error("Could not read the committed authored Terminal 4 baseline from HEAD.");
-}
-if (!committedSources.get(protectedSourcePaths[3])?.includes("installAuthoredKphxGround")) {
-  throw new Error("Could not read the committed authored KPHX ground baseline from HEAD.");
-}
-if (!committedSources.get(protectedSourcePaths[4])?.includes("buildTerminal4LowerFacadeSkin")) {
-  throw new Error("Could not read the committed Terminal 4 lower-facade baseline from HEAD.");
-}
-if (!committedSources.get(protectedSourcePaths[5])?.includes("restoreA1TerminalConnectorV11")) {
-  throw new Error("Could not read the committed production restorer baseline from HEAD.");
+const requiredBaselines = Object.freeze([
+  ["src/components/RampReadyStandupTrainerTerminal4.jsx", "export default function RampReadyStandupTrainer", "Terminal 4 trainer"],
+  ["src/components/RampReadyStandupTrainer.jsx", "export default function RampReadyStandupTrainer", "secondary trainer"],
+  ["src/environment/sourcePlacedTerminal4Jetways.js", "buildSourcePlacedTerminal4Jetways", "Terminal 4 jetway"],
+  ["src/environment/authoredTerminal4Visual.js", "installAuthoredTerminal4Visual", "authored Terminal 4"],
+  ["src/environment/authoredKphxGround.js", "installAuthoredKphxGround", "authored KPHX ground"],
+  ["src/environment/authoredKphxPhotoGround.js", "installAuthoredKphxPhotoGround", "authored KPHX source aerial"],
+  ["src/environment/terminal4LowerFacadeSkinV9.js", "buildTerminal4LowerFacadeSkin", "Terminal 4 lower-facade"],
+  ["src/environment/terminal4JetwaySimulatorPolishV13.js", "applyTerminal4JetwaySimulatorPolish", "Terminal 4 jetway-polish"],
+  ["scripts/build-production.mjs", "restoreA1TerminalConnectorV11", "production restorer"],
+]);
+for (const [sourcePath, token, label] of requiredBaselines) {
+  if (!committedSources.get(sourcePath)?.includes(token)) {
+    throw new Error(`Could not read the committed ${label} baseline from HEAD.`);
+  }
 }
 
 function runNode(script) {
@@ -45,11 +46,14 @@ function runNode(script) {
 
 let buildError;
 try {
-  await runNode("scripts/prepare-full-airport-inspection-route.mjs");
+  await runNode("scripts/prepare-a1-connection-camera-v5.mjs");
   await runNode("scripts/prepare-inspection-route-lifecycle.mjs");
   await runNode("scripts/prepare-inspection-preset-telemetry.mjs");
   await runNode("scripts/prepare-simulator-render-quality.mjs");
   await runNode("scripts/prepare-kphx-nearfield-pavement-v6.mjs");
+  await runNode("scripts/prepare-kphx-source-aerial-priority-v41.mjs");
+  await runNode("scripts/prepare-kphx-aerial-underlay-depth-v42.mjs");
+  await runNode("scripts/prepare-kphx-source-pavement-underlay-v43.mjs");
   await runNode("scripts/prepare-terminal4-a1-legacy-block-filter.mjs");
   await runNode("scripts/prepare-terminal4-floating-roof-filter.mjs");
   await runNode("scripts/prepare-terminal4-jetway-simulator-polish.mjs");
@@ -86,4 +90,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the framed, windowed and grounded A1 terminal attachment, anchored A1 to the exact supplied BGATE1 wall plane, removed the two exact floating black Terminal 4 roof slabs, restored the missing Terminal 4 B-concourse from the supplied PHX aerial and B15-B28 source gate coordinates so both B15 regional rotundas intersect a real pier facade rather than 88-112 m apron tunnels, parked all remaining unoccupied jetways in varied retracted positions, replaced the repeated nearfield grid with a large source-derived pavement field, replaced repeated dark ramp bays with broad supplied wall geometry and sparse doors/vents, surgically removed the three exact authored A1 legacy boxes, applied Terminal 4 jetway simulator polish, added terminal-facing A1-to-B15 inspection routing with synchronous telemetry and balanced rendering, then restored every protected committed source exactly.");
+console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, connected A1 to the measured T4_WALK source portal, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including both trainer sources.");

@@ -31,41 +31,61 @@ async function launchStandup(page) {
   return canvas;
 }
 
-async function captureCanvas(page, canvas, fileName) {
-  const bounds = await canvas.boundingBox();
-  expect(bounds).not.toBeNull();
-  const image = await page.screenshot({
-    type: "png",
-    clip: {
-      x: Math.max(0, Math.floor(bounds.x)),
-      y: Math.max(0, Math.floor(bounds.y)),
-      width: Math.floor(bounds.width),
-      height: Math.floor(bounds.height),
-    },
-    animations: "disabled",
+async function getCanvasBounds(canvas) {
+  return canvas.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
   });
-  expect(image.byteLength).toBeGreaterThan(50_000);
+}
+
+async function captureCompositedPng(page, clip, minimumBytes) {
+  const client = await page.context().newCDPSession(page);
+  try {
+    const capture = client.send("Page.captureScreenshot", {
+      format: "png",
+      fromSurface: true,
+      captureBeyondViewport: false,
+      clip: {
+        x: Math.max(0, clip.x),
+        y: Math.max(0, clip.y),
+        width: Math.max(1, Math.min(clip.width, 1440 - Math.max(0, clip.x))),
+        height: Math.max(1, Math.min(clip.height, 900 - Math.max(0, clip.y))),
+        scale: 1,
+      },
+    });
+    const timeout = new Promise((_, reject) => setTimeout(
+      () => reject(new Error("Chromium compositor capture exceeded 30 seconds")),
+      30_000,
+    ));
+    const { data } = await Promise.race([capture, timeout]);
+    const image = Buffer.from(data, "base64");
+    expect(image.byteLength).toBeGreaterThan(minimumBytes);
+    return image;
+  } finally {
+    await client.detach();
+  }
+}
+
+async function captureCanvas(page, canvas, fileName) {
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const bounds = await getCanvasBounds(canvas);
+  expect(bounds.width).toBeGreaterThan(64);
+  expect(bounds.height).toBeGreaterThan(64);
+  const image = await captureCompositedPng(page, bounds, 50_000);
   await writeFile(`test-results/${fileName}`, image);
 }
 
 async function captureCanvasRegion(page, canvas, fileName, region) {
-  const bounds = await canvas.boundingBox();
-  expect(bounds).not.toBeNull();
-  const x = bounds.x + bounds.width * region.left;
-  const y = bounds.y + bounds.height * region.top;
-  const width = bounds.width * region.width;
-  const height = bounds.height * region.height;
-  const image = await page.screenshot({
-    type: "png",
-    clip: {
-      x: Math.max(0, Math.floor(x)),
-      y: Math.max(0, Math.floor(y)),
-      width: Math.max(1, Math.floor(width)),
-      height: Math.max(1, Math.floor(height)),
-    },
-    animations: "disabled",
-  });
-  expect(image.byteLength).toBeGreaterThan(20_000);
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const bounds = await getCanvasBounds(canvas);
+  expect(bounds.width).toBeGreaterThan(64);
+  expect(bounds.height).toBeGreaterThan(64);
+  const image = await captureCompositedPng(page, {
+    x: bounds.x + bounds.width * region.left,
+    y: bounds.y + bounds.height * region.top,
+    width: bounds.width * region.width,
+    height: bounds.height * region.height,
+  }, 20_000);
   await writeFile(`test-results/${fileName}`, image);
 }
 
@@ -94,8 +114,8 @@ async function frameA1Chase(page, canvas) {
   await expect(canvas).toBeVisible();
 }
 
-test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and pavement-coincident markings", async ({ page }) => {
-  test.setTimeout(300_000);
+test("loads source-correct PHX scenery with the complete uploaded Terminal 4 jetway fleet and pavement-coincident markings", async ({ page }) => {
+  test.setTimeout(600_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const assetResponses = [];
   const tileResponses = new Map();
@@ -113,8 +133,12 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
   const canvas = await launchStandup(page);
   await expect.poll(
     async () => canvas.getAttribute("data-environment-source"),
-    { timeout: 90_000, intervals: [500, 1_000, 2_000] },
+    { timeout: 120_000, intervals: [500, 1_000, 2_000] },
   ).toBe("authored-phx-terminal4-textured-source-jetways");
+  await expect.poll(
+    async () => canvas.getAttribute("data-terminal4-uploaded-jetway-load-state"),
+    { timeout: 120_000, intervals: [500, 1_000] },
+  ).toBe("ready");
   await expect.poll(
     async () => canvas.getAttribute("data-terminal4-a1-jetway-wall-distance"),
     { timeout: 30_000, intervals: [500, 1_000] },
@@ -147,7 +171,7 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
   expect(runtime.terminal4A1LegacyBlockRemovedTriangles).toBe("36");
   expect(runtime.terminal4A1LegacyBlockAuthority).toBe("surgical-exact-three-box-36-triangle-authored-removal-v3");
   expect(runtime.terminal4FallbackTextureCount).toBe("0");
-  expect(runtime.terminal4TexturedMaterialCount).toBe("19");
+  expect(runtime.terminal4TexturedMaterialCount).toBe("22");
   expect(runtime.terminal4Position).toBe("-101.593,0.035,70.901");
   expect(runtime.terminal4Placement).toBe(
     "decoded original KPHX_ADEX library-object placement relative to decoded original Gate A1",
@@ -155,26 +179,36 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
   expect(runtime.groundMarkingContactMode).toBe("pavement-coincident-decals");
   expect(runtime.b15Anchors).toBe("ready");
   expect(runtime.b15CorridorMeters).toBe("515,542");
+  expect(runtime.terminal4UploadedJetwayLoadState).toBe("ready");
+  expect(runtime.terminal4UploadedJetwayCount).toBe("58");
+  expect(runtime.terminal4UploadedJetwayConnectorCount).toBe("58");
+  expect(runtime.terminal4UploadedJetwayVerifiedModelCount).toBe("58");
+  expect(runtime.terminal4UploadedJetwayReadyAuthority).toBe("uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured");
 
   const nearestGeometryMeters = Number(runtime.terminal4A1NearestGeometryMeters);
   expect(nearestGeometryMeters).toBeGreaterThan(29.9);
   expect(nearestGeometryMeters).toBeLessThan(30.6);
   const a1WallDistance = Number(runtime.terminal4A1JetwayWallDistance);
-  expect(a1WallDistance).toBeGreaterThan(24);
-  expect(a1WallDistance).toBeLessThan(36);
+  expect(a1WallDistance).toBeGreaterThan(9.1);
+  expect(a1WallDistance).toBeLessThan(9.2);
   expect(Number(runtime.terminal4TerminalConnectedJetwayCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4SourceCutoutMaterialCount)).toBeGreaterThan(0);
-  expect(Number(runtime.terminal4FacadeInfillCount)).toBeGreaterThan(90);
+  expect(Number(runtime.terminal4FacadeInfillCount)).toBe(0);
   expect(Number(runtime.terminal4OpenServiceBayCount)).toBe(0);
-  expect(Number(runtime.terminal4LowerFacadeFitCount)).toBeGreaterThan(90);
+  expect(Number(runtime.terminal4LowerFacadeFitCount)).toBe(0);
+  const openFacadeCells = Number(runtime.terminal4SourceFacadeOpenCellCount);
+  const closedFacadeCells = Number(runtime.terminal4SourceFacadeClosedCellCount);
+  expect(openFacadeCells).toBeGreaterThan(0);
+  expect(closedFacadeCells).toBeGreaterThan(openFacadeCells * 3);
+  expect(Number(runtime.terminal4SourceFacadeVariantMaterialCount)).toBeGreaterThanOrEqual(4);
   expect(runtime.terminal4ExactJetwayTextureActive).toBe("true");
   expect(runtime.terminal4JetwayTextureAuthority).toContain("M1DGJETWAY exact recovered");
   expect(runtime.terminal4JetwayDetailLevel).toBe("fsx-air-jetway01-exact-textured-source-scale-articulated-v5");
   expect(runtime.terminal4JetwaySourceScaleAuthority).toBe(
     "airport-authored-AIR_Jetway01-scale-preserved-no-aircraft-specific-shrink",
   );
-  expect(runtime.terminal4JetwaySourceGeometryMode).toContain("fallback-pending-original-AIR_Jetway01-mesh-recovery");
-  expect(runtime.terminal4RequiresOriginalJetwayMesh).toBe("true");
+  expect(runtime.terminal4JetwaySourceGeometryMode).toBe("user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured");
+  expect(runtime.terminal4RequiresOriginalJetwayMesh).toBe("false");
   expect(runtime.terminal4JetwayInitialState).toBe("attached-to-aircraft-door");
   expect(runtime.terminal4JetwayPrePushSequence).toBe("retract-bellows-clear-door-telescope-in-rotate-to-park");
 
@@ -207,7 +241,7 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
   expect(relevantErrors).toEqual([]);
 
   await frameA1Chase(page, canvas);
-  await captureCanvas(page, canvas, "kphx-a1-source-scale-jetway-chase.png");
+  await captureCanvas(page, canvas, "kphx-a1-uploaded-jetway-chase.png");
   await captureCanvasRegion(page, canvas, "kphx-a1-terminal-connection-close.png", {
     left: 0,
     top: 0.13,
@@ -223,5 +257,5 @@ test("loads source-correct PHX scenery with source-scale Terminal 4 jetways and 
     select.dispatchEvent(new Event("change", { bubbles: true }));
   });
   await page.waitForTimeout(1_200);
-  await captureCanvas(page, canvas, "kphx-a1-source-scale-jetway-overhead.png");
+  await captureCanvas(page, canvas, "kphx-a1-uploaded-jetway-overhead.png");
 });

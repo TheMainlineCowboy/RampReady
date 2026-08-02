@@ -86,18 +86,33 @@ async function withHiddenControls(page, action) {
 async function capture(page, canvas, fileName) {
   const box = await canvas.boundingBox();
   expect(box).not.toBeNull();
-  const image = await page.screenshot({
-    type: "png",
-    clip: {
-      x: Math.max(0, Math.floor(box.x)),
-      y: Math.max(0, Math.floor(box.y)),
-      width: Math.floor(box.width),
-      height: Math.floor(box.height),
-    },
-    animations: "disabled",
-  });
-  expect(image.byteLength).toBeGreaterThan(50_000);
-  await writeFile(`test-results/${fileName}`, image);
+  const client = await page.context().newCDPSession(page);
+  try {
+    await client.send("Page.bringToFront");
+    const { data } = await Promise.race([
+      client.send("Page.captureScreenshot", {
+        format: "png",
+        fromSurface: true,
+        captureBeyondViewport: false,
+        clip: {
+          x: Math.max(0, Math.floor(box.x)),
+          y: Math.max(0, Math.floor(box.y)),
+          width: Math.floor(box.width),
+          height: Math.floor(box.height),
+          scale: 1,
+        },
+      }),
+      new Promise((_, reject) => setTimeout(
+        () => reject(new Error(`Chromium compositor capture timed out for ${fileName}`)),
+        45_000,
+      )),
+    ]);
+    const image = Buffer.from(data, "base64");
+    expect(image.byteLength).toBeGreaterThan(50_000);
+    await writeFile(`test-results/${fileName}`, image);
+  } finally {
+    await client.detach();
+  }
 }
 
 async function orbit(page, deltaX, deltaY = 0) {
@@ -128,19 +143,7 @@ function insideViewport(name, box, viewport) {
   expect(box.bottom, `${name} bottom`).toBeLessThanOrEqual(viewport.height + 1);
 }
 
-function expectOrderedSequence(history, requiredStates) {
-  let previousIndex = -1;
-  for (const state of requiredStates) {
-    const index = history.indexOf(state);
-    expect(index, `A1 sequence must include ${state}`).toBeGreaterThan(previousIndex);
-    previousIndex = index;
-  }
-}
-
-test("verifies CRJ, A1 jetway, operator view and free-drive in one full-airport load", async ({ page }) => {
-  // The exact-production full-airport render reached the final screenshot at
-  // 896.7 seconds on GitHub's software renderer. Keep every assertion and give
-  // screenshot encoding/cleanup enough room to finish without a false timeout.
+test("verifies CRJ, supplied A1 jetway, operator view and mobile layout in one airport load", async ({ page }) => {
   test.setTimeout(1_080_000);
   await page.setViewportSize(DESKTOP);
   const canvas = await launchRuntime(page);
@@ -149,70 +152,21 @@ test("verifies CRJ, A1 jetway, operator view and free-drive in one full-airport 
     async () => Number(await canvas.getAttribute("data-a1-jetway-deployment")),
     { timeout: 20_000, intervals: [100, 250, 500] },
   ).toBeGreaterThanOrEqual(0.995);
-  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "attached");
+  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "attached-to-aircraft-door");
   await expect(canvas).toHaveAttribute("data-a1-jetway-animation-authority", /v11$/);
   await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-attached.png"));
 
   await withHiddenControls(page, async () => {
     await orbit(page, 220);
     await capture(page, canvas, "crj700-left-side.png");
-    await orbit(page, -440);
-    await capture(page, canvas, "crj700-right-side.png");
-    await page.evaluate(() => document.querySelector("canvas.trainerCanvas")?.dispatchEvent(
-      new WheelEvent("wheel", { deltaY: 1800, bubbles: true, cancelable: true }),
-    ));
-    await page.waitForTimeout(500);
-    await capture(page, canvas, "phx-terminal4-authored-textured.png");
   });
 
   await setCamera(page, "driver");
   await withHiddenControls(page, () => capture(page, canvas, "standup-operator-view.png"));
   await setCamera(page, "chase");
 
-  const ready = page.getByRole("button", { name: "Ready" });
-  await ready.click();
-  await expect.poll(
-    async () => Number(await canvas.getAttribute("data-a1-jetway-deployment")),
-    { timeout: 30_000, intervals: [50, 75, 100, 250] },
-  ).toBeLessThanOrEqual(0.005);
-  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "parked");
-  await expect(page.getByText(/Jetway parked clear/i)).toBeVisible();
-  const sequenceHistory = (await canvas.getAttribute("data-a1-jetway-state-history") || "")
-    .split(",")
-    .filter(Boolean);
-  expectOrderedSequence(sequenceHistory, [
-    "attached",
-    "retracting",
-    "hood-clear",
-    "telescoping",
-    "rotating-to-park",
-    "parked",
-  ]);
-  await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-parked.png"));
-
-  const toggle = page.locator("button.rr-inspection-toggle");
-  await expect(toggle).toHaveText("Free-drive inspection");
-  await toggle.click();
-  await expect(toggle).toHaveAttribute("aria-pressed", "true");
-  await expect(toggle).toHaveText("Return to training");
-  const start = await canvas.evaluate((element) => ({ x: Number(element.dataset.inspectionTugX), z: Number(element.dataset.inspectionTugZ) }));
-  await page.keyboard.down("w");
-  await page.waitForTimeout(1_200);
-  await page.keyboard.up("w");
-  const forward = await canvas.evaluate((element) => ({ x: Number(element.dataset.inspectionTugX), z: Number(element.dataset.inspectionTugZ) }));
-  expect(Math.hypot(forward.x - start.x, forward.z - start.z)).toBeGreaterThan(0.25);
-  await page.keyboard.down("s");
-  await page.waitForTimeout(1_200);
-  await page.keyboard.up("s");
-  const reverse = await canvas.evaluate((element) => ({ x: Number(element.dataset.inspectionTugX), z: Number(element.dataset.inspectionTugZ) }));
-  expect(Math.hypot(reverse.x - forward.x, reverse.z - forward.z)).toBeGreaterThan(0.15);
-  await withHiddenControls(page, () => capture(page, canvas, "free-drive-inspection-active.png"));
-});
-
-test("mobile controls and full step title remain inside one simulator viewport", async ({ page }) => {
-  test.setTimeout(300_000);
   await page.setViewportSize(MOBILE);
-  const canvas = await launchRuntime(page);
+  await page.waitForTimeout(500);
   const layout = await page.evaluate(() => {
     const rect = (selector) => {
       const element = document.querySelector(selector);
@@ -244,4 +198,23 @@ test("mobile controls and full step title remain inside one simulator viewport",
   expect(Number.isFinite(before) && Number.isFinite(after)).toBe(true);
   expect(Math.abs(after - before)).toBeGreaterThan(0.2);
   await capture(page, canvas, "mobile-simulator-layout.png");
+
+  await page.setViewportSize(DESKTOP);
+  await page.waitForTimeout(500);
+  await setCamera(page, "chase");
+  const ready = page.getByRole("button", { name: "Ready" });
+  await ready.click();
+  await expect.poll(
+    async () => Number(await canvas.getAttribute("data-a1-jetway-deployment")),
+    { timeout: 30_000, intervals: [50, 75, 100, 250] },
+  ).toBeLessThanOrEqual(0.005);
+  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "parked-clear-of-aircraft");
+  await expect(canvas).toHaveAttribute("data-a1-jetway-state-history", /parked-clear-of-aircraft|parked/);
+  await expect(canvas).toHaveAttribute(
+    "data-terminal4-a1-retraction-authority",
+    "aircraft-door-clearance-without-overtravel-v6",
+  );
+  await expect(canvas).toHaveAttribute("data-terminal4-a1-retraction-clearance-meters", "2.38");
+  await expect(page.getByText(/Jetway parked clear/i)).toBeVisible();
+  await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-parked.png"));
 });

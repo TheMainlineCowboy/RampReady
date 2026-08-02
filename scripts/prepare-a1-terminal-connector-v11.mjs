@@ -112,10 +112,12 @@ if (!independentStructuralFit && source.includes("function findTerminalWallConne
   );
 }
 
-// Gate A1 sits at a Terminal 4 corner where a radial search can select a valid
-// but visually unrelated structural face. Use the exact BGATE1 wall plane from
-// the supplied Terminal 4 mesh at the jetway elevation. Coordinates are in the
-// source-placed jetway group's A1-local frame after its +6.2 m Z scene offset.
+// Gate A1 is not connected to the broad BGATE facade plane. The source model
+// contains a fixed T4_WALK portal directly behind the authored rotunda. The old
+// target (-3.553, -40.607) sent the connector roughly 30 m diagonally across
+// the corner and left the visible bridge detached. This point was measured from
+// the converted source triangles at the rotunda elevation: X=-30.16857013 and
+// the same local Z station as the authored A1 jetway root, a 9.15857013 m fit.
 const committedA1Connection = `    const terminalConnection = findTerminalWallConnection(
       THREE,
       terminal,
@@ -135,23 +137,23 @@ const exactA1Connection = `    const terminalConnection = findTerminalWallConnec
       rotundaY,
     ) || {};
     if (jetway.g === "A1") {
-      const exactWallX = -3.55299146;
-      const exactWallZ = -40.60699866;
-      const exactDx = exactWallX - jetway.x;
-      const exactDz = exactWallZ - jetway.z;
+      const exactWalkwayPortalX = -30.16857013;
+      const exactWalkwayPortalZ = jetway.z;
+      const exactDx = exactWalkwayPortalX - jetway.x;
+      const exactDz = exactWalkwayPortalZ - jetway.z;
       const exactDistance = Math.hypot(exactDx, exactDz);
       Object.assign(terminalConnection, {
         distance: exactDistance,
         towardX: exactDx / exactDistance,
         towardZ: exactDz / exactDistance,
-        authority: "exact-BGATE1-A1-terminal-wall-plane-v14",
+        authority: "exact-T4_WALK-A1-terminal-portal-v25",
       });
     }`;
 replaceRequired(
   committedA1Connection,
   exactA1Connection,
-  "exact-BGATE1-A1-terminal-wall-plane-v14",
-  "exact A1 Terminal 4 wall-plane connection",
+  "exact-T4_WALK-A1-terminal-portal-v25",
+  "exact A1 source walkway portal connection",
 );
 
 const independentPrepared = [
@@ -170,11 +172,11 @@ const legacyPrepared = [
   "1.25, 44",
   "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
 ].every((token) => source.includes(token));
-if ((!independentPrepared && !legacyPrepared) || !source.includes("exact-BGATE1-A1-terminal-wall-plane-v14")) {
-  throw new Error(`${jetwayPath}: structural A1 terminal connector preparation is incomplete`);
+if ((!independentPrepared && !legacyPrepared) || !source.includes("exact-T4_WALK-A1-terminal-portal-v25")) {
+  throw new Error(`${jetwayPath}: source-measured A1 terminal connector preparation is incomplete`);
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
 console.log(independentPrepared
-  ? "Prepared A1 terminal connector v14 at the exact supplied BGATE1 wall plane, with radial structural fitting retained for every other gate."
-  : "Prepared legacy A1 terminal connector v14 at the exact supplied BGATE1 wall plane.");
+  ? "Prepared A1 connector v25 at the measured source T4_WALK portal, with structural fitting retained for every other gate."
+  : "Prepared legacy A1 connector v25 at the measured source T4_WALK portal.");
