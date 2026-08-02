@@ -112,12 +112,15 @@ function prepareRuntime() {
     source = source.replace(readyAnchor, `${readyAnchor}${collisionRuntime}`);
 
     const wrappedController = `        const a1JetwayController = environment.userData.authoredTerminal4A1JetwayController || null;
+        const nativeA1RetractionActive = environment.userData.authoredTerminal4Jetways?.userData.uploadedJetwayA1RetractionAuthority === "${retractionAuthority}";
         if (a1JetwayController && !a1JetwayController.__rampReadyDoorClearanceWrapped) {
           const sourceSetDeployment = a1JetwayController.setDeployment.bind(a1JetwayController);
           let requestedDeployment = 1;
           a1JetwayController.setDeployment = (value) => {
             requestedDeployment = Math.max(0, Math.min(1, Number(value) || 0));
-            const visualDeployment = 1 - (1 - requestedDeployment) * ${retractionRatio.toFixed(12)};
+            const visualDeployment = nativeA1RetractionActive
+              ? requestedDeployment
+              : 1 - (1 - requestedDeployment) * ${retractionRatio.toFixed(12)};
             sourceSetDeployment(visualDeployment);
           };
           a1JetwayController.getDeployment = () => requestedDeployment;
@@ -127,6 +130,7 @@ function prepareRuntime() {
               ? "parked-clear-of-aircraft"
               : "retracting-from-aircraft";
           a1JetwayController.__rampReadyDoorClearanceWrapped = true;
+          a1JetwayController.__rampReadyNativeRetractionActive = nativeA1RetractionActive;
           a1JetwayController.__rampReadyRetractionAuthority = "${retractionAuthority}";
           a1JetwayController.__rampReadyRetractionClearanceMeters = 2.38;
         }
@@ -135,6 +139,7 @@ function prepareRuntime() {
 
     const collisionReady = `    void Promise.all([terminalLoad, groundLoad, photoGroundLoad])
       .then(() => {
+        const nativeA1RetractionActive = environment.userData.authoredTerminal4Jetways?.userData.uploadedJetwayA1RetractionAuthority === "${retractionAuthority}";
         airportCollision.staticTargets = [
           environment.userData.authoredTerminal4,
           environment.userData.authoredTerminal4Jetways,
@@ -145,7 +150,8 @@ function prepareRuntime() {
         renderer.domElement.dataset.airportCollisionTargetCount = String(airportCollision.staticTargets.length);
         renderer.domElement.dataset.terminal4A1RetractionAuthority = "${retractionAuthority}";
         renderer.domElement.dataset.terminal4A1RetractionClearanceMeters = "2.38";
-        renderer.domElement.dataset.terminal4A1RetractionRatio = "${retractionRatio.toFixed(6)}";
+        renderer.domElement.dataset.terminal4A1RetractionRatio = nativeA1RetractionActive ? "1.000000" : "${retractionRatio.toFixed(6)}";
+        renderer.domElement.dataset.terminal4A1NativeRetractionActive = nativeA1RetractionActive ? "true" : "false";
         renderer.domElement.dataset.environmentSource = environment.userData.environmentSource;`;
     source = source.replace(resolvedAnchor, collisionReady);
 
@@ -210,6 +216,8 @@ function prepareRuntime() {
     "aircraftCollisionSamples",
     "dataset.airportCollision",
     "__rampReadyDoorClearanceWrapped",
+    "nativeA1RetractionActive",
+    "terminal4A1NativeRetractionActive",
     "terminal4A1RetractionClearanceMeters",
   ]) {
     if (!source.includes(token)) throw new Error(`Airport collision/retraction runtime is missing ${token}`);
@@ -217,4 +225,4 @@ function prepareRuntime() {
 }
 
 prepareRuntime();
-console.log("Prepared physical airport collision protection and runtime-limited A1 jetway door-clearance retraction without replacing or mutating the uploaded model source.");
+console.log("Prepared physical airport collision protection and native-aware A1 jetway door-clearance retraction without replacing or mutating the uploaded model source.");
