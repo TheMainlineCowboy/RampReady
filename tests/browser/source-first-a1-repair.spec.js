@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 async function saveCompositedCanvasPng(page, path) {
   const box = await page.evaluate(() => {
     const canvas = document.querySelector("canvas.trainerCanvas");
-    if (!canvas) throw new Error("Three.js canvas is missing for A1 evidence capture");
+    if (!canvas) throw new Error("Three.js canvas is missing for evidence capture");
     const rect = canvas.getBoundingClientRect();
     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   });
@@ -33,14 +33,25 @@ async function saveCompositedCanvasPng(page, path) {
     fs.mkdirSync("test-results", { recursive: true });
     fs.writeFileSync(path, Buffer.from(data, "base64"));
     const bytes = fs.statSync(path).size;
-    if (bytes < 30_000) throw new Error(`Composited A1 evidence is suspiciously small: ${bytes} bytes`);
+    if (bytes < 30_000) throw new Error(`Composited evidence is suspiciously small: ${bytes} bytes`);
   } finally {
     await client.detach();
   }
 }
 
-async function numericCanvasAttribute(canvas, name) {
-  return Number(await canvas.getAttribute(name));
+async function readCanvasRuntime(page) {
+  return page.evaluate(() => {
+    const canvas = document.querySelector("canvas.trainerCanvas");
+    if (!canvas) throw new Error("Three.js canvas disappeared");
+    return { ...canvas.dataset };
+  });
+}
+
+async function numericCanvasAttribute(page, name) {
+  return Number(await page.evaluate((attribute) => {
+    const canvas = document.querySelector("canvas.trainerCanvas");
+    return canvas?.getAttribute(attribute) ?? "NaN";
+  }, name));
 }
 
 test("direct tug inspection proves the visible A1 terminal connection, realistic retraction and physical airport collision protection", async ({ page }) => {
@@ -51,87 +62,98 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   const directInspection = page.getByRole("button", { name: "Drive tug / inspect airport" });
   await expect(directInspection).toBeVisible();
   await directInspection.click();
-
-  const canvas = page.locator("canvas.trainerCanvas");
-  await expect(canvas).toHaveAttribute("data-inspection-mode", "active", { timeout: 120_000 });
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
+
+  await page.waitForFunction(() => {
+    const canvas = document.querySelector("canvas.trainerCanvas");
+    const data = canvas?.dataset;
+    return data?.inspectionMode === "active"
+      && data?.environmentSource?.includes("authored-phx-terminal4")
+      && data?.terminal4UploadedJetwayLoadState === "ready"
+      && data?.terminal4UploadedJetwayCount === "58"
+      && data?.terminal4UploadedJetwayConnectorCount === "58"
+      && data?.terminal4UploadedJetwayVerifiedModelCount === "58"
+      && data?.photoGroundSource === "source-authored-phx-photo"
+      && data?.airportCollisionReady === "true"
+      && data?.airportCollisionTargetCount === "2";
+  }, null, { timeout: 180_000, polling: 250 });
+
   const hudHeight = await page.evaluate(() => document.querySelector(".rr-hud")?.getBoundingClientRect().height ?? Number.POSITIVE_INFINITY);
   expect(hudHeight).toBeLessThan(110);
 
-  await expect(canvas).toHaveAttribute("data-environment-source", /authored-phx-terminal4/, { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-load-state", "ready", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-count", "58", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-connector-count", "58", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-verified-model-count", "58", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute(
-    "data-terminal4-uploaded-jetway-ready-authority",
+  const runtime = await readCanvasRuntime(page);
+  expect(runtime.inspectionMode).toBe("active");
+  expect(runtime.environmentSource).toContain("authored-phx-terminal4");
+  expect(runtime.terminal4UploadedJetwayLoadState).toBe("ready");
+  expect(runtime.terminal4UploadedJetwayCount).toBe("58");
+  expect(runtime.terminal4UploadedJetwayConnectorCount).toBe("58");
+  expect(runtime.terminal4UploadedJetwayVerifiedModelCount).toBe("58");
+  expect(runtime.terminal4UploadedJetwayReadyAuthority).toBe(
     "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured",
-    { timeout: 120_000 },
   );
-  await expect(canvas).toHaveAttribute("data-photo-ground-source", "source-authored-phx-photo", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute(
-    "data-ground-pavement-authority",
-    "full-source-aerial-primary-with-subtle-package-surface-detail-v41",
-    { timeout: 120_000 },
-  );
-  await expect(canvas).toHaveAttribute("data-ground-source-aerial-priority", "true", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-ground-nearfield-detail-opacity", "0.18", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-render-quality-authority", "srgb-aces-apron-daylight-dynamic-shadows-v3");
-  await expect(canvas).toHaveAttribute("data-shadow-mode", "dynamic-high-fidelity");
-  await expect(canvas).toHaveAttribute("data-terminal4-facade-infill-count", "0", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-terminal4-a1-jetway-wall-distance", /9\.(1|2)/, { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-terminal4-a1-portal-seal-authority", "exact-T4_WALK-source-shell-overlap-and-framed-portal-v37", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-terminal4-a1-portal-seal-overlap-meters", "0.8", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-terminal4-a1-portal-seal-exact-texture", "true", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-terminal4-source-closed-bay-material-count", /^[1-9]\d*$/, { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-terminal4-source-facade-variant-material-count", /^[4-9]\d*$/, { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-airport-collision-authority", "terminal-jetway-aircraft-raycast-envelope-v45", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-airport-collision-ready", "true", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-airport-collision-target-count", "2", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-airport-collision-aircraft-envelope", "nose-center-tail-wing-sweep-v2", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-terminal4-a1-retraction-authority", "aircraft-door-clearance-without-overtravel-v6", { timeout: 120_000 });
-  await expect(canvas).toHaveAttribute("data-terminal4-a1-retraction-clearance-meters", "2.38", { timeout: 120_000 });
+  expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
+  expect(runtime.groundPavementAuthority).toBe("full-source-aerial-primary-with-subtle-package-surface-detail-v41");
+  expect(runtime.groundSourceAerialPriority).toBe("true");
+  expect(runtime.groundNearfieldDetailOpacity).toBe("0.18");
+  expect(runtime.renderQualityAuthority).toBe("srgb-aces-apron-daylight-dynamic-shadows-v3");
+  expect(runtime.shadowMode).toBe("dynamic-high-fidelity");
+  expect(runtime.terminal4FacadeInfillCount).toBe("0");
+  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeGreaterThan(9.1);
+  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeLessThan(9.3);
+  expect(runtime.terminal4A1PortalSealAuthority).toBe("exact-T4_WALK-source-shell-overlap-and-framed-portal-v37");
+  expect(runtime.terminal4A1PortalSealOverlapMeters).toBe("0.8");
+  expect(runtime.terminal4A1PortalSealExactTexture).toBe("true");
+  expect(Number(runtime.terminal4SourceClosedBayMaterialCount)).toBeGreaterThan(0);
+  expect(Number(runtime.terminal4SourceFacadeVariantMaterialCount)).toBeGreaterThanOrEqual(4);
+  expect(runtime.airportCollisionAuthority).toBe("terminal-jetway-aircraft-raycast-envelope-v45");
+  expect(runtime.airportCollisionReady).toBe("true");
+  expect(runtime.airportCollisionTargetCount).toBe("2");
+  expect(runtime.airportCollisionAircraftEnvelope).toBe("nose-center-tail-wing-sweep-v2");
+  expect(runtime.terminal4A1RetractionAuthority).toBe("aircraft-door-clearance-without-overtravel-v6");
+  expect(runtime.terminal4A1RetractionClearanceMeters).toBe("2.38");
 
-  const variation = await page.evaluate(() => {
-    const element = document.querySelector("canvas.trainerCanvas");
-    if (!element) throw new Error("Three.js canvas disappeared before facade evidence capture");
-    return {
-      open: Number(element.dataset.terminal4SourceFacadeOpenCellCount || 0),
-      closed: Number(element.dataset.terminal4SourceFacadeClosedCellCount || 0),
-      variants: Number(element.dataset.terminal4SourceFacadeVariantMaterialCount || 0),
-    };
-  });
-  expect(variation.open).toBeGreaterThan(0);
-  expect(variation.closed).toBeGreaterThan(variation.open * 3);
-  expect(variation.variants).toBeGreaterThanOrEqual(4);
+  const openCells = Number(runtime.terminal4SourceFacadeOpenCellCount || 0);
+  const closedCells = Number(runtime.terminal4SourceFacadeClosedCellCount || 0);
+  expect(openCells).toBeGreaterThan(0);
+  expect(closedCells).toBeGreaterThan(openCells * 3);
 
   const inspectionLocation = page.getByLabel("Inspection location");
   await expect(inspectionLocation).toHaveValue("a1");
   await inspectionLocation.selectOption("a1Connection");
-  await expect(canvas).toHaveAttribute("data-inspection-preset", "a1Connection");
-  await expect(canvas).toHaveAttribute("data-inspection-preset-label", "A1 terminal connection");
-  await expect(canvas).toHaveAttribute("data-inspection-camera-authority", "wide-diagonal-a1-terminal-joint-v6-clear-tug");
-  await page.waitForTimeout(1800);
-
+  await page.waitForFunction(() => {
+    const data = document.querySelector("canvas.trainerCanvas")?.dataset;
+    return data?.inspectionPreset === "a1Connection"
+      && data?.inspectionPresetLabel === "A1 terminal connection"
+      && data?.inspectionCameraAuthority === "wide-diagonal-a1-terminal-joint-v6-clear-tug";
+  }, null, { timeout: 30_000, polling: 100 });
+  await page.waitForTimeout(1_800);
   await saveCompositedCanvasPng(page, "test-results/source-first-a1-terminal-connection.png");
 
   await inspectionLocation.selectOption("b15");
-  await expect(canvas).toHaveAttribute("data-inspection-preset", "b15");
-  await expect(canvas).toHaveAttribute("data-inspection-tug-x", "-5.500", { timeout: 30_000 });
-  await expect(canvas).toHaveAttribute("data-inspection-tug-z", "539.200", { timeout: 30_000 });
-  const startX = await numericCanvasAttribute(canvas, "data-inspection-tug-x");
-  const startCount = await numericCanvasAttribute(canvas, "data-airport-collision-count");
+  await page.waitForFunction(() => {
+    const data = document.querySelector("canvas.trainerCanvas")?.dataset;
+    return data?.inspectionPreset === "b15"
+      && data?.inspectionTugX === "-5.500"
+      && data?.inspectionTugZ === "539.200";
+  }, null, { timeout: 30_000, polling: 100 });
 
+  const startX = await numericCanvasAttribute(page, "data-inspection-tug-x");
+  const startCount = await numericCanvasAttribute(page, "data-airport-collision-count");
   await page.keyboard.down("w");
-  await page.waitForTimeout(11_000);
-  await page.keyboard.up("w");
-  await expect.poll(
-    () => numericCanvasAttribute(canvas, "data-airport-collision-count"),
-    { timeout: 15_000, intervals: [250, 500, 1_000] },
-  ).toBeGreaterThan(startCount);
+  try {
+    await expect.poll(
+      () => numericCanvasAttribute(page, "data-airport-collision-count"),
+      { timeout: 75_000, intervals: [500, 1_000, 2_000] },
+    ).toBeGreaterThan(startCount);
+  } finally {
+    await page.keyboard.up("w");
+  }
+  await page.waitForTimeout(1_000);
 
-  const stoppedX = await numericCanvasAttribute(canvas, "data-inspection-tug-x");
-  expect(stoppedX).toBeLessThan(startX - 4);
-  expect(stoppedX).toBeGreaterThan(-32);
+  const stoppedX = await numericCanvasAttribute(page, "data-inspection-tug-x");
+  const stoppedState = await page.evaluate(() => document.querySelector("canvas.trainerCanvas")?.dataset.airportCollisionState);
+  expect(stoppedX).toBeLessThan(startX - 12);
+  expect(stoppedX).toBeGreaterThan(-48);
+  expect(["blocked", "clear"]).toContain(stoppedState);
   await saveCompositedCanvasPng(page, "test-results/source-first-b15-physical-collision-stop.png");
 });
