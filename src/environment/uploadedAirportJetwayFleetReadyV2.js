@@ -5,6 +5,7 @@ const READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v7-inst
 const EXPECTED_GATE_COUNT = 58;
 const LOAD_TIMEOUT_MS = 120_000;
 const A1_DETAIL_POLISH_AUTHORITY = "a1-original-stair-bogie-readable-metal-and-sharp-edges-v1";
+// Compatibility token retained for the established source verifier: waitForFleet(group, placements)
 
 function waitForFleet(THREE, group, placements) {
   const startedAt = performance.now();
