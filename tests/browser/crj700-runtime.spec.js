@@ -175,7 +175,7 @@ test("verifies CRJ, A1 jetway, operator view and free-drive in one full-airport 
     async () => Number(await canvas.getAttribute("data-a1-jetway-deployment")),
     { timeout: 30_000, intervals: [50, 75, 100, 250] },
   ).toBeLessThanOrEqual(0.005);
-  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "parked");
+  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "parked-clear-of-aircraft");
   await expect(page.getByText(/Jetway parked clear/i)).toBeVisible();
   const sequenceHistory = (await canvas.getAttribute("data-a1-jetway-state-history") || "")
     .split(",")
