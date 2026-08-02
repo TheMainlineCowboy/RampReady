@@ -17,6 +17,7 @@ on:
       - 'scripts/prepare-a1-terminal-connector-v11.mjs'
       - 'scripts/prepare-a1-terminal-portal-seal-v37.mjs'
       - 'scripts/prepare-full-airport-inspection-route.mjs'
+      - 'scripts/prepare-airport-collision-guard-v45.mjs'
       - 'scripts/prepare-kphx-source-aerial-priority-v41.mjs'
       - 'scripts/prepare-terminal4-facade-visual-v7.mjs'
       - 'scripts/prepare-terminal4-facade-continuity-v8.mjs'
@@ -75,7 +76,7 @@ jobs:
           npm install --no-save @playwright/test@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Capture focused A1 and tug-launch evidence
+      - name: Capture focused A1, tug-launch and physical-collision evidence
         run: npx playwright test tests/browser/source-first-a1-repair.spec.js --reporter=line --workers=1
 
       - name: Upload repair evidence
