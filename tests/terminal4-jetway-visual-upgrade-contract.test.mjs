@@ -3,6 +3,7 @@ import fs from "node:fs";
 const moduleSource = fs.readFileSync("src/environment/terminal4JetwayVisualUpgradeV35.js", "utf8");
 const preparation = fs.readFileSync("scripts/prepare-terminal4-jetway-visual-upgrade-v35.mjs", "utf8");
 const uploadedFleet = fs.readFileSync("src/environment/uploadedAirportJetwayFleet.js", "utf8");
+const uploadedConnectors = fs.readFileSync("src/environment/uploadedAirportJetwayTerminalConnector.js", "utf8");
 const uploadedPreparation = fs.readFileSync("scripts/prepare-uploaded-airport-jetway-fleet.mjs", "utf8");
 const uvPreparation = fs.readFileSync("scripts/prepare-terminal4-jetway-source-uv-v36.mjs", "utf8");
 const continuity = fs.readFileSync("scripts/prepare-terminal4-facade-continuity-v8.mjs", "utf8");
@@ -42,14 +43,15 @@ for (const token of [
 }
 
 for (const token of [
-  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v4-instanced-static-source-textured",
+  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured",
   "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2",
-  "57-static-gates-instanced-plus-1-animated-a1-source-geometry-v4",
+  "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5",
   "Tunnel_B",
   "Tunnel_C",
   "Cab",
   "UploadedAirportJetwayFleet",
   "UploadedAirportJetwayStaticInstancedBatches",
+  "addUploadedAirportJetwayStaticTerminalConnectors",
   "addProjectedUvs",
   "cloneCorrugatedAtlasBand",
   "collectPrototypeMeshes",
@@ -60,6 +62,9 @@ for (const token of [
   "uploadedJetwayStaticInstancedGateCount = staticFleet.staticGateCount",
   "uploadedJetwayAnimatedIndividualGateCount = 1",
   "uploadedJetwayStaticPrimitiveBatchCount = staticFleet.primitiveBatchCount",
+  "uploadedJetwayStaticConnectorGateCount = staticConnectors.staticGateCount",
+  "uploadedJetwayStaticConnectorBatchCount = staticConnectors.batchCount",
+  "uploadedJetwayIndividualConnectorGateCount = 1",
   "proceduralJetwayStairCount = 0",
   "hiddenGeneratedObjectCount",
   "PART_COUNT = 5",
@@ -73,6 +78,22 @@ for (const forbidden of [
 ]) {
   if (uploadedFleet.includes(forbidden)) throw new Error(`Uploaded Terminal 4 jetway fleet retained an all-gate rendering cost: ${forbidden}`);
 }
+
+for (const token of [
+  "57-static-terminal-connectors-three-instanced-box-batches-v1",
+  "addUploadedAirportJetwayStaticTerminalConnectors",
+  "UploadedAirportJetwayStaticTerminalConnectorBatches",
+  "UploadedAirportJetwayStaticConnectorShells",
+  "UploadedAirportJetwayStaticConnectorFrames",
+  "UploadedAirportJetwayStaticConnectorGlass",
+  "new THREE.InstancedMesh",
+  "staticGateCount: staticPlacements.length",
+  "batchCount: group.children.length",
+  "deep-overlap-open-framed-terminal-end-v3",
+]) {
+  if (!uploadedConnectors.includes(token)) throw new Error(`Uploaded Terminal 4 connector batching is missing ${token}`);
+}
+
 for (const token of [
   "uploadedJetwayPlacements",
   "installUploadedAirportJetwayFleet",
@@ -112,4 +133,4 @@ for (const forbidden of [
   }
 }
 
-console.log("The supplied source-textured Tunnel_A/B/C/Rotunda/Cab fleet is the production authority at all 58 gates: 57 static gates are batched from the exact shared geometry and materials, A1 remains an individual animated model and no procedural replacement or all-gate edge dressing is wired into runtime.");
+console.log("The supplied source-textured Tunnel_A/B/C/Rotunda/Cab fleet is the production authority at all 58 gates: 57 static jetways and their terminal connectors are batched, A1 remains an individual animated model with a detailed deep-overlap connector, and no procedural replacement or all-gate edge dressing is wired into runtime.");
