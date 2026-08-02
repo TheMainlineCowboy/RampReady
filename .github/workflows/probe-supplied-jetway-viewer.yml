@@ -19,8 +19,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # This is the exact public viewer payload for the user-supplied model.
           python - <<'PY'
-          import base64, json, pathlib, urllib.request
+          import json, pathlib, urllib.request
           uid = '6067e855917e498abee3d98076293cc6'
           headers = {
               'User-Agent': 'Mozilla/5.0',
