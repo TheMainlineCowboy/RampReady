@@ -14,13 +14,22 @@ function requireTokens(path, tokens) {
 }
 
 const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
-  'MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured"',
+  'MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v6-source-detail-material-split"',
   'MATERIAL_AUTHORITY = "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2"',
+  'DETAIL_MATERIAL_AUTHORITY = "source-triangle-stair-and-bogie-material-split-v1"',
   'PERFORMANCE_AUTHORITY = "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5"',
   "geometry.part",
   "DecompressionStream(\"gzip\")",
   "addProjectedUvs",
   "cloneCorrugatedAtlasBand",
+  "splitTunnelCSourceDetail",
+  'const isStair = centerX > 16.4 && centerY < -1.55 && centerZ < 4.8',
+  "centerX >= 15.0",
+  "centerX < 16.8",
+  "centerZ < 1.3",
+  'root.name = "Tunnel_C_SourceDetailMaterialSplit"',
+  '"Tunnel_C_GalvanizedServiceStair_SourceTriangles"',
+  '"Tunnel_C_DarkBogieLift_SourceTriangles"',
   "collectPrototypeMeshes",
   "buildStaticInstancedFleet",
   "new THREE.InstancedMesh",
@@ -33,6 +42,8 @@ const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
   "uploadedJetwayCount = placements.length",
   "uploadedJetwayMeasuredTerminalConnectorCount = placements.length",
   "uploadedJetwayMaterialAuthority = prototype.userData.materialAuthority",
+  "uploadedJetwayDetailMaterialAuthority = prototype.userData.detailMaterialAuthority",
+  "uploadedJetwayStairMaterialSplitActive = true",
   "uploadedJetwayPerformanceAuthority = prototype.userData.performanceAuthority",
   "uploadedJetwayShadowCasterGateCount = shadowCasterGateCount",
   "uploadedJetwayGlobalEdgeOverlayCount = 0",
@@ -51,16 +62,19 @@ for (const forbidden of [
   "addStructuralEdges",
   "new THREE.EdgesGeometry",
   "new THREE.LineSegments",
+  "proceduralJetwayStair",
 ]) {
   if (fleet.includes(forbidden)) throw new Error(`Uploaded jetway fleet contains retired global rendering work: ${forbidden}`);
 }
 
 requireTokens("src/environment/uploadedAirportJetwayFleetReadyV2.js", [
-  'READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured"',
+  'READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v8-source-detail-materials-and-facade-portal"',
   "EXPECTED_GATE_COUNT = 58",
   "placements.map((placement) => `UploadedAirportJetway_${placement.gate}`)",
   "missingModels",
   'materialAuthority.includes("exact-M1DGJETWAY")',
+  'detailMaterialAuthority !== "source-triangle-stair-and-bogie-material-split-v1"',
+  "!stairMaterialSplitActive",
   'performanceAuthority !== "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5"',
   "shadowCasterGateCount !== 1",
   "globalEdgeOverlayCount !== 0",
@@ -96,7 +110,7 @@ if ((jetways.match(/uploadedAirportJetwayFleetReadyV2\.js/g) || []).length !== 1
 }
 
 requireTokens("src/environment/uploadedAirportJetwayTerminalConnector.js", [
-  'CONNECTOR_AUTHORITY = "measured-authored-terminal-wall-to-uploaded-rotunda-v4-static-instanced-a1-deep-overlap"',
+  'CONNECTOR_AUTHORITY = "measured-authored-terminal-wall-to-uploaded-rotunda-v5-facade-plane-portal-static-instanced"',
   'STATIC_CONNECTOR_BATCH_AUTHORITY = "57-static-terminal-connectors-three-instanced-box-batches-v1"',
   'const terminalOverlap = placement.gate === "A1" ? 1.45 : 0.55',
   "addUploadedAirportJetwayStaticTerminalConnectors",
@@ -106,10 +120,16 @@ requireTokens("src/environment/uploadedAirportJetwayTerminalConnector.js", [
   'buildInstancedBatch(THREE, "UploadedAirportJetwayStaticConnectorGlass"',
   "group.userData.staticGateCount = staticPlacements.length",
   "group.userData.batchCount = group.children.length",
-  'connector.userData.a1TerminalPortalFrame = "deep-overlap-open-framed-terminal-end-v3"',
-  "UploadedAirportJetwayTerminalPortalHeader_A1",
-  "UploadedAirportJetwayTerminalPortalThreshold_A1",
-  "UploadedAirportJetwayTerminalPortalJamb_A1",
+  'const facadeDistance = Math.max(0.8, frame.measuredLength - 0.08)',
+  "UploadedAirportJetwayTerminalPortalInterior_A1",
+  "UploadedAirportJetwayTerminalPortalOuterHeader_A1",
+  "UploadedAirportJetwayTerminalPortalOuterThreshold_A1",
+  "UploadedAirportJetwayTerminalPortalOuterJamb_A1",
+  "UploadedAirportJetwayTerminalPortalInnerJamb_A1",
+  "UploadedAirportJetwayTerminalPortalInnerHeader_A1",
+  'connector.userData.a1TerminalPortalFrame = "facade-plane-dark-reveal-with-hidden-deep-overlap-v4"',
+  "connector.userData.a1FacadePortalDistanceMeters = facadeDistance",
+  "connector.userData.a1HiddenOverlapMeters = frame.terminalOverlap",
 ]);
 
 requireTokens("src/environment/authoredTerminal4Visual.js", [
@@ -148,7 +168,7 @@ requireTokens("tests/browser/source-first-a1-repair.spec.js", [
   '"data-terminal4-uploaded-jetway-count"',
   '"data-terminal4-uploaded-jetway-connector-count"',
   '"data-terminal4-uploaded-jetway-verified-model-count"',
-  "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured",
+  "uploaded-airport-jetway-fleet-complete-58-gates-v8-source-detail-materials-and-facade-portal",
   "wide-diagonal-a1-terminal-joint-v6-clear-tug",
 ]);
 requireTokens("tests/browser/kphx-ground-runtime.spec.js", [
@@ -158,8 +178,8 @@ requireTokens("tests/browser/kphx-ground-runtime.spec.js", [
   "terminal4UploadedJetwayConnectorCount",
   "terminal4UploadedJetwayVerifiedModelCount",
   "terminal4UploadedJetwayReadyAuthority",
-  "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured",
-  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured",
+  "uploaded-airport-jetway-fleet-complete-58-gates-v8-source-detail-materials-and-facade-portal",
+  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v6-source-detail-material-split",
 ]);
 
-console.log("Verified the exact-source-textured supplied Tunnel_A/B/C/Rotunda/Cab fleet as 57 instanced static jetways and three instanced static connector batches plus one individually animated A1 with a deep-overlap framed connector, all 58 gate records, all 58 measured terminal connections, one jetway shadow caster and zero global edge overlays.");
+console.log("Verified the supplied Tunnel_A/B/C/Rotunda/Cab fleet with exact shell texture, source-triangle galvanized stair and dark bogie materials, 57 instanced static jetways, three instanced static connector batches, and one individually animated A1 with a facade-plane dark portal reveal plus hidden 1.45 m terminal overlap.");
