@@ -81,4 +81,5 @@ if ((source.match(/cameraTarget:\s*Object\.freeze/g) || []).length !== 1) {
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared the full-airport inspection route when absent, normalized a wide diagonal A1 terminal-connection camera and moved the inspection tug clear of the jetway stair/support footprint.");
+await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
+console.log("Prepared the full-airport inspection route when absent, normalized a wide diagonal A1 terminal-connection camera, moved the inspection tug clear of the jetway stair/support footprint, added physical airport collision protection and limited A1 bridge retraction to door-clearance travel.");
