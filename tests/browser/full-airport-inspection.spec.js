@@ -7,7 +7,7 @@ const PRESETS = [
   { id: "a1", x: 0, z: 0, file: "inspection-a1-ramp.png", groundFile: "inspection-a1-operator-ground.png" },
   { id: "a14", x: 218.45, z: -86.52, file: "inspection-a-concourse-midpoint.png" },
   { id: "b14", x: 216.4, z: 150.35, file: "inspection-b-concourse-midpoint.png" },
-  { id: "b15", x: -5.5, z: 539.2, file: "inspection-b15-ramp.png", groundFile: "inspection-b15-operator-ground.png" },
+  { id: "b15", x: -18.5, z: 539.2, file: "inspection-b15-ramp.png", groundFile: "inspection-b15-operator-ground.png" },
 ];
 
 async function launchRuntime(page) {
@@ -97,7 +97,7 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
   await expect(toggle).toHaveText("Return to training");
   await expect(canvas).toHaveAttribute(
     "data-inspection-route-authority",
-    "source-gate-apron-presets-with-wide-diagonal-a1-connection-a1-a14-b14-b15-v6",
+    "source-gate-apron-presets-with-wide-diagonal-a1-connection-near-wall-b15-a1-a14-b14-b15-v7",
   );
   await expect(canvas).toHaveAttribute(
     "data-inspection-telemetry-authority",
