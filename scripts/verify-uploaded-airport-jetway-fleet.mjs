@@ -55,6 +55,7 @@ const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
   "uploadedJetwayStaticConnectorInstanceCount = staticConnectors.instanceCount",
   "uploadedJetwayStaticConnectorBatchAuthority = staticConnectors.authority",
   "uploadedJetwayIndividualConnectorGateCount = 1",
+  "proceduralJetwayStairCount = 0",
   "sourceGeometryMode = MODEL_AUTHORITY",
 ]);
 for (const forbidden of [
@@ -62,7 +63,6 @@ for (const forbidden of [
   "addStructuralEdges",
   "new THREE.EdgesGeometry",
   "new THREE.LineSegments",
-  "proceduralJetwayStair",
 ]) {
   if (fleet.includes(forbidden)) throw new Error(`Uploaded jetway fleet contains retired global rendering work: ${forbidden}`);
 }
