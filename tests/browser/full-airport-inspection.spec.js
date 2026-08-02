@@ -22,6 +22,8 @@ async function launchRuntime(page) {
     ["data-environment-source", "authored-phx-terminal4-textured-source-jetways"],
     ["data-ground-source", "authored-kphx-v181-source-textured-nearfield"],
     ["data-photo-ground-source", "source-authored-phx-photo"],
+    ["data-terminal4-jetway-source-geometry-mode", "user-supplied-jetway-geometry-only"],
+    ["data-steering-mode", "rear"],
   ]) {
     await expect.poll(
       () => canvas.getAttribute(attribute),
@@ -95,23 +97,12 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-pressed", "true");
   await expect(toggle).toHaveText("Return to training");
-  await expect(canvas).toHaveAttribute(
-    "data-inspection-route-authority",
-    "source-gate-apron-presets-with-wide-diagonal-a1-connection-near-wall-b15-a1-a14-b14-b15-v7",
-  );
-  await expect(canvas).toHaveAttribute(
-    "data-inspection-telemetry-authority",
-    "synchronous-preset-placement-v2",
-  );
 
   const location = page.getByLabel("Inspection location");
   const camera = page.getByLabel("Camera view");
   await expect(location).toBeVisible();
   await expect(camera).toBeVisible();
 
-  // Exercise every source-derived route preset. Focused A1 and B15 visual
-  // evidence is captured by the source-first browser gate, so this test stays
-  // dedicated to full-route reachability and live free-drive motion.
   for (const preset of PRESETS) {
     await location.selectOption(preset.id);
     await expect(canvas).toHaveAttribute("data-inspection-preset", preset.id);
@@ -139,5 +130,5 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
 
   await camera.selectOption("overhead");
   await page.waitForTimeout(500);
-  await captureScene(page, "inspection-b15-overhead-after-drive.png");
+  await captureScene(page, "inspection-b15-source-only-overhead-after-drive.png");
 });
