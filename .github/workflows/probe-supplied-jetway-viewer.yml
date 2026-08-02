@@ -13,31 +13,54 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - name: Query public viewer metadata for the supplied model
+      - name: Request the downloadable archive for the supplied model
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json, urllib.request, pathlib, gzip, zlib
-          uid='6067e855917e498abee3d98076293cc6'
-          req=urllib.request.Request(f'https://sketchfab.com/i/models/{uid}', headers={'User-Agent':'Mozilla/5.0'})
-          with urllib.request.urlopen(req, timeout=30) as r:
-              data=json.load(r)
-          print('files=', json.dumps(data.get('files'), indent=2, sort_keys=True))
-          file_url=data['files'][0]['osgjsUrl']
-          req=urllib.request.Request(file_url, headers={'User-Agent':'Mozilla/5.0','Referer':f'https://sketchfab.com/models/{uid}/embed'})
-          with urllib.request.urlopen(req, timeout=30) as r:
-              payload=r.read()
-          pathlib.Path('file.binz').write_bytes(payload)
-          print('file.binz bytes=',len(payload),'head=',payload[:32].hex())
-          for name, decoder in [('gzip',gzip.decompress),('zlib',zlib.decompress)]:
+          import json, pathlib, urllib.error, urllib.request
+          uid = '6067e855917e498abee3d98076293cc6'
+          headers = {'User-Agent': 'RampReady source verification/1.0'}
+          endpoints = [
+              f'https://api.sketchfab.com/v3/models/{uid}',
+              f'https://api.sketchfab.com/v3/models/{uid}/download',
+          ]
+          for endpoint in endpoints:
+              request = urllib.request.Request(endpoint, headers=headers)
               try:
-                  decoded=decoder(payload)
-                  print(name,'decoded bytes=',len(decoded),'head=',decoded[:200])
-              except Exception as e:
-                  print(name,'decode failed=',repr(e))
+                  with urllib.request.urlopen(request, timeout=45) as response:
+                      payload = response.read()
+                      print(endpoint, 'status=', response.status, 'bytes=', len(payload))
+                      pathlib.Path('response-' + endpoint.rsplit('/', 1)[-1] + '.json').write_bytes(payload)
+                      if endpoint.endswith('/download'):
+                          data = json.loads(payload)
+                          print('download keys=', sorted(data))
+                          for archive_type in ('gltf', 'source', 'glb'):
+                              archive = data.get(archive_type)
+                              if not archive or not archive.get('url'):
+                                  continue
+                              print('selected archive=', archive_type, archive.get('size'), archive['url'])
+                              archive_request = urllib.request.Request(archive['url'], headers=headers)
+                              with urllib.request.urlopen(archive_request, timeout=120) as archive_response:
+                                  archive_bytes = archive_response.read()
+                              pathlib.Path(f'supplied-jetway-{archive_type}.zip').write_bytes(archive_bytes)
+                              print('archive bytes=', len(archive_bytes))
+                              break
+              except urllib.error.HTTPError as error:
+                  body = error.read()
+                  print(endpoint, 'HTTP', error.code, body[:500])
+              except Exception as error:
+                  print(endpoint, 'ERROR', repr(error))
           PY
-          file file.binz || true
-          strings file.binz | head -50 || true
+          ls -lh response-*.json supplied-jetway-*.zip 2>/dev/null || true
+      - name: Upload any recovered official archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: supplied-jetway-official-download
+          path: |
+            response-*.json
+            supplied-jetway-*.zip
+          if-no-files-found: warn
+          retention-days: 1
