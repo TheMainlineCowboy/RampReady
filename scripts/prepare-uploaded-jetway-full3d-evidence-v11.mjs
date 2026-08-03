@@ -80,4 +80,6 @@ for (const token of [
 ]) {
   if (!source.includes(token)) throw new Error(`${path}: missing full-3D runtime evidence ${token}`);
 }
-console.log("Prepared browser telemetry for full-3D supplied jetway contact, Cab normal, height and grounded stair/bogie checks.");
+
+await import("./prepare-uploaded-jetway-cab-threshold-v12.mjs");
+console.log("Prepared browser telemetry for full-3D supplied jetway contact, Cab normal, height, source doorway threshold, aircraft-plane clearance and grounded stair/bogie checks.");
