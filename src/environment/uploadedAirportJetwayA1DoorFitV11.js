@@ -210,16 +210,14 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
   if (!placement || !anchor || !model) throw new Error("Supplied A1 3D door fit is missing placement, anchor, or model");
 
   restoreUnarticulatedSource(model);
-  let rotundaCenter = measureRotundaCenter(THREE, model);
-  const sourceRoot = findSourceRootNode(model);
-  // The source archive's internal origin is offset about 0.7 m from the actual
-  // rotunda. Gate placement and the measured terminal connector both describe
-  // the rotunda center, so center the A1 source hierarchy on that authority
-  // before solving the aircraft-side articulation. Static gates remain untouched.
-  sourceRoot.position.x -= rotundaCenter.x;
-  sourceRoot.position.z -= rotundaCenter.z;
+  const rotundaCenter = measureRotundaCenter(THREE, model);
+  // Keep every authored RootNode transform untouched. The decoded prototype is
+  // an aligned outer group, so center that direct anchor child on the measured
+  // Rotunda instead of translating the archive hierarchy in the wrong frame.
+  model.position.x -= rotundaCenter.x;
+  model.position.z -= rotundaCenter.z;
+  model.updateMatrix();
   model.updateMatrixWorld(true);
-  rotundaCenter = measureRotundaCenter(THREE, model);
 
   const sourceContact = measureCabContact(THREE, model);
   const desiredX = CRJ_FORWARD_LEFT_DOOR.x - placement.x;
