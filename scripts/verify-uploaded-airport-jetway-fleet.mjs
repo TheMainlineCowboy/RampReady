@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import zlib from "node:zlib";
 
 function read(path) {
   if (!fs.existsSync(path)) throw new Error(`Uploaded jetway verification is missing ${path}`);
@@ -67,8 +68,17 @@ for (const forbidden of [
   if (fleet.includes(forbidden)) throw new Error(`Uploaded jetway fleet contains retired global rendering work: ${forbidden}`);
 }
 
-requireTokens("src/environment/uploadedAirportJetwayFleetReadyV2.js", [
+const ready = requireTokens("src/environment/uploadedAirportJetwayFleetReadyV2.js", [
   'READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured"',
+  'enforceExactUploadedJetwayVisualAuthority } from "./uploadedAirportJetwayExactModelGuard.js"',
+  'EXACT_MODEL_AUTHORITY = "user-supplied-airport-jetway-exclusive-geometry-v9"',
+  "const exactModelGuard = enforceExactUploadedJetwayVisualAuthority(group, fleet)",
+  "exactModelGuard.hiddenLegacyGroupCount < 1",
+  "exactModelGuard.hiddenSyntheticPortalCount < 1",
+  "exactModelGuard.hierarchy.requiredPartCount !== 5",
+  'uploadedJetwayA1DetailPolishAuthority = "none-exact-source-model"',
+  "uploadedJetwayA1DetailEdgeOverlayCount = exactModelGuard.hierarchy.syntheticEdgeCount",
+  "uploadedJetwayParentAxisCorrectionRadians = 0",
   "EXPECTED_GATE_COUNT = 58",
   "placements.map((placement) => `UploadedAirportJetway_${placement.gate}`)",
   "missingModels",
@@ -91,6 +101,40 @@ requireTokens("src/environment/uploadedAirportJetwayFleetReadyV2.js", [
   "waitForFleet(group, placements)",
   "installUploadedAirportJetwayFleetBase(THREE, group, placements, sourceTextures)",
 ]);
+for (const forbidden of [
+  "polishUploadedA1JetwayDetail",
+  "A1_DETAIL_POLISH_AUTHORITY",
+  "aligned.rotation.y = Math.PI / 2",
+]) {
+  if (ready.includes(forbidden)) throw new Error(`Uploaded jetway ready wrapper mutates the supplied model: ${forbidden}`);
+}
+
+requireTokens("src/environment/uploadedAirportJetwayExactModelGuard.js", [
+  'EXACT_MODEL_AUTHORITY = "user-supplied-airport-jetway-exclusive-geometry-v9"',
+  'REQUIRED_SOURCE_PARTS = Object.freeze(["Tunnel_A", "Tunnel_B", "Tunnel_C", "Rotunda", "Cab"])',
+  'LEGACY_BRIDGE_PATTERN = /^(?:AIR_Jetway01_',
+  'A1_SYNTHETIC_PORTAL_PATTERN = /^UploadedAirportJetwayTerminalPortal/i',
+  "Supplied airport jetway prototype was deformed",
+  "Supplied airport jetway prototype received a non-authored axis rotation",
+  "Supplied airport jetway contains ${syntheticEdgeCount} non-source edge overlays",
+  "uploadedJetwayExactSourceGeometryPreserved = true",
+  "uploadedJetwayParentAxisCorrectionRadians = 0",
+]);
+
+const encodedGeometry = Array.from({ length: 5 }, (_, index) => (
+  read(`public/models/airport-jetway/geometry.part${index}`).trim()
+)).join("");
+const geometryPayload = zlib.gunzipSync(Buffer.from(encodedGeometry, "base64"));
+const metadataLength = geometryPayload.readUInt32LE(0);
+const metadata = JSON.parse(geometryPayload.subarray(4, 4 + metadataLength).toString("utf8"));
+const authoredNodeNames = new Set(metadata.nodes.map((node) => node.name));
+for (const requiredName of ["Tunnel_A", "Tunnel_B", "Tunnel_C", "Rotunda", "Cab"]) {
+  if (!authoredNodeNames.has(requiredName)) throw new Error(`Supplied jetway geometry payload is missing ${requiredName}`);
+}
+const rootNode = metadata.nodes.find((node) => node.name === "RootNode");
+if (!rootNode || rootNode.children?.length !== 5) {
+  throw new Error(`Supplied jetway RootNode expected five exact authored assemblies, received ${rootNode?.children?.length ?? 0}`);
+}
 
 const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js", [
   'installUploadedAirportJetwayFleet } from "./uploadedAirportJetwayFleetReadyV2.js"',
@@ -182,4 +226,4 @@ requireTokens("tests/browser/kphx-ground-runtime.spec.js", [
   "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured",
 ]);
 
-console.log("Verified the supplied Tunnel_A/B/C/Rotunda/Cab fleet with exact shell texture, source-triangle galvanized stair and dark bogie materials, 57 instanced static jetways, three instanced static connector batches, and one individually animated A1 with a facade-plane dark portal reveal plus hidden 1.45 m terminal overlap.");
+console.log("Verified the exact supplied Tunnel_A/B/C/Rotunda/Cab hierarchy at all 58 gates with no parent-axis rotation, no geometry deformation, no synthetic edge overlays, all duplicate AIR_Jetway01/fixed-walkway visuals hidden, and the synthetic A1 portal frame suppressed while the measured terminal overlap remains.");
