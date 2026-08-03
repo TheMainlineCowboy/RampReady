@@ -1,12 +1,12 @@
 import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";
-import { polishUploadedA1JetwayDetail } from "./a1UploadedJetwayDetailPolish.js";
 import { installStaticJetwayPortalClosures } from "./staticJetwayPortalClosures.js";
+import { enforceExactUploadedJetwayVisualAuthority } from "./uploadedAirportJetwayExactModelGuard.js";
 
 const READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured";
 const EXPECTED_GATE_COUNT = 58;
 const LOAD_TIMEOUT_MS = 120_000;
-const A1_DETAIL_POLISH_AUTHORITY = "a1-original-stair-bogie-readable-metal-and-sharp-edges-v1";
 const STATIC_PORTAL_AUTHORITY = "57-static-terminal-portals-paired-vestibule-doors-v1";
+const EXACT_MODEL_AUTHORITY = "user-supplied-airport-jetway-exclusive-geometry-v9";
 // Compatibility token retained for the established source verifier: waitForFleet(group, placements)
 
 function waitForFleet(THREE, group, placements) {
@@ -37,16 +37,8 @@ function waitForFleet(THREE, group, placements) {
           reject(new Error("Uploaded airport jetway fleet is ready without the individual A1 model"));
           return;
         }
-        const a1DetailPolish = a1Model.userData.a1SourceDetailPolishAuthority === A1_DETAIL_POLISH_AUTHORITY
-          ? {
-            authority: A1_DETAIL_POLISH_AUTHORITY,
-            stairMeshCount: Number(a1Model.userData.a1SourceStairMeshCount || 0),
-            bogieMeshCount: Number(a1Model.userData.a1SourceBogieMeshCount || 0),
-            edgeOverlayCount: Number(a1Model.userData.a1SourceDetailEdgeOverlayCount || 0),
-            geometryReplaced: a1Model.userData.a1SourceDetailGeometryReplaced === true,
-          }
-          : polishUploadedA1JetwayDetail(THREE, a1Model);
         const staticPortalClosures = installStaticJetwayPortalClosures(THREE, fleet, placements);
+        const exactModelGuard = enforceExactUploadedJetwayVisualAuthority(group, fleet);
         const materialAuthority = group.userData.uploadedJetwayMaterialAuthority || "missing";
         const detailMaterialAuthority = group.userData.uploadedJetwayDetailMaterialAuthority || "missing";
         const stairMaterialSplitActive = group.userData.uploadedJetwayStairMaterialSplitActive === true;
@@ -79,35 +71,40 @@ function waitForFleet(THREE, group, placements) {
           || staticConnectorInstanceCount < 1
           || staticConnectorBatchAuthority !== "57-static-terminal-connectors-three-instanced-box-batches-v1"
           || individualConnectorGateCount !== 1
-          || a1DetailPolish.authority !== A1_DETAIL_POLISH_AUTHORITY
-          || a1DetailPolish.stairMeshCount !== 1
-          || a1DetailPolish.bogieMeshCount !== 1
-          || a1DetailPolish.edgeOverlayCount !== 2
-          || a1DetailPolish.geometryReplaced
           || staticPortalClosures.authority !== STATIC_PORTAL_AUTHORITY
           || staticPortalClosures.gateCount !== 57
           || staticPortalClosures.batchCount !== 2
           || staticPortalClosures.panelCount !== 114
           || staticPortalClosures.windowCount !== 114
+          || exactModelGuard.authority !== EXACT_MODEL_AUTHORITY
+          || exactModelGuard.hiddenLegacyGroupCount < 1
+          || exactModelGuard.hiddenSyntheticPortalCount < 1
+          || exactModelGuard.hierarchy.requiredPartCount !== 5
         ) {
           reject(new Error(
-            `Uploaded airport jetway fleet reported ready with ${count} placements, ${connectorCount} connectors, ${modelCount} gate records, shell material ${materialAuthority}, detail material ${detailMaterialAuthority}, stair split ${stairMaterialSplitActive}, performance ${performanceAuthority}, ${shadowCasterGateCount} shadow-casting gates, ${globalEdgeOverlayCount} global edge overlays, ${staticInstancedGateCount} instanced static jetways, ${animatedIndividualGateCount} animated jetways, ${staticPrimitiveBatchCount} jetway primitive batches, ${staticConnectorGateCount} static connector gates, ${staticConnectorBatchCount} connector batches, ${staticConnectorInstanceCount} connector instances, connector authority ${staticConnectorBatchAuthority}, ${individualConnectorGateCount} individual connectors, A1 detail ${a1DetailPolish.authority}/${a1DetailPolish.stairMeshCount}/${a1DetailPolish.bogieMeshCount}/${a1DetailPolish.edgeOverlayCount}/${a1DetailPolish.geometryReplaced}, and static portals ${staticPortalClosures.authority}/${staticPortalClosures.gateCount}/${staticPortalClosures.batchCount}/${staticPortalClosures.panelCount}/${staticPortalClosures.windowCount}${missingModels.length ? `; missing ${missingModels.join(", ")}` : ""}`,
+            `Uploaded airport jetway fleet reported ready with ${count} placements, ${connectorCount} connectors, ${modelCount} gate records, shell material ${materialAuthority}, detail material ${detailMaterialAuthority}, stair split ${stairMaterialSplitActive}, performance ${performanceAuthority}, ${shadowCasterGateCount} shadow-casting gates, ${globalEdgeOverlayCount} global edge overlays, ${staticInstancedGateCount} instanced static jetways, ${animatedIndividualGateCount} animated jetways, ${staticPrimitiveBatchCount} jetway primitive batches, ${staticConnectorGateCount} static connector gates, ${staticConnectorBatchCount} connector batches, ${staticConnectorInstanceCount} connector instances, connector authority ${staticConnectorBatchAuthority}, ${individualConnectorGateCount} individual connectors, exact source detail ${exactModelGuard.hierarchy.stairMeshCount}/${exactModelGuard.hierarchy.bogieMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}, and static portals ${staticPortalClosures.authority}/${staticPortalClosures.gateCount}/${staticPortalClosures.batchCount}/${staticPortalClosures.panelCount}/${staticPortalClosures.windowCount}, exact model ${exactModelGuard.authority}/${exactModelGuard.hiddenLegacyGroupCount}/${exactModelGuard.hiddenSyntheticPortalCount}/${exactModelGuard.hierarchy.requiredPartCount}${missingModels.length ? `; missing ${missingModels.join(", ")}` : ""}`,
           ));
           return;
         }
         group.userData.uploadedJetwayReadyAuthority = READY_AUTHORITY;
         group.userData.uploadedJetwayVerifiedModelCount = modelCount;
         group.userData.uploadedJetwayVerifiedGateNames = [...loadedModelNames].sort().join(",");
-        group.userData.uploadedJetwayA1DetailPolishAuthority = a1DetailPolish.authority;
-        group.userData.uploadedJetwayA1SourceStairMeshCount = a1DetailPolish.stairMeshCount;
-        group.userData.uploadedJetwayA1SourceBogieMeshCount = a1DetailPolish.bogieMeshCount;
-        group.userData.uploadedJetwayA1DetailEdgeOverlayCount = a1DetailPolish.edgeOverlayCount;
-        group.userData.uploadedJetwayA1SourceGeometryReplaced = a1DetailPolish.geometryReplaced;
+        group.userData.uploadedJetwayA1DetailPolishAuthority = "none-exact-source-model";
+        group.userData.uploadedJetwayA1SourceStairMeshCount = exactModelGuard.hierarchy.stairMeshCount;
+        group.userData.uploadedJetwayA1SourceBogieMeshCount = exactModelGuard.hierarchy.bogieMeshCount;
+        group.userData.uploadedJetwayA1DetailEdgeOverlayCount = exactModelGuard.hierarchy.syntheticEdgeCount;
+        group.userData.uploadedJetwayA1SourceGeometryReplaced = exactModelGuard.hierarchy.geometryReplaced;
         group.userData.uploadedJetwayStaticPortalClosureAuthority = staticPortalClosures.authority;
         group.userData.uploadedJetwayStaticPortalClosureGateCount = staticPortalClosures.gateCount;
         group.userData.uploadedJetwayStaticPortalClosureBatchCount = staticPortalClosures.batchCount;
         group.userData.uploadedJetwayStaticPortalClosurePanelCount = staticPortalClosures.panelCount;
         group.userData.uploadedJetwayStaticPortalClosureWindowCount = staticPortalClosures.windowCount;
+        group.userData.uploadedJetwayExactModelAuthority = exactModelGuard.authority;
+        group.userData.uploadedJetwayExactSourceGeometryPreserved = true;
+        group.userData.uploadedJetwayLegacyBridgeGroupCountHidden = exactModelGuard.hiddenLegacyGroupCount;
+        group.userData.uploadedJetwaySyntheticA1PortalCountHidden = exactModelGuard.hiddenSyntheticPortalCount;
+        group.userData.uploadedJetwayAuthoredPartCount = exactModelGuard.hierarchy.requiredPartCount;
+        group.userData.uploadedJetwayParentAxisCorrectionRadians = 0;
         resolve({
           count,
           connectorCount,
@@ -126,8 +123,8 @@ function waitForFleet(THREE, group, placements) {
           staticConnectorInstanceCount,
           staticConnectorBatchAuthority,
           individualConnectorGateCount,
-          a1DetailPolish,
           staticPortalClosures,
+          exactModelGuard,
           authority: READY_AUTHORITY,
         });
         return;
@@ -148,7 +145,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
   const controller = installUploadedAirportJetwayFleetBase(THREE, group, placements, sourceTextures);
   const ready = waitForFleet(THREE, group, placements);
   group.userData.uploadedJetwayReady = ready;
-  group.userData.uploadedJetwayReadyAuthority = "waiting-for-source-detail-material-facade-portal-a1-readability-and-static-closures";
+  group.userData.uploadedJetwayReadyAuthority = "waiting-for-exact-source-model-exclusive-visual-authority";
   controller.ready = ready;
   return controller;
 }
