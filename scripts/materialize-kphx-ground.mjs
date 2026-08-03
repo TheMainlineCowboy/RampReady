@@ -3,11 +3,13 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 
-const SOURCE_COMMIT = "7ee8f9b4712f842706f00aa5a307e8861b601620";
+const SOURCE_COMMIT = "2e6642778c9c88eac6a82b21063763cc78be7cfe";
 const SOURCE_BGL_PATH = "scenery/KPHX_ADEX.BGL";
 const SOURCE_BGL_BYTES = 183_319;
 const SOURCE_BGL_GIT_BLOB_SHA1 = "fa185427e154eb92058e755b9fbdb1ad799317ed";
-const SOURCE_ROOT = `https://raw.githubusercontent.com/TheMainlineCowboy/SkyHarborPhx/${SOURCE_COMMIT}`;
+const PACKAGE_ROOT = path.resolve(`.cache/skyharborphx-package/${SOURCE_COMMIT}`);
+const PACKAGE_BGL_PATH = path.join(PACKAGE_ROOT, "scenery", "KPHX_ADEX.BGL");
+const INSPECTOR_PATH = path.resolve("scripts/inspect-kphx-adex.mjs");
 const OUTPUT_DIR = path.resolve("public/models/kphx-ground");
 const CACHE_DIR = path.resolve(".cache/kphx-ground-source");
 const EXPECTED = Object.freeze({
@@ -32,22 +34,18 @@ const gitBlobSha1 = (bytes) => createHash("sha1")
   .digest("hex");
 const nearlyEqual = (a, b, tolerance = 1e-6) => Math.abs(a - b) <= tolerance;
 
-async function download(relativePath) {
-  const url = `${SOURCE_ROOT}/${relativePath}`;
-  const response = await fetch(url, { headers: { "User-Agent": "RampReady-KPHX-Ground-Materializer" } });
-  if (!response.ok) throw new Error(`Failed to download ${url}: HTTP ${response.status}`);
-  return Buffer.from(await response.arrayBuffer());
-}
-
 await rm(CACHE_DIR, { recursive: true, force: true });
 await rm(OUTPUT_DIR, { recursive: true, force: true });
 await mkdir(CACHE_DIR, { recursive: true });
 await mkdir(OUTPUT_DIR, { recursive: true });
 
-const [bgl, inspector] = await Promise.all([
-  download(SOURCE_BGL_PATH),
-  download("scripts/inspect-kphx-adex.mjs"),
-]);
+const bgl = await readFile(PACKAGE_BGL_PATH).catch((error) => {
+  if (error?.code === "ENOENT") {
+    throw new Error(`Pinned package mirror is missing ${PACKAGE_BGL_PATH}; run materialize:phx-terminal4 first`);
+  }
+  throw error;
+});
+await readFile(INSPECTOR_PATH);
 if (bgl.length !== SOURCE_BGL_BYTES) throw new Error(`Unexpected KPHX ADEX source size ${bgl.length}`);
 const sourceBlobSha = gitBlobSha1(bgl);
 if (sourceBlobSha !== SOURCE_BGL_GIT_BLOB_SHA1) {
@@ -55,10 +53,8 @@ if (sourceBlobSha !== SOURCE_BGL_GIT_BLOB_SHA1) {
 }
 
 const bglPath = path.join(CACHE_DIR, "KPHX_ADEX.BGL");
-const inspectorPath = path.join(CACHE_DIR, "inspect-kphx-adex.mjs");
 const inspectionPath = path.join(CACHE_DIR, "inspection.json");
 await writeFile(bglPath, bgl);
-await writeFile(inspectorPath, inspector);
 
 function run(script, args, label) {
   const result = spawnSync(process.execPath, [script, ...args], {
@@ -71,7 +67,7 @@ function run(script, args, label) {
   return result.stdout;
 }
 
-run(inspectorPath, [bglPath, inspectionPath], "KPHX ADEX inspection");
+run(INSPECTOR_PATH, [bglPath, inspectionPath], "KPHX ADEX inspection");
 run(path.resolve("scripts/decode-kphx-runways.mjs"), [bglPath, inspectionPath], "KPHX runway decoding");
 run(path.resolve("scripts/build-kphx-simulator-ground.mjs"), [inspectionPath, OUTPUT_DIR], "KPHX simulator ground build");
 
@@ -137,6 +133,7 @@ const runtimeManifest = {
   sourceBytes: bgl.length,
   sourceGitBlobSha1: sourceBlobSha,
   sourceSha256: sha256(bgl),
+  sourceAcquisition: "local-pinned-package-mirror-no-secondary-network-fetch",
   coordinateFrame: groundManifest.coordinateFrame,
   detailLevel: groundManifest.detailLevel,
   anchor: groundManifest.anchor,
@@ -152,4 +149,4 @@ const runtimeManifest = {
   remainingSourceLayers: ["derived taxiway signage from source graph", "source boundary-fence visualization"],
 };
 await writeFile(path.join(OUTPUT_DIR, "runtime-manifest.json"), `${JSON.stringify(runtimeManifest, null, 2)}\n`);
-console.log(`RampReady airport-wide KPHX simulator ground materialized: ${EXPECTED.runways} exact runways, ${groundManifest.counts.pathSurfaces} source-drawn path surfaces, ${groundManifest.counts.holdShortCount} hold shorts and ${groundManifest.counts.runwayMarkingElementCount} runway marking elements.`);
+console.log(`RampReady airport-wide KPHX simulator ground materialized from the local pinned source package: ${EXPECTED.runways} exact runways, ${groundManifest.counts.pathSurfaces} source-drawn path surfaces, ${groundManifest.counts.holdShortCount} hold shorts and ${groundManifest.counts.runwayMarkingElementCount} runway marking elements.`);

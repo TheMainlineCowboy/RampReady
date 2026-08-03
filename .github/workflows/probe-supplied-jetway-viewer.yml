@@ -1,0 +1,63 @@
+name: Probe supplied jetway viewer source
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/probe-supplied-jetway-viewer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download and inspect the supplied model viewer source
+        shell: bash
+        run: |
+          set -euo pipefail
+          # This is the exact public viewer payload for the user-supplied model.
+          python - <<'PY'
+          import json, pathlib, urllib.request
+          uid = '6067e855917e498abee3d98076293cc6'
+          headers = {
+              'User-Agent': 'Mozilla/5.0',
+              'Referer': f'https://sketchfab.com/models/{uid}/embed',
+          }
+          request = urllib.request.Request(f'https://sketchfab.com/i/models/{uid}', headers=headers)
+          with urllib.request.urlopen(request, timeout=45) as response:
+              data = json.load(response)
+          pathlib.Path('viewer-model.json').write_text(json.dumps(data, indent=2, sort_keys=True))
+          source = data['files'][0]
+          source_url = source['osgjsUrl']
+          source_request = urllib.request.Request(source_url, headers=headers)
+          with urllib.request.urlopen(source_request, timeout=120) as response:
+              payload = response.read()
+          pathlib.Path('file.binz').write_bytes(payload)
+          pathlib.Path('file-probe.json').write_text(json.dumps({
+              'uid': uid,
+              'url': source_url,
+              'bytes': len(payload),
+              'first64Hex': payload[:64].hex(),
+              'metadata': source,
+          }, indent=2, sort_keys=True))
+          print('viewer source bytes=', len(payload))
+          print('first 64 bytes=', payload[:64].hex())
+          print('file metadata=', json.dumps(source, indent=2))
+          PY
+          file file.binz || true
+          xxd -l 256 file.binz || true
+          strings -n 8 file.binz | head -100 || true
+      - name: Upload exact viewer source for local inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: supplied-jetway-viewer-source
+          path: |
+            viewer-model.json
+            file.binz
+            file-probe.json
+          if-no-files-found: error
+          retention-days: 1

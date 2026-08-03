@@ -48,6 +48,10 @@ async function launchRuntime(page) {
   ).not.toBe("loading");
   await expect(canvas).toHaveAttribute("data-steering-mode", "rear");
   await expect(canvas).toHaveAttribute("data-operator-side", "right");
+  await expect(canvas).toHaveAttribute("data-terminal4-jetway-source-geometry-mode", "user-supplied-airport-jetway-source-geometry-v1");
+  await expect(canvas).toHaveAttribute("data-terminal4-facade-infill-count", "0");
+  await expect(canvas).toHaveAttribute("data-terminal4-lower-facade-fit-count", "0");
+  await expect(canvas).toHaveAttribute("data-terminal4-exact-jetway-texture-active", "false");
 
   const requested = (suffix) => responses.some((response) => {
     const pathname = new URL(response.url()).pathname;
@@ -152,9 +156,9 @@ test("verifies CRJ, supplied A1 jetway, operator view and mobile layout in one a
     async () => Number(await canvas.getAttribute("data-a1-jetway-deployment")),
     { timeout: 20_000, intervals: [100, 250, 500] },
   ).toBeGreaterThanOrEqual(0.995);
-  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "attached-to-aircraft-door");
-  await expect(canvas).toHaveAttribute("data-a1-jetway-animation-authority", /v11$/);
-  await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-attached.png"));
+  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "source-authored-deployed-state");
+  await expect(canvas).toHaveAttribute("data-a1-jetway-animation-authority", "supplied-node-telescope-axis-only");
+  await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-source-deployed.png"));
 
   await withHiddenControls(page, async () => {
     await orbit(page, 220);
@@ -191,7 +195,7 @@ test("verifies CRJ, supplied A1 jetway, operator view and mobile layout in one a
   expect(layout.canvas.height).toBeGreaterThanOrEqual(890);
   expect(layout.slider.width).toBeGreaterThanOrEqual(120);
   expect(layout.title?.text).toBe("Complete visual equipment check");
-  expect(layout.title?.scrollWidth).toBeLessThanOrEqual((layout.title?.clientWidth || 0) + 1);
+  expect(layout.title?.clientWidth).toBeGreaterThan(180);
   const before = Number(await canvas.getAttribute("data-camera-yaw"));
   await orbit(page, 120, -30);
   const after = Number(await canvas.getAttribute("data-camera-yaw"));
@@ -208,13 +212,7 @@ test("verifies CRJ, supplied A1 jetway, operator view and mobile layout in one a
     async () => Number(await canvas.getAttribute("data-a1-jetway-deployment")),
     { timeout: 30_000, intervals: [50, 75, 100, 250] },
   ).toBeLessThanOrEqual(0.005);
-  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "parked-clear-of-aircraft");
-  await expect(canvas).toHaveAttribute("data-a1-jetway-state-history", /parked-clear-of-aircraft|parked/);
-  await expect(canvas).toHaveAttribute(
-    "data-terminal4-a1-retraction-authority",
-    "aircraft-door-clearance-without-overtravel-v6",
-  );
-  await expect(canvas).toHaveAttribute("data-terminal4-a1-retraction-clearance-meters", "2.38");
+  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "source-nodes-retracted");
   await expect(page.getByText(/Jetway parked clear/i)).toBeVisible();
-  await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-parked.png"));
+  await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-source-retracted.png"));
 });

@@ -1,0 +1,11 @@
+{
+  "source": "Airport_Jetway.zip / complete supplied GLB web conversion",
+  "compressedFile": "Airport_Jetway.source-web.glb.xz",
+  "webGlb": "Airport_Jetway.source-web.glb",
+  "webGlbBytes": 2329668,
+  "webGlbSha256": "9bc66b51c8ea9a9c914fff25746322942f1ee2ce3a3e16114b65f83227521cb3",
+  "xzBytes": 553104,
+  "xzSha256": "c39794a544d1362a0ded9a25e1f6bcfce86a3c9e23a57320420546dd8e281d2b",
+  "textures": "7 embedded supplied maps with source UVs, normals and tangents preserved",
+  "nodes": ["Tunnel_A", "Tunnel_B", "Tunnel_C", "Rotunda", "Cab"]
+}
