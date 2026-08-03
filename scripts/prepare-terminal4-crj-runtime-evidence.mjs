@@ -137,4 +137,32 @@ for (const [path, tokens] of [
   for (const token of tokens) if (!source.includes(token)) throw new Error(`${path}: missing source-scale jetway runtime evidence ${token}`);
 }
 
-console.log("Prepared honest Terminal 4 jetway runtime evidence: stock scale is preserved and the uploaded replacement must report ready with 58 decoded models and 58 measured terminal connectors.");
+// This script is the last jetway evidence writer before production bundling.
+// Re-run the full-3D evidence patch here so later baseline telemetry cannot
+// leave the Cab pose, height, ground-clearance or static-order fields absent.
+await import("./prepare-uploaded-jetway-full3d-evidence-v11.mjs");
+const finalRuntimeSource = fs.readFileSync(runtimePath, "utf8");
+for (const token of [
+  'dataset.terminal4UploadedJetwayStaticPartOrderValid = "loading"',
+  "dataset.terminal4UploadedJetwayStaticPartOrderValid = String",
+  'dataset.terminal4UploadedJetwayStaticPartOrderValid = "load-error"',
+  "dataset.terminal4UploadedJetwayStaticMaximumCabNormalErrorDegrees",
+  "dataset.terminal4UploadedJetwayStaticMaximumCabHeightErrorMeters",
+  "dataset.terminal4UploadedJetwayStaticMinimumStairGroundClearanceMeters",
+  "dataset.terminal4UploadedJetwayStaticMaximumStairGroundClearanceMeters",
+  "dataset.terminal4UploadedJetwayStaticMinimumBogieGroundClearanceMeters",
+  "dataset.terminal4UploadedJetwayStaticMaximumBogieGroundClearanceMeters",
+  "dataset.terminal4UploadedJetwayA1CabNormalErrorDegrees",
+  "dataset.terminal4UploadedJetwayA1CabHeightErrorMeters",
+  "dataset.terminal4UploadedJetwayA1StairGroundClearanceMeters",
+  "dataset.terminal4UploadedJetwayA1BogieGroundClearanceMeters",
+  "dataset.terminal4UploadedJetwayA1AnchorYawDegrees",
+  "dataset.terminal4UploadedJetwayA1CabYawOffsetDegrees",
+  "dataset.terminal4UploadedJetwayA1ActualContactPoint",
+]) {
+  if (!finalRuntimeSource.includes(token)) {
+    throw new Error(`${runtimePath}: final full-3D jetway evidence is missing ${token}`);
+  }
+}
+
+console.log("Prepared honest Terminal 4 jetway runtime evidence with final full-3D Cab pose, height, grounding and static-order telemetry.");
