@@ -1,4 +1,4 @@
-const ARTICULATION_AUTHORITY = "exact-source-rotunda-pivot-crj-door-height-v10";
+const ARTICULATION_AUTHORITY = "exact-source-root-hierarchy-rotunda-pivot-crj-door-v11";
 const RETRACTION = Object.freeze({
   rotation: 0.052,
   tunnelB: 0.42,
@@ -11,13 +11,14 @@ const SOURCE = Object.freeze({
   stairBottomPivot: Object.freeze([-1.624111, 0.455146, 15.555789]),
   stairTop: Object.freeze([-1.214334, 7.010758, 21.880923]),
   contactZ: 25.731423,
-  floorY: 4.3,
+  contactFloorY: 4.22478,
+  proceduralContactClearanceMeters: 1.55,
 });
 const TARGET = Object.freeze({
   crjDoorThresholdY: 1.8,
   parkedPitchRadians: 0.06,
-  tunnelBExtensionShare: 0.32,
-  tunnelCExtensionShare: 0.68,
+  tunnelBExtensionShare: 0.25,
+  tunnelCExtensionShare: 0.55,
   maximumExtensionMeters: 5,
 });
 
@@ -29,12 +30,28 @@ function requireObject(root, name) {
   return object;
 }
 
-function solveStairPitch(bridgePitch, tunnelCExtension) {
+function solveBridgePitch(distance) {
+  const [, pivotY] = SOURCE.bridgePivot;
+  const localY = SOURCE.contactFloorY - pivotY;
+  let low = 0;
+  let high = 0.24;
+  for (let iteration = 0; iteration < 40; iteration += 1) {
+    const pitch = (low + high) / 2;
+    const thresholdY = pivotY
+      + localY * Math.cos(pitch)
+      - distance * Math.sin(pitch);
+    if (thresholdY > TARGET.crjDoorThresholdY) low = pitch;
+    else high = pitch;
+  }
+  return (low + high) / 2;
+}
+
+function solveStairPitch(bridgePitch, tunnelCTravel) {
   const [, bottomY, bottomZ] = SOURCE.stairBottomPivot;
   const [, topY, topZ] = SOURCE.stairTop;
   const [, pivotY, pivotZ] = SOURCE.bridgePivot;
-  const shiftedTopZ = topZ + tunnelCExtension;
-  const shiftedBottomZ = bottomZ + tunnelCExtension;
+  const shiftedTopZ = topZ + tunnelCTravel;
+  const shiftedBottomZ = bottomZ + tunnelCTravel;
   const desiredTopY = pivotY
     + (topY - pivotY) * Math.cos(bridgePitch)
     - (shiftedTopZ - pivotZ) * Math.sin(bridgePitch);
@@ -60,19 +77,24 @@ export function installUploadedAirportJetwayA1Articulation(
 
   const anchor = requireObject(fleet, "UploadedAirportJetway_A1");
   const model = requireObject(fleet, "UploadedAirportJetwayModel_A1");
-  const tunnelA = requireObject(model, "Tunnel_A");
-  const tunnelB = requireObject(model, "Tunnel_B");
-  const tunnelC = requireObject(model, "Tunnel_C");
-  const cab = requireObject(model, "Cab");
-  const rotunda = requireObject(model, "Rotunda");
-  const stair = requireObject(model, "Tunnel_C_GalvanizedServiceStair_SourceTriangles");
-  const bogie = requireObject(model, "Tunnel_C_DarkBogieLift_SourceTriangles");
+  const rootNode = requireObject(model, "RootNode");
+  const tunnelB = requireObject(rootNode, "Tunnel_B");
+  const tunnelC = requireObject(rootNode, "Tunnel_C");
+  const cab = requireObject(rootNode, "Cab");
+  const rotunda = requireObject(rootNode, "Rotunda");
+  const stair = requireObject(rootNode, "Tunnel_C_GalvanizedServiceStair_SourceTriangles");
+  const bogie = requireObject(rootNode, "Tunnel_C_DarkBogieLift_SourceTriangles");
 
   const requestedDeployment = clamp(baseController.getDeployment(), 0, 1);
   baseController.setDeployment(1);
 
+  // The decoded procedural bridgeEnd intentionally stops 1.55 m before its
+  // generated bellows. The supplied FBX includes its own complete cab, so its
+  // true door target is the full decoded anchor-to-door distance.
+  const targetDistance = Number(placement.bridgeEnd)
+    + SOURCE.proceduralContactClearanceMeters;
   const attachedExtension = clamp(
-    Number(placement.bridgeEnd) - SOURCE.contactZ,
+    targetDistance - SOURCE.contactZ,
     0,
     TARGET.maximumExtensionMeters,
   );
@@ -83,6 +105,16 @@ export function installUploadedAirportJetwayA1Articulation(
   cab.position.z += attachedExtension;
 
   model.updateMatrixWorld(true);
+
+  // Keep the exact source rotunda upright and fixed at the terminal. Only the
+  // authored RootNode corridor hierarchy pitches; Tunnel A/B/C and Cab remain
+  // siblings under their original FBX parent and are never independently
+  // reparented or rotated.
+  const fixedRotunda = new THREE.Group();
+  fixedRotunda.name = "UploadedAirportJetway_A1_FixedSourceRotunda";
+  model.add(fixedRotunda);
+  model.updateMatrixWorld(true);
+  fixedRotunda.attach(rotunda);
 
   const groundedBogie = new THREE.Group();
   groundedBogie.name = "UploadedAirportJetway_A1_GroundedSourceBogie";
@@ -103,37 +135,37 @@ export function installUploadedAirportJetwayA1Articulation(
   bridgePivot.position.fromArray(SOURCE.bridgePivot);
   model.add(bridgePivot);
   model.updateMatrixWorld(true);
-  for (const movingAssembly of [tunnelA, tunnelB, tunnelC, cab]) {
-    bridgePivot.attach(movingAssembly);
-  }
+  bridgePivot.attach(rootNode);
 
   const contactMarker = new THREE.Object3D();
   contactMarker.name = "UploadedAirportJetway_A1_CabThresholdMarker";
-  contactMarker.position.set(0, 0, SOURCE.contactZ + attachedExtension);
+  contactMarker.position.set(
+    0,
+    SOURCE.contactFloorY - SOURCE.bridgePivot[1],
+    targetDistance,
+  );
   bridgePivot.add(contactMarker);
 
-  const attachedPitch = Math.asin(clamp(
-    (SOURCE.floorY - TARGET.crjDoorThresholdY)
-      / Math.max(1, SOURCE.contactZ + attachedExtension),
-    -0.3,
-    0.3,
-  ));
+  const attachedPitch = solveBridgePitch(targetDistance);
   const base = Object.freeze({
     yaw: anchor.rotation.y,
     tunnelB: tunnelB.position.clone(),
     tunnelC: tunnelC.position.clone(),
     cab: cab.position.clone(),
+    groundedBogie: groundedBogie.position.clone(),
+    stairPivot: stairPivot.position.clone(),
   });
 
   const articulation = {
     authority: ARTICULATION_AUTHORITY,
+    targetDistance,
     attachedExtension,
     attachedPitch,
     bridgePivot,
+    fixedRotunda,
     stairPivot,
     groundedBogie,
     contactMarker,
-    tunnelCExtension,
     apply(value) {
       const deployment = clamp(value, 0, 1);
       const retract = 1 - deployment;
@@ -146,27 +178,40 @@ export function installUploadedAirportJetwayA1Articulation(
       const bridgePitch = TARGET.parkedPitchRadians
         + deployment * (attachedPitch - TARGET.parkedPitchRadians);
       bridgePivot.rotation.x = bridgePitch;
-      stairPivot.rotation.x = solveStairPitch(bridgePitch, tunnelCExtension);
+      const tunnelCTravel = tunnelCExtension - retract * RETRACTION.tunnelC;
+      groundedBogie.position.copy(base.groundedBogie);
+      groundedBogie.position.z -= retract * RETRACTION.tunnelC;
+      stairPivot.position.copy(base.stairPivot);
+      stairPivot.position.z -= retract * RETRACTION.tunnelC;
+      stairPivot.rotation.x = solveStairPitch(bridgePitch, tunnelCTravel);
+
       anchor.updateMatrixWorld(true);
       const contactWorld = contactMarker.getWorldPosition(new THREE.Vector3());
 
       anchor.userData.articulationAuthority = ARTICULATION_AUTHORITY;
       anchor.userData.bridgePitchRadians = bridgePitch;
       anchor.userData.stairPitchRadians = stairPivot.rotation.x;
+      anchor.userData.targetDistanceMeters = targetDistance;
       anchor.userData.attachedExtensionMeters = attachedExtension;
       anchor.userData.cabThresholdWorld = contactWorld.toArray();
       anchor.userData.cabThresholdWorldY = contactWorld.y;
       anchor.userData.targetDoorThresholdY = TARGET.crjDoorThresholdY;
-      anchor.userData.sourceRotundaFixed = rotunda.parent !== bridgePivot;
+      anchor.userData.sourceRootHierarchyPreserved = rootNode.getObjectByName("Tunnel_A")
+        && rootNode.getObjectByName("Tunnel_B")
+        && rootNode.getObjectByName("Tunnel_C")
+        && rootNode.getObjectByName("Cab");
+      anchor.userData.sourceRotundaFixed = rotunda.parent === fixedRotunda;
       anchor.userData.sourceBogieGrounded = bogie.parent === groundedBogie;
       anchor.userData.sourceStairBottomPivoted = stair.parent === stairPivot;
 
       group.userData.uploadedJetwayA1ArticulationAuthority = ARTICULATION_AUTHORITY;
+      group.userData.uploadedJetwayA1TargetDistanceMeters = targetDistance;
       group.userData.uploadedJetwayA1AttachedExtensionMeters = attachedExtension;
       group.userData.uploadedJetwayA1AttachedPitchRadians = attachedPitch;
       group.userData.uploadedJetwayA1CurrentPitchRadians = bridgePitch;
       group.userData.uploadedJetwayA1CabThresholdWorldY = contactWorld.y;
       group.userData.uploadedJetwayA1TargetDoorThresholdY = TARGET.crjDoorThresholdY;
+      group.userData.uploadedJetwayA1SourceRootHierarchyPreserved = Boolean(anchor.userData.sourceRootHierarchyPreserved);
       group.userData.uploadedJetwayA1SourceRotundaFixed = anchor.userData.sourceRotundaFixed;
       group.userData.uploadedJetwayA1SourceBogieGrounded = anchor.userData.sourceBogieGrounded;
       group.userData.uploadedJetwayA1SourceStairBottomPivoted = anchor.userData.sourceStairBottomPivoted;
@@ -181,6 +226,8 @@ export function installUploadedAirportJetwayA1Articulation(
 
   model.userData.a1ArticulationAuthority = ARTICULATION_AUTHORITY;
   model.userData.a1SourceMeshGeometryPreserved = true;
+  model.userData.a1SourceRootHierarchyPreserved = true;
+  model.userData.a1TargetDistanceMeters = targetDistance;
   model.userData.a1AttachedExtensionMeters = attachedExtension;
   model.userData.a1AttachedPitchRadians = attachedPitch;
   model.userData.a1TargetDoorThresholdY = TARGET.crjDoorThresholdY;
