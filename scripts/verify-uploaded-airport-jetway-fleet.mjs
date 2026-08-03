@@ -136,6 +136,88 @@ if (!rootNode || rootNode.children?.length !== 5) {
   throw new Error(`Supplied jetway RootNode expected five exact authored assemblies, received ${rootNode?.children?.length ?? 0}`);
 }
 
+const { enforceExactUploadedJetwayVisualAuthority } = await import(
+  "../src/environment/uploadedAirportJetwayExactModelGuard.js"
+);
+
+class MockNode {
+  constructor(name, { group = false, mesh = false } = {}) {
+    this.name = name;
+    this.isGroup = group;
+    this.isMesh = mesh;
+    this.visible = true;
+    this.castShadow = true;
+    this.receiveShadow = true;
+    this.children = [];
+    this.userData = {};
+    this.scale = { x: 1, y: 1, z: 1, toArray: () => [1, 1, 1] };
+    this.rotation = { x: 0, y: 0, z: 0 };
+  }
+
+  add(...children) {
+    this.children.push(...children);
+    return this;
+  }
+
+  traverse(visitor) {
+    visitor(this);
+    for (const child of this.children) child.traverse(visitor);
+  }
+
+  getObjectByName(name) {
+    if (this.name === name) return this;
+    for (const child of this.children) {
+      const match = child.getObjectByName(name);
+      if (match) return match;
+    }
+    return null;
+  }
+}
+
+const sourceModel = new MockNode("UploadedAirportJetwayModel_A1", { group: true });
+for (const name of ["Tunnel_A", "Tunnel_B", "Tunnel_C", "Rotunda", "Cab"]) {
+  sourceModel.add(new MockNode(name, { group: true }));
+}
+sourceModel.add(
+  new MockNode("Tunnel_C_GalvanizedServiceStair_SourceTriangles", { mesh: true }),
+  new MockNode("Tunnel_C_DarkBogieLift_SourceTriangles", { mesh: true }),
+);
+const connector = new MockNode("UploadedAirportJetwayTerminalConnector_A1", { group: true }).add(
+  new MockNode("UploadedAirportJetwayTerminalConnectorShell_A1_0", { mesh: true }),
+  new MockNode("UploadedAirportJetwayTerminalPortalInterior_A1", { mesh: true }),
+  new MockNode("UploadedAirportJetwayTerminalPortalOuterHeader_A1", { mesh: true }),
+);
+const fleetMock = new MockNode("UploadedAirportJetwayFleet", { group: true }).add(sourceModel, connector);
+const legacyCollar = new MockNode("AIR_Jetway01_WallCollars", { group: true }).add(
+  new MockNode("LegacyCollarMesh", { mesh: true }),
+);
+const legacyWalkway = new MockNode("Terminal4_FixedWalkwayArchitecturalDetail_V15", { group: true }).add(
+  new MockNode("LegacyWalkwayMesh", { mesh: true }),
+);
+const legacySeal = new MockNode("A1_T4_WALK_TerminalPortalSeal_V37", { group: true }).add(
+  new MockNode("LegacySealMesh", { mesh: true }),
+);
+const sourceGroupMock = new MockNode("PHX_Terminal4_AIR_Jetway01_SourcePlaced", { group: true }).add(
+  legacyCollar,
+  legacyWalkway,
+  legacySeal,
+  fleetMock,
+);
+const guardResult = enforceExactUploadedJetwayVisualAuthority(sourceGroupMock, fleetMock);
+if (
+  guardResult.hiddenLegacyGroupCount !== 3
+  || guardResult.hiddenSyntheticPortalCount !== 2
+  || legacyCollar.visible
+  || legacyWalkway.visible
+  || legacySeal.visible
+  || connector.children[0].visible !== true
+  || connector.children[1].visible !== false
+  || sourceModel.visible !== true
+  || sourceGroupMock.userData.uploadedJetwayParentAxisCorrectionRadians !== 0
+) {
+  throw new Error(`Exact supplied jetway visual guard failed its executable contract: ${JSON.stringify(guardResult)}`);
+}
+
 const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js", [
   'installUploadedAirportJetwayFleet } from "./uploadedAirportJetwayFleetReadyV2.js"',
   "const uploadedJetwayPlacements = []",
