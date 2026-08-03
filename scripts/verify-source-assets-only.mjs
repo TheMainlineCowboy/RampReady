@@ -1,8 +1,10 @@
-import { readFile, stat } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
 
-const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
+const read = (path, encoding = "utf8") => readFile(new URL(`../${path}`, import.meta.url), encoding);
+const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 
-const [rig, placements, fleet, ready, authoredVisual, exactA1, packageMaterializer, groundMaterializer] = await Promise.all([
+const [rig, placements, fleet, ready, authoredVisual, exactA1, packageMaterializer, groundMaterializer, jetwayMaterializer, buildScript, manifestText] = await Promise.all([
   read("src/tug/lektroRig.js"),
   read("src/environment/sourcePlacedTerminal4Jetways.js"),
   read("src/environment/uploadedAirportJetwayFleet.js"),
@@ -11,7 +13,11 @@ const [rig, placements, fleet, ready, authoredVisual, exactA1, packageMaterializ
   read("src/environment/kphxExactA1/index.js"),
   read("scripts/materialize-terminal4-package-first.mjs"),
   read("scripts/materialize-kphx-ground.mjs"),
+  read("scripts/materialize-uploaded-airport-jetway-glb.mjs"),
+  read("scripts/build-source-only.mjs"),
+  read("public/models/airport-jetway/source-manifest.json"),
 ]);
+const manifest = JSON.parse(manifestText);
 
 function requireToken(source, token, label) {
   if (!source.includes(token)) throw new Error(`${label} is missing ${token}`);
@@ -25,11 +31,10 @@ requireToken(rig, 'steeringMode: "rear"', "Lektro rig");
 requireToken(placements, "sourceHeadingDegrees", "source jetway placement");
 requireToken(placements, "Math.PI - THREE.MathUtils.degToRad", "source jetway heading conversion");
 requireToken(placements, 'headingConversion: "three-yaw-radians = PI - source-heading-radians"', "source jetway heading conversion");
-requireToken(placements, 'sourceGeometryMode = "user-supplied-jetway-geometry-only"', "source jetway placement");
+requireToken(placements, 'sourcePlacementOffsetAuthority = "no-manual-post-decode-shift"', "source jetway placement");
 requireToken(placements, "generatedTerminalConnectorCount = 0", "source jetway placement");
 requireToken(placements, "facadeInfillCount = 0", "source jetway placement");
 requireToken(placements, "lowerFacadeFitCount = 0", "source jetway placement");
-
 for (const token of [
   "function createArchedTunnelGeometry",
   "function addServiceStairs",
@@ -39,12 +44,17 @@ for (const token of [
   "transforms.wallCollar",
 ]) forbidToken(placements, token, "source jetway placement");
 
-requireToken(fleet, 'MODEL_AUTHORITY = "user-supplied-airport-jetway-source-geometry-v1"', "supplied jetway fleet");
+requireToken(fleet, 'MODEL_AUTHORITY = "user-supplied-airport-jetway-complete-glb-v2"', "supplied jetway fleet");
+requireToken(fleet, 'MATERIAL_AUTHORITY = "supplied-embedded-webp-materials-source-uvs-and-tangents"', "supplied jetway fleet");
+requireToken(fleet, 'SOURCE_FILE = "Airport_Jetway.source-web.glb"', "supplied jetway fleet");
 requireToken(fleet, "sourceRotundaCenter", "supplied jetway fleet");
 requireToken(fleet, "sourceCabCenter", "supplied jetway fleet");
 requireToken(fleet, "generatedConnectorCount = 0", "supplied jetway fleet");
 requireToken(fleet, "generatedPortalCount = 0", "supplied jetway fleet");
 requireToken(fleet, "generatedFacadeCount = 0", "supplied jetway fleet");
+requireToken(fleet, "entry.geometry?.getAttribute(\"uv\")", "supplied jetway UV verification");
+requireToken(fleet, "entry.geometry?.getAttribute(\"tangent\")", "supplied jetway tangent verification");
+requireToken(fleet, "material.map || material.normalMap", "supplied jetway texture verification");
 requireToken(fleet, "nodes.tunnelB.position.z", "supplied jetway A1 animation");
 requireToken(fleet, "nodes.tunnelC.position.z", "supplied jetway A1 animation");
 requireToken(fleet, "nodes.cab.position.z", "supplied jetway A1 animation");
@@ -52,7 +62,6 @@ requireToken(fleet, 'A1_RETRACTION_AUTHORITY = "supplied-tunnel-node-native-z-ax
 forbidToken(fleet, "nodes.tunnelB.position.x", "supplied jetway A1 animation");
 forbidToken(fleet, "nodes.tunnelC.position.x", "supplied jetway A1 animation");
 forbidToken(fleet, "nodes.cab.position.x", "supplied jetway A1 animation");
-
 for (const token of [
   "function addProjectedUvs",
   "function cloneCorrugatedAtlasBand",
@@ -79,11 +88,16 @@ requireToken(packageMaterializer, '"scenery/term4.BGL"', "supplied Terminal 4 ma
 requireToken(packageMaterializer, '"scenery/KPHX_ADEX.BGL"', "supplied Terminal 4 materializer");
 requireToken(groundMaterializer, "KPHX_ADEX.BGL", "supplied airport ground materializer");
 requireToken(groundMaterializer, "markingSegments", "supplied airport ground materializer");
+requireToken(jetwayMaterializer, "manifest.compressedFile", "complete jetway materializer");
+requireToken(jetwayMaterializer, '["POSITION", "NORMAL", "TANGENT", "TEXCOORD_0"]', "complete jetway attribute gate");
+requireToken(buildScript, 'scripts/materialize-uploaded-airport-jetway-glb.mjs', "production build");
 
-for (let index = 0; index < 5; index += 1) {
-  const file = new URL(`../public/models/airport-jetway/geometry.part${index}`, import.meta.url);
-  const details = await stat(file);
-  if (details.size < 1000) throw new Error(`Supplied jetway geometry part ${index} is missing or too small`);
+const compressed = await read(`public/models/airport-jetway/${manifest.compressedFile}`, null);
+if (compressed.length !== manifest.xzBytes) throw new Error(`Complete supplied jetway archive size mismatch: ${compressed.length} != ${manifest.xzBytes}`);
+if (sha256(compressed) !== manifest.xzSha256) throw new Error("Complete supplied jetway archive SHA-256 mismatch");
+if (manifest.webGlbBytes < 2_000_000) throw new Error("Complete supplied jetway GLB is unexpectedly small");
+if (!Array.isArray(manifest.nodes) || manifest.nodes.join("|") !== "Tunnel_A|Tunnel_B|Tunnel_C|Rotunda|Cab") {
+  throw new Error("Complete supplied jetway hierarchy manifest is wrong");
 }
 
-console.log("RampReady source-only verification passed: Lektro rear steering, 58 corrected source BGL jetway transforms, supplied jetway geometry, longitudinal source-node retraction, zero generated connectors/portals/facades, no projected corrugated fill, pavement-coincident exact A1 markings, and pinned source materializers ready.");
+console.log("RampReady source-only verification passed: exact complete supplied jetway archive pinned by SHA-256, source UVs/tangents/seven maps required, 58 unshifted BGL transforms, zero generated connectors/portals/facades, Lektro rear steering, and pavement-coincident markings.");
