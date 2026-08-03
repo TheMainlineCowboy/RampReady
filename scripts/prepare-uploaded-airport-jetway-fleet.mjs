@@ -102,6 +102,7 @@ if (source.indexOf(placementPush) < source.indexOf("const connectorTowardX")) {
 fs.writeFileSync(path, source, "utf8");
 
 await import("./prepare-uploaded-airport-jetway-articulation-v10.mjs");
+await import("./prepare-uploaded-jetway-full3d-evidence-v11.mjs");
 
 const fleetPath = "src/environment/uploadedAirportJetwayFleet.js";
 const fleet = fs.readFileSync(fleetPath, "utf8");
