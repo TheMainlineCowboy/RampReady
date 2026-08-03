@@ -59,13 +59,18 @@ requireTokens("scripts/prepare-uploaded-jetway-full3d-evidence-v11.mjs", [
   "dataset.terminal4UploadedJetwayA1CabHeightErrorMeters",
   "dataset.terminal4UploadedJetwayA1CabYawOffsetDegrees",
 ]);
+requireTokens("scripts/prepare-uploaded-jetway-exact-threshold-band-v13.mjs", [
+  "EXACT_MINIMUM_VERTICAL_OFFSET = -1.36",
+  "EXACT_MAXIMUM_VERTICAL_OFFSET = -1.33",
+  "zero plane intrusion",
+]);
 
 const sourceGeometry = Object.freeze({
   sourceContactDistance: 25.980676689692473,
   cabContactAuthority: "supplied-cab-aircraft-side-opening-threshold-v12",
   cabPivot: Object.freeze({ x: 0.651626, y: 5.736130, z: 21.890110 }),
-  cabContact: Object.freeze({ x: 0.653434, y: 4.261828, z: 25.731423 }),
-  cabContactLever: Object.freeze({ x: 0.001808, y: -1.474302, z: 3.841313 }),
+  cabContact: Object.freeze({ x: 0.653434, y: 4.294661264419555, z: 25.731423 }),
+  cabContactLever: Object.freeze({ x: 0.001808, y: -1.441468735580445, z: 3.841313 }),
   cabOpeningYaw: 0,
 });
 const sourcePartCenters = Object.freeze({
@@ -136,7 +141,7 @@ if (!a1) throw new Error("A1 full-3D articulation was not computed");
 if (!(a1.extension > 5.4 && a1.extension < 5.6)) throw new Error(`A1 extension is ${a1.extension} m`);
 if (!(a1.anchorYaw * 180 / Math.PI > 33.7 && a1.anchorYaw * 180 / Math.PI < 34.0)) throw new Error(`A1 bridge yaw is ${a1.anchorYaw * 180 / Math.PI} degrees`);
 if (!(a1.cabYawOffset * 180 / Math.PI > 55.5 && a1.cabYawOffset * 180 / Math.PI < 55.9)) throw new Error(`A1 Cab yaw is ${a1.cabYawOffset * 180 / Math.PI} degrees`);
-if (!(a1.cabVerticalOffset < -1.30 && a1.cabVerticalOffset > -1.33)) throw new Error(`A1 Cab threshold vertical offset is ${a1.cabVerticalOffset} m`);
-if (!(a1.partOffsets.Cab.y > -1.33 && a1.partOffsets.Cab.y < -1.30)) throw new Error(`A1 Cab still uses the rejected vertical pose: ${a1.partOffsets.Cab.y} m`);
+if (!(a1.cabVerticalOffset > -1.36 && a1.cabVerticalOffset < -1.33)) throw new Error(`A1 Cab threshold vertical offset is ${a1.cabVerticalOffset} m`);
+if (!(a1.partOffsets.Cab.y > -1.36 && a1.partOffsets.Cab.y < -1.33)) throw new Error(`A1 Cab still uses the rejected vertical pose: ${a1.partOffsets.Cab.y} m`);
 
-console.log(`Verified ${UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY}: all 58 exact supplied models solve from the source-authored Cab doorway threshold; A1 uses ${a1.extension.toFixed(3)} m extension, ${(a1.anchorYaw * 180 / Math.PI).toFixed(3)}° bridge yaw, ${(a1.cabYawOffset * 180 / Math.PI).toFixed(3)}° Cab yaw and ${a1.cabVerticalOffset.toFixed(3)} m threshold articulation.`);
+console.log(`Verified ${UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY}: all 58 exact supplied models solve from the source-authored Cab doorway threshold; A1 uses ${a1.extension.toFixed(3)} m extension, ${(a1.anchorYaw * 180 / Math.PI).toFixed(3)}° bridge yaw, ${(a1.cabYawOffset * 180 / Math.PI).toFixed(3)}° Cab yaw and ${a1.cabVerticalOffset.toFixed(3)} m exact browser-derived threshold articulation.`);
