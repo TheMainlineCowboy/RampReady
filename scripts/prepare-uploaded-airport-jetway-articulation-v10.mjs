@@ -271,7 +271,15 @@ ready = replaceOnce(
         const a1PredictedContactDistance = Number(group.userData.uploadedJetwayA1PredictedContactDistanceMeters ?? NaN);
         const a1ActualContactDistance = Number(group.userData.uploadedJetwayA1ActualContactDistanceMeters ?? NaN);
         const a1ActualDoorGap = Number(group.userData.uploadedJetwayA1ActualDoorGapMeters ?? Infinity);
-        const a1PartOrderValid = group.userData.uploadedJetwayA1PartOrderValid === true;`,
+        const a1PartOrderValid = group.userData.uploadedJetwayA1PartOrderValid === true;
+        const articulationDiagnostic = "authority=" + articulationAuthority
+          + "; source=" + sourceContactDistance
+          + "; static=" + staticArticulatedGateCount + "/" + staticMaximumContactError
+          + "; A1 target=" + a1TargetDoorDistance
+          + "; extension=" + a1AttachedExtension
+          + "; predicted=" + a1PredictedContactDistance + "/" + a1PredictedDoorGap
+          + "; actual=" + a1ActualContactDistance + "/" + a1ActualDoorGap
+          + "; order=" + a1PartOrderValid`,
   "readiness articulation measurements",
 );
 ready = replaceOnce(
@@ -291,12 +299,20 @@ ready = replaceOnce(
           || !a1PartOrderValid`,
   "readiness articulation assertions",
 );
+ready = replaceOnce(
+  ready,
+  "        ) {\n          reject(new Error(",
+  "        ) {\n          console.error(`Uploaded supplied-jetway articulation readiness failed: ${articulationDiagnostic}`);\n          reject(new Error(",
+  "readiness articulation diagnostics",
+);
 for (const token of [
   "UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY",
   "staticArticulatedGateCount !== 57",
   "a1PredictedDoorGap > 0.05",
   "a1ActualDoorGap > 0.05",
   "!a1PartOrderValid",
+  "articulationDiagnostic",
+  "Uploaded supplied-jetway articulation readiness failed",
 ]) {
   if (!ready.includes(token)) throw new Error(`${readyPath}: articulation readiness is missing ${token}`);
 }
