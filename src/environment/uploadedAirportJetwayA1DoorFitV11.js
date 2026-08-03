@@ -100,6 +100,24 @@ function applyModelSpaceMatrix(THREE, model, object, correction) {
   model.updateWorldMatrix(true, true);
 }
 
+function applyModelSpaceMatrixExact(THREE, model, object, correction) {
+  model.updateWorldMatrix(true, true);
+  const modelInverse = new THREE.Matrix4().copy(model.matrixWorld).invert();
+  const objectInModel = new THREE.Matrix4().multiplyMatrices(modelInverse, object.matrixWorld);
+  const parentInModel = new THREE.Matrix4().multiplyMatrices(modelInverse, object.parent.matrixWorld);
+  const correctedInModel = new THREE.Matrix4().multiplyMatrices(correction, objectInModel);
+  const local = new THREE.Matrix4().multiplyMatrices(parentInModel.clone().invert(), correctedInModel);
+
+  // The stair and bogie inherit the bridge pitch. A model-space vertical fit can
+  // therefore contain shear that position/quaternion/scale decomposition loses.
+  // Preserve the exact affine matrix for these non-articulating detail meshes.
+  object.matrixAutoUpdate = false;
+  object.matrix.copy(local);
+  local.decompose(object.position, object.quaternion, object.scale);
+  object.matrixWorldNeedsUpdate = true;
+  model.updateWorldMatrix(true, true);
+}
+
 function translationMatrix(THREE, x, y, z) {
   return new THREE.Matrix4().makeTranslation(x, y, z);
 }
@@ -144,9 +162,9 @@ function correctGroundedDetail(THREE, model, object, keepTop) {
       0.25,
       1,
     );
-    applyModelSpaceMatrix(THREE, model, object, scaleYKeepingTop(THREE, before.max.y, scaleY));
+    applyModelSpaceMatrixExact(THREE, model, object, scaleYKeepingTop(THREE, before.max.y, scaleY));
   } else {
-    applyModelSpaceMatrix(
+    applyModelSpaceMatrixExact(
       THREE,
       model,
       object,
