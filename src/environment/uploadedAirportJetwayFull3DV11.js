@@ -6,6 +6,7 @@ import {
 const PART_NAMES = Object.freeze(["Rotunda", "Tunnel_A", "Tunnel_B", "Tunnel_C", "Cab"]);
 const STAIR_NAME = "Tunnel_C_GalvanizedServiceStair_SourceTriangles";
 const BOGIE_NAME = "Tunnel_C_DarkBogieLift_SourceTriangles";
+const CAB_CONTACT_AUTHORITY = "supplied-cab-aircraft-side-opening-threshold-v12";
 
 export function findUploadedJetwaySourcePart(model, name) {
   const root = model?.getObjectByName?.("RootNode");
@@ -18,6 +19,68 @@ function sourcePartName(entry) {
   return current?.parent?.name === "RootNode" && PART_NAMES.includes(current.name) ? current.name : null;
 }
 
+function collectWorldVertices(THREE, object) {
+  object.updateMatrixWorld(true);
+  const vertices = [];
+  const point = new THREE.Vector3();
+  object.traverse((entry) => {
+    if (!entry.isMesh) return;
+    const position = entry.geometry?.getAttribute?.("position");
+    if (!position) return;
+    for (let index = 0; index < position.count; index += 1) {
+      point.fromBufferAttribute(position, index);
+      entry.localToWorld(point);
+      vertices.push(point.clone());
+    }
+  });
+  return vertices;
+}
+
+function percentile(sortedValues, fraction) {
+  if (!sortedValues.length) return NaN;
+  const index = Math.floor((sortedValues.length - 1) * Math.max(0, Math.min(1, fraction)));
+  return sortedValues[index];
+}
+
+function measureSuppliedCabOpening(THREE, cab) {
+  const vertices = collectWorldVertices(THREE, cab);
+  if (vertices.length < 16) throw new Error("Supplied Cab opening has insufficient source vertices");
+  const bounds = new THREE.Box3().setFromPoints(vertices);
+  const size = bounds.getSize(new THREE.Vector3());
+  const frontBandDepth = Math.max(0.25, Math.min(0.45, size.z * 0.08));
+  const aircraftSideVertices = vertices.filter((vertex) => vertex.z >= bounds.max.z - frontBandDepth);
+  if (aircraftSideVertices.length < 8) {
+    throw new Error(`Supplied Cab aircraft-side opening is incomplete: ${aircraftSideVertices.length} vertices`);
+  }
+  const openingThresholdY = percentile(
+    aircraftSideVertices.map((vertex) => vertex.y).sort((a, b) => a - b),
+    0.1,
+  );
+  const minimumX = Math.min(...aircraftSideVertices.map((vertex) => vertex.x));
+  const maximumX = Math.max(...aircraftSideVertices.map((vertex) => vertex.x));
+  if (![openingThresholdY, minimumX, maximumX, bounds.max.z].every(Number.isFinite)) {
+    throw new Error("Supplied Cab aircraft-side opening measurement is invalid");
+  }
+  return {
+    authority: CAB_CONTACT_AUTHORITY,
+    point: new THREE.Vector3((minimumX + maximumX) / 2, openingThresholdY, bounds.max.z),
+    bounds,
+    frontBandDepth,
+    sourceVertexCount: vertices.length,
+    aircraftSideVertexCount: aircraftSideVertices.length,
+  };
+}
+
+function maximumAircraftPlaneIntrusion(THREE, cab, target, desiredNormal) {
+  const vertices = collectWorldVertices(THREE, cab);
+  let maximum = -Infinity;
+  const delta = new THREE.Vector3();
+  for (const vertex of vertices) {
+    maximum = Math.max(maximum, delta.copy(vertex).sub(target).dot(desiredNormal));
+  }
+  return maximum;
+}
+
 export function measureUploadedJetwaySourcePose(THREE, prototype) {
   prototype.updateMatrixWorld(true);
   const rotunda = findUploadedJetwaySourcePart(prototype, "Rotunda");
@@ -26,11 +89,10 @@ export function measureUploadedJetwaySourcePose(THREE, prototype) {
   const bogie = prototype.getObjectByName(BOGIE_NAME);
   if (!rotunda || !cab || !stair || !bogie) throw new Error("Supplied jetway source pose is incomplete");
   const rotundaBox = new THREE.Box3().setFromObject(rotunda);
-  const cabBox = new THREE.Box3().setFromObject(cab);
   const rotundaCenter = rotundaBox.getCenter(new THREE.Vector3());
-  const cabCenter = cabBox.getCenter(new THREE.Vector3());
+  const cabOpening = measureSuppliedCabOpening(THREE, cab);
   const cabPivot = cab.getWorldPosition(new THREE.Vector3());
-  const cabContact = new THREE.Vector3(cabCenter.x, cabCenter.y, cabBox.max.z);
+  const cabContact = cabOpening.point;
   const cabContactLever = cabContact.clone().sub(cabPivot);
   const cabContactLocal = cab.worldToLocal(cabContact.clone());
   const cabWorldQuaternion = cab.getWorldQuaternion(new THREE.Quaternion());
@@ -38,20 +100,26 @@ export function measureUploadedJetwaySourcePose(THREE, prototype) {
   const cabOpeningNormalLocal = cabOpeningNormalWorld.clone()
     .applyQuaternion(cabWorldQuaternion.clone().invert())
     .normalize();
-  const sourceContactDistance = cabBox.max.z - rotundaCenter.z;
+  const sourceContactDistance = cabContact.z - rotundaCenter.z;
   if (!(sourceContactDistance > 10 && sourceContactDistance < 40)) {
     throw new Error(`Supplied jetway source reach is invalid: ${sourceContactDistance}`);
   }
   return {
     sourceContactDistance,
+    cabContactAuthority: cabOpening.authority,
     cabContactLocal,
     cabOpeningNormalLocal,
+    cabSourceBounds: cabOpening.bounds.clone(),
     articulationSource: {
       sourceContactDistance,
+      cabContactAuthority: cabOpening.authority,
       cabPivot: { x: cabPivot.x, y: cabPivot.y, z: cabPivot.z },
       cabContact: { x: cabContact.x, y: cabContact.y, z: cabContact.z },
       cabContactLever: { x: cabContactLever.x, y: cabContactLever.y, z: cabContactLever.z },
       cabOpeningYaw: 0,
+      cabOpeningFrontBandDepth: cabOpening.frontBandDepth,
+      cabSourceVertexCount: cabOpening.sourceVertexCount,
+      cabAircraftSideVertexCount: cabOpening.aircraftSideVertexCount,
     },
   };
 }
@@ -105,6 +173,7 @@ export function measureUploadedJetwayFull3DPose(THREE, anchor, model, sourcePose
   const normalErrorRadians = Math.acos(Math.max(-1, Math.min(1, openingNormal.dot(desiredNormal))));
   const direction = new THREE.Vector3(Math.sin(articulation.anchorYaw), 0, Math.cos(articulation.anchorYaw));
   const anchorPosition = anchor.getWorldPosition(new THREE.Vector3());
+  const cabBox = new THREE.Box3().setFromObject(cab);
   const partCenters = Object.fromEntries(PART_NAMES.map((name) => {
     const center = new THREE.Box3().setFromObject(findUploadedJetwaySourcePart(model, name)).getCenter(new THREE.Vector3());
     return [name, center.sub(anchorPosition).dot(direction)];
@@ -114,6 +183,8 @@ export function measureUploadedJetwayFull3DPose(THREE, anchor, model, sourcePose
     actualDoorGap: contact.distanceTo(target),
     cabHeightError: Math.abs(contact.y - target.y),
     cabNormalErrorDegrees: THREE.MathUtils.radToDeg(normalErrorRadians),
+    cabAircraftPlaneIntrusion: maximumAircraftPlaneIntrusion(THREE, cab, target, desiredNormal),
+    cabRampClearance: cabBox.min.y,
     stairGroundClearance: new THREE.Box3().setFromObject(stair).min.y,
     bogieGroundClearance: new THREE.Box3().setFromObject(bogie).min.y,
     partCenters,
@@ -141,6 +212,8 @@ export function buildUploadedJetwayStaticFull3D(THREE, prototype, placements, so
   let maximumContactError = 0;
   let maximumNormalErrorDegrees = 0;
   let maximumHeightError = 0;
+  let maximumAircraftPlaneIntrusion = -Infinity;
+  let minimumCabRampClearance = Infinity;
   let minimumStairGroundClearance = Infinity;
   let maximumStairGroundClearance = -Infinity;
   let minimumBogieGroundClearance = Infinity;
@@ -160,6 +233,8 @@ export function buildUploadedJetwayStaticFull3D(THREE, prototype, placements, so
     maximumContactError = Math.max(maximumContactError, result.actualDoorGap);
     maximumNormalErrorDegrees = Math.max(maximumNormalErrorDegrees, result.cabNormalErrorDegrees);
     maximumHeightError = Math.max(maximumHeightError, result.cabHeightError);
+    maximumAircraftPlaneIntrusion = Math.max(maximumAircraftPlaneIntrusion, result.cabAircraftPlaneIntrusion);
+    minimumCabRampClearance = Math.min(minimumCabRampClearance, result.cabRampClearance);
     minimumStairGroundClearance = Math.min(minimumStairGroundClearance, result.stairGroundClearance);
     maximumStairGroundClearance = Math.max(maximumStairGroundClearance, result.stairGroundClearance);
     minimumBogieGroundClearance = Math.min(minimumBogieGroundClearance, result.bogieGroundClearance);
@@ -193,11 +268,16 @@ export function buildUploadedJetwayStaticFull3D(THREE, prototype, placements, so
     maximumContactError,
     maximumNormalErrorDegrees,
     maximumHeightError,
+    maximumAircraftPlaneIntrusion,
+    minimumCabRampClearance,
     minimumStairGroundClearance,
     maximumStairGroundClearance,
     minimumBogieGroundClearance,
     maximumBogieGroundClearance,
     allPartOrdersValid,
     articulationAuthority: UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY,
+    cabContactAuthority: sourcePose.cabContactAuthority,
   };
 }
+
+export { CAB_CONTACT_AUTHORITY as UPLOADED_AIRPORT_JETWAY_CAB_CONTACT_AUTHORITY };
