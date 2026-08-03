@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { expect, test } from "@playwright/test";
 
 const FULL_3D_AUTHORITY = "user-supplied-airport-jetway-full-3d-door-plane-v11";
+const CAB_CONTACT_AUTHORITY = "supplied-cab-aircraft-side-opening-threshold-v12";
 
 async function captureCanvas(page, path) {
   const box = await page.evaluate(() => {
@@ -43,7 +44,7 @@ function number(runtime, key) {
   return value;
 }
 
-test("the exact supplied A1 jetway aligns its Cab to the CRJ door plane in full 3D", async ({ page }) => {
+test("the exact supplied A1 jetway aligns its real Cab threshold without crossing the CRJ door plane", async ({ page }) => {
   test.setTimeout(600_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   page.on("console", (message) => console.log(`[browser:${message.type()}] ${message.text()}`));
@@ -52,16 +53,17 @@ test("the exact supplied A1 jetway aligns its Cab to the CRJ door plane in full 
   await page.getByRole("button", { name: "Drive tug / inspect airport" }).click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction((authority) => {
+  await page.waitForFunction(({ articulation, contact }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return (
       data?.terminal4UploadedJetwayLoadState === "ready"
-      && data?.terminal4UploadedJetwayArticulationAuthority === authority
+      && data?.terminal4UploadedJetwayArticulationAuthority === articulation
+      && data?.terminal4UploadedJetwayCabContactAuthority === contact
       && data?.terminal4UploadedJetwayA1PartOrderValid === "true"
       && data?.terminal4UploadedJetwayStaticPartOrderValid === "true"
     ) || data?.environmentSource === "load-error"
       || data?.terminal4UploadedJetwayLoadState === "load-error";
-  }, FULL_3D_AUTHORITY, { timeout: 120_000, polling: 100 });
+  }, { articulation: FULL_3D_AUTHORITY, contact: CAB_CONTACT_AUTHORITY }, { timeout: 120_000, polling: 100 });
 
   const readiness = await page.evaluate(() => ({
     runtime: { ...document.querySelector("canvas.trainerCanvas").dataset },
@@ -77,6 +79,7 @@ test("the exact supplied A1 jetway aligns its Cab to the CRJ door plane in full 
   expect(runtime.terminal4UploadedJetwayVerifiedModelCount).toBe("58");
   expect(runtime.terminal4UploadedJetwayStaticArticulatedGateCount).toBe("57");
   expect(runtime.terminal4UploadedJetwayArticulationAuthority).toBe(FULL_3D_AUTHORITY);
+  expect(runtime.terminal4UploadedJetwayCabContactAuthority).toBe(CAB_CONTACT_AUTHORITY);
   expect(runtime.terminal4UploadedJetwayA1PartOrderValid).toBe("true");
   expect(runtime.terminal4UploadedJetwayStaticPartOrderValid).toBe("true");
 
@@ -88,12 +91,17 @@ test("the exact supplied A1 jetway aligns its Cab to the CRJ door plane in full 
   const staticMaximumError = number(runtime, "terminal4UploadedJetwayStaticMaximumContactErrorMeters");
   const staticMaximumNormalError = number(runtime, "terminal4UploadedJetwayStaticMaximumCabNormalErrorDegrees");
   const staticMaximumHeightError = number(runtime, "terminal4UploadedJetwayStaticMaximumCabHeightErrorMeters");
+  const staticMaximumPlaneIntrusion = number(runtime, "terminal4UploadedJetwayStaticMaximumAircraftPlaneIntrusionMeters");
+  const staticMinimumCabRampClearance = number(runtime, "terminal4UploadedJetwayStaticMinimumCabRampClearanceMeters");
   const staticMinimumStairGround = number(runtime, "terminal4UploadedJetwayStaticMinimumStairGroundClearanceMeters");
   const staticMaximumStairGround = number(runtime, "terminal4UploadedJetwayStaticMaximumStairGroundClearanceMeters");
   const staticMinimumBogieGround = number(runtime, "terminal4UploadedJetwayStaticMinimumBogieGroundClearanceMeters");
   const staticMaximumBogieGround = number(runtime, "terminal4UploadedJetwayStaticMaximumBogieGroundClearanceMeters");
   const a1CabNormalError = number(runtime, "terminal4UploadedJetwayA1CabNormalErrorDegrees");
   const a1CabHeightError = number(runtime, "terminal4UploadedJetwayA1CabHeightErrorMeters");
+  const a1CabAircraftPlaneIntrusion = number(runtime, "terminal4UploadedJetwayA1CabAircraftPlaneIntrusionMeters");
+  const a1CabRampClearance = number(runtime, "terminal4UploadedJetwayA1CabRampClearanceMeters");
+  const a1CabVerticalOffset = number(runtime, "terminal4UploadedJetwayA1CabVerticalOffsetMeters");
   const a1StairGround = number(runtime, "terminal4UploadedJetwayA1StairGroundClearanceMeters");
   const a1BogieGround = number(runtime, "terminal4UploadedJetwayA1BogieGroundClearanceMeters");
   const a1AnchorYaw = number(runtime, "terminal4UploadedJetwayA1AnchorYawDegrees");
@@ -110,12 +118,18 @@ test("the exact supplied A1 jetway aligns its Cab to the CRJ door plane in full 
   expect(staticMaximumError).toBeLessThanOrEqual(0.05);
   expect(staticMaximumNormalError).toBeLessThanOrEqual(2);
   expect(staticMaximumHeightError).toBeLessThanOrEqual(0.05);
+  expect(staticMaximumPlaneIntrusion).toBeLessThanOrEqual(0.05);
+  expect(staticMinimumCabRampClearance).toBeGreaterThanOrEqual(1.5);
   expect(staticMinimumStairGround).toBeGreaterThanOrEqual(-0.05);
   expect(staticMaximumStairGround).toBeLessThanOrEqual(0.65);
   expect(staticMinimumBogieGround).toBeGreaterThanOrEqual(-0.05);
   expect(staticMaximumBogieGround).toBeLessThanOrEqual(0.65);
   expect(a1CabNormalError).toBeLessThanOrEqual(2);
   expect(a1CabHeightError).toBeLessThanOrEqual(0.05);
+  expect(a1CabAircraftPlaneIntrusion).toBeLessThanOrEqual(0.05);
+  expect(a1CabRampClearance).toBeGreaterThanOrEqual(1.5);
+  expect(a1CabVerticalOffset).toBeGreaterThan(-1.33);
+  expect(a1CabVerticalOffset).toBeLessThan(-1.30);
   expect(a1StairGround).toBeGreaterThanOrEqual(-0.05);
   expect(a1StairGround).toBeLessThanOrEqual(0.65);
   expect(a1BogieGround).toBeGreaterThanOrEqual(-0.05);
@@ -145,10 +159,11 @@ test("the exact supplied A1 jetway aligns its Cab to the CRJ door plane in full 
   }, null, { timeout: 30_000, polling: 100 });
   await page.waitForTimeout(2_000);
   await page.addStyleTag({ content: ".rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}" });
-  await captureCanvas(page, "test-results/uploaded-jetway-a1-full-3d-v11.png");
+  await captureCanvas(page, "test-results/uploaded-jetway-a1-threshold-v12.png");
 
-  fs.writeFileSync("test-results/uploaded-jetway-a1-full-3d-v11.json", `${JSON.stringify({
+  fs.writeFileSync("test-results/uploaded-jetway-a1-threshold-v12.json", `${JSON.stringify({
     authority: runtime.terminal4UploadedJetwayArticulationAuthority,
+    cabContactAuthority: runtime.terminal4UploadedJetwayCabContactAuthority,
     sourceReach,
     target,
     extension,
@@ -157,12 +172,17 @@ test("the exact supplied A1 jetway aligns its Cab to the CRJ door plane in full 
     staticMaximumError,
     staticMaximumNormalError,
     staticMaximumHeightError,
+    staticMaximumPlaneIntrusion,
+    staticMinimumCabRampClearance,
     staticMinimumStairGround,
     staticMaximumStairGround,
     staticMinimumBogieGround,
     staticMaximumBogieGround,
     a1CabNormalError,
     a1CabHeightError,
+    a1CabAircraftPlaneIntrusion,
+    a1CabRampClearance,
+    a1CabVerticalOffset,
     a1StairGround,
     a1BogieGround,
     a1AnchorYaw,
