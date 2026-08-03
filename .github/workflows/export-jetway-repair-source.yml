@@ -5,6 +5,10 @@ on:
     branches: [agent/fix-terminal4-jetway-geometry]
     paths:
       - '.github/workflows/export-jetway-repair-source.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/export-jetway-repair-source.yml'
   workflow_dispatch:
 
 permissions:
