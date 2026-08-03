@@ -141,7 +141,7 @@ function correctGroundedDetail(THREE, model, object, keepTop) {
   if (keepTop && before.max.y > GROUND_CLEARANCE_METERS + 0.5) {
     const scaleY = clamp(
       (before.max.y - GROUND_CLEARANCE_METERS) / (before.max.y - before.min.y),
-      0.55,
+      0.25,
       1,
     );
     applyModelSpaceMatrix(THREE, model, object, scaleYKeepingTop(THREE, before.max.y, scaleY));
