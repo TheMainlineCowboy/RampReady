@@ -32,6 +32,11 @@ const awaitedBuild = `  const sourcePlacedJetways = buildSourcePlacedTerminal4Je
     || Number(sourcePlacedJetways.userData.uploadedJetwayCount) !== 58
     || Number(sourcePlacedJetways.userData.uploadedJetwayMeasuredTerminalConnectorCount) !== 58
     || Number(sourcePlacedJetways.userData.uploadedJetwayVerifiedModelCount) !== 58
+    || sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-per-gate-telescoping-v10"
+    || Number(sourcePlacedJetways.userData.uploadedJetwayStaticArticulatedGateCount) !== 57
+    || Number(sourcePlacedJetways.userData.uploadedJetwayA1PredictedDoorGapMeters) > 0.05
+    || Number(sourcePlacedJetways.userData.uploadedJetwayA1ActualDoorGapMeters) > 0.05
+    || sourcePlacedJetways.userData.uploadedJetwayA1PartOrderValid !== true
   ) {
     throw new Error("Terminal 4 uploaded jetway fleet did not complete all 58 source placements");
   }
@@ -47,7 +52,19 @@ const evidenceBlock = `${evidenceAnchor}
   environment.userData.authoredTerminal4UploadedJetwayCount = sourcePlacedJetways.userData.uploadedJetwayCount;
   environment.userData.authoredTerminal4UploadedJetwayConnectorCount = sourcePlacedJetways.userData.uploadedJetwayMeasuredTerminalConnectorCount;
   environment.userData.authoredTerminal4UploadedJetwayVerifiedModelCount = sourcePlacedJetways.userData.uploadedJetwayVerifiedModelCount;
-  environment.userData.authoredTerminal4UploadedJetwayReadyAuthority = sourcePlacedJetways.userData.uploadedJetwayReadyAuthority;`;
+  environment.userData.authoredTerminal4UploadedJetwayReadyAuthority = sourcePlacedJetways.userData.uploadedJetwayReadyAuthority;
+  environment.userData.authoredTerminal4UploadedJetwayArticulationAuthority = sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority;
+  environment.userData.authoredTerminal4UploadedJetwaySourceContactDistanceMeters = sourcePlacedJetways.userData.uploadedJetwaySourceContactDistanceMeters;
+  environment.userData.authoredTerminal4UploadedJetwayStaticArticulatedGateCount = sourcePlacedJetways.userData.uploadedJetwayStaticArticulatedGateCount;
+  environment.userData.authoredTerminal4UploadedJetwayStaticMaximumContactErrorMeters = sourcePlacedJetways.userData.uploadedJetwayStaticMaximumContactErrorMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1TargetDoorDistanceMeters = sourcePlacedJetways.userData.uploadedJetwayA1TargetDoorDistanceMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1AttachedExtensionMeters = sourcePlacedJetways.userData.uploadedJetwayA1AttachedExtensionMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1PredictedDoorGapMeters = sourcePlacedJetways.userData.uploadedJetwayA1PredictedDoorGapMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1PredictedContactDistanceMeters = sourcePlacedJetways.userData.uploadedJetwayA1PredictedContactDistanceMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1ActualContactDistanceMeters = sourcePlacedJetways.userData.uploadedJetwayA1ActualContactDistanceMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1ActualDoorGapMeters = sourcePlacedJetways.userData.uploadedJetwayA1ActualDoorGapMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1PartOrderValid = sourcePlacedJetways.userData.uploadedJetwayA1PartOrderValid;
+  environment.userData.authoredTerminal4UploadedJetwayA1PartCentersMeters = sourcePlacedJetways.userData.uploadedJetwayA1PartCentersMeters;`;
 if (!terminalSource.includes("authoredTerminal4UploadedJetwayLoadState")) {
   if (!terminalSource.includes(evidenceAnchor)) throw new Error(`${terminalPath}: jetway geometry evidence anchor is missing`);
   terminalSource = terminalSource.replace(evidenceAnchor, evidenceBlock);
@@ -62,6 +79,11 @@ for (const token of [
   "authoredTerminal4UploadedJetwayConnectorCount",
   "authoredTerminal4UploadedJetwayVerifiedModelCount",
   "authoredTerminal4UploadedJetwayReadyAuthority",
+  "authoredTerminal4UploadedJetwayArticulationAuthority",
+  "authoredTerminal4UploadedJetwayA1AttachedExtensionMeters",
+  "authoredTerminal4UploadedJetwayA1PredictedDoorGapMeters",
+  "authoredTerminal4UploadedJetwayA1ActualDoorGapMeters",
+  "authoredTerminal4UploadedJetwayA1PartOrderValid",
 ]) {
   if (!terminalSource.includes(token)) throw new Error(`${terminalPath}: uploaded jetway readiness wiring is missing ${token}`);
 }

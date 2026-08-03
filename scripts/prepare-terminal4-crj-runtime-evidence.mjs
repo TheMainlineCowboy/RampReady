@@ -35,7 +35,19 @@ insertAfter(
     renderer.domElement.dataset.terminal4UploadedJetwayCount = "loading";
     renderer.domElement.dataset.terminal4UploadedJetwayConnectorCount = "loading";
     renderer.domElement.dataset.terminal4UploadedJetwayVerifiedModelCount = "loading";
-    renderer.domElement.dataset.terminal4UploadedJetwayReadyAuthority = "loading";`,
+    renderer.domElement.dataset.terminal4UploadedJetwayReadyAuthority = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayArticulationAuthority = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwaySourceContactDistanceMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayStaticArticulatedGateCount = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumContactErrorMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1TargetDoorDistanceMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1AttachedExtensionMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1PredictedDoorGapMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1PredictedContactDistanceMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1ActualContactDistanceMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1ActualDoorGapMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1PartOrderValid = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1PartCentersMeters = "loading";`,
   'dataset.terminal4UploadedJetwayLoadState = "loading"',
   "source-scale and uploaded-fleet dataset initialization",
 );
@@ -53,7 +65,19 @@ insertAfter(
         renderer.domElement.dataset.terminal4UploadedJetwayCount = String(environment.userData.authoredTerminal4UploadedJetwayCount ?? "missing");
         renderer.domElement.dataset.terminal4UploadedJetwayConnectorCount = String(environment.userData.authoredTerminal4UploadedJetwayConnectorCount ?? "missing");
         renderer.domElement.dataset.terminal4UploadedJetwayVerifiedModelCount = String(environment.userData.authoredTerminal4UploadedJetwayVerifiedModelCount ?? "missing");
-        renderer.domElement.dataset.terminal4UploadedJetwayReadyAuthority = environment.userData.authoredTerminal4UploadedJetwayReadyAuthority || "missing";`,
+        renderer.domElement.dataset.terminal4UploadedJetwayReadyAuthority = environment.userData.authoredTerminal4UploadedJetwayReadyAuthority || "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayArticulationAuthority = environment.userData.authoredTerminal4UploadedJetwayArticulationAuthority || "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwaySourceContactDistanceMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwaySourceContactDistanceMeters) ? environment.userData.authoredTerminal4UploadedJetwaySourceContactDistanceMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticArticulatedGateCount = String(environment.userData.authoredTerminal4UploadedJetwayStaticArticulatedGateCount ?? "missing");
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumContactErrorMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwayStaticMaximumContactErrorMeters) ? environment.userData.authoredTerminal4UploadedJetwayStaticMaximumContactErrorMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1TargetDoorDistanceMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwayA1TargetDoorDistanceMeters) ? environment.userData.authoredTerminal4UploadedJetwayA1TargetDoorDistanceMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1AttachedExtensionMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwayA1AttachedExtensionMeters) ? environment.userData.authoredTerminal4UploadedJetwayA1AttachedExtensionMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PredictedDoorGapMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwayA1PredictedDoorGapMeters) ? environment.userData.authoredTerminal4UploadedJetwayA1PredictedDoorGapMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PredictedContactDistanceMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwayA1PredictedContactDistanceMeters) ? environment.userData.authoredTerminal4UploadedJetwayA1PredictedContactDistanceMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1ActualContactDistanceMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwayA1ActualContactDistanceMeters) ? environment.userData.authoredTerminal4UploadedJetwayA1ActualContactDistanceMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1ActualDoorGapMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwayA1ActualDoorGapMeters) ? environment.userData.authoredTerminal4UploadedJetwayA1ActualDoorGapMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PartOrderValid = String(environment.userData.authoredTerminal4UploadedJetwayA1PartOrderValid === true);
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PartCentersMeters = environment.userData.authoredTerminal4UploadedJetwayA1PartCentersMeters || "missing";`,
   "dataset.terminal4UploadedJetwayLoadState = environment.userData",
   "source-scale and uploaded-fleet dataset values",
 );
@@ -69,7 +93,19 @@ insertAfter(
         renderer.domElement.dataset.terminal4UploadedJetwayCount = "load-error";
         renderer.domElement.dataset.terminal4UploadedJetwayConnectorCount = "load-error";
         renderer.domElement.dataset.terminal4UploadedJetwayVerifiedModelCount = "load-error";
-        renderer.domElement.dataset.terminal4UploadedJetwayReadyAuthority = "load-error";`,
+        renderer.domElement.dataset.terminal4UploadedJetwayReadyAuthority = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayArticulationAuthority = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwaySourceContactDistanceMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticArticulatedGateCount = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumContactErrorMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1TargetDoorDistanceMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1AttachedExtensionMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PredictedDoorGapMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PredictedContactDistanceMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1ActualContactDistanceMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1ActualDoorGapMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PartOrderValid = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PartCentersMeters = "load-error";`,
   'dataset.terminal4UploadedJetwayLoadState = "load-error"',
   "source-scale and uploaded-fleet dataset error state",
 );
@@ -92,6 +128,9 @@ for (const [path, tokens] of [
     'dataset.terminal4UploadedJetwayLoadState = "load-error"',
     "dataset.terminal4UploadedJetwayVerifiedModelCount",
     "dataset.terminal4UploadedJetwayReadyAuthority",
+    "dataset.terminal4UploadedJetwayArticulationAuthority",
+    "dataset.terminal4UploadedJetwayA1AttachedExtensionMeters",
+    "dataset.terminal4UploadedJetwayA1PredictedDoorGapMeters",
   ]],
 ]) {
   const source = fs.readFileSync(path, "utf8");

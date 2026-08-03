@@ -5,6 +5,8 @@ const protectedSourcePaths = Object.freeze([
   "src/components/RampReadyStandupTrainerTerminal4.jsx",
   "src/components/RampReadyStandupTrainer.jsx",
   "src/environment/sourcePlacedTerminal4Jetways.js",
+  "src/environment/uploadedAirportJetwayFleet.js",
+  "src/environment/uploadedAirportJetwayFleetReadyV2.js",
   "src/environment/authoredTerminal4Visual.js",
   "src/environment/authoredKphxGround.js",
   "src/environment/authoredKphxPhotoGround.js",
@@ -20,6 +22,8 @@ const requiredBaselines = Object.freeze([
   ["src/components/RampReadyStandupTrainerTerminal4.jsx", "export default function RampReadyStandupTrainer", "Terminal 4 trainer"],
   ["src/components/RampReadyStandupTrainer.jsx", "export default function RampReadyStandupTrainer", "secondary trainer"],
   ["src/environment/sourcePlacedTerminal4Jetways.js", "buildSourcePlacedTerminal4Jetways", "Terminal 4 jetway"],
+  ["src/environment/uploadedAirportJetwayFleet.js", "installUploadedAirportJetwayFleet", "supplied airport jetway fleet"],
+  ["src/environment/uploadedAirportJetwayFleetReadyV2.js", "installUploadedAirportJetwayFleet", "supplied airport jetway readiness"],
   ["src/environment/authoredTerminal4Visual.js", "installAuthoredTerminal4Visual", "authored Terminal 4"],
   ["src/environment/authoredKphxGround.js", "installAuthoredKphxGround", "authored KPHX ground"],
   ["src/environment/authoredKphxPhotoGround.js", "installAuthoredKphxPhotoGround", "authored KPHX source aerial"],
@@ -90,4 +94,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, connected A1 to the measured T4_WALK source portal, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including both trainer sources.");
+console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, connected A1 to the measured T4_WALK source portal, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including both supplied-jetway runtime modules and both trainer sources.");
