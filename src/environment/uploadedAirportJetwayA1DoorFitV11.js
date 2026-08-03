@@ -210,15 +210,30 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
   if (!placement || !anchor || !model) throw new Error("Supplied A1 3D door fit is missing placement, anchor, or model");
 
   restoreUnarticulatedSource(model);
+  let rotundaCenter = measureRotundaCenter(THREE, model);
+  const sourceRoot = findSourceRootNode(model);
+  // The source archive's internal origin is offset about 0.7 m from the actual
+  // rotunda. Gate placement and the measured terminal connector both describe
+  // the rotunda center, so center the A1 source hierarchy on that authority
+  // before solving the aircraft-side articulation. Static gates remain untouched.
+  sourceRoot.position.x -= rotundaCenter.x;
+  sourceRoot.position.z -= rotundaCenter.z;
+  model.updateMatrixWorld(true);
+  rotundaCenter = measureRotundaCenter(THREE, model);
+
   const sourceContact = measureCabContact(THREE, model);
-  const rotundaCenter = measureRotundaCenter(THREE, model);
   const desiredX = CRJ_FORWARD_LEFT_DOOR.x - placement.x;
   const desiredZ = CRJ_FORWARD_LEFT_DOOR.z - placement.z;
   const desiredRadius = Math.hypot(desiredX, desiredZ);
-  const desiredContactZ = Math.sqrt(Math.max(0.01, desiredRadius ** 2 - sourceContact.point.x ** 2));
-  const extension = desiredContactZ - sourceContact.point.z;
+  const sourceContactOffsetX = sourceContact.point.x - rotundaCenter.x;
+  const sourceContactOffsetZ = sourceContact.point.z - rotundaCenter.z;
+  const desiredContactOffsetZ = Math.sqrt(Math.max(0.01, desiredRadius ** 2 - sourceContactOffsetX ** 2));
+  const extension = desiredContactOffsetZ - sourceContactOffsetZ;
   if (!(extension > -8 && extension < 8)) {
-    throw new Error(`Supplied A1 corrected extension is outside the physical range: ${extension}`);
+    throw new Error(
+      `Supplied A1 corrected extension is outside the physical range: ${extension}; `
+      + `targetRadius=${desiredRadius}; sourceOffset=${sourceContactOffsetX},${sourceContactOffsetZ}`,
+    );
   }
   applyWeightedLongitudinalExtension(THREE, model, extension);
 
@@ -241,8 +256,9 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
   const mechanicalGrounding = correctGroundedDetail(THREE, model, mechanical, false);
 
   contact = measureCabContact(THREE, model);
-  const correctedContactZ = Math.sqrt(Math.max(0.01, desiredRadius ** 2 - contact.point.x ** 2));
-  const residualLongitudinal = correctedContactZ - contact.point.z;
+  const correctedContactOffsetX = contact.point.x - rotundaCenter.x;
+  const correctedContactOffsetZ = Math.sqrt(Math.max(0.01, desiredRadius ** 2 - correctedContactOffsetX ** 2));
+  const residualLongitudinal = correctedContactOffsetZ - (contact.point.z - rotundaCenter.z);
   if (Math.abs(residualLongitudinal) > 0.001) {
     const residualCorrection = translationMatrix(THREE, 0, 0, residualLongitudinal);
     for (const name of ["Tunnel_B", "Tunnel_C", "Cab"]) {
@@ -252,7 +268,10 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
     contact = measureCabContact(THREE, model);
   }
 
-  const localDirection = Math.atan2(contact.point.x, contact.point.z);
+  const localDirection = Math.atan2(
+    contact.point.x - rotundaCenter.x,
+    contact.point.z - rotundaCenter.z,
+  );
   const targetDirection = Math.atan2(desiredX, desiredZ);
   anchor.rotation.y = targetDirection - localDirection;
   anchor.updateMatrixWorld(true);
