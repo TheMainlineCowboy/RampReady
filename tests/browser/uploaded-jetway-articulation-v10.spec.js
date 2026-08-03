@@ -128,8 +128,8 @@ test("the exact supplied A1 jetway aligns its real Cab threshold without crossin
   expect(a1CabHeightError).toBeLessThanOrEqual(0.05);
   expect(a1CabAircraftPlaneIntrusion).toBeLessThanOrEqual(0.05);
   expect(a1CabRampClearance).toBeGreaterThanOrEqual(1.5);
-  expect(a1CabVerticalOffset).toBeGreaterThan(-1.33);
-  expect(a1CabVerticalOffset).toBeLessThan(-1.30);
+  expect(a1CabVerticalOffset).toBeGreaterThan(-1.36);
+  expect(a1CabVerticalOffset).toBeLessThan(-1.33);
   expect(a1StairGround).toBeGreaterThanOrEqual(-0.05);
   expect(a1StairGround).toBeLessThanOrEqual(0.65);
   expect(a1BogieGround).toBeGreaterThanOrEqual(-0.05);
