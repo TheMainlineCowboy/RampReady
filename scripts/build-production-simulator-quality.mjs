@@ -93,4 +93,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the exact supplied Terminal 4 jetway meshes and internal transforms, corrected only their parent authoring axis to match the package gate headings, removed overlapping legacy bridge geometry, connected A1 to the measured terminal portal, retained package-native facade variants, kept the pinned full-airport aerial visible, and restored every protected committed source exactly.");
+console.log("RampReady simulator-quality production build preserved the exact supplied Terminal 4 jetway meshes, authored +Z axis and internal transforms, removed every overlapping legacy bridge, collar and walkway layer, connected A1 to the measured terminal portal, retained package-native facade variants, kept the pinned full-airport aerial visible, and restored every protected committed source exactly.");
