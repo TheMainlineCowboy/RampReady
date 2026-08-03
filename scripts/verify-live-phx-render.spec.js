@@ -5,6 +5,29 @@ const pageUrl = process.env.PAGE_URL;
 const expectedSha = process.env.EXPECTED_SHA;
 const evidenceDirectory = 'live-phx-render-evidence';
 
+async function captureCanvasClip(page, bounds, outputPath) {
+  const session = await page.context().newCDPSession(page);
+  try {
+    const result = await session.send('Page.captureScreenshot', {
+      format: 'png',
+      fromSurface: true,
+      captureBeyondViewport: false,
+      clip: {
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+        scale: 1,
+      },
+    });
+    const png = Buffer.from(result.data, 'base64');
+    fs.writeFileSync(outputPath, png);
+    return png.length;
+  } finally {
+    await session.detach();
+  }
+}
+
 test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
 test.setTimeout(240000);
 
@@ -80,8 +103,7 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
   expect(bounds.height).toBeGreaterThanOrEqual(700);
 
   const chasePath = `${evidenceDirectory}/sky-harbor-live.png`;
-  await canvas.screenshot({ path: chasePath, type: 'png', animations: 'disabled' });
-  const chaseBytes = fs.statSync(chasePath).size;
+  const chaseBytes = await captureCanvasClip(page, bounds, chasePath);
   expect(chaseBytes).toBeGreaterThan(100000);
 
   const overheadSelection = await page.evaluate(() => {
@@ -96,8 +118,7 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
   await page.waitForTimeout(1000);
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const overheadPath = `${evidenceDirectory}/sky-harbor-overhead.png`;
-  await canvas.screenshot({ path: overheadPath, type: 'png', animations: 'disabled' });
-  const overheadBytes = fs.statSync(overheadPath).size;
+  const overheadBytes = await captureCanvasClip(page, bounds, overheadPath);
   expect(overheadBytes).toBeGreaterThan(100000);
 
   const report = {
