@@ -5,7 +5,6 @@ const protectedSourcePaths = Object.freeze([
   "src/components/RampReadyStandupTrainerTerminal4.jsx",
   "src/components/RampReadyStandupTrainer.jsx",
   "src/environment/sourcePlacedTerminal4Jetways.js",
-  "src/environment/uploadedAirportJetwayFleet.js",
   "src/environment/authoredTerminal4Visual.js",
   "src/environment/authoredKphxGround.js",
   "src/environment/authoredKphxPhotoGround.js",
@@ -21,7 +20,6 @@ const requiredBaselines = Object.freeze([
   ["src/components/RampReadyStandupTrainerTerminal4.jsx", "export default function RampReadyStandupTrainer", "Terminal 4 trainer"],
   ["src/components/RampReadyStandupTrainer.jsx", "export default function RampReadyStandupTrainer", "secondary trainer"],
   ["src/environment/sourcePlacedTerminal4Jetways.js", "buildSourcePlacedTerminal4Jetways", "Terminal 4 jetway"],
-  ["src/environment/uploadedAirportJetwayFleet.js", "installUploadedAirportJetwayFleet", "supplied airport jetway fleet"],
   ["src/environment/authoredTerminal4Visual.js", "installAuthoredTerminal4Visual", "authored Terminal 4"],
   ["src/environment/authoredKphxGround.js", "installAuthoredKphxGround", "authored KPHX ground"],
   ["src/environment/authoredKphxPhotoGround.js", "installAuthoredKphxPhotoGround", "authored KPHX source aerial"],
@@ -59,7 +57,6 @@ try {
   await runNode("scripts/prepare-terminal4-a1-legacy-block-filter.mjs");
   await runNode("scripts/prepare-terminal4-floating-roof-filter.mjs");
   await runNode("scripts/prepare-terminal4-jetway-simulator-polish.mjs");
-  await runNode("scripts/prepare-uploaded-airport-jetway-exact-integration-v8.mjs");
   await runNode("scripts/prepare-a1-terminal-attachment-v14.mjs");
   await runNode("scripts/prepare-terminal4-static-jetway-parking-v15.mjs");
   await runNode("scripts/prepare-terminal4-ramp-facade-v16.mjs");
@@ -93,4 +90,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the exact supplied Terminal 4 jetway meshes, authored +Z axis and internal transforms, removed every overlapping legacy bridge, collar and walkway layer, connected A1 to the measured terminal portal, retained package-native facade variants, kept the pinned full-airport aerial visible, and restored every protected committed source exactly.");
+console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, connected A1 to the measured T4_WALK source portal, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including both trainer sources.");
