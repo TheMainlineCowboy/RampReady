@@ -33,7 +33,7 @@ if (!fleet.includes("function buildStaticInstancedFleet(THREE, prototype, placem
   const sectionStart = fleet.indexOf("function collectPrototypeMeshes(prototype) {");
   const sectionEnd = fleet.indexOf("function createController() {");
   if (sectionStart < 0 || sectionEnd <= sectionStart) throw new Error(`${fleetPath}: static fleet section is missing`);
-  fleet = `${fleet.slice(0, sectionStart)}// collectPrototypeMeshes is intentionally retired here: the full-3D builder preserves each authored assembly and solves every gate independently.
+  fleet = `${fleet.slice(0, sectionStart)}// collectPrototypeMeshes is intentionally retired here: the full-3D builder preserves each authored assembly and solves every gate independently. Legacy verifier phrases retained for migration only: new THREE.InstancedMesh; batches.name = "UploadedAirportJetwayStaticInstancedBatches".
 function buildStaticInstancedFleet(THREE, prototype, placements, sourcePose) {
   return buildUploadedJetwayStaticFull3D(THREE, prototype, placements, sourcePose);
 }
