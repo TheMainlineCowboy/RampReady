@@ -278,14 +278,36 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
   model.updateMatrixWorld(true);
 
   contact = measureCabContact(THREE, model);
-  const actualWorld = model.localToWorld(contact.point.clone());
   const targetWorld = toWorldTarget(THREE, group);
+  let actualWorld = model.localToWorld(contact.point.clone());
+  let postFitYawCorrection = 0;
+  // Resolve the final azimuth from what Three.js actually placed in the anchor's
+  // parent frame. This accounts for every retained source-node transform and
+  // keeps the rotunda fixed at the package-authored terminal pivot.
+  for (let iteration = 0; iteration < 2; iteration += 1) {
+    const targetInParent = anchor.parent.worldToLocal(targetWorld.clone());
+    const actualInParent = anchor.parent.worldToLocal(actualWorld.clone());
+    const targetVectorX = targetInParent.x - anchor.position.x;
+    const targetVectorZ = targetInParent.z - anchor.position.z;
+    const actualVectorX = actualInParent.x - anchor.position.x;
+    const actualVectorZ = actualInParent.z - anchor.position.z;
+    const yawCorrection = Math.atan2(targetVectorX, targetVectorZ)
+      - Math.atan2(actualVectorX, actualVectorZ);
+    postFitYawCorrection += yawCorrection;
+    anchor.rotation.y += yawCorrection;
+    anchor.updateMatrixWorld(true);
+    model.updateMatrixWorld(true);
+    actualWorld = model.localToWorld(contact.point.clone());
+  }
+
   const vectorGap = actualWorld.distanceTo(targetWorld);
   const horizontalGap = Math.hypot(actualWorld.x - targetWorld.x, actualWorld.z - targetWorld.z);
   const verticalGap = Math.abs(actualWorld.y - targetWorld.y);
   if (vectorGap > 0.12 || horizontalGap > 0.08 || verticalGap > 0.08) {
     throw new Error(
-      `Supplied A1 full-3D door fit failed: vector=${vectorGap}, horizontal=${horizontalGap}, vertical=${verticalGap}`,
+      `Supplied A1 full-3D door fit failed: vector=${vectorGap}, horizontal=${horizontalGap}, vertical=${verticalGap}; `
+      + `target=${targetWorld.toArray().join(",")}; actual=${actualWorld.toArray().join(",")}; `
+      + `anchor=${anchor.position.toArray().join(",")}; yaw=${anchor.rotation.y}; correction=${postFitYawCorrection}`,
     );
   }
 
@@ -305,6 +327,7 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
     pitchRadians,
     pitchDegrees: THREE.MathUtils.radToDeg(pitchRadians),
     correctedYawRadians: anchor.rotation.y,
+    postFitYawCorrectionRadians: postFitYawCorrection,
     cabContactWidthMeters: contact.width,
     stairGrounding,
     mechanicalGrounding,
