@@ -43,6 +43,14 @@ function waitForFleet(THREE, group, placements, controller) {
           reject(new Error("Uploaded airport jetway fleet is ready without the individual A1 anchor/model"));
           return;
         }
+        // The v10 loader has already put A1 into its prepared attached pose.
+        // The full-3D pass must correct from the geometry actually on screen, not
+        // subtract historical source offsets a second time.
+        const a1SourceRoot = a1Model.getObjectByName("RootNode");
+        for (const partName of ["Rotunda", "Tunnel_A", "Tunnel_B", "Tunnel_C", "Cab"]) {
+          const part = a1SourceRoot?.children?.find((entry) => entry.name === partName);
+          if (part) part.userData.uploadedJetwayArticulationOffsetMeters = 0;
+        }
         let full3dDoorFit;
         try {
           full3dDoorFit = fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placements);
