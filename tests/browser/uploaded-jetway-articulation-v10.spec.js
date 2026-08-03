@@ -38,18 +38,31 @@ async function captureCanvas(page, path) {
 test("the exact supplied A1 jetway telescopes to the aircraft door in authored part order", async ({ page }) => {
   test.setTimeout(600_000);
   await page.setViewportSize({ width: 1440, height: 900 });
+  page.on("console", (message) => console.log(`[browser:${message.type()}] ${message.text()}`));
+  page.on("pageerror", (error) => console.log(`[browser:pageerror] ${error.message}`));
   await page.goto("/", { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Drive tug / inspect airport" }).click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
   await page.waitForFunction(() => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
-    return data?.terminal4UploadedJetwayLoadState === "ready"
+    return (
+      data?.terminal4UploadedJetwayLoadState === "ready"
       && data?.terminal4UploadedJetwayArticulationAuthority === "user-supplied-airport-jetway-per-gate-telescoping-v10"
-      && data?.terminal4UploadedJetwayA1PartOrderValid === "true";
-  }, null, { timeout: 180_000, polling: 250 });
+      && data?.terminal4UploadedJetwayA1PartOrderValid === "true"
+    ) || data?.environmentSource === "load-error"
+      || data?.terminal4UploadedJetwayLoadState === "load-error";
+  }, null, { timeout: 90_000, polling: 100 });
 
-  const runtime = await page.evaluate(() => ({ ...document.querySelector("canvas.trainerCanvas").dataset }));
+  const readiness = await page.evaluate(() => ({
+    runtime: { ...document.querySelector("canvas.trainerCanvas").dataset },
+    hud: document.querySelector(".rr-hud p")?.textContent || "",
+  }));
+  if (readiness.runtime.environmentSource === "load-error"
+    || readiness.runtime.terminal4UploadedJetwayLoadState === "load-error") {
+    throw new Error(`Terminal 4 rejected the supplied jetway runtime: ${readiness.hud}`);
+  }
+  const runtime = readiness.runtime;
   expect(runtime.terminal4UploadedJetwayCount).toBe("58");
   expect(runtime.terminal4UploadedJetwayVerifiedModelCount).toBe("58");
   expect(runtime.terminal4UploadedJetwayStaticArticulatedGateCount).toBe("57");
