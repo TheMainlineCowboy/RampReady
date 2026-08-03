@@ -82,4 +82,5 @@ for (const token of [
 }
 
 await import("./prepare-uploaded-jetway-cab-threshold-v12.mjs");
-console.log("Prepared browser telemetry for full-3D supplied jetway contact, Cab normal, height, source doorway threshold, aircraft-plane clearance and grounded stair/bogie checks.");
+await import("./prepare-uploaded-jetway-exact-threshold-band-v13.mjs");
+console.log("Prepared browser telemetry for full-3D supplied jetway contact, Cab normal, height, source doorway threshold, exact browser-derived vertical band, aircraft-plane clearance and grounded stair/bogie checks.");
