@@ -100,24 +100,6 @@ function applyModelSpaceMatrix(THREE, model, object, correction) {
   model.updateWorldMatrix(true, true);
 }
 
-function applyModelSpaceMatrixExact(THREE, model, object, correction) {
-  model.updateWorldMatrix(true, true);
-  const modelInverse = new THREE.Matrix4().copy(model.matrixWorld).invert();
-  const objectInModel = new THREE.Matrix4().multiplyMatrices(modelInverse, object.matrixWorld);
-  const parentInModel = new THREE.Matrix4().multiplyMatrices(modelInverse, object.parent.matrixWorld);
-  const correctedInModel = new THREE.Matrix4().multiplyMatrices(correction, objectInModel);
-  const local = new THREE.Matrix4().multiplyMatrices(parentInModel.clone().invert(), correctedInModel);
-
-  // The stair and bogie inherit the bridge pitch. A model-space vertical fit can
-  // therefore contain shear that position/quaternion/scale decomposition loses.
-  // Preserve the exact affine matrix for these non-articulating detail meshes.
-  object.matrixAutoUpdate = false;
-  object.matrix.copy(local);
-  local.decompose(object.position, object.quaternion, object.scale);
-  object.matrixWorldNeedsUpdate = true;
-  model.updateWorldMatrix(true, true);
-}
-
 function translationMatrix(THREE, x, y, z) {
   return new THREE.Matrix4().makeTranslation(x, y, z);
 }
@@ -129,11 +111,36 @@ function pitchAround(THREE, pivotY, pivotZ, radians) {
   return new THREE.Matrix4().multiplyMatrices(toPivot, pitch).multiply(fromPivot);
 }
 
-function scaleYKeepingTop(THREE, topY, scaleY) {
-  const toTop = new THREE.Matrix4().makeTranslation(0, topY, 0);
-  const scale = new THREE.Matrix4().makeScale(1, scaleY, 1);
-  const fromTop = new THREE.Matrix4().makeTranslation(0, -topY, 0);
-  return new THREE.Matrix4().multiplyMatrices(toTop, scale).multiply(fromTop);
+function measureObjectLocalBounds(THREE, object) {
+  object.updateWorldMatrix(true, true);
+  const objectInverse = new THREE.Matrix4().copy(object.matrixWorld).invert();
+  const box = new THREE.Box3();
+  const vertex = new THREE.Vector3();
+  object.traverse((entry) => {
+    if (!entry.isMesh || entry.visible === false) return;
+    const position = entry.geometry?.getAttribute?.("position");
+    if (!position) return;
+    for (let index = 0; index < position.count; index += 1) {
+      vertex.fromBufferAttribute(position, index);
+      vertex.applyMatrix4(entry.matrixWorld);
+      vertex.applyMatrix4(objectInverse);
+      box.expandByPoint(vertex);
+    }
+  });
+  if (box.isEmpty()) throw new Error(`Supplied jetway detail ${object.name || "unnamed"} has no local bounds`);
+  return box;
+}
+
+function setLocalYScaleKeepingTop(THREE, model, object, baseMatrix, topY, scaleY) {
+  const correction = new THREE.Matrix4()
+    .makeTranslation(0, topY, 0)
+    .multiply(new THREE.Matrix4().makeScale(1, scaleY, 1))
+    .multiply(new THREE.Matrix4().makeTranslation(0, -topY, 0));
+  object.matrixAutoUpdate = false;
+  object.matrix.multiplyMatrices(baseMatrix, correction);
+  object.matrix.decompose(object.position, object.quaternion, object.scale);
+  object.matrixWorldNeedsUpdate = true;
+  model.updateWorldMatrix(true, true);
 }
 
 function solvePitchRadians({ floorY, floorZ, pivotY, pivotZ, targetY }) {
@@ -154,17 +161,37 @@ function correctGroundedDetail(THREE, model, object, keepTop) {
   if (!object) return { corrected: false, minimumY: NaN, maximumY: NaN };
   const before = measureBounds(THREE, model, object).box;
   if (before.min.y >= GROUND_CLEARANCE_METERS) {
-    return { corrected: false, minimumY: before.min.y, maximumY: before.max.y };
+    return { corrected: false, minimumY: before.min.y, maximumY: before.max.y, localScaleY: 1 };
   }
+
+  let localScaleY = 1;
   if (keepTop && before.max.y > GROUND_CLEARANCE_METERS + 0.5) {
-    const scaleY = clamp(
-      (before.max.y - GROUND_CLEARANCE_METERS) / (before.max.y - before.min.y),
-      0.25,
-      1,
-    );
-    applyModelSpaceMatrixExact(THREE, model, object, scaleYKeepingTop(THREE, before.max.y, scaleY));
+    if (object.matrixAutoUpdate) object.updateMatrix();
+    const baseMatrix = object.matrix.clone();
+    const localBounds = measureObjectLocalBounds(THREE, object);
+    const topY = localBounds.max.y;
+    let low = 0.05;
+    let high = 1;
+
+    setLocalYScaleKeepingTop(THREE, model, object, baseMatrix, topY, low);
+    const compressedMinimum = measureBounds(THREE, model, object).box.min.y;
+    if (compressedMinimum < GROUND_CLEARANCE_METERS - 0.002) {
+      throw new Error(
+        `Supplied A1 stair cannot reach the pavement without detaching its top: ${compressedMinimum}`,
+      );
+    }
+
+    for (let iteration = 0; iteration < 42; iteration += 1) {
+      const candidate = (low + high) / 2;
+      setLocalYScaleKeepingTop(THREE, model, object, baseMatrix, topY, candidate);
+      const candidateMinimum = measureBounds(THREE, model, object).box.min.y;
+      if (candidateMinimum >= GROUND_CLEARANCE_METERS) low = candidate;
+      else high = candidate;
+    }
+    localScaleY = low;
+    setLocalYScaleKeepingTop(THREE, model, object, baseMatrix, topY, localScaleY);
   } else {
-    applyModelSpaceMatrixExact(
+    applyModelSpaceMatrix(
       THREE,
       model,
       object,
@@ -172,7 +199,7 @@ function correctGroundedDetail(THREE, model, object, keepTop) {
     );
   }
   const after = measureBounds(THREE, model, object).box;
-  return { corrected: true, minimumY: after.min.y, maximumY: after.max.y };
+  return { corrected: true, minimumY: after.min.y, maximumY: after.max.y, localScaleY };
 }
 
 function restoreUnarticulatedSource(model) {
