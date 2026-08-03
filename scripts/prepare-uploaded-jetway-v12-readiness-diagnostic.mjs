@@ -39,4 +39,5 @@ for (const token of [
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared exact v12 supplied-Cab readiness diagnostics without changing any clearance threshold or canonical v11 preparation block.");
+await import("./prepare-uploaded-jetway-exact-threshold-band-v13.mjs");
+console.log("Prepared exact v12 supplied-Cab readiness diagnostics and the browser-derived vertical threshold band without changing any contact, plane-intrusion or ramp-clearance gate.");
