@@ -3,7 +3,7 @@ import fs from "node:fs";
 const path = "src/environment/uploadedAirportJetwayFleet.js";
 let source = fs.readFileSync(path, "utf8");
 
-const axisMarker = "uploaded-source-model-longitudinal-axis-aligned-to-terminal4-heading-v8";
+const axisMarker = "uploaded-source-model-authored-plus-z-direct-to-terminal4-target-vector-v8";
 const legacyMarker = "uploaded-source-model-exclusive-bridge-geometry-v8";
 
 const oldHide = `// Replace only the movable fallback jetway. The source-positioned fixed walkway
@@ -25,12 +25,11 @@ const oldAlignment = `  const aligned = new THREE.Group();
   aligned.add(model);`;
 const newAlignment = `  const aligned = new THREE.Group();
   aligned.name = "UploadedAirportJetway_AlignedPrototype";
-  // ${axisMarker}: the supplied FBX model is authored longitudinally on +Z,
-  // while the decoded PHX jetway headings place the original AIR_Jetway01 on +X.
-  // Rotate only the parent coordinate frame. No supplied mesh, proportion,
-  // stair, bogie, cab, rotunda or tunnel transform is changed or rebuilt.
-  aligned.rotation.y = Math.PI / 2;
-  aligned.userData.authoringAxisCorrectionRadians = Math.PI / 2;
+  // ${axisMarker}: the supplied model already runs longitudinally on local +Z,
+  // exactly matching the PHX placement yaw built from atan2(targetX, targetZ).
+  // Keep the authored axis unchanged. No parent rotation, mesh transform,
+  // proportion, stair, bogie, cab, rotunda or tunnel geometry is altered.
+  aligned.userData.authoringAxisCorrectionRadians = 0;
   aligned.userData.authoringAxisAuthority = "${axisMarker}";
   model.position.set(0.651626, 0.23, 15.12);
   aligned.add(model);`;
@@ -54,15 +53,18 @@ if (!source.includes("uploadedJetwayExactSourceGeometryPreserved")) {
 for (const token of [
   axisMarker,
   legacyMarker,
-  "aligned.rotation.y = Math.PI / 2",
+  "aligned.userData.authoringAxisCorrectionRadians = 0",
   "uploadedJetwayExactSourceGeometryPreserved = true",
   "const HIDE_REPLACED = /^(?:AIR_Jetway01_",
 ]) {
   if (!source.includes(token)) throw new Error(`${path}: exact uploaded jetway integration missing ${token}`);
+}
+if (source.includes("aligned.rotation.y = Math.PI / 2")) {
+  throw new Error(`${path}: supplied jetway was incorrectly rotated away from its authored +Z target axis`);
 }
 if (source.includes("AIR_Jetway01_(?!WallCollars)")) {
   throw new Error(`${path}: legacy wall-collar exception still permits duplicate bridge geometry`);
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared the exact supplied airport jetway model with a parent-only +90 degree authoring-axis correction and exclusive replacement of all legacy bridge geometry. Supplied meshes and internal transforms remain untouched.");
+console.log("Prepared the exact supplied airport jetway model on its unchanged authored +Z axis and exclusively replaced all legacy bridge geometry. Supplied meshes and internal transforms remain untouched.");
