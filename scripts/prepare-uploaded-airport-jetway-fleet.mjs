@@ -28,6 +28,10 @@ const placementPush = `    uploadedJetwayPlacements.push({
       connectorTowardX,
       connectorTowardZ,
       wallConnectorLength,
+      targetX,
+      targetZ,
+      aircraftDoorDistance: distance,
+      aircraftContactClearanceMeters: AIR_JETWAY01_CONTACT_CLEARANCE_METERS,
     });`;
 const oldPlacementPush = `    uploadedJetwayPlacements.push({
       gate: jetway.g,
@@ -89,6 +93,8 @@ for (const token of [
   "connectorTowardX",
   "connectorTowardZ",
   "wallConnectorLength",
+  "aircraftDoorDistance: distance",
+  "aircraftContactClearanceMeters: AIR_JETWAY01_CONTACT_CLEARANCE_METERS",
   'sourceGeometryMode = "user-supplied-airport-jetway-loading"',
   "requiresOriginalSourceMesh = false",
   "a1JetwayController = uploadedJetwayController",
@@ -102,6 +108,8 @@ if (source.indexOf(placementPush) < source.indexOf("const connectorTowardX")) {
 }
 
 fs.writeFileSync(path, source, "utf8");
+
+await import("./prepare-uploaded-airport-jetway-articulation-v10.mjs");
 
 // The fleet module is committed as the canonical runtime implementation. This
 // preparation step must validate it without inserting compatibility imports or
@@ -119,6 +127,9 @@ for (const token of [
   "uploadedJetwayStaticConnectorGateCount = staticConnectors.staticGateCount",
   "uploadedJetwayStaticConnectorBatchCount = staticConnectors.batchCount",
   "uploadedJetwayIndividualConnectorGateCount = 1",
+  "UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY",
+  "uploadedJetwayA1PredictedDoorGapMeters",
+  "uploadedJetwayStaticArticulatedGateCount",
 ]) {
   if (!fleet.includes(token)) throw new Error(`${fleetPath}: canonical batched terminal connector wiring missing ${token}`);
 }
