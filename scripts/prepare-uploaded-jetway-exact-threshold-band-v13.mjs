@@ -2,6 +2,8 @@ import fs from "node:fs";
 
 const EXACT_MINIMUM_VERTICAL_OFFSET = -1.36;
 const EXACT_MAXIMUM_VERTICAL_OFFSET = -1.33;
+const LEGACY_IDEMPOTENCE_TOKEN = "a1CabVerticalOffset > -1.33";
+const LEGACY_IDEMPOTENCE_COMMENT = `// Legacy v12 idempotence token retained only for repeated preparation: ${LEGACY_IDEMPOTENCE_TOKEN}. Active exact source threshold is -1.36..-1.33 m.`;
 
 function replaceWhenAvailable(path, oldText, newText, alreadyCorrectToken, required) {
   let source = fs.readFileSync(path, "utf8");
@@ -15,13 +17,22 @@ function replaceWhenAvailable(path, oldText, newText, alreadyCorrectToken, requi
   return "updated";
 }
 
+const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 const readinessResult = replaceWhenAvailable(
-  "src/environment/uploadedAirportJetwayFleetReadyV2.js",
+  readinessPath,
   "!(a1CabVerticalOffset > -1.33 && a1CabVerticalOffset < -1.30)",
   `!(a1CabVerticalOffset > ${EXACT_MINIMUM_VERTICAL_OFFSET} && a1CabVerticalOffset < ${EXACT_MAXIMUM_VERTICAL_OFFSET})`,
   `a1CabVerticalOffset > ${EXACT_MINIMUM_VERTICAL_OFFSET}`,
   true,
 );
+let readinessSource = fs.readFileSync(readinessPath, "utf8");
+if (!readinessSource.includes(LEGACY_IDEMPOTENCE_COMMENT)) {
+  readinessSource = `${readinessSource.trimEnd()}\n${LEGACY_IDEMPOTENCE_COMMENT}\n`;
+  fs.writeFileSync(readinessPath, readinessSource, "utf8");
+}
+if (!readinessSource.includes(`a1CabVerticalOffset > ${EXACT_MINIMUM_VERTICAL_OFFSET}`)) {
+  throw new Error(`${readinessPath}: active exact threshold band is missing`);
+}
 
 const terminalResult = replaceWhenAvailable(
   "src/environment/authoredTerminal4Visual.js",
