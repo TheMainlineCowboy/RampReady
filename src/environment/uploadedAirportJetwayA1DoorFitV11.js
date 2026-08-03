@@ -35,8 +35,10 @@ function findSourcePartRoot(model, name) {
 }
 
 function collectModelLocalVertices(THREE, model, object) {
-  model.updateMatrixWorld(true);
-  object.updateMatrixWorld(true);
+  // Freeze one coherent world-matrix snapshot. Calling localToWorld per vertex
+  // updates ancestors lazily and can mix a stale model inverse with a fresh
+  // anchor transform, injecting the gate position into model-local measurements.
+  model.updateWorldMatrix(true, true);
   const modelInverse = new THREE.Matrix4().copy(model.matrixWorld).invert();
   const vertex = new THREE.Vector3();
   const values = [];
@@ -46,7 +48,7 @@ function collectModelLocalVertices(THREE, model, object) {
     if (!position) return;
     for (let index = 0; index < position.count; index += 1) {
       vertex.fromBufferAttribute(position, index);
-      entry.localToWorld(vertex);
+      vertex.applyMatrix4(entry.matrixWorld);
       vertex.applyMatrix4(modelInverse);
       values.push(vertex.clone());
     }
@@ -87,9 +89,7 @@ function measureCabContact(THREE, model) {
 }
 
 function applyModelSpaceMatrix(THREE, model, object, correction) {
-  model.updateMatrixWorld(true);
-  object.parent?.updateMatrixWorld?.(true);
-  object.updateMatrixWorld(true);
+  model.updateWorldMatrix(true, true);
   const modelInverse = new THREE.Matrix4().copy(model.matrixWorld).invert();
   const objectInModel = new THREE.Matrix4().multiplyMatrices(modelInverse, object.matrixWorld);
   const parentInModel = new THREE.Matrix4().multiplyMatrices(modelInverse, object.parent.matrixWorld);
@@ -97,7 +97,7 @@ function applyModelSpaceMatrix(THREE, model, object, correction) {
   const local = new THREE.Matrix4().multiplyMatrices(parentInModel.clone().invert(), correctedInModel);
   local.decompose(object.position, object.quaternion, object.scale);
   object.updateMatrix();
-  object.updateMatrixWorld(true);
+  model.updateWorldMatrix(true, true);
 }
 
 function translationMatrix(THREE, x, y, z) {
