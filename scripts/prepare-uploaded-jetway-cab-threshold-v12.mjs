@@ -65,21 +65,18 @@ const readyPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 if (fs.existsSync(readyPath)) {
   const readySource = fs.readFileSync(readyPath, "utf8");
   if (readySource.includes("staticMaximumCabHeightError")) {
+    // Insert all v12 declarations after the canonical v11 measurement block.
+    // This preserves the exact v11 block so repeated preparation cannot add it twice.
     insertAfter(
       readyPath,
-      "        const staticMaximumCabHeightError = Number(group.userData.uploadedJetwayStaticMaximumCabHeightErrorMeters ?? Infinity);",
+      '          + "; A1 ground/order=" + a1StairGround + "/" + a1BogieGround + "/" + a1PartOrderValid',
       `        const cabContactAuthority = group.userData.uploadedJetwayCabContactAuthority || "missing";
         const staticMaximumAircraftPlaneIntrusion = Number(group.userData.uploadedJetwayStaticMaximumAircraftPlaneIntrusionMeters ?? Infinity);
-        const staticMinimumCabRampClearance = Number(group.userData.uploadedJetwayStaticMinimumCabRampClearanceMeters ?? -Infinity);`,
-      "const staticMaximumAircraftPlaneIntrusion = Number",
-    );
-    insertAfter(
-      readyPath,
-      "        const a1CabHeightError = Number(group.userData.uploadedJetwayA1CabHeightErrorMeters ?? Infinity);",
-      `        const a1CabAircraftPlaneIntrusion = Number(group.userData.uploadedJetwayA1CabAircraftPlaneIntrusionMeters ?? Infinity);
+        const staticMinimumCabRampClearance = Number(group.userData.uploadedJetwayStaticMinimumCabRampClearanceMeters ?? -Infinity);
+        const a1CabAircraftPlaneIntrusion = Number(group.userData.uploadedJetwayA1CabAircraftPlaneIntrusionMeters ?? Infinity);
         const a1CabRampClearance = Number(group.userData.uploadedJetwayA1CabRampClearanceMeters ?? -Infinity);
         const a1CabVerticalOffset = Number(group.userData.uploadedJetwayA1CabVerticalOffsetMeters ?? NaN);`,
-      "const a1CabAircraftPlaneIntrusion = Number",
+      "const staticMaximumAircraftPlaneIntrusion = Number",
     );
     insertAfter(
       readyPath,
