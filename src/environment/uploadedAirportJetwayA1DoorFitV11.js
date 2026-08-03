@@ -111,36 +111,99 @@ function pitchAround(THREE, pivotY, pivotZ, radians) {
   return new THREE.Matrix4().multiplyMatrices(toPivot, pitch).multiply(fromPivot);
 }
 
-function measureObjectLocalBounds(THREE, object) {
-  object.updateWorldMatrix(true, true);
-  const objectInverse = new THREE.Matrix4().copy(object.matrixWorld).invert();
-  const box = new THREE.Box3();
-  const vertex = new THREE.Vector3();
-  object.traverse((entry) => {
-    if (!entry.isMesh || entry.visible === false) return;
-    const position = entry.geometry?.getAttribute?.("position");
-    if (!position) return;
-    for (let index = 0; index < position.count; index += 1) {
-      vertex.fromBufferAttribute(position, index);
-      vertex.applyMatrix4(entry.matrixWorld);
-      vertex.applyMatrix4(objectInverse);
-      box.expandByPoint(vertex);
-    }
-  });
-  if (box.isEmpty()) throw new Error(`Supplied jetway detail ${object.name || "unnamed"} has no local bounds`);
-  return box;
+function rotationAroundModelAxis(THREE, pivot, axis, radians) {
+  const toPivot = new THREE.Matrix4().makeTranslation(pivot.x, pivot.y, pivot.z);
+  const rotation = new THREE.Matrix4().makeRotationAxis(axis, radians);
+  const fromPivot = new THREE.Matrix4().makeTranslation(-pivot.x, -pivot.y, -pivot.z);
+  return new THREE.Matrix4().multiplyMatrices(toPivot, rotation).multiply(fromPivot);
 }
 
-function setLocalYScaleKeepingTop(THREE, model, object, baseMatrix, topY, scaleY) {
-  const correction = new THREE.Matrix4()
-    .makeTranslation(0, topY, 0)
-    .multiply(new THREE.Matrix4().makeScale(1, scaleY, 1))
-    .multiply(new THREE.Matrix4().makeTranslation(0, -topY, 0));
-  object.matrixAutoUpdate = false;
-  object.matrix.multiplyMatrices(baseMatrix, correction);
-  object.matrix.decompose(object.position, object.quaternion, object.scale);
+function restoreObjectLocalMatrix(model, object, localMatrix) {
+  object.matrixAutoUpdate = true;
+  localMatrix.decompose(object.position, object.quaternion, object.scale);
+  object.updateMatrix();
   object.matrixWorldNeedsUpdate = true;
   model.updateWorldMatrix(true, true);
+}
+
+function measureTopHingeAndLowestPoint(THREE, model, object) {
+  const vertices = collectModelLocalVertices(THREE, model, object);
+  const box = new THREE.Box3();
+  for (const vertex of vertices) box.expandByPoint(vertex);
+  const height = Math.max(0.001, box.max.y - box.min.y);
+  const topBandDepth = Math.min(0.24, height * 0.12);
+  const bottomBandDepth = Math.min(0.10, height * 0.05);
+  const topBand = vertices.filter((vertex) => vertex.y >= box.max.y - topBandDepth);
+  const bottomBand = vertices.filter((vertex) => vertex.y <= box.min.y + bottomBandDepth);
+  if (!topBand.length || !bottomBand.length) {
+    throw new Error("Supplied A1 stair is missing a measurable top hinge or pavement foot");
+  }
+  const average = (values) => {
+    const point = new THREE.Vector3();
+    for (const value of values) point.add(value);
+    return point.multiplyScalar(1 / values.length);
+  };
+  return { box, pivot: average(topBand), lowest: average(bottomBand) };
+}
+
+function rotateRigidDetailToGround(THREE, model, object) {
+  if (object.matrixAutoUpdate) object.updateMatrix();
+  const baseLocalMatrix = object.matrix.clone();
+  const { pivot, lowest } = measureTopHingeAndLowestPoint(THREE, model, object);
+  const radial = lowest.clone().sub(pivot);
+  const axis = new THREE.Vector3(-radial.z, 0, radial.x);
+  if (axis.lengthSq() < 1e-6) {
+    throw new Error("Supplied A1 stair cannot define a horizontal top-hinge axis");
+  }
+  axis.normalize();
+
+  const applyAngle = (radians) => {
+    restoreObjectLocalMatrix(model, object, baseLocalMatrix);
+    applyModelSpaceMatrix(
+      THREE,
+      model,
+      object,
+      rotationAroundModelAxis(THREE, pivot, axis, radians),
+    );
+    return measureBounds(THREE, model, object).box;
+  };
+
+  let low = 0;
+  let high = 0;
+  let highBox = null;
+  const maximumAngle = THREE.MathUtils.degToRad(35);
+  for (let degrees = 0.5; degrees <= 35; degrees += 0.5) {
+    const angle = THREE.MathUtils.degToRad(degrees);
+    const candidate = applyAngle(angle);
+    if (candidate.min.y >= GROUND_CLEARANCE_METERS) {
+      high = angle;
+      highBox = candidate;
+      break;
+    }
+    low = angle;
+  }
+  if (!highBox) {
+    restoreObjectLocalMatrix(model, object, baseLocalMatrix);
+    throw new Error(
+      `Supplied A1 stair cannot reach the pavement through a rigid top-hinge rotation within ${THREE.MathUtils.radToDeg(maximumAngle)} degrees`,
+    );
+  }
+
+  for (let iteration = 0; iteration < 42; iteration += 1) {
+    const candidateAngle = (low + high) / 2;
+    const candidate = applyAngle(candidateAngle);
+    if (candidate.min.y >= GROUND_CLEARANCE_METERS) high = candidateAngle;
+    else low = candidateAngle;
+  }
+  const after = applyAngle(high);
+  return {
+    corrected: true,
+    minimumY: after.min.y,
+    maximumY: after.max.y,
+    hingeRotationDegrees: THREE.MathUtils.radToDeg(high),
+    hingeAxis: Object.freeze([axis.x, axis.y, axis.z]),
+    hingePivot: Object.freeze([pivot.x, pivot.y, pivot.z]),
+  };
 }
 
 function solvePitchRadians({ floorY, floorZ, pivotY, pivotZ, targetY }) {
@@ -164,42 +227,18 @@ function correctGroundedDetail(THREE, model, object, keepTop) {
     return { corrected: false, minimumY: before.min.y, maximumY: before.max.y, localScaleY: 1 };
   }
 
-  let localScaleY = 1;
   if (keepTop && before.max.y > GROUND_CLEARANCE_METERS + 0.5) {
-    if (object.matrixAutoUpdate) object.updateMatrix();
-    const baseMatrix = object.matrix.clone();
-    const localBounds = measureObjectLocalBounds(THREE, object);
-    const topY = localBounds.max.y;
-    let low = 0.05;
-    let high = 1;
-
-    setLocalYScaleKeepingTop(THREE, model, object, baseMatrix, topY, low);
-    const compressedMinimum = measureBounds(THREE, model, object).box.min.y;
-    if (compressedMinimum < GROUND_CLEARANCE_METERS - 0.002) {
-      throw new Error(
-        `Supplied A1 stair cannot reach the pavement without detaching its top: ${compressedMinimum}`,
-      );
-    }
-
-    for (let iteration = 0; iteration < 42; iteration += 1) {
-      const candidate = (low + high) / 2;
-      setLocalYScaleKeepingTop(THREE, model, object, baseMatrix, topY, candidate);
-      const candidateMinimum = measureBounds(THREE, model, object).box.min.y;
-      if (candidateMinimum >= GROUND_CLEARANCE_METERS) low = candidate;
-      else high = candidate;
-    }
-    localScaleY = low;
-    setLocalYScaleKeepingTop(THREE, model, object, baseMatrix, topY, localScaleY);
-  } else {
-    applyModelSpaceMatrix(
-      THREE,
-      model,
-      object,
-      translationMatrix(THREE, 0, GROUND_CLEARANCE_METERS - before.min.y, 0),
-    );
+    return rotateRigidDetailToGround(THREE, model, object);
   }
+
+  applyModelSpaceMatrix(
+    THREE,
+    model,
+    object,
+    translationMatrix(THREE, 0, GROUND_CLEARANCE_METERS - before.min.y, 0),
+  );
   const after = measureBounds(THREE, model, object).box;
-  return { corrected: true, minimumY: after.min.y, maximumY: after.max.y, localScaleY };
+  return { corrected: true, minimumY: after.min.y, maximumY: after.max.y };
 }
 
 function restoreUnarticulatedSource(model) {
