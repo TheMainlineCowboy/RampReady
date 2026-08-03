@@ -25,9 +25,11 @@ const fleetPath = "src/environment/uploadedAirportJetwayFleet.js";
 if (fs.existsSync(fleetPath)) {
   const fleetSource = fs.readFileSync(fleetPath, "utf8");
   if (fleetSource.includes("measureUploadedJetwayFull3DPose")) {
+    // Keep these assignments after the canonical full-3D replacement block so
+    // its exact text remains recognizable on every later preparation pass.
     insertAfter(
       fleetPath,
-      "          articulation.cabNormalErrorDegrees = measurement.cabNormalErrorDegrees;",
+      "          anchor.userData.uploadedJetwayArticulation = articulation;",
       `          articulation.cabAircraftPlaneIntrusion = measurement.cabAircraftPlaneIntrusion;
           articulation.cabRampClearance = measurement.cabRampClearance;`,
       "articulation.cabAircraftPlaneIntrusion = measurement.cabAircraftPlaneIntrusion",
