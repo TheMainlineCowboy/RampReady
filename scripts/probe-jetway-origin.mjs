@@ -3,6 +3,23 @@ import { createHash } from "node:crypto";
 const uid = "6067e855917e498abee3d98076293cc6";
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const endpoint = `https://sketchfab.com/i/models/${uid}`;
+const summarizeResponse = async (label, url) => {
+  try {
+    const response = await fetch(url, {
+      redirect: "manual",
+      headers: { "user-agent": "RampReady exact-asset identity verifier/1.0", accept: "application/json,text/html,*/*" },
+    });
+    const bytes = Buffer.from(await response.arrayBuffer());
+    const location = response.headers.get("location") || "";
+    const text = bytes.toString("utf8");
+    console.log(`${label} url=${url} status=${response.status} bytes=${bytes.length} sha256=${sha256(bytes)} type=${response.headers.get("content-type") || ""} location=${location ? new URL(location, url).origin + new URL(location, url).pathname : ""} body=${JSON.stringify(text.slice(0, 1200))}`);
+    return { response, bytes, text };
+  } catch (error) {
+    console.log(`${label}_ERROR url=${url} error=${error?.message || error}`);
+    return null;
+  }
+};
+
 try {
   const response = await fetch(endpoint, {
     redirect: "follow",
@@ -22,28 +39,32 @@ try {
   })}`);
   console.log(`JETWAY_ORIGIN_ARCHIVE_STATUS ${JSON.stringify(data.archivesStatus || null)}`);
 
+  const currentVersionUid = data.version?.uid || "";
+  const historicalEndpoints = [
+    `https://sketchfab.com/i/models/${uid}/versions`,
+    `https://sketchfab.com/i/models/${uid}/versions?offset=0&limit=100`,
+    `https://sketchfab.com/i/models/${uid}/modelversions`,
+    `https://api.sketchfab.com/v3/models/${uid}/versions`,
+    currentVersionUid && `https://sketchfab.com/i/models/${uid}/versions/${currentVersionUid}`,
+    currentVersionUid && `https://sketchfab.com/i/models/${uid}/versions/${currentVersionUid}/textures?optimized=1`,
+  ].filter(Boolean);
+  for (const url of historicalEndpoints) await summarizeResponse("JETWAY_VERSION_ENDPOINT", url);
+
   const archiveEndpoints = [
     `https://sketchfab.com/i/models/${uid}/download`,
     `https://sketchfab.com/i/models/${uid}/download?archive_type=glb`,
     `https://sketchfab.com/i/models/${uid}/archives`,
     `https://sketchfab.com/i/models/${uid}/archives/glb`,
+    currentVersionUid && `https://sketchfab.com/i/models/${uid}/versions/${currentVersionUid}/download`,
+    currentVersionUid && `https://sketchfab.com/i/models/${uid}/versions/${currentVersionUid}/download?archive_type=glb`,
     `https://api.sketchfab.com/v3/models/${uid}/download`,
-  ];
-  for (const archiveEndpoint of archiveEndpoints) {
-    try {
-      const archiveResponse = await fetch(archiveEndpoint, { redirect: "manual" });
-      const bytes = Buffer.from(await archiveResponse.arrayBuffer());
-      const location = archiveResponse.headers.get("location") || "";
-      console.log(`JETWAY_ORIGIN_ARCHIVE_ENDPOINT url=${archiveEndpoint} status=${archiveResponse.status} bytes=${bytes.length} sha256=${sha256(bytes)} type=${archiveResponse.headers.get("content-type") || ""} location=${location ? new URL(location, archiveEndpoint).origin + new URL(location, archiveEndpoint).pathname : ""} body=${JSON.stringify(bytes.toString("utf8", 0, Math.min(bytes.length, 400)))}`);
-    } catch (error) {
-      console.log(`JETWAY_ORIGIN_ARCHIVE_ERROR url=${archiveEndpoint} error=${error?.message || error}`);
-    }
-  }
+  ].filter(Boolean);
+  for (const archiveEndpoint of archiveEndpoints) await summarizeResponse("JETWAY_ORIGIN_ARCHIVE_ENDPOINT", archiveEndpoint);
 
   const candidates = [];
   const visit = (value, keyPath = "root") => {
     if (typeof value === "string" && /^https?:\/\//i.test(value)) {
-      if (/(osgjs|texture|file|archive|source|model)/i.test(keyPath + value)) candidates.push({ keyPath, url: value });
+      if (/(osgjs|texture|file|archive|source|model|version)/i.test(keyPath + value)) candidates.push({ keyPath, url: value });
       return;
     }
     if (Array.isArray(value)) value.forEach((entry, index) => visit(entry, `${keyPath}[${index}]`));
