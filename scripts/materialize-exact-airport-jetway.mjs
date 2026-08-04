@@ -1,71 +1,102 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 
-await import("./collect-official-jetway-viewer-candidates.mjs");
-await import("./diagnose-official-jetway-viewer-textures.mjs");
-
-const CHUNK_COUNT = 9;
-const CHUNK_ROOT = path.resolve(".jetway-source-staging");
-const OUTPUT_PATH = path.resolve("public/models/airport-jetway/Airport_Jetway.glb");
-const EXPECTED_BYTES = 31_459_796;
-const EXPECTED_SHA256 = "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0";
+const CHUNK_COUNT = 106;
+const CHUNK_ROOT = path.resolve(".jetway-source-v3");
+const OUTPUT_ROOT = path.resolve("public/models/airport-jetway/source");
+const ARCHIVE_PATH = path.resolve(".jetway-source-v3/airport-jetway-source.tar.xz");
+const EXPECTED_ENCODED_CHARS = 1_053_264;
+const EXPECTED_ARCHIVE_BYTES = 789_948;
+const EXPECTED_ARCHIVE_SHA256 = "d197405c68f24f0870a700679838c5ac8fca8410ec51d706abdd8ea7a53ddc9e";
+const EXPECTED_MESHES = [
+  "Tunnel_C_Jetway_0",
+  "Tunnel_C_Glass_JW_0",
+  "Rotunda_Jetway_0",
+  "Cab_Jetway_0",
+  "Cab_Glass_JW_0",
+  "Tunnel_A_Jetway_0",
+  "Tunnel_B_Jetway_0",
+];
+const EXPECTED_NODES = ["Tunnel_A", "Tunnel_B", "Tunnel_C", "Rotunda", "Cab"];
+const EXPECTED_IMAGES = [
+  "Jetway_albedo.avif",
+  "Jetway_metallic.avif",
+  "Jetway_normal.avif",
+  "Jetway_AO.avif",
+  "Glass_JW_normal.avif",
+  "Glass_JW_AO.avif",
+  "Glass_JW_emissive.avif",
+];
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
+
+function payloadFromChunk(source, index) {
+  const trimmed = source.trim();
+  if (!trimmed.startsWith("RAMPREADY_JETWAY_ASSET_PART_")) return trimmed;
+  const separator = trimmed.indexOf("\n\n");
+  if (separator < 0) throw new Error(`Jetway source part ${index} has a header but no payload separator`);
+  return trimmed.slice(separator + 2).replace(/\s+/g, "");
+}
 
 const encodedParts = [];
 for (let index = 0; index < CHUNK_COUNT; index += 1) {
-  const chunkPath = path.join(CHUNK_ROOT, `chunk${String(index).padStart(3, "0")}.b64`);
-  const encoded = (await readFile(chunkPath, "utf8")).trim();
-  console.log(`JETWAY_CHUNK ${String(index).padStart(3, "0")} chars=${encoded.length} sha256=${sha256(Buffer.from(encoded, "utf8"))} prefix=${encoded.slice(0, 12)} suffix=${encoded.slice(-12)}`);
+  const chunkPath = path.join(CHUNK_ROOT, `part${String(index).padStart(3, "0")}.b64`);
+  const source = await readFile(chunkPath, "utf8");
+  const encoded = payloadFromChunk(source, index);
+  const expectedLength = index === CHUNK_COUNT - 1 ? 3_264 : 10_000;
+  if (encoded.length !== expectedLength) {
+    throw new Error(`Jetway source part ${index} expected ${expectedLength} characters, received ${encoded.length}`);
+  }
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) throw new Error(`Jetway source part ${index} is not valid base64 text`);
+  console.log(`JETWAY_SOURCE_PART ${String(index).padStart(3, "0")} chars=${encoded.length} sha256=${sha256(Buffer.from(encoded))}`);
   encodedParts.push(encoded);
 }
-const encoded = encodedParts.join("");
-const compressed = Buffer.from(encoded, "base64");
-console.log(`JETWAY_ENCODED chars=${encoded.length} sha256=${sha256(Buffer.from(encoded, "utf8"))}`);
-console.log(`JETWAY_XZ bytes=${compressed.length} sha256=${sha256(compressed)} prefix=${compressed.subarray(0, 16).toString("hex")} suffix=${compressed.subarray(-16).toString("hex")}`);
-if (compressed.subarray(0, 6).toString("hex") !== "fd377a585a00") {
-  throw new Error("Exact Airport_Jetway.glb staging payload is not the expected XZ stream");
-}
-const test = spawnSync("xz", ["-t"], {
-  input: compressed,
-  encoding: null,
-  maxBuffer: 64 * 1024 * 1024,
-});
-if (test.error) throw test.error;
-if (test.status !== 0) {
-  throw new Error(`Exact Airport_Jetway.glb XZ integrity test failed: ${String(test.stderr || "").trim()}`);
-}
-const result = spawnSync("xz", ["-dc"], {
-  input: compressed,
-  encoding: null,
-  maxBuffer: 64 * 1024 * 1024,
-});
-if (result.error) throw result.error;
-if (result.status !== 0) {
-  throw new Error(`Exact Airport_Jetway.glb XZ reconstruction failed: ${String(result.stderr || "").trim()}`);
-}
-const model = Buffer.from(result.stdout);
-const digest = sha256(model);
-if (model.length !== EXPECTED_BYTES || digest !== EXPECTED_SHA256) {
-  throw new Error(`Exact Airport_Jetway.glb reconstruction mismatch: ${model.length} bytes / ${digest}`);
-}
-if (model.toString("ascii", 0, 4) !== "glTF" || model.readUInt32LE(4) !== 2 || model.readUInt32LE(8) !== model.length) {
-  throw new Error("Exact Airport_Jetway.glb reconstruction has an invalid GLB 2.0 header");
-}
 
-await mkdir(path.dirname(OUTPUT_PATH), { recursive: true });
-let currentMatches = false;
-try {
-  const current = await readFile(OUTPUT_PATH);
-  currentMatches = current.length === model.length && sha256(current) === EXPECTED_SHA256;
-} catch (error) {
-  if (error?.code !== "ENOENT") throw error;
+const encoded = encodedParts.join("");
+if (encoded.length !== EXPECTED_ENCODED_CHARS) {
+  throw new Error(`Jetway source package expected ${EXPECTED_ENCODED_CHARS} base64 characters, received ${encoded.length}`);
 }
-if (!currentMatches) await writeFile(OUTPUT_PATH, model);
-for (let index = 0; index < 5; index += 1) {
-  await rm(path.resolve(`public/models/airport-jetway/geometry.part${index}`), { force: true });
+const archive = Buffer.from(encoded, "base64");
+const archiveDigest = sha256(archive);
+if (archive.length !== EXPECTED_ARCHIVE_BYTES || archiveDigest !== EXPECTED_ARCHIVE_SHA256) {
+  throw new Error(`Jetway source archive mismatch: ${archive.length} bytes / ${archiveDigest}`);
 }
-const outputStat = await stat(OUTPUT_PATH);
-if (outputStat.size !== EXPECTED_BYTES) throw new Error("Exact Airport_Jetway.glb output size changed after write");
-console.log(`Materialized untouched user-supplied Airport_Jetway.glb: ${EXPECTED_BYTES} bytes, sha256 ${EXPECTED_SHA256}.`);
+if (archive.subarray(0, 6).toString("hex") !== "fd377a585a00") throw new Error("Jetway source archive is not an XZ stream");
+const test = spawnSync("xz", ["-t"], { input: archive, encoding: null, maxBuffer: 16 * 1024 * 1024 });
+if (test.error) throw test.error;
+if (test.status !== 0) throw new Error(`Jetway source archive integrity failed: ${String(test.stderr || "").trim()}`);
+
+await mkdir(CHUNK_ROOT, { recursive: true });
+await writeFile(ARCHIVE_PATH, archive);
+await rm(OUTPUT_ROOT, { recursive: true, force: true });
+await mkdir(OUTPUT_ROOT, { recursive: true });
+const extract = spawnSync("tar", ["-xJf", ARCHIVE_PATH, "-C", OUTPUT_ROOT], { encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
+if (extract.error) throw extract.error;
+if (extract.status !== 0) throw new Error(`Jetway source archive extraction failed: ${extract.stderr.trim()}`);
+
+const gltfPath = path.join(OUTPUT_ROOT, "Airport_Jetway.gltf");
+const binPath = path.join(OUTPUT_ROOT, "Airport_Jetway.bin");
+const gltf = JSON.parse(await readFile(gltfPath, "utf8"));
+const binStat = await stat(binPath);
+if (binStat.size !== gltf.buffers?.[0]?.byteLength) throw new Error("Jetway source binary length does not match glTF metadata");
+if (!gltf.extensionsUsed?.includes("EXT_texture_avif")) throw new Error("Jetway source glTF is missing EXT_texture_avif");
+if (gltf.meshes?.length !== 7 || gltf.materials?.length !== 2 || gltf.images?.length !== 7) {
+  throw new Error(`Jetway source glTF expected 7 meshes, 2 materials and 7 images; received ${gltf.meshes?.length}, ${gltf.materials?.length}, ${gltf.images?.length}`);
+}
+const meshNames = new Set(gltf.meshes.map((entry) => entry.name));
+const nodeNames = new Set(gltf.nodes.map((entry) => entry.name));
+for (const name of EXPECTED_MESHES) if (!meshNames.has(name)) throw new Error(`Jetway source glTF is missing mesh ${name}`);
+for (const name of EXPECTED_NODES) if (!nodeNames.has(name)) throw new Error(`Jetway source glTF is missing node ${name}`);
+for (const mesh of gltf.meshes) {
+  for (const primitive of mesh.primitives) {
+    if (primitive.attributes?.POSITION == null || primitive.attributes?.TEXCOORD_0 == null) {
+      throw new Error(`Jetway source mesh ${mesh.name} lost source positions or UVs`);
+    }
+  }
+}
+const imageFiles = new Set(await readdir(path.join(OUTPUT_ROOT, "images")));
+for (const name of EXPECTED_IMAGES) if (!imageFiles.has(name)) throw new Error(`Jetway source package is missing clean texture ${name}`);
+for (let index = 0; index < 5; index += 1) await rm(path.resolve(`public/models/airport-jetway/geometry.part${index}`), { force: true });
+await rm(path.resolve("public/models/airport-jetway/Airport_Jetway.glb"), { force: true });
+console.log(`Materialized supplied Airport Jetway source package: ${archive.length} bytes, sha256 ${archiveDigest}, 7 UV-mapped meshes and 7 clean full-resolution textures.`);
