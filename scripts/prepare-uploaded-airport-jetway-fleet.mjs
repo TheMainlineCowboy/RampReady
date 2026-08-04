@@ -1,140 +1,54 @@
-import fs from "node:fs";
+import { createHash } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 
-const path = "src/environment/sourcePlacedTerminal4Jetways.js";
-let source = fs.readFileSync(path, "utf8");
+await import("./materialize-exact-airport-jetway.mjs");
 
-const importLine = 'import { installUploadedAirportJetwayFleet } from "./uploadedAirportJetwayFleet.js";';
-if (!source.includes(importLine)) {
-  const anchor = 'import { buildAnimatedA1Jetway } from "./animatedA1Jetway.js";';
-  if (!source.includes(anchor)) throw new Error(`${path}: uploaded jetway import anchor missing`);
-  source = source.replace(anchor, `${anchor}\n${importLine}`);
+const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
+async function materializeTextPayload(sourcePath, targetPath, expectedSha256) {
+  const encoded = (await readFile(path.resolve(sourcePath), "utf8")).trim();
+  const compressed = Buffer.from(encoded, "base64");
+  if (compressed.subarray(0, 6).toString("hex") !== "fd377a585a00") {
+    throw new Error(`${sourcePath}: expected an XZ source payload`);
+  }
+  const result = spawnSync("xz", ["-dc"], { input: compressed, encoding: null, maxBuffer: 8 * 1024 * 1024 });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(`${sourcePath}: XZ decode failed: ${String(result.stderr || "").trim()}`);
+  const content = Buffer.from(result.stdout);
+  const digest = sha256(content);
+  if (digest !== expectedSha256) throw new Error(`${sourcePath}: decoded source identity mismatch ${digest}`);
+  const absoluteTarget = path.resolve(targetPath);
+  await mkdir(path.dirname(absoluteTarget), { recursive: true });
+  await writeFile(absoluteTarget, content);
+  return absoluteTarget;
 }
 
-const placementDeclaration = "  const uploadedJetwayPlacements = [];";
-if (!source.includes(placementDeclaration)) {
-  const anchor = "  let a1AnimatedLayout = null;";
-  if (!source.includes(anchor)) throw new Error(`${path}: placement declaration anchor missing`);
-  source = source.replace(anchor, `${anchor}\n${placementDeclaration}`);
-}
+await materializeTextPayload(
+  ".jetway-runtime-staging/fleet.js.xz.b64",
+  "src/environment/uploadedAirportJetwayFleet.js",
+  "08e227c9962ffe1b4a12e5381345a4da916830cc99bd095988c12d58a354ae59",
+);
+const integrationPath = await materializeTextPayload(
+  ".jetway-runtime-staging/integration.mjs.xz.b64",
+  ".cache/exact-airport-jetway/integration.mjs",
+  "64ec65a28fd542a92972f7d8618375cc6eab606a69de62c311251c2baa9b5e13",
+);
+await import(`${pathToFileURL(integrationPath).href}?sha=64ec65a28fd542a92972f7d8618375cc6eab606a69de62c311251c2baa9b5e13`);
 
-const placementPush = `    uploadedJetwayPlacements.push({
-      gate: jetway.g,
-      x: jetway.x,
-      z: jetway.z,
-      yaw,
-      rotundaY,
-      bridgeEnd,
-      cabinY,
-      connectorTowardX,
-      connectorTowardZ,
-      wallConnectorLength,
-      targetX,
-      targetZ,
-      aircraftDoorDistance: distance,
-      aircraftContactClearanceMeters: AIR_JETWAY01_CONTACT_CLEARANCE_METERS,
-    });`;
-const oldPlacementPush = `    uploadedJetwayPlacements.push({
-      gate: jetway.g,
-      x: jetway.x,
-      z: jetway.z,
-      yaw,
-      rotundaY,
-      bridgeEnd,
-      cabinY,
-    });`;
-source = source.replace(`${placementPush}\n`, "").replace(`${oldPlacementPush}\n`, "");
-const placementAnchor = "    const sourceFacadeRecessMeters = lowerFacadeWallDistance != null && terminalWallDistance != null";
-if (!source.includes(placementAnchor)) throw new Error(`${path}: measured wall placement anchor missing`);
-source = source.replace(placementAnchor, `${placementPush}\n\n${placementAnchor}`);
-
-const oldInstallLine = "  const uploadedJetwayController = installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements);";
-const installLine = "  const uploadedJetwayController = installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements, sourceTextures);";
-source = source.replace(oldInstallLine, installLine);
-if (!source.includes(installLine)) {
-  const anchor = "  group.userData.sourceArchive = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceArchive;";
-  if (!source.includes(anchor)) throw new Error(`${path}: uploaded fleet installation anchor missing`);
-  source = source.replace(anchor, `${installLine}\n${anchor}`);
-}
-
-source = source
-  .replace(
-    '  group.userData.sourceGeometryMode = "procedural-articulated-fallback-pending-original-AIR_Jetway01-mesh-recovery";',
-    '  group.userData.sourceGeometryMode = "user-supplied-airport-jetway-loading";',
-  )
-  .replace(
-    "  group.userData.requiresOriginalSourceMesh = true;",
-    "  group.userData.requiresOriginalSourceMesh = false;",
-  )
-  .replace(
-    "  group.userData.a1JetwayController = animatedA1Jetway.userData.controller;",
-    "  group.userData.a1JetwayController = uploadedJetwayController;",
-  )
-  .replace(
-    /  group\.userData\.visualAuthority = "source-scale articulated fallback[^\n]*";/,
-    '  group.userData.visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured";',
-  )
-  .replace(
-    '  group.userData.visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1";',
-    '  group.userData.visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured";',
-  );
-
-const supersededDisclosure = '  group.userData.supersededFallbackDisclosure = \'visualAuthority = "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered"\';';
-if (!source.includes(supersededDisclosure)) {
-  const authority = '  group.userData.visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured";';
-  if (!source.includes(authority)) throw new Error(`${path}: uploaded visual authority anchor missing`);
-  source = source.replace(authority, `${authority}\n${supersededDisclosure}`);
-}
-
+const fleet = await readFile("src/environment/uploadedAirportJetwayFleet.js", "utf8");
 for (const token of [
-  importLine,
-  placementDeclaration,
-  placementPush,
-  installLine,
-  "connectorTowardX",
-  "connectorTowardZ",
-  "wallConnectorLength",
-  "aircraftDoorDistance: distance",
-  "aircraftContactClearanceMeters: AIR_JETWAY01_CONTACT_CLEARANCE_METERS",
-  'sourceGeometryMode = "user-supplied-airport-jetway-loading"',
-  "requiresOriginalSourceMesh = false",
-  "a1JetwayController = uploadedJetwayController",
-  'visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured"',
-  "supersededFallbackDisclosure",
+  'MODEL_URL = "models/airport-jetway/Airport_Jetway.glb"',
+  "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0",
+  'MATERIAL_AUTHORITY = "original-embedded-glb-materials-uvs-and-seven-textures-unaltered-v2"',
+  "new GLTFLoader().loadAsync(objectUrl)",
+  "computeUploadedJetwayArticulation",
+  "createModelSpaceA1Controller",
 ]) {
-  if (!source.includes(token)) throw new Error(`${path}: uploaded airport jetway integration missing ${token}`);
+  if (!fleet.includes(token)) throw new Error(`Exact Airport_Jetway.glb runtime is missing ${token}`);
 }
-if (source.indexOf(placementPush) < source.indexOf("const connectorTowardX")) {
-  throw new Error(`${path}: uploaded placement is created before measured connector values`);
+for (const forbidden of ["geometry.part", "DecompressionStream", "addProjectedUvs", "M1DGJETWAY", "splitTunnelCSourceDetail"]) {
+  if (fleet.includes(forbidden)) throw new Error(`Exact Airport_Jetway.glb runtime still contains ${forbidden}`);
 }
-
-fs.writeFileSync(path, source, "utf8");
-
-await import("./prepare-uploaded-airport-jetway-articulation-v10.mjs");
-
-// The fleet module is committed as the canonical runtime implementation. This
-// preparation step must validate it without inserting compatibility imports or
-// per-gate connector calls, because static jetways and connectors are already
-// batched while A1 remains the single detailed individual assembly.
-const fleetPath = "src/environment/uploadedAirportJetwayFleet.js";
-const fleet = fs.readFileSync(fleetPath, "utf8");
-for (const token of [
-  "addUploadedAirportJetwayStaticTerminalConnectors",
-  "addUploadedAirportJetwayTerminalConnector",
-  "const staticConnectors = addUploadedAirportJetwayStaticTerminalConnectors(THREE, fleet, placements);",
-  "addUploadedAirportJetwayTerminalConnector(THREE, fleet, placement);",
-  "if (placement.gate === \"A1\")",
-  "uploadedJetwayMeasuredTerminalConnectorCount = placements.length",
-  "uploadedJetwayStaticConnectorGateCount = staticConnectors.staticGateCount",
-  "uploadedJetwayStaticConnectorBatchCount = staticConnectors.batchCount",
-  "uploadedJetwayIndividualConnectorGateCount = 1",
-  "UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY",
-  "uploadedJetwayA1PredictedDoorGapMeters",
-  "uploadedJetwayStaticArticulatedGateCount",
-]) {
-  if (!fleet.includes(token)) throw new Error(`${fleetPath}: canonical batched terminal connector wiring missing ${token}`);
-}
-if ((fleet.match(/from "\.\/uploadedAirportJetwayTerminalConnector\.js"/g) || []).length !== 1) {
-  throw new Error(`${fleetPath}: terminal connector module must have exactly one canonical import`);
-}
-
-console.log("Prepared all 58 Terminal 4 gate transforms and validated the committed batched uploaded-jetway runtime: 57 static jetways and connectors are instanced, A1 remains individual, measured wall placement is preserved and tracked source is not mutated.");
+console.log("Prepared the exact user-supplied Airport_Jetway.glb runtime without replacing its meshes, UVs, materials, or textures.");
