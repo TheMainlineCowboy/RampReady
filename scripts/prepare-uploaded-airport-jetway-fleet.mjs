@@ -102,6 +102,7 @@ if (source.indexOf(placementPush) < source.indexOf("const connectorTowardX")) {
 fs.writeFileSync(path, source, "utf8");
 
 await import("./prepare-uploaded-airport-jetway-articulation-v10.mjs");
+await import("./prepare-uploaded-jetway-crj700-door-target-v14.mjs");
 await import("./prepare-uploaded-jetway-full3d-evidence-v11.mjs");
 await import("./prepare-uploaded-jetway-v12-readiness-diagnostic.mjs");
 
@@ -124,4 +125,4 @@ if ((fleet.match(/from "\.\/uploadedAirportJetwayTerminalConnector\.js"/g) || []
   throw new Error(`${fleetPath}: terminal connector module must have exactly one canonical import`);
 }
 
-console.log("Prepared all 58 exact supplied Terminal 4 jetways with aircraft headings, full 3D Cab poses, grounded source stair/bogie geometry and measured terminal connectors.");
+console.log("Prepared all 58 exact supplied Terminal 4 jetways with the authored CRJ700 forward-left-door A1 target, aircraft headings, full 3D Cab poses, grounded source stair/bogie geometry and measured terminal connectors.");
