@@ -29,7 +29,11 @@ async function captureCanvasClip(page, bounds, outputPath) {
 }
 
 test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
-test.setTimeout(240000);
+// The explicit readiness checks below can legitimately consume more than four
+// minutes on a cold GitHub runner while Chromium compiles shaders and decodes all
+// 21 native-resolution PHX tiles. Keep the overall budget above the sum of those
+// bounded waits so a completed chase render cannot fail during the overhead swap.
+test.setTimeout(420000);
 
 test('live RampReady renders native-resolution Sky Harbor ground and authored Terminal 4', async ({ page }) => {
   if (!pageUrl || !expectedSha) throw new Error('PAGE_URL and EXPECTED_SHA are required');
@@ -52,7 +56,10 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
     }
   });
 
-  const response = await page.goto(`${pageUrl}?release=${expectedSha}`, { waitUntil: 'networkidle', timeout: 120000 });
+  // Do not wait for generic network-idle here. The simulator has explicit,
+  // authoritative dataset and tile-response gates below; network-idle can spend
+  // most of the test budget on unrelated browser activity after the app is ready.
+  const response = await page.goto(`${pageUrl}?release=${expectedSha}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   expect(response?.ok()).toBe(true);
 
   await page.getByRole('heading', { name: 'Choose pushback equipment' }).waitFor({ state: 'visible', timeout: 30000 });
@@ -84,7 +91,11 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
       && element?.dataset.b15Anchors === 'ready';
   }, null, { timeout: 30000 });
 
-  await page.waitForTimeout(2500);
+  await page.waitForFunction(() => {
+    const canvas = document.querySelector('canvas.trainerCanvas');
+    return canvas && Number(canvas.dataset.photoRuntimeTileCount) === 21;
+  }, null, { timeout: 30000 });
+  await page.waitForTimeout(1000);
   expect(tileResponses.size).toBe(21);
   expect([...tileResponses.values()].filter(entry => !entry.ok || entry.status !== 200)).toEqual([]);
 
@@ -115,7 +126,7 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
     return selector.value;
   });
   expect(overheadSelection).toBe('overhead');
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(500);
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const overheadPath = `${evidenceDirectory}/sky-harbor-overhead.png`;
   const overheadBytes = await captureCanvasClip(page, bounds, overheadPath);
