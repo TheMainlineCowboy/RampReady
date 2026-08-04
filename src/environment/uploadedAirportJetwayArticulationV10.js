@@ -1,4 +1,10 @@
-const ARTICULATION_AUTHORITY = "user-supplied-airport-jetway-full-3d-door-plane-v11";
+const ARTICULATION_AUTHORITY = "user-supplied-airport-jetway-full-3d-door-plane-v14";
+const A1_CRJ700_FORWARD_LEFT_DOOR_AUTHORITY = "authored-crj700-forward-left-door-from-model-v14";
+const A1_CRJ700_FORWARD_LEFT_DOOR_WORLD = Object.freeze({
+  x: -1.309233922,
+  y: 1.72,
+  z: 2.23886,
+});
 const SOURCE_PART_Z_WEIGHTS = Object.freeze({
   Rotunda: 0,
   Tunnel_A: 0,
@@ -43,16 +49,21 @@ function rotateXZ(vector, yaw) {
 
 function resolveTarget(placement) {
   if (!placement || typeof placement !== "object") throw new Error("Uploaded jetway articulation requires a gate placement");
-  const attached = placement.gate === "A1"
-    && Number.isFinite(Number(placement.targetX))
+  const attached = placement.gate === "A1";
+  const authoredA1Target = attached ? A1_CRJ700_FORWARD_LEFT_DOOR_WORLD : null;
+  const hasPlacementTarget = Number.isFinite(Number(placement.targetX))
     && Number.isFinite(Number(placement.targetZ));
-  const targetX = attached
-    ? finite(placement.targetX) - finite(placement.x)
-    : Math.sin(finite(placement.yaw)) * finite(placement.bridgeEnd, NaN);
-  const targetZ = attached
-    ? finite(placement.targetZ) - finite(placement.z)
-    : Math.cos(finite(placement.yaw)) * finite(placement.bridgeEnd, NaN);
-  const targetY = finite(placement.cabinY, NaN);
+  const targetX = authoredA1Target
+    ? authoredA1Target.x - finite(placement.x)
+    : hasPlacementTarget
+      ? finite(placement.targetX) - finite(placement.x)
+      : Math.sin(finite(placement.yaw)) * finite(placement.bridgeEnd, NaN);
+  const targetZ = authoredA1Target
+    ? authoredA1Target.z - finite(placement.z)
+    : hasPlacementTarget
+      ? finite(placement.targetZ) - finite(placement.z)
+      : Math.cos(finite(placement.yaw)) * finite(placement.bridgeEnd, NaN);
+  const targetY = authoredA1Target ? authoredA1Target.y : finite(placement.cabinY, NaN);
   if (![targetX, targetY, targetZ].every(Number.isFinite)) {
     throw new Error(`Uploaded jetway ${placement.gate || "unknown"} has no valid 3D target`);
   }
@@ -62,7 +73,15 @@ function resolveTarget(placement) {
     : normalizeJetwayAngle(finite(placement.yaw));
   return {
     attached,
+    targetAuthority: authoredA1Target
+      ? A1_CRJ700_FORWARD_LEFT_DOOR_AUTHORITY
+      : hasPlacementTarget
+        ? "package-placement-aircraft-target"
+        : "package-static-bridge-end-target",
     point: { x: targetX, y: targetY, z: targetZ },
+    worldPoint: authoredA1Target
+      ? { ...authoredA1Target }
+      : { x: finite(placement.x) + targetX, y: targetY, z: finite(placement.z) + targetZ },
     desiredOpeningYaw,
     targetDistance: Math.hypot(targetX, targetZ),
   };
@@ -136,11 +155,13 @@ export function computeUploadedJetwayArticulation(placement, sourceGeometry) {
 
   return {
     authority: ARTICULATION_AUTHORITY,
+    targetAuthority: target.targetAuthority,
     gate: placement.gate,
     attached: target.attached,
     sourceContactDistance: finite(geometry.sourceContactDistance, NaN),
     targetDistance: target.targetDistance,
     targetContact: target.point,
+    targetWorldContact: target.worldPoint,
     desiredOpeningYaw: target.desiredOpeningYaw,
     sourceOpeningYaw,
     anchorYaw,
@@ -158,6 +179,8 @@ export function computeUploadedJetwayArticulation(placement, sourceGeometry) {
 
 export {
   ARTICULATION_AUTHORITY as UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY,
+  A1_CRJ700_FORWARD_LEFT_DOOR_AUTHORITY as UPLOADED_AIRPORT_JETWAY_A1_TARGET_AUTHORITY,
+  A1_CRJ700_FORWARD_LEFT_DOOR_WORLD as UPLOADED_AIRPORT_JETWAY_A1_TARGET_WORLD,
   SOURCE_PART_Z_WEIGHTS as UPLOADED_AIRPORT_JETWAY_ARTICULATION_WEIGHTS,
   SOURCE_PART_Y_WEIGHTS as UPLOADED_AIRPORT_JETWAY_VERTICAL_WEIGHTS,
   EXTENSION_LIMITS as UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS,
