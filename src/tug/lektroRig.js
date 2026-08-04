@@ -8,7 +8,7 @@ export const LEKTRO_RIG_PROFILE = Object.freeze({
   captureAnchor: Object.freeze([0, 0.34, 3.45]),
   liftTravel: 0.24,
   bodyBounds: Object.freeze([2.35, 1.45, 5.5]),
-  steeringMode: "front",
+  steeringMode: "rear",
 });
 
 export const STANDUP_RIG_PROFILE = Object.freeze({

@@ -13,6 +13,8 @@ if (rig.root.name !== "RampReady_LektroRig") failures.push(`unexpected root name
 if (rig.captureAnchor.name !== "CaptureAnchor") failures.push("capture anchor is not explicitly named");
 if (rig.operatorEye.name !== "OperatorEye") failures.push("operator eye is not explicitly named");
 if (rig.cradleLift.name !== "CradleLift") failures.push("cradle group is not explicitly named");
+if (rig.profile !== LEKTRO_RIG_PROFILE) failures.push("Lektro rig did not select the Lektro profile");
+if (rig.profile.steeringMode !== "rear") failures.push("Lektro steering mode is not rear-wheel steering");
 
 const localCapture = rig.captureAnchor.position;
 if (Math.abs(localCapture.z - LEKTRO_RIG_PROFILE.cradleOffset) > 1e-9) {
@@ -33,7 +35,13 @@ if (captureWorld.distanceTo(expectedWorld) > 1e-6) {
 
 rig.setSteering(0.31);
 for (const pivot of rig.steeringPivots) {
-  if (Math.abs(pivot.rotation.y - 0.31) > 1e-9) failures.push(`${pivot.name} did not receive steering angle`);
+  if (!pivot.name.startsWith("RearSteer_")) failures.push(`${pivot.name} is not a rear steering pivot`);
+  if (Math.abs(pivot.rotation.y + 0.31) > 1e-9) failures.push(`${pivot.name} did not counter-steer the rear axle`);
+}
+for (const name of ["FrontSteer_L", "FrontSteer_R"]) {
+  const pivot = rig.root.getObjectByName(name);
+  if (!pivot) failures.push(`missing fixed front axle pivot ${name}`);
+  else if (Math.abs(pivot.rotation.y) > 1e-9) failures.push(`${name} incorrectly received steering angle`);
 }
 
 const wheelRotations = rig.rollingWheels.map((wheel) => wheel.rotation.x);
@@ -51,7 +59,16 @@ if (Math.abs(rig.cradleLift.position.y) > 1e-9) failures.push("lift progress was
 
 const anchorNames = new Set();
 rig.root.traverse((node) => { if (node.name) anchorNames.add(node.name); });
-for (const required of ["CaptureAnchor", "OperatorEye", "OperatorLook", "FrontSteer_L", "FrontSteer_R", "CradleLift"]) {
+for (const required of [
+  "CaptureAnchor",
+  "OperatorEye",
+  "OperatorLook",
+  "FrontSteer_L",
+  "FrontSteer_R",
+  "RearSteer_L",
+  "RearSteer_R",
+  "CradleLift",
+]) {
   if (!anchorNames.has(required)) failures.push(`missing required named node ${required}`);
 }
 
@@ -75,4 +92,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`RampReady equipment runtime-rig verification passed: Lektro front-steer and stand-up rear-steer profiles both expose validated wheels, anchors, operator positions and capture geometry.`);
+console.log("RampReady equipment runtime-rig verification passed: both Lektro and stand-up rigs use validated rear-wheel steering, fixed front axles, rolling wheels, anchors, operator positions and capture geometry.");

@@ -1,6 +1,11 @@
 import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";
 import { installStaticJetwayPortalClosures } from "./staticJetwayPortalClosures.js";
 import { enforceExactUploadedJetwayVisualAuthority } from "./uploadedAirportJetwayExactModelGuard.js";
+import { UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY } from "./uploadedAirportJetwayArticulationV10.js";
+import {
+  fitUploadedA1JetwayToRenderedCrjDoor,
+  UPLOADED_A1_FULL_3D_DOOR_FIT_AUTHORITY,
+} from "./uploadedAirportJetwayA1DoorFitV11.js";
 
 const READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured";
 const EXPECTED_GATE_COUNT = 58;
@@ -9,7 +14,7 @@ const STATIC_PORTAL_AUTHORITY = "57-static-terminal-portals-paired-vestibule-doo
 const EXACT_MODEL_AUTHORITY = "user-supplied-airport-jetway-exclusive-geometry-v9";
 // Compatibility token retained for the established source verifier: waitForFleet(group, placements)
 
-function waitForFleet(THREE, group, placements) {
+function waitForFleet(THREE, group, placements, controller) {
   const startedAt = performance.now();
   const expectedModelNames = new Set(
     placements.map((placement) => `UploadedAirportJetway_${placement.gate}`),
@@ -32,9 +37,28 @@ function waitForFleet(THREE, group, placements) {
         );
         const modelCount = loadedModelNames.size;
         const missingModels = [...expectedModelNames].filter((name) => !loadedModelNames.has(name));
-        const a1Model = fleet?.getObjectByName("UploadedAirportJetwayModel_A1");
-        if (!a1Model) {
-          reject(new Error("Uploaded airport jetway fleet is ready without the individual A1 model"));
+        const a1Anchor = fleet?.getObjectByName("UploadedAirportJetway_A1");
+        const a1Model = a1Anchor?.getObjectByName("UploadedAirportJetwayModel_A1");
+        if (!a1Anchor || !a1Model) {
+          reject(new Error("Uploaded airport jetway fleet is ready without the individual A1 anchor/model"));
+          return;
+        }
+        // The v10 loader has already put A1 into its prepared attached pose.
+        // The full-3D pass must correct from the geometry actually on screen, not
+        // subtract historical source offsets a second time.
+        const a1SourceRoot = a1Model.getObjectByName("RootNode");
+        for (const partName of ["Rotunda", "Tunnel_A", "Tunnel_B", "Tunnel_C", "Cab"]) {
+          const part = a1SourceRoot?.children?.find((entry) => entry.name === partName);
+          if (part) part.userData.uploadedJetwayArticulationOffsetMeters = 0;
+        }
+        let full3dDoorFit;
+        try {
+          full3dDoorFit = fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placements);
+          controller.bind(a1Anchor);
+        } catch (error) {
+          group.userData.uploadedJetwayLoadState = "error";
+          group.userData.uploadedJetwayLoadError = error instanceof Error ? error.message : String(error);
+          reject(error instanceof Error ? error : new Error(String(error)));
           return;
         }
         const staticPortalClosures = installStaticJetwayPortalClosures(THREE, fleet, placements);
@@ -53,6 +77,38 @@ function waitForFleet(THREE, group, placements) {
         const staticConnectorInstanceCount = Number(group.userData.uploadedJetwayStaticConnectorInstanceCount ?? -1);
         const staticConnectorBatchAuthority = group.userData.uploadedJetwayStaticConnectorBatchAuthority || "missing";
         const individualConnectorGateCount = Number(group.userData.uploadedJetwayIndividualConnectorGateCount ?? -1);
+        const articulationAuthority = group.userData.uploadedJetwayArticulationAuthority || "missing";
+        const sourceContactDistance = Number(group.userData.uploadedJetwaySourceContactDistanceMeters ?? NaN);
+        const staticArticulatedGateCount = Number(group.userData.uploadedJetwayStaticArticulatedGateCount ?? -1);
+        const staticMaximumContactError = Number(group.userData.uploadedJetwayStaticMaximumContactErrorMeters ?? Infinity);
+        const a1TargetDoorDistance = Number(group.userData.uploadedJetwayA1TargetDoorDistanceMeters ?? NaN);
+        const a1AttachedExtension = Number(group.userData.uploadedJetwayA1AttachedExtensionMeters ?? NaN);
+        const a1PredictedDoorGap = Number(group.userData.uploadedJetwayA1PredictedDoorGapMeters ?? Infinity);
+        const a1PredictedContactDistance = Number(group.userData.uploadedJetwayA1PredictedContactDistanceMeters ?? NaN);
+        const a1ActualContactDistance = Number(group.userData.uploadedJetwayA1ActualContactDistanceMeters ?? NaN);
+        const a1ActualDoorGap = Number(group.userData.uploadedJetwayA1ActualDoorGapMeters ?? Infinity);
+        const a1PartOrderValid = group.userData.uploadedJetwayA1PartOrderValid === true;
+        const articulationDiagnostic = "authority=" + articulationAuthority
+          + "; source=" + sourceContactDistance
+          + "; static=" + staticArticulatedGateCount + "/" + staticMaximumContactError
+          + "; A1 target=" + a1TargetDoorDistance
+          + "; extension=" + a1AttachedExtension
+          + "; predicted=" + a1PredictedContactDistance + "/" + a1PredictedDoorGap
+          + "; actual=" + a1ActualContactDistance + "/" + a1ActualDoorGap
+          + "; order=" + a1PartOrderValid;
+        const full3dDoorFitAuthority = group.userData.uploadedJetwayA1Full3dDoorFitAuthority || "missing";
+        const a1VectorDoorGap = Number(group.userData.uploadedJetwayA1VectorDoorGapMeters ?? Infinity);
+        const a1HorizontalDoorGap = Number(group.userData.uploadedJetwayA1HorizontalDoorGapMeters ?? Infinity);
+        const a1VerticalDoorGap = Number(group.userData.uploadedJetwayA1VerticalDoorGapMeters ?? Infinity);
+        const a1CorrectedPitchDegrees = Number(group.userData.uploadedJetwayA1CorrectedPitchDegrees ?? NaN);
+        const a1CorrectedExtension = Number(group.userData.uploadedJetwayA1CorrectedExtensionMeters ?? NaN);
+        const a1StairMinimumHeight = Number(group.userData.uploadedJetwayA1StairMinimumHeightMeters ?? NaN);
+        const a1MechanicalMinimumHeight = Number(group.userData.uploadedJetwayA1MechanicalMinimumHeightMeters ?? NaN);
+        const full3dDiagnostic = "full3d=" + full3dDoorFitAuthority
+          + "; gaps=" + a1VectorDoorGap + "/" + a1HorizontalDoorGap + "/" + a1VerticalDoorGap
+          + "; pitch=" + a1CorrectedPitchDegrees
+          + "; correctedExtension=" + a1CorrectedExtension
+          + "; ground=" + a1StairMinimumHeight + "/" + a1MechanicalMinimumHeight;
         if (
           count !== EXPECTED_GATE_COUNT
           || connectorCount !== EXPECTED_GATE_COUNT
@@ -71,6 +127,25 @@ function waitForFleet(THREE, group, placements) {
           || staticConnectorInstanceCount < 1
           || staticConnectorBatchAuthority !== "57-static-terminal-connectors-three-instanced-box-batches-v1"
           || individualConnectorGateCount !== 1
+          || articulationAuthority !== UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY
+          || !(sourceContactDistance > 20 && sourceContactDistance < 32)
+          || staticArticulatedGateCount !== 57
+          || staticMaximumContactError > 0.05
+          || !(a1TargetDoorDistance > sourceContactDistance)
+          || !(a1AttachedExtension > 3 && a1AttachedExtension < 7)
+          || a1PredictedDoorGap > 0.05
+          || Math.abs(a1PredictedContactDistance - a1TargetDoorDistance) > 0.05
+          || Math.abs(a1ActualContactDistance - a1TargetDoorDistance) > 0.05
+          || a1ActualDoorGap > 0.05
+          || !a1PartOrderValid
+          || full3dDoorFitAuthority !== UPLOADED_A1_FULL_3D_DOOR_FIT_AUTHORITY
+          || a1VectorDoorGap > 0.12
+          || a1HorizontalDoorGap > 0.08
+          || a1VerticalDoorGap > 0.08
+          || !(a1CorrectedPitchDegrees > 1 && a1CorrectedPitchDegrees < 8)
+          || !(a1CorrectedExtension > -8 && a1CorrectedExtension < 8)
+          || a1StairMinimumHeight < 0.045
+          || a1MechanicalMinimumHeight < 0.045
           || staticPortalClosures.authority !== STATIC_PORTAL_AUTHORITY
           || staticPortalClosures.gateCount !== 57
           || staticPortalClosures.batchCount !== 2
@@ -81,8 +156,9 @@ function waitForFleet(THREE, group, placements) {
           || exactModelGuard.hiddenSyntheticPortalCount < 1
           || exactModelGuard.hierarchy.requiredPartCount !== 5
         ) {
+          console.error(`Uploaded supplied-jetway articulation readiness failed: ${articulationDiagnostic}`);
           reject(new Error(
-            `Uploaded airport jetway fleet reported ready with ${count} placements, ${connectorCount} connectors, ${modelCount} gate records, shell material ${materialAuthority}, detail material ${detailMaterialAuthority}, stair split ${stairMaterialSplitActive}, performance ${performanceAuthority}, ${shadowCasterGateCount} shadow-casting gates, ${globalEdgeOverlayCount} global edge overlays, ${staticInstancedGateCount} instanced static jetways, ${animatedIndividualGateCount} animated jetways, ${staticPrimitiveBatchCount} jetway primitive batches, ${staticConnectorGateCount} static connector gates, ${staticConnectorBatchCount} connector batches, ${staticConnectorInstanceCount} connector instances, connector authority ${staticConnectorBatchAuthority}, ${individualConnectorGateCount} individual connectors, exact source detail ${exactModelGuard.hierarchy.stairMeshCount}/${exactModelGuard.hierarchy.bogieMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}, and static portals ${staticPortalClosures.authority}/${staticPortalClosures.gateCount}/${staticPortalClosures.batchCount}/${staticPortalClosures.panelCount}/${staticPortalClosures.windowCount}, exact model ${exactModelGuard.authority}/${exactModelGuard.hiddenLegacyGroupCount}/${exactModelGuard.hiddenSyntheticPortalCount}/${exactModelGuard.hierarchy.requiredPartCount}${missingModels.length ? `; missing ${missingModels.join(", ")}` : ""}`,
+            `Uploaded airport jetway fleet reported ready with ${count} placements, ${connectorCount} connectors, ${modelCount} gate records, shell material ${materialAuthority}, detail material ${detailMaterialAuthority}, stair split ${stairMaterialSplitActive}, performance ${performanceAuthority}, ${shadowCasterGateCount} shadow-casting gates, ${globalEdgeOverlayCount} global edge overlays, ${staticInstancedGateCount} instanced static jetways, ${animatedIndividualGateCount} animated jetways, ${staticPrimitiveBatchCount} jetway primitive batches, ${staticConnectorGateCount} static connector gates, ${staticConnectorBatchCount} connector batches, ${staticConnectorInstanceCount} connector instances, connector authority ${staticConnectorBatchAuthority}, ${individualConnectorGateCount} individual connectors, exact source detail ${exactModelGuard.hierarchy.stairMeshCount}/${exactModelGuard.hierarchy.bogieMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}, and static portals ${staticPortalClosures.authority}/${staticPortalClosures.gateCount}/${staticPortalClosures.batchCount}/${staticPortalClosures.panelCount}/${staticPortalClosures.windowCount}, exact model ${exactModelGuard.authority}/${exactModelGuard.hiddenLegacyGroupCount}/${exactModelGuard.hiddenSyntheticPortalCount}/${exactModelGuard.hierarchy.requiredPartCount}; ${full3dDiagnostic}${missingModels.length ? `; missing ${missingModels.join(", ")}` : ""}`,
           ));
           return;
         }
@@ -123,6 +199,7 @@ function waitForFleet(THREE, group, placements) {
           staticConnectorInstanceCount,
           staticConnectorBatchAuthority,
           individualConnectorGateCount,
+          full3dDoorFit,
           staticPortalClosures,
           exactModelGuard,
           authority: READY_AUTHORITY,
@@ -143,7 +220,7 @@ function waitForFleet(THREE, group, placements) {
 
 export function installUploadedAirportJetwayFleet(THREE, group, placements, sourceTextures = {}) {
   const controller = installUploadedAirportJetwayFleetBase(THREE, group, placements, sourceTextures);
-  const ready = waitForFleet(THREE, group, placements);
+  const ready = waitForFleet(THREE, group, placements, controller);
   group.userData.uploadedJetwayReady = ready;
   group.userData.uploadedJetwayReadyAuthority = "waiting-for-exact-source-model-exclusive-visual-authority";
   controller.ready = ready;
