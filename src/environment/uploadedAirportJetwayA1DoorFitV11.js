@@ -17,6 +17,9 @@ const CRJ_FORWARD_LEFT_DOOR = Object.freeze({
   z: 2.22,
 });
 const CONTACT_BAND_METERS = 0.22;
+const CAB_HINGE_BAND_METERS = 0.35;
+const MAX_CAB_NORMAL_ERROR_DEGREES = 2;
+const MAX_CAB_FUSELAGE_PENETRATION_METERS = 0.3;
 const GROUND_CLEARANCE_METERS = 0.06;
 
 function clamp(value, minimum, maximum) {
@@ -62,69 +65,67 @@ function measureBounds(THREE, model, object) {
   return { vertices, box };
 }
 
-function measureCabContact(THREE, model, rotundaCenter) {
-  const cab = findSourcePartRoot(model, "Cab");
-  if (!cab) throw new Error("Supplied A1 jetway is missing Cab");
-  const { vertices, box } = measureBounds(THREE, model, cab);
-  const cabCenter = box.getCenter(new THREE.Vector3());
-  const bridgeDirection = new THREE.Vector3(
-    cabCenter.x - rotundaCenter.x,
-    0,
-    cabCenter.z - rotundaCenter.z,
-  );
-  if (bridgeDirection.lengthSq() < 0.01) {
-    throw new Error("Supplied A1 cab cannot define an aircraft-facing direction from the Rotunda");
-  }
-  bridgeDirection.normalize();
-
-  // The uploaded Cab keeps its authored node transforms. Its aircraft-facing
-  // hood is therefore not guaranteed to be model-local +Z. Select the real
-  // outer face by projection away from the measured Rotunda instead of using
-  // an arbitrary bounding-box axis that can align an interior/side surface.
-  let maximumProjection = Number.NEGATIVE_INFINITY;
+function measureCabFace(THREE, model, cab, facingDirection, front, bandMeters) {
+  const vertices = collectModelLocalVertices(THREE, model, cab);
+  const direction = facingDirection.clone().normalize();
+  let extreme = front ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
   for (const vertex of vertices) {
-    maximumProjection = Math.max(
-      maximumProjection,
-      (vertex.x - rotundaCenter.x) * bridgeDirection.x
-        + (vertex.z - rotundaCenter.z) * bridgeDirection.z,
-    );
+    const projection = vertex.dot(direction);
+    extreme = front ? Math.max(extreme, projection) : Math.min(extreme, projection);
   }
-  const contact = vertices.filter((vertex) => {
-    const projection = (vertex.x - rotundaCenter.x) * bridgeDirection.x
-      + (vertex.z - rotundaCenter.z) * bridgeDirection.z;
-    return projection >= maximumProjection - CONTACT_BAND_METERS;
+  const selected = vertices.filter((vertex) => {
+    const projection = vertex.dot(direction);
+    return front
+      ? projection >= extreme - bandMeters
+      : projection <= extreme + bandMeters;
   });
-  if (contact.length < 4) throw new Error(`Supplied A1 cab contact plane has only ${contact.length} vertices`);
+  if (selected.length < 4) {
+    throw new Error(`Supplied A1 cab ${front ? "contact" : "hinge"} plane has only ${selected.length} vertices`);
+  }
 
-  const contactBox = new THREE.Box3();
+  const box = new THREE.Box3();
   const point = new THREE.Vector3();
-  for (const vertex of contact) {
-    contactBox.expandByPoint(vertex);
+  for (const vertex of selected) {
+    box.expandByPoint(vertex);
     point.x += vertex.x;
     point.z += vertex.z;
   }
-  point.x /= contact.length;
-  point.z /= contact.length;
-  point.y = contactBox.min.y;
+  point.x /= selected.length;
+  point.z /= selected.length;
+  point.y = box.min.y;
+  return {
+    point,
+    centerY: (box.min.y + box.max.y) / 2,
+    floorY: box.min.y,
+    topY: box.max.y,
+    box,
+    vertices: selected,
+    extremeProjection: extreme,
+  };
+}
 
-  const perpendicular = new THREE.Vector3(-bridgeDirection.z, 0, bridgeDirection.x);
+function measureCabAssembly(THREE, model, facingDirection) {
+  const cab = findSourcePartRoot(model, "Cab");
+  if (!cab) throw new Error("Supplied A1 jetway is missing Cab");
+  const direction = facingDirection.clone().setY(0).normalize();
+  const front = measureCabFace(THREE, model, cab, direction, true, CONTACT_BAND_METERS);
+  const rear = measureCabFace(THREE, model, cab, direction, false, CAB_HINGE_BAND_METERS);
+  const frontOffset = front.point.clone().sub(rear.point);
+  const perpendicular = new THREE.Vector3(-direction.z, 0, direction.x).normalize();
   let minimumAcross = Number.POSITIVE_INFINITY;
   let maximumAcross = Number.NEGATIVE_INFINITY;
-  for (const vertex of contact) {
-    const across = vertex.x * perpendicular.x + vertex.z * perpendicular.z;
+  for (const vertex of front.vertices) {
+    const across = vertex.dot(perpendicular);
     minimumAcross = Math.min(minimumAcross, across);
     maximumAcross = Math.max(maximumAcross, across);
   }
   return {
     cab,
-    point,
-    centerY: (contactBox.min.y + contactBox.max.y) / 2,
-    floorY: contactBox.min.y,
-    topY: contactBox.max.y,
-    width: maximumAcross - minimumAcross,
-    contactBox,
-    bridgeDirection,
-    maximumProjection,
+    direction,
+    front,
+    rear,
+    frontOffset,
+    contactWidth: maximumAcross - minimumAcross,
   };
 }
 
@@ -151,6 +152,13 @@ function pitchAround(THREE, pivotY, pivotZ, radians) {
   return new THREE.Matrix4().multiplyMatrices(toPivot, pitch).multiply(fromPivot);
 }
 
+function yawAround(THREE, pivotX, pivotZ, radians) {
+  const toPivot = new THREE.Matrix4().makeTranslation(pivotX, 0, pivotZ);
+  const yaw = new THREE.Matrix4().makeRotationY(radians);
+  const fromPivot = new THREE.Matrix4().makeTranslation(-pivotX, 0, -pivotZ);
+  return new THREE.Matrix4().multiplyMatrices(toPivot, yaw).multiply(fromPivot);
+}
+
 function solvePitchRadians({ floorY, floorZ, pivotY, pivotZ, targetY }) {
   let low = 0;
   let high = Math.PI / 10;
@@ -173,8 +181,7 @@ function correctGroundedDetail(THREE, model, object) {
   }
 
   // Tunnel C's stair and bogie are exact triangle subsets of the supplied mesh,
-  // not independent authored articulation nodes. Scaling or rotating either
-  // subset tears the original assembly apart. A small rigid vertical adjustment
+  // not independent authored articulation nodes. A small rigid vertical adjustment
   // preserves every supplied vertex, material split and silhouette while placing
   // the lowest source triangle at the pavement clearance plane.
   const rigidVerticalAdjustmentMeters = GROUND_CLEARANCE_METERS - before.min.y;
@@ -222,9 +229,12 @@ function applyWeightedLongitudinalExtension(THREE, model, extension) {
   model.updateMatrixWorld(true);
 }
 
-function applyPitchToBridge(THREE, model, radians, pivotY, pivotZ) {
+function applyPitchToTunnels(THREE, model, radians, pivotY, pivotZ) {
   const correction = pitchAround(THREE, pivotY, pivotZ, radians);
-  for (const name of ["Tunnel_A", "Tunnel_B", "Tunnel_C", "Cab"]) {
+  // The passenger cab remains level while the telescoping tunnels slope to it.
+  // This matches real jetway articulation and avoids pitching the hood across the
+  // aircraft roof.
+  for (const name of ["Tunnel_A", "Tunnel_B", "Tunnel_C"]) {
     const part = findSourcePartRoot(model, name);
     applyModelSpaceMatrix(THREE, model, part, correction);
     part.userData.uploadedJetwayPitchRadians = radians;
@@ -237,6 +247,20 @@ function toWorldTarget(THREE, group) {
     CRJ_FORWARD_LEFT_DOOR.sillY,
     CRJ_FORWARD_LEFT_DOOR.z,
   ));
+}
+
+function angleFromPositiveZ(vector) {
+  return Math.atan2(vector.x, vector.z);
+}
+
+function transformDirectionToParent(THREE, sourceObject, localDirection, parent) {
+  sourceObject.updateWorldMatrix(true, false);
+  parent.updateWorldMatrix(true, false);
+  const worldOrigin = sourceObject.localToWorld(new THREE.Vector3());
+  const worldPoint = sourceObject.localToWorld(localDirection.clone());
+  const parentOrigin = parent.worldToLocal(worldOrigin);
+  const parentPoint = parent.worldToLocal(worldPoint);
+  return parentPoint.sub(parentOrigin).setY(0).normalize();
 }
 
 export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placements) {
@@ -255,93 +279,140 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
   model.updateMatrix();
   model.updateMatrixWorld(true);
 
-  const sourceContact = measureCabContact(THREE, model, rotundaCenter);
-  const desiredX = CRJ_FORWARD_LEFT_DOOR.x - placement.x;
-  const desiredZ = CRJ_FORWARD_LEFT_DOOR.z - placement.z;
-  const desiredRadius = Math.hypot(desiredX, desiredZ);
-  const sourceContactOffsetX = sourceContact.point.x - rotundaCenter.x;
-  const sourceContactOffsetZ = sourceContact.point.z - rotundaCenter.z;
-  const desiredContactOffsetZ = Math.sqrt(Math.max(0.01, desiredRadius ** 2 - sourceContactOffsetX ** 2));
-  const extension = desiredContactOffsetZ - sourceContactOffsetZ;
+  const cabBounds = measureBounds(THREE, model, findSourcePartRoot(model, "Cab")).box;
+  const cabCenter = cabBounds.getCenter(new THREE.Vector3());
+  const sourceFacingDirection = new THREE.Vector3(
+    cabCenter.x - rotundaCenter.x,
+    0,
+    cabCenter.z - rotundaCenter.z,
+  ).normalize();
+  const sourceCab = measureCabAssembly(THREE, model, sourceFacingDirection);
+
+  const targetWorld = toWorldTarget(THREE, group);
+  anchor.parent.updateWorldMatrix(true, false);
+  const targetInParent = anchor.parent.worldToLocal(targetWorld.clone());
+  const desiredFacingDirection = transformDirectionToParent(
+    THREE,
+    group,
+    new THREE.Vector3(1, 0, 0),
+    anchor.parent,
+  );
+  const sourceCabDirectionAngle = angleFromPositiveZ(sourceCab.frontOffset);
+  const desiredCabDirectionAngle = angleFromPositiveZ(desiredFacingDirection);
+  const absoluteCabRotation = desiredCabDirectionAngle - sourceCabDirectionAngle;
+  const desiredFrontOffset = sourceCab.frontOffset.clone().setY(0)
+    .applyAxisAngle(new THREE.Vector3(0, 1, 0), absoluteCabRotation);
+  const desiredHingeInParent = targetInParent.clone().sub(desiredFrontOffset);
+  const desiredHingeFromAnchor = desiredHingeInParent.clone().sub(anchor.position).setY(0);
+
+  const sourceHingeFromAnchor = new THREE.Vector3(
+    sourceCab.rear.point.x - rotundaCenter.x,
+    0,
+    sourceCab.rear.point.z - rotundaCenter.z,
+  );
+  const targetHingeRadius = Math.hypot(desiredHingeFromAnchor.x, desiredHingeFromAnchor.z);
+  const extensionRadicand = targetHingeRadius ** 2 - sourceHingeFromAnchor.x ** 2;
+  if (!(extensionRadicand > 0.01)) {
+    throw new Error(`Supplied A1 cab hinge cannot reach the aircraft door: radius=${targetHingeRadius}`);
+  }
+  const correctedHingeZ = Math.sign(sourceHingeFromAnchor.z || 1) * Math.sqrt(extensionRadicand);
+  const extension = correctedHingeZ - sourceHingeFromAnchor.z;
   if (!(extension > -8 && extension < 8)) {
-    throw new Error(
-      `Supplied A1 corrected extension is outside the physical range: ${extension}; `
-      + `targetRadius=${desiredRadius}; sourceOffset=${sourceContactOffsetX},${sourceContactOffsetZ}`,
-    );
+    throw new Error(`Supplied A1 corrected hinge extension is outside the physical range: ${extension}`);
   }
   applyWeightedLongitudinalExtension(THREE, model, extension);
 
-  let contact = measureCabContact(THREE, model, rotundaCenter);
+  let cabAssembly = measureCabAssembly(THREE, model, sourceFacingDirection);
+  const extendedHingeFromAnchor = new THREE.Vector3(
+    cabAssembly.rear.point.x - rotundaCenter.x,
+    0,
+    cabAssembly.rear.point.z - rotundaCenter.z,
+  );
+  const correctedYawRadians = angleFromPositiveZ(desiredHingeFromAnchor)
+    - angleFromPositiveZ(extendedHingeFromAnchor);
+  const cabRelativeYawRadians = desiredCabDirectionAngle
+    - correctedYawRadians
+    - sourceCabDirectionAngle;
+  applyModelSpaceMatrix(
+    THREE,
+    model,
+    cabAssembly.cab,
+    yawAround(
+      THREE,
+      cabAssembly.rear.point.x,
+      cabAssembly.rear.point.z,
+      cabRelativeYawRadians,
+    ),
+  );
+  const cabFacingDirection = sourceFacingDirection.clone()
+    .applyAxisAngle(new THREE.Vector3(0, 1, 0), cabRelativeYawRadians)
+    .setY(0)
+    .normalize();
+  cabAssembly = measureCabAssembly(THREE, model, cabFacingDirection);
+
+  const targetYInAnchor = targetInParent.y - anchor.position.y;
   const pitchRadians = solvePitchRadians({
-    floorY: contact.floorY,
-    floorZ: contact.point.z,
-    pivotY: placement.rotundaY,
+    floorY: cabAssembly.front.floorY,
+    floorZ: cabAssembly.front.point.z,
+    pivotY: rotundaCenter.y,
     pivotZ: rotundaCenter.z,
-    targetY: CRJ_FORWARD_LEFT_DOOR.sillY,
+    targetY: targetYInAnchor,
   });
   if (!(pitchRadians > 0.02 && pitchRadians < 0.14)) {
     throw new Error(`Supplied A1 corrected pitch is outside the physical range: ${pitchRadians}`);
   }
-  applyPitchToBridge(THREE, model, pitchRadians, placement.rotundaY, rotundaCenter.z);
+  applyPitchToTunnels(THREE, model, pitchRadians, rotundaCenter.y, rotundaCenter.z);
+
+  // Keep the cab level and place its threshold exactly at the cabin sill. The
+  // tunnel end slopes down to this level; the cab itself does not lean across the
+  // fuselage like the previous one-point fit did.
+  const cabVerticalAdjustment = targetYInAnchor - cabAssembly.front.floorY;
+  applyModelSpaceMatrix(
+    THREE,
+    model,
+    cabAssembly.cab,
+    translationMatrix(THREE, 0, cabVerticalAdjustment, 0),
+  );
 
   const stair = model.getObjectByName("Tunnel_C_GalvanizedServiceStair_SourceTriangles");
   const mechanical = model.getObjectByName("Tunnel_C_DarkBogieLift_SourceTriangles");
   const stairGrounding = correctGroundedDetail(THREE, model, stair);
   const mechanicalGrounding = correctGroundedDetail(THREE, model, mechanical);
 
-  contact = measureCabContact(THREE, model, rotundaCenter);
-  const correctedContactOffsetX = contact.point.x - rotundaCenter.x;
-  const correctedContactOffsetZ = Math.sqrt(Math.max(0.01, desiredRadius ** 2 - correctedContactOffsetX ** 2));
-  const residualLongitudinal = correctedContactOffsetZ - (contact.point.z - rotundaCenter.z);
-  if (Math.abs(residualLongitudinal) > 0.001) {
-    const residualCorrection = translationMatrix(THREE, 0, 0, residualLongitudinal);
-    for (const name of ["Tunnel_B", "Tunnel_C", "Cab"]) {
-      const part = findSourcePartRoot(model, name);
-      applyModelSpaceMatrix(THREE, model, part, residualCorrection);
-    }
-    contact = measureCabContact(THREE, model, rotundaCenter);
-  }
-
-  const localDirection = Math.atan2(
-    contact.point.x - rotundaCenter.x,
-    contact.point.z - rotundaCenter.z,
-  );
-  const targetDirection = Math.atan2(desiredX, desiredZ);
-  anchor.rotation.y = targetDirection - localDirection;
+  anchor.rotation.y = correctedYawRadians;
   anchor.updateMatrixWorld(true);
   model.updateMatrixWorld(true);
+  cabAssembly = measureCabAssembly(THREE, model, cabFacingDirection);
 
-  contact = measureCabContact(THREE, model, rotundaCenter);
-  const targetWorld = toWorldTarget(THREE, group);
-  let actualWorld = model.localToWorld(contact.point.clone());
-  let postFitYawCorrection = 0;
-  // Resolve the final azimuth from what Three.js actually placed in the anchor's
-  // parent frame. This accounts for every retained source-node transform and
-  // keeps the rotunda fixed at the package-authored terminal pivot.
-  for (let iteration = 0; iteration < 2; iteration += 1) {
-    const targetInParent = anchor.parent.worldToLocal(targetWorld.clone());
-    const actualInParent = anchor.parent.worldToLocal(actualWorld.clone());
-    const targetVectorX = targetInParent.x - anchor.position.x;
-    const targetVectorZ = targetInParent.z - anchor.position.z;
-    const actualVectorX = actualInParent.x - anchor.position.x;
-    const actualVectorZ = actualInParent.z - anchor.position.z;
-    const yawCorrection = Math.atan2(targetVectorX, targetVectorZ)
-      - Math.atan2(actualVectorX, actualVectorZ);
-    postFitYawCorrection += yawCorrection;
-    anchor.rotation.y += yawCorrection;
-    anchor.updateMatrixWorld(true);
-    model.updateMatrixWorld(true);
-    actualWorld = model.localToWorld(contact.point.clone());
-  }
-
+  const actualWorld = model.localToWorld(cabAssembly.front.point.clone());
   const vectorGap = actualWorld.distanceTo(targetWorld);
   const horizontalGap = Math.hypot(actualWorld.x - targetWorld.x, actualWorld.z - targetWorld.z);
   const verticalGap = Math.abs(actualWorld.y - targetWorld.y);
-  if (vectorGap > 0.12 || horizontalGap > 0.08 || verticalGap > 0.08) {
+
+  group.updateWorldMatrix(true, false);
+  const desiredCabNormalWorld = new THREE.Vector3(1, 0, 0).transformDirection(group.matrixWorld);
+  const actualCabNormalWorld = cabFacingDirection.clone().transformDirection(model.matrixWorld);
+  const cabNormalErrorDegrees = THREE.MathUtils.radToDeg(actualCabNormalWorld.angleTo(desiredCabNormalWorld));
+  const cabVertices = collectModelLocalVertices(THREE, model, cabAssembly.cab);
+  let cabFuselagePenetrationMeters = Number.NEGATIVE_INFINITY;
+  for (const vertex of cabVertices) {
+    const worldVertex = model.localToWorld(vertex.clone());
+    const penetration = worldVertex.sub(targetWorld).dot(desiredCabNormalWorld);
+    cabFuselagePenetrationMeters = Math.max(cabFuselagePenetrationMeters, penetration);
+  }
+
+  if (
+    vectorGap > 0.12
+    || horizontalGap > 0.08
+    || verticalGap > 0.08
+    || cabNormalErrorDegrees > MAX_CAB_NORMAL_ERROR_DEGREES
+    || cabFuselagePenetrationMeters > MAX_CAB_FUSELAGE_PENETRATION_METERS
+  ) {
     throw new Error(
-      `Supplied A1 full-3D door fit failed: vector=${vectorGap}, horizontal=${horizontalGap}, vertical=${verticalGap}; `
+      `Supplied A1 full-cab door fit failed: vector=${vectorGap}, horizontal=${horizontalGap}, vertical=${verticalGap}; `
+      + `normalError=${cabNormalErrorDegrees}; penetration=${cabFuselagePenetrationMeters}; `
       + `target=${targetWorld.toArray().join(",")}; actual=${actualWorld.toArray().join(",")}; `
-      + `anchor=${anchor.position.toArray().join(",")}; yaw=${anchor.rotation.y}; correction=${postFitYawCorrection}`,
+      + `anchor=${anchor.position.toArray().join(",")}; yaw=${anchor.rotation.y}; cabYaw=${cabRelativeYawRadians}`,
     );
   }
 
@@ -357,12 +428,16 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
     vectorGapMeters: vectorGap,
     horizontalGapMeters: horizontalGap,
     verticalGapMeters: verticalGap,
-    correctedExtensionMeters: extension + residualLongitudinal,
+    correctedExtensionMeters: extension,
     pitchRadians,
     pitchDegrees: THREE.MathUtils.radToDeg(pitchRadians),
-    correctedYawRadians: anchor.rotation.y,
-    postFitYawCorrectionRadians: postFitYawCorrection,
-    cabContactWidthMeters: contact.width,
+    correctedYawRadians,
+    cabRelativeYawRadians,
+    cabRelativeYawDegrees: THREE.MathUtils.radToDeg(cabRelativeYawRadians),
+    cabNormalErrorDegrees,
+    cabFuselagePenetrationMeters,
+    cabContactWidthMeters: cabAssembly.contactWidth,
+    cabVerticalAdjustmentMeters: cabVerticalAdjustment,
     stairGrounding,
     mechanicalGrounding,
   });
@@ -377,6 +452,10 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
   group.userData.uploadedJetwayA1CorrectedPitchDegrees = result.pitchDegrees;
   group.userData.uploadedJetwayA1CorrectedYawRadians = result.correctedYawRadians;
   group.userData.uploadedJetwayA1CorrectedExtensionMeters = result.correctedExtensionMeters;
+  group.userData.uploadedJetwayA1CabRelativeYawDegrees = result.cabRelativeYawDegrees;
+  group.userData.uploadedJetwayA1CabNormalErrorDegrees = result.cabNormalErrorDegrees;
+  group.userData.uploadedJetwayA1CabFuselagePenetrationMeters = result.cabFuselagePenetrationMeters;
+  group.userData.uploadedJetwayA1CabVerticalAdjustmentMeters = result.cabVerticalAdjustmentMeters;
   group.userData.uploadedJetwayA1StairMinimumHeightMeters = result.stairGrounding.minimumY;
   group.userData.uploadedJetwayA1MechanicalMinimumHeightMeters = result.mechanicalGrounding.minimumY;
   return result;
