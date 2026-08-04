@@ -111,101 +111,6 @@ function pitchAround(THREE, pivotY, pivotZ, radians) {
   return new THREE.Matrix4().multiplyMatrices(toPivot, pitch).multiply(fromPivot);
 }
 
-function rotationAroundModelAxis(THREE, pivot, axis, radians) {
-  const toPivot = new THREE.Matrix4().makeTranslation(pivot.x, pivot.y, pivot.z);
-  const rotation = new THREE.Matrix4().makeRotationAxis(axis, radians);
-  const fromPivot = new THREE.Matrix4().makeTranslation(-pivot.x, -pivot.y, -pivot.z);
-  return new THREE.Matrix4().multiplyMatrices(toPivot, rotation).multiply(fromPivot);
-}
-
-function restoreObjectLocalMatrix(model, object, localMatrix) {
-  object.matrixAutoUpdate = true;
-  localMatrix.decompose(object.position, object.quaternion, object.scale);
-  object.updateMatrix();
-  object.matrixWorldNeedsUpdate = true;
-  model.updateWorldMatrix(true, true);
-}
-
-function measureTopHingeAndLowestPoint(THREE, model, object) {
-  const vertices = collectModelLocalVertices(THREE, model, object);
-  const box = new THREE.Box3();
-  for (const vertex of vertices) box.expandByPoint(vertex);
-  const height = Math.max(0.001, box.max.y - box.min.y);
-  const topBandDepth = Math.min(0.24, height * 0.12);
-  const bottomBandDepth = Math.min(0.10, height * 0.05);
-  const topBand = vertices.filter((vertex) => vertex.y >= box.max.y - topBandDepth);
-  const bottomBand = vertices.filter((vertex) => vertex.y <= box.min.y + bottomBandDepth);
-  if (!topBand.length || !bottomBand.length) {
-    throw new Error("Supplied A1 stair is missing a measurable top hinge or pavement foot");
-  }
-  const average = (values) => {
-    const point = new THREE.Vector3();
-    for (const value of values) point.add(value);
-    return point.multiplyScalar(1 / values.length);
-  };
-  return { box, pivot: average(topBand), lowest: average(bottomBand) };
-}
-
-function rotateRigidDetailToGround(THREE, model, object) {
-  if (object.matrixAutoUpdate) object.updateMatrix();
-  const baseLocalMatrix = object.matrix.clone();
-  const { pivot, lowest } = measureTopHingeAndLowestPoint(THREE, model, object);
-  const radial = lowest.clone().sub(pivot);
-  const axis = new THREE.Vector3(-radial.z, 0, radial.x);
-  if (axis.lengthSq() < 1e-6) {
-    throw new Error("Supplied A1 stair cannot define a horizontal top-hinge axis");
-  }
-  axis.normalize();
-
-  const applyAngle = (radians) => {
-    restoreObjectLocalMatrix(model, object, baseLocalMatrix);
-    applyModelSpaceMatrix(
-      THREE,
-      model,
-      object,
-      rotationAroundModelAxis(THREE, pivot, axis, radians),
-    );
-    return measureBounds(THREE, model, object).box;
-  };
-
-  let low = 0;
-  let high = 0;
-  let highBox = null;
-  const maximumAngle = THREE.MathUtils.degToRad(35);
-  for (let degrees = 0.5; degrees <= 35; degrees += 0.5) {
-    const angle = THREE.MathUtils.degToRad(degrees);
-    const candidate = applyAngle(angle);
-    if (candidate.min.y >= GROUND_CLEARANCE_METERS) {
-      high = angle;
-      highBox = candidate;
-      break;
-    }
-    low = angle;
-  }
-  if (!highBox) {
-    restoreObjectLocalMatrix(model, object, baseLocalMatrix);
-    throw new Error(
-      `Supplied A1 stair cannot reach the pavement through a rigid top-hinge rotation within ${THREE.MathUtils.radToDeg(maximumAngle)} degrees`,
-    );
-  }
-
-  for (let iteration = 0; iteration < 42; iteration += 1) {
-    const candidateAngle = (low + high) / 2;
-    const candidate = applyAngle(candidateAngle);
-    if (candidate.min.y >= GROUND_CLEARANCE_METERS) high = candidateAngle;
-    else low = candidateAngle;
-  }
-  const after = applyAngle(high);
-  return {
-    corrected: true,
-    minimumY: after.min.y,
-    maximumY: after.max.y,
-    hingeRotationDegrees: THREE.MathUtils.radToDeg(high),
-    hingeAxis: Object.freeze([axis.x, axis.y, axis.z]),
-    hingePivot: Object.freeze([pivot.x, pivot.y, pivot.z]),
-  };
-}
-
 function solvePitchRadians({ floorY, floorZ, pivotY, pivotZ, targetY }) {
   let low = 0;
   let high = Math.PI / 10;
@@ -220,25 +125,32 @@ function solvePitchRadians({ floorY, floorZ, pivotY, pivotZ, targetY }) {
   return (low + high) / 2;
 }
 
-function correctGroundedDetail(THREE, model, object, keepTop) {
+function correctGroundedDetail(THREE, model, object) {
   if (!object) return { corrected: false, minimumY: NaN, maximumY: NaN };
   const before = measureBounds(THREE, model, object).box;
   if (before.min.y >= GROUND_CLEARANCE_METERS) {
-    return { corrected: false, minimumY: before.min.y, maximumY: before.max.y, localScaleY: 1 };
+    return { corrected: false, minimumY: before.min.y, maximumY: before.max.y };
   }
 
-  if (keepTop && before.max.y > GROUND_CLEARANCE_METERS + 0.5) {
-    return rotateRigidDetailToGround(THREE, model, object);
-  }
-
+  // Tunnel C's stair and bogie are exact triangle subsets of the supplied mesh,
+  // not independent authored articulation nodes. Scaling or rotating either
+  // subset tears the original assembly apart. A small rigid vertical adjustment
+  // preserves every supplied vertex, material split and silhouette while placing
+  // the lowest source triangle at the pavement clearance plane.
+  const rigidVerticalAdjustmentMeters = GROUND_CLEARANCE_METERS - before.min.y;
   applyModelSpaceMatrix(
     THREE,
     model,
     object,
-    translationMatrix(THREE, 0, GROUND_CLEARANCE_METERS - before.min.y, 0),
+    translationMatrix(THREE, 0, rigidVerticalAdjustmentMeters, 0),
   );
   const after = measureBounds(THREE, model, object).box;
-  return { corrected: true, minimumY: after.min.y, maximumY: after.max.y };
+  return {
+    corrected: true,
+    minimumY: after.min.y,
+    maximumY: after.max.y,
+    rigidVerticalAdjustmentMeters,
+  };
 }
 
 function restoreUnarticulatedSource(model) {
@@ -334,8 +246,8 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
 
   const stair = model.getObjectByName("Tunnel_C_GalvanizedServiceStair_SourceTriangles");
   const mechanical = model.getObjectByName("Tunnel_C_DarkBogieLift_SourceTriangles");
-  const stairGrounding = correctGroundedDetail(THREE, model, stair, true);
-  const mechanicalGrounding = correctGroundedDetail(THREE, model, mechanical, false);
+  const stairGrounding = correctGroundedDetail(THREE, model, stair);
+  const mechanicalGrounding = correctGroundedDetail(THREE, model, mechanical);
 
   contact = measureCabContact(THREE, model);
   const correctedContactOffsetX = contact.point.x - rotundaCenter.x;
