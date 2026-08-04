@@ -7,9 +7,9 @@ const CHUNK_COUNT = 106;
 const CHUNK_ROOT = path.resolve(".jetway-source-v3");
 const OUTPUT_ROOT = path.resolve("public/models/airport-jetway/source");
 const ARCHIVE_PATH = path.resolve(".jetway-source-v3/airport-jetway-source.tar.xz");
-const EXPECTED_ENCODED_CHARS = 1_053_264;
-const EXPECTED_ARCHIVE_BYTES = 789_948;
-const EXPECTED_ARCHIVE_SHA256 = "d197405c68f24f0870a700679838c5ac8fca8410ec51d706abdd8ea7a53ddc9e";
+const EXPECTED_ENCODED_CHARS = 1_058_480;
+const EXPECTED_ARCHIVE_BYTES = 793_860;
+const EXPECTED_ARCHIVE_SHA256 = "86d643260ce4601fcb68a16d925747d9ac22662b00bce026aa9c7d63182c0ed1";
 const EXPECTED_MESHES = [
   "Tunnel_C_Jetway_0",
   "Tunnel_C_Glass_JW_0",
@@ -44,7 +44,7 @@ for (let index = 0; index < CHUNK_COUNT; index += 1) {
   const chunkPath = path.join(CHUNK_ROOT, `part${String(index).padStart(3, "0")}.b64`);
   const source = await readFile(chunkPath, "utf8");
   const encoded = payloadFromChunk(source, index);
-  const expectedLength = index === CHUNK_COUNT - 1 ? 3_264 : 10_000;
+  const expectedLength = index === CHUNK_COUNT - 1 ? 8_480 : 10_000;
   if (encoded.length !== expectedLength) {
     throw new Error(`Jetway source part ${index} expected ${expectedLength} characters, received ${encoded.length}`);
   }
@@ -80,7 +80,10 @@ const binPath = path.join(OUTPUT_ROOT, "Airport_Jetway.bin");
 const gltf = JSON.parse(await readFile(gltfPath, "utf8"));
 const binStat = await stat(binPath);
 if (binStat.size !== gltf.buffers?.[0]?.byteLength) throw new Error("Jetway source binary length does not match glTF metadata");
-if (!gltf.extensionsUsed?.includes("EXT_texture_avif")) throw new Error("Jetway source glTF is missing EXT_texture_avif");
+if (!gltf.extensionsUsed?.includes("EXT_texture_avif") || !gltf.extensionsRequired?.includes("EXT_texture_avif")) {
+  throw new Error("Jetway source glTF is missing required EXT_texture_avif declarations");
+}
+if (gltf.extensionsRequired?.includes("EXT_texture_webp")) throw new Error("Jetway source glTF still requires the retired WebP extension");
 if (gltf.meshes?.length !== 7 || gltf.materials?.length !== 2 || gltf.images?.length !== 7) {
   throw new Error(`Jetway source glTF expected 7 meshes, 2 materials and 7 images; received ${gltf.meshes?.length}, ${gltf.materials?.length}, ${gltf.images?.length}`);
 }
@@ -90,8 +93,8 @@ for (const name of EXPECTED_MESHES) if (!meshNames.has(name)) throw new Error(`J
 for (const name of EXPECTED_NODES) if (!nodeNames.has(name)) throw new Error(`Jetway source glTF is missing node ${name}`);
 for (const mesh of gltf.meshes) {
   for (const primitive of mesh.primitives) {
-    if (primitive.attributes?.POSITION == null || primitive.attributes?.TEXCOORD_0 == null) {
-      throw new Error(`Jetway source mesh ${mesh.name} lost source positions or UVs`);
+    for (const attribute of ["POSITION", "NORMAL", "TANGENT", "TEXCOORD_0"]) {
+      if (primitive.attributes?.[attribute] == null) throw new Error(`Jetway source mesh ${mesh.name} lost ${attribute}`);
     }
   }
 }
