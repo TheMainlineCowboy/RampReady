@@ -41,7 +41,7 @@ async function loadRealCRJ700(THREE, aircraftRoot) {
     realModel.name = result.preserveMaterials
       ? "User-authored American Eagle CRJ"
       : "Prepared CRJ700 fallback";
-    realModel.scale.setScalar(1 / LEGACY_PARENT_SCALE);
+    realModel.scale.setScalar(1 / (LEGACY_PARENT_SCALE * PROCEDURAL_INTERNAL_SCALE));
     aircraftRoot.add(realModel);
 
     for (const child of aircraftRoot.children) {
