@@ -142,15 +142,18 @@ if (!source.includes(modeAuthority)) {
   if (!source.includes(oldRetraction)) {
     throw new Error(`${fleetPath}: legacy A1 retraction constants are missing`);
   }
-  const insertionIndex = source.indexOf(insertionToken);
-  if (insertionIndex < 0) {
-    throw new Error(`${fleetPath}: A1 controller insertion anchor is missing`);
-  }
   if (!source.includes(controllerFactoryToken)) {
     throw new Error(`${fleetPath}: legacy A1 controller factory call is missing`);
   }
 
+  // Replace the constants first, then calculate the insertion index against the
+  // updated source. The replacement adds a line; reusing an index measured from
+  // the shorter legacy source inserts the new controller inside createController.
   source = source.replace(oldRetraction, newRetraction);
+  const insertionIndex = source.indexOf(insertionToken);
+  if (insertionIndex < 0) {
+    throw new Error(`${fleetPath}: A1 controller insertion anchor is missing`);
+  }
   source = `${source.slice(0, insertionIndex)}${measuredController}${source.slice(insertionIndex)}`;
   source = source.replace(controllerFactoryToken, controllerFactoryReplacement);
   fs.writeFileSync(fleetPath, source, "utf8");
@@ -171,6 +174,13 @@ for (const token of [
   "anchor.userData.retractionDirectionModel",
 ]) {
   if (!source.includes(token)) throw new Error(`${fleetPath}: model-space A1 retraction is missing ${token}`);
+}
+
+// The complete generated controller must sit immediately before the next
+// top-level function. This catches the stale-index nesting bug even though the
+// resulting JavaScript is syntactically valid.
+if (!source.includes(`${measuredController}${insertionToken}`)) {
+  throw new Error(`${fleetPath}: model-space A1 controller is not top-level before hideGeneratedJetways`);
 }
 
 console.log("Prepared supplied A1 model-space retraction toward the measured Rotunda: B 0.79 m, C 1.59 m, Cab 2.38 m, no yaw sweep.");
