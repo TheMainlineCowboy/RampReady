@@ -1,5 +1,6 @@
 import fs from "node:fs";
 
+const ARTICULATION_AUTHORITY = "user-supplied-airport-jetway-full-3d-door-plane-v14";
 const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let jetwaySource = fs.readFileSync(jetwayPath, "utf8");
 const oldImport = 'import { installUploadedAirportJetwayFleet } from "./uploadedAirportJetwayFleet.js";';
@@ -30,7 +31,7 @@ const awaitedBuild = `  const sourcePlacedJetways = buildSourcePlacedTerminal4Je
     || Number(sourcePlacedJetways.userData.uploadedJetwayCount) !== 58
     || Number(sourcePlacedJetways.userData.uploadedJetwayMeasuredTerminalConnectorCount) !== 58
     || Number(sourcePlacedJetways.userData.uploadedJetwayVerifiedModelCount) !== 58
-    || sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-full-3d-door-plane-v11"
+    || sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "${ARTICULATION_AUTHORITY}"
     || Number(sourcePlacedJetways.userData.uploadedJetwayStaticArticulatedGateCount) !== 57
     || Number(sourcePlacedJetways.userData.uploadedJetwayStaticMaximumContactErrorMeters) > 0.05
     || Number(sourcePlacedJetways.userData.uploadedJetwayStaticMaximumCabNormalErrorDegrees) > 2
@@ -42,17 +43,22 @@ const awaitedBuild = `  const sourcePlacedJetways = buildSourcePlacedTerminal4Je
     || Number(sourcePlacedJetways.userData.uploadedJetwayA1CabHeightErrorMeters) > 0.05
     || sourcePlacedJetways.userData.uploadedJetwayA1PartOrderValid !== true
   ) {
-    throw new Error("Terminal 4 exact supplied jetway fleet did not complete full-3D verification");
+    throw new Error("Terminal 4 exact supplied jetway fleet did not complete authored CRJ700 forward-door full-3D verification");
   }
   environment.add(authored, sourcePlacedJetways);`;
 if (!terminalSource.includes("await sourcePlacedJetways.userData.uploadedJetwayReady")) {
   if (!terminalSource.includes(buildAnchor)) throw new Error(`${terminalPath}: source-placed jetway build anchor is missing`);
   terminalSource = terminalSource.replace(buildAnchor, awaitedBuild);
 } else {
-  terminalSource = terminalSource.replace(
-    'sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-per-gate-telescoping-v10"',
-    'sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-full-3d-door-plane-v11"',
-  );
+  terminalSource = terminalSource
+    .replace(
+      'sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-per-gate-telescoping-v10"',
+      `sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "${ARTICULATION_AUTHORITY}"`,
+    )
+    .replace(
+      'sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-full-3d-door-plane-v11"',
+      `sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "${ARTICULATION_AUTHORITY}"`,
+    );
   const oldChecks = `    || Number(sourcePlacedJetways.userData.uploadedJetwayStaticArticulatedGateCount) !== 57
     || Number(sourcePlacedJetways.userData.uploadedJetwayA1PredictedDoorGapMeters) > 0.05
     || Number(sourcePlacedJetways.userData.uploadedJetwayA1ActualDoorGapMeters) > 0.05
@@ -126,13 +132,13 @@ if (!terminalSource.includes("authoredTerminal4UploadedJetwayLoadState")) {
 
 for (const token of [
   "await sourcePlacedJetways.userData.uploadedJetwayReady",
-  "user-supplied-airport-jetway-full-3d-door-plane-v11",
+  ARTICULATION_AUTHORITY,
   "authoredTerminal4UploadedJetwayA1CabNormalErrorDegrees",
   "authoredTerminal4UploadedJetwayA1CabHeightErrorMeters",
   "authoredTerminal4UploadedJetwayStaticMaximumCabNormalErrorDegrees",
   "authoredTerminal4UploadedJetwayStaticPartOrderValid",
 ]) {
-  if (!terminalSource.includes(token)) throw new Error(`${terminalPath}: full-3D jetway readiness wiring is missing ${token}`);
+  if (!terminalSource.includes(token)) throw new Error(`${terminalPath}: authored CRJ700 forward-door full-3D jetway readiness wiring is missing ${token}`);
 }
 fs.writeFileSync(terminalPath, terminalSource, "utf8");
-console.log("Prepared awaited full-3D supplied jetway readiness for all 58 Terminal 4 gates.");
+console.log(`Prepared awaited ${ARTICULATION_AUTHORITY} supplied jetway readiness for all 58 Terminal 4 gates.`);
