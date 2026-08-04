@@ -7,17 +7,17 @@ const MOVABLE_PART_WEIGHTS = Object.freeze({
   Cab: 1,
 });
 
-// The rendered aircraft root uses the procedural CRJ coordinate frame even
-// after the authored GLB replaces the fallback shell. Its forward-left cabin
-// door is therefore the scaled procedural door location, not the 6.25-meter
-// airport parking-record offset used by the separate source-placement builder.
-const AIRCRAFT_PARENT_SCALE = 0.82;
-const PROCEDURAL_INTERNAL_SCALE = 1.35;
+// The exact authored CRJ is already normalized to real-world dimensions. The
+// forward-left passenger-door target below is measured directly from that GLB,
+// so the jetway fits the rendered aircraft rather than a procedural fallback.
 const CRJ_FORWARD_LEFT_DOOR = Object.freeze({
-  x: -0.985 * AIRCRAFT_PARENT_SCALE * PROCEDURAL_INTERNAL_SCALE,
-  centerY: 2.58 * AIRCRAFT_PARENT_SCALE * PROCEDURAL_INTERNAL_SCALE,
-  sillY: (2.58 - 0.92 / 2) * AIRCRAFT_PARENT_SCALE * PROCEDURAL_INTERNAL_SCALE,
-  z: -0.75 * AIRCRAFT_PARENT_SCALE * PROCEDURAL_INTERNAL_SCALE,
+  // Measured directly from the exact authored 32.5 m CRJ GLB. The forward-left
+  // passenger door spans approximately Z 1.8-2.7 m and Y 1.85-3.7 m. Keep the
+  // hood just outside the left fuselage skin at the door sill.
+  x: -1.35,
+  centerY: 2.76,
+  sillY: 1.85,
+  z: 2.22,
 });
 const CONTACT_BAND_METERS = 0.22;
 const GROUND_CLEARANCE_METERS = 0.06;
