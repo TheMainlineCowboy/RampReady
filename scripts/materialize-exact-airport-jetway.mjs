@@ -3,6 +3,7 @@ import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 
+await import("./collect-official-jetway-viewer-candidates.mjs");
 await import("./diagnose-official-jetway-viewer-textures.mjs");
 
 const CHUNK_COUNT = 9;
