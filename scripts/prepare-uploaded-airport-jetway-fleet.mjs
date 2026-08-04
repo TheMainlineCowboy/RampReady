@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+await import("./probe-jetway-origin.mjs");
 await import("./materialize-exact-airport-jetway.mjs");
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
