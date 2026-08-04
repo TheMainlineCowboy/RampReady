@@ -4,6 +4,8 @@ import concourseB from "../src/environment/kphxV181/concourseB.js";
 import {
   computeUploadedJetwayArticulation,
   UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY,
+  UPLOADED_AIRPORT_JETWAY_A1_TARGET_AUTHORITY,
+  UPLOADED_AIRPORT_JETWAY_A1_TARGET_WORLD,
 } from "../src/environment/uploadedAirportJetwayArticulationV10.js";
 
 function requireTokens(path, tokens) {
@@ -38,19 +40,23 @@ const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
 if (fleet.includes("AIR_Jetway01_(?!WallCollars)")) throw new Error("Legacy wall collars are still exempted");
 requireTokens("scripts/prepare-uploaded-airport-jetway-fleet.mjs", [
   "aircraftHeading: parkingHeading",
+  "prepare-uploaded-jetway-crj700-door-target-v14.mjs",
   "prepare-uploaded-jetway-full3d-evidence-v11.mjs",
   "targetX",
   "targetZ",
 ]);
+requireTokens("scripts/prepare-uploaded-jetway-crj700-door-target-v14.mjs", [
+  "a1AttachedExtension > 2.2 && a1AttachedExtension < 2.5",
+  "Legacy v11 assertion block retained only",
+]);
 requireTokens("src/environment/uploadedAirportJetwayFleetReadyV2.js", [
   "UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY",
   "staticMaximumCabNormalError > 2",
-  "a1AttachedExtension > 5 && a1AttachedExtension < 6",
+  "a1AttachedExtension > 2.2 && a1AttachedExtension < 2.5",
   "a1CabNormalError > 2",
   "a1CabHeightError > 0.05",
 ]);
 requireTokens("scripts/prepare-uploaded-airport-jetway-readiness-v2.mjs", [
-  "user-supplied-airport-jetway-full-3d-door-plane-v11",
   "authoredTerminal4UploadedJetwayA1CabNormalErrorDegrees",
   "authoredTerminal4UploadedJetwayA1CabHeightErrorMeters",
 ]);
@@ -60,9 +66,15 @@ requireTokens("scripts/prepare-uploaded-jetway-full3d-evidence-v11.mjs", [
   "dataset.terminal4UploadedJetwayA1CabYawOffsetDegrees",
 ]);
 requireTokens("scripts/prepare-uploaded-jetway-exact-threshold-band-v13.mjs", [
-  "EXACT_MINIMUM_VERTICAL_OFFSET = -1.36",
-  "EXACT_MAXIMUM_VERTICAL_OFFSET = -1.33",
+  "EXACT_MINIMUM_VERTICAL_OFFSET = -2.59",
+  "EXACT_MAXIMUM_VERTICAL_OFFSET = -2.56",
   "zero plane intrusion",
+]);
+requireTokens("src/environment/uploadedAirportJetwayArticulationV10.js", [
+  "authored-crj700-forward-left-door-from-model-v14",
+  "x: -1.309233922",
+  "y: 1.72",
+  "z: 2.23886",
 ]);
 
 const sourceGeometry = Object.freeze({
@@ -138,10 +150,18 @@ for (const placement of placements) {
 if (maximumPredictedGap > 0.001) throw new Error(`Full-3D supplied jetway predicted gap is ${maximumPredictedGap} m`);
 if (minimumPartSeparation < 0.4) throw new Error(`Full-3D supplied sections telescope too deeply: ${minimumPartSeparation} m`);
 if (!a1) throw new Error("A1 full-3D articulation was not computed");
-if (!(a1.extension > 5.4 && a1.extension < 5.6)) throw new Error(`A1 extension is ${a1.extension} m`);
-if (!(a1.anchorYaw * 180 / Math.PI > 33.7 && a1.anchorYaw * 180 / Math.PI < 34.0)) throw new Error(`A1 bridge yaw is ${a1.anchorYaw * 180 / Math.PI} degrees`);
-if (!(a1.cabYawOffset * 180 / Math.PI > 55.5 && a1.cabYawOffset * 180 / Math.PI < 55.9)) throw new Error(`A1 Cab yaw is ${a1.cabYawOffset * 180 / Math.PI} degrees`);
-if (!(a1.cabVerticalOffset > -1.36 && a1.cabVerticalOffset < -1.33)) throw new Error(`A1 Cab threshold vertical offset is ${a1.cabVerticalOffset} m`);
-if (!(a1.partOffsets.Cab.y > -1.36 && a1.partOffsets.Cab.y < -1.33)) throw new Error(`A1 Cab still uses the rejected vertical pose: ${a1.partOffsets.Cab.y} m`);
+if (a1.targetAuthority !== UPLOADED_AIRPORT_JETWAY_A1_TARGET_AUTHORITY) {
+  throw new Error(`A1 used the wrong target authority: ${a1.targetAuthority}`);
+}
+for (const axis of ["x", "y", "z"]) {
+  const error = Math.abs(a1.targetWorldContact[axis] - UPLOADED_AIRPORT_JETWAY_A1_TARGET_WORLD[axis]);
+  if (error > 1e-9) throw new Error(`A1 ${axis} door target error is ${error} m`);
+}
+if (!(a1.targetDistance > 26.8 && a1.targetDistance < 27.1)) throw new Error(`A1 target distance is ${a1.targetDistance} m`);
+if (!(a1.extension > 2.2 && a1.extension < 2.5)) throw new Error(`A1 extension is ${a1.extension} m`);
+if (!(a1.anchorYaw * 180 / Math.PI > 39 && a1.anchorYaw * 180 / Math.PI < 40)) throw new Error(`A1 bridge yaw is ${a1.anchorYaw * 180 / Math.PI} degrees`);
+if (!(a1.cabYawOffset * 180 / Math.PI > 49.5 && a1.cabYawOffset * 180 / Math.PI < 51)) throw new Error(`A1 Cab yaw is ${a1.cabYawOffset * 180 / Math.PI} degrees`);
+if (!(a1.cabVerticalOffset > -2.59 && a1.cabVerticalOffset < -2.56)) throw new Error(`A1 Cab threshold vertical offset is ${a1.cabVerticalOffset} m`);
+if (!(a1.partOffsets.Cab.y > -2.59 && a1.partOffsets.Cab.y < -2.56)) throw new Error(`A1 Cab still uses the rejected vertical pose: ${a1.partOffsets.Cab.y} m`);
 
-console.log(`Verified ${UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY}: all 58 exact supplied models solve from the source-authored Cab doorway threshold; A1 uses ${a1.extension.toFixed(3)} m extension, ${(a1.anchorYaw * 180 / Math.PI).toFixed(3)}° bridge yaw, ${(a1.cabYawOffset * 180 / Math.PI).toFixed(3)}° Cab yaw and ${a1.cabVerticalOffset.toFixed(3)} m exact browser-derived threshold articulation.`);
+console.log(`Verified ${UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY}: all 58 exact supplied models preserve their authored hierarchy; A1 targets the authored CRJ700 forward-left door at (${a1.targetWorldContact.x.toFixed(3)}, ${a1.targetWorldContact.y.toFixed(3)}, ${a1.targetWorldContact.z.toFixed(3)}) with ${a1.extension.toFixed(3)} m extension, ${(a1.anchorYaw * 180 / Math.PI).toFixed(3)}° bridge yaw, ${(a1.cabYawOffset * 180 / Math.PI).toFixed(3)}° Cab yaw and ${a1.cabVerticalOffset.toFixed(3)} m vertical articulation.`);
