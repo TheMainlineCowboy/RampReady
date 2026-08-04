@@ -2,13 +2,13 @@ import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetB
 import { installStaticJetwayPortalClosures } from "./staticJetwayPortalClosures.js";
 import { enforceExactUploadedJetwayVisualAuthority } from "./uploadedAirportJetwayExactModelGuard.js";
 
-const READY_AUTHORITY = "supplied-airport-jetway-complete-58-gates-source-hierarchy-v8";
+const READY_AUTHORITY = "supplied-airport-jetway-complete-58-gates-source-hierarchy-v9";
 const EXPECTED_GATE_COUNT = 58;
 const LOAD_TIMEOUT_MS = 120_000;
 const STATIC_PORTAL_AUTHORITY = "57-static-terminal-portals-paired-vestibule-doors-v1";
 const EXACT_MODEL_AUTHORITY = "supplied-airport-jetway-source-hierarchy-meshes-uvs-exclusive-v10";
-const MATERIAL_AUTHORITY = "supplied-airport-jetway-clean-full-resolution-texture-set-v3";
-const PERFORMANCE_AUTHORITY = "57-static-source-mesh-instances-plus-1-animated-a1-v3";
+const MATERIAL_AUTHORITY = "supplied-airport-jetway-source-atlas-full-resolution-avif-v4";
+const PERFORMANCE_AUTHORITY = "57-static-source-mesh-instances-plus-1-animated-a1-v4";
 
 function waitForFleet(THREE, group, placements) {
   const startedAt = performance.now();
@@ -43,6 +43,9 @@ function waitForFleet(THREE, group, placements) {
           const individualConnectorGateCount = Number(group.userData.uploadedJetwayIndividualConnectorGateCount ?? -1);
           const materialAuthority = group.userData.uploadedJetwayMaterialAuthority || "missing";
           const performanceAuthority = group.userData.uploadedJetwayPerformanceAuthority || "missing";
+          const sourceTriangleCount = Number(group.userData.uploadedJetwaySourceTriangleCount ?? -1);
+          const maximumPositionErrorMeters = Number(group.userData.uploadedJetwayMaximumPositionErrorMeters ?? Infinity);
+          const maximumUvError = Number(group.userData.uploadedJetwayMaximumUvError ?? Infinity);
 
           if (
             count !== EXPECTED_GATE_COUNT
@@ -50,6 +53,9 @@ function waitForFleet(THREE, group, placements) {
             || missingModels.length
             || materialAuthority !== MATERIAL_AUTHORITY
             || performanceAuthority !== PERFORMANCE_AUTHORITY
+            || sourceTriangleCount !== 31_978
+            || maximumPositionErrorMeters > 0.0001
+            || maximumUvError > 0.000008
             || staticInstancedGateCount !== 57
             || animatedIndividualGateCount !== 1
             || staticPrimitiveBatchCount !== 7
@@ -66,7 +72,7 @@ function waitForFleet(THREE, group, placements) {
             || staticPortalClosures.gateCount !== 57
           ) {
             throw new Error(
-              `Supplied jetway readiness mismatch: placements=${count}, gateRecords=${loadedModelNames.size}, missing=${missingModels.join(",") || "none"}, materials=${materialAuthority}, performance=${performanceAuthority}, static=${staticInstancedGateCount}, animated=${animatedIndividualGateCount}, meshBatches=${staticPrimitiveBatchCount}, connectors=${staticConnectorGateCount}/${staticConnectorBatchCount}/${individualConnectorGateCount}, source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`,
+              `Supplied jetway readiness mismatch: placements=${count}, gateRecords=${loadedModelNames.size}, missing=${missingModels.join(",") || "none"}, materials=${materialAuthority}, performance=${performanceAuthority}, topology=${sourceTriangleCount}/${maximumPositionErrorMeters}/${maximumUvError}, static=${staticInstancedGateCount}, animated=${animatedIndividualGateCount}, meshBatches=${staticPrimitiveBatchCount}, connectors=${staticConnectorGateCount}/${staticConnectorBatchCount}/${individualConnectorGateCount}, source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`,
             );
           }
 
@@ -85,12 +91,18 @@ function waitForFleet(THREE, group, placements) {
           group.userData.uploadedJetwayAuthoredPartCount = exactModelGuard.hierarchy.requiredPartCount;
           group.userData.uploadedJetwayOriginalMeshCount = exactModelGuard.hierarchy.sourceMeshCount;
           group.userData.uploadedJetwayOriginalUvMeshCount = exactModelGuard.hierarchy.uvMeshCount;
+          group.userData.uploadedJetwaySourceTriangleCount = sourceTriangleCount;
+          group.userData.uploadedJetwayMaximumPositionErrorMeters = maximumPositionErrorMeters;
+          group.userData.uploadedJetwayMaximumUvError = maximumUvError;
           group.userData.uploadedJetwayParentAxisCorrectionRadians = 0;
           resolve({
             count,
             modelCount: loadedModelNames.size,
             materialAuthority,
             performanceAuthority,
+            sourceTriangleCount,
+            maximumPositionErrorMeters,
+            maximumUvError,
             staticInstancedGateCount,
             animatedIndividualGateCount,
             staticPrimitiveBatchCount,
