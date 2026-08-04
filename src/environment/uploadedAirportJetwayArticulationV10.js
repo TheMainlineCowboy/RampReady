@@ -19,7 +19,7 @@ const SOURCE_PART_Y_WEIGHTS = Object.freeze({
   Tunnel_C: 2 / 3,
   Cab: 1,
 });
-const EXTENSION_LIMITS = Object.freeze({ minimum: -14.25, maximum: 8.75 });
+const EXTENSION_LIMITS = Object.freeze({ minimum: -14.25, maximum: 14.25 });
 
 function finite(value, fallback = 0) {
   const number = Number(value);
