@@ -7,20 +7,19 @@ let source = fs.readFileSync(fleetPath, "utf8");
 const oldRetraction = 'const A1_RETRACTION = Object.freeze({ rotation: 0.052, tunnelB: 0.42, tunnelC: 0.78, cab: 1.18, lift: 0.08, totalClearanceMeters: 2.38 });';
 const newRetraction = `const A1_RETRACTION = Object.freeze({ rotation: 0, tunnelB: 0.79, tunnelC: 1.59, cab: 2.38, lift: 0.08, totalClearanceMeters: 2.38 });
 const A1_RETRACTION_MODE = "${modeAuthority}";`;
-
-const controllerStartToken = "function createController() {";
-const controllerEndToken = "\nfunction hideGeneratedJetways";
+const insertionToken = "\nfunction hideGeneratedJetways";
 const controllerFactoryToken = "const controller = createController();";
-const controllerFactoryReplacement = "const controller = createController(THREE);";
+const controllerFactoryReplacement = "const controller = createModelSpaceController(THREE);";
 
-const controllerReplacement = `function restoreLocalMatrix(object, matrix) {
+const measuredController = `
+function restoreA1LocalMatrix(object, matrix) {
   matrix.decompose(object.position, object.quaternion, object.scale);
   object.updateMatrix();
 }
 
-function applyModelSpaceRetraction(THREE, model, object, baseLocalMatrix, direction, distance, lift = 0) {
+function applyA1ModelSpaceRetraction(THREE, model, object, baseLocalMatrix, direction, distance, lift = 0) {
   if (!object) return;
-  restoreLocalMatrix(object, baseLocalMatrix);
+  restoreA1LocalMatrix(object, baseLocalMatrix);
   model.updateWorldMatrix(true, true);
   const modelInverse = new THREE.Matrix4().copy(model.matrixWorld).invert();
   const objectInModel = new THREE.Matrix4().multiplyMatrices(modelInverse, object.matrixWorld);
@@ -37,9 +36,9 @@ function applyModelSpaceRetraction(THREE, model, object, baseLocalMatrix, direct
   model.updateWorldMatrix(true, true);
 }
 
-function measureRetractionDirection(THREE, model) {
-  const rotunda = findSourcePartRoot(model, "Rotunda");
-  const cab = findSourcePartRoot(model, "Cab");
+function measureA1RetractionDirection(THREE, model) {
+  const rotunda = model?.getObjectByName?.("Rotunda");
+  const cab = model?.getObjectByName?.("Cab");
   if (!rotunda || !cab) throw new Error("Supplied A1 retraction requires Rotunda and Cab");
   model.updateWorldMatrix(true, true);
   const rotundaWorld = new THREE.Box3().setFromObject(rotunda).getCenter(new THREE.Vector3());
@@ -52,7 +51,7 @@ function measureRetractionDirection(THREE, model) {
   return direction.normalize();
 }
 
-function createController(THREE) {
+function createModelSpaceController(THREE) {
   let deployment = 1;
   let visual = null;
   let state = "loading-uploaded-model";
@@ -64,12 +63,26 @@ function createController(THREE) {
     anchor.rotation.y = base.yaw;
     anchor.updateMatrix();
     for (const [name, node] of Object.entries(nodes)) {
-      if (node) restoreLocalMatrix(node, base[name]);
+      if (node) restoreA1LocalMatrix(node, base[name]);
     }
     model.updateWorldMatrix(true, true);
-    applyModelSpaceRetraction(THREE, model, nodes.tunnelB, base.tunnelB, direction, retract * A1_RETRACTION.tunnelB);
-    applyModelSpaceRetraction(THREE, model, nodes.tunnelC, base.tunnelC, direction, retract * A1_RETRACTION.tunnelC);
-    applyModelSpaceRetraction(
+    applyA1ModelSpaceRetraction(
+      THREE,
+      model,
+      nodes.tunnelB,
+      base.tunnelB,
+      direction,
+      retract * A1_RETRACTION.tunnelB,
+    );
+    applyA1ModelSpaceRetraction(
+      THREE,
+      model,
+      nodes.tunnelC,
+      base.tunnelC,
+      direction,
+      retract * A1_RETRACTION.tunnelC,
+    );
+    applyA1ModelSpaceRetraction(
       THREE,
       model,
       nodes.cab,
@@ -97,12 +110,15 @@ function createController(THREE) {
     bind(anchor) {
       const model = anchor.getObjectByName("UploadedAirportJetwayModel_A1");
       const nodes = {
-        tunnelB: findSourcePartRoot(model, "Tunnel_B"),
-        tunnelC: findSourcePartRoot(model, "Tunnel_C"),
-        cab: findSourcePartRoot(model, "Cab"),
+        tunnelB: model?.getObjectByName?.("Tunnel_B"),
+        tunnelC: model?.getObjectByName?.("Tunnel_C"),
+        cab: model?.getObjectByName?.("Cab"),
       };
-      for (const node of Object.values(nodes)) node?.updateMatrix();
-      const direction = measureRetractionDirection(THREE, model);
+      if (!model || !nodes.tunnelB || !nodes.tunnelC || !nodes.cab) {
+        throw new Error("Supplied A1 model-space retraction is missing the fitted model hierarchy");
+      }
+      for (const node of Object.values(nodes)) node.updateMatrix();
+      const direction = measureA1RetractionDirection(THREE, model);
       visual = {
         anchor,
         model,
@@ -110,9 +126,9 @@ function createController(THREE) {
         direction,
         base: {
           yaw: anchor.rotation.y,
-          tunnelB: nodes.tunnelB?.matrix.clone() || new THREE.Matrix4(),
-          tunnelC: nodes.tunnelC?.matrix.clone() || new THREE.Matrix4(),
-          cab: nodes.cab?.matrix.clone() || new THREE.Matrix4(),
+          tunnelB: nodes.tunnelB.matrix.clone(),
+          tunnelC: nodes.tunnelC.matrix.clone(),
+          cab: nodes.cab.matrix.clone(),
         },
       };
       state = "uploaded-model-ready";
@@ -126,17 +142,16 @@ if (!source.includes(modeAuthority)) {
   if (!source.includes(oldRetraction)) {
     throw new Error(`${fleetPath}: legacy A1 retraction constants are missing`);
   }
-  const controllerStart = source.indexOf(controllerStartToken);
-  const controllerEnd = source.indexOf(controllerEndToken, controllerStart + controllerStartToken.length);
-  if (controllerStart < 0 || controllerEnd < 0 || controllerEnd <= controllerStart) {
-    throw new Error(`${fleetPath}: legacy A1 retraction controller block is missing`);
+  const insertionIndex = source.indexOf(insertionToken);
+  if (insertionIndex < 0) {
+    throw new Error(`${fleetPath}: A1 controller insertion anchor is missing`);
   }
   if (!source.includes(controllerFactoryToken)) {
     throw new Error(`${fleetPath}: legacy A1 controller factory call is missing`);
   }
 
   source = source.replace(oldRetraction, newRetraction);
-  source = `${source.slice(0, controllerStart)}${controllerReplacement}${source.slice(controllerEnd)}`;
+  source = `${source.slice(0, insertionIndex)}${measuredController}${source.slice(insertionIndex)}`;
   source = source.replace(controllerFactoryToken, controllerFactoryReplacement);
   fs.writeFileSync(fleetPath, source, "utf8");
 }
@@ -144,20 +159,18 @@ if (!source.includes(modeAuthority)) {
 source = fs.readFileSync(fleetPath, "utf8");
 for (const token of [
   modeAuthority,
-  "function applyModelSpaceRetraction",
-  "function measureRetractionDirection",
+  "function applyA1ModelSpaceRetraction",
+  "function measureA1RetractionDirection",
+  "function createModelSpaceController",
   "direction.x * distance",
   "direction.z * distance",
   "tunnelB: 0.79",
   "tunnelC: 1.59",
   "cab: 2.38",
-  "const controller = createController(THREE);",
+  "const controller = createModelSpaceController(THREE);",
   "anchor.userData.retractionDirectionModel",
 ]) {
   if (!source.includes(token)) throw new Error(`${fleetPath}: model-space A1 retraction is missing ${token}`);
-}
-if (source.includes("base.yaw - retract * A1_RETRACTION.rotation")) {
-  throw new Error(`${fleetPath}: retired A1 yaw-sweep retraction is still active`);
 }
 
 console.log("Prepared supplied A1 model-space retraction toward the measured Rotunda: B 0.79 m, C 1.59 m, Cab 2.38 m, no yaw sweep.");
