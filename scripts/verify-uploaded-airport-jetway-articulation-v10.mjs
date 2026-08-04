@@ -8,6 +8,10 @@ import {
   UPLOADED_AIRPORT_JETWAY_A1_TARGET_WORLD,
 } from "../src/environment/uploadedAirportJetwayArticulationV10.js";
 
+const CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 2.25;
+const CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.29;
+const CRJ_FORWARD_DOOR_SILL_HEIGHT_METERS = 1.72;
+
 function requireTokens(path, tokens) {
   const source = fs.readFileSync(path, "utf8");
   for (const token of tokens) {
@@ -46,6 +50,9 @@ requireTokens("scripts/prepare-uploaded-airport-jetway-fleet.mjs", [
   "targetZ",
 ]);
 requireTokens("scripts/prepare-uploaded-jetway-crj700-door-target-v14.mjs", [
+  "CRJ_DOOR_AFT_METERS = 2.25",
+  "CRJ_DOOR_LEFT_METERS = 1.29",
+  "CRJ_DOOR_SILL_METERS = 1.72",
   "a1AttachedExtension > 2.2 && a1AttachedExtension < 2.5",
   "Legacy v11 assertion block retained only",
 ]);
@@ -75,6 +82,7 @@ requireTokens("src/environment/uploadedAirportJetwayArticulationV10.js", [
   "x: -1.309233922",
   "y: 1.72",
   "z: 2.23886",
+  "minimum: -14.25, maximum: 14.25",
 ]);
 
 const sourceGeometry = Object.freeze({
@@ -100,8 +108,12 @@ const placements = [...concourseA.jetways, ...concourseB.jetways].map((jetway) =
   const forwardZ = Math.sin(aircraftHeading);
   const leftX = forwardZ;
   const leftZ = -forwardX;
-  const targetX = jetway.px - forwardX * 6.25 + leftX * 1.35;
-  const targetZ = jetway.pz - forwardZ * 6.25 + leftZ * 1.35;
+  const targetX = jetway.px
+    - forwardX * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS
+    + leftX * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
+  const targetZ = jetway.pz
+    - forwardZ * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS
+    + leftZ * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
   const distance = Math.hypot(targetX - jetway.x, targetZ - jetway.z);
   const yaw = Math.atan2(targetX - jetway.x, targetZ - jetway.z);
   const parkedGateCode = [...jetway.g].reduce((value, character) => value + character.charCodeAt(0), 0);
@@ -112,7 +124,7 @@ const placements = [...concourseA.jetways, ...concourseB.jetways].map((jetway) =
     yaw,
     aircraftHeading,
     bridgeEnd: jetway.g === "A1" ? Math.min(29.5, Math.max(11.5, distance - 1.55)) : 11.9 + (parkedGateCode % 4) * 0.65,
-    cabinY: jetway.g === "A1" ? 2.95 : 3.08,
+    cabinY: CRJ_FORWARD_DOOR_SILL_HEIGHT_METERS,
     targetX,
     targetZ,
   };
@@ -120,12 +132,18 @@ const placements = [...concourseA.jetways, ...concourseB.jetways].map((jetway) =
 if (placements.length !== 58) throw new Error(`Expected 58 supplied-jetway placements, received ${placements.length}`);
 
 let maximumPredictedGap = 0;
+let maximumRequestedExtension = -Infinity;
+let maximumRequestedExtensionGate = null;
 let minimumPartSeparation = Infinity;
 let a1 = null;
 for (const placement of placements) {
   const articulation = computeUploadedJetwayArticulation(placement, sourceGeometry);
   if (articulation.authority !== UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY) {
     throw new Error(`${placement.gate} used the wrong articulation authority`);
+  }
+  if (articulation.requestedExtension > maximumRequestedExtension) {
+    maximumRequestedExtension = articulation.requestedExtension;
+    maximumRequestedExtensionGate = placement.gate;
   }
   if (articulation.predictedDoorGap > 0.001) {
     throw new Error(`${placement.gate} predicted gap ${articulation.predictedDoorGap} m; requested extension ${articulation.requestedExtension} m; applied extension ${articulation.extension} m; clamped=${articulation.clamped}; target=${JSON.stringify(articulation.targetWorldContact)}`);
@@ -151,6 +169,9 @@ for (const placement of placements) {
   if (placement.gate === "A1") a1 = articulation;
 }
 if (maximumPredictedGap > 0.001) throw new Error(`Full-3D supplied jetway predicted gap is ${maximumPredictedGap} m`);
+if (maximumRequestedExtension > 14.25) {
+  throw new Error(`${maximumRequestedExtensionGate} requires ${maximumRequestedExtension} m extension, outside the 14.25 m supplied-model envelope`);
+}
 if (minimumPartSeparation < 0.4) throw new Error(`Full-3D supplied sections telescope too deeply: ${minimumPartSeparation} m`);
 if (!a1) throw new Error("A1 full-3D articulation was not computed");
 if (a1.targetAuthority !== UPLOADED_AIRPORT_JETWAY_A1_TARGET_AUTHORITY) {
@@ -167,4 +188,4 @@ if (!(a1.cabYawOffset * 180 / Math.PI > 49.5 && a1.cabYawOffset * 180 / Math.PI 
 if (!(a1.cabVerticalOffset > -2.59 && a1.cabVerticalOffset < -2.56)) throw new Error(`A1 Cab threshold vertical offset is ${a1.cabVerticalOffset} m`);
 if (!(a1.partOffsets.Cab.y > -2.59 && a1.partOffsets.Cab.y < -2.56)) throw new Error(`A1 Cab still uses the rejected vertical pose: ${a1.partOffsets.Cab.y} m`);
 
-console.log(`Verified ${UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY}: all 58 exact supplied models preserve their authored hierarchy; A1 targets the authored CRJ700 forward-left door at (${a1.targetWorldContact.x.toFixed(3)}, ${a1.targetWorldContact.y.toFixed(3)}, ${a1.targetWorldContact.z.toFixed(3)}) with ${a1.extension.toFixed(3)} m extension, ${(a1.anchorYaw * 180 / Math.PI).toFixed(3)}° bridge yaw, ${(a1.cabYawOffset * 180 / Math.PI).toFixed(3)}° Cab yaw and ${a1.cabVerticalOffset.toFixed(3)} m vertical articulation.`);
+console.log(`Verified ${UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY}: all 58 exact supplied models target the authored CRJ700 forward-left doorway contract. The maximum requested extension is ${maximumRequestedExtension.toFixed(3)} m at ${maximumRequestedExtensionGate}; A1 targets (${a1.targetWorldContact.x.toFixed(3)}, ${a1.targetWorldContact.y.toFixed(3)}, ${a1.targetWorldContact.z.toFixed(3)}) with ${a1.extension.toFixed(3)} m extension, ${(a1.anchorYaw * 180 / Math.PI).toFixed(3)}° bridge yaw, ${(a1.cabYawOffset * 180 / Math.PI).toFixed(3)}° Cab yaw and ${a1.cabVerticalOffset.toFixed(3)} m vertical articulation.`);
