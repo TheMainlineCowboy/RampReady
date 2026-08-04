@@ -1,9 +1,9 @@
 import fs from "node:fs";
 
-const EXACT_MINIMUM_VERTICAL_OFFSET = -1.36;
-const EXACT_MAXIMUM_VERTICAL_OFFSET = -1.33;
+const EXACT_MINIMUM_VERTICAL_OFFSET = -2.59;
+const EXACT_MAXIMUM_VERTICAL_OFFSET = -2.56;
 const LEGACY_IDEMPOTENCE_TOKEN = "a1CabVerticalOffset > -1.33";
-const LEGACY_IDEMPOTENCE_COMMENT = `// Legacy v12 idempotence token retained only for repeated preparation: ${LEGACY_IDEMPOTENCE_TOKEN}. Active exact source threshold is -1.36..-1.33 m.`;
+const LEGACY_IDEMPOTENCE_COMMENT = `// Legacy v12 idempotence token retained only for repeated preparation: ${LEGACY_IDEMPOTENCE_TOKEN}. Active authored CRJ700 forward-door threshold is -2.59..-2.56 m.`;
 
 function replaceWhenAvailable(path, oldText, newText, alreadyCorrectToken, required) {
   let source = fs.readFileSync(path, "utf8");
@@ -31,7 +31,7 @@ if (!readinessSource.includes(LEGACY_IDEMPOTENCE_COMMENT)) {
   fs.writeFileSync(readinessPath, readinessSource, "utf8");
 }
 if (!readinessSource.includes(`a1CabVerticalOffset > ${EXACT_MINIMUM_VERTICAL_OFFSET}`)) {
-  throw new Error(`${readinessPath}: active exact threshold band is missing`);
+  throw new Error(`${readinessPath}: active authored CRJ700 forward-door threshold band is missing`);
 }
 
 const terminalResult = replaceWhenAvailable(
@@ -44,4 +44,4 @@ const terminalResult = replaceWhenAvailable(
   false,
 );
 
-console.log(`Prepared exact browser-derived supplied-Cab threshold band ${EXACT_MINIMUM_VERTICAL_OFFSET}..${EXACT_MAXIMUM_VERTICAL_OFFSET} m while preserving zero plane intrusion and 1.5 m minimum ramp clearance gates (readiness=${readinessResult}, terminal=${terminalResult}).`);
+console.log(`Prepared authored CRJ700 forward-left-door supplied-Cab threshold band ${EXACT_MINIMUM_VERTICAL_OFFSET}..${EXACT_MAXIMUM_VERTICAL_OFFSET} m while preserving zero plane intrusion and 1.5 m minimum ramp clearance gates (readiness=${readinessResult}, terminal=${terminalResult}).`);
