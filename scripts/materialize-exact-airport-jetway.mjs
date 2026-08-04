@@ -3,6 +3,8 @@ import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 
+await import("./diagnose-official-jetway-viewer-textures.mjs");
+
 const CHUNK_COUNT = 9;
 const CHUNK_ROOT = path.resolve(".jetway-source-staging");
 const OUTPUT_PATH = path.resolve("public/models/airport-jetway/Airport_Jetway.glb");
