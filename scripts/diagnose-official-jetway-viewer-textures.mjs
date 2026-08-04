@@ -15,7 +15,7 @@ const EXPECTED = Object.freeze({
 });
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const basename = (name) => String(name || "").replace(/\.[^.]+$/, "").toLowerCase();
-const cacheRoot = path.resolve(".cache/exact-airport-jetway/viewer-textures");
+const cacheRoot = path.resolve("test-results/official-viewer-textures");
 
 function decodeEntities(value) {
   return value
@@ -110,5 +110,7 @@ for (const [exactName, expected] of Object.entries(EXPECTED)) {
 }
 const byteExactCount = outcomes.filter((entry) => entry.byteExact).length;
 const pixelExactCount = outcomes.filter((entry) => entry.pixelExact).length;
+const report = { byteExactCount, pixelExactCount, outcomes };
+await writeFile(path.join(cacheRoot, "comparison.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
 console.log(`JETWAY_PIXEL_SUMMARY byteExact=${byteExactCount}/7 pixelExact=${pixelExactCount}/7`);
 console.log(`JETWAY_PIXEL_OUTCOMES ${JSON.stringify(outcomes)}`);
