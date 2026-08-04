@@ -1,1 +1,0 @@
-Payload transport uses connector-safe 10k base64 chunks. Build reconstructs and SHA-verifies the authored stand-up GLB.

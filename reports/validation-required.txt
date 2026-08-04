@@ -1,1 +1,0 @@
-Required before merge: full verification, production build, direct tug launch browser test, A1 attachment screenshot inspection.

@@ -1,1 +1,0 @@
-A1 target corrected from wrong diagonal BGATE point to measured T4_WALK portal; cloned facade pass removed; direct tug launch added.

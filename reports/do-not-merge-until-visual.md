@@ -1,1 +1,0 @@
-This repair must remain unmerged until the uploaded browser evidence is manually inspected. Green source checks alone do not prove that A1 is visibly attached or that the lower terminal facade no longer repeats generated modules.
