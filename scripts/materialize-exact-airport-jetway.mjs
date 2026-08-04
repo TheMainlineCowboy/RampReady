@@ -13,11 +13,25 @@ const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const encodedParts = [];
 for (let index = 0; index < CHUNK_COUNT; index += 1) {
   const chunkPath = path.join(CHUNK_ROOT, `chunk${String(index).padStart(3, "0")}.b64`);
-  encodedParts.push((await readFile(chunkPath, "utf8")).trim());
+  const encoded = (await readFile(chunkPath, "utf8")).trim();
+  console.log(`JETWAY_CHUNK ${String(index).padStart(3, "0")} chars=${encoded.length} sha256=${sha256(Buffer.from(encoded, "utf8"))} prefix=${encoded.slice(0, 12)} suffix=${encoded.slice(-12)}`);
+  encodedParts.push(encoded);
 }
-const compressed = Buffer.from(encodedParts.join(""), "base64");
+const encoded = encodedParts.join("");
+const compressed = Buffer.from(encoded, "base64");
+console.log(`JETWAY_ENCODED chars=${encoded.length} sha256=${sha256(Buffer.from(encoded, "utf8"))}`);
+console.log(`JETWAY_XZ bytes=${compressed.length} sha256=${sha256(compressed)} prefix=${compressed.subarray(0, 16).toString("hex")} suffix=${compressed.subarray(-16).toString("hex")}`);
 if (compressed.subarray(0, 6).toString("hex") !== "fd377a585a00") {
   throw new Error("Exact Airport_Jetway.glb staging payload is not the expected XZ stream");
+}
+const test = spawnSync("xz", ["-t"], {
+  input: compressed,
+  encoding: null,
+  maxBuffer: 64 * 1024 * 1024,
+});
+if (test.error) throw test.error;
+if (test.status !== 0) {
+  throw new Error(`Exact Airport_Jetway.glb XZ integrity test failed: ${String(test.stderr || "").trim()}`);
 }
 const result = spawnSync("xz", ["-dc"], {
   input: compressed,
