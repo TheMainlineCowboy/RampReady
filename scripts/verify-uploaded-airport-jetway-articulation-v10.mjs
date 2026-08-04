@@ -127,6 +127,9 @@ for (const placement of placements) {
   if (articulation.authority !== UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY) {
     throw new Error(`${placement.gate} used the wrong articulation authority`);
   }
+  if (articulation.predictedDoorGap > 0.001) {
+    throw new Error(`${placement.gate} predicted gap ${articulation.predictedDoorGap} m; requested extension ${articulation.requestedExtension} m; applied extension ${articulation.extension} m; clamped=${articulation.clamped}; target=${JSON.stringify(articulation.targetWorldContact)}`);
+  }
   maximumPredictedGap = Math.max(maximumPredictedGap, articulation.predictedDoorGap);
   const centers = Object.fromEntries(Object.entries(sourcePartCenters).map(([name, center]) => [
     name,
