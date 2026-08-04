@@ -66,8 +66,12 @@ export function createModelSpaceA1Controller(THREE, {
   const apply = () => {
     if (!visual) return;
     const retract = 1 - deployment;
+    // Real departure sequence: telescope away from the aircraft first, then
+    // swing the complete bridge around its terminal-side Rotunda pivot.
+    const telescopeProgress = clamp(retract / 0.72, 0, 1);
+    const swingProgress = clamp((retract - 0.72) / 0.28, 0, 1);
     const { anchor, model, nodes, base, direction } = visual;
-    anchor.rotation.y = base.yaw;
+    anchor.rotation.y = base.yaw - swingProgress * (Number(retraction.rotation) || 0);
     anchor.updateMatrix();
     for (const [name, node] of Object.entries(nodes)) {
       if (node) restoreLocalMatrix(node, base[name]);
@@ -79,7 +83,7 @@ export function createModelSpaceA1Controller(THREE, {
       nodes.tunnelB,
       base.tunnelB,
       direction,
-      retract * retraction.tunnelB,
+      telescopeProgress * retraction.tunnelB,
     );
     applyModelSpaceRetraction(
       THREE,
@@ -87,7 +91,7 @@ export function createModelSpaceA1Controller(THREE, {
       nodes.tunnelC,
       base.tunnelC,
       direction,
-      retract * retraction.tunnelC,
+      telescopeProgress * retraction.tunnelC,
     );
     applyModelSpaceRetraction(
       THREE,
@@ -95,16 +99,20 @@ export function createModelSpaceA1Controller(THREE, {
       nodes.cab,
       base.cab,
       direction,
-      retract * retraction.cab,
-      retract * retraction.lift,
+      telescopeProgress * retraction.cab,
+      telescopeProgress * retraction.lift,
     );
     anchor.userData.retractionAuthority = authority;
     anchor.userData.retractionClearanceMeters = retraction.totalClearanceMeters;
     anchor.userData.retractionMode = modeAuthority;
     anchor.userData.retractionDirectionModel = direction.toArray().join(",");
+    anchor.userData.retractionTelescopeProgress = telescopeProgress;
+    anchor.userData.retractionSwingProgress = swingProgress;
+    anchor.userData.retractionRotationRadians = swingProgress * (Number(retraction.rotation) || 0);
     state = deployment >= 0.995 ? "attached-to-aircraft-door"
       : deployment <= 0.005 ? "parked-clear-of-aircraft"
-        : "retracting-from-aircraft";
+        : swingProgress > 0 ? "rotating-to-park"
+          : "telescoping-from-aircraft";
   };
 
   return {
@@ -144,4 +152,4 @@ export function createModelSpaceA1Controller(THREE, {
   };
 }
 
-export const A1_MODEL_SPACE_RETRACTION_MODE_V7 = "model-space-toward-measured-rotunda-v7";
+export const A1_MODEL_SPACE_RETRACTION_MODE_V7 = "model-space-telescope-then-rotunda-parking-swing-v8";
