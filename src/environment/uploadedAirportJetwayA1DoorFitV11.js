@@ -64,27 +64,69 @@ function measureBounds(THREE, model, object) {
   return { vertices, box };
 }
 
-function measureCabContact(THREE, model) {
+function measureCabContact(THREE, model, rotundaCenter) {
   const cab = findSourcePartRoot(model, "Cab");
   if (!cab) throw new Error("Supplied A1 jetway is missing Cab");
   const { vertices, box } = measureBounds(THREE, model, cab);
-  const maximumZ = box.max.z;
-  const contact = vertices.filter((vertex) => vertex.z >= maximumZ - CONTACT_BAND_METERS);
+  const cabCenter = box.getCenter(new THREE.Vector3());
+  const bridgeDirection = new THREE.Vector3(
+    cabCenter.x - rotundaCenter.x,
+    0,
+    cabCenter.z - rotundaCenter.z,
+  );
+  if (bridgeDirection.lengthSq() < 0.01) {
+    throw new Error("Supplied A1 cab cannot define an aircraft-facing direction from the Rotunda");
+  }
+  bridgeDirection.normalize();
+
+  // The uploaded Cab keeps its authored node transforms. Its aircraft-facing
+  // hood is therefore not guaranteed to be model-local +Z. Select the real
+  // outer face by projection away from the measured Rotunda instead of using
+  // an arbitrary bounding-box axis that can align an interior/side surface.
+  let maximumProjection = Number.NEGATIVE_INFINITY;
+  for (const vertex of vertices) {
+    maximumProjection = Math.max(
+      maximumProjection,
+      (vertex.x - rotundaCenter.x) * bridgeDirection.x
+        + (vertex.z - rotundaCenter.z) * bridgeDirection.z,
+    );
+  }
+  const contact = vertices.filter((vertex) => {
+    const projection = (vertex.x - rotundaCenter.x) * bridgeDirection.x
+      + (vertex.z - rotundaCenter.z) * bridgeDirection.z;
+    return projection >= maximumProjection - CONTACT_BAND_METERS;
+  });
   if (contact.length < 4) throw new Error(`Supplied A1 cab contact plane has only ${contact.length} vertices`);
+
   const contactBox = new THREE.Box3();
-  for (const vertex of contact) contactBox.expandByPoint(vertex);
+  const point = new THREE.Vector3();
+  for (const vertex of contact) {
+    contactBox.expandByPoint(vertex);
+    point.x += vertex.x;
+    point.z += vertex.z;
+  }
+  point.x /= contact.length;
+  point.z /= contact.length;
+  point.y = contactBox.min.y;
+
+  const perpendicular = new THREE.Vector3(-bridgeDirection.z, 0, bridgeDirection.x);
+  let minimumAcross = Number.POSITIVE_INFINITY;
+  let maximumAcross = Number.NEGATIVE_INFINITY;
+  for (const vertex of contact) {
+    const across = vertex.x * perpendicular.x + vertex.z * perpendicular.z;
+    minimumAcross = Math.min(minimumAcross, across);
+    maximumAcross = Math.max(maximumAcross, across);
+  }
   return {
     cab,
-    point: new THREE.Vector3(
-      (contactBox.min.x + contactBox.max.x) / 2,
-      contactBox.min.y,
-      maximumZ,
-    ),
+    point,
     centerY: (contactBox.min.y + contactBox.max.y) / 2,
     floorY: contactBox.min.y,
     topY: contactBox.max.y,
-    width: contactBox.max.x - contactBox.min.x,
+    width: maximumAcross - minimumAcross,
     contactBox,
+    bridgeDirection,
+    maximumProjection,
   };
 }
 
@@ -215,7 +257,7 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
   model.updateMatrix();
   model.updateMatrixWorld(true);
 
-  const sourceContact = measureCabContact(THREE, model);
+  const sourceContact = measureCabContact(THREE, model, rotundaCenter);
   const desiredX = CRJ_FORWARD_LEFT_DOOR.x - placement.x;
   const desiredZ = CRJ_FORWARD_LEFT_DOOR.z - placement.z;
   const desiredRadius = Math.hypot(desiredX, desiredZ);
@@ -231,7 +273,7 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
   }
   applyWeightedLongitudinalExtension(THREE, model, extension);
 
-  let contact = measureCabContact(THREE, model);
+  let contact = measureCabContact(THREE, model, rotundaCenter);
   const pitchRadians = solvePitchRadians({
     floorY: contact.floorY,
     floorZ: contact.point.z,
@@ -249,7 +291,7 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
   const stairGrounding = correctGroundedDetail(THREE, model, stair);
   const mechanicalGrounding = correctGroundedDetail(THREE, model, mechanical);
 
-  contact = measureCabContact(THREE, model);
+  contact = measureCabContact(THREE, model, rotundaCenter);
   const correctedContactOffsetX = contact.point.x - rotundaCenter.x;
   const correctedContactOffsetZ = Math.sqrt(Math.max(0.01, desiredRadius ** 2 - correctedContactOffsetX ** 2));
   const residualLongitudinal = correctedContactOffsetZ - (contact.point.z - rotundaCenter.z);
@@ -259,7 +301,7 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
       const part = findSourcePartRoot(model, name);
       applyModelSpaceMatrix(THREE, model, part, residualCorrection);
     }
-    contact = measureCabContact(THREE, model);
+    contact = measureCabContact(THREE, model, rotundaCenter);
   }
 
   const localDirection = Math.atan2(
@@ -271,7 +313,7 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
   anchor.updateMatrixWorld(true);
   model.updateMatrixWorld(true);
 
-  contact = measureCabContact(THREE, model);
+  contact = measureCabContact(THREE, model, rotundaCenter);
   const targetWorld = toWorldTarget(THREE, group);
   let actualWorld = model.localToWorld(contact.point.clone());
   let postFitYawCorrection = 0;
