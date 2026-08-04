@@ -7,16 +7,13 @@ const MOVABLE_PART_WEIGHTS = Object.freeze({
   Cab: 1,
 });
 
-// The exact authored CRJ is already normalized to real-world dimensions. The
-// forward-left passenger-door target below is measured directly from that GLB,
-// so the jetway fits the rendered aircraft rather than a procedural fallback.
+// Measured directly from the exact authored CRJ. The visible forward entry
+// door extends down as an integrated airstair, but the passenger-cabin threshold
+// where a jetway hood meets the fuselage is approximately 2.52 m above grade.
 const CRJ_FORWARD_LEFT_DOOR = Object.freeze({
-  // Measured directly from the exact authored 32.5 m CRJ GLB. The forward-left
-  // passenger door spans approximately Z 1.8-2.7 m and Y 1.85-3.7 m. Keep the
-  // hood just outside the left fuselage skin at the door sill.
   x: -1.35,
-  centerY: 2.76,
-  sillY: 1.85,
+  centerY: 3.10,
+  sillY: 2.52,
   z: 2.22,
 });
 const CONTACT_BAND_METERS = 0.22;
