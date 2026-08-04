@@ -7,16 +7,15 @@ const MOVABLE_PART_WEIGHTS = Object.freeze({
   Cab: 1,
 });
 
-// These coordinates are the forward-left cabin-door reference already authored
-// into the CRJ runtime fallback. The real GLB is normalized into the same
-// nose-gear coordinate frame, so this remains stable while materials/models load.
-const AIRCRAFT_PARENT_SCALE = 0.82;
-const PROCEDURAL_INTERNAL_SCALE = 1.35;
+// Source parking coordinates are the nose-gear stop. The decoded KPHX A1
+// placement already establishes the CRJ forward-left door 6.25 m aft of that
+// stop and 1.35 m left of centerline. Keep those airport-scale meters here;
+// the prior procedural-door coordinate incorrectly targeted the cockpit/nose.
 const CRJ_FORWARD_LEFT_DOOR = Object.freeze({
-  x: -0.985 * AIRCRAFT_PARENT_SCALE * PROCEDURAL_INTERNAL_SCALE,
-  centerY: 2.58 * AIRCRAFT_PARENT_SCALE * PROCEDURAL_INTERNAL_SCALE,
-  sillY: (2.58 - 0.92 / 2) * AIRCRAFT_PARENT_SCALE * PROCEDURAL_INTERNAL_SCALE,
-  z: -0.75 * AIRCRAFT_PARENT_SCALE * PROCEDURAL_INTERNAL_SCALE,
+  x: -1.35,
+  centerY: 2.58 * 0.82 * 1.35,
+  sillY: (2.58 - 0.92 / 2) * 0.82 * 1.35,
+  z: 6.25,
 });
 const CONTACT_BAND_METERS = 0.22;
 const GROUND_CLEARANCE_METERS = 0.06;
