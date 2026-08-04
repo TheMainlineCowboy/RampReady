@@ -79,6 +79,9 @@ try {
       const bytes = Buffer.from(await assetResponse.arrayBuffer());
       const parsed = new URL(candidate.url);
       console.log(`JETWAY_ORIGIN_ASSET key=${candidate.keyPath} status=${assetResponse.status} bytes=${bytes.length} sha256=${sha256(bytes)} type=${assetResponse.headers.get("content-type") || ""} host=${parsed.host} path=${parsed.pathname}`);
+      if (/osgjsUrl$/i.test(candidate.keyPath) && bytes.length <= 64 * 1024) {
+        console.log(`JETWAY_ORIGIN_OSGJS_BASE64 key=${candidate.keyPath} bytes=${bytes.length} sha256=${sha256(bytes)} data=${bytes.toString("base64")}`);
+      }
     } catch (error) {
       console.log(`JETWAY_ORIGIN_ASSET_ERROR key=${candidate.keyPath} error=${error?.message || error}`);
     }
