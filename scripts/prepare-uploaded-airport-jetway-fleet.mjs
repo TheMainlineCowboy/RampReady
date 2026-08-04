@@ -22,6 +22,7 @@ const placementPush = `    uploadedJetwayPlacements.push({
       x: jetway.x,
       z: jetway.z,
       yaw,
+      aircraftHeading: parkingHeading,
       rotundaY,
       bridgeEnd,
       cabinY,
@@ -61,14 +62,8 @@ source = source
     '  group.userData.sourceGeometryMode = "procedural-articulated-fallback-pending-original-AIR_Jetway01-mesh-recovery";',
     '  group.userData.sourceGeometryMode = "user-supplied-airport-jetway-loading";',
   )
-  .replace(
-    "  group.userData.requiresOriginalSourceMesh = true;",
-    "  group.userData.requiresOriginalSourceMesh = false;",
-  )
-  .replace(
-    "  group.userData.a1JetwayController = animatedA1Jetway.userData.controller;",
-    "  group.userData.a1JetwayController = uploadedJetwayController;",
-  )
+  .replace("  group.userData.requiresOriginalSourceMesh = true;", "  group.userData.requiresOriginalSourceMesh = false;")
+  .replace("  group.userData.a1JetwayController = animatedA1Jetway.userData.controller;", "  group.userData.a1JetwayController = uploadedJetwayController;")
   .replace(
     /  group\.userData\.visualAuthority = "source-scale articulated fallback[^\n]*";/,
     '  group.userData.visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured";',
@@ -90,31 +85,27 @@ for (const token of [
   placementDeclaration,
   placementPush,
   installLine,
+  "aircraftHeading: parkingHeading",
   "connectorTowardX",
   "connectorTowardZ",
   "wallConnectorLength",
   "aircraftDoorDistance: distance",
-  "aircraftContactClearanceMeters: AIR_JETWAY01_CONTACT_CLEARANCE_METERS",
   'sourceGeometryMode = "user-supplied-airport-jetway-loading"',
   "requiresOriginalSourceMesh = false",
   "a1JetwayController = uploadedJetwayController",
-  'visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured"',
-  "supersededFallbackDisclosure",
 ]) {
   if (!source.includes(token)) throw new Error(`${path}: uploaded airport jetway integration missing ${token}`);
 }
 if (source.indexOf(placementPush) < source.indexOf("const connectorTowardX")) {
   throw new Error(`${path}: uploaded placement is created before measured connector values`);
 }
-
 fs.writeFileSync(path, source, "utf8");
 
 await import("./prepare-uploaded-airport-jetway-articulation-v10.mjs");
+await import("./prepare-uploaded-jetway-crj700-door-target-v14.mjs");
+await import("./prepare-uploaded-jetway-full3d-evidence-v11.mjs");
+await import("./prepare-uploaded-jetway-v12-readiness-diagnostic.mjs");
 
-// The fleet module is committed as the canonical runtime implementation. This
-// preparation step must validate it without inserting compatibility imports or
-// per-gate connector calls, because static jetways and connectors are already
-// batched while A1 remains the single detailed individual assembly.
 const fleetPath = "src/environment/uploadedAirportJetwayFleet.js";
 const fleet = fs.readFileSync(fleetPath, "utf8");
 for (const token of [
@@ -122,19 +113,16 @@ for (const token of [
   "addUploadedAirportJetwayTerminalConnector",
   "const staticConnectors = addUploadedAirportJetwayStaticTerminalConnectors(THREE, fleet, placements);",
   "addUploadedAirportJetwayTerminalConnector(THREE, fleet, placement);",
-  "if (placement.gate === \"A1\")",
   "uploadedJetwayMeasuredTerminalConnectorCount = placements.length",
   "uploadedJetwayStaticConnectorGateCount = staticConnectors.staticGateCount",
-  "uploadedJetwayStaticConnectorBatchCount = staticConnectors.batchCount",
-  "uploadedJetwayIndividualConnectorGateCount = 1",
   "UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY",
-  "uploadedJetwayA1PredictedDoorGapMeters",
-  "uploadedJetwayStaticArticulatedGateCount",
+  "uploadedJetwayA1CabNormalErrorDegrees",
+  "uploadedJetwayStaticMaximumCabNormalErrorDegrees",
 ]) {
-  if (!fleet.includes(token)) throw new Error(`${fleetPath}: canonical batched terminal connector wiring missing ${token}`);
+  if (!fleet.includes(token)) throw new Error(`${fleetPath}: canonical full-3D terminal connector wiring missing ${token}`);
 }
 if ((fleet.match(/from "\.\/uploadedAirportJetwayTerminalConnector\.js"/g) || []).length !== 1) {
   throw new Error(`${fleetPath}: terminal connector module must have exactly one canonical import`);
 }
 
-console.log("Prepared all 58 Terminal 4 gate transforms and validated the committed batched uploaded-jetway runtime: 57 static jetways and connectors are instanced, A1 remains individual, measured wall placement is preserved and tracked source is not mutated.");
+console.log("Prepared all 58 exact supplied Terminal 4 jetways with the authored CRJ700 forward-left-door A1 target, aircraft headings, full 3D Cab poses, grounded source stair/bogie geometry and measured terminal connectors.");
