@@ -12,12 +12,15 @@ function replaceRequired(before, after, marker, label) {
 replaceRequired(
   "const NOSE_START_Z = 6.2;",
   `const NOSE_START_Z = 6.2;
-const A1_INSPECTION_NOSE_GEAR_X = 0;
-const A1_INSPECTION_NOSE_GEAR_Z = 0;
+// Photo registration moves the complete A1 jetway/aircraft set 17.565 m from
+// the original source stop toward the measured terminal corner, retaining a
+// 2.4 m fixed vestibule. The aircraft pose uses the identical relocation.
+const A1_INSPECTION_NOSE_GEAR_X = 12.353412;
+const A1_INSPECTION_NOSE_GEAR_Z = -12.486888;
 // Source A1 parking heading is 270.491 degrees. The uploaded CRJ points along
 // local -Z, so its Three.js yaw is parking heading minus 270 degrees.
 const A1_INSPECTION_AIRCRAFT_YAW = THREE.MathUtils.degToRad(0.491);
-const A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "source-a1-nose-gear-stop-and-heading-v1";`,
+const A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "photo-registered-a1-terminal-corner-stop-v1";`,
   "A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY",
   "A1 inspection aircraft pose constants",
 );
@@ -114,6 +117,8 @@ replaceRequired(
 
 for (const token of [
   "A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY",
+  "A1_INSPECTION_NOSE_GEAR_X = 12.353412",
+  "A1_INSPECTION_NOSE_GEAR_Z = -12.486888",
   "const resetUsesInspectionAircraftPose = inspectionRef.current",
   "next ? A1_INSPECTION_NOSE_GEAR_Z : NOSE_START_Z",
   'sim.renderer.domElement.dataset.inspectionPreset = next ? "a1" : "training"',
@@ -129,4 +134,4 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared persistent inspection route evidence and registered the uploaded CRJ nose gear at the source A1 parking stop and heading while preserving the separate training approach pose.");
+console.log("Prepared persistent inspection route evidence and photo-registered the uploaded CRJ nose gear at the corrected A1 terminal-corner stop and heading while preserving the separate training approach pose.");
