@@ -64,6 +64,7 @@ try {
   await runNode("scripts/prepare-terminal4-floating-roof-filter.mjs");
   await runNode("scripts/prepare-terminal4-jetway-simulator-polish.mjs");
   await runNode("scripts/prepare-a1-terminal-attachment-v14.mjs");
+  await runNode("scripts/prepare-a1-photo-registered-stop-v1.mjs");
   await runNode("scripts/prepare-terminal4-static-jetway-parking-v15.mjs");
   await runNode("scripts/prepare-terminal4-ramp-facade-v16.mjs");
   await runNode("scripts/prepare-terminal4-b-concourse-extension-v17.mjs");
@@ -96,4 +97,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, connected A1 to the nearest measured structural terminal facade, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including the supplied-jetway installation correction and both trainer sources.");
+console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, photo-registered the complete A1 jetway and aircraft stop at the measured terminal corner with a compact fixed vestibule, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including the supplied-jetway installation correction and both trainer sources.");
