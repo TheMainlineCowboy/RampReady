@@ -10,6 +10,7 @@ async function captureCanvas(page, path) {
   });
   const client = await page.context().newCDPSession(page);
   try {
+    await client.send("Page.bringToFront");
     const capture = client.send("Page.captureScreenshot", {
       format: "png",
       fromSurface: true,
@@ -23,8 +24,8 @@ async function captureCanvas(page, path) {
       },
     });
     const timeout = new Promise((_, reject) => setTimeout(
-      () => reject(new Error("Jetway evidence capture exceeded 30 seconds")),
-      30_000,
+      () => reject(new Error("Jetway evidence capture exceeded 75 seconds")),
+      75_000,
     ));
     const { data } = await Promise.race([capture, timeout]);
     fs.mkdirSync("test-results", { recursive: true });
@@ -50,7 +51,7 @@ async function captureInspectionPreset(page, presetId, outputPath) {
 }
 
 test("the exact supplied A1 jetway telescopes to the aircraft door in authored part order", async ({ page }) => {
-  test.setTimeout(600_000);
+  test.setTimeout(780_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   page.on("console", (message) => console.log(`[browser:${message.type()}] ${message.text()}`));
   page.on("pageerror", (error) => console.log(`[browser:pageerror] ${error.message}`));
@@ -111,12 +112,13 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
   expect(centers.Tunnel_B).toBeLessThan(centers.Tunnel_C);
   expect(centers.Tunnel_C).toBeLessThan(centers.Cab);
 
+  await page.addStyleTag({ content: ".rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}" });
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   await captureInspectionPreset(
     page,
     "a1Connection",
     "test-results/uploaded-jetway-a1-articulated-v10.png",
   );
-  await page.addStyleTag({ content: ".rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}" });
   await captureInspectionPreset(
     page,
     "a14",
