@@ -9,7 +9,7 @@ const UPLOADED_JETWAY_ATTRIBUTES = Object.freeze([
 ]);
 
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
-const DIRECT_A1_CAMERA_AUTHORITY = "side-on-direct-terminal-wall-a1-v7";
+const DIRECT_A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
 
 async function saveCompositedCanvasPng(page, path) {
   const box = await page.evaluate(() => {
