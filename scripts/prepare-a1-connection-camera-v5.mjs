@@ -19,8 +19,12 @@ let presetBlock = source.slice(presetStart, presetEnd);
 const tugXLine = '    x: 7.5,';
 const tugZLine = '    z: 8.5,';
 const tugYawLine = '    yaw: -0.35,';
-const cameraPositionLine = '    cameraPosition: Object.freeze([-12.0, 10.5, 28.0]),';
-const cameraTargetLine = '    cameraTarget: Object.freeze([-27.5, 4.1, -16.15]),';
+// User-provided overhead imagery proves A1's fixed connector runs from the
+// rotunda at (-21.01, -16.15) directly south to the authored terminal wall near
+// z=-32.24. View that 16.09 m span side-on from the east so neither the movable
+// tunnel nor the old elevated corridor can hide the wall joint.
+const cameraPositionLine = '    cameraPosition: Object.freeze([8.0, 11.5, -24.2]),';
+const cameraTargetLine = '    cameraTarget: Object.freeze([-21.01, 4.6, -24.2]),';
 
 for (const [pattern, line, label] of [
   [/\n\s+x:\s*-?\d+(?:\.\d+)?,/, tugXLine, "inspection tug x"],
@@ -61,11 +65,11 @@ if (!b15InspectionPattern.test(source)) {
 source = source.replace(b15InspectionPattern, b15InspectionPreset);
 source = source.replace(
   /source-gate-apron-presets-with-[^"\n]+-a1-a14-b14-b15-v\d+/g,
-  'source-gate-apron-presets-with-wide-diagonal-a1-connection-near-wall-b15-a1-a14-b14-b15-v7',
+  'source-gate-apron-presets-with-side-on-direct-terminal-a1-near-wall-b15-a1-a14-b14-b15-v8',
 );
 source = source.replace(
-  /(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*/g,
-  'wide-diagonal-a1-terminal-joint-v6-clear-tug',
+  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+)/g,
+  'side-on-direct-terminal-wall-a1-v7',
 );
 
 for (const token of [
@@ -75,10 +79,10 @@ for (const token of [
   cameraPositionLine,
   cameraTargetLine,
   b15InspectionPreset,
-  'source-gate-apron-presets-with-wide-diagonal-a1-connection-near-wall-b15-a1-a14-b14-b15-v7',
-  'wide-diagonal-a1-terminal-joint-v6-clear-tug',
+  'source-gate-apron-presets-with-side-on-direct-terminal-a1-near-wall-b15-a1-a14-b14-b15-v8',
+  'side-on-direct-terminal-wall-a1-v7',
 ]) {
-  if (!source.includes(token)) throw new Error(`${path}: wide A1/B15 inspection preparation is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${path}: direct-terminal A1/B15 inspection preparation is missing ${token}`);
 }
 const fixedCameraPositionCount = (source.match(/cameraPosition:\s*Object\.freeze/g) || []).length;
 const fixedCameraTargetCount = (source.match(/cameraTarget:\s*Object\.freeze/g) || []).length;
@@ -100,4 +104,4 @@ if (fixedCameraPositionCount === 2) {
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared the full-airport inspection route with its fixed A1 connection view and optional fixed A14 exact-fleet view, moved A1 clear of the jetway support footprint, placed B15 close enough for a fast physical-contact check, added airport collision protection and limited A1 bridge retraction to door-clearance travel.");
+console.log("Prepared a side-on A1 inspection camera that visibly frames the user-photo-verified direct terminal-wall connector from facade to rotunda, while retaining the full-airport route and physical collision checks.");
