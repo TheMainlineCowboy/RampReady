@@ -6,6 +6,8 @@ on:
       - fix/exact-airport-jetway-glb
     paths:
       - 'scripts/prepare-phx-stand-alignment.mjs'
+      - 'scripts/prepare-uploaded-airport-jetway-articulation-v10.mjs'
+      - 'tests/browser/uploaded-jetway-articulation-v10.spec.js'
       - '.github/workflows/materialize-exact-jetway-runtime.yml'
   workflow_dispatch:
 
