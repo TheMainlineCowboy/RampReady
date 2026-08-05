@@ -21,9 +21,13 @@ const relocatedSpanBlock = `  let rotundaOpening = measureExactRotundaOpening(TH
   const initialTerminalDistance = wallOffsetX * rotundaOpening.openingDirectionX
     + wallOffsetZ * rotundaOpening.openingDirectionZ;
   const desiredTerminalDistance = rotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS;
+  // The exact authored opening can initially sit on either side of the measured
+  // wall after the cab-pivot orientation. Preserve that orientation and apply
+  // the required signed translation instead of forcing every repair to move
+  // farther in the opening direction.
   const terminalRelocationMeters = initialTerminalDistance - desiredTerminalDistance;
-  if (!(terminalRelocationMeters > 0 && terminalRelocationMeters < 60)) {
-    throw new Error(\`A1 terminal relocation is invalid: \${terminalRelocationMeters}\`);
+  if (!Number.isFinite(terminalRelocationMeters) || Math.abs(terminalRelocationMeters) >= 60) {
+    throw new Error(\`A1 signed terminal relocation is invalid: \${terminalRelocationMeters}\`);
   }
   const terminalRelocationX = rotundaOpening.openingDirectionX * terminalRelocationMeters;
   const terminalRelocationZ = rotundaOpening.openingDirectionZ * terminalRelocationMeters;
@@ -39,7 +43,7 @@ const relocatedSpanBlock = `  let rotundaOpening = measureExactRotundaOpening(TH
   const openingAlignment = rotundaOpening.openingDirectionX * terminalDirection.x
     + rotundaOpening.openingDirectionZ * terminalDirection.z;
   if (relocationDistanceError > 0.03) {
-    throw new Error(\`A1 terminal relocation missed the measured vestibule span by \${relocationDistanceError} m\`);
+    throw new Error(\`A1 signed terminal relocation missed the measured vestibule span by \${relocationDistanceError} m\`);
   }
   if (openingAlignment < 0.995) {
     throw new Error(\`A1 authored Rotunda opening is not terminal-facing after relocation: \${openingAlignment}\`);
@@ -86,13 +90,14 @@ if (!source.includes(relocationBefore)) {
 source = source.replace(relocationBefore, relocationAfter);
 source = source.replace(
   /const INSTALLATION_AUTHORITY = "[^"]+";/,
-  'const INSTALLATION_AUTHORITY = "terminal-relocated-authored-opening-cab-pivot-rigid-parent-grounded-exact-chain-v20";',
+  'const INSTALLATION_AUTHORITY = "signed-terminal-relocated-authored-opening-cab-pivot-rigid-parent-grounded-exact-chain-v21";',
 );
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "terminal-relocated-authored-opening-cab-pivot-rigid-parent-grounded-exact-chain-v20"',
+  'INSTALLATION_AUTHORITY = "signed-terminal-relocated-authored-opening-cab-pivot-rigid-parent-grounded-exact-chain-v21"',
   "const measuredTerminalAlignment = rotundaOpening.openingDirectionX * terminalDirection.x",
   "const desiredTerminalDistance = rotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS",
+  "Math.abs(terminalRelocationMeters) >= 60",
   "a1Anchor.position.x += terminalRelocationX",
   "x: terminalWallX - terminalDirection.x * terminalDistance",
   "z: terminalWallZ - terminalDirection.z * terminalDistance",
@@ -103,8 +108,8 @@ for (const token of [
   "uploadedJetwayA1TerminalOpeningAlignment",
   "uploadedJetwayA1MeasuredTerminalWallX",
 ]) {
-  if (!source.includes(token)) throw new Error(`${installationPath}: authored-opening terminal relocation output is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${installationPath}: signed authored-opening terminal relocation output is missing ${token}`);
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Relocated the authored-terminal-side A1 Rotunda to the real wall, anchored the compact vestibule to that wall, and preserved the supplied GLB hierarchy.");
+console.log("Applied the bounded signed relocation needed to place the authored-terminal-side A1 Rotunda at the real wall, anchored the compact vestibule there, and preserved the supplied GLB hierarchy.");
