@@ -13,6 +13,7 @@ on:
       - 'scripts/scan-exact-jetway-history.mjs'
       - 'scripts/list-jetway-actions-artifacts.mjs'
       - 'scripts/recover-exact-jetway-from-actions-artifacts.mjs'
+      - 'scripts/inspect-dedicated-jetway-transfers.mjs'
       - 'scripts/verify-exact-airport-jetway-runtime.mjs'
       - 'src/**'
       - 'public/**'
@@ -39,6 +40,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Inspect dedicated source-transfer branches
+        run: node scripts/inspect-dedicated-jetway-transfers.mjs
 
       - name: Recover exact uploaded GLB from retained Actions artifacts
         env:
