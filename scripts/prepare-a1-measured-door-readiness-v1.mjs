@@ -5,14 +5,22 @@ let source = fs.readFileSync(readinessPath, "utf8");
 
 const MINIMUM_AUTHORED_EXTENSION_METERS = -14.5;
 const MAXIMUM_AUTHORED_EXTENSION_METERS = 8.75;
-const authority = "authored-articulation-limits-with-measured-crj-door-v1";
+const authority = "authored-articulation-limits-with-measured-crj-door-v2";
 
 const staleCondition = "|| !(a1AttachedExtension > 3 && a1AttachedExtension < 7)";
-const correctedCondition = `|| !Number.isFinite(a1AttachedExtension)\n            || a1AttachedExtension < ${MINIMUM_AUTHORED_EXTENSION_METERS}\n            || a1AttachedExtension > ${MAXIMUM_AUTHORED_EXTENSION_METERS}`;
-if (source.includes(staleCondition)) {
+const intermediateCondition = `|| !(a1AttachedExtension > 0.25 && a1AttachedExtension < 7)
+            || Math.abs(sourceContactDistance + a1AttachedExtension - a1TargetDoorDistance) > 0.05`;
+const correctedCondition = `|| !Number.isFinite(a1AttachedExtension)
+            || a1AttachedExtension < ${MINIMUM_AUTHORED_EXTENSION_METERS}
+            || a1AttachedExtension > ${MAXIMUM_AUTHORED_EXTENSION_METERS}
+            || Math.abs(sourceContactDistance + a1AttachedExtension - a1TargetDoorDistance) > 0.05`;
+
+if (source.includes(intermediateCondition)) {
+  source = source.replace(intermediateCondition, correctedCondition);
+} else if (source.includes(staleCondition)) {
   source = source.replace(staleCondition, correctedCondition);
 } else if (!source.includes(correctedCondition)) {
-  throw new Error(`${readinessPath}: stale A1 extension readiness window is missing`);
+  throw new Error(`${readinessPath}: A1 measured-extension readiness guard is missing`);
 }
 
 if (!source.includes("MEASURED_DOOR_READINESS_AUTHORITY")) {
@@ -23,6 +31,11 @@ if (!source.includes("MEASURED_DOOR_READINESS_AUTHORITY")) {
   source = source.replace(
     constantAnchor,
     `${constantAnchor}\nconst MEASURED_DOOR_READINESS_AUTHORITY = "${authority}";`,
+  );
+} else {
+  source = source.replace(
+    /const MEASURED_DOOR_READINESS_AUTHORITY = "[^"]+";/,
+    `const MEASURED_DOOR_READINESS_AUTHORITY = "${authority}";`,
   );
 }
 
@@ -43,15 +56,18 @@ for (const token of [
   "uploadedJetwayA1MeasuredDoorReadinessAuthority",
   `uploadedJetwayA1MinimumAuthoredExtensionMeters = ${MINIMUM_AUTHORED_EXTENSION_METERS}`,
   `uploadedJetwayA1MaximumAuthoredExtensionMeters = ${MAXIMUM_AUTHORED_EXTENSION_METERS}`,
+  "sourceContactDistance + a1AttachedExtension - a1TargetDoorDistance",
 ]) {
   if (!source.includes(token)) {
     throw new Error(`${readinessPath}: measured-door readiness output is missing ${token}`);
   }
 }
 
-if (source.includes(staleCondition)) {
-  throw new Error(`${readinessPath}: obsolete 3–7 m A1 extension window survived`);
+for (const forbidden of [staleCondition, intermediateCondition]) {
+  if (source.includes(forbidden)) {
+    throw new Error(`${readinessPath}: obsolete A1 extension window survived`);
+  }
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log(`Prepared A1 readiness against the authored ${MINIMUM_AUTHORED_EXTENSION_METERS} to ${MAXIMUM_AUTHORED_EXTENSION_METERS} m articulation limits; the measured 1.842 m forward-door extension remains subject to exact predicted/actual contact, gap and part-order checks.`);
+console.log(`Prepared A1 readiness against the authored ${MINIMUM_AUTHORED_EXTENSION_METERS} to ${MAXIMUM_AUTHORED_EXTENSION_METERS} m articulation limits and the exact measured-reach identity; the 1.842 m forward-door extension remains subject to predicted/actual contact, gap, continuity and part-order checks.`);
