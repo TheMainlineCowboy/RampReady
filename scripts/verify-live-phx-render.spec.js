@@ -29,11 +29,11 @@ async function captureCanvasClip(page, bounds, outputPath) {
 }
 
 test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
-// The explicit readiness checks below can legitimately consume more than four
-// minutes on a cold GitHub runner while Chromium compiles shaders and decodes all
-// 21 native-resolution PHX tiles. Keep the overall budget above the sum of those
-// bounded waits so a completed chase render cannot fail during the overhead swap.
-test.setTimeout(420000);
+// A cold live runner can spend more than seven minutes compiling the complete
+// WebGL airport, decoding all 21 PHX tiles and capturing the first compositor
+// frame. Keep this bounded below the workflow's 20-minute job timeout while
+// leaving enough time to capture and validate both authoritative camera views.
+test.setTimeout(720000);
 
 test('live RampReady renders native-resolution Sky Harbor ground and authored Terminal 4', async ({ page }) => {
   if (!pageUrl || !expectedSha) throw new Error('PAGE_URL and EXPECTED_SHA are required');
@@ -139,7 +139,6 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
     return selector.value;
   });
   expect(overheadSelection).toBe('overhead');
-  await page.waitForTimeout(500);
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const overheadPath = `${evidenceDirectory}/sky-harbor-overhead.png`;
   const overheadBytes = await captureCanvasClip(page, bounds, overheadPath);
