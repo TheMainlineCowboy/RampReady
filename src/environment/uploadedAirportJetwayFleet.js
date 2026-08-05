@@ -2,25 +2,30 @@ import {
   addUploadedAirportJetwayStaticTerminalConnectors,
   addUploadedAirportJetwayTerminalConnector,
 } from "./uploadedAirportJetwayTerminalConnector.js";
+import {
+  computeUploadedJetwayArticulation,
+  UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY,
+} from "./uploadedAirportJetwayArticulationV10.js";
+import {
+  createModelSpaceA1Controller,
+  A1_MODEL_SPACE_RETRACTION_MODE_V7,
+} from "./uploadedAirportJetwayModelSpaceControllerV7.js";
 
 const MODEL_AUTHORITY = "exact-uploaded-airport-jetway-glb-562e3144-v1";
 const MATERIAL_AUTHORITY = "exact-seven-embedded-airport-jetway-textures-v1";
 const PERFORMANCE_AUTHORITY = "57-static-exact-glb-instances-plus-1-animated-a1-v1";
 const A1_RETRACTION_AUTHORITY = "exact-glb-authored-node-telescoping-a1-v1";
 const A1_RETRACTION = Object.freeze({
-  rotation: 0.052,
-  tunnelB: 0.42,
-  tunnelC: 0.78,
-  cab: 1.18,
+  rotation: 0,
+  tunnelB: 0.79,
+  tunnelC: 1.59,
+  cab: 2.38,
   lift: 0.08,
   totalClearanceMeters: 2.38,
 });
-const HIDE_REPLACED = /^(?:AIR_Jetway01_(?!WallCollars)|Terminal4_LowerFacadeInfillPanels|Terminal4_ClosedServiceDoors|Terminal4_FacadeVentGrilles)/i;
+const SOURCE_PART_NAMES = Object.freeze(["Rotunda", "Tunnel_A", "Tunnel_B", "Tunnel_C", "Cab"]);
+const HIDE_REPLACED = /^(?:AIR_Jetway01_|Terminal4_LowerFacadeInfillPanels|Terminal4_ClosedServiceDoors|Terminal4_FacadeVentGrilles)/i;
 const EXACT_GLB_URL = "models/airport-jetway/Airport_Jetway.glb";
-
-function clamp(value, minimum, maximum) {
-  return Math.max(minimum, Math.min(maximum, Number(value) || 0));
-}
 
 function modelUrl() {
   return `${import.meta.env.BASE_URL || "/"}${EXACT_GLB_URL}`;
@@ -52,15 +57,12 @@ function validateExactHierarchy(root) {
   if (missing.length) throw new Error(`Exact Airport_Jetway.glb hierarchy is missing: ${missing.join(", ")}`);
 
   const meshes = requiredMeshes.map((name) => root.getObjectByName(name));
+  const materials = new Set();
   for (const mesh of meshes) {
     if (!mesh?.isMesh) throw new Error(`Exact Airport_Jetway.glb object ${mesh?.name || "unknown"} is not a mesh`);
     if (!mesh.geometry?.getAttribute("position")) throw new Error(`${mesh.name} lost original positions`);
     if (!mesh.geometry?.getAttribute("normal")) throw new Error(`${mesh.name} lost original normals`);
     if (!mesh.geometry?.getAttribute("uv")) throw new Error(`${mesh.name} lost original UVs`);
-  }
-
-  const materials = new Set();
-  for (const mesh of meshes) {
     for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
       if (material?.name) materials.add(material.name);
     }
@@ -68,11 +70,8 @@ function validateExactHierarchy(root) {
   if (!materials.has("Jetway") || !materials.has("Glass_JW") || materials.size !== 2) {
     throw new Error(`Exact Airport_Jetway.glb material assignment mismatch: ${[...materials].join(",")}`);
   }
-
   const triangleCount = countTriangles(root);
-  if (triangleCount !== 31_978) {
-    throw new Error(`Exact Airport_Jetway.glb triangle count mismatch: ${triangleCount}`);
-  }
+  if (triangleCount !== 31_978) throw new Error(`Exact Airport_Jetway.glb triangle count mismatch: ${triangleCount}`);
   return { triangleCount, meshCount: meshes.length, materialNames: [...materials].sort() };
 }
 
@@ -108,30 +107,95 @@ async function loadExactPrototype(THREE) {
   return aligned;
 }
 
+function findSourceRootNode(model) {
+  return model?.getObjectByName?.("RootNode") || null;
+}
+
+function findSourcePartRoot(model, name) {
+  const root = findSourceRootNode(model);
+  return root?.children?.find((entry) => entry.name === name) || null;
+}
+
+function sourcePartNameForEntry(entry) {
+  let current = entry;
+  while (current?.parent && current.parent.name !== "RootNode") current = current.parent;
+  return current?.parent?.name === "RootNode" && SOURCE_PART_NAMES.includes(current.name) ? current.name : null;
+}
+
+function measurePrototypeReach(THREE, prototype) {
+  prototype.updateMatrixWorld(true);
+  const rotunda = findSourcePartRoot(prototype, "Rotunda");
+  const cab = findSourcePartRoot(prototype, "Cab");
+  if (!rotunda || !cab) throw new Error("Exact jetway reach measurement is missing Rotunda or Cab");
+  const rotundaBox = new THREE.Box3().setFromObject(rotunda);
+  const cabBox = new THREE.Box3().setFromObject(cab);
+  const rotundaCenter = rotundaBox.getCenter(new THREE.Vector3());
+  const sourceContactDistance = cabBox.max.z - rotundaCenter.z;
+  if (!(sourceContactDistance > 20 && sourceContactDistance < 32)) {
+    throw new Error(`Exact jetway reach is outside the expected range: ${sourceContactDistance}`);
+  }
+  const partCenters = Object.fromEntries(SOURCE_PART_NAMES.map((name) => {
+    const part = findSourcePartRoot(prototype, name);
+    if (!part) throw new Error(`Exact jetway reach measurement is missing ${name}`);
+    return [name, new THREE.Box3().setFromObject(part).getCenter(new THREE.Vector3()).z];
+  }));
+  return {
+    sourceContactDistance,
+    partCenters,
+    partOrderValid: partCenters.Rotunda < partCenters.Tunnel_A
+      && partCenters.Tunnel_A < partCenters.Tunnel_B
+      && partCenters.Tunnel_B < partCenters.Tunnel_C
+      && partCenters.Tunnel_C < partCenters.Cab,
+  };
+}
+
+function applyIndividualArticulation(model, articulation) {
+  for (const [name, offset] of Object.entries(articulation.partOffsets)) {
+    const part = findSourcePartRoot(model, name);
+    if (!part) throw new Error(`Exact jetway articulation is missing ${name}`);
+    part.position.z += offset;
+    part.userData.uploadedJetwayArticulationOffsetMeters = offset;
+    part.userData.uploadedJetwayArticulationAuthority = articulation.authority;
+  }
+  model.updateMatrixWorld(true);
+  model.userData.uploadedJetwayArticulation = articulation;
+}
+
 function collectPrototypeMeshes(prototype) {
   prototype.updateMatrixWorld(true);
   const meshes = [];
   prototype.traverse((entry) => {
     if (!entry.isMesh) return;
+    const sourcePartName = sourcePartNameForEntry(entry);
+    if (!sourcePartName) throw new Error(`Exact jetway mesh ${entry.name || "unnamed"} has no authored source-part ancestor`);
     meshes.push({
-      name: entry.name,
+      name: entry.name || `Primitive_${meshes.length}`,
       geometry: entry.geometry,
       material: entry.material,
       localMatrix: entry.matrixWorld.clone(),
+      sourcePartName,
     });
   });
   if (meshes.length !== 7) throw new Error(`Exact Airport_Jetway.glb expected seven meshes, received ${meshes.length}`);
   return meshes;
 }
 
-function buildStaticInstancedFleet(THREE, prototype, placements) {
+function buildStaticInstancedFleet(THREE, prototype, placements, sourceContactDistance) {
   const staticPlacements = placements.filter((placement) => placement.gate !== "A1");
   if (staticPlacements.length !== 57) throw new Error(`Exact jetway fleet expected 57 static gates, received ${staticPlacements.length}`);
   const prototypeMeshes = collectPrototypeMeshes(prototype);
   const batches = new THREE.Group();
   batches.name = "UploadedAirportJetwayStaticExactGlbInstances";
   const placementMatrix = new THREE.Matrix4();
+  const articulationMatrix = new THREE.Matrix4();
+  const articulatedLocalMatrix = new THREE.Matrix4();
   const finalMatrix = new THREE.Matrix4();
+  let maximumContactError = 0;
+  const articulationByGate = new Map(staticPlacements.map((placement) => {
+    const articulation = computeUploadedJetwayArticulation(placement, sourceContactDistance);
+    maximumContactError = Math.max(maximumContactError, Math.abs(articulation.contactError));
+    return [placement.gate, articulation];
+  }));
 
   prototypeMeshes.forEach((meshDefinition, primitiveIndex) => {
     const batch = new THREE.InstancedMesh(meshDefinition.geometry, meshDefinition.material, staticPlacements.length);
@@ -140,9 +204,13 @@ function buildStaticInstancedFleet(THREE, prototype, placements) {
     batch.castShadow = false;
     batch.receiveShadow = true;
     staticPlacements.forEach((placement, instanceIndex) => {
+      const articulation = articulationByGate.get(placement.gate);
+      const partOffset = articulation.partOffsets[meshDefinition.sourcePartName] || 0;
       placementMatrix.makeRotationY(placement.yaw);
       placementMatrix.setPosition(placement.x, 0, placement.z);
-      finalMatrix.multiplyMatrices(placementMatrix, meshDefinition.localMatrix);
+      articulationMatrix.makeTranslation(0, 0, partOffset);
+      articulatedLocalMatrix.multiplyMatrices(articulationMatrix, meshDefinition.localMatrix);
+      finalMatrix.multiplyMatrices(placementMatrix, articulatedLocalMatrix);
       batch.setMatrixAt(instanceIndex, finalMatrix);
     });
     batch.instanceMatrix.needsUpdate = true;
@@ -151,55 +219,12 @@ function buildStaticInstancedFleet(THREE, prototype, placements) {
     batches.add(batch);
   });
 
-  return { batches, staticGateCount: staticPlacements.length, primitiveBatchCount: prototypeMeshes.length };
-}
-
-function createController() {
-  let deployment = 1;
-  let visual = null;
-  let state = "loading-exact-glb";
-  const apply = () => {
-    if (!visual) return;
-    const retract = 1 - deployment;
-    const { anchor, nodes, base } = visual;
-    anchor.rotation.y = base.yaw - retract * A1_RETRACTION.rotation;
-    if (nodes.tunnelB) nodes.tunnelB.position.z = base.tunnelB.z - retract * A1_RETRACTION.tunnelB;
-    if (nodes.tunnelC) nodes.tunnelC.position.z = base.tunnelC.z - retract * A1_RETRACTION.tunnelC;
-    if (nodes.cab) {
-      nodes.cab.position.z = base.cab.z - retract * A1_RETRACTION.cab;
-      nodes.cab.position.y = base.cab.y + retract * A1_RETRACTION.lift;
-    }
-    anchor.userData.retractionAuthority = A1_RETRACTION_AUTHORITY;
-    anchor.userData.retractionClearanceMeters = A1_RETRACTION.totalClearanceMeters;
-    state = deployment >= 0.995
-      ? "attached-to-aircraft-door"
-      : deployment <= 0.005
-        ? "parked-clear-of-aircraft"
-        : "retracting-from-aircraft";
-  };
   return {
-    setDeployment(value) { deployment = clamp(value, 0, 1); apply(); },
-    getDeployment() { return deployment; },
-    getState() { return state; },
-    bind(anchor) {
-      const nodes = {
-        tunnelB: anchor.getObjectByName("Tunnel_B"),
-        tunnelC: anchor.getObjectByName("Tunnel_C"),
-        cab: anchor.getObjectByName("Cab"),
-      };
-      visual = {
-        anchor,
-        nodes,
-        base: {
-          yaw: anchor.rotation.y,
-          tunnelB: nodes.tunnelB?.position.clone() || { z: 0 },
-          tunnelC: nodes.tunnelC?.position.clone() || { z: 0 },
-          cab: nodes.cab?.position.clone() || { y: 0, z: 0 },
-        },
-      };
-      state = "exact-glb-ready";
-      apply();
-    },
+    batches,
+    staticGateCount: staticPlacements.length,
+    primitiveBatchCount: prototypeMeshes.length,
+    articulatedGateCount: staticPlacements.length,
+    maximumContactError,
   };
 }
 
@@ -227,7 +252,11 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, _sou
     throw new Error(`Exact airport jetway replacement expected 58 placements, received ${placements?.length ?? 0}`);
   }
 
-  const controller = createController();
+  const controller = createModelSpaceA1Controller(THREE, {
+    retraction: A1_RETRACTION,
+    authority: A1_RETRACTION_AUTHORITY,
+    modeAuthority: A1_MODEL_SPACE_RETRACTION_MODE_V7,
+  });
   group.userData.uploadedJetwayLoadState = "loading";
   group.userData.uploadedJetwayModelAuthority = MODEL_AUTHORITY;
   group.userData.uploadedJetwayMaterialAuthority = MATERIAL_AUTHORITY;
@@ -237,16 +266,20 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, _sou
 
   loadExactPrototype(THREE)
     .then((prototype) => {
+      const reach = measurePrototypeReach(THREE, prototype);
+      if (!reach.partOrderValid) throw new Error("Exact Airport_Jetway.glb authored parts are not ordered from Rotunda to Cab");
       const fleet = new THREE.Group();
       fleet.name = "UploadedAirportJetwayFleet";
-      const staticFleet = buildStaticInstancedFleet(THREE, prototype, placements);
+      const staticFleet = buildStaticInstancedFleet(THREE, prototype, placements, reach.sourceContactDistance);
       fleet.add(staticFleet.batches);
       const staticConnectors = addUploadedAirportJetwayStaticTerminalConnectors(THREE, fleet, placements);
 
       for (const placement of placements) {
         const anchor = new THREE.Group();
         anchor.name = `UploadedAirportJetway_${placement.gate}`;
-        anchor.userData.renderMode = placement.gate === "A1" ? "individual-animated-exact-glb" : "static-exact-glb-instance-marker";
+        anchor.userData.renderMode = placement.gate === "A1"
+          ? "individual-animated-exact-glb"
+          : "static-articulated-exact-glb-instance-marker";
         if (placement.gate === "A1") {
           anchor.position.set(placement.x, 0, placement.z);
           anchor.rotation.y = placement.yaw;
@@ -255,6 +288,14 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, _sou
           model.traverse((entry) => {
             if (entry.isMesh && !entry.material?.transparent) entry.castShadow = true;
           });
+          const articulation = computeUploadedJetwayArticulation(placement, reach.sourceContactDistance);
+          applyIndividualArticulation(model, articulation);
+          const attachedReach = measurePrototypeReach(THREE, model);
+          articulation.actualContactDistance = attachedReach.sourceContactDistance;
+          articulation.actualDoorGap = Math.abs(articulation.targetDistance - attachedReach.sourceContactDistance);
+          articulation.partCenters = attachedReach.partCenters;
+          articulation.partOrderValid = attachedReach.partOrderValid;
+          anchor.userData.uploadedJetwayArticulation = articulation;
           anchor.add(model);
           controller.bind(anchor);
           addUploadedAirportJetwayTerminalConnector(THREE, fleet, placement);
@@ -264,6 +305,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, _sou
 
       group.add(fleet);
       const hiddenGeneratedObjectCount = hideGeneratedJetways(group);
+      const a1Articulation = fleet.getObjectByName("UploadedAirportJetway_A1")?.userData.uploadedJetwayArticulation;
       group.userData.uploadedJetwayLoadState = "ready";
       group.userData.uploadedJetwayCount = 58;
       group.userData.uploadedJetwayHiddenGeneratedObjectCount = hiddenGeneratedObjectCount;
@@ -283,6 +325,18 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, _sou
       group.userData.uploadedJetwayMaximumUvError = 0;
       group.userData.uploadedJetwayExactGlbUrl = prototype.userData.sourceUrl;
       group.userData.uploadedJetwayExactGlbSha256 = "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0";
+      group.userData.uploadedJetwayArticulationAuthority = UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY;
+      group.userData.uploadedJetwaySourceContactDistanceMeters = reach.sourceContactDistance;
+      group.userData.uploadedJetwayStaticArticulatedGateCount = staticFleet.articulatedGateCount;
+      group.userData.uploadedJetwayStaticMaximumContactErrorMeters = staticFleet.maximumContactError;
+      group.userData.uploadedJetwayA1TargetDoorDistanceMeters = a1Articulation?.targetDistance;
+      group.userData.uploadedJetwayA1AttachedExtensionMeters = a1Articulation?.extension;
+      group.userData.uploadedJetwayA1PredictedDoorGapMeters = Math.abs(a1Articulation?.contactError ?? Infinity);
+      group.userData.uploadedJetwayA1PredictedContactDistanceMeters = a1Articulation?.predictedContactDistance;
+      group.userData.uploadedJetwayA1ActualContactDistanceMeters = a1Articulation?.actualContactDistance;
+      group.userData.uploadedJetwayA1ActualDoorGapMeters = a1Articulation?.actualDoorGap;
+      group.userData.uploadedJetwayA1PartOrderValid = a1Articulation?.partOrderValid === true;
+      group.userData.uploadedJetwayA1PartCentersMeters = JSON.stringify(a1Articulation?.partCenters || {});
       group.userData.sourceGeometryMode = MODEL_AUTHORITY;
       group.userData.visualAuthority = MODEL_AUTHORITY;
       group.userData.requiresOriginalSourceMesh = true;
