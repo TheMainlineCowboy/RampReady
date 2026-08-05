@@ -31,8 +31,19 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Open encrypted transfer mailbox and receive all exact parts
-        run: node scripts/receive-exact-jetway-mail-transfer.mjs
+      - name: Open encrypted one-time transfer mailbox
+        run: node scripts/receive-exact-jetway-mail-transfer.mjs --create-mailbox
+
+      - name: Publish only the one-time mailbox address
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .jetway-transfer-mailbox.txt
+          git commit -m 'Publish one-time exact jetway transfer address [skip transfer]'
+          git push origin HEAD:fix/exact-airport-jetway-glb
+
+      - name: Receive all encrypted exact parts and reconstruct GLB
+        run: node scripts/receive-exact-jetway-mail-transfer.mjs --receive
 
       - name: Install locked dependencies
         run: npm ci
@@ -73,9 +84,8 @@ jobs:
 
       - name: Commit exact supplied GLB after browser verification
         run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add public/models/airport-jetway/Airport_Jetway.glb public/models/airport-jetway/exact-asset-manifest.json
+          git rm -f .jetway-transfer-mailbox.txt
           git diff --cached --quiet && exit 0
           git commit -m 'Install exact supplied Airport Jetway GLB [skip transfer]'
           git push origin HEAD:fix/exact-airport-jetway-glb
