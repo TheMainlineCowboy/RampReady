@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 
 const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
 const VIEWPORT = { width: 1440, height: 900 };
+const INSPECTION_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
 const PRESETS = [
   { id: "a1", x: 0, z: 0 },
   { id: "a14", x: 218.45, z: -86.52 },
@@ -73,7 +74,7 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
   test.setTimeout(900_000);
   await launchRuntime(page);
 
-  const result = await page.evaluate(async (presets) => {
+  const result = await page.evaluate(async ({ presets, routeAuthority }) => {
     const canvas = document.querySelector("canvas.trainerCanvas");
     if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Three.js canvas is missing");
 
@@ -126,7 +127,7 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
 
     await waitFor(
       () => canvas.dataset.inspectionMode === "active"
-        && canvas.dataset.inspectionRouteAuthority === "source-gate-apron-presets-with-wide-diagonal-a1-connection-near-wall-b15-a1-a14-b14-b15-v7"
+        && canvas.dataset.inspectionRouteAuthority === routeAuthority
         && canvas.dataset.inspectionTelemetryAuthority === "synchronous-preset-placement-v2",
       "authoritative inspection mode",
     );
@@ -166,11 +167,9 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
       reverse,
       cameraMode: camera.value,
     };
-  }, PRESETS);
+  }, { presets: PRESETS, routeAuthority: INSPECTION_ROUTE_AUTHORITY });
 
-  expect(result.routeAuthority).toBe(
-    "source-gate-apron-presets-with-wide-diagonal-a1-connection-near-wall-b15-a1-a14-b14-b15-v7",
-  );
+  expect(result.routeAuthority).toBe(INSPECTION_ROUTE_AUTHORITY);
   expect(result.telemetryAuthority).toBe("synchronous-preset-placement-v2");
   expect(result.preset).toBe("b15");
   expect(result.cameraMode).toBe("overhead");
