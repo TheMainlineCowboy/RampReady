@@ -6,10 +6,11 @@ const SOURCE_PART_WEIGHTS = Object.freeze({
   Tunnel_C: 2 / 3,
   Cab: 1,
 });
-// Measured against the supplied Tunnel A/B/C hierarchy. At -14.25 m the
-// sections remain ordered and nested, while the shortest authored static park
-// target (11.9 m) remains reachable from the 25.981 m source pose.
-const EXTENSION_LIMITS = Object.freeze({ minimum: -14.25, maximum: 8.75 });
+// Measured against the supplied Tunnel A/B/C hierarchy after normalizing only
+// the GLB parent axis. The shortest authored Terminal 4 park target requires
+// about -14.343 m from the exact 26.243 m source reach; -14.50 m preserves the
+// authored section order and leaves more than half a meter between sections.
+const EXTENSION_LIMITS = Object.freeze({ minimum: -14.5, maximum: 8.75 });
 
 function finite(value, fallback = 0) {
   const number = Number(value);
