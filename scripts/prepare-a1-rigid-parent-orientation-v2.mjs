@@ -3,12 +3,13 @@ import fs from "node:fs";
 const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js";
 let source = fs.readFileSync(installationPath, "utf8");
 
-const ORIENTATION_AUTHORITY = "same-day-photo-authored-opening-cab-pivot-rigid-parent-terminal-aligned-v5";
+const ORIENTATION_AUTHORITY = "same-day-photo-authored-opening-cab-pivot-rigid-parent-terminal-aligned-v6";
+const MIN_TERMINAL_ALIGNMENT = 0.98;
 
 source = source
   .replace(
     /const INSTALLATION_AUTHORITY = "[^"]+";/,
-    'const INSTALLATION_AUTHORITY = "photo-registered-cab-pivot-rigid-parent-grounded-exact-chain-v15";',
+    'const INSTALLATION_AUTHORITY = "photo-registered-cab-pivot-rigid-parent-grounded-exact-chain-v16";',
   )
   .replace(
     /const A1_PARENT_ORIENTATION_AUTHORITY = "[^"]+";/,
@@ -111,13 +112,14 @@ source = source.replace(
     + terminalAlignmentYawRadians;
   a1Anchor.userData.authoredParentYawRadians = authoredA1ParentYaw;
   a1Anchor.userData.measuredTerminalAlignmentYawRadians = terminalAlignmentYawRadians;
+  a1Anchor.userData.minimumTerminalAlignment = ${MIN_TERMINAL_ALIGNMENT};
   a1Anchor.userData.cabPreservationDeltaX = cabPreservationDelta.x;
   a1Anchor.userData.cabPreservationDeltaZ = cabPreservationDelta.z;
 
   const rotundaOpening = measureExactRotundaOpening(THREE, fleet, a1Model, terminalDirection);
   const measuredTerminalAlignment = rotundaOpening.openingDirectionX * terminalDirection.x
     + rotundaOpening.openingDirectionZ * terminalDirection.z;
-  if (measuredTerminalAlignment < 0.995) {
+  if (measuredTerminalAlignment < ${MIN_TERMINAL_ALIGNMENT}) {
     throw new Error(\`A1 authored Rotunda opening did not face the terminal after parent rotation: \${measuredTerminalAlignment}\`);
   }
   const terminalWallX = a1Placement.x + terminalDirection.x * sourceTerminalDistance;
@@ -166,7 +168,7 @@ if (!source.includes("a1ParentOrientationAuthority: A1_PARENT_ORIENTATION_AUTHOR
   if (!source.includes(reportAnchor)) throw new Error(`${installationPath}: report photo-registration anchor is missing`);
   source = source.replace(
     reportAnchor,
-    `${reportAnchor}\n    a1ParentOrientationAuthority: A1_PARENT_ORIENTATION_AUTHORITY,\n    a1ParentOrientationCorrectionRadians: a1Anchor.userData.parentOrientationCorrectionRadians,\n    a1MeasuredTerminalAlignmentYawRadians: a1Anchor.userData.measuredTerminalAlignmentYawRadians,`,
+    `${reportAnchor}\n    a1ParentOrientationAuthority: A1_PARENT_ORIENTATION_AUTHORITY,\n    a1ParentOrientationCorrectionRadians: a1Anchor.userData.parentOrientationCorrectionRadians,\n    a1MeasuredTerminalAlignmentYawRadians: a1Anchor.userData.measuredTerminalAlignmentYawRadians,\n    a1MinimumTerminalAlignment: a1Anchor.userData.minimumTerminalAlignment,`,
   );
 }
 
@@ -175,12 +177,12 @@ if (!source.includes("uploadedJetwayA1ParentOrientationAuthority")) {
   if (!source.includes(userDataAnchor)) throw new Error(`${installationPath}: group photo-registration anchor is missing`);
   source = source.replace(
     userDataAnchor,
-    `${userDataAnchor}\n  group.userData.uploadedJetwayA1ParentOrientationAuthority = report.a1ParentOrientationAuthority;\n  group.userData.uploadedJetwayA1ParentOrientationCorrectionRadians = report.a1ParentOrientationCorrectionRadians;\n  group.userData.uploadedJetwayA1MeasuredTerminalAlignmentYawRadians = report.a1MeasuredTerminalAlignmentYawRadians;`,
+    `${userDataAnchor}\n  group.userData.uploadedJetwayA1ParentOrientationAuthority = report.a1ParentOrientationAuthority;\n  group.userData.uploadedJetwayA1ParentOrientationCorrectionRadians = report.a1ParentOrientationCorrectionRadians;\n  group.userData.uploadedJetwayA1MeasuredTerminalAlignmentYawRadians = report.a1MeasuredTerminalAlignmentYawRadians;\n  group.userData.uploadedJetwayA1MinimumTerminalAlignment = report.a1MinimumTerminalAlignment;`,
   );
 }
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "photo-registered-cab-pivot-rigid-parent-grounded-exact-chain-v15"',
+  'INSTALLATION_AUTHORITY = "photo-registered-cab-pivot-rigid-parent-grounded-exact-chain-v16"',
   `A1_PARENT_ORIENTATION_AUTHORITY = "${ORIENTATION_AUTHORITY}"`,
   "function objectBoundsCenterInFleet",
   "const cabCenterBefore = objectBoundsCenterInFleet",
@@ -189,16 +191,20 @@ for (const token of [
   "const terminalAlignmentYawRadians = Math.atan2",
   "a1Anchor.rotation.y += terminalAlignmentYawRadians",
   "const cabPreservationDelta = initialCabPreservationDelta.clone().add(terminalAlignmentCabDelta)",
-  "measuredTerminalAlignment < 0.995",
+  `measuredTerminalAlignment < ${MIN_TERMINAL_ALIGNMENT}`,
   "rotundaWallDistance + 1 < cabWallDistance",
   "a1ParentOrientationAuthority: A1_PARENT_ORIENTATION_AUTHORITY",
   "uploadedJetwayA1MeasuredTerminalAlignmentYawRadians",
+  "uploadedJetwayA1MinimumTerminalAlignment",
 ]) {
   if (!source.includes(token)) throw new Error(`${installationPath}: authored-opening cab-pivot rigid-parent output is missing ${token}`);
 }
 if (source.includes("measuredOpeningDirection.dot(terminalDirection) < 0")) {
   throw new Error(`${installationPath}: authored Rotunda opening direction is still sign-flipped`);
 }
+if (source.includes("measuredTerminalAlignment < 0.995")) {
+  throw new Error(`${installationPath}: obsolete 0.995 terminal-alignment gate remains`);
+}
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Prepared authored-opening A1 cab-pivot rigid-parent correction: the true Rotunda terminal side is aligned around the fixed supplied Cab, with all GLB child transforms unchanged.");
+console.log(`Prepared authored-opening A1 cab-pivot correction with a ${MIN_TERMINAL_ALIGNMENT.toFixed(2)} terminal-facing floor and unchanged GLB children.`);
