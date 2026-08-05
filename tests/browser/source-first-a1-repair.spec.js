@@ -73,7 +73,7 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   await directInspection.click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction((attributeNames) => {
+  await page.waitForFunction(({ attributeNames, expectedAuthority }) => {
     const canvas = document.querySelector("canvas.trainerCanvas");
     const data = canvas?.dataset;
     const uploaded = attributeNames.map((name) => canvas?.getAttribute(name));
@@ -83,11 +83,14 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
       && uploaded[1] === "58"
       && uploaded[2] === "58"
       && uploaded[3] === "58"
-      && data?.terminal4A1ConnectionAuthority === DIRECT_A1_TERMINAL_AUTHORITY
+      && data?.terminal4A1ConnectionAuthority === expectedAuthority
       && data?.photoGroundSource === "source-authored-phx-photo"
       && data?.airportCollisionReady === "true"
       && data?.airportCollisionTargetCount === "2";
-  }, UPLOADED_JETWAY_ATTRIBUTES, { timeout: 180_000, polling: 250 });
+  }, {
+    attributeNames: UPLOADED_JETWAY_ATTRIBUTES,
+    expectedAuthority: DIRECT_A1_TERMINAL_AUTHORITY,
+  }, { timeout: 180_000, polling: 250 });
 
   const hudHeight = await page.evaluate(() => document.querySelector(".rr-hud")?.getBoundingClientRect().height ?? Number.POSITIVE_INFINITY);
   expect(hudHeight).toBeLessThan(110);
