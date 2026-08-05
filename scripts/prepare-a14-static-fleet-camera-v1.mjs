@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
+const A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const exactPreset = `  a14: Object.freeze({
@@ -25,25 +26,15 @@ if (!source.includes('cameraAuthority: "wide-diagonal-a14-exact-static-fleet-v1"
   source = source.replace(oneLinePreset, exactPreset);
 }
 
-const legacyAuthority = `    canvas.dataset.inspectionCameraAuthority = preset.cameraPosition
-      ? "wide-diagonal-a1-terminal-joint-v6-clear-tug"
-      : "free-orbit-follow-tug";`;
-const directTerminalAuthority = `    canvas.dataset.inspectionCameraAuthority = preset.cameraPosition
-      ? "side-on-direct-terminal-wall-a1-v7"
-      : "free-orbit-follow-tug";`;
-const newAuthority = `    canvas.dataset.inspectionCameraAuthority = preset.cameraAuthority || (preset.cameraPosition
-      ? "side-on-direct-terminal-wall-a1-v7"
+const canonicalAuthorityBlock = `    canvas.dataset.inspectionCameraAuthority = preset.cameraAuthority || (preset.cameraPosition
+      ? "${A1_CAMERA_AUTHORITY}"
       : "free-orbit-follow-tug");`;
-if (!source.includes(newAuthority)) {
-  const anchor = source.includes(directTerminalAuthority)
-    ? directTerminalAuthority
-    : source.includes(legacyAuthority)
-      ? legacyAuthority
-      : null;
-  if (!anchor) {
+if (!source.includes(canonicalAuthorityBlock)) {
+  const genericAuthorityBlock = /    canvas\.dataset\.inspectionCameraAuthority = preset(?:\.cameraAuthority \|\| \()?\.cameraPosition\n      \? "[^"]+"\n      : "free-orbit-follow-tug"\)?;/;
+  if (!genericAuthorityBlock.test(source)) {
     throw new Error(`${trainerPath}: inspection camera authority anchor is missing`);
   }
-  source = source.replace(anchor, newAuthority);
+  source = source.replace(genericAuthorityBlock, canonicalAuthorityBlock);
 }
 
 source = source.replace(
@@ -56,11 +47,11 @@ for (const token of [
   'cameraTarget: Object.freeze([218.45, 4.2, -86.52])',
   'cameraAuthority: "wide-diagonal-a14-exact-static-fleet-v1"',
   "preset.cameraAuthority || (preset.cameraPosition",
-  '"side-on-direct-terminal-wall-a1-v7"',
+  `"${A1_CAMERA_AUTHORITY}"`,
   CANONICAL_ROUTE_AUTHORITY,
 ]) {
   if (!source.includes(token)) throw new Error(`${trainerPath}: fixed A1/A14 camera preparation is missing ${token}`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared the direct-terminal A1 evidence camera together with the fixed apron-side A14 exact-fleet camera under one canonical route authority.");
+console.log("Prepared the measured-terminal A1 evidence camera together with the fixed apron-side A14 exact-fleet camera under one canonical route authority.");
