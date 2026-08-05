@@ -1,9 +1,10 @@
-const INSTALLATION_AUTHORITY = "user-photo-overhead-terminal-anchor-bogie-contact-and-continuous-assembly-v3";
+const INSTALLATION_AUTHORITY = "user-photo-overhead-terminal-anchor-bogie-contact-and-continuous-assembly-v4";
 const A1_TERMINAL_CONNECTION_AUTHORITY = "user-photo-overhead-authored-terminal-wall-direct-v1";
 const ASSEMBLY_CONTINUITY_AUTHORITY = "exact-authored-five-part-chain-no-isolated-node-rotation-v2";
-const ROTUNDA_FACE_AUTHORITY = "exact-uploaded-rotunda-terminal-face-bounds-v1";
+const ROTUNDA_FACE_AUTHORITY = "exact-uploaded-tunnel-a-overlap-and-rotunda-terminal-face-bounds-v2";
 const A1_DIRECT_TERMINAL_DISTANCE_METERS = 16.08913693907184;
 const A1_TERMINAL_HIDDEN_OVERLAP_METERS = 0.55;
+const A1_TUNNEL_VISIBLE_OVERLAP_METERS = 0.18;
 const BOGIE_TIRE_CONTACT_CORRECTION_METERS = 0.06;
 const A1_TERMINAL_DIRECTION = Object.freeze({ x: 0, z: -1 });
 const SOURCE_PART_NAMES = Object.freeze(["Rotunda", "Tunnel_A", "Tunnel_B", "Tunnel_C", "Cab"]);
@@ -59,16 +60,8 @@ function createA1VestibuleMaterials(THREE) {
   return { shell, seam, bellows, portalInterior };
 }
 
-function measureRotundaTerminalFrame(THREE, fleet, a1Model) {
-  const rotunda = a1Model.getObjectByName("Rotunda");
-  if (!rotunda) throw new Error("A1 exact jetway is missing the authored Rotunda node for terminal-face measurement");
-  fleet.updateMatrixWorld(true);
-  const worldBounds = new THREE.Box3().setFromObject(rotunda);
-  const center = worldBounds.getCenter(new THREE.Vector3());
-  fleet.worldToLocal(center);
-
-  const ux = A1_TERMINAL_DIRECTION.x;
-  const uz = A1_TERMINAL_DIRECTION.z;
+function localBoundsCorners(THREE, fleet, object) {
+  const worldBounds = new THREE.Box3().setFromObject(object);
   const corners = [];
   for (const x of [worldBounds.min.x, worldBounds.max.x]) {
     for (const y of [worldBounds.min.y, worldBounds.max.y]) {
@@ -79,11 +72,35 @@ function measureRotundaTerminalFrame(THREE, fleet, a1Model) {
       }
     }
   }
-  const centerProjection = center.x * ux + center.z * uz;
-  const terminalProjection = Math.max(...corners.map((corner) => corner.x * ux + corner.z * uz));
-  const terminalRadius = terminalProjection - centerProjection;
+  return { worldBounds, corners };
+}
+
+function measureRotundaTerminalFrame(THREE, fleet, a1Model) {
+  const rotunda = a1Model.getObjectByName("Rotunda");
+  const tunnelA = a1Model.getObjectByName("Tunnel_A");
+  if (!rotunda || !tunnelA) {
+    throw new Error("A1 exact jetway is missing the authored Rotunda or Tunnel_A node for terminal-face measurement");
+  }
+  fleet.updateMatrixWorld(true);
+  const { worldBounds: rotundaWorldBounds, corners: rotundaCorners } = localBoundsCorners(THREE, fleet, rotunda);
+  const { corners: tunnelCorners } = localBoundsCorners(THREE, fleet, tunnelA);
+  const center = rotundaWorldBounds.getCenter(new THREE.Vector3());
+  fleet.worldToLocal(center);
+
+  const ux = A1_TERMINAL_DIRECTION.x;
+  const uz = A1_TERMINAL_DIRECTION.z;
+  const project = (point) => point.x * ux + point.z * uz;
+  const centerProjection = project(center);
+  const rotundaTerminalProjection = Math.max(...rotundaCorners.map(project));
+  const tunnelTerminalProjection = Math.max(...tunnelCorners.map(project));
+  const terminalRadius = rotundaTerminalProjection - centerProjection;
+  const connectorStartProjection = tunnelTerminalProjection - A1_TUNNEL_VISIBLE_OVERLAP_METERS;
+  const connectorStartRadius = connectorStartProjection - centerProjection;
   if (!(terminalRadius > 0.25 && terminalRadius < 6)) {
     throw new Error(`A1 exact Rotunda terminal-face radius is invalid: ${terminalRadius}`);
+  }
+  if (!(connectorStartRadius > 0.1 && connectorStartRadius < terminalRadius)) {
+    throw new Error(`A1 exact connector start does not overlap Tunnel A inside the Rotunda bounds: ${connectorStartRadius}/${terminalRadius}`);
   }
   return Object.freeze({
     authority: ROTUNDA_FACE_AUTHORITY,
@@ -93,6 +110,11 @@ function measureRotundaTerminalFrame(THREE, fleet, a1Model) {
     terminalRadius,
     terminalFaceX: center.x + ux * terminalRadius,
     terminalFaceZ: center.z + uz * terminalRadius,
+    connectorStartRadius,
+    connectorStartX: center.x + ux * connectorStartRadius,
+    connectorStartZ: center.z + uz * connectorStartRadius,
+    tunnelTerminalProjection,
+    visibleTunnelOverlapMeters: A1_TUNNEL_VISIBLE_OVERLAP_METERS,
   });
 }
 
@@ -111,8 +133,8 @@ function buildA1PhotoVestibule(THREE, fleet, placement, rotundaFrame) {
   const sideZ = -Math.sin(yaw);
   const facadeX = placement.x + ux * A1_DIRECT_TERMINAL_DISTANCE_METERS;
   const facadeZ = placement.z + uz * A1_DIRECT_TERMINAL_DISTANCE_METERS;
-  const startX = rotundaFrame.terminalFaceX;
-  const startZ = rotundaFrame.terminalFaceZ;
+  const startX = rotundaFrame.connectorStartX;
+  const startZ = rotundaFrame.connectorStartZ;
   const visibleLength = Math.hypot(facadeX - startX, facadeZ - startZ);
   if (!(visibleLength > 4 && visibleLength < A1_DIRECT_TERMINAL_DISTANCE_METERS)) {
     throw new Error(`A1 photo vestibule visible span is invalid: ${visibleLength}`);
@@ -185,8 +207,8 @@ function buildA1PhotoVestibule(THREE, fleet, placement, rotundaFrame) {
     }
   }
 
-  // The flexible collar belongs on the measured terminal-facing outside edge
-  // of the Rotunda, never through its center.
+  // The flexible collar overlaps the exact Tunnel A terminal edge so the
+  // authored Rotunda's open sector cannot produce a visible broken middle.
   const rotundaCollarX = startX + ux * 0.1;
   const rotundaCollarZ = startZ + uz * 0.1;
   addBox(
@@ -271,13 +293,14 @@ function buildA1PhotoVestibule(THREE, fleet, placement, rotundaFrame) {
   }
 
   connector.userData.connectorAuthority = A1_TERMINAL_CONNECTION_AUTHORITY;
-  connector.userData.connectorStyleAuthority = "same-day-a1-photo-solid-white-fixed-vestibule-v2";
+  connector.userData.connectorStyleAuthority = "same-day-a1-photo-solid-white-fixed-vestibule-v3";
   connector.userData.connectorLengthMeters = totalLength;
   connector.userData.visibleVestibuleLengthMeters = visibleLength;
   connector.userData.measuredWallLengthMeters = A1_DIRECT_TERMINAL_DISTANCE_METERS;
   connector.userData.terminalOverlapMeters = A1_TERMINAL_HIDDEN_OVERLAP_METERS;
   connector.userData.rotundaTerminalFaceAuthority = rotundaFrame.authority;
   connector.userData.rotundaTerminalRadiusMeters = rotundaFrame.terminalRadius;
+  connector.userData.visibleTunnelOverlapMeters = rotundaFrame.visibleTunnelOverlapMeters;
   connector.userData.userPhotoOverheadVerified = true;
   connector.userData.noGeneratedGlassCorridor = true;
   fleet.add(connector);
@@ -400,6 +423,7 @@ export function correctUploadedJetwayInstallation(THREE, group, fleet, placement
     assemblyContinuity,
     connectorStyleAuthority: connector.userData.connectorStyleAuthority,
     visibleVestibuleLengthMeters: connector.userData.visibleVestibuleLengthMeters,
+    visibleTunnelOverlapMeters: connector.userData.visibleTunnelOverlapMeters,
     doubleSidedMaterialCount,
   });
 
@@ -428,6 +452,7 @@ export function correctUploadedJetwayInstallation(THREE, group, fleet, placement
   group.userData.uploadedJetwayA1RotundaTerminalFaceAuthority = rotundaFrame.authority;
   group.userData.uploadedJetwayA1RotundaTerminalRadiusMeters = rotundaFrame.terminalRadius;
   group.userData.uploadedJetwayA1VisibleVestibuleLengthMeters = report.visibleVestibuleLengthMeters;
+  group.userData.uploadedJetwayA1VisibleTunnelOverlapMeters = report.visibleTunnelOverlapMeters;
   group.userData.a1TerminalWallDistance = report.a1TerminalWallDistanceMeters;
   group.userData.a1TerminalConnectionAuthority = report.a1TerminalConnectionAuthority;
   group.userData.a1TerminalConnectionDirection = [
