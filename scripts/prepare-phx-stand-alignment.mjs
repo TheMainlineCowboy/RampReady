@@ -2,8 +2,19 @@ import fs from "node:fs";
 
 const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 const groundPath = "src/environment/authoredKphxGround.js";
-const jetways = fs.readFileSync(jetwayPath, "utf8");
+let jetways = fs.readFileSync(jetwayPath, "utf8");
 const ground = fs.readFileSync(groundPath, "utf8");
+
+// The exact uploaded-model placement data is authored by the source-wiring
+// preparation step. Older build order invoked this assertion first, causing a
+// false failure even though the verified GLB was already committed. Materialize
+// the exact wiring here when needed so every entry point reaches the same
+// deterministic 58-gate source state before validating it.
+if (!jetways.includes("aircraftDoorDistance: distance")
+  || !jetways.includes("uploadedJetwayPlacements.push({")) {
+  await import("./prepare-exact-airport-jetway-source-wiring.mjs");
+  jetways = fs.readFileSync(jetwayPath, "utf8");
+}
 
 for (const token of [
   "parkingByGate",
