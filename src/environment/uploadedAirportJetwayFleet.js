@@ -3,240 +3,109 @@ import {
   addUploadedAirportJetwayTerminalConnector,
 } from "./uploadedAirportJetwayTerminalConnector.js";
 
-const MODEL_AUTHORITY = "supplied-airport-jetway-source-triangles-hierarchy-submillimeter-v4";
-const MATERIAL_AUTHORITY = "supplied-airport-jetway-source-atlas-full-resolution-avif-v4";
-const PERFORMANCE_AUTHORITY = "57-static-source-mesh-instances-plus-1-animated-a1-v4";
-const A1_RETRACTION_AUTHORITY = "source-node-telescoping-without-height-correction-v7";
-const A1_RETRACTION = Object.freeze({ rotation: 0.052, tunnelB: 0.42, tunnelC: 0.78, cab: 1.18, lift: 0.08, totalClearanceMeters: 2.38 });
+const MODEL_AUTHORITY = "exact-uploaded-airport-jetway-glb-562e3144-v1";
+const MATERIAL_AUTHORITY = "exact-seven-embedded-airport-jetway-textures-v1";
+const PERFORMANCE_AUTHORITY = "57-static-exact-glb-instances-plus-1-animated-a1-v1";
+const A1_RETRACTION_AUTHORITY = "exact-glb-authored-node-telescoping-a1-v1";
+const A1_RETRACTION = Object.freeze({
+  rotation: 0.052,
+  tunnelB: 0.42,
+  tunnelC: 0.78,
+  cab: 1.18,
+  lift: 0.08,
+  totalClearanceMeters: 2.38,
+});
 const HIDE_REPLACED = /^(?:AIR_Jetway01_(?!WallCollars)|Terminal4_LowerFacadeInfillPanels|Terminal4_ClosedServiceDoors|Terminal4_FacadeVentGrilles)/i;
+const EXACT_GLB_URL = "models/airport-jetway/Airport_Jetway.glb";
 
 function clamp(value, minimum, maximum) {
   return Math.max(minimum, Math.min(maximum, Number(value) || 0));
 }
 
-function sourceRootUrl() {
-  return `${import.meta.env.BASE_URL || "/"}models/airport-jetway/source/`;
+function modelUrl() {
+  return `${import.meta.env.BASE_URL || "/"}${EXACT_GLB_URL}`;
 }
 
-function readSlice(binary, range) {
-  const [offset, length] = range;
-  return binary.subarray(offset, offset + length);
-}
-
-function decodeDeltaVarint(bytes, count) {
-  const values = new Uint32Array(count);
-  let cursor = 0;
-  let previous = 0;
-  for (let index = 0; index < count; index += 1) {
-    let encoded = 0;
-    let shift = 0;
-    while (true) {
-      if (cursor >= bytes.length || shift > 35) throw new Error("Supplied jetway index stream is truncated");
-      const byte = bytes[cursor++];
-      encoded |= (byte & 0x7f) << shift;
-      if ((byte & 0x80) === 0) break;
-      shift += 7;
-    }
-    const delta = (encoded >>> 1) ^ -(encoded & 1);
-    previous += delta;
-    if (previous < 0) throw new Error("Supplied jetway index stream decoded a negative vertex index");
-    values[index] = previous;
-  }
-  if (cursor !== bytes.length) throw new Error("Supplied jetway index stream contains trailing bytes");
-  return values;
-}
-
-function decodeOctNormal(xByte, yByte) {
-  let x = Math.max(-1, xByte / 127);
-  let y = Math.max(-1, yByte / 127);
-  let z = 1 - Math.abs(x) - Math.abs(y);
-  if (z < 0) {
-    const oldX = x;
-    const oldY = y;
-    x = (1 - Math.abs(oldY)) * (oldX >= 0 ? 1 : -1);
-    y = (1 - Math.abs(oldX)) * (oldY >= 0 ? 1 : -1);
-  }
-  const inverseLength = 1 / Math.max(1e-12, Math.hypot(x, y, z));
-  return [x * inverseLength, y * inverseLength, z * inverseLength];
-}
-
-function decodeGeometry(THREE, definition, binary) {
-  const count = definition.count;
-  const positionBytes = readSlice(binary, definition.positions);
-  const normalBytes = readSlice(binary, definition.normalsOct);
-  const uvBytes = readSlice(binary, definition.uvs);
-  const positionView = new DataView(positionBytes.buffer, positionBytes.byteOffset, positionBytes.byteLength);
-  const uvView = new DataView(uvBytes.buffer, uvBytes.byteOffset, uvBytes.byteLength);
-  const normalView = new Int8Array(normalBytes.buffer, normalBytes.byteOffset, normalBytes.byteLength);
-  const positions = new Float32Array(count * 3);
-  const normals = new Float32Array(count * 3);
-  const uvs = new Float32Array(count * 2);
-
-  for (let vertex = 0; vertex < count; vertex += 1) {
-    for (let axis = 0; axis < 3; axis += 1) {
-      const quantized = positionView.getUint16((vertex * 3 + axis) * 2, true);
-      positions[vertex * 3 + axis] = definition.positionMin[axis]
-        + (quantized / 65535) * definition.positionSpan[axis];
-    }
-    normals.set(decodeOctNormal(normalView[vertex * 2], normalView[vertex * 2 + 1]), vertex * 3);
-    for (let axis = 0; axis < 2; axis += 1) {
-      const quantized = uvView.getUint16((vertex * 2 + axis) * 2, true);
-      uvs[vertex * 2 + axis] = definition.uvMin[axis]
-        + (quantized / 65535) * definition.uvSpan[axis];
-    }
-  }
-
-  const decodedIndices = decodeDeltaVarint(readSlice(binary, definition.indicesDeltaVarint), definition.indexCount);
-  let maximumIndex = 0;
-  for (const value of decodedIndices) maximumIndex = Math.max(maximumIndex, value);
-  if (maximumIndex >= count) throw new Error(`${definition.name} decoded index ${maximumIndex} beyond ${count} vertices`);
-  const indices = maximumIndex < 65536 ? new Uint16Array(decodedIndices) : decodedIndices;
-  const geometry = new THREE.BufferGeometry();
-  geometry.name = `${definition.name}_SuppliedSourceGeometry`;
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
-  const uvAttribute = new THREE.BufferAttribute(uvs, 2);
-  geometry.setAttribute("uv", uvAttribute);
-  geometry.setAttribute("uv1", uvAttribute.clone());
-  geometry.setAttribute("uv2", uvAttribute.clone());
-  geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-  geometry.computeBoundingBox();
-  geometry.computeBoundingSphere();
-  geometry.userData.sourceVertexCount = definition.sourceCount;
-  geometry.userData.storedVertexCount = definition.count;
-  geometry.userData.sourceTriangleCount = definition.indexCount / 3;
-  geometry.userData.maximumPositionErrorMeters = 0.00009584426879882812;
-  geometry.userData.maximumUvError = 0.00000762939453125;
-  return geometry;
-}
-
-async function loadTextures(THREE, descriptor, rootUrl) {
-  const loader = new THREE.TextureLoader();
-  const images = await Promise.all(descriptor.images.map(async (image) => {
-    const texture = await loader.loadAsync(`${rootUrl}${image.uri}`);
-    texture.name = image.name;
-    texture.flipY = false;
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.magFilter = THREE.LinearFilter;
-    texture.minFilter = THREE.LinearMipmapLinearFilter;
-    texture.anisotropy = 8;
-    texture.colorSpace = /albedo|emissive/i.test(image.name) ? THREE.SRGBColorSpace : THREE.NoColorSpace;
-    texture.needsUpdate = true;
-    return texture;
-  }));
-  return descriptor.textures.map((textureDefinition) => {
-    const sourceIndex = textureDefinition.extensions?.EXT_texture_avif?.source;
-    if (!Number.isInteger(sourceIndex) || !images[sourceIndex]) {
-      throw new Error("Supplied jetway texture descriptor has an invalid AVIF source");
-    }
-    return images[sourceIndex];
+function countTriangles(root) {
+  let triangles = 0;
+  root.traverse((entry) => {
+    if (!entry.isMesh || !entry.geometry) return;
+    const indexCount = entry.geometry.index?.count;
+    const positionCount = entry.geometry.getAttribute("position")?.count;
+    triangles += Math.floor((indexCount ?? positionCount ?? 0) / 3);
   });
+  return triangles;
 }
 
-function createSourceMaterials(THREE, descriptor, textures) {
-  return descriptor.materials.map((definition) => {
-    const pbr = definition.pbrMetallicRoughness || {};
-    const baseColor = pbr.baseColorFactor || [1, 1, 1, 1];
-    const textureAt = (slot) => Number.isInteger(slot?.index) ? textures[slot.index] : null;
-    const common = {
-      name: definition.name,
-      color: new THREE.Color(baseColor[0], baseColor[1], baseColor[2]),
-      opacity: baseColor[3] ?? 1,
-      transparent: definition.alphaMode === "BLEND" || (baseColor[3] ?? 1) < 1,
-      side: definition.doubleSided ? THREE.DoubleSide : THREE.FrontSide,
-      roughness: pbr.roughnessFactor ?? 1,
-      metalness: pbr.metallicFactor ?? 1,
-      map: textureAt(pbr.baseColorTexture),
-      normalMap: textureAt(definition.normalTexture),
-      aoMap: textureAt(definition.occlusionTexture),
-    };
-    const packedMetalRoughness = textureAt(pbr.metallicRoughnessTexture);
-    if (packedMetalRoughness) {
-      common.metalnessMap = packedMetalRoughness;
-      common.roughnessMap = packedMetalRoughness;
-    }
-    const material = new THREE.MeshStandardMaterial(common);
-    const emissiveFactor = definition.emissiveFactor || [0, 0, 0];
-    material.emissive.setRGB(...emissiveFactor);
-    material.emissiveMap = textureAt(definition.emissiveTexture);
-    material.depthWrite = !material.transparent;
-    material.userData.materialAuthority = MATERIAL_AUTHORITY;
-    return material;
-  });
-}
+function validateExactHierarchy(root) {
+  const requiredNodes = ["Tunnel_A", "Tunnel_B", "Tunnel_C", "Rotunda", "Cab"];
+  const requiredMeshes = [
+    "Tunnel_C_Jetway_0",
+    "Tunnel_C_Glass_JW_0",
+    "Rotunda_Jetway_0",
+    "Cab_Jetway_0",
+    "Cab_Glass_JW_0",
+    "Tunnel_A_Jetway_0",
+    "Tunnel_B_Jetway_0",
+  ];
+  const missing = [...requiredNodes, ...requiredMeshes].filter((name) => !root.getObjectByName(name));
+  if (missing.length) throw new Error(`Exact Airport_Jetway.glb hierarchy is missing: ${missing.join(", ")}`);
 
-function applyNodeTransform(object, definition) {
-  if (Array.isArray(definition.matrix) && definition.matrix.length === 16) {
-    object.matrix.fromArray(definition.matrix);
-    object.matrix.decompose(object.position, object.quaternion, object.scale);
-    return;
+  const meshes = requiredMeshes.map((name) => root.getObjectByName(name));
+  for (const mesh of meshes) {
+    if (!mesh?.isMesh) throw new Error(`Exact Airport_Jetway.glb object ${mesh?.name || "unknown"} is not a mesh`);
+    if (!mesh.geometry?.getAttribute("position")) throw new Error(`${mesh.name} lost original positions`);
+    if (!mesh.geometry?.getAttribute("normal")) throw new Error(`${mesh.name} lost original normals`);
+    if (!mesh.geometry?.getAttribute("uv")) throw new Error(`${mesh.name} lost original UVs`);
   }
-  if (definition.translation) object.position.fromArray(definition.translation);
-  if (definition.rotation) object.quaternion.fromArray(definition.rotation);
-  if (definition.scale) object.scale.fromArray(definition.scale);
+
+  const materials = new Set();
+  for (const mesh of meshes) {
+    for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+      if (material?.name) materials.add(material.name);
+    }
+  }
+  if (!materials.has("Jetway") || !materials.has("Glass_JW") || materials.size !== 2) {
+    throw new Error(`Exact Airport_Jetway.glb material assignment mismatch: ${[...materials].join(",")}`);
+  }
+
+  const triangleCount = countTriangles(root);
+  if (triangleCount !== 31_978) {
+    throw new Error(`Exact Airport_Jetway.glb triangle count mismatch: ${triangleCount}`);
+  }
+  return { triangleCount, meshCount: meshes.length, materialNames: [...materials].sort() };
 }
 
-function buildSourceHierarchy(THREE, metadata, geometries, materials) {
-  const buildNode = (index) => {
-    const definition = metadata.nodes[index];
-    const object = definition.mesh == null
-      ? new THREE.Group()
-      : new THREE.Mesh(geometries[definition.mesh], materials[metadata.meshes[definition.mesh].material]);
-    object.name = definition.name || `SuppliedJetwayNode_${index}`;
-    if (object.isMesh) {
-      object.castShadow = false;
-      object.receiveShadow = true;
-    }
-    applyNodeTransform(object, definition);
-    for (const childIndex of definition.children || []) object.add(buildNode(childIndex));
-    return object;
-  };
-  const scene = new THREE.Group();
-  scene.name = metadata.scenes?.[metadata.scene || 0]?.name || "Airport_Jetway_SourceScene";
-  for (const rootIndex of metadata.scenes?.[metadata.scene || 0]?.nodes || []) scene.add(buildNode(rootIndex));
+async function loadExactPrototype(THREE) {
+  const { GLTFLoader } = await import("three/addons/loaders/GLTFLoader.js");
+  const gltf = await new GLTFLoader().loadAsync(modelUrl());
+  if (!gltf?.scene) throw new Error("Exact Airport_Jetway.glb loaded without a scene");
+
+  const sourceScene = gltf.scene;
+  sourceScene.name = sourceScene.name || "Airport_Jetway_ExactSourceScene";
+  sourceScene.traverse((entry) => {
+    if (!entry.isMesh) return;
+    entry.castShadow = false;
+    entry.receiveShadow = true;
+    entry.frustumCulled = true;
+  });
+  const validation = validateExactHierarchy(sourceScene);
+
   const aligned = new THREE.Group();
-  aligned.name = "UploadedAirportJetway_AlignedSourcePrototype";
-  scene.position.set(0.651626, 0.23, 15.12);
-  aligned.add(scene);
+  aligned.name = "UploadedAirportJetway_ExactGlbPrototype";
+  sourceScene.position.set(0.651626, 0.23, 15.12);
+  aligned.add(sourceScene);
   aligned.updateMatrixWorld(true);
   aligned.userData.modelAuthority = MODEL_AUTHORITY;
   aligned.userData.materialAuthority = MATERIAL_AUTHORITY;
   aligned.userData.performanceAuthority = PERFORMANCE_AUTHORITY;
-  aligned.userData.sourceTriangleCount = metadata.validation?.triangleCount;
-  aligned.userData.maximumPositionErrorMeters = metadata.validation?.maxPositionAbsErrorMeters;
-  aligned.userData.maximumUvError = metadata.validation?.maxUvAbsError;
+  aligned.userData.sourceTriangleCount = validation.triangleCount;
+  aligned.userData.originalMeshCount = validation.meshCount;
+  aligned.userData.originalMaterialNames = validation.materialNames.join(",");
+  aligned.userData.maximumPositionErrorMeters = 0;
+  aligned.userData.maximumUvError = 0;
+  aligned.userData.sourceUrl = modelUrl();
   return aligned;
-}
-
-async function loadSourcePrototype(THREE) {
-  const rootUrl = sourceRootUrl();
-  const [geometryResponse, materialsResponse] = await Promise.all([
-    fetch(`${rootUrl}geometry.bin`, { cache: "force-cache" }),
-    fetch(`${rootUrl}materials.json`, { cache: "force-cache" }),
-  ]);
-  if (!geometryResponse.ok) throw new Error(`Supplied jetway geometry failed: ${geometryResponse.status}`);
-  if (!materialsResponse.ok) throw new Error(`Supplied jetway materials failed: ${materialsResponse.status}`);
-  const payload = new Uint8Array(await geometryResponse.arrayBuffer());
-  const metadataLength = new DataView(payload.buffer, payload.byteOffset, 4).getUint32(0, true);
-  const metadata = JSON.parse(new TextDecoder().decode(payload.subarray(4, 4 + metadataLength)));
-  const binary = payload.subarray(4 + metadataLength);
-  const descriptor = await materialsResponse.json();
-  if (metadata.version !== 2 || metadata.meshes?.length !== 7 || metadata.validation?.triangleCount !== 31978) {
-    throw new Error("Supplied jetway compact source metadata failed its topology contract");
-  }
-  const textures = await loadTextures(THREE, descriptor, rootUrl);
-  const materials = createSourceMaterials(THREE, descriptor, textures);
-  const geometries = metadata.meshes.map((definition) => decodeGeometry(THREE, definition, binary));
-  const prototype = buildSourceHierarchy(THREE, metadata, geometries, materials);
-  const requiredNodes = ["Tunnel_A", "Tunnel_B", "Tunnel_C", "Rotunda", "Cab"];
-  const requiredMeshes = [
-    "Tunnel_C_Jetway_0", "Tunnel_C_Glass_JW_0", "Rotunda_Jetway_0",
-    "Cab_Jetway_0", "Cab_Glass_JW_0", "Tunnel_A_Jetway_0", "Tunnel_B_Jetway_0",
-  ];
-  const missing = [...requiredNodes, ...requiredMeshes].filter((name) => !prototype.getObjectByName(name));
-  if (missing.length) throw new Error(`Supplied Airport Jetway hierarchy is missing: ${missing.join(", ")}`);
-  return prototype;
 }
 
 function collectPrototypeMeshes(prototype) {
@@ -244,18 +113,26 @@ function collectPrototypeMeshes(prototype) {
   const meshes = [];
   prototype.traverse((entry) => {
     if (!entry.isMesh) return;
-    meshes.push({ name: entry.name, geometry: entry.geometry, material: entry.material, localMatrix: entry.matrixWorld.clone() });
+    meshes.push({
+      name: entry.name,
+      geometry: entry.geometry,
+      material: entry.material,
+      localMatrix: entry.matrixWorld.clone(),
+    });
   });
+  if (meshes.length !== 7) throw new Error(`Exact Airport_Jetway.glb expected seven meshes, received ${meshes.length}`);
   return meshes;
 }
 
 function buildStaticInstancedFleet(THREE, prototype, placements) {
   const staticPlacements = placements.filter((placement) => placement.gate !== "A1");
+  if (staticPlacements.length !== 57) throw new Error(`Exact jetway fleet expected 57 static gates, received ${staticPlacements.length}`);
   const prototypeMeshes = collectPrototypeMeshes(prototype);
   const batches = new THREE.Group();
-  batches.name = "UploadedAirportJetwayStaticSourceInstances";
+  batches.name = "UploadedAirportJetwayStaticExactGlbInstances";
   const placementMatrix = new THREE.Matrix4();
   const finalMatrix = new THREE.Matrix4();
+
   prototypeMeshes.forEach((meshDefinition, primitiveIndex) => {
     const batch = new THREE.InstancedMesh(meshDefinition.geometry, meshDefinition.material, staticPlacements.length);
     batch.name = `UploadedAirportJetwayStatic_${primitiveIndex}_${meshDefinition.name}`;
@@ -273,13 +150,14 @@ function buildStaticInstancedFleet(THREE, prototype, placements) {
     batch.computeBoundingSphere();
     batches.add(batch);
   });
+
   return { batches, staticGateCount: staticPlacements.length, primitiveBatchCount: prototypeMeshes.length };
 }
 
 function createController() {
   let deployment = 1;
   let visual = null;
-  let state = "loading-supplied-model";
+  let state = "loading-exact-glb";
   const apply = () => {
     if (!visual) return;
     const retract = 1 - deployment;
@@ -293,8 +171,10 @@ function createController() {
     }
     anchor.userData.retractionAuthority = A1_RETRACTION_AUTHORITY;
     anchor.userData.retractionClearanceMeters = A1_RETRACTION.totalClearanceMeters;
-    state = deployment >= 0.995 ? "attached-to-aircraft-door"
-      : deployment <= 0.005 ? "parked-clear-of-aircraft"
+    state = deployment >= 0.995
+      ? "attached-to-aircraft-door"
+      : deployment <= 0.005
+        ? "parked-clear-of-aircraft"
         : "retracting-from-aircraft";
   };
   return {
@@ -317,7 +197,7 @@ function createController() {
           cab: nodes.cab?.position.clone() || { y: 0, z: 0 },
         },
       };
-      state = "supplied-model-ready";
+      state = "exact-glb-ready";
       apply();
     },
   };
@@ -330,7 +210,10 @@ function hideGeneratedJetways(group) {
     if (HIDE_REPLACED.test(child.name) || /A1.*Animated.*Jetway/i.test(child.name)) {
       child.visible = false;
       child.traverse((entry) => {
-        if (entry.isMesh) { entry.visible = false; entry.castShadow = false; }
+        if (entry.isMesh) {
+          entry.visible = false;
+          entry.castShadow = false;
+        }
       });
       hidden += 1;
     }
@@ -339,49 +222,52 @@ function hideGeneratedJetways(group) {
 }
 
 export function installUploadedAirportJetwayFleet(THREE, group, placements, _sourceTextures = {}) {
-  if (!group?.isGroup) throw new Error("Supplied airport jetway replacement requires the Terminal 4 jetway group");
+  if (!group?.isGroup) throw new Error("Exact airport jetway replacement requires the Terminal 4 jetway group");
   if (!Array.isArray(placements) || placements.length !== 58) {
-    throw new Error(`Supplied airport jetway replacement expected 58 placements, received ${placements?.length ?? 0}`);
+    throw new Error(`Exact airport jetway replacement expected 58 placements, received ${placements?.length ?? 0}`);
   }
+
   const controller = createController();
   group.userData.uploadedJetwayLoadState = "loading";
   group.userData.uploadedJetwayModelAuthority = MODEL_AUTHORITY;
   group.userData.uploadedJetwayMaterialAuthority = MATERIAL_AUTHORITY;
   group.userData.uploadedJetwayPerformanceAuthority = PERFORMANCE_AUTHORITY;
-  group.userData.uploadedJetwayExpectedCount = placements.length;
+  group.userData.uploadedJetwayExpectedCount = 58;
   group.userData.uploadedJetwayA1RetractionAuthority = A1_RETRACTION_AUTHORITY;
 
-  loadSourcePrototype(THREE)
+  loadExactPrototype(THREE)
     .then((prototype) => {
       const fleet = new THREE.Group();
       fleet.name = "UploadedAirportJetwayFleet";
       const staticFleet = buildStaticInstancedFleet(THREE, prototype, placements);
       fleet.add(staticFleet.batches);
       const staticConnectors = addUploadedAirportJetwayStaticTerminalConnectors(THREE, fleet, placements);
+
       for (const placement of placements) {
         const anchor = new THREE.Group();
         anchor.name = `UploadedAirportJetway_${placement.gate}`;
-        anchor.userData.renderMode = placement.gate === "A1" ? "individual-animated" : "static-instanced-marker";
+        anchor.userData.renderMode = placement.gate === "A1" ? "individual-animated-exact-glb" : "static-exact-glb-instance-marker";
         if (placement.gate === "A1") {
           anchor.position.set(placement.x, 0, placement.z);
           anchor.rotation.y = placement.yaw;
           const model = prototype.clone(true);
           model.name = "UploadedAirportJetwayModel_A1";
-          model.traverse((entry) => { if (entry.isMesh && !entry.material?.transparent) entry.castShadow = true; });
+          model.traverse((entry) => {
+            if (entry.isMesh && !entry.material?.transparent) entry.castShadow = true;
+          });
           anchor.add(model);
           controller.bind(anchor);
           addUploadedAirportJetwayTerminalConnector(THREE, fleet, placement);
         }
         fleet.add(anchor);
       }
+
       group.add(fleet);
       const hiddenGeneratedObjectCount = hideGeneratedJetways(group);
       group.userData.uploadedJetwayLoadState = "ready";
-      group.userData.uploadedJetwayCount = placements.length;
+      group.userData.uploadedJetwayCount = 58;
       group.userData.uploadedJetwayHiddenGeneratedObjectCount = hiddenGeneratedObjectCount;
       group.userData.uploadedJetwayTerminalConnectorPreserved = true;
-      group.userData.uploadedJetwayMaterialAuthority = MATERIAL_AUTHORITY;
-      group.userData.uploadedJetwayPerformanceAuthority = PERFORMANCE_AUTHORITY;
       group.userData.uploadedJetwayShadowCasterGateCount = 1;
       group.userData.uploadedJetwayGlobalEdgeOverlayCount = 0;
       group.userData.uploadedJetwayStaticInstancedGateCount = staticFleet.staticGateCount;
@@ -393,8 +279,10 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, _sou
       group.userData.uploadedJetwayStaticConnectorBatchAuthority = staticConnectors.authority;
       group.userData.uploadedJetwayIndividualConnectorGateCount = 1;
       group.userData.uploadedJetwaySourceTriangleCount = prototype.userData.sourceTriangleCount;
-      group.userData.uploadedJetwayMaximumPositionErrorMeters = prototype.userData.maximumPositionErrorMeters;
-      group.userData.uploadedJetwayMaximumUvError = prototype.userData.maximumUvError;
+      group.userData.uploadedJetwayMaximumPositionErrorMeters = 0;
+      group.userData.uploadedJetwayMaximumUvError = 0;
+      group.userData.uploadedJetwayExactGlbUrl = prototype.userData.sourceUrl;
+      group.userData.uploadedJetwayExactGlbSha256 = "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0";
       group.userData.sourceGeometryMode = MODEL_AUTHORITY;
       group.userData.visualAuthority = MODEL_AUTHORITY;
       group.userData.requiresOriginalSourceMesh = true;
@@ -403,8 +291,9 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, _sou
     })
     .catch((error) => {
       group.userData.uploadedJetwayLoadState = "error";
-      group.userData.uploadedJetwayLoadError = error.message;
-      console.error("Supplied airport jetway fleet failed to load", error);
+      group.userData.uploadedJetwayLoadError = error instanceof Error ? error.message : String(error);
+      console.error("Exact Airport_Jetway.glb fleet failed to load", error);
     });
+
   return controller;
 }
