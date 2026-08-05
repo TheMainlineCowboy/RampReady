@@ -50,6 +50,7 @@ jobs:
             console.log(`MATERIALIZE_RUN_WAIT id=${current.id} status=${current.status} conclusion=${current.conclusion || 'pending'}`);
           }
           const jobs = await getJson(`${base}/actions/runs/${current.id}/jobs?per_page=100`);
+          const artifacts = await getJson(`${base}/actions/runs/${current.id}/artifacts?per_page=100`);
           const summary = {
             id: current.id,
             name: current.name,
@@ -63,6 +64,13 @@ jobs:
               status: job.status,
               conclusion: job.conclusion,
               steps: (job.steps || []).map((step) => ({ name: step.name, conclusion: step.conclusion })),
+            })),
+            artifacts: (artifacts.artifacts || []).map((artifact) => ({
+              id: artifact.id,
+              name: artifact.name,
+              size_in_bytes: artifact.size_in_bytes,
+              expired: artifact.expired,
+              digest: artifact.digest,
             })),
           };
           fs.writeFileSync('materialize-run-summary.json', `${JSON.stringify(summary, null, 2)}\n`);
