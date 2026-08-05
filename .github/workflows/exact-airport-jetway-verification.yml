@@ -10,6 +10,7 @@ on:
       - '.jetway-source-staging/**'
       - 'scripts/materialize-exact-airport-jetway.mjs'
       - 'scripts/probe-exact-jetway-source-chunks.mjs'
+      - 'scripts/scan-exact-jetway-history.mjs'
       - 'scripts/verify-exact-airport-jetway-runtime.mjs'
       - 'src/**'
       - 'public/**'
@@ -23,18 +24,23 @@ permissions:
 jobs:
   verify-exact-airport-jetway:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
-      - name: Check out pull request
+      - name: Check out complete pull-request history
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Inspect original source chunk stream
+      - name: Recover exact uploaded GLB from repository history
+        run: node scripts/scan-exact-jetway-history.mjs
+
+      - name: Inspect current original-source chunk stream
         run: node scripts/probe-exact-jetway-source-chunks.mjs
 
       - name: Reconstruct and verify exact uploaded geometry package
