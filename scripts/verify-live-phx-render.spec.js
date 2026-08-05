@@ -108,7 +108,20 @@ test('live RampReady renders native-resolution Sky Harbor ground and authored Te
 
   await page.addStyleTag({ content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}' });
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-  const bounds = await canvas.boundingBox();
+  // Read the already-authoritative canvas bounds in the browser process. A
+  // cross-process Locator.boundingBox() can wait indefinitely when this large
+  // WebGL scene saturates the runner even though the same canvas is ready.
+  const bounds = await page.evaluate(() => {
+    const element = document.querySelector('canvas.trainerCanvas');
+    if (!(element instanceof HTMLCanvasElement)) throw new Error('Three.js canvas is missing before live capture');
+    const rect = element.getBoundingClientRect();
+    return {
+      x: Math.max(0, rect.left),
+      y: Math.max(0, rect.top),
+      width: Math.min(window.innerWidth, rect.width),
+      height: Math.min(window.innerHeight, rect.height),
+    };
+  });
   expect(bounds).not.toBeNull();
   expect(bounds.width).toBeGreaterThanOrEqual(1000);
   expect(bounds.height).toBeGreaterThanOrEqual(700);
