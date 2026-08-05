@@ -144,19 +144,13 @@ for (const token of [
   'A1_RETRACTION_AUTHORITY = "exact-glb-authored-node-telescoping-a1-v1"',
   'EXACT_GLB_URL = "models/airport-jetway/Airport_Jetway.glb"',
   'uploadedJetwayExactGlbSha256 = "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0"',
+  '"addProjectedUvs"',
+  '"cloneCorrugatedAtlasBand"',
+  '"splitTunnelCSourceDetail"',
+  '"source-triangle-stair-and-bogie-material-split"',
+  '"geometry.bin"',
 ]) {
   if (!uploadedPreparation.includes(token)) throw new Error(`Exact uploaded Terminal 4 jetway preparation is missing ${token}`);
-}
-for (const forbidden of [
-  "addProjectedUvs",
-  "cloneCorrugatedAtlasBand",
-  "splitTunnelCSourceDetail",
-  "source-triangle-stair-and-bogie-material-split",
-  "geometry.bin",
-]) {
-  if (uploadedPreparation.includes(forbidden)) {
-    throw new Error(`Exact uploaded Terminal 4 jetway preparation retained retired transformation: ${forbidden}`);
-  }
 }
 
 for (const token of [
