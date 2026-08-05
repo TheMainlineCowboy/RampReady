@@ -1,6 +1,7 @@
 import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
+const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const exactPreset = `  a14: Object.freeze({
@@ -47,7 +48,7 @@ if (!source.includes(newAuthority)) {
 
 source = source.replace(
   /source-gate-apron-presets-with-[^"\n]+-a1-a14-b14-b15-v\d+/g,
-  "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9",
+  CANONICAL_ROUTE_AUTHORITY,
 );
 
 for (const token of [
@@ -56,10 +57,10 @@ for (const token of [
   'cameraAuthority: "wide-diagonal-a14-exact-static-fleet-v1"',
   "preset.cameraAuthority || (preset.cameraPosition",
   '"side-on-direct-terminal-wall-a1-v7"',
-  "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9",
+  CANONICAL_ROUTE_AUTHORITY,
 ]) {
   if (!source.includes(token)) throw new Error(`${trainerPath}: fixed A1/A14 camera preparation is missing ${token}`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared the direct-terminal A1 evidence camera together with the fixed apron-side A14 exact-fleet camera.");
+console.log("Prepared the direct-terminal A1 evidence camera together with the fixed apron-side A14 exact-fleet camera under one canonical route authority.");
