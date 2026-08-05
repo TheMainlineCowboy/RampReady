@@ -151,7 +151,9 @@ fs.writeFileSync(jetwayPath, source, "utf8");
 
 // The real structural facade can be farther from the source A1 rotunda than
 // the earlier fabricated short-span assumption. Preserve a hard upper bound,
-// but allow the measured facade result to drive the connector geometry.
+// but allow the measured facade result to drive the connector geometry. The
+// same-day A1 photos also show a pronounced corner between the Rotunda opening
+// and fixed terminal vestibule, so a measured elbow is valid and expected.
 const boundedFacadeFiles = [
   "src/environment/correctUploadedJetwayInstallationV1.js",
   "src/environment/uploadedAirportJetwayFleetReadyV2.js",
@@ -162,16 +164,39 @@ for (const runtimePath of boundedFacadeFiles) {
     .replaceAll("terminalDistance > 0.4 && terminalDistance < 12", "terminalDistance > 0.4 && terminalDistance < 28")
     .replaceAll("mainVisibleLength > 0.25 && mainVisibleLength < 12", "mainVisibleLength > 0.25 && mainVisibleLength < 28")
     .replaceAll("a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 12", "a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 28")
-    .replaceAll("connectorVisibleLength > 0.25 && connectorVisibleLength < 12", "connectorVisibleLength > 0.25 && connectorVisibleLength < 28");
+    .replaceAll("connectorVisibleLength > 0.25 && connectorVisibleLength < 12", "connectorVisibleLength > 0.25 && connectorVisibleLength < 28")
+    .replaceAll("if (terminalFacingDot < 0.4)", "if (terminalFacingDot < 0.15)")
+    .replaceAll(
+      "const terminalFacingDot = openingDirection.dot(terminalDirection);",
+      "const terminalFacingDot = openingDirection.dot(terminalDirection);\n  const terminalCornerAngleDegrees = THREE.MathUtils.radToDeg(Math.acos(THREE.MathUtils.clamp(terminalFacingDot, -1, 1)));",
+    )
+    .replaceAll(
+      "terminalFacingDot,\n    terminalRadius,",
+      "terminalFacingDot,\n    terminalCornerAngleDegrees,\n    terminalRadius,",
+    )
+    .replaceAll(
+      "connector.userData.measuredWallDirection = [terminalDirection.x, terminalDirection.z];",
+      "connector.userData.measuredWallDirection = [terminalDirection.x, terminalDirection.z];\n  connector.userData.terminalCornerAngleDegrees = rotundaOpening.terminalCornerAngleDegrees;",
+    );
   for (const stale of [
     "terminalDistance > 0.4 && terminalDistance < 12",
     "mainVisibleLength > 0.25 && mainVisibleLength < 12",
     "a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 12",
     "connectorVisibleLength > 0.25 && connectorVisibleLength < 12",
+    "if (terminalFacingDot < 0.4)",
   ]) {
-    if (runtime.includes(stale)) throw new Error(`${runtimePath}: stale short-span limit remains: ${stale}`);
+    if (runtime.includes(stale)) throw new Error(`${runtimePath}: stale straight/short-span limit remains: ${stale}`);
+  }
+  if (runtimePath.endsWith("correctUploadedJetwayInstallationV1.js")) {
+    for (const required of [
+      "terminalCornerAngleDegrees = THREE.MathUtils.radToDeg",
+      "terminalCornerAngleDegrees,",
+      "connector.userData.terminalCornerAngleDegrees",
+    ]) {
+      if (!runtime.includes(required)) throw new Error(`${runtimePath}: measured A1 elbow evidence is missing ${required}`);
+    }
   }
   fs.writeFileSync(runtimePath, runtime, "utf8");
 }
 
-console.log("Prepared A1 terminal attachment using the nearest real vertical Terminal 4 wall, removed the false T4_WALK override, and bounded measured facade spans at 28 m.");
+console.log("Prepared A1 terminal attachment using the nearest real vertical Terminal 4 wall, removed the false T4_WALK override, accepted the photo-matched measured Rotunda elbow, and bounded measured facade spans at 28 m.");
