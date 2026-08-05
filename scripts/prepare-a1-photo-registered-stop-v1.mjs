@@ -4,26 +4,28 @@ const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js
 let source = fs.readFileSync(installationPath, "utf8");
 
 const PHOTO_FIXED_VESTIBULE_METERS = 2.4;
-const PHOTO_REGISTRATION_AUTHORITY = "same-day-photo-a1-terminal-corner-registration-v3";
+const PHOTO_REGISTRATION_AUTHORITY = "same-day-photo-a1-terminal-corner-registration-v4";
 const TERMINAL_FACADE_EMBED_METERS = 0.9;
-const TERMINAL_WALL_SEAL_DEPTH_METERS = 0.72;
+const TERMINAL_WALL_SEAL_DEPTH_METERS = 0.18;
+const TERMINAL_WALL_SEAL_THICKNESS_METERS = 0.42;
+const TERMINAL_WALL_SEAL_MARGIN_METERS = 0.24;
 
 source = source
   .replace(
     'const INSTALLATION_AUTHORITY = "measured-terminal-facade-short-connector-grounded-exact-chain-v7";',
-    'const INSTALLATION_AUTHORITY = "photo-registered-terminal-corner-grounded-exact-chain-v10";',
+    'const INSTALLATION_AUTHORITY = "photo-registered-terminal-corner-grounded-exact-chain-v11";',
   )
   .replace(
     /const INSTALLATION_AUTHORITY = "photo-registered-terminal-corner-grounded-exact-chain-v\d+";/,
-    'const INSTALLATION_AUTHORITY = "photo-registered-terminal-corner-grounded-exact-chain-v10";',
+    'const INSTALLATION_AUTHORITY = "photo-registered-terminal-corner-grounded-exact-chain-v11";',
   )
   .replace(
     'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-short-solid-terminal-vestibule-v6";',
-    'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-straight-solid-terminal-vestibule-v9";',
+    'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-straight-solid-terminal-vestibule-v10";',
   )
   .replace(
-    /const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-compact-solid-terminal-vestibule-v\d+";/,
-    'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-straight-solid-terminal-vestibule-v9";',
+    /const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-(?:compact|straight)-solid-terminal-vestibule-v\d+";/,
+    'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-straight-solid-terminal-vestibule-v10";',
   )
   .replace(
     'const TERMINAL_HIDDEN_OVERLAP_METERS = 0.3;',
@@ -96,9 +98,6 @@ source = source.replace(
     rotundaOpening,`,
 );
 
-// Build the compact fixed vestibule on the exact authored Rotunda opening axis.
-// The previous endpoint used the independently measured wall ray, creating a
-// sideways kink that read as a detached vertical box in the apron evidence.
 const endpointPattern = /  const terminalPoint = new THREE\.Vector3\(\n    placement\.x \+ terminalDirection\.x \* terminalDistance,\n    rotundaOpening\.centerY,\n    placement\.z \+ terminalDirection\.z \* terminalDistance,\n  \);\n  const collarPoint = new THREE\.Vector3\(rotundaOpening\.collarX, rotundaOpening\.centerY, rotundaOpening\.collarZ\);\n  const openingDirection = new THREE\.Vector3\(rotundaOpening\.openingDirectionX, 0, rotundaOpening\.openingDirectionZ\);/;
 if (!endpointPattern.test(source) && !source.includes("rotundaOpening.centerX + openingDirection.x * terminalDistance")) {
   throw new Error(`${installationPath}: terminal endpoint construction block is missing`);
@@ -114,7 +113,6 @@ source = source.replace(
   );`,
 );
 
-// Embed the closed shell through the real facade and use a white wall seal.
 source = source
   .replace(
     `    materials.interior,
@@ -123,12 +121,16 @@ source = source
     "UploadedAirportJetwayA1TerminalWallSeal",`,
   )
   .replace(
-    /terminalPoint\.x \+ mainVector\.x \* 0\.06/g,
+    /terminalPoint\.x \+ mainVector\.x \* (?:0\.06|0\.72)/g,
     `terminalPoint.x + mainVector.x * ${TERMINAL_WALL_SEAL_DEPTH_METERS}`,
   )
   .replace(
-    /terminalPoint\.z \+ mainVector\.z \* 0\.06/g,
+    /terminalPoint\.z \+ mainVector\.z \* (?:0\.06|0\.72)/g,
     `terminalPoint.z + mainVector.z * ${TERMINAL_WALL_SEAL_DEPTH_METERS}`,
+  )
+  .replace(
+    /\[width - 0\.3, height - 0\.3, 0\.12\]/g,
+    `[width + ${TERMINAL_WALL_SEAL_MARGIN_METERS}, height + ${TERMINAL_WALL_SEAL_MARGIN_METERS}, ${TERMINAL_WALL_SEAL_THICKNESS_METERS}]`,
   );
 
 if (!source.includes("sourceA1TerminalWallDistanceMeters: sourceTerminalDistance")) {
@@ -160,8 +162,8 @@ if (!source.includes("uploadedJetwayA1PhotoRegistrationAuthority")) {
 }
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "photo-registered-terminal-corner-grounded-exact-chain-v10"',
-  'CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-straight-solid-terminal-vestibule-v9"',
+  'INSTALLATION_AUTHORITY = "photo-registered-terminal-corner-grounded-exact-chain-v11"',
+  'CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-straight-solid-terminal-vestibule-v10"',
   `TERMINAL_HIDDEN_OVERLAP_METERS = ${TERMINAL_FACADE_EMBED_METERS}`,
   `A1_PHOTO_FIXED_VESTIBULE_METERS = ${PHOTO_FIXED_VESTIBULE_METERS}`,
   `A1_PHOTO_REGISTRATION_AUTHORITY = "${PHOTO_REGISTRATION_AUTHORITY}"`,
@@ -173,6 +175,7 @@ for (const token of [
   "UploadedAirportJetwayA1TerminalWallSeal",
   `terminalPoint.x + mainVector.x * ${TERMINAL_WALL_SEAL_DEPTH_METERS}`,
   `terminalPoint.z + mainVector.z * ${TERMINAL_WALL_SEAL_DEPTH_METERS}`,
+  `[width + ${TERMINAL_WALL_SEAL_MARGIN_METERS}, height + ${TERMINAL_WALL_SEAL_MARGIN_METERS}, ${TERMINAL_WALL_SEAL_THICKNESS_METERS}]`,
   "sourceA1TerminalWallDistanceMeters: sourceTerminalDistance",
   "uploadedJetwayA1PhotoRegistrationAuthority",
 ]) {
@@ -180,4 +183,4 @@ for (const token of [
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log(`Prepared A1 photo registration: shifted the complete authored A1 installation toward the measured terminal facade, aligned the compact closed vestibule directly with the authored Rotunda opening, embedded it ${TERMINAL_FACADE_EMBED_METERS.toFixed(1)} m through the wall, and retained all source-part local transforms.`);
+console.log(`Prepared A1 photo registration with one continuous authored bridge, a straight 2.4 m solid vestibule, and a full opaque white facade-overlap seal; retained all source-part local transforms.`);
