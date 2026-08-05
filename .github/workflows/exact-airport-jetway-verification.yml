@@ -11,6 +11,7 @@ on:
       - 'scripts/materialize-exact-airport-jetway.mjs'
       - 'scripts/probe-exact-jetway-source-chunks.mjs'
       - 'scripts/scan-exact-jetway-history.mjs'
+      - 'scripts/deep-scan-jetway-transfer-history.mjs'
       - 'scripts/list-jetway-actions-artifacts.mjs'
       - 'scripts/list-dedicated-jetway-artifacts.mjs'
       - 'scripts/recover-exact-jetway-from-actions-artifacts.mjs'
@@ -30,7 +31,7 @@ permissions:
 jobs:
   verify-exact-airport-jetway:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - name: Check out complete pull-request history
@@ -38,10 +39,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch every remote branch
+        run: git fetch origin '+refs/heads/*:refs/remotes/origin/*' --force
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Deep scan every ref and historical transfer family
+        run: node scripts/deep-scan-jetway-transfer-history.mjs
 
       - name: Inspect dedicated source-transfer branches
         run: node scripts/inspect-dedicated-jetway-transfers.mjs
