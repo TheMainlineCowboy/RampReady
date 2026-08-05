@@ -1,7 +1,9 @@
 import fs from "node:fs";
 
 const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js";
+const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 let source = fs.readFileSync(installationPath, "utf8");
+let readinessSource = fs.readFileSync(readinessPath, "utf8");
 
 const WHOLE_ASSEMBLY_ORIENTATION_AUTHORITY = "same-day-a1-whole-authored-assembly-midpoint-terminal-rotunda-v3";
 const HALF_TURN_RADIANS = Math.PI;
@@ -148,6 +150,21 @@ if (!source.includes("uploadedJetwayA1WholeAssemblyOrientationAuthority")) {
   );
 }
 
+// The retired pre-reversal setup required a 3–7 m telescope extension. The
+// correctly reversed and photo-registered authored assembly needs less travel.
+// Validate the actual geometry identity instead of preserving that stale range.
+const oldReadinessExtensionGuard = "            || !(a1AttachedExtension > 3 && a1AttachedExtension < 7)";
+const measuredReadinessExtensionGuard = `            || !(a1AttachedExtension > 0.25 && a1AttachedExtension < 7)
+            || Math.abs(sourceContactDistance + a1AttachedExtension - a1TargetDoorDistance) > 0.05`;
+if (readinessSource.includes(oldReadinessExtensionGuard)) {
+  readinessSource = readinessSource.replace(
+    oldReadinessExtensionGuard,
+    measuredReadinessExtensionGuard,
+  );
+} else if (!readinessSource.includes(measuredReadinessExtensionGuard)) {
+  throw new Error(`${readinessPath}: A1 attached-extension readiness guard is missing`);
+}
+
 for (const token of [
   'INSTALLATION_AUTHORITY = "photo-registered-terminal-rotunda-grounded-exact-chain-v16"',
   `a1Anchor.rotation.y += ${HALF_TURN_RADIANS}`,
@@ -162,6 +179,15 @@ for (const token of [
 ]) {
   if (!source.includes(token)) throw new Error(`${installationPath}: whole-assembly midpoint orientation output is missing ${token}`);
 }
+for (const token of [
+  "a1AttachedExtension > 0.25 && a1AttachedExtension < 7",
+  "sourceContactDistance + a1AttachedExtension - a1TargetDoorDistance",
+]) {
+  if (!readinessSource.includes(token)) {
+    throw new Error(`${readinessPath}: measured A1 extension readiness output is missing ${token}`);
+  }
+}
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Prepared A1 as one continuous authored assembly with a parent-level half-turn around the measured Rotunda-to-Cab midpoint, re-registered the supplied Rotunda to the terminal, and bounded that translation from the authored assembly span instead of an obsolete fixed cutoff; no authored node was rotated independently.");
+fs.writeFileSync(readinessPath, readinessSource, "utf8");
+console.log("Prepared A1 as one continuous authored assembly with a parent-level half-turn around the measured Rotunda-to-Cab midpoint, re-registered the supplied Rotunda to the terminal, bounded that translation from the authored assembly span, and validated telescope travel from measured reach instead of the retired fixed range; no authored node was rotated independently.");
