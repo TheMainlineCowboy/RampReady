@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { createHash } from "node:crypto";
-import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,17 +19,32 @@ const expectedImages = Object.freeze([
   { file: "Glass_JW_AO.jpg", bytes: 88_646, sha256: "391d039485a6139ddd3f82b97455970c897410f031320e0f04ef1c690415fe13" },
   { file: "Glass_JW_emissive.jpg", bytes: 185_984, sha256: "b04433a9724729d969bb8fee1b6ffc7c452773a228bbf13b44d1696fdff4cce9" },
 ]);
+const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
-function sha256(bytes) {
-  return createHash("sha256").update(bytes).digest("hex");
+function identity(bytes) {
+  return { bytes: bytes.length, sha256: sha256(bytes) };
 }
 
 function requireIdentity(label, bytes, expected) {
-  const actual = { bytes: bytes.length, sha256: sha256(bytes) };
+  const actual = identity(bytes);
   if (actual.bytes !== expected.bytes || actual.sha256 !== expected.sha256) {
     throw new Error(`${label} identity mismatch: ${actual.bytes}/${actual.sha256}; expected ${expected.bytes}/${expected.sha256}`);
   }
   return actual;
+}
+
+async function readCommittedExactGlb() {
+  try {
+    const bytes = await readFile(outputGlb);
+    const actual = identity(bytes);
+    if (actual.bytes === expectedGlb.bytes && actual.sha256 === expectedGlb.sha256) {
+      return { label: "committed-exact-upload", names: [path.relative(repoRoot, outputGlb)], bytes: null, output: bytes };
+    }
+    console.log(`[exact-airport-jetway] Ignoring non-exact committed GLB ${actual.bytes}/${actual.sha256}.`);
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
+  return null;
 }
 
 async function decodePartSet(directory, patterns) {
@@ -50,17 +65,9 @@ async function decodePartSet(directory, patterns) {
 }
 
 function decompressXz(candidate) {
-  if (candidate.bytes.subarray(0, 6).toString("hex") !== "fd377a585a00") {
-    return { ...candidate, error: "missing XZ header" };
-  }
-  const result = spawnSync("xz", ["--decompress", "--stdout"], {
-    input: candidate.bytes,
-    encoding: null,
-    maxBuffer: 128 * 1024 * 1024,
-  });
-  if (result.status !== 0) {
-    return { ...candidate, error: result.stderr?.toString("utf8").trim() || `xz status ${result.status}` };
-  }
+  if (candidate.bytes.subarray(0, 6).toString("hex") !== "fd377a585a00") return { ...candidate, error: "missing XZ header" };
+  const result = spawnSync("xz", ["--decompress", "--stdout"], { input: candidate.bytes, encoding: null, maxBuffer: 128 * 1024 * 1024 });
+  if (result.status !== 0) return { ...candidate, error: result.stderr?.toString("utf8").trim() || `xz status ${result.status}` };
   return { ...candidate, output: Buffer.from(result.stdout) };
 }
 
@@ -83,44 +90,40 @@ function parseGlb(bytes) {
   return { json, binary };
 }
 
-async function main() {
+async function reconstructFallback() {
   const candidates = [
     { label: "v5-prefix-tail", ...(await decodePartSet(path.join(repoRoot, ".jetway-geometry-staging-v5"), [/^prefix\d{3}\.b64$/, /^tail\d{3}\.b64$/])) },
     { label: "v2-parts", ...(await decodePartSet(path.join(repoRoot, ".jetway-geometry-staging-v2"), [/^part\d{3}\.b64$/])) },
   ].map(decompressXz);
-
-  let selected = null;
   for (const candidate of candidates) {
     const compressedMeta = `${candidate.bytes.length}/${sha256(candidate.bytes)}`;
     if (candidate.error) {
       console.log(`[exact-airport-jetway] ${candidate.label} ${compressedMeta} failed: ${candidate.error}`);
       continue;
     }
-    const outputMeta = `${candidate.output.length}/${sha256(candidate.output)}`;
-    console.log(`[exact-airport-jetway] ${candidate.label} ${compressedMeta} decompressed to ${outputMeta}`);
-    if (candidate.output.length === expectedGlb.bytes && sha256(candidate.output) === expectedGlb.sha256) {
-      selected = candidate;
-      break;
-    }
+    const outputMeta = identity(candidate.output);
+    console.log(`[exact-airport-jetway] ${candidate.label} ${compressedMeta} decompressed to ${outputMeta.bytes}/${outputMeta.sha256}`);
+    if (outputMeta.bytes === expectedGlb.bytes && outputMeta.sha256 === expectedGlb.sha256) return candidate;
   }
-  if (!selected) throw new Error("No staged exact jetway transfer reconstructed the required GLB identity");
+  return null;
+}
 
+async function main() {
+  const selected = (await readCommittedExactGlb()) || (await reconstructFallback());
+  if (!selected) throw new Error("The exact uploaded Airport_Jetway.glb is absent; no substitute is permitted");
   const glb = selected.output;
   const glbIdentity = requireIdentity("Airport_Jetway.glb", glb, expectedGlb);
   const { json, binary } = parseGlb(glb);
   if (json.meshes?.length !== 7 || json.materials?.length !== 2 || json.images?.length !== 7) {
     throw new Error(`Exact GLB structure mismatch: meshes=${json.meshes?.length}, materials=${json.materials?.length}, images=${json.images?.length}`);
   }
-
   const embeddedImages = (json.images || []).map((image, index) => {
     const view = json.bufferViews?.[image.bufferView];
     if (!view) throw new Error(`Embedded image ${index} has no valid bufferView`);
     const bytes = binary.subarray(view.byteOffset || 0, (view.byteOffset || 0) + view.byteLength);
-    return { index, image, bytes, identity: { bytes: bytes.length, sha256: sha256(bytes) } };
+    return { index, image, bytes, identity: identity(bytes) };
   });
-
   await mkdir(outputDir, { recursive: true });
-  await rm(outputGlb, { force: true });
   await writeFile(outputGlb, glb);
   const extracted = [];
   for (const expected of expectedImages) {
@@ -129,19 +132,18 @@ async function main() {
     await writeFile(path.join(outputDir, expected.file), match.bytes);
     extracted.push({ file: expected.file, ...match.identity, glbImageIndex: match.index, mimeType: match.image.mimeType });
   }
-
   const manifest = {
     authority: "exact-uploaded-airport-jetway-glb-sha256-v1",
     transfer: selected.label,
     sourceParts: selected.names,
-    compressedBytes: selected.bytes.length,
-    compressedSha256: sha256(selected.bytes),
+    compressedBytes: selected.bytes?.length || null,
+    compressedSha256: selected.bytes ? sha256(selected.bytes) : null,
     glb: { file: "Airport_Jetway.glb", ...glbIdentity },
     structure: { meshes: json.meshes.length, materials: json.materials.length, images: json.images.length },
     textures: extracted,
   };
   await writeFile(path.join(outputDir, "exact-asset-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
-  console.log(`[exact-airport-jetway] Materialized ${manifest.glb.file}: ${manifest.glb.bytes} bytes ${manifest.glb.sha256}`);
+  console.log(`[exact-airport-jetway] Verified committed exact GLB: ${manifest.glb.bytes} bytes ${manifest.glb.sha256}`);
   console.log(`[exact-airport-jetway] Verified ${manifest.structure.meshes} meshes, ${manifest.structure.materials} materials, and ${manifest.structure.images} exact embedded textures.`);
 }
 
