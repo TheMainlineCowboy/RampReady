@@ -45,6 +45,13 @@ jobs:
       - name: Receive all encrypted exact parts and reconstruct GLB
         run: node scripts/receive-exact-jetway-mail-transfer.mjs --receive
 
+      - name: Persist the verified exact GLB before further work
+        run: |
+          git add public/models/airport-jetway/Airport_Jetway.glb
+          git rm -f .jetway-transfer-mailbox.txt
+          git commit -m 'Install exact supplied Airport Jetway GLB [skip transfer]'
+          git push origin HEAD:fix/exact-airport-jetway-glb
+
       - name: Install locked dependencies
         run: npm ci
 
@@ -82,10 +89,9 @@ jobs:
           if-no-files-found: warn
           retention-days: 3
 
-      - name: Commit exact supplied GLB after browser verification
+      - name: Persist exact manifest after browser verification
         run: |
-          git add public/models/airport-jetway/Airport_Jetway.glb public/models/airport-jetway/exact-asset-manifest.json
-          git rm -f .jetway-transfer-mailbox.txt
+          git add public/models/airport-jetway/exact-asset-manifest.json
           git diff --cached --quiet && exit 0
-          git commit -m 'Install exact supplied Airport Jetway GLB [skip transfer]'
+          git commit -m 'Record exact Airport Jetway runtime manifest [skip transfer]'
           git push origin HEAD:fix/exact-airport-jetway-glb
