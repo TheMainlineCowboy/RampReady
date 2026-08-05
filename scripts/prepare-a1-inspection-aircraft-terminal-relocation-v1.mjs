@@ -28,15 +28,36 @@ if (!source.includes(marker)) {
           sim.aircraft.position.x += exactA1RelocationX;
           sim.aircraft.position.z += exactA1RelocationZ;
           sim.aircraft.userData[${markerLiteral}] = true;
-          renderer.domElement.dataset.inspectionAircraftNoseGearX = sim.aircraft.position.x.toFixed(3);
-          renderer.domElement.dataset.inspectionAircraftNoseGearZ = sim.aircraft.position.z.toFixed(3);
-          renderer.domElement.dataset.inspectionAircraftTerminalRelocationX = exactA1RelocationX.toFixed(3);
-          renderer.domElement.dataset.inspectionAircraftTerminalRelocationZ = exactA1RelocationZ.toFixed(3);
+          renderer.domElement.dataset.inspectionAircraftNoseGearX = sim.aircraft.position.x.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftNoseGearZ = sim.aircraft.position.z.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftTerminalRelocationX = exactA1RelocationX.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftTerminalRelocationZ = exactA1RelocationZ.toFixed(6);
           renderer.domElement.dataset.inspectionAircraftPoseAuthority = A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY;
         }
         return terminal;`,
   );
 }
+
+// Preserve millimetre-level validation after the asynchronous terminal load.
+// The lifecycle writer runs every frame, so upgrade those telemetry writes too
+// rather than weakening the placement assertion around rounded three-decimal data.
+source = source
+  .replaceAll(
+    "inspectionAircraftNoseGearX = sim.aircraft.position.x.toFixed(3)",
+    "inspectionAircraftNoseGearX = sim.aircraft.position.x.toFixed(6)",
+  )
+  .replaceAll(
+    "inspectionAircraftNoseGearZ = sim.aircraft.position.z.toFixed(3)",
+    "inspectionAircraftNoseGearZ = sim.aircraft.position.z.toFixed(6)",
+  )
+  .replaceAll(
+    "inspectionAircraftTerminalRelocationX = exactA1RelocationX.toFixed(3)",
+    "inspectionAircraftTerminalRelocationX = exactA1RelocationX.toFixed(6)",
+  )
+  .replaceAll(
+    "inspectionAircraftTerminalRelocationZ = exactA1RelocationZ.toFixed(3)",
+    "inspectionAircraftTerminalRelocationZ = exactA1RelocationZ.toFixed(6)",
+  );
 
 for (const token of [
   marker,
@@ -44,11 +65,13 @@ for (const token of [
   `userData[${markerLiteral}]`,
   "uploadedJetwayA1TerminalRelocationX",
   "uploadedJetwayA1TerminalRelocationZ",
-  "inspectionAircraftTerminalRelocationX",
-  "inspectionAircraftTerminalRelocationZ",
+  "inspectionAircraftTerminalRelocationX = exactA1RelocationX.toFixed(6)",
+  "inspectionAircraftTerminalRelocationZ = exactA1RelocationZ.toFixed(6)",
+  "inspectionAircraftNoseGearX = sim.aircraft.position.x.toFixed(6)",
+  "inspectionAircraftNoseGearZ = sim.aircraft.position.z.toFixed(6)",
 ]) {
   if (!source.includes(token)) throw new Error(`${trainerPath}: A1 terminal-relocated aircraft output is missing ${token}`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared persistent inspection-aircraft registration to the exact A1 Cab after measured Rotunda-to-terminal relocation.");
+console.log("Prepared millimetre-precision inspection-aircraft registration to the exact A1 Cab after measured Rotunda-to-terminal relocation.");
