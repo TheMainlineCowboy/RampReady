@@ -11,6 +11,7 @@ on:
       - 'scripts/materialize-exact-airport-jetway.mjs'
       - 'scripts/probe-exact-jetway-source-chunks.mjs'
       - 'scripts/scan-exact-jetway-history.mjs'
+      - 'scripts/list-jetway-actions-artifacts.mjs'
       - 'scripts/verify-exact-airport-jetway-runtime.mjs'
       - 'src/**'
       - 'public/**'
@@ -19,6 +20,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
 
 jobs:
@@ -36,6 +38,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Inventory retained Actions artifacts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/list-jetway-actions-artifacts.mjs
 
       - name: Recover exact uploaded GLB from repository history
         run: node scripts/scan-exact-jetway-history.mjs
