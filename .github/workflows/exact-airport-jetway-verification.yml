@@ -12,6 +12,7 @@ on:
       - 'scripts/probe-exact-jetway-source-chunks.mjs'
       - 'scripts/scan-exact-jetway-history.mjs'
       - 'scripts/list-jetway-actions-artifacts.mjs'
+      - 'scripts/list-dedicated-jetway-artifacts.mjs'
       - 'scripts/recover-exact-jetway-from-actions-artifacts.mjs'
       - 'scripts/inspect-dedicated-jetway-transfers.mjs'
       - 'scripts/verify-exact-airport-jetway-runtime.mjs'
@@ -43,6 +44,11 @@ jobs:
 
       - name: Inspect dedicated source-transfer branches
         run: node scripts/inspect-dedicated-jetway-transfers.mjs
+
+      - name: List dedicated transfer artifacts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/list-dedicated-jetway-artifacts.mjs
 
       - name: Recover exact uploaded GLB from retained Actions artifacts
         env:
