@@ -63,10 +63,13 @@ async function main() {
     throw new Error(`Exact jetway transfer requires part000.b64 through part024.b64; found ${partNames.length} parts`);
   }
 
-  const encodedParts = await Promise.all(partNames.map(async (name) =>
-    (await readFile(path.join(stagingDir, name), "utf8")).replace(/\s+/g, ""),
-  ));
-  const compressed = Buffer.from(encodedParts.join(""), "base64");
+  const decodedParts = await Promise.all(partNames.map(async (name) => {
+    const encoded = (await readFile(path.join(stagingDir, name), "utf8")).replace(/\s+/g, "");
+    const decoded = Buffer.from(encoded, "base64");
+    if (!decoded.length) throw new Error(`${name} decoded to an empty transfer part`);
+    return decoded;
+  }));
+  const compressed = Buffer.concat(decodedParts);
   if (compressed.subarray(0, 6).toString("hex") !== "fd377a585a00") {
     throw new Error("Exact jetway staged stream is not the expected XZ payload");
   }
@@ -112,6 +115,8 @@ async function main() {
   const manifest = {
     authority: "exact-uploaded-airport-jetway-glb-sha256-v1",
     sourceParts: partNames,
+    compressedBytes: compressed.length,
+    compressedSha256: sha256(compressed),
     glb: { file: "Airport_Jetway.glb", ...glbIdentity },
     structure: { meshes: json.meshes.length, materials: json.materials.length, images: json.images.length },
     textures: extracted,
