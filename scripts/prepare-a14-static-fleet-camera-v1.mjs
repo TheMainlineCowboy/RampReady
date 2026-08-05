@@ -1,8 +1,8 @@
 import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
-const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-photo-registered-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v10";
-const A1_CAMERA_AUTHORITY = "oblique-photo-registered-terminal-corner-a1-v9";
+const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
+const A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const exactPreset = `  a14: Object.freeze({
@@ -58,4 +58,4 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared the photo-registered A1 evidence camera together with the fixed apron-side A14 exact-fleet camera under one canonical route authority.");
+console.log("Prepared the relocated A1 evidence coordinates together with the fixed apron-side A14 exact-fleet camera under the established canonical route authority.");
