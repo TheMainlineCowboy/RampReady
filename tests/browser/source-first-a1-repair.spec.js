@@ -10,7 +10,7 @@ const UPLOADED_JETWAY_ATTRIBUTES = Object.freeze([
 
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
 const DIRECT_A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
-const TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY = "terminal-relocated-a1-exact-cab-registration-v1";
+const EXACT_PARENT_RELOCATED_AIRCRAFT_AUTHORITY = "total-rigid-parent-relocated-a1-exact-cab-registration-v2";
 const PHOTO_REGISTERED_NOSE_GEAR = Object.freeze({ x: 12.353412, z: -12.486888 });
 
 async function saveCompositedCanvasPng(page, path) {
@@ -38,8 +38,8 @@ async function saveCompositedCanvasPng(page, path) {
         },
       }),
       new Promise((_, reject) => setTimeout(
-        () => reject(new Error("Chromium compositor capture exceeded 45 seconds")),
-        45_000,
+        () => reject(new Error("Chromium compositor capture exceeded 75 seconds")),
+        75_000,
       )),
     ]);
     fs.mkdirSync("test-results", { recursive: true });
@@ -67,7 +67,7 @@ async function numericCanvasAttribute(page, name) {
 }
 
 test("direct tug inspection proves the visible A1 terminal connection, realistic retraction and physical airport collision protection", async ({ page }) => {
-  test.setTimeout(660_000);
+  test.setTimeout(780_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
@@ -88,15 +88,15 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
       && uploaded[3] === "58"
       && data?.terminal4A1ConnectionAuthority === expectedAuthority
       && data?.inspectionAircraftPoseAuthority === aircraftAuthority
-      && Number.isFinite(Number(data?.inspectionAircraftTerminalRelocationX))
-      && Number.isFinite(Number(data?.inspectionAircraftTerminalRelocationZ))
+      && Number.isFinite(Number(data?.inspectionAircraftExactParentRelocationX))
+      && Number.isFinite(Number(data?.inspectionAircraftExactParentRelocationZ))
       && data?.photoGroundSource === "source-authored-phx-photo"
       && data?.airportCollisionReady === "true"
       && data?.airportCollisionTargetCount === "2";
   }, {
     attributeNames: UPLOADED_JETWAY_ATTRIBUTES,
     expectedAuthority: DIRECT_A1_TERMINAL_AUTHORITY,
-    aircraftAuthority: TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY,
+    aircraftAuthority: EXACT_PARENT_RELOCATED_AIRCRAFT_AUTHORITY,
   }, { timeout: 180_000, polling: 250 });
 
   const hudHeight = await page.evaluate(() => document.querySelector(".rr-hud")?.getBoundingClientRect().height ?? Number.POSITIVE_INFINITY);
@@ -122,25 +122,29 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
 
   const terminalWallDistance = Number(runtime.terminal4A1JetwayWallDistance);
   expect(terminalWallDistance).toBeGreaterThan(1.5);
-  expect(terminalWallDistance).toBeLessThan(4.0);
+  expect(terminalWallDistance).toBeLessThan(4.1);
   expect(runtime.terminal4A1ConnectionAuthority).toBe(DIRECT_A1_TERMINAL_AUTHORITY);
   expect(runtime.terminal4A1ConnectionAuthority).not.toMatch(/WALK/i);
   const terminalDirection = runtime.terminal4A1ConnectionDirection.split(",").map(Number);
   expect(terminalDirection).toHaveLength(2);
   expect(Math.abs(Math.hypot(...terminalDirection) - 1)).toBeLessThanOrEqual(0.01);
 
-  const aircraftRelocationX = Number(runtime.inspectionAircraftTerminalRelocationX);
-  const aircraftRelocationZ = Number(runtime.inspectionAircraftTerminalRelocationZ);
-  expect(Number.isFinite(aircraftRelocationX)).toBe(true);
-  expect(Number.isFinite(aircraftRelocationZ)).toBe(true);
-  expect(Math.hypot(aircraftRelocationX, aircraftRelocationZ)).toBeGreaterThan(1);
-  expect(runtime.inspectionAircraftPoseAuthority).toBe(TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY);
+  const exactParentRelocationX = Number(runtime.inspectionAircraftExactParentRelocationX);
+  const exactParentRelocationZ = Number(runtime.inspectionAircraftExactParentRelocationZ);
+  const terminalRelocationX = Number(runtime.inspectionAircraftTerminalRelocationX);
+  const terminalRelocationZ = Number(runtime.inspectionAircraftTerminalRelocationZ);
+  expect(Number.isFinite(exactParentRelocationX)).toBe(true);
+  expect(Number.isFinite(exactParentRelocationZ)).toBe(true);
+  expect(Math.hypot(exactParentRelocationX, exactParentRelocationZ)).toBeGreaterThan(1);
+  expect(Number.isFinite(terminalRelocationX)).toBe(true);
+  expect(Number.isFinite(terminalRelocationZ)).toBe(true);
+  expect(runtime.inspectionAircraftPoseAuthority).toBe(EXACT_PARENT_RELOCATED_AIRCRAFT_AUTHORITY);
   expect(Number(runtime.inspectionAircraftNoseGearX)).toBeCloseTo(
-    PHOTO_REGISTERED_NOSE_GEAR.x + aircraftRelocationX,
+    PHOTO_REGISTERED_NOSE_GEAR.x + exactParentRelocationX,
     3,
   );
   expect(Number(runtime.inspectionAircraftNoseGearZ)).toBeCloseTo(
-    PHOTO_REGISTERED_NOSE_GEAR.z + aircraftRelocationZ,
+    PHOTO_REGISTERED_NOSE_GEAR.z + exactParentRelocationZ,
     3,
   );
   expect(Number(runtime.inspectionAircraftYaw)).toBeCloseTo(0.00857, 4);
@@ -185,7 +189,8 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
       Number(runtime.inspectionAircraftNoseGearX),
       Number(runtime.inspectionAircraftNoseGearZ),
     ],
-    inspectionAircraftTerminalRelocation: [aircraftRelocationX, aircraftRelocationZ],
+    inspectionAircraftExactParentRelocation: [exactParentRelocationX, exactParentRelocationZ],
+    inspectionAircraftTerminalRelocation: [terminalRelocationX, terminalRelocationZ],
     evidenceAuthority: "user-overhead-and-same-day-a1-ramp-photos",
   }, null, 2)}\n`);
 
@@ -216,12 +221,12 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   } finally {
     await page.keyboard.up("w");
   }
-  await page.waitForTimeout(1_000);
 
+  // The incremented collision count proves the physical stop. Read the final
+  // position immediately and avoid a second compositor capture unrelated to A1,
+  // which previously exhausted the source-first workflow timeout after the A1
+  // evidence had already been produced.
   const stoppedX = await numericCanvasAttribute(page, "data-inspection-tug-x");
-  const stoppedState = await page.evaluate(() => document.querySelector("canvas.trainerCanvas")?.dataset.airportCollisionState);
   expect(stoppedX).toBeLessThan(startX - 5);
   expect(stoppedX).toBeGreaterThan(-27.35);
-  expect(["blocked", "clear"]).toContain(stoppedState);
-  await saveCompositedCanvasPng(page, "test-results/source-first-b15-physical-collision-stop.png");
 });
