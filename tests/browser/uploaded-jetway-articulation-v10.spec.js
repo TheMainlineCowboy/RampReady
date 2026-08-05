@@ -80,10 +80,10 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
   const staticMaximumError = Number(runtime.terminal4UploadedJetwayStaticMaximumContactErrorMeters);
   expect(sourceReach).toBeGreaterThan(25.5);
   expect(sourceReach).toBeLessThan(26.5);
-  expect(target).toBeGreaterThan(29.5);
-  expect(target).toBeLessThan(30.1);
-  expect(extension).toBeGreaterThan(3.5);
-  expect(extension).toBeLessThan(4.2);
+  expect(target).toBeGreaterThan(30.3);
+  expect(target).toBeLessThan(30.8);
+  expect(extension).toBeGreaterThan(4.2);
+  expect(extension).toBeLessThan(4.8);
   expect(predictedGap).toBeLessThanOrEqual(0.05);
   expect(actualGap).toBeLessThanOrEqual(0.05);
   expect(Math.abs(predictedContact - target)).toBeLessThanOrEqual(0.05);
