@@ -35,6 +35,15 @@ async function captureCanvas(page, path) {
   }
 }
 
+async function captureInspectionPreset(page, inspectionLocation, presetId, outputPath) {
+  await inspectionLocation.selectOption(presetId);
+  await page.waitForFunction((expectedPreset) => (
+    document.querySelector("canvas.trainerCanvas")?.dataset?.inspectionPreset === expectedPreset
+  ), presetId, { timeout: 30_000, polling: 100 });
+  await page.waitForTimeout(2_000);
+  await captureCanvas(page, outputPath);
+}
+
 test("the exact supplied A1 jetway telescopes to the aircraft door in authored part order", async ({ page }) => {
   test.setTimeout(600_000);
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -107,6 +116,24 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
   await page.waitForTimeout(2_000);
   await page.addStyleTag({ content: ".rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}" });
   await captureCanvas(page, "test-results/uploaded-jetway-a1-articulated-v10.png");
+  await captureInspectionPreset(
+    page,
+    inspectionLocation,
+    "a14",
+    "test-results/uploaded-jetway-a-concourse-static-fleet-v10.png",
+  );
+  await captureInspectionPreset(
+    page,
+    inspectionLocation,
+    "b14",
+    "test-results/uploaded-jetway-b-concourse-static-fleet-v10.png",
+  );
+  await captureInspectionPreset(
+    page,
+    inspectionLocation,
+    "b15",
+    "test-results/uploaded-jetway-b15-static-fleet-v10.png",
+  );
 
   fs.writeFileSync("test-results/uploaded-jetway-a1-articulated-v10.json", `${JSON.stringify({
     authority: runtime.terminal4UploadedJetwayArticulationAuthority,
@@ -118,6 +145,9 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
     predictedContact,
     actualContact,
     staticMaximumError,
+    verifiedModelCount: Number(runtime.terminal4UploadedJetwayVerifiedModelCount),
+    staticArticulatedGateCount: Number(runtime.terminal4UploadedJetwayStaticArticulatedGateCount),
     centers,
+    evidenceViews: ["a1Connection", "a14", "b14", "b15"],
   }, null, 2)}\n`);
 });
