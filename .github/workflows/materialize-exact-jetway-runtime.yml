@@ -5,6 +5,7 @@ on:
     branches:
       - fix/exact-airport-jetway-glb
     paths:
+      - 'src/environment/uploadedAirportJetwayArticulationV10.js'
       - 'scripts/prepare-phx-stand-alignment.mjs'
       - 'scripts/prepare-uploaded-airport-jetway-articulation-v10.mjs'
       - 'tests/browser/uploaded-jetway-articulation-v10.spec.js'
