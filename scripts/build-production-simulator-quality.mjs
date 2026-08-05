@@ -71,9 +71,11 @@ try {
   await runNode("scripts/prepare-terminal4-ramp-facade-v16.mjs");
   await runNode("scripts/prepare-terminal4-b-concourse-extension-v17.mjs");
   await runNode("scripts/prepare-terminal4-attachment-evidence-v14.mjs");
-  // Run this last so legacy source-contract preparation cannot overwrite the
-  // door coordinates measured directly from the production aircraft model.
+  // Run these last so legacy source-contract preparation cannot overwrite the
+  // door coordinates measured directly from the production aircraft model or
+  // reject the resulting bounded 28.935 m whole-assembly relocation.
   await runNode("scripts/prepare-crj-model-measured-door-v1.mjs");
+  await runNode("scripts/prepare-a1-measured-door-relocation-bound-v1.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
   buildError = error;
@@ -102,4 +104,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, installed the complete authored A1 assembly with the Rotunda terminal-side and Cab apron-side, targeted the cab to the forward-left door measured from the authored CRJ model instead of the wing area, photo-registered the terminal joint with a compact fixed vestibule, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly.");
+console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, installed the complete authored A1 assembly with the Rotunda terminal-side and Cab apron-side, targeted the cab to the forward-left door measured from the authored CRJ model instead of the wing area, accepted only the bounded whole-assembly relocation needed for that measured target, photo-registered the terminal joint with a compact fixed vestibule, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly.");
