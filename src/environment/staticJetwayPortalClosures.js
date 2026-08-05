@@ -1,4 +1,5 @@
-const STATIC_PORTAL_AUTHORITY = "57-static-terminal-and-aircraft-portals-closed-v2";
+const STATIC_PORTAL_AUTHORITY = "57-static-terminal-portals-paired-vestibule-doors-v1";
+const STATIC_CAB_CLOSURE_AUTHORITY = "57-static-aircraft-facing-cab-portals-closed-v1";
 
 function clamp(value, minimum, maximum) {
   return Math.max(minimum, Math.min(maximum, Number(value) || 0));
@@ -46,6 +47,7 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
       windowCount: Number(existing.userData.windowCount || 0),
       cabPanelCount: Number(existing.userData.cabPanelCount || 0),
       cabWindowCount: Number(existing.userData.cabWindowCount || 0),
+      cabClosureAuthority: existing.userData.cabClosureAuthority || "missing",
     };
   }
 
@@ -88,10 +90,9 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
       });
     }
 
-    // The exact supplied GLB has an authored open aircraft interface. Static
-    // parked jetways must not present that large empty aperture to the apron.
-    // Close it at the already-articulated contact distance without touching
-    // Cab, Tunnel A/B/C, Rotunda, geometry, hierarchy, UVs or node transforms.
+    // Close the aircraft-facing cab aperture at the already-articulated static
+    // contact point. These are separate instanced closure meshes: no supplied
+    // GLB node, geometry, hierarchy, UV, material assignment or transform is changed.
     const cabYaw = Number(placement.yaw) || 0;
     const cabForwardX = Math.sin(cabYaw);
     const cabForwardZ = Math.cos(cabYaw);
@@ -200,6 +201,7 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
     buildInstancedBoxes(THREE, "StaticJetwayCabClosureJambs", cabBellowsMaterial, cabJambTransforms),
   );
   group.userData.authority = STATIC_PORTAL_AUTHORITY;
+  group.userData.cabClosureAuthority = STATIC_CAB_CLOSURE_AUTHORITY;
   group.userData.gateCount = staticPlacements.length;
   group.userData.batchCount = group.children.length;
   group.userData.panelCount = doorTransforms.length;
@@ -213,6 +215,7 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
 
   return {
     authority: STATIC_PORTAL_AUTHORITY,
+    cabClosureAuthority: STATIC_CAB_CLOSURE_AUTHORITY,
     gateCount: staticPlacements.length,
     batchCount: group.children.length,
     panelCount: doorTransforms.length,
@@ -224,3 +227,4 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
 }
 
 export { STATIC_PORTAL_AUTHORITY as STATIC_JETWAY_PORTAL_CLOSURE_AUTHORITY };
+export { STATIC_CAB_CLOSURE_AUTHORITY as STATIC_JETWAY_CAB_CLOSURE_AUTHORITY };
