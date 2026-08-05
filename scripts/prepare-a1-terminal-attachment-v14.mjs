@@ -55,7 +55,8 @@ if (!source.includes(marker)) {
       node.localToWorld(c);
       triangle.set(a, b, c);
       triangle.getNormal(normal);
-      // Terminal attachment must land on a facade, never a roof, floor or ramp slab.
+      // Terminal attachment must land on a facade, never a roof, floor, ramp,
+      // or the elevated T4_WALK corridor that was previously forced at A1.
       if (Math.abs(normal.y) > 0.72) continue;
       const minimumY = Math.min(a.y, b.y, c.y);
       const maximumY = Math.max(a.y, b.y, c.y);
@@ -83,8 +84,6 @@ if (!source.includes(marker)) {
   });
   if (nearest) return nearest;
 
-  // Conservative fallback for incomplete legacy triangles. This retains the
-  // prior radial behavior but only accepts actual structural facade materials.
   const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();
   const cast = (direction, far = 48) => {
     const raycaster = new THREE.Raycaster(origin, direction, 0.05, far);
@@ -122,15 +121,31 @@ if (!source.includes(marker)) {
   source = `${source.slice(0, start)}${replacement}${source.slice(end)}`;
 }
 
+// Remove the old A1-only override that forced the jetway to the elevated
+// T4_WALK portal. A1 must use the same nearest structural terminal-facade
+// solution as every other gate.
+const falseWalkwayOverride = /\n    if \(jetway\.g === "A1"\) \{\n      const exactWalkwayPortalX = -30\.16857013;[\s\S]*?\n    \}\n    const terminalWallDistance/;
+if (falseWalkwayOverride.test(source)) {
+  source = source.replace(falseWalkwayOverride, "\n    const terminalWallDistance");
+}
+
 for (const token of [
   marker,
   "Terminal attachment must land on a facade",
   "structural-facade-raycast-fallback-v14",
 ]) {
   if (!source.includes(token)) {
-    throw new Error(`${jetwayPath}: A1 terminal attachment v14 token missing: ${token}`);
+    throw new Error(`${jetwayPath}: A1 terminal attachment token missing: ${token}`);
+  }
+}
+for (const forbidden of [
+  "exact-T4_WALK-A1-terminal-portal-v25",
+  "exactWalkwayPortalX",
+]) {
+  if (source.includes(forbidden)) {
+    throw new Error(`${jetwayPath}: false A1 walkway override remains: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
-console.log("Prepared A1 terminal attachment v14 using the nearest real vertical Terminal 4 wall triangle, with structural-only raycast fallback.");
+console.log("Prepared A1 terminal attachment using the nearest real vertical Terminal 4 wall and removed the false T4_WALK override.");
