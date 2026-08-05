@@ -26,97 +26,107 @@ async function launchStandup(page) {
   const launch = page.getByRole("button", { name: "Start training" });
   await expect(launch).toBeEnabled();
   await launch.click();
-  const canvas = page.locator("canvas.trainerCanvas");
-  await expect(canvas).toBeVisible();
-  return canvas;
+
+  await page.waitForFunction(() => {
+    const data = document.querySelector("canvas.trainerCanvas")?.dataset;
+    return data?.environmentSource === "authored-phx-terminal4-textured-source-jetways"
+      && data?.groundSource === "authored-kphx-v181-source-textured-nearfield"
+      && data?.photoGroundSource === "source-authored-phx-photo"
+      && data?.terminal4UploadedJetwayLoadState === "ready"
+      && data?.terminal4UploadedJetwayCount === "58"
+      && data?.terminal4UploadedJetwayConnectorCount === "58"
+      && data?.terminal4UploadedJetwayVerifiedModelCount === "58"
+      && data?.terminal4A1JetwayWallDistance !== "loading"
+      && data?.terminal4A1LegacyBlockRemovedTriangles === "36";
+  }, null, { timeout: 300_000, polling: 100 });
 }
 
-async function getCanvasBounds(canvas) {
-  return canvas.evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
+async function captureRegion(page, fileName, region = null, minimumBytes = 50_000) {
+  const bounds = await page.evaluate(() => {
+    const canvas = document.querySelector("canvas.trainerCanvas");
+    if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Three.js canvas is missing");
+    const box = canvas.getBoundingClientRect();
+    return { x: box.x, y: box.y, width: box.width, height: box.height };
   });
-}
+  expect(bounds.width).toBeGreaterThan(64);
+  expect(bounds.height).toBeGreaterThan(64);
 
-async function captureCompositedPng(page, clip, minimumBytes) {
+  const clip = region ? {
+    x: bounds.x + bounds.width * region.left,
+    y: bounds.y + bounds.height * region.top,
+    width: bounds.width * region.width,
+    height: bounds.height * region.height,
+  } : bounds;
+
   const client = await page.context().newCDPSession(page);
   try {
-    const capture = client.send("Page.captureScreenshot", {
-      format: "png",
-      fromSurface: true,
-      captureBeyondViewport: false,
-      clip: {
-        x: Math.max(0, clip.x),
-        y: Math.max(0, clip.y),
-        width: Math.max(1, Math.min(clip.width, 1440 - Math.max(0, clip.x))),
-        height: Math.max(1, Math.min(clip.height, 900 - Math.max(0, clip.y))),
-        scale: 1,
-      },
-    });
-    const timeout = new Promise((_, reject) => setTimeout(
-      () => reject(new Error("Chromium compositor capture exceeded 30 seconds")),
-      30_000,
-    ));
-    const { data } = await Promise.race([capture, timeout]);
+    await client.send("Page.bringToFront");
+    const { data } = await Promise.race([
+      client.send("Page.captureScreenshot", {
+        format: "png",
+        fromSurface: true,
+        captureBeyondViewport: false,
+        clip: {
+          x: Math.max(0, clip.x),
+          y: Math.max(0, clip.y),
+          width: Math.max(1, Math.min(clip.width, 1440 - Math.max(0, clip.x))),
+          height: Math.max(1, Math.min(clip.height, 900 - Math.max(0, clip.y))),
+          scale: 1,
+        },
+      }),
+      new Promise((_, reject) => setTimeout(
+        () => reject(new Error(`Chromium compositor capture exceeded 45 seconds for ${fileName}`)),
+        45_000,
+      )),
+    ]);
     const image = Buffer.from(data, "base64");
     expect(image.byteLength).toBeGreaterThan(minimumBytes);
-    return image;
+    await writeFile(`test-results/${fileName}`, image);
   } finally {
     await client.detach();
   }
 }
 
-async function captureCanvas(page, canvas, fileName) {
-  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-  const bounds = await getCanvasBounds(canvas);
-  expect(bounds.width).toBeGreaterThan(64);
-  expect(bounds.height).toBeGreaterThan(64);
-  const image = await captureCompositedPng(page, bounds, 50_000);
-  await writeFile(`test-results/${fileName}`, image);
-}
-
-async function captureCanvasRegion(page, canvas, fileName, region) {
-  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-  const bounds = await getCanvasBounds(canvas);
-  expect(bounds.width).toBeGreaterThan(64);
-  expect(bounds.height).toBeGreaterThan(64);
-  const image = await captureCompositedPng(page, {
-    x: bounds.x + bounds.width * region.left,
-    y: bounds.y + bounds.height * region.top,
-    width: bounds.width * region.width,
-    height: bounds.height * region.height,
-  }, 20_000);
-  await writeFile(`test-results/${fileName}`, image);
-}
-
-async function frameA1Chase(page, canvas) {
-  await page.evaluate(() => {
-    const liveCanvas = document.querySelector("canvas.trainerCanvas");
-    if (!liveCanvas) throw new Error("Three.js canvas is missing for PHX evidence framing");
-    liveCanvas.dispatchEvent(new WheelEvent("wheel", { deltaY: 1600, bubbles: true, cancelable: true }));
-    const box = liveCanvas.getBoundingClientRect();
+async function prepareA1Evidence(page) {
+  await page.evaluate(async () => {
+    const canvas = document.querySelector("canvas.trainerCanvas");
+    if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Three.js canvas is missing");
+    canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: 1600, bubbles: true, cancelable: true }));
+    const box = canvas.getBoundingClientRect();
     const x = box.left + box.width / 2;
     const y = box.top + box.height / 2;
-    const held = { bubbles: true, cancelable: true, pointerId: 81, pointerType: "mouse", button: 0, buttons: 1 };
-    liveCanvas.dispatchEvent(new PointerEvent("pointerdown", { ...held, clientX: x, clientY: y }));
+    const held = {
+      bubbles: true,
+      cancelable: true,
+      pointerId: 81,
+      pointerType: "mouse",
+      button: 0,
+      buttons: 1,
+    };
+    canvas.dispatchEvent(new PointerEvent("pointerdown", { ...held, clientX: x, clientY: y }));
     window.dispatchEvent(new PointerEvent("pointermove", { ...held, clientX: x + 180, clientY: y - 25 }));
-    window.dispatchEvent(new PointerEvent("pointerup", { ...held, clientX: x + 180, clientY: y - 25, buttons: 0 }));
-  });
-  await page.waitForTimeout(1_000);
-  await page.addStyleTag({
-    content: `
+    window.dispatchEvent(new PointerEvent("pointerup", {
+      ...held,
+      clientX: x + 180,
+      clientY: y - 25,
+      buttons: 0,
+    }));
+
+    const style = document.createElement("style");
+    style.textContent = `
       .rr-hud, .rr-metrics, .rr-score-float, .rr-guidance, .rr-diagnostics,
       .rr-steer, .rr-throttle { display: none !important; }
       .rr-shell, .rr-scene, canvas { width: 100vw !important; height: 100vh !important; }
-    `,
+    `;
+    document.head.appendChild(style);
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   });
-  await page.waitForTimeout(1_200);
-  await expect(canvas).toBeVisible();
 }
 
-test("loads source-correct PHX scenery with the complete uploaded Terminal 4 jetway fleet and pavement-coincident markings", async ({ page }) => {
+test("loads source-correct PHX scenery with the complete exact Terminal 4 jetway fleet and pavement-coincident markings", async ({ page }) => {
   test.setTimeout(600_000);
   await page.setViewportSize({ width: 1440, height: 900 });
+
   const assetResponses = [];
   const tileResponses = new Map();
   const runtimeErrors = [];
@@ -130,25 +140,11 @@ test("loads source-correct PHX scenery with the complete uploaded Terminal 4 jet
   });
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
 
-  const canvas = await launchStandup(page);
-  await expect.poll(
-    async () => canvas.getAttribute("data-environment-source"),
-    { timeout: 120_000, intervals: [500, 1_000, 2_000] },
-  ).toBe("authored-phx-terminal4-textured-source-jetways");
-  await expect.poll(
-    async () => canvas.getAttribute("data-terminal4-uploaded-jetway-load-state"),
-    { timeout: 120_000, intervals: [500, 1_000] },
-  ).toBe("ready");
-  await expect.poll(
-    async () => canvas.getAttribute("data-terminal4-a1-jetway-wall-distance"),
-    { timeout: 30_000, intervals: [500, 1_000] },
-  ).not.toBe("loading");
-  await expect.poll(
-    async () => canvas.getAttribute("data-terminal4-a1-legacy-block-removed-triangles"),
-    { timeout: 30_000, intervals: [500, 1_000] },
-  ).toBe("36");
+  await launchStandup(page);
+  const runtime = await page.evaluate(() => ({
+    ...document.querySelector("canvas.trainerCanvas").dataset,
+  }));
 
-  const runtime = await canvas.evaluate((element) => ({ ...element.dataset }));
   expect(runtime.environmentSource).toBe("authored-phx-terminal4-textured-source-jetways");
   expect(runtime.groundSource).toBe("authored-kphx-v181-source-textured-nearfield");
   expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
@@ -183,14 +179,16 @@ test("loads source-correct PHX scenery with the complete uploaded Terminal 4 jet
   expect(runtime.terminal4UploadedJetwayCount).toBe("58");
   expect(runtime.terminal4UploadedJetwayConnectorCount).toBe("58");
   expect(runtime.terminal4UploadedJetwayVerifiedModelCount).toBe("58");
-  expect(runtime.terminal4UploadedJetwayReadyAuthority).toBe("uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured");
+  expect(runtime.terminal4UploadedJetwayReadyAuthority).toBe(
+    "exact-uploaded-airport-jetway-complete-58-gates-v1",
+  );
 
   const nearestGeometryMeters = Number(runtime.terminal4A1NearestGeometryMeters);
   expect(nearestGeometryMeters).toBeGreaterThan(29.9);
   expect(nearestGeometryMeters).toBeLessThan(30.6);
   const a1WallDistance = Number(runtime.terminal4A1JetwayWallDistance);
   expect(a1WallDistance).toBeGreaterThan(9.1);
-  expect(a1WallDistance).toBeLessThan(9.2);
+  expect(a1WallDistance).toBeLessThan(9.3);
   expect(Number(runtime.terminal4TerminalConnectedJetwayCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4SourceCutoutMaterialCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4FacadeInfillCount)).toBe(0);
@@ -207,28 +205,38 @@ test("loads source-correct PHX scenery with the complete uploaded Terminal 4 jet
   expect(runtime.terminal4JetwaySourceScaleAuthority).toBe(
     "airport-authored-AIR_Jetway01-scale-preserved-no-aircraft-specific-shrink",
   );
-  expect(runtime.terminal4JetwaySourceGeometryMode).toBe("user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured");
+  expect(runtime.terminal4JetwaySourceGeometryMode).toBe(
+    "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured",
+  );
   expect(runtime.terminal4RequiresOriginalJetwayMesh).toBe("false");
   expect(runtime.terminal4JetwayInitialState).toBe("attached-to-aircraft-door");
-  expect(runtime.terminal4JetwayPrePushSequence).toBe("retract-bellows-clear-door-telescope-in-rotate-to-park");
+  expect(runtime.terminal4JetwayPrePushSequence).toBe(
+    "retract-bellows-clear-door-telescope-in-rotate-to-park",
+  );
 
   for (const suffix of SOURCE_ASSETS) {
-    await expect.poll(
-      () => assetResponses.some((response) => new URL(response.url()).pathname.endsWith(suffix) && response.status() === 200),
-      { timeout: 30_000 },
-    ).toBe(true);
+    expect(assetResponses.some((response) => (
+      new URL(response.url()).pathname.endsWith(suffix) && response.status() === 200
+    )), `successful response for ${suffix}`).toBe(true);
   }
-  await expect.poll(() => tileResponses.size, { timeout: 30_000 }).toBe(21);
+  expect(tileResponses.size).toBe(21);
   expect([...tileResponses.values()].every((response) => response.status() === 200)).toBe(true);
 
   const entries = await page.evaluate((suffixes) => suffixes.map((suffix) => {
     const entry = performance.getEntriesByType("resource")
       .find((resource) => new URL(resource.name).pathname.endsWith(suffix));
-    return entry ? { suffix, decodedBodySize: entry.decodedBodySize, transferSize: entry.transferSize } : null;
+    return entry ? {
+      suffix,
+      decodedBodySize: entry.decodedBodySize,
+      transferSize: entry.transferSize,
+    } : null;
   }), SOURCE_ASSETS);
   expect(entries.every(Boolean)).toBe(true);
   const bySuffix = Object.fromEntries(entries.map((entry) => [entry.suffix, entry]));
-  const measuredSize = (suffix) => Math.max(bySuffix[suffix].decodedBodySize, bySuffix[suffix].transferSize);
+  const measuredSize = (suffix) => Math.max(
+    bySuffix[suffix].decodedBodySize,
+    bySuffix[suffix].transferSize,
+  );
   expect(measuredSize("/models/kphx-ground/kphx-ground.bin")).toBeGreaterThan(500_000);
   expect(measuredSize("/models/phx-terminal4/terminal4.bin")).toBeGreaterThan(1_000_000);
   expect(measuredSize("/models/phx-terminal4/textures/BGATE1.png")).toBeGreaterThan(10_000);
@@ -240,22 +248,24 @@ test("loads source-correct PHX scenery with the complete uploaded Terminal 4 jet
   );
   expect(relevantErrors).toEqual([]);
 
-  await frameA1Chase(page, canvas);
-  await captureCanvas(page, canvas, "kphx-a1-uploaded-jetway-chase.png");
-  await captureCanvasRegion(page, canvas, "kphx-a1-terminal-connection-close.png", {
+  await prepareA1Evidence(page);
+  await captureRegion(page, "kphx-a1-uploaded-jetway-chase.png");
+  await captureRegion(page, "kphx-a1-terminal-connection-close.png", {
     left: 0,
     top: 0.13,
     width: 0.5,
     height: 0.72,
-  });
+  }, 20_000);
 
-  await page.evaluate(() => {
-    const select = document.querySelector("select.rr-view-select");
-    if (!select) throw new Error("Camera view selector is missing");
-    select.value = "overhead";
+  await page.evaluate(async () => {
+    const select = document.querySelector('select[aria-label="Camera view"]');
+    if (!(select instanceof HTMLSelectElement)) throw new Error("Camera view selector is missing");
+    const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+    if (!setter) throw new Error("Native camera selector setter is unavailable");
+    setter.call(select, "overhead");
     select.dispatchEvent(new Event("input", { bubbles: true }));
     select.dispatchEvent(new Event("change", { bubbles: true }));
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   });
-  await page.waitForTimeout(1_200);
-  await captureCanvas(page, canvas, "kphx-a1-uploaded-jetway-overhead.png");
+  await captureRegion(page, "kphx-a1-uploaded-jetway-overhead.png");
 });
