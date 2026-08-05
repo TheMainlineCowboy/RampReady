@@ -150,7 +150,9 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
     const start = position();
     await holdKey("w", "KeyW", 1_200);
     const forward = position();
-    await holdKey("s", "KeyS", 1_200);
+    // Reverse longer than forward so the tug first cancels residual forward
+    // velocity, then proves measurable motion in the opposite direction.
+    await holdKey("s", "KeyS", 2_000);
     const reverse = position();
 
     nativeSelect(camera, "overhead");
