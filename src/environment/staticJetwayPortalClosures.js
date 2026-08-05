@@ -1,5 +1,5 @@
 const STATIC_PORTAL_AUTHORITY = "57-static-terminal-portals-paired-vestibule-doors-v1";
-const STATIC_CAB_CLOSURE_AUTHORITY = "57-static-aircraft-facing-cab-portals-closed-v1";
+const STATIC_CAB_CLOSURE_AUTHORITY = "57-static-aircraft-facing-cab-portals-closed-oversized-forward-v2";
 
 function clamp(value, minimum, maximum) {
   return Math.max(minimum, Math.min(maximum, Number(value) || 0));
@@ -90,54 +90,54 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
       });
     }
 
-    // Close the aircraft-facing cab aperture at the already-articulated static
-    // contact point. These are separate instanced closure meshes: no supplied
-    // GLB node, geometry, hierarchy, UV, material assignment or transform is changed.
+    // Close the apron-facing cab mouth beyond the authored cab face so the
+    // closure cannot remain hidden inside the supplied shell. These are
+    // separate instanced meshes; no authored GLB node or transform is changed.
     const cabYaw = Number(placement.yaw) || 0;
     const cabForwardX = Math.sin(cabYaw);
     const cabForwardZ = Math.cos(cabYaw);
     const cabRightX = Math.cos(cabYaw);
     const cabRightZ = -Math.sin(cabYaw);
     const contactDistance = finitePositive(placement.bridgeEnd, 18);
-    const cabFaceDistance = contactDistance - 0.12;
+    const cabFaceDistance = contactDistance + 0.38;
     const cabFaceX = placement.x + cabForwardX * cabFaceDistance;
     const cabFaceZ = placement.z + cabForwardZ * cabFaceDistance;
-    const cabCenterY = centerY + 0.04;
+    const cabCenterY = centerY + 0.02;
 
     cabPanelTransforms.push({
       position: [cabFaceX, cabCenterY, cabFaceZ],
       yaw: cabYaw,
-      scale: [2.42, 2.46, 0.14],
+      scale: [3.4, 3.15, 0.2],
     });
     cabWindowTransforms.push({
       position: [
-        cabFaceX + cabForwardX * 0.085,
-        cabCenterY + 0.2,
-        cabFaceZ + cabForwardZ * 0.085,
+        cabFaceX + cabForwardX * 0.12,
+        cabCenterY + 0.22,
+        cabFaceZ + cabForwardZ * 0.12,
       ],
       yaw: cabYaw,
-      scale: [1.68, 1.2, 0.035],
+      scale: [2.35, 1.65, 0.045],
     });
     for (const vertical of [-1, 1]) {
       cabHeaderTransforms.push({
         position: [
-          cabFaceX + cabForwardX * 0.1,
-          cabCenterY + vertical * 1.16,
-          cabFaceZ + cabForwardZ * 0.1,
+          cabFaceX + cabForwardX * 0.14,
+          cabCenterY + vertical * 1.48,
+          cabFaceZ + cabForwardZ * 0.14,
         ],
         yaw: cabYaw,
-        scale: [2.68, 0.22, 0.18],
+        scale: [3.7, 0.28, 0.24],
       });
     }
     for (const side of [-1, 1]) {
       cabJambTransforms.push({
         position: [
-          cabFaceX + cabRightX * side * 1.23 + cabForwardX * 0.1,
+          cabFaceX + cabRightX * side * 1.66 + cabForwardX * 0.14,
           cabCenterY,
-          cabFaceZ + cabRightZ * side * 1.23 + cabForwardZ * 0.1,
+          cabFaceZ + cabRightZ * side * 1.66 + cabForwardZ * 0.14,
         ],
         yaw: cabYaw,
-        scale: [0.22, 2.5, 0.18],
+        scale: [0.28, 3.18, 0.24],
       });
     }
   }
