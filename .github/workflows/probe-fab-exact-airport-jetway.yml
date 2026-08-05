@@ -1,0 +1,24 @@
+name: Probe Fab Exact Airport Jetway
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/probe-fab-exact-airport-jetway.mjs'
+      - '.github/workflows/probe-fab-exact-airport-jetway.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Probe exact paid-listing distribution metadata
+        run: node scripts/probe-fab-exact-airport-jetway.mjs
