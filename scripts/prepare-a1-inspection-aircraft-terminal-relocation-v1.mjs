@@ -4,6 +4,7 @@ const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const marker = "terminal-relocated-a1-aircraft-pose-v1";
+const markerLiteral = JSON.stringify(marker);
 if (!source.includes(marker)) {
   const anchor = "        return terminal;";
   if (!source.includes(anchor)) throw new Error(`${trainerPath}: terminal-load completion anchor is missing`);
@@ -16,10 +17,10 @@ if (!source.includes(marker)) {
         const exactA1Fleet = environment.userData.authoredTerminal4Jetways;
         const exactA1RelocationX = Number(exactA1Fleet?.userData?.uploadedJetwayA1TerminalRelocationX) || 0;
         const exactA1RelocationZ = Number(exactA1Fleet?.userData?.uploadedJetwayA1TerminalRelocationZ) || 0;
-        if (inspectionRef.current && !sim.aircraft.userData.${marker}) {
+        if (inspectionRef.current && !sim.aircraft.userData[${markerLiteral}]) {
           sim.aircraft.position.x += exactA1RelocationX;
           sim.aircraft.position.z += exactA1RelocationZ;
-          sim.aircraft.userData.${marker} = true;
+          sim.aircraft.userData[${markerLiteral}] = true;
           renderer.domElement.dataset.inspectionAircraftNoseGearX = sim.aircraft.position.x.toFixed(3);
           renderer.domElement.dataset.inspectionAircraftNoseGearZ = sim.aircraft.position.z.toFixed(3);
           renderer.domElement.dataset.inspectionAircraftTerminalRelocationX = exactA1RelocationX.toFixed(3);
@@ -32,6 +33,7 @@ if (!source.includes(marker)) {
 
 for (const token of [
   marker,
+  `userData[${markerLiteral}]`,
   "uploadedJetwayA1TerminalRelocationX",
   "uploadedJetwayA1TerminalRelocationZ",
   "terminal-relocated-a1-exact-cab-registration-v1",
