@@ -65,6 +65,7 @@ try {
   await runNode("scripts/prepare-terminal4-jetway-simulator-polish.mjs");
   await runNode("scripts/prepare-a1-terminal-attachment-v14.mjs");
   await runNode("scripts/prepare-a1-photo-registered-stop-v1.mjs");
+  await runNode("scripts/prepare-a1-rotunda-vestibule-closure-v1.mjs");
   await runNode("scripts/prepare-terminal4-static-jetway-parking-v15.mjs");
   await runNode("scripts/prepare-terminal4-ramp-facade-v16.mjs");
   await runNode("scripts/prepare-terminal4-b-concourse-extension-v17.mjs");
