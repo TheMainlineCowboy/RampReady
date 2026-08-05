@@ -189,11 +189,12 @@ test("loads source-correct PHX scenery with the complete exact Terminal 4 jetway
   const a1WallDistance = Number(runtime.terminal4A1JetwayWallDistance);
   expect(a1WallDistance).toBeGreaterThan(9.1);
   expect(a1WallDistance).toBeLessThan(9.3);
-  expect(Number(runtime.terminal4TerminalConnectedJetwayCount)).toBeGreaterThan(0);
+  const terminalConnectedJetways = Number(runtime.terminal4TerminalConnectedJetwayCount);
+  expect(terminalConnectedJetways).toBeGreaterThan(0);
   expect(Number(runtime.terminal4SourceCutoutMaterialCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4FacadeInfillCount)).toBe(0);
   expect(Number(runtime.terminal4OpenServiceBayCount)).toBe(0);
-  expect(Number(runtime.terminal4LowerFacadeFitCount)).toBe(0);
+  expect(Number(runtime.terminal4LowerFacadeFitCount)).toBe(terminalConnectedJetways);
   const openFacadeCells = Number(runtime.terminal4SourceFacadeOpenCellCount);
   const closedFacadeCells = Number(runtime.terminal4SourceFacadeClosedCellCount);
   expect(openFacadeCells).toBeGreaterThan(0);
@@ -206,9 +207,9 @@ test("loads source-correct PHX scenery with the complete exact Terminal 4 jetway
     "airport-authored-AIR_Jetway01-scale-preserved-no-aircraft-specific-shrink",
   );
   expect(runtime.terminal4JetwaySourceGeometryMode).toBe(
-    "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured",
+    "exact-uploaded-airport-jetway-glb-562e3144-v1",
   );
-  expect(runtime.terminal4RequiresOriginalJetwayMesh).toBe("false");
+  expect(runtime.terminal4RequiresOriginalJetwayMesh).toBe("true");
   expect(runtime.terminal4JetwayInitialState).toBe("attached-to-aircraft-door");
   expect(runtime.terminal4JetwayPrePushSequence).toBe(
     "retract-bellows-clear-door-telescope-in-rotate-to-park",
