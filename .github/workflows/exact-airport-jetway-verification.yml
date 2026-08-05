@@ -12,6 +12,7 @@ on:
       - 'scripts/probe-exact-jetway-source-chunks.mjs'
       - 'scripts/scan-exact-jetway-history.mjs'
       - 'scripts/list-jetway-actions-artifacts.mjs'
+      - 'scripts/recover-exact-jetway-from-actions-artifacts.mjs'
       - 'scripts/verify-exact-airport-jetway-runtime.mjs'
       - 'src/**'
       - 'public/**'
@@ -26,7 +27,7 @@ permissions:
 jobs:
   verify-exact-airport-jetway:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Check out complete pull-request history
@@ -39,10 +40,10 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Inventory retained Actions artifacts
+      - name: Recover exact uploaded GLB from retained Actions artifacts
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: node scripts/list-jetway-actions-artifacts.mjs
+        run: node scripts/recover-exact-jetway-from-actions-artifacts.mjs
 
       - name: Recover exact uploaded GLB from repository history
         run: node scripts/scan-exact-jetway-history.mjs
@@ -50,8 +51,16 @@ jobs:
       - name: Inspect current original-source chunk stream
         run: node scripts/probe-exact-jetway-source-chunks.mjs
 
-      - name: Reconstruct and verify exact uploaded geometry package
-        run: node scripts/materialize-exact-airport-jetway.mjs
+      - name: Reconstruct exact uploaded geometry package when not already recovered
+        shell: bash
+        run: |
+          GLB=public/models/airport-jetway/Airport_Jetway.glb
+          EXPECTED=562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0
+          if [[ -f "$GLB" && "$(stat -c%s "$GLB")" == "31459796" && "$(sha256sum "$GLB" | awk '{print $1}')" == "$EXPECTED" ]]; then
+            echo "Exact Airport_Jetway.glb already recovered and verified."
+          else
+            node scripts/materialize-exact-airport-jetway.mjs
+          fi
 
       - name: Require exact uploaded GLB and all seven textures
         run: node scripts/verify-exact-airport-jetway-runtime.mjs
