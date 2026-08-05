@@ -1,5 +1,5 @@
 const STATIC_PORTAL_AUTHORITY = "57-static-terminal-portals-paired-vestibule-doors-v1";
-const STATIC_CAB_CLOSURE_AUTHORITY = "57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3";
+const STATIC_CAB_CLOSURE_AUTHORITY = "57-static-aircraft-facing-cab-portals-measured-exact-glb-height-caps-v4";
 
 function clamp(value, minimum, maximum) {
   return Math.max(minimum, Math.min(maximum, Number(value) || 0));
@@ -36,6 +36,38 @@ function finitePositive(value, fallback) {
   return Number.isFinite(number) && number > 0 ? number : fallback;
 }
 
+function measureExactCabClosureProfile(THREE, fleet) {
+  const a1Cab = fleet
+    .getObjectByName("UploadedAirportJetway_A1")
+    ?.getObjectByName("Cab");
+  if (!a1Cab) throw new Error("Static cab closures require the exact uploaded A1 Cab as their measurement source");
+
+  fleet.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(a1Cab);
+  const centerWorld = box.getCenter(new THREE.Vector3());
+  const sizeWorld = box.getSize(new THREE.Vector3());
+  const centerLocal = fleet.worldToLocal(centerWorld.clone());
+  const centerY = centerLocal.y;
+  const height = Math.max(4.2, sizeWorld.y + 0.28);
+  const width = 4.18;
+  const depth = 1.8;
+
+  if (!(centerY > 4.5 && centerY < 6.2)) {
+    throw new Error(`Exact uploaded Cab vertical center is invalid: ${centerY}`);
+  }
+  if (!(height > 4 && height < 5.2)) {
+    throw new Error(`Exact uploaded Cab closure height is invalid: ${height}`);
+  }
+
+  return Object.freeze({
+    authority: "a1-exact-cab-world-bounds-shared-static-profile-v1",
+    centerY,
+    width,
+    height,
+    depth,
+  });
+}
+
 export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
   const existing = fleet.getObjectByName("UploadedAirportJetwayStaticPortalClosures");
   if (existing) {
@@ -52,6 +84,7 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
   }
 
   const staticPlacements = placements.filter((placement) => placement.gate !== "A1");
+  const exactCabProfile = measureExactCabClosureProfile(THREE, fleet);
   const doorTransforms = [];
   const windowTransforms = [];
   const cabPanelTransforms = [];
@@ -90,9 +123,9 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
       });
     }
 
-    // Straddle the authored aircraft-contact plane with a thick opaque cap.
-    // This closes the aperture from either viewing side and avoids depending
-    // on an exporter-specific Cab forward-axis sign. No GLB node is changed.
+    // The static exact GLB instances all share the same measured Cab height.
+    // The old closure used rotundaY and landed about 1.1 m below the real Cab,
+    // leaving the aircraft-facing aperture visibly open despite count checks.
     const cabYaw = Number(placement.yaw) || 0;
     const cabForwardX = Math.sin(cabYaw);
     const cabForwardZ = Math.cos(cabYaw);
@@ -101,42 +134,47 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
     const contactDistance = finitePositive(placement.bridgeEnd, 18);
     const cabFaceX = placement.x + cabForwardX * contactDistance;
     const cabFaceZ = placement.z + cabForwardZ * contactDistance;
-    const cabCenterY = centerY + 0.02;
+    const cabCenterY = exactCabProfile.centerY;
+    const cabCapDepth = exactCabProfile.depth;
+    const cabCapCenterOffset = -0.32;
+    const cabCapCenterX = cabFaceX + cabForwardX * cabCapCenterOffset;
+    const cabCapCenterZ = cabFaceZ + cabForwardZ * cabCapCenterOffset;
+    const cabCapFrontOffset = cabCapCenterOffset + cabCapDepth * 0.5 + 0.035;
+    const cabFrontX = cabFaceX + cabForwardX * cabCapFrontOffset;
+    const cabFrontZ = cabFaceZ + cabForwardZ * cabCapFrontOffset;
+    const cabHalfWidth = exactCabProfile.width * 0.5;
+    const cabHalfHeight = exactCabProfile.height * 0.5;
 
     cabPanelTransforms.push({
-      position: [cabFaceX, cabCenterY, cabFaceZ],
+      position: [cabCapCenterX, cabCenterY, cabCapCenterZ],
       yaw: cabYaw,
-      scale: [3.9, 3.5, 1.45],
+      scale: [exactCabProfile.width, exactCabProfile.height, cabCapDepth],
     });
     cabWindowTransforms.push({
-      position: [
-        cabFaceX + cabForwardX * 0.76,
-        cabCenterY + 0.35,
-        cabFaceZ + cabForwardZ * 0.76,
-      ],
+      position: [cabFrontX, cabCenterY + 0.38, cabFrontZ],
       yaw: cabYaw,
       scale: [1.08, 0.72, 0.055],
     });
     for (const vertical of [-1, 1]) {
       cabHeaderTransforms.push({
         position: [
-          cabFaceX + cabForwardX * 0.78,
-          cabCenterY + vertical * 1.58,
-          cabFaceZ + cabForwardZ * 0.78,
+          cabFrontX,
+          cabCenterY + vertical * (cabHalfHeight - 0.14),
+          cabFrontZ,
         ],
         yaw: cabYaw,
-        scale: [4.05, 0.3, 0.18],
+        scale: [exactCabProfile.width + 0.18, 0.3, 0.18],
       });
     }
     for (const side of [-1, 1]) {
       cabJambTransforms.push({
         position: [
-          cabFaceX + cabRightX * side * 1.82 + cabForwardX * 0.78,
+          cabFrontX + cabRightX * side * (cabHalfWidth - 0.14),
           cabCenterY,
-          cabFaceZ + cabRightZ * side * 1.82 + cabForwardZ * 0.78,
+          cabFrontZ + cabRightZ * side * (cabHalfWidth - 0.14),
         ],
         yaw: cabYaw,
-        scale: [0.3, 3.5, 0.18],
+        scale: [0.3, exactCabProfile.height, 0.18],
       });
     }
   }
@@ -206,7 +244,10 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
   group.userData.cabSurroundPieceCount = cabHeaderTransforms.length + cabJambTransforms.length;
   group.userData.a1LeftOpen = true;
   group.userData.authoredNodeTransformCount = 0;
-  group.userData.opaqueCabCapDepthMeters = 1.45;
+  group.userData.opaqueCabCapDepthMeters = exactCabProfile.depth;
+  group.userData.measuredCabClosureProfileAuthority = exactCabProfile.authority;
+  group.userData.measuredCabClosureCenterYMeters = exactCabProfile.centerY;
+  group.userData.measuredCabClosureHeightMeters = exactCabProfile.height;
   group.userData.apronFacingOpenAreaMeters = 0;
   fleet.add(group);
 
