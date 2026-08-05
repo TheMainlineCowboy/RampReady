@@ -1,0 +1,91 @@
+name: Materialize and render exact Airport Jetway
+
+on:
+  push:
+    branches:
+      - fix/exact-airport-jetway-glb
+    paths:
+      - 'scripts/prepare-phx-stand-alignment.mjs'
+      - '.github/workflows/materialize-exact-jetway-runtime.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: materialize-exact-jetway-runtime
+  cancel-in-progress: false
+
+jobs:
+  materialize-build-render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out PR 137 branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/exact-airport-jetway-glb
+          fetch-depth: 0
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Materialize exact GLB runtime and every Terminal 4 placement
+        run: |
+          node scripts/materialize-exact-airport-jetway.mjs
+          npm run materialize:phx-terminal4
+          npm run materialize:kphx-ground
+          npm run verify:kphx-v181
+          npm run prepare:terminal4-runtime
+          node scripts/prepare-uploaded-airport-jetway-fleet.mjs
+          node scripts/verify-exact-airport-jetway-runtime.mjs
+          node scripts/verify-uploaded-airport-jetway-fleet.mjs
+          node scripts/verify-uploaded-airport-jetway-articulation-v10.mjs
+
+      - name: Commit deterministic prepared runtime
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src scripts package.json public/models/airport-jetway/Airport_Jetway.glb
+          if ! git diff --cached --quiet; then
+            git commit -m 'Materialize exact Airport Jetway runtime [skip materialize]'
+            git push origin HEAD:fix/exact-airport-jetway-glb
+          else
+            echo 'Exact Airport Jetway runtime was already fully materialized.'
+          fi
+
+      - name: Build exact browser runtime from clean prepared source
+        shell: bash
+        run: |
+          npm run build
+          if ! git diff --exit-code -- . ':!dist'; then
+            echo 'Build mutated tracked exact-runtime source after materialization.'
+            exit 1
+          fi
+
+      - name: Install Chromium verifier
+        run: |
+          npm install --no-save @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Render and measure exact A1 jetway
+        run: npx playwright test tests/browser/uploaded-jetway-articulation-v10.spec.js --reporter=line --workers=1
+
+      - name: Upload exact rendered evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exact-airport-jetway-materialized-${{ github.sha }}
+          path: |
+            test-results/
+            playwright-report/
+            public/models/airport-jetway/exact-asset-manifest.json
+          if-no-files-found: warn
+          retention-days: 3
