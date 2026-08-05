@@ -102,21 +102,11 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
     });
 
     const holdKey = async (key, code, durationMs) => {
-      window.dispatchEvent(new KeyboardEvent("keydown", {
-        key,
-        code,
-        bubbles: true,
-        cancelable: true,
-      }));
+      window.dispatchEvent(new KeyboardEvent("keydown", { key, code, bubbles: true, cancelable: true }));
       try {
         await new Promise((resolve) => setTimeout(resolve, durationMs));
       } finally {
-        window.dispatchEvent(new KeyboardEvent("keyup", {
-          key,
-          code,
-          bubbles: true,
-          cancelable: true,
-        }));
+        window.dispatchEvent(new KeyboardEvent("keyup", { key, code, bubbles: true, cancelable: true }));
       }
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     };
@@ -150,9 +140,9 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
     const start = position();
     await holdKey("w", "KeyW", 1_200);
     const forward = position();
-    // Reverse longer than forward so the tug first cancels residual forward
-    // velocity, then proves measurable motion in the opposite direction.
-    await holdKey("s", "KeyS", 2_000);
+    // Reverse long enough to cancel residual forward velocity and produce a
+    // deterministic opposite-direction displacement on slower CI/WebGL frames.
+    await holdKey("s", "KeyS", 2_800);
     const reverse = position();
 
     nativeSelect(camera, "overhead");
