@@ -3,7 +3,8 @@ import { expect, test } from "@playwright/test";
 
 const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
-const PHOTO_REGISTERED_AIRCRAFT_AUTHORITY = "photo-registered-a1-terminal-corner-stop-v1";
+const TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY = "terminal-relocated-a1-exact-cab-registration-v1";
+const PHOTO_REGISTERED_NOSE_GEAR = Object.freeze({ x: 12.353412, z: -12.486888 });
 const GROUND_SUFFIXES = ["/models/kphx-ground/kphx-ground.gltf", "/models/kphx-ground/kphx-ground.bin"];
 const PHOTO_SUFFIXES = ["/models/kphx-photo/photo-manifest.json"];
 const TERMINAL_SUFFIXES = [
@@ -42,10 +43,12 @@ async function launchStandup(page) {
       && data?.terminal4A1JetwayWallDistance !== "loading"
       && data?.terminal4A1ConnectionAuthority === expectedAuthority
       && data?.inspectionAircraftPoseAuthority === aircraftAuthority
+      && Number.isFinite(Number(data?.inspectionAircraftTerminalRelocationX))
+      && Number.isFinite(Number(data?.inspectionAircraftTerminalRelocationZ))
       && data?.terminal4A1LegacyBlockRemovedTriangles === "36";
   }, {
     expectedAuthority: DIRECT_A1_TERMINAL_AUTHORITY,
-    aircraftAuthority: PHOTO_REGISTERED_AIRCRAFT_AUTHORITY,
+    aircraftAuthority: TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY,
   }, { timeout: 300_000, polling: 100 });
 }
 
@@ -192,9 +195,20 @@ test("loads source-correct PHX scenery with the complete exact Terminal 4 jetway
   const a1TerminalDirection = runtime.terminal4A1ConnectionDirection.split(",").map(Number);
   expect(a1TerminalDirection).toHaveLength(2);
   expect(Math.abs(Math.hypot(...a1TerminalDirection) - 1)).toBeLessThanOrEqual(0.01);
-  expect(runtime.inspectionAircraftPoseAuthority).toBe(PHOTO_REGISTERED_AIRCRAFT_AUTHORITY);
-  expect(Number(runtime.inspectionAircraftNoseGearX)).toBeCloseTo(12.353, 3);
-  expect(Number(runtime.inspectionAircraftNoseGearZ)).toBeCloseTo(-12.487, 3);
+  const aircraftRelocationX = Number(runtime.inspectionAircraftTerminalRelocationX);
+  const aircraftRelocationZ = Number(runtime.inspectionAircraftTerminalRelocationZ);
+  expect(Number.isFinite(aircraftRelocationX)).toBe(true);
+  expect(Number.isFinite(aircraftRelocationZ)).toBe(true);
+  expect(Math.hypot(aircraftRelocationX, aircraftRelocationZ)).toBeGreaterThan(1);
+  expect(runtime.inspectionAircraftPoseAuthority).toBe(TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY);
+  expect(Number(runtime.inspectionAircraftNoseGearX)).toBeCloseTo(
+    PHOTO_REGISTERED_NOSE_GEAR.x + aircraftRelocationX,
+    3,
+  );
+  expect(Number(runtime.inspectionAircraftNoseGearZ)).toBeCloseTo(
+    PHOTO_REGISTERED_NOSE_GEAR.z + aircraftRelocationZ,
+    3,
+  );
   expect(Number(runtime.inspectionAircraftYaw)).toBeCloseTo(0.00857, 4);
   const terminalConnectedJetways = Number(runtime.terminal4TerminalConnectedJetwayCount);
   expect(terminalConnectedJetways).toBeGreaterThan(0);
