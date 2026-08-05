@@ -4,28 +4,28 @@ const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js
 let source = fs.readFileSync(installationPath, "utf8");
 
 const PHOTO_FIXED_VESTIBULE_METERS = 2.4;
-const PHOTO_REGISTRATION_AUTHORITY = "same-day-photo-a1-terminal-corner-registration-v4";
+const PHOTO_REGISTRATION_AUTHORITY = "same-day-photo-a1-terminal-corner-registration-v5";
 const TERMINAL_FACADE_EMBED_METERS = 0.9;
-const TERMINAL_WALL_SEAL_DEPTH_METERS = 0.18;
-const TERMINAL_WALL_SEAL_THICKNESS_METERS = 0.42;
-const TERMINAL_WALL_SEAL_MARGIN_METERS = 0.24;
+const TERMINAL_FACADE_COLLAR_DEPTH_METERS = 1.2;
+const TERMINAL_FACADE_COLLAR_APRON_OFFSET_METERS = 0.28;
+const TERMINAL_FACADE_COLLAR_MARGIN_METERS = 0.5;
 
 source = source
   .replace(
     'const INSTALLATION_AUTHORITY = "measured-terminal-facade-short-connector-grounded-exact-chain-v7";',
-    'const INSTALLATION_AUTHORITY = "photo-registered-terminal-corner-grounded-exact-chain-v11";',
+    'const INSTALLATION_AUTHORITY = "photo-registered-terminal-corner-grounded-exact-chain-v12";',
   )
   .replace(
     /const INSTALLATION_AUTHORITY = "photo-registered-terminal-corner-grounded-exact-chain-v\d+";/,
-    'const INSTALLATION_AUTHORITY = "photo-registered-terminal-corner-grounded-exact-chain-v11";',
+    'const INSTALLATION_AUTHORITY = "photo-registered-terminal-corner-grounded-exact-chain-v12";',
   )
   .replace(
     'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-short-solid-terminal-vestibule-v6";',
-    'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-straight-solid-terminal-vestibule-v10";',
+    'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-straight-solid-terminal-vestibule-v11";',
   )
   .replace(
     /const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-(?:compact|straight)-solid-terminal-vestibule-v\d+";/,
-    'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-straight-solid-terminal-vestibule-v10";',
+    'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-straight-solid-terminal-vestibule-v11";',
   )
   .replace(
     'const TERMINAL_HIDDEN_OVERLAP_METERS = 0.3;',
@@ -113,25 +113,31 @@ source = source.replace(
   );`,
 );
 
-source = source
-  .replace(
-    `    materials.interior,
-    "UploadedAirportJetwayA1TerminalPortalInterior",`,
-    `    materials.shell,
-    "UploadedAirportJetwayA1TerminalWallSeal",`,
-  )
-  .replace(
-    /terminalPoint\.x \+ mainVector\.x \* (?:0\.06|0\.72)/g,
-    `terminalPoint.x + mainVector.x * ${TERMINAL_WALL_SEAL_DEPTH_METERS}`,
-  )
-  .replace(
-    /terminalPoint\.z \+ mainVector\.z \* (?:0\.06|0\.72)/g,
-    `terminalPoint.z + mainVector.z * ${TERMINAL_WALL_SEAL_DEPTH_METERS}`,
-  )
-  .replace(
-    /\[width - 0\.3, height - 0\.3, 0\.12\]/g,
-    `[width + ${TERMINAL_WALL_SEAL_MARGIN_METERS}, height + ${TERMINAL_WALL_SEAL_MARGIN_METERS}, ${TERMINAL_WALL_SEAL_THICKNESS_METERS}]`,
-  );
+const terminalPortalPattern = /  addBox\(\n    THREE,\n    connector,\n    materials\.interior,\n    "UploadedAirportJetwayA1TerminalPortalInterior",\n    \[width - 0\.3, height - 0\.3, 0\.12\],\n    \[terminalPoint\.x \+ mainVector\.x \* 0\.06, collarPoint\.y, terminalPoint\.z \+ mainVector\.z \* 0\.06\],\n    mainFrame\.yaw,\n    false,\n  \);/;
+if (!terminalPortalPattern.test(source)) {
+  throw new Error(`${installationPath}: original terminal portal block is missing`);
+}
+source = source.replace(
+  terminalPortalPattern,
+  `  // The same-day apron view must read as one short, solid white terminal
+  // vestibule attached to the facade. A thin recessed end plate remained
+  // visible edge-on and exposed a black apron-facing recess. This opaque
+  // collar straddles the wall plane, overlaps every shell face, and leaves all
+  // authored Rotunda/tunnel/cab transforms untouched.
+  addBox(
+    THREE,
+    connector,
+    materials.shell,
+    "UploadedAirportJetwayA1TerminalFacadeOverlapCollar",
+    [width + ${TERMINAL_FACADE_COLLAR_MARGIN_METERS}, height + ${TERMINAL_FACADE_COLLAR_MARGIN_METERS}, ${TERMINAL_FACADE_COLLAR_DEPTH_METERS}],
+    [
+      terminalPoint.x - mainVector.x * ${TERMINAL_FACADE_COLLAR_APRON_OFFSET_METERS},
+      collarPoint.y,
+      terminalPoint.z - mainVector.z * ${TERMINAL_FACADE_COLLAR_APRON_OFFSET_METERS},
+    ],
+    mainFrame.yaw,
+  );`,
+);
 
 if (!source.includes("sourceA1TerminalWallDistanceMeters: sourceTerminalDistance")) {
   const reportAnchor = "    a1TerminalWallDistanceMeters: terminalDistance,";
@@ -162,8 +168,8 @@ if (!source.includes("uploadedJetwayA1PhotoRegistrationAuthority")) {
 }
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "photo-registered-terminal-corner-grounded-exact-chain-v11"',
-  'CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-straight-solid-terminal-vestibule-v10"',
+  'INSTALLATION_AUTHORITY = "photo-registered-terminal-corner-grounded-exact-chain-v12"',
+  'CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-straight-solid-terminal-vestibule-v11"',
   `TERMINAL_HIDDEN_OVERLAP_METERS = ${TERMINAL_FACADE_EMBED_METERS}`,
   `A1_PHOTO_FIXED_VESTIBULE_METERS = ${PHOTO_FIXED_VESTIBULE_METERS}`,
   `A1_PHOTO_REGISTRATION_AUTHORITY = "${PHOTO_REGISTRATION_AUTHORITY}"`,
@@ -172,10 +178,10 @@ for (const token of [
   "a1Anchor.position.x += relocationX",
   "correctedA1Placement",
   "rotundaOpening.centerX + openingDirection.x * terminalDistance",
-  "UploadedAirportJetwayA1TerminalWallSeal",
-  `terminalPoint.x + mainVector.x * ${TERMINAL_WALL_SEAL_DEPTH_METERS}`,
-  `terminalPoint.z + mainVector.z * ${TERMINAL_WALL_SEAL_DEPTH_METERS}`,
-  `[width + ${TERMINAL_WALL_SEAL_MARGIN_METERS}, height + ${TERMINAL_WALL_SEAL_MARGIN_METERS}, ${TERMINAL_WALL_SEAL_THICKNESS_METERS}]`,
+  "UploadedAirportJetwayA1TerminalFacadeOverlapCollar",
+  `[width + ${TERMINAL_FACADE_COLLAR_MARGIN_METERS}, height + ${TERMINAL_FACADE_COLLAR_MARGIN_METERS}, ${TERMINAL_FACADE_COLLAR_DEPTH_METERS}]`,
+  `terminalPoint.x - mainVector.x * ${TERMINAL_FACADE_COLLAR_APRON_OFFSET_METERS}`,
+  `terminalPoint.z - mainVector.z * ${TERMINAL_FACADE_COLLAR_APRON_OFFSET_METERS}`,
   "sourceA1TerminalWallDistanceMeters: sourceTerminalDistance",
   "uploadedJetwayA1PhotoRegistrationAuthority",
 ]) {
@@ -183,4 +189,4 @@ for (const token of [
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log(`Prepared A1 photo registration with one continuous authored bridge, a straight 2.4 m solid vestibule, and a full opaque white facade-overlap seal; retained all source-part local transforms.`);
+console.log(`Prepared A1 photo registration with one continuous authored bridge, a straight 2.4 m solid vestibule, and a full opaque white facade-overlap collar; retained all source-part local transforms.`);
