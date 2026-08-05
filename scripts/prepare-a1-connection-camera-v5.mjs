@@ -1,8 +1,8 @@
 import fs from "node:fs";
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
-const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-photo-registered-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v10";
-const A1_CAMERA_AUTHORITY = "oblique-photo-registered-terminal-corner-a1-v9";
+const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
+const A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
 const A1_RELOCATION_X = 12.353412;
 const A1_RELOCATION_Z = -12.486888;
 let source = fs.readFileSync(path, "utf8");
@@ -83,7 +83,7 @@ for (const token of [
   CANONICAL_ROUTE_AUTHORITY,
   A1_CAMERA_AUTHORITY,
 ]) {
-  if (!source.includes(token)) throw new Error(`${path}: photo-registered A1/B15 inspection preparation is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${path}: relocated A1/B15 inspection preparation is missing ${token}`);
 }
 const fixedCameraPositionCount = (source.match(/cameraPosition:\s*Object\.freeze/g) || []).length;
 const fixedCameraTargetCount = (source.match(/cameraTarget:\s*Object\.freeze/g) || []).length;
@@ -105,4 +105,4 @@ if (fixedCameraPositionCount === 2) {
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared the photo-registered A1 evidence tug and fixed camera at the relocated terminal corner, framing the compact vestibule, Rotunda, complete bridge and aircraft door.");
+console.log("Prepared the established A1 evidence preset at the photo-registered terminal-corner coordinates, framing the compact vestibule, Rotunda, complete bridge and aircraft door.");
