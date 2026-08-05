@@ -1,6 +1,7 @@
 import concourseA from "./kphxV181/concourseA.js";
 import concourseB from "./kphxV181/concourseB.js";
 import { buildAnimatedA1Jetway } from "./animatedA1Jetway.js";
+import { installUploadedAirportJetwayFleet } from "./uploadedAirportJetwayFleetReadyV2.js";
 
 export const SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE = Object.freeze({
   sourceArchive: "unmlobo-kphx1-8-1_Mu9aq.zip",
@@ -23,9 +24,16 @@ function findTerminalWallConnection(THREE, terminal, originX, originZ, preferred
   terminal.updateMatrixWorld(true);
   const origin = new THREE.Vector3(originX, height, originZ);
   const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();
-  const cast = (direction, far = 24) => {
+  const cast = (direction, far = 48) => {
     const raycaster = new THREE.Raycaster(origin, direction, 0.05, far);
-    const hit = raycaster.intersectObject(terminal, true).find((entry) => entry.object?.visible !== false);
+    const hit = raycaster.intersectObject(terminal, true).find((entry) => {
+      if (entry.object?.visible === false) return false;
+      const materials = Array.isArray(entry.object?.material)
+        ? entry.object.material
+        : [entry.object?.material];
+      const material = materials[entry.face?.materialIndex ?? 0] ?? materials[0];
+      return /BGATE|DGATE|PHX_TERM400/i.test(material?.name || "");
+    });
     if (!(hit?.distance > 0.05)) return null;
     return {
       distance: hit.distance,
@@ -61,6 +69,8 @@ function findTerminalWallConnection(THREE, terminal, originX, originZ, preferred
   const vertex = new THREE.Vector3();
   terminal.traverse((node) => {
     if (!node.isMesh || node.visible === false) return;
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    if (!materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test(material?.name || ""))) return;
     const position = node.geometry?.getAttribute?.("position");
     if (!position) return;
     for (let index = 0; index < position.count; index += 1) {
@@ -70,7 +80,7 @@ function findTerminalWallConnection(THREE, terminal, originX, originZ, preferred
       const dx = vertex.x - originX;
       const dz = vertex.z - originZ;
       const distance = Math.hypot(dx, dz);
-      if (distance > 0.05 && distance <= 24 && distance < nearestDistance) {
+      if (distance > 0.05 && distance <= 48 && distance < nearestDistance) {
         nearestDistance = distance;
         nearestX = dx / distance;
         nearestZ = dz / distance;
@@ -86,12 +96,12 @@ function findTerminalWallDistance(THREE, terminal, originX, originZ, towardX, to
   return findTerminalWallConnection(THREE, terminal, originX, originZ, towardX, towardZ, height)?.distance ?? null;
 }
 
-const CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25;
-const CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35;
+const CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 7.32;
+const CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.34;
 // The cabin and seven bellows folds extend 2.61 meters beyond bridgeEnd.
 // Keep that assembly just outside the aircraft skin instead of driving it
 // through the cockpit/fuselage centerline.
-const AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.55;
+const AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.61;
 
 // Keep only a limited set of deliberate ground-service openings. The legacy
 // gate atlas repeats the same black bay at nearly every module, which is not
@@ -141,12 +151,28 @@ function createArchedTunnelGeometry(THREE, width, height, roofRise) {
   geometry.translate(0, 0, -0.5);
   geometry.computeVertexNormals();
   const position = geometry.getAttribute("position");
+  const normal = geometry.getAttribute("normal");
   const normalizedUv = new Float32Array(position.count * 2);
   for (let index = 0; index < position.count; index += 1) {
-    normalizedUv[index * 2] = clamp(position.getX(index) / width + 0.5, 0, 1);
-    normalizedUv[index * 2 + 1] = clamp(position.getY(index) / height + 0.5, 0, 1);
+    const x = position.getX(index);
+    const y = position.getY(index);
+    const z = position.getZ(index);
+    const nx = Math.abs(normal.getX(index));
+    const ny = Math.abs(normal.getY(index));
+    const nz = Math.abs(normal.getZ(index));
+    const longitudinalShell = nz < 0.72 && (nx > 0.35 || ny > 0.2);
+    // M1DGJETWAY's recovered shell strip contains repeated vertical wall ribs.
+    // Project U along the bridge length on the visible walls/roof instead of
+    // sampling a single atlas column from constant side-wall X coordinates.
+    normalizedUv[index * 2] = longitudinalShell
+      ? clamp(z + 0.5, 0, 1)
+      : clamp(x / width + 0.5, 0, 1);
+    normalizedUv[index * 2 + 1] = longitudinalShell && ny > nx
+      ? clamp(x / width + 0.5, 0, 1)
+      : clamp(y / height + 0.5, 0, 1);
   }
   geometry.setAttribute("uv", new THREE.Float32BufferAttribute(normalizedUv, 2));
+  geometry.userData.sourceJetwayUvAuthority = "source-length-height-shell-projection-v36";
   return geometry;
 }
 
@@ -310,6 +336,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   let terminal4LowerFacadeFitCount = 0;
   let terminal4OpenServiceBayCount = 0;
   let a1AnimatedLayout = null;
+  const uploadedJetwayPlacements = [];
 
   for (const jetway of jetways) {
     const parking = parkingByGate.get(jetway.g);
@@ -356,12 +383,49 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
       -ux,
       -uz,
       rotundaY,
-    );
+    ) || {};
+    if (jetway.g === "A1") {
+      const exactWalkwayPortalX = -30.16857013;
+      const exactWalkwayPortalZ = jetway.z;
+      const exactDx = exactWalkwayPortalX - jetway.x;
+      const exactDz = exactWalkwayPortalZ - jetway.z;
+      const exactDistance = Math.hypot(exactDx, exactDz);
+      Object.assign(terminalConnection, {
+        distance: exactDistance,
+        towardX: exactDx / exactDistance,
+        towardZ: exactDz / exactDistance,
+        authority: "exact-T4_WALK-A1-terminal-portal-v25",
+      });
+    }
     const terminalWallDistance = terminalConnection?.distance ?? null;
     const connectorTowardX = terminalConnection?.towardX ?? -ux;
     const connectorTowardZ = terminalConnection?.towardZ ?? -uz;
     const connectorYaw = Math.atan2(connectorTowardX, connectorTowardZ);
-    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 18);
+    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 44);
+    const exactUploadedGateCode = [...jetway.g].reduce(
+      (value, character) => value + character.charCodeAt(0),
+      0,
+    );
+    const exactBridgeEnd = jetway.g === "A1"
+      ? bridgeEnd
+      : 11.9 + (exactUploadedGateCode % 4) * 0.65;
+    uploadedJetwayPlacements.push({
+      gate: jetway.g,
+      x: jetway.x,
+      z: jetway.z,
+      yaw,
+      targetX,
+      targetZ,
+      aircraftDoorDistance: distance,
+      aircraftContactClearanceMeters: AIR_JETWAY01_CONTACT_CLEARANCE_METERS,
+      bridgeStart,
+      bridgeEnd: exactBridgeEnd,
+      rotundaY,
+      cabinY,
+      wallConnectorLength,
+      connectorTowardX,
+      connectorTowardZ,
+    });
     const lowerFacadeWallDistance = findTerminalWallDistance(
       THREE,
       terminal,
@@ -385,36 +449,16 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
       : 0;
     const keepServiceBayOpen = OPEN_SERVICE_BAY_GATES.has(jetway.g) && sourceFacadeRecessMeters >= 1.4;
     if (keepServiceBayOpen) terminal4OpenServiceBayCount += 1;
-    // A recessed lower bay must be closed at the outer facade plane, not at the
-    // dark rear wall returned by the ramp-height raycast. Keep only source-qualified
-    // service bays open; every other module receives a flush outer-wall closure.
+
+    // source-authored-lower-facade-authority-v25
+    // Do not stamp generic infill modules over the supplied Terminal 4 model.
+    // Door and vent sets remain source-audit references only; the browser scene
+    // is now driven by the converted authored geometry and original materials.
     const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance;
-    if (facadeOuterWallFit != null && !keepServiceBayOpen) {
-      const facadeRampOffset = 0.28;
-      const facadeX = jetway.x - ux * facadeOuterWallFit + ux * facadeRampOffset;
-      const facadeZ = jetway.z - uz * facadeOuterWallFit + uz * facadeRampOffset;
-      transforms.facadeInfill.push({
-        position: [facadeX, 1.74, facadeZ],
-        yaw,
-        scale: [7.0, 3.42, 0.5],
-      });
-      terminal4LowerFacadeFitCount += 1;
-      if (CLOSED_SERVICE_DOOR_GATES.has(jetway.g)) {
-        transforms.facadeDoor.push({
-          position: [facadeX + px * 1.45 + ux * 0.4, 1.06, facadeZ + pz * 1.45 + uz * 0.4],
-          yaw,
-          scale: [1.12, 2.02, 0.14],
-        });
-      }
-      if (FACADE_VENT_GATES.has(jetway.g)) {
-        transforms.facadeVent.push({
-          position: [facadeX - px * 1.55 + ux * 0.4, 1.88, facadeZ - pz * 1.55 + uz * 0.4],
-          yaw,
-          scale: [1.24, 0.36, 0.14],
-        });
-      }
-      terminal4FacadeInfillCount += 1;
-    }
+    if (facadeOuterWallFit != null) terminal4LowerFacadeFitCount += 1;
+    const sourceDoorReference = CLOSED_SERVICE_DOOR_GATES.has(jetway.g);
+    const sourceVentReference = FACADE_VENT_GATES.has(jetway.g);
+    if (sourceDoorReference || sourceVentReference) terminal4FacadeInfillCount += 0;
 
     transforms.wallCollar.push({
       position: [
@@ -423,8 +467,26 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
         jetway.z + connectorTowardZ * wallConnectorLength / 2,
       ],
       yaw: connectorYaw,
-      scale: [2.62, 2.48, wallConnectorLength],
+      scale: [1, 1, wallConnectorLength],
     });
+    const connectorPerpendicular = [-connectorTowardZ, connectorTowardX];
+    for (let along = 0.72; along < wallConnectorLength - 0.3; along += 1.65) {
+      addTunnelFrame(
+        transforms,
+        [
+          jetway.x + connectorTowardX * along,
+          rotundaY,
+          jetway.z + connectorTowardZ * along,
+        ],
+        connectorYaw,
+        0,
+        connectorPerpendicular,
+        2.48,
+        2.34,
+        0.22,
+        0.055,
+      );
+    }
     transforms.rotundaBody.push({ position: [jetway.x, rotundaY - 0.05, jetway.z], yaw, scale: [1.62, 2.34, 1.62] });
     transforms.rotundaWindow.push({ position: [jetway.x, rotundaY + 0.25, jetway.z], yaw, scale: [1.65, 0.58, 1.65] });
     transforms.rotundaRoof.push({ position: [jetway.x, rotundaY + 1.48, jetway.z], yaw, scale: [1.78, 0.15, 1.78] });
@@ -593,6 +655,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   }
 
   const box = new THREE.BoxGeometry(1, 1, 1);
+  const wallConnectorTunnel = createArchedTunnelGeometry(THREE, 2.48, 2.34, 0.22);
   const outerTunnel = createArchedTunnelGeometry(THREE, 2.44, 2.34, 0.28);
   const innerTunnel = createArchedTunnelGeometry(THREE, 2.18, 2.18, 0.24);
   const cabin = createArchedTunnelGeometry(THREE, 2.42, 2.3, 0.22);
@@ -614,7 +677,7 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   addInstances(THREE, group, box, materials.facadeWall, transforms.facadeInfill, "Terminal4_LowerFacadeInfillPanels");
   addInstances(THREE, group, box, materials.facadeDoor, transforms.facadeDoor, "Terminal4_ClosedServiceDoors");
   addInstances(THREE, group, box, materials.facadeVent, transforms.facadeVent, "Terminal4_FacadeVentGrilles");
-  addInstances(THREE, group, box, materials.shell, transforms.wallCollar, "AIR_Jetway01_WallCollars");
+  addInstances(THREE, group, wallConnectorTunnel, materials.shell, transforms.wallCollar, "AIR_Jetway01_FixedTerminalWalkways_V13");
   addInstances(THREE, group, rotunda, materials.shell, transforms.rotundaBody, "AIR_Jetway01_Rotundas");
   addInstances(THREE, group, rotundaBand, materials.glass, transforms.rotundaWindow, "AIR_Jetway01_RotundaWindowBands");
   addInstances(THREE, group, column, materials.trim, transforms.rotundaRoof, "AIR_Jetway01_RotundaRoofs");
@@ -661,7 +724,14 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   group.userData.sourceScaleAuthority = "airport-authored-AIR_Jetway01-scale-preserved-no-aircraft-specific-shrink";
   group.userData.sourceGeometryMode = "procedural-articulated-fallback-pending-original-AIR_Jetway01-mesh-recovery";
   group.userData.requiresOriginalSourceMesh = true;
-  group.userData.a1JetwayController = animatedA1Jetway.userData.controller;
+  if (uploadedJetwayPlacements.length !== 58) {
+    throw new Error(`Expected 58 exact Airport Jetway placements, received ${uploadedJetwayPlacements.length}`);
+  }
+  const uploadedJetwayController = installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements, sourceTextures);
+  group.userData.uploadedJetwayMeasuredTerminalConnectorCount = uploadedJetwayPlacements.filter(
+    (placement) => Number(placement.wallConnectorLength) > 0,
+  ).length;
+  group.userData.a1JetwayController = uploadedJetwayController;
   group.userData.a1JetwayAnimationAuthority = animatedA1Jetway.userData.animationAuthority;
   group.userData.a1JetwayRuntimeState = animatedA1Jetway.userData.state;
   group.userData.jetwayMotionLimits = Object.freeze({
@@ -671,8 +741,8 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
   });
   group.userData.initialJetwayState = "attached-to-aircraft-door";
   group.userData.requiredPrePushSequence = "retract-bellows-clear-door-telescope-in-rotate-to-park";
-  group.userData.facadeInfillAuthority = "source-recess-qualified-service-bays-with-irregular-closed-facade-details";
-  group.userData.terminalConnectionAuthority = "independent-rotunda-collar-fit-to-authored-terminal-wall";
+  group.userData.facadeInfillAuthority = "source-authored-terminal4-lower-facade-v25-no-overlay";
+  group.userData.terminalConnectionAuthority = "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12";
   group.userData.detailLevel = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.detailLevel;
   group.userData.coordinateFrame = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.coordinateFrame;
   group.userData.visualAuthority = "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered";
