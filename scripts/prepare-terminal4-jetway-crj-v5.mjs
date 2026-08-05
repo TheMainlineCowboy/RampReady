@@ -117,6 +117,7 @@ replaceAny(
   [
     "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered",
     "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1",
+    "exact-uploaded-airport-jetway-glb-562e3144-v1",
   ],
   "honest visual authority",
 );
@@ -130,11 +131,17 @@ for (const forbidden of [
   if (source.includes(forbidden)) throw new Error(`AIR_Jetway01 source-scale protection found aircraft-specific shrink token ${forbidden}`);
 }
 
-for (const token of [
+for (const marker of [
   'sourceDimensionsMeters: Object.freeze([37.92, 8.77, 26.51])',
   'detailLevel: "fsx-air-jetway01-exact-textured-source-scale-articulated-v5"',
-  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
-  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35",
+  [
+    "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
+    "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 7.32",
+  ],
+  [
+    "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35",
+    "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.34",
+  ],
   "const sourceFacadeRecessMeters",
   "CLOSED_SERVICE_DOOR_GATES.has(jetway.g)",
   "FACADE_VENT_GATES.has(jetway.g)",
@@ -142,8 +149,11 @@ for (const token of [
   "group.userData.jetwayMotionLimits",
   'group.userData.initialJetwayState = "attached-to-aircraft-door"',
 ]) {
-  if (!source.includes(token)) throw new Error(`${jetwayPath}: source-scale jetway preparation is missing ${token}`);
+  if (!hasMarker(marker)) {
+    const description = Array.isArray(marker) ? marker.join(" or ") : marker;
+    throw new Error(`${jetwayPath}: source-scale jetway preparation is missing ${description}`);
+  }
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
-console.log("Prepared Terminal 4 jetways idempotently: source scale retained, source-only facade authority preserved, and either the legacy fallback or uploaded Tunnel_A/B/C/Rotunda/Cab model remains authoritative.");
+console.log("Prepared Terminal 4 jetways idempotently: source scale retained, corrected CRJ forward-door geometry accepted, and the exact uploaded Airport_Jetway.glb remains authoritative when present.");
