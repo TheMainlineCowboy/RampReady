@@ -88,10 +88,16 @@ replaceRequired(
     renderer.domElement.dataset.inspectionAircraftPoseAuthority = inspectionRef.current
       ? A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY
       : "training-approach-start";
-    renderer.domElement.dataset.inspectionAircraftNoseGearX = aircraft.position.x.toFixed(3);
-    renderer.domElement.dataset.inspectionAircraftNoseGearZ = aircraft.position.z.toFixed(3);
-    renderer.domElement.dataset.inspectionAircraftYaw = aircraft.rotation.y.toFixed(6);`,
-  "renderer.domElement.dataset.inspectionAircraftPoseAuthority = inspectionRef.current",
+    renderer.domElement.dataset.inspectionAircraftNoseGearX = (
+      inspectionRef.current ? A1_INSPECTION_NOSE_GEAR_X : 0
+    ).toFixed(3);
+    renderer.domElement.dataset.inspectionAircraftNoseGearZ = (
+      inspectionRef.current ? A1_INSPECTION_NOSE_GEAR_Z : NOSE_START_Z
+    ).toFixed(3);
+    renderer.domElement.dataset.inspectionAircraftYaw = (
+      inspectionRef.current ? A1_INSPECTION_AIRCRAFT_YAW : 0
+    ).toFixed(6);`,
+  "inspectionRef.current ? A1_INSPECTION_NOSE_GEAR_X : 0",
   "initial inspection route and aircraft-pose evidence",
 );
 
@@ -125,6 +131,7 @@ for (const token of [
   "next ? A1_INSPECTION_NOSE_GEAR_Z : NOSE_START_Z",
   'sim.renderer.domElement.dataset.inspectionPreset = next ? "a1" : "training"',
   "renderer.domElement.dataset.inspectionPreset = inspectionRef.current ? inspectionPresetRef.current",
+  "inspectionRef.current ? A1_INSPECTION_NOSE_GEAR_X : 0",
   "sim.renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY",
   "renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY",
   "const liveInspectionPreset = inspectionActive",
@@ -135,5 +142,13 @@ for (const token of [
   if (!source.includes(token)) throw new Error(`${trainerPath}: inspection lifecycle is missing ${token}`);
 }
 
+for (const forbidden of [
+  "renderer.domElement.dataset.inspectionAircraftNoseGearX = aircraft.position.x",
+  "renderer.domElement.dataset.inspectionAircraftNoseGearZ = aircraft.position.z",
+  "renderer.domElement.dataset.inspectionAircraftYaw = aircraft.rotation.y",
+]) {
+  if (source.includes(forbidden)) throw new Error(`${trainerPath}: startup telemetry still reads aircraft before initialization: ${forbidden}`);
+}
+
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared persistent inspection route evidence and photo-registered the uploaded CRJ nose gear at the corrected A1 terminal-corner stop and heading while preserving the separate training approach pose.");
+console.log("Prepared persistent inspection route evidence and photo-registered the uploaded CRJ nose gear at the corrected A1 terminal-corner stop and heading without reading the aircraft before initialization; training retains its separate approach pose.");
