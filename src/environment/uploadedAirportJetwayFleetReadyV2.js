@@ -2,13 +2,13 @@ import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetB
 import { installStaticJetwayPortalClosures } from "./staticJetwayPortalClosures.js";
 import { enforceExactUploadedJetwayVisualAuthority } from "./uploadedAirportJetwayExactModelGuard.js";
 
-const READY_AUTHORITY = "supplied-airport-jetway-complete-58-gates-source-hierarchy-v9";
+const READY_AUTHORITY = "exact-uploaded-airport-jetway-complete-58-gates-v1";
 const EXPECTED_GATE_COUNT = 58;
 const LOAD_TIMEOUT_MS = 120_000;
 const STATIC_PORTAL_AUTHORITY = "57-static-terminal-portals-paired-vestibule-doors-v1";
 const EXACT_MODEL_AUTHORITY = "supplied-airport-jetway-source-hierarchy-meshes-uvs-exclusive-v10";
-const MATERIAL_AUTHORITY = "supplied-airport-jetway-source-atlas-full-resolution-avif-v4";
-const PERFORMANCE_AUTHORITY = "57-static-source-mesh-instances-plus-1-animated-a1-v4";
+const MATERIAL_AUTHORITY = "exact-seven-embedded-airport-jetway-textures-v1";
+const PERFORMANCE_AUTHORITY = "57-static-exact-glb-instances-plus-1-animated-a1-v1";
 
 function waitForFleet(THREE, group, placements) {
   const startedAt = performance.now();
@@ -17,20 +17,20 @@ function waitForFleet(THREE, group, placements) {
     const check = () => {
       const state = group.userData.uploadedJetwayLoadState;
       if (state === "error") {
-        reject(new Error(group.userData.uploadedJetwayLoadError || "Supplied airport jetway fleet failed to load"));
+        reject(new Error(group.userData.uploadedJetwayLoadError || "Exact Airport_Jetway.glb fleet failed to load"));
         return;
       }
       if (state === "ready") {
         try {
           const fleet = group.getObjectByName("UploadedAirportJetwayFleet");
-          if (!fleet) throw new Error("Supplied airport jetway fleet reported ready without a fleet group");
+          if (!fleet) throw new Error("Exact Airport_Jetway.glb fleet reported ready without a fleet group");
           const loadedModelNames = new Set(
             fleet.children.map((entry) => entry.name).filter((name) => expectedModelNames.has(name)),
           );
           const missingModels = [...expectedModelNames].filter((name) => !loadedModelNames.has(name));
           const a1Anchor = fleet.getObjectByName("UploadedAirportJetway_A1");
           const a1Model = a1Anchor?.getObjectByName("UploadedAirportJetwayModel_A1");
-          if (!a1Anchor || !a1Model) throw new Error("Supplied airport jetway fleet is missing the individual A1 source model");
+          if (!a1Anchor || !a1Model) throw new Error("Exact Airport_Jetway.glb fleet is missing the individual A1 model");
 
           const exactModelGuard = enforceExactUploadedJetwayVisualAuthority(group, fleet);
           const staticPortalClosures = installStaticJetwayPortalClosures(THREE, fleet, placements);
@@ -46,6 +46,7 @@ function waitForFleet(THREE, group, placements) {
           const sourceTriangleCount = Number(group.userData.uploadedJetwaySourceTriangleCount ?? -1);
           const maximumPositionErrorMeters = Number(group.userData.uploadedJetwayMaximumPositionErrorMeters ?? Infinity);
           const maximumUvError = Number(group.userData.uploadedJetwayMaximumUvError ?? Infinity);
+          const exactGlbSha256 = group.userData.uploadedJetwayExactGlbSha256 || "missing";
 
           if (
             count !== EXPECTED_GATE_COUNT
@@ -53,9 +54,10 @@ function waitForFleet(THREE, group, placements) {
             || missingModels.length
             || materialAuthority !== MATERIAL_AUTHORITY
             || performanceAuthority !== PERFORMANCE_AUTHORITY
+            || exactGlbSha256 !== "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0"
             || sourceTriangleCount !== 31_978
-            || maximumPositionErrorMeters > 0.0001
-            || maximumUvError > 0.000008
+            || maximumPositionErrorMeters !== 0
+            || maximumUvError !== 0
             || staticInstancedGateCount !== 57
             || animatedIndividualGateCount !== 1
             || staticPrimitiveBatchCount !== 7
@@ -72,14 +74,14 @@ function waitForFleet(THREE, group, placements) {
             || staticPortalClosures.gateCount !== 57
           ) {
             throw new Error(
-              `Supplied jetway readiness mismatch: placements=${count}, gateRecords=${loadedModelNames.size}, missing=${missingModels.join(",") || "none"}, materials=${materialAuthority}, performance=${performanceAuthority}, topology=${sourceTriangleCount}/${maximumPositionErrorMeters}/${maximumUvError}, static=${staticInstancedGateCount}, animated=${animatedIndividualGateCount}, meshBatches=${staticPrimitiveBatchCount}, connectors=${staticConnectorGateCount}/${staticConnectorBatchCount}/${individualConnectorGateCount}, source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`,
+              `Exact jetway readiness mismatch: placements=${count}, gateRecords=${loadedModelNames.size}, missing=${missingModels.join(",") || "none"}, sha=${exactGlbSha256}, materials=${materialAuthority}, performance=${performanceAuthority}, topology=${sourceTriangleCount}/${maximumPositionErrorMeters}/${maximumUvError}, static=${staticInstancedGateCount}, animated=${animatedIndividualGateCount}, meshBatches=${staticPrimitiveBatchCount}, connectors=${staticConnectorGateCount}/${staticConnectorBatchCount}/${individualConnectorGateCount}, source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`,
             );
           }
 
           group.userData.uploadedJetwayReadyAuthority = READY_AUTHORITY;
           group.userData.uploadedJetwayVerifiedModelCount = loadedModelNames.size;
           group.userData.uploadedJetwayVerifiedGateNames = [...loadedModelNames].sort().join(",");
-          group.userData.uploadedJetwayA1DetailPolishAuthority = "none-source-model-preserved";
+          group.userData.uploadedJetwayA1DetailPolishAuthority = "none-exact-glb-preserved";
           group.userData.uploadedJetwayA1SourceStairMeshCount = 1;
           group.userData.uploadedJetwayA1SourceBogieMeshCount = 1;
           group.userData.uploadedJetwayA1DetailEdgeOverlayCount = 0;
@@ -98,6 +100,7 @@ function waitForFleet(THREE, group, placements) {
           resolve({
             count,
             modelCount: loadedModelNames.size,
+            exactGlbSha256,
             materialAuthority,
             performanceAuthority,
             sourceTriangleCount,
@@ -119,7 +122,7 @@ function waitForFleet(THREE, group, placements) {
       }
       if (performance.now() - startedAt >= LOAD_TIMEOUT_MS) {
         group.userData.uploadedJetwayLoadState = "error";
-        group.userData.uploadedJetwayLoadError = `Supplied airport jetway fleet did not become ready within ${LOAD_TIMEOUT_MS} ms`;
+        group.userData.uploadedJetwayLoadError = `Exact Airport_Jetway.glb fleet did not become ready within ${LOAD_TIMEOUT_MS} ms`;
         reject(new Error(group.userData.uploadedJetwayLoadError));
         return;
       }
@@ -133,7 +136,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, sour
   const controller = installUploadedAirportJetwayFleetBase(THREE, group, placements, sourceTextures);
   const ready = waitForFleet(THREE, group, placements);
   group.userData.uploadedJetwayReady = ready;
-  group.userData.uploadedJetwayReadyAuthority = "waiting-for-supplied-source-model";
+  group.userData.uploadedJetwayReadyAuthority = "waiting-for-exact-airport-jetway-glb";
   controller.ready = ready;
   return controller;
 }
