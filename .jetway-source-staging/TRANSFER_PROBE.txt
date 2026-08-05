@@ -1,0 +1,1 @@
+The connected GitHub writer accepts text content, not a mounted binary file path. This probe file may be removed before merge.
