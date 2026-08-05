@@ -3,11 +3,11 @@ import fs from "node:fs";
 const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js";
 let source = fs.readFileSync(installationPath, "utf8");
 
-const ORIENTATION_AUTHORITY = "same-day-photo-measured-cab-pivot-rigid-parent-terminal-aligned-v4";
+const ORIENTATION_AUTHORITY = "same-day-photo-authored-opening-cab-pivot-rigid-parent-terminal-aligned-v5";
 
 source = source
   .replace(
-    /const INSTALLATION_AUTHORITY = "photo-registered-[^"]+-v\d+";/,
+    /const INSTALLATION_AUTHORITY = "[^"]+";/,
     'const INSTALLATION_AUTHORITY = "photo-registered-cab-pivot-rigid-parent-grounded-exact-chain-v15";',
   )
   .replace(
@@ -51,8 +51,10 @@ if (!photoBlockPattern.test(source)) {
 source = source.replace(
   photoBlockPattern,
   `  // Rotate only the complete A1 parent. First reverse the authored installation,
-  // then measure the exact Rotunda-to-Tunnel A axis and apply the remaining yaw
-  // needed to point the Rotunda opening directly at the measured terminal wall.
+  // then measure the exact authored Rotunda opening opposite Tunnel A and apply
+  // the remaining yaw needed to point that side directly at the terminal wall.
+  // Never invert the measured vector merely to satisfy the terminal dot product:
+  // that allowed a backwards bridge to pass the previous numeric gate.
   // Both rotations are compensated around the supplied Cab endpoint, so every
   // GLB child transform remains untouched and the aircraft-side endpoint stays fixed.
   const cabEndpoint = a1Model.getObjectByName("Cab") || a1Model.getObjectByName("Cab_Jetway_0");
@@ -84,10 +86,9 @@ source = source.replace(
   const measuredOpeningDirection = rotundaAxisCenter.clone().sub(tunnelAAxisCenter);
   measuredOpeningDirection.y = 0;
   if (measuredOpeningDirection.lengthSq() < 0.25) {
-    throw new Error("A1 measured Rotunda opening axis is degenerate");
+    throw new Error("A1 measured authored Rotunda opening axis is degenerate");
   }
   measuredOpeningDirection.normalize();
-  if (measuredOpeningDirection.dot(terminalDirection) < 0) measuredOpeningDirection.multiplyScalar(-1);
 
   const terminalAlignmentYawRadians = Math.atan2(
     measuredOpeningDirection.z * terminalDirection.x
@@ -117,7 +118,7 @@ source = source.replace(
   const measuredTerminalAlignment = rotundaOpening.openingDirectionX * terminalDirection.x
     + rotundaOpening.openingDirectionZ * terminalDirection.z;
   if (measuredTerminalAlignment < 0.995) {
-    throw new Error(\`A1 measured parent orientation did not face the terminal: \${measuredTerminalAlignment}\`);
+    throw new Error(\`A1 authored Rotunda opening did not face the terminal after parent rotation: \${measuredTerminalAlignment}\`);
   }
   const terminalWallX = a1Placement.x + terminalDirection.x * sourceTerminalDistance;
   const terminalWallZ = a1Placement.z + terminalDirection.z * sourceTerminalDistance;
@@ -184,6 +185,7 @@ for (const token of [
   "function objectBoundsCenterInFleet",
   "const cabCenterBefore = objectBoundsCenterInFleet",
   "a1Anchor.rotation.y += A1_PARENT_ORIENTATION_CORRECTION_RADIANS",
+  "const measuredOpeningDirection = rotundaAxisCenter.clone().sub(tunnelAAxisCenter)",
   "const terminalAlignmentYawRadians = Math.atan2",
   "a1Anchor.rotation.y += terminalAlignmentYawRadians",
   "const cabPreservationDelta = initialCabPreservationDelta.clone().add(terminalAlignmentCabDelta)",
@@ -192,8 +194,11 @@ for (const token of [
   "a1ParentOrientationAuthority: A1_PARENT_ORIENTATION_AUTHORITY",
   "uploadedJetwayA1MeasuredTerminalAlignmentYawRadians",
 ]) {
-  if (!source.includes(token)) throw new Error(`${installationPath}: measured cab-pivot rigid-parent output is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${installationPath}: authored-opening cab-pivot rigid-parent output is missing ${token}`);
+}
+if (source.includes("measuredOpeningDirection.dot(terminalDirection) < 0")) {
+  throw new Error(`${installationPath}: authored Rotunda opening direction is still sign-flipped`);
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Prepared measured A1 cab-pivot rigid-parent correction: the exact Rotunda axis is terminal-aligned around the fixed supplied Cab, with all GLB child transforms unchanged.");
+console.log("Prepared authored-opening A1 cab-pivot rigid-parent correction: the true Rotunda terminal side is aligned around the fixed supplied Cab, with all GLB child transforms unchanged.");
