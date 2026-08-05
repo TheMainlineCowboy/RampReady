@@ -67,7 +67,11 @@ export function createModelSpaceA1Controller(THREE, {
     if (!visual) return;
     const retract = 1 - deployment;
     const { anchor, model, nodes, base, direction } = visual;
-    anchor.rotation.y = base.yaw;
+    const wholeAssemblyOrientationCorrectionRadians = Number(
+      anchor.userData.wholeAssemblyOrientationCorrectionRadians || 0,
+    );
+    anchor.rotation.y = base.yaw + wholeAssemblyOrientationCorrectionRadians;
+    anchor.userData.wholeAssemblyOrientationControllerAuthority = "persistent-whole-assembly-orientation-through-retraction-v1";
     anchor.updateMatrix();
     for (const [name, node] of Object.entries(nodes)) {
       if (node) restoreLocalMatrix(node, base[name]);
