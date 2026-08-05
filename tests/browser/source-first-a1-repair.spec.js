@@ -8,6 +8,8 @@ const UPLOADED_JETWAY_ATTRIBUTES = Object.freeze([
   "data-terminal4-uploaded-jetway-verified-model-count",
 ]);
 
+const DIRECT_A1_TERMINAL_AUTHORITY = "user-photo-overhead-authored-terminal-wall-direct-v1";
+
 async function saveCompositedCanvasPng(page, path) {
   const box = await page.evaluate(() => {
     const canvas = document.querySelector("canvas.trainerCanvas");
@@ -81,6 +83,7 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
       && uploaded[1] === "58"
       && uploaded[2] === "58"
       && uploaded[3] === "58"
+      && data?.terminal4A1ConnectionAuthority === DIRECT_A1_TERMINAL_AUTHORITY
       && data?.photoGroundSource === "source-authored-phx-photo"
       && data?.airportCollisionReady === "true"
       && data?.airportCollisionTargetCount === "2";
@@ -106,11 +109,17 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   expect(runtime.renderQualityAuthority).toBe("srgb-aces-apron-daylight-dynamic-shadows-v3");
   expect(runtime.shadowMode).toBe("dynamic-high-fidelity");
   expect(runtime.terminal4FacadeInfillCount).toBe("0");
-  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeGreaterThan(9.1);
-  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeLessThan(9.3);
-  expect(runtime.terminal4A1PortalSealAuthority).toBe("exact-T4_WALK-source-shell-overlap-and-framed-portal-v37");
-  expect(runtime.terminal4A1PortalSealOverlapMeters).toBe("0.8");
-  expect(runtime.terminal4A1PortalSealExactTexture).toBe("true");
+
+  const terminalWallDistance = Number(runtime.terminal4A1JetwayWallDistance);
+  expect(terminalWallDistance).toBeGreaterThan(15.5);
+  expect(terminalWallDistance).toBeLessThan(16.7);
+  expect(runtime.terminal4A1ConnectionAuthority).toBe(DIRECT_A1_TERMINAL_AUTHORITY);
+  expect(runtime.terminal4A1ConnectionAuthority).not.toMatch(/WALK/i);
+  const terminalDirection = runtime.terminal4A1ConnectionDirection.split(",").map(Number);
+  expect(terminalDirection).toHaveLength(2);
+  expect(Math.abs(terminalDirection[0])).toBeLessThanOrEqual(0.01);
+  expect(Math.abs(terminalDirection[1] + 1)).toBeLessThanOrEqual(0.01);
+
   expect(Number(runtime.terminal4SourceClosedBayMaterialCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4SourceFacadeVariantMaterialCount)).toBeGreaterThanOrEqual(4);
   expect(runtime.airportCollisionAuthority).toBe("terminal-jetway-aircraft-raycast-envelope-v45");
@@ -136,6 +145,13 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   }, null, { timeout: 30_000, polling: 100 });
   await page.waitForTimeout(1_800);
   await saveCompositedCanvasPng(page, "test-results/source-first-a1-terminal-connection.png");
+
+  fs.writeFileSync("test-results/source-first-a1-terminal-connection.json", `${JSON.stringify({
+    terminalWallDistance,
+    terminalConnectionAuthority: runtime.terminal4A1ConnectionAuthority,
+    terminalConnectionDirection: terminalDirection,
+    evidenceAuthority: "user-overhead-and-same-day-a1-ramp-photos",
+  }, null, 2)}\n`);
 
   await inspectionLocation.selectOption("b15");
   await page.waitForFunction(() => {
