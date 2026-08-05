@@ -24,13 +24,13 @@ if (!source.includes("const uploadedJetwayPlacements = []")) {
 
 const connectorAnchor = "    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 18);";
 const placementBlock = `${connectorAnchor}
-    const parkedGateCode = [...jetway.g].reduce(
+    const exactUploadedGateCode = [...jetway.g].reduce(
       (value, character) => value + character.charCodeAt(0),
       0,
     );
     const exactBridgeEnd = jetway.g === "A1"
       ? bridgeEnd
-      : 11.9 + (parkedGateCode % 4) * 0.65;
+      : 11.9 + (exactUploadedGateCode % 4) * 0.65;
     uploadedJetwayPlacements.push({
       gate: jetway.g,
       x: jetway.x,
@@ -70,6 +70,7 @@ if (!source.includes("const uploadedJetwayController = installUploadedAirportJet
 for (const token of [
   exactImport,
   "const uploadedJetwayPlacements = []",
+  "const exactUploadedGateCode =",
   "uploadedJetwayPlacements.push({",
   "aircraftDoorDistance: distance",
   "bridgeEnd: exactBridgeEnd",
@@ -84,4 +85,4 @@ for (const token of [
   if (!source.includes(token)) throw new Error(`${path}: exact Airport Jetway source wiring is missing ${token}`);
 }
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared 58 measured Terminal 4 placements for the exact Airport_Jetway.glb: 57 parked articulated instances and individually controlled A1 door alignment.");
+console.log("Prepared 58 measured Terminal 4 placements for the exact Airport_Jetway.glb: 57 parked articulated instances and individually controlled A1 door alignment, with collision-safe build identifiers.");
