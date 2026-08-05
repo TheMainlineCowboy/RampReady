@@ -1,4 +1,4 @@
-const STATIC_PORTAL_AUTHORITY = "57-static-terminal-portals-paired-vestibule-doors-v1";
+const STATIC_PORTAL_AUTHORITY = "57-static-terminal-and-aircraft-portals-closed-v2";
 
 function clamp(value, minimum, maximum) {
   return Math.max(minimum, Math.min(maximum, Number(value) || 0));
@@ -30,6 +30,11 @@ function buildInstancedBoxes(THREE, name, material, transforms) {
   return instances;
 }
 
+function finitePositive(value, fallback) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : fallback;
+}
+
 export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
   const existing = fleet.getObjectByName("UploadedAirportJetwayStaticPortalClosures");
   if (existing) {
@@ -39,21 +44,28 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
       batchCount: Number(existing.userData.batchCount || 0),
       panelCount: Number(existing.userData.panelCount || 0),
       windowCount: Number(existing.userData.windowCount || 0),
+      cabPanelCount: Number(existing.userData.cabPanelCount || 0),
+      cabWindowCount: Number(existing.userData.cabWindowCount || 0),
     };
   }
 
   const staticPlacements = placements.filter((placement) => placement.gate !== "A1");
   const doorTransforms = [];
   const windowTransforms = [];
+  const cabPanelTransforms = [];
+  const cabWindowTransforms = [];
+  const cabHeaderTransforms = [];
+  const cabJambTransforms = [];
+
   for (const placement of staticPlacements) {
     const towardX = Number(placement.connectorTowardX) || 0;
     const towardZ = Number(placement.connectorTowardZ) || 0;
     const magnitude = Math.hypot(towardX, towardZ) || 1;
     const ux = towardX / magnitude;
     const uz = towardZ / magnitude;
-    const yaw = Math.atan2(ux, uz);
-    const rightX = Math.cos(yaw);
-    const rightZ = -Math.sin(yaw);
+    const terminalYaw = Math.atan2(ux, uz);
+    const rightX = Math.cos(terminalYaw);
+    const rightZ = -Math.sin(terminalYaw);
     const measuredLength = clamp(placement.wallConnectorLength, 1.25, 18);
     const facadeDistance = Math.max(0.85, measuredLength - 0.14);
     const facadeX = placement.x + ux * facadeDistance;
@@ -66,13 +78,65 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
       const panelZ = facadeZ + rightZ * sideOffset - uz * 0.04;
       doorTransforms.push({
         position: [panelX, centerY - 0.04, panelZ],
-        yaw,
+        yaw: terminalYaw,
         scale: [1.13, 2.06, 0.12],
       });
       windowTransforms.push({
         position: [panelX - ux * 0.07, centerY + 0.32, panelZ - uz * 0.07],
-        yaw,
+        yaw: terminalYaw,
         scale: [0.62, 0.62, 0.035],
+      });
+    }
+
+    // The exact supplied GLB has an authored open aircraft interface. Static
+    // parked jetways must not present that large empty aperture to the apron.
+    // Close it at the already-articulated contact distance without touching
+    // Cab, Tunnel A/B/C, Rotunda, geometry, hierarchy, UVs or node transforms.
+    const cabYaw = Number(placement.yaw) || 0;
+    const cabForwardX = Math.sin(cabYaw);
+    const cabForwardZ = Math.cos(cabYaw);
+    const cabRightX = Math.cos(cabYaw);
+    const cabRightZ = -Math.sin(cabYaw);
+    const contactDistance = finitePositive(placement.bridgeEnd, 18);
+    const cabFaceDistance = contactDistance - 0.12;
+    const cabFaceX = placement.x + cabForwardX * cabFaceDistance;
+    const cabFaceZ = placement.z + cabForwardZ * cabFaceDistance;
+    const cabCenterY = centerY + 0.04;
+
+    cabPanelTransforms.push({
+      position: [cabFaceX, cabCenterY, cabFaceZ],
+      yaw: cabYaw,
+      scale: [2.42, 2.46, 0.14],
+    });
+    cabWindowTransforms.push({
+      position: [
+        cabFaceX + cabForwardX * 0.085,
+        cabCenterY + 0.2,
+        cabFaceZ + cabForwardZ * 0.085,
+      ],
+      yaw: cabYaw,
+      scale: [1.68, 1.2, 0.035],
+    });
+    for (const vertical of [-1, 1]) {
+      cabHeaderTransforms.push({
+        position: [
+          cabFaceX + cabForwardX * 0.1,
+          cabCenterY + vertical * 1.16,
+          cabFaceZ + cabForwardZ * 0.1,
+        ],
+        yaw: cabYaw,
+        scale: [2.68, 0.22, 0.18],
+      });
+    }
+    for (const side of [-1, 1]) {
+      cabJambTransforms.push({
+        position: [
+          cabFaceX + cabRightX * side * 1.23 + cabForwardX * 0.1,
+          cabCenterY,
+          cabFaceZ + cabRightZ * side * 1.23 + cabForwardZ * 0.1,
+        ],
+        yaw: cabYaw,
+        scale: [0.22, 2.5, 0.18],
       });
     }
   }
@@ -98,19 +162,53 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
     depthWrite: true,
     side: THREE.DoubleSide,
   });
+  const cabPanelMaterial = new THREE.MeshStandardMaterial({
+    name: "Static jetway closed aircraft interface panel",
+    color: 0xd5d8d5,
+    roughness: 0.72,
+    metalness: 0.1,
+    side: THREE.DoubleSide,
+  });
+  const cabWindowMaterial = new THREE.MeshPhysicalMaterial({
+    name: "Static jetway closed aircraft interface glazing",
+    color: 0x25343a,
+    roughness: 0.3,
+    metalness: 0.03,
+    transmission: 0.04,
+    clearcoat: 0.12,
+    transparent: true,
+    opacity: 0.92,
+    depthWrite: true,
+    side: THREE.DoubleSide,
+  });
+  const cabBellowsMaterial = new THREE.MeshStandardMaterial({
+    name: "Static jetway aircraft interface rubber surround",
+    color: 0x303336,
+    roughness: 0.94,
+    metalness: 0.01,
+    side: THREE.DoubleSide,
+  });
 
   const group = new THREE.Group();
   group.name = "UploadedAirportJetwayStaticPortalClosures";
   group.add(
     buildInstancedBoxes(THREE, "StaticJetwayVestibuleDoorPanels", doorMaterial, doorTransforms),
     buildInstancedBoxes(THREE, "StaticJetwayVestibuleDoorWindows", windowMaterial, windowTransforms),
+    buildInstancedBoxes(THREE, "StaticJetwayCabClosurePanels", cabPanelMaterial, cabPanelTransforms),
+    buildInstancedBoxes(THREE, "StaticJetwayCabClosureWindows", cabWindowMaterial, cabWindowTransforms),
+    buildInstancedBoxes(THREE, "StaticJetwayCabClosureHeaders", cabBellowsMaterial, cabHeaderTransforms),
+    buildInstancedBoxes(THREE, "StaticJetwayCabClosureJambs", cabBellowsMaterial, cabJambTransforms),
   );
   group.userData.authority = STATIC_PORTAL_AUTHORITY;
   group.userData.gateCount = staticPlacements.length;
   group.userData.batchCount = group.children.length;
   group.userData.panelCount = doorTransforms.length;
   group.userData.windowCount = windowTransforms.length;
+  group.userData.cabPanelCount = cabPanelTransforms.length;
+  group.userData.cabWindowCount = cabWindowTransforms.length;
+  group.userData.cabSurroundPieceCount = cabHeaderTransforms.length + cabJambTransforms.length;
   group.userData.a1LeftOpen = true;
+  group.userData.authoredNodeTransformCount = 0;
   fleet.add(group);
 
   return {
@@ -119,6 +217,9 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
     batchCount: group.children.length,
     panelCount: doorTransforms.length,
     windowCount: windowTransforms.length,
+    cabPanelCount: cabPanelTransforms.length,
+    cabWindowCount: cabWindowTransforms.length,
+    cabSurroundPieceCount: cabHeaderTransforms.length + cabJambTransforms.length,
   };
 }
 
