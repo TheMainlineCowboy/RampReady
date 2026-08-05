@@ -1,0 +1,130 @@
+name: Patch red exact-jetway verifiers
+
+on:
+  push:
+    branches:
+      - fix/exact-airport-jetway-glb
+
+permissions:
+  contents: write
+
+jobs:
+  patch-verifiers:
+    if: ${{ !contains(github.event.head_commit.message, '[patch-red-verifiers]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/exact-airport-jetway-glb
+          fetch-depth: 0
+
+      - name: Replace fragile cross-process polling
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          source_path = Path('tests/browser/source-first-a1-repair.spec.js')
+          source = source_path.read_text()
+          old_collision = '''  await page.keyboard.down("w");
+            try {
+              await expect.poll(
+                () => numericCanvasAttribute(page, "data-airport-collision-count"),
+                { timeout: 50_000, intervals: [250, 500, 1_000] },
+              ).toBeGreaterThan(startCount);
+            } finally {
+              await page.keyboard.up("w");
+            }
+          '''
+          new_collision = '''  await page.keyboard.down("w");
+            try {
+              await page.waitForFunction((initialCount) => {
+                const canvas = document.querySelector("canvas.trainerCanvas");
+                return Number(canvas?.getAttribute("data-airport-collision-count") ?? "0") > initialCount;
+              }, startCount, { timeout: 120_000, polling: 100 });
+            } finally {
+              await page.keyboard.up("w");
+            }
+          '''
+          if old_collision not in source:
+              raise SystemExit('source-first collision polling block was not found')
+          source_path.write_text(source.replace(old_collision, new_collision, 1))
+
+          crj_path = Path('tests/browser/crj700-runtime.spec.js')
+          crj = crj_path.read_text()
+          old_attached = '''  await expect.poll(
+            async () => Number(await canvas.getAttribute("data-a1-jetway-deployment")),
+            { timeout: 20_000, intervals: [100, 250, 500] },
+          ).toBeGreaterThanOrEqual(0.995);
+          await expect(canvas).toHaveAttribute("data-a1-jetway-state", "attached-to-aircraft-door");
+          await expect(canvas).toHaveAttribute("data-a1-jetway-animation-authority", /v11$/);
+          '''
+          new_attached = '''  await page.waitForFunction(() => {
+            const data = document.querySelector("canvas.trainerCanvas")?.dataset;
+            const deployment = Number(data?.a1JetwayDeployment);
+            const actualGap = Number(data?.terminal4UploadedJetwayA1ActualDoorGapMeters);
+            return data?.terminal4UploadedJetwayLoadState === "ready"
+              && data?.terminal4UploadedJetwayCount === "58"
+              && data?.terminal4UploadedJetwayVerifiedModelCount === "58"
+              && data?.terminal4UploadedJetwayArticulationAuthority === "user-supplied-airport-jetway-per-gate-telescoping-v10"
+              && data?.terminal4UploadedJetwayA1PartOrderValid === "true"
+              && Number.isFinite(actualGap)
+              && actualGap <= 0.05
+              && Number.isFinite(deployment)
+              && deployment >= 0.995;
+          }, null, { timeout: 180_000, polling: 100 });
+          const attachedRuntime = await page.evaluate(() => ({
+            ...document.querySelector("canvas.trainerCanvas").dataset,
+          }));
+          expect(attachedRuntime.a1JetwayState).toBe("attached-to-aircraft-door");
+          expect(attachedRuntime.a1JetwayAnimationAuthority).toMatch(/v11$/);
+          expect(attachedRuntime.terminal4UploadedJetwayCount).toBe("58");
+          expect(attachedRuntime.terminal4UploadedJetwayVerifiedModelCount).toBe("58");
+          expect(attachedRuntime.terminal4UploadedJetwayA1PartOrderValid).toBe("true");
+          expect(Number(attachedRuntime.terminal4UploadedJetwayA1ActualDoorGapMeters)).toBeLessThanOrEqual(0.05);
+          '''
+          if old_attached not in crj:
+              raise SystemExit('CRJ attached-state polling block was not found')
+          crj = crj.replace(old_attached, new_attached, 1)
+
+          old_parked = '''  await expect.poll(
+            async () => Number(await canvas.getAttribute("data-a1-jetway-deployment")),
+            { timeout: 30_000, intervals: [50, 75, 100, 250] },
+          ).toBeLessThanOrEqual(0.005);
+          await expect(canvas).toHaveAttribute("data-a1-jetway-state", "parked-clear-of-aircraft");
+          await expect(canvas).toHaveAttribute("data-a1-jetway-state-history", /parked-clear-of-aircraft|parked/);
+          await expect(canvas).toHaveAttribute(
+            "data-terminal4-a1-retraction-authority",
+            "aircraft-door-clearance-without-overtravel-v6",
+          );
+          await expect(canvas).toHaveAttribute("data-terminal4-a1-retraction-clearance-meters", "2.38");
+          '''
+          new_parked = '''  await page.waitForFunction(() => {
+            const data = document.querySelector("canvas.trainerCanvas")?.dataset;
+            return Number(data?.a1JetwayDeployment) <= 0.005
+              && data?.a1JetwayState === "parked-clear-of-aircraft"
+              && /parked-clear-of-aircraft|parked/.test(data?.a1JetwayStateHistory || "")
+              && data?.terminal4A1RetractionAuthority === "aircraft-door-clearance-without-overtravel-v6"
+              && data?.terminal4A1RetractionClearanceMeters === "2.38";
+          }, null, { timeout: 180_000, polling: 100 });
+          const parkedRuntime = await page.evaluate(() => ({
+            ...document.querySelector("canvas.trainerCanvas").dataset,
+          }));
+          expect(Number(parkedRuntime.a1JetwayDeployment)).toBeLessThanOrEqual(0.005);
+          expect(parkedRuntime.a1JetwayState).toBe("parked-clear-of-aircraft");
+          expect(parkedRuntime.a1JetwayStateHistory).toMatch(/parked-clear-of-aircraft|parked/);
+          expect(parkedRuntime.terminal4A1RetractionAuthority).toBe("aircraft-door-clearance-without-overtravel-v6");
+          expect(parkedRuntime.terminal4A1RetractionClearanceMeters).toBe("2.38");
+          '''
+          if old_parked not in crj:
+              raise SystemExit('CRJ parked-state polling block was not found')
+          crj_path.write_text(crj.replace(old_parked, new_parked, 1))
+          PY
+
+      - name: Commit repaired verifiers
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/browser/source-first-a1-repair.spec.js tests/browser/crj700-runtime.spec.js
+          git diff --cached --check
+          git commit -m "Stabilize exact jetway browser verification [patch-red-verifiers]"
+          git push origin HEAD:fix/exact-airport-jetway-glb
