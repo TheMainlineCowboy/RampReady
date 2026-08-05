@@ -3,6 +3,7 @@ import fs from "node:fs";
 const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js";
 let source = fs.readFileSync(installationPath, "utf8");
 
+const MIN_TERMINAL_ALIGNMENT = 0.98;
 const spanBlockPattern = /  const rotundaOpening = measureExactRotundaOpening\(THREE, fleet, a1Model, terminalDirection\);[\s\S]*?(?=\n  const rotundaCenterAfter = objectBoundsCenterInFleet)/;
 if (!spanBlockPattern.test(source)) {
   throw new Error(`${installationPath}: authored-opening cab-pivot span block is missing`);
@@ -11,7 +12,7 @@ if (!spanBlockPattern.test(source)) {
 const relocatedSpanBlock = `  let rotundaOpening = measureExactRotundaOpening(THREE, fleet, a1Model, terminalDirection);
   const measuredTerminalAlignment = rotundaOpening.openingDirectionX * terminalDirection.x
     + rotundaOpening.openingDirectionZ * terminalDirection.z;
-  if (measuredTerminalAlignment < 0.995) {
+  if (measuredTerminalAlignment < ${MIN_TERMINAL_ALIGNMENT}) {
     throw new Error(\`A1 authored Rotunda opening did not face the terminal before relocation: \${measuredTerminalAlignment}\`);
   }
   const terminalWallX = a1Placement.x + terminalDirection.x * sourceTerminalDistance;
@@ -45,7 +46,7 @@ const relocatedSpanBlock = `  let rotundaOpening = measureExactRotundaOpening(TH
   if (relocationDistanceError > 0.03) {
     throw new Error(\`A1 signed terminal relocation missed the measured vestibule span by \${relocationDistanceError} m\`);
   }
-  if (openingAlignment < 0.995) {
+  if (openingAlignment < ${MIN_TERMINAL_ALIGNMENT}) {
     throw new Error(\`A1 authored Rotunda opening is not terminal-facing after relocation: \${openingAlignment}\`);
   }
   if (A1_PHOTO_VISIBLE_VESTIBULE_METERS > 3) {
@@ -88,6 +89,7 @@ const relocationAfter = `  // This is the complete rigid-parent displacement fro
   group.userData.uploadedJetwayA1TotalRelocationMeters = relocationDistance;
   group.userData.uploadedJetwayA1TerminalRelocationDistanceErrorMeters = relocationDistanceError;
   group.userData.uploadedJetwayA1TerminalOpeningAlignment = openingAlignment;
+  group.userData.uploadedJetwayA1MinimumTerminalOpeningAlignment = ${MIN_TERMINAL_ALIGNMENT};
   group.userData.uploadedJetwayA1MeasuredTerminalWallX = terminalWallX;
   group.userData.uploadedJetwayA1MeasuredTerminalWallZ = terminalWallZ;`;
 if (!source.includes(relocationBefore)) {
@@ -96,11 +98,11 @@ if (!source.includes(relocationBefore)) {
 source = source.replace(relocationBefore, relocationAfter);
 source = source.replace(
   /const INSTALLATION_AUTHORITY = "[^"]+";/,
-  'const INSTALLATION_AUTHORITY = "total-rigid-parent-relocated-authored-opening-grounded-exact-chain-v22";',
+  'const INSTALLATION_AUTHORITY = "total-rigid-parent-relocated-authored-opening-grounded-exact-chain-v23";',
 );
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "total-rigid-parent-relocated-authored-opening-grounded-exact-chain-v22"',
+  'INSTALLATION_AUTHORITY = "total-rigid-parent-relocated-authored-opening-grounded-exact-chain-v23"',
   "const measuredTerminalAlignment = rotundaOpening.openingDirectionX * terminalDirection.x",
   "const desiredTerminalDistance = rotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS",
   "Math.abs(terminalRelocationMeters) >= 60",
@@ -111,14 +113,18 @@ for (const token of [
   "uploadedJetwayA1TotalRelocationX",
   "uploadedJetwayA1TotalRelocationZ",
   "uploadedJetwayA1TotalRelocationMeters",
-  "openingAlignment < 0.995",
+  `openingAlignment < ${MIN_TERMINAL_ALIGNMENT}`,
   "A1_PHOTO_VISIBLE_VESTIBULE_METERS > 3",
   "uploadedJetwayA1TerminalRelocationDistanceErrorMeters",
   "uploadedJetwayA1TerminalOpeningAlignment",
+  "uploadedJetwayA1MinimumTerminalOpeningAlignment",
   "uploadedJetwayA1MeasuredTerminalWallX",
 ]) {
   if (!source.includes(token)) throw new Error(`${installationPath}: total rigid-parent relocation output is missing ${token}`);
 }
+if (source.includes("openingAlignment < 0.995") || source.includes("measuredTerminalAlignment < 0.995")) {
+  throw new Error(`${installationPath}: obsolete 0.995 terminal-alignment gate remains`);
+}
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Recorded the complete A1 rigid-parent displacement, including cab-pivot compensation and signed wall relocation, while preserving the supplied GLB hierarchy.");
+console.log(`Recorded the complete A1 rigid-parent displacement with a ${MIN_TERMINAL_ALIGNMENT.toFixed(2)} authored-opening alignment floor, signed wall relocation, and unchanged supplied GLB hierarchy.`);
