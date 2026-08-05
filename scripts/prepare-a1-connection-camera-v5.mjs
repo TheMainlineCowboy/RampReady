@@ -2,9 +2,7 @@ import fs from "node:fs";
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
-const A1_CAMERA_AUTHORITY = "wide-oblique-full-assembly-terminal-corner-a1-v9";
-const A1_RELOCATION_X = 12.353412;
-const A1_RELOCATION_Z = -12.486888;
+const A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
 let source = fs.readFileSync(path, "utf8");
 if (!source.includes('  a1Connection: Object.freeze({')) {
   await import(`./prepare-full-airport-inspection-route.mjs?wide-a1=${Date.now()}`);
@@ -20,15 +18,19 @@ if (presetStart < 0 || presetEnd < 0 || presetEnd <= presetStart) {
 }
 
 let presetBlock = source.slice(presetStart, presetEnd);
-const tugXLine = `    x: ${(7.5 + A1_RELOCATION_X).toFixed(6)},`;
-const tugZLine = `    z: ${(8.5 + A1_RELOCATION_Z).toFixed(6)},`;
+// Keep the inspection tug on clear apron close enough that the overhead view
+// includes the entire relocated A1 installation without parking under it.
+const tugXLine = "    x: 31.0,";
+const tugZLine = "    z: -24.0,";
 const tugYawLine = '    yaw: -0.35,';
-// Pull the camera farther back and aim at the middle of the complete bridge,
-// rather than at the Rotunda alone. The resulting frame must include the real
-// terminal wall, short white vestibule, Rotunda, all tunnel sections, bogie and
-// aircraft-facing Cab without cutting the jetway off at the viewport edge.
-const cameraPositionLine = `    cameraPosition: Object.freeze([${(38.0 + A1_RELOCATION_X).toFixed(6)}, 18.0, ${(18.0 + A1_RELOCATION_Z).toFixed(6)}]),`;
-const cameraTargetLine = `    cameraTarget: Object.freeze([${(-12.0 + A1_RELOCATION_X).toFixed(6)}, 4.0, ${(-16.5 + A1_RELOCATION_Z).toFixed(6)}]),`;
+// Final measured A1 geometry after rigid-parent orientation and Rotunda-to-wall
+// relocation runs from the aircraft-side Cab near (40.2,-35.7) to the terminal
+// wall near (62.3,-58.1). Aim at the bridge midpoint from the apron-side normal
+// so the wall, compact vestibule, Rotunda, all tunnel sections, grounded bogie,
+// Cab and aircraft door are visible together instead of being clipped at the
+// bottom and right edges of the old pre-relocation frame.
+const cameraPositionLine = "    cameraPosition: Object.freeze([83.25, 19.0, -15.25]),";
+const cameraTargetLine = "    cameraTarget: Object.freeze([51.25, 4.0, -46.9]),";
 const cameraAuthorityLine = `    cameraAuthority: "${A1_CAMERA_AUTHORITY}",`;
 
 for (const [pattern, line, label] of [
@@ -106,4 +108,4 @@ if (fixedCameraPositionCount === 2) {
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared a wide oblique A1 evidence frame showing the terminal wall, compact vestibule, Rotunda, complete authored bridge, grounded bogie and aircraft-facing Cab together.");
+console.log("Prepared a measured apron-side A1 evidence frame showing the terminal wall, compact vestibule, Rotunda, complete exact bridge, grounded bogie and aircraft-facing Cab together.");
