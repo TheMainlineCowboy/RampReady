@@ -28,6 +28,12 @@ function requireIdentity(label, bytes, expected) {
   }
 }
 
+function requireTokens(filePath, tokens) {
+  const source = readFileSync(filePath, "utf8");
+  for (const token of tokens) if (!source.includes(token)) throw new Error(`${filePath} is missing ${token}`);
+  return source;
+}
+
 function parseGlb(bytes) {
   if (bytes.toString("ascii", 0, 4) !== "glTF" || bytes.readUInt32LE(4) !== 2 || bytes.readUInt32LE(8) !== bytes.length) {
     throw new Error("Exact Airport_Jetway.glb has an invalid GLB 2.0 header");
@@ -57,25 +63,20 @@ const meshNames = new Set(json.meshes.map((mesh) => mesh.name));
 const nodeNames = new Set(json.nodes.map((node) => node.name));
 for (const name of EXPECTED_MESHES) if (!meshNames.has(name)) throw new Error(`Exact GLB is missing mesh ${name}`);
 for (const name of EXPECTED_NODES) if (!nodeNames.has(name)) throw new Error(`Exact GLB is missing node ${name}`);
-const materialNames = json.materials.map((material) => material.name).sort().join(",");
-if (materialNames !== "Glass_JW,Jetway") throw new Error(`Exact GLB material names changed: ${materialNames}`);
-
+if (json.materials.map((material) => material.name).sort().join(",") !== "Glass_JW,Jetway") {
+  throw new Error("Exact GLB authored material names changed");
+}
 const embeddedImages = json.images.map((image, index) => {
   const view = json.bufferViews?.[image.bufferView];
   if (!view) throw new Error(`Exact GLB image ${index} has no bufferView`);
   const bytes = binary.subarray(view.byteOffset || 0, (view.byteOffset || 0) + view.byteLength);
-  return { index, bytes, sha256: sha256(bytes) };
+  return { bytes, sha256: sha256(bytes) };
 });
 for (const expected of EXPECTED_IMAGES) {
-  const embedded = embeddedImages.find((candidate) => candidate.bytes.length === expected.bytes && candidate.sha256 === expected.sha256);
-  if (!embedded) throw new Error(`Exact embedded texture is missing: ${expected.file}`);
+  if (!embeddedImages.some((candidate) => candidate.bytes.length === expected.bytes && candidate.sha256 === expected.sha256)) {
+    throw new Error(`Exact embedded texture is missing: ${expected.file}`);
+  }
   requireIdentity(expected.file, readFileSync(`public/models/airport-jetway/${expected.file}`), expected);
-}
-
-function requireTokens(filePath, tokens) {
-  const source = readFileSync(filePath, "utf8");
-  for (const token of tokens) if (!source.includes(token)) throw new Error(`${filePath} is missing ${token}`);
-  return source;
 }
 
 const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
@@ -85,9 +86,13 @@ const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
   'EXACT_GLB_URL = "models/airport-jetway/Airport_Jetway.glb"',
   'new GLTFLoader().loadAsync(modelUrl())',
   "new THREE.InstancedMesh",
-  "prototype.clone(true)",
-  "placements.length !== 58",
   "staticPlacements.length !== 57",
+  "placements.length !== 58",
+  "prototype.clone(true)",
+  "computeUploadedJetwayArticulation(placement, reach.sourceContactDistance)",
+  "createModelSpaceA1Controller(THREE",
+  "controller.bind(anchor)",
+  'uploadedJetwayExactGlbSha256 = "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0"',
 ]);
 for (const forbidden of ["geometry.part", "DecompressionStream", "addProjectedUvs", "M1DGJETWAY", "decodeDeltaVarint", "decodeOctNormal", "geometry.bin", "new THREE.EdgesGeometry"]) {
   if (fleet.includes(forbidden)) throw new Error(`Exact Airport Jetway runtime contains retired substitute ${forbidden}`);
@@ -101,13 +106,18 @@ requireTokens("src/environment/uploadedAirportJetwayFleetReadyV2.js", [
   "staticPrimitiveBatchCount !== 7",
 ]);
 requireTokens("src/environment/uploadedAirportJetwayExactModelGuard.js", [
-  'EXACT_MODEL_AUTHORITY = "supplied-airport-jetway-source-hierarchy-meshes-uvs-exclusive-v10"',
   '"Tunnel_C_Jetway_0"', '"Cab_Glass_JW_0"', "sourceMeshCount !== 7 || uvMeshCount !== 7",
 ]);
 requireTokens("src/environment/sourcePlacedTerminal4Jetways.js", [
-  'uploadedAirportJetwayFleetReadyV2.js', "const uploadedJetwayPlacements = []",
-  "uploadedJetwayPlacements.push", "installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements, sourceTextures)",
+  "const uploadedJetwayPlacements = []",
+  "uploadedJetwayPlacements.push",
+  "installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements, sourceTextures)",
   "a1JetwayController = uploadedJetwayController",
 ]);
+requireTokens("scripts/prepare-uploaded-airport-jetway-readiness-v2.mjs", [
+  'import { installUploadedAirportJetwayFleet } from "./uploadedAirportJetwayFleetReadyV2.js";',
+  "await sourcePlacedJetways.userData.uploadedJetwayReady",
+  "authoredTerminal4UploadedJetwayVerifiedModelCount",
+]);
 for (let index = 0; index < 5; index += 1) if (existsSync(`public/models/airport-jetway/geometry.part${index}`)) throw new Error(`Retired geometry.part${index} still exists`);
-console.log("Verified the exact 31,459,796-byte Airport_Jetway.glb, seven embedded source textures, seven authored meshes, two authored materials, 57 static instances, and one individually animated A1 model.");
+console.log("Verified the exact 31,459,796-byte Airport_Jetway.glb, seven exact embedded textures, seven authored meshes, two authored materials, all 58 Terminal 4 placements, 57 articulated static instance sets, and one independently controlled A1 model.");
