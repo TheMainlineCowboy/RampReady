@@ -1,7 +1,7 @@
 const INSTALLATION_AUTHORITY = "measured-terminal-facade-short-connector-grounded-exact-chain-v7";
 const A1_TERMINAL_CONNECTION_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
 const ASSEMBLY_CONTINUITY_AUTHORITY = "exact-authored-five-part-chain-no-isolated-node-rotation-v2";
-const ROTUNDA_OPENING_AUTHORITY = "exact-vertex-centroid-opposite-rotunda-to-tunnel-a-axis-v4";
+const ROTUNDA_OPENING_AUTHORITY = "exact-authored-opposite-rotunda-to-tunnel-a-axis-v5";
 const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-short-solid-terminal-vestibule-v6";
 const SOURCE_WALL_LENGTH_PADDING_METERS = 0.35;
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.3;
@@ -100,15 +100,13 @@ function measureExactRotundaOpening(THREE, fleet, a1Model, terminalDirection) {
   bridgeDirection.y = 0;
   if (bridgeDirection.lengthSq() < 0.25) throw new Error("A1 exact Rotunda-to-Tunnel A axis is degenerate");
   bridgeDirection.normalize();
-  let openingDirection = bridgeDirection.clone().multiplyScalar(-1);
 
-  // The uploaded model may arrive mirrored by parent-axis normalization. Select
-  // the authored Rotunda side that actually faces the measured terminal wall,
-  // without rotating any source node.
-  if (openingDirection.dot(terminalDirection) < 0) openingDirection.multiplyScalar(-1);
+  // The terminal opening is the authored side of the Rotunda opposite Tunnel A.
+  // Never flip this vector to make a backwards installation pass validation.
+  const openingDirection = bridgeDirection.clone().multiplyScalar(-1);
   const terminalFacingDot = openingDirection.dot(terminalDirection);
   if (terminalFacingDot < 0.4) {
-    throw new Error(`A1 exact Rotunda opening is not compatible with the measured terminal wall: ${terminalFacingDot}`);
+    throw new Error(`A1 exact authored Rotunda opening does not face the measured terminal wall: ${terminalFacingDot}`);
   }
 
   let terminalRadius = Number.NEGATIVE_INFINITY;
@@ -281,8 +279,6 @@ function buildMeasuredA1Connector(THREE, fleet, placement, rotundaOpening, termi
     corrugated: true,
   });
 
-  // Overlapping cap at the small corner eliminates daylight without inventing
-  // a long corridor or altering the supplied Rotunda/tunnel chain.
   addBox(
     THREE,
     connector,
