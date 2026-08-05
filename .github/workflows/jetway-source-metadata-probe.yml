@@ -1,0 +1,49 @@
+name: Jetway source metadata probe
+
+on:
+  push:
+    branches:
+      - fix/exact-airport-jetway-glb
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read official model metadata
+        shell: bash
+        run: |
+          node <<'NODE'
+          const uid = '6067e855917e498abee3d98076293cc6';
+          const decode = (v) => v
+            .replace(/&quot;/g, '"').replace(/&#39;|&#x27;/gi, "'")
+            .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+            .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+            .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)));
+          const page = await fetch(`https://sketchfab.com/models/${uid}/embed?api_log=1`, {
+            headers: {'User-Agent': 'Mozilla/5.0 RampReady source revision probe'}
+          });
+          if (!page.ok) throw new Error(`embed HTTP ${page.status}`);
+          const html = await page.text();
+          const match = html.match(/<[^>]+id=["']js-dom-data-prefetched-data["'][^>]*>([\s\S]*?)<\/[^>]+>/i);
+          if (!match) throw new Error('prefetched data missing');
+          const data = JSON.parse(decode(match[1].trim()).replace(/^<!--\s*/, '').replace(/\s*-->$/, ''));
+          const rows = [];
+          for (const [key, value] of Object.entries(data)) {
+            const text = JSON.stringify(value);
+            const urls = [...new Set(text.match(/https?:\\?\/\\?\/[^"\\s]+/g) || [])]
+              .map((u) => u.replaceAll('\\/', '/'));
+            const ids = [...new Set(text.match(/[0-9a-f]{32}/gi) || [])];
+            rows.push({key, type: Array.isArray(value) ? 'array' : typeof value, bytes: text.length, ids, urls});
+          }
+          console.log('JETWAY_PREFETCH_INDEX ' + JSON.stringify(rows));
+          const modelKeys = Object.keys(data).filter((k) => k.includes(`/i/models/${uid}`));
+          for (const key of modelKeys) {
+            const value = data[key];
+            const text = JSON.stringify(value);
+            console.log('JETWAY_MODEL_KEY ' + JSON.stringify({key, bytes: text.length}));
+            console.log('JETWAY_MODEL_DATA ' + text);
+          }
+          NODE

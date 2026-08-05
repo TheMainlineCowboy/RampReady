@@ -4,13 +4,23 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'public/models/airport-jetway/Airport_Jetway.glb'
+      - 'src/environment/sourcePlacedTerminal4Jetways.js'
+      - 'src/environment/uploadedAirportJetwayFleet.js'
+      - 'src/environment/uploadedAirportJetwayFleetReadyV2.js'
+      - 'src/environment/uploadedAirportJetwayExactModelGuard.js'
       - 'src/environment/uploadedAirportJetwayArticulationV10.js'
-      - 'scripts/prepare-uploaded-airport-jetway-articulation-v10.mjs'
+      - 'scripts/materialize-exact-airport-jetway.mjs'
+      - 'scripts/prepare-exact-airport-jetway-source-wiring.mjs'
       - 'scripts/prepare-uploaded-airport-jetway-fleet.mjs'
+      - 'scripts/prepare-uploaded-airport-jetway-articulation-v10.mjs'
       - 'scripts/prepare-uploaded-airport-jetway-readiness-v2.mjs'
       - 'scripts/prepare-terminal4-crj-runtime-evidence.mjs'
+      - 'scripts/verify-exact-airport-jetway-runtime.mjs'
+      - 'scripts/verify-uploaded-airport-jetway-fleet.mjs'
       - 'scripts/verify-uploaded-airport-jetway-articulation-v10.mjs'
       - 'tests/browser/uploaded-jetway-articulation-v10.spec.js'
+      - 'package.json'
       - '.github/workflows/verify-uploaded-jetway-articulation-v10.yml'
   workflow_dispatch:
 
@@ -20,7 +30,7 @@ permissions:
 jobs:
   verify-exact-supplied-jetway-articulation:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - name: Check out exact repair commit
         uses: actions/checkout@v4
@@ -34,9 +44,16 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Prepare and verify per-gate supplied-model articulation contract
+      - name: Prepare and verify exact GLB, 58 placements, textures, fleet, and articulation
         run: |
+          node scripts/materialize-exact-airport-jetway.mjs
+          node scripts/prepare-exact-airport-jetway-source-wiring.mjs
+          node scripts/prepare-uploaded-airport-jetway-articulation-v10.mjs
+          node scripts/prepare-uploaded-airport-jetway-readiness-v2.mjs
+          node scripts/prepare-terminal4-crj-runtime-evidence.mjs
           node scripts/prepare-uploaded-airport-jetway-fleet.mjs
+          node scripts/verify-exact-airport-jetway-runtime.mjs
+          node scripts/verify-uploaded-airport-jetway-fleet.mjs
           node scripts/verify-uploaded-airport-jetway-articulation-v10.mjs
 
       - name: Run complete RampReady verification
@@ -61,5 +78,6 @@ jobs:
           path: |
             test-results/
             playwright-report/
+            public/models/airport-jetway/exact-asset-manifest.json
           if-no-files-found: warn
           retention-days: 3

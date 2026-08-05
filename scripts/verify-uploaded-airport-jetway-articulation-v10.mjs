@@ -17,6 +17,7 @@ function requireTokens(path, tokens) {
 
 const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
   'from "./uploadedAirportJetwayArticulationV10.js"',
+  'from "./uploadedAirportJetwayModelSpaceControllerV7.js"',
   "measurePrototypeReach",
   "applyIndividualArticulation",
   "sourcePartNameForEntry",
@@ -25,21 +26,22 @@ const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
   "uploadedJetwayA1TargetDoorDistanceMeters",
   "uploadedJetwayA1AttachedExtensionMeters",
   "uploadedJetwayA1PredictedDoorGapMeters",
+  "uploadedJetwayA1ActualDoorGapMeters",
   "uploadedJetwayStaticArticulatedGateCount",
   "uploadedJetwayStaticMaximumContactErrorMeters",
+  "createModelSpaceA1Controller(THREE",
+  "controller.bind(anchor)",
 ]);
-if (fleet.includes("AIR_Jetway01_(?!WallCollars)")) {
-  throw new Error("Legacy wall collars are still exempted from supplied-jetway replacement");
+for (const forbidden of ["AIR_Jetway01_(?!WallCollars)", "geometry.bin", "decodeDeltaVarint", "decodeOctNormal"]) {
+  if (fleet.includes(forbidden)) throw new Error(`Retired articulation path remains: ${forbidden}`);
 }
 
-requireTokens("scripts/prepare-uploaded-airport-jetway-fleet.mjs", [
-  "targetX",
-  "targetZ",
-  "aircraftDoorDistance: distance",
-  "aircraftContactClearanceMeters: AIR_JETWAY01_CONTACT_CLEARANCE_METERS",
+requireTokens("scripts/prepare-uploaded-airport-jetway-articulation-v10.mjs", [
+  "57 per-gate static instance sets",
+  "one independently controlled A1 clone",
 ]);
 requireTokens("src/environment/uploadedAirportJetwayFleetReadyV2.js", [
-  "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured",
+  'READY_AUTHORITY = "exact-uploaded-airport-jetway-complete-58-gates-v1"',
   "UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY",
   "staticArticulatedGateCount !== 57",
   "a1PredictedDoorGap > 0.05",
@@ -68,9 +70,7 @@ const sourcePartCenters = Object.freeze({
   Tunnel_C: 17.126,
   Cab: 23.327,
 });
-const parkings = new Map(
-  [...concourseA.parkings, ...concourseB.parkings].map((parking) => [parking.g, parking]),
-);
+const parkings = new Map([...concourseA.parkings, ...concourseB.parkings].map((parking) => [parking.g, parking]));
 const placements = [...concourseA.jetways, ...concourseB.jetways].map((jetway) => {
   const parking = parkings.get(jetway.g);
   const heading = Number(parking?.h || 0) * Math.PI / 180;
@@ -83,18 +83,16 @@ const placements = [...concourseA.jetways, ...concourseB.jetways].map((jetway) =
   const targetZ = jetway.pz - forwardZ * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS
     + leftZ * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
   const aircraftDoorDistance = Math.hypot(targetX - jetway.x, targetZ - jetway.z);
-  const parkedGateCode = [...jetway.g].reduce(
-    (value, character) => value + character.charCodeAt(0),
-    0,
-  );
+  const parkedGateCode = [...jetway.g].reduce((value, character) => value + character.charCodeAt(0), 0);
   const bridgeEnd = jetway.g === "A1"
     ? Math.max(11.5, Math.min(29.5, aircraftDoorDistance - AIR_JETWAY01_CONTACT_CLEARANCE_METERS))
     : 11.9 + (parkedGateCode % 4) * 0.65;
   return { gate: jetway.g, targetX, targetZ, aircraftDoorDistance, bridgeEnd };
 });
-if (placements.length !== 58) throw new Error(`Expected 58 supplied-jetway placements, received ${placements.length}`);
+if (placements.length !== 58) throw new Error(`Expected 58 exact-jetway placements, received ${placements.length}`);
+if (placements.filter((placement) => placement.gate !== "A1").length !== 57) throw new Error("Expected 57 static exact-jetway placements");
 if (UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum > -14.08) {
-  throw new Error(`Supplied jetway cannot reach the shortest authored parked pose: ${UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum}`);
+  throw new Error(`Exact jetway cannot reach the shortest authored parked pose: ${UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum}`);
 }
 
 let maximumStaticError = 0;
@@ -119,28 +117,25 @@ for (const placement of placements) {
   ];
   minimumPartSeparation = Math.min(minimumPartSeparation, ...separations);
   if (separations.some((separation) => separation <= 0)) {
-    throw new Error(`${placement.gate} supplied tunnel sections inverted while telescoping: ${JSON.stringify(centers)}`);
+    throw new Error(`${placement.gate} exact tunnel sections inverted while telescoping: ${JSON.stringify(centers)}`);
   }
   if (placement.gate === "A1") {
     if (!(articulation.extension > 3 && articulation.extension < 5)) {
-      throw new Error(`A1 supplied jetway extension is not the measured aircraft-door reach: ${articulation.extension}`);
+      throw new Error(`A1 exact jetway extension is not the measured aircraft-door reach: ${articulation.extension}`);
     }
     if (Math.abs(articulation.contactError) > 0.001) {
-      throw new Error(`A1 supplied jetway remains ${articulation.contactError} m from the aircraft door`);
+      throw new Error(`A1 exact jetway remains ${articulation.contactError} m from the aircraft door`);
     }
     if (!(articulation.partOffsets.Tunnel_B < articulation.partOffsets.Tunnel_C
       && articulation.partOffsets.Tunnel_C < articulation.partOffsets.Cab)) {
-      throw new Error("A1 supplied tunnel sections are not telescoped in authored order");
+      throw new Error("A1 exact tunnel sections are not telescoped in authored order");
     }
   } else {
     maximumStaticError = Math.max(maximumStaticError, Math.abs(articulation.contactError));
   }
 }
-if (maximumStaticError > 0.001) {
-  throw new Error(`Static supplied jetway contact error is ${maximumStaticError} m`);
-}
+if (maximumStaticError > 0.001) throw new Error(`Static exact jetway contact error is ${maximumStaticError} m`);
 if (minimumPartSeparation < 0.45) {
-  throw new Error(`Supplied parked jetways telescope too deeply; minimum part-center separation is ${minimumPartSeparation} m`);
+  throw new Error(`Exact parked jetways telescope too deeply; minimum part-center separation is ${minimumPartSeparation} m`);
 }
-
-console.log(`Verified the exact supplied Terminal 4 jetway articulation: all 57 static gates reach their authored 11.9-13.85 m parked poses, the deepest retraction remains ordered with ${minimumPartSeparation.toFixed(3)} m minimum center separation, A1 reaches the CRJ forward door, Rotunda and Tunnel A remain fixed, and no source mesh is scaled or replaced.`);
+console.log(`Verified direct exact-GLB articulation for all 58 Terminal 4 gates: 57 static gate poses, individually controlled A1 door alignment, ordered authored sections, ${maximumStaticError.toFixed(6)} m maximum static contact error, and ${minimumPartSeparation.toFixed(3)} m minimum section separation.`);

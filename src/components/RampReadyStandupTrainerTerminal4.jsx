@@ -22,6 +22,8 @@ import { installAuthoredKphxPhotoGround } from "../environment/authoredKphxPhoto
 import "./RampReadyTrainer.css";
 import "./procedure-gates.css";
 import "./mobile-runtime-recovery.css";
+import "./inspection-compact-v30.css";
+import "./mobile-hud-v9.css";
 
 const NOSE_START_Z = 6.2;
 const STOP_Z = 52;
@@ -36,6 +38,35 @@ const STAGES = [
   "Drive the tug clear",
   "Scenario complete",
 ];
+const INSPECTION_PRESETS = Object.freeze({
+  // Each chase camera is placed on the apron side of its tug and looks back
+  // toward the actual source jetway/terminal position instead of across an
+  // empty taxiway. Positions remain source-gate apron locations.
+  a1: Object.freeze({ id: "a1", label: "A1 ramp", x: 0, z: 0, yaw: 0, cameraYaw: 0.92, cameraDistance: 25 }),
+  // A true side-on architectural view of the measured A1 rotunda-to-T4_WALK
+  // corridor. The tug remains freely drivable and the driver/overhead views
+  // remain available, while chase mode starts by looking directly at the joint
+  // rather than hiding it behind the rotunda.
+  a1Connection: Object.freeze({
+    id: "a1Connection",
+    label: "A1 terminal connection",
+    x: 7.5,
+    z: 8.5,
+    yaw: -0.35,
+    cameraYaw: 0,
+    cameraDistance: 22,
+    cameraPosition: Object.freeze([-12.0, 10.5, 28.0]),
+    cameraTarget: Object.freeze([-27.5, 4.1, -16.15]),
+  }),
+  a14: Object.freeze({ id: "a14", label: "A concourse midpoint", x: 218.45, z: -86.52, yaw: 2.88, cameraYaw: 2.19, cameraDistance: 32 }),
+  b14: Object.freeze({ id: "b14", label: "B concourse midpoint", x: 216.4, z: 150.35, yaw: 2.8, cameraYaw: 2.10, cameraDistance: 32 }),
+  // B15 sits on the east face of the north-south pier. The former inspection
+  // pose faced south toward the distant main concourse and could not verify the
+  // B15L/B15M terminal portals. This pose is on the actual B15 apron, 21.85 m
+  // east of the facade, and points the operator view directly west at both gates.
+  b15: Object.freeze({ id: "b15", label: "B15 ramp", x: -18.5, z: 539.2, yaw: -1.5708, cameraYaw: 1.38, cameraDistance: 25 }),
+});
+const INSPECTION_ROUTE_AUTHORITY = "source-gate-apron-presets-with-wide-diagonal-a1-connection-near-wall-b15-a1-a14-b14-b15-v7";
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 function material(color, roughness = 0.62, metalness = 0.05) {
@@ -86,6 +117,7 @@ function dispose(object) {
 
 export default function RampReadyStandupTrainer({
   equipmentId = "lektro-88",
+  initialInspectionMode = false,
   onChangeEquipment,
   gyroAvailable = true,
   gyroEnabled = false,
@@ -96,11 +128,15 @@ export default function RampReadyStandupTrainer({
   const stageRef = useRef(0);
   const cameraRef = useRef("chase");
   const inspectionRef = useRef(false);
+  const inspectionPresetRef = useRef("a1");
   const jetwayRef = useRef({
     controller: null,
     deployment: 1,
     target: 1,
     retractionRequested: false,
+    transitionStartDeployment: 1,
+    transitionStartedAt: 0,
+    transitionDurationMs: 4200,
   });
   const orbitRef = useRef({
     yaw: -0.64,
@@ -116,6 +152,7 @@ export default function RampReadyStandupTrainer({
   const [stage, setStage] = useState(0);
   const [cameraMode, setCameraMode] = useState("chase");
   const [inspectionMode, setInspectionMode] = useState(false);
+  const [inspectionPreset, setInspectionPreset] = useState("a1");
   const [direction, setDirection] = useState("FWD");
   const [throttle, setThrottle] = useState(0);
   const [message, setMessage] = useState("Complete the equipment check, then approach at idle speed.");
@@ -135,6 +172,7 @@ export default function RampReadyStandupTrainer({
 
   useEffect(() => { stageRef.current = stage; }, [stage]);
   useEffect(() => { cameraRef.current = cameraMode; }, [cameraMode]);
+  useEffect(() => { inspectionPresetRef.current = inspectionPreset; }, [inspectionPreset]);
   useEffect(() => {
     inspectionRef.current = inspectionMode;
     const canvas = simRef.current?.renderer?.domElement;
@@ -155,6 +193,8 @@ export default function RampReadyStandupTrainer({
     const resetJetwayDeployment = inspectionRef.current ? 0 : 1;
     jetwayRef.current.target = resetJetwayDeployment;
     jetwayRef.current.deployment = resetJetwayDeployment;
+    jetwayRef.current.transitionStartDeployment = resetJetwayDeployment;
+    jetwayRef.current.transitionStartedAt = 0;
     jetwayRef.current.retractionRequested = false;
     jetwayRef.current.controller?.setDeployment(resetJetwayDeployment);
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
@@ -169,6 +209,48 @@ export default function RampReadyStandupTrainer({
     setMessage(inspectionRef.current
       ? "Free-drive inspection reset at A1. Use the tug to inspect any part of the airport."
       : "Complete the equipment check, then approach at idle speed.");
+  }, []);
+
+  const moveInspectionToPreset = useCallback((presetId) => {
+    const preset = INSPECTION_PRESETS[presetId] || INSPECTION_PRESETS.a1;
+    inspectionPresetRef.current = preset.id;
+    setInspectionPreset(preset.id);
+    const sim = simRef.current;
+    if (!sim) return;
+    sim.connection = createConnectionState();
+    sim.dynamics = createPushbackState({
+      tugX: preset.x,
+      tugZ: preset.z,
+      tugYaw: preset.yaw,
+      aircraftX: sim.aircraft.position.x,
+      aircraftZ: sim.aircraft.position.z,
+      aircraftYaw: sim.aircraft.rotation.y,
+    });
+    sim.rig.root.position.set(preset.x, 0, preset.z);
+    sim.rig.root.rotation.y = preset.yaw;
+    sim.rig.setSteering(0);
+    sim.rig.setLiftProgress(0);
+    driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
+    orbitRef.current.yaw = preset.cameraYaw;
+    orbitRef.current.pitch = 0.38;
+    orbitRef.current.distance = preset.cameraDistance || 30;
+    scoreRef.current = 100;
+    setThrottle(0);
+    setDirection("FWD");
+    setCameraMode("chase");
+    const canvas = sim.renderer.domElement;
+    canvas.dataset.inspectionPreset = preset.id;
+    canvas.dataset.inspectionPresetLabel = preset.label;
+    canvas.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY;
+    canvas.dataset.inspectionTugX = preset.x.toFixed(3);
+    canvas.dataset.inspectionTugZ = preset.z.toFixed(3);
+    canvas.dataset.cameraYaw = preset.cameraYaw.toFixed(4);
+    canvas.dataset.cameraPitch = orbitRef.current.pitch.toFixed(4);
+    canvas.dataset.cameraDistance = orbitRef.current.distance.toFixed(3);
+    canvas.dataset.inspectionCameraAuthority = preset.cameraPosition
+      ? "wide-diagonal-a1-terminal-joint-v6-clear-tug"
+      : "free-orbit-follow-tug";
+    setMessage(`Inspection position: ${preset.label}. Drive freely with W/S or the power slider and use A/D to steer.`);
   }, []);
 
   const toggleInspectionDrive = useCallback(() => {
@@ -186,9 +268,14 @@ export default function RampReadyStandupTrainer({
       sim.aircraft.position.set(0, 0, NOSE_START_Z);
       sim.aircraft.rotation.y = 0;
       sim.renderer.domElement.dataset.inspectionMode = next ? "active" : "training";
+      sim.renderer.domElement.dataset.inspectionPreset = next ? "a1" : "training";
+      sim.renderer.domElement.dataset.inspectionPresetLabel = next ? INSPECTION_PRESETS.a1.label : "Training";
+      sim.renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY;
       const inspectionJetwayDeployment = next ? 0 : 1;
       jetwayRef.current.target = inspectionJetwayDeployment;
       jetwayRef.current.deployment = inspectionJetwayDeployment;
+      jetwayRef.current.transitionStartDeployment = inspectionJetwayDeployment;
+      jetwayRef.current.transitionStartedAt = 0;
       jetwayRef.current.retractionRequested = false;
       jetwayRef.current.controller?.setDeployment(inspectionJetwayDeployment);
     }
@@ -202,16 +289,41 @@ export default function RampReadyStandupTrainer({
     setThrottle(0);
     setDirection("FWD");
     setCameraMode("chase");
+    inspectionPresetRef.current = "a1";
+    setInspectionPreset("a1");
     setMessage(next
       ? "Free-drive airport inspection active. Use W/S or the power slider, A/D to steer, and the camera views to inspect the entire airport."
       : "Training mode restored. Complete the equipment check, then approach at idle speed.");
   }, []);
+
+  useEffect(() => {
+    if (!initialInspectionMode) return undefined;
+    let cancelled = false;
+    let frameId = 0;
+    let attempts = 0;
+    const activate = () => {
+      if (cancelled) return;
+      attempts += 1;
+      if (simRef.current) {
+        if (!inspectionRef.current) toggleInspectionDrive();
+        return;
+      }
+      if (attempts < 600) frameId = window.requestAnimationFrame(activate);
+    };
+    frameId = window.requestAnimationFrame(activate);
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [initialInspectionMode, toggleInspectionDrive]);
 
   const advance = useCallback(() => {
     const sim = simRef.current;
     if (!sim || inspectionRef.current) return;
     if (stageRef.current === 0) {
       if (jetwayRef.current.retractionRequested) return;
+      jetwayRef.current.transitionStartDeployment = jetwayRef.current.deployment;
+      jetwayRef.current.transitionStartedAt = performance.now();
       jetwayRef.current.target = 0;
       jetwayRef.current.retractionRequested = true;
       setMessage("Jetway departure sequence active: hood clear, telescope in, then rotate to park before tug approach.");
@@ -269,6 +381,11 @@ export default function RampReadyStandupTrainer({
     renderer.domElement.dataset.cameraDistance = orbitRef.current.distance.toFixed(3);
     renderer.domElement.dataset.equipmentId = equipmentId;
     renderer.domElement.dataset.inspectionMode = inspectionRef.current ? "active" : "training";
+    renderer.domElement.dataset.inspectionPreset = inspectionRef.current ? inspectionPresetRef.current : "training";
+    renderer.domElement.dataset.inspectionPresetLabel = inspectionRef.current
+      ? (INSPECTION_PRESETS[inspectionPresetRef.current] || INSPECTION_PRESETS.a1).label
+      : "Training";
+    renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY;
     mount.replaceChildren(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -280,6 +397,91 @@ export default function RampReadyStandupTrainer({
     sun.castShadow = true;
     scene.add(sun);
     const environment = buildGround(scene);
+    const airportCollision = {
+      authority: "terminal-jetway-aircraft-raycast-envelope-v45",
+      raycaster: new THREE.Raycaster(),
+      direction: new THREE.Vector3(),
+      origin: new THREE.Vector3(),
+      staticTargets: [],
+      aircraftTarget: null,
+      ready: false,
+      blocked: false,
+      count: 0,
+      lastMessageAt: 0,
+    };
+    const collisionHierarchyVisible = (object) => {
+      for (let current = object; current; current = current.parent) {
+        if (current.visible === false) return false;
+      }
+      return true;
+    };
+    const collisionHitEligible = (hit) => {
+      if (!hit?.object?.isMesh || !collisionHierarchyVisible(hit.object)) return false;
+      const path = [];
+      for (let current = hit.object; current; current = current.parent) path.push(current.name || "");
+      const identity = path.join("/");
+      if (/Ground|Aerial|Pavement|Marking|Projected|Runway|Taxiway|LightHalo|ApronSurface/i.test(identity)) return false;
+      if (hit.object.material?.transparent && Number(hit.object.material.opacity) <= 0.05) return false;
+      return Number(hit.point?.y) >= 0.18;
+    };
+    const airportMovementBlocked = ({ startX, startZ, endX, endZ, radius, heights, includeAircraft = false }) => {
+      if (!airportCollision.ready) return false;
+      const dx = endX - startX;
+      const dz = endZ - startZ;
+      const distance = Math.hypot(dx, dz);
+      if (!(distance > 0.0005)) return false;
+      airportCollision.direction.set(dx / distance, 0, dz / distance);
+      const sideX = -airportCollision.direction.z;
+      const sideZ = airportCollision.direction.x;
+      const targets = includeAircraft && airportCollision.aircraftTarget
+        ? [...airportCollision.staticTargets, airportCollision.aircraftTarget]
+        : airportCollision.staticTargets;
+      const rayLength = distance + radius + 0.2;
+      const probes = [
+        { side: -0.82, height: heights[0] },
+        { side: 0, height: heights[0] },
+        { side: 0.82, height: heights[0] },
+        { side: 0, height: heights[1] },
+        { side: 0, height: heights[2] },
+      ];
+      for (const probe of probes) {
+        airportCollision.origin.set(
+          startX + sideX * radius * probe.side,
+          probe.height,
+          startZ + sideZ * radius * probe.side,
+        );
+        airportCollision.raycaster.set(airportCollision.origin, airportCollision.direction);
+        airportCollision.raycaster.near = 0.04;
+        airportCollision.raycaster.far = rayLength;
+        const hit = airportCollision.raycaster
+          .intersectObjects(targets, true)
+          .find(collisionHitEligible);
+        if (hit) return true;
+      }
+      return false;
+    };
+    const aircraftCollisionSamples = (x, z, yaw) => {
+      const local = [
+        [0, 0],
+        [0, 8.5],
+        [0, 17.5],
+        [0, 26.5],
+        [-10.8, 12.5],
+        [10.8, 12.5],
+      ];
+      const sin = Math.sin(yaw);
+      const cos = Math.cos(yaw);
+      return local.map(([side, longitudinal]) => ({
+        x: x + cos * side + sin * longitudinal,
+        z: z - sin * side + cos * longitudinal,
+      }));
+    };
+    renderer.domElement.dataset.airportCollisionAuthority = airportCollision.authority;
+    renderer.domElement.dataset.airportCollisionReady = "false";
+    renderer.domElement.dataset.airportCollisionTargetCount = "0";
+    renderer.domElement.dataset.airportCollisionState = "clear";
+    renderer.domElement.dataset.airportCollisionCount = "0";
+    renderer.domElement.dataset.airportCollisionAircraftEnvelope = "nose-center-tail-wing-sweep-v2";
     renderer.domElement.dataset.environmentSource = "loading-authored-phx-terminal4-textured";
     renderer.domElement.dataset.groundSource = "loading-authored-kphx-v181";
     renderer.domElement.dataset.photoGroundSource = "loading-source-authored-phx-photo";
@@ -298,6 +500,8 @@ export default function RampReadyStandupTrainer({
     renderer.domElement.dataset.b15CorridorMeters = "loading";
     renderer.domElement.dataset.terminal4TextureCount = "loading";
     renderer.domElement.dataset.terminal4ExactTextureCount = "loading";
+    renderer.domElement.dataset.terminal4A1LegacyBlockRemovedTriangles = "loading";
+    renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = "loading";
     renderer.domElement.dataset.terminal4FallbackTextureCount = "loading";
     renderer.domElement.dataset.terminal4TexturedMaterialCount = "loading";
     renderer.domElement.dataset.terminal4Position = "loading";
@@ -312,8 +516,32 @@ export default function RampReadyStandupTrainer({
     renderer.domElement.dataset.a1JetwayDeployment = "loading";
     renderer.domElement.dataset.a1JetwayState = "loading";
     renderer.domElement.dataset.a1JetwayAnimationAuthority = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayLoadState = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayCount = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayConnectorCount = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayVerifiedModelCount = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayReadyAuthority = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayArticulationAuthority = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwaySourceContactDistanceMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayStaticArticulatedGateCount = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumContactErrorMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1TargetDoorDistanceMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1AttachedExtensionMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1PredictedDoorGapMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1PredictedContactDistanceMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1ActualContactDistanceMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1ActualDoorGapMeters = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1PartOrderValid = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayA1PartCentersMeters = "loading";
     renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = "loading";
     renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = "loading";
+    renderer.domElement.dataset.terminal4SourceClosedBayMaterialCount = "loading";
+    renderer.domElement.dataset.terminal4SourceFacadeOpenCellCount = "loading";
+    renderer.domElement.dataset.terminal4SourceFacadeClosedCellCount = "loading";
+    renderer.domElement.dataset.terminal4SourceFacadeVariantMaterialCount = "loading";
+    renderer.domElement.dataset.terminal4A1PortalSealAuthority = "loading";
+    renderer.domElement.dataset.terminal4A1PortalSealOverlapMeters = "loading";
+    renderer.domElement.dataset.terminal4A1PortalSealExactTexture = "loading";
     renderer.domElement.dataset.terminal4FacadeInfillCount = "loading";
     renderer.domElement.dataset.terminal4OpenServiceBayCount = "loading";
     renderer.domElement.dataset.terminal4JetwayDetailLevel = "loading";
@@ -321,10 +549,15 @@ export default function RampReadyStandupTrainer({
     renderer.domElement.dataset.terminal4JetwayTextureAuthority = "loading";
     renderer.domElement.dataset.terminal4ExactJetwayTextureActive = "loading";
     renderer.domElement.dataset.groundMarkingContactMode = "loading";
+    renderer.domElement.dataset.groundPavementAuthority = "loading";
+    renderer.domElement.dataset.groundSourceAerialPriority = "loading";
+    renderer.domElement.dataset.groundNearfieldDetailOpacity = "loading";
     const terminalLoad = installAuthoredTerminal4Visual(THREE, environment)
       .then((terminal) => {
         renderer.domElement.dataset.terminal4TextureCount = String(environment.userData.authoredTerminal4TextureCount);
         renderer.domElement.dataset.terminal4ExactTextureCount = String(environment.userData.authoredTerminal4ExactTextureCount);
+        renderer.domElement.dataset.terminal4A1LegacyBlockRemovedTriangles = String(environment.userData.authoredTerminal4A1LegacyBlockRemovedTriangles ?? 0);
+        renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = environment.userData.authoredTerminal4A1LegacyBlockAuthority || "missing";
         renderer.domElement.dataset.terminal4FallbackTextureCount = String(environment.userData.authoredTerminal4FallbackTextureCount);
         renderer.domElement.dataset.terminal4TexturedMaterialCount = String(environment.userData.authoredTerminal4TexturedMaterialCount);
         renderer.domElement.dataset.terminal4Position = environment.userData.authoredTerminal4Position.map((value) => value.toFixed(3)).join(",");
@@ -339,13 +572,59 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.terminal4JetwayInitialState = environment.userData.authoredTerminal4JetwayInitialState || "missing";
         renderer.domElement.dataset.terminal4JetwayPrePushSequence = environment.userData.authoredTerminal4JetwayRequiredPrePushSequence || "missing";
         const a1JetwayController = environment.userData.authoredTerminal4A1JetwayController || null;
+        const nativeA1RetractionActive = environment.userData.authoredTerminal4Jetways?.userData.uploadedJetwayA1RetractionAuthority === "aircraft-door-clearance-without-overtravel-v6";
+        if (a1JetwayController && !a1JetwayController.__rampReadyDoorClearanceWrapped) {
+          const sourceSetDeployment = a1JetwayController.setDeployment.bind(a1JetwayController);
+          let requestedDeployment = 1;
+          a1JetwayController.setDeployment = (value) => {
+            requestedDeployment = Math.max(0, Math.min(1, Number(value) || 0));
+            const visualDeployment = nativeA1RetractionActive
+              ? requestedDeployment
+              : 1 - (1 - requestedDeployment) * 0.330555555556;
+            sourceSetDeployment(visualDeployment);
+          };
+          a1JetwayController.getDeployment = () => requestedDeployment;
+          a1JetwayController.getState = () => requestedDeployment >= 0.995
+            ? "attached-to-aircraft-door"
+            : requestedDeployment <= 0.005
+              ? "parked-clear-of-aircraft"
+              : "retracting-from-aircraft";
+          a1JetwayController.__rampReadyDoorClearanceWrapped = true;
+          a1JetwayController.__rampReadyNativeRetractionActive = nativeA1RetractionActive;
+          a1JetwayController.__rampReadyRetractionAuthority = "aircraft-door-clearance-without-overtravel-v6";
+          a1JetwayController.__rampReadyRetractionClearanceMeters = 2.38;
+        }
         jetwayRef.current.controller = a1JetwayController;
         a1JetwayController?.setDeployment(jetwayRef.current.target);
         renderer.domElement.dataset.a1JetwayDeployment = jetwayRef.current.deployment.toFixed(3);
         renderer.domElement.dataset.a1JetwayState = a1JetwayController?.getState?.() || "missing";
         renderer.domElement.dataset.a1JetwayAnimationAuthority = environment.userData.authoredTerminal4A1JetwayAnimationAuthority || "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayLoadState = environment.userData.authoredTerminal4UploadedJetwayLoadState || "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayCount = String(environment.userData.authoredTerminal4UploadedJetwayCount ?? "missing");
+        renderer.domElement.dataset.terminal4UploadedJetwayConnectorCount = String(environment.userData.authoredTerminal4UploadedJetwayConnectorCount ?? "missing");
+        renderer.domElement.dataset.terminal4UploadedJetwayVerifiedModelCount = String(environment.userData.authoredTerminal4UploadedJetwayVerifiedModelCount ?? "missing");
+        renderer.domElement.dataset.terminal4UploadedJetwayReadyAuthority = environment.userData.authoredTerminal4UploadedJetwayReadyAuthority || "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayArticulationAuthority = environment.userData.authoredTerminal4UploadedJetwayArticulationAuthority || "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwaySourceContactDistanceMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwaySourceContactDistanceMeters) ? environment.userData.authoredTerminal4UploadedJetwaySourceContactDistanceMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticArticulatedGateCount = String(environment.userData.authoredTerminal4UploadedJetwayStaticArticulatedGateCount ?? "missing");
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumContactErrorMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwayStaticMaximumContactErrorMeters) ? environment.userData.authoredTerminal4UploadedJetwayStaticMaximumContactErrorMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1TargetDoorDistanceMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwayA1TargetDoorDistanceMeters) ? environment.userData.authoredTerminal4UploadedJetwayA1TargetDoorDistanceMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1AttachedExtensionMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwayA1AttachedExtensionMeters) ? environment.userData.authoredTerminal4UploadedJetwayA1AttachedExtensionMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PredictedDoorGapMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwayA1PredictedDoorGapMeters) ? environment.userData.authoredTerminal4UploadedJetwayA1PredictedDoorGapMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PredictedContactDistanceMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwayA1PredictedContactDistanceMeters) ? environment.userData.authoredTerminal4UploadedJetwayA1PredictedContactDistanceMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1ActualContactDistanceMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwayA1ActualContactDistanceMeters) ? environment.userData.authoredTerminal4UploadedJetwayA1ActualContactDistanceMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1ActualDoorGapMeters = Number.isFinite(environment.userData.authoredTerminal4UploadedJetwayA1ActualDoorGapMeters) ? environment.userData.authoredTerminal4UploadedJetwayA1ActualDoorGapMeters.toFixed(3) : "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PartOrderValid = String(environment.userData.authoredTerminal4UploadedJetwayA1PartOrderValid === true);
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PartCentersMeters = environment.userData.authoredTerminal4UploadedJetwayA1PartCentersMeters || "missing";
         renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = String(environment.userData.authoredTerminal4TerminalConnectedJetwayCount ?? 0);
         renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = String(environment.userData.authoredTerminal4SourceCutoutMaterialCount ?? 0);
+        renderer.domElement.dataset.terminal4SourceClosedBayMaterialCount = String(environment.userData.authoredTerminal4SourceClosedBayMaterialCount ?? 0);
+        renderer.domElement.dataset.terminal4SourceFacadeOpenCellCount = String(environment.userData.authoredTerminal4SourceFacadeOpenCellCount ?? 0);
+        renderer.domElement.dataset.terminal4SourceFacadeClosedCellCount = String(environment.userData.authoredTerminal4SourceFacadeClosedCellCount ?? 0);
+        renderer.domElement.dataset.terminal4SourceFacadeVariantMaterialCount = String(environment.userData.authoredTerminal4SourceFacadeVariantMaterialCount ?? 0);
+        renderer.domElement.dataset.terminal4A1PortalSealAuthority = environment.userData.authoredTerminal4A1TerminalPortalSealAuthority || "missing";
+        renderer.domElement.dataset.terminal4A1PortalSealOverlapMeters = String(environment.userData.authoredTerminal4A1TerminalPortalSealOverlapMeters ?? 0);
+        renderer.domElement.dataset.terminal4A1PortalSealExactTexture = environment.userData.authoredTerminal4A1TerminalPortalSealExactTexture === true ? "true" : "false";
         renderer.domElement.dataset.terminal4FacadeInfillCount = String(environment.userData.authoredTerminal4FacadeInfillCount ?? 0);
         renderer.domElement.dataset.terminal4OpenServiceBayCount = String(environment.userData.authoredTerminal4OpenServiceBayCount ?? 0);
         renderer.domElement.dataset.terminal4JetwayDetailLevel = environment.userData.authoredTerminal4JetwayDetailLevel || "missing";
@@ -355,6 +634,8 @@ export default function RampReadyStandupTrainer({
         return terminal;
       })
       .catch((error) => {
+        renderer.domElement.dataset.terminal4A1LegacyBlockRemovedTriangles = "load-error";
+        renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = "load-error";
         renderer.domElement.dataset.terminal4Position = "load-error";
         renderer.domElement.dataset.terminal4A1NearestGeometryMeters = "load-error";
         renderer.domElement.dataset.terminal4Placement = "load-error";
@@ -367,8 +648,32 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.a1JetwayDeployment = "load-error";
         renderer.domElement.dataset.a1JetwayState = "load-error";
         renderer.domElement.dataset.a1JetwayAnimationAuthority = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayLoadState = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayCount = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayConnectorCount = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayVerifiedModelCount = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayReadyAuthority = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayArticulationAuthority = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwaySourceContactDistanceMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticArticulatedGateCount = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumContactErrorMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1TargetDoorDistanceMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1AttachedExtensionMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PredictedDoorGapMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PredictedContactDistanceMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1ActualContactDistanceMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1ActualDoorGapMeters = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PartOrderValid = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayA1PartCentersMeters = "load-error";
         renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = "load-error";
         renderer.domElement.dataset.terminal4SourceCutoutMaterialCount = "load-error";
+        renderer.domElement.dataset.terminal4SourceClosedBayMaterialCount = "load-error";
+        renderer.domElement.dataset.terminal4SourceFacadeOpenCellCount = "load-error";
+        renderer.domElement.dataset.terminal4SourceFacadeClosedCellCount = "load-error";
+        renderer.domElement.dataset.terminal4SourceFacadeVariantMaterialCount = "load-error";
+        renderer.domElement.dataset.terminal4A1PortalSealAuthority = "load-error";
+        renderer.domElement.dataset.terminal4A1PortalSealOverlapMeters = "load-error";
+        renderer.domElement.dataset.terminal4A1PortalSealExactTexture = "load-error";
         renderer.domElement.dataset.terminal4FacadeInfillCount = "load-error";
         renderer.domElement.dataset.terminal4OpenServiceBayCount = "load-error";
         renderer.domElement.dataset.terminal4JetwayDetailLevel = "load-error";
@@ -390,6 +695,9 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.b15Anchors = environment.userData.b15Anchors?.length === 2 ? "ready" : "missing";
         renderer.domElement.dataset.b15CorridorMeters = environment.userData.trainingCorridor?.distanceMeters?.map((value) => Math.round(value)).join(",") || "missing";
         renderer.domElement.dataset.groundMarkingContactMode = environment.userData.authoredGroundMarkingContactMode || "missing";
+        renderer.domElement.dataset.groundPavementAuthority = environment.userData.authoredGroundPavementAuthority || "missing";
+        renderer.domElement.dataset.groundSourceAerialPriority = String(environment.userData.authoredGroundSourceAerialPriority === true);
+        renderer.domElement.dataset.groundNearfieldDetailOpacity = String(environment.userData.authoredGroundNearfieldDetailOpacity ?? "missing");
         return ground;
       })
       .catch((error) => {
@@ -398,6 +706,9 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.b15Anchors = "load-error";
         renderer.domElement.dataset.b15CorridorMeters = "load-error";
         renderer.domElement.dataset.groundMarkingContactMode = "load-error";
+        renderer.domElement.dataset.groundPavementAuthority = "load-error";
+        renderer.domElement.dataset.groundSourceAerialPriority = "load-error";
+        renderer.domElement.dataset.groundNearfieldDetailOpacity = "load-error";
         console.error("RampReady KPHX ground load failed", error);
         setMessage(`PHX airport ground failed to load: ${error.message}`);
         throw error;
@@ -434,6 +745,19 @@ export default function RampReadyStandupTrainer({
       });
     void Promise.all([terminalLoad, groundLoad, photoGroundLoad])
       .then(() => {
+        const nativeA1RetractionActive = environment.userData.authoredTerminal4Jetways?.userData.uploadedJetwayA1RetractionAuthority === "aircraft-door-clearance-without-overtravel-v6";
+        airportCollision.staticTargets = [
+          environment.userData.authoredTerminal4,
+          environment.userData.authoredTerminal4Jetways,
+        ].filter((target) => target?.isObject3D);
+        airportCollision.aircraftTarget = aircraft;
+        airportCollision.ready = airportCollision.staticTargets.length === 2;
+        renderer.domElement.dataset.airportCollisionReady = airportCollision.ready ? "true" : "false";
+        renderer.domElement.dataset.airportCollisionTargetCount = String(airportCollision.staticTargets.length);
+        renderer.domElement.dataset.terminal4A1RetractionAuthority = "aircraft-door-clearance-without-overtravel-v6";
+        renderer.domElement.dataset.terminal4A1RetractionClearanceMeters = "2.38";
+        renderer.domElement.dataset.terminal4A1RetractionRatio = nativeA1RetractionActive ? "1.000000" : "0.330556";
+        renderer.domElement.dataset.terminal4A1NativeRetractionActive = nativeA1RetractionActive ? "true" : "false";
         renderer.domElement.dataset.environmentSource = environment.userData.environmentSource;
         renderer.domElement.dataset.groundSource = environment.userData.groundSource;
         renderer.domElement.dataset.photoGroundSource = environment.userData.photoGroundSource;
@@ -529,19 +853,36 @@ export default function RampReadyStandupTrainer({
     const desiredCamera = new THREE.Vector3();
     let frame = 0;
     const tick = (now) => {
-      const dt = Math.min(0.04, Math.max(0.001, (now - sim.last) / 1000));
+      const rawFrameDt = Math.max(0.001, (now - sim.last) / 1000);
+      const dt = Math.min(0.04, rawFrameDt);
       sim.last = now;
       const inspectionActive = inspectionRef.current;
       const jetway = jetwayRef.current;
       if (jetway.controller) {
         const difference = jetway.target - jetway.deployment;
         if (Math.abs(difference) > 0.0005) {
-          const step = Math.min(Math.abs(difference), dt * 0.34);
-          jetway.deployment += Math.sign(difference) * step;
+          if (!(jetway.transitionStartedAt > 0)) {
+            jetway.transitionStartDeployment = jetway.deployment;
+            jetway.transitionStartedAt = now;
+          }
+          const transitionElapsedMs = Math.max(0, now - jetway.transitionStartedAt);
+          const transitionDistance = Math.max(0.001, Math.abs(jetway.target - jetway.transitionStartDeployment));
+          const transitionDurationMs = Math.max(900, jetway.transitionDurationMs * transitionDistance);
+          const transitionProgress = Math.min(1, transitionElapsedMs / transitionDurationMs);
+          const easedProgress = transitionProgress * transitionProgress * (3 - 2 * transitionProgress);
+          jetway.deployment = jetway.transitionStartDeployment
+            + (jetway.target - jetway.transitionStartDeployment) * easedProgress;
+          if (transitionProgress >= 1) {
+            jetway.deployment = jetway.target;
+            jetway.transitionStartDeployment = jetway.target;
+            jetway.transitionStartedAt = 0;
+          }
           jetway.controller.setDeployment(jetway.deployment);
         }
         renderer.domElement.dataset.a1JetwayDeployment = jetway.deployment.toFixed(3);
-        renderer.domElement.dataset.a1JetwayState = jetway.controller.getState?.() || "unknown";
+        const currentA1JetwayState = jetway.controller.getState?.() || "unknown";
+        renderer.domElement.dataset.a1JetwayState = currentA1JetwayState;
+        renderer.domElement.dataset.a1JetwayStateHistory = jetway.controller.getStateHistory?.().join(",") || currentA1JetwayState;
         if (!inspectionActive && jetway.retractionRequested && jetway.deployment <= 0.005 && stageRef.current === 0) {
           jetway.retractionRequested = false;
           stageRef.current = 1;
@@ -592,8 +933,8 @@ export default function RampReadyStandupTrainer({
       const keyboardForward = inspectionActive && (keysRef.current.has("w") || keysRef.current.has("arrowup"));
       const keyboardReverse = inspectionActive && (keysRef.current.has("s") || keysRef.current.has("arrowdown"));
       const inspectionDirection = keyboardReverse ? -1 : keyboardForward ? 1 : drive.direction;
-      const inspectionThrottle = keyboardForward || keyboardReverse ? Math.max(drive.throttle, 0.55) : drive.throttle;
-      sim.dynamics = stepPushbackDynamics(sim.dynamics, {
+      const inspectionThrottle = keyboardForward || keyboardReverse ? Math.max(drive.throttle, 1) : drive.throttle;
+      const dynamicsCommand = {
         connected: towing,
         throttle: motionAllowed && (!towing || inspectionDirection === 1) ? inspectionThrottle : 0,
         direction: inspectionDirection,
@@ -602,13 +943,69 @@ export default function RampReadyStandupTrainer({
         cradleOffset: rig.profile.cradleOffset,
         steeringMode: rig.profile.steeringMode,
         wheelbase: rig.profile.wheelbase,
-      }, dt);
+      };
+      if (inspectionActive) {
+        let remainingInspectionDt = Math.min(0.5, rawFrameDt);
+        while (remainingInspectionDt > 0.000001) {
+          const inspectionStepDt = Math.min(0.04, remainingInspectionDt);
+          sim.dynamics = stepPushbackDynamics(sim.dynamics, dynamicsCommand, inspectionStepDt);
+          remainingInspectionDt -= inspectionStepDt;
+        }
+      } else {
+        sim.dynamics = stepPushbackDynamics(sim.dynamics, dynamicsCommand, dt);
+      }
 
       const state = sim.dynamics;
+      const previousTug = { x: rig.root.position.x, z: rig.root.position.z, yaw: rig.root.rotation.y };
+      const tugBlocked = airportMovementBlocked({
+        startX: previousTug.x,
+        startZ: previousTug.z,
+        endX: state.tugX,
+        endZ: state.tugZ,
+        radius: equipmentId === "standup-tug" ? 0.92 : 1.18,
+        heights: equipmentId === "standup-tug" ? [0.48, 1.15, 1.9] : [0.42, 0.92, 1.55],
+        includeAircraft: inspectionActive,
+      });
+      let aircraftBlocked = false;
+      if (connectionHasAircraft(sim.connection)) {
+        const previousSamples = aircraftCollisionSamples(aircraft.position.x, aircraft.position.z, aircraft.rotation.y);
+        const nextSamples = aircraftCollisionSamples(state.aircraftX, state.aircraftZ, state.aircraftYaw);
+        aircraftBlocked = previousSamples.some((sample, index) => airportMovementBlocked({
+          startX: sample.x,
+          startZ: sample.z,
+          endX: nextSamples[index].x,
+          endZ: nextSamples[index].z,
+          radius: index >= 4 ? 1.35 : 1.05,
+          heights: index >= 4 ? [1.1, 2.2, 3.5] : [0.72, 2.05, 3.8],
+        }));
+      }
+      const collisionBlocked = tugBlocked || aircraftBlocked;
+      if (collisionBlocked) {
+        state.tugX = previousTug.x;
+        state.tugZ = previousTug.z;
+        state.tugYaw = previousTug.yaw;
+        if (connectionHasAircraft(sim.connection)) {
+          state.aircraftX = aircraft.position.x;
+          state.aircraftZ = aircraft.position.z;
+          state.aircraftYaw = aircraft.rotation.y;
+        }
+        state.speed = 0;
+        if (!airportCollision.blocked) airportCollision.count += 1;
+        if (now - airportCollision.lastMessageAt > 1200) {
+          airportCollision.lastMessageAt = now;
+          setMessage(inspectionActive
+            ? "Collision prevented. Stop, steer clear, and continue the airport inspection."
+            : "Collision prevented. Stop and correct the pushback path before continuing.");
+        }
+      }
+      airportCollision.blocked = collisionBlocked;
+      renderer.domElement.dataset.airportCollisionState = collisionBlocked ? "blocked" : "clear";
+      renderer.domElement.dataset.airportCollisionCount = String(airportCollision.count);
       rig.root.position.set(state.tugX, 0, state.tugZ);
       rig.root.rotation.y = state.tugYaw;
       rig.setSteering(state.steerAngle || 0);
-      rig.rotateWheels(state.speed * dt);
+      const visualMotionDt = inspectionActive ? Math.min(0.5, rawFrameDt) : dt;
+      rig.rotateWheels(state.speed * visualMotionDt);
       if (connectionHasAircraft(sim.connection)) {
         aircraft.position.set(state.aircraftX, 0, state.aircraftZ);
         aircraft.rotation.y = state.aircraftYaw;
@@ -643,16 +1040,26 @@ export default function RampReadyStandupTrainer({
         camera.position.lerp(new THREE.Vector3(target.x, 34, target.z + 2), 0.16);
         camera.lookAt(target.x, 0, target.z + 5);
       } else {
-        const orbit = orbitRef.current;
-        cameraTarget.set(target.x, 1.3, target.z + (connectionHasAircraft(sim.connection) ? 0 : 2.5));
-        const horizontal = Math.cos(orbit.pitch) * orbit.distance;
-        desiredCamera.set(
-          cameraTarget.x + Math.sin(orbit.yaw) * horizontal,
-          cameraTarget.y + Math.sin(orbit.pitch) * orbit.distance,
-          cameraTarget.z + Math.cos(orbit.yaw) * horizontal,
-        );
-        camera.position.lerp(desiredCamera, 0.16);
-        camera.lookAt(cameraTarget);
+        const inspectionPresetConfig = inspectionActive
+          ? INSPECTION_PRESETS[inspectionPresetRef.current]
+          : null;
+        if (inspectionPresetConfig?.cameraPosition && inspectionPresetConfig?.cameraTarget) {
+          desiredCamera.fromArray(inspectionPresetConfig.cameraPosition);
+          cameraTarget.fromArray(inspectionPresetConfig.cameraTarget);
+          camera.position.lerp(desiredCamera, 0.16);
+          camera.lookAt(cameraTarget);
+        } else {
+          const orbit = orbitRef.current;
+          cameraTarget.set(target.x, 1.3, target.z + (connectionHasAircraft(sim.connection) ? 0 : 2.5));
+          const horizontal = Math.cos(orbit.pitch) * orbit.distance;
+          desiredCamera.set(
+            cameraTarget.x + Math.sin(orbit.yaw) * horizontal,
+            cameraTarget.y + Math.sin(orbit.pitch) * orbit.distance,
+            cameraTarget.z + Math.cos(orbit.yaw) * horizontal,
+          );
+          camera.position.lerp(desiredCamera, 0.16);
+          camera.lookAt(cameraTarget);
+        }
       }
 
       const aircraftSource = aircraft.userData.renderedAircraftSource || aircraft.userData.aircraftAssetCandidateId || aircraft.userData.aircraftAssetState || "loading";
@@ -660,6 +1067,7 @@ export default function RampReadyStandupTrainer({
       canvas.dataset.inspectionTugX = rig.root.position.x.toFixed(3);
       canvas.dataset.inspectionTugZ = rig.root.position.z.toFixed(3);
       canvas.dataset.inspectionSpeed = Math.abs(state.speed).toFixed(3);
+      canvas.dataset.inspectionTimeIntegration = inspectionActive ? "elapsed-substep-40ms" : "training-frame-capped";
       if (now - sim.lastHud > 100) {
         sim.lastHud = now;
         setHud({
@@ -709,7 +1117,7 @@ export default function RampReadyStandupTrainer({
   const releaseSteer = () => { driveRef.current.steer = 0; };
   const releaseBrake = () => { driveRef.current.brake = false; };
 
-  return <div className="rr-shell" data-equipment-id={equipmentId} data-inspection-mode={inspectionMode ? "active" : "training"}>
+  return <div className="rr-shell" data-equipment-id={equipmentId} data-inspection-mode={inspectionMode ? "active" : "training"} data-inspection-preset={inspectionMode ? inspectionPreset : "training"}>
     <div ref={mountRef} className="rr-scene" />
     <section className="rr-hud">
       <div className="rr-topline">
@@ -724,6 +1132,14 @@ export default function RampReadyStandupTrainer({
             aria-pressed={inspectionMode}
             onClick={toggleInspectionDrive}
           >{inspectionMode ? "Return to training" : "Free-drive inspection"}</button>
+          {inspectionMode && <select
+            className="rr-view-select rr-inspection-location"
+            value={inspectionPreset}
+            onChange={(event) => moveInspectionToPreset(event.target.value)}
+            aria-label="Inspection location"
+          >
+            {Object.values(INSPECTION_PRESETS).map((preset) => <option key={preset.id} value={preset.id}>{preset.label}</option>)}
+          </select>}
           <select className="rr-view-select" value={cameraMode} onChange={(event) => setCameraMode(event.target.value)} aria-label="Camera view">
             <option value="chase">Chase view</option>
             <option value="driver">Operator view</option>

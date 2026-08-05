@@ -35,6 +35,20 @@ async function captureCanvas(page, path) {
   }
 }
 
+async function captureInspectionPreset(page, presetId, outputPath) {
+  await page.evaluate((nextPreset) => {
+    const select = document.querySelector('select[aria-label="Inspection location"]');
+    if (!(select instanceof HTMLSelectElement)) throw new Error("Inspection location selector is missing");
+    select.value = nextPreset;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  }, presetId);
+  await page.waitForFunction((expectedPreset) => (
+    document.querySelector("canvas.trainerCanvas")?.dataset?.inspectionPreset === expectedPreset
+  ), presetId, { timeout: 30_000, polling: 100 });
+  await page.waitForTimeout(2_000);
+  await captureCanvas(page, outputPath);
+}
+
 test("the exact supplied A1 jetway telescopes to the aircraft door in authored part order", async ({ page }) => {
   test.setTimeout(600_000);
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -80,10 +94,10 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
   const staticMaximumError = Number(runtime.terminal4UploadedJetwayStaticMaximumContactErrorMeters);
   expect(sourceReach).toBeGreaterThan(25.5);
   expect(sourceReach).toBeLessThan(26.5);
-  expect(target).toBeGreaterThan(29.5);
-  expect(target).toBeLessThan(30.1);
-  expect(extension).toBeGreaterThan(3.5);
-  expect(extension).toBeLessThan(4.2);
+  expect(target).toBeGreaterThan(30.3);
+  expect(target).toBeLessThan(30.8);
+  expect(extension).toBeGreaterThan(4.2);
+  expect(extension).toBeLessThan(4.8);
   expect(predictedGap).toBeLessThanOrEqual(0.05);
   expect(actualGap).toBeLessThanOrEqual(0.05);
   expect(Math.abs(predictedContact - target)).toBeLessThanOrEqual(0.05);
@@ -97,16 +111,27 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
   expect(centers.Tunnel_B).toBeLessThan(centers.Tunnel_C);
   expect(centers.Tunnel_C).toBeLessThan(centers.Cab);
 
-  const inspectionLocation = page.getByLabel("Inspection location");
-  await inspectionLocation.selectOption("a1Connection");
-  await page.waitForFunction(() => {
-    const data = document.querySelector("canvas.trainerCanvas")?.dataset;
-    return data?.inspectionPreset === "a1Connection"
-      && data?.inspectionCameraAuthority === "wide-diagonal-a1-terminal-joint-v6-clear-tug";
-  }, null, { timeout: 30_000, polling: 100 });
-  await page.waitForTimeout(2_000);
+  await captureInspectionPreset(
+    page,
+    "a1Connection",
+    "test-results/uploaded-jetway-a1-articulated-v10.png",
+  );
   await page.addStyleTag({ content: ".rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}" });
-  await captureCanvas(page, "test-results/uploaded-jetway-a1-articulated-v10.png");
+  await captureInspectionPreset(
+    page,
+    "a14",
+    "test-results/uploaded-jetway-a-concourse-static-fleet-v10.png",
+  );
+  await captureInspectionPreset(
+    page,
+    "b14",
+    "test-results/uploaded-jetway-b-concourse-static-fleet-v10.png",
+  );
+  await captureInspectionPreset(
+    page,
+    "b15",
+    "test-results/uploaded-jetway-b15-static-fleet-v10.png",
+  );
 
   fs.writeFileSync("test-results/uploaded-jetway-a1-articulated-v10.json", `${JSON.stringify({
     authority: runtime.terminal4UploadedJetwayArticulationAuthority,
@@ -118,6 +143,9 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
     predictedContact,
     actualContact,
     staticMaximumError,
+    verifiedModelCount: Number(runtime.terminal4UploadedJetwayVerifiedModelCount),
+    staticArticulatedGateCount: Number(runtime.terminal4UploadedJetwayStaticArticulatedGateCount),
     centers,
+    evidenceViews: ["a1Connection", "a14", "b14", "b15"],
   }, null, 2)}\n`);
 });

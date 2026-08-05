@@ -153,11 +153,163 @@ async function loadSourceTextures(THREE, baseUrl) {
   return { textures, emissiveTextures, manifest };
 }
 
+const splitterMarker = "source-package-facade-cell-variation-v31";
+const sourceFacadeSafeVariantAuthority = "source-package-facade-safe-variant-set-v34";
+
+function interpolateFacadeVertex(a, b, t) {
+  return {
+    position: a.position.clone().lerp(b.position, t),
+    normal: a.normal.clone().lerp(b.normal, t).normalize(),
+    uv: a.uv.clone().lerp(b.uv, t),
+  };
+}
+
+function clipFacadePolygonByU(polygon, boundary, keepGreater) {
+  if (!polygon.length) return [];
+  const clipped = [];
+  for (let index = 0; index < polygon.length; index += 1) {
+    const a = polygon[index];
+    const b = polygon[(index + 1) % polygon.length];
+    const aInside = keepGreater ? a.uv.x >= boundary - 1e-6 : a.uv.x <= boundary + 1e-6;
+    const bInside = keepGreater ? b.uv.x >= boundary - 1e-6 : b.uv.x <= boundary + 1e-6;
+    if (aInside && bInside) {
+      clipped.push(b);
+    } else if (aInside !== bInside) {
+      const denominator = b.uv.x - a.uv.x;
+      const t = Math.abs(denominator) < 1e-8 ? 0 : (boundary - a.uv.x) / denominator;
+      const intersection = interpolateFacadeVertex(a, b, Math.max(0, Math.min(1, t)));
+      clipped.push(intersection);
+      if (!aInside && bInside) clipped.push(b);
+    }
+  }
+  return clipped;
+}
+
+function splitRepeatedBGATE1Facade(THREE, scene) {
+  const sequence = [
+    "BGATE3.BMP",
+    "DGATE3.BMP",
+    "BGATE3.BMP",
+    "DGATE1.BMP",
+    "BGATE3.BMP",
+    "BGATE1.BMP",
+    "DGATE3.BMP",
+    "BGATE3.BMP",
+  ];
+  const uniqueReferences = [...new Set(sequence)];
+  let splitMeshCount = 0;
+  const sourceCells = new Set();
+  const openCells = new Set();
+  const closedCells = new Set();
+
+  scene.traverse((node) => {
+    if (!node.isMesh || Array.isArray(node.material)) return;
+    if (textureReference(node.material)?.toUpperCase() !== "BGATE1.BMP") return;
+    const sourceGeometry = node.geometry?.index ? node.geometry.toNonIndexed() : node.geometry;
+    const position = sourceGeometry?.getAttribute?.("position");
+    const normal = sourceGeometry?.getAttribute?.("normal");
+    const uv = sourceGeometry?.getAttribute?.("uv");
+    if (!position || !normal || !uv || position.count % 3 !== 0) {
+      throw new Error("BGATE1 facade geometry is missing non-indexed position, normal or UV attributes");
+    }
+
+    const buffers = new Map(uniqueReferences.map((reference) => [reference, {
+      position: [],
+      normal: [],
+      uv: [],
+    }]));
+    const readVertex = (vertexIndex) => ({
+      position: new THREE.Vector3().fromBufferAttribute(position, vertexIndex),
+      normal: new THREE.Vector3().fromBufferAttribute(normal, vertexIndex),
+      uv: new THREE.Vector2().fromBufferAttribute(uv, vertexIndex),
+    });
+
+    for (let vertexIndex = 0; vertexIndex < position.count; vertexIndex += 3) {
+      const triangle = [readVertex(vertexIndex), readVertex(vertexIndex + 1), readVertex(vertexIndex + 2)];
+      const minimumU = Math.min(...triangle.map((vertex) => vertex.uv.x));
+      const maximumU = Math.max(...triangle.map((vertex) => vertex.uv.x));
+      const firstCell = Math.floor(minimumU + 1e-6);
+      const lastCell = Math.max(firstCell, Math.ceil(maximumU - 1e-6) - 1);
+      for (let cell = firstCell; cell <= lastCell; cell += 1) {
+        let polygon = clipFacadePolygonByU(triangle, cell, true);
+        polygon = clipFacadePolygonByU(polygon, cell + 1, false);
+        if (polygon.length < 3) continue;
+        const sequenceIndex = ((cell % sequence.length) + sequence.length) % sequence.length;
+        const reference = sequence[sequenceIndex];
+        const buffer = buffers.get(reference);
+        sourceCells.add(cell);
+        if (reference === "BGATE1.BMP") openCells.add(cell);
+        else closedCells.add(cell);
+        for (let fan = 1; fan < polygon.length - 1; fan += 1) {
+          for (const vertex of [polygon[0], polygon[fan], polygon[fan + 1]]) {
+            buffer.position.push(vertex.position.x, vertex.position.y, vertex.position.z);
+            buffer.normal.push(vertex.normal.x, vertex.normal.y, vertex.normal.z);
+            buffer.uv.push(Math.max(0, Math.min(1, vertex.uv.x - cell)), vertex.uv.y);
+          }
+        }
+      }
+    }
+
+    const replacement = new THREE.BufferGeometry();
+    const positions = [];
+    const normals = [];
+    const uvs = [];
+    const materials = [];
+    let groupStart = 0;
+    for (const reference of uniqueReferences) {
+      const buffer = buffers.get(reference);
+      if (!buffer.position.length) continue;
+      const material = node.material.clone();
+      material.name = String(material.name || "material-0-BGATE1.BMP").replace(/BGATE1\.(BMP|DDS)/i, reference);
+      material.userData = {
+        ...(material.userData || {}),
+        diffuseTexture: reference,
+        sourceFacadeCellVariation: true,
+        sourceFacadeVariationAuthority: splitterMarker,
+      };
+      materials.push(material);
+      positions.push(...buffer.position);
+      normals.push(...buffer.normal);
+      uvs.push(...buffer.uv);
+      replacement.addGroup(groupStart, buffer.position.length / 3, materials.length - 1);
+      groupStart += buffer.position.length / 3;
+    }
+    if (!materials.length) throw new Error("BGATE1 facade splitter produced no source-variant geometry");
+    replacement.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    replacement.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
+    replacement.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+    replacement.computeBoundingBox();
+    replacement.computeBoundingSphere();
+    if (sourceGeometry !== node.geometry) sourceGeometry.dispose();
+    node.geometry.dispose();
+    node.geometry = replacement;
+    node.material = materials;
+    node.userData = {
+      ...(node.userData || {}),
+      sourceFacadeCellVariation: true,
+      sourceFacadeVariationAuthority: splitterMarker,
+      sourceFacadeVariantReferences: uniqueReferences,
+    };
+    splitMeshCount += 1;
+  });
+
+  return {
+    authority: splitterMarker,
+    splitMeshCount,
+    sourceCellCount: sourceCells.size,
+    openCellCount: openCells.size,
+    closedCellCount: closedCells.size,
+    variantMaterialCount: uniqueReferences.length,
+    safeVariantAuthority: sourceFacadeSafeVariantAuthority,
+  };
+}
+
 function applySourceMaterials(THREE, scene, textures, emissiveTextures) {
   let texturedMaterialCount = 0;
   let lightmappedMaterialCount = 0;
   let hiddenLegacyGroundMaterialCount = 0;
   let sourceCutoutMaterialCount = 0;
+  let sourceClosedBayMaterialCount = 0;
   scene.traverse((node) => {
     if (!node.isMesh) return;
     const originals = Array.isArray(node.material) ? node.material : [node.material];
@@ -166,6 +318,8 @@ function applySourceMaterials(THREE, scene, textures, emissiveTextures) {
       const material = source.clone();
       const reference = textureReference(material);
       const key = reference?.toUpperCase();
+      const sourceFacadeSelection = node.userData?.sourceFacadeVariationAuthority === "source-package-facade-cell-variation-v31";
+      const sourceClosedBaySelection = sourceFacadeSelection && key !== "BGATE1.BMP";
       const texture = key ? textures.get(key) : null;
       const emissiveMap = key ? emissiveTextures.get(key) : null;
       if (!texture) throw new Error(`Terminal 4 material texture is missing at runtime: ${reference || material.name}`);
@@ -189,6 +343,11 @@ function applySourceMaterials(THREE, scene, textures, emissiveTextures) {
         ...(material.userData || {}),
         legacyGroundAtlas,
         sourceLightmap: emissiveMap ? `${reference} exact _lm source` : null,
+        sourceDiffuseTexture: reference,
+        runtimeDiffuseTexture: reference,
+        sourceFacadeSelectionAuthority: sourceFacadeSelection
+          ? "source-package-facade-cell-variation-v31"
+          : "source-material-unmodified",
         sourceCutout,
         sourceAlphaCoverage: Number(texture?.userData?.sourceAlphaCoverage || 0),
         sourceAtlasCutoutAuthority: texture?.userData?.sourceAtlasCutoutAuthority || "none",
@@ -198,6 +357,7 @@ function applySourceMaterials(THREE, scene, textures, emissiveTextures) {
       };
       if (legacyGroundAtlas) hiddenLegacyGroundMaterialCount += 1;
       if (sourceCutout && !legacyGroundAtlas) sourceCutoutMaterialCount += 1;
+      if (sourceClosedBaySelection) sourceClosedBayMaterialCount += 1;
       if (emissiveMap) lightmappedMaterialCount += 1;
       material.needsUpdate = true;
       texturedMaterialCount += 1;
@@ -208,7 +368,7 @@ function applySourceMaterials(THREE, scene, textures, emissiveTextures) {
     node.receiveShadow = true;
     node.frustumCulled = true;
   });
-  return { texturedMaterialCount, lightmappedMaterialCount, hiddenLegacyGroundMaterialCount, sourceCutoutMaterialCount };
+  return { texturedMaterialCount, lightmappedMaterialCount, hiddenLegacyGroundMaterialCount, sourceCutoutMaterialCount, sourceClosedBayMaterialCount };
 }
 
 function nearestHorizontalVertexDistance(THREE, scene, point) {
@@ -250,14 +410,33 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   authored.position.fromArray(AUTHORED_TERMINAL4_PROFILE.position);
   authored.rotation.y = THREE.MathUtils.degToRad(AUTHORED_TERMINAL4_PROFILE.rotationYDegrees);
   authored.scale.fromArray(AUTHORED_TERMINAL4_PROFILE.scale);
+  const sourceFacadeVariation = splitRepeatedBGATE1Facade(THREE, authored);
   const {
     texturedMaterialCount,
     lightmappedMaterialCount,
     hiddenLegacyGroundMaterialCount,
     sourceCutoutMaterialCount,
+    sourceClosedBayMaterialCount,
   } = applySourceMaterials(THREE, authored, textures, emissiveTextures);
   authored.updateMatrixWorld(true);
   const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, authored, jetwayTextures);
+  if (!sourcePlacedJetways.userData.uploadedJetwayReady) {
+    throw new Error("Terminal 4 uploaded jetway fleet did not expose a readiness promise");
+  }
+  await sourcePlacedJetways.userData.uploadedJetwayReady;
+  if (
+    sourcePlacedJetways.userData.uploadedJetwayLoadState !== "ready"
+    || Number(sourcePlacedJetways.userData.uploadedJetwayCount) !== 58
+    || Number(sourcePlacedJetways.userData.uploadedJetwayMeasuredTerminalConnectorCount) !== 58
+    || Number(sourcePlacedJetways.userData.uploadedJetwayVerifiedModelCount) !== 58
+    || sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-per-gate-telescoping-v10"
+    || Number(sourcePlacedJetways.userData.uploadedJetwayStaticArticulatedGateCount) !== 57
+    || Number(sourcePlacedJetways.userData.uploadedJetwayA1PredictedDoorGapMeters) > 0.05
+    || Number(sourcePlacedJetways.userData.uploadedJetwayA1ActualDoorGapMeters) > 0.05
+    || sourcePlacedJetways.userData.uploadedJetwayA1PartOrderValid !== true
+  ) {
+    throw new Error("Terminal 4 uploaded jetway fleet did not complete all 58 source placements");
+  }
   environment.add(authored, sourcePlacedJetways);
   authored.updateMatrixWorld(true);
   sourcePlacedJetways.updateMatrixWorld(true);
@@ -286,12 +465,37 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4LightmappedMaterialCount = lightmappedMaterialCount;
   environment.userData.authoredTerminal4HiddenLegacyGroundMaterialCount = hiddenLegacyGroundMaterialCount;
   environment.userData.authoredTerminal4SourceCutoutMaterialCount = sourceCutoutMaterialCount;
+  environment.userData.authoredTerminal4SourceClosedBayMaterialCount = sourceClosedBayMaterialCount;
+  environment.userData.authoredTerminal4SourceFacadeSelectionAuthority = sourceFacadeVariation.authority;
+  environment.userData.authoredTerminal4SourceFacadeSplitMeshCount = sourceFacadeVariation.splitMeshCount;
+  environment.userData.authoredTerminal4SourceFacadeCellCount = sourceFacadeVariation.sourceCellCount;
+  environment.userData.authoredTerminal4SourceFacadeOpenCellCount = sourceFacadeVariation.openCellCount;
+  environment.userData.authoredTerminal4SourceFacadeClosedCellCount = sourceFacadeVariation.closedCellCount;
+  environment.userData.authoredTerminal4SourceFacadeVariantMaterialCount = sourceFacadeVariation.variantMaterialCount;
+  environment.userData.authoredTerminal4SourceFacadeSafeVariantAuthority = sourceFacadeVariation.safeVariantAuthority;
   environment.userData.authoredTerminal4SourceAlphaAuthority = "recovered-source-atlas-unused-quadrant-cutout";
   environment.userData.authoredTerminal4JetwayVisualCount = sourcePlacedJetways.userData.jetwayCount;
   environment.userData.authoredTerminal4TerminalConnectedJetwayCount = sourcePlacedJetways.userData.terminalConnectedJetwayCount;
   environment.userData.authoredTerminal4A1JetwayWallDistance = sourcePlacedJetways.userData.a1TerminalWallDistance;
   environment.userData.authoredTerminal4JetwaySourceScaleAuthority = sourcePlacedJetways.userData.sourceScaleAuthority;
   environment.userData.authoredTerminal4JetwaySourceGeometryMode = sourcePlacedJetways.userData.sourceGeometryMode;
+  environment.userData.authoredTerminal4UploadedJetwayLoadState = sourcePlacedJetways.userData.uploadedJetwayLoadState;
+  environment.userData.authoredTerminal4UploadedJetwayCount = sourcePlacedJetways.userData.uploadedJetwayCount;
+  environment.userData.authoredTerminal4UploadedJetwayConnectorCount = sourcePlacedJetways.userData.uploadedJetwayMeasuredTerminalConnectorCount;
+  environment.userData.authoredTerminal4UploadedJetwayVerifiedModelCount = sourcePlacedJetways.userData.uploadedJetwayVerifiedModelCount;
+  environment.userData.authoredTerminal4UploadedJetwayReadyAuthority = sourcePlacedJetways.userData.uploadedJetwayReadyAuthority;
+  environment.userData.authoredTerminal4UploadedJetwayArticulationAuthority = sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority;
+  environment.userData.authoredTerminal4UploadedJetwaySourceContactDistanceMeters = sourcePlacedJetways.userData.uploadedJetwaySourceContactDistanceMeters;
+  environment.userData.authoredTerminal4UploadedJetwayStaticArticulatedGateCount = sourcePlacedJetways.userData.uploadedJetwayStaticArticulatedGateCount;
+  environment.userData.authoredTerminal4UploadedJetwayStaticMaximumContactErrorMeters = sourcePlacedJetways.userData.uploadedJetwayStaticMaximumContactErrorMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1TargetDoorDistanceMeters = sourcePlacedJetways.userData.uploadedJetwayA1TargetDoorDistanceMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1AttachedExtensionMeters = sourcePlacedJetways.userData.uploadedJetwayA1AttachedExtensionMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1PredictedDoorGapMeters = sourcePlacedJetways.userData.uploadedJetwayA1PredictedDoorGapMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1PredictedContactDistanceMeters = sourcePlacedJetways.userData.uploadedJetwayA1PredictedContactDistanceMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1ActualContactDistanceMeters = sourcePlacedJetways.userData.uploadedJetwayA1ActualContactDistanceMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1ActualDoorGapMeters = sourcePlacedJetways.userData.uploadedJetwayA1ActualDoorGapMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1PartOrderValid = sourcePlacedJetways.userData.uploadedJetwayA1PartOrderValid;
+  environment.userData.authoredTerminal4UploadedJetwayA1PartCentersMeters = sourcePlacedJetways.userData.uploadedJetwayA1PartCentersMeters;
   environment.userData.authoredTerminal4RequiresOriginalJetwayMesh = sourcePlacedJetways.userData.requiresOriginalSourceMesh === true;
   environment.userData.authoredTerminal4JetwayInitialState = sourcePlacedJetways.userData.initialJetwayState;
   environment.userData.authoredTerminal4JetwayRequiredPrePushSequence = sourcePlacedJetways.userData.requiredPrePushSequence;
@@ -304,6 +508,9 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4OpenServiceBayCount = sourcePlacedJetways.userData.openServiceBayCount;
   environment.userData.authoredTerminal4FacadeInfillAuthority = sourcePlacedJetways.userData.facadeInfillAuthority;
   environment.userData.authoredTerminal4JetwayTerminalConnectionAuthority = sourcePlacedJetways.userData.terminalConnectionAuthority;
+  environment.userData.authoredTerminal4A1TerminalPortalSealAuthority = sourcePlacedJetways.userData.a1TerminalPortalSealAuthority;
+  environment.userData.authoredTerminal4A1TerminalPortalSealOverlapMeters = sourcePlacedJetways.userData.a1TerminalPortalSealOverlapMeters;
+  environment.userData.authoredTerminal4A1TerminalPortalSealExactTexture = sourcePlacedJetways.userData.a1TerminalPortalSealExactTexture === true;
   environment.userData.authoredTerminal4JetwayDetailLevel = sourcePlacedJetways.userData.detailLevel;
   environment.userData.authoredTerminal4Position = [...AUTHORED_TERMINAL4_PROFILE.position];
   environment.userData.authoredTerminal4A1NearestGeometryDistance = a1NearestGeometryDistance;

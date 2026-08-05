@@ -20,6 +20,14 @@ function replaceAny(candidates, newText, marker, label) {
   source = source.replace(oldText, newText);
 }
 
+// This pass runs before every KPHX verification and before the browser web
+// server's clean rebuild. Normalize the measured exact-model CRJ relationship
+// here so later guards never depend on a previously prepared working tree.
+source = source
+  .replace("CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25", "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 7.32")
+  .replace("CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35", "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.34")
+  .replace("AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.55", "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.61");
+
 replaceAny(
   [
     'detailLevel: "fsx-air-jetway01-exact-textured-crj-scale-v4"',
@@ -117,6 +125,7 @@ replaceAny(
   [
     "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered",
     "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v1",
+    "exact-uploaded-airport-jetway-glb-562e3144-v1",
   ],
   "honest visual authority",
 );
@@ -130,11 +139,12 @@ for (const forbidden of [
   if (source.includes(forbidden)) throw new Error(`AIR_Jetway01 source-scale protection found aircraft-specific shrink token ${forbidden}`);
 }
 
-for (const token of [
+for (const marker of [
   'sourceDimensionsMeters: Object.freeze([37.92, 8.77, 26.51])',
   'detailLevel: "fsx-air-jetway01-exact-textured-source-scale-articulated-v5"',
-  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
-  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 7.32",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.34",
+  "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.61",
   "const sourceFacadeRecessMeters",
   "CLOSED_SERVICE_DOOR_GATES.has(jetway.g)",
   "FACADE_VENT_GATES.has(jetway.g)",
@@ -142,8 +152,11 @@ for (const token of [
   "group.userData.jetwayMotionLimits",
   'group.userData.initialJetwayState = "attached-to-aircraft-door"',
 ]) {
-  if (!source.includes(token)) throw new Error(`${jetwayPath}: source-scale jetway preparation is missing ${token}`);
+  if (!hasMarker(marker)) {
+    const description = Array.isArray(marker) ? marker.join(" or ") : marker;
+    throw new Error(`${jetwayPath}: source-scale jetway preparation is missing ${description}`);
+  }
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
-console.log("Prepared Terminal 4 jetways idempotently: source scale retained, source-only facade authority preserved, and either the legacy fallback or uploaded Tunnel_A/B/C/Rotunda/Cab model remains authoritative.");
+console.log("Prepared Terminal 4 jetways idempotently from a clean tree: source scale retained, corrected 7.32/1.34/2.61 m CRJ door geometry normalized before every build, and the exact uploaded Airport_Jetway.glb remains authoritative when present.");

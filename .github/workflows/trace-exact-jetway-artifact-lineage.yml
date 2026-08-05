@@ -1,0 +1,27 @@
+name: Trace Exact Jetway Artifact Lineage
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/trace-exact-jetway-artifact-lineage.mjs'
+      - '.github/workflows/trace-exact-jetway-artifact-lineage.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  trace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Trace artifacts, sibling outputs, jobs, and caches
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/trace-exact-jetway-artifact-lineage.mjs

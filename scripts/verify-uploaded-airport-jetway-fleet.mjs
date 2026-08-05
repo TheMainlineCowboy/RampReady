@@ -1,311 +1,123 @@
-import fs from "node:fs";
-import zlib from "node:zlib";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
 
-function read(path) {
-  if (!fs.existsSync(path)) throw new Error(`Uploaded jetway verification is missing ${path}`);
-  return fs.readFileSync(path, "utf8");
+await import("./materialize-exact-airport-jetway.mjs");
+
+const GLB_PATH = "public/models/airport-jetway/Airport_Jetway.glb";
+const EXPECTED_GLB = Object.freeze({ bytes: 31_459_796, sha256: "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0" });
+const EXPECTED_IMAGES = Object.freeze([
+  { file: "Jetway_albedo.jpg", bytes: 4_374_151, sha256: "ded6dbad1930417349bd11a2b22de6f5aa6c89a0b9ef8241b1978ea092f37ed0" },
+  { file: "Jetway_metallic.png", bytes: 9_300_055, sha256: "7deac7f078fd2ea28dcd6a88d47a9b2baf55503c7730c3b6846afb11178b7b8c" },
+  { file: "Jetway_normal.png", bytes: 10_763_430, sha256: "9319dca63343e55ade0be00f06facf9cbc26dabb432f21240e9aa9781b53a6b1" },
+  { file: "Jetway_AO.jpg", bytes: 3_529_816, sha256: "85f8368e13fcf27b7eab3d9b19a554065311df0980566a8e2c8fb3690391011c" },
+  { file: "Glass_JW_normal.png", bytes: 1_107_961, sha256: "823cf53bfeaf1bb11fdcfbb7235a456032e5e7d4bea07e2901354ba9e923e794" },
+  { file: "Glass_JW_AO.jpg", bytes: 88_646, sha256: "391d039485a6139ddd3f82b97455970c897410f031320e0f04ef1c690415fe13" },
+  { file: "Glass_JW_emissive.jpg", bytes: 185_984, sha256: "b04433a9724729d969bb8fee1b6ffc7c452773a228bbf13b44d1696fdff4cce9" },
+]);
+const EXPECTED_MESHES = Object.freeze([
+  "Tunnel_A_Jetway_0", "Tunnel_B_Jetway_0", "Tunnel_C_Jetway_0",
+  "Tunnel_C_Glass_JW_0", "Rotunda_Jetway_0", "Cab_Jetway_0", "Cab_Glass_JW_0",
+]);
+const EXPECTED_NODES = Object.freeze(["RootNode", "Tunnel_A", "Tunnel_B", "Tunnel_C", "Rotunda", "Cab"]);
+const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
+
+function requireIdentity(label, bytes, expected) {
+  const digest = sha256(bytes);
+  if (bytes.length !== expected.bytes || digest !== expected.sha256) {
+    throw new Error(`${label} identity mismatch: ${bytes.length}/${digest}; expected ${expected.bytes}/${expected.sha256}`);
+  }
 }
 
-function requireTokens(path, tokens) {
-  const source = read(path);
-  for (const token of tokens) {
-    if (!source.includes(token)) throw new Error(`${path} is missing uploaded jetway token: ${token}`);
-  }
+function requireTokens(filePath, tokens) {
+  const source = readFileSync(filePath, "utf8");
+  for (const token of tokens) if (!source.includes(token)) throw new Error(`${filePath} is missing ${token}`);
   return source;
 }
 
-const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
-  'MODEL_AUTHORITY = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured"',
-  'MATERIAL_AUTHORITY = "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2"',
-  'DETAIL_MATERIAL_AUTHORITY = "source-triangle-stair-and-bogie-material-split-v1"',
-  'PERFORMANCE_AUTHORITY = "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5"',
-  "geometry.part",
-  "DecompressionStream(\"gzip\")",
-  "addProjectedUvs",
-  "cloneCorrugatedAtlasBand",
-  "splitTunnelCSourceDetail",
-  'const isStair = centerX > 16.4 && centerY < -1.55 && centerZ < 4.8',
-  "centerX >= 15.0",
-  "centerX < 16.8",
-  "centerZ < 1.3",
-  'root.name = "Tunnel_C_SourceDetailMaterialSplit"',
-  '"Tunnel_C_GalvanizedServiceStair_SourceTriangles"',
-  '"Tunnel_C_DarkBogieLift_SourceTriangles"',
-  "collectPrototypeMeshes",
-  "buildStaticInstancedFleet",
-  "new THREE.InstancedMesh",
-  'batches.name = "UploadedAirportJetwayStaticInstancedBatches"',
-  "addUploadedAirportJetwayStaticTerminalConnectors",
-  'fleet.name = "UploadedAirportJetwayFleet"',
-  'anchor.name = `UploadedAirportJetway_${placement.gate}`',
-  'anchor.userData.renderMode = placement.gate === "A1" ? "individual-animated" : "static-instanced-marker"',
-  'uploadedJetwayLoadState = "ready"',
-  "uploadedJetwayCount = placements.length",
-  "uploadedJetwayMeasuredTerminalConnectorCount = placements.length",
-  "uploadedJetwayMaterialAuthority = prototype.userData.materialAuthority",
-  "uploadedJetwayDetailMaterialAuthority = prototype.userData.detailMaterialAuthority",
-  "uploadedJetwayStairMaterialSplitActive = true",
-  "uploadedJetwayPerformanceAuthority = prototype.userData.performanceAuthority",
-  "uploadedJetwayShadowCasterGateCount = shadowCasterGateCount",
-  "uploadedJetwayGlobalEdgeOverlayCount = 0",
-  "uploadedJetwayStaticInstancedGateCount = staticFleet.staticGateCount",
-  "uploadedJetwayAnimatedIndividualGateCount = 1",
-  "uploadedJetwayStaticPrimitiveBatchCount = staticFleet.primitiveBatchCount",
-  "uploadedJetwayStaticConnectorGateCount = staticConnectors.staticGateCount",
-  "uploadedJetwayStaticConnectorBatchCount = staticConnectors.batchCount",
-  "uploadedJetwayStaticConnectorInstanceCount = staticConnectors.instanceCount",
-  "uploadedJetwayStaticConnectorBatchAuthority = staticConnectors.authority",
-  "uploadedJetwayIndividualConnectorGateCount = 1",
-  "proceduralJetwayStairCount = 0",
-  "sourceGeometryMode = MODEL_AUTHORITY",
-]);
-for (const forbidden of [
-  "procedural-articulated-fallback-pending-original-AIR_Jetway01-mesh-recovery",
-  "addStructuralEdges",
-  "new THREE.EdgesGeometry",
-  "new THREE.LineSegments",
-]) {
-  if (fleet.includes(forbidden)) throw new Error(`Uploaded jetway fleet contains retired global rendering work: ${forbidden}`);
+function parseGlb(bytes) {
+  if (bytes.toString("ascii", 0, 4) !== "glTF" || bytes.readUInt32LE(4) !== 2 || bytes.readUInt32LE(8) !== bytes.length) {
+    throw new Error("Exact Airport_Jetway.glb has an invalid GLB 2.0 header");
+  }
+  let cursor = 12;
+  let json;
+  let binary;
+  while (cursor + 8 <= bytes.length) {
+    const length = bytes.readUInt32LE(cursor);
+    const type = bytes.readUInt32LE(cursor + 4);
+    const payload = bytes.subarray(cursor + 8, cursor + 8 + length);
+    if (type === 0x4e4f534a) json = JSON.parse(payload.toString("utf8").replace(/\u0000+$/g, "").trimEnd());
+    if (type === 0x004e4942) binary = payload;
+    cursor += 8 + length;
+  }
+  if (!json || !binary) throw new Error("Exact Airport_Jetway.glb is missing its JSON or BIN chunk");
+  return { json, binary };
 }
 
-const ready = requireTokens("src/environment/uploadedAirportJetwayFleetReadyV2.js", [
-  'READY_AUTHORITY = "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured"',
-  'enforceExactUploadedJetwayVisualAuthority } from "./uploadedAirportJetwayExactModelGuard.js"',
-  'EXACT_MODEL_AUTHORITY = "user-supplied-airport-jetway-exclusive-geometry-v9"',
-  "const exactModelGuard = enforceExactUploadedJetwayVisualAuthority(group, fleet)",
-  "exactModelGuard.hiddenLegacyGroupCount < 1",
-  "exactModelGuard.hiddenSyntheticPortalCount < 1",
-  "exactModelGuard.hierarchy.requiredPartCount !== 5",
-  'uploadedJetwayA1DetailPolishAuthority = "none-exact-source-model"',
-  "uploadedJetwayA1DetailEdgeOverlayCount = exactModelGuard.hierarchy.syntheticEdgeCount",
-  "uploadedJetwayParentAxisCorrectionRadians = 0",
-  "EXPECTED_GATE_COUNT = 58",
-  "placements.map((placement) => `UploadedAirportJetway_${placement.gate}`)",
-  "missingModels",
-  'materialAuthority.includes("exact-M1DGJETWAY")',
-  'detailMaterialAuthority !== "source-triangle-stair-and-bogie-material-split-v1"',
-  "!stairMaterialSplitActive",
-  'performanceAuthority !== "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5"',
-  "shadowCasterGateCount !== 1",
-  "globalEdgeOverlayCount !== 0",
+const glb = readFileSync(GLB_PATH);
+requireIdentity("Airport_Jetway.glb", glb, EXPECTED_GLB);
+const { json, binary } = parseGlb(glb);
+if (json.meshes?.length !== 7 || json.materials?.length !== 2 || json.images?.length !== 7) {
+  throw new Error(`Exact GLB structure changed: meshes=${json.meshes?.length}, materials=${json.materials?.length}, images=${json.images?.length}`);
+}
+const meshNames = new Set(json.meshes.map((mesh) => mesh.name));
+const nodeNames = new Set(json.nodes.map((node) => node.name));
+for (const name of EXPECTED_MESHES) if (!meshNames.has(name)) throw new Error(`Exact GLB is missing mesh ${name}`);
+for (const name of EXPECTED_NODES) if (!nodeNames.has(name)) throw new Error(`Exact GLB is missing node ${name}`);
+if (json.materials.map((material) => material.name).sort().join(",") !== "Glass_JW,Jetway") {
+  throw new Error("Exact GLB authored material names changed");
+}
+const embeddedImages = json.images.map((image, index) => {
+  const view = json.bufferViews?.[image.bufferView];
+  if (!view) throw new Error(`Exact GLB image ${index} has no bufferView`);
+  const bytes = binary.subarray(view.byteOffset || 0, (view.byteOffset || 0) + view.byteLength);
+  return { bytes, sha256: sha256(bytes) };
+});
+for (const expected of EXPECTED_IMAGES) {
+  if (!embeddedImages.some((candidate) => candidate.bytes.length === expected.bytes && candidate.sha256 === expected.sha256)) {
+    throw new Error(`Exact embedded texture is missing: ${expected.file}`);
+  }
+  requireIdentity(expected.file, readFileSync(`public/models/airport-jetway/${expected.file}`), expected);
+}
+
+const fleet = requireTokens("src/environment/uploadedAirportJetwayFleet.js", [
+  'MODEL_AUTHORITY = "exact-uploaded-airport-jetway-glb-562e3144-v1"',
+  'MATERIAL_AUTHORITY = "exact-seven-embedded-airport-jetway-textures-v1"',
+  'PERFORMANCE_AUTHORITY = "57-static-exact-glb-instances-plus-1-animated-a1-v1"',
+  'EXACT_GLB_URL = "models/airport-jetway/Airport_Jetway.glb"',
+  'new GLTFLoader().loadAsync(modelUrl())',
+  "new THREE.InstancedMesh",
+  "staticPlacements.length !== 57",
+  "placements.length !== 58",
+  "prototype.clone(true)",
+  "computeUploadedJetwayArticulation(placement, reach.sourceContactDistance)",
+  "createModelSpaceA1Controller(THREE",
+  "controller.bind(anchor)",
+  'uploadedJetwayExactGlbSha256 = "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0"',
+]);
+for (const forbidden of ["geometry.part", "DecompressionStream", "addProjectedUvs", "M1DGJETWAY", "decodeDeltaVarint", "decodeOctNormal", "geometry.bin", "new THREE.EdgesGeometry"]) {
+  if (fleet.includes(forbidden)) throw new Error(`Exact Airport Jetway runtime contains retired substitute ${forbidden}`);
+}
+requireTokens("src/environment/uploadedAirportJetwayFleetReadyV2.js", [
+  'READY_AUTHORITY = "exact-uploaded-airport-jetway-complete-58-gates-v1"',
+  'MATERIAL_AUTHORITY = "exact-seven-embedded-airport-jetway-textures-v1"',
+  'PERFORMANCE_AUTHORITY = "57-static-exact-glb-instances-plus-1-animated-a1-v1"',
   "staticInstancedGateCount !== 57",
   "animatedIndividualGateCount !== 1",
-  "staticPrimitiveBatchCount < 1",
-  "staticConnectorGateCount !== 57",
-  "staticConnectorBatchCount !== 3",
-  "staticConnectorInstanceCount < 1",
-  'staticConnectorBatchAuthority !== "57-static-terminal-connectors-three-instanced-box-batches-v1"',
-  "individualConnectorGateCount !== 1",
-  "uploadedJetwayVerifiedModelCount = modelCount",
-  "uploadedJetwayVerifiedGateNames",
-  "waitForFleet(group, placements)",
-  "installUploadedAirportJetwayFleetBase(THREE, group, placements, sourceTextures)",
+  "staticPrimitiveBatchCount !== 7",
 ]);
-for (const forbidden of [
-  "polishUploadedA1JetwayDetail",
-  "A1_DETAIL_POLISH_AUTHORITY",
-  "aligned.rotation.y = Math.PI / 2",
-]) {
-  if (ready.includes(forbidden)) throw new Error(`Uploaded jetway ready wrapper mutates the supplied model: ${forbidden}`);
-}
-
 requireTokens("src/environment/uploadedAirportJetwayExactModelGuard.js", [
-  'EXACT_MODEL_AUTHORITY = "user-supplied-airport-jetway-exclusive-geometry-v9"',
-  'REQUIRED_SOURCE_PARTS = Object.freeze(["Tunnel_A", "Tunnel_B", "Tunnel_C", "Rotunda", "Cab"])',
-  'LEGACY_BRIDGE_PATTERN = /^(?:AIR_Jetway01_',
-  'A1_SYNTHETIC_PORTAL_PATTERN = /^UploadedAirportJetwayTerminalPortal/i',
-  "Supplied airport jetway prototype was deformed",
-  "Supplied airport jetway prototype received a non-authored axis rotation",
-  "Supplied airport jetway contains ${syntheticEdgeCount} non-source edge overlays",
-  "uploadedJetwayExactSourceGeometryPreserved = true",
-  "uploadedJetwayParentAxisCorrectionRadians = 0",
+  '"Tunnel_C_Jetway_0"', '"Cab_Glass_JW_0"', "sourceMeshCount !== 7 || uvMeshCount !== 7",
 ]);
-
-const encodedGeometry = Array.from({ length: 5 }, (_, index) => (
-  read(`public/models/airport-jetway/geometry.part${index}`).trim()
-)).join("");
-const geometryPayload = zlib.gunzipSync(Buffer.from(encodedGeometry, "base64"));
-const metadataLength = geometryPayload.readUInt32LE(0);
-const metadata = JSON.parse(geometryPayload.subarray(4, 4 + metadataLength).toString("utf8"));
-const authoredNodeNames = new Set(metadata.nodes.map((node) => node.name));
-for (const requiredName of ["Tunnel_A", "Tunnel_B", "Tunnel_C", "Rotunda", "Cab"]) {
-  if (!authoredNodeNames.has(requiredName)) throw new Error(`Supplied jetway geometry payload is missing ${requiredName}`);
-}
-const rootNode = metadata.nodes.find((node) => node.name === "RootNode");
-if (!rootNode || rootNode.children?.length !== 5) {
-  throw new Error(`Supplied jetway RootNode expected five exact authored assemblies, received ${rootNode?.children?.length ?? 0}`);
-}
-
-const { enforceExactUploadedJetwayVisualAuthority } = await import(
-  "../src/environment/uploadedAirportJetwayExactModelGuard.js"
-);
-
-class MockNode {
-  constructor(name, { group = false, mesh = false } = {}) {
-    this.name = name;
-    this.isGroup = group;
-    this.isMesh = mesh;
-    this.visible = true;
-    this.castShadow = true;
-    this.receiveShadow = true;
-    this.children = [];
-    this.userData = {};
-    this.scale = { x: 1, y: 1, z: 1, toArray: () => [1, 1, 1] };
-    this.rotation = { x: 0, y: 0, z: 0 };
-  }
-
-  add(...children) {
-    this.children.push(...children);
-    return this;
-  }
-
-  traverse(visitor) {
-    visitor(this);
-    for (const child of this.children) child.traverse(visitor);
-  }
-
-  getObjectByName(name) {
-    if (this.name === name) return this;
-    for (const child of this.children) {
-      const match = child.getObjectByName(name);
-      if (match) return match;
-    }
-    return null;
-  }
-}
-
-const sourceModel = new MockNode("UploadedAirportJetwayModel_A1", { group: true });
-for (const name of ["Tunnel_A", "Tunnel_B", "Tunnel_C", "Rotunda", "Cab"]) {
-  sourceModel.add(new MockNode(name, { group: true }));
-}
-sourceModel.add(
-  new MockNode("Tunnel_C_GalvanizedServiceStair_SourceTriangles", { mesh: true }),
-  new MockNode("Tunnel_C_DarkBogieLift_SourceTriangles", { mesh: true }),
-);
-const connector = new MockNode("UploadedAirportJetwayTerminalConnector_A1", { group: true }).add(
-  new MockNode("UploadedAirportJetwayTerminalConnectorShell_A1_0", { mesh: true }),
-  new MockNode("UploadedAirportJetwayTerminalPortalInterior_A1", { mesh: true }),
-  new MockNode("UploadedAirportJetwayTerminalPortalOuterHeader_A1", { mesh: true }),
-);
-const fleetMock = new MockNode("UploadedAirportJetwayFleet", { group: true }).add(sourceModel, connector);
-const legacyCollar = new MockNode("AIR_Jetway01_WallCollars", { group: true }).add(
-  new MockNode("LegacyCollarMesh", { mesh: true }),
-);
-const legacyWalkway = new MockNode("Terminal4_FixedWalkwayArchitecturalDetail_V15", { group: true }).add(
-  new MockNode("LegacyWalkwayMesh", { mesh: true }),
-);
-const legacySeal = new MockNode("A1_T4_WALK_TerminalPortalSeal_V37", { group: true }).add(
-  new MockNode("LegacySealMesh", { mesh: true }),
-);
-const sourceGroupMock = new MockNode("PHX_Terminal4_AIR_Jetway01_SourcePlaced", { group: true }).add(
-  legacyCollar,
-  legacyWalkway,
-  legacySeal,
-  fleetMock,
-);
-const guardResult = enforceExactUploadedJetwayVisualAuthority(sourceGroupMock, fleetMock);
-if (
-  guardResult.hiddenLegacyGroupCount !== 3
-  || guardResult.hiddenSyntheticPortalCount !== 2
-  || legacyCollar.visible
-  || legacyWalkway.visible
-  || legacySeal.visible
-  || connector.children[0].visible !== true
-  || connector.children[1].visible !== false
-  || sourceModel.visible !== true
-  || sourceGroupMock.userData.uploadedJetwayParentAxisCorrectionRadians !== 0
-) {
-  throw new Error(`Exact supplied jetway visual guard failed its executable contract: ${JSON.stringify(guardResult)}`);
-}
-
-const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js", [
-  'installUploadedAirportJetwayFleet } from "./uploadedAirportJetwayFleetReadyV2.js"',
+requireTokens("src/environment/sourcePlacedTerminal4Jetways.js", [
   "const uploadedJetwayPlacements = []",
-  "connectorTowardX",
-  "connectorTowardZ",
-  "wallConnectorLength",
   "uploadedJetwayPlacements.push",
   "installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements, sourceTextures)",
-  'sourceGeometryMode = "user-supplied-airport-jetway-loading"',
-  "requiresOriginalSourceMesh = false",
   "a1JetwayController = uploadedJetwayController",
-  'visualAuthority = "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v2-source-textured"',
 ]);
-if ((jetways.match(/uploadedAirportJetwayFleetReadyV2\.js/g) || []).length !== 1) {
-  throw new Error("Source-placed Terminal 4 jetways must contain exactly one awaited fleet import");
-}
-
-requireTokens("src/environment/uploadedAirportJetwayTerminalConnector.js", [
-  'CONNECTOR_AUTHORITY = "measured-authored-terminal-wall-to-uploaded-rotunda-v5-facade-plane-portal-static-instanced"',
-  'STATIC_CONNECTOR_BATCH_AUTHORITY = "57-static-terminal-connectors-three-instanced-box-batches-v1"',
-  'const terminalOverlap = placement.gate === "A1" ? 1.45 : 0.55',
-  "addUploadedAirportJetwayStaticTerminalConnectors",
-  'group.name = "UploadedAirportJetwayStaticTerminalConnectorBatches"',
-  'buildInstancedBatch(THREE, "UploadedAirportJetwayStaticConnectorShells"',
-  'buildInstancedBatch(THREE, "UploadedAirportJetwayStaticConnectorFrames"',
-  'buildInstancedBatch(THREE, "UploadedAirportJetwayStaticConnectorGlass"',
-  "group.userData.staticGateCount = staticPlacements.length",
-  "group.userData.batchCount = group.children.length",
-  'const facadeDistance = Math.max(0.8, frame.measuredLength - 0.08)',
-  "UploadedAirportJetwayTerminalPortalInterior_A1",
-  "UploadedAirportJetwayTerminalPortalOuterHeader_A1",
-  "UploadedAirportJetwayTerminalPortalOuterThreshold_A1",
-  "UploadedAirportJetwayTerminalPortalOuterJamb_A1",
-  "UploadedAirportJetwayTerminalPortalInnerJamb_A1",
-  "UploadedAirportJetwayTerminalPortalInnerHeader_A1",
-  'connector.userData.a1TerminalPortalFrame = "facade-plane-dark-reveal-with-hidden-deep-overlap-v4"',
-  "connector.userData.a1FacadePortalDistanceMeters = facadeDistance",
-  "connector.userData.a1HiddenOverlapMeters = frame.terminalOverlap",
-]);
-
-requireTokens("src/environment/authoredTerminal4Visual.js", [
+requireTokens("scripts/prepare-uploaded-airport-jetway-readiness-v2.mjs", [
+  'import { installUploadedAirportJetwayFleet } from "./uploadedAirportJetwayFleetReadyV2.js";',
   "await sourcePlacedJetways.userData.uploadedJetwayReady",
-  'uploadedJetwayLoadState !== "ready"',
-  "uploadedJetwayCount) !== 58",
-  "uploadedJetwayMeasuredTerminalConnectorCount) !== 58",
-  "uploadedJetwayVerifiedModelCount) !== 58",
-  "authoredTerminal4UploadedJetwayLoadState",
-  "authoredTerminal4UploadedJetwayCount",
-  "authoredTerminal4UploadedJetwayConnectorCount",
   "authoredTerminal4UploadedJetwayVerifiedModelCount",
-  "authoredTerminal4UploadedJetwayReadyAuthority",
 ]);
-
-requireTokens("src/components/RampReadyStandupTrainerTerminal4.jsx", [
-  'dataset.terminal4UploadedJetwayLoadState = "loading"',
-  "dataset.terminal4UploadedJetwayLoadState = environment.userData",
-  "dataset.terminal4UploadedJetwayCount",
-  "dataset.terminal4UploadedJetwayConnectorCount",
-  "dataset.terminal4UploadedJetwayVerifiedModelCount",
-  "dataset.terminal4UploadedJetwayReadyAuthority",
-  'dataset.terminal4UploadedJetwayLoadState = "load-error"',
-]);
-
-requireTokens("scripts/prepare-a1-connection-camera-v5.mjs", [
-  "x: 7.5",
-  "z: 8.5",
-  "yaw: -0.35",
-  "cameraPosition: Object.freeze([-12.0, 10.5, 28.0])",
-  "cameraTarget: Object.freeze([-27.5, 4.1, -16.15])",
-  "wide-diagonal-a1-terminal-joint-v6-clear-tug",
-]);
-requireTokens("tests/browser/source-first-a1-repair.spec.js", [
-  '"data-terminal4-uploaded-jetway-load-state"',
-  '"data-terminal4-uploaded-jetway-count"',
-  '"data-terminal4-uploaded-jetway-connector-count"',
-  '"data-terminal4-uploaded-jetway-verified-model-count"',
-  "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured",
-  "wide-diagonal-a1-terminal-joint-v6-clear-tug",
-]);
-requireTokens("tests/browser/kphx-ground-runtime.spec.js", [
-  '"data-terminal4-uploaded-jetway-load-state"',
-  "terminal4UploadedJetwayLoadState",
-  "terminal4UploadedJetwayCount",
-  "terminal4UploadedJetwayConnectorCount",
-  "terminal4UploadedJetwayVerifiedModelCount",
-  "terminal4UploadedJetwayReadyAuthority",
-  "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured",
-  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured",
-]);
-
-console.log("Verified the exact supplied Tunnel_A/B/C/Rotunda/Cab hierarchy at all 58 gates with no parent-axis rotation, no geometry deformation, no synthetic edge overlays, all duplicate AIR_Jetway01/fixed-walkway visuals hidden, and the synthetic A1 portal frame suppressed while the measured terminal overlap remains.");
+for (let index = 0; index < 5; index += 1) if (existsSync(`public/models/airport-jetway/geometry.part${index}`)) throw new Error(`Retired geometry.part${index} still exists`);
+console.log("Verified the exact 31,459,796-byte Airport_Jetway.glb, seven exact embedded textures, seven authored meshes, two authored materials, all 58 Terminal 4 placements, 57 articulated static instance sets, and one independently controlled A1 model.");

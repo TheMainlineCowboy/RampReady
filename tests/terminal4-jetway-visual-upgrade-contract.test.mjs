@@ -5,7 +5,6 @@ const preparation = fs.readFileSync("scripts/prepare-terminal4-jetway-visual-upg
 const uploadedFleet = fs.readFileSync("src/environment/uploadedAirportJetwayFleet.js", "utf8");
 const uploadedConnectors = fs.readFileSync("src/environment/uploadedAirportJetwayTerminalConnector.js", "utf8");
 const uploadedPreparation = fs.readFileSync("scripts/prepare-uploaded-airport-jetway-fleet.mjs", "utf8");
-const uvPreparation = fs.readFileSync("scripts/prepare-terminal4-jetway-source-uv-v36.mjs", "utf8");
 const continuity = fs.readFileSync("scripts/prepare-terminal4-facade-continuity-v8.mjs", "utf8");
 
 for (const token of [
@@ -43,47 +42,76 @@ for (const token of [
 }
 
 for (const token of [
+  'MODEL_AUTHORITY = "exact-uploaded-airport-jetway-glb-562e3144-v1"',
+  'MATERIAL_AUTHORITY = "exact-seven-embedded-airport-jetway-textures-v1"',
+  'PERFORMANCE_AUTHORITY = "57-static-exact-glb-instances-plus-1-animated-a1-v1"',
+  'A1_RETRACTION_AUTHORITY = "exact-glb-authored-node-telescoping-a1-v1"',
+  'EXACT_GLB_URL = "models/airport-jetway/Airport_Jetway.glb"',
+  'new GLTFLoader().loadAsync(modelUrl())',
+  'const requiredNodes = ["Tunnel_A", "Tunnel_B", "Tunnel_C", "Rotunda", "Cab"]',
+  '"Tunnel_C_Jetway_0"',
+  '"Tunnel_C_Glass_JW_0"',
+  '"Rotunda_Jetway_0"',
+  '"Cab_Jetway_0"',
+  '"Cab_Glass_JW_0"',
+  '"Tunnel_A_Jetway_0"',
+  '"Tunnel_B_Jetway_0"',
+  'mesh.geometry?.getAttribute("position")',
+  'mesh.geometry?.getAttribute("normal")',
+  'mesh.geometry?.getAttribute("uv")',
+  'materials.has("Jetway")',
+  'materials.has("Glass_JW")',
+  'triangleCount !== 31_978',
+  'sourceLongitudinalAxis',
+  'axisCorrectionRadians',
+  'rotundaOriginNormalized = true',
+  'groundContactNormalized = true',
+  'placements.length !== 58',
+  'staticPlacements.length !== 57',
+  'collectPrototypeMeshes',
+  'buildStaticInstancedFleet',
+  'new THREE.InstancedMesh',
+  'UploadedAirportJetwayStaticExactGlbInstances',
+  'prototype.clone(true)',
+  'UploadedAirportJetwayModel_A1',
+  'addUploadedAirportJetwayStaticTerminalConnectors',
+  'uploadedJetwayStaticInstancedGateCount = staticFleet.staticGateCount',
+  'uploadedJetwayAnimatedIndividualGateCount = 1',
+  'uploadedJetwayStaticPrimitiveBatchCount = staticFleet.primitiveBatchCount',
+  'uploadedJetwayStaticConnectorGateCount = staticConnectors.staticGateCount',
+  'uploadedJetwayStaticConnectorBatchCount = staticConnectors.batchCount',
+  'uploadedJetwayIndividualConnectorGateCount = 1',
+  'uploadedJetwayExactGlbSha256 = "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0"',
+  'uploadedJetwayMaximumPositionErrorMeters = 0',
+  'uploadedJetwayMaximumUvError = 0',
+  'requiresOriginalSourceMesh = true',
+  'proceduralJetwayStairCount = 0',
+  'proceduralProjectedUvCount = 0',
+  'hiddenGeneratedObjectCount',
+]) {
+  if (!uploadedFleet.includes(token)) throw new Error(`Exact uploaded Terminal 4 jetway fleet is missing ${token}`);
+}
+
+for (const forbidden of [
   "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured",
   "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2",
   "source-triangle-stair-and-bogie-material-split-v1",
   "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5",
-  "Tunnel_B",
-  "Tunnel_C",
-  "Cab",
-  "UploadedAirportJetwayFleet",
-  "UploadedAirportJetwayStaticInstancedBatches",
-  "addUploadedAirportJetwayStaticTerminalConnectors",
   "addProjectedUvs",
   "cloneCorrugatedAtlasBand",
   "splitTunnelCSourceDetail",
   "Tunnel_C_SourceDetailMaterialSplit",
-  "Tunnel_C_GalvanizedServiceStair_SourceTriangles",
-  "Tunnel_C_DarkBogieLift_SourceTriangles",
-  "collectPrototypeMeshes",
-  "buildStaticInstancedFleet",
-  "new THREE.InstancedMesh",
-  "uploadedJetwayDetailMaterialAuthority = prototype.userData.detailMaterialAuthority",
-  "uploadedJetwayStairMaterialSplitActive = true",
-  "uploadedJetwayShadowCasterGateCount = shadowCasterGateCount",
-  "uploadedJetwayGlobalEdgeOverlayCount = 0",
-  "uploadedJetwayStaticInstancedGateCount = staticFleet.staticGateCount",
-  "uploadedJetwayAnimatedIndividualGateCount = 1",
-  "uploadedJetwayStaticPrimitiveBatchCount = staticFleet.primitiveBatchCount",
-  "uploadedJetwayStaticConnectorGateCount = staticConnectors.staticGateCount",
-  "uploadedJetwayStaticConnectorBatchCount = staticConnectors.batchCount",
-  "uploadedJetwayIndividualConnectorGateCount = 1",
-  "proceduralJetwayStairCount = 0",
-  "hiddenGeneratedObjectCount",
-  "PART_COUNT = 5",
-]) {
-  if (!uploadedFleet.includes(token)) throw new Error(`Uploaded Terminal 4 jetway fleet is missing ${token}`);
-}
-for (const forbidden of [
-  "addStructuralEdges",
   "new THREE.EdgesGeometry",
   "new THREE.LineSegments",
+  "decodeDeltaVarint",
+  "decodeOctNormal",
+  "geometry.bin",
+  "DecompressionStream",
+  "M1DGJETWAY",
 ]) {
-  if (uploadedFleet.includes(forbidden)) throw new Error(`Uploaded Terminal 4 jetway fleet retained forbidden generated detail: ${forbidden}`);
+  if (uploadedFleet.includes(forbidden)) {
+    throw new Error(`Exact uploaded Terminal 4 jetway fleet retained retired generated detail: ${forbidden}`);
+  }
 }
 
 for (const token of [
@@ -109,28 +137,26 @@ for (const token of [
 }
 
 for (const token of [
-  "uploadedJetwayPlacements",
-  "installUploadedAirportJetwayFleet",
-  "sourceTextures",
-  "requiresOriginalSourceMesh = false",
-  "a1JetwayController = uploadedJetwayController",
-  "supersededFallbackDisclosure",
+  'await import("./materialize-exact-airport-jetway.mjs")',
+  'MODEL_AUTHORITY = "exact-uploaded-airport-jetway-glb-562e3144-v1"',
+  'MATERIAL_AUTHORITY = "exact-seven-embedded-airport-jetway-textures-v1"',
+  'PERFORMANCE_AUTHORITY = "57-static-exact-glb-instances-plus-1-animated-a1-v1"',
+  'A1_RETRACTION_AUTHORITY = "exact-glb-authored-node-telescoping-a1-v1"',
+  'EXACT_GLB_URL = "models/airport-jetway/Airport_Jetway.glb"',
+  'uploadedJetwayExactGlbSha256 = "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0"',
+  '"addProjectedUvs"',
+  '"cloneCorrugatedAtlasBand"',
+  '"splitTunnelCSourceDetail"',
+  '"source-triangle-stair-and-bogie-material-split"',
+  '"geometry.bin"',
 ]) {
-  if (!uploadedPreparation.includes(token)) throw new Error(`Uploaded Terminal 4 jetway preparation is missing ${token}`);
-}
-
-for (const token of [
-  "source-length-height-shell-projection-v36",
-  "const longitudinalShell = nz < 0.72",
-  "clamp(z + 0.5, 0, 1)",
-  "M1DGJETWAY's recovered shell strip",
-]) {
-  if (!uvPreparation.includes(token)) throw new Error(`Terminal 4 exact jetway UV preparation is missing ${token}`);
+  if (!uploadedPreparation.includes(token)) throw new Error(`Exact uploaded Terminal 4 jetway preparation is missing ${token}`);
 }
 
 for (const token of [
   'await import("./prepare-terminal4-jetway-source-uv-v36.mjs")',
   'await import("./prepare-uploaded-airport-jetway-fleet.mjs")',
+  'await import("./prepare-uploaded-airport-jetway-readiness-v2.mjs")',
 ]) {
   if (!continuity.includes(token)) throw new Error(`Terminal 4 runtime preparation is missing ${token}`);
 }
@@ -142,9 +168,9 @@ for (const forbidden of [
   "usesTerminalBuildingTextures = true",
   "CanvasTexture",
 ]) {
-  if (moduleSource.includes(forbidden) || preparation.includes(forbidden) || uvPreparation.includes(forbidden)) {
+  if (moduleSource.includes(forbidden) || preparation.includes(forbidden) || uploadedPreparation.includes(forbidden)) {
     throw new Error(`Terminal 4 jetway visual pass contains forbidden source claim: ${forbidden}`);
   }
 }
 
-console.log("The supplied Tunnel_A/B/C/Rotunda/Cab fleet remains the production authority at all 58 gates: exact corrugated shell texture stays on the bridge body, supplied stair and bogie triangles receive readable metal materials, 57 static jetways/connectors remain batched, and A1 keeps an individual animated model with a facade-plane doorway reveal plus hidden terminal overlap.");
+console.log("The untouched Airport_Jetway.glb is the production geometry and material authority at all 58 Terminal 4 gates: seven authored meshes, seven embedded textures, two original materials, original UVs and normals, parent-only axis normalization, 57 exact articulated static instance sets, one independently controlled A1 model, measured terminal connectors, and zero projected UV or procedural-detail substitution.");

@@ -1,0 +1,93 @@
+name: Exact Airport Jetway Verification
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.jetway-geometry-staging-v2/**'
+      - '.jetway-geometry-staging-v5/**'
+      - '.jetway-source-staging/**'
+      - 'scripts/materialize-exact-airport-jetway.mjs'
+      - 'scripts/probe-exact-jetway-source-chunks.mjs'
+      - 'scripts/scan-exact-jetway-history.mjs'
+      - 'scripts/deep-scan-jetway-transfer-history.mjs'
+      - 'scripts/list-jetway-actions-artifacts.mjs'
+      - 'scripts/list-dedicated-jetway-artifacts.mjs'
+      - 'scripts/recover-exact-jetway-from-actions-artifacts.mjs'
+      - 'scripts/recover-exact-jetway-from-pages-artifacts.mjs'
+      - 'scripts/inspect-dedicated-jetway-transfers.mjs'
+      - 'scripts/verify-exact-airport-jetway-runtime.mjs'
+      - 'src/**'
+      - 'public/**'
+      - 'assets/**'
+      - '.github/workflows/exact-airport-jetway-verification.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  verify-exact-airport-jetway:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out complete pull-request history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch every remote branch
+        run: git fetch origin '+refs/heads/*:refs/remotes/origin/*' --force
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Deep scan every ref and historical transfer family
+        run: node scripts/deep-scan-jetway-transfer-history.mjs
+
+      - name: Inspect dedicated source-transfer branches
+        run: node scripts/inspect-dedicated-jetway-transfers.mjs
+
+      - name: List dedicated transfer artifacts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/list-dedicated-jetway-artifacts.mjs
+
+      - name: Recover exact uploaded GLB from retained Pages bundles
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/recover-exact-jetway-from-pages-artifacts.mjs
+
+      - name: Recover exact uploaded GLB from retained Actions artifacts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/recover-exact-jetway-from-actions-artifacts.mjs
+
+      - name: Recover exact uploaded GLB from repository history
+        run: node scripts/scan-exact-jetway-history.mjs
+
+      - name: Inspect current original-source chunk stream
+        run: node scripts/probe-exact-jetway-source-chunks.mjs
+
+      - name: Reconstruct exact uploaded geometry package when not already recovered
+        shell: bash
+        run: |
+          GLB=public/models/airport-jetway/Airport_Jetway.glb
+          EXPECTED=562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0
+          if [[ -f "$GLB" && "$(stat -c%s "$GLB")" == "31459796" && "$(sha256sum "$GLB" | awk '{print $1}')" == "$EXPECTED" ]]; then
+            echo "Exact Airport_Jetway.glb already recovered and verified."
+          else
+            node scripts/materialize-exact-airport-jetway.mjs
+          fi
+
+      - name: Require exact uploaded GLB and all seven textures
+        run: node scripts/verify-exact-airport-jetway-runtime.mjs
+
+      - name: Fail closed on any exact-asset mismatch
+        if: failure()
+        run: exit 1

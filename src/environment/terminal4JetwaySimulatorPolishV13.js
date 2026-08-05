@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { installA1TerminalPortalSealV37 } from "./a1TerminalPortalSealV37.js";
 
 const HIDDEN_REPETITIVE_DETAIL = /AIR_Jetway01_(?:HorizontalRibs|VerticalRibs|PanelSeams)/i;
 const LARGE_SHADOW_CASTER = /AIR_Jetway01_(?:OuterTelescopingTunnels|InnerTelescopingTunnels|AircraftCabins|Rotundas|WallCollars)/i;
@@ -334,7 +335,10 @@ export function applyTerminal4JetwaySimulatorPolish(group) {
   const walkwayRecords = fixedWalkwayRecords(group);
   const fixedWalkwayArchitecturalCount = installFixedWalkwayArchitecturalDetail(group, walkwayRecords);
   const fixedWalkwaySupportStationCount = installFixedWalkwayGroundSupports(group, walkwayRecords);
-  const a1LowerFacadePanelCount = installA1LowerFacadePortal(group);
+  const a1TerminalPortalSeal = installA1TerminalPortalSealV37(group);
+  // The source-measured T4_WALK portal is now the attachment authority.
+  // Do not retain the obsolete generated panels at the rejected BGATE1 plane.
+  const a1LowerFacadePanelCount = 0;
   group.userData.simulatorPolishAuthority = "daylight-exact-shell-windowed-fixed-walkway-grounded-a1-portal-v15";
   group.userData.simulatorPolishMaterialCount = materialLabels.size;
   group.userData.simulatorPolishHiddenRepetitiveMeshCount = hiddenRepetitiveMeshCount;
@@ -344,7 +348,10 @@ export function applyTerminal4JetwaySimulatorPolish(group) {
   group.userData.fixedWalkwayArchitecturalAuthority = "light-cladding-window-band-roof-cap-fixed-walkways-v15";
   group.userData.fixedWalkwaySupportStationCount = fixedWalkwaySupportStationCount;
   group.userData.fixedWalkwayGroundSupportAuthority = "source-placed-fixed-walkway-ground-supports-v14";
+  group.userData.a1TerminalPortalSealAuthority = a1TerminalPortalSeal.userData.authority;
+  group.userData.a1TerminalPortalSealOverlapMeters = a1TerminalPortalSeal.userData.portalOverlapMeters;
+  group.userData.a1TerminalPortalSealExactTexture = a1TerminalPortalSeal.userData.usesExactRecoveredJetwayTexture === true;
   group.userData.a1LowerFacadePanelCount = a1LowerFacadePanelCount;
-  group.userData.a1LowerFacadeAuthority = "exact-BGATE1-wall-solid-lower-facade-with-jetway-portal-v15";
+  group.userData.a1LowerFacadeAuthority = "source-authored-A1-lower-facade-no-rejected-BGATE1-overlay-v31";
   return group;
 }

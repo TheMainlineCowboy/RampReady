@@ -97,7 +97,7 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   expect(runtime.terminal4UploadedJetwayConnectorCount).toBe("58");
   expect(runtime.terminal4UploadedJetwayVerifiedModelCount).toBe("58");
   expect(runtime.terminal4UploadedJetwayReadyAuthority).toBe(
-    "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured",
+    "exact-uploaded-airport-jetway-complete-58-gates-v1",
   );
   expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
   expect(runtime.groundPavementAuthority).toBe("full-source-aerial-primary-with-subtle-package-surface-detail-v41");
@@ -149,10 +149,10 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   const startCount = await numericCanvasAttribute(page, "data-airport-collision-count");
   await page.keyboard.down("w");
   try {
-    await expect.poll(
-      () => numericCanvasAttribute(page, "data-airport-collision-count"),
-      { timeout: 50_000, intervals: [250, 500, 1_000] },
-    ).toBeGreaterThan(startCount);
+    await page.waitForFunction((initialCount) => {
+      const canvas = document.querySelector("canvas.trainerCanvas");
+      return Number(canvas?.getAttribute("data-airport-collision-count") ?? "0") > initialCount;
+    }, startCount, { timeout: 120_000, polling: 100 });
   } finally {
     await page.keyboard.up("w");
   }

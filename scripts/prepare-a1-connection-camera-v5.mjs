@@ -80,13 +80,24 @@ for (const token of [
 ]) {
   if (!source.includes(token)) throw new Error(`${path}: wide A1/B15 inspection preparation is missing ${token}`);
 }
-if ((source.match(/cameraPosition:\s*Object\.freeze/g) || []).length !== 1) {
-  throw new Error(`${path}: A1 inspection route must expose exactly one fixed camera position`);
+const fixedCameraPositionCount = (source.match(/cameraPosition:\s*Object\.freeze/g) || []).length;
+const fixedCameraTargetCount = (source.match(/cameraTarget:\s*Object\.freeze/g) || []).length;
+if (![1, 2].includes(fixedCameraPositionCount)) {
+  throw new Error(`${path}: inspection route must expose the A1 fixed camera and, when prepared, the A14 fixed fleet camera; received ${fixedCameraPositionCount} positions`);
 }
-if ((source.match(/cameraTarget:\s*Object\.freeze/g) || []).length !== 1) {
-  throw new Error(`${path}: A1 inspection route must expose exactly one fixed camera target`);
+if (fixedCameraTargetCount !== fixedCameraPositionCount) {
+  throw new Error(`${path}: fixed inspection camera positions and targets must remain paired (${fixedCameraPositionCount}/${fixedCameraTargetCount})`);
+}
+if (fixedCameraPositionCount === 2) {
+  for (const token of [
+    'cameraPosition: Object.freeze([184.0, 16.5, -52.0])',
+    'cameraTarget: Object.freeze([218.45, 4.2, -86.52])',
+    'cameraAuthority: "wide-diagonal-a14-exact-static-fleet-v1"',
+  ]) {
+    if (!source.includes(token)) throw new Error(`${path}: prepared A14 fixed fleet camera is missing ${token}`);
+  }
 }
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared the full-airport inspection route when absent, normalized a wide diagonal A1 terminal-connection camera, moved A1 clear of the jetway support footprint, placed B15 close enough for a fast physical-contact check, added airport collision protection and limited A1 bridge retraction to door-clearance travel.");
+console.log("Prepared the full-airport inspection route with its fixed A1 connection view and optional fixed A14 exact-fleet view, moved A1 clear of the jetway support footprint, placed B15 close enough for a fast physical-contact check, added airport collision protection and limited A1 bridge retraction to door-clearance travel.");
