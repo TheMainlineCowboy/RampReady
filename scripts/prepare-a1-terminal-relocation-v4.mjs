@@ -4,6 +4,11 @@ const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js
 let source = fs.readFileSync(installationPath, "utf8");
 
 const before = `  const rotundaOpening = measureExactRotundaOpening(THREE, fleet, a1Model, terminalDirection);
+  const measuredTerminalAlignment = rotundaOpening.openingDirectionX * terminalDirection.x
+    + rotundaOpening.openingDirectionZ * terminalDirection.z;
+  if (measuredTerminalAlignment < 0.995) {
+    throw new Error(\`A1 measured parent orientation did not face the terminal: \${measuredTerminalAlignment}\`);
+  }
   const terminalWallX = a1Placement.x + terminalDirection.x * sourceTerminalDistance;
   const terminalWallZ = a1Placement.z + terminalDirection.z * sourceTerminalDistance;
   const wallOffsetX = terminalWallX - rotundaOpening.centerX;
@@ -15,6 +20,11 @@ const before = `  const rotundaOpening = measureExactRotundaOpening(THREE, fleet
   }`;
 
 const after = `  let rotundaOpening = measureExactRotundaOpening(THREE, fleet, a1Model, terminalDirection);
+  const measuredTerminalAlignment = rotundaOpening.openingDirectionX * terminalDirection.x
+    + rotundaOpening.openingDirectionZ * terminalDirection.z;
+  if (measuredTerminalAlignment < 0.995) {
+    throw new Error(\`A1 measured parent orientation did not face the terminal: \${measuredTerminalAlignment}\`);
+  }
   const terminalWallX = a1Placement.x + terminalDirection.x * sourceTerminalDistance;
   const terminalWallZ = a1Placement.z + terminalDirection.z * sourceTerminalDistance;
   const wallOffsetX = terminalWallX - rotundaOpening.centerX;
@@ -42,14 +52,14 @@ const after = `  let rotundaOpening = measureExactRotundaOpening(THREE, fleet, a
   if (relocationDistanceError > 0.03) {
     throw new Error(\`A1 terminal relocation missed the measured vestibule span by \${relocationDistanceError} m\`);
   }
-  if (openingAlignment < 0.98) {
+  if (openingAlignment < 0.995) {
     throw new Error(\`A1 Rotunda opening is not terminal-facing after relocation: \${openingAlignment}\`);
   }
   if (A1_PHOTO_VISIBLE_VESTIBULE_METERS > 3) {
     throw new Error(\`A1 photo vestibule exceeds the compact-reference limit: \${A1_PHOTO_VISIBLE_VESTIBULE_METERS}\`);
   }`;
 
-if (!source.includes(before)) throw new Error(`${installationPath}: cab-pivot span block is missing`);
+if (!source.includes(before)) throw new Error(`${installationPath}: measured cab-pivot span block is missing`);
 source = source.replace(before, after);
 source = source
   .replace(
@@ -65,21 +75,22 @@ source = source
   )
   .replace(
     'const INSTALLATION_AUTHORITY = "photo-registered-cab-pivot-rigid-parent-grounded-exact-chain-v15";',
-    'const INSTALLATION_AUTHORITY = "terminal-relocated-cab-pivot-rigid-parent-grounded-exact-chain-v17";',
+    'const INSTALLATION_AUTHORITY = "terminal-relocated-measured-cab-pivot-rigid-parent-grounded-exact-chain-v18";',
   );
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "terminal-relocated-cab-pivot-rigid-parent-grounded-exact-chain-v17"',
+  'INSTALLATION_AUTHORITY = "terminal-relocated-measured-cab-pivot-rigid-parent-grounded-exact-chain-v18"',
+  "const measuredTerminalAlignment = rotundaOpening.openingDirectionX * terminalDirection.x",
   "const desiredTerminalDistance = rotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS",
   "a1Anchor.position.x += terminalRelocationX",
   "const relocationDistanceError = Math.abs(terminalDistance - desiredTerminalDistance)",
-  "openingAlignment < 0.98",
+  "openingAlignment < 0.995",
   "A1_PHOTO_VISIBLE_VESTIBULE_METERS > 3",
   "uploadedJetwayA1TerminalRelocationDistanceErrorMeters",
   "uploadedJetwayA1TerminalOpeningAlignment",
 ]) {
-  if (!source.includes(token)) throw new Error(`${installationPath}: terminal relocation output is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${installationPath}: measured terminal relocation output is missing ${token}`);
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Relocated the complete A1 parent by its Rotunda to the terminal wall, verified the measured compact vestibule span and terminal-facing opening, and preserved the supplied GLB hierarchy.");
+console.log("Relocated the measured terminal-aligned A1 parent by its Rotunda to the real wall, enforced the compact vestibule span, and preserved the supplied GLB hierarchy.");
