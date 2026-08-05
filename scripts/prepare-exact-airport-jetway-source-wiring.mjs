@@ -57,12 +57,7 @@ const oldController = "  group.userData.a1JetwayController = animatedA1Jetway.us
 const exactController = `  if (uploadedJetwayPlacements.length !== 58) {
     throw new Error(\`Expected 58 exact Airport Jetway placements, received \${uploadedJetwayPlacements.length}\`);
   }
-  const uploadedJetwayController = installUploadedAirportJetwayFleet(
-    THREE,
-    group,
-    uploadedJetwayPlacements,
-    sourceTextures,
-  );
+  const uploadedJetwayController = installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements, sourceTextures);
   group.userData.uploadedJetwayMeasuredTerminalConnectorCount = uploadedJetwayPlacements.filter(
     (placement) => Number(placement.wallConnectorLength) > 0,
   ).length;
@@ -82,7 +77,7 @@ for (const token of [
   "connectorTowardX",
   "connectorTowardZ",
   "uploadedJetwayPlacements.length !== 58",
-  "installUploadedAirportJetwayFleet(",
+  "installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements, sourceTextures)",
   "group.userData.a1JetwayController = uploadedJetwayController",
   "uploadedJetwayMeasuredTerminalConnectorCount",
 ]) {
