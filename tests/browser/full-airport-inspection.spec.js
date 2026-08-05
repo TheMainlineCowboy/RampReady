@@ -153,7 +153,8 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
     const reverse = position();
 
     nativeSelect(camera, "overhead");
-    await waitFor(() => canvas.dataset.cameraMode === "overhead", "overhead camera", 30_000);
+    await waitFor(() => camera.value === "overhead", "overhead camera", 30_000);
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
     return {
       routeAuthority: canvas.dataset.inspectionRouteAuthority,
@@ -163,7 +164,7 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
       start,
       forward,
       reverse,
-      cameraMode: canvas.dataset.cameraMode,
+      cameraMode: camera.value,
     };
   }, PRESETS);
 
