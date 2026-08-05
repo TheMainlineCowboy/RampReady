@@ -1,0 +1,44 @@
+name: Exact Airport Jetway Verification
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.jetway-geometry-staging-v2/**'
+      - 'scripts/materialize-exact-airport-jetway.mjs'
+      - 'scripts/verify-exact-airport-jetway-runtime.mjs'
+      - 'src/**'
+      - 'public/**'
+      - 'assets/**'
+      - '.github/workflows/exact-airport-jetway-verification.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-exact-airport-jetway:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out pull request
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Reconstruct and verify exact uploaded geometry package
+        run: node scripts/materialize-exact-airport-jetway.mjs
+
+      - name: Require exact uploaded GLB and all seven textures
+        run: node scripts/verify-exact-airport-jetway-runtime.mjs
+
+      - name: Explain blocked runtime
+        if: failure()
+        run: |
+          echo 'The jetway runtime remains blocked until the exact 31,459,796-byte uploaded GLB and all seven exact uploaded textures pass their byte-count and SHA-256 checks.'
+          exit 1
