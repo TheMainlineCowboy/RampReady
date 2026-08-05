@@ -57,7 +57,7 @@ if (!source.includes("UploadedAirportJetwayA1VestibuleInteriorBackWall")) {
       THREE,
       connector,
       materials.interior,
-      `UploadedAirportJetwayA1VestibuleDoorWindow_${side}`,
+      "UploadedAirportJetwayA1VestibuleDoorWindow_" + side,
       [0.48, 0.78, 0.028],
       [
         interiorBackWallX + vestibuleSideX * side * 0.47 - openingDirection.x * 0.058,
