@@ -5,154 +5,101 @@ const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 let source = fs.readFileSync(installationPath, "utf8");
 let readinessSource = fs.readFileSync(readinessPath, "utf8");
 
-const WHOLE_ASSEMBLY_ORIENTATION_AUTHORITY = "same-day-a1-whole-authored-assembly-midpoint-terminal-rotunda-v3";
-const HALF_TURN_RADIANS = Math.PI;
+const AUTHORED_END_ORDER_AUTHORITY = "uploaded-glb-rotunda-tunnels-cab-zero-parent-reversal-v4";
 
 source = source.replace(
   /const INSTALLATION_AUTHORITY = "photo-registered-[^"]+-v\d+";/,
-  'const INSTALLATION_AUTHORITY = "photo-registered-terminal-rotunda-grounded-exact-chain-v16";',
+  'const INSTALLATION_AUTHORITY = "photo-registered-authored-end-order-grounded-exact-chain-v17";',
 );
 
-const anchor = `  fleet.position.y -= BOGIE_TIRE_CONTACT_CORRECTION_METERS;
+for (const forbidden of [
+  "a1Anchor.rotation.y += Math.PI",
+  "wholeOrientationMidpointBefore",
+  "wholeAssemblyOrientationCorrectionRadians",
+]) {
+  if (source.includes(forbidden)) {
+    throw new Error(`${installationPath}: obsolete A1 parent reversal survived before authored-order preparation: ${forbidden}`);
+  }
+}
+
+const authoredOrderAnchor = `  fleet.position.y -= BOGIE_TIRE_CONTACT_CORRECTION_METERS;
   fleet.updateMatrixWorld(true);
 
   // Measure the exact supplied Rotunda before moving A1.`;
 
-if (!source.includes("a1Anchor.userData.wholeAssemblyOrientationAuthority")) {
-  if (!source.includes(anchor)) {
-    throw new Error(`${installationPath}: photo-registered A1 installation anchor is missing`);
+if (!source.includes("a1Anchor.userData.authoredEndOrderAuthority")) {
+  if (!source.includes(authoredOrderAnchor)) {
+    throw new Error(`${installationPath}: photo-registered A1 authored-order anchor is missing`);
   }
   source = source.replace(
-    anchor,
+    authoredOrderAnchor,
     `  fleet.position.y -= BOGIE_TIRE_CONTACT_CORRECTION_METERS;
   fleet.updateMatrixWorld(true);
 
-  // Rotate the complete supplied A1 installation around the measured midpoint
-  // between the authored Rotunda and Cab. Rotating around the anchor origin can
-  // leave the visible ends on the same sides when the source origin is located
-  // near one end of the bridge. No authored Rotunda/Tunnel/Cab node is changed.
-  const wholeOrientationRotunda = a1Model.getObjectByName("Rotunda");
-  const wholeOrientationCab = a1Model.getObjectByName("Cab");
-  if (!wholeOrientationRotunda || !wholeOrientationCab) {
-    throw new Error("A1 whole-assembly orientation requires authored Rotunda and Cab nodes");
+  // Preserve the uploaded GLB's authored end order exactly. The Rotunda is the
+  // terminal-side root followed by Tunnel A/B/C and the Cab at the aircraft.
+  // A parent half-turn makes the full bridge pass through the terminal, so the
+  // installation correction must translate only and apply zero parent rotation.
+  const authoredOrderRotunda = a1Model.getObjectByName("Rotunda");
+  const authoredOrderTunnelA = a1Model.getObjectByName("Tunnel_A");
+  const authoredOrderTunnelB = a1Model.getObjectByName("Tunnel_B");
+  const authoredOrderTunnelC = a1Model.getObjectByName("Tunnel_C");
+  const authoredOrderCab = a1Model.getObjectByName("Cab");
+  if (!authoredOrderRotunda || !authoredOrderTunnelA || !authoredOrderTunnelB
+    || !authoredOrderTunnelC || !authoredOrderCab) {
+    throw new Error("A1 authored end-order verification requires Rotunda, Tunnel A/B/C and Cab");
   }
-  const wholeOrientationBox = new THREE.Box3();
-  const wholeOrientationRotundaBefore = wholeOrientationBox
-    .setFromObject(wholeOrientationRotunda)
+  const authoredOrderBox = new THREE.Box3();
+  const authoredOrderRotundaCenter = authoredOrderBox
+    .setFromObject(authoredOrderRotunda)
     .getCenter(new THREE.Vector3());
-  const wholeOrientationCabBefore = wholeOrientationBox
-    .setFromObject(wholeOrientationCab)
+  const authoredOrderCabCenter = authoredOrderBox
+    .setFromObject(authoredOrderCab)
     .getCenter(new THREE.Vector3());
-  const wholeOrientationMidpointBefore = wholeOrientationRotundaBefore
-    .clone()
-    .add(wholeOrientationCabBefore)
-    .multiplyScalar(0.5);
-
-  a1Anchor.rotation.y += ${HALF_TURN_RADIANS};
-  fleet.updateMatrixWorld(true);
-
-  const wholeOrientationRotundaAfter = wholeOrientationBox
-    .setFromObject(wholeOrientationRotunda)
-    .getCenter(new THREE.Vector3());
-  const wholeOrientationCabAfter = wholeOrientationBox
-    .setFromObject(wholeOrientationCab)
-    .getCenter(new THREE.Vector3());
-  const wholeOrientationMidpointAfter = wholeOrientationRotundaAfter
-    .clone()
-    .add(wholeOrientationCabAfter)
-    .multiplyScalar(0.5);
-  const wholeOrientationWorldDelta = wholeOrientationMidpointBefore
-    .clone()
-    .sub(wholeOrientationMidpointAfter);
-  const wholeOrientationParentQuaternion = new THREE.Quaternion();
-  fleet.getWorldQuaternion(wholeOrientationParentQuaternion);
-  const wholeOrientationParentDelta = wholeOrientationWorldDelta
-    .clone()
-    .applyQuaternion(wholeOrientationParentQuaternion.invert());
-  a1Anchor.position.add(wholeOrientationParentDelta);
-  a1Anchor.userData.wholeAssemblyOrientationAuthority = "${WHOLE_ASSEMBLY_ORIENTATION_AUTHORITY}";
-  a1Anchor.userData.wholeAssemblyOrientationCorrectionRadians = ${HALF_TURN_RADIANS};
-  a1Anchor.userData.wholeAssemblyOrientationPivot = [
-    wholeOrientationMidpointBefore.x,
-    wholeOrientationMidpointBefore.y,
-    wholeOrientationMidpointBefore.z,
-  ];
-  a1Anchor.userData.wholeAssemblyOrientationMidpointErrorMeters = wholeOrientationMidpointBefore.distanceTo(
-    wholeOrientationMidpointAfter.clone().add(wholeOrientationWorldDelta),
-  );
-  fleet.updateMatrixWorld(true);
-
-  // Measure the exact supplied Rotunda after the complete assembly is reversed
-  // and then register that authored Rotunda to the real terminal wall.`,
-  );
-}
-
-const relocationGuardAnchor = `  const relocationDistance = Math.hypot(relocationX, relocationZ);
-  if (!(relocationDistance >= 0 && relocationDistance < 28)) {
-    throw new Error(\`A1 photo-registration relocation is invalid: \${relocationDistance}\`);
-  }`;
-
-if (!source.includes("const maximumPhotoRegistrationRelocationMeters")) {
-  if (!source.includes(relocationGuardAnchor)) {
-    throw new Error(`${installationPath}: fixed photo-registration relocation guard is missing`);
+  const authoredOrderAxis = authoredOrderCabCenter.clone().sub(authoredOrderRotundaCenter);
+  authoredOrderAxis.y = 0;
+  const authoredEndOrderSeparationMeters = authoredOrderAxis.length();
+  if (!(authoredEndOrderSeparationMeters > 20 && authoredEndOrderSeparationMeters < 40)) {
+    throw new Error(\`A1 authored Rotunda-to-Cab separation is invalid: \${authoredEndOrderSeparationMeters}\`);
   }
-  source = source.replace(
-    relocationGuardAnchor,
-    `  const relocationDistance = Math.hypot(relocationX, relocationZ);
-  const photoRegistrationBounds = new THREE.Box3().setFromObject(a1Model);
-  const photoRegistrationSize = photoRegistrationBounds.getSize(new THREE.Vector3());
-  const photoRegistrationHorizontalSpanMeters = Math.hypot(
-    photoRegistrationSize.x,
-    photoRegistrationSize.z,
-  );
-  const maximumPhotoRegistrationRelocationMeters =
-    photoRegistrationHorizontalSpanMeters + sourceTerminalDistance + terminalDistance;
-  if (!(maximumPhotoRegistrationRelocationMeters > sourceTerminalDistance
-    && maximumPhotoRegistrationRelocationMeters < 80)) {
-    throw new Error(\`A1 authored relocation bound is invalid: \${maximumPhotoRegistrationRelocationMeters}\`);
-  }
-  if (!(relocationDistance >= 0
-    && relocationDistance <= maximumPhotoRegistrationRelocationMeters)) {
-    throw new Error(
-      \`A1 photo-registration relocation is invalid: \${relocationDistance} > \${maximumPhotoRegistrationRelocationMeters}\`,
-    );
-  }`,
+  authoredOrderAxis.normalize();
+  a1Anchor.userData.authoredEndOrderAuthority = "${AUTHORED_END_ORDER_AUTHORITY}";
+  a1Anchor.userData.authoredEndOrderCorrectionRadians = 0;
+  a1Anchor.userData.authoredEndOrderSeparationMeters = authoredEndOrderSeparationMeters;
+  a1Anchor.userData.authoredEndOrderRotundaToCabVector = [authoredOrderAxis.x, authoredOrderAxis.z];
+
+  // Measure the exact supplied Rotunda before moving A1.`,
   );
 }
 
 const reportAnchor = "    groundOffsetMeters: -BOGIE_TIRE_CONTACT_CORRECTION_METERS,";
-if (!source.includes("wholeAssemblyOrientationAuthority: a1Anchor.userData.wholeAssemblyOrientationAuthority")) {
+if (!source.includes("authoredEndOrderAuthority: a1Anchor.userData.authoredEndOrderAuthority")) {
   if (!source.includes(reportAnchor)) throw new Error(`${installationPath}: correction report anchor is missing`);
   source = source.replace(
     reportAnchor,
     `${reportAnchor}
-    photoRegistrationHorizontalSpanMeters,
-    maximumPhotoRegistrationRelocationMeters,
-    wholeAssemblyOrientationAuthority: a1Anchor.userData.wholeAssemblyOrientationAuthority,
-    wholeAssemblyOrientationCorrectionRadians: a1Anchor.userData.wholeAssemblyOrientationCorrectionRadians,
-    wholeAssemblyOrientationPivot: a1Anchor.userData.wholeAssemblyOrientationPivot,
-    wholeAssemblyOrientationMidpointErrorMeters: a1Anchor.userData.wholeAssemblyOrientationMidpointErrorMeters,`,
+    authoredEndOrderAuthority: a1Anchor.userData.authoredEndOrderAuthority,
+    authoredEndOrderCorrectionRadians: a1Anchor.userData.authoredEndOrderCorrectionRadians,
+    authoredEndOrderSeparationMeters: a1Anchor.userData.authoredEndOrderSeparationMeters,
+    authoredEndOrderRotundaToCabVector: a1Anchor.userData.authoredEndOrderRotundaToCabVector,`,
   );
 }
 
 const userDataAnchor = "  group.userData.uploadedJetwayFleetGroundOffsetMeters = report.groundOffsetMeters;";
-if (!source.includes("uploadedJetwayA1WholeAssemblyOrientationAuthority")) {
+if (!source.includes("uploadedJetwayA1AuthoredEndOrderAuthority")) {
   if (!source.includes(userDataAnchor)) throw new Error(`${installationPath}: group report anchor is missing`);
   source = source.replace(
     userDataAnchor,
     `${userDataAnchor}
-  group.userData.uploadedJetwayA1PhotoRegistrationHorizontalSpanMeters = report.photoRegistrationHorizontalSpanMeters;
-  group.userData.uploadedJetwayA1MaximumPhotoRegistrationRelocationMeters = report.maximumPhotoRegistrationRelocationMeters;
-  group.userData.uploadedJetwayA1WholeAssemblyOrientationAuthority = report.wholeAssemblyOrientationAuthority;
-  group.userData.uploadedJetwayA1WholeAssemblyOrientationCorrectionRadians = report.wholeAssemblyOrientationCorrectionRadians;
-  group.userData.uploadedJetwayA1WholeAssemblyOrientationPivot = report.wholeAssemblyOrientationPivot;
-  group.userData.uploadedJetwayA1WholeAssemblyOrientationMidpointErrorMeters = report.wholeAssemblyOrientationMidpointErrorMeters;`,
+  group.userData.uploadedJetwayA1AuthoredEndOrderAuthority = report.authoredEndOrderAuthority;
+  group.userData.uploadedJetwayA1AuthoredEndOrderCorrectionRadians = report.authoredEndOrderCorrectionRadians;
+  group.userData.uploadedJetwayA1AuthoredEndOrderSeparationMeters = report.authoredEndOrderSeparationMeters;
+  group.userData.uploadedJetwayA1AuthoredEndOrderRotundaToCabVector = report.authoredEndOrderRotundaToCabVector;`,
   );
 }
 
-// The retired pre-reversal setup required a 3–7 m telescope extension. The
-// correctly reversed and photo-registered authored assembly needs less travel.
-// Validate the actual geometry identity instead of preserving that stale range.
+// Validate telescope travel from measured reach instead of preserving the
+// retired arbitrary 3–7 m window. The authored model order itself is unchanged.
 const oldReadinessExtensionGuard = "            || !(a1AttachedExtension > 3 && a1AttachedExtension < 7)";
 const measuredReadinessExtensionGuard = `            || !(a1AttachedExtension > 0.25 && a1AttachedExtension < 7)
             || Math.abs(sourceContactDistance + a1AttachedExtension - a1TargetDoorDistance) > 0.05`;
@@ -166,18 +113,23 @@ if (readinessSource.includes(oldReadinessExtensionGuard)) {
 }
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "photo-registered-terminal-rotunda-grounded-exact-chain-v16"',
-  `a1Anchor.rotation.y += ${HALF_TURN_RADIANS}`,
-  "wholeOrientationMidpointBefore",
-  "wholeOrientationParentDelta",
-  "const maximumPhotoRegistrationRelocationMeters",
-  "photoRegistrationHorizontalSpanMeters + sourceTerminalDistance + terminalDistance",
-  `wholeAssemblyOrientationAuthority = "${WHOLE_ASSEMBLY_ORIENTATION_AUTHORITY}"`,
-  "wholeAssemblyOrientationAuthority: a1Anchor.userData.wholeAssemblyOrientationAuthority",
-  "uploadedJetwayA1WholeAssemblyOrientationAuthority",
-  "uploadedJetwayA1MaximumPhotoRegistrationRelocationMeters",
+  'INSTALLATION_AUTHORITY = "photo-registered-authored-end-order-grounded-exact-chain-v17"',
+  `authoredEndOrderAuthority = "${AUTHORED_END_ORDER_AUTHORITY}"`,
+  "authoredEndOrderCorrectionRadians = 0",
+  "authoredEndOrderRotundaToCabVector",
+  "authoredEndOrderAuthority: a1Anchor.userData.authoredEndOrderAuthority",
+  "uploadedJetwayA1AuthoredEndOrderAuthority",
 ]) {
-  if (!source.includes(token)) throw new Error(`${installationPath}: whole-assembly midpoint orientation output is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${installationPath}: authored A1 end-order output is missing ${token}`);
+}
+for (const forbidden of [
+  "a1Anchor.rotation.y += Math.PI",
+  "wholeOrientationMidpointBefore",
+  "wholeAssemblyOrientationCorrectionRadians",
+]) {
+  if (source.includes(forbidden)) {
+    throw new Error(`${installationPath}: obsolete A1 parent reversal survived: ${forbidden}`);
+  }
 }
 for (const token of [
   "a1AttachedExtension > 0.25 && a1AttachedExtension < 7",
@@ -190,4 +142,4 @@ for (const token of [
 
 fs.writeFileSync(installationPath, source, "utf8");
 fs.writeFileSync(readinessPath, readinessSource, "utf8");
-console.log("Prepared A1 as one continuous authored assembly with a parent-level half-turn around the measured Rotunda-to-Cab midpoint, re-registered the supplied Rotunda to the terminal, bounded that translation from the authored assembly span, and validated telescope travel from measured reach instead of the retired fixed range; no authored node was rotated independently.");
+console.log("Prepared A1 in the uploaded GLB's authored Rotunda-to-Tunnel-A/B/C-to-Cab order with zero parent reversal, photo-registered the terminal-side Rotunda by translation only, and retained strict measured-reach articulation checks.");
