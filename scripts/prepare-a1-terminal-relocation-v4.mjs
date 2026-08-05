@@ -63,6 +63,21 @@ if (!source.includes(before)) throw new Error(`${installationPath}: measured cab
 source = source.replace(before, after);
 source = source
   .replace(
+    `  const correctedA1Placement = Object.freeze({
+    ...a1Placement,
+    wallConnectorLength: terminalDistance + SOURCE_WALL_LENGTH_PADDING_METERS,
+  });`,
+    `  // buildMeasuredA1Connector derives its wall endpoint from placement plus
+  // terminalDistance. Rebase that placement at the relocated Rotunda axis so
+  // the compact vestibule terminates at the measured real wall, not the old A1 origin.
+  const correctedA1Placement = Object.freeze({
+    ...a1Placement,
+    x: terminalWallX - terminalDirection.x * terminalDistance,
+    z: terminalWallZ - terminalDirection.z * terminalDistance,
+    wallConnectorLength: terminalDistance + SOURCE_WALL_LENGTH_PADDING_METERS,
+  });`,
+  )
+  .replace(
     "  const relocationX = cabPreservationDelta.x;\n  const relocationZ = cabPreservationDelta.z;\n  const relocationDistance = cabPreservationDelta.length();",
     `  const relocationX = cabPreservationDelta.x + terminalRelocationX;
   const relocationZ = cabPreservationDelta.z + terminalRelocationZ;
@@ -71,26 +86,31 @@ source = source
   group.userData.uploadedJetwayA1TerminalRelocationZ = terminalRelocationZ;
   group.userData.uploadedJetwayA1TerminalRelocationMeters = terminalRelocationMeters;
   group.userData.uploadedJetwayA1TerminalRelocationDistanceErrorMeters = relocationDistanceError;
-  group.userData.uploadedJetwayA1TerminalOpeningAlignment = openingAlignment;`,
+  group.userData.uploadedJetwayA1TerminalOpeningAlignment = openingAlignment;
+  group.userData.uploadedJetwayA1MeasuredTerminalWallX = terminalWallX;
+  group.userData.uploadedJetwayA1MeasuredTerminalWallZ = terminalWallZ;`,
   )
   .replace(
     'const INSTALLATION_AUTHORITY = "photo-registered-cab-pivot-rigid-parent-grounded-exact-chain-v15";',
-    'const INSTALLATION_AUTHORITY = "terminal-relocated-measured-cab-pivot-rigid-parent-grounded-exact-chain-v18";',
+    'const INSTALLATION_AUTHORITY = "terminal-relocated-measured-cab-pivot-rigid-parent-grounded-exact-chain-v19";',
   );
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "terminal-relocated-measured-cab-pivot-rigid-parent-grounded-exact-chain-v18"',
+  'INSTALLATION_AUTHORITY = "terminal-relocated-measured-cab-pivot-rigid-parent-grounded-exact-chain-v19"',
   "const measuredTerminalAlignment = rotundaOpening.openingDirectionX * terminalDirection.x",
   "const desiredTerminalDistance = rotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS",
   "a1Anchor.position.x += terminalRelocationX",
+  "x: terminalWallX - terminalDirection.x * terminalDistance",
+  "z: terminalWallZ - terminalDirection.z * terminalDistance",
   "const relocationDistanceError = Math.abs(terminalDistance - desiredTerminalDistance)",
   "openingAlignment < 0.995",
   "A1_PHOTO_VISIBLE_VESTIBULE_METERS > 3",
   "uploadedJetwayA1TerminalRelocationDistanceErrorMeters",
   "uploadedJetwayA1TerminalOpeningAlignment",
+  "uploadedJetwayA1MeasuredTerminalWallX",
 ]) {
   if (!source.includes(token)) throw new Error(`${installationPath}: measured terminal relocation output is missing ${token}`);
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Relocated the measured terminal-aligned A1 parent by its Rotunda to the real wall, enforced the compact vestibule span, and preserved the supplied GLB hierarchy.");
+console.log("Relocated the measured terminal-aligned A1 parent by its Rotunda to the real wall, anchored the compact vestibule to that wall, and preserved the supplied GLB hierarchy.");
