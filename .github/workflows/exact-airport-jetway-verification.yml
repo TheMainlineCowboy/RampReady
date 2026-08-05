@@ -6,7 +6,10 @@ on:
       - main
     paths:
       - '.jetway-geometry-staging-v2/**'
+      - '.jetway-geometry-staging-v5/**'
+      - '.jetway-source-staging/**'
       - 'scripts/materialize-exact-airport-jetway.mjs'
+      - 'scripts/probe-exact-jetway-source-chunks.mjs'
       - 'scripts/verify-exact-airport-jetway-runtime.mjs'
       - 'src/**'
       - 'public/**'
@@ -31,14 +34,15 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Inspect original source chunk stream
+        run: node scripts/probe-exact-jetway-source-chunks.mjs
+
       - name: Reconstruct and verify exact uploaded geometry package
         run: node scripts/materialize-exact-airport-jetway.mjs
 
       - name: Require exact uploaded GLB and all seven textures
         run: node scripts/verify-exact-airport-jetway-runtime.mjs
 
-      - name: Explain blocked runtime
+      - name: Fail closed on any exact-asset mismatch
         if: failure()
-        run: |
-          echo 'The jetway runtime remains blocked until the exact 31,459,796-byte uploaded GLB and all seven exact uploaded textures pass their byte-count and SHA-256 checks.'
-          exit 1
+        run: exit 1
