@@ -2,6 +2,11 @@ import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetB
 import { installStaticJetwayPortalClosures } from "./staticJetwayPortalClosures.js";
 import { enforceExactUploadedJetwayVisualAuthority } from "./uploadedAirportJetwayExactModelGuard.js";
 import { UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY } from "./uploadedAirportJetwayArticulationV10.js";
+import {
+  correctUploadedJetwayInstallation,
+  UPLOADED_JETWAY_INSTALLATION_CORRECTION_AUTHORITY,
+  UPLOADED_JETWAY_A1_TERMINAL_CONNECTION_AUTHORITY,
+} from "./correctUploadedJetwayInstallationV1.js";
 
 const READY_AUTHORITY = "exact-uploaded-airport-jetway-complete-58-gates-v1";
 const EXPECTED_GATE_COUNT = 58;
@@ -33,6 +38,7 @@ function waitForFleet(THREE, group, placements) {
           const a1Model = a1Anchor?.getObjectByName("UploadedAirportJetwayModel_A1");
           if (!a1Anchor || !a1Model) throw new Error("Exact Airport_Jetway.glb fleet is missing the individual A1 model");
 
+          const installationCorrection = correctUploadedJetwayInstallation(THREE, group, fleet, placements);
           const exactModelGuard = enforceExactUploadedJetwayVisualAuthority(group, fleet);
           const staticPortalClosures = installStaticJetwayPortalClosures(THREE, fleet, placements);
           const count = Number(group.userData.uploadedJetwayCount || 0);
@@ -59,6 +65,16 @@ function waitForFleet(THREE, group, placements) {
           const a1ActualContactDistance = Number(group.userData.uploadedJetwayA1ActualContactDistanceMeters ?? NaN);
           const a1ActualDoorGap = Number(group.userData.uploadedJetwayA1ActualDoorGapMeters ?? Infinity);
           const a1PartOrderValid = group.userData.uploadedJetwayA1PartOrderValid === true;
+          const installationAuthority = group.userData.uploadedJetwayInstallationCorrectionAuthority || "missing";
+          const fleetGroundOffset = Number(group.userData.uploadedJetwayFleetGroundOffsetMeters ?? Infinity);
+          const bogieTireCorrection = Number(group.userData.uploadedJetwayBogieTireContactCorrectionMeters ?? NaN);
+          const a1TerminalConnectionAuthority = group.userData.uploadedJetwayA1TerminalConnectionAuthority || "missing";
+          const a1TerminalWallDistance = Number(group.userData.uploadedJetwayA1TerminalWallDistanceMeters ?? NaN);
+          const a1TerminalDirection = group.userData.uploadedJetwayA1TerminalConnectionDirection || [];
+          const a1PortalAlignmentError = Number(group.userData.uploadedJetwayA1PortalAlignmentErrorRadians ?? Infinity);
+          const staticPortalAlignedGateCount = Number(group.userData.uploadedJetwayStaticPortalAlignedGateCount ?? -1);
+          const staticPortalAlignmentError = Number(group.userData.uploadedJetwayStaticMaximumPortalAlignmentErrorRadians ?? Infinity);
+          const doubleSidedMaterialCount = Number(group.userData.uploadedJetwayDoubleSidedMaterialCount ?? -1);
 
           if (
             count !== EXPECTED_GATE_COUNT
@@ -87,6 +103,17 @@ function waitForFleet(THREE, group, placements) {
             || Math.abs(a1ActualContactDistance - a1TargetDoorDistance) > 0.05
             || a1ActualDoorGap > 0.05
             || !a1PartOrderValid
+            || installationAuthority !== UPLOADED_JETWAY_INSTALLATION_CORRECTION_AUTHORITY
+            || Math.abs(fleetGroundOffset + bogieTireCorrection) > 1e-6
+            || !(bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1)
+            || a1TerminalConnectionAuthority !== UPLOADED_JETWAY_A1_TERMINAL_CONNECTION_AUTHORITY
+            || !(a1TerminalWallDistance > 15.5 && a1TerminalWallDistance < 16.7)
+            || Math.abs(Number(a1TerminalDirection[0] ?? Infinity)) > 0.01
+            || Math.abs(Number(a1TerminalDirection[1] ?? Infinity) + 1) > 0.01
+            || a1PortalAlignmentError > 1e-6
+            || staticPortalAlignedGateCount !== 57
+            || staticPortalAlignmentError > 1e-6
+            || doubleSidedMaterialCount < 2
             || exactModelGuard.authority !== EXACT_MODEL_AUTHORITY
             || exactModelGuard.hierarchy.requiredPartCount !== 5
             || exactModelGuard.hierarchy.sourceMeshCount !== 7
@@ -97,7 +124,7 @@ function waitForFleet(THREE, group, placements) {
             || staticPortalClosures.gateCount !== 57
           ) {
             throw new Error(
-              `Exact jetway readiness mismatch: placements=${count}, gateRecords=${loadedModelNames.size}, missing=${missingModels.join(",") || "none"}, sha=${exactGlbSha256}, materials=${materialAuthority}, performance=${performanceAuthority}, topology=${sourceTriangleCount}/${maximumPositionErrorMeters}/${maximumUvError}, static=${staticInstancedGateCount}, animated=${animatedIndividualGateCount}, meshBatches=${staticPrimitiveBatchCount}, connectors=${staticConnectorGateCount}/${staticConnectorBatchCount}/${individualConnectorGateCount}, articulation=${articulationAuthority}/${sourceContactDistance}/${staticArticulatedGateCount}/${staticMaximumContactError}, A1=${a1TargetDoorDistance}/${a1AttachedExtension}/${a1PredictedContactDistance}/${a1PredictedDoorGap}/${a1ActualContactDistance}/${a1ActualDoorGap}/${a1PartOrderValid}, source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`,
+              `Exact jetway readiness mismatch: placements=${count}, gateRecords=${loadedModelNames.size}, missing=${missingModels.join(",") || "none"}, sha=${exactGlbSha256}, materials=${materialAuthority}, performance=${performanceAuthority}, topology=${sourceTriangleCount}/${maximumPositionErrorMeters}/${maximumUvError}, static=${staticInstancedGateCount}, animated=${animatedIndividualGateCount}, meshBatches=${staticPrimitiveBatchCount}, connectors=${staticConnectorGateCount}/${staticConnectorBatchCount}/${individualConnectorGateCount}, articulation=${articulationAuthority}/${sourceContactDistance}/${staticArticulatedGateCount}/${staticMaximumContactError}, A1=${a1TargetDoorDistance}/${a1AttachedExtension}/${a1PredictedContactDistance}/${a1PredictedDoorGap}/${a1ActualContactDistance}/${a1ActualDoorGap}/${a1PartOrderValid}, installation=${installationAuthority}/${fleetGroundOffset}/${bogieTireCorrection}/${a1TerminalConnectionAuthority}/${a1TerminalWallDistance}/${a1TerminalDirection.join(",")}/${a1PortalAlignmentError}/${staticPortalAlignedGateCount}/${staticPortalAlignmentError}/${doubleSidedMaterialCount}, source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`,
             );
           }
 
@@ -140,6 +167,7 @@ function waitForFleet(THREE, group, placements) {
             a1AttachedExtension,
             a1PredictedDoorGap,
             a1ActualDoorGap,
+            installationCorrection,
             exactModelGuard,
             staticPortalClosures,
             authority: READY_AUTHORITY,
