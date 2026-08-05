@@ -9,6 +9,7 @@ const UPLOADED_JETWAY_ATTRIBUTES = Object.freeze([
 ]);
 
 const DIRECT_A1_TERMINAL_AUTHORITY = "user-photo-overhead-authored-terminal-wall-direct-v1";
+const DIRECT_A1_CAMERA_AUTHORITY = "side-on-direct-terminal-wall-a1-v7";
 
 async function saveCompositedCanvasPng(page, path) {
   const box = await page.evaluate(() => {
@@ -140,19 +141,24 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   const inspectionLocation = page.getByLabel("Inspection location");
   await expect(inspectionLocation).toHaveValue("a1");
   await inspectionLocation.selectOption("a1Connection");
-  await page.waitForFunction(() => {
+  await page.waitForFunction((cameraAuthority) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionPreset === "a1Connection"
       && data?.inspectionPresetLabel === "A1 terminal connection"
-      && data?.inspectionCameraAuthority === "wide-diagonal-a1-terminal-joint-v6-clear-tug";
-  }, null, { timeout: 30_000, polling: 100 });
-  await page.waitForTimeout(1_800);
+      && data?.inspectionCameraAuthority === cameraAuthority;
+  }, DIRECT_A1_CAMERA_AUTHORITY, { timeout: 30_000, polling: 100 });
+  await page.addStyleTag({
+    content: ".rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}",
+  });
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await page.waitForTimeout(1_000);
   await saveCompositedCanvasPng(page, "test-results/source-first-a1-terminal-connection.png");
 
   fs.writeFileSync("test-results/source-first-a1-terminal-connection.json", `${JSON.stringify({
     terminalWallDistance,
     terminalConnectionAuthority: runtime.terminal4A1ConnectionAuthority,
     terminalConnectionDirection: terminalDirection,
+    inspectionCameraAuthority: DIRECT_A1_CAMERA_AUTHORITY,
     evidenceAuthority: "user-overhead-and-same-day-a1-ramp-photos",
   }, null, 2)}\n`);
 
