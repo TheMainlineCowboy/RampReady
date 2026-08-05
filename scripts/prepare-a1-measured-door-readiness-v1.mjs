@@ -8,8 +8,8 @@ let controllerSource = fs.readFileSync(controllerPath, "utf8");
 const MINIMUM_AUTHORED_EXTENSION_METERS = 0.25;
 const MAXIMUM_AUTHORED_EXTENSION_METERS = 7;
 const MAXIMUM_REACH_ERROR_METERS = 0.05;
-const authority = "authored-positive-extension-with-measured-crj-door-reach-v4";
-const controllerAuthority = "persistent-whole-assembly-orientation-through-retraction-v1";
+const authority = "authored-positive-extension-with-measured-crj-door-reach-v5";
+const controllerAuthority = "preserve-uploaded-base-yaw-zero-parent-reversal-v2";
 
 const staleCondition = "|| !(a1AttachedExtension > 3 && a1AttachedExtension < 7)";
 const intermediateCondition = `|| !(a1AttachedExtension > 0.25 && a1AttachedExtension < 7)
@@ -78,20 +78,25 @@ if (!source.includes("uploadedJetwayA1MeasuredDoorReadinessAuthority")) {
   }
 }
 
-// The model-space controller captured the gate yaw before the installation
-// correction and restored that stale yaw on every deployment update. Preserve
-// the whole A1 parent correction so the Rotunda remains terminal-side through
-// attached, retracting and parked states. No authored child node is rotated.
-const staleControllerYaw = "    anchor.rotation.y = base.yaw;";
+// The uploaded GLB already carries the correct Rotunda-to-Cab end order. A
+// parent half-turn sends the bridge through the terminal. Normalize any older
+// generated controller back to the authored base yaw and reject hidden reversal.
 const persistentControllerYaw = `    const wholeAssemblyOrientationCorrectionRadians = Number(
       anchor.userData.wholeAssemblyOrientationCorrectionRadians || 0,
     );
     anchor.rotation.y = base.yaw + wholeAssemblyOrientationCorrectionRadians;
-    anchor.userData.wholeAssemblyOrientationControllerAuthority = "${controllerAuthority}";`;
-if (controllerSource.includes(staleControllerYaw)) {
-  controllerSource = controllerSource.replace(staleControllerYaw, persistentControllerYaw);
-} else if (!controllerSource.includes(persistentControllerYaw)) {
-  throw new Error(`${controllerPath}: A1 controller yaw reset anchor is missing`);
+    anchor.userData.wholeAssemblyOrientationControllerAuthority = "persistent-whole-assembly-orientation-through-retraction-v1";`;
+const authoredControllerYaw = `    anchor.rotation.y = base.yaw;
+    anchor.userData.authoredEndOrderControllerAuthority = "${controllerAuthority}";`;
+const plainControllerYaw = "    anchor.rotation.y = base.yaw;";
+
+if (controllerSource.includes(persistentControllerYaw)) {
+  controllerSource = controllerSource.replace(persistentControllerYaw, authoredControllerYaw);
+} else if (controllerSource.includes(plainControllerYaw)
+  && !controllerSource.includes("authoredEndOrderControllerAuthority")) {
+  controllerSource = controllerSource.replace(plainControllerYaw, authoredControllerYaw);
+} else if (!controllerSource.includes(authoredControllerYaw)) {
+  throw new Error(`${controllerPath}: authored base-yaw controller anchor is missing`);
 }
 
 for (const token of [
@@ -108,12 +113,11 @@ for (const token of [
   }
 }
 for (const token of [
-  "wholeAssemblyOrientationCorrectionRadians",
-  "base.yaw + wholeAssemblyOrientationCorrectionRadians",
-  `wholeAssemblyOrientationControllerAuthority = "${controllerAuthority}"`,
+  "anchor.rotation.y = base.yaw",
+  `authoredEndOrderControllerAuthority = "${controllerAuthority}"`,
 ]) {
   if (!controllerSource.includes(token)) {
-    throw new Error(`${controllerPath}: persistent A1 orientation output is missing ${token}`);
+    throw new Error(`${controllerPath}: authored A1 base-yaw output is missing ${token}`);
   }
 }
 
@@ -122,10 +126,16 @@ for (const forbidden of [staleCondition, broadCondition]) {
     throw new Error(`${readinessPath}: obsolete A1 extension rule survived`);
   }
 }
-if (controllerSource.includes(staleControllerYaw)) {
-  throw new Error(`${controllerPath}: stale A1 parent-yaw reset survived`);
+for (const forbidden of [
+  "wholeAssemblyOrientationCorrectionRadians",
+  "base.yaw + wholeAssemblyOrientationCorrectionRadians",
+  "wholeAssemblyOrientationControllerAuthority",
+]) {
+  if (controllerSource.includes(forbidden)) {
+    throw new Error(`${controllerPath}: obsolete A1 parent reversal survived: ${forbidden}`);
+  }
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
 fs.writeFileSync(controllerPath, controllerSource, "utf8");
-console.log(`Prepared A1 readiness with positive ${MINIMUM_AUTHORED_EXTENSION_METERS}–${MAXIMUM_AUTHORED_EXTENSION_METERS} m authored travel, a ${MAXIMUM_REACH_ERROR_METERS} m measured-reach identity, and a retraction controller that preserves the parent-level Rotunda-terminal orientation; exact predicted/actual gap, continuity and part-order checks remain mandatory.`);
+console.log(`Prepared A1 readiness with positive ${MINIMUM_AUTHORED_EXTENSION_METERS}–${MAXIMUM_AUTHORED_EXTENSION_METERS} m authored travel, a ${MAXIMUM_REACH_ERROR_METERS} m measured-reach identity, and zero parent reversal; the retraction controller preserves the uploaded GLB base yaw.`);
