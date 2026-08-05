@@ -2,6 +2,7 @@ import { writeFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 
 const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
+const DIRECT_A1_TERMINAL_AUTHORITY = "user-photo-overhead-authored-terminal-wall-direct-v1";
 const GROUND_SUFFIXES = ["/models/kphx-ground/kphx-ground.gltf", "/models/kphx-ground/kphx-ground.bin"];
 const PHOTO_SUFFIXES = ["/models/kphx-photo/photo-manifest.json"];
 const TERMINAL_SUFFIXES = [
@@ -27,7 +28,7 @@ async function launchStandup(page) {
   await expect(launch).toBeEnabled();
   await launch.click();
 
-  await page.waitForFunction(() => {
+  await page.waitForFunction((expectedAuthority) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.environmentSource === "authored-phx-terminal4-textured-source-jetways"
       && data?.groundSource === "authored-kphx-v181-source-textured-nearfield"
@@ -37,8 +38,9 @@ async function launchStandup(page) {
       && data?.terminal4UploadedJetwayConnectorCount === "58"
       && data?.terminal4UploadedJetwayVerifiedModelCount === "58"
       && data?.terminal4A1JetwayWallDistance !== "loading"
+      && data?.terminal4A1ConnectionAuthority === expectedAuthority
       && data?.terminal4A1LegacyBlockRemovedTriangles === "36";
-  }, null, { timeout: 300_000, polling: 100 });
+  }, DIRECT_A1_TERMINAL_AUTHORITY, { timeout: 300_000, polling: 100 });
 }
 
 async function captureRegion(page, fileName, region = null, minimumBytes = 50_000) {
@@ -187,8 +189,14 @@ test("loads source-correct PHX scenery with the complete exact Terminal 4 jetway
   expect(nearestGeometryMeters).toBeGreaterThan(29.9);
   expect(nearestGeometryMeters).toBeLessThan(30.6);
   const a1WallDistance = Number(runtime.terminal4A1JetwayWallDistance);
-  expect(a1WallDistance).toBeGreaterThan(9.1);
-  expect(a1WallDistance).toBeLessThan(9.3);
+  expect(a1WallDistance).toBeGreaterThan(15.5);
+  expect(a1WallDistance).toBeLessThan(16.7);
+  expect(runtime.terminal4A1ConnectionAuthority).toBe(DIRECT_A1_TERMINAL_AUTHORITY);
+  expect(runtime.terminal4A1ConnectionAuthority).not.toMatch(/WALK/i);
+  const a1TerminalDirection = runtime.terminal4A1ConnectionDirection.split(",").map(Number);
+  expect(a1TerminalDirection).toHaveLength(2);
+  expect(Math.abs(a1TerminalDirection[0])).toBeLessThanOrEqual(0.01);
+  expect(Math.abs(a1TerminalDirection[1] + 1)).toBeLessThanOrEqual(0.01);
   const terminalConnectedJetways = Number(runtime.terminal4TerminalConnectedJetwayCount);
   expect(terminalConnectedJetways).toBeGreaterThan(0);
   expect(Number(runtime.terminal4SourceCutoutMaterialCount)).toBeGreaterThan(0);
