@@ -5,6 +5,13 @@ let source = fs.readFileSync(trainerPath, "utf8");
 
 const marker = "terminal-relocated-a1-aircraft-pose-v1";
 const markerLiteral = JSON.stringify(marker);
+const poseAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
+
+source = source.replace(
+  /const A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "[^"]+";/,
+  `const A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "${poseAuthority}";`,
+);
+
 if (!source.includes(marker)) {
   const anchor = "        return terminal;";
   if (!source.includes(anchor)) throw new Error(`${trainerPath}: terminal-load completion anchor is missing`);
@@ -25,7 +32,7 @@ if (!source.includes(marker)) {
           renderer.domElement.dataset.inspectionAircraftNoseGearZ = sim.aircraft.position.z.toFixed(3);
           renderer.domElement.dataset.inspectionAircraftTerminalRelocationX = exactA1RelocationX.toFixed(3);
           renderer.domElement.dataset.inspectionAircraftTerminalRelocationZ = exactA1RelocationZ.toFixed(3);
-          renderer.domElement.dataset.inspectionAircraftPoseAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
+          renderer.domElement.dataset.inspectionAircraftPoseAuthority = A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY;
         }
         return terminal;`,
   );
@@ -33,13 +40,15 @@ if (!source.includes(marker)) {
 
 for (const token of [
   marker,
+  `A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "${poseAuthority}"`,
   `userData[${markerLiteral}]`,
   "uploadedJetwayA1TerminalRelocationX",
   "uploadedJetwayA1TerminalRelocationZ",
-  "terminal-relocated-a1-exact-cab-registration-v1",
+  "inspectionAircraftTerminalRelocationX",
+  "inspectionAircraftTerminalRelocationZ",
 ]) {
   if (!source.includes(token)) throw new Error(`${trainerPath}: A1 terminal-relocated aircraft output is missing ${token}`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared inspection-aircraft registration to the exact A1 Cab after measured Rotunda-to-terminal relocation.");
+console.log("Prepared persistent inspection-aircraft registration to the exact A1 Cab after measured Rotunda-to-terminal relocation.");
