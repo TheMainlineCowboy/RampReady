@@ -10,6 +10,7 @@ const UPLOADED_JETWAY_ATTRIBUTES = Object.freeze([
 
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
 const DIRECT_A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
+const PHOTO_REGISTERED_AIRCRAFT_AUTHORITY = "photo-registered-a1-terminal-corner-stop-v1";
 
 async function saveCompositedCanvasPng(page, path) {
   const box = await page.evaluate(() => {
@@ -74,7 +75,7 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   await directInspection.click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction(({ attributeNames, expectedAuthority }) => {
+  await page.waitForFunction(({ attributeNames, expectedAuthority, aircraftAuthority }) => {
     const canvas = document.querySelector("canvas.trainerCanvas");
     const data = canvas?.dataset;
     const uploaded = attributeNames.map((name) => canvas?.getAttribute(name));
@@ -85,12 +86,14 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
       && uploaded[2] === "58"
       && uploaded[3] === "58"
       && data?.terminal4A1ConnectionAuthority === expectedAuthority
+      && data?.inspectionAircraftPoseAuthority === aircraftAuthority
       && data?.photoGroundSource === "source-authored-phx-photo"
       && data?.airportCollisionReady === "true"
       && data?.airportCollisionTargetCount === "2";
   }, {
     attributeNames: UPLOADED_JETWAY_ATTRIBUTES,
     expectedAuthority: DIRECT_A1_TERMINAL_AUTHORITY,
+    aircraftAuthority: PHOTO_REGISTERED_AIRCRAFT_AUTHORITY,
   }, { timeout: 180_000, polling: 250 });
 
   const hudHeight = await page.evaluate(() => document.querySelector(".rr-hud")?.getBoundingClientRect().height ?? Number.POSITIVE_INFINITY);
@@ -115,13 +118,18 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   expect(runtime.terminal4FacadeInfillCount).toBe("0");
 
   const terminalWallDistance = Number(runtime.terminal4A1JetwayWallDistance);
-  expect(terminalWallDistance).toBeGreaterThan(8);
-  expect(terminalWallDistance).toBeLessThan(28);
+  expect(terminalWallDistance).toBeGreaterThan(1.5);
+  expect(terminalWallDistance).toBeLessThan(4.0);
   expect(runtime.terminal4A1ConnectionAuthority).toBe(DIRECT_A1_TERMINAL_AUTHORITY);
   expect(runtime.terminal4A1ConnectionAuthority).not.toMatch(/WALK/i);
   const terminalDirection = runtime.terminal4A1ConnectionDirection.split(",").map(Number);
   expect(terminalDirection).toHaveLength(2);
   expect(Math.abs(Math.hypot(...terminalDirection) - 1)).toBeLessThanOrEqual(0.01);
+
+  expect(runtime.inspectionAircraftPoseAuthority).toBe(PHOTO_REGISTERED_AIRCRAFT_AUTHORITY);
+  expect(Number(runtime.inspectionAircraftNoseGearX)).toBeCloseTo(12.353, 3);
+  expect(Number(runtime.inspectionAircraftNoseGearZ)).toBeCloseTo(-12.487, 3);
+  expect(Number(runtime.inspectionAircraftYaw)).toBeCloseTo(0.00857, 4);
 
   expect(Number(runtime.terminal4SourceClosedBayMaterialCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4SourceFacadeVariantMaterialCount)).toBeGreaterThanOrEqual(4);
@@ -158,6 +166,11 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
     terminalConnectionAuthority: runtime.terminal4A1ConnectionAuthority,
     terminalConnectionDirection: terminalDirection,
     inspectionCameraAuthority: DIRECT_A1_CAMERA_AUTHORITY,
+    inspectionAircraftPoseAuthority: runtime.inspectionAircraftPoseAuthority,
+    inspectionAircraftNoseGear: [
+      Number(runtime.inspectionAircraftNoseGearX),
+      Number(runtime.inspectionAircraftNoseGearZ),
+    ],
     evidenceAuthority: "user-overhead-and-same-day-a1-ramp-photos",
   }, null, 2)}\n`);
 
