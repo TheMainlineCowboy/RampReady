@@ -1,8 +1,10 @@
 import fs from "node:fs";
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
-const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
-const A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
+const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-photo-registered-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v10";
+const A1_CAMERA_AUTHORITY = "oblique-photo-registered-terminal-corner-a1-v9";
+const A1_RELOCATION_X = 12.353412;
+const A1_RELOCATION_Z = -12.486888;
 let source = fs.readFileSync(path, "utf8");
 if (!source.includes('  a1Connection: Object.freeze({')) {
   await import(`./prepare-full-airport-inspection-route.mjs?wide-a1=${Date.now()}`);
@@ -18,14 +20,14 @@ if (presetStart < 0 || presetEnd < 0 || presetEnd <= presetStart) {
 }
 
 let presetBlock = source.slice(presetStart, presetEnd);
-const tugXLine = '    x: 7.5,';
-const tugZLine = '    z: 8.5,';
+const tugXLine = `    x: ${(7.5 + A1_RELOCATION_X).toFixed(6)},`;
+const tugZLine = `    z: ${(8.5 + A1_RELOCATION_Z).toFixed(6)},`;
 const tugYawLine = '    yaw: -0.35,';
-// Frame the Rotunda and its nearby terminal corner broadly. The terminal point
-// is now measured from the authored facade at runtime, so the evidence camera
-// must not assume the deleted 16.09 m due-south corridor.
-const cameraPositionLine = '    cameraPosition: Object.freeze([14.0, 14.0, 8.0]),';
-const cameraTargetLine = '    cameraTarget: Object.freeze([-24.5, 4.35, -17.0]),';
+// Translate the complete evidence rig with the photo-registered A1 set. The
+// view is oblique enough to show the terminal wall, 2.4 m vestibule, Rotunda,
+// full articulated bridge and forward-left aircraft door in one frame.
+const cameraPositionLine = `    cameraPosition: Object.freeze([${(14.0 + A1_RELOCATION_X).toFixed(6)}, 14.0, ${(8.0 + A1_RELOCATION_Z).toFixed(6)}]),`;
+const cameraTargetLine = `    cameraTarget: Object.freeze([${(-24.5 + A1_RELOCATION_X).toFixed(6)}, 4.35, ${(-17.0 + A1_RELOCATION_Z).toFixed(6)}]),`;
 const cameraAuthorityLine = `    cameraAuthority: "${A1_CAMERA_AUTHORITY}",`;
 
 for (const [pattern, line, label] of [
@@ -66,7 +68,7 @@ source = source.replace(
   CANONICAL_ROUTE_AUTHORITY,
 );
 source = source.replace(
-  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+|oblique-measured-terminal-corner-a1-v\d+)/g,
+  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+|oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+)/g,
   A1_CAMERA_AUTHORITY,
 );
 
@@ -81,7 +83,7 @@ for (const token of [
   CANONICAL_ROUTE_AUTHORITY,
   A1_CAMERA_AUTHORITY,
 ]) {
-  if (!source.includes(token)) throw new Error(`${path}: measured-terminal A1/B15 inspection preparation is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${path}: photo-registered A1/B15 inspection preparation is missing ${token}`);
 }
 const fixedCameraPositionCount = (source.match(/cameraPosition:\s*Object\.freeze/g) || []).length;
 const fixedCameraTargetCount = (source.match(/cameraTarget:\s*Object\.freeze/g) || []).length;
@@ -103,4 +105,4 @@ if (fixedCameraPositionCount === 2) {
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared an oblique A1 evidence camera that frames the measured short terminal connector, Rotunda and authored facade corner.");
+console.log("Prepared the photo-registered A1 evidence tug and fixed camera at the relocated terminal corner, framing the compact vestibule, Rotunda, complete bridge and aircraft door.");
