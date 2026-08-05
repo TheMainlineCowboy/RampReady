@@ -1,6 +1,7 @@
 import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";
 import { installStaticJetwayPortalClosures } from "./staticJetwayPortalClosures.js";
 import { enforceExactUploadedJetwayVisualAuthority } from "./uploadedAirportJetwayExactModelGuard.js";
+import { UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY } from "./uploadedAirportJetwayArticulationV10.js";
 
 const READY_AUTHORITY = "exact-uploaded-airport-jetway-complete-58-gates-v1";
 const EXPECTED_GATE_COUNT = 58;
@@ -47,6 +48,17 @@ function waitForFleet(THREE, group, placements) {
           const maximumPositionErrorMeters = Number(group.userData.uploadedJetwayMaximumPositionErrorMeters ?? Infinity);
           const maximumUvError = Number(group.userData.uploadedJetwayMaximumUvError ?? Infinity);
           const exactGlbSha256 = group.userData.uploadedJetwayExactGlbSha256 || "missing";
+          const articulationAuthority = group.userData.uploadedJetwayArticulationAuthority || "missing";
+          const sourceContactDistance = Number(group.userData.uploadedJetwaySourceContactDistanceMeters ?? NaN);
+          const staticArticulatedGateCount = Number(group.userData.uploadedJetwayStaticArticulatedGateCount ?? -1);
+          const staticMaximumContactError = Number(group.userData.uploadedJetwayStaticMaximumContactErrorMeters ?? Infinity);
+          const a1TargetDoorDistance = Number(group.userData.uploadedJetwayA1TargetDoorDistanceMeters ?? NaN);
+          const a1AttachedExtension = Number(group.userData.uploadedJetwayA1AttachedExtensionMeters ?? NaN);
+          const a1PredictedDoorGap = Number(group.userData.uploadedJetwayA1PredictedDoorGapMeters ?? Infinity);
+          const a1PredictedContactDistance = Number(group.userData.uploadedJetwayA1PredictedContactDistanceMeters ?? NaN);
+          const a1ActualContactDistance = Number(group.userData.uploadedJetwayA1ActualContactDistanceMeters ?? NaN);
+          const a1ActualDoorGap = Number(group.userData.uploadedJetwayA1ActualDoorGapMeters ?? Infinity);
+          const a1PartOrderValid = group.userData.uploadedJetwayA1PartOrderValid === true;
 
           if (
             count !== EXPECTED_GATE_COUNT
@@ -64,6 +76,17 @@ function waitForFleet(THREE, group, placements) {
             || staticConnectorGateCount !== 57
             || staticConnectorBatchCount !== 3
             || individualConnectorGateCount !== 1
+            || articulationAuthority !== UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY
+            || !(sourceContactDistance > 20 && sourceContactDistance < 32)
+            || staticArticulatedGateCount !== 57
+            || staticMaximumContactError > 0.05
+            || !(a1TargetDoorDistance > 0)
+            || !(a1AttachedExtension > 3 && a1AttachedExtension < 7)
+            || a1PredictedDoorGap > 0.05
+            || Math.abs(a1PredictedContactDistance - a1TargetDoorDistance) > 0.05
+            || Math.abs(a1ActualContactDistance - a1TargetDoorDistance) > 0.05
+            || a1ActualDoorGap > 0.05
+            || !a1PartOrderValid
             || exactModelGuard.authority !== EXACT_MODEL_AUTHORITY
             || exactModelGuard.hierarchy.requiredPartCount !== 5
             || exactModelGuard.hierarchy.sourceMeshCount !== 7
@@ -74,7 +97,7 @@ function waitForFleet(THREE, group, placements) {
             || staticPortalClosures.gateCount !== 57
           ) {
             throw new Error(
-              `Exact jetway readiness mismatch: placements=${count}, gateRecords=${loadedModelNames.size}, missing=${missingModels.join(",") || "none"}, sha=${exactGlbSha256}, materials=${materialAuthority}, performance=${performanceAuthority}, topology=${sourceTriangleCount}/${maximumPositionErrorMeters}/${maximumUvError}, static=${staticInstancedGateCount}, animated=${animatedIndividualGateCount}, meshBatches=${staticPrimitiveBatchCount}, connectors=${staticConnectorGateCount}/${staticConnectorBatchCount}/${individualConnectorGateCount}, source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`,
+              `Exact jetway readiness mismatch: placements=${count}, gateRecords=${loadedModelNames.size}, missing=${missingModels.join(",") || "none"}, sha=${exactGlbSha256}, materials=${materialAuthority}, performance=${performanceAuthority}, topology=${sourceTriangleCount}/${maximumPositionErrorMeters}/${maximumUvError}, static=${staticInstancedGateCount}, animated=${animatedIndividualGateCount}, meshBatches=${staticPrimitiveBatchCount}, connectors=${staticConnectorGateCount}/${staticConnectorBatchCount}/${individualConnectorGateCount}, articulation=${articulationAuthority}/${sourceContactDistance}/${staticArticulatedGateCount}/${staticMaximumContactError}, A1=${a1TargetDoorDistance}/${a1AttachedExtension}/${a1PredictedContactDistance}/${a1PredictedDoorGap}/${a1ActualContactDistance}/${a1ActualDoorGap}/${a1PartOrderValid}, source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`,
             );
           }
 
@@ -109,6 +132,14 @@ function waitForFleet(THREE, group, placements) {
             staticInstancedGateCount,
             animatedIndividualGateCount,
             staticPrimitiveBatchCount,
+            articulationAuthority,
+            sourceContactDistance,
+            staticArticulatedGateCount,
+            staticMaximumContactError,
+            a1TargetDoorDistance,
+            a1AttachedExtension,
+            a1PredictedDoorGap,
+            a1ActualDoorGap,
             exactModelGuard,
             staticPortalClosures,
             authority: READY_AUTHORITY,
