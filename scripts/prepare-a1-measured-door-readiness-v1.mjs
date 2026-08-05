@@ -1,12 +1,15 @@
 import fs from "node:fs";
 
 const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
+const controllerPath = "src/environment/uploadedAirportJetwayModelSpaceControllerV7.js";
 let source = fs.readFileSync(readinessPath, "utf8");
+let controllerSource = fs.readFileSync(controllerPath, "utf8");
 
 const MINIMUM_AUTHORED_EXTENSION_METERS = 0.25;
 const MAXIMUM_AUTHORED_EXTENSION_METERS = 7;
 const MAXIMUM_REACH_ERROR_METERS = 0.05;
-const authority = "authored-positive-extension-with-measured-crj-door-reach-v3";
+const authority = "authored-positive-extension-with-measured-crj-door-reach-v4";
+const controllerAuthority = "persistent-whole-assembly-orientation-through-retraction-v1";
 
 const staleCondition = "|| !(a1AttachedExtension > 3 && a1AttachedExtension < 7)";
 const intermediateCondition = `|| !(a1AttachedExtension > 0.25 && a1AttachedExtension < 7)
@@ -75,6 +78,22 @@ if (!source.includes("uploadedJetwayA1MeasuredDoorReadinessAuthority")) {
   }
 }
 
+// The model-space controller captured the gate yaw before the installation
+// correction and restored that stale yaw on every deployment update. Preserve
+// the whole A1 parent correction so the Rotunda remains terminal-side through
+// attached, retracting and parked states. No authored child node is rotated.
+const staleControllerYaw = "    anchor.rotation.y = base.yaw;";
+const persistentControllerYaw = `    const wholeAssemblyOrientationCorrectionRadians = Number(
+      anchor.userData.wholeAssemblyOrientationCorrectionRadians || 0,
+    );
+    anchor.rotation.y = base.yaw + wholeAssemblyOrientationCorrectionRadians;
+    anchor.userData.wholeAssemblyOrientationControllerAuthority = "${controllerAuthority}";`;
+if (controllerSource.includes(staleControllerYaw)) {
+  controllerSource = controllerSource.replace(staleControllerYaw, persistentControllerYaw);
+} else if (!controllerSource.includes(persistentControllerYaw)) {
+  throw new Error(`${controllerPath}: A1 controller yaw reset anchor is missing`);
+}
+
 for (const token of [
   correctedCondition,
   `MEASURED_DOOR_READINESS_AUTHORITY = "${authority}"`,
@@ -88,12 +107,25 @@ for (const token of [
     throw new Error(`${readinessPath}: measured-door readiness output is missing ${token}`);
   }
 }
+for (const token of [
+  "wholeAssemblyOrientationCorrectionRadians",
+  "base.yaw + wholeAssemblyOrientationCorrectionRadians",
+  `wholeAssemblyOrientationControllerAuthority = "${controllerAuthority}"`,
+]) {
+  if (!controllerSource.includes(token)) {
+    throw new Error(`${controllerPath}: persistent A1 orientation output is missing ${token}`);
+  }
+}
 
 for (const forbidden of [staleCondition, broadCondition]) {
   if (source.includes(forbidden)) {
     throw new Error(`${readinessPath}: obsolete A1 extension rule survived`);
   }
 }
+if (controllerSource.includes(staleControllerYaw)) {
+  throw new Error(`${controllerPath}: stale A1 parent-yaw reset survived`);
+}
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log(`Prepared A1 readiness with positive ${MINIMUM_AUTHORED_EXTENSION_METERS}–${MAXIMUM_AUTHORED_EXTENSION_METERS} m authored travel and a ${MAXIMUM_REACH_ERROR_METERS} m measured-reach identity; exact predicted/actual gap, continuity and part-order checks remain mandatory.`);
+fs.writeFileSync(controllerPath, controllerSource, "utf8");
+console.log(`Prepared A1 readiness with positive ${MINIMUM_AUTHORED_EXTENSION_METERS}–${MAXIMUM_AUTHORED_EXTENSION_METERS} m authored travel, a ${MAXIMUM_REACH_ERROR_METERS} m measured-reach identity, and a retraction controller that preserves the parent-level Rotunda-terminal orientation; exact predicted/actual gap, continuity and part-order checks remain mandatory.`);
