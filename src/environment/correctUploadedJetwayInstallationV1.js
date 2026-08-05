@@ -1,10 +1,13 @@
-const INSTALLATION_AUTHORITY = "user-photo-overhead-terminal-anchor-bogie-contact-and-continuous-assembly-v5";
+const INSTALLATION_AUTHORITY = "user-photo-exact-rotunda-corner-vestibule-and-ground-contact-v6";
 const A1_TERMINAL_CONNECTION_AUTHORITY = "user-photo-overhead-authored-terminal-wall-direct-v1";
 const ASSEMBLY_CONTINUITY_AUTHORITY = "exact-authored-five-part-chain-no-isolated-node-rotation-v2";
-const ROTUNDA_OPENING_AUTHORITY = "exact-rotunda-mesh-opening-opposite-a1-bridge-axis-v3";
+const ROTUNDA_OPENING_AUTHORITY = "exact-vertex-centroid-opposite-rotunda-to-tunnel-a-axis-v4";
+const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-solid-white-two-segment-corner-vestibule-v5";
 const A1_DIRECT_TERMINAL_DISTANCE_METERS = 16.08913693907184;
 const A1_TERMINAL_HIDDEN_OVERLAP_METERS = 0.55;
 const A1_ROTUNDA_COLLAR_OVERLAP_METERS = 0.18;
+const A1_TRANSITION_LENGTH_METERS = 1.35;
+const A1_TRANSITION_MAIN_OVERLAP_METERS = 0.55;
 const BOGIE_TIRE_CONTACT_CORRECTION_METERS = 0.06;
 const A1_TERMINAL_DIRECTION = Object.freeze({ x: 0, z: -1 });
 const SOURCE_PART_NAMES = Object.freeze(["Rotunda", "Tunnel_A", "Tunnel_B", "Tunnel_C", "Cab"]);
@@ -61,55 +64,169 @@ function createA1VestibuleMaterials(THREE) {
   };
 }
 
-function measureExactRotundaOpening(THREE, fleet, a1Model, placement) {
-  const rotunda = a1Model.getObjectByName("Rotunda");
-  const rotundaMesh = a1Model.getObjectByName("Rotunda_Jetway_0");
-  if (!rotunda || !rotundaMesh?.isMesh) {
-    throw new Error("A1 exact jetway is missing Rotunda/Rotunda_Jetway_0 for opening measurement");
-  }
-  fleet.updateMatrixWorld(true);
-  const center = new THREE.Box3().setFromObject(rotundaMesh).getCenter(new THREE.Vector3());
-  fleet.worldToLocal(center);
-
-  // The exact uploaded model's +Z axis runs from Rotunda to Tunnel A/Cab after
-  // parent-axis normalization. The terminal opening is therefore opposite the
-  // source bridge axis at this gate, not the global due-south direction.
-  const openingX = -Math.sin(Number(placement.yaw) || 0);
-  const openingZ = -Math.cos(Number(placement.yaw) || 0);
-  const openingMagnitude = Math.hypot(openingX, openingZ) || 1;
-  const ux = openingX / openingMagnitude;
-  const uz = openingZ / openingMagnitude;
-
-  const position = rotundaMesh.geometry?.getAttribute?.("position");
-  if (!position) throw new Error("A1 exact Rotunda mesh has no source positions");
-  const vertex = new THREE.Vector3();
-  let terminalRadius = Number.NEGATIVE_INFINITY;
+function transformedGeometryVertices(THREE, fleet, mesh) {
+  const position = mesh?.geometry?.getAttribute?.("position");
+  if (!position) throw new Error(`${mesh?.name || "Exact jetway mesh"} has no source positions`);
+  const vertices = [];
+  const point = new THREE.Vector3();
   for (let index = 0; index < position.count; index += 1) {
-    vertex.fromBufferAttribute(position, index);
-    rotundaMesh.localToWorld(vertex);
-    fleet.worldToLocal(vertex);
+    point.fromBufferAttribute(position, index);
+    mesh.localToWorld(point);
+    fleet.worldToLocal(point);
+    vertices.push(point.clone());
+  }
+  return vertices;
+}
+
+function vertexCentroid(THREE, vertices) {
+  if (!vertices.length) throw new Error("Exact jetway centroid requires source vertices");
+  const center = new THREE.Vector3();
+  for (const vertex of vertices) center.add(vertex);
+  return center.multiplyScalar(1 / vertices.length);
+}
+
+function measureExactRotundaOpening(THREE, fleet, a1Model) {
+  const rotundaMesh = a1Model.getObjectByName("Rotunda_Jetway_0");
+  const tunnelAMesh = a1Model.getObjectByName("Tunnel_A_Jetway_0");
+  if (!rotundaMesh?.isMesh || !tunnelAMesh?.isMesh) {
+    throw new Error("A1 exact jetway is missing Rotunda_Jetway_0 or Tunnel_A_Jetway_0");
+  }
+
+  fleet.updateMatrixWorld(true);
+  const rotundaVertices = transformedGeometryVertices(THREE, fleet, rotundaMesh);
+  const tunnelVertices = transformedGeometryVertices(THREE, fleet, tunnelAMesh);
+  const rotundaCenter = vertexCentroid(THREE, rotundaVertices);
+  const tunnelCenter = vertexCentroid(THREE, tunnelVertices);
+
+  const bridgeDirection = tunnelCenter.clone().sub(rotundaCenter);
+  bridgeDirection.y = 0;
+  if (bridgeDirection.lengthSq() < 0.25) {
+    throw new Error("A1 exact Rotunda-to-Tunnel A axis is degenerate");
+  }
+  bridgeDirection.normalize();
+  const openingDirection = bridgeDirection.clone().multiplyScalar(-1);
+
+  let terminalRadius = Number.NEGATIVE_INFINITY;
+  for (const vertex of rotundaVertices) {
     terminalRadius = Math.max(
       terminalRadius,
-      (vertex.x - center.x) * ux + (vertex.z - center.z) * uz,
+      (vertex.x - rotundaCenter.x) * openingDirection.x
+        + (vertex.z - rotundaCenter.z) * openingDirection.z,
     );
   }
   if (!(terminalRadius > 0.7 && terminalRadius < 3.5)) {
     throw new Error(`A1 exact Rotunda opening radius is invalid: ${terminalRadius}`);
   }
+
+  const terminalFacingDot = openingDirection.x * A1_TERMINAL_DIRECTION.x
+    + openingDirection.z * A1_TERMINAL_DIRECTION.z;
+  if (terminalFacingDot < 0.55) {
+    throw new Error(`A1 exact Rotunda opening points away from the terminal: ${terminalFacingDot}`);
+  }
+
   const collarRadius = terminalRadius - A1_ROTUNDA_COLLAR_OVERLAP_METERS;
   return Object.freeze({
     authority: ROTUNDA_OPENING_AUTHORITY,
-    centerX: center.x,
-    centerY: center.y,
-    centerZ: center.z,
-    openingDirectionX: ux,
-    openingDirectionZ: uz,
+    centerX: rotundaCenter.x,
+    centerY: rotundaCenter.y,
+    centerZ: rotundaCenter.z,
+    bridgeDirectionX: bridgeDirection.x,
+    bridgeDirectionZ: bridgeDirection.z,
+    openingDirectionX: openingDirection.x,
+    openingDirectionZ: openingDirection.z,
+    terminalFacingDot,
     terminalRadius,
     collarRadius,
-    collarX: center.x + ux * collarRadius,
-    collarZ: center.z + uz * collarRadius,
+    collarX: rotundaCenter.x + openingDirection.x * collarRadius,
+    collarZ: rotundaCenter.z + openingDirection.z * collarRadius,
     visibleOverlapMeters: A1_ROTUNDA_COLLAR_OVERLAP_METERS,
   });
+}
+
+function addClosedShellSegment(THREE, connector, materials, {
+  prefix,
+  startX,
+  startZ,
+  ux,
+  uz,
+  length,
+  centerY,
+  width,
+  height,
+  addSeams = false,
+}) {
+  const yaw = Math.atan2(ux, uz);
+  const sideX = Math.cos(yaw);
+  const sideZ = -Math.sin(yaw);
+  const halfWidth = width * 0.5;
+  const centerX = startX + ux * length * 0.5;
+  const centerZ = startZ + uz * length * 0.5;
+
+  addBox(THREE, connector, materials.shell, `${prefix}Roof`, [width, 0.18, length], [centerX, centerY + height * 0.5, centerZ], yaw);
+  addBox(THREE, connector, materials.shell, `${prefix}Floor`, [width, 0.16, length], [centerX, centerY - height * 0.5, centerZ], yaw);
+  for (const side of [-1, 1]) {
+    addBox(
+      THREE,
+      connector,
+      materials.shell,
+      `${prefix}SolidWall_${side}`,
+      [0.14, height, length],
+      [centerX + sideX * side * halfWidth, centerY, centerZ + sideZ * side * halfWidth],
+      yaw,
+    );
+  }
+
+  if (addSeams) {
+    const seamCount = Math.max(3, Math.round(length / 2.4));
+    for (let seamIndex = 1; seamIndex < seamCount; seamIndex += 1) {
+      const distance = (length * seamIndex) / seamCount;
+      const seamX = startX + ux * distance;
+      const seamZ = startZ + uz * distance;
+      for (const side of [-1, 1]) {
+        addBox(
+          THREE,
+          connector,
+          materials.seam,
+          `${prefix}WallSeam_${seamIndex}_${side}`,
+          [0.055, height * 0.96, 0.1],
+          [seamX + sideX * side * (halfWidth + 0.015), centerY, seamZ + sideZ * side * (halfWidth + 0.015)],
+          yaw,
+          false,
+        );
+      }
+    }
+  }
+
+  return Object.freeze({ yaw, sideX, sideZ, halfWidth, centerX, centerZ });
+}
+
+function addBellowsRing(THREE, connector, materials, {
+  centerX,
+  centerY,
+  centerZ,
+  ux,
+  uz,
+  width,
+  height,
+  prefix,
+}) {
+  const yaw = Math.atan2(ux, uz);
+  const sideX = Math.cos(yaw);
+  const sideZ = -Math.sin(yaw);
+  const halfWidth = width * 0.5;
+  addBox(THREE, connector, materials.bellows, `${prefix}Header`, [width + 0.16, 0.3, 0.5], [centerX, centerY + height * 0.5, centerZ], yaw);
+  addBox(THREE, connector, materials.bellows, `${prefix}Threshold`, [width + 0.16, 0.24, 0.5], [centerX, centerY - height * 0.5, centerZ], yaw);
+  for (const side of [-1, 1]) {
+    addBox(
+      THREE,
+      connector,
+      materials.bellows,
+      `${prefix}Jamb_${side}`,
+      [0.26, height, 0.5],
+      [centerX + sideX * side * (halfWidth + 0.05), centerY, centerZ + sideZ * side * (halfWidth + 0.05)],
+      yaw,
+    );
+  }
 }
 
 function buildA1PhotoVestibule(THREE, fleet, placement, rotundaOpening) {
@@ -119,89 +236,96 @@ function buildA1PhotoVestibule(THREE, fleet, placement, rotundaOpening) {
     disposeObject(existing);
   }
 
+  const width = 3.18;
+  const height = 2.72;
+  const centerY = rotundaOpening.centerY;
+  const openingUx = rotundaOpening.openingDirectionX;
+  const openingUz = rotundaOpening.openingDirectionZ;
+  const collarX = rotundaOpening.collarX;
+  const collarZ = rotundaOpening.collarZ;
   const facadeX = placement.x + A1_TERMINAL_DIRECTION.x * A1_DIRECT_TERMINAL_DISTANCE_METERS;
   const facadeZ = placement.z + A1_TERMINAL_DIRECTION.z * A1_DIRECT_TERMINAL_DISTANCE_METERS;
-  const startX = rotundaOpening.collarX;
-  const startZ = rotundaOpening.collarZ;
-  const pathX = facadeX - startX;
-  const pathZ = facadeZ - startZ;
-  const visibleLength = Math.hypot(pathX, pathZ);
-  if (!(visibleLength > 4 && visibleLength < 20)) {
-    throw new Error(`A1 photo vestibule visible span is invalid: ${visibleLength}`);
-  }
-  const ux = pathX / visibleLength;
-  const uz = pathZ / visibleLength;
-  const yaw = Math.atan2(ux, uz);
-  const sideX = Math.cos(yaw);
-  const sideZ = -Math.sin(yaw);
-  const totalLength = visibleLength + A1_TERMINAL_HIDDEN_OVERLAP_METERS;
-  const width = 3.18;
-  const halfWidth = width * 0.5;
-  const height = 2.72;
-  const centerX = startX + ux * totalLength * 0.5;
-  const centerZ = startZ + uz * totalLength * 0.5;
-  const centerY = rotundaOpening.centerY;
   const materials = createA1VestibuleMaterials(THREE);
   const connector = new THREE.Group();
   connector.name = "UploadedAirportJetwayTerminalConnector_A1";
 
-  addBox(THREE, connector, materials.shell, "UploadedAirportJetwayA1VestibuleRoof", [width, 0.18, totalLength], [centerX, centerY + height * 0.5, centerZ], yaw);
-  addBox(THREE, connector, materials.shell, "UploadedAirportJetwayA1VestibuleFloor", [width, 0.16, totalLength], [centerX, centerY - height * 0.5, centerZ], yaw);
-  for (const side of [-1, 1]) {
-    const sideOffsetX = sideX * side * halfWidth;
-    const sideOffsetZ = sideZ * side * halfWidth;
-    addBox(
-      THREE,
-      connector,
-      materials.shell,
-      `UploadedAirportJetwayA1VestibuleSolidWall_${side}`,
-      [0.14, height, totalLength],
-      [centerX + sideOffsetX, centerY, centerZ + sideOffsetZ],
-      yaw,
-    );
-  }
+  // First follow the exact authored Rotunda opening so the collar cannot cut
+  // across or detach from the C-shaped source mesh.
+  addBellowsRing(THREE, connector, materials, {
+    centerX: collarX + openingUx * 0.08,
+    centerY,
+    centerZ: collarZ + openingUz * 0.08,
+    ux: openingUx,
+    uz: openingUz,
+    width,
+    height,
+    prefix: "UploadedAirportJetwayA1RotundaBellows",
+  });
+  addClosedShellSegment(THREE, connector, materials, {
+    prefix: "UploadedAirportJetwayA1Transition",
+    startX: collarX,
+    startZ: collarZ,
+    ux: openingUx,
+    uz: openingUz,
+    length: A1_TRANSITION_LENGTH_METERS,
+    centerY,
+    width,
+    height,
+  });
 
-  const seamCount = Math.max(3, Math.round(visibleLength / 2.4));
-  for (let seamIndex = 1; seamIndex < seamCount; seamIndex += 1) {
-    const distance = (visibleLength * seamIndex) / seamCount;
-    const seamX = startX + ux * distance;
-    const seamZ = startZ + uz * distance;
-    for (const side of [-1, 1]) {
-      addBox(
-        THREE,
-        connector,
-        materials.seam,
-        `UploadedAirportJetwayA1VestibuleWallSeam_${seamIndex}_${side}`,
-        [0.055, height * 0.96, 0.1],
-        [seamX + sideX * side * (halfWidth + 0.015), centerY, seamZ + sideZ * side * (halfWidth + 0.015)],
-        yaw,
-        false,
-      );
-    }
+  // The main fixed vestibule begins inside the transition so the corner is a
+  // physically overlapping enclosed joint rather than two boxes touching at a point.
+  const transitionEndX = collarX + openingUx * A1_TRANSITION_LENGTH_METERS;
+  const transitionEndZ = collarZ + openingUz * A1_TRANSITION_LENGTH_METERS;
+  const mainStartX = transitionEndX - openingUx * A1_TRANSITION_MAIN_OVERLAP_METERS;
+  const mainStartZ = transitionEndZ - openingUz * A1_TRANSITION_MAIN_OVERLAP_METERS;
+  const mainPathX = facadeX - mainStartX;
+  const mainPathZ = facadeZ - mainStartZ;
+  const visibleMainLength = Math.hypot(mainPathX, mainPathZ);
+  if (!(visibleMainLength > 4 && visibleMainLength < 20)) {
+    throw new Error(`A1 fixed vestibule main span is invalid: ${visibleMainLength}`);
   }
+  const mainUx = mainPathX / visibleMainLength;
+  const mainUz = mainPathZ / visibleMainLength;
+  const totalMainLength = visibleMainLength + A1_TERMINAL_HIDDEN_OVERLAP_METERS;
+  const mainFrame = addClosedShellSegment(THREE, connector, materials, {
+    prefix: "UploadedAirportJetwayA1MainVestibule",
+    startX: mainStartX,
+    startZ: mainStartZ,
+    ux: mainUx,
+    uz: mainUz,
+    length: totalMainLength,
+    centerY,
+    width,
+    height,
+    addSeams: true,
+  });
 
-  // The collar is centered on the exact authored terminal opening direction.
-  const collarX = startX + ux * 0.1;
-  const collarZ = startZ + uz * 0.1;
-  addBox(THREE, connector, materials.bellows, "UploadedAirportJetwayA1RotundaBellowsHeader", [width + 0.16, 0.28, 0.42], [collarX, centerY + height * 0.5, collarZ], yaw);
-  addBox(THREE, connector, materials.bellows, "UploadedAirportJetwayA1RotundaBellowsThreshold", [width + 0.16, 0.22, 0.42], [collarX, centerY - height * 0.5, collarZ], yaw);
-  for (const side of [-1, 1]) {
-    addBox(
-      THREE,
-      connector,
-      materials.bellows,
-      `UploadedAirportJetwayA1RotundaBellowsJamb_${side}`,
-      [0.24, height, 0.42],
-      [collarX + sideX * side * (halfWidth + 0.05), centerY, collarZ + sideZ * side * (halfWidth + 0.05)],
-      yaw,
-    );
-  }
+  // Close the elbow internally so no camera angle can see daylight through the miter.
+  addBox(
+    THREE,
+    connector,
+    materials.shell,
+    "UploadedAirportJetwayA1CornerJointRoofCap",
+    [width + 0.5, 0.22, 1.25],
+    [transitionEndX, centerY + height * 0.5, transitionEndZ],
+    mainFrame.yaw,
+  );
+  addBox(
+    THREE,
+    connector,
+    materials.shell,
+    "UploadedAirportJetwayA1CornerJointFloorCap",
+    [width + 0.5, 0.2, 1.25],
+    [transitionEndX, centerY - height * 0.5, transitionEndZ],
+    mainFrame.yaw,
+  );
 
-  const portalInteriorX = facadeX + ux * 0.07;
-  const portalInteriorZ = facadeZ + uz * 0.07;
-  addBox(THREE, connector, materials.portalInterior, "UploadedAirportJetwayA1TerminalVestibuleInterior", [width - 0.32, height - 0.34, 0.14], [portalInteriorX, centerY, portalInteriorZ], yaw, false);
-  addBox(THREE, connector, materials.shell, "UploadedAirportJetwayA1TerminalVestibuleHeader", [width + 0.24, 0.3, 0.52], [facadeX, centerY + height * 0.5, facadeZ], yaw);
-  addBox(THREE, connector, materials.shell, "UploadedAirportJetwayA1TerminalVestibuleThreshold", [width + 0.24, 0.22, 0.52], [facadeX, centerY - height * 0.5, facadeZ], yaw);
+  const portalInteriorX = facadeX + mainUx * 0.07;
+  const portalInteriorZ = facadeZ + mainUz * 0.07;
+  addBox(THREE, connector, materials.portalInterior, "UploadedAirportJetwayA1TerminalVestibuleInterior", [width - 0.32, height - 0.34, 0.14], [portalInteriorX, centerY, portalInteriorZ], mainFrame.yaw, false);
+  addBox(THREE, connector, materials.shell, "UploadedAirportJetwayA1TerminalVestibuleHeader", [width + 0.24, 0.3, 0.52], [facadeX, centerY + height * 0.5, facadeZ], mainFrame.yaw);
+  addBox(THREE, connector, materials.shell, "UploadedAirportJetwayA1TerminalVestibuleThreshold", [width + 0.24, 0.22, 0.52], [facadeX, centerY - height * 0.5, facadeZ], mainFrame.yaw);
   for (const side of [-1, 1]) {
     addBox(
       THREE,
@@ -209,22 +333,23 @@ function buildA1PhotoVestibule(THREE, fleet, placement, rotundaOpening) {
       materials.shell,
       `UploadedAirportJetwayA1TerminalVestibuleJamb_${side}`,
       [0.3, height, 0.52],
-      [facadeX + sideX * side * (halfWidth + 0.02), centerY, facadeZ + sideZ * side * (halfWidth + 0.02)],
-      yaw,
+      [facadeX + mainFrame.sideX * side * (mainFrame.halfWidth + 0.02), centerY, facadeZ + mainFrame.sideZ * side * (mainFrame.halfWidth + 0.02)],
+      mainFrame.yaw,
     );
   }
 
   connector.userData.connectorAuthority = A1_TERMINAL_CONNECTION_AUTHORITY;
-  connector.userData.connectorStyleAuthority = "same-day-a1-photo-solid-white-fixed-vestibule-v4";
-  connector.userData.connectorLengthMeters = totalLength;
-  connector.userData.visibleVestibuleLengthMeters = visibleLength;
+  connector.userData.connectorStyleAuthority = CONNECTOR_STYLE_AUTHORITY;
   connector.userData.measuredWallLengthMeters = A1_DIRECT_TERMINAL_DISTANCE_METERS;
   connector.userData.terminalOverlapMeters = A1_TERMINAL_HIDDEN_OVERLAP_METERS;
   connector.userData.rotundaOpeningAuthority = rotundaOpening.authority;
-  connector.userData.rotundaOpeningDirection = [rotundaOpening.openingDirectionX, rotundaOpening.openingDirectionZ];
+  connector.userData.rotundaOpeningDirection = [openingUx, openingUz];
   connector.userData.rotundaOpeningRadiusMeters = rotundaOpening.terminalRadius;
   connector.userData.rotundaCollarOverlapMeters = rotundaOpening.visibleOverlapMeters;
-  connector.userData.actualConnectorDirection = [ux, uz];
+  connector.userData.transitionLengthMeters = A1_TRANSITION_LENGTH_METERS;
+  connector.userData.transitionMainOverlapMeters = A1_TRANSITION_MAIN_OVERLAP_METERS;
+  connector.userData.visibleMainVestibuleLengthMeters = visibleMainLength;
+  connector.userData.actualConnectorDirection = [mainUx, mainUz];
   connector.userData.userPhotoOverheadVerified = true;
   connector.userData.noGeneratedGlassCorridor = true;
   fleet.add(connector);
@@ -311,7 +436,7 @@ export function correctUploadedJetwayInstallation(THREE, group, fleet, placement
   const beforeTransforms = captureAuthoredPartTransforms(a1Model);
   fleet.position.y -= BOGIE_TIRE_CONTACT_CORRECTION_METERS;
   fleet.updateMatrixWorld(true);
-  const rotundaOpening = measureExactRotundaOpening(THREE, fleet, a1Model, a1Placement);
+  const rotundaOpening = measureExactRotundaOpening(THREE, fleet, a1Model);
   const connector = buildA1PhotoVestibule(THREE, fleet, a1Placement, rotundaOpening);
   const doubleSidedMaterialCount = forceExactMaterialsDoubleSided(THREE, fleet);
   fleet.updateMatrixWorld(true);
@@ -344,7 +469,9 @@ export function correctUploadedJetwayInstallation(THREE, group, fleet, placement
     staticPortalAlignment,
     assemblyContinuity,
     connectorStyleAuthority: connector.userData.connectorStyleAuthority,
-    visibleVestibuleLengthMeters: connector.userData.visibleVestibuleLengthMeters,
+    transitionLengthMeters: connector.userData.transitionLengthMeters,
+    transitionMainOverlapMeters: connector.userData.transitionMainOverlapMeters,
+    visibleMainVestibuleLengthMeters: connector.userData.visibleMainVestibuleLengthMeters,
     actualConnectorDirection: connector.userData.actualConnectorDirection,
     doubleSidedMaterialCount,
   });
@@ -371,7 +498,9 @@ export function correctUploadedJetwayInstallation(THREE, group, fleet, placement
   group.userData.uploadedJetwayA1RotundaOpeningAuthority = rotundaOpening.authority;
   group.userData.uploadedJetwayA1RotundaOpeningDirection = [rotundaOpening.openingDirectionX, rotundaOpening.openingDirectionZ];
   group.userData.uploadedJetwayA1RotundaOpeningRadiusMeters = rotundaOpening.terminalRadius;
-  group.userData.uploadedJetwayA1VisibleVestibuleLengthMeters = report.visibleVestibuleLengthMeters;
+  group.userData.uploadedJetwayA1TransitionLengthMeters = report.transitionLengthMeters;
+  group.userData.uploadedJetwayA1TransitionMainOverlapMeters = report.transitionMainOverlapMeters;
+  group.userData.uploadedJetwayA1VisibleVestibuleLengthMeters = report.visibleMainVestibuleLengthMeters;
   group.userData.uploadedJetwayA1ActualConnectorDirection = report.actualConnectorDirection;
   group.userData.a1TerminalWallDistance = report.a1TerminalWallDistanceMeters;
   group.userData.a1TerminalConnectionAuthority = report.a1TerminalConnectionAuthority;
