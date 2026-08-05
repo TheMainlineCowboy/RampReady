@@ -97,7 +97,7 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   expect(runtime.terminal4UploadedJetwayConnectorCount).toBe("58");
   expect(runtime.terminal4UploadedJetwayVerifiedModelCount).toBe("58");
   expect(runtime.terminal4UploadedJetwayReadyAuthority).toBe(
-    "uploaded-airport-jetway-fleet-complete-58-gates-v7-instanced-jetways-and-connectors-source-textured",
+    "exact-uploaded-airport-jetway-complete-58-gates-v1",
   );
   expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
   expect(runtime.groundPavementAuthority).toBe("full-source-aerial-primary-with-subtle-package-surface-detail-v41");
