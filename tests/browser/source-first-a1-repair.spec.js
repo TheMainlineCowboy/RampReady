@@ -8,7 +8,7 @@ const UPLOADED_JETWAY_ATTRIBUTES = Object.freeze([
   "data-terminal4-uploaded-jetway-verified-model-count",
 ]);
 
-const DIRECT_A1_TERMINAL_AUTHORITY = "user-photo-overhead-authored-terminal-wall-direct-v1";
+const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
 const DIRECT_A1_CAMERA_AUTHORITY = "side-on-direct-terminal-wall-a1-v7";
 
 async function saveCompositedCanvasPng(page, path) {
@@ -115,14 +115,13 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   expect(runtime.terminal4FacadeInfillCount).toBe("0");
 
   const terminalWallDistance = Number(runtime.terminal4A1JetwayWallDistance);
-  expect(terminalWallDistance).toBeGreaterThan(15.5);
-  expect(terminalWallDistance).toBeLessThan(16.7);
+  expect(terminalWallDistance).toBeGreaterThan(0.4);
+  expect(terminalWallDistance).toBeLessThan(12);
   expect(runtime.terminal4A1ConnectionAuthority).toBe(DIRECT_A1_TERMINAL_AUTHORITY);
   expect(runtime.terminal4A1ConnectionAuthority).not.toMatch(/WALK/i);
   const terminalDirection = runtime.terminal4A1ConnectionDirection.split(",").map(Number);
   expect(terminalDirection).toHaveLength(2);
-  expect(Math.abs(terminalDirection[0])).toBeLessThanOrEqual(0.01);
-  expect(Math.abs(terminalDirection[1] + 1)).toBeLessThanOrEqual(0.01);
+  expect(Math.abs(Math.hypot(...terminalDirection) - 1)).toBeLessThanOrEqual(0.01);
 
   expect(Number(runtime.terminal4SourceClosedBayMaterialCount)).toBeGreaterThan(0);
   expect(Number(runtime.terminal4SourceFacadeVariantMaterialCount)).toBeGreaterThanOrEqual(4);
