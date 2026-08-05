@@ -2,7 +2,7 @@ import fs from "node:fs";
 
 const requireTokens = (path, tokens) => {
   const source = fs.readFileSync(path, "utf8");
-  for (const token of tokens) if (!source.includes(token)) throw new Error(`${path}: missing source-scale jetway token ${token}`);
+  for (const token of tokens) if (!source.includes(token)) throw new Error(`${path}: missing exact source-scale jetway token ${token}`);
   return source;
 };
 
@@ -16,6 +16,10 @@ for (const scriptName of ["materialize:phx-terminal4", "verify:kphx-v181", "prep
 }
 const runtimePreparation = packageJson.scripts?.["prepare:terminal4-runtime"] || "";
 for (const token of [
+  "materialize-exact-airport-jetway.mjs",
+  "prepare-exact-airport-jetway-source-wiring.mjs",
+  "prepare-uploaded-airport-jetway-articulation-v10.mjs",
+  "prepare-uploaded-airport-jetway-readiness-v2.mjs",
   "prepare-terminal4-crj-runtime-evidence.mjs",
   "prepare-terminal4-inspection-controls.mjs",
   "prepare-mobile-inspection-hud.mjs",
@@ -26,8 +30,9 @@ for (const token of [
 const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js", [
   'detailLevel: "fsx-air-jetway01-exact-textured-source-scale-articulated-v5"',
   'sourceDimensionsMeters: Object.freeze([37.92, 8.77, 26.51])',
-  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
-  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 7.32",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.34",
+  "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.61",
   "const sourceFacadeRecessMeters",
   "CLOSED_SERVICE_DOOR_GATES.has(jetway.g)",
   "FACADE_VENT_GATES.has(jetway.g)",
@@ -44,6 +49,10 @@ const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js",
   "exactJetwayAtlasRegions",
   "group.userData.jetwayTextureMappingAuthority",
   "THREE.ClampToEdgeWrapping",
+  'import { installUploadedAirportJetwayFleet } from "./uploadedAirportJetwayFleetReadyV2.js";',
+  "const uploadedJetwayPlacements = []",
+  "aircraftDoorDistance: distance",
+  "installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements, sourceTextures)",
 ]);
 for (const forbidden of [
   "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
@@ -106,4 +115,4 @@ for (const forbidden of ["0.0135", "0.0255", "0.0137", "0.0138", "0.0258"]) {
   if (markings.includes(forbidden)) throw new Error(`Raised marking token remains: ${forbidden}`);
 }
 
-console.log("Terminal 4 jetway source authority verified: stock scale 1.00 is protected, exact atlas regions remain active without whole-sheet repetition, the converted source terminal is the lower-facade authority with no cloned panels, fallback jetway geometry is disclosed, animation requirements are explicit, markings are pavement-coincident, free-drive controls are visible, and the mobile step title remains readable.");
+console.log("Terminal 4 exact jetway authority verified: the 31,459,796-byte uploaded GLB is wired to 58 measured gate placements at scale 1.00, corrected CRJ door geometry is enforced, exact atlas/source facade protections remain active, markings are pavement-coincident, free-drive controls are visible, and the mobile step title remains readable.");
