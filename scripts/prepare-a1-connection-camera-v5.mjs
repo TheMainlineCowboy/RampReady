@@ -1,6 +1,7 @@
 import fs from "node:fs";
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
+const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
 let source = fs.readFileSync(path, "utf8");
 if (!source.includes('  a1Connection: Object.freeze({')) {
   await import(`./prepare-full-airport-inspection-route.mjs?wide-a1=${Date.now()}`);
@@ -65,7 +66,7 @@ if (!b15InspectionPattern.test(source)) {
 source = source.replace(b15InspectionPattern, b15InspectionPreset);
 source = source.replace(
   /source-gate-apron-presets-with-[^"\n]+-a1-a14-b14-b15-v\d+/g,
-  'source-gate-apron-presets-with-side-on-direct-terminal-a1-near-wall-b15-a1-a14-b14-b15-v8',
+  CANONICAL_ROUTE_AUTHORITY,
 );
 source = source.replace(
   /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+)/g,
@@ -79,7 +80,7 @@ for (const token of [
   cameraPositionLine,
   cameraTargetLine,
   b15InspectionPreset,
-  'source-gate-apron-presets-with-side-on-direct-terminal-a1-near-wall-b15-a1-a14-b14-b15-v8',
+  CANONICAL_ROUTE_AUTHORITY,
   'side-on-direct-terminal-wall-a1-v7',
 ]) {
   if (!source.includes(token)) throw new Error(`${path}: direct-terminal A1/B15 inspection preparation is missing ${token}`);
@@ -104,4 +105,4 @@ if (fixedCameraPositionCount === 2) {
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared a side-on A1 inspection camera that visibly frames the user-photo-verified direct terminal-wall connector from facade to rotunda, while retaining the full-airport route and physical collision checks.");
+console.log("Prepared a side-on A1 inspection camera that visibly frames the user-photo-verified direct terminal-wall connector from facade to rotunda, while preserving the canonical A1/A14 inspection route authority.");
