@@ -115,8 +115,8 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
   expect(runtime.terminal4FacadeInfillCount).toBe("0");
 
   const terminalWallDistance = Number(runtime.terminal4A1JetwayWallDistance);
-  expect(terminalWallDistance).toBeGreaterThan(0.4);
-  expect(terminalWallDistance).toBeLessThan(12);
+  expect(terminalWallDistance).toBeGreaterThan(8);
+  expect(terminalWallDistance).toBeLessThan(28);
   expect(runtime.terminal4A1ConnectionAuthority).toBe(DIRECT_A1_TERMINAL_AUTHORITY);
   expect(runtime.terminal4A1ConnectionAuthority).not.toMatch(/WALK/i);
   const terminalDirection = runtime.terminal4A1ConnectionDirection.split(",").map(Number);
