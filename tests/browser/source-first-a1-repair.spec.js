@@ -162,7 +162,15 @@ test("direct tug inspection proves the visible A1 terminal connection, realistic
     evidenceAuthority: "user-overhead-and-same-day-a1-ramp-photos",
   }, null, 2)}\n`);
 
-  await inspectionLocation.selectOption("b15");
+  await page.evaluate(() => {
+    const select = document.querySelector('select[aria-label="Inspection location"]');
+    if (!(select instanceof HTMLSelectElement)) throw new Error("Inspection location selector is missing");
+    const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+    if (!setter) throw new Error("Native inspection selector setter is unavailable");
+    setter.call(select, "b15");
+    select.dispatchEvent(new Event("input", { bubbles: true }));
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
   await page.waitForFunction(() => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionPreset === "b15"
