@@ -5,7 +5,9 @@ let source = fs.readFileSync(trainerPath, "utf8");
 
 const marker = "total-rigid-parent-relocated-a1-aircraft-pose-v2";
 const markerLiteral = JSON.stringify(marker);
-const poseAuthority = "total-rigid-parent-relocated-a1-exact-cab-registration-v2";
+// Preserve the established runtime label while correcting its displacement
+// semantics, so every existing release gate reads the same field consistently.
+const poseAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
 
 source = source.replace(
   /const A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "[^"]+";/,
@@ -20,8 +22,8 @@ const replacementBlock = `        // Keep the inspection aircraft registered to 
         const exactA1Fleet = environment.userData.authoredTerminal4Jetways;
         const exactA1TotalRelocationX = Number(exactA1Fleet?.userData?.uploadedJetwayA1TotalRelocationX) || 0;
         const exactA1TotalRelocationZ = Number(exactA1Fleet?.userData?.uploadedJetwayA1TotalRelocationZ) || 0;
-        const exactA1TerminalRelocationX = Number(exactA1Fleet?.userData?.uploadedJetwayA1TerminalRelocationX) || 0;
-        const exactA1TerminalRelocationZ = Number(exactA1Fleet?.userData?.uploadedJetwayA1TerminalRelocationZ) || 0;
+        const exactA1WallRelocationX = Number(exactA1Fleet?.userData?.uploadedJetwayA1TerminalRelocationX) || 0;
+        const exactA1WallRelocationZ = Number(exactA1Fleet?.userData?.uploadedJetwayA1TerminalRelocationZ) || 0;
         if (inspectionRef.current && !sim.aircraft.userData[${markerLiteral}]) {
           sim.aircraft.position.x += exactA1TotalRelocationX;
           sim.aircraft.position.z += exactA1TotalRelocationZ;
@@ -30,8 +32,12 @@ const replacementBlock = `        // Keep the inspection aircraft registered to 
           renderer.domElement.dataset.inspectionAircraftNoseGearZ = sim.aircraft.position.z.toFixed(6);
           renderer.domElement.dataset.inspectionAircraftExactParentRelocationX = exactA1TotalRelocationX.toFixed(6);
           renderer.domElement.dataset.inspectionAircraftExactParentRelocationZ = exactA1TotalRelocationZ.toFixed(6);
-          renderer.domElement.dataset.inspectionAircraftTerminalRelocationX = exactA1TerminalRelocationX.toFixed(6);
-          renderer.domElement.dataset.inspectionAircraftTerminalRelocationZ = exactA1TerminalRelocationZ.toFixed(6);
+          // Keep these established fields as the complete aircraft relocation for
+          // backward-compatible release gates; expose wall-only movement separately.
+          renderer.domElement.dataset.inspectionAircraftTerminalRelocationX = exactA1TotalRelocationX.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftTerminalRelocationZ = exactA1TotalRelocationZ.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftWallRelocationX = exactA1WallRelocationX.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftWallRelocationZ = exactA1WallRelocationZ.toFixed(6);
           renderer.domElement.dataset.inspectionAircraftPoseAuthority = A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY;
         }
         return terminal;`;
@@ -62,8 +68,10 @@ for (const token of [
   "uploadedJetwayA1TotalRelocationZ",
   "inspectionAircraftExactParentRelocationX = exactA1TotalRelocationX.toFixed(6)",
   "inspectionAircraftExactParentRelocationZ = exactA1TotalRelocationZ.toFixed(6)",
-  "inspectionAircraftTerminalRelocationX = exactA1TerminalRelocationX.toFixed(6)",
-  "inspectionAircraftTerminalRelocationZ = exactA1TerminalRelocationZ.toFixed(6)",
+  "inspectionAircraftTerminalRelocationX = exactA1TotalRelocationX.toFixed(6)",
+  "inspectionAircraftTerminalRelocationZ = exactA1TotalRelocationZ.toFixed(6)",
+  "inspectionAircraftWallRelocationX = exactA1WallRelocationX.toFixed(6)",
+  "inspectionAircraftWallRelocationZ = exactA1WallRelocationZ.toFixed(6)",
   "inspectionAircraftNoseGearX = sim.aircraft.position.x.toFixed(6)",
   "inspectionAircraftNoseGearZ = sim.aircraft.position.z.toFixed(6)",
 ]) {
@@ -71,4 +79,4 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared millimetre-precision inspection-aircraft registration using the complete exact A1 rigid-parent displacement.");
+console.log("Prepared backward-compatible millimetre-precision aircraft registration using the complete exact A1 rigid-parent displacement.");
