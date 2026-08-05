@@ -90,9 +90,43 @@ async function loadExactPrototype(THREE) {
   });
   const validation = validateExactHierarchy(sourceScene);
 
+  // The uploaded GLB preserves its exporter-authored root transforms. Its
+  // longitudinal Rotunda-to-Cab axis is therefore diagonal in the GLB scene,
+  // not parent-local +Z. Normalize only the parent scene transform so gate yaw,
+  // telescoping offsets and contact measurements share one longitudinal axis.
+  // No source node, mesh, geometry, UV, normal, material or scale is replaced.
+  sourceScene.updateMatrixWorld(true);
+  const sourceRotunda = sourceScene.getObjectByName("Rotunda");
+  const sourceCab = sourceScene.getObjectByName("Cab");
+  if (!sourceRotunda || !sourceCab) {
+    throw new Error("Exact Airport_Jetway.glb axis normalization is missing Rotunda or Cab");
+  }
+  const sourceRotundaCenter = new THREE.Box3().setFromObject(sourceRotunda).getCenter(new THREE.Vector3());
+  const sourceCabCenter = new THREE.Box3().setFromObject(sourceCab).getCenter(new THREE.Vector3());
+  const sourceLongitudinalAxis = sourceCabCenter.clone().sub(sourceRotundaCenter);
+  sourceLongitudinalAxis.y = 0;
+  if (sourceLongitudinalAxis.lengthSq() < 1) {
+    throw new Error("Exact Airport_Jetway.glb longitudinal source axis is invalid");
+  }
+  sourceLongitudinalAxis.normalize();
+  const axisCorrectionRadians = -Math.atan2(sourceLongitudinalAxis.x, sourceLongitudinalAxis.z);
+  sourceScene.rotation.y = axisCorrectionRadians;
+  sourceScene.updateMatrixWorld(true);
+
+  const correctedRotundaCenter = new THREE.Box3().setFromObject(sourceRotunda).getCenter(new THREE.Vector3());
+  const correctedSourceBounds = new THREE.Box3().setFromObject(sourceScene);
+  sourceScene.position.set(
+    -correctedRotundaCenter.x,
+    -correctedSourceBounds.min.y,
+    -correctedRotundaCenter.z,
+  );
+  sourceScene.updateMatrixWorld(true);
+
   const aligned = new THREE.Group();
   aligned.name = "UploadedAirportJetway_ExactGlbPrototype";
-  sourceScene.position.set(0.651626, 0.23, 15.12);
+  aligned.userData.parentAxisCorrectionRadians = axisCorrectionRadians;
+  aligned.userData.rotundaOriginNormalized = true;
+  aligned.userData.groundContactNormalized = true;
   aligned.add(sourceScene);
   aligned.updateMatrixWorld(true);
   aligned.userData.modelAuthority = MODEL_AUTHORITY;
