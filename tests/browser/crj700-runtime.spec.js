@@ -148,12 +148,29 @@ test("verifies CRJ, supplied A1 jetway, operator view and mobile layout in one a
   await page.setViewportSize(DESKTOP);
   const canvas = await launchRuntime(page);
 
-  await expect.poll(
-    async () => Number(await canvas.getAttribute("data-a1-jetway-deployment")),
-    { timeout: 20_000, intervals: [100, 250, 500] },
-  ).toBeGreaterThanOrEqual(0.995);
-  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "attached-to-aircraft-door");
-  await expect(canvas).toHaveAttribute("data-a1-jetway-animation-authority", /v11$/);
+  await page.waitForFunction(() => {
+    const data = document.querySelector("canvas.trainerCanvas")?.dataset;
+    const deployment = Number(data?.a1JetwayDeployment);
+    const actualGap = Number(data?.terminal4UploadedJetwayA1ActualDoorGapMeters);
+    return data?.terminal4UploadedJetwayLoadState === "ready"
+      && data?.terminal4UploadedJetwayCount === "58"
+      && data?.terminal4UploadedJetwayVerifiedModelCount === "58"
+      && data?.terminal4UploadedJetwayArticulationAuthority === "user-supplied-airport-jetway-per-gate-telescoping-v10"
+      && data?.terminal4UploadedJetwayA1PartOrderValid === "true"
+      && Number.isFinite(actualGap)
+      && actualGap <= 0.05
+      && Number.isFinite(deployment)
+      && deployment >= 0.995;
+  }, null, { timeout: 180_000, polling: 100 });
+  const attachedRuntime = await page.evaluate(() => ({
+    ...document.querySelector("canvas.trainerCanvas").dataset,
+  }));
+  expect(attachedRuntime.a1JetwayState).toBe("attached-to-aircraft-door");
+  expect(attachedRuntime.a1JetwayAnimationAuthority).toMatch(/v11$/);
+  expect(attachedRuntime.terminal4UploadedJetwayCount).toBe("58");
+  expect(attachedRuntime.terminal4UploadedJetwayVerifiedModelCount).toBe("58");
+  expect(attachedRuntime.terminal4UploadedJetwayA1PartOrderValid).toBe("true");
+  expect(Number(attachedRuntime.terminal4UploadedJetwayA1ActualDoorGapMeters)).toBeLessThanOrEqual(0.05);
   await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-attached.png"));
 
   await withHiddenControls(page, async () => {
@@ -204,17 +221,22 @@ test("verifies CRJ, supplied A1 jetway, operator view and mobile layout in one a
   await setCamera(page, "chase");
   const ready = page.getByRole("button", { name: "Ready" });
   await ready.click();
-  await expect.poll(
-    async () => Number(await canvas.getAttribute("data-a1-jetway-deployment")),
-    { timeout: 30_000, intervals: [50, 75, 100, 250] },
-  ).toBeLessThanOrEqual(0.005);
-  await expect(canvas).toHaveAttribute("data-a1-jetway-state", "parked-clear-of-aircraft");
-  await expect(canvas).toHaveAttribute("data-a1-jetway-state-history", /parked-clear-of-aircraft|parked/);
-  await expect(canvas).toHaveAttribute(
-    "data-terminal4-a1-retraction-authority",
-    "aircraft-door-clearance-without-overtravel-v6",
-  );
-  await expect(canvas).toHaveAttribute("data-terminal4-a1-retraction-clearance-meters", "2.38");
+  await page.waitForFunction(() => {
+    const data = document.querySelector("canvas.trainerCanvas")?.dataset;
+    return Number(data?.a1JetwayDeployment) <= 0.005
+      && data?.a1JetwayState === "parked-clear-of-aircraft"
+      && /parked-clear-of-aircraft|parked/.test(data?.a1JetwayStateHistory || "")
+      && data?.terminal4A1RetractionAuthority === "aircraft-door-clearance-without-overtravel-v6"
+      && data?.terminal4A1RetractionClearanceMeters === "2.38";
+  }, null, { timeout: 180_000, polling: 100 });
+  const parkedRuntime = await page.evaluate(() => ({
+    ...document.querySelector("canvas.trainerCanvas").dataset,
+  }));
+  expect(Number(parkedRuntime.a1JetwayDeployment)).toBeLessThanOrEqual(0.005);
+  expect(parkedRuntime.a1JetwayState).toBe("parked-clear-of-aircraft");
+  expect(parkedRuntime.a1JetwayStateHistory).toMatch(/parked-clear-of-aircraft|parked/);
+  expect(parkedRuntime.terminal4A1RetractionAuthority).toBe("aircraft-door-clearance-without-overtravel-v6");
+  expect(parkedRuntime.terminal4A1RetractionClearanceMeters).toBe("2.38");
   await expect(page.getByText(/Jetway parked clear/i)).toBeVisible();
   await withHiddenControls(page, () => capture(page, canvas, "a1-jetway-parked.png"));
 });
