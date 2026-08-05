@@ -148,4 +148,30 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
-console.log("Prepared A1 terminal attachment using the nearest real vertical Terminal 4 wall and removed the false T4_WALK override.");
+
+// The real structural facade can be farther from the source A1 rotunda than
+// the earlier fabricated short-span assumption. Preserve a hard upper bound,
+// but allow the measured facade result to drive the connector geometry.
+const boundedFacadeFiles = [
+  "src/environment/correctUploadedJetwayInstallationV1.js",
+  "src/environment/uploadedAirportJetwayFleetReadyV2.js",
+];
+for (const runtimePath of boundedFacadeFiles) {
+  let runtime = fs.readFileSync(runtimePath, "utf8");
+  runtime = runtime
+    .replaceAll("terminalDistance > 0.4 && terminalDistance < 12", "terminalDistance > 0.4 && terminalDistance < 28")
+    .replaceAll("mainVisibleLength > 0.25 && mainVisibleLength < 12", "mainVisibleLength > 0.25 && mainVisibleLength < 28")
+    .replaceAll("a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 12", "a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 28")
+    .replaceAll("connectorVisibleLength > 0.25 && connectorVisibleLength < 12", "connectorVisibleLength > 0.25 && connectorVisibleLength < 28");
+  for (const stale of [
+    "terminalDistance > 0.4 && terminalDistance < 12",
+    "mainVisibleLength > 0.25 && mainVisibleLength < 12",
+    "a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 12",
+    "connectorVisibleLength > 0.25 && connectorVisibleLength < 12",
+  ]) {
+    if (runtime.includes(stale)) throw new Error(`${runtimePath}: stale short-span limit remains: ${stale}`);
+  }
+  fs.writeFileSync(runtimePath, runtime, "utf8");
+}
+
+console.log("Prepared A1 terminal attachment using the nearest real vertical Terminal 4 wall, removed the false T4_WALK override, and bounded measured facade spans at 28 m.");
