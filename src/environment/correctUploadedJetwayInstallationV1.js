@@ -1,6 +1,7 @@
-const INSTALLATION_AUTHORITY = "user-photo-overhead-terminal-anchor-bogie-contact-and-continuous-assembly-v2";
+const INSTALLATION_AUTHORITY = "user-photo-overhead-terminal-anchor-bogie-contact-and-continuous-assembly-v3";
 const A1_TERMINAL_CONNECTION_AUTHORITY = "user-photo-overhead-authored-terminal-wall-direct-v1";
 const ASSEMBLY_CONTINUITY_AUTHORITY = "exact-authored-five-part-chain-no-isolated-node-rotation-v2";
+const ROTUNDA_FACE_AUTHORITY = "exact-uploaded-rotunda-terminal-face-bounds-v1";
 const A1_DIRECT_TERMINAL_DISTANCE_METERS = 16.08913693907184;
 const A1_TERMINAL_HIDDEN_OVERLAP_METERS = 0.55;
 const BOGIE_TIRE_CONTACT_CORRECTION_METERS = 0.06;
@@ -58,7 +59,44 @@ function createA1VestibuleMaterials(THREE) {
   return { shell, seam, bellows, portalInterior };
 }
 
-function buildA1PhotoVestibule(THREE, fleet, placement, rotundaCenterY) {
+function measureRotundaTerminalFrame(THREE, fleet, a1Model) {
+  const rotunda = a1Model.getObjectByName("Rotunda");
+  if (!rotunda) throw new Error("A1 exact jetway is missing the authored Rotunda node for terminal-face measurement");
+  fleet.updateMatrixWorld(true);
+  const worldBounds = new THREE.Box3().setFromObject(rotunda);
+  const center = worldBounds.getCenter(new THREE.Vector3());
+  fleet.worldToLocal(center);
+
+  const ux = A1_TERMINAL_DIRECTION.x;
+  const uz = A1_TERMINAL_DIRECTION.z;
+  const corners = [];
+  for (const x of [worldBounds.min.x, worldBounds.max.x]) {
+    for (const y of [worldBounds.min.y, worldBounds.max.y]) {
+      for (const z of [worldBounds.min.z, worldBounds.max.z]) {
+        const corner = new THREE.Vector3(x, y, z);
+        fleet.worldToLocal(corner);
+        corners.push(corner);
+      }
+    }
+  }
+  const centerProjection = center.x * ux + center.z * uz;
+  const terminalProjection = Math.max(...corners.map((corner) => corner.x * ux + corner.z * uz));
+  const terminalRadius = terminalProjection - centerProjection;
+  if (!(terminalRadius > 0.25 && terminalRadius < 6)) {
+    throw new Error(`A1 exact Rotunda terminal-face radius is invalid: ${terminalRadius}`);
+  }
+  return Object.freeze({
+    authority: ROTUNDA_FACE_AUTHORITY,
+    centerX: center.x,
+    centerY: center.y,
+    centerZ: center.z,
+    terminalRadius,
+    terminalFaceX: center.x + ux * terminalRadius,
+    terminalFaceZ: center.z + uz * terminalRadius,
+  });
+}
+
+function buildA1PhotoVestibule(THREE, fleet, placement, rotundaFrame) {
   const existing = fleet.getObjectByName("UploadedAirportJetwayTerminalConnector_A1");
   if (existing) {
     existing.removeFromParent();
@@ -71,16 +109,21 @@ function buildA1PhotoVestibule(THREE, fleet, placement, rotundaCenterY) {
   const yaw = Math.atan2(ux, uz);
   const sideX = Math.cos(yaw);
   const sideZ = -Math.sin(yaw);
-  const visibleLength = A1_DIRECT_TERMINAL_DISTANCE_METERS;
+  const facadeX = placement.x + ux * A1_DIRECT_TERMINAL_DISTANCE_METERS;
+  const facadeZ = placement.z + uz * A1_DIRECT_TERMINAL_DISTANCE_METERS;
+  const startX = rotundaFrame.terminalFaceX;
+  const startZ = rotundaFrame.terminalFaceZ;
+  const visibleLength = Math.hypot(facadeX - startX, facadeZ - startZ);
+  if (!(visibleLength > 4 && visibleLength < A1_DIRECT_TERMINAL_DISTANCE_METERS)) {
+    throw new Error(`A1 photo vestibule visible span is invalid: ${visibleLength}`);
+  }
   const totalLength = visibleLength + A1_TERMINAL_HIDDEN_OVERLAP_METERS;
   const width = 3.18;
   const halfWidth = width * 0.5;
   const height = 2.72;
-  const centerX = placement.x + ux * totalLength * 0.5;
-  const centerZ = placement.z + uz * totalLength * 0.5;
-  const centerY = rotundaCenterY;
-  const facadeX = placement.x + ux * visibleLength;
-  const facadeZ = placement.z + uz * visibleLength;
+  const centerX = startX + ux * totalLength * 0.5;
+  const centerZ = startZ + uz * totalLength * 0.5;
+  const centerY = rotundaFrame.centerY;
   const materials = createA1VestibuleMaterials(THREE);
   const connector = new THREE.Group();
   connector.name = "UploadedAirportJetwayTerminalConnector_A1";
@@ -122,8 +165,8 @@ function buildA1PhotoVestibule(THREE, fleet, placement, rotundaCenterY) {
   const seamCount = Math.max(3, Math.round(visibleLength / 2.4));
   for (let seamIndex = 1; seamIndex < seamCount; seamIndex += 1) {
     const distance = (visibleLength * seamIndex) / seamCount;
-    const seamX = placement.x + ux * distance;
-    const seamZ = placement.z + uz * distance;
+    const seamX = startX + ux * distance;
+    const seamZ = startZ + uz * distance;
     for (const side of [-1, 1]) {
       addBox(
         THREE,
@@ -142,9 +185,10 @@ function buildA1PhotoVestibule(THREE, fleet, placement, rotundaCenterY) {
     }
   }
 
-  // A dark flexible collar closes the authored rotunda opening without rotating or detaching it.
-  const rotundaCollarX = placement.x + ux * 0.16;
-  const rotundaCollarZ = placement.z + uz * 0.16;
+  // The flexible collar belongs on the measured terminal-facing outside edge
+  // of the Rotunda, never through its center.
+  const rotundaCollarX = startX + ux * 0.1;
+  const rotundaCollarZ = startZ + uz * 0.1;
   addBox(
     THREE,
     connector,
@@ -227,10 +271,13 @@ function buildA1PhotoVestibule(THREE, fleet, placement, rotundaCenterY) {
   }
 
   connector.userData.connectorAuthority = A1_TERMINAL_CONNECTION_AUTHORITY;
-  connector.userData.connectorStyleAuthority = "same-day-a1-photo-solid-white-fixed-vestibule-v1";
+  connector.userData.connectorStyleAuthority = "same-day-a1-photo-solid-white-fixed-vestibule-v2";
   connector.userData.connectorLengthMeters = totalLength;
-  connector.userData.measuredWallLengthMeters = visibleLength;
+  connector.userData.visibleVestibuleLengthMeters = visibleLength;
+  connector.userData.measuredWallLengthMeters = A1_DIRECT_TERMINAL_DISTANCE_METERS;
   connector.userData.terminalOverlapMeters = A1_TERMINAL_HIDDEN_OVERLAP_METERS;
+  connector.userData.rotundaTerminalFaceAuthority = rotundaFrame.authority;
+  connector.userData.rotundaTerminalRadiusMeters = rotundaFrame.terminalRadius;
   connector.userData.userPhotoOverheadVerified = true;
   connector.userData.noGeneratedGlassCorridor = true;
   fleet.add(connector);
@@ -249,15 +296,6 @@ function forceExactMaterialsDoubleSided(THREE, fleet) {
     }
   });
   return materials.size;
-}
-
-function measureRotundaCenterY(THREE, fleet, a1Model) {
-  const rotunda = a1Model.getObjectByName("Rotunda");
-  if (!rotunda) throw new Error("A1 exact jetway is missing the authored Rotunda node for connector height measurement");
-  fleet.updateMatrixWorld(true);
-  const center = new THREE.Box3().setFromObject(rotunda).getCenter(new THREE.Vector3());
-  fleet.worldToLocal(center);
-  return center.y;
 }
 
 function captureAuthoredPartTransforms(a1Model) {
@@ -328,8 +366,8 @@ export function correctUploadedJetwayInstallation(THREE, group, fleet, placement
   const beforeTransforms = captureAuthoredPartTransforms(a1Model);
   fleet.position.y -= BOGIE_TIRE_CONTACT_CORRECTION_METERS;
   fleet.updateMatrixWorld(true);
-  const rotundaCenterY = measureRotundaCenterY(THREE, fleet, a1Model);
-  const connector = buildA1PhotoVestibule(THREE, fleet, a1Placement, rotundaCenterY);
+  const rotundaFrame = measureRotundaTerminalFrame(THREE, fleet, a1Model);
+  const connector = buildA1PhotoVestibule(THREE, fleet, a1Placement, rotundaFrame);
   const doubleSidedMaterialCount = forceExactMaterialsDoubleSided(THREE, fleet);
   fleet.updateMatrixWorld(true);
   const assemblyContinuity = verifyContinuousAuthoredAssembly(a1Model, beforeTransforms);
@@ -355,11 +393,13 @@ export function correctUploadedJetwayInstallation(THREE, group, fleet, placement
     a1TerminalWallDistanceMeters: A1_DIRECT_TERMINAL_DISTANCE_METERS,
     a1TerminalDirectionX: A1_TERMINAL_DIRECTION.x,
     a1TerminalDirectionZ: A1_TERMINAL_DIRECTION.z,
-    a1RotundaCenterYMeters: rotundaCenterY,
+    a1RotundaCenterYMeters: rotundaFrame.centerY,
+    rotundaFrame,
     a1PortalAlignment,
     staticPortalAlignment,
     assemblyContinuity,
     connectorStyleAuthority: connector.userData.connectorStyleAuthority,
+    visibleVestibuleLengthMeters: connector.userData.visibleVestibuleLengthMeters,
     doubleSidedMaterialCount,
   });
 
@@ -385,6 +425,9 @@ export function correctUploadedJetwayInstallation(THREE, group, fleet, placement
   group.userData.uploadedJetwayA1AssemblyTransformError = assemblyContinuity.maximumLocalTransformError;
   group.userData.uploadedJetwayA1IsolatedNodeRotationCount = assemblyContinuity.isolatedNodeRotationCount;
   group.userData.uploadedJetwayA1ConnectorStyleAuthority = report.connectorStyleAuthority;
+  group.userData.uploadedJetwayA1RotundaTerminalFaceAuthority = rotundaFrame.authority;
+  group.userData.uploadedJetwayA1RotundaTerminalRadiusMeters = rotundaFrame.terminalRadius;
+  group.userData.uploadedJetwayA1VisibleVestibuleLengthMeters = report.visibleVestibuleLengthMeters;
   group.userData.a1TerminalWallDistance = report.a1TerminalWallDistanceMeters;
   group.userData.a1TerminalConnectionAuthority = report.a1TerminalConnectionAuthority;
   group.userData.a1TerminalConnectionDirection = [
