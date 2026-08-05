@@ -2,7 +2,7 @@ import fs from "node:fs";
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
-const A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
+const A1_CAMERA_AUTHORITY = "wide-oblique-full-assembly-terminal-corner-a1-v9";
 const A1_RELOCATION_X = 12.353412;
 const A1_RELOCATION_Z = -12.486888;
 let source = fs.readFileSync(path, "utf8");
@@ -23,11 +23,12 @@ let presetBlock = source.slice(presetStart, presetEnd);
 const tugXLine = `    x: ${(7.5 + A1_RELOCATION_X).toFixed(6)},`;
 const tugZLine = `    z: ${(8.5 + A1_RELOCATION_Z).toFixed(6)},`;
 const tugYawLine = '    yaw: -0.35,';
-// Translate the complete evidence rig with the photo-registered A1 set. The
-// view is oblique enough to show the terminal wall, 2.4 m vestibule, Rotunda,
-// full articulated bridge and forward-left aircraft door in one frame.
-const cameraPositionLine = `    cameraPosition: Object.freeze([${(14.0 + A1_RELOCATION_X).toFixed(6)}, 14.0, ${(8.0 + A1_RELOCATION_Z).toFixed(6)}]),`;
-const cameraTargetLine = `    cameraTarget: Object.freeze([${(-24.5 + A1_RELOCATION_X).toFixed(6)}, 4.35, ${(-17.0 + A1_RELOCATION_Z).toFixed(6)}]),`;
+// Pull the camera farther back and aim at the middle of the complete bridge,
+// rather than at the Rotunda alone. The resulting frame must include the real
+// terminal wall, short white vestibule, Rotunda, all tunnel sections, bogie and
+// aircraft-facing Cab without cutting the jetway off at the viewport edge.
+const cameraPositionLine = `    cameraPosition: Object.freeze([${(38.0 + A1_RELOCATION_X).toFixed(6)}, 18.0, ${(18.0 + A1_RELOCATION_Z).toFixed(6)}]),`;
+const cameraTargetLine = `    cameraTarget: Object.freeze([${(-12.0 + A1_RELOCATION_X).toFixed(6)}, 4.0, ${(-16.5 + A1_RELOCATION_Z).toFixed(6)}]),`;
 const cameraAuthorityLine = `    cameraAuthority: "${A1_CAMERA_AUTHORITY}",`;
 
 for (const [pattern, line, label] of [
@@ -68,7 +69,7 @@ source = source.replace(
   CANONICAL_ROUTE_AUTHORITY,
 );
 source = source.replace(
-  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+|oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+)/g,
+  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+|oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+|wide-oblique-full-assembly-terminal-corner-a1-v\d+)/g,
   A1_CAMERA_AUTHORITY,
 );
 
@@ -105,4 +106,4 @@ if (fixedCameraPositionCount === 2) {
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared the established A1 evidence preset at the photo-registered terminal-corner coordinates, framing the compact vestibule, Rotunda, complete bridge and aircraft door.");
+console.log("Prepared a wide oblique A1 evidence frame showing the terminal wall, compact vestibule, Rotunda, complete authored bridge, grounded bogie and aircraft-facing Cab together.");
