@@ -6,11 +6,8 @@ import {
   correctUploadedJetwayInstallation,
   UPLOADED_JETWAY_INSTALLATION_CORRECTION_AUTHORITY,
   UPLOADED_JETWAY_A1_TERMINAL_CONNECTION_AUTHORITY,
+  UPLOADED_JETWAY_ASSEMBLY_CONTINUITY_AUTHORITY,
 } from "./correctUploadedJetwayInstallationV1.js";
-import {
-  decorateA1PhotoVestibule,
-  A1_PHOTO_VESTIBULE_DETAIL_AUTHORITY,
-} from "./decorateA1PhotoVestibuleV1.js";
 
 const READY_AUTHORITY = "exact-uploaded-airport-jetway-complete-58-gates-v1";
 const EXPECTED_GATE_COUNT = 58;
@@ -43,7 +40,6 @@ function waitForFleet(THREE, group, placements) {
           if (!a1Anchor || !a1Model) throw new Error("Exact Airport_Jetway.glb fleet is missing the individual A1 model");
 
           const installationCorrection = correctUploadedJetwayInstallation(THREE, group, fleet, placements);
-          const photoVestibuleDetail = decorateA1PhotoVestibule(THREE, group, fleet);
           const exactModelGuard = enforceExactUploadedJetwayVisualAuthority(group, fleet);
           const staticPortalClosures = installStaticJetwayPortalClosures(THREE, fleet, placements);
           const count = Number(group.userData.uploadedJetwayCount || 0);
@@ -80,13 +76,16 @@ function waitForFleet(THREE, group, placements) {
           const staticPortalAlignedGateCount = Number(group.userData.uploadedJetwayStaticPortalAlignedGateCount ?? -1);
           const staticPortalAlignmentError = Number(group.userData.uploadedJetwayStaticMaximumPortalAlignmentErrorRadians ?? Infinity);
           const doubleSidedMaterialCount = Number(group.userData.uploadedJetwayDoubleSidedMaterialCount ?? -1);
-          const photoDetailAuthority = group.userData.uploadedJetwayA1PhotoDetailAuthority || "missing";
-          const photoRibCount = Number(group.userData.uploadedJetwayA1PhotoWallRibCount ?? -1);
-          const photoPipeCount = Number(group.userData.uploadedJetwayA1PhotoServicePipeCount ?? -1);
-          const photoSupportCount = Number(group.userData.uploadedJetwayA1PhotoSupportCount ?? -1);
-          const photoUtilityCount = Number(group.userData.uploadedJetwayA1PhotoUtilityUnitCount ?? -1);
-          const photoVentCount = Number(group.userData.uploadedJetwayA1PhotoVentCount ?? -1);
-          const photoHoseCount = Number(group.userData.uploadedJetwayA1PhotoHoseCount ?? -1);
+          const assemblyContinuityAuthority = group.userData.uploadedJetwayA1AssemblyContinuityAuthority || "missing";
+          const assemblyPartCount = Number(group.userData.uploadedJetwayA1AssemblyPartCount ?? -1);
+          const assemblyTransformError = Number(group.userData.uploadedJetwayA1AssemblyTransformError ?? Infinity);
+          const isolatedNodeRotationCount = Number(group.userData.uploadedJetwayA1IsolatedNodeRotationCount ?? -1);
+          const connectorVisibleLength = Number(group.userData.uploadedJetwayA1VisibleVestibuleLengthMeters ?? NaN);
+          const connectorRibCount = Number(group.userData.uploadedJetwayA1ConnectorRibCount ?? -1);
+          const terminalDirectionMagnitude = Math.hypot(
+            Number(a1TerminalDirection[0] ?? NaN),
+            Number(a1TerminalDirection[1] ?? NaN),
+          );
 
           if (
             count !== EXPECTED_GATE_COUNT
@@ -119,20 +118,18 @@ function waitForFleet(THREE, group, placements) {
             || Math.abs(fleetGroundOffset + bogieTireCorrection) > 1e-6
             || !(bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1)
             || a1TerminalConnectionAuthority !== UPLOADED_JETWAY_A1_TERMINAL_CONNECTION_AUTHORITY
-            || !(a1TerminalWallDistance > 15.5 && a1TerminalWallDistance < 16.7)
-            || Math.abs(Number(a1TerminalDirection[0] ?? Infinity)) > 0.01
-            || Math.abs(Number(a1TerminalDirection[1] ?? Infinity) + 1) > 0.01
+            || !(a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 12)
+            || Math.abs(terminalDirectionMagnitude - 1) > 0.01
             || a1PortalAlignmentError > 1e-6
             || staticPortalAlignedGateCount !== 57
             || staticPortalAlignmentError > 1e-6
             || doubleSidedMaterialCount < 2
-            || photoDetailAuthority !== A1_PHOTO_VESTIBULE_DETAIL_AUTHORITY
-            || photoRibCount < 20
-            || photoPipeCount !== 2
-            || photoSupportCount !== 1
-            || photoUtilityCount !== 1
-            || photoVentCount < 9
-            || photoHoseCount !== 1
+            || assemblyContinuityAuthority !== UPLOADED_JETWAY_ASSEMBLY_CONTINUITY_AUTHORITY
+            || assemblyPartCount !== 5
+            || assemblyTransformError > 1e-9
+            || isolatedNodeRotationCount !== 0
+            || !(connectorVisibleLength > 0.25 && connectorVisibleLength < 12)
+            || connectorRibCount < 1
             || exactModelGuard.authority !== EXACT_MODEL_AUTHORITY
             || exactModelGuard.hierarchy.requiredPartCount !== 5
             || exactModelGuard.hierarchy.sourceMeshCount !== 7
@@ -143,7 +140,7 @@ function waitForFleet(THREE, group, placements) {
             || staticPortalClosures.gateCount !== 57
           ) {
             throw new Error(
-              `Exact jetway readiness mismatch: placements=${count}, gateRecords=${loadedModelNames.size}, missing=${missingModels.join(",") || "none"}, sha=${exactGlbSha256}, materials=${materialAuthority}, performance=${performanceAuthority}, topology=${sourceTriangleCount}/${maximumPositionErrorMeters}/${maximumUvError}, static=${staticInstancedGateCount}, animated=${animatedIndividualGateCount}, meshBatches=${staticPrimitiveBatchCount}, connectors=${staticConnectorGateCount}/${staticConnectorBatchCount}/${individualConnectorGateCount}, articulation=${articulationAuthority}/${sourceContactDistance}/${staticArticulatedGateCount}/${staticMaximumContactError}, A1=${a1TargetDoorDistance}/${a1AttachedExtension}/${a1PredictedContactDistance}/${a1PredictedDoorGap}/${a1ActualContactDistance}/${a1ActualDoorGap}/${a1PartOrderValid}, installation=${installationAuthority}/${fleetGroundOffset}/${bogieTireCorrection}/${a1TerminalConnectionAuthority}/${a1TerminalWallDistance}/${a1TerminalDirection.join(",")}/${a1PortalAlignmentError}/${staticPortalAlignedGateCount}/${staticPortalAlignmentError}/${doubleSidedMaterialCount}, photo=${photoDetailAuthority}/${photoRibCount}/${photoPipeCount}/${photoSupportCount}/${photoUtilityCount}/${photoVentCount}/${photoHoseCount}, source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`,
+              `Exact jetway readiness mismatch: placements=${count}, gateRecords=${loadedModelNames.size}, missing=${missingModels.join(",") || "none"}, sha=${exactGlbSha256}, materials=${materialAuthority}, performance=${performanceAuthority}, topology=${sourceTriangleCount}/${maximumPositionErrorMeters}/${maximumUvError}, static=${staticInstancedGateCount}, animated=${animatedIndividualGateCount}, meshBatches=${staticPrimitiveBatchCount}, connectors=${staticConnectorGateCount}/${staticConnectorBatchCount}/${individualConnectorGateCount}, articulation=${articulationAuthority}/${sourceContactDistance}/${staticArticulatedGateCount}/${staticMaximumContactError}, A1=${a1TargetDoorDistance}/${a1AttachedExtension}/${a1PredictedContactDistance}/${a1PredictedDoorGap}/${a1ActualContactDistance}/${a1ActualDoorGap}/${a1PartOrderValid}, installation=${installationAuthority}/${fleetGroundOffset}/${bogieTireCorrection}/${a1TerminalConnectionAuthority}/${a1TerminalWallDistance}/${a1TerminalDirection.join(",")}/${a1PortalAlignmentError}/${staticPortalAlignedGateCount}/${staticPortalAlignmentError}/${doubleSidedMaterialCount}, chain=${assemblyContinuityAuthority}/${assemblyPartCount}/${assemblyTransformError}/${isolatedNodeRotationCount}, connector=${connectorVisibleLength}/${connectorRibCount}, source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`,
             );
           }
 
@@ -187,7 +184,6 @@ function waitForFleet(THREE, group, placements) {
             a1PredictedDoorGap,
             a1ActualDoorGap,
             installationCorrection,
-            photoVestibuleDetail,
             exactModelGuard,
             staticPortalClosures,
             authority: READY_AUTHORITY,
