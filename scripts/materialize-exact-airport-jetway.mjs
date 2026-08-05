@@ -7,13 +7,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const stagingDir = path.join(repoRoot, ".jetway-geometry-staging-v2");
 const outputDir = path.join(repoRoot, "public", "models", "airport-jetway");
 const outputGlb = path.join(outputDir, "Airport_Jetway.glb");
-const expectedGlb = Object.freeze({
-  bytes: 31_459_796,
-  sha256: "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0",
-});
+const expectedGlb = Object.freeze({ bytes: 31_459_796, sha256: "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0" });
 const expectedImages = Object.freeze([
   { file: "Jetway_albedo.jpg", bytes: 4_374_151, sha256: "ded6dbad1930417349bd11a2b22de6f5aa6c89a0b9ef8241b1978ea092f37ed0" },
   { file: "Jetway_metallic.png", bytes: 9_300_055, sha256: "7deac7f078fd2ea28dcd6a88d47a9b2baf55503c7730c3b6846afb11178b7b8c" },
@@ -36,6 +32,38 @@ function requireIdentity(label, bytes, expected) {
   return actual;
 }
 
+async function decodePartSet(directory, patterns) {
+  const entries = await readdir(directory);
+  const names = entries.filter((name) => patterns.some((pattern) => pattern.test(name))).sort((a, b) => {
+    const familyA = a.startsWith("prefix") ? 0 : a.startsWith("part") ? 1 : 2;
+    const familyB = b.startsWith("prefix") ? 0 : b.startsWith("part") ? 1 : 2;
+    return familyA - familyB || a.localeCompare(b);
+  });
+  const pieces = [];
+  for (const name of names) {
+    const encoded = (await readFile(path.join(directory, name), "utf8")).replace(/\s+/g, "");
+    const decoded = Buffer.from(encoded, "base64");
+    if (!decoded.length) throw new Error(`${name} decoded to an empty transfer part`);
+    pieces.push(decoded);
+  }
+  return { names, bytes: Buffer.concat(pieces) };
+}
+
+function decompressXz(candidate) {
+  if (candidate.bytes.subarray(0, 6).toString("hex") !== "fd377a585a00") {
+    return { ...candidate, error: "missing XZ header" };
+  }
+  const result = spawnSync("xz", ["--decompress", "--stdout"], {
+    input: candidate.bytes,
+    encoding: null,
+    maxBuffer: 128 * 1024 * 1024,
+  });
+  if (result.status !== 0) {
+    return { ...candidate, error: result.stderr?.toString("utf8").trim() || `xz status ${result.status}` };
+  }
+  return { ...candidate, output: Buffer.from(result.stdout) };
+}
+
 function parseGlb(bytes) {
   if (bytes.toString("ascii", 0, 4) !== "glTF") throw new Error("Airport_Jetway.glb is missing the glTF binary magic");
   if (bytes.readUInt32LE(4) !== 2) throw new Error(`Airport_Jetway.glb uses unsupported GLB version ${bytes.readUInt32LE(4)}`);
@@ -56,36 +84,30 @@ function parseGlb(bytes) {
 }
 
 async function main() {
-  const partNames = (await readdir(stagingDir))
-    .filter((name) => /^part\d{3}\.b64$/.test(name))
-    .sort();
-  if (partNames.length !== 25 || partNames[0] !== "part000.b64" || partNames.at(-1) !== "part024.b64") {
-    throw new Error(`Exact jetway transfer requires part000.b64 through part024.b64; found ${partNames.length} parts`);
-  }
+  const candidates = [
+    { label: "v5-prefix-tail", ...(await decodePartSet(path.join(repoRoot, ".jetway-geometry-staging-v5"), [/^prefix\d{3}\.b64$/, /^tail\d{3}\.b64$/])) },
+    { label: "v2-parts", ...(await decodePartSet(path.join(repoRoot, ".jetway-geometry-staging-v2"), [/^part\d{3}\.b64$/])) },
+  ].map(decompressXz);
 
-  const decodedParts = await Promise.all(partNames.map(async (name) => {
-    const encoded = (await readFile(path.join(stagingDir, name), "utf8")).replace(/\s+/g, "");
-    const decoded = Buffer.from(encoded, "base64");
-    if (!decoded.length) throw new Error(`${name} decoded to an empty transfer part`);
-    return decoded;
-  }));
-  const compressed = Buffer.concat(decodedParts);
-  if (compressed.subarray(0, 6).toString("hex") !== "fd377a585a00") {
-    throw new Error("Exact jetway staged stream is not the expected XZ payload");
+  let selected = null;
+  for (const candidate of candidates) {
+    const compressedMeta = `${candidate.bytes.length}/${sha256(candidate.bytes)}`;
+    if (candidate.error) {
+      console.log(`[exact-airport-jetway] ${candidate.label} ${compressedMeta} failed: ${candidate.error}`);
+      continue;
+    }
+    const outputMeta = `${candidate.output.length}/${sha256(candidate.output)}`;
+    console.log(`[exact-airport-jetway] ${candidate.label} ${compressedMeta} decompressed to ${outputMeta}`);
+    if (candidate.output.length === expectedGlb.bytes && sha256(candidate.output) === expectedGlb.sha256) {
+      selected = candidate;
+      break;
+    }
   }
+  if (!selected) throw new Error("No staged exact jetway transfer reconstructed the required GLB identity");
 
-  const decompressed = spawnSync("xz", ["--decompress", "--stdout"], {
-    input: compressed,
-    encoding: null,
-    maxBuffer: 128 * 1024 * 1024,
-  });
-  if (decompressed.status !== 0) {
-    throw new Error(`XZ reconstruction failed: ${decompressed.stderr?.toString("utf8") || `status ${decompressed.status}`}`);
-  }
-  const glb = Buffer.from(decompressed.stdout);
+  const glb = selected.output;
   const glbIdentity = requireIdentity("Airport_Jetway.glb", glb, expectedGlb);
   const { json, binary } = parseGlb(glb);
-
   if (json.meshes?.length !== 7 || json.materials?.length !== 2 || json.images?.length !== 7) {
     throw new Error(`Exact GLB structure mismatch: meshes=${json.meshes?.length}, materials=${json.materials?.length}, images=${json.images?.length}`);
   }
@@ -100,23 +122,20 @@ async function main() {
   await mkdir(outputDir, { recursive: true });
   await rm(outputGlb, { force: true });
   await writeFile(outputGlb, glb);
-
   const extracted = [];
   for (const expected of expectedImages) {
-    const match = embeddedImages.find((candidate) =>
-      candidate.identity.bytes === expected.bytes && candidate.identity.sha256 === expected.sha256,
-    );
+    const match = embeddedImages.find((candidate) => candidate.identity.bytes === expected.bytes && candidate.identity.sha256 === expected.sha256);
     if (!match) throw new Error(`Exact embedded texture is missing or mismatched: ${expected.file}`);
-    const destination = path.join(outputDir, expected.file);
-    await writeFile(destination, match.bytes);
+    await writeFile(path.join(outputDir, expected.file), match.bytes);
     extracted.push({ file: expected.file, ...match.identity, glbImageIndex: match.index, mimeType: match.image.mimeType });
   }
 
   const manifest = {
     authority: "exact-uploaded-airport-jetway-glb-sha256-v1",
-    sourceParts: partNames,
-    compressedBytes: compressed.length,
-    compressedSha256: sha256(compressed),
+    transfer: selected.label,
+    sourceParts: selected.names,
+    compressedBytes: selected.bytes.length,
+    compressedSha256: sha256(selected.bytes),
     glb: { file: "Airport_Jetway.glb", ...glbIdentity },
     structure: { meshes: json.meshes.length, materials: json.materials.length, images: json.images.length },
     textures: extracted,
