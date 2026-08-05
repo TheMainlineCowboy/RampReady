@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
+const A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
 let source = fs.readFileSync(path, "utf8");
 if (!source.includes('  a1Connection: Object.freeze({')) {
   await import(`./prepare-full-airport-inspection-route.mjs?wide-a1=${Date.now()}`);
@@ -20,12 +21,12 @@ let presetBlock = source.slice(presetStart, presetEnd);
 const tugXLine = '    x: 7.5,';
 const tugZLine = '    z: 8.5,';
 const tugYawLine = '    yaw: -0.35,';
-// User-provided overhead imagery proves A1's fixed connector runs from the
-// rotunda at (-21.01, -16.15) directly south to the authored terminal wall near
-// z=-32.24. View that 16.09 m span side-on from the east so neither the movable
-// tunnel nor the old elevated corridor can hide the wall joint.
-const cameraPositionLine = '    cameraPosition: Object.freeze([8.0, 11.5, -24.2]),';
-const cameraTargetLine = '    cameraTarget: Object.freeze([-21.01, 4.6, -24.2]),';
+// Frame the Rotunda and its nearby terminal corner broadly. The terminal point
+// is now measured from the authored facade at runtime, so the evidence camera
+// must not assume the deleted 16.09 m due-south corridor.
+const cameraPositionLine = '    cameraPosition: Object.freeze([14.0, 14.0, 8.0]),';
+const cameraTargetLine = '    cameraTarget: Object.freeze([-24.5, 4.35, -17.0]),';
+const cameraAuthorityLine = `    cameraAuthority: "${A1_CAMERA_AUTHORITY}",`;
 
 for (const [pattern, line, label] of [
   [/\n\s+x:\s*-?\d+(?:\.\d+)?,/, tugXLine, "inspection tug x"],
@@ -36,41 +37,37 @@ for (const [pattern, line, label] of [
   presetBlock = presetBlock.replace(pattern, `\n${line}`);
 }
 
-if (/\s+cameraPosition:\s*Object\.freeze\(\[[^\]]+\]\),?/.test(presetBlock)) {
-  presetBlock = presetBlock.replace(
-    /\s+cameraPosition:\s*Object\.freeze\(\[[^\]]+\]\),?/,
-    `\n${cameraPositionLine}`,
-  );
-} else {
-  const close = presetBlock.lastIndexOf('  }),');
-  if (close < 0) throw new Error(`${path}: A1 connection preset closing anchor is missing`);
-  presetBlock = `${presetBlock.slice(0, close)}${cameraPositionLine}\n${presetBlock.slice(close)}`;
+for (const [pattern, line, label] of [
+  [/\s+cameraPosition:\s*Object\.freeze\(\[[^\]]+\]\),?/, cameraPositionLine, "camera position"],
+  [/\s+cameraTarget:\s*Object\.freeze\(\[[^\]]+\]\),?/, cameraTargetLine, "camera target"],
+]) {
+  if (pattern.test(presetBlock)) {
+    presetBlock = presetBlock.replace(pattern, `\n${line}`);
+  } else {
+    const close = presetBlock.lastIndexOf('  }),');
+    if (close < 0) throw new Error(`${path}: A1 connection preset closing anchor is missing for ${label}`);
+    presetBlock = `${presetBlock.slice(0, close)}${line}\n${presetBlock.slice(close)}`;
+  }
 }
-
-if (/\s+cameraTarget:\s*Object\.freeze\(\[[^\]]+\]\),?/.test(presetBlock)) {
-  presetBlock = presetBlock.replace(
-    /\s+cameraTarget:\s*Object\.freeze\(\[[^\]]+\]\),?/,
-    `\n${cameraTargetLine}`,
-  );
+if (/\s+cameraAuthority:\s*"[^"]+",?/.test(presetBlock)) {
+  presetBlock = presetBlock.replace(/\s+cameraAuthority:\s*"[^"]+",?/, `\n${cameraAuthorityLine}`);
 } else {
-  const positionEnd = presetBlock.indexOf(cameraPositionLine) + cameraPositionLine.length;
-  presetBlock = `${presetBlock.slice(0, positionEnd)}\n${cameraTargetLine}${presetBlock.slice(positionEnd)}`;
+  const targetEnd = presetBlock.indexOf(cameraTargetLine) + cameraTargetLine.length;
+  presetBlock = `${presetBlock.slice(0, targetEnd)}\n${cameraAuthorityLine}${presetBlock.slice(targetEnd)}`;
 }
 
 source = `${source.slice(0, presetStart)}${presetBlock}${source.slice(presetEnd)}`;
 const b15InspectionPattern = /b15: Object\.freeze\(\{ id: "b15", label: "B15 ramp", x: -?\d+(?:\.\d+)?, z: 539\.2, yaw: -1\.5708, cameraYaw: 1\.38, cameraDistance: 25 \}\),/;
 const b15InspectionPreset = 'b15: Object.freeze({ id: "b15", label: "B15 ramp", x: -18.5, z: 539.2, yaw: -1.5708, cameraYaw: 1.38, cameraDistance: 25 }),';
-if (!b15InspectionPattern.test(source)) {
-  throw new Error(`${path}: generated B15 inspection preset is missing`);
-}
+if (!b15InspectionPattern.test(source)) throw new Error(`${path}: generated B15 inspection preset is missing`);
 source = source.replace(b15InspectionPattern, b15InspectionPreset);
 source = source.replace(
   /source-gate-apron-presets-with-[^"\n]+-a1-a14-b14-b15-v\d+/g,
   CANONICAL_ROUTE_AUTHORITY,
 );
 source = source.replace(
-  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+)/g,
-  'side-on-direct-terminal-wall-a1-v7',
+  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+|oblique-measured-terminal-corner-a1-v\d+)/g,
+  A1_CAMERA_AUTHORITY,
 );
 
 for (const token of [
@@ -79,11 +76,12 @@ for (const token of [
   tugYawLine,
   cameraPositionLine,
   cameraTargetLine,
+  cameraAuthorityLine,
   b15InspectionPreset,
   CANONICAL_ROUTE_AUTHORITY,
-  'side-on-direct-terminal-wall-a1-v7',
+  A1_CAMERA_AUTHORITY,
 ]) {
-  if (!source.includes(token)) throw new Error(`${path}: direct-terminal A1/B15 inspection preparation is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${path}: measured-terminal A1/B15 inspection preparation is missing ${token}`);
 }
 const fixedCameraPositionCount = (source.match(/cameraPosition:\s*Object\.freeze/g) || []).length;
 const fixedCameraTargetCount = (source.match(/cameraTarget:\s*Object\.freeze/g) || []).length;
@@ -105,4 +103,4 @@ if (fixedCameraPositionCount === 2) {
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared a side-on A1 inspection camera that visibly frames the user-photo-verified direct terminal-wall connector from facade to rotunda, while preserving the canonical A1/A14 inspection route authority.");
+console.log("Prepared an oblique A1 evidence camera that frames the measured short terminal connector, Rotunda and authored facade corner.");
