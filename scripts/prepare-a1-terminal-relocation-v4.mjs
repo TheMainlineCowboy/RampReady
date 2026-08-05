@@ -32,7 +32,22 @@ const after = `  let rotundaOpening = measureExactRotundaOpening(THREE, fleet, a
   a1Anchor.position.z += terminalRelocationZ;
   fleet.updateMatrixWorld(true);
   rotundaOpening = measureExactRotundaOpening(THREE, fleet, a1Model, terminalDirection);
-  const terminalDistance = desiredTerminalDistance;`;
+  const relocatedWallOffsetX = terminalWallX - rotundaOpening.centerX;
+  const relocatedWallOffsetZ = terminalWallZ - rotundaOpening.centerZ;
+  const terminalDistance = relocatedWallOffsetX * rotundaOpening.openingDirectionX
+    + relocatedWallOffsetZ * rotundaOpening.openingDirectionZ;
+  const relocationDistanceError = Math.abs(terminalDistance - desiredTerminalDistance);
+  const openingAlignment = rotundaOpening.openingDirectionX * terminalDirection.x
+    + rotundaOpening.openingDirectionZ * terminalDirection.z;
+  if (relocationDistanceError > 0.03) {
+    throw new Error(\`A1 terminal relocation missed the measured vestibule span by \${relocationDistanceError} m\`);
+  }
+  if (openingAlignment < 0.98) {
+    throw new Error(\`A1 Rotunda opening is not terminal-facing after relocation: \${openingAlignment}\`);
+  }
+  if (A1_PHOTO_VISIBLE_VESTIBULE_METERS > 3) {
+    throw new Error(\`A1 photo vestibule exceeds the compact-reference limit: \${A1_PHOTO_VISIBLE_VESTIBULE_METERS}\`);
+  }`;
 
 if (!source.includes(before)) throw new Error(`${installationPath}: cab-pivot span block is missing`);
 source = source.replace(before, after);
@@ -44,21 +59,27 @@ source = source
   const relocationDistance = Math.hypot(relocationX, relocationZ);
   group.userData.uploadedJetwayA1TerminalRelocationX = terminalRelocationX;
   group.userData.uploadedJetwayA1TerminalRelocationZ = terminalRelocationZ;
-  group.userData.uploadedJetwayA1TerminalRelocationMeters = terminalRelocationMeters;`,
+  group.userData.uploadedJetwayA1TerminalRelocationMeters = terminalRelocationMeters;
+  group.userData.uploadedJetwayA1TerminalRelocationDistanceErrorMeters = relocationDistanceError;
+  group.userData.uploadedJetwayA1TerminalOpeningAlignment = openingAlignment;`,
   )
   .replace(
     'const INSTALLATION_AUTHORITY = "photo-registered-cab-pivot-rigid-parent-grounded-exact-chain-v15";',
-    'const INSTALLATION_AUTHORITY = "terminal-relocated-cab-pivot-rigid-parent-grounded-exact-chain-v16";',
+    'const INSTALLATION_AUTHORITY = "terminal-relocated-cab-pivot-rigid-parent-grounded-exact-chain-v17";',
   );
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "terminal-relocated-cab-pivot-rigid-parent-grounded-exact-chain-v16"',
+  'INSTALLATION_AUTHORITY = "terminal-relocated-cab-pivot-rigid-parent-grounded-exact-chain-v17"',
   "const desiredTerminalDistance = rotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS",
   "a1Anchor.position.x += terminalRelocationX",
-  "uploadedJetwayA1TerminalRelocationMeters",
+  "const relocationDistanceError = Math.abs(terminalDistance - desiredTerminalDistance)",
+  "openingAlignment < 0.98",
+  "A1_PHOTO_VISIBLE_VESTIBULE_METERS > 3",
+  "uploadedJetwayA1TerminalRelocationDistanceErrorMeters",
+  "uploadedJetwayA1TerminalOpeningAlignment",
 ]) {
   if (!source.includes(token)) throw new Error(`${installationPath}: terminal relocation output is missing ${token}`);
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Relocated the complete A1 parent by its Rotunda to the terminal wall while preserving the supplied GLB hierarchy and compact photo-matched vestibule.");
+console.log("Relocated the complete A1 parent by its Rotunda to the terminal wall, verified the measured compact vestibule span and terminal-facing opening, and preserved the supplied GLB hierarchy.");
