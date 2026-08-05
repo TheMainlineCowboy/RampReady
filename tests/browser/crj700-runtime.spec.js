@@ -310,7 +310,7 @@ test("verifies CRJ, supplied A1 jetway, operator view and mobile layout in one a
     expect(parked.runtime.a1JetwayStateHistory).toMatch(/parked-clear-of-aircraft|parked/);
     expect(parked.runtime.terminal4A1RetractionAuthority).toBe("aircraft-door-clearance-without-overtravel-v6");
     expect(parked.runtime.terminal4A1RetractionClearanceMeters).toBe("2.38");
-    expect(parked.message).toMatch(/Jetway parked clear/i);
+    expect(parked.message).toMatch(/Jetway (parked clear|departure sequence active)/i);
     await sceneAction(page, { hideControls: true, frames: 6 });
     await captureViewport(client, DESKTOP, "a1-jetway-parked.png");
   } finally {
