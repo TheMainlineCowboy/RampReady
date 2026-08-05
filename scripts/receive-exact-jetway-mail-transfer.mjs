@@ -7,6 +7,8 @@ import path from "node:path";
 
 const API = "https://api.mail.tm";
 const ROOT = path.resolve(".cache/exact-jetway-mail-transfer");
+const STATE_PATH = path.join(ROOT, "mailbox.json");
+const PUBLIC_ADDRESS_PATH = path.resolve(".jetway-transfer-mailbox.txt");
 const EXPECTED_PARTS = Object.freeze([
   { file: "jetway-part-00.bin", bytes: 5_000_000, sha256: "b782c806bc17d9d35c3443d03edd3b6b121fd79f6f8f74edeb0b9f5942c72fea" },
   { file: "jetway-part-01.bin", bytes: 5_000_000, sha256: "4d48e7029051b783755c1ca70660f3744dd0050229b197a6458cbcf0857b7ce9" },
@@ -55,11 +57,22 @@ async function createMailbox() {
     body: JSON.stringify({ address, password }),
   });
   if (!tokenResponse?.token) throw new Error("mail.tm did not return an access token");
+  const state = { address, token: tokenResponse.token };
+  await mkdir(ROOT, { recursive: true });
+  await writeFile(STATE_PATH, JSON.stringify(state), { mode: 0o600 });
+  await writeFile(PUBLIC_ADDRESS_PATH, `${address}\n`, "utf8");
   console.log(`JETWAY_MAILBOX_ADDRESS=${address}`);
   if (process.env.GITHUB_STEP_SUMMARY) {
-    await writeFile(process.env.GITHUB_STEP_SUMMARY, `## Exact jetway transfer mailbox\n\nSend the six encrypted parts to **${address}** with subjects ${SUBJECT_PREFIX}00 through ${SUBJECT_PREFIX}05.\n`, { flag: "a" });
+    await writeFile(process.env.GITHUB_STEP_SUMMARY, `## Exact jetway transfer mailbox\n\nOne-time address: **${address}**\n`, { flag: "a" });
   }
-  return { address, token: tokenResponse.token };
+  return state;
+}
+
+async function loadMailbox() {
+  const state = JSON.parse(await readFile(STATE_PATH, "utf8"));
+  if (!state?.address || !state?.token) throw new Error("Exact jetway mailbox state is incomplete");
+  console.log(`JETWAY_MAILBOX_ADDRESS=${state.address}`);
+  return state;
 }
 
 async function downloadAttachment(token, messageId, expected) {
@@ -67,8 +80,7 @@ async function downloadAttachment(token, messageId, expected) {
   const detail = await jsonRequest(`${API}/messages/${messageId}`, { headers });
   const attachment = (detail?.attachments || []).find((entry) => entry.filename === expected.file) || detail?.attachments?.[0];
   if (!attachment?.downloadUrl) throw new Error(`${expected.file}: received message has no downloadable attachment`);
-  const url = new URL(attachment.downloadUrl, API).href;
-  const response = await fetch(url, { headers, redirect: "follow" });
+  const response = await fetch(new URL(attachment.downloadUrl, API), { headers, redirect: "follow" });
   if (!response.ok) throw new Error(`${expected.file}: attachment download returned ${response.status}`);
   const bytes = Buffer.from(await response.arrayBuffer());
   assertIdentity(expected.file, bytes, expected);
@@ -104,16 +116,14 @@ function run(command, args, options = {}) {
   return Buffer.from(result.stdout || []);
 }
 
-async function main() {
+async function receiveAndMaterialize() {
   const transferKey = process.env.JETWAY_TRANSFER_KEY;
   if (!transferKey) throw new Error("JETWAY_TRANSFER_KEY is required");
-  await mkdir(ROOT, { recursive: true });
-  const { token } = await createMailbox();
+  const { token } = await loadMailbox();
   const encrypted = await receiveAll(token);
   assertIdentity("Encrypted exact jetway payload", encrypted, EXPECTED_ENCRYPTED);
   const encryptedPath = path.join(ROOT, "Airport_Jetway.glb.xz.enc");
   await writeFile(encryptedPath, encrypted);
-
   const xz = run("openssl", ["enc", "-d", "-aes-256-cbc", "-pbkdf2", "-iter", "200000", "-pass", `pass:${transferKey}`, "-in", encryptedPath]);
   assertIdentity("Exact jetway XZ", xz, EXPECTED_XZ);
   const xzPath = path.join(ROOT, "Airport_Jetway.glb.xz");
@@ -127,9 +137,17 @@ async function main() {
   const output = path.resolve("public/models/airport-jetway/Airport_Jetway.glb");
   await mkdir(path.dirname(output), { recursive: true });
   await writeFile(output, glb);
-  const persisted = await readFile(output);
-  assertIdentity("Persisted Airport_Jetway.glb", persisted, EXPECTED_GLB);
+  assertIdentity("Persisted Airport_Jetway.glb", await readFile(output), EXPECTED_GLB);
   console.log(`JETWAY_EXACT_GLB_READY=${output}`);
+}
+
+async function main() {
+  await mkdir(ROOT, { recursive: true });
+  const mode = process.argv[2] || "--all";
+  if (mode === "--create-mailbox") return createMailbox();
+  if (mode === "--receive") return receiveAndMaterialize();
+  await createMailbox();
+  return receiveAndMaterialize();
 }
 
 main().catch((error) => {
