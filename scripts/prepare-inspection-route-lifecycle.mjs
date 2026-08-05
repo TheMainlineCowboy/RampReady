@@ -18,8 +18,9 @@ replaceRequired(
 const A1_INSPECTION_NOSE_GEAR_X = 12.353412;
 const A1_INSPECTION_NOSE_GEAR_Z = -12.486888;
 // Source A1 parking heading is 270.491 degrees. The uploaded CRJ points along
-// local -Z, so its Three.js yaw is parking heading minus 270 degrees.
-const A1_INSPECTION_AIRCRAFT_YAW = THREE.MathUtils.degToRad(0.491);
+// local -Z, so its yaw is parking heading minus 270 degrees. Keep this
+// module-level constant independent of the later THREE runtime binding.
+const A1_INSPECTION_AIRCRAFT_YAW = (0.491 * Math.PI) / 180;
 const A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "photo-registered-a1-terminal-corner-stop-v1";`,
   "A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY",
   "A1 inspection aircraft pose constants",
@@ -119,6 +120,7 @@ for (const token of [
   "A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY",
   "A1_INSPECTION_NOSE_GEAR_X = 12.353412",
   "A1_INSPECTION_NOSE_GEAR_Z = -12.486888",
+  "const A1_INSPECTION_AIRCRAFT_YAW = (0.491 * Math.PI) / 180",
   "const resetUsesInspectionAircraftPose = inspectionRef.current",
   "next ? A1_INSPECTION_NOSE_GEAR_Z : NOSE_START_Z",
   'sim.renderer.domElement.dataset.inspectionPreset = next ? "a1" : "training"',
