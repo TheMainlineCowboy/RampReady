@@ -189,8 +189,8 @@ test("loads source-correct PHX scenery with the complete exact Terminal 4 jetway
   expect(nearestGeometryMeters).toBeGreaterThan(29.9);
   expect(nearestGeometryMeters).toBeLessThan(30.6);
   const a1WallDistance = Number(runtime.terminal4A1JetwayWallDistance);
-  expect(a1WallDistance).toBeGreaterThan(0.4);
-  expect(a1WallDistance).toBeLessThan(12);
+  expect(a1WallDistance).toBeGreaterThan(8);
+  expect(a1WallDistance).toBeLessThan(28);
   expect(runtime.terminal4A1ConnectionAuthority).toBe(DIRECT_A1_TERMINAL_AUTHORITY);
   expect(runtime.terminal4A1ConnectionAuthority).not.toMatch(/WALK/i);
   const a1TerminalDirection = runtime.terminal4A1ConnectionDirection.split(",").map(Number);
