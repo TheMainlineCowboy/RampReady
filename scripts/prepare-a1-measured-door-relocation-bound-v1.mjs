@@ -3,15 +3,31 @@ import fs from "node:fs";
 const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js";
 let source = fs.readFileSync(installationPath, "utf8");
 
-const MAXIMUM_MEASURED_RELOCATION_METERS = 32;
-const authority = "measured-crj-forward-door-bounded-a1-relocation-v1";
+const FALLBACK_MAXIMUM_MEASURED_RELOCATION_METERS = 32;
+const authority = "measured-crj-forward-door-authored-span-bound-v2";
 
 const oldGuard = "if (!(relocationDistance >= 0 && relocationDistance < 28)) {";
-const newGuard = `if (!(relocationDistance >= 0 && relocationDistance < ${MAXIMUM_MEASURED_RELOCATION_METERS})) {`;
-if (source.includes(oldGuard)) {
-  source = source.replace(oldGuard, newGuard);
-} else if (!source.includes(newGuard)) {
-  throw new Error(`${installationPath}: A1 photo-registration relocation guard is missing`);
+const fallbackGuard = `if (!(relocationDistance >= 0 && relocationDistance < ${FALLBACK_MAXIMUM_MEASURED_RELOCATION_METERS})) {`;
+const geometryBoundTokens = [
+  "const maximumPhotoRegistrationRelocationMeters",
+  "photoRegistrationHorizontalSpanMeters + sourceTerminalDistance + terminalDistance",
+  "relocationDistance <= maximumPhotoRegistrationRelocationMeters",
+];
+const hasGeometryDerivedGuard = geometryBoundTokens.every((token) => source.includes(token));
+
+let maximumRelocationExpression;
+if (hasGeometryDerivedGuard) {
+  // The whole authored assembly is reversed around its measured midpoint. Keep
+  // the resulting strict bound derived from the actual Rotunda-to-Cab geometry
+  // instead of replacing it with another arbitrary fixed number.
+  maximumRelocationExpression = "maximumPhotoRegistrationRelocationMeters";
+} else if (source.includes(oldGuard)) {
+  source = source.replace(oldGuard, fallbackGuard);
+  maximumRelocationExpression = String(FALLBACK_MAXIMUM_MEASURED_RELOCATION_METERS);
+} else if (source.includes(fallbackGuard)) {
+  maximumRelocationExpression = String(FALLBACK_MAXIMUM_MEASURED_RELOCATION_METERS);
+} else {
+  throw new Error(`${installationPath}: no valid A1 photo-registration relocation guard is present`);
 }
 
 if (!source.includes("A1_MEASURED_DOOR_RELOCATION_BOUND_AUTHORITY")) {
@@ -22,6 +38,11 @@ if (!source.includes("A1_MEASURED_DOOR_RELOCATION_BOUND_AUTHORITY")) {
     throw new Error(`${installationPath}: photo-registration authority anchor is missing`);
   }
   source = `${source.slice(0, lineEnd + 1)}const A1_MEASURED_DOOR_RELOCATION_BOUND_AUTHORITY = "${authority}";\n${source.slice(lineEnd + 1)}`;
+} else {
+  source = source.replace(
+    /const A1_MEASURED_DOOR_RELOCATION_BOUND_AUTHORITY = "[^"]+";/,
+    `const A1_MEASURED_DOOR_RELOCATION_BOUND_AUTHORITY = "${authority}";`,
+  );
 }
 
 if (!source.includes("a1MeasuredDoorRelocationBoundAuthority")) {
@@ -31,7 +52,12 @@ if (!source.includes("a1MeasuredDoorRelocationBoundAuthority")) {
   }
   source = source.replace(
     reportAnchor,
-    `${reportAnchor}\n    a1MeasuredDoorRelocationBoundAuthority: A1_MEASURED_DOOR_RELOCATION_BOUND_AUTHORITY,\n    a1MaximumMeasuredRelocationMeters: ${MAXIMUM_MEASURED_RELOCATION_METERS},`,
+    `${reportAnchor}\n    a1MeasuredDoorRelocationBoundAuthority: A1_MEASURED_DOOR_RELOCATION_BOUND_AUTHORITY,\n    a1MaximumMeasuredRelocationMeters: ${maximumRelocationExpression},`,
+  );
+} else {
+  source = source.replace(
+    /a1MaximumMeasuredRelocationMeters:\s*(?:\d+(?:\.\d+)?|maximumPhotoRegistrationRelocationMeters),/,
+    `a1MaximumMeasuredRelocationMeters: ${maximumRelocationExpression},`,
   );
 }
 
@@ -47,16 +73,22 @@ if (!source.includes("uploadedJetwayA1MaximumMeasuredRelocationMeters")) {
 }
 
 for (const token of [
-  newGuard,
   `A1_MEASURED_DOOR_RELOCATION_BOUND_AUTHORITY = "${authority}"`,
   "a1MeasuredDoorRelocationBoundAuthority: A1_MEASURED_DOOR_RELOCATION_BOUND_AUTHORITY",
-  `a1MaximumMeasuredRelocationMeters: ${MAXIMUM_MEASURED_RELOCATION_METERS}`,
+  `a1MaximumMeasuredRelocationMeters: ${maximumRelocationExpression}`,
   "uploadedJetwayA1MaximumMeasuredRelocationMeters",
 ]) {
   if (!source.includes(token)) {
     throw new Error(`${installationPath}: measured-door relocation bound output is missing ${token}`);
   }
 }
+if (hasGeometryDerivedGuard && !geometryBoundTokens.every((token) => source.includes(token))) {
+  throw new Error(`${installationPath}: authored-span relocation guard was not preserved`);
+}
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log(`Expanded the bounded whole-A1 relocation limit to ${MAXIMUM_MEASURED_RELOCATION_METERS} m so the 28.935 m authored-model forward-door correction can load; nonfinite, negative and larger relocations remain rejected.`);
+console.log(
+  hasGeometryDerivedGuard
+    ? "Preserved the authored-span A1 relocation bound for the measured CRJ forward-door target; no arbitrary fixed cutoff replaced it."
+    : `Applied the ${FALLBACK_MAXIMUM_MEASURED_RELOCATION_METERS} m compatibility bound because the authored-span guard was not present.`,
+);
