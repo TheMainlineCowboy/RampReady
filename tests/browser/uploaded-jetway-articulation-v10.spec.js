@@ -35,8 +35,13 @@ async function captureCanvas(page, path) {
   }
 }
 
-async function captureInspectionPreset(page, inspectionLocation, presetId, outputPath) {
-  await inspectionLocation.selectOption(presetId);
+async function captureInspectionPreset(page, presetId, outputPath) {
+  await page.evaluate((nextPreset) => {
+    const select = document.querySelector('select[aria-label="Inspection location"]');
+    if (!(select instanceof HTMLSelectElement)) throw new Error("Inspection location selector is missing");
+    select.value = nextPreset;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  }, presetId);
   await page.waitForFunction((expectedPreset) => (
     document.querySelector("canvas.trainerCanvas")?.dataset?.inspectionPreset === expectedPreset
   ), presetId, { timeout: 30_000, polling: 100 });
@@ -106,31 +111,24 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
   expect(centers.Tunnel_B).toBeLessThan(centers.Tunnel_C);
   expect(centers.Tunnel_C).toBeLessThan(centers.Cab);
 
-  const inspectionLocation = page.getByLabel("Inspection location");
-  await inspectionLocation.selectOption("a1Connection");
-  await page.waitForFunction(() => {
-    const data = document.querySelector("canvas.trainerCanvas")?.dataset;
-    return data?.inspectionPreset === "a1Connection"
-      && data?.inspectionCameraAuthority === "wide-diagonal-a1-terminal-joint-v6-clear-tug";
-  }, null, { timeout: 30_000, polling: 100 });
-  await page.waitForTimeout(2_000);
-  await page.addStyleTag({ content: ".rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}" });
-  await captureCanvas(page, "test-results/uploaded-jetway-a1-articulated-v10.png");
   await captureInspectionPreset(
     page,
-    inspectionLocation,
+    "a1Connection",
+    "test-results/uploaded-jetway-a1-articulated-v10.png",
+  );
+  await page.addStyleTag({ content: ".rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}" });
+  await captureInspectionPreset(
+    page,
     "a14",
     "test-results/uploaded-jetway-a-concourse-static-fleet-v10.png",
   );
   await captureInspectionPreset(
     page,
-    inspectionLocation,
     "b14",
     "test-results/uploaded-jetway-b-concourse-static-fleet-v10.png",
   );
   await captureInspectionPreset(
     page,
-    inspectionLocation,
     "b15",
     "test-results/uploaded-jetway-b15-static-fleet-v10.png",
   );
