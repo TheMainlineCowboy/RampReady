@@ -74,12 +74,18 @@ if (!source.includes(placementBefore)) {
 source = source.replace(placementBefore, placementAfter);
 
 const relocationBefore = "  const relocationX = cabPreservationDelta.x;\n  const relocationZ = cabPreservationDelta.z;\n  const relocationDistance = cabPreservationDelta.length();";
-const relocationAfter = `  const relocationX = cabPreservationDelta.x + terminalRelocationX;
+const relocationAfter = `  // This is the complete rigid-parent displacement from the pre-repair A1
+  // placement: cab-pivot compensation plus the final signed wall translation.
+  // The aircraft must use this complete vector, not only the wall component.
+  const relocationX = cabPreservationDelta.x + terminalRelocationX;
   const relocationZ = cabPreservationDelta.z + terminalRelocationZ;
   const relocationDistance = Math.hypot(relocationX, relocationZ);
   group.userData.uploadedJetwayA1TerminalRelocationX = terminalRelocationX;
   group.userData.uploadedJetwayA1TerminalRelocationZ = terminalRelocationZ;
   group.userData.uploadedJetwayA1TerminalRelocationMeters = terminalRelocationMeters;
+  group.userData.uploadedJetwayA1TotalRelocationX = relocationX;
+  group.userData.uploadedJetwayA1TotalRelocationZ = relocationZ;
+  group.userData.uploadedJetwayA1TotalRelocationMeters = relocationDistance;
   group.userData.uploadedJetwayA1TerminalRelocationDistanceErrorMeters = relocationDistanceError;
   group.userData.uploadedJetwayA1TerminalOpeningAlignment = openingAlignment;
   group.userData.uploadedJetwayA1MeasuredTerminalWallX = terminalWallX;
@@ -90,11 +96,11 @@ if (!source.includes(relocationBefore)) {
 source = source.replace(relocationBefore, relocationAfter);
 source = source.replace(
   /const INSTALLATION_AUTHORITY = "[^"]+";/,
-  'const INSTALLATION_AUTHORITY = "signed-terminal-relocated-authored-opening-cab-pivot-rigid-parent-grounded-exact-chain-v21";',
+  'const INSTALLATION_AUTHORITY = "total-rigid-parent-relocated-authored-opening-grounded-exact-chain-v22";',
 );
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "signed-terminal-relocated-authored-opening-cab-pivot-rigid-parent-grounded-exact-chain-v21"',
+  'INSTALLATION_AUTHORITY = "total-rigid-parent-relocated-authored-opening-grounded-exact-chain-v22"',
   "const measuredTerminalAlignment = rotundaOpening.openingDirectionX * terminalDirection.x",
   "const desiredTerminalDistance = rotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS",
   "Math.abs(terminalRelocationMeters) >= 60",
@@ -102,14 +108,17 @@ for (const token of [
   "x: terminalWallX - terminalDirection.x * terminalDistance",
   "z: terminalWallZ - terminalDirection.z * terminalDistance",
   "const relocationDistanceError = Math.abs(terminalDistance - desiredTerminalDistance)",
+  "uploadedJetwayA1TotalRelocationX",
+  "uploadedJetwayA1TotalRelocationZ",
+  "uploadedJetwayA1TotalRelocationMeters",
   "openingAlignment < 0.995",
   "A1_PHOTO_VISIBLE_VESTIBULE_METERS > 3",
   "uploadedJetwayA1TerminalRelocationDistanceErrorMeters",
   "uploadedJetwayA1TerminalOpeningAlignment",
   "uploadedJetwayA1MeasuredTerminalWallX",
 ]) {
-  if (!source.includes(token)) throw new Error(`${installationPath}: signed authored-opening terminal relocation output is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${installationPath}: total rigid-parent relocation output is missing ${token}`);
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Applied the bounded signed relocation needed to place the authored-terminal-side A1 Rotunda at the real wall, anchored the compact vestibule there, and preserved the supplied GLB hierarchy.");
+console.log("Recorded the complete A1 rigid-parent displacement, including cab-pivot compensation and signed wall relocation, while preserving the supplied GLB hierarchy.");
