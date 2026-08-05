@@ -1,5 +1,5 @@
 const STATIC_PORTAL_AUTHORITY = "57-static-terminal-portals-paired-vestibule-doors-v1";
-const STATIC_CAB_CLOSURE_AUTHORITY = "57-static-aircraft-facing-cab-portals-closed-oversized-forward-v2";
+const STATIC_CAB_CLOSURE_AUTHORITY = "57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3";
 
 function clamp(value, minimum, maximum) {
   return Math.max(minimum, Math.min(maximum, Number(value) || 0));
@@ -90,54 +90,53 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
       });
     }
 
-    // Close the apron-facing cab mouth beyond the authored cab face so the
-    // closure cannot remain hidden inside the supplied shell. These are
-    // separate instanced meshes; no authored GLB node or transform is changed.
+    // Straddle the authored aircraft-contact plane with a thick opaque cap.
+    // This closes the aperture from either viewing side and avoids depending
+    // on an exporter-specific Cab forward-axis sign. No GLB node is changed.
     const cabYaw = Number(placement.yaw) || 0;
     const cabForwardX = Math.sin(cabYaw);
     const cabForwardZ = Math.cos(cabYaw);
     const cabRightX = Math.cos(cabYaw);
     const cabRightZ = -Math.sin(cabYaw);
     const contactDistance = finitePositive(placement.bridgeEnd, 18);
-    const cabFaceDistance = contactDistance + 0.38;
-    const cabFaceX = placement.x + cabForwardX * cabFaceDistance;
-    const cabFaceZ = placement.z + cabForwardZ * cabFaceDistance;
+    const cabFaceX = placement.x + cabForwardX * contactDistance;
+    const cabFaceZ = placement.z + cabForwardZ * contactDistance;
     const cabCenterY = centerY + 0.02;
 
     cabPanelTransforms.push({
       position: [cabFaceX, cabCenterY, cabFaceZ],
       yaw: cabYaw,
-      scale: [3.4, 3.15, 0.2],
+      scale: [3.9, 3.5, 1.45],
     });
     cabWindowTransforms.push({
       position: [
-        cabFaceX + cabForwardX * 0.12,
-        cabCenterY + 0.22,
-        cabFaceZ + cabForwardZ * 0.12,
+        cabFaceX + cabForwardX * 0.76,
+        cabCenterY + 0.35,
+        cabFaceZ + cabForwardZ * 0.76,
       ],
       yaw: cabYaw,
-      scale: [2.35, 1.65, 0.045],
+      scale: [1.08, 0.72, 0.055],
     });
     for (const vertical of [-1, 1]) {
       cabHeaderTransforms.push({
         position: [
-          cabFaceX + cabForwardX * 0.14,
-          cabCenterY + vertical * 1.48,
-          cabFaceZ + cabForwardZ * 0.14,
+          cabFaceX + cabForwardX * 0.78,
+          cabCenterY + vertical * 1.58,
+          cabFaceZ + cabForwardZ * 0.78,
         ],
         yaw: cabYaw,
-        scale: [3.7, 0.28, 0.24],
+        scale: [4.05, 0.3, 0.18],
       });
     }
     for (const side of [-1, 1]) {
       cabJambTransforms.push({
         position: [
-          cabFaceX + cabRightX * side * 1.66 + cabForwardX * 0.14,
+          cabFaceX + cabRightX * side * 1.82 + cabForwardX * 0.78,
           cabCenterY,
-          cabFaceZ + cabRightZ * side * 1.66 + cabForwardZ * 0.14,
+          cabFaceZ + cabRightZ * side * 1.82 + cabForwardZ * 0.78,
         ],
         yaw: cabYaw,
-        scale: [0.28, 3.18, 0.24],
+        scale: [0.3, 3.5, 0.18],
       });
     }
   }
@@ -164,22 +163,18 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
     side: THREE.DoubleSide,
   });
   const cabPanelMaterial = new THREE.MeshStandardMaterial({
-    name: "Static jetway closed aircraft interface panel",
-    color: 0xd5d8d5,
-    roughness: 0.72,
-    metalness: 0.1,
+    name: "Static jetway opaque aircraft interface cap",
+    color: 0xd9dcda,
+    roughness: 0.76,
+    metalness: 0.08,
     side: THREE.DoubleSide,
   });
-  const cabWindowMaterial = new THREE.MeshPhysicalMaterial({
-    name: "Static jetway closed aircraft interface glazing",
-    color: 0x25343a,
-    roughness: 0.3,
-    metalness: 0.03,
-    transmission: 0.04,
-    clearcoat: 0.12,
-    transparent: true,
-    opacity: 0.92,
-    depthWrite: true,
+  const cabWindowMaterial = new THREE.MeshStandardMaterial({
+    name: "Static jetway closed aircraft interface service window",
+    color: 0x6f858c,
+    roughness: 0.52,
+    metalness: 0.08,
+    transparent: false,
     side: THREE.DoubleSide,
   });
   const cabBellowsMaterial = new THREE.MeshStandardMaterial({
@@ -211,6 +206,8 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
   group.userData.cabSurroundPieceCount = cabHeaderTransforms.length + cabJambTransforms.length;
   group.userData.a1LeftOpen = true;
   group.userData.authoredNodeTransformCount = 0;
+  group.userData.opaqueCabCapDepthMeters = 1.45;
+  group.userData.apronFacingOpenAreaMeters = 0;
   fleet.add(group);
 
   return {
