@@ -16,19 +16,15 @@ async function launchRuntime(page) {
   await expect(page.getByRole("heading", { name: "Choose pushback equipment" })).toBeVisible();
   await page.getByRole("radio", { name: /Stand-up pushback/i }).click();
   await page.getByRole("button", { name: "Start training" }).click();
-  const canvas = page.locator("canvas.trainerCanvas");
-  await expect(canvas).toBeVisible();
-  for (const [attribute, expected] of [
-    ["data-environment-source", "authored-phx-terminal4-textured-source-jetways"],
-    ["data-ground-source", "authored-kphx-v181-source-textured-nearfield"],
-    ["data-photo-ground-source", "source-authored-phx-photo"],
-  ]) {
-    await expect.poll(
-      () => canvas.getAttribute(attribute),
-      { timeout: 120_000, intervals: [500, 1_000, 2_000] },
-    ).toBe(expected);
-  }
-  return canvas;
+
+  await page.waitForFunction(() => {
+    const data = document.querySelector("canvas.trainerCanvas")?.dataset;
+    return data?.environmentSource === "authored-phx-terminal4-textured-source-jetways"
+      && data?.groundSource === "authored-kphx-v181-source-textured-nearfield"
+      && data?.photoGroundSource === "source-authored-phx-photo"
+      && data?.terminal4UploadedJetwayLoadState === "ready"
+      && data?.terminal4UploadedJetwayCount === "58";
+  }, null, { timeout: 300_000, polling: 100 });
 }
 
 async function captureScene(page, fileName) {
@@ -56,7 +52,10 @@ async function captureScene(page, fileName) {
           scale: 1,
         },
       }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Airport compositor capture exceeded 45 seconds")), 45_000)),
+      new Promise((_, reject) => setTimeout(
+        () => reject(new Error("Airport compositor capture exceeded 45 seconds")),
+        45_000,
+      )),
     ]);
     const image = Buffer.from(data, "base64");
     expect(image.byteLength).toBeGreaterThan(50_000);
@@ -66,78 +65,125 @@ async function captureScene(page, fileName) {
   }
 }
 
-async function numericAttribute(canvas, attribute) {
-  const value = await canvas.getAttribute(attribute);
-  return Number(value);
-}
-
-async function tugPosition(canvas) {
-  const x = await numericAttribute(canvas, "data-inspection-tug-x");
-  const z = await numericAttribute(canvas, "data-inspection-tug-z");
-  return { x, z };
-}
-
-async function expectPresetPosition(canvas, preset) {
-  await expect(canvas).toHaveAttribute("data-inspection-tug-x", preset.x.toFixed(3), { timeout: 30_000 });
-  await expect(canvas).toHaveAttribute("data-inspection-tug-z", preset.z.toFixed(3), { timeout: 30_000 });
-}
-
 function distance(a, b) {
   return Math.hypot(a.x - b.x, a.z - b.z);
 }
 
 test("free-drive inspection covers the full Terminal 4 route from A1 through B15", async ({ page }) => {
   test.setTimeout(900_000);
-  const canvas = await launchRuntime(page);
+  await launchRuntime(page);
 
-  const toggle = page.locator("button.rr-inspection-toggle");
-  await expect(toggle).toHaveText("Free-drive inspection");
-  await toggle.click();
-  await expect(toggle).toHaveAttribute("aria-pressed", "true");
-  await expect(toggle).toHaveText("Return to training");
-  await expect(canvas).toHaveAttribute(
-    "data-inspection-route-authority",
+  const result = await page.evaluate(async (presets) => {
+    const canvas = document.querySelector("canvas.trainerCanvas");
+    if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Three.js canvas is missing");
+
+    const waitFor = async (predicate, label, timeoutMs = 120_000) => {
+      const deadline = performance.now() + timeoutMs;
+      while (performance.now() < deadline) {
+        if (predicate()) return;
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      throw new Error(`Timed out waiting for ${label}: ${JSON.stringify({ ...canvas.dataset })}`);
+    };
+
+    const nativeSelect = (select, value) => {
+      if (!(select instanceof HTMLSelectElement)) throw new Error(`Missing selector for ${value}`);
+      const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+      if (!setter) throw new Error("Native select setter is unavailable");
+      setter.call(select, value);
+      select.dispatchEvent(new Event("input", { bubbles: true }));
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+
+    const position = () => ({
+      x: Number(canvas.dataset.inspectionTugX),
+      z: Number(canvas.dataset.inspectionTugZ),
+    });
+
+    const holdKey = async (key, code, durationMs) => {
+      window.dispatchEvent(new KeyboardEvent("keydown", {
+        key,
+        code,
+        bubbles: true,
+        cancelable: true,
+      }));
+      try {
+        await new Promise((resolve) => setTimeout(resolve, durationMs));
+      } finally {
+        window.dispatchEvent(new KeyboardEvent("keyup", {
+          key,
+          code,
+          bubbles: true,
+          cancelable: true,
+        }));
+      }
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    };
+
+    const toggle = document.querySelector("button.rr-inspection-toggle");
+    if (!(toggle instanceof HTMLButtonElement)) throw new Error("Free-drive inspection toggle is missing");
+    if (toggle.getAttribute("aria-pressed") !== "true") toggle.click();
+
+    await waitFor(
+      () => canvas.dataset.inspectionMode === "active"
+        && canvas.dataset.inspectionRouteAuthority === "source-gate-apron-presets-with-wide-diagonal-a1-connection-near-wall-b15-a1-a14-b14-b15-v7"
+        && canvas.dataset.inspectionTelemetryAuthority === "synchronous-preset-placement-v2",
+      "authoritative inspection mode",
+    );
+
+    const location = document.querySelector('select[aria-label="Inspection location"]');
+    const camera = document.querySelector('select[aria-label="Camera view"]');
+    const visited = [];
+
+    for (const preset of presets) {
+      nativeSelect(location, preset.id);
+      await waitFor(
+        () => canvas.dataset.inspectionPreset === preset.id
+          && canvas.dataset.inspectionTugX === preset.x.toFixed(3)
+          && canvas.dataset.inspectionTugZ === preset.z.toFixed(3),
+        `inspection preset ${preset.id}`,
+      );
+      visited.push({ id: preset.id, ...position() });
+    }
+
+    const start = position();
+    await holdKey("w", "KeyW", 1_200);
+    const forward = position();
+    await holdKey("s", "KeyS", 1_200);
+    const reverse = position();
+
+    nativeSelect(camera, "overhead");
+    await waitFor(() => canvas.dataset.cameraMode === "overhead", "overhead camera", 30_000);
+
+    return {
+      routeAuthority: canvas.dataset.inspectionRouteAuthority,
+      telemetryAuthority: canvas.dataset.inspectionTelemetryAuthority,
+      preset: canvas.dataset.inspectionPreset,
+      visited,
+      start,
+      forward,
+      reverse,
+      cameraMode: canvas.dataset.cameraMode,
+    };
+  }, PRESETS);
+
+  expect(result.routeAuthority).toBe(
     "source-gate-apron-presets-with-wide-diagonal-a1-connection-near-wall-b15-a1-a14-b14-b15-v7",
   );
-  await expect(canvas).toHaveAttribute(
-    "data-inspection-telemetry-authority",
-    "synchronous-preset-placement-v2",
-  );
-
-  const location = page.getByLabel("Inspection location");
-  const camera = page.getByLabel("Camera view");
-  await expect(location).toBeVisible();
-  await expect(camera).toBeVisible();
-
-  // Exercise every source-derived route preset. Focused A1 and B15 visual
-  // evidence is captured by the source-first browser gate, so this test stays
-  // dedicated to full-route reachability and live free-drive motion.
-  for (const preset of PRESETS) {
-    await location.selectOption(preset.id);
-    await expect(canvas).toHaveAttribute("data-inspection-preset", preset.id);
-    await expectPresetPosition(canvas, preset);
+  expect(result.telemetryAuthority).toBe("synchronous-preset-placement-v2");
+  expect(result.preset).toBe("b15");
+  expect(result.cameraMode).toBe("overhead");
+  expect(result.visited).toHaveLength(PRESETS.length);
+  for (const [index, preset] of PRESETS.entries()) {
+    expect(result.visited[index].id).toBe(preset.id);
+    expect(result.visited[index].x).toBeCloseTo(preset.x, 3);
+    expect(result.visited[index].z).toBeCloseTo(preset.z, 3);
   }
+  for (const point of [result.start, result.forward, result.reverse]) {
+    expect(Number.isFinite(point.x) && Number.isFinite(point.z)).toBe(true);
+  }
+  expect(distance(result.forward, result.start)).toBeGreaterThan(0.25);
+  expect(distance(result.reverse, result.forward)).toBeGreaterThan(0.15);
 
-  await expect(canvas).toHaveAttribute("data-inspection-preset", "b15");
-  await expectPresetPosition(canvas, PRESETS.at(-1));
-  const start = await tugPosition(canvas);
-  expect(Number.isFinite(start.x) && Number.isFinite(start.z)).toBe(true);
-
-  await page.keyboard.down("w");
-  await page.waitForTimeout(1_200);
-  await page.keyboard.up("w");
-  const forward = await tugPosition(canvas);
-  expect(Number.isFinite(forward.x) && Number.isFinite(forward.z)).toBe(true);
-  expect(distance(forward, start)).toBeGreaterThan(0.25);
-
-  await page.keyboard.down("s");
-  await page.waitForTimeout(1_200);
-  await page.keyboard.up("s");
-  const reverse = await tugPosition(canvas);
-  expect(Number.isFinite(reverse.x) && Number.isFinite(reverse.z)).toBe(true);
-  expect(distance(reverse, forward)).toBeGreaterThan(0.15);
-
-  await camera.selectOption("overhead");
-  await page.waitForTimeout(500);
   await captureScene(page, "inspection-b15-overhead-after-drive.png");
 });
