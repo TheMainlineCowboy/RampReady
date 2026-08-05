@@ -38,7 +38,7 @@ if (!source.includes("UploadedAirportJetwayA1RotundaVestibuleClosedDoorPanel")) 
   // while leaving the supplied Rotunda shell and the 2.4 m exterior vestibule
   // visible. No Rotunda/Tunnel/Cab source node is changed or covered externally.
   const rotundaDoorDistance = Math.min(
-    ROTUNDA_DOOR_RECESS_METERS,
+    ${ROTUNDA_DOOR_RECESS_METERS},
     Math.max(0.3, visibleVestibuleLength * 0.2),
   );
   const rotundaDoorX = collarPoint.x + openingDirection.x * rotundaDoorDistance;
@@ -48,13 +48,13 @@ if (!source.includes("UploadedAirportJetwayA1RotundaVestibuleClosedDoorPanel")) 
     connector,
     materials.shell,
     "UploadedAirportJetwayA1RotundaVestibuleClosedDoorPanel",
-    [width - 0.16, height - 0.16, ROTUNDA_DOOR_PANEL_DEPTH_METERS],
+    [width - 0.16, height - 0.16, ${ROTUNDA_DOOR_PANEL_DEPTH_METERS}],
     [rotundaDoorX, collarPoint.y, rotundaDoorZ],
     vestibuleYaw,
     false,
   );
 
-  const rotundaDoorApronFaceOffset = ROTUNDA_DOOR_PANEL_DEPTH_METERS * 0.5 + 0.018;
+  const rotundaDoorApronFaceOffset = ${ROTUNDA_DOOR_PANEL_DEPTH_METERS} * 0.5 + 0.018;
   for (const side of [-1, 1]) {
     addBox(
       THREE,
@@ -202,5 +202,15 @@ for (const token of [
   }
 }
 
+for (const forbidden of [
+  "ROTUNDA_DOOR_RECESS_METERS,",
+  "ROTUNDA_DOOR_PANEL_DEPTH_METERS]",
+  "ROTUNDA_DOOR_PANEL_DEPTH_METERS *",
+]) {
+  if (source.includes(forbidden)) {
+    throw new Error(`${installationPath}: build-time vestibule constant leaked into runtime source: ${forbidden}`);
+  }
+}
+
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Closed the apron-visible A1 Rotunda passage with recessed white vestibule doors while preserving the supplied Rotunda exterior, the short 2.4 m terminal vestibule, the exact authored bridge hierarchy and zero isolated-node rotations.");
+console.log("Closed the apron-visible A1 Rotunda passage with recessed white vestibule doors while preserving the supplied Rotunda exterior, the short 2.4 m terminal vestibule, the exact authored bridge hierarchy and zero isolated-node rotations; all generated runtime dimensions are numeric literals.");
