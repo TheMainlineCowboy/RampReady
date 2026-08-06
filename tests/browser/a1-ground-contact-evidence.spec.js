@@ -5,6 +5,7 @@ const JETWAY_GROUND_AUTHORITY = "exact-authored-a1-lowest-geometry-ramp-contact-
 const AIRCRAFT_GROUND_AUTHORITY = "authored-crj-lowest-geometry-contact-clusters-v2";
 const VERTICAL_FIT_AUTHORITY = "grounded-aircraft-door-progressive-tunnel-slope-v1";
 const CAMERA_ENDPOINT_AUTHORITY = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
+const CAMERA_LOCK_AUTHORITY = "exact-a1-evidence-camera-direct-lock-v1";
 
 async function captureCanvas(page, path) {
   const box = await page.evaluate(() => {
@@ -81,12 +82,14 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
   }, { timeout: 300_000, polling: 100 });
 
   await page.getByLabel("Inspection location").selectOption("a1Connection");
-  await page.waitForFunction((cameraAuthority) => {
+  await page.waitForFunction(({ cameraAuthority, lockAuthority }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionPreset === "a1Connection"
       && data?.a1JetwayDeployment === "1.000"
       && data?.a1JetwayState === "attached-to-aircraft-door"
       && data?.inspectionCameraEndpointAuthority === cameraAuthority
+      && data?.inspectionCameraEndpointLockAuthority === lockAuthority
+      && Math.abs(Number(data?.inspectionCameraEndpointConvergenceErrorMeters)) <= 0.001
       && String(data?.inspectionCameraEndpointPosition || "").split(",").length === 3
       && String(data?.inspectionCameraEndpointTarget || "").split(",").length === 3
       && String(data?.inspectionCameraEndpointWall || "").split(",").length === 3
@@ -95,7 +98,10 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
       && String(data?.inspectionCameraEndpointAircraftBoundsMin || "").split(",").length === 3
       && String(data?.inspectionCameraEndpointAircraftBoundsMax || "").split(",").length === 3
       && String(data?.inspectionCameraEndpointFrameSize || "").split(",").length === 3;
-  }, CAMERA_ENDPOINT_AUTHORITY, { timeout: 30_000, polling: 100 });
+  }, {
+    cameraAuthority: CAMERA_ENDPOINT_AUTHORITY,
+    lockAuthority: CAMERA_LOCK_AUTHORITY,
+  }, { timeout: 30_000, polling: 100 });
 
   const runtime = await page.evaluate(() => ({
     ...document.querySelector("canvas.trainerCanvas").dataset,
@@ -111,6 +117,8 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
   expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(0.01);
   expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(VERTICAL_FIT_AUTHORITY);
   expect(runtime.inspectionCameraEndpointAuthority).toBe(CAMERA_ENDPOINT_AUTHORITY);
+  expect(runtime.inspectionCameraEndpointLockAuthority).toBe(CAMERA_LOCK_AUTHORITY);
+  expect(Math.abs(Number(runtime.inspectionCameraEndpointConvergenceErrorMeters))).toBeLessThanOrEqual(0.001);
 
   const cameraPosition = parseTriplet(runtime.inspectionCameraEndpointPosition, "A1 camera position");
   const cameraTarget = parseTriplet(runtime.inspectionCameraEndpointTarget, "A1 camera target");
@@ -154,6 +162,49 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
   });
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   await captureCanvas(page, "test-results/a1-measured-ground-contact.png");
+
+  await page.evaluate(async () => {
+    const select = document.querySelector('select[aria-label="Camera view"]');
+    if (!(select instanceof HTMLSelectElement)) throw new Error("Camera view selector is missing");
+    const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+    if (!setter) throw new Error("Native camera selector setter is unavailable");
+    setter.call(select, "overhead");
+    select.dispatchEvent(new Event("input", { bubbles: true }));
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
+  await page.waitForFunction(({ cameraAuthority, lockAuthority }) => {
+    const data = document.querySelector("canvas.trainerCanvas")?.dataset;
+    return data?.inspectionOverheadCameraEndpointAuthority === cameraAuthority
+      && data?.inspectionOverheadCameraEndpointLockAuthority === lockAuthority
+      && Math.abs(Number(data?.inspectionOverheadCameraEndpointConvergenceErrorMeters)) <= 0.001
+      && String(data?.inspectionOverheadCameraEndpointTarget || "").split(",").length === 3
+      && String(data?.inspectionOverheadCameraEndpointFrameSize || "").split(",").length === 3;
+  }, {
+    cameraAuthority: CAMERA_ENDPOINT_AUTHORITY,
+    lockAuthority: CAMERA_LOCK_AUTHORITY,
+  }, { timeout: 30_000, polling: 100 });
+
+  const overheadRuntime = await page.evaluate(() => ({
+    ...document.querySelector("canvas.trainerCanvas").dataset,
+  }));
+  expect(overheadRuntime.inspectionOverheadCameraEndpointAuthority).toBe(CAMERA_ENDPOINT_AUTHORITY);
+  expect(overheadRuntime.inspectionOverheadCameraEndpointLockAuthority).toBe(CAMERA_LOCK_AUTHORITY);
+  expect(Math.abs(Number(overheadRuntime.inspectionOverheadCameraEndpointConvergenceErrorMeters))).toBeLessThanOrEqual(0.001);
+  const overheadTarget = parseTriplet(
+    overheadRuntime.inspectionOverheadCameraEndpointTarget,
+    "A1 overhead camera target",
+  );
+  const overheadFrameSize = parseTriplet(
+    overheadRuntime.inspectionOverheadCameraEndpointFrameSize,
+    "A1 overhead complete frame size",
+  );
+  expect(Math.max(overheadFrameSize[0], overheadFrameSize[2])).toBeGreaterThanOrEqual(
+    Math.max(aircraftBoundsSize[0], aircraftBoundsSize[2]),
+  );
+  expect(distance3(overheadTarget, cameraTarget)).toBeLessThan(25);
+  await captureCanvas(page, "test-results/a1-measured-ground-contact-overhead.png");
+
   fs.writeFileSync(
     "test-results/a1-measured-ground-contact.json",
     `${JSON.stringify({
@@ -170,6 +221,8 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
       aircraftDoorVerticalErrorMeters: Number(runtime.inspectionAircraftDoorVerticalErrorMeters),
       jetwayVerticalFitAuthority: runtime.inspectionAircraftJetwayVerticalFitAuthority,
       cameraEndpointAuthority: runtime.inspectionCameraEndpointAuthority,
+      cameraLockAuthority: runtime.inspectionCameraEndpointLockAuthority,
+      cameraConvergenceErrorMeters: Number(runtime.inspectionCameraEndpointConvergenceErrorMeters),
       cameraPosition,
       cameraTarget,
       wall,
@@ -179,6 +232,13 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
       aircraftBoundsMax,
       aircraftBoundsSize,
       frameSize,
+      overheadCameraEndpointAuthority: overheadRuntime.inspectionOverheadCameraEndpointAuthority,
+      overheadCameraLockAuthority: overheadRuntime.inspectionOverheadCameraEndpointLockAuthority,
+      overheadCameraConvergenceErrorMeters: Number(
+        overheadRuntime.inspectionOverheadCameraEndpointConvergenceErrorMeters,
+      ),
+      overheadTarget,
+      overheadFrameSize,
       rotundaWallDistance,
       rotundaCabDistance,
       evidenceAuthority: "exact-runtime-measured-ground-contact-and-current-head-render",
