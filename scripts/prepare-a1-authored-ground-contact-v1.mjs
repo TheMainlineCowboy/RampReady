@@ -51,7 +51,10 @@ const authoredContactBlock = `          // ${marker}
                 point.fromBufferAttribute(position, index).applyMatrix4(object.matrixWorld);
                 if (point.y > minimumY + contactBandMeters) continue;
                 contactBounds.expandByPoint(point);
-                occupiedCells.add(\`${Math.floor(point.x / cellSizeMeters)},\${Math.floor(point.z / cellSizeMeters)}\`);
+                occupiedCells.add([
+                  Math.floor(point.x / cellSizeMeters),
+                  Math.floor(point.z / cellSizeMeters),
+                ].join(","));
                 contactPointCount += 1;
               }
             });
@@ -67,7 +70,7 @@ const authoredContactBlock = `          // ${marker}
                 const [cellX, cellZ] = stack.pop().split(",").map(Number);
                 for (let dx = -1; dx <= 1; dx += 1) {
                   for (let dz = -1; dz <= 1; dz += 1) {
-                    const neighbor = \`${cellX + dx},\${cellZ + dz}\`;
+                    const neighbor = [cellX + dx, cellZ + dz].join(",");
                     if (!remaining.delete(neighbor)) continue;
                     stack.push(neighbor);
                   }
