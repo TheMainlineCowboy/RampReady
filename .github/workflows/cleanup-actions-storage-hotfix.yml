@@ -1,0 +1,21 @@
+name: Stop unsafe Actions cleanup attempt
+
+on:
+  push:
+    paths:
+      - .github/workflows/cleanup-actions-storage-hotfix.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rampready-actions-storage-cleanup
+  cancel-in-progress: true
+
+jobs:
+  stop-older-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Replace older cleanup under the shared concurrency lock
+        run: echo "Canceled the superseded cleanup before installing the corrected exhaustive filter."
