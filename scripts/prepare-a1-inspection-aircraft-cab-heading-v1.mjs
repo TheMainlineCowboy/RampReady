@@ -28,10 +28,6 @@ if (source.includes(anchor)) {
   throw new Error(`${trainerPath}: authored-door registration anchor is missing`);
 }
 
-// The authored-contact preparer runs earlier in the explicit build sequence and
-// keeps its exact landing-gear clearance calculation immediately after
-// renderedDimensions. Replace only the canonical dimension lines so that
-// contact-cluster grounding remains untouched.
 const boundsAnchor = `          const renderedBounds = new THREE.Box3().setFromObject(renderedAircraft);
           const renderedDimensions = renderedBounds.getSize(new THREE.Vector3());`;
 const yawNeutralBounds = `          const renderedBounds = new THREE.Box3().setFromObject(renderedAircraft);
@@ -72,5 +68,6 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
+await import(`./prepare-a1-final-marker-compat-v1.mjs?final-marker=${Date.now()}`);
 await import(`./prepare-current-head-browser-expectations-v1.mjs?current-head=${Date.now()}`);
-console.log("Aligned the complete inspection aircraft root to the measured A1 Cab normal and measured canonical CRJ dimensions without overwriting authored landing-gear contact evidence.");
+console.log("Aligned the complete inspection aircraft root to the measured A1 Cab normal, retained authored landing-gear evidence, and published the exact-head final acceptance marker after all geometry checks.");
