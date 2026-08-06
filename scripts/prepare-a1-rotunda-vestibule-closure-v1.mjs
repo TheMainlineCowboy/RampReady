@@ -68,5 +68,6 @@ for (const token of [
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
+await import(`./prepare-a1-readiness-compact-wall-v1.mjs?compact-readiness=${Date.now()}`);
 await import(`./prepare-a1-visual-acceptance-evidence-v1.mjs?visual-acceptance=${Date.now()}`);
-console.log("Closed the A1 Rotunda-side vestibule with a solid photo-matched white bulkhead, published compact continuous visual evidence, and preserved every supplied jetway child transform.");
+console.log("Closed the A1 Rotunda-side vestibule, normalized readiness to the compact real wall, published visual evidence, and preserved every supplied jetway child transform.");
