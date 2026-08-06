@@ -17,6 +17,7 @@ permissions:
   actions: write
   contents: read
   pull-requests: read
+  statuses: write
 
 concurrency:
   group: rampready-actions-storage-cleanup
@@ -28,6 +29,7 @@ jobs:
     timeout-minutes: 120
     steps:
       - name: Delete obsolete artifacts and caches, then verify zero remain
+        id: cleanup
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT_SHA: ${{ github.sha }}
@@ -170,6 +172,9 @@ jobs:
             exit 1
           fi
 
+          deleted_mb=$(( (deleted_artifact_bytes + deleted_cache_bytes + 524287) / 1048576 ))
+          echo "description=obsolete=0 caches=0; freed ${deleted_mb} MB" >> "${GITHUB_OUTPUT}"
+
       - name: Check out storage policy source
         if: always()
         uses: actions/checkout@v4
@@ -206,3 +211,28 @@ jobs:
               print('\n'.join(violations))
               sys.exit(1)
           print('Verified every actions/upload-artifact step retains evidence for exactly one day.')
+
+      - name: Publish cleanup success status
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DESCRIPTION: ${{ steps.cleanup.outputs.description }}
+        shell: bash
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -f state=success \
+            -f context='Actions storage cleanup' \
+            -f description="${DESCRIPTION}" \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - name: Publish cleanup failure status
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -f state=failure \
+            -f context='Actions storage cleanup' \
+            -f description='Cleanup or one-day retention policy failed' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
