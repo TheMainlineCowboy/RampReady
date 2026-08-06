@@ -5,7 +5,11 @@ let source = fs.readFileSync(trainerPath, "utf8");
 
 const marker = "measured-final-cab-contact-a1-aircraft-pose-v3";
 const markerLiteral = JSON.stringify(marker);
-const poseAuthority = "measured-final-cab-contact-a1-registration-v3";
+// Preserve the established release field while exposing the stricter physical
+// authority separately, so existing gates remain compatible without hiding the
+// measured final-Cab registration semantics.
+const poseAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
+const cabContactAuthority = "measured-final-cab-contact-a1-registration-v3";
 const doorAftOfNoseGearMeters = 7.32;
 const doorLeftOfCenterlineMeters = 1.34;
 
@@ -80,6 +84,7 @@ const replacementBlock = `        // Register the aircraft to the actual final a
           renderer.domElement.dataset.inspectionAircraftDoorTargetX = actualDoorX.toFixed(6);
           renderer.domElement.dataset.inspectionAircraftDoorTargetZ = actualDoorZ.toFixed(6);
           renderer.domElement.dataset.inspectionAircraftCabContactErrorMeters = cabContactErrorMeters.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftCabContactAuthority = "${cabContactAuthority}";
           renderer.domElement.dataset.inspectionAircraftPoseAuthority = A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY;
         }
         return terminal;`;
@@ -105,6 +110,7 @@ source = source
 for (const token of [
   marker,
   `A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "${poseAuthority}"`,
+  `inspectionAircraftCabContactAuthority = "${cabContactAuthority}"`,
   `userData[${markerLiteral}]`,
   "uploadedJetwayA1CabContactWorldX",
   "uploadedJetwayA1CabContactWorldZ",
