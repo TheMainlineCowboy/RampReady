@@ -88,9 +88,13 @@ try {
   // the synchronous preset telemetry last so the browser gate observes the
   // exact production behavior rather than timing out on a missing authority tag.
   await runNode("scripts/prepare-inspection-preset-telemetry.mjs");
-  // This must be the final source mutation before Vite. It fails closed if any
-  // historical preparer reintroduces obsolete pose or facade telemetry.
+  // Fail closed if historical preparers reintroduce obsolete pose or facade
+  // telemetry, then reapply the measured aircraft-pose lifecycle after that
+  // final mutation. The exact-head screenshots must show the aircraft at the
+  // Cab, not merely publish a stored contact position while rendering it at the
+  // training start.
   await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
+  await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
   buildError = error;
