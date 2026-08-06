@@ -83,6 +83,10 @@ try {
   await runNode("scripts/prepare-terminal4-ramp-facade-v16.mjs");
   await runNode("scripts/prepare-terminal4-b-concourse-extension-v17.mjs");
   await runNode("scripts/prepare-terminal4-attachment-evidence-v14.mjs");
+  // Several A1 lifecycle preparers replace the inspection toggle block. Reapply
+  // the synchronous preset telemetry last so the browser gate observes the
+  // exact production behavior rather than timing out on a missing authority tag.
+  await runNode("scripts/prepare-inspection-preset-telemetry.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
   buildError = error;
@@ -111,4 +115,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, anchored A1 to a ramp-level grounded structural facade rather than the elevated T4_WALK corridor, aligned the complete A1 parent from the authored Cab-to-Rotunda endpoint axis at the measured terminal corner with a compact fixed vestibule and full-vector wall lock, persisted and reapplied the rendered inspection aircraft pose at the relocated exact Cab across inspection toggles and resets, registered the rendered door in all three axes, exposed exact world-space Rotunda/wall/Cab endpoints and wheel-ground clearance, closed all parked jetway apron-facing cab mouths without changing supplied GLB node transforms, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including the supplied-jetway installation correction and both trainer sources.");
+console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, anchored A1 to a ramp-level grounded structural facade rather than the elevated T4_WALK corridor, aligned the complete A1 parent from the authored Cab-to-Rotunda endpoint axis at the measured terminal corner with a compact fixed vestibule and full-vector wall lock, kept the rendered inspection aircraft grounded while preserving horizontal Cab registration, exposed exact world-space Rotunda/wall/Cab endpoints and honest wheel-ground and vertical-gap evidence, closed all parked jetway apron-facing cab mouths without changing supplied GLB node transforms, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including the supplied-jetway installation correction and both trainer sources.");
