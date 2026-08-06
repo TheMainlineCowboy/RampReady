@@ -1,0 +1,72 @@
+name: Rebase PR 140 onto current main
+
+on:
+  push:
+    branches:
+      - repair/a1-final-rebased-20260806
+    paths:
+      - .github/workflows/rebase-pr140-on-main.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rebase-pr140-current-main
+  cancel-in-progress: false
+
+jobs:
+  integrate-main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the exact PR 140 branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/a1-rigid-parent-orientation-final
+          fetch-depth: 0
+          token: ${{ github.token }}
+
+      - name: Merge current main while preserving jetway repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git fetch origin main --force
+
+          set +e
+          git merge --no-ff --no-commit origin/main
+          merge_status=$?
+          set -e
+
+          if (( merge_status != 0 )); then
+            mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+            if (( ${#conflicts[@]} == 0 )); then
+              echo "Merge failed without resolvable file conflicts."
+              exit "${merge_status}"
+            fi
+
+            for path in "${conflicts[@]}"; do
+              case "${path}" in
+                .github/workflows/*)
+                  echo "Taking current main policy for ${path}"
+                  git checkout --theirs -- "${path}"
+                  ;;
+                *)
+                  echo "Preserving PR 140 jetway repair for ${path}"
+                  git checkout --ours -- "${path}"
+                  ;;
+              esac
+              git add -- "${path}"
+            done
+          fi
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "PR 140 already contains current main."
+            exit 0
+          fi
+
+          git commit -m "Merge current main policy into PR #140"
+          git push origin HEAD:fix/a1-rigid-parent-orientation-final
