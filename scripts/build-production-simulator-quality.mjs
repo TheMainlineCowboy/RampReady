@@ -65,6 +65,7 @@ try {
   await runNode("scripts/prepare-terminal4-jetway-simulator-polish.mjs");
   await runNode("scripts/prepare-a1-terminal-attachment-v14.mjs");
   await runNode("scripts/prepare-a1-photo-registered-stop-v1.mjs");
+  await runNode("scripts/prepare-a1-compact-source-wall-distance-v1.mjs");
   await runNode("scripts/prepare-a1-rigid-parent-orientation-v2.mjs");
   await runNode("scripts/prepare-a1-complete-endpoint-axis-v1.mjs");
   await runNode("scripts/prepare-a1-terminal-relocation-v4.mjs");
