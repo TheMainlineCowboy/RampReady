@@ -112,12 +112,11 @@ if (!independentStructuralFit && source.includes("function findTerminalWallConne
   );
 }
 
-// Gate A1 is not connected to the broad BGATE facade plane. The source model
-// contains a fixed T4_WALK portal directly behind the authored rotunda. The old
-// target (-3.553, -40.607) sent the connector roughly 30 m diagonally across
-// the corner and left the visible bridge detached. This point was measured from
-// the converted source triangles at the rotunda elevation: X=-30.16857013 and
-// the same local Z station as the authored A1 jetway root, a 9.15857013 m fit.
+// The user's overhead and same-day A1 photos show the Rotunda attached to the
+// actual Terminal 4 building. Never override A1 to the elevated T4_WALK mesh.
+// Use the preferred Cab-opposite axis and require its first structural hit so
+// the complete supplied parent can subsequently be rotated and relocated to
+// that building wall with only the compact photo-matched vestibule visible.
 const committedA1Connection = `    const terminalConnection = findTerminalWallConnection(
       THREE,
       terminal,
@@ -127,7 +126,7 @@ const committedA1Connection = `    const terminalConnection = findTerminalWallCo
       -uz,
       rotundaY,
     );`;
-const exactA1Connection = `    const terminalConnection = findTerminalWallConnection(
+const obsoleteWalkwayConnection = `    const terminalConnection = findTerminalWallConnection(
       THREE,
       terminal,
       jetway.x,
@@ -149,12 +148,29 @@ const exactA1Connection = `    const terminalConnection = findTerminalWallConnec
         authority: "exact-T4_WALK-A1-terminal-portal-v25",
       });
     }`;
-replaceRequired(
-  committedA1Connection,
-  exactA1Connection,
-  "exact-T4_WALK-A1-terminal-portal-v25",
-  "exact A1 source walkway portal connection",
-);
+const directBuildingConnection = `    const terminalConnection = findTerminalWallConnection(
+      THREE,
+      terminal,
+      jetway.x,
+      jetway.z + sourceOffsetZ,
+      -ux,
+      -uz,
+      rotundaY,
+    );
+    if (jetway.g === "A1") {
+      if (!terminalConnection || terminalConnection.authority !== "preferred-axis-raycast") {
+        throw new Error(\`A1 direct terminal-building raycast failed: \${terminalConnection?.authority || "missing"}\`);
+      }
+      terminalConnection.authority = "direct-A1-terminal-building-preferred-axis-v26";
+    }`;
+
+if (source.includes(obsoleteWalkwayConnection)) {
+  source = source.replace(obsoleteWalkwayConnection, directBuildingConnection);
+} else if (source.includes(committedA1Connection)) {
+  source = source.replace(committedA1Connection, directBuildingConnection);
+} else if (!source.includes("direct-A1-terminal-building-preferred-axis-v26")) {
+  throw new Error(`${jetwayPath}: A1 terminal target block is missing`);
+}
 
 const independentPrepared = [
   "function findTerminalWallConnection",
@@ -172,11 +188,13 @@ const legacyPrepared = [
   "1.25, 44",
   "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
 ].every((token) => source.includes(token));
-if ((!independentPrepared && !legacyPrepared) || !source.includes("exact-T4_WALK-A1-terminal-portal-v25")) {
-  throw new Error(`${jetwayPath}: source-measured A1 terminal connector preparation is incomplete`);
+if ((!independentPrepared && !legacyPrepared)
+  || !source.includes("direct-A1-terminal-building-preferred-axis-v26")
+  || source.includes("exact-T4_WALK-A1-terminal-portal-v25")) {
+  throw new Error(`${jetwayPath}: direct A1 terminal-building connector preparation is incomplete`);
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
 console.log(independentPrepared
-  ? "Prepared A1 connector v25 at the measured source T4_WALK portal, with structural fitting retained for every other gate."
-  : "Prepared legacy A1 connector v25 at the measured source T4_WALK portal.");
+  ? "Prepared A1 connector v26 at the real Terminal 4 building through the preferred structural wall ray; the elevated T4_WALK override is forbidden."
+  : "Prepared legacy A1 connector v26 at the real Terminal 4 building; the elevated T4_WALK override is forbidden.");
