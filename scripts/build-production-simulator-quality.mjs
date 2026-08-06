@@ -88,6 +88,9 @@ try {
   // the synchronous preset telemetry last so the browser gate observes the
   // exact production behavior rather than timing out on a missing authority tag.
   await runNode("scripts/prepare-inspection-preset-telemetry.mjs");
+  // This must be the final source mutation before Vite. It fails closed if any
+  // historical preparer reintroduces obsolete pose or facade telemetry.
+  await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
   buildError = error;
