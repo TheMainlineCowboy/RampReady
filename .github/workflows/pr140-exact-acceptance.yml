@@ -67,11 +67,13 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Verify exact supplied jetway assets and repair contract
+      - name: Verify exact supplied jetway assets and repair contracts
         shell: bash
         run: |
           set -euo pipefail
           node scripts/verify-a1-measured-ground-contact-contract.mjs
+          node scripts/verify-a1-evidence-subview-contract.mjs
+          node scripts/verify-terminal4-static-cab-closure-contract.mjs
           node scripts/materialize-exact-airport-jetway.mjs
           node scripts/verify-exact-airport-jetway-runtime.mjs
           node scripts/verify-uploaded-airport-jetway-fleet.mjs
@@ -117,8 +119,11 @@ jobs:
           grep -R --fixed-strings --line-number 'terminal4UploadedJetwayBogieGroundContactClusterCount' dist
           grep -R --fixed-strings --line-number 'terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters' dist
           grep -R --fixed-strings --line-number 'same-day-a1-continuous-compact-solid-closed-grounded-v1' dist
+          grep -R --fixed-strings --line-number 'exact-a1-terminal-joint-and-bogie-contact-subviews-v1' dist
+          grep -R --fixed-strings --line-number '57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3' dist
+          grep -R --fixed-strings --line-number '57-static-cab-endpoints-opaque-zero-open-area-no-authored-transform-v1' dist
           grep -R --fixed-strings --line-number 'final-a1-acceptance-authority-after-all-preparers-v1' dist
-          echo "Verified compact real-wall attachment, continuous closed vestibule, separated multi-point ramp contact, zero attached child lift, retained signed door gap, and final exact-head telemetry."
+          echo "Verified compact real-wall attachment, close-view camera evidence, continuous closed vestibule, separated multi-point ramp contact, zero attached child lift, retained signed door gap, and all 57 static Cab closures."
 
       - name: Install browser verifier and Chromium
         run: |
@@ -136,7 +141,9 @@ jobs:
           npx playwright test
           tests/browser/a1-jetway-contact-clusters.spec.js
           tests/browser/a1-ground-contact-evidence.spec.js
+          tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           tests/browser/source-first-a1-repair.spec.js
+          tests/browser/terminal4-static-cab-closure-evidence.spec.js
           tests/browser/uploaded-jetway-articulation-v10.spec.js
           tests/browser/kphx-ground-runtime.spec.js
           tests/browser/full-airport-inspection.spec.js
