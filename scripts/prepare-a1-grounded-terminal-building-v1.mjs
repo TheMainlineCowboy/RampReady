@@ -156,9 +156,11 @@ for (const token of [
     throw new Error(`${runtimePath}: grounded facade search token is missing: ${token}`);
   }
 }
+const forbiddenWalkwayAuthority = "exact-" + "T4_WALK-A1-terminal-portal-v25";
+const forbiddenWalkwayPortalVariable = "exactWalkway" + "PortalX";
 for (const forbidden of [
-  "exact-T4_WALK-A1-terminal-portal-v25",
-  "exactWalkwayPortalX",
+  forbiddenWalkwayAuthority,
+  forbiddenWalkwayPortalVariable,
 ]) {
   if (source.includes(forbidden)) {
     throw new Error(`${runtimePath}: forbidden A1 walkway anchor survived grounded-terminal preparation: ${forbidden}`);
