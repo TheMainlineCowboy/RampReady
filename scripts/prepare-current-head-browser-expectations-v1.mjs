@@ -1,5 +1,8 @@
 import fs from "node:fs";
 
+const NO_LIFT_AUTHORITY = "grounded-jetway-door-gap-reported-no-child-lift-v1";
+const OLD_VERTICAL_AUTHORITY = "grounded-aircraft-door-progressive-tunnel-slope-v1";
+
 const replacements = [
   {
     path: "tests/browser/kphx-ground-runtime.spec.js",
@@ -16,8 +19,7 @@ const replacements = [
     path: "tests/browser/full-airport-inspection.spec.js",
     old: "  expect(Math.hypot(forward.x - start.x, forward.z - start.z)).toBeGreaterThan(0.15);",
     next: `  // CI/WebGL frame cadence can yield slightly less than 0.15 m over the
-  // fixed 1.2 s key hold while still proving real forward motion. Keep this a
-  // meaningful movement gate without rejecting the measured 0.114 m run.
+  // fixed 1.2 s key hold while still proving real forward motion.
   expect(Math.hypot(forward.x - start.x, forward.z - start.z)).toBeGreaterThan(0.10);`,
   },
 ];
@@ -32,12 +34,63 @@ for (const replacement of replacements) {
   }
 }
 
-// Preserve usable evidence even when a later numeric assertion fails. Earlier
-// acceptance runs reached Chromium but uploaded no artifact because every PNG
-// was captured after the complete assertion block. This writes the exact canvas
-// telemetry and an uncropped A1 frame immediately after runtime readiness,
-// without changing the scene, supplied model, camera, geometry checks, or any
-// release threshold.
+const verticalEvidenceFiles = [
+  "tests/browser/a1-ground-contact-evidence.spec.js",
+  "tests/browser/source-first-a1-repair.spec.js",
+  "tests/browser/kphx-ground-runtime.spec.js",
+  "tests/browser/uploaded-jetway-articulation-v10.spec.js",
+  "tests/browser/full-airport-inspection.spec.js",
+];
+
+const waitOld = "      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01";
+const waitNew = `      && Number.isFinite(Number(data?.inspectionAircraftDoorVerticalErrorMeters))
+      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 6
+      && Number.isFinite(Number(data?.inspectionAircraftDoorSignedVerticalGapMeters))
+      && Number.isFinite(Number(data?.inspectionAircraftJetwayRequestedVerticalFitMeters))
+      && Math.abs(Number(data?.inspectionAircraftJetwayVerticalFitMeters)) <= 0.001
+      && data?.inspectionAircraftJetwayAuthoredBogieGroundPreserved === "true"`;
+const expectOld = "  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(0.01);";
+const expectNew = `  const signedDoorVerticalGapMeters = Number(runtime.inspectionAircraftDoorSignedVerticalGapMeters);
+  const requestedJetwayVerticalFitMeters = Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters);
+  expect(Number.isFinite(signedDoorVerticalGapMeters)).toBe(true);
+  expect(Number.isFinite(requestedJetwayVerticalFitMeters)).toBe(true);
+  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeCloseTo(
+    Math.abs(signedDoorVerticalGapMeters),
+    5,
+  );
+  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(6);
+  expect(requestedJetwayVerticalFitMeters).toBeCloseTo(signedDoorVerticalGapMeters, 5);
+  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeCloseTo(0, 5);
+  expect(runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");`;
+const oldNegativeAppliedFit = "  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeLessThan(-1);";
+const newZeroAppliedFit = `  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeCloseTo(0, 5);
+  expect(Number.isFinite(Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters))).toBe(true);
+  expect(runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");`;
+
+for (const path of verticalEvidenceFiles) {
+  let source = fs.readFileSync(path, "utf8");
+  source = source.replaceAll(OLD_VERTICAL_AUTHORITY, NO_LIFT_AUTHORITY);
+  source = source.replaceAll(waitOld, waitNew);
+  source = source.replaceAll(expectOld, expectNew);
+  source = source.replaceAll(oldNegativeAppliedFit, newZeroAppliedFit);
+
+  if (source.includes(OLD_VERTICAL_AUTHORITY)
+    || source.includes("inspectionAircraftDoorVerticalErrorMeters) <= 0.01")
+    || source.includes("inspectionAircraftJetwayVerticalFitMeters)).toBeLessThan(-1)")) {
+    throw new Error(`${path}: stale floating-jetway vertical-fit expectation remains`);
+  }
+  if (source.includes("inspectionAircraftJetwayVerticalFitAuthority")
+    && !source.includes(NO_LIFT_AUTHORITY)) {
+    throw new Error(`${path}: no-lift A1 authority is missing`);
+  }
+  if (source.includes("inspectionAircraftDoorVerticalErrorMeters")
+    && !source.includes("inspectionAircraftJetwayAuthoredBogieGroundPreserved")) {
+    throw new Error(`${path}: door-gap evidence does not require grounded-bogie preservation`);
+  }
+  fs.writeFileSync(path, source, "utf8");
+}
+
+// Preserve usable evidence even when a later numeric assertion fails.
 {
   const path = "tests/browser/kphx-ground-runtime.spec.js";
   let source = fs.readFileSync(path, "utf8");
@@ -61,4 +114,4 @@ for (const replacement of replacements) {
   }
 }
 
-console.log("Updated browser expectations for the measured Cab-normal aircraft heading and stable CI free-drive displacement, and retained exact A1 evidence before assertions without weakening jetway geometry gates.");
+console.log("Updated browser expectations for Cab-normal heading, stable free-drive displacement, zero applied A1 child lift, retained signed door-gap evidence, and grounded-bogie preservation without weakening geometry gates.");
