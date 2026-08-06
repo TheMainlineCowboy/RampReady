@@ -137,9 +137,17 @@ test("source-first A1 evidence proves the exact terminal-to-aircraft chain and p
     evidenceAuthority: "user-overhead-and-same-day-a1-ramp-photos",
   }, null, 2)}\n`);
 
-  // Keep the physical free-drive proof, but do not spend another compositor
-  // capture after the focused A1 evidence is safely written.
-  await inspectionLocation.selectOption("b15");
+  // The evidence capture intentionally hides the HUD. Change the now-hidden
+  // native select through the DOM so the collision proof cannot spend the
+  // remainder of the job waiting for Playwright actionability.
+  await page.evaluate(() => {
+    const select = document.querySelector("select[aria-label='Inspection location']");
+    if (!(select instanceof HTMLSelectElement)) {
+      throw new Error("Inspection location select is missing");
+    }
+    select.value = "b15";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
   await page.waitForFunction(() => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionPreset === "b15"
