@@ -5,8 +5,20 @@ let source = fs.readFileSync(trainerPath, "utf8");
 
 const marker = "rendered-a1-door-grounded-from-wheel-contact-v4";
 const verticalFitAuthority = "grounded-aircraft-door-progressive-tunnel-slope-v1";
+const staleVerticalFitAuthority = "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2";
+
 if (source.includes(marker)) {
-  console.log("A1 wheel-contact grounding and progressive jetway height fit are already prepared.");
+  if (source.includes(staleVerticalFitAuthority)) {
+    source = source.replaceAll(staleVerticalFitAuthority, verticalFitAuthority);
+  }
+  if (!source.includes(verticalFitAuthority)) {
+    throw new Error(`${trainerPath}: prepared A1 grounding marker exists without the required vertical-fit authority`);
+  }
+  if (source.includes(staleVerticalFitAuthority)) {
+    throw new Error(`${trainerPath}: conflicting A1 vertical-fit authority survived idempotent repair`);
+  }
+  fs.writeFileSync(trainerPath, source, "utf8");
+  console.log("Validated and repaired the existing A1 wheel-contact grounding authority without reapplying geometry transforms.");
   process.exit(0);
 }
 
@@ -146,7 +158,7 @@ for (const token of [
   }
 }
 
-if (source.includes("grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2")) {
+if (source.includes(staleVerticalFitAuthority)) {
   throw new Error(`${trainerPath}: conflicting A1 vertical-fit authority remains`);
 }
 if (source.includes("const aircraftRelocationY = -renderedBoundsBefore.min.y")) {
