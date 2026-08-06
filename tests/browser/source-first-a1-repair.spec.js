@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { expect, test } from "@playwright/test";
 
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
-const DIRECT_A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
+const DIRECT_A1_CAMERA_AUTHORITY = "oblique-measured-final-cab-and-aircraft-a1-v9";
 const AIRCRAFT_AUTHORITY = "terminal-relocated-a1-exact-cab-registration-v1";
 const CAB_CONTACT_AUTHORITY = "measured-final-cab-contact-a1-registration-v3";
 const PHOTO_REGISTERED_NOSE_GEAR = Object.freeze({ x: 12.353412, z: -12.486888 });
