@@ -4,6 +4,7 @@ import { expect, test } from "@playwright/test";
 const JETWAY_GROUND_AUTHORITY = "exact-authored-a1-lowest-geometry-ramp-contact-v1";
 const AIRCRAFT_GROUND_AUTHORITY = "authored-crj-lowest-geometry-contact-clusters-v2";
 const VERTICAL_FIT_AUTHORITY = "grounded-aircraft-door-progressive-tunnel-slope-v1";
+const CAMERA_ENDPOINT_AUTHORITY = "exact-world-wall-rotunda-cab-derived-camera-v1";
 
 async function captureCanvas(page, path) {
   const box = await page.evaluate(() => {
@@ -41,6 +42,17 @@ async function captureCanvas(page, path) {
   }
 }
 
+function parseTriplet(value, label) {
+  const values = String(value || "").split(",").map(Number);
+  expect(values, `${label} must contain three coordinates`).toHaveLength(3);
+  expect(values.every(Number.isFinite), `${label} must be finite`).toBe(true);
+  return values;
+}
+
+function distance3(a, b) {
+  return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+}
+
 test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp", async ({ page }) => {
   test.setTimeout(780_000);
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -69,12 +81,18 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
   }, { timeout: 300_000, polling: 100 });
 
   await page.getByLabel("Inspection location").selectOption("a1Connection");
-  await page.waitForFunction(() => {
+  await page.waitForFunction((cameraAuthority) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionPreset === "a1Connection"
       && data?.a1JetwayDeployment === "1.000"
-      && data?.a1JetwayState === "attached-to-aircraft-door";
-  }, null, { timeout: 30_000, polling: 100 });
+      && data?.a1JetwayState === "attached-to-aircraft-door"
+      && data?.inspectionCameraEndpointAuthority === cameraAuthority
+      && String(data?.inspectionCameraEndpointPosition || "").split(",").length === 3
+      && String(data?.inspectionCameraEndpointTarget || "").split(",").length === 3
+      && String(data?.inspectionCameraEndpointWall || "").split(",").length === 3
+      && String(data?.inspectionCameraEndpointRotunda || "").split(",").length === 3
+      && String(data?.inspectionCameraEndpointCab || "").split(",").length === 3;
+  }, CAMERA_ENDPOINT_AUTHORITY, { timeout: 30_000, polling: 100 });
 
   const runtime = await page.evaluate(() => ({
     ...document.querySelector("canvas.trainerCanvas").dataset,
@@ -89,6 +107,28 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
   expect(Math.abs(Number(runtime.inspectionAircraftGroundClearanceMeters))).toBeLessThanOrEqual(0.01);
   expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(0.01);
   expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(VERTICAL_FIT_AUTHORITY);
+  expect(runtime.inspectionCameraEndpointAuthority).toBe(CAMERA_ENDPOINT_AUTHORITY);
+
+  const cameraPosition = parseTriplet(runtime.inspectionCameraEndpointPosition, "A1 camera position");
+  const cameraTarget = parseTriplet(runtime.inspectionCameraEndpointTarget, "A1 camera target");
+  const wall = parseTriplet(runtime.inspectionCameraEndpointWall, "A1 measured terminal wall");
+  const rotunda = parseTriplet(runtime.inspectionCameraEndpointRotunda, "A1 Rotunda endpoint");
+  const cab = parseTriplet(runtime.inspectionCameraEndpointCab, "A1 Cab endpoint");
+  const rotundaWallDistance = distance3(rotunda, wall);
+  const rotundaCabDistance = distance3(rotunda, cab);
+  expect(rotundaWallDistance).toBeGreaterThan(1.5);
+  expect(rotundaWallDistance).toBeLessThan(6);
+  expect(rotundaCabDistance).toBeGreaterThan(20);
+  expect(rotundaCabDistance).toBeLessThan(45);
+  expect(rotundaWallDistance + 10).toBeLessThan(rotundaCabDistance);
+  expect(distance3(cameraPosition, cameraTarget)).toBeGreaterThan(35);
+  expect(distance3(cameraPosition, cameraTarget)).toBeLessThan(80);
+  const wallCabMidpoint = [
+    (wall[0] + cab[0]) * 0.5,
+    (wall[1] + cab[1]) * 0.5,
+    (wall[2] + cab[2]) * 0.5,
+  ];
+  expect(distance3(cameraTarget, wallCabMidpoint)).toBeLessThan(14);
 
   await page.addStyleTag({
     content: ".rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}",
@@ -110,6 +150,14 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
       ],
       aircraftDoorVerticalErrorMeters: Number(runtime.inspectionAircraftDoorVerticalErrorMeters),
       jetwayVerticalFitAuthority: runtime.inspectionAircraftJetwayVerticalFitAuthority,
+      cameraEndpointAuthority: runtime.inspectionCameraEndpointAuthority,
+      cameraPosition,
+      cameraTarget,
+      wall,
+      rotunda,
+      cab,
+      rotundaWallDistance,
+      rotundaCabDistance,
       evidenceAuthority: "exact-runtime-measured-ground-contact-and-current-head-render",
     }, null, 2)}\n`,
   );
