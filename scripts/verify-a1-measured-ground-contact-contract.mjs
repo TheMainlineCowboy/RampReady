@@ -124,6 +124,9 @@ requireTokens("dynamicCamera", [
   "inspectionOverheadCameraEndpointFrameSize",
 ]);
 
+// The lock preparer must contain the interpolation blocks as replacement
+// anchors, so validate its positive outputs instead of falsely forbidding those
+// source strings before the preparer has applied them to the generated trainer.
 requireTokens("cameraLock", [
   "exact-a1-evidence-camera-direct-lock-v1",
   "camera.position.copy(desiredCamera)",
@@ -132,10 +135,8 @@ requireTokens("cameraLock", [
   "inspectionOverheadCameraEndpointLockAuthority",
   "inspectionOverheadCameraEndpointConvergenceErrorMeters",
   "distanceTo(desiredCamera).toFixed(6)",
-]);
-forbidTokens("cameraLock", [
-  "camera.position.lerp(desiredCamera, 0.22);\n          camera.lookAt(cameraTarget);\n          renderer.domElement.dataset.inspectionCameraEndpointAuthority",
-  "camera.position.lerp(desiredCamera, 0.3);\n          camera.lookAt(cameraTarget);\n          renderer.domElement.dataset.inspectionOverheadCameraEndpointAuthority",
+  "endpoint-derived perspective camera interpolation block is missing",
+  "endpoint-derived overhead camera interpolation block is missing",
 ]);
 
 requireTokens("heading", [
