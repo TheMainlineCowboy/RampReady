@@ -6,6 +6,7 @@ const CAMERA_AUTHORITY = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-c
 const LOCK_AUTHORITY = "exact-a1-evidence-camera-direct-lock-v1";
 const VISUAL_AUTHORITY = "same-day-a1-continuous-compact-solid-closed-grounded-v1";
 const BOGIE_GROUND_AUTHORITY = "exact-authored-a1-lowest-geometry-ramp-contact-v1";
+const NO_LIFT_AUTHORITY = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 
 async function captureCanvas(page, path) {
   const box = await page.evaluate(() => {
@@ -65,16 +66,21 @@ async function selectSubview(page, subview) {
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 }
 
-test("A1 close evidence shows the real terminal joint and grounded bogie area", async ({ page }) => {
+test("A1 close evidence shows the compact real terminal joint and zero-lift grounded bogie", async ({ page }) => {
   test.setTimeout(780_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   await page.getByRole("button", { name: "Drive tug / inspect airport" }).click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction(({ visualAuthority, bogieAuthority }) => {
+  await page.waitForFunction(({ visualAuthority, bogieAuthority, noLiftAuthority }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
+    const wallAuthority = String(data?.terminal4A1ConnectionAuthority || "");
+    const wallDistance = Number(data?.terminal4A1JetwayWallDistance);
     return data?.terminal4UploadedJetwayLoadState === "ready"
+      && wallDistance > 1.5
+      && wallDistance < 4.1
+      && !/WALK|JETWAY|CONNECTOR|PORTAL/i.test(wallAuthority)
       && data?.terminal4UploadedJetwayA1VisualAcceptanceAuthority === visualAuthority
       && data?.terminal4UploadedJetwayA1AssemblyPartCount === "5"
       && data?.terminal4UploadedJetwayA1IsolatedNodeRotationCount === "0"
@@ -82,10 +88,19 @@ test("A1 close evidence shows the real terminal joint and grounded bogie area", 
       && data?.terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed === "true"
       && data?.terminal4UploadedJetwayA1NoGeneratedGlassCorridor === "true"
       && data?.terminal4UploadedJetwayBogieGroundContactAuthority === bogieAuthority
-      && Math.abs(Number(data?.terminal4UploadedJetwayBogieGroundClearanceMeters)) <= 0.005;
+      && Math.abs(Number(data?.terminal4UploadedJetwayBogieGroundClearanceMeters)) <= 0.005
+      && Number(data?.terminal4UploadedJetwayBogieGroundContactPointCount) >= 8
+      && Number(data?.terminal4UploadedJetwayBogieGroundContactClusterCount) >= 2
+      && Number(data?.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters) >= 1.2
+      && data?.inspectionAircraftJetwayVerticalFitAuthority === noLiftAuthority
+      && Math.abs(Number(data?.inspectionAircraftJetwayVerticalFitMeters)) <= 0.001
+      && data?.inspectionAircraftJetwayAuthoredBogieGroundPreserved === "true"
+      && Number.isFinite(Number(data?.inspectionAircraftDoorSignedVerticalGapMeters))
+      && Number.isFinite(Number(data?.inspectionAircraftJetwayRequestedVerticalFitMeters));
   }, {
     visualAuthority: VISUAL_AUTHORITY,
     bogieAuthority: BOGIE_GROUND_AUTHORITY,
+    noLiftAuthority: NO_LIFT_AUTHORITY,
   }, { timeout: 300_000, polling: 100 });
 
   await page.getByLabel("Inspection location").selectOption("a1Connection");
@@ -107,7 +122,10 @@ test("A1 close evidence shows the real terminal joint and grounded bogie area", 
   expect(terminalRuntime.inspectionCameraEndpointSubviewAuthority).toBe(SUBVIEW_AUTHORITY);
   expect(terminalRuntime.inspectionCameraEndpointSubview).toBe("terminal-joint");
   expect(Number(terminalRuntime.a1ExactRotundaToWallWorldMeters)).toBeGreaterThan(1.5);
-  expect(Number(terminalRuntime.a1ExactRotundaToWallWorldMeters)).toBeLessThan(6);
+  expect(Number(terminalRuntime.a1ExactRotundaToWallWorldMeters)).toBeLessThan(4.1);
+  expect(Number(terminalRuntime.terminal4A1JetwayWallDistance)).toBeGreaterThan(1.5);
+  expect(Number(terminalRuntime.terminal4A1JetwayWallDistance)).toBeLessThan(4.1);
+  expect(terminalRuntime.terminal4A1ConnectionAuthority).not.toMatch(/WALK|JETWAY|CONNECTOR|PORTAL/i);
   await captureCanvas(page, "test-results/a1-terminal-joint-close.png");
 
   await selectSubview(page, "bogie-contact");
@@ -118,6 +136,16 @@ test("A1 close evidence shows the real terminal joint and grounded bogie area", 
   expect(bogieRuntime.inspectionCameraEndpointSubview).toBe("bogie-contact");
   expect(bogieRuntime.terminal4UploadedJetwayBogieGroundContactAuthority).toBe(BOGIE_GROUND_AUTHORITY);
   expect(Math.abs(Number(bogieRuntime.terminal4UploadedJetwayBogieGroundClearanceMeters))).toBeLessThanOrEqual(0.005);
+  expect(Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactPointCount)).toBeGreaterThanOrEqual(8);
+  expect(Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactClusterCount)).toBeGreaterThanOrEqual(2);
+  expect(Number(bogieRuntime.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters)).toBeGreaterThanOrEqual(1.2);
+  expect(bogieRuntime.inspectionAircraftJetwayVerticalFitAuthority).toBe(NO_LIFT_AUTHORITY);
+  expect(Number(bogieRuntime.inspectionAircraftJetwayVerticalFitMeters)).toBeCloseTo(0, 5);
+  expect(bogieRuntime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");
+  const signedDoorGap = Number(bogieRuntime.inspectionAircraftDoorSignedVerticalGapMeters);
+  const requestedDoorFit = Number(bogieRuntime.inspectionAircraftJetwayRequestedVerticalFitMeters);
+  expect(Number.isFinite(signedDoorGap)).toBe(true);
+  expect(requestedDoorFit).toBeCloseTo(signedDoorGap, 5);
   await captureCanvas(page, "test-results/a1-bogie-contact-close.png");
 
   await selectSubview(page, "full-assembly");
@@ -130,6 +158,8 @@ test("A1 close evidence shows the real terminal joint and grounded bogie area", 
       visualAuthority: terminalRuntime.terminal4UploadedJetwayA1VisualAcceptanceAuthority,
       terminalSubview: terminalRuntime.inspectionCameraEndpointSubview,
       bogieSubview: bogieRuntime.inspectionCameraEndpointSubview,
+      terminalConnectionAuthority: terminalRuntime.terminal4A1ConnectionAuthority,
+      terminalWallDistanceMeters: Number(terminalRuntime.terminal4A1JetwayWallDistance),
       rotundaToWallMeters: Number(terminalRuntime.a1ExactRotundaToWallWorldMeters),
       visibleVestibuleLengthMeters: Number(
         terminalRuntime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters,
@@ -138,6 +168,16 @@ test("A1 close evidence shows the real terminal joint and grounded bogie area", 
       bogieGroundClearanceMeters: Number(
         bogieRuntime.terminal4UploadedJetwayBogieGroundClearanceMeters,
       ),
+      bogieContactPointCount: Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactPointCount),
+      bogieContactClusterCount: Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactClusterCount),
+      bogieHorizontalContactSpanMeters: Number(
+        bogieRuntime.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters,
+      ),
+      noLiftAuthority: bogieRuntime.inspectionAircraftJetwayVerticalFitAuthority,
+      requestedDoorFitMeters: requestedDoorFit,
+      appliedDoorFitMeters: Number(bogieRuntime.inspectionAircraftJetwayVerticalFitMeters),
+      signedDoorGapMeters: signedDoorGap,
+      authoredBogieGroundPreserved: bogieRuntime.inspectionAircraftJetwayAuthoredBogieGroundPreserved,
       evidenceViews: ["terminal-joint", "bogie-contact"],
     }, null, 2)}\n`,
   );
