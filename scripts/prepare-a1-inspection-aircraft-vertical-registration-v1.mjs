@@ -4,6 +4,7 @@ const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const marker = "rendered-a1-door-grounded-from-wheel-contact-v4";
+const verticalFitAuthority = "grounded-aircraft-door-progressive-tunnel-slope-v1";
 if (source.includes(marker)) {
   console.log("A1 wheel-contact grounding and progressive jetway height fit are already prepared.");
   process.exit(0);
@@ -30,43 +31,102 @@ replaceRequired(
 
 replaceRequired(
   `          const aircraftRelocationX = exactA1CabContactX - renderedDoorBefore.x;\n          const aircraftRelocationZ = exactA1CabContactZ - renderedDoorBefore.z;\n          sim.aircraft.position.x += aircraftRelocationX;\n          sim.aircraft.position.z += aircraftRelocationZ;`,
-  `          // Ground from actual landing-gear wheel meshes. Using the complete\n          // aircraft bounds can select antennas, belly geometry, or invisible\n          // helpers and leave the visible tires floating above the ramp.\n          const landingGearWheelBoundsBefore = new THREE.Box3();\n          let landingGearWheelMeshCount = 0;\n          renderedAircraft.traverse((object) => {\n            if (!object?.isMesh || object.visible === false) return;\n            const wheelName = String(object.name || "").toLowerCase();\n            if (!/(wheel|tire|tyre)/.test(wheelName)) return;\n            landingGearWheelBoundsBefore.expandByObject(object);\n            landingGearWheelMeshCount += 1;\n          });\n          if (landingGearWheelMeshCount < 3 || landingGearWheelBoundsBefore.isEmpty()) {\n            throw new Error(\`A1 rendered CRJ exposes only \${landingGearWheelMeshCount} landing-gear wheel meshes; refusing whole-aircraft bounds grounding\`);\n          }\n          const aircraftRelocationX = exactA1CabContactX - renderedDoorBefore.x;\n          const aircraftRelocationY = -landingGearWheelBoundsBefore.min.y;\n          const aircraftRelocationZ = exactA1CabContactZ - renderedDoorBefore.z;\n          sim.aircraft.position.x += aircraftRelocationX;\n          sim.aircraft.position.y += aircraftRelocationY;\n          sim.aircraft.position.z += aircraftRelocationZ;`,
+  `          // Ground from actual landing-gear wheel meshes. Whole-aircraft
+          // bounds can select antennas, belly geometry, or invisible helpers
+          // and leave the visible tires floating above the ramp.
+          const landingGearWheelBoundsBefore = new THREE.Box3();
+          let landingGearWheelMeshCount = 0;
+          renderedAircraft.traverse((object) => {
+            if (!object?.isMesh || object.visible === false) return;
+            const wheelName = String(object.name || "").toLowerCase();
+            if (!/(wheel|tire|tyre)/.test(wheelName)) return;
+            landingGearWheelBoundsBefore.expandByObject(object);
+            landingGearWheelMeshCount += 1;
+          });
+          if (landingGearWheelMeshCount < 3 || landingGearWheelBoundsBefore.isEmpty()) {
+            throw new Error(\`A1 rendered CRJ exposes only \${landingGearWheelMeshCount} landing-gear wheel meshes; refusing whole-aircraft bounds grounding\`);
+          }
+          const aircraftRelocationX = exactA1CabContactX - renderedDoorBefore.x;
+          const aircraftRelocationY = -landingGearWheelBoundsBefore.min.y;
+          const aircraftRelocationZ = exactA1CabContactZ - renderedDoorBefore.z;
+          sim.aircraft.position.x += aircraftRelocationX;
+          sim.aircraft.position.y += aircraftRelocationY;
+          sim.aircraft.position.z += aircraftRelocationZ;`,
   "rendered aircraft X/Z relocation",
 );
 
 replaceRequired(
   `          const renderedDoorAfter = renderedAircraft.localToWorld(authoredDoorLocal.clone());`,
-  `          const renderedDoorAfter = renderedAircraft.localToWorld(authoredDoorLocal.clone());\n          const requestedA1JetwayVerticalFitMeters = renderedDoorAfter.y - exactA1CabContactY;\n          if (!(requestedA1JetwayVerticalFitMeters > -6 && requestedA1JetwayVerticalFitMeters < 2)) {\n            throw new Error(\`A1 supplied bridge requires an invalid vertical fit: \${requestedA1JetwayVerticalFitMeters} m\`);\n          }\n          const appliedA1JetwayVerticalFitMeters = jetwayRef.current.controller?.setAttachedVerticalDrop?.(\n            requestedA1JetwayVerticalFitMeters,\n          );\n          if (!Number.isFinite(appliedA1JetwayVerticalFitMeters)\n            || Math.abs(appliedA1JetwayVerticalFitMeters - requestedA1JetwayVerticalFitMeters) > 0.001) {\n            throw new Error(\`A1 supplied bridge rejected the grounded-door height fit: requested=\${requestedA1JetwayVerticalFitMeters}, applied=\${appliedA1JetwayVerticalFitMeters}\`);\n          }\n          exactA1CabContactY += appliedA1JetwayVerticalFitMeters;\n          exactA1Fleet.userData.uploadedJetwayA1CabContactWorldY = exactA1CabContactY;\n          exactA1Fleet.userData.uploadedJetwayA1AttachedVerticalFitMeters = appliedA1JetwayVerticalFitMeters;\n          exactA1Fleet.userData.uploadedJetwayA1AttachedVerticalFitAuthority = "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2";`,
+  `          const renderedDoorAfter = renderedAircraft.localToWorld(authoredDoorLocal.clone());
+          const requestedA1JetwayVerticalFitMeters = renderedDoorAfter.y - exactA1CabContactY;
+          if (!(requestedA1JetwayVerticalFitMeters > -6 && requestedA1JetwayVerticalFitMeters < 2)) {
+            throw new Error(\`A1 supplied bridge requires an invalid vertical fit: \${requestedA1JetwayVerticalFitMeters} m\`);
+          }
+          const appliedA1JetwayVerticalFitMeters = jetwayRef.current.controller?.setAttachedVerticalDrop?.(
+            requestedA1JetwayVerticalFitMeters,
+          );
+          if (!Number.isFinite(appliedA1JetwayVerticalFitMeters)
+            || Math.abs(appliedA1JetwayVerticalFitMeters - requestedA1JetwayVerticalFitMeters) > 0.001) {
+            throw new Error(\`A1 supplied bridge rejected the grounded-door height fit: requested=\${requestedA1JetwayVerticalFitMeters}, applied=\${appliedA1JetwayVerticalFitMeters}\`);
+          }
+          exactA1CabContactY += appliedA1JetwayVerticalFitMeters;
+          exactA1Fleet.userData.uploadedJetwayA1CabContactWorldY = exactA1CabContactY;
+          exactA1Fleet.userData.uploadedJetwayA1AttachedVerticalFitMeters = appliedA1JetwayVerticalFitMeters;
+          exactA1Fleet.userData.uploadedJetwayA1AttachedVerticalFitAuthority = "${verticalFitAuthority}";`,
   "rendered aircraft door-after",
 );
 
 replaceRequired(
   `          const renderedBounds = new THREE.Box3().setFromObject(renderedAircraft);\n          const renderedDimensions = renderedBounds.getSize(new THREE.Vector3());`,
-  `          const renderedBounds = new THREE.Box3().setFromObject(renderedAircraft);\n          const renderedDimensions = renderedBounds.getSize(new THREE.Vector3());\n          const landingGearWheelBoundsAfter = new THREE.Box3();\n          renderedAircraft.traverse((object) => {\n            if (!object?.isMesh || object.visible === false) return;\n            const wheelName = String(object.name || "").toLowerCase();\n            if (/(wheel|tire|tyre)/.test(wheelName)) landingGearWheelBoundsAfter.expandByObject(object);\n          });\n          if (landingGearWheelBoundsAfter.isEmpty()) {\n            throw new Error("A1 landing-gear wheel bounds disappeared after aircraft registration");\n          }\n          const renderedGroundClearanceMeters = landingGearWheelBoundsAfter.min.y;\n          const renderedDoorVerticalErrorMeters = Math.abs(renderedDoorAfter.y - exactA1CabContactY);`,
+  `          const renderedBounds = new THREE.Box3().setFromObject(renderedAircraft);
+          const renderedDimensions = renderedBounds.getSize(new THREE.Vector3());
+          const landingGearWheelBoundsAfter = new THREE.Box3();
+          renderedAircraft.traverse((object) => {
+            if (!object?.isMesh || object.visible === false) return;
+            const wheelName = String(object.name || "").toLowerCase();
+            if (/(wheel|tire|tyre)/.test(wheelName)) landingGearWheelBoundsAfter.expandByObject(object);
+          });
+          if (landingGearWheelBoundsAfter.isEmpty()) {
+            throw new Error("A1 landing-gear wheel bounds disappeared after aircraft registration");
+          }
+          const renderedGroundClearanceMeters = landingGearWheelBoundsAfter.min.y;
+          const renderedDoorVerticalErrorMeters = Math.abs(renderedDoorAfter.y - exactA1CabContactY);`,
   "rendered aircraft bounds",
 );
 
 replaceRequired(
   `          renderer.domElement.dataset.inspectionAircraftExactParentRelocationX = aircraftRelocationX.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftExactParentRelocationZ = aircraftRelocationZ.toFixed(6);`,
-  `          renderer.domElement.dataset.inspectionAircraftExactParentRelocationX = aircraftRelocationX.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftExactParentRelocationY = aircraftRelocationY.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftExactParentRelocationZ = aircraftRelocationZ.toFixed(6);`,
+  `          renderer.domElement.dataset.inspectionAircraftExactParentRelocationX = aircraftRelocationX.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftExactParentRelocationY = aircraftRelocationY.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftExactParentRelocationZ = aircraftRelocationZ.toFixed(6);`,
   "rendered aircraft relocation telemetry",
 );
 
 replaceRequired(
   `          renderer.domElement.dataset.inspectionAircraftCabContactX = exactA1CabContactX.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftCabContactZ = exactA1CabContactZ.toFixed(6);`,
-  `          renderer.domElement.dataset.inspectionAircraftCabContactX = exactA1CabContactX.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftCabContactY = exactA1CabContactY.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftCabContactZ = exactA1CabContactZ.toFixed(6);`,
+  `          renderer.domElement.dataset.inspectionAircraftCabContactX = exactA1CabContactX.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftCabContactY = exactA1CabContactY.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftCabContactZ = exactA1CabContactZ.toFixed(6);`,
   "rendered Cab telemetry",
 );
 
 replaceRequired(
   `          renderer.domElement.dataset.inspectionAircraftDoorTargetX = renderedDoorAfter.x.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftDoorTargetZ = renderedDoorAfter.z.toFixed(6);`,
-  `          renderer.domElement.dataset.inspectionAircraftDoorTargetX = renderedDoorAfter.x.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftDoorTargetY = renderedDoorAfter.y.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftDoorTargetZ = renderedDoorAfter.z.toFixed(6);`,
+  `          renderer.domElement.dataset.inspectionAircraftDoorTargetX = renderedDoorAfter.x.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftDoorTargetY = renderedDoorAfter.y.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftDoorTargetZ = renderedDoorAfter.z.toFixed(6);`,
   "rendered door telemetry",
 );
 
 replaceRequired(
   `          renderer.domElement.dataset.inspectionAircraftCabContactErrorMeters = cabContactErrorMeters.toFixed(6);`,
-  `          renderer.domElement.dataset.inspectionAircraftCabContactErrorMeters = cabContactErrorMeters.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftDoorVerticalErrorMeters = renderedDoorVerticalErrorMeters.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftGroundClearanceMeters = renderedGroundClearanceMeters.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftLandingGearWheelMeshCount = String(landingGearWheelMeshCount);\n          renderer.domElement.dataset.inspectionAircraftGroundingAuthority = "named-landing-gear-wheel-bounds-v1";\n          renderer.domElement.dataset.inspectionAircraftJetwayVerticalFitMeters = appliedA1JetwayVerticalFitMeters.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftJetwayVerticalFitAuthority = "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2";`,
+  `          renderer.domElement.dataset.inspectionAircraftCabContactErrorMeters = cabContactErrorMeters.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftDoorVerticalErrorMeters = renderedDoorVerticalErrorMeters.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftGroundClearanceMeters = renderedGroundClearanceMeters.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftLandingGearWheelMeshCount = String(landingGearWheelMeshCount);
+          renderer.domElement.dataset.inspectionAircraftGroundingAuthority = "named-landing-gear-wheel-bounds-v1";
+          renderer.domElement.dataset.inspectionAircraftJetwayVerticalFitMeters = appliedA1JetwayVerticalFitMeters.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftJetwayVerticalFitAuthority = "${verticalFitAuthority}";`,
   "rendered Cab error telemetry",
 );
 
@@ -78,7 +138,7 @@ for (const token of [
   "const aircraftRelocationY = -landingGearWheelBoundsBefore.min.y",
   "landingGearWheelBoundsAfter.min.y",
   "named-landing-gear-wheel-bounds-v1",
-  "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2",
+  verticalFitAuthority,
   "inspectionAircraftLandingGearWheelMeshCount",
 ]) {
   if (!source.includes(token)) {
@@ -86,6 +146,9 @@ for (const token of [
   }
 }
 
+if (source.includes("grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2")) {
+  throw new Error(`${trainerPath}: conflicting A1 vertical-fit authority remains`);
+}
 if (source.includes("const aircraftRelocationY = -renderedBoundsBefore.min.y")) {
   throw new Error(`${trainerPath}: obsolete whole-aircraft bounds grounding remains active`);
 }
