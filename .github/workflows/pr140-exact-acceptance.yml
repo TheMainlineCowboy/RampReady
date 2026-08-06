@@ -7,6 +7,12 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - .pr140-acceptance-trigger
+  push:
+    branches:
+      - maintenance/pr140-acceptance-run
+    paths:
+      - .pr140-acceptance-trigger
+      - .github/workflows/pr140-exact-acceptance.yml
   workflow_dispatch:
 
 permissions:
