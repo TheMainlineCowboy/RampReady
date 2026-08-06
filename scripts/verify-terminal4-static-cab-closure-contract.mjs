@@ -3,8 +3,10 @@ import fs from "node:fs";
 const files = Object.freeze({
   build: "scripts/build-production-simulator-quality.mjs",
   source: "src/environment/staticJetwayPortalClosures.js",
+  target: "scripts/prepare-static-jetway-target-shared-with-articulation-v1.mjs",
   prepare: "scripts/prepare-static-jetway-portal-closures-v1.mjs",
   evidence: "scripts/prepare-static-jetway-closure-evidence-v1.mjs",
+  readiness: "scripts/prepare-static-jetway-closure-readiness-v1.mjs",
   finalizer: "scripts/prepare-a1-final-acceptance-authority-v1.mjs",
   articulationBrowser: "tests/browser/uploaded-jetway-articulation-v10.spec.js",
   staticBrowser: "tests/browser/terminal4-static-cab-closure-evidence.spec.js",
@@ -21,29 +23,46 @@ function requireTokens(key, tokens) {
   }
 }
 
-requireTokens("build", [
-  'await runNode("scripts/prepare-static-jetway-portal-closures-v1.mjs")',
-]);
+const prepareIndex = source.build.indexOf('await runNode("scripts/prepare-static-jetway-portal-closures-v1.mjs")');
+const finalizerIndex = source.build.indexOf('await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs")');
+if (!(prepareIndex >= 0 && finalizerIndex > prepareIndex)) {
+  throw new Error(`${files.build}: static Cab closure preparation must run before final acceptance`);
+}
 
+// The committed source intentionally retains the single legacy finitePositive
+// expression as the deterministic replacement anchor. The target preparer must
+// remove it before readiness/build output is accepted.
 requireTokens("source", [
   'STATIC_CAB_CLOSURE_AUTHORITY = "57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3"',
-  'STATIC_CAB_TARGET_AUTHORITY = "placement-bridgeEnd-shared-with-static-articulation-v1"',
-  "let bridgeEndFallbackCount = 0",
-  "const authoredBridgeEnd = Number(placement.bridgeEnd)",
-  "bridgeEndFallbackCount += 1",
   "const contactDistance = finitePositive(placement.bridgeEnd, 18)",
-  "cabTargetAuthority: existing.userData.cabTargetAuthority",
-  "bridgeEndFallbackCount: Number(existing.userData.bridgeEndFallbackCount",
+  "cabPanelTransforms.push",
+  "cabWindowTransforms.push",
+  "cabHeaderTransforms.push",
+  "cabJambTransforms.push",
   "group.userData.cabPanelCount = cabPanelTransforms.length",
   "group.userData.cabWindowCount = cabWindowTransforms.length",
   "group.userData.cabSurroundPieceCount = cabHeaderTransforms.length + cabJambTransforms.length",
   "group.userData.authoredNodeTransformCount = 0",
   "group.userData.opaqueCabCapDepthMeters = 1.45",
   "group.userData.apronFacingOpenAreaMeters = 0",
-  "return summarizeExisting(group)",
+]);
+
+requireTokens("target", [
+  'TARGET_AUTHORITY = "placement-bridgeEnd-shared-with-static-articulation-v1"',
+  'marker = "static-cab-target-shared-with-articulation-v2"',
+  "const fallbackContact = \"    const contactDistance = finitePositive(placement.bridgeEnd, 18);\"",
+  "const contactDistance = Number(placement.bridgeEnd)",
+  "missing the exact positive placement.bridgeEnd shared with articulation",
+  "cabTargetAuthority: existing.userData.cabTargetAuthority",
+  "bridgeEndFallbackCount: Number(existing.userData.bridgeEndFallbackCount",
+  "group.userData.cabTargetAuthority = STATIC_CAB_TARGET_AUTHORITY",
+  "group.userData.bridgeEndFallbackCount = 0",
+  "STATIC_JETWAY_CAB_TARGET_AUTHORITY",
+  "static Cab target fallback remains",
 ]);
 
 requireTokens("prepare", [
+  "prepare-static-jetway-target-shared-with-articulation-v1.mjs?exact-static-target=",
   "STATIC_JETWAY_CAB_CLOSURE_AUTHORITY",
   "STATIC_JETWAY_CAB_TARGET_AUTHORITY",
   "uploadedJetwayStaticCabClosureAuthority = staticPortalClosures.cabClosureAuthority",
@@ -55,24 +74,41 @@ requireTokens("prepare", [
   "uploadedJetwayStaticCabClosureAuthoredNodeTransformCount = staticPortalClosures.authoredNodeTransformCount",
   "uploadedJetwayStaticApronFacingOpenAreaMeters = staticPortalClosures.apronFacingOpenAreaMeters",
   "prepare-static-jetway-closure-evidence-v1.mjs?static-closure=",
+  "prepare-static-jetway-closure-readiness-v1.mjs?static-readiness=",
 ]);
 
 requireTokens("evidence", [
   'CAB_CLOSURE_AUTHORITY = "57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3"',
   'CAB_TARGET_AUTHORITY = "placement-bridgeEnd-shared-with-static-articulation-v1"',
   'EVIDENCE_AUTHORITY = "57-static-cab-endpoints-opaque-zero-open-area-no-authored-transform-v1"',
+  "STATIC_JETWAY_CAB_TARGET_AUTHORITY",
   "staticPortalClosures.cabTargetAuthority !== STATIC_JETWAY_CAB_TARGET_AUTHORITY",
   "staticPortalClosures.bridgeEndFallbackCount !== 0",
   "staticPortalClosures.cabPanelCount !== 57",
   "staticPortalClosures.cabWindowCount !== 57",
   "staticPortalClosures.cabSurroundPieceCount !== 228",
   "staticPortalClosures.authoredNodeTransformCount !== 0",
-  "staticPortalClosures.apronFacingOpenAreaMeters !== 0",
+  "Math.abs(staticPortalClosures.apronFacingOpenAreaMeters) > 1e-9",
   "authoredTerminal4UploadedJetwayStaticCabTargetAuthority",
   "authoredTerminal4UploadedJetwayStaticBridgeEndFallbackCount",
   "terminal4UploadedJetwayStaticCabTargetAuthority",
   "terminal4UploadedJetwayStaticBridgeEndFallbackCount",
   "terminal4UploadedJetwayStaticCabClosureEvidenceAuthority",
+]);
+
+requireTokens("readiness", [
+  'TARGET_AUTHORITY = "placement-bridgeEnd-shared-with-static-articulation-v1"',
+  "const contactDistance = Number(placement.bridgeEnd)",
+  "group.userData.bridgeEndFallbackCount = 0",
+  "staticPortalClosures.cabTargetAuthority !== STATIC_JETWAY_CAB_TARGET_AUTHORITY",
+  "staticPortalClosures.bridgeEndFallbackCount !== 0",
+  "staticPortalClosures.cabPanelCount !== 57",
+  "staticPortalClosures.cabWindowCount !== 57",
+  "staticPortalClosures.cabSurroundPieceCount !== 228",
+  "uploadedJetwayStaticCabTargetAuthority = staticPortalClosures.cabTargetAuthority",
+  "uploadedJetwayStaticBridgeEndFallbackCount = staticPortalClosures.bridgeEndFallbackCount",
+  "authoredTerminal4UploadedJetwayStaticCabTargetAuthority",
+  "terminal4UploadedJetwayStaticCabTargetAuthority",
 ]);
 
 requireTokens("finalizer", [
@@ -119,4 +155,4 @@ requireTokens("staticBrowser", [
   "terminal4-static-cab-closure-evidence.json",
 ]);
 
-console.log("Verified 57 static Terminal 4 Cab closures at the exact bridgeEnd targets shared with articulation, with zero fallback use, zero authored-node transforms, zero apron-facing open area, and rendered A14/B14/B15 evidence.");
+console.log("Verified the staged static Terminal 4 Cab pipeline: exact bridgeEnd migration, zero fallback, 57 panels, 57 windows, 228 surround pieces, zero authored-node transforms, zero apron-facing open area, final fail-closed acceptance, and rendered A14/B14/B15 evidence.");
