@@ -10,6 +10,9 @@ const cameraLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";
 const visualAuthority = "same-day-a1-continuous-compact-solid-closed-grounded-v1";
 const jetwayGroundAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v1";
 const noLiftAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
+const staticCabClosureAuthority = "57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3";
+const staticCabTargetAuthority = "placement-bridgeEnd-shared-with-static-articulation-v1";
+const staticCabEvidenceAuthority = "57-static-cab-endpoints-opaque-zero-open-area-no-authored-transform-v1";
 const marker = "final-a1-acceptance-authority-after-all-preparers-v2";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
@@ -49,6 +52,9 @@ for (const required of [
   visualAuthority,
   jetwayGroundAuthority,
   noLiftAuthority,
+  staticCabClosureAuthority,
+  staticCabTargetAuthority,
+  staticCabEvidenceAuthority,
   "inspectionAircraftDoorVerticalErrorMeters",
   "inspectionAircraftDoorSignedVerticalGapMeters",
   "inspectionAircraftGroundClearanceMeters",
@@ -78,6 +84,15 @@ for (const required of [
   "terminal4UploadedJetwayA1RotundaVestibuleClosureAuthority",
   "terminal4UploadedJetwayA1NoGeneratedGlassCorridor",
   "terminal4UploadedJetwayA1VisualAcceptanceAuthority",
+  "terminal4UploadedJetwayStaticCabClosureAuthority",
+  "terminal4UploadedJetwayStaticCabTargetAuthority",
+  "terminal4UploadedJetwayStaticBridgeEndFallbackCount",
+  "terminal4UploadedJetwayStaticCabClosurePanelCount",
+  "terminal4UploadedJetwayStaticCabClosureWindowCount",
+  "terminal4UploadedJetwayStaticCabClosureSurroundPieceCount",
+  "terminal4UploadedJetwayStaticCabClosureAuthoredNodeTransformCount",
+  "terminal4UploadedJetwayStaticApronFacingOpenAreaMeters",
+  "terminal4UploadedJetwayStaticCabClosureEvidenceAuthority",
   "inspectionCameraEndpointAircraftBoundsMin",
   "inspectionCameraEndpointAircraftBoundsMax",
   "inspectionCameraEndpointFrameSize",
@@ -90,7 +105,7 @@ for (const required of [
   "inspectionPresetJetwayDeployment",
 ]) {
   if (!source.includes(required)) {
-    throw new Error(`${trainerPath}: final A1 acceptance output is missing ${required}`);
+    throw new Error(`${trainerPath}: final Terminal 4 acceptance output is missing ${required}`);
   }
 }
 for (const forbidden of [
@@ -107,4 +122,4 @@ for (const forbidden of [
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs?grounded-pose=${Date.now()}`);
-console.log("Finalized A1 and prepared the full grounded X/Y/Z pre-inspection pose before lifecycle wiring, after compact wall, zero child lift, multi-point contact, continuous geometry, closed vestibule, and locked-camera evidence survived.");
+console.log("Finalized Terminal 4 only after A1 compact-wall, zero-lift, multi-point contact, continuous closed vestibule and locked-camera evidence plus all 57 static Cab closures survived every preparer.");
