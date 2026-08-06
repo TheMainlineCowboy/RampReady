@@ -11,6 +11,8 @@ on:
     paths:
       - .github/workflows/cleanup-actions-storage.yml
   workflow_dispatch:
+  schedule:
+    - cron: "17 8 * * *"
 
 permissions:
   actions: write
@@ -23,7 +25,7 @@ concurrency:
 jobs:
   cleanup:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - name: Delete obsolete artifacts and caches, then verify zero remain
         env:
@@ -33,17 +35,36 @@ jobs:
         run: |
           set -uo pipefail
 
+          wait_for_quota() {
+            local rate_json remaining reset now wait_seconds
+            if ! rate_json="$(gh api rate_limit 2>&1)"; then
+              echo "Could not read GitHub API rate limit: ${rate_json}" >&2
+              sleep 60
+              return
+            fi
+            remaining="$(jq -r '.resources.core.remaining // 0' <<<"${rate_json}")"
+            reset="$(jq -r '.resources.core.reset // 0' <<<"${rate_json}")"
+            now="$(date +%s)"
+            echo "GitHub API core quota remaining=${remaining}; reset=${reset}; now=${now}."
+            if (( remaining < 25 && reset > now )); then
+              wait_seconds=$((reset - now + 10))
+              echo "Waiting ${wait_seconds}s for GitHub API quota reset."
+              sleep "${wait_seconds}"
+            fi
+          }
+
           api_get() {
             local endpoint="$1"
             local attempt=1
             local output
-            while (( attempt <= 6 )); do
+            while (( attempt <= 12 )); do
+              wait_for_quota
               if output="$(gh api "${endpoint}" 2>&1)"; then
                 printf '%s' "${output}"
                 return 0
               fi
-              echo "GitHub GET failed for ${endpoint} on attempt ${attempt}; retrying." >&2
-              sleep $((attempt * 2))
+              echo "GitHub GET failed for ${endpoint} on attempt ${attempt}: ${output}" >&2
+              sleep $((attempt < 6 ? attempt * 10 : 60))
               attempt=$((attempt + 1))
             done
             echo "GitHub GET permanently failed for ${endpoint}." >&2
@@ -53,12 +74,14 @@ jobs:
           api_delete() {
             local endpoint="$1"
             local attempt=1
-            while (( attempt <= 6 )); do
-              if gh api --method DELETE "${endpoint}" >/dev/null 2>&1; then
+            local output
+            while (( attempt <= 12 )); do
+              wait_for_quota
+              if output="$(gh api --method DELETE "${endpoint}" 2>&1)"; then
                 return 0
               fi
-              echo "GitHub DELETE failed for ${endpoint} on attempt ${attempt}; retrying." >&2
-              sleep $((attempt * 2))
+              echo "GitHub DELETE failed for ${endpoint} on attempt ${attempt}: ${output}" >&2
+              sleep $((attempt < 6 ? attempt * 10 : 60))
               attempt=$((attempt + 1))
             done
             echo "GitHub DELETE permanently failed for ${endpoint}." >&2
