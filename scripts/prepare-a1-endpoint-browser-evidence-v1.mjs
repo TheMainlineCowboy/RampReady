@@ -71,4 +71,5 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Exposed exact world-space A1 Rotunda, grounded wall and Cab endpoints to the browser evidence gate for camera and visual diagnosis.");
+await import(`./prepare-a1-dynamic-evidence-camera-v1.mjs?exact-endpoint-camera=${Date.now()}`);
+console.log("Exposed exact world-space A1 Rotunda, grounded wall and Cab endpoints and derived the evidence cameras from those final runtime coordinates.");
