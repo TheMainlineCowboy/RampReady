@@ -74,6 +74,34 @@ for (const path of verticalEvidenceFiles) {
   source = source.replaceAll(expectOld, expectNew);
   source = source.replaceAll(oldNegativeAppliedFit, newZeroAppliedFit);
 
+  // Center-to-wall includes the exact authored Rotunda collar and can be up to
+  // 5.74 m. Compactness is proved independently by the exact 2.4 m visible
+  // vestibule—not by forcing the Rotunda center inside 4.1 m.
+  source = source
+    .replaceAll(
+      "Number(data?.terminal4A1JetwayWallDistance) > 1.5",
+      "Number(data?.terminal4A1JetwayWallDistance) > 2.9",
+    )
+    .replaceAll(
+      "Number(data?.terminal4A1JetwayWallDistance) < 4.1",
+      "Number(data?.terminal4A1JetwayWallDistance) < 5.8",
+    )
+    .replaceAll(
+      "expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeGreaterThan(1.5);",
+      "expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeGreaterThan(2.9);",
+    )
+    .replaceAll(
+      "expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeLessThan(4.1);",
+      `expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeLessThan(5.8);
+  expect(Math.abs(Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4)).toBeLessThanOrEqual(0.05);`,
+    );
+
+  const wallWaitAnchor = "      && Number(data?.terminal4A1JetwayWallDistance) < 5.8";
+  const visibleWait = "      && Math.abs(Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4) <= 0.05";
+  if (source.includes(wallWaitAnchor) && !source.includes(visibleWait)) {
+    source = source.replace(wallWaitAnchor, `${wallWaitAnchor}\n${visibleWait}`);
+  }
+
   if (source.includes(OLD_VERTICAL_AUTHORITY)
     || source.includes("inspectionAircraftDoorVerticalErrorMeters) <= 0.01")
     || source.includes("inspectionAircraftJetwayVerticalFitMeters)).toBeLessThan(-1)")) {
@@ -86,6 +114,17 @@ for (const path of verticalEvidenceFiles) {
   if (source.includes("inspectionAircraftDoorVerticalErrorMeters")
     && !source.includes("inspectionAircraftJetwayAuthoredBogieGroundPreserved")) {
     throw new Error(`${path}: door-gap evidence does not require grounded-bogie preservation`);
+  }
+  if (source.includes("terminal4A1JetwayWallDistance")) {
+    if (source.includes("terminal4A1JetwayWallDistance) > 1.5")
+      || source.includes("terminal4A1JetwayWallDistance) < 4.1")
+      || source.includes("terminal4A1JetwayWallDistance)).toBeGreaterThan(1.5)")
+      || source.includes("terminal4A1JetwayWallDistance)).toBeLessThan(4.1)")) {
+      throw new Error(`${path}: stale Rotunda center-to-wall limit remains`);
+    }
+    if (!source.includes("terminal4UploadedJetwayA1VisibleVestibuleLengthMeters")) {
+      throw new Error(`${path}: final A1 compactness is not tied to the exact visible vestibule`);
+    }
   }
   fs.writeFileSync(path, source, "utf8");
 }
@@ -114,4 +153,4 @@ for (const path of verticalEvidenceFiles) {
   }
 }
 
-console.log("Updated browser expectations for Cab-normal heading, stable free-drive displacement, zero applied A1 child lift, retained signed door-gap evidence, and grounded-bogie preservation without weakening geometry gates.");
+console.log("Updated browser expectations for Cab-normal heading, stable free-drive motion, zero applied A1 child lift, grounded-bogie preservation, authored Rotunda center distance, and an independently exact 2.4 m visible terminal vestibule.");
