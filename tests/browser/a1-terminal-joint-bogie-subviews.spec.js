@@ -66,7 +66,7 @@ async function selectSubview(page, subview) {
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 }
 
-test("A1 close evidence shows the compact real terminal joint and zero-lift grounded bogie", async ({ page }) => {
+test("A1 close evidence shows the exact 2.4 m terminal vestibule and zero-lift grounded bogie", async ({ page }) => {
   test.setTimeout(780_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
@@ -76,15 +76,16 @@ test("A1 close evidence shows the compact real terminal joint and zero-lift grou
   await page.waitForFunction(({ visualAuthority, bogieAuthority, noLiftAuthority }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     const wallAuthority = String(data?.terminal4A1ConnectionAuthority || "");
-    const wallDistance = Number(data?.terminal4A1JetwayWallDistance);
+    const centerToWallDistance = Number(data?.terminal4A1JetwayWallDistance);
+    const visibleVestibuleLength = Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters);
     return data?.terminal4UploadedJetwayLoadState === "ready"
-      && wallDistance > 1.5
-      && wallDistance < 4.1
+      && centerToWallDistance > 2.9
+      && centerToWallDistance < 5.8
+      && Math.abs(visibleVestibuleLength - 2.4) <= 0.05
       && !/WALK|JETWAY|CONNECTOR|PORTAL/i.test(wallAuthority)
       && data?.terminal4UploadedJetwayA1VisualAcceptanceAuthority === visualAuthority
       && data?.terminal4UploadedJetwayA1AssemblyPartCount === "5"
       && data?.terminal4UploadedJetwayA1IsolatedNodeRotationCount === "0"
-      && Math.abs(Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4) <= 0.05
       && data?.terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed === "true"
       && data?.terminal4UploadedJetwayA1NoGeneratedGlassCorridor === "true"
       && data?.terminal4UploadedJetwayBogieGroundContactAuthority === bogieAuthority
@@ -121,10 +122,11 @@ test("A1 close evidence shows the compact real terminal joint and zero-lift grou
   }));
   expect(terminalRuntime.inspectionCameraEndpointSubviewAuthority).toBe(SUBVIEW_AUTHORITY);
   expect(terminalRuntime.inspectionCameraEndpointSubview).toBe("terminal-joint");
-  expect(Number(terminalRuntime.a1ExactRotundaToWallWorldMeters)).toBeGreaterThan(1.5);
-  expect(Number(terminalRuntime.a1ExactRotundaToWallWorldMeters)).toBeLessThan(4.1);
-  expect(Number(terminalRuntime.terminal4A1JetwayWallDistance)).toBeGreaterThan(1.5);
-  expect(Number(terminalRuntime.terminal4A1JetwayWallDistance)).toBeLessThan(4.1);
+  expect(Number(terminalRuntime.a1ExactRotundaToWallWorldMeters)).toBeGreaterThan(2.9);
+  expect(Number(terminalRuntime.a1ExactRotundaToWallWorldMeters)).toBeLessThan(5.8);
+  expect(Number(terminalRuntime.terminal4A1JetwayWallDistance)).toBeGreaterThan(2.9);
+  expect(Number(terminalRuntime.terminal4A1JetwayWallDistance)).toBeLessThan(5.8);
+  expect(Math.abs(Number(terminalRuntime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4)).toBeLessThanOrEqual(0.05);
   expect(terminalRuntime.terminal4A1ConnectionAuthority).not.toMatch(/WALK|JETWAY|CONNECTOR|PORTAL/i);
   await captureCanvas(page, "test-results/a1-terminal-joint-close.png");
 
@@ -159,8 +161,8 @@ test("A1 close evidence shows the compact real terminal joint and zero-lift grou
       terminalSubview: terminalRuntime.inspectionCameraEndpointSubview,
       bogieSubview: bogieRuntime.inspectionCameraEndpointSubview,
       terminalConnectionAuthority: terminalRuntime.terminal4A1ConnectionAuthority,
-      terminalWallDistanceMeters: Number(terminalRuntime.terminal4A1JetwayWallDistance),
-      rotundaToWallMeters: Number(terminalRuntime.a1ExactRotundaToWallWorldMeters),
+      rotundaCenterToWallMeters: Number(terminalRuntime.terminal4A1JetwayWallDistance),
+      exactRotundaCenterToWallMeters: Number(terminalRuntime.a1ExactRotundaToWallWorldMeters),
       visibleVestibuleLengthMeters: Number(
         terminalRuntime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters,
       ),
