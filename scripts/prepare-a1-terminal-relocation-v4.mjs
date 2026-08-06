@@ -36,11 +36,15 @@ const relocatedSpanBlock = `  let rotundaOpening = measureExactRotundaOpening(TH
   const relocatedWallOffsetZ = terminalWallZ - rotundaOpening.centerZ;
   const terminalDistance = relocatedWallOffsetX * rotundaOpening.openingDirectionX
     + relocatedWallOffsetZ * rotundaOpening.openingDirectionZ;
+  const actualVisibleVestibuleMeters = terminalDistance - rotundaOpening.collarRadius;
   const relocationDistanceError = Math.abs(terminalDistance - desiredTerminalDistance);
   const openingAlignment = rotundaOpening.openingDirectionX * terminalDirection.x
     + rotundaOpening.openingDirectionZ * terminalDirection.z;
   if (relocationDistanceError > 0.03) {
     throw new Error(\`A1 signed terminal relocation missed the measured vestibule span by \${relocationDistanceError} m\`);
+  }
+  if (Math.abs(actualVisibleVestibuleMeters - A1_PHOTO_VISIBLE_VESTIBULE_METERS) > 0.05) {
+    throw new Error(\`A1 relocated visible vestibule is wrong: \${actualVisibleVestibuleMeters}\`);
   }
   if (openingAlignment < ${MIN_TERMINAL_ALIGNMENT}) {
     throw new Error(\`A1 authored Rotunda opening is not terminal-facing after relocation: \${openingAlignment}\`);
@@ -151,8 +155,19 @@ source = source.replace(
   'const INSTALLATION_AUTHORITY = "parent-matrix-committed-final-cab-contact-grounded-exact-chain-v25";',
 );
 
+const visibleVestibuleDeclarationCount = (
+  source.match(/const actualVisibleVestibuleMeters = terminalDistance - rotundaOpening\.collarRadius;/g) || []
+).length;
+if (visibleVestibuleDeclarationCount !== 1) {
+  throw new Error(
+    `${installationPath}: terminal relocation must retain exactly one visible-vestibule declaration, found ${visibleVestibuleDeclarationCount}`,
+  );
+}
+
 for (const token of [
   'INSTALLATION_AUTHORITY = "parent-matrix-committed-final-cab-contact-grounded-exact-chain-v25"',
+  "const actualVisibleVestibuleMeters = terminalDistance - rotundaOpening.collarRadius",
+  "Math.abs(actualVisibleVestibuleMeters - A1_PHOTO_VISIBLE_VESTIBULE_METERS) > 0.05",
   "group.updateMatrixWorld(true)",
   "fleet.updateWorldMatrix(true, true)",
   "cabContactParentOffsetZ > 5.9",
@@ -173,4 +188,4 @@ if (source.includes("openingAlignment < 0.995") || source.includes("measuredTerm
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log(`Committed the A1 source-parent matrix before measuring the final Cab scene contact, preserving the exact GLB hierarchy and ${MIN_TERMINAL_ALIGNMENT.toFixed(2)} opening-alignment floor.`);
+console.log(`Committed the A1 source-parent matrix, retained one scoped actual-visible-vestibule measurement, and preserved the exact GLB hierarchy with a ${MIN_TERMINAL_ALIGNMENT.toFixed(2)} opening-alignment floor.`);
