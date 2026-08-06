@@ -12,7 +12,6 @@ function replaceRequired(before, after, marker, label) {
 const independentStructuralFit = [
   "function findTerminalWallConnection",
   "const cast = (direction, far = 48)",
-  "return /BGATE|DGATE|PHX_TERM400/i.test",
   "distance <= 48",
   "1.25, 44",
   "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12",
@@ -112,6 +111,42 @@ if (!independentStructuralFit && source.includes("function findTerminalWallConne
   );
 }
 
+// Converted and UV-split Terminal 4 materials do not always retain BGATE or
+// DGATE in material.name. Their exact package identity is preserved in the
+// diffuse-texture metadata installed immediately before jetway placement.
+// Use that source identity for both ray hits and the nearest-vertex fallback.
+const structuralFacadeReferenceMarker = "A1 structural facade source-reference v28";
+if (!source.includes(structuralFacadeReferenceMarker)) {
+  const nameOnlyRayFilter = `      return /BGATE|DGATE|PHX_TERM400/i.test(material?.name || "");`;
+  const metadataAwareRayFilter = `      // ${structuralFacadeReferenceMarker}
+      const structuralReference = [
+        material?.name,
+        material?.userData?.diffuseTexture,
+        material?.userData?.sourceDiffuseTexture,
+        material?.userData?.runtimeDiffuseTexture,
+      ].filter(Boolean).join(" ");
+      return /BGATE|DGATE|PHX_TERM400/i.test(structuralReference);`;
+  if (!source.includes(nameOnlyRayFilter)) {
+    throw new Error(`${jetwayPath}: missing name-only structural ray filter`);
+  }
+  source = source.replace(nameOnlyRayFilter, metadataAwareRayFilter);
+
+  const nameOnlyVertexFilter = `    if (!materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test(material?.name || ""))) return;`;
+  const metadataAwareVertexFilter = `    if (!materials.some((material) => {
+      const structuralReference = [
+        material?.name,
+        material?.userData?.diffuseTexture,
+        material?.userData?.sourceDiffuseTexture,
+        material?.userData?.runtimeDiffuseTexture,
+      ].filter(Boolean).join(" ");
+      return /BGATE|DGATE|PHX_TERM400/i.test(structuralReference);
+    })) return;`;
+  if (!source.includes(nameOnlyVertexFilter)) {
+    throw new Error(`${jetwayPath}: missing name-only structural vertex filter`);
+  }
+  source = source.replace(nameOnlyVertexFilter, metadataAwareVertexFilter);
+}
+
 // The user's overhead and same-day A1 photos show the Rotunda attached to the
 // actual Terminal 4 building. Never override A1 to the elevated T4_WALK mesh.
 // The preferred Cab-opposite ray can pass through a split in the converted
@@ -185,7 +220,7 @@ const structuralBuildingConnection = `    const terminalConnection = findTermina
       if (!structuralAuthorities.has(terminalConnection.authority)) {
         throw new Error(\`A1 structural terminal-building search returned an invalid authority: \${terminalConnection.authority}\`);
       }
-      terminalConnection.authority = \`structural-A1-terminal-building-\${terminalConnection.authority}-v27\`;
+      terminalConnection.authority = \`structural-A1-terminal-building-\${terminalConnection.authority}-v28\`;
     }`;
 
 if (source.includes(obsoleteWalkwayConnection)) {
@@ -201,20 +236,25 @@ if (source.includes(obsoleteWalkwayConnection)) {
 const independentPrepared = [
   "function findTerminalWallConnection",
   "const cast = (direction, far = 48)",
-  "return /BGATE|DGATE|PHX_TERM400/i.test",
   "distance <= 48",
   "1.25, 44",
   "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12",
 ].every((token) => source.includes(token));
 const legacyPrepared = [
   "new THREE.Raycaster(origin, direction, 0.05, 48)",
-  "return /BGATE|DGATE|PHX_TERM400/i.test",
   "longitudinal <= 48",
   "lateral <= 5.5",
   "1.25, 44",
   "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
 ].every((token) => source.includes(token));
+const metadataAwareFacadePrepared = [
+  structuralFacadeReferenceMarker,
+  "material?.userData?.diffuseTexture",
+  "material?.userData?.sourceDiffuseTexture",
+  "material?.userData?.runtimeDiffuseTexture",
+].every((token) => source.includes(token));
 if ((!independentPrepared && !legacyPrepared)
+  || !metadataAwareFacadePrepared
   || !source.includes("structural-A1-terminal-building-")
   || source.includes("exact-T4_WALK-A1-terminal-portal-v25")
   || source.includes("A1 direct terminal-building raycast failed")) {
@@ -223,5 +263,5 @@ if ((!independentPrepared && !legacyPrepared)
 
 fs.writeFileSync(jetwayPath, source, "utf8");
 console.log(independentPrepared
-  ? "Prepared A1 connector v27 against the nearest valid structural Terminal 4 facade; the elevated T4_WALK override remains forbidden."
-  : "Prepared legacy A1 connector v27 against the structural Terminal 4 building; the elevated T4_WALK override remains forbidden.");
+  ? "Prepared A1 connector v28 using converted facade source metadata against the real Terminal 4 building; the elevated T4_WALK override remains forbidden."
+  : "Prepared legacy A1 connector v28 using converted facade source metadata against the structural Terminal 4 building; the elevated T4_WALK override remains forbidden.");
