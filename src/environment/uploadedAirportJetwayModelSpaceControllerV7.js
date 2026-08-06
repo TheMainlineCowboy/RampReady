@@ -60,12 +60,14 @@ export function createModelSpaceA1Controller(THREE, {
   }
 
   let deployment = 1;
+  let attachedVerticalDrop = 0;
   let visual = null;
   let state = "loading-uploaded-model";
 
   const apply = () => {
     if (!visual) return;
     const retract = 1 - deployment;
+    const attachedDrop = deployment * attachedVerticalDrop;
     const { anchor, model, nodes, base, direction } = visual;
     anchor.rotation.y = base.yaw;
     anchor.updateMatrix();
@@ -80,6 +82,7 @@ export function createModelSpaceA1Controller(THREE, {
       base.tunnelB,
       direction,
       retract * retraction.tunnelB,
+      attachedDrop / 3,
     );
     applyModelSpaceRetraction(
       THREE,
@@ -88,6 +91,7 @@ export function createModelSpaceA1Controller(THREE, {
       base.tunnelC,
       direction,
       retract * retraction.tunnelC,
+      attachedDrop * 2 / 3,
     );
     applyModelSpaceRetraction(
       THREE,
@@ -96,12 +100,14 @@ export function createModelSpaceA1Controller(THREE, {
       base.cab,
       direction,
       retract * retraction.cab,
-      retract * retraction.lift,
+      attachedDrop + retract * retraction.lift,
     );
     anchor.userData.retractionAuthority = authority;
     anchor.userData.retractionClearanceMeters = retraction.totalClearanceMeters;
     anchor.userData.retractionMode = modeAuthority;
     anchor.userData.retractionDirectionModel = direction.toArray().join(",");
+    anchor.userData.attachedVerticalDropMeters = attachedVerticalDrop;
+    anchor.userData.attachedVerticalFitAuthority = "grounded-aircraft-door-progressive-tunnel-slope-v1";
     state = deployment >= 0.995 ? "attached-to-aircraft-door"
       : deployment <= 0.005 ? "parked-clear-of-aircraft"
         : "retracting-from-aircraft";
@@ -112,6 +118,12 @@ export function createModelSpaceA1Controller(THREE, {
       deployment = clamp(value, 0, 1);
       apply();
     },
+    setAttachedVerticalDrop(value) {
+      attachedVerticalDrop = clamp(value, -6, 2);
+      apply();
+      return attachedVerticalDrop;
+    },
+    getAttachedVerticalDrop() { return attachedVerticalDrop; },
     getDeployment() { return deployment; },
     getState() { return state; },
     bind(anchor) {
