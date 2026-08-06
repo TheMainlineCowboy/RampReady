@@ -5,10 +5,10 @@ let source = fs.readFileSync(trainerPath, "utf8");
 
 const marker = "authored-rendered-door-to-final-cab-a1-aircraft-pose-v4";
 const markerLiteral = JSON.stringify(marker);
-// Preserve the established release field while exposing the stricter physical
-// authority separately, so existing gates remain compatible without hiding the
-// rendered authored-door registration semantics.
-const poseAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
+// The relocation, grounding and lifecycle now form one measured persisted pose.
+// Publish that final authority everywhere instead of retaining the superseded
+// horizontal-relocation-only label.
+const poseAuthority = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
 const cabContactAuthority = "authored-rendered-forward-left-door-to-final-cab-v4";
 const renderedScaleAuthority = "crj-authored-world-dimensions-preserved-v2";
 // Measured directly from the normalized authored CRJ GLB. The model is +Y up,
@@ -166,6 +166,9 @@ for (const token of [
 if (source.includes("aircraft.scale.setScalar(0.82)")) {
   throw new Error(`${trainerPath}: legacy aircraft scale overwrite remains`);
 }
+if (source.includes('const A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "terminal-relocated-a1-exact-cab-registration-v1";')) {
+  throw new Error(`${trainerPath}: superseded horizontal-only aircraft pose authority remains`);
+}
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared authored-world-scale CRJ rendering and millimetre-precision forward-left door registration to the measured final A1 Cab endpoint.");
+console.log("Prepared authored-world-scale CRJ rendering and the persisted measured forward-left door registration to the final A1 Cab endpoint.");
