@@ -4,32 +4,42 @@ const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const marker = "grounded-a1-training-pose-before-inspection-registration-v1";
-const moveBlock = `          sim.aircraft.position.x += aircraftRelocationX;
-          sim.aircraft.position.y += aircraftRelocationY;
-          sim.aircraft.position.z += aircraftRelocationZ;
-          sim.aircraft.updateMatrixWorld(true);`;
-const anchoredMoveBlock = `          // ${marker}
-          const trainingAircraftPoseBeforeInspectionRegistration = {
+const declarationToken = "const trainingAircraftPoseBeforeInspectionRegistration =";
+const fullDeclaration = `          const trainingAircraftPoseBeforeInspectionRegistration = {
             x: sim.aircraft.position.x,
             y: sim.aircraft.position.y,
             z: sim.aircraft.position.z,
             yaw: sim.aircraft.rotation.y,
-          };
-          sim.aircraft.position.x += aircraftRelocationX;
+          };`;
+const moveBlock = `          sim.aircraft.position.x += aircraftRelocationX;
           sim.aircraft.position.y += aircraftRelocationY;
           sim.aircraft.position.z += aircraftRelocationZ;
           sim.aircraft.updateMatrixWorld(true);`;
 
 if (!source.includes(marker)) {
-  if (!source.includes(moveBlock)) {
-    throw new Error(`${trainerPath}: grounded X/Y/Z aircraft registration move is missing`);
+  if (source.includes(fullDeclaration)) {
+    source = source.replace(fullDeclaration, `          // ${marker}\n${fullDeclaration}`);
+  } else if (source.includes(moveBlock)) {
+    source = source.replace(
+      moveBlock,
+      `          // ${marker}
+${fullDeclaration}
+${moveBlock}`,
+    );
+  } else {
+    throw new Error(`${trainerPath}: full grounded X/Y/Z pose declaration and aircraft registration move are both missing`);
   }
-  source = source.replace(moveBlock, anchoredMoveBlock);
+}
+
+const declarationCount = (source.match(/const trainingAircraftPoseBeforeInspectionRegistration =/g) || []).length;
+if (declarationCount !== 1) {
+  throw new Error(`${trainerPath}: expected one grounded pre-inspection pose declaration, received ${declarationCount}`);
 }
 
 for (const token of [
   marker,
-  "const trainingAircraftPoseBeforeInspectionRegistration =",
+  declarationToken,
+  "y: sim.aircraft.position.y",
   "sim.aircraft.position.y += aircraftRelocationY",
   "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
   "grounded-jetway-door-gap-reported-no-child-lift-v1",
@@ -40,4 +50,4 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Captured the full grounded X/Y/Z aircraft pose before inspection registration so lifecycle persistence cannot drop the landing-gear height or reference an undefined pre-inspection pose.");
+console.log("Reused the single full X/Y/Z/yaw pre-inspection pose declaration, marked it as the grounded lifecycle anchor, and rejected duplicate declarations before lifecycle wiring.");
