@@ -1,0 +1,77 @@
+name: Cleanup Actions storage
+
+on:
+  push:
+    branches:
+      - fix/a1-rigid-parent-orientation-final
+    paths:
+      - .github/workflows/cleanup-actions-storage.yml
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: rampready-actions-storage-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Delete artifacts and completed runs from obsolete heads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEEP_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Keeping Actions evidence for exact current head: ${KEEP_SHA}"
+
+          deleted_artifacts=0
+          while true; do
+            response="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100&page=1")"
+            mapfile -t artifact_ids < <(
+              jq -r --arg keep "${KEEP_SHA}" '
+                .artifacts[]
+                | select((.workflow_run.head_sha // "") != $keep)
+                | .id
+              ' <<<"${response}"
+            )
+
+            if (( ${#artifact_ids[@]} == 0 )); then
+              break
+            fi
+
+            for artifact_id in "${artifact_ids[@]}"; do
+              gh api --method DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}"
+              deleted_artifacts=$((deleted_artifacts + 1))
+            done
+          done
+
+          deleted_runs=0
+          while true; do
+            response="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100&page=1")"
+            mapfile -t run_ids < <(
+              jq -r --arg keep "${KEEP_SHA}" '
+                .workflow_runs[]
+                | select(.status == "completed")
+                | select(.head_sha != $keep)
+                | .id
+              ' <<<"${response}"
+            )
+
+            if (( ${#run_ids[@]} == 0 )); then
+              break
+            fi
+
+            for run_id in "${run_ids[@]}"; do
+              gh api --method DELETE "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}"
+              deleted_runs=$((deleted_runs + 1))
+            done
+          done
+
+          echo "Deleted ${deleted_artifacts} obsolete artifacts and ${deleted_runs} completed obsolete workflow runs."
