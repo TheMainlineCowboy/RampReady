@@ -41,6 +41,17 @@ jobs:
           echo "sha=${sha}" >> "${GITHUB_OUTPUT}"
           echo "Exact PR 140 head: ${sha}"
 
+      - name: Publish exact-head acceptance pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.pr.outputs.sha }}
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${SHA}" \
+            -f state=pending \
+            -f context='PR140 exact visual acceptance' \
+            -f description='Exact-head verification and visual render are running' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
       - name: Check out exact PR 140 head
         uses: actions/checkout@v4
         with:
