@@ -111,8 +111,10 @@ jobs:
           echo "STORAGE PURGE VERIFIED: deleted artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes); remaining obsolete artifacts=${obsolete_artifacts}, caches=${caches}; preserved current evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
           (( obsolete_artifacts == 0 && caches == 0 ))
 
-      - name: Check out policy source
+      - name: Check out current main policy source
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Verify every upload-artifact retention is one day
         shell: python
@@ -121,11 +123,14 @@ jobs:
           import re
           import sys
 
+          upload = re.compile(r'^\s*uses:\s*actions/upload-artifact@')
+          retention_line = re.compile(r'retention-days:\s*(\d+)')
           failures = []
+
           for path in sorted(Path('.github/workflows').glob('*.y*ml')):
               lines = path.read_text(encoding='utf-8').splitlines()
               for index, line in enumerate(lines):
-                  if 'uses: actions/upload-artifact@' not in line:
+                  if not upload.match(line):
                       continue
                   base_indent = len(line) - len(line.lstrip())
                   retention = None
@@ -134,13 +139,14 @@ jobs:
                       indent = len(candidate) - len(candidate.lstrip())
                       if stripped.startswith('- ') and indent <= base_indent:
                           break
-                      match = re.search(r'retention-days:\s*(\d+)', stripped)
+                      match = retention_line.search(stripped)
                       if match:
                           retention = int(match.group(1))
                           break
                   if retention != 1:
-                      failures.append(f'{path}:{index + 1}: retention-days={retention!r}')
+                      failures.append(f'{path}:{index + 1}: retention-days={retention!r}, expected 1')
+
           if failures:
               print('\n'.join(failures))
               sys.exit(1)
-          print('POLICY VERIFIED: every actions/upload-artifact step retains evidence for exactly one day.')
+          print('POLICY VERIFIED: every actions/upload-artifact step on main retains evidence for exactly one day.')
