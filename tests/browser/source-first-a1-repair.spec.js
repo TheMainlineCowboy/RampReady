@@ -3,8 +3,10 @@ import { expect, test } from "@playwright/test";
 
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
 const DIRECT_A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
-const AIRCRAFT_AUTHORITY = "terminal-relocated-a1-exact-cab-registration-v1";
+const AIRCRAFT_AUTHORITY = "measured-final-cab-contact-a1-registration-v3";
 const PHOTO_REGISTERED_NOSE_GEAR = Object.freeze({ x: 12.353412, z: -12.486888 });
+const CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 7.32;
+const CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.34;
 
 async function captureCanvas(page, path) {
   const box = await page.evaluate(() => {
@@ -66,6 +68,9 @@ test("source-first A1 evidence proves the exact terminal-to-aircraft chain and p
       && data?.inspectionAircraftPoseAuthority === aircraftAuthority
       && Number.isFinite(Number(data?.inspectionAircraftExactParentRelocationX))
       && Number.isFinite(Number(data?.inspectionAircraftExactParentRelocationZ))
+      && Number.isFinite(Number(data?.inspectionAircraftCabContactX))
+      && Number.isFinite(Number(data?.inspectionAircraftCabContactZ))
+      && Number(data?.inspectionAircraftCabContactErrorMeters) <= 0.01
       && data?.airportCollisionReady === "true";
   }, {
     terminalAuthority: DIRECT_A1_TERMINAL_AUTHORITY,
@@ -96,15 +101,32 @@ test("source-first A1 evidence proves the exact terminal-to-aircraft chain and p
   const totalZ = Number(runtime.inspectionAircraftExactParentRelocationZ);
   expect(Number.isFinite(totalX) && Number.isFinite(totalZ)).toBe(true);
   expect(Math.hypot(totalX, totalZ)).toBeGreaterThan(1);
-  expect(Number(runtime.inspectionAircraftNoseGearX)).toBeCloseTo(
-    PHOTO_REGISTERED_NOSE_GEAR.x + totalX,
-    3,
-  );
-  expect(Number(runtime.inspectionAircraftNoseGearZ)).toBeCloseTo(
-    PHOTO_REGISTERED_NOSE_GEAR.z + totalZ,
-    3,
-  );
+  const noseGearX = Number(runtime.inspectionAircraftNoseGearX);
+  const noseGearZ = Number(runtime.inspectionAircraftNoseGearZ);
+  expect(noseGearX).toBeCloseTo(PHOTO_REGISTERED_NOSE_GEAR.x + totalX, 3);
+  expect(noseGearZ).toBeCloseTo(PHOTO_REGISTERED_NOSE_GEAR.z + totalZ, 3);
   expect(runtime.inspectionAircraftPoseAuthority).toBe(AIRCRAFT_AUTHORITY);
+
+  const cabContactX = Number(runtime.inspectionAircraftCabContactX);
+  const cabContactZ = Number(runtime.inspectionAircraftCabContactZ);
+  const cabDirectionX = Number(runtime.inspectionAircraftCabDirectionX);
+  const cabDirectionZ = Number(runtime.inspectionAircraftCabDirectionZ);
+  expect([cabContactX, cabContactZ, cabDirectionX, cabDirectionZ].every(Number.isFinite)).toBe(true);
+  expect(Math.abs(Math.hypot(cabDirectionX, cabDirectionZ) - 1)).toBeLessThanOrEqual(0.01);
+  expect(Number(runtime.inspectionAircraftCabContactErrorMeters)).toBeLessThanOrEqual(0.01);
+
+  const aircraftYaw = Number(runtime.inspectionAircraftYaw);
+  const forwardX = Math.sin(aircraftYaw);
+  const forwardZ = -Math.cos(aircraftYaw);
+  const leftX = forwardZ;
+  const leftZ = -forwardX;
+  const measuredDoorX = noseGearX
+    - forwardX * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS
+    + leftX * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
+  const measuredDoorZ = noseGearZ
+    - forwardZ * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS
+    + leftZ * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
+  expect(Math.hypot(measuredDoorX - cabContactX, measuredDoorZ - cabContactZ)).toBeLessThanOrEqual(0.02);
 
   const inspectionLocation = page.getByLabel("Inspection location");
   await inspectionLocation.selectOption("a1Connection");
@@ -125,10 +147,10 @@ test("source-first A1 evidence proves the exact terminal-to-aircraft chain and p
     terminalConnectionDirection: direction,
     inspectionCameraAuthority: DIRECT_A1_CAMERA_AUTHORITY,
     inspectionAircraftPoseAuthority: runtime.inspectionAircraftPoseAuthority,
-    inspectionAircraftNoseGear: [
-      Number(runtime.inspectionAircraftNoseGearX),
-      Number(runtime.inspectionAircraftNoseGearZ),
-    ],
+    inspectionAircraftNoseGear: [noseGearX, noseGearZ],
+    inspectionAircraftCabContact: [cabContactX, cabContactZ],
+    inspectionAircraftCabDirection: [cabDirectionX, cabDirectionZ],
+    inspectionAircraftCabContactErrorMeters: Number(runtime.inspectionAircraftCabContactErrorMeters),
     inspectionAircraftExactParentRelocation: [totalX, totalZ],
     inspectionAircraftWallRelocation: [
       Number(runtime.inspectionAircraftWallRelocationX),
