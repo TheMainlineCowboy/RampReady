@@ -5,6 +5,7 @@ let source = fs.readFileSync(trainerPath, "utf8");
 
 const staleAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
 const finalAuthority = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
+const cameraAuthority = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const marker = "final-a1-acceptance-authority-after-all-preparers-v1";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
@@ -46,6 +47,7 @@ for (const required of [
   marker,
   facadeTelemetryMarker,
   finalAuthority,
+  cameraAuthority,
   "inspectionAircraftDoorVerticalErrorMeters",
   "inspectionAircraftGroundClearanceMeters",
   "inspectionAircraftJetwayVerticalFitMeters",
@@ -55,6 +57,10 @@ for (const required of [
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
   "terminal4UploadedJetwayBogieGroundContactAuthority",
   "exact-authored-a1-lowest-geometry-ramp-contact-v1",
+  "inspectionCameraEndpointAircraftBoundsMin",
+  "inspectionCameraEndpointAircraftBoundsMax",
+  "inspectionCameraEndpointFrameSize",
+  "inspectionOverheadCameraEndpointFrameSize",
   "terminal4TerminalConnectedJetwayCount",
   "inspectionPresetJetwayDeployment",
 ]) {
@@ -73,4 +79,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Finalized the generated A1 acceptance runtime with measured jetway ramp clearance, authored CRJ contact clusters, persisted Cab pose, grounded vertical door fit, attached connection preset, and authoritative lower-facade telemetry after every preparer.");
+console.log("Finalized the generated A1 acceptance runtime with measured jetway ramp clearance, authored CRJ contact clusters, endpoint-and-aircraft-bounds camera framing, persisted Cab pose, grounded vertical door fit, attached connection preset, and authoritative lower-facade telemetry after every preparer.");
