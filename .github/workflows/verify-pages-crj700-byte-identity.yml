@@ -119,7 +119,7 @@ jobs:
           name: rampready-crj700-production-byte-identity-${{ steps.release.outputs.expected_sha }}
           path: crj700-byte-identity/
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 1
 
   publish-production-status:
     if: ${{ always() }}
