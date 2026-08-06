@@ -1,6 +1,7 @@
 name: Cleanup Actions storage
 
 on:
+  workflow_call:
   push:
     branches:
       - fix/a1-rigid-parent-orientation-final
