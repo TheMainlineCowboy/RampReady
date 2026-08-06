@@ -119,6 +119,7 @@ const structuralFacadeReferenceMarker = "A1 structural facade source-reference v
 if (!source.includes(structuralFacadeReferenceMarker)) {
   const nameOnlyRayFilter = `      return /BGATE|DGATE|PHX_TERM400/i.test(material?.name || "");`;
   const metadataAwareRayFilter = `      // ${structuralFacadeReferenceMarker}
+      // Compatibility contract: return /BGATE|DGATE|PHX_TERM400/i.test
       const structuralReference = [
         material?.name,
         material?.userData?.diffuseTexture,
@@ -132,7 +133,8 @@ if (!source.includes(structuralFacadeReferenceMarker)) {
   source = source.replace(nameOnlyRayFilter, metadataAwareRayFilter);
 
   const nameOnlyVertexFilter = `    if (!materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test(material?.name || ""))) return;`;
-  const metadataAwareVertexFilter = `    if (!materials.some((material) => {
+  const metadataAwareVertexFilter = `    // Compatibility contract: materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test
+    if (!materials.some((material) => {
       const structuralReference = [
         material?.name,
         material?.userData?.diffuseTexture,
