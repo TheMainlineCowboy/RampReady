@@ -65,10 +65,31 @@ jobs:
       - name: Build exact production artifact
         run: npm run build
 
+      - name: Fail closed on stale generated A1 telemetry
+        shell: bash
+        run: |
+          set -euo pipefail
+          stale='terminal-relocated-a1-exact-cab-registration-v1'
+          final='measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2'
+          if grep -R --fixed-strings --line-number "${stale}" dist; then
+            echo "The production bundle still contains the superseded A1 aircraft pose authority."
+            exit 1
+          fi
+          grep -R --fixed-strings --line-number "${final}" dist
+          grep -R --fixed-strings --line-number 'grounded-aircraft-door-progressive-tunnel-slope-v1' dist
+          grep -R --fixed-strings --line-number 'final-a1-acceptance-authority-after-all-preparers-v1' dist
+          echo "Verified final A1 pose, vertical-fit and facade telemetry in the exact production bundle."
+
       - name: Install browser verifier and Chromium
         run: |
           npm install --no-save @playwright/test@1.55.0
           npx playwright install --with-deps chromium
+
+      - name: Preflight exact A1 connection telemetry
+        run: >-
+          npx playwright test
+          tests/browser/uploaded-jetway-articulation-v10.spec.js
+          --reporter=line --workers=1
 
       - name: Render and verify A1, articulation, Terminal 4 and full airport
         run: >-
