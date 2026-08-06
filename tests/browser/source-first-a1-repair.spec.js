@@ -4,10 +4,10 @@ import { expect, test } from "@playwright/test";
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
 const DIRECT_A1_CAMERA_AUTHORITY = "oblique-measured-final-cab-and-aircraft-a1-v9";
 const AIRCRAFT_AUTHORITY = "terminal-relocated-a1-exact-cab-registration-v1";
-const CAB_CONTACT_AUTHORITY = "measured-final-cab-contact-a1-registration-v3";
+const CAB_CONTACT_AUTHORITY = "authored-rendered-forward-left-door-to-final-cab-v4";
+const RENDERED_SCALE_AUTHORITY = "crj-authored-world-dimensions-preserved-v2";
 const PHOTO_REGISTERED_NOSE_GEAR = Object.freeze({ x: 12.353412, z: -12.486888 });
-const CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 7.32;
-const CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.34;
+const AUTHORED_FORWARD_LEFT_DOOR = Object.freeze({ x: -1.262, y: 3.0, z: 3.90 });
 
 async function captureCanvas(page, path) {
   const box = await page.evaluate(() => {
@@ -51,14 +51,14 @@ async function numericCanvasAttribute(page, name) {
   ), name));
 }
 
-test("source-first A1 evidence proves the exact terminal-to-aircraft chain and physical inspection mode", async ({ page }) => {
+test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft chain and physical inspection mode", async ({ page }) => {
   test.setTimeout(780_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   await page.getByRole("button", { name: "Drive tug / inspect airport" }).click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction(({ terminalAuthority, aircraftAuthority, cabContactAuthority }) => {
+  await page.waitForFunction(({ terminalAuthority, aircraftAuthority, cabContactAuthority, scaleAuthority }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionMode === "active"
       && data?.terminal4UploadedJetwayLoadState === "ready"
@@ -68,16 +68,22 @@ test("source-first A1 evidence proves the exact terminal-to-aircraft chain and p
       && data?.terminal4A1ConnectionAuthority === terminalAuthority
       && data?.inspectionAircraftPoseAuthority === aircraftAuthority
       && data?.inspectionAircraftCabContactAuthority === cabContactAuthority
+      && data?.inspectionAircraftRenderedScaleAuthority === scaleAuthority
       && Number.isFinite(Number(data?.inspectionAircraftExactParentRelocationX))
       && Number.isFinite(Number(data?.inspectionAircraftExactParentRelocationZ))
       && Number.isFinite(Number(data?.inspectionAircraftCabContactX))
       && Number.isFinite(Number(data?.inspectionAircraftCabContactZ))
+      && Number.isFinite(Number(data?.inspectionAircraftDoorTargetX))
+      && Number.isFinite(Number(data?.inspectionAircraftDoorTargetZ))
       && Number(data?.inspectionAircraftCabContactErrorMeters) <= 0.01
+      && Number(data?.inspectionAircraftRenderedLengthMeters) > 31
+      && Number(data?.inspectionAircraftRenderedWingspanMeters) > 22.5
       && data?.airportCollisionReady === "true";
   }, {
     terminalAuthority: DIRECT_A1_TERMINAL_AUTHORITY,
     aircraftAuthority: AIRCRAFT_AUTHORITY,
     cabContactAuthority: CAB_CONTACT_AUTHORITY,
+    scaleAuthority: RENDERED_SCALE_AUTHORITY,
   }, { timeout: 180_000, polling: 250 });
 
   const runtime = await page.evaluate(() => ({
@@ -110,27 +116,32 @@ test("source-first A1 evidence proves the exact terminal-to-aircraft chain and p
   expect(noseGearZ).toBeCloseTo(PHOTO_REGISTERED_NOSE_GEAR.z + totalZ, 3);
   expect(runtime.inspectionAircraftPoseAuthority).toBe(AIRCRAFT_AUTHORITY);
   expect(runtime.inspectionAircraftCabContactAuthority).toBe(CAB_CONTACT_AUTHORITY);
+  expect(runtime.inspectionAircraftRenderedScaleAuthority).toBe(RENDERED_SCALE_AUTHORITY);
 
   const cabContactX = Number(runtime.inspectionAircraftCabContactX);
   const cabContactZ = Number(runtime.inspectionAircraftCabContactZ);
   const cabDirectionX = Number(runtime.inspectionAircraftCabDirectionX);
   const cabDirectionZ = Number(runtime.inspectionAircraftCabDirectionZ);
-  expect([cabContactX, cabContactZ, cabDirectionX, cabDirectionZ].every(Number.isFinite)).toBe(true);
+  const renderedDoorX = Number(runtime.inspectionAircraftDoorTargetX);
+  const renderedDoorZ = Number(runtime.inspectionAircraftDoorTargetZ);
+  expect([
+    cabContactX,
+    cabContactZ,
+    cabDirectionX,
+    cabDirectionZ,
+    renderedDoorX,
+    renderedDoorZ,
+  ].every(Number.isFinite)).toBe(true);
   expect(Math.abs(Math.hypot(cabDirectionX, cabDirectionZ) - 1)).toBeLessThanOrEqual(0.01);
+  expect(Math.hypot(renderedDoorX - cabContactX, renderedDoorZ - cabContactZ)).toBeLessThanOrEqual(0.01);
   expect(Number(runtime.inspectionAircraftCabContactErrorMeters)).toBeLessThanOrEqual(0.01);
-
-  const aircraftYaw = Number(runtime.inspectionAircraftYaw);
-  const forwardX = Math.sin(aircraftYaw);
-  const forwardZ = -Math.cos(aircraftYaw);
-  const leftX = forwardZ;
-  const leftZ = -forwardX;
-  const measuredDoorX = noseGearX
-    - forwardX * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS
-    + leftX * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
-  const measuredDoorZ = noseGearZ
-    - forwardZ * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS
-    + leftZ * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
-  expect(Math.hypot(measuredDoorX - cabContactX, measuredDoorZ - cabContactZ)).toBeLessThanOrEqual(0.02);
+  expect(Number(runtime.inspectionAircraftDoorLocalX)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.x, 3);
+  expect(Number(runtime.inspectionAircraftDoorLocalY)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.y, 3);
+  expect(Number(runtime.inspectionAircraftDoorLocalZ)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.z, 3);
+  expect(Number(runtime.inspectionAircraftRenderedLengthMeters)).toBeGreaterThan(31);
+  expect(Number(runtime.inspectionAircraftRenderedLengthMeters)).toBeLessThan(34);
+  expect(Number(runtime.inspectionAircraftRenderedWingspanMeters)).toBeGreaterThan(22.5);
+  expect(Number(runtime.inspectionAircraftRenderedWingspanMeters)).toBeLessThan(25);
 
   const inspectionLocation = page.getByLabel("Inspection location");
   await inspectionLocation.selectOption("a1Connection");
@@ -145,6 +156,18 @@ test("source-first A1 evidence proves the exact terminal-to-aircraft chain and p
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   await captureCanvas(page, "test-results/source-first-a1-terminal-connection.png");
 
+  await page.evaluate(async () => {
+    const select = document.querySelector('select[aria-label="Camera view"]');
+    if (!(select instanceof HTMLSelectElement)) throw new Error("Camera view selector is missing");
+    const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+    if (!setter) throw new Error("Native camera selector setter is unavailable");
+    setter.call(select, "overhead");
+    select.dispatchEvent(new Event("input", { bubbles: true }));
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
+  await captureCanvas(page, "test-results/source-first-a1-terminal-aircraft-overhead.png");
+
   fs.writeFileSync("test-results/source-first-a1-terminal-connection.json", `${JSON.stringify({
     terminalWallDistance: Number(runtime.terminal4A1JetwayWallDistance),
     terminalConnectionAuthority: runtime.terminal4A1ConnectionAuthority,
@@ -152,8 +175,19 @@ test("source-first A1 evidence proves the exact terminal-to-aircraft chain and p
     inspectionCameraAuthority: DIRECT_A1_CAMERA_AUTHORITY,
     inspectionAircraftPoseAuthority: runtime.inspectionAircraftPoseAuthority,
     inspectionAircraftCabContactAuthority: runtime.inspectionAircraftCabContactAuthority,
+    inspectionAircraftRenderedScaleAuthority: runtime.inspectionAircraftRenderedScaleAuthority,
     inspectionAircraftNoseGear: [noseGearX, noseGearZ],
     inspectionAircraftCabContact: [cabContactX, cabContactZ],
+    inspectionAircraftRenderedDoor: [renderedDoorX, renderedDoorZ],
+    inspectionAircraftDoorLocal: [
+      Number(runtime.inspectionAircraftDoorLocalX),
+      Number(runtime.inspectionAircraftDoorLocalY),
+      Number(runtime.inspectionAircraftDoorLocalZ),
+    ],
+    inspectionAircraftRenderedDimensions: [
+      Number(runtime.inspectionAircraftRenderedLengthMeters),
+      Number(runtime.inspectionAircraftRenderedWingspanMeters),
+    ],
     inspectionAircraftCabDirection: [cabDirectionX, cabDirectionZ],
     inspectionAircraftCabContactErrorMeters: Number(runtime.inspectionAircraftCabContactErrorMeters),
     inspectionAircraftExactParentRelocation: [totalX, totalZ],
