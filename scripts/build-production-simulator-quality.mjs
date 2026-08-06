@@ -74,6 +74,13 @@ try {
   await runNode("scripts/prepare-a1-vector-wall-lock-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-terminal-relocation-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-vertical-registration-v1.mjs");
+  // Grounding is an explicit production stage, not a hidden side effect of the
+  // final heading preparer. Measure the supplied A1 parent against the ramp,
+  // validate readiness from that measured clearance, and ground the authored
+  // CRJ from separated low-geometry contact clusters before lifecycle wiring.
+  await runNode("scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs");
+  await runNode("scripts/prepare-a1-bogie-readiness-v1.mjs");
+  await runNode("scripts/prepare-a1-authored-ground-contact-v1.mjs");
   await runNode("scripts/prepare-a1-endpoint-browser-evidence-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-pose-declaration-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
@@ -98,7 +105,8 @@ try {
   // Translation-only door registration can report zero error while preserving
   // the training-start heading and leaving the aircraft visibly across the
   // terminal walkway. Align the complete aircraft root to the measured Cab
-  // normal before the final rendered-door measurement and relocation.
+  // normal before the final rendered-door measurement and relocation. This
+  // final step also asserts that authored contact-cluster grounding survived.
   await runNode("scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
@@ -128,4 +136,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, anchored A1 to a ramp-level grounded structural facade rather than the elevated T4_WALK corridor, aligned the complete A1 parent from the authored Cab-to-Rotunda endpoint axis at the measured terminal corner with a compact fixed vestibule and full-vector wall lock, aligned the rendered inspection aircraft heading to the measured Cab normal before exact door registration, kept the rendered inspection aircraft grounded while preserving horizontal Cab registration, exposed exact world-space Rotunda/wall/Cab endpoints and honest wheel-ground and vertical-gap evidence, closed all parked jetway apron-facing cab mouths without changing supplied GLB node transforms, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including the supplied-jetway installation correction and both trainer sources.");
+console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, anchored A1 to a ramp-level grounded structural facade rather than the elevated T4_WALK corridor, aligned the complete A1 parent from the authored Cab-to-Rotunda endpoint axis at the measured terminal corner with a compact fixed vestibule and full-vector wall lock, aligned the rendered inspection aircraft heading to the measured Cab normal before exact door registration, measured the complete supplied A1 parent and authored CRJ contact geometry against the ramp, exposed exact world-space Rotunda/wall/Cab endpoints and honest ground and vertical-gap evidence, closed all parked jetway apron-facing cab mouths without changing supplied GLB node transforms, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including the supplied-jetway installation correction and both trainer sources.");
