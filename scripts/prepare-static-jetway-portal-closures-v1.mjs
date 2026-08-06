@@ -30,15 +30,27 @@ if (!source.includes("const staticPortalClosures = installStaticJetwayPortalClos
   );
 }
 
-if (!source.includes("uploadedJetwayStaticCabClosureAuthority")) {
+const legacyEvidence = `      group.userData.uploadedJetwayStaticPortalClosureAuthority = staticPortalClosures.authority;
+      group.userData.uploadedJetwayStaticCabClosureAuthority = staticPortalClosures.cabClosureAuthority;
+      group.userData.uploadedJetwayStaticCabClosurePanelCount = staticPortalClosures.cabPanelCount;
+      group.userData.uploadedJetwayStaticApronFacingOpenAreaMeters = 0;`;
+const completeEvidence = `      group.userData.uploadedJetwayStaticPortalClosureAuthority = staticPortalClosures.authority;
+      group.userData.uploadedJetwayStaticCabClosureAuthority = staticPortalClosures.cabClosureAuthority;
+      group.userData.uploadedJetwayStaticCabClosurePanelCount = staticPortalClosures.cabPanelCount;
+      group.userData.uploadedJetwayStaticCabClosureWindowCount = staticPortalClosures.cabWindowCount;
+      group.userData.uploadedJetwayStaticCabClosureSurroundPieceCount = staticPortalClosures.cabSurroundPieceCount;
+      group.userData.uploadedJetwayStaticCabClosureAuthoredNodeTransformCount = staticPortalClosures.authoredNodeTransformCount;
+      group.userData.uploadedJetwayStaticCabClosureDepthMeters = staticPortalClosures.opaqueCabCapDepthMeters;
+      group.userData.uploadedJetwayStaticApronFacingOpenAreaMeters = staticPortalClosures.apronFacingOpenAreaMeters;`;
+
+if (source.includes(legacyEvidence)) {
+  source = source.replace(legacyEvidence, completeEvidence);
+} else if (!source.includes("uploadedJetwayStaticCabClosureSurroundPieceCount")) {
   const evidenceAnchor = "      group.userData.uploadedJetwayStaticConnectorBatchAuthority = staticConnectors.authority;";
   if (!source.includes(evidenceAnchor)) {
     throw new Error(`${fleetPath}: static connector evidence anchor is missing`);
   }
-  source = source.replace(
-    evidenceAnchor,
-    `${evidenceAnchor}\n      group.userData.uploadedJetwayStaticPortalClosureAuthority = staticPortalClosures.authority;\n      group.userData.uploadedJetwayStaticCabClosureAuthority = staticPortalClosures.cabClosureAuthority;\n      group.userData.uploadedJetwayStaticCabClosurePanelCount = staticPortalClosures.cabPanelCount;\n      group.userData.uploadedJetwayStaticApronFacingOpenAreaMeters = 0;`,
-  );
+  source = source.replace(evidenceAnchor, `${evidenceAnchor}\n${completeEvidence}`);
 }
 
 for (const token of [
@@ -47,7 +59,11 @@ for (const token of [
   "group.userData.uploadedJetwayStaticPortalClosureAuthority = staticPortalClosures.authority",
   "group.userData.uploadedJetwayStaticCabClosureAuthority = staticPortalClosures.cabClosureAuthority",
   "group.userData.uploadedJetwayStaticCabClosurePanelCount = staticPortalClosures.cabPanelCount",
-  "group.userData.uploadedJetwayStaticApronFacingOpenAreaMeters = 0",
+  "group.userData.uploadedJetwayStaticCabClosureWindowCount = staticPortalClosures.cabWindowCount",
+  "group.userData.uploadedJetwayStaticCabClosureSurroundPieceCount = staticPortalClosures.cabSurroundPieceCount",
+  "group.userData.uploadedJetwayStaticCabClosureAuthoredNodeTransformCount = staticPortalClosures.authoredNodeTransformCount",
+  "group.userData.uploadedJetwayStaticCabClosureDepthMeters = staticPortalClosures.opaqueCabCapDepthMeters",
+  "group.userData.uploadedJetwayStaticApronFacingOpenAreaMeters = staticPortalClosures.apronFacingOpenAreaMeters",
   "STATIC_JETWAY_CAB_CLOSURE_AUTHORITY",
 ]) {
   if (!source.includes(token)) {
@@ -56,4 +72,5 @@ for (const token of [
 }
 
 fs.writeFileSync(fleetPath, source, "utf8");
-console.log("Installed opaque aircraft-facing closure panels on all 57 parked Terminal 4 jetways without changing any supplied GLB node transform.");
+await import(`./prepare-static-jetway-closure-evidence-v1.mjs?static-closure=${Date.now()}`);
+console.log("Installed and published exact opaque aircraft-facing closure panels on all 57 parked Terminal 4 jetways without changing any supplied GLB node transform.");
