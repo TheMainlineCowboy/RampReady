@@ -3,9 +3,9 @@ import fs from "node:fs";
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
-const marker = "rendered-a1-door-three-axis-cab-registration-v1";
+const marker = "rendered-a1-door-grounded-horizontal-cab-registration-v2";
 if (source.includes(marker)) {
-  console.log("A1 rendered-aircraft three-axis Cab registration is already prepared.");
+  console.log("A1 rendered-aircraft grounded Cab registration is already prepared.");
   process.exit(0);
 }
 
@@ -30,8 +30,11 @@ const relocationBlock = `          const aircraftRelocationX = exactA1CabContact
           const aircraftRelocationZ = exactA1CabContactZ - renderedDoorBefore.z;
           sim.aircraft.position.x += aircraftRelocationX;
           sim.aircraft.position.z += aircraftRelocationZ;`;
-const relocationBlock3d = `          const aircraftRelocationX = exactA1CabContactX - renderedDoorBefore.x;
-          const aircraftRelocationY = exactA1CabContactY - renderedDoorBefore.y;
+const relocationBlockGrounded = `          const renderedBoundsBefore = new THREE.Box3().setFromObject(renderedAircraft);
+          const aircraftRelocationX = exactA1CabContactX - renderedDoorBefore.x;
+          // Keep the aircraft landing gear on the ramp. The jetway must meet a grounded
+          // aircraft; lifting the complete CRJ to the Cab creates a visually false floating pose.
+          const aircraftRelocationY = -renderedBoundsBefore.min.y;
           const aircraftRelocationZ = exactA1CabContactZ - renderedDoorBefore.z;
           sim.aircraft.position.x += aircraftRelocationX;
           sim.aircraft.position.y += aircraftRelocationY;
@@ -39,21 +42,20 @@ const relocationBlock3d = `          const aircraftRelocationX = exactA1CabConta
 if (!source.includes(relocationBlock)) {
   throw new Error(`${trainerPath}: rendered aircraft X/Z relocation anchor is missing`);
 }
-source = source.replace(relocationBlock, relocationBlock3d);
+source = source.replace(relocationBlock, relocationBlockGrounded);
 
 const errorBlock = `          const cabContactErrorMeters = Math.hypot(
             renderedDoorAfter.x - exactA1CabContactX,
             renderedDoorAfter.z - exactA1CabContactZ,
           );`;
-const errorBlock3d = `          const cabContactErrorMeters = Math.hypot(
+const errorBlockGrounded = `          const cabContactErrorMeters = Math.hypot(
             renderedDoorAfter.x - exactA1CabContactX,
-            renderedDoorAfter.y - exactA1CabContactY,
             renderedDoorAfter.z - exactA1CabContactZ,
           );`;
 if (!source.includes(errorBlock)) {
   throw new Error(`${trainerPath}: rendered aircraft X/Z Cab error anchor is missing`);
 }
-source = source.replace(errorBlock, errorBlock3d);
+source = source.replace(errorBlock, errorBlockGrounded);
 
 const boundsAnchor = `          const renderedBounds = new THREE.Box3().setFromObject(renderedAircraft);
           const renderedDimensions = renderedBounds.getSize(new THREE.Vector3());`;
@@ -108,9 +110,9 @@ source = source.replace(contactEvidenceAnchor, contactEvidence3d);
 for (const token of [
   marker,
   "uploadedJetwayA1CabContactWorldY",
-  "const aircraftRelocationY = exactA1CabContactY - renderedDoorBefore.y",
+  "const renderedBoundsBefore = new THREE.Box3().setFromObject(renderedAircraft)",
+  "const aircraftRelocationY = -renderedBoundsBefore.min.y",
   "sim.aircraft.position.y += aircraftRelocationY",
-  "renderedDoorAfter.y - exactA1CabContactY",
   "const renderedGroundClearanceMeters = renderedBounds.min.y",
   "inspectionAircraftExactParentRelocationY",
   "inspectionAircraftCabContactY",
@@ -119,9 +121,9 @@ for (const token of [
   "inspectionAircraftGroundClearanceMeters",
 ]) {
   if (!source.includes(token)) {
-    throw new Error(`${trainerPath}: three-axis rendered-aircraft token is missing: ${token}`);
+    throw new Error(`${trainerPath}: grounded rendered-aircraft token is missing: ${token}`);
   }
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared three-axis rendered CRJ door registration to the final A1 Cab, including exact vertical error and wheel-ground clearance evidence.");
+console.log("Prepared grounded rendered CRJ registration: horizontal door alignment remains exact while the landing gear stays on the ramp and vertical mismatch is reported honestly.");
