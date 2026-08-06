@@ -114,9 +114,10 @@ if (!independentStructuralFit && source.includes("function findTerminalWallConne
 
 // The user's overhead and same-day A1 photos show the Rotunda attached to the
 // actual Terminal 4 building. Never override A1 to the elevated T4_WALK mesh.
-// Use the preferred Cab-opposite axis and require its first structural hit so
-// the complete supplied parent can subsequently be rotated and relocated to
-// that building wall with only the compact photo-matched vestibule visible.
+// The preferred Cab-opposite ray can pass through a split in the converted
+// facade, so accept the existing radial structural-facade or nearest-vertex
+// fallback. All accepted paths are already restricted to BGATE/DGATE/
+// PHX_TERM400 building materials and therefore cannot select T4_WALK.
 const committedA1Connection = `    const terminalConnection = findTerminalWallConnection(
       THREE,
       terminal,
@@ -148,7 +149,7 @@ const obsoleteWalkwayConnection = `    const terminalConnection = findTerminalWa
         authority: "exact-T4_WALK-A1-terminal-portal-v25",
       });
     }`;
-const directBuildingConnection = `    const terminalConnection = findTerminalWallConnection(
+const brittleDirectConnection = `    const terminalConnection = findTerminalWallConnection(
       THREE,
       terminal,
       jetway.x,
@@ -163,12 +164,37 @@ const directBuildingConnection = `    const terminalConnection = findTerminalWal
       }
       terminalConnection.authority = "direct-A1-terminal-building-preferred-axis-v26";
     }`;
+const structuralBuildingConnection = `    const terminalConnection = findTerminalWallConnection(
+      THREE,
+      terminal,
+      jetway.x,
+      jetway.z + sourceOffsetZ,
+      -ux,
+      -uz,
+      rotundaY,
+    );
+    if (jetway.g === "A1") {
+      if (!terminalConnection) {
+        throw new Error("A1 structural terminal-building search found no BGATE/DGATE/PHX_TERM400 facade");
+      }
+      const structuralAuthorities = new Set([
+        "preferred-axis-raycast",
+        "radial-authored-wall-raycast",
+        "nearest-authored-wall-vertex",
+      ]);
+      if (!structuralAuthorities.has(terminalConnection.authority)) {
+        throw new Error(\`A1 structural terminal-building search returned an invalid authority: \${terminalConnection.authority}\`);
+      }
+      terminalConnection.authority = \`structural-A1-terminal-building-\${terminalConnection.authority}-v27\`;
+    }`;
 
 if (source.includes(obsoleteWalkwayConnection)) {
-  source = source.replace(obsoleteWalkwayConnection, directBuildingConnection);
+  source = source.replace(obsoleteWalkwayConnection, structuralBuildingConnection);
+} else if (source.includes(brittleDirectConnection)) {
+  source = source.replace(brittleDirectConnection, structuralBuildingConnection);
 } else if (source.includes(committedA1Connection)) {
-  source = source.replace(committedA1Connection, directBuildingConnection);
-} else if (!source.includes("direct-A1-terminal-building-preferred-axis-v26")) {
+  source = source.replace(committedA1Connection, structuralBuildingConnection);
+} else if (!source.includes("structural-A1-terminal-building-")) {
   throw new Error(`${jetwayPath}: A1 terminal target block is missing`);
 }
 
@@ -189,12 +215,13 @@ const legacyPrepared = [
   "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
 ].every((token) => source.includes(token));
 if ((!independentPrepared && !legacyPrepared)
-  || !source.includes("direct-A1-terminal-building-preferred-axis-v26")
-  || source.includes("exact-T4_WALK-A1-terminal-portal-v25")) {
-  throw new Error(`${jetwayPath}: direct A1 terminal-building connector preparation is incomplete`);
+  || !source.includes("structural-A1-terminal-building-")
+  || source.includes("exact-T4_WALK-A1-terminal-portal-v25")
+  || source.includes("A1 direct terminal-building raycast failed")) {
+  throw new Error(`${jetwayPath}: structural A1 terminal-building connector preparation is incomplete`);
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
 console.log(independentPrepared
-  ? "Prepared A1 connector v26 at the real Terminal 4 building through the preferred structural wall ray; the elevated T4_WALK override is forbidden."
-  : "Prepared legacy A1 connector v26 at the real Terminal 4 building; the elevated T4_WALK override is forbidden.");
+  ? "Prepared A1 connector v27 against the nearest valid structural Terminal 4 facade; the elevated T4_WALK override remains forbidden."
+  : "Prepared legacy A1 connector v27 against the structural Terminal 4 building; the elevated T4_WALK override remains forbidden.");
