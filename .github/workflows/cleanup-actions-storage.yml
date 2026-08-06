@@ -45,10 +45,10 @@ jobs:
             remaining="$(jq -r '.resources.core.remaining // 0' <<<"${rate_json}")"
             reset="$(jq -r '.resources.core.reset // 0' <<<"${rate_json}")"
             now="$(date +%s)"
-            echo "GitHub API core quota remaining=${remaining}; reset=${reset}; now=${now}."
+            echo "GitHub API core quota remaining=${remaining}; reset=${reset}; now=${now}." >&2
             if (( remaining < 25 && reset > now )); then
               wait_seconds=$((reset - now + 10))
-              echo "Waiting ${wait_seconds}s for GitHub API quota reset."
+              echo "Waiting ${wait_seconds}s for GitHub API quota reset." >&2
               sleep "${wait_seconds}"
             fi
           }
