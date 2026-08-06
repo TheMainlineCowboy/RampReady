@@ -72,5 +72,6 @@ for (const token of [
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-dynamic-evidence-camera-v1.mjs?exact-endpoint-camera=${Date.now()}`);
+await import(`./prepare-a1-evidence-subviews-v1.mjs?exact-evidence-subviews=${Date.now()}`);
 await import(`./prepare-a1-evidence-camera-lock-v1.mjs?exact-camera-lock=${Date.now()}`);
-console.log("Exposed exact world-space A1 Rotunda, grounded wall and Cab endpoints, derived the evidence cameras from the final runtime scene bounds, and locked them before capture.");
+console.log("Exposed exact A1 wall, Rotunda and Cab endpoints; derived full-scene and close evidence views; then locked every camera before capture.");
