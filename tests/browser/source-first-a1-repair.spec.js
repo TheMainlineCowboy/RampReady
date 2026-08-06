@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
 const DIRECT_A1_CAMERA_AUTHORITY = "oblique-measured-final-cab-and-aircraft-a1-v9";
-const AIRCRAFT_AUTHORITY = "terminal-relocated-a1-exact-cab-registration-v1";
+const AIRCRAFT_AUTHORITY = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
 const CAB_CONTACT_AUTHORITY = "authored-rendered-forward-left-door-to-final-cab-v4";
 const RENDERED_SCALE_AUTHORITY = "crj-authored-world-dimensions-preserved-v2";
 const PHOTO_REGISTERED_NOSE_GEAR = Object.freeze({ x: 12.353412, z: -12.486888 });
@@ -76,6 +76,9 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
       && Number.isFinite(Number(data?.inspectionAircraftDoorTargetX))
       && Number.isFinite(Number(data?.inspectionAircraftDoorTargetZ))
       && Number(data?.inspectionAircraftCabContactErrorMeters) <= 0.01
+      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01
+      && Math.abs(Number(data?.inspectionAircraftGroundClearanceMeters)) <= 0.01
+      && data?.inspectionAircraftJetwayVerticalFitAuthority === "grounded-aircraft-door-progressive-tunnel-slope-v1"
       && Number(data?.inspectionAircraftRenderedLengthMeters) > 31
       && Number(data?.inspectionAircraftRenderedWingspanMeters) > 22.5
       && data?.airportCollisionReady === "true";
@@ -135,6 +138,12 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
   expect(Math.abs(Math.hypot(cabDirectionX, cabDirectionZ) - 1)).toBeLessThanOrEqual(0.01);
   expect(Math.hypot(renderedDoorX - cabContactX, renderedDoorZ - cabContactZ)).toBeLessThanOrEqual(0.01);
   expect(Number(runtime.inspectionAircraftCabContactErrorMeters)).toBeLessThanOrEqual(0.01);
+  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(0.01);
+  expect(Math.abs(Number(runtime.inspectionAircraftGroundClearanceMeters))).toBeLessThanOrEqual(0.01);
+  expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(
+    "grounded-aircraft-door-progressive-tunnel-slope-v1",
+  );
+  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeLessThan(-1);
   expect(Number(runtime.inspectionAircraftDoorLocalX)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.x, 3);
   expect(Number(runtime.inspectionAircraftDoorLocalY)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.y, 3);
   expect(Number(runtime.inspectionAircraftDoorLocalZ)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.z, 3);
@@ -148,7 +157,10 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
   await page.waitForFunction((authority) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionPreset === "a1Connection"
-      && data?.inspectionCameraAuthority === authority;
+      && data?.inspectionCameraAuthority === authority
+      && data?.a1JetwayDeployment === "1.000"
+      && data?.a1JetwayState === "attached-to-aircraft-door"
+      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01;
   }, DIRECT_A1_CAMERA_AUTHORITY, { timeout: 30_000, polling: 100 });
   await page.addStyleTag({
     content: ".rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}",

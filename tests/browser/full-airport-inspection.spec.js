@@ -142,7 +142,7 @@ test("free-drive inspection covers the full Terminal 4 route from A1 through B15
     const forward = position();
     // Reverse long enough to cancel residual forward velocity and produce a
     // deterministic opposite-direction displacement on slower CI/WebGL frames.
-    await holdKey("s", "KeyS", 2_800);
+    await holdKey("s", "KeyS", 4_800);
     const reverse = position();
 
     nativeSelect(camera, "overhead");

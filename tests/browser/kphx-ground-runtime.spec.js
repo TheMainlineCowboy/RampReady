@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 
 const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
-const TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY = "terminal-relocated-a1-exact-cab-registration-v1";
+const TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
 const PHOTO_REGISTERED_NOSE_GEAR = Object.freeze({ x: 12.353412, z: -12.486888 });
 const GROUND_SUFFIXES = ["/models/kphx-ground/kphx-ground.gltf", "/models/kphx-ground/kphx-ground.bin"];
 const PHOTO_SUFFIXES = ["/models/kphx-photo/photo-manifest.json"];
@@ -201,6 +201,11 @@ test("loads source-correct PHX scenery with the complete exact Terminal 4 jetway
   expect(Number.isFinite(aircraftRelocationZ)).toBe(true);
   expect(Math.hypot(aircraftRelocationX, aircraftRelocationZ)).toBeGreaterThan(1);
   expect(runtime.inspectionAircraftPoseAuthority).toBe(TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY);
+  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(0.01);
+  expect(Math.abs(Number(runtime.inspectionAircraftGroundClearanceMeters))).toBeLessThanOrEqual(0.01);
+  expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(
+    "grounded-aircraft-door-progressive-tunnel-slope-v1",
+  );
   expect(Number(runtime.inspectionAircraftNoseGearX)).toBeCloseTo(
     PHOTO_REGISTERED_NOSE_GEAR.x + aircraftRelocationX,
     3,

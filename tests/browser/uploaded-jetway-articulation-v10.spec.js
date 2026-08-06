@@ -46,6 +46,15 @@ async function captureInspectionPreset(page, presetId, outputPath) {
   await page.waitForFunction((expectedPreset) => (
     document.querySelector("canvas.trainerCanvas")?.dataset?.inspectionPreset === expectedPreset
   ), presetId, { timeout: 30_000, polling: 100 });
+  if (presetId === "a1Connection") {
+    await page.waitForFunction(() => {
+      const data = document.querySelector("canvas.trainerCanvas")?.dataset;
+      return data?.a1JetwayDeployment === "1.000"
+        && data?.a1JetwayState === "attached-to-aircraft-door"
+        && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01
+        && Math.abs(Number(data?.inspectionAircraftGroundClearanceMeters)) <= 0.01;
+    }, null, { timeout: 30_000, polling: 100 });
+  }
   await page.waitForTimeout(2_000);
   await captureCanvas(page, outputPath);
 }
@@ -104,6 +113,8 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
   const actualGap = Number(runtime.terminal4UploadedJetwayA1ActualDoorGapMeters);
   const staticMaximumError = Number(runtime.terminal4UploadedJetwayStaticMaximumContactErrorMeters);
   const renderedAircraftCabError = Number(runtime.inspectionAircraftCabContactErrorMeters);
+  const renderedAircraftVerticalError = Number(runtime.inspectionAircraftDoorVerticalErrorMeters);
+  const renderedAircraftGroundClearance = Number(runtime.inspectionAircraftGroundClearanceMeters);
   const renderedDoorTargetX = Number(runtime.inspectionAircraftDoorTargetX);
   const renderedDoorTargetZ = Number(runtime.inspectionAircraftDoorTargetZ);
   const measuredCabX = Number(runtime.inspectionAircraftCabContactX);
@@ -124,6 +135,11 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
   expect(runtime.terminal4UploadedJetwayA1PartOrderValid).toBe("true");
   expect(Number.isFinite(renderedAircraftCabError)).toBe(true);
   expect(renderedAircraftCabError).toBeLessThanOrEqual(0.01);
+  expect(renderedAircraftVerticalError).toBeLessThanOrEqual(0.01);
+  expect(Math.abs(renderedAircraftGroundClearance)).toBeLessThanOrEqual(0.01);
+  expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(
+    "grounded-aircraft-door-progressive-tunnel-slope-v1",
+  );
   expect(Math.hypot(renderedDoorTargetX - measuredCabX, renderedDoorTargetZ - measuredCabZ)).toBeLessThanOrEqual(0.01);
   expect([inspectionNoseGearX, inspectionNoseGearZ].every(Number.isFinite)).toBe(true);
 
