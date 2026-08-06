@@ -4,6 +4,7 @@ const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const authority = "measured-cab-normal-aircraft-heading-v1";
+const dimensionAuthority = "yaw-neutral-authored-crj-dimensions-v1";
 const anchor = `          sim.aircraft.updateMatrixWorld(true);
           renderedAircraft.updateMatrixWorld(true);
           const renderedDoorBefore = renderedAircraft.localToWorld(authoredDoorLocal.clone());`;
@@ -30,6 +31,32 @@ if (source.includes(anchor)) {
   throw new Error(`${trainerPath}: authored-door registration anchor is missing`);
 }
 
+// A world-axis bounding box changes its X/Z footprint when the complete aircraft
+// is correctly yawed to the Cab normal. The previous 31-34 m Z and 22.5-25 m X
+// assertion therefore rejected a valid diagonally parked CRJ as roughly 27 x 27 m.
+// Measure canonical authored dimensions with the root yaw temporarily neutral,
+// then restore the exact Cab-registered heading before any rendered evidence.
+const boundsAnchor = `          const renderedBounds = new THREE.Box3().setFromObject(renderedAircraft);
+          const renderedDimensions = renderedBounds.getSize(new THREE.Vector3());
+          const renderedGroundClearanceMeters = renderedBounds.min.y;`;
+const yawNeutralBounds = `          const renderedBounds = new THREE.Box3().setFromObject(renderedAircraft);
+          const renderedGroundClearanceMeters = renderedBounds.min.y;
+          const renderedYawForDimensionCheck = sim.aircraft.rotation.y;
+          sim.aircraft.rotation.y = 0;
+          sim.aircraft.updateMatrixWorld(true);
+          renderedAircraft.updateMatrixWorld(true);
+          const renderedDimensionBounds = new THREE.Box3().setFromObject(renderedAircraft);
+          const renderedDimensions = renderedDimensionBounds.getSize(new THREE.Vector3());
+          sim.aircraft.rotation.y = renderedYawForDimensionCheck;
+          sim.aircraft.updateMatrixWorld(true);
+          renderedAircraft.updateMatrixWorld(true);
+          renderer.domElement.dataset.inspectionAircraftDimensionAuthority = "${dimensionAuthority}";`;
+if (source.includes(boundsAnchor)) {
+  source = source.replace(boundsAnchor, yawNeutralBounds);
+} else if (!source.includes(`inspectionAircraftDimensionAuthority = "${dimensionAuthority}"`)) {
+  throw new Error(`${trainerPath}: rendered-aircraft dimension anchor is missing`);
+}
+
 for (const token of [
   "const cabRegisteredAircraftYaw = Math.atan2(",
   "-exactA1CabDirectionZ",
@@ -37,11 +64,15 @@ for (const token of [
   "sim.aircraft.rotation.y = cabRegisteredAircraftYaw",
   `inspectionAircraftHeadingAuthority = "${authority}"`,
   "inspectionAircraftYaw = cabRegisteredAircraftYaw.toFixed(6)",
+  "const renderedYawForDimensionCheck = sim.aircraft.rotation.y",
+  "const renderedDimensionBounds = new THREE.Box3().setFromObject(renderedAircraft)",
+  "sim.aircraft.rotation.y = renderedYawForDimensionCheck",
+  `inspectionAircraftDimensionAuthority = "${dimensionAuthority}"`,
 ]) {
   if (!source.includes(token)) {
-    throw new Error(`${trainerPath}: measured Cab-normal aircraft heading token is missing: ${token}`);
+    throw new Error(`${trainerPath}: measured Cab-normal aircraft token is missing: ${token}`);
   }
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Aligned the complete inspection aircraft root to the measured A1 Cab normal before rendered-door registration.");
+console.log("Aligned the complete inspection aircraft root to the measured A1 Cab normal and made CRJ dimension validation independent of that rendered yaw.");
