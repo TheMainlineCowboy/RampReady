@@ -8,7 +8,8 @@ const finalAuthority = "measured-a1-cab-inspection-pose-persisted-across-mode-to
 const cameraAuthority = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const cameraLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";
 const visualAuthority = "same-day-a1-continuous-compact-solid-closed-grounded-v1";
-const marker = "final-a1-acceptance-authority-after-all-preparers-v1";
+const jetwayGroundAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v1";
+const marker = "final-a1-acceptance-authority-after-all-preparers-v2";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
 // Several historical build-time preparers can regenerate the aircraft
@@ -17,13 +18,6 @@ const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 // bundle cannot publish the superseded horizontal-only authority.
 source = source.replaceAll(staleAuthority, finalAuthority);
 
-// The lower-facade-fit preparer runs before the final inspection telemetry
-// preparer. That later preparer can regenerate the dataset assignment from an
-// older template and expose the supplemental 55-ray count even though the
-// browser already publishes the authoritative resolved terminal-connection
-// count. Mirror that exact browser value first, then fall back to environment
-// telemetry. This changes acceptance evidence only; no model, placement,
-// hierarchy, transform, material, UV or texture is modified.
 const facadeTelemetryAssignment = `        // ${facadeTelemetryMarker}
         renderer.domElement.dataset.terminal4LowerFacadeFitCount = String(
           renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount
@@ -39,10 +33,14 @@ if (facadeTelemetryPattern.test(source)) {
 }
 
 if (!source.includes(marker)) {
-  const anchor = `const INSPECTION_ROUTE_AUTHORITY =`;
-  const index = source.indexOf(anchor);
-  if (index < 0) throw new Error(`${trainerPath}: inspection route authority anchor is missing`);
-  source = `${source.slice(0, index)}// ${marker}\n${source.slice(index)}`;
+  const oldMarker = "final-a1-acceptance-authority-after-all-preparers-v1";
+  source = source.replaceAll(oldMarker, marker);
+  if (!source.includes(marker)) {
+    const anchor = `const INSPECTION_ROUTE_AUTHORITY =`;
+    const index = source.indexOf(anchor);
+    if (index < 0) throw new Error(`${trainerPath}: inspection route authority anchor is missing`);
+    source = `${source.slice(0, index)}// ${marker}\n${source.slice(index)}`;
+  }
 }
 
 for (const required of [
@@ -52,15 +50,22 @@ for (const required of [
   cameraAuthority,
   cameraLockAuthority,
   visualAuthority,
+  jetwayGroundAuthority,
   "inspectionAircraftDoorVerticalErrorMeters",
   "inspectionAircraftGroundClearanceMeters",
   "inspectionAircraftJetwayVerticalFitMeters",
   "grounded-aircraft-door-progressive-tunnel-slope-v1",
   "authored-crj-lowest-geometry-contact-clusters-v2",
   "inspectionAircraftLandingGearContactClusterCount",
+  "terminal4A1JetwayWallDistance",
+  "terminal4A1ConnectionAuthority",
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
   "terminal4UploadedJetwayBogieGroundContactAuthority",
-  "exact-authored-a1-lowest-geometry-ramp-contact-v1",
+  "terminal4UploadedJetwayBogieGroundContactPointCount",
+  "terminal4UploadedJetwayBogieGroundContactClusterCount",
+  "terminal4UploadedJetwayBogieGroundContactSpanX",
+  "terminal4UploadedJetwayBogieGroundContactSpanZ",
+  "terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters",
   "terminal4UploadedJetwayA1AssemblyContinuityAuthority",
   "terminal4UploadedJetwayA1AssemblyPartCount",
   "terminal4UploadedJetwayA1AssemblyTransformError",
@@ -99,4 +104,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Finalized the generated A1 acceptance runtime with one continuous five-part authored bridge, a compact solid closed vestibule, measured jetway ramp clearance, authored CRJ contact clusters, endpoint-and-aircraft-bounds camera framing locked at zero convergence error, persisted Cab pose, grounded vertical door fit, attached connection preset, and authoritative lower-facade telemetry after every preparer.");
+console.log("Finalized A1 only after compact real-wall telemetry, separated multi-point authored jetway contact, zero-clearance grounding, continuous five-part geometry, solid closed 2.4 m vestibule, locked evidence cameras, and grounded CRJ door registration all survived every preparer.");
