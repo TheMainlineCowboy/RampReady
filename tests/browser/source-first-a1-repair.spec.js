@@ -3,7 +3,8 @@ import { expect, test } from "@playwright/test";
 
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
 const DIRECT_A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
-const AIRCRAFT_AUTHORITY = "measured-final-cab-contact-a1-registration-v3";
+const AIRCRAFT_AUTHORITY = "terminal-relocated-a1-exact-cab-registration-v1";
+const CAB_CONTACT_AUTHORITY = "measured-final-cab-contact-a1-registration-v3";
 const PHOTO_REGISTERED_NOSE_GEAR = Object.freeze({ x: 12.353412, z: -12.486888 });
 const CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 7.32;
 const CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.34;
@@ -57,7 +58,7 @@ test("source-first A1 evidence proves the exact terminal-to-aircraft chain and p
   await page.getByRole("button", { name: "Drive tug / inspect airport" }).click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction(({ terminalAuthority, aircraftAuthority }) => {
+  await page.waitForFunction(({ terminalAuthority, aircraftAuthority, cabContactAuthority }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionMode === "active"
       && data?.terminal4UploadedJetwayLoadState === "ready"
@@ -66,6 +67,7 @@ test("source-first A1 evidence proves the exact terminal-to-aircraft chain and p
       && data?.terminal4UploadedJetwayVerifiedModelCount === "58"
       && data?.terminal4A1ConnectionAuthority === terminalAuthority
       && data?.inspectionAircraftPoseAuthority === aircraftAuthority
+      && data?.inspectionAircraftCabContactAuthority === cabContactAuthority
       && Number.isFinite(Number(data?.inspectionAircraftExactParentRelocationX))
       && Number.isFinite(Number(data?.inspectionAircraftExactParentRelocationZ))
       && Number.isFinite(Number(data?.inspectionAircraftCabContactX))
@@ -75,6 +77,7 @@ test("source-first A1 evidence proves the exact terminal-to-aircraft chain and p
   }, {
     terminalAuthority: DIRECT_A1_TERMINAL_AUTHORITY,
     aircraftAuthority: AIRCRAFT_AUTHORITY,
+    cabContactAuthority: CAB_CONTACT_AUTHORITY,
   }, { timeout: 180_000, polling: 250 });
 
   const runtime = await page.evaluate(() => ({
@@ -106,6 +109,7 @@ test("source-first A1 evidence proves the exact terminal-to-aircraft chain and p
   expect(noseGearX).toBeCloseTo(PHOTO_REGISTERED_NOSE_GEAR.x + totalX, 3);
   expect(noseGearZ).toBeCloseTo(PHOTO_REGISTERED_NOSE_GEAR.z + totalZ, 3);
   expect(runtime.inspectionAircraftPoseAuthority).toBe(AIRCRAFT_AUTHORITY);
+  expect(runtime.inspectionAircraftCabContactAuthority).toBe(CAB_CONTACT_AUTHORITY);
 
   const cabContactX = Number(runtime.inspectionAircraftCabContactX);
   const cabContactZ = Number(runtime.inspectionAircraftCabContactZ);
@@ -147,6 +151,7 @@ test("source-first A1 evidence proves the exact terminal-to-aircraft chain and p
     terminalConnectionDirection: direction,
     inspectionCameraAuthority: DIRECT_A1_CAMERA_AUTHORITY,
     inspectionAircraftPoseAuthority: runtime.inspectionAircraftPoseAuthority,
+    inspectionAircraftCabContactAuthority: runtime.inspectionAircraftCabContactAuthority,
     inspectionAircraftNoseGear: [noseGearX, noseGearZ],
     inspectionAircraftCabContact: [cabContactX, cabContactZ],
     inspectionAircraftCabDirection: [cabDirectionX, cabDirectionZ],
