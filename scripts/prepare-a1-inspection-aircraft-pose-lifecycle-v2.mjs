@@ -71,33 +71,97 @@ source = source
     "renderer.domElement.dataset.inspectionAircraftNoseGearZ = inspectionAircraftPose.z.toFixed(6);",
   );
 
-const defaultPoseBlock = `    sim.aircraft.position.set(0, 0, NOSE_START_Z);
-    sim.aircraft.rotation.y = 0;`;
-const lifecyclePoseBlock = `    const storedInspectionAircraftPose = inspectionRef.current
+const preparedResetBlock = `    const resetUsesInspectionAircraftPose = inspectionRef.current;
+    sim.aircraft.position.set(
+      resetUsesInspectionAircraftPose ? A1_INSPECTION_NOSE_GEAR_X : 0,
+      0,
+      resetUsesInspectionAircraftPose ? A1_INSPECTION_NOSE_GEAR_Z : NOSE_START_Z,
+    );
+    sim.aircraft.rotation.y = resetUsesInspectionAircraftPose ? A1_INSPECTION_AIRCRAFT_YAW : 0;`;
+const measuredResetBlock = `    const resetUsesInspectionAircraftPose = inspectionRef.current;
+    const storedResetAircraftPose = resetUsesInspectionAircraftPose
       ? sim.aircraft.userData.a1InspectionPose
       : null;
-    if (storedInspectionAircraftPose) {
-      sim.aircraft.position.set(
-        storedInspectionAircraftPose.x,
-        storedInspectionAircraftPose.y,
-        storedInspectionAircraftPose.z,
+    sim.aircraft.position.set(
+      storedResetAircraftPose?.x ?? (resetUsesInspectionAircraftPose ? A1_INSPECTION_NOSE_GEAR_X : 0),
+      storedResetAircraftPose?.y ?? 0,
+      storedResetAircraftPose?.z ?? (resetUsesInspectionAircraftPose ? A1_INSPECTION_NOSE_GEAR_Z : NOSE_START_Z),
+    );
+    sim.aircraft.rotation.y = storedResetAircraftPose?.yaw
+      ?? (resetUsesInspectionAircraftPose ? A1_INSPECTION_AIRCRAFT_YAW : 0);
+    sim.aircraft.updateMatrixWorld(true);
+    sim.renderer.domElement.dataset.inspectionAircraftPoseApplied = String(
+      resetUsesInspectionAircraftPose && Boolean(storedResetAircraftPose),
+    );`;
+if (source.includes(preparedResetBlock)) {
+  source = source.replace(preparedResetBlock, measuredResetBlock);
+} else if (!source.includes("const storedResetAircraftPose = resetUsesInspectionAircraftPose")) {
+  throw new Error(`${trainerPath}: prepared inspection reset aircraft pose block is missing`);
+}
+
+const preparedToggleBlock = `      sim.aircraft.position.set(
+        next ? A1_INSPECTION_NOSE_GEAR_X : 0,
+        0,
+        next ? A1_INSPECTION_NOSE_GEAR_Z : NOSE_START_Z,
       );
-      sim.aircraft.rotation.y = storedInspectionAircraftPose.yaw;
-      sim.renderer.domElement.dataset.inspectionAircraftPoseApplied = "true";
-    } else {
-      sim.aircraft.position.set(0, 0, NOSE_START_Z);
-      sim.aircraft.rotation.y = 0;
-      sim.renderer.domElement.dataset.inspectionAircraftPoseApplied = "false";
-    }
-    sim.aircraft.updateMatrixWorld(true);`;
-let lifecycleReplacementCount = 0;
-while (source.includes(defaultPoseBlock)) {
-  source = source.replace(defaultPoseBlock, lifecyclePoseBlock);
-  lifecycleReplacementCount += 1;
+      sim.aircraft.rotation.y = next ? A1_INSPECTION_AIRCRAFT_YAW : 0;`;
+const measuredToggleBlock = `      const storedToggleAircraftPose = next
+        ? sim.aircraft.userData.a1InspectionPose
+        : null;
+      sim.aircraft.position.set(
+        storedToggleAircraftPose?.x ?? (next ? A1_INSPECTION_NOSE_GEAR_X : 0),
+        storedToggleAircraftPose?.y ?? 0,
+        storedToggleAircraftPose?.z ?? (next ? A1_INSPECTION_NOSE_GEAR_Z : NOSE_START_Z),
+      );
+      sim.aircraft.rotation.y = storedToggleAircraftPose?.yaw
+        ?? (next ? A1_INSPECTION_AIRCRAFT_YAW : 0);
+      sim.aircraft.updateMatrixWorld(true);
+      sim.renderer.domElement.dataset.inspectionAircraftPoseApplied = String(
+        next && Boolean(storedToggleAircraftPose),
+      );`;
+if (source.includes(preparedToggleBlock)) {
+  source = source.replace(preparedToggleBlock, measuredToggleBlock);
+} else if (!source.includes("const storedToggleAircraftPose = next")) {
+  throw new Error(`${trainerPath}: prepared inspection toggle aircraft pose block is missing`);
 }
-if (lifecycleReplacementCount < 2 && !source.includes("const storedInspectionAircraftPose = inspectionRef.current")) {
-  throw new Error(`${trainerPath}: expected reset and inspection-toggle aircraft pose anchors`);
-}
+
+source = source.replaceAll(
+  `sim.renderer.domElement.dataset.inspectionAircraftPoseAuthority = next
+        ? A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY
+        : "training-approach-start";`,
+  `sim.renderer.domElement.dataset.inspectionAircraftPoseAuthority = next
+        ? (sim.aircraft.userData.a1InspectionPoseAuthority || A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY)
+        : "training-approach-start";`,
+);
+source = source.replaceAll(
+  `canvas.dataset.inspectionAircraftPoseAuthority = inspectionActive
+        ? A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY
+        : "training-approach-start";`,
+  `const liveStoredInspectionAircraftPose = sim.aircraft.userData.a1InspectionPose || null;
+      const liveInspectionAircraftPoseError = liveStoredInspectionAircraftPose
+        ? Math.hypot(
+          sim.aircraft.position.x - liveStoredInspectionAircraftPose.x,
+          sim.aircraft.position.z - liveStoredInspectionAircraftPose.z,
+        )
+        : Number.POSITIVE_INFINITY;
+      const liveInspectionAircraftYawError = liveStoredInspectionAircraftPose
+        ? Math.abs(Math.atan2(
+          Math.sin(sim.aircraft.rotation.y - liveStoredInspectionAircraftPose.yaw),
+          Math.cos(sim.aircraft.rotation.y - liveStoredInspectionAircraftPose.yaw),
+        ))
+        : Number.POSITIVE_INFINITY;
+      const liveInspectionAircraftPoseApplied = inspectionActive
+        && liveInspectionAircraftPoseError <= 0.01
+        && liveInspectionAircraftYawError <= 0.001;
+      canvas.dataset.inspectionAircraftPoseStored = String(Boolean(liveStoredInspectionAircraftPose));
+      canvas.dataset.inspectionAircraftPoseApplied = String(liveInspectionAircraftPoseApplied);
+      canvas.dataset.inspectionAircraftPoseErrorMeters = Number.isFinite(liveInspectionAircraftPoseError)
+        ? liveInspectionAircraftPoseError.toFixed(6)
+        : "missing";
+      canvas.dataset.inspectionAircraftPoseAuthority = inspectionActive
+        ? (sim.aircraft.userData.a1InspectionPoseAuthority || A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY)
+        : "training-approach-start";`,
+);
 
 for (const token of [
   persistentRegistration,
@@ -106,8 +170,11 @@ for (const token of [
   `a1InspectionPoseAuthority = "${lifecycleAuthority}"`,
   `inspectionAircraftPoseAuthority = "${lifecycleAuthority}"`,
   "inspectionAircraftPoseStored = \"true\"",
-  "inspectionAircraftPoseApplied = String(inspectionRef.current)",
-  "const storedInspectionAircraftPose = inspectionRef.current",
+  "const storedResetAircraftPose = resetUsesInspectionAircraftPose",
+  "const storedToggleAircraftPose = next",
+  "const liveStoredInspectionAircraftPose = sim.aircraft.userData.a1InspectionPose || null",
+  "liveInspectionAircraftPoseApplied",
+  "inspectionAircraftPoseErrorMeters",
   "inspectionAircraftNoseGearX = inspectionAircraftPose.x.toFixed(6)",
   "inspectionAircraftNoseGearZ = inspectionAircraftPose.z.toFixed(6)",
 ]) {
@@ -115,9 +182,11 @@ for (const token of [
     throw new Error(`${trainerPath}: A1 inspection aircraft lifecycle token is missing: ${token}`);
   }
 }
-if (source.includes(gatedRegistration)) {
-  throw new Error(`${trainerPath}: terminal-load-only A1 inspection registration gate remains`);
+if (source.includes(gatedRegistration)
+  || source.includes(preparedResetBlock)
+  || source.includes(preparedToggleBlock)) {
+  throw new Error(`${trainerPath}: stale fixed A1 inspection aircraft lifecycle remains`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Persisted the measured rendered-CRJ A1 Cab pose and reapplied it across ${Math.max(2, lifecycleReplacementCount)} inspection reset/toggle path(s), while restoring the separate training pose outside inspection mode.`);
+console.log("Persisted the measured rendered-CRJ A1 Cab pose, reapplied it explicitly on inspection reset and mode entry, and exposed live per-frame pose equality instead of the obsolete fixed photo-stop constants.");
