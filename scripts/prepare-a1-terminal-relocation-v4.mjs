@@ -22,10 +22,6 @@ const relocatedSpanBlock = `  let rotundaOpening = measureExactRotundaOpening(TH
   const initialTerminalDistance = wallOffsetX * rotundaOpening.openingDirectionX
     + wallOffsetZ * rotundaOpening.openingDirectionZ;
   const desiredTerminalDistance = rotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS;
-  // The exact authored opening can initially sit on either side of the measured
-  // wall after the cab-pivot orientation. Preserve that orientation and apply
-  // the required signed translation instead of forcing every repair to move
-  // farther in the opening direction.
   const terminalRelocationMeters = initialTerminalDistance - desiredTerminalDistance;
   if (!Number.isFinite(terminalRelocationMeters) || Math.abs(terminalRelocationMeters) >= 60) {
     throw new Error(\`A1 signed terminal relocation is invalid: \${terminalRelocationMeters}\`);
@@ -53,10 +49,6 @@ const relocatedSpanBlock = `  let rotundaOpening = measureExactRotundaOpening(TH
     throw new Error(\`A1 photo vestibule exceeds the compact-reference limit: \${A1_PHOTO_VISIBLE_VESTIBULE_METERS}\`);
   }
 
-  // Measure the actual final aircraft-facing Cab end in scene coordinates.
-  // Cab-pivot compensation moves the anchor while deliberately keeping the Cab
-  // fixed, so that compensation is not an aircraft displacement. Register the
-  // aircraft to this measured endpoint instead of reusing an anchor delta.
   const cabContactMesh = a1Model.getObjectByName("Cab_Jetway_0");
   const rotundaContactMesh = a1Model.getObjectByName("Rotunda_Jetway_0");
   if (!cabContactMesh?.isMesh || !rotundaContactMesh?.isMesh) {
@@ -91,8 +83,20 @@ const relocatedSpanBlock = `  let rotundaOpening = measureExactRotundaOpening(TH
     throw new Error(\`A1 final Cab contact face has too few vertices: \${cabEndFaceVertices.length}\`);
   }
   const cabContactLocal = vertexCentroid(THREE, cabEndFaceVertices);
+  // updateMatrixWorld on a child does not update a stale parent. The source
+  // jetway group carries the A1-local +6.2 m scene offset, so commit the entire
+  // ancestor chain before converting the Cab endpoint to scene coordinates.
+  group.updateMatrixWorld(true);
+  fleet.updateWorldMatrix(true, true);
   const cabContactWorld = fleet.localToWorld(cabContactLocal.clone());
   const cabDirectionWorld = cabDirectionLocal.clone().transformDirection(fleet.matrixWorld).normalize();
+  const cabContactParentOffsetX = cabContactWorld.x - cabContactLocal.x;
+  const cabContactParentOffsetZ = cabContactWorld.z - cabContactLocal.z;
+  if (!(Math.abs(cabContactParentOffsetX) < 0.1
+    && cabContactParentOffsetZ > 5.9
+    && cabContactParentOffsetZ < 6.5)) {
+    throw new Error(\`A1 final Cab scene-parent offset is invalid: \${cabContactParentOffsetX},\${cabContactParentOffsetZ}\`);
+  }
   if (![cabContactWorld.x, cabContactWorld.y, cabContactWorld.z, cabDirectionWorld.x, cabDirectionWorld.z].every(Number.isFinite)) {
     throw new Error("A1 final Cab contact produced non-finite scene coordinates");
   }
@@ -104,10 +108,7 @@ const placementBefore = `  const correctedA1Placement = Object.freeze({
     ...a1Placement,
     wallConnectorLength: terminalDistance + SOURCE_WALL_LENGTH_PADDING_METERS,
   });`;
-const placementAfter = `  // buildMeasuredA1Connector derives its wall endpoint from placement plus
-  // terminalDistance. Rebase that placement at the relocated Rotunda axis so
-  // the compact vestibule terminates at the measured real wall, not the old A1 origin.
-  const correctedA1Placement = Object.freeze({
+const placementAfter = `  const correctedA1Placement = Object.freeze({
     ...a1Placement,
     x: terminalWallX - terminalDirection.x * terminalDistance,
     z: terminalWallZ - terminalDirection.z * terminalDistance,
@@ -119,10 +120,7 @@ if (!source.includes(placementBefore)) {
 source = source.replace(placementBefore, placementAfter);
 
 const relocationBefore = "  const relocationX = cabPreservationDelta.x;\n  const relocationZ = cabPreservationDelta.z;\n  const relocationDistance = cabPreservationDelta.length();";
-const relocationAfter = `  // Preserve both anchor diagnostics and the true final Cab endpoint. Rotation
-  // around the Cab means cabPreservationDelta is not motion that the aircraft
-  // should inherit; only the measured endpoint is authoritative for attachment.
-  const relocationX = cabPreservationDelta.x + terminalRelocationX;
+const relocationAfter = `  const relocationX = cabPreservationDelta.x + terminalRelocationX;
   const relocationZ = cabPreservationDelta.z + terminalRelocationZ;
   const relocationDistance = Math.hypot(relocationX, relocationZ);
   group.userData.uploadedJetwayA1TerminalRelocationX = terminalRelocationX;
@@ -136,6 +134,8 @@ const relocationAfter = `  // Preserve both anchor diagnostics and the true fina
   group.userData.uploadedJetwayA1CabContactWorldZ = cabContactWorld.z;
   group.userData.uploadedJetwayA1CabDirectionWorldX = cabDirectionWorld.x;
   group.userData.uploadedJetwayA1CabDirectionWorldZ = cabDirectionWorld.z;
+  group.userData.uploadedJetwayA1CabContactParentOffsetX = cabContactParentOffsetX;
+  group.userData.uploadedJetwayA1CabContactParentOffsetZ = cabContactParentOffsetZ;
   group.userData.uploadedJetwayA1CabContactFaceVertexCount = cabEndFaceVertices.length;
   group.userData.uploadedJetwayA1TerminalRelocationDistanceErrorMeters = relocationDistanceError;
   group.userData.uploadedJetwayA1TerminalOpeningAlignment = openingAlignment;
@@ -148,38 +148,29 @@ if (!source.includes(relocationBefore)) {
 source = source.replace(relocationBefore, relocationAfter);
 source = source.replace(
   /const INSTALLATION_AUTHORITY = "[^"]+";/,
-  'const INSTALLATION_AUTHORITY = "measured-final-cab-contact-authored-opening-grounded-exact-chain-v24";',
+  'const INSTALLATION_AUTHORITY = "parent-matrix-committed-final-cab-contact-grounded-exact-chain-v25";',
 );
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "measured-final-cab-contact-authored-opening-grounded-exact-chain-v24"',
-  "const measuredTerminalAlignment = rotundaOpening.openingDirectionX * terminalDirection.x",
-  "const desiredTerminalDistance = rotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS",
-  "Math.abs(terminalRelocationMeters) >= 60",
-  "a1Anchor.position.x += terminalRelocationX",
-  "x: terminalWallX - terminalDirection.x * terminalDistance",
-  "z: terminalWallZ - terminalDirection.z * terminalDistance",
-  "const relocationDistanceError = Math.abs(terminalDistance - desiredTerminalDistance)",
-  "const cabContactMesh = a1Model.getObjectByName(\"Cab_Jetway_0\")",
-  "const cabContactWorld = fleet.localToWorld(cabContactLocal.clone())",
+  'INSTALLATION_AUTHORITY = "parent-matrix-committed-final-cab-contact-grounded-exact-chain-v25"',
+  "group.updateMatrixWorld(true)",
+  "fleet.updateWorldMatrix(true, true)",
+  "cabContactParentOffsetZ > 5.9",
+  "uploadedJetwayA1CabContactParentOffsetX",
+  "uploadedJetwayA1CabContactParentOffsetZ",
   "uploadedJetwayA1CabContactWorldX",
   "uploadedJetwayA1CabDirectionWorldX",
-  "uploadedJetwayA1CabContactFaceVertexCount",
   "uploadedJetwayA1TotalRelocationX",
-  "uploadedJetwayA1TotalRelocationZ",
-  "uploadedJetwayA1TotalRelocationMeters",
   `openingAlignment < ${MIN_TERMINAL_ALIGNMENT}`,
   "A1_PHOTO_VISIBLE_VESTIBULE_METERS > 3",
   "uploadedJetwayA1TerminalRelocationDistanceErrorMeters",
-  "uploadedJetwayA1TerminalOpeningAlignment",
-  "uploadedJetwayA1MinimumTerminalOpeningAlignment",
   "uploadedJetwayA1MeasuredTerminalWallX",
 ]) {
-  if (!source.includes(token)) throw new Error(`${installationPath}: measured final-Cab relocation output is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${installationPath}: parent-matrix final-Cab output is missing ${token}`);
 }
 if (source.includes("openingAlignment < 0.995") || source.includes("measuredTerminalAlignment < 0.995")) {
   throw new Error(`${installationPath}: obsolete 0.995 terminal-alignment gate remains`);
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log(`Recorded the measured final A1 Cab contact with a ${MIN_TERMINAL_ALIGNMENT.toFixed(2)} authored-opening alignment floor, signed wall relocation, and unchanged supplied GLB hierarchy.`);
+console.log(`Committed the A1 source-parent matrix before measuring the final Cab scene contact, preserving the exact GLB hierarchy and ${MIN_TERMINAL_ALIGNMENT.toFixed(2)} opening-alignment floor.`);
