@@ -71,4 +71,5 @@ fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-final-marker-compat-v1.mjs?final-marker=${Date.now()}`);
 await import(`./prepare-current-head-browser-expectations-v1.mjs?current-head=${Date.now()}`);
 await import(`./prepare-a1-no-lift-evidence-json-v1.mjs?no-lift-evidence=${Date.now()}`);
-console.log("Aligned the complete inspection aircraft root to the measured A1 Cab normal, retained authored landing-gear and zero-lift door-gap evidence, and published the exact-head final marker.");
+await import(`./prepare-a1-post-lifecycle-evidence-v1.mjs?post-lifecycle-evidence=${Date.now()}`);
+console.log("Aligned the complete inspection aircraft root to the measured A1 Cab normal, retained authored landing-gear and zero-lift door-gap evidence, required the applied grounded lifecycle pose before every A1 capture, and published the exact-head final marker.");
