@@ -6,6 +6,7 @@ let source = fs.readFileSync(trainerPath, "utf8");
 const staleAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
 const finalAuthority = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
 const cameraAuthority = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
+const cameraLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";
 const marker = "final-a1-acceptance-authority-after-all-preparers-v1";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
@@ -48,6 +49,7 @@ for (const required of [
   facadeTelemetryMarker,
   finalAuthority,
   cameraAuthority,
+  cameraLockAuthority,
   "inspectionAircraftDoorVerticalErrorMeters",
   "inspectionAircraftGroundClearanceMeters",
   "inspectionAircraftJetwayVerticalFitMeters",
@@ -60,7 +62,11 @@ for (const required of [
   "inspectionCameraEndpointAircraftBoundsMin",
   "inspectionCameraEndpointAircraftBoundsMax",
   "inspectionCameraEndpointFrameSize",
+  "inspectionCameraEndpointLockAuthority",
+  "inspectionCameraEndpointConvergenceErrorMeters",
   "inspectionOverheadCameraEndpointFrameSize",
+  "inspectionOverheadCameraEndpointLockAuthority",
+  "inspectionOverheadCameraEndpointConvergenceErrorMeters",
   "terminal4TerminalConnectedJetwayCount",
   "inspectionPresetJetwayDeployment",
 ]) {
@@ -79,4 +85,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Finalized the generated A1 acceptance runtime with measured jetway ramp clearance, authored CRJ contact clusters, endpoint-and-aircraft-bounds camera framing, persisted Cab pose, grounded vertical door fit, attached connection preset, and authoritative lower-facade telemetry after every preparer.");
+console.log("Finalized the generated A1 acceptance runtime with measured jetway ramp clearance, authored CRJ contact clusters, endpoint-and-aircraft-bounds camera framing locked at zero convergence error, persisted Cab pose, grounded vertical door fit, attached connection preset, and authoritative lower-facade telemetry after every preparer.");
