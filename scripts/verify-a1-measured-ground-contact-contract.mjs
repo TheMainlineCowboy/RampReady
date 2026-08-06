@@ -8,6 +8,7 @@ const files = Object.freeze({
   readiness: "scripts/prepare-a1-bogie-readiness-v1.mjs",
   endpointEvidence: "scripts/prepare-a1-endpoint-browser-evidence-v1.mjs",
   dynamicCamera: "scripts/prepare-a1-dynamic-evidence-camera-v1.mjs",
+  cameraLock: "scripts/prepare-a1-evidence-camera-lock-v1.mjs",
   heading: "scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs",
   finalizer: "scripts/prepare-a1-final-acceptance-authority-v1.mjs",
   browser: "tests/browser/a1-ground-contact-evidence.spec.js",
@@ -97,6 +98,7 @@ requireTokens("endpointEvidence", [
   "uploadedJetwayA1FinalRotundaWorldX",
   "uploadedJetwayA1CabContactWorldX",
   "prepare-a1-dynamic-evidence-camera-v1.mjs?exact-endpoint-camera=",
+  "prepare-a1-evidence-camera-lock-v1.mjs?exact-camera-lock=",
 ]);
 
 requireTokens("dynamicCamera", [
@@ -122,6 +124,20 @@ requireTokens("dynamicCamera", [
   "inspectionOverheadCameraEndpointFrameSize",
 ]);
 
+requireTokens("cameraLock", [
+  "exact-a1-evidence-camera-direct-lock-v1",
+  "camera.position.copy(desiredCamera)",
+  "inspectionCameraEndpointLockAuthority",
+  "inspectionCameraEndpointConvergenceErrorMeters",
+  "inspectionOverheadCameraEndpointLockAuthority",
+  "inspectionOverheadCameraEndpointConvergenceErrorMeters",
+  "distanceTo(desiredCamera).toFixed(6)",
+]);
+forbidTokens("cameraLock", [
+  "camera.position.lerp(desiredCamera, 0.22);\n          camera.lookAt(cameraTarget);\n          renderer.domElement.dataset.inspectionCameraEndpointAuthority",
+  "camera.position.lerp(desiredCamera, 0.3);\n          camera.lookAt(cameraTarget);\n          renderer.domElement.dataset.inspectionOverheadCameraEndpointAuthority",
+]);
+
 requireTokens("heading", [
   "const landingGearContactAfter = measureAuthoredLandingGearContact()",
   "renderedGroundClearanceMeters = landingGearContactAfter.minimumY",
@@ -137,7 +153,13 @@ requireTokens("finalizer", [
   "authored-crj-lowest-geometry-contact-clusters-v2",
   "exact-authored-a1-lowest-geometry-ramp-contact-v1",
   "grounded-aircraft-door-progressive-tunnel-slope-v1",
+  "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2",
+  "exact-a1-evidence-camera-direct-lock-v1",
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
+  "inspectionCameraEndpointLockAuthority",
+  "inspectionCameraEndpointConvergenceErrorMeters",
+  "inspectionOverheadCameraEndpointLockAuthority",
+  "inspectionOverheadCameraEndpointConvergenceErrorMeters",
   "named-landing-gear-wheel-bounds-v1",
   "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2",
 ]);
@@ -148,15 +170,23 @@ requireTokens("browser", [
   "inspectionAircraftLandingGearContactClusterCount",
   "inspectionAircraftGroundClearanceMeters",
   "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2",
+  "exact-a1-evidence-camera-direct-lock-v1",
   "inspectionCameraEndpointAuthority",
+  "inspectionCameraEndpointLockAuthority",
+  "inspectionCameraEndpointConvergenceErrorMeters",
   "inspectionCameraEndpointPosition",
   "inspectionCameraEndpointAircraftBoundsMin",
   "inspectionCameraEndpointAircraftBoundsMax",
   "inspectionCameraEndpointFrameSize",
+  "inspectionOverheadCameraEndpointAuthority",
+  "inspectionOverheadCameraEndpointLockAuthority",
+  "inspectionOverheadCameraEndpointConvergenceErrorMeters",
+  "inspectionOverheadCameraEndpointFrameSize",
   "aircraftBoundsSize",
   "rotundaWallDistance",
   "a1-measured-ground-contact.png",
+  "a1-measured-ground-contact-overhead.png",
   "a1-measured-ground-contact.json",
 ]);
 
-console.log("Verified the explicit measured A1 jetway/CRJ ground-contact build order, endpoint-and-aircraft-derived camera, authorities, browser publication, and rendered-evidence contract.");
+console.log("Verified the explicit measured A1 jetway/CRJ ground-contact build order, endpoint-and-aircraft-derived cameras, direct camera locks, authorities, browser publication, and perspective/overhead rendered-evidence contract.");
