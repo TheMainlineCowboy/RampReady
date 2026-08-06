@@ -4,7 +4,7 @@ const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const registrationMarker = "authored-rendered-door-to-final-cab-a1-aircraft-pose-v4";
-const lifecycleAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
+const lifecycleAuthority = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
 
 if (!source.includes(registrationMarker)) {
   throw new Error(`${trainerPath}: measured A1 aircraft registration must be prepared before pose lifecycle wiring`);
