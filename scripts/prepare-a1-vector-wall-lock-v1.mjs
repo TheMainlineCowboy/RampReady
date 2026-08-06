@@ -69,23 +69,58 @@ if (!source.includes(reportAnchor)) {
 }
 source = source.replace(
   reportAnchor,
-  `${reportAnchor}
+  `  const finalRotundaCenterWorld = fleet.localToWorld(new THREE.Vector3(
+    rotundaOpening.centerX,
+    rotundaOpening.centerY,
+    rotundaOpening.centerZ,
+  ));
+  const finalMeasuredTerminalWallWorld = fleet.localToWorld(new THREE.Vector3(
+    terminalWallX,
+    rotundaOpening.centerY,
+    terminalWallZ,
+  ));
+  const finalRotundaToCabWorldMeters = Math.hypot(
+    cabContactWorld.x - finalRotundaCenterWorld.x,
+    cabContactWorld.y - finalRotundaCenterWorld.y,
+    cabContactWorld.z - finalRotundaCenterWorld.z,
+  );
+  const finalRotundaToWallWorldMeters = Math.hypot(
+    finalMeasuredTerminalWallWorld.x - finalRotundaCenterWorld.x,
+    finalMeasuredTerminalWallWorld.y - finalRotundaCenterWorld.y,
+    finalMeasuredTerminalWallWorld.z - finalRotundaCenterWorld.z,
+  );
+  group.userData.uploadedJetwayA1TerminalRelocationDistanceErrorMeters = relocationDistanceError;
   group.userData.uploadedJetwayA1TerminalCrossTrackErrorMeters = terminalCrossTrackErrorMeters;
   group.userData.uploadedJetwayA1DesiredRotundaCenterX = desiredRotundaCenterX;
-  group.userData.uploadedJetwayA1DesiredRotundaCenterZ = desiredRotundaCenterZ;`,
+  group.userData.uploadedJetwayA1DesiredRotundaCenterZ = desiredRotundaCenterZ;
+  group.userData.uploadedJetwayA1FinalRotundaWorldX = finalRotundaCenterWorld.x;
+  group.userData.uploadedJetwayA1FinalRotundaWorldY = finalRotundaCenterWorld.y;
+  group.userData.uploadedJetwayA1FinalRotundaWorldZ = finalRotundaCenterWorld.z;
+  group.userData.uploadedJetwayA1FinalMeasuredWallWorldX = finalMeasuredTerminalWallWorld.x;
+  group.userData.uploadedJetwayA1FinalMeasuredWallWorldY = finalMeasuredTerminalWallWorld.y;
+  group.userData.uploadedJetwayA1FinalMeasuredWallWorldZ = finalMeasuredTerminalWallWorld.z;
+  group.userData.uploadedJetwayA1FinalRotundaToCabWorldMeters = finalRotundaToCabWorldMeters;
+  group.userData.uploadedJetwayA1FinalRotundaToWallWorldMeters = finalRotundaToWallWorldMeters;
+  group.userData.uploadedJetwayA1FinalEndpointEvidenceAuthority = "exact-world-rotunda-wall-cab-endpoints-v27";`,
 );
 
 source = source.replace(
   /const INSTALLATION_AUTHORITY = "[^"]+";/,
-  'const INSTALLATION_AUTHORITY = "full-vector-terminal-wall-lock-grounded-exact-chain-v26";',
+  'const INSTALLATION_AUTHORITY = "full-vector-terminal-wall-lock-grounded-exact-chain-v27";',
 );
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "full-vector-terminal-wall-lock-grounded-exact-chain-v26"',
+  'INSTALLATION_AUTHORITY = "full-vector-terminal-wall-lock-grounded-exact-chain-v27"',
   "desiredRotundaCenterX",
   "terminalCrossTrackErrorMeters",
   "A1 full-vector terminal lock missed the measured wall",
   "uploadedJetwayA1TerminalCrossTrackErrorMeters",
+  "const finalRotundaCenterWorld = fleet.localToWorld",
+  "const finalMeasuredTerminalWallWorld = fleet.localToWorld",
+  "uploadedJetwayA1FinalRotundaWorldX",
+  "uploadedJetwayA1FinalMeasuredWallWorldX",
+  "uploadedJetwayA1FinalRotundaToCabWorldMeters",
+  "uploadedJetwayA1FinalEndpointEvidenceAuthority",
 ]) {
   if (!source.includes(token)) {
     throw new Error(`${installationPath}: full-vector A1 wall lock output is missing ${token}`);
@@ -93,4 +128,4 @@ for (const token of [
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Locked the complete A1 parent to the measured terminal wall in full X/Z, eliminating the previously uncorrected cross-track detachment while preserving every supplied child transform.");
+console.log("Locked the complete A1 parent to the measured terminal wall in full X/Z and exposed exact world-space Rotunda, wall and Cab endpoint evidence without changing supplied child transforms.");
