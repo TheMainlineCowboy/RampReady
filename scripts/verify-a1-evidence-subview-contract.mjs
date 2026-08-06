@@ -7,6 +7,8 @@ const files = Object.freeze({
   subviews: "scripts/prepare-a1-evidence-subviews-v1.mjs",
   lock: "scripts/prepare-a1-evidence-camera-lock-v1.mjs",
   finalizer: "scripts/prepare-a1-final-acceptance-authority-v1.mjs",
+  heading: "scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs",
+  postLifecycle: "scripts/prepare-a1-post-lifecycle-evidence-v1.mjs",
   browser: "tests/browser/a1-terminal-joint-bogie-subviews.spec.js",
 });
 const source = Object.fromEntries(
@@ -64,6 +66,24 @@ requireTokens("finalizer", [
   "inspectionCameraEndpointConvergenceErrorMeters",
 ]);
 
+requireTokens("heading", [
+  "prepare-current-head-browser-expectations-v1.mjs?current-head=",
+  "prepare-a1-no-lift-evidence-json-v1.mjs?no-lift-evidence=",
+  "prepare-a1-post-lifecycle-evidence-v1.mjs?post-lifecycle-evidence=",
+]);
+
+requireTokens("postLifecycle", [
+  "post-lifecycle-grounded-a1-evidence-v1",
+  'data?.inspectionAircraftPoseStored === "true"',
+  'data?.inspectionAircraftPoseApplied === "true"',
+  'data?.inspectionAircraftPoseAuthority === "${POSE_AUTHORITY}"',
+  "Number(data?.inspectionAircraftPoseErrorMeters) <= 0.01",
+  'data?.inspectionAircraftHeadingAuthority === "${HEADING_AUTHORITY}"',
+  "Number.isFinite(Number(data?.inspectionAircraftYaw))",
+  "a1-ground-contact-evidence.spec.js",
+  "a1-terminal-joint-bogie-subviews.spec.js",
+]);
+
 requireTokens("browser", [
   "A1 close evidence shows the exact 2.4 m terminal vestibule and zero-lift grounded bogie",
   "exact-a1-terminal-joint-and-bogie-contact-subviews-v1",
@@ -95,4 +115,4 @@ requireTokens("browser", [
   "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
 ]);
 
-console.log("Verified grounded lifecycle order, exact 2.4 m terminal and low-bogie close views, authored Rotunda center range, strict subview ordering, direct camera lock, multi-point ramp contact, zero attached child lift, and retained evidence.");
+console.log("Verified grounded lifecycle order, post-lifecycle applied-pose capture gate, exact 2.4 m terminal and low-bogie close views, authored Rotunda center range, camera lock, multi-point ramp contact, zero attached child lift, and retained evidence.");
