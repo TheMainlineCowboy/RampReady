@@ -1,4 +1,4 @@
-Run the trusted exact-head PR 140 jetway acceptance workflow against 2304a4953bc3ad2525056770132c9991a9ce2135.
+Run the trusted exact-head PR 140 jetway acceptance workflow against 2db5a60dfb27d4d0be58211a93eb8bfbe457074c.
 Retain the uncropped A1 full perspective and overhead views, exact 2.4 m terminal-vestibule close view, low bogie-contact close view, A14/B14/B15 static Cab-closure views, exact runtime telemetry, contact-cluster JSON, and requested-versus-zero-applied door-height evidence.
 Reject any T4_WALK authority, non-ramp-level structural source wall, final Rotunda center-to-wall outside 2.9-5.8 m, visible vestibule outside 2.35-2.45 m, long/generated corridor, open apron-facing side, disconnected or isolated authored node, weak/airborne bogie contact, nonzero attached child lift, missing signed door gap, or static Terminal 4 Cab opening.
-Acceptance rerun nonce: 2026-08-06T22:50:00Z.
+Acceptance rerun nonce: 2026-08-06T22:53:00Z.
