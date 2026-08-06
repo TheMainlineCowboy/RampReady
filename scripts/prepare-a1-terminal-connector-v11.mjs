@@ -211,16 +211,18 @@ const structuralBuildingConnection = `    const terminalConnection = findTermina
       rotundaY,
     );
     if (jetway.g === "A1") {
+      const diagnostics = terminal?.userData?.a1WallSearchDiagnostics || null;
       if (!terminalConnection) {
-        throw new Error("A1 structural terminal-building search found no BGATE/DGATE/PHX_TERM400 facade");
+        throw new Error(\`A1 structural terminal-building search found no BGATE/DGATE/PHX_TERM400 facade: \${JSON.stringify(diagnostics)}\`);
       }
       const structuralAuthorities = new Set([
         "preferred-axis-raycast",
         "radial-authored-wall-raycast",
         "nearest-authored-wall-vertex",
+        "facade-contiguous-structural-wall-surface-v17",
       ]);
       if (!structuralAuthorities.has(terminalConnection.authority)) {
-        throw new Error(\`A1 structural terminal-building search returned an invalid authority: \${terminalConnection.authority}\`);
+        throw new Error(\`A1 structural terminal-building search returned an invalid authority: \${terminalConnection.authority}; diagnostics=\${JSON.stringify(diagnostics)}\`);
       }
       terminalConnection.authority = \`structural-A1-terminal-building-\${terminalConnection.authority}-v28\`;
     }`;
@@ -255,8 +257,14 @@ const metadataAwareFacadePrepared = [
   "material?.userData?.sourceDiffuseTexture",
   "material?.userData?.runtimeDiffuseTexture",
 ].every((token) => source.includes(token));
+const diagnosticPrepared = [
+  "a1WallSearchDiagnostics",
+  "facade-contiguous-structural-wall-surface-v17",
+  "JSON.stringify(diagnostics)",
+].every((token) => source.includes(token));
 if ((!independentPrepared && !legacyPrepared)
   || !metadataAwareFacadePrepared
+  || !diagnosticPrepared
   || !source.includes("structural-A1-terminal-building-")
   || source.includes("exact-T4_WALK-A1-terminal-portal-v25")
   || source.includes("A1 direct terminal-building raycast failed")) {
@@ -265,5 +273,5 @@ if ((!independentPrepared && !legacyPrepared)
 
 fs.writeFileSync(jetwayPath, source, "utf8");
 console.log(independentPrepared
-  ? "Prepared A1 connector v28 using converted facade source metadata against the real Terminal 4 building; the elevated T4_WALK override remains forbidden."
-  : "Prepared legacy A1 connector v28 using converted facade source metadata against the structural Terminal 4 building; the elevated T4_WALK override remains forbidden.");
+  ? "Prepared A1 connector v29 with exact final-facade diagnostics against the real Terminal 4 building; the elevated T4_WALK override remains forbidden."
+  : "Prepared legacy A1 connector v29 with exact final-facade diagnostics against the structural Terminal 4 building; the elevated T4_WALK override remains forbidden.");
