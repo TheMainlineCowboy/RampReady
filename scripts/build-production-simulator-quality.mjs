@@ -75,6 +75,7 @@ try {
   await runNode("scripts/prepare-a1-inspection-aircraft-terminal-relocation-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-vertical-registration-v1.mjs");
   await runNode("scripts/prepare-a1-endpoint-browser-evidence-v1.mjs");
+  await runNode("scripts/prepare-a1-inspection-aircraft-pose-declaration-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
   await runNode("scripts/prepare-a1-rotunda-vestibule-closure-v1.mjs");
   await runNode("scripts/prepare-static-jetway-portal-closures-v1.mjs");
