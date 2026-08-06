@@ -71,6 +71,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          node scripts/verify-a1-measured-ground-contact-contract.mjs
           node scripts/materialize-exact-airport-jetway.mjs
           node scripts/verify-exact-airport-jetway-runtime.mjs
           node scripts/verify-uploaded-airport-jetway-fleet.mjs
