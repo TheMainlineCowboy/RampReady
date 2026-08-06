@@ -36,20 +36,26 @@ function finitePositive(value, fallback) {
   return Number.isFinite(number) && number > 0 ? number : fallback;
 }
 
+function summarizeExisting(existing) {
+  return {
+    authority: existing.userData.authority,
+    gateCount: Number(existing.userData.gateCount || 0),
+    batchCount: Number(existing.userData.batchCount || 0),
+    panelCount: Number(existing.userData.panelCount || 0),
+    windowCount: Number(existing.userData.windowCount || 0),
+    cabPanelCount: Number(existing.userData.cabPanelCount || 0),
+    cabWindowCount: Number(existing.userData.cabWindowCount || 0),
+    cabSurroundPieceCount: Number(existing.userData.cabSurroundPieceCount || 0),
+    cabClosureAuthority: existing.userData.cabClosureAuthority || "missing",
+    authoredNodeTransformCount: Number(existing.userData.authoredNodeTransformCount ?? Infinity),
+    opaqueCabCapDepthMeters: Number(existing.userData.opaqueCabCapDepthMeters ?? NaN),
+    apronFacingOpenAreaMeters: Number(existing.userData.apronFacingOpenAreaMeters ?? Infinity),
+  };
+}
+
 export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
   const existing = fleet.getObjectByName("UploadedAirportJetwayStaticPortalClosures");
-  if (existing) {
-    return {
-      authority: existing.userData.authority,
-      gateCount: Number(existing.userData.gateCount || 0),
-      batchCount: Number(existing.userData.batchCount || 0),
-      panelCount: Number(existing.userData.panelCount || 0),
-      windowCount: Number(existing.userData.windowCount || 0),
-      cabPanelCount: Number(existing.userData.cabPanelCount || 0),
-      cabWindowCount: Number(existing.userData.cabWindowCount || 0),
-      cabClosureAuthority: existing.userData.cabClosureAuthority || "missing",
-    };
-  }
+  if (existing) return summarizeExisting(existing);
 
   const staticPlacements = placements.filter((placement) => placement.gate !== "A1");
   const doorTransforms = [];
@@ -90,9 +96,9 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
       });
     }
 
-    // Straddle the authored aircraft-contact plane with a thick opaque cap.
-    // This closes the aperture from either viewing side and avoids depending
-    // on an exporter-specific Cab forward-axis sign. No GLB node is changed.
+    // Straddle the exact static articulation target plane. Static uploaded
+    // jetways use the same placement.bridgeEnd value for their Cab contact,
+    // so these caps cannot drift to a guessed or fallback longitudinal stop.
     const cabYaw = Number(placement.yaw) || 0;
     const cabForwardX = Math.sin(cabYaw);
     const cabForwardZ = Math.cos(cabYaw);
@@ -210,17 +216,7 @@ export function installStaticJetwayPortalClosures(THREE, fleet, placements) {
   group.userData.apronFacingOpenAreaMeters = 0;
   fleet.add(group);
 
-  return {
-    authority: STATIC_PORTAL_AUTHORITY,
-    cabClosureAuthority: STATIC_CAB_CLOSURE_AUTHORITY,
-    gateCount: staticPlacements.length,
-    batchCount: group.children.length,
-    panelCount: doorTransforms.length,
-    windowCount: windowTransforms.length,
-    cabPanelCount: cabPanelTransforms.length,
-    cabWindowCount: cabWindowTransforms.length,
-    cabSurroundPieceCount: cabHeaderTransforms.length + cabJambTransforms.length,
-  };
+  return summarizeExisting(group);
 }
 
 export { STATIC_PORTAL_AUTHORITY as STATIC_JETWAY_PORTAL_CLOSURE_AUTHORITY };
