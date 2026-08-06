@@ -17,6 +17,7 @@ const files = Object.freeze({
   rotundaClosure: "scripts/prepare-a1-rotunda-vestibule-closure-v1.mjs",
   visualEvidence: "scripts/prepare-a1-visual-acceptance-evidence-v1.mjs",
   finalizer: "scripts/prepare-a1-final-acceptance-authority-v1.mjs",
+  lifecycleAnchor: "scripts/prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs",
   heading: "scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs",
   browserMigration: "scripts/prepare-current-head-browser-expectations-v1.mjs",
   browser: "tests/browser/a1-ground-contact-evidence.spec.js",
@@ -68,13 +69,14 @@ for (const stage of orderedBuildStages) {
 }
 
 requireTokens("groundedWall", [
-  "A1 compact grounded Terminal 4 building connection v31",
+  "A1 ramp-level real Terminal 4 source wall v32",
   "const groundedConnection = findTerminalWallConnection(",
-  "groundedConnection.distance > 1.5",
-  "groundedConnection.distance < 4.1",
+  "groundedConnection.distance > 3.4",
+  "groundedConnection.distance < 28",
   "groundedConnection.pointY > 2.2",
   "BGATE|DGATE|PHX_TERM400",
-  "compactRealTerminalWall: true",
+  "rampLevelRealTerminalWall: true",
+  "finalVisibleVestibuleCheckedAfterRelocation: true",
   "forbidden A1 walkway anchor survived",
 ]);
 requireTokens("wallAuthority", [
@@ -83,10 +85,14 @@ requireTokens("wallAuthority", [
   "structural-A1-terminal-building-${groundedStructuralAuthority}-v31",
 ]);
 requireTokens("compactWall", [
-  "const MINIMUM_A1_WALL_SPAN_METERS = 1.5",
-  "const MAXIMUM_A1_WALL_SPAN_METERS = 4.1",
-  "A1 measured real-terminal wall span is not compact",
-  "long A1 corridor allowance remains",
+  "const SOURCE_WALL_MINIMUM_METERS = 3.4",
+  "const SOURCE_WALL_MAXIMUM_METERS = 28",
+  "const FINAL_VISIBLE_VESTIBULE_METERS = 2.4",
+  "A1 ramp-level real-terminal source distance is invalid",
+  "sourceRotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS",
+  "const actualVisibleVestibuleMeters = terminalDistance - rotundaOpening.collarRadius",
+  "Math.abs(actualVisibleVestibuleMeters - A1_PHOTO_VISIBLE_VESTIBULE_METERS) > 0.05",
+  "source/final A1 wall measurements are still conflated",
 ]);
 requireTokens("rigidCompact", [
   "post-rigid-a1-exact-visible-vestibule-span-v1",
@@ -181,12 +187,20 @@ requireTokens("finalizer", [
   "terminal4UploadedJetwayBogieGroundContactPointCount",
   "terminal4UploadedJetwayBogieGroundContactClusterCount",
   "same-day-a1-continuous-compact-solid-closed-grounded-v1",
+  "prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs?grounded-pose=",
   "stale A1 grounding, child lift, or pose behavior survived finalization",
+]);
+requireTokens("lifecycleAnchor", [
+  "grounded-a1-training-pose-before-inspection-registration-v1",
+  "const trainingAircraftPoseBeforeInspectionRegistration =",
+  "sim.aircraft.position.y += aircraftRelocationY",
+  "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
 ]);
 requireTokens("heading", [
   "const landingGearContactAfter = measureAuthoredLandingGearContact()",
   "prepare-a1-final-marker-compat-v1.mjs?final-marker=",
   "prepare-current-head-browser-expectations-v1.mjs?current-head=",
+  "prepare-a1-no-lift-evidence-json-v1.mjs?no-lift-evidence=",
 ]);
 requireTokens("browserMigration", [
   "grounded-jetway-door-gap-reported-no-child-lift-v1",
@@ -211,4 +225,4 @@ requireTokens("jetwayBrowser", [
   "a1-jetway-contact-clusters.json",
 ]);
 
-console.log("Verified the A1 repair contract: no T4_WALK anchor, compact real wall, exact 2.4 m closed vestibule, continuous authored assembly, separated multi-point jetway/CRJ ramp contact, zero attached child lift, retained signed door gap, and current-head visual evidence.");
+console.log("Verified the A1 repair contract: a ramp-level structural source wall distinct from the final exact 2.4 m vestibule, no T4_WALK authority, complete-parent relocation, continuous authored assembly, separated multi-point jetway/CRJ ramp contact, zero attached child lift, retained signed door gap, grounded lifecycle pose, and current-head visual evidence.");
