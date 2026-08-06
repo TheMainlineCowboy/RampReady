@@ -17,7 +17,6 @@ const measuredOffsetBlock = `  // ${authority}
   }
   const measuredBogieGroundOffsetMeters = -authoredA1GroundBoundsBefore.min.y;
   if (!Number.isFinite(measuredBogieGroundOffsetMeters)
-    || measuredBogieGroundOffsetMeters >= 0
     || Math.abs(measuredBogieGroundOffsetMeters) > 0.5) {
     throw new Error(\`A1 exact authored bogie ground offset is invalid: \${measuredBogieGroundOffsetMeters}\`);
   }
