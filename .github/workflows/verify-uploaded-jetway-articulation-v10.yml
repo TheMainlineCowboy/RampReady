@@ -80,4 +80,4 @@ jobs:
             playwright-report/
             public/models/airport-jetway/exact-asset-manifest.json
           if-no-files-found: warn
-          retention-days: 3
+          retention-days: 1
