@@ -52,6 +52,50 @@ const relocatedSpanBlock = `  let rotundaOpening = measureExactRotundaOpening(TH
   if (A1_PHOTO_VISIBLE_VESTIBULE_METERS > 3) {
     throw new Error(\`A1 photo vestibule exceeds the compact-reference limit: \${A1_PHOTO_VISIBLE_VESTIBULE_METERS}\`);
   }
+
+  // Measure the actual final aircraft-facing Cab end in scene coordinates.
+  // Cab-pivot compensation moves the anchor while deliberately keeping the Cab
+  // fixed, so that compensation is not an aircraft displacement. Register the
+  // aircraft to this measured endpoint instead of reusing an anchor delta.
+  const cabContactMesh = a1Model.getObjectByName("Cab_Jetway_0");
+  const rotundaContactMesh = a1Model.getObjectByName("Rotunda_Jetway_0");
+  if (!cabContactMesh?.isMesh || !rotundaContactMesh?.isMesh) {
+    throw new Error("A1 final Cab contact measurement requires the exact Cab and Rotunda meshes");
+  }
+  const cabContactVertices = transformedGeometryVertices(THREE, fleet, cabContactMesh);
+  const cabCenterForContact = vertexCentroid(THREE, cabContactVertices);
+  const rotundaCenterForContact = vertexCentroid(
+    THREE,
+    transformedGeometryVertices(THREE, fleet, rotundaContactMesh),
+  );
+  const cabDirectionLocal = cabCenterForContact.clone().sub(rotundaCenterForContact);
+  cabDirectionLocal.y = 0;
+  if (cabDirectionLocal.lengthSq() < 1) {
+    throw new Error("A1 final Cab contact direction is degenerate");
+  }
+  cabDirectionLocal.normalize();
+  let cabContactProjection = Number.NEGATIVE_INFINITY;
+  for (const vertex of cabContactVertices) {
+    cabContactProjection = Math.max(
+      cabContactProjection,
+      (vertex.x - cabCenterForContact.x) * cabDirectionLocal.x
+        + (vertex.z - cabCenterForContact.z) * cabDirectionLocal.z,
+    );
+  }
+  const cabEndFaceVertices = cabContactVertices.filter((vertex) => {
+    const projection = (vertex.x - cabCenterForContact.x) * cabDirectionLocal.x
+      + (vertex.z - cabCenterForContact.z) * cabDirectionLocal.z;
+    return projection >= cabContactProjection - 0.12;
+  });
+  if (cabEndFaceVertices.length < 3) {
+    throw new Error(\`A1 final Cab contact face has too few vertices: \${cabEndFaceVertices.length}\`);
+  }
+  const cabContactLocal = vertexCentroid(THREE, cabEndFaceVertices);
+  const cabContactWorld = fleet.localToWorld(cabContactLocal.clone());
+  const cabDirectionWorld = cabDirectionLocal.clone().transformDirection(fleet.matrixWorld).normalize();
+  if (![cabContactWorld.x, cabContactWorld.y, cabContactWorld.z, cabDirectionWorld.x, cabDirectionWorld.z].every(Number.isFinite)) {
+    throw new Error("A1 final Cab contact produced non-finite scene coordinates");
+  }
 `;
 
 source = source.replace(spanBlockPattern, relocatedSpanBlock);
@@ -75,9 +119,9 @@ if (!source.includes(placementBefore)) {
 source = source.replace(placementBefore, placementAfter);
 
 const relocationBefore = "  const relocationX = cabPreservationDelta.x;\n  const relocationZ = cabPreservationDelta.z;\n  const relocationDistance = cabPreservationDelta.length();";
-const relocationAfter = `  // This is the complete rigid-parent displacement from the pre-repair A1
-  // placement: cab-pivot compensation plus the final signed wall translation.
-  // The aircraft must use this complete vector, not only the wall component.
+const relocationAfter = `  // Preserve both anchor diagnostics and the true final Cab endpoint. Rotation
+  // around the Cab means cabPreservationDelta is not motion that the aircraft
+  // should inherit; only the measured endpoint is authoritative for attachment.
   const relocationX = cabPreservationDelta.x + terminalRelocationX;
   const relocationZ = cabPreservationDelta.z + terminalRelocationZ;
   const relocationDistance = Math.hypot(relocationX, relocationZ);
@@ -87,6 +131,12 @@ const relocationAfter = `  // This is the complete rigid-parent displacement fro
   group.userData.uploadedJetwayA1TotalRelocationX = relocationX;
   group.userData.uploadedJetwayA1TotalRelocationZ = relocationZ;
   group.userData.uploadedJetwayA1TotalRelocationMeters = relocationDistance;
+  group.userData.uploadedJetwayA1CabContactWorldX = cabContactWorld.x;
+  group.userData.uploadedJetwayA1CabContactWorldY = cabContactWorld.y;
+  group.userData.uploadedJetwayA1CabContactWorldZ = cabContactWorld.z;
+  group.userData.uploadedJetwayA1CabDirectionWorldX = cabDirectionWorld.x;
+  group.userData.uploadedJetwayA1CabDirectionWorldZ = cabDirectionWorld.z;
+  group.userData.uploadedJetwayA1CabContactFaceVertexCount = cabEndFaceVertices.length;
   group.userData.uploadedJetwayA1TerminalRelocationDistanceErrorMeters = relocationDistanceError;
   group.userData.uploadedJetwayA1TerminalOpeningAlignment = openingAlignment;
   group.userData.uploadedJetwayA1MinimumTerminalOpeningAlignment = ${MIN_TERMINAL_ALIGNMENT};
@@ -98,11 +148,11 @@ if (!source.includes(relocationBefore)) {
 source = source.replace(relocationBefore, relocationAfter);
 source = source.replace(
   /const INSTALLATION_AUTHORITY = "[^"]+";/,
-  'const INSTALLATION_AUTHORITY = "total-rigid-parent-relocated-authored-opening-grounded-exact-chain-v23";',
+  'const INSTALLATION_AUTHORITY = "measured-final-cab-contact-authored-opening-grounded-exact-chain-v24";',
 );
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "total-rigid-parent-relocated-authored-opening-grounded-exact-chain-v23"',
+  'INSTALLATION_AUTHORITY = "measured-final-cab-contact-authored-opening-grounded-exact-chain-v24"',
   "const measuredTerminalAlignment = rotundaOpening.openingDirectionX * terminalDirection.x",
   "const desiredTerminalDistance = rotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS",
   "Math.abs(terminalRelocationMeters) >= 60",
@@ -110,6 +160,11 @@ for (const token of [
   "x: terminalWallX - terminalDirection.x * terminalDistance",
   "z: terminalWallZ - terminalDirection.z * terminalDistance",
   "const relocationDistanceError = Math.abs(terminalDistance - desiredTerminalDistance)",
+  "const cabContactMesh = a1Model.getObjectByName(\"Cab_Jetway_0\")",
+  "const cabContactWorld = fleet.localToWorld(cabContactLocal.clone())",
+  "uploadedJetwayA1CabContactWorldX",
+  "uploadedJetwayA1CabDirectionWorldX",
+  "uploadedJetwayA1CabContactFaceVertexCount",
   "uploadedJetwayA1TotalRelocationX",
   "uploadedJetwayA1TotalRelocationZ",
   "uploadedJetwayA1TotalRelocationMeters",
@@ -120,11 +175,11 @@ for (const token of [
   "uploadedJetwayA1MinimumTerminalOpeningAlignment",
   "uploadedJetwayA1MeasuredTerminalWallX",
 ]) {
-  if (!source.includes(token)) throw new Error(`${installationPath}: total rigid-parent relocation output is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${installationPath}: measured final-Cab relocation output is missing ${token}`);
 }
 if (source.includes("openingAlignment < 0.995") || source.includes("measuredTerminalAlignment < 0.995")) {
   throw new Error(`${installationPath}: obsolete 0.995 terminal-alignment gate remains`);
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log(`Recorded the complete A1 rigid-parent displacement with a ${MIN_TERMINAL_ALIGNMENT.toFixed(2)} authored-opening alignment floor, signed wall relocation, and unchanged supplied GLB hierarchy.`);
+console.log(`Recorded the measured final A1 Cab contact with a ${MIN_TERMINAL_ALIGNMENT.toFixed(2)} authored-opening alignment floor, signed wall relocation, and unchanged supplied GLB hierarchy.`);
