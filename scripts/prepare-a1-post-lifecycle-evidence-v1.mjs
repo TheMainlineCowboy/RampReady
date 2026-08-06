@@ -11,8 +11,14 @@ for (const path of files) {
   let source = fs.readFileSync(path, "utf8");
   const marker = "post-lifecycle-grounded-a1-evidence-v1";
   if (!source.includes(marker)) {
-    const loadAnchor = '      && data?.terminal4UploadedJetwayLoadState === "ready"';
-    if (!source.includes(loadAnchor)) {
+    const chainedLoadAnchor = '      && data?.terminal4UploadedJetwayLoadState === "ready"';
+    const returnedLoadAnchor = '    return data?.terminal4UploadedJetwayLoadState === "ready"';
+    const loadAnchor = source.includes(chainedLoadAnchor)
+      ? chainedLoadAnchor
+      : source.includes(returnedLoadAnchor)
+        ? returnedLoadAnchor
+        : null;
+    if (!loadAnchor) {
       throw new Error(`${path}: A1 evidence load-state anchor is missing`);
     }
     source = source.replace(
@@ -71,4 +77,4 @@ for (const path of files) {
   fs.writeFileSync(path, source, "utf8");
 }
 
-console.log("Required the stored grounded A1 inspection pose, measured Cab heading, finite yaw and near-zero live pose error before full or close evidence capture.");
+console.log("Required the stored grounded A1 inspection pose, measured Cab heading, finite yaw and near-zero live pose error before full or close evidence capture across both supported readiness-predicate structures.");
