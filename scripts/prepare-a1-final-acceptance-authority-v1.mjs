@@ -1,6 +1,14 @@
 import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
+const generatedAuthorityPaths = Object.freeze([
+  trainerPath,
+  "src/environment/correctUploadedJetwayInstallationV1.js",
+  "src/environment/uploadedAirportJetwayFleetReadyV2.js",
+  "src/environment/staticJetwayPortalClosures.js",
+  "src/environment/uploadedAirportJetwayModelSpaceControllerV7.js",
+  "src/environment/authoredTerminal4Visual.js",
+]);
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const staleAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
@@ -43,9 +51,15 @@ if (!source.includes(marker)) {
   }
 }
 
-for (const required of [
-  marker,
-  facadeTelemetryMarker,
+// Authority values are intentionally defined in the runtime layer that owns
+// them, then copied into the trainer browser dataset. Requiring every literal
+// to appear inside the trainer itself falsely rejects valid environment-owned
+// authority. Verify the literals across the complete generated runtime and the
+// corresponding publication fields specifically in the trainer.
+const generatedAuthoritySource = generatedAuthorityPaths
+  .map((path) => fs.readFileSync(path, "utf8"))
+  .join("\n");
+for (const authority of [
   finalAuthority,
   cameraAuthority,
   cameraLockAuthority,
@@ -55,13 +69,23 @@ for (const required of [
   staticCabClosureAuthority,
   staticCabTargetAuthority,
   staticCabEvidenceAuthority,
+]) {
+  if (!generatedAuthoritySource.includes(authority)) {
+    throw new Error(`Generated Terminal 4 runtime is missing final authority ${authority}`);
+  }
+}
+
+for (const required of [
+  marker,
+  facadeTelemetryMarker,
   "inspectionAircraftDoorVerticalErrorMeters",
   "inspectionAircraftDoorSignedVerticalGapMeters",
   "inspectionAircraftGroundClearanceMeters",
   "inspectionAircraftJetwayRequestedVerticalFitMeters",
   "inspectionAircraftJetwayVerticalFitMeters",
+  "inspectionAircraftJetwayVerticalFitAuthority",
   "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
-  "authored-crj-lowest-geometry-contact-clusters-v2",
+  "inspectionAircraftGroundingAuthority",
   "inspectionAircraftLandingGearContactClusterCount",
   "terminal4A1JetwayWallDistance",
   "terminal4A1ConnectionAuthority",
@@ -96,16 +120,18 @@ for (const required of [
   "inspectionCameraEndpointAircraftBoundsMin",
   "inspectionCameraEndpointAircraftBoundsMax",
   "inspectionCameraEndpointFrameSize",
+  "inspectionCameraEndpointAuthority",
   "inspectionCameraEndpointLockAuthority",
   "inspectionCameraEndpointConvergenceErrorMeters",
   "inspectionOverheadCameraEndpointFrameSize",
+  "inspectionOverheadCameraEndpointAuthority",
   "inspectionOverheadCameraEndpointLockAuthority",
   "inspectionOverheadCameraEndpointConvergenceErrorMeters",
   "terminal4TerminalConnectedJetwayCount",
   "inspectionPresetJetwayDeployment",
 ]) {
   if (!source.includes(required)) {
-    throw new Error(`${trainerPath}: final Terminal 4 acceptance output is missing ${required}`);
+    throw new Error(`${trainerPath}: final Terminal 4 browser publication is missing ${required}`);
   }
 }
 for (const forbidden of [
@@ -122,4 +148,4 @@ for (const forbidden of [
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs?grounded-pose=${Date.now()}`);
-console.log("Finalized Terminal 4 only after A1 compact-wall, zero-lift, multi-point contact, continuous closed vestibule and locked-camera evidence plus all 57 static Cab closures survived every preparer.");
+console.log("Finalized Terminal 4 after verifying every authority in its owning generated runtime layer and every required A1/static-Cab/camera publication in the trainer, without weakening compact-wall, zero-lift, contact, closure, or lifecycle gates.");
