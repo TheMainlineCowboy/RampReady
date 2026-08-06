@@ -1,3 +1,3 @@
-Run the trusted exact-head PR 140 jetway acceptance workflow against 61a74b729332efddd7a869099da1738bf7bc3c3a.
-Retain the uncropped A1 PNG and exact runtime telemetry before assertions so any remaining render failure is inspectable and correctable.
-Validate the pre-build measured-ground-contact contract, measured jetway ramp clearance, authored CRJ contact clusters, endpoint-and-aircraft-bounds-derived perspective and overhead cameras, unified vertical-fit authority, continuous authored assembly, compact terminal vestibule, no isolated node transforms, and current-main ancestry.
+Run the trusted exact-head PR 140 jetway acceptance workflow against 34a013478a419456711411b91e33ecd9ac663485.
+Retain both uncropped A1 perspective and overhead PNGs plus exact runtime telemetry before assertions so any remaining render failure is inspectable and correctable.
+Validate the pre-build measured-ground-contact contract, measured jetway ramp clearance, authored CRJ contact clusters, endpoint-and-aircraft-bounds-derived perspective and overhead cameras locked at zero convergence error, unified vertical-fit authority, continuous authored assembly, compact terminal vestibule, no isolated node transforms, and current-main ancestry.
