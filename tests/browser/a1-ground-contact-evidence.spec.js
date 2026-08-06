@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 const JETWAY_GROUND_AUTHORITY = "exact-authored-a1-lowest-geometry-ramp-contact-v1";
 const AIRCRAFT_GROUND_AUTHORITY = "authored-crj-lowest-geometry-contact-clusters-v2";
 const VERTICAL_FIT_AUTHORITY = "grounded-aircraft-door-progressive-tunnel-slope-v1";
-const CAMERA_ENDPOINT_AUTHORITY = "exact-world-wall-rotunda-cab-derived-camera-v1";
+const CAMERA_ENDPOINT_AUTHORITY = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 
 async function captureCanvas(page, path) {
   const box = await page.evaluate(() => {
@@ -91,7 +91,10 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
       && String(data?.inspectionCameraEndpointTarget || "").split(",").length === 3
       && String(data?.inspectionCameraEndpointWall || "").split(",").length === 3
       && String(data?.inspectionCameraEndpointRotunda || "").split(",").length === 3
-      && String(data?.inspectionCameraEndpointCab || "").split(",").length === 3;
+      && String(data?.inspectionCameraEndpointCab || "").split(",").length === 3
+      && String(data?.inspectionCameraEndpointAircraftBoundsMin || "").split(",").length === 3
+      && String(data?.inspectionCameraEndpointAircraftBoundsMax || "").split(",").length === 3
+      && String(data?.inspectionCameraEndpointFrameSize || "").split(",").length === 3;
   }, CAMERA_ENDPOINT_AUTHORITY, { timeout: 30_000, polling: 100 });
 
   const runtime = await page.evaluate(() => ({
@@ -114,6 +117,22 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
   const wall = parseTriplet(runtime.inspectionCameraEndpointWall, "A1 measured terminal wall");
   const rotunda = parseTriplet(runtime.inspectionCameraEndpointRotunda, "A1 Rotunda endpoint");
   const cab = parseTriplet(runtime.inspectionCameraEndpointCab, "A1 Cab endpoint");
+  const aircraftBoundsMin = parseTriplet(
+    runtime.inspectionCameraEndpointAircraftBoundsMin,
+    "A1 rendered-aircraft bounds minimum",
+  );
+  const aircraftBoundsMax = parseTriplet(
+    runtime.inspectionCameraEndpointAircraftBoundsMax,
+    "A1 rendered-aircraft bounds maximum",
+  );
+  const frameSize = parseTriplet(runtime.inspectionCameraEndpointFrameSize, "A1 complete frame size");
+  const aircraftBoundsSize = aircraftBoundsMax.map((value, index) => value - aircraftBoundsMin[index]);
+  expect(aircraftBoundsSize.every((value) => value > 0)).toBe(true);
+  expect(Math.hypot(aircraftBoundsSize[0], aircraftBoundsSize[2])).toBeGreaterThan(30);
+  expect(Math.hypot(aircraftBoundsSize[0], aircraftBoundsSize[2])).toBeLessThan(50);
+  expect(Math.max(frameSize[0], frameSize[2])).toBeGreaterThanOrEqual(
+    Math.max(aircraftBoundsSize[0], aircraftBoundsSize[2]),
+  );
   const rotundaWallDistance = distance3(rotunda, wall);
   const rotundaCabDistance = distance3(rotunda, cab);
   expect(rotundaWallDistance).toBeGreaterThan(1.5);
@@ -122,13 +141,13 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
   expect(rotundaCabDistance).toBeLessThan(45);
   expect(rotundaWallDistance + 10).toBeLessThan(rotundaCabDistance);
   expect(distance3(cameraPosition, cameraTarget)).toBeGreaterThan(35);
-  expect(distance3(cameraPosition, cameraTarget)).toBeLessThan(80);
+  expect(distance3(cameraPosition, cameraTarget)).toBeLessThan(100);
   const wallCabMidpoint = [
     (wall[0] + cab[0]) * 0.5,
     (wall[1] + cab[1]) * 0.5,
     (wall[2] + cab[2]) * 0.5,
   ];
-  expect(distance3(cameraTarget, wallCabMidpoint)).toBeLessThan(14);
+  expect(distance3(cameraTarget, wallCabMidpoint)).toBeLessThan(25);
 
   await page.addStyleTag({
     content: ".rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}",
@@ -156,6 +175,10 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
       wall,
       rotunda,
       cab,
+      aircraftBoundsMin,
+      aircraftBoundsMax,
+      aircraftBoundsSize,
+      frameSize,
       rotundaWallDistance,
       rotundaCabDistance,
       evidenceAuthority: "exact-runtime-measured-ground-contact-and-current-head-render",
