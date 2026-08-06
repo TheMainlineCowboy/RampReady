@@ -25,7 +25,7 @@ function requireTokens(key, tokens) {
 function forbidTokens(key, tokens) {
   for (const token of tokens) {
     if (source[key].includes(token)) {
-      throw new Error(`${files[key]}: stale A1 ground-contact contract remains: ${token}`);
+      throw new Error(`${files[key]}: hidden measured A1 ground-contact side effect remains: ${token}`);
     }
   }
 }
@@ -49,12 +49,10 @@ for (const stage of buildStages) {
 
 requireTokens("vertical", [
   'const verticalFitAuthority = "grounded-aircraft-door-progressive-tunnel-slope-v1"',
-  "landingGearWheelBoundsBefore",
-  "inspectionAircraftJetwayVerticalFitAuthority",
-]);
-forbidTokens("vertical", [
-  "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2",
-  "const aircraftRelocationY = -renderedBoundsBefore.min.y",
+  "const aircraftRelocationY = -landingGearWheelBoundsBefore.min.y",
+  "inspectionAircraftJetwayVerticalFitAuthority = \"${verticalFitAuthority}\"",
+  "conflicting A1 vertical-fit authority remains",
+  "obsolete whole-aircraft bounds grounding remains active",
 ]);
 
 requireTokens("aircraftGround", [
@@ -64,35 +62,31 @@ requireTokens("aircraftGround", [
   "contactSpan.x < 1",
   "contactSpan.z < 4",
   "const aircraftRelocationY = -landingGearContactBefore.minimumY",
+  "const landingGearContactAfter = measureAuthoredLandingGearContact()",
   "inspectionAircraftLandingGearContactClusterCount",
-]);
-forbidTokens("aircraftGround", [
-  "landingGearWheelBoundsBefore",
-  "landingGearWheelBoundsAfter",
-  "named-landing-gear-wheel-bounds-v1",
-  "`\${Math.floor(point.x",
-  "`\${cellX + dx}",
+  "obsolete name-based wheel grounding remains",
+  "Math.floor(point.x / cellSizeMeters)",
+  "const neighbor = [cellX + dx, cellZ + dz].join(\",\")",
 ]);
 
 requireTokens("jetwayGround", [
   "exact-authored-a1-lowest-geometry-ramp-contact-v1",
   "const measuredBogieGroundOffsetMeters = -authoredA1GroundBoundsBefore.min.y",
   "Math.abs(measuredBogieGroundOffsetMeters) > 0.5",
+  "fleet.position.y += measuredBogieGroundOffsetMeters",
   "Math.abs(measuredBogieGroundClearanceMeters) > 0.005",
   "uploadedJetwayBogieGroundContactAuthority",
-]);
-forbidTokens("jetwayGround", [
-  "measuredBogieGroundOffsetMeters >= 0",
-  "fleet.position.y -= BOGIE_TIRE_CONTACT_CORRECTION_METERS",
+  "hard-coded fleet ground correction remains active",
 ]);
 
 requireTokens("readiness", [
+  "Math.abs(Math.abs(fleetGroundOffset) - bogieTireCorrection) > 1e-6",
   "Math.abs(bogieGroundClearance) > 0.005",
   "authoredTerminal4UploadedJetwayBogieGroundClearanceMeters",
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
   "terminal4UploadedJetwayBogieGroundContactAuthority",
+  "obsolete fixed bogie correction range remains",
 ]);
-forbidTokens("readiness", ["bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1"]);
 
 requireTokens("heading", [
   "const landingGearContactAfter = measureAuthoredLandingGearContact()",
@@ -110,15 +104,15 @@ requireTokens("finalizer", [
   "exact-authored-a1-lowest-geometry-ramp-contact-v1",
   "grounded-aircraft-door-progressive-tunnel-slope-v1",
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
-]);
-forbidTokens("finalizer", [
-  "named-landing-gear-wheel-bounds-v1\",\n])",
+  "named-landing-gear-wheel-bounds-v1",
+  "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2",
 ]);
 
 requireTokens("browser", [
   "A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
   "inspectionAircraftLandingGearContactClusterCount",
+  "inspectionAircraftGroundClearanceMeters",
   "a1-measured-ground-contact.png",
   "a1-measured-ground-contact.json",
 ]);
