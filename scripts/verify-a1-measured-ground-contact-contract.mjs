@@ -6,6 +6,8 @@ const files = Object.freeze({
   aircraftGround: "scripts/prepare-a1-authored-ground-contact-v1.mjs",
   jetwayGround: "scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs",
   readiness: "scripts/prepare-a1-bogie-readiness-v1.mjs",
+  endpointEvidence: "scripts/prepare-a1-endpoint-browser-evidence-v1.mjs",
+  dynamicCamera: "scripts/prepare-a1-dynamic-evidence-camera-v1.mjs",
   heading: "scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs",
   finalizer: "scripts/prepare-a1-final-acceptance-authority-v1.mjs",
   browser: "tests/browser/a1-ground-contact-evidence.spec.js",
@@ -35,6 +37,7 @@ const buildStages = [
   'await runNode("scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs")',
   'await runNode("scripts/prepare-a1-bogie-readiness-v1.mjs")',
   'await runNode("scripts/prepare-a1-authored-ground-contact-v1.mjs")',
+  'await runNode("scripts/prepare-a1-endpoint-browser-evidence-v1.mjs")',
   'await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs")',
   'await runNode("scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs")',
 ];
@@ -88,6 +91,30 @@ requireTokens("readiness", [
   "obsolete fixed bogie correction range remains",
 ]);
 
+requireTokens("endpointEvidence", [
+  "exact-a1-world-endpoint-browser-evidence-v1",
+  "uploadedJetwayA1FinalMeasuredWallWorldX",
+  "uploadedJetwayA1FinalRotundaWorldX",
+  "uploadedJetwayA1CabContactWorldX",
+  "prepare-a1-dynamic-evidence-camera-v1.mjs?exact-endpoint-camera=",
+]);
+
+requireTokens("dynamicCamera", [
+  "exact-world-wall-rotunda-cab-derived-camera-v1",
+  "inspectionCameraEndpointAuthority",
+  "inspectionOverheadCameraEndpointAuthority",
+  "uploadedJetwayA1FinalMeasuredWallWorldX",
+  "uploadedJetwayA1FinalRotundaWorldX",
+  "uploadedJetwayA1CabContactWorldX",
+  "exactA1CameraAxisLength > 8",
+  "exactA1CameraAxisLength < 70",
+  "inspectionCameraEndpointPosition",
+  "inspectionCameraEndpointTarget",
+  "inspectionCameraEndpointWall",
+  "inspectionCameraEndpointRotunda",
+  "inspectionCameraEndpointCab",
+]);
+
 requireTokens("heading", [
   "const landingGearContactAfter = measureAuthoredLandingGearContact()",
   "renderedGroundClearanceMeters = landingGearContactAfter.minimumY",
@@ -113,8 +140,13 @@ requireTokens("browser", [
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
   "inspectionAircraftLandingGearContactClusterCount",
   "inspectionAircraftGroundClearanceMeters",
+  "exact-world-wall-rotunda-cab-derived-camera-v1",
+  "inspectionCameraEndpointAuthority",
+  "inspectionCameraEndpointPosition",
+  "inspectionCameraEndpointWall",
+  "rotundaWallDistance",
   "a1-measured-ground-contact.png",
   "a1-measured-ground-contact.json",
 ]);
 
-console.log("Verified the explicit measured A1 jetway/CRJ ground-contact build order, authorities, browser publication, and rendered-evidence contract.");
+console.log("Verified the explicit measured A1 jetway/CRJ ground-contact build order, endpoint-derived camera, authorities, browser publication, and rendered-evidence contract.");
