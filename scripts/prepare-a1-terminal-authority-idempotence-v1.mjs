@@ -19,8 +19,7 @@ const oldIdempotentValidation = `      const alreadyQualifiedStructuralAuthority
         terminalConnection.authority = \`structural-A1-terminal-building-\${terminalConnection.authority}-v28\`;
       }`;
 const groundedAssignment = "      terminalConnection = groundedConnection;";
-const groundedValidation = `${groundedAssignment}
-      // ${marker}
+const groundedValidationOnly = `      // ${marker}
       const groundedStructuralAuthority = String(terminalConnection.authority || "");
       if (!groundedStructuralAuthority || /WALK|JETWAY|CONNECTOR|PORTAL/i.test(groundedStructuralAuthority)) {
         throw new Error(\`A1 compact grounded wall returned a forbidden authority: \${groundedStructuralAuthority}\`);
@@ -31,21 +30,38 @@ const groundedValidation = `${groundedAssignment}
         terminalConnection.authority = \`structural-A1-terminal-building-\${groundedStructuralAuthority}-v31\`;
       }`;
 
-let replacementCount = 0;
+// Remove every historical validator first. Replacing those blocks with the
+// grounded assignment leaked the block-scoped groundedConnection identifier
+// into later scopes and crashed Terminal 4 at runtime. The assignment belongs
+// only in the A1 block created by the grounded-wall preparer; validators use the
+// surviving terminalConnection value after that assignment.
+let removedLegacyValidationCount = 0;
 while (source.includes(oldValidation)) {
-  source = source.replace(oldValidation, groundedValidation);
-  replacementCount += 1;
+  source = source.replace(oldValidation, "");
+  removedLegacyValidationCount += 1;
 }
 while (source.includes(oldIdempotentValidation)) {
-  source = source.replace(oldIdempotentValidation, groundedValidation);
-  replacementCount += 1;
+  source = source.replace(oldIdempotentValidation, "");
+  removedLegacyValidationCount += 1;
+}
+
+const assignmentCountBefore = source.split(groundedAssignment).length - 1;
+if (assignmentCountBefore !== 1) {
+  throw new Error(`${runtimePath}: expected exactly one block-scoped grounded A1 assignment, found ${assignmentCountBefore}`);
 }
 if (!source.includes(marker)) {
-  if (!source.includes(groundedAssignment)) {
-    throw new Error(`${runtimePath}: compact grounded A1 assignment is missing`);
-  }
-  source = source.replace(groundedAssignment, groundedValidation);
-  replacementCount += 1;
+  source = source.replace(
+    groundedAssignment,
+    `${groundedAssignment}\n${groundedValidationOnly}`,
+  );
+}
+
+const assignmentCountAfter = source.split(groundedAssignment).length - 1;
+const markerCount = source.split(marker).length - 1;
+if (assignmentCountAfter !== 1 || markerCount !== 1) {
+  throw new Error(
+    `${runtimePath}: grounded A1 authority output must contain one assignment and one validator; assignments=${assignmentCountAfter}, validators=${markerCount}`,
+  );
 }
 
 for (const token of [
@@ -73,4 +89,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log(`Validated ${Math.max(1, replacementCount)} compact grounded A1 authority path(s) idempotently with explicit template ${qualifiedAuthorityTemplate}.`);
+console.log(`Removed ${removedLegacyValidationCount} historical A1 validator block(s) and installed one block-scoped grounded authority validator without leaking groundedConnection.`);
