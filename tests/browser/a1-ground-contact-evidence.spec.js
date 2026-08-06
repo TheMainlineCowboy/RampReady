@@ -6,6 +6,11 @@ const AIRCRAFT_GROUND_AUTHORITY = "authored-crj-lowest-geometry-contact-clusters
 const VERTICAL_FIT_AUTHORITY = "grounded-aircraft-door-progressive-tunnel-slope-v1";
 const CAMERA_ENDPOINT_AUTHORITY = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const CAMERA_LOCK_AUTHORITY = "exact-a1-evidence-camera-direct-lock-v1";
+const VISUAL_ACCEPTANCE_AUTHORITY = "same-day-a1-continuous-compact-solid-closed-grounded-v1";
+const ASSEMBLY_CONTINUITY_AUTHORITY = "exact-authored-five-part-chain-no-isolated-node-rotation-v2";
+const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-visible-solid-terminal-vestibule-v12";
+const ROTUNDA_OPENING_AUTHORITY = "exact-authored-opposite-rotunda-to-tunnel-a-axis-v5";
+const ROTUNDA_CLOSURE_AUTHORITY = "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1";
 
 async function captureCanvas(page, path) {
   const box = await page.evaluate(() => {
@@ -54,31 +59,48 @@ function distance3(a, b) {
   return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 }
 
-test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp", async ({ page }) => {
+test("A1 evidence proves the continuous supplied jetway, compact closed vestibule and authored CRJ contact the ramp", async ({ page }) => {
   test.setTimeout(780_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   await page.getByRole("button", { name: "Drive tug / inspect airport" }).click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction(({ jetwayAuthority, aircraftAuthority, verticalAuthority }) => {
+  await page.waitForFunction((authorities) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionMode === "active"
       && data?.terminal4UploadedJetwayLoadState === "ready"
-      && data?.terminal4UploadedJetwayBogieGroundContactAuthority === jetwayAuthority
+      && data?.terminal4UploadedJetwayBogieGroundContactAuthority === authorities.jetwayGround
       && Math.abs(Number(data?.terminal4UploadedJetwayBogieGroundClearanceMeters)) <= 0.005
-      && data?.inspectionAircraftGroundingAuthority === aircraftAuthority
+      && data?.terminal4UploadedJetwayA1AssemblyContinuityAuthority === authorities.assembly
+      && Number(data?.terminal4UploadedJetwayA1AssemblyPartCount) === 5
+      && Math.abs(Number(data?.terminal4UploadedJetwayA1AssemblyTransformError)) <= 1e-9
+      && Number(data?.terminal4UploadedJetwayA1IsolatedNodeRotationCount) === 0
+      && data?.terminal4UploadedJetwayA1ConnectorStyleAuthority === authorities.connectorStyle
+      && data?.terminal4UploadedJetwayA1RotundaOpeningAuthority === authorities.rotundaOpening
+      && Math.abs(Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4) <= 0.05
+      && Number(data?.terminal4UploadedJetwayA1ConnectorRibCount) >= 6
+      && data?.terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed === "true"
+      && data?.terminal4UploadedJetwayA1RotundaVestibuleClosureAuthority === authorities.rotundaClosure
+      && data?.terminal4UploadedJetwayA1NoGeneratedGlassCorridor === "true"
+      && data?.terminal4UploadedJetwayA1VisualAcceptanceAuthority === authorities.visual
+      && data?.inspectionAircraftGroundingAuthority === authorities.aircraftGround
       && Number(data?.inspectionAircraftLandingGearContactPointCount) >= 6
       && Number(data?.inspectionAircraftLandingGearContactClusterCount) >= 3
       && Number(data?.inspectionAircraftLandingGearContactSpanX) >= 1
       && Number(data?.inspectionAircraftLandingGearContactSpanZ) >= 4
       && Math.abs(Number(data?.inspectionAircraftGroundClearanceMeters)) <= 0.01
       && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01
-      && data?.inspectionAircraftJetwayVerticalFitAuthority === verticalAuthority;
+      && data?.inspectionAircraftJetwayVerticalFitAuthority === authorities.verticalFit;
   }, {
-    jetwayAuthority: JETWAY_GROUND_AUTHORITY,
-    aircraftAuthority: AIRCRAFT_GROUND_AUTHORITY,
-    verticalAuthority: VERTICAL_FIT_AUTHORITY,
+    jetwayGround: JETWAY_GROUND_AUTHORITY,
+    assembly: ASSEMBLY_CONTINUITY_AUTHORITY,
+    connectorStyle: CONNECTOR_STYLE_AUTHORITY,
+    rotundaOpening: ROTUNDA_OPENING_AUTHORITY,
+    rotundaClosure: ROTUNDA_CLOSURE_AUTHORITY,
+    visual: VISUAL_ACCEPTANCE_AUTHORITY,
+    aircraftGround: AIRCRAFT_GROUND_AUTHORITY,
+    verticalFit: VERTICAL_FIT_AUTHORITY,
   }, { timeout: 300_000, polling: 100 });
 
   await page.getByLabel("Inspection location").selectOption("a1Connection");
@@ -108,6 +130,18 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
   }));
   expect(runtime.terminal4UploadedJetwayBogieGroundContactAuthority).toBe(JETWAY_GROUND_AUTHORITY);
   expect(Math.abs(Number(runtime.terminal4UploadedJetwayBogieGroundClearanceMeters))).toBeLessThanOrEqual(0.005);
+  expect(runtime.terminal4UploadedJetwayA1AssemblyContinuityAuthority).toBe(ASSEMBLY_CONTINUITY_AUTHORITY);
+  expect(Number(runtime.terminal4UploadedJetwayA1AssemblyPartCount)).toBe(5);
+  expect(Math.abs(Number(runtime.terminal4UploadedJetwayA1AssemblyTransformError))).toBeLessThanOrEqual(1e-9);
+  expect(Number(runtime.terminal4UploadedJetwayA1IsolatedNodeRotationCount)).toBe(0);
+  expect(runtime.terminal4UploadedJetwayA1ConnectorStyleAuthority).toBe(CONNECTOR_STYLE_AUTHORITY);
+  expect(runtime.terminal4UploadedJetwayA1RotundaOpeningAuthority).toBe(ROTUNDA_OPENING_AUTHORITY);
+  expect(Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters)).toBeCloseTo(2.4, 2);
+  expect(Number(runtime.terminal4UploadedJetwayA1ConnectorRibCount)).toBeGreaterThanOrEqual(6);
+  expect(runtime.terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed).toBe("true");
+  expect(runtime.terminal4UploadedJetwayA1RotundaVestibuleClosureAuthority).toBe(ROTUNDA_CLOSURE_AUTHORITY);
+  expect(runtime.terminal4UploadedJetwayA1NoGeneratedGlassCorridor).toBe("true");
+  expect(runtime.terminal4UploadedJetwayA1VisualAcceptanceAuthority).toBe(VISUAL_ACCEPTANCE_AUTHORITY);
   expect(runtime.inspectionAircraftGroundingAuthority).toBe(AIRCRAFT_GROUND_AUTHORITY);
   expect(Number(runtime.inspectionAircraftLandingGearContactPointCount)).toBeGreaterThanOrEqual(6);
   expect(Number(runtime.inspectionAircraftLandingGearContactClusterCount)).toBeGreaterThanOrEqual(3);
@@ -208,6 +242,18 @@ test("A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
   fs.writeFileSync(
     "test-results/a1-measured-ground-contact.json",
     `${JSON.stringify({
+      visualAcceptanceAuthority: runtime.terminal4UploadedJetwayA1VisualAcceptanceAuthority,
+      assemblyContinuityAuthority: runtime.terminal4UploadedJetwayA1AssemblyContinuityAuthority,
+      assemblyPartCount: Number(runtime.terminal4UploadedJetwayA1AssemblyPartCount),
+      assemblyTransformError: Number(runtime.terminal4UploadedJetwayA1AssemblyTransformError),
+      isolatedNodeRotationCount: Number(runtime.terminal4UploadedJetwayA1IsolatedNodeRotationCount),
+      connectorStyleAuthority: runtime.terminal4UploadedJetwayA1ConnectorStyleAuthority,
+      rotundaOpeningAuthority: runtime.terminal4UploadedJetwayA1RotundaOpeningAuthority,
+      visibleVestibuleLengthMeters: Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters),
+      connectorRibCount: Number(runtime.terminal4UploadedJetwayA1ConnectorRibCount),
+      apronFacingRotundaOpeningClosed: runtime.terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed === "true",
+      rotundaVestibuleClosureAuthority: runtime.terminal4UploadedJetwayA1RotundaVestibuleClosureAuthority,
+      noGeneratedGlassCorridor: runtime.terminal4UploadedJetwayA1NoGeneratedGlassCorridor === "true",
       jetwayGroundAuthority: runtime.terminal4UploadedJetwayBogieGroundContactAuthority,
       jetwayGroundClearanceMeters: Number(runtime.terminal4UploadedJetwayBogieGroundClearanceMeters),
       aircraftGroundAuthority: runtime.inspectionAircraftGroundingAuthority,
