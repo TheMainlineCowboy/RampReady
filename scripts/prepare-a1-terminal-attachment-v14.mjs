@@ -3,7 +3,7 @@ import fs from "node:fs";
 const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(jetwayPath, "utf8");
 
-const marker = "facade-contiguous-structural-wall-surface-v15";
+const marker = "facade-contiguous-structural-wall-surface-v16";
 const start = source.indexOf("function findTerminalWallConnection(");
 const end = source.indexOf("\nfunction findTerminalWallDistance(", start);
 if (start < 0 || end < 0) {
@@ -15,6 +15,7 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
   terminal.updateMatrixWorld(true);
   const origin = new THREE.Vector3(originX, height, originZ);
   const structuralMaterial = /BGATE|DGATE|PHX_TERM400/i;
+  const rejectedNodeName = /WALK|JETWAY|CONNECTOR|PORTAL|SIGN|COLUMN|LIGHT/i;
   const triangle = new THREE.Triangle();
   const a = new THREE.Vector3();
   const b = new THREE.Vector3();
@@ -35,14 +36,15 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
   };
 
   const isFacadeContiguousNode = (node) => {
+    if (rejectedNodeName.test(node.name || "")) return false;
     nodeBox.setFromObject(node);
     nodeBox.getSize(nodeSize);
     const horizontalSpan = Math.max(nodeSize.x, nodeSize.z);
     const thinAxis = Math.min(nodeSize.x, nodeSize.z);
-    // Reject isolated apron fragments, sign slabs, columns and legacy connector
-    // pieces carrying terminal materials. A real Terminal 4 facade section has
-    // a broad continuous horizontal span and enough vertical wall coverage.
-    return horizontalSpan >= 14 && nodeSize.y >= 3.2 && thinAxis <= 12;
+    // Terminal 4's authored facade is split into source mesh sections smaller
+    // than 14 m. Accept only wall-sized structural sections while explicitly
+    // rejecting walkways, signs, columns, lights, portals and connector pieces.
+    return horizontalSpan >= 6 && nodeSize.y >= 2.6 && thinAxis <= 12;
   };
 
   terminal.traverse((node) => {
@@ -81,7 +83,9 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
       if (!(horizontalDistance > 0.05 && horizontalDistance <= 48 && verticalError <= 0.65)) continue;
       const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();
       const candidateDirection = new THREE.Vector3(dx, 0, dz).normalize();
-      const directionPenalty = Math.max(0, 1 - candidateDirection.dot(preferred)) * 2.5;
+      const directionDot = candidateDirection.dot(preferred);
+      if (directionDot < 0.15) continue;
+      const directionPenalty = Math.max(0, 1 - directionDot) * 2.5;
       const score = horizontalDistance + verticalError * 4 + directionPenalty;
       if (!nearest || score < nearest.score) {
         nearest = {
@@ -96,7 +100,7 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
           nodeSpanY: nodeSize.y,
           nodeSpanZ: nodeSize.z,
           triangleArea: area,
-          authority: "facade-contiguous-structural-wall-surface-v15",
+          authority: "facade-contiguous-structural-wall-surface-v16",
         };
       }
     }
@@ -113,9 +117,11 @@ if (falseWalkwayOverride.test(source)) {
 
 for (const token of [
   marker,
-  "Reject isolated apron fragments",
-  "horizontalSpan >= 14",
-  "nodeSize.y >= 3.2",
+  "Terminal 4's authored facade is split",
+  "horizontalSpan >= 6",
+  "nodeSize.y >= 2.6",
+  "rejectedNodeName",
+  "directionDot < 0.15",
   "triangleArea: area",
 ]) {
   if (!source.includes(token)) {
@@ -161,4 +167,4 @@ for (const runtimePath of boundedFacadeFiles) {
   fs.writeFileSync(runtimePath, runtime, "utf8");
 }
 
-console.log("Prepared A1 attachment against a facade-contiguous Terminal 4 wall surface, rejecting isolated ramp fragments and preserving the short photo-matched Rotunda vestibule.");
+console.log("Prepared A1 attachment against a facade-contiguous Terminal 4 wall surface, accepting source-split structural facade sections while rejecting isolated ramp fragments and preserving the short photo-matched Rotunda vestibule.");
