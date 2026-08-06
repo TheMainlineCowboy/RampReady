@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "workflow": "Deploy RampReady to GitHub Pages",
+  "releaseSha": "0b33c29eb0143b2ef076f00c379a0e4a0fa93c5f",
+  "conclusion": "success",
+  "runId": 31094421542,
+  "runNumber": 439,
+  "runAttempt": 1,
+  "runUrl": "https://github.com/TheMainlineCowboy/RampReady/actions/runs/31094421542",
+  "completedAt": "2026-08-06T11:03:34Z",
+  "phxGroundContract": {
+    "textureMode": "tiled-native-source-resolution-v2",
+    "sourceDimensions": [
+      6400,
+      2304
+    ],
+    "runtimeTileCount": 21,
+    "maximumTextureDimension": 1024
+  }
+}
