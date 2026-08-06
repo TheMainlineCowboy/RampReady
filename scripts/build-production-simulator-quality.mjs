@@ -73,6 +73,7 @@ try {
   await runNode("scripts/prepare-a1-terminal-relocation-v4.mjs");
   await runNode("scripts/prepare-a1-vector-wall-lock-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-terminal-relocation-v1.mjs");
+  await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
   await runNode("scripts/prepare-a1-rotunda-vestibule-closure-v1.mjs");
   await runNode("scripts/prepare-static-jetway-portal-closures-v1.mjs");
   await runNode("scripts/prepare-terminal4-static-jetway-parking-v15.mjs");
@@ -107,4 +108,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, anchored A1 to a ramp-level grounded structural facade rather than the elevated T4_WALK corridor, aligned the complete A1 parent from the authored Cab-to-Rotunda endpoint axis at the measured terminal corner with a compact fixed vestibule and full-vector wall lock, registered the inspection aircraft to the relocated exact Cab, closed all parked jetway apron-facing cab mouths without changing supplied GLB node transforms, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including the supplied-jetway installation correction and both trainer sources.");
+console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, anchored A1 to a ramp-level grounded structural facade rather than the elevated T4_WALK corridor, aligned the complete A1 parent from the authored Cab-to-Rotunda endpoint axis at the measured terminal corner with a compact fixed vestibule and full-vector wall lock, persisted and reapplied the rendered inspection aircraft pose at the relocated exact Cab across inspection toggles and resets, closed all parked jetway apron-facing cab mouths without changing supplied GLB node transforms, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including the supplied-jetway installation correction and both trainer sources.");
