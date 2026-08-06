@@ -75,4 +75,5 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Aligned the complete inspection aircraft root to the measured A1 Cab normal and made CRJ dimension validation independent of that rendered yaw.");
+await import(`./prepare-current-head-browser-expectations-v1.mjs?current-head=${Date.now()}`);
+console.log("Aligned the complete inspection aircraft root to the measured A1 Cab normal, made CRJ dimension validation independent of rendered yaw, and synchronized current-head browser expectations with that authoritative pose.");
