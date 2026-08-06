@@ -6,7 +6,7 @@ let source = fs.readFileSync(trainerPath, "utf8");
 const staleAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
 const finalAuthority = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
 const marker = "final-a1-acceptance-authority-after-all-preparers-v1";
-const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v2";
+const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
 // Several historical build-time preparers can regenerate the aircraft
 // registration block from an older template. This finalizer deliberately runs
@@ -16,14 +16,15 @@ source = source.replaceAll(staleAuthority, finalAuthority);
 
 // The lower-facade-fit preparer runs before the final inspection telemetry
 // preparer. That later preparer can regenerate the dataset assignment from an
-// older template and expose the supplemental 55-ray count even though all 58
-// source placements have a resolved authored terminal-wall connection. Publish
-// the same terminal-connected authority used by the environment only after all
-// preparers have finished. This changes acceptance evidence only; no model,
-// placement, hierarchy, transform, material, UV or texture is modified.
+// older template and expose the supplemental 55-ray count even though the
+// browser already publishes the authoritative resolved terminal-connection
+// count. Mirror that exact browser value first, then fall back to environment
+// telemetry. This changes acceptance evidence only; no model, placement,
+// hierarchy, transform, material, UV or texture is modified.
 const facadeTelemetryAssignment = `        // ${facadeTelemetryMarker}
         renderer.domElement.dataset.terminal4LowerFacadeFitCount = String(
-          environment.userData.authoredTerminal4TerminalConnectedJetwayCount
+          renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount
+            ?? environment.userData.authoredTerminal4TerminalConnectedJetwayCount
             ?? environment.userData.authoredTerminal4LowerFacadeFitCount
             ?? 0,
         );`;
@@ -49,7 +50,7 @@ for (const required of [
   "inspectionAircraftGroundClearanceMeters",
   "inspectionAircraftJetwayVerticalFitMeters",
   "grounded-aircraft-door-progressive-tunnel-slope-v1",
-  "authoredTerminal4TerminalConnectedJetwayCount",
+  "terminal4TerminalConnectedJetwayCount",
   "inspectionPresetJetwayDeployment",
 ]) {
   if (!source.includes(required)) {
@@ -61,4 +62,4 @@ if (source.includes(staleAuthority)) {
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Finalized the generated A1 acceptance runtime with the persisted measured aircraft pose authority, grounded vertical door fit, attached connection preset, and authoritative 58-gate facade telemetry after every preparer.");
+console.log("Finalized the generated A1 acceptance runtime with the persisted measured aircraft pose authority, grounded vertical door fit, attached connection preset, and lower-facade telemetry mirrored from the exact resolved terminal-connected jetway count after every preparer.");
