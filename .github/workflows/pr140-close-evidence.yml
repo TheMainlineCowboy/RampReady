@@ -42,7 +42,7 @@ jobs:
           gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${sha}" \
             -f state=pending \
             -f context='PR140 close A1 evidence' \
-            -f description='Terminal-joint and bogie close renders are running' \
+            -f description='Compact terminal-joint and zero-lift bogie renders are running' \
             -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
       - name: Check out exact PR 140 head
@@ -65,21 +65,39 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/verify-a1-measured-ground-contact-contract.mjs
+          node scripts/verify-a1-evidence-subview-contract.mjs
           grep -F 'prepare-a1-evidence-subviews-v1.mjs?exact-evidence-subviews=' scripts/prepare-a1-endpoint-browser-evidence-v1.mjs
           grep -F 'exact-a1-terminal-joint-and-bogie-contact-subviews-v1' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -F 'grounded-jetway-door-gap-reported-no-child-lift-v1' scripts/prepare-a1-inspection-aircraft-vertical-registration-v1.mjs
+          grep -F 'terminal4A1ConnectionAuthority).not.toMatch(/WALK|JETWAY|CONNECTOR|PORTAL/i)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -F 'terminal4UploadedJetwayBogieGroundContactClusterCount' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -F 'inspectionAircraftJetwayAuthoredBogieGroundPreserved' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -F 'a1-terminal-joint-close.png' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -F 'a1-bogie-contact-close.png' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
 
       - name: Build exact production artifact
         run: npm run build
 
-      - name: Require close-view authority in production bundle
+      - name: Require strict close-view authority in production bundle
         shell: bash
         run: |
           set -euo pipefail
+          for forbidden in \
+            'exact-T4_WALK-A1-terminal-portal-v25' \
+            'exactWalkwayPortalX' \
+            'grounded-aircraft-door-progressive-tunnel-slope-v1'; do
+            if grep -R --fixed-strings --line-number "${forbidden}" dist; then
+              echo "Forbidden close-evidence behavior remains: ${forbidden}"
+              exit 1
+            fi
+          done
           grep -R --fixed-strings --line-number 'exact-a1-terminal-joint-and-bogie-contact-subviews-v1' dist
           grep -R --fixed-strings --line-number 'same-day-a1-continuous-compact-solid-closed-grounded-v1' dist
           grep -R --fixed-strings --line-number 'exact-authored-a1-lowest-geometry-ramp-contact-v1' dist
+          grep -R --fixed-strings --line-number 'grounded-jetway-door-gap-reported-no-child-lift-v1' dist
+          grep -R --fixed-strings --line-number 'terminal4UploadedJetwayBogieGroundContactPointCount' dist
+          grep -R --fixed-strings --line-number 'terminal4UploadedJetwayBogieGroundContactClusterCount' dist
+          grep -R --fixed-strings --line-number 'inspectionAircraftJetwayAuthoredBogieGroundPreserved' dist
 
       - name: Install Chromium
         run: |
@@ -114,7 +132,7 @@ jobs:
           gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${SHA}" \
             -f state=success \
             -f context='PR140 close A1 evidence' \
-            -f description='Terminal-joint and grounded-bogie close renders passed' \
+            -f description='Compact real-wall and zero-lift grounded-bogie close renders passed' \
             -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
       - name: Publish failure
@@ -127,5 +145,5 @@ jobs:
           gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${SHA}" \
             -f state=failure \
             -f context='PR140 close A1 evidence' \
-            -f description='Close A1 evidence failed; inspect retained artifacts' \
+            -f description='Strict close A1 evidence failed; inspect retained artifacts' \
             -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
