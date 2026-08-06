@@ -106,4 +106,5 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Finalized A1 only after compact real-wall telemetry, separated multi-point jetway contact, zero attached child lift, retained signed door-gap evidence, continuous five-part geometry, solid closed 2.4 m vestibule, locked cameras, and grounded CRJ registration survived every preparer.");
+await import(`./prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs?grounded-pose=${Date.now()}`);
+console.log("Finalized A1 and prepared the full grounded X/Y/Z pre-inspection pose before lifecycle wiring, after compact wall, zero child lift, multi-point contact, continuous geometry, closed vestibule, and locked-camera evidence survived.");
