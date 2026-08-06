@@ -1,3 +1,4 @@
+# Storage guard reverified 2026-08-06; functional policy unchanged.
 name: Cleanup Actions storage
 
 on:
