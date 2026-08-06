@@ -1,0 +1,210 @@
+name: Purge Actions storage now
+
+on:
+  push:
+    branches:
+      - maintenance/actions-storage-purge-20260806
+    paths:
+      - .github/workflows/purge-actions-storage-now.yml
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+  pull-requests: read
+  statuses: write
+
+concurrency:
+  group: rampready-actions-storage-purge-now
+  cancel-in-progress: false
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Delete and verify all obsolete Actions storage
+        id: purge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -uo pipefail
+
+          api_json() {
+            local endpoint="$1"
+            local paginated="${2:-false}"
+            local attempt=1
+            local output
+            while (( attempt <= 30 )); do
+              if [[ "${paginated}" == "true" ]]; then
+                output="$(gh api --paginate --slurp "${endpoint}" 2>&1)"
+              else
+                output="$(gh api "${endpoint}" 2>&1)"
+              fi
+              if jq -e . >/dev/null 2>&1 <<<"${output}"; then
+                printf '%s' "${output}"
+                return 0
+              fi
+              echo "GitHub GET failed for ${endpoint} on attempt ${attempt}: ${output}" >&2
+              sleep $((attempt < 6 ? attempt * 10 : 60))
+              attempt=$((attempt + 1))
+            done
+            return 1
+          }
+
+          api_delete() {
+            local endpoint="$1"
+            local attempt=1
+            local output
+            while (( attempt <= 30 )); do
+              if output="$(gh api --method DELETE "${endpoint}" 2>&1)"; then
+                sleep 1
+                return 0
+              fi
+              if [[ "${output}" == *"HTTP 404"* ]]; then
+                return 0
+              fi
+              echo "GitHub DELETE failed for ${endpoint} on attempt ${attempt}: ${output}" >&2
+              sleep $((attempt < 6 ? attempt * 10 : 60))
+              attempt=$((attempt + 1))
+            done
+            return 1
+          }
+
+          main_json="$(api_json "repos/${GITHUB_REPOSITORY}/commits/main")" || exit 1
+          main_sha="$(jq -r '.sha' <<<"${main_json}")"
+          pulls_json="$(api_json "repos/${GITHUB_REPOSITORY}/pulls?state=open&sort=updated&direction=desc&per_page=1")" || exit 1
+          latest_pr_sha="$(jq -r '.[0].head.sha // empty' <<<"${pulls_json}")"
+          keep_json="$(printf '%s\n' "${EVENT_SHA}" "${main_sha}" "${latest_pr_sha}" | jq -R . | jq -s 'map(select(length > 0)) | unique')"
+          echo "Preserving purge commit, main, and the most recently updated open PR: ${keep_json}"
+
+          deleted_runs=0
+          while true; do
+            pages="$(api_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)" || exit 1
+            mapfile -t ids < <(
+              jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '
+                .[] | .workflow_runs[]
+                | .head_sha as $sha
+                | select(.status == "completed")
+                | select((.id | tostring) != $current)
+                | select(($keep | index($sha)) == null)
+                | .id
+              ' <<<"${pages}"
+            )
+            (( ${#ids[@]} == 0 )) && break
+            for id in "${ids[@]}"; do
+              api_delete "repos/${GITHUB_REPOSITORY}/actions/runs/${id}" || exit 1
+              deleted_runs=$((deleted_runs + 1))
+            done
+            echo "Deleted ${deleted_runs} completed obsolete workflow runs so far."
+            sleep 10
+          done
+
+          deleted_artifacts=0
+          deleted_artifact_bytes=0
+          while true; do
+            pages="$(api_json "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" true)" || exit 1
+            mapfile -t rows < <(
+              jq -r --argjson keep "${keep_json}" '
+                .[] | .artifacts[]
+                | (.workflow_run.head_sha // "") as $sha
+                | select(($keep | index($sha)) == null)
+                | [.id, (.size_in_bytes // 0)] | @tsv
+              ' <<<"${pages}"
+            )
+            (( ${#rows[@]} == 0 )) && break
+            for row in "${rows[@]}"; do
+              IFS=$'\t' read -r id bytes <<<"${row}"
+              api_delete "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}" || exit 1
+              deleted_artifacts=$((deleted_artifacts + 1))
+              deleted_artifact_bytes=$((deleted_artifact_bytes + bytes))
+            done
+            echo "Deleted ${deleted_artifacts} orphaned artifacts (${deleted_artifact_bytes} bytes) so far."
+            sleep 5
+          done
+
+          deleted_caches=0
+          deleted_cache_bytes=0
+          while true; do
+            pages="$(api_json "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" true)" || exit 1
+            mapfile -t rows < <(jq -r '.[] | .actions_caches[]? | [.id, (.size_in_bytes // 0)] | @tsv' <<<"${pages}")
+            (( ${#rows[@]} == 0 )) && break
+            for row in "${rows[@]}"; do
+              IFS=$'\t' read -r id bytes <<<"${row}"
+              api_delete "repos/${GITHUB_REPOSITORY}/actions/caches/${id}" || exit 1
+              deleted_caches=$((deleted_caches + 1))
+              deleted_cache_bytes=$((deleted_cache_bytes + bytes))
+            done
+            echo "Deleted ${deleted_caches} caches (${deleted_cache_bytes} bytes) so far."
+            sleep 5
+          done
+
+          run_pages="$(api_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)" || exit 1
+          remaining_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | .head_sha as $sha | select(.status == "completed") | select((.id | tostring) != $current) | select(($keep | index($sha)) == null)] | length' <<<"${run_pages}")"
+          artifact_pages="$(api_json "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" true)" || exit 1
+          remaining_artifacts="$(jq -r --argjson keep "${keep_json}" '[.[] | .artifacts[] | (.workflow_run.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${artifact_pages}")"
+          preserved_artifacts="$(jq -r '[.[] | .artifacts[]] | length' <<<"${artifact_pages}")"
+          preserved_bytes="$(jq -r '[.[] | .artifacts[].size_in_bytes // 0] | add // 0' <<<"${artifact_pages}")"
+          cache_pages="$(api_json "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" true)" || exit 1
+          remaining_caches="$(jq -r '[.[] | .actions_caches[]?] | length' <<<"${cache_pages}")"
+
+          echo "PURGE VERIFIED: deleted runs=${deleted_runs}, artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes); remaining obsolete runs=${remaining_runs}, artifacts=${remaining_artifacts}, caches=${remaining_caches}; preserved artifacts=${preserved_artifacts} (${preserved_bytes} bytes)."
+          if (( remaining_runs != 0 || remaining_artifacts != 0 || remaining_caches != 0 )); then
+            exit 1
+          fi
+
+          freed_mb=$(( (deleted_artifact_bytes + deleted_cache_bytes + 524287) / 1048576 ))
+          echo "description=runs=0 artifacts=0 caches=0; freed ${freed_mb} MB" >> "${GITHUB_OUTPUT}"
+
+      - name: Check out current storage policy
+        if: always()
+        uses: actions/checkout@v4
+
+      - name: Verify one-day artifact retention everywhere
+        if: always()
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          import sys
+
+          failures = []
+          for path in sorted(Path('.github/workflows').glob('*.y*ml')):
+              lines = path.read_text(encoding='utf-8').splitlines()
+              for index, line in enumerate(lines):
+                  if 'uses: actions/upload-artifact@' not in line:
+                      continue
+                  base_indent = len(line) - len(line.lstrip())
+                  retention = None
+                  for candidate in lines[index + 1:]:
+                      stripped = candidate.strip()
+                      indent = len(candidate) - len(candidate.lstrip())
+                      if stripped.startswith('- ') and indent <= base_indent:
+                          break
+                      match = re.search(r'retention-days:\s*(\d+)', stripped)
+                      if match:
+                          retention = int(match.group(1))
+                          break
+                  if retention != 1:
+                      failures.append(f'{path}:{index + 1}: retention-days={retention!r}')
+          if failures:
+              print('\n'.join(failures))
+              sys.exit(1)
+          print('Every actions/upload-artifact step retains evidence for exactly one day.')
+
+      - name: Publish purge success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DESCRIPTION: ${{ steps.purge.outputs.description }}
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='Actions storage purge verification' -f description="${DESCRIPTION}" -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - name: Publish purge failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='Actions storage purge verification' -f description='Purge or one-day retention verification failed' -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
