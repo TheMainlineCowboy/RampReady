@@ -52,6 +52,7 @@ requireTokens("finalizer", [
   "grounded-jetway-door-gap-reported-no-child-lift-v1",
   "terminal4A1JetwayWallDistance",
   "terminal4A1ConnectionAuthority",
+  "terminal4UploadedJetwayA1VisibleVestibuleLengthMeters",
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
   "terminal4UploadedJetwayBogieGroundContactPointCount",
   "terminal4UploadedJetwayBogieGroundContactClusterCount",
@@ -62,7 +63,7 @@ requireTokens("finalizer", [
 ]);
 
 requireTokens("browser", [
-  "A1 close evidence shows the compact real terminal joint and zero-lift grounded bogie",
+  "A1 close evidence shows the exact 2.4 m terminal vestibule and zero-lift grounded bogie",
   "exact-a1-terminal-joint-and-bogie-contact-subviews-v1",
   "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2",
   "exact-a1-evidence-camera-direct-lock-v1",
@@ -77,6 +78,10 @@ requireTokens("browser", [
   "a1-terminal-joint-bogie-subviews.json",
   "a1ExactRotundaToWallWorldMeters",
   "terminal4A1JetwayWallDistance",
+  "terminal4UploadedJetwayA1VisibleVestibuleLengthMeters",
+  "centerToWallDistance > 2.9",
+  "centerToWallDistance < 5.8",
+  "Math.abs(visibleVestibuleLength - 2.4) <= 0.05",
   "terminal4A1ConnectionAuthority",
   "WALK|JETWAY|CONNECTOR|PORTAL",
   "terminal4UploadedJetwayBogieGroundContactPointCount",
@@ -88,4 +93,4 @@ requireTokens("browser", [
   "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
 ]);
 
-console.log("Verified compact real-terminal and low bogie close views, strict subview ordering, direct camera lock, multi-point ramp contact, zero attached child lift, and retained close evidence.");
+console.log("Verified exact 2.4 m visible-terminal and low bogie close views, authored Rotunda center range, strict subview ordering, direct camera lock, multi-point ramp contact, zero attached child lift, and retained evidence.");
