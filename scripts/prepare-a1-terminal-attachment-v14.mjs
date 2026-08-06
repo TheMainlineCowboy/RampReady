@@ -3,9 +3,9 @@ import fs from "node:fs";
 const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(jetwayPath, "utf8");
 
-const marker = "facade-contiguous-structural-wall-surface-v16";
 const materialIdentityMarker = "facade-source-material-identity-v17";
-const diagnosticMarker = "a1-facade-search-diagnostics-v18";
+const diagnosticMarker = "a1-facade-search-diagnostics-v19";
+const triangleQualificationMarker = "triangle-qualified-structural-facade-v19";
 const start = source.indexOf("function findTerminalWallConnection(");
 const end = source.indexOf("\nfunction findTerminalWallDistance(", start);
 if (start < 0 || end < 0) {
@@ -33,15 +33,15 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
   const diagnostics = {
     authority: "${diagnosticMarker}",
     meshCount: 0,
-    facadeNodeCount: 0,
+    eligibleNodeCount: 0,
     triangleCount: 0,
+    structuralTriangleCount: 0,
     wallNormalTriangleCount: 0,
     areaTriangleCount: 0,
     heightTriangleCount: 0,
     distanceTriangleCount: 0,
     directionTriangleCount: 0,
-    structuralTriangleCount: 0,
-    nearestMaterialRejected: null,
+    nearestDirectionRejected: null,
   };
 
   const triangleMaterial = (node, triangleOffset) => {
@@ -60,18 +60,6 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
     material?.userData?.runtimeDiffuseTexture,
   ].filter(Boolean).join(" "); // ${materialIdentityMarker}
 
-  const isFacadeContiguousNode = (node) => {
-    if (rejectedNodeName.test(node.name || "")) return false;
-    nodeBox.setFromObject(node);
-    nodeBox.getSize(nodeSize);
-    const horizontalSpan = Math.max(nodeSize.x, nodeSize.z);
-    const thinAxis = Math.min(nodeSize.x, nodeSize.z);
-    // Terminal 4's authored facade is split into source mesh sections smaller
-    // than 14 m. Accept only wall-sized structural sections while explicitly
-    // rejecting walkways, signs, columns, lights, portals and connector pieces.
-    return horizontalSpan >= 6 && nodeSize.y >= 2.6 && thinAxis <= 12;
-  };
-
   terminal.traverse((node) => {
     if (!node.isMesh || node.visible === false) return;
     diagnostics.meshCount += 1;
@@ -80,12 +68,16 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
       const reference = structuralMaterialReference(material);
       if (reference) allMaterialReferences.add(reference);
     });
-    if (!isFacadeContiguousNode(node)) return;
-    diagnostics.facadeNodeCount += 1;
-    nodeMaterials.forEach((material) => {
-      const reference = structuralMaterialReference(material);
-      if (reference) facadeMaterialReferences.add(reference);
-    });
+    if (rejectedNodeName.test(node.name || "")) return;
+
+    // ${triangleQualificationMarker}
+    // The converted Terminal 4 packs many separate facade sections into broad
+    // material meshes. A node bounding box therefore cannot identify a wall.
+    // Qualification must happen per triangle using exact source material,
+    // wall normal, area, height, distance and terminal-facing direction.
+    diagnostics.eligibleNodeCount += 1;
+    nodeBox.setFromObject(node);
+    nodeBox.getSize(nodeSize);
     const geometry = node.geometry;
     const position = geometry?.getAttribute?.("position");
     if (!position) return;
@@ -96,6 +88,10 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
       const triangleOffset = triangleIndex * 3;
       const material = triangleMaterial(node, triangleOffset);
       const materialReference = structuralMaterialReference(material);
+      if (!structuralMaterial.test(materialReference)) continue;
+      diagnostics.structuralTriangleCount += 1;
+      facadeMaterialReferences.add(materialReference);
+
       const ai = index ? index.getX(triangleOffset) : triangleOffset;
       const bi = index ? index.getX(triangleOffset + 1) : triangleOffset + 1;
       const ci = index ? index.getX(triangleOffset + 2) : triangleOffset + 2;
@@ -125,14 +121,9 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
       diagnostics.distanceTriangleCount += 1;
       const candidateDirection = new THREE.Vector3(dx, 0, dz).normalize();
       const directionDot = candidateDirection.dot(preferred);
-      if (directionDot < 0.15) continue;
-      diagnostics.directionTriangleCount += 1;
-      const directionPenalty = Math.max(0, 1 - directionDot) * 2.5;
-      const score = horizontalDistance + verticalError * 4 + directionPenalty;
-      if (!structuralMaterial.test(materialReference)) {
-        if (!diagnostics.nearestMaterialRejected || score < diagnostics.nearestMaterialRejected.score) {
-          diagnostics.nearestMaterialRejected = {
-            score,
+      if (directionDot < 0.15) {
+        if (!diagnostics.nearestDirectionRejected || horizontalDistance < diagnostics.nearestDirectionRejected.distance) {
+          diagnostics.nearestDirectionRejected = {
             nodeName: node.name || "unnamed",
             materialReference,
             distance: horizontalDistance,
@@ -145,7 +136,9 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
         }
         continue;
       }
-      diagnostics.structuralTriangleCount += 1;
+      diagnostics.directionTriangleCount += 1;
+      const directionPenalty = Math.max(0, 1 - directionDot) * 2.5;
+      const score = horizontalDistance + verticalError * 4 + directionPenalty;
       if (!nearest || score < nearest.score) {
         nearest = {
           score,
@@ -181,28 +174,29 @@ if (falseWalkwayOverride.test(source)) {
 for (const token of [
   materialIdentityMarker,
   diagnosticMarker,
+  triangleQualificationMarker,
   "facade-contiguous-structural-wall-surface-v17",
-  "Terminal 4's authored facade is split",
-  "horizontalSpan >= 6",
-  "nodeSize.y >= 2.6",
   "rejectedNodeName",
+  "structuralMaterial.test(materialReference)",
+  "Math.abs(normal.y) > 0.72",
+  "area < 0.45",
+  "horizontalDistance <= 48",
   "directionDot < 0.15",
-  "triangleArea: area",
   "material?.userData?.diffuseTexture",
   "material?.userData?.sourceDiffuseTexture",
   "material?.userData?.runtimeDiffuseTexture",
-  "const materialReference = structuralMaterialReference(material)",
   "terminal.userData.a1WallSearchDiagnostics = diagnostics",
-  "nearestMaterialRejected",
 ]) {
   if (!source.includes(token)) {
-    throw new Error(`${jetwayPath}: A1 contiguous-facade token missing: ${token}`);
+    throw new Error(`${jetwayPath}: A1 triangle-qualified facade token missing: ${token}`);
   }
 }
 for (const forbidden of [
   "exact-T4_WALK-A1-terminal-portal-v25",
   "exactWalkwayPortalX",
   "nearest-structural-wall-triangle-surface-v14",
+  "return horizontalSpan >= 6",
+  "thinAxis <= 12",
   "structuralMaterial.test(material?.name || \"\")",
 ]) {
   if (source.includes(forbidden)) {
@@ -239,4 +233,4 @@ for (const runtimePath of boundedFacadeFiles) {
   fs.writeFileSync(runtimePath, runtime, "utf8");
 }
 
-console.log("Prepared diagnostic A1 attachment search against facade-contiguous Terminal 4 wall surfaces with exact source material and geometric rejection evidence.");
+console.log("Prepared A1 attachment against exact-source structural facade triangles; converted broad mesh bounds no longer discard the real Terminal 4 wall.");
