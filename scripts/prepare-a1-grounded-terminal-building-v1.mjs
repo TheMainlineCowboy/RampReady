@@ -9,12 +9,10 @@ const MINIMUM_A1_WALL_SPAN_METERS = 1.5;
 const MAXIMUM_A1_WALL_SPAN_METERS = 4.1;
 const MAXIMUM_A1_WALL_HEIGHT_METERS = 2.2;
 
-// The final triangle-qualified search normally keeps candidates in the old
-// source bridge hemisphere. That is appropriate at bridge height for ordinary
-// gates, but it preserves A1's obsolete bias toward the elevated T4_WALK
-// corridor. At ramp level the corridor has no wall, so search radially and let
-// exact structural material, wall normal, area, height and distance identify
-// the actual grounded terminal facade.
+// At bridge height the preferred hemisphere is useful for ordinary gates. At
+// A1 ramp level it preserves the obsolete bias toward the elevated T4_WALK
+// corridor, so the 1.25 m search is radial while retaining strict structural
+// material, triangle normal, area, height and distance qualification.
 if (!source.includes(searchMarker) && source.includes("const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();")) {
   source = source.replace(
     "  const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();",
@@ -31,12 +29,26 @@ if (!source.includes(searchMarker) && source.includes("const preferred = new THR
   );
 }
 
-const terminalConnectionPattern = /    const terminalConnection = findTerminalWallConnection\(\n      THREE,\n      terminal,\n      jetway\.x,\n      jetway\.z \+ sourceOffsetZ,\n      -ux,\n      -uz,\n      rotundaY,\n    \);\n    if \(jetway\.g === "A1"\) \{\n      const diagnostics = terminal\?\.userData\?\.a1WallSearchDiagnostics \|\| null;/g;
+const terminalConnectionWithFallback = `    const terminalConnection = findTerminalWallConnection(
+      THREE,
+      terminal,
+      jetway.x,
+      jetway.z + sourceOffsetZ,
+      -ux,
+      -uz,
+      rotundaY,
+    ) || {};`;
+const terminalConnectionWithoutFallback = `    const terminalConnection = findTerminalWallConnection(
+      THREE,
+      terminal,
+      jetway.x,
+      jetway.z + sourceOffsetZ,
+      -ux,
+      -uz,
+      rotundaY,
+    );`;
 
-let replacementCount = 0;
-source = source.replace(terminalConnectionPattern, () => {
-  replacementCount += 1;
-  return `    let terminalConnection = findTerminalWallConnection(
+const groundedReplacement = `    let terminalConnection = findTerminalWallConnection(
       THREE,
       terminal,
       jetway.x,
@@ -97,17 +109,26 @@ source = source.replace(terminalConnectionPattern, () => {
         compactRealTerminalWall: true,
         maximumAllowedDistanceMeters: ${MAXIMUM_A1_WALL_SPAN_METERS},
         maximumAllowedHeightMeters: ${MAXIMUM_A1_WALL_HEIGHT_METERS},
-      };`;
-});
+      };
+    }`;
 
-if (replacementCount < 1 && !source.includes(connectionMarker)) {
-  throw new Error(`${runtimePath}: generated A1 structural connection block is missing`);
+let replacementCount = 0;
+if (!source.includes(connectionMarker)) {
+  if (source.includes(terminalConnectionWithFallback)) {
+    source = source.replace(terminalConnectionWithFallback, groundedReplacement);
+    replacementCount = 1;
+  } else if (source.includes(terminalConnectionWithoutFallback)) {
+    source = source.replace(terminalConnectionWithoutFallback, groundedReplacement);
+    replacementCount = 1;
+  } else {
+    throw new Error(`${runtimePath}: post-v14 terminalConnection declaration is missing`);
+  }
 }
 
 for (const token of [
   connectionMarker,
+  "let terminalConnection = findTerminalWallConnection(",
   "const groundedConnection = findTerminalWallConnection(",
-  "1.25,",
   "terminalConnection = groundedConnection",
   "a1GroundedBuildingConnection",
   "A1 grounded terminal-building search found no ramp-level structural facade",
@@ -121,16 +142,14 @@ for (const token of [
   }
 }
 
-if (source.includes("const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();")) {
-  for (const token of [
-    searchMarker,
-    "const requirePreferredHemisphere = height > 2.2",
-    "if (requirePreferredHemisphere && directionDot < 0.15)",
-    "const directionPenalty = requirePreferredHemisphere",
-  ]) {
-    if (!source.includes(token)) {
-      throw new Error(`${runtimePath}: grounded facade search token is missing: ${token}`);
-    }
+for (const token of [
+  searchMarker,
+  "const requirePreferredHemisphere = height > 2.2",
+  "if (requirePreferredHemisphere && directionDot < 0.15)",
+  "const directionPenalty = requirePreferredHemisphere",
+]) {
+  if (!source.includes(token)) {
+    throw new Error(`${runtimePath}: grounded facade search token is missing: ${token}`);
   }
 }
 for (const forbidden of [
@@ -143,4 +162,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log(`Prepared ${Math.max(1, replacementCount)} A1 connection block(s) to require a compact ramp-level authored Terminal 4 wall and reject the elevated T4_WALK corridor.`);
+console.log(`Prepared ${Math.max(1, replacementCount)} A1 connection block(s) from the actual post-v14 declaration, requiring a compact ramp-level authored Terminal 4 wall and rejecting T4_WALK.`);
