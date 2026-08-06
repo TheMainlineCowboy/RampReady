@@ -2,7 +2,7 @@ import fs from "node:fs";
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
-const A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
+const A1_CAMERA_AUTHORITY = "oblique-measured-final-cab-and-aircraft-a1-v9";
 let source = fs.readFileSync(path, "utf8");
 if (!source.includes('  a1Connection: Object.freeze({')) {
   await import(`./prepare-full-airport-inspection-route.mjs?wide-a1=${Date.now()}`);
@@ -23,14 +23,15 @@ let presetBlock = source.slice(presetStart, presetEnd);
 const tugXLine = "    x: 20.0,";
 const tugZLine = "    z: 3.0,";
 const tugYawLine = '    yaw: -0.35,';
-// The final exact A1 chain runs from the aircraft-side Cab/door near
-// (40.1,-34.6) to the measured terminal wall near (62.3,-58.1), while the CRJ
-// tail continues toward roughly (41,-10). View that complete footprint from
-// the open-apron side, not from above the terminal roof.
-const cameraPositionLine = "    cameraPosition: Object.freeze([9.0, 10.5, 4.0]),";
-const cameraTargetLine = "    cameraTarget: Object.freeze([50.5, 3.35, -34.0]),";
-const overheadCameraPositionLine = "    overheadCameraPosition: Object.freeze([50.5, 72.0, -34.0]),";
-const overheadCameraTargetLine = "    overheadCameraTarget: Object.freeze([50.5, 0.0, -34.0]),";
+// Current exact-head telemetry places the measured final Cab contact near
+// (-19.45,16.98), the CRJ nose near (-18.05,9.67), and the compact terminal
+// joint near the A1 origin. Frame that full footprint broadside from the open
+// apron so the terminal, Rotunda, bridge, Cab, aircraft nose, wings and tail
+// are all visible in one evidence image.
+const cameraPositionLine = "    cameraPosition: Object.freeze([-58.0, 14.0, 8.0]),";
+const cameraTargetLine = "    cameraTarget: Object.freeze([-9.0, 3.5, 18.0]),";
+const overheadCameraPositionLine = "    overheadCameraPosition: Object.freeze([-9.0, 75.0, 18.0]),";
+const overheadCameraTargetLine = "    overheadCameraTarget: Object.freeze([-9.0, 0.0, 18.0]),";
 const cameraAuthorityLine = `    cameraAuthority: "${A1_CAMERA_AUTHORITY}",`;
 
 for (const [pattern, line, label] of [
@@ -97,7 +98,7 @@ source = source.replace(
   CANONICAL_ROUTE_AUTHORITY,
 );
 source = source.replace(
-  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+|oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+|wide-oblique-full-assembly-terminal-corner-a1-v\d+)/g,
+  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+|oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+|wide-oblique-full-assembly-terminal-corner-a1-v\d+|oblique-measured-final-cab-and-aircraft-a1-v\d+)/g,
   A1_CAMERA_AUTHORITY,
 );
 
@@ -137,4 +138,4 @@ if (fixedCameraPositionCount === 2) {
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared fixed apron-side and overhead A1 evidence frames that show the measured terminal wall, compact vestibule, Rotunda, complete exact bridge, grounded bogie, Cab and aircraft together.");
+console.log("Prepared fixed apron-side and overhead A1 evidence frames around the measured final Cab contact and attached CRJ footprint.");
