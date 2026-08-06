@@ -86,4 +86,4 @@ jobs:
           name: materialized-exact-jetway-render-trace-${{ github.sha }}
           path: materialize-run-summary.json
           if-no-files-found: warn
-          retention-days: 3
+          retention-days: 1
