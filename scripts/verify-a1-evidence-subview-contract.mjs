@@ -49,18 +49,26 @@ requireTokens("lock", [
 
 requireTokens("finalizer", [
   "same-day-a1-continuous-compact-solid-closed-grounded-v1",
+  "grounded-jetway-door-gap-reported-no-child-lift-v1",
+  "terminal4A1JetwayWallDistance",
+  "terminal4A1ConnectionAuthority",
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
+  "terminal4UploadedJetwayBogieGroundContactPointCount",
+  "terminal4UploadedJetwayBogieGroundContactClusterCount",
+  "inspectionAircraftJetwayRequestedVerticalFitMeters",
+  "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
   "inspectionCameraEndpointLockAuthority",
   "inspectionCameraEndpointConvergenceErrorMeters",
 ]);
 
 requireTokens("browser", [
-  "A1 close evidence shows the real terminal joint and grounded bogie area",
+  "A1 close evidence shows the compact real terminal joint and zero-lift grounded bogie",
   "exact-a1-terminal-joint-and-bogie-contact-subviews-v1",
   "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2",
   "exact-a1-evidence-camera-direct-lock-v1",
   "same-day-a1-continuous-compact-solid-closed-grounded-v1",
   "exact-authored-a1-lowest-geometry-ramp-contact-v1",
+  "grounded-jetway-door-gap-reported-no-child-lift-v1",
   'selectSubview(page, "terminal-joint")',
   'selectSubview(page, "bogie-contact")',
   'selectSubview(page, "full-assembly")',
@@ -68,7 +76,16 @@ requireTokens("browser", [
   "a1-bogie-contact-close.png",
   "a1-terminal-joint-bogie-subviews.json",
   "a1ExactRotundaToWallWorldMeters",
-  "terminal4UploadedJetwayBogieGroundClearanceMeters",
+  "terminal4A1JetwayWallDistance",
+  "terminal4A1ConnectionAuthority",
+  "WALK|JETWAY|CONNECTOR|PORTAL",
+  "terminal4UploadedJetwayBogieGroundContactPointCount",
+  "terminal4UploadedJetwayBogieGroundContactClusterCount",
+  "terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters",
+  "inspectionAircraftJetwayVerticalFitMeters",
+  "inspectionAircraftJetwayRequestedVerticalFitMeters",
+  "inspectionAircraftDoorSignedVerticalGapMeters",
+  "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
 ]);
 
-console.log("Verified exact A1 terminal-joint and low bogie-contact subview wiring, ordering, direct camera lock, and retained close rendered evidence.");
+console.log("Verified compact real-terminal and low bogie close views, strict subview ordering, direct camera lock, multi-point ramp contact, zero attached child lift, and retained close evidence.");
