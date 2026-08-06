@@ -3,16 +3,17 @@ import fs from "node:fs";
 const runtimePath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(runtimePath, "utf8");
 
-const searchMarker = "A1 grounded-facade search v31";
-const connectionMarker = "A1 compact grounded Terminal 4 building connection v31";
-const MINIMUM_A1_WALL_SPAN_METERS = 1.5;
-const MAXIMUM_A1_WALL_SPAN_METERS = 4.1;
+const searchMarker = "A1 grounded-facade search v32";
+const connectionMarker = "A1 ramp-level real Terminal 4 source wall v32";
+const MINIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 3.4;
+const MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 28;
 const MAXIMUM_A1_WALL_HEIGHT_METERS = 2.2;
 
-// At bridge height the preferred hemisphere is useful for ordinary gates. At
-// A1 ramp level it preserves the obsolete bias toward the elevated T4_WALK
-// corridor, so the 1.25 m search is radial while retaining strict structural
-// material, triangle normal, area, height and distance qualification.
+// The source bridge can begin several meters from the real terminal wall. The
+// complete authored parent is relocated later so its final visible vestibule is
+// exactly 2.4 m. Therefore qualify the source hit by ramp-level height,
+// structural material and non-walkway authority—not by the final vestibule
+// length. The final compact span is checked after relocation.
 if (!source.includes(searchMarker) && source.includes("const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();")) {
   source = source.replace(
     "  const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();",
@@ -76,9 +77,9 @@ const groundedReplacement = `    let terminalConnection = findTerminalWallConnec
       if (/WALK|JETWAY|CONNECTOR|PORTAL/i.test(String(groundedConnection.authority || ""))) {
         throw new Error(\`A1 grounded search resolved a forbidden walkway/connector authority: \${groundedConnection.authority}\`);
       }
-      if (!(groundedConnection.distance > ${MINIMUM_A1_WALL_SPAN_METERS}
-        && groundedConnection.distance < ${MAXIMUM_A1_WALL_SPAN_METERS})) {
-        throw new Error(\`A1 grounded real-terminal wall span is not compact: \${groundedConnection.distance}; diagnostics=\${JSON.stringify(diagnostics)}\`);
+      if (!(groundedConnection.distance > ${MINIMUM_A1_SOURCE_WALL_DISTANCE_METERS}
+        && groundedConnection.distance < ${MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS})) {
+        throw new Error(\`A1 ramp-level real-terminal source wall distance is invalid: \${groundedConnection.distance}; diagnostics=\${JSON.stringify(diagnostics)}\`);
       }
       if (Number.isFinite(groundedConnection.pointY)
         && groundedConnection.pointY > ${MAXIMUM_A1_WALL_HEIGHT_METERS}) {
@@ -98,7 +99,7 @@ const groundedReplacement = `    let terminalConnection = findTerminalWallConnec
         }
         : null;
       terminal.userData.a1GroundedBuildingConnection = {
-        distance: groundedConnection.distance,
+        sourceDistance: groundedConnection.distance,
         towardX: groundedConnection.towardX,
         towardZ: groundedConnection.towardZ,
         pointX: groundedConnection.pointX ?? null,
@@ -106,8 +107,9 @@ const groundedReplacement = `    let terminalConnection = findTerminalWallConnec
         pointZ: groundedConnection.pointZ ?? null,
         materialReference: groundedConnection.materialReference ?? null,
         authority: groundedConnection.authority,
-        compactRealTerminalWall: true,
-        maximumAllowedDistanceMeters: ${MAXIMUM_A1_WALL_SPAN_METERS},
+        rampLevelRealTerminalWall: true,
+        sourceDistanceRangeMeters: [${MINIMUM_A1_SOURCE_WALL_DISTANCE_METERS}, ${MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS}],
+        finalVisibleVestibuleCheckedAfterRelocation: true,
         maximumAllowedHeightMeters: ${MAXIMUM_A1_WALL_HEIGHT_METERS},
       };
     }`;
@@ -129,19 +131,21 @@ for (const token of [
   connectionMarker,
   "let terminalConnection = findTerminalWallConnection(",
   "const groundedConnection = findTerminalWallConnection(",
+  "groundedConnection.distance > 3.4",
+  "groundedConnection.distance < 28",
   "terminalConnection = groundedConnection",
   "a1GroundedBuildingConnection",
+  "rampLevelRealTerminalWall: true",
+  "finalVisibleVestibuleCheckedAfterRelocation: true",
   "A1 grounded terminal-building search found no ramp-level structural facade",
-  "A1 grounded real-terminal wall span is not compact",
+  "A1 ramp-level real-terminal source wall distance is invalid",
   "A1 grounded search selected an elevated facade",
-  "compactRealTerminalWall: true",
   "BGATE|DGATE|PHX_TERM400",
 ]) {
   if (!source.includes(token)) {
-    throw new Error(`${runtimePath}: grounded A1 connection token is missing: ${token}`);
+    throw new Error(`${runtimePath}: grounded A1 source-wall token is missing: ${token}`);
   }
 }
-
 for (const token of [
   searchMarker,
   "const requirePreferredHemisphere = height > 2.2",
@@ -162,4 +166,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log(`Prepared ${Math.max(1, replacementCount)} A1 connection block(s) from the actual post-v14 declaration, requiring a compact ramp-level authored Terminal 4 wall and rejecting T4_WALK.`);
+console.log(`Prepared ${Math.max(1, replacementCount)} A1 ramp-level real-wall source hit(s), rejecting T4_WALK while leaving the final exact 2.4 m vestibule to the complete-parent relocation stage.`);
