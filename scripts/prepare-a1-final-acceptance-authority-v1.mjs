@@ -50,6 +50,11 @@ for (const required of [
   "inspectionAircraftGroundClearanceMeters",
   "inspectionAircraftJetwayVerticalFitMeters",
   "grounded-aircraft-door-progressive-tunnel-slope-v1",
+  "authored-crj-lowest-geometry-contact-clusters-v2",
+  "inspectionAircraftLandingGearContactClusterCount",
+  "terminal4UploadedJetwayBogieGroundClearanceMeters",
+  "terminal4UploadedJetwayBogieGroundContactAuthority",
+  "exact-authored-a1-lowest-geometry-ramp-contact-v1",
   "terminal4TerminalConnectedJetwayCount",
   "inspectionPresetJetwayDeployment",
 ]) {
@@ -57,9 +62,15 @@ for (const required of [
     throw new Error(`${trainerPath}: final A1 acceptance output is missing ${required}`);
   }
 }
-if (source.includes(staleAuthority)) {
-  throw new Error(`${trainerPath}: superseded A1 aircraft pose authority survived finalization`);
+for (const forbidden of [
+  staleAuthority,
+  "named-landing-gear-wheel-bounds-v1",
+  "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2",
+]) {
+  if (source.includes(forbidden)) {
+    throw new Error(`${trainerPath}: stale A1 grounding or pose authority survived finalization: ${forbidden}`);
+  }
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Finalized the generated A1 acceptance runtime with the persisted measured aircraft pose authority, grounded vertical door fit, attached connection preset, and lower-facade telemetry mirrored from the exact resolved terminal-connected jetway count after every preparer.");
+console.log("Finalized the generated A1 acceptance runtime with measured jetway ramp clearance, authored CRJ contact clusters, persisted Cab pose, grounded vertical door fit, attached connection preset, and authoritative lower-facade telemetry after every preparer.");
