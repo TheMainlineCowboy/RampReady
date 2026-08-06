@@ -1,2 +1,3 @@
 PR #140 exact-head verification trigger.
 This file contains no production code or model data and exists only to force the normal pull_request workflows to evaluate the current branch after an earlier head received zero workflow runs.
+Retriggered on 2026-08-06 for the current A1 visual acceptance pass after the browser expectation migration.
