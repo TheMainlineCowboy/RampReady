@@ -65,6 +65,8 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
       data?.terminal4UploadedJetwayLoadState === "ready"
       && data?.terminal4UploadedJetwayArticulationAuthority === "user-supplied-airport-jetway-per-gate-telescoping-v10"
       && data?.terminal4UploadedJetwayA1PartOrderValid === "true"
+      && data?.inspectionAircraftPoseStored === "true"
+      && data?.inspectionAircraftPoseApplied === "true"
     ) || data?.environmentSource === "load-error"
       || data?.terminal4UploadedJetwayLoadState === "load-error";
   }, null, { timeout: 90_000, polling: 100 });
@@ -84,6 +86,14 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
   expect(runtime.terminal4UploadedJetwayArticulationAuthority).toBe(
     "user-supplied-airport-jetway-per-gate-telescoping-v10",
   );
+  expect(runtime.inspectionAircraftPoseStored).toBe("true");
+  expect(runtime.inspectionAircraftPoseApplied).toBe("true");
+  expect(runtime.inspectionAircraftPoseAuthority).toBe(
+    "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2",
+  );
+  expect(runtime.inspectionAircraftCabContactAuthority).toBe(
+    "authored-rendered-forward-left-door-to-final-cab-v4",
+  );
 
   const sourceReach = Number(runtime.terminal4UploadedJetwaySourceContactDistanceMeters);
   const target = Number(runtime.terminal4UploadedJetwayA1TargetDoorDistanceMeters);
@@ -93,6 +103,13 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
   const actualContact = Number(runtime.terminal4UploadedJetwayA1ActualContactDistanceMeters);
   const actualGap = Number(runtime.terminal4UploadedJetwayA1ActualDoorGapMeters);
   const staticMaximumError = Number(runtime.terminal4UploadedJetwayStaticMaximumContactErrorMeters);
+  const renderedAircraftCabError = Number(runtime.inspectionAircraftCabContactErrorMeters);
+  const renderedDoorTargetX = Number(runtime.inspectionAircraftDoorTargetX);
+  const renderedDoorTargetZ = Number(runtime.inspectionAircraftDoorTargetZ);
+  const measuredCabX = Number(runtime.inspectionAircraftCabContactX);
+  const measuredCabZ = Number(runtime.inspectionAircraftCabContactZ);
+  const inspectionNoseGearX = Number(runtime.inspectionAircraftNoseGearX);
+  const inspectionNoseGearZ = Number(runtime.inspectionAircraftNoseGearZ);
   expect(sourceReach).toBeGreaterThan(25.5);
   expect(sourceReach).toBeLessThan(26.5);
   expect(target).toBeGreaterThan(30.3);
@@ -105,6 +122,10 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
   expect(Math.abs(actualContact - target)).toBeLessThanOrEqual(0.05);
   expect(staticMaximumError).toBeLessThanOrEqual(0.05);
   expect(runtime.terminal4UploadedJetwayA1PartOrderValid).toBe("true");
+  expect(Number.isFinite(renderedAircraftCabError)).toBe(true);
+  expect(renderedAircraftCabError).toBeLessThanOrEqual(0.01);
+  expect(Math.hypot(renderedDoorTargetX - measuredCabX, renderedDoorTargetZ - measuredCabZ)).toBeLessThanOrEqual(0.01);
+  expect([inspectionNoseGearX, inspectionNoseGearZ].every(Number.isFinite)).toBe(true);
 
   const centers = JSON.parse(runtime.terminal4UploadedJetwayA1PartCentersMeters);
   expect(centers.Rotunda).toBeLessThan(centers.Tunnel_A);
@@ -145,6 +166,11 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
     predictedContact,
     actualContact,
     staticMaximumError,
+    renderedAircraftCabError,
+    renderedDoorTarget: [renderedDoorTargetX, renderedDoorTargetZ],
+    measuredCab: [measuredCabX, measuredCabZ],
+    inspectionNoseGear: [inspectionNoseGearX, inspectionNoseGearZ],
+    inspectionAircraftPoseAuthority: runtime.inspectionAircraftPoseAuthority,
     verifiedModelCount: Number(runtime.terminal4UploadedJetwayVerifiedModelCount),
     staticArticulatedGateCount: Number(runtime.terminal4UploadedJetwayStaticArticulatedGateCount),
     centers,
