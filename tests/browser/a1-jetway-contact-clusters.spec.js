@@ -5,7 +5,7 @@ const JETWAY_GROUND_AUTHORITY = "exact-authored-a1-lowest-geometry-ramp-contact-
 const VISUAL_ACCEPTANCE_AUTHORITY = "same-day-a1-continuous-compact-solid-closed-grounded-v1";
 const ASSEMBLY_CONTINUITY_AUTHORITY = "exact-authored-five-part-chain-no-isolated-node-rotation-v2";
 
-test("A1 authored jetway uses a compact real-terminal anchor and a separated multi-point ramp footprint", async ({ page }) => {
+test("A1 authored jetway uses an exact 2.4 m real-terminal vestibule and a separated multi-point ramp footprint", async ({ page }) => {
   test.setTimeout(600_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
@@ -15,7 +15,8 @@ test("A1 authored jetway uses a compact real-terminal anchor and a separated mul
   await page.waitForFunction(({ groundAuthority, visualAuthority, assemblyAuthority }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     const wallAuthority = String(data?.terminal4A1ConnectionAuthority || "");
-    const wallDistance = Number(data?.terminal4A1JetwayWallDistance);
+    const centerToWallDistance = Number(data?.terminal4A1JetwayWallDistance);
+    const visibleVestibuleLength = Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters);
     return data?.terminal4UploadedJetwayLoadState === "ready"
       && data?.terminal4UploadedJetwayBogieGroundContactAuthority === groundAuthority
       && Math.abs(Number(data?.terminal4UploadedJetwayBogieGroundClearanceMeters)) <= 0.005
@@ -24,8 +25,9 @@ test("A1 authored jetway uses a compact real-terminal anchor and a separated mul
       && Number(data?.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters) >= 1.2
       && Number.isFinite(Number(data?.terminal4UploadedJetwayBogieGroundContactSpanX))
       && Number.isFinite(Number(data?.terminal4UploadedJetwayBogieGroundContactSpanZ))
-      && wallDistance > 1.5
-      && wallDistance < 4.1
+      && centerToWallDistance > 2.9
+      && centerToWallDistance < 5.8
+      && Math.abs(visibleVestibuleLength - 2.4) <= 0.05
       && !/WALK|JETWAY|CONNECTOR|PORTAL/i.test(wallAuthority)
       && data?.terminal4UploadedJetwayA1AssemblyContinuityAuthority === assemblyAuthority
       && Number(data?.terminal4UploadedJetwayA1AssemblyPartCount) === 5
@@ -56,8 +58,9 @@ test("A1 authored jetway uses a compact real-terminal anchor and a separated mul
   expect(Number(runtime.terminal4UploadedJetwayBogieGroundContactPointCount)).toBeGreaterThanOrEqual(8);
   expect(Number(runtime.terminal4UploadedJetwayBogieGroundContactClusterCount)).toBeGreaterThanOrEqual(2);
   expect(Number(runtime.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters)).toBeGreaterThanOrEqual(1.2);
-  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeGreaterThan(1.5);
-  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeLessThan(4.1);
+  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeGreaterThan(2.9);
+  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeLessThan(5.8);
+  expect(Math.abs(Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4)).toBeLessThanOrEqual(0.05);
   expect(runtime.terminal4A1ConnectionAuthority).not.toMatch(/WALK|JETWAY|CONNECTOR|PORTAL/i);
   expect(runtime.terminal4UploadedJetwayA1AssemblyContinuityAuthority).toBe(ASSEMBLY_CONTINUITY_AUTHORITY);
   expect(Number(runtime.terminal4UploadedJetwayA1AssemblyPartCount)).toBe(5);
@@ -80,7 +83,8 @@ test("A1 authored jetway uses a compact real-terminal anchor and a separated mul
         Number(runtime.terminal4UploadedJetwayBogieGroundContactSpanZ),
       ],
       horizontalContactSpanMeters: Number(runtime.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters),
-      terminalWallDistanceMeters: Number(runtime.terminal4A1JetwayWallDistance),
+      rotundaCenterToWallMeters: Number(runtime.terminal4A1JetwayWallDistance),
+      visibleVestibuleLengthMeters: Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters),
       terminalConnectionAuthority: runtime.terminal4A1ConnectionAuthority,
       assemblyContinuityAuthority: runtime.terminal4UploadedJetwayA1AssemblyContinuityAuthority,
       assemblyPartCount: Number(runtime.terminal4UploadedJetwayA1AssemblyPartCount),
