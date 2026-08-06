@@ -4,6 +4,7 @@ const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(jetwayPath, "utf8");
 
 const marker = "facade-contiguous-structural-wall-surface-v16";
+const materialIdentityMarker = "facade-source-material-identity-v17";
 const start = source.indexOf("function findTerminalWallConnection(");
 const end = source.indexOf("\nfunction findTerminalWallDistance(", start);
 if (start < 0 || end < 0) {
@@ -35,6 +36,13 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
     return materials[group?.materialIndex ?? 0] || materials[0] || null;
   };
 
+  const structuralMaterialReference = (material) => [
+    material?.name,
+    material?.userData?.diffuseTexture,
+    material?.userData?.sourceDiffuseTexture,
+    material?.userData?.runtimeDiffuseTexture,
+  ].filter(Boolean).join(" "); // ${materialIdentityMarker}
+
   const isFacadeContiguousNode = (node) => {
     if (rejectedNodeName.test(node.name || "")) return false;
     nodeBox.setFromObject(node);
@@ -57,7 +65,7 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
     for (let triangleIndex = 0; triangleIndex < triangleCount; triangleIndex += 1) {
       const triangleOffset = triangleIndex * 3;
       const material = triangleMaterial(node, triangleOffset);
-      if (!structuralMaterial.test(material?.name || "")) continue;
+      if (!structuralMaterial.test(structuralMaterialReference(material))) continue;
       const ai = index ? index.getX(triangleOffset) : triangleOffset;
       const bi = index ? index.getX(triangleOffset + 1) : triangleOffset + 1;
       const ci = index ? index.getX(triangleOffset + 2) : triangleOffset + 2;
@@ -100,7 +108,8 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
           nodeSpanY: nodeSize.y,
           nodeSpanZ: nodeSize.z,
           triangleArea: area,
-          authority: "facade-contiguous-structural-wall-surface-v16",
+          materialReference: structuralMaterialReference(material),
+          authority: "facade-contiguous-structural-wall-surface-v17",
         };
       }
     }
@@ -116,13 +125,18 @@ if (falseWalkwayOverride.test(source)) {
 }
 
 for (const token of [
-  marker,
+  materialIdentityMarker,
+  "facade-contiguous-structural-wall-surface-v17",
   "Terminal 4's authored facade is split",
   "horizontalSpan >= 6",
   "nodeSize.y >= 2.6",
   "rejectedNodeName",
   "directionDot < 0.15",
   "triangleArea: area",
+  "material?.userData?.diffuseTexture",
+  "material?.userData?.sourceDiffuseTexture",
+  "material?.userData?.runtimeDiffuseTexture",
+  "materialReference: structuralMaterialReference(material)",
 ]) {
   if (!source.includes(token)) {
     throw new Error(`${jetwayPath}: A1 contiguous-facade token missing: ${token}`);
@@ -132,6 +146,7 @@ for (const forbidden of [
   "exact-T4_WALK-A1-terminal-portal-v25",
   "exactWalkwayPortalX",
   "nearest-structural-wall-triangle-surface-v14",
+  "structuralMaterial.test(material?.name || \"\")",
 ]) {
   if (source.includes(forbidden)) {
     throw new Error(`${jetwayPath}: stale A1 wall authority remains: ${forbidden}`);
@@ -167,4 +182,4 @@ for (const runtimePath of boundedFacadeFiles) {
   fs.writeFileSync(runtimePath, runtime, "utf8");
 }
 
-console.log("Prepared A1 attachment against a facade-contiguous Terminal 4 wall surface, accepting source-split structural facade sections while rejecting isolated ramp fragments and preserving the short photo-matched Rotunda vestibule.");
+console.log("Prepared A1 attachment against a facade-contiguous Terminal 4 wall surface using preserved source material identity, accepting source-split structural facade sections while rejecting isolated ramp fragments and preserving the short photo-matched Rotunda vestibule.");
