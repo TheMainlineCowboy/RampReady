@@ -1,6 +1,7 @@
 import fs from "node:fs";
 
 await import(`./prepare-a1-exact-bogie-ground-contact-v1.mjs?bogie-contact=${Date.now()}`);
+await import(`./prepare-a1-bogie-readiness-v1.mjs?bogie-readiness=${Date.now()}`);
 await import(`./prepare-a1-authored-ground-contact-v1.mjs?authored-contact=${Date.now()}`);
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
