@@ -7,6 +7,7 @@ const staleAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
 const finalAuthority = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
 const cameraAuthority = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const cameraLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";
+const visualAuthority = "same-day-a1-continuous-compact-solid-closed-grounded-v1";
 const marker = "final-a1-acceptance-authority-after-all-preparers-v1";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
@@ -50,6 +51,7 @@ for (const required of [
   finalAuthority,
   cameraAuthority,
   cameraLockAuthority,
+  visualAuthority,
   "inspectionAircraftDoorVerticalErrorMeters",
   "inspectionAircraftGroundClearanceMeters",
   "inspectionAircraftJetwayVerticalFitMeters",
@@ -59,6 +61,18 @@ for (const required of [
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
   "terminal4UploadedJetwayBogieGroundContactAuthority",
   "exact-authored-a1-lowest-geometry-ramp-contact-v1",
+  "terminal4UploadedJetwayA1AssemblyContinuityAuthority",
+  "terminal4UploadedJetwayA1AssemblyPartCount",
+  "terminal4UploadedJetwayA1AssemblyTransformError",
+  "terminal4UploadedJetwayA1IsolatedNodeRotationCount",
+  "terminal4UploadedJetwayA1ConnectorStyleAuthority",
+  "terminal4UploadedJetwayA1RotundaOpeningAuthority",
+  "terminal4UploadedJetwayA1VisibleVestibuleLengthMeters",
+  "terminal4UploadedJetwayA1ConnectorRibCount",
+  "terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed",
+  "terminal4UploadedJetwayA1RotundaVestibuleClosureAuthority",
+  "terminal4UploadedJetwayA1NoGeneratedGlassCorridor",
+  "terminal4UploadedJetwayA1VisualAcceptanceAuthority",
   "inspectionCameraEndpointAircraftBoundsMin",
   "inspectionCameraEndpointAircraftBoundsMax",
   "inspectionCameraEndpointFrameSize",
@@ -85,4 +99,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Finalized the generated A1 acceptance runtime with measured jetway ramp clearance, authored CRJ contact clusters, endpoint-and-aircraft-bounds camera framing locked at zero convergence error, persisted Cab pose, grounded vertical door fit, attached connection preset, and authoritative lower-facade telemetry after every preparer.");
+console.log("Finalized the generated A1 acceptance runtime with one continuous five-part authored bridge, a compact solid closed vestibule, measured jetway ramp clearance, authored CRJ contact clusters, endpoint-and-aircraft-bounds camera framing locked at zero convergence error, persisted Cab pose, grounded vertical door fit, attached connection preset, and authoritative lower-facade telemetry after every preparer.");
