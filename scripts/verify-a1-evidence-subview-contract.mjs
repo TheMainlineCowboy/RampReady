@@ -1,5 +1,7 @@
 import fs from "node:fs";
 
+await import(`./verify-a1-grounded-lifecycle-order-v1.mjs?close-preflight=${Date.now()}`);
+
 const files = Object.freeze({
   endpoint: "scripts/prepare-a1-endpoint-browser-evidence-v1.mjs",
   subviews: "scripts/prepare-a1-evidence-subviews-v1.mjs",
@@ -93,4 +95,4 @@ requireTokens("browser", [
   "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
 ]);
 
-console.log("Verified exact 2.4 m visible-terminal and low bogie close views, authored Rotunda center range, strict subview ordering, direct camera lock, multi-point ramp contact, zero attached child lift, and retained evidence.");
+console.log("Verified grounded lifecycle order, exact 2.4 m terminal and low-bogie close views, authored Rotunda center range, strict subview ordering, direct camera lock, multi-point ramp contact, zero attached child lift, and retained evidence.");
