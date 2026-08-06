@@ -68,4 +68,5 @@ for (const token of [
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Closed the A1 Rotunda-side vestibule with a solid photo-matched white bulkhead behind the tight flexible collar; the supplied jetway hierarchy remains untouched.");
+await import(`./prepare-a1-visual-acceptance-evidence-v1.mjs?visual-acceptance=${Date.now()}`);
+console.log("Closed the A1 Rotunda-side vestibule with a solid photo-matched white bulkhead, published compact continuous visual evidence, and preserved every supplied jetway child transform.");
