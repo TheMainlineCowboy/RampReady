@@ -191,7 +191,7 @@ for (const token of [
   "material?.userData?.diffuseTexture",
   "material?.userData?.sourceDiffuseTexture",
   "material?.userData?.runtimeDiffuseTexture",
-  "materialReference: structuralMaterialReference(material)",
+  "const materialReference = structuralMaterialReference(material)",
   "terminal.userData.a1WallSearchDiagnostics = diagnostics",
   "nearestMaterialRejected",
 ]) {
