@@ -21,9 +21,9 @@ concurrency:
 jobs:
   purge-and-verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 90
     steps:
-      - name: Purge completed obsolete runs, artifacts, and caches
+      - name: Purge and verify obsolete artifacts and caches
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -53,7 +53,7 @@ jobs:
             local endpoint="$1" attempt=1 output
             while (( attempt <= 30 )); do
               if output="$(gh api --method DELETE "${endpoint}" 2>&1)"; then
-                sleep 1
+                sleep 0.25
                 return 0
               fi
               [[ "${output}" == *"HTTP 404"* ]] && return 0
@@ -69,19 +69,6 @@ jobs:
           keep_json="$(printf '%s\n' "${main_sha}" "${pr140_sha}" "${{ github.event.pull_request.head.sha }}" | jq -R . | jq -s 'map(select(length > 0)) | unique')"
           echo "Preserving main, PR #140, and this maintenance head: ${keep_json}"
 
-          deleted_runs=0
-          while true; do
-            pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)" || exit 1
-            mapfile -t ids < <(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '.[] | .workflow_runs[] | .head_sha as $sha | select(.status == "completed") | select((.id | tostring) != $current) | select(($keep | index($sha)) == null) | .id' <<<"${pages}")
-            (( ${#ids[@]} == 0 )) && break
-            for id in "${ids[@]}"; do
-              delete_one "repos/${GITHUB_REPOSITORY}/actions/runs/${id}" || exit 1
-              deleted_runs=$((deleted_runs + 1))
-            done
-            echo "Deleted ${deleted_runs} completed obsolete workflow runs."
-            sleep 10
-          done
-
           deleted_artifacts=0
           deleted_artifact_bytes=0
           while true; do
@@ -95,7 +82,7 @@ jobs:
               deleted_artifact_bytes=$((deleted_artifact_bytes + bytes))
             done
             echo "Deleted ${deleted_artifacts} obsolete artifacts (${deleted_artifact_bytes} bytes)."
-            sleep 5
+            sleep 3
           done
 
           deleted_caches=0
@@ -111,11 +98,9 @@ jobs:
               deleted_cache_bytes=$((deleted_cache_bytes + bytes))
             done
             echo "Deleted ${deleted_caches} caches (${deleted_cache_bytes} bytes)."
-            sleep 5
+            sleep 3
           done
 
-          run_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)" || exit 1
-          obsolete_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | .head_sha as $sha | select(.status == "completed") | select((.id | tostring) != $current) | select(($keep | index($sha)) == null)] | length' <<<"${run_pages}")"
           artifact_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" true)" || exit 1
           obsolete_artifacts="$(jq -r --argjson keep "${keep_json}" '[.[] | .artifacts[] | (.workflow_run.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${artifact_pages}")"
           preserved_artifacts="$(jq -r '[.[] | .artifacts[]] | length' <<<"${artifact_pages}")"
@@ -123,8 +108,8 @@ jobs:
           cache_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" true)" || exit 1
           caches="$(jq -r '[.[] | .actions_caches[]?] | length' <<<"${cache_pages}")"
 
-          echo "PURGE VERIFIED: deleted runs=${deleted_runs}, artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes); remaining obsolete runs=${obsolete_runs}, artifacts=${obsolete_artifacts}, caches=${caches}; preserved current evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
-          (( obsolete_runs == 0 && obsolete_artifacts == 0 && caches == 0 ))
+          echo "STORAGE PURGE VERIFIED: deleted artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes); remaining obsolete artifacts=${obsolete_artifacts}, caches=${caches}; preserved current evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
+          (( obsolete_artifacts == 0 && caches == 0 ))
 
       - name: Check out policy source
         uses: actions/checkout@v4
