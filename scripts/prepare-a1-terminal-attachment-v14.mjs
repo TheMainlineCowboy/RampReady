@@ -5,6 +5,7 @@ let source = fs.readFileSync(jetwayPath, "utf8");
 
 const marker = "facade-contiguous-structural-wall-surface-v16";
 const materialIdentityMarker = "facade-source-material-identity-v17";
+const diagnosticMarker = "a1-facade-search-diagnostics-v18";
 const start = source.indexOf("function findTerminalWallConnection(");
 const end = source.indexOf("\nfunction findTerminalWallDistance(", start);
 if (start < 0 || end < 0) {
@@ -15,6 +16,7 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
   if (!terminal?.isObject3D) return null;
   terminal.updateMatrixWorld(true);
   const origin = new THREE.Vector3(originX, height, originZ);
+  const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();
   const structuralMaterial = /BGATE|DGATE|PHX_TERM400/i;
   const rejectedNodeName = /WALK|JETWAY|CONNECTOR|PORTAL|SIGN|COLUMN|LIGHT/i;
   const triangle = new THREE.Triangle();
@@ -26,6 +28,21 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
   const nodeBox = new THREE.Box3();
   const nodeSize = new THREE.Vector3();
   let nearest = null;
+  const allMaterialReferences = new Set();
+  const facadeMaterialReferences = new Set();
+  const diagnostics = {
+    authority: "${diagnosticMarker}",
+    meshCount: 0,
+    facadeNodeCount: 0,
+    triangleCount: 0,
+    wallNormalTriangleCount: 0,
+    areaTriangleCount: 0,
+    heightTriangleCount: 0,
+    distanceTriangleCount: 0,
+    directionTriangleCount: 0,
+    structuralTriangleCount: 0,
+    nearestMaterialRejected: null,
+  };
 
   const triangleMaterial = (node, triangleOffset) => {
     const materials = Array.isArray(node.material) ? node.material : [node.material];
@@ -56,16 +73,29 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
   };
 
   terminal.traverse((node) => {
-    if (!node.isMesh || node.visible === false || !isFacadeContiguousNode(node)) return;
+    if (!node.isMesh || node.visible === false) return;
+    diagnostics.meshCount += 1;
+    const nodeMaterials = Array.isArray(node.material) ? node.material : [node.material];
+    nodeMaterials.forEach((material) => {
+      const reference = structuralMaterialReference(material);
+      if (reference) allMaterialReferences.add(reference);
+    });
+    if (!isFacadeContiguousNode(node)) return;
+    diagnostics.facadeNodeCount += 1;
+    nodeMaterials.forEach((material) => {
+      const reference = structuralMaterialReference(material);
+      if (reference) facadeMaterialReferences.add(reference);
+    });
     const geometry = node.geometry;
     const position = geometry?.getAttribute?.("position");
     if (!position) return;
     const index = geometry.index;
     const triangleCount = Math.floor((index?.count ?? position.count) / 3);
     for (let triangleIndex = 0; triangleIndex < triangleCount; triangleIndex += 1) {
+      diagnostics.triangleCount += 1;
       const triangleOffset = triangleIndex * 3;
       const material = triangleMaterial(node, triangleOffset);
-      if (!structuralMaterial.test(structuralMaterialReference(material))) continue;
+      const materialReference = structuralMaterialReference(material);
       const ai = index ? index.getX(triangleOffset) : triangleOffset;
       const bi = index ? index.getX(triangleOffset + 1) : triangleOffset + 1;
       const ci = index ? index.getX(triangleOffset + 2) : triangleOffset + 2;
@@ -78,23 +108,44 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
       triangle.set(a, b, c);
       triangle.getNormal(normal);
       if (Math.abs(normal.y) > 0.72) continue;
+      diagnostics.wallNormalTriangleCount += 1;
       const area = triangle.getArea();
       if (area < 0.45) continue;
+      diagnostics.areaTriangleCount += 1;
       const minimumY = Math.min(a.y, b.y, c.y);
       const maximumY = Math.max(a.y, b.y, c.y);
       if (height < minimumY - 0.35 || height > maximumY + 0.35) continue;
+      diagnostics.heightTriangleCount += 1;
       triangle.closestPointToPoint(origin, closest);
       const dx = closest.x - originX;
       const dz = closest.z - originZ;
       const horizontalDistance = Math.hypot(dx, dz);
       const verticalError = Math.abs(closest.y - height);
       if (!(horizontalDistance > 0.05 && horizontalDistance <= 48 && verticalError <= 0.65)) continue;
-      const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();
+      diagnostics.distanceTriangleCount += 1;
       const candidateDirection = new THREE.Vector3(dx, 0, dz).normalize();
       const directionDot = candidateDirection.dot(preferred);
       if (directionDot < 0.15) continue;
+      diagnostics.directionTriangleCount += 1;
       const directionPenalty = Math.max(0, 1 - directionDot) * 2.5;
       const score = horizontalDistance + verticalError * 4 + directionPenalty;
+      if (!structuralMaterial.test(materialReference)) {
+        if (!diagnostics.nearestMaterialRejected || score < diagnostics.nearestMaterialRejected.score) {
+          diagnostics.nearestMaterialRejected = {
+            score,
+            nodeName: node.name || "unnamed",
+            materialReference,
+            distance: horizontalDistance,
+            verticalError,
+            directionDot,
+            point: [closest.x, closest.y, closest.z],
+            nodeSize: [nodeSize.x, nodeSize.y, nodeSize.z],
+            triangleArea: area,
+          };
+        }
+        continue;
+      }
+      diagnostics.structuralTriangleCount += 1;
       if (!nearest || score < nearest.score) {
         nearest = {
           score,
@@ -108,12 +159,15 @@ const replacement = `function findTerminalWallConnection(THREE, terminal, origin
           nodeSpanY: nodeSize.y,
           nodeSpanZ: nodeSize.z,
           triangleArea: area,
-          materialReference: structuralMaterialReference(material),
+          materialReference,
           authority: "facade-contiguous-structural-wall-surface-v17",
         };
       }
     }
   });
+  diagnostics.allMaterialReferences = [...allMaterialReferences].slice(0, 24);
+  diagnostics.facadeMaterialReferences = [...facadeMaterialReferences].slice(0, 24);
+  terminal.userData.a1WallSearchDiagnostics = diagnostics;
   return nearest;
 }`;
 
@@ -126,6 +180,7 @@ if (falseWalkwayOverride.test(source)) {
 
 for (const token of [
   materialIdentityMarker,
+  diagnosticMarker,
   "facade-contiguous-structural-wall-surface-v17",
   "Terminal 4's authored facade is split",
   "horizontalSpan >= 6",
@@ -137,6 +192,8 @@ for (const token of [
   "material?.userData?.sourceDiffuseTexture",
   "material?.userData?.runtimeDiffuseTexture",
   "materialReference: structuralMaterialReference(material)",
+  "terminal.userData.a1WallSearchDiagnostics = diagnostics",
+  "nearestMaterialRejected",
 ]) {
   if (!source.includes(token)) {
     throw new Error(`${jetwayPath}: A1 contiguous-facade token missing: ${token}`);
@@ -182,4 +239,4 @@ for (const runtimePath of boundedFacadeFiles) {
   fs.writeFileSync(runtimePath, runtime, "utf8");
 }
 
-console.log("Prepared A1 attachment against a facade-contiguous Terminal 4 wall surface using preserved source material identity, accepting source-split structural facade sections while rejecting isolated ramp fragments and preserving the short photo-matched Rotunda vestibule.");
+console.log("Prepared diagnostic A1 attachment search against facade-contiguous Terminal 4 wall surfaces with exact source material and geometric rejection evidence.");
