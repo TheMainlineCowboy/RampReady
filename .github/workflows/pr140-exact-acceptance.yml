@@ -83,7 +83,7 @@ jobs:
       - name: Build exact production artifact
         run: npm run build
 
-      - name: Fail closed on stale generated A1 telemetry
+      - name: Fail closed on stale or incomplete generated A1 evidence
         shell: bash
         run: |
           set -euo pipefail
@@ -95,9 +95,11 @@ jobs:
           fi
           for forbidden in \
             'named-landing-gear-wheel-bounds-v1' \
-            'grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2'; do
+            'grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2' \
+            'exact-T4_WALK-A1-terminal-portal-v25' \
+            'exactWalkwayPortalX'; do
             if grep -R --fixed-strings --line-number "${forbidden}" dist; then
-              echo "The production bundle still contains stale A1 grounding telemetry: ${forbidden}."
+              echo "The production bundle still contains forbidden A1 grounding or walkway behavior: ${forbidden}."
               exit 1
             fi
           done
@@ -105,8 +107,12 @@ jobs:
           grep -R --fixed-strings --line-number 'grounded-aircraft-door-progressive-tunnel-slope-v1' dist
           grep -R --fixed-strings --line-number 'authored-crj-lowest-geometry-contact-clusters-v2' dist
           grep -R --fixed-strings --line-number 'exact-authored-a1-lowest-geometry-ramp-contact-v1' dist
+          grep -R --fixed-strings --line-number 'terminal4UploadedJetwayBogieGroundContactPointCount' dist
+          grep -R --fixed-strings --line-number 'terminal4UploadedJetwayBogieGroundContactClusterCount' dist
+          grep -R --fixed-strings --line-number 'terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters' dist
+          grep -R --fixed-strings --line-number 'same-day-a1-continuous-compact-solid-closed-grounded-v1' dist
           grep -R --fixed-strings --line-number 'final-a1-acceptance-authority-after-all-preparers-v1' dist
-          echo "Verified final A1 pose, measured jetway and aircraft ramp contact, vertical fit, and facade telemetry in the exact production bundle."
+          echo "Verified final A1 pose, compact real-wall attachment, multi-point jetway/aircraft ramp contact, closed vestibule, and final acceptance telemetry in the exact production bundle."
 
       - name: Install browser verifier and Chromium
         run: |
@@ -122,6 +128,7 @@ jobs:
       - name: Render and verify A1, articulation, Terminal 4 and full airport
         run: >-
           npx playwright test
+          tests/browser/a1-jetway-contact-clusters.spec.js
           tests/browser/a1-ground-contact-evidence.spec.js
           tests/browser/source-first-a1-repair.spec.js
           tests/browser/uploaded-jetway-articulation-v10.spec.js
@@ -162,5 +169,5 @@ jobs:
           gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${SHA}" \
             -f state=failure \
             -f context='PR140 exact visual acceptance' \
-            -f description='Exact-head acceptance failed; inspect workflow logs' \
+            -f description='Exact-head acceptance failed; inspect workflow logs and retained evidence' \
             -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
