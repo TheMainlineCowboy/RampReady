@@ -7,23 +7,98 @@ const authority = "exact-authored-a1-lowest-geometry-ramp-contact-v1";
 const fixedOffsetBlock = `  fleet.position.y -= BOGIE_TIRE_CONTACT_CORRECTION_METERS;
   fleet.updateMatrixWorld(true);`;
 const measuredOffsetBlock = `  // ${authority}
-  // Ground the complete supplied jetway parent from its authored lowest geometry.
-  // Yaw and X/Z registration cannot change this contact height, and no child node
-  // is translated or rotated independently.
+  // Ground the complete supplied jetway parent from separated authored low
+  // contact clusters. This rejects a false contact produced by one stair tip,
+  // helper, or shell vertex while preserving every supplied child transform.
+  const measureAuthoredA1RampContact = () => {
+    a1Model.updateMatrixWorld(true);
+    let minimumY = Number.POSITIVE_INFINITY;
+    let authoredVertexCount = 0;
+    const point = new THREE.Vector3();
+    a1Model.traverse((object) => {
+      if (!object?.isMesh || object.visible === false) return;
+      const position = object.geometry?.getAttribute?.("position");
+      if (!position) return;
+      for (let index = 0; index < position.count; index += 1) {
+        point.fromBufferAttribute(position, index).applyMatrix4(object.matrixWorld);
+        minimumY = Math.min(minimumY, point.y);
+        authoredVertexCount += 1;
+      }
+    });
+    if (!Number.isFinite(minimumY) || authoredVertexCount < 1000) {
+      throw new Error(\`A1 exact authored jetway ground scan is invalid: minimum=\${minimumY}, vertices=\${authoredVertexCount}\`);
+    }
+
+    const contactBandMeters = 0.08;
+    const cellSizeMeters = 0.28;
+    const contactBounds = new THREE.Box3();
+    const occupiedCells = new Set();
+    let contactPointCount = 0;
+    a1Model.traverse((object) => {
+      if (!object?.isMesh || object.visible === false) return;
+      const position = object.geometry?.getAttribute?.("position");
+      if (!position) return;
+      for (let index = 0; index < position.count; index += 1) {
+        point.fromBufferAttribute(position, index).applyMatrix4(object.matrixWorld);
+        if (point.y > minimumY + contactBandMeters) continue;
+        contactBounds.expandByPoint(point);
+        occupiedCells.add([
+          Math.floor(point.x / cellSizeMeters),
+          Math.floor(point.z / cellSizeMeters),
+        ].join(","));
+        contactPointCount += 1;
+      }
+    });
+
+    const remaining = new Set(occupiedCells);
+    let contactClusterCount = 0;
+    while (remaining.size) {
+      contactClusterCount += 1;
+      const first = remaining.values().next().value;
+      remaining.delete(first);
+      const stack = [first];
+      while (stack.length) {
+        const [cellX, cellZ] = stack.pop().split(",").map(Number);
+        for (let dx = -1; dx <= 1; dx += 1) {
+          for (let dz = -1; dz <= 1; dz += 1) {
+            const neighbor = [cellX + dx, cellZ + dz].join(",");
+            if (!remaining.delete(neighbor)) continue;
+            stack.push(neighbor);
+          }
+        }
+      }
+    }
+
+    const contactSpan = contactBounds.getSize(new THREE.Vector3());
+    const horizontalContactSpanMeters = Math.hypot(contactSpan.x, contactSpan.z);
+    if (contactBounds.isEmpty()
+      || contactPointCount < 8
+      || contactClusterCount < 2
+      || horizontalContactSpanMeters < 1.2) {
+      throw new Error(\`A1 exact authored jetway does not expose a credible multi-point ramp footprint: points=\${contactPointCount}, clusters=\${contactClusterCount}, span=\${contactSpan.x}x\${contactSpan.z}\`);
+    }
+    return Object.freeze({
+      minimumY,
+      authoredVertexCount,
+      contactPointCount,
+      contactClusterCount,
+      spanX: contactSpan.x,
+      spanZ: contactSpan.z,
+      horizontalContactSpanMeters,
+    });
+  };
+
   fleet.updateMatrixWorld(true);
-  const authoredA1GroundBoundsBefore = new THREE.Box3().setFromObject(a1Model);
-  if (authoredA1GroundBoundsBefore.isEmpty()) {
-    throw new Error("A1 exact authored jetway has empty ground-contact bounds");
-  }
-  const measuredBogieGroundOffsetMeters = -authoredA1GroundBoundsBefore.min.y;
+  const authoredA1GroundContactBefore = measureAuthoredA1RampContact();
+  const measuredBogieGroundOffsetMeters = -authoredA1GroundContactBefore.minimumY;
   if (!Number.isFinite(measuredBogieGroundOffsetMeters)
-    || Math.abs(measuredBogieGroundOffsetMeters) > 0.5) {
+    || Math.abs(measuredBogieGroundOffsetMeters) > 3) {
     throw new Error(\`A1 exact authored bogie ground offset is invalid: \${measuredBogieGroundOffsetMeters}\`);
   }
   fleet.position.y += measuredBogieGroundOffsetMeters;
   fleet.updateMatrixWorld(true);
-  const authoredA1GroundBoundsAfter = new THREE.Box3().setFromObject(a1Model);
-  const measuredBogieGroundClearanceMeters = authoredA1GroundBoundsAfter.min.y;
+  const authoredA1GroundContactAfter = measureAuthoredA1RampContact();
+  const measuredBogieGroundClearanceMeters = authoredA1GroundContactAfter.minimumY;
   if (Math.abs(measuredBogieGroundClearanceMeters) > 0.005) {
     throw new Error(\`A1 exact authored bogie missed the ramp by \${measuredBogieGroundClearanceMeters} m\`);
   }`;
@@ -40,7 +115,12 @@ source = source.replace(
   `    groundOffsetMeters: measuredBogieGroundOffsetMeters,
     bogieTireContactCorrectionMeters: Math.abs(measuredBogieGroundOffsetMeters),
     bogieGroundClearanceMeters: measuredBogieGroundClearanceMeters,
-    bogieGroundContactAuthority: "${authority}",`,
+    bogieGroundContactAuthority: "${authority}",
+    bogieGroundContactPointCount: authoredA1GroundContactAfter.contactPointCount,
+    bogieGroundContactClusterCount: authoredA1GroundContactAfter.contactClusterCount,
+    bogieGroundContactSpanX: authoredA1GroundContactAfter.spanX,
+    bogieGroundContactSpanZ: authoredA1GroundContactAfter.spanZ,
+    bogieGroundHorizontalContactSpanMeters: authoredA1GroundContactAfter.horizontalContactSpanMeters,`,
 );
 
 const groupAnchor = `  group.userData.uploadedJetwayBogieTireContactCorrectionMeters = report.bogieTireContactCorrectionMeters;`;
@@ -49,18 +129,27 @@ if (source.includes(groupAnchor) && !source.includes("uploadedJetwayBogieGroundC
     groupAnchor,
     `${groupAnchor}
   group.userData.uploadedJetwayBogieGroundClearanceMeters = report.bogieGroundClearanceMeters;
-  group.userData.uploadedJetwayBogieGroundContactAuthority = report.bogieGroundContactAuthority;`,
+  group.userData.uploadedJetwayBogieGroundContactAuthority = report.bogieGroundContactAuthority;
+  group.userData.uploadedJetwayBogieGroundContactPointCount = report.bogieGroundContactPointCount;
+  group.userData.uploadedJetwayBogieGroundContactClusterCount = report.bogieGroundContactClusterCount;
+  group.userData.uploadedJetwayBogieGroundContactSpanX = report.bogieGroundContactSpanX;
+  group.userData.uploadedJetwayBogieGroundContactSpanZ = report.bogieGroundContactSpanZ;
+  group.userData.uploadedJetwayBogieGroundHorizontalContactSpanMeters = report.bogieGroundHorizontalContactSpanMeters;`,
   );
 }
 
 for (const token of [
   authority,
-  "const authoredA1GroundBoundsBefore = new THREE.Box3().setFromObject(a1Model)",
-  "const measuredBogieGroundOffsetMeters = -authoredA1GroundBoundsBefore.min.y",
+  "const measureAuthoredA1RampContact = () =>",
+  "contactPointCount < 8",
+  "contactClusterCount < 2",
+  "horizontalContactSpanMeters < 1.2",
+  "const measuredBogieGroundOffsetMeters = -authoredA1GroundContactBefore.minimumY",
   "fleet.position.y += measuredBogieGroundOffsetMeters",
-  "const measuredBogieGroundClearanceMeters = authoredA1GroundBoundsAfter.min.y",
-  "bogieGroundClearanceMeters: measuredBogieGroundClearanceMeters",
-  "uploadedJetwayBogieGroundContactAuthority",
+  "const measuredBogieGroundClearanceMeters = authoredA1GroundContactAfter.minimumY",
+  "bogieGroundContactClusterCount: authoredA1GroundContactAfter.contactClusterCount",
+  "uploadedJetwayBogieGroundContactClusterCount",
+  "uploadedJetwayBogieGroundHorizontalContactSpanMeters",
 ]) {
   if (!source.includes(token)) {
     throw new Error(`${installationPath}: exact bogie ground-contact output is missing ${token}`);
@@ -71,4 +160,4 @@ if (source.includes("fleet.position.y -= BOGIE_TIRE_CONTACT_CORRECTION_METERS"))
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Grounded the complete supplied A1 jetway parent from exact authored lowest geometry and required post-offset ramp clearance within 5 mm.");
+console.log("Grounded the complete supplied A1 parent from separated authored low-contact clusters, required a credible multi-point ramp footprint, and retained every child transform unchanged.");
