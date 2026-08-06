@@ -4,7 +4,7 @@ const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const registrationMarker = "authored-rendered-door-to-final-cab-a1-aircraft-pose-v4";
-const lifecycleAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
+const lifecycleAuthority = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
 
 if (!source.includes(registrationMarker)) {
   throw new Error(`${trainerPath}: measured A1 aircraft registration must be prepared before pose lifecycle wiring`);
@@ -62,14 +62,16 @@ if (source.includes(markerAnchor) && !source.includes("a1InspectionPoseAuthority
   source = source.replace(markerAnchor, lifecycleBlock);
 }
 
+const storedPoseXExpression = "(sim.aircraft.userData.a1InspectionPose?.x ?? sim.aircraft.position.x).toFixed(6)";
+const storedPoseZExpression = "(sim.aircraft.userData.a1InspectionPose?.z ?? sim.aircraft.position.z).toFixed(6)";
 source = source
   .replaceAll(
     "renderer.domElement.dataset.inspectionAircraftNoseGearX = sim.aircraft.position.x.toFixed(6);",
-    "renderer.domElement.dataset.inspectionAircraftNoseGearX = inspectionAircraftPose.x.toFixed(6);",
+    `renderer.domElement.dataset.inspectionAircraftNoseGearX = ${storedPoseXExpression};`,
   )
   .replaceAll(
     "renderer.domElement.dataset.inspectionAircraftNoseGearZ = sim.aircraft.position.z.toFixed(6);",
-    "renderer.domElement.dataset.inspectionAircraftNoseGearZ = inspectionAircraftPose.z.toFixed(6);",
+    `renderer.domElement.dataset.inspectionAircraftNoseGearZ = ${storedPoseZExpression};`,
   );
 
 const preparedResetBlock = `    const resetUsesInspectionAircraftPose = inspectionRef.current;
@@ -176,11 +178,19 @@ for (const token of [
   "const liveStoredInspectionAircraftPose = sim.aircraft.userData.a1InspectionPose || null",
   "liveInspectionAircraftPoseApplied",
   "inspectionAircraftPoseErrorMeters",
-  "inspectionAircraftNoseGearX = inspectionAircraftPose.x.toFixed(6)",
-  "inspectionAircraftNoseGearZ = inspectionAircraftPose.z.toFixed(6)",
+  `inspectionAircraftNoseGearX = ${storedPoseXExpression}`,
+  `inspectionAircraftNoseGearZ = ${storedPoseZExpression}`,
 ]) {
   if (!source.includes(token)) {
     throw new Error(`${trainerPath}: A1 inspection aircraft lifecycle token is missing: ${token}`);
+  }
+}
+for (const forbidden of [
+  "inspectionAircraftNoseGearX = inspectionAircraftPose.x",
+  "inspectionAircraftNoseGearZ = inspectionAircraftPose.z",
+]) {
+  if (source.includes(forbidden)) {
+    throw new Error(`${trainerPath}: out-of-scope inspection aircraft pose reference remains: ${forbidden}`);
   }
 }
 if (source.includes(gatedRegistration)
@@ -190,4 +200,4 @@ if (source.includes(gatedRegistration)
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Persisted the grounded rendered-CRJ A1 inspection pose, reapplied it explicitly on reset and mode entry, and exposed live per-frame pose equality under the established terminal-relocation authority.");
+console.log("Persisted the measured A1 Cab inspection pose safely across reset and mode toggles with no out-of-scope runtime references.");
