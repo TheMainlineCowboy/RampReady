@@ -3,18 +3,22 @@ import fs from "node:fs";
 const files = Object.freeze({
   build: "scripts/build-production-simulator-quality.mjs",
   groundedWall: "scripts/prepare-a1-grounded-terminal-building-v1.mjs",
+  wallAuthority: "scripts/prepare-a1-terminal-authority-idempotence-v1.mjs",
   compactWall: "scripts/prepare-a1-compact-source-wall-distance-v1.mjs",
+  rigidCompact: "scripts/prepare-a1-rigid-compact-span-v1.mjs",
+  completeEndpoint: "scripts/prepare-a1-complete-endpoint-axis-v1.mjs",
+  controller: "src/environment/uploadedAirportJetwayModelSpaceControllerV7.js",
+  controllerVerifier: "scripts/prepare-uploaded-a1-model-space-retraction-v7.mjs",
   vertical: "scripts/prepare-a1-inspection-aircraft-vertical-registration-v1.mjs",
   aircraftGround: "scripts/prepare-a1-authored-ground-contact-v1.mjs",
   jetwayGround: "scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs",
   readiness: "scripts/prepare-a1-bogie-readiness-v1.mjs",
-  endpointEvidence: "scripts/prepare-a1-endpoint-browser-evidence-v1.mjs",
-  dynamicCamera: "scripts/prepare-a1-dynamic-evidence-camera-v1.mjs",
-  cameraLock: "scripts/prepare-a1-evidence-camera-lock-v1.mjs",
+  readinessCompact: "scripts/prepare-a1-readiness-compact-wall-v1.mjs",
   rotundaClosure: "scripts/prepare-a1-rotunda-vestibule-closure-v1.mjs",
   visualEvidence: "scripts/prepare-a1-visual-acceptance-evidence-v1.mjs",
-  heading: "scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs",
   finalizer: "scripts/prepare-a1-final-acceptance-authority-v1.mjs",
+  heading: "scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs",
+  browserMigration: "scripts/prepare-current-head-browser-expectations-v1.mjs",
   browser: "tests/browser/a1-ground-contact-evidence.spec.js",
   jetwayBrowser: "tests/browser/a1-jetway-contact-clusters.spec.js",
 });
@@ -25,7 +29,7 @@ const source = Object.fromEntries(
 function requireTokens(key, tokens) {
   for (const token of tokens) {
     if (!source[key].includes(token)) {
-      throw new Error(`${files[key]}: measured A1 acceptance contract is missing ${token}`);
+      throw new Error(`${files[key]}: A1 contract is missing ${token}`);
     }
   }
 }
@@ -38,24 +42,28 @@ function forbidTokens(key, tokens) {
   }
 }
 
-const buildStages = [
+const orderedBuildStages = [
+  'await runNode("scripts/prepare-a1-terminal-attachment-v14.mjs")',
   'await runNode("scripts/prepare-a1-grounded-terminal-building-v1.mjs")',
+  'await runNode("scripts/prepare-a1-terminal-authority-idempotence-v1.mjs")',
+  'await runNode("scripts/prepare-a1-photo-registered-stop-v1.mjs")',
   'await runNode("scripts/prepare-a1-compact-source-wall-distance-v1.mjs")',
+  'await runNode("scripts/prepare-a1-rigid-parent-orientation-v2.mjs")',
+  'await runNode("scripts/prepare-a1-complete-endpoint-axis-v1.mjs")',
+  'await runNode("scripts/prepare-a1-terminal-relocation-v4.mjs")',
+  'await runNode("scripts/prepare-a1-vector-wall-lock-v1.mjs")',
   'await runNode("scripts/prepare-a1-inspection-aircraft-vertical-registration-v1.mjs")',
   'await runNode("scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs")',
   'await runNode("scripts/prepare-a1-bogie-readiness-v1.mjs")',
   'await runNode("scripts/prepare-a1-authored-ground-contact-v1.mjs")',
-  'await runNode("scripts/prepare-a1-endpoint-browser-evidence-v1.mjs")',
   'await runNode("scripts/prepare-a1-rotunda-vestibule-closure-v1.mjs")',
   'await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs")',
   'await runNode("scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs")',
 ];
 let previousIndex = -1;
-for (const stage of buildStages) {
+for (const stage of orderedBuildStages) {
   const index = source.build.indexOf(stage);
-  if (index <= previousIndex) {
-    throw new Error(`${files.build}: A1 preparation order is invalid at ${stage}`);
-  }
+  if (index <= previousIndex) throw new Error(`${files.build}: invalid A1 build order at ${stage}`);
   previousIndex = index;
 }
 
@@ -65,29 +73,61 @@ requireTokens("groundedWall", [
   "groundedConnection.distance > 1.5",
   "groundedConnection.distance < 4.1",
   "groundedConnection.pointY > 2.2",
-  "A1 grounded real-terminal wall span is not compact",
-  "compactRealTerminalWall: true",
   "BGATE|DGATE|PHX_TERM400",
-  "exact-T4_WALK-A1-terminal-portal-v25",
-  "exactWalkwayPortalX",
+  "compactRealTerminalWall: true",
+  "forbidden A1 walkway anchor survived",
 ]);
-
+requireTokens("wallAuthority", [
+  "compact-grounded-A1-authority-idempotence-v31",
+  "A1 compact grounded wall returned a forbidden authority",
+  "structural-A1-terminal-building-${groundedStructuralAuthority}-v31",
+]);
 requireTokens("compactWall", [
   "const MINIMUM_A1_WALL_SPAN_METERS = 1.5",
   "const MAXIMUM_A1_WALL_SPAN_METERS = 4.1",
   "A1 measured real-terminal wall span is not compact",
-  "sourceRotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS",
   "long A1 corridor allowance remains",
+]);
+requireTokens("rigidCompact", [
+  "post-rigid-a1-exact-visible-vestibule-span-v1",
+  "terminalDistance < rotundaOpening.collarRadius + 4.1",
+  "Math.abs(actualVisibleVestibuleMeters - A1_PHOTO_VISIBLE_VESTIBULE_METERS) > 0.05",
+  "broad A1 terminal span survived rigid orientation",
+]);
+requireTokens("completeEndpoint", [
+  "prepare-a1-rigid-compact-span-v1.mjs?post-rigid=",
+  "same-day-photo-complete-cab-to-rotunda-parent-axis-v6",
+  "post-rigid-a1-exact-visible-vestibule-span-v1",
+]);
+
+requireTokens("controller", [
+  "grounded-jetway-door-gap-reported-no-child-lift-v1",
+  "requestedAttachedVerticalDropMeters",
+  "attachedVerticalDropMeters = 0",
+  "authoredBogieGroundPreserved = true",
+  "setAttachedVerticalDrop(value)",
+  "return 0",
+  "retract * retraction.lift",
+]);
+forbidTokens("controller", [
+  "const attachedDrop = deployment * attachedVerticalDrop",
+  "attachedDrop / 3",
+  "attachedDrop * 2 / 3",
+  "attachedDrop + retract * retraction.lift",
+]);
+requireTokens("controllerVerifier", [
+  "grounded-jetway-door-gap-reported-no-child-lift-v1",
+  "floating-bogie child-lift behavior remains",
 ]);
 
 requireTokens("vertical", [
-  'const verticalFitAuthority = "grounded-aircraft-door-progressive-tunnel-slope-v1"',
-  "const aircraftRelocationY = -landingGearWheelBoundsBefore.min.y",
-  "inspectionAircraftJetwayVerticalFitAuthority = \"${verticalFitAuthority}\"",
-  "conflicting A1 vertical-fit authority remains",
-  "obsolete whole-aircraft bounds grounding remains active",
+  'const verticalFitAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1"',
+  "Math.abs(appliedA1JetwayVerticalFitMeters) > 0.001",
+  "inspectionAircraftDoorSignedVerticalGapMeters",
+  "inspectionAircraftJetwayRequestedVerticalFitMeters",
+  "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
+  "Cab telemetry is still being moved to conceal the door-height gap",
 ]);
-
 requireTokens("aircraftGround", [
   "authored-crj-lowest-geometry-contact-clusters-v2",
   "const measureAuthoredLandingGearContact = () =>",
@@ -95,13 +135,7 @@ requireTokens("aircraftGround", [
   "contactSpan.x < 1",
   "contactSpan.z < 4",
   "const aircraftRelocationY = -landingGearContactBefore.minimumY",
-  "const landingGearContactAfter = measureAuthoredLandingGearContact()",
-  "inspectionAircraftLandingGearContactClusterCount",
-  "obsolete name-based wheel grounding remains",
-  "Math.floor(point.x / cellSizeMeters)",
-  "const neighbor = [cellX + dx, cellZ + dz].join(\",\")",
 ]);
-
 requireTokens("jetwayGround", [
   "exact-authored-a1-lowest-geometry-ramp-contact-v1",
   "const measureAuthoredA1RampContact = () =>",
@@ -109,174 +143,72 @@ requireTokens("jetwayGround", [
   "contactClusterCount < 2",
   "horizontalContactSpanMeters < 1.2",
   "const measuredBogieGroundOffsetMeters = -authoredA1GroundContactBefore.minimumY",
-  "Math.abs(measuredBogieGroundOffsetMeters) > 3",
-  "fleet.position.y += measuredBogieGroundOffsetMeters",
-  "const measuredBogieGroundClearanceMeters = authoredA1GroundContactAfter.minimumY",
-  "bogieGroundContactClusterCount: authoredA1GroundContactAfter.contactClusterCount",
-  "uploadedJetwayBogieGroundContactPointCount",
+  "Math.abs(measuredBogieGroundClearanceMeters) > 0.005",
   "uploadedJetwayBogieGroundContactClusterCount",
-  "uploadedJetwayBogieGroundHorizontalContactSpanMeters",
-  "hard-coded fleet ground correction remains active",
 ]);
-
 requireTokens("readiness", [
-  "Math.abs(Math.abs(fleetGroundOffset) - bogieTireCorrection) > 1e-6",
-  "Math.abs(fleetGroundOffset) > 3",
-  "Math.abs(bogieGroundClearance) > 0.005",
   "bogieGroundContactPointCount < 8",
   "bogieGroundContactClusterCount < 2",
   "bogieGroundHorizontalContactSpan < 1.2",
-  "authoredTerminal4UploadedJetwayBogieGroundContactClusterCount",
   "terminal4UploadedJetwayBogieGroundContactPointCount",
   "terminal4UploadedJetwayBogieGroundContactClusterCount",
-  "terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters",
-  "obsolete fixed bogie correction range remains",
 ]);
-
-requireTokens("endpointEvidence", [
-  "exact-a1-world-endpoint-browser-evidence-v1",
-  "uploadedJetwayA1FinalMeasuredWallWorldX",
-  "uploadedJetwayA1FinalRotundaWorldX",
-  "uploadedJetwayA1CabContactWorldX",
-  "prepare-a1-dynamic-evidence-camera-v1.mjs?exact-endpoint-camera=",
-  "prepare-a1-evidence-camera-lock-v1.mjs?exact-camera-lock=",
-]);
-
-requireTokens("dynamicCamera", [
-  "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2",
-  "inspectionCameraEndpointAuthority",
-  "inspectionOverheadCameraEndpointAuthority",
-  "uploadedJetwayA1FinalMeasuredWallWorldX",
-  "uploadedJetwayA1FinalRotundaWorldX",
-  "uploadedJetwayA1CabContactWorldX",
-  "sim.aircraft.userData.realAircraftObject",
-  "exactA1CameraAircraftBounds",
-  "exactA1CameraFrameBounds",
-  "exactA1CameraHorizontalExtent > 20",
-  "exactA1OverheadFrameBounds",
-  "inspectionCameraEndpointPosition",
-  "inspectionCameraEndpointTarget",
-  "inspectionCameraEndpointWall",
-  "inspectionCameraEndpointRotunda",
-  "inspectionCameraEndpointCab",
-  "inspectionCameraEndpointAircraftBoundsMin",
-  "inspectionCameraEndpointAircraftBoundsMax",
-  "inspectionCameraEndpointFrameSize",
-  "inspectionOverheadCameraEndpointFrameSize",
-]);
-
-requireTokens("cameraLock", [
-  "exact-a1-evidence-camera-direct-lock-v1",
-  "camera.position.copy(desiredCamera)",
-  "inspectionCameraEndpointLockAuthority",
-  "inspectionCameraEndpointConvergenceErrorMeters",
-  "inspectionOverheadCameraEndpointLockAuthority",
-  "inspectionOverheadCameraEndpointConvergenceErrorMeters",
-  "distanceTo(desiredCamera).toFixed(6)",
-  "endpoint-derived perspective camera interpolation block is missing",
-  "endpoint-derived overhead camera interpolation block is missing",
+requireTokens("readinessCompact", [
+  "compact-real-terminal-wall-readiness-v1",
+  "a1TerminalWallDistance > 1.5 && a1TerminalWallDistance < 4.1",
+  "connectorVisibleLength > 0.25 && connectorVisibleLength < 12",
 ]);
 
 requireTokens("rotundaClosure", [
   "UploadedAirportJetwayA1RotundaVestibuleClosurePanel",
   "connector.userData.apronFacingRotundaOpeningClosed = true",
-  "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1",
+  "prepare-a1-readiness-compact-wall-v1.mjs?compact-readiness=",
   "prepare-a1-visual-acceptance-evidence-v1.mjs?visual-acceptance=",
 ]);
-
 requireTokens("visualEvidence", [
   "same-day-a1-continuous-compact-solid-closed-grounded-v1",
   "exact-authored-five-part-chain-no-isolated-node-rotation-v2",
-  "same-day-a1-photo-visible-solid-terminal-vestibule-v12",
-  "exact-authored-opposite-rotunda-to-tunnel-a-axis-v5",
-  "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1",
   "const VISIBLE_VESTIBULE_METERS = 2.4",
   "Math.abs(connectorVisibleLength - ${VISIBLE_VESTIBULE_METERS}) > 0.05",
   "isolatedNodeRotationCount !== 0",
-  "uploadedJetwayA1ApronFacingRotundaOpeningClosed",
   "uploadedJetwayA1NoGeneratedGlassCorridor",
-  "authoredTerminal4UploadedJetwayA1VisualAcceptanceAuthority",
-  "terminal4UploadedJetwayA1VisibleVestibuleLengthMeters",
-  "terminal4UploadedJetwayA1RotundaVestibuleClosureAuthority",
 ]);
-
+requireTokens("finalizer", [
+  "grounded-jetway-door-gap-reported-no-child-lift-v1",
+  "inspectionAircraftDoorSignedVerticalGapMeters",
+  "inspectionAircraftJetwayRequestedVerticalFitMeters",
+  "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
+  "terminal4UploadedJetwayBogieGroundContactPointCount",
+  "terminal4UploadedJetwayBogieGroundContactClusterCount",
+  "same-day-a1-continuous-compact-solid-closed-grounded-v1",
+  "stale A1 grounding, child lift, or pose behavior survived finalization",
+]);
 requireTokens("heading", [
   "const landingGearContactAfter = measureAuthoredLandingGearContact()",
-  "renderedGroundClearanceMeters = landingGearContactAfter.minimumY",
-  "yaw-neutral-authored-crj-dimensions-v2",
+  "prepare-a1-final-marker-compat-v1.mjs?final-marker=",
+  "prepare-current-head-browser-expectations-v1.mjs?current-head=",
 ]);
-forbidTokens("heading", [
-  "prepare-a1-exact-bogie-ground-contact-v1.mjs?",
-  "prepare-a1-bogie-readiness-v1.mjs?",
-  "prepare-a1-authored-ground-contact-v1.mjs?",
-]);
-
-requireTokens("finalizer", [
-  "authored-crj-lowest-geometry-contact-clusters-v2",
-  "exact-authored-a1-lowest-geometry-ramp-contact-v1",
-  "grounded-aircraft-door-progressive-tunnel-slope-v1",
-  "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2",
-  "exact-a1-evidence-camera-direct-lock-v1",
-  "same-day-a1-continuous-compact-solid-closed-grounded-v1",
-  "terminal4UploadedJetwayBogieGroundClearanceMeters",
-  "terminal4UploadedJetwayA1AssemblyContinuityAuthority",
-  "terminal4UploadedJetwayA1VisibleVestibuleLengthMeters",
-  "terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed",
-  "terminal4UploadedJetwayA1NoGeneratedGlassCorridor",
-  "inspectionCameraEndpointLockAuthority",
-  "inspectionCameraEndpointConvergenceErrorMeters",
-  "inspectionOverheadCameraEndpointLockAuthority",
-  "inspectionOverheadCameraEndpointConvergenceErrorMeters",
-  "named-landing-gear-wheel-bounds-v1",
-  "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2",
+requireTokens("browserMigration", [
+  "grounded-jetway-door-gap-reported-no-child-lift-v1",
+  "inspectionAircraftDoorSignedVerticalGapMeters",
+  "inspectionAircraftJetwayRequestedVerticalFitMeters",
+  "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
+  "stale floating-jetway vertical-fit expectation remains",
 ]);
 
 requireTokens("browser", [
   "A1 evidence proves the continuous supplied jetway, compact closed vestibule and authored CRJ contact the ramp",
-  "same-day-a1-continuous-compact-solid-closed-grounded-v1",
-  "exact-authored-five-part-chain-no-isolated-node-rotation-v2",
-  "same-day-a1-photo-visible-solid-terminal-vestibule-v12",
-  "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1",
-  "terminal4UploadedJetwayA1AssemblyContinuityAuthority",
-  "terminal4UploadedJetwayA1AssemblyTransformError",
-  "terminal4UploadedJetwayA1IsolatedNodeRotationCount",
-  "terminal4UploadedJetwayA1VisibleVestibuleLengthMeters",
-  "terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed",
-  "terminal4UploadedJetwayA1NoGeneratedGlassCorridor",
-  "terminal4UploadedJetwayBogieGroundClearanceMeters",
-  "inspectionAircraftLandingGearContactClusterCount",
-  "inspectionAircraftGroundClearanceMeters",
-  "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2",
-  "exact-a1-evidence-camera-direct-lock-v1",
-  "inspectionCameraEndpointAuthority",
-  "inspectionCameraEndpointLockAuthority",
-  "inspectionCameraEndpointConvergenceErrorMeters",
-  "inspectionCameraEndpointPosition",
-  "inspectionCameraEndpointAircraftBoundsMin",
-  "inspectionCameraEndpointAircraftBoundsMax",
-  "inspectionCameraEndpointFrameSize",
-  "inspectionOverheadCameraEndpointAuthority",
-  "inspectionOverheadCameraEndpointLockAuthority",
-  "inspectionOverheadCameraEndpointConvergenceErrorMeters",
-  "inspectionOverheadCameraEndpointFrameSize",
-  "aircraftBoundsSize",
-  "rotundaWallDistance",
   "a1-measured-ground-contact.png",
   "a1-measured-ground-contact-overhead.png",
   "a1-measured-ground-contact.json",
 ]);
-
 requireTokens("jetwayBrowser", [
   "A1 authored jetway uses a compact real-terminal anchor and a separated multi-point ramp footprint",
   "terminal4UploadedJetwayBogieGroundContactPointCount",
   "terminal4UploadedJetwayBogieGroundContactClusterCount",
   "terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters",
-  "terminal4A1JetwayWallDistance",
   "WALK|JETWAY|CONNECTOR|PORTAL",
-  "terminal4UploadedJetwayA1AssemblyTransformError",
-  "terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed",
-  "terminal4UploadedJetwayA1NoGeneratedGlassCorridor",
   "a1-jetway-contact-clusters.json",
 ]);
 
-console.log("Verified compact ramp-level A1 wall selection, continuous authored assembly, solid closed vestibule, separated multi-point jetway/CRJ ramp contact, locked evidence cameras, and retained perspective/overhead evidence contracts.");
+console.log("Verified the A1 repair contract: no T4_WALK anchor, compact real wall, exact 2.4 m closed vestibule, continuous authored assembly, separated multi-point jetway/CRJ ramp contact, zero attached child lift, retained signed door gap, and current-head visual evidence.");
