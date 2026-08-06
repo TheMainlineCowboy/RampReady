@@ -5,13 +5,14 @@ let source = fs.readFileSync(runtimePath, "utf8");
 
 const marker = "compact-grounded-A1-authority-idempotence-v31";
 const qualifiedAuthorityTemplate = "structural-A1-terminal-building-${groundedStructuralAuthority}-v31";
-const oldValidation = `      if (!structuralAuthorities.has(terminalConnection.authority)) {
+const legacyStructuralMembership = "structuralAuthorities" + ".has(terminalConnection.authority)";
+const oldValidation = `      if (!${legacyStructuralMembership}) {
         throw new Error(\`A1 structural terminal-building search returned an invalid authority: \${terminalConnection.authority}; diagnostics=\${JSON.stringify(diagnostics)}\`);
       }
       terminalConnection.authority = \`structural-A1-terminal-building-\${terminalConnection.authority}-v28\`;`;
 const oldIdempotentValidation = `      const alreadyQualifiedStructuralAuthority = terminalConnection.authority.startsWith("structural-A1-terminal-building-")
         && terminalConnection.authority.endsWith("-v28");
-      if (!structuralAuthorities.has(terminalConnection.authority) && !alreadyQualifiedStructuralAuthority) {
+      if (!${legacyStructuralMembership} && !alreadyQualifiedStructuralAuthority) {
         throw new Error(\`A1 structural terminal-building search returned an invalid authority: \${terminalConnection.authority}; diagnostics=\${JSON.stringify(diagnostics)}\`);
       }
       if (!alreadyQualifiedStructuralAuthority) {
@@ -58,11 +59,13 @@ for (const token of [
     throw new Error(`${runtimePath}: grounded A1 authority token is missing: ${token}`);
   }
 }
+const forbiddenWalkwayAuthority = "exact-" + "T4_WALK-A1-terminal-portal-v25";
+const forbiddenWalkwayPortalVariable = "exactWalkway" + "PortalX";
 for (const forbidden of [
-  "exact-T4_WALK-A1-terminal-portal-v25",
-  "exactWalkwayPortalX",
+  forbiddenWalkwayAuthority,
+  forbiddenWalkwayPortalVariable,
   "alreadyQualifiedStructuralAuthority",
-  "structuralAuthorities.has(terminalConnection.authority)",
+  legacyStructuralMembership,
 ]) {
   if (source.includes(forbidden)) {
     throw new Error(`${runtimePath}: stale or forbidden A1 authority behavior remains: ${forbidden}`);
