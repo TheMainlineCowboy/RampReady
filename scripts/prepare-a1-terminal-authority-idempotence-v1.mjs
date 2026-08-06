@@ -4,6 +4,7 @@ const runtimePath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(runtimePath, "utf8");
 
 const marker = "compact-grounded-A1-authority-idempotence-v31";
+const qualifiedAuthorityTemplate = "structural-A1-terminal-building-${groundedStructuralAuthority}-v31";
 const oldValidation = `      if (!structuralAuthorities.has(terminalConnection.authority)) {
         throw new Error(\`A1 structural terminal-building search returned an invalid authority: \${terminalConnection.authority}; diagnostics=\${JSON.stringify(diagnostics)}\`);
       }
@@ -50,7 +51,7 @@ for (const token of [
   marker,
   "const groundedStructuralAuthority = String(terminalConnection.authority || \"\")",
   "alreadyQualifiedGroundedAuthority",
-  "terminalConnection.authority = `structural-A1-terminal-building-${groundedStructuralAuthority}-v31`",
+  qualifiedAuthorityTemplate,
   "A1 compact grounded wall returned a forbidden authority",
 ]) {
   if (!source.includes(token)) {
@@ -69,4 +70,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log(`Validated ${Math.max(1, replacementCount)} compact grounded A1 authority path(s) idempotently without relying on the obsolete pre-grounding validator block.`);
+console.log(`Validated ${Math.max(1, replacementCount)} compact grounded A1 authority path(s) idempotently with explicit template ${qualifiedAuthorityTemplate}.`);
