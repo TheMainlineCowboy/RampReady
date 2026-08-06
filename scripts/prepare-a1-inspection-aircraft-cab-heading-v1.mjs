@@ -1,9 +1,5 @@
 import fs from "node:fs";
 
-await import(`./prepare-a1-exact-bogie-ground-contact-v1.mjs?bogie-contact=${Date.now()}`);
-await import(`./prepare-a1-bogie-readiness-v1.mjs?bogie-readiness=${Date.now()}`);
-await import(`./prepare-a1-authored-ground-contact-v1.mjs?authored-contact=${Date.now()}`);
-
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
@@ -32,9 +28,10 @@ if (source.includes(anchor)) {
   throw new Error(`${trainerPath}: authored-door registration anchor is missing`);
 }
 
-// The authored-contact preparer runs first and keeps its exact landing-gear
-// clearance calculation immediately after renderedDimensions. Replace only the
-// canonical dimension lines so contact-cluster grounding remains untouched.
+// The authored-contact preparer runs earlier in the explicit build sequence and
+// keeps its exact landing-gear clearance calculation immediately after
+// renderedDimensions. Replace only the canonical dimension lines so that
+// contact-cluster grounding remains untouched.
 const boundsAnchor = `          const renderedBounds = new THREE.Box3().setFromObject(renderedAircraft);
           const renderedDimensions = renderedBounds.getSize(new THREE.Vector3());`;
 const yawNeutralBounds = `          const renderedBounds = new THREE.Box3().setFromObject(renderedAircraft);
