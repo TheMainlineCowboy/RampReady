@@ -4,7 +4,7 @@ const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const registrationMarker = "authored-rendered-door-to-final-cab-a1-aircraft-pose-v4";
-const lifecycleAuthority = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
+const lifecycleAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
 
 if (!source.includes(registrationMarker)) {
   throw new Error(`${trainerPath}: measured A1 aircraft registration must be prepared before pose lifecycle wiring`);
@@ -190,4 +190,4 @@ if (source.includes(gatedRegistration)
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Persisted the measured rendered-CRJ A1 Cab pose, reapplied it explicitly on inspection reset and mode entry, and exposed live per-frame pose equality instead of the obsolete fixed photo-stop constants.");
+console.log("Persisted the grounded rendered-CRJ A1 inspection pose, reapplied it explicitly on reset and mode entry, and exposed live per-frame pose equality under the established terminal-relocation authority.");
