@@ -1,3 +1,4 @@
+# Storage guard reverified 2026-08-06; preserves named PR140 acceptance evidence for its one-day retention window.
 name: Cleanup Actions storage
 
 on:
@@ -75,7 +76,7 @@ jobs:
           pr140_json="$(get_json "repos/${GITHUB_REPOSITORY}/pulls/140")" || exit 1
           pr140_sha="$(jq -r 'if .state == "open" then .head.sha else empty end' <<<"${pr140_json}")"
           keep_json="$(printf '%s\n' "${main_sha}" "${pr140_sha}" | jq -R . | jq -s 'map(select(length > 0)) | unique')"
-          echo "Preserving main and open PR #140 evidence: ${keep_json}"
+          echo "Preserving main, open PR #140, and named PR140 exact-acceptance artifacts for their one-day retention window: ${keep_json}"
 
           deleted_artifacts=0
           deleted_artifact_bytes=0
@@ -86,6 +87,7 @@ jobs:
                 .[] | .artifacts[]
                 | (.workflow_run.head_sha // "") as $sha
                 | select(($keep | index($sha)) == null)
+                | select(((.name // "") | startswith("pr140-exact-acceptance-")) | not)
                 | [.id, (.size_in_bytes // 0)]
                 | @tsv
               ' <<<"${pages}"
@@ -122,7 +124,8 @@ jobs:
             jq -r --argjson keep "${keep_json}" '
               [.[] | .artifacts[]
                 | (.workflow_run.head_sha // "") as $sha
-                | select(($keep | index($sha)) == null)]
+                | select(($keep | index($sha)) == null)
+                | select(((.name // "") | startswith("pr140-exact-acceptance-")) | not)]
               | length
             ' <<<"${artifact_pages}"
           )"
@@ -131,7 +134,7 @@ jobs:
           cache_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" true)" || exit 1
           remaining_caches="$(jq -r '[.[] | .actions_caches[]?] | length' <<<"${cache_pages}")"
 
-          echo "STORAGE CLEANUP VERIFIED: deleted artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes); remaining obsolete artifacts=${obsolete_artifacts}, caches=${remaining_caches}; preserved current evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
+          echo "STORAGE CLEANUP VERIFIED: deleted artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes); remaining obsolete artifacts=${obsolete_artifacts}, caches=${remaining_caches}; preserved current/acceptance evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
           (( obsolete_artifacts == 0 && remaining_caches == 0 ))
 
           freed_mb=$(( (deleted_artifact_bytes + deleted_cache_bytes + 524287) / 1048576 ))
