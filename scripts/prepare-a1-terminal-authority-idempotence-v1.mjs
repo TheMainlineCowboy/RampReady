@@ -17,10 +17,16 @@ const newValidation = `      const alreadyQualifiedStructuralAuthority = termina
         terminalConnection.authority = \`structural-A1-terminal-building-\${terminalConnection.authority}-v28\`;
       }`;
 
-if (source.includes(oldValidation)) {
+let replacementCount = 0;
+while (source.includes(oldValidation)) {
   source = source.replace(oldValidation, newValidation);
-} else if (!source.includes("alreadyQualifiedStructuralAuthority")) {
+  replacementCount += 1;
+}
+if (replacementCount < 1 && !source.includes("alreadyQualifiedStructuralAuthority")) {
   throw new Error(`${runtimePath}: A1 structural authority validator anchor is missing`);
+}
+if (source.includes(oldValidation)) {
+  throw new Error(`${runtimePath}: a non-idempotent A1 structural authority validator remains`);
 }
 
 for (const token of [
@@ -35,4 +41,4 @@ for (const token of [
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log("Made the A1 structural terminal-wall authority idempotent across repeated production preparation without changing geometry or source-node transforms.");
+console.log(`Made all ${Math.max(1, replacementCount)} A1 structural terminal-wall authority validators idempotent across repeated production preparation without changing geometry or source-node transforms.`);
