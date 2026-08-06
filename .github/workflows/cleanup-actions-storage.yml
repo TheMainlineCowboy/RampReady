@@ -1,7 +1,6 @@
 name: Cleanup Actions storage
 
 on:
-  workflow_call:
   push:
     branches:
       - fix/a1-rigid-parent-orientation-final
@@ -29,21 +28,53 @@ concurrency:
 jobs:
   cleanup:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
-      - name: Delete artifacts and completed runs from obsolete heads
+      - name: Delete obsolete artifacts and caches, then verify zero remain
         env:
           GH_TOKEN: ${{ github.token }}
           KEEP_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
+
+          api_get() {
+            local endpoint="$1"
+            local attempt=1
+            local output
+            while (( attempt <= 6 )); do
+              if output="$(gh api "${endpoint}" 2>&1)"; then
+                printf '%s' "${output}"
+                return 0
+              fi
+              echo "GitHub GET failed for ${endpoint} on attempt ${attempt}; retrying." >&2
+              sleep $((attempt * 2))
+              attempt=$((attempt + 1))
+            done
+            echo "GitHub GET permanently failed for ${endpoint}." >&2
+            return 1
+          }
+
+          api_delete() {
+            local endpoint="$1"
+            local attempt=1
+            while (( attempt <= 6 )); do
+              if gh api --method DELETE "${endpoint}" >/dev/null 2>&1; then
+                return 0
+              fi
+              echo "GitHub DELETE failed for ${endpoint} on attempt ${attempt}; retrying." >&2
+              sleep $((attempt * 2))
+              attempt=$((attempt + 1))
+            done
+            echo "GitHub DELETE permanently failed for ${endpoint}." >&2
+            return 1
+          }
 
           echo "Keeping Actions evidence for exact current head: ${KEEP_SHA}"
 
           deleted_artifacts=0
           while true; do
-            response="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100&page=1")"
+            response="$(api_get "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100&page=1")" || exit 1
             mapfile -t artifact_ids < <(
               jq -r --arg keep "${KEEP_SHA}" '
                 .artifacts[]
@@ -57,31 +88,40 @@ jobs:
             fi
 
             for artifact_id in "${artifact_ids[@]}"; do
-              gh api --method DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}"
+              api_delete "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}" || exit 1
               deleted_artifacts=$((deleted_artifacts + 1))
             done
+            echo "Deleted ${deleted_artifacts} obsolete artifacts so far."
           done
 
-          deleted_runs=0
+          deleted_caches=0
           while true; do
-            response="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100&page=1")"
-            mapfile -t run_ids < <(
-              jq -r --arg keep "${KEEP_SHA}" '
-                .workflow_runs[]
-                | select(.status == "completed")
-                | select(.head_sha != $keep)
-                | .id
-              ' <<<"${response}"
-            )
+            response="$(api_get "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100&page=1")" || exit 1
+            mapfile -t cache_ids < <(jq -r '.actions_caches[]?.id' <<<"${response}")
 
-            if (( ${#run_ids[@]} == 0 )); then
+            if (( ${#cache_ids[@]} == 0 )); then
               break
             fi
 
-            for run_id in "${run_ids[@]}"; do
-              gh api --method DELETE "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}"
-              deleted_runs=$((deleted_runs + 1))
+            for cache_id in "${cache_ids[@]}"; do
+              api_delete "repos/${GITHUB_REPOSITORY}/actions/caches/${cache_id}" || exit 1
+              deleted_caches=$((deleted_caches + 1))
             done
+            echo "Deleted ${deleted_caches} Actions caches so far."
           done
 
-          echo "Deleted ${deleted_artifacts} obsolete artifacts and ${deleted_runs} completed obsolete workflow runs."
+          artifact_check="$(api_get "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100&page=1")" || exit 1
+          remaining_obsolete_artifacts="$(
+            jq -r --arg keep "${KEEP_SHA}" '
+              [.artifacts[] | select((.workflow_run.head_sha // "") != $keep)] | length
+            ' <<<"${artifact_check}"
+          )"
+          cache_check="$(api_get "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=1&page=1")" || exit 1
+          remaining_caches="$(jq -r '.total_count // 0' <<<"${cache_check}")"
+
+          echo "Cleanup verified: deleted ${deleted_artifacts} obsolete artifacts and ${deleted_caches} caches; remaining obsolete artifacts=${remaining_obsolete_artifacts}; remaining caches=${remaining_caches}."
+
+          if (( remaining_obsolete_artifacts != 0 || remaining_caches != 0 )); then
+            echo "Actions storage cleanup verification failed."
+            exit 1
+          fi
