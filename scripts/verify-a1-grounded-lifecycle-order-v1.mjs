@@ -50,14 +50,20 @@ for (const required of [
 }
 
 for (const required of [
+  'const lifecycleAuthority = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2"',
   "trainingAircraftPoseBeforeInspectionRegistration",
-  "inspectionAircraftPoseLifecycleAuthority",
-  "inspectionAircraftPosePersisted",
-  "inspectionAircraftTrainingPoseRestored",
+  "sim.aircraft.userData.a1InspectionPose = inspectionAircraftPose",
+  "sim.aircraft.userData.a1InspectionPoseAuthority",
+  'renderer.domElement.dataset.inspectionAircraftPoseStored = "true"',
+  "const storedResetAircraftPose = resetUsesInspectionAircraftPose",
+  "const storedToggleAircraftPose = next",
+  "const liveStoredInspectionAircraftPose = sim.aircraft.userData.a1InspectionPose || null",
+  "liveInspectionAircraftPoseApplied",
+  "inspectionAircraftPoseErrorMeters",
 ]) {
   if (!lifecycle.includes(required)) {
     throw new Error(`${lifecyclePath}: pose lifecycle is missing ${required}`);
   }
 }
 
-console.log("Verified authored CRJ grounding -> full X/Y/Z pose declaration -> grounded anchor -> first lifecycle -> geometry finalization -> final acceptance -> second lifecycle -> Cab heading order.");
+console.log("Verified authored CRJ grounding -> full X/Y/Z pose declaration -> grounded anchor -> first stored-pose lifecycle -> geometry finalization -> final acceptance -> second lifecycle -> Cab heading order.");
