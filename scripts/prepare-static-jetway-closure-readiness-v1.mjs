@@ -28,12 +28,16 @@ requireTokens("source", [
   `STATIC_CAB_TARGET_AUTHORITY = "${TARGET_AUTHORITY}"`,
   "const contactDistance = Number(placement.bridgeEnd)",
   "missing the exact positive placement.bridgeEnd shared with articulation",
+  "cabTargetAuthority: existing.userData.cabTargetAuthority",
+  "bridgeEndFallbackCount: Number(existing.userData.bridgeEndFallbackCount",
+  "group.userData.cabTargetAuthority = STATIC_CAB_TARGET_AUTHORITY",
   "group.userData.bridgeEndFallbackCount = 0",
-  "group.userData.cabPanelCount = closurePanelCount",
-  "group.userData.cabWindowCount = closureWindowCount",
-  "group.userData.cabSurroundPieceCount = surroundPieceCount",
-  "group.userData.authoredNodeTransformCount = authoredNodeTransformCount",
-  "group.userData.apronFacingOpenAreaMeters = apronFacingOpenAreaMeters",
+  "group.userData.cabPanelCount = cabPanelTransforms.length",
+  "group.userData.cabWindowCount = cabWindowTransforms.length",
+  "group.userData.cabSurroundPieceCount = cabHeaderTransforms.length + cabJambTransforms.length",
+  "group.userData.authoredNodeTransformCount = 0",
+  "group.userData.opaqueCabCapDepthMeters = 1.45",
+  "group.userData.apronFacingOpenAreaMeters = 0",
   "STATIC_JETWAY_CAB_TARGET_AUTHORITY",
 ]);
 for (const forbidden of [
@@ -57,12 +61,13 @@ requireTokens("fleet", [
   "uploadedJetwayStaticCabClosureWindowCount = staticPortalClosures.cabWindowCount",
   "uploadedJetwayStaticCabClosureSurroundPieceCount = staticPortalClosures.cabSurroundPieceCount",
   "uploadedJetwayStaticCabClosureAuthoredNodeTransformCount = staticPortalClosures.authoredNodeTransformCount",
+  "uploadedJetwayStaticCabClosureDepthMeters = staticPortalClosures.opaqueCabCapDepthMeters",
   "uploadedJetwayStaticApronFacingOpenAreaMeters = staticPortalClosures.apronFacingOpenAreaMeters",
 ]);
 
 requireTokens("readiness", [
-  `STATIC_JETWAY_CAB_CLOSURE_AUTHORITY === "${CLOSURE_AUTHORITY}"`,
-  `STATIC_JETWAY_CAB_TARGET_AUTHORITY === "${TARGET_AUTHORITY}"`,
+  "STATIC_JETWAY_CAB_CLOSURE_AUTHORITY",
+  "STATIC_JETWAY_CAB_TARGET_AUTHORITY",
   "staticPortalClosures.cabClosureAuthority !== STATIC_JETWAY_CAB_CLOSURE_AUTHORITY",
   "staticPortalClosures.cabTargetAuthority !== STATIC_JETWAY_CAB_TARGET_AUTHORITY",
   "staticPortalClosures.bridgeEndFallbackCount !== 0",
@@ -70,6 +75,7 @@ requireTokens("readiness", [
   "staticPortalClosures.cabWindowCount !== 57",
   "staticPortalClosures.cabSurroundPieceCount !== 228",
   "staticPortalClosures.authoredNodeTransformCount !== 0",
+  "Math.abs(staticPortalClosures.opaqueCabCapDepthMeters - 1.45) > 1e-6",
   "Math.abs(staticPortalClosures.apronFacingOpenAreaMeters) > 1e-9",
   "uploadedJetwayStaticCabClosureAuthority = staticPortalClosures.cabClosureAuthority",
   "uploadedJetwayStaticCabTargetAuthority = staticPortalClosures.cabTargetAuthority",
@@ -78,7 +84,9 @@ requireTokens("readiness", [
   "uploadedJetwayStaticCabClosureWindowCount = staticPortalClosures.cabWindowCount",
   "uploadedJetwayStaticCabClosureSurroundPieceCount = staticPortalClosures.cabSurroundPieceCount",
   "uploadedJetwayStaticCabClosureAuthoredNodeTransformCount = staticPortalClosures.authoredNodeTransformCount",
+  "uploadedJetwayStaticCabClosureDepthMeters = staticPortalClosures.opaqueCabCapDepthMeters",
   "uploadedJetwayStaticApronFacingOpenAreaMeters = staticPortalClosures.apronFacingOpenAreaMeters",
+  `uploadedJetwayStaticCabClosureEvidenceAuthority = "${EVIDENCE_AUTHORITY}"`,
 ]);
 
 requireTokens("authored", [
@@ -89,6 +97,7 @@ requireTokens("authored", [
   "authoredTerminal4UploadedJetwayStaticCabClosureWindowCount",
   "authoredTerminal4UploadedJetwayStaticCabClosureSurroundPieceCount",
   "authoredTerminal4UploadedJetwayStaticCabClosureAuthoredNodeTransformCount",
+  "authoredTerminal4UploadedJetwayStaticCabClosureDepthMeters",
   "authoredTerminal4UploadedJetwayStaticApronFacingOpenAreaMeters",
   "authoredTerminal4UploadedJetwayStaticCabClosureEvidenceAuthority",
 ]);
@@ -101,9 +110,9 @@ requireTokens("trainer", [
   "terminal4UploadedJetwayStaticCabClosureWindowCount",
   "terminal4UploadedJetwayStaticCabClosureSurroundPieceCount",
   "terminal4UploadedJetwayStaticCabClosureAuthoredNodeTransformCount",
+  "terminal4UploadedJetwayStaticCabClosureDepthMeters",
   "terminal4UploadedJetwayStaticApronFacingOpenAreaMeters",
   "terminal4UploadedJetwayStaticCabClosureEvidenceAuthority",
-  EVIDENCE_AUTHORITY,
 ]);
 
-console.log("Validated prepared readiness for all 57 static Cab closures: exact articulation-shared bridgeEnd targets, zero fallback, 57 panels, 57 textured window rings, 228 surround pieces, zero authored-node transforms and zero apron-facing open area.");
+console.log(`Validated prepared readiness for ${CLOSURE_AUTHORITY}: ${TARGET_AUTHORITY}, zero fallback, 57 panels, 57 windows, 228 surround pieces, zero authored-node transforms, 1.45 m opaque cap depth, zero apron-facing open area, and ${EVIDENCE_AUTHORITY}.`);
