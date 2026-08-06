@@ -1,3 +1,3 @@
-Run the trusted exact-head PR 140 jetway acceptance workflow against 005dbd847d31e5ac979e89e6d2be56df6347cbaa.
-Retain both uncropped A1 perspective and overhead PNGs, exact runtime telemetry, the A1 jetway contact-cluster JSON, and requested-versus-zero-applied door-height evidence before assertions.
-Validate removal of the hard-coded T4_WALK portal, a compact ramp-level authored Terminal 4 wall hit, one continuous five-part supplied assembly, exact 2.4 m solid closed vestibule, no generated corridor, separated multi-point authored jetway/CRJ ramp contact, zero attached child lift, grounded-bogie preservation, finite signed door gap, zero isolated transforms, and locked endpoint/aircraft-bounds cameras.
+Run the trusted exact-head PR 140 jetway acceptance workflow against a2328fe6c0e3f3baa0aa1979526a540ea85bd9ed.
+Retain the uncropped A1 full perspective and overhead views, compact terminal-joint close view, low bogie-contact close view, A14/B14/B15 static Cab-closure views, exact runtime telemetry, contact-cluster JSON, and requested-versus-zero-applied door-height evidence.
+Reject any T4_WALK authority, wall span outside 1.5-4.1 m, long/generated corridor, open apron-facing side, disconnected or isolated authored node, weak/airborne bogie contact, nonzero attached child lift, missing signed door gap, or static Terminal 4 Cab opening.
