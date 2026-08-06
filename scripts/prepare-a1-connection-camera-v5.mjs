@@ -23,13 +23,12 @@ let presetBlock = source.slice(presetStart, presetEnd);
 const tugXLine = "    x: 20.0,";
 const tugZLine = "    z: 3.0,";
 const tugYawLine = '    yaw: -0.35,';
-// Current exact-head telemetry places the measured final Cab contact near
-// (-19.45,16.98), the CRJ nose near (-18.05,9.67), and the compact terminal
-// joint near the A1 origin. Frame that full footprint broadside from the open
-// apron so the terminal, Rotunda, bridge, Cab, aircraft nose, wings and tail
-// are all visible in one evidence image.
-const cameraPositionLine = "    cameraPosition: Object.freeze([-58.0, 14.0, 8.0]),";
-const cameraTargetLine = "    cameraTarget: Object.freeze([-9.0, 3.5, 18.0]),";
+// View A1 from the northeast open-apron side. The previous west-side camera
+// looked through the terminal roof and hid the actual Cab-to-aircraft contact.
+// This position keeps the terminal behind the bridge while showing the compact
+// vestibule, Rotunda, complete supplied bridge, Cab, CRJ nose, wings and tail.
+const cameraPositionLine = "    cameraPosition: Object.freeze([42.0, 16.0, 50.0]),";
+const cameraTargetLine = "    cameraTarget: Object.freeze([-6.0, 3.5, 17.0]),";
 const overheadCameraPositionLine = "    overheadCameraPosition: Object.freeze([-9.0, 75.0, 18.0]),";
 const overheadCameraTargetLine = "    overheadCameraTarget: Object.freeze([-9.0, 0.0, 18.0]),";
 const cameraAuthorityLine = `    cameraAuthority: "${A1_CAMERA_AUTHORITY}",`;
@@ -138,4 +137,4 @@ if (fixedCameraPositionCount === 2) {
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared fixed apron-side and overhead A1 evidence frames around the measured final Cab contact and attached CRJ footprint.");
+console.log("Prepared fixed northeast open-apron and overhead A1 evidence frames around the measured final Cab contact and attached CRJ footprint.");
