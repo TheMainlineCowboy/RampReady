@@ -67,7 +67,7 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Verify exact supplied jetway assets and articulation
+      - name: Verify exact supplied jetway assets and repair contract
         shell: bash
         run: |
           set -euo pipefail
@@ -96,15 +96,21 @@ jobs:
           for forbidden in \
             'named-landing-gear-wheel-bounds-v1' \
             'grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2' \
+            'grounded-aircraft-door-progressive-tunnel-slope-v1' \
             'exact-T4_WALK-A1-terminal-portal-v25' \
-            'exactWalkwayPortalX'; do
+            'exactWalkwayPortalX' \
+            'exactA1CabContactY += appliedA1JetwayVerticalFitMeters'; do
             if grep -R --fixed-strings --line-number "${forbidden}" dist; then
-              echo "The production bundle still contains forbidden A1 grounding or walkway behavior: ${forbidden}."
+              echo "The production bundle still contains forbidden A1 walkway, child-lift, or stale grounding behavior: ${forbidden}."
               exit 1
             fi
           done
           grep -R --fixed-strings --line-number "${final}" dist
-          grep -R --fixed-strings --line-number 'grounded-aircraft-door-progressive-tunnel-slope-v1' dist
+          grep -R --fixed-strings --line-number 'grounded-jetway-door-gap-reported-no-child-lift-v1' dist
+          grep -R --fixed-strings --line-number 'inspectionAircraftDoorSignedVerticalGapMeters' dist
+          grep -R --fixed-strings --line-number 'inspectionAircraftJetwayRequestedVerticalFitMeters' dist
+          grep -R --fixed-strings --line-number 'inspectionAircraftJetwayVerticalFitMeters' dist
+          grep -R --fixed-strings --line-number 'inspectionAircraftJetwayAuthoredBogieGroundPreserved' dist
           grep -R --fixed-strings --line-number 'authored-crj-lowest-geometry-contact-clusters-v2' dist
           grep -R --fixed-strings --line-number 'exact-authored-a1-lowest-geometry-ramp-contact-v1' dist
           grep -R --fixed-strings --line-number 'terminal4UploadedJetwayBogieGroundContactPointCount' dist
@@ -112,7 +118,7 @@ jobs:
           grep -R --fixed-strings --line-number 'terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters' dist
           grep -R --fixed-strings --line-number 'same-day-a1-continuous-compact-solid-closed-grounded-v1' dist
           grep -R --fixed-strings --line-number 'final-a1-acceptance-authority-after-all-preparers-v1' dist
-          echo "Verified final A1 pose, compact real-wall attachment, multi-point jetway/aircraft ramp contact, closed vestibule, and final acceptance telemetry in the exact production bundle."
+          echo "Verified compact real-wall attachment, continuous closed vestibule, separated multi-point ramp contact, zero attached child lift, retained signed door gap, and final exact-head telemetry."
 
       - name: Install browser verifier and Chromium
         run: |
