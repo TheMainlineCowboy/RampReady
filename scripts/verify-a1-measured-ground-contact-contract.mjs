@@ -75,10 +75,12 @@ for (const stage of orderedBuildStages) {
 
 requireTokens("groundedWall", [
   "A1 ramp-level real Terminal 4 source wall v32",
-  "const groundedConnection = findTerminalWallConnection(",
-  "groundedConnection.distance > 3.4",
-  "groundedConnection.distance < 28",
-  "groundedConnection.pointY > 2.2",
+  "const MINIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 3.4",
+  "const MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 28",
+  "const MAXIMUM_A1_WALL_HEIGHT_METERS = 2.2",
+  "groundedConnection.distance > ${MINIMUM_A1_SOURCE_WALL_DISTANCE_METERS}",
+  "groundedConnection.distance < ${MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS}",
+  "groundedConnection.pointY > ${MAXIMUM_A1_WALL_HEIGHT_METERS}",
   "BGATE|DGATE|PHX_TERM400",
   "rampLevelRealTerminalWall: true",
   "finalVisibleVestibuleCheckedAfterRelocation: true",
@@ -109,8 +111,8 @@ requireTokens("sourceFinalWall", [
   "const SOURCE_WALL_MINIMUM_METERS = 3.4",
   "const SOURCE_WALL_MAXIMUM_METERS = 28",
   "const FINAL_VISIBLE_VESTIBULE_METERS = 2.4",
-  "sourceTerminalDistance > 3.4",
-  "sourceTerminalDistance < 28",
+  "sourceTerminalDistance > ${SOURCE_WALL_MINIMUM_METERS}",
+  "sourceTerminalDistance < ${SOURCE_WALL_MAXIMUM_METERS}",
   "Math.abs(actualVisibleVestibuleMeters - A1_PHOTO_VISIBLE_VESTIBULE_METERS) > 0.05",
   "source/final A1 wall measurements are still conflated",
 ]);
@@ -183,7 +185,9 @@ requireTokens("readiness", [
 ]);
 requireTokens("finalDistance", [
   "compact-real-terminal-wall-readiness-v2",
-  "a1TerminalWallDistance > 2.9 && a1TerminalWallDistance < 5.8",
+  "const FINAL_CENTER_TO_WALL_MINIMUM_METERS = 2.9",
+  "const FINAL_CENTER_TO_WALL_MAXIMUM_METERS = 5.8",
+  "a1TerminalWallDistance > ${FINAL_CENTER_TO_WALL_MINIMUM_METERS} && a1TerminalWallDistance < ${FINAL_CENTER_TO_WALL_MAXIMUM_METERS}",
   "connectorVisibleLength > 0.25 && connectorVisibleLength < 12",
 ]);
 
@@ -233,6 +237,9 @@ requireTokens("browserMigration", [
   "inspectionAircraftDoorSignedVerticalGapMeters",
   "inspectionAircraftJetwayRequestedVerticalFitMeters",
   "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
+  "expect(a1WallDistance).toBeGreaterThan(1.5)",
+  "expect(a1WallDistance).toBeLessThan(4.0)",
+  "expect(distance(result.forward, result.start)).toBeGreaterThan(0.10)",
 ]);
 
 requireTokens("groundEvidence", [
@@ -257,4 +264,4 @@ requireTokens("closeEvidence", [
   "a1-bogie-contact-close.png",
 ]);
 
-console.log("Verified current A1 repair: ramp-level real source wall, complete-parent relocation, exact 2.4 m visible vestibule, no T4_WALK authority, continuous five-part authored assembly, solid closed apron side, separated multi-point jetway/CRJ ground contact, zero attached child lift, retained signed door gap, grounded lifecycle pose, and close/full rendered evidence contracts.");
+console.log("Verified current A1 repair source contracts: ramp-level real wall search constants, complete-parent relocation, exact 2.4 m visible vestibule, no T4_WALK authority, continuous five-part authored assembly, solid closed apron side, separated multi-point jetway/CRJ contact, zero attached child lift, retained signed door gap, grounded lifecycle pose, and close/full evidence.");
