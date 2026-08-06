@@ -83,6 +83,7 @@ try {
   await runNode("scripts/prepare-terminal4-ramp-facade-v16.mjs");
   await runNode("scripts/prepare-terminal4-b-concourse-extension-v17.mjs");
   await runNode("scripts/prepare-terminal4-attachment-evidence-v14.mjs");
+  await runNode("scripts/prepare-terminal4-lower-facade-fit-accounting-v1.mjs");
   // Several A1 lifecycle preparers replace the inspection toggle block. Reapply
   // the synchronous preset telemetry last so the browser gate observes the
   // exact production behavior rather than timing out on a missing authority tag.
