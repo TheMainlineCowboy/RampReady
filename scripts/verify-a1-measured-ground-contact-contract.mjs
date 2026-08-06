@@ -9,6 +9,8 @@ const files = Object.freeze({
   endpointEvidence: "scripts/prepare-a1-endpoint-browser-evidence-v1.mjs",
   dynamicCamera: "scripts/prepare-a1-dynamic-evidence-camera-v1.mjs",
   cameraLock: "scripts/prepare-a1-evidence-camera-lock-v1.mjs",
+  rotundaClosure: "scripts/prepare-a1-rotunda-vestibule-closure-v1.mjs",
+  visualEvidence: "scripts/prepare-a1-visual-acceptance-evidence-v1.mjs",
   heading: "scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs",
   finalizer: "scripts/prepare-a1-final-acceptance-authority-v1.mjs",
   browser: "tests/browser/a1-ground-contact-evidence.spec.js",
@@ -39,6 +41,7 @@ const buildStages = [
   'await runNode("scripts/prepare-a1-bogie-readiness-v1.mjs")',
   'await runNode("scripts/prepare-a1-authored-ground-contact-v1.mjs")',
   'await runNode("scripts/prepare-a1-endpoint-browser-evidence-v1.mjs")',
+  'await runNode("scripts/prepare-a1-rotunda-vestibule-closure-v1.mjs")',
   'await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs")',
   'await runNode("scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs")',
 ];
@@ -139,6 +142,28 @@ requireTokens("cameraLock", [
   "endpoint-derived overhead camera interpolation block is missing",
 ]);
 
+requireTokens("rotundaClosure", [
+  "UploadedAirportJetwayA1RotundaVestibuleClosurePanel",
+  "connector.userData.apronFacingRotundaOpeningClosed = true",
+  "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1",
+  "prepare-a1-visual-acceptance-evidence-v1.mjs?visual-acceptance=",
+]);
+
+requireTokens("visualEvidence", [
+  "same-day-a1-continuous-compact-solid-closed-grounded-v1",
+  "exact-authored-five-part-chain-no-isolated-node-rotation-v2",
+  "same-day-a1-photo-visible-solid-terminal-vestibule-v12",
+  "exact-authored-opposite-rotunda-to-tunnel-a-axis-v5",
+  "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1",
+  "Math.abs(connectorVisibleLength - 2.4) > 0.05",
+  "isolatedNodeRotationCount !== 0",
+  "uploadedJetwayA1ApronFacingRotundaOpeningClosed",
+  "uploadedJetwayA1NoGeneratedGlassCorridor",
+  "authoredTerminal4UploadedJetwayA1VisualAcceptanceAuthority",
+  "terminal4UploadedJetwayA1VisibleVestibuleLengthMeters",
+  "terminal4UploadedJetwayA1RotundaVestibuleClosureAuthority",
+]);
+
 requireTokens("heading", [
   "const landingGearContactAfter = measureAuthoredLandingGearContact()",
   "renderedGroundClearanceMeters = landingGearContactAfter.minimumY",
@@ -156,7 +181,12 @@ requireTokens("finalizer", [
   "grounded-aircraft-door-progressive-tunnel-slope-v1",
   "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2",
   "exact-a1-evidence-camera-direct-lock-v1",
+  "same-day-a1-continuous-compact-solid-closed-grounded-v1",
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
+  "terminal4UploadedJetwayA1AssemblyContinuityAuthority",
+  "terminal4UploadedJetwayA1VisibleVestibuleLengthMeters",
+  "terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed",
+  "terminal4UploadedJetwayA1NoGeneratedGlassCorridor",
   "inspectionCameraEndpointLockAuthority",
   "inspectionCameraEndpointConvergenceErrorMeters",
   "inspectionOverheadCameraEndpointLockAuthority",
@@ -166,7 +196,17 @@ requireTokens("finalizer", [
 ]);
 
 requireTokens("browser", [
-  "A1 evidence proves the supplied jetway and authored CRJ contact the ramp",
+  "A1 evidence proves the continuous supplied jetway, compact closed vestibule and authored CRJ contact the ramp",
+  "same-day-a1-continuous-compact-solid-closed-grounded-v1",
+  "exact-authored-five-part-chain-no-isolated-node-rotation-v2",
+  "same-day-a1-photo-visible-solid-terminal-vestibule-v12",
+  "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1",
+  "terminal4UploadedJetwayA1AssemblyContinuityAuthority",
+  "terminal4UploadedJetwayA1AssemblyTransformError",
+  "terminal4UploadedJetwayA1IsolatedNodeRotationCount",
+  "terminal4UploadedJetwayA1VisibleVestibuleLengthMeters",
+  "terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed",
+  "terminal4UploadedJetwayA1NoGeneratedGlassCorridor",
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
   "inspectionAircraftLandingGearContactClusterCount",
   "inspectionAircraftGroundClearanceMeters",
@@ -190,4 +230,4 @@ requireTokens("browser", [
   "a1-measured-ground-contact.json",
 ]);
 
-console.log("Verified the explicit measured A1 jetway/CRJ ground-contact build order, endpoint-and-aircraft-derived cameras, direct camera locks, authorities, browser publication, and perspective/overhead rendered-evidence contract.");
+console.log("Verified the explicit A1 build order, continuous five-part authored assembly, compact solid closed vestibule, no generated corridor, measured jetway/CRJ ramp contact, endpoint-and-aircraft-derived locked cameras, and perspective/overhead rendered-evidence contract.");
