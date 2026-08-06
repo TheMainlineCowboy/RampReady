@@ -9,13 +9,10 @@ const cameraAuthority = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-ca
 const cameraLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";
 const visualAuthority = "same-day-a1-continuous-compact-solid-closed-grounded-v1";
 const jetwayGroundAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v1";
+const noLiftAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const marker = "final-a1-acceptance-authority-after-all-preparers-v2";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
-// Several historical build-time preparers can regenerate the aircraft
-// registration block from an older template. This finalizer deliberately runs
-// after every geometry, lifecycle and telemetry preparer so the production
-// bundle cannot publish the superseded horizontal-only authority.
 source = source.replaceAll(staleAuthority, finalAuthority);
 
 const facadeTelemetryAssignment = `        // ${facadeTelemetryMarker}
@@ -51,10 +48,13 @@ for (const required of [
   cameraLockAuthority,
   visualAuthority,
   jetwayGroundAuthority,
+  noLiftAuthority,
   "inspectionAircraftDoorVerticalErrorMeters",
+  "inspectionAircraftDoorSignedVerticalGapMeters",
   "inspectionAircraftGroundClearanceMeters",
+  "inspectionAircraftJetwayRequestedVerticalFitMeters",
   "inspectionAircraftJetwayVerticalFitMeters",
-  "grounded-aircraft-door-progressive-tunnel-slope-v1",
+  "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
   "authored-crj-lowest-geometry-contact-clusters-v2",
   "inspectionAircraftLandingGearContactClusterCount",
   "terminal4A1JetwayWallDistance",
@@ -97,11 +97,13 @@ for (const forbidden of [
   staleAuthority,
   "named-landing-gear-wheel-bounds-v1",
   "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2",
+  "grounded-aircraft-door-progressive-tunnel-slope-v1",
+  "exactA1CabContactY += appliedA1JetwayVerticalFitMeters",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${trainerPath}: stale A1 grounding or pose authority survived finalization: ${forbidden}`);
+    throw new Error(`${trainerPath}: stale A1 grounding, child lift, or pose behavior survived finalization: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Finalized A1 only after compact real-wall telemetry, separated multi-point authored jetway contact, zero-clearance grounding, continuous five-part geometry, solid closed 2.4 m vestibule, locked evidence cameras, and grounded CRJ door registration all survived every preparer.");
+console.log("Finalized A1 only after compact real-wall telemetry, separated multi-point jetway contact, zero attached child lift, retained signed door-gap evidence, continuous five-part geometry, solid closed 2.4 m vestibule, locked cameras, and grounded CRJ registration survived every preparer.");
