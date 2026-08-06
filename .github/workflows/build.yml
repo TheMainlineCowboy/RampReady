@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: read
-  actions: write
 
 concurrency:
   group: rampready-build-${{ github.ref }}
@@ -78,9 +77,3 @@ jobs:
           path: dist/
           if-no-files-found: error
           retention-days: 1
-
-  cleanup-actions-storage:
-    name: Cleanup Actions storage
-    needs: build
-    if: ${{ always() }}
-    uses: ./.github/workflows/cleanup-actions-storage.yml
