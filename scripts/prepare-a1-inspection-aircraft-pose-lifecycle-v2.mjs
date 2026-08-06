@@ -30,7 +30,8 @@ const moveWithTrainingPose = `          const trainingAircraftPoseBeforeInspecti
           sim.aircraft.position.x += aircraftRelocationX;
           sim.aircraft.position.z += aircraftRelocationZ;
           sim.aircraft.updateMatrixWorld(true);`;
-if (source.includes(moveAnchor) && !source.includes("trainingAircraftPoseBeforeInspectionRegistration")) {
+if (source.includes(moveAnchor)
+  && !source.includes("const trainingAircraftPoseBeforeInspectionRegistration =")) {
   source = source.replace(moveAnchor, moveWithTrainingPose);
 }
 
@@ -165,7 +166,7 @@ source = source.replaceAll(
 
 for (const token of [
   persistentRegistration,
-  "trainingAircraftPoseBeforeInspectionRegistration",
+  "const trainingAircraftPoseBeforeInspectionRegistration =",
   "sim.aircraft.userData.a1InspectionPose = inspectionAircraftPose",
   `a1InspectionPoseAuthority = "${lifecycleAuthority}"`,
   `inspectionAircraftPoseAuthority = "${lifecycleAuthority}"`,
