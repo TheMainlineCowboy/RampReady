@@ -73,6 +73,15 @@ async function captureInspectionPreset(page, presetId, outputPath) {
       evidenceAuthority: STATIC_CAB_CLOSURE_EVIDENCE_AUTHORITY,
     }, { timeout: 30_000, polling: 100 });
   }
+  if (presetId === "a1Connection") {
+    await page.waitForFunction(() => {
+      const data = document.querySelector("canvas.trainerCanvas")?.dataset;
+      return data?.a1JetwayDeployment === "1.000"
+        && data?.a1JetwayState === "attached-to-aircraft-door"
+        && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01
+        && Math.abs(Number(data?.inspectionAircraftGroundClearanceMeters)) <= 0.01;
+    }, null, { timeout: 30_000, polling: 100 });
+  }
   await page.waitForTimeout(2_000);
   await captureCanvas(page, outputPath);
 }
