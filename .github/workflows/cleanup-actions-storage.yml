@@ -6,6 +6,15 @@ on:
       - fix/a1-rigid-parent-orientation-final
     paths:
       - .github/workflows/cleanup-actions-storage.yml
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - .github/workflows/cleanup-actions-storage.yml
   workflow_dispatch:
 
 permissions:
@@ -24,7 +33,7 @@ jobs:
       - name: Delete artifacts and completed runs from obsolete heads
         env:
           GH_TOKEN: ${{ github.token }}
-          KEEP_SHA: ${{ github.sha }}
+          KEEP_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         shell: bash
         run: |
           set -euo pipefail
