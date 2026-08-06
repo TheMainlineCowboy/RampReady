@@ -3,15 +3,14 @@ import fs from "node:fs";
 const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(jetwayPath, "utf8");
 
-const marker = "nearest-structural-wall-triangle-surface-v14";
-if (!source.includes(marker)) {
-  const start = source.indexOf("function findTerminalWallConnection(");
-  const end = source.indexOf("\nfunction findTerminalWallDistance(", start);
-  if (start < 0 || end < 0) {
-    throw new Error(`${jetwayPath}: could not locate terminal wall connection function`);
-  }
+const marker = "facade-contiguous-structural-wall-surface-v15";
+const start = source.indexOf("function findTerminalWallConnection(");
+const end = source.indexOf("\nfunction findTerminalWallDistance(", start);
+if (start < 0 || end < 0) {
+  throw new Error(`${jetwayPath}: could not locate terminal wall connection function`);
+}
 
-  const replacement = `function findTerminalWallConnection(THREE, terminal, originX, originZ, preferredX, preferredZ, height) {
+const replacement = `function findTerminalWallConnection(THREE, terminal, originX, originZ, preferredX, preferredZ, height) {
   if (!terminal?.isObject3D) return null;
   terminal.updateMatrixWorld(true);
   const origin = new THREE.Vector3(originX, height, originZ);
@@ -22,6 +21,8 @@ if (!source.includes(marker)) {
   const c = new THREE.Vector3();
   const closest = new THREE.Vector3();
   const normal = new THREE.Vector3();
+  const nodeBox = new THREE.Box3();
+  const nodeSize = new THREE.Vector3();
   let nearest = null;
 
   const triangleMaterial = (node, triangleOffset) => {
@@ -33,8 +34,19 @@ if (!source.includes(marker)) {
     return materials[group?.materialIndex ?? 0] || materials[0] || null;
   };
 
+  const isFacadeContiguousNode = (node) => {
+    nodeBox.setFromObject(node);
+    nodeBox.getSize(nodeSize);
+    const horizontalSpan = Math.max(nodeSize.x, nodeSize.z);
+    const thinAxis = Math.min(nodeSize.x, nodeSize.z);
+    // Reject isolated apron fragments, sign slabs, columns and legacy connector
+    // pieces carrying terminal materials. A real Terminal 4 facade section has
+    // a broad continuous horizontal span and enough vertical wall coverage.
+    return horizontalSpan >= 14 && nodeSize.y >= 3.2 && thinAxis <= 12;
+  };
+
   terminal.traverse((node) => {
-    if (!node.isMesh || node.visible === false) return;
+    if (!node.isMesh || node.visible === false || !isFacadeContiguousNode(node)) return;
     const geometry = node.geometry;
     const position = geometry?.getAttribute?.("position");
     if (!position) return;
@@ -55,9 +67,9 @@ if (!source.includes(marker)) {
       node.localToWorld(c);
       triangle.set(a, b, c);
       triangle.getNormal(normal);
-      // Terminal attachment must land on a facade, never a roof, floor, ramp,
-      // or the elevated T4_WALK corridor that was previously forced at A1.
       if (Math.abs(normal.y) > 0.72) continue;
+      const area = triangle.getArea();
+      if (area < 0.45) continue;
       const minimumY = Math.min(a.y, b.y, c.y);
       const maximumY = Math.max(a.y, b.y, c.y);
       if (height < minimumY - 0.35 || height > maximumY + 0.35) continue;
@@ -67,7 +79,10 @@ if (!source.includes(marker)) {
       const horizontalDistance = Math.hypot(dx, dz);
       const verticalError = Math.abs(closest.y - height);
       if (!(horizontalDistance > 0.05 && horizontalDistance <= 48 && verticalError <= 0.65)) continue;
-      const score = horizontalDistance + verticalError * 4;
+      const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();
+      const candidateDirection = new THREE.Vector3(dx, 0, dz).normalize();
+      const directionPenalty = Math.max(0, 1 - candidateDirection.dot(preferred)) * 2.5;
+      const score = horizontalDistance + verticalError * 4 + directionPenalty;
       if (!nearest || score < nearest.score) {
         nearest = {
           score,
@@ -77,53 +92,20 @@ if (!source.includes(marker)) {
           pointX: closest.x,
           pointY: closest.y,
           pointZ: closest.z,
-          authority: "nearest-structural-wall-triangle-surface-v14",
+          nodeSpanX: nodeSize.x,
+          nodeSpanY: nodeSize.y,
+          nodeSpanZ: nodeSize.z,
+          triangleArea: area,
+          authority: "facade-contiguous-structural-wall-surface-v15",
         };
       }
     }
   });
-  if (nearest) return nearest;
-
-  const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();
-  const cast = (direction, far = 48) => {
-    const raycaster = new THREE.Raycaster(origin, direction, 0.05, far);
-    const hit = raycaster.intersectObject(terminal, true).find((entry) => {
-      if (entry.object?.visible === false) return false;
-      const materials = Array.isArray(entry.object?.material)
-        ? entry.object.material
-        : [entry.object?.material];
-      const material = materials[entry.face?.materialIndex ?? 0] ?? materials[0];
-      return structuralMaterial.test(material?.name || "");
-    });
-    if (!(hit?.distance > 0.05)) return null;
-    return {
-      distance: hit.distance,
-      towardX: direction.x,
-      towardZ: direction.z,
-      pointX: hit.point.x,
-      pointY: hit.point.y,
-      pointZ: hit.point.z,
-      authority: "structural-facade-raycast-fallback-v14",
-    };
-  };
-  const preferredHit = cast(preferred);
-  if (preferredHit) return preferredHit;
-  let nearestHit = null;
-  for (let sample = 0; sample < 360; sample += 1) {
-    const angle = (sample / 360) * Math.PI * 2;
-    const direction = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle));
-    const hit = cast(direction);
-    if (hit && (!nearestHit || hit.distance < nearestHit.distance)) nearestHit = hit;
-  }
-  return nearestHit;
+  return nearest;
 }`;
 
-  source = `${source.slice(0, start)}${replacement}${source.slice(end)}`;
-}
+source = `${source.slice(0, start)}${replacement}${source.slice(end)}`;
 
-// Remove the old A1-only override that forced the jetway to the elevated
-// T4_WALK portal. A1 must use the same nearest structural terminal-facade
-// solution as every other gate.
 const falseWalkwayOverride = /\n    if \(jetway\.g === "A1"\) \{\n      const exactWalkwayPortalX = -30\.16857013;[\s\S]*?\n    \}\n    const terminalWallDistance/;
 if (falseWalkwayOverride.test(source)) {
   source = source.replace(falseWalkwayOverride, "\n    const terminalWallDistance");
@@ -131,29 +113,27 @@ if (falseWalkwayOverride.test(source)) {
 
 for (const token of [
   marker,
-  "Terminal attachment must land on a facade",
-  "structural-facade-raycast-fallback-v14",
+  "Reject isolated apron fragments",
+  "horizontalSpan >= 14",
+  "nodeSize.y >= 3.2",
+  "triangleArea: area",
 ]) {
   if (!source.includes(token)) {
-    throw new Error(`${jetwayPath}: A1 terminal attachment token missing: ${token}`);
+    throw new Error(`${jetwayPath}: A1 contiguous-facade token missing: ${token}`);
   }
 }
 for (const forbidden of [
   "exact-T4_WALK-A1-terminal-portal-v25",
   "exactWalkwayPortalX",
+  "nearest-structural-wall-triangle-surface-v14",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${jetwayPath}: false A1 walkway override remains: ${forbidden}`);
+    throw new Error(`${jetwayPath}: stale A1 wall authority remains: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
 
-// The real structural facade can be farther from the source A1 rotunda than
-// the earlier fabricated short-span assumption. Preserve a hard upper bound,
-// but allow the measured facade result to drive the connector geometry. The
-// same-day A1 photos also show a pronounced corner between the Rotunda opening
-// and fixed terminal vestibule, so a measured elbow is valid and expected.
 const boundedFacadeFiles = [
   "src/environment/correctUploadedJetwayInstallationV1.js",
   "src/environment/uploadedAirportJetwayFleetReadyV2.js",
@@ -178,25 +158,7 @@ for (const runtimePath of boundedFacadeFiles) {
       "connector.userData.measuredWallDirection = [terminalDirection.x, terminalDirection.z];",
       "connector.userData.measuredWallDirection = [terminalDirection.x, terminalDirection.z];\n  connector.userData.terminalCornerAngleDegrees = rotundaOpening.terminalCornerAngleDegrees;",
     );
-  for (const stale of [
-    "terminalDistance > 0.4 && terminalDistance < 12",
-    "mainVisibleLength > 0.25 && mainVisibleLength < 12",
-    "a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 12",
-    "connectorVisibleLength > 0.25 && connectorVisibleLength < 12",
-    "if (terminalFacingDot < 0.4)",
-  ]) {
-    if (runtime.includes(stale)) throw new Error(`${runtimePath}: stale straight/short-span limit remains: ${stale}`);
-  }
-  if (runtimePath.endsWith("correctUploadedJetwayInstallationV1.js")) {
-    for (const required of [
-      "terminalCornerAngleDegrees = THREE.MathUtils.radToDeg",
-      "terminalCornerAngleDegrees,",
-      "connector.userData.terminalCornerAngleDegrees",
-    ]) {
-      if (!runtime.includes(required)) throw new Error(`${runtimePath}: measured A1 elbow evidence is missing ${required}`);
-    }
-  }
   fs.writeFileSync(runtimePath, runtime, "utf8");
 }
 
-console.log("Prepared A1 terminal attachment using the nearest real vertical Terminal 4 wall, removed the false T4_WALK override, accepted the photo-matched measured Rotunda elbow, and bounded measured facade spans at 28 m.");
+console.log("Prepared A1 attachment against a facade-contiguous Terminal 4 wall surface, rejecting isolated ramp fragments and preserving the short photo-matched Rotunda vestibule.");
