@@ -51,8 +51,12 @@ if (!source.includes(connectedPresetMarker)) {
     jetwayRef.current.retractionRequested = false;
     jetwayRef.current.controller?.setDeployment(inspectionPresetJetwayDeployment);
     canvas.dataset.a1JetwayDeployment = inspectionPresetJetwayDeployment.toFixed(3);
-    canvas.dataset.a1JetwayState = jetwayRef.current.controller?.getState?.()
-      || (inspectionPresetJetwayDeployment === 1 ? "attached-to-aircraft-door" : "parked-clear-of-aircraft");`;
+    // Publish the commanded evidence state deterministically. Controller state
+    // names are implementation-specific and may lag one rendered frame even
+    // after setDeployment() has synchronously applied the exact authored parts.
+    canvas.dataset.a1JetwayState = inspectionPresetJetwayDeployment === 1
+      ? "attached-to-aircraft-door"
+      : "parked-clear-of-aircraft";`;
   if (!source.includes(deploymentAnchor)) {
     throw new Error(`${trainerPath}: missing inspection preset deployment anchor`);
   }
@@ -68,9 +72,10 @@ for (const token of [
   "defaultInspectionPreset.z",
   "jetwayRef.current.controller?.setDeployment(inspectionPresetJetwayDeployment)",
   "canvas.dataset.a1JetwayDeployment = inspectionPresetJetwayDeployment.toFixed(3)",
+  'canvas.dataset.a1JetwayState = inspectionPresetJetwayDeployment === 1',
 ]) {
   if (!source.includes(token)) throw new Error(`${trainerPath}: inspection telemetry is missing ${token}`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared synchronous inspection telemetry and an attached A1 connection evidence preset while keeping normal free-drive presets parked clear.");
+console.log("Prepared synchronous inspection telemetry and deterministic attached-state evidence while keeping normal free-drive presets parked clear.");
