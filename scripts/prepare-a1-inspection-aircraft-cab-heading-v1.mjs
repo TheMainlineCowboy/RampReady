@@ -1,5 +1,7 @@
 import fs from "node:fs";
 
+await import(`./prepare-a1-authored-ground-contact-v1.mjs?authored-contact=${Date.now()}`);
+
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
@@ -28,11 +30,9 @@ if (source.includes(anchor)) {
   throw new Error(`${trainerPath}: authored-door registration anchor is missing`);
 }
 
-// The wheel-grounding preparer runs before this one and appends its own wheel
-// bounds and clearance calculations immediately after renderedDimensions.
-// Replace only the two canonical dimension lines so those wheel-contact checks
-// remain intact. The previous three-line anchor expected obsolete whole-aircraft
-// ground clearance and caused every current-head production build to fail.
+// The authored-contact preparer runs first and keeps its exact landing-gear
+// clearance calculation immediately after renderedDimensions. Replace only the
+// canonical dimension lines so contact-cluster grounding remains untouched.
 const boundsAnchor = `          const renderedBounds = new THREE.Box3().setFromObject(renderedAircraft);
           const renderedDimensions = renderedBounds.getSize(new THREE.Vector3());`;
 const yawNeutralBounds = `          const renderedBounds = new THREE.Box3().setFromObject(renderedAircraft);
@@ -49,7 +49,7 @@ const yawNeutralBounds = `          const renderedBounds = new THREE.Box3().setF
 if (source.includes(boundsAnchor)) {
   source = source.replace(boundsAnchor, yawNeutralBounds);
 } else if (!source.includes(`inspectionAircraftDimensionAuthority = "${dimensionAuthority}"`)) {
-  throw new Error(`${trainerPath}: rendered-aircraft dimension anchor is missing after wheel-contact grounding`);
+  throw new Error(`${trainerPath}: rendered-aircraft dimension anchor is missing after authored contact grounding`);
 }
 
 for (const token of [
@@ -63,8 +63,9 @@ for (const token of [
   "const renderedDimensionBounds = new THREE.Box3().setFromObject(renderedAircraft)",
   "sim.aircraft.rotation.y = renderedYawForDimensionCheck",
   `inspectionAircraftDimensionAuthority = "${dimensionAuthority}"`,
-  "landingGearWheelBoundsAfter",
-  "renderedGroundClearanceMeters = landingGearWheelBoundsAfter.min.y",
+  "const landingGearContactAfter = measureAuthoredLandingGearContact()",
+  "renderedGroundClearanceMeters = landingGearContactAfter.minimumY",
+  "authored-crj-lowest-geometry-contact-clusters-v2",
 ]) {
   if (!source.includes(token)) {
     throw new Error(`${trainerPath}: measured Cab-normal aircraft token is missing: ${token}`);
@@ -73,4 +74,4 @@ for (const token of [
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-current-head-browser-expectations-v1.mjs?current-head=${Date.now()}`);
-console.log("Aligned the complete inspection aircraft root to the measured A1 Cab normal and measured canonical CRJ dimensions without overwriting wheel-contact grounding evidence.");
+console.log("Aligned the complete inspection aircraft root to the measured A1 Cab normal and measured canonical CRJ dimensions without overwriting authored landing-gear contact evidence.");
