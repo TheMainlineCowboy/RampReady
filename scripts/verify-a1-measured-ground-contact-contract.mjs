@@ -100,19 +100,26 @@ requireTokens("endpointEvidence", [
 ]);
 
 requireTokens("dynamicCamera", [
-  "exact-world-wall-rotunda-cab-derived-camera-v1",
+  "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2",
   "inspectionCameraEndpointAuthority",
   "inspectionOverheadCameraEndpointAuthority",
   "uploadedJetwayA1FinalMeasuredWallWorldX",
   "uploadedJetwayA1FinalRotundaWorldX",
   "uploadedJetwayA1CabContactWorldX",
-  "exactA1CameraAxisLength > 8",
-  "exactA1CameraAxisLength < 70",
+  "sim.aircraft.userData.realAircraftObject",
+  "exactA1CameraAircraftBounds",
+  "exactA1CameraFrameBounds",
+  "exactA1CameraHorizontalExtent > 20",
+  "exactA1OverheadFrameBounds",
   "inspectionCameraEndpointPosition",
   "inspectionCameraEndpointTarget",
   "inspectionCameraEndpointWall",
   "inspectionCameraEndpointRotunda",
   "inspectionCameraEndpointCab",
+  "inspectionCameraEndpointAircraftBoundsMin",
+  "inspectionCameraEndpointAircraftBoundsMax",
+  "inspectionCameraEndpointFrameSize",
+  "inspectionOverheadCameraEndpointFrameSize",
 ]);
 
 requireTokens("heading", [
@@ -140,13 +147,16 @@ requireTokens("browser", [
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
   "inspectionAircraftLandingGearContactClusterCount",
   "inspectionAircraftGroundClearanceMeters",
-  "exact-world-wall-rotunda-cab-derived-camera-v1",
+  "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2",
   "inspectionCameraEndpointAuthority",
   "inspectionCameraEndpointPosition",
-  "inspectionCameraEndpointWall",
+  "inspectionCameraEndpointAircraftBoundsMin",
+  "inspectionCameraEndpointAircraftBoundsMax",
+  "inspectionCameraEndpointFrameSize",
+  "aircraftBoundsSize",
   "rotundaWallDistance",
   "a1-measured-ground-contact.png",
   "a1-measured-ground-contact.json",
 ]);
 
-console.log("Verified the explicit measured A1 jetway/CRJ ground-contact build order, endpoint-derived camera, authorities, browser publication, and rendered-evidence contract.");
+console.log("Verified the explicit measured A1 jetway/CRJ ground-contact build order, endpoint-and-aircraft-derived camera, authorities, browser publication, and rendered-evidence contract.");
