@@ -91,4 +91,4 @@ jobs:
             test-results/
             playwright-report/
           if-no-files-found: warn
-          retention-days: 3
+          retention-days: 1
