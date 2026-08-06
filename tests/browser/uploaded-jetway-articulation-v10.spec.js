@@ -1,6 +1,9 @@
 import fs from "node:fs";
 import { expect, test } from "@playwright/test";
 
+const STATIC_CAB_CLOSURE_AUTHORITY = "57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3";
+const STATIC_CAB_CLOSURE_EVIDENCE_AUTHORITY = "57-static-cab-endpoints-opaque-zero-open-area-no-authored-transform-v1";
+
 async function captureCanvas(page, path) {
   const box = await page.evaluate(() => {
     const canvas = document.querySelector("canvas.trainerCanvas");
@@ -54,12 +57,27 @@ async function captureInspectionPreset(page, presetId, outputPath) {
         && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01
         && Math.abs(Number(data?.inspectionAircraftGroundClearanceMeters)) <= 0.01;
     }, null, { timeout: 30_000, polling: 100 });
+  } else {
+    await page.waitForFunction(({ closureAuthority, evidenceAuthority }) => {
+      const data = document.querySelector("canvas.trainerCanvas")?.dataset;
+      return data?.terminal4UploadedJetwayStaticCabClosureAuthority === closureAuthority
+        && data?.terminal4UploadedJetwayStaticCabClosureEvidenceAuthority === evidenceAuthority
+        && Number(data?.terminal4UploadedJetwayStaticCabClosurePanelCount) === 57
+        && Number(data?.terminal4UploadedJetwayStaticCabClosureWindowCount) === 57
+        && Number(data?.terminal4UploadedJetwayStaticCabClosureSurroundPieceCount) === 228
+        && Number(data?.terminal4UploadedJetwayStaticCabClosureAuthoredNodeTransformCount) === 0
+        && Math.abs(Number(data?.terminal4UploadedJetwayStaticCabClosureDepthMeters) - 1.45) <= 1e-6
+        && Math.abs(Number(data?.terminal4UploadedJetwayStaticApronFacingOpenAreaMeters)) <= 1e-9;
+    }, {
+      closureAuthority: STATIC_CAB_CLOSURE_AUTHORITY,
+      evidenceAuthority: STATIC_CAB_CLOSURE_EVIDENCE_AUTHORITY,
+    }, { timeout: 30_000, polling: 100 });
   }
   await page.waitForTimeout(2_000);
   await captureCanvas(page, outputPath);
 }
 
-test("the exact supplied A1 jetway telescopes to the aircraft door in authored part order", async ({ page }) => {
+test("the exact supplied A1 jetway telescopes to the aircraft door and all 57 static Cab portals are opaque", async ({ page }) => {
   test.setTimeout(780_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   page.on("console", (message) => console.log(`[browser:${message.type()}] ${message.text()}`));
@@ -68,7 +86,7 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
   await page.getByRole("button", { name: "Drive tug / inspect airport" }).click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction(() => {
+  await page.waitForFunction(({ closureAuthority, evidenceAuthority }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return (
       data?.terminal4UploadedJetwayLoadState === "ready"
@@ -76,9 +94,20 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
       && data?.terminal4UploadedJetwayA1PartOrderValid === "true"
       && data?.inspectionAircraftPoseStored === "true"
       && data?.inspectionAircraftPoseApplied === "true"
+      && data?.terminal4UploadedJetwayStaticCabClosureAuthority === closureAuthority
+      && data?.terminal4UploadedJetwayStaticCabClosureEvidenceAuthority === evidenceAuthority
+      && Number(data?.terminal4UploadedJetwayStaticCabClosurePanelCount) === 57
+      && Number(data?.terminal4UploadedJetwayStaticCabClosureWindowCount) === 57
+      && Number(data?.terminal4UploadedJetwayStaticCabClosureSurroundPieceCount) === 228
+      && Number(data?.terminal4UploadedJetwayStaticCabClosureAuthoredNodeTransformCount) === 0
+      && Math.abs(Number(data?.terminal4UploadedJetwayStaticCabClosureDepthMeters) - 1.45) <= 1e-6
+      && Math.abs(Number(data?.terminal4UploadedJetwayStaticApronFacingOpenAreaMeters)) <= 1e-9
     ) || data?.environmentSource === "load-error"
       || data?.terminal4UploadedJetwayLoadState === "load-error";
-  }, null, { timeout: 90_000, polling: 100 });
+  }, {
+    closureAuthority: STATIC_CAB_CLOSURE_AUTHORITY,
+    evidenceAuthority: STATIC_CAB_CLOSURE_EVIDENCE_AUTHORITY,
+  }, { timeout: 90_000, polling: 100 });
 
   const readiness = await page.evaluate(() => ({
     runtime: { ...document.querySelector("canvas.trainerCanvas").dataset },
@@ -95,6 +124,16 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
   expect(runtime.terminal4UploadedJetwayArticulationAuthority).toBe(
     "user-supplied-airport-jetway-per-gate-telescoping-v10",
   );
+  expect(runtime.terminal4UploadedJetwayStaticCabClosureAuthority).toBe(STATIC_CAB_CLOSURE_AUTHORITY);
+  expect(runtime.terminal4UploadedJetwayStaticCabClosureEvidenceAuthority).toBe(
+    STATIC_CAB_CLOSURE_EVIDENCE_AUTHORITY,
+  );
+  expect(Number(runtime.terminal4UploadedJetwayStaticCabClosurePanelCount)).toBe(57);
+  expect(Number(runtime.terminal4UploadedJetwayStaticCabClosureWindowCount)).toBe(57);
+  expect(Number(runtime.terminal4UploadedJetwayStaticCabClosureSurroundPieceCount)).toBe(228);
+  expect(Number(runtime.terminal4UploadedJetwayStaticCabClosureAuthoredNodeTransformCount)).toBe(0);
+  expect(Number(runtime.terminal4UploadedJetwayStaticCabClosureDepthMeters)).toBeCloseTo(1.45, 6);
+  expect(Math.abs(Number(runtime.terminal4UploadedJetwayStaticApronFacingOpenAreaMeters))).toBeLessThanOrEqual(1e-9);
   expect(runtime.inspectionAircraftPoseStored).toBe("true");
   expect(runtime.inspectionAircraftPoseApplied).toBe("true");
   expect(runtime.inspectionAircraftPoseAuthority).toBe(
@@ -174,6 +213,16 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
 
   fs.writeFileSync("test-results/uploaded-jetway-a1-articulated-v10.json", `${JSON.stringify({
     authority: runtime.terminal4UploadedJetwayArticulationAuthority,
+    staticCabClosureAuthority: runtime.terminal4UploadedJetwayStaticCabClosureAuthority,
+    staticCabClosureEvidenceAuthority: runtime.terminal4UploadedJetwayStaticCabClosureEvidenceAuthority,
+    staticCabClosurePanelCount: Number(runtime.terminal4UploadedJetwayStaticCabClosurePanelCount),
+    staticCabClosureWindowCount: Number(runtime.terminal4UploadedJetwayStaticCabClosureWindowCount),
+    staticCabClosureSurroundPieceCount: Number(runtime.terminal4UploadedJetwayStaticCabClosureSurroundPieceCount),
+    staticCabClosureAuthoredNodeTransformCount: Number(
+      runtime.terminal4UploadedJetwayStaticCabClosureAuthoredNodeTransformCount,
+    ),
+    staticCabClosureDepthMeters: Number(runtime.terminal4UploadedJetwayStaticCabClosureDepthMeters),
+    staticApronFacingOpenAreaMeters: Number(runtime.terminal4UploadedJetwayStaticApronFacingOpenAreaMeters),
     sourceReach,
     target,
     extension,
