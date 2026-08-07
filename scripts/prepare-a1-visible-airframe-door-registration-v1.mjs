@@ -7,15 +7,15 @@ const marker = "visible-airframe-forward-left-door-registration-v1";
 const alreadyPrepared = source.includes(marker);
 
 if (!alreadyPrepared) {
-  // The terminal-half-plane step intentionally expands the code immediately after
-  // renderedDoorBefore, while the grounding step inserts the Y relocation between
-  // the stable X/Z equations. Match that grounded X/Y/Z block so visible-airframe
-  // registration cannot accidentally discard wheel-contact grounding.
+  // The terminal-half-plane step expands the code immediately after
+  // renderedDoorBefore, while authored-ground-contact replaces the temporary
+  // wheel-name grounding with exact lowest-geometry contact clusters. Match the
+  // final grounded X/Y/Z block that actually reaches this preparer.
   const relocationAnchor = `          const aircraftRelocationX = exactA1CabContactX - renderedDoorBefore.x;
-          const aircraftRelocationY = -landingGearWheelBoundsBefore.min.y;
+          const aircraftRelocationY = -landingGearContactBefore.minimumY;
           const aircraftRelocationZ = exactA1CabContactZ - renderedDoorBefore.z;`;
   if (!source.includes(relocationAnchor)) {
-    throw new Error(`${trainerPath}: grounded authored-door X/Y/Z relocation equations are missing before visible-airframe correction`);
+    throw new Error(`${trainerPath}: final authored-contact X/Y/Z relocation equations are missing before visible-airframe correction`);
   }
 
   const relocationReplacement = `          // ${marker}
@@ -25,7 +25,7 @@ if (!alreadyPrepared) {
           // away. Measure the rendered mesh footprint and derive the CRJ forward-left
           // passenger door from the established geometry: 7.32 m aft of the visible nose
           // and 1.34 m left of the visible centerline. Preserve the independently measured
-          // wheel-contact Y relocation exactly.
+          // authored landing-gear contact Y relocation exactly.
           const measureVisibleAirframeDoor = () => {
             sim.aircraft.updateMatrixWorld(true);
             renderedAircraft.updateMatrixWorld(true);
@@ -91,7 +91,7 @@ if (!alreadyPrepared) {
           };
           const visibleDoorBefore = measureVisibleAirframeDoor();
           const aircraftRelocationX = exactA1CabContactX - visibleDoorBefore.point.x;
-          const aircraftRelocationY = -landingGearWheelBoundsBefore.min.y;
+          const aircraftRelocationY = -landingGearContactBefore.minimumY;
           const aircraftRelocationZ = exactA1CabContactZ - visibleDoorBefore.point.z;`;
   source = source.replace(relocationAnchor, relocationReplacement);
 
@@ -142,7 +142,7 @@ for (const token of [
   "maximumForwardProjection - 7.32",
   "centerlineLeftProjection + 1.34",
   "const visibleDoorBefore = measureVisibleAirframeDoor()",
-  "const aircraftRelocationY = -landingGearWheelBoundsBefore.min.y",
+  "const aircraftRelocationY = -landingGearContactBefore.minimumY",
   "const visibleDoorAfter = measureVisibleAirframeDoor()",
   "A1 visible CRJ penetrates the measured terminal wall",
   `inspectionAircraftVisibleDoorAuthority = "${marker}"`,
@@ -156,4 +156,4 @@ for (const token of [
 fs.writeFileSync(trainerPath, source, "utf8");
 console.log(alreadyPrepared
   ? "Visible-airframe A1 door registration was already present and remains valid."
-  : "Registered the visible rendered CRJ forward-left door to A1 from actual mesh bounds, preserved wheel-contact grounding, rejected terminal penetration, and retained the old Object3D-local door only as compatibility telemetry.");
+  : "Registered the visible rendered CRJ forward-left door to A1 from actual mesh bounds, preserved authored landing-gear grounding, rejected terminal penetration, and retained the old Object3D-local door only as compatibility telemetry.");
