@@ -32,7 +32,7 @@ const awaitedBuild = `  const sourcePlacedJetways = buildSourcePlacedTerminal4Je
     || Number(sourcePlacedJetways.userData.uploadedJetwayCount) !== 58
     || Number(sourcePlacedJetways.userData.uploadedJetwayMeasuredTerminalConnectorCount) !== 58
     || Number(sourcePlacedJetways.userData.uploadedJetwayVerifiedModelCount) !== 58
-    || sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-per-gate-telescoping-v10"
+    || sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-per-gate-telescoping-v11-a1-only"
     || Number(sourcePlacedJetways.userData.uploadedJetwayStaticArticulatedGateCount) !== 57
     || Number(sourcePlacedJetways.userData.uploadedJetwayA1PredictedDoorGapMeters) > 0.05
     || Number(sourcePlacedJetways.userData.uploadedJetwayA1ActualDoorGapMeters) > 0.05
@@ -44,6 +44,11 @@ const awaitedBuild = `  const sourcePlacedJetways = buildSourcePlacedTerminal4Je
 if (!terminalSource.includes("await sourcePlacedJetways.userData.uploadedJetwayReady")) {
   if (!terminalSource.includes(buildAnchor)) throw new Error(`${terminalPath}: source-placed jetway build anchor is missing`);
   terminalSource = terminalSource.replace(buildAnchor, awaitedBuild);
+} else {
+  terminalSource = terminalSource.replaceAll(
+    'sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-per-gate-telescoping-v10"',
+    'sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-per-gate-telescoping-v11-a1-only"',
+  );
 }
 
 const evidenceAnchor = "  environment.userData.authoredTerminal4JetwaySourceGeometryMode = sourcePlacedJetways.userData.sourceGeometryMode;";
@@ -74,6 +79,7 @@ for (const token of [
   "await sourcePlacedJetways.userData.uploadedJetwayReady",
   'uploadedJetwayLoadState !== "ready"',
   "uploadedJetwayVerifiedModelCount) !== 58",
+  "user-supplied-airport-jetway-per-gate-telescoping-v11-a1-only",
   "authoredTerminal4UploadedJetwayLoadState",
   "authoredTerminal4UploadedJetwayCount",
   "authoredTerminal4UploadedJetwayConnectorCount",
@@ -89,4 +95,4 @@ for (const token of [
 }
 fs.writeFileSync(terminalPath, terminalSource, "utf8");
 
-console.log("Prepared awaited uploaded-airport jetway readiness: one canonical loader import and all 58 source placements, measured terminal connectors and decoded model clones must complete before Terminal 4 becomes ready.");
+console.log("Prepared awaited uploaded-airport jetway readiness: A1 alone may telescope; all 57 static exact-GLB gates remain source-rigid while all 58 placements and measured terminal connectors complete before Terminal 4 becomes ready.");
