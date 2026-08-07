@@ -63,6 +63,21 @@ const replacement = `function buildMeasuredA1Connector(THREE, fleet, placement, 
     height,
   );
 
+  // Keep the Rotunda-side collar physically closed after this migration replaces
+  // the earlier connector function. Telemetry must never claim a closed apron-
+  // facing opening while the generated shell still has a visible dark aperture.
+  const rotundaClosurePoint = collarPoint.clone().addScaledVector(connectorVector, 0.24);
+  addBox(
+    THREE,
+    connector,
+    materials.shell,
+    "UploadedAirportJetwayA1RotundaVestibuleClosurePanel",
+    [width - 0.3, height - 0.3, 0.12],
+    [rotundaClosurePoint.x, collarPoint.y, rotundaClosurePoint.z],
+    Math.atan2(connectorVector.x, connectorVector.z),
+    false,
+  );
+
   const frame = addClosedShellSegment(THREE, connector, materials, {
     prefix: "UploadedAirportJetwayA1ShortTerminalVestibule",
     startX: startPoint.x,
@@ -126,6 +141,7 @@ for (const forbidden of [
 }
 for (const required of [
   "UploadedAirportJetwayA1ShortTerminalVestibule",
+  "UploadedAirportJetwayA1RotundaVestibuleClosurePanel",
   "UploadedAirportJetwayA1TerminalSolidBulkhead",
   "singleStraightSolidVestibule",
   "apronFacingOpenAreaMeters = 0",
@@ -138,4 +154,4 @@ for (const required of [
 }
 
 await writeFile(targetUrl, source);
-console.log("Prepared A1 as one short straight solid white terminal vestibule overlapping both the authored Rotunda and real terminal wall; removed kinked transition/corner/interior-plane geometry.");
+console.log("Prepared A1 as one short straight solid white terminal vestibule overlapping both the authored Rotunda and real terminal wall, with both Rotunda and terminal ends physically closed; removed kinked transition/corner/interior-plane geometry.");
