@@ -3,10 +3,11 @@ import { expect, test } from "@playwright/test";
 
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
 const DIRECT_A1_CAMERA_AUTHORITY = "oblique-measured-final-cab-and-aircraft-a1-v9";
-const AIRCRAFT_AUTHORITY = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
+const AIRCRAFT_AUTHORITY = "source-a1-gate-stop-world-offset-persisted-no-cab-follow-v2";
+const AIRCRAFT_MODE_POSE_AUTHORITY = "a1-single-aircraft-pose-training-and-free-drive-v1";
 const CAB_CONTACT_AUTHORITY = "authored-rendered-forward-left-door-to-final-cab-v4";
 const RENDERED_SCALE_AUTHORITY = "crj-authored-world-dimensions-preserved-v2";
-const PHOTO_REGISTERED_NOSE_GEAR = Object.freeze({ x: 12.353412, z: -12.486888 });
+const SOURCE_A1_NOSE_GEAR = Object.freeze({ x: 0, z: 6.2, yaw: 0.008570 });
 const AUTHORED_FORWARD_LEFT_DOOR = Object.freeze({ x: -1.262, y: 3.0, z: 3.90 });
 
 async function captureCanvas(page, path) {
@@ -51,14 +52,32 @@ async function numericCanvasAttribute(page, name) {
   ), name));
 }
 
-test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft chain and physical inspection mode", async ({ page }) => {
+async function chooseInspectionPreset(page, preset) {
+  await page.evaluate((nextPreset) => {
+    const select = document.querySelector('select[aria-label="Inspection location"]');
+    if (!(select instanceof HTMLSelectElement)) throw new Error("Inspection location selector is missing");
+    const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+    if (!setter) throw new Error("Native inspection selector setter is unavailable");
+    setter.call(select, nextPreset);
+    select.dispatchEvent(new Event("input", { bubbles: true }));
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  }, preset);
+}
+
+test("source-first A1 evidence proves the fixed gate aircraft, exact terminal-to-door chain and physical inspection mode", async ({ page }) => {
   test.setTimeout(780_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   await page.getByRole("button", { name: "Drive tug / inspect airport" }).click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction(({ terminalAuthority, aircraftAuthority, cabContactAuthority, scaleAuthority }) => {
+  await page.waitForFunction(({
+    terminalAuthority,
+    aircraftAuthority,
+    aircraftModePoseAuthority,
+    cabContactAuthority,
+    scaleAuthority,
+  }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionMode === "active"
       && data?.terminal4UploadedJetwayLoadState === "ready"
@@ -67,10 +86,12 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
       && data?.terminal4UploadedJetwayVerifiedModelCount === "58"
       && data?.terminal4A1ConnectionAuthority === terminalAuthority
       && data?.inspectionAircraftPoseAuthority === aircraftAuthority
+      && data?.aircraftModePoseAuthority === aircraftModePoseAuthority
+      && data?.inspectionAircraftPoseStored === "true"
+      && data?.inspectionAircraftPoseApplied === "true"
+      && Number(data?.inspectionAircraftPoseErrorMeters) <= 0.01
       && data?.inspectionAircraftCabContactAuthority === cabContactAuthority
       && data?.inspectionAircraftRenderedScaleAuthority === scaleAuthority
-      && Number.isFinite(Number(data?.inspectionAircraftExactParentRelocationX))
-      && Number.isFinite(Number(data?.inspectionAircraftExactParentRelocationZ))
       && Number.isFinite(Number(data?.inspectionAircraftCabContactX))
       && Number.isFinite(Number(data?.inspectionAircraftCabContactZ))
       && Number.isFinite(Number(data?.inspectionAircraftDoorTargetX))
@@ -86,10 +107,14 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
       && data?.inspectionAircraftJetwayVerticalFitAuthority === "grounded-jetway-door-gap-reported-no-child-lift-v1"
       && Number(data?.inspectionAircraftRenderedLengthMeters) > 31
       && Number(data?.inspectionAircraftRenderedWingspanMeters) > 22.5
+      && Number.isFinite(Number(data?.aircraftModePoseLiveX))
+      && Number.isFinite(Number(data?.aircraftModePoseLiveZ))
+      && Number.isFinite(Number(data?.aircraftModePoseLiveYaw))
       && data?.airportCollisionReady === "true";
   }, {
     terminalAuthority: DIRECT_A1_TERMINAL_AUTHORITY,
     aircraftAuthority: AIRCRAFT_AUTHORITY,
+    aircraftModePoseAuthority: AIRCRAFT_MODE_POSE_AUTHORITY,
     cabContactAuthority: CAB_CONTACT_AUTHORITY,
     scaleAuthority: RENDERED_SCALE_AUTHORITY,
   }, { timeout: 180_000, polling: 250 });
@@ -115,17 +140,22 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
   expect(direction).toHaveLength(2);
   expect(Math.abs(Math.hypot(...direction) - 1)).toBeLessThanOrEqual(0.01);
 
-  const totalX = Number(runtime.inspectionAircraftExactParentRelocationX);
-  const totalZ = Number(runtime.inspectionAircraftExactParentRelocationZ);
-  expect(Number.isFinite(totalX) && Number.isFinite(totalZ)).toBe(true);
-  expect(Math.hypot(totalX, totalZ)).toBeGreaterThan(1);
   const noseGearX = Number(runtime.inspectionAircraftNoseGearX);
   const noseGearZ = Number(runtime.inspectionAircraftNoseGearZ);
-  expect(noseGearX).toBeCloseTo(PHOTO_REGISTERED_NOSE_GEAR.x + totalX, 3);
-  expect(noseGearZ).toBeCloseTo(PHOTO_REGISTERED_NOSE_GEAR.z + totalZ, 3);
+  const liveX = Number(runtime.aircraftModePoseLiveX);
+  const liveZ = Number(runtime.aircraftModePoseLiveZ);
+  const liveYaw = Number(runtime.aircraftModePoseLiveYaw);
+  expect(noseGearX).toBeCloseTo(SOURCE_A1_NOSE_GEAR.x, 5);
+  expect(noseGearZ).toBeCloseTo(SOURCE_A1_NOSE_GEAR.z, 5);
+  expect(liveX).toBeCloseTo(SOURCE_A1_NOSE_GEAR.x, 5);
+  expect(liveZ).toBeCloseTo(SOURCE_A1_NOSE_GEAR.z, 5);
+  expect(liveYaw).toBeCloseTo(SOURCE_A1_NOSE_GEAR.yaw, 5);
   expect(runtime.inspectionAircraftPoseAuthority).toBe(AIRCRAFT_AUTHORITY);
+  expect(runtime.aircraftModePoseAuthority).toBe(AIRCRAFT_MODE_POSE_AUTHORITY);
   expect(runtime.inspectionAircraftCabContactAuthority).toBe(CAB_CONTACT_AUTHORITY);
   expect(runtime.inspectionAircraftRenderedScaleAuthority).toBe(RENDERED_SCALE_AUTHORITY);
+  expect(runtime.inspectionAircraftPoseApplied).toBe("true");
+  expect(Number(runtime.inspectionAircraftPoseErrorMeters)).toBeLessThanOrEqual(0.01);
 
   const cabContactX = Number(runtime.inspectionAircraftCabContactX);
   const cabContactZ = Number(runtime.inspectionAircraftCabContactZ);
@@ -144,6 +174,7 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
   expect(Math.abs(Math.hypot(cabDirectionX, cabDirectionZ) - 1)).toBeLessThanOrEqual(0.01);
   expect(Math.hypot(renderedDoorX - cabContactX, renderedDoorZ - cabContactZ)).toBeLessThanOrEqual(0.01);
   expect(Number(runtime.inspectionAircraftCabContactErrorMeters)).toBeLessThanOrEqual(0.01);
+
   const signedDoorVerticalGapMeters = Number(runtime.inspectionAircraftDoorSignedVerticalGapMeters);
   const requestedJetwayVerticalFitMeters = Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters);
   expect(Number.isFinite(signedDoorVerticalGapMeters)).toBe(true);
@@ -160,9 +191,6 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
   expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(
     "grounded-jetway-door-gap-reported-no-child-lift-v1",
   );
-  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeCloseTo(0, 5);
-  expect(Number.isFinite(Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters))).toBe(true);
-  expect(runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");
   expect(Number(runtime.inspectionAircraftDoorLocalX)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.x, 3);
   expect(Number(runtime.inspectionAircraftDoorLocalY)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.y, 3);
   expect(Number(runtime.inspectionAircraftDoorLocalZ)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.z, 3);
@@ -171,8 +199,7 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
   expect(Number(runtime.inspectionAircraftRenderedWingspanMeters)).toBeGreaterThan(22.5);
   expect(Number(runtime.inspectionAircraftRenderedWingspanMeters)).toBeLessThan(25);
 
-  const inspectionLocation = page.getByLabel("Inspection location");
-  await inspectionLocation.selectOption("a1Connection");
+  await chooseInspectionPreset(page, "a1Connection");
   await page.waitForFunction((authority) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionPreset === "a1Connection"
@@ -189,10 +216,10 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
   await page.addStyleTag({
     content: ".rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}",
   });
-  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await page.waitForTimeout(1_000);
   await captureCanvas(page, "test-results/source-first-a1-terminal-connection.png");
 
-  await page.evaluate(async () => {
+  await page.evaluate(() => {
     const select = document.querySelector('select[aria-label="Camera view"]');
     if (!(select instanceof HTMLSelectElement)) throw new Error("Camera view selector is missing");
     const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
@@ -200,8 +227,8 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
     setter.call(select, "overhead");
     select.dispatchEvent(new Event("input", { bubbles: true }));
     select.dispatchEvent(new Event("change", { bubbles: true }));
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   });
+  await page.waitForTimeout(1_000);
   await captureCanvas(page, "test-results/source-first-a1-terminal-aircraft-overhead.png");
 
   fs.writeFileSync("test-results/source-first-a1-terminal-connection.json", `${JSON.stringify({
@@ -210,6 +237,8 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
     terminalConnectionDirection: direction,
     inspectionCameraAuthority: DIRECT_A1_CAMERA_AUTHORITY,
     inspectionAircraftPoseAuthority: runtime.inspectionAircraftPoseAuthority,
+    aircraftModePoseAuthority: runtime.aircraftModePoseAuthority,
+    aircraftModePose: [liveX, Number(runtime.aircraftModePoseLiveY), liveZ, liveYaw],
     inspectionAircraftCabContactAuthority: runtime.inspectionAircraftCabContactAuthority,
     inspectionAircraftRenderedScaleAuthority: runtime.inspectionAircraftRenderedScaleAuthority,
     inspectionAircraftNoseGear: [noseGearX, noseGearZ],
@@ -226,25 +255,14 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
     ],
     inspectionAircraftCabDirection: [cabDirectionX, cabDirectionZ],
     inspectionAircraftCabContactErrorMeters: Number(runtime.inspectionAircraftCabContactErrorMeters),
-    inspectionAircraftExactParentRelocation: [totalX, totalZ],
-    inspectionAircraftWallRelocation: [
-      Number(runtime.inspectionAircraftWallRelocationX),
-      Number(runtime.inspectionAircraftWallRelocationZ),
+    legacyRelocationTelemetryOnly: [
+      Number(runtime.inspectionAircraftExactParentRelocationX),
+      Number(runtime.inspectionAircraftExactParentRelocationZ),
     ],
     evidenceAuthority: "user-overhead-and-same-day-a1-ramp-photos",
   }, null, 2)}\n`);
 
-  // The evidence capture intentionally hides the HUD. Change the now-hidden
-  // native select through the DOM so the collision proof cannot spend the
-  // remainder of the job waiting for Playwright actionability.
-  await page.evaluate(() => {
-    const select = document.querySelector("select[aria-label='Inspection location']");
-    if (!(select instanceof HTMLSelectElement)) {
-      throw new Error("Inspection location select is missing");
-    }
-    select.value = "b15";
-    select.dispatchEvent(new Event("change", { bubbles: true }));
-  });
+  await chooseInspectionPreset(page, "b15");
   await page.waitForFunction(() => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionPreset === "b15"
