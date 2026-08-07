@@ -189,7 +189,7 @@ for (const token of [
   "const exactA1JointCenterX",
   "const exactA1JointSpan",
   "const exactA1JointUnitX",
-  "const exactA1JointSideX",
+  "let exactA1JointSideX",
   "const exactA1JointSideOnCosine",
   "inspectionCameraEndpointJointSideOnCosine",
   "const exactA1JointApronDistance",
