@@ -4,12 +4,13 @@ import {
 
 const SOURCE_REGISTERED_A1_ELBOW_AUTHORITY = "photo-registered-a1-fixed-wall-rotunda-rendered-door-target-elbow-v4";
 const TARGET_DIRECTION_AUTHORITY = "authored-rendered-forward-left-door-at-source-a1-stop-v2";
-const TELESCOPING_AUTHORITY = "a1-authored-tunnels-fitted-to-rendered-source-door-v1";
+const TELESCOPING_AUTHORITY = "a1-authored-tunnels-fitted-to-rendered-source-door-v2";
 const SOURCE_MODEL_YAW_DEGREES = 0.491;
 const AUTHORED_DOOR_LOCAL_X = -1.262;
 const AUTHORED_DOOR_LOCAL_Z = 3.90;
-const MAXIMUM_FINAL_CAB_ERROR_METERS = 0.06;
+const MAXIMUM_FINAL_CAB_ERROR_METERS = 0.02;
 const MAXIMUM_TELESCOPE_CORRECTION_METERS = 5.0;
+const MAXIMUM_ENDPOINT_ANGULAR_CORRECTION_RADIANS = 0.03;
 
 function wrappedAngle(THREE, radians) {
   return THREE.MathUtils.euclideanModulo(radians + Math.PI, Math.PI * 2) - Math.PI;
@@ -95,6 +96,34 @@ function measureLowContactWorld(THREE, fleet, model) {
   return { minimumY, count, center, span };
 }
 
+function preserveRotundaAfterAnchorYaw(THREE, group, fleet, model, rotunda, anchor, fixedRotunda, yawDelta) {
+  anchor.rotation.y += yawDelta;
+  anchor.updateMatrix();
+  group.updateWorldMatrix(true, true);
+  fleet.updateWorldMatrix(true, true);
+  model.updateWorldMatrix(true, true);
+  const rotatedRotunda = centerInFleet(THREE, fleet, rotunda);
+  anchor.position.x += fixedRotunda.x - rotatedRotunda.x;
+  anchor.position.z += fixedRotunda.z - rotatedRotunda.z;
+  anchor.updateMatrix();
+  group.updateWorldMatrix(true, true);
+  fleet.updateWorldMatrix(true, true);
+  model.updateWorldMatrix(true, true);
+  const preserved = centerInFleet(THREE, fleet, rotunda);
+  const error = Math.hypot(preserved.x - fixedRotunda.x, preserved.z - fixedRotunda.z);
+  if (error > 1e-6) throw new Error(`A1 rendered-door pivot moved the fixed Rotunda by ${error} m`);
+  return { preserved, error };
+}
+
+function applyTelescope(tunnelB, tunnelC, cab, correction) {
+  tunnelB.position.z += correction / 3;
+  tunnelC.position.z += correction * 2 / 3;
+  cab.position.z += correction;
+  tunnelB.updateMatrix();
+  tunnelC.updateMatrix();
+  cab.updateMatrix();
+}
+
 export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, placements) {
   const legacy = enforceLegacySourceTargetElbow(THREE, group, fleet, placements);
   const placement = placements.find((entry) => entry.gate === "A1");
@@ -120,6 +149,7 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   const targetDistance = targetDirection.length();
   if (!(targetDistance > 20 && targetDistance < 35)) throw new Error(`A1 rendered source-door target distance is invalid: ${targetDistance}`);
   targetDirection.normalize();
+  const targetYaw = Math.atan2(targetDirection.x, targetDirection.z);
 
   const tunnelACenter = centerInFleet(THREE, fleet, tunnelA);
   const currentDirection = tunnelACenter.clone().sub(fixedRotunda);
@@ -127,56 +157,82 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   if (currentDirection.lengthSq() < 0.25) throw new Error("A1 rendered-door bridge direction is degenerate");
   currentDirection.normalize();
   const currentYaw = Math.atan2(currentDirection.x, currentDirection.z);
-  const targetYaw = Math.atan2(targetDirection.x, targetDirection.z);
   const yawDelta = wrappedAngle(THREE, targetYaw - currentYaw);
-  anchor.rotation.y += yawDelta;
-  anchor.updateMatrix();
-  group.updateWorldMatrix(true, true);
-  fleet.updateWorldMatrix(true, true);
-  model.updateWorldMatrix(true, true);
+  const firstPivot = preserveRotundaAfterAnchorYaw(THREE, group, fleet, model, rotunda, anchor, fixedRotunda, yawDelta);
+  const preservedRotunda = firstPivot.preserved;
 
-  const rotatedRotunda = centerInFleet(THREE, fleet, rotunda);
-  anchor.position.x += fixedRotunda.x - rotatedRotunda.x;
-  anchor.position.z += fixedRotunda.z - rotatedRotunda.z;
-  anchor.updateMatrix();
-  group.updateWorldMatrix(true, true);
-  fleet.updateWorldMatrix(true, true);
-  model.updateWorldMatrix(true, true);
+  const tunnelDirectionAfterFirstPivot = centerInFleet(THREE, fleet, tunnelA).sub(preservedRotunda);
+  tunnelDirectionAfterFirstPivot.y = 0;
+  tunnelDirectionAfterFirstPivot.normalize();
+  const tunnelAxisTargetCosine = tunnelDirectionAfterFirstPivot.dot(targetDirection);
+  if (tunnelAxisTargetCosine < 0.99999) throw new Error(`A1 rendered-door tunnel heading alignment failed: ${tunnelAxisTargetCosine}`);
 
-  const preservedRotunda = centerInFleet(THREE, fleet, rotunda);
-  const rotundaPreservationError = Math.hypot(preservedRotunda.x - fixedRotunda.x, preservedRotunda.z - fixedRotunda.z);
-  if (rotundaPreservationError > 1e-6) throw new Error(`A1 rendered-door pivot moved the fixed Rotunda by ${rotundaPreservationError} m`);
-
-  const bridgeDirection = centerInFleet(THREE, fleet, tunnelA).sub(preservedRotunda);
-  bridgeDirection.y = 0;
-  bridgeDirection.normalize();
-  const targetAlignmentCosine = bridgeDirection.dot(targetDirection);
-  if (targetAlignmentCosine < 0.99999) throw new Error(`A1 rendered-door heading alignment failed: ${targetAlignmentCosine}`);
-
-  // Measure the existing exact Cab endpoint after the final heading pivot, then
-  // change only the authored telescoping part translations. Tunnel A/Rotunda and
-  // the terminal connector remain fixed. This keeps the supplied hierarchy and
-  // makes the Cab meet the real rendered door rather than moving the airplane.
-  const beforeCabContact = endpointBandCenter(THREE, verticesInFleet(THREE, fleet, cab), preservedRotunda, bridgeDirection);
-  const beforeReach = beforeCabContact.clone().sub(preservedRotunda).dot(bridgeDirection);
+  // First solve longitudinal reach. The exact Cab is slightly asymmetric around
+  // Tunnel A's nominal centerline, so this pass alone can leave a few cm of
+  // lateral error even when the tunnel axis is mathematically perfect.
+  const beforeCabContact = endpointBandCenter(THREE, verticesInFleet(THREE, fleet, cab), preservedRotunda, targetDirection);
+  const beforeReach = beforeCabContact.clone().sub(preservedRotunda).dot(targetDirection);
   const telescopeCorrection = targetDistance - beforeReach;
   if (!Number.isFinite(telescopeCorrection) || Math.abs(telescopeCorrection) > MAXIMUM_TELESCOPE_CORRECTION_METERS) {
     throw new Error(`A1 rendered-door telescope correction is invalid: ${telescopeCorrection}`);
   }
-  tunnelB.position.z += telescopeCorrection / 3;
-  tunnelC.position.z += telescopeCorrection * 2 / 3;
-  cab.position.z += telescopeCorrection;
-  tunnelB.updateMatrix();
-  tunnelC.updateMatrix();
-  cab.updateMatrix();
+  applyTelescope(tunnelB, tunnelC, cab, telescopeCorrection);
   group.updateWorldMatrix(true, true);
   fleet.updateWorldMatrix(true, true);
   model.updateWorldMatrix(true, true);
 
-  const finalRotunda = centerInFleet(THREE, fleet, rotunda);
+  // Now use the ACTUAL Cab endpoint—not Tunnel A's nominal axis—as the final
+  // angular authority. Rotate the complete supplied bridge a tiny amount around
+  // the already photo-registered Rotunda, then re-center the Rotunda exactly.
+  // This removes the residual lateral miss without moving the building, plane,
+  // Rotunda, or any isolated authored child rotation.
+  let finalRotunda = centerInFleet(THREE, fleet, rotunda);
+  let cabAfterFirstTelescope = endpointBandCenter(THREE, verticesInFleet(THREE, fleet, cab), finalRotunda, targetDirection);
+  const cabVectorAfterFirstTelescope = cabAfterFirstTelescope.clone().sub(finalRotunda);
+  cabVectorAfterFirstTelescope.y = 0;
+  if (cabVectorAfterFirstTelescope.lengthSq() < 1) throw new Error("A1 rendered-door Cab endpoint vector is degenerate");
+  const cabYawAfterFirstTelescope = Math.atan2(cabVectorAfterFirstTelescope.x, cabVectorAfterFirstTelescope.z);
+  const endpointAngularCorrection = wrappedAngle(THREE, targetYaw - cabYawAfterFirstTelescope);
+  if (Math.abs(endpointAngularCorrection) > MAXIMUM_ENDPOINT_ANGULAR_CORRECTION_RADIANS) {
+    throw new Error(`A1 rendered-door endpoint angular correction is excessive: ${endpointAngularCorrection}`);
+  }
+  const endpointPivot = preserveRotundaAfterAnchorYaw(
+    THREE,
+    group,
+    fleet,
+    model,
+    rotunda,
+    anchor,
+    fixedRotunda,
+    endpointAngularCorrection,
+  );
+  finalRotunda = endpointPivot.preserved;
+
+  // A rotation around the Rotunda changes the endpoint's projection by a tiny
+  // amount. Close that residual only by telescoping B/C/Cab along their authored
+  // axis, then measure the exact mesh endpoint again.
+  let cabAfterEndpointPivot = endpointBandCenter(THREE, verticesInFleet(THREE, fleet, cab), finalRotunda, targetDirection);
+  const reachAfterEndpointPivot = cabAfterEndpointPivot.clone().sub(finalRotunda).dot(targetDirection);
+  const residualTelescopeCorrection = targetDistance - reachAfterEndpointPivot;
+  if (!Number.isFinite(residualTelescopeCorrection) || Math.abs(residualTelescopeCorrection) > 0.25) {
+    throw new Error(`A1 rendered-door residual telescope correction is excessive: ${residualTelescopeCorrection}`);
+  }
+  applyTelescope(tunnelB, tunnelC, cab, residualTelescopeCorrection);
+  group.updateWorldMatrix(true, true);
+  fleet.updateWorldMatrix(true, true);
+  model.updateWorldMatrix(true, true);
+
+  finalRotunda = centerInFleet(THREE, fleet, rotunda);
+  const rotundaPreservationError = Math.hypot(finalRotunda.x - fixedRotunda.x, finalRotunda.z - fixedRotunda.z);
+  if (rotundaPreservationError > 1e-6) throw new Error(`A1 final rendered-door fit moved the fixed Rotunda by ${rotundaPreservationError} m`);
   const finalCabContact = endpointBandCenter(THREE, verticesInFleet(THREE, fleet, cab), finalRotunda, targetDirection);
   const finalCabError = Math.hypot(finalCabContact.x - targetPoint.x, finalCabContact.z - targetPoint.z);
   const finalReach = finalCabContact.clone().sub(finalRotunda).dot(targetDirection);
+  const finalCabDirection = finalCabContact.clone().sub(finalRotunda);
+  finalCabDirection.y = 0;
+  finalCabDirection.normalize();
+  const targetAlignmentCosine = finalCabDirection.dot(targetDirection);
+  if (targetAlignmentCosine < 0.999999) throw new Error(`A1 final Cab endpoint direction is not aligned to the rendered door: ${targetAlignmentCosine}`);
   if (finalCabError > MAXIMUM_FINAL_CAB_ERROR_METERS) {
     throw new Error(`A1 exact Cab missed the actual rendered source-gate door by ${finalCabError} m`);
   }
@@ -193,11 +249,14 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   const cabWorld = fleet.localToWorld(finalCabContact.clone());
   const rotundaWorld = fleet.localToWorld(finalRotunda.clone());
   const lowContact = measureLowContactWorld(THREE, fleet, model);
+  const totalTelescopeCorrection = telescopeCorrection + residualTelescopeCorrection;
 
   group.userData.uploadedJetwayA1SourceLockedElbowAuthority = SOURCE_REGISTERED_A1_ELBOW_AUTHORITY;
   group.userData.uploadedJetwayA1TargetDirectionAuthority = TARGET_DIRECTION_AUTHORITY;
   group.userData.uploadedJetwayA1TelescopingAuthority = TELESCOPING_AUTHORITY;
   group.userData.uploadedJetwayA1TargetAlignmentCosine = targetAlignmentCosine;
+  group.userData.uploadedJetwayA1TunnelAxisTargetCosine = tunnelAxisTargetCosine;
+  group.userData.uploadedJetwayA1EndpointAngularCorrectionRadians = endpointAngularCorrection;
   group.userData.uploadedJetwayA1SourceDoorTargetX = targetPoint.x;
   group.userData.uploadedJetwayA1SourceDoorTargetZ = targetPoint.z;
   group.userData.uploadedJetwayA1SourceDoorTargetWorldX = targetWorld.x;
@@ -214,7 +273,8 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   group.userData.uploadedJetwayA1RenderedDoorLocalX = AUTHORED_DOOR_LOCAL_X;
   group.userData.uploadedJetwayA1RenderedDoorLocalZ = AUTHORED_DOOR_LOCAL_Z;
   group.userData.uploadedJetwayA1RenderedDoorSourceModelYawDegrees = SOURCE_MODEL_YAW_DEGREES;
-  group.userData.uploadedJetwayA1TelescopeCorrectionMeters = telescopeCorrection;
+  group.userData.uploadedJetwayA1TelescopeCorrectionMeters = totalTelescopeCorrection;
+  group.userData.uploadedJetwayA1ResidualTelescopeCorrectionMeters = residualTelescopeCorrection;
   group.userData.uploadedJetwayA1FinalCabReachMeters = finalReach;
   group.userData.uploadedJetwayA1TargetDoorDistanceMeters = targetDistance;
   group.userData.uploadedJetwayA1PredictedContactDistanceMeters = finalReach;
@@ -236,9 +296,12 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
     targetDirectionAuthority: TARGET_DIRECTION_AUTHORITY,
     telescopingAuthority: TELESCOPING_AUTHORITY,
     yawDeltaRadians: yawDelta,
+    endpointAngularCorrectionRadians: endpointAngularCorrection,
     targetAlignmentCosine,
+    tunnelAxisTargetCosine,
     targetDistanceMeters: targetDistance,
-    telescopeCorrectionMeters: telescopeCorrection,
+    telescopeCorrectionMeters: totalTelescopeCorrection,
+    residualTelescopeCorrectionMeters: residualTelescopeCorrection,
     finalCabErrorMeters: finalCabError,
     finalCabReachMeters: finalReach,
     cornerAngleDegrees,
