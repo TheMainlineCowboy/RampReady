@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { expect, test } from "@playwright/test";
 
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
-const DIRECT_A1_CAMERA_AUTHORITY = "oblique-measured-final-cab-and-aircraft-a1-v9";
+const DIRECT_A1_CAMERA_AUTHORITY = "fixed-terminal-wall-rotunda-joint-evidence-a1-v10";
 const AIRCRAFT_AUTHORITY = "source-a1-gate-stop-world-offset-persisted-no-cab-follow-v3";
 const AIRCRAFT_MODE_POSE_AUTHORITY = "a1-single-aircraft-pose-training-and-free-drive-v1";
 const CAB_CONTACT_AUTHORITY = "authored-rendered-forward-left-door-to-final-cab-v4";
