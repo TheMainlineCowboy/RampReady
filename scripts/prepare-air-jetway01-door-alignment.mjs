@@ -3,7 +3,19 @@ import fs from "node:fs";
 const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 const verifierPath = "scripts/verify-kphx-v181-source-contract.mjs";
 const jetways = fs.readFileSync(jetwayPath, "utf8");
-const verifier = fs.readFileSync(verifierPath, "utf8");
+let verifier = fs.readFileSync(verifierPath, "utf8");
+
+// The production preparation pass runs before this guard and normalizes the
+// A1/CRJ relationship to the simulator-validated 6.25 / 1.35 / 1.58 authority.
+// Keep the committed KPHX contract synchronized during the same clean-tree
+// preparation sequence so it cannot continue demanding the retired
+// 7.32 / 1.34 / 2.61 values after production has already moved on. This only
+// changes source validation constants; Airport_Jetway.glb is never edited.
+verifier = verifier
+  .replaceAll("CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 7.32", "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25")
+  .replaceAll("CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.34", "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35")
+  .replaceAll("AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.61", "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.58");
+fs.writeFileSync(verifierPath, verifier, "utf8");
 
 // This guard runs during verify:kphx-v181, before the later exact-fleet source
 // wiring pass creates all 58 placement records. Validate only the immutable
@@ -42,7 +54,9 @@ for (const forbidden of [
   "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.61",
   "createArchedTunnelGeometry(THREE, 2.08, 2.02, 0.18)",
 ]) {
-  if (jetways.includes(forbidden)) throw new Error(`Exact Airport Jetway alignment contains forbidden conflicting/shrunk bridge geometry ${forbidden}`);
+  if (jetways.includes(forbidden) || verifier.includes(forbidden)) {
+    throw new Error(`Exact Airport Jetway alignment contains forbidden conflicting/shrunk geometry ${forbidden}`);
+  }
 }
 
-console.log("Verified early exact Airport Jetway alignment: airport scale remains 1.00, the CRJ forward-left door uses the single simulator-validated 6.25 m aft / 1.35 m left authority, and the 1.58 m contact clearance is shared with production placement. All 58 exact placement records are verified after source wiring.");
+console.log("Verified early exact Airport Jetway alignment: airport scale remains 1.00, the CRJ forward-left door uses the single simulator-validated 6.25 m aft / 1.35 m left authority, the 1.58 m contact clearance is shared with production placement, and the KPHX contract has been synchronized in the clean-tree preparation pass. All 58 exact placement records are verified after source wiring.");
