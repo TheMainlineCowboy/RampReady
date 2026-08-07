@@ -173,12 +173,8 @@ jobs:
         with:
           name: pr140-close-a1-evidence-${{ steps.pr.outputs.sha }}
           path: |
-            test-results/a1-close-readiness-diagnostic.json
-            test-results/a1-close-subview-*.json
-            test-results/a1-close-subview-diagnostic.json
-            test-results/a1-terminal-joint-close.png
-            test-results/a1-bogie-contact-close.png
-            test-results/a1-terminal-joint-bogie-subviews.json
+            retained-evidence/
+            test-results/
             playwright-report/
           if-no-files-found: warn
           retention-days: 1
