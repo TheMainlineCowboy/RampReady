@@ -53,3 +53,5 @@ The uploaded base was a single large React/Three component that technically work
 - reset clears runtime state
 - project is scaffolded as a standard Vite React app
 - first pass uses a lightweight CRJ placeholder model instead of the huge embedded aircraft payload so deployment and iteration stay simple
+
+<!-- deployment trigger: verified Terminal 4 jetway repair -->
