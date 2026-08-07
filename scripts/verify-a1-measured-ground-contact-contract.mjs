@@ -191,7 +191,6 @@ requireTokens("contactEvidence", [
 requireTokens("closeEvidence", [
   "A1 close evidence shows the exact 2.4 m terminal vestibule and zero-lift grounded bogie",
   "inspectionCameraEndpointJointCenter",
-  "inspectionCameraEndpointJointSideOnCosine",
   "inspectionCameraEndpointBogieContactCenter",
   "inspectionCameraEndpointBogieAircraftOppositionCosine",
   "distance3(terminalCameraTarget, terminalJointCenter)",
