@@ -4,6 +4,7 @@ import concourseB from "../src/environment/kphxV181/concourseB.js";
 import {
   computeUploadedJetwayArticulation,
   UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY,
+  UPLOADED_AIRPORT_JETWAY_STATIC_RIGID_AUTHORITY,
   UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS,
 } from "../src/environment/uploadedAirportJetwayArticulationV10.js";
 
@@ -92,15 +93,18 @@ const placements = [...concourseA.jetways, ...concourseB.jetways].map((jetway) =
 if (placements.length !== 58) throw new Error(`Expected 58 exact-jetway placements, received ${placements.length}`);
 if (placements.filter((placement) => placement.gate !== "A1").length !== 57) throw new Error("Expected 57 static exact-jetway placements");
 if (UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum > -14.08) {
-  throw new Error(`Exact jetway cannot reach the shortest authored parked pose: ${UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum}`);
+  throw new Error(`A1 exact jetway articulation limit unexpectedly changed: ${UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum}`);
 }
 
-let maximumStaticError = 0;
+let maximumStaticOffset = 0;
 let minimumPartSeparation = Infinity;
 for (const placement of placements) {
   const articulation = computeUploadedJetwayArticulation(placement, sourceContactDistance);
-  if (articulation.authority !== UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY) {
-    throw new Error(`${placement.gate} used the wrong articulation authority`);
+  const expectedAuthority = placement.gate === "A1"
+    ? UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY
+    : UPLOADED_AIRPORT_JETWAY_STATIC_RIGID_AUTHORITY;
+  if (articulation.authority !== expectedAuthority) {
+    throw new Error(`${placement.gate} used the wrong articulation authority: ${articulation.authority}`);
   }
   const centers = {
     Rotunda: sourcePartCenters.Rotunda + articulation.partOffsets.Rotunda,
@@ -117,7 +121,7 @@ for (const placement of placements) {
   ];
   minimumPartSeparation = Math.min(minimumPartSeparation, ...separations);
   if (separations.some((separation) => separation <= 0)) {
-    throw new Error(`${placement.gate} exact tunnel sections inverted while telescoping: ${JSON.stringify(centers)}`);
+    throw new Error(`${placement.gate} exact tunnel sections inverted: ${JSON.stringify(centers)}`);
   }
   if (placement.gate === "A1") {
     if (!(articulation.extension > 3 && articulation.extension < 5)) {
@@ -131,11 +135,15 @@ for (const placement of placements) {
       throw new Error("A1 exact tunnel sections are not telescoped in authored order");
     }
   } else {
-    maximumStaticError = Math.max(maximumStaticError, Math.abs(articulation.contactError));
+    const offsets = Object.values(articulation.partOffsets).map((value) => Math.abs(Number(value)));
+    maximumStaticOffset = Math.max(maximumStaticOffset, ...offsets);
+    if (maximumStaticOffset > 1e-9 || articulation.extension !== 0 || articulation.rigidSourceHierarchy !== true) {
+      throw new Error(`${placement.gate} mutated the supplied static GLB hierarchy: ${JSON.stringify(articulation)}`);
+    }
   }
 }
-if (maximumStaticError > 0.001) throw new Error(`Static exact jetway contact error is ${maximumStaticError} m`);
-if (minimumPartSeparation < 0.45) {
-  throw new Error(`Exact parked jetways telescope too deeply; minimum part-center separation is ${minimumPartSeparation} m`);
+if (maximumStaticOffset > 1e-9) throw new Error(`Static exact jetway source-part offset is ${maximumStaticOffset} m`);
+if (minimumPartSeparation < 5) {
+  throw new Error(`Exact static source hierarchy lost authored section spacing; minimum part-center separation is ${minimumPartSeparation} m`);
 }
-console.log(`Verified direct exact-GLB articulation for all 58 Terminal 4 gates: 57 static gate poses, individually controlled A1 door alignment, ordered authored sections, ${maximumStaticError.toFixed(6)} m maximum static contact error, and ${minimumPartSeparation.toFixed(3)} m minimum section separation.`);
+console.log(`Verified exact supplied Terminal 4 jetway articulation: A1 alone telescopes to its aircraft door; all 57 static gates preserve the rigid source GLB hierarchy with ${maximumStaticOffset.toFixed(6)} m maximum source-part offset and ${minimumPartSeparation.toFixed(3)} m minimum section separation.`);
