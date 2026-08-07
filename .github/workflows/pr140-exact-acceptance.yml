@@ -107,7 +107,7 @@ jobs:
             fi
           done
           grep -Fq 'source-a1-parking-heading-authored-door-registration-v2' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
-          grep -Fq 'Math.abs(Number(data?.inspectionAircraftYaw) - 0.008569641) <= 0.001' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'Math.abs(Number(data?.inspectionAircraftYaw) - 0.008569567) <= 0.001' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'source-a1-parking-heading-authored-door-registration-v2' tests/browser/kphx-ground-runtime.spec.js
           mkdir -p retained-evidence/generated-browser-specs
           cp tests/browser/a1-ground-contact-evidence.spec.js retained-evidence/generated-browser-specs/
