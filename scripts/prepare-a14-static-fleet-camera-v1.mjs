@@ -2,7 +2,8 @@ import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
-const A1_CAMERA_AUTHORITY = "oblique-measured-terminal-corner-a1-v8";
+const A1_CAMERA_AUTHORITY = "oblique-measured-final-cab-and-aircraft-a1-v9";
+const VISUAL_BRIDGE_AUTHORITY = "real-final-inspection-preset-callback-v2";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const exactPreset = `  a14: Object.freeze({
@@ -42,9 +43,26 @@ source = source.replace(
   CANONICAL_ROUTE_AUTHORITY,
 );
 source = source.replace(
-  /oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+/g,
+  /oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+|oblique-measured-final-cab-and-aircraft-a1-v\d+/g,
   A1_CAMERA_AUTHORITY,
 );
+
+// The earlier inspection-control stage runs against a freshly regenerated
+// trainer, before INSPECTION_PRESETS/moveInspectionToPreset exist, so it exposes
+// a temporary self-contained bridge. At this final camera stage every real
+// preset exists. Replace the temporary bridge completely so browser evidence
+// uses the same callback/state/camera definitions as the visible app control.
+const temporaryBridgePattern = /  useEffect\(\(\) => \{\n    window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ = \(presetId\) => \{[\s\S]*?visual-evidence-source-gate-presets-v8[\s\S]*?\n    return \(\) => \{ delete window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__; \};\n  \}, \[\]\);/;
+const finalBridge = `  // ${VISUAL_BRIDGE_AUTHORITY}\n  useEffect(() => {\n    window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ = (presetId) => {\n      if (!Object.prototype.hasOwnProperty.call(INSPECTION_PRESETS, presetId)) return null;\n      moveInspectionToPreset(presetId);\n      return presetId;\n    };\n    return () => { delete window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__; };\n  }, [moveInspectionToPreset]);`;
+if (temporaryBridgePattern.test(source)) {
+  source = source.replace(temporaryBridgePattern, finalBridge);
+} else if (!source.includes(VISUAL_BRIDGE_AUTHORITY)) {
+  const advanceAnchor = "  const advance = useCallback(() => {";
+  if (!source.includes(advanceAnchor) || !source.includes("const moveInspectionToPreset = useCallback")) {
+    throw new Error(`${trainerPath}: final visual bridge cannot resolve the real inspection callback/advance anchor`);
+  }
+  source = source.replace(advanceAnchor, `${finalBridge}\n\n${advanceAnchor}`);
+}
 
 for (const token of [
   'cameraPosition: Object.freeze([184.0, 16.5, -52.0])',
@@ -53,8 +71,14 @@ for (const token of [
   "preset.cameraAuthority || (preset.cameraPosition",
   `"${A1_CAMERA_AUTHORITY}"`,
   CANONICAL_ROUTE_AUTHORITY,
+  VISUAL_BRIDGE_AUTHORITY,
+  "moveInspectionToPreset(presetId)",
+  "}, [moveInspectionToPreset]);",
 ]) {
-  if (!source.includes(token)) throw new Error(`${trainerPath}: fixed A1/A14 camera preparation is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${trainerPath}: fixed final inspection camera preparation is missing ${token}`);
+}
+if (source.includes("visual-evidence-source-gate-presets-v8")) {
+  throw new Error(`${trainerPath}: temporary hard-coded visual evidence presets survived final camera preparation`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
@@ -63,4 +87,4 @@ fs.writeFileSync(trainerPath, source, "utf8");
 // registration here. The photo-registered Rotunda finalizer deliberately runs
 // later, immediately before Vite bundles the fully migrated production runtime.
 await import(`./prepare-terminal4-jetway-source-registration-v1.mjs?terminal4-registration=${Date.now()}`);
-console.log("Prepared the A1/A14 inspection cameras and exact Terminal 4 source-coordinate registration. Final A1 Rotunda/wall placement is deferred until after the complete grounding/readiness migration stack.");
+console.log("Prepared the final A1/A14 inspection cameras, bound visual evidence to the real inspection preset callback, and applied exact Terminal 4 source-coordinate registration. Final A1 Rotunda/wall placement remains deferred until after the complete grounding/readiness migration stack.");
