@@ -42,12 +42,7 @@ const sourceLockEvidenceBlock = `${magnitudeBlock}
           const sourceYawPreserved = group.userData.uploadedJetwayA1SourceYawPreserved === true;
           const terminalSideIndependent = group.userData.uploadedJetwayA1TerminalSideIndependentFromTunnelAxis === true;
           const passengerPassageBlocked = group.userData.uploadedJetwayA1PassengerPassageCrossSectionBlocked === true;
-          const apronFacingOpenAreaMeters = Number(group.userData.uploadedJetwayA1ApronFacingOpenAreaMeters ?? Infinity);
-          const bogieGroundClearanceMeters = Number(group.userData.uploadedJetwayBogieGroundClearanceMeters ?? Infinity);
-          const bogieGroundContactAuthority = group.userData.uploadedJetwayBogieGroundContactAuthority || "missing";
-          const bogieGroundContactPointCount = Number(group.userData.uploadedJetwayBogieGroundContactPointCount ?? -1);
-          const bogieGroundContactClusterCount = Number(group.userData.uploadedJetwayBogieGroundContactClusterCount ?? -1);
-          const bogieGroundHorizontalContactSpanMeters = Number(group.userData.uploadedJetwayBogieGroundHorizontalContactSpanMeters ?? -1);`;
+          const apronFacingOpenAreaMeters = Number(group.userData.uploadedJetwayA1ApronFacingOpenAreaMeters ?? Infinity);`;
 if (!source.includes("const sourceLockedA1Authority")) {
   if (!source.includes(magnitudeBlock)) throw new Error(`${readinessPath}: terminal direction magnitude anchor is missing`);
   source = source.replace(magnitudeBlock, sourceLockEvidenceBlock);
@@ -58,8 +53,9 @@ if (!source.includes("const sourceLockedA1Authority")) {
 source = source.replace(/\n\s*\|\| a1PortalAlignmentError > 1e-6/g, "");
 source = source.replace(/\n\s*\|\| a1PortalAlignmentError > [0-9.eE+-]+/g, "");
 
-// Replace the old hand-tuned 0.04–0.10 m vertical-offset range with direct
-// authored-geometry ramp contact when that legacy gate is still present.
+// Replace the old hand-tuned 0.04–0.10 m vertical-offset range when it still
+// survives. The later grounding migration already owns the detailed evidence
+// declarations; this finalizer must consume them, not redeclare them.
 source = source.replace(
   /\n\s*\|\| !\(bogieTireCorrection > 0\.04 && bogieTireCorrection < 0\.1\)/g,
   `
