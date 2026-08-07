@@ -13,6 +13,13 @@ const protectedSourcePaths = Object.freeze([
   "src/environment/authoredKphxPhotoGround.js",
   "src/environment/terminal4LowerFacadeSkinV9.js",
   "src/environment/terminal4JetwaySimulatorPolishV13.js",
+  "src/environment/staticJetwayPortalClosures.js",
+  "tests/browser/a1-ground-contact-evidence.spec.js",
+  "tests/browser/a1-terminal-joint-bogie-subviews.spec.js",
+  "tests/browser/full-airport-inspection.spec.js",
+  "tests/browser/kphx-ground-runtime.spec.js",
+  "tests/browser/source-first-a1-repair.spec.js",
+  "tests/browser/uploaded-jetway-articulation-v10.spec.js",
   "scripts/build-production.mjs",
 ]);
 const committedSources = new Map(protectedSourcePaths.map((sourcePath) => [
@@ -74,19 +81,11 @@ try {
   await runNode("scripts/prepare-a1-vector-wall-lock-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-terminal-relocation-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-vertical-registration-v1.mjs");
-  // Grounding is an explicit production stage, not a hidden side effect of the
-  // final heading preparer. Measure the supplied A1 parent against the ramp,
-  // validate readiness from that measured clearance, and ground the authored
-  // CRJ from separated low-geometry contact clusters before lifecycle wiring.
   await runNode("scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs");
   await runNode("scripts/prepare-a1-bogie-readiness-v1.mjs");
   await runNode("scripts/prepare-a1-authored-ground-contact-v1.mjs");
   await runNode("scripts/prepare-a1-endpoint-browser-evidence-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-pose-declaration-v1.mjs");
-  // Capture the complete grounded X/Y/Z/yaw pose before the first lifecycle
-  // pass. The older lifecycle anchor only recognized X/Z registration and could
-  // skip declaration after authored Y grounding, then reference an undefined
-  // pre-inspection pose or lose the landing-gear height.
   await runNode("scripts/prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
   await runNode("scripts/prepare-a1-rotunda-vestibule-closure-v1.mjs");
@@ -96,22 +95,9 @@ try {
   await runNode("scripts/prepare-terminal4-b-concourse-extension-v17.mjs");
   await runNode("scripts/prepare-terminal4-attachment-evidence-v14.mjs");
   await runNode("scripts/prepare-terminal4-lower-facade-fit-accounting-v1.mjs");
-  // Several A1 lifecycle preparers replace the inspection toggle block. Reapply
-  // the synchronous preset telemetry last so the browser gate observes the
-  // exact production behavior rather than timing out on a missing authority tag.
   await runNode("scripts/prepare-inspection-preset-telemetry.mjs");
-  // Fail closed if historical preparers reintroduce obsolete pose or facade
-  // telemetry, then reapply the measured aircraft-pose lifecycle after that
-  // final mutation. The exact-head screenshots must show the aircraft at the
-  // Cab, not merely publish a stored contact position while rendering it at the
-  // training start.
   await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
-  // Translation-only door registration can report zero error while preserving
-  // the training-start heading and leaving the aircraft visibly across the
-  // terminal walkway. Align the complete aircraft root to the measured Cab
-  // normal before the final rendered-door measurement and relocation. This
-  // final step also asserts that authored contact-cluster grounding survived.
   await runNode("scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
