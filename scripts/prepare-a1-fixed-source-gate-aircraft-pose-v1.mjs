@@ -3,8 +3,10 @@ import fs from "node:fs";
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
-const authority = "source-a1-gate-stop-persisted-no-cab-follow-v1";
-const marker = "fixed-source-a1-gate-aircraft-pose-v1";
+const authority = "source-a1-gate-stop-world-offset-persisted-no-cab-follow-v2";
+const marker = "fixed-source-a1-gate-aircraft-pose-v2";
+const maximumDoorTargetErrorMeters = 0.06;
+const maximumCabContactErrorMeters = 0.08;
 
 const poseBlock = `          const inspectionAircraftPose = Object.freeze({
             x: sim.aircraft.position.x,
@@ -13,16 +15,14 @@ const poseBlock = `          const inspectionAircraftPose = Object.freeze({
             yaw: sim.aircraft.rotation.y,
           });`;
 const fixedPoseBlock = `          // ${marker}
-          // The A1 stand is authored at the source parking stop. Earlier code
-          // moved the airplane to wherever the incorrectly oriented Cab ended
-          // up, which could make door-contact telemetry perfect while the
-          // entire jetway ran underneath the elevated corridor. The gate/plane
-          // is authoritative: store and apply the source A1 nose-gear stop and
-          // let the Rotunda/bridge rotate toward it.
+          // Source A1 parking is local (0,0), while Terminal 4 and the trainer's
+          // authored A1 stop are deliberately shifted +6.2 m in scene Z. Keep
+          // the airplane at that real fixed stop; never move it to wherever an
+          // incorrectly oriented jetway Cab happens to end.
           const sourceGateInspectionPose = Object.freeze({
             x: 0,
             y: sim.aircraft.position.y,
-            z: 0,
+            z: NOSE_START_Z,
             yaw: A1_INSPECTION_AIRCRAFT_YAW,
           });
           sim.aircraft.position.set(
@@ -34,8 +34,8 @@ const fixedPoseBlock = `          // ${marker}
           sim.aircraft.updateMatrixWorld(true);
           renderedAircraft.updateMatrixWorld(true);
           const renderedDoorAtSourceGate = renderedAircraft.localToWorld(authoredDoorLocal.clone());
-          const sourceGateDoorTargetX = Number(exactA1Fleet?.userData?.uploadedJetwayA1SourceDoorTargetX);
-          const sourceGateDoorTargetZ = Number(exactA1Fleet?.userData?.uploadedJetwayA1SourceDoorTargetZ);
+          const sourceGateDoorTargetX = Number(exactA1Fleet?.userData?.uploadedJetwayA1SourceDoorTargetWorldX);
+          const sourceGateDoorTargetZ = Number(exactA1Fleet?.userData?.uploadedJetwayA1SourceDoorTargetWorldZ);
           const sourceGateDoorTargetErrorMeters = [sourceGateDoorTargetX, sourceGateDoorTargetZ].every(Number.isFinite)
             ? Math.hypot(
               renderedDoorAtSourceGate.x - sourceGateDoorTargetX,
@@ -46,6 +46,12 @@ const fixedPoseBlock = `          // ${marker}
             renderedDoorAtSourceGate.x - exactA1CabContactX,
             renderedDoorAtSourceGate.z - exactA1CabContactZ,
           );
+          if (!(sourceGateDoorTargetErrorMeters <= ${maximumDoorTargetErrorMeters})) {
+            throw new Error(\`A1 fixed source-stop rendered door missed its exact target by \${sourceGateDoorTargetErrorMeters} m\`);
+          }
+          if (!(sourceGateCabSeparationMeters <= ${maximumCabContactErrorMeters})) {
+            throw new Error(\`A1 exact Cab missed the fixed source-stop rendered door by \${sourceGateCabSeparationMeters} m\`);
+          }
           const inspectionAircraftPose = sourceGateInspectionPose;
           renderer.domElement.dataset.inspectionAircraftFixedSourceGateAuthority = "${authority}";
           renderer.domElement.dataset.inspectionAircraftNoseGearX = sourceGateInspectionPose.x.toFixed(6);
@@ -56,17 +62,23 @@ const fixedPoseBlock = `          // ${marker}
           renderer.domElement.dataset.inspectionAircraftSourceGateDoorTargetZ = Number.isFinite(sourceGateDoorTargetZ) ? sourceGateDoorTargetZ.toFixed(6) : "missing";
           renderer.domElement.dataset.inspectionAircraftSourceGateDoorTargetErrorMeters = Number.isFinite(sourceGateDoorTargetErrorMeters) ? sourceGateDoorTargetErrorMeters.toFixed(6) : "missing";
           renderer.domElement.dataset.inspectionAircraftCabContactErrorMeters = sourceGateCabSeparationMeters.toFixed(6);
-          renderer.domElement.dataset.inspectionAircraftCabContactAuthority = "source-gate-fixed-aircraft-does-not-follow-cab-v1";`;
+          renderer.domElement.dataset.inspectionAircraftCabContactAuthority = "source-gate-fixed-aircraft-exact-rendered-door-contact-v2";`;
 
 if (!source.includes(marker)) {
-  if (!source.includes(poseBlock)) {
-    throw new Error(`${trainerPath}: persisted A1 inspection pose block is missing`);
+  if (source.includes("fixed-source-a1-gate-aircraft-pose-v1")) {
+    // A previous prepared copy may already contain the v1 block. Replace the
+    // complete stored-pose section rather than layering another aircraft move.
+    const v1Pattern = /          \/\/ fixed-source-a1-gate-aircraft-pose-v1[\s\S]*?          renderer\.domElement\.dataset\.inspectionAircraftCabContactAuthority = "source-gate-fixed-aircraft-does-not-follow-cab-v1";/;
+    if (!v1Pattern.test(source)) throw new Error(`${trainerPath}: v1 fixed-source aircraft block could not be replaced safely`);
+    source = source.replace(v1Pattern, fixedPoseBlock.trimStart());
+  } else {
+    if (!source.includes(poseBlock)) throw new Error(`${trainerPath}: persisted A1 inspection pose block is missing`);
+    source = source.replace(poseBlock, fixedPoseBlock);
   }
-  source = source.replace(poseBlock, fixedPoseBlock);
 }
 
-source = source.replaceAll(
-  'const A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";',
+source = source.replace(
+  /const A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "[^"]+";/,
   `const A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "${authority}";`,
 );
 source = source.replaceAll(
@@ -77,21 +89,29 @@ source = source.replaceAll(
   'inspectionAircraftPoseAuthority = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2"',
   `inspectionAircraftPoseAuthority = "${authority}"`,
 );
+source = source.replaceAll(
+  'source-a1-gate-stop-persisted-no-cab-follow-v1',
+  authority,
+);
 
 for (const token of [
   marker,
   `A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "${authority}"`,
   "const sourceGateInspectionPose = Object.freeze({",
-  "x: 0,",
-  "z: 0,",
+  "z: NOSE_START_Z,",
   "renderedDoorAtSourceGate",
-  "uploadedJetwayA1SourceDoorTargetX",
-  "uploadedJetwayA1SourceDoorTargetZ",
-  "inspectionAircraftSourceGateDoorTargetErrorMeters",
-  'inspectionAircraftCabContactAuthority = "source-gate-fixed-aircraft-does-not-follow-cab-v1"',
+  "uploadedJetwayA1SourceDoorTargetWorldX",
+  "uploadedJetwayA1SourceDoorTargetWorldZ",
+  `sourceGateDoorTargetErrorMeters <= ${maximumDoorTargetErrorMeters}`,
+  `sourceGateCabSeparationMeters <= ${maximumCabContactErrorMeters}`,
+  'inspectionAircraftCabContactAuthority = "source-gate-fixed-aircraft-exact-rendered-door-contact-v2"',
 ]) {
-  if (!source.includes(token)) throw new Error(`${trainerPath}: fixed source-gate aircraft pose is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${trainerPath}: fixed world-offset source-gate aircraft pose is missing ${token}`);
+}
+if (source.includes("fixed-source-a1-gate-aircraft-pose-v1")) {
+  throw new Error(`${trainerPath}: obsolete world-Z=0 A1 source-stop patch remains`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared A1 inspection aircraft at the authored source gate stop (nose gear 0/0) and persisted that pose across reset/mode toggles. The airplane no longer follows an incorrectly oriented jetway Cab.");
+await import(`./prepare-a1-rendered-door-finalizer-v4.mjs?rendered-door=${Date.now()}`);
+console.log("Prepared A1 inspection aircraft at the real +6.2 m world-Z source stop and required the exact Cab to meet the actual authored rendered forward-left door without relocating either the airplane or the real terminal/Rotunda joint.");
