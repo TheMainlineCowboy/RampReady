@@ -14,6 +14,8 @@ const protectedSourcePaths = Object.freeze([
   "src/environment/terminal4LowerFacadeSkinV9.js",
   "src/environment/terminal4JetwaySimulatorPolishV13.js",
   "src/environment/staticJetwayPortalClosures.js",
+  "src/environment/registerStaticJetwayFleetToFacadeV1.js",
+  "src/environment/sourceRegisteredA1RotundaElbowV3.js",
   "tests/browser/a1-ground-contact-evidence.spec.js",
   "tests/browser/a1-terminal-joint-bogie-subviews.spec.js",
   "tests/browser/full-airport-inspection.spec.js",
@@ -91,21 +93,20 @@ try {
   await runNode("scripts/prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
   await runNode("scripts/prepare-a1-rotunda-vestibule-closure-v1.mjs");
-  // Do NOT add the former synthetic static Cab closure boxes. They were giant
-  // detached panels in the live scene and were never part of the supplied GLB.
-  // Do NOT force the 57 static gates into artificial 11.9-13.85 m retracted
-  // lengths either; the exact source hierarchy now remains rigid at those gates.
+  // The former static Cab closure pass generated large detached box fronts, and
+  // the static parking pass stretched the source hierarchy apart. Neither is
+  // allowed in the production geometry anymore.
   await runNode("scripts/prepare-terminal4-ramp-facade-v16.mjs");
   await runNode("scripts/prepare-terminal4-b-concourse-extension-v17.mjs");
   await runNode("scripts/prepare-terminal4-attachment-evidence-v14.mjs");
   await runNode("scripts/prepare-terminal4-lower-facade-fit-accounting-v1.mjs");
   await runNode("scripts/prepare-inspection-preset-telemetry.mjs");
-  await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs");
   await runNode("scripts/prepare-a1-fixed-source-gate-aircraft-pose-v1.mjs");
   await runNode("scripts/prepare-static-jetway-source-placement-integrity-v1.mjs");
   await runNode("scripts/prepare-a1-unified-aircraft-pose-v1.mjs");
+  await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
   buildError = error;
