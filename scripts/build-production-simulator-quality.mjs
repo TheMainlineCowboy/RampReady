@@ -75,7 +75,9 @@ try {
   await runNode("scripts/prepare-a1-terminal-authority-idempotence-v1.mjs");
   await runNode("scripts/prepare-a1-photo-registered-stop-v1.mjs");
   await runNode("scripts/prepare-a1-compact-source-wall-distance-v1.mjs");
+  await runNode("scripts/prepare-a1-readiness-compact-wall-v1.mjs");
   await runNode("scripts/prepare-a1-rigid-parent-orientation-v2.mjs");
+  await runNode("scripts/prepare-a1-rigid-compact-span-v1.mjs");
   await runNode("scripts/prepare-a1-complete-endpoint-axis-v1.mjs");
   await runNode("scripts/prepare-a1-terminal-relocation-v4.mjs");
   await runNode("scripts/prepare-a1-vector-wall-lock-v1.mjs");
