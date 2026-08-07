@@ -107,6 +107,7 @@ try {
   await runNode("scripts/prepare-static-jetway-source-placement-integrity-v1.mjs");
   await runNode("scripts/prepare-a1-unified-aircraft-pose-v1.mjs");
   await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
+  await runNode("scripts/prepare-a1-final-marker-compat-v1.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
   buildError = error;
