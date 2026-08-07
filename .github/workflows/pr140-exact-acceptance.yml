@@ -105,6 +105,8 @@ jobs:
             'named-landing-gear-wheel-bounds-v1' \
             'grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2' \
             'grounded-aircraft-door-progressive-tunnel-slope-v1' \
+            'measured-cab-normal-aircraft-heading-v1' \
+            'expectedCabRegisteredYaw' \
             'exact-T4_WALK-A1-terminal-portal-v25' \
             'exactWalkwayPortalX' \
             'exactA1CabContactY += appliedA1JetwayVerticalFitMeters' \
@@ -116,6 +118,9 @@ jobs:
           done
           for required in \
             'measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2' \
+            'source-a1-parking-heading-authored-door-registration-v2' \
+            'inspectionAircraftSourceParkingHeadingDegrees' \
+            'inspectionAircraftSourceModelYawDegrees' \
             'grounded-jetway-door-gap-reported-no-child-lift-v1' \
             'inspectionAircraftDoorSignedVerticalGapMeters' \
             'inspectionAircraftJetwayRequestedVerticalFitMeters' \
@@ -145,7 +150,7 @@ jobs:
               exit 1
             fi
           done
-          echo "Quiet generated-bundle v2 checks passed."
+          echo "Quiet generated-bundle v2 checks passed with authored A1 aircraft heading."
 
       - name: Install browser verifier and Chromium
         run: |
