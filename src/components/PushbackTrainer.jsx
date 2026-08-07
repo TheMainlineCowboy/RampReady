@@ -10,13 +10,21 @@ import "./equipment-selection.css";
 
 const RampReadyLektroPrototypeTrainer = RampReadyStandupTrainer;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+const VISUAL_INSPECTION_PRESETS = new Set(["a1", "a1Connection", "a14", "b14", "b15"]);
+
+function requestedInspectionPreset() {
+  if (typeof window === "undefined") return null;
+  const requested = new URLSearchParams(window.location.search).get("inspectionPreset");
+  return requested && VISUAL_INSPECTION_PRESETS.has(requested) ? requested : null;
+}
 
 export default function PushbackTrainer() {
+  const initialInspectionPreset = requestedInspectionPreset();
   const [gyroEnabled, setGyroEnabled] = useState(false);
   const [gyroAvailable, setGyroAvailable] = useState(true);
   const [selectedEquipmentId, setSelectedEquipmentId] = useState(DEFAULT_EQUIPMENT_ID);
-  const [activeEquipmentId, setActiveEquipmentId] = useState(null);
-  const [launchMode, setLaunchMode] = useState("training");
+  const [activeEquipmentId, setActiveEquipmentId] = useState(initialInspectionPreset ? DEFAULT_EQUIPMENT_ID : null);
+  const [launchMode, setLaunchMode] = useState(initialInspectionPreset ? "inspection" : "training");
   const baselineRef = useRef(null);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
   const selectedEquipment = getEquipmentProfile(selectedEquipmentId);
@@ -148,9 +156,10 @@ export default function PushbackTrainer() {
 
   return (
     <RampReadyLektroPrototypeTrainer
-      key={`${activeEquipmentId}-${launchMode}`}
+      key={`${activeEquipmentId}-${launchMode}-${initialInspectionPreset || "manual"}`}
       equipmentId={activeEquipmentId}
       initialInspectionMode={launchMode === "inspection"}
+      initialInspectionPreset={initialInspectionPreset || "a1"}
       onChangeEquipment={changeEquipment}
       gyroAvailable={gyroAvailable}
       gyroEnabled={gyroEnabled}
