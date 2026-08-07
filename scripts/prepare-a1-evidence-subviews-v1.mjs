@@ -53,8 +53,8 @@ const subviewBlock = `          let exactA1CameraPositionX = exactA1CameraFrameC
           ].every(Number.isFinite);
           if (exactA1EvidenceSubview === "terminal-joint") {
             // Frame the exact measured wall and Rotunda collar side-on. The old
-            // view moved 8 m down the full jetway and 12 m sideways, which made
-            // a telemetry-green image that did not visibly prove attachment.
+            // wide view did not visibly prove the attachment even when its
+            // telemetry was correct.
             const exactA1JointCenterX = (exactA1CameraWallX + exactA1CameraRotundaX) * 0.5;
             const exactA1JointCenterY = (exactA1CameraWallY + exactA1CameraRotundaY) * 0.5;
             const exactA1JointCenterZ = (exactA1CameraWallZ + exactA1CameraRotundaZ) * 0.5;
@@ -84,9 +84,8 @@ const subviewBlock = `          let exactA1CameraPositionX = exactA1CameraFrameC
             if (!exactA1BogieContactReady) {
               throw new Error("A1 bogie-contact close camera is missing the exact authored low-contact centroid");
             }
-            // Frame the actual measured low-contact footprint. The old guessed
-            // Cab-minus-6 m target landed on the aircraft nose and proved no
-            // bogie contact visually.
+            // Frame the actual measured low-contact footprint instead of using
+            // any Cab or aircraft-position offset.
             const exactA1BogieSideDistance = 5.4;
             exactA1CameraPositionX = exactA1BogieContactX
               - exactA1CameraApronX * 1.35
@@ -129,10 +128,13 @@ for (const token of [
     throw new Error(`${trainerPath}: exact A1 evidence subview is missing ${token}`);
   }
 }
+const forbiddenGuessedCabTarget = "exactA1CameraCabX - exactA1CameraApronX * " + "6";
+const forbiddenWideApronOffset = "exactA1CameraApronX * " + "8";
+const forbiddenWideSideOffset = "exactA1CameraSideSign * " + "12";
 for (const forbidden of [
-  "exactA1CameraCabX - exactA1CameraApronX * 6",
-  "exactA1CameraApronX * 8",
-  "exactA1CameraSideSign * 12",
+  forbiddenGuessedCabTarget,
+  forbiddenWideApronOffset,
+  forbiddenWideSideOffset,
 ]) {
   if (source.includes(forbidden)) {
     throw new Error(`${trainerPath}: obsolete guessed A1 close-camera targeting remains: ${forbidden}`);
@@ -140,4 +142,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared a tight side-on exact wall/Rotunda joint view and a low close-up derived from the authored bogie contact centroid, with no Cab or aircraft-nose target guess.");
+console.log("Prepared a tight side-on exact wall/Rotunda joint view and a low close-up derived from the authored bogie contact centroid, with fail-closed checks that do not self-match their migration vocabulary.");
