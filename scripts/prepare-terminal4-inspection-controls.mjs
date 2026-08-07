@@ -32,21 +32,24 @@ for (const path of targets) {
     "shell state",
   );
 
-  if (!source.includes("window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__")) {
-    // prepare-terminal4-runtime regenerates this trainer immediately before this
-    // preparer runs. Therefore the evidence bridge must not depend on callbacks
-    // that exist only in a previously prepared/tracked trainer. Install a
-    // self-contained bridge after the stable inspection toggle callback, using
-    // only refs/state that are declared by the regenerated runtime itself.
-    const anchor = "  const advance = useCallback(() => {";
-    const toggleAnchor = "  const toggleInspectionDrive = useCallback(() => {";
-    const toggleIndex = source.indexOf(toggleAnchor);
+  // Install one evidence bridge that delegates to the SAME callback used by the
+  // visible Inspection location control. Never duplicate preset coordinates or
+  // mutate simulator refs independently: that was allowing screenshots to
+  // disagree with the app's real inspection state/camera definitions.
+  const staleBridgePattern = /  useEffect\(\(\) => \{\n    window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ = \(presetId\) => \{[\s\S]*?\n    return \(\) => \{ delete window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__; \};\n  \}, \[\]\);\n\n/;
+  if (staleBridgePattern.test(source)) {
+    source = source.replace(staleBridgePattern, "");
+  }
+  if (!source.includes("visual-evidence-real-inspection-callback-v2")) {
+    const anchor = "  const toggleInspectionDrive = useCallback(() => {";
+    const callbackAnchor = "  const moveInspectionToPreset = useCallback((presetId) => {";
+    const callbackIndex = source.indexOf(callbackAnchor);
     const anchorIndex = source.indexOf(anchor);
-    if (toggleIndex < 0 || anchorIndex < 0 || toggleIndex > anchorIndex) {
-      throw new Error(`${path}: visual evidence preset bridge cannot be installed after the initialized inspection toggle`);
+    if (callbackIndex < 0 || anchorIndex < 0 || callbackIndex > anchorIndex) {
+      throw new Error(`${path}: real inspection preset callback is not available before inspection toggle`);
     }
-    const hook = `  useEffect(() => {\n    window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ = (presetId) => {\n      const presets = {\n        a1Connection: { id: "a1Connection", label: "A1 terminal connection", x: 7.5, z: 8.5, yaw: -0.35, cameraYaw: 0, cameraDistance: 22 },\n        a14: { id: "a14", label: "A concourse midpoint", x: 218.45, z: -86.52, yaw: 2.88, cameraYaw: 2.19, cameraDistance: 32 },\n        b14: { id: "b14", label: "B concourse midpoint", x: 216.4, z: 150.35, yaw: 2.8, cameraYaw: 2.10, cameraDistance: 32 },\n        b15: { id: "b15", label: "B15 ramp", x: -18.5, z: 539.2, yaw: -1.5708, cameraYaw: 1.38, cameraDistance: 25 },\n      };\n      const preset = presets[presetId];\n      const sim = simRef.current;\n      if (!preset || !sim) return null;\n      sim.connection = createConnectionState();\n      sim.dynamics = createPushbackState({\n        tugX: preset.x, tugZ: preset.z, tugYaw: preset.yaw,\n        aircraftX: sim.aircraft.position.x, aircraftZ: sim.aircraft.position.z, aircraftYaw: sim.aircraft.rotation.y,\n      });\n      sim.rig.root.position.set(preset.x, 0, preset.z);\n      sim.rig.root.rotation.y = preset.yaw;\n      sim.rig.setSteering(0);\n      sim.rig.setLiftProgress(0);\n      driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };\n      orbitRef.current.yaw = preset.cameraYaw;\n      orbitRef.current.pitch = 0.38;\n      orbitRef.current.distance = preset.cameraDistance;\n      setThrottle(0);\n      setDirection("FWD");\n      setCameraMode("chase");\n      const canvas = sim.renderer.domElement;\n      canvas.dataset.inspectionPreset = preset.id;\n      canvas.dataset.inspectionPresetLabel = preset.label;\n      canvas.dataset.inspectionRouteAuthority = "visual-evidence-source-gate-presets-v8";\n      canvas.dataset.inspectionTugX = preset.x.toFixed(3);\n      canvas.dataset.inspectionTugZ = preset.z.toFixed(3);\n      canvas.dataset.cameraYaw = preset.cameraYaw.toFixed(4);\n      canvas.dataset.cameraPitch = orbitRef.current.pitch.toFixed(4);\n      canvas.dataset.cameraDistance = orbitRef.current.distance.toFixed(3);\n      canvas.dataset.inspectionCameraAuthority = "free-orbit-follow-tug";\n      setMessage(\`Inspection position: \${preset.label}.\`);\n      return preset.id;\n    };\n    return () => { delete window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__; };\n  }, []);\n\n${anchor}`;
-    source = replaceRequired(source, anchor, hook, path, "visual evidence preset bridge");
+    const hook = `  // visual-evidence-real-inspection-callback-v2\n  useEffect(() => {\n    window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ = (presetId) => {\n      if (!Object.prototype.hasOwnProperty.call(INSPECTION_PRESETS, presetId)) return null;\n      moveInspectionToPreset(presetId);\n      return presetId;\n    };\n    return () => { delete window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__; };\n  }, [moveInspectionToPreset]);\n\n${anchor}`;
+    source = replaceRequired(source, anchor, hook, path, "real-callback visual evidence preset bridge");
   }
 
   if (!source.includes("const keyboardForward = inspectionActive")) {
@@ -80,10 +83,17 @@ for (const path of targets) {
   for (const token of [
     'className="rr-inspection-toggle"',
     'data-inspection-mode={inspectionMode ? "active" : "training"}',
+    "visual-evidence-real-inspection-callback-v2",
     "window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__",
+    "moveInspectionToPreset(presetId)",
+    "}, [moveInspectionToPreset]);",
     "const keyboardForward = inspectionActive",
     "const inspectionThrottle = keyboardForward || keyboardReverse ? Math.max(drive.throttle, 1)",
   ]) if (!source.includes(token)) throw new Error(`${path}: completed inspection mode is missing ${token}`);
+
+  if (source.includes('visual-evidence-source-gate-presets-v8')) {
+    throw new Error(`${path}: stale hard-coded visual evidence preset map survived`);
+  }
 
   fs.writeFileSync(path, source, "utf8");
 }
@@ -98,4 +108,4 @@ if (!css.includes(cssMarker)) {
 
 await import("./prepare-a1-terminal-connector-v11.mjs");
 await import("./prepare-inspection-elapsed-motion.mjs");
-console.log("Prepared the active Terminal 4 free-drive controls with a regeneration-safe deterministic visual-evidence preset bridge, full keyboard power, elapsed-motion integration and the measured A1 wall connector.");
+console.log("Prepared the active Terminal 4 free-drive controls with the real inspection preset callback exposed to bounded visual evidence, full keyboard power, elapsed-motion integration and the measured A1 wall connector.");
