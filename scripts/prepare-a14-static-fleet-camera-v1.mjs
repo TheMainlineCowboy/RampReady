@@ -38,7 +38,7 @@ if (!source.includes(canonicalAuthorityBlock)) {
 }
 
 source = source.replace(
-  /source-gate-apron-presets-with-[^"\n]+-a1-a14-b14-b15-v\d+/g,
+  /source-gate-apron-presets-with[^"\n]*-a1-a14-b14-b15-v\d+/g,
   CANONICAL_ROUTE_AUTHORITY,
 );
 source = source.replace(
@@ -58,5 +58,9 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-await import(`./prepare-source-locked-a1-elbow-finalizer-v1.mjs?terminal4-source-lock=${Date.now()}`);
-console.log("Prepared the A1/A14 inspection cameras, exact Terminal 4 jetway source registration, and source-locked A1 Rotunda elbow as the final runtime placement authority.");
+// This stage is still inside prepare:terminal4-runtime, before the later A1
+// grounding/readiness migrations. Enforce only the common source coordinate
+// registration here. The photo-registered Rotunda finalizer deliberately runs
+// later, immediately before Vite bundles the fully migrated production runtime.
+await import(`./prepare-terminal4-jetway-source-registration-v1.mjs?terminal4-registration=${Date.now()}`);
+console.log("Prepared the A1/A14 inspection cameras and exact Terminal 4 source-coordinate registration. Final A1 Rotunda/wall placement is deferred until after the complete grounding/readiness migration stack.");
