@@ -147,7 +147,10 @@ jobs:
             'inspectionAircraftJetwayRequestedVerticalFitMeters' \
             'inspectionAircraftJetwayVerticalFitMeters' \
             'inspectionAircraftJetwayAuthoredBogieGroundPreserved' \
-            'authored-crj-lowest-geometry-contact-clusters-v2' \
+            'inspectionAircraftLandingGearContactPatchCount' \
+            'inspectionAircraftNoseTireContact' \
+            'inspectionAircraftLeftMainTireContact' \
+            'inspectionAircraftRightMainTireContact' \
             'exact-authored-a1-lowest-geometry-ramp-contact-v2' \
             'terminal4UploadedJetwayBogieGroundContactPointCount' \
             'terminal4UploadedJetwayBogieGroundContactClusterCount' \
@@ -165,13 +168,13 @@ jobs:
             'exact-a1-terminal-joint-and-bogie-contact-subviews-v2' \
             '57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3' \
             '57-static-cab-endpoints-opaque-zero-open-area-no-authored-transform-v1' \
-            'final-a1-acceptance-authority-after-all-preparers-v1'; do
+            'final-a1-acceptance-authority-after-all-preparers-v3-three-tire-contact'; do
             if ! "${search[@]}" "${required}" dist; then
               echo "Required generated A1 evidence is missing: ${required}"
               exit 1
             fi
           done
-          echo "Quiet generated-bundle v2 checks passed with authored A1 aircraft heading."
+          echo "Quiet generated-bundle v3 checks passed with authored A1 aircraft heading and proved CRJ nose/left-main/right-main tire contact."
 
       - name: Install browser verifier and Chromium
         run: |
