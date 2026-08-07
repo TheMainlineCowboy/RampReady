@@ -38,20 +38,19 @@ async function settle(page, milliseconds = 1800) {
 }
 
 async function selectInspectionPreset(page, preset) {
-  await page.waitForFunction(() => typeof window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ === "function", null, { timeout: 30000 });
-  const state = await page.evaluate((expectedPreset) => {
-    const selected = window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__(expectedPreset);
-    const canvas = document.querySelector("canvas.trainerCanvas");
-    return {
-      ok: selected === expectedPreset,
-      expectedPreset,
-      selected,
-      datasetPreset: canvas?.dataset.inspectionPreset || null,
-      routeAuthority: canvas?.dataset.inspectionRouteAuthority || null,
-    };
-  }, preset);
-  if (!state.ok) throw new Error(`Unable to select inspection preset ${preset}: ${JSON.stringify(state)}`);
+  const selector = page.getByLabel("Inspection location");
+  await expect(selector).toBeVisible({ timeout: 30000 });
+  await selector.selectOption(preset);
   await page.waitForFunction(expected => document.querySelector("canvas.trainerCanvas")?.dataset.inspectionPreset === expected, preset, { timeout: 30000 });
+  const state = await page.locator("canvas.trainerCanvas").evaluate((element, expectedPreset) => ({
+    ok: element.dataset.inspectionPreset === expectedPreset,
+    expectedPreset,
+    selected: element.dataset.inspectionPreset || null,
+    datasetPreset: element.dataset.inspectionPreset || null,
+    routeAuthority: element.dataset.inspectionRouteAuthority || null,
+    cameraAuthority: element.dataset.inspectionCameraAuthority || null,
+  }), preset);
+  if (!state.ok) throw new Error(`Unable to select inspection preset ${preset}: ${JSON.stringify(state)}`);
   return state;
 }
 
