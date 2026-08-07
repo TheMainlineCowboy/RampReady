@@ -16,11 +16,14 @@ if (!jetways.includes("aircraftDoorDistance: distance")
   jetways = fs.readFileSync(jetwayPath, "utf8");
 }
 
+// Keep this stand-alignment guard on the same simulator-validated A1/CRJ
+// geometry authority as the production preparation and browser-readiness paths.
+// These constants only validate placement; Airport_Jetway.glb remains untouched.
 for (const token of [
   "parkingByGate",
-  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 7.32",
-  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.34",
-  "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.61",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35",
+  "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.58",
   "sourceDimensionsMeters: Object.freeze([37.92, 8.77, 26.51])",
   "aircraftDoorDistance: distance",
   "uploadedJetwayPlacements.push({",
@@ -31,9 +34,12 @@ for (const token of [
 for (const forbidden of [
   "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
   "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.28",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 7.32",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.34",
+  "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.61",
   "createArchedTunnelGeometry(THREE, 2.08, 2.02, 0.18)",
 ]) {
-  if (jetways.includes(forbidden)) throw new Error(`${jetwayPath}: aircraft-specific jetway shrink returned: ${forbidden}`);
+  if (jetways.includes(forbidden)) throw new Error(`${jetwayPath}: conflicting or aircraft-specific jetway shrink returned: ${forbidden}`);
 }
 
 for (const token of [
@@ -48,4 +54,4 @@ for (const token of [
   if (!ground.includes(token)) throw new Error(`${groundPath}: PHX stand geometry is missing ${token}`);
 }
 
-console.log("Verified PHX stand alignment without resizing the airport: scale-1.00 exact Airport Jetway placement, corrected CRJ door geometry, realistic stand-line scale, visible gate labels, and non-repeating pavement wear.");
+console.log("Verified PHX stand alignment without resizing the airport: scale-1.00 exact Airport Jetway placement, simulator-validated 6.25/1.35/1.58 m CRJ door/contact geometry, realistic stand-line scale, visible gate labels, and non-repeating pavement wear.");
