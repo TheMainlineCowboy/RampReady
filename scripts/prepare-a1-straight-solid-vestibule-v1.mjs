@@ -100,6 +100,8 @@ const replacement = `function buildMeasuredA1Connector(THREE, fleet, placement, 
   connector.userData.rotundaOverlapMeters = rotundaOverlap;
   connector.userData.terminalHiddenOverlapMeters = TERMINAL_HIDDEN_OVERLAP_METERS;
   connector.userData.apronFacingOpenAreaMeters = 0;
+  connector.userData.apronFacingRotundaOpeningClosed = true;
+  connector.userData.rotundaVestibuleClosureAuthority = "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1";
   fleet.add(connector);
   return connector;
 }
@@ -127,6 +129,8 @@ for (const required of [
   "UploadedAirportJetwayA1TerminalSolidBulkhead",
   "singleStraightSolidVestibule",
   "apronFacingOpenAreaMeters = 0",
+  "apronFacingRotundaOpeningClosed = true",
+  "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1",
 ]) {
   if (!source.includes(required)) {
     throw new Error(`Straight-solid A1 vestibule migration is missing ${required}`);
