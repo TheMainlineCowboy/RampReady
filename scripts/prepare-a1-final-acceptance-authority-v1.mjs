@@ -5,23 +5,23 @@ const generatedAuthorityPaths = Object.freeze([
   trainerPath,
   "src/environment/correctUploadedJetwayInstallationV1.js",
   "src/environment/uploadedAirportJetwayFleetReadyV2.js",
-  "src/environment/staticJetwayPortalClosures.js",
+  "src/environment/uploadedAirportJetwayArticulationV10.js",
   "src/environment/uploadedAirportJetwayModelSpaceControllerV7.js",
+  "src/environment/registerStaticJetwayFleetToFacadeV1.js",
   "src/environment/authoredTerminal4Visual.js",
 ]);
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const staleAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
-const finalAuthority = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
+const finalAuthority = "a1-single-aircraft-pose-training-and-free-drive-v1";
 const cameraAuthority = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const cameraLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";
 const visualAuthority = "same-day-a1-continuous-compact-solid-closed-grounded-v1";
 const jetwayGroundAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
 const noLiftAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
-const staticCabClosureAuthority = "57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3";
-const staticCabTargetAuthority = "placement-bridgeEnd-shared-with-static-articulation-v1";
-const staticCabEvidenceAuthority = "57-static-cab-endpoints-opaque-zero-open-area-no-authored-transform-v1";
-const marker = "final-a1-acceptance-authority-after-all-preparers-v3-three-tire-contact";
+const staticRigidAuthority = "57-static-exact-glb-rigid-source-hierarchy-v1";
+const staticSourcePlacementAuthority = "57-static-authored-rotundas-photo-registered-to-terminal-facade-v2";
+const marker = "final-a1-acceptance-authority-after-all-preparers-v4-source-static-integrity";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
 source = source.replaceAll(staleAuthority, finalAuthority);
@@ -42,6 +42,7 @@ if (facadeTelemetryPattern.test(source)) {
 
 if (!source.includes(marker)) {
   for (const oldMarker of [
+    "final-a1-acceptance-authority-after-all-preparers-v3-three-tire-contact",
     "final-a1-acceptance-authority-after-all-preparers-v2",
     "final-a1-acceptance-authority-after-all-preparers-v1",
   ]) {
@@ -65,9 +66,8 @@ for (const authority of [
   visualAuthority,
   jetwayGroundAuthority,
   noLiftAuthority,
-  staticCabClosureAuthority,
-  staticCabTargetAuthority,
-  staticCabEvidenceAuthority,
+  staticRigidAuthority,
+  staticSourcePlacementAuthority,
 ]) {
   if (!generatedAuthoritySource.includes(authority)) {
     throw new Error(`Generated Terminal 4 runtime is missing final authority ${authority}`);
@@ -114,15 +114,6 @@ for (const required of [
   "terminal4UploadedJetwayA1RotundaVestibuleClosureAuthority",
   "terminal4UploadedJetwayA1NoGeneratedGlassCorridor",
   "terminal4UploadedJetwayA1VisualAcceptanceAuthority",
-  "terminal4UploadedJetwayStaticCabClosureAuthority",
-  "terminal4UploadedJetwayStaticCabTargetAuthority",
-  "terminal4UploadedJetwayStaticBridgeEndFallbackCount",
-  "terminal4UploadedJetwayStaticCabClosurePanelCount",
-  "terminal4UploadedJetwayStaticCabClosureWindowCount",
-  "terminal4UploadedJetwayStaticCabClosureSurroundPieceCount",
-  "terminal4UploadedJetwayStaticCabClosureAuthoredNodeTransformCount",
-  "terminal4UploadedJetwayStaticApronFacingOpenAreaMeters",
-  "terminal4UploadedJetwayStaticCabClosureEvidenceAuthority",
   "inspectionCameraEndpointAircraftBoundsMin",
   "inspectionCameraEndpointAircraftBoundsMax",
   "inspectionCameraEndpointFrameSize",
@@ -155,4 +146,4 @@ for (const forbidden of [
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs?grounded-pose=${Date.now()}`);
-console.log("Finalized Terminal 4 after verifying every authority in its owning generated runtime layer, requiring the proved CRJ nose/left-main/right-main tire contacts, exact authored jetway bogie centroid, compact wall, zero lift, static closures, and camera evidence in the trainer.");
+console.log("Finalized Terminal 4 with the proved A1 wall/Rotunda and grounded aircraft/bogie evidence, plus rigid exact-GLB static jetways registered from their authored Rotundas to measured terminal facade walls. Synthetic static Cab closure boxes are not acceptance criteria.");

@@ -1,0 +1,95 @@
+name: Terminal 4 Jetway Visual Evidence
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/environment/**"
+      - "src/components/**"
+      - "scripts/**"
+      - "playwright.jetway-visual.config.js"
+      - ".github/workflows/jetway-visual-evidence.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terminal4-jetway-visual-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render-jetways:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact proposed commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build proposed RampReady site
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee jetway-build.log
+
+      - name: Install visual test runner
+        run: npm install --no-save --package-lock=false @playwright/test@1.55.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start local production preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p jetway-visual-evidence
+          npm run preview -- --host 127.0.0.1 --port 4173 > jetway-visual-evidence/preview.log 2>&1 &
+          echo $! > jetway-visual-evidence/preview.pid
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/RampReady/ >/dev/null; then
+              echo "RampReady preview ready after attempt ${attempt}."
+              exit 0
+            fi
+            sleep 2
+          done
+          cat jetway-visual-evidence/preview.log
+          exit 1
+
+      - name: Align visual spec timeout with Playwright config
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'test.setTimeout(90000);' scripts/verify-jetway-visual-registration.spec.js
+          sed -i 's/test.setTimeout(90000);/test.setTimeout(720000);/' scripts/verify-jetway-visual-registration.spec.js
+          grep -F 'test.setTimeout(720000);' scripts/verify-jetway-visual-registration.spec.js
+
+      - name: Render A1 and representative Terminal 4 jetways
+        env:
+          PAGE_URL: http://127.0.0.1:4173/RampReady/
+        shell: bash
+        run: |
+          set -o pipefail
+          npx playwright test --config=playwright.jetway-visual.config.js --reporter=line 2>&1 | tee jetway-visual-evidence/workflow.log
+
+      - name: Upload one-day jetway visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terminal4-jetway-visual-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            jetway-visual-evidence/
+            test-results/
+            jetway-build.log
+          if-no-files-found: warn
+          retention-days: 1

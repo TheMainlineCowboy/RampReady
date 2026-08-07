@@ -46,7 +46,7 @@ async function launchRuntime(page) {
       && data?.terminal4UploadedJetwayLoadState === "ready"
       && data?.terminal4UploadedJetwayCount === "58"
       && data?.terminal4UploadedJetwayVerifiedModelCount === "58"
-      && data?.terminal4UploadedJetwayArticulationAuthority === "user-supplied-airport-jetway-per-gate-telescoping-v10"
+      && data?.terminal4UploadedJetwayArticulationAuthority === "user-supplied-airport-jetway-per-gate-telescoping-v11-a1-only"
       && data?.terminal4UploadedJetwayA1PartOrderValid === "true"
       && Number.isFinite(actualGap)
       && actualGap <= 0.05

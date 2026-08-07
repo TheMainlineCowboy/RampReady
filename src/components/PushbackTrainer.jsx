@@ -10,8 +10,16 @@ import "./equipment-selection.css";
 
 const RampReadyLektroPrototypeTrainer = RampReadyStandupTrainer;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+const VISUAL_INSPECTION_PRESETS = new Set(["a1", "a1Connection", "a14", "b14", "b15"]);
+
+function requestedInspectionPreset() {
+  if (typeof window === "undefined") return null;
+  const requested = new URLSearchParams(window.location.search).get("inspectionPreset");
+  return requested && VISUAL_INSPECTION_PRESETS.has(requested) ? requested : null;
+}
 
 export default function PushbackTrainer() {
+  const initialInspectionPreset = requestedInspectionPreset();
   const [gyroEnabled, setGyroEnabled] = useState(false);
   const [gyroAvailable, setGyroAvailable] = useState(true);
   const [selectedEquipmentId, setSelectedEquipmentId] = useState(DEFAULT_EQUIPMENT_ID);
@@ -57,6 +65,15 @@ export default function PushbackTrainer() {
     setLaunchMode(mode);
     setActiveEquipmentId(selectedEquipmentId);
   }, [selectedEquipmentId]);
+
+  // Keep the equipment selector as the real default route. The query string is
+  // an evidence-only launch request applied after the normal initial state has
+  // mounted, so production/user navigation remains unchanged without a query.
+  useEffect(() => {
+    if (!initialInspectionPreset || activeEquipmentId) return;
+    setLaunchMode("inspection");
+    setActiveEquipmentId(DEFAULT_EQUIPMENT_ID);
+  }, [activeEquipmentId, initialInspectionPreset]);
 
   useEffect(() => {
     if (!gyroEnabled || !activeEquipmentId) return undefined;
@@ -148,9 +165,10 @@ export default function PushbackTrainer() {
 
   return (
     <RampReadyLektroPrototypeTrainer
-      key={`${activeEquipmentId}-${launchMode}`}
+      key={`${activeEquipmentId}-${launchMode}-${initialInspectionPreset || "manual"}`}
       equipmentId={activeEquipmentId}
       initialInspectionMode={launchMode === "inspection"}
+      initialInspectionPreset={initialInspectionPreset || "a1"}
       onChangeEquipment={changeEquipment}
       gyroAvailable={gyroAvailable}
       gyroEnabled={gyroEnabled}

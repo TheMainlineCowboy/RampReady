@@ -18,6 +18,52 @@ if ((jetwaySource.match(/uploadedAirportJetwayFleetReadyV2\.js/g) || []).length 
 }
 fs.writeFileSync(jetwayPath, jetwaySource, "utf8");
 
+// The uploaded replacement GLB does not share the stock AIR_Jetway01 model-root
+// convention. Raw BGL x/z/yaw therefore does not place the supplied Rotunda at
+// the terminal opening. Always register the 57 static supplied bridges from the
+// measured terminal-wall vectors before readiness/portal validation. This keeps
+// the exact meshes/UVs/materials untouched while moving only each complete parent
+// instance into the physical wall-to-gate pose.
+const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
+let readinessSource = fs.readFileSync(readinessPath, "utf8");
+const baseFleetImport = 'import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";';
+const legacyStaticRegistrationImport = 'import { registerStaticJetwayFleetToFacade } from "./registerStaticJetwayFleetToFacadeV1.js";';
+const staticRegistrationImport = `import {
+  registerStaticJetwayFleetToFacade,
+  STATIC_JETWAY_FACADE_REGISTRATION_AUTHORITY,
+  STATIC_JETWAY_GROUND_ISOLATION_AUTHORITY,
+  STATIC_JETWAY_MODEL_ROOT_OFFSET_AUTHORITY,
+} from "./registerStaticJetwayFleetToFacadeV1.js";`;
+if (readinessSource.includes(legacyStaticRegistrationImport)) {
+  readinessSource = readinessSource.replace(legacyStaticRegistrationImport, staticRegistrationImport);
+}
+if (!readinessSource.includes(staticRegistrationImport)) {
+  if (!readinessSource.includes(baseFleetImport)) {
+    throw new Error(`${readinessPath}: base fleet import anchor is missing`);
+  }
+  readinessSource = readinessSource.replace(baseFleetImport, `${baseFleetImport}\n${staticRegistrationImport}`);
+}
+const installationCall = "          const installationCorrection = correctUploadedJetwayInstallation(THREE, group, fleet, placements);";
+const registrationCall = "          const staticFleetRegistration = registerStaticJetwayFleetToFacade(THREE, group, fleet, placements);";
+if (!readinessSource.includes(registrationCall)) {
+  if (!readinessSource.includes(installationCall)) {
+    throw new Error(`${readinessPath}: installation-correction anchor is missing`);
+  }
+  readinessSource = readinessSource.replace(installationCall, `${installationCall}\n${registrationCall}`);
+}
+for (const token of [
+  staticRegistrationImport,
+  "STATIC_JETWAY_FACADE_REGISTRATION_AUTHORITY",
+  "STATIC_JETWAY_GROUND_ISOLATION_AUTHORITY",
+  "STATIC_JETWAY_MODEL_ROOT_OFFSET_AUTHORITY",
+  registrationCall,
+]) {
+  if (!readinessSource.includes(token)) {
+    throw new Error(`${readinessPath}: static wall/Rotunda registration is missing ${token}`);
+  }
+}
+fs.writeFileSync(readinessPath, readinessSource, "utf8");
+
 const terminalPath = "src/environment/authoredTerminal4Visual.js";
 let terminalSource = fs.readFileSync(terminalPath, "utf8");
 const buildAnchor = `  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, authored, jetwayTextures);
@@ -32,7 +78,7 @@ const awaitedBuild = `  const sourcePlacedJetways = buildSourcePlacedTerminal4Je
     || Number(sourcePlacedJetways.userData.uploadedJetwayCount) !== 58
     || Number(sourcePlacedJetways.userData.uploadedJetwayMeasuredTerminalConnectorCount) !== 58
     || Number(sourcePlacedJetways.userData.uploadedJetwayVerifiedModelCount) !== 58
-    || sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-per-gate-telescoping-v10"
+    || sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-per-gate-telescoping-v11-a1-only"
     || Number(sourcePlacedJetways.userData.uploadedJetwayStaticArticulatedGateCount) !== 57
     || Number(sourcePlacedJetways.userData.uploadedJetwayA1PredictedDoorGapMeters) > 0.05
     || Number(sourcePlacedJetways.userData.uploadedJetwayA1ActualDoorGapMeters) > 0.05
@@ -44,6 +90,11 @@ const awaitedBuild = `  const sourcePlacedJetways = buildSourcePlacedTerminal4Je
 if (!terminalSource.includes("await sourcePlacedJetways.userData.uploadedJetwayReady")) {
   if (!terminalSource.includes(buildAnchor)) throw new Error(`${terminalPath}: source-placed jetway build anchor is missing`);
   terminalSource = terminalSource.replace(buildAnchor, awaitedBuild);
+} else {
+  terminalSource = terminalSource.replaceAll(
+    'sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-per-gate-telescoping-v10"',
+    'sourcePlacedJetways.userData.uploadedJetwayArticulationAuthority !== "user-supplied-airport-jetway-per-gate-telescoping-v11-a1-only"',
+  );
 }
 
 const evidenceAnchor = "  environment.userData.authoredTerminal4JetwaySourceGeometryMode = sourcePlacedJetways.userData.sourceGeometryMode;";
@@ -63,8 +114,7 @@ const evidenceBlock = `${evidenceAnchor}
   environment.userData.authoredTerminal4UploadedJetwayA1PredictedContactDistanceMeters = sourcePlacedJetways.userData.uploadedJetwayA1PredictedContactDistanceMeters;
   environment.userData.authoredTerminal4UploadedJetwayA1ActualContactDistanceMeters = sourcePlacedJetways.userData.uploadedJetwayA1ActualContactDistanceMeters;
   environment.userData.authoredTerminal4UploadedJetwayA1ActualDoorGapMeters = sourcePlacedJetways.userData.uploadedJetwayA1ActualDoorGapMeters;
-  environment.userData.authoredTerminal4UploadedJetwayA1PartOrderValid = sourcePlacedJetways.userData.uploadedJetwayA1PartOrderValid;
-  environment.userData.authoredTerminal4UploadedJetwayA1PartCentersMeters = sourcePlacedJetways.userData.uploadedJetwayA1PartCentersMeters;`;
+  environment.userData.authoredTerminal4UploadedJetwayA1PartOrderValid = sourcePlacedJetways.userData.uploadedJetwayA1PartOrderValid;\n  environment.userData.authoredTerminal4UploadedJetwayA1PartCentersMeters = sourcePlacedJetways.userData.uploadedJetwayA1PartCentersMeters;`;
 if (!terminalSource.includes("authoredTerminal4UploadedJetwayLoadState")) {
   if (!terminalSource.includes(evidenceAnchor)) throw new Error(`${terminalPath}: jetway geometry evidence anchor is missing`);
   terminalSource = terminalSource.replace(evidenceAnchor, evidenceBlock);
@@ -74,6 +124,7 @@ for (const token of [
   "await sourcePlacedJetways.userData.uploadedJetwayReady",
   'uploadedJetwayLoadState !== "ready"',
   "uploadedJetwayVerifiedModelCount) !== 58",
+  "user-supplied-airport-jetway-per-gate-telescoping-v11-a1-only",
   "authoredTerminal4UploadedJetwayLoadState",
   "authoredTerminal4UploadedJetwayCount",
   "authoredTerminal4UploadedJetwayConnectorCount",
@@ -89,4 +140,4 @@ for (const token of [
 }
 fs.writeFileSync(terminalPath, terminalSource, "utf8");
 
-console.log("Prepared awaited uploaded-airport jetway readiness: one canonical loader import and all 58 source placements, measured terminal connectors and decoded model clones must complete before Terminal 4 becomes ready.");
+console.log("Prepared awaited uploaded-airport jetway readiness: A1 alone may telescope; all 57 static exact-GLB gates are registered from measured terminal walls to their gate targets before readiness, with every static registration authority imported before later readiness guards execute.");
