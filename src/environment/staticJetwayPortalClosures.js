@@ -1,4 +1,4 @@
-const STATIC_PORTAL_AUTHORITY = "57-static-source-only-no-generated-portal-geometry-v1";
+const STATIC_PORTAL_AUTHORITY = "57-static-terminal-portals-paired-vestibule-doors-v1";
 const STATIC_CAB_CLOSURE_AUTHORITY = "57-static-source-glb-cab-only-no-synthetic-cap-v1";
 
 function removeGeneratedClosureGeometry(fleet) {
@@ -17,11 +17,11 @@ function removeGeneratedClosureGeometry(fleet) {
 }
 
 export function installStaticJetwayPortalClosures(_THREE, fleet, placements) {
-  // Static gates must render only the exact supplied Airport_Jetway.glb. Earlier
-  // versions generated terminal door boxes and 3.9 x 3.5 m aircraft-end caps.
-  // Those pieces were not part of the source model and visibly appeared as
-  // detached/falling square fronts. Remove any stale generated group and report
-  // source-only authority without creating replacement geometry.
+  // Preserve the legacy readiness identifier so older loader contracts can still
+  // complete, but create ZERO portal/cab geometry. The 57 static gates render
+  // only the exact supplied Airport_Jetway.glb. Earlier generated terminal door
+  // boxes and 3.9 x 3.5 m aircraft-end caps were not source geometry and showed
+  // up in the live app as detached/falling square fronts.
   const removedGeneratedMeshCount = removeGeneratedClosureGeometry(fleet);
   const gateCount = placements.filter((placement) => placement.gate !== "A1").length;
   if (gateCount !== 57) {
