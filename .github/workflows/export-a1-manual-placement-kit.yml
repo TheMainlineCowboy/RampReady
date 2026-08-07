@@ -1,0 +1,93 @@
+name: Export A1 manual placement kit
+
+on:
+  push:
+    branches:
+      - exports/a1-manual-placement-kit
+
+permissions:
+  contents: write
+
+concurrency:
+  group: a1-manual-placement-kit
+  cancel-in-progress: true
+
+jobs:
+  export:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout export branch
+        uses: actions/checkout@v4
+        with:
+          ref: exports/a1-manual-placement-kit
+          fetch-depth: 1
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Materialize exact jetway and Terminal 4
+        run: |
+          node scripts/materialize-exact-airport-jetway.mjs
+          npm run materialize:phx-terminal4
+
+      - name: Build downloadable manual-placement kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf manual-placement-kit
+          mkdir -p manual-placement-kit/terminal4
+
+          cp public/models/airport-jetway/Airport_Jetway.glb manual-placement-kit/Airport_Jetway.glb
+          cp public/models/airport-jetway/exact-asset-manifest.json manual-placement-kit/jetway-exact-asset-manifest.json
+
+          cp public/models/phx-terminal4/terminal4.gltf manual-placement-kit/terminal4/terminal4.gltf
+          cp public/models/phx-terminal4/terminal4.bin manual-placement-kit/terminal4/terminal4.bin
+          cp public/models/phx-terminal4/extraction-manifest.json manual-placement-kit/terminal4/extraction-manifest.json
+          cp public/models/phx-terminal4/runtime-manifest.json manual-placement-kit/terminal4/runtime-manifest.json
+          cp -R public/models/phx-terminal4/textures manual-placement-kit/terminal4/textures
+
+          cat > manual-placement-kit/README.md <<'EOF'
+          # RampReady A1 manual placement kit
+
+          This folder contains the real 3D files needed to position the supplied passenger boarding bridge against Phoenix Sky Harbor Terminal 4 outside of RampReady.
+
+          ## Jetway
+          - `Airport_Jetway.glb`
+          - Exact untouched user-supplied model.
+          - Expected size: 31,459,796 bytes.
+          - Expected SHA-256: `562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0`.
+          - The GLB contains the original embedded materials/textures and hierarchy.
+
+          ## Terminal 4
+          Import `terminal4/terminal4.gltf`. Keep `terminal4.bin` and the `terminal4/textures/` folder beside it so the glTF resolves correctly.
+
+          The Terminal 4 export preserves the source coordinate system and authored geometry used by RampReady. Import the terminal first, then import `Airport_Jetway.glb` and position the complete jetway parent at A1 without changing the supplied child hierarchy.
+
+          When the placement is correct, save/export the positioned scene or provide the jetway parent transform. RampReady can then use that exact transform rather than trying to infer it from screenshots.
+          EOF
+
+          (
+            cd manual-placement-kit
+            sha256sum Airport_Jetway.glb terminal4/terminal4.gltf terminal4/terminal4.bin > SHA256SUMS.txt
+          )
+
+      - name: Commit actual 3D files to export branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f manual-placement-kit
+          if git diff --cached --quiet; then
+            echo "Manual-placement kit is already current."
+            exit 0
+          fi
+          git commit -m "Export downloadable A1 manual placement 3D kit [skip export]"
+          git push origin HEAD:exports/a1-manual-placement-kit
