@@ -38,6 +38,46 @@ async function settle(page, milliseconds = 1800) {
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 }
 
+async function waitForTerminal4Readiness(page, consoleErrors, pageErrors, failedRequests) {
+  const deadline = Date.now() + 120000;
+  let lastRuntime = {};
+  while (Date.now() < deadline) {
+    lastRuntime = await page.locator("canvas.trainerCanvas").evaluate(element => ({ ...element.dataset }));
+    if (
+      lastRuntime.environmentSource === "authored-phx-terminal4-textured-source-jetways"
+      && lastRuntime.groundSource === "authored-kphx-v181-source-textured-nearfield"
+      && lastRuntime.photoGroundSource === "source-authored-phx-photo"
+    ) return lastRuntime;
+
+    const fatalConsole = consoleErrors.find(message => /Exact jetway readiness mismatch|Airport_Jetway\.glb fleet|A1 Rotunda|source[- ]locked|Terminal 4|KPHX|ReferenceError|TypeError|SyntaxError/i.test(message));
+    const fatalPage = pageErrors.find(message => /jetway|A1|Terminal 4|KPHX|ReferenceError|TypeError|SyntaxError/i.test(message));
+    if (fatalConsole || fatalPage) {
+      fs.writeFileSync(`${evidenceDirectory}/readiness-failure.json`, `${JSON.stringify({
+        capturedAtUtc: new Date().toISOString(),
+        pageUrl,
+        runtime: lastRuntime,
+        fatalConsole: fatalConsole || null,
+        fatalPage: fatalPage || null,
+        consoleErrors,
+        pageErrors,
+        failedRequests,
+      }, null, 2)}\n`);
+      throw new Error(`Terminal 4 readiness failed before visual capture: ${fatalConsole || fatalPage}`);
+    }
+    await page.waitForTimeout(250);
+  }
+
+  fs.writeFileSync(`${evidenceDirectory}/readiness-timeout.json`, `${JSON.stringify({
+    capturedAtUtc: new Date().toISOString(),
+    pageUrl,
+    runtime: lastRuntime,
+    consoleErrors,
+    pageErrors,
+    failedRequests,
+  }, null, 2)}\n`);
+  throw new Error(`Terminal 4 readiness timed out before visual capture. Last canvas dataset: ${JSON.stringify(lastRuntime)}`);
+}
+
 test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
 test.setTimeout(720000);
 
@@ -63,12 +103,7 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
 
   const canvas = page.locator("canvas.trainerCanvas");
   await expect(canvas).toBeVisible({ timeout: 30000 });
-  await page.waitForFunction(() => {
-    const element = document.querySelector("canvas.trainerCanvas");
-    return element?.dataset.environmentSource === "authored-phx-terminal4-textured-source-jetways"
-      && element?.dataset.groundSource === "authored-kphx-v181-source-textured-nearfield"
-      && element?.dataset.photoGroundSource === "source-authored-phx-photo";
-  }, null, { timeout: 120000 });
+  await waitForTerminal4Readiness(page, consoleErrors, pageErrors, failedRequests);
 
   await settle(page, 5000);
   const freeDrive = page.getByRole("button", { name: "Free-drive inspection" });
@@ -79,9 +114,6 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
   await expect(location).toBeVisible();
   await expect(camera).toBeVisible();
 
-  // Select chase once. Re-selecting the already-active camera after every
-  // inspection preset caused Playwright to wait on a React select that was
-  // being replaced during the preset transition, hiding later fleet captures.
   await camera.selectOption("chase");
 
   const captures = {};
