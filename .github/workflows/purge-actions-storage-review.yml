@@ -65,9 +65,19 @@ jobs:
             return 1
           }
 
+          cancel_one() {
+            local endpoint="$1" output
+            if output="$(gh api --method POST "${endpoint}/cancel" 2>&1)"; then
+              return 0
+            fi
+            [[ "${output}" == *"HTTP 404"* || "${output}" == *"HTTP 409"* ]] && return 0
+            echo "CANCEL ${endpoint} failed: ${output}" >&2
+            return 1
+          }
+
           main_sha="$(get_json "repos/${GITHUB_REPOSITORY}/commits/main" | jq -r '.sha')" || exit 1
-          open_prs="$(get_json "repos/${GITHUB_REPOSITORY}/pulls?state=open&base=main&sort=updated&direction=desc&per_page=100")" || exit 1
-          accepted_pr="$(jq -c '[.[] | select((.head.ref | startswith("maintenance/")) | not)] | sort_by(.updated_at) | last // empty' <<<"${open_prs}")"
+          open_prs="$(get_json "repos/${GITHUB_REPOSITORY}/pulls?state=open&base=main&per_page=100")" || exit 1
+          accepted_pr="$(jq -c '[.[] | select((.head.ref | startswith("maintenance/")) | not)] | if length == 0 then empty else max_by(.number) end' <<<"${open_prs}")"
           accepted_pr_number=""
           accepted_sha=""
           if [[ -n "${accepted_pr}" ]]; then
@@ -76,7 +86,7 @@ jobs:
           fi
           [[ -n "${accepted_sha}" ]] || accepted_sha="${main_sha}"
           keep_json="$(printf '%s\n' "${main_sha}" "${accepted_sha}" | jq -R . | jq -s 'map(select(length > 0)) | unique')"
-          echo "Preserving deployed main ${main_sha} and current accepted PR #${accepted_pr_number:-none} head ${accepted_sha}: ${keep_json}"
+          echo "Preserving deployed main ${main_sha} and latest PR #${accepted_pr_number:-none} head ${accepted_sha}: ${keep_json}"
 
           deleted_artifacts=0
           deleted_artifact_bytes=0
@@ -110,6 +120,19 @@ jobs:
             sleep 3
           done
 
+          cancelled_runs=0
+          for attempt in $(seq 1 30); do
+            run_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)" || exit 1
+            mapfile -t active_ids < <(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '.[] | .workflow_runs[] | select((.id | tostring) != $current) | select(.status != "completed") | (.head_sha // "") as $sha | select(($keep | index($sha)) == null) | .id' <<<"${run_pages}")
+            (( ${#active_ids[@]} == 0 )) && break
+            for id in "${active_ids[@]}"; do
+              cancel_one "repos/${GITHUB_REPOSITORY}/actions/runs/${id}" || exit 1
+              cancelled_runs=$((cancelled_runs + 1))
+            done
+            echo "Requested cancellation of obsolete active runs; waiting for terminal state (attempt ${attempt}/30)."
+            sleep 5
+          done
+
           deleted_runs=0
           while true; do
             run_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)" || exit 1
@@ -133,7 +156,7 @@ jobs:
           obsolete_completed_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | select(.status == "completed") | (.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${run_pages}")"
           obsolete_active_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | select(.status != "completed") | (.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${run_pages}")"
 
-          echo "STORAGE PURGE VERIFIED: accepted PR #${accepted_pr_number:-none}=${accepted_sha}, main=${main_sha}; deleted artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes), obsolete completed runs=${deleted_runs}; remaining obsolete artifacts=${obsolete_artifacts}, caches=${caches}, obsolete completed runs=${obsolete_completed_runs}, obsolete active runs=${obsolete_active_runs}; preserved current evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
+          echo "STORAGE PURGE VERIFIED: latest PR #${accepted_pr_number:-none}=${accepted_sha}, main=${main_sha}; deleted artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes), cancelled obsolete runs=${cancelled_runs}, deleted obsolete completed runs=${deleted_runs}; remaining obsolete artifacts=${obsolete_artifacts}, caches=${caches}, obsolete completed runs=${obsolete_completed_runs}, obsolete active runs=${obsolete_active_runs}; preserved current evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
           (( obsolete_artifacts == 0 && caches == 0 && obsolete_completed_runs == 0 && obsolete_active_runs == 0 ))
 
       - name: Check out current main policy source
