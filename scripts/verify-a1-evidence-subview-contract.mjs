@@ -5,6 +5,8 @@ await import(`./verify-a1-grounded-lifecycle-order-v1.mjs?close-preflight=${Date
 const files = Object.freeze({
   endpoint: "scripts/prepare-a1-endpoint-browser-evidence-v1.mjs",
   subviews: "scripts/prepare-a1-evidence-subviews-v1.mjs",
+  bogieGround: "scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs",
+  readiness: "scripts/prepare-a1-bogie-readiness-v1.mjs",
   lock: "scripts/prepare-a1-evidence-camera-lock-v1.mjs",
   finalizer: "scripts/prepare-a1-final-acceptance-authority-v1.mjs",
   heading: "scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs",
@@ -32,18 +34,48 @@ if (!(dynamicIndex >= 0 && subviewIndex > dynamicIndex && lockIndex > subviewInd
   );
 }
 
+requireTokens("bogieGround", [
+  'exact-authored-a1-lowest-geometry-ramp-contact-v2',
+  "const contactCenter = contactBounds.getCenter",
+  "bogieGroundContactCenterX: authoredA1GroundContactAfter.centerX",
+  "uploadedJetwayBogieGroundContactCenterX",
+  "uploadedJetwayBogieGroundContactCenterY",
+  "uploadedJetwayBogieGroundContactCenterZ",
+]);
+
+requireTokens("readiness", [
+  'exact-authored-a1-lowest-geometry-ramp-contact-v2',
+  "bogieGroundContactCenterX",
+  "authoredTerminal4UploadedJetwayBogieGroundContactCenterX",
+  "terminal4UploadedJetwayBogieGroundContactCenterX",
+  "terminal4UploadedJetwayBogieGroundContactCenterY",
+  "terminal4UploadedJetwayBogieGroundContactCenterZ",
+]);
+
 requireTokens("subviews", [
   'const authority = "exact-a1-terminal-joint-and-bogie-contact-subviews-v1"',
   'exactA1EvidenceSubview === "terminal-joint"',
   'exactA1EvidenceSubview === "bogie-contact"',
   "const exactA1JointCenterX",
-  "const exactA1BogieTargetX",
-  "exactA1CameraCabX - exactA1CameraApronX * 6",
-  "exactA1CameraPositionY = 3.6",
-  "exactA1CameraTargetY = 1.1",
+  "const exactA1JointSpan",
+  "exactA1CameraApronX * 1.15",
+  "const exactA1BogieContactX",
+  "uploadedJetwayBogieGroundContactCenterX",
+  "inspectionCameraEndpointJointCenter",
+  "inspectionCameraEndpointJointSpanMeters",
+  "inspectionCameraEndpointBogieContactCenter",
   "inspectionCameraEndpointSubview = exactA1EvidenceSubview",
   "inspectionCameraEndpointSubviewAuthority",
 ]);
+for (const forbidden of [
+  "exactA1CameraCabX - exactA1CameraApronX * 6",
+  "exactA1CameraApronX * 8",
+  "exactA1CameraSideSign * 12",
+]) {
+  if (source.subviews.includes(forbidden)) {
+    throw new Error(`${files.subviews}: obsolete guessed close-camera target remains: ${forbidden}`);
+  }
+}
 
 requireTokens("lock", [
   "exact-a1-evidence-camera-direct-lock-v1",
@@ -90,7 +122,7 @@ requireTokens("browser", [
   "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2",
   "exact-a1-evidence-camera-direct-lock-v1",
   "same-day-a1-continuous-compact-solid-closed-grounded-v1",
-  "exact-authored-a1-lowest-geometry-ramp-contact-v1",
+  "exact-authored-a1-lowest-geometry-ramp-contact-v2",
   "grounded-jetway-door-gap-reported-no-child-lift-v1",
   'selectSubview(page, "terminal-joint")',
   'selectSubview(page, "bogie-contact")',
@@ -98,6 +130,12 @@ requireTokens("browser", [
   "a1-terminal-joint-close.png",
   "a1-bogie-contact-close.png",
   "a1-terminal-joint-bogie-subviews.json",
+  "inspectionCameraEndpointJointCenter",
+  "inspectionCameraEndpointBogieContactCenter",
+  "terminal4UploadedJetwayBogieGroundContactCenterX",
+  "distance3(terminalCameraTarget, terminalJointCenter)",
+  "distance3(bogieContactCenter, publishedBogieContactCenter)",
+  "distance3(bogieCameraPosition, bogieCameraTarget)",
   "a1ExactRotundaToWallWorldMeters",
   "terminal4A1JetwayWallDistance",
   "terminal4UploadedJetwayA1VisibleVestibuleLengthMeters",
@@ -115,4 +153,4 @@ requireTokens("browser", [
   "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
 ]);
 
-console.log("Verified grounded lifecycle order, post-lifecycle applied-pose capture gate, exact 2.4 m terminal and low-bogie close views, authored Rotunda center range, camera lock, multi-point ramp contact, zero attached child lift, and retained evidence.");
+console.log("Verified grounded lifecycle order and exact close framing: the terminal camera targets the measured wall/Rotunda midpoint, the bogie camera targets the authored low-contact centroid, both remain tightly bounded, and zero-lift/ground-contact evidence is retained.");
