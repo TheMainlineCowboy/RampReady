@@ -5,15 +5,11 @@ const sourceRegisteredImport = `import {
   enforceSourceRegisteredA1RotundaElbow,
   SOURCE_REGISTERED_A1_ELBOW_AUTHORITY,
 } from "./sourceRegisteredA1RotundaElbowV2.js";`;
+const BOGIE_GROUND_AUTHORITY = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
 
-// IMPORTANT: operate on the CURRENT prepared readiness layer. The production
-// migration stack has already upgraded grounding, static-fleet closure and
-// visual acceptance contracts by the time this finalizer runs. Reconstructing
-// the old committed baseline here would silently resurrect obsolete checks
-// (including the old fixed 0.06 m bogie correction) and discard newer evidence.
-// This finalizer changes only A1's final placement authority: preserve the
-// source aircraft-side yaw, register the supplied Rotunda to the real wall,
-// require the compact 2.4 m terminal leg, and reject the old straight portal.
+// Operate on the CURRENT prepared readiness layer. The production migration
+// stack upgrades grounding, static-fleet closure and visual acceptance before
+// this finalizer runs. Never rebuild readiness from the old committed baseline.
 let source = fs.readFileSync(readinessPath, "utf8");
 if (!source.includes("correctUploadedJetwayInstallation")) {
   throw new Error(`${readinessPath}: current prepared readiness layer is missing installation correction`);
@@ -46,18 +42,37 @@ const sourceLockEvidenceBlock = `${magnitudeBlock}
           const sourceYawPreserved = group.userData.uploadedJetwayA1SourceYawPreserved === true;
           const terminalSideIndependent = group.userData.uploadedJetwayA1TerminalSideIndependentFromTunnelAxis === true;
           const passengerPassageBlocked = group.userData.uploadedJetwayA1PassengerPassageCrossSectionBlocked === true;
-          const apronFacingOpenAreaMeters = Number(group.userData.uploadedJetwayA1ApronFacingOpenAreaMeters ?? Infinity);`;
+          const apronFacingOpenAreaMeters = Number(group.userData.uploadedJetwayA1ApronFacingOpenAreaMeters ?? Infinity);
+          const bogieGroundClearanceMeters = Number(group.userData.uploadedJetwayBogieGroundClearanceMeters ?? Infinity);
+          const bogieGroundContactAuthority = group.userData.uploadedJetwayBogieGroundContactAuthority || "missing";
+          const bogieGroundContactPointCount = Number(group.userData.uploadedJetwayBogieGroundContactPointCount ?? -1);
+          const bogieGroundContactClusterCount = Number(group.userData.uploadedJetwayBogieGroundContactClusterCount ?? -1);
+          const bogieGroundHorizontalContactSpanMeters = Number(group.userData.uploadedJetwayBogieGroundHorizontalContactSpanMeters ?? -1);`;
 if (!source.includes("const sourceLockedA1Authority")) {
   if (!source.includes(magnitudeBlock)) throw new Error(`${readinessPath}: terminal direction magnitude anchor is missing`);
   source = source.replace(magnitudeBlock, sourceLockEvidenceBlock);
 }
 
-// Zero portal-angle was the core visual regression: it forced the fixed
-// terminal leg and the movable bridge into one line. Remove only that obsolete
-// predicate wherever an older migration left it; all current grounding,
-// closure, source-integrity and exact-model predicates remain untouched.
+// The old zero-angle portal assertion is the exact regression that flattened
+// A1's real Rotunda corner. Remove only that obsolete geometric assumption.
 source = source.replace(/\n\s*\|\| a1PortalAlignmentError > 1e-6/g, "");
 source = source.replace(/\n\s*\|\| a1PortalAlignmentError > [0-9.eE+-]+/g, "");
+
+// Replace the old hand-tuned 0.04–0.10 m vertical-offset range with direct
+// authored-geometry ramp contact. The measured parent correction may be any
+// sane finite value; what matters is that the exact supplied geometry actually
+// lands on the ramp with a credible multi-point footprint.
+source = source.replace(
+  /\n\s*\|\| !\(bogieTireCorrection > 0\.04 && bogieTireCorrection < 0\.1\)/g,
+  `
+            || !Number.isFinite(bogieTireCorrection)
+            || bogieTireCorrection > 3
+            || Math.abs(bogieGroundClearanceMeters) > 0.005
+            || bogieGroundContactAuthority !== "${BOGIE_GROUND_AUTHORITY}"
+            || bogieGroundContactPointCount < 8
+            || bogieGroundContactClusterCount < 2
+            || bogieGroundHorizontalContactSpanMeters < 1.2`,
+);
 
 const partOrderCondition = "            || !a1PartOrderValid";
 const sourceLockConditions = `${partOrderCondition}
@@ -96,20 +111,22 @@ for (const token of [
   "sourceYawPreserved",
   "uploadedJetwayA1TerminalSideIndependentFromTunnelAxis",
   "uploadedJetwayA1PassengerPassageCrossSectionBlocked",
+  "bogieGroundClearanceMeters",
+  "bogieGroundContactAuthority",
+  `"${BOGIE_GROUND_AUTHORITY}"`,
+  "bogieGroundContactPointCount < 8",
+  "bogieGroundContactClusterCount < 2",
+  "bogieGroundHorizontalContactSpanMeters < 1.2",
 ]) {
-  if (!source.includes(token)) throw new Error(`${readinessPath}: photo-registered Rotunda finalizer is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${readinessPath}: final A1 readiness is missing ${token}`);
 }
 if (/\|\| a1PortalAlignmentError >/.test(source)) {
   throw new Error(`${readinessPath}: obsolete straight-A1 portal alignment gate remains`);
 }
-
-// Fail if the finalizer accidentally rolled modern grounding back to the old
-// fixed correction contract. Current preparation must retain whichever exact
-// measured/multi-point grounding predicates the migration stack installed.
 if (source.includes("bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1")) {
-  throw new Error(`${readinessPath}: obsolete fixed bogie-correction readiness predicate was resurrected`);
+  throw new Error(`${readinessPath}: obsolete fixed bogie-correction range remains`);
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
 await import(`./prepare-terminal4-jetway-source-registration-v1.mjs?photo-registered-rotunda=${Date.now()}`);
-console.log("Prepared final A1 readiness on the current migration layer: preserved modern exact grounding/static-fleet checks, preserved source aircraft-side yaw, photo-registered the supplied Rotunda to the real Terminal 4 wall, required the compact 2.4 m fixed leg and visible Rotunda elbow, and rejected T4_WALK/straight-portal targeting.");
+console.log("Prepared final A1 readiness on the current migration layer: direct exact-geometry ramp contact replaces the obsolete fixed offset range; source aircraft-side yaw is preserved; the supplied Rotunda is photo-registered to the real Terminal 4 wall through the compact 2.4 m fixed leg; a visible Rotunda elbow is mandatory; T4_WALK/straight-portal targeting is rejected.");
