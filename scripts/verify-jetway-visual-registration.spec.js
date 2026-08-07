@@ -19,17 +19,18 @@ async function captureCanvas(page, outputPath) {
 }
 
 async function selectInspectionPreset(page, preset) {
-  const selector = page.locator('select[aria-label="Inspection location"]');
-  await expect(selector).toBeVisible({ timeout: 10000 });
-  await selector.selectOption(preset, { timeout: 10000 });
-  await expect(selector).toHaveValue(preset, { timeout: 5000 });
-  await page.waitForTimeout(500);
+  await page.waitForFunction(() => typeof window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ === "function", null, { timeout: 10000 });
+  const returned = await page.evaluate((presetId) => window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__(presetId), preset);
+  if (returned !== preset) throw new Error(`Visual evidence preset bridge rejected ${preset}: ${returned}`);
+  await page.waitForFunction(expected => document.querySelector("canvas.trainerCanvas")?.dataset.inspectionPreset === expected, preset, { timeout: 10000 });
   const state = await page.locator("canvas.trainerCanvas").evaluate((element, expectedPreset) => ({
     ok: element.dataset.inspectionPreset === expectedPreset,
     expectedPreset,
     selected: element.dataset.inspectionPreset || null,
     routeAuthority: element.dataset.inspectionRouteAuthority || null,
     cameraAuthority: element.dataset.inspectionCameraAuthority || null,
+    cameraYaw: element.dataset.cameraYaw || null,
+    cameraDistance: element.dataset.cameraDistance || null,
   }), preset);
   if (!state.ok) throw new Error(`Inspection preset ${preset} did not propagate to the rendered canvas: ${JSON.stringify(state)}`);
   return state;
@@ -60,7 +61,7 @@ async function waitForTerminal4Readiness(page, consoleErrors, pageErrors, failed
 }
 
 test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
-test.setTimeout(180000);
+test.setTimeout(150000);
 
 test("Terminal 4 exact jetways are visually registered to their source terminal positions", async ({ page }) => {
   fs.mkdirSync(evidenceDirectory, { recursive: true });
@@ -91,11 +92,10 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
   await expect(inspectionSelector).toBeVisible({ timeout: 15000 });
   const returnToTraining = page.getByRole("button", { name: "Return to training" });
   await expect(returnToTraining).toBeVisible({ timeout: 15000 });
-  checkpoint("inspection-active");
-
   const camera = page.getByLabel("Camera view");
   await expect(camera).toBeVisible({ timeout: 10000 });
-  await camera.selectOption("chase", { timeout: 10000 });
+  expect(await camera.inputValue({ timeout: 5000 })).toBe("chase");
+  checkpoint("inspection-active");
 
   const captures = {};
   const presetSelection = {};
@@ -107,7 +107,7 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
   ]) {
     checkpoint(`preset-${preset}`);
     presetSelection[preset] = await selectInspectionPreset(page, preset);
-    await page.waitForTimeout(900);
+    await page.waitForTimeout(700);
     checkpoint(`capture-${preset}`, { presetSelection: presetSelection[preset] });
     captures[file] = await captureCanvas(page, `${evidenceDirectory}/${file}`);
   }
