@@ -20,6 +20,7 @@ for (const token of [
 
 for (const token of [
   "grounded-jetway-door-gap-reported-no-child-lift-v1",
+  "preserve-final-airport-placement-v8",
   "requestedAttachedVerticalDropMeters",
   "attachedVerticalDropMeters = 0",
   "authoredBogieGroundPreserved = true",
@@ -29,9 +30,10 @@ for (const token of [
   "nodes.tunnelC",
   "nodes.cab",
   "retract * retraction.lift",
+  "anchor.updateWorldMatrix(true, true)",
 ]) {
   if (!controller.includes(token)) {
-    throw new Error(`${controllerPath}: grounded-bogie controller contract is missing ${token}`);
+    throw new Error(`${controllerPath}: grounded-bogie/final-parent-pose controller contract is missing ${token}`);
   }
 }
 for (const forbidden of [
@@ -40,10 +42,12 @@ for (const forbidden of [
   "attachedDrop * 2 / 3",
   "attachedDrop + retract * retraction.lift",
   'attachedVerticalFitAuthority = "grounded-aircraft-door-progressive-tunnel-slope-v1"',
+  "anchor.rotation.y = base.yaw",
+  "yaw: anchor.rotation.y",
 ]) {
   if (controller.includes(forbidden)) {
-    throw new Error(`${controllerPath}: floating-bogie child-lift behavior remains: ${forbidden}`);
+    throw new Error(`${controllerPath}: forbidden A1 articulation behavior remains: ${forbidden}`);
   }
 }
 
-console.log("Verified exact A1 horizontal model-space retraction with zero attached child lift: the grounded bogie is preserved while the requested door-height gap remains diagnostic only.");
+console.log("Verified exact A1 horizontal model-space retraction with zero attached child lift and no parent-pose reset: the corrected Terminal 4 placement and grounded bogie are preserved whenever deployment changes.");
