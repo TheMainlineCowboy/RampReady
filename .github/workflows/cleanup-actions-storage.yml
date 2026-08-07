@@ -12,6 +12,7 @@ on:
 permissions:
   actions: write
   contents: read
+  deployments: read
   pull-requests: read
   statuses: write
 
@@ -67,6 +68,13 @@ jobs:
           }
 
           main_sha="$(get_json "repos/${GITHUB_REPOSITORY}/commits/main" | jq -r '.sha')"
+          deployments="$(get_json "repos/${GITHUB_REPOSITORY}/deployments?environment=github-pages&per_page=100")"
+          deployed_main_sha="$(jq -r '[.[] | select((.ref // "") == "main")][0].sha // empty' <<<"${deployments}")"
+          if [[ -z "${deployed_main_sha}" ]]; then
+            deployed_main_sha="${main_sha}"
+            echo "No github-pages main deployment was returned; falling back to current main ${main_sha}."
+          fi
+
           pulls_pages="$(get_json "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100" true)"
           accepted_pr_json="$(
             jq -c '
@@ -78,9 +86,9 @@ jobs:
           )"
           accepted_pr_number="$(jq -r 'if . == null then empty else .number end' <<<"${accepted_pr_json}")"
           accepted_pr_sha="$(jq -r 'if . == null then empty else .head.sha end' <<<"${accepted_pr_json}")"
-          keep_json="$(printf '%s\n' "${main_sha}" "${accepted_pr_sha}" | jq -R . | jq -s 'map(select(length > 0)) | unique')"
+          keep_json="$(printf '%s\n' "${deployed_main_sha}" "${accepted_pr_sha}" | jq -R . | jq -s 'map(select(length > 0)) | unique')"
 
-          echo "Preserving deployed main ${main_sha} and current accepted PR #${accepted_pr_number:-none} ${accepted_pr_sha:-none}."
+          echo "Current main=${main_sha}; preserving deployed main=${deployed_main_sha} and current accepted PR #${accepted_pr_number:-none}=${accepted_pr_sha:-none}."
 
           deleted_artifacts=0
           deleted_artifact_bytes=0
@@ -163,7 +171,7 @@ jobs:
           run_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)"
           obsolete_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | (.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${run_pages}")"
 
-          echo "STORAGE CLEANUP VERIFIED: accepted PR #${accepted_pr_number:-none}=${accepted_pr_sha:-none}; deleted artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes), runs=${deleted_runs}; cancelled obsolete active runs=${cancelled_runs}; remaining obsolete artifacts=${obsolete_artifacts}, caches=${remaining_caches}, runs=${obsolete_runs}; preserved current evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
+          echo "STORAGE CLEANUP VERIFIED: accepted PR #${accepted_pr_number:-none}=${accepted_pr_sha:-none}; deployed main=${deployed_main_sha}; deleted artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes), runs=${deleted_runs}; cancelled obsolete active runs=${cancelled_runs}; remaining obsolete artifacts=${obsolete_artifacts}, caches=${remaining_caches}, runs=${obsolete_runs}; preserved current evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
 
           (( obsolete_artifacts == 0 && remaining_caches == 0 && obsolete_runs == 0 ))
 
