@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
-const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
+const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v10";
 const A1_CAMERA_AUTHORITY = "oblique-measured-final-cab-and-aircraft-a1-v9";
 let source = fs.readFileSync(path, "utf8");
 if (!source.includes('  a1Connection: Object.freeze({')) {
@@ -23,10 +23,9 @@ let presetBlock = source.slice(presetStart, presetEnd);
 const tugXLine = "    x: 20.0,";
 const tugZLine = "    z: 3.0,";
 const tugYawLine = '    yaw: -0.35,';
-// View A1 from the northeast open-apron side. The previous west-side camera
-// looked through the terminal roof and hid the actual Cab-to-aircraft contact.
-// This position keeps the terminal behind the bridge while showing the compact
-// vestibule, Rotunda, complete supplied bridge, Cab, CRJ nose, wings and tail.
+// This fallback remains available for broad A1 context. The final production
+// evidence path selects the exact endpoint-derived terminal-joint subview when
+// a1Connection is launched, so this broad camera is not the acceptance view.
 const cameraPositionLine = "    cameraPosition: Object.freeze([42.0, 16.0, 50.0]),";
 const cameraTargetLine = "    cameraTarget: Object.freeze([-6.0, 3.5, 17.0]),";
 const overheadCameraPositionLine = "    overheadCameraPosition: Object.freeze([-9.0, 75.0, 18.0]),";
@@ -120,7 +119,7 @@ for (const token of [
 const fixedCameraPositionCount = (source.match(/cameraPosition:\s*Object\.freeze/g) || []).length;
 const fixedCameraTargetCount = (source.match(/cameraTarget:\s*Object\.freeze/g) || []).length;
 if (![1, 2].includes(fixedCameraPositionCount)) {
-  throw new Error(`${path}: inspection route must expose the A1 fixed camera and, when prepared, the A14 fixed fleet camera; received ${fixedCameraPositionCount} positions`);
+  throw new Error(`${path}: inspection route must expose the A1 fixed fallback camera and may expose one additional fixed fleet camera; received ${fixedCameraPositionCount} positions`);
 }
 if (fixedCameraTargetCount !== fixedCameraPositionCount) {
   throw new Error(`${path}: fixed inspection camera positions and targets must remain paired (${fixedCameraPositionCount}/${fixedCameraTargetCount})`);
@@ -131,10 +130,10 @@ if (fixedCameraPositionCount === 2) {
     'cameraTarget: Object.freeze([218.45, 4.2, -86.52])',
     'cameraAuthority: "wide-diagonal-a14-exact-static-fleet-v1"',
   ]) {
-    if (!source.includes(token)) throw new Error(`${path}: prepared A14 fixed fleet camera is missing ${token}`);
+    if (!source.includes(token)) throw new Error(`${path}: second fixed fleet camera is not the known A14 camera: ${token}`);
   }
 }
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared fixed northeast open-apron and overhead A1 evidence frames around the measured final Cab contact and attached CRJ footprint.");
+console.log("Prepared broad A1 fallback and overhead evidence framing while preserving the exact terminal-joint launch authority and chase-framed A/B fleet route.");
