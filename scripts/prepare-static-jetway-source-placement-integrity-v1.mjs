@@ -1,77 +1,56 @@
 import fs from "node:fs";
 
 const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
-const authority = "57-static-exact-bgl-source-placement-no-facade-relocation-v1";
 let source = fs.readFileSync(readinessPath, "utf8");
 
+const baseFleetImport = 'import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";';
+const registrationImport = 'import { registerStaticJetwayFleetToFacade } from "./registerStaticJetwayFleetToFacadeV1.js";';
+const installationCall = "          const installationCorrection = correctUploadedJetwayInstallation(THREE, group, fleet, placements);";
 const registrationCall = "          const staticFleetRegistration = registerStaticJetwayFleetToFacade(THREE, group, fleet, placements);";
-const preservedCall = `          // Static jetways are already authored at the exact KPHX BGL gate coordinates.
-          // Do not move them toward a guessed facade ray hit after the +6.2 m world-frame
-          // correction; that relocation visibly detached bridges from their real terminal
-          // openings. Keep all 57 source placements and only allow the dedicated A1 photo
-          // correction to override its own terminal-side geometry.
-          const staticFleetRegistration = Object.freeze({
-            authority: "${authority}",
-            gateCount: 57,
-            sourcePlacementPreserved: true,
-          });
-          group.userData.uploadedJetwayStaticSourcePlacementAuthority = "${authority}";
-          group.userData.uploadedJetwayStaticSourcePlacementGateCount = 57;
-          group.userData.uploadedJetwayStaticFacadeRelocationApplied = false;`;
 
-if (source.includes(registrationCall)) {
-  source = source.replace(registrationCall, preservedCall);
-} else if (!source.includes(`authority: "${authority}"`)) {
-  throw new Error(`${readinessPath}: static facade-registration call is missing`);
+// The exact replacement GLB has a different authored root/Rotunda convention
+// from the stock AIR_Jetway01 object in the KPHX BGL. Preserving raw BGL x/z/yaw
+// for the replacement root visibly leaves terminal ends floating in front of the
+// concourses. Preserve the BGL-derived gate evidence, but register each complete
+// supplied static parent from its measured facade wall point to its gate target.
+if (!source.includes(registrationImport)) {
+  if (!source.includes(baseFleetImport)) {
+    throw new Error(`${readinessPath}: base fleet import anchor is missing`);
+  }
+  source = source.replace(baseFleetImport, `${baseFleetImport}\n${registrationImport}`);
 }
 
-// The previous repair added readiness gates for the guessed facade relocation.
-// Those gates validated their own generated coordinates rather than the exact BGL
-// positions. Remove only those relocation-specific conditions; all source-model,
-// A1 wall/Rotunda, grounding and exact-asset gates remain intact.
-const relocationConditionTokens = [
-  "staticFacadeRegistrationAuthority !== STATIC_JETWAY_FACADE_REGISTRATION_AUTHORITY",
-  "staticFacadeRegisteredGateCount !== 57",
-  "staticFacadeMaximumWallError > 1e-6",
-  "staticPhysicalRotundaMaximumError > 1e-6",
-  "staticModelRootOffsetAuthority !== STATIC_JETWAY_MODEL_ROOT_OFFSET_AUTHORITY",
-  "!Number.isFinite(staticAuthoredRotundaOffsetHorizontal)",
-  "staticAuthoredRotundaOffsetHorizontal > 12",
-  "Math.abs(staticRotundaCenterToWall - 3.98) > 0.001",
-  "Math.abs(staticVisibleTerminalLeg - 2.4) > 0.001",
-  "staticGroundIsolationAuthority !== STATIC_JETWAY_GROUND_ISOLATION_AUTHORITY",
-  "Math.abs(staticFleetGroundYOffset) > 1e-8",
-];
-for (const token of relocationConditionTokens) {
-  const pattern = new RegExp(`\\n\\s*\\|\\| ${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "g");
-  source = source.replace(pattern, "");
+// Remove the historical override if an older preparation pass left it in the
+// working tree, then restore the physical facade-registration call.
+const obsoleteStart = "          // Static jetways are already authored at the exact KPHX BGL gate coordinates.";
+const obsoleteEnd = "          group.userData.uploadedJetwayStaticFacadeRelocationApplied = false;";
+if (source.includes(obsoleteStart)) {
+  const start = source.indexOf(obsoleteStart);
+  const endStart = source.indexOf(obsoleteEnd, start);
+  if (endStart < 0) throw new Error(`${readinessPath}: obsolete static-placement override is incomplete`);
+  const end = endStart + obsoleteEnd.length;
+  source = `${source.slice(0, start)}${registrationCall}${source.slice(end)}`;
+}
+if (!source.includes(registrationCall)) {
+  if (!source.includes(installationCall)) {
+    throw new Error(`${readinessPath}: installation-correction anchor is missing`);
+  }
+  source = source.replace(installationCall, `${installationCall}\n${registrationCall}`);
 }
 
-// Deliberately leave the now-unused static-registration import alone. Production
-// bundling tree-shakes it. A previous broad multiline import-removal regex could
-// start at an unrelated A1 finalizer import and consume everything through the
-// static-registration import, causing `enforceRenderedDoorA1Elbow is not defined`
-// in the browser. Source-preservation is more important than cosmetic dead-import
-// cleanup here.
-
-for (const token of [
-  authority,
+for (const forbidden of [
+  "57-static-exact-bgl-source-placement-no-facade-relocation-v1",
   "uploadedJetwayStaticFacadeRelocationApplied = false",
-  "const staticFleetRegistration = Object.freeze({",
-  "sourcePlacementPreserved: true",
 ]) {
-  if (!source.includes(token)) throw new Error(`${readinessPath}: source-placement integrity is missing ${token}`);
+  if (source.includes(forbidden)) {
+    throw new Error(`${readinessPath}: obsolete detached-static-jetway override is still active: ${forbidden}`);
+  }
 }
-if (source.includes("registerStaticJetwayFleetToFacade(THREE, group, fleet, placements)")) {
-  throw new Error(`${readinessPath}: guessed static facade relocation is still active`);
-}
-
-// If the rendered-door A1 finalizer was prepared before this pass, prove its import
-// survived untouched. This directly guards the crash found by the exact visual run.
-if (source.includes("enforceRenderedDoorA1Elbow(THREE, group, fleet, placements)")
-  && !source.includes("enforceSourceRegisteredA1RotundaElbow as enforceRenderedDoorA1Elbow")) {
-  throw new Error(`${readinessPath}: A1 rendered-door finalizer call survived without its import`);
+for (const required of [registrationImport, registrationCall]) {
+  if (!source.includes(required)) {
+    throw new Error(`${readinessPath}: measured static terminal-wall registration is missing ${required}`);
+  }
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Locked all 57 static Terminal 4 jetways to their exact BGL source placements without touching unrelated A1 rendered-door imports.");
+console.log("Enforced measured terminal-wall/Rotunda registration for all 57 static supplied jetways; raw BGL evidence remains input data but is no longer misused as the replacement GLB model-root pose.");
