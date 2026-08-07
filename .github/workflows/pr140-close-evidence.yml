@@ -1,0 +1,218 @@
+name: PR 140 close A1 evidence
+
+on:
+  push:
+    branches:
+      - maintenance/pr140-acceptance-run
+    paths:
+      - .github/workflows/pr140-close-evidence.yml
+      - .pr140-acceptance-trigger
+  pull_request:
+    branches:
+      - maintenance/pr140-acceptance-base
+    types: [opened, synchronize, reopened]
+    paths:
+      - .pr140-acceptance-trigger
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  statuses: write
+
+concurrency:
+  group: pr140-close-a1-evidence
+  cancel-in-progress: true
+
+jobs:
+  render-close-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      PLAYWRIGHT_WEB_SERVER_COMMAND: npm run preview -- --port 4173 --strictPort
+    steps:
+      - name: Resolve exact PR 140 head
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha="$(gh api repos/${GITHUB_REPOSITORY}/pulls/140 --jq .head.sha)"
+          test -n "${sha}"
+          echo "sha=${sha}" >> "${GITHUB_OUTPUT}"
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${sha}" \
+            -f state=pending \
+            -f context='PR140 close A1 evidence' \
+            -f description='Exact apron-side joint and unobstructed bogie renders are running' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - name: Check out exact PR 140 head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Require exact close-view production wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/verify-a1-measured-ground-contact-contract.mjs
+          node scripts/verify-a1-evidence-subview-contract.mjs
+          grep -Fq 'prepare-a1-evidence-subviews-v1.mjs?exact-evidence-subviews=' scripts/prepare-a1-endpoint-browser-evidence-v1.mjs
+          grep -Fq 'exact-a1-terminal-joint-and-bogie-contact-subviews-v2' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -Fq 'inspectionCameraEndpointJointCenter' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -Fq 'inspectionCameraEndpointJointApronDistanceMeters' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -Fq 'inspectionCameraEndpointJointSideDistanceMeters' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -Fq 'inspectionCameraEndpointBogieContactCenter' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -Fq 'inspectionCameraEndpointBogieAircraftCenter' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -Fq 'inspectionCameraEndpointBogieAircraftOppositionCosine' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -Fq 'uploadedJetwayBogieGroundContactCenterX' scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs
+          grep -Fq 'grounded-jetway-door-gap-reported-no-child-lift-v1' scripts/prepare-a1-inspection-aircraft-vertical-registration-v1.mjs
+          grep -Fq 'source-a1-parking-heading-authored-door-registration-v2' tests/browser/a1-close-readiness-diagnostic.spec.js
+          grep -Fq 'A1 close subviews reach exact locked camera telemetry before screenshot capture' tests/browser/a1-close-subview-diagnostic.spec.js
+
+      - name: Build exact production artifact
+        run: npm run build
+
+      - name: Reapply and freeze strict close browser evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/prepare-current-head-browser-expectations-v1.mjs
+          node scripts/prepare-a1-post-lifecycle-evidence-v1.mjs
+          node scripts/prepare-a1-bogie-centroid-browser-authority-v1.mjs
+          node scripts/verify-a1-evidence-subview-contract.mjs
+          grep -Fq 'source-a1-parking-heading-authored-door-registration-v2' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'Math.abs(Number(data?.inspectionAircraftYaw) - 0.008569567) <= 0.001' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          if grep -Fq 'measured-cab-normal-aircraft-heading-v1' tests/browser/a1-terminal-joint-bogie-subviews.spec.js; then
+            echo 'Retired Cab-normal heading was restored before browser execution'
+            exit 1
+          fi
+          grep -Fq 'distance3(terminalCameraTarget, terminalJointCenter)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'cameraApronProjection' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'distance3(bogieContactCenter, publishedBogieContactCenter)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'inspectionCameraEndpointBogieAircraftOppositionCosine' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'terminal4A1ConnectionAuthority).not.toMatch(/WALK|JETWAY|CONNECTOR|PORTAL/i)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'a1-terminal-joint-close.png' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'a1-bogie-contact-close.png' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          mkdir -p retained-evidence/generated-browser-specs
+          cp tests/browser/a1-terminal-joint-bogie-subviews.spec.js retained-evidence/generated-browser-specs/
+          cp tests/browser/a1-close-readiness-diagnostic.spec.js retained-evidence/generated-browser-specs/
+          cp tests/browser/a1-close-subview-diagnostic.spec.js retained-evidence/generated-browser-specs/
+          echo 'Frozen production dist and strict close browser specs are ready; Playwright preview will not rebuild or restore them.'
+
+      - name: Quiet strict close-view authority checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          search=(grep -R -I --exclude='*.glb' --exclude='*.bin' --fixed-strings --quiet)
+          for forbidden in \
+            'exact-T4_WALK-A1-terminal-portal-v25' \
+            'exactWalkwayPortalX' \
+            'grounded-aircraft-door-progressive-tunnel-slope-v1' \
+            'measured-cab-normal-aircraft-heading-v1' \
+            'expectedCabRegisteredYaw' \
+            'exactA1CameraCabX - exactA1CameraApronX * 6' \
+            'exactA1CameraApronX * 8'; do
+            if "${search[@]}" "${forbidden}" dist; then
+              echo "Forbidden close-evidence behavior remains: ${forbidden}"
+              exit 1
+            fi
+          done
+          for required in \
+            'source-a1-parking-heading-authored-door-registration-v2' \
+            'inspectionAircraftSourceParkingHeadingDegrees' \
+            'inspectionAircraftSourceModelYawDegrees' \
+            'exact-a1-terminal-joint-and-bogie-contact-subviews-v2' \
+            'same-day-a1-continuous-compact-solid-closed-grounded-v1' \
+            'exact-authored-a1-lowest-geometry-ramp-contact-v2' \
+            'grounded-jetway-door-gap-reported-no-child-lift-v1' \
+            'terminal4UploadedJetwayBogieGroundContactPointCount' \
+            'terminal4UploadedJetwayBogieGroundContactClusterCount' \
+            'terminal4UploadedJetwayBogieGroundContactCenterX' \
+            'terminal4UploadedJetwayBogieGroundContactCenterY' \
+            'terminal4UploadedJetwayBogieGroundContactCenterZ' \
+            'inspectionCameraEndpointJointCenter' \
+            'inspectionCameraEndpointJointSpanMeters' \
+            'inspectionCameraEndpointJointApronDistanceMeters' \
+            'inspectionCameraEndpointJointSideDistanceMeters' \
+            'inspectionCameraEndpointBogieContactCenter' \
+            'inspectionCameraEndpointBogieAircraftCenter' \
+            'inspectionCameraEndpointBogieAircraftOppositionCosine' \
+            'inspectionAircraftJetwayAuthoredBogieGroundPreserved'; do
+            if ! "${search[@]}" "${required}" dist; then
+              echo "Required close-evidence authority or target is missing: ${required}"
+              exit 1
+            fi
+          done
+          echo "Quiet close-view v2 bundle checks passed with authored A1 aircraft heading."
+
+      - name: Install Chromium
+        run: |
+          npm install --no-save @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Diagnose exact A1 close readiness
+        run: >-
+          npx playwright test
+          tests/browser/a1-close-readiness-diagnostic.spec.js
+          --reporter=line --workers=1
+
+      - name: Diagnose exact A1 subview locks
+        run: >-
+          npx playwright test
+          tests/browser/a1-close-subview-diagnostic.spec.js
+          --reporter=line --workers=1
+
+      - name: Render terminal-joint and bogie-contact views
+        run: >-
+          npx playwright test
+          tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          --reporter=line --workers=1
+
+      - name: Upload exact close evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr140-close-a1-evidence-${{ steps.pr.outputs.sha }}
+          path: |
+            retained-evidence/
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Publish success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.pr.outputs.sha }}
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${SHA}" \
+            -f state=success \
+            -f context='PR140 close A1 evidence' \
+            -f description='Apron-side joint and unobstructed bogie renders passed' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - name: Publish failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.pr.outputs.sha }}
+        run: |
+          test -n "${SHA}" || exit 0
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${SHA}" \
+            -f state=failure \
+            -f context='PR140 close A1 evidence' \
+            -f description='Strict targeted A1 close evidence failed; inspect retained artifacts' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

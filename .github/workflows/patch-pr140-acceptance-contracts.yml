@@ -1,112 +1,54 @@
-name: Patch PR 140 acceptance contracts
+name: Materialize PR 140 acceptance contracts
 
 on:
-  pull_request:
+  push:
     branches:
-      - maintenance/pr140-acceptance-base
-    types: [opened, synchronize, reopened]
+      - maintenance/pr140-acceptance-run
     paths:
+      - .github/workflows/patch-pr140-acceptance-contracts.yml
       - .pr140-contract-patch-trigger
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: pr140-contract-materialization
+  cancel-in-progress: true
+
 jobs:
-  patch:
+  materialize:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - name: Check out PR 140 branch
+      - name: Check out exact PR 140 branch
         uses: actions/checkout@v4
         with:
           ref: fix/a1-rigid-parent-orientation-final
           fetch-depth: 0
           token: ${{ github.token }}
 
-      - name: Patch exact acceptance contracts
-        shell: python
+      - name: Materialize current fail-closed browser contracts
+        shell: bash
         run: |
-          from pathlib import Path
+          set -euo pipefail
+          node scripts/prepare-current-head-browser-expectations-v1.mjs
+          node scripts/prepare-a1-post-lifecycle-evidence-v1.mjs
+          node scripts/prepare-a1-bogie-centroid-browser-authority-v1.mjs
+          node scripts/verify-a1-measured-ground-contact-contract.mjs
+          node scripts/verify-a1-evidence-subview-contract.mjs
+          git diff --check
 
-          def replace(path, old, new):
-              p = Path(path)
-              text = p.read_text(encoding='utf-8')
-              if new in text:
-                  return
-              if old not in text:
-                  raise SystemExit(f'{path}: missing replacement anchor: {old[:120]!r}')
-              p.write_text(text.replace(old, new, 1), encoding='utf-8')
-
-          new_authority = 'measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2'
-          replace(
-              'tests/browser/source-first-a1-repair.spec.js',
-              'const AIRCRAFT_AUTHORITY = "terminal-relocated-a1-exact-cab-registration-v1";',
-              f'const AIRCRAFT_AUTHORITY = "{new_authority}";',
-          )
-          replace(
-              'tests/browser/kphx-ground-runtime.spec.js',
-              'const TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY = "terminal-relocated-a1-exact-cab-registration-v1";',
-              f'const TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY = "{new_authority}";',
-          )
-          replace(
-              'tests/browser/full-airport-inspection.spec.js',
-              'await holdKey("s", "KeyS", 2_800);',
-              'await holdKey("s", "KeyS", 4_800);',
-          )
-
-          replace(
-              'tests/browser/source-first-a1-repair.spec.js',
-              '      && Number(data?.inspectionAircraftCabContactErrorMeters) <= 0.01\n      && Number(data?.inspectionAircraftRenderedLengthMeters) > 31',
-              '      && Number(data?.inspectionAircraftCabContactErrorMeters) <= 0.01\n      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01\n      && Math.abs(Number(data?.inspectionAircraftGroundClearanceMeters)) <= 0.01\n      && data?.inspectionAircraftJetwayVerticalFitAuthority === "grounded-aircraft-door-progressive-tunnel-slope-v1"\n      && Number(data?.inspectionAircraftRenderedLengthMeters) > 31',
-          )
-          replace(
-              'tests/browser/source-first-a1-repair.spec.js',
-              '  expect(Number(runtime.inspectionAircraftCabContactErrorMeters)).toBeLessThanOrEqual(0.01);\n  expect(Number(runtime.inspectionAircraftDoorLocalX))',
-              '  expect(Number(runtime.inspectionAircraftCabContactErrorMeters)).toBeLessThanOrEqual(0.01);\n  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(0.01);\n  expect(Math.abs(Number(runtime.inspectionAircraftGroundClearanceMeters))).toBeLessThanOrEqual(0.01);\n  expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(\n    "grounded-aircraft-door-progressive-tunnel-slope-v1",\n  );\n  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeLessThan(-1);\n  expect(Number(runtime.inspectionAircraftDoorLocalX))',
-          )
-          replace(
-              'tests/browser/source-first-a1-repair.spec.js',
-              '    return data?.inspectionPreset === "a1Connection"\n      && data?.inspectionCameraAuthority === authority;',
-              '    return data?.inspectionPreset === "a1Connection"\n      && data?.inspectionCameraAuthority === authority\n      && data?.a1JetwayDeployment === "1.000"\n      && data?.a1JetwayState === "attached-to-aircraft-door"\n      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01;',
-          )
-
-          replace(
-              'tests/browser/uploaded-jetway-articulation-v10.spec.js',
-              '  await page.waitForTimeout(2_000);\n  await captureCanvas(page, outputPath);',
-              '  if (presetId === "a1Connection") {\n    await page.waitForFunction(() => {\n      const data = document.querySelector("canvas.trainerCanvas")?.dataset;\n      return data?.a1JetwayDeployment === "1.000"\n        && data?.a1JetwayState === "attached-to-aircraft-door"\n        && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01\n        && Math.abs(Number(data?.inspectionAircraftGroundClearanceMeters)) <= 0.01;\n    }, null, { timeout: 30_000, polling: 100 });\n  }\n  await page.waitForTimeout(2_000);\n  await captureCanvas(page, outputPath);',
-          )
-          replace(
-              'tests/browser/uploaded-jetway-articulation-v10.spec.js',
-              '  const renderedAircraftCabError = Number(runtime.inspectionAircraftCabContactErrorMeters);',
-              '  const renderedAircraftCabError = Number(runtime.inspectionAircraftCabContactErrorMeters);\n  const renderedAircraftVerticalError = Number(runtime.inspectionAircraftDoorVerticalErrorMeters);\n  const renderedAircraftGroundClearance = Number(runtime.inspectionAircraftGroundClearanceMeters);',
-          )
-          replace(
-              'tests/browser/uploaded-jetway-articulation-v10.spec.js',
-              '  expect(renderedAircraftCabError).toBeLessThanOrEqual(0.01);\n  expect(Math.hypot(renderedDoorTargetX - measuredCabX, renderedDoorTargetZ - measuredCabZ)).toBeLessThanOrEqual(0.01);',
-              '  expect(renderedAircraftCabError).toBeLessThanOrEqual(0.01);\n  expect(renderedAircraftVerticalError).toBeLessThanOrEqual(0.01);\n  expect(Math.abs(renderedAircraftGroundClearance)).toBeLessThanOrEqual(0.01);\n  expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(\n    "grounded-aircraft-door-progressive-tunnel-slope-v1",\n  );\n  expect(Math.hypot(renderedDoorTargetX - measuredCabX, renderedDoorTargetZ - measuredCabZ)).toBeLessThanOrEqual(0.01);',
-          )
-
-          replace(
-              'tests/browser/kphx-ground-runtime.spec.js',
-              '  expect(runtime.inspectionAircraftPoseAuthority).toBe(TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY);',
-              '  expect(runtime.inspectionAircraftPoseAuthority).toBe(TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY);\n  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(0.01);\n  expect(Math.abs(Number(runtime.inspectionAircraftGroundClearanceMeters))).toBeLessThanOrEqual(0.01);\n  expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(\n    "grounded-aircraft-door-progressive-tunnel-slope-v1",\n  );',
-          )
-
-      - name: Commit patched contracts to PR 140
+      - name: Commit generated acceptance contracts to PR 140
         shell: bash
         run: |
           set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add tests/browser/full-airport-inspection.spec.js \
-            tests/browser/kphx-ground-runtime.spec.js \
-            tests/browser/source-first-a1-repair.spec.js \
-            tests/browser/uploaded-jetway-articulation-v10.spec.js
-          git diff --cached --check
+          git add tests/browser
           if git diff --cached --quiet; then
-            echo 'Acceptance contracts already patched.'
+            echo 'Current acceptance contracts are already materialized.'
             exit 0
           fi
-          git commit -m 'test(a1): require grounded vertical door connection'
+          git commit -m 'test(a1): materialize current visual acceptance contracts'
           git push origin HEAD:fix/a1-rigid-parent-orientation-final
