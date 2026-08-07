@@ -157,6 +157,12 @@ jobs:
           npm install --no-save @playwright/test@1.55.0
           npx playwright install --with-deps chromium
 
+      - name: Diagnose exact A1 readiness
+        run: >-
+          npx playwright test
+          tests/browser/a1-close-readiness-diagnostic.spec.js
+          --reporter=line --workers=1
+
       - name: Preflight exact A1 connection telemetry
         shell: bash
         run: |
