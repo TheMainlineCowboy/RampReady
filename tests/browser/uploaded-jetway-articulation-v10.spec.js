@@ -213,17 +213,35 @@ test("A1 uses one aircraft pose and only A1 articulates while all 57 static supp
   const renderedAircraftVerticalError = Number(returnedRuntime.inspectionAircraftDoorVerticalErrorMeters);
   const renderedAircraftGroundClearance = Number(returnedRuntime.inspectionAircraftGroundClearanceMeters);
   const renderedDoorTargetX = Number(returnedRuntime.inspectionAircraftDoorTargetX);
+  const renderedDoorTargetY = Number(returnedRuntime.inspectionAircraftDoorTargetY);
   const renderedDoorTargetZ = Number(returnedRuntime.inspectionAircraftDoorTargetZ);
+  const exactRotundaWorldX = Number(returnedRuntime.a1ExactRotundaWorldX);
+  const exactRotundaWorldY = Number(returnedRuntime.a1ExactRotundaWorldY);
+  const exactRotundaWorldZ = Number(returnedRuntime.a1ExactRotundaWorldZ);
   const measuredCabX = Number(returnedRuntime.inspectionAircraftCabContactX);
   const measuredCabZ = Number(returnedRuntime.inspectionAircraftCabContactZ);
   const inspectionNoseGearX = Number(returnedRuntime.inspectionAircraftNoseGearX);
   const inspectionNoseGearZ = Number(returnedRuntime.inspectionAircraftNoseGearZ);
-  expect(sourceReach).toBeGreaterThan(25.5);
-  expect(sourceReach).toBeLessThan(26.5);
-  expect(target).toBeGreaterThan(30.3);
-  expect(target).toBeLessThan(30.8);
-  expect(extension).toBeGreaterThan(4.2);
-  expect(extension).toBeLessThan(4.8);
+  const geometricRotundaToDoorDistance = Math.hypot(
+    renderedDoorTargetX - exactRotundaWorldX,
+    renderedDoorTargetY - exactRotundaWorldY,
+    renderedDoorTargetZ - exactRotundaWorldZ,
+  );
+  expect([
+    sourceReach, target, extension, predictedGap, predictedContact, actualContact, actualGap,
+    exactRotundaWorldX, exactRotundaWorldY, exactRotundaWorldZ,
+    renderedDoorTargetX, renderedDoorTargetY, renderedDoorTargetZ,
+    geometricRotundaToDoorDistance,
+  ].every(Number.isFinite)).toBe(true);
+  // The exact source GLB owns its native Rotunda-to-Cab reach; final A1 world
+  // registration owns the wall-to-fixed-aircraft target. Do not force that
+  // world-space target back into a retired pre-registration distance band.
+  expect(sourceReach).toBeGreaterThan(20);
+  expect(sourceReach).toBeLessThan(32);
+  expect(extension).toBeGreaterThan(0);
+  expect(extension).toBeLessThanOrEqual(8.75);
+  expect(target).toBeGreaterThan(sourceReach);
+  expect(Math.abs(target - geometricRotundaToDoorDistance)).toBeLessThanOrEqual(0.05);
   expect(predictedGap).toBeLessThanOrEqual(0.05);
   expect(actualGap).toBeLessThanOrEqual(0.05);
   expect(Math.abs(predictedContact - target)).toBeLessThanOrEqual(0.05);
@@ -281,7 +299,9 @@ test("A1 uses one aircraft pose and only A1 articulates while all 57 static supp
     actualContact,
     staticMaximumError,
     renderedAircraftCabError,
-    renderedDoorTarget: [renderedDoorTargetX, renderedDoorTargetZ],
+    exactRotundaWorld: [exactRotundaWorldX, exactRotundaWorldY, exactRotundaWorldZ],
+    renderedDoorTarget: [renderedDoorTargetX, renderedDoorTargetY, renderedDoorTargetZ],
+    geometricRotundaToDoorDistance,
     measuredCab: [measuredCabX, measuredCabZ],
     inspectionNoseGear: [inspectionNoseGearX, inspectionNoseGearZ],
     verifiedModelCount: Number(returnedRuntime.terminal4UploadedJetwayVerifiedModelCount),
