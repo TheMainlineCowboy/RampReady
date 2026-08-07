@@ -1,6 +1,8 @@
 import fs from "node:fs";
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
+const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
+const A1_CAMERA_AUTHORITY = "oblique-measured-final-cab-and-aircraft-a1-v9";
 let source = fs.readFileSync(path, "utf8");
 if (!source.includes('  a1Connection: Object.freeze({')) {
   await import(`./prepare-full-airport-inspection-route.mjs?wide-a1=${Date.now()}`);
@@ -16,11 +18,20 @@ if (presetStart < 0 || presetEnd < 0 || presetEnd <= presetStart) {
 }
 
 let presetBlock = source.slice(presetStart, presetEnd);
-const tugXLine = '    x: 7.5,';
-const tugZLine = '    z: 8.5,';
+// Keep the inspection tug away from the bridge and aircraft. A dedicated fixed
+// overhead camera below is used for evidence instead of centering on this tug.
+const tugXLine = "    x: 20.0,";
+const tugZLine = "    z: 3.0,";
 const tugYawLine = '    yaw: -0.35,';
-const cameraPositionLine = '    cameraPosition: Object.freeze([-12.0, 10.5, 28.0]),';
-const cameraTargetLine = '    cameraTarget: Object.freeze([-27.5, 4.1, -16.15]),';
+// View A1 from the northeast open-apron side. The previous west-side camera
+// looked through the terminal roof and hid the actual Cab-to-aircraft contact.
+// This position keeps the terminal behind the bridge while showing the compact
+// vestibule, Rotunda, complete supplied bridge, Cab, CRJ nose, wings and tail.
+const cameraPositionLine = "    cameraPosition: Object.freeze([42.0, 16.0, 50.0]),";
+const cameraTargetLine = "    cameraTarget: Object.freeze([-6.0, 3.5, 17.0]),";
+const overheadCameraPositionLine = "    overheadCameraPosition: Object.freeze([-9.0, 75.0, 18.0]),";
+const overheadCameraTargetLine = "    overheadCameraTarget: Object.freeze([-9.0, 0.0, 18.0]),";
+const cameraAuthorityLine = `    cameraAuthority: "${A1_CAMERA_AUTHORITY}",`;
 
 for (const [pattern, line, label] of [
   [/\n\s+x:\s*-?\d+(?:\.\d+)?,/, tugXLine, "inspection tug x"],
@@ -31,41 +42,63 @@ for (const [pattern, line, label] of [
   presetBlock = presetBlock.replace(pattern, `\n${line}`);
 }
 
-if (/\s+cameraPosition:\s*Object\.freeze\(\[[^\]]+\]\),?/.test(presetBlock)) {
-  presetBlock = presetBlock.replace(
-    /\s+cameraPosition:\s*Object\.freeze\(\[[^\]]+\]\),?/,
-    `\n${cameraPositionLine}`,
-  );
-} else {
-  const close = presetBlock.lastIndexOf('  }),');
-  if (close < 0) throw new Error(`${path}: A1 connection preset closing anchor is missing`);
-  presetBlock = `${presetBlock.slice(0, close)}${cameraPositionLine}\n${presetBlock.slice(close)}`;
+for (const [pattern, line, label] of [
+  [/\s+cameraPosition:\s*Object\.freeze\(\[[^\]]+\]\),?/, cameraPositionLine, "camera position"],
+  [/\s+cameraTarget:\s*Object\.freeze\(\[[^\]]+\]\),?/, cameraTargetLine, "camera target"],
+  [/\s+overheadCameraPosition:\s*Object\.freeze\(\[[^\]]+\]\),?/, overheadCameraPositionLine, "overhead camera position"],
+  [/\s+overheadCameraTarget:\s*Object\.freeze\(\[[^\]]+\]\),?/, overheadCameraTargetLine, "overhead camera target"],
+]) {
+  if (pattern.test(presetBlock)) {
+    presetBlock = presetBlock.replace(pattern, `\n${line}`);
+  } else {
+    const close = presetBlock.lastIndexOf('  }),');
+    if (close < 0) throw new Error(`${path}: A1 connection preset closing anchor is missing for ${label}`);
+    presetBlock = `${presetBlock.slice(0, close)}${line}\n${presetBlock.slice(close)}`;
+  }
 }
-
-if (/\s+cameraTarget:\s*Object\.freeze\(\[[^\]]+\]\),?/.test(presetBlock)) {
-  presetBlock = presetBlock.replace(
-    /\s+cameraTarget:\s*Object\.freeze\(\[[^\]]+\]\),?/,
-    `\n${cameraTargetLine}`,
-  );
+if (/\s+cameraAuthority:\s*"[^"]+",?/.test(presetBlock)) {
+  presetBlock = presetBlock.replace(/\s+cameraAuthority:\s*"[^"]+",?/, `\n${cameraAuthorityLine}`);
 } else {
-  const positionEnd = presetBlock.indexOf(cameraPositionLine) + cameraPositionLine.length;
-  presetBlock = `${presetBlock.slice(0, positionEnd)}\n${cameraTargetLine}${presetBlock.slice(positionEnd)}`;
+  const targetEnd = presetBlock.indexOf(cameraTargetLine) + cameraTargetLine.length;
+  presetBlock = `${presetBlock.slice(0, targetEnd)}\n${cameraAuthorityLine}${presetBlock.slice(targetEnd)}`;
 }
 
 source = `${source.slice(0, presetStart)}${presetBlock}${source.slice(presetEnd)}`;
+
+if (!source.includes("inspectionPresetConfig?.overheadCameraPosition")) {
+  const overheadBefore = `      } else if (cameraRef.current === "overhead") {
+        camera.position.lerp(new THREE.Vector3(target.x, 34, target.z + 2), 0.16);
+        camera.lookAt(target.x, 0, target.z + 5);
+      } else {`;
+  const overheadAfter = `      } else if (cameraRef.current === "overhead") {
+        const inspectionPresetConfig = inspectionActive
+          ? INSPECTION_PRESETS[inspectionPresetRef.current]
+          : null;
+        if (inspectionPresetConfig?.overheadCameraPosition && inspectionPresetConfig?.overheadCameraTarget) {
+          desiredCamera.fromArray(inspectionPresetConfig.overheadCameraPosition);
+          cameraTarget.fromArray(inspectionPresetConfig.overheadCameraTarget);
+          camera.position.lerp(desiredCamera, 0.22);
+          camera.lookAt(cameraTarget);
+        } else {
+          camera.position.lerp(new THREE.Vector3(target.x, 34, target.z + 2), 0.16);
+          camera.lookAt(target.x, 0, target.z + 5);
+        }
+      } else {`;
+  if (!source.includes(overheadBefore)) throw new Error(`${path}: overhead camera runtime anchor is missing`);
+  source = source.replace(overheadBefore, overheadAfter);
+}
+
 const b15InspectionPattern = /b15: Object\.freeze\(\{ id: "b15", label: "B15 ramp", x: -?\d+(?:\.\d+)?, z: 539\.2, yaw: -1\.5708, cameraYaw: 1\.38, cameraDistance: 25 \}\),/;
 const b15InspectionPreset = 'b15: Object.freeze({ id: "b15", label: "B15 ramp", x: -18.5, z: 539.2, yaw: -1.5708, cameraYaw: 1.38, cameraDistance: 25 }),';
-if (!b15InspectionPattern.test(source)) {
-  throw new Error(`${path}: generated B15 inspection preset is missing`);
-}
+if (!b15InspectionPattern.test(source)) throw new Error(`${path}: generated B15 inspection preset is missing`);
 source = source.replace(b15InspectionPattern, b15InspectionPreset);
 source = source.replace(
   /source-gate-apron-presets-with-[^"\n]+-a1-a14-b14-b15-v\d+/g,
-  'source-gate-apron-presets-with-wide-diagonal-a1-connection-near-wall-b15-a1-a14-b14-b15-v7',
+  CANONICAL_ROUTE_AUTHORITY,
 );
 source = source.replace(
-  /(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*/g,
-  'wide-diagonal-a1-terminal-joint-v6-clear-tug',
+  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+|oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+|wide-oblique-full-assembly-terminal-corner-a1-v\d+|oblique-measured-final-cab-and-aircraft-a1-v\d+)/g,
+  A1_CAMERA_AUTHORITY,
 );
 
 for (const token of [
@@ -74,11 +107,15 @@ for (const token of [
   tugYawLine,
   cameraPositionLine,
   cameraTargetLine,
+  overheadCameraPositionLine,
+  overheadCameraTargetLine,
+  cameraAuthorityLine,
+  "inspectionPresetConfig?.overheadCameraPosition",
   b15InspectionPreset,
-  'source-gate-apron-presets-with-wide-diagonal-a1-connection-near-wall-b15-a1-a14-b14-b15-v7',
-  'wide-diagonal-a1-terminal-joint-v6-clear-tug',
+  CANONICAL_ROUTE_AUTHORITY,
+  A1_CAMERA_AUTHORITY,
 ]) {
-  if (!source.includes(token)) throw new Error(`${path}: wide A1/B15 inspection preparation is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${path}: relocated A1/B15 inspection preparation is missing ${token}`);
 }
 const fixedCameraPositionCount = (source.match(/cameraPosition:\s*Object\.freeze/g) || []).length;
 const fixedCameraTargetCount = (source.match(/cameraTarget:\s*Object\.freeze/g) || []).length;
@@ -100,4 +137,4 @@ if (fixedCameraPositionCount === 2) {
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared the full-airport inspection route with its fixed A1 connection view and optional fixed A14 exact-fleet view, moved A1 clear of the jetway support footprint, placed B15 close enough for a fast physical-contact check, added airport collision protection and limited A1 bridge retraction to door-clearance travel.");
+console.log("Prepared fixed northeast open-apron and overhead A1 evidence frames around the measured final Cab contact and attached CRJ footprint.");

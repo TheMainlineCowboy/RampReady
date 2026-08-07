@@ -3,8 +3,12 @@ import fs from "node:fs";
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
-const marker = 'dataset.inspectionTelemetryAuthority = "synchronous-preset-placement-v2"';
-if (!source.includes(marker)) {
+const authority = "synchronous-preset-placement-v2";
+const toggleMarker = `sim.renderer.domElement.dataset.inspectionTelemetryAuthority = "${authority}";`;
+const presetMarker = `canvas.dataset.inspectionTelemetryAuthority = "${authority}";`;
+const connectedPresetMarker = `const inspectionPresetJetwayDeployment = preset.id === "a1Connection" ? 1 : 0;`;
+
+if (!source.includes(toggleMarker)) {
   const toggleAnchor = `      sim.renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY;
       const inspectionJetwayDeployment = next ? 0 : 1;`;
   const toggleReplacement = `      sim.renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY;
@@ -12,33 +16,66 @@ if (!source.includes(marker)) {
       sim.renderer.domElement.dataset.inspectionTugX = (next ? defaultInspectionPreset.x : 0).toFixed(3);
       sim.renderer.domElement.dataset.inspectionTugZ = (next ? defaultInspectionPreset.z : 0).toFixed(3);
       sim.renderer.domElement.dataset.inspectionSpeed = "0.000";
-      sim.renderer.domElement.dataset.inspectionTelemetryAuthority = "synchronous-preset-placement-v2";
+      sim.renderer.domElement.dataset.inspectionTelemetryAuthority = "${authority}";
       const inspectionJetwayDeployment = next ? 0 : 1;`;
   if (!source.includes(toggleAnchor)) {
     throw new Error(`${trainerPath}: missing inspection toggle telemetry anchor`);
   }
   source = source.replace(toggleAnchor, toggleReplacement);
+}
 
+if (!source.includes(presetMarker)) {
   const presetAnchor = `    canvas.dataset.inspectionTugX = preset.x.toFixed(3);
     canvas.dataset.inspectionTugZ = preset.z.toFixed(3);`;
   const presetReplacement = `    canvas.dataset.inspectionTugX = preset.x.toFixed(3);
     canvas.dataset.inspectionTugZ = preset.z.toFixed(3);
     canvas.dataset.inspectionSpeed = "0.000";
-    canvas.dataset.inspectionTelemetryAuthority = "synchronous-preset-placement-v2";`;
+    canvas.dataset.inspectionTelemetryAuthority = "${authority}";`;
   if (!source.includes(presetAnchor)) {
     throw new Error(`${trainerPath}: missing inspection preset telemetry anchor`);
   }
   source = source.replace(presetAnchor, presetReplacement);
 }
 
+if (!source.includes(connectedPresetMarker)) {
+  const deploymentAnchor = `    canvas.dataset.inspectionTelemetryAuthority = "${authority}";`;
+  const deploymentReplacement = `    canvas.dataset.inspectionTelemetryAuthority = "${authority}";
+    // The normal free-drive presets keep A1 parked clear. The dedicated A1
+    // connection preset is acceptance evidence, so it shows the bridge fully
+    // attached to the grounded CRJ door rather than the parked/retracted state.
+    const inspectionPresetJetwayDeployment = preset.id === "a1Connection" ? 1 : 0;
+    jetwayRef.current.target = inspectionPresetJetwayDeployment;
+    jetwayRef.current.deployment = inspectionPresetJetwayDeployment;
+    jetwayRef.current.transitionStartDeployment = inspectionPresetJetwayDeployment;
+    jetwayRef.current.transitionStartedAt = 0;
+    jetwayRef.current.retractionRequested = false;
+    jetwayRef.current.controller?.setDeployment(inspectionPresetJetwayDeployment);
+    canvas.dataset.a1JetwayDeployment = inspectionPresetJetwayDeployment.toFixed(3);
+    // Publish the commanded evidence state deterministically. Controller state
+    // names are implementation-specific and may lag one rendered frame even
+    // after setDeployment() has synchronously applied the exact authored parts.
+    canvas.dataset.a1JetwayState = inspectionPresetJetwayDeployment === 1
+      ? "attached-to-aircraft-door"
+      : "parked-clear-of-aircraft";`;
+  if (!source.includes(deploymentAnchor)) {
+    throw new Error(`${trainerPath}: missing inspection preset deployment anchor`);
+  }
+  source = source.replace(deploymentAnchor, deploymentReplacement);
+}
+
 for (const token of [
-  'dataset.inspectionTelemetryAuthority = "synchronous-preset-placement-v2"',
+  toggleMarker,
+  presetMarker,
+  connectedPresetMarker,
   'dataset.inspectionSpeed = "0.000"',
   "defaultInspectionPreset.x",
   "defaultInspectionPreset.z",
+  "jetwayRef.current.controller?.setDeployment(inspectionPresetJetwayDeployment)",
+  "canvas.dataset.a1JetwayDeployment = inspectionPresetJetwayDeployment.toFixed(3)",
+  'canvas.dataset.a1JetwayState = inspectionPresetJetwayDeployment === 1',
 ]) {
   if (!source.includes(token)) throw new Error(`${trainerPath}: inspection telemetry is missing ${token}`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared synchronous inspection preset telemetry so every location is immediately drive-ready before the next WebGL frame.");
+console.log("Prepared synchronous inspection telemetry and deterministic attached-state evidence while keeping normal free-drive presets parked clear.");

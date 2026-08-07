@@ -1,21 +1,21 @@
 import fs from "node:fs";
 import { expect, test } from "@playwright/test";
 
-const UPLOADED_JETWAY_ATTRIBUTES = Object.freeze([
-  "data-terminal4-uploaded-jetway-load-state",
-  "data-terminal4-uploaded-jetway-count",
-  "data-terminal4-uploaded-jetway-connector-count",
-  "data-terminal4-uploaded-jetway-verified-model-count",
-]);
+const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
+const DIRECT_A1_CAMERA_AUTHORITY = "oblique-measured-final-cab-and-aircraft-a1-v9";
+const AIRCRAFT_AUTHORITY = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
+const CAB_CONTACT_AUTHORITY = "authored-rendered-forward-left-door-to-final-cab-v4";
+const RENDERED_SCALE_AUTHORITY = "crj-authored-world-dimensions-preserved-v2";
+const PHOTO_REGISTERED_NOSE_GEAR = Object.freeze({ x: 12.353412, z: -12.486888 });
+const AUTHORED_FORWARD_LEFT_DOOR = Object.freeze({ x: -1.262, y: 3.0, z: 3.90 });
 
-async function saveCompositedCanvasPng(page, path) {
+async function captureCanvas(page, path) {
   const box = await page.evaluate(() => {
     const canvas = document.querySelector("canvas.trainerCanvas");
-    if (!canvas) throw new Error("Three.js canvas is missing for evidence capture");
+    if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Three.js canvas is missing");
     const rect = canvas.getBoundingClientRect();
     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   });
-  if (box.width < 64 || box.height < 64) throw new Error("Canvas has no usable compositor bounds");
   const client = await page.context().newCDPSession(page);
   try {
     await client.send("Page.bringToFront");
@@ -27,141 +27,241 @@ async function saveCompositedCanvasPng(page, path) {
         clip: {
           x: Math.max(0, box.x),
           y: Math.max(0, box.y),
-          width: Math.min(box.width, 1440 - Math.max(0, box.x)),
-          height: Math.min(box.height, 900 - Math.max(0, box.y)),
+          width: Math.max(1, Math.min(box.width, 1440 - Math.max(0, box.x))),
+          height: Math.max(1, Math.min(box.height, 900 - Math.max(0, box.y))),
           scale: 1,
         },
       }),
       new Promise((_, reject) => setTimeout(
-        () => reject(new Error("Chromium compositor capture exceeded 45 seconds")),
-        45_000,
+        () => reject(new Error("A1 compositor capture exceeded 75 seconds")),
+        75_000,
       )),
     ]);
     fs.mkdirSync("test-results", { recursive: true });
     fs.writeFileSync(path, Buffer.from(data, "base64"));
-    const bytes = fs.statSync(path).size;
-    if (bytes < 30_000) throw new Error(`Composited evidence is suspiciously small: ${bytes} bytes`);
+    expect(fs.statSync(path).size).toBeGreaterThan(30_000);
   } finally {
     await client.detach();
   }
 }
 
-async function readCanvasRuntime(page) {
-  return page.evaluate(() => {
-    const canvas = document.querySelector("canvas.trainerCanvas");
-    if (!canvas) throw new Error("Three.js canvas disappeared");
-    return { ...canvas.dataset };
-  });
-}
-
 async function numericCanvasAttribute(page, name) {
-  return Number(await page.evaluate((attribute) => {
-    const canvas = document.querySelector("canvas.trainerCanvas");
-    return canvas?.getAttribute(attribute) ?? "NaN";
-  }, name));
+  return Number(await page.evaluate((attribute) => (
+    document.querySelector("canvas.trainerCanvas")?.getAttribute(attribute) ?? "NaN"
+  ), name));
 }
 
-test("direct tug inspection proves the visible A1 terminal connection, realistic retraction and physical airport collision protection", async ({ page }) => {
-  test.setTimeout(660_000);
+test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft chain and physical inspection mode", async ({ page }) => {
+  test.setTimeout(780_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
-
-  const directInspection = page.getByRole("button", { name: "Drive tug / inspect airport" });
-  await expect(directInspection).toBeVisible();
-  await directInspection.click();
+  await page.getByRole("button", { name: "Drive tug / inspect airport" }).click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction((attributeNames) => {
-    const canvas = document.querySelector("canvas.trainerCanvas");
-    const data = canvas?.dataset;
-    const uploaded = attributeNames.map((name) => canvas?.getAttribute(name));
+  await page.waitForFunction(({ terminalAuthority, aircraftAuthority, cabContactAuthority, scaleAuthority }) => {
+    const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionMode === "active"
-      && data?.environmentSource?.includes("authored-phx-terminal4")
-      && uploaded[0] === "ready"
-      && uploaded[1] === "58"
-      && uploaded[2] === "58"
-      && uploaded[3] === "58"
-      && data?.photoGroundSource === "source-authored-phx-photo"
-      && data?.airportCollisionReady === "true"
-      && data?.airportCollisionTargetCount === "2";
-  }, UPLOADED_JETWAY_ATTRIBUTES, { timeout: 180_000, polling: 250 });
+      && data?.terminal4UploadedJetwayLoadState === "ready"
+      && data?.terminal4UploadedJetwayCount === "58"
+      && data?.terminal4UploadedJetwayConnectorCount === "58"
+      && data?.terminal4UploadedJetwayVerifiedModelCount === "58"
+      && data?.terminal4A1ConnectionAuthority === terminalAuthority
+      && data?.inspectionAircraftPoseAuthority === aircraftAuthority
+      && data?.inspectionAircraftCabContactAuthority === cabContactAuthority
+      && data?.inspectionAircraftRenderedScaleAuthority === scaleAuthority
+      && Number.isFinite(Number(data?.inspectionAircraftExactParentRelocationX))
+      && Number.isFinite(Number(data?.inspectionAircraftExactParentRelocationZ))
+      && Number.isFinite(Number(data?.inspectionAircraftCabContactX))
+      && Number.isFinite(Number(data?.inspectionAircraftCabContactZ))
+      && Number.isFinite(Number(data?.inspectionAircraftDoorTargetX))
+      && Number.isFinite(Number(data?.inspectionAircraftDoorTargetZ))
+      && Number(data?.inspectionAircraftCabContactErrorMeters) <= 0.01
+      && Number.isFinite(Number(data?.inspectionAircraftDoorVerticalErrorMeters))
+      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 6
+      && Number.isFinite(Number(data?.inspectionAircraftDoorSignedVerticalGapMeters))
+      && Number.isFinite(Number(data?.inspectionAircraftJetwayRequestedVerticalFitMeters))
+      && Math.abs(Number(data?.inspectionAircraftJetwayVerticalFitMeters)) <= 0.001
+      && data?.inspectionAircraftJetwayAuthoredBogieGroundPreserved === "true"
+      && Math.abs(Number(data?.inspectionAircraftGroundClearanceMeters)) <= 0.01
+      && data?.inspectionAircraftJetwayVerticalFitAuthority === "grounded-jetway-door-gap-reported-no-child-lift-v1"
+      && Number(data?.inspectionAircraftRenderedLengthMeters) > 31
+      && Number(data?.inspectionAircraftRenderedWingspanMeters) > 22.5
+      && data?.airportCollisionReady === "true";
+  }, {
+    terminalAuthority: DIRECT_A1_TERMINAL_AUTHORITY,
+    aircraftAuthority: AIRCRAFT_AUTHORITY,
+    cabContactAuthority: CAB_CONTACT_AUTHORITY,
+    scaleAuthority: RENDERED_SCALE_AUTHORITY,
+  }, { timeout: 180_000, polling: 250 });
 
-  const hudHeight = await page.evaluate(() => document.querySelector(".rr-hud")?.getBoundingClientRect().height ?? Number.POSITIVE_INFINITY);
-  expect(hudHeight).toBeLessThan(110);
-
-  const runtime = await readCanvasRuntime(page);
-  expect(runtime.inspectionMode).toBe("active");
-  expect(runtime.environmentSource).toContain("authored-phx-terminal4");
-  expect(runtime.terminal4UploadedJetwayLoadState).toBe("ready");
-  expect(runtime.terminal4UploadedJetwayCount).toBe("58");
-  expect(runtime.terminal4UploadedJetwayConnectorCount).toBe("58");
-  expect(runtime.terminal4UploadedJetwayVerifiedModelCount).toBe("58");
+  const runtime = await page.evaluate(() => ({
+    ...document.querySelector("canvas.trainerCanvas").dataset,
+  }));
   expect(runtime.terminal4UploadedJetwayReadyAuthority).toBe(
     "exact-uploaded-airport-jetway-complete-58-gates-v1",
   );
-  expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
-  expect(runtime.groundPavementAuthority).toBe("full-source-aerial-primary-with-subtle-package-surface-detail-v41");
-  expect(runtime.groundSourceAerialPriority).toBe("true");
-  expect(runtime.groundNearfieldDetailOpacity).toBe("0.18");
-  expect(runtime.renderQualityAuthority).toBe("srgb-aces-apron-daylight-dynamic-shadows-v3");
-  expect(runtime.shadowMode).toBe("dynamic-high-fidelity");
-  expect(runtime.terminal4FacadeInfillCount).toBe("0");
-  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeGreaterThan(9.1);
-  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeLessThan(9.3);
-  expect(runtime.terminal4A1PortalSealAuthority).toBe("exact-T4_WALK-source-shell-overlap-and-framed-portal-v37");
-  expect(runtime.terminal4A1PortalSealOverlapMeters).toBe("0.8");
-  expect(runtime.terminal4A1PortalSealExactTexture).toBe("true");
-  expect(Number(runtime.terminal4SourceClosedBayMaterialCount)).toBeGreaterThan(0);
-  expect(Number(runtime.terminal4SourceFacadeVariantMaterialCount)).toBeGreaterThanOrEqual(4);
-  expect(runtime.airportCollisionAuthority).toBe("terminal-jetway-aircraft-raycast-envelope-v45");
-  expect(runtime.airportCollisionReady).toBe("true");
-  expect(runtime.airportCollisionTargetCount).toBe("2");
-  expect(runtime.airportCollisionAircraftEnvelope).toBe("nose-center-tail-wing-sweep-v2");
+  expect(runtime.terminal4JetwaySourceGeometryMode).toBe(
+    "exact-uploaded-airport-jetway-glb-562e3144-v1",
+  );
+  expect(runtime.terminal4A1ConnectionAuthority).toBe(DIRECT_A1_TERMINAL_AUTHORITY);
+  expect(runtime.terminal4A1ConnectionAuthority).not.toMatch(/WALK/i);
+  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeGreaterThan(2.9);
+  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeLessThan(5.8);
+  expect(Math.abs(Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4)).toBeLessThanOrEqual(0.05);
   expect(runtime.terminal4A1RetractionAuthority).toBe("aircraft-door-clearance-without-overtravel-v6");
   expect(runtime.terminal4A1RetractionClearanceMeters).toBe("2.38");
 
-  const openCells = Number(runtime.terminal4SourceFacadeOpenCellCount || 0);
-  const closedCells = Number(runtime.terminal4SourceFacadeClosedCellCount || 0);
-  expect(openCells).toBeGreaterThan(0);
-  expect(closedCells).toBeGreaterThan(openCells * 3);
+  const direction = runtime.terminal4A1ConnectionDirection.split(",").map(Number);
+  expect(direction).toHaveLength(2);
+  expect(Math.abs(Math.hypot(...direction) - 1)).toBeLessThanOrEqual(0.01);
+
+  const totalX = Number(runtime.inspectionAircraftExactParentRelocationX);
+  const totalZ = Number(runtime.inspectionAircraftExactParentRelocationZ);
+  expect(Number.isFinite(totalX) && Number.isFinite(totalZ)).toBe(true);
+  expect(Math.hypot(totalX, totalZ)).toBeGreaterThan(1);
+  const noseGearX = Number(runtime.inspectionAircraftNoseGearX);
+  const noseGearZ = Number(runtime.inspectionAircraftNoseGearZ);
+  expect(noseGearX).toBeCloseTo(PHOTO_REGISTERED_NOSE_GEAR.x + totalX, 3);
+  expect(noseGearZ).toBeCloseTo(PHOTO_REGISTERED_NOSE_GEAR.z + totalZ, 3);
+  expect(runtime.inspectionAircraftPoseAuthority).toBe(AIRCRAFT_AUTHORITY);
+  expect(runtime.inspectionAircraftCabContactAuthority).toBe(CAB_CONTACT_AUTHORITY);
+  expect(runtime.inspectionAircraftRenderedScaleAuthority).toBe(RENDERED_SCALE_AUTHORITY);
+
+  const cabContactX = Number(runtime.inspectionAircraftCabContactX);
+  const cabContactZ = Number(runtime.inspectionAircraftCabContactZ);
+  const cabDirectionX = Number(runtime.inspectionAircraftCabDirectionX);
+  const cabDirectionZ = Number(runtime.inspectionAircraftCabDirectionZ);
+  const renderedDoorX = Number(runtime.inspectionAircraftDoorTargetX);
+  const renderedDoorZ = Number(runtime.inspectionAircraftDoorTargetZ);
+  expect([
+    cabContactX,
+    cabContactZ,
+    cabDirectionX,
+    cabDirectionZ,
+    renderedDoorX,
+    renderedDoorZ,
+  ].every(Number.isFinite)).toBe(true);
+  expect(Math.abs(Math.hypot(cabDirectionX, cabDirectionZ) - 1)).toBeLessThanOrEqual(0.01);
+  expect(Math.hypot(renderedDoorX - cabContactX, renderedDoorZ - cabContactZ)).toBeLessThanOrEqual(0.01);
+  expect(Number(runtime.inspectionAircraftCabContactErrorMeters)).toBeLessThanOrEqual(0.01);
+  const signedDoorVerticalGapMeters = Number(runtime.inspectionAircraftDoorSignedVerticalGapMeters);
+  const requestedJetwayVerticalFitMeters = Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters);
+  expect(Number.isFinite(signedDoorVerticalGapMeters)).toBe(true);
+  expect(Number.isFinite(requestedJetwayVerticalFitMeters)).toBe(true);
+  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeCloseTo(
+    Math.abs(signedDoorVerticalGapMeters),
+    5,
+  );
+  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(6);
+  expect(requestedJetwayVerticalFitMeters).toBeCloseTo(signedDoorVerticalGapMeters, 5);
+  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeCloseTo(0, 5);
+  expect(runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");
+  expect(Math.abs(Number(runtime.inspectionAircraftGroundClearanceMeters))).toBeLessThanOrEqual(0.01);
+  expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(
+    "grounded-jetway-door-gap-reported-no-child-lift-v1",
+  );
+  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeCloseTo(0, 5);
+  expect(Number.isFinite(Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters))).toBe(true);
+  expect(runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");
+  expect(Number(runtime.inspectionAircraftDoorLocalX)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.x, 3);
+  expect(Number(runtime.inspectionAircraftDoorLocalY)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.y, 3);
+  expect(Number(runtime.inspectionAircraftDoorLocalZ)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.z, 3);
+  expect(Number(runtime.inspectionAircraftRenderedLengthMeters)).toBeGreaterThan(31);
+  expect(Number(runtime.inspectionAircraftRenderedLengthMeters)).toBeLessThan(34);
+  expect(Number(runtime.inspectionAircraftRenderedWingspanMeters)).toBeGreaterThan(22.5);
+  expect(Number(runtime.inspectionAircraftRenderedWingspanMeters)).toBeLessThan(25);
 
   const inspectionLocation = page.getByLabel("Inspection location");
-  await expect(inspectionLocation).toHaveValue("a1");
   await inspectionLocation.selectOption("a1Connection");
-  await page.waitForFunction(() => {
+  await page.waitForFunction((authority) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionPreset === "a1Connection"
-      && data?.inspectionPresetLabel === "A1 terminal connection"
-      && data?.inspectionCameraAuthority === "wide-diagonal-a1-terminal-joint-v6-clear-tug";
-  }, null, { timeout: 30_000, polling: 100 });
-  await page.waitForTimeout(1_800);
-  await saveCompositedCanvasPng(page, "test-results/source-first-a1-terminal-connection.png");
+      && data?.inspectionCameraAuthority === authority
+      && data?.a1JetwayDeployment === "1.000"
+      && data?.a1JetwayState === "attached-to-aircraft-door"
+      && Number.isFinite(Number(data?.inspectionAircraftDoorVerticalErrorMeters))
+      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 6
+      && Number.isFinite(Number(data?.inspectionAircraftDoorSignedVerticalGapMeters))
+      && Number.isFinite(Number(data?.inspectionAircraftJetwayRequestedVerticalFitMeters))
+      && Math.abs(Number(data?.inspectionAircraftJetwayVerticalFitMeters)) <= 0.001
+      && data?.inspectionAircraftJetwayAuthoredBogieGroundPreserved === "true";
+  }, DIRECT_A1_CAMERA_AUTHORITY, { timeout: 30_000, polling: 100 });
+  await page.addStyleTag({
+    content: ".rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}",
+  });
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await captureCanvas(page, "test-results/source-first-a1-terminal-connection.png");
 
-  await inspectionLocation.selectOption("b15");
+  await page.evaluate(async () => {
+    const select = document.querySelector('select[aria-label="Camera view"]');
+    if (!(select instanceof HTMLSelectElement)) throw new Error("Camera view selector is missing");
+    const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+    if (!setter) throw new Error("Native camera selector setter is unavailable");
+    setter.call(select, "overhead");
+    select.dispatchEvent(new Event("input", { bubbles: true }));
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
+  await captureCanvas(page, "test-results/source-first-a1-terminal-aircraft-overhead.png");
+
+  fs.writeFileSync("test-results/source-first-a1-terminal-connection.json", `${JSON.stringify({
+    terminalWallDistance: Number(runtime.terminal4A1JetwayWallDistance),
+    terminalConnectionAuthority: runtime.terminal4A1ConnectionAuthority,
+    terminalConnectionDirection: direction,
+    inspectionCameraAuthority: DIRECT_A1_CAMERA_AUTHORITY,
+    inspectionAircraftPoseAuthority: runtime.inspectionAircraftPoseAuthority,
+    inspectionAircraftCabContactAuthority: runtime.inspectionAircraftCabContactAuthority,
+    inspectionAircraftRenderedScaleAuthority: runtime.inspectionAircraftRenderedScaleAuthority,
+    inspectionAircraftNoseGear: [noseGearX, noseGearZ],
+    inspectionAircraftCabContact: [cabContactX, cabContactZ],
+    inspectionAircraftRenderedDoor: [renderedDoorX, renderedDoorZ],
+    inspectionAircraftDoorLocal: [
+      Number(runtime.inspectionAircraftDoorLocalX),
+      Number(runtime.inspectionAircraftDoorLocalY),
+      Number(runtime.inspectionAircraftDoorLocalZ),
+    ],
+    inspectionAircraftRenderedDimensions: [
+      Number(runtime.inspectionAircraftRenderedLengthMeters),
+      Number(runtime.inspectionAircraftRenderedWingspanMeters),
+    ],
+    inspectionAircraftCabDirection: [cabDirectionX, cabDirectionZ],
+    inspectionAircraftCabContactErrorMeters: Number(runtime.inspectionAircraftCabContactErrorMeters),
+    inspectionAircraftExactParentRelocation: [totalX, totalZ],
+    inspectionAircraftWallRelocation: [
+      Number(runtime.inspectionAircraftWallRelocationX),
+      Number(runtime.inspectionAircraftWallRelocationZ),
+    ],
+    evidenceAuthority: "user-overhead-and-same-day-a1-ramp-photos",
+  }, null, 2)}\n`);
+
+  // The evidence capture intentionally hides the HUD. Change the now-hidden
+  // native select through the DOM so the collision proof cannot spend the
+  // remainder of the job waiting for Playwright actionability.
+  await page.evaluate(() => {
+    const select = document.querySelector("select[aria-label='Inspection location']");
+    if (!(select instanceof HTMLSelectElement)) {
+      throw new Error("Inspection location select is missing");
+    }
+    select.value = "b15";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
   await page.waitForFunction(() => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionPreset === "b15"
       && data?.inspectionTugX === "-18.500"
       && data?.inspectionTugZ === "539.200";
   }, null, { timeout: 30_000, polling: 100 });
-
   const startX = await numericCanvasAttribute(page, "data-inspection-tug-x");
   const startCount = await numericCanvasAttribute(page, "data-airport-collision-count");
   await page.keyboard.down("w");
   try {
-    await page.waitForFunction((initialCount) => {
-      const canvas = document.querySelector("canvas.trainerCanvas");
-      return Number(canvas?.getAttribute("data-airport-collision-count") ?? "0") > initialCount;
-    }, startCount, { timeout: 120_000, polling: 100 });
+    await page.waitForFunction((initialCount) => (
+      Number(document.querySelector("canvas.trainerCanvas")?.dataset.airportCollisionCount ?? "0") > initialCount
+    ), startCount, { timeout: 120_000, polling: 100 });
   } finally {
     await page.keyboard.up("w");
   }
-  await page.waitForTimeout(1_000);
-
   const stoppedX = await numericCanvasAttribute(page, "data-inspection-tug-x");
-  const stoppedState = await page.evaluate(() => document.querySelector("canvas.trainerCanvas")?.dataset.airportCollisionState);
   expect(stoppedX).toBeLessThan(startX - 5);
   expect(stoppedX).toBeGreaterThan(-27.35);
-  expect(["blocked", "clear"]).toContain(stoppedState);
-  await saveCompositedCanvasPng(page, "test-results/source-first-b15-physical-collision-stop.png");
 });

@@ -60,6 +60,7 @@ export function createModelSpaceA1Controller(THREE, {
   }
 
   let deployment = 1;
+  let requestedAttachedVerticalDrop = 0;
   let visual = null;
   let state = "loading-uploaded-model";
 
@@ -67,12 +68,24 @@ export function createModelSpaceA1Controller(THREE, {
     if (!visual) return;
     const retract = 1 - deployment;
     const { anchor, model, nodes, base, direction } = visual;
-    anchor.rotation.y = base.yaw;
+
+    // The airport-placement pipeline may rotate and relocate the complete A1
+    // parent after this controller binds to the supplied GLB. Retraction owns
+    // only the authored telescoping child transforms. Never restore the parent
+    // yaw captured at bind time: doing so would undo the final Terminal 4 wall
+    // registration whenever inspection/training calls setDeployment().
     anchor.updateMatrix();
+    anchor.updateWorldMatrix(true, true);
     for (const [name, node] of Object.entries(nodes)) {
       if (node) restoreLocalMatrix(node, base[name]);
     }
     model.updateWorldMatrix(true, true);
+
+    // Attached deployment must preserve the authored grounded assembly. The
+    // former progressive attachedDrop lifted Tunnel B, Tunnel C and Cab after
+    // the fleet had been grounded, carrying the authored bogie and wheels into
+    // the air. Retraction remains model-space horizontal movement; only the
+    // existing parked-state clearance lift is retained while retracting.
     applyModelSpaceRetraction(
       THREE,
       model,
@@ -80,6 +93,7 @@ export function createModelSpaceA1Controller(THREE, {
       base.tunnelB,
       direction,
       retract * retraction.tunnelB,
+      0,
     );
     applyModelSpaceRetraction(
       THREE,
@@ -88,6 +102,7 @@ export function createModelSpaceA1Controller(THREE, {
       base.tunnelC,
       direction,
       retract * retraction.tunnelC,
+      0,
     );
     applyModelSpaceRetraction(
       THREE,
@@ -102,6 +117,11 @@ export function createModelSpaceA1Controller(THREE, {
     anchor.userData.retractionClearanceMeters = retraction.totalClearanceMeters;
     anchor.userData.retractionMode = modeAuthority;
     anchor.userData.retractionDirectionModel = direction.toArray().join(",");
+    anchor.userData.retractionParentPoseAuthority = "preserve-final-airport-placement-v8";
+    anchor.userData.requestedAttachedVerticalDropMeters = requestedAttachedVerticalDrop;
+    anchor.userData.attachedVerticalDropMeters = 0;
+    anchor.userData.attachedVerticalFitAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
+    anchor.userData.authoredBogieGroundPreserved = true;
     state = deployment >= 0.995 ? "attached-to-aircraft-door"
       : deployment <= 0.005 ? "parked-clear-of-aircraft"
         : "retracting-from-aircraft";
@@ -112,6 +132,13 @@ export function createModelSpaceA1Controller(THREE, {
       deployment = clamp(value, 0, 1);
       apply();
     },
+    setAttachedVerticalDrop(value) {
+      requestedAttachedVerticalDrop = clamp(value, -6, 2);
+      apply();
+      return 0;
+    },
+    getAttachedVerticalDrop() { return 0; },
+    getRequestedAttachedVerticalDrop() { return requestedAttachedVerticalDrop; },
     getDeployment() { return deployment; },
     getState() { return state; },
     bind(anchor) {
@@ -132,7 +159,6 @@ export function createModelSpaceA1Controller(THREE, {
         nodes,
         direction,
         base: {
-          yaw: anchor.rotation.y,
           tunnelB: nodes.tunnelB.matrix.clone(),
           tunnelC: nodes.tunnelC.matrix.clone(),
           cab: nodes.cab.matrix.clone(),

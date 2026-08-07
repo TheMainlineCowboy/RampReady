@@ -84,27 +84,31 @@ for (const forbidden of ["CanvasTexture", "sourceKey === \"BGATE1.BMP\" ? \"BGAT
   if (facadeSelection.includes(forbidden)) throw new Error(`Facade variation retained a synthetic/global replacement: ${forbidden}`);
 }
 
+// The historical A1 T4_WALK portal was a second rendered jetway-like shell at
+// fixed walkway coordinates. That visual artifact is now forbidden: the only
+// A1 terminal attachment is the complete uploaded jetway parent against the
+// measured ramp-level structural Terminal 4 wall.
 for (const token of [
-  "exact-T4_WALK-source-shell-overlap-and-framed-portal-v37",
-  "A1_SOURCE_PORTAL",
+  "legacy-a1-walkway-portal-disabled-real-terminal-wall-v38",
+  "removeLegacyPortalGeometry",
+  "legacy.removeFromParent()",
+  "jetwayGroup.userData.a1TerminalPortalSealDisabled = true",
+  "jetwayGroup.userData.a1TerminalPortalSealOverlapMeters = 0",
+  "jetwayGroup.userData.a1TerminalPortalSealExactTexture = false",
+  "return disabled;",
+]) {
+  if (!portalSeal.includes(token)) throw new Error(`A1 legacy walkway portal disablement is missing ${token}`);
+}
+for (const forbidden of [
+  "const A1_SOURCE_PORTAL",
   "PORTAL_OVERLAP_METERS = 0.8",
+  "exact-T4_WALK-source-shell-overlap-and-framed-portal-v37",
   "A1_T4_WALK_SourceTexturedOverlapShell_V37",
   "A1_T4_WALK_PortalFrame_V37",
   "findExactRecoveredJetwayShellMaterial",
-  'exactTexture === "M1DGJETWAY.BMP"',
-  'exactAuthority === "exact-recovered-original-freeware-atlas-region"',
-  "A1 terminal portal seal could not find a mapped exact M1DGJETWAY shell material",
-  "usesExactRecoveredJetwayTexture",
-  "a1TerminalPortalSealTextureIdentity",
+  "jetwayGroup.add(root)",
 ]) {
-  if (!portalSeal.includes(token)) throw new Error(`A1 visible portal seal is missing ${token}`);
-}
-for (const forbidden of [
-  'getObjectByName("AIR_Jetway01_WallCollars")',
-  'getObjectByName("AIR_Jetway01_FixedTerminalWalkways_V13")',
-  "Boolean(shellMaterial.map);",
-]) {
-  if (portalSeal.includes(forbidden)) throw new Error(`A1 portal seal still permits an unverified material shortcut: ${forbidden}`);
+  if (portalSeal.includes(forbidden)) throw new Error(`Obsolete A1 elevated-walkway portal geometry remains: ${forbidden}`);
 }
 for (const token of [
   'installA1TerminalPortalSealV37 } from "./a1TerminalPortalSealV37.js"',
@@ -112,8 +116,13 @@ for (const token of [
   "authoredTerminal4A1TerminalPortalSealAuthority",
   "authoredTerminal4A1TerminalPortalSealOverlapMeters",
   "authoredTerminal4A1TerminalPortalSealExactTexture",
+  "legacy-a1-walkway-portal-disabled-real-terminal-wall-v38",
+  "obsolete elevated-walkway A1 geometry remains",
 ]) {
-  if (!portalSealPreparation.includes(token)) throw new Error(`A1 portal seal preparation is missing ${token}`);
+  if (!portalSealPreparation.includes(token)) throw new Error(`A1 disabled portal preparation is missing ${token}`);
+}
+if (portalSealPreparation.includes("Prepared the A1 T4_WALK portal seal v37")) {
+  throw new Error("A1 preparation still claims the obsolete elevated-walkway portal is installed");
 }
 
 for (const token of [
@@ -144,11 +153,11 @@ for (const token of [
   "exactWalkwayPortalZ = jetway.z",
   "exact-T4_WALK-A1-terminal-portal-v25",
 ]) {
-  if (!connector.includes(token)) throw new Error(`A1 source portal contract is missing ${token}`);
+  if (!connector.includes(token)) throw new Error(`A1 source migration guard is missing ${token}`);
 }
 
 if (connector.includes("const exactWallX = -3.55299146")) {
   throw new Error("The detached diagonal BGATE A1 target remains");
 }
 
-console.log("Source-first A1, mapped exact-source portal seal, varied safe package facade and direct compact tug inspection contracts verified.");
+console.log("Source-first A1 real-wall attachment, disabled legacy walkway portal, varied safe package facade and direct compact tug inspection contracts verified.");

@@ -7,11 +7,19 @@ const protectedSourcePaths = Object.freeze([
   "src/environment/sourcePlacedTerminal4Jetways.js",
   "src/environment/uploadedAirportJetwayFleet.js",
   "src/environment/uploadedAirportJetwayFleetReadyV2.js",
+  "src/environment/correctUploadedJetwayInstallationV1.js",
   "src/environment/authoredTerminal4Visual.js",
   "src/environment/authoredKphxGround.js",
   "src/environment/authoredKphxPhotoGround.js",
   "src/environment/terminal4LowerFacadeSkinV9.js",
   "src/environment/terminal4JetwaySimulatorPolishV13.js",
+  "src/environment/staticJetwayPortalClosures.js",
+  "tests/browser/a1-ground-contact-evidence.spec.js",
+  "tests/browser/a1-terminal-joint-bogie-subviews.spec.js",
+  "tests/browser/full-airport-inspection.spec.js",
+  "tests/browser/kphx-ground-runtime.spec.js",
+  "tests/browser/source-first-a1-repair.spec.js",
+  "tests/browser/uploaded-jetway-articulation-v10.spec.js",
   "scripts/build-production.mjs",
 ]);
 const committedSources = new Map(protectedSourcePaths.map((sourcePath) => [
@@ -24,6 +32,7 @@ const requiredBaselines = Object.freeze([
   ["src/environment/sourcePlacedTerminal4Jetways.js", "buildSourcePlacedTerminal4Jetways", "Terminal 4 jetway"],
   ["src/environment/uploadedAirportJetwayFleet.js", "installUploadedAirportJetwayFleet", "supplied airport jetway fleet"],
   ["src/environment/uploadedAirportJetwayFleetReadyV2.js", "installUploadedAirportJetwayFleet", "supplied airport jetway readiness"],
+  ["src/environment/correctUploadedJetwayInstallationV1.js", "correctUploadedJetwayInstallation", "supplied airport jetway installation correction"],
   ["src/environment/authoredTerminal4Visual.js", "installAuthoredTerminal4Visual", "authored Terminal 4"],
   ["src/environment/authoredKphxGround.js", "installAuthoredKphxGround", "authored KPHX ground"],
   ["src/environment/authoredKphxPhotoGround.js", "installAuthoredKphxPhotoGround", "authored KPHX source aerial"],
@@ -62,10 +71,36 @@ try {
   await runNode("scripts/prepare-terminal4-floating-roof-filter.mjs");
   await runNode("scripts/prepare-terminal4-jetway-simulator-polish.mjs");
   await runNode("scripts/prepare-a1-terminal-attachment-v14.mjs");
+  await runNode("scripts/prepare-a1-grounded-terminal-building-v1.mjs");
+  await runNode("scripts/prepare-a1-terminal-authority-idempotence-v1.mjs");
+  await runNode("scripts/prepare-a1-photo-registered-stop-v1.mjs");
+  await runNode("scripts/prepare-a1-compact-source-wall-distance-v1.mjs");
+  await runNode("scripts/prepare-a1-readiness-compact-wall-v1.mjs");
+  await runNode("scripts/prepare-a1-rigid-parent-orientation-v2.mjs");
+  await runNode("scripts/prepare-a1-rigid-compact-span-v1.mjs");
+  await runNode("scripts/prepare-a1-complete-endpoint-axis-v1.mjs");
+  await runNode("scripts/prepare-a1-terminal-relocation-v4.mjs");
+  await runNode("scripts/prepare-a1-vector-wall-lock-v1.mjs");
+  await runNode("scripts/prepare-a1-inspection-aircraft-terminal-relocation-v1.mjs");
+  await runNode("scripts/prepare-a1-inspection-aircraft-vertical-registration-v1.mjs");
+  await runNode("scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs");
+  await runNode("scripts/prepare-a1-bogie-readiness-v1.mjs");
+  await runNode("scripts/prepare-a1-authored-ground-contact-v1.mjs");
+  await runNode("scripts/prepare-a1-endpoint-browser-evidence-v1.mjs");
+  await runNode("scripts/prepare-a1-inspection-aircraft-pose-declaration-v1.mjs");
+  await runNode("scripts/prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs");
+  await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
+  await runNode("scripts/prepare-a1-rotunda-vestibule-closure-v1.mjs");
+  await runNode("scripts/prepare-static-jetway-portal-closures-v1.mjs");
   await runNode("scripts/prepare-terminal4-static-jetway-parking-v15.mjs");
   await runNode("scripts/prepare-terminal4-ramp-facade-v16.mjs");
   await runNode("scripts/prepare-terminal4-b-concourse-extension-v17.mjs");
   await runNode("scripts/prepare-terminal4-attachment-evidence-v14.mjs");
+  await runNode("scripts/prepare-terminal4-lower-facade-fit-accounting-v1.mjs");
+  await runNode("scripts/prepare-inspection-preset-telemetry.mjs");
+  await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
+  await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
+  await runNode("scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
   buildError = error;
@@ -94,4 +129,40 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, connected A1 to the measured T4_WALK source portal, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including both supplied-jetway runtime modules and both trainer sources.");
+
+// The production wrapper deliberately restores all tracked browser specs to
+// their committed baselines. Reapply browser-only acceptance migrations after
+// that restoration so Playwright tests the grounded no-lift runtime rather than
+// the retired zero-door-gap/progressive-lift assertions.
+await runNode("scripts/prepare-current-head-browser-expectations-v1.mjs");
+await runNode("scripts/prepare-a1-post-lifecycle-evidence-v1.mjs");
+await runNode("scripts/prepare-a1-bogie-centroid-browser-authority-v1.mjs");
+
+const articulationTestPath = new URL(
+  "../tests/browser/uploaded-jetway-articulation-v10.spec.js",
+  import.meta.url,
+);
+const preparedArticulationTest = await readFile(articulationTestPath, "utf8");
+for (const forbidden of [
+  "expect(renderedAircraftVerticalError).toBeLessThanOrEqual(0.01)",
+  "grounded-aircraft-door-progressive-tunnel-slope-v1",
+]) {
+  if (preparedArticulationTest.includes(forbidden)) {
+    throw new Error(`Post-restoration browser preparation left retired articulation expectation ${forbidden}`);
+  }
+}
+for (const required of [
+  "articulationSignedDoorVerticalGapMeters",
+  "articulationRequestedJetwayVerticalFitMeters",
+  "articulationAppliedJetwayVerticalFitMeters",
+  "renderedAircraftVerticalError).toBeLessThanOrEqual(6)",
+  "grounded-jetway-door-gap-reported-no-child-lift-v1",
+  "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
+  "exact-authored-a1-lowest-geometry-ramp-contact-v2",
+]) {
+  if (!preparedArticulationTest.includes(required)) {
+    throw new Error(`Post-restoration browser preparation is missing ${required}`);
+  }
+}
+
+console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, anchored A1 to a ramp-level grounded structural facade rather than the elevated T4_WALK corridor, aligned the complete A1 parent from the authored Cab-to-Rotunda endpoint axis at the measured terminal corner with an exact 2.4 m visible vestibule and full-vector wall lock, kept the attached supplied jetway grounded with zero child lift while reporting the signed aircraft-door height gap honestly, aligned the rendered inspection aircraft heading to the measured Cab normal before exact door registration, measured the complete supplied A1 parent and authored CRJ contact geometry against the ramp, exposed exact world-space Rotunda/wall/Cab endpoints and locked full/close evidence cameras, closed all parked jetway apron-facing cab mouths without changing supplied GLB node transforms, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, restored every protected committed source exactly, then reapplied and verified the current browser-only grounded no-lift and bogie-centroid acceptance contracts.");

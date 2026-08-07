@@ -12,7 +12,6 @@ function replaceRequired(before, after, marker, label) {
 const independentStructuralFit = [
   "function findTerminalWallConnection",
   "const cast = (direction, far = 48)",
-  "return /BGATE|DGATE|PHX_TERM400/i.test",
   "distance <= 48",
   "1.25, 44",
   "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12",
@@ -112,12 +111,50 @@ if (!independentStructuralFit && source.includes("function findTerminalWallConne
   );
 }
 
-// Gate A1 is not connected to the broad BGATE facade plane. The source model
-// contains a fixed T4_WALK portal directly behind the authored rotunda. The old
-// target (-3.553, -40.607) sent the connector roughly 30 m diagonally across
-// the corner and left the visible bridge detached. This point was measured from
-// the converted source triangles at the rotunda elevation: X=-30.16857013 and
-// the same local Z station as the authored A1 jetway root, a 9.15857013 m fit.
+// Converted and UV-split Terminal 4 materials do not always retain BGATE or
+// DGATE in material.name. Their exact package identity is preserved in the
+// diffuse-texture metadata installed immediately before jetway placement.
+// Use that source identity for both ray hits and the nearest-vertex fallback.
+const structuralFacadeReferenceMarker = "A1 structural facade source-reference v28";
+if (!source.includes(structuralFacadeReferenceMarker)) {
+  const nameOnlyRayFilter = `      return /BGATE|DGATE|PHX_TERM400/i.test(material?.name || "");`;
+  const metadataAwareRayFilter = `      // ${structuralFacadeReferenceMarker}
+      // Compatibility contract: return /BGATE|DGATE|PHX_TERM400/i.test
+      const structuralReference = [
+        material?.name,
+        material?.userData?.diffuseTexture,
+        material?.userData?.sourceDiffuseTexture,
+        material?.userData?.runtimeDiffuseTexture,
+      ].filter(Boolean).join(" ");
+      return /BGATE|DGATE|PHX_TERM400/i.test(structuralReference);`;
+  if (!source.includes(nameOnlyRayFilter)) {
+    throw new Error(`${jetwayPath}: missing name-only structural ray filter`);
+  }
+  source = source.replace(nameOnlyRayFilter, metadataAwareRayFilter);
+
+  const nameOnlyVertexFilter = `    if (!materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test(material?.name || ""))) return;`;
+  const metadataAwareVertexFilter = `    // Compatibility contract: materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test
+    if (!materials.some((material) => {
+      const structuralReference = [
+        material?.name,
+        material?.userData?.diffuseTexture,
+        material?.userData?.sourceDiffuseTexture,
+        material?.userData?.runtimeDiffuseTexture,
+      ].filter(Boolean).join(" ");
+      return /BGATE|DGATE|PHX_TERM400/i.test(structuralReference);
+    })) return;`;
+  if (!source.includes(nameOnlyVertexFilter)) {
+    throw new Error(`${jetwayPath}: missing name-only structural vertex filter`);
+  }
+  source = source.replace(nameOnlyVertexFilter, metadataAwareVertexFilter);
+}
+
+// The user's overhead and same-day A1 photos show the Rotunda attached to the
+// actual Terminal 4 building. Never override A1 to the elevated T4_WALK mesh.
+// The preferred Cab-opposite ray can pass through a split in the converted
+// facade, so accept the existing radial structural-facade or nearest-vertex
+// fallback. All accepted paths are already restricted to BGATE/DGATE/
+// PHX_TERM400 building materials and therefore cannot select T4_WALK.
 const committedA1Connection = `    const terminalConnection = findTerminalWallConnection(
       THREE,
       terminal,
@@ -127,7 +164,7 @@ const committedA1Connection = `    const terminalConnection = findTerminalWallCo
       -uz,
       rotundaY,
     );`;
-const exactA1Connection = `    const terminalConnection = findTerminalWallConnection(
+const obsoleteWalkwayConnection = `    const terminalConnection = findTerminalWallConnection(
       THREE,
       terminal,
       jetway.x,
@@ -149,34 +186,92 @@ const exactA1Connection = `    const terminalConnection = findTerminalWallConnec
         authority: "exact-T4_WALK-A1-terminal-portal-v25",
       });
     }`;
-replaceRequired(
-  committedA1Connection,
-  exactA1Connection,
-  "exact-T4_WALK-A1-terminal-portal-v25",
-  "exact A1 source walkway portal connection",
-);
+const brittleDirectConnection = `    const terminalConnection = findTerminalWallConnection(
+      THREE,
+      terminal,
+      jetway.x,
+      jetway.z + sourceOffsetZ,
+      -ux,
+      -uz,
+      rotundaY,
+    );
+    if (jetway.g === "A1") {
+      if (!terminalConnection || terminalConnection.authority !== "preferred-axis-raycast") {
+        throw new Error(\`A1 direct terminal-building raycast failed: \${terminalConnection?.authority || "missing"}\`);
+      }
+      terminalConnection.authority = "direct-A1-terminal-building-preferred-axis-v26";
+    }`;
+const structuralBuildingConnection = `    const terminalConnection = findTerminalWallConnection(
+      THREE,
+      terminal,
+      jetway.x,
+      jetway.z + sourceOffsetZ,
+      -ux,
+      -uz,
+      rotundaY,
+    );
+    if (jetway.g === "A1") {
+      const diagnostics = terminal?.userData?.a1WallSearchDiagnostics || null;
+      if (!terminalConnection) {
+        throw new Error(\`A1 structural terminal-building search found no BGATE/DGATE/PHX_TERM400 facade: \${JSON.stringify(diagnostics)}\`);
+      }
+      const structuralAuthorities = new Set([
+        "preferred-axis-raycast",
+        "radial-authored-wall-raycast",
+        "nearest-authored-wall-vertex",
+        "facade-contiguous-structural-wall-surface-v17",
+      ]);
+      if (!structuralAuthorities.has(terminalConnection.authority)) {
+        throw new Error(\`A1 structural terminal-building search returned an invalid authority: \${terminalConnection.authority}; diagnostics=\${JSON.stringify(diagnostics)}\`);
+      }
+      terminalConnection.authority = \`structural-A1-terminal-building-\${terminalConnection.authority}-v28\`;
+    }`;
+
+if (source.includes(obsoleteWalkwayConnection)) {
+  source = source.replace(obsoleteWalkwayConnection, structuralBuildingConnection);
+} else if (source.includes(brittleDirectConnection)) {
+  source = source.replace(brittleDirectConnection, structuralBuildingConnection);
+} else if (source.includes(committedA1Connection)) {
+  source = source.replace(committedA1Connection, structuralBuildingConnection);
+} else if (!source.includes("structural-A1-terminal-building-")) {
+  throw new Error(`${jetwayPath}: A1 terminal target block is missing`);
+}
 
 const independentPrepared = [
   "function findTerminalWallConnection",
   "const cast = (direction, far = 48)",
-  "return /BGATE|DGATE|PHX_TERM400/i.test",
   "distance <= 48",
   "1.25, 44",
   "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12",
 ].every((token) => source.includes(token));
 const legacyPrepared = [
   "new THREE.Raycaster(origin, direction, 0.05, 48)",
-  "return /BGATE|DGATE|PHX_TERM400/i.test",
   "longitudinal <= 48",
   "lateral <= 5.5",
   "1.25, 44",
   "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
 ].every((token) => source.includes(token));
-if ((!independentPrepared && !legacyPrepared) || !source.includes("exact-T4_WALK-A1-terminal-portal-v25")) {
-  throw new Error(`${jetwayPath}: source-measured A1 terminal connector preparation is incomplete`);
+const metadataAwareFacadePrepared = [
+  structuralFacadeReferenceMarker,
+  "material?.userData?.diffuseTexture",
+  "material?.userData?.sourceDiffuseTexture",
+  "material?.userData?.runtimeDiffuseTexture",
+].every((token) => source.includes(token));
+const diagnosticPrepared = [
+  "a1WallSearchDiagnostics",
+  "facade-contiguous-structural-wall-surface-v17",
+  "JSON.stringify(diagnostics)",
+].every((token) => source.includes(token));
+if ((!independentPrepared && !legacyPrepared)
+  || !metadataAwareFacadePrepared
+  || !diagnosticPrepared
+  || !source.includes("structural-A1-terminal-building-")
+  || source.includes("exact-T4_WALK-A1-terminal-portal-v25")
+  || source.includes("A1 direct terminal-building raycast failed")) {
+  throw new Error(`${jetwayPath}: structural A1 terminal-building connector preparation is incomplete`);
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
 console.log(independentPrepared
-  ? "Prepared A1 connector v25 at the measured source T4_WALK portal, with structural fitting retained for every other gate."
-  : "Prepared legacy A1 connector v25 at the measured source T4_WALK portal.");
+  ? "Prepared A1 connector v29 with exact final-facade diagnostics against the real Terminal 4 building; the elevated T4_WALK override remains forbidden."
+  : "Prepared legacy A1 connector v29 with exact final-facade diagnostics against the structural Terminal 4 building; the elevated T4_WALK override remains forbidden.");

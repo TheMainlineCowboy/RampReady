@@ -2,6 +2,9 @@ import { writeFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 
 const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
+const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
+const TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
+const PHOTO_REGISTERED_NOSE_GEAR = Object.freeze({ x: 12.353412, z: -12.486888 });
 const GROUND_SUFFIXES = ["/models/kphx-ground/kphx-ground.gltf", "/models/kphx-ground/kphx-ground.bin"];
 const PHOTO_SUFFIXES = ["/models/kphx-photo/photo-manifest.json"];
 const TERMINAL_SUFFIXES = [
@@ -22,14 +25,15 @@ const SOURCE_ASSETS = [...GROUND_SUFFIXES, ...PHOTO_SUFFIXES, ...TERMINAL_SUFFIX
 async function launchStandup(page) {
   await page.goto(TARGET_URL, { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "Choose pushback equipment" })).toBeVisible();
-  await page.getByRole("radio", { name: /Stand-up pushback/i }).click();
-  const launch = page.getByRole("button", { name: "Start training" });
-  await expect(launch).toBeEnabled();
-  await launch.click();
+  const directInspection = page.getByRole("button", { name: "Drive tug / inspect airport" });
+  await expect(directInspection).toBeEnabled();
+  await directInspection.click();
+  await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction(() => {
+  await page.waitForFunction(({ expectedAuthority, aircraftAuthority }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
-    return data?.environmentSource === "authored-phx-terminal4-textured-source-jetways"
+    return data?.inspectionMode === "active"
+      && data?.environmentSource === "authored-phx-terminal4-textured-source-jetways"
       && data?.groundSource === "authored-kphx-v181-source-textured-nearfield"
       && data?.photoGroundSource === "source-authored-phx-photo"
       && data?.terminal4UploadedJetwayLoadState === "ready"
@@ -37,8 +41,18 @@ async function launchStandup(page) {
       && data?.terminal4UploadedJetwayConnectorCount === "58"
       && data?.terminal4UploadedJetwayVerifiedModelCount === "58"
       && data?.terminal4A1JetwayWallDistance !== "loading"
+      && Number(data?.terminal4A1JetwayWallDistance) > 2.9
+      && Number(data?.terminal4A1JetwayWallDistance) < 5.8
+      && Math.abs(Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4) <= 0.05
+      && data?.terminal4A1ConnectionAuthority === expectedAuthority
+      && data?.inspectionAircraftPoseAuthority === aircraftAuthority
+      && Number.isFinite(Number(data?.inspectionAircraftTerminalRelocationX))
+      && Number.isFinite(Number(data?.inspectionAircraftTerminalRelocationZ))
       && data?.terminal4A1LegacyBlockRemovedTriangles === "36";
-  }, null, { timeout: 300_000, polling: 100 });
+  }, {
+    expectedAuthority: DIRECT_A1_TERMINAL_AUTHORITY,
+    aircraftAuthority: TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY,
+  }, { timeout: 300_000, polling: 100 });
 }
 
 async function captureRegion(page, fileName, region = null, minimumBytes = 50_000) {
@@ -91,26 +105,15 @@ async function prepareA1Evidence(page) {
   await page.evaluate(async () => {
     const canvas = document.querySelector("canvas.trainerCanvas");
     if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Three.js canvas is missing");
-    canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: 1600, bubbles: true, cancelable: true }));
-    const box = canvas.getBoundingClientRect();
-    const x = box.left + box.width / 2;
-    const y = box.top + box.height / 2;
-    const held = {
-      bubbles: true,
-      cancelable: true,
-      pointerId: 81,
-      pointerType: "mouse",
-      button: 0,
-      buttons: 1,
-    };
-    canvas.dispatchEvent(new PointerEvent("pointerdown", { ...held, clientX: x, clientY: y }));
-    window.dispatchEvent(new PointerEvent("pointermove", { ...held, clientX: x + 180, clientY: y - 25 }));
-    window.dispatchEvent(new PointerEvent("pointerup", {
-      ...held,
-      clientX: x + 180,
-      clientY: y - 25,
-      buttons: 0,
-    }));
+    const location = document.querySelector('select[aria-label="Inspection location"]');
+    if (location instanceof HTMLSelectElement) {
+      const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+      if (!setter) throw new Error("Native inspection selector setter is unavailable");
+      setter.call(location, "a1Connection");
+      location.dispatchEvent(new Event("input", { bubbles: true }));
+      location.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: 850, bubbles: true, cancelable: true }));
 
     const style = document.createElement("style");
     style.textContent = `
@@ -144,7 +147,14 @@ test("loads source-correct PHX scenery with the complete exact Terminal 4 jetway
   const runtime = await page.evaluate(() => ({
     ...document.querySelector("canvas.trainerCanvas").dataset,
   }));
+  await writeFile(
+    "test-results/kphx-a1-preassert-runtime.json",
+    JSON.stringify(runtime, null, 2),
+    "utf8",
+  );
+  await captureRegion(page, "kphx-a1-preassert-current-head.png", null, 20_000);
 
+  expect(runtime.inspectionMode).toBe("active");
   expect(runtime.environmentSource).toBe("authored-phx-terminal4-textured-source-jetways");
   expect(runtime.groundSource).toBe("authored-kphx-v181-source-textured-nearfield");
   expect(runtime.photoGroundSource).toBe("source-authored-phx-photo");
@@ -187,8 +197,51 @@ test("loads source-correct PHX scenery with the complete exact Terminal 4 jetway
   expect(nearestGeometryMeters).toBeGreaterThan(29.9);
   expect(nearestGeometryMeters).toBeLessThan(30.6);
   const a1WallDistance = Number(runtime.terminal4A1JetwayWallDistance);
-  expect(a1WallDistance).toBeGreaterThan(9.1);
-  expect(a1WallDistance).toBeLessThan(9.3);
+  expect(a1WallDistance).toBeGreaterThan(2.9);
+  expect(a1WallDistance).toBeLessThan(5.8);
+  expect(Math.abs(Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4)).toBeLessThanOrEqual(0.05);
+  expect(runtime.terminal4A1ConnectionAuthority).toBe(DIRECT_A1_TERMINAL_AUTHORITY);
+  expect(runtime.terminal4A1ConnectionAuthority).not.toMatch(/WALK/i);
+  const a1TerminalDirection = runtime.terminal4A1ConnectionDirection.split(",").map(Number);
+  expect(a1TerminalDirection).toHaveLength(2);
+  expect(Math.abs(Math.hypot(...a1TerminalDirection) - 1)).toBeLessThanOrEqual(0.01);
+  const aircraftRelocationX = Number(runtime.inspectionAircraftTerminalRelocationX);
+  const aircraftRelocationZ = Number(runtime.inspectionAircraftTerminalRelocationZ);
+  expect(Number.isFinite(aircraftRelocationX)).toBe(true);
+  expect(Number.isFinite(aircraftRelocationZ)).toBe(true);
+  expect(Math.hypot(aircraftRelocationX, aircraftRelocationZ)).toBeGreaterThan(1);
+  expect(runtime.inspectionAircraftPoseAuthority).toBe(TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY);
+  const signedDoorVerticalGapMeters = Number(runtime.inspectionAircraftDoorSignedVerticalGapMeters);
+  const requestedJetwayVerticalFitMeters = Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters);
+  expect(Number.isFinite(signedDoorVerticalGapMeters)).toBe(true);
+  expect(Number.isFinite(requestedJetwayVerticalFitMeters)).toBe(true);
+  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeCloseTo(
+    Math.abs(signedDoorVerticalGapMeters),
+    5,
+  );
+  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(6);
+  expect(requestedJetwayVerticalFitMeters).toBeCloseTo(signedDoorVerticalGapMeters, 5);
+  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeCloseTo(0, 5);
+  expect(runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");
+  expect(Math.abs(Number(runtime.inspectionAircraftGroundClearanceMeters))).toBeLessThanOrEqual(0.01);
+  expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(
+    "grounded-jetway-door-gap-reported-no-child-lift-v1",
+  );
+  expect(Number(runtime.inspectionAircraftNoseGearX)).toBeCloseTo(
+    PHOTO_REGISTERED_NOSE_GEAR.x + aircraftRelocationX,
+    3,
+  );
+  expect(Number(runtime.inspectionAircraftNoseGearZ)).toBeCloseTo(
+    PHOTO_REGISTERED_NOSE_GEAR.z + aircraftRelocationZ,
+    3,
+  );
+  expect(runtime.inspectionAircraftHeadingAuthority).toBe(
+    "measured-cab-normal-aircraft-heading-v1",
+  );
+  const cabDirectionX = Number(runtime.inspectionAircraftCabDirectionX);
+  const cabDirectionZ = Number(runtime.inspectionAircraftCabDirectionZ);
+  const expectedCabRegisteredYaw = Math.atan2(-cabDirectionZ, cabDirectionX);
+  expect(Number(runtime.inspectionAircraftYaw)).toBeCloseTo(expectedCabRegisteredYaw, 4);
   const terminalConnectedJetways = Number(runtime.terminal4TerminalConnectedJetwayCount);
   expect(terminalConnectedJetways).toBeGreaterThan(0);
   expect(Number(runtime.terminal4SourceCutoutMaterialCount)).toBeGreaterThan(0);
@@ -253,9 +306,9 @@ test("loads source-correct PHX scenery with the complete exact Terminal 4 jetway
   await captureRegion(page, "kphx-a1-uploaded-jetway-chase.png");
   await captureRegion(page, "kphx-a1-terminal-connection-close.png", {
     left: 0,
-    top: 0.13,
-    width: 0.5,
-    height: 0.72,
+    top: 0.08,
+    width: 0.62,
+    height: 0.78,
   }, 20_000);
 
   await page.evaluate(async () => {

@@ -68,6 +68,18 @@ if (!source.includes("dataset.terminal4A1LegacyBlockRemovedTriangles = String(en
   source = source.replace(terminalReadyAnchor, terminalReadyReplacement);
 }
 
+const terminalConnectorCountBefore = '        renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = String(environment.userData.authoredTerminal4TerminalConnectedJetwayCount ?? 0);';
+const terminalConnectorCountAfter = `        renderer.domElement.dataset.terminal4TerminalConnectedJetwayCount = String(Math.max(
+          Number(environment.userData.authoredTerminal4TerminalConnectedJetwayCount) || 0,
+          Number(environment.userData.authoredTerminal4UploadedJetwayConnectorCount) || 0,
+        ));`;
+if (!source.includes(terminalConnectorCountAfter)) {
+  if (!source.includes(terminalConnectorCountBefore)) {
+    throw new Error("PHX runtime terminal-connected jetway telemetry anchor is missing");
+  }
+  source = source.replace(terminalConnectorCountBefore, terminalConnectorCountAfter);
+}
+
 const terminalErrorAnchor = '        renderer.domElement.dataset.terminal4Position = "load-error";';
 const terminalErrorReplacement = `        renderer.domElement.dataset.terminal4A1LegacyBlockRemovedTriangles = "load-error";
         renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = "load-error";
@@ -93,10 +105,11 @@ for (const token of [
   "dataset.terminal4A1LegacyBlockRemovedTriangles = String(environment.userData.authoredTerminal4A1LegacyBlockRemovedTriangles",
   "dataset.terminal4A1LegacyBlockAuthority = environment.userData.authoredTerminal4A1LegacyBlockAuthority",
   'dataset.terminal4A1LegacyBlockRemovedTriangles = "load-error"',
+  "Number(environment.userData.authoredTerminal4UploadedJetwayConnectorCount) || 0",
 ]) {
   if (!source.includes(token)) throw new Error(`PHX runtime evidence missing ${token}`);
 }
 
 fs.writeFileSync(path, source, "utf8");
 await import("./prepare-direct-inspection-launch-v28.mjs");
-console.log("Prepared live PHX runtime evidence for native-resolution aerial tiling, source-aerial pavement priority, exact A1 cleanup and direct tug inspection launch.");
+console.log("Prepared live PHX runtime evidence for native-resolution aerial tiling, source-aerial pavement priority, exact A1 cleanup, exact uploaded terminal connector count and direct tug inspection launch.");
