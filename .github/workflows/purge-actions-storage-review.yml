@@ -7,6 +7,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - .storage-purge-trigger
+      - .github/workflows/purge-actions-storage-review.yml
   workflow_dispatch:
 
 permissions:
@@ -23,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - name: Purge and verify obsolete artifacts and caches
+      - name: Purge and verify obsolete artifacts, caches, and runs
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -65,9 +66,13 @@ jobs:
           }
 
           main_sha="$(get_json "repos/${GITHUB_REPOSITORY}/commits/main" | jq -r '.sha')" || exit 1
-          pr140_sha="$(get_json "repos/${GITHUB_REPOSITORY}/pulls/140" | jq -r '.head.sha')" || exit 1
-          keep_json="$(printf '%s\n' "${main_sha}" "${pr140_sha}" "${{ github.event.pull_request.head.sha }}" | jq -R . | jq -s 'map(select(length > 0)) | unique')"
-          echo "Preserving main, PR #140, and this maintenance head: ${keep_json}"
+          open_prs="$(get_json "repos/${GITHUB_REPOSITORY}/pulls?state=open&base=main&sort=updated&direction=desc&per_page=100")" || exit 1
+          accepted_pr="$(jq -c '[.[] | select((.head.ref | startswith("maintenance/")) | not)] | sort_by(.updated_at) | last // empty' <<<"${open_prs}")"
+          accepted_pr_number="$(jq -r '.number // empty' <<<"${accepted_pr:-{}}")"
+          accepted_sha="$(jq -r '.head.sha // empty' <<<"${accepted_pr:-{}}")"
+          [[ -n "${accepted_sha}" ]] || accepted_sha="${main_sha}"
+          keep_json="$(printf '%s\n' "${main_sha}" "${accepted_sha}" | jq -R . | jq -s 'map(select(length > 0)) | unique')"
+          echo "Preserving deployed main ${main_sha} and current accepted PR #${accepted_pr_number:-none} head ${accepted_sha}: ${keep_json}"
 
           deleted_artifacts=0
           deleted_artifact_bytes=0
@@ -101,18 +106,36 @@ jobs:
             sleep 3
           done
 
+          deleted_runs=0
+          while true; do
+            run_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)" || exit 1
+            mapfile -t run_ids < <(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '.[] | .workflow_runs[] | select((.id | tostring) != $current) | select(.status == "completed") | (.head_sha // "") as $sha | select(($keep | index($sha)) == null) | .id' <<<"${run_pages}")
+            (( ${#run_ids[@]} == 0 )) && break
+            for id in "${run_ids[@]}"; do
+              delete_one "repos/${GITHUB_REPOSITORY}/actions/runs/${id}" || exit 1
+              deleted_runs=$((deleted_runs + 1))
+            done
+            echo "Deleted ${deleted_runs} obsolete completed workflow runs."
+            sleep 3
+          done
+
           artifact_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" true)" || exit 1
           obsolete_artifacts="$(jq -r --argjson keep "${keep_json}" '[.[] | .artifacts[] | (.workflow_run.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${artifact_pages}")"
           preserved_artifacts="$(jq -r '[.[] | .artifacts[]] | length' <<<"${artifact_pages}")"
           preserved_bytes="$(jq -r '[.[] | .artifacts[].size_in_bytes // 0] | add // 0' <<<"${artifact_pages}")"
           cache_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" true)" || exit 1
           caches="$(jq -r '[.[] | .actions_caches[]?] | length' <<<"${cache_pages}")"
+          run_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)" || exit 1
+          obsolete_completed_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | select(.status == "completed") | (.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${run_pages}")"
+          obsolete_active_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | select(.status != "completed") | (.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${run_pages}")"
 
-          echo "STORAGE PURGE VERIFIED: deleted artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes); remaining obsolete artifacts=${obsolete_artifacts}, caches=${caches}; preserved current evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
-          (( obsolete_artifacts == 0 && caches == 0 ))
+          echo "STORAGE PURGE VERIFIED: accepted PR #${accepted_pr_number:-none}=${accepted_sha}, main=${main_sha}; deleted artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes), obsolete completed runs=${deleted_runs}; remaining obsolete artifacts=${obsolete_artifacts}, caches=${caches}, obsolete completed runs=${obsolete_completed_runs}, obsolete active runs=${obsolete_active_runs}; preserved current evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
+          (( obsolete_artifacts == 0 && caches == 0 && obsolete_completed_runs == 0 && obsolete_active_runs == 0 ))
 
-      - name: Check out policy source
+      - name: Check out current main policy source
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Verify every upload-artifact retention is one day
         shell: python
@@ -121,11 +144,14 @@ jobs:
           import re
           import sys
 
+          upload = re.compile(r'^\s*uses:\s*actions/upload-artifact@')
+          retention_line = re.compile(r'retention-days:\s*(\d+)')
           failures = []
+
           for path in sorted(Path('.github/workflows').glob('*.y*ml')):
               lines = path.read_text(encoding='utf-8').splitlines()
               for index, line in enumerate(lines):
-                  if 'uses: actions/upload-artifact@' not in line:
+                  if not upload.match(line):
                       continue
                   base_indent = len(line) - len(line.lstrip())
                   retention = None
@@ -134,13 +160,13 @@ jobs:
                       indent = len(candidate) - len(candidate.lstrip())
                       if stripped.startswith('- ') and indent <= base_indent:
                           break
-                      match = re.search(r'retention-days:\s*(\d+)', stripped)
+                      match = retention_line.search(stripped)
                       if match:
                           retention = int(match.group(1))
                           break
                   if retention != 1:
-                      failures.append(f'{path}:{index + 1}: retention-days={retention!r}')
+                      failures.append(f'{path}:{index + 1}: retention-days={retention!r}, expected 1')
           if failures:
               print('\n'.join(failures))
               sys.exit(1)
-          print('POLICY VERIFIED: every actions/upload-artifact step retains evidence for exactly one day.')
+          print('POLICY VERIFIED: every actions/upload-artifact step on main retains evidence for exactly one day.')
