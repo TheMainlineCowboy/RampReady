@@ -77,6 +77,7 @@ jobs:
           grep -Fq 'uploadedJetwayBogieGroundContactCenterX' scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs
           grep -Fq 'grounded-jetway-door-gap-reported-no-child-lift-v1' scripts/prepare-a1-inspection-aircraft-vertical-registration-v1.mjs
           grep -Fq 'source-a1-parking-heading-authored-door-registration-v2' tests/browser/a1-close-readiness-diagnostic.spec.js
+          grep -Fq 'A1 close subviews reach exact locked camera telemetry before screenshot capture' tests/browser/a1-close-subview-diagnostic.spec.js
 
       - name: Build exact production artifact
         run: npm run build
@@ -154,6 +155,12 @@ jobs:
           tests/browser/a1-close-readiness-diagnostic.spec.js
           --reporter=line --workers=1
 
+      - name: Diagnose exact A1 subview locks
+        run: >-
+          npx playwright test
+          tests/browser/a1-close-subview-diagnostic.spec.js
+          --reporter=line --workers=1
+
       - name: Render terminal-joint and bogie-contact views
         run: >-
           npx playwright test
@@ -167,6 +174,8 @@ jobs:
           name: pr140-close-a1-evidence-${{ steps.pr.outputs.sha }}
           path: |
             test-results/a1-close-readiness-diagnostic.json
+            test-results/a1-close-subview-*.json
+            test-results/a1-close-subview-diagnostic.json
             test-results/a1-terminal-joint-close.png
             test-results/a1-bogie-contact-close.png
             test-results/a1-terminal-joint-bogie-subviews.json
