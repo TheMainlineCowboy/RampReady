@@ -70,4 +70,5 @@ for (const token of [
 fs.writeFileSync(installationPath, source, "utf8");
 await import(`./prepare-a1-readiness-compact-wall-v1.mjs?compact-readiness=${Date.now()}`);
 await import(`./prepare-a1-visual-acceptance-evidence-v1.mjs?visual-acceptance=${Date.now()}`);
-console.log("Closed the A1 Rotunda-side vestibule, normalized readiness to the compact real wall, published visual evidence, and preserved every supplied jetway child transform.");
+await import(`./prepare-a1-straight-solid-vestibule-v1.mjs?straight-solid=${Date.now()}`);
+console.log("Closed the A1 Rotunda-side vestibule, normalized readiness to the compact real wall, replaced the kinked generated connector with one short straight solid vestibule, published visual evidence, and preserved every supplied jetway child transform.");
