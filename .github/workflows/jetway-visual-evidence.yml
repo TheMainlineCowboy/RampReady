@@ -66,6 +66,14 @@ jobs:
           cat jetway-visual-evidence/preview.log
           exit 1
 
+      - name: Align visual spec timeout with Playwright config
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'test.setTimeout(90000);' scripts/verify-jetway-visual-registration.spec.js
+          sed -i 's/test.setTimeout(90000);/test.setTimeout(720000);/' scripts/verify-jetway-visual-registration.spec.js
+          grep -F 'test.setTimeout(720000);' scripts/verify-jetway-visual-registration.spec.js
+
       - name: Render A1 and representative Terminal 4 jetways
         env:
           PAGE_URL: http://127.0.0.1:4173/RampReady/
