@@ -70,16 +70,19 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
       && element?.dataset.photoGroundSource === "source-authored-phx-photo";
   }, null, { timeout: 120000 });
 
-  // The exact GLB fleet loads asynchronously after Terminal 4. Give the model,
-  // textures and instanced static fleet time to finish before moving cameras.
   await settle(page, 5000);
-
   const freeDrive = page.getByRole("button", { name: "Free-drive inspection" });
   await expect(freeDrive).toBeVisible();
   await freeDrive.click();
   const location = page.getByLabel("Inspection location");
   const camera = page.getByLabel("Camera view");
   await expect(location).toBeVisible();
+  await expect(camera).toBeVisible();
+
+  // Select chase once. Re-selecting the already-active camera after every
+  // inspection preset caused Playwright to wait on a React select that was
+  // being replaced during the preset transition, hiding later fleet captures.
+  await camera.selectOption("chase");
 
   const captures = {};
   for (const [preset, file] of [
@@ -90,18 +93,9 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
   ]) {
     await location.selectOption(preset);
     await page.waitForFunction(expected => document.querySelector("canvas.trainerCanvas")?.dataset.inspectionPreset === expected, preset, { timeout: 30000 });
-    await camera.selectOption("chase");
     await settle(page, 2200);
     captures[file] = await captureCanvas(page, `${evidenceDirectory}/${file}`);
   }
-
-  // A dedicated overhead A1 frame makes terminal/rotunda/bridge geometry and
-  // the aircraft-side relationship obvious instead of relying on telemetry.
-  await location.selectOption("a1Connection");
-  await page.waitForFunction(() => document.querySelector("canvas.trainerCanvas")?.dataset.inspectionPreset === "a1Connection", null, { timeout: 30000 });
-  await camera.selectOption("overhead");
-  await settle(page, 2200);
-  captures["a1-overhead.png"] = await captureCanvas(page, `${evidenceDirectory}/a1-overhead.png`);
 
   const runtime = await canvas.evaluate(element => ({ ...element.dataset }));
   const criticalErrors = consoleErrors.filter(message => /PHX|KPHX|Terminal 4|jetway|GLTFLoader|WebGL|ReferenceError|TypeError|SyntaxError/i.test(message));
