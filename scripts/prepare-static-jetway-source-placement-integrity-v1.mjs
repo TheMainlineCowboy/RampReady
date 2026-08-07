@@ -47,12 +47,12 @@ for (const token of relocationConditionTokens) {
   source = source.replace(pattern, "");
 }
 
-// The import becomes dead once the runtime relocation call is removed. Delete it
-// so the production source cannot accidentally reintroduce the guessed transform.
-source = source.replace(
-  /import \{[\s\S]*?registerStaticJetwayFleetToFacade,[\s\S]*?\} from "\.\/registerStaticJetwayFleetToFacadeV1\.js";\n?/,
-  "",
-);
+// Deliberately leave the now-unused static-registration import alone. Production
+// bundling tree-shakes it. A previous broad multiline import-removal regex could
+// start at an unrelated A1 finalizer import and consume everything through the
+// static-registration import, causing `enforceRenderedDoorA1Elbow is not defined`
+// in the browser. Source-preservation is more important than cosmetic dead-import
+// cleanup here.
 
 for (const token of [
   authority,
@@ -66,5 +66,12 @@ if (source.includes("registerStaticJetwayFleetToFacade(THREE, group, fleet, plac
   throw new Error(`${readinessPath}: guessed static facade relocation is still active`);
 }
 
+// If the rendered-door A1 finalizer was prepared before this pass, prove its import
+// survived untouched. This directly guards the crash found by the exact visual run.
+if (source.includes("enforceRenderedDoorA1Elbow(THREE, group, fleet, placements)")
+  && !source.includes("enforceSourceRegisteredA1RotundaElbow as enforceRenderedDoorA1Elbow")) {
+  throw new Error(`${readinessPath}: A1 rendered-door finalizer call survived without its import`);
+}
+
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Locked all 57 static Terminal 4 jetways to their exact BGL source placements and disabled guessed post-registration facade relocation.");
+console.log("Locked all 57 static Terminal 4 jetways to their exact BGL source placements without touching unrelated A1 rendered-door imports.");
