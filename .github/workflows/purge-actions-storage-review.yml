@@ -68,8 +68,12 @@ jobs:
           main_sha="$(get_json "repos/${GITHUB_REPOSITORY}/commits/main" | jq -r '.sha')" || exit 1
           open_prs="$(get_json "repos/${GITHUB_REPOSITORY}/pulls?state=open&base=main&sort=updated&direction=desc&per_page=100")" || exit 1
           accepted_pr="$(jq -c '[.[] | select((.head.ref | startswith("maintenance/")) | not)] | sort_by(.updated_at) | last // empty' <<<"${open_prs}")"
-          accepted_pr_number="$(jq -r '.number // empty' <<<"${accepted_pr:-{}}")"
-          accepted_sha="$(jq -r '.head.sha // empty' <<<"${accepted_pr:-{}}")"
+          accepted_pr_number=""
+          accepted_sha=""
+          if [[ -n "${accepted_pr}" ]]; then
+            accepted_pr_number="$(jq -r '.number // empty' <<<"${accepted_pr}")"
+            accepted_sha="$(jq -r '.head.sha // empty' <<<"${accepted_pr}")"
+          fi
           [[ -n "${accepted_sha}" ]] || accepted_sha="${main_sha}"
           keep_json="$(printf '%s\n' "${main_sha}" "${accepted_sha}" | jq -R . | jq -s 'map(select(length > 0)) | unique')"
           echo "Preserving deployed main ${main_sha} and current accepted PR #${accepted_pr_number:-none} head ${accepted_sha}: ${keep_json}"
