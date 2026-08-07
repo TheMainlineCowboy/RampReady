@@ -4,7 +4,13 @@ const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 let source = fs.readFileSync(readinessPath, "utf8");
 
 const baseFleetImport = 'import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";';
-const registrationImport = 'import { registerStaticJetwayFleetToFacade } from "./registerStaticJetwayFleetToFacadeV1.js";';
+const legacyRegistrationImport = 'import { registerStaticJetwayFleetToFacade } from "./registerStaticJetwayFleetToFacadeV1.js";';
+const registrationImport = `import {
+  registerStaticJetwayFleetToFacade,
+  STATIC_JETWAY_FACADE_REGISTRATION_AUTHORITY,
+  STATIC_JETWAY_GROUND_ISOLATION_AUTHORITY,
+  STATIC_JETWAY_MODEL_ROOT_OFFSET_AUTHORITY,
+} from "./registerStaticJetwayFleetToFacadeV1.js";`;
 const installationCall = "          const installationCorrection = correctUploadedJetwayInstallation(THREE, group, fleet, placements);";
 const registrationCall = "          const staticFleetRegistration = registerStaticJetwayFleetToFacade(THREE, group, fleet, placements);";
 
@@ -13,6 +19,9 @@ const registrationCall = "          const staticFleetRegistration = registerStat
 // for the replacement root visibly leaves terminal ends floating in front of the
 // concourses. Preserve the BGL-derived gate evidence, but register each complete
 // supplied static parent from its measured facade wall point to its gate target.
+if (source.includes(legacyRegistrationImport)) {
+  source = source.replace(legacyRegistrationImport, registrationImport);
+}
 if (!source.includes(registrationImport)) {
   if (!source.includes(baseFleetImport)) {
     throw new Error(`${readinessPath}: base fleet import anchor is missing`);
@@ -46,11 +55,17 @@ for (const forbidden of [
     throw new Error(`${readinessPath}: obsolete detached-static-jetway override is still active: ${forbidden}`);
   }
 }
-for (const required of [registrationImport, registrationCall]) {
+for (const required of [
+  registrationImport,
+  "STATIC_JETWAY_FACADE_REGISTRATION_AUTHORITY",
+  "STATIC_JETWAY_GROUND_ISOLATION_AUTHORITY",
+  "STATIC_JETWAY_MODEL_ROOT_OFFSET_AUTHORITY",
+  registrationCall,
+]) {
   if (!source.includes(required)) {
     throw new Error(`${readinessPath}: measured static terminal-wall registration is missing ${required}`);
   }
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Enforced measured terminal-wall/Rotunda registration for all 57 static supplied jetways; raw BGL evidence remains input data but is no longer misused as the replacement GLB model-root pose.");
+console.log("Enforced measured terminal-wall/Rotunda registration for all 57 static supplied jetways with one complete registration-authority import block; raw BGL evidence remains input data but is no longer misused as the replacement GLB model-root pose.");
