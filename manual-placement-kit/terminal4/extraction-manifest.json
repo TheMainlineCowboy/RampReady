@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "source": "scenery/term4.BGL",
+  "sourceBytes": 690258,
+  "sourceSha256": "57140405cac64a0ce7f73a875d490307cf44f74f47b996441666dd0abad37df9",
+  "embeddedModelCount": 1,
+  "models": [
+    {
+      "name": "phx_term400",
+      "error": null,
+      "parts": 19,
+      "vertexBuffers": [
+        19248
+      ],
+      "materials": 19,
+      "textures": 33,
+      "declaredBounds": {
+        "min": [
+          -361.947998046875,
+          0,
+          -213.22799682617188
+        ],
+        "max": [
+          488.2799987792969,
+          30.215999603271484,
+          266.8240051269531
+        ]
+      }
+    }
+  ],
+  "selectedModel": "phx_term400",
+  "output": {
+    "source": "scenery/term4.BGL",
+    "modelName": "phx_term400",
+    "highestLod": 100,
+    "partCount": 19,
+    "triangleCount": 11138,
+    "skipped": 0,
+    "bounds": {
+      "min": [
+        -361.947998046875,
+        0,
+        -213.22799682617188
+      ],
+      "max": [
+        488.2799987792969,
+        30.215999603271484,
+        266.8240051269531
+      ]
+    },
+    "declaredBounds": {
+      "min": [
+        -361.947998046875,
+        0,
+        -213.22799682617188
+      ],
+      "max": [
+        488.2799987792969,
+        30.215999603271484,
+        266.8240051269531
+      ]
+    },
+    "textureNames": [
+      "BGATE1.BMP",
+      "BGATE1_LM.BMP",
+      "DGATE4.BMP",
+      "DGATE4_LM.BMP",
+      "DGATE5.BMP",
+      "DGATE5_LM.BMP",
+      "PARKRAMP1.BMP",
+      "PARKRAMP1_LM.BMP",
+      "PARKRAMPS.BMP",
+      "PARKRAMPS_LM.BMP",
+      "PARKRAMPS2.BMP",
+      "PARKRAMPS2_LM.BMP",
+      "BGATE3.BMP",
+      "PHX_TERM400_0.DDS",
+      "PHX_TERM400_0_LM.DDS",
+      "PHX_TERM400_1.DDS",
+      "PHX_TERM400_1_LM.DDS",
+      "PHXRAMPLIGHT.BMP",
+      "PHXRAMPLIGHT_LM.BMP",
+      "RW.BMP",
+      "SUPPORTS.BMP",
+      "SUPPORTS_LM.BMP",
+      "T4_WALK.BMP",
+      "BGATE3_LM.BMP",
+      "T4_WALK_LM.BMP",
+      "T4_WALK2.BMP",
+      "T4_WALK2_LM.BMP",
+      "DGATE1.BMP",
+      "DGATE1_LM.BMP",
+      "DGATE2.BMP",
+      "DGATE2_LM.BMP",
+      "DGATE3.BMP",
+      "DGATE3_LM.BMP"
+    ]
+  }
+}

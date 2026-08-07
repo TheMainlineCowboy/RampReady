@@ -1,0 +1,70 @@
+{
+  "authority": "exact-uploaded-airport-jetway-glb-sha256-v1",
+  "transfer": "committed-exact-upload",
+  "sourceParts": [
+    "public/models/airport-jetway/Airport_Jetway.glb"
+  ],
+  "compressedBytes": null,
+  "compressedSha256": null,
+  "glb": {
+    "file": "Airport_Jetway.glb",
+    "bytes": 31459796,
+    "sha256": "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0"
+  },
+  "structure": {
+    "meshes": 7,
+    "materials": 2,
+    "images": 7
+  },
+  "textures": [
+    {
+      "file": "Jetway_albedo.jpg",
+      "bytes": 4374151,
+      "sha256": "ded6dbad1930417349bd11a2b22de6f5aa6c89a0b9ef8241b1978ea092f37ed0",
+      "glbImageIndex": 0,
+      "mimeType": "image/jpeg"
+    },
+    {
+      "file": "Jetway_metallic.png",
+      "bytes": 9300055,
+      "sha256": "7deac7f078fd2ea28dcd6a88d47a9b2baf55503c7730c3b6846afb11178b7b8c",
+      "glbImageIndex": 1,
+      "mimeType": "image/png"
+    },
+    {
+      "file": "Jetway_normal.png",
+      "bytes": 10763430,
+      "sha256": "9319dca63343e55ade0be00f06facf9cbc26dabb432f21240e9aa9781b53a6b1",
+      "glbImageIndex": 2,
+      "mimeType": "image/png"
+    },
+    {
+      "file": "Jetway_AO.jpg",
+      "bytes": 3529816,
+      "sha256": "85f8368e13fcf27b7eab3d9b19a554065311df0980566a8e2c8fb3690391011c",
+      "glbImageIndex": 3,
+      "mimeType": "image/jpeg"
+    },
+    {
+      "file": "Glass_JW_normal.png",
+      "bytes": 1107961,
+      "sha256": "823cf53bfeaf1bb11fdcfbb7235a456032e5e7d4bea07e2901354ba9e923e794",
+      "glbImageIndex": 4,
+      "mimeType": "image/png"
+    },
+    {
+      "file": "Glass_JW_AO.jpg",
+      "bytes": 88646,
+      "sha256": "391d039485a6139ddd3f82b97455970c897410f031320e0f04ef1c690415fe13",
+      "glbImageIndex": 5,
+      "mimeType": "image/jpeg"
+    },
+    {
+      "file": "Glass_JW_emissive.jpg",
+      "bytes": 185984,
+      "sha256": "b04433a9724729d969bb8fee1b6ffc7c452773a228bbf13b44d1696fdff4cce9",
+      "glbImageIndex": 6,
+      "mimeType": "image/jpeg"
+    }
+  ]
+}
