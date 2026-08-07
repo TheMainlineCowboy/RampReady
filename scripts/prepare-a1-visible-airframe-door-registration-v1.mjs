@@ -25,10 +25,14 @@ if (!alreadyPrepared) {
           // away. Measure the rendered mesh footprint and derive the CRJ forward-left
           // passenger door from the established geometry: 7.32 m aft of the visible nose
           // and 1.34 m left of the visible centerline. Preserve the independently measured
-          // authored landing-gear contact Y relocation exactly.
+          // authored landing-gear contact Y relocation exactly. X/Z come from the visible
+          // airframe footprint, while Y must remain the grounded authored passenger-door
+          // height; replacing it with apron Y=0 makes a valid grounded aircraft appear
+          // more than six metres below the jetway Cab.
           const measureVisibleAirframeDoor = () => {
             sim.aircraft.updateMatrixWorld(true);
             renderedAircraft.updateMatrixWorld(true);
+            const renderedAuthoredDoorY = renderedAircraft.localToWorld(authoredDoorLocal.clone()).y;
             const forwardAxis = new THREE.Vector3(0, 0, -1)
               .applyQuaternion(sim.aircraft.quaternion)
               .setY(0)
@@ -69,6 +73,7 @@ if (!alreadyPrepared) {
             });
             if (sampleCount < 8
               || ![
+                renderedAuthoredDoorY,
                 maximumForwardProjection,
                 minimumLeftProjection,
                 maximumLeftProjection,
@@ -82,7 +87,7 @@ if (!alreadyPrepared) {
             return {
               point: new THREE.Vector3(
                 forwardAxis.x * doorForwardProjection + leftAxis.x * doorLeftProjection,
-                0,
+                renderedAuthoredDoorY,
                 forwardAxis.z * doorForwardProjection + leftAxis.z * doorLeftProjection,
               ),
               minimumApronClearanceMeters,
@@ -139,8 +144,10 @@ if (!alreadyPrepared) {
 for (const token of [
   marker,
   "const measureVisibleAirframeDoor = () =>",
+  "const renderedAuthoredDoorY = renderedAircraft.localToWorld(authoredDoorLocal.clone()).y",
   "maximumForwardProjection - 7.32",
   "centerlineLeftProjection + 1.34",
+  "renderedAuthoredDoorY,",
   "const visibleDoorBefore = measureVisibleAirframeDoor()",
   "const aircraftRelocationY = -landingGearContactBefore.minimumY",
   "const visibleDoorAfter = measureVisibleAirframeDoor()",
@@ -156,4 +163,4 @@ for (const token of [
 fs.writeFileSync(trainerPath, source, "utf8");
 console.log(alreadyPrepared
   ? "Visible-airframe A1 door registration was already present and remains valid."
-  : "Registered the visible rendered CRJ forward-left door to A1 from actual mesh bounds, preserved authored landing-gear grounding, rejected terminal penetration, and retained the old Object3D-local door only as compatibility telemetry.");
+  : "Registered the visible rendered CRJ forward-left door to A1 from actual mesh X/Z bounds, preserved the grounded authored passenger-door Y and landing-gear contact, rejected terminal penetration, and retained the old Object3D-local door only as compatibility telemetry.");
