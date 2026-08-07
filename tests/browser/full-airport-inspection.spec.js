@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 
 const TARGET_URL = process.env.PLAYWRIGHT_TARGET_URL || "/";
 const VIEWPORT = { width: 1440, height: 900 };
-const INSPECTION_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
+const INSPECTION_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v11";
 const PRESETS = [
   { id: "a1", x: 0, z: 0 },
   { id: "a14", x: 218.45, z: -86.52 },
