@@ -3,8 +3,8 @@ import fs from "node:fs";
 await import(`./prepare-terminal4-jetway-rendered-cleanup-v1.mjs?rendered-cleanup=${Date.now()}`);
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
-const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v10";
-const A1_CAMERA_AUTHORITY = "oblique-measured-final-cab-and-aircraft-a1-v9";
+const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v11";
+const A1_CAMERA_AUTHORITY = "fixed-terminal-wall-rotunda-joint-evidence-a1-v10";
 let source = fs.readFileSync(path, "utf8");
 if (!source.includes('  a1Connection: Object.freeze({')) {
   await import(`./prepare-full-airport-inspection-route.mjs?wide-a1=${Date.now()}`);
@@ -20,18 +20,16 @@ if (presetStart < 0 || presetEnd < 0 || presetEnd <= presetStart) {
 }
 
 let presetBlock = source.slice(presetStart, presetEnd);
-// Keep the inspection tug away from the bridge and aircraft. A dedicated fixed
-// overhead camera below is used for evidence instead of centering on this tug.
-const tugXLine = "    x: 20.0,";
-const tugZLine = "    z: 3.0,";
+// Keep the inspection tug away from the bridge and frame the actual terminal
+// wall/Rotunda joint rather than the aircraft stop. These coordinates are the
+// authored A1 terminal-joint view from the generated Terminal 4 baseline.
+const tugXLine = "    x: 7.5,";
+const tugZLine = "    z: 8.5,";
 const tugYawLine = '    yaw: -0.35,';
-// This fallback remains available for broad A1 context. The final production
-// evidence path selects the exact endpoint-derived terminal-joint subview when
-// a1Connection is launched, so this broad camera is not the acceptance view.
-const cameraPositionLine = "    cameraPosition: Object.freeze([42.0, 16.0, 50.0]),";
-const cameraTargetLine = "    cameraTarget: Object.freeze([-6.0, 3.5, 17.0]),";
-const overheadCameraPositionLine = "    overheadCameraPosition: Object.freeze([-9.0, 75.0, 18.0]),";
-const overheadCameraTargetLine = "    overheadCameraTarget: Object.freeze([-9.0, 0.0, 18.0]),";
+const cameraPositionLine = "    cameraPosition: Object.freeze([-12.0, 10.5, 28.0]),";
+const cameraTargetLine = "    cameraTarget: Object.freeze([-27.5, 4.1, -16.15]),";
+const overheadCameraPositionLine = "    overheadCameraPosition: Object.freeze([-27.5, 55.0, -16.15]),";
+const overheadCameraTargetLine = "    overheadCameraTarget: Object.freeze([-27.5, 0.0, -16.15]),";
 const cameraAuthorityLine = `    cameraAuthority: "${A1_CAMERA_AUTHORITY}",`;
 
 for (const [pattern, line, label] of [
@@ -98,7 +96,7 @@ source = source.replace(
   CANONICAL_ROUTE_AUTHORITY,
 );
 source = source.replace(
-  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+|oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+|wide-oblique-full-assembly-terminal-corner-a1-v\d+|oblique-measured-final-cab-and-aircraft-a1-v\d+)/g,
+  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+|oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+|wide-oblique-full-assembly-terminal-corner-a1-v\d+|oblique-measured-final-cab-and-aircraft-a1-v\d+|fixed-terminal-wall-rotunda-joint-evidence-a1-v\d+)/g,
   A1_CAMERA_AUTHORITY,
 );
 
@@ -121,7 +119,7 @@ for (const token of [
 const fixedCameraPositionCount = (source.match(/cameraPosition:\s*Object\.freeze/g) || []).length;
 const fixedCameraTargetCount = (source.match(/cameraTarget:\s*Object\.freeze/g) || []).length;
 if (![1, 2].includes(fixedCameraPositionCount)) {
-  throw new Error(`${path}: inspection route must expose the A1 fixed fallback camera and may expose one additional fixed fleet camera; received ${fixedCameraPositionCount} positions`);
+  throw new Error(`${path}: inspection route must expose the A1 fixed terminal-joint camera and may expose one additional fixed fleet camera; received ${fixedCameraPositionCount} positions`);
 }
 if (fixedCameraTargetCount !== fixedCameraPositionCount) {
   throw new Error(`${path}: fixed inspection camera positions and targets must remain paired (${fixedCameraPositionCount}/${fixedCameraTargetCount})`);
@@ -138,4 +136,4 @@ if (fixedCameraPositionCount === 2) {
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared broad A1 fallback and overhead evidence framing while preserving the exact terminal-joint launch authority and chase-framed A/B fleet route.");
+console.log("Prepared A1 terminal-joint evidence framing at the authored wall/Rotunda coordinates while preserving chase-framed A/B fleet inspection routes.");
