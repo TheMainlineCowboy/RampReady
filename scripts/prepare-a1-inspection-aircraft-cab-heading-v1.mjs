@@ -67,19 +67,23 @@ for (const token of [
   `inspectionAircraftDimensionAuthority = "${dimensionAuthority}"`,
   "const landingGearContactAfter = measureAuthoredLandingGearContact()",
   "renderedGroundClearanceMeters = landingGearContactAfter.minimumY",
-  "authored-crj-lowest-geometry-contact-clusters-v2",
+  "authored-crj-three-tire-contact-patches-v3",
+  "inspectionAircraftNoseTireContact",
+  "inspectionAircraftLeftMainTireContact",
+  "inspectionAircraftRightMainTireContact",
 ]) {
   if (!source.includes(token)) {
     throw new Error(`${trainerPath}: source A1 parking-heading token is missing: ${token}`);
   }
 }
 for (const forbidden of [
+  "authored-crj-lowest-geometry-contact-clusters-v2",
   "const cabRegisteredAircraftYaw = Math.atan2(",
   "sim.aircraft.rotation.y = cabRegisteredAircraftYaw",
   'inspectionAircraftHeadingAuthority = "measured-cab-normal-aircraft-heading-v1"',
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${trainerPath}: obsolete Cab-normal aircraft heading remains: ${forbidden}`);
+    throw new Error(`${trainerPath}: obsolete Cab/grounding authority remains: ${forbidden}`);
   }
 }
 
@@ -91,4 +95,4 @@ await import(`./prepare-current-head-browser-expectations-v1.mjs?current-head=${
 await import(`./prepare-a1-no-lift-evidence-json-v1.mjs?no-lift-evidence=${Date.now()}`);
 await import(`./prepare-a1-post-lifecycle-evidence-v1.mjs?post-lifecycle-evidence=${Date.now()}`);
 await import(`./prepare-a1-bogie-centroid-browser-authority-v1.mjs?bogie-centroid=${Date.now()}`);
-console.log("Restored the authored A1 parking heading, selected the exporter model axis that remains apron-side of the measured terminal wall, registered the visible rendered forward-left door to the Cab from actual airframe mesh bounds, retained zero-lift signed-gap evidence, and kept the grounded pose lifecycle intact.");
+console.log("Restored the authored A1 parking heading, selected the exporter model axis that remains apron-side of the measured terminal wall, registered the visible rendered forward-left door to the Cab, required proved three-tire contact grounding, retained zero-lift signed-gap evidence, and kept the grounded pose lifecycle intact.");
