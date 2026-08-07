@@ -12,7 +12,7 @@ const generatedAuthorityPaths = Object.freeze([
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const staleAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
-const finalAuthority = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
+const finalAuthority = "a1-single-aircraft-pose-training-and-free-drive-v1";
 const cameraAuthority = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const cameraLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";
 const visualAuthority = "same-day-a1-continuous-compact-solid-closed-grounded-v1";
