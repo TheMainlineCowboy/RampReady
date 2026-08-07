@@ -120,9 +120,13 @@ jobs:
             'terminal4UploadedJetwayBogieGroundContactCenterY' \
             'terminal4UploadedJetwayBogieGroundContactCenterZ' \
             'inspectionCameraEndpointJointCenter' \
+            'inspectionCameraEndpointJointApronDistanceMeters' \
+            'inspectionCameraEndpointJointSideDistanceMeters' \
             'inspectionCameraEndpointBogieContactCenter' \
+            'inspectionCameraEndpointBogieAircraftCenter' \
+            'inspectionCameraEndpointBogieAircraftOppositionCosine' \
             'same-day-a1-continuous-compact-solid-closed-grounded-v1' \
-            'exact-a1-terminal-joint-and-bogie-contact-subviews-v1' \
+            'exact-a1-terminal-joint-and-bogie-contact-subviews-v2' \
             '57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3' \
             '57-static-cab-endpoints-opaque-zero-open-area-no-authored-transform-v1' \
             'final-a1-acceptance-authority-after-all-preparers-v1'; do
@@ -131,7 +135,7 @@ jobs:
               exit 1
             fi
           done
-          echo "Quiet generated-bundle checks passed."
+          echo "Quiet generated-bundle v2 checks passed."
 
       - name: Install browser verifier and Chromium
         run: |
