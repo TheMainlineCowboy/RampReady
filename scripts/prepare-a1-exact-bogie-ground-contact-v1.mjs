@@ -5,13 +5,15 @@ let source = fs.readFileSync(installationPath, "utf8");
 
 const authority = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
 const legacyAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v1";
+const finalWorldRefreshMarker = "A1 final transformed world-space ground-contact refresh v3";
 const fixedOffsetBlock = `  fleet.position.y -= BOGIE_TIRE_CONTACT_CORRECTION_METERS;
   fleet.updateMatrixWorld(true);`;
 const measuredOffsetBlock = `  // ${authority}
   // Ground the complete supplied jetway parent from authored low-contact
   // clusters. Clearance must be measured in fleet-parent coordinates because
   // fleet.position.y is also parent-local. The evidence camera centroid is
-  // measured separately in final scene-world coordinates after grounding.
+  // measured separately in scene-world coordinates and refreshed again after
+  // the complete A1 parent has finished every yaw/terminal relocation.
   const measureAuthoredA1RampContact = (coordinateSpace = "fleet-parent") => {
     if (coordinateSpace !== "fleet-parent" && coordinateSpace !== "world") {
       throw new Error(\`Unsupported A1 ramp-contact coordinate space: \${coordinateSpace}\`);
@@ -134,7 +136,7 @@ const measuredOffsetBlock = `  // ${authority}
   if (Math.abs(measuredBogieGroundClearanceMeters) > 0.005) {
     throw new Error(\`A1 exact authored bogie missed the parent-local ramp plane by \${measuredBogieGroundClearanceMeters} m\`);
   }
-  const authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact("world");
+  let authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact("world");
   if (![authoredA1GroundContactWorldAfter.centerX,
     authoredA1GroundContactWorldAfter.centerY,
     authoredA1GroundContactWorldAfter.centerZ].every(Number.isFinite)) {
@@ -152,6 +154,26 @@ if (source.includes(fixedOffsetBlock)) {
 }
 
 source = source.replaceAll(legacyAuthority, authority);
+source = source.replace(
+  "  const authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact(\"world\");",
+  "  let authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact(\"world\");",
+);
+
+// The original world centroid was sampled immediately after vertical grounding,
+// before the complete A1 parent was rotated and moved to the terminal. That
+// stale coordinate could point the evidence camera at the aircraft landing gear
+// even while the jetway bogie itself was correctly grounded. Refresh the exact
+// same authored low-contact footprint only after every final A1 transform.
+if (!source.includes(finalWorldRefreshMarker)) {
+  const refreshAnchor = "  const doubleSidedMaterialCount = forceExactMaterialsDoubleSided(THREE, fleet);";
+  if (!source.includes(refreshAnchor)) {
+    throw new Error(`${installationPath}: final A1 transform/evidence refresh anchor is missing`);
+  }
+  source = source.replace(
+    refreshAnchor,
+    `  // ${finalWorldRefreshMarker}\n  group.updateWorldMatrix(true, true);\n  fleet.updateWorldMatrix(true, true);\n  a1Model.updateWorldMatrix(true, true);\n  authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact("world");\n  if (![authoredA1GroundContactWorldAfter.centerX,\n    authoredA1GroundContactWorldAfter.centerY,\n    authoredA1GroundContactWorldAfter.centerZ].every(Number.isFinite)) {\n    throw new Error("A1 final transformed world-space bogie contact centroid is invalid");\n  }\n  const doubleSidedMaterialCount = forceExactMaterialsDoubleSided(THREE, fleet);`,
+  );
+}
 
 source = source.replace(
   `    groundOffsetMeters: -BOGIE_TIRE_CONTACT_CORRECTION_METERS,
@@ -240,6 +262,7 @@ if (source.includes(groupAnchor) && !source.includes("uploadedJetwayBogieGroundC
 
 for (const token of [
   authority,
+  finalWorldRefreshMarker,
   'const measureAuthoredA1RampContact = (coordinateSpace = "fleet-parent") =>',
   'coordinateSpace !== "fleet-parent" && coordinateSpace !== "world"',
   "const fleetParentWorldInverse = new THREE.Matrix4()",
@@ -249,7 +272,8 @@ for (const token of [
   "const measuredBogieGroundOffsetMeters = -authoredA1GroundContactBefore.minimumY",
   "fleet.position.y += measuredBogieGroundOffsetMeters",
   "const measuredBogieGroundClearanceMeters = authoredA1GroundContactAfter.minimumY",
-  "const authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact",
+  "let authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact",
+  'authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact("world")',
   "bogieGroundContactClusterCount: authoredA1GroundContactAfter.contactClusterCount",
   "bogieGroundContactCenterX: authoredA1GroundContactWorldAfter.centerX",
   "uploadedJetwayBogieGroundContactCenterX",
@@ -268,4 +292,4 @@ if (source.includes("bogieGroundContactCenterX: authoredA1GroundContactAfter.cen
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Grounded A1 from fleet-parent-local clearance while publishing a separately measured final world-space authored contact centroid for the bogie camera.");
+console.log("Grounded A1 from fleet-parent-local clearance and refreshed the authored low-contact centroid after the final transformed A1 placement before publishing the bogie evidence camera target.");
