@@ -19,10 +19,23 @@ async function captureCanvas(page, outputPath) {
 }
 
 async function selectInspectionPreset(page, preset) {
-  await page.waitForFunction(() => typeof window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ === "function", null, { timeout: 10000 });
-  const returned = await page.evaluate((presetId) => window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__(presetId), preset);
-  if (returned !== preset) throw new Error(`Visual evidence preset bridge rejected ${preset}: ${returned}`);
-  await page.waitForFunction(expected => document.querySelector("canvas.trainerCanvas")?.dataset.inspectionPreset === expected, preset, { timeout: 10000 });
+  const selector = page.locator('select[aria-label="Inspection location"]');
+  await expect(selector).toBeVisible({ timeout: 10000 });
+  const changed = await selector.evaluate((element, expectedPreset) => {
+    if (!(element instanceof HTMLSelectElement)) return { ok: false, reason: "not-select" };
+    const optionExists = [...element.options].some(option => option.value === expectedPreset);
+    if (!optionExists) return { ok: false, reason: "missing-option", options: [...element.options].map(option => option.value) };
+    element.value = expectedPreset;
+    element.dispatchEvent(new Event("input", { bubbles: true }));
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+    return { ok: true, value: element.value };
+  }, preset);
+  if (!changed.ok) throw new Error(`Inspection selector rejected ${preset}: ${JSON.stringify(changed)}`);
+  await page.waitForFunction(expected => {
+    const select = document.querySelector('select[aria-label="Inspection location"]');
+    const canvas = document.querySelector("canvas.trainerCanvas");
+    return select?.value === expected && canvas?.dataset.inspectionPreset === expected;
+  }, preset, { timeout: 10000 });
   const state = await page.locator("canvas.trainerCanvas").evaluate((element, expectedPreset) => ({
     ok: element.dataset.inspectionPreset === expectedPreset,
     expectedPreset,
