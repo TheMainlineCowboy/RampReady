@@ -3,9 +3,9 @@ import fs from "node:fs";
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
-const authority = "exact-a1-terminal-joint-and-bogie-contact-subviews-v1";
+const authority = "exact-a1-terminal-joint-and-bogie-contact-subviews-v2";
 if (source.includes(`inspectionCameraEndpointSubviewAuthority = "${authority}"`)) {
-  console.log("Exact A1 terminal-joint and bogie-contact evidence subviews are already prepared.");
+  console.log("Exact A1 terminal-joint and bogie-contact evidence subviews v2 are already prepared.");
   process.exit(0);
 }
 
@@ -52,9 +52,6 @@ const subviewBlock = `          let exactA1CameraPositionX = exactA1CameraFrameC
             exactA1BogieContactZ,
           ].every(Number.isFinite);
           if (exactA1EvidenceSubview === "terminal-joint") {
-            // Frame the exact measured wall and Rotunda collar side-on. The old
-            // wide view did not visibly prove the attachment even when its
-            // telemetry was correct.
             const exactA1JointCenterX = (exactA1CameraWallX + exactA1CameraRotundaX) * 0.5;
             const exactA1JointCenterY = (exactA1CameraWallY + exactA1CameraRotundaY) * 0.5;
             const exactA1JointCenterZ = (exactA1CameraWallZ + exactA1CameraRotundaZ) * 0.5;
@@ -65,41 +62,80 @@ const subviewBlock = `          let exactA1CameraPositionX = exactA1CameraFrameC
             if (!(exactA1JointSpan > 2.9 && exactA1JointSpan < 5.8)) {
               throw new Error(\`A1 terminal-joint close camera received invalid exact span: \${exactA1JointSpan}\`);
             }
-            const exactA1JointSideDistance = Math.max(6.4, exactA1JointSpan * 1.7);
+            // Stay well out on the apron and far enough side-on that the Rotunda,
+            // bellows, compact vestibule and terminal wall all fit in one frame.
+            const exactA1JointApronDistance = Math.max(3.8, exactA1JointSpan * 0.95);
+            const exactA1JointSideDistance = Math.max(9.4, exactA1JointSpan * 2.35);
             exactA1CameraPositionX = exactA1JointCenterX
-              + exactA1CameraApronX * 1.15
+              + exactA1CameraApronX * exactA1JointApronDistance
               + exactA1CameraSideX * exactA1CameraSideSign * exactA1JointSideDistance;
-            exactA1CameraPositionY = exactA1JointCenterY + 2.9;
+            exactA1CameraPositionY = exactA1JointCenterY + 3.6;
             exactA1CameraPositionZ = exactA1JointCenterZ
-              + exactA1CameraApronZ * 1.15
+              + exactA1CameraApronZ * exactA1JointApronDistance
               + exactA1CameraSideZ * exactA1CameraSideSign * exactA1JointSideDistance;
             exactA1CameraTargetX = exactA1JointCenterX;
-            exactA1CameraTargetY = exactA1JointCenterY - 0.15;
+            exactA1CameraTargetY = exactA1JointCenterY - 0.1;
             exactA1CameraTargetZ = exactA1JointCenterZ;
             renderer.domElement.dataset.inspectionCameraEndpointJointCenter = [
               exactA1JointCenterX, exactA1JointCenterY, exactA1JointCenterZ,
             ].map((value) => value.toFixed(6)).join(",");
             renderer.domElement.dataset.inspectionCameraEndpointJointSpanMeters = exactA1JointSpan.toFixed(6);
+            renderer.domElement.dataset.inspectionCameraEndpointJointApronDistanceMeters = exactA1JointApronDistance.toFixed(6);
+            renderer.domElement.dataset.inspectionCameraEndpointJointSideDistanceMeters = exactA1JointSideDistance.toFixed(6);
           } else if (exactA1EvidenceSubview === "bogie-contact") {
             if (!exactA1BogieContactReady) {
               throw new Error("A1 bogie-contact close camera is missing the exact authored low-contact centroid");
             }
-            // Frame the actual measured low-contact footprint instead of using
-            // any Cab or aircraft-position offset.
-            const exactA1BogieSideDistance = 5.4;
+            const exactA1AircraftCenter = exactA1CameraAircraftBounds.getCenter(new THREE.Vector3());
+            const exactA1BogieAwayFromAircraftX = exactA1BogieContactX - exactA1AircraftCenter.x;
+            const exactA1BogieAwayFromAircraftZ = exactA1BogieContactZ - exactA1AircraftCenter.z;
+            const exactA1BogieAwayFromAircraftLength = Math.hypot(
+              exactA1BogieAwayFromAircraftX,
+              exactA1BogieAwayFromAircraftZ,
+            );
+            const exactA1BogieAwayX = exactA1BogieAwayFromAircraftLength > 0.5
+              ? exactA1BogieAwayFromAircraftX / exactA1BogieAwayFromAircraftLength
+              : exactA1CameraSideX * exactA1CameraSideSign;
+            const exactA1BogieAwayZ = exactA1BogieAwayFromAircraftLength > 0.5
+              ? exactA1BogieAwayFromAircraftZ / exactA1BogieAwayFromAircraftLength
+              : exactA1CameraSideZ * exactA1CameraSideSign;
+            const exactA1BogieViewDistance = 6.8;
             exactA1CameraPositionX = exactA1BogieContactX
-              - exactA1CameraApronX * 1.35
-              + exactA1CameraSideX * exactA1CameraSideSign * exactA1BogieSideDistance;
-            exactA1CameraPositionY = exactA1BogieContactY + 2.35;
+              + exactA1BogieAwayX * exactA1BogieViewDistance
+              - exactA1CameraApronX * 0.9;
+            exactA1CameraPositionY = exactA1BogieContactY + 2.75;
             exactA1CameraPositionZ = exactA1BogieContactZ
-              - exactA1CameraApronZ * 1.35
-              + exactA1CameraSideZ * exactA1CameraSideSign * exactA1BogieSideDistance;
+              + exactA1BogieAwayZ * exactA1BogieViewDistance
+              - exactA1CameraApronZ * 0.9;
             exactA1CameraTargetX = exactA1BogieContactX;
-            exactA1CameraTargetY = exactA1BogieContactY + 0.72;
+            exactA1CameraTargetY = exactA1BogieContactY + 0.78;
             exactA1CameraTargetZ = exactA1BogieContactZ;
+            const exactA1BogieCameraHorizontalX = exactA1CameraPositionX - exactA1BogieContactX;
+            const exactA1BogieCameraHorizontalZ = exactA1CameraPositionZ - exactA1BogieContactZ;
+            const exactA1BogieAircraftHorizontalX = exactA1AircraftCenter.x - exactA1BogieContactX;
+            const exactA1BogieAircraftHorizontalZ = exactA1AircraftCenter.z - exactA1BogieContactZ;
+            const exactA1BogieCameraHorizontalLength = Math.hypot(
+              exactA1BogieCameraHorizontalX,
+              exactA1BogieCameraHorizontalZ,
+            );
+            const exactA1BogieAircraftHorizontalLength = Math.hypot(
+              exactA1BogieAircraftHorizontalX,
+              exactA1BogieAircraftHorizontalZ,
+            );
+            const exactA1BogieAircraftOppositionCosine = exactA1BogieAircraftHorizontalLength > 0.5
+              ? (exactA1BogieCameraHorizontalX * exactA1BogieAircraftHorizontalX
+                + exactA1BogieCameraHorizontalZ * exactA1BogieAircraftHorizontalZ)
+                / (exactA1BogieCameraHorizontalLength * exactA1BogieAircraftHorizontalLength)
+              : -1;
+            if (!(exactA1BogieAircraftOppositionCosine < -0.65)) {
+              throw new Error(\`A1 bogie close camera is not on the jetway side of the aircraft: \${exactA1BogieAircraftOppositionCosine}\`);
+            }
             renderer.domElement.dataset.inspectionCameraEndpointBogieContactCenter = [
               exactA1BogieContactX, exactA1BogieContactY, exactA1BogieContactZ,
             ].map((value) => value.toFixed(6)).join(",");
+            renderer.domElement.dataset.inspectionCameraEndpointBogieAircraftCenter = exactA1AircraftCenter
+              .toArray().map((value) => value.toFixed(6)).join(",");
+            renderer.domElement.dataset.inspectionCameraEndpointBogieAircraftOppositionCosine = exactA1BogieAircraftOppositionCosine.toFixed(6);
           }
           renderer.domElement.dataset.inspectionCameraEndpointSubview = exactA1EvidenceSubview;
           renderer.domElement.dataset.inspectionCameraEndpointSubviewAuthority = "${authority}";`;
@@ -116,16 +152,23 @@ for (const token of [
   'exactA1EvidenceSubview === "bogie-contact"',
   "const exactA1JointCenterX",
   "const exactA1JointSpan",
-  "exactA1CameraApronX * 1.15",
+  "const exactA1JointApronDistance",
+  "const exactA1JointSideDistance",
   "const exactA1BogieContactX",
+  "const exactA1AircraftCenter",
+  "const exactA1BogieAircraftOppositionCosine",
   "uploadedJetwayBogieGroundContactCenterX",
   "inspectionCameraEndpointBogieContactCenter",
+  "inspectionCameraEndpointBogieAircraftCenter",
+  "inspectionCameraEndpointBogieAircraftOppositionCosine",
   "inspectionCameraEndpointJointCenter",
   "inspectionCameraEndpointJointSpanMeters",
+  "inspectionCameraEndpointJointApronDistanceMeters",
+  "inspectionCameraEndpointJointSideDistanceMeters",
   "inspectionCameraEndpointSubview = exactA1EvidenceSubview",
 ]) {
   if (!source.includes(token)) {
-    throw new Error(`${trainerPath}: exact A1 evidence subview is missing ${token}`);
+    throw new Error(`${trainerPath}: exact A1 evidence subview v2 is missing ${token}`);
   }
 }
 const forbiddenGuessedCabTarget = "exactA1CameraCabX - exactA1CameraApronX * " + "6";
@@ -142,4 +185,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared a tight side-on exact wall/Rotunda joint view and a low close-up derived from the authored bogie contact centroid, with fail-closed checks that do not self-match their migration vocabulary.");
+console.log("Prepared v2 A1 close evidence: an apron-side terminal-joint frame with the full compact attachment visible and a bogie frame forced onto the jetway side of the aircraft.");
