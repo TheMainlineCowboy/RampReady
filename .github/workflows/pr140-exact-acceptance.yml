@@ -28,6 +28,8 @@ jobs:
   verify-and-render:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      PLAYWRIGHT_WEB_SERVER_COMMAND: npm run preview -- --port 4173 --strictPort
     steps:
       - name: Resolve exact current PR 140 head
         id: pr
@@ -85,7 +87,7 @@ jobs:
       - name: Build exact production artifact
         run: npm run build
 
-      - name: Reapply strict browser acceptance migrations
+      - name: Reapply and freeze strict browser acceptance migrations
         shell: bash
         run: |
           set -euo pipefail
@@ -94,6 +96,25 @@ jobs:
           node scripts/prepare-a1-bogie-centroid-browser-authority-v1.mjs
           node scripts/verify-a1-measured-ground-contact-contract.mjs
           node scripts/verify-a1-evidence-subview-contract.mjs
+          for spec in \
+            tests/browser/a1-ground-contact-evidence.spec.js \
+            tests/browser/a1-terminal-joint-bogie-subviews.spec.js \
+            tests/browser/kphx-ground-runtime.spec.js \
+            tests/browser/uploaded-jetway-articulation-v10.spec.js; do
+            if grep -Fq 'measured-cab-normal-aircraft-heading-v1' "${spec}"; then
+              echo "Retired Cab-normal heading survived in ${spec}"
+              exit 1
+            fi
+          done
+          grep -Fq 'source-a1-parking-heading-authored-door-registration-v2' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'Math.abs(Number(data?.inspectionAircraftYaw) - 0.008569641) <= 0.001' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'source-a1-parking-heading-authored-door-registration-v2' tests/browser/kphx-ground-runtime.spec.js
+          mkdir -p retained-evidence/generated-browser-specs
+          cp tests/browser/a1-ground-contact-evidence.spec.js retained-evidence/generated-browser-specs/
+          cp tests/browser/a1-terminal-joint-bogie-subviews.spec.js retained-evidence/generated-browser-specs/
+          cp tests/browser/kphx-ground-runtime.spec.js retained-evidence/generated-browser-specs/
+          cp tests/browser/uploaded-jetway-articulation-v10.spec.js retained-evidence/generated-browser-specs/
+          echo 'Frozen production dist and strict exact browser specs are ready; Playwright preview will not rebuild or restore them.'
 
       - name: Quiet fail-closed generated A1 evidence checks
         shell: bash
@@ -193,6 +214,7 @@ jobs:
         with:
           name: pr140-exact-acceptance-${{ steps.pr.outputs.sha }}
           path: |
+            retained-evidence/
             test-results/
             playwright-report/
           if-no-files-found: warn
