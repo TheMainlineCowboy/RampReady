@@ -1,8 +1,8 @@
 import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
-const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v10";
-const A1_CAMERA_AUTHORITY = "oblique-measured-final-cab-and-aircraft-a1-v9";
+const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v11";
+const A1_CAMERA_AUTHORITY = "fixed-terminal-wall-rotunda-joint-evidence-a1-v10";
 const VISUAL_BRIDGE_AUTHORITY = "real-final-inspection-preset-callback-v2";
 const INITIAL_PRESET_AUTHORITY = "launch-time-inspection-preset-before-browser-interaction-v1";
 const INITIAL_SUBVIEW_AUTHORITY = "launch-time-a1-terminal-joint-subview-v1";
@@ -38,7 +38,7 @@ source = source.replace(
   CANONICAL_ROUTE_AUTHORITY,
 );
 source = source.replace(
-  /oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+|oblique-measured-final-cab-and-aircraft-a1-v\d+/g,
+  /oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+|oblique-measured-final-cab-and-aircraft-a1-v\d+|fixed-terminal-wall-rotunda-joint-evidence-a1-v\d+/g,
   A1_CAMERA_AUTHORITY,
 );
 
