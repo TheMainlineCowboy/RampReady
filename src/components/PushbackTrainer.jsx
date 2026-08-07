@@ -23,8 +23,8 @@ export default function PushbackTrainer() {
   const [gyroEnabled, setGyroEnabled] = useState(false);
   const [gyroAvailable, setGyroAvailable] = useState(true);
   const [selectedEquipmentId, setSelectedEquipmentId] = useState(DEFAULT_EQUIPMENT_ID);
-  const [activeEquipmentId, setActiveEquipmentId] = useState(initialInspectionPreset ? DEFAULT_EQUIPMENT_ID : null);
-  const [launchMode, setLaunchMode] = useState(initialInspectionPreset ? "inspection" : "training");
+  const [activeEquipmentId, setActiveEquipmentId] = useState(null);
+  const [launchMode, setLaunchMode] = useState("training");
   const baselineRef = useRef(null);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
   const selectedEquipment = getEquipmentProfile(selectedEquipmentId);
@@ -65,6 +65,15 @@ export default function PushbackTrainer() {
     setLaunchMode(mode);
     setActiveEquipmentId(selectedEquipmentId);
   }, [selectedEquipmentId]);
+
+  // Keep the equipment selector as the real default route. The query string is
+  // an evidence-only launch request applied after the normal initial state has
+  // mounted, so production/user navigation remains unchanged without a query.
+  useEffect(() => {
+    if (!initialInspectionPreset || activeEquipmentId) return;
+    setLaunchMode("inspection");
+    setActiveEquipmentId(DEFAULT_EQUIPMENT_ID);
+  }, [activeEquipmentId, initialInspectionPreset]);
 
   useEffect(() => {
     if (!gyroEnabled || !activeEquipmentId) return undefined;
