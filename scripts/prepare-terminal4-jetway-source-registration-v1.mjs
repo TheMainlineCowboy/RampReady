@@ -4,11 +4,9 @@ const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 const staticRegistrationPath = "src/environment/registerStaticJetwayFleetToFacadeV1.js";
 const SOURCE_REGISTRATION_AUTHORITY = "exact-terminal4-jetway-source-local-under-parent-offset-v2";
 const STATIC_SOURCE_HEADING_AUTHORITY = "57-static-bgl-jetway-heading-preserved-v1";
-const STATIC_TERMINAL_SEARCH_MARKER = "static-bgl-heading-terminal-search-v1";
+const STATIC_TERMINAL_SEARCH_MARKER = "static-bgl-heading-terminal-search-v2-non-a1-resolved";
 let source = fs.readFileSync(jetwayPath, "utf8");
 
-// The source-placed jetway GROUP already owns the KPHX +6.2 m Z world offset.
-// Child placement remains in original BGL-local x/z coordinates.
 const unregisteredPlacement = `    uploadedJetwayPlacements.push({
       gate: jetway.g,
       x: jetway.x,
@@ -33,10 +31,9 @@ source = source
   .replace("      targetZ: targetZ + sourceOffsetZ,", "      targetZ,")
   .replace(/      sourceRegistrationAuthority: "exact-terminal4-jetway-source-registration-plus-6p2z-v1",\n/g, "");
 
-// Legacy FSX heading h is clockwise from north. In the browser's reflected
-// Terminal 4 frame the supplied bridge longitudinal yaw is 180deg-h. Preserve
-// that source-authored parked angle for the 57 rigid scenery bridges. A1 remains
-// the independently photo-registered animated bridge.
+// Preserve the decoded stock AIR_Jetway01 heading for all 57 rigid static gates.
+// The browser longitudinal yaw for the source airport frame is 180deg-h. A1 is
+// an independent animated/photo-registered exception and retains the CRJ door yaw.
 const yawAnchor = "    const yaw = Math.atan2(ux, uz);";
 const yawPatch = `    const yaw = Math.atan2(ux, uz);
     const sourceJetwayHeadingDegrees = Number(jetway.h);
@@ -46,17 +43,19 @@ const yawPatch = `    const yaw = Math.atan2(ux, uz);
     const sourceJetwayYaw = THREE.MathUtils.degToRad(180 - sourceJetwayHeadingDegrees);
     const sourceJetwayForwardX = Math.sin(sourceJetwayYaw);
     const sourceJetwayForwardZ = Math.cos(sourceJetwayYaw);
-    const terminalPreferredX = jetway.g === "A1" ? -ux : -sourceJetwayForwardX;
-    const terminalPreferredZ = jetway.g === "A1" ? -uz : -sourceJetwayForwardZ;`;
+    const terminalPreferredX = -sourceJetwayForwardX;
+    const terminalPreferredZ = -sourceJetwayForwardZ;`;
 if (!source.includes("const sourceJetwayYaw = THREE.MathUtils.degToRad(180 - sourceJetwayHeadingDegrees);")) {
   if (!source.includes(yawAnchor)) throw new Error(`${jetwayPath}: source bridge yaw anchor is missing`);
   source = source.replace(yawAnchor, yawPatch);
 }
 
-// Preserve the exact original A1 terminalConnection declaration because the
-// grounded A1 building preparer replaces that byte-for-byte later. Apply the
-// BGL-heading terminal search as a separate non-A1 override immediately after it.
-const originalTerminalConnection = `    const terminalConnection = findTerminalWallConnection(
+// Do not rewrite the A1 terminalConnection declaration. Different A1 preparers
+// legitimately own const/let and fallback/no-fallback forms at different stages.
+// Find whichever declaration is present, leave it byte-identical, and add an
+// independent static-only source-heading connection after it.
+const terminalConnectionVariants = [
+`    const terminalConnection = findTerminalWallConnection(
       THREE,
       terminal,
       jetway.x,
@@ -64,23 +63,36 @@ const originalTerminalConnection = `    const terminalConnection = findTerminalW
       -ux,
       -uz,
       rotundaY,
-    ) || {};`;
-const transientPreferredTerminalConnection = `    const terminalConnection = findTerminalWallConnection(
+    ) || {};`,
+`    const terminalConnection = findTerminalWallConnection(
       THREE,
       terminal,
       jetway.x,
       jetway.z + sourceOffsetZ,
-      terminalPreferredX,
-      terminalPreferredZ,
+      -ux,
+      -uz,
       rotundaY,
-    ) || {};`;
-if (source.includes(transientPreferredTerminalConnection)) {
-  source = source.replace(transientPreferredTerminalConnection, originalTerminalConnection);
-}
-const staticTerminalOverride = `${originalTerminalConnection}
-    if (jetway.g !== "A1") {
-      // ${STATIC_TERMINAL_SEARCH_MARKER}
-      const sourceHeadingTerminalConnection = findTerminalWallConnection(
+    );`,
+`    let terminalConnection = findTerminalWallConnection(
+      THREE,
+      terminal,
+      jetway.x,
+      jetway.z + sourceOffsetZ,
+      -ux,
+      -uz,
+      rotundaY,
+    );`,
+];
+if (!source.includes(STATIC_TERMINAL_SEARCH_MARKER)) {
+  const declaration = terminalConnectionVariants.find((candidate) => source.includes(candidate));
+  if (!declaration) {
+    throw new Error(`${jetwayPath}: no compatible A1 terminalConnection declaration is present for static source-heading registration`);
+  }
+  const staticOverride = `${declaration}
+    // ${STATIC_TERMINAL_SEARCH_MARKER}
+    const sourceHeadingTerminalConnection = jetway.g === "A1"
+      ? null
+      : findTerminalWallConnection(
         THREE,
         terminal,
         jetway.x,
@@ -88,21 +100,24 @@ const staticTerminalOverride = `${originalTerminalConnection}
         terminalPreferredX,
         terminalPreferredZ,
         rotundaY,
-      );
-      if (sourceHeadingTerminalConnection) {
-        Object.assign(terminalConnection, sourceHeadingTerminalConnection);
-      }
-    }`;
-if (!source.includes(STATIC_TERMINAL_SEARCH_MARKER)) {
-  if (!source.includes(originalTerminalConnection)) {
-    throw new Error(`${jetwayPath}: original A1-compatible terminalConnection declaration is missing`);
-  }
-  source = source.replace(originalTerminalConnection, staticTerminalOverride);
+      );`;
+  source = source.replace(declaration, staticOverride);
 }
 
+const wallDistanceLine = "    const terminalWallDistance = terminalConnection?.distance ?? null;";
+const resolvedConnectionBlock = `    const resolvedTerminalConnection = jetway.g === "A1"
+      ? terminalConnection
+      : (sourceHeadingTerminalConnection || terminalConnection);
+    const terminalWallDistance = resolvedTerminalConnection?.distance ?? null;`;
+if (!source.includes("const resolvedTerminalConnection = jetway.g === \"A1\"")) {
+  if (!source.includes(wallDistanceLine)) {
+    throw new Error(`${jetwayPath}: terminal wall-distance anchor is missing`);
+  }
+  source = source.replace(wallDistanceLine, resolvedConnectionBlock);
+}
 source = source
-  .replace("    const connectorTowardX = terminalConnection?.towardX ?? -ux;", "    const connectorTowardX = terminalConnection?.towardX ?? terminalPreferredX;")
-  .replace("    const connectorTowardZ = terminalConnection?.towardZ ?? -uz;", "    const connectorTowardZ = terminalConnection?.towardZ ?? terminalPreferredZ;");
+  .replace("    const connectorTowardX = terminalConnection?.towardX ?? -ux;", "    const connectorTowardX = resolvedTerminalConnection?.towardX ?? (jetway.g === \"A1\" ? -ux : terminalPreferredX);")
+  .replace("    const connectorTowardZ = terminalConnection?.towardZ ?? -uz;", "    const connectorTowardZ = resolvedTerminalConnection?.towardZ ?? (jetway.g === \"A1\" ? -uz : terminalPreferredZ);");
 
 if (!source.includes(STATIC_SOURCE_HEADING_AUTHORITY)) {
   const registeredPlacement = `    uploadedJetwayPlacements.push({
@@ -142,8 +157,9 @@ for (const token of [
   "sourceJetwayYawRadians",
   "terminalPreferredX",
   "terminalPreferredZ",
+  "sourceHeadingTerminalConnection",
+  "resolvedTerminalConnection",
   'yaw: jetway.g === "A1" ? yaw : sourceJetwayYaw',
-  originalTerminalConnection,
 ]) {
   if (!source.includes(token)) {
     throw new Error(`${jetwayPath}: source-local/source-heading registration contract is missing ${token}`);
@@ -158,11 +174,8 @@ for (const forbidden of [
     throw new Error(`${jetwayPath}: double-applied jetway world offset remains: ${forbidden}`);
   }
 }
-fs.writeFileSync(jetwayPath, source, "utf8");
 
-// Static wall registration may translate the complete replacement parent so the
-// authored Rotunda sits at the correct wall, but it may not rotate a rigid bridge
-// away from its decoded BGL heading merely to point at a generic CRJ door target.
+// Prepare static registration entirely in memory before either file is written.
 let staticRegistration = fs.readFileSync(staticRegistrationPath, "utf8");
 const targetYawLine = "  const yaw = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;";
 const preservedYawBlock = `  const targetYaw = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;
@@ -228,6 +241,9 @@ for (const required of [
     throw new Error(`${staticRegistrationPath}: static source-heading preservation is missing ${required}`);
   }
 }
+
+// Commit both source transformations only after all compatibility checks pass.
+fs.writeFileSync(jetwayPath, source, "utf8");
 fs.writeFileSync(staticRegistrationPath, staticRegistration, "utf8");
 
-console.log(`Prepared all 58 exact Terminal 4 jetways in original BGL-local coordinates under the +6.2 m source parent; A1 keeps its grounded building handoff and never targets T4_WALK, while all 57 rigid static supplied bridges preserve their decoded BGL heading and independently use that heading to seek the terminal wall (${SOURCE_REGISTRATION_AUTHORITY}; ${STATIC_SOURCE_HEADING_AUTHORITY}).`);
+console.log(`Prepared all 58 exact Terminal 4 jetways in original BGL-local coordinates under the +6.2 m source parent; A1 keeps whichever grounded/photo terminalConnection stage owns it and never targets T4_WALK, while all 57 rigid static supplied bridges preserve their decoded BGL heading and independently use that heading to seek the terminal wall (${SOURCE_REGISTRATION_AUTHORITY}; ${STATIC_SOURCE_HEADING_AUTHORITY}).`);
