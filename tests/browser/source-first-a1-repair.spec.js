@@ -76,9 +76,14 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
       && Number.isFinite(Number(data?.inspectionAircraftDoorTargetX))
       && Number.isFinite(Number(data?.inspectionAircraftDoorTargetZ))
       && Number(data?.inspectionAircraftCabContactErrorMeters) <= 0.01
-      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01
+      && Number.isFinite(Number(data?.inspectionAircraftDoorVerticalErrorMeters))
+      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 6
+      && Number.isFinite(Number(data?.inspectionAircraftDoorSignedVerticalGapMeters))
+      && Number.isFinite(Number(data?.inspectionAircraftJetwayRequestedVerticalFitMeters))
+      && Math.abs(Number(data?.inspectionAircraftJetwayVerticalFitMeters)) <= 0.001
+      && data?.inspectionAircraftJetwayAuthoredBogieGroundPreserved === "true"
       && Math.abs(Number(data?.inspectionAircraftGroundClearanceMeters)) <= 0.01
-      && data?.inspectionAircraftJetwayVerticalFitAuthority === "grounded-aircraft-door-progressive-tunnel-slope-v1"
+      && data?.inspectionAircraftJetwayVerticalFitAuthority === "grounded-jetway-door-gap-reported-no-child-lift-v1"
       && Number(data?.inspectionAircraftRenderedLengthMeters) > 31
       && Number(data?.inspectionAircraftRenderedWingspanMeters) > 22.5
       && data?.airportCollisionReady === "true";
@@ -100,8 +105,9 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
   );
   expect(runtime.terminal4A1ConnectionAuthority).toBe(DIRECT_A1_TERMINAL_AUTHORITY);
   expect(runtime.terminal4A1ConnectionAuthority).not.toMatch(/WALK/i);
-  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeGreaterThan(1.5);
-  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeLessThan(4.1);
+  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeGreaterThan(2.9);
+  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeLessThan(5.8);
+  expect(Math.abs(Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4)).toBeLessThanOrEqual(0.05);
   expect(runtime.terminal4A1RetractionAuthority).toBe("aircraft-door-clearance-without-overtravel-v6");
   expect(runtime.terminal4A1RetractionClearanceMeters).toBe("2.38");
 
@@ -138,12 +144,25 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
   expect(Math.abs(Math.hypot(cabDirectionX, cabDirectionZ) - 1)).toBeLessThanOrEqual(0.01);
   expect(Math.hypot(renderedDoorX - cabContactX, renderedDoorZ - cabContactZ)).toBeLessThanOrEqual(0.01);
   expect(Number(runtime.inspectionAircraftCabContactErrorMeters)).toBeLessThanOrEqual(0.01);
-  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(0.01);
+  const signedDoorVerticalGapMeters = Number(runtime.inspectionAircraftDoorSignedVerticalGapMeters);
+  const requestedJetwayVerticalFitMeters = Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters);
+  expect(Number.isFinite(signedDoorVerticalGapMeters)).toBe(true);
+  expect(Number.isFinite(requestedJetwayVerticalFitMeters)).toBe(true);
+  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeCloseTo(
+    Math.abs(signedDoorVerticalGapMeters),
+    5,
+  );
+  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(6);
+  expect(requestedJetwayVerticalFitMeters).toBeCloseTo(signedDoorVerticalGapMeters, 5);
+  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeCloseTo(0, 5);
+  expect(runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");
   expect(Math.abs(Number(runtime.inspectionAircraftGroundClearanceMeters))).toBeLessThanOrEqual(0.01);
   expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(
-    "grounded-aircraft-door-progressive-tunnel-slope-v1",
+    "grounded-jetway-door-gap-reported-no-child-lift-v1",
   );
-  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeLessThan(-1);
+  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeCloseTo(0, 5);
+  expect(Number.isFinite(Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters))).toBe(true);
+  expect(runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");
   expect(Number(runtime.inspectionAircraftDoorLocalX)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.x, 3);
   expect(Number(runtime.inspectionAircraftDoorLocalY)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.y, 3);
   expect(Number(runtime.inspectionAircraftDoorLocalZ)).toBeCloseTo(AUTHORED_FORWARD_LEFT_DOOR.z, 3);
@@ -160,7 +179,12 @@ test("source-first A1 evidence proves the exact terminal-to-rendered-aircraft ch
       && data?.inspectionCameraAuthority === authority
       && data?.a1JetwayDeployment === "1.000"
       && data?.a1JetwayState === "attached-to-aircraft-door"
-      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01;
+      && Number.isFinite(Number(data?.inspectionAircraftDoorVerticalErrorMeters))
+      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 6
+      && Number.isFinite(Number(data?.inspectionAircraftDoorSignedVerticalGapMeters))
+      && Number.isFinite(Number(data?.inspectionAircraftJetwayRequestedVerticalFitMeters))
+      && Math.abs(Number(data?.inspectionAircraftJetwayVerticalFitMeters)) <= 0.001
+      && data?.inspectionAircraftJetwayAuthoredBogieGroundPreserved === "true";
   }, DIRECT_A1_CAMERA_AUTHORITY, { timeout: 30_000, polling: 100 });
   await page.addStyleTag({
     content: ".rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}",

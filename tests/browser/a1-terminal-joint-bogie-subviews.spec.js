@@ -90,6 +90,13 @@ test("A1 close evidence shows the exact 2.4 m terminal vestibule and zero-lift g
     const centerToWallDistance = Number(data?.terminal4A1JetwayWallDistance);
     const visibleVestibuleLength = Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters);
     return data?.terminal4UploadedJetwayLoadState === "ready"
+      // post-lifecycle-grounded-a1-evidence-v1
+      && data?.inspectionAircraftPoseStored === "true"
+      && data?.inspectionAircraftPoseApplied === "true"
+      && data?.inspectionAircraftPoseAuthority === "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2"
+      && Number(data?.inspectionAircraftPoseErrorMeters) <= 0.01
+      && data?.inspectionAircraftHeadingAuthority === "measured-cab-normal-aircraft-heading-v1"
+      && Number.isFinite(Number(data?.inspectionAircraftYaw))
       && centerToWallDistance > 2.9
       && centerToWallDistance < 5.8
       && Math.abs(visibleVestibuleLength - 2.4) <= 0.05
@@ -136,6 +143,12 @@ test("A1 close evidence shows the exact 2.4 m terminal vestibule and zero-lift g
   const terminalRuntime = await page.evaluate(() => ({
     ...document.querySelector("canvas.trainerCanvas").dataset,
   }));
+  expect(terminalRuntime.inspectionAircraftPoseStored).toBe("true");
+  expect(terminalRuntime.inspectionAircraftPoseApplied).toBe("true");
+  expect(terminalRuntime.inspectionAircraftPoseAuthority).toBe("measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2");
+  expect(Number(terminalRuntime.inspectionAircraftPoseErrorMeters)).toBeLessThanOrEqual(0.01);
+  expect(terminalRuntime.inspectionAircraftHeadingAuthority).toBe("measured-cab-normal-aircraft-heading-v1");
+  expect(Number.isFinite(Number(terminalRuntime.inspectionAircraftYaw))).toBe(true);
   expect(terminalRuntime.inspectionCameraEndpointSubviewAuthority).toBe(SUBVIEW_AUTHORITY);
   expect(terminalRuntime.inspectionCameraEndpointSubview).toBe("terminal-joint");
   expect(Number(terminalRuntime.a1ExactRotundaToWallWorldMeters)).toBeGreaterThan(2.9);

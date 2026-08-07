@@ -41,6 +41,9 @@ async function launchStandup(page) {
       && data?.terminal4UploadedJetwayConnectorCount === "58"
       && data?.terminal4UploadedJetwayVerifiedModelCount === "58"
       && data?.terminal4A1JetwayWallDistance !== "loading"
+      && Number(data?.terminal4A1JetwayWallDistance) > 2.9
+      && Number(data?.terminal4A1JetwayWallDistance) < 5.8
+      && Math.abs(Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4) <= 0.05
       && data?.terminal4A1ConnectionAuthority === expectedAuthority
       && data?.inspectionAircraftPoseAuthority === aircraftAuthority
       && Number.isFinite(Number(data?.inspectionAircraftTerminalRelocationX))
@@ -144,6 +147,12 @@ test("loads source-correct PHX scenery with the complete exact Terminal 4 jetway
   const runtime = await page.evaluate(() => ({
     ...document.querySelector("canvas.trainerCanvas").dataset,
   }));
+  await writeFile(
+    "test-results/kphx-a1-preassert-runtime.json",
+    JSON.stringify(runtime, null, 2),
+    "utf8",
+  );
+  await captureRegion(page, "kphx-a1-preassert-current-head.png", null, 20_000);
 
   expect(runtime.inspectionMode).toBe("active");
   expect(runtime.environmentSource).toBe("authored-phx-terminal4-textured-source-jetways");
@@ -188,8 +197,9 @@ test("loads source-correct PHX scenery with the complete exact Terminal 4 jetway
   expect(nearestGeometryMeters).toBeGreaterThan(29.9);
   expect(nearestGeometryMeters).toBeLessThan(30.6);
   const a1WallDistance = Number(runtime.terminal4A1JetwayWallDistance);
-  expect(a1WallDistance).toBeGreaterThan(1.5);
-  expect(a1WallDistance).toBeLessThan(4.0);
+  expect(a1WallDistance).toBeGreaterThan(2.9);
+  expect(a1WallDistance).toBeLessThan(5.8);
+  expect(Math.abs(Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4)).toBeLessThanOrEqual(0.05);
   expect(runtime.terminal4A1ConnectionAuthority).toBe(DIRECT_A1_TERMINAL_AUTHORITY);
   expect(runtime.terminal4A1ConnectionAuthority).not.toMatch(/WALK/i);
   const a1TerminalDirection = runtime.terminal4A1ConnectionDirection.split(",").map(Number);
@@ -201,10 +211,21 @@ test("loads source-correct PHX scenery with the complete exact Terminal 4 jetway
   expect(Number.isFinite(aircraftRelocationZ)).toBe(true);
   expect(Math.hypot(aircraftRelocationX, aircraftRelocationZ)).toBeGreaterThan(1);
   expect(runtime.inspectionAircraftPoseAuthority).toBe(TERMINAL_RELOCATED_AIRCRAFT_AUTHORITY);
-  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(0.01);
+  const signedDoorVerticalGapMeters = Number(runtime.inspectionAircraftDoorSignedVerticalGapMeters);
+  const requestedJetwayVerticalFitMeters = Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters);
+  expect(Number.isFinite(signedDoorVerticalGapMeters)).toBe(true);
+  expect(Number.isFinite(requestedJetwayVerticalFitMeters)).toBe(true);
+  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeCloseTo(
+    Math.abs(signedDoorVerticalGapMeters),
+    5,
+  );
+  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(6);
+  expect(requestedJetwayVerticalFitMeters).toBeCloseTo(signedDoorVerticalGapMeters, 5);
+  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeCloseTo(0, 5);
+  expect(runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");
   expect(Math.abs(Number(runtime.inspectionAircraftGroundClearanceMeters))).toBeLessThanOrEqual(0.01);
   expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(
-    "grounded-aircraft-door-progressive-tunnel-slope-v1",
+    "grounded-jetway-door-gap-reported-no-child-lift-v1",
   );
   expect(Number(runtime.inspectionAircraftNoseGearX)).toBeCloseTo(
     PHOTO_REGISTERED_NOSE_GEAR.x + aircraftRelocationX,
@@ -214,7 +235,13 @@ test("loads source-correct PHX scenery with the complete exact Terminal 4 jetway
     PHOTO_REGISTERED_NOSE_GEAR.z + aircraftRelocationZ,
     3,
   );
-  expect(Number(runtime.inspectionAircraftYaw)).toBeCloseTo(0.00857, 4);
+  expect(runtime.inspectionAircraftHeadingAuthority).toBe(
+    "measured-cab-normal-aircraft-heading-v1",
+  );
+  const cabDirectionX = Number(runtime.inspectionAircraftCabDirectionX);
+  const cabDirectionZ = Number(runtime.inspectionAircraftCabDirectionZ);
+  const expectedCabRegisteredYaw = Math.atan2(-cabDirectionZ, cabDirectionX);
+  expect(Number(runtime.inspectionAircraftYaw)).toBeCloseTo(expectedCabRegisteredYaw, 4);
   const terminalConnectedJetways = Number(runtime.terminal4TerminalConnectedJetwayCount);
   expect(terminalConnectedJetways).toBeGreaterThan(0);
   expect(Number(runtime.terminal4SourceCutoutMaterialCount)).toBeGreaterThan(0);

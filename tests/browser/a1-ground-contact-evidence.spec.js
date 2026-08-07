@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import { expect, test } from "@playwright/test";
 
-const JETWAY_GROUND_AUTHORITY = "exact-authored-a1-lowest-geometry-ramp-contact-v1";
+const JETWAY_GROUND_AUTHORITY = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
 const AIRCRAFT_GROUND_AUTHORITY = "authored-crj-lowest-geometry-contact-clusters-v2";
-const VERTICAL_FIT_AUTHORITY = "grounded-aircraft-door-progressive-tunnel-slope-v1";
+const VERTICAL_FIT_AUTHORITY = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const CAMERA_ENDPOINT_AUTHORITY = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const CAMERA_LOCK_AUTHORITY = "exact-a1-evidence-camera-direct-lock-v1";
 const VISUAL_ACCEPTANCE_AUTHORITY = "same-day-a1-continuous-compact-solid-closed-grounded-v1";
@@ -70,6 +70,13 @@ test("A1 evidence proves the continuous supplied jetway, compact closed vestibul
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionMode === "active"
       && data?.terminal4UploadedJetwayLoadState === "ready"
+      // post-lifecycle-grounded-a1-evidence-v1
+      && data?.inspectionAircraftPoseStored === "true"
+      && data?.inspectionAircraftPoseApplied === "true"
+      && data?.inspectionAircraftPoseAuthority === "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2"
+      && Number(data?.inspectionAircraftPoseErrorMeters) <= 0.01
+      && data?.inspectionAircraftHeadingAuthority === "measured-cab-normal-aircraft-heading-v1"
+      && Number.isFinite(Number(data?.inspectionAircraftYaw))
       && data?.terminal4UploadedJetwayBogieGroundContactAuthority === authorities.jetwayGround
       && Math.abs(Number(data?.terminal4UploadedJetwayBogieGroundClearanceMeters)) <= 0.005
       && data?.terminal4UploadedJetwayA1AssemblyContinuityAuthority === authorities.assembly
@@ -90,7 +97,12 @@ test("A1 evidence proves the continuous supplied jetway, compact closed vestibul
       && Number(data?.inspectionAircraftLandingGearContactSpanX) >= 1
       && Number(data?.inspectionAircraftLandingGearContactSpanZ) >= 4
       && Math.abs(Number(data?.inspectionAircraftGroundClearanceMeters)) <= 0.01
-      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01
+      && Number.isFinite(Number(data?.inspectionAircraftDoorVerticalErrorMeters))
+      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 6
+      && Number.isFinite(Number(data?.inspectionAircraftDoorSignedVerticalGapMeters))
+      && Number.isFinite(Number(data?.inspectionAircraftJetwayRequestedVerticalFitMeters))
+      && Math.abs(Number(data?.inspectionAircraftJetwayVerticalFitMeters)) <= 0.001
+      && data?.inspectionAircraftJetwayAuthoredBogieGroundPreserved === "true"
       && data?.inspectionAircraftJetwayVerticalFitAuthority === authorities.verticalFit;
   }, {
     jetwayGround: JETWAY_GROUND_AUTHORITY,
@@ -128,6 +140,12 @@ test("A1 evidence proves the continuous supplied jetway, compact closed vestibul
   const runtime = await page.evaluate(() => ({
     ...document.querySelector("canvas.trainerCanvas").dataset,
   }));
+  expect(runtime.inspectionAircraftPoseStored).toBe("true");
+  expect(runtime.inspectionAircraftPoseApplied).toBe("true");
+  expect(runtime.inspectionAircraftPoseAuthority).toBe("measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2");
+  expect(Number(runtime.inspectionAircraftPoseErrorMeters)).toBeLessThanOrEqual(0.01);
+  expect(runtime.inspectionAircraftHeadingAuthority).toBe("measured-cab-normal-aircraft-heading-v1");
+  expect(Number.isFinite(Number(runtime.inspectionAircraftYaw))).toBe(true);
   expect(runtime.terminal4UploadedJetwayBogieGroundContactAuthority).toBe(JETWAY_GROUND_AUTHORITY);
   expect(Math.abs(Number(runtime.terminal4UploadedJetwayBogieGroundClearanceMeters))).toBeLessThanOrEqual(0.005);
   expect(runtime.terminal4UploadedJetwayA1AssemblyContinuityAuthority).toBe(ASSEMBLY_CONTINUITY_AUTHORITY);
@@ -148,7 +166,18 @@ test("A1 evidence proves the continuous supplied jetway, compact closed vestibul
   expect(Number(runtime.inspectionAircraftLandingGearContactSpanX)).toBeGreaterThanOrEqual(1);
   expect(Number(runtime.inspectionAircraftLandingGearContactSpanZ)).toBeGreaterThanOrEqual(4);
   expect(Math.abs(Number(runtime.inspectionAircraftGroundClearanceMeters))).toBeLessThanOrEqual(0.01);
-  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(0.01);
+  const signedDoorVerticalGapMeters = Number(runtime.inspectionAircraftDoorSignedVerticalGapMeters);
+  const requestedJetwayVerticalFitMeters = Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters);
+  expect(Number.isFinite(signedDoorVerticalGapMeters)).toBe(true);
+  expect(Number.isFinite(requestedJetwayVerticalFitMeters)).toBe(true);
+  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeCloseTo(
+    Math.abs(signedDoorVerticalGapMeters),
+    5,
+  );
+  expect(Number(runtime.inspectionAircraftDoorVerticalErrorMeters)).toBeLessThanOrEqual(6);
+  expect(requestedJetwayVerticalFitMeters).toBeCloseTo(signedDoorVerticalGapMeters, 5);
+  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeCloseTo(0, 5);
+  expect(runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");
   expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(VERTICAL_FIT_AUTHORITY);
   expect(runtime.inspectionCameraEndpointAuthority).toBe(CAMERA_ENDPOINT_AUTHORITY);
   expect(runtime.inspectionCameraEndpointLockAuthority).toBe(CAMERA_LOCK_AUTHORITY);

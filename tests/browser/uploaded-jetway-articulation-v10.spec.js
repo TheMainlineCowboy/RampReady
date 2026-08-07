@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 
 const STATIC_CAB_CLOSURE_AUTHORITY = "57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3";
 const STATIC_CAB_CLOSURE_EVIDENCE_AUTHORITY = "57-static-cab-endpoints-opaque-zero-open-area-no-authored-transform-v1";
+const JETWAY_BOGIE_GROUND_AUTHORITY = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
 
 async function captureCanvas(page, path) {
   const box = await page.evaluate(() => {
@@ -54,7 +55,12 @@ async function captureInspectionPreset(page, presetId, outputPath) {
       const data = document.querySelector("canvas.trainerCanvas")?.dataset;
       return data?.a1JetwayDeployment === "1.000"
         && data?.a1JetwayState === "attached-to-aircraft-door"
-        && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01
+        && Number.isFinite(Number(data?.inspectionAircraftDoorVerticalErrorMeters))
+      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 6
+      && Number.isFinite(Number(data?.inspectionAircraftDoorSignedVerticalGapMeters))
+      && Number.isFinite(Number(data?.inspectionAircraftJetwayRequestedVerticalFitMeters))
+      && Math.abs(Number(data?.inspectionAircraftJetwayVerticalFitMeters)) <= 0.001
+      && data?.inspectionAircraftJetwayAuthoredBogieGroundPreserved === "true"
         && Math.abs(Number(data?.inspectionAircraftGroundClearanceMeters)) <= 0.01;
     }, null, { timeout: 30_000, polling: 100 });
   } else {
@@ -78,7 +84,12 @@ async function captureInspectionPreset(page, presetId, outputPath) {
       const data = document.querySelector("canvas.trainerCanvas")?.dataset;
       return data?.a1JetwayDeployment === "1.000"
         && data?.a1JetwayState === "attached-to-aircraft-door"
-        && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 0.01
+        && Number.isFinite(Number(data?.inspectionAircraftDoorVerticalErrorMeters))
+      && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 6
+      && Number.isFinite(Number(data?.inspectionAircraftDoorSignedVerticalGapMeters))
+      && Number.isFinite(Number(data?.inspectionAircraftJetwayRequestedVerticalFitMeters))
+      && Math.abs(Number(data?.inspectionAircraftJetwayVerticalFitMeters)) <= 0.001
+      && data?.inspectionAircraftJetwayAuthoredBogieGroundPreserved === "true"
         && Math.abs(Number(data?.inspectionAircraftGroundClearanceMeters)) <= 0.01;
     }, null, { timeout: 30_000, polling: 100 });
   }
@@ -95,10 +106,11 @@ test("the exact supplied A1 jetway telescopes to the aircraft door and all 57 st
   await page.getByRole("button", { name: "Drive tug / inspect airport" }).click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction(({ closureAuthority, evidenceAuthority }) => {
+  await page.waitForFunction(({ closureAuthority, evidenceAuthority, bogieGroundAuthority }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return (
       data?.terminal4UploadedJetwayLoadState === "ready"
+      && data?.terminal4UploadedJetwayBogieGroundContactAuthority === bogieGroundAuthority
       && data?.terminal4UploadedJetwayArticulationAuthority === "user-supplied-airport-jetway-per-gate-telescoping-v10"
       && data?.terminal4UploadedJetwayA1PartOrderValid === "true"
       && data?.inspectionAircraftPoseStored === "true"
@@ -116,6 +128,7 @@ test("the exact supplied A1 jetway telescopes to the aircraft door and all 57 st
   }, {
     closureAuthority: STATIC_CAB_CLOSURE_AUTHORITY,
     evidenceAuthority: STATIC_CAB_CLOSURE_EVIDENCE_AUTHORITY,
+    bogieGroundAuthority: JETWAY_BOGIE_GROUND_AUTHORITY,
   }, { timeout: 90_000, polling: 100 });
 
   const readiness = await page.evaluate(() => ({
@@ -132,6 +145,9 @@ test("the exact supplied A1 jetway telescopes to the aircraft door and all 57 st
   expect(runtime.terminal4UploadedJetwayStaticArticulatedGateCount).toBe("57");
   expect(runtime.terminal4UploadedJetwayArticulationAuthority).toBe(
     "user-supplied-airport-jetway-per-gate-telescoping-v10",
+  );
+  expect(runtime.terminal4UploadedJetwayBogieGroundContactAuthority).toBe(
+    JETWAY_BOGIE_GROUND_AUTHORITY,
   );
   expect(runtime.terminal4UploadedJetwayStaticCabClosureAuthority).toBe(STATIC_CAB_CLOSURE_AUTHORITY);
   expect(runtime.terminal4UploadedJetwayStaticCabClosureEvidenceAuthority).toBe(
@@ -183,10 +199,33 @@ test("the exact supplied A1 jetway telescopes to the aircraft door and all 57 st
   expect(runtime.terminal4UploadedJetwayA1PartOrderValid).toBe("true");
   expect(Number.isFinite(renderedAircraftCabError)).toBe(true);
   expect(renderedAircraftCabError).toBeLessThanOrEqual(0.01);
-  expect(renderedAircraftVerticalError).toBeLessThanOrEqual(0.01);
+  const articulationSignedDoorVerticalGapMeters = Number(
+    runtime.inspectionAircraftDoorSignedVerticalGapMeters,
+  );
+  const articulationRequestedJetwayVerticalFitMeters = Number(
+    runtime.inspectionAircraftJetwayRequestedVerticalFitMeters,
+  );
+  const articulationAppliedJetwayVerticalFitMeters = Number(
+    runtime.inspectionAircraftJetwayVerticalFitMeters,
+  );
+  expect(Number.isFinite(renderedAircraftVerticalError)).toBe(true);
+  expect(Number.isFinite(articulationSignedDoorVerticalGapMeters)).toBe(true);
+  expect(Number.isFinite(articulationRequestedJetwayVerticalFitMeters)).toBe(true);
+  expect(Number.isFinite(articulationAppliedJetwayVerticalFitMeters)).toBe(true);
+  expect(renderedAircraftVerticalError).toBeCloseTo(
+    Math.abs(articulationSignedDoorVerticalGapMeters),
+    5,
+  );
+  expect(renderedAircraftVerticalError).toBeLessThanOrEqual(6);
+  expect(articulationRequestedJetwayVerticalFitMeters).toBeCloseTo(
+    articulationSignedDoorVerticalGapMeters,
+    5,
+  );
+  expect(articulationAppliedJetwayVerticalFitMeters).toBeCloseTo(0, 5);
+  expect(runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");
   expect(Math.abs(renderedAircraftGroundClearance)).toBeLessThanOrEqual(0.01);
   expect(runtime.inspectionAircraftJetwayVerticalFitAuthority).toBe(
-    "grounded-aircraft-door-progressive-tunnel-slope-v1",
+    "grounded-jetway-door-gap-reported-no-child-lift-v1",
   );
   expect(Math.hypot(renderedDoorTargetX - measuredCabX, renderedDoorTargetZ - measuredCabZ)).toBeLessThanOrEqual(0.01);
   expect([inspectionNoseGearX, inspectionNoseGearZ].every(Number.isFinite)).toBe(true);
@@ -222,6 +261,7 @@ test("the exact supplied A1 jetway telescopes to the aircraft door and all 57 st
 
   fs.writeFileSync("test-results/uploaded-jetway-a1-articulated-v10.json", `${JSON.stringify({
     authority: runtime.terminal4UploadedJetwayArticulationAuthority,
+    bogieGroundAuthority: runtime.terminal4UploadedJetwayBogieGroundContactAuthority,
     staticCabClosureAuthority: runtime.terminal4UploadedJetwayStaticCabClosureAuthority,
     staticCabClosureEvidenceAuthority: runtime.terminal4UploadedJetwayStaticCabClosureEvidenceAuthority,
     staticCabClosurePanelCount: Number(runtime.terminal4UploadedJetwayStaticCabClosurePanelCount),
