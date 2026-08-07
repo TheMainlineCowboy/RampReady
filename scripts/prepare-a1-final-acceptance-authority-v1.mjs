@@ -16,7 +16,7 @@ const finalAuthority = "measured-a1-cab-inspection-pose-persisted-across-mode-to
 const cameraAuthority = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const cameraLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";
 const visualAuthority = "same-day-a1-continuous-compact-solid-closed-grounded-v1";
-const jetwayGroundAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v1";
+const jetwayGroundAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
 const noLiftAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const staticCabClosureAuthority = "57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3";
 const staticCabTargetAuthority = "placement-bridgeEnd-shared-with-static-articulation-v1";
@@ -51,11 +51,6 @@ if (!source.includes(marker)) {
   }
 }
 
-// Authority values are intentionally defined in the runtime layer that owns
-// them, then copied into the trainer browser dataset. Requiring every literal
-// to appear inside the trainer itself falsely rejects valid environment-owned
-// authority. Verify the literals across the complete generated runtime and the
-// corresponding publication fields specifically in the trainer.
 const generatedAuthoritySource = generatedAuthorityPaths
   .map((path) => fs.readFileSync(path, "utf8"))
   .join("\n");
@@ -96,6 +91,9 @@ for (const required of [
   "terminal4UploadedJetwayBogieGroundContactSpanX",
   "terminal4UploadedJetwayBogieGroundContactSpanZ",
   "terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters",
+  "terminal4UploadedJetwayBogieGroundContactCenterX",
+  "terminal4UploadedJetwayBogieGroundContactCenterY",
+  "terminal4UploadedJetwayBogieGroundContactCenterZ",
   "terminal4UploadedJetwayA1AssemblyContinuityAuthority",
   "terminal4UploadedJetwayA1AssemblyPartCount",
   "terminal4UploadedJetwayA1AssemblyTransformError",
@@ -148,4 +146,4 @@ for (const forbidden of [
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs?grounded-pose=${Date.now()}`);
-console.log("Finalized Terminal 4 after verifying every authority in its owning generated runtime layer and every required A1/static-Cab/camera publication in the trainer, without weakening compact-wall, zero-lift, contact, closure, or lifecycle gates.");
+console.log("Finalized Terminal 4 after verifying every authority in its owning generated runtime layer and requiring the exact authored bogie contact centroid, compact wall, zero lift, static closures, and camera evidence in the trainer.");
