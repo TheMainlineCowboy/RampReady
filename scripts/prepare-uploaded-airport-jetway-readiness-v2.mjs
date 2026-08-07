@@ -27,7 +27,16 @@ fs.writeFileSync(jetwayPath, jetwaySource, "utf8");
 const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 let readinessSource = fs.readFileSync(readinessPath, "utf8");
 const baseFleetImport = 'import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";';
-const staticRegistrationImport = 'import { registerStaticJetwayFleetToFacade } from "./registerStaticJetwayFleetToFacadeV1.js";';
+const legacyStaticRegistrationImport = 'import { registerStaticJetwayFleetToFacade } from "./registerStaticJetwayFleetToFacadeV1.js";';
+const staticRegistrationImport = `import {
+  registerStaticJetwayFleetToFacade,
+  STATIC_JETWAY_FACADE_REGISTRATION_AUTHORITY,
+  STATIC_JETWAY_GROUND_ISOLATION_AUTHORITY,
+  STATIC_JETWAY_MODEL_ROOT_OFFSET_AUTHORITY,
+} from "./registerStaticJetwayFleetToFacadeV1.js";`;
+if (readinessSource.includes(legacyStaticRegistrationImport)) {
+  readinessSource = readinessSource.replace(legacyStaticRegistrationImport, staticRegistrationImport);
+}
 if (!readinessSource.includes(staticRegistrationImport)) {
   if (!readinessSource.includes(baseFleetImport)) {
     throw new Error(`${readinessPath}: base fleet import anchor is missing`);
@@ -44,6 +53,9 @@ if (!readinessSource.includes(registrationCall)) {
 }
 for (const token of [
   staticRegistrationImport,
+  "STATIC_JETWAY_FACADE_REGISTRATION_AUTHORITY",
+  "STATIC_JETWAY_GROUND_ISOLATION_AUTHORITY",
+  "STATIC_JETWAY_MODEL_ROOT_OFFSET_AUTHORITY",
   registrationCall,
 ]) {
   if (!readinessSource.includes(token)) {
@@ -128,4 +140,4 @@ for (const token of [
 }
 fs.writeFileSync(terminalPath, terminalSource, "utf8");
 
-console.log("Prepared awaited uploaded-airport jetway readiness: A1 alone may telescope; all 57 static exact-GLB gates are registered from measured terminal walls to their gate targets before readiness, while all 58 placements and measured terminal connectors complete before Terminal 4 becomes ready.");
+console.log("Prepared awaited uploaded-airport jetway readiness: A1 alone may telescope; all 57 static exact-GLB gates are registered from measured terminal walls to their gate targets before readiness, with every static registration authority imported before later readiness guards execute.");
