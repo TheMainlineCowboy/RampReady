@@ -50,10 +50,17 @@ for (const stage of orderedBuildStages) {
 }
 
 requireTokens("groundedWall", [
-  "A1 ramp-level real Terminal 4 source wall v32",
+  "A1 ramp-level real Terminal 4 source wall v33 terminal-side locked",
+  "A1 grounded-facade search v33 terminal-side hemisphere locked",
   "const MINIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 3.4",
   "const MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 28",
   "const MAXIMUM_A1_WALL_HEIGHT_METERS = 2.2",
+  "const MINIMUM_A1_TERMINAL_DIRECTION_DOT = 0.15",
+  "const requirePreferredHemisphere = true",
+  "groundedTerminalDirectionDot >= 0.15",
+  "A1 grounded search selected the wrong side of the Rotunda",
+  "terminalSideHemisphereLocked: true",
+  "minimumTerminalDirectionDot: 0.15",
   "rampLevelRealTerminalWall: true",
   "finalVisibleVestibuleCheckedAfterRelocation: true",
   "forbidden A1 walkway anchor survived grounded-terminal preparation",
@@ -96,10 +103,6 @@ requireTokens("vertical", [
   "Math.abs(appliedA1JetwayVerticalFitMeters) > 0.001",
 ]);
 
-// This is a migration script. Its fixed-offset and parent-local-centroid text
-// may exist as deterministic input/rejection anchors. Require the generated
-// two-space output and its own fail-closed checks instead of scanning the
-// preparer source as though it were the generated installation.
 requireTokens("jetwayGround", [
   'exact-authored-a1-lowest-geometry-ramp-contact-v2',
   'const measureAuthoredA1RampContact = (coordinateSpace = "fleet-parent") =>',
@@ -140,17 +143,25 @@ requireTokens("subviews", [
   'exactA1EvidenceSubview === "bogie-contact"',
   "const exactA1JointCenterX",
   "const exactA1JointSpan",
+  "const exactA1JointUnitX",
+  "const exactA1JointSideOnCosine",
+  "inspectionCameraEndpointJointSideOnCosine",
   "const exactA1BogieContactX",
   "uploadedJetwayBogieGroundContactCenterX",
   "inspectionCameraEndpointJointCenter",
   "inspectionCameraEndpointJointSpanMeters",
   "inspectionCameraEndpointBogieContactCenter",
+  "inspectionCameraEndpointBogieAircraftOppositionCosine",
   "obsolete guessed A1 close-camera targeting remains",
 ]);
 
 requireTokens("finalizer", [
   "grounded-jetway-door-gap-reported-no-child-lift-v1",
   "exact-authored-a1-lowest-geometry-ramp-contact-v2",
+  "inspectionAircraftLandingGearContactPatchCount",
+  "inspectionAircraftNoseTireContact",
+  "inspectionAircraftLeftMainTireContact",
+  "inspectionAircraftRightMainTireContact",
   "terminal4UploadedJetwayBogieGroundContactCenterX",
   "terminal4UploadedJetwayBogieGroundContactCenterY",
   "terminal4UploadedJetwayBogieGroundContactCenterZ",
@@ -180,11 +191,13 @@ requireTokens("contactEvidence", [
 requireTokens("closeEvidence", [
   "A1 close evidence shows the exact 2.4 m terminal vestibule and zero-lift grounded bogie",
   "inspectionCameraEndpointJointCenter",
+  "inspectionCameraEndpointJointSideOnCosine",
   "inspectionCameraEndpointBogieContactCenter",
+  "inspectionCameraEndpointBogieAircraftOppositionCosine",
   "distance3(terminalCameraTarget, terminalJointCenter)",
   "distance3(bogieContactCenter, publishedBogieContactCenter)",
   "a1-terminal-joint-close.png",
   "a1-bogie-contact-close.png",
 ]);
 
-console.log("Verified current A1 contracts with stage-aware migration checks: real wall, one 2.4 m vestibule, zero attached lift, parent-local clearance, final world-space bogie centroid, targeted close cameras, grounded lifecycle pose, and strict browser evidence.");
+console.log("Verified current A1 contracts with stage-aware migration checks: terminal-side locked real wall, one 2.4 m vestibule, zero attached lift, parent-local clearance, final world-space bogie centroid, side-on terminal and jetway-side bogie cameras, grounded lifecycle pose, proved CRJ three-tire contact, and strict browser evidence.");
