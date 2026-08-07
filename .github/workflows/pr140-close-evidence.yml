@@ -93,7 +93,7 @@ jobs:
           node scripts/prepare-a1-bogie-centroid-browser-authority-v1.mjs
           node scripts/verify-a1-evidence-subview-contract.mjs
           grep -Fq 'source-a1-parking-heading-authored-door-registration-v2' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
-          grep -Fq 'Math.abs(Number(data?.inspectionAircraftYaw) - 0.008569641) <= 0.001' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'Math.abs(Number(data?.inspectionAircraftYaw) - 0.008569567) <= 0.001' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           if grep -Fq 'measured-cab-normal-aircraft-heading-v1' tests/browser/a1-terminal-joint-bogie-subviews.spec.js; then
             echo 'Retired Cab-normal heading was restored before browser execution'
             exit 1
