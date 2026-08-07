@@ -7,6 +7,7 @@ const generatedAuthorityPaths = Object.freeze([
   "src/environment/uploadedAirportJetwayFleetReadyV2.js",
   "src/environment/uploadedAirportJetwayArticulationV10.js",
   "src/environment/uploadedAirportJetwayModelSpaceControllerV7.js",
+  "src/environment/registerStaticJetwayFleetToFacadeV1.js",
   "src/environment/authoredTerminal4Visual.js",
 ]);
 let source = fs.readFileSync(trainerPath, "utf8");
