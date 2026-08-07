@@ -139,7 +139,15 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Preflight exact A1 connection telemetry
-        run: npx playwright test tests/browser/uploaded-jetway-articulation-v10.spec.js --reporter=line --workers=1
+        shell: bash
+        run: |
+          mkdir -p test-results
+          set +e
+          npx playwright test tests/browser/uploaded-jetway-articulation-v10.spec.js \
+            --reporter=json --workers=1 > test-results/a1-preflight-report.json
+          status=$?
+          set -e
+          exit "${status}"
 
       - name: Render and verify A1, articulation, Terminal 4 and full airport
         run: >-
