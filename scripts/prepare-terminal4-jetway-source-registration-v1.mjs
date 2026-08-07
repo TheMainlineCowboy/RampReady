@@ -28,7 +28,8 @@ const sourceLocalPlacement = `    uploadedJetwayPlacements.push({
       targetZ,
       sourceJetwayHeadingDegrees: Number(jetway.h),
       sourceJetwayYawRadians: sourceJetwayYaw,
-      sourceHeadingAuthority: jetway.g === "A1" ? "a1-photo-registered-animated-exception" : "${STATIC_SOURCE_HEADING_AUTHORITY}",`;
+      sourceHeadingAuthority: jetway.g === "A1" ? "a1-photo-registered-animated-exception" : "${STATIC_SOURCE_HEADING_AUTHORITY}",
+      sourceRegistrationAuthority: "${SOURCE_REGISTRATION_AUTHORITY}",`;
 
 // Repair any transient v1 double-offset form before applying the source-local
 // authority. This keeps the preparer idempotent even when invoked more than once
@@ -72,12 +73,7 @@ source = source
   .replace("    const connectorTowardX = terminalConnection?.towardX ?? -ux;", "    const connectorTowardX = terminalConnection?.towardX ?? terminalPreferredX;")
   .replace("    const connectorTowardZ = terminalConnection?.towardZ ?? -uz;", "    const connectorTowardZ = terminalConnection?.towardZ ?? terminalPreferredZ;");
 
-if (!source.includes(SOURCE_REGISTRATION_AUTHORITY)) {
-  if (!source.includes(unregisteredPlacement)) {
-    throw new Error(`${jetwayPath}: exact uploaded jetway source-local placement anchor is missing`);
-  }
-  source = source.replace(unregisteredPlacement, sourceLocalPlacement);
-} else if (!source.includes(STATIC_SOURCE_HEADING_AUTHORITY)) {
+if (!source.includes(STATIC_SOURCE_HEADING_AUTHORITY)) {
   const registeredPlacement = `    uploadedJetwayPlacements.push({
       gate: jetway.g,
       x: jetway.x,
@@ -86,12 +82,13 @@ if (!source.includes(SOURCE_REGISTRATION_AUTHORITY)) {
       targetX,
       targetZ,
       sourceRegistrationAuthority: "${SOURCE_REGISTRATION_AUTHORITY}",`;
-  const upgradedPlacement = `${sourceLocalPlacement}
-      sourceRegistrationAuthority: "${SOURCE_REGISTRATION_AUTHORITY}",`;
-  if (!source.includes(registeredPlacement)) {
-    throw new Error(`${jetwayPath}: registered placement block is missing for source-heading upgrade`);
+  if (source.includes(registeredPlacement)) {
+    source = source.replace(registeredPlacement, sourceLocalPlacement);
+  } else if (source.includes(unregisteredPlacement)) {
+    source = source.replace(unregisteredPlacement, sourceLocalPlacement);
+  } else {
+    throw new Error(`${jetwayPath}: exact uploaded jetway placement anchor is missing`);
   }
-  source = source.replace(registeredPlacement, upgradedPlacement);
 }
 
 // A1 must never be redirected to the elevated T4_WALK. Earlier source code had
