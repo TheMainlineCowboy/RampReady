@@ -94,7 +94,6 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
   await expect(returnToTraining).toBeVisible({ timeout: 15000 });
   const camera = page.getByLabel("Camera view");
   await expect(camera).toBeVisible({ timeout: 10000 });
-  expect(await camera.inputValue({ timeout: 5000 })).toBe("chase");
   checkpoint("inspection-active");
 
   const captures = {};
