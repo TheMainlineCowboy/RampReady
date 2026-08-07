@@ -28,6 +28,8 @@ jobs:
   render-close-evidence:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    env:
+      PLAYWRIGHT_WEB_SERVER_COMMAND: npm run preview -- --port 4173 --strictPort
     steps:
       - name: Resolve exact PR 140 head
         id: pr
@@ -82,7 +84,7 @@ jobs:
       - name: Build exact production artifact
         run: npm run build
 
-      - name: Reapply strict close browser evidence
+      - name: Reapply and freeze strict close browser evidence
         shell: bash
         run: |
           set -euo pipefail
@@ -90,6 +92,12 @@ jobs:
           node scripts/prepare-a1-post-lifecycle-evidence-v1.mjs
           node scripts/prepare-a1-bogie-centroid-browser-authority-v1.mjs
           node scripts/verify-a1-evidence-subview-contract.mjs
+          grep -Fq 'source-a1-parking-heading-authored-door-registration-v2' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'Math.abs(Number(data?.inspectionAircraftYaw) - 0.008569641) <= 0.001' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          if grep -Fq 'measured-cab-normal-aircraft-heading-v1' tests/browser/a1-terminal-joint-bogie-subviews.spec.js; then
+            echo 'Retired Cab-normal heading was restored before browser execution'
+            exit 1
+          fi
           grep -Fq 'distance3(terminalCameraTarget, terminalJointCenter)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'cameraApronProjection' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'distance3(bogieContactCenter, publishedBogieContactCenter)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
@@ -97,6 +105,11 @@ jobs:
           grep -Fq 'terminal4A1ConnectionAuthority).not.toMatch(/WALK|JETWAY|CONNECTOR|PORTAL/i)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'a1-terminal-joint-close.png' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'a1-bogie-contact-close.png' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          mkdir -p retained-evidence/generated-browser-specs
+          cp tests/browser/a1-terminal-joint-bogie-subviews.spec.js retained-evidence/generated-browser-specs/
+          cp tests/browser/a1-close-readiness-diagnostic.spec.js retained-evidence/generated-browser-specs/
+          cp tests/browser/a1-close-subview-diagnostic.spec.js retained-evidence/generated-browser-specs/
+          echo 'Frozen production dist and strict close browser specs are ready; Playwright preview will not rebuild or restore them.'
 
       - name: Quiet strict close-view authority checks
         shell: bash
