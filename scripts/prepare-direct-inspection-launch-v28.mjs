@@ -30,18 +30,12 @@ source = replaceRequired(
   "initial inspection prop",
 );
 
-const toggleEnd = `    setMessage(next
-      ? "Free-drive airport inspection active. Use W/S or the power slider, A/D to steer, and the camera views to inspect the entire airport."
-      : "Training mode restored. Complete the equipment check, then approach at idle speed.");
-  }, []);
-
-  const advance = useCallback(() => {`;
-const toggleReplacement = `    setMessage(next
-      ? "Free-drive airport inspection active. Use W/S or the power slider, A/D to steer, and the camera views to inspect the entire airport."
-      : "Training mode restored. Complete the equipment check, then approach at idle speed.");
-  }, []);
-
-  useEffect(() => {
+// The visual-evidence preparer may install its own useEffect between the
+// inspection toggle callback and `advance`. Anchor direct-launch activation to
+// the stable `advance` callback instead of requiring those blocks to remain
+// adjacent. This keeps both independent hooks regeneration-safe.
+const advanceAnchor = `  const advance = useCallback(() => {`;
+const activationEffect = `  useEffect(() => {
     if (!initialInspectionMode) return undefined;
     let cancelled = false;
     let frameId = 0;
@@ -62,11 +56,11 @@ const toggleReplacement = `    setMessage(next
     };
   }, [initialInspectionMode, toggleInspectionDrive]);
 
-  const advance = useCallback(() => {`;
+${advanceAnchor}`;
 source = replaceRequired(
   source,
-  toggleEnd,
-  toggleReplacement,
+  advanceAnchor,
+  activationEffect,
   "attempts < 600) frameId = window.requestAnimationFrame(activate);",
   "direct inspection activation effect",
 );
@@ -135,4 +129,4 @@ for (const token of [
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared direct tug inspection v37 without DOM polling, with compact controls, varied source facade evidence and exact A1 portal-seal evidence.");
+console.log("Prepared direct tug inspection v38 with bridge-compatible activation anchoring, compact controls, varied source facade evidence and exact A1 portal-seal evidence.");
