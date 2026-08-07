@@ -76,6 +76,18 @@ jobs:
           grep -Fq 'inspectionCameraEndpointBogieAircraftOppositionCosine' scripts/prepare-a1-evidence-subviews-v1.mjs
           grep -Fq 'uploadedJetwayBogieGroundContactCenterX' scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs
           grep -Fq 'grounded-jetway-door-gap-reported-no-child-lift-v1' scripts/prepare-a1-inspection-aircraft-vertical-registration-v1.mjs
+
+      - name: Build exact production artifact
+        run: npm run build
+
+      - name: Reapply strict close browser evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/prepare-current-head-browser-expectations-v1.mjs
+          node scripts/prepare-a1-post-lifecycle-evidence-v1.mjs
+          node scripts/prepare-a1-bogie-centroid-browser-authority-v1.mjs
+          node scripts/verify-a1-evidence-subview-contract.mjs
           grep -Fq 'distance3(terminalCameraTarget, terminalJointCenter)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'cameraApronProjection' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'distance3(bogieContactCenter, publishedBogieContactCenter)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
@@ -83,9 +95,6 @@ jobs:
           grep -Fq 'terminal4A1ConnectionAuthority).not.toMatch(/WALK|JETWAY|CONNECTOR|PORTAL/i)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'a1-terminal-joint-close.png' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'a1-bogie-contact-close.png' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
-
-      - name: Build exact production artifact
-        run: npm run build
 
       - name: Quiet strict close-view authority checks
         shell: bash
