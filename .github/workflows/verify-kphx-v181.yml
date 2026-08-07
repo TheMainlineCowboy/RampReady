@@ -57,6 +57,11 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Verify A1, B15, Terminal 4 and full-airport free drive in exact production artifact
+        env:
+          # dist/ is already built and the current-head browser gates were just
+          # reapplied. Do not let Playwright run npm run build a second time,
+          # because that production wrapper intentionally restores tracked specs.
+          PLAYWRIGHT_WEB_SERVER_COMMAND: npm run preview -- --port 4173 --strictPort
         run: npx playwright test tests/browser/kphx-ground-runtime.spec.js tests/browser/full-airport-inspection.spec.js tests/browser/a1-terminal-joint-bogie-subviews.spec.js --reporter=line --workers=1
 
       - name: Upload updated KPHX runtime evidence
