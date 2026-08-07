@@ -35,16 +35,18 @@ if (!(dynamicIndex >= 0 && subviewIndex > dynamicIndex && lockIndex > subviewInd
 }
 
 requireTokens("bogieGround", [
-  'exact-authored-a1-lowest-geometry-ramp-contact-v2',
+  "exact-authored-a1-lowest-geometry-ramp-contact-v2",
   "const contactCenter = contactBounds.getCenter",
-  "bogieGroundContactCenterX: authoredA1GroundContactAfter.centerX",
+  'measureAuthoredA1RampContact("fleet-parent")',
+  'measureAuthoredA1RampContact("world")',
+  "bogieGroundContactCenterX: authoredA1GroundContactWorldAfter.centerX",
   "uploadedJetwayBogieGroundContactCenterX",
   "uploadedJetwayBogieGroundContactCenterY",
   "uploadedJetwayBogieGroundContactCenterZ",
 ]);
 
 requireTokens("readiness", [
-  'exact-authored-a1-lowest-geometry-ramp-contact-v2',
+  "exact-authored-a1-lowest-geometry-ramp-contact-v2",
   "bogieGroundContactCenterX",
   "authoredTerminal4UploadedJetwayBogieGroundContactCenterX",
   "terminal4UploadedJetwayBogieGroundContactCenterX",
@@ -53,17 +55,24 @@ requireTokens("readiness", [
 ]);
 
 requireTokens("subviews", [
-  'const authority = "exact-a1-terminal-joint-and-bogie-contact-subviews-v1"',
+  'const authority = "exact-a1-terminal-joint-and-bogie-contact-subviews-v2"',
   'exactA1EvidenceSubview === "terminal-joint"',
   'exactA1EvidenceSubview === "bogie-contact"',
   "const exactA1JointCenterX",
   "const exactA1JointSpan",
-  "exactA1CameraApronX * 1.15",
+  "const exactA1JointApronDistance",
+  "const exactA1JointSideDistance",
   "const exactA1BogieContactX",
+  "const exactA1AircraftCenter",
+  "const exactA1BogieAircraftOppositionCosine",
   "uploadedJetwayBogieGroundContactCenterX",
   "inspectionCameraEndpointJointCenter",
   "inspectionCameraEndpointJointSpanMeters",
+  "inspectionCameraEndpointJointApronDistanceMeters",
+  "inspectionCameraEndpointJointSideDistanceMeters",
   "inspectionCameraEndpointBogieContactCenter",
+  "inspectionCameraEndpointBogieAircraftCenter",
+  "inspectionCameraEndpointBogieAircraftOppositionCosine",
   "inspectionCameraEndpointSubview = exactA1EvidenceSubview",
   "inspectionCameraEndpointSubviewAuthority",
 ]);
@@ -118,7 +127,7 @@ requireTokens("postLifecycle", [
 
 requireTokens("browser", [
   "A1 close evidence shows the exact 2.4 m terminal vestibule and zero-lift grounded bogie",
-  "exact-a1-terminal-joint-and-bogie-contact-subviews-v1",
+  "exact-a1-terminal-joint-and-bogie-contact-subviews-v2",
   "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2",
   "exact-a1-evidence-camera-direct-lock-v1",
   "same-day-a1-continuous-compact-solid-closed-grounded-v1",
@@ -131,11 +140,18 @@ requireTokens("browser", [
   "a1-bogie-contact-close.png",
   "a1-terminal-joint-bogie-subviews.json",
   "inspectionCameraEndpointJointCenter",
+  "inspectionCameraEndpointJointApronDistanceMeters",
+  "inspectionCameraEndpointJointSideDistanceMeters",
   "inspectionCameraEndpointBogieContactCenter",
+  "inspectionCameraEndpointBogieAircraftCenter",
+  "inspectionCameraEndpointBogieAircraftOppositionCosine",
   "terminal4UploadedJetwayBogieGroundContactCenterX",
   "distance3(terminalCameraTarget, terminalJointCenter)",
   "distance3(bogieContactCenter, publishedBogieContactCenter)",
   "distance3(bogieCameraPosition, bogieCameraTarget)",
+  "cameraApronProjection",
+  "cameraFromBogie",
+  "aircraftFromBogie",
   "a1ExactRotundaToWallWorldMeters",
   "terminal4A1JetwayWallDistance",
   "terminal4UploadedJetwayA1VisibleVestibuleLengthMeters",
@@ -153,4 +169,4 @@ requireTokens("browser", [
   "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
 ]);
 
-console.log("Verified grounded lifecycle order and exact close framing: the terminal camera targets the measured wall/Rotunda midpoint, the bogie camera targets the authored low-contact centroid, both remain tightly bounded, and zero-lift/ground-contact evidence is retained.");
+console.log("Verified grounded lifecycle order and A1 close evidence v2: the terminal camera stays on the apron with the full wall/Rotunda joint in frame, the bogie camera is forced opposite the aircraft to prevent occlusion, and zero-lift/ground-contact evidence is retained.");
