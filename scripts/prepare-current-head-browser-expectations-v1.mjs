@@ -83,6 +83,31 @@ const expectNew = `  const signedDoorVerticalGapMeters = Number(runtime.inspecti
   expect(requestedJetwayVerticalFitMeters).toBeCloseTo(signedDoorVerticalGapMeters, 5);
   expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeCloseTo(0, 5);
   expect(runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");`;
+const localExpectOld = "  expect(renderedAircraftVerticalError).toBeLessThanOrEqual(0.01);";
+const localExpectNew = `  const articulationSignedDoorVerticalGapMeters = Number(
+    runtime.inspectionAircraftDoorSignedVerticalGapMeters,
+  );
+  const articulationRequestedJetwayVerticalFitMeters = Number(
+    runtime.inspectionAircraftJetwayRequestedVerticalFitMeters,
+  );
+  const articulationAppliedJetwayVerticalFitMeters = Number(
+    runtime.inspectionAircraftJetwayVerticalFitMeters,
+  );
+  expect(Number.isFinite(renderedAircraftVerticalError)).toBe(true);
+  expect(Number.isFinite(articulationSignedDoorVerticalGapMeters)).toBe(true);
+  expect(Number.isFinite(articulationRequestedJetwayVerticalFitMeters)).toBe(true);
+  expect(Number.isFinite(articulationAppliedJetwayVerticalFitMeters)).toBe(true);
+  expect(renderedAircraftVerticalError).toBeCloseTo(
+    Math.abs(articulationSignedDoorVerticalGapMeters),
+    5,
+  );
+  expect(renderedAircraftVerticalError).toBeLessThanOrEqual(6);
+  expect(articulationRequestedJetwayVerticalFitMeters).toBeCloseTo(
+    articulationSignedDoorVerticalGapMeters,
+    5,
+  );
+  expect(articulationAppliedJetwayVerticalFitMeters).toBeCloseTo(0, 5);
+  expect(runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");`;
 const oldNegativeAppliedFit = "  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeLessThan(-1);";
 const newZeroAppliedFit = `  expect(Number(runtime.inspectionAircraftJetwayVerticalFitMeters)).toBeCloseTo(0, 5);
   expect(Number.isFinite(Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters))).toBe(true);
@@ -93,6 +118,7 @@ for (const path of verticalEvidenceFiles) {
   source = source.replaceAll(OLD_VERTICAL_AUTHORITY, NO_LIFT_AUTHORITY);
   source = source.replaceAll(waitOld, waitNew);
   source = source.replaceAll(expectOld, expectNew);
+  source = source.replaceAll(localExpectOld, localExpectNew);
   source = source.replaceAll(oldNegativeAppliedFit, newZeroAppliedFit);
 
   // Rotunda center-to-wall includes the authored collar. Compactness is proved
@@ -148,6 +174,7 @@ for (const path of verticalEvidenceFiles) {
 
   if (source.includes(OLD_VERTICAL_AUTHORITY)
     || source.includes("inspectionAircraftDoorVerticalErrorMeters) <= 0.01")
+    || source.includes(localExpectOld.trim())
     || source.includes("inspectionAircraftJetwayVerticalFitMeters)).toBeLessThan(-1)")) {
     throw new Error(`${path}: stale floating-jetway vertical-fit expectation remains`);
   }
@@ -158,6 +185,19 @@ for (const path of verticalEvidenceFiles) {
   if (source.includes("inspectionAircraftDoorVerticalErrorMeters")
     && !source.includes("inspectionAircraftJetwayAuthoredBogieGroundPreserved")) {
     throw new Error(`${path}: door-gap evidence does not require grounded-bogie preservation`);
+  }
+  if (path.endsWith("uploaded-jetway-articulation-v10.spec.js")) {
+    for (const token of [
+      "articulationSignedDoorVerticalGapMeters",
+      "articulationRequestedJetwayVerticalFitMeters",
+      "articulationAppliedJetwayVerticalFitMeters",
+      "renderedAircraftVerticalError).toBeLessThanOrEqual(6)",
+      "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
+    ]) {
+      if (!source.includes(token)) {
+        throw new Error(`${path}: local articulation no-lift evidence is missing ${token}`);
+      }
+    }
   }
   if (source.includes("terminal4A1JetwayWallDistance")) {
     for (const stale of [
@@ -202,4 +242,4 @@ for (const path of verticalEvidenceFiles) {
   }
 }
 
-console.log("Migrated current browser gates idempotently: Cab-normal heading, stable free-drive motion, zero attached A1 child lift, grounded-bogie preservation, authored Rotunda center distance, and an independently exact 2.4 m visible terminal vestibule.");
+console.log("Migrated current browser gates idempotently: Cab-normal heading, stable free-drive motion, finite signed door gap, zero attached A1 child lift, grounded-bogie preservation, authored Rotunda center distance, and an independently exact 2.4 m visible terminal vestibule.");
