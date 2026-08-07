@@ -90,10 +90,12 @@ for (const forbidden of [
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-aircraft-terminal-half-plane-v1.mjs?terminal-half-plane=${Date.now()}`);
 await import(`./prepare-a1-visible-airframe-door-registration-v1.mjs?visible-airframe-door=${Date.now()}`);
-await import(`./prepare-a1-final-marker-compat-v1.mjs?final-marker=${Date.now()}`);
+// Final-marker compatibility belongs after the final acceptance pass. Running it
+// here previously required a marker that had not been created yet and stopped the
+// production build before the source-preserving jetway fixes could even render.
 await import(`./prepare-current-head-browser-expectations-v1.mjs?current-head=${Date.now()}`);
 await import(`./prepare-a1-no-lift-evidence-json-v1.mjs?no-lift-evidence=${Date.now()}`);
 await import(`./prepare-a1-post-lifecycle-evidence-v1.mjs?post-lifecycle-evidence=${Date.now()}`);
 await import(`./prepare-a1-bogie-centroid-browser-authority-v1.mjs?bogie-centroid=${Date.now()}`);
 await import(`./prepare-source-locked-a1-elbow-finalizer-v1.mjs?final-a1-geometry=${Date.now()}`);
-console.log("Restored the authored A1 parking heading, retained the grounded aircraft and browser evidence contracts, then made the exact source-locked Rotunda elbow the final A1 geometry authority immediately before production bundling.");
+console.log("Restored the authored A1 parking heading, retained the grounded aircraft and browser evidence contracts, then made the exact source-locked Rotunda elbow the final A1 geometry authority immediately before the later source-integrity/final-acceptance passes.");
