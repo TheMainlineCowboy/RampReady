@@ -3,22 +3,24 @@ import fs from "node:fs";
 const runtimePath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(runtimePath, "utf8");
 
-const searchMarker = "A1 grounded-facade search v32";
-const connectionMarker = "A1 ramp-level real Terminal 4 source wall v32";
+const searchMarker = "A1 grounded-facade search v33 terminal-side hemisphere locked";
+const connectionMarker = "A1 ramp-level real Terminal 4 source wall v33 terminal-side locked";
 const MINIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 3.4;
 const MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 28;
 const MAXIMUM_A1_WALL_HEIGHT_METERS = 2.2;
+const MINIMUM_A1_TERMINAL_DIRECTION_DOT = 0.15;
 
 // The source bridge can begin several meters from the real terminal wall. The
 // complete authored parent is relocated later so its final visible vestibule is
-// exactly 2.4 m. Therefore qualify the source hit by ramp-level height,
-// structural material and non-walkway authority—not by the final vestibule
-// length. The final compact span is checked after relocation.
+// exactly 2.4 m. The terminal-side hemisphere must remain enforced even for the
+// 1.25 m ramp-level search. The previous height-based exception disabled that
+// guard at A1 and allowed a structurally named facade on the wrong side of the
+// Rotunda to win the radial search.
 if (!source.includes(searchMarker) && source.includes("const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();")) {
   source = source.replace(
     "  const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();",
     `  const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();
-  const requirePreferredHemisphere = height > 2.2; // ${searchMarker}`,
+  const requirePreferredHemisphere = true; // ${searchMarker}`,
   );
   source = source.replaceAll(
     "      if (directionDot < 0.15) {",
@@ -74,6 +76,11 @@ const groundedReplacement = `    let terminalConnection = findTerminalWallConnec
       if (!groundedConnection) {
         throw new Error(\`A1 grounded terminal-building search found no ramp-level structural facade: \${JSON.stringify(diagnostics)}\`);
       }
+      const groundedTerminalDirectionDot = groundedConnection.towardX * -ux
+        + groundedConnection.towardZ * -uz;
+      if (!(groundedTerminalDirectionDot >= ${MINIMUM_A1_TERMINAL_DIRECTION_DOT})) {
+        throw new Error(\`A1 grounded search selected the wrong side of the Rotunda: directionDot=\${groundedTerminalDirectionDot}; authority=\${groundedConnection.authority}; diagnostics=\${JSON.stringify(diagnostics)}\`);
+      }
       if (/WALK|JETWAY|CONNECTOR|PORTAL/i.test(String(groundedConnection.authority || ""))) {
         throw new Error(\`A1 grounded search resolved a forbidden walkway/connector authority: \${groundedConnection.authority}\`);
       }
@@ -102,12 +109,15 @@ const groundedReplacement = `    let terminalConnection = findTerminalWallConnec
         sourceDistance: groundedConnection.distance,
         towardX: groundedConnection.towardX,
         towardZ: groundedConnection.towardZ,
+        directionDot: groundedTerminalDirectionDot,
         pointX: groundedConnection.pointX ?? null,
         pointY: groundedConnection.pointY ?? null,
         pointZ: groundedConnection.pointZ ?? null,
         materialReference: groundedConnection.materialReference ?? null,
         authority: groundedConnection.authority,
         rampLevelRealTerminalWall: true,
+        terminalSideHemisphereLocked: true,
+        minimumTerminalDirectionDot: ${MINIMUM_A1_TERMINAL_DIRECTION_DOT},
         sourceDistanceRangeMeters: [${MINIMUM_A1_SOURCE_WALL_DISTANCE_METERS}, ${MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS}],
         finalVisibleVestibuleCheckedAfterRelocation: true,
         maximumAllowedHeightMeters: ${MAXIMUM_A1_WALL_HEIGHT_METERS},
@@ -131,10 +141,15 @@ for (const token of [
   connectionMarker,
   "let terminalConnection = findTerminalWallConnection(",
   "const groundedConnection = findTerminalWallConnection(",
+  "const groundedTerminalDirectionDot = groundedConnection.towardX * -ux",
+  "groundedTerminalDirectionDot >= 0.15",
+  "A1 grounded search selected the wrong side of the Rotunda",
   "groundedConnection.distance > 3.4",
   "groundedConnection.distance < 28",
   "terminalConnection = groundedConnection",
   "a1GroundedBuildingConnection",
+  "terminalSideHemisphereLocked: true",
+  "minimumTerminalDirectionDot: 0.15",
   "rampLevelRealTerminalWall: true",
   "finalVisibleVestibuleCheckedAfterRelocation: true",
   "A1 grounded terminal-building search found no ramp-level structural facade",
@@ -148,7 +163,7 @@ for (const token of [
 }
 for (const token of [
   searchMarker,
-  "const requirePreferredHemisphere = height > 2.2",
+  "const requirePreferredHemisphere = true",
   "if (requirePreferredHemisphere && directionDot < 0.15)",
   "const directionPenalty = requirePreferredHemisphere",
 ]) {
@@ -168,4 +183,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log(`Prepared ${Math.max(1, replacementCount)} A1 ramp-level real-wall source hit(s), rejecting T4_WALK while leaving the final exact 2.4 m vestibule to the complete-parent relocation stage.`);
+console.log(`Prepared ${Math.max(1, replacementCount)} A1 ramp-level real-wall source hit(s) with the terminal-side hemisphere locked at every search height, rejecting the wrong side/T4_WALK while leaving the final exact 2.4 m vestibule to the complete-parent relocation stage.`);
