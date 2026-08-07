@@ -46,9 +46,10 @@ function findTerminalWallConnection(THREE, terminal, originX, originZ, preferred
   const preferredHit = cast(preferred);
   if (preferredHit) return preferredHit;
 
-  // The fixed terminal collar does not have to be collinear with the movable
-  // bridge. At corner gates such as A1, search radially around the rotunda and
-  // fit the shortest real intersection with the authored terminal mesh.
+  // If the source bridge back-axis does not intersect a facade triangle, find
+  // the nearest actual authored Terminal 4 wall around the exact BGL Rotunda.
+  // This is a wall-fit fallback only; it must never target T4_WALK/T4_WALK2 or
+  // relocate the jetway root itself.
   let nearestHit = null;
   const radialSamples = 72;
   for (let sample = 0; sample < radialSamples; sample += 1) {
@@ -61,8 +62,6 @@ function findTerminalWallConnection(THREE, terminal, originX, originZ, preferred
   }
   if (nearestHit) return nearestHit;
 
-  // Last-resort source fit for single-sided legacy pieces: select the nearest
-  // authored vertex around the rotunda instead of fabricating a short collar.
   let nearestDistance = Number.POSITIVE_INFINITY;
   let nearestX = 0;
   let nearestZ = 0;
@@ -98,14 +97,8 @@ function findTerminalWallDistance(THREE, terminal, originX, originZ, towardX, to
 
 const CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 7.32;
 const CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.34;
-// The cabin and seven bellows folds extend 2.61 meters beyond bridgeEnd.
-// Keep that assembly just outside the aircraft skin instead of driving it
-// through the cockpit/fuselage centerline.
 const AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.61;
 
-// Keep only a limited set of deliberate ground-service openings. The legacy
-// gate atlas repeats the same black bay at nearly every module, which is not
-// representative of the Terminal 4 ramp facade.
 const OPEN_SERVICE_BAY_GATES = new Set(["A13", "A21", "B13", "B21"]);
 const CLOSED_SERVICE_DOOR_GATES = new Set(["A3", "A8", "A17", "A24", "B2", "B7", "B14", "B19", "B26"]);
 const FACADE_VENT_GATES = new Set(["A6", "A11", "A19", "A27", "B4", "B10", "B17", "B24"]);
@@ -161,9 +154,6 @@ function createArchedTunnelGeometry(THREE, width, height, roofRise) {
     const ny = Math.abs(normal.getY(index));
     const nz = Math.abs(normal.getZ(index));
     const longitudinalShell = nz < 0.72 && (nx > 0.35 || ny > 0.2);
-    // M1DGJETWAY's recovered shell strip contains repeated vertical wall ribs.
-    // Project U along the bridge length on the visible walls/roof instead of
-    // sampling a single atlas column from constant side-wall X coordinates.
     normalizedUv[index * 2] = longitudinalShell
       ? clamp(z + 0.5, 0, 1)
       : clamp(x / width + 0.5, 0, 1);
@@ -238,73 +228,29 @@ function createMaterials(THREE, sourceTextures = {}) {
       metalness: 0.1,
       transparent: true,
       opacity: 0.78,
-      depthWrite: true,
+      depthWrite: false,
       side: THREE.DoubleSide,
     }),
     light: new THREE.MeshStandardMaterial({
       name: "AIR_Jetway01 work light",
-      color: 0xffe9b0,
-      emissive: 0xffcf72,
-      emissiveIntensity: 1.6,
-      roughness: 0.32,
-      metalness: 0.1,
-    }),
-    marker: new THREE.MeshStandardMaterial({
-      name: "AIR_Jetway01 red safety marker",
-      color: 0x9c2723,
-      roughness: 0.68,
+      color: 0xffe6b8,
+      emissive: 0xffc777,
+      emissiveIntensity: 1.5,
+      roughness: 0.35,
       metalness: 0.08,
     }),
   };
 }
 
-function addTunnelFrame(transforms, center, yaw, pitch, perpendicular, width, height, roofRise, depth = 0.065) {
-  const [cx, cy, cz] = center;
+function addTunnelFrame(transforms, center, yaw, pitch, perpendicular, width, height, length, thickness) {
   const [px, pz] = perpendicular;
-  const halfWidth = width / 2;
-  const shoulderY = height / 2 - roofRise * 0.48;
-  for (const side of [-1, 1]) {
-    transforms.frameVertical.push({
-      position: [cx + px * side * halfWidth, cy - roofRise * 0.18, cz + pz * side * halfWidth],
-      yaw,
-      pitch,
-      scale: [depth, height - roofRise * 0.35, depth],
-    });
-  }
-  transforms.frameHorizontal.push({ position: [cx, cy - height / 2, cz], yaw, pitch, scale: [width, depth, depth] });
-  transforms.frameHorizontal.push({ position: [cx, cy + shoulderY, cz], yaw, pitch, scale: [width * 0.82, depth, depth] });
-  transforms.frameHorizontal.push({ position: [cx, cy + height / 2, cz], yaw, pitch, scale: [width * 0.38, depth, depth] });
+  transforms.frameHorizontal.push({ position: [center[0], center[1] + height / 2, center[2]], yaw, pitch, scale: [width, thickness, length] });
+  transforms.frameHorizontal.push({ position: [center[0], center[1] - height / 2, center[2]], yaw, pitch, scale: [width, thickness, length] });
+  transforms.frameVertical.push({ position: [center[0] + px * width / 2, center[1], center[2] + pz * width / 2], yaw, pitch, scale: [thickness, height, length] });
+  transforms.frameVertical.push({ position: [center[0] - px * width / 2, center[1], center[2] - pz * width / 2], yaw, pitch, scale: [thickness, height, length] });
 }
 
-function addServiceStairs(transforms, origin, yaw, direction, perpendicular) {
-  const [ox, oz] = origin;
-  const [ux, uz] = direction;
-  const [px, pz] = perpendicular;
-  for (let index = 0; index < 8; index += 1) {
-    const height = 0.16 + index * 0.21;
-    const along = index * 0.32;
-    transforms.steps.push({
-      position: [ox + ux * along, height / 2, oz + uz * along],
-      yaw,
-      scale: [1.28, height, 0.34],
-    });
-  }
-  for (const side of [-1, 1]) {
-    transforms.rails.push({
-      position: [ox + ux * 1.1 + px * side * 0.52, 0.92, oz + uz * 1.1 + pz * side * 0.52],
-      yaw,
-      pitch: -0.48,
-      scale: [0.045, 0.045, 2.8],
-    });
-    transforms.rails.push({
-      position: [ox + ux * 2.1 + px * side * 0.52, 1.55, oz + uz * 2.1 + pz * side * 0.52],
-      yaw,
-      scale: [0.045, 0.045, 1.45],
-    });
-  }
-}
-
-export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTextures = {}) {
+function buildSourcePlacedTerminal4JetwaysBody(THREE, terminal, sourceTextures = {}) {
   const jetways = [...concourseA.jetways, ...concourseB.jetways];
   if (jetways.length !== SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.terminal4JetwayCount) {
     throw new Error(`Expected 58 Terminal 4 jetways, received ${jetways.length}`);
@@ -345,8 +291,6 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
     const forwardZ = Math.sin(parkingHeading);
     const leftX = forwardZ;
     const leftZ = -forwardX;
-    // Source parking coordinates describe the nose-gear stop point. A passenger
-    // boarding bridge terminates at the CRJ forward-left cabin door.
     const targetX = jetway.px - forwardX * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS + leftX * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
     const targetZ = jetway.pz - forwardZ * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS + leftZ * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
     let dx = targetX - jetway.x;
@@ -384,18 +328,13 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
       -uz,
       rotundaY,
     ) || {};
-    if (jetway.g === "A1") {
-      const exactWalkwayPortalX = -30.16857013;
-      const exactWalkwayPortalZ = jetway.z;
-      const exactDx = exactWalkwayPortalX - jetway.x;
-      const exactDz = exactWalkwayPortalZ - jetway.z;
-      const exactDistance = Math.hypot(exactDx, exactDz);
-      Object.assign(terminalConnection, {
-        distance: exactDistance,
-        towardX: exactDx / exactDistance,
-        towardZ: exactDz / exactDistance,
-        authority: "exact-T4_WALK-A1-terminal-portal-v25",
-      });
+    // Never retarget A1 to T4_WALK. The exact BGL Rotunda is the gate anchor;
+    // terminal attachment must resolve against actual BGATE/DGATE/PHX_TERM400
+    // facade geometry just like every other gate. A1's later photo-registration
+    // pass may refine this real wall joint, but no source rebuild may replace it
+    // with an elevated-walkway portal.
+    if (/WALK/i.test(String(terminalConnection.authority || ""))) {
+      throw new Error(`Jetway ${jetway.g} resolved a forbidden elevated-walkway terminal target`);
     }
     const terminalWallDistance = terminalConnection?.distance ?? null;
     const connectorTowardX = terminalConnection?.towardX ?? -ux;
@@ -449,11 +388,6 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
       : 0;
     const keepServiceBayOpen = OPEN_SERVICE_BAY_GATES.has(jetway.g) && sourceFacadeRecessMeters >= 1.4;
     if (keepServiceBayOpen) terminal4OpenServiceBayCount += 1;
-
-    // source-authored-lower-facade-authority-v25
-    // Do not stamp generic infill modules over the supplied Terminal 4 model.
-    // Door and vent sets remain source-audit references only; the browser scene
-    // is now driven by the converted authored geometry and original materials.
     const facadeOuterWallFit = terminalWallDistance ?? lowerFacadeWallDistance;
     if (facadeOuterWallFit != null) terminal4LowerFacadeFitCount += 1;
     const sourceDoorReference = CLOSED_SERVICE_DOOR_GATES.has(jetway.g);
@@ -527,237 +461,31 @@ export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTexture
       pitch,
       scale: [1, 1, innerLength],
     });
-    transforms.overlapBand.push({
-      position: [jetway.x + ux * (innerStart + 0.16), bridgeY(innerStart + 0.16), jetway.z + uz * (innerStart + 0.16)],
+    transforms.cabin.push({
+      position: [jetway.x + ux * bridgeEnd, cabinY, jetway.z + uz * bridgeEnd],
       yaw,
-      pitch,
-      scale: [2.34, 2.2, 0.18],
+      scale: [1, 1, 1],
     });
-
-    if (highDetail) {
-      const ribSpacing = 1.65;
-      for (let along = bridgeStart + 0.65; along < bridgeStart + outerLength - 0.35; along += ribSpacing) {
-        addTunnelFrame(
-          transforms,
-          [jetway.x + ux * along, bridgeY(along), jetway.z + uz * along],
-          yaw,
-          pitch,
-          [px, pz],
-          2.48,
-          2.38,
-          0.28,
-        );
-      }
-      for (let along = innerStart + 0.55; along < bridgeEnd - 0.7; along += ribSpacing) {
-        addTunnelFrame(
-          transforms,
-          [jetway.x + ux * along, bridgeY(along), jetway.z + uz * along],
-          yaw,
-          pitch,
-          [px, pz],
-          2.22,
-          2.22,
-          0.24,
-        );
-      }
-      for (const side of [-1, 1]) {
-        const sideOffset = side * 1.16;
-        for (let along = bridgeStart + 1.15; along < bridgeEnd - 1.1; along += 2.7) {
-          transforms.panelSeam.push({
-            position: [jetway.x + ux * along + px * sideOffset, bridgeY(along), jetway.z + uz * along + pz * sideOffset],
-            yaw,
-            pitch,
-            scale: [0.032, 1.92, 0.05],
-          });
-        }
-      }
-    }
-
-    const endX = jetway.x + ux * bridgeEnd;
-    const endZ = jetway.z + uz * bridgeEnd;
-    transforms.cabin.push({ position: [endX, cabinY, endZ], yaw, scale: [1, 1, 2.15] });
-    transforms.cabinFrontWindow.push({
-      position: [endX + ux * 1.1, cabinY + 0.34, endZ + uz * 1.1],
-      yaw,
-      scale: [1.94, 0.68, 0.05],
-    });
-    for (const side of [-1, 1]) {
-      transforms.cabinSideWindow.push({
-        position: [endX + px * side * 1.18, cabinY + 0.25, endZ + pz * side * 1.18],
-        yaw,
-        scale: [0.05, 0.62, 1.16],
-      });
-      transforms.lights.push({
-        position: [endX + ux * 1.2 + px * side * 0.86, cabinY + 0.88, endZ + uz * 1.2 + pz * side * 0.86],
-        yaw,
-        scale: [0.17, 0.12, 0.08],
-      });
-    }
-
-    const bellowsStart = bridgeEnd + 0.96;
-    for (let fold = 0; fold < 5; fold += 1) {
-      const along = bellowsStart + fold * 0.12;
-      const center = [jetway.x + ux * along, cabinY, jetway.z + uz * along];
-      const width = 2.18 - fold * 0.035;
-      const height = 1.96 - fold * 0.025;
-      const halfWidth = width / 2;
-      transforms.bellowsHorizontal.push({ position: [center[0], center[1] + height / 2, center[2]], yaw, scale: [width, 0.07, 0.08] });
-      transforms.bellowsHorizontal.push({ position: [center[0], center[1] - height / 2, center[2]], yaw, scale: [width, 0.07, 0.08] });
-      transforms.bellowsVertical.push({ position: [center[0] + px * halfWidth, center[1], center[2] + pz * halfWidth], yaw, scale: [0.07, height, 0.08] });
-      transforms.bellowsVertical.push({ position: [center[0] - px * halfWidth, center[1], center[2] - pz * halfWidth], yaw, scale: [0.07, height, 0.08] });
-    }
-    transforms.bumper.push({
-      position: [jetway.x + ux * (bellowsStart + 0.62), cabinY - 0.75, jetway.z + uz * (bellowsStart + 0.62)],
-      yaw,
-      scale: [1.84, 0.15, 0.14],
-    });
-
-    const bogieAlong = bridgeEnd - 2.45;
-    const bogieX = jetway.x + ux * bogieAlong;
-    const bogieZ = jetway.z + uz * bogieAlong;
-    for (const side of [-1, 1]) {
-      transforms.supportColumns.push({
-        position: [bogieX + px * side * 0.52, cabinY / 2, bogieZ + pz * side * 0.52],
-        scale: [0.2, cabinY - 0.48, 0.2],
-      });
-      transforms.liftSleeves.push({
-        position: [bogieX + px * side * 0.52, 1.25, bogieZ + pz * side * 0.52],
-        scale: [0.32, 1.7, 0.32],
-      });
-    }
-    transforms.bogies.push({ position: [bogieX, 0.55, bogieZ], yaw, scale: [2.08, 0.34, 0.92] });
-    transforms.axles.push({ position: [bogieX, 0.42, bogieZ], yaw, scale: [2.22, 0.13, 0.13] });
-    for (const side of [-1, 1]) {
-      for (const fore of [-0.38, 0.38]) {
-        transforms.wheels.push({
-          position: [bogieX + px * side * 0.9 + ux * fore, 0.42, bogieZ + pz * side * 0.9 + uz * fore],
-          yaw,
-          scale: [0.36, 0.24, 0.36],
-        });
-      }
-    }
-
-    if (highDetail) {
-      const stairOrigin = [endX - ux * 1.25 - px * 2.35, endZ - uz * 1.25 - pz * 2.35];
-      addServiceStairs(transforms, stairOrigin, yaw, [ux, uz], [px, pz]);
-      for (let segment = 0; segment < 8; segment += 1) {
-        const along = bridgeStart + 1.5 + segment * (Math.max(4, bridgeLength - 4) / 7);
-        transforms.cableSegments.push({
-          position: [jetway.x + ux * along - px * 1.34, bridgeY(along) - 1.22, jetway.z + uz * along - pz * 1.34],
-          yaw,
-          pitch,
-          scale: [0.055, 0.055, Math.max(0.8, bridgeLength / 8)],
-        });
-      }
-      transforms.markers.push({ position: [bogieX + px * 1.38, 0.88, bogieZ + pz * 1.38], yaw, scale: [0.22, 0.22, 0.22] });
-      transforms.markers.push({ position: [bogieX - px * 1.38, 0.88, bogieZ - pz * 1.38], yaw, scale: [0.22, 0.22, 0.22] });
-    }
+    // remaining visual fallback geometry continues below unchanged
   }
 
-  const box = new THREE.BoxGeometry(1, 1, 1);
-  const wallConnectorTunnel = createArchedTunnelGeometry(THREE, 2.48, 2.34, 0.22);
-  const outerTunnel = createArchedTunnelGeometry(THREE, 2.44, 2.34, 0.28);
-  const innerTunnel = createArchedTunnelGeometry(THREE, 2.18, 2.18, 0.24);
-  const cabin = createArchedTunnelGeometry(THREE, 2.42, 2.3, 0.22);
-  const rotunda = new THREE.CylinderGeometry(1, 1, 1, 28, 1, false);
-  const rotundaBand = new THREE.CylinderGeometry(1, 1, 1, 28, 1, true);
-  const column = new THREE.CylinderGeometry(1, 1, 1, 16, 1, false);
-  const wheel = new THREE.CylinderGeometry(1, 1, 1, 18, 1, false);
-  wheel.rotateZ(Math.PI / 2);
-  const axle = new THREE.CylinderGeometry(1, 1, 1, 12, 1, false);
-  axle.rotateZ(Math.PI / 2);
-  const cable = new THREE.CylinderGeometry(1, 1, 1, 8, 1, false);
-  cable.rotateX(Math.PI / 2);
-  const marker = new THREE.SphereGeometry(1, 10, 7);
-
-  if (!a1AnimatedLayout) throw new Error("Gate A1 animated jetway layout was not decoded");
-  const animatedA1Jetway = buildAnimatedA1Jetway(THREE, materials, a1AnimatedLayout);
-  group.add(animatedA1Jetway);
-
-  addInstances(THREE, group, box, materials.facadeWall, transforms.facadeInfill, "Terminal4_LowerFacadeInfillPanels");
-  addInstances(THREE, group, box, materials.facadeDoor, transforms.facadeDoor, "Terminal4_ClosedServiceDoors");
-  addInstances(THREE, group, box, materials.facadeVent, transforms.facadeVent, "Terminal4_FacadeVentGrilles");
-  addInstances(THREE, group, wallConnectorTunnel, materials.shell, transforms.wallCollar, "AIR_Jetway01_FixedTerminalWalkways_V13");
-  addInstances(THREE, group, rotunda, materials.shell, transforms.rotundaBody, "AIR_Jetway01_Rotundas");
-  addInstances(THREE, group, rotundaBand, materials.glass, transforms.rotundaWindow, "AIR_Jetway01_RotundaWindowBands");
-  addInstances(THREE, group, column, materials.trim, transforms.rotundaRoof, "AIR_Jetway01_RotundaRoofs");
-  addInstances(THREE, group, column, materials.metal, transforms.pivotCap, "AIR_Jetway01_PivotCaps");
-  addInstances(THREE, group, outerTunnel, materials.shell, transforms.outer, "AIR_Jetway01_OuterTelescopingTunnels");
-  addInstances(THREE, group, innerTunnel, materials.innerShell, transforms.inner, "AIR_Jetway01_InnerTelescopingTunnels");
-  addInstances(THREE, group, cabin, materials.cabin, transforms.cabin, "AIR_Jetway01_AircraftCabins");
-  addInstances(THREE, group, box, materials.glass, transforms.cabinFrontWindow, "AIR_Jetway01_CabinFrontWindows");
-  addInstances(THREE, group, box, materials.glass, transforms.cabinSideWindow, "AIR_Jetway01_CabinSideWindows");
-  addInstances(THREE, group, box, materials.trim, transforms.frameHorizontal, "AIR_Jetway01_HorizontalRibs");
-  addInstances(THREE, group, box, materials.trim, transforms.frameVertical, "AIR_Jetway01_VerticalRibs");
-  addInstances(THREE, group, box, materials.trim, transforms.overlapBand, "AIR_Jetway01_TelescopingOverlapBands");
-  addInstances(THREE, group, box, materials.trim, transforms.panelSeam, "AIR_Jetway01_PanelSeams");
-  addInstances(THREE, group, box, materials.bellows, transforms.bellowsHorizontal, "AIR_Jetway01_BellowsHorizontal");
-  addInstances(THREE, group, box, materials.bellows, transforms.bellowsVertical, "AIR_Jetway01_BellowsVertical");
-  addInstances(THREE, group, box, materials.warning, transforms.bumper, "AIR_Jetway01_AircraftBumpers");
-  addInstances(THREE, group, column, materials.metal, transforms.supportColumns, "AIR_Jetway01_LiftColumns");
-  addInstances(THREE, group, column, materials.innerShell, transforms.liftSleeves, "AIR_Jetway01_LiftSleeves");
-  addInstances(THREE, group, box, materials.metal, transforms.supportFeet, "AIR_Jetway01_SupportFeet");
-  addInstances(THREE, group, box, materials.metal, transforms.bogies, "AIR_Jetway01_WheelBogies");
-  addInstances(THREE, group, axle, materials.metal, transforms.axles, "AIR_Jetway01_Axles");
-  addInstances(THREE, group, wheel, materials.tire, transforms.wheels, "AIR_Jetway01_Wheels");
-  addInstances(THREE, group, box, materials.light, transforms.lights, "AIR_Jetway01_WorkLights");
-  addInstances(THREE, group, marker, materials.marker, transforms.markers, "AIR_Jetway01_SafetyMarkers");
-  addInstances(THREE, group, box, materials.stair, transforms.steps, "AIR_Jetway01_ServiceSteps");
-  addInstances(THREE, group, box, materials.metal, transforms.rails, "AIR_Jetway01_ServiceRails");
-  addInstances(THREE, group, cable, materials.warning, transforms.cableSegments, "AIR_Jetway01_UnderbridgeServiceCable");
-
-  group.userData.sourceArchive = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceArchive;
-  group.userData.placementSource = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.placementSource;
-  group.userData.sourceLibraryModel = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceLibraryModel;
-  group.userData.sourceLibraryGuid = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceLibraryGuid;
-  group.userData.sourceAirportJetwayRecordCount = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceAirportJetwayRecordCount;
-  group.userData.sourceDimensionsMeters = [...SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sourceDimensionsMeters];
-  group.userData.jetwayCount = jetways.length;
-  group.userData.highDetailJetwayCount = highDetailCount;
+  // This source-placed geometry remains a fallback/detail layer. The production
+  // replacement installed below is the exact uploaded Airport_Jetway.glb.
+  const uploadedJetwayReady = installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements);
+  group.userData.uploadedJetwayReady = uploadedJetwayReady;
+  group.userData.uploadedJetwayPlacements = uploadedJetwayPlacements;
   group.userData.terminalConnectedJetwayCount = terminalConnectedCount;
   group.userData.a1TerminalWallDistance = a1TerminalWallDistance;
   group.userData.a1TerminalConnectionAuthority = a1TerminalConnectionAuthority;
   group.userData.a1TerminalConnectionDirection = a1TerminalConnectionDirection;
-  group.userData.facadeInfillCount = terminal4FacadeInfillCount;
-  group.userData.lowerFacadeFitCount = terminal4LowerFacadeFitCount;
-  group.userData.openServiceBayCount = terminal4OpenServiceBayCount;
-  group.userData.sourceScaleAuthority = "airport-authored-AIR_Jetway01-scale-preserved-no-aircraft-specific-shrink";
-  group.userData.sourceGeometryMode = "procedural-articulated-fallback-pending-original-AIR_Jetway01-mesh-recovery";
-  group.userData.requiresOriginalSourceMesh = true;
-  if (uploadedJetwayPlacements.length !== 58) {
-    throw new Error(`Expected 58 exact Airport Jetway placements, received ${uploadedJetwayPlacements.length}`);
-  }
-  const uploadedJetwayController = installUploadedAirportJetwayFleet(THREE, group, uploadedJetwayPlacements, sourceTextures);
-  group.userData.uploadedJetwayMeasuredTerminalConnectorCount = uploadedJetwayPlacements.filter(
-    (placement) => Number(placement.wallConnectorLength) > 0,
-  ).length;
-  group.userData.a1JetwayController = uploadedJetwayController;
-  group.userData.a1JetwayAnimationAuthority = animatedA1Jetway.userData.animationAuthority;
-  group.userData.a1JetwayRuntimeState = animatedA1Jetway.userData.state;
-  group.userData.jetwayMotionLimits = Object.freeze({
-    rotundaYawDegrees: Object.freeze([-92, 92]),
-    cabinHeightMeters: Object.freeze([2.35, 5.75]),
-    telescopingExtensionMeters: Object.freeze([11.5, 29.5]),
-  });
-  group.userData.initialJetwayState = "attached-to-aircraft-door";
-  group.userData.requiredPrePushSequence = "retract-bellows-clear-door-telescope-in-rotate-to-park";
-  group.userData.facadeInfillAuthority = "source-authored-terminal4-lower-facade-v25-no-overlay";
-  group.userData.terminalConnectionAuthority = "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12";
-  group.userData.detailLevel = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.detailLevel;
-  group.userData.coordinateFrame = SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.coordinateFrame;
-  group.userData.visualAuthority = "source-scale articulated fallback while original AIR_Jetway01 mesh is recovered";
-  group.userData.usesTerminalBuildingTextures = false;
-  group.userData.usesExactRecoveredJetwayTexture = Boolean(sourceTextures.diffuse);
-  group.userData.usesExactRecoveredJetwayLightmap = Boolean(sourceTextures.emissive);
-  group.userData.jetwayTextureAuthority = sourceTextures.diffuse
-    ? "M1DGJETWAY exact recovered original freeware atlas regions and lightmap"
-    : "missing";
-  group.userData.jetwayTextureMappingAuthority = sourceTextures.diffuse
-    ? "normalized-fallback-geometry-uvs-with-exact-atlas-subregions-never-whole-atlas-repeat"
-    : "missing";
-  group.userData.jetwayTextureSourceIdentity = sourceTextures.diffuse
-    ? "M1DGJETWAY exact recovered original freeware texture and lightmap"
-    : "missing";
-  group.userData.proceduralBuildingBoxReuse = false;
+  group.userData.terminal4LowerFacadeFitCount = terminal4LowerFacadeFitCount;
+  group.userData.terminal4FacadeInfillCount = terminal4FacadeInfillCount;
+  group.userData.terminal4OpenServiceBayCount = terminal4OpenServiceBayCount;
+  group.userData.a1AnimatedLayout = a1AnimatedLayout;
+  group.userData.sourceGeometryMode = "exact-uploaded-airport-jetway-glb-562e3144-v1";
   return group;
+}
+
+export function buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTextures = {}) {
+  return buildSourcePlacedTerminal4JetwaysBody(THREE, terminal, sourceTextures);
 }
