@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { expect, test } from "@playwright/test";
 
-const SUBVIEW_AUTHORITY = "exact-a1-terminal-joint-and-bogie-contact-subviews-v1";
+const SUBVIEW_AUTHORITY = "exact-a1-terminal-joint-and-bogie-contact-subviews-v2";
 const CAMERA_AUTHORITY = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const LOCK_AUTHORITY = "exact-a1-evidence-camera-direct-lock-v1";
 const VISUAL_AUTHORITY = "same-day-a1-continuous-compact-solid-closed-grounded-v1";
@@ -165,15 +165,30 @@ test("A1 close evidence shows the exact 2.4 m terminal vestibule and zero-lift g
     terminalRuntime.inspectionCameraEndpointRotunda,
     "terminal-joint Rotunda",
   );
+  const terminalCab = parseTriplet(
+    terminalRuntime.inspectionCameraEndpointCab,
+    "terminal-joint Cab",
+  );
   expect(distance3(terminalCameraTarget, terminalJointCenter)).toBeLessThanOrEqual(0.25);
-  expect(distance3(terminalCameraPosition, terminalCameraTarget)).toBeGreaterThan(5.5);
-  expect(distance3(terminalCameraPosition, terminalCameraTarget)).toBeLessThan(10);
+  expect(distance3(terminalCameraPosition, terminalCameraTarget)).toBeGreaterThan(9);
+  expect(distance3(terminalCameraPosition, terminalCameraTarget)).toBeLessThan(15);
+  expect(Number(terminalRuntime.inspectionCameraEndpointJointApronDistanceMeters)).toBeGreaterThanOrEqual(3.8);
+  expect(Number(terminalRuntime.inspectionCameraEndpointJointSideDistanceMeters)).toBeGreaterThanOrEqual(9.4);
   expect(distance3(terminalWall, terminalRotunda)).toBeCloseTo(
     Number(terminalRuntime.inspectionCameraEndpointJointSpanMeters),
     3,
   );
   expect(distance3(terminalCameraTarget, terminalWall)).toBeLessThan(3);
   expect(distance3(terminalCameraTarget, terminalRotunda)).toBeLessThan(3);
+  const wallToCabX = terminalCab[0] - terminalWall[0];
+  const wallToCabZ = terminalCab[2] - terminalWall[2];
+  const wallToCabLength = Math.hypot(wallToCabX, wallToCabZ);
+  const cameraFromJointX = terminalCameraPosition[0] - terminalJointCenter[0];
+  const cameraFromJointZ = terminalCameraPosition[2] - terminalJointCenter[2];
+  const cameraApronProjection = (
+    cameraFromJointX * wallToCabX + cameraFromJointZ * wallToCabZ
+  ) / wallToCabLength;
+  expect(cameraApronProjection).toBeGreaterThan(3.2);
   await captureCanvas(page, "test-results/a1-terminal-joint-close.png");
 
   await selectSubview(page, "bogie-contact");
@@ -207,6 +222,10 @@ test("A1 close evidence shows the exact 2.4 m terminal vestibule and zero-lift g
     bogieRuntime.inspectionCameraEndpointBogieContactCenter,
     "bogie exact contact center",
   );
+  const bogieAircraftCenter = parseTriplet(
+    bogieRuntime.inspectionCameraEndpointBogieAircraftCenter,
+    "bogie aircraft center",
+  );
   const publishedBogieContactCenter = [
     Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactCenterX),
     Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactCenterY),
@@ -220,8 +239,18 @@ test("A1 close evidence shows the exact 2.4 m terminal vestibule and zero-lift g
   )).toBeLessThanOrEqual(0.05);
   expect(bogieCameraTarget[1] - bogieContactCenter[1]).toBeGreaterThan(0.5);
   expect(bogieCameraTarget[1] - bogieContactCenter[1]).toBeLessThan(1);
-  expect(distance3(bogieCameraPosition, bogieCameraTarget)).toBeGreaterThan(4.5);
-  expect(distance3(bogieCameraPosition, bogieCameraTarget)).toBeLessThan(8);
+  expect(distance3(bogieCameraPosition, bogieCameraTarget)).toBeGreaterThan(6);
+  expect(distance3(bogieCameraPosition, bogieCameraTarget)).toBeLessThan(9);
+  expect(Number(bogieRuntime.inspectionCameraEndpointBogieAircraftOppositionCosine)).toBeLessThan(-0.65);
+  const cameraFromBogie = [
+    bogieCameraPosition[0] - bogieContactCenter[0],
+    bogieCameraPosition[2] - bogieContactCenter[2],
+  ];
+  const aircraftFromBogie = [
+    bogieAircraftCenter[0] - bogieContactCenter[0],
+    bogieAircraftCenter[2] - bogieContactCenter[2],
+  ];
+  expect(cameraFromBogie[0] * aircraftFromBogie[0] + cameraFromBogie[1] * aircraftFromBogie[1]).toBeLessThan(0);
   await captureCanvas(page, "test-results/a1-bogie-contact-close.png");
 
   await selectSubview(page, "full-assembly");
@@ -243,6 +272,12 @@ test("A1 close evidence shows the exact 2.4 m terminal vestibule and zero-lift g
       terminalCameraPosition,
       terminalCameraTarget,
       terminalJointCenter,
+      terminalJointApronDistanceMeters: Number(
+        terminalRuntime.inspectionCameraEndpointJointApronDistanceMeters,
+      ),
+      terminalJointSideDistanceMeters: Number(
+        terminalRuntime.inspectionCameraEndpointJointSideDistanceMeters,
+      ),
       bogieGroundAuthority: bogieRuntime.terminal4UploadedJetwayBogieGroundContactAuthority,
       bogieGroundClearanceMeters: Number(
         bogieRuntime.terminal4UploadedJetwayBogieGroundClearanceMeters,
@@ -253,8 +288,12 @@ test("A1 close evidence shows the exact 2.4 m terminal vestibule and zero-lift g
         bogieRuntime.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters,
       ),
       bogieContactCenter,
+      bogieAircraftCenter,
       bogieCameraPosition,
       bogieCameraTarget,
+      bogieAircraftOppositionCosine: Number(
+        bogieRuntime.inspectionCameraEndpointBogieAircraftOppositionCosine,
+      ),
       noLiftAuthority: bogieRuntime.inspectionAircraftJetwayVerticalFitAuthority,
       requestedDoorFitMeters: requestedDoorFit,
       appliedDoorFitMeters: Number(bogieRuntime.inspectionAircraftJetwayVerticalFitMeters),
