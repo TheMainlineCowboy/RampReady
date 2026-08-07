@@ -35,7 +35,6 @@ async function captureCanvas(page, outputPath) {
 
 async function settle(page, milliseconds = 1800) {
   await page.waitForTimeout(milliseconds);
-  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 }
 
 async function selectInspectionPreset(page, preset) {
