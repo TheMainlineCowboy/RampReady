@@ -1,6 +1,12 @@
 name: Inspectable Actions storage purge
 
 on:
+  push:
+    branches:
+      - maintenance/actions-storage-purge-review
+    paths:
+      - .storage-purge-trigger
+      - .github/workflows/purge-actions-storage-review.yml
   pull_request:
     branches:
       - maintenance/actions-storage-purge-review-base
