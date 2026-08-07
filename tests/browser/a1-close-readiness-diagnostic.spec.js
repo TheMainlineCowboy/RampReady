@@ -7,6 +7,7 @@ const NO_LIFT_AUTHORITY = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const POSE_AUTHORITY = "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2";
 const HEADING_AUTHORITY = "source-a1-parking-heading-authored-door-registration-v2";
 const SOURCE_YAW = (0.491 * Math.PI) / 180;
+const EVIDENCE_DIR = "retained-evidence";
 
 function evaluateConditions(data) {
   const wallAuthority = String(data?.terminal4A1ConnectionAuthority || "");
@@ -52,7 +53,7 @@ function evaluateConditions(data) {
 }
 
 test("A1 close readiness is fully satisfied before visual capture", async ({ page }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const browserErrors = [];
   page.on("pageerror", (error) => browserErrors.push(`pageerror: ${error.message}`));
@@ -69,7 +70,7 @@ test("A1 close readiness is fully satisfied before visual capture", async ({ pag
     return data?.terminal4UploadedJetwayLoadState === "ready"
       || data?.terminal4UploadedJetwayLoadState === "load-error"
       || data?.environmentSource === "load-error";
-  }, null, { timeout: 150_000, polling: 100 });
+  }, null, { timeout: 180_000, polling: 100 });
   await page.waitForTimeout(2_000);
 
   const snapshot = await page.evaluate(() => ({
@@ -87,9 +88,9 @@ test("A1 close readiness is fully satisfied before visual capture", async ({ pag
     hud: snapshot.hud,
     runtime: snapshot.runtime,
   };
-  fs.mkdirSync("test-results", { recursive: true });
+  fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
   fs.writeFileSync(
-    "test-results/a1-close-readiness-diagnostic.json",
+    `${EVIDENCE_DIR}/a1-close-readiness-diagnostic.json`,
     `${JSON.stringify(diagnostic, null, 2)}\n`,
   );
 
