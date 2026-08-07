@@ -1,31 +1,25 @@
 import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
-const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
+const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v10";
 const A1_CAMERA_AUTHORITY = "oblique-measured-final-cab-and-aircraft-a1-v9";
 const VISUAL_BRIDGE_AUTHORITY = "real-final-inspection-preset-callback-v2";
 const INITIAL_PRESET_AUTHORITY = "launch-time-inspection-preset-before-browser-interaction-v1";
+const INITIAL_SUBVIEW_AUTHORITY = "launch-time-a1-terminal-joint-subview-v1";
 let source = fs.readFileSync(trainerPath, "utf8");
 
-const exactPreset = `  a14: Object.freeze({
-    id: "a14",
-    label: "A concourse midpoint",
-    x: 218.45,
-    z: -86.52,
-    yaw: 2.88,
-    cameraYaw: -0.95,
-    cameraDistance: 44,
-    cameraPosition: Object.freeze([184.0, 16.5, -52.0]),
-    cameraTarget: Object.freeze([218.45, 4.2, -86.52]),
-    cameraAuthority: "wide-diagonal-a14-exact-static-fleet-v1",
-  }),`;
-
-if (!source.includes('cameraAuthority: "wide-diagonal-a14-exact-static-fleet-v1"')) {
-  const oneLinePreset = /  a14: Object\.freeze\(\{ id: "a14", label: "A concourse midpoint", x: 218\.45, z: -86\.52, yaw: 2\.88, cameraYaw: -?\d+(?:\.\d+)?, cameraDistance: \d+(?:\.\d+)? \}\),/;
-  if (!oneLinePreset.test(source)) {
-    throw new Error(`${trainerPath}: A14 inspection preset anchor is missing`);
-  }
-  source = source.replace(oneLinePreset, exactPreset);
+// A14 previously used a guessed fixed camera that rendered empty pavement.
+// Keep the source gate tug position but use the same proven chase/orbit framing
+// as B14/B15 so the camera follows the actual source-gate location.
+const exactPreset = `  a14: Object.freeze({ id: "a14", label: "A concourse midpoint", x: 218.45, z: -86.52, yaw: 2.88, cameraYaw: 2.19, cameraDistance: 32 }),`;
+const existingA14Block = /  a14: Object\.freeze\(\{[\s\S]*?\n  \}\),/;
+const oneLineA14 = /  a14: Object\.freeze\(\{ id: "a14", label: "A concourse midpoint", x: 218\.45, z: -86\.52, yaw: 2\.88, cameraYaw: -?\d+(?:\.\d+)?, cameraDistance: \d+(?:\.\d+)? \}\),/;
+if (existingA14Block.test(source)) {
+  source = source.replace(existingA14Block, exactPreset);
+} else if (oneLineA14.test(source)) {
+  source = source.replace(oneLineA14, exactPreset);
+} else if (!source.includes(exactPreset)) {
+  throw new Error(`${trainerPath}: A14 inspection preset anchor is missing`);
 }
 
 const canonicalAuthorityBlock = `    canvas.dataset.inspectionCameraAuthority = preset.cameraAuthority || (preset.cameraPosition
@@ -108,7 +102,13 @@ const launchPresetEffect = `  useEffect(() => {
         if (!inspectionRef.current) toggleInspectionDrive();
         moveInspectionToPreset(resolvedInitialInspectionPreset);
         const canvas = simRef.current.renderer?.domElement;
-        if (canvas) canvas.dataset.initialInspectionPresetAuthority = "${INITIAL_PRESET_AUTHORITY}";
+        if (canvas) {
+          canvas.dataset.initialInspectionPresetAuthority = "${INITIAL_PRESET_AUTHORITY}";
+          canvas.dataset.a1EvidenceSubview = resolvedInitialInspectionPreset === "a1Connection"
+            ? "terminal-joint"
+            : "full-assembly";
+          canvas.dataset.initialInspectionSubviewAuthority = "${INITIAL_SUBVIEW_AUTHORITY}";
+        }
         return;
       }
       if (attempts < 600) frameId = window.requestAnimationFrame(activate);
@@ -119,7 +119,10 @@ const launchPresetEffect = `  useEffect(() => {
       window.cancelAnimationFrame(frameId);
     };
   }, [initialInspectionMode, moveInspectionToPreset, resolvedInitialInspectionPreset, toggleInspectionDrive]);`;
-if (!source.includes(INITIAL_PRESET_AUTHORITY) || !source.includes("moveInspectionToPreset(resolvedInitialInspectionPreset);")) {
+const existingLaunchPresetEffect = /  useEffect\(\(\) => \{\n    if \(!initialInspectionMode\) return undefined;[\s\S]*?initialInspectionMode, moveInspectionToPreset, resolvedInitialInspectionPreset, toggleInspectionDrive\]\);/;
+if (existingLaunchPresetEffect.test(source)) {
+  source = source.replace(existingLaunchPresetEffect, launchPresetEffect);
+} else if (!source.includes(INITIAL_PRESET_AUTHORITY) || !source.includes("moveInspectionToPreset(resolvedInitialInspectionPreset);")) {
   if (!source.includes(legacyInitialEffect)) {
     throw new Error(`${trainerPath}: launch-time inspection effect anchor is missing`);
   }
@@ -144,9 +147,7 @@ if (temporaryBridgePattern.test(source)) {
 }
 
 for (const token of [
-  'cameraPosition: Object.freeze([184.0, 16.5, -52.0])',
-  'cameraTarget: Object.freeze([218.45, 4.2, -86.52])',
-  'cameraAuthority: "wide-diagonal-a14-exact-static-fleet-v1"',
+  exactPreset,
   "preset.cameraAuthority || (preset.cameraPosition",
   `"${A1_CAMERA_AUTHORITY}"`,
   CANONICAL_ROUTE_AUTHORITY,
@@ -154,12 +155,23 @@ for (const token of [
   "moveInspectionToPreset(presetId)",
   "}, [moveInspectionToPreset]);",
   INITIAL_PRESET_AUTHORITY,
+  INITIAL_SUBVIEW_AUTHORITY,
   'initialInspectionPreset = "a1",',
   "const resolvedInitialInspectionPreset =",
   "moveInspectionToPreset(resolvedInitialInspectionPreset);",
+  'resolvedInitialInspectionPreset === "a1Connection"',
+  'canvas.dataset.a1EvidenceSubview =',
+  '"terminal-joint"',
   "initialInspectionMode, moveInspectionToPreset, resolvedInitialInspectionPreset, toggleInspectionDrive",
 ]) {
-  if (!source.includes(token)) throw new Error(`${trainerPath}: fixed final inspection camera preparation is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${trainerPath}: final inspection camera preparation is missing ${token}`);
+}
+for (const forbidden of [
+  'cameraPosition: Object.freeze([184.0, 16.5, -52.0])',
+  'cameraTarget: Object.freeze([218.45, 4.2, -86.52])',
+  'cameraAuthority: "wide-diagonal-a14-exact-static-fleet-v1"',
+]) {
+  if (source.includes(forbidden)) throw new Error(`${trainerPath}: obsolete empty-pavement A14 camera remains: ${forbidden}`);
 }
 if (source.includes("visual-evidence-source-gate-presets-v8")) {
   throw new Error(`${trainerPath}: temporary hard-coded visual evidence presets survived final camera preparation`);
@@ -171,4 +183,4 @@ fs.writeFileSync(trainerPath, source, "utf8");
 // registration here. The photo-registered Rotunda finalizer deliberately runs
 // later, immediately before Vite bundles the fully migrated production runtime.
 await import(`./prepare-terminal4-jetway-source-registration-v1.mjs?terminal4-registration=${Date.now()}`);
-console.log("Prepared the final A1/A14 inspection cameras, launch-time evidence preset, real inspection callback bridge, and exact Terminal 4 source-coordinate registration. Final A1 Rotunda/wall placement remains deferred until after the complete grounding/readiness migration stack.");
+console.log("Prepared the final A1 terminal-joint subview, chase-framed A14 fleet view, launch-time evidence preset and exact Terminal 4 source-coordinate registration. Final A1 Rotunda/wall placement remains deferred until after the complete grounding/readiness migration stack.");
