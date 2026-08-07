@@ -38,6 +38,37 @@ async function settle(page, milliseconds = 1800) {
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 }
 
+async function selectInspectionPreset(page, preset) {
+  const state = await page.evaluate((expectedPreset) => {
+    const select = document.querySelector('select[aria-label="Inspection location"]');
+    if (!(select instanceof HTMLSelectElement)) {
+      return { ok: false, reason: "inspection-location-select-missing" };
+    }
+    const option = Array.from(select.options).find(entry => entry.value === expectedPreset);
+    if (!option) {
+      return {
+        ok: false,
+        reason: "inspection-preset-option-missing",
+        expectedPreset,
+        options: Array.from(select.options).map(entry => entry.value),
+      };
+    }
+    select.value = expectedPreset;
+    select.dispatchEvent(new Event("input", { bubbles: true }));
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    return {
+      ok: true,
+      expectedPreset,
+      disabled: select.disabled,
+      ariaDisabled: select.getAttribute("aria-disabled"),
+      value: select.value,
+    };
+  }, preset);
+  if (!state.ok) throw new Error(`Unable to select inspection preset ${preset}: ${JSON.stringify(state)}`);
+  await page.waitForFunction(expected => document.querySelector("canvas.trainerCanvas")?.dataset.inspectionPreset === expected, preset, { timeout: 30000 });
+  return state;
+}
+
 async function waitForTerminal4Readiness(page, consoleErrors, pageErrors, failedRequests) {
   const deadline = Date.now() + 120000;
   let lastRuntime = {};
@@ -109,6 +140,7 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
   const freeDrive = page.getByRole("button", { name: "Free-drive inspection" });
   await expect(freeDrive).toBeVisible();
   await freeDrive.click();
+  await page.waitForFunction(() => document.querySelector("canvas.trainerCanvas")?.dataset.inspectionMode === "active", null, { timeout: 30000 });
   const location = page.getByLabel("Inspection location");
   const camera = page.getByLabel("Camera view");
   await expect(location).toBeVisible();
@@ -117,14 +149,14 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
   await camera.selectOption("chase");
 
   const captures = {};
+  const presetSelection = {};
   for (const [preset, file] of [
     ["a1Connection", "a1-terminal-connection.png"],
     ["a14", "a-concourse-fleet.png"],
     ["b14", "b-concourse-fleet.png"],
     ["b15", "b15-terminal-jetways.png"],
   ]) {
-    await location.selectOption(preset);
-    await page.waitForFunction(expected => document.querySelector("canvas.trainerCanvas")?.dataset.inspectionPreset === expected, preset, { timeout: 30000 });
+    presetSelection[preset] = await selectInspectionPreset(page, preset);
     await settle(page, 2200);
     captures[file] = await captureCanvas(page, `${evidenceDirectory}/${file}`);
   }
@@ -141,6 +173,7 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
     pageUrl,
     runtime,
     captures,
+    presetSelection,
     consoleErrors,
     pageErrors,
     failedRequests,
