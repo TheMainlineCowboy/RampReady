@@ -128,7 +128,9 @@ const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js",
   "function findTerminalWallDistance",
   "buildSourcePlacedTerminal4Jetways(THREE, terminal, sourceTextures = {})",
   "const terminalConnection = findTerminalWallConnection",
-  "const terminalWallDistance = terminalConnection?.distance ?? null",
+  "const sourceHeadingTerminalConnection = jetway.g === \"A1\"",
+  "const resolvedTerminalConnection = jetway.g === \"A1\"",
+  "const terminalWallDistance = resolvedTerminalConnection?.distance ?? null",
   "const connectorYaw = Math.atan2(connectorTowardX, connectorTowardZ)",
   "const lowerFacadeWallDistance = findTerminalWallDistance",
   "const sourceFacadeRecessMeters",
@@ -230,4 +232,4 @@ if (!generatedRuntime.includes('dataset.inspectionMode = inspectionRef.current ?
   throw new Error("Generated PHX runtime does not expose initial inspection mode state");
 }
 
-console.log("RampReady PHX inspection pass verified for draft validation: unrestricted tug inspection, pavement-coincident markings, source-qualified service bays, irregular lower-wall facade fits, stabilized unlit source-textured KPHX concrete, stock-scale AIR_Jetway01 placement, exact textures and an independent A1 terminal-wall connector are active. Promotion remains blocked while the original stock skinned mesh is unavailable and fallback geometry is disclosed.");
+console.log("RampReady PHX inspection pass verified for draft validation: unrestricted tug inspection, pavement-coincident markings, source-qualified service bays, irregular lower-wall facade fits, stabilized unlit source-textured KPHX concrete, stock-scale AIR_Jetway01 placement, exact textures and split A1/static terminal-wall connection authority are active. Promotion remains blocked while the original stock skinned mesh is unavailable and fallback geometry is disclosed.");
