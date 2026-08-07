@@ -95,4 +95,5 @@ await import(`./prepare-current-head-browser-expectations-v1.mjs?current-head=${
 await import(`./prepare-a1-no-lift-evidence-json-v1.mjs?no-lift-evidence=${Date.now()}`);
 await import(`./prepare-a1-post-lifecycle-evidence-v1.mjs?post-lifecycle-evidence=${Date.now()}`);
 await import(`./prepare-a1-bogie-centroid-browser-authority-v1.mjs?bogie-centroid=${Date.now()}`);
-console.log("Restored the authored A1 parking heading, selected the exporter model axis that remains apron-side of the measured terminal wall, registered the visible rendered forward-left door to the Cab, required proved three-tire contact grounding, retained zero-lift signed-gap evidence, and kept the grounded pose lifecycle intact.");
+await import(`./prepare-source-locked-a1-elbow-finalizer-v1.mjs?final-a1-geometry=${Date.now()}`);
+console.log("Restored the authored A1 parking heading, retained the grounded aircraft and browser evidence contracts, then made the exact source-locked Rotunda elbow the final A1 geometry authority immediately before production bundling.");
