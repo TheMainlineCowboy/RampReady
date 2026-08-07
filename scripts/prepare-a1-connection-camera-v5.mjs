@@ -1,5 +1,7 @@
 import fs from "node:fs";
 
+await import(`./prepare-terminal4-jetway-rendered-cleanup-v1.mjs?rendered-cleanup=${Date.now()}`);
+
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v10";
 const A1_CAMERA_AUTHORITY = "oblique-measured-final-cab-and-aircraft-a1-v9";
