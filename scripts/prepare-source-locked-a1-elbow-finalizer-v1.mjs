@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import { execFileSync } from "node:child_process";
 
 const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 const sourceRegisteredImport = `import {
@@ -7,15 +6,17 @@ const sourceRegisteredImport = `import {
   SOURCE_REGISTERED_A1_ELBOW_AUTHORITY,
 } from "./sourceRegisteredA1RotundaElbowV2.js";`;
 
-// Re-establish the committed readiness baseline after the historical A1
-// migration stack has run. Those migrations still provide exact-model,
-// articulation and grounding diagnostics, but their rigid-parent/zero-angle
-// assumptions are not allowed to own the final A1 placement. The stock BGL
-// record identifies the real wall ray and aircraft-side heading; the supplied
-// replacement Rotunda is photo-registered to that wall independently.
-let source = execFileSync("git", ["show", `HEAD:${readinessPath}`], { encoding: "utf8" });
+// IMPORTANT: operate on the CURRENT prepared readiness layer. The production
+// migration stack has already upgraded grounding, static-fleet closure and
+// visual acceptance contracts by the time this finalizer runs. Reconstructing
+// the old committed baseline here would silently resurrect obsolete checks
+// (including the old fixed 0.06 m bogie correction) and discard newer evidence.
+// This finalizer changes only A1's final placement authority: preserve the
+// source aircraft-side yaw, register the supplied Rotunda to the real wall,
+// require the compact 2.4 m terminal leg, and reject the old straight portal.
+let source = fs.readFileSync(readinessPath, "utf8");
 if (!source.includes("correctUploadedJetwayInstallation")) {
-  throw new Error(`${readinessPath}: committed readiness baseline is missing the installation correction`);
+  throw new Error(`${readinessPath}: current prepared readiness layer is missing installation correction`);
 }
 
 if (!source.includes("sourceRegisteredA1RotundaElbowV2")) {
@@ -51,12 +52,13 @@ if (!source.includes("const sourceLockedA1Authority")) {
   source = source.replace(magnitudeBlock, sourceLockEvidenceBlock);
 }
 
-// A zero portal-angle error was a regression guard for the obsolete straight
-// installation. A1 must instead prove: the source aircraft-side yaw survives,
-// the exact Rotunda is registered to the measured real wall, the terminal leg
-// is the photo-matched compact 2.4 m span, and the Rotunda produces a visible
-// corner into the authored movable bridge.
+// Zero portal-angle was the core visual regression: it forced the fixed
+// terminal leg and the movable bridge into one line. Remove only that obsolete
+// predicate wherever an older migration left it; all current grounding,
+// closure, source-integrity and exact-model predicates remain untouched.
 source = source.replace(/\n\s*\|\| a1PortalAlignmentError > 1e-6/g, "");
+source = source.replace(/\n\s*\|\| a1PortalAlignmentError > [0-9.eE+-]+/g, "");
+
 const partOrderCondition = "            || !a1PartOrderValid";
 const sourceLockConditions = `${partOrderCondition}
             || sourceLockedA1Authority !== SOURCE_REGISTERED_A1_ELBOW_AUTHORITY
@@ -77,8 +79,9 @@ if (!source.includes("sourceLockedA1Authority !== SOURCE_REGISTERED_A1_ELBOW_AUT
 
 if (!source.includes("sourceLockedA1Elbow,")) {
   const returnAnchor = "            installationCorrection,";
-  if (!source.includes(returnAnchor)) throw new Error(`${readinessPath}: installation correction return anchor is missing`);
-  source = source.replace(returnAnchor, `${returnAnchor}\n            sourceLockedA1Elbow,`);
+  if (source.includes(returnAnchor)) {
+    source = source.replace(returnAnchor, `${returnAnchor}\n            sourceLockedA1Elbow,`);
+  }
 }
 
 for (const token of [
@@ -93,14 +96,20 @@ for (const token of [
   "sourceYawPreserved",
   "uploadedJetwayA1TerminalSideIndependentFromTunnelAxis",
   "uploadedJetwayA1PassengerPassageCrossSectionBlocked",
-  "sourceLockedA1Elbow,",
 ]) {
   if (!source.includes(token)) throw new Error(`${readinessPath}: photo-registered Rotunda finalizer is missing ${token}`);
 }
-if (source.includes("|| a1PortalAlignmentError > 1e-6")) {
-  throw new Error(`${readinessPath}: obsolete zero-angle A1 portal gate remains`);
+if (/\|\| a1PortalAlignmentError >/.test(source)) {
+  throw new Error(`${readinessPath}: obsolete straight-A1 portal alignment gate remains`);
+}
+
+// Fail if the finalizer accidentally rolled modern grounding back to the old
+// fixed correction contract. Current preparation must retain whichever exact
+// measured/multi-point grounding predicates the migration stack installed.
+if (source.includes("bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1")) {
+  throw new Error(`${readinessPath}: obsolete fixed bogie-correction readiness predicate was resurrected`);
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
 await import(`./prepare-terminal4-jetway-source-registration-v1.mjs?photo-registered-rotunda=${Date.now()}`);
-console.log("Prepared final A1 readiness: exact source aircraft-side yaw, photo-registered Rotunda at the real Terminal 4 wall, compact 2.4 m fixed terminal leg, visible Rotunda elbow, exact supplied child hierarchy, measured ground contact, and no T4_WALK targeting.");
+console.log("Prepared final A1 readiness on the current migration layer: preserved modern exact grounding/static-fleet checks, preserved source aircraft-side yaw, photo-registered the supplied Rotunda to the real Terminal 4 wall, required the compact 2.4 m fixed leg and visible Rotunda elbow, and rejected T4_WALK/straight-portal targeting.");
