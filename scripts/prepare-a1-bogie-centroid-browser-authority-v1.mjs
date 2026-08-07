@@ -121,4 +121,5 @@ if (authorityConsumerCount < 4) {
   throw new Error(`Expected at least four bogie-ground browser consumers including articulation, found ${authorityConsumerCount}`);
 }
 
-console.log(`Migrated ${changed} browser suite(s) to ${centroidAuthority}; articulation now requires the v2 authority in readiness, assertion, and retained evidence; verified ${authorityConsumerCount} consumers.`);
+await import(`./prepare-source-locked-a1-elbow-finalizer-v1.mjs?post-bogie-source-lock=${Date.now()}`);
+console.log(`Migrated ${changed} browser suite(s) to ${centroidAuthority}; articulation requires the v2 authority, and the exact source-locked A1 Rotunda elbow was re-applied after the final legacy A1 migration.`);
