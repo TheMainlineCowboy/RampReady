@@ -58,5 +58,5 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-await import(`./prepare-terminal4-jetway-source-registration-v1.mjs?terminal4-registration=${Date.now()}`);
-console.log("Prepared the relocated A1 evidence coordinates together with the fixed apron-side A14 exact-fleet camera under the established canonical route authority, then enforced exact Terminal 4 jetway source registration.");
+await import(`./prepare-source-locked-a1-elbow-finalizer-v1.mjs?terminal4-source-lock=${Date.now()}`);
+console.log("Prepared the A1/A14 inspection cameras, exact Terminal 4 jetway source registration, and source-locked A1 Rotunda elbow as the final runtime placement authority.");
