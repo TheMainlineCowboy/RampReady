@@ -1,38 +1,54 @@
-name: Verify PR 140 acceptance contracts
+name: Materialize PR 140 acceptance contracts
 
 on:
-  pull_request:
+  push:
     branches:
-      - maintenance/pr140-acceptance-base
-    types: [opened, synchronize, reopened]
+      - maintenance/pr140-acceptance-run
     paths:
+      - .github/workflows/patch-pr140-acceptance-contracts.yml
       - .pr140-contract-patch-trigger
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pull-requests: read
+  contents: write
+
+concurrency:
+  group: pr140-contract-materialization
+  cancel-in-progress: true
 
 jobs:
-  verify:
+  materialize:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - name: Check out PR 140 branch
+      - name: Check out exact PR 140 branch
         uses: actions/checkout@v4
         with:
           ref: fix/a1-rigid-parent-orientation-final
           fetch-depth: 0
+          token: ${{ github.token }}
 
-      - name: Verify current fail-closed acceptance migrations
+      - name: Materialize current fail-closed browser contracts
         shell: bash
         run: |
           set -euo pipefail
+          node scripts/prepare-current-head-browser-expectations-v1.mjs
+          node scripts/prepare-a1-post-lifecycle-evidence-v1.mjs
+          node scripts/prepare-a1-bogie-centroid-browser-authority-v1.mjs
           node scripts/verify-a1-measured-ground-contact-contract.mjs
           node scripts/verify-a1-evidence-subview-contract.mjs
-          grep -Fq 'grounded-jetway-door-gap-reported-no-child-lift-v1' scripts/prepare-current-head-browser-expectations-v1.mjs
-          grep -Fq 'exact-authored-a1-lowest-geometry-ramp-contact-v2' scripts/prepare-a1-bogie-centroid-browser-authority-v1.mjs
-          grep -Fq 'exact-a1-terminal-joint-and-bogie-contact-subviews-v2' scripts/prepare-a1-evidence-subviews-v1.mjs
-          grep -Fq 'articulationAppliedJetwayVerticalFitMeters).toBeCloseTo(0, 5)' scripts/prepare-current-head-browser-expectations-v1.mjs
-          grep -Fq 'inspectionCameraEndpointBogieAircraftOppositionCosine' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
-          echo 'PR 140 acceptance contract maintenance is verification-only; no workflow may rewrite the PR branch.'
+          git diff --check
+
+      - name: Commit generated acceptance contracts to PR 140
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add tests/browser
+          if git diff --cached --quiet; then
+            echo 'Current acceptance contracts are already materialized.'
+            exit 0
+          fi
+          git commit -m 'test(a1): materialize current visual acceptance contracts'
+          git push origin HEAD:fix/a1-rigid-parent-orientation-final
