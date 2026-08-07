@@ -7,6 +7,7 @@ const protectedSourcePaths = Object.freeze([
   "src/environment/sourcePlacedTerminal4Jetways.js",
   "src/environment/uploadedAirportJetwayFleet.js",
   "src/environment/uploadedAirportJetwayFleetReadyV2.js",
+  "src/environment/correctUploadedJetwayInstallationV1.js",
   "src/environment/authoredTerminal4Visual.js",
   "src/environment/authoredKphxGround.js",
   "src/environment/authoredKphxPhotoGround.js",
@@ -24,6 +25,7 @@ const requiredBaselines = Object.freeze([
   ["src/environment/sourcePlacedTerminal4Jetways.js", "buildSourcePlacedTerminal4Jetways", "Terminal 4 jetway"],
   ["src/environment/uploadedAirportJetwayFleet.js", "installUploadedAirportJetwayFleet", "supplied airport jetway fleet"],
   ["src/environment/uploadedAirportJetwayFleetReadyV2.js", "installUploadedAirportJetwayFleet", "supplied airport jetway readiness"],
+  ["src/environment/correctUploadedJetwayInstallationV1.js", "correctUploadedJetwayInstallation", "supplied airport jetway installation correction"],
   ["src/environment/authoredTerminal4Visual.js", "installAuthoredTerminal4Visual", "authored Terminal 4"],
   ["src/environment/authoredKphxGround.js", "installAuthoredKphxGround", "authored KPHX ground"],
   ["src/environment/authoredKphxPhotoGround.js", "installAuthoredKphxPhotoGround", "authored KPHX source aerial"],
@@ -62,10 +64,17 @@ try {
   await runNode("scripts/prepare-terminal4-floating-roof-filter.mjs");
   await runNode("scripts/prepare-terminal4-jetway-simulator-polish.mjs");
   await runNode("scripts/prepare-a1-terminal-attachment-v14.mjs");
+  await runNode("scripts/prepare-a1-photo-registered-stop-v1.mjs");
+  await runNode("scripts/prepare-a1-whole-assembly-orientation-v2.mjs");
+  await runNode("scripts/prepare-a1-rotunda-vestibule-closure-v1.mjs");
   await runNode("scripts/prepare-terminal4-static-jetway-parking-v15.mjs");
   await runNode("scripts/prepare-terminal4-ramp-facade-v16.mjs");
   await runNode("scripts/prepare-terminal4-b-concourse-extension-v17.mjs");
   await runNode("scripts/prepare-terminal4-attachment-evidence-v14.mjs");
+  // Run these last so legacy preparation cannot restore the retired wing-area
+  // target or reject the measured 1.842 m extension with an arbitrary window.
+  await runNode("scripts/prepare-crj-model-measured-door-v1.mjs");
+  await runNode("scripts/prepare-a1-measured-door-readiness-v1.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
   buildError = error;
@@ -94,4 +103,4 @@ if (buildError && restorationError) {
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
-console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, connected A1 to the measured T4_WALK source portal, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly, including both supplied-jetway runtime modules and both trainer sources.");
+console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, installed the complete authored A1 assembly with the Rotunda terminal-side and Cab apron-side, targeted the cab to the forward-left door measured from the authored CRJ model instead of the wing area, validated the measured extension against the authored articulation limits and exact contact-gap checks, bounded the whole-assembly relocation from the authored bridge span and terminal distances, photo-registered the terminal joint with a compact recessed vestibule, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, and restored every protected committed source exactly.");

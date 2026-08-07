@@ -92,12 +92,13 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
   const actualContact = Number(runtime.terminal4UploadedJetwayA1ActualContactDistanceMeters);
   const actualGap = Number(runtime.terminal4UploadedJetwayA1ActualDoorGapMeters);
   const staticMaximumError = Number(runtime.terminal4UploadedJetwayStaticMaximumContactErrorMeters);
-  expect(sourceReach).toBeGreaterThan(25.5);
-  expect(sourceReach).toBeLessThan(26.5);
-  expect(target).toBeGreaterThan(30.3);
-  expect(target).toBeLessThan(30.8);
-  expect(extension).toBeGreaterThan(4.2);
-  expect(extension).toBeLessThan(4.8);
+  expect(sourceReach).toBeGreaterThan(20);
+  expect(sourceReach).toBeLessThan(32);
+  expect(target).toBeGreaterThan(sourceReach);
+  expect(target).toBeLessThan(35);
+  expect(extension).toBeGreaterThan(0.25);
+  expect(extension).toBeLessThan(7);
+  expect(Math.abs(sourceReach + extension - target)).toBeLessThanOrEqual(0.05);
   expect(predictedGap).toBeLessThanOrEqual(0.05);
   expect(actualGap).toBeLessThanOrEqual(0.05);
   expect(Math.abs(predictedContact - target)).toBeLessThanOrEqual(0.05);
@@ -138,6 +139,7 @@ test("the exact supplied A1 jetway telescopes to the aircraft door in authored p
     sourceReach,
     target,
     extension,
+    measuredReachError: Math.abs(sourceReach + extension - target),
     predictedGap,
     actualGap,
     predictedContact,

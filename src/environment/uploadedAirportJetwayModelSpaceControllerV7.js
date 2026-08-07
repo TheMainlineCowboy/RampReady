@@ -67,7 +67,10 @@ export function createModelSpaceA1Controller(THREE, {
     if (!visual) return;
     const retract = 1 - deployment;
     const { anchor, model, nodes, base, direction } = visual;
+    // Keep the uploaded GLB's authored parent yaw. A1 may be translated to the
+    // terminal wall, but the complete bridge must never be reversed end-for-end.
     anchor.rotation.y = base.yaw;
+    anchor.userData.authoredEndOrderControllerAuthority = "preserve-uploaded-base-yaw-zero-parent-reversal-v2";
     anchor.updateMatrix();
     for (const [name, node] of Object.entries(nodes)) {
       if (node) restoreLocalMatrix(node, base[name]);
