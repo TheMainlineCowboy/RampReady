@@ -52,6 +52,7 @@ for (const stage of orderedBuildStages) {
 requireTokens("groundedWall", [
   "A1 ramp-level real Terminal 4 source wall v34 no-overhead-walkway",
   "A1 grounded-facade search v34 overhead-walkway-footprint-exclusion",
+  "A1 exact T4_WALK horizontal footprint exclusion v34",
   "const MINIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 3.4",
   "const MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 28",
   "const MAXIMUM_A1_WALL_HEIGHT_METERS = 2.2",
@@ -67,16 +68,10 @@ requireTokens("groundedWall", [
   "finalVisibleVestibuleCheckedAfterRelocation: true",
   "forbidden A1 walkway anchor survived grounded-terminal preparation",
 ]);
-for (const forbidden of [
-  "const requirePreferredHemisphere = true",
-  "groundedTerminalDirectionDot >= 0.15",
-  "terminalSideHemisphereLocked: true",
-  "minimumTerminalDirectionDot: 0.15",
-]) {
-  if (source.groundedWall.includes(forbidden)) {
-    throw new Error(`${files.groundedWall}: obsolete direction-only A1 wall discriminator remains: ${forbidden}`);
-  }
-}
+// The preparer itself owns the fail-closed check that obsolete direction-only
+// runtime tokens are absent after generation. Do not search the preparer's own
+// source text for those literals here, because its internal forbidden-token
+// list necessarily contains the strings it is designed to reject.
 requireTokens("wallAuthority", [
   "compact-grounded-A1-authority-idempotence-v31",
   "expected exactly one block-scoped grounded A1 assignment",
