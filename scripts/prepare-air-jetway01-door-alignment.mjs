@@ -46,6 +46,10 @@ for (const token of [
   if (!verifier.includes(token)) throw new Error(`KPHX verifier is missing simulator-validated exact-jetway alignment token ${token}`);
 }
 
+// Scan the prepared production jetway source for retired geometry. Do not scan
+// the verifier for these literals: it intentionally contains some of them in
+// its own forbidden-token assertions, and treating those negative assertions as
+// production geometry makes this guard reject itself before browser evidence.
 for (const forbidden of [
   "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
   "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.28",
@@ -54,8 +58,8 @@ for (const forbidden of [
   "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.61",
   "createArchedTunnelGeometry(THREE, 2.08, 2.02, 0.18)",
 ]) {
-  if (jetways.includes(forbidden) || verifier.includes(forbidden)) {
-    throw new Error(`Exact Airport Jetway alignment contains forbidden conflicting/shrunk geometry ${forbidden}`);
+  if (jetways.includes(forbidden)) {
+    throw new Error(`Exact Airport Jetway alignment contains forbidden conflicting/shrunk production geometry ${forbidden}`);
   }
 }
 
