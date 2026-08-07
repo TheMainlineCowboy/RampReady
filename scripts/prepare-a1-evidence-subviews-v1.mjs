@@ -55,33 +55,69 @@ const subviewBlock = `          let exactA1CameraPositionX = exactA1CameraFrameC
             const exactA1JointCenterX = (exactA1CameraWallX + exactA1CameraRotundaX) * 0.5;
             const exactA1JointCenterY = (exactA1CameraWallY + exactA1CameraRotundaY) * 0.5;
             const exactA1JointCenterZ = (exactA1CameraWallZ + exactA1CameraRotundaZ) * 0.5;
-            const exactA1JointSpan = Math.hypot(
-              exactA1CameraRotundaX - exactA1CameraWallX,
-              exactA1CameraRotundaZ - exactA1CameraWallZ,
-            );
+            const exactA1JointVectorX = exactA1CameraRotundaX - exactA1CameraWallX;
+            const exactA1JointVectorZ = exactA1CameraRotundaZ - exactA1CameraWallZ;
+            const exactA1JointSpan = Math.hypot(exactA1JointVectorX, exactA1JointVectorZ);
             if (!(exactA1JointSpan > 2.9 && exactA1JointSpan < 5.8)) {
               throw new Error(\`A1 terminal-joint close camera received invalid exact span: \${exactA1JointSpan}\`);
             }
-            // Stay well out on the apron and far enough side-on that the Rotunda,
-            // bellows, compact vestibule and terminal wall all fit in one frame.
-            const exactA1JointApronDistance = Math.max(3.8, exactA1JointSpan * 0.95);
-            const exactA1JointSideDistance = Math.max(9.4, exactA1JointSpan * 2.35);
+
+            // Frame the disputed attachment side-on to the actual wall-to-Rotunda
+            // vector. The old bridge-axis camera stacked T4_WALK directly behind
+            // the Rotunda and made a real terminal-facade joint look like a
+            // walkway attachment. This basis forces the compact vestibule to run
+            // across the image while keeping the camera on the apron side.
+            const exactA1JointUnitX = exactA1JointVectorX / exactA1JointSpan;
+            const exactA1JointUnitZ = exactA1JointVectorZ / exactA1JointSpan;
+            let exactA1JointSideX = -exactA1JointUnitZ;
+            let exactA1JointSideZ = exactA1JointUnitX;
+            const exactA1JointToCabX = exactA1CameraCabX - exactA1JointCenterX;
+            const exactA1JointToCabZ = exactA1CameraCabZ - exactA1JointCenterZ;
+            const exactA1JointToCabLength = Math.hypot(exactA1JointToCabX, exactA1JointToCabZ);
+            if (!(exactA1JointToCabLength > 5)) {
+              throw new Error(\`A1 terminal-joint side camera has invalid Cab separation: \${exactA1JointToCabLength}\`);
+            }
+            const exactA1JointApronX = exactA1JointToCabX / exactA1JointToCabLength;
+            const exactA1JointApronZ = exactA1JointToCabZ / exactA1JointToCabLength;
+            const sideDotApron = exactA1JointSideX * exactA1JointApronX
+              + exactA1JointSideZ * exactA1JointApronZ;
+            if (sideDotApron < 0) {
+              exactA1JointSideX *= -1;
+              exactA1JointSideZ *= -1;
+            }
+            const exactA1JointApronDistance = Math.max(4.2, exactA1JointSpan * 1.05);
+            const exactA1JointSideDistance = Math.max(10.4, exactA1JointSpan * 2.62);
             exactA1CameraPositionX = exactA1JointCenterX
-              + exactA1CameraApronX * exactA1JointApronDistance
-              + exactA1CameraSideX * exactA1CameraSideSign * exactA1JointSideDistance;
-            exactA1CameraPositionY = exactA1JointCenterY + 3.6;
+              + exactA1JointSideX * exactA1JointSideDistance
+              + exactA1JointApronX * exactA1JointApronDistance;
+            exactA1CameraPositionY = exactA1JointCenterY + 3.25;
             exactA1CameraPositionZ = exactA1JointCenterZ
-              + exactA1CameraApronZ * exactA1JointApronDistance
-              + exactA1CameraSideZ * exactA1CameraSideSign * exactA1JointSideDistance;
+              + exactA1JointSideZ * exactA1JointSideDistance
+              + exactA1JointApronZ * exactA1JointApronDistance;
             exactA1CameraTargetX = exactA1JointCenterX;
-            exactA1CameraTargetY = exactA1JointCenterY - 0.1;
+            exactA1CameraTargetY = exactA1JointCenterY - 0.05;
             exactA1CameraTargetZ = exactA1JointCenterZ;
+            const exactA1JointCameraVectorX = exactA1CameraPositionX - exactA1JointCenterX;
+            const exactA1JointCameraVectorZ = exactA1CameraPositionZ - exactA1JointCenterZ;
+            const exactA1JointCameraHorizontalDistance = Math.hypot(
+              exactA1JointCameraVectorX,
+              exactA1JointCameraVectorZ,
+            );
+            const exactA1JointSideOnCosine = Math.abs(
+              (exactA1JointCameraVectorX * exactA1JointUnitX
+                + exactA1JointCameraVectorZ * exactA1JointUnitZ)
+                / exactA1JointCameraHorizontalDistance,
+            );
+            if (!(exactA1JointSideOnCosine < 0.55)) {
+              throw new Error(\`A1 terminal-joint camera is not sufficiently side-on to the wall joint: \${exactA1JointSideOnCosine}\`);
+            }
             renderer.domElement.dataset.inspectionCameraEndpointJointCenter = [
               exactA1JointCenterX, exactA1JointCenterY, exactA1JointCenterZ,
             ].map((value) => value.toFixed(6)).join(",");
             renderer.domElement.dataset.inspectionCameraEndpointJointSpanMeters = exactA1JointSpan.toFixed(6);
             renderer.domElement.dataset.inspectionCameraEndpointJointApronDistanceMeters = exactA1JointApronDistance.toFixed(6);
             renderer.domElement.dataset.inspectionCameraEndpointJointSideDistanceMeters = exactA1JointSideDistance.toFixed(6);
+            renderer.domElement.dataset.inspectionCameraEndpointJointSideOnCosine = exactA1JointSideOnCosine.toFixed(6);
           } else if (exactA1EvidenceSubview === "bogie-contact") {
             if (!exactA1BogieContactReady) {
               throw new Error("A1 bogie-contact close camera is missing the exact authored low-contact centroid");
@@ -152,6 +188,10 @@ for (const token of [
   'exactA1EvidenceSubview === "bogie-contact"',
   "const exactA1JointCenterX",
   "const exactA1JointSpan",
+  "const exactA1JointUnitX",
+  "const exactA1JointSideX",
+  "const exactA1JointSideOnCosine",
+  "inspectionCameraEndpointJointSideOnCosine",
   "const exactA1JointApronDistance",
   "const exactA1JointSideDistance",
   "const exactA1BogieContactX",
@@ -185,4 +225,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared v2 A1 close evidence: an apron-side terminal-joint frame with the full compact attachment visible and a bogie frame forced onto the jetway side of the aircraft.");
+console.log("Prepared v2 A1 close evidence with a true wall-to-Rotunda side-on terminal frame and a bogie frame driven by the final transformed authored low-contact centroid.");
