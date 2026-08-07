@@ -3,59 +3,40 @@ import fs from "node:fs";
 
 const pageUrl = process.env.PAGE_URL || "http://127.0.0.1:4173/RampReady/";
 const evidenceDirectory = "jetway-visual-evidence";
+const progressPath = `${evidenceDirectory}/capture-progress.json`;
 
-async function captureCanvas(page, outputPath) {
-  const bounds = await page.evaluate(() => {
-    const element = document.querySelector("canvas.trainerCanvas");
-    if (!(element instanceof HTMLCanvasElement)) throw new Error("RampReady canvas is missing");
-    const rect = element.getBoundingClientRect();
-    return {
-      x: Math.max(0, rect.left),
-      y: Math.max(0, rect.top),
-      width: Math.min(window.innerWidth, rect.width),
-      height: Math.min(window.innerHeight, rect.height),
-    };
-  });
-  const session = await page.context().newCDPSession(page);
-  try {
-    const result = await session.send("Page.captureScreenshot", {
-      format: "png",
-      fromSurface: true,
-      captureBeyondViewport: false,
-      clip: { ...bounds, scale: 1 },
-    });
-    const png = Buffer.from(result.data, "base64");
-    fs.writeFileSync(outputPath, png);
-    expect(png.length).toBeGreaterThan(100000);
-    return png.length;
-  } finally {
-    await session.detach();
-  }
+function checkpoint(stage, detail = {}) {
+  fs.mkdirSync(evidenceDirectory, { recursive: true });
+  fs.writeFileSync(progressPath, `${JSON.stringify({ stage, capturedAtUtc: new Date().toISOString(), ...detail }, null, 2)}\n`);
 }
 
-async function settle(page, milliseconds = 1800) {
-  await page.waitForTimeout(milliseconds);
+async function captureCanvas(page, outputPath) {
+  const canvas = page.locator("canvas.trainerCanvas");
+  await expect(canvas).toBeVisible({ timeout: 10000 });
+  const buffer = await canvas.screenshot({ path: outputPath, timeout: 15000, animations: "disabled" });
+  expect(buffer.length).toBeGreaterThan(100000);
+  return buffer.length;
 }
 
 async function selectInspectionPreset(page, preset) {
-  const selector = page.getByLabel("Inspection location");
-  await expect(selector).toBeVisible({ timeout: 30000 });
-  await selector.selectOption(preset);
-  await page.waitForFunction(expected => document.querySelector("canvas.trainerCanvas")?.dataset.inspectionPreset === expected, preset, { timeout: 30000 });
+  const selector = page.locator('select[aria-label="Inspection location"]');
+  await expect(selector).toBeVisible({ timeout: 10000 });
+  await selector.selectOption(preset, { timeout: 10000 });
+  await expect(selector).toHaveValue(preset, { timeout: 5000 });
+  await page.waitForTimeout(500);
   const state = await page.locator("canvas.trainerCanvas").evaluate((element, expectedPreset) => ({
     ok: element.dataset.inspectionPreset === expectedPreset,
     expectedPreset,
     selected: element.dataset.inspectionPreset || null,
-    datasetPreset: element.dataset.inspectionPreset || null,
     routeAuthority: element.dataset.inspectionRouteAuthority || null,
     cameraAuthority: element.dataset.inspectionCameraAuthority || null,
   }), preset);
-  if (!state.ok) throw new Error(`Unable to select inspection preset ${preset}: ${JSON.stringify(state)}`);
+  if (!state.ok) throw new Error(`Inspection preset ${preset} did not propagate to the rendered canvas: ${JSON.stringify(state)}`);
   return state;
 }
 
 async function waitForTerminal4Readiness(page, consoleErrors, pageErrors, failedRequests) {
-  const deadline = Date.now() + 120000;
+  const deadline = Date.now() + 90000;
   let lastRuntime = {};
   while (Date.now() < deadline) {
     lastRuntime = await page.locator("canvas.trainerCanvas").evaluate(element => ({ ...element.dataset }));
@@ -65,70 +46,53 @@ async function waitForTerminal4Readiness(page, consoleErrors, pageErrors, failed
       && lastRuntime.photoGroundSource === "source-authored-phx-photo"
     ) return lastRuntime;
 
-    const fatalConsole = consoleErrors.find(message => /Exact jetway readiness mismatch|Airport_Jetway\.glb fleet|A1 Rotunda|source[- ]locked|Terminal 4|KPHX|ReferenceError|TypeError|SyntaxError/i.test(message));
+    const fatalConsole = consoleErrors.find(message => /Exact jetway readiness mismatch|Airport_Jetway\.glb fleet|A1 Rotunda|source[- ]locked|Static jetway|Terminal 4|KPHX|ReferenceError|TypeError|SyntaxError/i.test(message));
     const fatalPage = pageErrors.find(message => /jetway|A1|Terminal 4|KPHX|ReferenceError|TypeError|SyntaxError/i.test(message));
     if (fatalConsole || fatalPage) {
-      fs.writeFileSync(`${evidenceDirectory}/readiness-failure.json`, `${JSON.stringify({
-        capturedAtUtc: new Date().toISOString(),
-        pageUrl,
-        runtime: lastRuntime,
-        fatalConsole: fatalConsole || null,
-        fatalPage: fatalPage || null,
-        consoleErrors,
-        pageErrors,
-        failedRequests,
-      }, null, 2)}\n`);
+      const failure = { runtime: lastRuntime, fatalConsole: fatalConsole || null, fatalPage: fatalPage || null, consoleErrors, pageErrors, failedRequests };
+      fs.writeFileSync(`${evidenceDirectory}/readiness-failure.json`, `${JSON.stringify(failure, null, 2)}\n`);
       throw new Error(`Terminal 4 readiness failed before visual capture: ${fatalConsole || fatalPage}`);
     }
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(200);
   }
-
-  fs.writeFileSync(`${evidenceDirectory}/readiness-timeout.json`, `${JSON.stringify({
-    capturedAtUtc: new Date().toISOString(),
-    pageUrl,
-    runtime: lastRuntime,
-    consoleErrors,
-    pageErrors,
-    failedRequests,
-  }, null, 2)}\n`);
-  throw new Error(`Terminal 4 readiness timed out before visual capture. Last canvas dataset: ${JSON.stringify(lastRuntime)}`);
+  fs.writeFileSync(`${evidenceDirectory}/readiness-timeout.json`, `${JSON.stringify({ runtime: lastRuntime, consoleErrors, pageErrors, failedRequests }, null, 2)}\n`);
+  throw new Error(`Terminal 4 readiness timed out. Last canvas dataset: ${JSON.stringify(lastRuntime)}`);
 }
 
 test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
-test.setTimeout(720000);
+test.setTimeout(240000);
 
 test("Terminal 4 exact jetways are visually registered to their source terminal positions", async ({ page }) => {
   fs.mkdirSync(evidenceDirectory, { recursive: true });
   const consoleErrors = [];
   const pageErrors = [];
   const failedRequests = [];
-  page.on("console", message => {
-    if (message.type() === "error") consoleErrors.push(message.text());
-  });
+  page.on("console", message => { if (message.type() === "error") consoleErrors.push(message.text()); });
   page.on("pageerror", error => pageErrors.push(error.message));
   page.on("requestfailed", request => failedRequests.push(`${request.method()} ${request.url()} :: ${request.failure()?.errorText || "unknown"}`));
 
-  const response = await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
+  checkpoint("open");
+  const response = await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
   expect(response?.ok()).toBe(true);
-  await page.getByRole("heading", { name: "Choose pushback equipment" }).waitFor({ state: "visible", timeout: 30000 });
+  await page.getByRole("heading", { name: "Choose pushback equipment" }).waitFor({ state: "visible", timeout: 15000 });
   const lektro = page.getByRole("radio", { name: /Lektro 88/i });
   if (await lektro.getAttribute("aria-checked") !== "true") await lektro.click();
   const start = page.getByRole("button", { name: "Start training" });
-  await expect(start).toBeEnabled();
+  await expect(start).toBeEnabled({ timeout: 10000 });
   await start.click();
 
   const canvas = page.locator("canvas.trainerCanvas");
-  await expect(canvas).toBeVisible({ timeout: 30000 });
-  await waitForTerminal4Readiness(page, consoleErrors, pageErrors, failedRequests);
+  await expect(canvas).toBeVisible({ timeout: 20000 });
+  checkpoint("readiness");
+  const readiness = await waitForTerminal4Readiness(page, consoleErrors, pageErrors, failedRequests);
 
-  await settle(page, 5000);
   const freeDrive = page.getByRole("button", { name: "Free-drive inspection" });
-  await expect(freeDrive).toBeVisible();
+  await expect(freeDrive).toBeVisible({ timeout: 10000 });
   await freeDrive.click();
-  await page.waitForFunction(() => document.querySelector("canvas.trainerCanvas")?.dataset.inspectionMode === "active", null, { timeout: 30000 });
+  await expect(page.locator('.rr-shell[data-inspection-mode="active"]')).toBeVisible({ timeout: 10000 });
   const camera = page.getByLabel("Camera view");
-  await expect(camera).toBeVisible();
-  await camera.selectOption("chase");
+  await expect(camera).toBeVisible({ timeout: 10000 });
+  await camera.selectOption("chase", { timeout: 10000 });
 
   const captures = {};
   const presetSelection = {};
@@ -138,8 +102,10 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
     ["b14", "b-concourse-fleet.png"],
     ["b15", "b15-terminal-jetways.png"],
   ]) {
+    checkpoint(`preset-${preset}`);
     presetSelection[preset] = await selectInspectionPreset(page, preset);
-    await settle(page, 2200);
+    await page.waitForTimeout(900);
+    checkpoint(`capture-${preset}`, { presetSelection: presetSelection[preset] });
     captures[file] = await captureCanvas(page, `${evidenceDirectory}/${file}`);
   }
 
@@ -151,13 +117,7 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
   expect(criticalFailedRequests).toEqual([]);
 
   fs.writeFileSync(`${evidenceDirectory}/report.json`, `${JSON.stringify({
-    capturedAtUtc: new Date().toISOString(),
-    pageUrl,
-    runtime,
-    captures,
-    presetSelection,
-    consoleErrors,
-    pageErrors,
-    failedRequests,
+    capturedAtUtc: new Date().toISOString(), pageUrl, readiness, runtime, captures, presetSelection, consoleErrors, pageErrors, failedRequests,
   }, null, 2)}\n`);
+  checkpoint("complete", { captures });
 });
