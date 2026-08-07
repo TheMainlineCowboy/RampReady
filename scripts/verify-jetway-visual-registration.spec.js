@@ -60,7 +60,7 @@ async function waitForTerminal4Readiness(page, consoleErrors, pageErrors, failed
 }
 
 test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
-test.setTimeout(240000);
+test.setTimeout(180000);
 
 test("Terminal 4 exact jetways are visually registered to their source terminal positions", async ({ page }) => {
   fs.mkdirSync(evidenceDirectory, { recursive: true });
@@ -77,19 +77,22 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
   await page.getByRole("heading", { name: "Choose pushback equipment" }).waitFor({ state: "visible", timeout: 15000 });
   const lektro = page.getByRole("radio", { name: /Lektro 88/i });
   if (await lektro.getAttribute("aria-checked") !== "true") await lektro.click();
-  const start = page.getByRole("button", { name: "Start training" });
-  await expect(start).toBeEnabled({ timeout: 10000 });
-  await start.click();
+  const directInspection = page.getByRole("button", { name: "Drive tug / inspect airport" });
+  await expect(directInspection).toBeEnabled({ timeout: 10000 });
+  checkpoint("direct-inspection-launch");
+  await directInspection.click({ timeout: 10000 });
 
   const canvas = page.locator("canvas.trainerCanvas");
   await expect(canvas).toBeVisible({ timeout: 20000 });
   checkpoint("readiness");
   const readiness = await waitForTerminal4Readiness(page, consoleErrors, pageErrors, failedRequests);
 
-  const freeDrive = page.getByRole("button", { name: "Free-drive inspection" });
-  await expect(freeDrive).toBeVisible({ timeout: 10000 });
-  await freeDrive.click();
-  await expect(page.locator('.rr-shell[data-inspection-mode="active"]')).toBeVisible({ timeout: 10000 });
+  const inspectionSelector = page.locator('select[aria-label="Inspection location"]');
+  await expect(inspectionSelector).toBeVisible({ timeout: 15000 });
+  const returnToTraining = page.getByRole("button", { name: "Return to training" });
+  await expect(returnToTraining).toBeVisible({ timeout: 15000 });
+  checkpoint("inspection-active");
+
   const camera = page.getByLabel("Camera view");
   await expect(camera).toBeVisible({ timeout: 10000 });
   await camera.selectOption("chase", { timeout: 10000 });
