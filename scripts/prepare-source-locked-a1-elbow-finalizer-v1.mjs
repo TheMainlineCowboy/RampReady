@@ -67,11 +67,11 @@ const partOrderCondition = "            || !a1PartOrderValid";
 const sourceLockConditions = `${partOrderCondition}
             || !Number.isFinite(bogieTireCorrection)
             || bogieTireCorrection > 3
-            || Math.abs(bogieGroundClearanceMeters) > 0.005
+            || Math.abs(bogieGroundClearance) > 0.005
             || bogieGroundContactAuthority !== "${BOGIE_GROUND_AUTHORITY}"
             || bogieGroundContactPointCount < 8
             || bogieGroundContactClusterCount < 2
-            || bogieGroundHorizontalContactSpanMeters < 1.2
+            || bogieGroundHorizontalContactSpan < 1.2
             || sourceLockedA1Authority !== SOURCE_REGISTERED_A1_ELBOW_AUTHORITY
             || sourceLockedA1PoseError > 1e-6
             || sourceLockedA1YawError > 1e-7
@@ -107,12 +107,12 @@ for (const token of [
   "sourceYawPreserved",
   "uploadedJetwayA1TerminalSideIndependentFromTunnelAxis",
   "uploadedJetwayA1PassengerPassageCrossSectionBlocked",
-  "bogieGroundClearanceMeters",
+  "bogieGroundClearance",
   "bogieGroundContactAuthority",
   `"${BOGIE_GROUND_AUTHORITY}"`,
   "bogieGroundContactPointCount < 8",
   "bogieGroundContactClusterCount < 2",
-  "bogieGroundHorizontalContactSpanMeters < 1.2",
+  "bogieGroundHorizontalContactSpan < 1.2",
 ]) {
   if (!source.includes(token)) throw new Error(`${readinessPath}: final A1 readiness is missing ${token}`);
 }
