@@ -85,6 +85,16 @@ jobs:
       - name: Build exact production artifact
         run: npm run build
 
+      - name: Reapply strict browser acceptance migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/prepare-current-head-browser-expectations-v1.mjs
+          node scripts/prepare-a1-post-lifecycle-evidence-v1.mjs
+          node scripts/prepare-a1-bogie-centroid-browser-authority-v1.mjs
+          node scripts/verify-a1-measured-ground-contact-contract.mjs
+          node scripts/verify-a1-evidence-subview-contract.mjs
+
       - name: Quiet fail-closed generated A1 evidence checks
         shell: bash
         run: |
