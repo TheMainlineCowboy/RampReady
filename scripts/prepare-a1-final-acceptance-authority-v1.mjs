@@ -19,7 +19,7 @@ const visualAuthority = "same-day-a1-continuous-compact-solid-closed-grounded-v1
 const jetwayGroundAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
 const noLiftAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const staticRigidAuthority = "57-static-exact-glb-rigid-source-hierarchy-v1";
-const staticSourcePlacementAuthority = "57-static-exact-bgl-source-placement-no-facade-relocation-v1";
+const staticSourcePlacementAuthority = "57-static-authored-rotundas-photo-registered-to-terminal-facade-v2";
 const marker = "final-a1-acceptance-authority-after-all-preparers-v4-source-static-integrity";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
@@ -145,4 +145,4 @@ for (const forbidden of [
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs?grounded-pose=${Date.now()}`);
-console.log("Finalized Terminal 4 with the proved A1 wall/Rotunda and grounded aircraft/bogie evidence, plus rigid exact-GLB static jetways at their source BGL placements. Synthetic static Cab closure boxes are not acceptance criteria.");
+console.log("Finalized Terminal 4 with the proved A1 wall/Rotunda and grounded aircraft/bogie evidence, plus rigid exact-GLB static jetways registered from their authored Rotundas to measured terminal facade walls. Synthetic static Cab closure boxes are not acceptance criteria.");
