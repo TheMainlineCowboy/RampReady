@@ -31,10 +31,13 @@ if (inspectionSpec.includes(staleReverseThreshold)) {
 }
 fs.writeFileSync(inspectionSpecPath, inspectionSpec, "utf8");
 
+const sourceHeadingAuthority = "source-a1-parking-heading-authored-door-registration-v2";
+const staleHeadingAuthority = "measured-cab-normal-aircraft-heading-v1";
+
 const kphxSpecPath = "tests/browser/kphx-ground-runtime.spec.js";
 const kphxSpec = fs.readFileSync(kphxSpecPath, "utf8");
 for (const forbidden of [
-  "measured-cab-normal-aircraft-heading-v1",
+  staleHeadingAuthority,
   "expectedCabRegisteredYaw",
 ]) {
   if (kphxSpec.includes(forbidden)) {
@@ -42,7 +45,7 @@ for (const forbidden of [
   }
 }
 for (const required of [
-  "source-a1-parking-heading-authored-door-registration-v2",
+  sourceHeadingAuthority,
   "expectedSourceStandYaw",
   "inspectionAircraftSourceParkingHeadingDegrees",
   "inspectionAircraftSourceModelYawDegrees",
@@ -52,6 +55,20 @@ for (const required of [
   }
 }
 
+// The close terminal/bogie evidence suite was added after the original shared
+// migration list. Keep it on the same authored A1 stand-heading authority so a
+// retired Cab-normal assertion cannot silently block screenshot capture.
+const closeSpecPath = "tests/browser/a1-terminal-joint-bogie-subviews.spec.js";
+let closeSpec = fs.readFileSync(closeSpecPath, "utf8");
+closeSpec = closeSpec.replaceAll(staleHeadingAuthority, sourceHeadingAuthority);
+if (closeSpec.includes(staleHeadingAuthority)) {
+  throw new Error(`${closeSpecPath}: stale Cab-normal heading authority remains`);
+}
+if (!closeSpec.includes(sourceHeadingAuthority)) {
+  throw new Error(`${closeSpecPath}: authored A1 parking-heading authority is missing`);
+}
+fs.writeFileSync(closeSpecPath, closeSpec, "utf8");
+
 console.log(
-  "Prepared KPHX post-build current-head browser gates: authored A1 parking heading, zero-lift grounded jetway evidence, compact 2.4 m vestibule, and CI-stable bidirectional free-drive motion.",
+  "Prepared KPHX post-build current-head browser gates: authored A1 parking heading in both wide and close evidence, zero-lift grounded jetway evidence, compact 2.4 m vestibule, and CI-stable bidirectional free-drive motion.",
 );
