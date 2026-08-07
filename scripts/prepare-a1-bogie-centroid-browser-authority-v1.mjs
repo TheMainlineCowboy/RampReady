@@ -136,3 +136,4 @@ if (authorityConsumerCount < 4) {
 }
 
 console.log(`Migrated ${changed} browser suite(s) to ${centroidAuthority}; articulation retains the v2 grounded-bogie gate${hasCurrentSourceIntegritySuite ? " inside the stricter source-integrity/mode-consistency suite" : ""}; verified ${authorityConsumerCount} consumers.`);
+await import(`./prepare-fixed-a1-browser-regressions-v1.mjs?fixed-a1-browser=${Date.now()}`);
