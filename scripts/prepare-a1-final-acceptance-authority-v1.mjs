@@ -21,7 +21,7 @@ const noLiftAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const staticCabClosureAuthority = "57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3";
 const staticCabTargetAuthority = "placement-bridgeEnd-shared-with-static-articulation-v1";
 const staticCabEvidenceAuthority = "57-static-cab-endpoints-opaque-zero-open-area-no-authored-transform-v1";
-const marker = "final-a1-acceptance-authority-after-all-preparers-v2";
+const marker = "final-a1-acceptance-authority-after-all-preparers-v3-three-tire-contact";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
 source = source.replaceAll(staleAuthority, finalAuthority);
@@ -41,8 +41,12 @@ if (facadeTelemetryPattern.test(source)) {
 }
 
 if (!source.includes(marker)) {
-  const oldMarker = "final-a1-acceptance-authority-after-all-preparers-v1";
-  source = source.replaceAll(oldMarker, marker);
+  for (const oldMarker of [
+    "final-a1-acceptance-authority-after-all-preparers-v2",
+    "final-a1-acceptance-authority-after-all-preparers-v1",
+  ]) {
+    source = source.replaceAll(oldMarker, marker);
+  }
   if (!source.includes(marker)) {
     const anchor = `const INSPECTION_ROUTE_AUTHORITY =`;
     const index = source.indexOf(anchor);
@@ -81,7 +85,11 @@ for (const required of [
   "inspectionAircraftJetwayVerticalFitAuthority",
   "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
   "inspectionAircraftGroundingAuthority",
-  "inspectionAircraftLandingGearContactClusterCount",
+  "inspectionAircraftLandingGearContactPatchCount",
+  "inspectionAircraftNoseTireContact",
+  "inspectionAircraftLeftMainTireContact",
+  "inspectionAircraftRightMainTireContact",
+  "inspectionAircraftLandingGearContactHeightSpreadMeters",
   "terminal4A1JetwayWallDistance",
   "terminal4A1ConnectionAuthority",
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
@@ -134,6 +142,7 @@ for (const required of [
 }
 for (const forbidden of [
   staleAuthority,
+  "inspectionAircraftLandingGearContactClusterCount",
   "named-landing-gear-wheel-bounds-v1",
   "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2",
   "grounded-aircraft-door-progressive-tunnel-slope-v1",
@@ -146,4 +155,4 @@ for (const forbidden of [
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs?grounded-pose=${Date.now()}`);
-console.log("Finalized Terminal 4 after verifying every authority in its owning generated runtime layer and requiring the exact authored bogie contact centroid, compact wall, zero lift, static closures, and camera evidence in the trainer.");
+console.log("Finalized Terminal 4 after verifying every authority in its owning generated runtime layer, requiring the proved CRJ nose/left-main/right-main tire contacts, exact authored jetway bogie centroid, compact wall, zero lift, static closures, and camera evidence in the trainer.");
