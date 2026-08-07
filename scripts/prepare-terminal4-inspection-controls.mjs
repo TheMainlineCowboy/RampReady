@@ -33,7 +33,19 @@ for (const path of targets) {
   );
 
   if (!source.includes("window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__")) {
-    const anchor = "  const toggleInspectionDrive = useCallback(() => {";
+    // Install the trusted visual-evidence bridge only after every callback it
+    // captures has been initialized. Anchoring at toggleInspectionDrive caused
+    // a production TDZ crash when an earlier generated trainer ordered
+    // moveInspectionToPreset after that callback.
+    const moveAnchor = "  const moveInspectionToPreset = useCallback((presetId) => {";
+    const toggleAnchor = "  const toggleInspectionDrive = useCallback(() => {";
+    const anchor = "  const advance = useCallback(() => {";
+    const moveIndex = source.indexOf(moveAnchor);
+    const toggleIndex = source.indexOf(toggleAnchor);
+    const anchorIndex = source.indexOf(anchor);
+    if (moveIndex < 0 || toggleIndex < 0 || anchorIndex < 0 || moveIndex > anchorIndex || toggleIndex > anchorIndex) {
+      throw new Error(`${path}: visual evidence preset bridge cannot be installed after initialized inspection callbacks`);
+    }
     const hook = `  useEffect(() => {\n    window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ = (presetId) => {\n      moveInspectionToPreset(presetId);\n      return inspectionPresetRef.current;\n    };\n    return () => {\n      delete window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__;\n    };\n  }, [moveInspectionToPreset]);\n\n${anchor}`;
     source = replaceRequired(source, anchor, hook, path, "visual evidence preset bridge");
   }
@@ -89,4 +101,4 @@ if (!css.includes(cssMarker)) {
 
 await import("./prepare-a1-terminal-connector-v11.mjs");
 await import("./prepare-inspection-elapsed-motion.mjs");
-console.log("Prepared the active Terminal 4 free-drive controls with deterministic visual-evidence preset bridge, full keyboard power, elapsed-motion integration and the measured A1 wall connector.");
+console.log("Prepared the active Terminal 4 free-drive controls with deterministic visual-evidence preset bridge after initialized callbacks, full keyboard power, elapsed-motion integration and the measured A1 wall connector.");
