@@ -76,6 +76,7 @@ jobs:
           grep -Fq 'inspectionCameraEndpointBogieAircraftOppositionCosine' scripts/prepare-a1-evidence-subviews-v1.mjs
           grep -Fq 'uploadedJetwayBogieGroundContactCenterX' scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs
           grep -Fq 'grounded-jetway-door-gap-reported-no-child-lift-v1' scripts/prepare-a1-inspection-aircraft-vertical-registration-v1.mjs
+          grep -Fq 'source-a1-parking-heading-authored-door-registration-v2' tests/browser/a1-close-readiness-diagnostic.spec.js
 
       - name: Build exact production artifact
         run: npm run build
@@ -105,6 +106,8 @@ jobs:
             'exact-T4_WALK-A1-terminal-portal-v25' \
             'exactWalkwayPortalX' \
             'grounded-aircraft-door-progressive-tunnel-slope-v1' \
+            'measured-cab-normal-aircraft-heading-v1' \
+            'expectedCabRegisteredYaw' \
             'exactA1CameraCabX - exactA1CameraApronX * 6' \
             'exactA1CameraApronX * 8'; do
             if "${search[@]}" "${forbidden}" dist; then
@@ -113,6 +116,9 @@ jobs:
             fi
           done
           for required in \
+            'source-a1-parking-heading-authored-door-registration-v2' \
+            'inspectionAircraftSourceParkingHeadingDegrees' \
+            'inspectionAircraftSourceModelYawDegrees' \
             'exact-a1-terminal-joint-and-bogie-contact-subviews-v2' \
             'same-day-a1-continuous-compact-solid-closed-grounded-v1' \
             'exact-authored-a1-lowest-geometry-ramp-contact-v2' \
@@ -135,12 +141,18 @@ jobs:
               exit 1
             fi
           done
-          echo "Quiet close-view v2 bundle checks passed."
+          echo "Quiet close-view v2 bundle checks passed with authored A1 aircraft heading."
 
       - name: Install Chromium
         run: |
           npm install --no-save @playwright/test@1.55.0
           npx playwright install --with-deps chromium
+
+      - name: Diagnose exact A1 close readiness
+        run: >-
+          npx playwright test
+          tests/browser/a1-close-readiness-diagnostic.spec.js
+          --reporter=line --workers=1
 
       - name: Render terminal-joint and bogie-contact views
         run: >-
@@ -154,6 +166,7 @@ jobs:
         with:
           name: pr140-close-a1-evidence-${{ steps.pr.outputs.sha }}
           path: |
+            test-results/a1-close-readiness-diagnostic.json
             test-results/a1-terminal-joint-close.png
             test-results/a1-bogie-contact-close.png
             test-results/a1-terminal-joint-bogie-subviews.json
