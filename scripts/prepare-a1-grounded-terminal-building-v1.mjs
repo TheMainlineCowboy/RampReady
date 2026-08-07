@@ -4,6 +4,7 @@ const runtimePath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(runtimePath, "utf8");
 
 const searchMarker = "A1 grounded-facade search v34 overhead-walkway-footprint-exclusion";
+const footprintMarker = "A1 exact T4_WALK horizontal footprint exclusion v34";
 const connectionMarker = "A1 ramp-level real Terminal 4 source wall v34 no-overhead-walkway";
 const MINIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 3.4;
 const MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 28;
@@ -49,7 +50,7 @@ const overheadWalkwayTraversal = `  const structuralMaterialReference = (materia
     material?.userData?.runtimeDiffuseTexture,
   ].filter(Boolean).join(" "); // facade-source-material-identity-v17
 
-  // ${searchMarker}
+  // ${footprintMarker}
   // Build an X/Z footprint from the actual horizontal T4_WALK triangles. A
   // lower BGATE/DGATE wall underneath those surfaces is part of the elevated
   // corridor complex and is forbidden as A1's terminal attachment target.
@@ -101,7 +102,7 @@ const overheadWalkwayTraversal = `  const structuralMaterialReference = (materia
 
   terminal.traverse((node) => {`;
 
-if (!source.includes(searchMarker)) {
+if (!source.includes(footprintMarker)) {
   if (!source.includes(facadeTraversalAnchor)) {
     throw new Error(`${runtimePath}: structural facade traversal anchor is missing for overhead-walkway exclusion`);
   }
@@ -255,6 +256,7 @@ if (!source.includes(connectionMarker)) {
 for (const token of [
   connectionMarker,
   searchMarker,
+  footprintMarker,
   "const requirePreferredHemisphere = height > 2.2",
   "const elevatedWalkwayFootprints = []",
   "pointInsideWalkwayFootprint",
