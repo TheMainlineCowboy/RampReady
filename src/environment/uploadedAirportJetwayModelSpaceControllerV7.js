@@ -68,8 +68,14 @@ export function createModelSpaceA1Controller(THREE, {
     if (!visual) return;
     const retract = 1 - deployment;
     const { anchor, model, nodes, base, direction } = visual;
-    anchor.rotation.y = base.yaw;
+
+    // The airport-placement pipeline may rotate and relocate the complete A1
+    // parent after this controller binds to the supplied GLB. Retraction owns
+    // only the authored telescoping child transforms. Never restore the parent
+    // yaw captured at bind time: doing so would undo the final Terminal 4 wall
+    // registration whenever inspection/training calls setDeployment().
     anchor.updateMatrix();
+    anchor.updateWorldMatrix(true, true);
     for (const [name, node] of Object.entries(nodes)) {
       if (node) restoreLocalMatrix(node, base[name]);
     }
@@ -111,6 +117,7 @@ export function createModelSpaceA1Controller(THREE, {
     anchor.userData.retractionClearanceMeters = retraction.totalClearanceMeters;
     anchor.userData.retractionMode = modeAuthority;
     anchor.userData.retractionDirectionModel = direction.toArray().join(",");
+    anchor.userData.retractionParentPoseAuthority = "preserve-final-airport-placement-v8";
     anchor.userData.requestedAttachedVerticalDropMeters = requestedAttachedVerticalDrop;
     anchor.userData.attachedVerticalDropMeters = 0;
     anchor.userData.attachedVerticalFitAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
@@ -152,7 +159,6 @@ export function createModelSpaceA1Controller(THREE, {
         nodes,
         direction,
         base: {
-          yaw: anchor.rotation.y,
           tunnelB: nodes.tunnelB.matrix.clone(),
           tunnelC: nodes.tunnelC.matrix.clone(),
           cab: nodes.cab.matrix.clone(),
