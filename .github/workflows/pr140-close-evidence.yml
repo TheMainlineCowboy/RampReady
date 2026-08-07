@@ -42,7 +42,7 @@ jobs:
           gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${sha}" \
             -f state=pending \
             -f context='PR140 close A1 evidence' \
-            -f description='Exact joint-midpoint and authored-bogie-centroid renders are running' \
+            -f description='Exact apron-side joint and unobstructed bogie renders are running' \
             -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
       - name: Check out exact PR 140 head
@@ -67,12 +67,19 @@ jobs:
           node scripts/verify-a1-measured-ground-contact-contract.mjs
           node scripts/verify-a1-evidence-subview-contract.mjs
           grep -Fq 'prepare-a1-evidence-subviews-v1.mjs?exact-evidence-subviews=' scripts/prepare-a1-endpoint-browser-evidence-v1.mjs
+          grep -Fq 'exact-a1-terminal-joint-and-bogie-contact-subviews-v2' scripts/prepare-a1-evidence-subviews-v1.mjs
           grep -Fq 'inspectionCameraEndpointJointCenter' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -Fq 'inspectionCameraEndpointJointApronDistanceMeters' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -Fq 'inspectionCameraEndpointJointSideDistanceMeters' scripts/prepare-a1-evidence-subviews-v1.mjs
           grep -Fq 'inspectionCameraEndpointBogieContactCenter' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -Fq 'inspectionCameraEndpointBogieAircraftCenter' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -Fq 'inspectionCameraEndpointBogieAircraftOppositionCosine' scripts/prepare-a1-evidence-subviews-v1.mjs
           grep -Fq 'uploadedJetwayBogieGroundContactCenterX' scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs
           grep -Fq 'grounded-jetway-door-gap-reported-no-child-lift-v1' scripts/prepare-a1-inspection-aircraft-vertical-registration-v1.mjs
           grep -Fq 'distance3(terminalCameraTarget, terminalJointCenter)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'cameraApronProjection' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'distance3(bogieContactCenter, publishedBogieContactCenter)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'inspectionCameraEndpointBogieAircraftOppositionCosine' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'terminal4A1ConnectionAuthority).not.toMatch(/WALK|JETWAY|CONNECTOR|PORTAL/i)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'a1-terminal-joint-close.png' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'a1-bogie-contact-close.png' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
@@ -97,7 +104,7 @@ jobs:
             fi
           done
           for required in \
-            'exact-a1-terminal-joint-and-bogie-contact-subviews-v1' \
+            'exact-a1-terminal-joint-and-bogie-contact-subviews-v2' \
             'same-day-a1-continuous-compact-solid-closed-grounded-v1' \
             'exact-authored-a1-lowest-geometry-ramp-contact-v2' \
             'grounded-jetway-door-gap-reported-no-child-lift-v1' \
@@ -108,14 +115,18 @@ jobs:
             'terminal4UploadedJetwayBogieGroundContactCenterZ' \
             'inspectionCameraEndpointJointCenter' \
             'inspectionCameraEndpointJointSpanMeters' \
+            'inspectionCameraEndpointJointApronDistanceMeters' \
+            'inspectionCameraEndpointJointSideDistanceMeters' \
             'inspectionCameraEndpointBogieContactCenter' \
+            'inspectionCameraEndpointBogieAircraftCenter' \
+            'inspectionCameraEndpointBogieAircraftOppositionCosine' \
             'inspectionAircraftJetwayAuthoredBogieGroundPreserved'; do
             if ! "${search[@]}" "${required}" dist; then
               echo "Required close-evidence authority or target is missing: ${required}"
               exit 1
             fi
           done
-          echo "Quiet close-view bundle checks passed."
+          echo "Quiet close-view v2 bundle checks passed."
 
       - name: Install Chromium
         run: |
@@ -150,7 +161,7 @@ jobs:
           gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${SHA}" \
             -f state=success \
             -f context='PR140 close A1 evidence' \
-            -f description='Exact joint-midpoint and authored-bogie-centroid renders passed' \
+            -f description='Apron-side joint and unobstructed bogie renders passed' \
             -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
       - name: Publish failure
