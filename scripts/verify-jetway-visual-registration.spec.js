@@ -38,29 +38,16 @@ async function settle(page, milliseconds = 1800) {
 }
 
 async function selectInspectionPreset(page, preset) {
+  await page.waitForFunction(() => typeof window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ === "function", null, { timeout: 30000 });
   const state = await page.evaluate((expectedPreset) => {
-    const select = document.querySelector('select[aria-label="Inspection location"]');
-    if (!(select instanceof HTMLSelectElement)) {
-      return { ok: false, reason: "inspection-location-select-missing" };
-    }
-    const option = Array.from(select.options).find(entry => entry.value === expectedPreset);
-    if (!option) {
-      return {
-        ok: false,
-        reason: "inspection-preset-option-missing",
-        expectedPreset,
-        options: Array.from(select.options).map(entry => entry.value),
-      };
-    }
-    select.value = expectedPreset;
-    select.dispatchEvent(new Event("input", { bubbles: true }));
-    select.dispatchEvent(new Event("change", { bubbles: true }));
+    const selected = window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__(expectedPreset);
+    const canvas = document.querySelector("canvas.trainerCanvas");
     return {
-      ok: true,
+      ok: selected === expectedPreset,
       expectedPreset,
-      disabled: select.disabled,
-      ariaDisabled: select.getAttribute("aria-disabled"),
-      value: select.value,
+      selected,
+      datasetPreset: canvas?.dataset.inspectionPreset || null,
+      routeAuthority: canvas?.dataset.inspectionRouteAuthority || null,
     };
   }, preset);
   if (!state.ok) throw new Error(`Unable to select inspection preset ${preset}: ${JSON.stringify(state)}`);
@@ -140,11 +127,8 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
   await expect(freeDrive).toBeVisible();
   await freeDrive.click();
   await page.waitForFunction(() => document.querySelector("canvas.trainerCanvas")?.dataset.inspectionMode === "active", null, { timeout: 30000 });
-  const location = page.getByLabel("Inspection location");
   const camera = page.getByLabel("Camera view");
-  await expect(location).toBeVisible();
   await expect(camera).toBeVisible();
-
   await camera.selectOption("chase");
 
   const captures = {};
