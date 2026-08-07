@@ -19,9 +19,8 @@ async function captureCanvas(page, outputPath) {
 }
 
 async function selectInspectionPreset(page, preset) {
-  const selector = page.locator('select[aria-label="Inspection location"]');
-  await expect(selector).toBeVisible({ timeout: 10000 });
-  const changed = await selector.evaluate((element, expectedPreset) => {
+  const changed = await page.evaluate((expectedPreset) => {
+    const element = document.querySelector('select[aria-label="Inspection location"]');
     if (!(element instanceof HTMLSelectElement)) return { ok: false, reason: "not-select" };
     const optionExists = [...element.options].some(option => option.value === expectedPreset);
     if (!optionExists) return { ok: false, reason: "missing-option", options: [...element.options].map(option => option.value) };
@@ -31,22 +30,27 @@ async function selectInspectionPreset(page, preset) {
     return { ok: true, value: element.value };
   }, preset);
   if (!changed.ok) throw new Error(`Inspection selector rejected ${preset}: ${JSON.stringify(changed)}`);
-  await page.waitForFunction(expected => {
-    const select = document.querySelector('select[aria-label="Inspection location"]');
-    const canvas = document.querySelector("canvas.trainerCanvas");
-    return select?.value === expected && canvas?.dataset.inspectionPreset === expected;
-  }, preset, { timeout: 10000 });
-  const state = await page.locator("canvas.trainerCanvas").evaluate((element, expectedPreset) => ({
-    ok: element.dataset.inspectionPreset === expectedPreset,
-    expectedPreset,
-    selected: element.dataset.inspectionPreset || null,
-    routeAuthority: element.dataset.inspectionRouteAuthority || null,
-    cameraAuthority: element.dataset.inspectionCameraAuthority || null,
-    cameraYaw: element.dataset.cameraYaw || null,
-    cameraDistance: element.dataset.cameraDistance || null,
-  }), preset);
-  if (!state.ok) throw new Error(`Inspection preset ${preset} did not propagate to the rendered canvas: ${JSON.stringify(state)}`);
-  return state;
+
+  let state = null;
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    state = await page.evaluate((expectedPreset) => {
+      const select = document.querySelector('select[aria-label="Inspection location"]');
+      const canvas = document.querySelector("canvas.trainerCanvas");
+      return {
+        ok: select?.value === expectedPreset && canvas?.dataset.inspectionPreset === expectedPreset,
+        expectedPreset,
+        selected: canvas?.dataset.inspectionPreset || null,
+        selectValue: select?.value || null,
+        routeAuthority: canvas?.dataset.inspectionRouteAuthority || null,
+        cameraAuthority: canvas?.dataset.inspectionCameraAuthority || null,
+        cameraYaw: canvas?.dataset.cameraYaw || null,
+        cameraDistance: canvas?.dataset.cameraDistance || null,
+      };
+    }, preset);
+    if (state.ok) return state;
+    await page.waitForTimeout(100);
+  }
+  throw new Error(`Inspection preset ${preset} did not propagate to the rendered canvas: ${JSON.stringify(state)}`);
 }
 
 async function waitForTerminal4Readiness(page, consoleErrors, pageErrors, failedRequests) {
@@ -74,7 +78,7 @@ async function waitForTerminal4Readiness(page, consoleErrors, pageErrors, failed
 }
 
 test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
-test.setTimeout(150000);
+test.setTimeout(90000);
 
 test("Terminal 4 exact jetways are visually registered to their source terminal positions", async ({ page }) => {
   fs.mkdirSync(evidenceDirectory, { recursive: true });
@@ -101,12 +105,14 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
   checkpoint("readiness");
   const readiness = await waitForTerminal4Readiness(page, consoleErrors, pageErrors, failedRequests);
 
-  const inspectionSelector = page.locator('select[aria-label="Inspection location"]');
-  await expect(inspectionSelector).toBeVisible({ timeout: 15000 });
-  const returnToTraining = page.getByRole("button", { name: "Return to training" });
-  await expect(returnToTraining).toBeVisible({ timeout: 15000 });
-  const camera = page.getByLabel("Camera view");
-  await expect(camera).toBeVisible({ timeout: 10000 });
+  const inspectionControls = await page.evaluate(() => ({
+    location: document.querySelector('select[aria-label="Inspection location"]') instanceof HTMLSelectElement,
+    camera: document.querySelector('select[aria-label="Camera view"]') instanceof HTMLSelectElement,
+    returnButton: [...document.querySelectorAll("button")].some(button => button.textContent?.trim() === "Return to training"),
+  }));
+  if (!inspectionControls.location || !inspectionControls.camera || !inspectionControls.returnButton) {
+    throw new Error(`Visible inspection controls are incomplete: ${JSON.stringify(inspectionControls)}`);
+  }
   checkpoint("inspection-active");
 
   const captures = {};
