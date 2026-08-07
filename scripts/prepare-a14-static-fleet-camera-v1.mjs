@@ -58,4 +58,5 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Prepared the relocated A1 evidence coordinates together with the fixed apron-side A14 exact-fleet camera under the established canonical route authority.");
+await import(`./prepare-terminal4-jetway-source-registration-v1.mjs?terminal4-registration=${Date.now()}`);
+console.log("Prepared the relocated A1 evidence coordinates together with the fixed apron-side A14 exact-fleet camera under the established canonical route authority, then enforced exact Terminal 4 jetway source registration.");
