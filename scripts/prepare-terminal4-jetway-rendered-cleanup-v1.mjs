@@ -1,7 +1,10 @@
 import fs from "node:fs";
 
 const staticRegistrationPath = "src/environment/registerStaticJetwayFleetToFacadeV1.js";
+const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 const a1ElbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
+const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v1";
+const STATIC_SOLID_VESTIBULE_INSTANCE_COUNT = 228;
 
 let staticRegistration = fs.readFileSync(staticRegistrationPath, "utf8");
 
@@ -54,6 +57,65 @@ if (staticRegistration.includes(originalBatchBlock)) {
 }
 fs.writeFileSync(staticRegistrationPath, staticRegistration, "utf8");
 
+// The static connector implementation above deliberately replaces the former
+// three generated connector batches with one instanced solid shell batch. Make
+// readiness prove that exact topology rather than preserving the obsolete
+// three-batch corridor contract. Four shell transforms per gate x 57 gates = 228.
+let readiness = fs.readFileSync(readinessPath, "utf8");
+const performanceAuthorityLine = 'const PERFORMANCE_AUTHORITY = "57-static-exact-glb-instances-plus-1-animated-a1-v1";';
+if (!readiness.includes("const STATIC_CONNECTOR_AUTHORITY =")) {
+  if (!readiness.includes(performanceAuthorityLine)) {
+    throw new Error(`${readinessPath}: performance authority anchor is missing`);
+  }
+  readiness = readiness.replace(
+    performanceAuthorityLine,
+    `${performanceAuthorityLine}\nconst STATIC_CONNECTOR_AUTHORITY = "${STATIC_SOLID_VESTIBULE_AUTHORITY}";\nconst STATIC_CONNECTOR_INSTANCE_COUNT = ${STATIC_SOLID_VESTIBULE_INSTANCE_COUNT};`,
+  );
+}
+
+const connectorBatchTelemetryLine = "          const staticConnectorBatchCount = Number(group.userData.uploadedJetwayStaticConnectorBatchCount ?? -1);";
+if (!readiness.includes("const staticConnectorInstanceCount =")) {
+  if (!readiness.includes(connectorBatchTelemetryLine)) {
+    throw new Error(`${readinessPath}: static connector batch telemetry anchor is missing`);
+  }
+  readiness = readiness.replace(
+    connectorBatchTelemetryLine,
+    `${connectorBatchTelemetryLine}\n          const staticConnectorInstanceCount = Number(group.userData.uploadedJetwayStaticConnectorInstanceCount ?? -1);\n          const staticConnectorAuthority = group.userData.uploadedJetwayStaticConnectorBatchAuthority || "missing";`,
+  );
+}
+
+if (readiness.includes("            || staticConnectorBatchCount !== 3")) {
+  readiness = readiness.replace(
+    "            || staticConnectorBatchCount !== 3",
+    `            || staticConnectorBatchCount !== 1\n            || staticConnectorInstanceCount !== STATIC_CONNECTOR_INSTANCE_COUNT\n            || staticConnectorAuthority !== STATIC_CONNECTOR_AUTHORITY`,
+  );
+}
+
+const oldConnectorDiagnostic = 'connectors=${staticConnectorGateCount}/${staticConnectorBatchCount}/${individualConnectorGateCount}';
+const solidConnectorDiagnostic = 'connectors=${staticConnectorGateCount}/${staticConnectorBatchCount}/${staticConnectorInstanceCount}/${staticConnectorAuthority}/${individualConnectorGateCount}';
+if (readiness.includes(oldConnectorDiagnostic)) {
+  readiness = readiness.replace(oldConnectorDiagnostic, solidConnectorDiagnostic);
+}
+
+for (const token of [
+  `const STATIC_CONNECTOR_AUTHORITY = "${STATIC_SOLID_VESTIBULE_AUTHORITY}";`,
+  `const STATIC_CONNECTOR_INSTANCE_COUNT = ${STATIC_SOLID_VESTIBULE_INSTANCE_COUNT};`,
+  "const staticConnectorInstanceCount =",
+  "const staticConnectorAuthority =",
+  "staticConnectorBatchCount !== 1",
+  "staticConnectorInstanceCount !== STATIC_CONNECTOR_INSTANCE_COUNT",
+  "staticConnectorAuthority !== STATIC_CONNECTOR_AUTHORITY",
+  solidConnectorDiagnostic,
+]) {
+  if (!readiness.includes(token)) {
+    throw new Error(`${readinessPath}: solid static connector readiness is missing ${token}`);
+  }
+}
+if (readiness.includes("staticConnectorBatchCount !== 3")) {
+  throw new Error(`${readinessPath}: obsolete three-batch static connector readiness survived cleanup`);
+}
+fs.writeFileSync(readinessPath, readiness, "utf8");
+
 let a1Elbow = fs.readFileSync(a1ElbowPath, "utf8");
 a1Elbow = a1Elbow.replace(
   "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.75;",
@@ -71,4 +133,4 @@ if (!a1Elbow.includes("const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;")) {
 }
 fs.writeFileSync(a1ElbowPath, a1Elbow, "utf8");
 
-console.log("Prepared rendered Terminal 4 cleanup: all 57 static gates use short solid white 2.4 m terminal vestibules that stop at the authored Rotunda instead of generated long glass corridors, legacy closure instances remain co-registered if present, and A1 keeps only minimal hidden wall/Rotunda shell overlap.");
+console.log("Prepared rendered Terminal 4 cleanup: all 57 static gates use one verified 228-instance batch of short solid white 2.4 m terminal vestibules that stop at the authored Rotunda instead of generated long glass corridors; legacy closure instances remain co-registered if present, and A1 keeps only minimal hidden wall/Rotunda shell overlap.");
