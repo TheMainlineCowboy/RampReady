@@ -42,7 +42,7 @@ jobs:
           gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${sha}" \
             -f state=pending \
             -f context='PR140 close A1 evidence' \
-            -f description='Compact terminal-joint and zero-lift bogie renders are running' \
+            -f description='Exact joint-midpoint and authored-bogie-centroid renders are running' \
             -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
       - name: Check out exact PR 140 head
@@ -67,11 +67,13 @@ jobs:
           node scripts/verify-a1-measured-ground-contact-contract.mjs
           node scripts/verify-a1-evidence-subview-contract.mjs
           grep -Fq 'prepare-a1-evidence-subviews-v1.mjs?exact-evidence-subviews=' scripts/prepare-a1-endpoint-browser-evidence-v1.mjs
-          grep -Fq 'exact-a1-terminal-joint-and-bogie-contact-subviews-v1' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -Fq 'inspectionCameraEndpointJointCenter' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -Fq 'inspectionCameraEndpointBogieContactCenter' scripts/prepare-a1-evidence-subviews-v1.mjs
+          grep -Fq 'uploadedJetwayBogieGroundContactCenterX' scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs
           grep -Fq 'grounded-jetway-door-gap-reported-no-child-lift-v1' scripts/prepare-a1-inspection-aircraft-vertical-registration-v1.mjs
+          grep -Fq 'distance3(terminalCameraTarget, terminalJointCenter)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
+          grep -Fq 'distance3(bogieContactCenter, publishedBogieContactCenter)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'terminal4A1ConnectionAuthority).not.toMatch(/WALK|JETWAY|CONNECTOR|PORTAL/i)' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
-          grep -Fq 'terminal4UploadedJetwayBogieGroundContactClusterCount' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
-          grep -Fq 'inspectionAircraftJetwayAuthoredBogieGroundPreserved' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'a1-terminal-joint-close.png' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
           grep -Fq 'a1-bogie-contact-close.png' tests/browser/a1-terminal-joint-bogie-subviews.spec.js
 
@@ -86,7 +88,9 @@ jobs:
           for forbidden in \
             'exact-T4_WALK-A1-terminal-portal-v25' \
             'exactWalkwayPortalX' \
-            'grounded-aircraft-door-progressive-tunnel-slope-v1'; do
+            'grounded-aircraft-door-progressive-tunnel-slope-v1' \
+            'exactA1CameraCabX - exactA1CameraApronX * 6' \
+            'exactA1CameraApronX * 8'; do
             if "${search[@]}" "${forbidden}" dist; then
               echo "Forbidden close-evidence behavior remains: ${forbidden}"
               exit 1
@@ -95,13 +99,19 @@ jobs:
           for required in \
             'exact-a1-terminal-joint-and-bogie-contact-subviews-v1' \
             'same-day-a1-continuous-compact-solid-closed-grounded-v1' \
-            'exact-authored-a1-lowest-geometry-ramp-contact-v1' \
+            'exact-authored-a1-lowest-geometry-ramp-contact-v2' \
             'grounded-jetway-door-gap-reported-no-child-lift-v1' \
             'terminal4UploadedJetwayBogieGroundContactPointCount' \
             'terminal4UploadedJetwayBogieGroundContactClusterCount' \
+            'terminal4UploadedJetwayBogieGroundContactCenterX' \
+            'terminal4UploadedJetwayBogieGroundContactCenterY' \
+            'terminal4UploadedJetwayBogieGroundContactCenterZ' \
+            'inspectionCameraEndpointJointCenter' \
+            'inspectionCameraEndpointJointSpanMeters' \
+            'inspectionCameraEndpointBogieContactCenter' \
             'inspectionAircraftJetwayAuthoredBogieGroundPreserved'; do
             if ! "${search[@]}" "${required}" dist; then
-              echo "Required close-evidence authority is missing: ${required}"
+              echo "Required close-evidence authority or target is missing: ${required}"
               exit 1
             fi
           done
@@ -140,7 +150,7 @@ jobs:
           gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${SHA}" \
             -f state=success \
             -f context='PR140 close A1 evidence' \
-            -f description='Compact real-wall and zero-lift grounded-bogie close renders passed' \
+            -f description='Exact joint-midpoint and authored-bogie-centroid renders passed' \
             -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
       - name: Publish failure
@@ -153,5 +163,5 @@ jobs:
           gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${SHA}" \
             -f state=failure \
             -f context='PR140 close A1 evidence' \
-            -f description='Strict close A1 evidence failed; inspect retained artifacts' \
+            -f description='Strict targeted A1 close evidence failed; inspect retained artifacts' \
             -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
