@@ -168,7 +168,7 @@ jobs:
             'exact-a1-terminal-joint-and-bogie-contact-subviews-v2' \
             '57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3' \
             '57-static-cab-endpoints-opaque-zero-open-area-no-authored-transform-v1' \
-            'final-a1-acceptance-authority-after-all-preparers-v3-three-tire-contact'; do
+            'terminal4UploadedJetwayA1VisualAcceptanceAuthority'; do
             if ! "${search[@]}" "${required}" dist; then
               echo "Required generated A1 evidence is missing: ${required}"
               exit 1
