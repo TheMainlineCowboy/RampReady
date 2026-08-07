@@ -50,21 +50,33 @@ for (const stage of orderedBuildStages) {
 }
 
 requireTokens("groundedWall", [
-  "A1 ramp-level real Terminal 4 source wall v33 terminal-side locked",
-  "A1 grounded-facade search v33 terminal-side hemisphere locked",
+  "A1 ramp-level real Terminal 4 source wall v34 no-overhead-walkway",
+  "A1 grounded-facade search v34 overhead-walkway-footprint-exclusion",
   "const MINIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 3.4",
   "const MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 28",
   "const MAXIMUM_A1_WALL_HEIGHT_METERS = 2.2",
-  "const MINIMUM_A1_TERMINAL_DIRECTION_DOT = 0.15",
-  "const requirePreferredHemisphere = true",
-  "groundedTerminalDirectionDot >= 0.15",
-  "A1 grounded search selected the wrong side of the Rotunda",
-  "terminalSideHemisphereLocked: true",
-  "minimumTerminalDirectionDot: 0.15",
+  "const requirePreferredHemisphere = height > 2.2",
+  "const elevatedWalkwayFootprints = []",
+  "pointInsideWalkwayFootprint",
+  "if (!/T4_WALK/i.test(walkMaterialReference)) continue",
+  "diagnostics.walkwayOverlapRejectedCount += 1",
+  "underElevatedWalkway: false",
+  "elevatedWalkwayClearanceVerified: true",
+  "A1 grounded search did not prove clearance from the elevated T4_WALK footprint",
   "rampLevelRealTerminalWall: true",
   "finalVisibleVestibuleCheckedAfterRelocation: true",
   "forbidden A1 walkway anchor survived grounded-terminal preparation",
 ]);
+for (const forbidden of [
+  "const requirePreferredHemisphere = true",
+  "groundedTerminalDirectionDot >= 0.15",
+  "terminalSideHemisphereLocked: true",
+  "minimumTerminalDirectionDot: 0.15",
+]) {
+  if (source.groundedWall.includes(forbidden)) {
+    throw new Error(`${files.groundedWall}: obsolete direction-only A1 wall discriminator remains: ${forbidden}`);
+  }
+}
 requireTokens("wallAuthority", [
   "compact-grounded-A1-authority-idempotence-v31",
   "expected exactly one block-scoped grounded A1 assignment",
@@ -199,4 +211,4 @@ requireTokens("closeEvidence", [
   "a1-bogie-contact-close.png",
 ]);
 
-console.log("Verified current A1 contracts with stage-aware migration checks: terminal-side locked real wall, one 2.4 m vestibule, zero attached lift, parent-local clearance, final world-space bogie centroid, side-on terminal and jetway-side bogie cameras, grounded lifecycle pose, proved CRJ three-tire contact, and strict browser evidence.");
+console.log("Verified current A1 contracts with stage-aware migration checks: real building wall outside the elevated T4_WALK footprint, one 2.4 m vestibule, zero attached lift, parent-local clearance, final world-space bogie centroid, side-on terminal and jetway-side bogie cameras, grounded lifecycle pose, proved CRJ three-tire contact, and strict browser evidence.");
