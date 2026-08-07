@@ -33,7 +33,7 @@ async function captureViewport(page, outputPath) {
   }
 }
 
-test.setTimeout(150000);
+test.setTimeout(90000);
 
 test("Terminal 4 exact jetways are visually registered to their source terminal positions", async ({ browser }) => {
   fs.mkdirSync(evidenceDirectory, { recursive: true });
