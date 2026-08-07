@@ -91,8 +91,10 @@ try {
   await runNode("scripts/prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
   await runNode("scripts/prepare-a1-rotunda-vestibule-closure-v1.mjs");
-  await runNode("scripts/prepare-static-jetway-portal-closures-v1.mjs");
-  await runNode("scripts/prepare-terminal4-static-jetway-parking-v15.mjs");
+  // Do NOT add the former synthetic static Cab closure boxes. They were giant
+  // detached panels in the live scene and were never part of the supplied GLB.
+  // Do NOT force the 57 static gates into artificial 11.9-13.85 m retracted
+  // lengths either; the exact source hierarchy now remains rigid at those gates.
   await runNode("scripts/prepare-terminal4-ramp-facade-v16.mjs");
   await runNode("scripts/prepare-terminal4-b-concourse-extension-v17.mjs");
   await runNode("scripts/prepare-terminal4-attachment-evidence-v14.mjs");
@@ -102,6 +104,8 @@ try {
   await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs");
   await runNode("scripts/prepare-a1-fixed-source-gate-aircraft-pose-v1.mjs");
+  await runNode("scripts/prepare-static-jetway-source-placement-integrity-v1.mjs");
+  await runNode("scripts/prepare-a1-unified-aircraft-pose-v1.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
   buildError = error;
@@ -162,4 +166,4 @@ for (const required of [
   }
 }
 
-console.log("RampReady simulator-quality production build keeps the real A1 wall/Rotunda joint fixed, pivots the complete supplied bridge toward the authored A1 gate/door target, keeps the A1 aircraft at its source parking stop instead of moving it to a bad Cab endpoint, isolates A1 grounding from the 57 static bridges, registers all static physical Rotundas to their measured Terminal 4 facade points, preserves the exact supplied GLB hierarchy and grounded bogie, and restores every protected tracked source after bundling.");
+console.log("RampReady simulator-quality production build keeps the real A1 wall/Rotunda joint fixed, uses one aircraft pose in training and free drive, preserves all 57 static jetways at their exact BGL source placements as rigid supplied-GLB assemblies, omits synthetic Cab closure boxes, keeps A1 grounded, and restores every protected tracked source after bundling.");
