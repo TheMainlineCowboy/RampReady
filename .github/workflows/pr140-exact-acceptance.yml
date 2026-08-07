@@ -97,7 +97,8 @@ jobs:
             'grounded-aircraft-door-progressive-tunnel-slope-v1' \
             'exact-T4_WALK-A1-terminal-portal-v25' \
             'exactWalkwayPortalX' \
-            'exactA1CabContactY += appliedA1JetwayVerticalFitMeters'; do
+            'exactA1CabContactY += appliedA1JetwayVerticalFitMeters' \
+            'exactA1CameraCabX - exactA1CameraApronX * 6'; do
             if "${search[@]}" "${forbidden}" dist; then
               echo "Forbidden generated A1 behavior remains: ${forbidden}"
               exit 1
@@ -111,10 +112,15 @@ jobs:
             'inspectionAircraftJetwayVerticalFitMeters' \
             'inspectionAircraftJetwayAuthoredBogieGroundPreserved' \
             'authored-crj-lowest-geometry-contact-clusters-v2' \
-            'exact-authored-a1-lowest-geometry-ramp-contact-v1' \
+            'exact-authored-a1-lowest-geometry-ramp-contact-v2' \
             'terminal4UploadedJetwayBogieGroundContactPointCount' \
             'terminal4UploadedJetwayBogieGroundContactClusterCount' \
             'terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters' \
+            'terminal4UploadedJetwayBogieGroundContactCenterX' \
+            'terminal4UploadedJetwayBogieGroundContactCenterY' \
+            'terminal4UploadedJetwayBogieGroundContactCenterZ' \
+            'inspectionCameraEndpointJointCenter' \
+            'inspectionCameraEndpointBogieContactCenter' \
             'same-day-a1-continuous-compact-solid-closed-grounded-v1' \
             'exact-a1-terminal-joint-and-bogie-contact-subviews-v1' \
             '57-static-aircraft-facing-cab-portals-opaque-contact-plane-caps-v3' \
