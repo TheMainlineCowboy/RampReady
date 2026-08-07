@@ -18,6 +18,40 @@ if ((jetwaySource.match(/uploadedAirportJetwayFleetReadyV2\.js/g) || []).length 
 }
 fs.writeFileSync(jetwayPath, jetwaySource, "utf8");
 
+// The uploaded replacement GLB does not share the stock AIR_Jetway01 model-root
+// convention. Raw BGL x/z/yaw therefore does not place the supplied Rotunda at
+// the terminal opening. Always register the 57 static supplied bridges from the
+// measured terminal-wall vectors before readiness/portal validation. This keeps
+// the exact meshes/UVs/materials untouched while moving only each complete parent
+// instance into the physical wall-to-gate pose.
+const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
+let readinessSource = fs.readFileSync(readinessPath, "utf8");
+const baseFleetImport = 'import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";';
+const staticRegistrationImport = 'import { registerStaticJetwayFleetToFacade } from "./registerStaticJetwayFleetToFacadeV1.js";';
+if (!readinessSource.includes(staticRegistrationImport)) {
+  if (!readinessSource.includes(baseFleetImport)) {
+    throw new Error(`${readinessPath}: base fleet import anchor is missing`);
+  }
+  readinessSource = readinessSource.replace(baseFleetImport, `${baseFleetImport}\n${staticRegistrationImport}`);
+}
+const installationCall = "          const installationCorrection = correctUploadedJetwayInstallation(THREE, group, fleet, placements);";
+const registrationCall = "          const staticFleetRegistration = registerStaticJetwayFleetToFacade(THREE, group, fleet, placements);";
+if (!readinessSource.includes(registrationCall)) {
+  if (!readinessSource.includes(installationCall)) {
+    throw new Error(`${readinessPath}: installation-correction anchor is missing`);
+  }
+  readinessSource = readinessSource.replace(installationCall, `${installationCall}\n${registrationCall}`);
+}
+for (const token of [
+  staticRegistrationImport,
+  registrationCall,
+]) {
+  if (!readinessSource.includes(token)) {
+    throw new Error(`${readinessPath}: static wall/Rotunda registration is missing ${token}`);
+  }
+}
+fs.writeFileSync(readinessPath, readinessSource, "utf8");
+
 const terminalPath = "src/environment/authoredTerminal4Visual.js";
 let terminalSource = fs.readFileSync(terminalPath, "utf8");
 const buildAnchor = `  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, authored, jetwayTextures);
@@ -68,8 +102,7 @@ const evidenceBlock = `${evidenceAnchor}
   environment.userData.authoredTerminal4UploadedJetwayA1PredictedContactDistanceMeters = sourcePlacedJetways.userData.uploadedJetwayA1PredictedContactDistanceMeters;
   environment.userData.authoredTerminal4UploadedJetwayA1ActualContactDistanceMeters = sourcePlacedJetways.userData.uploadedJetwayA1ActualContactDistanceMeters;
   environment.userData.authoredTerminal4UploadedJetwayA1ActualDoorGapMeters = sourcePlacedJetways.userData.uploadedJetwayA1ActualDoorGapMeters;
-  environment.userData.authoredTerminal4UploadedJetwayA1PartOrderValid = sourcePlacedJetways.userData.uploadedJetwayA1PartOrderValid;
-  environment.userData.authoredTerminal4UploadedJetwayA1PartCentersMeters = sourcePlacedJetways.userData.uploadedJetwayA1PartCentersMeters;`;
+  environment.userData.authoredTerminal4UploadedJetwayA1PartOrderValid = sourcePlacedJetways.userData.uploadedJetwayA1PartOrderValid;\n  environment.userData.authoredTerminal4UploadedJetwayA1PartCentersMeters = sourcePlacedJetways.userData.uploadedJetwayA1PartCentersMeters;`;
 if (!terminalSource.includes("authoredTerminal4UploadedJetwayLoadState")) {
   if (!terminalSource.includes(evidenceAnchor)) throw new Error(`${terminalPath}: jetway geometry evidence anchor is missing`);
   terminalSource = terminalSource.replace(evidenceAnchor, evidenceBlock);
@@ -95,4 +128,4 @@ for (const token of [
 }
 fs.writeFileSync(terminalPath, terminalSource, "utf8");
 
-console.log("Prepared awaited uploaded-airport jetway readiness: A1 alone may telescope; all 57 static exact-GLB gates remain source-rigid while all 58 placements and measured terminal connectors complete before Terminal 4 becomes ready.");
+console.log("Prepared awaited uploaded-airport jetway readiness: A1 alone may telescope; all 57 static exact-GLB gates are registered from measured terminal walls to their gate targets before readiness, while all 58 placements and measured terminal connectors complete before Terminal 4 becomes ready.");
