@@ -101,6 +101,7 @@ try {
   await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs");
+  await runNode("scripts/prepare-a1-fixed-source-gate-aircraft-pose-v1.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
   buildError = error;
@@ -130,10 +131,6 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-// The production wrapper deliberately restores all tracked browser specs to
-// their committed baselines. Reapply browser-only acceptance migrations after
-// that restoration so Playwright tests the grounded no-lift runtime rather than
-// the retired zero-door-gap/progressive-lift assertions.
 await runNode("scripts/prepare-current-head-browser-expectations-v1.mjs");
 await runNode("scripts/prepare-a1-post-lifecycle-evidence-v1.mjs");
 await runNode("scripts/prepare-a1-bogie-centroid-browser-authority-v1.mjs");
@@ -165,4 +162,4 @@ for (const required of [
   }
 }
 
-console.log("RampReady simulator-quality production build preserved the supplied Terminal 4 placement, anchored A1 to a ramp-level grounded structural facade rather than the elevated T4_WALK corridor, aligned the complete A1 parent from the authored Cab-to-Rotunda endpoint axis at the measured terminal corner with an exact 2.4 m visible vestibule and full-vector wall lock, kept the attached supplied jetway grounded with zero child lift while reporting the signed aircraft-door height gap honestly, aligned the rendered inspection aircraft heading to the measured Cab normal before exact door registration, measured the complete supplied A1 parent and authored CRJ contact geometry against the ramp, exposed exact world-space Rotunda/wall/Cab endpoints and locked full/close evidence cameras, closed all parked jetway apron-facing cab mouths without changing supplied GLB node transforms, retained package-native facade variants and exact corridor skins, kept the pinned full-airport aerial visible, filled transparent apron pixels with a crop from the supplied PARKRAMPS texture, retained subtle ADEX surface detail and 2K/4K dynamic shadows, restored every protected committed source exactly, then reapplied and verified the current browser-only grounded no-lift and bogie-centroid acceptance contracts.");
+console.log("RampReady simulator-quality production build keeps the real A1 wall/Rotunda joint fixed, pivots the complete supplied bridge toward the authored A1 gate/door target, keeps the A1 aircraft at its source parking stop instead of moving it to a bad Cab endpoint, isolates A1 grounding from the 57 static bridges, registers all static physical Rotundas to their measured Terminal 4 facade points, preserves the exact supplied GLB hierarchy and grounded bogie, and restores every protected tracked source after bundling.");
