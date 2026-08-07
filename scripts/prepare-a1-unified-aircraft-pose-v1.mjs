@@ -27,28 +27,58 @@ source = source
 
 const restoreTrainingPattern = /\n\s*if \(!inspectionRef\.current\) \{\n\s*sim\.aircraft\.position\.set\(\n\s*trainingAircraftPoseBeforeInspectionRegistration\.x,\n\s*trainingAircraftPoseBeforeInspectionRegistration\.y,\n\s*trainingAircraftPoseBeforeInspectionRegistration\.z,\n\s*\);\n\s*sim\.aircraft\.rotation\.y = trainingAircraftPoseBeforeInspectionRegistration\.yaw;\n\s*sim\.aircraft\.updateMatrixWorld\(true\);\n\s*renderedAircraft\.updateMatrixWorld\(true\);\n\s*\}/;
 source = source.replace(restoreTrainingPattern, "");
+
+// The animation loop used to declare the stored A1 pose invalid whenever the UI
+// was in training mode even if the aircraft had not moved. Make the assertion
+// physical: the pose is applied when its live X/Z/yaw matches the one stored A1
+// gate pose, regardless of which UI mode is active.
+source = source.replace(
+  /const liveInspectionAircraftPoseApplied = inspectionActive\s*&& liveInspectionAircraftPoseError <= 0\.01\s*&& liveInspectionAircraftYawError <= 0\.001;/,
+  `const liveInspectionAircraftPoseApplied = liveInspectionAircraftPoseError <= 0.01
+        && liveInspectionAircraftYawError <= 0.001;`,
+);
+
 source = source.replaceAll(
   "renderer.domElement.dataset.inspectionAircraftPoseApplied = String(inspectionRef.current);",
   `renderer.domElement.dataset.inspectionAircraftPoseApplied = "true";\n          renderer.domElement.dataset.aircraftModePoseAuthority = "${authority}";`,
 );
 
-// Keep the telemetry truthful: switching UI modes must not imply a second
-// physical aircraft pose when the aircraft itself is intentionally unchanged.
 source = source.replaceAll(
   ': "training-approach-start";',
   `: "${authority}";`,
 );
 
+// Publish the actual physical position from the aircraft root each frame. This is
+// intentionally not copied from the stored target so browser verification can
+// catch any future mode-toggle code that moves the airplane again.
+const liveTelemetryAnchor = `      canvas.dataset.inspectionAircraftPoseStored = String(Boolean(liveStoredInspectionAircraftPose));`;
+const liveTelemetry = `${liveTelemetryAnchor}
+      canvas.dataset.aircraftModePoseAuthority = "${authority}";
+      canvas.dataset.aircraftModePoseLiveX = sim.aircraft.position.x.toFixed(6);
+      canvas.dataset.aircraftModePoseLiveY = sim.aircraft.position.y.toFixed(6);
+      canvas.dataset.aircraftModePoseLiveZ = sim.aircraft.position.z.toFixed(6);
+      canvas.dataset.aircraftModePoseLiveYaw = sim.aircraft.rotation.y.toFixed(6);`;
+if (source.includes(liveTelemetryAnchor) && !source.includes("aircraftModePoseLiveX")) {
+  source = source.replace(liveTelemetryAnchor, liveTelemetry);
+}
+
 for (const token of [
   "const storedResetAircraftPose = sim.aircraft.userData.a1InspectionPose || null;",
   "const storedToggleAircraftPose = sim.aircraft.userData.a1InspectionPose || null;",
   `aircraftModePoseAuthority = "${authority}"`,
+  "const liveInspectionAircraftPoseApplied = liveInspectionAircraftPoseError <= 0.01",
+  "aircraftModePoseLiveX = sim.aircraft.position.x.toFixed(6)",
+  "aircraftModePoseLiveZ = sim.aircraft.position.z.toFixed(6)",
+  "aircraftModePoseLiveYaw = sim.aircraft.rotation.y.toFixed(6)",
 ]) {
   if (!source.includes(token)) throw new Error(`${trainerPath}: unified A1 aircraft pose is missing ${token}`);
 }
 if (restoreTrainingPattern.test(source)) {
   throw new Error(`${trainerPath}: training mode still restores a second A1 aircraft pose`);
 }
+if (/const liveInspectionAircraftPoseApplied = inspectionActive\s*&&/.test(source)) {
+  throw new Error(`${trainerPath}: live A1 pose validation is still incorrectly gated by UI mode`);
+}
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Locked A1 to one physical aircraft pose across training and free-drive inspection; mode changes no longer move the airplane.");
+console.log("Locked A1 to one physical aircraft pose across training and free-drive inspection and published live root coordinates so mode-switch regressions are measurable.");
