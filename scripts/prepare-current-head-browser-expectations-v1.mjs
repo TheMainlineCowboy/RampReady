@@ -2,6 +2,8 @@ import fs from "node:fs";
 
 const NO_LIFT_AUTHORITY = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const OLD_VERTICAL_AUTHORITY = "grounded-aircraft-door-progressive-tunnel-slope-v1";
+const SOURCE_HEADING_AUTHORITY = "source-a1-parking-heading-authored-door-registration-v2";
+const SOURCE_A1_MODEL_YAW = (0.491 * Math.PI) / 180;
 
 function replaceOneOf(path, source, variants, replacement, acceptedToken) {
   for (const variant of variants) {
@@ -14,24 +16,39 @@ function replaceOneOf(path, source, variants, replacement, acceptedToken) {
   return source;
 }
 
-// Align the KPHX aircraft heading expectation with the measured Cab normal.
+// Preserve the authored A1 parking heading. The previous Cab-normal migration
+// rotated the CRJ roughly 135 degrees and drove most of its fuselage through the
+// terminal/walkway even though the door itself remained numerically registered.
 {
   const path = "tests/browser/kphx-ground-runtime.spec.js";
   let source = fs.readFileSync(path, "utf8");
-  const next = `  expect(runtime.inspectionAircraftHeadingAuthority).toBe(
+  const oldCabBlock = `  expect(runtime.inspectionAircraftHeadingAuthority).toBe(
     "measured-cab-normal-aircraft-heading-v1",
   );
   const cabDirectionX = Number(runtime.inspectionAircraftCabDirectionX);
   const cabDirectionZ = Number(runtime.inspectionAircraftCabDirectionZ);
   const expectedCabRegisteredYaw = Math.atan2(-cabDirectionZ, cabDirectionX);
   expect(Number(runtime.inspectionAircraftYaw)).toBeCloseTo(expectedCabRegisteredYaw, 4);`;
-  source = replaceOneOf(
-    path,
-    source,
-    ["  expect(Number(runtime.inspectionAircraftYaw)).toBeCloseTo(0.00857, 4);"],
-    next,
-    "const expectedCabRegisteredYaw = Math.atan2(-cabDirectionZ, cabDirectionX)",
+  const sourceHeadingBlock = `  expect(runtime.inspectionAircraftHeadingAuthority).toBe(
+    "${SOURCE_HEADING_AUTHORITY}",
   );
+  const expectedSourceStandYaw = (0.491 * Math.PI) / 180;
+  expect(Number(runtime.inspectionAircraftYaw)).toBeCloseTo(expectedSourceStandYaw, 4);
+  expect(Number(runtime.inspectionAircraftSourceParkingHeadingDegrees)).toBeCloseTo(270.491, 3);
+  expect(Number(runtime.inspectionAircraftSourceModelYawDegrees)).toBeCloseTo(0.491, 3);`;
+  if (source.includes(oldCabBlock)) {
+    source = source.replace(oldCabBlock, sourceHeadingBlock);
+  } else if (source.includes("  expect(Number(runtime.inspectionAircraftYaw)).toBeCloseTo(0.00857, 4);")) {
+    source = source.replace(
+      "  expect(Number(runtime.inspectionAircraftYaw)).toBeCloseTo(0.00857, 4);",
+      sourceHeadingBlock,
+    );
+  } else if (!source.includes("const expectedSourceStandYaw = (0.491 * Math.PI) / 180")) {
+    throw new Error(`${path}: authored A1 parking-heading expectation anchor is missing`);
+  }
+  if (source.includes("expectedCabRegisteredYaw") || source.includes("measured-cab-normal-aircraft-heading-v1")) {
+    throw new Error(`${path}: obsolete Cab-normal heading expectation remains`);
+  }
   fs.writeFileSync(path, source, "utf8");
 }
 
@@ -121,8 +138,6 @@ for (const path of verticalEvidenceFiles) {
   source = source.replaceAll(localExpectOld, localExpectNew);
   source = source.replaceAll(oldNegativeAppliedFit, newZeroAppliedFit);
 
-  // Rotunda center-to-wall includes the authored collar. Compactness is proved
-  // independently by the exact 2.4 m visible white vestibule.
   source = source
     .replaceAll(
       "Number(data?.terminal4A1JetwayWallDistance) > 1.5",
@@ -218,7 +233,6 @@ for (const path of verticalEvidenceFiles) {
   fs.writeFileSync(path, source, "utf8");
 }
 
-// Preserve usable evidence even when a later numeric assertion fails.
 {
   const path = "tests/browser/kphx-ground-runtime.spec.js";
   let source = fs.readFileSync(path, "utf8");
@@ -242,4 +256,4 @@ for (const path of verticalEvidenceFiles) {
   }
 }
 
-console.log("Migrated current browser gates idempotently: Cab-normal heading, stable free-drive motion, finite signed door gap, zero attached A1 child lift, grounded-bogie preservation, authored Rotunda center distance, and an independently exact 2.4 m visible terminal vestibule.");
+console.log(`Migrated current browser gates idempotently: authored A1 stand yaw ${SOURCE_A1_MODEL_YAW.toFixed(6)} rad, stable free-drive motion, finite signed door gap, zero attached A1 child lift, grounded-bogie preservation, authored Rotunda center distance, and an independently exact 2.4 m visible terminal vestibule.`);
