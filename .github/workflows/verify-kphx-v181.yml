@@ -7,6 +7,8 @@ on:
       - 'src/environment/**'
       - 'scripts/prepare-terminal4-runtime.mjs'
       - 'scripts/prepare-full-airport-inspection-route.mjs'
+      - 'scripts/prepare-a14-static-fleet-camera-v1.mjs'
+      - 'scripts/prepare-terminal4-jetway-source-registration-v1.mjs'
       - 'scripts/build-production-simulator-quality.mjs'
       - 'scripts/run-production-with-a1-cleanup.mjs'
       - 'scripts/verify-terminal4-runtime-integration.mjs'
