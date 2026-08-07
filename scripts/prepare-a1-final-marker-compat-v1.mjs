@@ -4,6 +4,7 @@ const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const currentMarkers = [
+  "final-a1-acceptance-authority-after-all-preparers-v4-source-static-integrity",
   "final-a1-acceptance-authority-after-all-preparers-v3-three-tire-contact",
   "final-a1-acceptance-authority-after-all-preparers-v2",
 ];
@@ -37,4 +38,4 @@ for (const currentMarker of currentMarkers) {
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Published the established exact-head final acceptance marker only after terminal-side compact-wall evidence, proved CRJ three-tire contact, multi-point authored jetway bogie contact, and closed-vestibule evidence survived finalization.");
+console.log("Published the established exact-head final acceptance marker after source-preserved static jetway integrity, terminal-side compact-wall evidence, proved CRJ three-tire contact, multi-point authored jetway bogie contact, and closed-vestibule evidence survived finalization.");
