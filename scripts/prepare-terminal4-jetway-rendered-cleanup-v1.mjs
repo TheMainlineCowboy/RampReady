@@ -5,6 +5,21 @@ const a1ElbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 
 let staticRegistration = fs.readFileSync(staticRegistrationPath, "utf8");
 
+const originalImport = 'import { addUploadedAirportJetwayStaticTerminalConnectors } from "./uploadedAirportJetwayTerminalConnector.js";';
+const solidImport = 'import { addStaticSolidTerminalVestibules } from "./staticSolidTerminalVestibulesV1.js";';
+if (staticRegistration.includes(originalImport)) {
+  staticRegistration = staticRegistration.replace(originalImport, solidImport);
+} else if (!staticRegistration.includes(solidImport)) {
+  throw new Error(`${staticRegistrationPath}: static connector import anchor was not found`);
+}
+staticRegistration = staticRegistration.replace(
+  /addUploadedAirportJetwayStaticTerminalConnectors\(THREE, fleet, placements\)/g,
+  "addStaticSolidTerminalVestibules(THREE, fleet, placements)",
+);
+if (!staticRegistration.includes("addStaticSolidTerminalVestibules(THREE, fleet, placements)")) {
+  throw new Error(`${staticRegistrationPath}: solid static vestibule call was not applied`);
+}
+
 const originalBatchBlock = `  const staticBatchesGroup = fleet.getObjectByName("UploadedAirportJetwayStaticExactGlbInstances");
   const staticBatches = staticBatchesGroup?.children?.filter((entry) => entry.isInstancedMesh) || [];
   if (staticBatches.length !== 7 || staticBatches.some((batch) => batch.count !== 57)) {
@@ -17,9 +32,9 @@ const correctedBatchBlock = `  const staticBatchesGroup = fleet.getObjectByName(
   if (staticBatches.length !== 7 || staticBatches.some((batch) => batch.count !== 57)) {
     throw new Error(\`Static exact jetway instance batches are invalid: batches=\${staticBatches.length}, counts=\${staticBatches.map((batch) => batch.count).join(",")}\`);
   }
-  // Portal/cab closure instances are authored against the same pre-registration
-  // placement frame. Move them by the identical per-gate delta as the exact GLB
-  // instances so no detached white closure boxes are left behind on the apron.
+  // Any legacy closure instances were authored in the pre-registration frame.
+  // Keep them co-registered if they are present, even though the production
+  // build no longer intentionally creates those detached Cab-box batches.
   const staticPortalClosures = fleet.getObjectByName("UploadedAirportJetwayStaticPortalClosures");
   const staticClosureBatches = staticPortalClosures?.children?.filter((entry) => entry.isInstancedMesh) || [];
   if (staticPortalClosures && (staticClosureBatches.length !== 6 || staticClosureBatches.some((batch) => batch.count !== 57 && batch.count !== 114))) {
@@ -56,4 +71,4 @@ if (!a1Elbow.includes("const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;")) {
 }
 fs.writeFileSync(a1ElbowPath, a1Elbow, "utf8");
 
-console.log("Prepared rendered Terminal 4 cleanup: static closure instances follow the exact per-gate registration delta, and A1 keeps only minimal hidden wall/Rotunda shell overlap around the exact 2.4 m visible vestibule.");
+console.log("Prepared rendered Terminal 4 cleanup: all 57 static gates use short solid white 2.4 m terminal vestibules that stop at the authored Rotunda instead of generated long glass corridors, legacy closure instances remain co-registered if present, and A1 keeps only minimal hidden wall/Rotunda shell overlap.");
