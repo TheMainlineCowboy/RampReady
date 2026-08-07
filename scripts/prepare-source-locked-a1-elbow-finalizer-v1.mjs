@@ -59,23 +59,23 @@ source = source.replace(/\n\s*\|\| a1PortalAlignmentError > 1e-6/g, "");
 source = source.replace(/\n\s*\|\| a1PortalAlignmentError > [0-9.eE+-]+/g, "");
 
 // Replace the old hand-tuned 0.04–0.10 m vertical-offset range with direct
-// authored-geometry ramp contact. The measured parent correction may be any
-// sane finite value; what matters is that the exact supplied geometry actually
-// lands on the ramp with a credible multi-point footprint.
+// authored-geometry ramp contact when that legacy gate is still present.
 source = source.replace(
   /\n\s*\|\| !\(bogieTireCorrection > 0\.04 && bogieTireCorrection < 0\.1\)/g,
   `
+            || !Number.isFinite(bogieTireCorrection)
+            || bogieTireCorrection > 3`,
+);
+
+const partOrderCondition = "            || !a1PartOrderValid";
+const sourceLockConditions = `${partOrderCondition}
             || !Number.isFinite(bogieTireCorrection)
             || bogieTireCorrection > 3
             || Math.abs(bogieGroundClearanceMeters) > 0.005
             || bogieGroundContactAuthority !== "${BOGIE_GROUND_AUTHORITY}"
             || bogieGroundContactPointCount < 8
             || bogieGroundContactClusterCount < 2
-            || bogieGroundHorizontalContactSpanMeters < 1.2`,
-);
-
-const partOrderCondition = "            || !a1PartOrderValid";
-const sourceLockConditions = `${partOrderCondition}
+            || bogieGroundHorizontalContactSpanMeters < 1.2
             || sourceLockedA1Authority !== SOURCE_REGISTERED_A1_ELBOW_AUTHORITY
             || sourceLockedA1PoseError > 1e-6
             || sourceLockedA1YawError > 1e-7
