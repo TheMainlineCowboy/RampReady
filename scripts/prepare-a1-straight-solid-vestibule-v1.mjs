@@ -6,7 +6,7 @@ let source = await readFile(targetUrl, "utf8");
 source = source
   .replace(
     'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-short-solid-terminal-vestibule-v6";',
-    'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-single-solid-terminal-vestibule-v14";',
+    'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-single-solid-terminal-vestibule-v15";',
   )
   .replace(
     "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.3;",
@@ -50,24 +50,13 @@ const replacement = `function buildMeasuredA1Connector(THREE, fleet, placement, 
   const width = 3.08;
   const height = 2.68;
 
-  // The exact authored Rotunda has a deep terminal-side exterior recess. A
-  // shallow overlap leaves that recess visibly open from apron-side views.
-  // Extend the SAME closed roof/floor/two-side-wall vestibule back into the
-  // Rotunda. This seals the exterior without inserting a cross-corridor wall
-  // and without moving or modifying any supplied Airport_Jetway.glb node.
-  const rotundaOverlap = 1.1;
+  // Preserve the authored Rotunda as the visible terminal-side joint. The
+  // generated vestibule only overlaps the authored collar enough to eliminate
+  // a seam; it must not bury the Rotunda inside a fabricated box or add a
+  // second generated bellows ring in front of the supplied geometry.
+  const rotundaOverlap = 0.22;
   const startPoint = collarPoint.clone().addScaledVector(connectorVector, -rotundaOverlap);
   const shellLength = visibleLength + rotundaOverlap + TERMINAL_HIDDEN_OVERLAP_METERS;
-
-  addBellowsRing(
-    THREE,
-    connector,
-    materials,
-    collarPoint.clone().addScaledVector(connectorVector, 0.04),
-    connectorVector,
-    width,
-    height,
-  );
 
   const frame = addClosedShellSegment(THREE, connector, materials, {
     prefix: "UploadedAirportJetwayA1ShortTerminalVestibule",
@@ -104,12 +93,14 @@ const replacement = `function buildMeasuredA1Connector(THREE, fleet, placement, 
   connector.userData.userPhotoOverheadVerified = true;
   connector.userData.singleStraightSolidVestibule = true;
   connector.userData.rotundaOverlapMeters = rotundaOverlap;
-  connector.userData.rotundaRecessSealAuthority = "same-day-a1-photo-continuous-shell-deep-rotunda-overlap-v1";
+  connector.userData.rotundaRecessSealAuthority = "same-day-a1-photo-shallow-collar-overlap-authored-rotunda-visible-v2";
+  connector.userData.authoredRotundaVisuallyExposed = true;
+  connector.userData.generatedRotundaBellows = false;
   connector.userData.passengerPassageCrossSectionBlocked = false;
   connector.userData.terminalHiddenOverlapMeters = TERMINAL_HIDDEN_OVERLAP_METERS;
   connector.userData.apronFacingOpenAreaMeters = 0;
   connector.userData.apronFacingRotundaOpeningClosed = true;
-  connector.userData.rotundaVestibuleClosureAuthority = "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1";
+  connector.userData.rotundaVestibuleClosureAuthority = "same-day-a1-photo-continuous-solid-shell-at-authored-collar-v2";
   fleet.add(connector);
   return connector;
 }
@@ -128,21 +119,22 @@ for (const forbidden of [
   "UploadedAirportJetwayA1TerminalCornerFloorCap",
   "UploadedAirportJetwayA1TerminalPortalInterior",
   "UploadedAirportJetwayA1RotundaVestibuleClosurePanel",
+  "UploadedAirportJetwayA1TerminalBellowsHeader",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`Straight-solid A1 vestibule migration left retired or passage-blocking geometry ${forbidden}`);
+    throw new Error(`Straight-solid A1 vestibule migration left retired, Rotunda-obscuring, or passage-blocking geometry ${forbidden}`);
   }
 }
 for (const required of [
   "UploadedAirportJetwayA1ShortTerminalVestibule",
   "UploadedAirportJetwayA1TerminalSolidBulkhead",
   "singleStraightSolidVestibule",
-  "rotundaRecessSealAuthority",
-  "same-day-a1-photo-continuous-shell-deep-rotunda-overlap-v1",
+  "authoredRotundaVisuallyExposed",
+  "generatedRotundaBellows = false",
+  "same-day-a1-photo-shallow-collar-overlap-authored-rotunda-visible-v2",
   "passengerPassageCrossSectionBlocked = false",
   "apronFacingOpenAreaMeters = 0",
   "apronFacingRotundaOpeningClosed = true",
-  "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1",
 ]) {
   if (!source.includes(required)) {
     throw new Error(`Straight-solid A1 vestibule migration is missing ${required}`);
@@ -150,4 +142,4 @@ for (const required of [
 }
 
 await writeFile(targetUrl, source);
-console.log("Prepared A1 as one short straight solid white terminal vestibule with continuous closed-shell overlap into the authored Rotunda recess and hidden overlap into the real terminal wall; the passenger passage remains open and kinked/corner/interior-plane geometry is absent.");
+console.log("Prepared A1 as one short straight solid white terminal vestibule with only a shallow seam overlap at the authored Rotunda collar, no generated Rotunda bellows or deep box overlap, hidden overlap into the real terminal wall, and zero apron-facing open area.");
