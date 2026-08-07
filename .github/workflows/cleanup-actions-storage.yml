@@ -75,61 +75,64 @@ jobs:
             echo "No github-pages main deployment was returned; falling back to current main ${main_sha}."
           fi
 
-          pulls_pages="$(get_json "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100" true)"
-          accepted_pr_json="$(
-            jq -c '
-              [.[][]
-                | select((.title // "") | test("maintenance|storage purge|acceptance harness"; "i") | not)
-                | select((.head.ref // "") | test("maintenance|storage|acceptance"; "i") | not)]
-              | if length == 0 then null else max_by(.number) end
-            ' <<<"${pulls_pages}"
-          )"
-          accepted_pr_number="$(jq -r 'if . == null then empty else .number end' <<<"${accepted_pr_json}")"
-          accepted_pr_sha="$(jq -r 'if . == null then empty else .head.sha end' <<<"${accepted_pr_json}")"
-          keep_json="$(printf '%s\n' "${deployed_main_sha}" "${accepted_pr_sha}" | jq -R . | jq -s 'map(select(length > 0)) | unique')"
-
-          echo "Current main=${main_sha}; preserving deployed main=${deployed_main_sha} and current accepted PR #${accepted_pr_number:-none}=${accepted_pr_sha:-none}."
+          refresh_keep() {
+            local pulls_pages accepted_pr_json
+            pulls_pages="$(get_json "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100" true)"
+            accepted_pr_json="$(
+              jq -c '
+                [.[][]
+                  | select((.title // "") | test("maintenance|storage purge|acceptance harness"; "i") | not)
+                  | select((.head.ref // "") | test("maintenance|storage|acceptance"; "i") | not)]
+                | if length == 0 then null else max_by(.number) end
+              ' <<<"${pulls_pages}"
+            )"
+            accepted_pr_number="$(jq -r 'if . == null then empty else .number end' <<<"${accepted_pr_json}")"
+            accepted_pr_sha="$(jq -r 'if . == null then empty else .head.sha end' <<<"${accepted_pr_json}")"
+            keep_json="$(printf '%s\n' "${deployed_main_sha}" "${accepted_pr_sha}" | jq -R . | jq -s 'map(select(length > 0)) | unique')"
+          }
 
           deleted_artifacts=0
           deleted_artifact_bytes=0
-          while true; do
-            pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" true)"
-            mapfile -t rows < <(
+          deleted_caches=0
+          deleted_cache_bytes=0
+          deleted_runs=0
+          cancelled_runs=0
+
+          # Re-resolve the accepted PR head on every pass. This prevents a head
+          # advance during cleanup from leaving stale active runs behind or from
+          # treating the newly accepted exact head as obsolete.
+          for pass in $(seq 1 40); do
+            refresh_keep
+            echo "Cleanup pass ${pass}: preserving deployed main=${deployed_main_sha} and current accepted PR #${accepted_pr_number:-none}=${accepted_pr_sha:-none}."
+            progress=0
+
+            artifact_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" true)"
+            mapfile -t artifact_rows < <(
               jq -r --argjson keep "${keep_json}" '
                 .[] | .artifacts[]
                 | (.workflow_run.head_sha // "") as $sha
                 | select(($keep | index($sha)) == null)
                 | [.id, (.size_in_bytes // 0)] | @tsv
-              ' <<<"${pages}"
+              ' <<<"${artifact_pages}"
             )
-            (( ${#rows[@]} == 0 )) && break
-            for row in "${rows[@]}"; do
+            for row in "${artifact_rows[@]}"; do
               IFS=$'\t' read -r id bytes <<<"${row}"
               delete_one "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}"
               deleted_artifacts=$((deleted_artifacts + 1))
               deleted_artifact_bytes=$((deleted_artifact_bytes + bytes))
+              progress=1
             done
-            sleep 2
-          done
 
-          deleted_caches=0
-          deleted_cache_bytes=0
-          while true; do
-            pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" true)"
-            mapfile -t rows < <(jq -r '.[] | .actions_caches[]? | [.id, (.size_in_bytes // 0)] | @tsv' <<<"${pages}")
-            (( ${#rows[@]} == 0 )) && break
-            for row in "${rows[@]}"; do
+            cache_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" true)"
+            mapfile -t cache_rows < <(jq -r '.[] | .actions_caches[]? | [.id, (.size_in_bytes // 0)] | @tsv' <<<"${cache_pages}")
+            for row in "${cache_rows[@]}"; do
               IFS=$'\t' read -r id bytes <<<"${row}"
               delete_one "repos/${GITHUB_REPOSITORY}/actions/caches/${id}"
               deleted_caches=$((deleted_caches + 1))
               deleted_cache_bytes=$((deleted_cache_bytes + bytes))
+              progress=1
             done
-            sleep 2
-          done
 
-          deleted_runs=0
-          cancelled_runs=0
-          for pass in $(seq 1 20); do
             run_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)"
             mapfile -t run_rows < <(
               jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '
@@ -140,9 +143,6 @@ jobs:
                 | [.id, .status] | @tsv
               ' <<<"${run_pages}"
             )
-            (( ${#run_rows[@]} == 0 )) && break
-
-            progress=0
             for row in "${run_rows[@]}"; do
               IFS=$'\t' read -r id status <<<"${row}"
               if [[ "${status}" == "completed" ]]; then
@@ -156,18 +156,31 @@ jobs:
                 fi
               fi
             done
-            (( progress == 0 )) && break
-            sleep 5
+
+            sleep 6
+            refresh_keep
+            artifact_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" true)"
+            obsolete_artifacts="$(jq -r --argjson keep "${keep_json}" '[.[] | .artifacts[] | (.workflow_run.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${artifact_pages}")"
+            cache_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" true)"
+            remaining_caches="$(jq -r '[.[] | .actions_caches[]?] | length' <<<"${cache_pages}")"
+            run_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)"
+            obsolete_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | (.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${run_pages}")"
+
+            if (( obsolete_artifacts == 0 && remaining_caches == 0 && obsolete_runs == 0 )); then
+              break
+            fi
+            if (( progress == 0 )); then
+              echo "No deletion progress on pass ${pass}; waiting for GitHub cancellation state to settle."
+            fi
           done
 
+          refresh_keep
           artifact_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" true)"
           obsolete_artifacts="$(jq -r --argjson keep "${keep_json}" '[.[] | .artifacts[] | (.workflow_run.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${artifact_pages}")"
           preserved_artifacts="$(jq -r '[.[] | .artifacts[]] | length' <<<"${artifact_pages}")"
           preserved_bytes="$(jq -r '[.[] | .artifacts[].size_in_bytes // 0] | add // 0' <<<"${artifact_pages}")"
-
           cache_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" true)"
           remaining_caches="$(jq -r '[.[] | .actions_caches[]?] | length' <<<"${cache_pages}")"
-
           run_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)"
           obsolete_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | (.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${run_pages}")"
 
