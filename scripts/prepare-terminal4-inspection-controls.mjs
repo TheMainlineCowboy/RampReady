@@ -32,6 +32,12 @@ for (const path of targets) {
     "shell state",
   );
 
+  if (!source.includes("window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__")) {
+    const anchor = "  const toggleInspectionDrive = useCallback(() => {";
+    const hook = `  useEffect(() => {\n    window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ = (presetId) => {\n      moveInspectionToPreset(presetId);\n      return inspectionPresetRef.current;\n    };\n    return () => {\n      delete window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__;\n    };\n  }, [moveInspectionToPreset]);\n\n${anchor}`;
+    source = replaceRequired(source, anchor, hook, path, "visual evidence preset bridge");
+  }
+
   if (!source.includes("const keyboardForward = inspectionActive")) {
     const towingAnchor = "      const towing = !inspectionActive && sim.connection.phase === CONNECTION_PHASES.TOWING;";
     source = replaceRequired(
@@ -65,6 +71,7 @@ for (const path of targets) {
   for (const token of [
     'className="rr-inspection-toggle"',
     'data-inspection-mode={inspectionMode ? "active" : "training"}',
+    "window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__",
     "const keyboardForward = inspectionActive",
     "const inspectionThrottle = keyboardForward || keyboardReverse ? Math.max(drive.throttle, 1)",
   ]) if (!source.includes(token)) throw new Error(`${path}: completed inspection mode is missing ${token}`);
@@ -82,4 +89,4 @@ if (!css.includes(cssMarker)) {
 
 await import("./prepare-a1-terminal-connector-v11.mjs");
 await import("./prepare-inspection-elapsed-motion.mjs");
-console.log("Prepared the active Terminal 4 free-drive controls with full keyboard power, elapsed-motion integration and the measured A1 wall connector.");
+console.log("Prepared the active Terminal 4 free-drive controls with deterministic visual-evidence preset bridge, full keyboard power, elapsed-motion integration and the measured A1 wall connector.");
