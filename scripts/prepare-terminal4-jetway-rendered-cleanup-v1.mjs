@@ -5,6 +5,7 @@ const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 const a1ElbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v1";
 const STATIC_SOLID_VESTIBULE_INSTANCE_COUNT = 228;
+const A1_TERMINAL_WALL_HIDDEN_OVERLAP_METERS = 0.70;
 
 let staticRegistration = fs.readFileSync(staticRegistrationPath, "utf8");
 
@@ -123,19 +124,27 @@ if (readiness.includes("staticConnectorBatchCount !== 3")) {
 }
 fs.writeFileSync(readinessPath, readiness, "utf8");
 
-// A1 no longer fabricates its Rotunda-side endpoint from a fixed connector
-// length. The production geometry must terminate at the transformed authored
-// Rotunda surface, with only shallow hidden overlaps at the real wall and the
-// supplied Rotunda. This guard intentionally rejects restoration of the old
-// 0.82 m overlap that visually swallowed the Rotunda in rendered evidence.
-const a1Elbow = fs.readFileSync(a1ElbowPath, "utf8");
+// The exact-head screenshot from 5743ffa207b4eb02ef971fcccf5010200a28a07f
+// showed a visible air gap between A1's compact terminal-side shell and the
+// terminal facade even though the wall target telemetry was green. Keep the
+// visible wall-to-Rotunda leg source-derived, but extend only the terminal-side
+// hidden seal into the real wall so the exterior cannot float detached.
+let a1Elbow = fs.readFileSync(a1ElbowPath, "utf8");
+if (a1Elbow.includes("const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;")) {
+  a1Elbow = a1Elbow.replace(
+    "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;",
+    `const TERMINAL_HIDDEN_OVERLAP_METERS = ${A1_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)};`,
+  );
+} else if (!a1Elbow.includes(`const TERMINAL_HIDDEN_OVERLAP_METERS = ${A1_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)};`)) {
+  throw new Error(`${a1ElbowPath}: terminal-wall hidden-overlap anchor was not found`);
+}
 for (const token of [
   "function projectedSurfaceDistance(vertices, origin, direction)",
   "const rotundaVertices = collectObjectVerticesInFleet(THREE, fleet, rotunda);",
   "const rotundaTerminalSurfaceMeters = projectedSurfaceDistance(rotundaVertices, rotundaCenter, terminalDirection);",
   "const rotundaSurfacePoint = rotundaCenter.clone().addScaledVector(terminalDirection, rotundaTerminalSurfaceMeters);",
   "const visibleTerminalLegMeters = fixedWallPoint.distanceTo(rotundaSurfacePoint);",
-  "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;",
+  `const TERMINAL_HIDDEN_OVERLAP_METERS = ${A1_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)};`,
   "const ROTUNDA_SHELL_OVERLAP_METERS = 0.10;",
   "shellEnd = rotundaSurfacePoint.clone().addScaledVector(terminalToRotunda, ROTUNDA_SHELL_OVERLAP_METERS)",
   "uploadedJetwayA1AuthoredRotundaTerminalSurfaceMeters",
@@ -145,12 +154,14 @@ for (const token of [
   }
 }
 for (const forbidden of [
+  "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;",
   "const ROTUNDA_SHELL_OVERLAP_METERS = 0.82;",
   "collarPoint = fixedWallPoint.clone().addScaledVector(terminalDirection, -VISIBLE_TERMINAL_LEG_METERS)",
 ]) {
   if (a1Elbow.includes(forbidden)) {
-    throw new Error(`${a1ElbowPath}: obsolete Rotunda-swallowing A1 connector logic survived cleanup: ${forbidden}`);
+    throw new Error(`${a1ElbowPath}: obsolete detached/swallowing A1 connector logic survived cleanup: ${forbidden}`);
   }
 }
+fs.writeFileSync(a1ElbowPath, a1Elbow, "utf8");
 
-console.log("Prepared rendered Terminal 4 cleanup: all 57 static gates use one verified 228-instance batch of short solid white terminal vestibules; A1 is source-driven from the real terminal wall to the transformed authored Rotunda surface with shallow hidden overlaps; downstream measured bogie readiness remains the sole owner of final exact-model ground-contact validation.");
+console.log(`Prepared rendered Terminal 4 cleanup: all 57 static gates use one verified 228-instance batch of short solid white terminal vestibules; A1 remains source-driven from the real terminal wall to the transformed authored Rotunda surface and now seals ${A1_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m into the terminal wall so the exact-head exterior cannot float detached; downstream measured bogie readiness remains the sole owner of final exact-model ground-contact validation.`);
