@@ -1,7 +1,4 @@
-import {
-  addUploadedAirportJetwayStaticTerminalConnectors,
-  addUploadedAirportJetwayTerminalConnector,
-} from "./uploadedAirportJetwayTerminalConnector.js";
+import { addUploadedAirportJetwayTerminalConnector } from "./uploadedAirportJetwayTerminalConnector.js";
 import {
   computeUploadedJetwayArticulation,
   UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY,
@@ -306,7 +303,10 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, _sou
       fleet.name = "UploadedAirportJetwayFleet";
       const staticFleet = buildStaticInstancedFleet(THREE, prototype, placements, reach.sourceContactDistance);
       fleet.add(staticFleet.batches);
-      const staticConnectors = addUploadedAirportJetwayStaticTerminalConnectors(THREE, fleet, placements);
+      // Static terminal vestibules are intentionally deferred until
+      // registerStaticJetwayFleetToFacade has measured each supplied Rotunda
+      // against its real terminal wall. Raw source placements do not yet carry
+      // staticAuthoredRotundaRadiusMeters/staticVisibleTerminalLegMeters.
 
       for (const placement of placements) {
         const anchor = new THREE.Group();
@@ -349,10 +349,12 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, _sou
       group.userData.uploadedJetwayStaticInstancedGateCount = staticFleet.staticGateCount;
       group.userData.uploadedJetwayAnimatedIndividualGateCount = 1;
       group.userData.uploadedJetwayStaticPrimitiveBatchCount = staticFleet.primitiveBatchCount;
-      group.userData.uploadedJetwayStaticConnectorGateCount = staticConnectors.staticGateCount;
-      group.userData.uploadedJetwayStaticConnectorBatchCount = staticConnectors.batchCount;
-      group.userData.uploadedJetwayStaticConnectorInstanceCount = staticConnectors.instanceCount;
-      group.userData.uploadedJetwayStaticConnectorBatchAuthority = staticConnectors.authority;
+      // Measured facade registration owns these final values. Mark this
+      // pre-registration phase explicitly instead of fabricating connectors.
+      group.userData.uploadedJetwayStaticConnectorGateCount = 0;
+      group.userData.uploadedJetwayStaticConnectorBatchCount = 0;
+      group.userData.uploadedJetwayStaticConnectorInstanceCount = 0;
+      group.userData.uploadedJetwayStaticConnectorBatchAuthority = "waiting-for-measured-static-facade-registration";
       group.userData.uploadedJetwayIndividualConnectorGateCount = 1;
       group.userData.uploadedJetwaySourceTriangleCount = prototype.userData.sourceTriangleCount;
       group.userData.uploadedJetwayMaximumPositionErrorMeters = 0;
