@@ -1,4 +1,4 @@
-const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v1";
+const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v2";
 const VISIBLE_TERMINAL_LEG_METERS = 2.4;
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.70;
 const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;
@@ -20,20 +20,28 @@ function buildShellTransforms(placement) {
   const rotundaZ = Number(placement.z);
   const centerY = Number(placement.rotundaY) || 4.1;
   const wallDistance = Number(placement.wallConnectorLength);
-  if (![rotundaX, rotundaZ, centerY, wallDistance].every(Number.isFinite)) {
+  const clearRotundaRadius = Number(placement.staticAuthoredRotundaRadiusMeters);
+  const visibleTerminalLegMeters = Number(placement.staticVisibleTerminalLegMeters);
+  if (![rotundaX, rotundaZ, centerY, wallDistance, clearRotundaRadius, visibleTerminalLegMeters].every(Number.isFinite)) {
     throw new Error(`Static ${placement.gate} vestibule placement is incomplete`);
   }
-  if (Math.abs(wallDistance - 3.98) > 0.01) {
-    throw new Error(`Static ${placement.gate} wall distance must remain 3.98 m, received ${wallDistance}`);
+  if (!(clearRotundaRadius > 0.7 && clearRotundaRadius < 3.5)) {
+    throw new Error(`Static ${placement.gate} authored Rotunda radius is invalid: ${clearRotundaRadius}`);
+  }
+  if (Math.abs(visibleTerminalLegMeters - VISIBLE_TERMINAL_LEG_METERS) > 0.02) {
+    throw new Error(`Static ${placement.gate} visible terminal vestibule must remain compact: ${visibleTerminalLegMeters}`);
+  }
+  const expectedCenterToWall = clearRotundaRadius + visibleTerminalLegMeters;
+  if (Math.abs(wallDistance - expectedCenterToWall) > 0.02) {
+    throw new Error(`Static ${placement.gate} wall/Rotunda registration is inconsistent: ${wallDistance} vs ${expectedCenterToWall}`);
   }
 
   const direction = normalizedTerminalDirection(placement);
   const yaw = Math.atan2(direction.x, direction.z);
   const sideX = Math.cos(yaw);
   const sideZ = -Math.sin(yaw);
-  const clearRotundaRadius = wallDistance - VISIBLE_TERMINAL_LEG_METERS;
   const shellStartDistance = clearRotundaRadius - ROTUNDA_SHELL_OVERLAP_METERS;
-  const shellLength = VISIBLE_TERMINAL_LEG_METERS + TERMINAL_HIDDEN_OVERLAP_METERS + ROTUNDA_SHELL_OVERLAP_METERS;
+  const shellLength = visibleTerminalLegMeters + TERMINAL_HIDDEN_OVERLAP_METERS + ROTUNDA_SHELL_OVERLAP_METERS;
   const shellCenterDistance = shellStartDistance + shellLength * 0.5;
   const centerX = rotundaX + direction.x * shellCenterDistance;
   const centerZ = rotundaZ + direction.z * shellCenterDistance;
