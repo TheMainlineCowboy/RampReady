@@ -1,6 +1,13 @@
 import fs from "node:fs";
 
-await import(`./prepare-terminal4-jetway-rendered-cleanup-v1.mjs?rendered-cleanup=${Date.now()}`);
+const a1ElbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
+const preparedA1Elbow = fs.readFileSync(a1ElbowPath, "utf8");
+const terminalRotundaSleevePrepared = preparedA1Elbow.includes("const ROTUNDA_SHELL_OVERLAP_METERS = 0.55;")
+  && preparedA1Elbow.includes("function addCompactRotundaBellows(")
+  && preparedA1Elbow.includes("  const depth = 0.90;");
+if (!terminalRotundaSleevePrepared) {
+  await import(`./prepare-terminal4-jetway-rendered-cleanup-v1.mjs?rendered-cleanup=${Date.now()}`);
+}
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v11";
