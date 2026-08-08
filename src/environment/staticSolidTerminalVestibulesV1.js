@@ -1,5 +1,6 @@
 const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v1";
-const VISIBLE_TERMINAL_LEG_METERS = 2.4;
+const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0;
+const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 44;
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.70;
 const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;
 const WIDTH_METERS = 3.02;
@@ -20,20 +21,32 @@ function buildShellTransforms(placement) {
   const rotundaZ = Number(placement.z);
   const centerY = Number(placement.rotundaY) || 4.1;
   const wallDistance = Number(placement.wallConnectorLength);
-  if (![rotundaX, rotundaZ, centerY, wallDistance].every(Number.isFinite)) {
+  const clearRotundaRadius = Number(placement.staticAuthoredRotundaRadiusMeters);
+  const visibleTerminalLegMeters = Number(placement.staticVisibleTerminalLegMeters);
+  const terminalWallOverlapMeters = Number(placement.staticTerminalWallOverlapMeters) || 0;
+  if (![rotundaX, rotundaZ, centerY, wallDistance, clearRotundaRadius, visibleTerminalLegMeters, terminalWallOverlapMeters].every(Number.isFinite)) {
     throw new Error(`Static ${placement.gate} vestibule placement is incomplete`);
   }
-  if (Math.abs(wallDistance - 3.98) > 0.01) {
-    throw new Error(`Static ${placement.gate} wall distance must remain 3.98 m, received ${wallDistance}`);
+  if (!(clearRotundaRadius > 0.7 && clearRotundaRadius < 3.5)) {
+    throw new Error(`Static ${placement.gate} authored Rotunda radius is invalid: ${clearRotundaRadius}`);
+  }
+  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
+    throw new Error(`Static ${placement.gate} measured visible terminal vestibule is invalid: ${visibleTerminalLegMeters}`);
+  }
+  if (!(terminalWallOverlapMeters >= 0 && terminalWallOverlapMeters < clearRotundaRadius)) {
+    throw new Error(`Static ${placement.gate} terminal wall/Rotunda overlap is invalid: ${terminalWallOverlapMeters}`);
+  }
+  const expectedCenterToWall = clearRotundaRadius + visibleTerminalLegMeters - terminalWallOverlapMeters;
+  if (Math.abs(wallDistance - expectedCenterToWall) > 0.02) {
+    throw new Error(`Static ${placement.gate} wall/Rotunda registration is inconsistent: ${wallDistance} vs ${expectedCenterToWall}`);
   }
 
   const direction = normalizedTerminalDirection(placement);
   const yaw = Math.atan2(direction.x, direction.z);
   const sideX = Math.cos(yaw);
   const sideZ = -Math.sin(yaw);
-  const clearRotundaRadius = wallDistance - VISIBLE_TERMINAL_LEG_METERS;
   const shellStartDistance = clearRotundaRadius - ROTUNDA_SHELL_OVERLAP_METERS;
-  const shellLength = VISIBLE_TERMINAL_LEG_METERS + TERMINAL_HIDDEN_OVERLAP_METERS + ROTUNDA_SHELL_OVERLAP_METERS;
+  const shellLength = visibleTerminalLegMeters + TERMINAL_HIDDEN_OVERLAP_METERS + ROTUNDA_SHELL_OVERLAP_METERS;
   const shellCenterDistance = shellStartDistance + shellLength * 0.5;
   const centerX = rotundaX + direction.x * shellCenterDistance;
   const centerZ = rotundaZ + direction.z * shellCenterDistance;
@@ -49,7 +62,7 @@ function buildShellTransforms(placement) {
       [0.13, HEIGHT_METERS, shellLength],
     );
   }
-  return transforms;
+  return { transforms, visibleTerminalLegMeters, terminalWallOverlapMeters, wallDistance };
 }
 
 function buildInstancedShellBatch(THREE, material, transforms) {
@@ -83,9 +96,14 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   if (staticPlacements.length !== 57) {
     throw new Error(`Static solid vestibules expected 57 gates, received ${staticPlacements.length}`);
   }
-  const transforms = staticPlacements.flatMap(buildShellTransforms);
+
+  const measured = staticPlacements.map(buildShellTransforms);
+  const transforms = measured.flatMap((entry) => entry.transforms);
+  const visibleLengths = measured.map((entry) => entry.visibleTerminalLegMeters);
+  const wallOverlaps = measured.map((entry) => entry.terminalWallOverlapMeters);
+  const wallDistances = measured.map((entry) => entry.wallDistance);
   const material = new THREE.MeshStandardMaterial({
-    name: "Terminal 4 short solid white jetway vestibule shell",
+    name: "Terminal 4 measured solid white jetway vestibule shell",
     color: 0xe1e2df,
     roughness: 0.78,
     metalness: 0.08,
@@ -96,9 +114,15 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   group.userData.connectorAuthority = STATIC_SOLID_VESTIBULE_AUTHORITY;
   group.userData.batchAuthority = STATIC_SOLID_VESTIBULE_AUTHORITY;
   group.userData.staticGateCount = 57;
-  group.userData.visibleTerminalLegMeters = VISIBLE_TERMINAL_LEG_METERS;
+  group.userData.minimumVisibleTerminalLegMeters = Math.min(...visibleLengths);
+  group.userData.maximumVisibleTerminalLegMeters = Math.max(...visibleLengths);
+  group.userData.minimumTerminalWallRotundaOverlapMeters = Math.min(...wallOverlaps);
+  group.userData.maximumTerminalWallRotundaOverlapMeters = Math.max(...wallOverlaps);
+  group.userData.minimumRotundaCenterToWallMeters = Math.min(...wallDistances);
+  group.userData.maximumRotundaCenterToWallMeters = Math.max(...wallDistances);
   group.userData.terminalHiddenOverlapMeters = TERMINAL_HIDDEN_OVERLAP_METERS;
   group.userData.rotundaShellOverlapMeters = ROTUNDA_SHELL_OVERLAP_METERS;
+  group.userData.perGateMeasuredTerminalVestibules = true;
   group.add(buildInstancedShellBatch(THREE, material, transforms));
   group.userData.batchCount = group.children.length;
   group.userData.instanceCount = transforms.length;
@@ -109,6 +133,9 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
     batchCount: group.children.length,
     instanceCount: transforms.length,
     authority: STATIC_SOLID_VESTIBULE_AUTHORITY,
+    minimumVisibleTerminalLegMeters: group.userData.minimumVisibleTerminalLegMeters,
+    maximumVisibleTerminalLegMeters: group.userData.maximumVisibleTerminalLegMeters,
+    maximumTerminalWallRotundaOverlapMeters: group.userData.maximumTerminalWallRotundaOverlapMeters,
   };
 }
 

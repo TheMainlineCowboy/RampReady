@@ -20,7 +20,7 @@ const visualAuthority = "same-day-a1-continuous-compact-solid-closed-grounded-v1
 const jetwayGroundAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
 const noLiftAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const staticRigidAuthority = "57-static-exact-glb-rigid-source-hierarchy-v1";
-const staticSourcePlacementAuthority = "57-static-authored-rotundas-photo-registered-to-terminal-facade-v2";
+const staticSourcePlacementAuthority = "57-static-authored-rotundas-real-wall-surface-registration-v4";
 const marker = "final-a1-acceptance-authority-after-all-preparers-v4-source-static-integrity";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 

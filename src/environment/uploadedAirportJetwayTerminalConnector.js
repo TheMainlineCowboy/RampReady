@@ -49,22 +49,24 @@ function measureConnector(placement) {
   let terminalOverlap;
   let length;
   let startDistance;
+  let visibleTerminalLegMeters;
   if (placement.gate === "A1") {
-    // A1 is subsequently replaced by the dedicated fixed-wall Rotunda elbow;
-    // preserve the legacy dimensions here so preparation order stays stable.
     terminalOverlap = 1.45;
     length = Math.max(1.8, Math.min(19.5, measuredLength + terminalOverlap));
     startDistance = 0;
+    visibleTerminalLegMeters = measuredLength;
   } else {
-    // Registered static placements report wallConnectorLength from the exact
-    // authored Rotunda center to the real terminal wall. Do not start a new
-    // corridor at that center: it buries the supplied Rotunda. Begin at the
-    // Rotunda perimeter, overlap it by only 12 cm, keep exactly 2.4 m visible,
-    // and hide only 18 cm in the terminal facade.
-    const inferredRotundaRadius = Math.max(0, measuredLength - STATIC_VISIBLE_TERMINAL_LEG_METERS);
+    const authoredRotundaRadius = Number(placement.staticAuthoredRotundaRadiusMeters);
+    visibleTerminalLegMeters = Number(placement.staticVisibleTerminalLegMeters);
+    if (!(authoredRotundaRadius > 0.7 && authoredRotundaRadius < 3.5)) {
+      throw new Error(`Static jetway ${placement.gate} is missing the measured authored Rotunda radius`);
+    }
+    if (!(visibleTerminalLegMeters > 0.35 && visibleTerminalLegMeters < 6.5)) {
+      throw new Error(`Static jetway ${placement.gate} measured visible vestibule is invalid: ${visibleTerminalLegMeters}`);
+    }
     terminalOverlap = STATIC_TERMINAL_OVERLAP_METERS;
-    startDistance = Math.max(0, inferredRotundaRadius - STATIC_ROTUNDA_OVERLAP_METERS);
-    length = STATIC_VISIBLE_TERMINAL_LEG_METERS + STATIC_ROTUNDA_OVERLAP_METERS + STATIC_TERMINAL_OVERLAP_METERS;
+    startDistance = Math.max(0, authoredRotundaRadius - STATIC_ROTUNDA_OVERLAP_METERS);
+    length = visibleTerminalLegMeters + STATIC_ROTUNDA_OVERLAP_METERS + STATIC_TERMINAL_OVERLAP_METERS;
   }
 
   const centerDistance = startDistance + length * 0.5;
@@ -79,6 +81,7 @@ function measureConnector(placement) {
     terminalOverlap,
     length,
     startDistance,
+    visibleTerminalLegMeters,
     ux,
     uz,
     centerX,

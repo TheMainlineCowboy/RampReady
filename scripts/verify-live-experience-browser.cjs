@@ -142,6 +142,27 @@ async function inspectCompositedPng(page, payload) {
   }, payload.toString('base64'));
 }
 
+async function captureClipPng(page, clip) {
+  const session = await page.context().newCDPSession(page);
+  try {
+    const result = await session.send('Page.captureScreenshot', {
+      format: 'png',
+      fromSurface: true,
+      captureBeyondViewport: false,
+      clip: {
+        x: clip.x,
+        y: clip.y,
+        width: clip.width,
+        height: clip.height,
+        scale: 1,
+      },
+    });
+    return Buffer.from(result.data, 'base64');
+  } finally {
+    await session.detach();
+  }
+}
+
 async function saveCanvasPng(page, canvas, filePath, minimumWidth, minimumHeight) {
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const box = await canvas.boundingBox();
@@ -152,7 +173,7 @@ async function saveCanvasPng(page, canvas, filePath, minimumWidth, minimumHeight
     width: Math.floor(box.width),
     height: Math.floor(box.height),
   };
-  const payload = await page.screenshot({ type: 'png', clip, animations: 'disabled', caret: 'hide' });
+  const payload = await captureClipPng(page, clip);
   const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
   if (!payload.subarray(0, 8).equals(signature)) throw new Error(`${filePath} is not a PNG`);
   if (payload.byteLength < 5000) throw new Error(`${filePath} is unexpectedly small: ${payload.byteLength}`);

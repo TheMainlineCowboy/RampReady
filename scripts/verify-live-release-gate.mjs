@@ -81,7 +81,8 @@ for (const required of [
   ".rr-view-select",
   "view: rect('.rr-view-select')",
   "setCameraView",
-  "page.screenshot",
+  "newCDPSession",
+  "Page.captureScreenshot",
   "inspectCompositedPng",
   "uniqueColorBuckets",
   "blank or visually flat",
@@ -90,6 +91,7 @@ for (const required of [
   "mobile-layout.json",
   "error.txt",
 ]) assert.ok(browserVerifier.includes(required), `live browser verifier missing ${required}`);
+assert.ok(!browserVerifier.includes("page.screenshot"), "live render evidence must not use Playwright page.screenshot because it can hang on the composited Three.js scene");
 assert.ok(!browserVerifier.includes("Stand-up model is launchable without its runtime GLB"), "production verifier must not preserve the obsolete pending-asset gate");
 assert.ok(!browserVerifier.includes("toDataURL('image/png')"), "live render evidence must not use the cleared default WebGL framebuffer");
 assert.ok(!browserVerifier.includes("page.selectOption('.rr-view-select'"), "camera verification must not depend on Playwright visibility after evidence overlays are hidden");
@@ -144,4 +146,4 @@ for (const required of [
   "bottom: var(--rr-recovery-safe) !important",
 ]) assert.ok(css.includes(required), `mobile recovery CSS missing ${required}`);
 
-console.log("RampReady live release gate verified: successful-deploy-only live experience verification, one authoritative PHX browser render gate, immutable release markers, compositor-backed evidence, verified authored stand-up equipment routing, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");
+console.log("RampReady live release gate verified: successful-deploy-only live experience verification, one authoritative PHX browser render gate, immutable release markers, CDP compositor-backed evidence, verified authored stand-up equipment routing, touch camera orbit, visible mobile controls, and diagnosable production evidence are enforced.");

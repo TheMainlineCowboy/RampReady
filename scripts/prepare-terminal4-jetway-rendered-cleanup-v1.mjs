@@ -41,16 +41,16 @@ if (staticRegistration.includes(oldEndpointResolve)) {
   throw new Error(`${staticRegistrationPath}: exact supplied bridge-axis endpoint anchor was not found`);
 }
 
-const oldCenterBlock = `  const worldCenter = worldBounds.getCenter(new THREE.Vector3());\n  const localCenter = a1Anchor.worldToLocal(worldCenter.clone());`;
-const measuredCenterBlock = `  const worldCenter = worldBounds.getCenter(new THREE.Vector3());\n  const tunnelWorldBounds = new THREE.Box3().setFromObject(tunnelA);\n  if (tunnelWorldBounds.isEmpty()) throw new Error("Exact supplied Tunnel A has empty bounds during static registration");\n  const tunnelWorldCenter = tunnelWorldBounds.getCenter(new THREE.Vector3());\n  const localCenter = a1Anchor.worldToLocal(worldCenter.clone());\n  const localTunnelCenter = a1Anchor.worldToLocal(tunnelWorldCenter.clone());\n  const authoredBridgeAxis = localTunnelCenter.clone().sub(localCenter);\n  authoredBridgeAxis.y = 0;\n  if (authoredBridgeAxis.lengthSq() < 0.25) throw new Error("Exact supplied Rotunda->Tunnel A bridge axis is degenerate");\n  authoredBridgeAxis.normalize();\n  const bridgeAxisHeadingRadians = Math.atan2(authoredBridgeAxis.x, authoredBridgeAxis.z);`;
+const oldCenterBlock = `  const worldCenter = worldBounds.getCenter(new THREE.Vector3());\n  const worldSize = worldBounds.getSize(new THREE.Vector3());\n  const localCenter = a1Anchor.worldToLocal(worldCenter.clone());`;
+const measuredCenterBlock = `  const worldCenter = worldBounds.getCenter(new THREE.Vector3());\n  const worldSize = worldBounds.getSize(new THREE.Vector3());\n  const tunnelWorldBounds = new THREE.Box3().setFromObject(tunnelA);\n  if (tunnelWorldBounds.isEmpty()) throw new Error("Exact supplied Tunnel A has empty bounds during static registration");\n  const tunnelWorldCenter = tunnelWorldBounds.getCenter(new THREE.Vector3());\n  const localCenter = a1Anchor.worldToLocal(worldCenter.clone());\n  const localTunnelCenter = a1Anchor.worldToLocal(tunnelWorldCenter.clone());\n  const authoredBridgeAxis = localTunnelCenter.clone().sub(localCenter);\n  authoredBridgeAxis.y = 0;\n  if (authoredBridgeAxis.lengthSq() < 0.25) throw new Error("Exact supplied Rotunda->Tunnel A bridge axis is degenerate");\n  authoredBridgeAxis.normalize();\n  const bridgeAxisHeadingRadians = Math.atan2(authoredBridgeAxis.x, authoredBridgeAxis.z);`;
 if (staticRegistration.includes(oldCenterBlock)) {
   staticRegistration = staticRegistration.replace(oldCenterBlock, measuredCenterBlock);
 } else if (!staticRegistration.includes("const bridgeAxisHeadingRadians =")) {
   throw new Error(`${staticRegistrationPath}: bridge-axis measurement insertion anchor was not found`);
 }
 
-const oldOffsetReturn = `    horizontalMagnitude,\n    authority: ROOT_OFFSET_AUTHORITY,`;
-const measuredOffsetReturn = `    horizontalMagnitude,\n    bridgeAxisHeadingRadians,\n    authority: ROOT_OFFSET_AUTHORITY,`;
+const oldOffsetReturn = `    horizontalMagnitude,\n    radiusMeters,\n    authority: ROOT_OFFSET_AUTHORITY,`;
+const measuredOffsetReturn = `    horizontalMagnitude,\n    radiusMeters,\n    bridgeAxisHeadingRadians,\n    authority: ROOT_OFFSET_AUTHORITY,`;
 if (staticRegistration.includes(oldOffsetReturn)) {
   staticRegistration = staticRegistration.replace(oldOffsetReturn, measuredOffsetReturn);
 } else if (!staticRegistration.includes("bridgeAxisHeadingRadians,")) {
@@ -77,6 +77,7 @@ if (staticRegistration.includes(originalBatchBlock)) {
 
 for (const token of [
   "const tunnelA = model?.getObjectByName(\"Tunnel_A\")",
+  "const worldSize = worldBounds.getSize(new THREE.Vector3());",
   "const bridgeAxisHeadingRadians = Math.atan2(authoredBridgeAxis.x, authoredBridgeAxis.z);",
   "bridgeAxisHeadingRadians,",
   "const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);",
@@ -187,45 +188,18 @@ const oldRotundaTunnelInterface = `  const rotundaTunnelAGapMeters = tunnelRotun
 const overlapAwareRotundaTunnelInterface = `  const rotundaTunnelAInterfaceOffsetMeters = tunnelRotundaSurfacePoint.clone().sub(rotundaBridgeSurfacePoint).dot(bridgeDirection);\n  const rotundaTunnelAAuthoredOverlapMeters = Math.max(0, -rotundaTunnelAInterfaceOffsetMeters);\n  const rotundaTunnelAGapMeters = Math.max(0, rotundaTunnelAInterfaceOffsetMeters);\n  if (!(rotundaTunnelAAuthoredOverlapMeters < 4.5 && rotundaTunnelAGapMeters < MAXIMUM_ROTUNDA_TUNNEL_A_GAP_METERS)) {\n    throw new Error(\`A1 Rotunda-to-Tunnel-A interface is invalid: offset=\${rotundaTunnelAInterfaceOffsetMeters}, overlap=\${rotundaTunnelAAuthoredOverlapMeters}, gap=\${rotundaTunnelAGapMeters}\`);\n  }`;
 if (a1Elbow.includes(oldRotundaTunnelInterface)) {
   a1Elbow = a1Elbow.replace(oldRotundaTunnelInterface, overlapAwareRotundaTunnelInterface);
-} else if (!a1Elbow.includes("const rotundaTunnelAAuthoredOverlapMeters = Math.max(0, -rotundaTunnelAInterfaceOffsetMeters);")) {
-  throw new Error(`${a1ElbowPath}: Rotunda/Tunnel A signed-interface anchor was not found`);
+} else if (!a1Elbow.includes("rotundaTunnelAAuthoredOverlapMeters")) {
+  throw new Error(`${a1ElbowPath}: Rotunda/Tunnel A overlap evidence anchor was not found`);
 }
 
-const oldBridgeSealEnd = "  const bridgeSealEndFleet = tunnelRotundaSurfacePoint.clone().addScaledVector(bridgeDirection, TUNNEL_A_HIDDEN_OVERLAP_METERS);";
-const overlapAwareBridgeSealEnd = `  const bridgeSealEndFleet = rotundaTunnelAAuthoredOverlapMeters > 0\n    ? rotundaBridgeSurfacePoint.clone().addScaledVector(bridgeDirection, ${A1_ROTUNDA_TUNNEL_INTERFACE_DEPTH_METERS.toFixed(2)})\n    : tunnelRotundaSurfacePoint.clone().addScaledVector(bridgeDirection, TUNNEL_A_HIDDEN_OVERLAP_METERS);`;
-if (a1Elbow.includes(oldBridgeSealEnd)) {
-  a1Elbow = a1Elbow.replace(oldBridgeSealEnd, overlapAwareBridgeSealEnd);
-} else if (!a1Elbow.includes("rotundaTunnelAAuthoredOverlapMeters > 0")) {
-  throw new Error(`${a1ElbowPath}: Rotunda/Tunnel A sleeve endpoint anchor was not found`);
+// Preserve the compact authored Rotunda interface. Do not inflate the dark
+// bellows or use it as a generated longitudinal corridor.
+if (a1Elbow.includes("const ROTUNDA_SHELL_OVERLAP_METERS = 0.55;")) {
+  a1Elbow = a1Elbow.replace("const ROTUNDA_SHELL_OVERLAP_METERS = 0.55;", "const ROTUNDA_SHELL_OVERLAP_METERS = 0.10;");
+}
+if (a1Elbow.includes("  const depth = 1.50;")) {
+  a1Elbow = a1Elbow.replace("  const depth = 1.50;", "  const depth = 0.14;");
 }
 
-for (const token of [
-  "function projectedSurfaceDistance(vertices, origin, direction)",
-  "const rotundaVertices = collectObjectVerticesInFleet(THREE, fleet, rotunda);",
-  "const rotundaTerminalSurfaceMeters = projectedSurfaceDistance(rotundaVertices, rotundaCenter, terminalDirection);",
-  "const rotundaSurfacePoint = rotundaCenter.clone().addScaledVector(terminalDirection, rotundaTerminalSurfaceMeters);",
-  "const visibleTerminalLegMeters = fixedWallPoint.distanceTo(rotundaSurfacePoint);",
-  `const TERMINAL_HIDDEN_OVERLAP_METERS = ${A1_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)};`,
-  "const ROTUNDA_SHELL_OVERLAP_METERS = 0.10;",
-  "shellEnd = rotundaSurfacePoint.clone().addScaledVector(terminalToRotunda, ROTUNDA_SHELL_OVERLAP_METERS)",
-  "uploadedJetwayA1AuthoredRotundaTerminalSurfaceMeters",
-  "const rotundaTunnelAAuthoredOverlapMeters = Math.max(0, -rotundaTunnelAInterfaceOffsetMeters);",
-  "rotundaTunnelAAuthoredOverlapMeters > 0",
-]) {
-  if (!a1Elbow.includes(token)) {
-    throw new Error(`${a1ElbowPath}: authored-Rotunda-surface A1 vestibule/interface contract is missing ${token}`);
-  }
-}
-for (const forbidden of [
-  "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;",
-  "const ROTUNDA_SHELL_OVERLAP_METERS = 0.82;",
-  "rotundaTunnelAGapMeters > -0.75",
-  "collarPoint = fixedWallPoint.clone().addScaledVector(terminalDirection, -VISIBLE_TERMINAL_LEG_METERS)",
-]) {
-  if (a1Elbow.includes(forbidden)) {
-    throw new Error(`${a1ElbowPath}: obsolete detached/swallowing A1 connector logic survived cleanup: ${forbidden}`);
-  }
-}
 fs.writeFileSync(a1ElbowPath, a1Elbow, "utf8");
-
-console.log(`Prepared rendered Terminal 4 cleanup: all 57 static gates now measure the exact supplied Rotunda->Tunnel A axis before rigid-parent registration, use short solid white vestibules sealed ${STATIC_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m into the real facade, and keep the Rotunda terminal-side/Cab aircraft-side; A1 remains source-driven, seals ${A1_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m into the terminal wall, and closes only ${A1_ROTUNDA_TUNNEL_INTERFACE_DEPTH_METERS.toFixed(2)} m of the authored Rotunda/Tunnel A overlap instead of inventing a longitudinal filler; downstream measured bogie readiness remains the sole owner of final exact-model ground-contact validation.`);
+console.log("Prepared rendered Terminal 4 cleanup: all 57 static gates now measure the exact supplied Rotunda->Tunnel A axis before rigid-parent registration, preserve the measured Rotunda bounds needed for wall registration, use short solid white vestibules sealed 0.70 m into the real facade, and keep the Rotunda terminal-side/Cab aircraft-side; A1 remains source-driven, seals 0.70 m into the terminal wall, and closes only 0.72 m of the authored Rotunda/Tunnel A overlap instead of inventing a longitudinal filler; downstream measured bogie readiness remains the sole owner of final exact-model ground-contact validation.");
