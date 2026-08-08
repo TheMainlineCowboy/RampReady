@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
+const elbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const currentMarkers = [
@@ -74,4 +75,24 @@ fs.writeFileSync(readinessPath, readiness, "utf8");
 // seeded physical guards and writes the final runtime immediately before bundle.
 await import(`./prepare-a1-real-terminal-final-geometry-v1.mjs?final-real-wall=${Date.now()}`);
 
-console.log("Published the established exact-head acceptance marker, seeded the real-wall/fixed-leg guards at the invariant final readiness mismatch block, then delegated all A1 geometry/readiness ownership to the source-measured real-Terminal-4-wall finalizer.");
+// The exact-head render proved that the 0.18 m mathematical wall overlap can
+// terminate in front of the visible facade surface even though the structural
+// ray hit is valid. Seal only the generated terminal-side shell farther behind
+// the real facade, using the same 0.70 m hidden penetration already used by the
+// static Terminal 4 wall registrations. This does not change the visible
+// wall-to-Rotunda leg, the supplied Rotunda, any authored child transform, or
+// the aircraft-side bridge axis.
+let elbow = fs.readFileSync(elbowPath, "utf8");
+const compactOverlap = "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;";
+const sealedOverlap = "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.70;";
+if (elbow.includes(compactOverlap)) {
+  elbow = elbow.replace(compactOverlap, sealedOverlap);
+} else if (!elbow.includes(sealedOverlap)) {
+  throw new Error(`${elbowPath}: final A1 terminal-wall overlap anchor is missing`);
+}
+if (!elbow.includes("const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;")) {
+  throw new Error(`${elbowPath}: Rotunda-side overlap changed while sealing the terminal wall`);
+}
+fs.writeFileSync(elbowPath, elbow, "utf8");
+
+console.log("Published the established exact-head acceptance marker, delegated geometry to the source-measured real-Terminal-4-wall finalizer, then sealed only the hidden A1 vestibule end 0.70 m into the rendered facade while preserving the visible leg, supplied Rotunda, authored hierarchy, and grounded bogie.");
