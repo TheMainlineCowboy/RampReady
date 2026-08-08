@@ -30,9 +30,9 @@ for (const token of [
 const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js", [
   'detailLevel: "fsx-air-jetway01-exact-textured-source-scale-articulated-v5"',
   'sourceDimensionsMeters: Object.freeze([37.92, 8.77, 26.51])',
-  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 7.32",
-  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.34",
-  "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.61",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 6.25",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.35",
+  "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 1.58",
   "const sourceFacadeRecessMeters",
   "CLOSED_SERVICE_DOOR_GATES.has(jetway.g)",
   "FACADE_VENT_GATES.has(jetway.g)",
@@ -57,6 +57,9 @@ const jetways = requireTokens("src/environment/sourcePlacedTerminal4Jetways.js",
 for (const forbidden of [
   "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 1.55",
   "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.28",
+  "CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS = 7.32",
+  "CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS = 1.34",
+  "AIR_JETWAY01_CONTACT_CLEARANCE_METERS = 2.61",
   "gateNumber % 3",
   "gateNumber % 2",
   "createArchedTunnelGeometry(THREE, 2.08, 2.02, 0.18)",
@@ -72,7 +75,7 @@ for (const forbidden of [
   "transforms.facadeInfill.push",
   "transforms.facadeDoor.push",
   "transforms.facadeVent.push",
-]) if (jetways.includes(forbidden)) throw new Error(`Aircraft-specific jetway shrink, whole-atlas repetition, or generated facade substitute remains: ${forbidden}`);
+]) if (jetways.includes(forbidden)) throw new Error(`Aircraft-specific jetway shrink, conflicting A1 geometry authority, whole-atlas repetition, or generated facade substitute remains: ${forbidden}`);
 
 requireTokens("src/environment/authoredTerminal4Visual.js", [
   "authoredTerminal4JetwaySourceScaleAuthority",
@@ -115,4 +118,4 @@ for (const forbidden of ["0.0135", "0.0255", "0.0137", "0.0138", "0.0258"]) {
   if (markings.includes(forbidden)) throw new Error(`Raised marking token remains: ${forbidden}`);
 }
 
-console.log("Terminal 4 exact jetway authority verified: the 31,459,796-byte uploaded GLB is wired to 58 measured gate placements at scale 1.00, corrected CRJ door geometry is enforced, exact atlas/source facade protections remain active, markings are pavement-coincident, free-drive controls are visible, and the mobile step title remains readable.");
+console.log("Terminal 4 exact jetway authority verified: the 31,459,796-byte uploaded GLB is wired to 58 measured gate placements at scale 1.00, the A1 CRJ door/contact relationship is single-authority at 6.25/1.35/1.58 m, exact atlas/source facade protections remain active, markings are pavement-coincident, free-drive controls are visible, and the mobile step title remains readable.");
