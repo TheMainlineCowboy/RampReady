@@ -8,4 +8,4 @@ if (!source.includes("const fleetGroundOffset") || !source.includes("const bogie
 }
 
 console.log("Confirmed final jetway ground-contact telemetry declarations before semantic readiness normalization.");
-await import(`./normalize-final-jetway-readiness-after-runtime.mjs?seeded-ground-contact=${Date.now()}`);
+await import(`./ensure-final-jetway-ground-contact-guard.mjs?seeded-ground-contact=${Date.now()}`);
