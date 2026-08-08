@@ -2,7 +2,7 @@ import fs from "node:fs";
 
 const sourcePath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const ROTUNDA_SHELL_OVERLAP_METERS = 0.55;
-const TERMINAL_ROTUNDA_BELLOWS_DEPTH_METERS = 0.90;
+const TERMINAL_ROTUNDA_BELLOWS_DEPTH_METERS = 1.50;
 
 let source = fs.readFileSync(sourcePath, "utf8");
 
