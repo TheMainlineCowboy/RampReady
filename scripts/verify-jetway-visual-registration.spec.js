@@ -48,6 +48,16 @@ async function selectA1Subview(page, canvas, subview) {
   await expect.poll(async () => Number(await canvas.getAttribute("data-inspection-camera-endpoint-convergence-error-meters")), { timeout: 30000 }).toBeLessThanOrEqual(0.001);
 }
 
+async function selectCameraView(page, value) {
+  await page.evaluate(nextValue => {
+    const select = document.querySelector('select[aria-label="Camera view"]');
+    if (!(select instanceof HTMLSelectElement)) throw new Error("Camera view control is missing");
+    select.value = nextValue;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  }, value);
+  await page.waitForFunction(expected => document.querySelector('select[aria-label="Camera view"]')?.value === expected, value, { timeout: 10000, polling: 100 });
+}
+
 test.setTimeout(90000);
 
 test("Terminal 4 exact jetways are visually registered to their source terminal positions", async ({ browser }) => {
@@ -105,8 +115,7 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
 
     captures[file] = await captureViewport(page, `${evidenceDirectory}/${file}`);
     if (preset === "a1Connection") {
-      const cameraView = page.getByRole("combobox", { name: "Camera view" });
-      await cameraView.selectOption({ label: "Overhead view" });
+      await selectCameraView(page, "overhead");
       await page.waitForTimeout(2000);
       captures["a1-terminal-overhead.png"] = await captureViewport(page, `${evidenceDirectory}/a1-terminal-overhead.png`);
     }
