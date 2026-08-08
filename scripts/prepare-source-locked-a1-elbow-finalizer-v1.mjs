@@ -13,6 +13,8 @@ const staticRegistrationImport = `import {
   STATIC_JETWAY_MODEL_ROOT_OFFSET_AUTHORITY,
 } from "./registerStaticJetwayFleetToFacadeV1.js";`;
 const BOGIE_GROUND_AUTHORITY = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
+const PHOTO_VISIBLE_VESTIBULE_METERS = 2.4;
+const PHOTO_VISIBLE_VESTIBULE_TOLERANCE_METERS = 0.05;
 
 let source = fs.readFileSync(readinessPath, "utf8");
 if (!source.includes("correctUploadedJetwayInstallation")) {
@@ -114,7 +116,7 @@ const replacementConditions = `${partOrderCondition}
             || targetAlignmentCosine < 0.99999
             || !(sourceDoorTargetDistance > 15 && sourceDoorTargetDistance < 45)
             || rotundaPreservationError > 1e-6
-            || Math.abs(sourceLockedA1VisibleLeg - 2.4) > 0.025
+            || Math.abs(sourceLockedA1VisibleLeg - ${PHOTO_VISIBLE_VESTIBULE_METERS}) > ${PHOTO_VISIBLE_VESTIBULE_TOLERANCE_METERS}
             || !(sourceLockedA1WallDistance >= 2.9 && sourceLockedA1WallDistance <= 5.8)
             || !(sourceLockedA1CornerAngle >= 45 && sourceLockedA1CornerAngle <= 150)
             || !sourceLockedA1Rotunda
@@ -147,6 +149,7 @@ for (const token of [
   "rotundaPreservationError > 1e-6",
   "sourceLockedA1CornerAngle >= 45",
   "bogieGroundContactClusterCount < 2",
+  `Math.abs(sourceLockedA1VisibleLeg - ${PHOTO_VISIBLE_VESTIBULE_METERS}) > ${PHOTO_VISIBLE_VESTIBULE_TOLERANCE_METERS}`,
 ]) {
   if (!source.includes(token)) throw new Error(`${readinessPath}: fixed-gate A1 readiness is missing ${token}`);
 }
@@ -162,4 +165,4 @@ for (const forbidden of [
 
 fs.writeFileSync(readinessPath, source, "utf8");
 await import(`./prepare-terminal4-jetway-source-registration-v1.mjs?fixed-gate-a1-elbow=${Date.now()}`);
-console.log("Prepared final Terminal 4 jetway readiness with the real A1 wall/Rotunda joint fixed in place and the complete supplied aircraft-side bridge pivoted toward the original A1 door target. The aircraft/gate stop owns the bridge heading; the airplane is no longer allowed to validate a bad bridge by following the Cab.");
+console.log(`Prepared final Terminal 4 jetway readiness with the real A1 wall/Rotunda joint fixed in place, the authored-surface visible vestibule constrained to ${PHOTO_VISIBLE_VESTIBULE_METERS.toFixed(2)} ± ${PHOTO_VISIBLE_VESTIBULE_TOLERANCE_METERS.toFixed(2)} m, and the complete supplied aircraft-side bridge pivoted toward the original A1 door target. The aircraft/gate stop owns the bridge heading; the airplane is no longer allowed to validate a bad bridge by following the Cab.`);
