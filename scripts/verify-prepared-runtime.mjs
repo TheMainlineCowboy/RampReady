@@ -68,10 +68,10 @@ if (failures.length) {
 
 console.log("RampReady prepared runtime verified: captured nose follows the tug while the aircraft pivots around a fixed wheelbase main-gear axle with delayed opposite-sign yaw, bounded articulation, and clean reconnect history.");
 
-// prepare:runtime intentionally regenerates broad compatibility code. Normalize
-// the final jetway readiness and the A1 evidence camera only after that
-// preparation has been verified, so no later runtime preparer can restore the
-// retired compact A1/static readiness or reject the real ~20 m wall/Rotunda
-// span before Vite bundles the production scene.
-await import(`./normalize-final-jetway-readiness-after-runtime.mjs?final-readiness=${Date.now()}`);
+// prepare:runtime intentionally regenerates broad compatibility code. Seed the
+// physical ground-contact invariant at the final mismatch block, then normalize
+// final jetway readiness and the A1 evidence camera only after preparation has
+// been verified. This avoids depending on retired migration-string anchors while
+// still failing closed on non-finite/floating bogie contact.
+await import(`./seed-final-jetway-ground-contact-before-normalization.mjs?final-readiness=${Date.now()}`);
 await import(`./normalize-final-a1-evidence-camera-after-runtime.mjs?final-camera=${Date.now()}`);
