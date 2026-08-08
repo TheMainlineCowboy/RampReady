@@ -38,6 +38,7 @@ on:
       - 'tests/terminal4-fixed-walkway-source-contract.test.mjs'
       - 'tests/kphx-source-aerial-priority-contract.test.mjs'
       - 'tests/browser/source-first-a1-repair.spec.js'
+      - 'tests/browser/a1-mode-pose-regression.spec.js'
       - '.github/workflows/verify-source-first-a1-repair.yml'
   workflow_dispatch:
 
@@ -79,8 +80,8 @@ jobs:
           npm install --no-save @playwright/test@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Capture focused A1, tug-launch and physical-collision evidence
-        run: npx playwright test tests/browser/source-first-a1-repair.spec.js --reporter=line --workers=1
+      - name: Capture focused A1, mode-pose, tug-launch and physical-collision evidence
+        run: npx playwright test tests/browser/a1-mode-pose-regression.spec.js tests/browser/source-first-a1-repair.spec.js --reporter=line --workers=1
 
       - name: Upload repair evidence
         if: always()
