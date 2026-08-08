@@ -27,10 +27,25 @@ source = source.replaceAll(
   "|| !(connectorVisibleLength > 0.25 && connectorVisibleLength < 12)",
   `|| !(connectorVisibleLength > ${MIN_A1_VISIBLE_LEG} && connectorVisibleLength < ${MAX_VISIBLE_LEG})`,
 );
-source = source.replaceAll(
-  "|| !(bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1)",
-  "|| !(Number.isFinite(bogieTireCorrection) && bogieTireCorrection > 0)",
+
+const bogieGroundGuard = "Number.isFinite(bogieTireCorrection) && bogieTireCorrection > 0";
+// Runtime preparation has emitted more than one formatting variant of the old
+// narrow bogie-correction range. Normalize it semantically, not by one exact
+// source-string spelling, and seed the physical guard if regeneration omitted it.
+source = source.replace(
+  /!\(\s*bogieTireCorrection\s*>\s*0\.04\s*&&\s*bogieTireCorrection\s*<\s*0\.1\s*\)/g,
+  `!(${bogieGroundGuard})`,
 );
+if (!source.includes(bogieGroundGuard)) {
+  const fleetGroundAnchor = "            || Math.abs(fleetGroundOffset + bogieTireCorrection) > 1e-6";
+  if (!source.includes(fleetGroundAnchor)) {
+    throw new Error(`${readinessPath}: fleet/bogie ground-contact readiness anchor is missing`);
+  }
+  source = source.replace(
+    fleetGroundAnchor,
+    `${fleetGroundAnchor}\n            || !(${bogieGroundGuard})`,
+  );
+}
 
 // The regenerated readiness source does not declare the per-gate range fields,
 // even though registerStaticJetwayFleetToFacadeV1 publishes them on group.userData.
@@ -129,7 +144,7 @@ for (const required of [
   "uploadedJetwayStaticMaximumMeasuredVisibleTerminalLegMeters",
   staticWallGuard,
   staticVisibleLegGuard,
-  "Number.isFinite(bogieTireCorrection) && bogieTireCorrection > 0",
+  bogieGroundGuard,
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${readinessPath}: final measured jetway readiness is missing ${required}`);
