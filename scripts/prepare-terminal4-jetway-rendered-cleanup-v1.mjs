@@ -116,25 +116,34 @@ if (readiness.includes("staticConnectorBatchCount !== 3")) {
 }
 fs.writeFileSync(readinessPath, readiness, "utf8");
 
-let a1Elbow = fs.readFileSync(a1ElbowPath, "utf8");
-// Keep the wall penetration shallow so the 2.4 m visible terminal leg stays
-// photo-registered, but let the same white shell continue well inside the
-// Rotunda recess. The earlier 0.12 m Rotunda overlap exposed the dark bellows
-// and read visually as a large hole/broken bridge in the close evidence view.
-a1Elbow = a1Elbow.replace(
-  "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.75;",
+// A1 no longer fabricates its Rotunda-side endpoint from a fixed connector
+// length. The production geometry must terminate at the transformed authored
+// Rotunda surface, with only shallow hidden overlaps at the real wall and the
+// supplied Rotunda. This guard intentionally rejects restoration of the old
+// 0.82 m overlap that visually swallowed the Rotunda in rendered evidence.
+const a1Elbow = fs.readFileSync(a1ElbowPath, "utf8");
+for (const token of [
+  "function projectedSurfaceDistance(vertices, origin, direction)",
+  "const rotundaVertices = collectObjectVerticesInFleet(THREE, fleet, rotunda);",
+  "const rotundaTerminalSurfaceMeters = projectedSurfaceDistance(rotundaVertices, rotundaCenter, terminalDirection);",
+  "const rotundaSurfacePoint = rotundaCenter.clone().addScaledVector(terminalDirection, rotundaTerminalSurfaceMeters);",
+  "const visibleTerminalLegMeters = fixedWallPoint.distanceTo(rotundaSurfacePoint);",
   "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;",
-);
-a1Elbow = a1Elbow.replace(
-  "const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;",
+  "const ROTUNDA_SHELL_OVERLAP_METERS = 0.10;",
+  "shellEnd = rotundaSurfacePoint.clone().addScaledVector(terminalToRotunda, ROTUNDA_SHELL_OVERLAP_METERS)",
+  "uploadedJetwayA1AuthoredRotundaTerminalSurfaceMeters",
+]) {
+  if (!a1Elbow.includes(token)) {
+    throw new Error(`${a1ElbowPath}: authored-Rotunda-surface A1 vestibule contract is missing ${token}`);
+  }
+}
+for (const forbidden of [
   "const ROTUNDA_SHELL_OVERLAP_METERS = 0.82;",
-);
-if (!a1Elbow.includes("const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;")) {
-  throw new Error(`${a1ElbowPath}: compact terminal hidden-overlap correction was not applied`);
+  "collarPoint = fixedWallPoint.clone().addScaledVector(terminalDirection, -VISIBLE_TERMINAL_LEG_METERS)",
+]) {
+  if (a1Elbow.includes(forbidden)) {
+    throw new Error(`${a1ElbowPath}: obsolete Rotunda-swallowing A1 connector logic survived cleanup: ${forbidden}`);
+  }
 }
-if (!a1Elbow.includes("const ROTUNDA_SHELL_OVERLAP_METERS = 0.82;")) {
-  throw new Error(`${a1ElbowPath}: closed Rotunda shell overlap was not preserved`);
-}
-fs.writeFileSync(a1ElbowPath, a1Elbow, "utf8");
 
-console.log("Prepared rendered Terminal 4 cleanup: all 57 static gates use one verified 228-instance batch of short solid white 2.4 m terminal vestibules; A1 keeps a shallow hidden wall overlap but restores the deeper hidden Rotunda shell overlap so the exterior remains visually continuous without lengthening the visible terminal leg.");
+console.log("Prepared rendered Terminal 4 cleanup: all 57 static gates use one verified 228-instance batch of short solid white terminal vestibules; A1 is source-driven from the real terminal wall to the transformed authored Rotunda surface with shallow hidden overlaps, preserving a visibly dominant connected Rotunda.");
