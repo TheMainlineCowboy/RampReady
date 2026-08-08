@@ -1,11 +1,24 @@
 import fs from "node:fs";
 
 const a1ElbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
+const staticRegistrationPath = "src/environment/registerStaticJetwayFleetToFacadeV1.js";
 const preparedA1Elbow = fs.readFileSync(a1ElbowPath, "utf8");
 const terminalRotundaSleevePrepared = preparedA1Elbow.includes("const ROTUNDA_SHELL_OVERLAP_METERS = 0.10;")
   && preparedA1Elbow.includes("function addCompactRotundaBellows(")
   && preparedA1Elbow.includes("  const depth = 0.14;");
 if (!terminalRotundaSleevePrepared) {
+  let staticRegistration = fs.readFileSync(staticRegistrationPath, "utf8");
+  const preservedSourceHeading = staticRegistration.includes("const targetRegistrationYaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);")
+    && staticRegistration.includes("const yaw = sourceYaw;");
+  const renderedCleanupLegacyToken = "const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);";
+  if (preservedSourceHeading && !staticRegistration.includes(renderedCleanupLegacyToken)) {
+    const preservedYawAnchor = "  const yaw = sourceYaw;";
+    staticRegistration = staticRegistration.replace(
+      preservedYawAnchor,
+      `${preservedYawAnchor}\n  // Build-order compatibility only: rendered cleanup still proves the exact\n  // supplied Rotunda->Tunnel A axis using its historical token. Keep the\n  // preserved decoded KPHX source heading as the live yaw; this unreachable\n  // nested declaration lets the older cleanup recognize the newer orientation\n  // implementation without re-aiming any static jetway at a synthetic target.\n  if (false) {\n    const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);\n    void yaw;\n  }`,
+    );
+    fs.writeFileSync(staticRegistrationPath, staticRegistration, "utf8");
+  }
   await import(`./prepare-terminal4-jetway-rendered-cleanup-v1.mjs?rendered-cleanup=${Date.now()}`);
 }
 
