@@ -3,6 +3,14 @@ const fs = require('node:fs');
 
 const pageUrl = process.env.PAGE_URL || 'http://127.0.0.1:4173/RampReady/';
 const evidenceDir = process.env.EVIDENCE_DIR || 'a1-terminal-joint-evidence';
+const CURRENT_SUBVIEW_AUTHORITY = 'source-measured-a1-terminal-joint-camera-v3';
+const LEGACY_SUBVIEW_AUTHORITY = 'exact-a1-terminal-joint-and-bogie-contact-subviews-v2';
+const CAMERA_AUTHORITY = 'exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2';
+const LOCK_AUTHORITY = 'exact-a1-evidence-camera-direct-lock-v1';
+const VISUAL_AUTHORITY = 'same-day-a1-continuous-source-measured-solid-closed-grounded-v2';
+const CONTINUITY_AUTHORITY = 'exact-authored-five-part-chain-no-isolated-node-rotation-v2';
+const BOGIE_AUTHORITY = 'exact-authored-a1-lowest-geometry-ramp-contact-v2';
+const WALL_AUTHORITY = 'nearest-structural-terminal-facade-photo-verified-v1';
 fs.mkdirSync(evidenceDir, { recursive: true });
 
 function numeric(value, label) {
@@ -37,6 +45,32 @@ async function captureCanvas(page, canvas, path) {
   }
 }
 
+function subviewAuthorityAccepted(value) {
+  return value === CURRENT_SUBVIEW_AUTHORITY || value === LEGACY_SUBVIEW_AUTHORITY;
+}
+
+async function selectSubview(page, subview) {
+  await page.evaluate(nextSubview => {
+    const canvas = document.querySelector('canvas.trainerCanvas');
+    if (!(canvas instanceof HTMLCanvasElement)) throw new Error('A1 evidence canvas is missing');
+    canvas.dataset.a1EvidenceSubview = nextSubview;
+  }, subview);
+  await page.waitForFunction(({ expectedSubview, currentAuthority, legacyAuthority, cameraAuthority, lockAuthority }) => {
+    const data = document.querySelector('canvas.trainerCanvas')?.dataset;
+    return data?.inspectionCameraEndpointSubview === expectedSubview
+      && [currentAuthority, legacyAuthority].includes(data?.inspectionCameraEndpointSubviewAuthority)
+      && data?.inspectionCameraEndpointAuthority === cameraAuthority
+      && data?.inspectionCameraEndpointLockAuthority === lockAuthority
+      && Math.abs(Number(data?.inspectionCameraEndpointConvergenceErrorMeters)) <= 0.001;
+  }, {
+    expectedSubview: subview,
+    currentAuthority: CURRENT_SUBVIEW_AUTHORITY,
+    legacyAuthority: LEGACY_SUBVIEW_AUTHORITY,
+    cameraAuthority: CAMERA_AUTHORITY,
+    lockAuthority: LOCK_AUTHORITY,
+  }, { timeout: 30000, polling: 100 });
+}
+
 (async () => {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -48,60 +82,73 @@ async function captureCanvas(page, canvas, path) {
   const response = await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
   if (!response?.ok()) throw new Error(`A1 evidence navigation failed: ${response?.status() || 'no response'}`);
 
-  // Use the same production inspection route a user uses. The previous global
-  // evidence bridge is a build-time convenience and is not guaranteed to
-  // survive the final production bundle.
   const inspectionLaunch = page.getByRole('button', { name: 'Drive tug / inspect airport' });
   await inspectionLaunch.waitFor({ state: 'visible', timeout: 30000 });
   await inspectionLaunch.click();
 
   const canvas = page.locator('canvas.trainerCanvas');
   await canvas.waitFor({ state: 'visible', timeout: 30000 });
-  await page.waitForFunction(() => {
-    const canvas = document.querySelector('canvas.trainerCanvas');
-    return canvas?.dataset.inspectionMode === 'active'
-      && canvas?.dataset.terminal4UploadedJetwayLoadState === 'ready'
-      && canvas?.dataset.terminal4UploadedJetwayCount === '58';
-  }, null, { timeout: 90000 });
+  await page.waitForFunction(({ visualAuthority, continuityAuthority, bogieAuthority, wallAuthority }) => {
+    const data = document.querySelector('canvas.trainerCanvas')?.dataset;
+    const vestibule = Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters);
+    const wallDistance = Number(data?.terminal4A1JetwayWallDistance);
+    const clearance = Number(data?.terminal4UploadedJetwayBogieGroundClearanceMeters);
+    return data?.inspectionMode === 'active'
+      && data?.terminal4UploadedJetwayLoadState === 'ready'
+      && data?.terminal4UploadedJetwayCount === '58'
+      && data?.terminal4UploadedJetwayA1VisualAcceptanceAuthority === visualAuthority
+      && data?.terminal4UploadedJetwayA1AssemblyContinuityAuthority === continuityAuthority
+      && data?.terminal4UploadedJetwayA1AssemblyPartCount === '5'
+      && data?.terminal4UploadedJetwayA1IsolatedNodeRotationCount === '0'
+      && data?.terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed === 'true'
+      && data?.terminal4UploadedJetwayA1NoGeneratedGlassCorridor === 'true'
+      && data?.terminal4UploadedJetwayBogieGroundContactAuthority === bogieAuthority
+      && Math.abs(clearance) <= 0.005
+      && Number(data?.terminal4UploadedJetwayBogieGroundContactPointCount) >= 8
+      && Number(data?.terminal4UploadedJetwayBogieGroundContactClusterCount) >= 2
+      && Number(data?.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters) >= 1.2
+      && Number.isFinite(vestibule)
+      && Math.abs(vestibule - 2.4) <= 0.05
+      && Number.isFinite(wallDistance)
+      && wallDistance > 2.9
+      && wallDistance < 5.8
+      && data?.terminal4A1ConnectionAuthority === wallAuthority;
+  }, {
+    visualAuthority: VISUAL_AUTHORITY,
+    continuityAuthority: CONTINUITY_AUTHORITY,
+    bogieAuthority: BOGIE_AUTHORITY,
+    wallAuthority: WALL_AUTHORITY,
+  }, { timeout: 120000, polling: 100 });
 
   const inspectionLocation = page.getByRole('combobox', { name: 'Inspection location' });
   await inspectionLocation.waitFor({ state: 'visible', timeout: 30000 });
   await inspectionLocation.selectOption({ label: 'A1 terminal connection' });
-  await page.waitForFunction(() => document.querySelector('canvas.trainerCanvas')?.dataset.inspectionPreset === 'a1Connection', null, { timeout: 30000 });
-
-  // A1 terminal connection defaults to a full-assembly view. Select the actual
-  // production terminal-joint evidence subview before inspecting or capturing.
-  await page.evaluate(() => {
-    const canvas = document.querySelector('canvas.trainerCanvas');
-    if (!(canvas instanceof HTMLCanvasElement)) throw new Error('A1 evidence canvas is missing');
-    canvas.dataset.a1EvidenceSubview = 'terminal-joint';
-  });
   await page.waitForFunction(() => {
     const data = document.querySelector('canvas.trainerCanvas')?.dataset;
-    return data?.inspectionCameraEndpointSubview === 'terminal-joint'
-      && data?.inspectionCameraEndpointSubviewAuthority === 'exact-a1-terminal-joint-and-bogie-contact-subviews-v2'
-      && data?.inspectionCameraEndpointAuthority === 'exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2'
-      && data?.inspectionCameraEndpointLockAuthority === 'exact-a1-evidence-camera-direct-lock-v1'
-      && Math.abs(Number(data?.inspectionCameraEndpointConvergenceErrorMeters)) <= 0.001;
-  }, null, { timeout: 30000 });
-  await page.waitForTimeout(750);
-
-  const data = await canvas.evaluate(element => ({ ...element.dataset }));
-  const failures = [];
-  if (data.terminal4UploadedJetwayA1AssemblyContinuityAuthority !== 'exact-authored-five-part-chain-no-isolated-node-rotation-v2') failures.push(`continuity=${data.terminal4UploadedJetwayA1AssemblyContinuityAuthority}`);
-  if (data.terminal4UploadedJetwayA1IsolatedNodeRotationCount !== '0') failures.push(`isolated rotations=${data.terminal4UploadedJetwayA1IsolatedNodeRotationCount}`);
-  if (data.terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed !== 'true') failures.push('apron-facing Rotunda opening is not closed');
-  if (data.terminal4UploadedJetwayA1NoGeneratedGlassCorridor !== 'true') failures.push('generated glass/long corridor authority is active');
-  if (data.terminal4UploadedJetwayBogieGroundContactAuthority !== 'exact-authored-a1-lowest-geometry-ramp-contact-v2') failures.push(`bogie authority=${data.terminal4UploadedJetwayBogieGroundContactAuthority}`);
-  if (numeric(data.terminal4UploadedJetwayBogieGroundClearanceMeters, 'bogie clearance') > 0.02) failures.push(`bogie clearance=${data.terminal4UploadedJetwayBogieGroundClearanceMeters}m`);
-  const vestibule = numeric(data.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters, 'visible vestibule length');
-  if (vestibule < 1.5 || vestibule > 3.5) failures.push(`visible vestibule=${vestibule}m`);
-  if (data.terminal4A1ConnectionAuthority !== 'nearest-structural-terminal-facade-photo-verified-v1') failures.push(`wall authority=${data.terminal4A1ConnectionAuthority}`);
-  if (data.inspectionPreset !== 'a1Connection') failures.push(`preset=${data.inspectionPreset}`);
-  if (data.inspectionCameraEndpointSubview !== 'terminal-joint') failures.push(`subview=${data.inspectionCameraEndpointSubview}`);
+    return data?.inspectionPreset === 'a1Connection'
+      && data?.a1JetwayDeployment === '1.000'
+      && data?.a1JetwayState === 'attached-to-aircraft-door';
+  }, null, { timeout: 30000, polling: 100 });
 
   await page.addStyleTag({ content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}' });
+
+  await selectSubview(page, 'terminal-joint');
+  await page.waitForTimeout(750);
+  const terminalData = await canvas.evaluate(element => ({ ...element.dataset }));
+  if (!subviewAuthorityAccepted(terminalData.inspectionCameraEndpointSubviewAuthority)) {
+    throw new Error(`Unexpected A1 terminal-joint subview authority: ${terminalData.inspectionCameraEndpointSubviewAuthority}`);
+  }
   await captureCanvas(page, canvas, `${evidenceDir}/a1-terminal-joint.png`);
+
+  await selectSubview(page, 'bogie-contact');
+  await page.waitForTimeout(750);
+  const bogieData = await canvas.evaluate(element => ({ ...element.dataset }));
+  await captureCanvas(page, canvas, `${evidenceDir}/a1-bogie-contact.png`);
+
+  await selectSubview(page, 'full-assembly');
+  await page.waitForTimeout(750);
+  const assemblyData = await canvas.evaluate(element => ({ ...element.dataset }));
+  await captureCanvas(page, canvas, `${evidenceDir}/a1-full-assembly.png`);
 
   const cameraView = page.getByRole('combobox', { name: 'Camera view' });
   await cameraView.waitFor({ state: 'visible', timeout: 10000 });
@@ -112,17 +159,21 @@ async function captureCanvas(page, canvas, path) {
   const report = {
     pageUrl,
     capturedAtUtc: new Date().toISOString(),
-    failures,
     consoleErrors,
     pageErrors,
-    telemetry: data,
+    terminalTelemetry: terminalData,
+    bogieTelemetry: bogieData,
+    assemblyTelemetry: assemblyData,
   };
   fs.writeFileSync(`${evidenceDir}/report.json`, JSON.stringify(report, null, 2));
 
   await browser.close();
   if (pageErrors.length) throw new Error(`A1 evidence page errors: ${pageErrors.join(' | ')}`);
-  if (failures.length) throw new Error(`A1 terminal-joint acceptance failed: ${failures.join(' | ')}`);
-  console.log(`A1 TERMINAL JOINT EVIDENCE READY: ${JSON.stringify({ vestibule, bogieClearanceMeters: data.terminal4UploadedJetwayBogieGroundClearanceMeters })}`);
+  console.log(`A1 TERMINAL JOINT EVIDENCE READY: ${JSON.stringify({
+    vestibule: numeric(terminalData.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters, 'visible vestibule'),
+    bogieClearanceMeters: numeric(bogieData.terminal4UploadedJetwayBogieGroundClearanceMeters, 'bogie clearance'),
+    subviewAuthority: terminalData.inspectionCameraEndpointSubviewAuthority,
+  })}`);
 })().catch(error => {
   console.error(error.stack || error.message || String(error));
   process.exit(1);
