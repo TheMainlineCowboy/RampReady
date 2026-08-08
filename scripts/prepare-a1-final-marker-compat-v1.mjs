@@ -38,4 +38,12 @@ for (const currentMarker of currentMarkers) {
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Published the established exact-head final acceptance marker after source-preserved static jetway integrity, terminal-side compact-wall evidence, proved CRJ three-tire contact, multi-point authored jetway bogie contact, and closed-vestibule evidence survived finalization.");
+
+// This must be the last A1 geometry mutation before the production wrapper.
+// The older migration chain remains for compatibility/evidence, but none of its
+// compact 2.4 m assumptions may own the final bundle. Reassert the real
+// structural Terminal 4 wall, source-measured fixed leg and exact supplied
+// Rotunda after every legacy preparer has finished.
+await import(`./prepare-a1-real-terminal-final-geometry-v1.mjs?final-real-wall=${Date.now()}`);
+
+console.log("Published the established exact-head acceptance marker, then replaced the retired compact A1 assumptions with the final real-Terminal-4-wall/source-measured geometry before production bundling.");
