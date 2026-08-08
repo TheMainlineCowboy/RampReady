@@ -40,41 +40,38 @@ for (const currentMarker of currentMarkers) {
 
 fs.writeFileSync(trainerPath, source, "utf8");
 
-// Late compatibility preparers can remove the historical terminal-authority
-// comparison that an older finalizer used as an insertion point. Seed the real
-// physical guards beside conditions that survive every readiness migration:
-// the normalized terminal-direction check and the connector-rib check. The
-// real-wall finalizer then normalizes/revalidates these exact guards and remains
-// the sole final geometry owner.
+// Late compatibility preparers remove/reformat several old A1-specific
+// readiness conditions. The one invariant every final readiness version keeps
+// is the top-level exact-fleet mismatch block. Seed the physical real-wall and
+// source-measured fixed-leg guards there, ahead of the gate-count check, so no
+// legacy authority/compactness rewrite can erase the final physical criteria.
 let readiness = fs.readFileSync(readinessPath, "utf8");
 const finalWallGuard = "a1TerminalWallDistance > 0.5 && a1TerminalWallDistance < 44";
 const finalVisibleLegGuard = "connectorVisibleLength > 0.15 && connectorVisibleLength < 44";
-if (!readiness.includes(finalWallGuard)) {
-  const stableWallAnchor = "            || Math.abs(terminalDirectionMagnitude - 1) > 0.01";
-  if (!readiness.includes(stableWallAnchor)) {
-    throw new Error(`${readinessPath}: stable terminal-direction readiness anchor is missing before final real-wall seeding`);
+if (!readiness.includes(finalWallGuard) || !readiness.includes(finalVisibleLegGuard)) {
+  const mismatchAnchor = `          if (\n            count !== EXPECTED_GATE_COUNT`;
+  if (!readiness.includes(mismatchAnchor)) {
+    throw new Error(`${readinessPath}: final exact-fleet readiness mismatch block is missing before real-wall seeding`);
   }
+  const seededConditions = [
+    !readiness.includes(finalWallGuard) ? `!(${finalWallGuard})` : null,
+    !readiness.includes(finalVisibleLegGuard) ? `!(${finalVisibleLegGuard})` : null,
+  ].filter(Boolean);
   readiness = readiness.replace(
-    stableWallAnchor,
-    `            || !(${finalWallGuard})\n${stableWallAnchor}`,
+    mismatchAnchor,
+    `          if (\n            ${seededConditions.join("\n            || ")}\n            || count !== EXPECTED_GATE_COUNT`,
   );
 }
-if (!readiness.includes(finalVisibleLegGuard)) {
-  const stableConnectorPattern = /            \|\| connectorRibCount < \d+/;
-  const match = readiness.match(stableConnectorPattern);
-  if (!match) {
-    throw new Error(`${readinessPath}: stable connector-rib readiness anchor is missing before final fixed-leg seeding`);
+for (const guard of [finalWallGuard, finalVisibleLegGuard]) {
+  if (!readiness.includes(guard)) {
+    throw new Error(`${readinessPath}: failed to seed final physical A1 readiness guard ${guard}`);
   }
-  readiness = readiness.replace(
-    stableConnectorPattern,
-    `            || !(${finalVisibleLegGuard})\n${match[0]}`,
-  );
 }
 fs.writeFileSync(readinessPath, readiness, "utf8");
 
 // Marker compatibility is not a geometry authority. Reassert the single final
-// A1 geometry owner after every legacy preparer; it normalizes the seeded real
-// wall/fixed-leg guards and writes the final runtime immediately before bundle.
+// A1 geometry owner after every legacy preparer; it normalizes/revalidates the
+// seeded physical guards and writes the final runtime immediately before bundle.
 await import(`./prepare-a1-real-terminal-final-geometry-v1.mjs?final-real-wall=${Date.now()}`);
 
-console.log("Published the established exact-head acceptance marker, seeded the final real-wall/fixed-leg guards at stable physical readiness anchors, then delegated all A1 geometry/readiness ownership to the source-measured real-Terminal-4-wall finalizer.");
+console.log("Published the established exact-head acceptance marker, seeded the real-wall/fixed-leg guards at the invariant final readiness mismatch block, then delegated all A1 geometry/readiness ownership to the source-measured real-Terminal-4-wall finalizer.");
