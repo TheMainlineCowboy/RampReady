@@ -56,14 +56,19 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
     const response = await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
     expect(response?.ok()).toBe(true);
 
-    // The production app does not reliably consume inspectionPreset from the
-    // URL. Drive the actual inspection-location control and fail closed unless
-    // the canvas proves that the requested scene is active before capture.
-    await page.waitForTimeout(15000);
+    // Enter the actual user-facing inspection route before asking for any
+    // inspection-only controls. The prior verifier stayed on the equipment
+    // picker and therefore could never produce jetway evidence.
+    const inspectionLaunch = page.getByRole("button", { name: "Drive tug / inspect airport" });
+    await expect(inspectionLaunch).toBeVisible({ timeout: 30000 });
+    await inspectionLaunch.click();
+    const canvas = page.locator("canvas.trainerCanvas");
+    await expect(canvas).toBeVisible({ timeout: 30000 });
+    await expect(canvas).toHaveAttribute("data-inspection-mode", "active", { timeout: 30000 });
+
     const inspectionLocation = page.getByRole("combobox", { name: "Inspection location" });
     await expect(inspectionLocation).toBeVisible({ timeout: 30000 });
     await inspectionLocation.selectOption({ label: inspectionLabel });
-    const canvas = page.locator("canvas").first();
     await expect(canvas).toHaveAttribute("data-inspection-preset", preset, { timeout: 30000 });
     checkpoint(`preset-${preset}-verified`, {
       inspectionLabel,
@@ -71,8 +76,6 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
     });
     await page.waitForTimeout(2500);
 
-    // For A1, fail closed unless the runtime has switched from the stale
-    // fixed-coordinate fallback to the final wall/Rotunda/Cab-derived camera.
     if (preset === "a1Connection") {
       await expect(canvas).toHaveAttribute(
         "data-inspection-camera-endpoint-authority",
@@ -109,9 +112,6 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
     checkpoint(`capture-${preset}`, { inspectionLabel });
     captures[file] = await captureViewport(page, `${evidenceDirectory}/${file}`);
 
-    // The user's overhead inspection exposed a see-through Rotunda/Tunnel-A
-    // cavity that the side-on terminal-joint camera could hide. Preserve that
-    // exact failure mode as mandatory evidence.
     if (preset === "a1Connection") {
       const cameraView = page.getByRole("combobox", { name: "Camera view" });
       await cameraView.selectOption({ label: "Overhead view" });
