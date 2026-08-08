@@ -3,7 +3,7 @@ import fs from "node:fs";
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const A1_CAMERA_AUTHORITY = "fixed-terminal-wall-rotunda-joint-evidence-a1-v10";
 const STATIC_FLEET_CAMERA_AUTHORITY = "source-gate-jetway-terminal-diagonal-fleet-v1";
-const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-and-source-aimed-a14-b14-b15-v12";
+const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v11";
 const VISUAL_BRIDGE_AUTHORITY = "exact-runtime-inspection-callback-visual-evidence-bridge-v2";
 let source = fs.readFileSync(trainerPath, "utf8");
 
