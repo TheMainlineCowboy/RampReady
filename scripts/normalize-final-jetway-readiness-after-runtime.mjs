@@ -95,17 +95,30 @@ if (missingStaticGuards.length) {
   );
 }
 
-for (const [guard, anchor] of [
-  [directWallGuard, "a1TerminalConnectionAuthority !== UPLOADED_JETWAY_A1_TERMINAL_CONNECTION_AUTHORITY"],
-  [directVisibleLegGuard, "isolatedNodeRotationCount !== 0"],
-]) {
-  if (!source.includes(guard)) {
-    if (!source.includes(anchor)) {
-      throw new Error(`${readinessPath}: readiness anchor is missing for ${guard}`);
-    }
-    source = source.replace(anchor, `${anchor}\n            || !(${guard})`);
+function injectIntoExactReadinessCondition(guard) {
+  if (source.includes(guard)) return;
+
+  const mismatchMarker = "Exact jetway readiness mismatch:";
+  const mismatchIndex = source.indexOf(mismatchMarker);
+  if (mismatchIndex < 0) {
+    throw new Error(`${readinessPath}: exact readiness mismatch marker is missing for ${guard}`);
   }
+
+  const ifIndex = source.lastIndexOf("          if (", mismatchIndex);
+  if (ifIndex < 0) {
+    throw new Error(`${readinessPath}: exact readiness condition is missing for ${guard}`);
+  }
+
+  const conditionClose = source.lastIndexOf("          ) {", mismatchIndex);
+  if (conditionClose < ifIndex) {
+    throw new Error(`${readinessPath}: exact readiness condition closing boundary is missing for ${guard}`);
+  }
+
+  source = `${source.slice(0, conditionClose)}            || !(${guard})\n${source.slice(conditionClose)}`;
 }
+
+injectIntoExactReadinessCondition(directWallGuard);
+injectIntoExactReadinessCondition(directVisibleLegGuard);
 
 const sourceTelemetry = "source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`";
 const rangeTelemetry = "staticMeasured=${staticMinimumRotundaCenterToWall}/${staticMaximumRotundaCenterToWall}/${staticMinimumVisibleTerminalLeg}/${staticMaximumVisibleTerminalLeg}, source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`";
@@ -146,4 +159,4 @@ for (const required of [
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Normalized final post-prepare jetway readiness using stable semantic anchors: A1 keeps source-measured physical wall/visible-leg bounds, all 57 static gates keep measured min/max wall and visible-leg ranges, and grounded bogie contact remains fail-closed without depending on generated condition ordering.");
+console.log("Normalized final post-prepare jetway readiness using the structural exact-readiness condition: A1 keeps source-measured physical wall/visible-leg bounds, all 57 static gates keep measured min/max wall and visible-leg ranges, and grounded bogie contact remains fail-closed without depending on generated clause ordering or authority text.");
