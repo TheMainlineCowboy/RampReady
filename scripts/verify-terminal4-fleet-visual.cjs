@@ -11,9 +11,9 @@ const LOCK_AUTHORITY = 'exact-a1-evidence-camera-direct-lock-v1';
 const A1_VISUAL_AUTHORITY = 'same-day-a1-continuous-source-measured-solid-closed-grounded-v2';
 
 const views = Object.freeze([
-  ['a14', 'A concourse midpoint', 'a-concourse-fleet.png'],
-  ['b14', 'B concourse midpoint', 'b-concourse-fleet.png'],
-  ['b15', 'B15 ramp', 'b15-terminal-jetways.png'],
+  ['a14', 'A concourse midpoint', 'a-concourse-fleet.png', 'chase'],
+  ['b14', 'B concourse midpoint', 'b-concourse-fleet.png', 'chase'],
+  ['b15', 'B15 ramp', 'b15-terminal-jetways.png', 'overhead'],
 ]);
 
 fs.mkdirSync(evidenceDirectory, { recursive: true });
@@ -132,12 +132,12 @@ async function capture(page, filename) {
   captures['a1-terminal-overhead.png'] = await capture(page, 'a1-terminal-overhead.png');
   checkpoint('a1-complete', { captures: Object.keys(captures) });
 
-  await selectByValue(page, 'Camera view', 'chase');
-  for (const [preset, label, filename] of views) {
+  for (const [preset, label, filename, cameraView] of views) {
+    await selectByValue(page, 'Camera view', cameraView);
     await selectByLabel(page, 'Inspection location', label);
     await waitForPreset(page, preset);
     captures[filename] = await capture(page, filename);
-    checkpoint(`${preset}-complete`, { label, filename, bytes: captures[filename] });
+    checkpoint(`${preset}-complete`, { label, filename, cameraView, bytes: captures[filename] });
   }
 
   const criticalConsole = consoleErrors.filter(message => /Exact jetway readiness mismatch|Airport_Jetway\.glb fleet|A1 Rotunda|Static jetway|Terminal 4|KPHX|ReferenceError|TypeError|SyntaxError/i.test(message));
