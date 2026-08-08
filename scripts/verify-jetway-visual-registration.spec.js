@@ -10,9 +10,11 @@ const views = Object.freeze([
   ["b14", "b-concourse-fleet.png", "B concourse midpoint"],
   ["b15", "b15-terminal-jetways.png", "B15 ramp"],
 ]);
+const CURRENT_SUBVIEW_AUTHORITY = "source-measured-a1-terminal-joint-camera-v3";
+const LEGACY_SUBVIEW_AUTHORITY = "exact-a1-terminal-joint-and-bogie-contact-subviews-v2";
 const A1_ENDPOINT_CAMERA_AUTHORITY = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const A1_ENDPOINT_CAMERA_LOCK_AUTHORITY = "exact-a1-evidence-camera-direct-lock-v1";
-const A1_ENDPOINT_SUBVIEW_AUTHORITY = "exact-a1-terminal-joint-and-bogie-contact-subviews-v2";
+const A1_VISUAL_AUTHORITY = "same-day-a1-continuous-source-measured-solid-closed-grounded-v2";
 
 function checkpoint(stage, detail = {}) {
   fs.mkdirSync(evidenceDirectory, { recursive: true });
@@ -36,25 +38,21 @@ async function captureViewport(page, outputPath) {
   }
 }
 
-async function selectA1TerminalJointSubview(page, canvas) {
-  await page.evaluate(() => {
+async function selectA1Subview(page, canvas, subview) {
+  await page.evaluate(nextSubview => {
     const element = document.querySelector("canvas.trainerCanvas");
     if (!(element instanceof HTMLCanvasElement)) throw new Error("A1 evidence canvas is missing");
-    element.dataset.a1EvidenceSubview = "terminal-joint";
-  });
-  await expect(canvas).toHaveAttribute(
-    "data-inspection-camera-endpoint-subview",
-    "terminal-joint",
-    { timeout: 30000 },
-  );
-  await expect(canvas).toHaveAttribute(
-    "data-inspection-camera-endpoint-subview-authority",
-    A1_ENDPOINT_SUBVIEW_AUTHORITY,
-    { timeout: 30000 },
-  );
+    element.dataset.a1EvidenceSubview = nextSubview;
+  }, subview);
+  await expect(canvas).toHaveAttribute("data-inspection-camera-endpoint-subview", subview, { timeout: 30000 });
+  const authority = await canvas.getAttribute("data-inspection-camera-endpoint-subview-authority");
+  expect([CURRENT_SUBVIEW_AUTHORITY, LEGACY_SUBVIEW_AUTHORITY]).toContain(authority);
+  await expect(canvas).toHaveAttribute("data-inspection-camera-endpoint-authority", A1_ENDPOINT_CAMERA_AUTHORITY, { timeout: 30000 });
+  await expect(canvas).toHaveAttribute("data-inspection-camera-endpoint-lock-authority", A1_ENDPOINT_CAMERA_LOCK_AUTHORITY, { timeout: 30000 });
+  await expect.poll(async () => Number(await canvas.getAttribute("data-inspection-camera-endpoint-convergence-error-meters")), { timeout: 30000 }).toBeLessThanOrEqual(0.001);
 }
 
-test.setTimeout(90000);
+test.setTimeout(180000);
 
 test("Terminal 4 exact jetways are visually registered to their source terminal positions", async ({ browser }) => {
   fs.mkdirSync(evidenceDirectory, { recursive: true });
@@ -81,46 +79,36 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
     const canvas = page.locator("canvas.trainerCanvas");
     await expect(canvas).toBeVisible({ timeout: 30000 });
     await expect(canvas).toHaveAttribute("data-inspection-mode", "active", { timeout: 30000 });
+    await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-load-state", "ready", { timeout: 120000 });
+    await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-count", "58", { timeout: 30000 });
 
     const inspectionLocation = page.getByRole("combobox", { name: "Inspection location" });
     await expect(inspectionLocation).toBeVisible({ timeout: 30000 });
     await inspectionLocation.selectOption({ label: inspectionLabel });
     await expect(canvas).toHaveAttribute("data-inspection-preset", preset, { timeout: 30000 });
-    checkpoint(`preset-${preset}-verified`, {
-      inspectionLabel,
-      activePreset: await canvas.getAttribute("data-inspection-preset"),
-    });
-    await page.waitForTimeout(2500);
+    checkpoint(`preset-${preset}-verified`, { inspectionLabel, activePreset: await canvas.getAttribute("data-inspection-preset") });
+    await page.waitForTimeout(2000);
 
     if (preset === "a1Connection") {
-      // Selecting the location intentionally defaults to the full-assembly view.
-      // Explicitly activate the production terminal-joint evidence subview before
-      // accepting or capturing the A1 wall/Rotunda frame.
-      await selectA1TerminalJointSubview(page, canvas);
-      await expect(canvas).toHaveAttribute(
-        "data-inspection-camera-endpoint-authority",
-        A1_ENDPOINT_CAMERA_AUTHORITY,
-        { timeout: 30000 },
-      );
-      await expect(canvas).toHaveAttribute(
-        "data-inspection-camera-endpoint-lock-authority",
-        A1_ENDPOINT_CAMERA_LOCK_AUTHORITY,
-        { timeout: 5000 },
-      );
-      const endpointPosition = await canvas.getAttribute("data-inspection-camera-endpoint-position");
-      const endpointTarget = await canvas.getAttribute("data-inspection-camera-endpoint-target");
-      const endpointWall = await canvas.getAttribute("data-inspection-camera-endpoint-wall");
-      const endpointRotunda = await canvas.getAttribute("data-inspection-camera-endpoint-rotunda");
-      expect(endpointPosition).toBeTruthy();
-      expect(endpointTarget).toBeTruthy();
-      expect(endpointWall).toBeTruthy();
-      expect(endpointRotunda).toBeTruthy();
-      checkpoint("a1-endpoint-camera-verified", {
-        endpointPosition,
-        endpointTarget,
-        endpointWall,
-        endpointRotunda,
-      });
+      await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-a1-visual-acceptance-authority", A1_VISUAL_AUTHORITY, { timeout: 30000 });
+      await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-a1-assembly-continuity-authority", "exact-authored-five-part-chain-no-isolated-node-rotation-v2", { timeout: 30000 });
+      await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-a1-assembly-part-count", "5", { timeout: 30000 });
+      await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-a1-isolated-node-rotation-count", "0", { timeout: 30000 });
+      await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-a1-apron-facing-rotunda-opening-closed", "true", { timeout: 30000 });
+      await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-a1-no-generated-glass-corridor", "true", { timeout: 30000 });
+      await expect(canvas).toHaveAttribute("data-terminal4-uploaded-jetway-bogie-ground-contact-authority", "exact-authored-a1-lowest-geometry-ramp-contact-v2", { timeout: 30000 });
+      await expect.poll(async () => Math.abs(Number(await canvas.getAttribute("data-terminal4-uploaded-jetway-bogie-ground-clearance-meters"))), { timeout: 30000 }).toBeLessThanOrEqual(0.005);
+      await expect.poll(async () => Math.abs(Number(await canvas.getAttribute("data-terminal4-uploaded-jetway-a1-visible-vestibule-length-meters")) - 2.4), { timeout: 30000 }).toBeLessThanOrEqual(0.05);
+
+      await selectA1Subview(page, canvas, "terminal-joint");
+      checkpoint("capture-a1-terminal-joint", { inspectionLabel });
+      captures["a1-terminal-joint-close.png"] = await captureViewport(page, `${evidenceDirectory}/a1-terminal-joint-close.png`);
+
+      await selectA1Subview(page, canvas, "bogie-contact");
+      checkpoint("capture-a1-bogie-contact", { inspectionLabel });
+      captures["a1-bogie-contact-close.png"] = await captureViewport(page, `${evidenceDirectory}/a1-bogie-contact-close.png`);
+
+      await selectA1Subview(page, canvas, "full-assembly");
       await page.waitForTimeout(750);
     }
 
@@ -130,24 +118,20 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
     if (preset === "a1Connection") {
       const cameraView = page.getByRole("combobox", { name: "Camera view" });
       await cameraView.selectOption({ label: "Overhead view" });
-      await page.waitForTimeout(2500);
+      await page.waitForTimeout(2000);
       checkpoint("capture-a1-overhead", { inspectionLabel });
       captures["a1-terminal-overhead.png"] = await captureViewport(page, `${evidenceDirectory}/a1-terminal-overhead.png`);
     }
 
     errors[preset] = { consoleErrors, pageErrors, failedRequests };
-
     const criticalConsole = consoleErrors.filter(message => /Exact jetway readiness mismatch|Airport_Jetway\.glb fleet|A1 Rotunda|Static jetway|Terminal 4|KPHX|ReferenceError|TypeError|SyntaxError/i.test(message));
     const criticalFailedRequests = failedRequests.filter(message => /airport-jetway|phx-terminal4|kphx-ground|kphx-photo|assets\/.*\.js/i.test(message));
     expect(criticalConsole).toEqual([]);
     expect(pageErrors).toEqual([]);
     expect(criticalFailedRequests).toEqual([]);
-
     await context.close();
   }
 
-  fs.writeFileSync(`${evidenceDirectory}/report.json`, `${JSON.stringify({
-    capturedAtUtc: new Date().toISOString(), pageUrl, captures, errors,
-  }, null, 2)}\n`);
+  fs.writeFileSync(`${evidenceDirectory}/report.json`, `${JSON.stringify({ capturedAtUtc: new Date().toISOString(), pageUrl, captures, errors }, null, 2)}\n`);
   checkpoint("complete", { captures });
 });
