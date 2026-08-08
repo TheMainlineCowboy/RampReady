@@ -7,30 +7,44 @@ const CAMERA_AUTHORITY = "source-measured-a1-terminal-joint-camera-v3";
 
 let source = fs.readFileSync(trainerPath, "utf8");
 
-// prepare:runtime still regenerates a terminal-joint evidence camera that was
-// designed around the retired 2.9-5.8 m compact vestibule. The real structural
-// wall -> exact Rotunda span is about 20 m on A1, so that camera was throwing
-// before it could publish its endpoint authority or render the terminal at all.
-// Normalize the camera AFTER runtime preparation, immediately before Vite.
+// prepare:terminal4-runtime can regenerate the terminal-joint evidence camera
+// with several slightly different compact-range spellings. Normalize the
+// physical variable itself rather than one literal formatting variant. The real
+// structural wall -> exact Rotunda span is about 20 m on A1.
+const spanPattern = /if \(!\(exactA1JointSpan\s*(?:>|>=)\s*[0-9.]+\s*&&\s*exactA1JointSpan\s*(?:<|<=)\s*[0-9.]+\)\) \{/g;
+const spanMatches = source.match(spanPattern) || [];
+if (spanMatches.length !== 1) {
+  throw new Error(`${trainerPath}: expected one A1 terminal-joint span guard, found ${spanMatches.length}`);
+}
 source = source.replace(
-  "if (!(exactA1JointSpan > 2.9 && exactA1JointSpan < 5.8)) {",
+  spanPattern,
   `if (!(exactA1JointSpan > ${MIN_JOINT_SPAN_METERS} && exactA1JointSpan < ${MAX_JOINT_SPAN_METERS})) {`,
 );
+
+const apronPattern = /const exactA1JointApronDistance = Math\.max\([^;]+\);/g;
+const apronMatches = source.match(apronPattern) || [];
+if (apronMatches.length !== 1) {
+  throw new Error(`${trainerPath}: expected one A1 terminal-joint apron-distance expression, found ${apronMatches.length}`);
+}
 source = source.replace(
-  "const exactA1JointApronDistance = Math.max(4.2, exactA1JointSpan * 1.05);",
+  apronPattern,
   "const exactA1JointApronDistance = Math.max(5.0, Math.min(10.0, exactA1JointSpan * 0.35));",
 );
+
+const sidePattern = /const exactA1JointSideDistance = Math\.max\([^;]+\);/g;
+const sideMatches = source.match(sidePattern) || [];
+if (sideMatches.length !== 1) {
+  throw new Error(`${trainerPath}: expected one A1 terminal-joint side-distance expression, found ${sideMatches.length}`);
+}
 source = source.replace(
-  "const exactA1JointSideDistance = Math.max(10.4, exactA1JointSpan * 2.62);",
+  sidePattern,
   "const exactA1JointSideDistance = Math.max(14.0, Math.min(30.0, exactA1JointSpan * 1.30));",
 );
+
 source = source.replace(
-  'renderer.domElement.dataset.inspectionCameraEndpointSubviewAuthority = "exact-a1-terminal-joint-and-bogie-contact-subviews-v2";',
+  /renderer\.domElement\.dataset\.inspectionCameraEndpointSubviewAuthority = "[^"]+";/,
   `renderer.domElement.dataset.inspectionCameraEndpointSubviewAuthority = "${CAMERA_AUTHORITY}";`,
 );
-
-// The comment is evidence-facing too: remove the obsolete claim that the
-// terminal-side leg is compact so future repairs do not infer the wrong target.
 source = source.replaceAll(
   "This basis forces the compact vestibule to run",
   "This basis forces the source-measured fixed terminal leg to run",
@@ -38,6 +52,7 @@ source = source.replaceAll(
 
 for (const forbidden of [
   "exactA1JointSpan > 2.9 && exactA1JointSpan < 5.8",
+  "exactA1JointSpan >= 2.9 && exactA1JointSpan <= 5.8",
   "Math.max(4.2, exactA1JointSpan * 1.05)",
   "Math.max(10.4, exactA1JointSpan * 2.62)",
   "This basis forces the compact vestibule to run",
@@ -59,4 +74,4 @@ for (const required of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Normalized the final A1 terminal-joint evidence camera for the source-measured 0.5-44 m wall/Rotunda span and bounded the side/apron framing distances so the real fixed terminal run is visible instead of rejected as non-compact.");
+console.log("Normalized the final A1 terminal-joint evidence camera by variable-specific guards: source-measured 0.5-44 m wall/Rotunda span and bounded side/apron framing replace every compact-camera spelling before Vite.");
