@@ -61,16 +61,21 @@ async function captureCanvas(page, canvas, path) {
       && canvas?.dataset.terminal4UploadedJetwayCount === '58';
   }, null, { timeout: 90000 });
 
-  // The production runtime always exposes inspection through the session Menu;
-  // the optional top-bar .rr-inspection-toggle is preparer-dependent and is not
-  // a stable browser contract. Use the same menu action a real user can reach,
-  // then fail closed on the actual canvas inspection state.
-  const menuButton = page.getByRole('button', { name: 'Menu' });
-  await menuButton.waitFor({ state: 'visible', timeout: 10000 });
-  await menuButton.click();
-  const inspectionMenuAction = page.getByRole('button', { name: 'Free-drive inspection' });
-  await inspectionMenuAction.waitFor({ state: 'visible', timeout: 10000 });
-  await inspectionMenuAction.click();
+  // Production exposes Free-drive inspection as a real top-level button. Avoid
+  // routing through the session <details>/<summary> menu: that menu is for
+  // equipment/gyro actions and its summary is not a button role. Trigger the
+  // actual control through the DOM, then fail closed on the canvas state.
+  await page.waitForFunction(() => {
+    const control = document.querySelector('.rr-inspection-toggle');
+    return control instanceof HTMLButtonElement && !control.disabled;
+  }, null, { timeout: 10000 });
+  const activated = await page.evaluate(() => {
+    const control = document.querySelector('.rr-inspection-toggle');
+    if (!(control instanceof HTMLButtonElement) || control.disabled) return false;
+    control.click();
+    return true;
+  });
+  if (!activated) throw new Error('Free-drive inspection control was not activatable');
   await page.waitForFunction(() => document.querySelector('canvas.trainerCanvas')?.dataset.inspectionMode === 'active', null, { timeout: 10000 });
 
   const location = page.getByRole('combobox', { name: 'Inspection location' });
