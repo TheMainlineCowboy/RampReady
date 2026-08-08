@@ -4,8 +4,9 @@ const AUTHORITY = "57-static-authored-rotundas-real-wall-surface-registration-v4
 const GROUND_AUTHORITY = "a1-anchor-only-grounding-static-fleet-pavement-zero-v1";
 const ROOT_OFFSET_AUTHORITY = "exact-supplied-glb-authored-rotunda-center-to-model-root-v1";
 const SOURCE_WALL_LENGTH_PADDING_METERS = 0.35;
-const VISIBLE_TERMINAL_LEG_METERS = 2.4;
-const MAXIMUM_REGISTRATION_DISPLACEMENT_METERS = 45;
+const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0.20;
+const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 18;
+const MAXIMUM_REGISTRATION_DISPLACEMENT_METERS = 12;
 
 function wrapYaw(THREE, radians) {
   return THREE.MathUtils.euclideanModulo(radians + Math.PI, Math.PI * 2) - Math.PI;
@@ -27,13 +28,16 @@ function measureAuthoredRotundaOffsetFromModelRoot(THREE, a1Anchor) {
   const rotunda = model?.getObjectByName("Rotunda") || model?.getObjectByName("Rotunda_Jetway_0");
   const tunnelA = model?.getObjectByName("Tunnel_A") || model?.getObjectByName("Tunnel_A_Jetway_0");
   if (!model || !rotunda || !tunnelA) throw new Error("Static jetway registration could not measure the exact supplied Rotunda/model-root/bridge-axis evidence");
+
   a1Anchor.updateWorldMatrix(true, true);
   model.updateWorldMatrix(true, true);
   rotunda.updateWorldMatrix(true, true);
   tunnelA.updateWorldMatrix(true, true);
+
   const worldBounds = new THREE.Box3().setFromObject(rotunda);
   const tunnelWorldBounds = new THREE.Box3().setFromObject(tunnelA);
   if (worldBounds.isEmpty() || tunnelWorldBounds.isEmpty()) throw new Error("Exact supplied Rotunda/Tunnel A has empty bounds during static registration");
+
   const worldCenter = worldBounds.getCenter(new THREE.Vector3());
   const worldSize = worldBounds.getSize(new THREE.Vector3());
   const tunnelWorldCenter = tunnelWorldBounds.getCenter(new THREE.Vector3());
@@ -43,13 +47,23 @@ function measureAuthoredRotundaOffsetFromModelRoot(THREE, a1Anchor) {
   authoredBridgeAxis.y = 0;
   if (authoredBridgeAxis.lengthSq() < 0.25) throw new Error("Exact supplied Rotunda->Tunnel A bridge axis is degenerate");
   authoredBridgeAxis.normalize();
+
   const bridgeAxisHeadingRadians = Math.atan2(authoredBridgeAxis.x, authoredBridgeAxis.z);
   if (![localCenter.x, localCenter.y, localCenter.z, bridgeAxisHeadingRadians].every(Number.isFinite)) throw new Error("Exact supplied Rotunda/model-root evidence is invalid");
   const horizontalMagnitude = Math.hypot(localCenter.x, localCenter.z);
   if (horizontalMagnitude > 12) throw new Error(`Exact supplied Rotunda/model-root horizontal offset is excessive: ${horizontalMagnitude}`);
+
   const radiusMeters = Math.max(worldSize.x, worldSize.z) * 0.5;
   if (!(radiusMeters > 0.7 && radiusMeters < 3.5)) throw new Error(`Exact supplied Rotunda horizontal radius is invalid: ${radiusMeters}`);
-  return Object.freeze({ x: localCenter.x, y: localCenter.y, z: localCenter.z, horizontalMagnitude, radiusMeters, bridgeAxisHeadingRadians, authority: ROOT_OFFSET_AUTHORITY });
+  return Object.freeze({
+    x: localCenter.x,
+    y: localCenter.y,
+    z: localCenter.z,
+    horizontalMagnitude,
+    radiusMeters,
+    bridgeAxisHeadingRadians,
+    authority: ROOT_OFFSET_AUTHORITY,
+  });
 }
 
 function buildRegisteredPlacement(THREE, placement, authoredRotundaOffset) {
@@ -61,19 +75,31 @@ function buildRegisteredPlacement(THREE, placement, authoredRotundaOffset) {
   const targetX = Number(placement.targetX);
   const targetZ = Number(placement.targetZ);
   const sourceWallDistance = Number(placement.wallConnectorLength) - SOURCE_WALL_LENGTH_PADDING_METERS;
-  if (![sourceX, sourceZ, sourceYaw, towardX, towardZ, targetX, targetZ, sourceWallDistance].every(Number.isFinite)) throw new Error(`Static jetway ${placement.gate} has incomplete source/facade registration evidence`);
+  if (![sourceX, sourceZ, sourceYaw, towardX, towardZ, targetX, targetZ, sourceWallDistance].every(Number.isFinite)) {
+    throw new Error(`Static jetway ${placement.gate} has incomplete source/facade registration evidence`);
+  }
+
   const magnitude = Math.hypot(towardX, towardZ);
   if (!(magnitude > 0.95 && magnitude < 1.05)) throw new Error(`Static jetway ${placement.gate} terminal direction is not normalized: ${magnitude}`);
-  if (!(sourceWallDistance > 0.4 && sourceWallDistance < 44)) throw new Error(`Static jetway ${placement.gate} source-to-wall distance is invalid: ${sourceWallDistance}`);
+  if (!(sourceWallDistance > authoredRotundaOffset.radiusMeters && sourceWallDistance < 44)) {
+    throw new Error(`Static jetway ${placement.gate} source Rotunda-to-wall distance is invalid: ${sourceWallDistance}`);
+  }
+
   const ux = towardX / magnitude;
   const uz = towardZ / magnitude;
-  const wallX = sourceX + ux * sourceWallDistance;
-  const wallZ = sourceZ + uz * sourceWallDistance;
-  const rotundaCenterToWallMeters = authoredRotundaOffset.radiusMeters + VISIBLE_TERMINAL_LEG_METERS;
-  const rotundaX = wallX - ux * rotundaCenterToWallMeters;
-  const rotundaZ = wallZ - uz * rotundaCenterToWallMeters;
-  const visibleTerminalLegMeters = Math.hypot(wallX - rotundaX, wallZ - rotundaZ) - authoredRotundaOffset.radiusMeters;
-  if (Math.abs(visibleTerminalLegMeters - VISIBLE_TERMINAL_LEG_METERS) > 0.02) throw new Error(`Static jetway ${placement.gate} compact terminal vestibule solve failed: ${visibleTerminalLegMeters}`);
+
+  // The exact uploaded prototype is normalized around its authored Rotunda before
+  // the 58 BGL placements are instantiated. Therefore sourceX/sourceZ already are
+  // the physical Rotunda center for each gate. Preserve that airport-authored
+  // location instead of dragging every Rotunda to one universal 2.4 m facade leg.
+  const rotundaX = sourceX;
+  const rotundaZ = sourceZ;
+  const wallX = rotundaX + ux * sourceWallDistance;
+  const wallZ = rotundaZ + uz * sourceWallDistance;
+  const visibleTerminalLegMeters = sourceWallDistance - authoredRotundaOffset.radiusMeters;
+  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
+    throw new Error(`Static jetway ${placement.gate} measured visible terminal vestibule is invalid: ${visibleTerminalLegMeters}`);
+  }
 
   const bridgeDx = targetX - rotundaX;
   const bridgeDz = targetZ - rotundaZ;
@@ -82,16 +108,19 @@ function buildRegisteredPlacement(THREE, placement, authoredRotundaOffset) {
   const sourceBridgeAxisHeading = Number(authoredRotundaOffset.bridgeAxisHeadingRadians);
   if (!Number.isFinite(sourceBridgeAxisHeading)) throw new Error(`Static jetway ${placement.gate} is missing exact supplied bridge-axis heading`);
   const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);
-  const rotatedRotundaOffset = new THREE.Vector3(authoredRotundaOffset.x, 0, authoredRotundaOffset.z).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+
+  const rotatedRotundaOffset = new THREE.Vector3(authoredRotundaOffset.x, 0, authoredRotundaOffset.z)
+    .applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
   const modelRootX = rotundaX - rotatedRotundaOffset.x;
   const modelRootZ = rotundaZ - rotatedRotundaOffset.z;
   const reconstructedRotundaX = modelRootX + rotatedRotundaOffset.x;
   const reconstructedRotundaZ = modelRootZ + rotatedRotundaOffset.z;
   const physicalRotundaRegistrationError = Math.hypot(reconstructedRotundaX - rotundaX, reconstructedRotundaZ - rotundaZ);
   const displacement = Math.hypot(modelRootX - sourceX, modelRootZ - sourceZ);
-  if (displacement > MAXIMUM_REGISTRATION_DISPLACEMENT_METERS) throw new Error(`Static jetway ${placement.gate} facade registration displacement is excessive: ${displacement}`);
+  if (displacement > MAXIMUM_REGISTRATION_DISPLACEMENT_METERS) throw new Error(`Static jetway ${placement.gate} model-root registration displacement is excessive: ${displacement}`);
   if (physicalRotundaRegistrationError > 1e-6) throw new Error(`Static jetway ${placement.gate} authored Rotunda registration error is ${physicalRotundaRegistrationError}`);
-  const wallError = Math.abs(Math.hypot(wallX - rotundaX, wallZ - rotundaZ) - rotundaCenterToWallMeters);
+
+  const wallError = Math.abs(Math.hypot(wallX - rotundaX, wallZ - rotundaZ) - sourceWallDistance);
   const yawChange = Math.abs(wrapYaw(THREE, yaw - sourceYaw));
   return {
     ...placement,
@@ -99,7 +128,7 @@ function buildRegisteredPlacement(THREE, placement, authoredRotundaOffset) {
     z: rotundaZ,
     yaw,
     aircraftDoorDistance: bridgeDistance,
-    wallConnectorLength: rotundaCenterToWallMeters,
+    wallConnectorLength: sourceWallDistance,
     staticModelRootX: modelRootX,
     staticModelRootZ: modelRootZ,
     staticAuthoredRotundaOffsetX: authoredRotundaOffset.x,
@@ -107,7 +136,7 @@ function buildRegisteredPlacement(THREE, placement, authoredRotundaOffset) {
     staticAuthoredRotundaRadiusMeters: authoredRotundaOffset.radiusMeters,
     staticVisibleTerminalLegMeters: visibleTerminalLegMeters,
     staticSourceWallDistanceMeters: sourceWallDistance,
-    staticResolvedRotundaCenterToWallMeters: rotundaCenterToWallMeters,
+    staticResolvedRotundaCenterToWallMeters: sourceWallDistance,
     staticPhysicalRotundaRegistrationErrorMeters: physicalRotundaRegistrationError,
     staticFacadeWallX: wallX,
     staticFacadeWallZ: wallZ,
@@ -132,6 +161,7 @@ function applyPlacementDeltaToStaticInstances(THREE, staticBatches, originalPlac
   const newQuaternion = new THREE.Quaternion();
   const position = new THREE.Vector3();
   const scale = new THREE.Vector3(1, 1, 1);
+
   for (let index = 0; index < registeredPlacements.length; index += 1) {
     const before = originalPlacements[index];
     const after = registeredPlacements[index];
@@ -151,6 +181,7 @@ function applyPlacementDeltaToStaticInstances(THREE, staticBatches, originalPlac
       batch.setMatrixAt(index, next);
     }
   }
+
   for (const batch of staticBatches) {
     batch.instanceMatrix.needsUpdate = true;
     batch.computeBoundingBox();
@@ -159,10 +190,13 @@ function applyPlacementDeltaToStaticInstances(THREE, staticBatches, originalPlac
 }
 
 export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placements) {
-  if (!group?.isGroup || !fleet?.isGroup || !Array.isArray(placements) || placements.length !== 58) throw new Error("Static jetway facade registration requires the complete Terminal 4 exact fleet and 58 placements");
+  if (!group?.isGroup || !fleet?.isGroup || !Array.isArray(placements) || placements.length !== 58) {
+    throw new Error("Static jetway facade registration requires the complete Terminal 4 exact fleet and 58 placements");
+  }
   const a1Anchor = fleet.getObjectByName("UploadedAirportJetway_A1");
   if (!a1Anchor) throw new Error("Static fleet registration could not resolve the individual A1 anchor");
   const authoredRotundaOffset = measureAuthoredRotundaOffsetFromModelRoot(THREE, a1Anchor);
+
   const inheritedFleetYOffset = Number(fleet.position.y);
   if (!Number.isFinite(inheritedFleetYOffset) || Math.abs(inheritedFleetYOffset) > 3) throw new Error(`Exact jetway fleet inherited an invalid vertical offset: ${inheritedFleetYOffset}`);
   a1Anchor.position.y += inheritedFleetYOffset;
@@ -173,12 +207,17 @@ export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placement
   const staticOriginalPlacements = placements.filter((placement) => placement.gate !== "A1").map((placement) => ({ ...placement }));
   if (staticOriginalPlacements.length !== 57) throw new Error(`Static facade registration expected 57 non-A1 placements, received ${staticOriginalPlacements.length}`);
   const staticRegisteredPlacements = staticOriginalPlacements.map((placement) => buildRegisteredPlacement(THREE, placement, authoredRotundaOffset));
+
   const staticBatchesGroup = fleet.getObjectByName("UploadedAirportJetwayStaticExactGlbInstances");
   const staticBatches = staticBatchesGroup?.children?.filter((entry) => entry.isInstancedMesh) || [];
-  if (staticBatches.length !== 7 || staticBatches.some((batch) => batch.count !== 57)) throw new Error(`Static exact jetway instance batches are invalid: batches=${staticBatches.length}, counts=${staticBatches.map((batch) => batch.count).join(",")}`);
+  if (staticBatches.length !== 7 || staticBatches.some((batch) => batch.count !== 57)) {
+    throw new Error(`Static exact jetway instance batches are invalid: batches=${staticBatches.length}, counts=${staticBatches.map((batch) => batch.count).join(",")}`);
+  }
   const staticPortalClosures = fleet.getObjectByName("UploadedAirportJetwayStaticPortalClosures");
   const staticClosureBatches = staticPortalClosures?.children?.filter((entry) => entry.isInstancedMesh) || [];
-  if (staticPortalClosures && (staticClosureBatches.length !== 6 || staticClosureBatches.some((batch) => batch.count !== 57 && batch.count !== 114))) throw new Error(`Static portal closure batches are invalid: batches=${staticClosureBatches.length}`);
+  if (staticPortalClosures && (staticClosureBatches.length !== 6 || staticClosureBatches.some((batch) => batch.count !== 57 && batch.count !== 114))) {
+    throw new Error(`Static portal closure batches are invalid: batches=${staticClosureBatches.length}`);
+  }
   applyPlacementDeltaToStaticInstances(THREE, [...staticBatches, ...staticClosureBatches], staticOriginalPlacements, staticRegisteredPlacements);
 
   const byGate = new Map(staticRegisteredPlacements.map((placement) => [placement.gate, placement]));
@@ -206,6 +245,7 @@ export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placement
     disposeConnectorGroup(oldConnectors);
   }
   const rebuiltConnectors = addStaticSolidTerminalVestibules(THREE, fleet, placements);
+
   const maximumDisplacement = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticFacadeRegistrationDisplacementMeters));
   const maximumYawChange = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticFacadeRegistrationYawChangeRadians));
   const maximumWallError = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticFacadeWallErrorMeters));
@@ -214,7 +254,6 @@ export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placement
   const maximumVisibleTerminalLeg = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticVisibleTerminalLegMeters));
   const minimumSourceWallDistance = Math.min(...staticRegisteredPlacements.map((placement) => placement.staticSourceWallDistanceMeters));
   const maximumSourceWallDistance = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticSourceWallDistanceMeters));
-  const resolvedCenterToWall = authoredRotundaOffset.radiusMeters + VISIBLE_TERMINAL_LEG_METERS;
   if (maximumWallError > 1e-6) throw new Error(`Static Rotunda facade registration wall error is ${maximumWallError}`);
   if (maximumPhysicalRotundaError > 1e-6) throw new Error(`Static authored Rotunda/model-root registration error is ${maximumPhysicalRotundaError}`);
 
@@ -228,8 +267,6 @@ export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placement
   group.userData.uploadedJetwayStaticAuthoredRotundaOffsetX = authoredRotundaOffset.x;
   group.userData.uploadedJetwayStaticAuthoredRotundaOffsetZ = authoredRotundaOffset.z;
   group.userData.uploadedJetwayStaticAuthoredRotundaOffsetHorizontalMeters = authoredRotundaOffset.horizontalMagnitude;
-  group.userData.uploadedJetwayStaticRotundaCenterToWallMeters = resolvedCenterToWall;
-  group.userData.uploadedJetwayStaticVisibleTerminalLegMeters = VISIBLE_TERMINAL_LEG_METERS;
   group.userData.uploadedJetwayStaticMinimumMeasuredVisibleTerminalLegMeters = minimumVisibleTerminalLeg;
   group.userData.uploadedJetwayStaticMaximumMeasuredVisibleTerminalLegMeters = maximumVisibleTerminalLeg;
   group.userData.uploadedJetwayStaticMinimumMeasuredWallDistanceMeters = minimumSourceWallDistance;
@@ -243,7 +280,39 @@ export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placement
   group.userData.uploadedJetwayStaticConnectorInstanceCount = rebuiltConnectors.instanceCount;
   group.userData.uploadedJetwayStaticConnectorBatchAuthority = rebuiltConnectors.authority;
 
-  return Object.freeze({ authority: AUTHORITY, groundAuthority: GROUND_AUTHORITY, modelRootOffsetAuthority: ROOT_OFFSET_AUTHORITY, gateCount: 57, rotundaCenterToWallMeters: resolvedCenterToWall, visibleTerminalLegMeters: VISIBLE_TERMINAL_LEG_METERS, authoredRotundaOffsetX: authoredRotundaOffset.x, authoredRotundaOffsetZ: authoredRotundaOffset.z, authoredRotundaOffsetHorizontalMeters: authoredRotundaOffset.horizontalMagnitude, maximumPhysicalRotundaErrorMeters: maximumPhysicalRotundaError, inheritedFleetYOffset, staticFleetYOffset: fleet.position.y, maximumDisplacementMeters: maximumDisplacement, maximumYawChangeRadians: maximumYawChange, maximumWallErrorMeters: maximumWallError, connectorGateCount: rebuiltConnectors.staticGateCount, connectorBatchCount: rebuiltConnectors.batchCount });
+  console.info("[RampReady] Static jetway real-wall registration", {
+    authority: AUTHORITY,
+    gateCount: 57,
+    authoredRotundaRadiusMeters: authoredRotundaOffset.radiusMeters,
+    minimumVisibleTerminalLegMeters: minimumVisibleTerminalLeg,
+    maximumVisibleTerminalLegMeters: maximumVisibleTerminalLeg,
+    minimumRotundaCenterToWallMeters: minimumSourceWallDistance,
+    maximumRotundaCenterToWallMeters: maximumSourceWallDistance,
+    maximumModelRootDisplacementMeters: maximumDisplacement,
+    maximumYawChangeRadians: maximumYawChange,
+  });
+
+  return Object.freeze({
+    authority: AUTHORITY,
+    groundAuthority: GROUND_AUTHORITY,
+    modelRootOffsetAuthority: ROOT_OFFSET_AUTHORITY,
+    gateCount: 57,
+    minimumVisibleTerminalLegMeters: minimumVisibleTerminalLeg,
+    maximumVisibleTerminalLegMeters: maximumVisibleTerminalLeg,
+    minimumRotundaCenterToWallMeters: minimumSourceWallDistance,
+    maximumRotundaCenterToWallMeters: maximumSourceWallDistance,
+    authoredRotundaOffsetX: authoredRotundaOffset.x,
+    authoredRotundaOffsetZ: authoredRotundaOffset.z,
+    authoredRotundaOffsetHorizontalMeters: authoredRotundaOffset.horizontalMagnitude,
+    maximumPhysicalRotundaErrorMeters: maximumPhysicalRotundaError,
+    inheritedFleetYOffset,
+    staticFleetYOffset: fleet.position.y,
+    maximumDisplacementMeters: maximumDisplacement,
+    maximumYawChangeRadians: maximumYawChange,
+    maximumWallErrorMeters: maximumWallError,
+    connectorGateCount: rebuiltConnectors.staticGateCount,
+    connectorBatchCount: rebuiltConnectors.batchCount,
+  });
 }
 
 export {
