@@ -8,9 +8,6 @@ const MAX_VISIBLE_LEG = 44;
 
 let source = fs.readFileSync(readinessPath, "utf8");
 
-// prepare:runtime can regenerate the older readiness module. Normalize the
-// regenerated file to the physical telemetry published by the final static
-// facade registration instead of requiring obsolete representative distances.
 source = source.replaceAll(
   "Math.abs(sourceLockedA1VisibleLeg - 2.4) > 0.05",
   `!(sourceLockedA1VisibleLeg > ${MIN_A1_VISIBLE_LEG} && sourceLockedA1VisibleLeg < ${MAX_VISIBLE_LEG})`,
@@ -29,28 +26,21 @@ source = source.replaceAll(
 );
 
 const bogieGroundGuard = "Number.isFinite(bogieTireCorrection) && bogieTireCorrection > 0";
-// Runtime preparation has emitted more than one formatting variant of the old
-// narrow bogie-correction range. Normalize it semantically, not by one exact
-// source-string spelling, and seed the physical guard if regeneration omitted it.
 source = source.replace(
   /!\(\s*bogieTireCorrection\s*>\s*0\.04\s*&&\s*bogieTireCorrection\s*<\s*0\.1\s*\)/g,
   `!(${bogieGroundGuard})`,
 );
 if (!source.includes(bogieGroundGuard)) {
-  const fleetGroundAnchor = "            || Math.abs(fleetGroundOffset + bogieTireCorrection) > 1e-6";
-  if (!source.includes(fleetGroundAnchor)) {
-    throw new Error(`${readinessPath}: fleet/bogie ground-contact readiness anchor is missing`);
+  const fleetGroundExpression = "Math.abs(fleetGroundOffset + bogieTireCorrection) > 1e-6";
+  if (!source.includes(fleetGroundExpression)) {
+    throw new Error(`${readinessPath}: fleet/bogie ground-contact readiness expression is missing`);
   }
   source = source.replace(
-    fleetGroundAnchor,
-    `${fleetGroundAnchor}\n            || !(${bogieGroundGuard})`,
+    fleetGroundExpression,
+    `${fleetGroundExpression}\n            || !(${bogieGroundGuard})`,
   );
 }
 
-// The regenerated readiness source does not declare the per-gate range fields,
-// even though registerStaticJetwayFleetToFacadeV1 publishes them on group.userData.
-// Seed those declarations deterministically beside the existing static portal
-// telemetry so verification and runtime consume the same measured fleet data.
 const staticDeclarationAnchor = "          const staticPortalAlignmentError = Number(group.userData.uploadedJetwayStaticMaximumPortalAlignmentErrorRadians ?? Infinity);";
 const measuredStaticDeclarations = `${staticDeclarationAnchor}\n          const staticMinimumRotundaCenterToWall = Number(group.userData.uploadedJetwayStaticMinimumMeasuredWallDistanceMeters ?? NaN);\n          const staticMaximumRotundaCenterToWall = Number(group.userData.uploadedJetwayStaticMaximumMeasuredWallDistanceMeters ?? NaN);\n          const staticMinimumVisibleTerminalLeg = Number(group.userData.uploadedJetwayStaticMinimumMeasuredVisibleTerminalLegMeters ?? NaN);\n          const staticMaximumVisibleTerminalLeg = Number(group.userData.uploadedJetwayStaticMaximumMeasuredVisibleTerminalLegMeters ?? NaN);`;
 if (!source.includes("uploadedJetwayStaticMinimumMeasuredWallDistanceMeters")) {
@@ -60,8 +50,6 @@ if (!source.includes("uploadedJetwayStaticMinimumMeasuredWallDistanceMeters")) {
   source = source.replace(staticDeclarationAnchor, measuredStaticDeclarations);
 }
 
-// Remove any older unpublished single-value static declarations if a regenerated
-// variant still emits them.
 source = source.replace(
   "          const staticRotundaCenterToWall = Number(group.userData.uploadedJetwayStaticRotundaCenterToWallMeters ?? NaN);\n",
   "",
@@ -87,32 +75,38 @@ source = source.replaceAll(
   `!(staticMinimumVisibleTerminalLeg >= 0 && staticMaximumVisibleTerminalLeg < ${MAX_VISIBLE_LEG})`,
 );
 
-// Seed physical sanity guards into the final mismatch block. The dedicated
-// browser evidence remains the visual authority; these checks only prove that
-// the measured wall/Rotunda relationships are finite and physically bounded.
 const directWallGuard = `a1TerminalWallDistance > ${MIN_WALL_DISTANCE} && a1TerminalWallDistance < ${MAX_WALL_DISTANCE}`;
 const directVisibleLegGuard = `connectorVisibleLength > ${MIN_A1_VISIBLE_LEG} && connectorVisibleLength < ${MAX_VISIBLE_LEG}`;
 const staticWallGuard = `staticMinimumRotundaCenterToWall > ${MIN_WALL_DISTANCE} && staticMaximumRotundaCenterToWall < ${MAX_WALL_DISTANCE}`;
 const staticVisibleLegGuard = `staticMinimumVisibleTerminalLeg >= 0 && staticMaximumVisibleTerminalLeg < ${MAX_VISIBLE_LEG}`;
-const mismatchAnchor = `          if (\n            count !== EXPECTED_GATE_COUNT`;
-const seeded = [
-  !source.includes(directWallGuard) ? `!(${directWallGuard})` : null,
-  !source.includes(directVisibleLegGuard) ? `!(${directVisibleLegGuard})` : null,
+
+const missingStaticGuards = [
   !source.includes(staticWallGuard) ? `!(${staticWallGuard})` : null,
   !source.includes(staticVisibleLegGuard) ? `!(${staticVisibleLegGuard})` : null,
 ].filter(Boolean);
-if (seeded.length) {
-  if (!source.includes(mismatchAnchor)) {
-    throw new Error(`${readinessPath}: final exact-fleet readiness mismatch block is missing`);
+if (missingStaticGuards.length) {
+  const staticPortalGuard = "staticPortalAlignmentError > 1e-6";
+  if (!source.includes(staticPortalGuard)) {
+    throw new Error(`${readinessPath}: static portal readiness expression is missing`);
   }
   source = source.replace(
-    mismatchAnchor,
-    `          if (\n            ${seeded.join("\n            || ")}\n            || count !== EXPECTED_GATE_COUNT`,
+    staticPortalGuard,
+    `${staticPortalGuard}\n            || ${missingStaticGuards.join("\n            || ")}`,
   );
 }
 
-// Append measured ranges to mismatch telemetry so a future rejection reports
-// the actual 57-gate source registration instead of hiding behind stale constants.
+for (const [guard, anchor] of [
+  [directWallGuard, "a1TerminalConnectionAuthority !== UPLOADED_JETWAY_A1_TERMINAL_CONNECTION_AUTHORITY"],
+  [directVisibleLegGuard, "isolatedNodeRotationCount !== 0"],
+]) {
+  if (!source.includes(guard)) {
+    if (!source.includes(anchor)) {
+      throw new Error(`${readinessPath}: readiness anchor is missing for ${guard}`);
+    }
+    source = source.replace(anchor, `${anchor}\n            || !(${guard})`);
+  }
+}
+
 const sourceTelemetry = "source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`";
 const rangeTelemetry = "staticMeasured=${staticMinimumRotundaCenterToWall}/${staticMaximumRotundaCenterToWall}/${staticMinimumVisibleTerminalLeg}/${staticMaximumVisibleTerminalLeg}, source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`";
 if (source.includes(sourceTelemetry) && !source.includes("staticMeasured=${staticMinimumRotundaCenterToWall}")) {
@@ -152,4 +146,4 @@ for (const required of [
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Normalized final post-prepare jetway readiness to telemetry the runtime actually publishes: A1 uses source-measured physical bounds and the 57 static gates use their measured min/max wall and visible-leg ranges; unpublished NaN aggregate fields and compact magic distances are removed.");
+console.log("Normalized final post-prepare jetway readiness using stable semantic anchors: A1 keeps source-measured physical wall/visible-leg bounds, all 57 static gates keep measured min/max wall and visible-leg ranges, and grounded bogie contact remains fail-closed without depending on generated condition ordering.");
