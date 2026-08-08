@@ -38,6 +38,36 @@ source = source.replace(
   fleet.updateMatrixWorld(true);
   a1Model.updateWorldMatrix(true, true);
   rotundaOpening = measureExactRotundaOpening(THREE, fleet, a1Model, terminalDirection);
+
+  // Trust the transformed authored Rotunda, not the requested parent delta.
+  // Some source-parent combinations can retain an earlier matrix contribution
+  // through the preparation stack. Close any radial residual using the complete
+  // A1 parent only, then remeasure before acceptance. This preserves every GLB
+  // child transform while making the physical wall/Rotunda measurement final.
+  let postLockWallOffsetX = terminalWallX - rotundaOpening.centerX;
+  let postLockWallOffsetZ = terminalWallZ - rotundaOpening.centerZ;
+  let postLockTerminalDistance = postLockWallOffsetX * rotundaOpening.openingDirectionX
+    + postLockWallOffsetZ * rotundaOpening.openingDirectionZ;
+  const postLockRadialResidual = postLockTerminalDistance - desiredTerminalDistance;
+  if (!Number.isFinite(postLockRadialResidual) || Math.abs(postLockRadialResidual) >= 60) {
+    throw new Error(\`A1 post-transform wall-lock residual is invalid: \${postLockRadialResidual}\`);
+  }
+  if (Math.abs(postLockRadialResidual) > 0.01) {
+    a1Anchor.position.x += rotundaOpening.openingDirectionX * postLockRadialResidual;
+    a1Anchor.position.z += rotundaOpening.openingDirectionZ * postLockRadialResidual;
+    a1Anchor.updateMatrix();
+    fleet.updateMatrixWorld(true);
+    a1Model.updateWorldMatrix(true, true);
+    rotundaOpening = measureExactRotundaOpening(THREE, fleet, a1Model, terminalDirection);
+    postLockWallOffsetX = terminalWallX - rotundaOpening.centerX;
+    postLockWallOffsetZ = terminalWallZ - rotundaOpening.centerZ;
+    postLockTerminalDistance = postLockWallOffsetX * rotundaOpening.openingDirectionX
+      + postLockWallOffsetZ * rotundaOpening.openingDirectionZ;
+  }
+  const finalPostLockRadialResidual = postLockTerminalDistance - desiredTerminalDistance;
+  if (!Number.isFinite(finalPostLockRadialResidual) || Math.abs(finalPostLockRadialResidual) > 0.03) {
+    throw new Error(\`A1 post-transform wall lock did not converge: \${finalPostLockRadialResidual} m\`);
+  }
   const relocatedWallOffsetX`,
 );
 
@@ -63,8 +93,8 @@ if (!errorGatePattern.test(source)) {
 }
 source = source.replace(
   errorGatePattern,
-  `  if (relocationDistanceError > 0.03 || terminalCrossTrackErrorMeters > 0.03) {
-    throw new Error(\`A1 full-vector terminal lock missed the measured wall: radial=\${relocationDistanceError} m cross-track=\${terminalCrossTrackErrorMeters} m\`);
+  `  if (Math.abs(finalPostLockRadialResidual) > 0.03 || terminalCrossTrackErrorMeters > 0.03) {
+    throw new Error(\`A1 full-vector terminal lock missed the measured wall: radial=\${finalPostLockRadialResidual} m cross-track=\${terminalCrossTrackErrorMeters} m\`);
   }`,
 );
 
@@ -94,7 +124,8 @@ source = source.replace(
     finalMeasuredTerminalWallWorld.y - finalRotundaCenterWorld.y,
     finalMeasuredTerminalWallWorld.z - finalRotundaCenterWorld.z,
   );
-  group.userData.uploadedJetwayA1TerminalRelocationDistanceErrorMeters = relocationDistanceError;
+  group.userData.uploadedJetwayA1TerminalRelocationDistanceErrorMeters = Math.abs(finalPostLockRadialResidual);
+  group.userData.uploadedJetwayA1TerminalPostLockRadialResidualMeters = finalPostLockRadialResidual;
   group.userData.uploadedJetwayA1TerminalCrossTrackErrorMeters = terminalCrossTrackErrorMeters;
   group.userData.uploadedJetwayA1DesiredRotundaCenterX = desiredRotundaCenterX;
   group.userData.uploadedJetwayA1DesiredRotundaCenterZ = desiredRotundaCenterZ;
@@ -106,23 +137,27 @@ source = source.replace(
   group.userData.uploadedJetwayA1FinalMeasuredWallWorldZ = finalMeasuredTerminalWallWorld.z;
   group.userData.uploadedJetwayA1FinalRotundaToCabWorldMeters = finalRotundaToCabWorldMeters;
   group.userData.uploadedJetwayA1FinalRotundaToWallWorldMeters = finalRotundaToWallWorldMeters;
-  group.userData.uploadedJetwayA1FinalEndpointEvidenceAuthority = "exact-world-rotunda-wall-cab-endpoints-v30";`,
+  group.userData.uploadedJetwayA1FinalEndpointEvidenceAuthority = "exact-world-rotunda-wall-cab-endpoints-v31";`,
 );
 
 source = source.replace(
   /const INSTALLATION_AUTHORITY = "[^"]+";/,
-  'const INSTALLATION_AUTHORITY = "photo-short-fleet-local-terminal-wall-lock-grounded-exact-chain-v32";',
+  'const INSTALLATION_AUTHORITY = "post-transform-measured-terminal-wall-lock-grounded-exact-chain-v33";',
 );
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "photo-short-fleet-local-terminal-wall-lock-grounded-exact-chain-v32"',
+  'INSTALLATION_AUTHORITY = "post-transform-measured-terminal-wall-lock-grounded-exact-chain-v33"',
   "a1Anchor.parent !== fleet",
   "desiredRotundaCenterX",
   "a1Anchor.position.x += terminalRelocationX",
   "a1Anchor.updateMatrix()",
   "a1Model.updateWorldMatrix(true, true)",
+  "postLockRadialResidual",
+  "finalPostLockRadialResidual",
+  "A1 post-transform wall lock did not converge",
   "terminalCrossTrackErrorMeters",
   "A1 full-vector terminal lock missed the measured wall",
+  "uploadedJetwayA1TerminalPostLockRadialResidualMeters",
   "uploadedJetwayA1TerminalCrossTrackErrorMeters",
   "const finalRotundaCenterWorld = fleet.localToWorld",
   "const finalMeasuredTerminalWallWorld = fleet.localToWorld",
@@ -132,9 +167,9 @@ for (const token of [
   "uploadedJetwayA1FinalEndpointEvidenceAuthority",
 ]) {
   if (!source.includes(token)) {
-    throw new Error(`${installationPath}: fleet-local photo-short A1 wall lock output is missing ${token}`);
+    throw new Error(`${installationPath}: post-transform measured A1 wall lock output is missing ${token}`);
   }
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Locked the complete A1 parent to the real Terminal 4 wall in its proven fleet-local coordinate system, preserving every supplied child transform.");
+console.log("Locked the complete A1 parent to the real Terminal 4 wall, then remeasured and corrected the transformed authored Rotunda without changing any supplied child transform.");
