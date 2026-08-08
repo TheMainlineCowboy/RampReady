@@ -121,10 +121,15 @@ readiness = replaceAllKnown(
   readiness,
   [
     "a1TerminalWallDistance > 2.9 && a1TerminalWallDistance < 5.8",
+    "a1TerminalWallDistance >= 2.9 && a1TerminalWallDistance <= 5.8",
     "a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 12",
     "a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 28",
     "a1TerminalWallDistance > 1.5 && a1TerminalWallDistance < 4.1",
   ],
+  `a1TerminalWallDistance > ${MIN_REAL_WALL_DISTANCE_METERS} && a1TerminalWallDistance < ${MAX_REAL_WALL_DISTANCE_METERS}`,
+);
+readiness = readiness.replace(
+  /a1TerminalWallDistance\s*(?:>|>=)\s*[0-9.]+\s*&&\s*a1TerminalWallDistance\s*(?:<|<=)\s*[0-9.]+/g,
   `a1TerminalWallDistance > ${MIN_REAL_WALL_DISTANCE_METERS} && a1TerminalWallDistance < ${MAX_REAL_WALL_DISTANCE_METERS}`,
 );
 readiness = replaceAllKnown(
@@ -133,6 +138,10 @@ readiness = replaceAllKnown(
     "connectorVisibleLength > 0.25 && connectorVisibleLength < 12",
     "connectorVisibleLength > 0.25 && connectorVisibleLength < 28",
   ],
+  `connectorVisibleLength > ${MIN_VISIBLE_FIXED_LEG_METERS} && connectorVisibleLength < ${MAX_VISIBLE_FIXED_LEG_METERS}`,
+);
+readiness = readiness.replace(
+  /connectorVisibleLength\s*(?:>|>=)\s*[0-9.]+\s*&&\s*connectorVisibleLength\s*(?:<|<=)\s*[0-9.]+/g,
   `connectorVisibleLength > ${MIN_VISIBLE_FIXED_LEG_METERS} && connectorVisibleLength < ${MAX_VISIBLE_FIXED_LEG_METERS}`,
 );
 readiness = readiness.replaceAll(
@@ -152,6 +161,7 @@ readiness = readiness.replaceAll("compact-real-terminal-wall-readiness-v1", FINA
 for (const forbidden of [
   "Math.abs(connectorVisibleLength - 2.4) > 0.05",
   "a1TerminalWallDistance > 2.9 && a1TerminalWallDistance < 5.8",
+  "a1TerminalWallDistance >= 2.9 && a1TerminalWallDistance <= 5.8",
   "connectorVisibleLength > 0.25 && connectorVisibleLength < 12",
 ]) {
   if (readiness.includes(forbidden)) {
@@ -184,6 +194,10 @@ elbow = replaceAllKnown(
     "terminalWallDistance >= 2.9 && terminalWallDistance <= 5.8",
     "terminalWallDistance > 2.9 && terminalWallDistance < 5.8",
   ],
+  `terminalWallDistance >= ${MIN_REAL_WALL_DISTANCE_METERS} && terminalWallDistance <= ${MAX_REAL_WALL_DISTANCE_METERS}`,
+);
+elbow = elbow.replace(
+  /terminalWallDistance\s*(?:>|>=)\s*[0-9.]+\s*&&\s*terminalWallDistance\s*(?:<|<=)\s*[0-9.]+/g,
   `terminalWallDistance >= ${MIN_REAL_WALL_DISTANCE_METERS} && terminalWallDistance <= ${MAX_REAL_WALL_DISTANCE_METERS}`,
 );
 elbow = elbow.replaceAll(
