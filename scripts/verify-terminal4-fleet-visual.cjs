@@ -133,9 +133,12 @@ async function capture(page, filename) {
   checkpoint('a1-complete', { captures: Object.keys(captures) });
 
   for (const [preset, label, filename, cameraView] of views) {
-    await selectByValue(page, 'Camera view', cameraView);
     await selectByLabel(page, 'Inspection location', label);
     await waitForPreset(page, preset);
+    // Inspection presets intentionally restore their preferred camera, so apply
+    // the evidence camera only after the preset has settled.
+    await selectByValue(page, 'Camera view', cameraView);
+    await page.waitForTimeout(900);
     captures[filename] = await capture(page, filename);
     checkpoint(`${preset}-complete`, { label, filename, cameraView, bytes: captures[filename] });
   }
