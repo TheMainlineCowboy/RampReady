@@ -70,6 +70,10 @@ installation = installation.replaceAll(
   `terminalDistance > rotundaOpening.collarRadius + ${MIN_VISIBLE_FIXED_LEG_METERS} && terminalDistance < ${MAX_REAL_WALL_DISTANCE_METERS}`,
 );
 installation = installation.replaceAll(
+  "Math.abs(actualVisibleVestibuleMeters - A1_PHOTO_VISIBLE_VESTIBULE_METERS) > 0.05",
+  `!(actualVisibleVestibuleMeters > ${MIN_VISIBLE_FIXED_LEG_METERS} && actualVisibleVestibuleMeters < ${MAX_VISIBLE_FIXED_LEG_METERS})`,
+);
+installation = installation.replaceAll(
   'same-day-a1-photo-visible-solid-terminal-vestibule-v12',
   'same-day-a1-photo-source-measured-terminal-vestibule-v15',
 );
