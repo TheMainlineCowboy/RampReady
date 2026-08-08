@@ -1,12 +1,13 @@
 const SOURCE_REGISTERED_A1_ELBOW_AUTHORITY = "photo-registered-a1-fixed-wall-rotunda-source-door-target-elbow-v3";
 const TARGET_DIRECTION_AUTHORITY = "source-a1-door-target-owns-aircraft-side-bridge-heading-v1";
 const CONNECTOR_AUTHORITY = "real-terminal-fixed-rotunda-independent-aircraft-side-elbow-v3";
-const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-compact-solid-terminal-leg-fixed-wall-v3";
-const VISIBLE_TERMINAL_LEG_METERS = 2.4;
+const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-compact-solid-terminal-leg-fixed-wall-v4-authored-rotunda-surface";
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;
-const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;
+const ROTUNDA_SHELL_OVERLAP_METERS = 0.10;
 const MINIMUM_CORNER_ANGLE_DEGREES = 45;
 const MAXIMUM_CORNER_ANGLE_DEGREES = 150;
+const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.2;
+const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.6;
 
 function disposeObject(object) {
   object?.traverse?.((entry) => {
@@ -72,6 +73,14 @@ function endpointBandCenter(THREE, vertices, origin, direction, bandMeters = 0.1
   return center.multiplyScalar(1 / selected.length);
 }
 
+function projectedSurfaceDistance(vertices, origin, direction) {
+  let maximumProjection = Number.NEGATIVE_INFINITY;
+  for (const vertex of vertices) {
+    maximumProjection = Math.max(maximumProjection, vertex.clone().sub(origin).dot(direction));
+  }
+  return maximumProjection;
+}
+
 function createMaterials(THREE) {
   return {
     shell: new THREE.MeshStandardMaterial({
@@ -82,10 +91,10 @@ function createMaterials(THREE) {
       side: THREE.DoubleSide,
     }),
     rib: new THREE.MeshStandardMaterial({
-      name: "A1 fixed-wall terminal-side ribs",
-      color: 0xb9bdba,
+      name: "A1 fixed-wall terminal-side panel seams",
+      color: 0xd9dbd8,
       roughness: 0.84,
-      metalness: 0.08,
+      metalness: 0.06,
       side: THREE.DoubleSide,
     }),
     bellows: new THREE.MeshStandardMaterial({
@@ -115,21 +124,21 @@ function addContinuousShell(THREE, parent, materials, start, direction, length, 
   const center = start.clone().addScaledVector(direction, length * 0.5);
   center.y = centerY;
   const halfWidth = width * 0.5;
-  addBox(THREE, parent, materials.shell, "UploadedAirportJetwayA1TerminalElbowRoof", [width, 0.16, length], center.clone().add(new THREE.Vector3(0, height * 0.5, 0)), yaw);
-  addBox(THREE, parent, materials.shell, "UploadedAirportJetwayA1TerminalElbowFloor", [width, 0.14, length], center.clone().add(new THREE.Vector3(0, -height * 0.5, 0)), yaw);
+  addBox(THREE, parent, materials.shell, "UploadedAirportJetwayA1TerminalElbowRoof", [width, 0.14, length], center.clone().add(new THREE.Vector3(0, height * 0.5, 0)), yaw);
+  addBox(THREE, parent, materials.shell, "UploadedAirportJetwayA1TerminalElbowFloor", [width, 0.12, length], center.clone().add(new THREE.Vector3(0, -height * 0.5, 0)), yaw);
   for (const sign of [-1, 1]) {
     addBox(
       THREE,
       parent,
       materials.shell,
       `UploadedAirportJetwayA1TerminalElbowWall_${sign}`,
-      [0.13, height, length],
+      [0.10, height, length],
       center.clone().addScaledVector(side, sign * halfWidth),
       yaw,
     );
   }
   let ribCount = 0;
-  for (let distance = 0.2; distance < length - 0.15; distance += 0.30) {
+  for (let distance = 0.36; distance < length - 0.2; distance += 0.52) {
     const ribCenter = start.clone().addScaledVector(direction, distance);
     ribCenter.y = centerY;
     for (const sign of [-1, 1]) {
@@ -138,8 +147,8 @@ function addContinuousShell(THREE, parent, materials, start, direction, length, 
         parent,
         materials.rib,
         `UploadedAirportJetwayA1TerminalElbowRib_${ribCount}_${sign}`,
-        [0.055, height * 0.94, 0.065],
-        ribCenter.clone().addScaledVector(side, sign * (halfWidth + 0.035)),
+        [0.035, height * 0.92, 0.04],
+        ribCenter.clone().addScaledVector(side, sign * (halfWidth + 0.018)),
         yaw,
         false,
       );
@@ -153,17 +162,17 @@ function addCompactRotundaBellows(THREE, parent, materials, center, direction, w
   const yaw = Math.atan2(direction.x, direction.z);
   const side = new THREE.Vector3(direction.z, 0, -direction.x).normalize();
   const halfWidth = width * 0.5;
-  const depth = 0.24;
-  addBox(THREE, parent, materials.bellows, "UploadedAirportJetwayA1TerminalElbowBellowsHeader", [width + 0.08, 0.22, depth], center.clone().add(new THREE.Vector3(0, height * 0.5, 0)), yaw);
-  addBox(THREE, parent, materials.bellows, "UploadedAirportJetwayA1TerminalElbowBellowsThreshold", [width + 0.08, 0.18, depth], center.clone().add(new THREE.Vector3(0, -height * 0.5, 0)), yaw);
+  const depth = 0.14;
+  addBox(THREE, parent, materials.bellows, "UploadedAirportJetwayA1TerminalElbowBellowsHeader", [width + 0.04, 0.16, depth], center.clone().add(new THREE.Vector3(0, height * 0.5, 0)), yaw);
+  addBox(THREE, parent, materials.bellows, "UploadedAirportJetwayA1TerminalElbowBellowsThreshold", [width + 0.04, 0.14, depth], center.clone().add(new THREE.Vector3(0, -height * 0.5, 0)), yaw);
   for (const sign of [-1, 1]) {
     addBox(
       THREE,
       parent,
       materials.bellows,
       `UploadedAirportJetwayA1TerminalElbowBellowsJamb_${sign}`,
-      [0.16, height, depth],
-      center.clone().addScaledVector(side, sign * (halfWidth + 0.015)),
+      [0.11, height, depth],
+      center.clone().addScaledVector(side, sign * (halfWidth + 0.008)),
       yaw,
     );
   }
@@ -191,11 +200,6 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   fleet.updateWorldMatrix(true, true);
   model.updateWorldMatrix(true, true);
 
-  // The complete earlier photo-registration stack already found the correct
-  // beige Terminal 4 facade and placed the Rotunda 2.9-5.8 m from it. Do NOT
-  // throw that away and re-run a stock-origin/ramp-level wall search here. The
-  // user's screenshots showed that doing so dragged the supplied bridge under
-  // the elevated corridor. Preserve this exact Rotunda center and real wall.
   const fixedRotundaCenter = objectCenterInFleet(THREE, fleet, rotunda);
   const terminalDirectionRaw = group.userData.uploadedJetwayA1TerminalConnectionDirection || [];
   const terminalDirection = new THREE.Vector3(Number(terminalDirectionRaw[0]), 0, Number(terminalDirectionRaw[1]));
@@ -229,9 +233,6 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   fleet.updateWorldMatrix(true, true);
   model.updateWorldMatrix(true, true);
 
-  // Rotating an exported model parent can slightly orbit its measured Rotunda
-  // if the exporter origin is imperfect. Translate the complete parent back so
-  // the already-correct real-building Rotunda center remains bit-for-bit fixed.
   const rotatedRotundaCenter = objectCenterInFleet(THREE, fleet, rotunda);
   anchor.position.x += fixedRotundaCenter.x - rotatedRotundaCenter.x;
   anchor.position.z += fixedRotundaCenter.z - rotatedRotundaCenter.z;
@@ -257,19 +258,24 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
     throw new Error(`A1 fixed-wall Rotunda did not produce the required visible elbow: ${cornerAngleDegrees.toFixed(3)} degrees`);
   }
 
-  // Keep the previously measured wall point but replace every historical A1
-  // connector shell with one compact 2.4 m wall-to-Rotunda leg. This connector
-  // is independent from the aircraft-side bridge heading; that independence is
-  // the physical Rotunda elbow visible in the user's overhead/on-site photos.
-  const collarPoint = fixedWallPoint.clone().addScaledVector(terminalDirection, -VISIBLE_TERMINAL_LEG_METERS);
-  collarPoint.y = rotundaCenter.y;
-  const collarRadius = collarPoint.distanceTo(rotundaCenter);
-  if (!(collarRadius > 0.7 && collarRadius < 3.4)) {
-    throw new Error(`A1 fixed-wall Rotunda collar radius is invalid: ${collarRadius}`);
+  // Derive the terminal-side interface from the transformed authored Rotunda
+  // itself. The generated vestibule is allowed to overlap the real Rotunda only
+  // by a shallow seal; it must never invent a collar radius from wall distance.
+  const rotundaVertices = collectObjectVerticesInFleet(THREE, fleet, rotunda);
+  const rotundaTerminalSurfaceMeters = projectedSurfaceDistance(rotundaVertices, rotundaCenter, terminalDirection);
+  if (!(rotundaTerminalSurfaceMeters > 0.7 && rotundaTerminalSurfaceMeters < 3.4)) {
+    throw new Error(`A1 authored Rotunda terminal-facing radius is invalid: ${rotundaTerminalSurfaceMeters}`);
   }
+  const rotundaSurfacePoint = rotundaCenter.clone().addScaledVector(terminalDirection, rotundaTerminalSurfaceMeters);
+  rotundaSurfacePoint.y = rotundaCenter.y;
+  const visibleTerminalLegMeters = fixedWallPoint.distanceTo(rotundaSurfacePoint);
+  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
+    throw new Error(`A1 authored wall-to-Rotunda visible vestibule is not compact: ${visibleTerminalLegMeters}`);
+  }
+
   const terminalToRotunda = terminalDirection.clone().multiplyScalar(-1);
-  const shellStart = fixedWallPoint.clone().addScaledVector(terminalToRotunda, -TERMINAL_HIDDEN_OVERLAP_METERS);
-  const shellEnd = collarPoint.clone().addScaledVector(terminalToRotunda, ROTUNDA_SHELL_OVERLAP_METERS);
+  const shellStart = fixedWallPoint.clone().addScaledVector(terminalDirection, TERMINAL_HIDDEN_OVERLAP_METERS);
+  const shellEnd = rotundaSurfacePoint.clone().addScaledVector(terminalToRotunda, ROTUNDA_SHELL_OVERLAP_METERS);
   const shellVector = shellEnd.clone().sub(shellStart);
   shellVector.y = 0;
   const shellLength = shellVector.length();
@@ -279,15 +285,16 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   const connector = new THREE.Group();
   connector.name = "UploadedAirportJetwayTerminalConnector_A1";
   const materials = createMaterials(THREE);
-  const width = 3.08;
-  const height = 2.68;
+  const width = 2.58;
+  const height = 2.44;
   const frame = addContinuousShell(THREE, connector, materials, shellStart, shellVector, shellLength, rotundaCenter.y, width, height);
-  addCompactRotundaBellows(THREE, connector, materials, collarPoint.clone().addScaledVector(terminalToRotunda, 0.05), terminalToRotunda, width, height);
+  addCompactRotundaBellows(THREE, connector, materials, rotundaSurfacePoint.clone().addScaledVector(terminalToRotunda, 0.03), terminalToRotunda, width, height);
   connector.userData.authority = CONNECTOR_AUTHORITY;
   connector.userData.connectorStyleAuthority = CONNECTOR_STYLE_AUTHORITY;
   connector.userData.fixedRealTerminalWall = true;
   connector.userData.terminalSideIndependentFromTunnelAxis = true;
-  connector.userData.visibleLengthMeters = VISIBLE_TERMINAL_LEG_METERS;
+  connector.userData.visibleLengthMeters = visibleTerminalLegMeters;
+  connector.userData.rotundaTerminalSurfaceMeters = rotundaTerminalSurfaceMeters;
   connector.userData.terminalCornerAngleDegrees = cornerAngleDegrees;
   connector.userData.corrugationRibCount = frame.ribCount;
   connector.userData.passengerPassageCrossSectionBlocked = false;
@@ -310,7 +317,7 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   group.userData.uploadedJetwayA1SourceDoorTargetDistanceMeters = targetDistance;
   group.userData.uploadedJetwayA1RotundaPreservationErrorMeters = rotundaPreservationErrorMeters;
   group.userData.uploadedJetwayA1TerminalCornerAngleDegrees = cornerAngleDegrees;
-  group.userData.uploadedJetwayA1VisibleVestibuleLengthMeters = VISIBLE_TERMINAL_LEG_METERS;
+  group.userData.uploadedJetwayA1VisibleVestibuleLengthMeters = visibleTerminalLegMeters;
   group.userData.uploadedJetwayA1TerminalWallDistanceMeters = terminalWallDistance;
   group.userData.uploadedJetwayA1TerminalConnectionDirection = [terminalDirection.x, terminalDirection.z];
   group.userData.uploadedJetwayA1SourceLockedRotunda = true;
@@ -329,6 +336,7 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   group.userData.uploadedJetwayA1ExactMeasuredWallWorldX = fixedWallPoint.x;
   group.userData.uploadedJetwayA1ExactMeasuredWallWorldY = fixedWallPoint.y;
   group.userData.uploadedJetwayA1ExactMeasuredWallWorldZ = fixedWallPoint.z;
+  group.userData.uploadedJetwayA1AuthoredRotundaTerminalSurfaceMeters = rotundaTerminalSurfaceMeters;
 
   return Object.freeze({
     authority: SOURCE_REGISTERED_A1_ELBOW_AUTHORITY,
@@ -341,7 +349,8 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
     targetDistanceMeters: targetDistance,
     rotundaPreservationErrorMeters,
     terminalWallDistanceMeters: terminalWallDistance,
-    visibleTerminalLegMeters: VISIBLE_TERMINAL_LEG_METERS,
+    visibleTerminalLegMeters,
+    rotundaTerminalSurfaceMeters,
     terminalCornerAngleDegrees: cornerAngleDegrees,
     cabTargetHorizontalErrorMeters,
     rotundaToCabMeters,
