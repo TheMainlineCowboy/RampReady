@@ -24,11 +24,7 @@ function checkpoint(stage, detail = {}) {
 async function captureViewport(page, outputPath) {
   const session = await page.context().newCDPSession(page);
   try {
-    const result = await session.send("Page.captureScreenshot", {
-      format: "png",
-      fromSurface: true,
-      captureBeyondViewport: false,
-    });
+    const result = await session.send("Page.captureScreenshot", { format: "png", fromSurface: true, captureBeyondViewport: false });
     const png = Buffer.from(result.data, "base64");
     fs.writeFileSync(outputPath, png);
     expect(png.length).toBeGreaterThan(100000);
@@ -52,7 +48,7 @@ async function selectA1Subview(page, canvas, subview) {
   await expect.poll(async () => Number(await canvas.getAttribute("data-inspection-camera-endpoint-convergence-error-meters")), { timeout: 30000 }).toBeLessThanOrEqual(0.001);
 }
 
-test.setTimeout(180000);
+test.setTimeout(90000);
 
 test("Terminal 4 exact jetways are visually registered to their source terminal positions", async ({ browser }) => {
   fs.mkdirSync(evidenceDirectory, { recursive: true });
@@ -72,7 +68,6 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
 
     const response = await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
     expect(response?.ok()).toBe(true);
-
     const inspectionLaunch = page.getByRole("button", { name: "Drive tug / inspect airport" });
     await expect(inspectionLaunch).toBeVisible({ timeout: 30000 });
     await inspectionLaunch.click();
@@ -101,25 +96,18 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
       await expect.poll(async () => Math.abs(Number(await canvas.getAttribute("data-terminal4-uploaded-jetway-a1-visible-vestibule-length-meters")) - 2.4), { timeout: 30000 }).toBeLessThanOrEqual(0.05);
 
       await selectA1Subview(page, canvas, "terminal-joint");
-      checkpoint("capture-a1-terminal-joint", { inspectionLabel });
       captures["a1-terminal-joint-close.png"] = await captureViewport(page, `${evidenceDirectory}/a1-terminal-joint-close.png`);
-
       await selectA1Subview(page, canvas, "bogie-contact");
-      checkpoint("capture-a1-bogie-contact", { inspectionLabel });
       captures["a1-bogie-contact-close.png"] = await captureViewport(page, `${evidenceDirectory}/a1-bogie-contact-close.png`);
-
       await selectA1Subview(page, canvas, "full-assembly");
       await page.waitForTimeout(750);
     }
 
-    checkpoint(`capture-${preset}`, { inspectionLabel });
     captures[file] = await captureViewport(page, `${evidenceDirectory}/${file}`);
-
     if (preset === "a1Connection") {
       const cameraView = page.getByRole("combobox", { name: "Camera view" });
       await cameraView.selectOption({ label: "Overhead view" });
       await page.waitForTimeout(2000);
-      checkpoint("capture-a1-overhead", { inspectionLabel });
       captures["a1-terminal-overhead.png"] = await captureViewport(page, `${evidenceDirectory}/a1-terminal-overhead.png`);
     }
 
