@@ -8,19 +8,31 @@ const MAXIMUM_DOOR_GAP_METERS = 0.05;
 async function waitForMode(page, mode) {
   await page.waitForFunction(({ expectedMode, authority, maximumDoorGap }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
-    const values = [
+    const deployment = Number(data?.a1JetwayDeployment);
+    const doorGap = Number(data?.terminal4UploadedJetwayA1ActualDoorGapMeters);
+    const poseValues = [
       Number(data?.aircraftModePoseLiveX),
       Number(data?.aircraftModePoseLiveY),
       Number(data?.aircraftModePoseLiveZ),
       Number(data?.aircraftModePoseLiveYaw),
-      Number(data?.terminal4UploadedJetwayA1ActualDoorGapMeters),
     ];
-    return data?.terminal4UploadedJetwayLoadState === "ready"
+    const commonReady = data?.terminal4UploadedJetwayLoadState === "ready"
       && data?.terminal4UploadedJetwayVerifiedModelCount === "58"
       && data?.inspectionMode === expectedMode
       && data?.aircraftModePoseAuthority === authority
-      && values.every(Number.isFinite)
-      && Math.abs(values[4]) <= maximumDoorGap;
+      && poseValues.every(Number.isFinite)
+      && Number.isFinite(deployment)
+      && Number.isFinite(doorGap);
+    if (!commonReady) return false;
+
+    if (expectedMode === "training") {
+      return deployment >= 0.995
+        && data?.a1JetwayState === "attached-to-aircraft-door"
+        && Math.abs(doorGap) <= maximumDoorGap;
+    }
+
+    return deployment <= 0.005
+      && data?.a1JetwayState === "parked-clear-of-aircraft";
   }, {
     expectedMode: mode,
     authority: MODE_POSE_AUTHORITY,
@@ -55,7 +67,6 @@ function expectSamePose(reference, actual, label) {
     expect(Math.abs(actual[key] - reference[key]), `${label} ${key} changed`).toBeLessThanOrEqual(MAXIMUM_POSE_DELTA);
   }
   expect(actual.authority, `${label} pose authority`).toBe(MODE_POSE_AUTHORITY);
-  expect(Math.abs(actual.doorGapMeters), `${label} A1 door gap`).toBeLessThanOrEqual(MAXIMUM_DOOR_GAP_METERS);
 }
 
 test("A1 aircraft stays physically fixed when switching free-drive and training", async ({ page }) => {
@@ -67,18 +78,23 @@ test("A1 aircraft stays physically fixed when switching free-drive and training"
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
   await waitForMode(page, "active");
   const freeDriveBefore = await readPose(page);
-  expect(freeDriveBefore.jetwayDeployment).toBeGreaterThanOrEqual(0.995);
-  expect(freeDriveBefore.jetwayState).toBe("attached-to-aircraft-door");
+  expect(freeDriveBefore.jetwayDeployment).toBeLessThanOrEqual(0.005);
+  expect(freeDriveBefore.jetwayState).toBe("parked-clear-of-aircraft");
 
   await page.getByRole("button", { name: "Return to training" }).click();
   await waitForMode(page, "training");
   const training = await readPose(page);
   expectSamePose(freeDriveBefore, training, "free-drive -> training");
+  expect(training.jetwayDeployment).toBeGreaterThanOrEqual(0.995);
+  expect(training.jetwayState).toBe("attached-to-aircraft-door");
+  expect(Math.abs(training.doorGapMeters)).toBeLessThanOrEqual(MAXIMUM_DOOR_GAP_METERS);
 
   await page.getByRole("button", { name: "Free-drive inspection" }).click();
   await waitForMode(page, "active");
   const freeDriveAfter = await readPose(page);
   expectSamePose(freeDriveBefore, freeDriveAfter, "training -> free-drive");
+  expect(freeDriveAfter.jetwayDeployment).toBeLessThanOrEqual(0.005);
+  expect(freeDriveAfter.jetwayState).toBe("parked-clear-of-aircraft");
 
   if ([freeDriveBefore.noseGearX, freeDriveBefore.noseGearZ, training.noseGearX, training.noseGearZ, freeDriveAfter.noseGearX, freeDriveAfter.noseGearZ].every(Number.isFinite)) {
     expect(Math.abs(training.noseGearX - freeDriveBefore.noseGearX)).toBeLessThanOrEqual(MAXIMUM_POSE_DELTA);
@@ -92,7 +108,7 @@ test("A1 aircraft stays physically fixed when switching free-drive and training"
     "test-results/a1-mode-pose-regression.json",
     `${JSON.stringify({
       maximumPoseDelta: MAXIMUM_POSE_DELTA,
-      maximumDoorGapMeters: MAXIMUM_DOOR_GAP_METERS,
+      maximumTrainingDoorGapMeters: MAXIMUM_DOOR_GAP_METERS,
       freeDriveBefore,
       training,
       freeDriveAfter,
