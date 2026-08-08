@@ -49,8 +49,8 @@ if (staticRegistration.includes(oldCenterBlock)) {
   throw new Error(`${staticRegistrationPath}: bridge-axis measurement insertion anchor was not found`);
 }
 
-const oldOffsetReturn = `    horizontalMagnitude,\n    authority: ROOT_OFFSET_AUTHORITY,`;
-const measuredOffsetReturn = `    horizontalMagnitude,\n    bridgeAxisHeadingRadians,\n    authority: ROOT_OFFSET_AUTHORITY,`;
+const oldOffsetReturn = `    horizontalMagnitude,\n    radiusMeters,\n    authority: ROOT_OFFSET_AUTHORITY,`;
+const measuredOffsetReturn = `    horizontalMagnitude,\n    radiusMeters,\n    bridgeAxisHeadingRadians,\n    authority: ROOT_OFFSET_AUTHORITY,`;
 if (staticRegistration.includes(oldOffsetReturn)) {
   staticRegistration = staticRegistration.replace(oldOffsetReturn, measuredOffsetReturn);
 } else if (!staticRegistration.includes("bridgeAxisHeadingRadians,")) {
