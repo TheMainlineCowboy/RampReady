@@ -2,9 +2,9 @@ import fs from "node:fs";
 
 const a1ElbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const preparedA1Elbow = fs.readFileSync(a1ElbowPath, "utf8");
-const terminalRotundaSleevePrepared = preparedA1Elbow.includes("const ROTUNDA_SHELL_OVERLAP_METERS = 0.55;")
+const terminalRotundaSleevePrepared = preparedA1Elbow.includes("const ROTUNDA_SHELL_OVERLAP_METERS = 1.50;")
   && preparedA1Elbow.includes("function addCompactRotundaBellows(")
-  && preparedA1Elbow.includes("  const depth = 1.50;");
+  && preparedA1Elbow.includes("  const depth = 0.14;");
 if (!terminalRotundaSleevePrepared) {
   await import(`./prepare-terminal4-jetway-rendered-cleanup-v1.mjs?rendered-cleanup=${Date.now()}`);
 }
