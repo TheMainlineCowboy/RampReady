@@ -1,6 +1,7 @@
 import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
+const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const currentMarkers = [
@@ -38,4 +39,39 @@ for (const currentMarker of currentMarkers) {
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Published the established exact-head final acceptance marker after source-preserved static jetway integrity, terminal-side compact-wall evidence, proved CRJ three-tire contact, multi-point authored jetway bogie contact, and closed-vestibule evidence survived finalization.");
+
+// Late compatibility preparers remove/reformat several old A1-specific
+// readiness conditions. The one invariant every final readiness version keeps
+// is the top-level exact-fleet mismatch block. Seed the physical real-wall and
+// source-measured fixed-leg guards there, ahead of the gate-count check, so no
+// legacy authority/compactness rewrite can erase the final physical criteria.
+let readiness = fs.readFileSync(readinessPath, "utf8");
+const finalWallGuard = "a1TerminalWallDistance > 0.5 && a1TerminalWallDistance < 44";
+const finalVisibleLegGuard = "connectorVisibleLength > 0.15 && connectorVisibleLength < 44";
+if (!readiness.includes(finalWallGuard) || !readiness.includes(finalVisibleLegGuard)) {
+  const mismatchAnchor = `          if (\n            count !== EXPECTED_GATE_COUNT`;
+  if (!readiness.includes(mismatchAnchor)) {
+    throw new Error(`${readinessPath}: final exact-fleet readiness mismatch block is missing before real-wall seeding`);
+  }
+  const seededConditions = [
+    !readiness.includes(finalWallGuard) ? `!(${finalWallGuard})` : null,
+    !readiness.includes(finalVisibleLegGuard) ? `!(${finalVisibleLegGuard})` : null,
+  ].filter(Boolean);
+  readiness = readiness.replace(
+    mismatchAnchor,
+    `          if (\n            ${seededConditions.join("\n            || ")}\n            || count !== EXPECTED_GATE_COUNT`,
+  );
+}
+for (const guard of [finalWallGuard, finalVisibleLegGuard]) {
+  if (!readiness.includes(guard)) {
+    throw new Error(`${readinessPath}: failed to seed final physical A1 readiness guard ${guard}`);
+  }
+}
+fs.writeFileSync(readinessPath, readiness, "utf8");
+
+// Marker compatibility is not a geometry authority. Reassert the single final
+// A1 geometry owner after every legacy preparer; it normalizes/revalidates the
+// seeded physical guards and writes the final runtime immediately before bundle.
+await import(`./prepare-a1-real-terminal-final-geometry-v1.mjs?final-real-wall=${Date.now()}`);
+
+console.log("Published the established exact-head acceptance marker, seeded the real-wall/fixed-leg guards at the invariant final readiness mismatch block, then delegated all A1 geometry/readiness ownership to the source-measured real-Terminal-4-wall finalizer.");

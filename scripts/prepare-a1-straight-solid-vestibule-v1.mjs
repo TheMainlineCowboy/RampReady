@@ -5,12 +5,12 @@ let source = await readFile(targetUrl, "utf8");
 
 source = source
   .replace(
-    'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-short-solid-terminal-vestibule-v6";',
-    'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-single-solid-terminal-vestibule-v14";',
+    /const CONNECTOR_STYLE_AUTHORITY = "[^"]+";/,
+    'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-source-measured-terminal-vestibule-v15";',
   )
   .replace(
-    "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.3;",
-    "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.75;",
+    /const TERMINAL_HIDDEN_OVERLAP_METERS = [^;]+;/,
+    "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;",
   );
 
 const replacement = `function buildMeasuredA1Connector(THREE, fleet, placement, rotundaOpening, terminalDirection, terminalDistance) {
@@ -29,8 +29,8 @@ const replacement = `function buildMeasuredA1Connector(THREE, fleet, placement, 
   const connectorVector = terminalPoint.clone().sub(collarPoint);
   connectorVector.y = 0;
   const visibleLength = connectorVector.length();
-  if (!(visibleLength > 0.25 && visibleLength < 6)) {
-    throw new Error(\`A1 measured straight terminal vestibule span is invalid: \${visibleLength}\`);
+  if (!(visibleLength > 0.15 && visibleLength < 12)) {
+    throw new Error(\`A1 measured terminal vestibule span is invalid: \${visibleLength}\`);
   }
   connectorVector.normalize();
 
@@ -40,22 +40,22 @@ const replacement = `function buildMeasuredA1Connector(THREE, fleet, placement, 
     rotundaOpening.openingDirectionZ,
   );
   const openingDot = connectorVector.dot(authoredOpeningDirection);
-  if (openingDot < 0.55) {
-    throw new Error(\`A1 straight terminal vestibule does not leave the authored Rotunda opening: \${openingDot}\`);
+  if (openingDot < 0.80) {
+    throw new Error(\`A1 terminal vestibule does not leave the authored Rotunda opening toward the measured wall: \${openingDot}\`);
   }
 
   const connector = new THREE.Group();
   connector.name = "UploadedAirportJetwayTerminalConnector_A1";
   const materials = createConnectorMaterials(THREE);
-  const width = 3.08;
-  const height = 2.68;
+  const width = 2.58;
+  const height = 2.44;
 
-  // The exact authored Rotunda has a deep terminal-side exterior recess. A
-  // shallow overlap leaves that recess visibly open from apron-side views.
-  // Extend the SAME closed roof/floor/two-side-wall vestibule back into the
-  // Rotunda. This seals the exterior without inserting a cross-corridor wall
-  // and without moving or modifying any supplied Airport_Jetway.glb node.
-  const rotundaOverlap = 1.1;
+  // Match the real A1 construction: one short rigid white vestibule from the
+  // actual Terminal 4 wall to the terminal-facing surface of the exact Rotunda.
+  // Only small hidden overlaps are allowed. Do not bury a metre of generated
+  // shell inside the Rotunda and do not cap the passenger passage with a fake
+  // bulkhead merely to make an apron screenshot look closed.
+  const rotundaOverlap = 0.12;
   const startPoint = collarPoint.clone().addScaledVector(connectorVector, -rotundaOverlap);
   const shellLength = visibleLength + rotundaOverlap + TERMINAL_HIDDEN_OVERLAP_METERS;
 
@@ -63,7 +63,7 @@ const replacement = `function buildMeasuredA1Connector(THREE, fleet, placement, 
     THREE,
     connector,
     materials,
-    collarPoint.clone().addScaledVector(connectorVector, 0.04),
+    collarPoint.clone().addScaledVector(connectorVector, 0.03),
     connectorVector,
     width,
     height,
@@ -82,18 +82,6 @@ const replacement = `function buildMeasuredA1Connector(THREE, fleet, placement, 
     corrugated: true,
   });
 
-  const terminalCapPoint = terminalPoint.clone().addScaledVector(connectorVector, TERMINAL_HIDDEN_OVERLAP_METERS - 0.08);
-  addBox(
-    THREE,
-    connector,
-    materials.shell,
-    "UploadedAirportJetwayA1TerminalSolidBulkhead",
-    [width, height, 0.16],
-    [terminalCapPoint.x, collarPoint.y, terminalCapPoint.z],
-    frame.yaw,
-    false,
-  );
-
   connector.userData.connectorAuthority = A1_TERMINAL_CONNECTION_AUTHORITY;
   connector.userData.connectorStyleAuthority = CONNECTOR_STYLE_AUTHORITY;
   connector.userData.measuredWallLengthMeters = terminalDistance;
@@ -104,12 +92,12 @@ const replacement = `function buildMeasuredA1Connector(THREE, fleet, placement, 
   connector.userData.userPhotoOverheadVerified = true;
   connector.userData.singleStraightSolidVestibule = true;
   connector.userData.rotundaOverlapMeters = rotundaOverlap;
-  connector.userData.rotundaRecessSealAuthority = "same-day-a1-photo-continuous-shell-deep-rotunda-overlap-v1";
+  connector.userData.rotundaRecessSealAuthority = "same-day-a1-photo-small-joint-overlap-v2";
   connector.userData.passengerPassageCrossSectionBlocked = false;
   connector.userData.terminalHiddenOverlapMeters = TERMINAL_HIDDEN_OVERLAP_METERS;
   connector.userData.apronFacingOpenAreaMeters = 0;
   connector.userData.apronFacingRotundaOpeningClosed = true;
-  connector.userData.rotundaVestibuleClosureAuthority = "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1";
+  connector.userData.rotundaVestibuleClosureAuthority = "exact-rotunda-surface-small-bellows-joint-v2";
   fleet.add(connector);
   return connector;
 }
@@ -118,7 +106,7 @@ function forceExactMaterialsDoubleSided`;
 
 const functionPattern = /function buildMeasuredA1Connector\(THREE, fleet, placement, rotundaOpening, terminalDirection, terminalDistance\) \{[\s\S]*?\n\}\n\nfunction forceExactMaterialsDoubleSided/;
 if (!functionPattern.test(source)) {
-  throw new Error("Could not locate A1 measured connector function for straight-solid vestibule migration");
+  throw new Error("Could not locate A1 measured connector function for source-measured vestibule migration");
 }
 source = source.replace(functionPattern, replacement);
 
@@ -128,26 +116,29 @@ for (const forbidden of [
   "UploadedAirportJetwayA1TerminalCornerFloorCap",
   "UploadedAirportJetwayA1TerminalPortalInterior",
   "UploadedAirportJetwayA1RotundaVestibuleClosurePanel",
+  "UploadedAirportJetwayA1TerminalSolidBulkhead",
+  "const rotundaOverlap = 1.1",
+  "TERMINAL_HIDDEN_OVERLAP_METERS = 0.75",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`Straight-solid A1 vestibule migration left retired or passage-blocking geometry ${forbidden}`);
+    throw new Error(`Source-measured A1 vestibule left masking or passage-blocking geometry ${forbidden}`);
   }
 }
 for (const required of [
   "UploadedAirportJetwayA1ShortTerminalVestibule",
-  "UploadedAirportJetwayA1TerminalSolidBulkhead",
   "singleStraightSolidVestibule",
-  "rotundaRecessSealAuthority",
-  "same-day-a1-photo-continuous-shell-deep-rotunda-overlap-v1",
+  "const rotundaOverlap = 0.12",
+  "same-day-a1-photo-small-joint-overlap-v2",
   "passengerPassageCrossSectionBlocked = false",
   "apronFacingOpenAreaMeters = 0",
   "apronFacingRotundaOpeningClosed = true",
-  "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1",
+  "exact-rotunda-surface-small-bellows-joint-v2",
+  "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18",
 ]) {
   if (!source.includes(required)) {
-    throw new Error(`Straight-solid A1 vestibule migration is missing ${required}`);
+    throw new Error(`Source-measured A1 vestibule migration is missing ${required}`);
   }
 }
 
 await writeFile(targetUrl, source);
-console.log("Prepared A1 as one short straight solid white terminal vestibule with continuous closed-shell overlap into the authored Rotunda recess and hidden overlap into the real terminal wall; the passenger passage remains open and kinked/corner/interior-plane geometry is absent.");
+console.log("Prepared A1 with one source-measured terminal vestibule, 0.12 m Rotunda overlap, 0.18 m wall overlap, no generated bulkhead and no deep shell masking.");

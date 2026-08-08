@@ -15,10 +15,9 @@ source = source.replace(
   const terminalWallZ = a1Placement.z + terminalDirection.z * sourceTerminalDistance;
   const desiredTerminalDistance = rotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS;
 
-  // The old correction projected the wall error onto the bridge axis. That
-  // allowed a large lateral offset to survive while every signed-distance
-  // assertion passed. Lock the complete A1 parent to the full measured wall
-  // vector instead. No supplied child transform or isolated node is changed.
+  // Keep the complete supplied assembly rigid and solve the parent in full X/Z
+  // from the real Terminal 4 wall. The short photo-matched vestibule is the
+  // terminal-side constraint; no supplied child node is rotated independently.
   const desiredRotundaCenterX = terminalWallX
     - rotundaOpening.openingDirectionX * desiredTerminalDistance;
   const desiredRotundaCenterZ = terminalWallZ
@@ -101,16 +100,16 @@ source = source.replace(
   group.userData.uploadedJetwayA1FinalMeasuredWallWorldZ = finalMeasuredTerminalWallWorld.z;
   group.userData.uploadedJetwayA1FinalRotundaToCabWorldMeters = finalRotundaToCabWorldMeters;
   group.userData.uploadedJetwayA1FinalRotundaToWallWorldMeters = finalRotundaToWallWorldMeters;
-  group.userData.uploadedJetwayA1FinalEndpointEvidenceAuthority = "exact-world-rotunda-wall-cab-endpoints-v27";`,
+  group.userData.uploadedJetwayA1FinalEndpointEvidenceAuthority = "exact-world-rotunda-wall-cab-endpoints-v29";`,
 );
 
 source = source.replace(
   /const INSTALLATION_AUTHORITY = "[^"]+";/,
-  'const INSTALLATION_AUTHORITY = "full-vector-terminal-wall-lock-grounded-exact-chain-v27";',
+  'const INSTALLATION_AUTHORITY = "photo-short-full-vector-terminal-wall-lock-grounded-exact-chain-v29";',
 );
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "full-vector-terminal-wall-lock-grounded-exact-chain-v27"',
+  'INSTALLATION_AUTHORITY = "photo-short-full-vector-terminal-wall-lock-grounded-exact-chain-v29"',
   "desiredRotundaCenterX",
   "terminalCrossTrackErrorMeters",
   "A1 full-vector terminal lock missed the measured wall",
@@ -123,9 +122,9 @@ for (const token of [
   "uploadedJetwayA1FinalEndpointEvidenceAuthority",
 ]) {
   if (!source.includes(token)) {
-    throw new Error(`${installationPath}: full-vector A1 wall lock output is missing ${token}`);
+    throw new Error(`${installationPath}: photo-short full-vector A1 wall lock output is missing ${token}`);
   }
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Locked the complete A1 parent to the measured terminal wall in full X/Z and exposed exact world-space Rotunda, wall and Cab endpoint evidence without changing supplied child transforms.");
+console.log("Locked the complete A1 parent to the real Terminal 4 wall with the short photo-matched vestibule span in full X/Z, preserving the supplied child transforms and exact world-space endpoint evidence.");

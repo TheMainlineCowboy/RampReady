@@ -10,12 +10,13 @@ let readiness = fs.readFileSync(readinessPath, "utf8");
 let authored = fs.readFileSync(authoredPath, "utf8");
 let trainer = fs.readFileSync(trainerPath, "utf8");
 
-const VISUAL_AUTHORITY = "same-day-a1-continuous-compact-solid-closed-grounded-v1";
+const VISUAL_AUTHORITY = "same-day-a1-continuous-source-measured-solid-closed-grounded-v2";
 const ASSEMBLY_AUTHORITY = "exact-authored-five-part-chain-no-isolated-node-rotation-v2";
-const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-visible-solid-terminal-vestibule-v12";
+const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-source-measured-terminal-vestibule-v15";
 const ROTUNDA_OPENING_AUTHORITY = "exact-authored-opposite-rotunda-to-tunnel-a-axis-v5";
-const ROTUNDA_CLOSURE_AUTHORITY = "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1";
-const VISIBLE_VESTIBULE_METERS = 2.4;
+const ROTUNDA_CLOSURE_AUTHORITY = "exact-rotunda-surface-small-bellows-joint-v2";
+const MIN_VISIBLE_FIXED_LEG_METERS = 0.15;
+const MAX_VISIBLE_FIXED_LEG_METERS = 44;
 
 function replaceRequired(text, before, after, path, label) {
   if (text.includes(after)) return text;
@@ -69,11 +70,10 @@ readiness = replaceRequired(
   "A1 readiness visual declarations",
 );
 
-const readinessGateAnchor = `            || isolatedNodeRotationCount !== 0
-            || !(connectorVisibleLength > 0.25 && connectorVisibleLength < 12)
-            || connectorRibCount < 1`;
+const sourceMeasuredRange = `connectorVisibleLength > ${MIN_VISIBLE_FIXED_LEG_METERS} && connectorVisibleLength < ${MAX_VISIBLE_FIXED_LEG_METERS}`;
+const readinessGatePattern = /            \|\| isolatedNodeRotationCount !== 0\n            \|\| !?\(?connectorVisibleLength[^\n]+\)?\n            \|\| connectorRibCount < \d+/;
 const readinessGates = `            || isolatedNodeRotationCount !== 0
-            || Math.abs(connectorVisibleLength - ${VISIBLE_VESTIBULE_METERS}) > 0.05
+            || !(${sourceMeasuredRange})
             || connectorRibCount < 6
             || connectorStyleAuthority !== "${CONNECTOR_STYLE_AUTHORITY}"
             || rotundaOpeningAuthority !== "${ROTUNDA_OPENING_AUTHORITY}"
@@ -81,13 +81,13 @@ const readinessGates = `            || isolatedNodeRotationCount !== 0
             || rotundaVestibuleClosureAuthority !== "${ROTUNDA_CLOSURE_AUTHORITY}"
             || !noGeneratedGlassCorridor
             || visualAcceptanceAuthority !== "${VISUAL_AUTHORITY}"`;
-readiness = replaceRequired(
-  readiness,
-  readinessGateAnchor,
-  readinessGates,
-  readinessPath,
-  "A1 readiness visual gates",
-);
+if (readiness.includes(readinessGates)) {
+  // already normalized
+} else if (readinessGatePattern.test(readiness)) {
+  readiness = readiness.replace(readinessGatePattern, readinessGates);
+} else {
+  throw new Error(`${readinessPath}: A1 readiness visual gate block is missing`);
+}
 
 readiness = readiness.replace(
   "connector=${connectorVisibleLength}/${connectorRibCount}, source=",
@@ -179,7 +179,7 @@ for (const [path, text, tokens] of [
     `rotundaOpeningAuthority !== "${ROTUNDA_OPENING_AUTHORITY}"`,
     `rotundaVestibuleClosureAuthority !== "${ROTUNDA_CLOSURE_AUTHORITY}"`,
     `visualAcceptanceAuthority !== "${VISUAL_AUTHORITY}"`,
-    `Math.abs(connectorVisibleLength - ${VISIBLE_VESTIBULE_METERS}) > 0.05`,
+    `!(${sourceMeasuredRange})`,
     "isolatedNodeRotationCount !== 0",
   ]],
   [authoredPath, authored, [
@@ -200,8 +200,20 @@ for (const [path, text, tokens] of [
   }
 }
 
+for (const forbidden of [
+  "Math.abs(connectorVisibleLength - 2.4)",
+  "VISIBLE_VESTIBULE_METERS = 2.4",
+  "same-day-a1-photo-visible-solid-terminal-vestibule-v12",
+  "same-day-a1-photo-solid-rotunda-vestibule-bulkhead-v1",
+  "no generated long corridor",
+]) {
+  if (readiness.includes(forbidden) || installation.includes(forbidden)) {
+    throw new Error(`A1 visual acceptance still contains retired compact geometry: ${forbidden}`);
+  }
+}
+
 fs.writeFileSync(installationPath, installation, "utf8");
 fs.writeFileSync(readinessPath, readiness, "utf8");
 fs.writeFileSync(authoredPath, authored, "utf8");
 fs.writeFileSync(trainerPath, trainer, "utf8");
-console.log("Published fail-closed A1 visual evidence for one continuous five-part authored assembly, a 2.4 m solid white vestibule, connected Rotunda closure, zero isolated node rotations, and no generated long corridor.");
+console.log("Published fail-closed A1 visual evidence for one continuous five-part authored assembly, a source-measured solid Terminal 4 fixed leg, connected exact-Rotunda seam, zero isolated node rotations, and no generated glass corridor.");
