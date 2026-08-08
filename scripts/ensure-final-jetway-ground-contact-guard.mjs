@@ -4,24 +4,25 @@ const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 let source = fs.readFileSync(readinessPath, "utf8");
 
 const residualFailure = "Math.abs(fleetGroundOffset + bogieTireCorrection) > 1e-6";
-const installationAnchor = "installationAuthority !== UPLOADED_JETWAY_INSTALLATION_CORRECTION_AUTHORITY";
-const terminalConnectionAnchor = "a1TerminalConnectionAuthority !== UPLOADED_JETWAY_A1_TERMINAL_CONNECTION_AUTHORITY";
-const legacyBogieGuard = "!(bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1)";
+const mismatchMarker = "Exact jetway readiness mismatch:";
 
 if (!source.includes("const fleetGroundOffset") || !source.includes("const bogieTireCorrection")) {
   throw new Error(`${readinessPath}: final fleet/bogie telemetry declarations are missing`);
 }
 
 if (!source.includes(residualFailure)) {
-  const candidates = [installationAnchor, legacyBogieGuard, terminalConnectionAnchor];
-  const anchor = candidates.find((candidate) => source.includes(candidate));
-  if (!anchor) {
-    throw new Error(`${readinessPath}: no semantic readiness anchor is available for the final ground-contact guard`);
+  const mismatchIndex = source.indexOf(mismatchMarker);
+  if (mismatchIndex < 0) {
+    throw new Error(`${readinessPath}: exact readiness mismatch block is missing for final ground-contact guard`);
   }
-  source = source.replace(
-    anchor,
-    `${residualFailure}\n            || ${anchor}`,
-  );
+
+  const conditionStart = source.lastIndexOf("\n          if (\n", mismatchIndex);
+  if (conditionStart < 0) {
+    throw new Error(`${readinessPath}: exact readiness condition opening is missing for final ground-contact guard`);
+  }
+
+  const insertionPoint = conditionStart + "\n          if (\n".length;
+  source = `${source.slice(0, insertionPoint)}            ${residualFailure}\n            || ${source.slice(insertionPoint).replace(/^\s*/, "")}`;
   fs.writeFileSync(readinessPath, source, "utf8");
 }
 
