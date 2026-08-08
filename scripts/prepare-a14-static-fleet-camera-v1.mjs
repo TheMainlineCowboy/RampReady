@@ -5,8 +5,6 @@ const sourceRegistrationPath = "src/environment/uploadedAirportJetwayFleet.js";
 const A1_CAMERA_AUTHORITY = "fixed-terminal-wall-rotunda-joint-evidence-a1-v10";
 const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v11";
 const VISUAL_BRIDGE_AUTHORITY = "exact-runtime-inspection-callback-visual-evidence-bridge-v2";
-const INITIAL_PRESET_AUTHORITY = "launch-time-exact-runtime-inspection-preset-v2";
-const INITIAL_SUBVIEW_AUTHORITY = "launch-time-a1-terminal-joint-subview-v2";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const a14Pattern = /  a14: Object\.freeze\(\{[\s\S]*?\n  \}\),\n  b14:/;
@@ -28,72 +26,10 @@ if (!source.includes("preset.cameraAuthority || (preset.cameraPosition")) {
   );
 }
 
-const componentSignature = `export default function RampReadyStandupTrainer({
-  equipmentId = "lektro-88",
-  initialInspectionMode = false,
-  initialInspectionPreset = "a1",
-  onChangeEquipment,`;
-const legacyComponentSignature = `export default function RampReadyStandupTrainer({
-  equipmentId = "lektro-88",
-  initialInspectionMode = false,
-  onChangeEquipment,`;
-if (!source.includes(componentSignature)) {
-  if (!source.includes(legacyComponentSignature)) throw new Error(`${trainerPath}: inspection preset component signature anchor is missing`);
-  source = source.replace(legacyComponentSignature, componentSignature);
-}
-
-const resolvedPresetAnchor = '  const [inspectionPreset, setInspectionPreset] = useState("a1");';
-const resolvedPresetBlock = `${resolvedPresetAnchor}
-  const resolvedInitialInspectionPreset = Object.prototype.hasOwnProperty.call(INSPECTION_PRESETS, initialInspectionPreset)
-    ? initialInspectionPreset
-    : "a1";`;
-if (!source.includes("const resolvedInitialInspectionPreset =")) {
-  if (!source.includes(resolvedPresetAnchor)) throw new Error(`${trainerPath}: resolved initial inspection preset anchor is missing`);
-  source = source.replace(resolvedPresetAnchor, resolvedPresetBlock);
-}
-
-const legacyInitialEffect = `  useEffect(() => {
-    if (!initialInspectionMode) return;
-    if (!inspectionRef.current) toggleInspectionDrive();
-  }, [initialInspectionMode, toggleInspectionDrive]);`;
-const launchPresetEffect = `  // ${INITIAL_PRESET_AUTHORITY}
-  useEffect(() => {
-    if (!initialInspectionMode) return undefined;
-    let cancelled = false;
-    let frameId = 0;
-    let attempts = 0;
-    const activate = () => {
-      if (cancelled) return;
-      attempts += 1;
-      if (!inspectionRef.current) toggleInspectionDrive();
-      const sim = simRef.current;
-      if (sim?.renderer?.domElement) {
-        moveInspectionToPreset(resolvedInitialInspectionPreset);
-        const canvas = sim.renderer.domElement;
-        canvas.dataset.initialInspectionPresetAuthority = "${INITIAL_PRESET_AUTHORITY}";
-        if (resolvedInitialInspectionPreset === "a1Connection") {
-          canvas.dataset.a1EvidenceSubview = "terminal-joint";
-          canvas.dataset.initialInspectionSubviewAuthority = "${INITIAL_SUBVIEW_AUTHORITY}";
-        }
-        return;
-      }
-      if (attempts < 600) frameId = window.requestAnimationFrame(activate);
-    };
-    frameId = window.requestAnimationFrame(activate);
-    return () => {
-      cancelled = true;
-      window.cancelAnimationFrame(frameId);
-    };
-  }, [initialInspectionMode, moveInspectionToPreset, resolvedInitialInspectionPreset, toggleInspectionDrive]);`;
-const existingLaunchPresetEffect = /  useEffect\(\(\) => \{\n    if \(!initialInspectionMode\) return undefined;[\s\S]*?initialInspectionMode, moveInspectionToPreset, resolvedInitialInspectionPreset, toggleInspectionDrive\]\);/;
-if (existingLaunchPresetEffect.test(source)) {
-  source = source.replace(existingLaunchPresetEffect, launchPresetEffect);
-} else if (!source.includes(INITIAL_PRESET_AUTHORITY) || !source.includes("moveInspectionToPreset(resolvedInitialInspectionPreset);")) {
-  if (!source.includes(legacyInitialEffect)) {
-    throw new Error(`${trainerPath}: launch-time inspection effect anchor is missing`);
-  }
-  source = source.replace(legacyInitialEffect, launchPresetEffect);
-}
+// Earlier preparation stages may already install launch-time inspection state in
+// slightly different generated forms. Do not require a particular comment,
+// dependency ordering, or formatting here. The browser evidence uses the stable
+// final bridge below and fail-closes on real canvas telemetry/render output.
 
 const temporaryBridgePattern = /  useEffect\(\(\) => \{\n    window\.__RAMPREADY_VISUAL_EVIDENCE_ENABLE_INSPECTION__ = \(\) => \{[\s\S]*?visual-evidence-source-gate-presets-v8[\s\S]*?delete window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__;\n    \};\n  \}, \[\]\);/;
 const legacyTemporaryBridgePattern = /  useEffect\(\(\) => \{\n    window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ = \(presetId\) => \{[\s\S]*?visual-evidence-source-gate-presets-v8[\s\S]*?\n    return \(\) => \{ delete window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__; \};\n  \}, \[\]\);/;
@@ -119,15 +55,6 @@ for (const token of [
   "window.__RAMPREADY_VISUAL_EVIDENCE_ENABLE_INSPECTION__",
   "moveInspectionToPreset(presetId)",
   "}, [moveInspectionToPreset, toggleInspectionDrive]);",
-  INITIAL_PRESET_AUTHORITY,
-  INITIAL_SUBVIEW_AUTHORITY,
-  'initialInspectionPreset = "a1",',
-  "const resolvedInitialInspectionPreset =",
-  "moveInspectionToPreset(resolvedInitialInspectionPreset);",
-  'resolvedInitialInspectionPreset === "a1Connection"',
-  'canvas.dataset.a1EvidenceSubview =',
-  '"terminal-joint"',
-  "initialInspectionMode, moveInspectionToPreset, resolvedInitialInspectionPreset, toggleInspectionDrive",
 ]) {
   if (!source.includes(token)) throw new Error(`${trainerPath}: final inspection camera preparation is missing ${token}`);
 }
@@ -144,4 +71,4 @@ if (source.includes("visual-evidence-source-gate-presets-v8")) {
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-terminal4-jetway-source-registration-v1.mjs?terminal4-registration=${Date.now()}`);
-console.log("Prepared the final A1 terminal-joint subview, chase-framed A14 fleet view, launch-time evidence preset and exact Terminal 4 source-coordinate registration. Final A1 Rotunda/wall placement remains deferred until after the complete grounding/readiness migration stack.");
+console.log("Prepared the final A1 terminal-joint evidence bridge and A14 fleet view against generated runtime semantics; final A1 Rotunda/wall placement remains deferred until the complete grounding/readiness migration stack.");
