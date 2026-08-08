@@ -67,3 +67,9 @@ if (failures.length) {
 }
 
 console.log("RampReady prepared runtime verified: captured nose follows the tug while the aircraft pivots around a fixed wheelbase main-gear axle with delayed opposite-sign yaw, bounded articulation, and clean reconnect history.");
+
+// prepare:runtime intentionally regenerates broad compatibility code. Normalize
+// the final jetway readiness only after that preparation has been verified, so
+// no later runtime preparer can restore the retired 2.4/3.98 m acceptance rules
+// before Vite bundles the production scene.
+await import(`./normalize-final-jetway-readiness-after-runtime.mjs?final-readiness=${Date.now()}`);
