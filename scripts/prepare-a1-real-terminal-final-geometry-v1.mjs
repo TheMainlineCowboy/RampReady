@@ -44,9 +44,8 @@ sourcePlaced = sourcePlaced.replace(
 write(sourcePlacedPath, sourcePlaced);
 
 // The exact supplied replacement GLB is normalized around its Rotunda, but the
-// real A1 fixed terminal section is not required to be 2.4 m long. The authored
-// structural-wall search currently resolves a roughly 18 m visible fixed run.
-// Preserve that measurement and only reject impossible values; do not relocate
+// real A1 fixed terminal section is not required to be 2.4 m long. Preserve the
+// measured structural-wall span and only reject impossible values; do not move
 // the Rotunda merely to manufacture a compact screenshot.
 let installation = read(installationPath);
 installation = replaceAllKnown(
@@ -114,9 +113,12 @@ for (const required of [
 write(installationPath, installation);
 
 // Readiness must validate the actual measured building-to-Rotunda distance,
-// not the retired compact-photo guess. Keep all exact-GLB identity, hierarchy,
-// articulation, grounding and continuity checks intact.
+// not the retired compact-photo guess. Normalize every range spelling first,
+// then INSERT the final guards if a later compatibility migration removed or
+// reformatted them. This is the last A1 geometry pass before the bundle.
 let readiness = read(readinessPath);
+const finalWallGuard = `a1TerminalWallDistance > ${MIN_REAL_WALL_DISTANCE_METERS} && a1TerminalWallDistance < ${MAX_REAL_WALL_DISTANCE_METERS}`;
+const finalVisibleLegGuard = `connectorVisibleLength > ${MIN_VISIBLE_FIXED_LEG_METERS} && connectorVisibleLength < ${MAX_VISIBLE_FIXED_LEG_METERS}`;
 readiness = replaceAllKnown(
   readiness,
   [
@@ -126,11 +128,11 @@ readiness = replaceAllKnown(
     "a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 28",
     "a1TerminalWallDistance > 1.5 && a1TerminalWallDistance < 4.1",
   ],
-  `a1TerminalWallDistance > ${MIN_REAL_WALL_DISTANCE_METERS} && a1TerminalWallDistance < ${MAX_REAL_WALL_DISTANCE_METERS}`,
+  finalWallGuard,
 );
 readiness = readiness.replace(
   /a1TerminalWallDistance\s*(?:>|>=)\s*[0-9.]+\s*&&\s*a1TerminalWallDistance\s*(?:<|<=)\s*[0-9.]+/g,
-  `a1TerminalWallDistance > ${MIN_REAL_WALL_DISTANCE_METERS} && a1TerminalWallDistance < ${MAX_REAL_WALL_DISTANCE_METERS}`,
+  finalWallGuard,
 );
 readiness = replaceAllKnown(
   readiness,
@@ -138,15 +140,15 @@ readiness = replaceAllKnown(
     "connectorVisibleLength > 0.25 && connectorVisibleLength < 12",
     "connectorVisibleLength > 0.25 && connectorVisibleLength < 28",
   ],
-  `connectorVisibleLength > ${MIN_VISIBLE_FIXED_LEG_METERS} && connectorVisibleLength < ${MAX_VISIBLE_FIXED_LEG_METERS}`,
+  finalVisibleLegGuard,
 );
 readiness = readiness.replace(
   /connectorVisibleLength\s*(?:>|>=)\s*[0-9.]+\s*&&\s*connectorVisibleLength\s*(?:<|<=)\s*[0-9.]+/g,
-  `connectorVisibleLength > ${MIN_VISIBLE_FIXED_LEG_METERS} && connectorVisibleLength < ${MAX_VISIBLE_FIXED_LEG_METERS}`,
+  finalVisibleLegGuard,
 );
 readiness = readiness.replaceAll(
   "Math.abs(connectorVisibleLength - 2.4) > 0.05",
-  `!(connectorVisibleLength > ${MIN_VISIBLE_FIXED_LEG_METERS} && connectorVisibleLength < ${MAX_VISIBLE_FIXED_LEG_METERS})`,
+  `!(${finalVisibleLegGuard})`,
 );
 readiness = readiness.replaceAll(
   'same-day-a1-photo-visible-solid-terminal-vestibule-v12',
@@ -158,6 +160,22 @@ readiness = readiness.replaceAll(
 );
 readiness = readiness.replaceAll("compact-real-terminal-wall-readiness-v2", FINAL_AUTHORITY);
 readiness = readiness.replaceAll("compact-real-terminal-wall-readiness-v1", FINAL_AUTHORITY);
+
+if (!readiness.includes(finalWallGuard)) {
+  const wallAnchor = "            || a1TerminalConnectionAuthority !== UPLOADED_JETWAY_A1_TERMINAL_CONNECTION_AUTHORITY";
+  if (!readiness.includes(wallAnchor)) {
+    throw new Error(`${readinessPath}: cannot insert final real-wall guard because the A1 terminal-authority condition is missing`);
+  }
+  readiness = readiness.replace(wallAnchor, `${wallAnchor}\n            || !(${finalWallGuard})`);
+}
+if (!readiness.includes(finalVisibleLegGuard)) {
+  const chainAnchor = "            || isolatedNodeRotationCount !== 0";
+  if (!readiness.includes(chainAnchor)) {
+    throw new Error(`${readinessPath}: cannot insert final fixed-leg guard because the A1 chain condition is missing`);
+  }
+  readiness = readiness.replace(chainAnchor, `${chainAnchor}\n            || !(${finalVisibleLegGuard})`);
+}
+
 for (const forbidden of [
   "Math.abs(connectorVisibleLength - 2.4) > 0.05",
   "a1TerminalWallDistance > 2.9 && a1TerminalWallDistance < 5.8",
@@ -168,10 +186,7 @@ for (const forbidden of [
     throw new Error(`${readinessPath}: retired compact A1 readiness survived: ${forbidden}`);
   }
 }
-for (const required of [
-  `a1TerminalWallDistance > ${MIN_REAL_WALL_DISTANCE_METERS} && a1TerminalWallDistance < ${MAX_REAL_WALL_DISTANCE_METERS}`,
-  `connectorVisibleLength > ${MIN_VISIBLE_FIXED_LEG_METERS} && connectorVisibleLength < ${MAX_VISIBLE_FIXED_LEG_METERS}`,
-]) {
+for (const required of [finalWallGuard, finalVisibleLegGuard]) {
   if (!readiness.includes(required)) {
     throw new Error(`${readinessPath}: final real-wall readiness is missing ${required}`);
   }
@@ -228,4 +243,4 @@ for (const required of [
 }
 write(elbowPath, elbow);
 
-console.log(`Finalized A1 against the actual structural Terminal 4 wall: no T4_WALK target, no 2.4 m relocation, source-measured fixed terminal leg allowed through ${MAX_VISIBLE_FIXED_LEG_METERS} m, exact Rotunda preserved, and only 0.18/0.12 m hidden wall/Rotunda seam overlaps.`);
+console.log(`Finalized A1 against the actual structural Terminal 4 wall: no T4_WALK target, no 2.4 m relocation, final readiness guards are inserted even after legacy migrations, source-measured fixed terminal leg allowed through ${MAX_VISIBLE_FIXED_LEG_METERS} m, exact Rotunda preserved, and only 0.18/0.12 m hidden wall/Rotunda seam overlaps.`);
