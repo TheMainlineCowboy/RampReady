@@ -11,8 +11,10 @@ let source = fs.readFileSync(trainerPath, "utf8");
 
 const a14Pattern = /  a14: Object\.freeze\(\{[\s\S]*?\n  \}\),\n  b14:/;
 const exactPreset = '  a14: Object.freeze({ id: "a14", label: "A concourse midpoint", x: 218.45, z: -86.52, yaw: 2.88, cameraYaw: 2.19, cameraDistance: 32 }),\n  b14:';
-if (!a14Pattern.test(source)) throw new Error(`${trainerPath}: A14 inspection preset anchor is missing`);
-source = source.replace(a14Pattern, exactPreset);
+if (!source.includes(exactPreset)) {
+  if (!a14Pattern.test(source)) throw new Error(`${trainerPath}: A14 inspection preset anchor is missing`);
+  source = source.replace(a14Pattern, exactPreset);
+}
 
 source = source.replace(
   /source-gate-apron-presets-with-[^"\n]+-a1-a14-b14-b15-v\d+/g,
@@ -93,11 +95,6 @@ if (existingLaunchPresetEffect.test(source)) {
   source = source.replace(legacyInitialEffect, launchPresetEffect);
 }
 
-// The earlier inspection-control stage runs against a freshly regenerated
-// trainer, before INSPECTION_PRESETS/moveInspectionToPreset exist, so it exposes
-// a temporary self-contained activation/preset bridge. At this final camera
-// stage every real preset exists. Replace that bridge completely so browser
-// evidence uses the same callback/state/camera definitions as the visible app.
 const temporaryBridgePattern = /  useEffect\(\(\) => \{\n    window\.__RAMPREADY_VISUAL_EVIDENCE_ENABLE_INSPECTION__ = \(\) => \{[\s\S]*?visual-evidence-source-gate-presets-v8[\s\S]*?delete window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__;\n    \};\n  \}, \[\]\);/;
 const legacyTemporaryBridgePattern = /  useEffect\(\(\) => \{\n    window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ = \(presetId\) => \{[\s\S]*?visual-evidence-source-gate-presets-v8[\s\S]*?\n    return \(\) => \{ delete window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__; \};\n  \}, \[\]\);/;
 const finalBridge = `  // ${VISUAL_BRIDGE_AUTHORITY}\n  useEffect(() => {\n    window.__RAMPREADY_VISUAL_EVIDENCE_ENABLE_INSPECTION__ = () => {\n      if (!inspectionRef.current) toggleInspectionDrive();\n      return "active";\n    };\n    window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ = (presetId) => {\n      if (!Object.prototype.hasOwnProperty.call(INSPECTION_PRESETS, presetId)) return null;\n      moveInspectionToPreset(presetId);\n      return presetId;\n    };\n    return () => {\n      delete window.__RAMPREADY_VISUAL_EVIDENCE_ENABLE_INSPECTION__;\n      delete window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__;\n    };\n  }, [moveInspectionToPreset, toggleInspectionDrive]);`;
@@ -146,9 +143,5 @@ if (source.includes("visual-evidence-source-gate-presets-v8")) {
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-// This stage is still inside prepare:terminal4-runtime, before the later A1
-// grounding/readiness migrations. Enforce only the common source coordinate
-// registration here. The photo-registered Rotunda finalizer deliberately runs
-// later, immediately before Vite bundles the fully migrated production runtime.
 await import(`./prepare-terminal4-jetway-source-registration-v1.mjs?terminal4-registration=${Date.now()}`);
 console.log("Prepared the final A1 terminal-joint subview, chase-framed A14 fleet view, launch-time evidence preset and exact Terminal 4 source-coordinate registration. Final A1 Rotunda/wall placement remains deferred until after the complete grounding/readiness migration stack.");
