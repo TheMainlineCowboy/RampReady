@@ -1,0 +1,46 @@
+name: Repair jetway preparer anchor
+
+on:
+  push:
+    branches:
+      - fix/live-experience-cdp-capture
+    paths:
+      - .github/workflows/repair-jetway-preparer-anchor.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/live-experience-cdp-capture
+          fetch-depth: 0
+          token: ${{ github.token }}
+      - name: Make bridge-axis preparer accept measured Rotunda bounds
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('scripts/prepare-terminal4-jetway-rendered-cleanup-v1.mjs')
+          text = path.read_text(encoding='utf-8')
+          old = '''const oldCenterBlock = `  const worldCenter = worldBounds.getCenter(new THREE.Vector3());\\n  const localCenter = a1Anchor.worldToLocal(worldCenter.clone());`;'''
+          new = '''const oldCenterBlock = `  const worldCenter = worldBounds.getCenter(new THREE.Vector3());\\n  const worldSize = worldBounds.getSize(new THREE.Vector3());\\n  const localCenter = a1Anchor.worldToLocal(worldCenter.clone());`;'''
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif new not in text:
+              raise SystemExit('bridge-axis center anchor contract was not found')
+          path.write_text(text, encoding='utf-8')
+      - name: Commit preparer repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add scripts/prepare-terminal4-jetway-rendered-cleanup-v1.mjs
+          git diff --cached --check
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'fix(jetway): accept measured Rotunda bounds in cleanup preparer'
+          git push origin HEAD:fix/live-experience-cdp-capture
