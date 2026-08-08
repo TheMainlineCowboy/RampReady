@@ -4,8 +4,32 @@ const fs = require('node:fs');
 const pageUrl = process.env.PAGE_URL || 'http://127.0.0.1:4173/RampReady/';
 const evidenceDir = process.env.EVIDENCE_DIR || 'a1-terminal-joint-evidence';
 const MOBILE_VIEWPORT = Object.freeze({ width: 448, height: 998 });
+const CURRENT_SUBVIEW_AUTHORITY = 'source-measured-a1-terminal-joint-camera-v3';
+const LEGACY_SUBVIEW_AUTHORITY = 'exact-a1-terminal-joint-and-bogie-contact-subviews-v2';
+const CAMERA_AUTHORITY = 'exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2';
+const LOCK_AUTHORITY = 'exact-a1-evidence-camera-direct-lock-v1';
 
 fs.mkdirSync(evidenceDir, { recursive: true });
+
+async function selectByLabel(page, ariaLabel, optionLabel) {
+  await page.evaluate(({ ariaLabel, optionLabel }) => {
+    const select = document.querySelector(`select[aria-label="${ariaLabel}"]`);
+    if (!(select instanceof HTMLSelectElement)) throw new Error(`${ariaLabel} control is missing`);
+    const option = [...select.options].find(entry => entry.textContent?.trim() === optionLabel);
+    if (!option) throw new Error(`${ariaLabel} option is missing: ${optionLabel}`);
+    select.value = option.value;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }, { ariaLabel, optionLabel });
+}
+
+async function selectByValue(page, ariaLabel, value) {
+  await page.evaluate(({ ariaLabel, value }) => {
+    const select = document.querySelector(`select[aria-label="${ariaLabel}"]`);
+    if (!(select instanceof HTMLSelectElement)) throw new Error(`${ariaLabel} control is missing`);
+    select.value = value;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }, { ariaLabel, value });
+}
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
@@ -39,13 +63,8 @@ fs.mkdirSync(evidenceDir, { recursive: true });
       && Number.isFinite(Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters));
   }, null, { timeout: 120000, polling: 100 });
 
-  const inspectionLocation = page.getByRole('combobox', { name: 'Inspection location' });
-  await inspectionLocation.waitFor({ state: 'visible', timeout: 30000 });
-  await inspectionLocation.selectOption({ label: 'A1 terminal connection' });
-
-  const cameraView = page.getByRole('combobox', { name: 'Camera view' });
-  await cameraView.waitFor({ state: 'visible', timeout: 30000 });
-  await cameraView.selectOption('chase');
+  await selectByLabel(page, 'Inspection location', 'A1 terminal connection');
+  await selectByValue(page, 'Camera view', 'chase');
 
   await page.waitForFunction(() => {
     const data = document.querySelector('canvas.trainerCanvas')?.dataset;
@@ -54,18 +73,43 @@ fs.mkdirSync(evidenceDir, { recursive: true });
       && data?.a1JetwayState === 'attached-to-aircraft-door';
   }, null, { timeout: 30000, polling: 100 });
 
-  await page.waitForTimeout(1500);
+  // Force the same exact terminal-wall/Rotunda close camera used by the desktop
+  // evidence while retaining the real portrait mobile HUD. A broad full-assembly
+  // view is not sufficient to prove the failure the user saw on a phone.
+  await page.evaluate(() => {
+    const element = document.querySelector('canvas.trainerCanvas');
+    if (!(element instanceof HTMLCanvasElement)) throw new Error('A1 mobile evidence canvas is missing');
+    element.dataset.a1EvidenceSubview = 'terminal-joint';
+  });
+  await page.waitForFunction(({ currentAuthority, legacyAuthority, cameraAuthority, lockAuthority }) => {
+    const data = document.querySelector('canvas.trainerCanvas')?.dataset;
+    return data?.inspectionCameraEndpointSubview === 'terminal-joint'
+      && [currentAuthority, legacyAuthority].includes(data?.inspectionCameraEndpointSubviewAuthority)
+      && data?.inspectionCameraEndpointAuthority === cameraAuthority
+      && data?.inspectionCameraEndpointLockAuthority === lockAuthority
+      && Math.abs(Number(data?.inspectionCameraEndpointConvergenceErrorMeters)) <= 0.001;
+  }, {
+    currentAuthority: CURRENT_SUBVIEW_AUTHORITY,
+    legacyAuthority: LEGACY_SUBVIEW_AUTHORITY,
+    cameraAuthority: CAMERA_AUTHORITY,
+    lockAuthority: LOCK_AUTHORITY,
+  }, { timeout: 30000, polling: 100 });
+
+  await page.waitForTimeout(1200);
   const telemetry = await canvas.evaluate(element => ({ ...element.dataset }));
   const box = await canvas.boundingBox();
   if (!box || box.width < 400 || box.height < 850) {
     throw new Error(`A1 mobile canvas is not filling the Pixel-class viewport: ${JSON.stringify(box)}`);
   }
+  if (telemetry.inspectionCameraEndpointSubview !== 'terminal-joint') {
+    throw new Error(`Pixel evidence did not retain the terminal-joint camera: ${telemetry.inspectionCameraEndpointSubview}`);
+  }
 
   await page.screenshot({
-    path: `${evidenceDir}/a1-mobile-pixel8pro-chase.png`,
+    path: `${evidenceDir}/a1-mobile-pixel8pro-terminal-joint.png`,
     fullPage: false,
   });
-  await canvas.screenshot({ path: `${evidenceDir}/a1-mobile-pixel8pro-canvas.png` });
+  await canvas.screenshot({ path: `${evidenceDir}/a1-mobile-pixel8pro-terminal-joint-canvas.png` });
 
   fs.writeFileSync(`${evidenceDir}/mobile-report.json`, JSON.stringify({
     pageUrl,
@@ -79,7 +123,7 @@ fs.mkdirSync(evidenceDir, { recursive: true });
   await browser.close();
   if (pageErrors.length) throw new Error(`A1 mobile evidence page errors: ${pageErrors.join(' | ')}`);
   if (consoleErrors.length) throw new Error(`A1 mobile evidence console errors: ${consoleErrors.join(' | ')}`);
-  console.log(`A1 MOBILE PIXEL EVIDENCE READY: ${MOBILE_VIEWPORT.width}x${MOBILE_VIEWPORT.height}`);
+  console.log(`A1 MOBILE PIXEL TERMINAL-JOINT EVIDENCE READY: ${MOBILE_VIEWPORT.width}x${MOBILE_VIEWPORT.height}`);
 })().catch(error => {
   console.error(error.stack || error.message || String(error));
   process.exit(1);
