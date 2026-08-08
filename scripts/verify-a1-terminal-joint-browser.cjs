@@ -45,38 +45,46 @@ async function captureCanvas(page, canvas, path) {
   page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   page.on('pageerror', error => pageErrors.push(error.message));
 
-  const response = await page.goto(pageUrl, { waitUntil: 'networkidle', timeout: 90000 });
+  const response = await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
   if (!response?.ok()) throw new Error(`A1 evidence navigation failed: ${response?.status() || 'no response'}`);
 
-  await page.getByRole('heading', { name: 'Choose pushback equipment' }).waitFor({ state: 'visible', timeout: 30000 });
-  const lektro = page.getByRole('radio', { name: /Lektro 88/i });
-  if (await lektro.getAttribute('aria-checked') !== 'true') await lektro.click();
-  await page.getByRole('button', { name: 'Start training' }).click();
+  // Use the same production inspection route a user uses. The previous global
+  // evidence bridge is a build-time convenience and is not guaranteed to
+  // survive the final production bundle.
+  const inspectionLaunch = page.getByRole('button', { name: 'Drive tug / inspect airport' });
+  await inspectionLaunch.waitFor({ state: 'visible', timeout: 30000 });
+  await inspectionLaunch.click();
 
   const canvas = page.locator('canvas.trainerCanvas');
   await canvas.waitFor({ state: 'visible', timeout: 30000 });
   await page.waitForFunction(() => {
     const canvas = document.querySelector('canvas.trainerCanvas');
-    return canvas?.dataset.terminal4UploadedJetwayLoadState === 'ready'
+    return canvas?.dataset.inspectionMode === 'active'
+      && canvas?.dataset.terminal4UploadedJetwayLoadState === 'ready'
       && canvas?.dataset.terminal4UploadedJetwayCount === '58';
   }, null, { timeout: 90000 });
 
-  // Use the production-prepared evidence bridge instead of a transient UI
-  // class. The bridge only activates the same inspection state and preset that
-  // the user-facing controls own; all physical acceptance remains fail-closed
-  // on the canvas telemetry and captured render.
-  await page.waitForFunction(() => (
-    typeof window.__RAMPREADY_VISUAL_EVIDENCE_ENABLE_INSPECTION__ === 'function'
-      && typeof window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ === 'function'
-  ), null, { timeout: 10000 });
-  const activation = await page.evaluate(() => window.__RAMPREADY_VISUAL_EVIDENCE_ENABLE_INSPECTION__());
-  if (activation !== 'active') throw new Error(`Visual evidence inspection activation failed: ${activation}`);
-  await page.waitForFunction(() => document.querySelector('canvas.trainerCanvas')?.dataset.inspectionMode === 'active', null, { timeout: 10000 });
+  const inspectionLocation = page.getByRole('combobox', { name: 'Inspection location' });
+  await inspectionLocation.waitFor({ state: 'visible', timeout: 30000 });
+  await inspectionLocation.selectOption({ label: 'A1 terminal connection' });
+  await page.waitForFunction(() => document.querySelector('canvas.trainerCanvas')?.dataset.inspectionPreset === 'a1Connection', null, { timeout: 30000 });
 
-  const selectedPreset = await page.evaluate(() => window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__('a1Connection'));
-  if (selectedPreset !== 'a1Connection') throw new Error(`A1 evidence preset activation failed: ${selectedPreset}`);
-  await page.waitForFunction(() => document.querySelector('canvas.trainerCanvas')?.dataset.inspectionPreset === 'a1Connection', null, { timeout: 10000 });
-  await page.waitForTimeout(1800);
+  // A1 terminal connection defaults to a full-assembly view. Select the actual
+  // production terminal-joint evidence subview before inspecting or capturing.
+  await page.evaluate(() => {
+    const canvas = document.querySelector('canvas.trainerCanvas');
+    if (!(canvas instanceof HTMLCanvasElement)) throw new Error('A1 evidence canvas is missing');
+    canvas.dataset.a1EvidenceSubview = 'terminal-joint';
+  });
+  await page.waitForFunction(() => {
+    const data = document.querySelector('canvas.trainerCanvas')?.dataset;
+    return data?.inspectionCameraEndpointSubview === 'terminal-joint'
+      && data?.inspectionCameraEndpointSubviewAuthority === 'exact-a1-terminal-joint-and-bogie-contact-subviews-v2'
+      && data?.inspectionCameraEndpointAuthority === 'exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2'
+      && data?.inspectionCameraEndpointLockAuthority === 'exact-a1-evidence-camera-direct-lock-v1'
+      && Math.abs(Number(data?.inspectionCameraEndpointConvergenceErrorMeters)) <= 0.001;
+  }, null, { timeout: 30000 });
+  await page.waitForTimeout(750);
 
   const data = await canvas.evaluate(element => ({ ...element.dataset }));
   const failures = [];
@@ -90,6 +98,7 @@ async function captureCanvas(page, canvas, path) {
   if (vestibule < 1.5 || vestibule > 3.5) failures.push(`visible vestibule=${vestibule}m`);
   if (data.terminal4A1ConnectionAuthority !== 'nearest-structural-terminal-facade-photo-verified-v1') failures.push(`wall authority=${data.terminal4A1ConnectionAuthority}`);
   if (data.inspectionPreset !== 'a1Connection') failures.push(`preset=${data.inspectionPreset}`);
+  if (data.inspectionCameraEndpointSubview !== 'terminal-joint') failures.push(`subview=${data.inspectionCameraEndpointSubview}`);
 
   await page.addStyleTag({ content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}' });
   await captureCanvas(page, canvas, `${evidenceDir}/a1-terminal-joint.png`);
