@@ -496,3 +496,8 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
     corrugationRibCount: frame.ribCount,
   });
 }
+
+export {
+  SOURCE_REGISTERED_A1_ELBOW_AUTHORITY,
+  TARGET_DIRECTION_AUTHORITY as SOURCE_REGISTERED_A1_TARGET_DIRECTION_AUTHORITY,
+};
