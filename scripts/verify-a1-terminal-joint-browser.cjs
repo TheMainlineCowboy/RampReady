@@ -61,7 +61,15 @@ async function captureCanvas(page, canvas, path) {
       && canvas?.dataset.terminal4UploadedJetwayCount === '58';
   }, null, { timeout: 90000 });
 
-  await page.getByRole('button', { name: 'Free-drive inspection' }).click();
+  // The WebGL training surface can keep the inspection toggle technically visible
+  // while Playwright's actionability scroll never completes. Trigger the real DOM
+  // click directly, then fail closed on the resulting UI/runtime state instead of
+  // weakening any jetway acceptance criterion.
+  const inspectionToggle = page.getByRole('button', { name: 'Free-drive inspection' });
+  await inspectionToggle.waitFor({ state: 'visible', timeout: 10000 });
+  await inspectionToggle.evaluate(element => element.click());
+  await page.waitForFunction(() => document.querySelector('.rr-inspection-toggle')?.getAttribute('aria-pressed') === 'true', null, { timeout: 10000 });
+
   const location = page.getByRole('combobox', { name: 'Inspection location' });
   await location.waitFor({ state: 'visible', timeout: 10000 });
   await location.selectOption('a1Connection');
