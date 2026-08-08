@@ -15,11 +15,13 @@ source = source.replace(
   const terminalWallZ = a1Placement.z + terminalDirection.z * sourceTerminalDistance;
   const desiredTerminalDistance = rotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS;
 
-  // Keep the complete supplied assembly rigid and solve the parent in full X/Z
-  // from the real Terminal 4 wall. The desired/current Rotunda centers are
-  // measured in fleet-local coordinates, but a1Anchor.position is parent-local.
-  // Convert both centers through world space before changing the complete anchor
-  // so a rotated/scaled parent cannot turn a short vestibule into a long corridor.
+  // UploadedAirportJetway_A1 is intentionally a direct child of fleet. Both
+  // a1Anchor.position and measureExactRotundaOpening() therefore use the same
+  // fleet-local X/Z coordinate system. Move the complete authored assembly by
+  // that exact vector; never rotate or translate an individual supplied node.
+  if (a1Anchor.parent !== fleet) {
+    throw new Error("A1 complete anchor is no longer a direct fleet child; refusing an ambiguous wall lock");
+  }
   const desiredRotundaCenterX = terminalWallX
     - rotundaOpening.openingDirectionX * desiredTerminalDistance;
   const desiredRotundaCenterZ = terminalWallZ
@@ -30,36 +32,10 @@ source = source.replace(
   if (!Number.isFinite(terminalRelocationMeters) || terminalRelocationMeters >= 60) {
     throw new Error(\`A1 full-vector terminal relocation is invalid: \${terminalRelocationMeters}\`);
   }
-  group.updateMatrixWorld(true);
-  fleet.updateWorldMatrix(true, true);
-  const anchorParent = a1Anchor.parent;
-  if (!anchorParent) throw new Error("A1 complete anchor has no parent for terminal wall lock");
-  anchorParent.updateWorldMatrix(true, false);
-  const currentRotundaCenterWorld = fleet.localToWorld(new THREE.Vector3(
-    rotundaOpening.centerX,
-    rotundaOpening.centerY,
-    rotundaOpening.centerZ,
-  ));
-  const desiredRotundaCenterWorld = fleet.localToWorld(new THREE.Vector3(
-    desiredRotundaCenterX,
-    rotundaOpening.centerY,
-    desiredRotundaCenterZ,
-  ));
-  const currentRotundaCenterParent = anchorParent.worldToLocal(currentRotundaCenterWorld.clone());
-  const desiredRotundaCenterParent = anchorParent.worldToLocal(desiredRotundaCenterWorld.clone());
-  const anchorParentCorrection = desiredRotundaCenterParent.sub(currentRotundaCenterParent);
-  if (![anchorParentCorrection.x, anchorParentCorrection.z].every(Number.isFinite)) {
-    throw new Error("A1 parent-space terminal wall correction is non-finite");
-  }
-  a1Anchor.position.x += anchorParentCorrection.x;
-  a1Anchor.position.z += anchorParentCorrection.z;
-  // Some upstream source-placement stages commit parent matrices explicitly.
-  // Commit this rigid-parent correction before any world-space remeasurement so
-  // the exact Rotunda measurement cannot observe the pre-correction matrix.
+  a1Anchor.position.x += terminalRelocationX;
+  a1Anchor.position.z += terminalRelocationZ;
   a1Anchor.updateMatrix();
-  a1Anchor.updateMatrixWorld(true);
-  group.updateMatrixWorld(true);
-  fleet.updateWorldMatrix(true, true);
+  fleet.updateMatrixWorld(true);
   a1Model.updateWorldMatrix(true, true);
   rotundaOpening = measureExactRotundaOpening(THREE, fleet, a1Model, terminalDirection);
   const relocatedWallOffsetX`,
@@ -130,18 +106,19 @@ source = source.replace(
   group.userData.uploadedJetwayA1FinalMeasuredWallWorldZ = finalMeasuredTerminalWallWorld.z;
   group.userData.uploadedJetwayA1FinalRotundaToCabWorldMeters = finalRotundaToCabWorldMeters;
   group.userData.uploadedJetwayA1FinalRotundaToWallWorldMeters = finalRotundaToWallWorldMeters;
-  group.userData.uploadedJetwayA1FinalEndpointEvidenceAuthority = "exact-world-rotunda-wall-cab-endpoints-v29";`,
+  group.userData.uploadedJetwayA1FinalEndpointEvidenceAuthority = "exact-world-rotunda-wall-cab-endpoints-v30";`,
 );
 
 source = source.replace(
   /const INSTALLATION_AUTHORITY = "[^"]+";/,
-  'const INSTALLATION_AUTHORITY = "photo-short-parent-space-terminal-wall-lock-grounded-exact-chain-v31";',
+  'const INSTALLATION_AUTHORITY = "photo-short-fleet-local-terminal-wall-lock-grounded-exact-chain-v32";',
 );
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "photo-short-parent-space-terminal-wall-lock-grounded-exact-chain-v31"',
+  'INSTALLATION_AUTHORITY = "photo-short-fleet-local-terminal-wall-lock-grounded-exact-chain-v32"',
+  "a1Anchor.parent !== fleet",
   "desiredRotundaCenterX",
-  "anchorParentCorrection",
+  "a1Anchor.position.x += terminalRelocationX",
   "a1Anchor.updateMatrix()",
   "a1Model.updateWorldMatrix(true, true)",
   "terminalCrossTrackErrorMeters",
@@ -155,9 +132,9 @@ for (const token of [
   "uploadedJetwayA1FinalEndpointEvidenceAuthority",
 ]) {
   if (!source.includes(token)) {
-    throw new Error(`${installationPath}: committed parent-space photo-short A1 wall lock output is missing ${token}`);
+    throw new Error(`${installationPath}: fleet-local photo-short A1 wall lock output is missing ${token}`);
   }
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Locked and explicitly committed the complete A1 parent to the real Terminal 4 wall before remeasurement, preserving every supplied child transform.");
+console.log("Locked the complete A1 parent to the real Terminal 4 wall in its proven fleet-local coordinate system, preserving every supplied child transform.");
