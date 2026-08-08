@@ -26,16 +26,8 @@ async function captureCanvas(page, canvas, path) {
   const session = await page.context().newCDPSession(page);
   try {
     const result = await session.send('Page.captureScreenshot', {
-      format: 'png',
-      fromSurface: true,
-      captureBeyondViewport: false,
-      clip: {
-        x: Math.max(0, Math.floor(box.x)),
-        y: Math.max(0, Math.floor(box.y)),
-        width: Math.floor(box.width),
-        height: Math.floor(box.height),
-        scale: 1,
-      },
+      format: 'png', fromSurface: true, captureBeyondViewport: false,
+      clip: { x: Math.max(0, Math.floor(box.x)), y: Math.max(0, Math.floor(box.y)), width: Math.floor(box.width), height: Math.floor(box.height), scale: 1 },
     });
     const payload = Buffer.from(result.data, 'base64');
     if (payload.length < 10000) throw new Error(`A1 evidence screenshot is unexpectedly small: ${payload.length}`);
@@ -62,13 +54,17 @@ async function selectSubview(page, subview) {
       && data?.inspectionCameraEndpointAuthority === cameraAuthority
       && data?.inspectionCameraEndpointLockAuthority === lockAuthority
       && Math.abs(Number(data?.inspectionCameraEndpointConvergenceErrorMeters)) <= 0.001;
-  }, {
-    expectedSubview: subview,
-    currentAuthority: CURRENT_SUBVIEW_AUTHORITY,
-    legacyAuthority: LEGACY_SUBVIEW_AUTHORITY,
-    cameraAuthority: CAMERA_AUTHORITY,
-    lockAuthority: LOCK_AUTHORITY,
-  }, { timeout: 30000, polling: 100 });
+  }, { expectedSubview: subview, currentAuthority: CURRENT_SUBVIEW_AUTHORITY, legacyAuthority: LEGACY_SUBVIEW_AUTHORITY, cameraAuthority: CAMERA_AUTHORITY, lockAuthority: LOCK_AUTHORITY }, { timeout: 30000, polling: 100 });
+}
+
+async function selectCameraView(page, value) {
+  await page.evaluate(nextValue => {
+    const select = document.querySelector('select[aria-label="Camera view"]');
+    if (!(select instanceof HTMLSelectElement)) throw new Error('Camera view control is missing');
+    select.value = nextValue;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }, value);
+  await page.waitForFunction(expected => document.querySelector('select[aria-label="Camera view"]')?.value === expected, value, { timeout: 10000, polling: 100 });
 }
 
 (async () => {
@@ -81,7 +77,6 @@ async function selectSubview(page, subview) {
 
   const response = await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
   if (!response?.ok()) throw new Error(`A1 evidence navigation failed: ${response?.status() || 'no response'}`);
-
   const inspectionLaunch = page.getByRole('button', { name: 'Drive tug / inspect airport' });
   await inspectionLaunch.waitFor({ state: 'visible', timeout: 30000 });
   await inspectionLaunch.click();
@@ -110,34 +105,23 @@ async function selectSubview(page, subview) {
       && Number.isFinite(vestibule)
       && Math.abs(vestibule - 2.4) <= 0.05
       && Number.isFinite(wallDistance)
-      && wallDistance > 2.9
-      && wallDistance < 5.8
+      && wallDistance > 2.9 && wallDistance < 5.8
       && data?.terminal4A1ConnectionAuthority === wallAuthority;
-  }, {
-    visualAuthority: VISUAL_AUTHORITY,
-    continuityAuthority: CONTINUITY_AUTHORITY,
-    bogieAuthority: BOGIE_AUTHORITY,
-    wallAuthority: WALL_AUTHORITY,
-  }, { timeout: 120000, polling: 100 });
+  }, { visualAuthority: VISUAL_AUTHORITY, continuityAuthority: CONTINUITY_AUTHORITY, bogieAuthority: BOGIE_AUTHORITY, wallAuthority: WALL_AUTHORITY }, { timeout: 120000, polling: 100 });
 
   const inspectionLocation = page.getByRole('combobox', { name: 'Inspection location' });
   await inspectionLocation.waitFor({ state: 'visible', timeout: 30000 });
   await inspectionLocation.selectOption({ label: 'A1 terminal connection' });
   await page.waitForFunction(() => {
     const data = document.querySelector('canvas.trainerCanvas')?.dataset;
-    return data?.inspectionPreset === 'a1Connection'
-      && data?.a1JetwayDeployment === '1.000'
-      && data?.a1JetwayState === 'attached-to-aircraft-door';
+    return data?.inspectionPreset === 'a1Connection' && data?.a1JetwayDeployment === '1.000' && data?.a1JetwayState === 'attached-to-aircraft-door';
   }, null, { timeout: 30000, polling: 100 });
 
   await page.addStyleTag({ content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}' });
-
   await selectSubview(page, 'terminal-joint');
   await page.waitForTimeout(750);
   const terminalData = await canvas.evaluate(element => ({ ...element.dataset }));
-  if (!subviewAuthorityAccepted(terminalData.inspectionCameraEndpointSubviewAuthority)) {
-    throw new Error(`Unexpected A1 terminal-joint subview authority: ${terminalData.inspectionCameraEndpointSubviewAuthority}`);
-  }
+  if (!subviewAuthorityAccepted(terminalData.inspectionCameraEndpointSubviewAuthority)) throw new Error(`Unexpected A1 terminal-joint subview authority: ${terminalData.inspectionCameraEndpointSubviewAuthority}`);
   await captureCanvas(page, canvas, `${evidenceDir}/a1-terminal-joint.png`);
 
   await selectSubview(page, 'bogie-contact');
@@ -150,31 +134,12 @@ async function selectSubview(page, subview) {
   const assemblyData = await canvas.evaluate(element => ({ ...element.dataset }));
   await captureCanvas(page, canvas, `${evidenceDir}/a1-full-assembly.png`);
 
-  const cameraView = page.getByRole('combobox', { name: 'Camera view' });
-  await cameraView.waitFor({ state: 'visible', timeout: 10000 });
-  await cameraView.selectOption('overhead');
+  await selectCameraView(page, 'overhead');
   await page.waitForTimeout(1200);
   await captureCanvas(page, canvas, `${evidenceDir}/a1-terminal-joint-overhead.png`);
 
-  const report = {
-    pageUrl,
-    capturedAtUtc: new Date().toISOString(),
-    consoleErrors,
-    pageErrors,
-    terminalTelemetry: terminalData,
-    bogieTelemetry: bogieData,
-    assemblyTelemetry: assemblyData,
-  };
-  fs.writeFileSync(`${evidenceDir}/report.json`, JSON.stringify(report, null, 2));
-
+  fs.writeFileSync(`${evidenceDir}/report.json`, JSON.stringify({ pageUrl, capturedAtUtc: new Date().toISOString(), consoleErrors, pageErrors, terminalTelemetry: terminalData, bogieTelemetry: bogieData, assemblyTelemetry: assemblyData }, null, 2));
   await browser.close();
   if (pageErrors.length) throw new Error(`A1 evidence page errors: ${pageErrors.join(' | ')}`);
-  console.log(`A1 TERMINAL JOINT EVIDENCE READY: ${JSON.stringify({
-    vestibule: numeric(terminalData.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters, 'visible vestibule'),
-    bogieClearanceMeters: numeric(bogieData.terminal4UploadedJetwayBogieGroundClearanceMeters, 'bogie clearance'),
-    subviewAuthority: terminalData.inspectionCameraEndpointSubviewAuthority,
-  })}`);
-})().catch(error => {
-  console.error(error.stack || error.message || String(error));
-  process.exit(1);
-});
+  console.log(`A1 TERMINAL JOINT EVIDENCE READY: ${JSON.stringify({ vestibule: numeric(terminalData.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters, 'visible vestibule'), bogieClearanceMeters: numeric(bogieData.terminal4UploadedJetwayBogieGroundClearanceMeters, 'bogie clearance'), subviewAuthority: terminalData.inspectionCameraEndpointSubviewAuthority })}`);
+})().catch(error => { console.error(error.stack || error.message || String(error)); process.exit(1); });
