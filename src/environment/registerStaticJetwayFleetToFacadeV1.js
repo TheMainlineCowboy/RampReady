@@ -4,8 +4,9 @@ const AUTHORITY = "57-static-authored-rotundas-real-wall-surface-registration-v4
 const GROUND_AUTHORITY = "a1-anchor-only-grounding-static-fleet-pavement-zero-v1";
 const ROOT_OFFSET_AUTHORITY = "exact-supplied-glb-authored-rotunda-center-to-model-root-v1";
 const SOURCE_WALL_LENGTH_PADDING_METERS = 0.35;
-const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0.20;
+const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 44;
+const MINIMUM_SOURCE_WALL_DISTANCE_METERS = 0.5;
 const MAXIMUM_REGISTRATION_DISPLACEMENT_METERS = 12;
 
 function wrapYaw(THREE, radians) {
@@ -81,7 +82,7 @@ function buildRegisteredPlacement(THREE, placement, authoredRotundaOffset) {
 
   const magnitude = Math.hypot(towardX, towardZ);
   if (!(magnitude > 0.95 && magnitude < 1.05)) throw new Error(`Static jetway ${placement.gate} terminal direction is not normalized: ${magnitude}`);
-  if (!(sourceWallDistance > authoredRotundaOffset.radiusMeters && sourceWallDistance < 44)) {
+  if (!(sourceWallDistance > MINIMUM_SOURCE_WALL_DISTANCE_METERS && sourceWallDistance < 44)) {
     throw new Error(`Static jetway ${placement.gate} source Rotunda-to-wall distance is invalid: ${sourceWallDistance}`);
   }
 
@@ -91,14 +92,20 @@ function buildRegisteredPlacement(THREE, placement, authoredRotundaOffset) {
   // The exact uploaded prototype is normalized around its authored Rotunda before
   // the 58 BGL placements are instantiated. Therefore sourceX/sourceZ already are
   // the physical Rotunda center for each gate. Preserve that airport-authored
-  // location instead of dragging every Rotunda to one universal 2.4 m facade leg.
+  // location. If the authored facade reaches inside the Rotunda radius, retain the
+  // direct wall/Rotunda overlap rather than inventing a positive white corridor.
   const rotundaX = sourceX;
   const rotundaZ = sourceZ;
   const wallX = rotundaX + ux * sourceWallDistance;
   const wallZ = rotundaZ + uz * sourceWallDistance;
-  const visibleTerminalLegMeters = sourceWallDistance - authoredRotundaOffset.radiusMeters;
+  const signedTerminalLegMeters = sourceWallDistance - authoredRotundaOffset.radiusMeters;
+  const visibleTerminalLegMeters = Math.max(0, signedTerminalLegMeters);
+  const terminalWallOverlapMeters = Math.max(0, -signedTerminalLegMeters);
   if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
     throw new Error(`Static jetway ${placement.gate} measured visible terminal vestibule is invalid: ${visibleTerminalLegMeters}`);
+  }
+  if (!(terminalWallOverlapMeters >= 0 && terminalWallOverlapMeters < authoredRotundaOffset.radiusMeters)) {
+    throw new Error(`Static jetway ${placement.gate} terminal wall/Rotunda overlap is invalid: ${terminalWallOverlapMeters}`);
   }
 
   const bridgeDx = targetX - rotundaX;
@@ -135,6 +142,7 @@ function buildRegisteredPlacement(THREE, placement, authoredRotundaOffset) {
     staticAuthoredRotundaOffsetZ: authoredRotundaOffset.z,
     staticAuthoredRotundaRadiusMeters: authoredRotundaOffset.radiusMeters,
     staticVisibleTerminalLegMeters: visibleTerminalLegMeters,
+    staticTerminalWallOverlapMeters: terminalWallOverlapMeters,
     staticSourceWallDistanceMeters: sourceWallDistance,
     staticResolvedRotundaCenterToWallMeters: sourceWallDistance,
     staticPhysicalRotundaRegistrationErrorMeters: physicalRotundaRegistrationError,
@@ -237,6 +245,7 @@ export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placement
     marker.userData.staticFacadeWallDistanceMeters = registered.staticResolvedRotundaCenterToWallMeters;
     marker.userData.staticAuthoredRotundaRadiusMeters = registered.staticAuthoredRotundaRadiusMeters;
     marker.userData.staticVisibleTerminalLegMeters = registered.staticVisibleTerminalLegMeters;
+    marker.userData.staticTerminalWallOverlapMeters = registered.staticTerminalWallOverlapMeters;
   }
 
   const oldConnectors = fleet.getObjectByName("UploadedAirportJetwayStaticTerminalConnectorBatches");
@@ -252,6 +261,7 @@ export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placement
   const maximumPhysicalRotundaError = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticPhysicalRotundaRegistrationErrorMeters));
   const minimumVisibleTerminalLeg = Math.min(...staticRegisteredPlacements.map((placement) => placement.staticVisibleTerminalLegMeters));
   const maximumVisibleTerminalLeg = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticVisibleTerminalLegMeters));
+  const maximumTerminalWallOverlap = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticTerminalWallOverlapMeters));
   const minimumSourceWallDistance = Math.min(...staticRegisteredPlacements.map((placement) => placement.staticSourceWallDistanceMeters));
   const maximumSourceWallDistance = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticSourceWallDistanceMeters));
   if (maximumWallError > 1e-6) throw new Error(`Static Rotunda facade registration wall error is ${maximumWallError}`);
@@ -269,6 +279,7 @@ export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placement
   group.userData.uploadedJetwayStaticAuthoredRotundaOffsetHorizontalMeters = authoredRotundaOffset.horizontalMagnitude;
   group.userData.uploadedJetwayStaticMinimumMeasuredVisibleTerminalLegMeters = minimumVisibleTerminalLeg;
   group.userData.uploadedJetwayStaticMaximumMeasuredVisibleTerminalLegMeters = maximumVisibleTerminalLeg;
+  group.userData.uploadedJetwayStaticMaximumTerminalWallRotundaOverlapMeters = maximumTerminalWallOverlap;
   group.userData.uploadedJetwayStaticMinimumMeasuredWallDistanceMeters = minimumSourceWallDistance;
   group.userData.uploadedJetwayStaticMaximumMeasuredWallDistanceMeters = maximumSourceWallDistance;
   group.userData.uploadedJetwayStaticAuthoredRotundaRadiusMeters = authoredRotundaOffset.radiusMeters;
@@ -286,6 +297,7 @@ export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placement
     authoredRotundaRadiusMeters: authoredRotundaOffset.radiusMeters,
     minimumVisibleTerminalLegMeters: minimumVisibleTerminalLeg,
     maximumVisibleTerminalLegMeters: maximumVisibleTerminalLeg,
+    maximumTerminalWallRotundaOverlapMeters: maximumTerminalWallOverlap,
     minimumRotundaCenterToWallMeters: minimumSourceWallDistance,
     maximumRotundaCenterToWallMeters: maximumSourceWallDistance,
     maximumModelRootDisplacementMeters: maximumDisplacement,
@@ -299,6 +311,7 @@ export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placement
     gateCount: 57,
     minimumVisibleTerminalLegMeters: minimumVisibleTerminalLeg,
     maximumVisibleTerminalLegMeters: maximumVisibleTerminalLeg,
+    maximumTerminalWallRotundaOverlapMeters: maximumTerminalWallOverlap,
     minimumRotundaCenterToWallMeters: minimumSourceWallDistance,
     maximumRotundaCenterToWallMeters: maximumSourceWallDistance,
     authoredRotundaOffsetX: authoredRotundaOffset.x,
