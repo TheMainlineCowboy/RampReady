@@ -75,7 +75,7 @@ jobs:
           keep_json='[]'
 
           refresh_keep() {
-            local main_response deployments pulls_pages accepted_pr_json latest_deployed_main_sha
+            local main_response deployments pulls_pages merged_pages accepted_pr_json latest_deployed_main_sha latest_merged_number
             main_response="$(get_json "repos/${GITHUB_REPOSITORY}/commits/main")"
             current_main_sha="$(jq -r '.sha' <<<"${main_response}")"
 
@@ -89,9 +89,20 @@ jobs:
             fi
 
             pulls_pages="$(get_json "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100" true)"
-            accepted_pr_json="$(
-              jq -c '
+            merged_pages="$(get_json "repos/${GITHUB_REPOSITORY}/pulls?state=closed&per_page=100" true)"
+            latest_merged_number="$(
+              jq -r '
                 [.[][]
+                  | select(.merged_at != null)
+                  | select((.title // "") | test("maintenance|storage purge|acceptance harness"; "i") | not)
+                  | select((.head.ref // "") | test("maintenance|storage|acceptance"; "i") | not)]
+                | if length == 0 then 0 else max_by(.number).number end
+              ' <<<"${merged_pages}"
+            )"
+            accepted_pr_json="$(
+              jq -c --argjson latest_merged "${latest_merged_number}" '
+                [.[][]
+                  | select(.number > $latest_merged)
                   | select((.title // "") | test("maintenance|storage purge|acceptance harness"; "i") | not)
                   | select((.head.ref // "") | test("maintenance|storage|acceptance"; "i") | not)]
                 | if length == 0 then null else max_by(.number) end
