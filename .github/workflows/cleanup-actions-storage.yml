@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - name: Purge obsolete Actions storage and runs
+      - name: Purge obsolete completed Actions storage and runs
         id: cleanup
         env:
           GH_TOKEN: ${{ github.token }}
@@ -118,16 +118,13 @@ jobs:
           deleted_caches=0
           deleted_cache_bytes=0
           deleted_runs=0
-          cancelled_runs=0
-          force_cancelled_runs=0
 
-          # Re-resolve current main, deployed main, and the accepted PR on every
-          # pass. Most importantly, never cancel an active main-branch workflow:
-          # a just-pushed Pages release is not obsolete merely because it has not
-          # become the deployed SHA yet.
-          for pass in $(seq 1 40); do
+          # IMPORTANT: cleanup must never cancel or force-cancel an active run.
+          # An in-progress PR verifier or Pages release is not disposable storage.
+          # Only COMPLETED obsolete runs are eligible for deletion.
+          for pass in $(seq 1 20); do
             refresh_keep
-            echo "Cleanup pass ${pass}: preserving event=${event_sha}, current main=${current_main_sha}, deployed main=${deployed_main_sha}, accepted PR #${accepted_pr_number:-none}=${accepted_pr_sha:-none}."
+            echo "Cleanup pass ${pass}: preserving event=${event_sha}, current main=${current_main_sha}, deployed main=${deployed_main_sha}, accepted PR #${accepted_pr_number:-none}=${accepted_pr_sha:-none}. Active workflow runs are never cancellation targets."
             progress=0
 
             artifact_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" true)"
@@ -158,63 +155,36 @@ jobs:
             done
 
             run_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)"
-            mapfile -t run_rows < <(
+            mapfile -t run_ids < <(
               jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '
                 .[] | .workflow_runs[]
                 | select((.id | tostring) != $current)
+                | select(.status == "completed")
                 | (.head_sha // "") as $sha
                 | select(($keep | index($sha)) == null)
-                | select(.status == "completed" or (.head_branch // "") != "main")
-                | [.id, .status] | @tsv
+                | .id
               ' <<<"${run_pages}"
             )
-            for row in "${run_rows[@]}"; do
-              IFS=$'\t' read -r id status <<<"${row}"
-              if [[ "${status}" == "completed" ]]; then
-                delete_one "repos/${GITHUB_REPOSITORY}/actions/runs/${id}"
-                deleted_runs=$((deleted_runs + 1))
-                progress=1
-                continue
-              fi
-
-              # Only obsolete non-main active runs are eligible for cancellation.
-              # Active main runs are explicitly excluded above so deployment and
-              # production-verification workflows can finish normally.
-              if gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/runs/${id}/cancel" >/dev/null 2>&1; then
-                cancelled_runs=$((cancelled_runs + 1))
-                progress=1
-              fi
-              sleep 1
-              status="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs/${id}" | jq -r '.status // empty')"
-              if [[ "${status}" != "completed" ]]; then
-                if gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/runs/${id}/force-cancel" >/dev/null 2>&1; then
-                  force_cancelled_runs=$((force_cancelled_runs + 1))
-                  progress=1
-                fi
-                sleep 1
-                status="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs/${id}" | jq -r '.status // empty')"
-              fi
-              if [[ "${status}" == "completed" ]]; then
-                delete_one "repos/${GITHUB_REPOSITORY}/actions/runs/${id}"
-                deleted_runs=$((deleted_runs + 1))
-                progress=1
-              fi
+            for id in "${run_ids[@]}"; do
+              delete_one "repos/${GITHUB_REPOSITORY}/actions/runs/${id}"
+              deleted_runs=$((deleted_runs + 1))
+              progress=1
             done
 
-            sleep 6
+            sleep 5
             refresh_keep
             artifact_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" true)"
             obsolete_artifacts="$(jq -r --argjson keep "${keep_json}" '[.[] | .artifacts[] | (.workflow_run.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${artifact_pages}")"
             cache_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" true)"
             remaining_caches="$(jq -r '[.[] | .actions_caches[]?] | length' <<<"${cache_pages}")"
             run_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)"
-            obsolete_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | (.head_sha // "") as $sha | select(($keep | index($sha)) == null) | select(.status == "completed" or (.head_branch // "") != "main")] | length' <<<"${run_pages}")"
+            obsolete_completed_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | select(.status == "completed") | (.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${run_pages}")"
 
-            if (( obsolete_artifacts == 0 && remaining_caches == 0 && obsolete_runs == 0 )); then
+            if (( obsolete_artifacts == 0 && remaining_caches == 0 && obsolete_completed_runs == 0 )); then
               break
             fi
             if (( progress == 0 )); then
-              echo "No deletion progress on pass ${pass}; waiting for GitHub cancellation state to settle."
+              echo "No deletion progress on pass ${pass}; leaving active runs untouched and waiting for completed-storage state to settle."
             fi
           done
 
@@ -226,14 +196,14 @@ jobs:
           cache_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" true)"
           remaining_caches="$(jq -r '[.[] | .actions_caches[]?] | length' <<<"${cache_pages}")"
           run_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)"
-          obsolete_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | (.head_sha // "") as $sha | select(($keep | index($sha)) == null) | select(.status == "completed" or (.head_branch // "") != "main")] | length' <<<"${run_pages}")"
+          obsolete_completed_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | select(.status == "completed") | (.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${run_pages}")"
 
-          echo "STORAGE CLEANUP VERIFIED: accepted PR #${accepted_pr_number:-none}=${accepted_pr_sha:-none}; current main=${current_main_sha}; deployed main=${deployed_main_sha}; deleted artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes), runs=${deleted_runs}; cancelled obsolete non-main active runs=${cancelled_runs}; force-cancelled obsolete non-main active runs=${force_cancelled_runs}; remaining obsolete artifacts=${obsolete_artifacts}, caches=${remaining_caches}, runs=${obsolete_runs}; preserved current evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
+          echo "STORAGE CLEANUP VERIFIED: accepted PR #${accepted_pr_number:-none}=${accepted_pr_sha:-none}; current main=${current_main_sha}; deployed main=${deployed_main_sha}; deleted artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes), completed runs=${deleted_runs}; remaining obsolete artifacts=${obsolete_artifacts}, caches=${remaining_caches}, completed runs=${obsolete_completed_runs}; active runs untouched; preserved current evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
 
-          (( obsolete_artifacts == 0 && remaining_caches == 0 && obsolete_runs == 0 ))
+          (( obsolete_artifacts == 0 && remaining_caches == 0 && obsolete_completed_runs == 0 ))
 
           freed_mb=$(( (deleted_artifact_bytes + deleted_cache_bytes + 524287) / 1048576 ))
-          echo "description=obsolete artifacts/runs=0 caches=0; freed ${freed_mb} MB" >> "${GITHUB_OUTPUT}"
+          echo "description=completed obsolete runs/artifacts=0 caches=0; active runs untouched; freed ${freed_mb} MB" >> "${GITHUB_OUTPUT}"
 
       - name: Check out main storage policy source
         if: always()
@@ -297,5 +267,5 @@ jobs:
           gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
             -f state=failure \
             -f context='Actions storage cleanup' \
-            -f description='Cleanup, obsolete-run purge, or one-day retention policy failed' \
+            -f description='Completed-run/artifact/cache cleanup or one-day retention policy failed; active runs were not cancelled' \
             -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
