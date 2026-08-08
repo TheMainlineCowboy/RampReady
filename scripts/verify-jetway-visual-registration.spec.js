@@ -10,6 +10,8 @@ const views = Object.freeze([
   ["b14", "b-concourse-fleet.png"],
   ["b15", "b15-terminal-jetways.png"],
 ]);
+const A1_ENDPOINT_CAMERA_AUTHORITY = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
+const A1_ENDPOINT_CAMERA_LOCK_AUTHORITY = "exact-a1-evidence-camera-direct-lock-v1";
 
 function checkpoint(stage, detail = {}) {
   fs.mkdirSync(evidenceDirectory, { recursive: true });
@@ -56,11 +58,46 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
     const response = await page.goto(presetUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
     expect(response?.ok()).toBe(true);
 
-    // Do not execute JavaScript against the fully loaded Three.js page here.
-    // The launch URL initializes inspection mode and its camera internally.
-    // A protocol-level wait/screenshot remains responsive even when the render
-    // thread is saturated by the complete Terminal 4 scene.
+    // Let the exact Terminal 4 scene and supplied jetway fleet settle before
+    // capturing. For A1, fail closed unless the runtime has switched from the
+    // stale fixed-coordinate fallback to the final wall/Rotunda/Cab-derived
+    // terminal-joint camera. This prevents an empty-ramp screenshot from ever
+    // being accepted as connection evidence again.
     await page.waitForTimeout(15000);
+    if (preset === "a1Connection") {
+      const canvas = page.locator("canvas").first();
+      await expect(canvas).toHaveAttribute(
+        "data-inspection-camera-endpoint-authority",
+        A1_ENDPOINT_CAMERA_AUTHORITY,
+        { timeout: 30000 },
+      );
+      await expect(canvas).toHaveAttribute(
+        "data-inspection-camera-endpoint-lock-authority",
+        A1_ENDPOINT_CAMERA_LOCK_AUTHORITY,
+        { timeout: 5000 },
+      );
+      await expect(canvas).toHaveAttribute(
+        "data-inspection-camera-endpoint-subview",
+        "terminal-joint",
+        { timeout: 5000 },
+      );
+      const endpointPosition = await canvas.getAttribute("data-inspection-camera-endpoint-position");
+      const endpointTarget = await canvas.getAttribute("data-inspection-camera-endpoint-target");
+      const endpointWall = await canvas.getAttribute("data-inspection-camera-endpoint-wall");
+      const endpointRotunda = await canvas.getAttribute("data-inspection-camera-endpoint-rotunda");
+      expect(endpointPosition).toBeTruthy();
+      expect(endpointTarget).toBeTruthy();
+      expect(endpointWall).toBeTruthy();
+      expect(endpointRotunda).toBeTruthy();
+      checkpoint("a1-endpoint-camera-verified", {
+        endpointPosition,
+        endpointTarget,
+        endpointWall,
+        endpointRotunda,
+      });
+      await page.waitForTimeout(750);
+    }
+
     checkpoint(`capture-${preset}`, { presetUrl });
     captures[file] = await captureViewport(page, `${evidenceDirectory}/${file}`);
     errors[preset] = { consoleErrors, pageErrors, failedRequests };

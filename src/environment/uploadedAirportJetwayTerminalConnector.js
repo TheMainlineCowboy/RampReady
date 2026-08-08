@@ -1,31 +1,31 @@
 const CONNECTOR_AUTHORITY = "measured-authored-terminal-wall-to-uploaded-rotunda-v5-facade-plane-portal-static-instanced";
 const STATIC_CONNECTOR_BATCH_AUTHORITY = "57-static-terminal-connectors-three-instanced-box-batches-v1";
+const STATIC_VISIBLE_TERMINAL_LEG_METERS = 2.4;
+const STATIC_ROTUNDA_OVERLAP_METERS = 0.12;
+const STATIC_TERMINAL_OVERLAP_METERS = 0.18;
 
 function createConnectorMaterials(THREE) {
   const shell = new THREE.MeshStandardMaterial({
     name: "Uploaded airport jetway fixed terminal connector shell",
-    color: 0xd4d2cc,
-    roughness: 0.7,
-    metalness: 0.07,
+    color: 0xe1e2df,
+    roughness: 0.78,
+    metalness: 0.08,
     side: THREE.DoubleSide,
   });
   const frame = new THREE.MeshStandardMaterial({
     name: "Uploaded airport jetway fixed connector frame",
-    color: 0x555b5e,
-    roughness: 0.56,
-    metalness: 0.38,
+    color: 0xc7cac7,
+    roughness: 0.82,
+    metalness: 0.06,
     side: THREE.DoubleSide,
   });
-  const glass = new THREE.MeshPhysicalMaterial({
-    name: "Uploaded airport jetway fixed connector glazing",
-    color: 0x597784,
-    roughness: 0.28,
-    metalness: 0.04,
-    transmission: 0.08,
-    clearcoat: 0.18,
-    transparent: true,
-    opacity: 0.58,
-    depthWrite: false,
+  // Keep the existing three-batch runtime contract, but the photo-accurate
+  // Terminal 4 vestibule is opaque solid white rather than a glazed corridor.
+  const glass = new THREE.MeshStandardMaterial({
+    name: "Uploaded airport jetway fixed connector opaque upper wall",
+    color: 0xe1e2df,
+    roughness: 0.78,
+    metalness: 0.08,
     side: THREE.DoubleSide,
   });
   const portalInterior = new THREE.MeshStandardMaterial({
@@ -40,15 +40,36 @@ function createConnectorMaterials(THREE) {
 
 function measureConnector(placement) {
   const measuredLength = Math.max(1.25, Math.min(18, Number(placement.wallConnectorLength) || 1.25));
-  const terminalOverlap = placement.gate === "A1" ? 1.45 : 0.55;
-  const length = Math.max(1.8, Math.min(19.5, measuredLength + terminalOverlap));
   const towardX = Number(placement.connectorTowardX) || 0;
   const towardZ = Number(placement.connectorTowardZ) || 0;
   const magnitude = Math.hypot(towardX, towardZ) || 1;
   const ux = towardX / magnitude;
   const uz = towardZ / magnitude;
-  const centerX = placement.x + ux * length * 0.5;
-  const centerZ = placement.z + uz * length * 0.5;
+
+  let terminalOverlap;
+  let length;
+  let startDistance;
+  if (placement.gate === "A1") {
+    // A1 is subsequently replaced by the dedicated fixed-wall Rotunda elbow;
+    // preserve the legacy dimensions here so preparation order stays stable.
+    terminalOverlap = 1.45;
+    length = Math.max(1.8, Math.min(19.5, measuredLength + terminalOverlap));
+    startDistance = 0;
+  } else {
+    // Registered static placements report wallConnectorLength from the exact
+    // authored Rotunda center to the real terminal wall. Do not start a new
+    // corridor at that center: it buries the supplied Rotunda. Begin at the
+    // Rotunda perimeter, overlap it by only 12 cm, keep exactly 2.4 m visible,
+    // and hide only 18 cm in the terminal facade.
+    const inferredRotundaRadius = Math.max(0, measuredLength - STATIC_VISIBLE_TERMINAL_LEG_METERS);
+    terminalOverlap = STATIC_TERMINAL_OVERLAP_METERS;
+    startDistance = Math.max(0, inferredRotundaRadius - STATIC_ROTUNDA_OVERLAP_METERS);
+    length = STATIC_VISIBLE_TERMINAL_LEG_METERS + STATIC_ROTUNDA_OVERLAP_METERS + STATIC_TERMINAL_OVERLAP_METERS;
+  }
+
+  const centerDistance = startDistance + length * 0.5;
+  const centerX = placement.x + ux * centerDistance;
+  const centerZ = placement.z + uz * centerDistance;
   const centerY = Number(placement.rotundaY) || 4.1;
   const yaw = Math.atan2(ux, uz);
   const sideX = Math.cos(yaw);
@@ -57,6 +78,7 @@ function measureConnector(placement) {
     measuredLength,
     terminalOverlap,
     length,
+    startDistance,
     ux,
     uz,
     centerX,
@@ -65,7 +87,7 @@ function measureConnector(placement) {
     yaw,
     sideX,
     sideZ,
-    span: length + 0.35,
+    span: length,
     halfWidth: 1.31,
   };
 }
@@ -105,7 +127,7 @@ function addBaseConnectorTransforms(placement, targets) {
       targets.glass,
       [centerX + sideOffsetX * 1.008, centerY + 0.31, centerZ + sideOffsetZ * 1.008],
       yaw,
-      [0.035, 1.0, Math.max(0.8, length - 0.12)],
+      [0.035, 1.0, length],
     );
     pushTransform(
       targets.frame,
@@ -115,6 +137,9 @@ function addBaseConnectorTransforms(placement, targets) {
     );
   }
 
+  // The two ends remain physically open for passenger passage, but the static
+  // vestibule starts inside the supplied Rotunda and ends inside the real wall,
+  // so neither open cross-section is exposed to the apron.
   for (const end of [-1, 1]) {
     const alongX = ux * end * length * 0.5;
     const alongZ = uz * end * length * 0.5;
@@ -171,6 +196,10 @@ export function addUploadedAirportJetwayStaticTerminalConnectors(THREE, fleet, p
   group.userData.connectorAuthority = CONNECTOR_AUTHORITY;
   group.userData.batchAuthority = STATIC_CONNECTOR_BATCH_AUTHORITY;
   group.userData.staticGateCount = staticPlacements.length;
+  group.userData.visibleTerminalLegMeters = STATIC_VISIBLE_TERMINAL_LEG_METERS;
+  group.userData.rotundaOverlapMeters = STATIC_ROTUNDA_OVERLAP_METERS;
+  group.userData.terminalOverlapMeters = STATIC_TERMINAL_OVERLAP_METERS;
+  group.userData.solidOpaqueTerminalVestibule = true;
   group.add(
     buildInstancedBatch(THREE, "UploadedAirportJetwayStaticConnectorShells", materials.shell, transforms.shell),
     buildInstancedBatch(THREE, "UploadedAirportJetwayStaticConnectorFrames", materials.frame, transforms.frame),
@@ -264,9 +293,9 @@ export function addUploadedAirportJetwayTerminalConnector(THREE, fleet, placemen
       }
     }
 
-    // The connector shell continues 1.45 m inside the authored terminal to
-    // eliminate daylight gaps. The visible portal collar belongs at the
-    // measured facade plane, not at the hidden end of that overlap.
+    // The legacy A1 connector is removed by the dedicated fixed-wall Rotunda
+    // elbow later in the preparation stack. Keep its portal metadata intact so
+    // earlier migration checks remain deterministic.
     const facadeDistance = Math.max(0.8, frame.measuredLength - 0.08);
     const facadeX = placement.x + ux * facadeDistance;
     const facadeZ = placement.z + uz * facadeDistance;
