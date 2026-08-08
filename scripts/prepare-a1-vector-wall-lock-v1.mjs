@@ -34,6 +34,7 @@ source = source.replace(
   fleet.updateWorldMatrix(true, true);
   const anchorParent = a1Anchor.parent;
   if (!anchorParent) throw new Error("A1 complete anchor has no parent for terminal wall lock");
+  anchorParent.updateWorldMatrix(true, false);
   const currentRotundaCenterWorld = fleet.localToWorld(new THREE.Vector3(
     rotundaOpening.centerX,
     rotundaOpening.centerY,
@@ -52,8 +53,14 @@ source = source.replace(
   }
   a1Anchor.position.x += anchorParentCorrection.x;
   a1Anchor.position.z += anchorParentCorrection.z;
+  // Some upstream source-placement stages commit parent matrices explicitly.
+  // Commit this rigid-parent correction before any world-space remeasurement so
+  // the exact Rotunda measurement cannot observe the pre-correction matrix.
+  a1Anchor.updateMatrix();
+  a1Anchor.updateMatrixWorld(true);
   group.updateMatrixWorld(true);
   fleet.updateWorldMatrix(true, true);
+  a1Model.updateWorldMatrix(true, true);
   rotundaOpening = measureExactRotundaOpening(THREE, fleet, a1Model, terminalDirection);
   const relocatedWallOffsetX`,
 );
@@ -128,13 +135,15 @@ source = source.replace(
 
 source = source.replace(
   /const INSTALLATION_AUTHORITY = "[^"]+";/,
-  'const INSTALLATION_AUTHORITY = "photo-short-parent-space-terminal-wall-lock-grounded-exact-chain-v30";',
+  'const INSTALLATION_AUTHORITY = "photo-short-parent-space-terminal-wall-lock-grounded-exact-chain-v31";',
 );
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "photo-short-parent-space-terminal-wall-lock-grounded-exact-chain-v30"',
+  'INSTALLATION_AUTHORITY = "photo-short-parent-space-terminal-wall-lock-grounded-exact-chain-v31"',
   "desiredRotundaCenterX",
   "anchorParentCorrection",
+  "a1Anchor.updateMatrix()",
+  "a1Model.updateWorldMatrix(true, true)",
   "terminalCrossTrackErrorMeters",
   "A1 full-vector terminal lock missed the measured wall",
   "uploadedJetwayA1TerminalCrossTrackErrorMeters",
@@ -146,9 +155,9 @@ for (const token of [
   "uploadedJetwayA1FinalEndpointEvidenceAuthority",
 ]) {
   if (!source.includes(token)) {
-    throw new Error(`${installationPath}: parent-space photo-short A1 wall lock output is missing ${token}`);
+    throw new Error(`${installationPath}: committed parent-space photo-short A1 wall lock output is missing ${token}`);
   }
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Locked the complete A1 parent to the real Terminal 4 wall in the anchor parent's coordinate system, preserving the short photo-matched vestibule and every supplied child transform.");
+console.log("Locked and explicitly committed the complete A1 parent to the real Terminal 4 wall before remeasurement, preserving every supplied child transform.");
