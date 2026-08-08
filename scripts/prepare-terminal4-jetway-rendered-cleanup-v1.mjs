@@ -8,6 +8,7 @@ const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-v
 const STATIC_SOLID_VESTIBULE_INSTANCE_COUNT = 228;
 const A1_TERMINAL_WALL_HIDDEN_OVERLAP_METERS = 0.70;
 const STATIC_TERMINAL_WALL_HIDDEN_OVERLAP_METERS = 0.70;
+const A1_ROTUNDA_TUNNEL_INTERFACE_DEPTH_METERS = 0.72;
 
 let staticRegistration = fs.readFileSync(staticRegistrationPath, "utf8");
 
@@ -167,6 +168,11 @@ fs.writeFileSync(readinessPath, readiness, "utf8");
 
 // Keep the visible A1 wall-to-Rotunda leg source-derived, but extend only the
 // terminal-side hidden seal into the real wall so the exterior cannot float detached.
+// The exact supplied Tunnel A already penetrates/overlaps the authored Rotunda
+// along the bridge axis. The remaining visible hole is therefore a shell closure
+// problem inside that overlap, not a longitudinal gap to fill or a reason to move
+// either supplied child. Convert the signed interface offset into explicit gap/
+// overlap evidence and close only a short section of the existing overlap.
 let a1Elbow = fs.readFileSync(a1ElbowPath, "utf8");
 if (a1Elbow.includes("const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;")) {
   a1Elbow = a1Elbow.replace(
@@ -176,6 +182,23 @@ if (a1Elbow.includes("const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;")) {
 } else if (!a1Elbow.includes(`const TERMINAL_HIDDEN_OVERLAP_METERS = ${A1_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)};`)) {
   throw new Error(`${a1ElbowPath}: terminal-wall hidden-overlap anchor was not found`);
 }
+
+const oldRotundaTunnelInterface = `  const rotundaTunnelAGapMeters = tunnelRotundaSurfacePoint.clone().sub(rotundaBridgeSurfacePoint).dot(bridgeDirection);\n  if (!(rotundaTunnelAGapMeters > -0.75 && rotundaTunnelAGapMeters < MAXIMUM_ROTUNDA_TUNNEL_A_GAP_METERS)) {\n    throw new Error(\`A1 Rotunda-to-Tunnel-A interface gap is invalid: \${rotundaTunnelAGapMeters}\`);\n  }`;
+const overlapAwareRotundaTunnelInterface = `  const rotundaTunnelAInterfaceOffsetMeters = tunnelRotundaSurfacePoint.clone().sub(rotundaBridgeSurfacePoint).dot(bridgeDirection);\n  const rotundaTunnelAAuthoredOverlapMeters = Math.max(0, -rotundaTunnelAInterfaceOffsetMeters);\n  const rotundaTunnelAGapMeters = Math.max(0, rotundaTunnelAInterfaceOffsetMeters);\n  if (!(rotundaTunnelAAuthoredOverlapMeters < 4.5 && rotundaTunnelAGapMeters < MAXIMUM_ROTUNDA_TUNNEL_A_GAP_METERS)) {\n    throw new Error(\`A1 Rotunda-to-Tunnel-A interface is invalid: offset=\${rotundaTunnelAInterfaceOffsetMeters}, overlap=\${rotundaTunnelAAuthoredOverlapMeters}, gap=\${rotundaTunnelAGapMeters}\`);\n  }`;
+if (a1Elbow.includes(oldRotundaTunnelInterface)) {
+  a1Elbow = a1Elbow.replace(oldRotundaTunnelInterface, overlapAwareRotundaTunnelInterface);
+} else if (!a1Elbow.includes("const rotundaTunnelAAuthoredOverlapMeters = Math.max(0, -rotundaTunnelAInterfaceOffsetMeters);")) {
+  throw new Error(`${a1ElbowPath}: Rotunda/Tunnel A signed-interface anchor was not found`);
+}
+
+const oldBridgeSealEnd = "  const bridgeSealEndFleet = tunnelRotundaSurfacePoint.clone().addScaledVector(bridgeDirection, TUNNEL_A_HIDDEN_OVERLAP_METERS);";
+const overlapAwareBridgeSealEnd = `  const bridgeSealEndFleet = rotundaTunnelAAuthoredOverlapMeters > 0\n    ? rotundaBridgeSurfacePoint.clone().addScaledVector(bridgeDirection, ${A1_ROTUNDA_TUNNEL_INTERFACE_DEPTH_METERS.toFixed(2)})\n    : tunnelRotundaSurfacePoint.clone().addScaledVector(bridgeDirection, TUNNEL_A_HIDDEN_OVERLAP_METERS);`;
+if (a1Elbow.includes(oldBridgeSealEnd)) {
+  a1Elbow = a1Elbow.replace(oldBridgeSealEnd, overlapAwareBridgeSealEnd);
+} else if (!a1Elbow.includes("rotundaTunnelAAuthoredOverlapMeters > 0")) {
+  throw new Error(`${a1ElbowPath}: Rotunda/Tunnel A sleeve endpoint anchor was not found`);
+}
+
 for (const token of [
   "function projectedSurfaceDistance(vertices, origin, direction)",
   "const rotundaVertices = collectObjectVerticesInFleet(THREE, fleet, rotunda);",
@@ -186,14 +209,17 @@ for (const token of [
   "const ROTUNDA_SHELL_OVERLAP_METERS = 0.10;",
   "shellEnd = rotundaSurfacePoint.clone().addScaledVector(terminalToRotunda, ROTUNDA_SHELL_OVERLAP_METERS)",
   "uploadedJetwayA1AuthoredRotundaTerminalSurfaceMeters",
+  "const rotundaTunnelAAuthoredOverlapMeters = Math.max(0, -rotundaTunnelAInterfaceOffsetMeters);",
+  "rotundaTunnelAAuthoredOverlapMeters > 0",
 ]) {
   if (!a1Elbow.includes(token)) {
-    throw new Error(`${a1ElbowPath}: authored-Rotunda-surface A1 vestibule contract is missing ${token}`);
+    throw new Error(`${a1ElbowPath}: authored-Rotunda-surface A1 vestibule/interface contract is missing ${token}`);
   }
 }
 for (const forbidden of [
   "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;",
   "const ROTUNDA_SHELL_OVERLAP_METERS = 0.82;",
+  "rotundaTunnelAGapMeters > -0.75",
   "collarPoint = fixedWallPoint.clone().addScaledVector(terminalDirection, -VISIBLE_TERMINAL_LEG_METERS)",
 ]) {
   if (a1Elbow.includes(forbidden)) {
@@ -202,4 +228,4 @@ for (const forbidden of [
 }
 fs.writeFileSync(a1ElbowPath, a1Elbow, "utf8");
 
-console.log(`Prepared rendered Terminal 4 cleanup: all 57 static gates now measure the exact supplied Rotunda->Tunnel A axis before rigid-parent registration, use short solid white vestibules sealed ${STATIC_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m into the real facade, and keep the Rotunda terminal-side/Cab aircraft-side; A1 remains source-driven and seals ${A1_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m into the terminal wall; downstream measured bogie readiness remains the sole owner of final exact-model ground-contact validation.`);
+console.log(`Prepared rendered Terminal 4 cleanup: all 57 static gates now measure the exact supplied Rotunda->Tunnel A axis before rigid-parent registration, use short solid white vestibules sealed ${STATIC_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m into the real facade, and keep the Rotunda terminal-side/Cab aircraft-side; A1 remains source-driven, seals ${A1_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m into the terminal wall, and closes only ${A1_ROTUNDA_TUNNEL_INTERFACE_DEPTH_METERS.toFixed(2)} m of the authored Rotunda/Tunnel A overlap instead of inventing a longitudinal filler; downstream measured bogie readiness remains the sole owner of final exact-model ground-contact validation.`);
