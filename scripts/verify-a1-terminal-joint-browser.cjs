@@ -61,26 +61,20 @@ async function captureCanvas(page, canvas, path) {
       && canvas?.dataset.terminal4UploadedJetwayCount === '58';
   }, null, { timeout: 90000 });
 
-  // Production exposes Free-drive inspection as a real top-level button. Avoid
-  // routing through the session <details>/<summary> menu: that menu is for
-  // equipment/gyro actions and its summary is not a button role. Trigger the
-  // actual control through the DOM, then fail closed on the canvas state.
-  await page.waitForFunction(() => {
-    const control = document.querySelector('.rr-inspection-toggle');
-    return control instanceof HTMLButtonElement && !control.disabled;
-  }, null, { timeout: 10000 });
-  const activated = await page.evaluate(() => {
-    const control = document.querySelector('.rr-inspection-toggle');
-    if (!(control instanceof HTMLButtonElement) || control.disabled) return false;
-    control.click();
-    return true;
-  });
-  if (!activated) throw new Error('Free-drive inspection control was not activatable');
+  // Use the production-prepared evidence bridge instead of a transient UI
+  // class. The bridge only activates the same inspection state and preset that
+  // the user-facing controls own; all physical acceptance remains fail-closed
+  // on the canvas telemetry and captured render.
+  await page.waitForFunction(() => (
+    typeof window.__RAMPREADY_VISUAL_EVIDENCE_ENABLE_INSPECTION__ === 'function'
+      && typeof window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ === 'function'
+  ), null, { timeout: 10000 });
+  const activation = await page.evaluate(() => window.__RAMPREADY_VISUAL_EVIDENCE_ENABLE_INSPECTION__());
+  if (activation !== 'active') throw new Error(`Visual evidence inspection activation failed: ${activation}`);
   await page.waitForFunction(() => document.querySelector('canvas.trainerCanvas')?.dataset.inspectionMode === 'active', null, { timeout: 10000 });
 
-  const location = page.getByRole('combobox', { name: 'Inspection location' });
-  await location.waitFor({ state: 'visible', timeout: 10000 });
-  await location.selectOption('a1Connection');
+  const selectedPreset = await page.evaluate(() => window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__('a1Connection'));
+  if (selectedPreset !== 'a1Connection') throw new Error(`A1 evidence preset activation failed: ${selectedPreset}`);
   await page.waitForFunction(() => document.querySelector('canvas.trainerCanvas')?.dataset.inspectionPreset === 'a1Connection', null, { timeout: 10000 });
   await page.waitForTimeout(1800);
 
@@ -100,7 +94,9 @@ async function captureCanvas(page, canvas, path) {
   await page.addStyleTag({ content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}' });
   await captureCanvas(page, canvas, `${evidenceDir}/a1-terminal-joint.png`);
 
-  await page.locator('.rr-view-select').first().selectOption('overhead');
+  const cameraView = page.getByRole('combobox', { name: 'Camera view' });
+  await cameraView.waitFor({ state: 'visible', timeout: 10000 });
+  await cameraView.selectOption('overhead');
   await page.waitForTimeout(1200);
   await captureCanvas(page, canvas, `${evidenceDir}/a1-terminal-joint-overhead.png`);
 
