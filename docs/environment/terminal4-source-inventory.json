@@ -1,11 +1,12 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "workstream": "PHX Terminal 4 B15-to-A1 operational corridor",
   "status": "source-inventory",
   "sourceRepository": {
     "repository": "TheMainlineCowboy/SkyHarborPhx",
     "repositoryId": 1304606198,
     "defaultBranch": "main",
+    "sourceCommit": "7422b5bdaa2112db70072bfd01a802dd42e86f6a",
     "hostingUse": "source-only",
     "runtimeImportAllowed": false
   },
@@ -18,11 +19,13 @@
   "requiredSourceArtifacts": [
     {
       "path": "scenery/term4.BGL",
+      "sourceBlobSha": "c2c6cefe0fc2e7b2dc222d59386b7e4cfa7e6449",
       "role": "Terminal 4 primary geometry and/or placement source",
       "state": "identified-not-extracted"
     },
     {
       "path": "scenery/KPHX_ADEX.BGL",
+      "sourceBlobSha": "fa185427e154eb92058e755b9fbdb1ad799317ed",
       "role": "airport layout, parking, heading, taxi and placement authority",
       "state": "identified-not-extracted"
     },
@@ -52,6 +55,7 @@
     "extract only assets required for the B15-to-A1 corridor",
     "preserve source-derived scale, orientation and placement provenance",
     "record every manual correction separately from source-derived values",
+    "verify source commit and blob pins before extraction",
     "convert only cleaned corridor assets to browser-ready GLB or glTF",
     "partition geometry into loadable sectors and levels of detail",
     "do not copy raw BGL, BMP or DDS files into the production runtime"
@@ -74,6 +78,7 @@
   ],
   "releaseGates": [
     "ADEX-derived gate identifiers and placements are recorded before scenario selection is enabled",
+    "source commit and required BGL blob identities are pinned before extraction",
     "debug markers expose every gate point, heading, path and clearance envelope",
     "converted assets validate and stay within documented browser budgets",
     "the live simulator loads only the selected Terminal 4 sector",
