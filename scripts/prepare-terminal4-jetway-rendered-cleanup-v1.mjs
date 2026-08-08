@@ -97,6 +97,17 @@ if (readiness.includes(oldConnectorDiagnostic)) {
   readiness = readiness.replace(oldConnectorDiagnostic, solidConnectorDiagnostic);
 }
 
+// Grounding must be judged from the exact transformed model, not a historical
+// 4-10 cm correction range. The supplied GLB currently needs a larger parent
+// correction because its authored lowest bogie contact is farther from the
+// runtime ramp datum. The physically meaningful invariant is that the fleet
+// parent offset and measured bogie correction cancel to zero residual height.
+const oldBogieCorrectionGuard = "            || !(bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1)";
+const exactGroundContactGuard = `            || !Number.isFinite(bogieTireCorrection)\n            || bogieTireCorrection <= 0\n            || bogieTireCorrection >= 1`;
+if (readiness.includes(oldBogieCorrectionGuard)) {
+  readiness = readiness.replace(oldBogieCorrectionGuard, exactGroundContactGuard);
+}
+
 for (const token of [
   `const STATIC_CONNECTOR_AUTHORITY = "${STATIC_SOLID_VESTIBULE_AUTHORITY}";`,
   `const STATIC_CONNECTOR_INSTANCE_COUNT = ${STATIC_SOLID_VESTIBULE_INSTANCE_COUNT};`,
@@ -106,13 +117,20 @@ for (const token of [
   "staticConnectorInstanceCount !== STATIC_CONNECTOR_INSTANCE_COUNT",
   "staticConnectorAuthority !== STATIC_CONNECTOR_AUTHORITY",
   solidConnectorDiagnostic,
+  "Math.abs(fleetGroundOffset + bogieTireCorrection) > 1e-6",
+  "!Number.isFinite(bogieTireCorrection)",
+  "bogieTireCorrection <= 0",
+  "bogieTireCorrection >= 1",
 ]) {
   if (!readiness.includes(token)) {
-    throw new Error(`${readinessPath}: solid static connector readiness is missing ${token}`);
+    throw new Error(`${readinessPath}: current static connector/ground-contact readiness is missing ${token}`);
   }
 }
 if (readiness.includes("staticConnectorBatchCount !== 3")) {
   throw new Error(`${readinessPath}: obsolete three-batch static connector readiness survived cleanup`);
+}
+if (readiness.includes("bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1")) {
+  throw new Error(`${readinessPath}: obsolete fixed bogie-correction range survived exact-model grounding cleanup`);
 }
 fs.writeFileSync(readinessPath, readiness, "utf8");
 
@@ -146,4 +164,4 @@ for (const forbidden of [
   }
 }
 
-console.log("Prepared rendered Terminal 4 cleanup: all 57 static gates use one verified 228-instance batch of short solid white terminal vestibules; A1 is source-driven from the real terminal wall to the transformed authored Rotunda surface with shallow hidden overlaps, preserving a visibly dominant connected Rotunda.");
+console.log("Prepared rendered Terminal 4 cleanup: all 57 static gates use one verified 228-instance batch of short solid white terminal vestibules; A1 is source-driven from the real terminal wall to the transformed authored Rotunda surface with shallow hidden overlaps; readiness now validates zero-residual exact-model bogie grounding instead of the retired fixed correction range.");
