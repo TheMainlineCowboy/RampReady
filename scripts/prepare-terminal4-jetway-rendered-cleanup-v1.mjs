@@ -41,7 +41,7 @@ if (staticRegistration.includes(oldEndpointResolve)) {
   throw new Error(`${staticRegistrationPath}: exact supplied bridge-axis endpoint anchor was not found`);
 }
 
-const oldCenterBlock = `  const worldCenter = worldBounds.getCenter(new THREE.Vector3());\n  const localCenter = a1Anchor.worldToLocal(worldCenter.clone());`;
+const oldCenterBlock = `  const worldCenter = worldBounds.getCenter(new THREE.Vector3());\n  const worldSize = worldBounds.getSize(new THREE.Vector3());\n  const localCenter = a1Anchor.worldToLocal(worldCenter.clone());`;
 const measuredCenterBlock = `  const worldCenter = worldBounds.getCenter(new THREE.Vector3());\n  const tunnelWorldBounds = new THREE.Box3().setFromObject(tunnelA);\n  if (tunnelWorldBounds.isEmpty()) throw new Error("Exact supplied Tunnel A has empty bounds during static registration");\n  const tunnelWorldCenter = tunnelWorldBounds.getCenter(new THREE.Vector3());\n  const localCenter = a1Anchor.worldToLocal(worldCenter.clone());\n  const localTunnelCenter = a1Anchor.worldToLocal(tunnelWorldCenter.clone());\n  const authoredBridgeAxis = localTunnelCenter.clone().sub(localCenter);\n  authoredBridgeAxis.y = 0;\n  if (authoredBridgeAxis.lengthSq() < 0.25) throw new Error("Exact supplied Rotunda->Tunnel A bridge axis is degenerate");\n  authoredBridgeAxis.normalize();\n  const bridgeAxisHeadingRadians = Math.atan2(authoredBridgeAxis.x, authoredBridgeAxis.z);`;
 if (staticRegistration.includes(oldCenterBlock)) {
   staticRegistration = staticRegistration.replace(oldCenterBlock, measuredCenterBlock);
