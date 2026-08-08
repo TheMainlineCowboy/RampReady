@@ -35,8 +35,10 @@ jobs:
       - name: Build production site
         run: npm run build
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install pinned Playwright and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
 
       - name: Serve exact production build
         run: |
