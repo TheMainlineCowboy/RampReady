@@ -2,8 +2,12 @@ const SOURCE_REGISTERED_A1_ELBOW_AUTHORITY = "photo-registered-a1-fixed-wall-rot
 const TARGET_DIRECTION_AUTHORITY = "source-a1-door-target-owns-aircraft-side-bridge-heading-v1";
 const CONNECTOR_AUTHORITY = "real-terminal-fixed-rotunda-independent-aircraft-side-elbow-v3";
 const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-compact-solid-terminal-leg-fixed-wall-v4-authored-rotunda-surface";
-const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;
+const ROTUNDA_TUNNEL_A_SEAL_AUTHORITY = "measured-authored-rotunda-tunnel-a-flexible-bellows-seal-v1";
+const TERMINAL_HIDDEN_OVERLAP_METERS = 0.70;
 const ROTUNDA_SHELL_OVERLAP_METERS = 0.10;
+const ROTUNDA_BRIDGE_HIDDEN_OVERLAP_METERS = 0.18;
+const TUNNEL_A_HIDDEN_OVERLAP_METERS = 0.24;
+const MAXIMUM_ROTUNDA_TUNNEL_A_GAP_METERS = 4.0;
 const MINIMUM_CORNER_ANGLE_DEGREES = 45;
 const MAXIMUM_CORNER_ANGLE_DEGREES = 150;
 const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.2;
@@ -27,6 +31,7 @@ function removeGeneratedA1TerminalGeometry(fleet) {
       || name.startsWith("UploadedAirportJetwayA1Terminal")
       || name.startsWith("UploadedAirportJetwayA1ShortTerminalVestibule")
       || name.startsWith("UploadedAirportJetwayA1RotundaVestibule")
+      || name.startsWith("UploadedAirportJetwayA1RotundaBridge")
     ) removals.push(entry);
   });
   const roots = removals.filter((entry) => !removals.includes(entry.parent));
@@ -79,6 +84,24 @@ function projectedSurfaceDistance(vertices, origin, direction) {
     maximumProjection = Math.max(maximumProjection, vertex.clone().sub(origin).dot(direction));
   }
   return maximumProjection;
+}
+
+function projectedSpan(vertices, origin, axis) {
+  let minimumProjection = Number.POSITIVE_INFINITY;
+  let maximumProjection = Number.NEGATIVE_INFINITY;
+  for (const vertex of vertices) {
+    const projection = vertex.clone().sub(origin).dot(axis);
+    minimumProjection = Math.min(minimumProjection, projection);
+    maximumProjection = Math.max(maximumProjection, projection);
+  }
+  return maximumProjection - minimumProjection;
+}
+
+function pointFromFleetToObjectLocal(fleet, object, pointInFleet) {
+  fleet.updateWorldMatrix(true, true);
+  object.updateWorldMatrix(true, true);
+  const worldPoint = fleet.localToWorld(pointInFleet.clone());
+  return object.worldToLocal(worldPoint);
 }
 
 function createMaterials(THREE) {
@@ -178,6 +201,47 @@ function addCompactRotundaBellows(THREE, parent, materials, center, direction, w
   }
 }
 
+function addRotundaBridgeBellowsSleeve(THREE, parent, material, start, direction, length, centerY, width, height) {
+  const yaw = Math.atan2(direction.x, direction.z);
+  const side = new THREE.Vector3(direction.z, 0, -direction.x).normalize();
+  const center = start.clone().addScaledVector(direction, length * 0.5);
+  center.y = centerY;
+  const halfWidth = width * 0.5;
+  addBox(THREE, parent, material, "UploadedAirportJetwayA1RotundaBridgeBellowsRoof", [width, 0.16, length], center.clone().add(new THREE.Vector3(0, height * 0.5, 0)), yaw);
+  addBox(THREE, parent, material, "UploadedAirportJetwayA1RotundaBridgeBellowsFloor", [width, 0.14, length], center.clone().add(new THREE.Vector3(0, -height * 0.5, 0)), yaw);
+  for (const sign of [-1, 1]) {
+    addBox(
+      THREE,
+      parent,
+      material,
+      `UploadedAirportJetwayA1RotundaBridgeBellowsWall_${sign}`,
+      [0.12, height, length],
+      center.clone().addScaledVector(side, sign * halfWidth),
+      yaw,
+    );
+  }
+  let ribCount = 0;
+  for (let distance = 0.16; distance < length - 0.08; distance += 0.24) {
+    const ribCenter = start.clone().addScaledVector(direction, distance);
+    ribCenter.y = centerY;
+    addBox(THREE, parent, material, `UploadedAirportJetwayA1RotundaBridgeBellowsTopRib_${ribCount}`, [width + 0.05, 0.05, 0.045], ribCenter.clone().add(new THREE.Vector3(0, height * 0.5 + 0.02, 0)), yaw, false);
+    for (const sign of [-1, 1]) {
+      addBox(
+        THREE,
+        parent,
+        material,
+        `UploadedAirportJetwayA1RotundaBridgeBellowsSideRib_${ribCount}_${sign}`,
+        [0.045, height * 0.95, 0.045],
+        ribCenter.clone().addScaledVector(side, sign * (halfWidth + 0.02)),
+        yaw,
+        false,
+      );
+    }
+    ribCount += 1;
+  }
+  return { yaw, ribCount };
+}
+
 function wrappedAngle(THREE, radians) {
   return THREE.MathUtils.euclideanModulo(radians + Math.PI, Math.PI * 2) - Math.PI;
 }
@@ -258,9 +322,6 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
     throw new Error(`A1 fixed-wall Rotunda did not produce the required visible elbow: ${cornerAngleDegrees.toFixed(3)} degrees`);
   }
 
-  // Derive the terminal-side interface from the transformed authored Rotunda
-  // itself. The generated vestibule is allowed to overlap the real Rotunda only
-  // by a shallow seal; it must never invent a collar radius from wall distance.
   const rotundaVertices = collectObjectVerticesInFleet(THREE, fleet, rotunda);
   const rotundaTerminalSurfaceMeters = projectedSurfaceDistance(rotundaVertices, rotundaCenter, terminalDirection);
   if (!(rotundaTerminalSurfaceMeters > 0.7 && rotundaTerminalSurfaceMeters < 3.4)) {
@@ -273,6 +334,35 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
     throw new Error(`A1 authored wall-to-Rotunda visible vestibule is not compact: ${visibleTerminalLegMeters}`);
   }
 
+  const rotundaBridgeSurfaceMeters = projectedSurfaceDistance(rotundaVertices, rotundaCenter, bridgeDirection);
+  if (!(rotundaBridgeSurfaceMeters > 0.7 && rotundaBridgeSurfaceMeters < 3.4)) {
+    throw new Error(`A1 authored Rotunda bridge-facing radius is invalid: ${rotundaBridgeSurfaceMeters}`);
+  }
+  const rotundaBridgeSurfacePoint = rotundaCenter.clone().addScaledVector(bridgeDirection, rotundaBridgeSurfaceMeters);
+  rotundaBridgeSurfacePoint.y = rotundaCenter.y;
+  const tunnelVertices = collectObjectVerticesInFleet(THREE, fleet, tunnelA);
+  const tunnelRotundaDirection = bridgeDirection.clone().multiplyScalar(-1);
+  const tunnelRotundaSurfaceMeters = projectedSurfaceDistance(tunnelVertices, tunnelCenterAfter, tunnelRotundaDirection);
+  if (!(tunnelRotundaSurfaceMeters > 0.2 && tunnelRotundaSurfaceMeters < 12)) {
+    throw new Error(`A1 authored Tunnel A Rotunda-facing extent is invalid: ${tunnelRotundaSurfaceMeters}`);
+  }
+  const tunnelRotundaSurfacePoint = tunnelCenterAfter.clone().addScaledVector(tunnelRotundaDirection, tunnelRotundaSurfaceMeters);
+  const rotundaTunnelAGapMeters = tunnelRotundaSurfacePoint.clone().sub(rotundaBridgeSurfacePoint).dot(bridgeDirection);
+  if (!(rotundaTunnelAGapMeters > -0.75 && rotundaTunnelAGapMeters < MAXIMUM_ROTUNDA_TUNNEL_A_GAP_METERS)) {
+    throw new Error(`A1 Rotunda-to-Tunnel-A interface gap is invalid: ${rotundaTunnelAGapMeters}`);
+  }
+  const bridgeSideAxis = new THREE.Vector3(bridgeDirection.z, 0, -bridgeDirection.x).normalize();
+  const tunnelCrossSectionWidthMeters = projectedSpan(tunnelVertices, tunnelCenterAfter, bridgeSideAxis);
+  const tunnelCrossSectionHeightMeters = projectedSpan(tunnelVertices, tunnelCenterAfter, new THREE.Vector3(0, 1, 0));
+  if (!(tunnelCrossSectionWidthMeters > 1.8 && tunnelCrossSectionWidthMeters < 5.5)) {
+    throw new Error(`A1 Tunnel A cross-section width is invalid: ${tunnelCrossSectionWidthMeters}`);
+  }
+  if (!(tunnelCrossSectionHeightMeters > 1.8 && tunnelCrossSectionHeightMeters < 4.8)) {
+    throw new Error(`A1 Tunnel A cross-section height is invalid: ${tunnelCrossSectionHeightMeters}`);
+  }
+  const bridgeBellowsWidthMeters = THREE.MathUtils.clamp(tunnelCrossSectionWidthMeters * 1.02, 2.45, 3.45);
+  const bridgeBellowsHeightMeters = THREE.MathUtils.clamp(tunnelCrossSectionHeightMeters * 1.02, 2.30, 3.20);
+
   const terminalToRotunda = terminalDirection.clone().multiplyScalar(-1);
   const shellStart = fixedWallPoint.clone().addScaledVector(terminalDirection, TERMINAL_HIDDEN_OVERLAP_METERS);
   const shellEnd = rotundaSurfacePoint.clone().addScaledVector(terminalToRotunda, ROTUNDA_SHELL_OVERLAP_METERS);
@@ -281,10 +371,22 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   const shellLength = shellVector.length();
   shellVector.normalize();
 
+  const bridgeSealStartFleet = rotundaBridgeSurfacePoint.clone().addScaledVector(bridgeDirection, -ROTUNDA_BRIDGE_HIDDEN_OVERLAP_METERS);
+  const bridgeSealEndFleet = tunnelRotundaSurfacePoint.clone().addScaledVector(bridgeDirection, TUNNEL_A_HIDDEN_OVERLAP_METERS);
+  const bridgeSealStartLocal = pointFromFleetToObjectLocal(fleet, anchor, bridgeSealStartFleet);
+  const bridgeSealEndLocal = pointFromFleetToObjectLocal(fleet, anchor, bridgeSealEndFleet);
+  const bridgeSealVectorLocal = bridgeSealEndLocal.clone().sub(bridgeSealStartLocal);
+  bridgeSealVectorLocal.y = 0;
+  const bridgeSealLengthMeters = bridgeSealVectorLocal.length();
+  if (!(bridgeSealLengthMeters > 0.08 && bridgeSealLengthMeters < MAXIMUM_ROTUNDA_TUNNEL_A_GAP_METERS + 1)) {
+    throw new Error(`A1 Rotunda-to-Tunnel-A bellows sleeve length is invalid: ${bridgeSealLengthMeters}`);
+  }
+  bridgeSealVectorLocal.normalize();
+
   const removedGeneratedTerminalObjects = removeGeneratedA1TerminalGeometry(fleet);
+  const materials = createMaterials(THREE);
   const connector = new THREE.Group();
   connector.name = "UploadedAirportJetwayTerminalConnector_A1";
-  const materials = createMaterials(THREE);
   const width = 2.58;
   const height = 2.44;
   const frame = addContinuousShell(THREE, connector, materials, shellStart, shellVector, shellLength, rotundaCenter.y, width, height);
@@ -300,6 +402,27 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   connector.userData.passengerPassageCrossSectionBlocked = false;
   connector.userData.apronFacingOpenAreaMeters = 0;
   fleet.add(connector);
+
+  const bridgeJoint = new THREE.Group();
+  bridgeJoint.name = "UploadedAirportJetwayA1RotundaBridgeBellows";
+  const bridgeJointFrame = addRotundaBridgeBellowsSleeve(
+    THREE,
+    bridgeJoint,
+    materials.bellows,
+    bridgeSealStartLocal,
+    bridgeSealVectorLocal,
+    bridgeSealLengthMeters,
+    (bridgeSealStartLocal.y + bridgeSealEndLocal.y) * 0.5,
+    bridgeBellowsWidthMeters,
+    bridgeBellowsHeightMeters,
+  );
+  bridgeJoint.userData.authority = ROTUNDA_TUNNEL_A_SEAL_AUTHORITY;
+  bridgeJoint.userData.rotundaTunnelAGapMeters = rotundaTunnelAGapMeters;
+  bridgeJoint.userData.sleeveLengthMeters = bridgeSealLengthMeters;
+  bridgeJoint.userData.sleeveWidthMeters = bridgeBellowsWidthMeters;
+  bridgeJoint.userData.sleeveHeightMeters = bridgeBellowsHeightMeters;
+  bridgeJoint.userData.visibleOpenAreaMeters = 0;
+  anchor.add(bridgeJoint);
 
   const cabVertices = collectObjectVerticesInFleet(THREE, fleet, cab);
   const cabContact = endpointBandCenter(THREE, cabVertices, rotundaCenter, bridgeDirection);
@@ -337,12 +460,21 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   group.userData.uploadedJetwayA1ExactMeasuredWallWorldY = fixedWallPoint.y;
   group.userData.uploadedJetwayA1ExactMeasuredWallWorldZ = fixedWallPoint.z;
   group.userData.uploadedJetwayA1AuthoredRotundaTerminalSurfaceMeters = rotundaTerminalSurfaceMeters;
+  group.userData.uploadedJetwayA1RotundaTunnelASealAuthority = ROTUNDA_TUNNEL_A_SEAL_AUTHORITY;
+  group.userData.uploadedJetwayA1RotundaBridgeSurfaceMeters = rotundaBridgeSurfaceMeters;
+  group.userData.uploadedJetwayA1TunnelARotundaSurfaceMeters = tunnelRotundaSurfaceMeters;
+  group.userData.uploadedJetwayA1RotundaTunnelAGapMeters = rotundaTunnelAGapMeters;
+  group.userData.uploadedJetwayA1RotundaBridgeBellowsLengthMeters = bridgeSealLengthMeters;
+  group.userData.uploadedJetwayA1RotundaBridgeBellowsWidthMeters = bridgeBellowsWidthMeters;
+  group.userData.uploadedJetwayA1RotundaBridgeBellowsHeightMeters = bridgeBellowsHeightMeters;
+  group.userData.uploadedJetwayA1RotundaTunnelAVisibleOpenAreaMeters = 0;
 
   return Object.freeze({
     authority: SOURCE_REGISTERED_A1_ELBOW_AUTHORITY,
     targetDirectionAuthority: TARGET_DIRECTION_AUTHORITY,
     connectorAuthority: CONNECTOR_AUTHORITY,
     connectorStyleAuthority: CONNECTOR_STYLE_AUTHORITY,
+    rotundaTunnelASealAuthority: ROTUNDA_TUNNEL_A_SEAL_AUTHORITY,
     removedGeneratedTerminalObjects,
     yawDeltaRadians: yawDelta,
     targetAlignmentCosine,
@@ -351,6 +483,13 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
     terminalWallDistanceMeters: terminalWallDistance,
     visibleTerminalLegMeters,
     rotundaTerminalSurfaceMeters,
+    rotundaBridgeSurfaceMeters,
+    tunnelRotundaSurfaceMeters,
+    rotundaTunnelAGapMeters,
+    bridgeBellowsLengthMeters: bridgeSealLengthMeters,
+    bridgeBellowsWidthMeters,
+    bridgeBellowsHeightMeters,
+    bridgeBellowsRibCount: bridgeJointFrame.ribCount,
     terminalCornerAngleDegrees: cornerAngleDegrees,
     cabTargetHorizontalErrorMeters,
     rotundaToCabMeters,

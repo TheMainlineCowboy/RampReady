@@ -100,6 +100,20 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
 
     checkpoint(`capture-${preset}`, { presetUrl });
     captures[file] = await captureViewport(page, `${evidenceDirectory}/${file}`);
+
+    // The user's overhead inspection exposed a see-through Rotunda/Tunnel-A
+    // cavity that the side-on terminal-joint camera could hide. Preserve that
+    // exact failure mode as mandatory evidence: after the endpoint-derived A1
+    // camera is proved, switch the same loaded scene to the normal overhead
+    // view and retain a second screenshot before the page can pass.
+    if (preset === "a1Connection") {
+      const cameraView = page.getByRole("combobox", { name: "Camera view" });
+      await cameraView.selectOption({ label: "Overhead view" });
+      await page.waitForTimeout(2500);
+      checkpoint("capture-a1-overhead", { presetUrl });
+      captures["a1-terminal-overhead.png"] = await captureViewport(page, `${evidenceDirectory}/a1-terminal-overhead.png`);
+    }
+
     errors[preset] = { consoleErrors, pageErrors, failedRequests };
 
     const criticalConsole = consoleErrors.filter(message => /Exact jetway readiness mismatch|Airport_Jetway\.glb fleet|A1 Rotunda|Static jetway|Terminal 4|KPHX|ReferenceError|TypeError|SyntaxError/i.test(message));
