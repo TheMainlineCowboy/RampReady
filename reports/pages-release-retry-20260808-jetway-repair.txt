@@ -1,0 +1,6 @@
+RampReady GitHub Pages release retry
+
+Runtime repair merge: 5c331a61dc81b7cff4d1a8b0993b96237a463140
+Cancelled Pages run: 31245985898
+
+This reports-only commit intentionally changes no simulator, jetway, aircraft, asset, or runtime source. It exists only to trigger a fresh GitHub Pages deployment of the already verified Terminal 4 jetway repair.
