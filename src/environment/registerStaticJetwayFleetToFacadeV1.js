@@ -5,7 +5,7 @@ const GROUND_AUTHORITY = "a1-anchor-only-grounding-static-fleet-pavement-zero-v1
 const ROOT_OFFSET_AUTHORITY = "exact-supplied-glb-authored-rotunda-center-to-model-root-v1";
 const SOURCE_WALL_LENGTH_PADDING_METERS = 0.35;
 const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0.20;
-const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 18;
+const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 44;
 const MAXIMUM_REGISTRATION_DISPLACEMENT_METERS = 12;
 
 function wrapYaw(THREE, radians) {
