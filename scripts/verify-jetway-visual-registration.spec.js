@@ -12,6 +12,7 @@ const views = Object.freeze([
 ]);
 const A1_ENDPOINT_CAMERA_AUTHORITY = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const A1_ENDPOINT_CAMERA_LOCK_AUTHORITY = "exact-a1-evidence-camera-direct-lock-v1";
+const A1_ENDPOINT_SUBVIEW_AUTHORITY = "exact-a1-terminal-joint-and-bogie-contact-subviews-v2";
 
 function checkpoint(stage, detail = {}) {
   fs.mkdirSync(evidenceDirectory, { recursive: true });
@@ -35,6 +36,24 @@ async function captureViewport(page, outputPath) {
   }
 }
 
+async function selectA1TerminalJointSubview(page, canvas) {
+  await page.evaluate(() => {
+    const element = document.querySelector("canvas.trainerCanvas");
+    if (!(element instanceof HTMLCanvasElement)) throw new Error("A1 evidence canvas is missing");
+    element.dataset.a1EvidenceSubview = "terminal-joint";
+  });
+  await expect(canvas).toHaveAttribute(
+    "data-inspection-camera-endpoint-subview",
+    "terminal-joint",
+    { timeout: 30000 },
+  );
+  await expect(canvas).toHaveAttribute(
+    "data-inspection-camera-endpoint-subview-authority",
+    A1_ENDPOINT_SUBVIEW_AUTHORITY,
+    { timeout: 30000 },
+  );
+}
+
 test.setTimeout(90000);
 
 test("Terminal 4 exact jetways are visually registered to their source terminal positions", async ({ browser }) => {
@@ -56,9 +75,6 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
     const response = await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
     expect(response?.ok()).toBe(true);
 
-    // Enter the actual user-facing inspection route before asking for any
-    // inspection-only controls. The prior verifier stayed on the equipment
-    // picker and therefore could never produce jetway evidence.
     const inspectionLaunch = page.getByRole("button", { name: "Drive tug / inspect airport" });
     await expect(inspectionLaunch).toBeVisible({ timeout: 30000 });
     await inspectionLaunch.click();
@@ -77,6 +93,10 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
     await page.waitForTimeout(2500);
 
     if (preset === "a1Connection") {
+      // Selecting the location intentionally defaults to the full-assembly view.
+      // Explicitly activate the production terminal-joint evidence subview before
+      // accepting or capturing the A1 wall/Rotunda frame.
+      await selectA1TerminalJointSubview(page, canvas);
       await expect(canvas).toHaveAttribute(
         "data-inspection-camera-endpoint-authority",
         A1_ENDPOINT_CAMERA_AUTHORITY,
@@ -85,11 +105,6 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
       await expect(canvas).toHaveAttribute(
         "data-inspection-camera-endpoint-lock-authority",
         A1_ENDPOINT_CAMERA_LOCK_AUTHORITY,
-        { timeout: 5000 },
-      );
-      await expect(canvas).toHaveAttribute(
-        "data-inspection-camera-endpoint-subview",
-        "terminal-joint",
         { timeout: 5000 },
       );
       const endpointPosition = await canvas.getAttribute("data-inspection-camera-endpoint-position");
