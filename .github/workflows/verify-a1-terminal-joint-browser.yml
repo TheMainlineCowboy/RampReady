@@ -61,6 +61,12 @@ jobs:
           EVIDENCE_DIR: a1-terminal-joint-evidence
         run: node scripts/verify-a1-terminal-joint-browser.cjs
 
+      - name: Render Pixel portrait A1 free-drive evidence
+        env:
+          PAGE_URL: http://127.0.0.1:4173/RampReady/
+          EVIDENCE_DIR: a1-terminal-joint-evidence
+        run: node scripts/verify-a1-mobile-browser.cjs
+
       - name: Upload exact A1 terminal-joint evidence
         if: always()
         uses: actions/upload-artifact@v4
