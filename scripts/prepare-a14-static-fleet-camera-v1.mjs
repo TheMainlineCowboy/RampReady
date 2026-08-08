@@ -1,96 +1,61 @@
 import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
-const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v11";
+const sourceRegistrationPath = "src/environment/uploadedAirportJetwayFleet.js";
 const A1_CAMERA_AUTHORITY = "fixed-terminal-wall-rotunda-joint-evidence-a1-v10";
-const VISUAL_BRIDGE_AUTHORITY = "real-final-inspection-preset-callback-v2";
-const INITIAL_PRESET_AUTHORITY = "launch-time-inspection-preset-before-browser-interaction-v1";
-const INITIAL_SUBVIEW_AUTHORITY = "launch-time-a1-terminal-joint-subview-v1";
+const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v11";
+const VISUAL_BRIDGE_AUTHORITY = "exact-runtime-inspection-callback-visual-evidence-bridge-v2";
+const INITIAL_PRESET_AUTHORITY = "launch-time-exact-runtime-inspection-preset-v2";
+const INITIAL_SUBVIEW_AUTHORITY = "launch-time-a1-terminal-joint-subview-v2";
 let source = fs.readFileSync(trainerPath, "utf8");
 
-// A14 previously used a guessed fixed camera that rendered empty pavement.
-// Keep the source gate tug position but use the same proven chase/orbit framing
-// as B14/B15 so the camera follows the actual source-gate location.
-const exactPreset = `  a14: Object.freeze({ id: "a14", label: "A concourse midpoint", x: 218.45, z: -86.52, yaw: 2.88, cameraYaw: 2.19, cameraDistance: 32 }),`;
-const existingA14Block = /  a14: Object\.freeze\(\{[\s\S]*?\n  \}\),/;
-const oneLineA14 = /  a14: Object\.freeze\(\{ id: "a14", label: "A concourse midpoint", x: 218\.45, z: -86\.52, yaw: 2\.88, cameraYaw: -?\d+(?:\.\d+)?, cameraDistance: \d+(?:\.\d+)? \}\),/;
-if (existingA14Block.test(source)) {
-  source = source.replace(existingA14Block, exactPreset);
-} else if (oneLineA14.test(source)) {
-  source = source.replace(oneLineA14, exactPreset);
-} else if (!source.includes(exactPreset)) {
-  throw new Error(`${trainerPath}: A14 inspection preset anchor is missing`);
-}
-
-const canonicalAuthorityBlock = `    canvas.dataset.inspectionCameraAuthority = preset.cameraAuthority || (preset.cameraPosition
-      ? "${A1_CAMERA_AUTHORITY}"
-      : "free-orbit-follow-tug");`;
-if (!source.includes(canonicalAuthorityBlock)) {
-  const genericAuthorityBlock = /    canvas\.dataset\.inspectionCameraAuthority = preset(?:\.cameraAuthority \|\| \()?\.cameraPosition\n      \? "[^"]+"\n      : "free-orbit-follow-tug"\)?;/;
-  if (!genericAuthorityBlock.test(source)) {
-    throw new Error(`${trainerPath}: inspection camera authority anchor is missing`);
-  }
-  source = source.replace(genericAuthorityBlock, canonicalAuthorityBlock);
-}
+const a14Pattern = /  a14: Object\.freeze\(\{[\s\S]*?\n  \}\),\n  b14:/;
+const exactPreset = '  a14: Object.freeze({ id: "a14", label: "A concourse midpoint", x: 218.45, z: -86.52, yaw: 2.88, cameraYaw: 2.19, cameraDistance: 32 }),\n  b14:';
+if (!a14Pattern.test(source)) throw new Error(`${trainerPath}: A14 inspection preset anchor is missing`);
+source = source.replace(a14Pattern, exactPreset);
 
 source = source.replace(
-  /source-gate-apron-presets-with[^"\n]*-a1-a14-b14-b15-v\d+/g,
+  /source-gate-apron-presets-with-[^"\n]+-a1-a14-b14-b15-v\d+/g,
   CANONICAL_ROUTE_AUTHORITY,
 );
-source = source.replace(
-  /oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+|oblique-measured-final-cab-and-aircraft-a1-v\d+|fixed-terminal-wall-rotunda-joint-evidence-a1-v\d+/g,
-  A1_CAMERA_AUTHORITY,
-);
 
-// Browser evidence can request a preset in the URL and launch the trainer
-// already in inspection mode. Install that preset into the real trainer before
-// any external browser automation has to touch the fully loaded Three.js scene.
-if (!source.includes('initialInspectionPreset = "a1",')) {
-  const propAnchor = '  initialInspectionMode = false,\n  onChangeEquipment,';
-  if (!source.includes(propAnchor)) throw new Error(`${trainerPath}: initial inspection mode prop anchor is missing`);
+if (!source.includes("preset.cameraAuthority || (preset.cameraPosition")) {
   source = source.replace(
-    propAnchor,
-    '  initialInspectionMode = false,\n  initialInspectionPreset = "a1",\n  onChangeEquipment,',
+    'canvas.dataset.inspectionCameraAuthority = preset.cameraPosition\n      ? "fixed-terminal-wall-rotunda-joint-evidence-a1-v10"\n      : "free-orbit-follow-tug";',
+    'canvas.dataset.inspectionCameraAuthority = preset.cameraAuthority || (preset.cameraPosition\n      ? "fixed-terminal-wall-rotunda-joint-evidence-a1-v10"\n      : "free-orbit-follow-tug");',
   );
 }
+
+const componentSignature = `export default function RampReadyStandupTrainer({
+  equipmentId = "lektro-88",
+  initialInspectionMode = false,
+  initialInspectionPreset = "a1",
+  onChangeEquipment,`;
+const legacyComponentSignature = `export default function RampReadyStandupTrainer({
+  equipmentId = "lektro-88",
+  initialInspectionMode = false,
+  onChangeEquipment,`;
+if (!source.includes(componentSignature)) {
+  if (!source.includes(legacyComponentSignature)) throw new Error(`${trainerPath}: inspection preset component signature anchor is missing`);
+  source = source.replace(legacyComponentSignature, componentSignature);
+}
+
+const resolvedPresetAnchor = '  const [inspectionPreset, setInspectionPreset] = useState("a1");';
+const resolvedPresetBlock = `${resolvedPresetAnchor}
+  const resolvedInitialInspectionPreset = Object.prototype.hasOwnProperty.call(INSPECTION_PRESETS, initialInspectionPreset)
+    ? initialInspectionPreset
+    : "a1";`;
 if (!source.includes("const resolvedInitialInspectionPreset =")) {
-  const mountAnchor = "  const mountRef = useRef(null);";
-  if (!source.includes(mountAnchor)) throw new Error(`${trainerPath}: trainer mount anchor is missing`);
-  source = source.replace(
-    mountAnchor,
-    `  // ${INITIAL_PRESET_AUTHORITY}\n  const resolvedInitialInspectionPreset = Object.prototype.hasOwnProperty.call(INSPECTION_PRESETS, initialInspectionPreset)\n    ? initialInspectionPreset\n    : "a1";\n${mountAnchor}`,
-  );
+  if (!source.includes(resolvedPresetAnchor)) throw new Error(`${trainerPath}: resolved initial inspection preset anchor is missing`);
+  source = source.replace(resolvedPresetAnchor, resolvedPresetBlock);
 }
-source = source.replace(
-  '  const inspectionPresetRef = useRef("a1");',
-  '  const inspectionPresetRef = useRef(resolvedInitialInspectionPreset);',
-);
-source = source.replace(
-  '  const [inspectionPreset, setInspectionPreset] = useState("a1");',
-  '  const [inspectionPreset, setInspectionPreset] = useState(resolvedInitialInspectionPreset);',
-);
 
 const legacyInitialEffect = `  useEffect(() => {
-    if (!initialInspectionMode) return undefined;
-    let cancelled = false;
-    let frameId = 0;
-    let attempts = 0;
-    const activate = () => {
-      if (cancelled) return;
-      attempts += 1;
-      if (simRef.current) {
-        if (!inspectionRef.current) toggleInspectionDrive();
-        return;
-      }
-      if (attempts < 600) frameId = window.requestAnimationFrame(activate);
-    };
-    frameId = window.requestAnimationFrame(activate);
-    return () => {
-      cancelled = true;
-      window.cancelAnimationFrame(frameId);
-    };
+    if (!initialInspectionMode) return;
+    if (!inspectionRef.current) toggleInspectionDrive();
   }, [initialInspectionMode, toggleInspectionDrive]);`;
-const launchPresetEffect = `  useEffect(() => {
+const launchPresetEffect = `  // ${INITIAL_PRESET_AUTHORITY}
+  useEffect(() => {
     if (!initialInspectionMode) return undefined;
     let cancelled = false;
     let frameId = 0;
@@ -98,15 +63,14 @@ const launchPresetEffect = `  useEffect(() => {
     const activate = () => {
       if (cancelled) return;
       attempts += 1;
-      if (simRef.current) {
-        if (!inspectionRef.current) toggleInspectionDrive();
+      if (!inspectionRef.current) toggleInspectionDrive();
+      const sim = simRef.current;
+      if (sim?.renderer?.domElement) {
         moveInspectionToPreset(resolvedInitialInspectionPreset);
-        const canvas = simRef.current.renderer?.domElement;
-        if (canvas) {
-          canvas.dataset.initialInspectionPresetAuthority = "${INITIAL_PRESET_AUTHORITY}";
-          canvas.dataset.a1EvidenceSubview = resolvedInitialInspectionPreset === "a1Connection"
-            ? "terminal-joint"
-            : "full-assembly";
+        const canvas = sim.renderer.domElement;
+        canvas.dataset.initialInspectionPresetAuthority = "${INITIAL_PRESET_AUTHORITY}";
+        if (resolvedInitialInspectionPreset === "a1Connection") {
+          canvas.dataset.a1EvidenceSubview = "terminal-joint";
           canvas.dataset.initialInspectionSubviewAuthority = "${INITIAL_SUBVIEW_AUTHORITY}";
         }
         return;
@@ -131,13 +95,16 @@ if (existingLaunchPresetEffect.test(source)) {
 
 // The earlier inspection-control stage runs against a freshly regenerated
 // trainer, before INSPECTION_PRESETS/moveInspectionToPreset exist, so it exposes
-// a temporary self-contained bridge. At this final camera stage every real
-// preset exists. Replace the temporary bridge completely so browser evidence
-// uses the same callback/state/camera definitions as the visible app control.
-const temporaryBridgePattern = /  useEffect\(\(\) => \{\n    window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ = \(presetId\) => \{[\s\S]*?visual-evidence-source-gate-presets-v8[\s\S]*?\n    return \(\) => \{ delete window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__; \};\n  \}, \[\]\);/;
-const finalBridge = `  // ${VISUAL_BRIDGE_AUTHORITY}\n  useEffect(() => {\n    window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ = (presetId) => {\n      if (!Object.prototype.hasOwnProperty.call(INSPECTION_PRESETS, presetId)) return null;\n      moveInspectionToPreset(presetId);\n      return presetId;\n    };\n    return () => { delete window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__; };\n  }, [moveInspectionToPreset]);`;
+// a temporary self-contained activation/preset bridge. At this final camera
+// stage every real preset exists. Replace that bridge completely so browser
+// evidence uses the same callback/state/camera definitions as the visible app.
+const temporaryBridgePattern = /  useEffect\(\(\) => \{\n    window\.__RAMPREADY_VISUAL_EVIDENCE_ENABLE_INSPECTION__ = \(\) => \{[\s\S]*?visual-evidence-source-gate-presets-v8[\s\S]*?delete window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__;\n    \};\n  \}, \[\]\);/;
+const legacyTemporaryBridgePattern = /  useEffect\(\(\) => \{\n    window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ = \(presetId\) => \{[\s\S]*?visual-evidence-source-gate-presets-v8[\s\S]*?\n    return \(\) => \{ delete window\.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__; \};\n  \}, \[\]\);/;
+const finalBridge = `  // ${VISUAL_BRIDGE_AUTHORITY}\n  useEffect(() => {\n    window.__RAMPREADY_VISUAL_EVIDENCE_ENABLE_INSPECTION__ = () => {\n      if (!inspectionRef.current) toggleInspectionDrive();\n      return "active";\n    };\n    window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__ = (presetId) => {\n      if (!Object.prototype.hasOwnProperty.call(INSPECTION_PRESETS, presetId)) return null;\n      moveInspectionToPreset(presetId);\n      return presetId;\n    };\n    return () => {\n      delete window.__RAMPREADY_VISUAL_EVIDENCE_ENABLE_INSPECTION__;\n      delete window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__;\n    };\n  }, [moveInspectionToPreset, toggleInspectionDrive]);`;
 if (temporaryBridgePattern.test(source)) {
   source = source.replace(temporaryBridgePattern, finalBridge);
+} else if (legacyTemporaryBridgePattern.test(source)) {
+  source = source.replace(legacyTemporaryBridgePattern, finalBridge);
 } else if (!source.includes(VISUAL_BRIDGE_AUTHORITY)) {
   const advanceAnchor = "  const advance = useCallback(() => {";
   if (!source.includes(advanceAnchor) || !source.includes("const moveInspectionToPreset = useCallback")) {
@@ -152,8 +119,9 @@ for (const token of [
   `"${A1_CAMERA_AUTHORITY}"`,
   CANONICAL_ROUTE_AUTHORITY,
   VISUAL_BRIDGE_AUTHORITY,
+  "window.__RAMPREADY_VISUAL_EVIDENCE_ENABLE_INSPECTION__",
   "moveInspectionToPreset(presetId)",
-  "}, [moveInspectionToPreset]);",
+  "}, [moveInspectionToPreset, toggleInspectionDrive]);",
   INITIAL_PRESET_AUTHORITY,
   INITIAL_SUBVIEW_AUTHORITY,
   'initialInspectionPreset = "a1",',
