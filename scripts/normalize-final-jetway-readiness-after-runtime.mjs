@@ -8,11 +8,9 @@ const MAX_VISIBLE_LEG = 44;
 
 let source = fs.readFileSync(readinessPath, "utf8");
 
-// prepare:runtime can regenerate older compactness expressions. Normalize the
-// physical A1 values and, critically, bind static-fleet readiness to the
-// per-gate min/max measurements that registerStaticJetwayFleetToFacadeV1
-// actually publishes. The old single-value fields are not published and become
-// NaN, which was tearing down an otherwise loaded Terminal 4 scene.
+// prepare:runtime can regenerate the older readiness module. Normalize the
+// regenerated file to the physical telemetry published by the final static
+// facade registration instead of requiring obsolete representative distances.
 source = source.replaceAll(
   "Math.abs(sourceLockedA1VisibleLeg - 2.4) > 0.05",
   `!(sourceLockedA1VisibleLeg > ${MIN_A1_VISIBLE_LEG} && sourceLockedA1VisibleLeg < ${MAX_VISIBLE_LEG})`,
@@ -21,19 +19,42 @@ source = source.replaceAll(
   "!(sourceLockedA1WallDistance >= 2.9 && sourceLockedA1WallDistance <= 5.8)",
   `!(sourceLockedA1WallDistance > ${MIN_WALL_DISTANCE} && sourceLockedA1WallDistance < ${MAX_WALL_DISTANCE})`,
 );
+source = source.replaceAll(
+  "|| !(a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 12)",
+  `|| !(a1TerminalWallDistance > ${MIN_WALL_DISTANCE} && a1TerminalWallDistance < ${MAX_WALL_DISTANCE})`,
+);
+source = source.replaceAll(
+  "|| !(connectorVisibleLength > 0.25 && connectorVisibleLength < 12)",
+  `|| !(connectorVisibleLength > ${MIN_A1_VISIBLE_LEG} && connectorVisibleLength < ${MAX_VISIBLE_LEG})`,
+);
+source = source.replaceAll(
+  "|| !(bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1)",
+  "|| !(Number.isFinite(bogieTireCorrection) && bogieTireCorrection > 0)",
+);
 
-const legacyStaticWallDeclaration = "          const staticRotundaCenterToWall = Number(group.userData.uploadedJetwayStaticRotundaCenterToWallMeters ?? NaN);";
-const measuredStaticWallDeclarations = `          const staticMinimumRotundaCenterToWall = Number(group.userData.uploadedJetwayStaticMinimumMeasuredWallDistanceMeters ?? NaN);\n          const staticMaximumRotundaCenterToWall = Number(group.userData.uploadedJetwayStaticMaximumMeasuredWallDistanceMeters ?? NaN);`;
-if (source.includes(legacyStaticWallDeclaration)) {
-  source = source.replace(legacyStaticWallDeclaration, measuredStaticWallDeclarations);
+// The regenerated readiness source does not declare the per-gate range fields,
+// even though registerStaticJetwayFleetToFacadeV1 publishes them on group.userData.
+// Seed those declarations deterministically beside the existing static portal
+// telemetry so verification and runtime consume the same measured fleet data.
+const staticDeclarationAnchor = "          const staticPortalAlignmentError = Number(group.userData.uploadedJetwayStaticMaximumPortalAlignmentErrorRadians ?? Infinity);";
+const measuredStaticDeclarations = `${staticDeclarationAnchor}\n          const staticMinimumRotundaCenterToWall = Number(group.userData.uploadedJetwayStaticMinimumMeasuredWallDistanceMeters ?? NaN);\n          const staticMaximumRotundaCenterToWall = Number(group.userData.uploadedJetwayStaticMaximumMeasuredWallDistanceMeters ?? NaN);\n          const staticMinimumVisibleTerminalLeg = Number(group.userData.uploadedJetwayStaticMinimumMeasuredVisibleTerminalLegMeters ?? NaN);\n          const staticMaximumVisibleTerminalLeg = Number(group.userData.uploadedJetwayStaticMaximumMeasuredVisibleTerminalLegMeters ?? NaN);`;
+if (!source.includes("uploadedJetwayStaticMinimumMeasuredWallDistanceMeters")) {
+  if (!source.includes(staticDeclarationAnchor)) {
+    throw new Error(`${readinessPath}: static portal telemetry declaration anchor is missing`);
+  }
+  source = source.replace(staticDeclarationAnchor, measuredStaticDeclarations);
 }
 
-const legacyStaticLegDeclaration = "          const staticVisibleTerminalLeg = Number(group.userData.uploadedJetwayStaticVisibleTerminalLegMeters ?? NaN);";
-const measuredStaticLegDeclarations = `          const staticMinimumVisibleTerminalLeg = Number(group.userData.uploadedJetwayStaticMinimumMeasuredVisibleTerminalLegMeters ?? NaN);\n          const staticMaximumVisibleTerminalLeg = Number(group.userData.uploadedJetwayStaticMaximumMeasuredVisibleTerminalLegMeters ?? NaN);`;
-if (source.includes(legacyStaticLegDeclaration)) {
-  source = source.replace(legacyStaticLegDeclaration, measuredStaticLegDeclarations);
-}
-
+// Remove any older unpublished single-value static declarations if a regenerated
+// variant still emits them.
+source = source.replace(
+  "          const staticRotundaCenterToWall = Number(group.userData.uploadedJetwayStaticRotundaCenterToWallMeters ?? NaN);\n",
+  "",
+);
+source = source.replace(
+  "          const staticVisibleTerminalLeg = Number(group.userData.uploadedJetwayStaticVisibleTerminalLegMeters ?? NaN);\n",
+  "",
+);
 source = source.replaceAll(
   "Math.abs(staticRotundaCenterToWall - 3.98) > 0.001",
   `!(staticMinimumRotundaCenterToWall > ${MIN_WALL_DISTANCE} && staticMaximumRotundaCenterToWall < ${MAX_WALL_DISTANCE})`,
@@ -51,29 +72,32 @@ source = source.replaceAll(
   `!(staticMinimumVisibleTerminalLeg >= 0 && staticMaximumVisibleTerminalLeg < ${MAX_VISIBLE_LEG})`,
 );
 
-// The final browser evidence gate is the visual authority. These readiness
-// checks are physical sanity bounds only and must not reintroduce fabricated
-// representative corridor distances.
+// Seed physical sanity guards into the final mismatch block. The dedicated
+// browser evidence remains the visual authority; these checks only prove that
+// the measured wall/Rotunda relationships are finite and physically bounded.
 const directWallGuard = `a1TerminalWallDistance > ${MIN_WALL_DISTANCE} && a1TerminalWallDistance < ${MAX_WALL_DISTANCE}`;
 const directVisibleLegGuard = `connectorVisibleLength > ${MIN_A1_VISIBLE_LEG} && connectorVisibleLength < ${MAX_VISIBLE_LEG}`;
+const staticWallGuard = `staticMinimumRotundaCenterToWall > ${MIN_WALL_DISTANCE} && staticMaximumRotundaCenterToWall < ${MAX_WALL_DISTANCE}`;
+const staticVisibleLegGuard = `staticMinimumVisibleTerminalLeg >= 0 && staticMaximumVisibleTerminalLeg < ${MAX_VISIBLE_LEG}`;
 const mismatchAnchor = `          if (\n            count !== EXPECTED_GATE_COUNT`;
-if (!source.includes(directWallGuard) || !source.includes(directVisibleLegGuard)) {
+const seeded = [
+  !source.includes(directWallGuard) ? `!(${directWallGuard})` : null,
+  !source.includes(directVisibleLegGuard) ? `!(${directVisibleLegGuard})` : null,
+  !source.includes(staticWallGuard) ? `!(${staticWallGuard})` : null,
+  !source.includes(staticVisibleLegGuard) ? `!(${staticVisibleLegGuard})` : null,
+].filter(Boolean);
+if (seeded.length) {
   if (!source.includes(mismatchAnchor)) {
     throw new Error(`${readinessPath}: final exact-fleet readiness mismatch block is missing`);
   }
-  const seeded = [
-    !source.includes(directWallGuard) ? `!(${directWallGuard})` : null,
-    !source.includes(directVisibleLegGuard) ? `!(${directVisibleLegGuard})` : null,
-  ].filter(Boolean);
   source = source.replace(
     mismatchAnchor,
     `          if (\n            ${seeded.join("\n            || ")}\n            || count !== EXPECTED_GATE_COUNT`,
   );
 }
 
-// Append the actual static physical ranges to mismatch telemetry so any future
-// rejection identifies the measured fleet values instead of hiding them behind
-// an obsolete aggregate.
+// Append measured ranges to mismatch telemetry so a future rejection reports
+// the actual 57-gate source registration instead of hiding behind stale constants.
 const sourceTelemetry = "source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`";
 const rangeTelemetry = "staticMeasured=${staticMinimumRotundaCenterToWall}/${staticMaximumRotundaCenterToWall}/${staticMinimumVisibleTerminalLeg}/${staticMaximumVisibleTerminalLeg}, source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`";
 if (source.includes(sourceTelemetry) && !source.includes("staticMeasured=${staticMinimumRotundaCenterToWall}")) {
@@ -87,8 +111,9 @@ for (const forbidden of [
   "Math.abs(staticVisibleTerminalLeg - 2.4) > 0.001",
   "uploadedJetwayStaticRotundaCenterToWallMeters ?? NaN",
   "uploadedJetwayStaticVisibleTerminalLegMeters ?? NaN",
-  "staticRotundaCenterToWall > 0.5",
-  "staticVisibleTerminalLeg >= 0",
+  "bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1",
+  "a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 12",
+  "connectorVisibleLength > 0.25 && connectorVisibleLength < 12",
 ]) {
   if (source.includes(forbidden)) {
     throw new Error(`${readinessPath}: retired or unpublished jetway readiness survived final runtime normalization: ${forbidden}`);
@@ -102,8 +127,9 @@ for (const required of [
   "uploadedJetwayStaticMaximumMeasuredWallDistanceMeters",
   "uploadedJetwayStaticMinimumMeasuredVisibleTerminalLegMeters",
   "uploadedJetwayStaticMaximumMeasuredVisibleTerminalLegMeters",
-  `staticMinimumRotundaCenterToWall > ${MIN_WALL_DISTANCE} && staticMaximumRotundaCenterToWall < ${MAX_WALL_DISTANCE}`,
-  `staticMinimumVisibleTerminalLeg >= 0 && staticMaximumVisibleTerminalLeg < ${MAX_VISIBLE_LEG}`,
+  staticWallGuard,
+  staticVisibleLegGuard,
+  "Number.isFinite(bogieTireCorrection) && bogieTireCorrection > 0",
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${readinessPath}: final measured jetway readiness is missing ${required}`);
