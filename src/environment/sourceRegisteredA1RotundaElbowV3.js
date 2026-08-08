@@ -3,8 +3,8 @@ const TARGET_DIRECTION_AUTHORITY = "source-a1-door-target-owns-aircraft-side-bri
 const CONNECTOR_AUTHORITY = "real-terminal-fixed-rotunda-independent-aircraft-side-elbow-v3";
 const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-compact-solid-terminal-leg-fixed-wall-v3";
 const VISIBLE_TERMINAL_LEG_METERS = 2.4;
-const TERMINAL_HIDDEN_OVERLAP_METERS = 0.75;
-const ROTUNDA_SHELL_OVERLAP_METERS = 0.82;
+const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;
+const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;
 const MINIMUM_CORNER_ANGLE_DEGREES = 45;
 const MAXIMUM_CORNER_ANGLE_DEGREES = 150;
 
