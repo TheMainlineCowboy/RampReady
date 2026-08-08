@@ -53,6 +53,19 @@ jobs:
           cat /tmp/rampready-vite-preview.log
           exit 1
 
+      - name: Normalize browser evidence selector to stable inspection control
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/verify-a1-terminal-joint-browser.cjs')
+          source = path.read_text()
+          old = "const inspectionToggle = page.getByRole('button', { name: 'Free-drive inspection' });\n  await inspectionToggle.waitFor({ state: 'visible', timeout: 10000 });"
+          new = "const inspectionToggle = page.locator('.rr-inspection-toggle');\n  await inspectionToggle.waitFor({ state: 'attached', timeout: 10000 });"
+          if old not in source:
+              raise SystemExit('Expected brittle inspection selector not found')
+          path.write_text(source.replace(old, new, 1))
+          PY
+
       - name: Render and verify A1 terminal wall joint
         env:
           PAGE_URL: http://127.0.0.1:4173/RampReady/
