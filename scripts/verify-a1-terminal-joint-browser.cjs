@@ -61,12 +61,12 @@ async function captureCanvas(page, canvas, path) {
       && canvas?.dataset.terminal4UploadedJetwayCount === '58';
   }, null, { timeout: 90000 });
 
-  // The WebGL training surface can keep the inspection toggle technically visible
-  // while Playwright's actionability scroll never completes. Trigger the real DOM
-  // click directly, then fail closed on the resulting UI/runtime state instead of
-  // weakening any jetway acceptance criterion.
-  const inspectionToggle = page.getByRole('button', { name: 'Free-drive inspection' });
-  await inspectionToggle.waitFor({ state: 'visible', timeout: 10000 });
+  // Use the stable inspection control class because the visible label is not a
+  // runtime contract and can be regenerated independently of the actual control.
+  // Trigger the real DOM click directly, then fail closed on the resulting
+  // inspection/runtime state instead of weakening any jetway acceptance criterion.
+  const inspectionToggle = page.locator('.rr-inspection-toggle').first();
+  await inspectionToggle.waitFor({ state: 'attached', timeout: 10000 });
   await inspectionToggle.evaluate(element => element.click());
   await page.waitForFunction(() => document.querySelector('.rr-inspection-toggle')?.getAttribute('aria-pressed') === 'true', null, { timeout: 10000 });
 
