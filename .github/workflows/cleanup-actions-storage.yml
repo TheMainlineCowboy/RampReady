@@ -18,7 +18,7 @@ permissions:
 
 concurrency:
   group: rampready-actions-storage-cleanup
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   cleanup:
@@ -67,16 +67,27 @@ jobs:
             return 1
           }
 
-          main_sha="$(get_json "repos/${GITHUB_REPOSITORY}/commits/main" | jq -r '.sha')"
-          deployments="$(get_json "repos/${GITHUB_REPOSITORY}/deployments?environment=github-pages&per_page=100")"
-          deployed_main_sha="$(jq -r '[.[] | select((.ref // "") == "main")][0].sha // empty' <<<"${deployments}")"
-          if [[ -z "${deployed_main_sha}" ]]; then
-            deployed_main_sha="${main_sha}"
-            echo "No github-pages main deployment was returned; falling back to current main ${main_sha}."
-          fi
+          event_sha="${GITHUB_SHA}"
+          current_main_sha=""
+          deployed_main_sha=""
+          accepted_pr_number=""
+          accepted_pr_sha=""
+          keep_json='[]'
 
           refresh_keep() {
-            local pulls_pages accepted_pr_json
+            local main_response deployments pulls_pages accepted_pr_json latest_deployed_main_sha
+            main_response="$(get_json "repos/${GITHUB_REPOSITORY}/commits/main")"
+            current_main_sha="$(jq -r '.sha' <<<"${main_response}")"
+
+            deployments="$(get_json "repos/${GITHUB_REPOSITORY}/deployments?environment=github-pages&per_page=100")"
+            latest_deployed_main_sha="$(jq -r '[.[] | select((.ref // "") == "main")][0].sha // empty' <<<"${deployments}")"
+            if [[ -n "${latest_deployed_main_sha}" ]]; then
+              deployed_main_sha="${latest_deployed_main_sha}"
+            elif [[ -z "${deployed_main_sha}" ]]; then
+              deployed_main_sha="${current_main_sha}"
+              echo "No github-pages main deployment was returned; falling back to current main ${current_main_sha}."
+            fi
+
             pulls_pages="$(get_json "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100" true)"
             accepted_pr_json="$(
               jq -c '
@@ -88,7 +99,7 @@ jobs:
             )"
             accepted_pr_number="$(jq -r 'if . == null then empty else .number end' <<<"${accepted_pr_json}")"
             accepted_pr_sha="$(jq -r 'if . == null then empty else .head.sha end' <<<"${accepted_pr_json}")"
-            keep_json="$(printf '%s\n' "${deployed_main_sha}" "${accepted_pr_sha}" | jq -R . | jq -s 'map(select(length > 0)) | unique')"
+            keep_json="$(printf '%s\n' "${event_sha}" "${current_main_sha}" "${deployed_main_sha}" "${accepted_pr_sha}" | jq -R . | jq -s 'map(select(length > 0)) | unique')"
           }
 
           deleted_artifacts=0
@@ -99,12 +110,13 @@ jobs:
           cancelled_runs=0
           force_cancelled_runs=0
 
-          # Re-resolve the accepted PR head on every pass. This prevents a head
-          # advance during cleanup from leaving stale active runs behind or from
-          # treating the newly accepted exact head as obsolete.
+          # Re-resolve current main, deployed main, and the accepted PR on every
+          # pass. Most importantly, never cancel an active main-branch workflow:
+          # a just-pushed Pages release is not obsolete merely because it has not
+          # become the deployed SHA yet.
           for pass in $(seq 1 40); do
             refresh_keep
-            echo "Cleanup pass ${pass}: preserving deployed main=${deployed_main_sha} and current accepted PR #${accepted_pr_number:-none}=${accepted_pr_sha:-none}."
+            echo "Cleanup pass ${pass}: preserving event=${event_sha}, current main=${current_main_sha}, deployed main=${deployed_main_sha}, accepted PR #${accepted_pr_number:-none}=${accepted_pr_sha:-none}."
             progress=0
 
             artifact_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" true)"
@@ -141,6 +153,7 @@ jobs:
                 | select((.id | tostring) != $current)
                 | (.head_sha // "") as $sha
                 | select(($keep | index($sha)) == null)
+                | select(.status == "completed" or (.head_branch // "") != "main")
                 | [.id, .status] | @tsv
               ' <<<"${run_pages}"
             )
@@ -153,10 +166,9 @@ jobs:
                 continue
               fi
 
-              # A normal cancellation can remain queued/in_progress indefinitely.
-              # Request it first, then force-cancel only if GitHub still reports the
-              # obsolete run as active. This keeps the common path gentle while
-              # guaranteeing stale runs cannot permanently block zero-residual cleanup.
+              # Only obsolete non-main active runs are eligible for cancellation.
+              # Active main runs are explicitly excluded above so deployment and
+              # production-verification workflows can finish normally.
               if gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/runs/${id}/cancel" >/dev/null 2>&1; then
                 cancelled_runs=$((cancelled_runs + 1))
                 progress=1
@@ -185,7 +197,7 @@ jobs:
             cache_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" true)"
             remaining_caches="$(jq -r '[.[] | .actions_caches[]?] | length' <<<"${cache_pages}")"
             run_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)"
-            obsolete_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | (.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${run_pages}")"
+            obsolete_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | (.head_sha // "") as $sha | select(($keep | index($sha)) == null) | select(.status == "completed" or (.head_branch // "") != "main")] | length' <<<"${run_pages}")"
 
             if (( obsolete_artifacts == 0 && remaining_caches == 0 && obsolete_runs == 0 )); then
               break
@@ -203,9 +215,9 @@ jobs:
           cache_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" true)"
           remaining_caches="$(jq -r '[.[] | .actions_caches[]?] | length' <<<"${cache_pages}")"
           run_pages="$(get_json "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" true)"
-          obsolete_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | (.head_sha // "") as $sha | select(($keep | index($sha)) == null)] | length' <<<"${run_pages}")"
+          obsolete_runs="$(jq -r --argjson keep "${keep_json}" --arg current "${GITHUB_RUN_ID}" '[.[] | .workflow_runs[] | select((.id | tostring) != $current) | (.head_sha // "") as $sha | select(($keep | index($sha)) == null) | select(.status == "completed" or (.head_branch // "") != "main")] | length' <<<"${run_pages}")"
 
-          echo "STORAGE CLEANUP VERIFIED: accepted PR #${accepted_pr_number:-none}=${accepted_pr_sha:-none}; deployed main=${deployed_main_sha}; deleted artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes), runs=${deleted_runs}; cancelled obsolete active runs=${cancelled_runs}; force-cancelled obsolete active runs=${force_cancelled_runs}; remaining obsolete artifacts=${obsolete_artifacts}, caches=${remaining_caches}, runs=${obsolete_runs}; preserved current evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
+          echo "STORAGE CLEANUP VERIFIED: accepted PR #${accepted_pr_number:-none}=${accepted_pr_sha:-none}; current main=${current_main_sha}; deployed main=${deployed_main_sha}; deleted artifacts=${deleted_artifacts} (${deleted_artifact_bytes} bytes), caches=${deleted_caches} (${deleted_cache_bytes} bytes), runs=${deleted_runs}; cancelled obsolete non-main active runs=${cancelled_runs}; force-cancelled obsolete non-main active runs=${force_cancelled_runs}; remaining obsolete artifacts=${obsolete_artifacts}, caches=${remaining_caches}, runs=${obsolete_runs}; preserved current evidence=${preserved_artifacts} artifacts (${preserved_bytes} bytes)."
 
           (( obsolete_artifacts == 0 && remaining_caches == 0 && obsolete_runs == 0 ))
 
