@@ -1,5 +1,5 @@
 const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v1";
-const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0.20;
+const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 44;
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.70;
 const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;
@@ -23,7 +23,8 @@ function buildShellTransforms(placement) {
   const wallDistance = Number(placement.wallConnectorLength);
   const clearRotundaRadius = Number(placement.staticAuthoredRotundaRadiusMeters);
   const visibleTerminalLegMeters = Number(placement.staticVisibleTerminalLegMeters);
-  if (![rotundaX, rotundaZ, centerY, wallDistance, clearRotundaRadius, visibleTerminalLegMeters].every(Number.isFinite)) {
+  const terminalWallOverlapMeters = Number(placement.staticTerminalWallOverlapMeters) || 0;
+  if (![rotundaX, rotundaZ, centerY, wallDistance, clearRotundaRadius, visibleTerminalLegMeters, terminalWallOverlapMeters].every(Number.isFinite)) {
     throw new Error(`Static ${placement.gate} vestibule placement is incomplete`);
   }
   if (!(clearRotundaRadius > 0.7 && clearRotundaRadius < 3.5)) {
@@ -32,7 +33,10 @@ function buildShellTransforms(placement) {
   if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
     throw new Error(`Static ${placement.gate} measured visible terminal vestibule is invalid: ${visibleTerminalLegMeters}`);
   }
-  const expectedCenterToWall = clearRotundaRadius + visibleTerminalLegMeters;
+  if (!(terminalWallOverlapMeters >= 0 && terminalWallOverlapMeters < clearRotundaRadius)) {
+    throw new Error(`Static ${placement.gate} terminal wall/Rotunda overlap is invalid: ${terminalWallOverlapMeters}`);
+  }
+  const expectedCenterToWall = clearRotundaRadius + visibleTerminalLegMeters - terminalWallOverlapMeters;
   if (Math.abs(wallDistance - expectedCenterToWall) > 0.02) {
     throw new Error(`Static ${placement.gate} wall/Rotunda registration is inconsistent: ${wallDistance} vs ${expectedCenterToWall}`);
   }
@@ -58,7 +62,7 @@ function buildShellTransforms(placement) {
       [0.13, HEIGHT_METERS, shellLength],
     );
   }
-  return { transforms, visibleTerminalLegMeters, wallDistance };
+  return { transforms, visibleTerminalLegMeters, terminalWallOverlapMeters, wallDistance };
 }
 
 function buildInstancedShellBatch(THREE, material, transforms) {
@@ -96,6 +100,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   const measured = staticPlacements.map(buildShellTransforms);
   const transforms = measured.flatMap((entry) => entry.transforms);
   const visibleLengths = measured.map((entry) => entry.visibleTerminalLegMeters);
+  const wallOverlaps = measured.map((entry) => entry.terminalWallOverlapMeters);
   const wallDistances = measured.map((entry) => entry.wallDistance);
   const material = new THREE.MeshStandardMaterial({
     name: "Terminal 4 measured solid white jetway vestibule shell",
@@ -111,6 +116,8 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   group.userData.staticGateCount = 57;
   group.userData.minimumVisibleTerminalLegMeters = Math.min(...visibleLengths);
   group.userData.maximumVisibleTerminalLegMeters = Math.max(...visibleLengths);
+  group.userData.minimumTerminalWallRotundaOverlapMeters = Math.min(...wallOverlaps);
+  group.userData.maximumTerminalWallRotundaOverlapMeters = Math.max(...wallOverlaps);
   group.userData.minimumRotundaCenterToWallMeters = Math.min(...wallDistances);
   group.userData.maximumRotundaCenterToWallMeters = Math.max(...wallDistances);
   group.userData.terminalHiddenOverlapMeters = TERMINAL_HIDDEN_OVERLAP_METERS;
@@ -128,6 +135,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
     authority: STATIC_SOLID_VESTIBULE_AUTHORITY,
     minimumVisibleTerminalLegMeters: group.userData.minimumVisibleTerminalLegMeters,
     maximumVisibleTerminalLegMeters: group.userData.maximumVisibleTerminalLegMeters,
+    maximumTerminalWallRotundaOverlapMeters: group.userData.maximumTerminalWallRotundaOverlapMeters,
   };
 }
 
