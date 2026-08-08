@@ -61,14 +61,17 @@ async function captureCanvas(page, canvas, path) {
       && canvas?.dataset.terminal4UploadedJetwayCount === '58';
   }, null, { timeout: 90000 });
 
-  // Use the stable inspection control class because the visible label is not a
-  // runtime contract and can be regenerated independently of the actual control.
-  // Trigger the real DOM click directly, then fail closed on the resulting
-  // inspection/runtime state instead of weakening any jetway acceptance criterion.
-  const inspectionToggle = page.locator('.rr-inspection-toggle').first();
-  await inspectionToggle.waitFor({ state: 'attached', timeout: 10000 });
-  await inspectionToggle.evaluate(element => element.click());
-  await page.waitForFunction(() => document.querySelector('.rr-inspection-toggle')?.getAttribute('aria-pressed') === 'true', null, { timeout: 10000 });
+  // The production runtime always exposes inspection through the session Menu;
+  // the optional top-bar .rr-inspection-toggle is preparer-dependent and is not
+  // a stable browser contract. Use the same menu action a real user can reach,
+  // then fail closed on the actual canvas inspection state.
+  const menuButton = page.getByRole('button', { name: 'Menu' });
+  await menuButton.waitFor({ state: 'visible', timeout: 10000 });
+  await menuButton.click();
+  const inspectionMenuAction = page.getByRole('button', { name: 'Free-drive inspection' });
+  await inspectionMenuAction.waitFor({ state: 'visible', timeout: 10000 });
+  await inspectionMenuAction.click();
+  await page.waitForFunction(() => document.querySelector('canvas.trainerCanvas')?.dataset.inspectionMode === 'active', null, { timeout: 10000 });
 
   const location = page.getByRole('combobox', { name: 'Inspection location' });
   await location.waitFor({ state: 'visible', timeout: 10000 });
