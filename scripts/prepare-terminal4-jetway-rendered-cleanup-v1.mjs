@@ -1,11 +1,13 @@
 import fs from "node:fs";
 
 const staticRegistrationPath = "src/environment/registerStaticJetwayFleetToFacadeV1.js";
+const staticVestibulePath = "src/environment/staticSolidTerminalVestibulesV1.js";
 const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 const a1ElbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v1";
 const STATIC_SOLID_VESTIBULE_INSTANCE_COUNT = 228;
 const A1_TERMINAL_WALL_HIDDEN_OVERLAP_METERS = 0.70;
+const STATIC_TERMINAL_WALL_HIDDEN_OVERLAP_METERS = 0.70;
 
 let staticRegistration = fs.readFileSync(staticRegistrationPath, "utf8");
 
@@ -24,39 +26,78 @@ if (!staticRegistration.includes("addStaticSolidTerminalVestibules(THREE, fleet,
   throw new Error(`${staticRegistrationPath}: solid static vestibule call was not applied`);
 }
 
-const originalBatchBlock = `  const staticBatchesGroup = fleet.getObjectByName("UploadedAirportJetwayStaticExactGlbInstances");
-  const staticBatches = staticBatchesGroup?.children?.filter((entry) => entry.isInstancedMesh) || [];
-  if (staticBatches.length !== 7 || staticBatches.some((batch) => batch.count !== 57)) {
-    throw new Error(\`Static exact jetway instance batches are invalid: batches=\${staticBatches.length}, counts=\${staticBatches.map((batch) => batch.count).join(",")}\`);
-  }
-  applyPlacementDeltaToStaticInstances(THREE, staticBatches, staticOriginalPlacements, staticRegisteredPlacements);`;
+// The prior static registration assumed the supplied model's tunnel axis was
+// local +Z. The exact-head B15 evidence proved that assumption reverses the
+// authored assembly: the Cab/open aircraft end lands at the terminal wall while
+// the tunnel projects toward the apron. Measure the supplied Rotunda->Tunnel A
+// axis from the exact A1 prototype and rotate each static parent as one rigid
+// assembly so Rotunda is terminal-side and Cab is aircraft-side.
+const oldEndpointResolve = `  const rotunda = model?.getObjectByName("Rotunda") || model?.getObjectByName("Rotunda_Jetway_0");\n  if (!model || !rotunda) {\n    throw new Error("Static jetway registration could not measure the exact supplied Rotunda/model-root offset");\n  }`;
+const measuredEndpointResolve = `  const rotunda = model?.getObjectByName("Rotunda") || model?.getObjectByName("Rotunda_Jetway_0");\n  const tunnelA = model?.getObjectByName("Tunnel_A") || model?.getObjectByName("Tunnel_A_Jetway_0");\n  if (!model || !rotunda || !tunnelA) {\n    throw new Error("Static jetway registration could not measure the exact supplied Rotunda/model-root/bridge-axis evidence");\n  }`;
+if (staticRegistration.includes(oldEndpointResolve)) {
+  staticRegistration = staticRegistration.replace(oldEndpointResolve, measuredEndpointResolve);
+} else if (!staticRegistration.includes("bridgeAxisHeadingRadians")) {
+  throw new Error(`${staticRegistrationPath}: exact supplied bridge-axis endpoint anchor was not found`);
+}
 
-const correctedBatchBlock = `  const staticBatchesGroup = fleet.getObjectByName("UploadedAirportJetwayStaticExactGlbInstances");
-  const staticBatches = staticBatchesGroup?.children?.filter((entry) => entry.isInstancedMesh) || [];
-  if (staticBatches.length !== 7 || staticBatches.some((batch) => batch.count !== 57)) {
-    throw new Error(\`Static exact jetway instance batches are invalid: batches=\${staticBatches.length}, counts=\${staticBatches.map((batch) => batch.count).join(",")}\`);
-  }
-  // Any legacy closure instances were authored in the pre-registration frame.
-  // Keep them co-registered if they are present, even though the production
-  // build no longer intentionally creates those detached Cab-box batches.
-  const staticPortalClosures = fleet.getObjectByName("UploadedAirportJetwayStaticPortalClosures");
-  const staticClosureBatches = staticPortalClosures?.children?.filter((entry) => entry.isInstancedMesh) || [];
-  if (staticPortalClosures && (staticClosureBatches.length !== 6 || staticClosureBatches.some((batch) => batch.count !== 57 && batch.count !== 114))) {
-    throw new Error(\`Static portal closure batches are invalid: batches=\${staticClosureBatches.length}, counts=\${staticClosureBatches.map((batch) => batch.count).join(",")}\`);
-  }
-  applyPlacementDeltaToStaticInstances(
-    THREE,
-    [...staticBatches, ...staticClosureBatches],
-    staticOriginalPlacements,
-    staticRegisteredPlacements,
-  );`;
+const oldCenterBlock = `  const worldCenter = worldBounds.getCenter(new THREE.Vector3());\n  const localCenter = a1Anchor.worldToLocal(worldCenter.clone());`;
+const measuredCenterBlock = `  const worldCenter = worldBounds.getCenter(new THREE.Vector3());\n  const tunnelWorldBounds = new THREE.Box3().setFromObject(tunnelA);\n  if (tunnelWorldBounds.isEmpty()) throw new Error("Exact supplied Tunnel A has empty bounds during static registration");\n  const tunnelWorldCenter = tunnelWorldBounds.getCenter(new THREE.Vector3());\n  const localCenter = a1Anchor.worldToLocal(worldCenter.clone());\n  const localTunnelCenter = a1Anchor.worldToLocal(tunnelWorldCenter.clone());\n  const authoredBridgeAxis = localTunnelCenter.clone().sub(localCenter);\n  authoredBridgeAxis.y = 0;\n  if (authoredBridgeAxis.lengthSq() < 0.25) throw new Error("Exact supplied Rotunda->Tunnel A bridge axis is degenerate");\n  authoredBridgeAxis.normalize();\n  const bridgeAxisHeadingRadians = Math.atan2(authoredBridgeAxis.x, authoredBridgeAxis.z);`;
+if (staticRegistration.includes(oldCenterBlock)) {
+  staticRegistration = staticRegistration.replace(oldCenterBlock, measuredCenterBlock);
+} else if (!staticRegistration.includes("const bridgeAxisHeadingRadians =")) {
+  throw new Error(`${staticRegistrationPath}: bridge-axis measurement insertion anchor was not found`);
+}
+
+const oldOffsetReturn = `    horizontalMagnitude,\n    authority: ROOT_OFFSET_AUTHORITY,`;
+const measuredOffsetReturn = `    horizontalMagnitude,\n    bridgeAxisHeadingRadians,\n    authority: ROOT_OFFSET_AUTHORITY,`;
+if (staticRegistration.includes(oldOffsetReturn)) {
+  staticRegistration = staticRegistration.replace(oldOffsetReturn, measuredOffsetReturn);
+} else if (!staticRegistration.includes("bridgeAxisHeadingRadians,")) {
+  throw new Error(`${staticRegistrationPath}: bridge-axis return anchor was not found`);
+}
+
+const oldStaticYaw = `  const bridgeDistance = Math.hypot(bridgeDx, bridgeDz);\n  const yaw = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;`;
+const measuredStaticYaw = `  const bridgeDistance = Math.hypot(bridgeDx, bridgeDz);\n  const targetHeading = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;\n  const sourceBridgeAxisHeading = Number(authoredRotundaOffset.bridgeAxisHeadingRadians);\n  if (!Number.isFinite(sourceBridgeAxisHeading)) {\n    throw new Error(\`Static jetway \${placement.gate} is missing exact supplied bridge-axis heading\`);\n  }\n  const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);`;
+if (staticRegistration.includes(oldStaticYaw)) {
+  staticRegistration = staticRegistration.replace(oldStaticYaw, measuredStaticYaw);
+} else if (!staticRegistration.includes("targetHeading - sourceBridgeAxisHeading")) {
+  throw new Error(`${staticRegistrationPath}: static parent orientation anchor was not found`);
+}
+
+const originalBatchBlock = `  const staticBatchesGroup = fleet.getObjectByName("UploadedAirportJetwayStaticExactGlbInstances");\n  const staticBatches = staticBatchesGroup?.children?.filter((entry) => entry.isInstancedMesh) || [];\n  if (staticBatches.length !== 7 || staticBatches.some((batch) => batch.count !== 57)) {\n    throw new Error(\`Static exact jetway instance batches are invalid: batches=\${staticBatches.length}, counts=\${staticBatches.map((batch) => batch.count).join(",")}\`);\n  }\n  applyPlacementDeltaToStaticInstances(THREE, staticBatches, staticOriginalPlacements, staticRegisteredPlacements);`;
+
+const correctedBatchBlock = `  const staticBatchesGroup = fleet.getObjectByName("UploadedAirportJetwayStaticExactGlbInstances");\n  const staticBatches = staticBatchesGroup?.children?.filter((entry) => entry.isInstancedMesh) || [];\n  if (staticBatches.length !== 7 || staticBatches.some((batch) => batch.count !== 57)) {\n    throw new Error(\`Static exact jetway instance batches are invalid: batches=\${staticBatches.length}, counts=\${staticBatches.map((batch) => batch.count).join(",")}\`);\n  }\n  // Any legacy closure instances were authored in the pre-registration frame.\n  // Keep them co-registered if they are present, even though the production\n  // build no longer intentionally creates those detached Cab-box batches.\n  const staticPortalClosures = fleet.getObjectByName("UploadedAirportJetwayStaticPortalClosures");\n  const staticClosureBatches = staticPortalClosures?.children?.filter((entry) => entry.isInstancedMesh) || [];\n  if (staticPortalClosures && (staticClosureBatches.length !== 6 || staticClosureBatches.some((batch) => batch.count !== 57 && batch.count !== 114))) {\n    throw new Error(\`Static portal closure batches are invalid: batches=\${staticClosureBatches.length}, counts=\${staticClosureBatches.map((batch) => batch.count).join(",")}\`);\n  }\n  applyPlacementDeltaToStaticInstances(\n    THREE,\n    [...staticBatches, ...staticClosureBatches],\n    staticOriginalPlacements,\n    staticRegisteredPlacements,\n  );`;
 
 if (staticRegistration.includes(originalBatchBlock)) {
   staticRegistration = staticRegistration.replace(originalBatchBlock, correctedBatchBlock);
 } else if (!staticRegistration.includes("staticClosureBatches")) {
   throw new Error(`${staticRegistrationPath}: static placement-delta block was not found`);
 }
+
+for (const token of [
+  "const tunnelA = model?.getObjectByName(\"Tunnel_A\")",
+  "const bridgeAxisHeadingRadians = Math.atan2(authoredBridgeAxis.x, authoredBridgeAxis.z);",
+  "bridgeAxisHeadingRadians,",
+  "const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);",
+]) {
+  if (!staticRegistration.includes(token)) {
+    throw new Error(`${staticRegistrationPath}: exact supplied parent-orientation repair is missing ${token}`);
+  }
+}
 fs.writeFileSync(staticRegistrationPath, staticRegistration, "utf8");
+
+// Use the same hidden terminal-wall seal for the 57 static vestibules. This is
+// hidden inside the facade only; the visible wall-to-Rotunda span remains 2.4 m.
+let staticVestibule = fs.readFileSync(staticVestibulePath, "utf8");
+if (staticVestibule.includes("const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;")) {
+  staticVestibule = staticVestibule.replace(
+    "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;",
+    `const TERMINAL_HIDDEN_OVERLAP_METERS = ${STATIC_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)};`,
+  );
+} else if (!staticVestibule.includes(`const TERMINAL_HIDDEN_OVERLAP_METERS = ${STATIC_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)};`)) {
+  throw new Error(`${staticVestibulePath}: static terminal-wall overlap anchor was not found`);
+}
+fs.writeFileSync(staticVestibulePath, staticVestibule, "utf8");
 
 // The static connector implementation above deliberately replaces the former
 // three generated connector batches with one instanced solid shell batch. Make
@@ -124,11 +165,8 @@ if (readiness.includes("staticConnectorBatchCount !== 3")) {
 }
 fs.writeFileSync(readinessPath, readiness, "utf8");
 
-// The exact-head screenshot from 5743ffa207b4eb02ef971fcccf5010200a28a07f
-// showed a visible air gap between A1's compact terminal-side shell and the
-// terminal facade even though the wall target telemetry was green. Keep the
-// visible wall-to-Rotunda leg source-derived, but extend only the terminal-side
-// hidden seal into the real wall so the exterior cannot float detached.
+// Keep the visible A1 wall-to-Rotunda leg source-derived, but extend only the
+// terminal-side hidden seal into the real wall so the exterior cannot float detached.
 let a1Elbow = fs.readFileSync(a1ElbowPath, "utf8");
 if (a1Elbow.includes("const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;")) {
   a1Elbow = a1Elbow.replace(
@@ -164,4 +202,4 @@ for (const forbidden of [
 }
 fs.writeFileSync(a1ElbowPath, a1Elbow, "utf8");
 
-console.log(`Prepared rendered Terminal 4 cleanup: all 57 static gates use one verified 228-instance batch of short solid white terminal vestibules; A1 remains source-driven from the real terminal wall to the transformed authored Rotunda surface and now seals ${A1_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m into the terminal wall so the exact-head exterior cannot float detached; downstream measured bogie readiness remains the sole owner of final exact-model ground-contact validation.`);
+console.log(`Prepared rendered Terminal 4 cleanup: all 57 static gates now measure the exact supplied Rotunda->Tunnel A axis before rigid-parent registration, use short solid white vestibules sealed ${STATIC_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m into the real facade, and keep the Rotunda terminal-side/Cab aircraft-side; A1 remains source-driven and seals ${A1_TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m into the terminal wall; downstream measured bogie readiness remains the sole owner of final exact-model ground-contact validation.`);
