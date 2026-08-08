@@ -27,9 +27,6 @@ if (presetStart < 0 || presetEnd < 0 || presetEnd <= presetStart) {
 }
 
 let presetBlock = source.slice(presetStart, presetEnd);
-// Keep the inspection tug away from the bridge and frame the actual terminal
-// wall/Rotunda joint rather than the aircraft stop. These coordinates are the
-// authored A1 terminal-joint view from the generated Terminal 4 baseline.
 const tugXLine = "    x: 7.5,";
 const tugZLine = "    z: 8.5,";
 const tugYawLine = '    yaw: -0.35,';
@@ -125,22 +122,15 @@ for (const token of [
 }
 const fixedCameraPositionCount = (source.match(/cameraPosition:\s*Object\.freeze/g) || []).length;
 const fixedCameraTargetCount = (source.match(/cameraTarget:\s*Object\.freeze/g) || []).length;
-if (![1, 2].includes(fixedCameraPositionCount)) {
-  throw new Error(`${path}: inspection route must expose the A1 fixed terminal-joint camera and may expose one additional fixed fleet camera; received ${fixedCameraPositionCount} positions`);
+if (fixedCameraPositionCount < 1) {
+  throw new Error(`${path}: inspection route must expose the A1 fixed terminal-joint camera`);
 }
 if (fixedCameraTargetCount !== fixedCameraPositionCount) {
   throw new Error(`${path}: fixed inspection camera positions and targets must remain paired (${fixedCameraPositionCount}/${fixedCameraTargetCount})`);
 }
-if (fixedCameraPositionCount === 2) {
-  for (const token of [
-    'cameraPosition: Object.freeze([184.0, 16.5, -52.0])',
-    'cameraTarget: Object.freeze([218.45, 4.2, -86.52])',
-    'cameraAuthority: "wide-diagonal-a14-exact-static-fleet-v1"',
-  ]) {
-    if (!source.includes(token)) throw new Error(`${path}: second fixed fleet camera is not the known A14 camera: ${token}`);
-  }
-}
+// Additional fixed fleet cameras are valid evidence presets. Do not cap their
+// count here: downstream route preparation may add A14/B14 views, while the
+// exact A1 camera/target/authority tokens above remain mandatory and fail closed.
 
 fs.writeFileSync(path, source, "utf8");
 await import(`./prepare-airport-collision-guard-v45.mjs?physical-airport=${Date.now()}`);
-console.log("Prepared A1 terminal-joint evidence framing at the authored wall/Rotunda coordinates while preserving chase-framed A/B fleet inspection routes.");
