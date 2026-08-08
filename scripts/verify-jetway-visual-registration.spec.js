@@ -5,10 +5,10 @@ const pageUrl = process.env.PAGE_URL || "http://127.0.0.1:4173/RampReady/";
 const evidenceDirectory = "jetway-visual-evidence";
 const progressPath = `${evidenceDirectory}/capture-progress.json`;
 const views = Object.freeze([
-  ["a1Connection", "a1-terminal-connection.png"],
-  ["a14", "a-concourse-fleet.png"],
-  ["b14", "b-concourse-fleet.png"],
-  ["b15", "b15-terminal-jetways.png"],
+  ["a1Connection", "a1-terminal-connection.png", "A1 terminal connection"],
+  ["a14", "a-concourse-fleet.png", "A concourse midpoint"],
+  ["b14", "b-concourse-fleet.png", "B concourse midpoint"],
+  ["b15", "b15-terminal-jetways.png", "B15 ramp"],
 ]);
 const A1_ENDPOINT_CAMERA_AUTHORITY = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const A1_ENDPOINT_CAMERA_LOCK_AUTHORITY = "exact-a1-evidence-camera-direct-lock-v1";
@@ -35,14 +35,14 @@ async function captureViewport(page, outputPath) {
   }
 }
 
-test.setTimeout(90000);
+test.setTimeout(120000);
 
 test("Terminal 4 exact jetways are visually registered to their source terminal positions", async ({ browser }) => {
   fs.mkdirSync(evidenceDirectory, { recursive: true });
   const captures = {};
   const errors = {};
 
-  for (const [preset, file] of views) {
+  for (const [preset, file, inspectionLabel] of views) {
     checkpoint(`launch-${preset}`);
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
     const page = await context.newPage();
@@ -53,19 +53,27 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
     page.on("pageerror", error => pageErrors.push(error.message));
     page.on("requestfailed", request => failedRequests.push(`${request.method()} ${request.url()} :: ${request.failure()?.errorText || "unknown"}`));
 
-    const separator = pageUrl.includes("?") ? "&" : "?";
-    const presetUrl = `${pageUrl}${separator}inspectionPreset=${encodeURIComponent(preset)}`;
-    const response = await page.goto(presetUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+    const response = await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
     expect(response?.ok()).toBe(true);
 
-    // Let the exact Terminal 4 scene and supplied jetway fleet settle before
-    // capturing. For A1, fail closed unless the runtime has switched from the
-    // stale fixed-coordinate fallback to the final wall/Rotunda/Cab-derived
-    // terminal-joint camera. This prevents an empty-ramp screenshot from ever
-    // being accepted as connection evidence again.
+    // The production app does not reliably consume inspectionPreset from the
+    // URL. Drive the actual inspection-location control and fail closed unless
+    // the canvas proves that the requested scene is active before capture.
     await page.waitForTimeout(15000);
+    const inspectionLocation = page.getByRole("combobox", { name: "Inspection location" });
+    await expect(inspectionLocation).toBeVisible({ timeout: 30000 });
+    await inspectionLocation.selectOption({ label: inspectionLabel });
+    const canvas = page.locator("canvas").first();
+    await expect(canvas).toHaveAttribute("data-inspection-preset", preset, { timeout: 30000 });
+    checkpoint(`preset-${preset}-verified`, {
+      inspectionLabel,
+      activePreset: await canvas.getAttribute("data-inspection-preset"),
+    });
+    await page.waitForTimeout(2500);
+
+    // For A1, fail closed unless the runtime has switched from the stale
+    // fixed-coordinate fallback to the final wall/Rotunda/Cab-derived camera.
     if (preset === "a1Connection") {
-      const canvas = page.locator("canvas").first();
       await expect(canvas).toHaveAttribute(
         "data-inspection-camera-endpoint-authority",
         A1_ENDPOINT_CAMERA_AUTHORITY,
@@ -98,19 +106,17 @@ test("Terminal 4 exact jetways are visually registered to their source terminal 
       await page.waitForTimeout(750);
     }
 
-    checkpoint(`capture-${preset}`, { presetUrl });
+    checkpoint(`capture-${preset}`, { inspectionLabel });
     captures[file] = await captureViewport(page, `${evidenceDirectory}/${file}`);
 
     // The user's overhead inspection exposed a see-through Rotunda/Tunnel-A
     // cavity that the side-on terminal-joint camera could hide. Preserve that
-    // exact failure mode as mandatory evidence: after the endpoint-derived A1
-    // camera is proved, switch the same loaded scene to the normal overhead
-    // view and retain a second screenshot before the page can pass.
+    // exact failure mode as mandatory evidence.
     if (preset === "a1Connection") {
       const cameraView = page.getByRole("combobox", { name: "Camera view" });
       await cameraView.selectOption({ label: "Overhead view" });
       await page.waitForTimeout(2500);
-      checkpoint("capture-a1-overhead", { presetUrl });
+      checkpoint("capture-a1-overhead", { inspectionLabel });
       captures["a1-terminal-overhead.png"] = await captureViewport(page, `${evidenceDirectory}/a1-terminal-overhead.png`);
     }
 
