@@ -16,8 +16,10 @@ source = source.replace(
   const desiredTerminalDistance = rotundaOpening.collarRadius + A1_PHOTO_VISIBLE_VESTIBULE_METERS;
 
   // Keep the complete supplied assembly rigid and solve the parent in full X/Z
-  // from the real Terminal 4 wall. The short photo-matched vestibule is the
-  // terminal-side constraint; no supplied child node is rotated independently.
+  // from the real Terminal 4 wall. The desired/current Rotunda centers are
+  // measured in fleet-local coordinates, but a1Anchor.position is parent-local.
+  // Convert both centers through world space before changing the complete anchor
+  // so a rotated/scaled parent cannot turn a short vestibule into a long corridor.
   const desiredRotundaCenterX = terminalWallX
     - rotundaOpening.openingDirectionX * desiredTerminalDistance;
   const desiredRotundaCenterZ = terminalWallZ
@@ -28,9 +30,30 @@ source = source.replace(
   if (!Number.isFinite(terminalRelocationMeters) || terminalRelocationMeters >= 60) {
     throw new Error(\`A1 full-vector terminal relocation is invalid: \${terminalRelocationMeters}\`);
   }
-  a1Anchor.position.x += terminalRelocationX;
-  a1Anchor.position.z += terminalRelocationZ;
-  fleet.updateMatrixWorld(true);
+  group.updateMatrixWorld(true);
+  fleet.updateWorldMatrix(true, true);
+  const anchorParent = a1Anchor.parent;
+  if (!anchorParent) throw new Error("A1 complete anchor has no parent for terminal wall lock");
+  const currentRotundaCenterWorld = fleet.localToWorld(new THREE.Vector3(
+    rotundaOpening.centerX,
+    rotundaOpening.centerY,
+    rotundaOpening.centerZ,
+  ));
+  const desiredRotundaCenterWorld = fleet.localToWorld(new THREE.Vector3(
+    desiredRotundaCenterX,
+    rotundaOpening.centerY,
+    desiredRotundaCenterZ,
+  ));
+  const currentRotundaCenterParent = anchorParent.worldToLocal(currentRotundaCenterWorld.clone());
+  const desiredRotundaCenterParent = anchorParent.worldToLocal(desiredRotundaCenterWorld.clone());
+  const anchorParentCorrection = desiredRotundaCenterParent.sub(currentRotundaCenterParent);
+  if (![anchorParentCorrection.x, anchorParentCorrection.z].every(Number.isFinite)) {
+    throw new Error("A1 parent-space terminal wall correction is non-finite");
+  }
+  a1Anchor.position.x += anchorParentCorrection.x;
+  a1Anchor.position.z += anchorParentCorrection.z;
+  group.updateMatrixWorld(true);
+  fleet.updateWorldMatrix(true, true);
   rotundaOpening = measureExactRotundaOpening(THREE, fleet, a1Model, terminalDirection);
   const relocatedWallOffsetX`,
 );
@@ -105,12 +128,13 @@ source = source.replace(
 
 source = source.replace(
   /const INSTALLATION_AUTHORITY = "[^"]+";/,
-  'const INSTALLATION_AUTHORITY = "photo-short-full-vector-terminal-wall-lock-grounded-exact-chain-v29";',
+  'const INSTALLATION_AUTHORITY = "photo-short-parent-space-terminal-wall-lock-grounded-exact-chain-v30";',
 );
 
 for (const token of [
-  'INSTALLATION_AUTHORITY = "photo-short-full-vector-terminal-wall-lock-grounded-exact-chain-v29"',
+  'INSTALLATION_AUTHORITY = "photo-short-parent-space-terminal-wall-lock-grounded-exact-chain-v30"',
   "desiredRotundaCenterX",
+  "anchorParentCorrection",
   "terminalCrossTrackErrorMeters",
   "A1 full-vector terminal lock missed the measured wall",
   "uploadedJetwayA1TerminalCrossTrackErrorMeters",
@@ -122,9 +146,9 @@ for (const token of [
   "uploadedJetwayA1FinalEndpointEvidenceAuthority",
 ]) {
   if (!source.includes(token)) {
-    throw new Error(`${installationPath}: photo-short full-vector A1 wall lock output is missing ${token}`);
+    throw new Error(`${installationPath}: parent-space photo-short A1 wall lock output is missing ${token}`);
   }
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Locked the complete A1 parent to the real Terminal 4 wall with the short photo-matched vestibule span in full X/Z, preserving the supplied child transforms and exact world-space endpoint evidence.");
+console.log("Locked the complete A1 parent to the real Terminal 4 wall in the anchor parent's coordinate system, preserving the short photo-matched vestibule and every supplied child transform.");
