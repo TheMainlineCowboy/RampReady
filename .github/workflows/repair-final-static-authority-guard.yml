@@ -1,0 +1,60 @@
+name: Repair final static authority guard
+
+on:
+  push:
+    branches:
+      - fix/live-experience-cdp-capture
+    paths:
+      - .github/workflows/repair-final-static-authority-guard.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/live-experience-cdp-capture
+          fetch-depth: 0
+          token: ${{ github.token }}
+      - name: Migrate final acceptance to measured static registration authority
+        shell: python
+        run: |
+          from pathlib import Path
+          old = '57-static-authored-rotundas-photo-registered-to-terminal-facade-v2'
+          new = '57-static-authored-rotundas-measured-source-wall-registration-v3'
+          changed = []
+          for root in [Path('scripts'), Path('src'), Path('tests'), Path('e2e')]:
+              if not root.exists():
+                  continue
+              for path in root.rglob('*'):
+                  if not path.is_file() or path.suffix.lower() not in {'.js','.mjs','.cjs','.jsx','.ts','.tsx','.json'}:
+                      continue
+                  text = path.read_text(encoding='utf-8')
+                  if old in text:
+                      path.write_text(text.replace(old, new), encoding='utf-8')
+                      changed.append(str(path))
+          if not changed:
+              raise SystemExit('No stale static-registration authority guards were found')
+          print('Migrated authority guards:')
+          for path in changed:
+              print(path)
+          final = Path('scripts/prepare-a1-final-acceptance-authority-v1.mjs').read_text(encoding='utf-8')
+          if f'const staticSourcePlacementAuthority = "{new}";' not in final:
+              raise SystemExit('Final A1 acceptance guard was not migrated')
+          if old in final:
+              raise SystemExit('Retired static registration authority survived final acceptance guard')
+      - name: Commit guard migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add scripts src tests e2e 2>/dev/null || true
+          git diff --cached --check
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'fix(jetway): accept measured static facade authority'
+          git push origin HEAD:fix/live-experience-cdp-capture
