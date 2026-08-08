@@ -1,4 +1,4 @@
-const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v2";
+const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v1";
 const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.2;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.6;
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.70;
