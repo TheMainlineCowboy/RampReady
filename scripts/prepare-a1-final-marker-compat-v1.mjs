@@ -39,33 +39,9 @@ for (const currentMarker of currentMarkers) {
 
 fs.writeFileSync(trainerPath, source, "utf8");
 
-// Several legacy preparers run immediately before this final compatibility stage.
-// Normalize only their stale textual range guards here so the final real-wall
-// authority can validate the actual source-measured A1 geometry deterministically.
-// This does not move, rotate, rescale, replace or otherwise mutate Airport_Jetway.glb.
-const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
-let readiness = fs.readFileSync(readinessPath, "utf8");
-readiness = readiness.replace(
-  /a1TerminalWallDistance\s*(?:>|>=)\s*[0-9.]+\s*&&\s*a1TerminalWallDistance\s*(?:<|<=)\s*[0-9.]+/g,
-  "a1TerminalWallDistance > 0.5 && a1TerminalWallDistance < 44",
-);
-readiness = readiness.replace(
-  /connectorVisibleLength\s*(?:>|>=)\s*[0-9.]+\s*&&\s*connectorVisibleLength\s*(?:<|<=)\s*[0-9.]+/g,
-  "connectorVisibleLength > 0.15 && connectorVisibleLength < 44",
-);
-if (!readiness.includes("a1TerminalWallDistance > 0.5 && a1TerminalWallDistance < 44")) {
-  throw new Error(`${readinessPath}: unable to normalize final source-measured A1 wall-distance guard`);
-}
-if (!readiness.includes("connectorVisibleLength > 0.15 && connectorVisibleLength < 44")) {
-  throw new Error(`${readinessPath}: unable to normalize final source-measured A1 fixed-leg guard`);
-}
-fs.writeFileSync(readinessPath, readiness, "utf8");
-
-// This must be the last A1 geometry mutation before the production wrapper.
-// The older migration chain remains for compatibility/evidence, but none of its
-// compact 2.4 m assumptions may own the final bundle. Reassert the real
-// structural Terminal 4 wall, source-measured fixed leg and exact supplied
-// Rotunda after every legacy preparer has finished.
+// Marker compatibility is not a geometry authority. Reassert the single final
+// A1 geometry owner after every legacy preparer; it normalizes/inserts the real
+// wall and fixed-leg readiness guards itself and then writes the final runtime.
 await import(`./prepare-a1-real-terminal-final-geometry-v1.mjs?final-real-wall=${Date.now()}`);
 
-console.log("Published the established exact-head acceptance marker, normalized stale readiness range guards, then replaced the retired compact A1 assumptions with the final real-Terminal-4-wall/source-measured geometry before production bundling.");
+console.log("Published the established exact-head acceptance marker, then delegated all final A1 geometry/readiness ownership to the real-Terminal-4-wall source-measured finalizer.");
