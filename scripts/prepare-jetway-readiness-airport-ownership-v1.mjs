@@ -66,24 +66,23 @@ source = source
   .replace(cabDirectPattern, `!Number.isFinite(${cabTargetHorizontalError})`);
 
 // Physical acceptance is the articulated Cab at the real rendered door, not the
-// unarticulated source Cab. Upstream preparers have emitted this check in several
-// algebraically equivalent orders, so do not depend on one spelling. Guarantee a
-// final <= 6 cm condition directly in the readiness mismatch block. Existing
-// stricter checks may remain; this clause is the stable airport-owned floor.
+// unarticulated source Cab. Insert one stable fail-closed check immediately after
+// the generated door-gap telemetry declaration. This is intentionally separate
+// from the large historical mismatch predicate so upstream formatting/order can
+// change without weakening or breaking the final physical acceptance contract.
 const strictActualContactCondition = `Math.abs(${a1ActualContactDistance} - ${a1TargetDoorDistance}) > 0.06`;
 const strictActualDoorGapCondition = `${a1ActualDoorGap} > 0.06`;
-const countCondition = "            count !== EXPECTED_GATE_COUNT";
-if (!source.includes(countCondition)) {
-  throw new Error(`${readinessPath}: exact-fleet readiness count condition is missing`);
-}
-if (!source.includes(strictActualContactCondition) || !source.includes(strictActualDoorGapCondition)) {
-  const seeded = [
-    !source.includes(strictActualContactCondition) ? strictActualContactCondition : null,
-    !source.includes(strictActualDoorGapCondition) ? strictActualDoorGapCondition : null,
-  ].filter(Boolean);
+const strictContactMarker = "airport-owned-a1-articulated-door-contact-v1";
+if (!source.includes(strictContactMarker)) {
+  const doorGapDeclarationPattern = new RegExp(
+    `(const\\s+${a1ActualDoorGap}\\s*=\\s*Number\\(group\\.userData\\.uploadedJetwayA1ActualDoorGapMeters\\s*\\?\\?\\s*[^)]+\\);)`,
+  );
+  if (!doorGapDeclarationPattern.test(source)) {
+    throw new Error(`${readinessPath}: generated A1 actual-door-gap telemetry declaration is missing`);
+  }
   source = source.replace(
-    countCondition,
-    `            ${seeded.join("\n            || ")}\n            || count !== EXPECTED_GATE_COUNT`,
+    doorGapDeclarationPattern,
+    `$1\n          // ${strictContactMarker}\n          if (${strictActualContactCondition} || ${strictActualDoorGapCondition}) {\n            throw new Error(\`A1 articulated door contact exceeds 0.06 m: distance=\${${a1ActualContactDistance}} target=\${${a1TargetDoorDistance}} gap=\${${a1ActualDoorGap}}\`);\n          }`,
   );
 }
 
@@ -91,6 +90,7 @@ for (const required of [
   `Math.abs(${staticFleetGroundYOffset} - ${fleetGroundOffset}) > 1e-6`,
   `!Number.isFinite(${targetAlignmentCosine}) || ${targetAlignmentCosine} < -1 || ${targetAlignmentCosine} > 1`,
   `!Number.isFinite(${cabTargetHorizontalError})`,
+  strictContactMarker,
   strictActualContactCondition,
   strictActualDoorGapCondition,
 ]) {
@@ -111,4 +111,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Aligned final exact-jetway readiness with airport-owned geometry: all 58 bridges preserve the measured shared ground offset; decoded source heading may differ from the synthetic CRJ target; the articulated A1 Cab is explicitly rejected above 0.06 m contact-distance error or 0.06 m rendered door gap.");
+console.log("Aligned final exact-jetway readiness with airport-owned geometry: all 58 bridges preserve the measured shared ground offset; decoded source heading may differ from the synthetic CRJ target; a standalone final guard rejects the articulated A1 Cab above 0.06 m contact-distance error or 0.06 m rendered door gap.");
