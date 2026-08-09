@@ -5,6 +5,12 @@ const retiredAuthorities = [
   "user-supplied-airport-jetway-per-gate-telescoping-v10",
   "user-supplied-airport-jetway-per-gate-telescoping-v11-a1-only",
 ];
+const staticSourcePlacementAuthority = "57-static-bgl-pose-locked-short-real-wall-registration-v7";
+const retiredStaticSourcePlacementAuthorities = [
+  "57-static-exact-bgl-source-placement-no-facade-relocation-v1",
+  "57-static-authored-rotundas-short-real-wall-registration-v5",
+  "57-static-bgl-position-locked-short-real-wall-registration-v6",
+];
 
 {
   const path = "tests/browser/crj700-runtime.spec.js";
@@ -24,6 +30,9 @@ const retiredAuthorities = [
   let source = fs.readFileSync(path, "utf8");
 
   for (const retired of retiredAuthorities) source = source.replaceAll(retired, articulationAuthority);
+  for (const retired of retiredStaticSourcePlacementAuthorities) {
+    source = source.replaceAll(retired, staticSourcePlacementAuthority);
+  }
 
   const oldMagicRange = `  expect(target).toBeGreaterThan(30.3);
   expect(target).toBeLessThan(30.8);
@@ -92,8 +101,12 @@ const retiredAuthorities = [
   for (const retired of retiredAuthorities) {
     if (source.includes(retired)) throw new Error(`${path}: retired stretched articulation authority remains: ${retired}`);
   }
+  for (const retired of retiredStaticSourcePlacementAuthorities) {
+    if (source.includes(retired)) throw new Error(`${path}: retired static source-placement authority remains: ${retired}`);
+  }
   for (const required of [
     articulationAuthority,
+    staticSourcePlacementAuthority,
     "expect(Math.abs(extension)).toBeLessThanOrEqual(0.001);",
     "expect(Math.abs(target - sourceReach)).toBeLessThanOrEqual(0.01);",
     "expect(Math.abs(predictedContact - sourceReach)).toBeLessThanOrEqual(0.05);",
@@ -107,4 +120,4 @@ const retiredAuthorities = [
   fs.writeFileSync(path, source, "utf8");
 }
 
-console.log("Updated browser regressions for connected A1 articulation: attached Tunnel B/C/Cab may not stretch apart, the aircraft keeps one Cab-derived pose, and Chromium captures a full-chain A1 ramp view plus the terminal joint.");
+console.log("Updated browser regressions for connected A1 articulation: attached Tunnel B/C/Cab may not stretch apart, current static BGL pose locking is required, the aircraft keeps one Cab-derived pose, and Chromium captures a full-chain A1 ramp view plus the terminal joint.");
