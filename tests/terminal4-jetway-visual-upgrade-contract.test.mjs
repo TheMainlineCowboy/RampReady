@@ -164,7 +164,8 @@ for (const forbidden of [
 for (const token of [
   "staticSourceMeasuredTerminalConnectorsV2.js",
   "addStaticSolidTerminalVestibules",
-  "57-static-source-measured-real-wall-fixed-terminal-legs-v3",
+  "MIN_VISIBLE_METERS = 0",
+  "MAX_VISIBLE_METERS = 43",
 ]) {
   if (!measuredStaticPreparation.includes(token)) throw new Error(`Measured static connector preparation is missing ${token}`);
 }
