@@ -1,9 +1,9 @@
 import fs from "node:fs";
 
-// Static source registration runs immediately before this stage. Apply the same
-// airport-first ownership to A1 only after that registration has normalized the
-// decoded KPHX placement fields, so no later source-preparation pass can restore
-// the old synthetic aircraft-door yaw exception.
+// Static source registration runs immediately before this stage. Preserve its
+// exact-model ground correction on the complete fleet before finalizing A1, then
+// apply the same airport-first source-pose ownership to A1.
+await import(`./prepare-static-jetway-ground-contact-v1.mjs?whole-fleet-ground=${Date.now()}`);
 await import(`./prepare-a1-source-bgl-rotunda-ownership-v1.mjs?a1-source-owner=${Date.now()}`);
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
@@ -87,4 +87,4 @@ if (/const liveInspectionAircraftPoseApplied = inspectionActive\s*&&/.test(sourc
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Locked A1 to one physical aircraft pose across training and free-drive inspection after restoring the jetway itself to its decoded KPHX airport pose; published live aircraft root coordinates so mode-switch regressions remain measurable.");
+console.log("Kept the exact supplied jetway ground-contact offset on the complete 58-gate fleet, then locked A1 to one physical aircraft pose across training and free-drive inspection after restoring the jetway itself to its decoded KPHX airport pose.");
