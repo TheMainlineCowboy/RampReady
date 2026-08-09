@@ -1,8 +1,9 @@
-const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v3-physical-rotunda-authoritative";
+const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v4-registered-facade-authoritative";
 const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.2;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.6;
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.70;
 const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;
+const MAXIMUM_TERMINAL_DIRECTION_SKEW_RADIANS = Math.PI / 12;
 const WIDTH_METERS = 3.02;
 const HEIGHT_METERS = 2.62;
 
@@ -39,10 +40,11 @@ function physicalRotundaFromAuthoredOffset(placement) {
 
 function buildShellTransforms(placement) {
   const centerY = Number(placement.rotundaY) || 4.1;
-  const sourceWallDistance = Number(placement.wallConnectorLength);
   const clearRotundaRadius = Number(placement.staticAuthoredRotundaRadiusMeters);
   const terminalWallOverlapMeters = Number(placement.staticTerminalWallOverlapMeters) || 0;
-  if (![centerY, sourceWallDistance, clearRotundaRadius, terminalWallOverlapMeters].every(Number.isFinite)) {
+  const registeredWallX = Number(placement.staticFacadeWallX);
+  const registeredWallZ = Number(placement.staticFacadeWallZ);
+  if (![centerY, clearRotundaRadius, terminalWallOverlapMeters, registeredWallX, registeredWallZ].every(Number.isFinite)) {
     throw new Error(`Static ${placement.gate} vestibule placement is incomplete`);
   }
   if (!(clearRotundaRadius > 0.7 && clearRotundaRadius < 3.5)) {
@@ -54,8 +56,8 @@ function buildShellTransforms(placement) {
 
   const sourceDirection = normalizedTerminalDirection(placement);
   const physicalRotunda = physicalRotundaFromAuthoredOffset(placement);
-  const wallX = physicalRotunda.modelRootX + sourceDirection.x * sourceWallDistance;
-  const wallZ = physicalRotunda.modelRootZ + sourceDirection.z * sourceWallDistance;
+  const wallX = registeredWallX;
+  const wallZ = registeredWallZ;
   const wallDx = wallX - physicalRotunda.x;
   const wallDz = wallZ - physicalRotunda.z;
   const physicalCenterToWallMeters = Math.hypot(wallDx, wallDz);
@@ -68,22 +70,29 @@ function buildShellTransforms(placement) {
     throw new Error(`Static ${placement.gate} physical visible terminal vestibule is invalid: ${visibleTerminalLegMeters}`);
   }
 
-  // The exact GLB model root remains locked to the decoded BGL pose, but every
-  // downstream acceptance measurement must describe the physical Rotunda center,
-  // not the model-root origin. Mutate only telemetry/measurement fields here;
-  // never change x/z/yaw or any supplied GLB transform.
-  placement.staticPhysicalRotundaX = physicalRotunda.x;
-  placement.staticPhysicalRotundaZ = physicalRotunda.z;
-  placement.staticFacadeWallX = wallX;
-  placement.staticFacadeWallZ = wallZ;
-  placement.staticResolvedRotundaCenterToWallMeters = physicalCenterToWallMeters;
-  placement.staticVisibleTerminalLegMeters = visibleTerminalLegMeters;
-  placement.staticPhysicalRotundaRegistrationErrorMeters = 0;
-
   const direction = {
     x: wallDx / physicalCenterToWallMeters,
     z: wallDz / physicalCenterToWallMeters,
   };
+  const directionDot = Math.max(-1, Math.min(1, direction.x * sourceDirection.x + direction.z * sourceDirection.z));
+  const directionSkewRadians = Math.acos(directionDot);
+  if (directionSkewRadians > MAXIMUM_TERMINAL_DIRECTION_SKEW_RADIANS) {
+    throw new Error(`Static ${placement.gate} registered facade would create a sideways terminal vestibule: ${(directionSkewRadians * 180 / Math.PI).toFixed(2)}deg`);
+  }
+
+  // The exact GLB model root remains locked to the decoded BGL pose. The
+  // registration pass owns the facade endpoint; rendering consumes that exact
+  // endpoint rather than independently manufacturing a second wall solution.
+  placement.staticPhysicalRotundaX = physicalRotunda.x;
+  placement.staticPhysicalRotundaZ = physicalRotunda.z;
+  placement.staticResolvedRotundaCenterToWallMeters = physicalCenterToWallMeters;
+  placement.staticVisibleTerminalLegMeters = visibleTerminalLegMeters;
+  placement.staticPhysicalRotundaRegistrationErrorMeters = Math.hypot(
+    Number(placement.staticPhysicalRotundaX) - physicalRotunda.x,
+    Number(placement.staticPhysicalRotundaZ) - physicalRotunda.z,
+  );
+  placement.staticTerminalDirectionSkewRadians = directionSkewRadians;
+
   const yaw = Math.atan2(direction.x, direction.z);
   const sideX = Math.cos(yaw);
   const sideZ = -Math.sin(yaw);
@@ -112,6 +121,7 @@ function buildShellTransforms(placement) {
     visibleTerminalLegMeters,
     terminalWallOverlapMeters,
     wallDistance: physicalCenterToWallMeters,
+    directionSkewRadians,
     physicalRotundaX: physicalRotunda.x,
     physicalRotundaZ: physicalRotunda.z,
   };
@@ -154,6 +164,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   const visibleLengths = measured.map((entry) => entry.visibleTerminalLegMeters);
   const wallOverlaps = measured.map((entry) => entry.terminalWallOverlapMeters);
   const wallDistances = measured.map((entry) => entry.wallDistance);
+  const directionSkews = measured.map((entry) => entry.directionSkewRadians);
   const material = new THREE.MeshStandardMaterial({
     name: "Terminal 4 measured compact solid white jetway vestibule shell",
     color: 0xe1e2df,
@@ -172,11 +183,13 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   group.userData.maximumTerminalWallRotundaOverlapMeters = Math.max(...wallOverlaps);
   group.userData.minimumRotundaCenterToWallMeters = Math.min(...wallDistances);
   group.userData.maximumRotundaCenterToWallMeters = Math.max(...wallDistances);
+  group.userData.maximumTerminalDirectionSkewRadians = Math.max(...directionSkews);
   group.userData.terminalHiddenOverlapMeters = TERMINAL_HIDDEN_OVERLAP_METERS;
   group.userData.rotundaShellOverlapMeters = ROTUNDA_SHELL_OVERLAP_METERS;
   group.userData.perGateMeasuredTerminalVestibules = true;
   group.userData.physicalRotundaFromExactGlbOffset = true;
   group.userData.physicalRotundaMeasurementsAuthoritative = true;
+  group.userData.registeredFacadeEndpointAuthoritative = true;
   group.add(buildInstancedShellBatch(THREE, material, transforms));
   group.userData.batchCount = group.children.length;
   group.userData.instanceCount = transforms.length;
@@ -190,6 +203,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
     minimumVisibleTerminalLegMeters: group.userData.minimumVisibleTerminalLegMeters,
     maximumVisibleTerminalLegMeters: group.userData.maximumVisibleTerminalLegMeters,
     maximumTerminalWallRotundaOverlapMeters: group.userData.maximumTerminalWallRotundaOverlapMeters,
+    maximumTerminalDirectionSkewRadians: group.userData.maximumTerminalDirectionSkewRadians,
   };
 }
 
