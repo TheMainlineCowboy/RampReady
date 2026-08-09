@@ -130,6 +130,18 @@ const newZeroAppliedFit = `  expect(Number(runtime.inspectionAircraftJetwayVerti
   expect(Number.isFinite(Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters))).toBe(true);
   expect(runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");`;
 
+// These compact-vestibule checks belonged to the retired design that relocated
+// the complete A1 parent to manufacture a 2.4 m terminal leg. Final acceptance
+// now uses the decoded PHX Rotunda plus the measured structural wall endpoint.
+const retiredVisibleWait = "      && Math.abs(Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4) <= 0.05";
+const retiredVisibleExpect = "  expect(Math.abs(Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4)).toBeLessThanOrEqual(0.05);";
+const realWallWait = `      && Number.isFinite(Number(data?.a1ExactRotundaToWallWorldMeters))
+      && Math.abs(Number(data?.a1ExactRotundaToWallWorldMeters) - Number(data?.terminal4A1JetwayWallDistance)) <= 0.05`;
+const realWallExpect = `  expect(Number.isFinite(Number(runtime.a1ExactRotundaToWallWorldMeters))).toBe(true);
+  expect(Math.abs(
+    Number(runtime.a1ExactRotundaToWallWorldMeters) - Number(runtime.terminal4A1JetwayWallDistance),
+  )).toBeLessThanOrEqual(0.05);`;
+
 for (const path of verticalEvidenceFiles) {
   let source = fs.readFileSync(path, "utf8");
   source = source.replaceAll(OLD_VERTICAL_AUTHORITY, NO_LIFT_AUTHORITY);
@@ -137,6 +149,8 @@ for (const path of verticalEvidenceFiles) {
   source = source.replaceAll(expectOld, expectNew);
   source = source.replaceAll(localExpectOld, localExpectNew);
   source = source.replaceAll(oldNegativeAppliedFit, newZeroAppliedFit);
+  source = source.replaceAll(retiredVisibleWait, realWallWait);
+  source = source.replaceAll(retiredVisibleExpect, realWallExpect);
 
   source = source
     .replaceAll(
@@ -153,8 +167,7 @@ for (const path of verticalEvidenceFiles) {
     )
     .replaceAll(
       "expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeLessThan(4.1);",
-      `expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeLessThan(5.8);
-  expect(Math.abs(Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4)).toBeLessThanOrEqual(0.05);`,
+      `expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeLessThan(5.8);\n${realWallExpect}`,
     )
     .replaceAll(
       "expect(a1WallDistance).toBeGreaterThan(1.5);",
@@ -162,29 +175,26 @@ for (const path of verticalEvidenceFiles) {
     )
     .replaceAll(
       "expect(a1WallDistance).toBeLessThan(4.0);",
-      `expect(a1WallDistance).toBeLessThan(5.8);
-  expect(Math.abs(Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4)).toBeLessThanOrEqual(0.05);`,
+      `expect(a1WallDistance).toBeLessThan(5.8);\n${realWallExpect}`,
     )
     .replaceAll(
       "expect(a1WallDistance).toBeLessThan(4.1);",
-      `expect(a1WallDistance).toBeLessThan(5.8);
-  expect(Math.abs(Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4)).toBeLessThanOrEqual(0.05);`,
+      `expect(a1WallDistance).toBeLessThan(5.8);\n${realWallExpect}`,
     );
 
   const wallLoadingAnchor = '      && data?.terminal4A1JetwayWallDistance !== "loading"';
-  const wallReadyBlock = `${wallLoadingAnchor}
-      && Number(data?.terminal4A1JetwayWallDistance) > 2.9
-      && Number(data?.terminal4A1JetwayWallDistance) < 5.8
-      && Math.abs(Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4) <= 0.05`;
   if (source.includes(wallLoadingAnchor)
-    && !source.includes("Math.abs(Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4) <= 0.05")) {
-    source = source.replace(wallLoadingAnchor, wallReadyBlock);
+    && !source.includes("a1ExactRotundaToWallWorldMeters")) {
+    source = source.replace(
+      wallLoadingAnchor,
+      `${wallLoadingAnchor}\n      && Number(data?.terminal4A1JetwayWallDistance) > 2.9\n      && Number(data?.terminal4A1JetwayWallDistance) < 5.8\n${realWallWait}`,
+    );
   }
 
   const wallRangeAnchor = "      && Number(data?.terminal4A1JetwayWallDistance) < 5.8";
-  const visibleWait = "      && Math.abs(Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4) <= 0.05";
-  if (source.includes(wallRangeAnchor) && !source.includes(visibleWait)) {
-    source = source.replace(wallRangeAnchor, `${wallRangeAnchor}\n${visibleWait}`);
+  if (source.includes(wallRangeAnchor)
+    && !source.includes("a1ExactRotundaToWallWorldMeters")) {
+    source = source.replace(wallRangeAnchor, `${wallRangeAnchor}\n${realWallWait}`);
   }
 
   if (source.includes(OLD_VERTICAL_AUTHORITY)
@@ -200,6 +210,10 @@ for (const path of verticalEvidenceFiles) {
   if (source.includes("inspectionAircraftDoorVerticalErrorMeters")
     && !source.includes("inspectionAircraftJetwayAuthoredBogieGroundPreserved")) {
     throw new Error(`${path}: door-gap evidence does not require grounded-bogie preservation`);
+  }
+  if (source.includes("terminal4UploadedJetwayA1VisibleVestibuleLengthMeters")
+    && (source.includes(retiredVisibleWait) || source.includes(retiredVisibleExpect))) {
+    throw new Error(`${path}: retired exact-2.4m compact-vestibule assertion remains`);
   }
   if (path.endsWith("uploaded-jetway-articulation-v10.spec.js")) {
     for (const token of [
@@ -225,9 +239,6 @@ for (const path of verticalEvidenceFiles) {
       "expect(a1WallDistance).toBeLessThan(4.1)",
     ]) {
       if (source.includes(stale)) throw new Error(`${path}: stale Rotunda center-to-wall limit remains: ${stale}`);
-    }
-    if (!source.includes("terminal4UploadedJetwayA1VisibleVestibuleLengthMeters")) {
-      throw new Error(`${path}: final A1 compactness is not tied to the exact visible vestibule`);
     }
   }
   fs.writeFileSync(path, source, "utf8");
@@ -256,4 +267,4 @@ for (const path of verticalEvidenceFiles) {
   }
 }
 
-console.log(`Migrated current browser gates idempotently: authored A1 stand yaw ${SOURCE_A1_MODEL_YAW.toFixed(6)} rad, stable free-drive motion, finite signed door gap, zero attached A1 child lift, grounded-bogie preservation, authored Rotunda center distance, and an independently exact 2.4 m visible terminal vestibule.`);
+console.log(`Migrated current browser gates idempotently: authored A1 stand yaw ${SOURCE_A1_MODEL_YAW.toFixed(6)} rad, stable free-drive motion, finite signed door gap, zero attached A1 child lift, grounded-bogie preservation, and final decoded-Rotunda-to-measured-wall agreement. The retired exact-2.4m parent-relocation compactness rule is not reintroduced.`);
