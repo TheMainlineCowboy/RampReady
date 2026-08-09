@@ -1,8 +1,10 @@
 import fs from "node:fs";
 
-// Static source registration runs immediately before this stage. Preserve its
-// exact-model ground correction on the complete fleet before finalizing A1, then
-// apply the same airport-first source-pose ownership to A1.
+// Static source registration runs immediately before this stage. Keep each
+// source-positioned static Rotunda connected to its actual measured Terminal 4
+// wall span, preserve the exact-model ground correction on the complete fleet,
+// then apply the same airport-first source-pose ownership to A1.
+await import(`./prepare-static-jetway-source-measured-terminal-legs-v1.mjs?source-wall-legs=${Date.now()}`);
 await import(`./prepare-static-jetway-ground-contact-v1.mjs?whole-fleet-ground=${Date.now()}`);
 await import(`./prepare-a1-source-bgl-rotunda-ownership-v1.mjs?a1-source-owner=${Date.now()}`);
 
@@ -87,4 +89,4 @@ if (/const liveInspectionAircraftPoseApplied = inspectionActive\s*&&/.test(sourc
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Kept the exact supplied jetway ground-contact offset on the complete 58-gate fleet, then locked A1 to one physical aircraft pose across training and free-drive inspection after restoring the jetway itself to its decoded KPHX airport pose.");
+console.log("Kept all 57 static Rotundas at their exact source poses with their real measured Terminal 4 fixed-leg spans, preserved the exact supplied jetway ground-contact offset on the complete 58-gate fleet, then locked A1 to one physical aircraft pose across training and free-drive inspection.");
