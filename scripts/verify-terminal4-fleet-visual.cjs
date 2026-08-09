@@ -96,13 +96,28 @@ async function capture(page, filename) {
   await inspectionLaunch.waitFor({ state: 'visible', timeout: 30000 });
   await inspectionLaunch.click();
 
-  await page.waitForFunction(() => {
-    const data = document.querySelector('canvas.trainerCanvas')?.dataset;
-    return data?.inspectionMode === 'active'
-      && data?.terminal4UploadedJetwayLoadState === 'ready'
-      && data?.terminal4UploadedJetwayCount === '58'
-      && data?.terminal4UploadedJetwayConnectorCount === '58';
-  }, null, { timeout: 180000, polling: 100 });
+  try {
+    await page.waitForFunction(() => {
+      const data = document.querySelector('canvas.trainerCanvas')?.dataset;
+      return data?.inspectionMode === 'active'
+        && data?.terminal4UploadedJetwayLoadState === 'ready'
+        && data?.terminal4UploadedJetwayCount === '58'
+        && data?.terminal4UploadedJetwayConnectorCount === '58';
+    }, null, { timeout: 180000, polling: 100 });
+  } catch (error) {
+    const readinessDataset = await page.locator('canvas.trainerCanvas').evaluate(element => ({ ...element.dataset })).catch(() => ({}));
+    const diagnosticPath = `${evidenceDirectory}/fleet-readiness-diagnostic.png`;
+    await page.screenshot({ path: diagnosticPath, fullPage: false }).catch(() => {});
+    fs.writeFileSync(`${evidenceDirectory}/readiness-diagnostic.json`, `${JSON.stringify({
+      capturedAtUtc: new Date().toISOString(),
+      dataset: readinessDataset,
+      consoleErrors,
+      pageErrors,
+      failedRequests,
+      originalError: error?.stack || error?.message || String(error),
+    }, null, 2)}\n`);
+    throw new Error(`Fleet readiness failed before visual capture. loadState=${readinessDataset.terminal4UploadedJetwayLoadState || 'missing'} count=${readinessDataset.terminal4UploadedJetwayCount || 'missing'} connectors=${readinessDataset.terminal4UploadedJetwayConnectorCount || 'missing'} console=${consoleErrors.join(' | ') || 'none'} page=${pageErrors.join(' | ') || 'none'}`);
+  }
   checkpoint('fleet-ready');
 
   const captures = {};
