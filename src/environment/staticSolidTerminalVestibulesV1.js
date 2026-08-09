@@ -1,4 +1,4 @@
-const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v2-physical-rotunda";
+const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v3-physical-rotunda-authoritative";
 const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.2;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.6;
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.70;
@@ -67,6 +67,18 @@ function buildShellTransforms(placement) {
   if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
     throw new Error(`Static ${placement.gate} physical visible terminal vestibule is invalid: ${visibleTerminalLegMeters}`);
   }
+
+  // The exact GLB model root remains locked to the decoded BGL pose, but every
+  // downstream acceptance measurement must describe the physical Rotunda center,
+  // not the model-root origin. Mutate only telemetry/measurement fields here;
+  // never change x/z/yaw or any supplied GLB transform.
+  placement.staticPhysicalRotundaX = physicalRotunda.x;
+  placement.staticPhysicalRotundaZ = physicalRotunda.z;
+  placement.staticFacadeWallX = wallX;
+  placement.staticFacadeWallZ = wallZ;
+  placement.staticResolvedRotundaCenterToWallMeters = physicalCenterToWallMeters;
+  placement.staticVisibleTerminalLegMeters = visibleTerminalLegMeters;
+  placement.staticPhysicalRotundaRegistrationErrorMeters = 0;
 
   const direction = {
     x: wallDx / physicalCenterToWallMeters,
@@ -164,6 +176,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   group.userData.rotundaShellOverlapMeters = ROTUNDA_SHELL_OVERLAP_METERS;
   group.userData.perGateMeasuredTerminalVestibules = true;
   group.userData.physicalRotundaFromExactGlbOffset = true;
+  group.userData.physicalRotundaMeasurementsAuthoritative = true;
   group.add(buildInstancedShellBatch(THREE, material, transforms));
   group.userData.batchCount = group.children.length;
   group.userData.instanceCount = transforms.length;
