@@ -1,6 +1,6 @@
 const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v1";
-const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0;
-const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 44;
+const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.2;
+const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.6;
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.70;
 const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;
 const WIDTH_METERS = 3.02;
@@ -47,6 +47,9 @@ function buildShellTransforms(placement) {
   const sideZ = -Math.sin(yaw);
   const shellStartDistance = clearRotundaRadius - ROTUNDA_SHELL_OVERLAP_METERS;
   const shellLength = visibleTerminalLegMeters + TERMINAL_HIDDEN_OVERLAP_METERS + ROTUNDA_SHELL_OVERLAP_METERS;
+  if (shellLength > MAXIMUM_VISIBLE_TERMINAL_LEG_METERS + TERMINAL_HIDDEN_OVERLAP_METERS + ROTUNDA_SHELL_OVERLAP_METERS + 1e-6) {
+    throw new Error(`Static ${placement.gate} attempted to fabricate a long terminal corridor: ${shellLength}`);
+  }
   const shellCenterDistance = shellStartDistance + shellLength * 0.5;
   const centerX = rotundaX + direction.x * shellCenterDistance;
   const centerZ = rotundaZ + direction.z * shellCenterDistance;
@@ -103,7 +106,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   const wallOverlaps = measured.map((entry) => entry.terminalWallOverlapMeters);
   const wallDistances = measured.map((entry) => entry.wallDistance);
   const material = new THREE.MeshStandardMaterial({
-    name: "Terminal 4 measured solid white jetway vestibule shell",
+    name: "Terminal 4 measured compact solid white jetway vestibule shell",
     color: 0xe1e2df,
     roughness: 0.78,
     metalness: 0.08,

@@ -66,21 +66,14 @@ jobs:
           cat jetway-visual-evidence/preview.log
           exit 1
 
-      - name: Align visual spec timeout with Playwright config
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -F 'test.setTimeout(90000);' scripts/verify-jetway-visual-registration.spec.js
-          sed -i 's/test.setTimeout(90000);/test.setTimeout(720000);/' scripts/verify-jetway-visual-registration.spec.js
-          grep -F 'test.setTimeout(720000);' scripts/verify-jetway-visual-registration.spec.js
-
-      - name: Render A1 and representative Terminal 4 jetways
+      - name: Render A1 and representative Terminal 4 jetways in one loaded scene
         env:
           PAGE_URL: http://127.0.0.1:4173/RampReady/
+          EVIDENCE_DIR: jetway-visual-evidence
         shell: bash
         run: |
           set -o pipefail
-          npx playwright test --config=playwright.jetway-visual.config.js --reporter=line 2>&1 | tee jetway-visual-evidence/workflow.log
+          node scripts/verify-terminal4-fleet-visual.cjs 2>&1 | tee jetway-visual-evidence/workflow.log
 
       - name: Upload one-day jetway visual evidence
         if: always()
@@ -89,7 +82,6 @@ jobs:
           name: terminal4-jetway-visual-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             jetway-visual-evidence/
-            test-results/
             jetway-build.log
           if-no-files-found: warn
           retention-days: 1

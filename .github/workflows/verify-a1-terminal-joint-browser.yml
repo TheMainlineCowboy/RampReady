@@ -1,0 +1,79 @@
+name: Verify A1 Terminal Joint Browser Evidence
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-a1-terminal-joint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-a1-terminal-joint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run complete RampReady verification suite
+        run: npm run verify
+
+      - name: Build production site
+        run: npm run build
+
+      - name: Install pinned Playwright and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
+
+      - name: Serve exact production build
+        run: |
+          npx vite preview --host 127.0.0.1 --port 4173 > /tmp/rampready-vite-preview.log 2>&1 &
+          echo $! > /tmp/rampready-vite-preview.pid
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/rampready-vite-preview.log
+          exit 1
+
+      - name: Render and verify A1 terminal wall joint
+        env:
+          PAGE_URL: http://127.0.0.1:4173/RampReady/
+          EVIDENCE_DIR: a1-terminal-joint-evidence
+        run: node scripts/verify-a1-terminal-joint-browser.cjs
+
+      - name: Render Pixel portrait A1 free-drive evidence
+        env:
+          PAGE_URL: http://127.0.0.1:4173/RampReady/
+          EVIDENCE_DIR: a1-terminal-joint-evidence
+        run: node scripts/verify-a1-mobile-browser.cjs
+
+      - name: Upload exact A1 terminal-joint evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a1-terminal-joint-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            a1-terminal-joint-evidence/**
+            /tmp/rampready-vite-preview.log
+          if-no-files-found: warn
+          retention-days: 1

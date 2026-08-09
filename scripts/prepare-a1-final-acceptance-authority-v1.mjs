@@ -16,11 +16,11 @@ const staleAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
 const finalAuthority = "a1-single-aircraft-pose-training-and-free-drive-v1";
 const cameraAuthority = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const cameraLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";
-const visualAuthority = "same-day-a1-continuous-compact-solid-closed-grounded-v1";
+const visualAuthority = "same-day-a1-continuous-source-measured-solid-closed-grounded-v2";
 const jetwayGroundAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
 const noLiftAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const staticRigidAuthority = "57-static-exact-glb-rigid-source-hierarchy-v1";
-const staticSourcePlacementAuthority = "57-static-authored-rotundas-real-wall-surface-registration-v4";
+const staticSourcePlacementAuthority = "57-static-authored-rotundas-short-real-wall-registration-v5";
 const marker = "final-a1-acceptance-authority-after-all-preparers-v4-source-static-integrity";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
@@ -133,6 +133,7 @@ for (const required of [
 }
 for (const forbidden of [
   staleAuthority,
+  "same-day-a1-continuous-compact-solid-closed-grounded-v1",
   "inspectionAircraftLandingGearContactClusterCount",
   "named-landing-gear-wheel-bounds-v1",
   "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2",
@@ -140,10 +141,10 @@ for (const forbidden of [
   "exactA1CabContactY += appliedA1JetwayVerticalFitMeters",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${trainerPath}: stale A1 grounding, child lift, or pose behavior survived finalization: ${forbidden}`);
+    throw new Error(`${trainerPath}: stale compact A1, grounding, child lift, or pose behavior survived finalization: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs?grounded-pose=${Date.now()}`);
-console.log("Finalized Terminal 4 with the proved A1 wall/Rotunda and grounded aircraft/bogie evidence, plus rigid exact-GLB static jetways registered from their authored Rotundas to measured terminal facade walls. Synthetic static Cab closure boxes are not acceptance criteria.");
+console.log("Finalized Terminal 4 with the source-measured A1 real-wall/Rotunda geometry and grounded aircraft/bogie evidence, plus rigid exact-GLB static jetways relocated as complete assemblies to short photo-scale real-wall vestibules. Long synthetic static corridors remain forbidden.");

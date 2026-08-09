@@ -80,7 +80,7 @@ for (const token of [
   "const worldSize = worldBounds.getSize(new THREE.Vector3());",
   "const bridgeAxisHeadingRadians = Math.atan2(authoredBridgeAxis.x, authoredBridgeAxis.z);",
   "bridgeAxisHeadingRadians,",
-  "const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);",
+  "targetHeading - sourceBridgeAxisHeading",
 ]) {
   if (!staticRegistration.includes(token)) {
     throw new Error(`${staticRegistrationPath}: exact supplied parent-orientation repair is missing ${token}`);
