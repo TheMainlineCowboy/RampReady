@@ -27,6 +27,19 @@ if (registration.includes(compactGuard)) {
   throw new Error(`${registrationPath}: source-locked compact terminal-leg guard is missing`);
 }
 
+// The old constants also feed the fleet-wide min/max assertion after all 57
+// gates are registered. Replace that global compact-photo envelope with the same
+// source-measured limits so a legitimate 0 m Rotunda overlap or a long fixed
+// terminal leg cannot abort the whole airport after each gate already passed its
+// real-wall consistency checks.
+registration = registration
+  .replace('const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.2;', `const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MIN_VISIBLE_METERS};`)
+  .replace('const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.6;', `const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MAX_VISIBLE_METERS};`)
+  .replace(
+    'throw new Error(`Static visible vestibule envelope escaped photo bounds: ${minimumVisibleTerminalLeg}-${maximumVisibleTerminalLeg}`);',
+    'throw new Error(`Static source-measured terminal-leg envelope is invalid: ${minimumVisibleTerminalLeg}-${maximumVisibleTerminalLeg}`);',
+  );
+
 // Keep the existing decoded-BGL source-pose authority token because downstream
 // acceptance already uses it to prove x/z/yaw ownership. Only the fixed terminal
 // connector length policy changes here. A zero visible leg is valid when the
@@ -34,12 +47,27 @@ if (registration.includes(compactGuard)) {
 if (!registration.includes(`const AUTHORITY = "${SOURCE_POSE_AUTHORITY}";`)) {
   throw new Error(`${registrationPath}: decoded static source-pose authority is missing`);
 }
-if (registration.includes("source-locked wall fit would require an invalid visible terminal leg")) {
-  throw new Error(`${registrationPath}: retired compact static terminal-leg rejection survived`);
+for (const required of [
+  CONNECTOR_IMPORT,
+  `const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MIN_VISIBLE_METERS};`,
+  `const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MAX_VISIBLE_METERS};`,
+  "Static source-measured terminal-leg envelope is invalid",
+]) {
+  if (!registration.includes(required)) {
+    throw new Error(`${registrationPath}: source-measured fleet envelope is missing ${required}`);
+  }
 }
-if (registration.includes(OLD_CONNECTOR_IMPORT)) {
-  throw new Error(`${registrationPath}: retired compact static connector runtime survived`);
+for (const forbidden of [
+  "source-locked wall fit would require an invalid visible terminal leg",
+  "Static visible vestibule envelope escaped photo bounds",
+  "const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.2;",
+  "const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.6;",
+  OLD_CONNECTOR_IMPORT,
+]) {
+  if (registration.includes(forbidden)) {
+    throw new Error(`${registrationPath}: retired compact static terminal-leg policy survived: ${forbidden}`);
+  }
 }
 
 fs.writeFileSync(registrationPath, registration, "utf8");
-console.log(`Allowed all 57 static exact jetways to keep their real source-measured Terminal 4 wall-to-Rotunda fixed-leg lengths (${MIN_VISIBLE_METERS}-${MAX_VISIBLE_METERS} m), including zero visible leg when the authored Rotunda already meets the wall, without relocating/re-aiming the supplied parent.`);
+console.log(`Allowed all 57 static exact jetways and the fleet-wide acceptance gate to keep their real source-measured Terminal 4 wall-to-Rotunda fixed-leg lengths (${MIN_VISIBLE_METERS}-${MAX_VISIBLE_METERS} m), including zero visible leg when the authored Rotunda already meets the wall, without relocating/re-aiming the supplied parent.`);
