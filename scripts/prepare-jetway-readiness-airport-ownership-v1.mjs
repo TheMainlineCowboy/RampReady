@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 const STATIC_SOURCE_MEASURED_CONNECTOR_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v3";
+const STATIC_CONNECTOR_MINIMUM_INSTANCE_COUNT = 228;
 let source = fs.readFileSync(readinessPath, "utf8");
 
 function resolveTelemetryVariable(fieldName) {
@@ -35,6 +36,30 @@ if (!source.includes(`const STATIC_CONNECTOR_AUTHORITY = "${STATIC_SOURCE_MEASUR
 if (source.includes('const STATIC_CONNECTOR_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v1";')) {
   throw new Error(`${readinessPath}: retired compact static connector authority survived final readiness`);
 }
+
+// The original bare source-measured fixed corridors used exactly four box
+// surfaces per gate (228 instances total). Simulator-quality corridor panel ribs
+// and ground supports deliberately add more instances to the SAME single
+// instanced draw batch. Readiness must preserve the structural floor, not reject
+// legitimate visual detail for exceeding the old exact count.
+const exactStaticCountDeclaration = /const STATIC_CONNECTOR_INSTANCE_COUNT = 228;/g;
+const exactStaticCountCondition = /staticConnectorInstanceCount !== STATIC_CONNECTOR_INSTANCE_COUNT/g;
+if (!exactStaticCountDeclaration.test(source)) {
+  throw new Error(`${readinessPath}: retired exact static connector instance declaration is missing`);
+}
+exactStaticCountDeclaration.lastIndex = 0;
+source = source.replace(
+  exactStaticCountDeclaration,
+  `const STATIC_CONNECTOR_MINIMUM_INSTANCE_COUNT = ${STATIC_CONNECTOR_MINIMUM_INSTANCE_COUNT};`,
+);
+if (!exactStaticCountCondition.test(source)) {
+  throw new Error(`${readinessPath}: retired exact static connector instance assertion is missing`);
+}
+exactStaticCountCondition.lastIndex = 0;
+source = source.replace(
+  exactStaticCountCondition,
+  "staticConnectorInstanceCount < STATIC_CONNECTOR_MINIMUM_INSTANCE_COUNT",
+);
 
 // Grounding authority changed deliberately: the exact-model contact correction
 // now remains on the shared 58-gate fleet parent instead of being transferred to
@@ -96,6 +121,8 @@ if (!source.includes(strictContactMarker)) {
 
 for (const required of [
   `const STATIC_CONNECTOR_AUTHORITY = "${STATIC_SOURCE_MEASURED_CONNECTOR_AUTHORITY}";`,
+  `const STATIC_CONNECTOR_MINIMUM_INSTANCE_COUNT = ${STATIC_CONNECTOR_MINIMUM_INSTANCE_COUNT};`,
+  "staticConnectorInstanceCount < STATIC_CONNECTOR_MINIMUM_INSTANCE_COUNT",
   `Math.abs(${staticFleetGroundYOffset} - ${fleetGroundOffset}) > 1e-6`,
   `!Number.isFinite(${targetAlignmentCosine}) || ${targetAlignmentCosine} < -1 || ${targetAlignmentCosine} > 1`,
   `!Number.isFinite(${cabTargetHorizontalError})`,
@@ -109,6 +136,8 @@ for (const required of [
 }
 for (const forbidden of [
   'const STATIC_CONNECTOR_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v1";',
+  "const STATIC_CONNECTOR_INSTANCE_COUNT = 228;",
+  "staticConnectorInstanceCount !== STATIC_CONNECTOR_INSTANCE_COUNT",
   `Math.abs(${staticFleetGroundYOffset}) > 1e-8`,
   `${targetAlignmentCosine} < 0.99999`,
   `${cabTargetHorizontalError} > 0.06`,
@@ -116,9 +145,9 @@ for (const forbidden of [
   "Number(group.userData.uploadedJetwayA1CabTargetHorizontalErrorMeters ?? Number.POSITIVE_INFINITY) > 0.06",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${readinessPath}: retired aircraft-owned/static-floating readiness survived: ${forbidden}`);
+    throw new Error(`${readinessPath}: retired aircraft-owned/static-floating/exact-count readiness survived: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log(`Aligned final exact-jetway readiness with airport-owned geometry and source-measured static connectors (${STATIC_SOURCE_MEASURED_CONNECTOR_AUTHORITY}): all 58 bridges preserve the shared ground offset and the A1 aircraft must conform to the fixed source jetway Cab within 0.06 m.`);
+console.log(`Aligned final exact-jetway readiness with airport-owned geometry and source-measured static connectors (${STATIC_SOURCE_MEASURED_CONNECTOR_AUTHORITY}): all 58 bridges preserve the shared ground offset; static fixed-corridor detail may exceed the ${STATIC_CONNECTOR_MINIMUM_INSTANCE_COUNT}-instance structural floor in the same batch; and the A1 aircraft must conform to the fixed source jetway Cab within 0.06 m.`);
