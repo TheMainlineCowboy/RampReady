@@ -3,8 +3,8 @@ import fs from "node:fs";
 const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 const MIN_WALL_DISTANCE = 0.5;
 const MAX_WALL_DISTANCE = 44;
-const MIN_A1_VISIBLE_LEG = 0.15;
-const MAX_VISIBLE_LEG = 44;
+const MIN_A1_VISIBLE_LEG = 1.2;
+const MAX_VISIBLE_LEG = 3.6;
 
 let source = fs.readFileSync(readinessPath, "utf8");
 
@@ -159,4 +159,4 @@ for (const required of [
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Normalized final post-prepare jetway readiness using the structural exact-readiness condition: A1 keeps source-measured physical wall/visible-leg bounds, all 57 static gates keep measured min/max wall and visible-leg ranges, and grounded bogie contact remains fail-closed without depending on generated clause ordering or authority text.");
+console.log("Normalized final post-prepare jetway readiness using the structural exact-readiness condition: A1 and all 57 static gates now fail closed on any visible terminal leg at or above 3.6 m; A1 also requires at least 1.2 m, measured wall ranges remain source-derived, and grounded bogie contact remains mandatory.");
