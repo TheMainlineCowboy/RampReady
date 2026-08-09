@@ -155,7 +155,6 @@ for (const required of [
 for (const forbidden of [
   "const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;",
   "const rotundaZ = wallZ - uz * resolvedRotundaCenterToWallMeters;",
-  "const targetHeading = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;",
   "const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);",
 ]) {
   if (registration.includes(forbidden)) {
