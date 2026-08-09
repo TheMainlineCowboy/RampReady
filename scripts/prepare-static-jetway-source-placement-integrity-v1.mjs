@@ -15,11 +15,12 @@ const registrationImport = `import {
 const installationCall = "          const installationCorrection = correctUploadedJetwayInstallation(THREE, group, fleet, placements);";
 const registrationCall = "          const staticFleetRegistration = registerStaticJetwayFleetToFacade(THREE, group, fleet, placements);";
 
-// Keep the registration/readiness pass, but do not let it move a package-authored
-// static jetway to manufacture a short wall connection. The KPHX BGL x/z values
-// are the airport placement authority. A bad terminal-wall ray must fail closed
-// so the wall fit can be corrected; moving the complete supplied parent instead
-// visibly bunches/crosses neighboring bridges at concourse corners.
+// Keep the registration/readiness pass, but do not let it move or re-aim a
+// package-authored static jetway to manufacture a short wall connection. The
+// decoded KPHX BGL x/z/yaw values are the airport placement authority. A bad
+// terminal-wall ray must fail closed so the wall fit can be corrected; moving
+// or re-aiming the complete supplied parent visibly bunches/crosses neighboring
+// bridges at concourse corners.
 if (source.includes(legacyRegistrationImport)) {
   source = source.replace(legacyRegistrationImport, registrationImport);
 }
@@ -102,17 +103,44 @@ if (registration.includes(relocatingBlock)) {
   throw new Error(`${registrationPath}: static relocation block is missing; refusing to guess at fleet geometry`);
 }
 
+const targetDerivedYawBlock = `  const bridgeDx = targetX - rotundaX;
+  const bridgeDz = targetZ - rotundaZ;
+  const bridgeDistance = Math.hypot(bridgeDx, bridgeDz);
+  const targetHeading = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;
+  const sourceBridgeAxisHeading = Number(authoredRotundaOffset.bridgeAxisHeadingRadians);
+  if (!Number.isFinite(sourceBridgeAxisHeading)) throw new Error(\`Static jetway \${placement.gate} is missing exact supplied bridge-axis heading\`);
+  const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);`;
+const sourceLockedYawBlock = `  const bridgeDx = targetX - rotundaX;
+  const bridgeDz = targetZ - rotundaZ;
+  const bridgeDistance = Math.hypot(bridgeDx, bridgeDz);
+  // The static fleet was originally instantiated directly with placement.yaw,
+  // after the exact GLB prototype normalized its Rotunda to the parent origin
+  // and its longitudinal axis to +Z. Preserve that decoded BGL heading exactly;
+  // targetX/targetZ may describe an aircraft-door target but must never re-aim
+  // the complete source jetway across a neighboring stand.
+  const yaw = sourceYaw;`;
+if (registration.includes(targetDerivedYawBlock)) {
+  registration = registration.replace(targetDerivedYawBlock, sourceLockedYawBlock);
+} else if (!registration.includes("const yaw = sourceYaw;")) {
+  throw new Error(`${registrationPath}: target-derived static yaw block is missing; refusing to guess at fleet heading`);
+}
+
 registration = registration.replace(
   'const AUTHORITY = "57-static-authored-rotundas-short-real-wall-registration-v5";',
+  'const AUTHORITY = "57-static-bgl-pose-locked-short-real-wall-registration-v7";',
+);
+registration = registration.replace(
   'const AUTHORITY = "57-static-bgl-position-locked-short-real-wall-registration-v6";',
+  'const AUTHORITY = "57-static-bgl-pose-locked-short-real-wall-registration-v7";',
 );
 
 for (const required of [
   "const rotundaX = sourceX;",
   "const rotundaZ = sourceZ;",
+  "const yaw = sourceYaw;",
   "const resolvedRotundaCenterToWallMeters = sourceWallDistance;",
   "source-locked wall fit would require an invalid visible terminal leg",
-  '57-static-bgl-position-locked-short-real-wall-registration-v6',
+  '57-static-bgl-pose-locked-short-real-wall-registration-v7',
 ]) {
   if (!registration.includes(required)) {
     throw new Error(`${registrationPath}: source-locked static fleet contract is missing ${required}`);
@@ -121,11 +149,13 @@ for (const required of [
 for (const forbidden of [
   "const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;",
   "const rotundaZ = wallZ - uz * resolvedRotundaCenterToWallMeters;",
+  "const targetHeading = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;",
+  "const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);",
 ]) {
   if (registration.includes(forbidden)) {
-    throw new Error(`${registrationPath}: static fleet relocation survived source-placement lock: ${forbidden}`);
+    throw new Error(`${registrationPath}: static fleet relocation/re-aim survived source-pose lock: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(registrationPath, registration, "utf8");
-console.log("Locked all 57 static exact jetways to their decoded KPHX BGL positions. Real-wall registration may add only a short measured vestibule; it now fails closed instead of relocating supplied parents and crossing neighboring gates.");
+console.log("Locked all 57 static exact jetways to their decoded KPHX BGL x/z/yaw poses. Real-wall registration may add only a short measured vestibule; it now fails closed instead of relocating or re-aiming supplied parents across neighboring gates.");
