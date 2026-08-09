@@ -21,8 +21,9 @@ const cabTargetHorizontalError = resolveTelemetryVariable("uploadedJetwayA1CabTa
 // now remains on the shared 58-gate fleet parent instead of being transferred to
 // A1 and then reset to Y=0 for all 57 static bridges. Readiness must prove the
 // static fleet kept the same measured parent offset, not demand the retired zero.
+const zeroGroundCheck = new RegExp(`Math\\.abs\\(${staticFleetGroundYOffset}\\)\\s*>\\s*1e-8`);
 const zeroGroundPattern = new RegExp(`Math\\.abs\\(${staticFleetGroundYOffset}\\)\\s*>\\s*1e-8`, "g");
-if (!zeroGroundPattern.test(source)) {
+if (!zeroGroundCheck.test(source)) {
   throw new Error(`${readinessPath}: retired static-fleet-zero grounding assertion is missing`);
 }
 source = source.replace(
@@ -34,8 +35,9 @@ source = source.replace(
 // still required to reach it through the real runtime contact checks below. It
 // must no longer re-aim the complete source-authored bridge, so source-heading
 // readiness may only require a finite cosine in the mathematically valid range.
+const targetAlignmentCheck = new RegExp(`${targetAlignmentCosine}\\s*<\\s*0\\.99999`);
 const targetAlignmentPattern = new RegExp(`${targetAlignmentCosine}\\s*<\\s*0\\.99999`, "g");
-if (!targetAlignmentPattern.test(source)) {
+if (!targetAlignmentCheck.test(source)) {
   throw new Error(`${readinessPath}: retired source-parent synthetic-target alignment assertion is missing`);
 }
 source = source.replace(
@@ -45,13 +47,20 @@ source = source.replace(
 
 // This value measures the unarticulated source Cab against the synthetic door
 // target. It is no longer an acceptance distance once the airport heading owns
-// the rigid parent. Keep it finite for diagnostics; actual animated door contact
-// remains separately enforced to 6 cm by a1ActualContactDistance/a1ActualDoorGap.
-const cabErrorPattern = new RegExp(`${cabTargetHorizontalError}\\s*>\\s*0\\.06`, "g");
-if (!cabErrorPattern.test(source)) {
+// the rigid parent. Generated readiness has used both a local telemetry variable
+// and a direct group.userData Number(...) expression over time, so normalize
+// either form. Keep the value finite for diagnostics; actual articulated contact
+// remains separately enforced to 6 cm below.
+const cabVariableCheck = new RegExp(`${cabTargetHorizontalError}\\s*>\\s*0\\.06`);
+const cabVariablePattern = new RegExp(`${cabTargetHorizontalError}\\s*>\\s*0\\.06`, "g");
+const cabDirectCheck = /Number\(group\.userData\.uploadedJetwayA1CabTargetHorizontalErrorMeters\s*\?\?\s*(?:Infinity|Number\.POSITIVE_INFINITY)\)\s*>\s*0\.06/;
+const cabDirectPattern = /Number\(group\.userData\.uploadedJetwayA1CabTargetHorizontalErrorMeters\s*\?\?\s*(?:Infinity|Number\.POSITIVE_INFINITY)\)\s*>\s*0\.06/g;
+if (!cabVariableCheck.test(source) && !cabDirectCheck.test(source)) {
   throw new Error(`${readinessPath}: retired unarticulated source-Cab 6 cm assertion is missing`);
 }
-source = source.replace(cabErrorPattern, `!Number.isFinite(${cabTargetHorizontalError})`);
+source = source
+  .replace(cabVariablePattern, `!Number.isFinite(${cabTargetHorizontalError})`)
+  .replace(cabDirectPattern, `!Number.isFinite(${cabTargetHorizontalError})`);
 
 for (const required of [
   `Math.abs(${staticFleetGroundYOffset} - ${fleetGroundOffset}) > 1e-6`,
@@ -68,6 +77,8 @@ for (const forbidden of [
   `Math.abs(${staticFleetGroundYOffset}) > 1e-8`,
   `${targetAlignmentCosine} < 0.99999`,
   `${cabTargetHorizontalError} > 0.06`,
+  "Number(group.userData.uploadedJetwayA1CabTargetHorizontalErrorMeters ?? Infinity) > 0.06",
+  "Number(group.userData.uploadedJetwayA1CabTargetHorizontalErrorMeters ?? Number.POSITIVE_INFINITY) > 0.06",
 ]) {
   if (source.includes(forbidden)) {
     throw new Error(`${readinessPath}: retired aircraft-owned/static-floating readiness survived: ${forbidden}`);
