@@ -21,14 +21,21 @@ for (const path of browserSpecs) {
   fs.writeFileSync(path, committed, "utf8");
 }
 
-// The articulation workflow runs Chromium immediately after the production
-// build. Reapply the current fixed-aircraft A1 regression migration here so
-// that the trusted exact-head browser gate cannot fall back to the retired
-// pre-registration 30.3-30.8 m target-distance constants after restoration.
-// This changes only the browser acceptance spec in the runner workspace; it
-// does not touch Airport_Jetway.glb or any runtime geometry/textures.
-execFileSync(process.execPath, ["scripts/prepare-fixed-a1-browser-regressions-v1.mjs"], {
-  stdio: "inherit",
-});
+// Browser-acceptance migrations are runner-only compatibility transforms. A
+// generic production Build/Verify must finish with the exact committed tree,
+// so only reapply the transforms when the current workflow will immediately
+// execute one of the affected browser specs after npm run build.
+const workflow = String(process.env.GITHUB_WORKFLOW || "");
+const needsPostBuildBrowserMigration = new Set([
+  "Verify exact supplied jetway articulation",
+  "CRJ700 Runtime Verification",
+]).has(workflow);
 
-console.log(`Restored ${browserSpecs.length} browser acceptance specs to exact HEAD after production artifact generation, then reapplied the current fixed-aircraft A1 articulation regression migration before Chromium.`);
+if (needsPostBuildBrowserMigration) {
+  execFileSync(process.execPath, ["scripts/prepare-fixed-a1-browser-regressions-v1.mjs"], {
+    stdio: "inherit",
+  });
+  console.log(`Restored ${browserSpecs.length} browser acceptance specs to exact HEAD, then reapplied connected-A1 browser expectations for ${workflow}.`);
+} else {
+  console.log(`Restored ${browserSpecs.length} browser acceptance specs to exact HEAD; ${workflow || "local build"} does not consume the migrated articulation/CRJ specs, so the tracked tree remains clean.`);
+}
