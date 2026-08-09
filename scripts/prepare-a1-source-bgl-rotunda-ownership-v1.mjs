@@ -127,6 +127,10 @@ const sourceHeadingReplacement = `  // Preserve the complete supplied A1 parent 
   bridgeDirection.y = 0;
   if (bridgeDirection.lengthSq() < 0.25) throw new Error("A1 exact source bridge axis is degenerate");
   bridgeDirection.normalize();
+  // No whole-parent yaw is applied after the decoded airport heading. Keep the
+  // historical return/telemetry field explicit at zero so downstream consumers
+  // can prove that source ownership did not silently rotate the assembly.
+  const yawDelta = 0;
   const targetAlignmentCosine = bridgeDirection.dot(targetDirection);
 `;
 if (!parentPivotPattern.test(elbow)) {
@@ -159,6 +163,7 @@ for (const required of [
   'anchor.rotation.y = Number(placement.yaw)',
   'uploadedJetwayA1MeasuredTerminalWallX',
   'uploadedJetwayA1SourceRotundaPositionErrorMeters',
+  'const yawDelta = 0;',
   'const targetAlignmentCosine = bridgeDirection.dot(targetDirection);',
 ]) {
   if (!elbow.includes(required)) throw new Error(`${elbowPath}: A1 source ownership is missing ${required}`);
@@ -173,4 +178,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(elbowPath, elbow, "utf8");
-console.log(`Locked A1 Rotunda x/z/yaw to the decoded KPHX BGL airport pose and routed its fixed terminal leg to the pre-relocation measured real Terminal 4 wall. The complete supplied parent can no longer be rotated or translated to satisfy a synthetic aircraft door or 2.4 m vestibule (${AUTHORITY}).`);
+console.log(`Locked A1 Rotunda x/z/yaw to the decoded KPHX BGL airport pose, published zero whole-parent yaw delta, and routed its fixed terminal leg to the pre-relocation measured real Terminal 4 wall. The complete supplied parent can no longer be rotated or translated to satisfy a synthetic aircraft door or 2.4 m vestibule (${AUTHORITY}).`);
