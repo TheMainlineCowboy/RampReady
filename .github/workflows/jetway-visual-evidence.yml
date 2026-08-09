@@ -37,7 +37,24 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Fail closed unless static fleet is source-pose locked
+      - name: Fail closed if tracked static fleet can relocate or re-aim supplied jetways
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -Fq 'MAXIMUM_REGISTRATION_DISPLACEMENT_METERS = 44' src/environment/registerStaticJetwayFleetToFacadeV1.js; then
+            echo 'Tracked runtime still permits up to 44 m of static jetway relocation.' >&2
+            exit 1
+          fi
+          if grep -Fq 'const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;' src/environment/registerStaticJetwayFleetToFacadeV1.js; then
+            echo 'Tracked runtime still relocates supplied static Rotundas toward the terminal wall.' >&2
+            exit 1
+          fi
+          if grep -Fq 'const targetHeading = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;' src/environment/registerStaticJetwayFleetToFacadeV1.js; then
+            echo 'Tracked runtime still re-aims supplied static jetways from a synthetic aircraft target.' >&2
+            exit 1
+          fi
+
+      - name: Fail closed unless prepared static fleet is source-pose locked
         shell: bash
         run: |
           set -euo pipefail
