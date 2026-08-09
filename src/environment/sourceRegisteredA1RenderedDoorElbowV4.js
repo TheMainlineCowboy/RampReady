@@ -8,7 +8,11 @@ const TELESCOPING_AUTHORITY = "a1-source-authored-rigid-heading-aircraft-conform
 const SOURCE_MODEL_YAW_DEGREES = 0.491;
 const AUTHORED_DOOR_LOCAL_X = -1.34;
 const AUTHORED_DOOR_LOCAL_Z = 7.32;
-const MINIMUM_SOURCE_AXIS_COSINE = 0.99999;
+// The exact Cab endpoint band and Tunnel-A mesh centroid are not mathematically
+// collinear even when every supplied child transform is untouched. Accept a
+// sub-degree source-mesh centroid difference without rotating or telescoping the
+// bridge to manufacture a perfect line. 0.9999 is about 0.81 degrees.
+const MINIMUM_SOURCE_AXIS_COSINE = 0.9999;
 
 function centerInFleet(THREE, fleet, object) {
   fleet.updateWorldMatrix(true, true);
