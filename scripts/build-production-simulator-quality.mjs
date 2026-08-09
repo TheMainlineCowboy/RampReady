@@ -108,6 +108,7 @@ try {
   await runNode("scripts/prepare-a1-unified-aircraft-pose-v1.mjs");
   await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
   await runNode("scripts/prepare-a1-final-marker-compat-v1.mjs");
+  await runNode("scripts/prepare-jetway-readiness-airport-ownership-v1.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
   buildError = error;
@@ -148,7 +149,7 @@ const articulationTestPath = new URL(
 const preparedArticulationTest = await readFile(articulationTestPath, "utf8");
 for (const forbidden of [
   "expect(renderedAircraftVerticalError).toBeLessThanOrEqual(0.01)",
-  "grounded-aircraft-door-progressive-tunnel-slope-v1",
+  "grounded-aircraft-door-progressive-tunnel-slope-v2",
 ]) {
   if (preparedArticulationTest.includes(forbidden)) {
     throw new Error(`Post-restoration browser preparation left retired articulation expectation ${forbidden}`);
