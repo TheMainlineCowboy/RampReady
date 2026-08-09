@@ -3,6 +3,8 @@ name: Verify A1 Terminal Joint Browser Evidence
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [fix/a1-live-terminal-joint-evidence-v1]
   workflow_dispatch:
 
 permissions:
