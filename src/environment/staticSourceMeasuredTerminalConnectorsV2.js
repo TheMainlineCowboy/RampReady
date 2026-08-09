@@ -1,5 +1,5 @@
-const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v2";
-const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0.15;
+const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v3";
+const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 43;
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.70;
 const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;
@@ -30,7 +30,7 @@ function buildShellTransforms(placement) {
   if (!(clearRotundaRadius > 0.7 && clearRotundaRadius < 3.5)) {
     throw new Error(`Static ${placement.gate} authored Rotunda radius is invalid: ${clearRotundaRadius}`);
   }
-  if (!(visibleTerminalLegMeters > MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters < MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
+  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters < MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
     throw new Error(`Static ${placement.gate} source-measured visible terminal leg is invalid: ${visibleTerminalLegMeters}`);
   }
   if (!(terminalWallOverlapMeters >= 0 && terminalWallOverlapMeters < clearRotundaRadius)) {
