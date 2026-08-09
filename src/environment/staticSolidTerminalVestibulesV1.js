@@ -1,9 +1,10 @@
-const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v4-registered-facade-authoritative";
+const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v5-registered-rotunda-verified";
 const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.2;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.6;
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.70;
 const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;
 const MAXIMUM_TERMINAL_DIRECTION_SKEW_RADIANS = Math.PI / 12;
+const MAXIMUM_ROTUNDA_REGISTRATION_ERROR_METERS = 0.05;
 const WIDTH_METERS = 3.02;
 const HEIGHT_METERS = 2.62;
 
@@ -44,7 +45,9 @@ function buildShellTransforms(placement) {
   const terminalWallOverlapMeters = Number(placement.staticTerminalWallOverlapMeters) || 0;
   const registeredWallX = Number(placement.staticFacadeWallX);
   const registeredWallZ = Number(placement.staticFacadeWallZ);
-  if (![centerY, clearRotundaRadius, terminalWallOverlapMeters, registeredWallX, registeredWallZ].every(Number.isFinite)) {
+  const registeredPhysicalRotundaX = Number(placement.staticPhysicalRotundaX);
+  const registeredPhysicalRotundaZ = Number(placement.staticPhysicalRotundaZ);
+  if (![centerY, clearRotundaRadius, terminalWallOverlapMeters, registeredWallX, registeredWallZ, registeredPhysicalRotundaX, registeredPhysicalRotundaZ].every(Number.isFinite)) {
     throw new Error(`Static ${placement.gate} vestibule placement is incomplete`);
   }
   if (!(clearRotundaRadius > 0.7 && clearRotundaRadius < 3.5)) {
@@ -56,6 +59,14 @@ function buildShellTransforms(placement) {
 
   const sourceDirection = normalizedTerminalDirection(placement);
   const physicalRotunda = physicalRotundaFromAuthoredOffset(placement);
+  const rotundaRegistrationErrorMeters = Math.hypot(
+    registeredPhysicalRotundaX - physicalRotunda.x,
+    registeredPhysicalRotundaZ - physicalRotunda.z,
+  );
+  if (rotundaRegistrationErrorMeters > MAXIMUM_ROTUNDA_REGISTRATION_ERROR_METERS) {
+    throw new Error(`Static ${placement.gate} registered physical Rotunda disagrees with exact GLB-authored offset by ${rotundaRegistrationErrorMeters.toFixed(3)}m`);
+  }
+
   const wallX = registeredWallX;
   const wallZ = registeredWallZ;
   const wallDx = wallX - physicalRotunda.x;
@@ -87,10 +98,7 @@ function buildShellTransforms(placement) {
   placement.staticPhysicalRotundaZ = physicalRotunda.z;
   placement.staticResolvedRotundaCenterToWallMeters = physicalCenterToWallMeters;
   placement.staticVisibleTerminalLegMeters = visibleTerminalLegMeters;
-  placement.staticPhysicalRotundaRegistrationErrorMeters = Math.hypot(
-    Number(placement.staticPhysicalRotundaX) - physicalRotunda.x,
-    Number(placement.staticPhysicalRotundaZ) - physicalRotunda.z,
-  );
+  placement.staticPhysicalRotundaRegistrationErrorMeters = rotundaRegistrationErrorMeters;
   placement.staticTerminalDirectionSkewRadians = directionSkewRadians;
 
   const yaw = Math.atan2(direction.x, direction.z);
@@ -122,6 +130,7 @@ function buildShellTransforms(placement) {
     terminalWallOverlapMeters,
     wallDistance: physicalCenterToWallMeters,
     directionSkewRadians,
+    rotundaRegistrationErrorMeters,
     physicalRotundaX: physicalRotunda.x,
     physicalRotundaZ: physicalRotunda.z,
   };
@@ -165,6 +174,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   const wallOverlaps = measured.map((entry) => entry.terminalWallOverlapMeters);
   const wallDistances = measured.map((entry) => entry.wallDistance);
   const directionSkews = measured.map((entry) => entry.directionSkewRadians);
+  const rotundaRegistrationErrors = measured.map((entry) => entry.rotundaRegistrationErrorMeters);
   const material = new THREE.MeshStandardMaterial({
     name: "Terminal 4 measured compact solid white jetway vestibule shell",
     color: 0xe1e2df,
@@ -184,12 +194,15 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   group.userData.minimumRotundaCenterToWallMeters = Math.min(...wallDistances);
   group.userData.maximumRotundaCenterToWallMeters = Math.max(...wallDistances);
   group.userData.maximumTerminalDirectionSkewRadians = Math.max(...directionSkews);
+  group.userData.maximumPhysicalRotundaRegistrationErrorMeters = Math.max(...rotundaRegistrationErrors);
+  group.userData.maximumAllowedPhysicalRotundaRegistrationErrorMeters = MAXIMUM_ROTUNDA_REGISTRATION_ERROR_METERS;
   group.userData.terminalHiddenOverlapMeters = TERMINAL_HIDDEN_OVERLAP_METERS;
   group.userData.rotundaShellOverlapMeters = ROTUNDA_SHELL_OVERLAP_METERS;
   group.userData.perGateMeasuredTerminalVestibules = true;
   group.userData.physicalRotundaFromExactGlbOffset = true;
   group.userData.physicalRotundaMeasurementsAuthoritative = true;
   group.userData.registeredFacadeEndpointAuthoritative = true;
+  group.userData.registeredPhysicalRotundaVerifiedAgainstExactGlb = true;
   group.add(buildInstancedShellBatch(THREE, material, transforms));
   group.userData.batchCount = group.children.length;
   group.userData.instanceCount = transforms.length;
@@ -204,6 +217,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
     maximumVisibleTerminalLegMeters: group.userData.maximumVisibleTerminalLegMeters,
     maximumTerminalWallRotundaOverlapMeters: group.userData.maximumTerminalWallRotundaOverlapMeters,
     maximumTerminalDirectionSkewRadians: group.userData.maximumTerminalDirectionSkewRadians,
+    maximumPhysicalRotundaRegistrationErrorMeters: group.userData.maximumPhysicalRotundaRegistrationErrorMeters,
   };
 }
 
