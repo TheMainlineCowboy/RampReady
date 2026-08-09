@@ -1,4 +1,4 @@
-const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v1";
+const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v2-physical-rotunda";
 const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.2;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.6;
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.70;
@@ -16,32 +16,62 @@ function normalizedTerminalDirection(placement) {
   return { x: x / magnitude, z: z / magnitude };
 }
 
+function physicalRotundaFromAuthoredOffset(placement) {
+  const modelRootX = Number(placement.staticModelRootX ?? placement.x);
+  const modelRootZ = Number(placement.staticModelRootZ ?? placement.z);
+  const yaw = Number(placement.yaw);
+  const authoredOffsetX = Number(placement.staticAuthoredRotundaOffsetX);
+  const authoredOffsetZ = Number(placement.staticAuthoredRotundaOffsetZ);
+  if (![modelRootX, modelRootZ, yaw, authoredOffsetX, authoredOffsetZ].every(Number.isFinite)) {
+    throw new Error(`Static ${placement.gate} authored Rotunda/root evidence is incomplete`);
+  }
+  const cos = Math.cos(yaw);
+  const sin = Math.sin(yaw);
+  const rotatedOffsetX = authoredOffsetX * cos + authoredOffsetZ * sin;
+  const rotatedOffsetZ = -authoredOffsetX * sin + authoredOffsetZ * cos;
+  return {
+    modelRootX,
+    modelRootZ,
+    x: modelRootX + rotatedOffsetX,
+    z: modelRootZ + rotatedOffsetZ,
+  };
+}
+
 function buildShellTransforms(placement) {
-  const rotundaX = Number(placement.x);
-  const rotundaZ = Number(placement.z);
   const centerY = Number(placement.rotundaY) || 4.1;
-  const wallDistance = Number(placement.wallConnectorLength);
+  const sourceWallDistance = Number(placement.wallConnectorLength);
   const clearRotundaRadius = Number(placement.staticAuthoredRotundaRadiusMeters);
-  const visibleTerminalLegMeters = Number(placement.staticVisibleTerminalLegMeters);
   const terminalWallOverlapMeters = Number(placement.staticTerminalWallOverlapMeters) || 0;
-  if (![rotundaX, rotundaZ, centerY, wallDistance, clearRotundaRadius, visibleTerminalLegMeters, terminalWallOverlapMeters].every(Number.isFinite)) {
+  if (![centerY, sourceWallDistance, clearRotundaRadius, terminalWallOverlapMeters].every(Number.isFinite)) {
     throw new Error(`Static ${placement.gate} vestibule placement is incomplete`);
   }
   if (!(clearRotundaRadius > 0.7 && clearRotundaRadius < 3.5)) {
     throw new Error(`Static ${placement.gate} authored Rotunda radius is invalid: ${clearRotundaRadius}`);
   }
-  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
-    throw new Error(`Static ${placement.gate} measured visible terminal vestibule is invalid: ${visibleTerminalLegMeters}`);
-  }
   if (!(terminalWallOverlapMeters >= 0 && terminalWallOverlapMeters < clearRotundaRadius)) {
     throw new Error(`Static ${placement.gate} terminal wall/Rotunda overlap is invalid: ${terminalWallOverlapMeters}`);
   }
-  const expectedCenterToWall = clearRotundaRadius + visibleTerminalLegMeters - terminalWallOverlapMeters;
-  if (Math.abs(wallDistance - expectedCenterToWall) > 0.02) {
-    throw new Error(`Static ${placement.gate} wall/Rotunda registration is inconsistent: ${wallDistance} vs ${expectedCenterToWall}`);
+
+  const sourceDirection = normalizedTerminalDirection(placement);
+  const physicalRotunda = physicalRotundaFromAuthoredOffset(placement);
+  const wallX = physicalRotunda.modelRootX + sourceDirection.x * sourceWallDistance;
+  const wallZ = physicalRotunda.modelRootZ + sourceDirection.z * sourceWallDistance;
+  const wallDx = wallX - physicalRotunda.x;
+  const wallDz = wallZ - physicalRotunda.z;
+  const physicalCenterToWallMeters = Math.hypot(wallDx, wallDz);
+  if (!(physicalCenterToWallMeters > clearRotundaRadius)) {
+    throw new Error(`Static ${placement.gate} physical Rotunda center does not resolve outside the terminal wall: ${physicalCenterToWallMeters}`);
   }
 
-  const direction = normalizedTerminalDirection(placement);
+  const visibleTerminalLegMeters = physicalCenterToWallMeters - clearRotundaRadius + terminalWallOverlapMeters;
+  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
+    throw new Error(`Static ${placement.gate} physical visible terminal vestibule is invalid: ${visibleTerminalLegMeters}`);
+  }
+
+  const direction = {
+    x: wallDx / physicalCenterToWallMeters,
+    z: wallDz / physicalCenterToWallMeters,
+  };
   const yaw = Math.atan2(direction.x, direction.z);
   const sideX = Math.cos(yaw);
   const sideZ = -Math.sin(yaw);
@@ -51,8 +81,8 @@ function buildShellTransforms(placement) {
     throw new Error(`Static ${placement.gate} attempted to fabricate a long terminal corridor: ${shellLength}`);
   }
   const shellCenterDistance = shellStartDistance + shellLength * 0.5;
-  const centerX = rotundaX + direction.x * shellCenterDistance;
-  const centerZ = rotundaZ + direction.z * shellCenterDistance;
+  const centerX = physicalRotunda.x + direction.x * shellCenterDistance;
+  const centerZ = physicalRotunda.z + direction.z * shellCenterDistance;
   const halfWidth = WIDTH_METERS * 0.5;
 
   const transforms = [];
@@ -65,7 +95,14 @@ function buildShellTransforms(placement) {
       [0.13, HEIGHT_METERS, shellLength],
     );
   }
-  return { transforms, visibleTerminalLegMeters, terminalWallOverlapMeters, wallDistance };
+  return {
+    transforms,
+    visibleTerminalLegMeters,
+    terminalWallOverlapMeters,
+    wallDistance: physicalCenterToWallMeters,
+    physicalRotundaX: physicalRotunda.x,
+    physicalRotundaZ: physicalRotunda.z,
+  };
 }
 
 function buildInstancedShellBatch(THREE, material, transforms) {
@@ -126,6 +163,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   group.userData.terminalHiddenOverlapMeters = TERMINAL_HIDDEN_OVERLAP_METERS;
   group.userData.rotundaShellOverlapMeters = ROTUNDA_SHELL_OVERLAP_METERS;
   group.userData.perGateMeasuredTerminalVestibules = true;
+  group.userData.physicalRotundaFromExactGlbOffset = true;
   group.add(buildInstancedShellBatch(THREE, material, transforms));
   group.userData.batchCount = group.children.length;
   group.userData.instanceCount = transforms.length;
