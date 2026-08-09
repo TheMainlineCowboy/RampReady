@@ -5,6 +5,7 @@ const browserSpecs = Object.freeze([
   "tests/browser/a1-ground-contact-evidence.spec.js",
   "tests/browser/a1-jetway-contact-clusters.spec.js",
   "tests/browser/a1-terminal-joint-bogie-subviews.spec.js",
+  "tests/browser/crj700-runtime.spec.js",
   "tests/browser/full-airport-inspection.spec.js",
   "tests/browser/kphx-ground-runtime.spec.js",
   "tests/browser/source-first-a1-repair.spec.js",
