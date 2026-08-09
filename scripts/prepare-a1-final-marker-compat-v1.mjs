@@ -3,6 +3,8 @@ import fs from "node:fs";
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 const elbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
+const sourcePlacedPath = "src/environment/sourcePlacedTerminal4Jetways.js";
+const SOURCE_OWNER = "a1-decoded-kphx-bgl-rotunda-and-heading-own-physical-jetway-v1";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const currentMarkers = [
@@ -38,21 +40,26 @@ for (const currentMarker of currentMarkers) {
     throw new Error(`${trainerPath}: superseded final acceptance marker remains after workflow compatibility migration: ${currentMarker}`);
   }
 }
-
 fs.writeFileSync(trainerPath, source, "utf8");
 
-// Late compatibility preparers remove/reformat several old A1-specific
-// readiness conditions. The one invariant every final readiness version keeps
-// is the top-level exact-fleet mismatch block. Seed the physical real-wall and
-// source-measured fixed-leg guards there, ahead of the gate-count check, so no
-// legacy authority/compactness rewrite can erase the final physical criteria.
+// Marker compatibility must never own geometry. Normalize browser readiness to
+// the same broad physical envelope used by the airport-owned A1 source pass and
+// delete every historical 2.40 m / compact-photo condition that can survive a
+// legacy preparer. The actual wall point, Rotunda pose and bridge yaw remain
+// independently measured and verified by the generated runtime.
 let readiness = fs.readFileSync(readinessPath, "utf8");
 const finalWallGuard = "a1TerminalWallDistance > 0.5 && a1TerminalWallDistance < 44";
 const finalVisibleLegGuard = "connectorVisibleLength > 0.15 && connectorVisibleLength < 44";
+readiness = readiness
+  .replace(/a1TerminalWallDistance\s*(?:>|>=)\s*[0-9.]+\s*&&\s*a1TerminalWallDistance\s*(?:<|<=)\s*[0-9.]+/g, finalWallGuard)
+  .replace(/connectorVisibleLength\s*(?:>|>=)\s*[0-9.]+\s*&&\s*connectorVisibleLength\s*(?:<|<=)\s*[0-9.]+/g, finalVisibleLegGuard)
+  .replaceAll("Math.abs(connectorVisibleLength - 2.4) > 0.05", `!(${finalVisibleLegGuard})`)
+  .replaceAll("Math.abs(connectorVisibleLength - A1_PHOTO_VISIBLE_VESTIBULE_METERS) > 0.05", `!(${finalVisibleLegGuard})`);
+
 if (!readiness.includes(finalWallGuard) || !readiness.includes(finalVisibleLegGuard)) {
   const mismatchAnchor = `          if (\n            count !== EXPECTED_GATE_COUNT`;
   if (!readiness.includes(mismatchAnchor)) {
-    throw new Error(`${readinessPath}: final exact-fleet readiness mismatch block is missing before real-wall seeding`);
+    throw new Error(`${readinessPath}: final exact-fleet readiness mismatch block is missing before source-wall seeding`);
   }
   const seededConditions = [
     !readiness.includes(finalWallGuard) ? `!(${finalWallGuard})` : null,
@@ -65,24 +72,61 @@ if (!readiness.includes(finalWallGuard) || !readiness.includes(finalVisibleLegGu
 }
 for (const guard of [finalWallGuard, finalVisibleLegGuard]) {
   if (!readiness.includes(guard)) {
-    throw new Error(`${readinessPath}: failed to seed final physical A1 readiness guard ${guard}`);
+    throw new Error(`${readinessPath}: failed to preserve final physical A1 readiness guard ${guard}`);
+  }
+}
+for (const forbidden of [
+  "a1TerminalWallDistance > 2.9 && a1TerminalWallDistance < 5.8",
+  "a1TerminalWallDistance >= 2.9 && a1TerminalWallDistance <= 5.8",
+  "connectorVisibleLength > 1.2 && connectorVisibleLength < 3.6",
+  "connectorVisibleLength >= 1.2 && connectorVisibleLength <= 3.6",
+  "Math.abs(connectorVisibleLength - 2.4) > 0.05",
+]) {
+  if (readiness.includes(forbidden)) {
+    throw new Error(`${readinessPath}: compact A1 readiness survived final marker compatibility: ${forbidden}`);
   }
 }
 fs.writeFileSync(readinessPath, readiness, "utf8");
 
-// Marker compatibility is not a geometry authority. Reassert the single final
-// A1 geometry owner after every legacy preparer; it normalizes/revalidates the
-// seeded physical guards and writes the final runtime immediately before bundle.
-await import(`./prepare-a1-real-terminal-final-geometry-v1.mjs?final-real-wall=${Date.now()}`);
-
-// The exact-head render proved that the 0.18 m mathematical wall overlap can
-// terminate in front of the visible facade surface even though the structural
-// ray hit is valid. Seal only the generated terminal-side shell farther behind
-// the real facade, using the same 0.70 m hidden penetration already used by the
-// static Terminal 4 wall registrations. This does not change the visible
-// wall-to-Rotunda leg, the supplied Rotunda, any authored child transform, or
-// the aircraft-side bridge axis.
+// The preceding source-ownership pass is the final geometry authority. Do NOT
+// call prepare-a1-real-terminal-final-geometry-v1 here: that historical helper
+// rewrites the valid 0.5-44 m source wall envelope back to 2.9-5.8 m, rewrites
+// the visible leg to 1.2-3.6 m, and therefore rejects the real 19.965 m A1 wall
+// span after the correct airport pose has already been restored.
 let elbow = fs.readFileSync(elbowPath, "utf8");
+const sourcePlaced = fs.readFileSync(sourcePlacedPath, "utf8");
+for (const required of [
+  SOURCE_OWNER,
+  "const sourceRotundaTarget = new THREE.Vector3(Number(placement.x)",
+  "anchor.rotation.y = Number(placement.yaw)",
+  "terminalWallDistance > 0.5 && terminalWallDistance < 44",
+  "uploadedJetwayA1MeasuredTerminalWallX",
+]) {
+  if (!elbow.includes(required)) {
+    throw new Error(`${elbowPath}: airport-owned A1 geometry was lost before final marker compatibility: ${required}`);
+  }
+}
+for (const forbidden of [
+  "terminalWallDistance >= 2.9 && terminalWallDistance <= 5.8",
+  "terminalWallDistance > 2.9 && terminalWallDistance < 5.8",
+  "anchor.rotation.y += yawDelta;",
+  "A1 supplied bridge does not point at the source A1 door target",
+]) {
+  if (elbow.includes(forbidden)) {
+    throw new Error(`${elbowPath}: compact/aircraft-owned A1 geometry survived final marker compatibility: ${forbidden}`);
+  }
+}
+if (sourcePlaced.includes("exact-T4_WALK-A1-terminal-portal-v25")) {
+  throw new Error(`${sourcePlacedPath}: obsolete elevated T4_WALK A1 portal survived final marker compatibility`);
+}
+if (!sourcePlaced.includes("structural-A1-terminal-building-")) {
+  throw new Error(`${sourcePlacedPath}: structural Terminal 4 A1 wall authority is missing`);
+}
+
+// Keep only the hidden facade penetration from the old compatibility layer. It
+// closes the generated terminal-side shell behind the real wall and does not
+// move the supplied Rotunda, alter the visible source-measured span, re-aim the
+// bridge, or touch any authored GLB child transform.
 const compactOverlap = "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.18;";
 const sealedOverlap = "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.70;";
 if (elbow.includes(compactOverlap)) {
@@ -93,6 +137,9 @@ if (elbow.includes(compactOverlap)) {
 if (!elbow.includes("const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;")) {
   throw new Error(`${elbowPath}: Rotunda-side overlap changed while sealing the terminal wall`);
 }
+if (!elbow.includes(SOURCE_OWNER)) {
+  throw new Error(`${elbowPath}: source-owned A1 authority disappeared while sealing the wall`);
+}
 fs.writeFileSync(elbowPath, elbow, "utf8");
 
-console.log("Published the established exact-head acceptance marker, delegated geometry to the source-measured real-Terminal-4-wall finalizer, then sealed only the hidden A1 vestibule end 0.70 m into the rendered facade while preserving the visible leg, supplied Rotunda, authored hierarchy, and grounded bogie.");
+console.log("Published the established exact-head acceptance marker without invoking the retired compact-photo A1 finalizer. Preserved decoded KPHX A1 Rotunda x/z/yaw, the measured real Terminal 4 wall span, the supplied jetway hierarchy and whole-fleet grounding; only the hidden terminal-side shell penetrates 0.70 m behind the real facade, and T4_WALK remains forbidden.");
