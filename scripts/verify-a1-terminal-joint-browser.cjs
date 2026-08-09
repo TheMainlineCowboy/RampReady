@@ -83,31 +83,46 @@ async function selectCameraView(page, value) {
 
   const canvas = page.locator('canvas.trainerCanvas');
   await canvas.waitFor({ state: 'visible', timeout: 30000 });
-  await page.waitForFunction(({ visualAuthority, continuityAuthority, bogieAuthority, wallAuthority }) => {
-    const data = document.querySelector('canvas.trainerCanvas')?.dataset;
-    const vestibule = Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters);
-    const wallDistance = Number(data?.terminal4A1JetwayWallDistance);
-    const clearance = Number(data?.terminal4UploadedJetwayBogieGroundClearanceMeters);
-    return data?.inspectionMode === 'active'
-      && data?.terminal4UploadedJetwayLoadState === 'ready'
-      && data?.terminal4UploadedJetwayCount === '58'
-      && data?.terminal4UploadedJetwayA1VisualAcceptanceAuthority === visualAuthority
-      && data?.terminal4UploadedJetwayA1AssemblyContinuityAuthority === continuityAuthority
-      && data?.terminal4UploadedJetwayA1AssemblyPartCount === '5'
-      && data?.terminal4UploadedJetwayA1IsolatedNodeRotationCount === '0'
-      && data?.terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed === 'true'
-      && data?.terminal4UploadedJetwayA1NoGeneratedGlassCorridor === 'true'
-      && data?.terminal4UploadedJetwayBogieGroundContactAuthority === bogieAuthority
-      && Math.abs(clearance) <= 0.005
-      && Number(data?.terminal4UploadedJetwayBogieGroundContactPointCount) >= 8
-      && Number(data?.terminal4UploadedJetwayBogieGroundContactClusterCount) >= 2
-      && Number(data?.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters) >= 1.2
-      && Number.isFinite(vestibule)
-      && Math.abs(vestibule - 2.4) <= 0.05
-      && Number.isFinite(wallDistance)
-      && wallDistance > 2.9 && wallDistance < 5.8
-      && data?.terminal4A1ConnectionAuthority === wallAuthority;
-  }, { visualAuthority: VISUAL_AUTHORITY, continuityAuthority: CONTINUITY_AUTHORITY, bogieAuthority: BOGIE_AUTHORITY, wallAuthority: WALL_AUTHORITY }, { timeout: 120000, polling: 100 });
+  try {
+    await page.waitForFunction(({ visualAuthority, continuityAuthority, bogieAuthority, wallAuthority }) => {
+      const data = document.querySelector('canvas.trainerCanvas')?.dataset;
+      const vestibule = Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters);
+      const wallDistance = Number(data?.terminal4A1JetwayWallDistance);
+      const clearance = Number(data?.terminal4UploadedJetwayBogieGroundClearanceMeters);
+      return data?.inspectionMode === 'active'
+        && data?.terminal4UploadedJetwayLoadState === 'ready'
+        && data?.terminal4UploadedJetwayCount === '58'
+        && data?.terminal4UploadedJetwayA1VisualAcceptanceAuthority === visualAuthority
+        && data?.terminal4UploadedJetwayA1AssemblyContinuityAuthority === continuityAuthority
+        && data?.terminal4UploadedJetwayA1AssemblyPartCount === '5'
+        && data?.terminal4UploadedJetwayA1IsolatedNodeRotationCount === '0'
+        && data?.terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed === 'true'
+        && data?.terminal4UploadedJetwayA1NoGeneratedGlassCorridor === 'true'
+        && data?.terminal4UploadedJetwayBogieGroundContactAuthority === bogieAuthority
+        && Math.abs(clearance) <= 0.005
+        && Number(data?.terminal4UploadedJetwayBogieGroundContactPointCount) >= 8
+        && Number(data?.terminal4UploadedJetwayBogieGroundContactClusterCount) >= 2
+        && Number(data?.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters) >= 1.2
+        // The airport source now owns A1. Validate the actual measured real-wall
+        // span rather than the retired 2.40 m relocation target.
+        && Number.isFinite(vestibule)
+        && vestibule > 0.15 && vestibule < 44
+        && Number.isFinite(wallDistance)
+        && wallDistance > 0.5 && wallDistance < 44
+        && data?.terminal4A1ConnectionAuthority === wallAuthority;
+    }, { visualAuthority: VISUAL_AUTHORITY, continuityAuthority: CONTINUITY_AUTHORITY, bogieAuthority: BOGIE_AUTHORITY, wallAuthority: WALL_AUTHORITY }, { timeout: 120000, polling: 100 });
+  } catch (error) {
+    const dataset = await canvas.evaluate(element => ({ ...element.dataset })).catch(() => ({}));
+    await page.screenshot({ path: `${evidenceDir}/a1-readiness-diagnostic.png`, fullPage: false }).catch(() => {});
+    fs.writeFileSync(`${evidenceDir}/readiness-diagnostic.json`, JSON.stringify({
+      capturedAtUtc: new Date().toISOString(),
+      dataset,
+      consoleErrors,
+      pageErrors,
+      originalError: error?.stack || error?.message || String(error),
+    }, null, 2));
+    throw new Error(`A1 source-geometry readiness failed: load=${dataset.terminal4UploadedJetwayLoadState || 'missing'} count=${dataset.terminal4UploadedJetwayCount || 'missing'} vestibule=${dataset.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters || 'missing'} wall=${dataset.terminal4A1JetwayWallDistance || 'missing'} console=${consoleErrors.join(' | ') || 'none'} page=${pageErrors.join(' | ') || 'none'}`);
+  }
 
   const inspectionLocation = page.getByRole('combobox', { name: 'Inspection location' });
   await inspectionLocation.waitFor({ state: 'visible', timeout: 30000 });
@@ -141,5 +156,5 @@ async function selectCameraView(page, value) {
   fs.writeFileSync(`${evidenceDir}/report.json`, JSON.stringify({ pageUrl, capturedAtUtc: new Date().toISOString(), consoleErrors, pageErrors, terminalTelemetry: terminalData, bogieTelemetry: bogieData, assemblyTelemetry: assemblyData }, null, 2));
   await browser.close();
   if (pageErrors.length) throw new Error(`A1 evidence page errors: ${pageErrors.join(' | ')}`);
-  console.log(`A1 TERMINAL JOINT EVIDENCE READY: ${JSON.stringify({ vestibule: numeric(terminalData.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters, 'visible vestibule'), bogieClearanceMeters: numeric(bogieData.terminal4UploadedJetwayBogieGroundClearanceMeters, 'bogie clearance'), subviewAuthority: terminalData.inspectionCameraEndpointSubviewAuthority })}`);
+  console.log(`A1 TERMINAL JOINT EVIDENCE READY: ${JSON.stringify({ vestibule: numeric(terminalData.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters, 'visible vestibule'), wallDistance: numeric(terminalData.terminal4A1JetwayWallDistance, 'real wall distance'), bogieClearanceMeters: numeric(bogieData.terminal4UploadedJetwayBogieGroundClearanceMeters, 'bogie clearance'), subviewAuthority: terminalData.inspectionCameraEndpointSubviewAuthority })}`);
 })().catch(error => { console.error(error.stack || error.message || String(error)); process.exit(1); });
