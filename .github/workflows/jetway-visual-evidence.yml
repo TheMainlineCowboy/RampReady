@@ -50,15 +50,18 @@ jobs:
             exit 1
           fi
 
-      - name: Fail closed unless prepared static fleet is source-pose locked
+      - name: Fail closed unless prepared static fleet is physical-Rotunda source-pose locked
         shell: bash
         run: |
           set -euo pipefail
           node scripts/prepare-static-jetway-source-placement-integrity-v1.mjs
-          grep -Fq '57-static-bgl-pose-locked-short-real-wall-registration-v7' src/environment/registerStaticJetwayFleetToFacadeV1.js
-          grep -Fq 'const rotundaX = sourceX;' src/environment/registerStaticJetwayFleetToFacadeV1.js
-          grep -Fq 'const rotundaZ = sourceZ;' src/environment/registerStaticJetwayFleetToFacadeV1.js
+          grep -Fq '57-static-bgl-pose-locked-short-real-wall-registration-v8-physical-rotunda-authoritative' src/environment/registerStaticJetwayFleetToFacadeV1.js
+          grep -Fq 'const modelRootX = sourceX;' src/environment/registerStaticJetwayFleetToFacadeV1.js
+          grep -Fq 'const modelRootZ = sourceZ;' src/environment/registerStaticJetwayFleetToFacadeV1.js
           grep -Fq 'const yaw = sourceYaw;' src/environment/registerStaticJetwayFleetToFacadeV1.js
+          grep -Fq 'const physicalRotundaX = modelRootX + rotatedRotundaOffset.x;' src/environment/registerStaticJetwayFleetToFacadeV1.js
+          grep -Fq 'const physicalRotundaZ = modelRootZ + rotatedRotundaOffset.z;' src/environment/registerStaticJetwayFleetToFacadeV1.js
+          grep -Fq 'const physicalCenterToWallMeters = Math.hypot(wallX - physicalRotundaX, wallZ - physicalRotundaZ);' src/environment/registerStaticJetwayFleetToFacadeV1.js
           if grep -Fq 'const targetHeading = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;' src/environment/registerStaticJetwayFleetToFacadeV1.js; then
             echo 'Unsafe target-derived static jetway yaw survived preparation.' >&2
             exit 1
