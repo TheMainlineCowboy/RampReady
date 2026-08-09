@@ -56,7 +56,9 @@ const retiredAuthorities = [
   expect(extension).toBeLessThanOrEqual(8.75);
   expect(target).toBeGreaterThan(sourceReach);`;
   const currentConnectedBlock = `  expect(Math.abs(extension)).toBeLessThanOrEqual(0.001);
-  expect(Math.abs(target - sourceReach)).toBeLessThanOrEqual(0.01);`;
+  expect(Math.abs(target - sourceReach)).toBeLessThanOrEqual(0.01);
+  expect(Math.abs(predictedContact - sourceReach)).toBeLessThanOrEqual(0.05);
+  expect(Math.abs(actualContact - sourceReach)).toBeLessThanOrEqual(0.05);`;
   if (source.includes(currentPositiveStretchBlock)) {
     source = source.replace(currentPositiveStretchBlock, currentConnectedBlock);
   }
