@@ -8,6 +8,7 @@ const TELESCOPING_AUTHORITY = "a1-source-authored-rigid-heading-aircraft-conform
 const SOURCE_MODEL_YAW_DEGREES = 0.491;
 const AUTHORED_DOOR_LOCAL_X = -1.34;
 const AUTHORED_DOOR_LOCAL_Z = 7.32;
+const MINIMUM_SOURCE_AXIS_COSINE = 0.99999;
 
 function centerInFleet(THREE, fleet, object) {
   fleet.updateWorldMatrix(true, true);
@@ -124,7 +125,7 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   }
   const cabDirection = cabVector.clone().normalize();
   const targetAlignmentCosine = cabDirection.dot(bridgeDirection);
-  if (targetAlignmentCosine < 0.999999) {
+  if (targetAlignmentCosine < MINIMUM_SOURCE_AXIS_COSINE) {
     throw new Error(`A1 source-owned Cab endpoint is not on the decoded bridge axis: ${targetAlignmentCosine}`);
   }
 
