@@ -97,9 +97,11 @@ const sourceLockedBlock = `  // The decoded KPHX BGL x/z is the physical static-
   }
   const resolvedRotundaCenterToWallMeters = sourceWallDistance;`;
 
+const trackedPoseLockedMarker = "real wall fit requires invalid visible terminal leg";
+const legacyPoseLockedMarker = "source-locked wall fit would require an invalid visible terminal leg";
 if (registration.includes(relocatingBlock)) {
   registration = registration.replace(relocatingBlock, sourceLockedBlock);
-} else if (!registration.includes("source-locked wall fit would require an invalid visible terminal leg")) {
+} else if (!registration.includes(trackedPoseLockedMarker) && !registration.includes(legacyPoseLockedMarker)) {
   throw new Error(`${registrationPath}: static relocation block is missing; refusing to guess at fleet geometry`);
 }
 
@@ -139,12 +141,14 @@ for (const required of [
   "const rotundaZ = sourceZ;",
   "const yaw = sourceYaw;",
   "const resolvedRotundaCenterToWallMeters = sourceWallDistance;",
-  "source-locked wall fit would require an invalid visible terminal leg",
   '57-static-bgl-pose-locked-short-real-wall-registration-v7',
 ]) {
   if (!registration.includes(required)) {
     throw new Error(`${registrationPath}: source-locked static fleet contract is missing ${required}`);
   }
+}
+if (!registration.includes(trackedPoseLockedMarker) && !registration.includes(legacyPoseLockedMarker)) {
+  throw new Error(`${registrationPath}: source-locked static fleet contract is missing the fail-closed terminal-leg diagnostic`);
 }
 for (const forbidden of [
   "const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;",
