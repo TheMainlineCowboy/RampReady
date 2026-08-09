@@ -1,6 +1,7 @@
 import fs from "node:fs";
 
 const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
+const STATIC_SOURCE_MEASURED_CONNECTOR_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v3";
 let source = fs.readFileSync(readinessPath, "utf8");
 
 function resolveTelemetryVariable(fieldName) {
@@ -20,6 +21,21 @@ const a1TargetDoorDistance = resolveTelemetryVariable("uploadedJetwayA1TargetDoo
 const a1ActualContactDistance = resolveTelemetryVariable("uploadedJetwayA1ActualContactDistanceMeters");
 const a1ActualDoorGap = resolveTelemetryVariable("uploadedJetwayA1ActualDoorGapMeters");
 
+// The static terminal connector is now a source-measured fixed wall-to-Rotunda
+// leg. Retire the compact synthetic connector authority in the final readiness
+// file so successful real spans (including zero visible overlap and long fixed
+// legs) are compared against the runtime that actually built them.
+source = source.replace(
+  'const STATIC_CONNECTOR_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v1";',
+  `const STATIC_CONNECTOR_AUTHORITY = "${STATIC_SOURCE_MEASURED_CONNECTOR_AUTHORITY}";`,
+);
+if (!source.includes(`const STATIC_CONNECTOR_AUTHORITY = "${STATIC_SOURCE_MEASURED_CONNECTOR_AUTHORITY}";`)) {
+  throw new Error(`${readinessPath}: source-measured static connector authority could not be installed`);
+}
+if (source.includes('const STATIC_CONNECTOR_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v1";')) {
+  throw new Error(`${readinessPath}: retired compact static connector authority survived final readiness`);
+}
+
 // Grounding authority changed deliberately: the exact-model contact correction
 // now remains on the shared 58-gate fleet parent instead of being transferred to
 // A1 and then reset to Y=0 for all 57 static bridges. Readiness must prove the
@@ -34,10 +50,10 @@ source = source.replace(
   `Math.abs(${staticFleetGroundYOffset} - ${fleetGroundOffset}) > 1e-6`,
 );
 
-// The synthetic CRJ door target is useful telemetry and the articulated Cab is
-// still required to reach it through the real runtime contact checks below. It
-// must no longer re-aim the complete source-authored bridge, so source-heading
-// readiness may only require a finite cosine in the mathematically valid range.
+// The aircraft now conforms to the decoded source jetway Cab endpoint. The
+// source-parent bridge heading therefore remains airport-owned; target alignment
+// only has to be finite and mathematically valid, while the actual Cab/door
+// contact is enforced separately below.
 const targetAlignmentCheck = new RegExp(`${targetAlignmentCosine}\\s*<\\s*0\\.99999`);
 const targetAlignmentPattern = new RegExp(`${targetAlignmentCosine}\\s*<\\s*0\\.99999`, "g");
 if (!targetAlignmentCheck.test(source)) {
@@ -48,12 +64,6 @@ source = source.replace(
   `!Number.isFinite(${targetAlignmentCosine}) || ${targetAlignmentCosine} < -1 || ${targetAlignmentCosine} > 1`,
 );
 
-// This value measures the unarticulated source Cab against the synthetic door
-// target. It is no longer an acceptance distance once the airport heading owns
-// the rigid parent. Generated readiness has used both a local telemetry variable
-// and a direct group.userData Number(...) expression over time, so normalize
-// either form. Keep the value finite for diagnostics; actual articulated contact
-// is independently enforced below.
 const cabVariableCheck = new RegExp(`${cabTargetHorizontalError}\\s*>\\s*0\\.06`);
 const cabVariablePattern = new RegExp(`${cabTargetHorizontalError}\\s*>\\s*0\\.06`, "g");
 const cabDirectCheck = /Number\(group\.userData\.uploadedJetwayA1CabTargetHorizontalErrorMeters\s*\?\?\s*(?:Infinity|Number\.POSITIVE_INFINITY)\)\s*>\s*0\.06/;
@@ -65,11 +75,9 @@ source = source
   .replace(cabVariablePattern, `!Number.isFinite(${cabTargetHorizontalError})`)
   .replace(cabDirectPattern, `!Number.isFinite(${cabTargetHorizontalError})`);
 
-// Physical acceptance is the articulated Cab at the real rendered door, not the
-// unarticulated source Cab. Insert one stable fail-closed check immediately after
-// the generated door-gap telemetry declaration. This is intentionally separate
-// from the large historical mismatch predicate so upstream formatting/order can
-// change without weakening or breaking the final physical acceptance contract.
+// Physical acceptance is the rendered aircraft door at the source jetway Cab.
+// Keep a standalone fail-closed check independent of the old large mismatch
+// predicate so upstream formatting cannot silently loosen it.
 const strictActualContactCondition = `Math.abs(${a1ActualContactDistance} - ${a1TargetDoorDistance}) > 0.06`;
 const strictActualDoorGapCondition = `${a1ActualDoorGap} > 0.06`;
 const strictContactMarker = "airport-owned-a1-articulated-door-contact-v1";
@@ -87,6 +95,7 @@ if (!source.includes(strictContactMarker)) {
 }
 
 for (const required of [
+  `const STATIC_CONNECTOR_AUTHORITY = "${STATIC_SOURCE_MEASURED_CONNECTOR_AUTHORITY}";`,
   `Math.abs(${staticFleetGroundYOffset} - ${fleetGroundOffset}) > 1e-6`,
   `!Number.isFinite(${targetAlignmentCosine}) || ${targetAlignmentCosine} < -1 || ${targetAlignmentCosine} > 1`,
   `!Number.isFinite(${cabTargetHorizontalError})`,
@@ -99,6 +108,7 @@ for (const required of [
   }
 }
 for (const forbidden of [
+  'const STATIC_CONNECTOR_AUTHORITY = "57-static-short-solid-white-terminal-vestibules-v1";',
   `Math.abs(${staticFleetGroundYOffset}) > 1e-8`,
   `${targetAlignmentCosine} < 0.99999`,
   `${cabTargetHorizontalError} > 0.06`,
@@ -111,4 +121,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Aligned final exact-jetway readiness with airport-owned geometry: all 58 bridges preserve the measured shared ground offset; decoded source heading may differ from the synthetic CRJ target; a standalone final guard rejects the articulated A1 Cab above 0.06 m contact-distance error or 0.06 m rendered door gap.");
+console.log(`Aligned final exact-jetway readiness with airport-owned geometry and source-measured static connectors (${STATIC_SOURCE_MEASURED_CONNECTOR_AUTHORITY}): all 58 bridges preserve the shared ground offset and the A1 aircraft must conform to the fixed source jetway Cab within 0.06 m.`);
