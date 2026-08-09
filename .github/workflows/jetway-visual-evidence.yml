@@ -9,6 +9,14 @@ on:
       - "scripts/**"
       - "playwright.jetway-visual.config.js"
       - ".github/workflows/jetway-visual-evidence.yml"
+  push:
+    branches: [fix/a1-live-terminal-joint-evidence-v1]
+    paths:
+      - "src/environment/**"
+      - "src/components/**"
+      - "scripts/**"
+      - "playwright.jetway-visual.config.js"
+      - ".github/workflows/jetway-visual-evidence.yml"
   workflow_dispatch:
 
 permissions:
