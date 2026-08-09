@@ -37,6 +37,24 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Fail closed unless static fleet is source-pose locked
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/prepare-static-jetway-source-placement-integrity-v1.mjs
+          grep -Fq '57-static-bgl-pose-locked-short-real-wall-registration-v7' src/environment/registerStaticJetwayFleetToFacadeV1.js
+          grep -Fq 'const rotundaX = sourceX;' src/environment/registerStaticJetwayFleetToFacadeV1.js
+          grep -Fq 'const rotundaZ = sourceZ;' src/environment/registerStaticJetwayFleetToFacadeV1.js
+          grep -Fq 'const yaw = sourceYaw;' src/environment/registerStaticJetwayFleetToFacadeV1.js
+          if grep -Fq 'const targetHeading = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;' src/environment/registerStaticJetwayFleetToFacadeV1.js; then
+            echo 'Unsafe target-derived static jetway yaw survived preparation.' >&2
+            exit 1
+          fi
+          if grep -Fq 'const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;' src/environment/registerStaticJetwayFleetToFacadeV1.js; then
+            echo 'Unsafe static jetway relocation survived preparation.' >&2
+            exit 1
+          fi
+
       - name: Build proposed RampReady site
         shell: bash
         run: |
