@@ -53,7 +53,7 @@ source = source.replace(
 // the rigid parent. Generated readiness has used both a local telemetry variable
 // and a direct group.userData Number(...) expression over time, so normalize
 // either form. Keep the value finite for diagnostics; actual articulated contact
-// remains separately enforced to <= 6 cm below.
+// is independently enforced below.
 const cabVariableCheck = new RegExp(`${cabTargetHorizontalError}\\s*>\\s*0\\.06`);
 const cabVariablePattern = new RegExp(`${cabTargetHorizontalError}\\s*>\\s*0\\.06`, "g");
 const cabDirectCheck = /Number\(group\.userData\.uploadedJetwayA1CabTargetHorizontalErrorMeters\s*\?\?\s*(?:Infinity|Number\.POSITIVE_INFINITY)\)\s*>\s*0\.06/;
@@ -65,35 +65,34 @@ source = source
   .replace(cabVariablePattern, `!Number.isFinite(${cabTargetHorizontalError})`)
   .replace(cabDirectPattern, `!Number.isFinite(${cabTargetHorizontalError})`);
 
-// Do not hard-code whichever local identifiers or 5/6 cm spelling an upstream
-// preparer emitted. Resolve the generated telemetry variables, find the actual
-// articulated contact predicates, and prove their thresholds are no looser than
-// 6 cm. These are the physical door-contact checks that remain acceptance-critical.
-const actualContactPattern = new RegExp(
-  `Math\\.abs\\(\\s*${a1ActualContactDistance}\\s*-\\s*${a1TargetDoorDistance}\\s*\\)\\s*>\\s*([0-9.]+)`,
-);
-const actualDoorGapPattern = new RegExp(`${a1ActualDoorGap}\\s*>\\s*([0-9.]+)`);
-const actualContactMatch = source.match(actualContactPattern);
-const actualDoorGapMatch = source.match(actualDoorGapPattern);
-if (!actualContactMatch) {
-  throw new Error(`${readinessPath}: actual articulated A1 contact-distance tolerance is missing`);
+// Physical acceptance is the articulated Cab at the real rendered door, not the
+// unarticulated source Cab. Upstream preparers have emitted this check in several
+// algebraically equivalent orders, so do not depend on one spelling. Guarantee a
+// final <= 6 cm condition directly in the readiness mismatch block. Existing
+// stricter checks may remain; this clause is the stable airport-owned floor.
+const strictActualContactCondition = `Math.abs(${a1ActualContactDistance} - ${a1TargetDoorDistance}) > 0.06`;
+const strictActualDoorGapCondition = `${a1ActualDoorGap} > 0.06`;
+const countCondition = "            count !== EXPECTED_GATE_COUNT";
+if (!source.includes(countCondition)) {
+  throw new Error(`${readinessPath}: exact-fleet readiness count condition is missing`);
 }
-if (!actualDoorGapMatch) {
-  throw new Error(`${readinessPath}: actual articulated A1 door-gap tolerance is missing`);
-}
-const actualContactToleranceMeters = Number(actualContactMatch[1]);
-const actualDoorGapToleranceMeters = Number(actualDoorGapMatch[1]);
-if (!(actualContactToleranceMeters > 0 && actualContactToleranceMeters <= 0.06)) {
-  throw new Error(`${readinessPath}: articulated A1 contact tolerance is too loose: ${actualContactToleranceMeters}`);
-}
-if (!(actualDoorGapToleranceMeters > 0 && actualDoorGapToleranceMeters <= 0.06)) {
-  throw new Error(`${readinessPath}: articulated A1 door-gap tolerance is too loose: ${actualDoorGapToleranceMeters}`);
+if (!source.includes(strictActualContactCondition) || !source.includes(strictActualDoorGapCondition)) {
+  const seeded = [
+    !source.includes(strictActualContactCondition) ? strictActualContactCondition : null,
+    !source.includes(strictActualDoorGapCondition) ? strictActualDoorGapCondition : null,
+  ].filter(Boolean);
+  source = source.replace(
+    countCondition,
+    `            ${seeded.join("\n            || ")}\n            || count !== EXPECTED_GATE_COUNT`,
+  );
 }
 
 for (const required of [
   `Math.abs(${staticFleetGroundYOffset} - ${fleetGroundOffset}) > 1e-6`,
   `!Number.isFinite(${targetAlignmentCosine}) || ${targetAlignmentCosine} < -1 || ${targetAlignmentCosine} > 1`,
   `!Number.isFinite(${cabTargetHorizontalError})`,
+  strictActualContactCondition,
+  strictActualDoorGapCondition,
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${readinessPath}: final airport-owned readiness is missing ${required}`);
@@ -112,4 +111,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log(`Aligned final exact-jetway readiness with airport-owned geometry: all 58 bridges preserve the measured shared ground offset; decoded source heading may differ from the synthetic CRJ target; actual articulated Cab contact remains enforced at ${actualContactToleranceMeters} m distance error / ${actualDoorGapToleranceMeters} m door gap.`);
+console.log("Aligned final exact-jetway readiness with airport-owned geometry: all 58 bridges preserve the measured shared ground offset; decoded source heading may differ from the synthetic CRJ target; the articulated A1 Cab is explicitly rejected above 0.06 m contact-distance error or 0.06 m rendered door gap.");
