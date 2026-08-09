@@ -1,4 +1,4 @@
-const ARTICULATION_AUTHORITY = "user-supplied-airport-jetway-per-gate-telescoping-v11-a1-only";
+const ARTICULATION_AUTHORITY = "user-supplied-airport-jetway-source-connected-attached-v12-a1-retracts-inward-only";
 const STATIC_RIGID_AUTHORITY = "57-static-exact-glb-rigid-source-hierarchy-v1";
 const SOURCE_PART_WEIGHTS = Object.freeze({
   Rotunda: 0,
@@ -14,20 +14,15 @@ const ZERO_PART_OFFSETS = Object.freeze({
   Tunnel_C: 0,
   Cab: 0,
 });
-// A1 remains the only bridge that is allowed to telescope for the training
-// sequence. The other 57 bridges are unoccupied scenery and must preserve the
-// exact supplied GLB hierarchy as one rigid assembly. Artificially retracting
-// them by up to ~14.5 m was visibly pulling Tunnel B/C and Cab away from each
-// other and producing the broken/falling-off appearance in live screenshots.
+// These limits are retained for the separate inward retraction controller and
+// compatibility telemetry. They must never be used to stretch the attached A1
+// source hierarchy toward an aircraft door. The exact supplied GLB is already
+// a connected assembly; the aircraft conforms to its attached Cab endpoint.
 const EXTENSION_LIMITS = Object.freeze({ minimum: -14.5, maximum: 8.75 });
 
 function finite(value, fallback = 0) {
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
-}
-
-function clamp(value, minimum, maximum) {
-  return Math.max(minimum, Math.min(maximum, finite(value)));
 }
 
 export function resolveUploadedJetwayTargetDistance(placement) {
@@ -51,8 +46,7 @@ export function computeUploadedJetwayArticulation(placement, sourceContactDistan
     throw new Error(`Uploaded jetway source contact distance is invalid: ${sourceContactDistance}`);
   }
 
-  // Static gates have no aircraft to fit. Keep every authored source part at
-  // its exact GLB transform so Tunnel A/B/C, the Rotunda and Cab cannot separate.
+  // Every static gate stays exactly as authored.
   if (placement?.gate !== "A1") {
     return {
       authority: STATIC_RIGID_AUTHORITY,
@@ -66,29 +60,37 @@ export function computeUploadedJetwayArticulation(placement, sourceContactDistan
       partOffsets: { ...ZERO_PART_OFFSETS },
       clamped: false,
       rigidSourceHierarchy: true,
+      attachedSourceHierarchyPreserved: true,
     };
   }
 
-  const targetDistance = resolveUploadedJetwayTargetDistance(placement);
-  const requestedExtension = targetDistance - sourceDistance;
-  const extension = clamp(requestedExtension, EXTENSION_LIMITS.minimum, EXTENSION_LIMITS.maximum);
-  const predictedContactDistance = sourceDistance + extension;
-  const contactError = targetDistance - predictedContactDistance;
-  const partOffsets = Object.fromEntries(
-    Object.entries(SOURCE_PART_WEIGHTS).map(([part, weight]) => [part, extension * weight]),
-  );
+  // A1 used to stretch Tunnel B, Tunnel C and Cab by 1/3, 2/3 and 100% of
+  // the aircraft-door error. Because those authored nodes are siblings, that
+  // added the same positive gap at every articulated interface. In the live
+  // release this was +4.331 m total, or roughly +1.444 m at each joint.
+  //
+  // The attached state must instead preserve the exact supplied GLB hierarchy
+  // byte-for-byte in transform spacing. The separate model-space controller is
+  // still allowed to telescope the downstream sections inward during the
+  // pre-push retraction sequence. The starting aircraft is registered to the
+  // resulting source Cab endpoint; the jetway never stretches to chase it.
+  const aircraftDoorDistance = resolveUploadedJetwayTargetDistance(placement);
+  const discardedAttachedExtension = aircraftDoorDistance - sourceDistance;
   return {
     authority: ARTICULATION_AUTHORITY,
     gate: placement.gate,
-    sourceContactDistance,
-    targetDistance,
-    requestedExtension,
-    extension,
-    predictedContactDistance,
-    contactError,
-    partOffsets,
-    clamped: Math.abs(requestedExtension - extension) > 1e-6,
+    sourceContactDistance: sourceDistance,
+    targetDistance: sourceDistance,
+    aircraftDoorDistance,
+    discardedAttachedExtension,
+    requestedExtension: 0,
+    extension: 0,
+    predictedContactDistance: sourceDistance,
+    contactError: 0,
+    partOffsets: { ...ZERO_PART_OFFSETS },
+    clamped: false,
     rigidSourceHierarchy: false,
+    attachedSourceHierarchyPreserved: true,
   };
 }
 
