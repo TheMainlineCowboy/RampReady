@@ -1,14 +1,12 @@
 import { addStaticSolidTerminalVestibules } from "./staticSolidTerminalVestibulesV1.js";
 
-const AUTHORITY = "57-static-authored-rotundas-short-real-wall-registration-v5";
+const AUTHORITY = "57-static-bgl-pose-locked-short-real-wall-registration-v7";
 const GROUND_AUTHORITY = "a1-anchor-only-grounding-static-fleet-pavement-zero-v1";
 const ROOT_OFFSET_AUTHORITY = "exact-supplied-glb-authored-rotunda-center-to-model-root-v1";
 const SOURCE_WALL_LENGTH_PADDING_METERS = 0.35;
-const TARGET_VISIBLE_TERMINAL_LEG_METERS = 2.4;
 const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.2;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.6;
 const MINIMUM_SOURCE_WALL_DISTANCE_METERS = 0.5;
-const MAXIMUM_REGISTRATION_DISPLACEMENT_METERS = 44;
 
 function wrapYaw(THREE, radians) {
   return THREE.MathUtils.euclideanModulo(radians + Math.PI, Math.PI * 2) - Math.PI;
@@ -95,49 +93,39 @@ function buildRegisteredPlacement(THREE, placement, authoredRotundaOffset) {
 
   const ux = towardX / magnitude;
   const uz = towardZ / magnitude;
-
-  // Preserve the measured real facade point, not the stale Rotunda position.
-  // The old registration left the supplied Rotunda at the raw BGL point and
-  // filled the entire remaining distance with a fabricated white corridor.
-  // Instead move the complete rigid authored assembly toward the real wall so
-  // every static gate has the same compact photo-style wall -> vestibule ->
-  // Rotunda relationship as A1. No supplied child transform is changed.
   const wallX = sourceX + ux * sourceWallDistance;
   const wallZ = sourceZ + uz * sourceWallDistance;
-  const visibleTerminalLegMeters = TARGET_VISIBLE_TERMINAL_LEG_METERS;
-  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
-    throw new Error(`Static jetway ${placement.gate} compact visible terminal vestibule is invalid: ${visibleTerminalLegMeters}`);
-  }
-  const terminalWallOverlapMeters = 0;
-  const resolvedRotundaCenterToWallMeters = authoredRotundaOffset.radiusMeters + visibleTerminalLegMeters;
-  const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;
-  const rotundaZ = wallZ - uz * resolvedRotundaCenterToWallMeters;
 
-  const bridgeDx = targetX - rotundaX;
-  const bridgeDz = targetZ - rotundaZ;
-  const bridgeDistance = Math.hypot(bridgeDx, bridgeDz);
-  const targetHeading = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;
-  const sourceBridgeAxisHeading = Number(authoredRotundaOffset.bridgeAxisHeadingRadians);
-  if (!Number.isFinite(sourceBridgeAxisHeading)) throw new Error(`Static jetway ${placement.gate} is missing exact supplied bridge-axis heading`);
-  const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);
+  // The decoded KPHX BGL pose is authoritative. Never relocate or re-aim the
+  // supplied Airport_Jetway.glb parent to manufacture a short connector.
+  const rotundaX = sourceX;
+  const rotundaZ = sourceZ;
+  const yaw = sourceYaw;
+  const visibleTerminalLegMeters = sourceWallDistance - authoredRotundaOffset.radiusMeters;
+  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters < MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
+    throw new Error(`Static jetway ${placement.gate} real wall fit requires invalid visible terminal leg ${visibleTerminalLegMeters.toFixed(3)}m; refusing to relocate supplied jetway`);
+  }
+
+  const terminalWallOverlapMeters = 0;
+  const resolvedRotundaCenterToWallMeters = sourceWallDistance;
+  const bridgeDistance = Math.hypot(targetX - rotundaX, targetZ - rotundaZ);
 
   const rotatedRotundaOffset = new THREE.Vector3(authoredRotundaOffset.x, 0, authoredRotundaOffset.z)
     .applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
-  const modelRootX = rotundaX - rotatedRotundaOffset.x;
-  const modelRootZ = rotundaZ - rotatedRotundaOffset.z;
-  const reconstructedRotundaX = modelRootX + rotatedRotundaOffset.x;
-  const reconstructedRotundaZ = modelRootZ + rotatedRotundaOffset.z;
-  const physicalRotundaRegistrationError = Math.hypot(reconstructedRotundaX - rotundaX, reconstructedRotundaZ - rotundaZ);
-  const displacement = Math.hypot(modelRootX - sourceX, modelRootZ - sourceZ);
-  if (displacement > MAXIMUM_REGISTRATION_DISPLACEMENT_METERS) {
-    throw new Error(`Static jetway ${placement.gate} model-root registration displacement is excessive: ${displacement}`);
+  const modelRootX = sourceX;
+  const modelRootZ = sourceZ;
+  const physicalRotundaRegistrationError = 0;
+  const displacement = 0;
+  const yawChange = Math.abs(wrapYaw(THREE, yaw - sourceYaw));
+  const wallError = Math.abs(Math.hypot(wallX - rotundaX, wallZ - rotundaZ) - resolvedRotundaCenterToWallMeters);
+
+  if (Math.abs(rotatedRotundaOffset.x) > 12 || Math.abs(rotatedRotundaOffset.z) > 12) {
+    throw new Error(`Static jetway ${placement.gate} authored Rotunda offset escaped expected bounds`);
   }
-  if (physicalRotundaRegistrationError > 1e-6) {
-    throw new Error(`Static jetway ${placement.gate} authored Rotunda registration error is ${physicalRotundaRegistrationError}`);
+  if (yawChange > 1e-9 || displacement > 1e-9) {
+    throw new Error(`Static jetway ${placement.gate} decoded KPHX pose changed unexpectedly`);
   }
 
-  const wallError = Math.abs(Math.hypot(wallX - rotundaX, wallZ - rotundaZ) - resolvedRotundaCenterToWallMeters);
-  const yawChange = Math.abs(wrapYaw(THREE, yaw - sourceYaw));
   return {
     ...placement,
     x: rotundaX,
@@ -277,7 +265,9 @@ export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placement
   const maximumSourceWallDistance = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticSourceWallDistanceMeters));
   if (maximumWallError > 1e-6) throw new Error(`Static Rotunda facade registration wall error is ${maximumWallError}`);
   if (maximumPhysicalRotundaError > 1e-6) throw new Error(`Static authored Rotunda/model-root registration error is ${maximumPhysicalRotundaError}`);
-  if (minimumVisibleTerminalLeg < MINIMUM_VISIBLE_TERMINAL_LEG_METERS || maximumVisibleTerminalLeg > MAXIMUM_VISIBLE_TERMINAL_LEG_METERS) {
+  if (maximumDisplacement > 1e-9) throw new Error(`Static BGL position lock was violated: displacement=${maximumDisplacement}`);
+  if (maximumYawChange > 1e-9) throw new Error(`Static BGL heading lock was violated: yawChange=${maximumYawChange}`);
+  if (minimumVisibleTerminalLeg < MINIMUM_VISIBLE_TERMINAL_LEG_METERS || maximumVisibleTerminalLeg >= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS) {
     throw new Error(`Static visible vestibule envelope escaped photo bounds: ${minimumVisibleTerminalLeg}-${maximumVisibleTerminalLeg}`);
   }
 
@@ -305,7 +295,7 @@ export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placement
   group.userData.uploadedJetwayStaticConnectorInstanceCount = rebuiltConnectors.instanceCount;
   group.userData.uploadedJetwayStaticConnectorBatchAuthority = rebuiltConnectors.authority;
 
-  console.info("[RampReady] Static jetway real-wall registration", {
+  console.info("[RampReady] Static jetway BGL-pose-locked real-wall registration", {
     authority: AUTHORITY,
     gateCount: 57,
     authoredRotundaRadiusMeters: authoredRotundaOffset.radiusMeters,
