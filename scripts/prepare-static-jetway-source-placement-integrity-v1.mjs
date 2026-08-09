@@ -15,12 +15,6 @@ const registrationImport = `import {
 const installationCall = "          const installationCorrection = correctUploadedJetwayInstallation(THREE, group, fleet, placements);";
 const registrationCall = "          const staticFleetRegistration = registerStaticJetwayFleetToFacade(THREE, group, fleet, placements);";
 
-// Keep the registration/readiness pass, but do not let it move or re-aim a
-// package-authored static jetway to manufacture a short wall connection. The
-// decoded KPHX BGL x/z/yaw values are the airport placement authority. A bad
-// terminal-wall ray must fail closed so the wall fit can be corrected; moving
-// or re-aiming the complete supplied parent visibly bunches/crosses neighboring
-// bridges at concourse corners.
 if (source.includes(legacyRegistrationImport)) {
   source = source.replace(legacyRegistrationImport, registrationImport);
 }
@@ -97,11 +91,12 @@ const sourceLockedBlock = `  // The decoded KPHX BGL x/z is the physical static-
   }
   const resolvedRotundaCenterToWallMeters = sourceWallDistance;`;
 
+const physicalPoseLockedMarker = "physical real-wall fit requires invalid visible terminal leg";
 const trackedPoseLockedMarker = "real wall fit requires invalid visible terminal leg";
 const legacyPoseLockedMarker = "source-locked wall fit would require an invalid visible terminal leg";
 if (registration.includes(relocatingBlock)) {
   registration = registration.replace(relocatingBlock, sourceLockedBlock);
-} else if (!registration.includes(trackedPoseLockedMarker) && !registration.includes(legacyPoseLockedMarker)) {
+} else if (!registration.includes(physicalPoseLockedMarker) && !registration.includes(trackedPoseLockedMarker) && !registration.includes(legacyPoseLockedMarker)) {
   throw new Error(`${registrationPath}: static relocation block is missing; refusing to guess at fleet geometry`);
 }
 
@@ -127,28 +122,32 @@ if (registration.includes(targetDerivedYawBlock)) {
   throw new Error(`${registrationPath}: target-derived static yaw block is missing; refusing to guess at fleet heading`);
 }
 
-registration = registration.replace(
+for (const oldAuthority of [
   'const AUTHORITY = "57-static-authored-rotundas-short-real-wall-registration-v5";',
-  'const AUTHORITY = "57-static-bgl-pose-locked-short-real-wall-registration-v7";',
-);
-registration = registration.replace(
   'const AUTHORITY = "57-static-bgl-position-locked-short-real-wall-registration-v6";',
   'const AUTHORITY = "57-static-bgl-pose-locked-short-real-wall-registration-v7";',
-);
+]) {
+  registration = registration.replace(
+    oldAuthority,
+    'const AUTHORITY = "57-static-bgl-pose-locked-short-real-wall-registration-v8-physical-rotunda-authoritative";',
+  );
+}
 
 for (const required of [
-  "const rotundaX = sourceX;",
-  "const rotundaZ = sourceZ;",
+  "const modelRootX = sourceX;",
+  "const modelRootZ = sourceZ;",
   "const yaw = sourceYaw;",
-  "const resolvedRotundaCenterToWallMeters = sourceWallDistance;",
-  '57-static-bgl-pose-locked-short-real-wall-registration-v7',
+  "const physicalRotundaX = modelRootX + rotatedRotundaOffset.x;",
+  "const physicalRotundaZ = modelRootZ + rotatedRotundaOffset.z;",
+  "const physicalCenterToWallMeters = Math.hypot(wallX - physicalRotundaX, wallZ - physicalRotundaZ);",
+  '57-static-bgl-pose-locked-short-real-wall-registration-v8-physical-rotunda-authoritative',
 ]) {
   if (!registration.includes(required)) {
-    throw new Error(`${registrationPath}: source-locked static fleet contract is missing ${required}`);
+    throw new Error(`${registrationPath}: physical-Rotunda source-pose contract is missing ${required}`);
   }
 }
-if (!registration.includes(trackedPoseLockedMarker) && !registration.includes(legacyPoseLockedMarker)) {
-  throw new Error(`${registrationPath}: source-locked static fleet contract is missing the fail-closed terminal-leg diagnostic`);
+if (!registration.includes(physicalPoseLockedMarker)) {
+  throw new Error(`${registrationPath}: physical-Rotunda source-pose contract is missing the fail-closed terminal-leg diagnostic`);
 }
 for (const forbidden of [
   "const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;",
@@ -157,9 +156,9 @@ for (const forbidden of [
   "const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);",
 ]) {
   if (registration.includes(forbidden)) {
-    throw new Error(`${registrationPath}: static fleet relocation/re-aim survived source-pose lock: ${forbidden}`);
+    throw new Error(`${registrationPath}: static fleet relocation/re-aim survived physical-Rotunda source-pose lock: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(registrationPath, registration, "utf8");
-console.log("Locked all 57 static exact jetways to their decoded KPHX BGL x/z/yaw poses. Real-wall registration may add only a short measured vestibule; it now fails closed instead of relocating or re-aiming supplied parents across neighboring gates.");
+console.log("Locked all 57 static exact jetway model roots to decoded KPHX BGL x/z/yaw while validating terminal-wall fit from each supplied GLB's physical authored Rotunda center. Bad fits fail closed; supplied parents are never relocated or re-aimed.");
