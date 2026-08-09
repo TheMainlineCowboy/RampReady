@@ -3,20 +3,8 @@ name: Terminal 4 Jetway Visual Evidence
 on:
   pull_request:
     branches: [main]
-    paths:
-      - "src/environment/**"
-      - "src/components/**"
-      - "scripts/**"
-      - "playwright.jetway-visual.config.js"
-      - ".github/workflows/jetway-visual-evidence.yml"
   push:
     branches: [fix/a1-live-terminal-joint-evidence-v1]
-    paths:
-      - "src/environment/**"
-      - "src/components/**"
-      - "scripts/**"
-      - "playwright.jetway-visual.config.js"
-      - ".github/workflows/jetway-visual-evidence.yml"
   workflow_dispatch:
 
 permissions:
