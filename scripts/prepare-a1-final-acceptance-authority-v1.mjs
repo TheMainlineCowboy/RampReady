@@ -1,5 +1,6 @@
 import fs from "node:fs";
 
+// CI retrigger marker: no runtime or geometry behavior change.
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const generatedAuthorityPaths = Object.freeze([
   trainerPath,
