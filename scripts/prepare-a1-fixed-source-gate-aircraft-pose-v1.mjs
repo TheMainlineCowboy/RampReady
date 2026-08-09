@@ -3,10 +3,10 @@ import fs from "node:fs";
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
-const authority = "source-a1-gate-stop-world-offset-persisted-no-cab-follow-v3";
-const marker = "fixed-source-a1-gate-aircraft-pose-v3";
-const maximumDoorTargetErrorMeters = 0.06;
-const maximumCabContactErrorMeters = 0.08;
+const authority = "source-a1-jetway-cab-endpoint-aircraft-conforms-v4";
+const marker = "source-a1-jetway-owned-aircraft-pose-v4";
+const maximumDoorTargetErrorMeters = 0.02;
+const maximumCabContactErrorMeters = 0.03;
 
 const poseBlock = `          const inspectionAircraftPose = Object.freeze({
             x: sim.aircraft.position.x,
@@ -15,16 +15,29 @@ const poseBlock = `          const inspectionAircraftPose = Object.freeze({
             yaw: sim.aircraft.rotation.y,
           });`;
 const fixedPoseBlock = `          // ${marker}
-          // Source A1 parking is local (0,0), while Terminal 4 and the trainer's
-          // authored A1 stop are shifted +6.2 m in scene Z. Keep the airplane at
-          // that fixed source stop; never move it to wherever a bad bridge Cab
-          // happens to end. Derive the passenger-door target independently from
-          // the PHX parking heading and CRJ geometry used by the source placement:
-          // 7.32 m aft of nose gear and 1.34 m left of centerline.
+          // The decoded PHX jetway now owns A1. Do not rotate or translate the
+          // complete bridge to chase a synthetic CRJ door. Read the exact source
+          // Cab endpoint published by the final jetway stage and place the
+          // aircraft so its forward-left door lands there. Aircraft position is
+          // intentionally the adjustable side of this relationship.
+          const sourceGateDoorTargetX = Number(exactA1Fleet?.userData?.uploadedJetwayA1SourceDoorTargetWorldX);
+          const sourceGateDoorTargetZ = Number(exactA1Fleet?.userData?.uploadedJetwayA1SourceDoorTargetWorldZ);
+          if (![sourceGateDoorTargetX, sourceGateDoorTargetZ].every(Number.isFinite)) {
+            throw new Error("A1 source-jetway Cab endpoint is missing before aircraft registration");
+          }
+          const sourceParkingHeadingRadians = THREE.MathUtils.degToRad(270.491);
+          const sourceParkingForwardX = Math.cos(sourceParkingHeadingRadians);
+          const sourceParkingForwardZ = Math.sin(sourceParkingHeadingRadians);
+          const sourceParkingLeftX = sourceParkingForwardZ;
+          const sourceParkingLeftZ = -sourceParkingForwardX;
           const sourceGateInspectionPose = Object.freeze({
-            x: 0,
+            x: sourceGateDoorTargetX
+              + sourceParkingForwardX * 7.32
+              - sourceParkingLeftX * 1.34,
             y: sim.aircraft.position.y,
-            z: NOSE_START_Z,
+            z: sourceGateDoorTargetZ
+              + sourceParkingForwardZ * 7.32
+              - sourceParkingLeftZ * 1.34,
             yaw: A1_INSPECTION_AIRCRAFT_YAW,
           });
           sim.aircraft.position.set(
@@ -35,12 +48,7 @@ const fixedPoseBlock = `          // ${marker}
           sim.aircraft.rotation.y = sourceGateInspectionPose.yaw;
           sim.aircraft.updateMatrixWorld(true);
           renderedAircraft.updateMatrixWorld(true);
-          const sourceParkingHeadingRadians = THREE.MathUtils.degToRad(270.491);
-          const sourceParkingForwardX = Math.cos(sourceParkingHeadingRadians);
-          const sourceParkingForwardZ = Math.sin(sourceParkingHeadingRadians);
-          const sourceParkingLeftX = sourceParkingForwardZ;
-          const sourceParkingLeftZ = -sourceParkingForwardX;
-          const sourceParkingDoorAtFixedGate = new THREE.Vector3(
+          const sourceParkingDoorAtJetway = new THREE.Vector3(
             sourceGateInspectionPose.x
               - sourceParkingForwardX * 7.32
               + sourceParkingLeftX * 1.34,
@@ -49,26 +57,23 @@ const fixedPoseBlock = `          // ${marker}
               - sourceParkingForwardZ * 7.32
               + sourceParkingLeftZ * 1.34,
           );
-          // Keep this variable name for downstream telemetry compatibility; X/Z
-          // now represent the actual source-parking forward-left door station.
-          const renderedDoorAtSourceGate = sourceParkingDoorAtFixedGate;
-          const sourceGateDoorTargetX = Number(exactA1Fleet?.userData?.uploadedJetwayA1SourceDoorTargetWorldX);
-          const sourceGateDoorTargetZ = Number(exactA1Fleet?.userData?.uploadedJetwayA1SourceDoorTargetWorldZ);
-          const sourceGateDoorTargetErrorMeters = [sourceGateDoorTargetX, sourceGateDoorTargetZ].every(Number.isFinite)
-            ? Math.hypot(
-              renderedDoorAtSourceGate.x - sourceGateDoorTargetX,
-              renderedDoorAtSourceGate.z - sourceGateDoorTargetZ,
-            )
-            : Number.POSITIVE_INFINITY;
+          // Keep this variable name for downstream telemetry compatibility. X/Z
+          // are the actual door location after the aircraft conforms to the
+          // source-authored A1 Cab endpoint.
+          const renderedDoorAtSourceGate = sourceParkingDoorAtJetway;
+          const sourceGateDoorTargetErrorMeters = Math.hypot(
+            renderedDoorAtSourceGate.x - sourceGateDoorTargetX,
+            renderedDoorAtSourceGate.z - sourceGateDoorTargetZ,
+          );
           const sourceGateCabSeparationMeters = Math.hypot(
             renderedDoorAtSourceGate.x - exactA1CabContactX,
             renderedDoorAtSourceGate.z - exactA1CabContactZ,
           );
           if (!(sourceGateDoorTargetErrorMeters <= ${maximumDoorTargetErrorMeters})) {
-            throw new Error(\`A1 fixed source-stop PHX/CRJ door missed its exact target by \${sourceGateDoorTargetErrorMeters} m\`);
+            throw new Error(\`A1 aircraft-conformed door missed the source jetway target by \${sourceGateDoorTargetErrorMeters} m\`);
           }
           if (!(sourceGateCabSeparationMeters <= ${maximumCabContactErrorMeters})) {
-            throw new Error(\`A1 exact Cab missed the fixed source-stop PHX/CRJ door by \${sourceGateCabSeparationMeters} m\`);
+            throw new Error(\`A1 aircraft-conformed door missed the source jetway Cab by \${sourceGateCabSeparationMeters} m\`);
           }
           const inspectionAircraftPose = sourceGateInspectionPose;
           renderer.domElement.dataset.inspectionAircraftFixedSourceGateAuthority = "${authority}";
@@ -76,17 +81,18 @@ const fixedPoseBlock = `          // ${marker}
           renderer.domElement.dataset.inspectionAircraftNoseGearZ = sourceGateInspectionPose.z.toFixed(6);
           renderer.domElement.dataset.inspectionAircraftDoorTargetX = renderedDoorAtSourceGate.x.toFixed(6);
           renderer.domElement.dataset.inspectionAircraftDoorTargetZ = renderedDoorAtSourceGate.z.toFixed(6);
-          renderer.domElement.dataset.inspectionAircraftDoorStationAuthority = "phx-source-parking-7p32m-aft-1p34m-left-v1";
+          renderer.domElement.dataset.inspectionAircraftDoorStationAuthority = "source-jetway-cab-plus-crj-door-offset-v1";
           renderer.domElement.dataset.inspectionAircraftDoorAftOfNoseGearMeters = "7.320";
           renderer.domElement.dataset.inspectionAircraftDoorLeftOfCenterlineMeters = "1.340";
-          renderer.domElement.dataset.inspectionAircraftSourceGateDoorTargetX = Number.isFinite(sourceGateDoorTargetX) ? sourceGateDoorTargetX.toFixed(6) : "missing";
-          renderer.domElement.dataset.inspectionAircraftSourceGateDoorTargetZ = Number.isFinite(sourceGateDoorTargetZ) ? sourceGateDoorTargetZ.toFixed(6) : "missing";
-          renderer.domElement.dataset.inspectionAircraftSourceGateDoorTargetErrorMeters = Number.isFinite(sourceGateDoorTargetErrorMeters) ? sourceGateDoorTargetErrorMeters.toFixed(6) : "missing";
+          renderer.domElement.dataset.inspectionAircraftSourceGateDoorTargetX = sourceGateDoorTargetX.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftSourceGateDoorTargetZ = sourceGateDoorTargetZ.toFixed(6);
+          renderer.domElement.dataset.inspectionAircraftSourceGateDoorTargetErrorMeters = sourceGateDoorTargetErrorMeters.toFixed(6);
           renderer.domElement.dataset.inspectionAircraftCabContactErrorMeters = sourceGateCabSeparationMeters.toFixed(6);
-          renderer.domElement.dataset.inspectionAircraftCabContactAuthority = "source-gate-fixed-aircraft-phx-parking-door-contact-v3";`;
+          renderer.domElement.dataset.inspectionAircraftCabContactAuthority = "source-jetway-fixed-aircraft-conforms-to-cab-v4";`;
 
 if (!source.includes(marker)) {
   const priorPatterns = [
+    /          \/\/ fixed-source-a1-gate-aircraft-pose-v3[\s\S]*?          renderer\.domElement\.dataset\.inspectionAircraftCabContactAuthority = "source-gate-fixed-aircraft-phx-parking-door-contact-v3";/,
     /          \/\/ fixed-source-a1-gate-aircraft-pose-v2[\s\S]*?          renderer\.domElement\.dataset\.inspectionAircraftCabContactAuthority = "source-gate-fixed-aircraft-exact-rendered-door-contact-v2";/,
     /          \/\/ fixed-source-a1-gate-aircraft-pose-v1[\s\S]*?          renderer\.domElement\.dataset\.inspectionAircraftCabContactAuthority = "source-gate-fixed-aircraft-does-not-follow-cab-v1";/,
   ];
@@ -113,33 +119,35 @@ source = source.replaceAll(
 );
 source = source.replaceAll("source-a1-gate-stop-persisted-no-cab-follow-v1", authority);
 source = source.replaceAll("source-a1-gate-stop-world-offset-persisted-no-cab-follow-v2", authority);
+source = source.replaceAll("source-a1-gate-stop-world-offset-persisted-no-cab-follow-v3", authority);
 
 for (const token of [
   marker,
   `A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "${authority}"`,
-  "const sourceGateInspectionPose = Object.freeze({",
-  "z: NOSE_START_Z,",
-  "const sourceParkingHeadingRadians = THREE.MathUtils.degToRad(270.491)",
+  "const sourceGateDoorTargetX = Number(exactA1Fleet?.userData?.uploadedJetwayA1SourceDoorTargetWorldX)",
+  "const sourceGateDoorTargetZ = Number(exactA1Fleet?.userData?.uploadedJetwayA1SourceDoorTargetWorldZ)",
   "sourceParkingForwardX * 7.32",
   "sourceParkingLeftX * 1.34",
-  "const renderedDoorAtSourceGate = sourceParkingDoorAtFixedGate",
-  "uploadedJetwayA1SourceDoorTargetWorldX",
-  "uploadedJetwayA1SourceDoorTargetWorldZ",
+  "sourceParkingForwardZ * 7.32",
+  "sourceParkingLeftZ * 1.34",
+  "const renderedDoorAtSourceGate = sourceParkingDoorAtJetway",
   `sourceGateDoorTargetErrorMeters <= ${maximumDoorTargetErrorMeters}`,
   `sourceGateCabSeparationMeters <= ${maximumCabContactErrorMeters}`,
-  'inspectionAircraftDoorStationAuthority = "phx-source-parking-7p32m-aft-1p34m-left-v1"',
-  'inspectionAircraftCabContactAuthority = "source-gate-fixed-aircraft-phx-parking-door-contact-v3"',
+  'inspectionAircraftDoorStationAuthority = "source-jetway-cab-plus-crj-door-offset-v1"',
+  'inspectionAircraftCabContactAuthority = "source-jetway-fixed-aircraft-conforms-to-cab-v4"',
 ]) {
-  if (!source.includes(token)) throw new Error(`${trainerPath}: fixed PHX source-gate aircraft pose is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${trainerPath}: source-jetway-owned A1 aircraft pose is missing ${token}`);
 }
 for (const obsolete of [
   "fixed-source-a1-gate-aircraft-pose-v1",
   "fixed-source-a1-gate-aircraft-pose-v2",
+  "fixed-source-a1-gate-aircraft-pose-v3",
   "source-gate-fixed-aircraft-exact-rendered-door-contact-v2",
+  "source-gate-fixed-aircraft-phx-parking-door-contact-v3",
 ]) {
-  if (source.includes(obsolete)) throw new Error(`${trainerPath}: obsolete A1 source-stop door registration remains: ${obsolete}`);
+  if (source.includes(obsolete)) throw new Error(`${trainerPath}: obsolete aircraft-owned A1 source-stop registration remains: ${obsolete}`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-rendered-door-finalizer-v4.mjs?rendered-door=${Date.now()}`);
-console.log("Prepared A1 inspection aircraft at the fixed +6.2 m source stop and independently derived the PHX/CRJ forward-left door 7.32 m aft and 1.34 m left of nose gear; the bridge must meet that target without moving the airplane.");
+console.log("Prepared A1 inspection aircraft from the fixed decoded PHX jetway Cab endpoint: the bridge/Rotunda remains at the airport source pose and the aircraft nose position is derived so its forward-left door meets the jetway, never the reverse.");

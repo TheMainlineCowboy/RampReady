@@ -3,11 +3,13 @@ import { expect, test } from "@playwright/test";
 
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
 const DIRECT_A1_CAMERA_AUTHORITY = "fixed-terminal-wall-rotunda-joint-evidence-a1-v10";
-const AIRCRAFT_AUTHORITY = "source-a1-gate-stop-world-offset-persisted-no-cab-follow-v3";
+const AIRCRAFT_AUTHORITY = "source-a1-jetway-cab-endpoint-aircraft-conforms-v4";
 const AIRCRAFT_MODE_POSE_AUTHORITY = "a1-single-aircraft-pose-training-and-free-drive-v1";
 const CAB_CONTACT_AUTHORITY = "authored-rendered-forward-left-door-to-final-cab-v4";
 const RENDERED_SCALE_AUTHORITY = "crj-authored-world-dimensions-preserved-v2";
-const SOURCE_A1_NOSE_GEAR = Object.freeze({ x: 0, z: 6.2, yaw: 0.008570 });
+const DOOR_STATION_AUTHORITY = "source-jetway-cab-plus-crj-door-offset-v1";
+const A1_PARKING_YAW = 0.008570;
+const CRJ_DOOR_HORIZONTAL_OFFSET_METERS = Math.hypot(7.32, 1.34);
 const AUTHORED_FORWARD_LEFT_DOOR = Object.freeze({ x: -1.262, y: 3.0, z: 3.90 });
 
 async function captureCanvas(page, path) {
@@ -64,7 +66,7 @@ async function chooseInspectionPreset(page, preset) {
   }, preset);
 }
 
-test("source-first A1 evidence proves the fixed gate aircraft, exact terminal-to-door chain and physical inspection mode", async ({ page }) => {
+test("source-owned A1 evidence proves the fixed PHX jetway, Cab-derived aircraft pose, exact terminal-to-door chain and physical inspection mode", async ({ page }) => {
   test.setTimeout(780_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
@@ -77,6 +79,7 @@ test("source-first A1 evidence proves the fixed gate aircraft, exact terminal-to
     aircraftModePoseAuthority,
     cabContactAuthority,
     scaleAuthority,
+    doorStationAuthority,
   }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     return data?.inspectionMode === "active"
@@ -86,17 +89,21 @@ test("source-first A1 evidence proves the fixed gate aircraft, exact terminal-to
       && data?.terminal4UploadedJetwayVerifiedModelCount === "58"
       && data?.terminal4A1ConnectionAuthority === terminalAuthority
       && data?.inspectionAircraftPoseAuthority === aircraftAuthority
+      && data?.inspectionAircraftFixedSourceGateAuthority === aircraftAuthority
       && data?.aircraftModePoseAuthority === aircraftModePoseAuthority
       && data?.inspectionAircraftPoseStored === "true"
       && data?.inspectionAircraftPoseApplied === "true"
       && Number(data?.inspectionAircraftPoseErrorMeters) <= 0.01
       && data?.inspectionAircraftCabContactAuthority === cabContactAuthority
+      && data?.inspectionAircraftDoorStationAuthority === doorStationAuthority
       && data?.inspectionAircraftRenderedScaleAuthority === scaleAuthority
       && Number.isFinite(Number(data?.inspectionAircraftCabContactX))
       && Number.isFinite(Number(data?.inspectionAircraftCabContactZ))
       && Number.isFinite(Number(data?.inspectionAircraftDoorTargetX))
       && Number.isFinite(Number(data?.inspectionAircraftDoorTargetZ))
       && Number(data?.inspectionAircraftCabContactErrorMeters) <= 0.01
+      && Number.isFinite(Number(data?.a1ExactRotundaToWallWorldMeters))
+      && Math.abs(Number(data?.a1ExactRotundaToWallWorldMeters) - Number(data?.terminal4A1JetwayWallDistance)) <= 0.05
       && Number.isFinite(Number(data?.inspectionAircraftDoorVerticalErrorMeters))
       && Number(data?.inspectionAircraftDoorVerticalErrorMeters) <= 6
       && Number.isFinite(Number(data?.inspectionAircraftDoorSignedVerticalGapMeters))
@@ -107,6 +114,8 @@ test("source-first A1 evidence proves the fixed gate aircraft, exact terminal-to
       && data?.inspectionAircraftJetwayVerticalFitAuthority === "grounded-jetway-door-gap-reported-no-child-lift-v1"
       && Number(data?.inspectionAircraftRenderedLengthMeters) > 31
       && Number(data?.inspectionAircraftRenderedWingspanMeters) > 22.5
+      && Number.isFinite(Number(data?.inspectionAircraftNoseGearX))
+      && Number.isFinite(Number(data?.inspectionAircraftNoseGearZ))
       && Number.isFinite(Number(data?.aircraftModePoseLiveX))
       && Number.isFinite(Number(data?.aircraftModePoseLiveZ))
       && Number.isFinite(Number(data?.aircraftModePoseLiveYaw))
@@ -117,6 +126,7 @@ test("source-first A1 evidence proves the fixed gate aircraft, exact terminal-to
     aircraftModePoseAuthority: AIRCRAFT_MODE_POSE_AUTHORITY,
     cabContactAuthority: CAB_CONTACT_AUTHORITY,
     scaleAuthority: RENDERED_SCALE_AUTHORITY,
+    doorStationAuthority: DOOR_STATION_AUTHORITY,
   }, { timeout: 180_000, polling: 250 });
 
   const runtime = await page.evaluate(() => ({
@@ -130,9 +140,14 @@ test("source-first A1 evidence proves the fixed gate aircraft, exact terminal-to
   );
   expect(runtime.terminal4A1ConnectionAuthority).toBe(DIRECT_A1_TERMINAL_AUTHORITY);
   expect(runtime.terminal4A1ConnectionAuthority).not.toMatch(/WALK/i);
-  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeGreaterThan(2.9);
-  expect(Number(runtime.terminal4A1JetwayWallDistance)).toBeLessThan(5.8);
-  expect(Math.abs(Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4)).toBeLessThanOrEqual(0.05);
+
+  const terminalWallDistance = Number(runtime.terminal4A1JetwayWallDistance);
+  const finalRotundaToWallDistance = Number(runtime.a1ExactRotundaToWallWorldMeters);
+  expect(terminalWallDistance).toBeGreaterThan(2.9);
+  expect(terminalWallDistance).toBeLessThan(5.8);
+  expect(finalRotundaToWallDistance).toBeGreaterThan(2.9);
+  expect(finalRotundaToWallDistance).toBeLessThan(5.8);
+  expect(Math.abs(finalRotundaToWallDistance - terminalWallDistance)).toBeLessThanOrEqual(0.05);
   expect(runtime.terminal4A1RetractionAuthority).toBe("aircraft-door-clearance-without-overtravel-v6");
   expect(runtime.terminal4A1RetractionClearanceMeters).toBe("2.38");
 
@@ -145,14 +160,15 @@ test("source-first A1 evidence proves the fixed gate aircraft, exact terminal-to
   const liveX = Number(runtime.aircraftModePoseLiveX);
   const liveZ = Number(runtime.aircraftModePoseLiveZ);
   const liveYaw = Number(runtime.aircraftModePoseLiveYaw);
-  expect(noseGearX).toBeCloseTo(SOURCE_A1_NOSE_GEAR.x, 5);
-  expect(noseGearZ).toBeCloseTo(SOURCE_A1_NOSE_GEAR.z, 5);
-  expect(liveX).toBeCloseTo(SOURCE_A1_NOSE_GEAR.x, 5);
-  expect(liveZ).toBeCloseTo(SOURCE_A1_NOSE_GEAR.z, 5);
-  expect(liveYaw).toBeCloseTo(SOURCE_A1_NOSE_GEAR.yaw, 5);
+  expect([noseGearX, noseGearZ, liveX, liveZ, liveYaw].every(Number.isFinite)).toBe(true);
+  expect(liveX).toBeCloseTo(noseGearX, 5);
+  expect(liveZ).toBeCloseTo(noseGearZ, 5);
+  expect(liveYaw).toBeCloseTo(A1_PARKING_YAW, 5);
   expect(runtime.inspectionAircraftPoseAuthority).toBe(AIRCRAFT_AUTHORITY);
+  expect(runtime.inspectionAircraftFixedSourceGateAuthority).toBe(AIRCRAFT_AUTHORITY);
   expect(runtime.aircraftModePoseAuthority).toBe(AIRCRAFT_MODE_POSE_AUTHORITY);
   expect(runtime.inspectionAircraftCabContactAuthority).toBe(CAB_CONTACT_AUTHORITY);
+  expect(runtime.inspectionAircraftDoorStationAuthority).toBe(DOOR_STATION_AUTHORITY);
   expect(runtime.inspectionAircraftRenderedScaleAuthority).toBe(RENDERED_SCALE_AUTHORITY);
   expect(runtime.inspectionAircraftPoseApplied).toBe("true");
   expect(Number(runtime.inspectionAircraftPoseErrorMeters)).toBeLessThanOrEqual(0.01);
@@ -174,6 +190,10 @@ test("source-first A1 evidence proves the fixed gate aircraft, exact terminal-to
   expect(Math.abs(Math.hypot(cabDirectionX, cabDirectionZ) - 1)).toBeLessThanOrEqual(0.01);
   expect(Math.hypot(renderedDoorX - cabContactX, renderedDoorZ - cabContactZ)).toBeLessThanOrEqual(0.01);
   expect(Number(runtime.inspectionAircraftCabContactErrorMeters)).toBeLessThanOrEqual(0.01);
+  expect(Math.hypot(renderedDoorX - noseGearX, renderedDoorZ - noseGearZ)).toBeCloseTo(
+    CRJ_DOOR_HORIZONTAL_OFFSET_METERS,
+    2,
+  );
 
   const signedDoorVerticalGapMeters = Number(runtime.inspectionAircraftDoorSignedVerticalGapMeters);
   const requestedJetwayVerticalFitMeters = Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters);
@@ -232,7 +252,8 @@ test("source-first A1 evidence proves the fixed gate aircraft, exact terminal-to
   await captureCanvas(page, "test-results/source-first-a1-terminal-aircraft-overhead.png");
 
   fs.writeFileSync("test-results/source-first-a1-terminal-connection.json", `${JSON.stringify({
-    terminalWallDistance: Number(runtime.terminal4A1JetwayWallDistance),
+    terminalWallDistance,
+    finalRotundaToWallDistance,
     terminalConnectionAuthority: runtime.terminal4A1ConnectionAuthority,
     terminalConnectionDirection: direction,
     inspectionCameraAuthority: DIRECT_A1_CAMERA_AUTHORITY,

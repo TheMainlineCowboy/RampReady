@@ -1,6 +1,15 @@
 import fs from "node:fs";
 
+// The static pose guard can only be correct if placement.yaw is actually the
+// decoded KPHX BGL jetway heading. The live production stack previously skipped
+// this migration, so the guard was locking 57 supplied bridges to a synthetic
+// CRJ-door heading and then calling that pose "source locked". Run the source
+// registration first, late enough that it owns the scene that is actually
+// bundled.
+await import(`./prepare-terminal4-jetway-source-registration-v1.mjs?static-source-pose=${Date.now()}`);
+
 const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
+const registrationPath = "src/environment/registerStaticJetwayFleetToFacadeV1.js";
 let source = fs.readFileSync(readinessPath, "utf8");
 
 const baseFleetImport = 'import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";';
@@ -14,11 +23,12 @@ const registrationImport = `import {
 const installationCall = "          const installationCorrection = correctUploadedJetwayInstallation(THREE, group, fleet, placements);";
 const registrationCall = "          const staticFleetRegistration = registerStaticJetwayFleetToFacade(THREE, group, fleet, placements);";
 
-// The exact replacement GLB has a different authored root/Rotunda convention
-// from the stock AIR_Jetway01 object in the KPHX BGL. Preserving raw BGL x/z/yaw
-// for the replacement root visibly leaves terminal ends floating in front of the
-// concourses. Preserve the BGL-derived gate evidence, but register each complete
-// supplied static parent from its measured facade wall point to its gate target.
+// Keep the registration/readiness pass, but do not let it move or re-aim a
+// package-authored static jetway to manufacture a short wall connection. The
+// decoded KPHX BGL x/z/yaw values are the airport placement authority. A bad
+// terminal-wall ray must fail closed so the wall fit can be corrected; moving
+// or re-aiming the complete supplied parent visibly bunches/crosses neighboring
+// bridges at concourse corners.
 if (source.includes(legacyRegistrationImport)) {
   source = source.replace(legacyRegistrationImport, registrationImport);
 }
@@ -29,8 +39,6 @@ if (!source.includes(registrationImport)) {
   source = source.replace(baseFleetImport, `${baseFleetImport}\n${registrationImport}`);
 }
 
-// Remove the historical override if an older preparation pass left it in the
-// working tree, then restore the physical facade-registration call.
 const obsoleteStart = "          // Static jetways are already authored at the exact KPHX BGL gate coordinates.";
 const obsoleteEnd = "          group.userData.uploadedJetwayStaticFacadeRelocationApplied = false;";
 if (source.includes(obsoleteStart)) {
@@ -47,14 +55,6 @@ if (!source.includes(registrationCall)) {
   source = source.replace(installationCall, `${installationCall}\n${registrationCall}`);
 }
 
-for (const forbidden of [
-  "57-static-exact-bgl-source-placement-no-facade-relocation-v1",
-  "uploadedJetwayStaticFacadeRelocationApplied = false",
-]) {
-  if (source.includes(forbidden)) {
-    throw new Error(`${readinessPath}: obsolete detached-static-jetway override is still active: ${forbidden}`);
-  }
-}
 for (const required of [
   registrationImport,
   "STATIC_JETWAY_FACADE_REGISTRATION_AUTHORITY",
@@ -66,6 +66,101 @@ for (const required of [
     throw new Error(`${readinessPath}: measured static terminal-wall registration is missing ${required}`);
   }
 }
-
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Enforced measured terminal-wall/Rotunda registration for all 57 static supplied jetways with one complete registration-authority import block; raw BGL evidence remains input data but is no longer misused as the replacement GLB model-root pose.");
+
+let registration = fs.readFileSync(registrationPath, "utf8");
+const relocatingBlock = `  // Preserve the measured real facade point, not the stale Rotunda position.
+  // The old registration left the supplied Rotunda at the raw BGL point and
+  // filled the entire remaining distance with a fabricated white corridor.
+  // Instead move the complete rigid authored assembly toward the real wall so
+  // every static gate has the same compact photo-style wall -> vestibule ->
+  // Rotunda relationship as A1. No supplied child transform is changed.
+  const wallX = sourceX + ux * sourceWallDistance;
+  const wallZ = sourceZ + uz * sourceWallDistance;
+  const visibleTerminalLegMeters = TARGET_VISIBLE_TERMINAL_LEG_METERS;
+  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
+    throw new Error(\`Static jetway \${placement.gate} compact visible terminal vestibule is invalid: \${visibleTerminalLegMeters}\`);
+  }
+  const terminalWallOverlapMeters = 0;
+  const resolvedRotundaCenterToWallMeters = authoredRotundaOffset.radiusMeters + visibleTerminalLegMeters;
+  const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;
+  const rotundaZ = wallZ - uz * resolvedRotundaCenterToWallMeters;`;
+const sourceLockedBlock = `  // The decoded KPHX BGL x/z is the physical static-jetway placement authority.
+  // Never translate a supplied jetway parent merely to force a short connector:
+  // that was the source of crossed/bunched bridges in exact-head fleet renders.
+  // Measure the real facade from the source Rotunda and fail closed if that wall
+  // fit would require either an invented long corridor or a deep hidden overlap.
+  const rotundaX = sourceX;
+  const rotundaZ = sourceZ;
+  const wallX = rotundaX + ux * sourceWallDistance;
+  const wallZ = rotundaZ + uz * sourceWallDistance;
+  const signedTerminalLegMeters = sourceWallDistance - authoredRotundaOffset.radiusMeters;
+  const visibleTerminalLegMeters = Math.max(0, signedTerminalLegMeters);
+  const terminalWallOverlapMeters = Math.max(0, -signedTerminalLegMeters);
+  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
+    throw new Error(\`Static jetway \${placement.gate} source-locked wall fit would require an invalid visible terminal leg: \${visibleTerminalLegMeters} m (wall=\${sourceWallDistance} m)\`);
+  }
+  if (!(terminalWallOverlapMeters >= 0 && terminalWallOverlapMeters < authoredRotundaOffset.radiusMeters)) {
+    throw new Error(\`Static jetway \${placement.gate} source-locked wall fit would require an invalid Rotunda overlap: \${terminalWallOverlapMeters}\`);
+  }
+  const resolvedRotundaCenterToWallMeters = sourceWallDistance;`;
+
+if (registration.includes(relocatingBlock)) {
+  registration = registration.replace(relocatingBlock, sourceLockedBlock);
+} else if (!registration.includes("source-locked wall fit would require an invalid visible terminal leg")) {
+  throw new Error(`${registrationPath}: static relocation block is missing; refusing to guess at fleet geometry`);
+}
+
+const targetDerivedYawBlock = `  const bridgeDx = targetX - rotundaX;
+  const bridgeDz = targetZ - rotundaZ;
+  const bridgeDistance = Math.hypot(bridgeDx, bridgeDz);
+  const targetHeading = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;
+  const sourceBridgeAxisHeading = Number(authoredRotundaOffset.bridgeAxisHeadingRadians);
+  if (!Number.isFinite(sourceBridgeAxisHeading)) throw new Error(\`Static jetway \${placement.gate} is missing exact supplied bridge-axis heading\`);
+  const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);`;
+const sourceLockedYawBlock = `  const bridgeDx = targetX - rotundaX;
+  const bridgeDz = targetZ - rotundaZ;
+  const bridgeDistance = Math.hypot(bridgeDx, bridgeDz);
+  // placement.yaw has already been normalized from the decoded KPHX BGL
+  // heading by prepare-terminal4-jetway-source-registration-v1. Preserve it.
+  // A synthetic CRJ door target must never re-aim the complete static jetway.
+  const yaw = sourceYaw;`;
+if (registration.includes(targetDerivedYawBlock)) {
+  registration = registration.replace(targetDerivedYawBlock, sourceLockedYawBlock);
+} else if (!registration.includes("const yaw = sourceYaw;")) {
+  throw new Error(`${registrationPath}: target-derived static yaw block is missing; refusing to guess at fleet heading`);
+}
+
+registration = registration.replace(
+  'const AUTHORITY = "57-static-authored-rotundas-short-real-wall-registration-v5";',
+  'const AUTHORITY = "57-static-bgl-pose-locked-short-real-wall-registration-v7";',
+);
+registration = registration.replace(
+  'const AUTHORITY = "57-static-bgl-position-locked-short-real-wall-registration-v6";',
+  'const AUTHORITY = "57-static-bgl-pose-locked-short-real-wall-registration-v7";',
+);
+
+for (const required of [
+  "const rotundaX = sourceX;",
+  "const rotundaZ = sourceZ;",
+  "const yaw = sourceYaw;",
+  "const resolvedRotundaCenterToWallMeters = sourceWallDistance;",
+  "source-locked wall fit would require an invalid visible terminal leg",
+  '57-static-bgl-pose-locked-short-real-wall-registration-v7',
+]) {
+  if (!registration.includes(required)) {
+    throw new Error(`${registrationPath}: source-locked static fleet contract is missing ${required}`);
+  }
+}
+for (const forbidden of [
+  "const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;",
+  "const rotundaZ = wallZ - uz * resolvedRotundaCenterToWallMeters;",
+  "const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);",
+]) {
+  if (registration.includes(forbidden)) {
+    throw new Error(`${registrationPath}: static fleet relocation/re-aim survived source-pose lock: ${forbidden}`);
+  }
+}
+
+fs.writeFileSync(registrationPath, registration, "utf8");
+console.log("Locked all 57 static exact jetways to their decoded KPHX BGL x/z/yaw poses after explicitly running source-heading registration. Real-wall registration may add only a short measured vestibule; it now fails closed instead of relocating or re-aiming supplied parents across neighboring gates.");
