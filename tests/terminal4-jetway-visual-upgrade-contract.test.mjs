@@ -6,6 +6,7 @@ const uploadedFleet = fs.readFileSync("src/environment/uploadedAirportJetwayFlee
 const uploadedConnectors = fs.readFileSync("src/environment/uploadedAirportJetwayTerminalConnector.js", "utf8");
 const measuredStaticConnectors = fs.readFileSync("src/environment/staticSourceMeasuredTerminalConnectorsV2.js", "utf8");
 const measuredStaticPreparation = fs.readFileSync("scripts/prepare-static-jetway-source-measured-terminal-legs-v1.mjs", "utf8");
+const staticPlacementPreparation = fs.readFileSync("scripts/prepare-static-jetway-source-placement-integrity-v1.mjs", "utf8");
 const uploadedPreparation = fs.readFileSync("scripts/prepare-uploaded-airport-jetway-fleet.mjs", "utf8");
 const continuity = fs.readFileSync("scripts/prepare-terminal4-facade-continuity-v8.mjs", "utf8");
 
@@ -131,14 +132,15 @@ for (const token of [
   if (!uploadedConnectors.includes(token)) throw new Error(`A1 Terminal 4 connector is missing ${token}`);
 }
 
-// Static connectors are built only after each supplied Rotunda has been measured
-// against the real Terminal 4 facade. They may legitimately be 0 m at an
-// overlapping Rotunda or much longer than the retired 1.2-3.6 m template; the
-// exact jetway parent itself must not be translated or re-aimed to satisfy them.
+// Static bridges keep the decoded KPHX source HEADING, but their complete rigid
+// parents are translated to the measured real facade so the authored Rotunda is
+// actually at the building. Generated geometry is allowed only as a short sleeve
+// through the facade/Rotunda joint; it can never become a substitute jetway.
 for (const token of [
-  'STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v3"',
-  "MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0",
-  "MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 43",
+  'STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v4"',
+  "MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0.25",
+  "MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.25",
+  "TERMINAL_HIDDEN_OVERLAP_METERS = 0.30",
   "staticAuthoredRotundaRadiusMeters",
   "staticVisibleTerminalLegMeters",
   "staticTerminalWallOverlapMeters",
@@ -146,28 +148,47 @@ for (const token of [
   "expectedCenterToWall",
   "UploadedAirportJetwayStaticSourceMeasuredTerminalConnectors",
   "UploadedAirportJetwayStaticTerminalConnectorBatches",
-  "perGateMeasuredTerminalVestibules = true",
+  "compactRealWallSleevesOnly = true",
   "sourceMeasuredRealWallConnectors = true",
   "staticGateCount: 57",
   "addStaticSolidTerminalVestibules",
 ]) {
-  if (!measuredStaticConnectors.includes(token)) throw new Error(`Source-measured static Terminal 4 connector is missing ${token}`);
+  if (!measuredStaticConnectors.includes(token)) throw new Error(`Compact static Terminal 4 connector is missing ${token}`);
 }
 for (const forbidden of [
-  "1.2",
-  "3.6",
-  "complete-parent relocation",
+  "MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 43",
+  "SUPPORT_SPACING_METERS",
+  "groundSupportedFixedCorridors = true",
   "addUploadedAirportJetwayStaticTerminalConnectors",
 ]) {
-  if (measuredStaticConnectors.includes(forbidden)) throw new Error(`Source-measured static connector retained retired compact geometry: ${forbidden}`);
+  if (measuredStaticConnectors.includes(forbidden)) throw new Error(`Static connector retained giant-corridor behavior: ${forbidden}`);
 }
 for (const token of [
   "staticSourceMeasuredTerminalConnectorsV2.js",
-  "addStaticSolidTerminalVestibules",
-  "MIN_VISIBLE_METERS = 0",
-  "MAX_VISIBLE_METERS = 43",
+  "MIN_VISIBLE_METERS = 0.25",
+  "MAX_VISIBLE_METERS = 1.25",
+  "EXPECTED_VISIBLE_METERS = 0.55",
+  "giant-corridor policy",
 ]) {
-  if (!measuredStaticPreparation.includes(token)) throw new Error(`Measured static connector preparation is missing ${token}`);
+  if (!measuredStaticPreparation.includes(token)) throw new Error(`Compact static connector preparation is missing ${token}`);
+}
+for (const token of [
+  'REGISTRATION_AUTHORITY = "57-static-source-heading-real-wall-compact-registration-v8"',
+  "COMPACT_VISIBLE_TERMINAL_LEG_METERS = 0.55",
+  "COMPACT_TERMINAL_WALL_OVERLAP_METERS = 0.18",
+  "const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;",
+  "const rotundaZ = wallZ - uz * resolvedRotundaCenterToWallMeters;",
+  "const yaw = sourceYaw;",
+  "Giant synthetic corridors and CRJ-target re-aiming are now fail-closed",
+]) {
+  if (!staticPlacementPreparation.includes(token)) throw new Error(`Static source-heading real-wall registration is missing ${token}`);
+}
+for (const forbidden of [
+  "MAX_VISIBLE_METERS = 43",
+  "const resolvedRotundaCenterToWallMeters = sourceWallDistance;",
+  "source-locked wall fit would require an invalid visible terminal leg",
+]) {
+  if (staticPlacementPreparation.includes(forbidden)) throw new Error(`Static placement retained bad source-position lock: ${forbidden}`);
 }
 
 for (const token of [
@@ -204,4 +225,4 @@ for (const forbidden of ["usesTerminalBuildingTextures = true", "CanvasTexture"]
   }
 }
 
-console.log("The exact Airport_Jetway.glb remains the production geometry/material authority at all 58 Terminal 4 gates. Static jetway parents are preserved at decoded KPHX poses; their fixed terminal legs are generated only from per-gate real-wall measurements after facade registration, while A1 retains its individual real-wall portal and airport-owned bridge pose.");
+console.log("The exact Airport_Jetway.glb remains the production geometry/material authority at all 58 Terminal 4 gates. Static jetways preserve decoded KPHX headings, their rigid parents register to the measured real facade, and generated fixed geometry is hard-limited to compact wall/Rotunda sleeves instead of long substitute corridors. A1 retains its individual real-wall portal and airport-owned bridge pose.");
