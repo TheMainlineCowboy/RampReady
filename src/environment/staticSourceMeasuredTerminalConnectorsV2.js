@@ -1,4 +1,4 @@
-const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v4";
+const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v3";
 const STATIC_CORRIDOR_DETAIL_AUTHORITY = "57-static-compact-panelled-real-wall-fixed-terminal-legs-v2";
 const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0.25;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.25;
