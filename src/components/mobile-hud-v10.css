@@ -124,24 +124,30 @@
   }
 
   .rr-shell .rr-metrics {
-    left: 8px;
-    right: auto;
-    bottom: 110px;
-    width: auto;
-    max-width: calc(100vw - 16px);
-    min-width: 0;
-    display: flex;
-    gap: 12px;
-    padding: 6px 9px;
-    border-radius: 11px;
-    background: rgba(12, 15, 22, 0.80);
+    top: auto !important;
+    left: 8px !important;
+    right: auto !important;
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 96px) !important;
+    width: auto !important;
+    max-width: calc(100vw - 16px) !important;
+    min-width: 0 !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 4px 8px !important;
+    overflow: hidden !important;
+    border-radius: 10px !important;
+    background: rgba(12, 15, 22, 0.80) !important;
     backdrop-filter: blur(7px);
   }
 
   .rr-shell .rr-metrics > span {
     display: none;
     margin: 0;
-    font-size: 9px;
+    font-size: 8px !important;
     line-height: 1;
     white-space: nowrap;
   }
@@ -154,7 +160,8 @@
   }
 
   .rr-shell .rr-metrics b {
-    font-size: 12px;
+    display: inline;
+    font-size: 11px !important;
   }
 
   .rr-shell .rr-score-float {
@@ -162,59 +169,71 @@
   }
 
   .rr-shell .rr-throttle {
-    left: 8px;
-    right: 8px;
-    bottom: 58px;
-    width: auto;
-    height: 44px;
-    min-height: 44px;
-    display: grid;
-    grid-template-columns: 62px minmax(0, 1fr) 58px;
-    align-items: center;
-    gap: 7px;
-    padding: 5px 7px;
-    border-radius: 13px;
-    background: rgba(12, 15, 22, 0.84);
+    top: auto !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 48px) !important;
+    width: auto !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    display: grid !important;
+    grid-template-columns: 58px minmax(0, 1fr) 52px !important;
+    grid-template-rows: 1fr !important;
+    align-items: center !important;
+    justify-items: stretch !important;
+    gap: 5px !important;
+    padding: 4px 6px !important;
+    overflow: hidden !important;
+    border-radius: 12px !important;
+    background: rgba(12, 15, 22, 0.84) !important;
   }
 
   .rr-shell .rr-throttle button {
-    height: 34px;
-    min-height: 34px;
-    padding: 0 8px;
-    border-radius: 10px;
-    font-size: 11px;
+    height: 34px !important;
+    min-height: 34px !important;
+    min-width: 0 !important;
+    padding: 0 6px !important;
+    border-radius: 9px;
+    font-size: 10px !important;
   }
 
-  .rr-shell .rr-power-slider {
-    min-width: 0;
-    width: 100%;
+  .rr-shell .rr-power-slider,
+  .rr-shell .rr-throttle input[type="range"] {
+    min-width: 0 !important;
+    width: 100% !important;
+    height: 34px !important;
+    transform: none !important;
   }
 
   .rr-shell .rr-throttle-label {
-    display: none;
+    display: none !important;
   }
 
   .rr-shell .rr-steer {
-    left: 8px;
-    right: 8px;
-    bottom: 8px;
-    width: auto;
-    height: 44px;
-    min-height: 44px;
-    display: grid;
-    grid-template-columns: 1fr 1.15fr 1fr;
-    gap: 6px;
-    padding: 5px 7px;
-    border-radius: 13px;
-    background: rgba(12, 15, 22, 0.84);
+    top: auto !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    transform: none !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1.15fr 1fr !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 4px 6px !important;
+    border-radius: 12px !important;
+    background: rgba(12, 15, 22, 0.84) !important;
   }
 
   .rr-shell .rr-steer button {
-    height: 34px;
-    min-height: 34px;
-    padding: 0;
-    border-radius: 10px;
-    font-size: 13px;
+    height: 32px !important;
+    min-height: 32px !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    border-radius: 9px;
+    font-size: 12px !important;
   }
 
   .rr-shell[data-inspection-mode="active"] .rr-hud {
