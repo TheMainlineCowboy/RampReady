@@ -89,4 +89,76 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log(`Removed ${removedLegacyValidationCount} historical A1 validator block(s) and installed one block-scoped grounded authority validator without leaking groundedConnection.`);
+
+// The production pipeline prepares the same A1 installation module more than
+// once. Several current passes legitimately reformat the three endpoint
+// declarations inside buildMeasuredA1Connector, while the subsequent photo
+// registration pass historically recognized only one exact multiline layout.
+// Normalize those declarations by their semantic names before that pass runs.
+// This does not change the supplied GLB or choose a new wall; it only guarantees
+// that terminalPoint is derived from the measured Rotunda opening and direction.
+const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js";
+let installation = fs.readFileSync(installationPath, "utf8");
+const endpointAuthority = "a1-semantic-terminal-endpoint-normalization-v1";
+const desiredEndpointToken = "rotundaOpening.centerX + openingDirection.x * terminalDistance";
+if (!installation.includes(desiredEndpointToken)) {
+  const functionStart = installation.indexOf("function buildMeasuredA1Connector(");
+  const functionEndCandidate = installation.indexOf("\nfunction ", functionStart + 1);
+  const functionEnd = functionEndCandidate > functionStart ? functionEndCandidate : installation.length;
+  if (functionStart < 0) {
+    throw new Error(`${installationPath}: buildMeasuredA1Connector is missing before photo registration`);
+  }
+
+  const declarations = [
+    "  const terminalPoint = new THREE.Vector3(",
+    "  const collarPoint = new THREE.Vector3(",
+    "  const openingDirection = new THREE.Vector3(",
+  ].map((needle) => {
+    const start = installation.indexOf(needle, functionStart);
+    if (start < 0 || start >= functionEnd) {
+      throw new Error(`${installationPath}: A1 endpoint declaration is missing: ${needle.trim()}`);
+    }
+    const end = installation.indexOf(");", start);
+    if (end < 0 || end >= functionEnd) {
+      throw new Error(`${installationPath}: A1 endpoint declaration does not terminate: ${needle.trim()}`);
+    }
+    return { start, end: end + 2 };
+  });
+
+  const declarationStart = Math.min(...declarations.map((entry) => entry.start));
+  const declarationEnd = Math.max(...declarations.map((entry) => entry.end));
+  if (declarationEnd - declarationStart > 1600) {
+    throw new Error(`${installationPath}: A1 endpoint declarations are unexpectedly far apart`);
+  }
+  const declarationSpan = installation.slice(declarationStart, declarationEnd);
+  if (!declarationSpan.includes("terminalPoint")
+    || !declarationSpan.includes("collarPoint")
+    || !declarationSpan.includes("openingDirection")) {
+    throw new Error(`${installationPath}: A1 semantic endpoint span is incomplete`);
+  }
+
+  const normalizedDeclarations = `  // ${endpointAuthority}
+  const collarPoint = new THREE.Vector3(rotundaOpening.collarX, rotundaOpening.centerY, rotundaOpening.collarZ);
+  const openingDirection = new THREE.Vector3(rotundaOpening.openingDirectionX, 0, rotundaOpening.openingDirectionZ);
+  const terminalPoint = new THREE.Vector3(
+    rotundaOpening.centerX + openingDirection.x * terminalDistance,
+    rotundaOpening.centerY,
+    rotundaOpening.centerZ + openingDirection.z * terminalDistance,
+  );`;
+  installation = `${installation.slice(0, declarationStart)}${normalizedDeclarations}${installation.slice(declarationEnd)}`;
+  fs.writeFileSync(installationPath, installation, "utf8");
+}
+
+const normalizedInstallation = fs.readFileSync(installationPath, "utf8");
+for (const endpointToken of [
+  desiredEndpointToken,
+  "rotundaOpening.centerZ + openingDirection.z * terminalDistance",
+  "const collarPoint = new THREE.Vector3(rotundaOpening.collarX",
+  "const openingDirection = new THREE.Vector3(rotundaOpening.openingDirectionX",
+]) {
+  if (!normalizedInstallation.includes(endpointToken)) {
+    throw new Error(`${installationPath}: normalized A1 endpoint is missing ${endpointToken}`);
+  }
+}
+
+console.log(`Removed ${removedLegacyValidationCount} historical A1 validator block(s), installed one grounded authority validator, and normalized the measured Rotunda terminal endpoint before photo registration.`);
