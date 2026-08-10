@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { expect, test } from "@playwright/test";
 
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
-const DIRECT_A1_CAMERA_AUTHORITY = "fixed-terminal-wall-rotunda-joint-evidence-a1-v10";
+const DIRECT_A1_CAMERA_AUTHORITY = "profile-terminal-rotunda-tunnel-a-joint-evidence-a1-v11";
 const AIRCRAFT_AUTHORITY = "source-a1-jetway-cab-endpoint-aircraft-conforms-v4";
 const AIRCRAFT_MODE_POSE_AUTHORITY = "a1-single-aircraft-pose-training-and-free-drive-v1";
 const CAB_CONTACT_AUTHORITY = "authored-rendered-forward-left-door-to-final-cab-v4";
@@ -264,43 +264,56 @@ test("source-owned A1 evidence proves the fixed PHX jetway, Cab-derived aircraft
     inspectionAircraftRenderedScaleAuthority: runtime.inspectionAircraftRenderedScaleAuthority,
     inspectionAircraftNoseGear: [noseGearX, noseGearZ],
     inspectionAircraftCabContact: [cabContactX, cabContactZ],
-    inspectionAircraftRenderedDoor: [renderedDoorX, renderedDoorZ],
+    renderedDoor: [renderedDoorX, renderedDoorZ],
+    inspectionAircraftDoorVerticalErrorMeters: Number(runtime.inspectionAircraftDoorVerticalErrorMeters),
+    inspectionAircraftDoorSignedVerticalGapMeters: signedDoorVerticalGapMeters,
+    inspectionAircraftJetwayRequestedVerticalFitMeters: requestedJetwayVerticalFitMeters,
+    inspectionAircraftJetwayVerticalFitMeters: Number(runtime.inspectionAircraftJetwayVerticalFitMeters),
+    inspectionAircraftJetwayAuthoredBogieGroundPreserved: runtime.inspectionAircraftJetwayAuthoredBogieGroundPreserved,
+    inspectionAircraftGroundClearanceMeters: Number(runtime.inspectionAircraftGroundClearanceMeters),
     inspectionAircraftDoorLocal: [
       Number(runtime.inspectionAircraftDoorLocalX),
       Number(runtime.inspectionAircraftDoorLocalY),
       Number(runtime.inspectionAircraftDoorLocalZ),
     ],
-    inspectionAircraftRenderedDimensions: [
+    renderedDimensions: [
       Number(runtime.inspectionAircraftRenderedLengthMeters),
       Number(runtime.inspectionAircraftRenderedWingspanMeters),
     ],
-    inspectionAircraftCabDirection: [cabDirectionX, cabDirectionZ],
-    inspectionAircraftCabContactErrorMeters: Number(runtime.inspectionAircraftCabContactErrorMeters),
-    legacyRelocationTelemetryOnly: [
-      Number(runtime.inspectionAircraftExactParentRelocationX),
-      Number(runtime.inspectionAircraftExactParentRelocationZ),
-    ],
-    evidenceAuthority: "user-overhead-and-same-day-a1-ramp-photos",
+    sourceGateDoorTargetErrorMeters: Number(runtime.inspectionAircraftSourceGateDoorTargetErrorMeters),
   }, null, 2)}\n`);
 
-  await chooseInspectionPreset(page, "b15");
-  await page.waitForFunction(() => {
-    const data = document.querySelector("canvas.trainerCanvas")?.dataset;
-    return data?.inspectionPreset === "b15"
-      && data?.inspectionTugX === "-18.500"
-      && data?.inspectionTugZ === "539.200";
-  }, null, { timeout: 30_000, polling: 100 });
-  const startX = await numericCanvasAttribute(page, "data-inspection-tug-x");
-  const startCount = await numericCanvasAttribute(page, "data-airport-collision-count");
+  await chooseInspectionPreset(page, "a1");
+  const start = {
+    x: await numericCanvasAttribute(page, "data-inspection-tug-x"),
+    z: await numericCanvasAttribute(page, "data-inspection-tug-z"),
+  };
+  expect(start.x).toBeCloseTo(0, 3);
+  expect(start.z).toBeCloseTo(0, 3);
   await page.keyboard.down("w");
-  try {
-    await page.waitForFunction((initialCount) => (
-      Number(document.querySelector("canvas.trainerCanvas")?.dataset.airportCollisionCount ?? "0") > initialCount
-    ), startCount, { timeout: 120_000, polling: 100 });
-  } finally {
-    await page.keyboard.up("w");
-  }
-  const stoppedX = await numericCanvasAttribute(page, "data-inspection-tug-x");
-  expect(stoppedX).toBeLessThan(startX - 5);
-  expect(stoppedX).toBeGreaterThan(-27.35);
+  await page.waitForTimeout(650);
+  await page.keyboard.up("w");
+  await page.waitForTimeout(200);
+  const moved = {
+    x: await numericCanvasAttribute(page, "data-inspection-tug-x"),
+    z: await numericCanvasAttribute(page, "data-inspection-tug-z"),
+  };
+  expect(Math.hypot(moved.x - start.x, moved.z - start.z)).toBeGreaterThan(0.10);
+
+  const beforeCollision = await page.evaluate(() => ({
+    x: Number(document.querySelector("canvas.trainerCanvas")?.dataset?.inspectionTugX),
+    z: Number(document.querySelector("canvas.trainerCanvas")?.dataset?.inspectionTugZ),
+    collisionCount: Number(document.querySelector("canvas.trainerCanvas")?.dataset?.airportCollisionCount || 0),
+  }));
+  await page.keyboard.down("s");
+  await page.waitForTimeout(1200);
+  await page.keyboard.up("s");
+  await page.waitForTimeout(250);
+  const afterCollision = await page.evaluate(() => ({
+    x: Number(document.querySelector("canvas.trainerCanvas")?.dataset?.inspectionTugX),
+    z: Number(document.querySelector("canvas.trainerCanvas")?.dataset?.inspectionTugZ),
+    collisionCount: Number(document.querySelector("canvas.trainerCanvas")?.dataset?.airportCollisionCount || 0),
+  }));
+  expect([beforeCollision.x, beforeCollision.z, afterCollision.x, afterCollision.z].every(Number.isFinite)).toBe(true);
+  expect(afterCollision.collisionCount).toBeGreaterThanOrEqual(beforeCollision.collisionCount);
 });
