@@ -91,23 +91,38 @@ const placements = [...concourseA.jetways, ...concourseB.jetways].map((jetway) =
   const targetZ = jetway.pz - forwardZ * CRJ_FORWARD_DOOR_AFT_OF_NOSE_GEAR_METERS
     + leftZ * CRJ_FORWARD_DOOR_LEFT_OF_CENTERLINE_METERS;
   const aircraftDoorDistance = Math.hypot(targetX - jetway.x, targetZ - jetway.z);
-  const parkedGateCode = [...jetway.g].reduce((value, character) => value + character.charCodeAt(0), 0);
-  const bridgeEnd = jetway.g === "A1"
-    ? Math.max(11.5, Math.min(29.5, aircraftDoorDistance - AIR_JETWAY01_CONTACT_CLEARANCE_METERS))
-    : 11.9 + (parkedGateCode % 4) * 0.65;
-  return { gate: jetway.g, targetX, targetZ, aircraftDoorDistance, bridgeEnd };
+  // Match sourcePlacedTerminal4Jetways exactly: every gate owns its decoded
+  // bridge distance. The retired verifier invented an unrelated gate-code length
+  // for all 57 static bridges, which is the behavior the fleet repair removes.
+  const bridgeEnd = Math.max(
+    11.5,
+    Math.min(29.5, aircraftDoorDistance - AIR_JETWAY01_CONTACT_CLEARANCE_METERS),
+  );
+  return {
+    gate: jetway.g,
+    targetX,
+    targetZ,
+    aircraftDoorDistance,
+    aircraftContactClearanceMeters: AIR_JETWAY01_CONTACT_CLEARANCE_METERS,
+    bridgeEnd,
+  };
 });
 if (placements.length !== 58) throw new Error(`Expected 58 exact-jetway placements, received ${placements.length}`);
 if (placements.filter((placement) => placement.gate !== "A1").length !== 57) throw new Error("Expected 57 static exact-jetway placements");
-if (UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum > -14.08) {
-  throw new Error(`A1 exact jetway inward retraction limit unexpectedly changed: ${UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum}`);
+if (UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum > -14.08 || UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.maximum !== 0) {
+  throw new Error(`Exact jetway inward-only limits unexpectedly changed: ${JSON.stringify(UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS)}`);
 }
 
-let maximumStaticOffset = 0;
+let maximumStaticRetraction = 0;
+let maximumStaticOutwardShortfall = 0;
+let staticRetractedGateCount = 0;
+let staticFullLengthGateCount = 0;
+let maximumStaticTargetError = 0;
 let maximumA1AttachedOffset = 0;
 let maximumA1AdjacentSpacingDelta = 0;
 let retiredPositiveStretchMeters = 0;
 let minimumPartSeparation = Infinity;
+
 for (const placement of placements) {
   const articulation = computeUploadedJetwayArticulation(placement, sourceContactDistance);
   const expectedAuthority = placement.gate === "A1"
@@ -116,6 +131,7 @@ for (const placement of placements) {
   if (articulation.authority !== expectedAuthority) {
     throw new Error(`${placement.gate} used the wrong articulation authority: ${articulation.authority}`);
   }
+
   const centers = {
     Rotunda: sourcePartCenters.Rotunda + articulation.partOffsets.Rotunda,
     Tunnel_A: sourcePartCenters.Tunnel_A + articulation.partOffsets.Tunnel_A,
@@ -130,8 +146,10 @@ for (const placement of placements) {
     centers.Cab - centers.Tunnel_C,
   ];
   minimumPartSeparation = Math.min(minimumPartSeparation, ...separations);
-  if (separations.some((separation) => separation <= 0)) {
-    throw new Error(`${placement.gate} exact tunnel sections inverted: ${JSON.stringify(centers)}`);
+  // Inward telescope intentionally increases shell overlap, but section centers
+  // must never invert or cross one another.
+  if (separations.some((separation) => separation <= 0.25)) {
+    throw new Error(`${placement.gate} exact tunnel sections over-retracted or inverted: ${JSON.stringify({ centers, separations, articulation })}`);
   }
 
   if (placement.gate === "A1") {
@@ -161,16 +179,74 @@ for (const placement of placements) {
     if (!(retiredPositiveStretchMeters > 3 && retiredPositiveStretchMeters < 5)) {
       throw new Error(`A1 regression fixture no longer proves removal of the former positive stretch: ${retiredPositiveStretchMeters}`);
     }
-  } else {
-    const offsets = Object.values(articulation.partOffsets).map((value) => Math.abs(Number(value)));
-    maximumStaticOffset = Math.max(maximumStaticOffset, ...offsets);
-    if (maximumStaticOffset > 1e-9 || articulation.extension !== 0 || articulation.rigidSourceHierarchy !== true) {
-      throw new Error(`${placement.gate} mutated the supplied static GLB hierarchy: ${JSON.stringify(articulation)}`);
+    continue;
+  }
+
+  const extension = Number(articulation.extension);
+  const requestedExtension = Number(articulation.requestedExtension);
+  const expectedOwnGateTargetDistance = placement.bridgeEnd + AIR_JETWAY01_CONTACT_CLEARANCE_METERS;
+  if (!Number.isFinite(extension) || extension > 1e-9 || extension < UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum - 1e-9) {
+    throw new Error(`${placement.gate} escaped inward-only static extension limits: ${extension}`);
+  }
+  if (articulation.inwardTelescopeOnly !== true || articulation.rigidSourceHierarchy !== false) {
+    throw new Error(`${placement.gate} did not use inward-only gate-specific static articulation: ${JSON.stringify(articulation)}`);
+  }
+  if (Math.abs(Number(articulation.ownGateTargetDistance) - expectedOwnGateTargetDistance) > 1e-9) {
+    throw new Error(`${placement.gate} lost its decoded own-gate target distance: ${JSON.stringify(articulation)}`);
+  }
+  if (Math.abs(Number(articulation.predictedContactDistance) - (sourceContactDistance + extension)) > 1e-9) {
+    throw new Error(`${placement.gate} predicted contact distance is inconsistent with its inward telescope: ${JSON.stringify(articulation)}`);
+  }
+
+  const expectedOffsets = {
+    Rotunda: 0,
+    Tunnel_A: 0,
+    Tunnel_B: extension / 3,
+    Tunnel_C: extension * 2 / 3,
+    Cab: extension,
+  };
+  for (const [part, expected] of Object.entries(expectedOffsets)) {
+    const actual = Number(articulation.partOffsets[part]);
+    if (!Number.isFinite(actual) || Math.abs(actual - expected) > 1e-9) {
+      throw new Error(`${placement.gate} ${part} static telescope offset is wrong: actual=${actual}, expected=${expected}`);
+    }
+    if (actual > 1e-9) {
+      throw new Error(`${placement.gate} ${part} stretched outward by ${actual} m`);
     }
   }
+
+  for (let index = 1; index < separations.length; index += 1) {
+    if (separations[index] > sourceAdjacentSpacing[index] + 1e-9) {
+      throw new Error(`${placement.gate} increased authored section spacing during inward telescope: ${JSON.stringify(separations)}`);
+    }
+  }
+
+  const targetError = Math.abs(Number(articulation.predictedContactDistance) - expectedOwnGateTargetDistance);
+  if (requestedExtension <= 0 && requestedExtension >= UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum) {
+    if (targetError > 1e-9 || articulation.clamped !== false) {
+      throw new Error(`${placement.gate} failed to telescope exactly to its own decoded gate distance: ${JSON.stringify(articulation)}`);
+    }
+  } else if (requestedExtension > 0) {
+    if (Math.abs(extension) > 1e-9 || Number(articulation.outwardReachShortfallMeters) <= 0) {
+      throw new Error(`${placement.gate} illegally stretched outward instead of reporting reach shortfall: ${JSON.stringify(articulation)}`);
+    }
+  } else if (requestedExtension < UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum) {
+    if (Math.abs(extension - UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum) > 1e-9 || articulation.clamped !== true) {
+      throw new Error(`${placement.gate} failed to clamp excessive inward travel safely: ${JSON.stringify(articulation)}`);
+    }
+  }
+
+  maximumStaticRetraction = Math.max(maximumStaticRetraction, Math.max(0, -extension));
+  maximumStaticOutwardShortfall = Math.max(maximumStaticOutwardShortfall, Number(articulation.outwardReachShortfallMeters) || 0);
+  maximumStaticTargetError = Math.max(maximumStaticTargetError, targetError);
+  if (extension < -0.001) staticRetractedGateCount += 1;
+  else staticFullLengthGateCount += 1;
 }
-if (maximumStaticOffset > 1e-9) throw new Error(`Static exact jetway source-part offset is ${maximumStaticOffset} m`);
-if (minimumPartSeparation < 5) {
-  throw new Error(`Exact source hierarchy lost authored section spacing; minimum part-center separation is ${minimumPartSeparation} m`);
+
+if (staticRetractedGateCount < 1) {
+  throw new Error("Static articulation fixture did not exercise any decoded gate-specific inward telescope");
 }
-console.log(`Verified exact supplied Terminal 4 jetway articulation: attached A1 preserves all authored child transforms and adjacent joint spacings exactly (max offset ${maximumA1AttachedOffset.toFixed(6)} m, max spacing delta ${maximumA1AdjacentSpacingDelta.toFixed(6)} m) instead of applying the retired ${retiredPositiveStretchMeters.toFixed(3)} m positive stretch; all 57 static gates remain rigid, and pre-push A1 retraction remains separately available.`);
+if (minimumPartSeparation <= 0.25) {
+  throw new Error(`Exact static hierarchy over-retracted; minimum part-center separation is ${minimumPartSeparation} m`);
+}
+console.log(`Verified exact supplied Terminal 4 jetway articulation: attached A1 preserves all authored child transforms exactly (max attached offset ${maximumA1AttachedOffset.toFixed(6)} m, max spacing delta ${maximumA1AdjacentSpacingDelta.toFixed(6)} m) instead of applying the retired ${retiredPositiveStretchMeters.toFixed(3)} m positive stretch; ${staticRetractedGateCount}/57 static gates telescope inward to decoded gate-specific lengths, ${staticFullLengthGateCount}/57 remain at full supplied reach, maximum static retraction is ${maximumStaticRetraction.toFixed(3)} m, maximum reported outward shortfall is ${maximumStaticOutwardShortfall.toFixed(3)} m, and no static section stretches outward or inverts.`);
