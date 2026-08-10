@@ -9,6 +9,7 @@ const STATIONARY_SUPPORT_SOURCE_SPAN_METERS = 1.72;
 const MINIMUM_EXPECTED_SUPPORT_GAP_METERS = 1.30;
 const MAXIMUM_EXPECTED_SUPPORT_GAP_METERS = 2.15;
 const MAXIMUM_FINAL_SUPPORT_GAP_METERS = 0.012;
+const MAXIMUM_SUPPORT_CORRECTION_PASSES = 3;
 
 let source = fs.readFileSync(sourcePath, "utf8");
 
@@ -22,12 +23,15 @@ source = source
     `const TERMINAL_HIDDEN_OVERLAP_METERS = ${TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)};`,
   );
 
-const supportHelperMarker = "A1 stationary Rotunda support owns its own ramp contact v2";
-const legacySupportHelperMarker = "A1 stationary Rotunda support owns its own ramp contact v1";
+const supportHelperMarker = "A1 stationary Rotunda support owns its own ramp contact v3";
+const legacySupportHelperMarkers = [
+  "A1 stationary Rotunda support owns its own ramp contact v1",
+  "A1 stationary Rotunda support owns its own ramp contact v2",
+];
 
-// Replace the v1 helper wholesale when present. The v2 helper writes its own
-// telemetry directly onto the A1 group so later production transforms cannot
-// leave a dead local variable behind while preserving its evidence lines.
+// Replace any earlier helper wholesale. V3 measures the actual transformed
+// pedestal after deformation and applies bounded corrective stretches rather
+// than trusting a single source-bounds ratio to land the rendered foot.
 const helperStart = source.indexOf("function groundA1StationaryRotundaSupport(");
 const wrappedAngleStart = source.indexOf("function wrappedAngle(THREE, radians) {");
 if (helperStart >= 0 && wrappedAngleStart > helperStart) {
@@ -46,8 +50,7 @@ if (!source.includes(supportHelperMarker)) {
   // stationary Rotunda pedestal. Grounding the complete parent by the bogie
   // alone leaves the Rotunda pedestal roughly two metres in the air in the
   // final production pose. Keep every object transform and every passenger-
-  // level Rotunda vertex fixed; stretch only the authored lower pedestal
-  // geometry so its original foot reaches the same physical ramp plane.
+  // level Rotunda vertex fixed; stretch only the authored lower pedestal.
   fleet.updateWorldMatrix(true, true);
   model.updateWorldMatrix(true, true);
   rotunda.updateWorldMatrix(true, true);
@@ -72,40 +75,62 @@ if (!source.includes(supportHelperMarker)) {
   }
 
   let changedVertexCount = 0;
+  let correctionPassCount = 0;
   const localPoint = new THREE.Vector3();
   const worldPoint = new THREE.Vector3();
-  rotunda.traverse((entry) => {
-    if (!entry?.isMesh || !entry.geometry?.getAttribute?.("position")) return;
-    const geometry = entry.geometry.clone();
-    const position = geometry.getAttribute("position");
-    entry.geometry = geometry;
-    entry.updateWorldMatrix(true, false);
-    for (let index = 0; index < position.count; index += 1) {
-      localPoint.fromBufferAttribute(position, index);
-      worldPoint.copy(localPoint).applyMatrix4(entry.matrixWorld);
-      if (worldPoint.y > supportTopWorldY + 1e-5) continue;
-      const distanceBelowSupportTop = supportTopWorldY - worldPoint.y;
-      worldPoint.y = supportTopWorldY - distanceBelowSupportTop * supportStretch;
-      entry.worldToLocal(localPoint.copy(worldPoint));
-      position.setXYZ(index, localPoint.x, localPoint.y, localPoint.z);
-      changedVertexCount += 1;
+
+  const stretchLowerPedestalFromFixedTop = (stretchFactor) => {
+    if (!(Number.isFinite(stretchFactor) && stretchFactor > 0.90 && stretchFactor < 2.50)) {
+      throw new Error("A1 stationary Rotunda support corrective scale is invalid: " + stretchFactor);
     }
-    position.needsUpdate = true;
-    geometry.computeVertexNormals();
-    geometry.computeBoundingBox();
-    geometry.computeBoundingSphere();
-  });
+    rotunda.traverse((entry) => {
+      if (!entry?.isMesh || !entry.geometry?.getAttribute?.("position")) return;
+      const geometry = entry.geometry.clone();
+      const position = geometry.getAttribute("position");
+      entry.geometry = geometry;
+      entry.updateWorldMatrix(true, false);
+      for (let index = 0; index < position.count; index += 1) {
+        localPoint.fromBufferAttribute(position, index);
+        worldPoint.copy(localPoint).applyMatrix4(entry.matrixWorld);
+        if (worldPoint.y > supportTopWorldY + 1e-5) continue;
+        const distanceBelowSupportTop = supportTopWorldY - worldPoint.y;
+        worldPoint.y = supportTopWorldY - distanceBelowSupportTop * stretchFactor;
+        entry.worldToLocal(localPoint.copy(worldPoint));
+        position.setXYZ(index, localPoint.x, localPoint.y, localPoint.z);
+        changedVertexCount += 1;
+      }
+      position.needsUpdate = true;
+      geometry.computeVertexNormals();
+      geometry.computeBoundingBox();
+      geometry.computeBoundingSphere();
+    });
+    fleet.updateWorldMatrix(true, true);
+    model.updateWorldMatrix(true, true);
+    rotunda.updateWorldMatrix(true, true);
+  };
+
+  stretchLowerPedestalFromFixedTop(supportStretch);
   if (changedVertexCount < 100) {
     throw new Error("A1 stationary Rotunda support changed too few authored vertices: " + changedVertexCount);
   }
 
-  fleet.updateWorldMatrix(true, true);
-  model.updateWorldMatrix(true, true);
-  rotunda.updateWorldMatrix(true, true);
-  const rotundaBoundsAfter = new THREE.Box3().setFromObject(rotunda);
-  const finalGroundGapMeters = rotundaBoundsAfter.min.y - sourceModelGroundY;
+  let rotundaBoundsAfter = new THREE.Box3().setFromObject(rotunda);
+  let finalGroundGapMeters = rotundaBoundsAfter.min.y - sourceModelGroundY;
+  while (Math.abs(finalGroundGapMeters) > ${MAXIMUM_FINAL_SUPPORT_GAP_METERS.toFixed(3)} && correctionPassCount < ${MAXIMUM_SUPPORT_CORRECTION_PASSES}) {
+    const currentSupportSpanMeters = supportTopWorldY - rotundaBoundsAfter.min.y;
+    const desiredSupportSpanMeters = supportTopWorldY - sourceModelGroundY;
+    const correctionScale = desiredSupportSpanMeters / currentSupportSpanMeters;
+    if (!(Number.isFinite(correctionScale) && correctionScale > 0.95 && correctionScale < 1.15)) {
+      throw new Error("A1 stationary Rotunda support residual correction is outside the bounded envelope: gap=" + finalGroundGapMeters + " scale=" + correctionScale);
+    }
+    stretchLowerPedestalFromFixedTop(correctionScale);
+    correctionPassCount += 1;
+    rotundaBoundsAfter = new THREE.Box3().setFromObject(rotunda);
+    finalGroundGapMeters = rotundaBoundsAfter.min.y - sourceModelGroundY;
+  }
+
   if (Math.abs(finalGroundGapMeters) > ${MAXIMUM_FINAL_SUPPORT_GAP_METERS.toFixed(3)}) {
-    throw new Error("A1 stationary Rotunda support did not reach the bogie ramp plane: " + finalGroundGapMeters);
+    throw new Error("A1 stationary Rotunda support did not reach the bogie ramp plane after corrective seating: " + finalGroundGapMeters);
   }
   const appliedExtensionMeters = sourceRotundaFootY - rotundaBoundsAfter.min.y;
 
@@ -114,12 +139,14 @@ if (!source.includes(supportHelperMarker)) {
   rotunda.userData.a1StationarySupportAppliedExtensionMeters = appliedExtensionMeters;
   rotunda.userData.a1StationarySupportFinalGroundGapMeters = finalGroundGapMeters;
   rotunda.userData.a1StationarySupportChangedVertexCount = changedVertexCount;
+  rotunda.userData.a1StationarySupportCorrectionPassCount = correctionPassCount;
   group.userData.uploadedJetwayA1StationaryRotundaSupportGroundAuthority = "${STATIONARY_SUPPORT_AUTHORITY}";
   group.userData.uploadedJetwayA1StationaryRotundaSupportSourceGapMeters = sourceGapMeters;
   group.userData.uploadedJetwayA1StationaryRotundaSupportAppliedExtensionMeters = appliedExtensionMeters;
   group.userData.uploadedJetwayA1StationaryRotundaSupportFinalGroundGapMeters = finalGroundGapMeters;
   group.userData.uploadedJetwayA1StationaryRotundaSupportChangedVertexCount = changedVertexCount;
   group.userData.uploadedJetwayA1StationaryRotundaSupportStretch = supportStretch;
+  group.userData.uploadedJetwayA1StationaryRotundaSupportCorrectionPassCount = correctionPassCount;
 
   return Object.freeze({
     authority: "${STATIONARY_SUPPORT_AUTHORITY}",
@@ -128,6 +155,7 @@ if (!source.includes(supportHelperMarker)) {
     finalGroundGapMeters,
     changedVertexCount,
     supportStretch,
+    correctionPassCount,
   });
 }
 
@@ -135,10 +163,6 @@ if (!source.includes(supportHelperMarker)) {
   source = source.replace(helperAnchor, `${supportHelper}${helperAnchor}`);
 }
 
-// Remove the fragile v1 local declaration and any old telemetry block that
-// dereferenced it. Later production transforms rewrite the Rotunda positioning
-// section, but preserve the Cab telemetry section; attach the grounding call
-// there so the final bundled source always executes it.
 source = source
   .replace(/\n\s*const stationaryRotundaSupport = groundA1StationaryRotundaSupport\([^;]+;\n/g, "\n")
   .replace(/\n\s*groundA1StationaryRotundaSupport\(THREE, group, fleet, model, rotunda\);\n/g, "\n")
@@ -165,7 +189,7 @@ if (!bellowsBlock.includes(requiredDepth)) {
 }
 
 for (const forbidden of [
-  legacySupportHelperMarker,
+  ...legacySupportHelperMarkers,
   "stationaryRotundaSupport.authority",
   "stationaryRotundaSupport.sourceGapMeters",
   "stationaryRotundaSupport.appliedExtensionMeters",
@@ -185,13 +209,15 @@ for (const required of [
   supportHelperMarker,
   "groundA1StationaryRotundaSupport(THREE, group, fleet, model, rotunda);",
   "uploadedJetwayA1StationaryRotundaSupportGroundAuthority",
+  "uploadedJetwayA1StationaryRotundaSupportCorrectionPassCount",
   STATIONARY_SUPPORT_AUTHORITY,
   `sourceGapMeters >= ${MINIMUM_EXPECTED_SUPPORT_GAP_METERS.toFixed(2)}`,
   `sourceGapMeters <= ${MAXIMUM_EXPECTED_SUPPORT_GAP_METERS.toFixed(2)}`,
   `Math.abs(finalGroundGapMeters) > ${MAXIMUM_FINAL_SUPPORT_GAP_METERS.toFixed(3)}`,
+  `correctionPassCount < ${MAXIMUM_SUPPORT_CORRECTION_PASSES}`,
 ]) {
   if (!source.includes(required)) throw new Error(`${sourcePath}: missing final A1 stationary-support requirement ${required}`);
 }
 
 fs.writeFileSync(sourcePath, source, "utf8");
-console.log(`Prepared A1 terminal-to-Rotunda joint with ${ROTUNDA_SHELL_OVERLAP_METERS.toFixed(2)} m Rotunda overlap and ${TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m terminal-wall overlap; the exact passenger-level Rotunda stays fixed while its authored stationary pedestal is independently grounded to the bogie ramp plane under ${STATIONARY_SUPPORT_AUTHORITY}.`);
+console.log(`Prepared A1 terminal-to-Rotunda joint with ${ROTUNDA_SHELL_OVERLAP_METERS.toFixed(2)} m Rotunda overlap and ${TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m terminal-wall overlap; the exact passenger-level Rotunda stays fixed while its authored stationary pedestal is iteratively seated on the measured bogie ramp plane under ${STATIONARY_SUPPORT_AUTHORITY}.`);
