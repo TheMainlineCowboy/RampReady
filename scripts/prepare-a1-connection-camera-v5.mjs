@@ -24,7 +24,7 @@ if (!terminalRotundaSleevePrepared) {
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v11";
-const A1_CAMERA_AUTHORITY = "fixed-terminal-wall-rotunda-joint-evidence-a1-v10";
+const A1_CAMERA_AUTHORITY = "profile-terminal-rotunda-tunnel-a-joint-evidence-a1-v11";
 let source = fs.readFileSync(path, "utf8");
 if (!source.includes('  a1Connection: Object.freeze({')) {
   await import(`./prepare-full-airport-inspection-route.mjs?wide-a1=${Date.now()}`);
@@ -43,8 +43,12 @@ let presetBlock = source.slice(presetStart, presetEnd);
 const tugXLine = "    x: 7.5,";
 const tugZLine = "    z: 8.5,";
 const tugYawLine = '    yaw: -0.35,';
-const cameraPositionLine = "    cameraPosition: Object.freeze([-12.0, 10.5, 28.0]),";
-const cameraTargetLine = "    cameraTarget: Object.freeze([-27.5, 4.1, -16.15]),";
+// Profile the elbow from the apron side, approximately perpendicular to the
+// Rotunda->Cab axis. Both the terminal-side fixed leg and the supplied
+// aircraft-side Tunnel A must be visible in the same frame so a vertical step
+// cannot be hidden by an end-on or high-overhead perspective.
+const cameraPositionLine = "    cameraPosition: Object.freeze([-21.0, 6.7, -3.5]),";
+const cameraTargetLine = "    cameraTarget: Object.freeze([-10.2, 5.2, -21.9]),";
 const overheadCameraPositionLine = "    overheadCameraPosition: Object.freeze([-27.5, 55.0, -16.15]),";
 const overheadCameraTargetLine = "    overheadCameraTarget: Object.freeze([-27.5, 0.0, -16.15]),";
 const cameraAuthorityLine = `    cameraAuthority: "${A1_CAMERA_AUTHORITY}",`;
@@ -113,7 +117,7 @@ source = source.replace(
   CANONICAL_ROUTE_AUTHORITY,
 );
 source = source.replace(
-  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+|oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+|wide-oblique-full-assembly-terminal-corner-a1-v\d+|oblique-measured-final-cab-and-aircraft-a1-v\d+|fixed-terminal-wall-rotunda-joint-evidence-a1-v\d+)/g,
+  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+|oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+|wide-oblique-full-assembly-terminal-corner-a1-v\d+|oblique-measured-final-cab-and-aircraft-a1-v\d+|fixed-terminal-wall-rotunda-joint-evidence-a1-v\d+|profile-terminal-rotunda-tunnel-a-joint-evidence-a1-v\d+)/g,
   A1_CAMERA_AUTHORITY,
 );
 
