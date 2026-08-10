@@ -69,4 +69,5 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(registrationPath, registration, "utf8");
-console.log(`Enforced a ${MIN_VISIBLE_METERS}-${MAX_VISIBLE_METERS} m static real-wall vestibule envelope (target ${EXPECTED_VISIBLE_METERS} m) while preserving own-gate target yaw and decoded per-gate bridge lengths. Long synthetic corridors and cross-stand raw-heading ownership now fail.`);
+await import(`./prepare-static-jetway-post-registration-lengths-v1.mjs?post-wall-lengths=${Date.now()}`);
+console.log(`Enforced a ${MIN_VISIBLE_METERS}-${MAX_VISIBLE_METERS} m static real-wall vestibule envelope (target ${EXPECTED_VISIBLE_METERS} m), preserved own-gate target yaw, then recalculated every static exact-GLB length from the final registered Rotunda. Long synthetic corridors, cross-stand raw-heading ownership and pre-wall length guesses now fail.`);
