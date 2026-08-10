@@ -11,6 +11,9 @@ const VISUAL_AUTHORITY = 'same-day-a1-continuous-source-measured-solid-closed-gr
 const CONTINUITY_AUTHORITY = 'exact-authored-five-part-chain-no-isolated-node-rotation-v2';
 const BOGIE_AUTHORITY = 'exact-authored-a1-lowest-geometry-ramp-contact-v2';
 const WALL_AUTHORITY = 'nearest-structural-terminal-facade-photo-verified-v1';
+const MAX_VISIBLE_TERMINAL_LEG_METERS = 6.0;
+const MIN_REAL_WALL_DISTANCE_METERS = 2.9;
+const MAX_REAL_WALL_DISTANCE_METERS = 5.8;
 fs.mkdirSync(evidenceDir, { recursive: true });
 
 function numeric(value, label) {
@@ -84,7 +87,7 @@ async function selectCameraView(page, value) {
   const canvas = page.locator('canvas.trainerCanvas');
   await canvas.waitFor({ state: 'visible', timeout: 30000 });
   try {
-    await page.waitForFunction(({ visualAuthority, continuityAuthority, bogieAuthority, wallAuthority }) => {
+    await page.waitForFunction(({ visualAuthority, continuityAuthority, bogieAuthority, wallAuthority, maxVisibleLeg, minWall, maxWall }) => {
       const data = document.querySelector('canvas.trainerCanvas')?.dataset;
       const vestibule = Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters);
       const wallDistance = Number(data?.terminal4A1JetwayWallDistance);
@@ -103,14 +106,24 @@ async function selectCameraView(page, value) {
         && Number(data?.terminal4UploadedJetwayBogieGroundContactPointCount) >= 8
         && Number(data?.terminal4UploadedJetwayBogieGroundContactClusterCount) >= 2
         && Number(data?.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters) >= 1.2
-        // The airport source now owns A1. Validate the actual measured real-wall
-        // span rather than the retired 2.40 m relocation target.
+        // The old browser gate allowed a 44 m connector and therefore blessed
+        // the 18.56 m duplicate tunnel seen on the phone. A1's actual structural
+        // wall is ~4 m from the transformed Rotunda; allow generous real-world
+        // overlap/collar tolerance but categorically reject another long shell.
         && Number.isFinite(vestibule)
-        && vestibule > 0.15 && vestibule < 44
+        && vestibule > 0.15 && vestibule < maxVisibleLeg
         && Number.isFinite(wallDistance)
-        && wallDistance > 0.5 && wallDistance < 44
+        && wallDistance > minWall && wallDistance < maxWall
         && data?.terminal4A1ConnectionAuthority === wallAuthority;
-    }, { visualAuthority: VISUAL_AUTHORITY, continuityAuthority: CONTINUITY_AUTHORITY, bogieAuthority: BOGIE_AUTHORITY, wallAuthority: WALL_AUTHORITY }, { timeout: 120000, polling: 100 });
+    }, {
+      visualAuthority: VISUAL_AUTHORITY,
+      continuityAuthority: CONTINUITY_AUTHORITY,
+      bogieAuthority: BOGIE_AUTHORITY,
+      wallAuthority: WALL_AUTHORITY,
+      maxVisibleLeg: MAX_VISIBLE_TERMINAL_LEG_METERS,
+      minWall: MIN_REAL_WALL_DISTANCE_METERS,
+      maxWall: MAX_REAL_WALL_DISTANCE_METERS,
+    }, { timeout: 120000, polling: 100 });
   } catch (error) {
     const dataset = await canvas.evaluate(element => ({ ...element.dataset })).catch(() => ({}));
     await page.screenshot({ path: `${evidenceDir}/a1-readiness-diagnostic.png`, fullPage: false }).catch(() => {});
@@ -137,6 +150,14 @@ async function selectCameraView(page, value) {
   await page.waitForTimeout(750);
   const terminalData = await canvas.evaluate(element => ({ ...element.dataset }));
   if (!subviewAuthorityAccepted(terminalData.inspectionCameraEndpointSubviewAuthority)) throw new Error(`Unexpected A1 terminal-joint subview authority: ${terminalData.inspectionCameraEndpointSubviewAuthority}`);
+  const visibleLeg = numeric(terminalData.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters, 'visible vestibule');
+  const realWallDistance = numeric(terminalData.terminal4A1JetwayWallDistance, 'real wall distance');
+  if (!(visibleLeg > 0.15 && visibleLeg < MAX_VISIBLE_TERMINAL_LEG_METERS)) {
+    throw new Error(`A1 terminal-side shell is implausibly long: ${visibleLeg} m`);
+  }
+  if (!(realWallDistance > MIN_REAL_WALL_DISTANCE_METERS && realWallDistance < MAX_REAL_WALL_DISTANCE_METERS)) {
+    throw new Error(`A1 transformed Rotunda-to-wall distance is outside the measured envelope: ${realWallDistance} m`);
+  }
   await captureCanvas(page, canvas, `${evidenceDir}/a1-terminal-joint.png`);
 
   await selectSubview(page, 'bogie-contact');
@@ -156,5 +177,5 @@ async function selectCameraView(page, value) {
   fs.writeFileSync(`${evidenceDir}/report.json`, JSON.stringify({ pageUrl, capturedAtUtc: new Date().toISOString(), consoleErrors, pageErrors, terminalTelemetry: terminalData, bogieTelemetry: bogieData, assemblyTelemetry: assemblyData }, null, 2));
   await browser.close();
   if (pageErrors.length) throw new Error(`A1 evidence page errors: ${pageErrors.join(' | ')}`);
-  console.log(`A1 TERMINAL JOINT EVIDENCE READY: ${JSON.stringify({ vestibule: numeric(terminalData.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters, 'visible vestibule'), wallDistance: numeric(terminalData.terminal4A1JetwayWallDistance, 'real wall distance'), bogieClearanceMeters: numeric(bogieData.terminal4UploadedJetwayBogieGroundClearanceMeters, 'bogie clearance'), subviewAuthority: terminalData.inspectionCameraEndpointSubviewAuthority })}`);
+  console.log(`A1 TERMINAL JOINT EVIDENCE READY: ${JSON.stringify({ vestibule: visibleLeg, wallDistance: realWallDistance, bogieClearanceMeters: numeric(bogieData.terminal4UploadedJetwayBogieGroundClearanceMeters, 'bogie clearance'), subviewAuthority: terminalData.inspectionCameraEndpointSubviewAuthority })}`);
 })().catch(error => { console.error(error.stack || error.message || String(error)); process.exit(1); });
