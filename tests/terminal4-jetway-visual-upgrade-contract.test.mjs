@@ -6,6 +6,7 @@ const articulation = fs.readFileSync("src/environment/uploadedAirportJetwayArtic
 const measuredStaticConnectors = fs.readFileSync("src/environment/staticSourceMeasuredTerminalConnectorsV2.js", "utf8");
 const measuredStaticPreparation = fs.readFileSync("scripts/prepare-static-jetway-source-measured-terminal-legs-v1.mjs", "utf8");
 const staticPlacementPreparation = fs.readFileSync("scripts/prepare-static-jetway-source-placement-integrity-v1.mjs", "utf8");
+const sourceRegistrationPreparation = fs.readFileSync("scripts/prepare-terminal4-jetway-source-registration-v1.mjs", "utf8");
 const ownGateLengthPreparation = fs.readFileSync("scripts/prepare-static-jetway-own-gate-lengths-v1.mjs", "utf8");
 const uploadedPreparation = fs.readFileSync("scripts/prepare-uploaded-airport-jetway-fleet.mjs", "utf8");
 const continuity = fs.readFileSync("scripts/prepare-terminal4-facade-continuity-v8.mjs", "utf8");
@@ -91,11 +92,19 @@ for (const token of [
   if (!staticPlacementPreparation.includes(token)) throw new Error(`Own-gate real-wall registration is missing ${token}`);
 }
 for (const forbidden of [
-  "const yaw = sourceYaw;",
   "const resolvedRotundaCenterToWallMeters = sourceWallDistance;",
   "57-static-source-heading-real-wall-compact-registration-v8",
 ]) {
-  if (staticPlacementPreparation.includes(forbidden)) throw new Error(`Static placement retained crossed/fake placement behavior: ${forbidden}`);
+  if (staticPlacementPreparation.includes(forbidden)) throw new Error(`Static placement retained fake wall registration behavior: ${forbidden}`);
+}
+for (const token of [
+  'STATIC_SOURCE_HEADING_AUTHORITY = "57-static-bgl-jetway-heading-provenance-v3"',
+  'const yaw = targetRegistrationYaw;',
+  'replaceAll("  const yaw = sourceYaw;", "  const yaw = targetRegistrationYaw;")',
+  "uploadedJetwayStaticSourceHeadingProvenanceGateCount = 57",
+  "forcing sourceYaw here caused the fleet to cross stands",
+]) {
+  if (!sourceRegistrationPreparation.includes(token)) throw new Error(`Source-heading provenance migration is missing ${token}`);
 }
 
 for (const token of [
