@@ -20,8 +20,8 @@ const visualAuthority = "same-day-a1-continuous-source-measured-solid-closed-gro
 const jetwayGroundAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
 const noLiftAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const staticRigidAuthority = "57-static-exact-glb-rigid-source-hierarchy-v1";
-const staticSourcePlacementAuthority = "57-static-bgl-pose-locked-short-real-wall-registration-v7";
-const marker = "final-a1-acceptance-authority-after-all-preparers-v4-source-static-integrity";
+const staticSourcePlacementAuthority = "57-static-source-heading-real-wall-compact-registration-v8";
+const marker = "final-a1-acceptance-authority-after-all-preparers-v5-source-heading-real-wall-static";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
 source = source.replaceAll(staleAuthority, finalAuthority);
@@ -42,6 +42,7 @@ if (facadeTelemetryPattern.test(source)) {
 
 if (!source.includes(marker)) {
   for (const oldMarker of [
+    "final-a1-acceptance-authority-after-all-preparers-v4-source-static-integrity",
     "final-a1-acceptance-authority-after-all-preparers-v3-three-tire-contact",
     "final-a1-acceptance-authority-after-all-preparers-v2",
     "final-a1-acceptance-authority-after-all-preparers-v1",
@@ -139,12 +140,13 @@ for (const forbidden of [
   "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2",
   "grounded-aircraft-door-progressive-tunnel-slope-v1",
   "exactA1CabContactY += appliedA1JetwayVerticalFitMeters",
+  "57-static-bgl-pose-locked-short-real-wall-registration-v7",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${trainerPath}: stale compact A1, grounding, child lift, or pose behavior survived finalization: ${forbidden}`);
+    throw new Error(`${trainerPath}: stale compact A1, grounding, child lift, or static source-position-lock behavior survived finalization: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs?grounded-pose=${Date.now()}`);
-console.log("Finalized Terminal 4 with source-measured A1 real-wall/Rotunda geometry and grounded aircraft/bogie evidence, plus all 57 rigid exact-GLB static jetways locked to their decoded KPHX BGL poses. Short real-wall vestibules remain allowed; whole-parent relocation/re-aim and long synthetic static corridors remain forbidden.");
+console.log("Finalized Terminal 4 with source-measured A1 real-wall/Rotunda geometry and grounded aircraft/bogie evidence. All 57 static exact-GLB jetways preserve their decoded KPHX headings while their complete rigid parents register to the measured real facade; generated wall sleeves are compact and long synthetic corridors or CRJ-target re-aiming remain forbidden.");
