@@ -63,8 +63,22 @@
     font-weight: 800;
   }
 
+  .rr-shell[data-inspection-mode="active"] .rr-kicker {
+    display: none;
+  }
+
+  .rr-shell[data-inspection-mode="active"] .rr-inspection-toggle {
+    width: 48px !important;
+    min-width: 48px !important;
+    min-height: 30px !important;
+    padding: 0 5px !important;
+    font-size: 0 !important;
+  }
+
   .rr-shell[data-inspection-mode="active"] .rr-inspection-toggle::after {
     content: "Train";
+    font-size: 10px;
+    font-weight: 800;
   }
 
   .rr-shell .rr-view-select {
@@ -239,7 +253,7 @@
   .rr-shell[data-inspection-mode="active"] .rr-hud {
     right: 8px;
     max-height: none;
-    padding: 7px 9px;
+    padding: 6px 8px;
   }
 
   .rr-shell[data-inspection-mode="active"] .rr-hud > p,
@@ -248,6 +262,6 @@
   }
 
   .rr-shell[data-inspection-mode="active"] .rr-hud h1 {
-    font-size: 13px;
+    font-size: 12px;
   }
 }
