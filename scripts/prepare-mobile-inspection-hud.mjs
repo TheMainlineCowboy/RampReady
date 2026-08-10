@@ -33,7 +33,10 @@ for (const token of [
   ".rr-shell .rr-metrics",
   ".rr-shell .rr-throttle",
   ".rr-shell .rr-steer",
-  "grid-template-columns: 62px minmax(0, 1fr) 58px",
+  "grid-template-columns: 58px minmax(0, 1fr) 52px",
+  "height: 30px !important",
+  "height: 44px !important",
+  "height: 42px !important",
   "content: \"Inspect\"",
 ]) if (!style.includes(token)) throw new Error(`Mobile HUD v10 stylesheet is missing ${token}`);
 
@@ -47,4 +50,4 @@ if (preparedRuntime.indexOf(legacyImportLine) > preparedRuntime.indexOf(importLi
   throw new Error("Mobile HUD v10 must cascade after v9 containment");
 }
 
-console.log("Prepared regeneration-safe compact mobile simulator HUD v10: restored v9 containment, then applied the shallow top status panel, compact telemetry pill and two 44 px driving-control strips.");
+console.log("Prepared regeneration-safe compact mobile simulator HUD v10: restored v9 containment, then applied the shallow top status panel, 30 px telemetry pill, 44 px throttle strip and 42 px steering strip.");
