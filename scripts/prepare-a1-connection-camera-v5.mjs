@@ -134,8 +134,12 @@ source = source.replace(
   /source-gate-apron-presets-with-[^"\n]+-a1-a14-b14-b15-v\d+/g,
   CANONICAL_ROUTE_AUTHORITY,
 );
+// Migrate stale A1 camera authorities on the A1 preset/runtime only. Do not
+// include the legacy fallback authority in this normalization: it intentionally
+// remains as the inert compatibility fallback for presets lacking their own
+// cameraAuthority.
 source = source.replace(
-  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+|oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+|wide-oblique-full-assembly-terminal-corner-a1-v\d+|oblique-measured-final-cab-and-aircraft-a1-v\d+|fixed-terminal-wall-rotunda-joint-evidence-a1-v\d+|profile-terminal-rotunda-tunnel-a-joint-evidence-a1-v\d+)/g,
+  /(?:(?:side-on-fixed|wide-diagonal)-a1-terminal-joint-v\d+(?:-clear-tug)*|side-on-direct-terminal-wall-a1-v\d+|oblique-(?:measured|photo-registered)-terminal-corner-a1-v\d+|wide-oblique-full-assembly-terminal-corner-a1-v\d+|oblique-measured-final-cab-and-aircraft-a1-v\d+|profile-terminal-rotunda-tunnel-a-joint-evidence-a1-v\d+)/g,
   A1_CAMERA_AUTHORITY,
 );
 
