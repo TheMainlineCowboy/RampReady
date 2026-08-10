@@ -9,6 +9,10 @@ const LEGACY_SUBVIEW_AUTHORITY = 'exact-a1-terminal-joint-and-bogie-contact-subv
 const CAMERA_AUTHORITY = 'exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2';
 const LOCK_AUTHORITY = 'exact-a1-evidence-camera-direct-lock-v1';
 const A1_VISUAL_AUTHORITY = 'same-day-a1-continuous-source-measured-solid-closed-grounded-v2';
+const STATIC_OWN_GATE_AUTHORITY = '57-static-own-gate-target-real-wall-compact-registration-v9';
+const MAXIMUM_STATIC_OWN_GATE_HEADING_ERROR_RADIANS = 0.002;
+const MAXIMUM_STATIC_TERMINAL_FACING_DOT = 0.25;
+const MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS = 0.5;
 
 const views = Object.freeze([
   ['a14', 'A concourse midpoint', 'a-concourse-fleet.png', 'chase'],
@@ -77,10 +81,6 @@ async function capture(page, filename) {
   if (!box || !(box.width > 100) || !(box.height > 100)) {
     throw new Error(`${filename} cannot capture a visible Three.js canvas`);
   }
-  // page.screenshot() can stall for 30 s while Chromium waits on unrelated
-  // document/font paint state even though the WebGL frame is already ready.
-  // Capture the exact visible canvas rectangle through CDP instead, matching the
-  // dedicated A1 evidence workflow and avoiding false visual-run failures.
   const client = await page.context().newCDPSession(page);
   try {
     const { data } = await client.send('Page.captureScreenshot', {
@@ -105,6 +105,11 @@ async function capture(page, filename) {
   return bytes;
 }
 
+function finiteNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
 (async () => {
   checkpoint('launch');
   const browser = await chromium.launch({ headless: true });
@@ -113,6 +118,7 @@ async function capture(page, filename) {
   const consoleErrors = [];
   const pageErrors = [];
   const failedRequests = [];
+  const geometryFailures = [];
   page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   page.on('pageerror', error => pageErrors.push(error.message));
   page.on('requestfailed', request => failedRequests.push(`${request.method()} ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
@@ -152,13 +158,34 @@ async function capture(page, filename) {
 
   const a1 = await page.locator('canvas.trainerCanvas').evaluate(element => ({ ...element.dataset }));
   if (a1.terminal4UploadedJetwayA1VisualAcceptanceAuthority !== A1_VISUAL_AUTHORITY) {
-    throw new Error(`A1 visual authority is stale: ${a1.terminal4UploadedJetwayA1VisualAcceptanceAuthority}`);
+    geometryFailures.push(`A1 visual authority is stale: ${a1.terminal4UploadedJetwayA1VisualAcceptanceAuthority}`);
   }
   if (a1.terminal4UploadedJetwayA1AssemblyPartCount !== '5' || a1.terminal4UploadedJetwayA1IsolatedNodeRotationCount !== '0') {
-    throw new Error(`A1 authored assembly continuity failed: parts=${a1.terminal4UploadedJetwayA1AssemblyPartCount} isolated=${a1.terminal4UploadedJetwayA1IsolatedNodeRotationCount}`);
+    geometryFailures.push(`A1 authored assembly continuity failed: parts=${a1.terminal4UploadedJetwayA1AssemblyPartCount} isolated=${a1.terminal4UploadedJetwayA1IsolatedNodeRotationCount}`);
   }
   if (Math.abs(Number(a1.terminal4UploadedJetwayBogieGroundClearanceMeters)) > 0.005) {
-    throw new Error(`A1 bogie is not grounded: ${a1.terminal4UploadedJetwayBogieGroundClearanceMeters}`);
+    geometryFailures.push(`A1 bogie is not grounded: ${a1.terminal4UploadedJetwayBogieGroundClearanceMeters}`);
+  }
+  const a1DoorVerticalError = finiteNumber(a1.inspectionAircraftDoorVerticalErrorMeters);
+  if (a1DoorVerticalError === null || Math.abs(a1DoorVerticalError) > MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS) {
+    geometryFailures.push(`A1 Cab/aircraft door vertical error is visually unacceptable: ${a1.inspectionAircraftDoorVerticalErrorMeters} m (max ${MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS})`);
+  }
+  if (a1.terminal4TerminalConnectedJetwayCount !== '58') {
+    geometryFailures.push(`Terminal-connected jetway count is not 58: ${a1.terminal4TerminalConnectedJetwayCount}`);
+  }
+  if (a1.terminal4UploadedJetwayStaticOwnGateTargetAuthority !== STATIC_OWN_GATE_AUTHORITY) {
+    geometryFailures.push(`Static own-gate authority is wrong: ${a1.terminal4UploadedJetwayStaticOwnGateTargetAuthority}`);
+  }
+  if (a1.terminal4UploadedJetwayStaticOwnGateTargetCount !== '57') {
+    geometryFailures.push(`Static own-gate target count is not 57: ${a1.terminal4UploadedJetwayStaticOwnGateTargetCount}`);
+  }
+  const maximumOwnGateHeadingError = finiteNumber(a1.terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians);
+  if (maximumOwnGateHeadingError === null || maximumOwnGateHeadingError > MAXIMUM_STATIC_OWN_GATE_HEADING_ERROR_RADIANS) {
+    geometryFailures.push(`Static maximum own-gate heading error is invalid: ${a1.terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians}`);
+  }
+  const maximumTerminalFacingDot = finiteNumber(a1.terminal4UploadedJetwayStaticMaximumTerminalFacingDot);
+  if (maximumTerminalFacingDot === null || maximumTerminalFacingDot > MAXIMUM_STATIC_TERMINAL_FACING_DOT) {
+    geometryFailures.push(`Static fleet includes a bridge aimed back toward the terminal: max dot=${a1.terminal4UploadedJetwayStaticMaximumTerminalFacingDot}`);
   }
 
   await selectA1Subview(page, 'terminal-joint');
@@ -170,7 +197,7 @@ async function capture(page, filename) {
   await selectByValue(page, 'Camera view', 'overhead');
   await page.waitForTimeout(1000);
   captures['a1-terminal-overhead.png'] = await capture(page, 'a1-terminal-overhead.png');
-  checkpoint('a1-complete', { captures: Object.keys(captures) });
+  checkpoint('a1-complete', { captures: Object.keys(captures), geometryFailures });
 
   for (const [preset, label, filename, cameraView] of views) {
     await selectByLabel(page, 'Inspection location', label);
@@ -183,24 +210,29 @@ async function capture(page, filename) {
 
   const criticalConsole = consoleErrors.filter(message => /Exact jetway readiness mismatch|Airport_Jetway\.glb fleet|A1 Rotunda|Static jetway|Terminal 4|KPHX|ReferenceError|TypeError|SyntaxError/i.test(message));
   const criticalFailedRequests = failedRequests.filter(message => /airport-jetway|phx-terminal4|kphx-ground|kphx-photo|assets\/.*\.js/i.test(message));
-  if (criticalConsole.length) throw new Error(`Fleet evidence critical console errors: ${criticalConsole.join(' | ')}`);
-  if (pageErrors.length) throw new Error(`Fleet evidence page errors: ${pageErrors.join(' | ')}`);
-  if (criticalFailedRequests.length) throw new Error(`Fleet evidence failed requests: ${criticalFailedRequests.join(' | ')}`);
 
   fs.writeFileSync(`${evidenceDirectory}/report.json`, `${JSON.stringify({
     capturedAtUtc: new Date().toISOString(),
     pageUrl,
     captures,
+    geometryFailures,
     consoleErrors,
     pageErrors,
     failedRequests,
     a1Telemetry: a1,
   }, null, 2)}\n`);
+  checkpoint('captured-and-validated', { captures, geometryFailures });
+
+  if (geometryFailures.length) throw new Error(`Fleet geometry acceptance failed: ${geometryFailures.join(' | ')}`);
+  if (criticalConsole.length) throw new Error(`Fleet evidence critical console errors: ${criticalConsole.join(' | ')}`);
+  if (pageErrors.length) throw new Error(`Fleet evidence page errors: ${pageErrors.join(' | ')}`);
+  if (criticalFailedRequests.length) throw new Error(`Fleet evidence failed requests: ${criticalFailedRequests.join(' | ')}`);
+
   checkpoint('complete', { captures });
   await context.close();
   await browser.close();
-  console.log(`TERMINAL 4 FLEET VISUAL EVIDENCE READY: ${Object.keys(captures).join(', ')}`);
-})().catch(error => {
+  console.log(`TERMINAL 4 FLEET VISUAL EVIDENCE ACCEPTED: ${Object.keys(captures).join(', ')}`);
+})().catch(async error => {
   checkpoint('failed', { error: error?.stack || error?.message || String(error) });
   console.error(error?.stack || error?.message || String(error));
   process.exit(1);
