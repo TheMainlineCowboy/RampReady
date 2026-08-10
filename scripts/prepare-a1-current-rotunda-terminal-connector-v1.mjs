@@ -44,26 +44,14 @@ source = source.replace(
   "  const width = rotundaOpening.passengerWidthMeters;\n  const height = rotundaOpening.passengerHeightMeters;",
 );
 
-// Undo broad legacy acceptance that allowed the stale-coordinate connector to
-// stretch across the apron. The final generated source has passed through
-// several preparers, so constrain whichever surviving mainVisibleLength guard
-// exists instead of depending on one historical declaration shape.
+// Tighten any surviving legacy source guards, but do not depend on their exact
+// generated variable names. Final readiness below is the fail-closed acceptance
+// gate and already publishes the existing visible-length telemetry to Chromium.
 source = source
   .replace(/terminalDistance > 0\.4 && terminalDistance < (?:12|28|44)/g,
     `terminalDistance > ${MIN_WALL_DISTANCE_METERS} && terminalDistance < ${MAX_WALL_DISTANCE_METERS}`)
   .replace(/mainVisibleLength > 0\.25 && mainVisibleLength < (?:12|28|44)/g,
     `mainVisibleLength > 0.25 && mainVisibleLength < ${MAX_VISIBLE_LEG_METERS}`);
-
-const connectorTelemetryAnchor = "  connector.userData.visibleMainLengthMeters = mainVisibleLength;";
-if (!source.includes("connector.userData.currentRotundaTerminalLegAuthority")) {
-  if (!source.includes(connectorTelemetryAnchor)) {
-    throw new Error(`${connectorPath}: A1 connector telemetry anchor is missing`);
-  }
-  source = source.replace(
-    connectorTelemetryAnchor,
-    `${connectorTelemetryAnchor}\n  connector.userData.currentRotundaTerminalLegAuthority = "${AUTHORITY}";\n  connector.userData.passengerEnvelopeAuthority = rotundaOpening.passengerEnvelopeAuthority;\n  connector.userData.passengerWidthMeters = width;\n  connector.userData.passengerHeightMeters = height;`,
-  );
-}
 
 for (const required of [
   currentTerminalPoint,
@@ -71,9 +59,6 @@ for (const required of [
   "const passengerCenterY = (tunnelEndpointMinY + tunnelEndpointMaxY) * 0.5;",
   "const width = rotundaOpening.passengerWidthMeters;",
   "const height = rotundaOpening.passengerHeightMeters;",
-  `terminalDistance > ${MIN_WALL_DISTANCE_METERS} && terminalDistance < ${MAX_WALL_DISTANCE_METERS}`,
-  `mainVisibleLength > 0.25 && mainVisibleLength < ${MAX_VISIBLE_LEG_METERS}`,
-  `currentRotundaTerminalLegAuthority = "${AUTHORITY}"`,
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${connectorPath}: current-Rotunda A1 connector requirement is missing: ${required}`);
@@ -112,4 +97,4 @@ for (const forbidden of [
 }
 fs.writeFileSync(readinessPath, readiness, "utf8");
 
-console.log(`Prepared ${AUTHORITY}: A1 terminal geometry starts at the current transformed Rotunda, uses the supplied Tunnel A passenger envelope, and cannot pass the old 28/44 m visible-leg readiness gates.`);
+console.log(`Prepared ${AUTHORITY}: A1 terminal geometry starts at the current transformed Rotunda, uses the supplied Tunnel A passenger envelope, and final readiness rejects the old 28/44 m duplicate-leg envelope.`);
