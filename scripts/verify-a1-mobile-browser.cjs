@@ -8,6 +8,9 @@ const CURRENT_SUBVIEW_AUTHORITY = 'source-measured-a1-terminal-joint-camera-v3';
 const LEGACY_SUBVIEW_AUTHORITY = 'exact-a1-terminal-joint-and-bogie-contact-subviews-v2';
 const CAMERA_AUTHORITY = 'exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2';
 const LOCK_AUTHORITY = 'exact-a1-evidence-camera-direct-lock-v1';
+const PROFILE_AUTHORITY = 'rotunda-terminal-and-tunnel-a-bisector-profile-v3-midheight';
+const MAX_BRANCH_VIEW_COSINE = 0.82;
+const MAX_BRANCH_VIEW_IMBALANCE = 0.20;
 
 fs.mkdirSync(evidenceDir, { recursive: true });
 
@@ -73,26 +76,36 @@ async function selectByValue(page, ariaLabel, value) {
       && data?.a1JetwayState === 'attached-to-aircraft-door';
   }, null, { timeout: 30000, polling: 100 });
 
-  // Force the same exact terminal-wall/Rotunda close camera used by the desktop
-  // evidence while retaining the real portrait mobile HUD. A broad full-assembly
-  // view is not sufficient to prove the failure the user saw on a phone.
+  // Force the final production passenger-elbow camera while retaining the real
+  // portrait HUD. The accepted camera must expose both the terminal-side leg
+  // and supplied Tunnel A around the Rotunda; an end-on view is rejected.
   await page.evaluate(() => {
     const element = document.querySelector('canvas.trainerCanvas');
     if (!(element instanceof HTMLCanvasElement)) throw new Error('A1 mobile evidence canvas is missing');
     element.dataset.a1EvidenceSubview = 'terminal-joint';
   });
-  await page.waitForFunction(({ currentAuthority, legacyAuthority, cameraAuthority, lockAuthority }) => {
+  await page.waitForFunction(({ currentAuthority, legacyAuthority, cameraAuthority, lockAuthority, profileAuthority, maxBranchViewCosine, maxBranchViewImbalance }) => {
     const data = document.querySelector('canvas.trainerCanvas')?.dataset;
+    const wallView = Number(data?.inspectionCameraEndpointJointWallViewCosine);
+    const tunnelView = Number(data?.inspectionCameraEndpointJointTunnelAViewCosine);
+    const imbalance = Number(data?.inspectionCameraEndpointJointBranchViewImbalance);
     return data?.inspectionCameraEndpointSubview === 'terminal-joint'
       && [currentAuthority, legacyAuthority].includes(data?.inspectionCameraEndpointSubviewAuthority)
       && data?.inspectionCameraEndpointAuthority === cameraAuthority
       && data?.inspectionCameraEndpointLockAuthority === lockAuthority
+      && data?.inspectionCameraEndpointJointProfileAuthority === profileAuthority
+      && Number.isFinite(wallView) && wallView < maxBranchViewCosine
+      && Number.isFinite(tunnelView) && tunnelView < maxBranchViewCosine
+      && Number.isFinite(imbalance) && imbalance < maxBranchViewImbalance
       && Math.abs(Number(data?.inspectionCameraEndpointConvergenceErrorMeters)) <= 0.001;
   }, {
     currentAuthority: CURRENT_SUBVIEW_AUTHORITY,
     legacyAuthority: LEGACY_SUBVIEW_AUTHORITY,
     cameraAuthority: CAMERA_AUTHORITY,
     lockAuthority: LOCK_AUTHORITY,
+    profileAuthority: PROFILE_AUTHORITY,
+    maxBranchViewCosine: MAX_BRANCH_VIEW_COSINE,
+    maxBranchViewImbalance: MAX_BRANCH_VIEW_IMBALANCE,
   }, { timeout: 30000, polling: 100 });
 
   await page.waitForTimeout(1200);
@@ -104,12 +117,28 @@ async function selectByValue(page, ariaLabel, value) {
   if (telemetry.inspectionCameraEndpointSubview !== 'terminal-joint') {
     throw new Error(`Pixel evidence did not retain the terminal-joint camera: ${telemetry.inspectionCameraEndpointSubview}`);
   }
+  if (telemetry.inspectionCameraEndpointJointProfileAuthority !== PROFILE_AUTHORITY) {
+    throw new Error(`Pixel evidence did not retain the branch-bisector profile: ${telemetry.inspectionCameraEndpointJointProfileAuthority}`);
+  }
 
   await page.screenshot({
     path: `${evidenceDir}/a1-mobile-pixel8pro-terminal-joint.png`,
     fullPage: false,
   });
-  await canvas.screenshot({ path: `${evidenceDir}/a1-mobile-pixel8pro-terminal-joint-canvas.png` });
+
+  // locator.screenshot waits for a WebGL canvas to become visually stable,
+  // which a continuously rendered simulator never does. Capture the already
+  // measured canvas rectangle directly from the page compositor instead.
+  await page.screenshot({
+    path: `${evidenceDir}/a1-mobile-pixel8pro-terminal-joint-canvas.png`,
+    fullPage: false,
+    clip: {
+      x: Math.max(0, Math.floor(box.x)),
+      y: Math.max(0, Math.floor(box.y)),
+      width: Math.min(MOBILE_VIEWPORT.width, Math.floor(box.width)),
+      height: Math.min(MOBILE_VIEWPORT.height, Math.floor(box.height)),
+    },
+  });
 
   fs.writeFileSync(`${evidenceDir}/mobile-report.json`, JSON.stringify({
     pageUrl,
@@ -123,7 +152,7 @@ async function selectByValue(page, ariaLabel, value) {
   await browser.close();
   if (pageErrors.length) throw new Error(`A1 mobile evidence page errors: ${pageErrors.join(' | ')}`);
   if (consoleErrors.length) throw new Error(`A1 mobile evidence console errors: ${consoleErrors.join(' | ')}`);
-  console.log(`A1 MOBILE PIXEL TERMINAL-JOINT EVIDENCE READY: ${MOBILE_VIEWPORT.width}x${MOBILE_VIEWPORT.height}`);
+  console.log(`A1 MOBILE PIXEL PASSENGER-ELBOW EVIDENCE READY: ${MOBILE_VIEWPORT.width}x${MOBILE_VIEWPORT.height}`);
 })().catch(error => {
   console.error(error.stack || error.message || String(error));
   process.exit(1);

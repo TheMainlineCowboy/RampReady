@@ -69,9 +69,14 @@ if (failures.length) {
 console.log("RampReady prepared runtime verified: captured nose follows the tug while the aircraft pivots around a fixed wheelbase main-gear axle with delayed opposite-sign yaw, bounded articulation, and clean reconnect history.");
 
 // prepare:runtime intentionally regenerates broad compatibility code. Seed the
-// physical ground-contact invariant at the final mismatch block, then normalize
-// final jetway readiness and the A1 evidence camera only after preparation has
-// been verified. This avoids depending on retired migration-string anchors while
-// still failing closed on non-finite/floating bogie contact.
+// physical ground-contact invariant at the final mismatch block, then correct
+// A1's terminal leg from the CURRENT transformed Rotunda (not stale decoded
+// placement coordinates). Finally enforce the ACTUAL render-center argument:
+// endpoint math alone is insufficient because addContinuousShell overwrites its
+// vertical center from the explicit centerY parameter. The production sourcemap
+// exposed that parameter still using rotundaCenter.y, which includes the Rotunda
+// pedestal and rendered the building-side shell below Tunnel A.
 await import(`./seed-final-jetway-ground-contact-before-normalization.mjs?final-readiness=${Date.now()}`);
+await import(`./prepare-a1-current-rotunda-terminal-connector-v1.mjs?current-rotunda=${Date.now()}`);
+await import(`./prepare-a1-terminal-shell-passenger-y-v1.mjs?passenger-shell=${Date.now()}`);
 await import(`./normalize-final-a1-evidence-camera-after-runtime.mjs?final-camera=${Date.now()}`);

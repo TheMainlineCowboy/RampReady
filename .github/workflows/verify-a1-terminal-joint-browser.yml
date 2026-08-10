@@ -34,6 +34,11 @@ jobs:
       - name: Run complete RampReady verification suite
         run: npm run verify
 
+      - name: Restore exact head after verification generation
+        run: |
+          git reset --hard "${{ github.event.pull_request.head.sha || github.sha }}"
+          git clean -fd
+
       - name: Build production site
         run: npm run build
 

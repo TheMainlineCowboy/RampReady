@@ -34,6 +34,11 @@ jobs:
           set -o pipefail
           npm run verify 2>&1 | tee aircraft-verify.log
 
+      - name: Restore exact head after verification generation
+        run: |
+          git reset --hard "${{ github.event.pull_request.head.sha || github.sha }}"
+          git clean -fd
+
       - name: Build production artifact
         run: npm run build
 
