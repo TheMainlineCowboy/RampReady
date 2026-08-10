@@ -71,9 +71,12 @@ console.log("RampReady prepared runtime verified: captured nose follows the tug 
 // prepare:runtime intentionally regenerates broad compatibility code. Seed the
 // physical ground-contact invariant at the final mismatch block, then correct
 // A1's terminal leg from the CURRENT transformed Rotunda (not stale decoded
-// placement coordinates), and only then normalize the final evidence camera.
-// This ordering is deliberate: no earlier 28/44 m compatibility envelope may
-// recreate the duplicate terminal-side tunnel before Vite bundles the runtime.
+// placement coordinates). Finally enforce the ACTUAL render-center argument:
+// endpoint math alone is insufficient because addContinuousShell overwrites its
+// vertical center from the explicit centerY parameter. The production sourcemap
+// exposed that parameter still using rotundaCenter.y, which includes the Rotunda
+// pedestal and rendered the building-side shell below Tunnel A.
 await import(`./seed-final-jetway-ground-contact-before-normalization.mjs?final-readiness=${Date.now()}`);
 await import(`./prepare-a1-current-rotunda-terminal-connector-v1.mjs?current-rotunda=${Date.now()}`);
+await import(`./prepare-a1-terminal-shell-passenger-y-v1.mjs?passenger-shell=${Date.now()}`);
 await import(`./normalize-final-a1-evidence-camera-after-runtime.mjs?final-camera=${Date.now()}`);
