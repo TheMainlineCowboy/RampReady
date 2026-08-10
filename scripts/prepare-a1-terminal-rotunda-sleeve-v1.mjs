@@ -7,7 +7,7 @@ const REQUIRED_TERMINAL_ROTUNDA_BELLOWS_DEPTH_METERS = 0.14;
 const STATIONARY_SUPPORT_AUTHORITY = "a1-authored-rotunda-stationary-support-stretched-to-bogie-ramp-plane-v1";
 const STATIONARY_SUPPORT_SOURCE_SPAN_METERS = 1.72;
 const MINIMUM_EXPECTED_SUPPORT_GAP_METERS = 1.30;
-const MAXIMUM_EXPECTED_SUPPORT_GAP_METERS = 1.90;
+const MAXIMUM_EXPECTED_SUPPORT_GAP_METERS = 2.15;
 const MAXIMUM_FINAL_SUPPORT_GAP_METERS = 0.012;
 
 let source = fs.readFileSync(sourcePath, "utf8");
@@ -44,10 +44,10 @@ if (!source.includes(supportHelperMarker)) {
   // The exact supplied GLB has two legitimate ground-contact families at
   // different authored Y levels: the moving Tunnel-C/bogie assembly and the
   // stationary Rotunda pedestal. Grounding the complete parent by the bogie
-  // alone leaves the Rotunda pedestal roughly 1.6 m in the air. Keep every
-  // object transform and every passenger-level Rotunda vertex fixed; stretch
-  // only the authored lower pedestal geometry so its original foot reaches the
-  // same physical ramp plane as the bogie.
+  // alone leaves the Rotunda pedestal roughly two metres in the air in the
+  // final production pose. Keep every object transform and every passenger-
+  // level Rotunda vertex fixed; stretch only the authored lower pedestal
+  // geometry so its original foot reaches the same physical ramp plane.
   fleet.updateWorldMatrix(true, true);
   model.updateWorldMatrix(true, true);
   rotunda.updateWorldMatrix(true, true);
