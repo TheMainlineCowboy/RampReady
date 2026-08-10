@@ -23,15 +23,17 @@ source = source
     `const TERMINAL_HIDDEN_OVERLAP_METERS = ${TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)};`,
   );
 
-const supportHelperMarker = "A1 stationary Rotunda support owns its own ramp contact v3";
+const supportHelperMarker = "A1 stationary Rotunda support owns its own ramp contact v4";
 const legacySupportHelperMarkers = [
   "A1 stationary Rotunda support owns its own ramp contact v1",
   "A1 stationary Rotunda support owns its own ramp contact v2",
+  "A1 stationary Rotunda support owns its own ramp contact v3",
 ];
 
-// Replace any earlier helper wholesale. V3 measures the actual transformed
-// pedestal after deformation and applies bounded corrective stretches rather
-// than trusting a single source-bounds ratio to land the rendered foot.
+// Replace any earlier helper wholesale. V4 keeps the iterative physical seating
+// from V3, but makes the operation idempotent: a later construction/readiness
+// pass that sees the pedestal already within the same strict 12 mm ramp-contact
+// envelope verifies and reuses that geometry instead of deforming it again.
 const helperStart = source.indexOf("function groundA1StationaryRotundaSupport(");
 const wrappedAngleStart = source.indexOf("function wrappedAngle(THREE, radians) {");
 if (helperStart >= 0 && wrappedAngleStart > helperStart) {
@@ -62,6 +64,53 @@ if (!source.includes(supportHelperMarker)) {
   const sourceModelGroundY = modelBoundsBefore.min.y;
   const sourceRotundaFootY = rotundaBoundsBefore.min.y;
   const sourceGapMeters = sourceRotundaFootY - sourceModelGroundY;
+
+  // This helper can legitimately be invoked more than once while the final PHX
+  // scene is assembled. The first invocation starts with the authored ~2.03 m
+  // pedestal gap and performs the deformation below. A later invocation sees
+  // the already-seated geometry. Treat that as a strict verification path, not
+  // as a new source asset: it must still be physically within 12 mm of the same
+  // bogie/ramp plane, otherwise fail closed.
+  if (Math.abs(sourceGapMeters) <= ${MAXIMUM_FINAL_SUPPORT_GAP_METERS.toFixed(3)}) {
+    const previousSourceGapMeters = Number(group.userData.uploadedJetwayA1StationaryRotundaSupportSourceGapMeters ?? rotunda.userData.a1StationarySupportSourceGapMeters);
+    const previousAppliedExtensionMeters = Number(group.userData.uploadedJetwayA1StationaryRotundaSupportAppliedExtensionMeters ?? rotunda.userData.a1StationarySupportAppliedExtensionMeters);
+    const previousChangedVertexCount = Number(group.userData.uploadedJetwayA1StationaryRotundaSupportChangedVertexCount ?? rotunda.userData.a1StationarySupportChangedVertexCount);
+    const previousSupportStretch = Number(group.userData.uploadedJetwayA1StationaryRotundaSupportStretch);
+    const previousCorrectionPassCount = Number(group.userData.uploadedJetwayA1StationaryRotundaSupportCorrectionPassCount ?? rotunda.userData.a1StationarySupportCorrectionPassCount);
+    const verifiedSourceGapMeters = Number.isFinite(previousSourceGapMeters) && previousSourceGapMeters >= ${MINIMUM_EXPECTED_SUPPORT_GAP_METERS.toFixed(2)}
+      ? previousSourceGapMeters
+      : sourceGapMeters;
+    const verifiedAppliedExtensionMeters = Number.isFinite(previousAppliedExtensionMeters) ? previousAppliedExtensionMeters : 0;
+    const verifiedChangedVertexCount = Number.isFinite(previousChangedVertexCount) ? previousChangedVertexCount : 0;
+    const verifiedSupportStretch = Number.isFinite(previousSupportStretch) ? previousSupportStretch : 1;
+    const verifiedCorrectionPassCount = Number.isFinite(previousCorrectionPassCount) ? previousCorrectionPassCount : 0;
+
+    rotunda.userData.a1StationarySupportGroundAuthority = "${STATIONARY_SUPPORT_AUTHORITY}";
+    rotunda.userData.a1StationarySupportSourceGapMeters = verifiedSourceGapMeters;
+    rotunda.userData.a1StationarySupportAppliedExtensionMeters = verifiedAppliedExtensionMeters;
+    rotunda.userData.a1StationarySupportFinalGroundGapMeters = sourceGapMeters;
+    rotunda.userData.a1StationarySupportChangedVertexCount = verifiedChangedVertexCount;
+    rotunda.userData.a1StationarySupportCorrectionPassCount = verifiedCorrectionPassCount;
+    group.userData.uploadedJetwayA1StationaryRotundaSupportGroundAuthority = "${STATIONARY_SUPPORT_AUTHORITY}";
+    group.userData.uploadedJetwayA1StationaryRotundaSupportSourceGapMeters = verifiedSourceGapMeters;
+    group.userData.uploadedJetwayA1StationaryRotundaSupportAppliedExtensionMeters = verifiedAppliedExtensionMeters;
+    group.userData.uploadedJetwayA1StationaryRotundaSupportFinalGroundGapMeters = sourceGapMeters;
+    group.userData.uploadedJetwayA1StationaryRotundaSupportChangedVertexCount = verifiedChangedVertexCount;
+    group.userData.uploadedJetwayA1StationaryRotundaSupportStretch = verifiedSupportStretch;
+    group.userData.uploadedJetwayA1StationaryRotundaSupportCorrectionPassCount = verifiedCorrectionPassCount;
+    group.userData.uploadedJetwayA1StationaryRotundaSupportIdempotentReuse = true;
+    return Object.freeze({
+      authority: "${STATIONARY_SUPPORT_AUTHORITY}",
+      sourceGapMeters: verifiedSourceGapMeters,
+      appliedExtensionMeters: verifiedAppliedExtensionMeters,
+      finalGroundGapMeters: sourceGapMeters,
+      changedVertexCount: verifiedChangedVertexCount,
+      supportStretch: verifiedSupportStretch,
+      correctionPassCount: verifiedCorrectionPassCount,
+      idempotentReuse: true,
+    });
+  }
+
   if (!(sourceGapMeters >= ${MINIMUM_EXPECTED_SUPPORT_GAP_METERS.toFixed(2)} && sourceGapMeters <= ${MAXIMUM_EXPECTED_SUPPORT_GAP_METERS.toFixed(2)})) {
     throw new Error("A1 stationary Rotunda authored support gap is outside the exact-source envelope: " + sourceGapMeters);
   }
@@ -147,6 +196,7 @@ if (!source.includes(supportHelperMarker)) {
   group.userData.uploadedJetwayA1StationaryRotundaSupportChangedVertexCount = changedVertexCount;
   group.userData.uploadedJetwayA1StationaryRotundaSupportStretch = supportStretch;
   group.userData.uploadedJetwayA1StationaryRotundaSupportCorrectionPassCount = correctionPassCount;
+  group.userData.uploadedJetwayA1StationaryRotundaSupportIdempotentReuse = false;
 
   return Object.freeze({
     authority: "${STATIONARY_SUPPORT_AUTHORITY}",
@@ -156,6 +206,7 @@ if (!source.includes(supportHelperMarker)) {
     changedVertexCount,
     supportStretch,
     correctionPassCount,
+    idempotentReuse: false,
   });
 }
 
@@ -210,7 +261,9 @@ for (const required of [
   "groundA1StationaryRotundaSupport(THREE, group, fleet, model, rotunda);",
   "uploadedJetwayA1StationaryRotundaSupportGroundAuthority",
   "uploadedJetwayA1StationaryRotundaSupportCorrectionPassCount",
+  "uploadedJetwayA1StationaryRotundaSupportIdempotentReuse",
   STATIONARY_SUPPORT_AUTHORITY,
+  `Math.abs(sourceGapMeters) <= ${MAXIMUM_FINAL_SUPPORT_GAP_METERS.toFixed(3)}`,
   `sourceGapMeters >= ${MINIMUM_EXPECTED_SUPPORT_GAP_METERS.toFixed(2)}`,
   `sourceGapMeters <= ${MAXIMUM_EXPECTED_SUPPORT_GAP_METERS.toFixed(2)}`,
   `Math.abs(finalGroundGapMeters) > ${MAXIMUM_FINAL_SUPPORT_GAP_METERS.toFixed(3)}`,
@@ -220,4 +273,4 @@ for (const required of [
 }
 
 fs.writeFileSync(sourcePath, source, "utf8");
-console.log(`Prepared A1 terminal-to-Rotunda joint with ${ROTUNDA_SHELL_OVERLAP_METERS.toFixed(2)} m Rotunda overlap and ${TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m terminal-wall overlap; the exact passenger-level Rotunda stays fixed while its authored stationary pedestal is iteratively seated on the measured bogie ramp plane under ${STATIONARY_SUPPORT_AUTHORITY}.`);
+console.log(`Prepared A1 terminal-to-Rotunda joint with ${ROTUNDA_SHELL_OVERLAP_METERS.toFixed(2)} m Rotunda overlap and ${TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m terminal-wall overlap; the exact passenger-level Rotunda stays fixed while its authored stationary pedestal is iteratively seated on the measured bogie ramp plane and safely reused on later construction passes under ${STATIONARY_SUPPORT_AUTHORITY}.`);
