@@ -88,12 +88,12 @@ for (const token of [
   "ownGateHeadingErrorRadians >",
   "terminalFacingDot > 0.25",
   "uploadedJetwayStaticOwnGateTargetCount = 57",
+  'replace(\'const AUTHORITY = "57-static-source-heading-real-wall-compact-registration-v8";\'',
 ]) {
   if (!staticPlacementPreparation.includes(token)) throw new Error(`Own-gate real-wall registration is missing ${token}`);
 }
 for (const forbidden of [
   "const resolvedRotundaCenterToWallMeters = sourceWallDistance;",
-  "57-static-source-heading-real-wall-compact-registration-v8",
 ]) {
   if (staticPlacementPreparation.includes(forbidden)) throw new Error(`Static placement retained fake wall registration behavior: ${forbidden}`);
 }
