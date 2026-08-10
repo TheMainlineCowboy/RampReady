@@ -23,23 +23,15 @@ if (!registration.includes(CONNECTOR_IMPORT)) {
 registration = registration
   .replace(/const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = [0-9.]+;/, `const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MIN_VISIBLE_METERS};`)
   .replace(/const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = [0-9.]+;/, `const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MAX_VISIBLE_METERS};`)
-  .replace(/const TARGET_VISIBLE_TERMINAL_LEG_METERS = [0-9.]+;/, `const TARGET_VISIBLE_TERMINAL_LEG_METERS = ${EXPECTED_VISIBLE_METERS};`);
-
-const oldFleetEnvelope = `  if (!(minimumVisibleTerminalLeg >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS
-    && maximumVisibleTerminalLeg <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
-    throw new Error(\`Static visible vestibule envelope escaped photo bounds: \${minimumVisibleTerminalLeg}-\${maximumVisibleTerminalLeg}\`);
-  }`;
-const compactFleetEnvelope = `  if (!(minimumVisibleTerminalLeg >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS
-    && maximumVisibleTerminalLeg <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
-    throw new Error(\`Static compact real-wall vestibule envelope is invalid: \${minimumVisibleTerminalLeg}-\${maximumVisibleTerminalLeg}\`);
-  }`;
-if (registration.includes(oldFleetEnvelope)) {
-  registration = registration.replace(oldFleetEnvelope, compactFleetEnvelope);
-}
-registration = registration.replace(
-  'throw new Error(`Static source-measured terminal-leg envelope is invalid: ${minimumVisibleTerminalLeg}-${maximumVisibleTerminalLeg}`);',
-  'throw new Error(`Static compact real-wall vestibule envelope is invalid: ${minimumVisibleTerminalLeg}-${maximumVisibleTerminalLeg}`);',
-);
+  .replace(/const TARGET_VISIBLE_TERMINAL_LEG_METERS = [0-9.]+;/, `const TARGET_VISIBLE_TERMINAL_LEG_METERS = ${EXPECTED_VISIBLE_METERS};`)
+  .replaceAll(
+    "Static visible vestibule envelope escaped photo bounds",
+    "Static compact real-wall vestibule envelope is invalid",
+  )
+  .replaceAll(
+    "Static source-measured terminal-leg envelope is invalid",
+    "Static compact real-wall vestibule envelope is invalid",
+  );
 
 if (!registration.includes(`const AUTHORITY = "${SOURCE_POSE_AUTHORITY}";`)) {
   throw new Error(`${registrationPath}: compact source-heading real-wall authority is missing`);
@@ -50,6 +42,7 @@ for (const required of [
   `const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MAX_VISIBLE_METERS};`,
   `const TARGET_VISIBLE_TERMINAL_LEG_METERS = ${EXPECTED_VISIBLE_METERS};`,
   SOURCE_POSE_AUTHORITY,
+  "Static compact real-wall vestibule envelope is invalid",
 ]) {
   if (!registration.includes(required)) {
     throw new Error(`${registrationPath}: compact real-wall fleet envelope is missing ${required}`);
@@ -60,6 +53,7 @@ for (const forbidden of [
   "0-43",
   "source-locked wall fit would require an invalid visible terminal leg",
   "Static visible vestibule envelope escaped photo bounds",
+  "Static source-measured terminal-leg envelope is invalid",
   OLD_CONNECTOR_IMPORT,
 ]) {
   if (registration.includes(forbidden)) {
