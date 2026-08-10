@@ -1,7 +1,28 @@
 import fs from "node:fs";
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
+const terminalVisualPath = "src/environment/authoredTerminal4Visual.js";
 let source = fs.readFileSync(path, "utf8");
+
+// Carry final static-fleet placement evidence from the prepared jetway group to
+// the environment and then to the browser canvas. This turns the visual workflow
+// into a geometry gate instead of a screenshot-exists gate.
+{
+  let terminalSource = fs.readFileSync(terminalVisualPath, "utf8");
+  const fleetAnchor = "  environment.userData.authoredTerminal4UploadedJetwayStaticArticulatedGateCount = sourcePlacedJetways.userData.uploadedJetwayStaticArticulatedGateCount;";
+  const fleetBlock = `${fleetAnchor}
+  environment.userData.authoredTerminal4UploadedJetwayStaticOwnGateTargetAuthority = sourcePlacedJetways.userData.uploadedJetwayStaticOwnGateTargetAuthority;
+  environment.userData.authoredTerminal4UploadedJetwayStaticOwnGateTargetCount = sourcePlacedJetways.userData.uploadedJetwayStaticOwnGateTargetCount;
+  environment.userData.authoredTerminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians = sourcePlacedJetways.userData.uploadedJetwayStaticMaximumOwnGateHeadingErrorRadians;
+  environment.userData.authoredTerminal4UploadedJetwayStaticMaximumTerminalFacingDot = sourcePlacedJetways.userData.uploadedJetwayStaticMaximumTerminalFacingDot;
+  environment.userData.authoredTerminal4UploadedJetwayStaticSourceHeadingAuthority = sourcePlacedJetways.userData.uploadedJetwayStaticSourceHeadingAuthority;
+  environment.userData.authoredTerminal4UploadedJetwayStaticSourceHeadingProvenanceGateCount = sourcePlacedJetways.userData.uploadedJetwayStaticSourceHeadingProvenanceGateCount;`;
+  if (!terminalSource.includes("authoredTerminal4UploadedJetwayStaticOwnGateTargetAuthority")) {
+    if (!terminalSource.includes(fleetAnchor)) throw new Error("PHX runtime static own-gate environment evidence anchor is missing");
+    terminalSource = terminalSource.replace(fleetAnchor, fleetBlock);
+  }
+  fs.writeFileSync(terminalVisualPath, terminalSource, "utf8");
+}
 
 const loadingAnchor = '    renderer.domElement.dataset.photoDetailLevel = "loading";\n    renderer.domElement.dataset.photoTileCount = "loading";';
 const loadingReplacement = '    renderer.domElement.dataset.photoDetailLevel = "loading";\n    renderer.domElement.dataset.photoTextureMode = "loading";\n    renderer.domElement.dataset.photoRuntimeTileCount = "loading";\n    renderer.domElement.dataset.photoMaxTextureDimension = "loading";\n    renderer.domElement.dataset.photoTileCount = "loading";';
@@ -53,10 +74,23 @@ if (!source.includes('dataset.groundPavementAuthority = "load-error"')) {
 const terminalLoadingAnchor = '    renderer.domElement.dataset.terminal4ExactTextureCount = "loading";';
 const terminalLoadingReplacement = `${terminalLoadingAnchor}
     renderer.domElement.dataset.terminal4A1LegacyBlockRemovedTriangles = "loading";
-    renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = "loading";`;
+    renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayStaticOwnGateTargetAuthority = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayStaticOwnGateTargetCount = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumTerminalFacingDot = "loading";`;
 if (!source.includes('dataset.terminal4A1LegacyBlockRemovedTriangles = "loading"')) {
   if (!source.includes(terminalLoadingAnchor)) throw new Error("PHX runtime A1 authored-cleanup loading anchor is missing");
   source = source.replace(terminalLoadingAnchor, terminalLoadingReplacement);
+} else if (!source.includes('dataset.terminal4UploadedJetwayStaticOwnGateTargetAuthority = "loading"')) {
+  source = source.replace(
+    '    renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = "loading";',
+    `    renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayStaticOwnGateTargetAuthority = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayStaticOwnGateTargetCount = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians = "loading";
+    renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumTerminalFacingDot = "loading";`,
+  );
 }
 
 const terminalReadyAnchor = '        renderer.domElement.dataset.terminal4ExactTextureCount = String(environment.userData.authoredTerminal4ExactTextureCount);';
@@ -80,13 +114,39 @@ if (!source.includes(terminalConnectorCountAfter)) {
   source = source.replace(terminalConnectorCountBefore, terminalConnectorCountAfter);
 }
 
+const fleetBrowserAnchor = terminalConnectorCountAfter;
+const fleetBrowserBlock = `${fleetBrowserAnchor}
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticOwnGateTargetAuthority = environment.userData.authoredTerminal4UploadedJetwayStaticOwnGateTargetAuthority || "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticOwnGateTargetCount = String(environment.userData.authoredTerminal4UploadedJetwayStaticOwnGateTargetCount ?? "missing");
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians = String(environment.userData.authoredTerminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians ?? "missing");
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumTerminalFacingDot = String(environment.userData.authoredTerminal4UploadedJetwayStaticMaximumTerminalFacingDot ?? "missing");
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticSourceHeadingAuthority = environment.userData.authoredTerminal4UploadedJetwayStaticSourceHeadingAuthority || "missing";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticSourceHeadingProvenanceGateCount = String(environment.userData.authoredTerminal4UploadedJetwayStaticSourceHeadingProvenanceGateCount ?? "missing");`;
+if (!source.includes("dataset.terminal4UploadedJetwayStaticOwnGateTargetAuthority = environment.userData.authoredTerminal4UploadedJetwayStaticOwnGateTargetAuthority")) {
+  if (!source.includes(fleetBrowserAnchor)) throw new Error("PHX runtime fleet own-gate browser evidence anchor is missing");
+  source = source.replace(fleetBrowserAnchor, fleetBrowserBlock);
+}
+
 const terminalErrorAnchor = '        renderer.domElement.dataset.terminal4Position = "load-error";';
 const terminalErrorReplacement = `        renderer.domElement.dataset.terminal4A1LegacyBlockRemovedTriangles = "load-error";
         renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticOwnGateTargetAuthority = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticOwnGateTargetCount = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumTerminalFacingDot = "load-error";
 ${terminalErrorAnchor}`;
 if (!source.includes('dataset.terminal4A1LegacyBlockRemovedTriangles = "load-error"')) {
   if (!source.includes(terminalErrorAnchor)) throw new Error("PHX runtime A1 authored-cleanup error anchor is missing");
   source = source.replace(terminalErrorAnchor, terminalErrorReplacement);
+} else if (!source.includes('dataset.terminal4UploadedJetwayStaticOwnGateTargetAuthority = "load-error"')) {
+  source = source.replace(
+    '        renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = "load-error";',
+    `        renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticOwnGateTargetAuthority = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticOwnGateTargetCount = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians = "load-error";
+        renderer.domElement.dataset.terminal4UploadedJetwayStaticMaximumTerminalFacingDot = "load-error";`,
+  );
 }
 
 for (const token of [
@@ -106,10 +166,14 @@ for (const token of [
   "dataset.terminal4A1LegacyBlockAuthority = environment.userData.authoredTerminal4A1LegacyBlockAuthority",
   'dataset.terminal4A1LegacyBlockRemovedTriangles = "load-error"',
   "Number(environment.userData.authoredTerminal4UploadedJetwayConnectorCount) || 0",
+  "authoredTerminal4UploadedJetwayStaticOwnGateTargetAuthority",
+  "dataset.terminal4UploadedJetwayStaticOwnGateTargetCount",
+  "dataset.terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians",
+  "dataset.terminal4UploadedJetwayStaticMaximumTerminalFacingDot",
 ]) {
   if (!source.includes(token)) throw new Error(`PHX runtime evidence missing ${token}`);
 }
 
 fs.writeFileSync(path, source, "utf8");
 await import("./prepare-direct-inspection-launch-v28.mjs");
-console.log("Prepared live PHX runtime evidence for native-resolution aerial tiling, source-aerial pavement priority, exact A1 cleanup, exact uploaded terminal connector count and direct tug inspection launch.");
+console.log("Prepared live PHX runtime evidence for native-resolution aerial tiling, source-aerial pavement priority, exact A1 cleanup, all 58 terminal connectors, and fail-closed own-gate static jetway alignment telemetry.");
