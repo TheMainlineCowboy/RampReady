@@ -25,6 +25,7 @@ if (!terminalRotundaSleevePrepared) {
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v11";
 const A1_CAMERA_AUTHORITY = "profile-terminal-rotunda-tunnel-a-joint-evidence-a1-v11";
+const LEGACY_CAMERA_FALLBACK_AUTHORITY = "fixed-terminal-wall-rotunda-joint-evidence-a1-v10";
 let source = fs.readFileSync(path, "utf8");
 if (!source.includes('  a1Connection: Object.freeze({')) {
   await import(`./prepare-full-airport-inspection-route.mjs?wide-a1=${Date.now()}`);
@@ -85,6 +86,23 @@ if (/\s+cameraAuthority:\s*"[^"]+",?/.test(presetBlock)) {
 
 source = `${source.slice(0, presetStart)}${presetBlock}${source.slice(presetEnd)}`;
 
+// Inspection cameras are data-driven. A1 now carries a profile-camera
+// authority that explicitly proves both halves of the elbow in one frame, and
+// A14/B14 install their own fixed-fleet authorities later. Preserve those
+// values instead of hard-coding A1's authority into the runtime. The historical
+// A1 string remains only as the fallback for an older fixed-camera preset with
+// no explicit authority, which also keeps downstream preparation idempotent.
+if (!source.includes("preset.cameraAuthority || (preset.cameraPosition")) {
+  const hardCodedCameraPattern = /canvas\.dataset\.inspectionCameraAuthority = preset\.cameraPosition\n\s*\? "[^"]+"\n\s*: "free-orbit-follow-tug";/;
+  if (!hardCodedCameraPattern.test(source)) {
+    throw new Error(`${path}: inspection camera authority runtime anchor is missing`);
+  }
+  source = source.replace(
+    hardCodedCameraPattern,
+    `canvas.dataset.inspectionCameraAuthority = preset.cameraAuthority || (preset.cameraPosition\n      ? "${LEGACY_CAMERA_FALLBACK_AUTHORITY}"\n      : "free-orbit-follow-tug");`,
+  );
+}
+
 if (!source.includes("inspectionPresetConfig?.overheadCameraPosition")) {
   const overheadBefore = `      } else if (cameraRef.current === "overhead") {
         camera.position.lerp(new THREE.Vector3(target.x, 34, target.z + 2), 0.16);
@@ -130,6 +148,8 @@ for (const token of [
   overheadCameraPositionLine,
   overheadCameraTargetLine,
   cameraAuthorityLine,
+  "preset.cameraAuthority || (preset.cameraPosition",
+  `"${LEGACY_CAMERA_FALLBACK_AUTHORITY}"`,
   "inspectionPresetConfig?.overheadCameraPosition",
   b15InspectionPreset,
   CANONICAL_ROUTE_AUTHORITY,
