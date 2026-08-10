@@ -56,12 +56,8 @@ const retiredStaticSourcePlacementAuthorities = [
   expect(Math.abs(predictedContact - target)).toBeLessThanOrEqual(0.05);
   expect(Math.abs(actualContact - target)).toBeLessThanOrEqual(0.05);`;
 
-  if (source.includes(oldMagicRange)) {
-    source = source.replace(oldMagicRange, connectedSourceRange);
-  }
-  if (source.includes(previousPositiveStretchRange)) {
-    source = source.replace(previousPositiveStretchRange, connectedSourceRange);
-  }
+  if (source.includes(oldMagicRange)) source = source.replace(oldMagicRange, connectedSourceRange);
+  if (source.includes(previousPositiveStretchRange)) source = source.replace(previousPositiveStretchRange, connectedSourceRange);
 
   const currentPositiveStretchBlock = `  expect(extension).toBeGreaterThan(0);
   expect(extension).toBeLessThanOrEqual(8.75);
@@ -70,31 +66,40 @@ const retiredStaticSourcePlacementAuthorities = [
   expect(Math.abs(target - sourceReach)).toBeLessThanOrEqual(0.16);
   expect(Math.abs(predictedContact - target)).toBeLessThanOrEqual(0.05);
   expect(Math.abs(actualContact - target)).toBeLessThanOrEqual(0.05);`;
-  if (source.includes(currentPositiveStretchBlock)) {
-    source = source.replace(currentPositiveStretchBlock, currentConnectedBlock);
-  }
+  if (source.includes(currentPositiveStretchBlock)) source = source.replace(currentPositiveStretchBlock, currentConnectedBlock);
 
-  // target is a horizontal Rotunda-to-Cab reach. The old browser assertion
-  // compared it with an XYZ Rotunda-to-rendered-door distance, which adds the
-  // roughly two-metre door-height component and fails even when the connected
-  // source jetway is correct. Compare horizontal reach to horizontal geometry.
+  // The final endpoint telemetry exposes two legitimate Rotunda references:
+  // sourceReach/target use the supplied Rotunda bounds center, while
+  // a1ExactRotundaWorld* is the terminal-facing Rotunda opening/collar used by
+  // the wall connector. They differ by roughly the Rotunda radius and must not
+  // be forced equal. Keep the opening-to-Cab geometry independently plausible,
+  // and separately require the rendered aircraft door to coincide with the
+  // measured Cab X/Z point below.
   const oldThreeDimensionalDistance = `  const geometricRotundaToDoorDistance = Math.hypot(
     renderedDoorTargetX - exactRotundaWorldX,
     renderedDoorTargetY - exactRotundaWorldY,
     renderedDoorTargetZ - exactRotundaWorldZ,
   );`;
-  const horizontalDistance = `  const geometricHorizontalRotundaToDoorDistance = Math.hypot(
-    renderedDoorTargetX - exactRotundaWorldX,
-    renderedDoorTargetZ - exactRotundaWorldZ,
+  const openingToCabDistance = `  const geometricHorizontalRotundaOpeningToCabDistance = Math.hypot(
+    measuredCabX - exactRotundaWorldX,
+    measuredCabZ - exactRotundaWorldZ,
   );`;
-  if (source.includes(oldThreeDimensionalDistance)) {
-    source = source.replace(oldThreeDimensionalDistance, horizontalDistance);
-  }
+  if (source.includes(oldThreeDimensionalDistance)) source = source.replace(oldThreeDimensionalDistance, openingToCabDistance);
   source = source
-    .replaceAll("geometricRotundaToDoorDistance,", "geometricHorizontalRotundaToDoorDistance,")
+    .replaceAll("geometricRotundaToDoorDistance,", "geometricHorizontalRotundaOpeningToCabDistance,")
     .replaceAll(
       "expect(Math.abs(target - geometricRotundaToDoorDistance)).toBeLessThanOrEqual(0.05);",
+      `expect(geometricHorizontalRotundaOpeningToCabDistance).toBeGreaterThan(20);
+  expect(geometricHorizontalRotundaOpeningToCabDistance).toBeLessThan(32);`,
+    )
+    .replaceAll(
+      "geometricHorizontalRotundaToDoorDistance,",
+      "geometricHorizontalRotundaOpeningToCabDistance,",
+    )
+    .replaceAll(
       "expect(Math.abs(target - geometricHorizontalRotundaToDoorDistance)).toBeLessThanOrEqual(0.05);",
+      `expect(geometricHorizontalRotundaOpeningToCabDistance).toBeGreaterThan(20);
+  expect(geometricHorizontalRotundaOpeningToCabDistance).toBeLessThan(32);`,
     );
 
   // Capture the same wide A1 ramp/chase family that exposed the user's two
@@ -124,6 +129,7 @@ const retiredStaticSourcePlacementAuthorities = [
     "expect(Math.abs(predictedContact - sourceReach)).toBeLessThanOrEqual(0.05)",
     "expect(Math.abs(actualContact - sourceReach)).toBeLessThanOrEqual(0.05)",
     "geometricRotundaToDoorDistance",
+    "geometricHorizontalRotundaToDoorDistance",
   ]) {
     if (source.includes(stale)) throw new Error(`${path}: stale stretched/mismatched A1 browser check remains: ${stale}`);
   }
@@ -140,8 +146,10 @@ const retiredStaticSourcePlacementAuthorities = [
     "expect(Math.abs(target - sourceReach)).toBeLessThanOrEqual(0.16);",
     "expect(Math.abs(predictedContact - target)).toBeLessThanOrEqual(0.05);",
     "expect(Math.abs(actualContact - target)).toBeLessThanOrEqual(0.05);",
-    "geometricHorizontalRotundaToDoorDistance",
-    "expect(Math.abs(target - geometricHorizontalRotundaToDoorDistance)).toBeLessThanOrEqual(0.05);",
+    "geometricHorizontalRotundaOpeningToCabDistance",
+    "expect(geometricHorizontalRotundaOpeningToCabDistance).toBeGreaterThan(20);",
+    "expect(geometricHorizontalRotundaOpeningToCabDistance).toBeLessThan(32);",
+    "expect(Math.hypot(renderedDoorTargetX - measuredCabX, renderedDoorTargetZ - measuredCabZ)).toBeLessThanOrEqual(0.01);",
     "uploaded-jetway-a1-full-chain-connected-v12.png",
     "expectSamePose(trainingPose, freeDrivePose);",
     "expectSamePose(returnedPose, freeDrivePose);",
@@ -151,4 +159,4 @@ const retiredStaticSourcePlacementAuthorities = [
   fs.writeFileSync(path, source, "utf8");
 }
 
-console.log("Updated browser regressions for connected A1 articulation: attached Tunnel B/C/Cab may not stretch apart, current static BGL pose locking is required, horizontal Cab reach is compared to horizontal geometry, the aircraft keeps one Cab-derived pose, and Chromium captures a full-chain A1 ramp view plus the terminal joint.");
+console.log("Updated browser regressions for connected A1 articulation: attached Tunnel B/C/Cab may not stretch apart, current static BGL pose locking is required, Rotunda-center and Rotunda-opening measurements stay distinct, the rendered door must meet the measured Cab, and Chromium captures a full-chain A1 ramp view plus the terminal joint.");
