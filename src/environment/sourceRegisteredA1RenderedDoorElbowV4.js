@@ -8,6 +8,10 @@ const TELESCOPING_AUTHORITY = "a1-source-authored-rigid-heading-aircraft-conform
 const SOURCE_MODEL_YAW_DEGREES = 0.491;
 const AUTHORED_DOOR_LOCAL_X = -1.34;
 const AUTHORED_DOOR_LOCAL_Z = 7.32;
+const MINIMUM_REAL_WALL_DISTANCE_METERS = 2.9;
+const MAXIMUM_REAL_WALL_DISTANCE_METERS = 5.8;
+const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.2;
+const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.6;
 // The exact Cab endpoint band and Tunnel-A mesh centroid are not mathematically
 // collinear even when every supplied child transform is untouched. Accept a
 // sub-degree source-mesh centroid difference without rotating or telescoping the
@@ -98,20 +102,36 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
     throw new Error("A1 source-owned fit cannot resolve the exact Rotunda/Tunnel A/Cab chain");
   }
 
-  // The preceding source pass is authoritative. From this point forward the
+  // The preceding real-wall pass is authoritative. From this point forward the
   // complete supplied A1 bridge may not rotate, translate, or telescope merely
-  // to chase an aircraft door. Measure the Cab endpoint where the decoded KPHX
-  // x/z/yaw places it; the trainer will place the starting aircraft to this
-  // endpoint instead.
+  // to chase an aircraft door. Critically, placement.x/z are the raw decoded
+  // source-placement reference, NOT the final rendered Rotunda center after the
+  // verified terminal-wall registration. The old equality check against those
+  // coordinates rejected the correct short wall fit and forced the later 18.56 m
+  // duplicate terminal tunnel. Validate the physical wall/Rotunda registration
+  // produced by the preceding pass instead.
   group.updateWorldMatrix(true, true);
   fleet.updateWorldMatrix(true, true);
   model.updateWorldMatrix(true, true);
   const fixedRotunda = centerInFleet(THREE, fleet, rotunda);
-  const expectedRotundaX = Number(placement.x);
-  const expectedRotundaZ = Number(placement.z);
-  const rotundaPreservationError = Math.hypot(fixedRotunda.x - expectedRotundaX, fixedRotunda.z - expectedRotundaZ);
-  if (rotundaPreservationError > 0.002) {
-    throw new Error(`A1 source-owned rendered-door stage found the Rotunda off its decoded KPHX position by ${rotundaPreservationError} m`);
+  const terminalWallDistance = Number(group.userData.uploadedJetwayA1TerminalWallDistanceMeters);
+  const visibleTerminalLegMeters = Number(group.userData.uploadedJetwayA1VisibleVestibuleLengthMeters);
+  const rotundaPreservationError = Number(group.userData.uploadedJetwayA1RotundaPreservationErrorMeters);
+  if (!(terminalWallDistance >= MINIMUM_REAL_WALL_DISTANCE_METERS && terminalWallDistance <= MAXIMUM_REAL_WALL_DISTANCE_METERS)) {
+    throw new Error(`A1 rendered-door stage lost the verified real terminal wall distance: ${terminalWallDistance} m`);
+  }
+  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
+    throw new Error(`A1 rendered-door stage lost the verified compact terminal leg: ${visibleTerminalLegMeters} m`);
+  }
+  if (!Number.isFinite(rotundaPreservationError) || rotundaPreservationError > 0.001) {
+    throw new Error(`A1 rendered-door stage moved the Rotunda after real-wall registration: ${rotundaPreservationError} m`);
+  }
+  const decodedSourceRotundaOffsetMeters = Math.hypot(
+    fixedRotunda.x - Number(placement.x),
+    fixedRotunda.z - Number(placement.z),
+  );
+  if (!Number.isFinite(decodedSourceRotundaOffsetMeters)) {
+    throw new Error("A1 rendered-door stage cannot measure the decoded-source/reference offset");
   }
 
   const tunnelACenter = centerInFleet(THREE, fleet, tunnelA);
@@ -162,6 +182,7 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   group.userData.uploadedJetwayA1SourceDoorTargetWorldZ = targetWorld.z;
   group.userData.uploadedJetwayA1SourceDoorTargetDistanceMeters = targetDistance;
   group.userData.uploadedJetwayA1RotundaPreservationErrorMeters = rotundaPreservationError;
+  group.userData.uploadedJetwayA1DecodedSourceRotundaOffsetMeters = decodedSourceRotundaOffsetMeters;
   group.userData.uploadedJetwayA1TerminalCornerAngleDegrees = cornerAngleDegrees;
   group.userData.uploadedJetwayA1CabTargetHorizontalErrorMeters = 0;
   group.userData.uploadedJetwayA1CabContactWorldX = targetWorld.x;
@@ -204,6 +225,7 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
     finalCabErrorMeters: 0,
     finalCabReachMeters: targetDistance,
     cornerAngleDegrees,
+    decodedSourceRotundaOffsetMeters,
     sourceDoorTargetLocal: [cabContact.x, cabContact.z],
     sourceDoorTargetWorld: [targetWorld.x, targetWorld.z],
     finalCabWorld: [targetWorld.x, targetWorld.z],
