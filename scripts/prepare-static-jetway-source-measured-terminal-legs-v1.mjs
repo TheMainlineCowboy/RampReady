@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const registrationPath = "src/environment/registerStaticJetwayFleetToFacadeV1.js";
-const SOURCE_POSE_AUTHORITY = "57-static-source-heading-real-wall-compact-registration-v8";
+const SOURCE_POSE_AUTHORITY = "57-static-own-gate-target-real-wall-compact-registration-v9";
 const CONNECTOR_IMPORT = 'import { addStaticSolidTerminalVestibules } from "./staticSourceMeasuredTerminalConnectorsV2.js";';
 const OLD_CONNECTOR_IMPORT = 'import { addStaticSolidTerminalVestibules } from "./staticSolidTerminalVestibulesV1.js";';
 const MIN_VISIBLE_METERS = 0.25;
@@ -19,7 +19,8 @@ if (!registration.includes(CONNECTOR_IMPORT)) {
 // A source-placement coordinate mismatch must be repaired by translating the
 // complete rigid supplied jetway to the measured facade, not by drawing a huge
 // synthetic corridor. Keep a hard visual envelope here so the fleet can never
-// regress to the prior 0-43 m white-box policy.
+// regress to the prior 0-43 m white-box policy. Final aircraft-side yaw is owned
+// by each gate's own authored target, not by a raw heading that can cross stands.
 registration = registration
   .replace(/const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = [0-9.]+;/, `const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MIN_VISIBLE_METERS};`)
   .replace(/const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = [0-9.]+;/, `const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MAX_VISIBLE_METERS};`)
@@ -34,7 +35,7 @@ registration = registration
   );
 
 if (!registration.includes(`const AUTHORITY = "${SOURCE_POSE_AUTHORITY}";`)) {
-  throw new Error(`${registrationPath}: compact source-heading real-wall authority is missing`);
+  throw new Error(`${registrationPath}: compact own-gate real-wall authority is missing`);
 }
 for (const required of [
   CONNECTOR_IMPORT,
@@ -42,10 +43,12 @@ for (const required of [
   `const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MAX_VISIBLE_METERS};`,
   `const TARGET_VISIBLE_TERMINAL_LEG_METERS = ${EXPECTED_VISIBLE_METERS};`,
   SOURCE_POSE_AUTHORITY,
+  "const yaw = targetRegistrationYaw;",
+  "staticOwnGateHeadingErrorRadians",
   "Static compact real-wall vestibule envelope is invalid",
 ]) {
   if (!registration.includes(required)) {
-    throw new Error(`${registrationPath}: compact real-wall fleet envelope is missing ${required}`);
+    throw new Error(`${registrationPath}: compact own-gate real-wall fleet envelope is missing ${required}`);
   }
 }
 for (const forbidden of [
@@ -54,12 +57,13 @@ for (const forbidden of [
   "source-locked wall fit would require an invalid visible terminal leg",
   "Static visible vestibule envelope escaped photo bounds",
   "Static source-measured terminal-leg envelope is invalid",
+  "const yaw = sourceYaw;",
   OLD_CONNECTOR_IMPORT,
 ]) {
   if (registration.includes(forbidden)) {
-    throw new Error(`${registrationPath}: retired giant-corridor policy survived: ${forbidden}`);
+    throw new Error(`${registrationPath}: retired giant-corridor/source-yaw policy survived: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(registrationPath, registration, "utf8");
-console.log(`Enforced a ${MIN_VISIBLE_METERS}-${MAX_VISIBLE_METERS} m static real-wall vestibule envelope (target ${EXPECTED_VISIBLE_METERS} m). Any placement that would need a long synthetic Terminal 4 corridor now fails instead of rendering one.`);
+console.log(`Enforced a ${MIN_VISIBLE_METERS}-${MAX_VISIBLE_METERS} m static real-wall vestibule envelope (target ${EXPECTED_VISIBLE_METERS} m) while preserving own-gate target yaw. Long synthetic corridors and cross-stand raw-heading ownership now fail.`);
