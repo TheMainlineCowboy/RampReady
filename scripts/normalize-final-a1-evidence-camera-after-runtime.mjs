@@ -8,79 +8,106 @@ const PROFILE_AUTHORITY = "rotunda-to-tunnel-a-passenger-profile-v1";
 
 let source = fs.readFileSync(trainerPath, "utf8");
 
-// The live phone defect is at the passenger elbow: the terminal-side generated
-// passage and the supplied aircraft-side Tunnel A were visibly stacked at the
-// Rotunda. A wall-to-Rotunda close-up can hide that defect completely. Make the
-// final production camera use Rotunda->Cab as the passenger-bridge axis, target
-// the Rotunda itself, and view that axis from the side at near-passenger height.
-// The short real wall leg remains visible behind the Rotunda, while Tunnel A is
-// forced into the same profile frame.
-const oldJointBasis = `            const exactA1JointCenterX = (exactA1CameraWallX + exactA1CameraRotundaX) * 0.5;
-            const exactA1JointCenterY = (exactA1CameraWallY + exactA1CameraRotundaY) * 0.5;
-            const exactA1JointCenterZ = (exactA1CameraWallZ + exactA1CameraRotundaZ) * 0.5;
-            const exactA1JointVectorX = exactA1CameraRotundaX - exactA1CameraWallX;
-            const exactA1JointVectorZ = exactA1CameraRotundaZ - exactA1CameraWallZ;`;
-const passengerElbowBasis = `            const exactA1JointCenterX = exactA1CameraRotundaX;
-            const exactA1JointCenterY = exactA1CameraRotundaY;
-            const exactA1JointCenterZ = exactA1CameraRotundaZ;
-            const exactA1JointVectorX = exactA1CameraCabX - exactA1CameraRotundaX;
-            const exactA1JointVectorZ = exactA1CameraCabZ - exactA1CameraRotundaZ;`;
-if (source.includes(oldJointBasis)) {
-  source = source.replace(oldJointBasis, passengerElbowBasis);
-} else if (!source.includes(passengerElbowBasis)) {
-  throw new Error(`${trainerPath}: final A1 passenger-elbow camera basis anchor is missing`);
+// This normalizer is called in two different phases. Plain `npm run verify`
+// reaches it before the endpoint-derived evidence camera is generated, while
+// the simulator-quality production wrapper reaches it after that camera exists.
+// Early verification must not invent a camera. The later production phase must
+// fail closed unless the actual terminal-joint subview is converted to the
+// Rotunda->Tunnel-A passenger profile that exposes the live defect.
+const hasEndpointJointCamera = source.includes('exactA1EvidenceSubview === "terminal-joint"')
+  && source.includes("const exactA1JointCenterX")
+  && source.includes("const exactA1JointVectorX")
+  && source.includes("inspectionCameraEndpointJointSideOnCosine");
+
+if (!hasEndpointJointCamera) {
+  console.log("A1 passenger-elbow profile normalization deferred: endpoint-derived terminal-joint camera is not generated in this verification phase yet.");
+  process.exit(0);
 }
 
-// Later runtime preparation does not always emit a dedicated joint-span guard.
-// Normalize it when present. The span now represents Rotunda->Cab/Tunnel-A,
-// not the short wall vestibule.
+function replaceSingle(pattern, replacement, label) {
+  const matches = source.match(pattern) || [];
+  if (matches.length !== 1) {
+    throw new Error(`${trainerPath}: expected exactly one ${label}, found ${matches.length}`);
+  }
+  source = source.replace(pattern, replacement);
+}
+
+// The live phone defect is at the passenger elbow: the terminal-side generated
+// passage and the supplied aircraft-side Tunnel A were visibly stacked at the
+// Rotunda. A wall-to-Rotunda close-up can hide that defect completely. Target
+// the Rotunda itself and define the profile axis from Rotunda to Cab/Tunnel A.
+replaceSingle(
+  /const exactA1JointCenterX = [^;]+;/,
+  "const exactA1JointCenterX = exactA1CameraRotundaX;",
+  "A1 joint-center X declaration",
+);
+replaceSingle(
+  /const exactA1JointCenterY = [^;]+;/,
+  "const exactA1JointCenterY = exactA1CameraRotundaY;",
+  "A1 joint-center Y declaration",
+);
+replaceSingle(
+  /const exactA1JointCenterZ = [^;]+;/,
+  "const exactA1JointCenterZ = exactA1CameraRotundaZ;",
+  "A1 joint-center Z declaration",
+);
+replaceSingle(
+  /const exactA1JointVectorX = [^;]+;/,
+  "const exactA1JointVectorX = exactA1CameraCabX - exactA1CameraRotundaX;",
+  "A1 joint-axis X declaration",
+);
+replaceSingle(
+  /const exactA1JointVectorZ = [^;]+;/,
+  "const exactA1JointVectorZ = exactA1CameraCabZ - exactA1CameraRotundaZ;",
+  "A1 joint-axis Z declaration",
+);
+
 const spanPattern = /if \(!\(exactA1JointSpan\s*(?:>|>=)\s*[0-9.]+\s*&&\s*exactA1JointSpan\s*(?:<|<=)\s*[0-9.]+\)\) \{/g;
 const spanMatches = source.match(spanPattern) || [];
-if (spanMatches.length > 1) {
-  throw new Error(`${trainerPath}: expected at most one A1 passenger-elbow span guard, found ${spanMatches.length}`);
+if (spanMatches.length !== 1) {
+  throw new Error(`${trainerPath}: expected exactly one A1 passenger-elbow span guard, found ${spanMatches.length}`);
 }
-if (spanMatches.length === 1) {
-  source = source.replace(
-    spanPattern,
-    `if (!(exactA1JointSpan > ${MIN_JOINT_SPAN_METERS} && exactA1JointSpan < ${MAX_JOINT_SPAN_METERS})) {`,
-  );
-}
+source = source.replace(
+  spanPattern,
+  `if (!(exactA1JointSpan > ${MIN_JOINT_SPAN_METERS} && exactA1JointSpan < ${MAX_JOINT_SPAN_METERS})) {`,
+);
 
 const apronPattern = /const exactA1JointApronDistance = Math\.max\([^;]+\);/g;
 const apronMatches = source.match(apronPattern) || [];
-if (apronMatches.length === 1) {
-  source = source.replace(
-    apronPattern,
-    "const exactA1JointApronDistance = Math.max(2.0, Math.min(3.5, exactA1JointSpan * 0.10));",
-  );
-} else if (apronMatches.length > 1) {
-  throw new Error(`${trainerPath}: expected at most one A1 passenger-elbow forward-offset expression, found ${apronMatches.length}`);
+if (apronMatches.length !== 1) {
+  throw new Error(`${trainerPath}: expected exactly one A1 passenger-elbow forward-offset expression, found ${apronMatches.length}`);
 }
+source = source.replace(
+  apronPattern,
+  "const exactA1JointApronDistance = Math.max(2.0, Math.min(3.5, exactA1JointSpan * 0.10));",
+);
 
 const sidePattern = /const exactA1JointSideDistance = Math\.max\([^;]+\);/g;
 const sideMatches = source.match(sidePattern) || [];
-if (sideMatches.length === 1) {
-  source = source.replace(
-    sidePattern,
-    "const exactA1JointSideDistance = Math.max(13.0, Math.min(16.0, exactA1JointSpan * 0.52));",
-  );
-} else if (sideMatches.length > 1) {
-  throw new Error(`${trainerPath}: expected at most one A1 passenger-elbow side-distance expression, found ${sideMatches.length}`);
+if (sideMatches.length !== 1) {
+  throw new Error(`${trainerPath}: expected exactly one A1 passenger-elbow side-distance expression, found ${sideMatches.length}`);
 }
-
 source = source.replace(
-  "exactA1CameraPositionY = exactA1JointCenterY + 3.25;",
-  "exactA1CameraPositionY = exactA1JointCenterY + 1.40;",
+  sidePattern,
+  "const exactA1JointSideDistance = Math.max(13.0, Math.min(16.0, exactA1JointSpan * 0.52));",
 );
-source = source.replace(
-  "exactA1CameraTargetY = exactA1JointCenterY - 0.05;",
+
+replaceSingle(
+  /exactA1CameraPositionY = exactA1JointCenterY \+ [0-9.]+;/,
+  "exactA1CameraPositionY = exactA1JointCenterY + 1.40;",
+  "A1 passenger-elbow camera height",
+);
+replaceSingle(
+  /exactA1CameraTargetY = exactA1JointCenterY(?:\s*[+-]\s*[0-9.]+)?;/,
   "exactA1CameraTargetY = exactA1JointCenterY;",
+  "A1 passenger-elbow target height",
 );
 
 source = source.replace(
   /renderer\.domElement\.dataset\.inspectionCameraEndpointSubviewAuthority = "[^"]+";/,
   `renderer.domElement.dataset.inspectionCameraEndpointSubviewAuthority = "${CAMERA_AUTHORITY}";`,
 );
+
 if (!source.includes("inspectionCameraEndpointJointProfileAuthority")) {
   const telemetryAnchor = "            renderer.domElement.dataset.inspectionCameraEndpointJointSideOnCosine = exactA1JointSideOnCosine.toFixed(6);";
   if (!source.includes(telemetryAnchor)) {
@@ -91,6 +118,7 @@ if (!source.includes("inspectionCameraEndpointJointProfileAuthority")) {
     `${telemetryAnchor}\n            renderer.domElement.dataset.inspectionCameraEndpointJointProfileAuthority = "${PROFILE_AUTHORITY}";`,
   );
 }
+
 source = source.replaceAll(
   "Frame the disputed attachment side-on to the actual wall-to-Rotunda",
   "Frame the disputed passenger elbow side-on to the actual Rotunda-to-Cab",
@@ -133,7 +161,11 @@ for (const forbidden of [
 }
 
 for (const required of [
-  passengerElbowBasis,
+  "const exactA1JointCenterX = exactA1CameraRotundaX;",
+  "const exactA1JointCenterY = exactA1CameraRotundaY;",
+  "const exactA1JointCenterZ = exactA1CameraRotundaZ;",
+  "const exactA1JointVectorX = exactA1CameraCabX - exactA1CameraRotundaX;",
+  "const exactA1JointVectorZ = exactA1CameraCabZ - exactA1CameraRotundaZ;",
   `exactA1JointSpan > ${MIN_JOINT_SPAN_METERS} && exactA1JointSpan < ${MAX_JOINT_SPAN_METERS}`,
   "Math.max(2.0, Math.min(3.5, exactA1JointSpan * 0.10))",
   "Math.max(13.0, Math.min(16.0, exactA1JointSpan * 0.52))",
@@ -147,4 +179,4 @@ for (const required of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Normalized final A1 evidence camera to the Rotunda->Tunnel-A passenger profile (spanGuard=${spanMatches.length}, forward=${apronMatches.length}, side=${sideMatches.length}); wall-only framing is forbidden.`);
+console.log("Normalized final A1 evidence camera to the Rotunda->Tunnel-A passenger profile; wall-only framing is forbidden once the endpoint camera exists.");
