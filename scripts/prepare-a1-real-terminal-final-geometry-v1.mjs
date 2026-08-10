@@ -131,8 +131,10 @@ for (const required of [
 write(installationPath, installation);
 
 // Readiness must reject the long-corridor regression. Normalize every spelling
-// to the same-day A1 wall/Rotunda envelope and insert the guards if a later
-// compatibility migration removed or reformatted them.
+// to the same-day A1 wall/Rotunda envelope. Late static-fleet preparers have
+// changed the exact text surrounding the mismatch predicate several times, so
+// the finalizer must seed the physical guards into the predicate generically
+// rather than depend on one historical A1-authority or chain-condition line.
 let readiness = read(readinessPath);
 const finalWallGuard = `a1TerminalWallDistance > ${MIN_REAL_WALL_DISTANCE_METERS} && a1TerminalWallDistance < ${MAX_REAL_WALL_DISTANCE_METERS}`;
 const finalVisibleLegGuard = `connectorVisibleLength > ${MIN_VISIBLE_FIXED_LEG_METERS} && connectorVisibleLength < ${MAX_VISIBLE_FIXED_LEG_METERS}`;
@@ -186,19 +188,24 @@ readiness = readiness.replaceAll("compact-real-terminal-wall-readiness-v2", FINA
 readiness = readiness.replaceAll("compact-real-terminal-wall-readiness-v1", FINAL_AUTHORITY);
 readiness = readiness.replaceAll("a1-real-terminal-wall-source-measured-fixed-leg-final-v1", FINAL_AUTHORITY);
 
-if (!readiness.includes(finalWallGuard)) {
-  const wallAnchor = "            || a1TerminalConnectionAuthority !== UPLOADED_JETWAY_A1_TERMINAL_CONNECTION_AUTHORITY";
-  if (!readiness.includes(wallAnchor)) {
-    throw new Error(`${readinessPath}: cannot insert final photo-matched wall guard because the A1 terminal-authority condition is missing`);
+const missingPhysicalConditions = [
+  !readiness.includes(finalWallGuard) ? `!(${finalWallGuard})` : null,
+  !readiness.includes(finalVisibleLegGuard) ? `!(${finalVisibleLegGuard})` : null,
+].filter(Boolean);
+if (missingPhysicalConditions.length) {
+  const mismatchAnchors = [
+    "          if (\n            count !== EXPECTED_GATE_COUNT",
+    "          if (\n            count !== placements.length",
+    "          if (\n            count !== 58",
+  ];
+  const mismatchAnchor = mismatchAnchors.find((anchor) => readiness.includes(anchor));
+  if (!mismatchAnchor) {
+    throw new Error(`${readinessPath}: cannot locate final fleet readiness mismatch block for A1 physical guard insertion`);
   }
-  readiness = readiness.replace(wallAnchor, `${wallAnchor}\n            || !(${finalWallGuard})`);
-}
-if (!readiness.includes(finalVisibleLegGuard)) {
-  const chainAnchor = "            || isolatedNodeRotationCount !== 0";
-  if (!readiness.includes(chainAnchor)) {
-    throw new Error(`${readinessPath}: cannot insert final photo-matched fixed-leg guard because the A1 chain condition is missing`);
-  }
-  readiness = readiness.replace(chainAnchor, `${chainAnchor}\n            || !(${finalVisibleLegGuard})`);
+  readiness = readiness.replace(
+    mismatchAnchor,
+    `          if (\n            ${missingPhysicalConditions.join("\n            || ")}\n            || ${mismatchAnchor.split("            ")[1]}`,
+  );
 }
 
 for (const forbidden of [
