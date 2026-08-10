@@ -18,9 +18,10 @@ if (!registration.includes(CONNECTOR_IMPORT)) {
 
 // A source-placement coordinate mismatch must be repaired by translating the
 // complete rigid supplied jetway to the measured facade, not by drawing a huge
-// synthetic corridor. Keep a hard visual envelope here so the fleet can never
-// regress to the prior 0-43 m white-box policy. Final aircraft-side yaw is owned
-// by each gate's own authored target, not by a raw heading that can cross stands.
+// synthetic corridor. This is the giant-corridor policy guard: keep a hard
+// visual envelope here so the fleet can never regress to the prior 0-43 m
+// white-box behavior. Final aircraft-side yaw is owned by each gate's own
+// authored target, not by a raw heading that can cross stands.
 registration = registration
   .replace(/const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = [0-9.]+;/, `const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MIN_VISIBLE_METERS};`)
   .replace(/const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = [0-9.]+;/, `const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MAX_VISIBLE_METERS};`)
