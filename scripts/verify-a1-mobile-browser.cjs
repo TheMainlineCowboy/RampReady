@@ -8,7 +8,7 @@ const CURRENT_SUBVIEW_AUTHORITY = 'source-measured-a1-terminal-joint-camera-v3';
 const LEGACY_SUBVIEW_AUTHORITY = 'exact-a1-terminal-joint-and-bogie-contact-subviews-v2';
 const CAMERA_AUTHORITY = 'exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2';
 const LOCK_AUTHORITY = 'exact-a1-evidence-camera-direct-lock-v1';
-const PROFILE_AUTHORITY = 'rotunda-terminal-and-tunnel-a-bisector-profile-v2';
+const PROFILE_AUTHORITY = 'rotunda-terminal-and-tunnel-a-bisector-profile-v3-midheight';
 const MAX_BRANCH_VIEW_COSINE = 0.82;
 const MAX_BRANCH_VIEW_IMBALANCE = 0.20;
 
