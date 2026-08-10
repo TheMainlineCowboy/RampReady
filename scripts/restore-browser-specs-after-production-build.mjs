@@ -36,7 +36,10 @@ if (needsPostBuildBrowserMigration) {
   execFileSync(process.execPath, ["scripts/prepare-fixed-a1-browser-regressions-v1.mjs"], {
     stdio: "inherit",
   });
-  console.log(`Restored ${browserSpecs.length} browser acceptance specs to exact HEAD, then reapplied connected-A1 browser expectations for ${workflow}.`);
+  execFileSync(process.execPath, ["scripts/prepare-compact-mobile-browser-regression-v1.mjs"], {
+    stdio: "inherit",
+  });
+  console.log(`Restored ${browserSpecs.length} browser acceptance specs to exact HEAD, then reapplied connected-A1 and compact-mobile browser expectations for ${workflow}.`);
 } else {
   console.log(`Restored ${browserSpecs.length} browser acceptance specs to exact HEAD; ${workflow || "local build"} does not consume the migrated articulation/CRJ specs, so the tracked tree remains clean.`);
 }
