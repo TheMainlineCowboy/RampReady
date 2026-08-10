@@ -44,15 +44,10 @@ source = source.replace(
   "  const width = rotundaOpening.passengerWidthMeters;\n  const height = rotundaOpening.passengerHeightMeters;",
 );
 
-// Tighten any surviving legacy source guards, but do not depend on their exact
-// generated variable names. Final readiness below is the fail-closed acceptance
-// gate and already publishes the existing visible-length telemetry to Chromium.
-source = source
-  .replace(/terminalDistance > 0\.4 && terminalDistance < (?:12|28|44)/g,
-    `terminalDistance > ${MIN_WALL_DISTANCE_METERS} && terminalDistance < ${MAX_WALL_DISTANCE_METERS}`)
-  .replace(/mainVisibleLength > 0\.25 && mainVisibleLength < (?:12|28|44)/g,
-    `mainVisibleLength > 0.25 && mainVisibleLength < ${MAX_VISIBLE_LEG_METERS}`);
-
+// Do not rewrite the historical source-guard text here. The dedicated browser
+// workflow intentionally runs verify and then build in the same checkout, and
+// older preparers still use those exact guards as regeneration anchors. Physical
+// rejection of the old 18+ metre duplicate leg belongs in final readiness below.
 for (const required of [
   currentTerminalPoint,
   `passengerEnvelopeAuthority: "${PASSENGER_AUTHORITY}"`,
