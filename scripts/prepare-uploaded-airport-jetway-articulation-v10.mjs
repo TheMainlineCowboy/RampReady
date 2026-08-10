@@ -104,4 +104,4 @@ for (const forbidden of [
 ]) {
   if (fleet.includes(forbidden)) throw new Error(`${fleetPath}: retired articulation path remains: ${forbidden}`);
 }
-console.log("Prepared direct exact-GLB articulation with parent-only authored-axis normalization, retained authored source-part identity on every static primitive batch, and kept one independently controlled A1 clone.");
+console.log("Prepared direct exact-GLB articulation with parent-only authored-axis normalization: 57 per-gate static instance sets retain authored source-part identity for post-wall gate-specific inward lengths, plus one independently controlled A1 clone.");
