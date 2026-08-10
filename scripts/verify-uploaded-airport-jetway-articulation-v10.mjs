@@ -46,9 +46,10 @@ requireTokens("src/environment/uploadedAirportJetwayFleetReadyV2.js", [
   "UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY",
   "staticArticulatedGateCount !== 57",
   "a1PredictedDoorGap > 0.05",
-  "a1AttachedExtension > 3 && a1AttachedExtension < 7",
+  "Math.abs(a1AttachedExtension) > 0.001",
 ]);
 requireTokens("scripts/prepare-uploaded-airport-jetway-readiness-v2.mjs", [
+  "source-connected-attached-v12-a1-retracts-inward-only",
   "authoredTerminal4UploadedJetwayArticulationAuthority",
   "authoredTerminal4UploadedJetwayStaticArticulatedGateCount",
   "authoredTerminal4UploadedJetwayA1AttachedExtensionMeters",
@@ -71,6 +72,12 @@ const sourcePartCenters = Object.freeze({
   Tunnel_C: 17.126,
   Cab: 23.327,
 });
+const sourceAdjacentSpacing = Object.freeze([
+  sourcePartCenters.Tunnel_A - sourcePartCenters.Rotunda,
+  sourcePartCenters.Tunnel_B - sourcePartCenters.Tunnel_A,
+  sourcePartCenters.Tunnel_C - sourcePartCenters.Tunnel_B,
+  sourcePartCenters.Cab - sourcePartCenters.Tunnel_C,
+]);
 const parkings = new Map([...concourseA.parkings, ...concourseB.parkings].map((parking) => [parking.g, parking]));
 const placements = [...concourseA.jetways, ...concourseB.jetways].map((jetway) => {
   const parking = parkings.get(jetway.g);
@@ -93,10 +100,13 @@ const placements = [...concourseA.jetways, ...concourseB.jetways].map((jetway) =
 if (placements.length !== 58) throw new Error(`Expected 58 exact-jetway placements, received ${placements.length}`);
 if (placements.filter((placement) => placement.gate !== "A1").length !== 57) throw new Error("Expected 57 static exact-jetway placements");
 if (UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum > -14.08) {
-  throw new Error(`A1 exact jetway articulation limit unexpectedly changed: ${UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum}`);
+  throw new Error(`A1 exact jetway inward retraction limit unexpectedly changed: ${UPLOADED_AIRPORT_JETWAY_EXTENSION_LIMITS.minimum}`);
 }
 
 let maximumStaticOffset = 0;
+let maximumA1AttachedOffset = 0;
+let maximumA1AdjacentSpacingDelta = 0;
+let retiredPositiveStretchMeters = 0;
 let minimumPartSeparation = Infinity;
 for (const placement of placements) {
   const articulation = computeUploadedJetwayArticulation(placement, sourceContactDistance);
@@ -123,16 +133,33 @@ for (const placement of placements) {
   if (separations.some((separation) => separation <= 0)) {
     throw new Error(`${placement.gate} exact tunnel sections inverted: ${JSON.stringify(centers)}`);
   }
+
   if (placement.gate === "A1") {
-    if (!(articulation.extension > 3 && articulation.extension < 5)) {
-      throw new Error(`A1 exact jetway extension is not the measured aircraft-door reach: ${articulation.extension}`);
+    const offsets = Object.values(articulation.partOffsets).map((value) => Math.abs(Number(value)));
+    maximumA1AttachedOffset = Math.max(...offsets);
+    maximumA1AdjacentSpacingDelta = Math.max(
+      ...separations.map((spacing, index) => Math.abs(spacing - sourceAdjacentSpacing[index])),
+    );
+    retiredPositiveStretchMeters = Number(articulation.discardedAttachedExtension);
+    if (articulation.extension !== 0 || articulation.requestedExtension !== 0) {
+      throw new Error(`A1 attached exact jetway still stretches by ${articulation.extension} m`);
+    }
+    if (maximumA1AttachedOffset > 1e-9) {
+      throw new Error(`A1 attached source hierarchy still offsets a child by ${maximumA1AttachedOffset} m`);
+    }
+    if (maximumA1AdjacentSpacingDelta > 1e-9) {
+      throw new Error(`A1 attached source hierarchy changed an adjacent joint spacing by ${maximumA1AdjacentSpacingDelta} m`);
     }
     if (Math.abs(articulation.contactError) > 0.001) {
-      throw new Error(`A1 exact jetway remains ${articulation.contactError} m from the aircraft door`);
+      throw new Error(`A1 attached source hierarchy reports ${articulation.contactError} m internal contact error`);
     }
-    if (!(articulation.partOffsets.Tunnel_B < articulation.partOffsets.Tunnel_C
-      && articulation.partOffsets.Tunnel_C < articulation.partOffsets.Cab)) {
-      throw new Error("A1 exact tunnel sections are not telescoped in authored order");
+    if (articulation.targetDistance !== sourceContactDistance
+      || articulation.predictedContactDistance !== sourceContactDistance
+      || articulation.attachedSourceHierarchyPreserved !== true) {
+      throw new Error(`A1 attached source hierarchy is not authoritative: ${JSON.stringify(articulation)}`);
+    }
+    if (!(retiredPositiveStretchMeters > 3 && retiredPositiveStretchMeters < 5)) {
+      throw new Error(`A1 regression fixture no longer proves removal of the former positive stretch: ${retiredPositiveStretchMeters}`);
     }
   } else {
     const offsets = Object.values(articulation.partOffsets).map((value) => Math.abs(Number(value)));
@@ -144,6 +171,6 @@ for (const placement of placements) {
 }
 if (maximumStaticOffset > 1e-9) throw new Error(`Static exact jetway source-part offset is ${maximumStaticOffset} m`);
 if (minimumPartSeparation < 5) {
-  throw new Error(`Exact static source hierarchy lost authored section spacing; minimum part-center separation is ${minimumPartSeparation} m`);
+  throw new Error(`Exact source hierarchy lost authored section spacing; minimum part-center separation is ${minimumPartSeparation} m`);
 }
-console.log(`Verified exact supplied Terminal 4 jetway articulation: A1 alone telescopes to its aircraft door; all 57 static gates preserve the rigid source GLB hierarchy with ${maximumStaticOffset.toFixed(6)} m maximum source-part offset and ${minimumPartSeparation.toFixed(3)} m minimum section separation.`);
+console.log(`Verified exact supplied Terminal 4 jetway articulation: attached A1 preserves all authored child transforms and adjacent joint spacings exactly (max offset ${maximumA1AttachedOffset.toFixed(6)} m, max spacing delta ${maximumA1AdjacentSpacingDelta.toFixed(6)} m) instead of applying the retired ${retiredPositiveStretchMeters.toFixed(3)} m positive stretch; all 57 static gates remain rigid, and pre-push A1 retraction remains separately available.`);
