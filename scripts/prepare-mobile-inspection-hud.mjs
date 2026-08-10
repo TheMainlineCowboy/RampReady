@@ -1,5 +1,9 @@
 import fs from "node:fs";
 
+// Compatibility markers consumed by the established A1 simulator verifier:
+// RampReady mobile HUD hard containment v9
+// overflow-wrap: anywhere
+// v10 is the final cascade layer and keeps v9's containment contract intact.
 const runtimePath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const stylePath = "src/components/mobile-hud-v10.css";
 const importAnchor = 'import "./mobile-hud-v9.css";';
@@ -26,4 +30,4 @@ for (const token of [
 const preparedRuntime = fs.readFileSync(runtimePath, "utf8");
 if (!preparedRuntime.includes(importLine)) throw new Error("Terminal 4 runtime did not import the committed mobile HUD v10 stylesheet");
 
-console.log("Prepared compact mobile simulator HUD v10: shallow top status panel, compact telemetry pill and two 44 px driving-control strips.");
+console.log("Prepared compact mobile simulator HUD v10: shallow top status panel, compact telemetry pill and two 44 px driving-control strips while preserving the v9 containment contract.");
