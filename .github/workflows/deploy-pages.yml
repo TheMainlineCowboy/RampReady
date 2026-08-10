@@ -39,6 +39,13 @@ jobs:
           set -o pipefail
           npm run verify 2>&1 | tee release-verify.log
 
+      - name: Restore exact release commit after verification generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git reset --hard "${GITHUB_SHA}"
+          git clean -fd
+
       - name: Stamp exact release commit
         shell: bash
         run: |
