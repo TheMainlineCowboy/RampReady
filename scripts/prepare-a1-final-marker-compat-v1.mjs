@@ -7,6 +7,7 @@ const sourcePlacedPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const currentMarkers = [
+  "final-a1-acceptance-authority-after-all-preparers-v5-source-heading-real-wall-static",
   "final-a1-acceptance-authority-after-all-preparers-v4-source-static-integrity",
   "final-a1-acceptance-authority-after-all-preparers-v3-three-tire-contact",
   "final-a1-acceptance-authority-after-all-preparers-v2",
