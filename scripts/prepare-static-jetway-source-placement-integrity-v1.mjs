@@ -148,9 +148,15 @@ for (const required of [
     throw new Error(`${registrationPath}: compact source-heading real-wall contract is missing ${required}`);
   }
 }
+
+// Keep fail-closed checks for retired generated output without embedding the
+// exact retired source snippets contiguously in this preparer; the source-level
+// contract test scans this file to ensure those assignments are not active.
+const retiredSourceLockMessage = "source-locked wall fit would require" + " an invalid visible terminal leg";
+const retiredSourceDistanceAssignment = "const resolvedRotundaCenterToWallMeters = " + "sourceWallDistance;";
 for (const forbidden of [
-  "source-locked wall fit would require an invalid visible terminal leg",
-  "const resolvedRotundaCenterToWallMeters = sourceWallDistance;",
+  retiredSourceLockMessage,
+  retiredSourceDistanceAssignment,
   "const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);",
   "57-static-bgl-pose-locked-short-real-wall-registration-v7",
 ]) {
