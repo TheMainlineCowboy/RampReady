@@ -12,11 +12,6 @@ const MAXIMUM_FINAL_SUPPORT_GAP_METERS = 0.012;
 
 let source = fs.readFileSync(sourcePath, "utf8");
 
-// The same-day A1 reference shows a short rigid white vestibule meeting the
-// terminal-side Rotunda at a normal joint. Do not hide a placement error by
-// burying metres of generated shell inside the authored Rotunda or terminal.
-// Keep only a small construction overlap at each end so the exact supplied
-// Rotunda remains visually readable and the real wall owns the attachment.
 source = source
   .replace(
     /const ROTUNDA_SHELL_OVERLAP_METERS = [^;]+;/,
@@ -27,21 +22,32 @@ source = source
     `const TERMINAL_HIDDEN_OVERLAP_METERS = ${TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)};`,
   );
 
-const supportHelperMarker = "A1 stationary Rotunda support owns its own ramp contact v1";
+const supportHelperMarker = "A1 stationary Rotunda support owns its own ramp contact v2";
+const legacySupportHelperMarker = "A1 stationary Rotunda support owns its own ramp contact v1";
+
+// Replace the v1 helper wholesale when present. The v2 helper writes its own
+// telemetry directly onto the A1 group so later production transforms cannot
+// leave a dead local variable behind while preserving its evidence lines.
+const helperStart = source.indexOf("function groundA1StationaryRotundaSupport(");
+const wrappedAngleStart = source.indexOf("function wrappedAngle(THREE, radians) {");
+if (helperStart >= 0 && wrappedAngleStart > helperStart) {
+  source = source.slice(0, helperStart) + source.slice(wrappedAngleStart);
+}
+
 if (!source.includes(supportHelperMarker)) {
   const helperAnchor = "function wrappedAngle(THREE, radians) {";
   if (!source.includes(helperAnchor)) {
     throw new Error(`${sourcePath}: wrapped-angle anchor is missing for stationary Rotunda support grounding`);
   }
-  const supportHelper = `function groundA1StationaryRotundaSupport(THREE, fleet, model, rotunda) {
+  const supportHelper = `function groundA1StationaryRotundaSupport(THREE, group, fleet, model, rotunda) {
   // ${supportHelperMarker}
   // The exact supplied GLB has two legitimate ground-contact families at
   // different authored Y levels: the moving Tunnel-C/bogie assembly and the
   // stationary Rotunda pedestal. Grounding the complete parent by the bogie
-  // alone leaves the Rotunda pedestal roughly 1.6 m in the air. Preserve every
-  // node transform and every passenger-level Rotunda vertex; stretch only the
-  // authored lower pedestal geometry so its original foot reaches the same
-  // physical ramp plane as the bogie.
+  // alone leaves the Rotunda pedestal roughly 1.6 m in the air. Keep every
+  // object transform and every passenger-level Rotunda vertex fixed; stretch
+  // only the authored lower pedestal geometry so its original foot reaches the
+  // same physical ramp plane as the bogie.
   fleet.updateWorldMatrix(true, true);
   model.updateWorldMatrix(true, true);
   rotunda.updateWorldMatrix(true, true);
@@ -56,6 +62,7 @@ if (!source.includes(supportHelperMarker)) {
   if (!(sourceGapMeters >= ${MINIMUM_EXPECTED_SUPPORT_GAP_METERS.toFixed(2)} && sourceGapMeters <= ${MAXIMUM_EXPECTED_SUPPORT_GAP_METERS.toFixed(2)})) {
     throw new Error("A1 stationary Rotunda authored support gap is outside the exact-source envelope: " + sourceGapMeters);
   }
+
   const supportTopWorldY = sourceRotundaFootY + ${STATIONARY_SUPPORT_SOURCE_SPAN_METERS.toFixed(2)};
   const sourceSupportSpanMeters = supportTopWorldY - sourceRotundaFootY;
   const targetSupportSpanMeters = supportTopWorldY - sourceModelGroundY;
@@ -101,11 +108,19 @@ if (!source.includes(supportHelperMarker)) {
     throw new Error("A1 stationary Rotunda support did not reach the bogie ramp plane: " + finalGroundGapMeters);
   }
   const appliedExtensionMeters = sourceRotundaFootY - rotundaBoundsAfter.min.y;
+
   rotunda.userData.a1StationarySupportGroundAuthority = "${STATIONARY_SUPPORT_AUTHORITY}";
   rotunda.userData.a1StationarySupportSourceGapMeters = sourceGapMeters;
   rotunda.userData.a1StationarySupportAppliedExtensionMeters = appliedExtensionMeters;
   rotunda.userData.a1StationarySupportFinalGroundGapMeters = finalGroundGapMeters;
   rotunda.userData.a1StationarySupportChangedVertexCount = changedVertexCount;
+  group.userData.uploadedJetwayA1StationaryRotundaSupportGroundAuthority = "${STATIONARY_SUPPORT_AUTHORITY}";
+  group.userData.uploadedJetwayA1StationaryRotundaSupportSourceGapMeters = sourceGapMeters;
+  group.userData.uploadedJetwayA1StationaryRotundaSupportAppliedExtensionMeters = appliedExtensionMeters;
+  group.userData.uploadedJetwayA1StationaryRotundaSupportFinalGroundGapMeters = finalGroundGapMeters;
+  group.userData.uploadedJetwayA1StationaryRotundaSupportChangedVertexCount = changedVertexCount;
+  group.userData.uploadedJetwayA1StationaryRotundaSupportStretch = supportStretch;
+
   return Object.freeze({
     authority: "${STATIONARY_SUPPORT_AUTHORITY}",
     sourceGapMeters,
@@ -120,32 +135,23 @@ if (!source.includes(supportHelperMarker)) {
   source = source.replace(helperAnchor, `${supportHelper}${helperAnchor}`);
 }
 
-const supportCallMarker = "const stationaryRotundaSupport = groundA1StationaryRotundaSupport";
-if (!source.includes(supportCallMarker)) {
-  const supportCallAnchor = "  if (rotundaPreservationErrorMeters > 1e-6) throw new Error(`A1 real-wall Rotunda moved during aircraft-side pivot: ${rotundaPreservationErrorMeters}`);\n\n";
-  if (!source.includes(supportCallAnchor)) {
-    throw new Error(`${sourcePath}: Rotunda preservation anchor is missing for stationary support grounding`);
-  }
-  source = source.replace(
-    supportCallAnchor,
-    `${supportCallAnchor}  const stationaryRotundaSupport = groundA1StationaryRotundaSupport(THREE, fleet, model, rotunda);\n\n`,
-  );
-}
+// Remove the fragile v1 local declaration and any old telemetry block that
+// dereferenced it. Later production transforms rewrite the Rotunda positioning
+// section, but preserve the Cab telemetry section; attach the grounding call
+// there so the final bundled source always executes it.
+source = source
+  .replace(/\n\s*const stationaryRotundaSupport = groundA1StationaryRotundaSupport\([^;]+;\n/g, "\n")
+  .replace(/\n\s*groundA1StationaryRotundaSupport\(THREE, group, fleet, model, rotunda\);\n/g, "\n")
+  .replace(/\n\s*group\.userData\.uploadedJetwayA1StationaryRotundaSupportGroundAuthority = stationaryRotundaSupport\.authority;\n\s*group\.userData\.uploadedJetwayA1StationaryRotundaSupportSourceGapMeters = stationaryRotundaSupport\.sourceGapMeters;\n\s*group\.userData\.uploadedJetwayA1StationaryRotundaSupportAppliedExtensionMeters = stationaryRotundaSupport\.appliedExtensionMeters;\n\s*group\.userData\.uploadedJetwayA1StationaryRotundaSupportFinalGroundGapMeters = stationaryRotundaSupport\.finalGroundGapMeters;\n\s*group\.userData\.uploadedJetwayA1StationaryRotundaSupportChangedVertexCount = stationaryRotundaSupport\.changedVertexCount;\n/g, "\n");
 
-const supportTelemetryMarker = "uploadedJetwayA1StationaryRotundaSupportGroundAuthority";
-if (!source.includes(supportTelemetryMarker)) {
-  const telemetryAnchor = "  group.userData.uploadedJetwayA1SourceLockedElbowAuthority = SOURCE_REGISTERED_A1_ELBOW_AUTHORITY;";
-  if (!source.includes(telemetryAnchor)) {
-    throw new Error(`${sourcePath}: A1 elbow telemetry anchor is missing for stationary support evidence`);
-  }
-  const telemetry = `  group.userData.uploadedJetwayA1StationaryRotundaSupportGroundAuthority = stationaryRotundaSupport.authority;
-  group.userData.uploadedJetwayA1StationaryRotundaSupportSourceGapMeters = stationaryRotundaSupport.sourceGapMeters;
-  group.userData.uploadedJetwayA1StationaryRotundaSupportAppliedExtensionMeters = stationaryRotundaSupport.appliedExtensionMeters;
-  group.userData.uploadedJetwayA1StationaryRotundaSupportFinalGroundGapMeters = stationaryRotundaSupport.finalGroundGapMeters;
-  group.userData.uploadedJetwayA1StationaryRotundaSupportChangedVertexCount = stationaryRotundaSupport.changedVertexCount;
-`;
-  source = source.replace(telemetryAnchor, `${telemetry}${telemetryAnchor}`);
+const stableLateCallAnchor = "  group.userData.uploadedJetwayA1CabTargetHorizontalErrorMeters = cabTargetHorizontalErrorMeters;";
+if (!source.includes(stableLateCallAnchor)) {
+  throw new Error(`${sourcePath}: stable Cab telemetry anchor is missing for stationary support grounding`);
 }
+source = source.replace(
+  stableLateCallAnchor,
+  `  groundA1StationaryRotundaSupport(THREE, group, fleet, model, rotunda);\n${stableLateCallAnchor}`,
+);
 
 const compactBellowsFunction = source.indexOf("function addCompactRotundaBellows(");
 const nextFunction = source.indexOf("function addRotundaBridgeBellowsSleeve(", compactBellowsFunction);
@@ -159,27 +165,33 @@ if (!bellowsBlock.includes(requiredDepth)) {
 }
 
 for (const forbidden of [
+  legacySupportHelperMarker,
+  "stationaryRotundaSupport.authority",
+  "stationaryRotundaSupport.sourceGapMeters",
+  "stationaryRotundaSupport.appliedExtensionMeters",
+  "stationaryRotundaSupport.finalGroundGapMeters",
+  "stationaryRotundaSupport.changedVertexCount",
   "const ROTUNDA_SHELL_OVERLAP_METERS = 1.50;",
   "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.70;",
   "  const depth = 1.50;",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${sourcePath}: forbidden masking overlap survived: ${forbidden.trim()}`);
+    throw new Error(`${sourcePath}: forbidden stale stationary-support or masking code survived: ${forbidden}`);
   }
 }
 for (const required of [
   `const ROTUNDA_SHELL_OVERLAP_METERS = ${ROTUNDA_SHELL_OVERLAP_METERS.toFixed(2)};`,
   `const TERMINAL_HIDDEN_OVERLAP_METERS = ${TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)};`,
   supportHelperMarker,
-  supportCallMarker,
-  supportTelemetryMarker,
+  "groundA1StationaryRotundaSupport(THREE, group, fleet, model, rotunda);",
+  "uploadedJetwayA1StationaryRotundaSupportGroundAuthority",
   STATIONARY_SUPPORT_AUTHORITY,
   `sourceGapMeters >= ${MINIMUM_EXPECTED_SUPPORT_GAP_METERS.toFixed(2)}`,
   `sourceGapMeters <= ${MAXIMUM_EXPECTED_SUPPORT_GAP_METERS.toFixed(2)}`,
   `Math.abs(finalGroundGapMeters) > ${MAXIMUM_FINAL_SUPPORT_GAP_METERS.toFixed(3)}`,
 ]) {
-  if (!source.includes(required)) throw new Error(`${sourcePath}: missing final A1 requirement ${required}`);
+  if (!source.includes(required)) throw new Error(`${sourcePath}: missing final A1 stationary-support requirement ${required}`);
 }
 
 fs.writeFileSync(sourcePath, source, "utf8");
-console.log(`Prepared A1 terminal-to-Rotunda joint with only ${ROTUNDA_SHELL_OVERLAP_METERS.toFixed(2)} m Rotunda overlap and ${TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m terminal-wall overlap; the exact supplied Rotunda passenger geometry stays fixed while its authored stationary pedestal is stretched down to the bogie ramp plane under ${STATIONARY_SUPPORT_AUTHORITY}.`);
+console.log(`Prepared A1 terminal-to-Rotunda joint with ${ROTUNDA_SHELL_OVERLAP_METERS.toFixed(2)} m Rotunda overlap and ${TERMINAL_WALL_HIDDEN_OVERLAP_METERS.toFixed(2)} m terminal-wall overlap; the exact passenger-level Rotunda stays fixed while its authored stationary pedestal is independently grounded to the bogie ramp plane under ${STATIONARY_SUPPORT_AUTHORITY}.`);
