@@ -72,7 +72,34 @@ async function selectA1Subview(page, subview) {
 
 async function capture(page, filename) {
   const path = `${evidenceDirectory}/${filename}`;
-  await page.screenshot({ path, fullPage: false });
+  const canvas = page.locator('canvas.trainerCanvas');
+  const box = await canvas.boundingBox();
+  if (!box || !(box.width > 100) || !(box.height > 100)) {
+    throw new Error(`${filename} cannot capture a visible Three.js canvas`);
+  }
+  // page.screenshot() can stall for 30 s while Chromium waits on unrelated
+  // document/font paint state even though the WebGL frame is already ready.
+  // Capture the exact visible canvas rectangle through CDP instead, matching the
+  // dedicated A1 evidence workflow and avoiding false visual-run failures.
+  const client = await page.context().newCDPSession(page);
+  try {
+    const { data } = await client.send('Page.captureScreenshot', {
+      format: 'png',
+      fromSurface: true,
+      captureBeyondViewport: false,
+      clip: {
+        x: Math.max(0, box.x),
+        y: Math.max(0, box.y),
+        width: box.width,
+        height: box.height,
+        scale: 1,
+      },
+    });
+    const payload = Buffer.from(data, 'base64');
+    fs.writeFileSync(path, payload);
+  } finally {
+    await client.detach();
+  }
   const bytes = fs.statSync(path).size;
   if (bytes < 100000) throw new Error(`${filename} is unexpectedly small: ${bytes}`);
   return bytes;
@@ -106,8 +133,6 @@ async function capture(page, filename) {
     }, null, { timeout: 180000, polling: 100 });
   } catch (error) {
     const readinessDataset = await page.locator('canvas.trainerCanvas').evaluate(element => ({ ...element.dataset })).catch(() => ({}));
-    const diagnosticPath = `${evidenceDirectory}/fleet-readiness-diagnostic.png`;
-    await page.screenshot({ path: diagnosticPath, fullPage: false }).catch(() => {});
     fs.writeFileSync(`${evidenceDirectory}/readiness-diagnostic.json`, `${JSON.stringify({
       capturedAtUtc: new Date().toISOString(),
       dataset: readinessDataset,
@@ -150,8 +175,6 @@ async function capture(page, filename) {
   for (const [preset, label, filename, cameraView] of views) {
     await selectByLabel(page, 'Inspection location', label);
     await waitForPreset(page, preset);
-    // Inspection presets intentionally restore their preferred camera, so apply
-    // the evidence camera only after the preset has settled.
     await selectByValue(page, 'Camera view', cameraView);
     await page.waitForTimeout(900);
     captures[filename] = await capture(page, filename);
