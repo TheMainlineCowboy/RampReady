@@ -84,9 +84,9 @@ for (const token of [
   "COMPACT_TERMINAL_WALL_OVERLAP_METERS = 0.18",
   "const yaw = targetRegistrationYaw;",
   "const ownGateHeadingErrorRadians",
+  "ownGateHeadingErrorRadians >",
   "terminalFacingDot > 0.25",
   "uploadedJetwayStaticOwnGateTargetCount = 57",
-  "cross-stand raw-heading ownership is fail-closed",
 ]) {
   if (!staticPlacementPreparation.includes(token)) throw new Error(`Own-gate real-wall registration is missing ${token}`);
 }
