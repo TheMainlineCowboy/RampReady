@@ -74,6 +74,29 @@ const retiredStaticSourcePlacementAuthorities = [
     source = source.replace(currentPositiveStretchBlock, currentConnectedBlock);
   }
 
+  // target is a horizontal Rotunda-to-Cab reach. The old browser assertion
+  // compared it with an XYZ Rotunda-to-rendered-door distance, which adds the
+  // roughly two-metre door-height component and fails even when the connected
+  // source jetway is correct. Compare horizontal reach to horizontal geometry.
+  const oldThreeDimensionalDistance = `  const geometricRotundaToDoorDistance = Math.hypot(
+    renderedDoorTargetX - exactRotundaWorldX,
+    renderedDoorTargetY - exactRotundaWorldY,
+    renderedDoorTargetZ - exactRotundaWorldZ,
+  );`;
+  const horizontalDistance = `  const geometricHorizontalRotundaToDoorDistance = Math.hypot(
+    renderedDoorTargetX - exactRotundaWorldX,
+    renderedDoorTargetZ - exactRotundaWorldZ,
+  );`;
+  if (source.includes(oldThreeDimensionalDistance)) {
+    source = source.replace(oldThreeDimensionalDistance, horizontalDistance);
+  }
+  source = source
+    .replaceAll("geometricRotundaToDoorDistance,", "geometricHorizontalRotundaToDoorDistance,")
+    .replaceAll(
+      "expect(Math.abs(target - geometricRotundaToDoorDistance)).toBeLessThanOrEqual(0.05);",
+      "expect(Math.abs(target - geometricHorizontalRotundaToDoorDistance)).toBeLessThanOrEqual(0.05);",
+    );
+
   // Capture the same wide A1 ramp/chase family that exposed the user's two
   // separated turning joints, in addition to the terminal-joint close view.
   const oldA1Capture = `  await captureInspectionPreset(page, "a1Connection", "test-results/uploaded-jetway-a1-articulated-v11.png");`;
@@ -100,6 +123,7 @@ const retiredStaticSourcePlacementAuthorities = [
     "expect(Math.abs(target - sourceReach)).toBeLessThanOrEqual(0.01)",
     "expect(Math.abs(predictedContact - sourceReach)).toBeLessThanOrEqual(0.05)",
     "expect(Math.abs(actualContact - sourceReach)).toBeLessThanOrEqual(0.05)",
+    "geometricRotundaToDoorDistance",
   ]) {
     if (source.includes(stale)) throw new Error(`${path}: stale stretched/mismatched A1 browser check remains: ${stale}`);
   }
@@ -116,6 +140,8 @@ const retiredStaticSourcePlacementAuthorities = [
     "expect(Math.abs(target - sourceReach)).toBeLessThanOrEqual(0.16);",
     "expect(Math.abs(predictedContact - target)).toBeLessThanOrEqual(0.05);",
     "expect(Math.abs(actualContact - target)).toBeLessThanOrEqual(0.05);",
+    "geometricHorizontalRotundaToDoorDistance",
+    "expect(Math.abs(target - geometricHorizontalRotundaToDoorDistance)).toBeLessThanOrEqual(0.05);",
     "uploaded-jetway-a1-full-chain-connected-v12.png",
     "expectSamePose(trainingPose, freeDrivePose);",
     "expectSamePose(returnedPose, freeDrivePose);",
@@ -125,4 +151,4 @@ const retiredStaticSourcePlacementAuthorities = [
   fs.writeFileSync(path, source, "utf8");
 }
 
-console.log("Updated browser regressions for connected A1 articulation: attached Tunnel B/C/Cab may not stretch apart, current static BGL pose locking is required, final Cab contact owns the endpoint measurement, the aircraft keeps one Cab-derived pose, and Chromium captures a full-chain A1 ramp view plus the terminal joint.");
+console.log("Updated browser regressions for connected A1 articulation: attached Tunnel B/C/Cab may not stretch apart, current static BGL pose locking is required, horizontal Cab reach is compared to horizontal geometry, the aircraft keeps one Cab-derived pose, and Chromium captures a full-chain A1 ramp view plus the terminal joint.");
