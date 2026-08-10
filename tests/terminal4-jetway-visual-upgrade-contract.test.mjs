@@ -92,10 +92,8 @@ for (const token of [
 ]) {
   if (!staticPlacementPreparation.includes(token)) throw new Error(`Own-gate real-wall registration is missing ${token}`);
 }
-for (const forbidden of [
-  "const resolvedRotundaCenterToWallMeters = sourceWallDistance;",
-]) {
-  if (staticPlacementPreparation.includes(forbidden)) throw new Error(`Static placement retained fake wall registration behavior: ${forbidden}`);
+if (staticPlacementPreparation.includes("const resolvedRotundaCenterToWallMeters = sourceWallDistance;")) {
+  throw new Error("Static placement retained fake raw source wall distance ownership");
 }
 for (const token of [
   'STATIC_SOURCE_HEADING_AUTHORITY = "57-static-bgl-jetway-heading-provenance-v3"',
@@ -107,15 +105,19 @@ for (const token of [
   if (!sourceRegistrationPreparation.includes(token)) throw new Error(`Source-heading provenance migration is missing ${token}`);
 }
 
+// This preparation must explicitly find the retired random gate-code expression,
+// replace it with the decoded per-gate bridgeEnd, and fail if the retired formula
+// survives in the generated runtime. The old expression necessarily appears as
+// a search string in this migrator, so its mere text presence is not a failure.
 for (const token of [
+  "const randomLengthBlock =",
+  "const ownGateLengthBlock =",
   "const exactBridgeEnd = bridgeEnd;",
+  "source = source.replace(randomLengthBlock, ownGateLengthBlock)",
   "arbitrary static jetway length formula survived",
   "decoded source bridge distance",
 ]) {
-  if (!ownGateLengthPreparation.includes(token)) throw new Error(`Decoded static jetway length preparation is missing ${token}`);
-}
-if (ownGateLengthPreparation.includes("11.9 + (exactUploadedGateCode % 4) * 0.65")) {
-  throw new Error("Arbitrary gate-code jetway length formula returned");
+  if (!ownGateLengthPreparation.includes(token)) throw new Error(`Decoded static jetway length migration is missing ${token}`);
 }
 
 for (const token of [
