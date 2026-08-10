@@ -1,5 +1,7 @@
 import fs from "node:fs";
 
+await import(`./prepare-static-jetway-own-gate-lengths-v1.mjs?own-gate-lengths=${Date.now()}`);
+
 const registrationPath = "src/environment/registerStaticJetwayFleetToFacadeV1.js";
 const SOURCE_POSE_AUTHORITY = "57-static-own-gate-target-real-wall-compact-registration-v9";
 const CONNECTOR_IMPORT = 'import { addStaticSolidTerminalVestibules } from "./staticSourceMeasuredTerminalConnectorsV2.js";';
@@ -67,4 +69,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(registrationPath, registration, "utf8");
-console.log(`Enforced a ${MIN_VISIBLE_METERS}-${MAX_VISIBLE_METERS} m static real-wall vestibule envelope (target ${EXPECTED_VISIBLE_METERS} m) while preserving own-gate target yaw. Long synthetic corridors and cross-stand raw-heading ownership now fail.`);
+console.log(`Enforced a ${MIN_VISIBLE_METERS}-${MAX_VISIBLE_METERS} m static real-wall vestibule envelope (target ${EXPECTED_VISIBLE_METERS} m) while preserving own-gate target yaw and decoded per-gate bridge lengths. Long synthetic corridors and cross-stand raw-heading ownership now fail.`);
