@@ -7,6 +7,7 @@ const sourcePlacedPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const currentMarkers = [
+  "final-a1-acceptance-authority-after-all-preparers-v6-own-gate-real-wall-static",
   "final-a1-acceptance-authority-after-all-preparers-v5-source-heading-real-wall-static",
   "final-a1-acceptance-authority-after-all-preparers-v4-source-static-integrity",
   "final-a1-acceptance-authority-after-all-preparers-v3-three-tire-contact",
@@ -99,4 +100,4 @@ for (const forbidden of [
   }
 }
 
-console.log("Published the established exact-head acceptance marker while preserving A1's verified real Terminal 4 wall registration: 2.9-5.8 m Rotunda-to-wall, 1.2-3.6 m visible fixed leg, no T4_WALK target, and no raw-BGL Rotunda reset.");
+console.log("Published the established exact-head acceptance marker while preserving A1's verified real Terminal 4 wall registration: 2.9-5.8 m Rotunda-to-wall, 1.2-3.6 m visible fixed leg, no T4_WALK target, and no raw-BGL Rotunda reset. Static fleet own-gate target alignment remains authoritative before this compatibility-only marker step.");
