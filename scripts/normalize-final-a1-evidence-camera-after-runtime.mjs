@@ -2,8 +2,9 @@ import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const CAMERA_AUTHORITY = "source-measured-a1-terminal-joint-camera-v3";
-const PROFILE_AUTHORITY = "rotunda-terminal-and-tunnel-a-bisector-profile-v2";
-const CAMERA_DISTANCE_METERS = 12.0;
+const PROFILE_AUTHORITY = "rotunda-terminal-and-tunnel-a-bisector-profile-v3-midheight";
+const CAMERA_DISTANCE_METERS = 14.0;
+const CAMERA_HEIGHT_OFFSET_METERS = 0.15;
 const MAX_BRANCH_VIEW_COSINE = 0.82;
 const MAX_BRANCH_VIEW_IMBALANCE = 0.20;
 
@@ -24,14 +25,12 @@ if (terminalStart < 0 || bogieElse < 0) {
   process.exit(0);
 }
 
-// The terminal leg and Tunnel A meet at roughly a right angle. The previous
-// camera was perpendicular to Tunnel A, which unfortunately made its sightline
-// almost collinear with the terminal leg and hid the exact vertical-step defect
-// visible in the user's phone screenshots. Use the INTERIOR angle bisector as
-// the camera sightline and place the camera on the opposite (apron) side. The
-// short terminal leg and the first several metres of Tunnel A then fan left and
-// right from the Rotunda in the same frame, so neither branch can hide behind
-// the other on desktop or a narrow portrait viewport.
+// Use the interior angle bisector so both the terminal-side fixed leg and
+// supplied Tunnel A fan away from the Rotunda in the same image. Keep the lens
+// essentially at passenger-tunnel mid-height. The prior +1.40 m offset put the
+// camera almost exactly at roof level, so the fixed-leg roof itself filled the
+// frame and could hide a vertical seam even when the camera was horizontally
+// well placed.
 const terminalBlock = `          if (exactA1EvidenceSubview === "terminal-joint") {
             const exactA1JointCenterX = exactA1CameraRotundaX;
             const exactA1JointCenterY = exactA1CameraRotundaY;
@@ -74,7 +73,7 @@ const terminalBlock = `          if (exactA1EvidenceSubview === "terminal-joint"
             const exactA1JointCameraDistance = ${CAMERA_DISTANCE_METERS.toFixed(1)};
 
             exactA1CameraPositionX = exactA1JointCenterX + exactA1JointCameraOutX * exactA1JointCameraDistance;
-            exactA1CameraPositionY = exactA1JointCenterY + 1.40;
+            exactA1CameraPositionY = exactA1JointCenterY + ${CAMERA_HEIGHT_OFFSET_METERS.toFixed(2)};
             exactA1CameraPositionZ = exactA1JointCenterZ + exactA1JointCameraOutZ * exactA1JointCameraDistance;
             exactA1CameraTargetX = exactA1JointCenterX;
             exactA1CameraTargetY = exactA1JointCenterY;
@@ -97,9 +96,6 @@ const terminalBlock = `          if (exactA1EvidenceSubview === "terminal-joint"
               throw new Error(\`A1 passenger-elbow camera can hide a branch: wall=\${exactA1JointWallViewCosine} tunnelA=\${exactA1JointTunnelAViewCosine} imbalance=\${exactA1JointBranchViewImbalance}\`);
             }
 
-            // Keep the historical telemetry keys for downstream consumers, but
-            // publish explicit branch-view metrics so acceptance can prove that
-            // neither half of the elbow is being viewed end-on.
             const exactA1JointApronDistance = 0;
             const exactA1JointSideDistance = exactA1JointCameraDistance;
             const exactA1JointSideOnCosine = Math.max(
@@ -119,6 +115,7 @@ const terminalBlock = `          if (exactA1EvidenceSubview === "terminal-joint"
             renderer.domElement.dataset.inspectionCameraEndpointJointWallViewCosine = exactA1JointWallViewCosine.toFixed(6);
             renderer.domElement.dataset.inspectionCameraEndpointJointTunnelAViewCosine = exactA1JointTunnelAViewCosine.toFixed(6);
             renderer.domElement.dataset.inspectionCameraEndpointJointBranchViewImbalance = exactA1JointBranchViewImbalance.toFixed(6);
+            renderer.domElement.dataset.inspectionCameraEndpointJointCameraHeightOffsetMeters = "${CAMERA_HEIGHT_OFFSET_METERS.toFixed(2)}";
             renderer.domElement.dataset.inspectionCameraEndpointJointProfileAuthority = "${PROFILE_AUTHORITY}";
 `;
 
@@ -135,9 +132,11 @@ for (const forbidden of [
   "Math.max(4.2, exactA1JointSpan * 1.05)",
   "Math.max(13.0, Math.min(16.0, exactA1JointSpan * 0.52))",
   "rotunda-to-tunnel-a-passenger-profile-v1",
+  "rotunda-terminal-and-tunnel-a-bisector-profile-v2",
+  "exactA1CameraPositionY = exactA1JointCenterY + 1.40;",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${trainerPath}: retired end-on A1 evidence framing survived final normalization: ${forbidden}`);
+    throw new Error(`${trainerPath}: retired roof-level/end-on A1 evidence framing survived final normalization: ${forbidden}`);
   }
 }
 
@@ -147,17 +146,18 @@ for (const required of [
   "const exactA1JointCabVectorX = exactA1CameraCabX - exactA1JointCenterX;",
   "const exactA1JointBisectorX = exactA1JointWallUnitX + exactA1JointCabUnitX;",
   `const exactA1JointCameraDistance = ${CAMERA_DISTANCE_METERS.toFixed(1)};`,
-  "exactA1CameraPositionY = exactA1JointCenterY + 1.40;",
+  `exactA1CameraPositionY = exactA1JointCenterY + ${CAMERA_HEIGHT_OFFSET_METERS.toFixed(2)};`,
   "exactA1CameraTargetY = exactA1JointCenterY;",
+  `inspectionCameraEndpointJointCameraHeightOffsetMeters = "${CAMERA_HEIGHT_OFFSET_METERS.toFixed(2)}"`,
   "inspectionCameraEndpointJointWallViewCosine",
   "inspectionCameraEndpointJointTunnelAViewCosine",
   "inspectionCameraEndpointJointBranchViewImbalance",
   `inspectionCameraEndpointJointProfileAuthority = "${PROFILE_AUTHORITY}"`,
 ]) {
   if (!source.includes(required)) {
-    throw new Error(`${trainerPath}: normalized A1 bisector evidence camera is missing ${required}`);
+    throw new Error(`${trainerPath}: normalized A1 mid-height bisector evidence camera is missing ${required}`);
   }
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Normalized final A1 evidence camera to the apron-side terminal/Rotunda/Tunnel-A angle bisector; both elbow branches must remain visible in the same frame.");
+console.log("Normalized final A1 evidence camera to a passenger-midheight apron-side terminal/Rotunda/Tunnel-A bisector; both elbow branches must remain visible without roof occlusion.");
