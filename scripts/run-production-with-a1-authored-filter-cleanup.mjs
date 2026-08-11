@@ -43,10 +43,19 @@ if (
 
 let buildError;
 try {
-  // This wrapper runs after the final airport-ownership readiness pass. Re-run
-  // the Tunnel-C migration here so no later compatibility layer can restore the
-  // retired whole-model/pedestal ground rule in the artifact that Vite bundles.
-  await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?post-airport-ownership=${Date.now()}`);
+  // All of the simulator-quality A1 relocation/aircraft/closure preparers have
+  // finished before this wrapper. Re-apply the physical A1 articulation HERE so
+  // none of those late compatibility passes can rotate the Rotunda portal away
+  // from the real terminal again. This operation leaves Tunnel A/B/C/Cab and
+  // their Y/ground pose untouched; it restores only the Rotunda world
+  // orientation/center that existed at the measured wall before the complete
+  // anchor received its decoded KPHX heading.
+  await import(`./prepare-a1-fixed-rotunda-aircraft-side-pivot-v1.mjs?final-production-rotunda=${Date.now()}`);
+
+  // The fixed Rotunda correction never changes Tunnel-C Y, but re-run the actual
+  // aircraft-side ground contract after it so the artifact can only bundle if
+  // the visible support/wheel geometry remains on the ramp.
+  await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?post-fixed-rotunda=${Date.now()}`);
   await import("./run-production-with-a1-cleanup.mjs");
 } catch (error) {
   buildError = error;
@@ -86,4 +95,4 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log("RampReady production artifact preserved the exact three-box, 36-triangle A1 authored cleanup and Terminal 4 jetway simulator polish, then restored authoredTerminal4Visual.js byte-for-byte.");
+console.log("RampReady production artifact keeps the A1 Rotunda fixed to the measured terminal-wall orientation as the final geometry authority, preserves the decoded aircraft-side Tunnel A/B/C/Cab heading and Tunnel-C ramp contact, applies the exact three-box authored cleanup and Terminal 4 jetway polish, then restores authoredTerminal4Visual.js byte-for-byte.");
