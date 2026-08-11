@@ -15,7 +15,23 @@ await import(`./prepare-a1-readiness-compact-wall-v1.mjs?source-measured-readine
 // relocation. It must not manufacture the historical 2.40 m spacing.
 await import(`./prepare-a1-real-terminal-final-geometry-v1.mjs?pre-visual-real-wall=${Date.now()}`);
 
-const installation = fs.readFileSync(installationPath, "utf8");
+let installation = fs.readFileSync(installationPath, "utf8");
+
+// Upstream photo-registration compatibility can still generate the historical
+// 2.40 m constant declaration even after every executable use has been removed by
+// the physical-elbow stages. Strip that dead declaration here. If ANY reference
+// remains afterward, fail closed rather than silently allowing it to regain
+// geometry ownership.
+installation = installation.replace(/^const A1_PHOTO_VISIBLE_VESTIBULE_METERS = [^;]+;\n/m, "");
+if (installation.includes("A1_PHOTO_VISIBLE_VESTIBULE_METERS")) {
+  const survivors = installation
+    .split("\n")
+    .filter((line) => line.includes("A1_PHOTO_VISIBLE_VESTIBULE_METERS"))
+    .join(" | ");
+  throw new Error(`${installationPath}: executable legacy photo-distance reference survived physical elbow preparation: ${survivors}`);
+}
+fs.writeFileSync(installationPath, installation, "utf8");
+
 for (const required of [
   `A1_PARENT_ORIENTATION_AUTHORITY = "${ELBOW_AUTHORITY}"`,
   "const measuredTerminalAlignment = alignedOpeningDirection.dot(terminalDirection)",
@@ -36,7 +52,6 @@ for (const required of [
 for (const forbidden of [
   "const desiredTerminalDistance = rotundaOpening.collarRadius + 2.4;",
   "const desiredTerminalDistance = sourceTerminalDistance;",
-  "A1_PHOTO_VISIBLE_VESTIBULE_METERS",
   "a1Anchor.position.x += terminalRelocationX",
   "a1Anchor.position.z += terminalRelocationZ",
   "UploadedAirportJetwayA1RotundaVestibuleClosurePanel",
@@ -50,4 +65,4 @@ for (const forbidden of [
 
 await import(`./prepare-a1-visual-acceptance-evidence-v1.mjs?visual-acceptance=${Date.now()}`);
 
-console.log("Prepared A1 Rotunda/terminal visual acceptance without moving the jetway: the physically articulated Rotunda aperture remains aligned to the structural wall, whole-bridge relocation stays exactly zero, and only the measured short wall-side seam is styled/closed before evidence capture.");
+console.log("Prepared A1 Rotunda/terminal visual acceptance without moving the jetway: the physically articulated Rotunda aperture remains aligned to the structural wall, whole-bridge relocation stays exactly zero, the dead 2.40 m photo constant is removed, and only the measured short wall-side seam is styled/closed before evidence capture.");
