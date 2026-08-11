@@ -46,7 +46,7 @@ const monitor = `${anchor}
                 }
               });
               if (liveCabVertexCount < 100 || !Number.isFinite(liveMaximumProjection)) {
-                throw new Error(`live A1 Cab sample is invalid: ${liveCabVertexCount}`);
+                throw new Error(\`live A1 Cab sample is invalid: \${liveCabVertexCount}\`);
               }
 
               const liveCabEndpointWorld = new THREE.Vector3();
