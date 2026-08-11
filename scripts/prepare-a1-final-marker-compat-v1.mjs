@@ -64,6 +64,12 @@ if (sourcePlaced.includes('yaw: jetway.g === "A1" ? yaw : sourceJetwayYaw')) {
   throw new Error(`${sourcePlacedPath}: synthetic A1 yaw exception returned during marker compatibility`);
 }
 
+// The earlier readiness preparer still knows the retired whole-model v2 label.
+// Migrate that acceptance contract now, after the Tunnel-C geometry measurement
+// has already been installed, and before we inspect final readiness. This changes
+// no scene geometry or transforms.
+await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?final-compat=${Date.now()}`);
+
 const readiness = fs.readFileSync(readinessPath, "utf8");
 const elbow = fs.readFileSync(elbowPath, "utf8");
 for (const required of [
@@ -87,8 +93,16 @@ for (const forbidden of [
     throw new Error(`${elbowPath}: compatibility step found destructive A1 pivot behavior ${forbidden}`);
   }
 }
-if (!readiness.includes(bogieAuthority)) {
-  throw new Error(`${readinessPath}: Tunnel-C bogie grounding authority is missing before final compatibility publication`);
+for (const required of [
+  `bogieGroundContactAuthority !== "${bogieAuthority}"`,
+  "Math.abs(bogieGroundClearance) > 0.015",
+  "bogieGroundContactPointCount < 4",
+  "bogieGroundContactClusterCount < 1",
+  "bogieGroundHorizontalContactSpan < 0.35",
+]) {
+  if (!readiness.includes(required)) {
+    throw new Error(`${readinessPath}: Tunnel-C bogie readiness is missing ${required}`);
+  }
 }
 
 console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. No A1 geometry preparer ran: decoded KPHX source pose, intact supplied hierarchy and Tunnel-C bogie ramp authority remain untouched.`);
