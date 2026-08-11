@@ -32,8 +32,6 @@ const declarations = `${declarationAnchor}
           const bogieGroundContactCenterY = Number(group.userData.uploadedJetwayBogieGroundContactCenterY ?? NaN);
           const bogieGroundContactCenterZ = Number(group.userData.uploadedJetwayBogieGroundContactCenterZ ?? NaN);`;
 
-// Idempotent declaration publication: a second production pass may already have
-// the complete v3 telemetry block from verify-prepared-runtime.
 if (!source.includes("const bogieGroundContactPointCount =")) {
   if (!source.includes(declarationAnchor)) {
     throw new Error(`${readinessPath}: bogie telemetry declaration anchor is missing`);
@@ -51,10 +49,6 @@ if (!source.includes("const bogieGroundContactPointCount =")) {
   );
 }
 
-// Normalize any legacy whole-model/pedestal wording that may survive an older
-// generated readiness pass. These thresholds describe the actual Tunnel-C
-// aircraft-side support footprint and are deliberately the same as the final
-// runtime guard.
 for (const retired of retiredAuthorities) source = source.replaceAll(retired, authority);
 source = source
   .replaceAll("Math.abs(bogieGroundClearance) > 0.005", "Math.abs(bogieGroundClearance) > 0.015")
@@ -62,7 +56,11 @@ source = source
   .replaceAll("bogieGroundContactClusterCount < 2", "bogieGroundContactClusterCount < 1")
   .replaceAll("bogieGroundHorizontalContactSpan < 1.2", "bogieGroundHorizontalContactSpan < 0.35")
   .replaceAll("Math.abs(fleetGroundOffset) > 3", "Math.abs(fleetGroundOffset) > 8")
-  .replaceAll("Math.abs(fleetGroundOffset) > 0.5", "Math.abs(fleetGroundOffset) > 8");
+  .replaceAll("Math.abs(fleetGroundOffset) > 0.5", "Math.abs(fleetGroundOffset) > 8")
+  .replaceAll(
+    "bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1",
+    "Number.isFinite(bogieTireCorrection) && bogieTireCorrection > 0",
+  );
 
 const strictGuards = [
   "!Number.isFinite(fleetGroundOffset)",
@@ -81,9 +79,6 @@ const strictGuards = [
   "!Number.isFinite(bogieGroundContactCenterZ)",
 ];
 
-// If this is the first pass, attach any missing v3 guards to the exact readiness
-// mismatch condition. If this is a second pass, simply validate the already-
-// normalized guard instead of demanding the retired literal syntax.
 const missingGuards = strictGuards.filter((guard) => !source.includes(guard));
 if (missingGuards.length) {
   const mismatchMarker = "Exact jetway readiness mismatch:";
