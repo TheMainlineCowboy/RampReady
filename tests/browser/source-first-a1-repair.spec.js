@@ -9,7 +9,6 @@ const CAB_CONTACT_AUTHORITY = "authored-rendered-forward-left-door-to-final-cab-
 const RENDERED_SCALE_AUTHORITY = "crj-authored-world-dimensions-preserved-v2";
 const DOOR_STATION_AUTHORITY = "final-live-cab-mesh-visible-door-v3";
 const A1_PARKING_YAW = 0.008570;
-const CRJ_DOOR_HORIZONTAL_OFFSET_METERS = Math.hypot(7.32, 1.34);
 const AUTHORED_FORWARD_LEFT_DOOR = Object.freeze({ x: -1.262, y: 3.0, z: 3.90 });
 
 async function captureCanvas(page, path) {
@@ -119,6 +118,8 @@ test("source-owned A1 evidence proves the fixed PHX jetway, Cab-derived aircraft
       && Number.isFinite(Number(data?.aircraftModePoseLiveX))
       && Number.isFinite(Number(data?.aircraftModePoseLiveZ))
       && Number.isFinite(Number(data?.aircraftModePoseLiveYaw))
+      && Number.isFinite(Number(data?.inspectionAircraftSourceGateDoorTargetErrorMeters))
+      && Number(data?.inspectionAircraftSourceGateDoorTargetErrorMeters) <= 0.01
       && data?.airportCollisionReady === "true";
   }, {
     terminalAuthority: DIRECT_A1_TERMINAL_AUTHORITY,
@@ -190,10 +191,7 @@ test("source-owned A1 evidence proves the fixed PHX jetway, Cab-derived aircraft
   expect(Math.abs(Math.hypot(cabDirectionX, cabDirectionZ) - 1)).toBeLessThanOrEqual(0.01);
   expect(Math.hypot(renderedDoorX - cabContactX, renderedDoorZ - cabContactZ)).toBeLessThanOrEqual(0.01);
   expect(Number(runtime.inspectionAircraftCabContactErrorMeters)).toBeLessThanOrEqual(0.01);
-  expect(Math.hypot(renderedDoorX - noseGearX, renderedDoorZ - noseGearZ)).toBeCloseTo(
-    CRJ_DOOR_HORIZONTAL_OFFSET_METERS,
-    2,
-  );
+  expect(Number(runtime.inspectionAircraftSourceGateDoorTargetErrorMeters)).toBeLessThanOrEqual(0.01);
 
   const signedDoorVerticalGapMeters = Number(runtime.inspectionAircraftDoorSignedVerticalGapMeters);
   const requestedJetwayVerticalFitMeters = Number(runtime.inspectionAircraftJetwayRequestedVerticalFitMeters);
