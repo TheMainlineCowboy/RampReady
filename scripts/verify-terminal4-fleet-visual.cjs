@@ -9,6 +9,7 @@ const LEGACY_SUBVIEW_AUTHORITY = 'exact-a1-terminal-joint-and-bogie-contact-subv
 const CAMERA_AUTHORITY = 'exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2';
 const LOCK_AUTHORITY = 'exact-a1-evidence-camera-direct-lock-v1';
 const A1_VISUAL_AUTHORITY = 'same-day-a1-continuous-source-measured-solid-closed-grounded-v2';
+const A1_LIVE_CAB_AUTHORITY = 'final-visible-cab-mesh-door-contact-v7';
 const STATIC_OWN_GATE_AUTHORITY = '57-static-own-gate-target-real-wall-compact-registration-v9';
 const MAXIMUM_STATIC_OWN_GATE_HEADING_ERROR_RADIANS = 0.002;
 const MAXIMUM_STATIC_TERMINAL_FACING_DOT = 0.25;
@@ -171,6 +172,21 @@ function finiteNumber(value) {
   }
   if (Math.abs(Number(a1.terminal4UploadedJetwayBogieGroundClearanceMeters)) > 0.005) {
     geometryFailures.push(`A1 bogie is not grounded: ${a1.terminal4UploadedJetwayBogieGroundClearanceMeters}`);
+  }
+  if (a1.inspectionAircraftCabContactAuthority !== A1_LIVE_CAB_AUTHORITY) {
+    geometryFailures.push(`A1 aircraft is not registered to the final visible Cab mesh: ${a1.inspectionAircraftCabContactAuthority}`);
+  }
+  for (const [name, value] of [
+    ['final visible Cab X', a1.inspectionAircraftFinalVisibleCabWorldX],
+    ['final visible Cab Y', a1.inspectionAircraftFinalVisibleCabWorldY],
+    ['final visible Cab Z', a1.inspectionAircraftFinalVisibleCabWorldZ],
+    ['final visible Cab vertex count', a1.inspectionAircraftFinalVisibleCabVertexCount],
+    ['final visible Cab endpoint count', a1.inspectionAircraftFinalVisibleCabEndpointVertexCount],
+  ]) {
+    if (finiteNumber(value) === null) geometryFailures.push(`A1 ${name} is missing: ${value}`);
+  }
+  if (Number(a1.inspectionAircraftFinalVisibleCabVertexCount) < 100 || Number(a1.inspectionAircraftFinalVisibleCabEndpointVertexCount) < 3) {
+    geometryFailures.push(`A1 final live Cab mesh sample is invalid: vertices=${a1.inspectionAircraftFinalVisibleCabVertexCount} endpoint=${a1.inspectionAircraftFinalVisibleCabEndpointVertexCount}`);
   }
   const a1HorizontalDoorError = finiteNumber(a1.inspectionAircraftCabContactErrorMeters);
   if (a1HorizontalDoorError === null || Math.abs(a1HorizontalDoorError) > MAXIMUM_A1_HORIZONTAL_DOOR_ERROR_METERS) {
