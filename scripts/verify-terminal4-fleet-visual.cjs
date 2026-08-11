@@ -12,7 +12,12 @@ const A1_VISUAL_AUTHORITY = 'same-day-a1-continuous-source-measured-solid-closed
 const STATIC_OWN_GATE_AUTHORITY = '57-static-own-gate-target-real-wall-compact-registration-v9';
 const MAXIMUM_STATIC_OWN_GATE_HEADING_ERROR_RADIANS = 0.002;
 const MAXIMUM_STATIC_TERMINAL_FACING_DOT = 0.25;
-const MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS = 0.5;
+const MAXIMUM_A1_HORIZONTAL_DOOR_ERROR_METERS = 0.06;
+// A1 bridge height is intentionally deferred. The user explicitly asked that
+// exact aircraft-height fit not block the airport/jetway placement work. Keep
+// the signed vertical gap finite and visible in the report, but never "fix" it
+// by floating the bogie or aircraft. A later bridge-lift rig will own Y.
+const MAXIMUM_DEFERRED_A1_DOOR_VERTICAL_ERROR_METERS = 6;
 
 const views = Object.freeze([
   ['a14', 'A concourse midpoint', 'a-concourse-fleet.png', 'chase'],
@@ -119,6 +124,7 @@ function finiteNumber(value) {
   const pageErrors = [];
   const failedRequests = [];
   const geometryFailures = [];
+  const deferredGeometry = [];
   page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   page.on('pageerror', error => pageErrors.push(error.message));
   page.on('requestfailed', request => failedRequests.push(`${request.method()} ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
@@ -166,9 +172,22 @@ function finiteNumber(value) {
   if (Math.abs(Number(a1.terminal4UploadedJetwayBogieGroundClearanceMeters)) > 0.005) {
     geometryFailures.push(`A1 bogie is not grounded: ${a1.terminal4UploadedJetwayBogieGroundClearanceMeters}`);
   }
+  const a1HorizontalDoorError = finiteNumber(a1.inspectionAircraftCabContactErrorMeters);
+  if (a1HorizontalDoorError === null || Math.abs(a1HorizontalDoorError) > MAXIMUM_A1_HORIZONTAL_DOOR_ERROR_METERS) {
+    geometryFailures.push(`A1 Cab/aircraft horizontal door error is unacceptable: ${a1.inspectionAircraftCabContactErrorMeters} m`);
+  }
+  const a1SourceGateDoorError = finiteNumber(a1.inspectionAircraftSourceGateDoorTargetErrorMeters);
+  if (a1SourceGateDoorError === null || Math.abs(a1SourceGateDoorError) > MAXIMUM_A1_HORIZONTAL_DOOR_ERROR_METERS) {
+    geometryFailures.push(`A1 source-gate door target error is unacceptable: ${a1.inspectionAircraftSourceGateDoorTargetErrorMeters} m`);
+  }
   const a1DoorVerticalError = finiteNumber(a1.inspectionAircraftDoorVerticalErrorMeters);
-  if (a1DoorVerticalError === null || Math.abs(a1DoorVerticalError) > MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS) {
-    geometryFailures.push(`A1 Cab/aircraft door vertical error is visually unacceptable: ${a1.inspectionAircraftDoorVerticalErrorMeters} m (max ${MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS})`);
+  if (a1DoorVerticalError === null || Math.abs(a1DoorVerticalError) > MAXIMUM_DEFERRED_A1_DOOR_VERTICAL_ERROR_METERS) {
+    geometryFailures.push(`A1 deferred door-height gap escaped safe bounds: ${a1.inspectionAircraftDoorVerticalErrorMeters} m`);
+  } else if (Math.abs(a1DoorVerticalError) > 0.5) {
+    deferredGeometry.push(`A1 bridge lift remains deferred: Cab/aircraft door vertical gap=${a1DoorVerticalError.toFixed(3)} m; aircraft and bogie remain grounded.`);
+  }
+  if (a1.inspectionAircraftJetwayAuthoredBogieGroundPreserved !== 'true') {
+    geometryFailures.push(`A1 exact-model bogie ground preservation is false: ${a1.inspectionAircraftJetwayAuthoredBogieGroundPreserved}`);
   }
   if (a1.terminal4TerminalConnectedJetwayCount !== '58') {
     geometryFailures.push(`Terminal-connected jetway count is not 58: ${a1.terminal4TerminalConnectedJetwayCount}`);
@@ -197,7 +216,7 @@ function finiteNumber(value) {
   await selectByValue(page, 'Camera view', 'overhead');
   await page.waitForTimeout(1000);
   captures['a1-terminal-overhead.png'] = await capture(page, 'a1-terminal-overhead.png');
-  checkpoint('a1-complete', { captures: Object.keys(captures), geometryFailures });
+  checkpoint('a1-complete', { captures: Object.keys(captures), geometryFailures, deferredGeometry });
 
   for (const [preset, label, filename, cameraView] of views) {
     await selectByLabel(page, 'Inspection location', label);
@@ -216,22 +235,24 @@ function finiteNumber(value) {
     pageUrl,
     captures,
     geometryFailures,
+    deferredGeometry,
     consoleErrors,
     pageErrors,
     failedRequests,
     a1Telemetry: a1,
   }, null, 2)}\n`);
-  checkpoint('captured-and-validated', { captures, geometryFailures });
+  checkpoint('captured-and-validated', { captures, geometryFailures, deferredGeometry });
 
   if (geometryFailures.length) throw new Error(`Fleet geometry acceptance failed: ${geometryFailures.join(' | ')}`);
   if (criticalConsole.length) throw new Error(`Fleet evidence critical console errors: ${criticalConsole.join(' | ')}`);
   if (pageErrors.length) throw new Error(`Fleet evidence page errors: ${pageErrors.join(' | ')}`);
   if (criticalFailedRequests.length) throw new Error(`Fleet evidence failed requests: ${criticalFailedRequests.join(' | ')}`);
 
-  checkpoint('complete', { captures });
+  checkpoint('complete', { captures, deferredGeometry });
   await context.close();
   await browser.close();
   console.log(`TERMINAL 4 FLEET VISUAL EVIDENCE ACCEPTED: ${Object.keys(captures).join(', ')}`);
+  if (deferredGeometry.length) console.log(`DEFERRED HEIGHT ONLY: ${deferredGeometry.join(' | ')}`);
 })().catch(async error => {
   checkpoint('failed', { error: error?.stack || error?.message || String(error) });
   console.error(error?.stack || error?.message || String(error));
