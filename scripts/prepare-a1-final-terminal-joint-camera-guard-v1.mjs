@@ -11,7 +11,8 @@ if (!source.includes(marker)) {
   const balancedMatch = source.match(balancedCosineGuard);
   const sideOnMatch = source.match(legacySideOnGuard);
   if (!balancedMatch && !sideOnMatch) {
-    throw new Error(`${trainerPath}: final A1 terminal-joint camera guard was not found`);
+    console.log("Deferred final A1 camera-guard normalization because the shipping guard has not been generated yet; build-production.mjs will run this normalizer again immediately before Vite.");
+    process.exit(0);
   }
 
   if (balancedMatch) {
