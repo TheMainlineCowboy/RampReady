@@ -144,6 +144,7 @@ for (const forbidden of [
   "expect(renderedAircraftVerticalError).toBeLessThanOrEqual(0.01)",
   "grounded-aircraft-door-progressive-tunnel-slope-v2",
   "exact-authored-a1-lowest-geometry-ramp-contact-v2",
+  "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3",
 ]) {
   if (preparedArticulationTest.includes(forbidden)) throw new Error(`Post-restoration browser preparation left retired articulation expectation ${forbidden}`);
 }
@@ -154,9 +155,12 @@ for (const required of [
   "renderedAircraftVerticalError).toBeLessThanOrEqual(6)",
   "grounded-jetway-door-gap-reported-no-child-lift-v1",
   "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
-  "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3",
+  "exact-authored-a1-connected-wheel-pair-ramp-contact-v4",
+  "terminal4UploadedJetwayBogieGroundContactPointCount) >= 8",
+  "terminal4UploadedJetwayBogieGroundContactClusterCount) >= 2",
+  "terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters) >= 1.4",
 ]) {
   if (!preparedArticulationTest.includes(required)) throw new Error(`Post-restoration browser preparation is missing ${required}`);
 }
 
-console.log("RampReady simulator-quality production build requires the intact source-owned A1 assembly and aircraft-side Tunnel-C bogie/support ramp contact; a grounded terminal pedestal can no longer masquerade as a grounded jetway bogie.");
+console.log("RampReady simulator-quality production build requires the intact source-owned A1 assembly and the exact connected authored two-wheel bogie pair on the ramp; a grounded terminal pedestal or arbitrary Tunnel-C low point can no longer masquerade as grounded aircraft-side wheels.");
