@@ -4,13 +4,21 @@ const runtimePath = "src/environment/sourcePlacedTerminal4Jetways.js";
 const marker = "a1-final-source-hierarchy-walkway-exclusion-v1";
 let source = fs.readFileSync(runtimePath, "utf8");
 
-// The A1 facade finder already rejects meshes whose own name says WALK/JETWAY,
-// and a later pass rejects ramp-level points underneath horizontal T4_WALK
-// triangles. That is not enough for the converted airport: a structural-looking
-// child mesh can carry BGATE/DGATE material while one of its ancestors/source
-// metadata still identifies it as the elevated walkway/portal assembly.
-// Reject the complete source hierarchy before the triangle can ever become a
-// terminal-wall candidate.
+// This wrapper is intentionally valid in two build phases. prepare:terminal4-runtime
+// already runs prepare-a1-terminal-connector-v11, which has a full ancestor/source
+// hierarchy exclusion. The simulator-quality pass later replaces the wall finder
+// with v14 triangle qualification, so this script must strengthen that later form
+// without rejecting the already-safe v11 form or leaving a marker that could make
+// a later replacement look prepared when it is not.
+const hasV11HierarchyExclusion = source.includes("hierarchyObject.userData?.sourceName")
+  && source.includes("hierarchyNode.userData?.sourceName")
+  && source.includes("/T4[_ -]?WALK|WALKWAY|JETWAY|CONNECTOR|PORTAL/i");
+const hasFinalHierarchyExclusion = source.includes("sourceHierarchyNode.userData?.sourceName")
+  && source.includes(marker);
+
+// The v14 triangle finder initially checks only node.name. Upgrade that exact
+// runtime form so a structural-looking child mesh still gets rejected whenever
+// any converted ancestor/source identity belongs to T4_WALK/walkway/portal.
 const nodeNameOnlyFilter = `    if (rejectedNodeName.test(node.name || "")) return;`;
 const hierarchyFilter = `    // ${marker}
     let sourceHierarchyNode = node;
@@ -35,76 +43,80 @@ const hierarchyFilter = `    // ${marker}
     }
     if (rejectedNodeName.test(node.name || "")) return;`;
 
-if (!source.includes(marker)) {
+if (!hasV11HierarchyExclusion && !hasFinalHierarchyExclusion) {
   if (!source.includes(nodeNameOnlyFilter)) {
-    throw new Error(`${runtimePath}: final A1 hierarchy exclusion could not find the triangle node-name filter`);
+    throw new Error(`${runtimePath}: A1 wall finder has neither the safe v11 hierarchy exclusion nor the v14 node-name anchor to strengthen`);
   }
   source = source.replace(nodeNameOnlyFilter, hierarchyFilter);
 }
 
-// Make the selected candidate itself carry positive evidence that the complete
-// source hierarchy passed the walkway exclusion. This gives runtime/browser
-// evidence a fail-closed bit instead of relying on a preparer comment.
-const candidateAnchor = `          underElevatedWalkway: false,
+// The following grounded-wall blocks exist only after the simulator-quality
+// grounded-terminal pass. When present, bind the hierarchy exclusion into the
+// selected candidate, gate and telemetry. During the earlier v11 runtime-prep
+// phase they are intentionally absent and the v11 hierarchy contract is enough.
+const hasGroundedA1Authority = source.includes("a1GroundedBuildingConnection")
+  && source.includes("elevatedWalkwayClearanceVerified");
+if (hasGroundedA1Authority) {
+  const candidateAnchor = `          underElevatedWalkway: false,
           elevatedWalkwayClearanceVerified: true,
           authority: "facade-contiguous-structural-wall-surface-v17",`;
-const candidateEvidence = `          underElevatedWalkway: false,
+  const candidateEvidence = `          underElevatedWalkway: false,
           elevatedWalkwayClearanceVerified: true,
           sourceHierarchyWalkwayExcluded: true,
           authority: "facade-contiguous-structural-wall-surface-v17",`;
-if (!source.includes("sourceHierarchyWalkwayExcluded: true")) {
-  if (!source.includes(candidateAnchor)) {
-    throw new Error(`${runtimePath}: final A1 hierarchy exclusion could not find the selected-facade evidence block`);
+  if (!source.includes("sourceHierarchyWalkwayExcluded: true")) {
+    if (!source.includes(candidateAnchor)) {
+      throw new Error(`${runtimePath}: grounded A1 authority exists but selected-facade hierarchy evidence block is missing`);
+    }
+    source = source.replace(candidateAnchor, candidateEvidence);
   }
-  source = source.replace(candidateAnchor, candidateEvidence);
-}
 
-// The grounded A1 connection is the authority ultimately assigned to A1. Require
-// the hierarchy bit there too so a future wall-search refactor cannot silently
-// bypass this rule and still satisfy the old footprint-only gate.
-const groundedGateAnchor = `      if (groundedConnection.underElevatedWalkway !== false
+  const groundedGateAnchor = `      if (groundedConnection.underElevatedWalkway !== false
         || groundedConnection.elevatedWalkwayClearanceVerified !== true) {
         throw new Error(\`A1 grounded search did not prove clearance from the elevated T4_WALK footprint: \${JSON.stringify(groundedConnection)}\`);
       }`;
-const groundedGate = `      if (groundedConnection.underElevatedWalkway !== false
+  const groundedGate = `      if (groundedConnection.underElevatedWalkway !== false
         || groundedConnection.elevatedWalkwayClearanceVerified !== true
         || groundedConnection.sourceHierarchyWalkwayExcluded !== true) {
         throw new Error(\`A1 grounded search did not prove clearance from the complete elevated T4_WALK source hierarchy: \${JSON.stringify(groundedConnection)}\`);
       }`;
-if (!source.includes("complete elevated T4_WALK source hierarchy")) {
-  if (!source.includes(groundedGateAnchor)) {
-    throw new Error(`${runtimePath}: final A1 hierarchy exclusion could not find the grounded walkway gate`);
+  if (!source.includes("complete elevated T4_WALK source hierarchy")) {
+    if (!source.includes(groundedGateAnchor)) {
+      throw new Error(`${runtimePath}: grounded A1 authority exists but footprint-only walkway gate is missing`);
+    }
+    source = source.replace(groundedGateAnchor, groundedGate);
   }
-  source = source.replace(groundedGateAnchor, groundedGate);
-}
 
-const groundedTelemetryAnchor = `        underElevatedWalkway: false,
+  const groundedTelemetryAnchor = `        underElevatedWalkway: false,
         elevatedWalkwayClearanceVerified: true,
         elevatedWalkwayFootprintCount: diagnostics?.elevatedWalkwayFootprintCount ?? 0,`;
-const groundedTelemetry = `        underElevatedWalkway: false,
+  const groundedTelemetry = `        underElevatedWalkway: false,
         elevatedWalkwayClearanceVerified: true,
         sourceHierarchyWalkwayExcluded: groundedConnection.sourceHierarchyWalkwayExcluded === true,
         walkwayHierarchyRejectedCount: diagnostics?.walkwayHierarchyRejectedCount ?? 0,
         elevatedWalkwayFootprintCount: diagnostics?.elevatedWalkwayFootprintCount ?? 0,`;
-if (!source.includes("walkwayHierarchyRejectedCount: diagnostics?.walkwayHierarchyRejectedCount")) {
-  if (!source.includes(groundedTelemetryAnchor)) {
-    throw new Error(`${runtimePath}: final A1 hierarchy exclusion could not find grounded connection telemetry`);
+  if (!source.includes("walkwayHierarchyRejectedCount: diagnostics?.walkwayHierarchyRejectedCount")) {
+    if (!source.includes(groundedTelemetryAnchor)) {
+      throw new Error(`${runtimePath}: grounded A1 authority exists but grounded connection telemetry block is missing`);
+    }
+    source = source.replace(groundedTelemetryAnchor, groundedTelemetry);
   }
-  source = source.replace(groundedTelemetryAnchor, groundedTelemetry);
 }
 
-for (const required of [
-  marker,
-  "sourceHierarchyNode.userData?.sourceName",
-  "sourceHierarchyNode.userData?.sourceModel",
-  "sourceHierarchyNode.userData?.sourcePart",
-  "/T4[_ -]?WALK|WALKWAY|JETWAY|CONNECTOR|PORTAL/i",
-  "diagnostics.walkwayHierarchyRejectedCount",
-  "sourceHierarchyWalkwayExcluded: true",
-  "complete elevated T4_WALK source hierarchy",
-]) {
-  if (!source.includes(required)) {
-    throw new Error(`${runtimePath}: final A1 walkway-hierarchy authority is missing ${required}`);
+const finalSafeHierarchy = source.includes("sourceHierarchyNode.userData?.sourceName")
+  || (source.includes("hierarchyObject.userData?.sourceName") && source.includes("hierarchyNode.userData?.sourceName"));
+if (!finalSafeHierarchy || !source.includes("/T4[_ -]?WALK|WALKWAY|JETWAY|CONNECTOR|PORTAL/i")) {
+  throw new Error(`${runtimePath}: A1 final wall finder does not reject the complete converted T4_WALK source hierarchy`);
+}
+if (hasGroundedA1Authority) {
+  for (const required of [
+    "sourceHierarchyWalkwayExcluded: true",
+    "complete elevated T4_WALK source hierarchy",
+    "walkwayHierarchyRejectedCount: diagnostics?.walkwayHierarchyRejectedCount",
+  ]) {
+    if (!source.includes(required)) {
+      throw new Error(`${runtimePath}: grounded A1 final hierarchy authority is missing ${required}`);
+    }
   }
 }
 for (const forbidden of [
@@ -117,4 +129,6 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log("Finalized A1 terminal-wall search so any T4_WALK/walkway/portal identity anywhere in a candidate's converted source hierarchy is rejected before wall selection; ramp-level footprint clearance remains required as a second independent gate.");
+console.log(hasGroundedA1Authority
+  ? "Finalized grounded A1 wall selection with both full converted-source hierarchy rejection and physical T4_WALK footprint clearance required."
+  : "Validated the existing v11 full-hierarchy A1 terminal-building exclusion during early Terminal 4 runtime preparation.");
