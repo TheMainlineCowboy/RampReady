@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const elbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
-const marker = "a1-terminal-sleeve-uses-supplied-tunnel-a-skin-and-cross-section-v1";
+const marker = "a1-terminal-sleeve-uses-supplied-tunnel-a-skin-and-cross-section-v2";
 let source = fs.readFileSync(elbowPath, "utf8");
 
 if (!source.includes(marker)) {
@@ -54,9 +54,9 @@ function createMaterials(THREE, tunnelA) {
     shell,
     shellSourceMaterialName: suppliedTunnelMaterial?.name || "fallback-untextured-shell",
     rib: new THREE.MeshStandardMaterial({
-      name: "A1 fixed-wall terminal-side panel seams",
-      color: 0xc7cac8,
-      roughness: 0.86,
+      name: "A1 fixed terminal sleeve - source-like panel seams",
+      color: 0x92999b,
+      roughness: 0.88,
       metalness: 0.05,
       side: THREE.DoubleSide,
     }),
@@ -91,8 +91,8 @@ function createMaterials(THREE, tunnelA) {
         parent,
         materials.rib,
         \`UploadedAirportJetwayA1TerminalElbowRib_\${ribCount}_\${sign}\`,
-        [0.035, height * 0.92, 0.04],
-        ribCenter.clone().addScaledVector(side, sign * (halfWidth + 0.018)),
+        [0.05, height * 0.90, 0.055],
+        ribCenter.clone().addScaledVector(side, sign * (halfWidth + 0.052)),
         yaw,
         false,
       );
@@ -102,14 +102,56 @@ function createMaterials(THREE, tunnelA) {
       parent,
       materials.rib,
       \`UploadedAirportJetwayA1TerminalElbowRoofRib_\${ribCount}\`,
-      [width + 0.05, 0.035, 0.04],
-      ribCenter.clone().add(new THREE.Vector3(0, height * 0.5 + 0.018, 0)),
+      [width + 0.08, 0.045, 0.055],
+      ribCenter.clone().add(new THREE.Vector3(0, height * 0.5 + 0.085, 0)),
       yaw,
       false,
     );
     ribCount += 1;`;
   if (!source.includes(sideRibAnchor)) throw new Error(`${elbowPath}: A1 terminal sleeve rib anchor is missing`);
   source = source.replace(sideRibAnchor, detailedRib);
+
+  // The exact uploaded bridge has visible framed/panelized tunnel sides. The
+  // generated fixed wall sleeve is only 2-3 m long, but without equivalent edge
+  // structure it reads as one giant blank box in a close inspection view. Add
+  // shallow upper/lower side rails outside the wall surface; these do not change
+  // the passenger envelope or wall/Rotunda placement.
+  const returnAnchor = `  }
+  return { yaw, ribCount };
+}
+
+function addCompactRotundaBellows`;
+  const framedReturn = `  }
+  const railLength = Math.max(0.25, length - 0.12);
+  for (const sign of [-1, 1]) {
+    for (const verticalSign of [-1, 1]) {
+      addBox(
+        THREE,
+        parent,
+        materials.rib,
+        \`UploadedAirportJetwayA1TerminalElbowSideRail_\${sign}_\${verticalSign}\`,
+        [0.055, 0.055, railLength],
+        center.clone()
+          .addScaledVector(side, sign * (halfWidth + 0.052))
+          .add(new THREE.Vector3(0, verticalSign * height * 0.34, 0)),
+        yaw,
+        false,
+      );
+    }
+  }
+  return { yaw, ribCount };
+}
+
+function addCompactRotundaBellows`;
+  if (!source.includes(returnAnchor)) throw new Error(`${elbowPath}: A1 terminal sleeve frame return anchor is missing`);
+  source = source.replace(returnAnchor, framedReturn);
+
+  // Make panel spacing closer to the visible supplied tunnel framing instead of
+  // leaving one broad uninterrupted side face.
+  source = source.replace(
+    "  for (let distance = 0.36; distance < length - 0.2; distance += 0.52) {",
+    "  for (let distance = 0.28; distance < length - 0.16; distance += 0.38) {",
+  );
 
   const materialCall = "  const materials = createMaterials(THREE);";
   if (!source.includes(materialCall)) throw new Error(`${elbowPath}: A1 terminal sleeve material-call anchor is missing`);
@@ -130,7 +172,8 @@ function createMaterials(THREE, tunnelA) {
   connector.userData.suppliedTunnelSkinAuthority = "${marker}";
   connector.userData.suppliedTunnelMaterialName = materials.shellSourceMaterialName;
   connector.userData.suppliedTunnelMatchedWidthMeters = width;
-  connector.userData.suppliedTunnelMatchedHeightMeters = height;`;
+  connector.userData.suppliedTunnelMatchedHeightMeters = height;
+  connector.userData.sourceLikePanelRailCount = 4;`;
   if (!source.includes(telemetryAnchor)) throw new Error(`${elbowPath}: A1 terminal sleeve telemetry anchor is missing`);
   source = source.replace(telemetryAnchor, telemetry);
 }
@@ -139,12 +182,16 @@ for (const required of [
   marker,
   "function createMaterials(THREE, tunnelA)",
   'shell.name = "A1 fixed terminal sleeve - supplied Tunnel A skin"',
+  'name: "A1 fixed terminal sleeve - source-like panel seams"',
   "const materials = createMaterials(THREE, tunnelA)",
   "UploadedAirportJetwayA1TerminalElbowRoofRib_",
+  "UploadedAirportJetwayA1TerminalElbowSideRail_",
+  "distance += 0.38",
   "connector.userData.suppliedTunnelSkinAuthority",
   "connector.userData.suppliedTunnelMaterialName",
   "connector.userData.suppliedTunnelMatchedWidthMeters = width",
   "connector.userData.suppliedTunnelMatchedHeightMeters = height",
+  "connector.userData.sourceLikePanelRailCount = 4",
 ]) {
   if (!source.includes(required)) throw new Error(`${elbowPath}: supplied Tunnel A terminal sleeve is missing ${required}`);
 }
@@ -152,9 +199,11 @@ for (const forbidden of [
   "const width = 2.58;",
   "const height = 2.44;",
   'name: "A1 fixed-wall compact terminal-side shell"',
+  "halfWidth + 0.018",
+  "distance += 0.52",
 ]) {
   if (source.includes(forbidden)) throw new Error(`${elbowPath}: fabricated blank A1 terminal sleeve behavior remains: ${forbidden}`);
 }
 
 fs.writeFileSync(elbowPath, source, "utf8");
-console.log("Matched the A1 terminal-side fixed sleeve to the supplied Tunnel A skin, preserved any already-measured passenger-envelope dimensions, added visible roof/side panel ribs, and removed the featureless custom gray shell.");
+console.log("Matched the A1 terminal-side sleeve to the supplied Tunnel A skin and passenger envelope, then added shallow source-like panel seams and edge rails so the short fixed leg no longer renders as a featureless box.");
