@@ -3,11 +3,11 @@ import { expect, test } from "@playwright/test";
 
 const DIRECT_A1_TERMINAL_AUTHORITY = "nearest-structural-terminal-facade-photo-verified-v1";
 const DIRECT_A1_CAMERA_AUTHORITY = "profile-terminal-rotunda-tunnel-a-joint-evidence-a1-v11";
-const AIRCRAFT_AUTHORITY = "source-a1-jetway-cab-endpoint-aircraft-conforms-v4";
+const AIRCRAFT_AUTHORITY = "final-live-cab-mesh-visible-door-registration-v7";
 const AIRCRAFT_MODE_POSE_AUTHORITY = "a1-single-aircraft-pose-training-and-free-drive-v1";
 const CAB_CONTACT_AUTHORITY = "authored-rendered-forward-left-door-to-final-cab-v4";
 const RENDERED_SCALE_AUTHORITY = "crj-authored-world-dimensions-preserved-v2";
-const DOOR_STATION_AUTHORITY = "source-jetway-cab-plus-crj-door-offset-v1";
+const DOOR_STATION_AUTHORITY = "final-live-cab-mesh-visible-door-v3";
 const A1_PARKING_YAW = 0.008570;
 const CRJ_DOOR_HORIZONTAL_OFFSET_METERS = Math.hypot(7.32, 1.34);
 const AUTHORED_FORWARD_LEFT_DOOR = Object.freeze({ x: -1.262, y: 3.0, z: 3.90 });
