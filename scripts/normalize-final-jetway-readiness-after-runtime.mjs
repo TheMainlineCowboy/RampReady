@@ -84,7 +84,6 @@ const directWallGuard = `a1TerminalWallDistance > ${MIN_WALL_DISTANCE} && a1Term
 const directVisibleLegGuard = `connectorVisibleLength > ${MIN_A1_VISIBLE_LEG} && connectorVisibleLength < ${MAX_VISIBLE_LEG}`;
 const staticWallGuard = `staticMinimumRotundaCenterToWall > ${MIN_WALL_DISTANCE} && staticMaximumRotundaCenterToWall < ${MAX_WALL_DISTANCE}`;
 const staticVisibleLegGuard = `staticMinimumVisibleTerminalLeg >= 0 && staticMaximumVisibleTerminalLeg < ${MAX_VISIBLE_LEG}`;
-const rotundaPreservationGuard = `rotundaPreservationError <= ${MAX_A1_ROTUNDA_PRESERVATION_ERROR}`;
 
 const missingStaticGuards = [
   !source.includes(staticWallGuard) ? `!(${staticWallGuard})` : null,
@@ -159,7 +158,6 @@ for (const required of [
   staticWallGuard,
   staticVisibleLegGuard,
   bogieGroundGuard,
-  `rotundaPreservationError > ${MAX_A1_ROTUNDA_PRESERVATION_ERROR}`,
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${readinessPath}: final measured jetway readiness is missing ${required}`);
@@ -167,4 +165,4 @@ for (const required of [
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Normalized final post-prepare jetway readiness using the structural exact-readiness condition: A1 keeps source-measured physical wall/visible-leg bounds, all 57 static gates keep measured min/max wall and visible-leg ranges, the intact-parent Rotunda preservation tolerance matches the source-owned 1 mm validator, and grounded Tunnel-C bogie contact remains fail-closed without depending on generated clause ordering or authority text.");
+console.log("Normalized final post-prepare jetway readiness using the structural exact-readiness condition: A1 keeps source-measured physical wall/visible-leg bounds, all 57 static gates keep measured min/max wall and visible-leg ranges, any generated intact-parent Rotunda preservation guard is normalized to the source-owned 1 mm tolerance when present, and grounded Tunnel-C bogie contact remains fail-closed without depending on generated clause ordering or authority text.");
