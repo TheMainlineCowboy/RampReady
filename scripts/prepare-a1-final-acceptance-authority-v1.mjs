@@ -20,7 +20,9 @@ const cameraAuthority = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-ca
 const cameraLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";
 const visualAuthority = "same-day-a1-continuous-source-measured-solid-closed-grounded-v2";
 const jetwayGroundAuthority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
-const sourceOwnershipAuthority = "a1-decoded-kphx-bgl-rotunda-and-heading-own-physical-jetway-v1";
+const sourceOwnershipAuthority = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";
+const sourceWallAuthority = "a1-measured-real-wall-preserved-rotunda-v2";
+const legacyRawBglRotundaAuthority = "a1-decoded-kphx-bgl-rotunda-and-heading-own-physical-jetway-v1";
 const noLiftAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const staticRigidAuthority = "57-static-exact-glb-own-gate-inward-telescope-v2";
 const staticSourcePlacementAuthority = "57-static-own-gate-target-real-wall-compact-registration-v9";
@@ -62,19 +64,25 @@ for (const forbidden of [
   "bridgePivot.rotation.y = yawDelta",
   "anchor.rotation.y += yawDelta",
   "a1-fixed-terminal-rotunda-aircraft-side-pivot-v1",
+  legacyRawBglRotundaAuthority,
+  "const sourceRotundaTarget = new THREE.Vector3(Number(placement.x)",
 ]) {
   if (sourceElbow.includes(forbidden)) {
-    throw new Error(`${sourceElbowPath}: visually destructive A1 child/target pivot survived finalization: ${forbidden}`);
+    throw new Error(`${sourceElbowPath}: visually destructive/raw-origin A1 behavior survived finalization: ${forbidden}`);
   }
 }
 for (const required of [
   sourceOwnershipAuthority,
+  sourceWallAuthority,
+  "const sourceRotundaTarget = fixedRotundaCenter.clone();",
   "anchor.rotation.y = Number(placement.yaw)",
   "const yawDelta = 0;",
+  "uploadedJetwayA1RawBglPlacementX",
   "uploadedJetwayA1SourceRotundaPositionErrorMeters",
+  "uploadedJetwayA1MeasuredRealWallAuthority",
 ]) {
   if (!sourceElbow.includes(required)) {
-    throw new Error(`${sourceElbowPath}: final intact source-owned A1 is missing ${required}`);
+    throw new Error(`${sourceElbowPath}: final intact measured-wall source-owned A1 is missing ${required}`);
   }
 }
 
@@ -86,6 +94,7 @@ for (const authority of [
   visualAuthority,
   jetwayGroundAuthority,
   sourceOwnershipAuthority,
+  sourceWallAuthority,
   noLiftAuthority,
   staticRigidAuthority,
   staticSourcePlacementAuthority,
@@ -167,4 +176,4 @@ for (const forbidden of [
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs?grounded-pose=${Date.now()}`);
-console.log("Finalized Terminal 4 with A1 preserved as one intact decoded-KPHX supplied assembly and Tunnel-C aircraft-side bogie/support geometry required on the ramp. Child reparenting and whole-model-minimum fake grounding are hard failures.");
+console.log("Finalized Terminal 4 with A1 preserved at its measured real-wall Rotunda position as one intact decoded-KPHX supplied assembly, with Tunnel-C aircraft-side bogie/support geometry required on the ramp. Raw-BGL Rotunda relocation, child reparenting and whole-model-minimum fake grounding are hard failures.");
