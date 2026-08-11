@@ -2,7 +2,7 @@ import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const CAMERA_AUTHORITY = "source-measured-a1-terminal-joint-camera-v3";
-const PROFILE_AUTHORITY = "rotunda-terminal-and-tunnel-a-bisector-profile-v3-midheight";
+const PROFILE_AUTHORITY = "rotunda-terminal-and-tunnel-a-bisector-normal-profile-v4-midheight";
 const CAMERA_DISTANCE_METERS = 14.0;
 const CAMERA_HEIGHT_OFFSET_METERS = 0.15;
 const MAX_BRANCH_VIEW_COSINE = 0.82;
@@ -13,24 +13,23 @@ let source = fs.readFileSync(trainerPath, "utf8");
 // This normalizer is called before the endpoint-derived evidence camera exists
 // during plain verification, then again after that camera is generated inside
 // the simulator-quality production wrapper. Early verification must not invent
-// a camera. The later stage must replace the old wall-only/end-on framing with
-// a view that exposes BOTH sides of the disputed passenger elbow at once.
+// a camera. The later stage must replace the old end-on framing with a genuinely
+// side-on view that exposes BOTH sides of the disputed passenger elbow at once.
 const terminalStartToken = '          if (exactA1EvidenceSubview === "terminal-joint") {';
 const bogieElseToken = '          } else if (exactA1EvidenceSubview === "bogie-contact") {';
 const terminalStart = source.indexOf(terminalStartToken);
 const bogieElse = source.indexOf(bogieElseToken, terminalStart + terminalStartToken.length);
 
 if (terminalStart < 0 || bogieElse < 0) {
-  console.log("A1 passenger-elbow bisector normalization deferred: endpoint-derived terminal-joint camera is not generated in this verification phase yet.");
+  console.log("A1 passenger-elbow side-on normalization deferred: endpoint-derived terminal-joint camera is not generated in this verification phase yet.");
   process.exit(0);
 }
 
-// Use the interior angle bisector so both the terminal-side fixed leg and
-// supplied Tunnel A fan away from the Rotunda in the same image. Keep the lens
-// essentially at passenger-tunnel mid-height. The prior +1.40 m offset put the
-// camera almost exactly at roof level, so the fixed-leg roof itself filled the
-// frame and could hide a vertical seam even when the camera was horizontally
-// well placed.
+// The interior bisector describes the elbow's centerline, but looking ALONG it
+// makes both branches too end-on. Put the camera along the perpendicular to the
+// bisector instead. For the measured ~65 degree A1 elbow this yields a true
+// side-on view of both branches (|cos| ~0.54 rather than ~0.84), while the later
+// clear-side/T4_WALK probes remain free to choose the unobstructed sign.
 const terminalBlock = `          if (exactA1EvidenceSubview === "terminal-joint") {
             const exactA1JointCenterX = exactA1CameraRotundaX;
             const exactA1JointCenterY = exactA1CameraRotundaY;
@@ -57,7 +56,7 @@ const terminalBlock = `          if (exactA1EvidenceSubview === "terminal-joint"
             const exactA1JointBranchAngleCosine = exactA1JointWallUnitX * exactA1JointCabUnitX
               + exactA1JointWallUnitZ * exactA1JointCabUnitZ;
             if (!(exactA1JointBranchAngleCosine > -0.95 && exactA1JointBranchAngleCosine < 0.80)) {
-              throw new Error(\`A1 passenger-elbow branches cannot be safely bisected: \${exactA1JointBranchAngleCosine}\`);
+              throw new Error(\`A1 passenger-elbow branches cannot be safely framed: \${exactA1JointBranchAngleCosine}\`);
             }
 
             const exactA1JointBisectorX = exactA1JointWallUnitX + exactA1JointCabUnitX;
@@ -66,8 +65,10 @@ const terminalBlock = `          if (exactA1EvidenceSubview === "terminal-joint"
             if (!(exactA1JointBisectorLength > 0.25)) {
               throw new Error(\`A1 passenger-elbow angle bisector collapsed: \${exactA1JointBisectorLength}\`);
             }
-            const exactA1JointViewUnitX = exactA1JointBisectorX / exactA1JointBisectorLength;
-            const exactA1JointViewUnitZ = exactA1JointBisectorZ / exactA1JointBisectorLength;
+            const exactA1JointBisectorUnitX = exactA1JointBisectorX / exactA1JointBisectorLength;
+            const exactA1JointBisectorUnitZ = exactA1JointBisectorZ / exactA1JointBisectorLength;
+            const exactA1JointViewUnitX = -exactA1JointBisectorUnitZ;
+            const exactA1JointViewUnitZ = exactA1JointBisectorUnitX;
             const exactA1JointCameraOutX = -exactA1JointViewUnitX;
             const exactA1JointCameraOutZ = -exactA1JointViewUnitZ;
             const exactA1JointCameraDistance = ${CAMERA_DISTANCE_METERS.toFixed(1)};
@@ -133,6 +134,8 @@ for (const forbidden of [
   "Math.max(13.0, Math.min(16.0, exactA1JointSpan * 0.52))",
   "rotunda-to-tunnel-a-passenger-profile-v1",
   "rotunda-terminal-and-tunnel-a-bisector-profile-v2",
+  "rotunda-terminal-and-tunnel-a-bisector-profile-v3-midheight",
+  "const exactA1JointViewUnitX = exactA1JointBisectorX / exactA1JointBisectorLength;",
   "exactA1CameraPositionY = exactA1JointCenterY + 1.40;",
 ]) {
   if (source.includes(forbidden)) {
@@ -145,6 +148,9 @@ for (const required of [
   "const exactA1JointWallVectorX = exactA1CameraWallX - exactA1JointCenterX;",
   "const exactA1JointCabVectorX = exactA1CameraCabX - exactA1JointCenterX;",
   "const exactA1JointBisectorX = exactA1JointWallUnitX + exactA1JointCabUnitX;",
+  "const exactA1JointBisectorUnitX = exactA1JointBisectorX / exactA1JointBisectorLength;",
+  "const exactA1JointViewUnitX = -exactA1JointBisectorUnitZ;",
+  "const exactA1JointViewUnitZ = exactA1JointBisectorUnitX;",
   `const exactA1JointCameraDistance = ${CAMERA_DISTANCE_METERS.toFixed(1)};`,
   `exactA1CameraPositionY = exactA1JointCenterY + ${CAMERA_HEIGHT_OFFSET_METERS.toFixed(2)};`,
   "exactA1CameraTargetY = exactA1JointCenterY;",
@@ -155,9 +161,9 @@ for (const required of [
   `inspectionCameraEndpointJointProfileAuthority = "${PROFILE_AUTHORITY}"`,
 ]) {
   if (!source.includes(required)) {
-    throw new Error(`${trainerPath}: normalized A1 mid-height bisector evidence camera is missing ${required}`);
+    throw new Error(`${trainerPath}: normalized A1 mid-height side-on evidence camera is missing ${required}`);
   }
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Normalized final A1 evidence camera to a passenger-midheight apron-side terminal/Rotunda/Tunnel-A bisector; both elbow branches must remain visible without roof occlusion.");
+console.log("Normalized final A1 evidence camera to a passenger-midheight view perpendicular to the terminal/Rotunda/Tunnel-A bisector; both elbow branches must remain visible without roof occlusion.");
