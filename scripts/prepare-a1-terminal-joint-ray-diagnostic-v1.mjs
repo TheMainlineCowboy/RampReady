@@ -4,7 +4,7 @@ await import(`./prepare-exact-fleet-hide-obsolete-fixed-walkways-v1.mjs?hide-obs
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const marker = "a1-terminal-joint-rendered-ray-diagnostic-v1";
-const clearSideAuthority = "a1-terminal-joint-open-wedge-unoccluded-t4-walk-v1";
+const clearSideAuthority = "a1-terminal-joint-open-wedge-unoccluded-t4-walk-v2";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 if (!source.includes(marker)) {
@@ -15,13 +15,13 @@ if (!source.includes(marker)) {
           camera.lookAt(cameraTarget);
 
           // ${marker}
-          // The final passenger-elbow camera can be regenerated later from the
-          // exact wall/Rotunda/Cab endpoints. Prove that its line of sight to the
-          // Rotunda is not blocked by the real authored T4_WALK. If the selected
-          // angle-bisector side is blocked, reflect only the horizontal camera
-          // position through the Rotunda target to the opposite/open apron side,
-          // then fail closed if that side is also obstructed. No airport object,
-          // material, transform or visibility is changed to make evidence pass.
+          // The v3 endpoint camera is regenerated on the terminal-side angle
+          // bisector every frame. That mathematically valid side puts the real
+          // authored T4_WALK in the foreground of the A1 close-up. For visual
+          // acceptance, always use the horizontally opposite bisector: the
+          // Rotunda remains the same target, camera height is unchanged, and no
+          // airport geometry/material/visibility is touched. Then reject the
+          // frame if T4_WALK still occupies the near field around the joint.
           if (exactA1EvidenceSubview === "terminal-joint") {
             const isAuthoredT4WalkHit = (hit) => {
               let cursor = hit?.object || null;
@@ -33,62 +33,62 @@ if (!source.includes(marker)) {
                 : [hit?.object?.material];
               return materials.some((material) => /T4_WALK/i.test(material?.name || ""));
             };
-            const findT4WalkBlocker = (origin, target) => {
-              const sight = target.clone().sub(origin);
-              const distance = sight.length();
-              if (!(distance > 1)) throw new Error(\`A1 terminal-joint evidence line of sight is degenerate: \${distance}\`);
-              const sightRay = new THREE.Raycaster(
-                origin,
-                sight.normalize(),
-                0.05,
-                Math.max(0.10, distance - 0.40),
-              );
-              return sightRay.intersectObjects(scene.children, true)
-                .find((hit) => hit?.object?.visible !== false && isAuthoredT4WalkHit(hit)) || null;
-            };
 
-            const originalEvidenceCamera = camera.position.clone();
-            const originalT4WalkBlocker = findT4WalkBlocker(originalEvidenceCamera, cameraTarget);
-            if (originalT4WalkBlocker) {
-              const clearSideCandidate = new THREE.Vector3(
-                cameraTarget.x * 2 - originalEvidenceCamera.x,
-                originalEvidenceCamera.y,
-                cameraTarget.z * 2 - originalEvidenceCamera.z,
-              );
-              const oppositeT4WalkBlocker = findT4WalkBlocker(clearSideCandidate, cameraTarget);
-              if (oppositeT4WalkBlocker) {
-                throw new Error(\`A1 terminal-joint evidence camera is blocked by authored T4_WALK from both bisector sides: original=\${originalT4WalkBlocker.object?.name || "unnamed"} opposite=\${oppositeT4WalkBlocker.object?.name || "unnamed"}\`);
+            const generatedBisectorCamera = camera.position.clone();
+            const clearSideCandidate = new THREE.Vector3(
+              cameraTarget.x * 2 - generatedBisectorCamera.x,
+              generatedBisectorCamera.y,
+              cameraTarget.z * 2 - generatedBisectorCamera.z,
+            );
+            exactA1CameraPositionX = clearSideCandidate.x;
+            exactA1CameraPositionY = clearSideCandidate.y;
+            exactA1CameraPositionZ = clearSideCandidate.z;
+            desiredCamera.copy(clearSideCandidate);
+            camera.position.copy(clearSideCandidate);
+            camera.lookAt(cameraTarget);
+            camera.updateMatrixWorld(true);
+
+            const exactA1JointTargetDistance = camera.position.distanceTo(cameraTarget);
+            if (!(exactA1JointTargetDistance > 8 && exactA1JointTargetDistance < 30)) {
+              throw new Error(\`A1 clear-side terminal-joint camera distance is invalid: \${exactA1JointTargetDistance}\`);
+            }
+            const frameProbeCoordinates = [
+              [-0.38, 0.40],
+              [-0.19, 0.30],
+              [0.00, 0.30],
+              [0.19, 0.30],
+              [0.38, 0.40],
+              [0.00, 0.00],
+            ];
+            const nearFieldWalkwayHits = [];
+            const frameProbeRaycaster = new THREE.Raycaster();
+            for (const [x, y] of frameProbeCoordinates) {
+              frameProbeRaycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+              const blocker = frameProbeRaycaster.intersectObjects(scene.children, true)
+                .find((hit) => hit?.object?.visible !== false
+                  && hit.distance < exactA1JointTargetDistance + 1.25
+                  && isAuthoredT4WalkHit(hit));
+              if (blocker) {
+                nearFieldWalkwayHits.push({
+                  x,
+                  y,
+                  name: blocker.object?.name || "unnamed",
+                  distance: Number(blocker.distance.toFixed(4)),
+                });
               }
-
-              exactA1CameraPositionX = clearSideCandidate.x;
-              exactA1CameraPositionY = clearSideCandidate.y;
-              exactA1CameraPositionZ = clearSideCandidate.z;
-              desiredCamera.copy(clearSideCandidate);
-              camera.position.copy(clearSideCandidate);
-              camera.lookAt(cameraTarget);
-              renderer.domElement.dataset.inspectionCameraEndpointJointOriginalT4WalkBlocker = originalT4WalkBlocker.object?.name || "unnamed";
-              const blockerMaterials = Array.isArray(originalT4WalkBlocker.object?.material)
-                ? originalT4WalkBlocker.object.material
-                : [originalT4WalkBlocker.object?.material];
-              renderer.domElement.dataset.inspectionCameraEndpointJointOriginalT4WalkMaterial = blockerMaterials
-                .filter(Boolean)
-                .map((material) => material.name || "unnamed")
-                .join(",");
-              renderer.domElement.dataset.inspectionCameraEndpointJointClearSideFlipped = "true";
-            } else {
-              renderer.domElement.dataset.inspectionCameraEndpointJointClearSideFlipped = "false";
+            }
+            if (nearFieldWalkwayHits.length) {
+              throw new Error(\`A1 clear-side terminal-joint frame still has near-field T4_WALK coverage: \${JSON.stringify(nearFieldWalkwayHits)}\`);
             }
 
-            const finalT4WalkBlocker = findT4WalkBlocker(camera.position, cameraTarget);
-            if (finalT4WalkBlocker) {
-              throw new Error(\`A1 terminal-joint evidence camera still intersects authored T4_WALK after clear-side selection: \${finalT4WalkBlocker.object?.name || "unnamed"}\`);
-            }
             renderer.domElement.dataset.inspectionCameraEndpointJointClearSideAuthority = "${clearSideAuthority}";
+            renderer.domElement.dataset.inspectionCameraEndpointJointClearSideFlipped = "true";
             renderer.domElement.dataset.inspectionCameraEndpointJointT4WalkOccluded = "false";
+            renderer.domElement.dataset.inspectionCameraEndpointJointNearFieldProbeCount = String(frameProbeCoordinates.length);
 
-            // Retain a one-shot object diagnostic from the corrected camera so
-            // fresh evidence records what is actually visible rather than what
-            // the old obstructed camera happened to hit.
+            // Keep one-shot object rays from this corrected view for human
+            // review. T4_WALK may legitimately appear far behind the joint; the
+            // acceptance gate above only forbids it at or in front of the joint.
             if (renderer.domElement.dataset.inspectionA1TerminalJointRayAuthority !== "${marker}") {
               const diagnosticRays = [
                 [-0.306, 0.444],
@@ -135,10 +135,12 @@ if (!source.includes(marker)) {
 for (const token of [
   marker,
   clearSideAuthority,
-  "const findT4WalkBlocker = (origin, target) =>",
-  "const originalT4WalkBlocker = findT4WalkBlocker(originalEvidenceCamera, cameraTarget)",
-  "cameraTarget.x * 2 - originalEvidenceCamera.x",
+  "cameraTarget.x * 2 - generatedBisectorCamera.x",
   "exactA1CameraPositionX = clearSideCandidate.x",
+  "camera.updateMatrixWorld(true)",
+  "const frameProbeCoordinates = [",
+  "hit.distance < exactA1JointTargetDistance + 1.25",
+  "near-field T4_WALK coverage",
   'inspectionCameraEndpointJointT4WalkOccluded = "false"',
   "const diagnosticRays = [",
   "raycaster.setFromCamera(new THREE.Vector2(x, y), camera)",
@@ -149,4 +151,4 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("A1 terminal-joint evidence now fails closed on authored T4_WALK occlusion and automatically selects the unobstructed opposite bisector side without hiding or moving any airport geometry; corrected-camera ray evidence remains published for visual review.");
+console.log("A1 terminal-joint evidence now always uses the opposite/open bisector side and fails closed if six frame probes find authored T4_WALK at or in front of the Rotunda; no airport geometry is hidden or moved.");
