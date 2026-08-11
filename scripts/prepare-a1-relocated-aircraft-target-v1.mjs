@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const sourcePath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const AUTHORITY = "a1-aircraft-target-follows-intact-parent-relocation-v1";
+const ELBOW_DIAGNOSTIC_AUTHORITY = "a1-fixed-wall-elbow-vector-diagnostic-v1";
 let source = fs.readFileSync(sourcePath, "utf8");
 
 const legacyTargetBlock = `  const targetPoint = new THREE.Vector3(Number(placement.targetX), fixedRotundaCenter.y, Number(placement.targetZ));
@@ -53,6 +54,24 @@ if (!source.includes(AUTHORITY)) {
   source = source.replace(legacyTargetBlock, relocatedTargetBlock);
 }
 
+// Keep the fail-closed angle gate, but make its next failure self-describing.
+// We need to know whether the new real-wall vector or the normalized supplied
+// bridge axis is reversed; merely printing the scalar angle loses that evidence.
+if (!source.includes(ELBOW_DIAGNOSTIC_AUTHORITY)) {
+  const elbowGate = `  if (!(cornerAngleDegrees >= MINIMUM_CORNER_ANGLE_DEGREES && cornerAngleDegrees <= MAXIMUM_CORNER_ANGLE_DEGREES)) {
+    throw new Error(\`A1 fixed-wall Rotunda did not produce the required visible elbow: \${cornerAngleDegrees.toFixed(3)} degrees\`);
+  }`;
+  const diagnosticElbowGate = `  // ${ELBOW_DIAGNOSTIC_AUTHORITY}
+  if (!(cornerAngleDegrees >= MINIMUM_CORNER_ANGLE_DEGREES && cornerAngleDegrees <= MAXIMUM_CORNER_ANGLE_DEGREES)) {
+    const travelTurnDegrees = 180 - cornerAngleDegrees;
+    throw new Error(\`A1 fixed-wall Rotunda did not produce the required visible elbow: branch=\${cornerAngleDegrees.toFixed(3)} degrees travelTurn=\${travelTurnDegrees.toFixed(3)} terminalDir=(\${terminalDirection.x.toFixed(6)},\${terminalDirection.z.toFixed(6)}) bridgeDir=(\${bridgeDirection.x.toFixed(6)},\${bridgeDirection.z.toFixed(6)}) targetDir=(\${targetDirection.x.toFixed(6)},\${targetDirection.z.toFixed(6)}) rotunda=(\${rotundaCenter.x.toFixed(6)},\${rotundaCenter.z.toFixed(6)}) wall=(\${fixedWallPoint.x.toFixed(6)},\${fixedWallPoint.z.toFixed(6)}) target=(\${targetPoint.x.toFixed(6)},\${targetPoint.z.toFixed(6)}) sourceYaw=\${Number(placement.yaw).toFixed(6)} relocation=(\${sourceModelOriginRelocationX.toFixed(6)},\${sourceModelOriginRelocationZ.toFixed(6)})\`);
+  }`;
+  if (!source.includes(elbowGate)) {
+    throw new Error(`${sourcePath}: A1 elbow gate is unavailable for vector diagnostics`);
+  }
+  source = source.replace(elbowGate, diagnosticElbowGate);
+}
+
 const telemetryAnchor = "  group.userData.uploadedJetwayA1SourceLockedElbowAuthority = SOURCE_REGISTERED_A1_ELBOW_AUTHORITY;";
 if (!source.includes("uploadedJetwayA1AircraftTargetRelocationAuthority")) {
   if (!source.includes(telemetryAnchor)) {
@@ -72,17 +91,20 @@ if (!source.includes("uploadedJetwayA1AircraftTargetRelocationAuthority")) {
 
 for (const required of [
   AUTHORITY,
+  ELBOW_DIAGNOSTIC_AUTHORITY,
   "const sourceModelOriginRelocationX = anchor.position.x - rawBglPlacementX;",
   "rawTargetX + sourceModelOriginRelocationX",
   "aircraftTargetFrameErrorMeters",
   "A1 relocated source door target distance is invalid",
+  "travelTurnDegrees",
+  "terminalDir=(",
   "uploadedJetwayA1AircraftTargetRelocationAuthority",
 ]) {
-  if (!source.includes(required)) throw new Error(`${sourcePath}: relocated A1 aircraft target output is missing ${required}`);
+  if (!source.includes(required)) throw new Error(`${sourcePath}: relocated A1 aircraft target/diagnostic output is missing ${required}`);
 }
 if (source.includes("const targetPoint = new THREE.Vector3(Number(placement.targetX), fixedRotundaCenter.y, Number(placement.targetZ));")) {
   throw new Error(`${sourcePath}: raw source-space A1 door target survived after the jetway parent was relocated`);
 }
 
 fs.writeFileSync(sourcePath, source, "utf8");
-console.log("Prepared A1 aircraft target in the same translated model-origin frame as the intact real-wall jetway parent; the terminal and Rotunda remain fixed.");
+console.log("Prepared A1 aircraft target in the same translated model-origin frame as the intact real-wall jetway parent and armed exact elbow-vector diagnostics; the terminal and Rotunda remain fixed.");
