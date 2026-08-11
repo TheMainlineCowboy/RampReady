@@ -2,6 +2,7 @@ import fs from "node:fs";
 import * as THREE from "three";
 
 const GLB_PATH = "public/models/airport-jetway/Airport_Jetway.glb";
+const WELD_EPSILON = 1e-5;
 
 function parseGlb(bytes) {
   if (bytes.toString("ascii", 0, 4) !== "glTF" || bytes.readUInt32LE(4) !== 2) {
@@ -123,6 +124,10 @@ function unionFind(size) {
   return { find, union };
 }
 
+function weldKey(position) {
+  return position.map((value) => Math.round(value / WELD_EPSILON)).join(":");
+}
+
 const bytes = fs.readFileSync(GLB_PATH);
 const { json, binary } = parseGlb(bytes);
 const tunnelMeshIndex = json.meshes?.findIndex((mesh) => mesh.name === "Tunnel_C_Jetway_0") ?? -1;
@@ -135,11 +140,25 @@ const indices = primitive.indices === undefined
   ? Array.from({ length: positions.length }, (_, i) => i)
   : readAccessor(json, binary, primitive.indices);
 if (indices.length % 3 !== 0) throw new Error(`Tunnel_C index count is not triangular: ${indices.length}`);
+
 const uf = unionFind(positions.length);
+const firstVertexForPosition = new Map();
+let weldedDuplicateCount = 0;
+for (let i = 0; i < positions.length; i += 1) {
+  const key = weldKey(positions[i]);
+  const existing = firstVertexForPosition.get(key);
+  if (existing === undefined) firstVertexForPosition.set(key, i);
+  else {
+    uf.union(i, existing);
+    weldedDuplicateCount += 1;
+  }
+}
 for (let i = 0; i < indices.length; i += 3) {
   uf.union(indices[i], indices[i + 1]);
   uf.union(indices[i + 1], indices[i + 2]);
+  uf.union(indices[i + 2], indices[i]);
 }
+
 const componentVertices = new Map();
 const componentTriangles = new Map();
 for (let i = 0; i < positions.length; i += 1) {
@@ -163,17 +182,26 @@ if (axisLengthSq < 1) throw new Error("Rotunda-to-Cab source axis is invalid");
 const point = new THREE.Vector3();
 const components = [...componentVertices.entries()].map(([root, vertices]) => {
   const box = new THREE.Box3();
-  for (const vertexIndex of vertices) box.expandByPoint(point.fromArray(positions[vertexIndex]).applyMatrix4(tunnelWorld));
+  const uniquePositions = new Set();
+  for (const vertexIndex of vertices) {
+    uniquePositions.add(weldKey(positions[vertexIndex]));
+    box.expandByPoint(point.fromArray(positions[vertexIndex]).applyMatrix4(tunnelWorld));
+  }
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
   const offset = center.clone().sub(rotunda.center);
   offset.y = 0;
   const axisT = offset.dot(axis) / axisLengthSq;
+  const horizontalDistanceToRotunda = Math.hypot(center.x - rotunda.center.x, center.z - rotunda.center.z);
+  const horizontalDistanceToCab = Math.hypot(center.x - cab.center.x, center.z - cab.center.z);
   return {
     root,
     vertexCount: vertices.length,
+    uniqueVertexCount: uniquePositions.size,
     triangleCount: componentTriangles.get(root) || 0,
     axisT: Number(axisT.toFixed(5)),
+    horizontalDistanceToRotunda: Number(horizontalDistanceToRotunda.toFixed(5)),
+    horizontalDistanceToCab: Number(horizontalDistanceToCab.toFixed(5)),
     center: center.toArray().map((v) => Number(v.toFixed(5))),
     min: box.min.toArray().map((v) => Number(v.toFixed(5))),
     max: box.max.toArray().map((v) => Number(v.toFixed(5))),
@@ -183,7 +211,10 @@ const components = [...componentVertices.entries()].map(([root, vertices]) => {
 
 const report = {
   mesh: "Tunnel_C_Jetway_0",
+  weldEpsilon: WELD_EPSILON,
   vertexCount: positions.length,
+  weldedUniquePositionCount: firstVertexForPosition.size,
+  weldedDuplicateCount,
   triangleCount: indices.length / 3,
   componentCount: components.length,
   rotundaCenter: rotunda.center.toArray(),
