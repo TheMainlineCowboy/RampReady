@@ -15,8 +15,6 @@ const measuredOffsetBlock = `  // ${authority}
   // Ground A1 from the AIRCRAFT-SIDE support assembly, not from the lowest
   // point anywhere in the complete jetway. The Rotunda pedestal can already
   // touch the ramp while the Tunnel-C bogie/wheels remain meters in the air.
-  // Tunnel_C is the authored aircraft-side support section in the supplied GLB;
-  // its lowest compact multi-point footprint is therefore the grounding truth.
   const bogieRoot = a1Model.getObjectByName("Tunnel_C")
     || a1Model.getObjectByName("Tunnel_C_Jetway_0");
   if (!bogieRoot) throw new Error("A1 exact supplied jetway is missing Tunnel_C bogie/support geometry");
@@ -153,23 +151,20 @@ if (fixedOffsetPattern.test(source)) {
 }
 
 for (const legacy of legacyAuthorities) source = source.replaceAll(legacy, authority);
-
 source = source
   .replaceAll("authoredA1GroundContactAfter", "authoredA1BogieAfter")
   .replaceAll("authoredA1GroundContactWorldAfter", "authoredA1BogieWorldAfter")
   .replaceAll("measureAuthoredA1RampContact", "measureAuthoredA1BogieContact")
   .replaceAll("A1 final transformed world-space ground-contact refresh v3", finalWorldRefreshMarker);
 
-source = source.replace(
-  /  \/\/ A1 final transformed Tunnel-C bogie world-contact refresh v4[\s\S]*?  const doubleSidedMaterialCount = forceExactMaterialsDoubleSided\(THREE, fleet\);/,
-  `  // ${finalWorldRefreshMarker}\n  group.updateWorldMatrix(true, true);\n  fleet.updateWorldMatrix(true, true);\n  a1Model.updateWorldMatrix(true, true);\n  bogieRoot.updateWorldMatrix(true, true);\n  authoredA1BogieWorldAfter = measureAuthoredA1BogieContact("world");\n  const finalBogieWorldClearanceMeters = authoredA1BogieWorldAfter.minimumY;\n  if (Math.abs(finalBogieWorldClearanceMeters) > 0.015) {\n    throw new Error(\`A1 FINAL visible Tunnel-C bogie is not on the ramp: \${finalBogieWorldClearanceMeters} m\`);\n  }\n  const doubleSidedMaterialCount = forceExactMaterialsDoubleSided(THREE, fleet);`,
-);
+if (!source.includes("const finalBogieWorldClearanceMeters = authoredA1BogieWorldAfter.minimumY")) {
+  const finalAnchor = "  const doubleSidedMaterialCount = forceExactMaterialsDoubleSided(THREE, fleet);";
+  if (!source.includes(finalAnchor)) throw new Error(`${installationPath}: final bogie-world check anchor is missing`);
+  const finalCheck = `  // final rendered Tunnel-C bogie ramp truth\n  group.updateWorldMatrix(true, true);\n  fleet.updateWorldMatrix(true, true);\n  a1Model.updateWorldMatrix(true, true);\n  bogieRoot.updateWorldMatrix(true, true);\n  authoredA1BogieWorldAfter = measureAuthoredA1BogieContact("world");\n  const finalBogieWorldClearanceMeters = authoredA1BogieWorldAfter.minimumY;\n  if (Math.abs(finalBogieWorldClearanceMeters) > 0.015) {\n    throw new Error(\`A1 FINAL visible Tunnel-C bogie is not on the ramp: \${finalBogieWorldClearanceMeters} m\`);\n  }\n`;
+  source = source.replace(finalAnchor, `${finalCheck}${finalAnchor}`);
+}
 
-source = source
-  .replace(/bogieGroundContactAuthority: "[^"]+"/, `bogieGroundContactAuthority: "${authority}"`)
-  .replace("bogieGroundContactPointCount: authoredA1BogieAfter.contactPointCount", "bogieGroundContactPointCount: authoredA1BogieAfter.contactPointCount")
-  .replace("bogieGroundContactClusterCount: authoredA1BogieAfter.contactClusterCount", "bogieGroundContactClusterCount: authoredA1BogieAfter.contactClusterCount")
-  .replace("bogieGroundContactCenterX: authoredA1BogieWorldAfter.centerX", "bogieGroundContactCenterX: authoredA1BogieWorldAfter.centerX");
+source = source.replace(/bogieGroundContactAuthority: "[^"]+"/, `bogieGroundContactAuthority: "${authority}"`);
 
 if (!source.includes("uploadedJetwayBogieGroundContactAuthority")) {
   const groupAnchor = `  group.userData.uploadedJetwayBogieTireContactCorrectionMeters = report.bogieTireContactCorrectionMeters;`;
@@ -199,4 +194,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Grounded A1 from the supplied Tunnel-C aircraft-side bogie/support geometry and added a final world-space fail-closed ramp-clearance check after every A1 transform.");
+console.log("Grounded A1 from the supplied Tunnel-C aircraft-side bogie/support geometry and added a deterministic final world-space fail-closed ramp-clearance check after every A1 transform.");
