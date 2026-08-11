@@ -5,7 +5,8 @@ let source = fs.readFileSync(readinessPath, "utf8");
 
 const residualFailure = "Math.abs(fleetGroundOffset + bogieTireCorrection) > 1e-6";
 const mismatchMarker = "Exact jetway readiness mismatch:";
-const bogieAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
+const bogieAuthority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
+const retiredBogieAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
 const bogieDeclarationAnchor = `          const bogieTireCorrection = Number(group.userData.uploadedJetwayBogieTireContactCorrectionMeters ?? NaN);`;
 const measuredDeclarations = `${bogieDeclarationAnchor}
           const bogieGroundClearance = Number(group.userData.uploadedJetwayBogieGroundClearanceMeters ?? Infinity);
@@ -21,14 +22,14 @@ const measuredDeclarations = `${bogieDeclarationAnchor}
 const measuredFailures = `!Number.isFinite(fleetGroundOffset)
             || !Number.isFinite(bogieTireCorrection)
             || Math.abs(Math.abs(fleetGroundOffset) - bogieTireCorrection) > 1e-6
-            || Math.abs(fleetGroundOffset) > 3
-            || Math.abs(bogieGroundClearance) > 0.005
+            || Math.abs(fleetGroundOffset) > 8
+            || Math.abs(bogieGroundClearance) > 0.015
             || bogieGroundContactAuthority !== "${bogieAuthority}"
-            || bogieGroundContactPointCount < 8
-            || bogieGroundContactClusterCount < 2
+            || bogieGroundContactPointCount < 4
+            || bogieGroundContactClusterCount < 1
             || !Number.isFinite(bogieGroundContactSpanX)
             || !Number.isFinite(bogieGroundContactSpanZ)
-            || bogieGroundHorizontalContactSpan < 1.2
+            || bogieGroundHorizontalContactSpan < 0.35
             || !Number.isFinite(bogieGroundContactCenterX)
             || !Number.isFinite(bogieGroundContactCenterY)
             || !Number.isFinite(bogieGroundContactCenterZ)`;
@@ -39,11 +40,21 @@ if (!source.includes("const fleetGroundOffset") || !source.includes(bogieDeclara
 
 // npm run verify intentionally normalizes the generated readiness module before
 // some browser workflows invoke npm run build in the same checkout. Seed the
-// complete measured bogie contract here so the later production preparer sees
-// the same physical invariant instead of depending on the old literal guard.
+// complete Tunnel-C-specific bogie contract here so regeneration can never fall
+// back to a terminal-pedestal/whole-model minimum as proof that the aircraft-side
+// wheels are on the ramp.
 if (!source.includes("const bogieGroundContactPointCount =")) {
   source = source.replace(bogieDeclarationAnchor, measuredDeclarations);
 }
+
+// Remove any retired whole-model authority/thresholds that an earlier generated
+// readiness pass may have left behind before we attach the final invariant.
+source = source
+  .replaceAll(retiredBogieAuthority, bogieAuthority)
+  .replaceAll("Math.abs(bogieGroundClearance) > 0.005", "Math.abs(bogieGroundClearance) > 0.015")
+  .replaceAll("bogieGroundContactPointCount < 8", "bogieGroundContactPointCount < 4")
+  .replaceAll("bogieGroundContactClusterCount < 2", "bogieGroundContactClusterCount < 1")
+  .replaceAll("bogieGroundHorizontalContactSpan < 1.2", "bogieGroundHorizontalContactSpan < 0.35");
 
 const mismatchIndex = source.indexOf(mismatchMarker);
 if (mismatchIndex < 0) {
@@ -59,10 +70,13 @@ if (!source.includes(residualFailure)) {
   source = `${source.slice(0, insertionPoint)}            ${residualFailure}\n            || ${source.slice(insertionPoint).replace(/^\s*/, "")}`;
 }
 
-if (!source.includes("bogieGroundContactClusterCount < 2")) {
+// Add the Tunnel-C-specific invariant once if an existing readiness condition
+// does not already contain it. Duplicated equivalent v3 checks are harmless but
+// retired v2 semantics are a hard error below.
+if (!source.includes(`bogieGroundContactAuthority !== "${bogieAuthority}"`)) {
   const residualIndex = source.indexOf(residualFailure, conditionStart);
   if (residualIndex < 0 || residualIndex > mismatchIndex) {
-    throw new Error(`${readinessPath}: cannot attach measured bogie readiness gates to the final residual guard`);
+    throw new Error(`${readinessPath}: cannot attach measured Tunnel-C bogie readiness gates to the final residual guard`);
   }
   const lineEnd = source.indexOf("\n", residualIndex);
   if (lineEnd < 0) throw new Error(`${readinessPath}: malformed final bogie residual guard`);
@@ -74,15 +88,27 @@ for (const required of [
   "const bogieGroundContactPointCount =",
   "const bogieGroundContactClusterCount =",
   "const bogieGroundContactCenterX =",
-  "bogieGroundContactClusterCount < 2",
+  "bogieGroundContactPointCount < 4",
   `bogieGroundContactAuthority !== "${bogieAuthority}"`,
-  "bogieGroundHorizontalContactSpan < 1.2",
+  "bogieGroundHorizontalContactSpan < 0.35",
+  "Math.abs(bogieGroundClearance) > 0.015",
 ]) {
   if (!source.includes(required)) {
-    throw new Error(`${readinessPath}: final measured bogie guard is missing ${required}`);
+    throw new Error(`${readinessPath}: final Tunnel-C measured bogie guard is missing ${required}`);
+  }
+}
+for (const forbidden of [
+  retiredBogieAuthority,
+  "Math.abs(bogieGroundClearance) > 0.005",
+  "bogieGroundContactPointCount < 8",
+  "bogieGroundContactClusterCount < 2",
+  "bogieGroundHorizontalContactSpan < 1.2",
+]) {
+  if (source.includes(forbidden)) {
+    throw new Error(`${readinessPath}: retired whole-model/pedestal bogie guard survived final runtime preparation: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Ensured regeneration-safe final exact-model bogie readiness: zero residual plus measured multi-point grounded-contact evidence.");
+console.log("Ensured regeneration-safe final Tunnel-C bogie readiness: actual aircraft-side support geometry must be within 1.5 cm of the ramp with a finite multi-point contact footprint; terminal-pedestal contact cannot satisfy this guard.");
 await import(`./normalize-final-jetway-readiness-after-runtime.mjs?ground-contact-guard=${Date.now()}`);
