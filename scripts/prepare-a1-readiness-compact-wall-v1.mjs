@@ -62,25 +62,45 @@ fs.writeFileSync(readinessPath, source, "utf8");
 // The immediately following Rotunda-elbow preparer owns the physical aperture
 // articulation. Earlier photo/terminal compatibility passes may rewrite only the
 // numeric terminal-facing floor in measureExactRotundaOpening. Canonicalize that
-// small generated block here so the elbow writer receives one stable input form;
-// this does NOT move any geometry.
+// generated block only BEFORE the elbow exists. Later preparation passes call
+// this module again; once the physical elbow is present, validate it and leave it
+// untouched instead of trying to recreate the pre-elbow source text.
 const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js";
 let installation = fs.readFileSync(installationPath, "utf8");
-const openingDeclaration = "  const openingDirection = bridgeDirection.clone().multiplyScalar(-1);";
-const openingStart = installation.indexOf(openingDeclaration);
-const terminalRadiusStart = installation.indexOf("\n\n  let terminalRadius =", openingStart);
-if (openingStart < 0 || terminalRadiusStart < 0) {
-  throw new Error(`${installationPath}: cannot canonicalize the authored Rotunda opening block before elbow articulation`);
-}
-const canonicalOpeningLogic = `  const openingDirection = bridgeDirection.clone().multiplyScalar(-1);
+const PHYSICAL_ELBOW_AUTHORITY = "same-day-photo-authored-opening-fixed-rotunda-elbow-terminal-aligned-v7";
+const physicalElbowAlreadyInstalled = installation.includes(PHYSICAL_ELBOW_AUTHORITY)
+  && installation.includes("alignedOpeningDirection?.clone().normalize()")
+  && installation.includes("a1Anchor.userData.rotundaElbowArticulated = true")
+  && installation.includes("beforeTransforms = captureAuthoredPartTransforms(a1Model)");
+
+if (!physicalElbowAlreadyInstalled) {
+  const openingDeclaration = "  const openingDirection = bridgeDirection.clone().multiplyScalar(-1);";
+  const openingStart = installation.indexOf(openingDeclaration);
+  const terminalRadiusStart = installation.indexOf("\n\n  let terminalRadius =", openingStart);
+  if (openingStart < 0 || terminalRadiusStart < 0) {
+    throw new Error(`${installationPath}: cannot canonicalize the authored Rotunda opening block before elbow articulation`);
+  }
+  const canonicalOpeningLogic = `  const openingDirection = bridgeDirection.clone().multiplyScalar(-1);
   const terminalFacingDot = openingDirection.dot(terminalDirection);
   if (terminalFacingDot < 0.4) {
     throw new Error(\`A1 exact authored Rotunda opening does not face the measured terminal wall: \${terminalFacingDot}\`);
   }`;
-installation = `${installation.slice(0, openingStart)}${canonicalOpeningLogic}${installation.slice(terminalRadiusStart)}`;
-if (!installation.includes(canonicalOpeningLogic)) {
-  throw new Error(`${installationPath}: canonical authored Rotunda opening input was not installed`);
+  installation = `${installation.slice(0, openingStart)}${canonicalOpeningLogic}${installation.slice(terminalRadiusStart)}`;
+  if (!installation.includes(canonicalOpeningLogic)) {
+    throw new Error(`${installationPath}: canonical authored Rotunda opening input was not installed`);
+  }
+  fs.writeFileSync(installationPath, installation, "utf8");
+  console.log("Normalized final A1 readiness to the source-measured structural wall span and canonicalized the pre-elbow Rotunda opening measurement; no geometry was moved.");
+} else {
+  for (const required of [
+    `A1_PARENT_ORIENTATION_AUTHORITY = "${PHYSICAL_ELBOW_AUTHORITY}"`,
+    "const alignedOpeningDirection = authoredOpeningBefore.clone().applyAxisAngle",
+    "const measuredTerminalAlignment = alignedOpeningDirection.dot(terminalDirection)",
+    "a1Anchor.userData.rotundaElbowArticulated = true",
+  ]) {
+    if (!installation.includes(required)) {
+      throw new Error(`${installationPath}: existing physical A1 elbow is incomplete during idempotent readiness pass: ${required}`);
+    }
+  }
+  console.log("Preserved the already-installed physical A1 Rotunda elbow during repeated readiness preparation; no pre-elbow canonicalization or geometry mutation was attempted.");
 }
-fs.writeFileSync(installationPath, installation, "utf8");
-
-console.log("Normalized final A1 readiness to the source-measured structural Terminal 4 wall span and canonicalized the generated Rotunda opening measurement immediately before the physical elbow articulation; no geometry was moved by this preparer.");
