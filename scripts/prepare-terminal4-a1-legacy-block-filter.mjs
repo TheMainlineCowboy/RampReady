@@ -39,4 +39,4 @@ for (const token of [
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared surgical Terminal 4 A1 authored cleanup: three exact isolated PHX_TERM400_1 boxes, 36 triangles total, with bounded runtime evidence.");
+console.log("Prepared surgical Terminal 4 A1 authored cleanup: preserved the PHX_TERM400_1 source terminal box that owns A1's real attachment face and removed only two detached artifacts, 24 triangles total, with bounded runtime evidence.");
