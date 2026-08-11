@@ -1,5 +1,7 @@
 import fs from "node:fs";
 
+await import(`./prepare-a1-supplied-tunnel-terminal-sleeve-v1.mjs?sleeve=${Date.now()}`);
+
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const authority = "a1-fixed-aircraft-calibrated-to-attached-live-cab-v1";
 const marker = "a1-attached-state-owns-fixed-aircraft-calibration-v1";
@@ -63,4 +65,4 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Calibrated the fixed A1 aircraft pose against the fully attached live Cab, then restored the prior jetway deployment without moving the aircraft.");
+console.log("Calibrated the fixed A1 aircraft pose against the fully attached live Cab after matching the terminal sleeve to supplied Tunnel A, then restored the prior jetway deployment without moving the aircraft.");
