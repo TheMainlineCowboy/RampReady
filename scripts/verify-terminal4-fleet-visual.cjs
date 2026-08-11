@@ -157,13 +157,13 @@ async function capture(page, filename) {
   await selectByLabel(page, 'Inspection location', 'A1 terminal connection');
   await waitForPreset(page, 'a1Connection');
 
-  // This is the critical acceptance boundary. Compatibility telemetry from older
-  // readiness layers is deliberately ignored. Wait until the live monitor has
-  // re-measured the actual rendered Cab mesh and actual visible CRJ door after
-  // all final transforms are active.
+  // Critical acceptance boundary: measure the actual visible CRJ door against
+  // the actual final Cab while A1 is physically in its attached deployment.
   await page.waitForFunction(({ authority }) => {
     const data = document.querySelector('canvas.trainerCanvas')?.dataset;
-    return data?.inspectionAircraftLiveVisibleContactAuthority === authority
+    return data?.a1JetwayDeployment === '1.000'
+      && data?.a1JetwayState === 'attached-to-aircraft-door'
+      && data?.inspectionAircraftLiveVisibleContactAuthority === authority
       && Number.isFinite(Number(data?.inspectionAircraftLiveVisibleDoorCabHorizontalErrorMeters));
   }, { authority: A1_LIVE_VISUAL_CONTACT_AUTHORITY }, { timeout: 30000, polling: 100 });
   await page.waitForTimeout(600);
@@ -186,6 +186,9 @@ async function capture(page, filename) {
   if (a1.inspectionAircraftLiveVisibleContactAuthority !== A1_LIVE_VISUAL_CONTACT_AUTHORITY) {
     geometryFailures.push(`A1 live visual monitor authority is wrong: ${a1.inspectionAircraftLiveVisibleContactAuthority}`);
   }
+  if (a1.a1JetwayDeployment !== '1.000' || a1.a1JetwayState !== 'attached-to-aircraft-door') {
+    geometryFailures.push(`A1 contact evidence was not captured attached: deployment=${a1.a1JetwayDeployment} state=${a1.a1JetwayState}`);
+  }
 
   for (const [label, value] of [
     ['live Cab X', a1.inspectionAircraftLiveVisibleCabWorldX],
@@ -206,7 +209,7 @@ async function capture(page, filename) {
 
   const liveHorizontalError = finiteNumber(a1.inspectionAircraftLiveVisibleDoorCabHorizontalErrorMeters);
   if (liveHorizontalError === null || liveHorizontalError > MAXIMUM_A1_LIVE_HORIZONTAL_ERROR_METERS) {
-    geometryFailures.push(`A1 live visible door/Cab horizontal error is unacceptable: ${a1.inspectionAircraftLiveVisibleDoorCabHorizontalErrorMeters} m`);
+    geometryFailures.push(`A1 live visible door/Cab horizontal error is unacceptable while attached: ${a1.inspectionAircraftLiveVisibleDoorCabHorizontalErrorMeters} m`);
   }
 
   const verticalError = finiteNumber(a1.inspectionAircraftDoorVerticalErrorMeters);
@@ -248,7 +251,7 @@ async function capture(page, filename) {
   await selectByValue(page, 'Camera view', 'overhead');
   await page.waitForTimeout(1000);
   captures['a1-terminal-overhead.png'] = await capture(page, 'a1-terminal-overhead.png');
-  checkpoint('a1-complete', { captures: Object.keys(captures), geometryFailures, deferredGeometry });
+  checkpoint('a1-complete', { captures: Object.keys(captures), geometryFailures, deferredGeometry, liveHorizontalError });
 
   for (const [preset, label, filename, cameraView] of fleetViews) {
     await selectByLabel(page, 'Inspection location', label);
@@ -261,10 +264,22 @@ async function capture(page, filename) {
 
   const finalDataset = await page.locator('canvas.trainerCanvas').evaluate((element) => ({ ...element.dataset }));
   const finalLiveError = finiteNumber(finalDataset.inspectionAircraftLiveVisibleDoorCabHorizontalErrorMeters);
-  if (finalDataset.inspectionAircraftLiveVisibleContactAuthority !== A1_LIVE_VISUAL_CONTACT_AUTHORITY
-    || finalLiveError === null
-    || finalLiveError > MAXIMUM_A1_LIVE_HORIZONTAL_ERROR_METERS) {
-    geometryFailures.push(`A1 live visible contact drifted before final capture: authority=${finalDataset.inspectionAircraftLiveVisibleContactAuthority} error=${finalDataset.inspectionAircraftLiveVisibleDoorCabHorizontalErrorMeters}`);
+  const finalDeployment = finiteNumber(finalDataset.a1JetwayDeployment);
+  if (finalDataset.inspectionAircraftLiveVisibleContactAuthority !== A1_LIVE_VISUAL_CONTACT_AUTHORITY) {
+    geometryFailures.push(`A1 live visual monitor stopped before final fleet capture: ${finalDataset.inspectionAircraftLiveVisibleContactAuthority}`);
+  }
+  if (finalDeployment === null) {
+    geometryFailures.push(`A1 final deployment telemetry is invalid: ${finalDataset.a1JetwayDeployment}`);
+  } else if (Math.abs(finalDeployment - 1) <= 0.001) {
+    if (finalLiveError === null || finalLiveError > MAXIMUM_A1_LIVE_HORIZONTAL_ERROR_METERS) {
+      geometryFailures.push(`A1 live visible contact drifted while still attached: error=${finalDataset.inspectionAircraftLiveVisibleDoorCabHorizontalErrorMeters}`);
+    }
+  } else if (Math.abs(finalDeployment) <= 0.001) {
+    if (finalDataset.a1JetwayState !== 'parked-clear-of-aircraft') {
+      geometryFailures.push(`A1 retracted after fleet capture but did not report the parked state: ${finalDataset.a1JetwayState}`);
+    }
+  } else {
+    geometryFailures.push(`A1 ended fleet evidence in an unexpected intermediate deployment: ${finalDataset.a1JetwayDeployment}`);
   }
 
   const criticalConsole = consoleErrors.filter((message) => /Exact jetway readiness mismatch|Airport_Jetway\.glb fleet|A1 Rotunda|Static jetway|Terminal 4|KPHX|ReferenceError|TypeError|SyntaxError/i.test(message));
@@ -288,10 +303,17 @@ async function capture(page, filename) {
   if (pageErrors.length) throw new Error(`Fleet evidence page errors: ${pageErrors.join(' | ')}`);
   if (criticalFailedRequests.length) throw new Error(`Fleet evidence failed requests: ${criticalFailedRequests.join(' | ')}`);
 
-  checkpoint('complete', { captures, deferredGeometry, liveHorizontalError: finalLiveError });
+  checkpoint('complete', {
+    captures,
+    deferredGeometry,
+    attachedLiveHorizontalError: liveHorizontalError,
+    finalDeployment,
+    finalLiveError,
+  });
   await context.close();
   await browser.close();
   console.log(`TERMINAL 4 FLEET VISUAL EVIDENCE ACCEPTED: ${Object.keys(captures).join(', ')}`);
+  console.log(`A1 LIVE ATTACHED CONTACT ACCEPTED: ${liveHorizontalError.toFixed(6)} m horizontal error at deployment 1.000.`);
   if (deferredGeometry.length) console.log(`DEFERRED HEIGHT ONLY: ${deferredGeometry.join(' | ')}`);
 })().catch((error) => {
   checkpoint('failed', { error: error?.stack || error?.message || String(error) });
