@@ -57,4 +57,10 @@ for (const required of [
   }
 }
 
-console.log("Prepared A1 as one intact supplied Airport_Jetway.glb assembly: measured terminal-wall Rotunda position is preserved, decoded KPHX heading owns the complete parent, the aircraft target follows the same parent relocation, the complete T4_WALK source hierarchy is forbidden as its wall, and no Tunnel A/B/C/Cab child is reparented or independently yawed.");
+// The decoded BGL yaw is a world heading, not proof that the replacement GLB's
+// local +Z axis is its physical bridge axis. Calibrate the complete supplied
+// parent from the measured Rotunda->Tunnel-A axis, preserving the Rotunda and
+// every child local transform.
+await import(`./prepare-a1-intact-source-axis-alignment-v1.mjs?source-axis=${Date.now()}`);
+
+console.log("Prepared A1 as one intact supplied Airport_Jetway.glb assembly: measured terminal-wall Rotunda position is preserved, decoded KPHX heading owns the complete parent through the measured Rotunda-to-Tunnel-A axis, the aircraft target follows the same parent relocation, the complete T4_WALK source hierarchy is forbidden as its wall, and no Tunnel A/B/C/Cab child is reparented or independently yawed.");
