@@ -1,5 +1,7 @@
 import fs from "node:fs";
 
+await import(`./prepare-a1-attached-state-aircraft-calibration-v1.mjs?attached-calibration=${Date.now()}`);
+
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const authority = "live-final-visible-a1-door-cab-monitor-v1";
 let source = fs.readFileSync(trainerPath, "utf8");
@@ -44,7 +46,7 @@ const monitor = `${anchor}
                 }
               });
               if (liveCabVertexCount < 100 || !Number.isFinite(liveMaximumProjection)) {
-                throw new Error(\`live A1 Cab sample is invalid: \${liveCabVertexCount}\`);
+                throw new Error(`live A1 Cab sample is invalid: ${liveCabVertexCount}`);
               }
 
               const liveCabEndpointWorld = new THREE.Vector3();
@@ -100,6 +102,7 @@ if (!source.includes(`inspectionAircraftLiveVisibleContactAuthority = "${authori
 }
 
 for (const token of [
+  "a1-attached-state-owns-fixed-aircraft-calibration-v1",
   `inspectionAircraftLiveVisibleContactAuthority = "${authority}"`,
   "const publishLiveA1VisibleContact = () =>",
   "const liveVisibleDoorWorld = measureVisibleAirframeDoor().point",
@@ -110,4 +113,4 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Installed live browser-time A1 visual truth: the actual final Cab mesh endpoint and visible CRJ door are re-measured every 250 ms, so stale compatibility telemetry can no longer make a disconnected screenshot pass.");
+console.log("Installed live browser-time A1 visual truth after attached-state aircraft calibration: the actual final Cab mesh endpoint and visible CRJ door are re-measured every 250 ms, so stale or parked-state telemetry cannot make a disconnected screenshot pass.");
