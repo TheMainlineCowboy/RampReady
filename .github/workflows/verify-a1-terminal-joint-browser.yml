@@ -60,6 +60,13 @@ jobs:
           cat /tmp/rampready-vite-preview.log
           exit 1
 
+      - name: Capture A1 terminal-joint camera diagnostics
+        continue-on-error: true
+        env:
+          PAGE_URL: http://127.0.0.1:4173/RampReady/
+          EVIDENCE_DIR: a1-terminal-joint-evidence
+        run: node scripts/diagnose-a1-subview-browser.cjs
+
       - name: Render and verify A1 terminal wall joint
         env:
           PAGE_URL: http://127.0.0.1:4173/RampReady/
