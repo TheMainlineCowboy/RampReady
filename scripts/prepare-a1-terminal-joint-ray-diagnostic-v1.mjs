@@ -47,7 +47,7 @@ if (!source.includes(marker)) {
 
             const exactA1JointTargetDistance = camera.position.distanceTo(cameraTarget);
             if (!(exactA1JointTargetDistance > 8 && exactA1JointTargetDistance < 30)) {
-              throw new Error(`A1 clear-side terminal-joint camera distance is invalid: ${exactA1JointTargetDistance}`);
+              throw new Error(\`A1 clear-side terminal-joint camera distance is invalid: \${exactA1JointTargetDistance}\`);
             }
 
             const frameProbeCoordinates = [
@@ -76,7 +76,7 @@ if (!source.includes(marker)) {
               }
             }
             if (nearFieldWalkwayHits.length) {
-              throw new Error(`A1 clear-side terminal-joint frame still has near-field T4_WALK coverage: ${JSON.stringify(nearFieldWalkwayHits)}`);
+              throw new Error(\`A1 clear-side terminal-joint frame still has near-field T4_WALK coverage: \${JSON.stringify(nearFieldWalkwayHits)}\`);
             }
 
             renderer.domElement.dataset.inspectionCameraEndpointJointClearSideAuthority = "${clearSideAuthority}";
