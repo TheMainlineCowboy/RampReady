@@ -111,16 +111,18 @@ function createMaterials(THREE, tunnelA) {
   if (!source.includes(sideRibAnchor)) throw new Error(`${elbowPath}: A1 terminal sleeve rib anchor is missing`);
   source = source.replace(sideRibAnchor, detailedRib);
 
-  // Patch these independently. A later preparation pass legitimately changes
-  // the shell Y center to Tunnel A passenger height, so matching the entire
-  // construction block makes this visual repair unnecessarily order-sensitive.
-  for (const [before, after, label] of [
-    ["  const materials = createMaterials(THREE);", "  const materials = createMaterials(THREE, tunnelA);", "material source"],
-    ["  const width = 2.58;", "  const width = bridgeBellowsWidthMeters;", "measured width"],
-    ["  const height = 2.44;", "  const height = bridgeBellowsHeightMeters;", "measured height"],
-  ]) {
-    if (!source.includes(before)) throw new Error(`${elbowPath}: A1 terminal sleeve ${label} anchor is missing`);
-    source = source.replace(before, after);
+  const materialCall = "  const materials = createMaterials(THREE);";
+  if (!source.includes(materialCall)) throw new Error(`${elbowPath}: A1 terminal sleeve material-call anchor is missing`);
+  source = source.replace(materialCall, "  const materials = createMaterials(THREE, tunnelA);");
+
+  // Earlier production preparation may already have replaced the legacy
+  // 2.58/2.44 box dimensions with measured Tunnel-A passenger-envelope values.
+  // Keep those measured values if present; only remove the old hard-coded pair.
+  if (source.includes("  const width = 2.58;")) {
+    source = source.replace("  const width = 2.58;", "  const width = bridgeBellowsWidthMeters;");
+  }
+  if (source.includes("  const height = 2.44;")) {
+    source = source.replace("  const height = 2.44;", "  const height = bridgeBellowsHeightMeters;");
   }
 
   const telemetryAnchor = `  connector.userData.corrugationRibCount = frame.ribCount;`;
@@ -138,11 +140,11 @@ for (const required of [
   "function createMaterials(THREE, tunnelA)",
   'shell.name = "A1 fixed terminal sleeve - supplied Tunnel A skin"',
   "const materials = createMaterials(THREE, tunnelA)",
-  "const width = bridgeBellowsWidthMeters",
-  "const height = bridgeBellowsHeightMeters",
   "UploadedAirportJetwayA1TerminalElbowRoofRib_",
   "connector.userData.suppliedTunnelSkinAuthority",
   "connector.userData.suppliedTunnelMaterialName",
+  "connector.userData.suppliedTunnelMatchedWidthMeters = width",
+  "connector.userData.suppliedTunnelMatchedHeightMeters = height",
 ]) {
   if (!source.includes(required)) throw new Error(`${elbowPath}: supplied Tunnel A terminal sleeve is missing ${required}`);
 }
@@ -155,4 +157,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(elbowPath, source, "utf8");
-console.log("Matched the A1 terminal-side fixed sleeve to the supplied Tunnel A skin and measured passenger cross-section, with visible roof/side panel ribs and no hard-coded blank gray box dimensions.");
+console.log("Matched the A1 terminal-side fixed sleeve to the supplied Tunnel A skin, preserved any already-measured passenger-envelope dimensions, added visible roof/side panel ribs, and removed the featureless custom gray shell.");
