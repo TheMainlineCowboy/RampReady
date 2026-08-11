@@ -1,6 +1,7 @@
 import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
+const sourceElbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const generatedAuthorityPaths = Object.freeze([
   trainerPath,
   "src/environment/correctUploadedJetwayInstallationV1.js",
@@ -9,6 +10,7 @@ const generatedAuthorityPaths = Object.freeze([
   "src/environment/uploadedAirportJetwayModelSpaceControllerV7.js",
   "src/environment/registerStaticJetwayFleetToFacadeV1.js",
   "src/environment/authoredTerminal4Visual.js",
+  sourceElbowPath,
 ]);
 let source = fs.readFileSync(trainerPath, "utf8");
 
@@ -17,14 +19,23 @@ const finalAuthority = "a1-single-aircraft-pose-training-and-free-drive-v1";
 const cameraAuthority = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const cameraLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";
 const visualAuthority = "same-day-a1-continuous-source-measured-solid-closed-grounded-v2";
-const jetwayGroundAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
+const jetwayGroundAuthority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
+const sourceOwnershipAuthority = "a1-decoded-kphx-bgl-rotunda-and-heading-own-physical-jetway-v1";
 const noLiftAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const staticRigidAuthority = "57-static-exact-glb-own-gate-inward-telescope-v2";
 const staticSourcePlacementAuthority = "57-static-own-gate-target-real-wall-compact-registration-v9";
-const marker = "final-a1-acceptance-authority-after-all-preparers-v6-own-gate-real-wall-static";
+const marker = "final-a1-acceptance-authority-after-all-preparers-v7-intact-source-bogie";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
 source = source.replaceAll(staleAuthority, finalAuthority);
+for (const oldMarker of [
+  "final-a1-acceptance-authority-after-all-preparers-v6-own-gate-real-wall-static",
+  "final-a1-acceptance-authority-after-all-preparers-v5-source-heading-real-wall-static",
+  "final-a1-acceptance-authority-after-all-preparers-v4-source-static-integrity",
+  "final-a1-acceptance-authority-after-all-preparers-v3-three-tire-contact",
+  "final-a1-acceptance-authority-after-all-preparers-v2",
+  "final-a1-acceptance-authority-after-all-preparers-v1",
+]) source = source.replaceAll(oldMarker, marker);
 
 const facadeTelemetryAssignment = `        // ${facadeTelemetryMarker}
         renderer.domElement.dataset.terminal4LowerFacadeFitCount = String(
@@ -34,46 +45,52 @@ const facadeTelemetryAssignment = `        // ${facadeTelemetryMarker}
             ?? 0,
         );`;
 const facadeTelemetryPattern = /        (?:\/\/ terminal-connected-lower-facade-fit-accounting-v\d+-trainer-publication\n|\/\/ final-terminal4-lower-facade-fit-publication-v\d+\n)?        renderer\.domElement\.dataset\.terminal4LowerFacadeFitCount = String\([\s\S]*?        \);/;
-if (facadeTelemetryPattern.test(source)) {
-  source = source.replace(facadeTelemetryPattern, facadeTelemetryAssignment);
-} else {
-  throw new Error(`${trainerPath}: final lower-facade browser telemetry assignment is missing`);
-}
+if (facadeTelemetryPattern.test(source)) source = source.replace(facadeTelemetryPattern, facadeTelemetryAssignment);
+else throw new Error(`${trainerPath}: final lower-facade browser telemetry assignment is missing`);
 
 if (!source.includes(marker)) {
-  for (const oldMarker of [
-    "final-a1-acceptance-authority-after-all-preparers-v5-source-heading-real-wall-static",
-    "final-a1-acceptance-authority-after-all-preparers-v4-source-static-integrity",
-    "final-a1-acceptance-authority-after-all-preparers-v3-three-tire-contact",
-    "final-a1-acceptance-authority-after-all-preparers-v2",
-    "final-a1-acceptance-authority-after-all-preparers-v1",
-  ]) {
-    source = source.replaceAll(oldMarker, marker);
+  const anchor = `const INSPECTION_ROUTE_AUTHORITY =`;
+  const index = source.indexOf(anchor);
+  if (index < 0) throw new Error(`${trainerPath}: inspection route authority anchor is missing`);
+  source = `${source.slice(0, index)}// ${marker}\n${source.slice(index)}`;
+}
+
+const sourceElbow = fs.readFileSync(sourceElbowPath, "utf8");
+for (const forbidden of [
+  "UploadedAirportJetwayA1AircraftSidePivot",
+  "bridgePivot.attach(root)",
+  "bridgePivot.rotation.y = yawDelta",
+  "anchor.rotation.y += yawDelta",
+  "a1-fixed-terminal-rotunda-aircraft-side-pivot-v1",
+]) {
+  if (sourceElbow.includes(forbidden)) {
+    throw new Error(`${sourceElbowPath}: visually destructive A1 child/target pivot survived finalization: ${forbidden}`);
   }
-  if (!source.includes(marker)) {
-    const anchor = `const INSPECTION_ROUTE_AUTHORITY =`;
-    const index = source.indexOf(anchor);
-    if (index < 0) throw new Error(`${trainerPath}: inspection route authority anchor is missing`);
-    source = `${source.slice(0, index)}// ${marker}\n${source.slice(index)}`;
+}
+for (const required of [
+  sourceOwnershipAuthority,
+  "anchor.rotation.y = Number(placement.yaw)",
+  "const yawDelta = 0;",
+  "uploadedJetwayA1SourceRotundaPositionErrorMeters",
+]) {
+  if (!sourceElbow.includes(required)) {
+    throw new Error(`${sourceElbowPath}: final intact source-owned A1 is missing ${required}`);
   }
 }
 
-const generatedAuthoritySource = generatedAuthorityPaths
-  .map((path) => fs.readFileSync(path, "utf8"))
-  .join("\n");
+const generatedAuthoritySource = generatedAuthorityPaths.map((path) => fs.readFileSync(path, "utf8")).join("\n");
 for (const authority of [
   finalAuthority,
   cameraAuthority,
   cameraLockAuthority,
   visualAuthority,
   jetwayGroundAuthority,
+  sourceOwnershipAuthority,
   noLiftAuthority,
   staticRigidAuthority,
   staticSourcePlacementAuthority,
 ]) {
-  if (!generatedAuthoritySource.includes(authority)) {
-    throw new Error(`Generated Terminal 4 runtime is missing final authority ${authority}`);
-  }
+  if (!generatedAuthoritySource.includes(authority)) throw new Error(`Generated Terminal 4 runtime is missing final authority ${authority}`);
 }
 
 for (const required of [
@@ -129,10 +146,9 @@ for (const required of [
   "terminal4TerminalConnectedJetwayCount",
   "inspectionPresetJetwayDeployment",
 ]) {
-  if (!source.includes(required)) {
-    throw new Error(`${trainerPath}: final Terminal 4 browser publication is missing ${required}`);
-  }
+  if (!source.includes(required)) throw new Error(`${trainerPath}: final Terminal 4 browser publication is missing ${required}`);
 }
+
 for (const forbidden of [
   staleAuthority,
   "same-day-a1-continuous-compact-solid-closed-grounded-v1",
@@ -144,12 +160,11 @@ for (const forbidden of [
   "57-static-bgl-pose-locked-short-real-wall-registration-v7",
   "57-static-source-heading-real-wall-compact-registration-v8",
   "57-static-exact-glb-rigid-source-hierarchy-v1",
+  "exact-authored-a1-lowest-geometry-ramp-contact-v2",
 ]) {
-  if (source.includes(forbidden)) {
-    throw new Error(`${trainerPath}: stale compact A1, grounding, child lift, static cross-stand source-heading, or fixed-length fleet behavior survived finalization: ${forbidden}`);
-  }
+  if (source.includes(forbidden)) throw new Error(`${trainerPath}: stale A1/static/grounding behavior survived finalization: ${forbidden}`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs?grounded-pose=${Date.now()}`);
-console.log("Finalized Terminal 4 with source-measured A1 real-wall/Rotunda geometry and grounded aircraft/bogie evidence. All 57 static exact-GLB jetways keep the supplied meshes, register their Rotundas to the measured real facade, aim at their own authored gate targets, and telescope inward only to decoded gate-specific lengths instead of crossing stands at one fixed extension.");
+console.log("Finalized Terminal 4 with A1 preserved as one intact decoded-KPHX supplied assembly and Tunnel-C aircraft-side bogie/support geometry required on the ramp. Child reparenting and whole-model-minimum fake grounding are hard failures.");
