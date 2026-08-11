@@ -1,5 +1,7 @@
 import fs from "node:fs";
 
+await import(`./prepare-exact-fleet-hide-obsolete-fixed-walkways-v1.mjs?hide-obsolete-fixed-walkways=${Date.now()}`);
+
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const marker = "a1-terminal-joint-rendered-ray-diagnostic-v1";
 let source = fs.readFileSync(trainerPath, "utf8");
@@ -74,4 +76,4 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Added one-shot read-only A1 terminal-joint ray telemetry at four slab sample pixels and an encoded evidence-report emission so the exact rendered object/material can be identified before the next geometry edit.");
+console.log("Removed obsolete procedural fixed-walkway overlays from the exact replacement fleet, then added one-shot read-only A1 terminal-joint ray telemetry so the remaining slab/object can be identified before any further geometry edit.");
