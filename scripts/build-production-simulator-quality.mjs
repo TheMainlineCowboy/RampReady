@@ -88,6 +88,7 @@ try {
   await runNode("scripts/prepare-a1-vector-wall-lock-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-terminal-relocation-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-vertical-registration-v1.mjs");
+  await runNode("scripts/prepare-exact-airport-jetway-wheel-level-source-v1.mjs");
   await runNode("scripts/prepare-a1-exact-bogie-ground-contact-v1.mjs");
   await runNode("scripts/prepare-a1-bogie-readiness-v1.mjs");
   await runNode("scripts/prepare-a1-authored-ground-contact-v1.mjs");
