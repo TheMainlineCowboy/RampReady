@@ -16,8 +16,11 @@ const protectedSourcePaths = Object.freeze([
   "src/environment/staticJetwayPortalClosures.js",
   "src/environment/registerStaticJetwayFleetToFacadeV1.js",
   "src/environment/sourceRegisteredA1RotundaElbowV3.js",
+  "tests/browser/a1-close-readiness-diagnostic.spec.js",
   "tests/browser/a1-ground-contact-evidence.spec.js",
+  "tests/browser/a1-jetway-contact-clusters.spec.js",
   "tests/browser/a1-terminal-joint-bogie-subviews.spec.js",
+  "tests/browser/crj700-runtime.spec.js",
   "tests/browser/full-airport-inspection.spec.js",
   "tests/browser/kphx-ground-runtime.spec.js",
   "tests/browser/source-first-a1-repair.spec.js",
@@ -93,9 +96,6 @@ try {
   await runNode("scripts/prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
   await runNode("scripts/prepare-a1-rotunda-vestibule-closure-v1.mjs");
-  // The former static Cab closure pass generated large detached box fronts, and
-  // the static parking pass stretched the source hierarchy apart. Neither is
-  // allowed in the production geometry anymore.
   await runNode("scripts/prepare-terminal4-ramp-facade-v16.mjs");
   await runNode("scripts/prepare-terminal4-b-concourse-extension-v17.mjs");
   await runNode("scripts/prepare-terminal4-attachment-evidence-v14.mjs");
@@ -122,19 +122,14 @@ try {
   }
   for (const [sourcePath, committedSource] of committedSources) {
     const restored = await readFile(new URL(`../${sourcePath}`, import.meta.url), "utf8");
-    if (restored !== committedSource) {
-      throw new Error(`Simulator-quality production wrapper failed to restore ${sourcePath} exactly.`);
-    }
+    if (restored !== committedSource) throw new Error(`Simulator-quality production wrapper failed to restore ${sourcePath} exactly.`);
   }
 } catch (error) {
   restorationError = error;
 }
 
 if (buildError && restorationError) {
-  throw new AggregateError(
-    [buildError, restorationError],
-    "Simulator-quality production build failed and protected source restoration also failed.",
-  );
+  throw new AggregateError([buildError, restorationError], "Simulator-quality production build failed and protected source restoration also failed.");
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
@@ -143,18 +138,14 @@ await runNode("scripts/prepare-current-head-browser-expectations-v1.mjs");
 await runNode("scripts/prepare-a1-post-lifecycle-evidence-v1.mjs");
 await runNode("scripts/prepare-a1-bogie-centroid-browser-authority-v1.mjs");
 
-const articulationTestPath = new URL(
-  "../tests/browser/uploaded-jetway-articulation-v10.spec.js",
-  import.meta.url,
-);
+const articulationTestPath = new URL("../tests/browser/uploaded-jetway-articulation-v10.spec.js", import.meta.url);
 const preparedArticulationTest = await readFile(articulationTestPath, "utf8");
 for (const forbidden of [
   "expect(renderedAircraftVerticalError).toBeLessThanOrEqual(0.01)",
   "grounded-aircraft-door-progressive-tunnel-slope-v2",
+  "exact-authored-a1-lowest-geometry-ramp-contact-v2",
 ]) {
-  if (preparedArticulationTest.includes(forbidden)) {
-    throw new Error(`Post-restoration browser preparation left retired articulation expectation ${forbidden}`);
-  }
+  if (preparedArticulationTest.includes(forbidden)) throw new Error(`Post-restoration browser preparation left retired articulation expectation ${forbidden}`);
 }
 for (const required of [
   "articulationSignedDoorVerticalGapMeters",
@@ -163,11 +154,9 @@ for (const required of [
   "renderedAircraftVerticalError).toBeLessThanOrEqual(6)",
   "grounded-jetway-door-gap-reported-no-child-lift-v1",
   "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
-  "exact-authored-a1-lowest-geometry-ramp-contact-v2",
+  "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3",
 ]) {
-  if (!preparedArticulationTest.includes(required)) {
-    throw new Error(`Post-restoration browser preparation is missing ${required}`);
-  }
+  if (!preparedArticulationTest.includes(required)) throw new Error(`Post-restoration browser preparation is missing ${required}`);
 }
 
-console.log("RampReady simulator-quality production build keeps the real A1 wall/Rotunda joint fixed, uses one aircraft pose in training and free drive, preserves all 57 static jetways at their exact BGL source placements as rigid supplied-GLB assemblies, omits synthetic Cab closure boxes, keeps A1 grounded, and restores every protected tracked source after bundling.");
+console.log("RampReady simulator-quality production build requires the intact source-owned A1 assembly and aircraft-side Tunnel-C bogie/support ramp contact; a grounded terminal pedestal can no longer masquerade as a grounded jetway bogie.");

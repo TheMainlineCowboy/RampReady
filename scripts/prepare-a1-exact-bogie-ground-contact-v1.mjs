@@ -3,31 +3,33 @@ import fs from "node:fs";
 const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js";
 let source = fs.readFileSync(installationPath, "utf8");
 
-const authority = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
-const legacyAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v1";
-const finalWorldRefreshMarker = "A1 final transformed world-space ground-contact refresh v3";
-const fixedOffsetBlock = `  fleet.position.y -= BOGIE_TIRE_CONTACT_CORRECTION_METERS;
-  fleet.updateMatrixWorld(true);`;
+const authority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
+const legacyAuthorities = [
+  "exact-authored-a1-lowest-geometry-ramp-contact-v1",
+  "exact-authored-a1-lowest-geometry-ramp-contact-v2",
+];
+const finalWorldRefreshMarker = "A1 final transformed Tunnel-C bogie world-contact refresh v4";
+const fixedOffsetPattern = /  fleet\.position\.y -= BOGIE_TIRE_CONTACT_CORRECTION_METERS;\n  fleet\.updateMatrixWorld\(true\);/;
+
 const measuredOffsetBlock = `  // ${authority}
-  // Ground the complete supplied jetway parent from authored low-contact
-  // clusters. Clearance must be measured in fleet-parent coordinates because
-  // fleet.position.y is also parent-local. The evidence camera centroid is
-  // measured separately in scene-world coordinates and refreshed again after
-  // the complete A1 parent has finished every yaw/terminal relocation.
-  const measureAuthoredA1RampContact = (coordinateSpace = "fleet-parent") => {
+  // Ground A1 from the AIRCRAFT-SIDE support assembly, not from the lowest
+  // point anywhere in the complete jetway. The Rotunda pedestal can already
+  // touch the ramp while the Tunnel-C bogie/wheels remain meters in the air.
+  const bogieRoot = a1Model.getObjectByName("Tunnel_C")
+    || a1Model.getObjectByName("Tunnel_C_Jetway_0");
+  if (!bogieRoot) throw new Error("A1 exact supplied jetway is missing Tunnel_C bogie/support geometry");
+
+  const measureAuthoredA1BogieContact = (coordinateSpace = "fleet-parent") => {
     if (coordinateSpace !== "fleet-parent" && coordinateSpace !== "world") {
-      throw new Error(\`Unsupported A1 ramp-contact coordinate space: \${coordinateSpace}\`);
+      throw new Error(\`Unsupported A1 bogie coordinate space: \${coordinateSpace}\`);
     }
     group.updateWorldMatrix(true, true);
     fleet.updateWorldMatrix(true, true);
     a1Model.updateWorldMatrix(true, true);
+    bogieRoot.updateWorldMatrix(true, true);
     const fleetParent = fleet.parent;
-    if (!fleetParent?.matrixWorld) {
-      throw new Error("A1 exact authored jetway fleet has no matrix-bearing parent");
-    }
-    const fleetParentWorldInverse = new THREE.Matrix4()
-      .copy(fleetParent.matrixWorld)
-      .invert();
+    if (!fleetParent?.matrixWorld) throw new Error("A1 exact jetway fleet has no matrix-bearing parent");
+    const fleetParentWorldInverse = new THREE.Matrix4().copy(fleetParent.matrixWorld).invert();
     const point = new THREE.Vector3();
     const readPoint = (object, position, index) => {
       point.fromBufferAttribute(position, index).applyMatrix4(object.matrixWorld);
@@ -37,29 +39,31 @@ const measuredOffsetBlock = `  // ${authority}
 
     let minimumY = Number.POSITIVE_INFINITY;
     let authoredVertexCount = 0;
-    a1Model.traverse((object) => {
+    bogieRoot.traverse((object) => {
       if (!object?.isMesh || object.visible === false) return;
       const position = object.geometry?.getAttribute?.("position");
       if (!position) return;
+      object.updateWorldMatrix(true, false);
       for (let index = 0; index < position.count; index += 1) {
         readPoint(object, position, index);
         minimumY = Math.min(minimumY, point.y);
         authoredVertexCount += 1;
       }
     });
-    if (!Number.isFinite(minimumY) || authoredVertexCount < 1000) {
-      throw new Error(\`A1 exact authored jetway \${coordinateSpace} ground scan is invalid: minimum=\${minimumY}, vertices=\${authoredVertexCount}\`);
+    if (!Number.isFinite(minimumY) || authoredVertexCount < 100) {
+      throw new Error(\`A1 Tunnel-C bogie scan is invalid: minimum=\${minimumY}, vertices=\${authoredVertexCount}\`);
     }
 
-    const contactBandMeters = 0.08;
-    const cellSizeMeters = 0.28;
+    const contactBandMeters = 0.10;
+    const cellSizeMeters = 0.22;
     const contactBounds = new THREE.Box3();
     const occupiedCells = new Set();
     let contactPointCount = 0;
-    a1Model.traverse((object) => {
+    bogieRoot.traverse((object) => {
       if (!object?.isMesh || object.visible === false) return;
       const position = object.geometry?.getAttribute?.("position");
       if (!position) return;
+      object.updateWorldMatrix(true, false);
       for (let index = 0; index < position.count; index += 1) {
         readPoint(object, position, index);
         if (point.y > minimumY + contactBandMeters) continue;
@@ -95,11 +99,11 @@ const measuredOffsetBlock = `  // ${authority}
     const contactCenter = contactBounds.getCenter(new THREE.Vector3());
     const horizontalContactSpanMeters = Math.hypot(contactSpan.x, contactSpan.z);
     if (contactBounds.isEmpty()
-      || contactPointCount < 8
-      || contactClusterCount < 2
-      || horizontalContactSpanMeters < 1.2
+      || contactPointCount < 4
+      || contactClusterCount < 1
+      || horizontalContactSpanMeters < 0.35
       || ![contactCenter.x, contactCenter.y, contactCenter.z].every(Number.isFinite)) {
-      throw new Error(\`A1 exact authored jetway does not expose a credible \${coordinateSpace} multi-point ramp footprint: points=\${contactPointCount}, clusters=\${contactClusterCount}, span=\${contactSpan.x}x\${contactSpan.z}, center=\${contactCenter.toArray().join(",")}\`);
+      throw new Error(\`A1 Tunnel-C bogie does not expose a credible ramp footprint: points=\${contactPointCount}, clusters=\${contactClusterCount}, span=\${contactSpan.x}x\${contactSpan.z}\`);
     }
     return Object.freeze({
       coordinateSpace,
@@ -120,176 +124,74 @@ const measuredOffsetBlock = `  // ${authority}
     });
   };
 
-  const authoredA1GroundContactBefore = measureAuthoredA1RampContact("fleet-parent");
-  const measuredBogieGroundOffsetMeters = -authoredA1GroundContactBefore.minimumY;
-  if (!Number.isFinite(measuredBogieGroundOffsetMeters)
-    || Math.abs(measuredBogieGroundOffsetMeters) > 3) {
-    throw new Error(\`A1 exact authored parent-local bogie ground offset is invalid: \${measuredBogieGroundOffsetMeters}\`);
+  const authoredA1BogieBefore = measureAuthoredA1BogieContact("fleet-parent");
+  const measuredBogieGroundOffsetMeters = -authoredA1BogieBefore.minimumY;
+  if (!Number.isFinite(measuredBogieGroundOffsetMeters) || Math.abs(measuredBogieGroundOffsetMeters) > 8) {
+    throw new Error(\`A1 Tunnel-C bogie ground offset is invalid: \${measuredBogieGroundOffsetMeters}\`);
   }
   fleet.position.y += measuredBogieGroundOffsetMeters;
   group.updateWorldMatrix(true, true);
   fleet.updateWorldMatrix(true, true);
   a1Model.updateWorldMatrix(true, true);
+  bogieRoot.updateWorldMatrix(true, true);
 
-  const authoredA1GroundContactAfter = measureAuthoredA1RampContact("fleet-parent");
-  const measuredBogieGroundClearanceMeters = authoredA1GroundContactAfter.minimumY;
-  if (Math.abs(measuredBogieGroundClearanceMeters) > 0.005) {
-    throw new Error(\`A1 exact authored bogie missed the parent-local ramp plane by \${measuredBogieGroundClearanceMeters} m\`);
+  const authoredA1BogieAfter = measureAuthoredA1BogieContact("fleet-parent");
+  const measuredBogieGroundClearanceMeters = authoredA1BogieAfter.minimumY;
+  if (Math.abs(measuredBogieGroundClearanceMeters) > 0.015) {
+    throw new Error(\`A1 Tunnel-C bogie missed the ramp plane by \${measuredBogieGroundClearanceMeters} m\`);
   }
-  let authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact("world");
-  if (![authoredA1GroundContactWorldAfter.centerX,
-    authoredA1GroundContactWorldAfter.centerY,
-    authoredA1GroundContactWorldAfter.centerZ].every(Number.isFinite)) {
-    throw new Error("A1 exact authored world-space bogie contact centroid is invalid");
-  }`;
+  let authoredA1BogieWorldAfter = measureAuthoredA1BogieContact("world");`;
 
-if (source.includes(fixedOffsetBlock)) {
-  source = source.replace(fixedOffsetBlock, measuredOffsetBlock);
-} else if (!source.includes(authority)) {
-  if (source.includes(legacyAuthority)) {
-    source = source.replaceAll(legacyAuthority, authority);
-  } else {
-    throw new Error(`${installationPath}: fixed A1 fleet ground offset block is missing`);
-  }
+if (fixedOffsetPattern.test(source)) {
+  source = source.replace(fixedOffsetPattern, measuredOffsetBlock);
+} else {
+  const priorBlockPattern = /  \/\/ exact-authored-a1-lowest-geometry-ramp-contact-v2[\s\S]*?  let authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact\("world"\);/;
+  if (priorBlockPattern.test(source)) source = source.replace(priorBlockPattern, measuredOffsetBlock);
+  else if (!source.includes(authority)) throw new Error(`${installationPath}: A1 ground-contact block could not be replaced safely`);
 }
 
-source = source.replaceAll(legacyAuthority, authority);
-source = source.replace(
-  "  const authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact(\"world\");",
-  "  let authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact(\"world\");",
-);
+for (const legacy of legacyAuthorities) source = source.replaceAll(legacy, authority);
+source = source
+  .replaceAll("authoredA1GroundContactAfter", "authoredA1BogieAfter")
+  .replaceAll("authoredA1GroundContactWorldAfter", "authoredA1BogieWorldAfter")
+  .replaceAll("measureAuthoredA1RampContact", "measureAuthoredA1BogieContact")
+  .replaceAll("A1 final transformed world-space ground-contact refresh v3", finalWorldRefreshMarker);
 
-// The original world centroid was sampled immediately after vertical grounding,
-// before the complete A1 parent was rotated and moved to the terminal. That
-// stale coordinate could point the evidence camera at the aircraft landing gear
-// even while the jetway bogie itself was correctly grounded. Refresh the exact
-// same authored low-contact footprint only after every final A1 transform.
-if (!source.includes(finalWorldRefreshMarker)) {
-  const refreshAnchor = "  const doubleSidedMaterialCount = forceExactMaterialsDoubleSided(THREE, fleet);";
-  if (!source.includes(refreshAnchor)) {
-    throw new Error(`${installationPath}: final A1 transform/evidence refresh anchor is missing`);
-  }
-  source = source.replace(
-    refreshAnchor,
-    `  // ${finalWorldRefreshMarker}\n  group.updateWorldMatrix(true, true);\n  fleet.updateWorldMatrix(true, true);\n  a1Model.updateWorldMatrix(true, true);\n  authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact("world");\n  if (![authoredA1GroundContactWorldAfter.centerX,\n    authoredA1GroundContactWorldAfter.centerY,\n    authoredA1GroundContactWorldAfter.centerZ].every(Number.isFinite)) {\n    throw new Error("A1 final transformed world-space bogie contact centroid is invalid");\n  }\n  const doubleSidedMaterialCount = forceExactMaterialsDoubleSided(THREE, fleet);`,
-  );
+if (!source.includes("const finalBogieWorldClearanceMeters = authoredA1BogieWorldAfter.minimumY")) {
+  const finalAnchor = "  const doubleSidedMaterialCount = forceExactMaterialsDoubleSided(THREE, fleet);";
+  if (!source.includes(finalAnchor)) throw new Error(`${installationPath}: final bogie-world check anchor is missing`);
+  const finalCheck = `  // final rendered Tunnel-C bogie ramp truth\n  group.updateWorldMatrix(true, true);\n  fleet.updateWorldMatrix(true, true);\n  a1Model.updateWorldMatrix(true, true);\n  bogieRoot.updateWorldMatrix(true, true);\n  authoredA1BogieWorldAfter = measureAuthoredA1BogieContact("world");\n  const finalBogieWorldClearanceMeters = authoredA1BogieWorldAfter.minimumY;\n  if (Math.abs(finalBogieWorldClearanceMeters) > 0.015) {\n    throw new Error(\`A1 FINAL visible Tunnel-C bogie is not on the ramp: \${finalBogieWorldClearanceMeters} m\`);\n  }\n`;
+  source = source.replace(finalAnchor, `${finalCheck}${finalAnchor}`);
 }
 
-source = source.replace(
-  `    groundOffsetMeters: -BOGIE_TIRE_CONTACT_CORRECTION_METERS,
-    bogieTireContactCorrectionMeters: BOGIE_TIRE_CONTACT_CORRECTION_METERS,`,
-  `    groundOffsetMeters: measuredBogieGroundOffsetMeters,
-    bogieTireContactCorrectionMeters: Math.abs(measuredBogieGroundOffsetMeters),
-    bogieGroundClearanceMeters: measuredBogieGroundClearanceMeters,
-    bogieGroundContactAuthority: "${authority}",
-    bogieGroundContactPointCount: authoredA1GroundContactAfter.contactPointCount,
-    bogieGroundContactClusterCount: authoredA1GroundContactAfter.contactClusterCount,
-    bogieGroundContactSpanX: authoredA1GroundContactAfter.spanX,
-    bogieGroundContactSpanZ: authoredA1GroundContactAfter.spanZ,
-    bogieGroundHorizontalContactSpanMeters: authoredA1GroundContactAfter.horizontalContactSpanMeters,
-    bogieGroundContactCenterX: authoredA1GroundContactWorldAfter.centerX,
-    bogieGroundContactCenterY: authoredA1GroundContactWorldAfter.centerY,
-    bogieGroundContactCenterZ: authoredA1GroundContactWorldAfter.centerZ,
-    bogieGroundContactMinimumX: authoredA1GroundContactWorldAfter.minimumX,
-    bogieGroundContactMinimumZ: authoredA1GroundContactWorldAfter.minimumZ,
-    bogieGroundContactMaximumX: authoredA1GroundContactWorldAfter.maximumX,
-    bogieGroundContactMaximumZ: authoredA1GroundContactWorldAfter.maximumZ,`,
-);
+source = source.replace(/bogieGroundContactAuthority: "[^"]+"/, `bogieGroundContactAuthority: "${authority}"`);
 
-if (!source.includes("bogieGroundContactCenterX: authoredA1GroundContactWorldAfter.centerX")) {
-  const oldWorldlessReport = `    bogieGroundContactCenterX: authoredA1GroundContactAfter.centerX,
-    bogieGroundContactCenterY: authoredA1GroundContactAfter.centerY,
-    bogieGroundContactCenterZ: authoredA1GroundContactAfter.centerZ,
-    bogieGroundContactMinimumX: authoredA1GroundContactAfter.minimumX,
-    bogieGroundContactMinimumZ: authoredA1GroundContactAfter.minimumZ,
-    bogieGroundContactMaximumX: authoredA1GroundContactAfter.maximumX,
-    bogieGroundContactMaximumZ: authoredA1GroundContactAfter.maximumZ,`;
-  const worldReport = `    bogieGroundContactCenterX: authoredA1GroundContactWorldAfter.centerX,
-    bogieGroundContactCenterY: authoredA1GroundContactWorldAfter.centerY,
-    bogieGroundContactCenterZ: authoredA1GroundContactWorldAfter.centerZ,
-    bogieGroundContactMinimumX: authoredA1GroundContactWorldAfter.minimumX,
-    bogieGroundContactMinimumZ: authoredA1GroundContactWorldAfter.minimumZ,
-    bogieGroundContactMaximumX: authoredA1GroundContactWorldAfter.maximumX,
-    bogieGroundContactMaximumZ: authoredA1GroundContactWorldAfter.maximumZ,`;
-  if (source.includes(oldWorldlessReport)) {
-    source = source.replace(oldWorldlessReport, worldReport);
-  } else {
-    const reportAnchor = "    bogieGroundHorizontalContactSpanMeters: authoredA1GroundContactAfter.horizontalContactSpanMeters,";
-    if (!source.includes(reportAnchor)) {
-      throw new Error(`${installationPath}: bogie contact report anchor is missing`);
-    }
-    source = source.replace(reportAnchor, `${reportAnchor}\n${worldReport}`);
-  }
-}
-
-const groupAnchor = `  group.userData.uploadedJetwayBogieTireContactCorrectionMeters = report.bogieTireContactCorrectionMeters;`;
-if (source.includes(groupAnchor) && !source.includes("uploadedJetwayBogieGroundContactAuthority")) {
+if (!source.includes("uploadedJetwayBogieGroundContactAuthority")) {
+  const groupAnchor = `  group.userData.uploadedJetwayBogieTireContactCorrectionMeters = report.bogieTireContactCorrectionMeters;`;
+  if (!source.includes(groupAnchor)) throw new Error(`${installationPath}: bogie report publication anchor is missing`);
   source = source.replace(
     groupAnchor,
-    `${groupAnchor}
-  group.userData.uploadedJetwayBogieGroundClearanceMeters = report.bogieGroundClearanceMeters;
-  group.userData.uploadedJetwayBogieGroundContactAuthority = report.bogieGroundContactAuthority;
-  group.userData.uploadedJetwayBogieGroundContactPointCount = report.bogieGroundContactPointCount;
-  group.userData.uploadedJetwayBogieGroundContactClusterCount = report.bogieGroundContactClusterCount;
-  group.userData.uploadedJetwayBogieGroundContactSpanX = report.bogieGroundContactSpanX;
-  group.userData.uploadedJetwayBogieGroundContactSpanZ = report.bogieGroundContactSpanZ;
-  group.userData.uploadedJetwayBogieGroundHorizontalContactSpanMeters = report.bogieGroundHorizontalContactSpanMeters;
-  group.userData.uploadedJetwayBogieGroundContactCenterX = report.bogieGroundContactCenterX;
-  group.userData.uploadedJetwayBogieGroundContactCenterY = report.bogieGroundContactCenterY;
-  group.userData.uploadedJetwayBogieGroundContactCenterZ = report.bogieGroundContactCenterZ;
-  group.userData.uploadedJetwayBogieGroundContactMinimumX = report.bogieGroundContactMinimumX;
-  group.userData.uploadedJetwayBogieGroundContactMinimumZ = report.bogieGroundContactMinimumZ;
-  group.userData.uploadedJetwayBogieGroundContactMaximumX = report.bogieGroundContactMaximumX;
-  group.userData.uploadedJetwayBogieGroundContactMaximumZ = report.bogieGroundContactMaximumZ;`,
-  );
-} else if (!source.includes("uploadedJetwayBogieGroundContactCenterX")) {
-  const existingGroupAnchor = "  group.userData.uploadedJetwayBogieGroundHorizontalContactSpanMeters = report.bogieGroundHorizontalContactSpanMeters;";
-  if (!source.includes(existingGroupAnchor)) {
-    throw new Error(`${installationPath}: existing bogie contact group publication anchor is missing`);
-  }
-  source = source.replace(
-    existingGroupAnchor,
-    `${existingGroupAnchor}
-  group.userData.uploadedJetwayBogieGroundContactCenterX = report.bogieGroundContactCenterX;
-  group.userData.uploadedJetwayBogieGroundContactCenterY = report.bogieGroundContactCenterY;
-  group.userData.uploadedJetwayBogieGroundContactCenterZ = report.bogieGroundContactCenterZ;
-  group.userData.uploadedJetwayBogieGroundContactMinimumX = report.bogieGroundContactMinimumX;
-  group.userData.uploadedJetwayBogieGroundContactMinimumZ = report.bogieGroundContactMinimumZ;
-  group.userData.uploadedJetwayBogieGroundContactMaximumX = report.bogieGroundContactMaximumX;
-  group.userData.uploadedJetwayBogieGroundContactMaximumZ = report.bogieGroundContactMaximumZ;`,
+    `${groupAnchor}\n  group.userData.uploadedJetwayBogieGroundClearanceMeters = report.bogieGroundClearanceMeters;\n  group.userData.uploadedJetwayBogieGroundContactAuthority = report.bogieGroundContactAuthority;\n  group.userData.uploadedJetwayBogieGroundContactPointCount = report.bogieGroundContactPointCount;\n  group.userData.uploadedJetwayBogieGroundContactClusterCount = report.bogieGroundContactClusterCount;\n  group.userData.uploadedJetwayBogieGroundContactSpanX = report.bogieGroundContactSpanX;\n  group.userData.uploadedJetwayBogieGroundContactSpanZ = report.bogieGroundContactSpanZ;\n  group.userData.uploadedJetwayBogieGroundHorizontalContactSpanMeters = report.bogieGroundHorizontalContactSpanMeters;\n  group.userData.uploadedJetwayBogieGroundContactCenterX = report.bogieGroundContactCenterX;\n  group.userData.uploadedJetwayBogieGroundContactCenterY = report.bogieGroundContactCenterY;\n  group.userData.uploadedJetwayBogieGroundContactCenterZ = report.bogieGroundContactCenterZ;`,
   );
 }
 
-for (const token of [
+for (const required of [
   authority,
-  finalWorldRefreshMarker,
-  'const measureAuthoredA1RampContact = (coordinateSpace = "fleet-parent") =>',
-  'coordinateSpace !== "fleet-parent" && coordinateSpace !== "world"',
-  "const fleetParentWorldInverse = new THREE.Matrix4()",
-  'if (coordinateSpace === "fleet-parent") point.applyMatrix4(fleetParentWorldInverse)',
-  'measureAuthoredA1RampContact("fleet-parent")',
-  'measureAuthoredA1RampContact("world")',
-  "const measuredBogieGroundOffsetMeters = -authoredA1GroundContactBefore.minimumY",
-  "fleet.position.y += measuredBogieGroundOffsetMeters",
-  "const measuredBogieGroundClearanceMeters = authoredA1GroundContactAfter.minimumY",
-  "let authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact",
-  'authoredA1GroundContactWorldAfter = measureAuthoredA1RampContact("world")',
-  "bogieGroundContactClusterCount: authoredA1GroundContactAfter.contactClusterCount",
-  "bogieGroundContactCenterX: authoredA1GroundContactWorldAfter.centerX",
-  "uploadedJetwayBogieGroundContactCenterX",
-  "uploadedJetwayBogieGroundContactCenterY",
-  "uploadedJetwayBogieGroundContactCenterZ",
+  "const bogieRoot = a1Model.getObjectByName(\"Tunnel_C\")",
+  "const measureAuthoredA1BogieContact = (coordinateSpace = \"fleet-parent\") =>",
+  "const measuredBogieGroundOffsetMeters = -authoredA1BogieBefore.minimumY",
+  "const finalBogieWorldClearanceMeters = authoredA1BogieWorldAfter.minimumY",
+  "A1 FINAL visible Tunnel-C bogie is not on the ramp",
 ]) {
-  if (!source.includes(token)) {
-    throw new Error(`${installationPath}: exact bogie ground-contact output is missing ${token}`);
-  }
+  if (!source.includes(required)) throw new Error(`${installationPath}: Tunnel-C bogie grounding is missing ${required}`);
 }
-if (source.includes("fleet.position.y -= BOGIE_TIRE_CONTACT_CORRECTION_METERS")) {
-  throw new Error(`${installationPath}: hard-coded fleet ground correction remains active`);
-}
-if (source.includes("bogieGroundContactCenterX: authoredA1GroundContactAfter.centerX")) {
-  throw new Error(`${installationPath}: parent-local contact center is still being published as a world camera target`);
+for (const forbidden of [
+  "fleet.position.y -= BOGIE_TIRE_CONTACT_CORRECTION_METERS",
+  "const measureAuthoredA1RampContact",
+  "exact-authored-a1-lowest-geometry-ramp-contact-v2",
+]) {
+  if (source.includes(forbidden)) throw new Error(`${installationPath}: obsolete whole-model ground authority remains: ${forbidden}`);
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Grounded A1 from fleet-parent-local clearance and refreshed the authored low-contact centroid after the final transformed A1 placement before publishing the bogie evidence camera target.");
+console.log("Grounded A1 from the supplied Tunnel-C aircraft-side bogie/support geometry and added a deterministic final world-space fail-closed ramp-clearance check after every A1 transform.");

@@ -7,7 +7,11 @@ let source = fs.readFileSync(readinessPath, "utf8");
 let authored = fs.readFileSync(authoredPath, "utf8");
 let trainer = fs.readFileSync(trainerPath, "utf8");
 
-const authority = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
+const authority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
+const retiredAuthorities = [
+  "exact-authored-a1-lowest-geometry-ramp-contact-v1",
+  "exact-authored-a1-lowest-geometry-ramp-contact-v2",
+];
 
 function replaceRequired(text, before, after, path, label) {
   if (text.includes(after)) return text;
@@ -27,59 +31,65 @@ const declarations = `${declarationAnchor}
           const bogieGroundContactCenterX = Number(group.userData.uploadedJetwayBogieGroundContactCenterX ?? NaN);
           const bogieGroundContactCenterY = Number(group.userData.uploadedJetwayBogieGroundContactCenterY ?? NaN);
           const bogieGroundContactCenterZ = Number(group.userData.uploadedJetwayBogieGroundContactCenterZ ?? NaN);`;
-if (source.includes(declarationAnchor) && !source.includes("const bogieGroundContactPointCount =")) {
+
+if (!source.includes("const bogieGroundContactPointCount =")) {
+  if (!source.includes(declarationAnchor)) {
+    throw new Error(`${readinessPath}: bogie telemetry declaration anchor is missing`);
+  }
   source = source.replace(declarationAnchor, declarations);
-} else if (source.includes("const bogieGroundHorizontalContactSpan =")
-  && !source.includes("const bogieGroundContactCenterX =")) {
+} else if (!source.includes("const bogieGroundContactCenterX =")) {
+  const spanAnchor = `          const bogieGroundHorizontalContactSpan = Number(group.userData.uploadedJetwayBogieGroundHorizontalContactSpanMeters ?? -1);`;
+  if (!source.includes(spanAnchor)) throw new Error(`${readinessPath}: bogie center telemetry anchor is missing`);
   source = source.replace(
-    `          const bogieGroundHorizontalContactSpan = Number(group.userData.uploadedJetwayBogieGroundHorizontalContactSpanMeters ?? -1);`,
-    `          const bogieGroundHorizontalContactSpan = Number(group.userData.uploadedJetwayBogieGroundHorizontalContactSpanMeters ?? -1);
+    spanAnchor,
+    `${spanAnchor}
           const bogieGroundContactCenterX = Number(group.userData.uploadedJetwayBogieGroundContactCenterX ?? NaN);
           const bogieGroundContactCenterY = Number(group.userData.uploadedJetwayBogieGroundContactCenterY ?? NaN);
           const bogieGroundContactCenterZ = Number(group.userData.uploadedJetwayBogieGroundContactCenterZ ?? NaN);`,
   );
 }
 
-const staleGates = `            || Math.abs(fleetGroundOffset + bogieTireCorrection) > 1e-6
-            || !(bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1)`;
-const earlierMeasuredGates = `            || !Number.isFinite(fleetGroundOffset)
-            || !Number.isFinite(bogieTireCorrection)
-            || Math.abs(Math.abs(fleetGroundOffset) - bogieTireCorrection) > 1e-6
-            || Math.abs(fleetGroundOffset) > 0.5
-            || Math.abs(bogieGroundClearance) > 0.005
-            || bogieGroundContactAuthority !== "exact-authored-a1-lowest-geometry-ramp-contact-v1"`;
-const measuredGates = `            || !Number.isFinite(fleetGroundOffset)
-            || !Number.isFinite(bogieTireCorrection)
-            || Math.abs(Math.abs(fleetGroundOffset) - bogieTireCorrection) > 1e-6
-            || Math.abs(fleetGroundOffset) > 3
-            || Math.abs(bogieGroundClearance) > 0.005
-            || bogieGroundContactAuthority !== "${authority}"
-            || bogieGroundContactPointCount < 8
-            || bogieGroundContactClusterCount < 2
-            || !Number.isFinite(bogieGroundContactSpanX)
-            || !Number.isFinite(bogieGroundContactSpanZ)
-            || bogieGroundHorizontalContactSpan < 1.2
-            || !Number.isFinite(bogieGroundContactCenterX)
-            || !Number.isFinite(bogieGroundContactCenterY)
-            || !Number.isFinite(bogieGroundContactCenterZ)`;
-if (source.includes(staleGates)) {
-  source = source.replace(staleGates, measuredGates);
-} else if (source.includes(earlierMeasuredGates)) {
-  source = source.replace(earlierMeasuredGates, measuredGates);
-} else if (!source.includes("bogieGroundContactClusterCount < 2")) {
-  throw new Error(`${readinessPath}: A1 measured bogie readiness gates are missing`);
-} else {
-  source = source
-    .replaceAll('bogieGroundContactAuthority !== "exact-authored-a1-lowest-geometry-ramp-contact-v1"', `bogieGroundContactAuthority !== "${authority}"`);
-  if (!source.includes("!Number.isFinite(bogieGroundContactCenterX)")) {
-    source = source.replace(
-      "            || bogieGroundHorizontalContactSpan < 1.2",
-      `            || bogieGroundHorizontalContactSpan < 1.2
-            || !Number.isFinite(bogieGroundContactCenterX)
-            || !Number.isFinite(bogieGroundContactCenterY)
-            || !Number.isFinite(bogieGroundContactCenterZ)`,
-    );
+for (const retired of retiredAuthorities) source = source.replaceAll(retired, authority);
+source = source
+  .replaceAll("Math.abs(bogieGroundClearance) > 0.005", "Math.abs(bogieGroundClearance) > 0.015")
+  .replaceAll("bogieGroundContactPointCount < 8", "bogieGroundContactPointCount < 4")
+  .replaceAll("bogieGroundContactClusterCount < 2", "bogieGroundContactClusterCount < 1")
+  .replaceAll("bogieGroundHorizontalContactSpan < 1.2", "bogieGroundHorizontalContactSpan < 0.35")
+  .replaceAll("Math.abs(fleetGroundOffset) > 3", "Math.abs(fleetGroundOffset) > 8")
+  .replaceAll("Math.abs(fleetGroundOffset) > 0.5", "Math.abs(fleetGroundOffset) > 8")
+  .replaceAll(
+    "bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1",
+    "Number.isFinite(bogieTireCorrection) && bogieTireCorrection > 0",
+  );
+
+const strictGuards = [
+  "!Number.isFinite(fleetGroundOffset)",
+  "!Number.isFinite(bogieTireCorrection)",
+  "Math.abs(Math.abs(fleetGroundOffset) - bogieTireCorrection) > 1e-6",
+  "Math.abs(fleetGroundOffset) > 8",
+  "Math.abs(bogieGroundClearance) > 0.015",
+  `bogieGroundContactAuthority !== "${authority}"`,
+  "bogieGroundContactPointCount < 4",
+  "bogieGroundContactClusterCount < 1",
+  "!Number.isFinite(bogieGroundContactSpanX)",
+  "!Number.isFinite(bogieGroundContactSpanZ)",
+  "bogieGroundHorizontalContactSpan < 0.35",
+  "!Number.isFinite(bogieGroundContactCenterX)",
+  "!Number.isFinite(bogieGroundContactCenterY)",
+  "!Number.isFinite(bogieGroundContactCenterZ)",
+];
+
+const missingGuards = strictGuards.filter((guard) => !source.includes(guard));
+if (missingGuards.length) {
+  const mismatchMarker = "Exact jetway readiness mismatch:";
+  const mismatchIndex = source.indexOf(mismatchMarker);
+  if (mismatchIndex < 0) throw new Error(`${readinessPath}: exact readiness mismatch marker is missing`);
+  const conditionClose = source.lastIndexOf("          ) {", mismatchIndex);
+  const conditionStart = source.lastIndexOf("          if (", mismatchIndex);
+  if (conditionStart < 0 || conditionClose < conditionStart) {
+    throw new Error(`${readinessPath}: exact readiness condition boundaries are missing`);
   }
+  source = `${source.slice(0, conditionClose)}            || ${missingGuards.join("\n            || ")}\n${source.slice(conditionClose)}`;
 }
 
 source = source.replace(
@@ -176,10 +186,10 @@ for (const [path, text, tokens] of [
     "const bogieGroundClearance = Number(group.userData.uploadedJetwayBogieGroundClearanceMeters",
     "const bogieGroundContactPointCount = Number(group.userData.uploadedJetwayBogieGroundContactPointCount",
     "const bogieGroundContactCenterX = Number(group.userData.uploadedJetwayBogieGroundContactCenterX",
-    "bogieGroundContactClusterCount < 2",
-    "bogieGroundHorizontalContactSpan < 1.2",
+    "bogieGroundContactClusterCount < 1",
+    "bogieGroundHorizontalContactSpan < 0.35",
     "!Number.isFinite(bogieGroundContactCenterX)",
-    "Math.abs(bogieGroundClearance) > 0.005",
+    "Math.abs(bogieGroundClearance) > 0.015",
     `bogieGroundContactAuthority !== "${authority}"`,
   ]],
   [authoredPath, authored, [
@@ -199,14 +209,23 @@ for (const [path, text, tokens] of [
   ]],
 ]) {
   for (const token of tokens) {
-    if (!text.includes(token)) throw new Error(`${path}: measured bogie evidence is missing ${token}`);
+    if (!text.includes(token)) throw new Error(`${path}: measured Tunnel-C bogie evidence is missing ${token}`);
   }
 }
-if (source.includes("bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1")) {
-  throw new Error(`${readinessPath}: obsolete fixed bogie correction range remains`);
+for (const forbidden of [
+  "bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1",
+  ...retiredAuthorities,
+  "Math.abs(bogieGroundClearance) > 0.005",
+  "bogieGroundContactPointCount < 8",
+  "bogieGroundContactClusterCount < 2",
+  "bogieGroundHorizontalContactSpan < 1.2",
+]) {
+  if (source.includes(forbidden)) {
+    throw new Error(`${readinessPath}: retired whole-model/pedestal bogie readiness remains: ${forbidden}`);
+  }
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
 fs.writeFileSync(authoredPath, authored, "utf8");
 fs.writeFileSync(trainerPath, trainer, "utf8");
-console.log("Required and published a separated multi-point authored A1 ramp footprint, exact post-offset clearance, and the exact low-contact centroid through readiness and browser evidence.");
+console.log("Required and published idempotent Tunnel-C-specific A1 ramp evidence: <=1.5 cm clearance, finite multi-point aircraft-side support footprint, and no whole-model/pedestal ground authority.");

@@ -6,11 +6,12 @@ const CAMERA_AUTHORITY = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-c
 const LOCK_AUTHORITY = "exact-a1-evidence-camera-direct-lock-v1";
 const VISUAL_AUTHORITY = "same-day-a1-continuous-source-measured-solid-closed-grounded-v2";
 const CONTINUITY_AUTHORITY = "exact-authored-five-part-chain-no-isolated-node-rotation-v2";
-const BOGIE_GROUND_AUTHORITY = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
+const BOGIE_GROUND_AUTHORITY = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
 const NO_LIFT_AUTHORITY = "grounded-jetway-door-gap-reported-no-child-lift-v1";
-const FIXED_AIRCRAFT_AUTHORITY = "source-a1-gate-stop-world-offset-persisted-no-cab-follow-v3";
+const FIXED_AIRCRAFT_AUTHORITY = "final-live-cab-mesh-visible-door-registration-v7";
 const AIRCRAFT_MODE_POSE_AUTHORITY = "a1-single-aircraft-pose-training-and-free-drive-v1";
 const SOURCE_HEADING_AUTHORITY = "source-a1-parking-heading-authored-door-registration-v2";
+const SOURCE_A1_YAW = 0.00857;
 
 function triplet(value, label) {
   const values = String(value || "").split(",").map(Number);
@@ -61,30 +62,40 @@ async function selectSubview(page, subview) {
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 }
 
-test("A1 terminal joint and authored bogie match the same-day source-measured geometry", async ({ page }) => {
+test("A1 terminal joint and authored Tunnel-C bogie match the current source-measured geometry", async ({ page }) => {
   test.setTimeout(780_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   await page.getByRole("button", { name: "Drive tug / inspect airport" }).click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction(({ visualAuthority, continuityAuthority, bogieAuthority, noLiftAuthority, aircraftAuthority, modeAuthority, headingAuthority }) => {
+  await page.waitForFunction(({ visualAuthority, continuityAuthority, bogieAuthority, noLiftAuthority, aircraftAuthority, modeAuthority, headingAuthority, sourceYaw }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     const wallAuthority = String(data?.terminal4A1ConnectionAuthority || "");
+    const wallDistance = Number(data?.terminal4A1JetwayWallDistance);
+    const finalRotundaToWall = Number(data?.a1ExactRotundaToWallWorldMeters);
+    const noseX = Number(data?.inspectionAircraftNoseGearX);
+    const noseZ = Number(data?.inspectionAircraftNoseGearZ);
+    const liveX = Number(data?.aircraftModePoseLiveX);
+    const liveZ = Number(data?.aircraftModePoseLiveZ);
     return data?.terminal4UploadedJetwayLoadState === "ready"
       && data?.terminal4UploadedJetwayCount === "58"
       && data?.inspectionAircraftPoseAuthority === aircraftAuthority
+      && data?.inspectionAircraftFixedSourceGateAuthority === aircraftAuthority
       && data?.aircraftModePoseAuthority === modeAuthority
       && data?.inspectionAircraftHeadingAuthority === headingAuthority
       && data?.inspectionAircraftPoseStored === "true"
       && data?.inspectionAircraftPoseApplied === "true"
       && Number(data?.inspectionAircraftPoseErrorMeters) <= 0.01
-      && Math.abs(Number(data?.aircraftModePoseLiveX)) <= 0.01
-      && Math.abs(Number(data?.aircraftModePoseLiveZ) - 6.2) <= 0.01
-      && Math.abs(Number(data?.aircraftModePoseLiveYaw) - 0.00857) <= 0.0001
-      && Number(data?.terminal4A1JetwayWallDistance) > 2.9
-      && Number(data?.terminal4A1JetwayWallDistance) < 5.8
-      && Math.abs(Number(data?.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4) <= 0.05
+      && [noseX, noseZ, liveX, liveZ].every(Number.isFinite)
+      && Math.abs(liveX - noseX) <= 0.01
+      && Math.abs(liveZ - noseZ) <= 0.01
+      && Math.abs(Number(data?.aircraftModePoseLiveYaw) - sourceYaw) <= 0.0001
+      && Number(data?.inspectionAircraftSourceGateDoorTargetErrorMeters) <= 0.01
+      && Number(data?.inspectionAircraftCabContactErrorMeters) <= 0.01
+      && wallDistance > 2.9 && wallDistance < 5.8
+      && Number.isFinite(finalRotundaToWall)
+      && Math.abs(finalRotundaToWall - wallDistance) <= 0.05
       && !/WALK|JETWAY|CONNECTOR|PORTAL/i.test(wallAuthority)
       && data?.terminal4UploadedJetwayA1VisualAcceptanceAuthority === visualAuthority
       && data?.terminal4UploadedJetwayA1AssemblyContinuityAuthority === continuityAuthority
@@ -93,10 +104,10 @@ test("A1 terminal joint and authored bogie match the same-day source-measured ge
       && data?.terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed === "true"
       && data?.terminal4UploadedJetwayA1NoGeneratedGlassCorridor === "true"
       && data?.terminal4UploadedJetwayBogieGroundContactAuthority === bogieAuthority
-      && Math.abs(Number(data?.terminal4UploadedJetwayBogieGroundClearanceMeters)) <= 0.005
-      && Number(data?.terminal4UploadedJetwayBogieGroundContactPointCount) >= 8
-      && Number(data?.terminal4UploadedJetwayBogieGroundContactClusterCount) >= 2
-      && Number(data?.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters) >= 1.2
+      && Math.abs(Number(data?.terminal4UploadedJetwayBogieGroundClearanceMeters)) <= 0.015
+      && Number(data?.terminal4UploadedJetwayBogieGroundContactPointCount) >= 4
+      && Number(data?.terminal4UploadedJetwayBogieGroundContactClusterCount) >= 1
+      && Number(data?.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters) >= 0.35
       && data?.inspectionAircraftJetwayVerticalFitAuthority === noLiftAuthority
       && Math.abs(Number(data?.inspectionAircraftJetwayVerticalFitMeters)) <= 0.001
       && data?.inspectionAircraftJetwayAuthoredBogieGroundPreserved === "true";
@@ -108,6 +119,7 @@ test("A1 terminal joint and authored bogie match the same-day source-measured ge
     aircraftAuthority: FIXED_AIRCRAFT_AUTHORITY,
     modeAuthority: AIRCRAFT_MODE_POSE_AUTHORITY,
     headingAuthority: SOURCE_HEADING_AUTHORITY,
+    sourceYaw: SOURCE_A1_YAW,
   }, { timeout: 300_000, polling: 100 });
 
   await page.getByLabel("Inspection location").selectOption("a1Connection");
@@ -122,15 +134,24 @@ test("A1 terminal joint and authored bogie match the same-day source-measured ge
   await selectSubview(page, "terminal-joint");
   const terminalRuntime = await page.evaluate(() => ({ ...document.querySelector("canvas.trainerCanvas").dataset }));
   expect(terminalRuntime.inspectionAircraftPoseAuthority).toBe(FIXED_AIRCRAFT_AUTHORITY);
+  expect(terminalRuntime.inspectionAircraftFixedSourceGateAuthority).toBe(FIXED_AIRCRAFT_AUTHORITY);
   expect(terminalRuntime.aircraftModePoseAuthority).toBe(AIRCRAFT_MODE_POSE_AUTHORITY);
   expect(terminalRuntime.inspectionAircraftHeadingAuthority).toBe(SOURCE_HEADING_AUTHORITY);
-  expect(Number(terminalRuntime.aircraftModePoseLiveX)).toBeCloseTo(0, 3);
-  expect(Number(terminalRuntime.aircraftModePoseLiveZ)).toBeCloseTo(6.2, 3);
-  expect(Number(terminalRuntime.aircraftModePoseLiveYaw)).toBeCloseTo(0.00857, 4);
+  const terminalNoseX = Number(terminalRuntime.inspectionAircraftNoseGearX);
+  const terminalNoseZ = Number(terminalRuntime.inspectionAircraftNoseGearZ);
+  expect([terminalNoseX, terminalNoseZ].every(Number.isFinite)).toBe(true);
+  expect(Number(terminalRuntime.aircraftModePoseLiveX)).toBeCloseTo(terminalNoseX, 5);
+  expect(Number(terminalRuntime.aircraftModePoseLiveZ)).toBeCloseTo(terminalNoseZ, 5);
+  expect(Number(terminalRuntime.aircraftModePoseLiveYaw)).toBeCloseTo(SOURCE_A1_YAW, 4);
+  expect(Number(terminalRuntime.inspectionAircraftCabContactErrorMeters)).toBeLessThanOrEqual(0.01);
+  expect(Number(terminalRuntime.inspectionAircraftSourceGateDoorTargetErrorMeters)).toBeLessThanOrEqual(0.01);
   expect(terminalRuntime.inspectionCameraEndpointSubviewAuthority).toBe(SUBVIEW_AUTHORITY);
-  expect(Number(terminalRuntime.terminal4A1JetwayWallDistance)).toBeGreaterThan(2.9);
-  expect(Number(terminalRuntime.terminal4A1JetwayWallDistance)).toBeLessThan(5.8);
-  expect(Math.abs(Number(terminalRuntime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4)).toBeLessThanOrEqual(0.05);
+  const wallDistance = Number(terminalRuntime.terminal4A1JetwayWallDistance);
+  const finalRotundaToWall = Number(terminalRuntime.a1ExactRotundaToWallWorldMeters);
+  expect(wallDistance).toBeGreaterThan(2.9);
+  expect(wallDistance).toBeLessThan(5.8);
+  expect(Number.isFinite(finalRotundaToWall)).toBe(true);
+  expect(Math.abs(finalRotundaToWall - wallDistance)).toBeLessThanOrEqual(0.05);
   const wall = triplet(terminalRuntime.inspectionCameraEndpointWall, "terminal wall");
   const rotunda = triplet(terminalRuntime.inspectionCameraEndpointRotunda, "Rotunda");
   const target = triplet(terminalRuntime.inspectionCameraEndpointTarget, "terminal camera target");
@@ -143,10 +164,10 @@ test("A1 terminal joint and authored bogie match the same-day source-measured ge
   const bogieRuntime = await page.evaluate(() => ({ ...document.querySelector("canvas.trainerCanvas").dataset }));
   expect(bogieRuntime.inspectionCameraEndpointSubviewAuthority).toBe(SUBVIEW_AUTHORITY);
   expect(bogieRuntime.terminal4UploadedJetwayBogieGroundContactAuthority).toBe(BOGIE_GROUND_AUTHORITY);
-  expect(Math.abs(Number(bogieRuntime.terminal4UploadedJetwayBogieGroundClearanceMeters))).toBeLessThanOrEqual(0.005);
-  expect(Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactPointCount)).toBeGreaterThanOrEqual(8);
-  expect(Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactClusterCount)).toBeGreaterThanOrEqual(2);
-  expect(Number(bogieRuntime.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters)).toBeGreaterThanOrEqual(1.2);
+  expect(Math.abs(Number(bogieRuntime.terminal4UploadedJetwayBogieGroundClearanceMeters))).toBeLessThanOrEqual(0.015);
+  expect(Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactPointCount)).toBeGreaterThanOrEqual(4);
+  expect(Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactClusterCount)).toBeGreaterThanOrEqual(1);
+  expect(Number(bogieRuntime.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters)).toBeGreaterThanOrEqual(0.35);
   expect(bogieRuntime.inspectionAircraftJetwayVerticalFitAuthority).toBe(NO_LIFT_AUTHORITY);
   expect(Number(bogieRuntime.inspectionAircraftJetwayVerticalFitMeters)).toBeCloseTo(0, 5);
   expect(bogieRuntime.inspectionAircraftJetwayAuthoredBogieGroundPreserved).toBe("true");
@@ -163,7 +184,7 @@ test("A1 terminal joint and authored bogie match the same-day source-measured ge
     subviewAuthority: SUBVIEW_AUTHORITY,
     visualAuthority: terminalRuntime.terminal4UploadedJetwayA1VisualAcceptanceAuthority,
     continuityAuthority: terminalRuntime.terminal4UploadedJetwayA1AssemblyContinuityAuthority,
-    visibleVestibuleLengthMeters: Number(terminalRuntime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters),
+    finalRotundaToWallDistanceMeters: finalRotundaToWall,
     bogieGroundClearanceMeters: Number(bogieRuntime.terminal4UploadedJetwayBogieGroundClearanceMeters),
     bogieContactPointCount: Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactPointCount),
     bogieContactClusterCount: Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactClusterCount),

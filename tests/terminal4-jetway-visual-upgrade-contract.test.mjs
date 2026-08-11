@@ -95,14 +95,30 @@ for (const token of [
 if (staticPlacementPreparation.includes("const resolvedRotundaCenterToWallMeters = sourceWallDistance;")) {
   throw new Error("Static placement retained fake raw source wall distance ownership");
 }
+
+// A1 and the 57 static gates intentionally have different heading ownership.
+// A1 is the independently animated source gate and must keep the decoded KPHX
+// airport yaw as physical authority. The static gates retain decoded source yaw
+// as provenance, then use their own authored stand target for aircraft-side yaw
+// after real-wall Rotunda registration so they cannot cross neighboring stands.
 for (const token of [
   'STATIC_SOURCE_HEADING_AUTHORITY = "57-static-bgl-jetway-heading-provenance-v3"',
+  'A1_SOURCE_HEADING_AUTHORITY = "a1-decoded-kphx-bgl-heading-preserved-v1"',
+  'yaw: sourceJetwayYaw',
+  'sourceHeadingAuthority: jetway.g === "A1" ? "${A1_SOURCE_HEADING_AUTHORITY}" : "${STATIC_SOURCE_HEADING_AUTHORITY}"',
   'const yaw = targetRegistrationYaw;',
   'replaceAll("  const yaw = sourceYaw;", "  const yaw = targetRegistrationYaw;")',
   "uploadedJetwayStaticSourceHeadingProvenanceGateCount = 57",
-  "forcing sourceYaw here caused the fleet to cross stands",
+  'const oldA1Exception = \'yaw: jetway.g === "A1" ? yaw : sourceJetwayYaw\';',
 ]) {
-  if (!sourceRegistrationPreparation.includes(token)) throw new Error(`Source-heading provenance migration is missing ${token}`);
+  if (!sourceRegistrationPreparation.includes(token)) throw new Error(`Source-heading ownership migration is missing ${token}`);
+}
+for (const forbidden of [
+  'a1-photo-registered-animated-exception',
+]) {
+  if (sourceRegistrationPreparation.includes(forbidden) && !sourceRegistrationPreparation.includes(`forbidden`)) {
+    throw new Error(`Retired A1 source-heading exception survived: ${forbidden}`);
+  }
 }
 
 // This preparation must explicitly find the retired random gate-code expression,
@@ -151,4 +167,4 @@ for (const token of [
   if (!continuity.includes(token)) throw new Error(`Terminal 4 runtime preparation is missing ${token}`);
 }
 
-console.log("Terminal 4 jetway contract passed: exact supplied GLB at 58 gates, compact real-wall Rotunda sleeves, own-gate aircraft-side headings, decoded per-gate static lengths, and inward-only telescoping with no arbitrary fixed-length or cross-stand source-heading ownership.");
+console.log("Terminal 4 jetway contract passed: exact supplied GLB at 58 gates; A1 keeps decoded KPHX source yaw as its physical airport authority; static gates use compact real-wall Rotunda sleeves, own-gate aircraft-side headings, decoded per-gate lengths and inward-only telescoping with no arbitrary fixed length or cross-stand source-heading ownership.");

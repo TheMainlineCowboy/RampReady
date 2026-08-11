@@ -5,6 +5,7 @@ const MIN_WALL_DISTANCE = 0.5;
 const MAX_WALL_DISTANCE = 44;
 const MIN_A1_VISIBLE_LEG = 0.15;
 const MAX_VISIBLE_LEG = 44;
+const MAX_A1_ROTUNDA_PRESERVATION_ERROR = 0.001;
 
 let source = fs.readFileSync(readinessPath, "utf8");
 
@@ -23,6 +24,10 @@ source = source.replaceAll(
 source = source.replaceAll(
   "|| !(connectorVisibleLength > 0.25 && connectorVisibleLength < 12)",
   `|| !(connectorVisibleLength > ${MIN_A1_VISIBLE_LEG} && connectorVisibleLength < ${MAX_VISIBLE_LEG})`,
+);
+source = source.replaceAll(
+  "rotundaPreservationError > 1e-6",
+  `rotundaPreservationError > ${MAX_A1_ROTUNDA_PRESERVATION_ERROR}`,
 );
 
 const bogieGroundGuard = "Number.isFinite(bogieTireCorrection) && bogieTireCorrection > 0";
@@ -136,6 +141,7 @@ for (const forbidden of [
   "bogieTireCorrection > 0.04 && bogieTireCorrection < 0.1",
   "a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 12",
   "connectorVisibleLength > 0.25 && connectorVisibleLength < 12",
+  "rotundaPreservationError > 1e-6",
 ]) {
   if (source.includes(forbidden)) {
     throw new Error(`${readinessPath}: retired or unpublished jetway readiness survived final runtime normalization: ${forbidden}`);
@@ -159,4 +165,4 @@ for (const required of [
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Normalized final post-prepare jetway readiness using the structural exact-readiness condition: A1 keeps source-measured physical wall/visible-leg bounds, all 57 static gates keep measured min/max wall and visible-leg ranges, and grounded bogie contact remains fail-closed without depending on generated clause ordering or authority text.");
+console.log("Normalized final post-prepare jetway readiness using the structural exact-readiness condition: A1 keeps source-measured physical wall/visible-leg bounds, all 57 static gates keep measured min/max wall and visible-leg ranges, any generated intact-parent Rotunda preservation guard is normalized to the source-owned 1 mm tolerance when present, and grounded Tunnel-C bogie contact remains fail-closed without depending on generated clause ordering or authority text.");

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 
 const browserSpecs = Object.freeze([
+  "tests/browser/a1-close-readiness-diagnostic.spec.js",
   "tests/browser/a1-ground-contact-evidence.spec.js",
   "tests/browser/a1-jetway-contact-clusters.spec.js",
   "tests/browser/a1-terminal-joint-bogie-subviews.spec.js",
