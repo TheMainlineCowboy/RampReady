@@ -80,4 +80,9 @@ await import(`./seed-final-jetway-ground-contact-before-normalization.mjs?final-
 await import(`./prepare-a1-current-rotunda-terminal-connector-v1.mjs?current-rotunda=${Date.now()}`);
 await import(`./prepare-a1-terminal-shell-passenger-y-v1.mjs?passenger-shell=${Date.now()}`);
 await import(`./normalize-final-a1-evidence-camera-after-runtime.mjs?final-camera=${Date.now()}`);
+// A1 and the 57 static bridges intentionally use different ground frames: A1 is
+// grounded from final visible Tunnel-C support geometry; statics retain the
+// supplied model's authored shared offset. Require each independently rather than
+// forcing those two offsets to be numerically identical.
+await import(`./prepare-static-a1-ground-offset-independence-v1.mjs?independent-ground=${Date.now()}`);
 await import(`./prepare-a1-readiness-hidden-diagnostics-v1.mjs?hidden-a1-readiness=${Date.now()}`);
