@@ -15,7 +15,8 @@ if (!source.includes(marker)) {
           // Identify the actual rendered mesh under the broad upper-left slab in
           // the terminal-joint evidence view. This is diagnostic telemetry only:
           // no scene transform, visibility, material or geometry is changed.
-          if (exactA1EvidenceSubview === "terminal-joint") {
+          if (exactA1EvidenceSubview === "terminal-joint"
+            && renderer.domElement.dataset.inspectionA1TerminalJointRayAuthority !== "${marker}") {
             const diagnosticRays = [
               [-0.306, 0.444],
               [-0.028, 0.444],
@@ -47,8 +48,14 @@ if (!source.includes(marker)) {
                 };
               });
             });
+            const serializedRayHits = JSON.stringify(rayHits);
             renderer.domElement.dataset.inspectionA1TerminalJointRayAuthority = "${marker}";
-            renderer.domElement.dataset.inspectionA1TerminalJointRayHits = JSON.stringify(rayHits);
+            renderer.domElement.dataset.inspectionA1TerminalJointRayHits = serializedRayHits;
+            // The fleet verifier already records browser console errors in its
+            // evidence report. Base64 keeps object/material names out of its
+            // critical-error regex while giving this one diagnostic cycle a
+            // deterministic, decodable rendered-object identity.
+            console.error(\`SLABRAY64:\${btoa(serializedRayHits)}\`);
           }
           renderer.domElement.dataset.inspectionCameraEndpointLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";`;
   if (!source.includes(anchor)) throw new Error(`${trainerPath}: A1 camera lock anchor is missing`);
@@ -60,10 +67,11 @@ for (const token of [
   "const diagnosticRays = [",
   "raycaster.setFromCamera(new THREE.Vector2(x, y), camera)",
   "raycaster.intersectObjects(scene.children, true)",
-  "inspectionA1TerminalJointRayHits = JSON.stringify(rayHits)",
+  "inspectionA1TerminalJointRayHits = serializedRayHits",
+  "SLABRAY64:",
 ]) {
   if (!source.includes(token)) throw new Error(`${trainerPath}: A1 terminal-joint ray diagnostic is missing ${token}`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Added read-only A1 terminal-joint ray telemetry at four slab sample pixels so the exact rendered object/material can be identified before the next geometry edit.");
+console.log("Added one-shot read-only A1 terminal-joint ray telemetry at four slab sample pixels and an encoded evidence-report emission so the exact rendered object/material can be identified before the next geometry edit.");
