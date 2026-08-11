@@ -104,6 +104,7 @@ try {
   await runNode("scripts/prepare-a1-inspection-aircraft-pose-lifecycle-v2.mjs");
   await runNode("scripts/prepare-a1-inspection-aircraft-cab-heading-v1.mjs");
   await runNode("scripts/prepare-a1-fixed-source-gate-aircraft-pose-v1.mjs");
+  await runNode("scripts/prepare-a1-live-visual-contact-monitor-v1.mjs");
   await runNode("scripts/prepare-static-jetway-source-placement-integrity-v1.mjs");
   await runNode("scripts/prepare-a1-unified-aircraft-pose-v1.mjs");
   await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");

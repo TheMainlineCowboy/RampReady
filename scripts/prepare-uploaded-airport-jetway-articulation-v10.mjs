@@ -48,10 +48,25 @@ const exactAlignment = `  // The uploaded GLB preserves its exporter-authored ro
 
 if (fleet.includes(legacyAlignment)) {
   fleet = fleet.replace(legacyAlignment, exactAlignment);
-  fs.writeFileSync(fleetPath, fleet, "utf8");
 } else if (!fleet.includes("const axisCorrectionRadians = -Math.atan2(sourceLongitudinalAxis.x, sourceLongitudinalAxis.z);")) {
   throw new Error(`${fleetPath}: exact uploaded-model parent-axis normalization anchor is missing`);
 }
+
+// Preserve each exact primitive's authored top-level part identity on its
+// instanced batch. The later real-wall registration pass needs this to apply the
+// final gate-specific inward telescope AFTER the Rotunda has been registered to
+// the actual facade. Without this metadata all seven primitive batches are
+// indistinguishable once instanced.
+const batchNameAnchor = '    batch.name = `UploadedAirportJetwayStatic_${primitiveIndex}_${meshDefinition.name}`;';
+const batchNamePatch = `${batchNameAnchor}
+    batch.userData.sourcePartName = meshDefinition.sourcePartName;
+    batch.userData.sourcePrimitiveName = meshDefinition.name;`;
+if (!fleet.includes("batch.userData.sourcePartName = meshDefinition.sourcePartName;")) {
+  if (!fleet.includes(batchNameAnchor)) throw new Error(`${fleetPath}: static batch source-part metadata anchor is missing`);
+  fleet = fleet.replace(batchNameAnchor, batchNamePatch);
+}
+
+fs.writeFileSync(fleetPath, fleet, "utf8");
 
 const required = [
   'from "./uploadedAirportJetwayArticulationV10.js"',
@@ -75,6 +90,7 @@ const required = [
   "correctedSourceBounds",
   "rotundaOriginNormalized",
   "groundContactNormalized",
+  "batch.userData.sourcePartName = meshDefinition.sourcePartName",
 ];
 for (const token of required) {
   if (!fleet.includes(token)) throw new Error(`${fleetPath}: exact GLB articulation is missing ${token}`);
@@ -88,4 +104,4 @@ for (const forbidden of [
 ]) {
   if (fleet.includes(forbidden)) throw new Error(`${fleetPath}: retired articulation path remains: ${forbidden}`);
 }
-console.log("Prepared direct exact-GLB articulation with parent-only authored-axis normalization: 57 per-gate static instance sets and one independently controlled A1 clone.");
+console.log("Prepared direct exact-GLB articulation with parent-only authored-axis normalization: 57 per-gate static instance sets retain authored source-part identity for post-wall gate-specific inward lengths, plus one independently controlled A1 clone.");

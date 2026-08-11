@@ -1,15 +1,22 @@
 import fs from "node:fs";
 
 const articulationAuthority = "user-supplied-airport-jetway-source-connected-attached-v12-a1-retracts-inward-only";
+const staticArticulationAuthority = "57-static-exact-glb-own-gate-inward-telescope-v2";
+const staticSourcePlacementAuthority = "57-static-own-gate-target-real-wall-compact-registration-v9";
+const staticHeadingProvenanceAuthority = "57-static-bgl-jetway-heading-provenance-v3";
 const retiredAuthorities = [
   "user-supplied-airport-jetway-per-gate-telescoping-v10",
   "user-supplied-airport-jetway-per-gate-telescoping-v11-a1-only",
 ];
-const staticSourcePlacementAuthority = "57-static-bgl-pose-locked-short-real-wall-registration-v7";
+const retiredStaticArticulationAuthorities = [
+  "57-static-exact-glb-rigid-source-hierarchy-v1",
+];
 const retiredStaticSourcePlacementAuthorities = [
   "57-static-exact-bgl-source-placement-no-facade-relocation-v1",
   "57-static-authored-rotundas-short-real-wall-registration-v5",
   "57-static-bgl-position-locked-short-real-wall-registration-v6",
+  "57-static-bgl-pose-locked-short-real-wall-registration-v7",
+  "57-static-source-heading-real-wall-compact-registration-v8",
 ];
 
 {
@@ -30,9 +37,27 @@ const retiredStaticSourcePlacementAuthorities = [
   let source = fs.readFileSync(path, "utf8");
 
   for (const retired of retiredAuthorities) source = source.replaceAll(retired, articulationAuthority);
-  for (const retired of retiredStaticSourcePlacementAuthorities) {
-    source = source.replaceAll(retired, staticSourcePlacementAuthority);
-  }
+  for (const retired of retiredStaticArticulationAuthorities) source = source.replaceAll(retired, staticArticulationAuthority);
+  for (const retired of retiredStaticSourcePlacementAuthorities) source = source.replaceAll(retired, staticSourcePlacementAuthority);
+
+  source = source
+    .replace(
+      'const STATIC_RIGID_AUTHORITY = "57-static-exact-glb-own-gate-inward-telescope-v2";',
+      `const STATIC_RIGID_AUTHORITY = "${staticArticulationAuthority}";`,
+    )
+    .replace(
+      /const STATIC_SOURCE_PLACEMENT_AUTHORITY = "[^"]+";/,
+      `const STATIC_SOURCE_PLACEMENT_AUTHORITY = "${staticSourcePlacementAuthority}";\nconst STATIC_HEADING_PROVENANCE_AUTHORITY = "${staticHeadingProvenanceAuthority}";`,
+    )
+    .replaceAll("rigidSourceHierarchy: true", "inwardTelescopeOnly: true")
+    .replace(
+      '  expect(placementPass).toContain("uploadedJetwayStaticFacadeRelocationApplied = false");',
+      `  expect(placementPass).toContain("uploadedJetwayStaticOwnGateTargetCount = 57");\n  expect(placementPass).toContain("const yaw = targetRegistrationYaw;");\n  expect(placementPass).toContain("ownGateHeadingErrorRadians");\n  expect(placementPass).toContain("terminalFacingDot > 0.25");`,
+    )
+    .replace(
+      'test("A1 uses one aircraft pose and only A1 articulates while all 57 static supplied jetways remain rigid", async ({ page }) => {',
+      'test("A1 uses one aircraft pose while all 57 static supplied jetways aim at their own gates and telescope inward only", async ({ page }) => {',
+    );
 
   const oldMagicRange = `  expect(target).toBeGreaterThan(30.3);
   expect(target).toBeLessThan(30.8);
@@ -45,12 +70,9 @@ const retiredStaticSourcePlacementAuthorities = [
   expect(extension).toBeGreaterThan(0);
   expect(extension).toBeLessThanOrEqual(8.75);
   expect(Math.abs((sourceReach + extension) - predictedContact)).toBeLessThanOrEqual(0.05);`;
-  const connectedSourceRange = `  // The live mobile failure was caused by stretching sibling Tunnel B/C/Cab
-  // roots toward the aircraft. Attached A1 must keep the exact supplied GLB
-  // spacing: zero added extension. The sourceReach value is measured from a
-  // broader source-contact definition than the final Cab endpoint band, so a
-  // small sub-20 cm difference is legitimate; predicted/actual contact must
-  // instead agree tightly with the final measured Cab target.
+  const connectedSourceRange = `  // Attached A1 preserves the exact supplied connected hierarchy. Static gates
+  // use their own separate inward-only parked articulation; A1 never stretches
+  // sibling Tunnel B/C/Cab roots outward to chase the aircraft.
   expect(Math.abs(extension)).toBeLessThanOrEqual(0.001);
   expect(Math.abs(target - sourceReach)).toBeLessThanOrEqual(0.16);
   expect(Math.abs(predictedContact - target)).toBeLessThanOrEqual(0.05);
@@ -68,13 +90,6 @@ const retiredStaticSourcePlacementAuthorities = [
   expect(Math.abs(actualContact - target)).toBeLessThanOrEqual(0.05);`;
   if (source.includes(currentPositiveStretchBlock)) source = source.replace(currentPositiveStretchBlock, currentConnectedBlock);
 
-  // The final endpoint telemetry exposes two legitimate Rotunda references:
-  // sourceReach/target use the supplied Rotunda bounds center, while
-  // a1ExactRotundaWorld* is the terminal-facing Rotunda opening/collar used by
-  // the wall connector. They differ by roughly the Rotunda radius and must not
-  // be forced equal. Keep the opening-to-Cab geometry independently plausible,
-  // and separately require the rendered aircraft door to coincide with the
-  // measured Cab X/Z point below.
   const oldThreeDimensionalDistance = `  const geometricRotundaToDoorDistance = Math.hypot(
     renderedDoorTargetX - exactRotundaWorldX,
     renderedDoorTargetY - exactRotundaWorldY,
@@ -89,8 +104,7 @@ const retiredStaticSourcePlacementAuthorities = [
     .replaceAll("geometricRotundaToDoorDistance,", "geometricHorizontalRotundaOpeningToCabDistance,")
     .replaceAll(
       "expect(Math.abs(target - geometricRotundaToDoorDistance)).toBeLessThanOrEqual(0.05);",
-      `expect(geometricHorizontalRotundaOpeningToCabDistance).toBeGreaterThan(20);
-  expect(geometricHorizontalRotundaOpeningToCabDistance).toBeLessThan(32);`,
+      `expect(geometricHorizontalRotundaOpeningToCabDistance).toBeGreaterThan(20);\n  expect(geometricHorizontalRotundaOpeningToCabDistance).toBeLessThan(32);`,
     )
     .replaceAll(
       "geometricHorizontalRotundaToDoorDistance,",
@@ -98,12 +112,24 @@ const retiredStaticSourcePlacementAuthorities = [
     )
     .replaceAll(
       "expect(Math.abs(target - geometricHorizontalRotundaToDoorDistance)).toBeLessThanOrEqual(0.05);",
-      `expect(geometricHorizontalRotundaOpeningToCabDistance).toBeGreaterThan(20);
-  expect(geometricHorizontalRotundaOpeningToCabDistance).toBeLessThan(32);`,
+      `expect(geometricHorizontalRotundaOpeningToCabDistance).toBeGreaterThan(20);\n  expect(geometricHorizontalRotundaOpeningToCabDistance).toBeLessThan(32);`,
     );
 
-  // Capture the same wide A1 ramp/chase family that exposed the user's two
-  // separated turning joints, in addition to the terminal-joint close view.
+  // Add fleet-wide browser assertions after the existing static articulated count.
+  const staticCountAnchor = '  expect(runtime.terminal4UploadedJetwayStaticArticulatedGateCount).toBe("57");';
+  const fleetAcceptanceBlock = `${staticCountAnchor}
+  expect(runtime.terminal4UploadedJetwayStaticOwnGateTargetAuthority).toBe(STATIC_SOURCE_PLACEMENT_AUTHORITY);
+  expect(runtime.terminal4UploadedJetwayStaticOwnGateTargetCount).toBe("57");
+  expect(runtime.terminal4UploadedJetwayStaticSourceHeadingAuthority).toBe(STATIC_HEADING_PROVENANCE_AUTHORITY);
+  expect(runtime.terminal4UploadedJetwayStaticSourceHeadingProvenanceGateCount).toBe("57");
+  expect(Number(runtime.terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians)).toBeLessThanOrEqual(0.002);
+  expect(Number(runtime.terminal4UploadedJetwayStaticMaximumTerminalFacingDot)).toBeLessThanOrEqual(0.25);`;
+  if (!source.includes("terminal4UploadedJetwayStaticOwnGateTargetAuthority")) {
+    if (!source.includes(staticCountAnchor)) throw new Error(`${path}: static fleet runtime assertion anchor is missing`);
+    source = source.replace(staticCountAnchor, fleetAcceptanceBlock);
+  }
+
+  // Capture the same wide views that exposed crossed stands in the user's fleet.
   const oldA1Capture = `  await captureInspectionPreset(page, "a1Connection", "test-results/uploaded-jetway-a1-articulated-v11.png");`;
   const connectedA1Capture = `  await captureInspectionPreset(page, "a1", "test-results/uploaded-jetway-a1-full-chain-connected-v12.png");
   await captureInspectionPreset(page, "a1Connection", "test-results/uploaded-jetway-a1-terminal-connected-v12.png");`;
@@ -112,10 +138,14 @@ const retiredStaticSourcePlacementAuthorities = [
   } else if (!source.includes("uploaded-jetway-a1-full-chain-connected-v12.png")) {
     throw new Error(`${path}: full-chain A1 visual evidence capture anchor is missing`);
   }
-  source = source.replace(
-    'evidenceViews: ["a1Connection", "a14", "b14", "b15"],',
-    'evidenceViews: ["a1", "a1Connection", "a14", "b14", "b15"],',
-  );
+  source = source
+    .replaceAll("uploaded-jetway-a-concourse-static-source-rigid-v11.png", "uploaded-jetway-a-concourse-own-gate-v13.png")
+    .replaceAll("uploaded-jetway-b-concourse-static-source-rigid-v11.png", "uploaded-jetway-b-concourse-own-gate-v13.png")
+    .replaceAll("uploaded-jetway-b15-static-source-rigid-v11.png", "uploaded-jetway-b15-own-gate-v13.png")
+    .replace(
+      'evidenceViews: ["a1Connection", "a14", "b14", "b15"],',
+      'evidenceViews: ["a1", "a1Connection", "a14", "b14", "b15"],',
+    );
 
   for (const stale of [
     "expect(target).toBeGreaterThan(30.3)",
@@ -130,33 +160,40 @@ const retiredStaticSourcePlacementAuthorities = [
     "expect(Math.abs(actualContact - sourceReach)).toBeLessThanOrEqual(0.05)",
     "geometricRotundaToDoorDistance",
     "geometricHorizontalRotundaToDoorDistance",
+    "rigidSourceHierarchy: true",
+    "all 57 static supplied jetways remain rigid",
   ]) {
-    if (source.includes(stale)) throw new Error(`${path}: stale stretched/mismatched A1 browser check remains: ${stale}`);
+    if (source.includes(stale)) throw new Error(`${path}: stale stretched/rigid A1 or static browser check remains: ${stale}`);
   }
   for (const retired of retiredAuthorities) {
     if (source.includes(retired)) throw new Error(`${path}: retired stretched articulation authority remains: ${retired}`);
+  }
+  for (const retired of retiredStaticArticulationAuthorities) {
+    if (source.includes(retired)) throw new Error(`${path}: retired fixed-length static articulation authority remains: ${retired}`);
   }
   for (const retired of retiredStaticSourcePlacementAuthorities) {
     if (source.includes(retired)) throw new Error(`${path}: retired static source-placement authority remains: ${retired}`);
   }
   for (const required of [
     articulationAuthority,
+    staticArticulationAuthority,
     staticSourcePlacementAuthority,
+    staticHeadingProvenanceAuthority,
+    "inwardTelescopeOnly: true",
+    "terminal4UploadedJetwayStaticOwnGateTargetAuthority",
+    "terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians",
     "expect(Math.abs(extension)).toBeLessThanOrEqual(0.001);",
     "expect(Math.abs(target - sourceReach)).toBeLessThanOrEqual(0.16);",
-    "expect(Math.abs(predictedContact - target)).toBeLessThanOrEqual(0.05);",
-    "expect(Math.abs(actualContact - target)).toBeLessThanOrEqual(0.05);",
     "geometricHorizontalRotundaOpeningToCabDistance",
-    "expect(geometricHorizontalRotundaOpeningToCabDistance).toBeGreaterThan(20);",
-    "expect(geometricHorizontalRotundaOpeningToCabDistance).toBeLessThan(32);",
     "expect(Math.hypot(renderedDoorTargetX - measuredCabX, renderedDoorTargetZ - measuredCabZ)).toBeLessThanOrEqual(0.01);",
     "uploaded-jetway-a1-full-chain-connected-v12.png",
+    "uploaded-jetway-a-concourse-own-gate-v13.png",
     "expectSamePose(trainingPose, freeDrivePose);",
     "expectSamePose(returnedPose, freeDrivePose);",
   ]) {
-    if (!source.includes(required)) throw new Error(`${path}: connected A1 regression proof is missing ${required}`);
+    if (!source.includes(required)) throw new Error(`${path}: connected A1 / own-gate static regression proof is missing ${required}`);
   }
   fs.writeFileSync(path, source, "utf8");
 }
 
-console.log("Updated browser regressions for connected A1 articulation: attached Tunnel B/C/Cab may not stretch apart, current static BGL pose locking is required, Rotunda-center and Rotunda-opening measurements stay distinct, the rendered door must meet the measured Cab, and Chromium captures a full-chain A1 ramp view plus the terminal joint.");
+console.log("Updated browser regressions for connected A1 and fleet-wide own-gate static jetways: A1 cannot stretch apart, all 57 static bridges must report own-gate aim/real-wall registration, raw BGL headings are provenance only, and the wide A/B fleet screenshots are captured for visual review.");

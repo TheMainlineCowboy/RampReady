@@ -1,207 +1,154 @@
 import fs from "node:fs";
 
 const moduleSource = fs.readFileSync("src/environment/terminal4JetwayVisualUpgradeV35.js", "utf8");
-const preparation = fs.readFileSync("scripts/prepare-terminal4-jetway-visual-upgrade-v35.mjs", "utf8");
 const uploadedFleet = fs.readFileSync("src/environment/uploadedAirportJetwayFleet.js", "utf8");
-const uploadedConnectors = fs.readFileSync("src/environment/uploadedAirportJetwayTerminalConnector.js", "utf8");
+const articulation = fs.readFileSync("src/environment/uploadedAirportJetwayArticulationV10.js", "utf8");
 const measuredStaticConnectors = fs.readFileSync("src/environment/staticSourceMeasuredTerminalConnectorsV2.js", "utf8");
 const measuredStaticPreparation = fs.readFileSync("scripts/prepare-static-jetway-source-measured-terminal-legs-v1.mjs", "utf8");
+const staticPlacementPreparation = fs.readFileSync("scripts/prepare-static-jetway-source-placement-integrity-v1.mjs", "utf8");
+const sourceRegistrationPreparation = fs.readFileSync("scripts/prepare-terminal4-jetway-source-registration-v1.mjs", "utf8");
+const ownGateLengthPreparation = fs.readFileSync("scripts/prepare-static-jetway-own-gate-lengths-v1.mjs", "utf8");
 const uploadedPreparation = fs.readFileSync("scripts/prepare-uploaded-airport-jetway-fleet.mjs", "utf8");
 const continuity = fs.readFileSync("scripts/prepare-terminal4-facade-continuity-v8.mjs", "utf8");
 
 for (const token of [
   "enhanceTerminal4JetwayVisuals",
-  "package-native-terminal4-jetway-material-pass-no-procedural-detail-v52",
-  "jetwayVisualUpgradeDetailInstanceCount = 0",
   "jetwayVisualUpgradeProceduralGeometryRemoved = true",
   "jetwayVisualUpgradePackageMeshIsSoleGeometryAuthority = true",
   "jetwayVisualUpgradeExactTexturePreserved = true",
-  "jetwayVisualUpgradeMissingSourceMeshDisclosure = true",
 ]) {
-  if (!moduleSource.includes(token)) throw new Error(`Package-native Terminal 4 jetway visual module is missing ${token}`);
+  if (!moduleSource.includes(token)) throw new Error(`Terminal 4 package-native visual authority is missing ${token}`);
 }
-
 for (const forbidden of [
-  "new THREE.InstancedMesh",
   "new THREE.BoxGeometry",
   "new THREE.CylinderGeometry",
   "AIR_Jetway01_OuterLowerSkirts_V35",
   "AIR_Jetway01_OuterRoofAndUnderbridgeStructure_V35",
-  "AIR_Jetway01_InnerSafetyBands_V35",
-  "AIR_Jetway01_CabinFramesAndSkirts_V35",
-  "AIR_Jetway01_CabinThresholds_V35",
-  "AIR_Jetway01_RotundaStructuralBands_V35",
 ]) {
   if (moduleSource.includes(forbidden)) throw new Error(`Procedural jetway dressing remains: ${forbidden}`);
 }
 
 for (const token of [
-  'import { enhanceTerminal4JetwayVisuals } from "./terminal4JetwayVisualUpgradeV35.js";',
-  "const jetwayVisualUpgrade = enhanceTerminal4JetwayVisuals(THREE, group);",
-  "group.userData.jetwayVisualUpgradeDetailInstanceCount = jetwayVisualUpgrade.detailInstanceCount;",
-]) {
-  if (!preparation.includes(token)) throw new Error(`Terminal 4 legacy visual compatibility preparation is missing ${token}`);
-}
-
-for (const token of [
   'MODEL_AUTHORITY = "exact-uploaded-airport-jetway-glb-562e3144-v1"',
   'MATERIAL_AUTHORITY = "exact-seven-embedded-airport-jetway-textures-v1"',
   'PERFORMANCE_AUTHORITY = "57-static-exact-glb-instances-plus-1-animated-a1-v1"',
-  'A1_RETRACTION_AUTHORITY = "exact-glb-authored-node-telescoping-a1-v1"',
   'EXACT_GLB_URL = "models/airport-jetway/Airport_Jetway.glb"',
-  'new GLTFLoader().loadAsync(modelUrl())',
   'const requiredNodes = ["Tunnel_A", "Tunnel_B", "Tunnel_C", "Rotunda", "Cab"]',
-  '"Tunnel_C_Jetway_0"',
-  '"Tunnel_C_Glass_JW_0"',
-  '"Rotunda_Jetway_0"',
-  '"Cab_Jetway_0"',
-  '"Cab_Glass_JW_0"',
-  '"Tunnel_A_Jetway_0"',
-  '"Tunnel_B_Jetway_0"',
-  'mesh.geometry?.getAttribute("position")',
-  'mesh.geometry?.getAttribute("normal")',
-  'mesh.geometry?.getAttribute("uv")',
-  'materials.has("Jetway")',
-  'materials.has("Glass_JW")',
   'triangleCount !== 31_978',
-  'sourceLongitudinalAxis',
-  'axisCorrectionRadians',
-  'rotundaOriginNormalized = true',
-  'groundContactNormalized = true',
   'placements.length !== 58',
   'staticPlacements.length !== 57',
-  'collectPrototypeMeshes',
-  'buildStaticInstancedFleet',
-  'new THREE.InstancedMesh',
   'UploadedAirportJetwayStaticExactGlbInstances',
-  'prototype.clone(true)',
   'UploadedAirportJetwayModel_A1',
-  'uploadedJetwayStaticConnectorGateCount = 0',
-  'uploadedJetwayStaticConnectorBatchCount = 0',
-  'uploadedJetwayStaticConnectorBatchAuthority = "waiting-for-measured-static-facade-registration"',
-  'uploadedJetwayIndividualConnectorGateCount = 1',
   'uploadedJetwayExactGlbSha256 = "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0"',
-  'uploadedJetwayMaximumPositionErrorMeters = 0',
-  'uploadedJetwayMaximumUvError = 0',
-  'requiresOriginalSourceMesh = true',
-  'proceduralJetwayStairCount = 0',
-  'proceduralProjectedUvCount = 0',
-  'hiddenGeneratedObjectCount',
 ]) {
   if (!uploadedFleet.includes(token)) throw new Error(`Exact uploaded Terminal 4 jetway fleet is missing ${token}`);
 }
-
 for (const forbidden of [
-  "addUploadedAirportJetwayStaticTerminalConnectors",
-  "57-static-terminal-connectors-three-instanced-box-batches-v1",
-  "57-static-short-solid-white-terminal-vestibules-v1",
-  "user-supplied-airport-jetway-tunnel-a-b-c-rotunda-cab-v5-instanced-static-jetways-and-connectors-source-textured",
-  "exact-M1DGJETWAY-corrugated-band-projected-onto-user-model-v2",
-  "source-triangle-stair-and-bogie-material-split-v1",
-  "57-static-jetways-and-connectors-instanced-plus-1-animated-a1-v5",
   "addProjectedUvs",
   "cloneCorrugatedAtlasBand",
   "splitTunnelCSourceDetail",
-  "Tunnel_C_SourceDetailMaterialSplit",
-  "new THREE.EdgesGeometry",
-  "new THREE.LineSegments",
-  "decodeDeltaVarint",
-  "decodeOctNormal",
   "geometry.bin",
-  "DecompressionStream",
-  "M1DGJETWAY",
 ]) {
-  if (uploadedFleet.includes(forbidden)) {
-    throw new Error(`Exact uploaded Terminal 4 jetway fleet retained retired generated/static-connector detail: ${forbidden}`);
-  }
+  if (uploadedFleet.includes(forbidden)) throw new Error(`Exact uploaded jetway fleet retained retired generated detail: ${forbidden}`);
 }
 
-// A1 keeps its individual facade portal implementation. The 57 static bridges
-// deliberately do not use this legacy compact connector path anymore.
 for (const token of [
-  "addUploadedAirportJetwayTerminalConnector",
-  "facade-plane-dark-reveal-with-hidden-deep-overlap-v4",
-  "UploadedAirportJetwayTerminalPortalInterior_A1",
-  "UploadedAirportJetwayTerminalPortalOuterHeader_A1",
-  "UploadedAirportJetwayTerminalPortalOuterJamb_A1",
-  "UploadedAirportJetwayTerminalPortalInnerJamb_A1",
-  "a1FacadePortalDistanceMeters",
-  "a1HiddenOverlapMeters",
-]) {
-  if (!uploadedConnectors.includes(token)) throw new Error(`A1 Terminal 4 connector is missing ${token}`);
-}
-
-// Static connectors are built only after each supplied Rotunda has been measured
-// against the real Terminal 4 facade. They may legitimately be 0 m at an
-// overlapping Rotunda or much longer than the retired 1.2-3.6 m template; the
-// exact jetway parent itself must not be translated or re-aimed to satisfy them.
-for (const token of [
-  'STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v3"',
-  "MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0",
-  "MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 43",
-  "staticAuthoredRotundaRadiusMeters",
-  "staticVisibleTerminalLegMeters",
-  "staticTerminalWallOverlapMeters",
-  "wallConnectorLength",
-  "expectedCenterToWall",
-  "UploadedAirportJetwayStaticSourceMeasuredTerminalConnectors",
-  "UploadedAirportJetwayStaticTerminalConnectorBatches",
-  "perGateMeasuredTerminalVestibules = true",
+  'STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v4"',
+  "MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0.25",
+  "MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.25",
+  "compactRealWallSleevesOnly = true",
   "sourceMeasuredRealWallConnectors = true",
   "staticGateCount: 57",
-  "addStaticSolidTerminalVestibules",
 ]) {
-  if (!measuredStaticConnectors.includes(token)) throw new Error(`Source-measured static Terminal 4 connector is missing ${token}`);
+  if (!measuredStaticConnectors.includes(token)) throw new Error(`Compact static wall connector is missing ${token}`);
 }
 for (const forbidden of [
-  "1.2",
-  "3.6",
-  "complete-parent relocation",
-  "addUploadedAirportJetwayStaticTerminalConnectors",
+  "MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 43",
+  "groundSupportedFixedCorridors = true",
 ]) {
-  if (measuredStaticConnectors.includes(forbidden)) throw new Error(`Source-measured static connector retained retired compact geometry: ${forbidden}`);
+  if (measuredStaticConnectors.includes(forbidden)) throw new Error(`Static connector retained giant-corridor behavior: ${forbidden}`);
+}
+
+for (const token of [
+  'prepare-static-jetway-own-gate-lengths-v1.mjs',
+  "MIN_VISIBLE_METERS = 0.25",
+  "MAX_VISIBLE_METERS = 1.25",
+  "EXPECTED_VISIBLE_METERS = 0.55",
+  "giant-corridor policy",
+]) {
+  if (!measuredStaticPreparation.includes(token)) throw new Error(`Final static connector preparation is missing ${token}`);
+}
+
+for (const token of [
+  'REGISTRATION_AUTHORITY = "57-static-own-gate-target-real-wall-compact-registration-v9"',
+  "COMPACT_VISIBLE_TERMINAL_LEG_METERS = 0.55",
+  "COMPACT_TERMINAL_WALL_OVERLAP_METERS = 0.18",
+  "const yaw = targetRegistrationYaw;",
+  "const ownGateHeadingErrorRadians",
+  "ownGateHeadingErrorRadians >",
+  "terminalFacingDot > 0.25",
+  "uploadedJetwayStaticOwnGateTargetCount = 57",
+  'replace(\'const AUTHORITY = "57-static-source-heading-real-wall-compact-registration-v8";\'',
+]) {
+  if (!staticPlacementPreparation.includes(token)) throw new Error(`Own-gate real-wall registration is missing ${token}`);
+}
+if (staticPlacementPreparation.includes("const resolvedRotundaCenterToWallMeters = sourceWallDistance;")) {
+  throw new Error("Static placement retained fake raw source wall distance ownership");
 }
 for (const token of [
-  "staticSourceMeasuredTerminalConnectorsV2.js",
-  "addStaticSolidTerminalVestibules",
-  "MIN_VISIBLE_METERS = 0",
-  "MAX_VISIBLE_METERS = 43",
+  'STATIC_SOURCE_HEADING_AUTHORITY = "57-static-bgl-jetway-heading-provenance-v3"',
+  'const yaw = targetRegistrationYaw;',
+  'replaceAll("  const yaw = sourceYaw;", "  const yaw = targetRegistrationYaw;")',
+  "uploadedJetwayStaticSourceHeadingProvenanceGateCount = 57",
+  "forcing sourceYaw here caused the fleet to cross stands",
 ]) {
-  if (!measuredStaticPreparation.includes(token)) throw new Error(`Measured static connector preparation is missing ${token}`);
+  if (!sourceRegistrationPreparation.includes(token)) throw new Error(`Source-heading provenance migration is missing ${token}`);
+}
+
+// This preparation must explicitly find the retired random gate-code expression,
+// replace it with the decoded per-gate bridgeEnd, and fail if the retired formula
+// survives in the generated runtime. The old expression necessarily appears as
+// a search string in this migrator, so its mere text presence is not a failure.
+for (const token of [
+  "const randomLengthBlock =",
+  "const ownGateLengthBlock =",
+  "const exactBridgeEnd = bridgeEnd;",
+  "source = source.replace(randomLengthBlock, ownGateLengthBlock)",
+  "arbitrary static jetway length formula survived",
+  "decoded source bridge distance",
+]) {
+  if (!ownGateLengthPreparation.includes(token)) throw new Error(`Decoded static jetway length migration is missing ${token}`);
+}
+
+for (const token of [
+  'STATIC_RIGID_AUTHORITY = "57-static-exact-glb-own-gate-inward-telescope-v2"',
+  'EXTENSION_LIMITS = Object.freeze({ minimum: -14.5, maximum: 0 })',
+  "staticInwardPartOffsets",
+  "Math.min(EXTENSION_LIMITS.maximum, requestedExtension)",
+  "outwardReachShortfallMeters",
+  "inwardTelescopeOnly: true",
+]) {
+  if (!articulation.includes(token)) throw new Error(`Static inward-only articulation is missing ${token}`);
+}
+for (const forbidden of [
+  'STATIC_RIGID_AUTHORITY = "57-static-exact-glb-rigid-source-hierarchy-v1"',
+  "maximum: 8.75",
+]) {
+  if (articulation.includes(forbidden)) throw new Error(`Static fixed/outward-stretch articulation survived: ${forbidden}`);
 }
 
 for (const token of [
   'await import("./materialize-exact-airport-jetway.mjs")',
   'MODEL_AUTHORITY = "exact-uploaded-airport-jetway-glb-562e3144-v1"',
-  'MATERIAL_AUTHORITY = "exact-seven-embedded-airport-jetway-textures-v1"',
-  'PERFORMANCE_AUTHORITY = "57-static-exact-glb-instances-plus-1-animated-a1-v1"',
-  'A1_RETRACTION_AUTHORITY = "exact-glb-authored-node-telescoping-a1-v1"',
-  'EXACT_GLB_URL = "models/airport-jetway/Airport_Jetway.glb"',
   'uploadedJetwayExactGlbSha256 = "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0"',
-  '"addProjectedUvs"',
-  '"cloneCorrugatedAtlasBand"',
-  '"splitTunnelCSourceDetail"',
-  '"source-triangle-stair-and-bogie-material-split"',
-  '"geometry.bin"',
 ]) {
-  if (!uploadedPreparation.includes(token)) throw new Error(`Exact uploaded Terminal 4 jetway preparation is missing ${token}`);
+  if (!uploadedPreparation.includes(token)) throw new Error(`Exact uploaded jetway preparation is missing ${token}`);
 }
-
 for (const token of [
-  'await import("./prepare-terminal4-jetway-source-uv-v36.mjs")',
   'await import("./prepare-uploaded-airport-jetway-fleet.mjs")',
   'await import("./prepare-uploaded-airport-jetway-readiness-v2.mjs")',
 ]) {
   if (!continuity.includes(token)) throw new Error(`Terminal 4 runtime preparation is missing ${token}`);
 }
-if (continuity.includes('await import("./prepare-terminal4-jetway-visual-upgrade-v35.mjs")')) {
-  throw new Error("Obsolete V35 procedural jetway pass returned to the production runtime chain");
-}
 
-for (const forbidden of ["usesTerminalBuildingTextures = true", "CanvasTexture"]) {
-  if (moduleSource.includes(forbidden) || preparation.includes(forbidden) || uploadedPreparation.includes(forbidden)) {
-    throw new Error(`Terminal 4 jetway visual pass contains forbidden source claim: ${forbidden}`);
-  }
-}
-
-console.log("The exact Airport_Jetway.glb remains the production geometry/material authority at all 58 Terminal 4 gates. Static jetway parents are preserved at decoded KPHX poses; their fixed terminal legs are generated only from per-gate real-wall measurements after facade registration, while A1 retains its individual real-wall portal and airport-owned bridge pose.");
+console.log("Terminal 4 jetway contract passed: exact supplied GLB at 58 gates, compact real-wall Rotunda sleeves, own-gate aircraft-side headings, decoded per-gate static lengths, and inward-only telescoping with no arbitrary fixed-length or cross-stand source-heading ownership.");

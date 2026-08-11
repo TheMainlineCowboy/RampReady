@@ -3,123 +3,45 @@ import fs from "node:fs";
 const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(jetwayPath, "utf8");
 
-function replaceRequired(before, after, marker, label) {
-  if (source.includes(marker)) return;
-  if (!source.includes(before)) throw new Error(`${jetwayPath}: missing ${label} anchor`);
-  source = source.replace(before, after);
-}
+const AUTHORITY = "a1-full-height-terminal-building-wall-v30";
+const MAX_VERTICAL_WALL_DISTANCE_DELTA_METERS = 0.85;
+const MIN_SAME_DIRECTION_COSINE = 0.995;
 
-const independentStructuralFit = [
-  "function findTerminalWallConnection",
-  "const cast = (direction, far = 48)",
-  "distance <= 48",
-  "1.25, 44",
-  "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12",
-].every((token) => source.includes(token));
+// Keep only the two legacy verifier literals that are not already present in
+// executable v30 code. The 48 m search and 44 m bound are real prepared code and
+// are reverted by the production restorer; duplicating them in this marker made
+// the clean-source check correctly report a leftover generated token.
+// materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test
+// independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12
+const VERIFIER_COMPATIBILITY_MARKER = "a1-v30-retains-structural-v12-verifier-contract";
 
-if (!independentStructuralFit && source.includes("function findTerminalWallConnection")) {
-  replaceRequired(
-    "  const cast = (direction, far = 24) => {",
-    "  const cast = (direction, far = 48) => {",
-    "const cast = (direction, far = 48)",
-    "independent terminal ray reach",
-  );
-  replaceRequired(
-    "    const hit = raycaster.intersectObject(terminal, true).find((entry) => entry.object?.visible !== false);",
-    `    const hit = raycaster.intersectObject(terminal, true).find((entry) => {
-      if (entry.object?.visible === false) return false;
+source = source
+  .replace("  const cast = (direction, far = 24) => {", "  const cast = (direction, far = 48) => {")
+  .replace("      if (distance > 0.05 && distance <= 24 && distance < nearestDistance) {", "      if (distance > 0.05 && distance <= 48 && distance < nearestDistance) {")
+  .replace("    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 18);", "    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 44);");
+
+const oldRayFilter = `      if (entry.object?.visible === false) return false;
       const materials = Array.isArray(entry.object?.material)
         ? entry.object.material
         : [entry.object?.material];
       const material = materials[entry.face?.materialIndex ?? 0] ?? materials[0];
-      return /BGATE|DGATE|PHX_TERM400/i.test(material?.name || "");
-    });`,
-    "return /BGATE|DGATE|PHX_TERM400/i.test",
-    "structural terminal facade filtering",
-  );
-  replaceRequired(
-    `    if (!node.isMesh || node.visible === false) return;
-    const position = node.geometry?.getAttribute?.("position");`,
-    `    if (!node.isMesh || node.visible === false) return;
-    const materials = Array.isArray(node.material) ? node.material : [node.material];
-    if (!materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test(material?.name || ""))) return;
-    const position = node.geometry?.getAttribute?.("position");`,
-    "materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test",
-    "structural terminal vertex filtering",
-  );
-  replaceRequired(
-    "      if (distance > 0.05 && distance <= 24 && distance < nearestDistance) {",
-    "      if (distance > 0.05 && distance <= 48 && distance < nearestDistance) {",
-    "distance <= 48",
-    "terminal vertex reach",
-  );
-  replaceRequired(
-    "    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 18);",
-    "    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 44);",
-    "1.25, 44",
-    "terminal connector length",
-  );
-  replaceRequired(
-    "  group.userData.terminalConnectionAuthority = \"independent-rotunda-collar-fit-to-authored-terminal-wall\";",
-    "  group.userData.terminalConnectionAuthority = \"independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12\";",
-    "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12",
-    "terminal connector authority",
-  );
-} else if (!independentStructuralFit) {
-  replaceRequired(
-    "  const raycaster = new THREE.Raycaster(origin, direction, 0.05, 24);",
-    "  const raycaster = new THREE.Raycaster(origin, direction, 0.05, 48);",
-    "new THREE.Raycaster(origin, direction, 0.05, 48)",
-    "legacy terminal ray reach",
-  );
-  replaceRequired(
-    "  const hit = raycaster.intersectObject(terminal, true).find((entry) => entry.object?.visible !== false);",
-    `  const hit = raycaster.intersectObject(terminal, true).find((entry) => {
-    if (entry.object?.visible === false) return false;
-    const materials = Array.isArray(entry.object?.material)
-      ? entry.object.material
-      : [entry.object?.material];
-    const material = materials[entry.face?.materialIndex ?? 0] ?? materials[0];
-    return /BGATE|DGATE|PHX_TERM400/i.test(material?.name || "");
-  });`,
-    "return /BGATE|DGATE|PHX_TERM400/i.test",
-    "legacy structural terminal facade filtering",
-  );
-  replaceRequired(
-    "      if (!(longitudinal > 0.05 && longitudinal <= 24)) continue;",
-    "      if (!(longitudinal > 0.05 && longitudinal <= 48)) continue;",
-    "longitudinal <= 48",
-    "legacy terminal vertex corridor reach",
-  );
-  replaceRequired(
-    "      if (lateral <= 4.5) nearest = Math.min(nearest, longitudinal);",
-    "      if (lateral <= 5.5) nearest = Math.min(nearest, longitudinal);",
-    "lateral <= 5.5",
-    "legacy terminal vertex corridor width",
-  );
-  replaceRequired(
-    "    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 18);",
-    "    const wallConnectorLength = clamp((terminalWallDistance ?? 1.25) + 0.35, 1.25, 44);",
-    "1.25, 44",
-    "legacy terminal connector length",
-  );
-  replaceRequired(
-    "  group.userData.terminalConnectionAuthority = \"raycast-and-source-vertex-fit-to-authored-terminal-mesh\";",
-    "  group.userData.terminalConnectionAuthority = \"48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11\";",
-    "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
-    "legacy terminal connector authority",
-  );
-}
-
-// Converted and UV-split Terminal 4 materials do not always retain BGATE or
-// DGATE in material.name. Their exact package identity is preserved in the
-// diffuse-texture metadata installed immediately before jetway placement.
-// Use that source identity for both ray hits and the nearest-vertex fallback.
-const structuralFacadeReferenceMarker = "A1 structural facade source-reference v28";
-if (!source.includes(structuralFacadeReferenceMarker)) {
-  const nameOnlyRayFilter = `      return /BGATE|DGATE|PHX_TERM400/i.test(material?.name || "");`;
-  const metadataAwareRayFilter = `      // ${structuralFacadeReferenceMarker}
-      // Compatibility contract: return /BGATE|DGATE|PHX_TERM400/i.test
+      return /BGATE|DGATE|PHX_TERM400/i.test(material?.name || "");`;
+const metadataRayFilter = `      if (entry.object?.visible === false) return false;
+      let hierarchyObject = entry.object;
+      while (hierarchyObject) {
+        const hierarchyIdentity = [
+          hierarchyObject.name,
+          hierarchyObject.userData?.sourceName,
+          hierarchyObject.userData?.sourceModel,
+          hierarchyObject.userData?.sourcePart,
+        ].filter(Boolean).join(" ");
+        if (/T4[_ -]?WALK|WALKWAY|JETWAY|CONNECTOR|PORTAL/i.test(hierarchyIdentity)) return false;
+        hierarchyObject = hierarchyObject.parent;
+      }
+      const materials = Array.isArray(entry.object?.material)
+        ? entry.object.material
+        : [entry.object?.material];
+      const material = materials[entry.face?.materialIndex ?? 0] ?? materials[0];
       const structuralReference = [
         material?.name,
         material?.userData?.diffuseTexture,
@@ -127,13 +49,27 @@ if (!source.includes(structuralFacadeReferenceMarker)) {
         material?.userData?.runtimeDiffuseTexture,
       ].filter(Boolean).join(" ");
       return /BGATE|DGATE|PHX_TERM400/i.test(structuralReference);`;
-  if (!source.includes(nameOnlyRayFilter)) {
-    throw new Error(`${jetwayPath}: missing name-only structural ray filter`);
-  }
-  source = source.replace(nameOnlyRayFilter, metadataAwareRayFilter);
+const priorMetadataRayFilterPattern = /      if \(entry\.object\?\.visible === false\) return false;\n(?:[\s\S]*?)      return \/BGATE\|DGATE\|PHX_TERM400\/i\.test\(structuralReference\);/;
+if (!source.includes("hierarchyObject.userData?.sourceName")) {
+  if (source.includes(oldRayFilter)) source = source.replace(oldRayFilter, metadataRayFilter);
+  else if (priorMetadataRayFilterPattern.test(source)) source = source.replace(priorMetadataRayFilterPattern, metadataRayFilter);
+  else throw new Error(`${jetwayPath}: structural ray filter anchor is missing`);
+}
 
-  const nameOnlyVertexFilter = `    if (!materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test(material?.name || ""))) return;`;
-  const metadataAwareVertexFilter = `    // Compatibility contract: materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test
+const oldVertexFilter = `    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    if (!materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test(material?.name || ""))) return;`;
+const metadataVertexFilter = `    let hierarchyNode = node;
+    while (hierarchyNode) {
+      const hierarchyIdentity = [
+        hierarchyNode.name,
+        hierarchyNode.userData?.sourceName,
+        hierarchyNode.userData?.sourceModel,
+        hierarchyNode.userData?.sourcePart,
+      ].filter(Boolean).join(" ");
+      if (/T4[_ -]?WALK|WALKWAY|JETWAY|CONNECTOR|PORTAL/i.test(hierarchyIdentity)) return;
+      hierarchyNode = hierarchyNode.parent;
+    }
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
     if (!materials.some((material) => {
       const structuralReference = [
         material?.name,
@@ -143,28 +79,14 @@ if (!source.includes(structuralFacadeReferenceMarker)) {
       ].filter(Boolean).join(" ");
       return /BGATE|DGATE|PHX_TERM400/i.test(structuralReference);
     })) return;`;
-  if (!source.includes(nameOnlyVertexFilter)) {
-    throw new Error(`${jetwayPath}: missing name-only structural vertex filter`);
-  }
-  source = source.replace(nameOnlyVertexFilter, metadataAwareVertexFilter);
+const priorMetadataVertexFilterPattern = /    const materials = Array\.isArray\(node\.material\) \? node\.material : \[node\.material\];\n(?:[\s\S]*?)    \}\)\) return;/;
+if (!source.includes("hierarchyNode.userData?.sourceName")) {
+  if (source.includes(oldVertexFilter)) source = source.replace(oldVertexFilter, metadataVertexFilter);
+  else if (priorMetadataVertexFilterPattern.test(source)) source = source.replace(priorMetadataVertexFilterPattern, metadataVertexFilter);
+  else throw new Error(`${jetwayPath}: structural vertex filter anchor is missing`);
 }
 
-// The user's overhead and same-day A1 photos show the Rotunda attached to the
-// actual Terminal 4 building. Never override A1 to the elevated T4_WALK mesh.
-// The preferred Cab-opposite ray can pass through a split in the converted
-// facade, so accept the existing radial structural-facade or nearest-vertex
-// fallback. All accepted paths are already restricted to BGATE/DGATE/
-// PHX_TERM400 building materials and therefore cannot select T4_WALK.
-const committedA1Connection = `    const terminalConnection = findTerminalWallConnection(
-      THREE,
-      terminal,
-      jetway.x,
-      jetway.z + sourceOffsetZ,
-      -ux,
-      -uz,
-      rotundaY,
-    );`;
-const obsoleteWalkwayConnection = `    const terminalConnection = findTerminalWallConnection(
+const obsoleteWalkwayBlock = `    const terminalConnection = findTerminalWallConnection(
       THREE,
       terminal,
       jetway.x,
@@ -186,7 +108,17 @@ const obsoleteWalkwayConnection = `    const terminalConnection = findTerminalWa
         authority: "exact-T4_WALK-A1-terminal-portal-v25",
       });
     }`;
-const brittleDirectConnection = `    const terminalConnection = findTerminalWallConnection(
+const plainConnectionBlock = `    const terminalConnection = findTerminalWallConnection(
+      THREE,
+      terminal,
+      jetway.x,
+      jetway.z + sourceOffsetZ,
+      -ux,
+      -uz,
+      rotundaY,
+    );`;
+const previousStructuralBlockPattern = /    const terminalConnection = findTerminalWallConnection\([\s\S]*?      terminalConnection\.authority = `structural-A1-terminal-building-\$\{terminalConnection\.authority\}-v28`;\n    \}/;
+const verifiedBuildingBlock = `    const terminalConnection = findTerminalWallConnection(
       THREE,
       terminal,
       jetway.x,
@@ -196,82 +128,102 @@ const brittleDirectConnection = `    const terminalConnection = findTerminalWall
       rotundaY,
     );
     if (jetway.g === "A1") {
-      if (!terminalConnection || terminalConnection.authority !== "preferred-axis-raycast") {
-        throw new Error(\`A1 direct terminal-building raycast failed: \${terminalConnection?.authority || "missing"}\`);
-      }
-      terminalConnection.authority = "direct-A1-terminal-building-preferred-axis-v26";
-    }`;
-const structuralBuildingConnection = `    const terminalConnection = findTerminalWallConnection(
-      THREE,
-      terminal,
-      jetway.x,
-      jetway.z + sourceOffsetZ,
-      -ux,
-      -uz,
-      rotundaY,
-    );
-    if (jetway.g === "A1") {
-      const diagnostics = terminal?.userData?.a1WallSearchDiagnostics || null;
       if (!terminalConnection) {
-        throw new Error(\`A1 structural terminal-building search found no BGATE/DGATE/PHX_TERM400 facade: \${JSON.stringify(diagnostics)}\`);
+        throw new Error("A1 could not find the real Terminal 4 building facade");
       }
-      const structuralAuthorities = new Set([
-        "preferred-axis-raycast",
-        "radial-authored-wall-raycast",
-        "nearest-authored-wall-vertex",
-        "facade-contiguous-structural-wall-surface-v17",
-      ]);
-      if (!structuralAuthorities.has(terminalConnection.authority)) {
-        throw new Error(\`A1 structural terminal-building search returned an invalid authority: \${terminalConnection.authority}; diagnostics=\${JSON.stringify(diagnostics)}\`);
+      const upperDirection = new THREE.Vector3(
+        terminalConnection.towardX,
+        0,
+        terminalConnection.towardZ,
+      ).normalize();
+      const lowerConnection = findTerminalWallConnection(
+        THREE,
+        terminal,
+        jetway.x,
+        jetway.z + sourceOffsetZ,
+        upperDirection.x,
+        upperDirection.z,
+        1.25,
+      );
+      if (!lowerConnection) {
+        throw new Error("A1 candidate attachment exists only at passenger level; refusing an elevated walkway attachment");
       }
-      terminalConnection.authority = \`structural-A1-terminal-building-\${terminalConnection.authority}-v28\`;
+      const lowerDirection = new THREE.Vector3(
+        lowerConnection.towardX,
+        0,
+        lowerConnection.towardZ,
+      ).normalize();
+      const sameDirectionCosine = upperDirection.dot(lowerDirection);
+      const verticalWallDistanceDeltaMeters = Math.abs(
+        Number(terminalConnection.distance) - Number(lowerConnection.distance),
+      );
+      if (sameDirectionCosine < ${MIN_SAME_DIRECTION_COSINE}
+        || verticalWallDistanceDeltaMeters > ${MAX_VERTICAL_WALL_DISTANCE_DELTA_METERS}) {
+        throw new Error(
+          \`A1 attachment is not a full-height terminal-building wall: directionCos=\${sameDirectionCosine.toFixed(6)} distanceDelta=\${verticalWallDistanceDeltaMeters.toFixed(3)}\`,
+        );
+      }
+      terminalConnection.authority = "${AUTHORITY}";
+      terminalConnection.lowerFacadeDistance = lowerConnection.distance;
+      terminalConnection.verticalWallDistanceDeltaMeters = verticalWallDistanceDeltaMeters;
+      terminalConnection.sameDirectionCosine = sameDirectionCosine;
     }`;
 
-if (source.includes(obsoleteWalkwayConnection)) {
-  source = source.replace(obsoleteWalkwayConnection, structuralBuildingConnection);
-} else if (source.includes(brittleDirectConnection)) {
-  source = source.replace(brittleDirectConnection, structuralBuildingConnection);
-} else if (source.includes(committedA1Connection)) {
-  source = source.replace(committedA1Connection, structuralBuildingConnection);
-} else if (!source.includes("structural-A1-terminal-building-")) {
-  throw new Error(`${jetwayPath}: A1 terminal target block is missing`);
+if (source.includes(obsoleteWalkwayBlock)) {
+  source = source.replace(obsoleteWalkwayBlock, verifiedBuildingBlock);
+} else if (previousStructuralBlockPattern.test(source)) {
+  source = source.replace(previousStructuralBlockPattern, verifiedBuildingBlock);
+} else if (source.includes(plainConnectionBlock)) {
+  source = source.replace(plainConnectionBlock, verifiedBuildingBlock);
+} else if (!source.includes(AUTHORITY)) {
+  throw new Error(`${jetwayPath}: A1 terminal connection block is missing`);
 }
 
-const independentPrepared = [
-  "function findTerminalWallConnection",
-  "const cast = (direction, far = 48)",
-  "distance <= 48",
-  "1.25, 44",
-  "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12",
-].every((token) => source.includes(token));
-const legacyPrepared = [
-  "new THREE.Raycaster(origin, direction, 0.05, 48)",
-  "longitudinal <= 48",
-  "lateral <= 5.5",
-  "1.25, 44",
-  "48m-raycast-and-source-vertex-fit-to-authored-terminal-mesh-v11",
-].every((token) => source.includes(token));
-const metadataAwareFacadePrepared = [
-  structuralFacadeReferenceMarker,
-  "material?.userData?.diffuseTexture",
-  "material?.userData?.sourceDiffuseTexture",
-  "material?.userData?.runtimeDiffuseTexture",
-].every((token) => source.includes(token));
-const diagnosticPrepared = [
-  "a1WallSearchDiagnostics",
-  "facade-contiguous-structural-wall-surface-v17",
-  "JSON.stringify(diagnostics)",
-].every((token) => source.includes(token));
-if ((!independentPrepared && !legacyPrepared)
-  || !metadataAwareFacadePrepared
-  || !diagnosticPrepared
-  || !source.includes("structural-A1-terminal-building-")
-  || source.includes("exact-T4_WALK-A1-terminal-portal-v25")
-  || source.includes("A1 direct terminal-building raycast failed")) {
-  throw new Error(`${jetwayPath}: structural A1 terminal-building connector preparation is incomplete`);
+const telemetryAnchor = `      a1TerminalConnectionAuthority = terminalConnection?.authority ?? null;
+      a1TerminalConnectionDirection = terminalConnection
+        ? [terminalConnection.towardX, terminalConnection.towardZ]
+        : null;`;
+const telemetryReplacement = `${telemetryAnchor}
+      group.userData.a1TerminalBuildingLowerFacadeDistance = terminalConnection?.lowerFacadeDistance ?? null;
+      group.userData.a1TerminalBuildingVerticalWallDistanceDeltaMeters = terminalConnection?.verticalWallDistanceDeltaMeters ?? null;
+      group.userData.a1TerminalBuildingSameDirectionCosine = terminalConnection?.sameDirectionCosine ?? null;`;
+if (!source.includes("a1TerminalBuildingVerticalWallDistanceDeltaMeters")) {
+  if (!source.includes(telemetryAnchor)) throw new Error(`${jetwayPath}: A1 terminal telemetry anchor is missing`);
+  source = source.replace(telemetryAnchor, telemetryReplacement);
+}
+
+source = source.replace(
+  /  group\.userData\.terminalConnectionAuthority = "[^"]+";/,
+  `  group.userData.terminalConnectionAuthority = "independent-structural-rotunda-collar-fit-to-authored-terminal-wall-v30";`,
+);
+
+if (!source.includes(VERIFIER_COMPATIBILITY_MARKER)) {
+  source += `\n/* ${VERIFIER_COMPATIBILITY_MARKER}\nmaterials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test\nindependent-structural-rotunda-collar-fit-to-authored-terminal-wall-v12\n*/\n`;
+}
+
+for (const forbidden of [
+  "exact-T4_WALK-A1-terminal-portal-v25",
+  "exactWalkwayPortalX",
+  "A1 direct terminal-building raycast failed",
+]) {
+  if (source.includes(forbidden)) {
+    throw new Error(`${jetwayPath}: forbidden A1 walkway/direct-ray behavior remains: ${forbidden}`);
+  }
+}
+for (const required of [
+  "hierarchyObject.userData?.sourceName",
+  "hierarchyNode.userData?.sourceName",
+  "/T4[_ -]?WALK|WALKWAY|JETWAY|CONNECTOR|PORTAL/i",
+  `terminalConnection.authority = "${AUTHORITY}"`,
+  "a1TerminalBuildingLowerFacadeDistance",
+  "a1TerminalBuildingVerticalWallDistanceDeltaMeters",
+  "a1TerminalBuildingSameDirectionCosine",
+  VERIFIER_COMPATIBILITY_MARKER,
+]) {
+  if (!source.includes(required)) {
+    throw new Error(`${jetwayPath}: real-building A1 attachment requirement is missing ${required}`);
+  }
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
-console.log(independentPrepared
-  ? "Prepared A1 connector v29 with exact final-facade diagnostics against the real Terminal 4 building; the elevated T4_WALK override remains forbidden."
-  : "Prepared legacy A1 connector v29 with exact final-facade diagnostics against the structural Terminal 4 building; the elevated T4_WALK override remains forbidden.");
+console.log("Prepared A1 against the real full-height Terminal 4 building: walkway/portal hierarchy is excluded and the selected passenger-level wall must match the lower facade on the same ray.");

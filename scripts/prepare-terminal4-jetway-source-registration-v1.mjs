@@ -3,7 +3,7 @@ import fs from "node:fs";
 const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 const staticRegistrationPath = "src/environment/registerStaticJetwayFleetToFacadeV1.js";
 const SOURCE_REGISTRATION_AUTHORITY = "exact-terminal4-jetway-source-local-under-parent-offset-v2";
-const STATIC_SOURCE_HEADING_AUTHORITY = "57-static-bgl-jetway-heading-preserved-v2";
+const STATIC_SOURCE_HEADING_AUTHORITY = "57-static-bgl-jetway-heading-provenance-v3";
 const STATIC_TERMINAL_SEARCH_MARKER = "static-bgl-heading-terminal-search-v2-non-a1-resolved";
 let source = fs.readFileSync(jetwayPath, "utf8");
 
@@ -18,6 +18,9 @@ const sourceLocalPlacement = `    uploadedJetwayPlacements.push({
       gate: jetway.g,
       x: jetway.x,
       z: jetway.z,
+      // Preserve the decoded source yaw on the initial placement only so the
+      // static instance delta can measure/rotate from it later. It is provenance,
+      // not final rendered heading authority.
       yaw: jetway.g === "A1" ? yaw : sourceJetwayYaw,
       targetX,
       targetZ,
@@ -81,6 +84,8 @@ if (!source.includes(STATIC_TERMINAL_SEARCH_MARKER)) {
   if (!declaration) throw new Error(`${jetwayPath}: no compatible A1 terminalConnection declaration is present for static source-heading registration`);
   const staticOverride = `${declaration}
     // ${STATIC_TERMINAL_SEARCH_MARKER}
+    // Source heading is useful for finding the building-side facade from the
+    // decoded source point, but it never owns the aircraft-side bridge heading.
     const sourceHeadingTerminalConnection = jetway.g === "A1"
       ? null
       : findTerminalWallConnection(
@@ -120,8 +125,9 @@ if (!source.includes(STATIC_SOURCE_HEADING_AUTHORITY)) {
   if (source.includes(registeredPlacement)) source = source.replace(registeredPlacement, sourceLocalPlacement);
   else if (source.includes(unregisteredPlacement)) source = source.replace(unregisteredPlacement, sourceLocalPlacement);
   else {
-    // A previous preparation pass may already contain the v1 heading authority.
-    source = source.replaceAll("57-static-bgl-jetway-heading-preserved-v1", STATIC_SOURCE_HEADING_AUTHORITY);
+    source = source
+      .replaceAll("57-static-bgl-jetway-heading-preserved-v1", STATIC_SOURCE_HEADING_AUTHORITY)
+      .replaceAll("57-static-bgl-jetway-heading-preserved-v2", STATIC_SOURCE_HEADING_AUTHORITY);
   }
 }
 
@@ -147,7 +153,7 @@ for (const token of [
   "resolvedTerminalConnection",
   'yaw: jetway.g === "A1" ? yaw : sourceJetwayYaw',
 ]) {
-  if (!source.includes(token)) throw new Error(`${jetwayPath}: source-local/source-heading registration contract is missing ${token}`);
+  if (!source.includes(token)) throw new Error(`${jetwayPath}: source-local/source-heading provenance contract is missing ${token}`);
 }
 for (const forbidden of [
   "z: jetway.z + sourceOffsetZ,",
@@ -159,25 +165,32 @@ for (const forbidden of [
 
 let staticRegistration = fs.readFileSync(staticRegistrationPath, "utf8");
 const legacyTargetYawLine = "  const yaw = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;";
-const preservedYawBlock = `  const targetYaw = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;
-  const sourceHeadingTargetDeltaRadians = Math.abs(wrapYaw(THREE, targetYaw - sourceYaw));
-  const yaw = sourceYaw;`;
 const rigidParentYawLine = "  const yaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);";
-const rigidParentPreservedPatch = `  const targetRegistrationYaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);
+const targetYawBlock = `  const targetRegistrationYaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);
   const sourceHeadingTargetDeltaRadians = Math.abs(wrapYaw(THREE, targetRegistrationYaw - sourceYaw));
-  // Fleet evidence showed the synthetic aircraft-target yaw crossing bridges and
-  // forcing invented terminal corridors. Preserve the decoded KPHX BGL heading
-  // for every non-A1 exact GLB; aircraft placement can be solved independently.
-  const yaw = sourceYaw;`;
+  // Decoded BGL heading remains measurable provenance only. The exact supplied
+  // bridge must point at THIS gate's authored target after its Rotunda is moved
+  // to the real facade; forcing sourceYaw here caused the fleet to cross stands.
+  const yaw = targetRegistrationYaw;`;
+
 if (staticRegistration.includes(rigidParentYawLine)) {
-  staticRegistration = staticRegistration.replace(rigidParentYawLine, rigidParentPreservedPatch);
+  staticRegistration = staticRegistration.replace(rigidParentYawLine, targetYawBlock);
 } else if (staticRegistration.includes(legacyTargetYawLine)) {
-  staticRegistration = staticRegistration.replace(legacyTargetYawLine, preservedYawBlock);
-} else if (staticRegistration.includes("const targetRegistrationYaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);")) {
-  staticRegistration = staticRegistration.replaceAll("57-static-bgl-jetway-heading-preserved-v1", STATIC_SOURCE_HEADING_AUTHORITY);
-} else if (!staticRegistration.includes("const yaw = sourceYaw;")) {
-  throw new Error(`${staticRegistrationPath}: no compatible static source-heading registration anchor is present`);
+  staticRegistration = staticRegistration.replace(legacyTargetYawLine, `  const targetHeading = bridgeDistance > 2 ? Math.atan2(bridgeDx, bridgeDz) : sourceYaw;
+  const sourceBridgeAxisHeading = Number(authoredRotundaOffset.bridgeAxisHeadingRadians);
+  if (!Number.isFinite(sourceBridgeAxisHeading)) throw new Error(\`Static jetway \${placement.gate} is missing exact supplied bridge-axis heading\`);
+${targetYawBlock}`);
+} else if (staticRegistration.includes("  const yaw = sourceYaw;")) {
+  staticRegistration = staticRegistration.replaceAll("  const yaw = sourceYaw;", "  const yaw = targetRegistrationYaw;");
+} else if (!staticRegistration.includes("  const yaw = targetRegistrationYaw;")) {
+  throw new Error(`${staticRegistrationPath}: no compatible static own-gate registration anchor is present`);
 }
+
+// Remove any late source-heading ownership left by older generated variants.
+staticRegistration = staticRegistration.replaceAll("  const yaw = sourceYaw;", "  const yaw = targetRegistrationYaw;");
+staticRegistration = staticRegistration
+  .replaceAll("57-static-bgl-jetway-heading-preserved-v1", STATIC_SOURCE_HEADING_AUTHORITY)
+  .replaceAll("57-static-bgl-jetway-heading-preserved-v2", STATIC_SOURCE_HEADING_AUTHORITY);
 
 const returnedAuthorityAnchor = `    staticFacadeRegistrationYawChangeRadians: yawChange,
     staticFacadeWallErrorMeters: wallError,`;
@@ -189,7 +202,6 @@ if (!staticRegistration.includes("staticSourceHeadingTargetDeltaRadians:")) {
   if (!staticRegistration.includes(returnedAuthorityAnchor)) throw new Error(`${staticRegistrationPath}: static registration return anchor is missing`);
   staticRegistration = staticRegistration.replace(returnedAuthorityAnchor, returnedAuthorityPatch);
 }
-staticRegistration = staticRegistration.replaceAll("57-static-bgl-jetway-heading-preserved-v1", STATIC_SOURCE_HEADING_AUTHORITY);
 
 const aggregateAnchor = `  const maximumYawChange = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticFacadeRegistrationYawChangeRadians));`;
 const aggregatePatch = `${aggregateAnchor}
@@ -202,28 +214,31 @@ if (!staticRegistration.includes("maximumSourceHeadingTargetDelta")) {
 const telemetryAnchor = `  group.userData.uploadedJetwayStaticFacadeMaximumYawChangeRadians = maximumYawChange;`;
 const telemetryPatch = `${telemetryAnchor}
   group.userData.uploadedJetwayStaticSourceHeadingAuthority = "${STATIC_SOURCE_HEADING_AUTHORITY}";
-  group.userData.uploadedJetwayStaticSourceHeadingPreservedGateCount = 57;
+  group.userData.uploadedJetwayStaticSourceHeadingProvenanceGateCount = 57;
   group.userData.uploadedJetwayStaticMaximumSourceHeadingTargetDeltaRadians = maximumSourceHeadingTargetDelta;`;
 if (!staticRegistration.includes("uploadedJetwayStaticSourceHeadingAuthority")) {
   if (!staticRegistration.includes(telemetryAnchor)) throw new Error(`${staticRegistrationPath}: static yaw telemetry anchor is missing`);
   staticRegistration = staticRegistration.replace(telemetryAnchor, telemetryPatch);
 }
-staticRegistration = staticRegistration.replaceAll("57-static-bgl-jetway-heading-preserved-v1", STATIC_SOURCE_HEADING_AUTHORITY);
+staticRegistration = staticRegistration
+  .replaceAll("uploadedJetwayStaticSourceHeadingPreservedGateCount", "uploadedJetwayStaticSourceHeadingProvenanceGateCount")
+  .replaceAll("57-static-bgl-jetway-heading-preserved-v1", STATIC_SOURCE_HEADING_AUTHORITY)
+  .replaceAll("57-static-bgl-jetway-heading-preserved-v2", STATIC_SOURCE_HEADING_AUTHORITY);
 
 for (const required of [
   STATIC_SOURCE_HEADING_AUTHORITY,
   "staticSourceHeadingTargetDeltaRadians",
   "maximumSourceHeadingTargetDelta",
-  "uploadedJetwayStaticSourceHeadingPreservedGateCount = 57",
-  "const yaw = sourceYaw;",
+  "uploadedJetwayStaticSourceHeadingProvenanceGateCount = 57",
+  "const yaw = targetRegistrationYaw;",
 ]) {
-  if (!staticRegistration.includes(required)) throw new Error(`${staticRegistrationPath}: static source-heading telemetry is missing ${required}`);
+  if (!staticRegistration.includes(required)) throw new Error(`${staticRegistrationPath}: static source-heading provenance/own-gate yaw telemetry is missing ${required}`);
 }
-if (staticRegistration.includes(rigidParentYawLine)) {
-  throw new Error(`${staticRegistrationPath}: synthetic aircraft-target yaw still owns the static exact GLB fleet`);
+if (staticRegistration.includes("  const yaw = sourceYaw;")) {
+  throw new Error(`${staticRegistrationPath}: decoded source heading still owns final static rendered yaw`);
 }
 
 fs.writeFileSync(jetwayPath, source, "utf8");
 fs.writeFileSync(staticRegistrationPath, staticRegistration, "utf8");
 
-console.log(`Prepared all 58 exact Terminal 4 jetways in original BGL-local coordinates under the +6.2 m source parent; A1 keeps the grounded/photo terminalConnection stage and never targets T4_WALK. All 57 static exact GLBs now preserve the decoded KPHX BGL heading instead of being re-aimed at synthetic CRJ door targets (${SOURCE_REGISTRATION_AUTHORITY}; ${STATIC_SOURCE_HEADING_AUTHORITY}).`);
+console.log(`Prepared all 58 exact Terminal 4 jetways in original BGL-local coordinates under the +6.2 m source parent. Raw BGL headings remain provenance for terminal-side discovery and comparison only; final static aircraft-side yaw is owned by each gate's authored target (${SOURCE_REGISTRATION_AUTHORITY}; ${STATIC_SOURCE_HEADING_AUTHORITY}).`);
