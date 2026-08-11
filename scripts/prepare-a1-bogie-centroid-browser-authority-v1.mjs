@@ -36,12 +36,24 @@ if (!articulation.includes(`JETWAY_BOGIE_GROUND_AUTHORITY = "${bogieAuthority}"`
   articulation = articulation.replace(anchor, `${anchor}\nconst JETWAY_BOGIE_GROUND_AUTHORITY = "${bogieAuthority}";`);
 }
 
-if (!articulation.includes("data?.terminal4UploadedJetwayBogieGroundContactAuthority === bogieGroundAuthority")) {
+const waitAuthorityLine = "      && data?.terminal4UploadedJetwayBogieGroundContactAuthority === bogieGroundAuthority";
+const waitClearanceLine = "      && Math.abs(Number(data?.terminal4UploadedJetwayBogieGroundClearanceMeters)) <= 0.015";
+if (!articulation.includes(waitAuthorityLine)) {
   throw new Error(`${articulationPath}: articulation no longer fail-closes on the published bogie authority`);
 }
-if (!articulation.includes("terminal4UploadedJetwayBogieGroundClearanceMeters")) {
-  throw new Error(`${articulationPath}: articulation is missing bogie clearance evidence`);
+if (!articulation.includes(waitClearanceLine)) {
+  articulation = articulation.replace(waitAuthorityLine, `${waitAuthorityLine}\n${waitClearanceLine}`);
 }
+
+const runtimeAuthorityAssertion = "  expect(runtime.terminal4UploadedJetwayBogieGroundContactAuthority).toBe(JETWAY_BOGIE_GROUND_AUTHORITY);";
+const runtimeClearanceAssertion = "  expect(Math.abs(Number(runtime.terminal4UploadedJetwayBogieGroundClearanceMeters))).toBeLessThanOrEqual(0.015);";
+if (!articulation.includes(runtimeAuthorityAssertion)) {
+  throw new Error(`${articulationPath}: runtime bogie authority assertion is missing`);
+}
+if (!articulation.includes(runtimeClearanceAssertion)) {
+  articulation = articulation.replace(runtimeAuthorityAssertion, `${runtimeAuthorityAssertion}\n${runtimeClearanceAssertion}`);
+}
+
 fs.writeFileSync(articulationPath, articulation, "utf8");
 
 let authorityConsumerCount = 0;
@@ -57,5 +69,14 @@ for (const file of files) {
 }
 if (authorityConsumerCount < 4) throw new Error(`Expected at least four Tunnel-C bogie browser consumers, found ${authorityConsumerCount}`);
 
-console.log(`Migrated ${changed} browser suite(s) to ${bogieAuthority}; ${authorityConsumerCount} consumers now require the actual aircraft-side Tunnel-C support/bogie ground authority instead of the lowest point anywhere in the jetway.`);
+for (const required of [
+  `JETWAY_BOGIE_GROUND_AUTHORITY = "${bogieAuthority}"`,
+  waitAuthorityLine.trim(),
+  "terminal4UploadedJetwayBogieGroundClearanceMeters",
+  runtimeClearanceAssertion.trim(),
+]) {
+  if (!articulation.includes(required)) throw new Error(`${articulationPath}: Tunnel-C bogie browser gate is missing ${required}`);
+}
+
+console.log(`Migrated ${changed} browser suite(s) to ${bogieAuthority}; articulation now requires both the Tunnel-C authority and <=1.5 cm published bogie/ramp clearance, and ${authorityConsumerCount} consumers reject the old whole-model-minimum authority.`);
 await import(`./prepare-fixed-a1-browser-regressions-v1.mjs?fixed-a1-browser=${Date.now()}`);
