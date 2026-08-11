@@ -1,5 +1,7 @@
 import fs from "node:fs";
 
+await import(`./prepare-a1-remove-legacy-fixed-walkway-v1.mjs?legacy-walkway=${Date.now()}`);
+
 const elbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const marker = "a1-terminal-sleeve-supplied-skin-recessed-panel-joints-v4";
 let source = fs.readFileSync(elbowPath, "utf8");
