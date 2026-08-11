@@ -111,6 +111,10 @@ try {
   // Rotunda position after every legacy geometry preparer has run. Final
   // acceptance verifies this state; it does not create it.
   await runNode("scripts/prepare-a1-fixed-rotunda-aircraft-side-pivot-v1.mjs");
+  // The final wall selector must reject the elevated T4_WALK hierarchy after
+  // every late A1 geometry rewrite. This guard also hard-fails any surviving
+  // explicit walkway portal target before acceptance can report green.
+  await runNode("scripts/prepare-a1-final-walkway-hierarchy-exclusion-v1.mjs");
   await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
   await runNode("scripts/prepare-a1-final-marker-compat-v1.mjs");
   await runNode("scripts/prepare-jetway-readiness-airport-ownership-v1.mjs");
