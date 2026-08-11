@@ -117,6 +117,11 @@ try {
   await runNode("scripts/prepare-a1-final-walkway-hierarchy-exclusion-v1.mjs");
   await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
   await runNode("scripts/prepare-a1-final-marker-compat-v1.mjs");
+  // Camera evidence is generated and rewritten by several legacy preparers.
+  // Normalize the FINAL generated terminal-joint guard only after those passes
+  // so a balanced wall/Tunnel-A view cannot be rejected by the obsolete 0.82
+  // cosine cutoff before the browser can acknowledge the requested subview.
+  await runNode("scripts/prepare-a1-final-terminal-joint-camera-guard-v1.mjs");
   await runNode("scripts/prepare-jetway-readiness-airport-ownership-v1.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
