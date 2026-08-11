@@ -80,3 +80,4 @@ await import(`./seed-final-jetway-ground-contact-before-normalization.mjs?final-
 await import(`./prepare-a1-current-rotunda-terminal-connector-v1.mjs?current-rotunda=${Date.now()}`);
 await import(`./prepare-a1-terminal-shell-passenger-y-v1.mjs?passenger-shell=${Date.now()}`);
 await import(`./normalize-final-a1-evidence-camera-after-runtime.mjs?final-camera=${Date.now()}`);
+await import(`./prepare-a1-readiness-hidden-diagnostics-v1.mjs?hidden-a1-readiness=${Date.now()}`);
