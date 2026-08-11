@@ -43,10 +43,18 @@ if (
 
 let buildError;
 try {
-  // This wrapper runs after the final airport-ownership readiness pass. Re-run
-  // the Tunnel-C migration here so no later compatibility layer can restore the
-  // retired whole-model/pedestal ground rule in the artifact that Vite bundles.
-  await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?post-airport-ownership=${Date.now()}`);
+  // The physical A1 elbow now has one geometry owner: the rigid-parent-orientation
+  // preparation stage articulates ONLY the Rotunda aperture to the measured wall,
+  // then recaptures the accepted five-part baseline. Do not add a second portal
+  // rotation here. Instead, re-run only the fixed-wall preservation guard after
+  // every late compatibility preparer so the source-heading pass cannot rotate
+  // that accepted Rotunda aperture back toward the apron.
+  await import(`./prepare-a1-fixed-rotunda-aircraft-side-pivot-v1.mjs?final-production-rotunda=${Date.now()}`);
+
+  // The Rotunda preservation guard never changes Tunnel-C Y. Re-run the actual
+  // aircraft-side ground contract immediately before final bundling anyway so
+  // airborne support/wheels remain a hard production failure.
+  await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?post-fixed-rotunda=${Date.now()}`);
   await import("./run-production-with-a1-cleanup.mjs");
 } catch (error) {
   buildError = error;
@@ -86,4 +94,4 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log("RampReady production artifact preserved the exact three-box, 36-triangle A1 authored cleanup and Terminal 4 jetway simulator polish, then restored authoredTerminal4Visual.js byte-for-byte.");
+console.log("RampReady production artifact preserves the physically articulated A1 Rotunda aperture at the measured Terminal 4 wall as the final geometry authority, keeps Tunnel A/B/C/Cab on the decoded aircraft-side heading with Tunnel-C on the ramp, applies the authored cleanup and Terminal 4 jetway polish, then restores authoredTerminal4Visual.js byte-for-byte.");

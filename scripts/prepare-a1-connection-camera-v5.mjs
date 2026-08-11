@@ -22,6 +22,31 @@ if (!terminalRotundaSleevePrepared) {
   await import(`./prepare-terminal4-jetway-rendered-cleanup-v1.mjs?rendered-cleanup=${Date.now()}`);
 }
 
+// Rendered cleanup historically forces the generated A1 fixed terminal leg
+// 0.70 m inside the terminal facade. The apron-side screenshots prove that this
+// is visibly buried, not hidden. Normalize the FINAL prepared geometry after
+// cleanup and immediately before the camera/production bundle to an 8 cm seam
+// overlap. This is intentionally independent of whichever upstream literal was
+// used, and it is idempotent on repeated production preparation.
+{
+  let finalA1Elbow = fs.readFileSync(a1ElbowPath, "utf8");
+  const overlapPattern = /const TERMINAL_HIDDEN_OVERLAP_METERS = ([0-9.]+);/;
+  const overlapMatch = finalA1Elbow.match(overlapPattern);
+  if (!overlapMatch) throw new Error(`${a1ElbowPath}: final terminal-wall overlap declaration is missing`);
+  const upstreamOverlapMeters = Number(overlapMatch[1]);
+  if (!Number.isFinite(upstreamOverlapMeters) || upstreamOverlapMeters < 0 || upstreamOverlapMeters > 1.5) {
+    throw new Error(`${a1ElbowPath}: final upstream terminal-wall overlap is invalid: ${upstreamOverlapMeters}`);
+  }
+  finalA1Elbow = finalA1Elbow.replace(overlapPattern, "const TERMINAL_HIDDEN_OVERLAP_METERS = 0.08;");
+  const normalizedMatch = finalA1Elbow.match(overlapPattern);
+  const normalizedOverlapMeters = Number(normalizedMatch?.[1]);
+  if (!Number.isFinite(normalizedOverlapMeters) || Math.abs(normalizedOverlapMeters - 0.08) > 1e-9 || normalizedOverlapMeters > 0.12) {
+    throw new Error(`${a1ElbowPath}: final A1 terminal seam penetration is invalid: ${normalizedOverlapMeters}`);
+  }
+  fs.writeFileSync(a1ElbowPath, finalA1Elbow, "utf8");
+  console.log(`Normalized final A1 terminal-wall seam after rendered cleanup: ${upstreamOverlapMeters.toFixed(2)} -> ${normalizedOverlapMeters.toFixed(2)} m; deep terminal penetration is forbidden in the bundled scene.`);
+}
+
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v11";
 const A1_CAMERA_AUTHORITY = "profile-terminal-rotunda-tunnel-a-joint-evidence-a1-v11";
