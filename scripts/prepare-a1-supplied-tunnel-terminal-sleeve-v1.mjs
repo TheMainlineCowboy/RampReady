@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const elbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
-const marker = "a1-terminal-sleeve-uses-supplied-tunnel-a-skin-and-panel-geometry-v3";
+const marker = "a1-terminal-sleeve-supplied-skin-recessed-panel-joints-v4";
 let source = fs.readFileSync(elbowPath, "utf8");
 
 if (!source.includes(marker)) {
@@ -33,8 +33,8 @@ if (!source.includes(marker)) {
   const newMaterials = `// ${marker}
 function createMaterials(THREE, tunnelA) {
   // Reuse the exact supplied Tunnel A PBR material on the short fixed sleeve.
-  // Geometry seams below provide the panel structure, so the connector does
-  // not depend on an atlas UV happening to look correct on a generic box.
+  // The atlas cannot be trusted to make seams readable on generic BoxGeometry,
+  // so the panel joints below are real recessed geometry with a dark backing.
   let suppliedTunnelMaterial = null;
   tunnelA?.traverse?.((entry) => {
     if (suppliedTunnelMaterial || !entry?.isMesh || entry.visible === false) return;
@@ -54,10 +54,10 @@ function createMaterials(THREE, tunnelA) {
     shell,
     shellSourceMaterialName: suppliedTunnelMaterial?.name || "fallback-untextured-shell",
     rib: new THREE.MeshStandardMaterial({
-      name: "A1 fixed terminal sleeve - recessed panel joints",
-      color: 0x777d7f,
-      roughness: 0.9,
-      metalness: 0.04,
+      name: "A1 fixed terminal sleeve - recessed joint backing",
+      color: 0x565c5e,
+      roughness: 0.96,
+      metalness: 0.02,
       side: THREE.DoubleSide,
     }),
     bellows: new THREE.MeshStandardMaterial({
@@ -83,15 +83,17 @@ function createMaterials(THREE, tunnelA) {
       yaw,
     );
   }`;
-  const panelizedSideWalls = `  // One uninterrupted side box was the source of the giant blank-wall look.
-  // Build the same passenger envelope from short physical panels instead. The
-  // narrow recessed gaps create real shadow seams at inspection distance while
-  // preserving the exact wall-to-Rotunda span and cross-section.
+  const recessedPanelSideWalls = `  // Replace the giant uninterrupted wall slab with short physical panels.
+  // Each 40 mm joint has a backing plate recessed inside the passenger wall,
+  // so the seam reads through shadow/occlusion without becoming a hole, a
+  // painted stripe, or external cage-like trim.
   const sidePanelTargetMeters = 0.46;
-  const sidePanelGapMeters = 0.022;
+  const sidePanelGapMeters = 0.040;
   const sidePanelCount = Math.max(3, Math.ceil(length / sidePanelTargetMeters));
   const sidePanelSpanMeters = length / sidePanelCount;
   const sidePanelLengthMeters = Math.max(0.16, sidePanelSpanMeters - sidePanelGapMeters);
+  const sideJointBackingInsetMeters = 0.060;
+  const sideJointBackingThicknessMeters = 0.025;
   for (const sign of [-1, 1]) {
     for (let panelIndex = 0; panelIndex < sidePanelCount; panelIndex += 1) {
       const panelCenter = start.clone().addScaledVector(direction, sidePanelSpanMeters * (panelIndex + 0.5));
@@ -106,9 +108,23 @@ function createMaterials(THREE, tunnelA) {
         yaw,
       );
     }
+    for (let jointIndex = 1; jointIndex < sidePanelCount; jointIndex += 1) {
+      const jointCenter = start.clone().addScaledVector(direction, sidePanelSpanMeters * jointIndex);
+      jointCenter.y = centerY;
+      addBox(
+        THREE,
+        parent,
+        materials.rib,
+        \`UploadedAirportJetwayA1TerminalElbowRecessedJoint_\${sign}_\${jointIndex}\`,
+        [sideJointBackingThicknessMeters, height * 0.94, sidePanelGapMeters * 0.72],
+        jointCenter.clone().addScaledVector(side, sign * (halfWidth - sideJointBackingInsetMeters)),
+        yaw,
+        false,
+      );
+    }
   }`;
   if (!source.includes(oldSideWalls)) throw new Error(`${elbowPath}: A1 continuous side-wall anchor is missing`);
-  source = source.replace(oldSideWalls, panelizedSideWalls);
+  source = source.replace(oldSideWalls, recessedPanelSideWalls);
 
   const oldRibs = `  let ribCount = 0;
   for (let distance = 0.36; distance < length - 0.2; distance += 0.52) {
@@ -128,35 +144,29 @@ function createMaterials(THREE, tunnelA) {
     }
     ribCount += 1;
   }`;
-  const panelJointRibs = `  let ribCount = 0;
-  for (let panelIndex = 1; panelIndex < sidePanelCount; panelIndex += 1) {
-    const seamCenter = start.clone().addScaledVector(direction, sidePanelSpanMeters * panelIndex);
-    seamCenter.y = centerY;
-    // The side seam itself is the recessed physical gap between wall panels.
-    // Add only the matching shallow roof joint; no external cage or oversized
-    // vertical trim is allowed around the fixed sleeve.
+  const roofJoints = `  let ribCount = 0;
+  for (let jointIndex = 1; jointIndex < sidePanelCount; jointIndex += 1) {
+    const jointCenter = start.clone().addScaledVector(direction, sidePanelSpanMeters * jointIndex);
+    jointCenter.y = centerY;
     addBox(
       THREE,
       parent,
       materials.rib,
       \`UploadedAirportJetwayA1TerminalElbowRoofJoint_\${ribCount}\`,
-      [width + 0.025, 0.025, sidePanelGapMeters],
-      seamCenter.clone().add(new THREE.Vector3(0, height * 0.5 + 0.076, 0)),
+      [width + 0.02, 0.022, sidePanelGapMeters * 0.72],
+      jointCenter.clone().add(new THREE.Vector3(0, height * 0.5 + 0.069, 0)),
       yaw,
       false,
     );
     ribCount += 1;
   }`;
   if (!source.includes(oldRibs)) throw new Error(`${elbowPath}: A1 decorative rib loop anchor is missing`);
-  source = source.replace(oldRibs, panelJointRibs);
+  source = source.replace(oldRibs, roofJoints);
 
   const materialCall = "  const materials = createMaterials(THREE);";
   if (!source.includes(materialCall)) throw new Error(`${elbowPath}: A1 terminal sleeve material-call anchor is missing`);
   source = source.replace(materialCall, "  const materials = createMaterials(THREE, tunnelA);");
 
-  // Some earlier preparation passes already replace the original hard-coded
-  // dimensions with the measured Tunnel-A passenger cross-section. Preserve
-  // those measured values when present.
   if (source.includes("  const width = 2.58;")) {
     source = source.replace("  const width = 2.58;", "  const width = bridgeBellowsWidthMeters;");
   }
@@ -170,7 +180,8 @@ function createMaterials(THREE, tunnelA) {
   connector.userData.suppliedTunnelMaterialName = materials.shellSourceMaterialName;
   connector.userData.suppliedTunnelMatchedWidthMeters = width;
   connector.userData.suppliedTunnelMatchedHeightMeters = height;
-  connector.userData.physicalSidePanelCount = frame.sidePanelCount;`;
+  connector.userData.physicalSidePanelCount = frame.sidePanelCount;
+  connector.userData.recessedPanelJointCount = frame.ribCount;`;
   if (!source.includes(telemetryAnchor)) throw new Error(`${elbowPath}: A1 terminal sleeve telemetry anchor is missing`);
   source = source.replace(telemetryAnchor, telemetry);
 
@@ -183,14 +194,16 @@ for (const required of [
   marker,
   "function createMaterials(THREE, tunnelA)",
   'shell.name = "A1 fixed terminal sleeve - supplied Tunnel A skin"',
-  "const sidePanelCount = Math.max(3, Math.ceil(length / sidePanelTargetMeters))",
+  "const sidePanelGapMeters = 0.040",
+  "const sideJointBackingInsetMeters = 0.060",
   "UploadedAirportJetwayA1TerminalElbowWallPanel_",
+  "UploadedAirportJetwayA1TerminalElbowRecessedJoint_",
   "UploadedAirportJetwayA1TerminalElbowRoofJoint_",
   "const materials = createMaterials(THREE, tunnelA)",
-  "connector.userData.physicalSidePanelCount = frame.sidePanelCount",
+  "connector.userData.recessedPanelJointCount = frame.ribCount",
   "return { yaw, ribCount, sidePanelCount }",
 ]) {
-  if (!source.includes(required)) throw new Error(`${elbowPath}: physical panel A1 terminal sleeve is missing ${required}`);
+  if (!source.includes(required)) throw new Error(`${elbowPath}: recessed-panel A1 terminal sleeve is missing ${required}`);
 }
 for (const forbidden of [
   "UploadedAirportJetwayA1TerminalElbowWall_${sign}",
@@ -206,4 +219,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(elbowPath, source, "utf8");
-console.log("Rebuilt the A1 fixed terminal sleeve from physical short wall panels using the supplied Tunnel A skin and measured passenger envelope; giant uninterrupted wall slabs and external cage-like trim are removed.");
+console.log("Rebuilt the A1 fixed terminal sleeve with supplied Tunnel A skin, short physical side panels and closed recessed dark joints; the broad blank slab and external trim cage are both removed without moving the wall, Rotunda or aircraft.");
