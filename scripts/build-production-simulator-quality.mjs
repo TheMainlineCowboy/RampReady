@@ -107,6 +107,10 @@ try {
   await runNode("scripts/prepare-a1-live-visual-contact-monitor-v1.mjs");
   await runNode("scripts/prepare-static-jetway-source-placement-integrity-v1.mjs");
   await runNode("scripts/prepare-a1-unified-aircraft-pose-v1.mjs");
+  // Normalize A1 as one intact supplied hierarchy at its measured real-wall
+  // Rotunda position after every legacy geometry preparer has run. Final
+  // acceptance verifies this state; it does not create it.
+  await runNode("scripts/prepare-a1-fixed-rotunda-aircraft-side-pivot-v1.mjs");
   await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
   await runNode("scripts/prepare-a1-final-marker-compat-v1.mjs");
   await runNode("scripts/prepare-jetway-readiness-airport-ownership-v1.mjs");
