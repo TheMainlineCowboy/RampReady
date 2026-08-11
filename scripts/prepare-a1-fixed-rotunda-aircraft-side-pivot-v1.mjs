@@ -7,6 +7,11 @@ import fs from "node:fs";
 // supplied parent, and fail closed if any child-pivot rewrite is present.
 await import(`./prepare-a1-source-bgl-rotunda-ownership-v1.mjs?intact-a1=${Date.now()}`);
 
+// Run this after every older terminal/facade preparer. The converted airport can
+// expose BGATE/DGATE-looking child meshes whose ancestor/source metadata still
+// belongs to T4_WALK. A1 must never accept one of those as the terminal wall.
+await import(`./prepare-a1-final-walkway-hierarchy-exclusion-v1.mjs?final-wall=${Date.now()}`);
+
 const sourcePath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const source = fs.readFileSync(sourcePath, "utf8");
 const authority = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";
@@ -41,4 +46,4 @@ for (const required of [
   }
 }
 
-console.log("Prepared A1 as one intact supplied Airport_Jetway.glb assembly: measured terminal-wall Rotunda position is preserved, the complete parent receives decoded KPHX heading, and no Tunnel A/B/C/Cab child is reparented or independently yawed.");
+console.log("Prepared A1 as one intact supplied Airport_Jetway.glb assembly: measured terminal-wall Rotunda position is preserved, the complete parent receives decoded KPHX heading, the complete T4_WALK source hierarchy is forbidden as its wall, and no Tunnel A/B/C/Cab child is reparented or independently yawed.");
