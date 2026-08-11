@@ -58,4 +58,29 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Normalized final A1 readiness to the source-measured structural Terminal 4 wall span (0.5-44 m center-to-wall; 0.15-44 m visible fixed leg) with no 2.4 m relocation requirement.");
+
+// The immediately following Rotunda-elbow preparer owns the physical aperture
+// articulation. Earlier photo/terminal compatibility passes may rewrite only the
+// numeric terminal-facing floor in measureExactRotundaOpening. Canonicalize that
+// small generated block here so the elbow writer receives one stable input form;
+// this does NOT move any geometry.
+const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js";
+let installation = fs.readFileSync(installationPath, "utf8");
+const openingDeclaration = "  const openingDirection = bridgeDirection.clone().multiplyScalar(-1);";
+const openingStart = installation.indexOf(openingDeclaration);
+const terminalRadiusStart = installation.indexOf("\n\n  let terminalRadius =", openingStart);
+if (openingStart < 0 || terminalRadiusStart < 0) {
+  throw new Error(`${installationPath}: cannot canonicalize the authored Rotunda opening block before elbow articulation`);
+}
+const canonicalOpeningLogic = `  const openingDirection = bridgeDirection.clone().multiplyScalar(-1);
+  const terminalFacingDot = openingDirection.dot(terminalDirection);
+  if (terminalFacingDot < 0.4) {
+    throw new Error(\`A1 exact authored Rotunda opening does not face the measured terminal wall: \${terminalFacingDot}\`);
+  }`;
+installation = `${installation.slice(0, openingStart)}${canonicalOpeningLogic}${installation.slice(terminalRadiusStart)}`;
+if (!installation.includes(canonicalOpeningLogic)) {
+  throw new Error(`${installationPath}: canonical authored Rotunda opening input was not installed`);
+}
+fs.writeFileSync(installationPath, installation, "utf8");
+
+console.log("Normalized final A1 readiness to the source-measured structural Terminal 4 wall span and canonicalized the generated Rotunda opening measurement immediately before the physical elbow articulation; no geometry was moved by this preparer.");
