@@ -1,6 +1,7 @@
 import fs from "node:fs";
 
 await import(`./prepare-a1-attached-state-aircraft-calibration-v1.mjs?attached-calibration=${Date.now()}`);
+await import(`./prepare-a1-terminal-joint-ray-diagnostic-v1.mjs?terminal-joint-ray=${Date.now()}`);
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const authority = "live-final-visible-a1-door-cab-monitor-v1";
@@ -103,6 +104,7 @@ if (!source.includes(`inspectionAircraftLiveVisibleContactAuthority = "${authori
 
 for (const token of [
   "a1-attached-state-owns-fixed-aircraft-calibration-v1",
+  "a1-terminal-joint-rendered-ray-diagnostic-v1",
   `inspectionAircraftLiveVisibleContactAuthority = "${authority}"`,
   "const publishLiveA1VisibleContact = () =>",
   "const liveVisibleDoorWorld = measureVisibleAirframeDoor().point",
@@ -113,4 +115,4 @@ for (const token of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Installed live browser-time A1 visual truth after attached-state aircraft calibration: the actual final Cab mesh endpoint and visible CRJ door are re-measured every 250 ms, so stale or parked-state telemetry cannot make a disconnected screenshot pass.");
+console.log("Installed live browser-time A1 visual truth and the read-only terminal-joint rendered-object ray diagnostic after attached-state aircraft calibration.");
