@@ -8,14 +8,10 @@ let source = fs.readFileSync(trainerPath, "utf8");
 
 const finalMarker = "final-a1-acceptance-authority-after-all-preparers-v7-intact-source-bogie";
 const workflowMarker = "final-a1-acceptance-authority-after-all-preparers-v1";
-const sourceOwnershipAuthority = "a1-decoded-kphx-bgl-rotunda-and-heading-own-physical-jetway-v1";
+const sourceOwnershipAuthority = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";
 const bogieAuthority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
 const compatibilityComment = `// ${workflowMarker} compatibility-alias-only; geometry remains ${finalMarker}`;
 
-// Compatibility is text-only. Older workflow contracts still look for the v1
-// marker, but replacing the new final marker or importing an older geometry
-// preparer can silently undo the actual A1 repair after it has passed. Keep the
-// v7 authority intact and publish v1 only as a non-mutating alias token.
 if (!source.includes(finalMarker)) {
   throw new Error(`${trainerPath}: current intact-source A1 final marker is missing`);
 }
@@ -44,9 +40,7 @@ for (const token of [
   "terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed",
   "terminal4UploadedJetwayA1NoGeneratedGlassCorridor",
 ]) {
-  if (!source.includes(token)) {
-    throw new Error(`${trainerPath}: final compatible A1 marker is missing acceptance evidence ${token}`);
-  }
+  if (!source.includes(token)) throw new Error(`${trainerPath}: final compatible A1 marker is missing acceptance evidence ${token}`);
 }
 fs.writeFileSync(trainerPath, source, "utf8");
 
@@ -64,23 +58,20 @@ if (sourcePlaced.includes('yaw: jetway.g === "A1" ? yaw : sourceJetwayYaw')) {
   throw new Error(`${sourcePlacedPath}: synthetic A1 yaw exception returned during marker compatibility`);
 }
 
-// The earlier readiness preparer still knows the retired whole-model v2 label.
-// Migrate that acceptance contract now, after the Tunnel-C geometry measurement
-// has already been installed, and before we inspect final readiness. This changes
-// no scene geometry or transforms.
 await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?final-compat=${Date.now()}`);
 
 const readiness = fs.readFileSync(readinessPath, "utf8");
 const elbow = fs.readFileSync(elbowPath, "utf8");
 for (const required of [
   sourceOwnershipAuthority,
-  "const sourceRotundaTarget = new THREE.Vector3(Number(placement.x)",
+  "const sourceRotundaTarget = fixedRotundaCenter.clone();",
+  "const rawBglPlacementX = Number(placement.x);",
   "anchor.rotation.y = Number(placement.yaw)",
+  "const rotatedSourceHeadingRotundaCenter = objectCenterInFleet",
+  "A1 FINAL wall-registered Rotunda-to-real-wall distance is invalid",
   "const yawDelta = 0;",
 ]) {
-  if (!elbow.includes(required)) {
-    throw new Error(`${elbowPath}: compatibility step found A1 source ownership missing ${required}`);
-  }
+  if (!elbow.includes(required)) throw new Error(`${elbowPath}: compatibility step found measured-wall intact A1 ownership missing ${required}`);
 }
 for (const forbidden of [
   "UploadedAirportJetwayA1AircraftSidePivot",
@@ -88,10 +79,10 @@ for (const forbidden of [
   "bridgePivot.rotation.y = yawDelta",
   "anchor.rotation.y += yawDelta",
   "a1-fixed-terminal-rotunda-aircraft-side-pivot-v1",
+  "const sourceRotundaTarget = new THREE.Vector3(Number(placement.x)",
+  "A1 source Rotunda-to-real-wall distance is invalid",
 ]) {
-  if (elbow.includes(forbidden)) {
-    throw new Error(`${elbowPath}: compatibility step found destructive A1 pivot behavior ${forbidden}`);
-  }
+  if (elbow.includes(forbidden)) throw new Error(`${elbowPath}: compatibility step found destructive/raw-origin A1 behavior ${forbidden}`);
 }
 for (const required of [
   `bogieGroundContactAuthority !== "${bogieAuthority}"`,
@@ -100,9 +91,7 @@ for (const required of [
   "bogieGroundContactClusterCount < 1",
   "bogieGroundHorizontalContactSpan < 0.35",
 ]) {
-  if (!readiness.includes(required)) {
-    throw new Error(`${readinessPath}: Tunnel-C bogie readiness is missing ${required}`);
-  }
+  if (!readiness.includes(required)) throw new Error(`${readinessPath}: Tunnel-C bogie readiness is missing ${required}`);
 }
 
-console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. No A1 geometry preparer ran: decoded KPHX source pose, intact supplied hierarchy and Tunnel-C bogie ramp authority remain untouched.`);
+console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. No A1 geometry preparer ran: measured structural-wall Rotunda position, decoded KPHX complete-parent heading, intact supplied hierarchy and Tunnel-C bogie ramp authority remain untouched.`);
