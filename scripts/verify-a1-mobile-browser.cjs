@@ -8,8 +8,8 @@ const CURRENT_SUBVIEW_AUTHORITY = 'source-measured-a1-terminal-joint-camera-v3';
 const LEGACY_SUBVIEW_AUTHORITY = 'exact-a1-terminal-joint-and-bogie-contact-subviews-v2';
 const CAMERA_AUTHORITY = 'exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2';
 const LOCK_AUTHORITY = 'exact-a1-evidence-camera-direct-lock-v1';
-const PROFILE_AUTHORITY = 'rotunda-terminal-and-tunnel-a-bisector-normal-profile-v4-midheight';
-const MAX_BRANCH_VIEW_COSINE = 0.82;
+const PROFILE_AUTHORITY = 'rotunda-terminal-and-tunnel-a-elbow-revealing-bisector-profile-v5-midheight';
+const MAX_BRANCH_VIEW_COSINE = 0.88;
 const MAX_BRANCH_VIEW_IMBALANCE = 0.20;
 
 fs.mkdirSync(evidenceDir, { recursive: true });
@@ -77,8 +77,9 @@ async function selectByValue(page, ariaLabel, value) {
   }, null, { timeout: 30000, polling: 100 });
 
   // Force the final production passenger-elbow camera while retaining the real
-  // portrait HUD. The accepted camera must expose both the terminal-side leg
-  // and supplied Tunnel A around the Rotunda; an end-on view is rejected.
+  // portrait HUD. The accepted camera must expose the terminal-side leg and
+  // supplied Tunnel A on opposite sides of the Rotunda; a projection that stacks
+  // both branches in the same screen direction is not valid visual evidence.
   await page.evaluate(() => {
     const element = document.querySelector('canvas.trainerCanvas');
     if (!(element instanceof HTMLCanvasElement)) throw new Error('A1 mobile evidence canvas is missing');
@@ -118,7 +119,7 @@ async function selectByValue(page, ariaLabel, value) {
     throw new Error(`Pixel evidence did not retain the terminal-joint camera: ${telemetry.inspectionCameraEndpointSubview}`);
   }
   if (telemetry.inspectionCameraEndpointJointProfileAuthority !== PROFILE_AUTHORITY) {
-    throw new Error(`Pixel evidence did not retain the side-on branch profile: ${telemetry.inspectionCameraEndpointJointProfileAuthority}`);
+    throw new Error(`Pixel evidence did not retain the elbow-revealing branch profile: ${telemetry.inspectionCameraEndpointJointProfileAuthority}`);
   }
 
   await page.screenshot({
