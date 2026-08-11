@@ -15,13 +15,10 @@ if (!source.includes(marker)) {
           camera.lookAt(cameraTarget);
 
           // ${marker}
-          // The v3 endpoint camera is regenerated on the terminal-side angle
-          // bisector every frame. That mathematically valid side puts the real
-          // authored T4_WALK in the foreground of the A1 close-up. For visual
-          // acceptance, always use the horizontally opposite bisector: the
-          // Rotunda remains the same target, camera height is unchanged, and no
-          // airport geometry/material/visibility is touched. Then reject the
-          // frame if T4_WALK still occupies the near field around the joint.
+          // Keep the A1 terminal-joint evidence camera on the open apron-side
+          // bisector. The Rotunda target and camera height remain unchanged and
+          // no airport geometry, material, transform or visibility is modified.
+          // Reject the frame if authored T4_WALK still occupies the near field.
           if (exactA1EvidenceSubview === "terminal-joint") {
             const isAuthoredT4WalkHit = (hit) => {
               let cursor = hit?.object || null;
@@ -52,6 +49,7 @@ if (!source.includes(marker)) {
             if (!(exactA1JointTargetDistance > 8 && exactA1JointTargetDistance < 30)) {
               throw new Error(\`A1 clear-side terminal-joint camera distance is invalid: \${exactA1JointTargetDistance}\`);
             }
+
             const frameProbeCoordinates = [
               [-0.38, 0.40],
               [-0.19, 0.30],
@@ -85,47 +83,6 @@ if (!source.includes(marker)) {
             renderer.domElement.dataset.inspectionCameraEndpointJointClearSideFlipped = "true";
             renderer.domElement.dataset.inspectionCameraEndpointJointT4WalkOccluded = "false";
             renderer.domElement.dataset.inspectionCameraEndpointJointNearFieldProbeCount = String(frameProbeCoordinates.length);
-
-            // Keep one-shot object rays from this corrected view for human
-            // review. T4_WALK may legitimately appear far behind the joint; the
-            // acceptance gate above only forbids it at or in front of the joint.
-            if (renderer.domElement.dataset.inspectionA1TerminalJointRayAuthority !== "${marker}") {
-              const diagnosticRays = [
-                [-0.306, 0.444],
-                [-0.028, 0.444],
-                [0.250, 0.444],
-                [-0.028, 0.300],
-              ];
-              const raycaster = new THREE.Raycaster();
-              const rayHits = diagnosticRays.map(([x, y]) => {
-                raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
-                const intersections = raycaster.intersectObjects(scene.children, true)
-                  .filter((hit) => hit?.object?.visible !== false)
-                  .slice(0, 6);
-                return intersections.map((hit) => {
-                  const materialList = Array.isArray(hit.object?.material)
-                    ? hit.object.material
-                    : [hit.object?.material];
-                  const ancestry = [];
-                  let cursor = hit.object;
-                  for (let depth = 0; cursor && depth < 7; depth += 1, cursor = cursor.parent) {
-                    ancestry.push(cursor.name || cursor.type || "unnamed");
-                  }
-                  return {
-                    name: hit.object?.name || "unnamed",
-                    type: hit.object?.type || "unknown",
-                    materials: materialList.filter(Boolean).map((material) => material.name || "unnamed"),
-                    ancestry,
-                    distance: Number(hit.distance.toFixed(4)),
-                    point: hit.point.toArray().map((value) => Number(value.toFixed(4))),
-                  };
-                });
-              });
-              const serializedRayHits = JSON.stringify(rayHits);
-              renderer.domElement.dataset.inspectionA1TerminalJointRayAuthority = "${marker}";
-              renderer.domElement.dataset.inspectionA1TerminalJointRayHits = serializedRayHits;
-              console.error(\`SLABRAY64:\${btoa(serializedRayHits)}\`);
-            }
           }
           renderer.domElement.dataset.inspectionCameraEndpointLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";`;
   if (!source.includes(anchor)) throw new Error(`${trainerPath}: A1 camera lock anchor is missing`);
@@ -142,13 +99,12 @@ for (const token of [
   "hit.distance < exactA1JointTargetDistance + 1.25",
   "near-field T4_WALK coverage",
   'inspectionCameraEndpointJointT4WalkOccluded = "false"',
-  "const diagnosticRays = [",
-  "raycaster.setFromCamera(new THREE.Vector2(x, y), camera)",
-  "inspectionA1TerminalJointRayHits = serializedRayHits",
-  "SLABRAY64:",
 ]) {
   if (!source.includes(token)) throw new Error(`${trainerPath}: A1 clear-side terminal-joint evidence is missing ${token}`);
 }
+for (const forbidden of ["SLABRAY64:", "console.error("]) {
+  if (source.includes(forbidden)) throw new Error(`${trainerPath}: temporary A1 ray diagnostic console error remains: ${forbidden}`);
+}
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("A1 terminal-joint evidence now always uses the opposite/open bisector side and fails closed if six frame probes find authored T4_WALK at or in front of the Rotunda; no airport geometry is hidden or moved.");
+console.log("A1 terminal-joint evidence keeps the verified open bisector side and six near-field T4_WALK rejection probes without emitting temporary browser console errors.");
