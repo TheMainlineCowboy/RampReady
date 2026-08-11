@@ -24,3 +24,10 @@ jobs:
       - run: npm ci
       - name: Inspect exact Tunnel C source topology
         run: node scripts/inspect-airport-jetway-tunnel-c-components.mjs
+      - name: Upload exact Tunnel C topology report
+        uses: actions/upload-artifact@v4
+        with:
+          name: a1-tunnel-c-source-topology-${{ github.sha }}
+          path: /tmp/airport-jetway-tunnel-c-components.json
+          if-no-files-found: error
+          retention-days: 1
