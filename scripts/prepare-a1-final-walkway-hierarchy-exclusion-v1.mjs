@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const runtimePath = "src/environment/sourcePlacedTerminal4Jetways.js";
 const marker = "a1-final-source-hierarchy-walkway-exclusion-v1";
+const directionMarker = "a1-grounded-terminal-side-direction-v1";
 let source = fs.readFileSync(runtimePath, "utf8");
 
 // This wrapper is intentionally valid in two build phases. prepare:terminal4-runtime
@@ -57,6 +58,63 @@ if (!hasV11HierarchyExclusion && !hasFinalHierarchyExclusion) {
 const hasGroundedA1Authority = source.includes("a1GroundedBuildingConnection")
   && source.includes("elevatedWalkwayClearanceVerified");
 if (hasGroundedA1Authority) {
+  // The previous finder disabled its preferred-direction hemisphere whenever
+  // height <= 2.2 m. A1 then replaced the passenger-level terminal-side result
+  // with the nearest ramp-level BGATE/DGATE triangle even when that triangle was
+  // on the opposite side of the source jetway. Preserve the same terminal-side
+  // hemisphere during A1's grounded proof instead of allowing nearest-distance
+  // to select the south-side corridor corner.
+  const finderSignature = "function findTerminalWallConnection(THREE, terminal, originX, originZ, preferredX, preferredZ, height) {";
+  const finderSignatureDirected = "function findTerminalWallConnection(THREE, terminal, originX, originZ, preferredX, preferredZ, height, forcePreferredHemisphere = false) {";
+  if (!source.includes(directionMarker)) {
+    if (source.includes(finderSignature)) source = source.replace(finderSignature, finderSignatureDirected);
+    if (!source.includes(finderSignatureDirected)) {
+      throw new Error(`${runtimePath}: A1 direction-preserving wall finder signature is unavailable`);
+    }
+    const hemisphereAnchor = "  const requirePreferredHemisphere = height > 2.2; // A1 grounded-facade search v34 overhead-walkway-footprint-exclusion";
+    const hemisphereDirected = `  const requirePreferredHemisphere = height > 2.2 || forcePreferredHemisphere; // ${directionMarker}`;
+    if (!source.includes(hemisphereAnchor)) {
+      throw new Error(`${runtimePath}: A1 grounded search still lacks the expected height-only direction toggle`);
+    }
+    source = source.replace(hemisphereAnchor, hemisphereDirected);
+
+    const groundedCall = `      const groundedConnection = findTerminalWallConnection(
+        THREE,
+        terminal,
+        jetway.x,
+        jetway.z + sourceOffsetZ,
+        -ux,
+        -uz,
+        1.25,
+      );`;
+    const groundedDirectedCall = `      const groundedConnection = findTerminalWallConnection(
+        THREE,
+        terminal,
+        jetway.x,
+        jetway.z + sourceOffsetZ,
+        -ux,
+        -uz,
+        1.25,
+        true,
+      );`;
+    if (!source.includes(groundedCall)) {
+      throw new Error(`${runtimePath}: A1 grounded wall call is unavailable for terminal-side enforcement`);
+    }
+    source = source.replace(groundedCall, groundedDirectedCall);
+
+    const lowerCallSuffix = `        upperDirection.z,
+        1.25,
+      );`;
+    const lowerDirectedCallSuffix = `        upperDirection.z,
+        1.25,
+        true,
+      );`;
+    if (!source.includes(lowerCallSuffix)) {
+      throw new Error(`${runtimePath}: A1 lower full-height wall check is unavailable for terminal-side enforcement`);
+    }
+    source = source.split(lowerCallSuffix).join(lowerDirectedCallSuffix);
+  }
+
   const candidateAnchor = `          underElevatedWalkway: false,
           elevatedWalkwayClearanceVerified: true,
           authority: "facade-contiguous-structural-wall-surface-v17",`;
@@ -87,6 +145,20 @@ if (hasGroundedA1Authority) {
     source = source.replace(groundedGateAnchor, groundedGate);
   }
 
+  if (!source.includes("A1 grounded terminal-side direction is invalid")) {
+    const directionGateAnchor = `      if (/WALK|JETWAY|CONNECTOR|PORTAL/i.test(String(groundedConnection.authority || ""))) {
+        throw new Error(\`A1 grounded search resolved a forbidden walkway/connector authority: \${groundedConnection.authority}\`);
+      }`;
+    const directionGate = `${directionGateAnchor}
+      if (!(groundedTerminalDirectionDot >= 0.15)) {
+        throw new Error(\`A1 grounded terminal-side direction is invalid: directionDot=\${groundedTerminalDirectionDot}; connection=\${JSON.stringify(groundedConnection)}\`);
+      }`;
+    if (!source.includes(directionGateAnchor)) {
+      throw new Error(`${runtimePath}: A1 grounded authority gate is unavailable for direction proof`);
+    }
+    source = source.replace(directionGateAnchor, directionGate);
+  }
+
   const groundedTelemetryAnchor = `        underElevatedWalkway: false,
         elevatedWalkwayClearanceVerified: true,
         elevatedWalkwayFootprintCount: diagnostics?.elevatedWalkwayFootprintCount ?? 0,`;
@@ -113,9 +185,11 @@ if (hasGroundedA1Authority) {
     "sourceHierarchyWalkwayExcluded: true",
     "complete elevated T4_WALK source hierarchy",
     "walkwayHierarchyRejectedCount: diagnostics?.walkwayHierarchyRejectedCount",
+    directionMarker,
+    "A1 grounded terminal-side direction is invalid",
   ]) {
     if (!source.includes(required)) {
-      throw new Error(`${runtimePath}: grounded A1 final hierarchy authority is missing ${required}`);
+      throw new Error(`${runtimePath}: grounded A1 final hierarchy/direction authority is missing ${required}`);
     }
   }
 }
@@ -130,5 +204,5 @@ for (const forbidden of [
 
 fs.writeFileSync(runtimePath, source, "utf8");
 console.log(hasGroundedA1Authority
-  ? "Finalized grounded A1 wall selection with both full converted-source hierarchy rejection and physical T4_WALK footprint clearance required."
+  ? "Finalized grounded A1 wall selection with full source-hierarchy exclusion, physical T4_WALK clearance, and terminal-side direction preserved at ramp level."
   : "Validated the existing v11 full-hierarchy A1 terminal-building exclusion during early Terminal 4 runtime preparation.");
