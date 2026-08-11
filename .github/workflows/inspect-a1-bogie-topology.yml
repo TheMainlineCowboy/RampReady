@@ -1,0 +1,33 @@
+name: Inspect A1 Bogie Topology
+
+on:
+  pull_request:
+    paths:
+      - 'public/models/airport-jetway/Airport_Jetway.glb'
+      - 'scripts/inspect-airport-jetway-tunnel-c-components.mjs'
+      - '.github/workflows/inspect-a1-bogie-topology.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Inspect exact Tunnel C source topology
+        run: node scripts/inspect-airport-jetway-tunnel-c-components.mjs
+      - name: Upload exact Tunnel C topology report
+        uses: actions/upload-artifact@v4
+        with:
+          name: a1-tunnel-c-source-topology-${{ github.sha }}
+          path: /tmp/airport-jetway-tunnel-c-components.json
+          if-no-files-found: error
+          retention-days: 1

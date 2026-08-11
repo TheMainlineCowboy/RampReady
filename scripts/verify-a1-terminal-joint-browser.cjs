@@ -9,15 +9,15 @@ const CAMERA_AUTHORITY = 'exact-world-wall-rotunda-cab-aircraft-bounds-derived-c
 const LOCK_AUTHORITY = 'exact-a1-evidence-camera-direct-lock-v1';
 const VISUAL_AUTHORITY = 'same-day-a1-continuous-source-measured-solid-closed-grounded-v2';
 const CONTINUITY_AUTHORITY = 'exact-authored-five-part-chain-no-isolated-node-rotation-v2';
-const BOGIE_AUTHORITY = 'exact-authored-a1-tunnel-c-bogie-ramp-contact-v3';
+const BOGIE_AUTHORITY = 'exact-authored-a1-connected-wheel-pair-ramp-contact-v4';
 const WALL_AUTHORITY = 'nearest-structural-terminal-facade-photo-verified-v1';
 const MAX_VISIBLE_TERMINAL_LEG_METERS = 6.0;
 const MIN_REAL_WALL_DISTANCE_METERS = 2.9;
 const MAX_REAL_WALL_DISTANCE_METERS = 5.8;
 const MAX_BOGIE_CLEARANCE_METERS = 0.015;
-const MIN_BOGIE_CONTACT_POINTS = 4;
-const MIN_BOGIE_CONTACT_CLUSTERS = 1;
-const MIN_BOGIE_HORIZONTAL_CONTACT_SPAN_METERS = 0.35;
+const MIN_BOGIE_CONTACT_POINTS = 8;
+const MIN_BOGIE_CONTACT_CLUSTERS = 2;
+const MIN_BOGIE_HORIZONTAL_CONTACT_SPAN_METERS = 1.4;
 fs.mkdirSync(evidenceDir, { recursive: true });
 
 function numeric(value, label) {
@@ -138,7 +138,7 @@ async function selectCameraView(page, value) {
       pageErrors,
       originalError: error?.stack || error?.message || String(error),
     }, null, 2));
-    throw new Error(`A1 source-geometry readiness failed: load=${dataset.terminal4UploadedJetwayLoadState || 'missing'} count=${dataset.terminal4UploadedJetwayCount || 'missing'} vestibule=${dataset.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters || 'missing'} wall=${dataset.terminal4A1JetwayWallDistance || 'missing'} bogie=${dataset.terminal4UploadedJetwayBogieGroundContactAuthority || 'missing'}/${dataset.terminal4UploadedJetwayBogieGroundClearanceMeters || 'missing'} console=${consoleErrors.join(' | ') || 'none'} page=${pageErrors.join(' | ') || 'none'}`);
+    throw new Error(`A1 exact-wheel readiness failed: load=${dataset.terminal4UploadedJetwayLoadState || 'missing'} count=${dataset.terminal4UploadedJetwayCount || 'missing'} vestibule=${dataset.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters || 'missing'} wall=${dataset.terminal4A1JetwayWallDistance || 'missing'} bogie=${dataset.terminal4UploadedJetwayBogieGroundContactAuthority || 'missing'}/${dataset.terminal4UploadedJetwayBogieGroundClearanceMeters || 'missing'}/${dataset.terminal4UploadedJetwayBogieGroundContactPointCount || 'missing'}/${dataset.terminal4UploadedJetwayBogieGroundContactClusterCount || 'missing'}/${dataset.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters || 'missing'} console=${consoleErrors.join(' | ') || 'none'} page=${pageErrors.join(' | ') || 'none'}`);
   }
 
   const inspectionLocation = page.getByRole('combobox', { name: 'Inspection location' });
@@ -167,9 +167,18 @@ async function selectCameraView(page, value) {
   await selectSubview(page, 'bogie-contact');
   await page.waitForTimeout(750);
   const bogieData = await canvas.evaluate(element => ({ ...element.dataset }));
-  const finalBogieClearance = numeric(bogieData.terminal4UploadedJetwayBogieGroundClearanceMeters, 'bogie clearance');
-  if (Math.abs(finalBogieClearance) > MAX_BOGIE_CLEARANCE_METERS) {
-    throw new Error(`A1 Tunnel-C bogie/support is not on the ramp: ${finalBogieClearance} m clearance`);
+  const finalBogieClearance = numeric(bogieData.terminal4UploadedJetwayBogieGroundClearanceMeters, 'paired-wheel clearance');
+  const finalBogiePoints = numeric(bogieData.terminal4UploadedJetwayBogieGroundContactPointCount, 'paired-wheel contact points');
+  const finalBogieClusters = numeric(bogieData.terminal4UploadedJetwayBogieGroundContactClusterCount, 'paired-wheel contact clusters');
+  const finalBogieSpan = numeric(bogieData.terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters, 'paired-wheel horizontal span');
+  if (bogieData.terminal4UploadedJetwayBogieGroundContactAuthority !== BOGIE_AUTHORITY) {
+    throw new Error(`A1 bogie proof is not using the exact paired-wheel authority: ${bogieData.terminal4UploadedJetwayBogieGroundContactAuthority}`);
+  }
+  if (Math.abs(finalBogieClearance) > MAX_BOGIE_CLEARANCE_METERS
+    || finalBogiePoints < MIN_BOGIE_CONTACT_POINTS
+    || finalBogieClusters < MIN_BOGIE_CONTACT_CLUSTERS
+    || finalBogieSpan < MIN_BOGIE_HORIZONTAL_CONTACT_SPAN_METERS) {
+    throw new Error(`A1 exact wheel pair is not visibly grounded: clearance=${finalBogieClearance}, points=${finalBogiePoints}, clusters=${finalBogieClusters}, span=${finalBogieSpan}`);
   }
   await captureCanvas(page, canvas, `${evidenceDir}/a1-bogie-contact.png`);
 
@@ -185,5 +194,5 @@ async function selectCameraView(page, value) {
   fs.writeFileSync(`${evidenceDir}/report.json`, JSON.stringify({ pageUrl, capturedAtUtc: new Date().toISOString(), consoleErrors, pageErrors, terminalTelemetry: terminalData, bogieTelemetry: bogieData, assemblyTelemetry: assemblyData }, null, 2));
   await browser.close();
   if (pageErrors.length) throw new Error(`A1 evidence page errors: ${pageErrors.join(' | ')}`);
-  console.log(`A1 TERMINAL JOINT EVIDENCE READY: ${JSON.stringify({ vestibule: visibleLeg, wallDistance: realWallDistance, bogieClearanceMeters: finalBogieClearance, subviewAuthority: terminalData.inspectionCameraEndpointSubviewAuthority })}`);
+  console.log(`A1 TERMINAL JOINT EVIDENCE READY: ${JSON.stringify({ vestibule: visibleLeg, wallDistance: realWallDistance, bogieClearanceMeters: finalBogieClearance, bogieContactClusters: finalBogieClusters, bogieHorizontalSpanMeters: finalBogieSpan, subviewAuthority: terminalData.inspectionCameraEndpointSubviewAuthority })}`);
 })().catch(error => { console.error(error.stack || error.message || String(error)); process.exit(1); });

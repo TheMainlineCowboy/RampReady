@@ -6,8 +6,24 @@ const MAX_WALL_DISTANCE = 44;
 const MIN_A1_VISIBLE_LEG = 0.15;
 const MAX_VISIBLE_LEG = 44;
 const MAX_A1_ROTUNDA_PRESERVATION_ERROR = 0.001;
+const EXACT_A1_WHEEL_AUTHORITY = "exact-authored-a1-connected-wheel-pair-ramp-contact-v4";
+const RETIRED_BOGIE_AUTHORITIES = Object.freeze([
+  "exact-authored-a1-lowest-geometry-ramp-contact-v1",
+  "exact-authored-a1-lowest-geometry-ramp-contact-v2",
+  "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3",
+]);
 
 let source = fs.readFileSync(readinessPath, "utf8");
+
+// This is the true last semantic normalization before Vite. Any compatibility
+// preparer that still names the generic Tunnel-C v3 contract is overwritten
+// here with the exact paired source-wheel authority.
+for (const retired of RETIRED_BOGIE_AUTHORITIES) source = source.replaceAll(retired, EXACT_A1_WHEEL_AUTHORITY);
+source = source
+  .replaceAll("bogieGroundContactPointCount < 4", "bogieGroundContactPointCount < 8")
+  .replaceAll("bogieGroundContactClusterCount < 1", "bogieGroundContactClusterCount < 2")
+  .replaceAll("bogieGroundHorizontalContactSpan < 0.35", "bogieGroundHorizontalContactSpan < 1.4")
+  .replaceAll("bogieGroundHorizontalContactSpan < 1.2", "bogieGroundHorizontalContactSpan < 1.4");
 
 source = source.replaceAll(
   "Math.abs(sourceLockedA1VisibleLeg - 2.4) > 0.05",
@@ -44,6 +60,17 @@ if (!source.includes(bogieGroundGuard)) {
     fleetGroundExpression,
     `${fleetGroundExpression}\n            || !(${bogieGroundGuard})`,
   );
+}
+
+// Publish/read the semantic source-wheel evidence that distinguishes the actual
+// aircraft-side wheel pair from the terminal Rotunda pedestal.
+const bogieCenterDeclaration = "          const bogieGroundContactCenterZ = Number(group.userData.uploadedJetwayBogieGroundContactCenterZ ?? NaN);";
+const exactWheelDeclarations = `${bogieCenterDeclaration}\n          const bogieGroundContactAxisT = Number(group.userData.uploadedJetwayBogieGroundContactAxisT ?? NaN);\n          const bogieGroundContactRotundaDistance = Number(group.userData.uploadedJetwayBogieGroundContactRotundaDistanceMeters ?? NaN);\n          const bogieGroundContactCabDistance = Number(group.userData.uploadedJetwayBogieGroundContactCabDistanceMeters ?? NaN);\n          const bogieWheelSeparation = Number(group.userData.uploadedJetwayBogieWheelSeparationMeters ?? NaN);\n          const bogieWheelTriangleCount = Number(group.userData.uploadedJetwayBogieWheelTriangleCount ?? NaN);`;
+if (!source.includes("const bogieGroundContactAxisT =")) {
+  if (!source.includes(bogieCenterDeclaration)) {
+    throw new Error(`${readinessPath}: bogie contact-center declaration is missing before exact-wheel normalization`);
+  }
+  source = source.replace(bogieCenterDeclaration, exactWheelDeclarations);
 }
 
 const staticDeclarationAnchor = "          const staticPortalAlignmentError = Number(group.userData.uploadedJetwayStaticMaximumPortalAlignmentErrorRadians ?? Infinity);";
@@ -84,6 +111,14 @@ const directWallGuard = `a1TerminalWallDistance > ${MIN_WALL_DISTANCE} && a1Term
 const directVisibleLegGuard = `connectorVisibleLength > ${MIN_A1_VISIBLE_LEG} && connectorVisibleLength < ${MAX_VISIBLE_LEG}`;
 const staticWallGuard = `staticMinimumRotundaCenterToWall > ${MIN_WALL_DISTANCE} && staticMaximumRotundaCenterToWall < ${MAX_WALL_DISTANCE}`;
 const staticVisibleLegGuard = `staticMinimumVisibleTerminalLeg >= 0 && staticMaximumVisibleTerminalLeg < ${MAX_VISIBLE_LEG}`;
+const exactWheelAuthorityGuard = `bogieGroundContactAuthority === "${EXACT_A1_WHEEL_AUTHORITY}"`;
+const exactWheelPointGuard = "bogieGroundContactPointCount >= 8";
+const exactWheelClusterGuard = "bogieGroundContactClusterCount >= 2";
+const exactWheelSpanGuard = "bogieGroundHorizontalContactSpan >= 1.4";
+const exactWheelAxisGuard = "Number.isFinite(bogieGroundContactAxisT) && bogieGroundContactAxisT >= 0.58 && bogieGroundContactAxisT <= 0.78";
+const exactWheelDistanceGuard = "Number.isFinite(bogieGroundContactRotundaDistance) && Number.isFinite(bogieGroundContactCabDistance) && bogieGroundContactCabDistance < bogieGroundContactRotundaDistance";
+const exactWheelSeparationGuard = "Number.isFinite(bogieWheelSeparation) && bogieWheelSeparation >= 1.4 && bogieWheelSeparation <= 3.0";
+const exactWheelTriangleGuard = "bogieWheelTriangleCount === 2348";
 
 const missingStaticGuards = [
   !source.includes(staticWallGuard) ? `!(${staticWallGuard})` : null,
@@ -122,8 +157,18 @@ function injectIntoExactReadinessCondition(guard) {
   source = `${source.slice(0, conditionClose)}            || !(${guard})\n${source.slice(conditionClose)}`;
 }
 
-injectIntoExactReadinessCondition(directWallGuard);
-injectIntoExactReadinessCondition(directVisibleLegGuard);
+for (const guard of [
+  directWallGuard,
+  directVisibleLegGuard,
+  exactWheelAuthorityGuard,
+  exactWheelPointGuard,
+  exactWheelClusterGuard,
+  exactWheelSpanGuard,
+  exactWheelAxisGuard,
+  exactWheelDistanceGuard,
+  exactWheelSeparationGuard,
+  exactWheelTriangleGuard,
+]) injectIntoExactReadinessCondition(guard);
 
 const sourceTelemetry = "source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`";
 const rangeTelemetry = "staticMeasured=${staticMinimumRotundaCenterToWall}/${staticMaximumRotundaCenterToWall}/${staticMinimumVisibleTerminalLeg}/${staticMaximumVisibleTerminalLeg}, source=${exactModelGuard.authority}/${exactModelGuard.hierarchy.requiredPartCount}/${exactModelGuard.hierarchy.sourceMeshCount}/${exactModelGuard.hierarchy.uvMeshCount}/${exactModelGuard.hierarchy.syntheticEdgeCount}/${exactModelGuard.hierarchy.geometryReplaced}`";
@@ -142,9 +187,14 @@ for (const forbidden of [
   "a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 12",
   "connectorVisibleLength > 0.25 && connectorVisibleLength < 12",
   "rotundaPreservationError > 1e-6",
+  "bogieGroundContactPointCount < 4",
+  "bogieGroundContactClusterCount < 1",
+  "bogieGroundHorizontalContactSpan < 0.35",
+  "bogieGroundHorizontalContactSpan < 1.2",
+  ...RETIRED_BOGIE_AUTHORITIES,
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${readinessPath}: retired or unpublished jetway readiness survived final runtime normalization: ${forbidden}`);
+    throw new Error(`${readinessPath}: retired or non-wheel jetway readiness survived final runtime normalization: ${forbidden}`);
   }
 }
 
@@ -158,11 +208,26 @@ for (const required of [
   staticWallGuard,
   staticVisibleLegGuard,
   bogieGroundGuard,
+  "uploadedJetwayBogieGroundContactAxisT",
+  "uploadedJetwayBogieGroundContactRotundaDistanceMeters",
+  "uploadedJetwayBogieGroundContactCabDistanceMeters",
+  "uploadedJetwayBogieWheelSeparationMeters",
+  "uploadedJetwayBogieWheelTriangleCount",
+  ...[
+    exactWheelAuthorityGuard,
+    exactWheelPointGuard,
+    exactWheelClusterGuard,
+    exactWheelSpanGuard,
+    exactWheelAxisGuard,
+    exactWheelDistanceGuard,
+    exactWheelSeparationGuard,
+    exactWheelTriangleGuard,
+  ],
 ]) {
   if (!source.includes(required)) {
-    throw new Error(`${readinessPath}: final measured jetway readiness is missing ${required}`);
+    throw new Error(`${readinessPath}: final exact-wheel jetway readiness is missing ${required}`);
   }
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Normalized final post-prepare jetway readiness using the structural exact-readiness condition: A1 keeps source-measured physical wall/visible-leg bounds, all 57 static gates keep measured min/max wall and visible-leg ranges, any generated intact-parent Rotunda preservation guard is normalized to the source-owned 1 mm tolerance when present, and grounded Tunnel-C bogie contact remains fail-closed without depending on generated clause ordering or authority text.");
+console.log("Normalized final post-prepare jetway readiness to the exact authored A1 wheel pair: two connected source wheels, full axle-width footprint, aircraft-side Rotunda-to-Cab position, Cab-side proximity and <=1.5 cm ramp contact are all fail-closed after every compatibility preparer.");

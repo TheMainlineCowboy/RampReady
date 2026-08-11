@@ -9,7 +9,8 @@ let source = fs.readFileSync(trainerPath, "utf8");
 const finalMarker = "final-a1-acceptance-authority-after-all-preparers-v7-intact-source-bogie";
 const workflowMarker = "final-a1-acceptance-authority-after-all-preparers-v1";
 const sourceOwnershipAuthority = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";
-const bogieAuthority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
+const bogieAuthority = "exact-authored-a1-connected-wheel-pair-ramp-contact-v4";
+const retiredBogieAuthority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
 const compatibilityComment = `// ${workflowMarker} compatibility-alias-only; geometry remains ${finalMarker}`;
 
 if (!source.includes(finalMarker)) {
@@ -58,8 +59,8 @@ if (sourcePlaced.includes('yaw: jetway.g === "A1" ? yaw : sourceJetwayYaw')) {
   throw new Error(`${sourcePlacedPath}: synthetic A1 yaw exception returned during marker compatibility`);
 }
 
-// Publish the measurements that the final Tunnel-C world-space geometry check
-// already proved. This is telemetry/report plumbing only; it does not move A1.
+// Publish only the measurements already proved by the exact connected source
+// wheel pair. This is telemetry/report plumbing only; it never moves A1.
 await import(`./prepare-a1-tunnel-c-bogie-report-publication-v1.mjs?final-compat=${Date.now()}`);
 await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?final-compat=${Date.now()}`);
 
@@ -90,11 +91,14 @@ for (const forbidden of [
 for (const required of [
   `bogieGroundContactAuthority !== "${bogieAuthority}"`,
   "Math.abs(bogieGroundClearance) > 0.015",
-  "bogieGroundContactPointCount < 4",
-  "bogieGroundContactClusterCount < 1",
-  "bogieGroundHorizontalContactSpan < 0.35",
+  "bogieGroundContactPointCount < 8",
+  "bogieGroundContactClusterCount < 2",
+  "bogieGroundHorizontalContactSpan < 1.4",
 ]) {
-  if (!readiness.includes(required)) throw new Error(`${readinessPath}: Tunnel-C bogie readiness is missing ${required}`);
+  if (!readiness.includes(required)) throw new Error(`${readinessPath}: exact wheel-pair readiness is missing ${required}`);
+}
+if (readiness.includes(retiredBogieAuthority)) {
+  throw new Error(`${readinessPath}: retired v3 generic Tunnel-C authority survived final marker compatibility`);
 }
 
-console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. No A1 geometry preparer ran: measured structural-wall Rotunda position, decoded KPHX complete-parent heading, intact supplied hierarchy and Tunnel-C bogie ramp authority remain untouched.`);
+console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. No A1 geometry preparer ran: measured structural-wall Rotunda position, decoded KPHX complete-parent heading, intact supplied hierarchy and exact authored two-wheel ramp authority remain untouched.`);
