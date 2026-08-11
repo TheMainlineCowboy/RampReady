@@ -9,9 +9,9 @@ let placements = fs.readFileSync(placementsPath, "utf8");
 
 // The airport source owns the physical bridge pose. A1 used to be the one
 // exception that kept a synthetic aircraft-door yaw while the other 57 gates
-// used the decoded BGL heading. That exception is exactly the wrong ownership
-// model for an airport-accuracy pass: the aircraft may be registered to the
-// gate later, but it must never re-aim the complete boarding bridge.
+// used the decoded BGL heading. Patch that exception idempotently: the second
+// production preparation must validate the already-source-owned result instead
+// of expecting the retired source text to reappear.
 placements = placements.replace(
   '      yaw: jetway.g === "A1" ? yaw : sourceJetwayYaw,',
   '      yaw: sourceJetwayYaw,',
@@ -30,26 +30,42 @@ fs.writeFileSync(placementsPath, placements, "utf8");
 
 let elbow = fs.readFileSync(elbowPath, "utf8");
 
-elbow = elbow
-  .replace(
-    'const SOURCE_REGISTERED_A1_ELBOW_AUTHORITY = "photo-registered-a1-fixed-wall-rotunda-source-door-target-elbow-v3";',
-    `const SOURCE_REGISTERED_A1_ELBOW_AUTHORITY = "${AUTHORITY}";`,
-  )
-  .replace(
-    'const TARGET_DIRECTION_AUTHORITY = "source-a1-door-target-owns-aircraft-side-bridge-heading-v1";',
-    'const TARGET_DIRECTION_AUTHORITY = "decoded-kphx-bgl-heading-owns-a1-bridge-aircraft-must-conform-v1";',
-  )
-  .replace(
-    'const CONNECTOR_AUTHORITY = "real-terminal-fixed-rotunda-independent-aircraft-side-elbow-v3";',
-    `const CONNECTOR_AUTHORITY = "${WALL_AUTHORITY}";`,
-  )
-  .replace(
-    'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-compact-solid-terminal-leg-fixed-wall-v4-authored-rotunda-surface";',
-    'const CONNECTOR_STYLE_AUTHORITY = "source-measured-real-wall-to-source-rotunda-solid-terminal-leg-v5";',
-  );
+const alreadySourceOwned = [
+  AUTHORITY,
+  WALL_AUTHORITY,
+  'const sourceRotundaTarget = new THREE.Vector3(Number(placement.x)',
+  'anchor.rotation.y = Number(placement.yaw)',
+  'uploadedJetwayA1MeasuredTerminalWallX',
+  'uploadedJetwayA1SourceRotundaPositionErrorMeters',
+  'const yawDelta = 0;',
+  'const targetAlignmentCosine = bridgeDirection.dot(targetDirection);',
+].every((token) => elbow.includes(token))
+  && !elbow.includes('anchor.rotation.y += yawDelta;')
+  && !elbow.includes('A1 supplied bridge does not point at the source A1 door target')
+  && !elbow.includes('UploadedAirportJetwayA1AircraftSidePivot')
+  && !elbow.includes('bridgePivot.attach(root)');
 
-const fixedWallBlockPattern = /  const fixedRotundaCenter = objectCenterInFleet\(THREE, fleet, rotunda\);[\s\S]*?  fixedWallPoint\.y = fixedRotundaCenter\.y;\n/;
-const fixedWallReplacement = `  // Restore the exact A1 Rotunda to the decoded KPHX BGL gate coordinate before
+if (!alreadySourceOwned) {
+  elbow = elbow
+    .replace(
+      'const SOURCE_REGISTERED_A1_ELBOW_AUTHORITY = "photo-registered-a1-fixed-wall-rotunda-source-door-target-elbow-v3";',
+      `const SOURCE_REGISTERED_A1_ELBOW_AUTHORITY = "${AUTHORITY}";`,
+    )
+    .replace(
+      'const TARGET_DIRECTION_AUTHORITY = "source-a1-door-target-owns-aircraft-side-bridge-heading-v1";',
+      'const TARGET_DIRECTION_AUTHORITY = "decoded-kphx-bgl-heading-owns-a1-bridge-aircraft-must-conform-v1";',
+    )
+    .replace(
+      'const CONNECTOR_AUTHORITY = "real-terminal-fixed-rotunda-independent-aircraft-side-elbow-v3";',
+      `const CONNECTOR_AUTHORITY = "${WALL_AUTHORITY}";`,
+    )
+    .replace(
+      'const CONNECTOR_STYLE_AUTHORITY = "same-day-a1-photo-compact-solid-terminal-leg-fixed-wall-v4-authored-rotunda-surface";',
+      'const CONNECTOR_STYLE_AUTHORITY = "source-measured-real-wall-to-source-rotunda-solid-terminal-leg-v5";',
+    );
+
+  const fixedWallBlockPattern = /  const fixedRotundaCenter = objectCenterInFleet\(THREE, fleet, rotunda\);[\s\S]*?  fixedWallPoint\.y = fixedRotundaCenter\.y;\n/;
+  const fixedWallReplacement = `  // Restore the exact A1 Rotunda to the decoded KPHX BGL gate coordinate before
   // doing any terminal or aircraft fit. Earlier production stages intentionally
   // moved the whole supplied parent to manufacture a 2.4 m vestibule; undo that
   // displacement here so the airport source, not a cosmetic target length,
@@ -104,13 +120,13 @@ const fixedWallReplacement = `  // Restore the exact A1 Rotunda to the decoded K
   }
   terminalDirection.normalize();
 `;
-if (!fixedWallBlockPattern.test(elbow)) {
-  throw new Error(`${elbowPath}: fixed Rotunda/wall block is missing`);
-}
-elbow = elbow.replace(fixedWallBlockPattern, fixedWallReplacement);
+  if (!fixedWallBlockPattern.test(elbow)) {
+    throw new Error(`${elbowPath}: fixed Rotunda/wall block is missing and the final source-owned form is incomplete`);
+  }
+  elbow = elbow.replace(fixedWallBlockPattern, fixedWallReplacement);
 
-const parentPivotPattern = /  const tunnelCenterBefore = objectCenterInFleet\(THREE, fleet, tunnelA\);[\s\S]*?  if \(targetAlignmentCosine < 0\.99999\) throw new Error\(`A1 supplied bridge does not point at the source A1 door target: \$\{targetAlignmentCosine\}`\);\n/;
-const sourceHeadingReplacement = `  // Preserve the complete supplied A1 parent at the decoded airport heading.
+  const parentPivotPattern = /  const tunnelCenterBefore = objectCenterInFleet\(THREE, fleet, tunnelA\);[\s\S]*?  if \(targetAlignmentCosine < 0\.99999\) throw new Error\(`A1 supplied bridge does not point at the source A1 door target: \$\{targetAlignmentCosine\}`\);\n/;
+  const sourceHeadingReplacement = `  // Preserve the complete supplied A1 parent at the decoded airport heading.
   // The previous implementation rotated the whole parent toward a synthetic CRJ
   // door target and then translated it back around the Rotunda. That made the
   // aircraft own the airport geometry and visibly destroyed the intended elbow.
@@ -133,27 +149,28 @@ const sourceHeadingReplacement = `  // Preserve the complete supplied A1 parent 
   const yawDelta = 0;
   const targetAlignmentCosine = bridgeDirection.dot(targetDirection);
 `;
-if (!parentPivotPattern.test(elbow)) {
-  throw new Error(`${elbowPath}: synthetic whole-parent A1 door-target pivot block is missing`);
-}
-elbow = elbow.replace(parentPivotPattern, sourceHeadingReplacement);
+  if (!parentPivotPattern.test(elbow)) {
+    throw new Error(`${elbowPath}: synthetic whole-parent A1 door-target pivot block is missing and source ownership is incomplete`);
+  }
+  elbow = elbow.replace(parentPivotPattern, sourceHeadingReplacement);
 
-elbow = elbow.replace(
-  '  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {\n    throw new Error(`A1 authored wall-to-Rotunda visible vestibule is not compact: ${visibleTerminalLegMeters}`);\n  }',
-  '  if (!(visibleTerminalLegMeters > 0.15 && visibleTerminalLegMeters < 44)) {\n    throw new Error(`A1 source wall-to-Rotunda fixed leg is invalid: ${visibleTerminalLegMeters}`);\n  }',
-);
+  elbow = elbow.replace(
+    '  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {\n    throw new Error(`A1 authored wall-to-Rotunda visible vestibule is not compact: ${visibleTerminalLegMeters}`);\n  }',
+    '  if (!(visibleTerminalLegMeters > 0.15 && visibleTerminalLegMeters < 44)) {\n    throw new Error(`A1 source wall-to-Rotunda fixed leg is invalid: ${visibleTerminalLegMeters}`);\n  }',
+  );
 
-const telemetryAnchor = '  group.userData.uploadedJetwayA1SourceLockedElbowAuthority = SOURCE_REGISTERED_A1_ELBOW_AUTHORITY;';
-const telemetryPatch = `  group.userData.uploadedJetwayA1SourceBglOwnershipAuthority = "${AUTHORITY}";
+  const telemetryAnchor = '  group.userData.uploadedJetwayA1SourceLockedElbowAuthority = SOURCE_REGISTERED_A1_ELBOW_AUTHORITY;';
+  const telemetryPatch = `  group.userData.uploadedJetwayA1SourceBglOwnershipAuthority = "${AUTHORITY}";
   group.userData.uploadedJetwayA1SourceRotundaPositionErrorMeters = sourceRotundaPositionErrorMeters;
   group.userData.uploadedJetwayA1SourcePlacementX = sourceRotundaTarget.x;
   group.userData.uploadedJetwayA1SourcePlacementZ = sourceRotundaTarget.z;
   group.userData.uploadedJetwayA1SourcePlacementYawRadians = Number(placement.yaw);
   group.userData.uploadedJetwayA1MeasuredRealWallAuthority = "${WALL_AUTHORITY}";
   ${telemetryAnchor}`;
-if (!elbow.includes('uploadedJetwayA1SourceBglOwnershipAuthority')) {
-  if (!elbow.includes(telemetryAnchor)) throw new Error(`${elbowPath}: A1 elbow telemetry anchor is missing`);
-  elbow = elbow.replace(telemetryAnchor, telemetryPatch);
+  if (!elbow.includes('uploadedJetwayA1SourceBglOwnershipAuthority')) {
+    if (!elbow.includes(telemetryAnchor)) throw new Error(`${elbowPath}: A1 elbow telemetry anchor is missing`);
+    elbow = elbow.replace(telemetryAnchor, telemetryPatch);
+  }
 }
 
 for (const required of [
@@ -173,9 +190,11 @@ for (const forbidden of [
   'A1 supplied bridge does not point at the source A1 door target',
   'terminalWallDistance >= 2.9 && terminalWallDistance <= 5.8',
   'A1 authored wall-to-Rotunda visible vestibule is not compact',
+  'UploadedAirportJetwayA1AircraftSidePivot',
+  'bridgePivot.attach(root)',
 ]) {
   if (elbow.includes(forbidden)) throw new Error(`${elbowPath}: synthetic A1 geometry ownership survived: ${forbidden}`);
 }
 
 fs.writeFileSync(elbowPath, elbow, "utf8");
-console.log(`Locked A1 Rotunda x/z/yaw to the decoded KPHX BGL airport pose, published zero whole-parent yaw delta, and routed its fixed terminal leg to the pre-relocation measured real Terminal 4 wall. The complete supplied parent can no longer be rotated or translated to satisfy a synthetic aircraft door or 2.4 m vestibule (${AUTHORITY}).`);
+console.log(`${alreadySourceOwned ? "Validated existing" : "Installed"} A1 decoded-KPHX Rotunda/x-z/yaw ownership with zero whole-parent door-target yaw and no child reparenting (${AUTHORITY}).`);
