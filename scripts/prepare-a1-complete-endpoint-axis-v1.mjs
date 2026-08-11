@@ -1,73 +1,48 @@
 import fs from "node:fs";
 
-// The rigid-parent preparer historically reintroduced a 12 m terminal span.
-// Enforce the exact photo-visible 2.4 m vestibule before any endpoint-axis
-// replacement reads or extends that generated block.
-await import(`./prepare-a1-rigid-compact-span-v1.mjs?post-rigid=${Date.now()}`);
+// Preserve the measured short fixed leg before validating the final endpoint
+// relationship. This stage must never rotate/translate A1 again: the physical
+// elbow stage immediately upstream already owns the Rotunda terminal aperture,
+// while Tunnel A/B/C/Cab remain the aircraft-side chain.
+await import(`./prepare-a1-rigid-compact-span-v1.mjs?post-elbow=${Date.now()}`);
 
 const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js";
-let source = fs.readFileSync(installationPath, "utf8");
+const source = fs.readFileSync(installationPath, "utf8");
 
-const oldBlock = `  const rotundaAxisCenter = vertexCentroid(
-    THREE,
-    transformedGeometryVertices(THREE, fleet, rotundaAxisMesh),
-  );
-  const tunnelAAxisCenter = vertexCentroid(
-    THREE,
-    transformedGeometryVertices(THREE, fleet, tunnelAAxisMesh),
-  );
-  const measuredOpeningDirection = rotundaAxisCenter.clone().sub(tunnelAAxisCenter);
-  measuredOpeningDirection.y = 0;
-  if (measuredOpeningDirection.lengthSq() < 0.25) {
-    throw new Error("A1 measured authored Rotunda opening axis is degenerate");
-  }
-  measuredOpeningDirection.normalize();`;
+const ELBOW_AUTHORITY = "same-day-photo-authored-opening-fixed-rotunda-elbow-terminal-aligned-v7";
+const SPAN_MARKER = "post-fixed-rotunda-a1-measured-short-terminal-span-v2";
 
-const newBlock = `  // Determine terminal/apron orientation from the complete supplied bridge,
-  // not from a local Rotunda-to-Tunnel-A opening vector. In the authored
-  // hierarchy the Rotunda is the terminal endpoint and the Cab is the aircraft
-  // endpoint, so Cab -> Rotunda is the only unambiguous terminal direction.
-  // Rotate only the complete parent around the fixed Cab; every GLB child
-  // transform remains untouched.
-  const rotundaTerminalCenter = objectBoundsCenterInFleet(THREE, fleet, rotundaEndpoint);
-  const cabAircraftCenter = objectBoundsCenterInFleet(THREE, fleet, cabEndpoint);
-  const measuredOpeningDirection = rotundaTerminalCenter.clone().sub(cabAircraftCenter);
-  measuredOpeningDirection.y = 0;
-  if (measuredOpeningDirection.lengthSq() < 4) {
-    throw new Error("A1 complete Cab-to-Rotunda endpoint axis is degenerate");
-  }
-  measuredOpeningDirection.normalize();`;
-
-if (!source.includes(oldBlock)) {
-  throw new Error(`${installationPath}: local Rotunda-to-Tunnel-A orientation block is missing`);
-}
-source = source.replace(oldBlock, newBlock);
-
-source = source.replace(
-  /const A1_PARENT_ORIENTATION_AUTHORITY = "[^"]+";/,
-  'const A1_PARENT_ORIENTATION_AUTHORITY = "same-day-photo-complete-cab-to-rotunda-parent-axis-v6";',
-);
-
-for (const token of [
-  "post-rigid-a1-exact-visible-vestibule-span-v1",
-  "const rotundaTerminalCenter = objectBoundsCenterInFleet",
-  "const cabAircraftCenter = objectBoundsCenterInFleet",
-  "rotundaTerminalCenter.clone().sub(cabAircraftCenter)",
-  'A1_PARENT_ORIENTATION_AUTHORITY = "same-day-photo-complete-cab-to-rotunda-parent-axis-v6"',
+// This used to replace the Rotunda/Tunnel-A axis with a Cab->Rotunda vector and
+// then let later code rotate the COMPLETE parent. That destroys the real elbow:
+// the terminal Rotunda opening and Tunnel A are independent directions at A1.
+// Endpoint validation is now deliberately two-axis and non-mutating.
+for (const required of [
+  SPAN_MARKER,
+  `A1_PARENT_ORIENTATION_AUTHORITY = "${ELBOW_AUTHORITY}"`,
+  "const rotundaRoot = a1Model.getObjectByName(\"Rotunda\")",
+  "const authoredOpeningBefore = rotundaCenterBefore.clone().sub(tunnelAAxisCenter)",
+  "const alignedOpeningDirection = authoredOpeningBefore.clone().applyAxisAngle",
+  "const measuredTerminalAlignment = alignedOpeningDirection.dot(terminalDirection)",
+  "beforeTransforms = captureAuthoredPartTransforms(a1Model)",
+  "a1Anchor.userData.rotundaElbowArticulated = true",
+  "connector.userData.measuredTerminalAlignment = measuredTerminalAlignment",
+  "connector.userData.visibleMainLengthMeters = actualVisibleVestibuleMeters",
 ]) {
-  if (!source.includes(token)) {
-    throw new Error(`${installationPath}: complete endpoint-axis output is missing ${token}`);
+  if (!source.includes(required)) {
+    throw new Error(`${installationPath}: physical two-axis A1 endpoint contract is missing ${required}`);
   }
 }
+
 for (const forbidden of [
-  "const rotundaAxisCenter = vertexCentroid",
-  "terminalDistance < 12",
-  "terminalDistance < 28",
+  "same-day-photo-complete-cab-to-rotunda-parent-axis-v6",
+  "rotundaTerminalCenter.clone().sub(cabAircraftCenter)",
+  "a1Anchor.rotation.y += terminalAlignmentYawRadians",
+  "a1Anchor.rotation.y += A1_PARENT_ORIENTATION_CORRECTION_RADIANS",
+  "post-rigid-a1-exact-visible-vestibule-span-v1",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${installationPath}: stale endpoint or long terminal span remains: ${forbidden}`);
+    throw new Error(`${installationPath}: stale whole-parent endpoint orientation survived physical elbow preparation: ${forbidden}`);
   }
 }
 
-fs.writeFileSync(installationPath, source, "utf8");
-console.log("Aligned the complete A1 parent from the authored Cab-to-Rotunda endpoint axis after enforcing the exact 2.4 m terminal vestibule, preserving every supplied child transform.");
+console.log("Validated A1's physical two-axis endpoint geometry without mutation: the Rotunda aperture independently faces the measured terminal wall, Tunnel A/B/C/Cab retain the aircraft-side pose, and the measured short fixed leg remains unchanged.");
