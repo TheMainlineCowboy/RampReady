@@ -58,6 +58,9 @@ if (sourcePlaced.includes('yaw: jetway.g === "A1" ? yaw : sourceJetwayYaw')) {
   throw new Error(`${sourcePlacedPath}: synthetic A1 yaw exception returned during marker compatibility`);
 }
 
+// Publish the measurements that the final Tunnel-C world-space geometry check
+// already proved. This is telemetry/report plumbing only; it does not move A1.
+await import(`./prepare-a1-tunnel-c-bogie-report-publication-v1.mjs?final-compat=${Date.now()}`);
 await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?final-compat=${Date.now()}`);
 
 const readiness = fs.readFileSync(readinessPath, "utf8");
