@@ -8,10 +8,11 @@ await import(`./prepare-current-head-browser-expectations-v1.mjs?kphx-post-build
 
 const CURRENT_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v11";
 const STALE_ROUTE_AUTHORITY = "source-gate-apron-presets-with-side-on-a1-and-fixed-a14-fleet-cameras-b15-a1-a14-b14-b15-v9";
-const AIRPORT_OWNED_AIRCRAFT_AUTHORITY = "source-a1-jetway-cab-endpoint-aircraft-conforms-v4";
+const AIRPORT_OWNED_AIRCRAFT_AUTHORITY = "final-live-cab-mesh-visible-door-registration-v7";
 const STALE_AIRCRAFT_AUTHORITIES = [
   "measured-a1-cab-inspection-pose-persisted-across-mode-toggle-v2",
   "source-a1-gate-stop-world-offset-persisted-no-cab-follow-v3",
+  "source-a1-jetway-cab-endpoint-aircraft-conforms-v4",
 ];
 const AIRCRAFT_MODE_POSE_AUTHORITY = "a1-single-aircraft-pose-training-and-free-drive-v1";
 const SOURCE_HEADING_AUTHORITY = "source-a1-parking-heading-authored-door-registration-v2";
@@ -58,9 +59,9 @@ function removeCompactVestibuleAssertions(source) {
   fs.writeFileSync(path, source, "utf8");
 }
 
-// KPHX scenery acceptance follows the airport-owned A1 architecture: the
-// decoded PHX jetway remains fixed and the aircraft is positioned so its
-// forward-left door meets the final Cab.
+// KPHX scenery acceptance follows the final live A1 architecture: the decoded
+// PHX jetway stays fixed and the rendered CRJ door is registered to the final
+// live Cab. Nose/stand pose telemetry is not a model-local door offset.
 {
   const path = "tests/browser/kphx-ground-runtime.spec.js";
   let source = fs.readFileSync(path, "utf8");
@@ -87,9 +88,14 @@ function removeCompactVestibuleAssertions(source) {
       && Number.isFinite(Number(data?.aircraftModePoseLiveZ))
       && Math.abs(Number(data?.aircraftModePoseLiveX) - Number(data?.inspectionAircraftNoseGearX)) <= 0.01
       && Math.abs(Number(data?.aircraftModePoseLiveZ) - Number(data?.inspectionAircraftNoseGearZ)) <= 0.01
-      && Math.abs(Number(data?.aircraftModePoseLiveYaw) - ${SOURCE_A1_YAW}) <= 0.0001`;
+      && Math.abs(Number(data?.aircraftModePoseLiveYaw) - ${SOURCE_A1_YAW}) <= 0.0001
+      && Number.isFinite(Number(data?.inspectionAircraftSourceGateDoorTargetErrorMeters))
+      && Number(data?.inspectionAircraftSourceGateDoorTargetErrorMeters) <= 0.01
+      && Number.isFinite(Number(data?.inspectionAircraftCabContactErrorMeters))
+      && Number(data?.inspectionAircraftCabContactErrorMeters) <= 0.01`;
   if (source.includes(staleLaunchPoseBlock)) source = source.replace(staleLaunchPoseBlock, cabDerivedLaunchPoseBlock);
-  requireToken(path, source, "data?.inspectionAircraftFixedSourceGateAuthority === aircraftAuthority", "Cab-derived launch pose");
+  requireToken(path, source, "data?.inspectionAircraftFixedSourceGateAuthority === aircraftAuthority", "final live-Cab launch pose");
+  requireToken(path, source, "inspectionAircraftSourceGateDoorTargetErrorMeters", "source-gate rendered door registration");
 
   const staleRelocationAssertBlock = `  const aircraftRelocationX = Number(runtime.inspectionAircraftTerminalRelocationX);
   const aircraftRelocationZ = Number(runtime.inspectionAircraftTerminalRelocationZ);
@@ -104,7 +110,7 @@ function removeCompactVestibuleAssertions(source) {
   expect(runtime.inspectionAircraftPoseApplied).toBe("true");
   expect(Number(runtime.inspectionAircraftPoseErrorMeters)).toBeLessThanOrEqual(0.01);`;
   if (source.includes(staleRelocationAssertBlock)) source = source.replace(staleRelocationAssertBlock, cabDerivedPoseAssertBlock);
-  requireToken(path, source, "inspectionAircraftFixedSourceGateAuthority", "Cab-derived pose assertion");
+  requireToken(path, source, "inspectionAircraftFixedSourceGateAuthority", "final live-Cab pose assertion");
 
   const staleNoseGearBlock = `  expect(Number(runtime.inspectionAircraftNoseGearX)).toBeCloseTo(
     PHOTO_REGISTERED_NOSE_GEAR.x + aircraftRelocationX,
@@ -114,7 +120,7 @@ function removeCompactVestibuleAssertions(source) {
     PHOTO_REGISTERED_NOSE_GEAR.z + aircraftRelocationZ,
     3,
   );`;
-  const cabDerivedNoseGearBlock = `  const noseGearX = Number(runtime.inspectionAircraftNoseGearX);
+  const finalLiveRegistrationBlock = `  const noseGearX = Number(runtime.inspectionAircraftNoseGearX);
   const noseGearZ = Number(runtime.inspectionAircraftNoseGearZ);
   const liveX = Number(runtime.aircraftModePoseLiveX);
   const liveZ = Number(runtime.aircraftModePoseLiveZ);
@@ -123,13 +129,15 @@ function removeCompactVestibuleAssertions(source) {
   expect(liveZ).toBeCloseTo(noseGearZ, 5);
   const renderedDoorX = Number(runtime.inspectionAircraftDoorTargetX);
   const renderedDoorZ = Number(runtime.inspectionAircraftDoorTargetZ);
-  expect([renderedDoorX, renderedDoorZ].every(Number.isFinite)).toBe(true);
-  expect(Math.hypot(renderedDoorX - noseGearX, renderedDoorZ - noseGearZ)).toBeCloseTo(
-    Math.hypot(7.32, 1.34),
-    2,
-  );`;
-  if (source.includes(staleNoseGearBlock)) source = source.replace(staleNoseGearBlock, cabDerivedNoseGearBlock);
-  requireToken(path, source, "const noseGearX = Number(runtime.inspectionAircraftNoseGearX)", "Cab-derived nose/door assertion");
+  const cabContactX = Number(runtime.inspectionAircraftCabContactX);
+  const cabContactZ = Number(runtime.inspectionAircraftCabContactZ);
+  expect([renderedDoorX, renderedDoorZ, cabContactX, cabContactZ].every(Number.isFinite)).toBe(true);
+  expect(Math.hypot(renderedDoorX - cabContactX, renderedDoorZ - cabContactZ)).toBeLessThanOrEqual(0.01);
+  expect(Number(runtime.inspectionAircraftCabContactErrorMeters)).toBeLessThanOrEqual(0.01);
+  expect(Number(runtime.inspectionAircraftSourceGateDoorTargetErrorMeters)).toBeLessThanOrEqual(0.01);`;
+  if (source.includes(staleNoseGearBlock)) source = source.replace(staleNoseGearBlock, finalLiveRegistrationBlock);
+  requireToken(path, source, "const noseGearX = Number(runtime.inspectionAircraftNoseGearX)", "fixed stand/live pose assertion");
+  requireToken(path, source, "renderedDoorX - cabContactX", "live rendered door-to-Cab assertion");
 
   source = source.replaceAll(
     "expect(Number(runtime.inspectionAircraftYaw)).toBeCloseTo(expectedSourceStandYaw, 4);",
@@ -145,6 +153,7 @@ function removeCompactVestibuleAssertions(source) {
     "aircraftRelocationZ",
     "inspectionAircraftYaw)).toBeCloseTo",
     "terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4",
+    "Math.hypot(7.32, 1.34)",
   ]) if (source.includes(forbidden)) throw new Error(`${path}: stale moved-aircraft/compact-A1 assertion remains: ${forbidden}`);
 
   for (const required of [
@@ -155,6 +164,9 @@ function removeCompactVestibuleAssertions(source) {
     "inspectionAircraftFixedSourceGateAuthority",
     "inspectionAircraftNoseGearX",
     "inspectionAircraftDoorTargetX",
+    "inspectionAircraftCabContactX",
+    "inspectionAircraftCabContactErrorMeters",
+    "inspectionAircraftSourceGateDoorTargetErrorMeters",
     "aircraftModePoseLiveYaw",
     "inspectionAircraftSourceParkingHeadingDegrees",
     "inspectionAircraftSourceModelYawDegrees",
@@ -164,8 +176,10 @@ function removeCompactVestibuleAssertions(source) {
   fs.writeFileSync(path, source, "utf8");
 }
 
-// Close A1 terminal/bogie evidence uses the same Cab-derived aircraft pose and
-// final Rotunda-to-real-wall geometry while retaining continuity/grounding gates.
+// Close A1 terminal/bogie evidence uses the same final live-Cab aircraft pose
+// and final Rotunda-to-real-wall geometry while retaining continuity/grounding
+// gates. The fixed stand pose can be anywhere in airport world space; only its
+// stability and final rendered door registration are authoritative.
 {
   const path = "tests/browser/a1-terminal-joint-bogie-subviews.spec.js";
   let source = fs.readFileSync(path, "utf8");
@@ -182,7 +196,11 @@ function removeCompactVestibuleAssertions(source) {
       && Number.isFinite(Number(data?.aircraftModePoseLiveZ))
       && Math.abs(Number(data?.aircraftModePoseLiveX) - Number(data?.inspectionAircraftNoseGearX)) <= 0.01
       && Math.abs(Number(data?.aircraftModePoseLiveZ) - Number(data?.inspectionAircraftNoseGearZ)) <= 0.01
-      && Math.abs(Number(data?.aircraftModePoseLiveYaw) - ${SOURCE_A1_YAW}) <= 0.0001`;
+      && Math.abs(Number(data?.aircraftModePoseLiveYaw) - ${SOURCE_A1_YAW}) <= 0.0001
+      && Number.isFinite(Number(data?.inspectionAircraftSourceGateDoorTargetErrorMeters))
+      && Number(data?.inspectionAircraftSourceGateDoorTargetErrorMeters) <= 0.01
+      && Number.isFinite(Number(data?.inspectionAircraftCabContactErrorMeters))
+      && Number(data?.inspectionAircraftCabContactErrorMeters) <= 0.01`;
   if (source.includes(staleWaitPose)) source = source.replace(staleWaitPose, cabDerivedWaitPose);
 
   const staleTerminalPoseAsserts = `  expect(Number(terminalRuntime.aircraftModePoseLiveX)).toBeCloseTo(0, 3);
@@ -193,7 +211,9 @@ function removeCompactVestibuleAssertions(source) {
   expect([terminalNoseX, terminalNoseZ].every(Number.isFinite)).toBe(true);
   expect(Number(terminalRuntime.aircraftModePoseLiveX)).toBeCloseTo(terminalNoseX, 5);
   expect(Number(terminalRuntime.aircraftModePoseLiveZ)).toBeCloseTo(terminalNoseZ, 5);
-  expect(Number(terminalRuntime.aircraftModePoseLiveYaw)).toBeCloseTo(${SOURCE_A1_YAW}, 4);`;
+  expect(Number(terminalRuntime.aircraftModePoseLiveYaw)).toBeCloseTo(${SOURCE_A1_YAW}, 4);
+  expect(Number(terminalRuntime.inspectionAircraftCabContactErrorMeters)).toBeLessThanOrEqual(0.01);
+  expect(Number(terminalRuntime.inspectionAircraftSourceGateDoorTargetErrorMeters)).toBeLessThanOrEqual(0.01);`;
   if (source.includes(staleTerminalPoseAsserts)) source = source.replace(staleTerminalPoseAsserts, cabDerivedTerminalPoseAsserts);
 
   source = source.replace(
@@ -215,6 +235,8 @@ function removeCompactVestibuleAssertions(source) {
     SOURCE_HEADING_AUTHORITY,
     "a1ExactRotundaToWallWorldMeters",
     "inspectionAircraftNoseGearX",
+    "inspectionAircraftCabContactErrorMeters",
+    "inspectionAircraftSourceGateDoorTargetErrorMeters",
     "terminal4UploadedJetwayBogieGroundContactAuthority",
     "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
   ]) requireToken(path, source, required);
@@ -223,5 +245,5 @@ function removeCompactVestibuleAssertions(source) {
 }
 
 console.log(
-  "Prepared KPHX post-build current-head browser gates: route v11, Cab-derived A1 aircraft pose, decoded Rotunda-to-measured-wall agreement, authored parking heading, grounded zero-lift jetway evidence, and CI-stable bidirectional free-drive motion. Every historical exact-2.4m compact-vestibule assertion is removed regardless of local test variable spelling.",
+  "Prepared KPHX post-build current-head browser gates for the final live-Cab A1 architecture: route v11, stable fixed aircraft pose, rendered door/Cab and source-gate registration within 1 cm, decoded Rotunda-to-real-wall agreement, authored parking heading, grounded zero-lift jetway evidence, and CI-stable bidirectional free-drive motion. Historical moved-aircraft, 7.44 m nose-offset and exact-2.4m compact-vestibule assumptions are removed.",
 );
