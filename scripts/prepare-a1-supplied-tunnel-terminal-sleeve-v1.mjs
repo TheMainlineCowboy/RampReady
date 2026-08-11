@@ -32,9 +32,9 @@ if (!source.includes(marker)) {
 }`;
   const newMaterials = `// ${marker}
 function createMaterials(THREE, tunnelA) {
-  // The terminal-side fixed sleeve is not a second invented jetway. Reuse the
-  // supplied Tunnel A visual material so the short wall-to-Rotunda leg reads as
-  // one continuous authored bridge instead of a blank generated gray box.
+  // This short fixed leg is part of the jetway visual system, not a new
+  // terminal building. Reuse the supplied Tunnel A material instead of
+  // painting a separate featureless gray box beside the exact uploaded model.
   let suppliedTunnelMaterial = null;
   tunnelA?.traverse?.((entry) => {
     if (suppliedTunnelMaterial || !entry?.isMesh || entry.visible === false) return;
@@ -48,9 +48,6 @@ function createMaterials(THREE, tunnelA) {
   });
   shell.name = "A1 fixed terminal sleeve - supplied Tunnel A skin";
   shell.side = THREE.DoubleSide;
-  shell.transparent = false;
-  shell.opacity = 1;
-  shell.depthWrite = true;
   shell.needsUpdate = true;
 
   return {
@@ -114,21 +111,17 @@ function createMaterials(THREE, tunnelA) {
   if (!source.includes(sideRibAnchor)) throw new Error(`${elbowPath}: A1 terminal sleeve rib anchor is missing`);
   source = source.replace(sideRibAnchor, detailedRib);
 
-  const oldConstruction = `  const materials = createMaterials(THREE);
-  const connector = new THREE.Group();
-  connector.name = "UploadedAirportJetwayTerminalConnector_A1";
-  const width = 2.58;
-  const height = 2.44;`;
-  const newConstruction = `  const materials = createMaterials(THREE, tunnelA);
-  const connector = new THREE.Group();
-  connector.name = "UploadedAirportJetwayTerminalConnector_A1";
-  // Match the supplied Tunnel A passenger envelope already measured above.
-  // The small 1.02 factor gives the fixed sleeve just enough overlap to hide a
-  // hairline seam; it must never become a larger fabricated terminal box.
-  const width = bridgeBellowsWidthMeters;
-  const height = bridgeBellowsHeightMeters;`;
-  if (!source.includes(oldConstruction)) throw new Error(`${elbowPath}: A1 terminal sleeve construction anchor is missing`);
-  source = source.replace(oldConstruction, newConstruction);
+  // Patch these independently. A later preparation pass legitimately changes
+  // the shell Y center to Tunnel A passenger height, so matching the entire
+  // construction block makes this visual repair unnecessarily order-sensitive.
+  for (const [before, after, label] of [
+    ["  const materials = createMaterials(THREE);", "  const materials = createMaterials(THREE, tunnelA);", "material source"],
+    ["  const width = 2.58;", "  const width = bridgeBellowsWidthMeters;", "measured width"],
+    ["  const height = 2.44;", "  const height = bridgeBellowsHeightMeters;", "measured height"],
+  ]) {
+    if (!source.includes(before)) throw new Error(`${elbowPath}: A1 terminal sleeve ${label} anchor is missing`);
+    source = source.replace(before, after);
+  }
 
   const telemetryAnchor = `  connector.userData.corrugationRibCount = frame.ribCount;`;
   const telemetry = `${telemetryAnchor}
