@@ -73,9 +73,10 @@ for (const forbidden of [
   }
 }
 
-// Normalize readiness only. The runtime may phrase the same physical wall range
-// differently across generated passes; the final gate must allow the measured
-// structural ray while rejecting a long visible corridor.
+// Normalize readiness only. Multiple compatibility passes rewrite this module in
+// different textual forms. The final physical gate therefore both replaces any
+// recognized range and INSERTS the guard directly into the final readiness `if`
+// when a later generator has removed it. This never changes scene geometry.
 let readiness = read(readinessPath);
 const finalWallGuard = `a1TerminalWallDistance > ${MIN_REAL_WALL_DISTANCE_METERS} && a1TerminalWallDistance < ${MAX_REAL_WALL_DISTANCE_METERS}`;
 const finalVisibleLegGuard = `connectorVisibleLength > ${MIN_VISIBLE_FIXED_LEG_METERS} && connectorVisibleLength < ${MAX_VISIBLE_FIXED_LEG_METERS}`;
@@ -93,6 +94,27 @@ readiness = readiness
   .replaceAll("a1-real-terminal-wall-source-measured-fixed-leg-final-v1", FINAL_AUTHORITY)
   .replaceAll("compact-real-terminal-wall-readiness-v2", FINAL_AUTHORITY)
   .replaceAll("compact-real-terminal-wall-readiness-v1", FINAL_AUTHORITY);
+
+if (!readiness.includes(finalWallGuard)) {
+  const wallAnchor = "            || a1TerminalConnectionAuthority !== UPLOADED_JETWAY_A1_TERMINAL_CONNECTION_AUTHORITY";
+  if (!readiness.includes(wallAnchor)) {
+    throw new Error(`${readinessPath}: cannot attach final physical A1 wall-distance guard`);
+  }
+  readiness = readiness.replace(
+    wallAnchor,
+    `${wallAnchor}\n            || !(${finalWallGuard})`,
+  );
+}
+if (!readiness.includes(finalVisibleLegGuard)) {
+  const visibleAnchor = "            || isolatedNodeRotationCount !== 0";
+  if (!readiness.includes(visibleAnchor)) {
+    throw new Error(`${readinessPath}: cannot attach final physical A1 visible-leg guard`);
+  }
+  readiness = readiness.replace(
+    visibleAnchor,
+    `${visibleAnchor}\n            || !(${finalVisibleLegGuard})`,
+  );
+}
 
 for (const required of [finalWallGuard, finalVisibleLegGuard]) {
   if (!readiness.includes(required)) {
