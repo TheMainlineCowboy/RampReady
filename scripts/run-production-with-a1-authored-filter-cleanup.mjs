@@ -43,6 +43,10 @@ if (
 
 let buildError;
 try {
+  // This wrapper runs after the final airport-ownership readiness pass. Re-run
+  // the Tunnel-C migration here so no later compatibility layer can restore the
+  // retired whole-model/pedestal ground rule in the artifact that Vite bundles.
+  await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?post-airport-ownership=${Date.now()}`);
   await import("./run-production-with-a1-cleanup.mjs");
 } catch (error) {
   buildError = error;
