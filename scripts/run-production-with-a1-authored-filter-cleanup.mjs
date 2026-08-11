@@ -43,18 +43,24 @@ if (
 
 let buildError;
 try {
-  // All of the simulator-quality A1 relocation/aircraft/closure preparers have
-  // finished before this wrapper. Re-apply the physical A1 articulation HERE so
-  // none of those late compatibility passes can rotate the Rotunda portal away
-  // from the real terminal again. This operation leaves Tunnel A/B/C/Cab and
-  // their Y/ground pose untouched; it restores only the Rotunda world
-  // orientation/center that existed at the measured wall before the complete
-  // anchor received its decoded KPHX heading.
+  // All relocation/aircraft/closure compatibility preparers have finished before
+  // this wrapper. Correct the REAL authored A1 portal here, at the final geometry
+  // stage: the Rotunda terminal opening (opposite Tunnel A in Airport_Jetway.glb)
+  // must physically face the measured Terminal 4 structural wall. Tunnel A/B/C/
+  // Cab are not moved by this articulation and the Rotunda mesh centroid remains
+  // fixed to the already measured real-wall position.
+  await import(`./prepare-a1-authored-rotunda-opening-alignment-v1.mjs?final-production-opening=${Date.now()}`);
+
+  // The later source-heading preparation historically rotated the whole A1
+  // anchor, including the terminal portal. Re-apply the fixed-wall Rotunda guard
+  // after installing the physical opening authority so that decoded KPHX heading
+  // continues to own Tunnel A/B/C/Cab but cannot turn the terminal portal back
+  // toward the apron.
   await import(`./prepare-a1-fixed-rotunda-aircraft-side-pivot-v1.mjs?final-production-rotunda=${Date.now()}`);
 
-  // The fixed Rotunda correction never changes Tunnel-C Y, but re-run the actual
-  // aircraft-side ground contract after it so the artifact can only bundle if
-  // the visible support/wheel geometry remains on the ramp.
+  // Neither Rotunda operation is allowed to change Tunnel-C Y. Re-run the actual
+  // aircraft-side ground contract immediately before the final bundle anyway, so
+  // any regression to airborne support/wheels fails closed.
   await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?post-fixed-rotunda=${Date.now()}`);
   await import("./run-production-with-a1-cleanup.mjs");
 } catch (error) {
@@ -95,4 +101,4 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log("RampReady production artifact keeps the A1 Rotunda fixed to the measured terminal-wall orientation as the final geometry authority, preserves the decoded aircraft-side Tunnel A/B/C/Cab heading and Tunnel-C ramp contact, applies the exact three-box authored cleanup and Terminal 4 jetway polish, then restores authoredTerminal4Visual.js byte-for-byte.");
+console.log("RampReady production artifact physically aligns the supplied A1 Rotunda terminal opening to the measured Terminal 4 wall as the final geometry authority, preserves the decoded aircraft-side Tunnel A/B/C/Cab heading and Tunnel-C ramp contact, applies the authored cleanup and Terminal 4 jetway polish, then restores authoredTerminal4Visual.js byte-for-byte.");
