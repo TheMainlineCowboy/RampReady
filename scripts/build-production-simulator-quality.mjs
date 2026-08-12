@@ -127,6 +127,10 @@ try {
   // so a balanced wall/Tunnel-A view cannot be rejected by the obsolete 0.82
   // cosine cutoff before the browser can acknowledge the requested subview.
   await runNode("scripts/prepare-a1-final-terminal-joint-camera-guard-v1.mjs");
+  // Diagnostic only: fail before Vite if any late preparer has reintroduced the
+  // retired decoded-KPHX visible-elbow assertion, and print its exact generated
+  // source context so the responsible guard can be replaced structurally.
+  await runNode("scripts/prepare-a1-final-elbow-guard-diagnostic-v1.mjs");
   await runNode("scripts/prepare-jetway-readiness-airport-ownership-v1.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
 } catch (error) {
