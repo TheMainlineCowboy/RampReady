@@ -32,6 +32,10 @@ registration = registration
   .replaceAll(
     "Static source-measured terminal-leg envelope is invalid",
     "Static compact real-wall vestibule envelope is invalid",
+  )
+  .replaceAll(
+    "compact visible terminal vestibule is invalid",
+    "compact real-wall vestibule envelope is invalid",
   );
 
 if (!registration.includes(`const AUTHORITY = "${SOURCE_POSE_AUTHORITY}";`)) {
