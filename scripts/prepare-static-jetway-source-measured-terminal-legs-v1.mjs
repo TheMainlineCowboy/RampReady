@@ -8,6 +8,7 @@ const CONNECTOR_IMPORT = 'import { addStaticSolidTerminalVestibules } from "./st
 const OLD_CONNECTOR_IMPORT = 'import { addStaticSolidTerminalVestibules } from "./staticSolidTerminalVestibulesV1.js";';
 const MIN_VISIBLE_METERS = 0.25;
 const MAX_VISIBLE_METERS = 1.25;
+const EXPECTED_VISIBLE_METERS = 0.55;
 
 let registration = fs.readFileSync(registrationPath, "utf8");
 if (registration.includes(OLD_CONNECTOR_IMPORT)) {
@@ -17,6 +18,7 @@ if (!registration.includes(CONNECTOR_IMPORT)) {
   throw new Error(`${registrationPath}: source-measured static connector import is missing`);
 }
 
+// Enforce the compact measured-wall sleeve and reject the retired giant-corridor policy.
 // The replacement GLB Rotunda stays registered to the measured Terminal 4
 // facade. Only the decoded KPHX heading owns rigid-parent yaw. This pass may
 // recalculate telescope length and connector detail, but it must never restore
@@ -46,7 +48,7 @@ for (const required of [
   `const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MIN_VISIBLE_METERS};`,
   `const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MAX_VISIBLE_METERS};`,
   SOURCE_POSE_AUTHORITY,
-  "const visibleTerminalLegMeters = 0.55;",
+  `const visibleTerminalLegMeters = ${EXPECTED_VISIBLE_METERS};`,
   "const terminalWallOverlapMeters = 0.18;",
   "const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;",
   "const rotundaZ = wallZ - uz * resolvedRotundaCenterToWallMeters;",
@@ -72,4 +74,4 @@ for (const forbidden of [
 
 fs.writeFileSync(registrationPath, registration, "utf8");
 await import(`./prepare-static-jetway-post-registration-lengths-v1.mjs?post-wall-lengths=${Date.now()}`);
-console.log(`Preserved measured real-wall Rotunda registration and decoded KPHX parent yaw through static terminal-leg preparation, retained the ${MIN_VISIBLE_METERS}-${MAX_VISIBLE_METERS} m compact facade sleeve, and recalculated bridge lengths without re-aiming fixed jetways.`);
+console.log(`Preserved measured real-wall Rotunda registration and decoded KPHX parent yaw through static terminal-leg preparation, retained the ${MIN_VISIBLE_METERS}-${MAX_VISIBLE_METERS} m compact facade sleeve with expected ${EXPECTED_VISIBLE_METERS} m visible leg, and recalculated bridge lengths without re-aiming fixed jetways.`);
