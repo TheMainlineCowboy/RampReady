@@ -25,7 +25,7 @@ const sourceWallAuthority = "a1-measured-real-wall-preserved-rotunda-v2";
 const legacyRawBglRotundaAuthority = "a1-decoded-kphx-bgl-rotunda-and-heading-own-physical-jetway-v1";
 const noLiftAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const staticRigidAuthority = "57-static-exact-glb-own-gate-inward-telescope-v2";
-const staticSourcePlacementAuthority = "57-static-own-gate-target-real-wall-compact-registration-v9";
+const staticSourcePlacementAuthority = "57-static-bgl-source-pose-real-wall-registration-v10";
 const marker = "final-a1-acceptance-authority-after-all-preparers-v7-intact-source-bogie";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
