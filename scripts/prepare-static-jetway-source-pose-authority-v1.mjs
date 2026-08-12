@@ -4,55 +4,22 @@ const registrationPath = "src/environment/registerStaticJetwayFleetToFacadeV1.js
 const authority = "57-static-bgl-source-pose-real-wall-registration-v10";
 let source = fs.readFileSync(registrationPath, "utf8");
 
-// The decoded kphx-airport.bgl jetway records already contain the authored
-// physical pivot position and heading. The previous final registration moved
-// every Rotunda toward a nearest facade candidate and then replaced the source
-// heading with a CRJ-door target heading. That can make individually-valid
-// bridges sweep through neighbouring stands. Keep the authored airport pose as
-// the rigid-parent authority; aircraft fitting/articulation must happen later.
-source = source
-  .replaceAll("57-static-own-gate-target-real-wall-compact-registration-v9", authority)
-  .replaceAll('const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0.25;', 'const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0;')
-  .replaceAll('const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.25;', 'const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 28;');
-
-const relocatedBlock = `  // Register the complete rigid supplied assembly to the measured real
-  // Terminal 4 wall. Generated geometry is limited to the short wall sleeve;
-  // the replacement jetway itself stays the exact supplied GLB.
-  const wallX = sourceX + ux * sourceWallDistance;
-  const wallZ = sourceZ + uz * sourceWallDistance;
-  const visibleTerminalLegMeters = 0.55;
-  const terminalWallOverlapMeters = 0.18;
-  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
-    throw new Error(\`Static jetway \${placement.gate} compact real-wall vestibule is invalid: \${visibleTerminalLegMeters}\`);
-  }
-  const resolvedRotundaCenterToWallMeters = authoredRotundaOffset.radiusMeters
-    + visibleTerminalLegMeters - terminalWallOverlapMeters;
-  const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;
-  const rotundaZ = wallZ - uz * resolvedRotundaCenterToWallMeters;`;
-
-const sourcePoseBlock = `  // exact-kphx-bgl-static-pose-authority-v10
-  // Keep the authored KPHX Rotunda/pivot point. The measured wall hit is used
-  // only to build the terminal sleeve; it is never allowed to relocate the
-  // complete supplied jetway.
-  const wallX = sourceX + ux * sourceWallDistance;
-  const wallZ = sourceZ + uz * sourceWallDistance;
-  const rotundaX = sourceX;
-  const rotundaZ = sourceZ;
-  const terminalWallOverlapMeters = 0;
-  const resolvedRotundaCenterToWallMeters = sourceWallDistance;
-  const visibleTerminalLegMeters = Math.max(0, sourceWallDistance - authoredRotundaOffset.radiusMeters);
-  if (!(visibleTerminalLegMeters >= MINIMUM_VISIBLE_TERMINAL_LEG_METERS && visibleTerminalLegMeters <= MAXIMUM_VISIBLE_TERMINAL_LEG_METERS)) {
-    throw new Error(\`Static jetway \${placement.gate} authored source-pose terminal span is invalid: \${visibleTerminalLegMeters}\`);
-  }`;
-
-if (source.includes(relocatedBlock)) {
-  source = source.replace(relocatedBlock, sourcePoseBlock);
-} else if (!source.includes("exact-kphx-bgl-static-pose-authority-v10")) {
-  throw new Error(`${registrationPath}: final compact relocation block is missing; refusing to guess at static placement`);
-}
+// The decoded KPHX BGL heading is valid airport-placement provenance, but the
+// decoded x/z is the stock-model origin rather than the replacement GLB's
+// Rotunda center. Keep the existing measured real-wall Rotunda registration so
+// every bridge stays attached to Terminal 4, and restore only the BGL heading
+// as rigid-parent yaw. Aircraft targets may control later articulation/length;
+// they must not swivel the entire fixed bridge through neighbouring stands.
+source = source.replaceAll(
+  "57-static-own-gate-target-real-wall-compact-registration-v9",
+  authority,
+);
 
 if (source.includes("  const yaw = targetRegistrationYaw;")) {
-  source = source.replace("  const yaw = targetRegistrationYaw;", `  // The BGL source heading owns the rigid supplied-parent yaw.\n  const yaw = sourceYaw;`);
+  source = source.replace(
+    "  const yaw = targetRegistrationYaw;",
+    `  // The decoded BGL heading owns the rigid supplied-parent yaw.\n  const yaw = sourceYaw;`,
+  );
 }
 if (!source.includes("const yaw = sourceYaw;")) {
   throw new Error(`${registrationPath}: could not restore decoded source yaw as rigid-parent authority`);
@@ -71,8 +38,8 @@ const oldHeadingValidation = `  const resolvedBridgeHeading = wrapYaw(THREE, yaw
   }`;
 
 const sourceHeadingValidation = `  const resolvedBridgeHeading = wrapYaw(THREE, yaw + sourceBridgeAxisHeading);
-  // Own-gate target error remains diagnostic only. It must not rotate the
-  // fixed airport mounting. Source-parent preservation is the hard contract.
+  // Own-gate target error remains diagnostic only. The fixed airport mounting
+  // must stay on its measured wall pivot and retain decoded KPHX yaw.
   const ownGateHeadingErrorRadians = Math.abs(wrapYaw(THREE, resolvedBridgeHeading - targetHeading));
   const sourceParentYawErrorRadians = Math.abs(wrapYaw(THREE, yaw - sourceYaw));
   if (sourceParentYawErrorRadians > 1e-9) {
@@ -119,28 +86,29 @@ if (source.includes(telemetryAnchor) && !source.includes("uploadedJetwayStaticSo
 
 for (const required of [
   authority,
-  "exact-kphx-bgl-static-pose-authority-v10",
-  "const rotundaX = sourceX;",
-  "const rotundaZ = sourceZ;",
-  "const resolvedRotundaCenterToWallMeters = sourceWallDistance;",
+  "const visibleTerminalLegMeters = 0.55;",
+  "const terminalWallOverlapMeters = 0.18;",
+  "const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;",
+  "const rotundaZ = wallZ - uz * resolvedRotundaCenterToWallMeters;",
   "const yaw = sourceYaw;",
   "sourceParentYawErrorRadians",
   "uploadedJetwayStaticSourcePoseAuthority",
   "uploadedJetwayStaticSourcePoseGateCount = 57",
 ]) {
   if (!source.includes(required)) {
-    throw new Error(`${registrationPath}: source-pose static contract is missing ${required}`);
+    throw new Error(`${registrationPath}: real-wall/source-heading static contract is missing ${required}`);
   }
 }
 for (const forbidden of [
   "const yaw = targetRegistrationYaw;",
-  "const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;",
-  "const rotundaZ = wallZ - uz * resolvedRotundaCenterToWallMeters;",
+  "const rotundaX = sourceX;",
+  "const rotundaZ = sourceZ;",
+  "authored source-pose terminal span is invalid",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${registrationPath}: target-driven static relocation survived: ${forbidden}`);
+    throw new Error(`${registrationPath}: raw-origin/target-driven static placement survived: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(registrationPath, source, "utf8");
-console.log("Prepared all 57 static Terminal 4 jetways with decoded KPHX BGL pivot position and heading as rigid-parent authority; wall hits now size only the terminal sleeve and aircraft targets no longer steer fixed bridge mountings.");
+console.log("Prepared all 57 static Terminal 4 jetways with measured real-wall Rotunda registration preserved and decoded KPHX BGL heading as rigid-parent yaw; aircraft targets no longer swivel fixed bridges across neighbouring stands.");
