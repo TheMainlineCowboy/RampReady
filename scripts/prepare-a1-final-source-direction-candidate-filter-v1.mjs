@@ -3,27 +3,36 @@ import fs from "node:fs";
 const runtimePath = "src/environment/sourcePlacedTerminal4Jetways.js";
 const marker = "a1-final-source-direction-candidate-filter-v1";
 const materialMarker = "a1-final-phx-term400-wall-only-v1";
-const candidateDiagnosticMarker = "a1-final-phx-term400-candidate-dump-v1";
+const candidateDiagnosticMarker = "a1-final-structural-candidate-dump-v2";
 const MINIMUM_A1_SOURCE_DIRECTION_DOT = 0.05;
 let source = fs.readFileSync(runtimePath, "utf8");
 
-// The grounded-wall preparer intentionally disabled direction discrimination at
-// ramp height and the later hierarchy pass restored only a 0.15 hemisphere
-// check. Visual evidence proved that allowing any terminal-looking material can
-// admit the elevated connector-side facade. Material identity is therefore the
-// strong A1 discriminator; direction is retained only as a weak terminal-side
-// hemisphere guard so a legitimate angled PHX_TERM400 face is not excluded.
-//
-// A1 has one strong source discriminator: PHX_TERM400_1 is the authored
-// Terminal 4 source box that owns the real A1 attachment face. BGATE/DGATE
-// materials are valid elsewhere on the concourses, but allowing them in A1's
-// final grounded search lets corridor-side facade triangles masquerade as the
-// terminal wall. The forced A1 search must therefore reject every candidate
-// that is not backed by PHX_TERM400 source material.
+// The last visually inspected render proved PHX_TERM400 is NOT the real A1
+// building face: every qualifying PHX_TERM400 candidate landed on the same
+// corridor plane. Keep the current shipping filter intact for this diagnostic
+// build, but inventory every already-qualified BGATE/DGATE/PHX_TERM400 wall
+// candidate before PHX_TERM400 rejection. The browser is intentionally failed
+// after traversal so no diagnostic candidate can become shipping geometry.
 if (!source.includes(marker)) {
   const oldCandidateGate = `      if (requirePreferredHemisphere && directionDot < 0.15) {
         if (!diagnostics.nearestDirectionRejected || horizontalDistance < diagnostics.nearestDirectionRejected.distance) {`;
   const sourceAlignedCandidateGate = `      // ${marker}
+      // ${candidateDiagnosticMarker}
+      if (forcePreferredHemisphere && /BGATE|DGATE|PHX_TERM400/i.test(String(materialReference || ""))) {
+        diagnostics.a1StructuralCandidates = diagnostics.a1StructuralCandidates || [];
+        if (diagnostics.a1StructuralCandidates.length < 192) {
+          diagnostics.a1StructuralCandidates.push({
+            nodeName: node.name || "unnamed",
+            materialReference,
+            distance: horizontalDistance,
+            verticalError,
+            directionDot,
+            point: [closest.x, closest.y, closest.z],
+            nodeSize: [nodeSize.x, nodeSize.y, nodeSize.z],
+            triangleArea: area,
+          });
+        }
+      }
       // ${materialMarker}
       if (forcePreferredHemisphere && !/PHX_TERM400/i.test(String(materialReference || ""))) {
         diagnostics.sourceMaterialRejectedCount = (diagnostics.sourceMaterialRejectedCount || 0) + 1;
@@ -78,50 +87,18 @@ if (!source.includes(marker)) {
     throw new Error(`${runtimePath}: final A1 grounded telemetry anchor is missing`);
   }
   source = source.replace(telemetryAnchor, telemetryWithDirection);
-}
-
-// Temporary fail-fast geometry inventory. The last green visual run still put
-// A1 on the wrong elevated structure, so inspect every nearby PHX_TERM400 wall
-// candidate before selecting a new authority. This deliberately fails the
-// browser render with the candidate coordinates; it does not alter jetway or
-// terminal geometry.
-if (!source.includes(candidateDiagnosticMarker)) {
-  const candidateAnchor = `      const minimumDirectionDot = forcePreferredHemisphere ? ${MINIMUM_A1_SOURCE_DIRECTION_DOT} : 0.15;
-      if (requirePreferredHemisphere && directionDot < minimumDirectionDot) {`;
-  const candidateDiagnostic = `      // ${candidateDiagnosticMarker}
-      if (forcePreferredHemisphere) {
-        diagnostics.a1PhxTerm400Candidates = diagnostics.a1PhxTerm400Candidates || [];
-        if (diagnostics.a1PhxTerm400Candidates.length < 96) {
-          diagnostics.a1PhxTerm400Candidates.push({
-            nodeName: node.name || "unnamed",
-            materialReference,
-            distance: horizontalDistance,
-            verticalError,
-            directionDot,
-            point: [closest.x, closest.y, closest.z],
-            nodeSize: [nodeSize.x, nodeSize.y, nodeSize.z],
-            triangleArea: area,
-          });
-        }
-      }
-      const minimumDirectionDot = forcePreferredHemisphere ? ${MINIMUM_A1_SOURCE_DIRECTION_DOT} : 0.15;
-      if (requirePreferredHemisphere && directionDot < minimumDirectionDot) {`;
-  if (!source.includes(candidateAnchor)) {
-    throw new Error(`${runtimePath}: A1 candidate diagnostic insertion point is missing`);
-  }
-  source = source.replace(candidateAnchor, candidateDiagnostic);
 
   const returnAnchor = `  terminal.userData.a1WallSearchDiagnostics = diagnostics;
   return nearest;
 }`;
   const diagnosticReturn = `  terminal.userData.a1WallSearchDiagnostics = diagnostics;
   if (forcePreferredHemisphere) {
-    throw new Error(\`A1 PHX_TERM400 CANDIDATE DUMP ${candidateDiagnosticMarker}: \${JSON.stringify(diagnostics.a1PhxTerm400Candidates || [])}\`);
+    throw new Error(\`A1 STRUCTURAL CANDIDATE DUMP ${candidateDiagnosticMarker}: \${JSON.stringify(diagnostics.a1StructuralCandidates || [])}\`);
   }
   return nearest;
 }`;
   if (!source.includes(returnAnchor)) {
-    throw new Error(`${runtimePath}: A1 candidate diagnostic return point is missing`);
+    throw new Error(`${runtimePath}: A1 structural candidate diagnostic return point is missing`);
   }
   source = source.replace(returnAnchor, diagnosticReturn);
 }
@@ -131,6 +108,8 @@ for (const required of [
   materialMarker,
   candidateDiagnosticMarker,
   `forcePreferredHemisphere ? ${MINIMUM_A1_SOURCE_DIRECTION_DOT} : 0.15`,
+  "diagnostics.a1StructuralCandidates",
+  "/BGATE|DGATE|PHX_TERM400/i.test",
   "forcePreferredHemisphere && !/PHX_TERM400/i.test",
   "diagnostics.sourceMaterialRejectedCount",
   'diagnostics.requiredA1TerminalMaterial = "PHX_TERM400"',
@@ -141,10 +120,10 @@ for (const required of [
   "selectedMaterialReference: groundedMaterialReference",
   `minimumRequiredDirectionDot: ${MINIMUM_A1_SOURCE_DIRECTION_DOT}`,
   "selectedSourceDirectionDot: groundedTerminalDirectionDot",
-  "A1 PHX_TERM400 CANDIDATE DUMP",
+  "A1 STRUCTURAL CANDIDATE DUMP",
 ]) {
   if (!source.includes(required)) {
-    throw new Error(`${runtimePath}: final PHX_TERM400/source-direction A1 filter is missing ${required}`);
+    throw new Error(`${runtimePath}: final A1 structural-candidate diagnostic is missing ${required}`);
   }
 }
 for (const forbidden of [
@@ -157,4 +136,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log(`Filtered final A1 ramp-level wall candidates to PHX_TERM400 with terminal-side source-axis dot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT}; candidate-dump instrumentation is active for the next browser render.`);
+console.log(`Instrumented final A1 wall search to dump every already-qualified BGATE/DGATE/PHX_TERM400 structural candidate before the known-wrong PHX_TERM400 shipping filter; no diagnostic candidate is allowed to ship.`);
