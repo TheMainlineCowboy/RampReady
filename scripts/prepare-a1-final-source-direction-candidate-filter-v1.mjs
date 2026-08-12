@@ -3,6 +3,7 @@ import fs from "node:fs";
 const runtimePath = "src/environment/sourcePlacedTerminal4Jetways.js";
 const marker = "a1-final-source-direction-candidate-filter-v1";
 const materialMarker = "a1-final-phx-term400-wall-only-v1";
+const candidateDiagnosticMarker = "a1-final-phx-term400-candidate-dump-v1";
 const MINIMUM_A1_SOURCE_DIRECTION_DOT = 0.05;
 let source = fs.readFileSync(runtimePath, "utf8");
 
@@ -79,9 +80,56 @@ if (!source.includes(marker)) {
   source = source.replace(telemetryAnchor, telemetryWithDirection);
 }
 
+// Temporary fail-fast geometry inventory. The last green visual run still put
+// A1 on the wrong elevated structure, so inspect every nearby PHX_TERM400 wall
+// candidate before selecting a new authority. This deliberately fails the
+// browser render with the candidate coordinates; it does not alter jetway or
+// terminal geometry.
+if (!source.includes(candidateDiagnosticMarker)) {
+  const candidateAnchor = `      const minimumDirectionDot = forcePreferredHemisphere ? ${MINIMUM_A1_SOURCE_DIRECTION_DOT} : 0.15;
+      if (requirePreferredHemisphere && directionDot < minimumDirectionDot) {`;
+  const candidateDiagnostic = `      // ${candidateDiagnosticMarker}
+      if (forcePreferredHemisphere) {
+        diagnostics.a1PhxTerm400Candidates = diagnostics.a1PhxTerm400Candidates || [];
+        if (diagnostics.a1PhxTerm400Candidates.length < 96) {
+          diagnostics.a1PhxTerm400Candidates.push({
+            nodeName: node.name || "unnamed",
+            materialReference,
+            distance: horizontalDistance,
+            verticalError,
+            directionDot,
+            point: [closest.x, closest.y, closest.z],
+            nodeSize: [nodeSize.x, nodeSize.y, nodeSize.z],
+            triangleArea: area,
+          });
+        }
+      }
+      const minimumDirectionDot = forcePreferredHemisphere ? ${MINIMUM_A1_SOURCE_DIRECTION_DOT} : 0.15;
+      if (requirePreferredHemisphere && directionDot < minimumDirectionDot) {`;
+  if (!source.includes(candidateAnchor)) {
+    throw new Error(`${runtimePath}: A1 candidate diagnostic insertion point is missing`);
+  }
+  source = source.replace(candidateAnchor, candidateDiagnostic);
+
+  const returnAnchor = `  terminal.userData.a1WallSearchDiagnostics = diagnostics;
+  return nearest;
+}`;
+  const diagnosticReturn = `  terminal.userData.a1WallSearchDiagnostics = diagnostics;
+  if (forcePreferredHemisphere) {
+    throw new Error(\`A1 PHX_TERM400 CANDIDATE DUMP ${candidateDiagnosticMarker}: \${JSON.stringify(diagnostics.a1PhxTerm400Candidates || [])}\`);
+  }
+  return nearest;
+}`;
+  if (!source.includes(returnAnchor)) {
+    throw new Error(`${runtimePath}: A1 candidate diagnostic return point is missing`);
+  }
+  source = source.replace(returnAnchor, diagnosticReturn);
+}
+
 for (const required of [
   marker,
   materialMarker,
+  candidateDiagnosticMarker,
   `forcePreferredHemisphere ? ${MINIMUM_A1_SOURCE_DIRECTION_DOT} : 0.15`,
   "forcePreferredHemisphere && !/PHX_TERM400/i.test",
   "diagnostics.sourceMaterialRejectedCount",
@@ -93,6 +141,7 @@ for (const required of [
   "selectedMaterialReference: groundedMaterialReference",
   `minimumRequiredDirectionDot: ${MINIMUM_A1_SOURCE_DIRECTION_DOT}`,
   "selectedSourceDirectionDot: groundedTerminalDirectionDot",
+  "A1 PHX_TERM400 CANDIDATE DUMP",
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${runtimePath}: final PHX_TERM400/source-direction A1 filter is missing ${required}`);
@@ -108,4 +157,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log(`Filtered final A1 ramp-level wall candidates to PHX_TERM400 with terminal-side source-axis dot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT}; corridor-side BGATE/DGATE surfaces can no longer win.`);
+console.log(`Filtered final A1 ramp-level wall candidates to PHX_TERM400 with terminal-side source-axis dot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT}; candidate-dump instrumentation is active for the next browser render.`);
