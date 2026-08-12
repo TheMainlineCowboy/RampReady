@@ -63,4 +63,11 @@ for (const required of [
 // every child local transform.
 await import(`./prepare-a1-intact-source-axis-alignment-v1.mjs?source-axis=${Date.now()}`);
 
-console.log("Prepared A1 as one intact supplied Airport_Jetway.glb assembly: measured terminal-wall Rotunda position is preserved, decoded KPHX heading owns the complete parent through the measured Rotunda-to-Tunnel-A axis, the aircraft target follows the same parent relocation, the complete T4_WALK source hierarchy is forbidden as its wall, and no Tunnel A/B/C/Cab child is reparented or independently yawed.");
+// The legacy elbow guard forced a visually obvious 30+ degree turn even when
+// the measured terminal wall and decoded source heading form a nearly straight
+// physical path. Keep the measured angle as telemetry, but reject only a real
+// fold-back where terminal and aircraft-side legs leave the Rotunda into the
+// same hemisphere.
+await import(`./prepare-a1-final-rotunda-continuity-v1.mjs?rotunda-continuity=${Date.now()}`);
+
+console.log("Prepared A1 as one intact supplied Airport_Jetway.glb assembly: measured terminal-wall Rotunda position is preserved, decoded KPHX heading owns the complete parent through the measured Rotunda-to-Tunnel-A axis, the aircraft target follows the same parent relocation, the complete T4_WALK source hierarchy is forbidden as its wall, the Rotunda uses physical through-continuity instead of a cosmetic elbow-angle requirement, and no Tunnel A/B/C/Cab child is reparented or independently yawed.");
