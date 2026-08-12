@@ -1,45 +1,47 @@
 import fs from "node:fs";
 
 const runtimePath = "src/environment/sourcePlacedTerminal4Jetways.js";
-const marker = "a1-final-source-direction-candidate-filter-v1";
-const materialMarker = "a1-final-phx-term400-wall-only-v1";
-const candidateDiagnosticMarker = "a1-final-structural-candidate-dump-v2";
-const MINIMUM_A1_SOURCE_DIRECTION_DOT = 0.05;
+const marker = "a1-final-decoded-kphx-terminal-wall-direction-v2";
+const MINIMUM_A1_SOURCE_DIRECTION_DOT = 0.90;
+const MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 34;
 let source = fs.readFileSync(runtimePath, "utf8");
 
-// The last visually inspected render proved PHX_TERM400 is NOT the real A1
-// building face: every qualifying PHX_TERM400 candidate landed on the same
-// corridor plane. Keep the current shipping filter intact for this diagnostic
-// build, but inventory every already-qualified BGATE/DGATE/PHX_TERM400 wall
-// candidate before PHX_TERM400 rejection. The browser is intentionally failed
-// after traversal so no diagnostic candidate can become shipping geometry.
+// Browser evidence from 5099979 proved the PHX_TERM400-only rule selected the
+// elevated/corridor plane at z=-26.039. The same runtime inventory exposed a
+// DGATE5 main-building face at x=-48.001 whose terminal-side vector is nearly
+// collinear with the decoded KPHX A1 jetway heading. The previous so-called
+// source-direction pass was still feeding -ux/-uz derived from the CRJ target.
+// A1 wall selection now uses the decoded BGL jetway heading itself.
 if (!source.includes(marker)) {
+  const oldGroundedCall = `      const groundedConnection = findTerminalWallConnection(
+        THREE,
+        terminal,
+        jetway.x,
+        jetway.z + sourceOffsetZ,
+        -ux,
+        -uz,
+        1.25,
+        true,
+      );`;
+  const sourceHeadingGroundedCall = `      // ${marker}
+      const groundedConnection = findTerminalWallConnection(
+        THREE,
+        terminal,
+        jetway.x,
+        jetway.z + sourceOffsetZ,
+        -sourceJetwayForwardX,
+        -sourceJetwayForwardZ,
+        1.25,
+        true,
+      );`;
+  if (!source.includes(oldGroundedCall)) {
+    throw new Error(`${runtimePath}: A1 grounded wall search call is missing`);
+  }
+  source = source.replace(oldGroundedCall, sourceHeadingGroundedCall);
+
   const oldCandidateGate = `      if (requirePreferredHemisphere && directionDot < 0.15) {
         if (!diagnostics.nearestDirectionRejected || horizontalDistance < diagnostics.nearestDirectionRejected.distance) {`;
-  const sourceAlignedCandidateGate = `      // ${marker}
-      // ${candidateDiagnosticMarker}
-      if (forcePreferredHemisphere && /BGATE|DGATE|PHX_TERM400/i.test(String(materialReference || ""))) {
-        diagnostics.a1StructuralCandidates = diagnostics.a1StructuralCandidates || [];
-        if (diagnostics.a1StructuralCandidates.length < 192) {
-          diagnostics.a1StructuralCandidates.push({
-            nodeName: node.name || "unnamed",
-            materialReference,
-            distance: horizontalDistance,
-            verticalError,
-            directionDot,
-            point: [closest.x, closest.y, closest.z],
-            nodeSize: [nodeSize.x, nodeSize.y, nodeSize.z],
-            triangleArea: area,
-          });
-        }
-      }
-      // ${materialMarker}
-      if (forcePreferredHemisphere && !/PHX_TERM400/i.test(String(materialReference || ""))) {
-        diagnostics.sourceMaterialRejectedCount = (diagnostics.sourceMaterialRejectedCount || 0) + 1;
-        diagnostics.requiredA1TerminalMaterial = "PHX_TERM400";
-        continue;
-      }
-      const minimumDirectionDot = forcePreferredHemisphere ? ${MINIMUM_A1_SOURCE_DIRECTION_DOT} : 0.15;
+  const sourceAlignedCandidateGate = `      const minimumDirectionDot = forcePreferredHemisphere ? ${MINIMUM_A1_SOURCE_DIRECTION_DOT} : 0.15;
       if (requirePreferredHemisphere && directionDot < minimumDirectionDot) {
         diagnostics.sourceDirectionRejectedCount = (diagnostics.sourceDirectionRejectedCount || 0) + 1;
         diagnostics.minimumRequiredDirectionDot = minimumDirectionDot;
@@ -53,87 +55,82 @@ if (!source.includes(marker)) {
         throw new Error(\`A1 grounded terminal-side direction is invalid: directionDot=\${groundedTerminalDirectionDot}; connection=\${JSON.stringify(groundedConnection)}\`);
       }`;
   const sourceAlignedFinalGate = `      if (!(groundedTerminalDirectionDot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT})) {
-        throw new Error(\`A1 grounded terminal-side direction is invalid: directionDot=\${groundedTerminalDirectionDot}; minimum=${MINIMUM_A1_SOURCE_DIRECTION_DOT}; connection=\${JSON.stringify(groundedConnection)}\`);
+        throw new Error(\`A1 grounded decoded-KPHX terminal-side direction is invalid: directionDot=\${groundedTerminalDirectionDot}; minimum=${MINIMUM_A1_SOURCE_DIRECTION_DOT}; connection=\${JSON.stringify(groundedConnection)}\`);
       }`;
   if (!source.includes(oldFinalGate)) {
     throw new Error(`${runtimePath}: final A1 grounded direction acceptance gate is missing`);
   }
   source = source.replace(oldFinalGate, sourceAlignedFinalGate);
 
-  const oldMaterialGate = `      const groundedMaterialReference = String(groundedConnection.materialReference || "");
+  const oldDistanceGate = `      if (!(groundedConnection.distance > 3.4
+        && groundedConnection.distance < 28)) {
+        throw new Error(\`A1 ramp-level real-terminal source wall distance is invalid: \${groundedConnection.distance}; diagnostics=\${JSON.stringify(diagnostics)}\`);
+      }`;
+  const sourceHeadingDistanceGate = `      if (!(groundedConnection.distance > 3.4
+        && groundedConnection.distance < ${MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS})) {
+        throw new Error(\`A1 ramp-level decoded-source terminal wall distance is invalid: \${groundedConnection.distance}; maximum=${MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS}; diagnostics=\${JSON.stringify(diagnostics)}\`);
+      }`;
+  if (!source.includes(oldDistanceGate)) {
+    throw new Error(`${runtimePath}: A1 source wall distance gate is missing`);
+  }
+  source = source.replace(oldDistanceGate, sourceHeadingDistanceGate);
+
+  const genericMaterialGate = `      const groundedMaterialReference = String(groundedConnection.materialReference || "");
       if (!/BGATE|DGATE|PHX_TERM400/i.test(groundedMaterialReference)) {
         throw new Error(\`A1 grounded search did not resolve the authored Terminal 4 structural material: \${groundedMaterialReference}\`);
       }`;
-  const phxTerm400MaterialGate = `      const groundedMaterialReference = String(groundedConnection.materialReference || "");
-      if (!/PHX_TERM400/i.test(groundedMaterialReference)) {
-        throw new Error(\`A1 grounded search did not resolve the PHX_TERM400 Terminal 4 building face: \${groundedMaterialReference}\`);
-      }`;
-  if (!source.includes(oldMaterialGate)) {
-    throw new Error(`${runtimePath}: final A1 grounded material acceptance gate is missing`);
+  if (!source.includes(genericMaterialGate)) {
+    throw new Error(`${runtimePath}: generic structural A1 wall material gate is missing`);
   }
-  source = source.replace(oldMaterialGate, phxTerm400MaterialGate);
 
   const telemetryAnchor = `        walkwayHierarchyRejectedCount: diagnostics?.walkwayHierarchyRejectedCount ?? 0,
         elevatedWalkwayFootprintCount: diagnostics?.elevatedWalkwayFootprintCount ?? 0,`;
   const telemetryWithDirection = `        walkwayHierarchyRejectedCount: diagnostics?.walkwayHierarchyRejectedCount ?? 0,
-        sourceMaterialRejectedCount: diagnostics?.sourceMaterialRejectedCount ?? 0,
-        requiredA1TerminalMaterial: "PHX_TERM400",
+        wallSelectionVectorAuthority: "decoded-kphx-bgl-heading-terminal-side-v2",
         selectedMaterialReference: groundedMaterialReference,
         sourceDirectionRejectedCount: diagnostics?.sourceDirectionRejectedCount ?? 0,
         minimumRequiredDirectionDot: ${MINIMUM_A1_SOURCE_DIRECTION_DOT},
         selectedSourceDirectionDot: groundedTerminalDirectionDot,
+        maximumSourceWallDistanceMeters: ${MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS},
         elevatedWalkwayFootprintCount: diagnostics?.elevatedWalkwayFootprintCount ?? 0,`;
   if (!source.includes(telemetryAnchor)) {
     throw new Error(`${runtimePath}: final A1 grounded telemetry anchor is missing`);
   }
   source = source.replace(telemetryAnchor, telemetryWithDirection);
-
-  const returnAnchor = `  terminal.userData.a1WallSearchDiagnostics = diagnostics;
-  return nearest;
-}`;
-  const diagnosticReturn = `  terminal.userData.a1WallSearchDiagnostics = diagnostics;
-  if (forcePreferredHemisphere) {
-    throw new Error(\`A1 STRUCTURAL CANDIDATE DUMP ${candidateDiagnosticMarker}: \${JSON.stringify(diagnostics.a1StructuralCandidates || [])}\`);
-  }
-  return nearest;
-}`;
-  if (!source.includes(returnAnchor)) {
-    throw new Error(`${runtimePath}: A1 structural candidate diagnostic return point is missing`);
-  }
-  source = source.replace(returnAnchor, diagnosticReturn);
 }
 
 for (const required of [
   marker,
-  materialMarker,
-  candidateDiagnosticMarker,
+  "-sourceJetwayForwardX",
+  "-sourceJetwayForwardZ",
   `forcePreferredHemisphere ? ${MINIMUM_A1_SOURCE_DIRECTION_DOT} : 0.15`,
-  "diagnostics.a1StructuralCandidates",
-  "/BGATE|DGATE|PHX_TERM400/i.test",
-  "forcePreferredHemisphere && !/PHX_TERM400/i.test",
-  "diagnostics.sourceMaterialRejectedCount",
-  'diagnostics.requiredA1TerminalMaterial = "PHX_TERM400"',
   "diagnostics.sourceDirectionRejectedCount",
   `groundedTerminalDirectionDot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT}`,
-  "A1 grounded search did not resolve the PHX_TERM400 Terminal 4 building face",
-  'requiredA1TerminalMaterial: "PHX_TERM400"',
+  `groundedConnection.distance < ${MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS}`,
+  "/BGATE|DGATE|PHX_TERM400/i.test(groundedMaterialReference)",
+  'wallSelectionVectorAuthority: "decoded-kphx-bgl-heading-terminal-side-v2"',
   "selectedMaterialReference: groundedMaterialReference",
   `minimumRequiredDirectionDot: ${MINIMUM_A1_SOURCE_DIRECTION_DOT}`,
   "selectedSourceDirectionDot: groundedTerminalDirectionDot",
-  "A1 STRUCTURAL CANDIDATE DUMP",
 ]) {
   if (!source.includes(required)) {
-    throw new Error(`${runtimePath}: final A1 structural-candidate diagnostic is missing ${required}`);
+    throw new Error(`${runtimePath}: decoded-KPHX A1 terminal-wall selection is missing ${required}`);
   }
 }
 for (const forbidden of [
+  "forcePreferredHemisphere && !/PHX_TERM400/i.test",
+  "requiredA1TerminalMaterial",
+  "A1 PHX_TERM400 CANDIDATE DUMP",
+  "A1 STRUCTURAL CANDIDATE DUMP",
+  "a1-final-phx-term400-candidate-dump-v1",
+  "a1-final-structural-candidate-dump-v2",
   "if (!(groundedTerminalDirectionDot >= 0.15))",
-  "if (!/BGATE|DGATE|PHX_TERM400/i.test(groundedMaterialReference))",
+  "if (!/PHX_TERM400/i.test(groundedMaterialReference))",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${runtimePath}: permissive A1 final wall acceptance survived: ${forbidden}`);
+    throw new Error(`${runtimePath}: stale PHX-only/target-vector A1 wall behavior survived: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log(`Instrumented final A1 wall search to dump every already-qualified BGATE/DGATE/PHX_TERM400 structural candidate before the known-wrong PHX_TERM400 shipping filter; no diagnostic candidate is allowed to ship.`);
+console.log(`Selected final A1 terminal wall from the decoded KPHX BGL terminal-side heading (dot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT}) across real structural BGATE/DGATE/PHX_TERM400 faces; the visually rejected PHX-only corridor rule and temporary candidate dumps are removed.`);
