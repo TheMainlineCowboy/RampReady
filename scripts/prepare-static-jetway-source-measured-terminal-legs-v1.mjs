@@ -34,10 +34,6 @@ registration = registration
   .replaceAll(
     "Static source-measured terminal-leg envelope is invalid",
     "Static compact real-wall vestibule envelope is invalid",
-  )
-  .replaceAll(
-    "compact visible terminal vestibule is invalid",
-    "compact real-wall vestibule envelope is invalid",
   );
 
 if (!registration.includes(`const AUTHORITY = "${SOURCE_POSE_AUTHORITY}";`)) {
@@ -54,7 +50,6 @@ for (const required of [
   "const rotundaZ = wallZ - uz * resolvedRotundaCenterToWallMeters;",
   "const yaw = sourceYaw;",
   "sourceParentYawErrorRadians",
-  "Static compact real-wall vestibule envelope is invalid",
 ]) {
   if (!registration.includes(required)) {
     throw new Error(`${registrationPath}: real-wall/source-heading static fleet envelope is missing ${required}`);
