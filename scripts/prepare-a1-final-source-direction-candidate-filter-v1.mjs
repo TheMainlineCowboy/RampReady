@@ -1,17 +1,18 @@
 import fs from "node:fs";
 
 const runtimePath = "src/environment/sourcePlacedTerminal4Jetways.js";
-const marker = "a1-final-decoded-kphx-terminal-wall-direction-v2";
+const marker = "a1-final-decoded-kphx-terminal-wall-direction-v3";
 const MINIMUM_A1_SOURCE_DIRECTION_DOT = 0.90;
 const MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 34;
 let source = fs.readFileSync(runtimePath, "utf8");
 
 // Browser evidence from 5099979 proved the PHX_TERM400-only rule selected the
 // elevated/corridor plane at z=-26.039. The same runtime inventory exposed a
-// DGATE5 main-building face at x=-48.001 whose terminal-side vector is nearly
-// collinear with the decoded KPHX A1 jetway heading. The previous so-called
-// source-direction pass was still feeding -ux/-uz derived from the CRJ target.
-// A1 wall selection now uses the decoded BGL jetway heading itself.
+// DGATE5 main-building face at x=-48.001. The previous so-called source-
+// direction pass still fed -ux/-uz from the CRJ target into A1 wall search and,
+// after the first correction, the final acceptance dot still used that retired
+// target vector. Selection AND acceptance now use only the decoded BGL jetway
+// terminal-side heading.
 if (!source.includes(marker)) {
   const oldGroundedCall = `      const groundedConnection = findTerminalWallConnection(
         THREE,
@@ -51,6 +52,15 @@ if (!source.includes(marker)) {
   }
   source = source.replace(oldCandidateGate, sourceAlignedCandidateGate);
 
+  const oldDirectionMeasurement = `      const groundedTerminalDirectionDot = groundedConnection.towardX * -ux
+        + groundedConnection.towardZ * -uz;`;
+  const sourceDirectionMeasurement = `      const groundedTerminalDirectionDot = groundedConnection.towardX * -sourceJetwayForwardX
+        + groundedConnection.towardZ * -sourceJetwayForwardZ;`;
+  if (!source.includes(oldDirectionMeasurement)) {
+    throw new Error(`${runtimePath}: A1 grounded direction measurement is missing`);
+  }
+  source = source.replace(oldDirectionMeasurement, sourceDirectionMeasurement);
+
   const oldFinalGate = `      if (!(groundedTerminalDirectionDot >= 0.15)) {
         throw new Error(\`A1 grounded terminal-side direction is invalid: directionDot=\${groundedTerminalDirectionDot}; connection=\${JSON.stringify(groundedConnection)}\`);
       }`;
@@ -86,7 +96,7 @@ if (!source.includes(marker)) {
   const telemetryAnchor = `        walkwayHierarchyRejectedCount: diagnostics?.walkwayHierarchyRejectedCount ?? 0,
         elevatedWalkwayFootprintCount: diagnostics?.elevatedWalkwayFootprintCount ?? 0,`;
   const telemetryWithDirection = `        walkwayHierarchyRejectedCount: diagnostics?.walkwayHierarchyRejectedCount ?? 0,
-        wallSelectionVectorAuthority: "decoded-kphx-bgl-heading-terminal-side-v2",
+        wallSelectionVectorAuthority: "decoded-kphx-bgl-heading-terminal-side-v3",
         selectedMaterialReference: groundedMaterialReference,
         sourceDirectionRejectedCount: diagnostics?.sourceDirectionRejectedCount ?? 0,
         minimumRequiredDirectionDot: ${MINIMUM_A1_SOURCE_DIRECTION_DOT},
@@ -97,27 +107,33 @@ if (!source.includes(marker)) {
     throw new Error(`${runtimePath}: final A1 grounded telemetry anchor is missing`);
   }
   source = source.replace(telemetryAnchor, telemetryWithDirection);
+  source = source.replace("sourceDistanceRangeMeters: [3.4, 28]", `sourceDistanceRangeMeters: [3.4, ${MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS}]`);
 }
 
 for (const required of [
   marker,
   "-sourceJetwayForwardX",
   "-sourceJetwayForwardZ",
+  `groundedConnection.towardX * -sourceJetwayForwardX`,
+  `groundedConnection.towardZ * -sourceJetwayForwardZ`,
   `forcePreferredHemisphere ? ${MINIMUM_A1_SOURCE_DIRECTION_DOT} : 0.15`,
   "diagnostics.sourceDirectionRejectedCount",
   `groundedTerminalDirectionDot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT}`,
   `groundedConnection.distance < ${MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS}`,
   "/BGATE|DGATE|PHX_TERM400/i.test(groundedMaterialReference)",
-  'wallSelectionVectorAuthority: "decoded-kphx-bgl-heading-terminal-side-v2"',
+  'wallSelectionVectorAuthority: "decoded-kphx-bgl-heading-terminal-side-v3"',
   "selectedMaterialReference: groundedMaterialReference",
   `minimumRequiredDirectionDot: ${MINIMUM_A1_SOURCE_DIRECTION_DOT}`,
   "selectedSourceDirectionDot: groundedTerminalDirectionDot",
+  `sourceDistanceRangeMeters: [3.4, ${MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS}]`,
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${runtimePath}: decoded-KPHX A1 terminal-wall selection is missing ${required}`);
   }
 }
 for (const forbidden of [
+  "groundedConnection.towardX * -ux",
+  "groundedConnection.towardZ * -uz",
   "forcePreferredHemisphere && !/PHX_TERM400/i.test",
   "requiredA1TerminalMaterial",
   "A1 PHX_TERM400 CANDIDATE DUMP",
@@ -126,6 +142,7 @@ for (const forbidden of [
   "a1-final-structural-candidate-dump-v2",
   "if (!(groundedTerminalDirectionDot >= 0.15))",
   "if (!/PHX_TERM400/i.test(groundedMaterialReference))",
+  "sourceDistanceRangeMeters: [3.4, 28]",
 ]) {
   if (source.includes(forbidden)) {
     throw new Error(`${runtimePath}: stale PHX-only/target-vector A1 wall behavior survived: ${forbidden}`);
@@ -133,4 +150,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log(`Selected final A1 terminal wall from the decoded KPHX BGL terminal-side heading (dot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT}) across real structural BGATE/DGATE/PHX_TERM400 faces; the visually rejected PHX-only corridor rule and temporary candidate dumps are removed.`);
+console.log(`Selected and accepted final A1 terminal wall from the decoded KPHX BGL terminal-side heading (dot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT}) across real structural BGATE/DGATE/PHX_TERM400 faces; the visually rejected PHX corridor, CRJ-target wall vector, and temporary candidate dumps are removed.`);
