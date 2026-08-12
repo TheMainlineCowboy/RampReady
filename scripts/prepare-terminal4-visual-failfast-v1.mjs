@@ -2,6 +2,8 @@ import fs from "node:fs";
 
 const verifierPath = "scripts/verify-terminal4-fleet-visual.cjs";
 const marker = "terminal4-jetway-load-failfast-v1";
+const sourcePoseVisualMarker = "terminal4-static-source-pose-visual-acceptance-v1";
+const sourcePoseAuthority = "57-static-bgl-source-pose-real-wall-registration-v10";
 let source = fs.readFileSync(verifierPath, "utf8");
 
 if (!source.includes(marker)) {
@@ -41,7 +43,7 @@ if (!source.includes(marker)) {
           consoleErrors: consoleErrors.slice(-20),
           failedRequests: failedRequests.slice(-20),
         });
-        throw new Error(\`Terminal 4 jetway fleet loader failed before visual readiness: state=\${loadState || 'unset'}; pageErrors=\${JSON.stringify(pageErrors)}; dataset=\${JSON.stringify(data)}\`);
+        throw new Error(\`Terminal 4 jetway fleet loader failed before visual readiness: state=\${loadState || 'unset'}; pageErrors=\${JSON.stringify(pageErrors)}; consoleErrors=\${JSON.stringify(consoleErrors.slice(-20))}; failedRequests=\${JSON.stringify(failedRequests.slice(-20))}; dataset=\${JSON.stringify(data)}\`);
       }
     }
     await page.waitForTimeout(250);
@@ -69,15 +71,61 @@ if (!source.includes(marker)) {
   source = source.replace(oldWait, failFastWait);
 }
 
+// The static fleet now keeps the KPHX BGL pivot and heading. Do not let the
+// visual evidence runner resurrect the retired rule that rotated every bridge
+// toward a training-aircraft target. The production registration itself hard-
+// fails if any rigid parent escapes sourceYaw; this visual pass should judge the
+// rendered fleet and source-pose authority rather than CRJ-target coincidence.
+if (!source.includes(sourcePoseVisualMarker)) {
+  source = source.replace(
+    `const STATIC_OWN_GATE_AUTHORITY = '57-static-own-gate-target-real-wall-compact-registration-v9';`,
+    `// ${sourcePoseVisualMarker}\nconst STATIC_OWN_GATE_AUTHORITY = '${sourcePoseAuthority}';`,
+  );
+
+  const oldHeadingChecks = `  const maximumOwnGateHeadingError = finiteNumber(a1.terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians);
+  if (maximumOwnGateHeadingError === null
+    || maximumOwnGateHeadingError > MAXIMUM_STATIC_OWN_GATE_HEADING_ERROR_RADIANS) {
+    geometryFailures.push(\`Static maximum own-gate heading error is invalid: \${a1.terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians}\`);
+  }
+  const maximumTerminalFacingDot = finiteNumber(a1.terminal4UploadedJetwayStaticMaximumTerminalFacingDot);
+  if (maximumTerminalFacingDot === null || maximumTerminalFacingDot > MAXIMUM_STATIC_TERMINAL_FACING_DOT) {
+    geometryFailures.push(\`Static fleet contains a bridge aimed back toward the terminal: max dot=\${a1.terminal4UploadedJetwayStaticMaximumTerminalFacingDot}\`);
+  }`;
+  const sourcePoseChecks = `  // ${sourcePoseVisualMarker}
+  // Own-gate CRJ heading error and the old target-derived terminal-facing dot
+  // are diagnostics only under source-pose ownership. Crossing/attachment is
+  // judged from the screenshots and a dedicated fleet intersection guard.
+  const maximumOwnGateHeadingError = finiteNumber(a1.terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians);
+  const maximumTerminalFacingDot = finiteNumber(a1.terminal4UploadedJetwayStaticMaximumTerminalFacingDot);
+  if (maximumOwnGateHeadingError === null || maximumTerminalFacingDot === null) {
+    geometryFailures.push(\`Static source-pose diagnostics are missing: heading=\${a1.terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians} terminalDot=\${a1.terminal4UploadedJetwayStaticMaximumTerminalFacingDot}\`);
+  }`;
+  if (!source.includes(oldHeadingChecks)) {
+    throw new Error(`${verifierPath}: retired static target-heading visual checks are missing`);
+  }
+  source = source.replace(oldHeadingChecks, sourcePoseChecks);
+}
+
 for (const required of [
   marker,
+  sourcePoseVisualMarker,
+  `const STATIC_OWN_GATE_AUTHORITY = '${sourcePoseAuthority}';`,
   "checkpoint('fleet-load-error'",
   "checkpoint('fleet-ready-timeout'",
+  "consoleErrors=${JSON.stringify(consoleErrors.slice(-20))}",
   "Terminal 4 jetway fleet loader failed before visual readiness",
   "pageErrors.length > 0",
+  "Static source-pose diagnostics are missing",
 ]) {
-  if (!source.includes(required)) throw new Error(`${verifierPath}: fail-fast visual diagnostic is missing ${required}`);
+  if (!source.includes(required)) throw new Error(`${verifierPath}: fail-fast/source-pose visual diagnostic is missing ${required}`);
+}
+for (const forbidden of [
+  "57-static-own-gate-target-real-wall-compact-registration-v9",
+  "maximumOwnGateHeadingError > MAXIMUM_STATIC_OWN_GATE_HEADING_ERROR_RADIANS",
+  "maximumTerminalFacingDot > MAXIMUM_STATIC_TERMINAL_FACING_DOT",
+]) {
+  if (source.includes(forbidden)) throw new Error(`${verifierPath}: retired target-driven visual acceptance survived: ${forbidden}`);
 }
 
 fs.writeFileSync(verifierPath, source, "utf8");
-console.log("Prepared Terminal 4 visual verifier to fail immediately on loader/page errors with the full canvas dataset instead of silently waiting three minutes.");
+console.log("Prepared Terminal 4 visual evidence to fail immediately with the actual browser loader error and to validate the 57 static bridges under decoded KPHX source-pose authority instead of retired CRJ-target heading ownership.");
