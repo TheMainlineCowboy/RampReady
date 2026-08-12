@@ -3,17 +3,17 @@ import fs from "node:fs";
 const runtimePath = "src/environment/sourcePlacedTerminal4Jetways.js";
 const marker = "a1-final-source-direction-candidate-filter-v1";
 const materialMarker = "a1-final-phx-term400-wall-only-v1";
-const MINIMUM_A1_SOURCE_DIRECTION_DOT = 0.75;
+const MINIMUM_A1_SOURCE_DIRECTION_DOT = 0.05;
 let source = fs.readFileSync(runtimePath, "utf8");
 
 // The grounded-wall preparer intentionally disabled direction discrimination at
 // ramp height and the later hierarchy pass restored only a 0.15 hemisphere
-// check. Visual evidence proved that this admits the elevated connector-side
-// facade because the nearest terminal-looking triangle can be badly misaligned
-// with the decoded KPHX A1 terminal-side axis. Filter candidates themselves by
-// the source axis so the wrong surface cannot win merely by being closer.
+// check. Visual evidence proved that allowing any terminal-looking material can
+// admit the elevated connector-side facade. Material identity is therefore the
+// strong A1 discriminator; direction is retained only as a weak terminal-side
+// hemisphere guard so a legitimate angled PHX_TERM400 face is not excluded.
 //
-// A1 has one stronger source discriminator: PHX_TERM400_1 is the authored
+// A1 has one strong source discriminator: PHX_TERM400_1 is the authored
 // Terminal 4 source box that owns the real A1 attachment face. BGATE/DGATE
 // materials are valid elsewhere on the concourses, but allowing them in A1's
 // final grounded search lets corridor-side facade triangles masquerade as the
@@ -108,4 +108,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log(`Filtered final A1 ramp-level wall candidates to PHX_TERM400 and decoded terminal-side source axis dot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT}; corridor-side BGATE/DGATE surfaces can no longer win.`);
+console.log(`Filtered final A1 ramp-level wall candidates to PHX_TERM400 with terminal-side source-axis dot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT}; corridor-side BGATE/DGATE surfaces can no longer win.`);
