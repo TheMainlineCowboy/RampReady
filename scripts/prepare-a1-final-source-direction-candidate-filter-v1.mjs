@@ -1,18 +1,17 @@
 import fs from "node:fs";
 
 const runtimePath = "src/environment/sourcePlacedTerminal4Jetways.js";
-const marker = "a1-final-decoded-kphx-terminal-wall-direction-v3";
+const marker = "a1-final-decoded-kphx-terminal-wall-direction-v4";
+const fullHeightMarker = "a1-decoded-kphx-full-height-terminal-building-wall-v31";
 const MINIMUM_A1_SOURCE_DIRECTION_DOT = 0.90;
 const MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS = 34;
+const MAXIMUM_FULL_HEIGHT_PLANE_DELTA_METERS = 0.50;
 let source = fs.readFileSync(runtimePath, "utf8");
 
-// Browser evidence from 5099979 proved the PHX_TERM400-only rule selected the
-// elevated/corridor plane at z=-26.039. The same runtime inventory exposed a
-// DGATE5 main-building face at x=-48.001. The previous so-called source-
-// direction pass still fed -ux/-uz from the CRJ target into A1 wall search and,
-// after the first correction, the final acceptance dot still used that retired
-// target vector. Selection AND acceptance now use only the decoded BGL jetway
-// terminal-side heading.
+// Browser evidence proved the PHX_TERM400-only rule selected the elevated
+// corridor plane. The structural candidate inventory then exposed the DGATE5
+// main-building facade. Selection and acceptance now use only the decoded KPHX
+// BGL terminal-side heading; no CRJ target vector is allowed to own the wall.
 if (!source.includes(marker)) {
   const oldGroundedCall = `      const groundedConnection = findTerminalWallConnection(
         THREE,
@@ -96,7 +95,7 @@ if (!source.includes(marker)) {
   const telemetryAnchor = `        walkwayHierarchyRejectedCount: diagnostics?.walkwayHierarchyRejectedCount ?? 0,
         elevatedWalkwayFootprintCount: diagnostics?.elevatedWalkwayFootprintCount ?? 0,`;
   const telemetryWithDirection = `        walkwayHierarchyRejectedCount: diagnostics?.walkwayHierarchyRejectedCount ?? 0,
-        wallSelectionVectorAuthority: "decoded-kphx-bgl-heading-terminal-side-v3",
+        wallSelectionVectorAuthority: "decoded-kphx-bgl-heading-terminal-side-v4",
         selectedMaterialReference: groundedMaterialReference,
         sourceDirectionRejectedCount: diagnostics?.sourceDirectionRejectedCount ?? 0,
         minimumRequiredDirectionDot: ${MINIMUM_A1_SOURCE_DIRECTION_DOT},
@@ -110,8 +109,85 @@ if (!source.includes(marker)) {
   source = source.replace("sourceDistanceRangeMeters: [3.4, 28]", `sourceDistanceRangeMeters: [3.4, ${MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS}]`);
 }
 
+// The v30 preparer is invoked more than once during the production chain. Its
+// old non-idempotent replacement could inject the same nearest-point cosine
+// validator twice. Worse, after the grounded A1 override both "upper" and
+// "lower" searches no longer represented two physical heights. Remove every
+// generated legacy copy and replace it with one direct vertical-facade test:
+// the decoded-heading ramp hit and a decoded-heading Rotunda-height hit must lie
+// on the same dominant facade plane. Nearest points may slide along a large
+// triangulated wall; the wall-plane coordinate itself may not.
+const legacyFullHeightBlockPattern = /    if \(jetway\.g === "A1"\) \{\n      if \(!terminalConnection\) \{\n        throw new Error\("A1 could not find the real Terminal 4 building facade"\);\n      \}\n      const upperDirection = new THREE\.Vector3\([\s\S]*?      terminalConnection\.sameDirectionCosine = sameDirectionCosine;\n    \}\n/g;
+const legacyFullHeightBlocks = source.match(legacyFullHeightBlockPattern) || [];
+if (legacyFullHeightBlocks.length < 1) {
+  throw new Error(`${runtimePath}: generated legacy A1 full-height validator is missing`);
+}
+source = source.replace(legacyFullHeightBlockPattern, "");
+
+const fullHeightAnchor = `    // static-bgl-heading-terminal-search-v2-non-a1-resolved`;
+const robustFullHeightBlock = `    // ${fullHeightMarker}
+    if (jetway.g === "A1") {
+      if (!terminalConnection) {
+        throw new Error("A1 decoded-heading ramp-level terminal wall is missing before full-height validation");
+      }
+      const fullHeightUpperConnection = findTerminalWallConnection(
+        THREE,
+        terminal,
+        jetway.x,
+        jetway.z + sourceOffsetZ,
+        -sourceJetwayForwardX,
+        -sourceJetwayForwardZ,
+        rotundaY,
+        true,
+      );
+      if (!fullHeightUpperConnection) {
+        throw new Error("A1 decoded-heading terminal facade has no structural Rotunda-height continuation");
+      }
+      if (fullHeightUpperConnection.underElevatedWalkway !== false
+        || fullHeightUpperConnection.elevatedWalkwayClearanceVerified !== true
+        || fullHeightUpperConnection.sourceHierarchyWalkwayExcluded !== true) {
+        throw new Error(\`A1 Rotunda-height terminal facade did not prove T4_WALK exclusion: \${JSON.stringify(fullHeightUpperConnection)}\`);
+      }
+      const fullHeightUpperSourceDot = fullHeightUpperConnection.towardX * -sourceJetwayForwardX
+        + fullHeightUpperConnection.towardZ * -sourceJetwayForwardZ;
+      if (!(fullHeightUpperSourceDot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT})) {
+        throw new Error(\`A1 Rotunda-height facade is not aligned to decoded KPHX heading: dot=\${fullHeightUpperSourceDot}\`);
+      }
+      if (!(Number.isFinite(fullHeightUpperConnection.pointY)
+        && fullHeightUpperConnection.pointY > 2.2)) {
+        throw new Error(\`A1 Rotunda-height facade hit is not above the ramp-level wall sample: y=\${fullHeightUpperConnection.pointY}\`);
+      }
+      const fullHeightDominantPlaneAxis = Math.abs(terminalConnection.towardX) >= Math.abs(terminalConnection.towardZ)
+        ? "x"
+        : "z";
+      const rampFacadePlaneCoordinate = fullHeightDominantPlaneAxis === "x"
+        ? Number(terminalConnection.pointX)
+        : Number(terminalConnection.pointZ);
+      const upperFacadePlaneCoordinate = fullHeightDominantPlaneAxis === "x"
+        ? Number(fullHeightUpperConnection.pointX)
+        : Number(fullHeightUpperConnection.pointZ);
+      const fullHeightFacadePlaneDeltaMeters = Math.abs(upperFacadePlaneCoordinate - rampFacadePlaneCoordinate);
+      if (!(Number.isFinite(fullHeightFacadePlaneDeltaMeters)
+        && fullHeightFacadePlaneDeltaMeters <= ${MAXIMUM_FULL_HEIGHT_PLANE_DELTA_METERS})) {
+        throw new Error(\`A1 ramp and Rotunda-height hits are not on one terminal facade plane: axis=\${fullHeightDominantPlaneAxis} delta=\${fullHeightFacadePlaneDeltaMeters}; ramp=\${JSON.stringify(terminalConnection)}; upper=\${JSON.stringify(fullHeightUpperConnection)}\`);
+      }
+      terminalConnection.authority = "${fullHeightMarker}";
+      terminalConnection.fullHeightFacadePlaneAxis = fullHeightDominantPlaneAxis;
+      terminalConnection.fullHeightFacadePlaneDeltaMeters = fullHeightFacadePlaneDeltaMeters;
+      terminalConnection.fullHeightUpperDistanceMeters = fullHeightUpperConnection.distance;
+      terminalConnection.fullHeightUpperSourceDirectionDot = fullHeightUpperSourceDot;
+      terminalConnection.fullHeightUpperPointY = fullHeightUpperConnection.pointY;
+      terminalConnection.legacyFullHeightValidatorCopiesRemoved = ${legacyFullHeightBlocks.length};
+    }
+`;
+if (!source.includes(fullHeightAnchor)) {
+  throw new Error(`${runtimePath}: A1 full-height validator insertion anchor is missing`);
+}
+source = source.replace(fullHeightAnchor, robustFullHeightBlock + fullHeightAnchor);
+
 for (const required of [
   marker,
+  fullHeightMarker,
   "-sourceJetwayForwardX",
   "-sourceJetwayForwardZ",
   `groundedConnection.towardX * -sourceJetwayForwardX`,
@@ -121,14 +197,19 @@ for (const required of [
   `groundedTerminalDirectionDot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT}`,
   `groundedConnection.distance < ${MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS}`,
   "/BGATE|DGATE|PHX_TERM400/i.test(groundedMaterialReference)",
-  'wallSelectionVectorAuthority: "decoded-kphx-bgl-heading-terminal-side-v3"',
+  'wallSelectionVectorAuthority: "decoded-kphx-bgl-heading-terminal-side-v4"',
+  "fullHeightUpperConnection",
+  "fullHeightDominantPlaneAxis",
+  "fullHeightFacadePlaneDeltaMeters",
+  `fullHeightFacadePlaneDeltaMeters <= ${MAXIMUM_FULL_HEIGHT_PLANE_DELTA_METERS}`,
+  "legacyFullHeightValidatorCopiesRemoved",
   "selectedMaterialReference: groundedMaterialReference",
   `minimumRequiredDirectionDot: ${MINIMUM_A1_SOURCE_DIRECTION_DOT}`,
   "selectedSourceDirectionDot: groundedTerminalDirectionDot",
   `sourceDistanceRangeMeters: [3.4, ${MAXIMUM_A1_SOURCE_WALL_DISTANCE_METERS}]`,
 ]) {
   if (!source.includes(required)) {
-    throw new Error(`${runtimePath}: decoded-KPHX A1 terminal-wall selection is missing ${required}`);
+    throw new Error(`${runtimePath}: decoded-KPHX A1 terminal-wall authority is missing ${required}`);
   }
 }
 for (const forbidden of [
@@ -143,11 +224,13 @@ for (const forbidden of [
   "if (!(groundedTerminalDirectionDot >= 0.15))",
   "if (!/PHX_TERM400/i.test(groundedMaterialReference))",
   "sourceDistanceRangeMeters: [3.4, 28]",
+  "A1 attachment is not a full-height terminal-building wall",
+  "sameDirectionCosine < 0.995",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${runtimePath}: stale PHX-only/target-vector A1 wall behavior survived: ${forbidden}`);
+    throw new Error(`${runtimePath}: stale PHX-only/target-vector/legacy full-height A1 behavior survived: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log(`Selected and accepted final A1 terminal wall from the decoded KPHX BGL terminal-side heading (dot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT}) across real structural BGATE/DGATE/PHX_TERM400 faces; the visually rejected PHX corridor, CRJ-target wall vector, and temporary candidate dumps are removed.`);
+console.log(`Selected and accepted A1 terminal wall from decoded KPHX heading (dot >= ${MINIMUM_A1_SOURCE_DIRECTION_DOT}), removed ${legacyFullHeightBlocks.length} duplicate legacy nearest-point validator block(s), and required ramp/Rotunda-height hits to share one facade plane within ${MAXIMUM_FULL_HEIGHT_PLANE_DELTA_METERS} m.`);
