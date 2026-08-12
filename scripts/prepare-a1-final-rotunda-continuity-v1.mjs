@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const sourcePath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const marker = "a1-final-rotunda-through-continuity-v1";
+const diagnosticAuthority = "a1-fixed-wall-elbow-vector-diagnostic-v1";
 let source = fs.readFileSync(sourcePath, "utf8");
 
 if (source.includes(marker)) {
@@ -24,6 +25,14 @@ const legacyGuard = `  const cornerDot = THREE.MathUtils.clamp(terminalDirection
     throw new Error(\`A1 fixed-wall Rotunda did not produce the required visible elbow: \${cornerAngleDegrees.toFixed(3)} degrees\`);
   }`;
 
+const diagnosticGuard = `  const cornerDot = THREE.MathUtils.clamp(terminalDirection.dot(bridgeDirection), -1, 1);
+  const cornerAngleDegrees = THREE.MathUtils.radToDeg(Math.acos(cornerDot));
+  // ${diagnosticAuthority}
+  if (!(cornerAngleDegrees >= MINIMUM_CORNER_ANGLE_DEGREES && cornerAngleDegrees <= MAXIMUM_CORNER_ANGLE_DEGREES)) {
+    const travelTurnDegrees = 180 - cornerAngleDegrees;
+    throw new Error(\`A1 fixed-wall Rotunda did not produce the required visible elbow: branch=\${cornerAngleDegrees.toFixed(3)} degrees travelTurn=\${travelTurnDegrees.toFixed(3)} terminalDir=(\${terminalDirection.x.toFixed(6)},\${terminalDirection.z.toFixed(6)}) bridgeDir=(\${bridgeDirection.x.toFixed(6)},\${bridgeDirection.z.toFixed(6)}) targetDir=(\${targetDirection.x.toFixed(6)},\${targetDirection.z.toFixed(6)}) rotunda=(\${rotundaCenter.x.toFixed(6)},\${rotundaCenter.z.toFixed(6)}) wall=(\${fixedWallPoint.x.toFixed(6)},\${fixedWallPoint.z.toFixed(6)}) target=(\${targetPoint.x.toFixed(6)},\${targetPoint.z.toFixed(6)}) sourceYaw=\${Number(placement.yaw).toFixed(6)} relocation=(\${sourceModelOriginRelocationX.toFixed(6)},\${sourceModelOriginRelocationZ.toFixed(6)})\`);
+  }`;
+
 const continuityGuard = `  const cornerDot = THREE.MathUtils.clamp(terminalDirection.dot(bridgeDirection), -1, 1);
   const cornerAngleDegrees = THREE.MathUtils.radToDeg(Math.acos(cornerDot));
   const throughTurnDegrees = 180 - cornerAngleDegrees;
@@ -32,10 +41,9 @@ const continuityGuard = `  const cornerDot = THREE.MathUtils.clamp(terminalDirec
     throw new Error(\`A1 Rotunda terminal leg folds back into the aircraft-side bridge: branch=\${cornerAngleDegrees.toFixed(3)} degrees, turn=\${throughTurnDegrees.toFixed(3)} degrees\`);
   }`;
 
-if (!source.includes(legacyGuard)) {
-  throw new Error(`${sourcePath}: stale 45–150 degree visible-elbow guard is missing; refusing to guess a rewrite`);
-}
-source = source.replace(legacyGuard, continuityGuard);
+if (source.includes(diagnosticGuard)) source = source.replace(diagnosticGuard, continuityGuard);
+else if (source.includes(legacyGuard)) source = source.replace(legacyGuard, continuityGuard);
+else throw new Error(`${sourcePath}: stale visible-elbow guard is missing in both baseline and diagnostic forms; refusing to guess a rewrite`);
 
 const telemetryAnchor = "  group.userData.uploadedJetwayA1TerminalCornerAngleDegrees = cornerAngleDegrees;";
 if (!source.includes(telemetryAnchor)) {
