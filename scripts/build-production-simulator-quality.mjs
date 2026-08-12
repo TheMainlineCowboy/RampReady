@@ -115,6 +115,10 @@ try {
   // every late A1 geometry rewrite. This guard also hard-fails any surviving
   // explicit walkway portal target before acceptance can report green.
   await runNode("scripts/prepare-a1-final-walkway-hierarchy-exclusion-v1.mjs");
+  // The grounded search must also remain aligned with the decoded A1 terminal-
+  // side source axis. Filtering candidates here prevents a nearer connector-side
+  // facade from winning merely because it carries a terminal-looking material.
+  await runNode("scripts/prepare-a1-final-source-direction-candidate-filter-v1.mjs");
   await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
   await runNode("scripts/prepare-a1-final-marker-compat-v1.mjs");
   // Camera evidence is generated and rewritten by several legacy preparers.
