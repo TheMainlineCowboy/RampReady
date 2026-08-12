@@ -106,6 +106,7 @@ try {
   await runNode("scripts/prepare-a1-fixed-source-gate-aircraft-pose-v1.mjs");
   await runNode("scripts/prepare-a1-live-visual-contact-monitor-v1.mjs");
   await runNode("scripts/prepare-static-jetway-source-placement-integrity-v1.mjs");
+  await runNode("scripts/prepare-static-jetway-source-pose-authority-v1.mjs");
   await runNode("scripts/prepare-a1-unified-aircraft-pose-v1.mjs");
   // Normalize A1 as one intact supplied hierarchy at its measured real-wall
   // Rotunda position after every legacy geometry preparer has run. Final
