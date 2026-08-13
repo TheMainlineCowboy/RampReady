@@ -30,10 +30,12 @@ if (!preparedSource.includes("A1_RESTORER_BASELINE_COMPATIBILITY")) {
 let buildError;
 try {
   // The source-authored BGATE1 main facade is split into small UV-repeat cells
-  // before this point, so final wall ownership must use retained BGATE1 material
-  // identity rather than individual triangle area. The T4_WALK-clear route rule
-  // remains mandatory and the exact supplied jetway geometry is not changed.
+  // before this point, so first migrate the old final shape away from triangle
+  // area, then replace cosmetic cell-material ownership with the original
+  // BGATE1 mesh-node authority retained by the splitter. T4_WALK-clear routing
+  // remains mandatory and no supplied jetway geometry is changed.
   await import(`./prepare-a1-bgateg1-main-facade-after-split-v1.mjs?final-bgateg1=${Date.now()}`);
+  await import(`./prepare-a1-original-bgateg1-node-authority-v1.mjs?final-source-node=${Date.now()}`);
   await import("./build-production.mjs");
 } catch (error) {
   buildError = error;
