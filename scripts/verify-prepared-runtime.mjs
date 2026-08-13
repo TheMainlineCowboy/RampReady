@@ -80,6 +80,11 @@ await import(`./seed-final-jetway-ground-contact-before-normalization.mjs?final-
 await import(`./prepare-a1-current-rotunda-terminal-connector-v1.mjs?current-rotunda=${Date.now()}`);
 await import(`./prepare-a1-terminal-shell-passenger-y-v1.mjs?passenger-shell=${Date.now()}`);
 await import(`./normalize-final-a1-evidence-camera-after-runtime.mjs?final-camera=${Date.now()}`);
+// The generated source-through-axis camera is correct geometrically, but a late
+// legacy clear-side block used to mirror it into the terminal and the old bogie
+// camera deliberately moved away from the aircraft into the same facade. Apply
+// the final apron-half-plane camera contract immediately after normalization.
+await import(`./prepare-a1-apron-side-evidence-camera-v1.mjs?apron-camera=${Date.now()}`);
 // A1 and the 57 static bridges intentionally use different ground frames: A1 is
 // grounded from final visible Tunnel-C support geometry; statics retain the
 // supplied model's authored shared offset. Require each independently rather than
