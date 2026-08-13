@@ -36,6 +36,12 @@ try {
   // remains mandatory and no supplied jetway geometry is changed.
   await import(`./prepare-a1-bgateg1-main-facade-after-split-v1.mjs?final-bgateg1=${Date.now()}`);
   await import(`./prepare-a1-original-bgateg1-node-authority-v1.mjs?final-source-node=${Date.now()}`);
+  // The AIR_Jetway01 source pivot/heading are not a replacement-Rotunda pose.
+  // Once the correct original BGATE1 facade is known, register A1 from the actual
+  // wall point and authored wall normal facing the A1 stand. This keeps the exact
+  // GLB intact while preventing the old source ray from folding the bridge across
+  // the real terminal wall.
+  await import(`./prepare-a1-bgateg1-wall-normal-registration-v1.mjs?final-wall-normal=${Date.now()}`);
   await import("./build-production.mjs");
 } catch (error) {
   buildError = error;
