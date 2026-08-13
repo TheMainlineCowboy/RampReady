@@ -40,7 +40,7 @@ if (!source.includes(marker)) {
       const wallPointZ = Number(resolvedTerminalConnection?.pointZ);
       const wallNormalLength = Math.hypot(wallNormalX, wallNormalZ);
       if (!(wallNormalLength > 0.25) || ![wallPointX, wallPointZ].every(Number.isFinite)) {
-        throw new Error(`A1 original BGATE1 facade is missing a usable wall normal/point: ${JSON.stringify(resolvedTerminalConnection)}`);
+        throw new Error("A1 original BGATE1 facade is missing a usable wall normal/point: " + JSON.stringify(resolvedTerminalConnection));
       }
       a1WallOutwardX = wallNormalX / wallNormalLength;
       a1WallOutwardZ = wallNormalZ / wallNormalLength;
@@ -52,7 +52,7 @@ if (!source.includes(marker)) {
       }
       const outwardTargetDot = a1WallOutwardX * wallToTargetX + a1WallOutwardZ * wallToTargetZ;
       if (!(outwardTargetDot > 1)) {
-        throw new Error(`A1 BGATE1 wall normal does not face the authored stand/apron: dot=${outwardTargetDot}`);
+        throw new Error("A1 BGATE1 wall normal does not face the authored stand/apron: dot=" + outwardTargetDot);
       }
       resolvedTerminalConnection.wallOutwardX = a1WallOutwardX;
       resolvedTerminalConnection.wallOutwardZ = a1WallOutwardZ;
