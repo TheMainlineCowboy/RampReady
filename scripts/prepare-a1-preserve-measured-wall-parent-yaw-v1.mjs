@@ -2,17 +2,18 @@ import fs from "node:fs";
 
 const runtimePath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const marker = "a1-preserve-measured-wall-parent-yaw-v1";
+const legacySourceAuthority = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";
+const measuredWallAuthority = "a1-real-wall-registered-rotunda-measured-wall-parent-yaw-v3";
+const legacyTargetAuthority = "decoded-kphx-heading-owns-intact-a1-aircraft-must-conform-v2";
+const measuredWallTargetAuthority = "measured-wall-parent-owns-a1-aircraft-target-diagnostic-v3";
 let source = fs.readFileSync(runtimePath, "utf8");
 
 if (!source.includes(marker)) {
-  source = source.replace(
-    `const SOURCE_REGISTERED_A1_ELBOW_AUTHORITY = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";`,
-    `const SOURCE_REGISTERED_A1_ELBOW_AUTHORITY = "a1-real-wall-registered-rotunda-measured-wall-parent-yaw-v3";`,
-  );
-  source = source.replace(
-    `const TARGET_DIRECTION_AUTHORITY = "decoded-kphx-heading-owns-intact-a1-aircraft-must-conform-v2";`,
-    `const TARGET_DIRECTION_AUTHORITY = "measured-wall-parent-owns-a1-aircraft-target-diagnostic-v3";`,
-  );
+  // Replace authority strings globally because the old source-heading authority
+  // is also published later as compatibility/provenance telemetry. The physical
+  // safety boundary below separately forbids the executable yaw mutations.
+  source = source.replaceAll(legacySourceAuthority, measuredWallAuthority);
+  source = source.replaceAll(legacyTargetAuthority, measuredWallTargetAuthority);
 
   const startToken = `  // Apply the decoded KPHX heading to the COMPLETE supplied A1 anchor, never to`;
   const endToken = `  group.userData.uploadedJetwayA1SourceAxisYawDeltaRadians = sourceAxisYawDelta;`;
@@ -67,8 +68,8 @@ if (!source.includes(marker)) {
 
 for (const required of [
   marker,
-  'a1-real-wall-registered-rotunda-measured-wall-parent-yaw-v3',
-  'measured-wall-parent-owns-a1-aircraft-target-diagnostic-v3',
+  measuredWallAuthority,
+  measuredWallTargetAuthority,
   'uploadedJetwayA1DecodedBglHeadingIsProvenanceOnly = true',
   'uploadedJetwayA1MeasuredWallParentYawRadians = anchor.rotation.y',
   'sourceAxisAlignmentCosine = sourceAxisBridgeDirectionAfter.dot(decodedSourceBridgeDirection)',
@@ -80,10 +81,10 @@ for (const forbidden of [
   "anchor.rotation.y += sourceAxisYawDelta;",
   "A1 complete-parent bridge axis does not match decoded KPHX heading",
   "sourceAxisAlignmentCosine >= 0.999",
-  'a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2',
-  'decoded-kphx-heading-owns-intact-a1-aircraft-must-conform-v2',
+  legacySourceAuthority,
+  legacyTargetAuthority,
 ]) {
-  if (source.includes(forbidden)) throw new Error(`${runtimePath}: destructive decoded-heading ownership survived: ${forbidden}`);
+  if (source.includes(forbidden)) throw new Error(`${runtimePath}: destructive/stale decoded-heading ownership survived: ${forbidden}`);
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
