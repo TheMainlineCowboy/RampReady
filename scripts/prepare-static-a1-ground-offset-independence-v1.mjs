@@ -1,5 +1,10 @@
 import fs from "node:fs";
 
+// The preceding final-world Tunnel_C measurement changes only the target
+// coordinates, not the established side-on/apron camera orientation. Keep the
+// existing v2 profile label while retaining the separate final-world authority.
+await import(`./prepare-a1-final-world-bogie-profile-compat-v1.mjs?before-ground-readiness=${Date.now()}`);
+
 const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 const retiredCoupling = "Math.abs(staticFleetGroundYOffset - fleetGroundOffset) > 1e-6";
 const independentStaticGuard = "!Number.isFinite(staticFleetGroundYOffset) || Math.abs(staticFleetGroundYOffset) > 8";
