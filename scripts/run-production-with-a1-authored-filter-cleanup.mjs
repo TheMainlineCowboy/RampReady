@@ -43,6 +43,14 @@ if (
 
 let buildError;
 try {
+  // Browser evidence proved the previous decoded-heading wall selector could
+  // choose the long elevated-corridor facade even though the candidate point
+  // itself was outside the T4_WALK roof footprint. Apply the final A1-only
+  // main-terminal selector immediately before the artifact is bundled: the wall
+  // must be a broad facade and its route to the AIR_Jetway01 source pivot must
+  // cross zero T4_WALK footprint. This does not change the supplied GLB or its
+  // decoded KPHX parent yaw.
+  await import(`./prepare-a1-main-terminal-facade-route-v1.mjs?final-main-facade=${Date.now()}`);
   // This wrapper runs after the final airport-ownership readiness pass. Re-run
   // the Tunnel-C migration here so no later compatibility layer can restore the
   // retired whole-model/pedestal ground rule in the artifact that Vite bundles.
