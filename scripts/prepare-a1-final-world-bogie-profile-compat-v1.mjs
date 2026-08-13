@@ -19,3 +19,8 @@ if (!source.includes('inspectionCameraEndpointBogieFinalWorldAuthority')) {
 
 fs.writeFileSync(trainerPath, source, "utf8");
 console.log("Kept the existing A1 bogie side-profile v2 camera orientation while requiring the separate final-world Tunnel_C contact authority for its target coordinates.");
+
+// The 57 static exact bridges use the same supplied GLB local axis. Correct the
+// rigid-parent yaw so each visible Rotunda->Tunnel-A axis, rather than parent +Z,
+// matches the decoded KPHX AIR_Jetway01 bridge heading before final readiness.
+await import(`./prepare-static-supplied-axis-source-heading-v1.mjs?after-bogie-profile=${Date.now()}`);
