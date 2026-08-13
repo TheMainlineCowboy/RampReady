@@ -3,7 +3,7 @@ import fs from "node:fs";
 await import(`./prepare-a1-remove-legacy-fixed-walkway-v1.mjs?legacy-walkway=${Date.now()}`);
 
 const elbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
-const marker = "a1-terminal-sleeve-supplied-skin-recessed-panel-joints-v4";
+const marker = "a1-terminal-sleeve-opaque-source-matched-recessed-panel-joints-v5";
 let source = fs.readFileSync(elbowPath, "utf8");
 
 if (!source.includes(marker)) {
@@ -34,27 +34,26 @@ if (!source.includes(marker)) {
 }`;
   const newMaterials = `// ${marker}
 function createMaterials(THREE, tunnelA) {
-  // Reuse the exact supplied Tunnel A PBR material on the short fixed sleeve.
-  // The atlas cannot be trusted to make seams readable on generic BoxGeometry,
-  // so the panel joints below are real recessed geometry with a dark backing.
-  let suppliedTunnelMaterial = null;
-  tunnelA?.traverse?.((entry) => {
-    if (suppliedTunnelMaterial || !entry?.isMesh || entry.visible === false) return;
-    const candidates = Array.isArray(entry.material) ? entry.material : [entry.material];
-    suppliedTunnelMaterial = candidates.find((material) => material?.isMaterial && material.visible !== false) || null;
-  });
-  const shell = suppliedTunnelMaterial?.clone?.() || new THREE.MeshStandardMaterial({
+  // Keep the generated fixed sleeve visually consistent with Tunnel A without
+  // copying Tunnel A's authored texture atlas onto unrelated BoxGeometry UVs.
+  // The measured Tunnel A cross-section is preserved below; this synthetic
+  // terminal section uses a clean opaque source-matched PBR shell instead.
+  const shell = new THREE.MeshStandardMaterial({
+    name: "A1 fixed terminal sleeve - opaque source-matched shell",
     color: 0xe1e2df,
     roughness: 0.78,
     metalness: 0.08,
+    side: THREE.DoubleSide,
+    transparent: false,
+    opacity: 1,
+    depthWrite: true,
+    depthTest: true,
   });
-  shell.name = "A1 fixed terminal sleeve - supplied Tunnel A skin";
-  shell.side = THREE.DoubleSide;
   shell.needsUpdate = true;
 
   return {
     shell,
-    shellSourceMaterialName: suppliedTunnelMaterial?.name || "fallback-untextured-shell",
+    shellSourceMaterialName: "source-matched-opaque-pbr-no-atlas",
     rib: new THREE.MeshStandardMaterial({
       name: "A1 fixed terminal sleeve - recessed joint backing",
       color: 0x565c5e,
@@ -195,7 +194,8 @@ function createMaterials(THREE, tunnelA) {
 for (const required of [
   marker,
   "function createMaterials(THREE, tunnelA)",
-  'shell.name = "A1 fixed terminal sleeve - supplied Tunnel A skin"',
+  'name: "A1 fixed terminal sleeve - opaque source-matched shell"',
+  'shellSourceMaterialName: "source-matched-opaque-pbr-no-atlas"',
   "const sidePanelGapMeters = 0.040",
   "const sideJointBackingInsetMeters = 0.060",
   "UploadedAirportJetwayA1TerminalElbowWallPanel_",
@@ -205,9 +205,10 @@ for (const required of [
   "connector.userData.recessedPanelJointCount = frame.ribCount",
   "return { yaw, ribCount, sidePanelCount }",
 ]) {
-  if (!source.includes(required)) throw new Error(`${elbowPath}: recessed-panel A1 terminal sleeve is missing ${required}`);
+  if (!source.includes(required)) throw new Error(`${elbowPath}: opaque recessed-panel A1 terminal sleeve is missing ${required}`);
 }
 for (const forbidden of [
+  "suppliedTunnelMaterial",
   "UploadedAirportJetwayA1TerminalElbowWall_${sign}",
   "UploadedAirportJetwayA1TerminalElbowSideRail_",
   "UploadedAirportJetwayA1TerminalElbowRib_",
@@ -216,9 +217,10 @@ for (const forbidden of [
   "const width = 2.58;",
   "const height = 2.44;",
   'name: "A1 fixed-wall compact terminal-side shell"',
+  'shell.name = "A1 fixed terminal sleeve - supplied Tunnel A skin"',
 ]) {
-  if (source.includes(forbidden)) throw new Error(`${elbowPath}: obsolete blank/cage A1 terminal sleeve behavior remains: ${forbidden}`);
+  if (source.includes(forbidden)) throw new Error(`${elbowPath}: obsolete textured/blank/cage A1 terminal sleeve behavior remains: ${forbidden}`);
 }
 
 fs.writeFileSync(elbowPath, source, "utf8");
-console.log("Rebuilt the A1 fixed terminal sleeve with supplied Tunnel A skin, short physical side panels and closed recessed dark joints; the broad blank slab and external trim cage are both removed without moving the wall, Rotunda or aircraft.");
+console.log("Rebuilt the A1 fixed terminal sleeve with measured Tunnel A dimensions, an opaque source-matched PBR shell, short physical side panels and closed recessed dark joints; no Tunnel A atlas is reused on generated geometry and no wall, Rotunda or aircraft position is changed.");
