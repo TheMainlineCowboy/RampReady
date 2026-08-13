@@ -90,6 +90,11 @@ await import(`./prepare-a1-apron-side-evidence-camera-v1.mjs?apron-camera=${Date
 // the exact Rotunda-to-Cab/aircraft axis for a clear view; never move geometry or
 // cross the terminal half-plane just to make evidence pass.
 await import(`./prepare-a1-unoccluded-aircraft-side-evidence-camera-v1.mjs?unoccluded-camera=${Date.now()}`);
+// The installation report's Tunnel-C center is measured before Terminal 4's
+// final parent transform and cannot safely drive a world-space evidence camera.
+// Re-measure the visible Tunnel_C mesh after all scene transforms and require
+// its lowest cluster to be aircraft-side, on-axis and physically on the ramp.
+await import(`./prepare-a1-final-world-bogie-camera-v1.mjs?final-world-bogie=${Date.now()}`);
 // A1 and the 57 static bridges intentionally use different ground frames: A1 is
 // grounded from final visible Tunnel-C support geometry; statics retain the
 // supplied model's authored shared offset. Require each independently rather than
