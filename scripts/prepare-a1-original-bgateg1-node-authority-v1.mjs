@@ -91,3 +91,9 @@ for (const forbidden of [
 
 fs.writeFileSync(runtimePath, source, "utf8");
 console.log("Prepared A1 wall ownership from the original BGATE1 source mesh-node authority retained through UV-cell material variation; zero-T4_WALK route clearance remains mandatory and exact jetway geometry is unchanged.");
+
+// The correct installation pass has already aligned the complete supplied A1
+// parent to the measured main-terminal wall. Preserve that physical parent yaw
+// immediately after final wall ownership is established; the replaced stock
+// AIR_Jetway01 BGL heading is provenance only and must not rotate A1 away again.
+await import(`./prepare-a1-preserve-measured-wall-parent-yaw-v1.mjs?after-source-wall=${Date.now()}`);
