@@ -89,3 +89,5 @@ for (const forbidden of [
 
 fs.writeFileSync(runtimePath, source, "utf8");
 console.log("Preserved the complete A1 parent orientation already registered to the measured Terminal 4 wall; decoded AIR_Jetway01 BGL heading is provenance only, supplied child transforms remain untouched, and physical Rotunda through-continuity remains fail-closed.");
+
+await import(`./prepare-a1-main-facade-wall-normal-registration-v1.mjs?after-measured-wall-parent=${Date.now()}`);
