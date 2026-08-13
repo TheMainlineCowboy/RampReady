@@ -4,13 +4,15 @@ const fs = require('node:fs');
 const pageUrl = process.env.PAGE_URL || 'http://127.0.0.1:4173/RampReady/';
 const evidenceDir = process.env.EVIDENCE_DIR || 'a1-terminal-joint-evidence';
 const MOBILE_VIEWPORT = Object.freeze({ width: 448, height: 998 });
-const CURRENT_SUBVIEW_AUTHORITY = 'source-measured-a1-terminal-joint-camera-v3';
-const LEGACY_SUBVIEW_AUTHORITY = 'exact-a1-terminal-joint-and-bogie-contact-subviews-v2';
+const CURRENT_SUBVIEW_AUTHORITY = 'source-measured-a1-apron-side-evidence-camera-v4';
+const LEGACY_SUBVIEW_AUTHORITY = 'source-measured-a1-terminal-joint-camera-v3';
 const CAMERA_AUTHORITY = 'exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2';
 const LOCK_AUTHORITY = 'exact-a1-evidence-camera-direct-lock-v1';
-const PROFILE_AUTHORITY = 'rotunda-terminal-and-tunnel-a-bisector-normal-profile-v4-midheight';
+const PROFILE_AUTHORITY = 'rotunda-terminal-and-tunnel-a-through-axis-normal-profile-v5-midheight';
+const CLEAR_SIDE_AUTHORITY = 'a1-terminal-joint-apron-half-plane-unoccluded-v3';
 const MAX_BRANCH_VIEW_COSINE = 0.82;
 const MAX_BRANCH_VIEW_IMBALANCE = 0.20;
+const MIN_APRON_HALF_PLANE_OFFSET_METERS = 2.5;
 
 fs.mkdirSync(evidenceDir, { recursive: true });
 
@@ -76,24 +78,30 @@ async function selectByValue(page, ariaLabel, value) {
       && data?.a1JetwayState === 'attached-to-aircraft-door';
   }, null, { timeout: 30000, polling: 100 });
 
-  // Force the final production passenger-elbow camera while retaining the real
-  // portrait HUD. The accepted camera must expose both the terminal-side leg
-  // and supplied Tunnel A around the Rotunda; an end-on view is rejected.
+  // Force the final production terminal-joint camera while retaining the real
+  // portrait HUD. The accepted camera must stay on the apron half-plane, expose
+  // both physical branches around the Rotunda, and never use the retired mirror
+  // that put the frame inside the terminal facade.
   await page.evaluate(() => {
     const element = document.querySelector('canvas.trainerCanvas');
     if (!(element instanceof HTMLCanvasElement)) throw new Error('A1 mobile evidence canvas is missing');
     element.dataset.a1EvidenceSubview = 'terminal-joint';
   });
-  await page.waitForFunction(({ currentAuthority, legacyAuthority, cameraAuthority, lockAuthority, profileAuthority, maxBranchViewCosine, maxBranchViewImbalance }) => {
+  await page.waitForFunction(({ currentAuthority, legacyAuthority, cameraAuthority, lockAuthority, profileAuthority, clearSideAuthority, maxBranchViewCosine, maxBranchViewImbalance, minApronOffset }) => {
     const data = document.querySelector('canvas.trainerCanvas')?.dataset;
     const wallView = Number(data?.inspectionCameraEndpointJointWallViewCosine);
     const tunnelView = Number(data?.inspectionCameraEndpointJointTunnelAViewCosine);
     const imbalance = Number(data?.inspectionCameraEndpointJointBranchViewImbalance);
+    const apronOffset = Number(data?.inspectionCameraEndpointJointRenderedApronHalfPlaneOffsetMeters);
     return data?.inspectionCameraEndpointSubview === 'terminal-joint'
       && [currentAuthority, legacyAuthority].includes(data?.inspectionCameraEndpointSubviewAuthority)
       && data?.inspectionCameraEndpointAuthority === cameraAuthority
       && data?.inspectionCameraEndpointLockAuthority === lockAuthority
       && data?.inspectionCameraEndpointJointProfileAuthority === profileAuthority
+      && data?.inspectionCameraEndpointJointClearSideAuthority === clearSideAuthority
+      && data?.inspectionCameraEndpointJointClearSideFlipped === 'false'
+      && data?.inspectionCameraEndpointJointT4WalkOccluded === 'false'
+      && Number.isFinite(apronOffset) && apronOffset > minApronOffset
       && Number.isFinite(wallView) && wallView < maxBranchViewCosine
       && Number.isFinite(tunnelView) && tunnelView < maxBranchViewCosine
       && Number.isFinite(imbalance) && imbalance < maxBranchViewImbalance
@@ -104,8 +112,10 @@ async function selectByValue(page, ariaLabel, value) {
     cameraAuthority: CAMERA_AUTHORITY,
     lockAuthority: LOCK_AUTHORITY,
     profileAuthority: PROFILE_AUTHORITY,
+    clearSideAuthority: CLEAR_SIDE_AUTHORITY,
     maxBranchViewCosine: MAX_BRANCH_VIEW_COSINE,
     maxBranchViewImbalance: MAX_BRANCH_VIEW_IMBALANCE,
+    minApronOffset: MIN_APRON_HALF_PLANE_OFFSET_METERS,
   }, { timeout: 30000, polling: 100 });
 
   await page.waitForTimeout(1200);
@@ -118,7 +128,10 @@ async function selectByValue(page, ariaLabel, value) {
     throw new Error(`Pixel evidence did not retain the terminal-joint camera: ${telemetry.inspectionCameraEndpointSubview}`);
   }
   if (telemetry.inspectionCameraEndpointJointProfileAuthority !== PROFILE_AUTHORITY) {
-    throw new Error(`Pixel evidence did not retain the side-on branch profile: ${telemetry.inspectionCameraEndpointJointProfileAuthority}`);
+    throw new Error(`Pixel evidence did not retain the source-through-axis profile: ${telemetry.inspectionCameraEndpointJointProfileAuthority}`);
+  }
+  if (telemetry.inspectionCameraEndpointJointClearSideFlipped !== 'false') {
+    throw new Error(`Pixel evidence reintroduced the retired terminal-side camera mirror: ${telemetry.inspectionCameraEndpointJointClearSideFlipped}`);
   }
 
   await page.screenshot({
@@ -152,7 +165,7 @@ async function selectByValue(page, ariaLabel, value) {
   await browser.close();
   if (pageErrors.length) throw new Error(`A1 mobile evidence page errors: ${pageErrors.join(' | ')}`);
   if (consoleErrors.length) throw new Error(`A1 mobile evidence console errors: ${consoleErrors.join(' | ')}`);
-  console.log(`A1 MOBILE PIXEL PASSENGER-ELBOW EVIDENCE READY: ${MOBILE_VIEWPORT.width}x${MOBILE_VIEWPORT.height}`);
+  console.log(`A1 MOBILE PIXEL APRON-SIDE TERMINAL-JOINT EVIDENCE READY: ${MOBILE_VIEWPORT.width}x${MOBILE_VIEWPORT.height}`);
 })().catch(error => {
   console.error(error.stack || error.message || String(error));
   process.exit(1);
