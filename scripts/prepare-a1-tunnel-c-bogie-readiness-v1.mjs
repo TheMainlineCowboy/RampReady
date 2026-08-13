@@ -4,6 +4,7 @@ const readinessPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 const oldAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
 const authority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
 const obsoleteSyntheticExtensionGate = "!(a1AttachedExtension > 3 && a1AttachedExtension < 7)";
+const intermediateConnectedExtensionGate = "Math.abs(a1AttachedExtension) > 0.001";
 const sourceOwnedExtensionGate = "!Number.isFinite(a1AttachedExtension) || Math.abs(a1AttachedExtension) > 1e-6";
 let source = fs.readFileSync(readinessPath, "utf8");
 
@@ -13,13 +14,15 @@ let source = fs.readFileSync(readinessPath, "utf8");
 // the air. Keep the existing telemetry plumbing, but make its acceptance values
 // match the Tunnel-C-specific measurement now published by installation v3.
 //
-// The old readiness gate also required a fabricated 3-7 m A1 attachment
-// extension. The source-owned A1 bridge now preserves the decoded KPHX parent
-// geometry directly, so synthetic attachment extension must remain zero instead
-// of being treated as evidence of readiness.
+// The retired readiness gate required a fabricated 3-7 m A1 attachment
+// extension. An earlier connected-A1 preparer correctly reduced that to a
+// near-zero guard. Normalize either intermediate form here so the final contract
+// is idempotent and fail-closed: the source-owned A1 bridge must publish a finite
+// synthetic attachment extension that is effectively zero.
 source = source.replaceAll(oldAuthority, authority);
 source = source
   .replaceAll(obsoleteSyntheticExtensionGate, sourceOwnedExtensionGate)
+  .replaceAll(intermediateConnectedExtensionGate, sourceOwnedExtensionGate)
   .replaceAll("Math.abs(fleetGroundOffset) > 3", "Math.abs(fleetGroundOffset) > 8")
   .replaceAll("Math.abs(bogieGroundClearance) > 0.005", "Math.abs(bogieGroundClearance) > 0.015")
   .replaceAll("bogieGroundContactPointCount < 8", "bogieGroundContactPointCount < 4")
@@ -41,6 +44,7 @@ for (const required of [
 for (const forbidden of [
   oldAuthority,
   obsoleteSyntheticExtensionGate,
+  intermediateConnectedExtensionGate,
   "Math.abs(bogieGroundClearance) > 0.005",
   "bogieGroundContactPointCount < 8",
   "bogieGroundContactClusterCount < 2",
@@ -52,4 +56,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log(`Migrated final A1 readiness to ${authority}: source-owned A1 uses zero synthetic extension and the aircraft-side Tunnel-C support/bogie must be within 1.5 cm of the ramp; terminal-pedestal ground contact cannot satisfy this gate.`);
+console.log(`Migrated final A1 readiness to ${authority}: source-owned A1 uses finite zero synthetic extension and the aircraft-side Tunnel-C support/bogie must be within 1.5 cm of the ramp; terminal-pedestal ground contact cannot satisfy this gate.`);
