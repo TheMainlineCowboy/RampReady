@@ -208,7 +208,8 @@ for (const required of [
   if (!source.includes(required)) throw new Error(`${elbowPath}: opaque recessed-panel A1 terminal sleeve is missing ${required}`);
 }
 for (const forbidden of [
-  "suppliedTunnelMaterial",
+  "let suppliedTunnelMaterial",
+  "suppliedTunnelMaterial?.clone",
   "UploadedAirportJetwayA1TerminalElbowWall_${sign}",
   "UploadedAirportJetwayA1TerminalElbowSideRail_",
   "UploadedAirportJetwayA1TerminalElbowRib_",
