@@ -7,6 +7,8 @@ const residualFailure = "Math.abs(fleetGroundOffset + bogieTireCorrection) > 1e-
 const mismatchMarker = "Exact jetway readiness mismatch:";
 const bogieAuthority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
 const retiredBogieAuthority = "exact-authored-a1-lowest-geometry-ramp-contact-v2";
+const retiredA1CosmeticCornerGuard = "!(sourceLockedA1CornerAngle >= 45 && sourceLockedA1CornerAngle <= 150)";
+const physicalA1CornerDiagnosticGuard = "!Number.isFinite(sourceLockedA1CornerAngle) || sourceLockedA1CornerAngle < 0 || sourceLockedA1CornerAngle > 180";
 const bogieDeclarationAnchor = `          const bogieTireCorrection = Number(group.userData.uploadedJetwayBogieTireContactCorrectionMeters ?? NaN);`;
 const measuredDeclarations = `${bogieDeclarationAnchor}
           const bogieGroundClearance = Number(group.userData.uploadedJetwayBogieGroundClearanceMeters ?? Infinity);
@@ -70,6 +72,17 @@ if (!source.includes(residualFailure)) {
   source = `${source.slice(0, insertionPoint)}            ${residualFailure}\n            || ${source.slice(insertionPoint).replace(/^\s*/, "")}`;
 }
 
+// The source-registered Rotunda module owns physical through-continuity and may
+// already have removed the retired 45-150 degree cosmetic corner gate before
+// this final readiness pass. In that path, seed only a mathematical sanity check
+// for the published diagnostic angle so the downstream normalizer is idempotent.
+// If the retired cosmetic gate is still present, leave it for the normalizer to
+// convert rather than duplicating the physical diagnostic.
+if (!source.includes(retiredA1CosmeticCornerGuard) && !source.includes(physicalA1CornerDiagnosticGuard)) {
+  const insertionPoint = conditionStart + "\n          if (\n".length;
+  source = `${source.slice(0, insertionPoint)}            ${physicalA1CornerDiagnosticGuard}\n            || ${source.slice(insertionPoint).replace(/^\s*/, "")}`;
+}
+
 // Add the Tunnel-C-specific invariant once if an existing readiness condition
 // does not already contain it. Duplicated equivalent v3 checks are harmless but
 // retired v2 semantics are a hard error below.
@@ -97,6 +110,9 @@ for (const required of [
     throw new Error(`${readinessPath}: final Tunnel-C measured bogie guard is missing ${required}`);
   }
 }
+if (!source.includes(retiredA1CosmeticCornerGuard) && !source.includes(physicalA1CornerDiagnosticGuard)) {
+  throw new Error(`${readinessPath}: final A1 source-owned corner diagnostic is missing`);
+}
 for (const forbidden of [
   retiredBogieAuthority,
   "Math.abs(bogieGroundClearance) > 0.005",
@@ -110,5 +126,5 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Ensured regeneration-safe final Tunnel-C bogie readiness: actual aircraft-side support geometry must be within 1.5 cm of the ramp with a finite multi-point contact footprint; terminal-pedestal contact cannot satisfy this guard.");
+console.log("Ensured regeneration-safe final Tunnel-C bogie readiness and idempotent source-owned A1 corner telemetry: aircraft-side support geometry must be within 1.5 cm of the ramp, and no cosmetic 45-150 degree turn is required for a physically continuous Rotunda.");
 await import(`./normalize-final-jetway-readiness-after-runtime.mjs?ground-contact-guard=${Date.now()}`);
