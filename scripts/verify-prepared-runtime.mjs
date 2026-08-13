@@ -85,6 +85,11 @@ await import(`./normalize-final-a1-evidence-camera-after-runtime.mjs?final-camer
 // camera deliberately moved away from the aircraft into the same facade. Apply
 // the final apron-half-plane camera contract immediately after normalization.
 await import(`./prepare-a1-apron-side-evidence-camera-v1.mjs?apron-camera=${Date.now()}`);
+// A single side-on position can still be hidden by the real package T4_WALK even
+// while it is physically on the apron side. Search only farther outward along
+// the exact Rotunda-to-Cab/aircraft axis for a clear view; never move geometry or
+// cross the terminal half-plane just to make evidence pass.
+await import(`./prepare-a1-unoccluded-aircraft-side-evidence-camera-v1.mjs?unoccluded-camera=${Date.now()}`);
 // A1 and the 57 static bridges intentionally use different ground frames: A1 is
 // grounded from final visible Tunnel-C support geometry; statics retain the
 // supplied model's authored shared offset. Require each independently rather than
