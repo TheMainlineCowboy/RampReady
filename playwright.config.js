@@ -1,6 +1,13 @@
 import { defineConfig } from "@playwright/test";
 
 const externalBaseURL = process.env.PLAYWRIGHT_BASE_URL || "";
+// When CI already built dist/ and asks Playwright to serve that immutable
+// artifact, apply the tiny final expectation migration before spec discovery.
+// This touches browser tests only; it never modifies runtime geometry or assets.
+if (process.env.PLAYWRIGHT_WEB_SERVER_COMMAND) {
+  await import(`./scripts/prepare-kphx-final-browser-compat-v1.mjs?playwright=${Date.now()}`);
+}
+
 // Browser evidence must judge the exact production artifact, never a fresh
 // development compilation of source that the clean build has already restored.
 // Rebuilding here is intentional: it makes every direct Playwright invocation
