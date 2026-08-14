@@ -43,22 +43,13 @@ if (
 
 let buildError;
 try {
-  // Browser evidence proved the previous decoded-heading wall selector could
-  // choose the long elevated-corridor facade even though the candidate point
-  // itself was outside the T4_WALK roof footprint. Apply the final A1-only
-  // main-terminal selector immediately before the artifact is bundled: the wall
-  // must be a broad facade and its route to the AIR_Jetway01 source pivot must
-  // cross zero T4_WALK footprint. This does not change the supplied GLB or its
-  // decoded KPHX parent yaw.
   await import(`./prepare-a1-main-terminal-facade-route-v1.mjs?final-main-facade=${Date.now()}`);
-  // Static exact jetways must use the structural terminal wall directly behind
-  // each gate's own KPHX parking centerline. The decoded AIR_Jetway01 heading
-  // remains fallback/provenance only; preferring it at concourse corners can
-  // collapse neighboring Rotunda anchors onto the same wall region.
+  // The source-placement pass resolves the real authored face planes for A10
+  // and A12. The registrar then projects each ORIGINAL KPHX source pivot onto
+  // its selected plane, preserving the source-authored tangential separation at
+  // the concourse corner while correcting only terminal-normal distance.
   await import(`./prepare-static-own-parking-wall-anchor-v1.mjs?final-static-wall=${Date.now()}`);
-  // This wrapper runs after the final airport-ownership readiness pass. Re-run
-  // the Tunnel-C migration here so no later compatibility layer can restore the
-  // retired whole-model/pedestal ground rule in the artifact that Vite bundles.
+  await import(`./prepare-static-corner-plane-registration-v1.mjs?final-static-corner-plane=${Date.now()}`);
   await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?post-airport-ownership=${Date.now()}`);
   await import("./run-production-with-a1-cleanup.mjs");
 } catch (error) {
