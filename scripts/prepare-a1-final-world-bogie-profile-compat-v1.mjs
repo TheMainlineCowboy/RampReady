@@ -22,3 +22,4 @@ console.log("Kept the existing A1 bogie side-profile v2 camera orientation while
 
 await import(`./prepare-static-supplied-axis-source-heading-v1.mjs?after-bogie-profile=${Date.now()}`);
 await import(`./prepare-static-final-own-parking-no-crossing-v1.mjs?after-static-source=${Date.now()}`);
+await import(`./prepare-static-overlap-diagnostics-v1.mjs?after-static-overlap=${Date.now()}`);
