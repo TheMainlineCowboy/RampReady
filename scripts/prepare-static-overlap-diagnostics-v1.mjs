@@ -1,21 +1,34 @@
 import fs from "node:fs";
 
 const runtimePath = "src/environment/registerStaticJetwayFleetToFacadeV1.js";
-const marker = "static-a14-vs-a12-zero-raw-overlap-refinement-v7";
-let source = fs.readFileSync(runtimePath, "utf8");
+const measuredMarker = "static-a14-terminal-corner-measured-zero-overlap-articulation-v2";
+const measuredAuthority = "a14-terminal-corner-exact-arm-minus-7.5deg-zero-raw-overlap-v2";
+const source = fs.readFileSync(runtimePath, "utf8");
 
-if (!source.includes(marker)) {
-  const oldBlock = `  if (staticExactPartOverlaps.length) {\n    throw new Error(\`Static Terminal 4 exact supplied part envelopes overlap after final registration/telescoping: \${staticExactPartOverlaps.join(", ")}\`);\n  }`;
-  const newBlock = `  if (staticExactPartOverlaps.length) {\n    // ${marker}\n    const staticPartNameForBatch = (batch) => {\n      const explicit = batch.userData?.sourcePartName;\n      if (explicit) return explicit;\n      const name = String(batch.name || \"\");\n      if (/Rotunda/i.test(name)) return \"Rotunda\";\n      if (/Tunnel_A/i.test(name)) return \"Tunnel_A\";\n      if (/Tunnel_B/i.test(name)) return \"Tunnel_B\";\n      if (/Tunnel_C/i.test(name)) return \"Tunnel_C\";\n      if (/Cab/i.test(name)) return \"Cab\";\n      return name;\n    };\n    const a12Index = staticRegisteredPlacements.findIndex((placement) => placement.gate === \"A12\");\n    const a14Index = staticRegisteredPlacements.findIndex((placement) => placement.gate === \"A14\");\n    if (a12Index < 0 || a14Index < 0) throw new Error(\"A14/A12 raw-clearance refinement could not resolve static instance indices\");\n    const a12Envelope = finalExactEnvelopes[a12Index];\n    const a14Registered = staticRegisteredPlacements[a14Index];\n    const movableA14Batches = staticBatches.filter((batch) => staticPartNameForBatch(batch) !== \"Rotunda\");\n    const baselineA14Matrices = movableA14Batches.map((batch) => {\n      const matrix = new THREE.Matrix4();\n      batch.getMatrixAt(a14Index, matrix);\n      return { batch, matrix: matrix.clone() };\n    });\n    const rotateA14Arm = (deltaRadians) => {\n      const px = Number(a14Registered.x);\n      const pz = Number(a14Registered.z);\n      const toOrigin = new THREE.Matrix4().makeTranslation(-px, 0, -pz);\n      const rotation = new THREE.Matrix4().makeRotationY(deltaRadians);\n      const fromOrigin = new THREE.Matrix4().makeTranslation(px, 0, pz);\n      const aboutPivot = new THREE.Matrix4().multiplyMatrices(fromOrigin, rotation).multiply(toOrigin);\n      const next = new THREE.Matrix4();\n      for (const { batch, matrix } of baselineA14Matrices) {\n        next.multiplyMatrices(aboutPivot, matrix);\n        batch.setMatrixAt(a14Index, next);\n      }\n    };\n    const restoreA14Arm = () => {\n      for (const { batch, matrix } of baselineA14Matrices) batch.setMatrixAt(a14Index, matrix);\n      for (const batch of movableA14Batches) batch.instanceMatrix.needsUpdate = true;\n    };\n    const measureA14Candidate = (degrees) => {\n      rotateA14Arm(THREE.MathUtils.degToRad(degrees));\n      const candidateParts = staticBatches.map((batch) => staticExactInstanceEnvelope(THREE, batch, a14Index));\n      const rawOverlaps = [];\n      let maximumRawDepth = 0;\n      for (const leftPart of a12Envelope.parts) {\n        for (const rightPart of candidateParts) {\n          const depth = staticEnvelopeOverlapDepthXZ(leftPart, rightPart);\n          if (!(depth > 1e-6)) continue;\n          maximumRawDepth = Math.max(maximumRawDepth, depth);\n          rawOverlaps.push(\`A12/\${leftPart.part}<->A14/\${rightPart.part}=\${depth.toFixed(6)}m\`);\n        }\n      }\n      return { degrees, rawOverlapCount: rawOverlaps.length, maximumRawDepth, rawOverlaps };\n    };\n    const candidateDegrees = [-7.5, -7.625, -7.75, -7.875, -8];\n    const results = candidateDegrees.map(measureA14Candidate);\n    restoreA14Arm();\n    const zeroRawOverlap = results.filter((result) => result.rawOverlapCount === 0)\n      .sort((left, right) => Math.abs(left.degrees) - Math.abs(right.degrees));\n    const minimumZeroRawDegrees = zeroRawOverlap[0]?.degrees ?? null;\n    throw new Error(\`Static Terminal 4 exact supplied part envelopes overlap after final registration/telescoping: \${staticExactPartOverlaps.join(", ")}; ${marker} minimumZeroRawDegrees=\${minimumZeroRawDegrees} results=\${JSON.stringify(results)}\`);\n  }`;
-  if (!source.includes(oldBlock)) {
-    throw new Error(`${runtimePath}: exact static overlap failure block is missing before raw A14 refinement`);
+for (const required of [
+  measuredMarker,
+  measuredAuthority,
+  "staticCornerArmArticulationDegrees = -7.5",
+  "uploadedJetwayStaticA14CornerArmArticulationDegrees = -7.5",
+  "const finalOccupiedCenterlines = staticRegisteredPlacements.map(staticFinalOccupiedCenterline);",
+  "const staticExactPartOverlaps = [];",
+  "if (staticExactPartOverlaps.length)",
+  "Static Terminal 4 exact supplied part envelopes overlap after final registration/telescoping",
+]) {
+  if (!source.includes(required)) {
+    throw new Error(`${runtimePath}: measured A14/full-fleet overlap authority is missing ${required}`);
   }
-  source = source.replace(oldBlock, newBlock);
 }
 
-for (const required of [marker, "minimumZeroRawDegrees", "maximumRawDepth", "rawOverlapCount", "rotateA14Arm"]) {
-  if (!source.includes(required)) throw new Error(`${runtimePath}: raw A14 refinement is missing ${required}`);
+for (const retired of [
+  "static-a14-vs-a12-zero-raw-overlap-refinement-v7",
+  "static-a14-vs-a12-minimum-clear-angle-refinement-v6",
+  "static-a14-vs-a12-clean-articulation-sweep-v5",
+  "static-a12-a14-articulation-exact-envelope-sweep-v4",
+]) {
+  if (source.includes(retired)) {
+    throw new Error(`${runtimePath}: temporary overlap diagnostic survived production promotion: ${retired}`);
+  }
 }
 
-fs.writeFileSync(runtimePath, source, "utf8");
-console.log("Armed a geometry-neutral A14 raw-overlap refinement at -7.50/-7.625/-7.75/-7.875/-8.00 degrees; no 5 cm tolerance is applied and all trial matrices are restored before failure reporting.");
+console.log("Verified measured A14 -7.50 degree zero-raw-overlap articulation and restored the unmodified fail-closed full 57-gate exact-part overlap validator; no diagnostic geometry or throw replacement remains.");
