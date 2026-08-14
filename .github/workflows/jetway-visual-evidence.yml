@@ -15,8 +15,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: terminal4-jetway-visual-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: terminal4-jetway-visual-${{ github.event.pull_request.number || github.ref }}-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: false
 
 jobs:
   render-jetways:
