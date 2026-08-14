@@ -50,6 +50,7 @@ try {
   // the concourse corner while correcting only terminal-normal distance.
   await import(`./prepare-static-own-parking-wall-anchor-v1.mjs?final-static-wall=${Date.now()}`);
   await import(`./prepare-static-corner-plane-registration-v1.mjs?final-static-corner-plane=${Date.now()}`);
+  await import(`./verify-static-corner-plane-registration-v1.mjs?final-static-corner-plane-verify=${Date.now()}`);
   await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?post-airport-ownership=${Date.now()}`);
   await import("./run-production-with-a1-cleanup.mjs");
 } catch (error) {
