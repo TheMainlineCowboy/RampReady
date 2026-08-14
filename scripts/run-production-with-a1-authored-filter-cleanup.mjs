@@ -51,6 +51,11 @@ try {
   // cross zero T4_WALK footprint. This does not change the supplied GLB or its
   // decoded KPHX parent yaw.
   await import(`./prepare-a1-main-terminal-facade-route-v1.mjs?final-main-facade=${Date.now()}`);
+  // Static exact jetways must use the structural terminal wall directly behind
+  // each gate's own KPHX parking centerline. The decoded AIR_Jetway01 heading
+  // remains fallback/provenance only; preferring it at concourse corners can
+  // collapse neighboring Rotunda anchors onto the same wall region.
+  await import(`./prepare-static-own-parking-wall-anchor-v1.mjs?final-static-wall=${Date.now()}`);
   // This wrapper runs after the final airport-ownership readiness pass. Re-run
   // the Tunnel-C migration here so no later compatibility layer can restore the
   // retired whole-model/pedestal ground rule in the artifact that Vite bundles.
