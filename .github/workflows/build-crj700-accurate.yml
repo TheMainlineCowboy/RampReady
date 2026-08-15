@@ -1,0 +1,164 @@
+name: Build accurate American Eagle CRJ700
+
+on:
+  push:
+    branches:
+      - asset/crj700-accurate-model
+    paths:
+      - tools/crj700/**
+      - .github/workflows/build-crj700-accurate.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - tools/crj700/**
+      - .github/workflows/build-crj700-accurate.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-crj700:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out RampReady build source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Node for real Three.js QA
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install system rendering dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            git xvfb libgl1 libegl1 libxrender1 libxkbcommon-x11-0 \
+            libsm6 libxext6 fonts-dejavu-core fonts-liberation
+
+      - name: Install Python mesh and rendering stack
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            "numpy<2.3" pillow trimesh pyvista vtk scipy networkx shapely rtree pygltflib
+
+      - name: Install Three.js browser QA stack
+        run: |
+          npm install --no-save --no-package-lock three@0.178.0 playwright@1.54.1
+          npx playwright install --with-deps chromium
+
+      - name: Fetch GPL CRJ700 source geometry
+        run: |
+          git clone --depth 1 https://github.com/YoRyan/FlightGear-CRJ700-family.git upstream-crj700
+          git -C upstream-crj700 rev-parse HEAD
+
+      - name: Correct source mapping and build one consolidated livery
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tools/crj700/build_accurate_crj700.py')
+          source = path.read_text(encoding='utf-8')
+          source = source.replace(
+              'matrix[:3, :3] = [[cosine, -sine, 0], [sine, cosine, 0], [0, 0, 1]]',
+              'matrix[:3, :3] = [[cosine, 0, sine], [0, 1, 0], [-sine, 0, cosine]]'
+          )
+          source = source.replace(
+              'matrix[:3, :3] = np.array([[0, 1, 0], [0, 0, 1], [-1, 0, 0]], dtype=float)',
+              'matrix[:3, :3] = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]], dtype=float)'
+          )
+          source = source.replace(
+              'append_scene(assembled, scene_copy_with_transform(engine, translation(*offset) @ rotation_source_heading(heading), label))',
+              'append_scene(assembled, scene_copy_with_transform(engine, translation(offset[0], offset[2], offset[1]) @ rotation_source_heading(heading), label))'
+          )
+          source = source.replace(
+              'scene_copy_with_transform(nosegear, translation(-14.232, 0, -3.201), "NoseGear")',
+              'scene_copy_with_transform(nosegear, translation(-14.232, -3.201, 0), "NoseGear")'
+          )
+          source = source.replace(
+              'scene_copy_with_transform(maingear, translation(0.986, 0, -3.357), "MainGear")',
+              'scene_copy_with_transform(maingear, translation(0.986, -3.357, 0), "MainGear")'
+          )
+          path.write_text(source, encoding='utf-8')
+          PY
+          python tools/crj700/apply_livery_patch.py
+          python tools/crj700/apply_visual_refinement_v3.py
+          python tools/crj700/apply_tailcone_fit_v5.py
+          python tools/crj700/apply_reference_alignment_v6.py
+          python tools/crj700/apply_fin_conformity_v7.py
+          python tools/crj700/apply_tail_flag_v20.py
+          python tools/crj700/apply_material_wordmark_v21.py
+          python tools/crj700/apply_tail_feather_geometry_v22.py
+
+      - name: Build and structurally validate the actual GLB
+        run: |
+          mkdir -p dist/crj700
+          xvfb-run -a python tools/crj700/build_accurate_crj700.py \
+            --source upstream-crj700 \
+            --output dist/crj700
+
+      - name: Render the actual exported GLB through Three.js and verify livery visibility
+        id: threejs_qa
+        continue-on-error: true
+        run: |
+          node tools/crj700/render_threejs_qa.mjs dist/crj700
+
+      - name: Combine true Three.js QA views
+        if: always()
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw, ImageFont
+          root = Path('dist/crj700')
+          views = [
+              'front-left','front-right','left-side','right-side','rear','top-oblique',
+              'bottom-oblique','ramp-close','logo-close','tail-close','gear-close'
+          ]
+          existing = [(view, root / f'threejs_{view}.png') for view in views if (root / f'threejs_{view}.png').exists()]
+          if not existing:
+              print('No Three.js screenshots were produced; preserving other diagnostics only.')
+              raise SystemExit(0)
+          images = [(view, Image.open(path).convert('RGB')) for view, path in existing]
+          width, height = images[0][1].size
+          rows = (len(images) + 1) // 2
+          canvas = Image.new('RGB', (width * 2, height * rows), (238, 241, 244))
+          font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 28)
+          for index, (view, image) in enumerate(images):
+              x, y = (index % 2) * width, (index // 2) * height
+              canvas.paste(image, (x, y))
+              draw = ImageDraw.Draw(canvas)
+              draw.rounded_rectangle((x + 18, y + 16, x + 310, y + 62), radius=10,
+                                     fill=(255, 255, 255), outline=(150, 158, 166), width=2)
+              draw.text((x + 34, y + 24), view.replace('-', ' ').title(), font=font, fill=(35, 40, 46))
+          canvas.save(root / 'american_eagle_crj700_actual_threejs_QA_views.png', quality=95)
+          PY
+
+      - name: Show generated files
+        if: always()
+        run: |
+          find dist/crj700 -maxdepth 3 -type f -printf '%p %k KB\n' | sort || true
+
+      - name: Upload model and QA artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: american-eagle-crj700-rampready-accurate
+          path: dist/crj700/
+          if-no-files-found: error
+          compression-level: 6
+          retention-days: 30
+
+      - name: Enforce Three.js visual QA gate
+        if: always()
+        run: |
+          if [ "${{ steps.threejs_qa.outcome }}" != "success" ]; then
+            echo "Three.js visual QA failed. Artifact was preserved for inspection."
+            exit 1
+          fi
