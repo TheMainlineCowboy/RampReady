@@ -1,0 +1,104 @@
+const { chromium } = require('@playwright/test');
+const fs = require('node:fs');
+
+const pageUrl = process.env.PAGE_URL || 'http://127.0.0.1:4173/RampReady/';
+const evidenceDirectory = process.env.EVIDENCE_DIR || 'a14-corner-evidence';
+const outputPath = `${evidenceDirectory}/a14-corner-overhead.png`;
+const reportPath = `${evidenceDirectory}/report.json`;
+
+fs.mkdirSync(evidenceDirectory, { recursive: true });
+
+async function selectByLabel(page, ariaLabel, optionLabel) {
+  await page.evaluate(({ ariaLabel, optionLabel }) => {
+    const select = document.querySelector(`select[aria-label="${ariaLabel}"]`);
+    if (!(select instanceof HTMLSelectElement)) throw new Error(`${ariaLabel} control is missing`);
+    const option = [...select.options].find((entry) => entry.textContent?.trim() === optionLabel);
+    if (!option) throw new Error(`${ariaLabel} option is missing: ${optionLabel}`);
+    select.value = option.value;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }, { ariaLabel, optionLabel });
+}
+
+async function selectByValue(page, ariaLabel, value) {
+  await page.evaluate(({ ariaLabel, value }) => {
+    const select = document.querySelector(`select[aria-label="${ariaLabel}"]`);
+    if (!(select instanceof HTMLSelectElement)) throw new Error(`${ariaLabel} control is missing`);
+    select.value = value;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }, { ariaLabel, value });
+}
+
+(async () => {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+  const page = await context.newPage();
+  const pageErrors = [];
+  const consoleErrors = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+
+  try {
+    const response = await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    if (!response?.ok()) throw new Error(`A14 overhead navigation failed: ${response?.status() || 'no response'}`);
+
+    const launch = page.getByRole('button', { name: 'Drive tug / inspect airport' });
+    await launch.waitFor({ state: 'visible', timeout: 30000 });
+    await launch.click();
+
+    const deadline = Date.now() + 180000;
+    let ready = null;
+    while (Date.now() < deadline) {
+      const canvas = page.locator('canvas.trainerCanvas');
+      if (await canvas.count()) {
+        const data = await canvas.evaluate((element) => ({ ...element.dataset }));
+        const state = String(data.terminal4UploadedJetwayLoadState || '');
+        if (data.inspectionMode === 'active'
+          && state === 'ready'
+          && data.terminal4UploadedJetwayCount === '58'
+          && data.terminal4UploadedJetwayConnectorCount === '58') {
+          ready = data;
+          break;
+        }
+        if (/error|failed|failure/i.test(state) || pageErrors.length) {
+          throw new Error(`A14 overhead fleet load failed: state=${state}; pageErrors=${JSON.stringify(pageErrors)}; consoleErrors=${JSON.stringify(consoleErrors.slice(-10))}`);
+        }
+      }
+      await page.waitForTimeout(250);
+    }
+    if (!ready) throw new Error('A14 overhead fleet did not become ready in 180000 ms');
+
+    await selectByLabel(page, 'Inspection location', 'A concourse midpoint');
+    await page.waitForFunction(() => document.querySelector('canvas.trainerCanvas')?.dataset?.inspectionPreset === 'a14', null, { timeout: 30000, polling: 100 });
+    await selectByValue(page, 'Camera view', 'overhead');
+    await page.waitForTimeout(1500);
+
+    const canvas = page.locator('canvas.trainerCanvas');
+    const box = await canvas.boundingBox();
+    if (!box || box.width <= 100 || box.height <= 100) throw new Error('A14 overhead canvas is not visibly rendered');
+    await canvas.screenshot({ path: outputPath, type: 'png' });
+    const bytes = fs.statSync(outputPath).size;
+    if (bytes < 100000) throw new Error(`A14 overhead screenshot is unexpectedly small: ${bytes}`);
+
+    const dataset = await canvas.evaluate((element) => ({ ...element.dataset }));
+    fs.writeFileSync(reportPath, `${JSON.stringify({
+      capturedAtUtc: new Date().toISOString(),
+      bytes,
+      loadState: dataset.terminal4UploadedJetwayLoadState,
+      jetwayCount: dataset.terminal4UploadedJetwayCount,
+      connectorCount: dataset.terminal4UploadedJetwayConnectorCount,
+      terminalConnectedCount: dataset.terminal4TerminalConnectedJetwayCount,
+      staticGateCount: dataset.terminal4UploadedJetwayStaticArticulatedGateCount,
+      staticAuthority: dataset.terminal4UploadedJetwayStaticOwnGateTargetAuthority,
+      a14CornerAuthority: dataset.terminal4UploadedJetwayStaticA14CornerArmAuthority,
+      a14CornerDegrees: dataset.terminal4UploadedJetwayStaticA14CornerArmArticulationDegrees,
+      pageErrors,
+      consoleErrors,
+    }, null, 2)}\n`);
+    console.log(`Captured dedicated A14 corner overhead: ${bytes} bytes; 58 exact jetways ready; articulation=${dataset.terminal4UploadedJetwayStaticA14CornerArmArticulationDegrees} degrees.`);
+  } finally {
+    await browser.close();
+  }
+})().catch((error) => {
+  console.error(error.stack || error.message || String(error));
+  process.exitCode = 1;
+});
