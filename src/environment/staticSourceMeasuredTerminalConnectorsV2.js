@@ -3,7 +3,7 @@ const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fi
 // v3 runtime identifier for compatibility: STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v4"
 const STATIC_CORRIDOR_DETAIL_AUTHORITY = "57-static-compact-panelled-real-wall-fixed-terminal-legs-v2";
 const STATIC_CONNECTOR_DIRECTION_AUTHORITY = "57-static-final-rotunda-to-registered-wall-vector-v1";
-const STATIC_TIGHT_CORNER_NECK_AUTHORITY = "a27-a29-generated-corner-vestibule-neck-1.40m-v6-minimum-offset-0.30m";
+const STATIC_TIGHT_CORNER_NECK_AUTHORITY = "a27-a29-generated-corner-vestibule-neck-1.40m-v7-measured-offset-0.47m";
 const STATIC_WALL_DEPTH_AUTHORITY = "registered-terminal-wall-overlap-owned-once-v1";
 const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0.25;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.25;
@@ -17,7 +17,7 @@ const TERMINAL_HIDDEN_OVERLAP_METERS = 0;
 const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;
 const WIDTH_METERS = 3.02;
 const TIGHT_CORNER_WIDTH_METERS = 1.40;
-const A27_CORNER_LATERAL_OFFSET_METERS = 0.30;
+const A27_CORNER_LATERAL_OFFSET_METERS = 0.47;
 const HEIGHT_METERS = 2.62;
 const PANEL_SPACING_METERS = 0.72;
 
