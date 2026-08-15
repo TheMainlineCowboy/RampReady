@@ -25,5 +25,4 @@ await import(`./prepare-static-final-own-parking-no-crossing-v1.mjs?after-static
 await import(`./prepare-static-a14-corner-arm-articulation-v1.mjs?after-static-own-parking=${Date.now()}`);
 await import(`./prepare-static-overlap-diagnostics-v1.mjs?after-static-overlap=${Date.now()}`);
 await import(`./prepare-static-connector-inclusive-overlap-guard-v1.mjs?after-static-connector-overlap=${Date.now()}`);
-await import(`./prepare-static-a14-connector-inclusive-sweep-v1.mjs?after-static-connector-sweep=${Date.now()}`);
 await import(`./prepare-a1-explicit-wall-to-collar-connector-v17.mjs?after-final-a1-static=${Date.now()}`);
