@@ -5,6 +5,7 @@ const pageUrl = process.env.PAGE_URL || 'http://127.0.0.1:4173/RampReady/';
 const evidenceDirectory = process.env.EVIDENCE_DIR || 'a14-corner-evidence';
 const outputPath = `${evidenceDirectory}/a14-corner-overhead.png`;
 const reportPath = `${evidenceDirectory}/report.json`;
+const cameraAuthority = 'a12-a14-rotunda-corner-fixed-overhead-evidence-v1';
 
 fs.mkdirSync(evidenceDirectory, { recursive: true });
 
@@ -17,15 +18,6 @@ async function selectByLabel(page, ariaLabel, optionLabel) {
     select.value = option.value;
     select.dispatchEvent(new Event('change', { bubbles: true }));
   }, { ariaLabel, optionLabel });
-}
-
-async function selectByValue(page, ariaLabel, value) {
-  await page.evaluate(({ ariaLabel, value }) => {
-    const select = document.querySelector(`select[aria-label="${ariaLabel}"]`);
-    if (!(select instanceof HTMLSelectElement)) throw new Error(`${ariaLabel} control is missing`);
-    select.value = value;
-    select.dispatchEvent(new Event('change', { bubbles: true }));
-  }, { ariaLabel, value });
 }
 
 (async () => {
@@ -67,9 +59,15 @@ async function selectByValue(page, ariaLabel, value) {
     }
     if (!ready) throw new Error('A14 overhead fleet did not become ready in 180000 ms');
 
-    await selectByLabel(page, 'Inspection location', 'A concourse midpoint');
-    await page.waitForFunction(() => document.querySelector('canvas.trainerCanvas')?.dataset?.inspectionPreset === 'a14', null, { timeout: 30000, polling: 100 });
-    await selectByValue(page, 'Camera view', 'overhead');
+    await selectByLabel(page, 'Inspection location', 'A14 corner overhead');
+    await page.waitForFunction((authority) => {
+      const data = document.querySelector('canvas.trainerCanvas')?.dataset;
+      return data?.inspectionPreset === 'a14CornerOverhead'
+        && data?.inspectionCameraAuthority === authority;
+    }, cameraAuthority, { timeout: 30000, polling: 100 });
+    // Do NOT switch to the generic "overhead" camera mode here. That mode is
+    // tug-follow and re-centers on the A14 stand. The dedicated preset's fixed
+    // cameraPosition/cameraTarget is the actual corner-overhead evidence frame.
     await page.waitForTimeout(1500);
 
     const canvas = page.locator('canvas.trainerCanvas');
@@ -91,10 +89,12 @@ async function selectByValue(page, ariaLabel, value) {
       staticAuthority: dataset.terminal4UploadedJetwayStaticOwnGateTargetAuthority,
       a14CornerAuthority: dataset.terminal4UploadedJetwayStaticA14CornerArmAuthority,
       a14CornerDegrees: dataset.terminal4UploadedJetwayStaticA14CornerArmArticulationDegrees,
+      inspectionPreset: dataset.inspectionPreset,
+      inspectionCameraAuthority: dataset.inspectionCameraAuthority,
       pageErrors,
       consoleErrors,
     }, null, 2)}\n`);
-    console.log(`Captured dedicated A14 corner overhead: ${bytes} bytes; 58 exact jetways ready; articulation=${dataset.terminal4UploadedJetwayStaticA14CornerArmArticulationDegrees} degrees.`);
+    console.log(`Captured fixed A12/A14 Rotunda-corner overhead: ${bytes} bytes; 58 exact jetways ready; articulation=${dataset.terminal4UploadedJetwayStaticA14CornerArmArticulationDegrees} degrees; camera=${dataset.inspectionCameraAuthority}.`);
   } finally {
     await browser.close();
   }
