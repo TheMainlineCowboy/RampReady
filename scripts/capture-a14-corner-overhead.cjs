@@ -73,7 +73,18 @@ async function selectByLabel(page, ariaLabel, optionLabel) {
     const canvas = page.locator('canvas.trainerCanvas');
     const box = await canvas.boundingBox();
     if (!box || box.width <= 100 || box.height <= 100) throw new Error('A14 overhead canvas is not visibly rendered');
-    await canvas.screenshot({ path: outputPath, type: 'png' });
+    // A WebGL canvas is continuously repainting, so locator.screenshot() waits
+    // forever for element stability. Capture the same canvas rectangle from the
+    // page viewport instead; this samples the live rendered frame immediately.
+    const viewport = page.viewportSize();
+    const clip = {
+      x: Math.max(0, box.x),
+      y: Math.max(0, box.y),
+      width: Math.min(box.width, viewport.width - Math.max(0, box.x)),
+      height: Math.min(box.height, viewport.height - Math.max(0, box.y)),
+    };
+    if (!(clip.width > 100 && clip.height > 100)) throw new Error(`A14 overhead clip is invalid: ${JSON.stringify(clip)}`);
+    await page.screenshot({ path: outputPath, type: 'png', clip, timeout: 30000 });
     const bytes = fs.statSync(outputPath).size;
     if (bytes < 100000) throw new Error(`A14 overhead screenshot is unexpectedly small: ${bytes}`);
 
