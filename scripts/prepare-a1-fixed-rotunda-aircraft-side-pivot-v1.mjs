@@ -3,6 +3,7 @@ import fs from "node:fs";
 const sourcePath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const photoAuthority = "a1-real-photo-remote-rotunda-fixed-corridor-v1";
 const doglegAuthority = "a1-aug15-photo-fixed-corridor-dogleg-v1";
+const supportAuthority = "a1-aug15-photo-two-permanent-fixed-support-columns-v1";
 const authority = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";
 const targetAuthority = "a1-aircraft-target-follows-intact-parent-relocation-v1";
 let source = fs.readFileSync(sourcePath, "utf8");
@@ -79,10 +80,17 @@ await import(`./prepare-a1-real-photo-fixed-corridor-v1.mjs?real-photo=${Date.no
 // own short/direct measured terminal connectors.
 await import(`./prepare-a1-real-photo-dogleg-v1.mjs?real-photo-dogleg=${Date.now()}`);
 
+// The same A1 photo also shows a permanent structural support pair beneath the
+// fixed corridor before the remote Rotunda. Install exactly two ramp-supported
+// fixed columns here; they are not part of the movable supplied GLB and never
+// rise, telescope or rotate with the wheel-supported bridge.
+await import(`./prepare-a1-photo-fixed-support-columns-v1.mjs?fixed-supports=${Date.now()}`);
+
 source = fs.readFileSync(sourcePath, "utf8");
 for (const required of [
   photoAuthority,
   doglegAuthority,
+  supportAuthority,
   authority,
   targetAuthority,
   "anchor.position.x = rawBglPlacementX;",
@@ -93,6 +101,9 @@ for (const required of [
   "uploadedJetwayA1RemoteSourceRotunda",
   "uploadedJetwayA1LongFixedTerminalCorridor",
   "uploadedJetwayA1FixedCorridorDoglegAuthority",
+  "uploadedJetwayA1PermanentFixedSupportAuthority",
+  "uploadedJetwayA1PermanentFixedSupportColumnCount = 2",
+  "UploadedAirportJetwayA1PermanentFixedSupportColumn_",
   "const rotundaTerminalBranchDirection = bridgeDirection.clone().multiplyScalar(-1).normalize();",
   "const firstFrame = addContinuousShell",
   "const secondFrame = addContinuousShell",
@@ -117,4 +128,4 @@ for (const forbidden of [
   }
 }
 
-console.log(`Prepared A1 under ${photoAuthority} + ${doglegAuthority}: the complete exact Airport_Jetway.glb uses the decoded source model origin and calibrated physical bridge heading, its Rotunda remains remote, the real Terminal 4 facade is connected by the A1-only fixed dogleg corridor, A3+ keep their short/direct connectors, and neither supplied children nor the aircraft target are moved to hide a bad terminal attachment.`);
+console.log(`Prepared A1 under ${photoAuthority} + ${doglegAuthority} + ${supportAuthority}: the complete exact Airport_Jetway.glb uses the decoded source model origin and calibrated physical bridge heading, its Rotunda remains remote, the real Terminal 4 facade is connected by the A1-only fixed dogleg corridor carried by exactly two permanent ramp-supported columns, A3+ keep their short/direct connectors, and neither supplied children nor the aircraft target are moved to hide a bad terminal attachment.`);
