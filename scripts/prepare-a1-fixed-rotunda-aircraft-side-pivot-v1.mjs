@@ -70,4 +70,12 @@ await import(`./prepare-a1-intact-source-axis-alignment-v1.mjs?source-axis=${Dat
 // same hemisphere.
 await import(`./prepare-a1-final-rotunda-continuity-v1.mjs?rotunda-continuity=${Date.now()}`);
 
-console.log("Prepared A1 as one intact supplied Airport_Jetway.glb assembly: measured terminal-wall Rotunda position is preserved, decoded KPHX heading owns the complete parent through the measured Rotunda-to-Tunnel-A axis, the aircraft target follows the same parent relocation, the complete T4_WALK source hierarchy is forbidden as its wall, the Rotunda uses physical through-continuity instead of a cosmetic elbow-angle requirement, and no Tunnel A/B/C/Cab child is reparented or independently yawed.");
+// The Aug. 15 KPHX overhead photo resolves the remaining geometry ambiguity:
+// A1's exact movable jetway owns a remote source Rotunda, while a long elevated
+// fixed corridor/dogleg connects that Rotunda back to the real terminal facade.
+// Apply this after every legacy compact-wall rewrite so no later preparation can
+// pull the supplied Rotunda back against the building or move the aircraft to
+// hide the resulting error.
+await import(`./prepare-a1-real-photo-fixed-corridor-v1.mjs?real-photo=${Date.now()}`);
+
+console.log("Prepared A1 as one intact supplied Airport_Jetway.glb assembly with the Aug. 15 KPHX photo as final geometry authority: the decoded source pose owns the remote Rotunda, the long fixed terminal corridor connects back to the real Terminal 4 facade, the complete T4_WALK hierarchy is forbidden as the wall, and no Tunnel A/B/C/Cab child or aircraft target is moved to hide a placement error.");
