@@ -112,8 +112,8 @@ jobs:
       - name: Install visual test runner
         run: npm install --no-save --package-lock=false @playwright/test@1.55.0
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install Chromium binary
+        run: npx playwright install chromium
 
       - name: Start local production preview
         shell: bash
