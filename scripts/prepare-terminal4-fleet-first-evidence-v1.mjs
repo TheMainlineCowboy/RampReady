@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const verifierPath = "scripts/verify-terminal4-fleet-visual.cjs";
-const marker = "terminal4-fleet-views-before-a1-close-evidence-v1";
+const marker = "terminal4-fleet-views-before-a1-close-evidence-v2";
 let source = fs.readFileSync(verifierPath, "utf8");
 
 if (!source.includes("terminal4-jetway-load-failfast-v1")) {
@@ -34,6 +34,16 @@ if (!source.includes(marker)) {
   // A1 close-camera handshake cannot prevent fleet evidence from being written.
   const captures = {};
 ${fleetLoop}
+  // The A-concourse chase view can visually occlude the A12/A14 90-degree
+  // terminal corner. Capture the same A14 preset from overhead so the fixed
+  // real-wall Rotundas, short terminal legs and downstream arm separation are
+  // directly reviewable rather than inferred from telemetry.
+  await selectByLabel(page, 'Inspection location', 'A concourse midpoint');
+  await waitForPreset(page, 'a14');
+  await selectByValue(page, 'Camera view', 'overhead');
+  await page.waitForTimeout(900);
+  captures['a14-corner-overhead.png'] = await capture(page, 'a14-corner-overhead.png');
+  checkpoint('a14-corner-overhead-complete', { filename: 'a14-corner-overhead.png', bytes: captures['a14-corner-overhead.png'] });
   checkpoint('fleet-views-complete-before-a1-close', { captures: Object.keys(captures) });`;
   source = source.replace(readyAnchor, earlyFleetBlock);
 
@@ -58,8 +68,10 @@ ${fleetLoop}
 for (const required of [
   marker,
   "fleet-views-complete-before-a1-close",
+  "a14-corner-overhead-complete",
   "const captures = {};",
   "a-concourse-fleet.png",
+  "a14-corner-overhead.png",
   "b-concourse-fleet.png",
   "b15-terminal-jetways.png",
 ]) {
@@ -72,4 +84,4 @@ if (fleetLoopOccurrences !== 1) {
 }
 
 fs.writeFileSync(verifierPath, source, "utf8");
-console.log("Prepared Terminal 4 visual evidence to capture A14/B14/B15 fleet views immediately after 58-jetway readiness, before any A1 close-camera wait; geometry and acceptance thresholds are unchanged.");
+console.log("Prepared Terminal 4 visual evidence to capture A14/B14/B15 fleet views plus an A14 corner overhead immediately after 58-jetway readiness, before any A1 close-camera wait; geometry and acceptance thresholds are unchanged.");
