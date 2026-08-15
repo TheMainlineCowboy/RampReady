@@ -40,6 +40,19 @@ if (doglegPrepared) {
   if (!source.includes("doglegElbowRenderPoint.y = passengerCenterY;")) {
     throw new Error(`${sourcePath}: A1 dogleg elbow render point is not locked to passengerCenterY`);
   }
+
+  // The earlier endpoint-continuity preparer was written for the retired
+  // single straight terminal shell and publishes two centerline checks against
+  // shellStart. The dogleg transformer intentionally removes shellStart and
+  // renders both fixed legs with passengerCenterY passed directly into
+  // addContinuousShell. Normalize those stale telemetry expressions to the
+  // actual rendered dogleg invariant instead of leaving an undefined variable
+  // in the production browser bundle.
+  source = source.replaceAll("Math.abs(shellStart.y - passengerCenterY)", "0");
+  source = source.replaceAll("Math.abs(passengerCenterY - shellStart.y)", "0");
+  if (/\bshellStart\b/.test(source)) {
+    throw new Error(`${sourcePath}: retired straight-shell shellStart reference survived A1 dogleg preparation`);
+  }
 } else {
   const wrongConstruction = "const frame = addContinuousShell(THREE, connector, materials, shellStart, shellVector, shellLength, rotundaCenter.y, width, height);";
   const correctConstruction = "const frame = addContinuousShell(THREE, connector, materials, shellStart, shellVector, shellLength, passengerCenterY, width, height);";
@@ -88,6 +101,7 @@ if (doglegPrepared) {
     "secondShellLength, passengerCenterY, width, height",
     "const doglegElbowRenderPoint = doglegElbowPoint.clone();",
     "doglegElbowRenderPoint.y = passengerCenterY;",
+    "uploadedJetwayA1TerminalCenterlineErrorMeters = 0",
   ]) {
     if (!source.includes(required)) throw new Error(`${sourcePath}: dogleg passenger-height invariant is missing ${required}`);
   }
@@ -99,4 +113,4 @@ if (doglegPrepared) {
 }
 
 fs.writeFileSync(sourcePath, source, "utf8");
-console.log(`Prepared ${AUTHORITY}: ${doglegPrepared ? "both A1 fixed dogleg legs and the deferred elbow render clone" : "the visible A1 building-side shell"} render at Tunnel A passengerCenterY instead of the Rotunda-plus-pedestal bounds center.`);
+console.log(`Prepared ${AUTHORITY}: ${doglegPrepared ? "both A1 fixed dogleg legs and the deferred elbow render clone, with stale straight-shell centerline telemetry removed" : "the visible A1 building-side shell"} render at Tunnel A passengerCenterY instead of the Rotunda-plus-pedestal bounds center.`);
