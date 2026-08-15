@@ -70,4 +70,10 @@ await import(`./prepare-a1-intact-source-axis-alignment-v1.mjs?source-axis=${Dat
 // same hemisphere.
 await import(`./prepare-a1-final-rotunda-continuity-v1.mjs?rotunda-continuity=${Date.now()}`);
 
+// Measure the supplied GLB itself after the same axis/ground normalization used
+// by the live loader. This is diagnostic only: no source node or runtime pose is
+// changed. It replaces visual guesses about terminal-side height with exact
+// Rotunda/Tunnel/Cab bounds before the 3D attachment repair is applied.
+await import(`./inspect-exact-jetway-vertical-geometry.mjs?vertical-geometry=${Date.now()}`);
+
 console.log("Prepared A1 as one intact supplied Airport_Jetway.glb assembly: measured terminal-wall Rotunda position is preserved, decoded KPHX heading owns the complete parent through the measured Rotunda-to-Tunnel-A axis, the aircraft target follows the same parent relocation, the complete T4_WALK source hierarchy is forbidden as its wall, the Rotunda uses physical through-continuity instead of a cosmetic elbow-angle requirement, and no Tunnel A/B/C/Cab child is reparented or independently yawed.");
