@@ -3,13 +3,14 @@ const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fi
 // v3 runtime identifier for compatibility: STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v4"
 const STATIC_CORRIDOR_DETAIL_AUTHORITY = "57-static-compact-panelled-real-wall-fixed-terminal-legs-v2";
 const STATIC_CONNECTOR_DIRECTION_AUTHORITY = "57-static-final-rotunda-to-registered-wall-vector-v1";
-const STATIC_TIGHT_CORNER_NECK_AUTHORITY = "a27-a29-generated-corner-vestibule-neck-1.40m-v1";
+const STATIC_TIGHT_CORNER_NECK_AUTHORITY = "a27-a29-generated-corner-vestibule-neck-1.40m-v2-a27-offset";
 const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0.25;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.25;
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.30;
 const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;
 const WIDTH_METERS = 3.02;
 const TIGHT_CORNER_WIDTH_METERS = 1.40;
+const A27_CORNER_LATERAL_OFFSET_METERS = 0.45;
 const HEIGHT_METERS = 2.62;
 const PANEL_SPACING_METERS = 0.72;
 
@@ -50,7 +51,25 @@ function normalizedTerminalDirection(placement) {
   return { x: x / magnitude, z: z / magnitude, magnitude };
 }
 
-function buildShellTransforms(placement) {
+function measuredCornerLateralOffsetMeters(placement, placementsByGate, sideX, sideZ) {
+  if (placement.gate !== "A27") return 0;
+  const neighbor = placementsByGate.get("A29");
+  if (!neighbor) throw new Error("Static A27 corner neck cannot resolve neighboring Gate A29");
+  const neighborDx = Number(neighbor.x) - Number(placement.x);
+  const neighborDz = Number(neighbor.z) - Number(placement.z);
+  const lateralTowardNeighbor = neighborDx * sideX + neighborDz * sideZ;
+  if (!Number.isFinite(lateralTowardNeighbor) || Math.abs(lateralTowardNeighbor) < 0.5) {
+    throw new Error(`Static A27/A29 corner lateral relationship is invalid: ${lateralTowardNeighbor}`);
+  }
+  // At the centered 1.40 m neck, the connector-inclusive guard measured 0.381 m
+  // roof/floor penetration and 0.130 m A29-facing side-wall penetration. Move
+  // the complete generated A27 neck 0.45 m AWAY from A29. That preserves the
+  // full 1.40 m neck width while retracting the offending edge by 0.45 m and
+  // leaves ~0.07 m measured margin over the worst prior penetration.
+  return -Math.sign(lateralTowardNeighbor) * A27_CORNER_LATERAL_OFFSET_METERS;
+}
+
+function buildShellTransforms(placement, placementsByGate) {
   const rotundaX = Number(placement.x);
   const rotundaZ = Number(placement.z);
   const centerY = Number(placement.rotundaY) || 4.1;
@@ -87,13 +106,17 @@ function buildShellTransforms(placement) {
     throw new Error(`Static ${placement.gate} compact terminal connector exceeds the hard visual envelope: ${shellLength}`);
   }
   const shellCenterDistance = shellStartDistance + shellLength * 0.5;
-  const centerX = rotundaX + direction.x * shellCenterDistance;
-  const centerZ = rotundaZ + direction.z * shellCenterDistance;
   const widthMeters = connectorWidthMeters(placement);
   if (!(widthMeters >= 1.2 && widthMeters <= WIDTH_METERS)) {
     throw new Error(`Static ${placement.gate} connector width is invalid: ${widthMeters}`);
   }
   const halfWidth = widthMeters * 0.5;
+  const lateralOffsetMeters = measuredCornerLateralOffsetMeters(placement, placementsByGate, sideX, sideZ);
+  if (Math.abs(lateralOffsetMeters) + halfWidth > clearRotundaRadius - 0.1) {
+    throw new Error(`Static ${placement.gate} offset connector cannot remain inside its supplied Rotunda opening: offset=${lateralOffsetMeters}, halfWidth=${halfWidth}, radius=${clearRotundaRadius}`);
+  }
+  const centerX = rotundaX + direction.x * shellCenterDistance + sideX * lateralOffsetMeters;
+  const centerZ = rotundaZ + direction.z * shellCenterDistance + sideZ * lateralOffsetMeters;
   const floorY = centerY - HEIGHT_METERS * 0.5;
 
   const transforms = [];
@@ -113,8 +136,8 @@ function buildShellTransforms(placement) {
   let panelRibCount = 0;
   for (let along = 0.34; along < shellLength - 0.20; along += PANEL_SPACING_METERS) {
     const stationDistance = shellStartDistance + along;
-    const ribX = rotundaX + direction.x * stationDistance;
-    const ribZ = rotundaZ + direction.z * stationDistance;
+    const ribX = rotundaX + direction.x * stationDistance + sideX * lateralOffsetMeters;
+    const ribZ = rotundaZ + direction.z * stationDistance + sideZ * lateralOffsetMeters;
     for (const side of [-1, 1]) {
       push(
         [ribX + sideX * side * (halfWidth + 0.018), centerY, ribZ + sideZ * side * (halfWidth + 0.018)],
@@ -134,6 +157,7 @@ function buildShellTransforms(placement) {
     terminalWallOverlapMeters,
     wallDistance,
     widthMeters,
+    lateralOffsetMeters,
     panelRibCount,
   };
 }
@@ -170,12 +194,14 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
     throw new Error(`Static compact terminal connectors expected 57 gates, received ${staticPlacements.length}`);
   }
 
-  const measured = staticPlacements.map(buildShellTransforms);
+  const placementsByGate = new Map(staticPlacements.map((placement) => [placement.gate, placement]));
+  const measured = staticPlacements.map((placement) => buildShellTransforms(placement, placementsByGate));
   const transforms = measured.flatMap((entry) => entry.transforms);
   const visibleLengths = measured.map((entry) => entry.visibleTerminalLegMeters);
   const wallOverlaps = measured.map((entry) => entry.terminalWallOverlapMeters);
   const wallDistances = measured.map((entry) => entry.wallDistance);
   const widths = measured.map((entry) => entry.widthMeters);
+  const lateralOffsets = measured.map((entry) => entry.lateralOffsetMeters);
   const panelRibCount = measured.reduce((total, entry) => total + entry.panelRibCount, 0);
   const material = new THREE.MeshStandardMaterial({
     name: "Terminal 4 compact real-wall fixed terminal connector shell",
@@ -200,7 +226,9 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   group.userData.maximumRotundaCenterToWallMeters = Math.max(...wallDistances);
   group.userData.minimumConnectorWidthMeters = Math.min(...widths);
   group.userData.maximumConnectorWidthMeters = Math.max(...widths);
+  group.userData.maximumConnectorLateralOffsetMeters = Math.max(...lateralOffsets.map(Math.abs));
   group.userData.a27A29CornerConnectorWidthMeters = TIGHT_CORNER_WIDTH_METERS;
+  group.userData.a27CornerConnectorLateralOffsetMeters = A27_CORNER_LATERAL_OFFSET_METERS;
   group.userData.terminalHiddenOverlapMeters = TERMINAL_HIDDEN_OVERLAP_METERS;
   group.userData.rotundaShellOverlapMeters = ROTUNDA_SHELL_OVERLAP_METERS;
   group.userData.perGateMeasuredTerminalVestibules = true;
@@ -228,6 +256,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
     maximumTerminalWallRotundaOverlapMeters: group.userData.maximumTerminalWallRotundaOverlapMeters,
     minimumConnectorWidthMeters: group.userData.minimumConnectorWidthMeters,
     maximumConnectorWidthMeters: group.userData.maximumConnectorWidthMeters,
+    maximumConnectorLateralOffsetMeters: group.userData.maximumConnectorLateralOffsetMeters,
     panelRibCount,
     supportStationCount: 0,
   };
