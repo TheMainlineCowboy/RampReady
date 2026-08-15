@@ -1,0 +1,2 @@
+Post-merge verification trigger for the merged Terminal 4 static-corner evidence only.
+No simulator geometry, runtime, or production source is changed by this file.
