@@ -3,12 +3,13 @@ import fs from "node:fs";
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const A1_CAMERA_AUTHORITY = "fixed-terminal-wall-rotunda-joint-evidence-a1-v10";
 const STATIC_FLEET_CAMERA_AUTHORITY = "source-gate-jetway-terminal-diagonal-fleet-v1";
+const A14_CORNER_OVERHEAD_CAMERA_AUTHORITY = "a12-a14-rotunda-corner-fixed-overhead-evidence-v1";
 const CANONICAL_ROUTE_AUTHORITY = "source-gate-apron-presets-with-exact-a1-terminal-joint-subview-and-chase-a14-b14-b15-v11";
 const VISUAL_BRIDGE_AUTHORITY = "exact-runtime-inspection-callback-visual-evidence-bridge-v2";
 let source = fs.readFileSync(trainerPath, "utf8");
 
 const a14B14Pattern = /  a14: Object\.freeze\(\{[\s\S]*?\n  b14: Object\.freeze\(\{[^\n]+\}\),/;
-const exactFleetPresets = `  // Fixed fleet-evidence cameras are aimed at the actual package-authored jetway positions,\n  // not at the inspection tug. A14 source jetway: 176.13/-56.39, parking: 203.78/-76.08.\n  // B14 source jetway: 164.41/180.73, parking: 200.87/159.42.\n  a14: Object.freeze({\n    id: "a14", label: "A concourse midpoint", x: 203.78, z: -76.08, yaw: 2.88,\n    cameraYaw: 2.19, cameraDistance: 32,\n    cameraPosition: Object.freeze([226.0, 16.0, -111.0]),\n    cameraTarget: Object.freeze([184.0, 4.0, -61.0]),\n    cameraAuthority: "${STATIC_FLEET_CAMERA_AUTHORITY}",\n  }),\n  b14: Object.freeze({\n    id: "b14", label: "B concourse midpoint", x: 200.87, z: 159.42, yaw: 2.8,\n    cameraYaw: 2.10, cameraDistance: 32,\n    cameraPosition: Object.freeze([226.0, 16.0, 132.0]),\n    cameraTarget: Object.freeze([173.0, 4.0, 181.0]),\n    cameraAuthority: "${STATIC_FLEET_CAMERA_AUTHORITY}",\n  }),`;
+const exactFleetPresets = `  // Fixed fleet-evidence cameras are aimed at the actual package-authored jetway positions,\n  // not at the inspection tug. A14 source jetway: 176.13/-56.39, parking: 203.78/-76.08.\n  // B14 source jetway: 164.41/180.73, parking: 200.87/159.42.\n  a14: Object.freeze({\n    id: "a14", label: "A concourse midpoint", x: 203.78, z: -76.08, yaw: 2.88,\n    cameraYaw: 2.19, cameraDistance: 32,\n    cameraPosition: Object.freeze([226.0, 16.0, -111.0]),\n    cameraTarget: Object.freeze([184.0, 4.0, -61.0]),\n    cameraAuthority: "${STATIC_FLEET_CAMERA_AUTHORITY}",\n  }),\n  // Dedicated near-top-down evidence frame for the 90-degree A12/A14 corner.\n  // It covers the two measured real-wall Rotundas and both downstream arms\n  // without falling back to the generic tug-follow overhead camera.\n  a14CornerOverhead: Object.freeze({\n    id: "a14CornerOverhead", label: "A14 corner overhead", x: 203.78, z: -76.08, yaw: 2.88,\n    cameraYaw: 0, cameraDistance: 75,\n    cameraPosition: Object.freeze([184.0, 75.0, -79.0]),\n    cameraTarget: Object.freeze([184.0, 0.5, -80.0]),\n    cameraAuthority: "${A14_CORNER_OVERHEAD_CAMERA_AUTHORITY}",\n  }),\n  b14: Object.freeze({\n    id: "b14", label: "B concourse midpoint", x: 200.87, z: 159.42, yaw: 2.8,\n    cameraYaw: 2.10, cameraDistance: 32,\n    cameraPosition: Object.freeze([226.0, 16.0, 132.0]),\n    cameraTarget: Object.freeze([173.0, 4.0, 181.0]),\n    cameraAuthority: "${STATIC_FLEET_CAMERA_AUTHORITY}",\n  }),`;
 if (!a14B14Pattern.test(source)) {
   throw new Error(`${trainerPath}: A14/B14 inspection preset anchor is missing`);
 }
@@ -43,9 +44,13 @@ if (temporaryBridgePattern.test(source)) {
 
 for (const token of [
   'id: "a14", label: "A concourse midpoint"',
+  'id: "a14CornerOverhead", label: "A14 corner overhead"',
   'id: "b14", label: "B concourse midpoint"',
   'cameraPosition: Object.freeze([226.0, 16.0, -111.0])',
   'cameraTarget: Object.freeze([184.0, 4.0, -61.0])',
+  'cameraPosition: Object.freeze([184.0, 75.0, -79.0])',
+  'cameraTarget: Object.freeze([184.0, 0.5, -80.0])',
+  `cameraAuthority: "${A14_CORNER_OVERHEAD_CAMERA_AUTHORITY}"`,
   'cameraPosition: Object.freeze([226.0, 16.0, 132.0])',
   'cameraTarget: Object.freeze([173.0, 4.0, 181.0])',
   `cameraAuthority: "${STATIC_FLEET_CAMERA_AUTHORITY}"`,
@@ -72,4 +77,4 @@ if (source.includes("visual-evidence-source-gate-presets-v8")) {
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-terminal4-jetway-source-registration-v1.mjs?terminal4-registration=${Date.now()}`);
-console.log("Prepared exact A1 terminal-joint evidence plus fixed A14/B14 fleet cameras aimed at the package-authored jetway/terminal positions instead of empty apron pavement.");
+console.log("Prepared exact A1 terminal-joint evidence plus fixed A14/B14 fleet cameras and a dedicated fixed A12/A14 corner overhead camera aimed at the package-authored jetway/terminal positions instead of the inspection tug.");
