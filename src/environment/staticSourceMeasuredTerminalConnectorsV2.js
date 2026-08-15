@@ -3,10 +3,17 @@ const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fi
 // v3 runtime identifier for compatibility: STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v4"
 const STATIC_CORRIDOR_DETAIL_AUTHORITY = "57-static-compact-panelled-real-wall-fixed-terminal-legs-v2";
 const STATIC_CONNECTOR_DIRECTION_AUTHORITY = "57-static-final-rotunda-to-registered-wall-vector-v1";
-const STATIC_TIGHT_CORNER_NECK_AUTHORITY = "a27-a29-generated-corner-vestibule-neck-1.40m-v3-a27-offset-0.60m";
+const STATIC_TIGHT_CORNER_NECK_AUTHORITY = "a27-a29-generated-corner-vestibule-neck-1.40m-v4-correct-wall-depth";
+const STATIC_WALL_DEPTH_AUTHORITY = "registered-terminal-wall-overlap-owned-once-v1";
 const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0.25;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.25;
-const TERMINAL_HIDDEN_OVERLAP_METERS = 0.30;
+// The final Rotunda->wall registration already subtracts the intended terminal
+// overlap (0.18 m in the shipping static registration). Adding another hidden
+// extension here double-counted wall penetration and made every sleeve 0.30 m
+// too deep. The shell now spans only visible leg + Rotunda seam overlap; because
+// the wall position already includes terminalWallOverlapMeters, its far end lands
+// exactly terminalWallOverlapMeters inside the facade.
+const TERMINAL_HIDDEN_OVERLAP_METERS = 0;
 const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;
 const WIDTH_METERS = 3.02;
 const TIGHT_CORNER_WIDTH_METERS = 1.40;
@@ -15,22 +22,12 @@ const HEIGHT_METERS = 2.62;
 const PANEL_SPACING_METERS = 0.72;
 
 function connectorWidthMeters(placement) {
-  // A27/A29 are a genuine 90-degree terminal corner. Their exact supplied GLB
-  // bodies and Rotundas already clear each other, but two generic 3.02 m-wide
-  // generated fixed sleeves cannot occupy the same inside-corner volume. Keep
-  // every supplied model transform and wall registration untouched; narrow only
-  // these generated vestibule necks to a realistic passenger portal width.
   return placement.gate === "A27" || placement.gate === "A29"
     ? TIGHT_CORNER_WIDTH_METERS
     : WIDTH_METERS;
 }
 
 function normalizedTerminalDirection(placement) {
-  // The compact sleeve is final geometry, so it must follow the FINAL physical
-  // Rotunda -> registered-facade relationship. connectorTowardX/Z came from the
-  // earlier wall-search ray and can become stale when a corner gate is projected
-  // onto an authored facade plane (A12 was the visible failure: its final wall
-  // was due +Z while the stale ray still pointed diagonally into A14).
   const rotundaX = Number(placement.x);
   const rotundaZ = Number(placement.z);
   const wallX = Number(placement.staticFacadeWallX);
@@ -61,12 +58,6 @@ function measuredCornerLateralOffsetMeters(placement, placementsByGate, sideX, s
   if (!Number.isFinite(lateralTowardNeighbor) || Math.abs(lateralTowardNeighbor) < 0.5) {
     throw new Error(`Static A27/A29 corner lateral relationship is invalid: ${lateralTowardNeighbor}`);
   }
-  // The centered 1.40 m neck still intersected A29's Rotunda by 0.381 m. A
-  // measured 0.45 m move away from A29 removed every Rotunda/Tunnel collision,
-  // leaving only generated-sleeve-to-sleeve overlap with a 0.102 m maximum.
-  // Move the complete A27 neck another 0.15 m away. The final 0.60 m offset
-  // preserves the full 1.40 m passage width and adds about 0.048 m margin over
-  // that measured residual while remaining well inside the supplied Rotunda.
   return -Math.sign(lateralTowardNeighbor) * A27_CORNER_LATERAL_OFFSET_METERS;
 }
 
@@ -100,9 +91,13 @@ function buildShellTransforms(placement, placementsByGate) {
   const sideX = Math.cos(yaw);
   const sideZ = -Math.sin(yaw);
   const shellStartDistance = clearRotundaRadius - ROTUNDA_SHELL_OVERLAP_METERS;
-  const shellLength = visibleTerminalLegMeters + TERMINAL_HIDDEN_OVERLAP_METERS + ROTUNDA_SHELL_OVERLAP_METERS;
-  const maximumAllowedShellLength = MAXIMUM_VISIBLE_TERMINAL_LEG_METERS
-    + TERMINAL_HIDDEN_OVERLAP_METERS + ROTUNDA_SHELL_OVERLAP_METERS;
+  const shellLength = visibleTerminalLegMeters + ROTUNDA_SHELL_OVERLAP_METERS;
+  const expectedShellEndDistance = wallDistance + terminalWallOverlapMeters;
+  const actualShellEndDistance = shellStartDistance + shellLength;
+  if (Math.abs(actualShellEndDistance - expectedShellEndDistance) > 0.02) {
+    throw new Error(`Static ${placement.gate} sleeve depth does not end at the registered wall overlap: ${actualShellEndDistance} vs ${expectedShellEndDistance}`);
+  }
+  const maximumAllowedShellLength = MAXIMUM_VISIBLE_TERMINAL_LEG_METERS + ROTUNDA_SHELL_OVERLAP_METERS;
   if (!(shellLength > 0.2 && shellLength <= maximumAllowedShellLength + 1e-6)) {
     throw new Error(`Static ${placement.gate} compact terminal connector exceeds the hard visual envelope: ${shellLength}`);
   }
@@ -123,8 +118,6 @@ function buildShellTransforms(placement, placementsByGate) {
   const transforms = [];
   const push = (position, scale) => transforms.push({ position, yaw, scale });
 
-  // This geometry is only the short fixed sleeve between the supplied Rotunda
-  // and the real terminal facade. It must never become a substitute jetway.
   push([centerX, centerY + HEIGHT_METERS * 0.5, centerZ], [widthMeters, 0.16, shellLength]);
   push([centerX, floorY, centerZ], [widthMeters, 0.14, shellLength]);
   for (const side of [-1, 1]) {
@@ -159,6 +152,8 @@ function buildShellTransforms(placement, placementsByGate) {
     wallDistance,
     widthMeters,
     lateralOffsetMeters,
+    shellLength,
+    wallPenetrationMeters: terminalWallOverlapMeters,
     panelRibCount,
   };
 }
@@ -203,6 +198,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   const wallDistances = measured.map((entry) => entry.wallDistance);
   const widths = measured.map((entry) => entry.widthMeters);
   const lateralOffsets = measured.map((entry) => entry.lateralOffsetMeters);
+  const shellLengths = measured.map((entry) => entry.shellLength);
   const panelRibCount = measured.reduce((total, entry) => total + entry.panelRibCount, 0);
   const material = new THREE.MeshStandardMaterial({
     name: "Terminal 4 compact real-wall fixed terminal connector shell",
@@ -217,6 +213,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   group.userData.batchAuthority = STATIC_SOLID_VESTIBULE_AUTHORITY;
   group.userData.detailAuthority = STATIC_CORRIDOR_DETAIL_AUTHORITY;
   group.userData.directionAuthority = STATIC_CONNECTOR_DIRECTION_AUTHORITY;
+  group.userData.wallDepthAuthority = STATIC_WALL_DEPTH_AUTHORITY;
   group.userData.tightCornerNeckAuthority = STATIC_TIGHT_CORNER_NECK_AUTHORITY;
   group.userData.staticGateCount = 57;
   group.userData.minimumVisibleTerminalLegMeters = Math.min(...visibleLengths);
@@ -227,6 +224,8 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   group.userData.maximumRotundaCenterToWallMeters = Math.max(...wallDistances);
   group.userData.minimumConnectorWidthMeters = Math.min(...widths);
   group.userData.maximumConnectorWidthMeters = Math.max(...widths);
+  group.userData.minimumConnectorShellLengthMeters = Math.min(...shellLengths);
+  group.userData.maximumConnectorShellLengthMeters = Math.max(...shellLengths);
   group.userData.maximumConnectorLateralOffsetMeters = Math.max(...lateralOffsets.map(Math.abs));
   group.userData.a27A29CornerConnectorWidthMeters = TIGHT_CORNER_WIDTH_METERS;
   group.userData.a27CornerConnectorLateralOffsetMeters = A27_CORNER_LATERAL_OFFSET_METERS;
@@ -235,6 +234,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   group.userData.perGateMeasuredTerminalVestibules = true;
   group.userData.sourceMeasuredRealWallConnectors = true;
   group.userData.finalRegisteredWallDirection = true;
+  group.userData.registeredWallOverlapOwnedOnce = true;
   group.userData.panelRibCount = panelRibCount;
   group.userData.supportStationCount = 0;
   group.userData.groundSupportedFixedCorridors = false;
@@ -251,12 +251,15 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
     authority: STATIC_SOLID_VESTIBULE_AUTHORITY,
     detailAuthority: STATIC_CORRIDOR_DETAIL_AUTHORITY,
     directionAuthority: STATIC_CONNECTOR_DIRECTION_AUTHORITY,
+    wallDepthAuthority: STATIC_WALL_DEPTH_AUTHORITY,
     tightCornerNeckAuthority: STATIC_TIGHT_CORNER_NECK_AUTHORITY,
     minimumVisibleTerminalLegMeters: group.userData.minimumVisibleTerminalLegMeters,
     maximumVisibleTerminalLegMeters: group.userData.maximumVisibleTerminalLegMeters,
     maximumTerminalWallRotundaOverlapMeters: group.userData.maximumTerminalWallRotundaOverlapMeters,
     minimumConnectorWidthMeters: group.userData.minimumConnectorWidthMeters,
     maximumConnectorWidthMeters: group.userData.maximumConnectorWidthMeters,
+    minimumConnectorShellLengthMeters: group.userData.minimumConnectorShellLengthMeters,
+    maximumConnectorShellLengthMeters: group.userData.maximumConnectorShellLengthMeters,
     maximumConnectorLateralOffsetMeters: group.userData.maximumConnectorLateralOffsetMeters,
     panelRibCount,
     supportStationCount: 0,
@@ -268,4 +271,5 @@ export {
   STATIC_CORRIDOR_DETAIL_AUTHORITY,
   STATIC_CONNECTOR_DIRECTION_AUTHORITY,
   STATIC_TIGHT_CORNER_NECK_AUTHORITY,
+  STATIC_WALL_DEPTH_AUTHORITY,
 };
