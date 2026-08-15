@@ -2,6 +2,7 @@ const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fi
 // Contract marker for the compact-geometry migration test; readiness retains the
 // v3 runtime identifier for compatibility: STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v4"
 const STATIC_CORRIDOR_DETAIL_AUTHORITY = "57-static-compact-panelled-real-wall-fixed-terminal-legs-v2";
+const STATIC_CONNECTOR_DIRECTION_AUTHORITY = "57-static-final-rotunda-to-registered-wall-vector-v1";
 const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0.25;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.25;
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.30;
@@ -11,13 +12,29 @@ const HEIGHT_METERS = 2.62;
 const PANEL_SPACING_METERS = 0.72;
 
 function normalizedTerminalDirection(placement) {
-  const x = Number(placement.connectorTowardX);
-  const z = Number(placement.connectorTowardZ);
-  const magnitude = Math.hypot(x, z);
-  if (!(magnitude > 0.95 && magnitude < 1.05)) {
-    throw new Error(`Static ${placement.gate} terminal direction is invalid: ${x},${z}`);
+  // The compact sleeve is final geometry, so it must follow the FINAL physical
+  // Rotunda -> registered-facade relationship. connectorTowardX/Z came from the
+  // earlier wall-search ray and can become stale when a corner gate is projected
+  // onto an authored facade plane (A12 was the visible failure: its final wall
+  // was due +Z while the stale ray still pointed diagonally into A14).
+  const rotundaX = Number(placement.x);
+  const rotundaZ = Number(placement.z);
+  const wallX = Number(placement.staticFacadeWallX);
+  const wallZ = Number(placement.staticFacadeWallZ);
+  const registeredDistance = Number(placement.staticResolvedRotundaCenterToWallMeters ?? placement.wallConnectorLength);
+  if (![rotundaX, rotundaZ, wallX, wallZ, registeredDistance].every(Number.isFinite)) {
+    throw new Error(`Static ${placement.gate} final Rotunda/wall connector direction evidence is incomplete`);
   }
-  return { x: x / magnitude, z: z / magnitude };
+  const x = wallX - rotundaX;
+  const z = wallZ - rotundaZ;
+  const magnitude = Math.hypot(x, z);
+  if (!(magnitude > 0.2 && magnitude < 8)) {
+    throw new Error(`Static ${placement.gate} final Rotunda-to-wall direction is invalid: ${x},${z} (${magnitude} m)`);
+  }
+  if (Math.abs(magnitude - registeredDistance) > 0.02) {
+    throw new Error(`Static ${placement.gate} final Rotunda-to-wall vector disagrees with registration: ${magnitude} vs ${registeredDistance} m`);
+  }
+  return { x: x / magnitude, z: z / magnitude, magnitude };
 }
 
 function buildShellTransforms(placement) {
@@ -153,6 +170,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   group.userData.connectorAuthority = STATIC_SOLID_VESTIBULE_AUTHORITY;
   group.userData.batchAuthority = STATIC_SOLID_VESTIBULE_AUTHORITY;
   group.userData.detailAuthority = STATIC_CORRIDOR_DETAIL_AUTHORITY;
+  group.userData.directionAuthority = STATIC_CONNECTOR_DIRECTION_AUTHORITY;
   group.userData.staticGateCount = 57;
   group.userData.minimumVisibleTerminalLegMeters = Math.min(...visibleLengths);
   group.userData.maximumVisibleTerminalLegMeters = Math.max(...visibleLengths);
@@ -164,6 +182,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   group.userData.rotundaShellOverlapMeters = ROTUNDA_SHELL_OVERLAP_METERS;
   group.userData.perGateMeasuredTerminalVestibules = true;
   group.userData.sourceMeasuredRealWallConnectors = true;
+  group.userData.finalRegisteredWallDirection = true;
   group.userData.panelRibCount = panelRibCount;
   group.userData.supportStationCount = 0;
   group.userData.groundSupportedFixedCorridors = false;
@@ -179,6 +198,7 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
     instanceCount: transforms.length,
     authority: STATIC_SOLID_VESTIBULE_AUTHORITY,
     detailAuthority: STATIC_CORRIDOR_DETAIL_AUTHORITY,
+    directionAuthority: STATIC_CONNECTOR_DIRECTION_AUTHORITY,
     minimumVisibleTerminalLegMeters: group.userData.minimumVisibleTerminalLegMeters,
     maximumVisibleTerminalLegMeters: group.userData.maximumVisibleTerminalLegMeters,
     maximumTerminalWallRotundaOverlapMeters: group.userData.maximumTerminalWallRotundaOverlapMeters,
@@ -187,4 +207,4 @@ export function addStaticSolidTerminalVestibules(THREE, fleet, placements) {
   };
 }
 
-export { STATIC_SOLID_VESTIBULE_AUTHORITY, STATIC_CORRIDOR_DETAIL_AUTHORITY };
+export { STATIC_SOLID_VESTIBULE_AUTHORITY, STATIC_CORRIDOR_DETAIL_AUTHORITY, STATIC_CONNECTOR_DIRECTION_AUTHORITY };
