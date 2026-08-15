@@ -53,9 +53,7 @@ if (!elbow.includes(PHOTO_AUTHORITY)) {
     .replaceAll(
       'A1 measured wall-to-Rotunda fixed leg is invalid:',
       'A1 real-photo fixed terminal corridor length is invalid:',
-    )
-    .replaceAll("A1 fixed-wall compact terminal-side shell", "A1 remote fixed terminal-side corridor shell")
-    .replaceAll("A1 fixed-wall terminal-side panel seams", "A1 remote fixed corridor panel seams");
+    );
 
   const telemetryAnchor = "  group.userData.uploadedJetwayA1SourceLockedElbowAuthority = SOURCE_REGISTERED_A1_ELBOW_AUTHORITY;";
   if (!elbow.includes(telemetryAnchor)) {
