@@ -3,14 +3,14 @@ const STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fi
 // v3 runtime identifier for compatibility: STATIC_SOLID_VESTIBULE_AUTHORITY = "57-static-source-measured-real-wall-fixed-terminal-legs-v4"
 const STATIC_CORRIDOR_DETAIL_AUTHORITY = "57-static-compact-panelled-real-wall-fixed-terminal-legs-v2";
 const STATIC_CONNECTOR_DIRECTION_AUTHORITY = "57-static-final-rotunda-to-registered-wall-vector-v1";
-const STATIC_TIGHT_CORNER_NECK_AUTHORITY = "a27-a29-generated-corner-vestibule-neck-1.40m-v2-a27-offset";
+const STATIC_TIGHT_CORNER_NECK_AUTHORITY = "a27-a29-generated-corner-vestibule-neck-1.40m-v3-a27-offset-0.60m";
 const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 0.25;
 const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 1.25;
 const TERMINAL_HIDDEN_OVERLAP_METERS = 0.30;
 const ROTUNDA_SHELL_OVERLAP_METERS = 0.12;
 const WIDTH_METERS = 3.02;
 const TIGHT_CORNER_WIDTH_METERS = 1.40;
-const A27_CORNER_LATERAL_OFFSET_METERS = 0.45;
+const A27_CORNER_LATERAL_OFFSET_METERS = 0.60;
 const HEIGHT_METERS = 2.62;
 const PANEL_SPACING_METERS = 0.72;
 
@@ -61,11 +61,12 @@ function measuredCornerLateralOffsetMeters(placement, placementsByGate, sideX, s
   if (!Number.isFinite(lateralTowardNeighbor) || Math.abs(lateralTowardNeighbor) < 0.5) {
     throw new Error(`Static A27/A29 corner lateral relationship is invalid: ${lateralTowardNeighbor}`);
   }
-  // At the centered 1.40 m neck, the connector-inclusive guard measured 0.381 m
-  // roof/floor penetration and 0.130 m A29-facing side-wall penetration. Move
-  // the complete generated A27 neck 0.45 m AWAY from A29. That preserves the
-  // full 1.40 m neck width while retracting the offending edge by 0.45 m and
-  // leaves ~0.07 m measured margin over the worst prior penetration.
+  // The centered 1.40 m neck still intersected A29's Rotunda by 0.381 m. A
+  // measured 0.45 m move away from A29 removed every Rotunda/Tunnel collision,
+  // leaving only generated-sleeve-to-sleeve overlap with a 0.102 m maximum.
+  // Move the complete A27 neck another 0.15 m away. The final 0.60 m offset
+  // preserves the full 1.40 m passage width and adds about 0.048 m margin over
+  // that measured residual while remaining well inside the supplied Rotunda.
   return -Math.sign(lateralTowardNeighbor) * A27_CORNER_LATERAL_OFFSET_METERS;
 }
 
