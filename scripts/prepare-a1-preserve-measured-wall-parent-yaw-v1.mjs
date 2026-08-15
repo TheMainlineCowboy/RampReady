@@ -41,7 +41,14 @@ if (source.includes(photoAuthority)) {
   ]) {
     if (source.includes(forbidden)) throw new Error(`${runtimePath}: stale measured-wall yaw ownership survived real-photo authority: ${forbidden}`);
   }
-  console.log(`Skipped ${marker}: ${photoAuthority} keeps the complete exact A1 parent on its decoded source pose/physical bridge heading while the fixed corridor owns the terminal-side connection.`);
+
+  // Preserve the useful half of the old wall-normal pass: publish the exact
+  // selected BGATE1 facade point and oriented wall normal into the final A1
+  // placement so correctUploadedJetwayInstallationV1 can build the fixed
+  // corridor to the real terminal. The photo-safe publisher is forbidden from
+  // changing A1 yaw or demoting the decoded source heading.
+  await import(`./prepare-a1-photo-explicit-terminal-wall-v1.mjs?photo-wall=${Date.now()}`);
+  console.log(`Skipped ${marker} yaw rewrite: ${photoAuthority} keeps the complete exact A1 parent on its decoded source pose/physical bridge heading while the explicit BGATE1 wall endpoint owns the fixed terminal corridor.`);
 } else {
   if (!source.includes(marker)) {
     source = source.replaceAll(legacySourceAuthority, measuredWallAuthority);
