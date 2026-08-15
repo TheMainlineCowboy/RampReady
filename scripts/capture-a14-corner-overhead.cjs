@@ -1,4 +1,3 @@
-// Post-merge verification trigger only; no runtime behavior change.
 const { chromium } = require('@playwright/test');
 const fs = require('node:fs');
 
