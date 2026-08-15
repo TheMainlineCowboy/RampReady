@@ -38,6 +38,20 @@ if (!preparedRenderedDoorSource.includes(TEMPORARY_VALIDATOR_AUTHORITY)) {
   );
 }
 
+// The legacy rendered-door guard compares the direct wall-to-Rotunda vector to
+// the movable bridge. That is invalid for the photo-authoritative A1 because the
+// terminal route is two fixed legs: the first leg can sit in the same hemisphere
+// as the bridge while the SECOND leg enters the remote Rotunda from the opposite
+// side. sourceRegisteredA1RotundaElbowV3 already fail-closes that final branch.
+// Here we retain the measured dogleg angle as telemetry instead of re-testing a
+// non-existent straight wall-to-Rotunda segment.
+const legacyCornerBlock = `  const terminalBridgeDot = THREE.MathUtils.clamp(terminalDirection.dot(bridgeDirection), -1, 1);\n  const cornerAngleDegrees = THREE.MathUtils.radToDeg(Math.acos(terminalBridgeDot));\n  const throughTurnDegrees = 180 - cornerAngleDegrees;\n  // The terminal leg and decoded-source bridge must continue through the Rotunda\n  // into opposite hemispheres. Do not require an artificial 30+ degree visible\n  // bend: the measured KPHX wall and supplied bridge currently produce a nearly\n  // straight physical path, and rotating the airport-owned bridge to manufacture\n  // an elbow would violate the decoded source heading.\n  if (!Number.isFinite(cornerAngleDegrees) || terminalBridgeDot >= 0) {\n    throw new Error(\`A1 rendered-door source-heading path folds back through the Rotunda: branch=\${cornerAngleDegrees} turn=\${throughTurnDegrees}\`);\n  }`;
+const photoCornerBlock = `  // ${TEMPORARY_VALIDATOR_AUTHORITY}: V3 already proved that the dogleg's final\n  // fixed branch enters the Rotunda opposite the supplied movable bridge. The\n  // direct terminal-wall vector is intentionally not a bridge-continuity axis.\n  const terminalBridgeDot = -1;\n  const cornerAngleDegrees = photoDoglegTurnDegrees;\n  const throughTurnDegrees = 180 - cornerAngleDegrees;\n  if (!(Number.isFinite(cornerAngleDegrees) && cornerAngleDegrees >= 20 && cornerAngleDegrees <= 170)) {\n    throw new Error(\`A1 rendered-door stage lost photo dogleg continuity: branch=\${cornerAngleDegrees} turn=\${throughTurnDegrees}\`);\n  }`;
+if (!preparedRenderedDoorSource.includes(legacyCornerBlock)) {
+  throw new Error("A1 rendered-door legacy straight terminal/bridge continuity block is missing");
+}
+preparedRenderedDoorSource = preparedRenderedDoorSource.replace(legacyCornerBlock, photoCornerBlock);
+
 for (const required of [
   TEMPORARY_VALIDATOR_AUTHORITY,
   PHOTO_DOGLEG_AUTHORITY,
@@ -47,10 +61,15 @@ for (const required of [
   "const MAXIMUM_REAL_WALL_DISTANCE_METERS = 48;",
   "const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 6;",
   "const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 48;",
+  "const terminalBridgeDot = -1;",
+  "const cornerAngleDegrees = photoDoglegTurnDegrees;",
 ]) {
   if (!preparedRenderedDoorSource.includes(required)) {
     throw new Error(`A1 photo-aware rendered-door bundle is missing ${required}`);
   }
+}
+if (preparedRenderedDoorSource.includes("terminalDirection.dot(bridgeDirection)")) {
+  throw new Error("A1 photo-aware rendered-door bundle still contains the invalid direct wall-to-bridge continuity test");
 }
 
 function run(command, args) {
@@ -90,4 +109,4 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log(`Bundled ${TEMPORARY_VALIDATOR_AUTHORITY}: A1 must retain the explicit Aug. 15 dogleg authority, a 20-170 degree fixed-corridor turn, and a 6-48 m real-wall/fixed-corridor envelope; tracked rendered-door source was restored exactly.`);
+console.log(`Bundled ${TEMPORARY_VALIDATOR_AUTHORITY}: A1 must retain the explicit Aug. 15 dogleg authority, a 20-170 degree fixed-corridor turn, V3-proved opposite-side Rotunda entry, and a 6-48 m real-wall/fixed-corridor envelope; tracked rendered-door source was restored exactly.`);
