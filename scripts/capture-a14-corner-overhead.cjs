@@ -6,6 +6,7 @@ const evidenceDirectory = process.env.EVIDENCE_DIR || 'a14-corner-evidence';
 const outputPath = `${evidenceDirectory}/a14-corner-overhead.png`;
 const reportPath = `${evidenceDirectory}/report.json`;
 const cameraAuthority = 'a12-a14-rotunda-corner-fixed-overhead-evidence-v1';
+const cornerRegistrationPrefix = '[RampReady] Static A12/A14 final registration ';
 
 fs.mkdirSync(evidenceDirectory, { recursive: true });
 
@@ -26,8 +27,16 @@ async function selectByLabel(page, ariaLabel, optionLabel) {
   const page = await context.newPage();
   const pageErrors = [];
   const consoleErrors = [];
+  const cornerRegistrationMessages = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
-  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+  page.on('console', (message) => {
+    const text = message.text();
+    if (message.type() === 'error') consoleErrors.push(text);
+    if (text.startsWith(cornerRegistrationPrefix)) {
+      cornerRegistrationMessages.push(text);
+      console.log(text);
+    }
+  });
 
   try {
     const response = await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
@@ -58,6 +67,9 @@ async function selectByLabel(page, ariaLabel, optionLabel) {
       await page.waitForTimeout(250);
     }
     if (!ready) throw new Error('A14 overhead fleet did not become ready in 180000 ms');
+    if (!cornerRegistrationMessages.length) {
+      throw new Error('A14 overhead fleet became ready without publishing final A12/A14 registration diagnostics');
+    }
 
     await selectByLabel(page, 'Inspection location', 'A14 corner overhead');
     await page.waitForFunction((authority) => {
@@ -89,6 +101,7 @@ async function selectByLabel(page, ariaLabel, optionLabel) {
     if (bytes < 100000) throw new Error(`A14 overhead screenshot is unexpectedly small: ${bytes}`);
 
     const dataset = await canvas.evaluate((element) => ({ ...element.dataset }));
+    const cornerRegistration = JSON.parse(cornerRegistrationMessages.at(-1).slice(cornerRegistrationPrefix.length));
     fs.writeFileSync(reportPath, `${JSON.stringify({
       capturedAtUtc: new Date().toISOString(),
       bytes,
@@ -102,6 +115,7 @@ async function selectByLabel(page, ariaLabel, optionLabel) {
       a14CornerDegrees: dataset.terminal4UploadedJetwayStaticA14CornerArmArticulationDegrees,
       inspectionPreset: dataset.inspectionPreset,
       inspectionCameraAuthority: dataset.inspectionCameraAuthority,
+      cornerRegistration,
       pageErrors,
       consoleErrors,
     }, null, 2)}\n`);
