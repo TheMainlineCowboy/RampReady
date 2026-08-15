@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const sourcePath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const photoAuthority = "a1-real-photo-remote-rotunda-fixed-corridor-v1";
+const doglegAuthority = "a1-aug15-photo-fixed-corridor-dogleg-v1";
 const authority = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";
 const targetAuthority = "a1-aircraft-target-follows-intact-parent-relocation-v1";
 let source = fs.readFileSync(sourcePath, "utf8");
@@ -72,9 +73,16 @@ fs.writeFileSync(sourcePath, prePhotoSource, "utf8");
 // origin + calibrated bridge heading + long fixed terminal corridor every time.
 await import(`./prepare-a1-real-photo-fixed-corridor-v1.mjs?real-photo=${Date.now()}`);
 
+// A1 is gate-specific in the Aug. 15 reference: after the long-corridor source
+// pose is restored, convert only A1's fixed terminal-side span into the visible
+// two-leg corridor + elbow. A3 and the rest of the static fleet retain their
+// own short/direct measured terminal connectors.
+await import(`./prepare-a1-real-photo-dogleg-v1.mjs?real-photo-dogleg=${Date.now()}`);
+
 source = fs.readFileSync(sourcePath, "utf8");
 for (const required of [
   photoAuthority,
+  doglegAuthority,
   authority,
   targetAuthority,
   "anchor.position.x = rawBglPlacementX;",
@@ -84,6 +92,10 @@ for (const required of [
   "const sourceModelOriginRelocationZ = 0;",
   "uploadedJetwayA1RemoteSourceRotunda",
   "uploadedJetwayA1LongFixedTerminalCorridor",
+  "uploadedJetwayA1FixedCorridorDoglegAuthority",
+  "const rotundaTerminalBranchDirection = bridgeDirection.clone().multiplyScalar(-1).normalize();",
+  "const firstFrame = addContinuousShell",
+  "const secondFrame = addContinuousShell",
   "const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.5;",
   "const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 30;",
 ]) {
@@ -97,10 +109,12 @@ for (const forbidden of [
   "bridgePivot.rotation.y = yawDelta",
   "const sourceModelOriginRelocationX = anchor.position.x - rawBglPlacementX;",
   "same-day-a1-photo-compact-solid-terminal-leg-fixed-wall",
+  "const frame = addContinuousShell(THREE, connector, materials, shellStart, shellVector, shellLength",
+  "terminalDirection.dot(bridgeDirection)",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${sourcePath}: obsolete compact/destructive A1 behavior survived final real-photo normalization: ${forbidden}`);
+    throw new Error(`${sourcePath}: obsolete compact/destructive/straight A1 behavior survived final real-photo normalization: ${forbidden}`);
   }
 }
 
-console.log(`Prepared A1 under ${photoAuthority}: the complete exact Airport_Jetway.glb uses the decoded source model origin and calibrated physical bridge heading, its Rotunda remains remote, the real Terminal 4 facade is connected by the long fixed A1 corridor, and neither supplied children nor the aircraft target are moved to hide a bad terminal attachment.`);
+console.log(`Prepared A1 under ${photoAuthority} + ${doglegAuthority}: the complete exact Airport_Jetway.glb uses the decoded source model origin and calibrated physical bridge heading, its Rotunda remains remote, the real Terminal 4 facade is connected by the A1-only fixed dogleg corridor, A3+ keep their short/direct connectors, and neither supplied children nor the aircraft target are moved to hide a bad terminal attachment.`);
