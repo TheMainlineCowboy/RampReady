@@ -8,21 +8,8 @@ let source = fs.readFileSync(sourcePath, "utf8");
 const alreadyPhotoCorrected = source.includes(photoAuthority);
 
 if (!alreadyPhotoCorrected) {
-  // First pass through the legacy preparation chain: retain its structural-wall
-  // discovery and intact-parent safety checks long enough to recover the real
-  // terminal facade and exact supplied hierarchy. The Aug. 15 photo correction
-  // below then replaces the obsolete compact-wall Rotunda relocation.
   await import(`./prepare-a1-source-bgl-rotunda-ownership-v1.mjs?intact-a1=${Date.now()}`);
-
-  // The converted airport can expose BGATE/DGATE-looking child meshes whose
-  // ancestor/source metadata still belongs to T4_WALK. A1 must never accept one
-  // of those as the actual Terminal 4 building wall.
   await import(`./prepare-a1-final-walkway-hierarchy-exclusion-v1.mjs?final-wall=${Date.now()}`);
-
-  // Run the old relocation preparer only on this first migration pass. Its
-  // output provides compatibility telemetry consumed by older verification;
-  // the final photo authority resets relocation to zero and keeps the aircraft
-  // at the source stop instead of using it to conceal terminal geometry errors.
   await import(`./prepare-a1-relocated-aircraft-target-v1.mjs?relocated-target=${Date.now()}`);
 
   source = fs.readFileSync(sourcePath, "utf8");
@@ -61,22 +48,23 @@ if (!alreadyPhotoCorrected) {
     }
   }
 
-  // Calibrate the complete replacement GLB from its measured Rotunda->Tunnel-A
-  // axis without touching any supplied child. The photo finalizer incorporates
-  // this same correction into the source-model-origin placement that survives.
   await import(`./prepare-a1-intact-source-axis-alignment-v1.mjs?source-axis=${Date.now()}`);
-
-  // Keep physical Rotunda through-continuity rather than the obsolete cosmetic
-  // 45-150 degree turn gate.
   await import(`./prepare-a1-final-rotunda-continuity-v1.mjs?rotunda-continuity=${Date.now()}`);
 } else {
-  // Production invokes this wrapper more than once after many legacy preparers.
-  // Once the real-photo authority exists, never run the obsolete wall-relocation
-  // scripts again: they explicitly pull the Rotunda back against the building.
-  // Re-run only the terminal-wall hierarchy exclusion before re-normalizing the
-  // photo geometry below.
   await import(`./prepare-a1-final-walkway-hierarchy-exclusion-v1.mjs?photo-final-wall=${Date.now()}`);
 }
+
+// Late production preparers can re-stamp their obsolete compact connector
+// authority even though they leave the photo marker in the generated file.
+// Remove that stale semantic label before the idempotent photo normalizer so it
+// can validate the actual geometry rather than tripping on dead compatibility
+// text left by those passes.
+let prePhotoSource = fs.readFileSync(sourcePath, "utf8");
+prePhotoSource = prePhotoSource.replace(
+  /same-day-a1-photo-compact-solid-terminal-leg-fixed-wall[^"\n]*/g,
+  "same-day-a1-photo-remote-fixed-corridor-to-source-rotunda-v1",
+);
+fs.writeFileSync(sourcePath, prePhotoSource, "utf8");
 
 // Always normalize, even on repeated production passes. Older late preparers can
 // rewrite compact ranges while leaving telemetry markers in place; this script
