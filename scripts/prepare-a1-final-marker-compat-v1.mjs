@@ -9,6 +9,7 @@ let source = fs.readFileSync(trainerPath, "utf8");
 const finalMarker = "final-a1-acceptance-authority-after-all-preparers-v7-intact-source-bogie";
 const workflowMarker = "final-a1-acceptance-authority-after-all-preparers-v1";
 const sourceOwnershipAuthority = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";
+const photoAuthority = "a1-real-photo-remote-rotunda-fixed-corridor-v1";
 const bogieAuthority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
 const compatibilityComment = `// ${workflowMarker} compatibility-alias-only; geometry remains ${finalMarker}`;
 
@@ -65,28 +66,70 @@ await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?final-compat=${Date.n
 
 const readiness = fs.readFileSync(readinessPath, "utf8");
 const elbow = fs.readFileSync(elbowPath, "utf8");
-for (const required of [
-  sourceOwnershipAuthority,
-  "const sourceRotundaTarget = fixedRotundaCenter.clone();",
-  "const rawBglPlacementX = Number(placement.x);",
-  "anchor.rotation.y = Number(placement.yaw)",
-  "const rotatedSourceHeadingRotundaCenter = objectCenterInFleet",
-  "A1 FINAL wall-registered Rotunda-to-real-wall distance is invalid",
-  "const yawDelta = 0;",
-]) {
-  if (!elbow.includes(required)) throw new Error(`${elbowPath}: compatibility step found measured-wall intact A1 ownership missing ${required}`);
+const usesRealPhotoGeometry = elbow.includes(photoAuthority);
+
+if (usesRealPhotoGeometry) {
+  // The Aug. 15 A1/A3 overhead reference supersedes the old near-wall Rotunda
+  // compatibility assumptions. Preserve only the harmless historical ownership
+  // marker while verifying the actual final geometry: source model origin,
+  // calibrated complete-parent bridge heading, remote Rotunda, long fixed
+  // terminal corridor, zero aircraft-target relocation, and intact GLB children.
+  for (const required of [
+    sourceOwnershipAuthority,
+    photoAuthority,
+    "const sourceRotundaTarget = fixedRotundaCenter.clone();",
+    "const rawBglPlacementX = Number(placement.x);",
+    "anchor.position.x = rawBglPlacementX;",
+    "anchor.position.z = rawBglPlacementZ;",
+    "anchor.rotation.y = Number(placement.yaw)",
+    "anchor.rotation.y += sourceAxisYawDelta;",
+    "const sourceModelOriginRelocationX = 0;",
+    "const sourceModelOriginRelocationZ = 0;",
+    "uploadedJetwayA1RemoteSourceRotunda",
+    "uploadedJetwayA1LongFixedTerminalCorridor",
+    "const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.5;",
+    "const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 30;",
+    "const yawDelta = 0;",
+  ]) {
+    if (!elbow.includes(required)) throw new Error(`${elbowPath}: real-photo A1 compatibility is missing ${required}`);
+  }
+  for (const forbidden of [
+    "UploadedAirportJetwayA1AircraftSidePivot",
+    "bridgePivot.attach(root)",
+    "bridgePivot.rotation.y = yawDelta",
+    "anchor.rotation.y += yawDelta",
+    "a1-fixed-terminal-rotunda-aircraft-side-pivot-v1",
+    "const sourceRotundaTarget = new THREE.Vector3(Number(placement.x)",
+    "const sourceModelOriginRelocationX = anchor.position.x - rawBglPlacementX;",
+    "same-day-a1-photo-compact-solid-terminal-leg-fixed-wall",
+  ]) {
+    if (elbow.includes(forbidden)) throw new Error(`${elbowPath}: real-photo A1 compatibility found obsolete compact/destructive behavior ${forbidden}`);
+  }
+} else {
+  for (const required of [
+    sourceOwnershipAuthority,
+    "const sourceRotundaTarget = fixedRotundaCenter.clone();",
+    "const rawBglPlacementX = Number(placement.x);",
+    "anchor.rotation.y = Number(placement.yaw)",
+    "const rotatedSourceHeadingRotundaCenter = objectCenterInFleet",
+    "A1 FINAL wall-registered Rotunda-to-real-wall distance is invalid",
+    "const yawDelta = 0;",
+  ]) {
+    if (!elbow.includes(required)) throw new Error(`${elbowPath}: compatibility step found measured-wall intact A1 ownership missing ${required}`);
+  }
+  for (const forbidden of [
+    "UploadedAirportJetwayA1AircraftSidePivot",
+    "bridgePivot.attach(root)",
+    "bridgePivot.rotation.y = yawDelta",
+    "anchor.rotation.y += yawDelta",
+    "a1-fixed-terminal-rotunda-aircraft-side-pivot-v1",
+    "const sourceRotundaTarget = new THREE.Vector3(Number(placement.x)",
+    "A1 source Rotunda-to-real-wall distance is invalid",
+  ]) {
+    if (elbow.includes(forbidden)) throw new Error(`${elbowPath}: compatibility step found destructive/raw-origin A1 behavior ${forbidden}`);
+  }
 }
-for (const forbidden of [
-  "UploadedAirportJetwayA1AircraftSidePivot",
-  "bridgePivot.attach(root)",
-  "bridgePivot.rotation.y = yawDelta",
-  "anchor.rotation.y += yawDelta",
-  "a1-fixed-terminal-rotunda-aircraft-side-pivot-v1",
-  "const sourceRotundaTarget = new THREE.Vector3(Number(placement.x)",
-  "A1 source Rotunda-to-real-wall distance is invalid",
-]) {
-  if (elbow.includes(forbidden)) throw new Error(`${elbowPath}: compatibility step found destructive/raw-origin A1 behavior ${forbidden}`);
-}
+
 for (const required of [
   `bogieGroundContactAuthority !== "${bogieAuthority}"`,
   "Math.abs(bogieGroundClearance) > 0.015",
@@ -97,4 +140,4 @@ for (const required of [
   if (!readiness.includes(required)) throw new Error(`${readinessPath}: Tunnel-C bogie readiness is missing ${required}`);
 }
 
-console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. No A1 geometry preparer ran: measured structural-wall Rotunda position, decoded KPHX complete-parent heading, intact supplied hierarchy and Tunnel-C bogie ramp authority remain untouched.`);
+console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. Final A1 compatibility now accepts ${usesRealPhotoGeometry ? photoAuthority : "the legacy measured-wall layout"} without changing geometry; exact supplied hierarchy and Tunnel-C bogie ramp authority remain untouched.`);
