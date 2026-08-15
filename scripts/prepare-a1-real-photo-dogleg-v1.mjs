@@ -43,7 +43,7 @@ if (!source.includes(DOGLEG_AUTHORITY)) {
     "bridgeDirection.clone().multiplyScalar(-1).normalize().dot(bridgeDirection)",
   );
 
-  const shellReplacement = `  // ${DOGLEG_AUTHORITY}: two elevated fixed legs plus a sealed elbow.\n  const firstShellStart = fixedWallPoint.clone().addScaledVector(doglegFirstLegDirection, -TERMINAL_HIDDEN_OVERLAP_METERS);\n  const firstShellEnd = doglegElbowPoint.clone().addScaledVector(doglegFirstLegDirection, ${ELBOW_OVERLAP_METERS});\n  const firstShellVector = firstShellEnd.clone().sub(firstShellStart).setY(0);\n  const firstShellLength = firstShellVector.length();\n  firstShellVector.normalize();\n  const secondShellStart = doglegElbowPoint.clone().addScaledVector(doglegSecondLegDirection, -${ELBOW_OVERLAP_METERS});\n  const secondShellEnd = rotundaSurfacePoint.clone().addScaledVector(doglegSecondLegDirection, ROTUNDA_SHELL_OVERLAP_METERS);\n  const secondShellVector = secondShellEnd.clone().sub(secondShellStart).setY(0);\n  const secondShellLength = secondShellVector.length();\n  secondShellVector.normalize();\n\n`;
+  const shellReplacement = `  // ${DOGLEG_AUTHORITY}: two elevated fixed legs plus a sealed elbow.\n  const firstShellStart = fixedWallPoint.clone().addScaledVector(doglegFirstLegDirection, -TERMINAL_HIDDEN_OVERLAP_METERS);\n  const firstShellEnd = doglegElbowPoint.clone().addScaledVector(doglegFirstLegDirection, ${ELBOW_OVERLAP_METERS});\n  const firstShellVector = firstShellEnd.clone().sub(firstShellStart).setY(0);\n  const firstShellLength = firstShellVector.length();\n  firstShellVector.normalize();\n  const secondShellStart = doglegElbowPoint.clone().addScaledVector(doglegSecondLegDirection, -${ELBOW_OVERLAP_METERS});\n  const secondShellEnd = rotundaSurfacePoint.clone().addScaledVector(doglegSecondLegDirection, ROTUNDA_SHELL_OVERLAP_METERS);\n  const secondShellVector = secondShellEnd.clone().sub(secondShellStart).setY(0);\n  const secondShellLength = secondShellVector.length();\n  secondShellVector.normalize();\n\n  // Preserve the exact supplied Rotunda-to-Tunnel-A flexible joint setup. The\n  // dogleg replaces only the fixed terminal-side shell; it must not delete or\n  // recreate the movable-bridge bellows coordinates or generated-object cleanup.\n  const bridgeSealStartFleet = rotundaBridgeSurfacePoint.clone().addScaledVector(bridgeDirection, -ROTUNDA_BRIDGE_HIDDEN_OVERLAP_METERS);\n  const bridgeSealEndFleet = tunnelRotundaSurfacePoint.clone().addScaledVector(bridgeDirection, TUNNEL_A_HIDDEN_OVERLAP_METERS);\n  const bridgeSealStartLocal = pointFromFleetToObjectLocal(fleet, anchor, bridgeSealStartFleet);\n  const bridgeSealEndLocal = pointFromFleetToObjectLocal(fleet, anchor, bridgeSealEndFleet);\n  const bridgeSealVectorLocal = bridgeSealEndLocal.clone().sub(bridgeSealStartLocal);\n  bridgeSealVectorLocal.y = 0;\n  const bridgeSealLengthMeters = bridgeSealVectorLocal.length();\n  if (!(bridgeSealLengthMeters > 0.08 && bridgeSealLengthMeters < MAXIMUM_ROTUNDA_TUNNEL_A_GAP_METERS + 1)) {\n    throw new Error(\`A1 Rotunda-to-Tunnel-A bellows sleeve length is invalid: \${bridgeSealLengthMeters}\`);\n  }\n  bridgeSealVectorLocal.normalize();\n\n  const removedGeneratedTerminalObjects = removeGeneratedA1TerminalGeometry(fleet);\n`;
   replaceBetween(
     "  const terminalToRotunda = terminalDirection.clone().multiplyScalar(-1);",
     "  const materials = createMaterials(THREE);",
@@ -83,6 +83,9 @@ for (const required of [
   "UploadedAirportJetwayA1FixedCorridorDoglegRoof",
   "uploadedJetwayA1FixedCorridorDoglegAuthority",
   "bridgeDirection.clone().multiplyScalar(-1).normalize().dot(bridgeDirection)",
+  "const bridgeSealStartLocal = pointFromFleetToObjectLocal",
+  "const bridgeSealEndLocal = pointFromFleetToObjectLocal",
+  "const removedGeneratedTerminalObjects = removeGeneratedA1TerminalGeometry(fleet);",
 ]) {
   if (!source.includes(required)) throw new Error(`${sourcePath}: A1 dogleg output is missing ${required}`);
 }
@@ -95,4 +98,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(sourcePath, source, "utf8");
-console.log(`Prepared ${DOGLEG_AUTHORITY}: only A1 now uses two elevated fixed corridor legs and an elbow from the exact BGATE1 facade to the remote supplied Rotunda; A3+ retain their short/direct terminal-side connectors, Airport_Jetway.glb remains untouched, and the early continuity guard is TDZ-safe.`);
+console.log(`Prepared ${DOGLEG_AUTHORITY}: only A1 now uses two elevated fixed corridor legs and an elbow from the exact BGATE1 facade to the remote supplied Rotunda; A3+ retain their short/direct terminal-side connectors, Airport_Jetway.glb remains untouched, the early continuity guard is TDZ-safe, and the exact Rotunda-to-Tunnel-A bellows setup is preserved.`);
