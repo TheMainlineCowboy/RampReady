@@ -14,9 +14,6 @@ if (!source.includes("const width = tunnelCrossSectionWidthMeters;") || !source.
 
 const doglegPrepared = source.includes(DOGLEG_AUTHORITY);
 if (doglegPrepared) {
-  // A1 now has two fixed terminal-side legs. Keep both at the exact passenger
-  // centerline measured from the supplied Tunnel A; never use Rotunda bounds,
-  // whose pedestal drags the rendered passage below passenger height.
   const firstWrong = "const firstFrame = addContinuousShell(THREE, connector, materials, firstShellStart, firstShellVector, firstShellLength, rotundaCenter.y, width, height);";
   const firstCorrect = "const firstFrame = addContinuousShell(THREE, connector, materials, firstShellStart, firstShellVector, firstShellLength, passengerCenterY, width, height);";
   const secondWrong = "const secondFrame = addContinuousShell(THREE, connector, materials, secondShellStart, secondShellVector, secondShellLength, rotundaCenter.y, width, height);";
@@ -27,17 +24,23 @@ if (doglegPrepared) {
     throw new Error(`${sourcePath}: dogleg A1 fixed corridor legs are not both constructed at passengerCenterY`);
   }
 
-  // The fixed elbow roof/floor and posts are centered on doglegElbowPoint, so
-  // explicitly lock that point to the same passenger centerline before those
-  // pieces are created.
-  const elbowAnchor = "  doglegElbowPoint.y = rotundaCenter.y;";
-  const elbowCorrect = "  doglegElbowPoint.y = passengerCenterY;";
-  if (source.includes(elbowAnchor)) source = source.replace(elbowAnchor, elbowCorrect);
-  if (!source.includes(elbowCorrect)) {
-    throw new Error(`${sourcePath}: A1 dogleg elbow is not locked to passengerCenterY`);
+  // doglegElbowPoint is solved earlier, before passengerCenterY exists, so its
+  // X/Z route remains an early geometry value. Create a render-only clone after
+  // passengerCenterY is initialized and use that clone for the elbow enclosure.
+  const frameAnchor = `  ${firstCorrect}`;
+  const renderPointBlock = "  const doglegElbowRenderPoint = doglegElbowPoint.clone();\n  doglegElbowRenderPoint.y = passengerCenterY;\n";
+  if (!source.includes("const doglegElbowRenderPoint = doglegElbowPoint.clone();")) {
+    if (!source.includes(frameAnchor)) throw new Error(`${sourcePath}: dogleg first-frame construction anchor is missing`);
+    source = source.replace(frameAnchor, `${renderPointBlock}${frameAnchor}`);
+  }
+  source = source.replaceAll(
+    "doglegElbowPoint.clone().add(new THREE.Vector3",
+    "doglegElbowRenderPoint.clone().add(new THREE.Vector3",
+  );
+  if (!source.includes("doglegElbowRenderPoint.y = passengerCenterY;")) {
+    throw new Error(`${sourcePath}: A1 dogleg elbow render point is not locked to passengerCenterY`);
   }
 } else {
-  // Legacy/direct form retained for non-dogleg source preparation paths.
   const wrongConstruction = "const frame = addContinuousShell(THREE, connector, materials, shellStart, shellVector, shellLength, rotundaCenter.y, width, height);";
   const correctConstruction = "const frame = addContinuousShell(THREE, connector, materials, shellStart, shellVector, shellLength, passengerCenterY, width, height);";
   if (source.includes(wrongConstruction)) {
@@ -64,9 +67,7 @@ if (!source.includes("uploadedJetwayA1RenderedShellCenterlineAuthority")) {
   if (!source.includes(groupAnchor)) {
     throw new Error(`${sourcePath}: A1 passenger-centerline group telemetry anchor is missing`);
   }
-  const errorExpression = doglegPrepared
-    ? "0"
-    : "Math.abs(passengerCenterY - shellStart.y)";
+  const errorExpression = doglegPrepared ? "0" : "Math.abs(passengerCenterY - shellStart.y)";
   source = source.replace(
     groupAnchor,
     `${groupAnchor}\n  group.userData.uploadedJetwayA1RenderedShellCenterlineAuthority = "${AUTHORITY}";\n  group.userData.uploadedJetwayA1RenderedShellCenterY = passengerCenterY;\n  group.userData.uploadedJetwayA1RenderedShellCenterlineErrorMeters = ${errorExpression};`,
@@ -85,13 +86,17 @@ if (doglegPrepared) {
   for (const required of [
     "firstShellLength, passengerCenterY, width, height",
     "secondShellLength, passengerCenterY, width, height",
-    "doglegElbowPoint.y = passengerCenterY;",
+    "const doglegElbowRenderPoint = doglegElbowPoint.clone();",
+    "doglegElbowRenderPoint.y = passengerCenterY;",
   ]) {
     if (!source.includes(required)) throw new Error(`${sourcePath}: dogleg passenger-height invariant is missing ${required}`);
+  }
+  if (source.includes("doglegElbowPoint.y = passengerCenterY;")) {
+    throw new Error(`${sourcePath}: dogleg route point illegally references passengerCenterY before initialization`);
   }
 } else if (!source.includes("shellLength, passengerCenterY, width, height")) {
   throw new Error(`${sourcePath}: direct terminal shell is not rendered at passengerCenterY`);
 }
 
 fs.writeFileSync(sourcePath, source, "utf8");
-console.log(`Prepared ${AUTHORITY}: ${doglegPrepared ? "both A1 fixed dogleg legs and the elbow" : "the visible A1 building-side shell"} render at Tunnel A passengerCenterY instead of the Rotunda-plus-pedestal bounds center.`);
+console.log(`Prepared ${AUTHORITY}: ${doglegPrepared ? "both A1 fixed dogleg legs and the deferred elbow render clone" : "the visible A1 building-side shell"} render at Tunnel A passengerCenterY instead of the Rotunda-plus-pedestal bounds center.`);
