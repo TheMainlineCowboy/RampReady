@@ -74,6 +74,7 @@ jobs:
         run: |
           set -o pipefail
           node scripts/prepare-terminal4-visual-failfast-v1.mjs 2>&1 | tee jetway-visual-evidence/preflight.log
+          node scripts/prepare-terminal4-fleet-first-evidence-v1.mjs 2>&1 | tee -a jetway-visual-evidence/preflight.log
           node scripts/verify-terminal4-fleet-visual.cjs 2>&1 | tee jetway-visual-evidence/workflow.log
 
       - name: Upload one-day jetway visual evidence
