@@ -33,9 +33,14 @@ if (!source.includes(DOGLEG_AUTHORITY)) {
   if (!source.includes("terminalDirection.dot(bridgeDirection)")) {
     throw new Error(`${sourcePath}: A1 Rotunda continuity dot product is missing`);
   }
+  // This continuity guard occurs earlier in the function than the Rotunda
+  // surface solve. Do not reference rotundaTerminalBranchDirection here or the
+  // browser bundle hits a temporal-dead-zone before that const is initialized.
+  // The dogleg's final branch is defined exactly as -bridgeDirection, so express
+  // that same physical invariant inline at this earlier guard.
   source = source.replaceAll(
     "terminalDirection.dot(bridgeDirection)",
-    "rotundaTerminalBranchDirection.dot(bridgeDirection)",
+    "bridgeDirection.clone().multiplyScalar(-1).normalize().dot(bridgeDirection)",
   );
 
   const shellReplacement = `  // ${DOGLEG_AUTHORITY}: two elevated fixed legs plus a sealed elbow.\n  const firstShellStart = fixedWallPoint.clone().addScaledVector(doglegFirstLegDirection, -TERMINAL_HIDDEN_OVERLAP_METERS);\n  const firstShellEnd = doglegElbowPoint.clone().addScaledVector(doglegFirstLegDirection, ${ELBOW_OVERLAP_METERS});\n  const firstShellVector = firstShellEnd.clone().sub(firstShellStart).setY(0);\n  const firstShellLength = firstShellVector.length();\n  firstShellVector.normalize();\n  const secondShellStart = doglegElbowPoint.clone().addScaledVector(doglegSecondLegDirection, -${ELBOW_OVERLAP_METERS});\n  const secondShellEnd = rotundaSurfacePoint.clone().addScaledVector(doglegSecondLegDirection, ROTUNDA_SHELL_OVERLAP_METERS);\n  const secondShellVector = secondShellEnd.clone().sub(secondShellStart).setY(0);\n  const secondShellLength = secondShellVector.length();\n  secondShellVector.normalize();\n\n`;
@@ -77,16 +82,17 @@ for (const required of [
   "const secondFrame = addContinuousShell",
   "UploadedAirportJetwayA1FixedCorridorDoglegRoof",
   "uploadedJetwayA1FixedCorridorDoglegAuthority",
-  "rotundaTerminalBranchDirection.dot(bridgeDirection)",
+  "bridgeDirection.clone().multiplyScalar(-1).normalize().dot(bridgeDirection)",
 ]) {
   if (!source.includes(required)) throw new Error(`${sourcePath}: A1 dogleg output is missing ${required}`);
 }
 for (const forbidden of [
   "const frame = addContinuousShell(THREE, connector, materials, shellStart, shellVector, shellLength",
   "terminalDirection.dot(bridgeDirection)",
+  "rotundaTerminalBranchDirection.dot(bridgeDirection)",
 ]) {
-  if (source.includes(forbidden)) throw new Error(`${sourcePath}: obsolete straight A1 terminal branch survived dogleg preparation: ${forbidden}`);
+  if (source.includes(forbidden)) throw new Error(`${sourcePath}: obsolete/TDZ-prone straight A1 terminal branch survived dogleg preparation: ${forbidden}`);
 }
 
 fs.writeFileSync(sourcePath, source, "utf8");
-console.log(`Prepared ${DOGLEG_AUTHORITY}: only A1 now uses two elevated fixed corridor legs and an elbow from the exact BGATE1 facade to the remote supplied Rotunda; A3+ retain their short/direct terminal-side connectors, and Airport_Jetway.glb remains untouched.`);
+console.log(`Prepared ${DOGLEG_AUTHORITY}: only A1 now uses two elevated fixed corridor legs and an elbow from the exact BGATE1 facade to the remote supplied Rotunda; A3+ retain their short/direct terminal-side connectors, Airport_Jetway.glb remains untouched, and the early continuity guard is TDZ-safe.`);
