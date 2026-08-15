@@ -107,4 +107,100 @@ for (const required of [
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Prepared source-first Terminal 4 facade v25: removed cloned lower-building modules and retained authored source geometry with source-fitted terminal walkways.");
+
+// A single transient GitHub Pages/CDN 5xx must not take down the complete
+// Terminal 4 scene. THREE.TextureLoader rejects image failures with a browser
+// Event (not an Error), which previously surfaced to the UI as an unhelpful
+// "failed to load: undefined" and aborted every terminal material. Inject a
+// bounded retry around only the authored Terminal 4 texture requests. The first
+// request retains the canonical URL; retries add a cache-busting query so a
+// cached transient response cannot poison the next attempt.
+const terminal4VisualPath = "src/environment/authoredTerminal4Visual.js";
+let terminal4Visual = fs.readFileSync(terminal4VisualPath, "utf8");
+const textureRetryMarker = "terminal4-static-texture-retry-v1";
+if (!terminal4Visual.includes(textureRetryMarker)) {
+  const helperAnchor = "\nasync function loadExactJetwayTextures(THREE, baseUrl) {";
+  if (!terminal4Visual.includes(helperAnchor)) {
+    throw new Error("Terminal 4 texture retry helper anchor is missing");
+  }
+  const helper = `
+const TERMINAL4_TEXTURE_RETRY_AUTHORITY = "terminal4-static-texture-retry-v1";
+const TERMINAL4_TEXTURE_RETRY_ATTEMPTS = 4;
+const TERMINAL4_TEXTURE_RETRY_DELAY_MS = 350;
+
+function terminal4RetryTextureUrl(url, attempt) {
+  if (attempt <= 1) return url;
+  const retryUrl = new URL(url, window.location.href);
+  retryUrl.searchParams.set("rrTextureRetry", String(attempt));
+  return retryUrl.href;
+}
+
+function terminal4TextureFailureDetail(error) {
+  if (error instanceof Error && error.message) return error.message;
+  if (error?.target?.src) return "browser image error for " + error.target.src;
+  return String(error?.type || "browser image load event");
+}
+
+async function loadTerminal4TextureWithRetry(loader, url, label) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= TERMINAL4_TEXTURE_RETRY_ATTEMPTS; attempt += 1) {
+    const requestUrl = terminal4RetryTextureUrl(url, attempt);
+    try {
+      return await loader.loadAsync(requestUrl);
+    } catch (error) {
+      lastError = error;
+      if (attempt >= TERMINAL4_TEXTURE_RETRY_ATTEMPTS) break;
+      await new Promise((resolve) => setTimeout(resolve, TERMINAL4_TEXTURE_RETRY_DELAY_MS * attempt));
+    }
+  }
+  throw new Error(
+    "Terminal 4 texture " + label
+      + " failed after " + TERMINAL4_TEXTURE_RETRY_ATTEMPTS
+      + " attempts: " + url + "; " + terminal4TextureFailureDetail(lastError),
+  );
+}
+`;
+  terminal4Visual = terminal4Visual.replace(helperAnchor, `${helper}${helperAnchor}`);
+
+  const replacements = [
+    [
+      'loader.loadAsync(`${baseUrl}textures/M1DGJETWAY.png`)',
+      'loadTerminal4TextureWithRetry(loader, `${baseUrl}textures/M1DGJETWAY.png`, "M1DGJETWAY diffuse")',
+    ],
+    [
+      'loader.loadAsync(`${baseUrl}textures/M1DGJETWAY_LM.png`)',
+      'loadTerminal4TextureWithRetry(loader, `${baseUrl}textures/M1DGJETWAY_LM.png`, "M1DGJETWAY emissive")',
+    ],
+    [
+      "loader.loadAsync(diffuseUrl)",
+      'loadTerminal4TextureWithRetry(loader, diffuseUrl, reference + " diffuse")',
+    ],
+    [
+      "entry.emissiveUrl ? loader.loadAsync(new URL(entry.emissiveUrl, manifestUrl).href) : Promise.resolve(null)",
+      'entry.emissiveUrl ? loadTerminal4TextureWithRetry(loader, new URL(entry.emissiveUrl, manifestUrl).href, reference + " emissive") : Promise.resolve(null)',
+    ],
+  ];
+  for (const [before, after] of replacements) {
+    if (!terminal4Visual.includes(before)) {
+      throw new Error(`Terminal 4 texture retry replacement anchor is missing: ${before}`);
+    }
+    terminal4Visual = terminal4Visual.replace(before, after);
+  }
+}
+
+for (const required of [
+  textureRetryMarker,
+  "TERMINAL4_TEXTURE_RETRY_ATTEMPTS = 4",
+  "rrTextureRetry",
+  "loadTerminal4TextureWithRetry(loader, diffuseUrl",
+  "loadTerminal4TextureWithRetry(loader, new URL(entry.emissiveUrl, manifestUrl).href",
+  "loadTerminal4TextureWithRetry(loader, `${baseUrl}textures/M1DGJETWAY.png`",
+  "loadTerminal4TextureWithRetry(loader, `${baseUrl}textures/M1DGJETWAY_LM.png`",
+]) {
+  if (!terminal4Visual.includes(required)) {
+    throw new Error(`Terminal 4 texture retry preparation is missing ${required}`);
+  }
+}
+fs.writeFileSync(terminal4VisualPath, terminal4Visual, "utf8");
+
+console.log("Prepared source-first Terminal 4 facade v25 and bounded transient texture retry without changing terminal or jetway geometry.");
