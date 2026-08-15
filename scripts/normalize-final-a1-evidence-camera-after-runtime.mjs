@@ -2,34 +2,38 @@ import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const CAMERA_AUTHORITY = "source-measured-a1-terminal-joint-camera-v3";
-const PROFILE_AUTHORITY = "rotunda-terminal-and-tunnel-a-bisector-normal-profile-v4-midheight";
+const PROFILE_AUTHORITY = "rotunda-terminal-and-tunnel-a-through-axis-normal-profile-v5-midheight";
 const CAMERA_DISTANCE_METERS = 14.0;
 const CAMERA_HEIGHT_OFFSET_METERS = 0.15;
 const MAX_BRANCH_VIEW_COSINE = 0.82;
 const MAX_BRANCH_VIEW_IMBALANCE = 0.20;
+const MINIMUM_THROUGH_AXIS_LENGTH = 0.5;
 
 let source = fs.readFileSync(trainerPath, "utf8");
 
 // This normalizer is called before the endpoint-derived evidence camera exists
 // during plain verification, then again after that camera is generated inside
 // the simulator-quality production wrapper. Early verification must not invent
-// a camera. The later stage must replace the old end-on framing with a genuinely
-// side-on view that exposes BOTH sides of the disputed passenger elbow at once.
+// a camera. The later stage must replace the old elbow-specific framing with a
+// source-geometry camera that remains valid when the real terminal leg and the
+// supplied bridge are nearly collinear through the Rotunda.
 const terminalStartToken = '          if (exactA1EvidenceSubview === "terminal-joint") {';
 const bogieElseToken = '          } else if (exactA1EvidenceSubview === "bogie-contact") {';
 const terminalStart = source.indexOf(terminalStartToken);
 const bogieElse = source.indexOf(bogieElseToken, terminalStart + terminalStartToken.length);
 
 if (terminalStart < 0 || bogieElse < 0) {
-  console.log("A1 passenger-elbow side-on normalization deferred: endpoint-derived terminal-joint camera is not generated in this verification phase yet.");
+  console.log("A1 source-through-axis side-on normalization deferred: endpoint-derived terminal-joint camera is not generated in this verification phase yet.");
   process.exit(0);
 }
 
-// The interior bisector describes the elbow's centerline, but looking ALONG it
-// makes both branches too end-on. Put the camera along the perpendicular to the
-// bisector instead. For the measured ~65 degree A1 elbow this yields a true
-// side-on view of both branches (|cos| ~0.54 rather than ~0.84), while the later
-// clear-side/T4_WALK probes remain free to choose the unobstructed sign.
+// The physical A1 now preserves decoded KPHX source heading and Rotunda
+// through-continuity. For a near-straight joint, the interior angle bisector
+// collapses and is the wrong camera authority. Build a stable through-axis from
+// (Cab unit - wall unit): because the wall branch points toward the terminal and
+// the Cab branch points toward the aircraft, their difference follows the
+// passenger path through the Rotunda. Looking perpendicular to that axis shows
+// both branches side-on without requiring or manufacturing a cosmetic elbow.
 const terminalBlock = `          if (exactA1EvidenceSubview === "terminal-joint") {
             const exactA1JointCenterX = exactA1CameraRotundaX;
             const exactA1JointCenterY = exactA1CameraRotundaY;
@@ -43,10 +47,10 @@ const terminalBlock = `          if (exactA1EvidenceSubview === "terminal-joint"
             const exactA1JointCabSpan = Math.hypot(exactA1JointCabVectorX, exactA1JointCabVectorZ);
             const exactA1JointSpan = exactA1JointCabSpan;
             if (!(exactA1JointWallSpan > 0.5 && exactA1JointWallSpan < 44)) {
-              throw new Error(\`A1 passenger-elbow camera received invalid Rotunda-to-wall span: \${exactA1JointWallSpan}\`);
+              throw new Error(\`A1 passenger-joint camera received invalid Rotunda-to-wall span: \${exactA1JointWallSpan}\`);
             }
             if (!(exactA1JointCabSpan > 8 && exactA1JointCabSpan < 44)) {
-              throw new Error(\`A1 passenger-elbow camera received invalid Rotunda-to-Cab span: \${exactA1JointCabSpan}\`);
+              throw new Error(\`A1 passenger-joint camera received invalid Rotunda-to-Cab span: \${exactA1JointCabSpan}\`);
             }
 
             const exactA1JointWallUnitX = exactA1JointWallVectorX / exactA1JointWallSpan;
@@ -55,20 +59,22 @@ const terminalBlock = `          if (exactA1EvidenceSubview === "terminal-joint"
             const exactA1JointCabUnitZ = exactA1JointCabVectorZ / exactA1JointCabSpan;
             const exactA1JointBranchAngleCosine = exactA1JointWallUnitX * exactA1JointCabUnitX
               + exactA1JointWallUnitZ * exactA1JointCabUnitZ;
-            if (!(exactA1JointBranchAngleCosine > -0.95 && exactA1JointBranchAngleCosine < 0.80)) {
-              throw new Error(\`A1 passenger-elbow branches cannot be safely framed: \${exactA1JointBranchAngleCosine}\`);
+            if (!Number.isFinite(exactA1JointBranchAngleCosine)
+              || exactA1JointBranchAngleCosine < -1.000001
+              || exactA1JointBranchAngleCosine > 1.000001) {
+              throw new Error(\`A1 passenger-joint branch diagnostic is invalid: \${exactA1JointBranchAngleCosine}\`);
             }
 
-            const exactA1JointBisectorX = exactA1JointWallUnitX + exactA1JointCabUnitX;
-            const exactA1JointBisectorZ = exactA1JointWallUnitZ + exactA1JointCabUnitZ;
-            const exactA1JointBisectorLength = Math.hypot(exactA1JointBisectorX, exactA1JointBisectorZ);
-            if (!(exactA1JointBisectorLength > 0.25)) {
-              throw new Error(\`A1 passenger-elbow angle bisector collapsed: \${exactA1JointBisectorLength}\`);
+            const exactA1JointThroughAxisX = exactA1JointCabUnitX - exactA1JointWallUnitX;
+            const exactA1JointThroughAxisZ = exactA1JointCabUnitZ - exactA1JointWallUnitZ;
+            const exactA1JointThroughAxisLength = Math.hypot(exactA1JointThroughAxisX, exactA1JointThroughAxisZ);
+            if (!(exactA1JointThroughAxisLength > ${MINIMUM_THROUGH_AXIS_LENGTH.toFixed(2)})) {
+              throw new Error(\`A1 passenger-joint through-axis collapsed: \${exactA1JointThroughAxisLength}\`);
             }
-            const exactA1JointBisectorUnitX = exactA1JointBisectorX / exactA1JointBisectorLength;
-            const exactA1JointBisectorUnitZ = exactA1JointBisectorZ / exactA1JointBisectorLength;
-            const exactA1JointViewUnitX = -exactA1JointBisectorUnitZ;
-            const exactA1JointViewUnitZ = exactA1JointBisectorUnitX;
+            const exactA1JointThroughUnitX = exactA1JointThroughAxisX / exactA1JointThroughAxisLength;
+            const exactA1JointThroughUnitZ = exactA1JointThroughAxisZ / exactA1JointThroughAxisLength;
+            const exactA1JointViewUnitX = -exactA1JointThroughUnitZ;
+            const exactA1JointViewUnitZ = exactA1JointThroughUnitX;
             const exactA1JointCameraOutX = -exactA1JointViewUnitX;
             const exactA1JointCameraOutZ = -exactA1JointViewUnitZ;
             const exactA1JointCameraDistance = ${CAMERA_DISTANCE_METERS.toFixed(1)};
@@ -94,7 +100,7 @@ const terminalBlock = `          if (exactA1EvidenceSubview === "terminal-joint"
             if (!(exactA1JointWallViewCosine < ${MAX_BRANCH_VIEW_COSINE.toFixed(2)}
               && exactA1JointTunnelAViewCosine < ${MAX_BRANCH_VIEW_COSINE.toFixed(2)}
               && exactA1JointBranchViewImbalance < ${MAX_BRANCH_VIEW_IMBALANCE.toFixed(2)})) {
-              throw new Error(\`A1 passenger-elbow camera can hide a branch: wall=\${exactA1JointWallViewCosine} tunnelA=\${exactA1JointTunnelAViewCosine} imbalance=\${exactA1JointBranchViewImbalance}\`);
+              throw new Error(\`A1 passenger-joint camera can hide a branch: wall=\${exactA1JointWallViewCosine} tunnelA=\${exactA1JointTunnelAViewCosine} imbalance=\${exactA1JointBranchViewImbalance}\`);
             }
 
             const exactA1JointApronDistance = 0;
@@ -113,6 +119,7 @@ const terminalBlock = `          if (exactA1EvidenceSubview === "terminal-joint"
             renderer.domElement.dataset.inspectionCameraEndpointJointSideDistanceMeters = exactA1JointSideDistance.toFixed(6);
             renderer.domElement.dataset.inspectionCameraEndpointJointSideOnCosine = exactA1JointSideOnCosine.toFixed(6);
             renderer.domElement.dataset.inspectionCameraEndpointJointBranchAngleCosine = exactA1JointBranchAngleCosine.toFixed(6);
+            renderer.domElement.dataset.inspectionCameraEndpointJointThroughAxisLength = exactA1JointThroughAxisLength.toFixed(6);
             renderer.domElement.dataset.inspectionCameraEndpointJointWallViewCosine = exactA1JointWallViewCosine.toFixed(6);
             renderer.domElement.dataset.inspectionCameraEndpointJointTunnelAViewCosine = exactA1JointTunnelAViewCosine.toFixed(6);
             renderer.domElement.dataset.inspectionCameraEndpointJointBranchViewImbalance = exactA1JointBranchViewImbalance.toFixed(6);
@@ -135,11 +142,14 @@ for (const forbidden of [
   "rotunda-to-tunnel-a-passenger-profile-v1",
   "rotunda-terminal-and-tunnel-a-bisector-profile-v2",
   "rotunda-terminal-and-tunnel-a-bisector-profile-v3-midheight",
+  "rotunda-terminal-and-tunnel-a-bisector-normal-profile-v4-midheight",
+  "const exactA1JointBisectorX = exactA1JointWallUnitX + exactA1JointCabUnitX;",
+  "exactA1JointBranchAngleCosine > -0.95",
   "const exactA1JointViewUnitX = exactA1JointBisectorX / exactA1JointBisectorLength;",
   "exactA1CameraPositionY = exactA1JointCenterY + 1.40;",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${trainerPath}: retired roof-level/end-on A1 evidence framing survived final normalization: ${forbidden}`);
+    throw new Error(`${trainerPath}: retired elbow-specific/end-on A1 evidence framing survived final normalization: ${forbidden}`);
   }
 }
 
@@ -147,23 +157,24 @@ for (const required of [
   "const exactA1JointCenterX = exactA1CameraRotundaX;",
   "const exactA1JointWallVectorX = exactA1CameraWallX - exactA1JointCenterX;",
   "const exactA1JointCabVectorX = exactA1CameraCabX - exactA1JointCenterX;",
-  "const exactA1JointBisectorX = exactA1JointWallUnitX + exactA1JointCabUnitX;",
-  "const exactA1JointBisectorUnitX = exactA1JointBisectorX / exactA1JointBisectorLength;",
-  "const exactA1JointViewUnitX = -exactA1JointBisectorUnitZ;",
-  "const exactA1JointViewUnitZ = exactA1JointBisectorUnitX;",
+  "const exactA1JointThroughAxisX = exactA1JointCabUnitX - exactA1JointWallUnitX;",
+  "const exactA1JointThroughUnitX = exactA1JointThroughAxisX / exactA1JointThroughAxisLength;",
+  "const exactA1JointViewUnitX = -exactA1JointThroughUnitZ;",
+  "const exactA1JointViewUnitZ = exactA1JointThroughUnitX;",
   `const exactA1JointCameraDistance = ${CAMERA_DISTANCE_METERS.toFixed(1)};`,
   `exactA1CameraPositionY = exactA1JointCenterY + ${CAMERA_HEIGHT_OFFSET_METERS.toFixed(2)};`,
   "exactA1CameraTargetY = exactA1JointCenterY;",
   `inspectionCameraEndpointJointCameraHeightOffsetMeters = "${CAMERA_HEIGHT_OFFSET_METERS.toFixed(2)}"`,
+  "inspectionCameraEndpointJointThroughAxisLength",
   "inspectionCameraEndpointJointWallViewCosine",
   "inspectionCameraEndpointJointTunnelAViewCosine",
   "inspectionCameraEndpointJointBranchViewImbalance",
   `inspectionCameraEndpointJointProfileAuthority = "${PROFILE_AUTHORITY}"`,
 ]) {
   if (!source.includes(required)) {
-    throw new Error(`${trainerPath}: normalized A1 mid-height side-on evidence camera is missing ${required}`);
+    throw new Error(`${trainerPath}: normalized A1 source-through-axis evidence camera is missing ${required}`);
   }
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Normalized final A1 evidence camera to a passenger-midheight view perpendicular to the terminal/Rotunda/Tunnel-A bisector; both elbow branches must remain visible without roof occlusion.");
+console.log("Normalized final A1 evidence camera to a passenger-midheight view perpendicular to the source-owned wall/Rotunda/Cab through-axis; near-straight physical continuity no longer collapses the camera while both branches remain side-on and visible.");

@@ -1,0 +1,46 @@
+import fs from "node:fs";
+
+const runtimePath = "src/environment/registerStaticJetwayFleetToFacadeV1.js";
+const marker = "static-generated-terminal-connector-inclusive-overlap-guard-v1";
+const authority = "57-static-generated-terminal-connectors-neighbor-envelope-no-overlap-v1";
+const toleranceMeters = 0.01;
+let source = fs.readFileSync(runtimePath, "utf8");
+
+for (const required of [
+  "static-final-kphx-own-parking-rigid-bridge-v1",
+  "static-a14-terminal-corner-connector-inclusive-zero-overlap-articulation-v3",
+  "const finalExactEnvelopes = staticRegisteredPlacements.map",
+  "function staticExactInstanceEnvelope(THREE, batch, instanceIndex)",
+  "const rebuiltConnectors = addStaticSolidTerminalVestibules(THREE, fleet, placements);",
+]) {
+  if (!source.includes(required)) {
+    throw new Error(`${runtimePath}: connector-inclusive overlap guard requires final static geometry token ${required}`);
+  }
+}
+
+if (!source.includes(marker)) {
+  const exportAnchor = "export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placements) {";
+  if (!source.includes(exportAnchor)) throw new Error(`${runtimePath}: static registration export anchor is missing`);
+
+  const helper = `// ${marker}\nfunction staticConnectorEnvelopeOverlapDepthXZ(left, right, toleranceMeters) {\n  const verticalOverlap = Math.min(left.maxY, right.maxY) - Math.max(left.minY, right.minY);\n  if (verticalOverlap <= toleranceMeters) return 0;\n  let minimumOverlap = Infinity;\n  for (const polygon of [left.hull, right.hull]) {\n    for (let index = 0; index < polygon.length; index += 1) {\n      const a = polygon[index];\n      const b = polygon[(index + 1) % polygon.length];\n      const edgeX = b.x - a.x;\n      const edgeZ = b.z - a.z;\n      const length = Math.hypot(edgeX, edgeZ);\n      if (!(length > 1e-8)) continue;\n      const axisX = -edgeZ / length;\n      const axisZ = edgeX / length;\n      const project = (hull) => {\n        let min = Infinity;\n        let max = -Infinity;\n        for (const point of hull) {\n          const value = point.x * axisX + point.z * axisZ;\n          min = Math.min(min, value);\n          max = Math.max(max, value);\n        }\n        return { min, max };\n      };\n      const p1 = project(left.hull);\n      const p2 = project(right.hull);\n      const overlap = Math.min(p1.max, p2.max) - Math.max(p1.min, p2.min);\n      if (overlap <= toleranceMeters) return 0;\n      minimumOverlap = Math.min(minimumOverlap, overlap);\n    }\n  }\n  return Number.isFinite(minimumOverlap) ? minimumOverlap : 0;\n}\n\n${exportAnchor}`;
+  source = source.replace(exportAnchor, helper);
+
+  const connectorAnchor = "  const rebuiltConnectors = addStaticSolidTerminalVestibules(THREE, fleet, placements);";
+  const connectorGuard = `${connectorAnchor}\n\n  // ${marker}\n  // The seven supplied GLB batches are not the whole visible static assembly.\n  // Each gate also owns a generated compact terminal sleeve made from instanced\n  // shell/rib boxes. Validate those boxes against every OTHER gate's supplied\n  // parts and terminal sleeve boxes. Same-gate sleeve/Rotunda overlap is\n  // intentional and therefore excluded.\n  const staticConnectorBatch = rebuiltConnectors.group?.children?.find((entry) => entry.isInstancedMesh);\n  if (!staticConnectorBatch || rebuiltConnectors.group.children.filter((entry) => entry.isInstancedMesh).length !== 1) {\n    throw new Error("Static Terminal 4 connector-inclusive guard requires one compact connector InstancedMesh batch");\n  }\n  const connectorInstancesPerGate = staticConnectorBatch.count / staticRegisteredPlacements.length;\n  if (!Number.isInteger(connectorInstancesPerGate) || connectorInstancesPerGate < 4) {\n    throw new Error(\`Static Terminal 4 connector batch cannot be mapped back to 57 gates: instances=\${staticConnectorBatch.count}, gates=\${staticRegisteredPlacements.length}\`);\n  }\n  const staticConnectorEnvelopes = staticRegisteredPlacements.map((placement, gateIndex) => ({\n    gate: placement.gate,\n    parts: Array.from({ length: connectorInstancesPerGate }, (_, localIndex) => {\n      const instanceIndex = gateIndex * connectorInstancesPerGate + localIndex;\n      const envelope = staticExactInstanceEnvelope(THREE, staticConnectorBatch, instanceIndex);\n      return { ...envelope, part: \`TerminalConnector\${localIndex + 1}\` };\n    }),\n  }));\n  const staticConnectorInclusiveOverlaps = [];\n  let maximumStaticConnectorInclusiveOverlapDepthMeters = 0;\n  const recordConnectorOverlap = (leftGate, leftPart, rightGate, rightPart) => {\n    const overlapDepth = staticConnectorEnvelopeOverlapDepthXZ(leftPart, rightPart, ${toleranceMeters});\n    if (overlapDepth <= ${toleranceMeters}) return;\n    maximumStaticConnectorInclusiveOverlapDepthMeters = Math.max(maximumStaticConnectorInclusiveOverlapDepthMeters, overlapDepth);\n    staticConnectorInclusiveOverlaps.push(\`\${leftGate}/\${leftPart.part}<->\${rightGate}/\${rightPart.part}=\${overlapDepth.toFixed(3)}m\`);\n  };\n  for (let leftIndex = 0; leftIndex < staticRegisteredPlacements.length; leftIndex += 1) {\n    for (let rightIndex = leftIndex + 1; rightIndex < staticRegisteredPlacements.length; rightIndex += 1) {\n      const leftBody = finalExactEnvelopes[leftIndex];\n      const rightBody = finalExactEnvelopes[rightIndex];\n      const leftConnector = staticConnectorEnvelopes[leftIndex];\n      const rightConnector = staticConnectorEnvelopes[rightIndex];\n      for (const leftPart of leftConnector.parts) {\n        for (const rightPart of rightBody.parts) recordConnectorOverlap(leftConnector.gate, leftPart, rightBody.gate, rightPart);\n        for (const rightPart of rightConnector.parts) recordConnectorOverlap(leftConnector.gate, leftPart, rightConnector.gate, rightPart);\n      }\n      for (const rightPart of rightConnector.parts) {\n        for (const leftPart of leftBody.parts) recordConnectorOverlap(rightConnector.gate, rightPart, leftBody.gate, leftPart);\n      }\n    }\n  }\n  group.userData.uploadedJetwayStaticConnectorOverlapAuthority = "${authority}";\n  group.userData.uploadedJetwayStaticConnectorOverlapToleranceMeters = ${toleranceMeters};\n  group.userData.uploadedJetwayStaticConnectorOverlapCount = staticConnectorInclusiveOverlaps.length;\n  group.userData.uploadedJetwayStaticConnectorMaximumOverlapDepthMeters = maximumStaticConnectorInclusiveOverlapDepthMeters;\n\n  const originalStaticByGate = new Map(staticOriginalPlacements.map((placement) => [placement.gate, placement]));\n  const finalCornerRegistration = Object.fromEntries(["A12", "A14", "A27", "A29"].map((gate) => {\n    const finalPlacement = staticRegisteredPlacements.find((placement) => placement.gate === gate);\n    const originalPlacement = originalStaticByGate.get(gate);\n    if (!finalPlacement || !originalPlacement) throw new Error(\`Static corner diagnostic lost \${gate}\`);\n    return [gate, {\n      sourceX: Number(originalPlacement.x),\n      sourceZ: Number(originalPlacement.z),\n      sourceYaw: Number(originalPlacement.yaw),\n      finalRotundaX: Number(finalPlacement.x),\n      finalRotundaZ: Number(finalPlacement.z),\n      finalYaw: Number(finalPlacement.yaw),\n      targetX: Number(finalPlacement.targetX),\n      targetZ: Number(finalPlacement.targetZ),\n      wallX: Number(finalPlacement.staticFacadeWallX),\n      wallZ: Number(finalPlacement.staticFacadeWallZ),\n      wallNormalX: Number(finalPlacement.staticCornerWallNormalX),\n      wallNormalZ: Number(finalPlacement.staticCornerWallNormalZ),\n      cornerPlaneUsed: finalPlacement.staticCornerWallPlaneUsed === true,\n      cornerPlaneAuthority: finalPlacement.staticCornerWallPlaneAuthority || null,\n      connectorTowardX: Number(finalPlacement.connectorTowardX),\n      connectorTowardZ: Number(finalPlacement.connectorTowardZ),\n      visibleTerminalLegMeters: Number(finalPlacement.staticVisibleTerminalLegMeters),\n      rotundaCenterToWallMeters: Number(finalPlacement.staticResolvedRotundaCenterToWallMeters),\n    }];\n  }));\n  console.info(\`[RampReady] Static A12/A14 final registration \${JSON.stringify(finalCornerRegistration)}\`);\n\n  if (staticConnectorInclusiveOverlaps.length) {\n    throw new Error(\`Static Terminal 4 generated terminal connector envelopes overlap neighboring jetway geometry: \${staticConnectorInclusiveOverlaps.join(", ")}\`);\n  }`;
+  source = source.replace(connectorAnchor, connectorGuard);
+}
+
+for (const required of [
+  marker,
+  authority,
+  `staticConnectorEnvelopeOverlapDepthXZ(leftPart, rightPart, ${toleranceMeters})`,
+  "const staticConnectorEnvelopes = staticRegisteredPlacements.map",
+  "[RampReady] Static A12/A14 final registration",
+  '"A27", "A29"',
+  "Static Terminal 4 generated terminal connector envelopes overlap neighboring jetway geometry",
+]) {
+  if (!source.includes(required)) throw new Error(`${runtimePath}: connector-inclusive overlap guard is missing ${required}`);
+}
+
+fs.writeFileSync(runtimePath, source, "utf8");
+console.log(`Prepared static connector-inclusive collision validation at ${toleranceMeters.toFixed(2)} m tolerance: every generated terminal sleeve is checked against every neighboring supplied jetway part and sleeve, while intentional same-gate sleeve/Rotunda overlap remains allowed.`);

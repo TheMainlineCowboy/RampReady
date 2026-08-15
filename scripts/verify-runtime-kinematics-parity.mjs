@@ -39,3 +39,8 @@ assert.ok(source.includes("if (captureOffset <= maxCaptureCorrection || captureO
 assert.ok(!source.includes("const requestedYawStep = lateralNoseTravel / 11.2;"), "obsolete direct lateral-yaw coupling remains in prepared runtime");
 
 console.log("Prepared runtime kinematics parity verified against shared capture, main-gear wheelbase, delayed yaw-rate, and articulation constants.");
+
+// build-production.mjs invokes this verifier as its final step immediately before
+// Vite. Normalize the generated A1 terminal-joint camera here, after every late
+// production rewrite and before the exact browser artifact is bundled.
+await import(`./prepare-a1-final-terminal-joint-camera-guard-v1.mjs?pre-vite=${Date.now()}`);

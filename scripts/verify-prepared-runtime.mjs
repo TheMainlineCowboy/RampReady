@@ -80,6 +80,21 @@ await import(`./seed-final-jetway-ground-contact-before-normalization.mjs?final-
 await import(`./prepare-a1-current-rotunda-terminal-connector-v1.mjs?current-rotunda=${Date.now()}`);
 await import(`./prepare-a1-terminal-shell-passenger-y-v1.mjs?passenger-shell=${Date.now()}`);
 await import(`./normalize-final-a1-evidence-camera-after-runtime.mjs?final-camera=${Date.now()}`);
+// The generated source-through-axis camera is correct geometrically, but a late
+// legacy clear-side block used to mirror it into the terminal and the old bogie
+// camera deliberately moved away from the aircraft into the same facade. Apply
+// the final apron-half-plane camera contract immediately after normalization.
+await import(`./prepare-a1-apron-side-evidence-camera-v1.mjs?apron-camera=${Date.now()}`);
+// A single side-on position can still be hidden by the real package T4_WALK even
+// while it is physically on the apron side. Search only farther outward along
+// the exact Rotunda-to-Cab/aircraft axis for a clear view; never move geometry or
+// cross the terminal half-plane just to make evidence pass.
+await import(`./prepare-a1-unoccluded-aircraft-side-evidence-camera-v1.mjs?unoccluded-camera=${Date.now()}`);
+// The installation report's Tunnel-C center is measured before Terminal 4's
+// final parent transform and cannot safely drive a world-space evidence camera.
+// Re-measure the visible Tunnel_C mesh after all scene transforms and require
+// its lowest cluster to be aircraft-side, on-axis and physically on the ramp.
+await import(`./prepare-a1-final-world-bogie-camera-v1.mjs?final-world-bogie=${Date.now()}`);
 // A1 and the 57 static bridges intentionally use different ground frames: A1 is
 // grounded from final visible Tunnel-C support geometry; statics retain the
 // supplied model's authored shared offset. Require each independently rather than

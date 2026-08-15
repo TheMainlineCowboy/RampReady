@@ -43,9 +43,14 @@ if (
 
 let buildError;
 try {
-  // This wrapper runs after the final airport-ownership readiness pass. Re-run
-  // the Tunnel-C migration here so no later compatibility layer can restore the
-  // retired whole-model/pedestal ground rule in the artifact that Vite bundles.
+  await import(`./prepare-a1-main-terminal-facade-route-v1.mjs?final-main-facade=${Date.now()}`);
+  // The source-placement pass resolves the real authored face planes for A10
+  // and A12. The registrar then projects each ORIGINAL KPHX source pivot onto
+  // its selected plane, preserving the source-authored tangential separation at
+  // the concourse corner while correcting only terminal-normal distance.
+  await import(`./prepare-static-own-parking-wall-anchor-v1.mjs?final-static-wall=${Date.now()}`);
+  await import(`./prepare-static-corner-plane-registration-v1.mjs?final-static-corner-plane=${Date.now()}`);
+  await import(`./verify-static-corner-plane-registration-v1.mjs?final-static-corner-plane-verify=${Date.now()}`);
   await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?post-airport-ownership=${Date.now()}`);
   await import("./run-production-with-a1-cleanup.mjs");
 } catch (error) {

@@ -1,20 +1,16 @@
 const TARGET_MATERIAL_NAME = /^material-13-PHX_TERM400_1\.DDS$/i;
 const EXPECTED_SOURCE_TRIANGLES = 280;
 const EXPECTED_TRIANGLES_PER_BOX = 12;
-const EXPECTED_REMOVED_TRIANGLES = 36;
-const EXPECTED_RETAINED_TRIANGLES = 244;
+const EXPECTED_REMOVED_TRIANGLES = 24;
+const EXPECTED_RETAINED_TRIANGLES = 256;
 
-// Three isolated authored boxes sit around the A1 corner and read as detached
-// beige walls in the ramp camera. The first two overlap one another behind the
-// rotunda; the third is a narrow 2 x 8.6 x 6.9 m panel east of the stand. These
-// exact local-space bounds remove only those standalone 12-triangle boxes and
-// preserve the surrounding connected Terminal 4 geometry.
+// The PHX_TERM400_1 box nearest A1 is real terminal geometry: its west face is
+// the source-authored building surface the A1 fixed leg/Rotunda must attach to.
+// Earlier cleanup incorrectly classified that entire box as detached and removed
+// the wall, forcing the later structural search across T4_WALK to a broad main-
+// terminal boundary. Preserve that near block. Only the genuinely rear detached
+// box and the east freestanding panel remain surgical cleanup targets.
 const TARGET_LOCAL_BOXES = Object.freeze([
-  Object.freeze({
-    id: "A1-near-legacy-box",
-    minimum: Object.freeze([-105.05, -0.05, 80.0]),
-    maximum: Object.freeze([-96.83, 9.6, 88.22]),
-  }),
   Object.freeze({
     id: "A1-rear-legacy-box",
     minimum: Object.freeze([-122.27, -0.05, 80.0]),
@@ -104,13 +100,13 @@ function filterGeometry(THREE, geometry) {
   }
 
   const filtered = new THREE.BufferGeometry();
-  filtered.name = `${geometry.name || "Terminal4Primitive"}_A1LegacyBlocksRemoved`;
+  filtered.name = `${geometry.name || "Terminal4Primitive"}_A1DetachedArtifactsRemoved`;
   for (const [name, attribute] of Object.entries(nonIndexed.attributes)) {
     filtered.setAttribute(name, copyAttribute(THREE, attribute, keptVertexIndices));
   }
   filtered.userData = {
     ...(geometry.userData || {}),
-    a1LegacyBlockFilter: "exact-three-box-36-triangle-PHX_TERM400_1-removal-v3",
+    a1LegacyBlockFilter: "preserve-a1-terminal-attachment-remove-two-detached-PHX_TERM400_1-artifacts-v4",
     a1LegacyBlockRemovedByTarget: Object.fromEntries(
       TARGET_LOCAL_BOXES.map((box, index) => [box.id, removedByTarget[index]]),
     ),
@@ -147,7 +143,7 @@ export function removeTerminal4A1LegacyBlock(THREE, terminal) {
       a1LegacyBlockRemovedByTarget: Object.fromEntries(
         TARGET_LOCAL_BOXES.map((box, index) => [box.id, result.removedByTarget[index]]),
       ),
-      a1LegacyBlockAuthority: "exact-authored-PHX_TERM400_1-three-box-bounds-v3",
+      a1LegacyBlockAuthority: "preserve-real-a1-terminal-face-two-detached-artifact-bounds-v4",
     };
   });
 
@@ -179,7 +175,8 @@ export function removeTerminal4A1LegacyBlock(THREE, terminal) {
     a1LegacyBlockSourceTriangles: sourceTriangleCount,
     a1LegacyBlockRetainedTriangles: retainedTriangleCount,
     a1LegacyBlockBounds: TARGET_LOCAL_BOXES,
-    a1LegacyBlockAuthority: "surgical-exact-three-box-36-triangle-authored-removal-v3",
+    a1LegacyBlockPreservedAttachmentFace: "PHX_TERM400_1 A1-near source terminal box",
+    a1LegacyBlockAuthority: "preserve-a1-source-terminal-remove-two-detached-artifacts-v4",
   };
 
   return {

@@ -5,6 +5,7 @@ import {
 const SOURCE_REGISTERED_A1_ELBOW_AUTHORITY = "source-airport-a1-fixed-rotunda-rigid-heading-aircraft-conforms-v6";
 const TARGET_DIRECTION_AUTHORITY = "source-jetway-cab-endpoint-aircraft-conforms-v1";
 const TELESCOPING_AUTHORITY = "a1-source-authored-rigid-heading-aircraft-conforms-v1";
+const RENDERED_DOOR_CONTINUITY_AUTHORITY = "a1-rendered-door-source-heading-through-continuity-v1";
 const SOURCE_MODEL_YAW_DEGREES = 0.491;
 const AUTHORED_DOOR_LOCAL_X = -1.34;
 const AUTHORED_DOOR_LOCAL_Z = 7.32;
@@ -159,11 +160,16 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
     throw new Error("A1 source-owned terminal direction is missing");
   }
   terminalDirection.normalize();
-  const cornerAngleDegrees = THREE.MathUtils.radToDeg(
-    Math.acos(THREE.MathUtils.clamp(terminalDirection.dot(bridgeDirection), -1, 1)),
-  );
-  if (!(cornerAngleDegrees >= 45 && cornerAngleDegrees <= 150)) {
-    throw new Error(`A1 decoded KPHX bridge lost the required terminal-side elbow: ${cornerAngleDegrees}`);
+  const terminalBridgeDot = THREE.MathUtils.clamp(terminalDirection.dot(bridgeDirection), -1, 1);
+  const cornerAngleDegrees = THREE.MathUtils.radToDeg(Math.acos(terminalBridgeDot));
+  const throughTurnDegrees = 180 - cornerAngleDegrees;
+  // The terminal leg and decoded-source bridge must continue through the Rotunda
+  // into opposite hemispheres. Do not require an artificial 30+ degree visible
+  // bend: the measured KPHX wall and supplied bridge currently produce a nearly
+  // straight physical path, and rotating the airport-owned bridge to manufacture
+  // an elbow would violate the decoded source heading.
+  if (!Number.isFinite(cornerAngleDegrees) || terminalBridgeDot >= 0) {
+    throw new Error(`A1 rendered-door source-heading path folds back through the Rotunda: branch=${cornerAngleDegrees} turn=${throughTurnDegrees}`);
   }
 
   const targetWorld = fleet.localToWorld(cabContact.clone());
@@ -173,6 +179,8 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
   group.userData.uploadedJetwayA1SourceLockedElbowAuthority = SOURCE_REGISTERED_A1_ELBOW_AUTHORITY;
   group.userData.uploadedJetwayA1TargetDirectionAuthority = TARGET_DIRECTION_AUTHORITY;
   group.userData.uploadedJetwayA1TelescopingAuthority = TELESCOPING_AUTHORITY;
+  group.userData.uploadedJetwayA1RenderedDoorContinuityAuthority = RENDERED_DOOR_CONTINUITY_AUTHORITY;
+  group.userData.uploadedJetwayA1RenderedDoorThroughTurnDegrees = throughTurnDegrees;
   group.userData.uploadedJetwayA1TargetAlignmentCosine = targetAlignmentCosine;
   group.userData.uploadedJetwayA1TunnelAxisTargetCosine = targetAlignmentCosine;
   group.userData.uploadedJetwayA1EndpointAngularCorrectionRadians = 0;
@@ -215,6 +223,7 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
     authority: SOURCE_REGISTERED_A1_ELBOW_AUTHORITY,
     targetDirectionAuthority: TARGET_DIRECTION_AUTHORITY,
     telescopingAuthority: TELESCOPING_AUTHORITY,
+    renderedDoorContinuityAuthority: RENDERED_DOOR_CONTINUITY_AUTHORITY,
     yawDeltaRadians: 0,
     endpointAngularCorrectionRadians: 0,
     targetAlignmentCosine,
@@ -225,6 +234,7 @@ export function enforceSourceRegisteredA1RotundaElbow(THREE, group, fleet, place
     finalCabErrorMeters: 0,
     finalCabReachMeters: targetDistance,
     cornerAngleDegrees,
+    throughTurnDegrees,
     decodedSourceRotundaOffsetMeters,
     sourceDoorTargetLocal: [cabContact.x, cabContact.z],
     sourceDoorTargetWorld: [targetWorld.x, targetWorld.z],

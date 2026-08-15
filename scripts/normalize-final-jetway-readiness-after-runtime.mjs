@@ -6,6 +6,8 @@ const MAX_WALL_DISTANCE = 44;
 const MIN_A1_VISIBLE_LEG = 0.15;
 const MAX_VISIBLE_LEG = 44;
 const MAX_A1_ROTUNDA_PRESERVATION_ERROR = 0.001;
+const retiredA1CosmeticCornerGuard = "!(sourceLockedA1CornerAngle >= 45 && sourceLockedA1CornerAngle <= 150)";
+const physicalA1CornerDiagnosticGuard = "!Number.isFinite(sourceLockedA1CornerAngle) || sourceLockedA1CornerAngle < 0 || sourceLockedA1CornerAngle > 180";
 
 let source = fs.readFileSync(readinessPath, "utf8");
 
@@ -29,6 +31,12 @@ source = source.replaceAll(
   "rotundaPreservationError > 1e-6",
   `rotundaPreservationError > ${MAX_A1_ROTUNDA_PRESERVATION_ERROR}`,
 );
+
+// The source-registered elbow module now validates physical Rotunda through-
+// continuity instead of demanding a visually conspicuous 45-150 degree corner.
+// Keep the measured angle as fail-closed telemetry, but never use the retired
+// cosmetic range to rotate or reject an otherwise continuous source-owned A1.
+source = source.replaceAll(retiredA1CosmeticCornerGuard, physicalA1CornerDiagnosticGuard);
 
 const bogieGroundGuard = "Number.isFinite(bogieTireCorrection) && bogieTireCorrection > 0";
 source = source.replace(
@@ -142,6 +150,7 @@ for (const forbidden of [
   "a1TerminalWallDistance > 0.4 && a1TerminalWallDistance < 12",
   "connectorVisibleLength > 0.25 && connectorVisibleLength < 12",
   "rotundaPreservationError > 1e-6",
+  retiredA1CosmeticCornerGuard,
 ]) {
   if (source.includes(forbidden)) {
     throw new Error(`${readinessPath}: retired or unpublished jetway readiness survived final runtime normalization: ${forbidden}`);
@@ -158,6 +167,7 @@ for (const required of [
   staticWallGuard,
   staticVisibleLegGuard,
   bogieGroundGuard,
+  physicalA1CornerDiagnosticGuard,
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${readinessPath}: final measured jetway readiness is missing ${required}`);
@@ -165,4 +175,4 @@ for (const required of [
 }
 
 fs.writeFileSync(readinessPath, source, "utf8");
-console.log("Normalized final post-prepare jetway readiness using the structural exact-readiness condition: A1 keeps source-measured physical wall/visible-leg bounds, all 57 static gates keep measured min/max wall and visible-leg ranges, any generated intact-parent Rotunda preservation guard is normalized to the source-owned 1 mm tolerance when present, and grounded Tunnel-C bogie contact remains fail-closed without depending on generated clause ordering or authority text.");
+console.log("Normalized final post-prepare jetway readiness using the structural exact-readiness condition: A1 keeps source-measured physical wall/visible-leg bounds and source-owned Rotunda through-continuity without the retired cosmetic 45-150 degree corner range; all 57 static gates keep measured min/max wall and visible-leg ranges; grounded Tunnel-C bogie contact remains fail-closed.");

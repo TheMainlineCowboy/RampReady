@@ -15,8 +15,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: terminal4-jetway-visual-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: terminal4-jetway-visual-${{ github.event.pull_request.number || github.ref }}-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: false
 
 jobs:
   render-jetways:
@@ -73,6 +73,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          node scripts/prepare-terminal4-visual-failfast-v1.mjs 2>&1 | tee jetway-visual-evidence/preflight.log
+          node scripts/prepare-terminal4-fleet-first-evidence-v1.mjs 2>&1 | tee -a jetway-visual-evidence/preflight.log
           node scripts/verify-terminal4-fleet-visual.cjs 2>&1 | tee jetway-visual-evidence/workflow.log
 
       - name: Upload one-day jetway visual evidence
@@ -83,5 +85,64 @@ jobs:
           path: |
             jetway-visual-evidence/
             jetway-build.log
+          if-no-files-found: warn
+          retention-days: 1
+
+  a14-corner-overhead:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact proposed commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build proposed RampReady site
+        run: npm run build
+
+      - name: Install visual test runner
+        run: npm install --no-save --package-lock=false @playwright/test@1.55.0
+
+      - name: Install Chromium binary
+        run: npx playwright install chromium
+
+      - name: Start local production preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p a14-corner-evidence
+          npm run preview -- --host 127.0.0.1 --port 4173 > a14-corner-evidence/preview.log 2>&1 &
+          echo $! > a14-corner-evidence/preview.pid
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/RampReady/ >/dev/null; then
+              echo "RampReady preview ready after attempt ${attempt}."
+              exit 0
+            fi
+            sleep 2
+          done
+          cat a14-corner-evidence/preview.log
+          exit 1
+
+      - name: Capture A14 corner overhead only
+        env:
+          PAGE_URL: http://127.0.0.1:4173/RampReady/
+          EVIDENCE_DIR: a14-corner-evidence
+        run: node scripts/capture-a14-corner-overhead.cjs
+
+      - name: Upload A14 corner overhead evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a14-corner-overhead-${{ github.event.pull_request.head.sha || github.sha }}
+          path: a14-corner-evidence/
           if-no-files-found: warn
           retention-days: 1

@@ -72,6 +72,11 @@ jobs:
       - name: Run complete source verification
         run: npm run verify
 
+      - name: Reset generated runtime before production build
+        run: |
+          git reset --hard HEAD
+          git clean -fd
+
       - name: Build exact production artifact
         run: npm run build
 

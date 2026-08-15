@@ -3,10 +3,12 @@ const fs = require('node:fs');
 
 const pageUrl = process.env.PAGE_URL || 'http://127.0.0.1:4173/RampReady/';
 const evidenceDir = process.env.EVIDENCE_DIR || 'a1-terminal-joint-evidence';
-const CURRENT_SUBVIEW_AUTHORITY = 'source-measured-a1-terminal-joint-camera-v3';
-const LEGACY_SUBVIEW_AUTHORITY = 'exact-a1-terminal-joint-and-bogie-contact-subviews-v2';
+const CURRENT_SUBVIEW_AUTHORITY = 'source-measured-a1-apron-side-evidence-camera-v4';
 const CAMERA_AUTHORITY = 'exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2';
 const LOCK_AUTHORITY = 'exact-a1-evidence-camera-direct-lock-v1';
+const TERMINAL_PROFILE_AUTHORITY = 'rotunda-terminal-and-tunnel-a-through-axis-normal-profile-v5-midheight';
+const TERMINAL_CLEAR_SIDE_AUTHORITY = 'a1-terminal-joint-apron-half-plane-unoccluded-v3';
+const BOGIE_PROFILE_AUTHORITY = 'a1-tunnel-c-bogie-apron-half-plane-side-profile-v2';
 const VISUAL_AUTHORITY = 'same-day-a1-continuous-source-measured-solid-closed-grounded-v2';
 const CONTINUITY_AUTHORITY = 'exact-authored-five-part-chain-no-isolated-node-rotation-v2';
 const BOGIE_AUTHORITY = 'exact-authored-a1-tunnel-c-bogie-ramp-contact-v3';
@@ -18,6 +20,10 @@ const MAX_BOGIE_CLEARANCE_METERS = 0.015;
 const MIN_BOGIE_CONTACT_POINTS = 4;
 const MIN_BOGIE_CONTACT_CLUSTERS = 1;
 const MIN_BOGIE_HORIZONTAL_CONTACT_SPAN_METERS = 0.35;
+const MAX_BRANCH_VIEW_COSINE = 0.82;
+const MAX_BRANCH_VIEW_IMBALANCE = 0.20;
+const MIN_TERMINAL_APRON_OFFSET_METERS = 2.5;
+const MIN_BOGIE_APRON_OFFSET_METERS = 1.5;
 fs.mkdirSync(evidenceDir, { recursive: true });
 
 function numeric(value, label) {
@@ -44,24 +50,52 @@ async function captureCanvas(page, canvas, path) {
   }
 }
 
-function subviewAuthorityAccepted(value) {
-  return value === CURRENT_SUBVIEW_AUTHORITY || value === LEGACY_SUBVIEW_AUTHORITY;
-}
-
 async function selectSubview(page, subview) {
   await page.evaluate(nextSubview => {
     const canvas = document.querySelector('canvas.trainerCanvas');
     if (!(canvas instanceof HTMLCanvasElement)) throw new Error('A1 evidence canvas is missing');
     canvas.dataset.a1EvidenceSubview = nextSubview;
   }, subview);
-  await page.waitForFunction(({ expectedSubview, currentAuthority, legacyAuthority, cameraAuthority, lockAuthority }) => {
+  await page.waitForFunction(({ expectedSubview, currentAuthority, cameraAuthority, lockAuthority, terminalProfileAuthority, terminalClearSideAuthority, bogieProfileAuthority, maxBranchViewCosine, maxBranchViewImbalance, minTerminalApronOffset, minBogieApronOffset }) => {
     const data = document.querySelector('canvas.trainerCanvas')?.dataset;
-    return data?.inspectionCameraEndpointSubview === expectedSubview
-      && [currentAuthority, legacyAuthority].includes(data?.inspectionCameraEndpointSubviewAuthority)
-      && data?.inspectionCameraEndpointAuthority === cameraAuthority
-      && data?.inspectionCameraEndpointLockAuthority === lockAuthority
-      && Math.abs(Number(data?.inspectionCameraEndpointConvergenceErrorMeters)) <= 0.001;
-  }, { expectedSubview: subview, currentAuthority: CURRENT_SUBVIEW_AUTHORITY, legacyAuthority: LEGACY_SUBVIEW_AUTHORITY, cameraAuthority: CAMERA_AUTHORITY, lockAuthority: LOCK_AUTHORITY }, { timeout: 30000, polling: 100 });
+    if (data?.inspectionCameraEndpointSubview !== expectedSubview
+      || data?.inspectionCameraEndpointSubviewAuthority !== currentAuthority
+      || data?.inspectionCameraEndpointAuthority !== cameraAuthority
+      || data?.inspectionCameraEndpointLockAuthority !== lockAuthority
+      || Math.abs(Number(data?.inspectionCameraEndpointConvergenceErrorMeters)) > 0.001) return false;
+    if (expectedSubview === 'terminal-joint') {
+      const wallView = Number(data?.inspectionCameraEndpointJointWallViewCosine);
+      const tunnelView = Number(data?.inspectionCameraEndpointJointTunnelAViewCosine);
+      const imbalance = Number(data?.inspectionCameraEndpointJointBranchViewImbalance);
+      const apronOffset = Number(data?.inspectionCameraEndpointJointRenderedApronHalfPlaneOffsetMeters);
+      return data?.inspectionCameraEndpointJointProfileAuthority === terminalProfileAuthority
+        && data?.inspectionCameraEndpointJointClearSideAuthority === terminalClearSideAuthority
+        && data?.inspectionCameraEndpointJointClearSideFlipped === 'false'
+        && data?.inspectionCameraEndpointJointT4WalkOccluded === 'false'
+        && Number.isFinite(apronOffset) && apronOffset > minTerminalApronOffset
+        && Number.isFinite(wallView) && wallView < maxBranchViewCosine
+        && Number.isFinite(tunnelView) && tunnelView < maxBranchViewCosine
+        && Number.isFinite(imbalance) && imbalance < maxBranchViewImbalance;
+    }
+    if (expectedSubview === 'bogie-contact') {
+      const apronOffset = Number(data?.inspectionCameraEndpointBogieApronHalfPlaneOffsetMeters);
+      return data?.inspectionCameraEndpointBogieProfileAuthority === bogieProfileAuthority
+        && Number.isFinite(apronOffset) && apronOffset > minBogieApronOffset;
+    }
+    return true;
+  }, {
+    expectedSubview: subview,
+    currentAuthority: CURRENT_SUBVIEW_AUTHORITY,
+    cameraAuthority: CAMERA_AUTHORITY,
+    lockAuthority: LOCK_AUTHORITY,
+    terminalProfileAuthority: TERMINAL_PROFILE_AUTHORITY,
+    terminalClearSideAuthority: TERMINAL_CLEAR_SIDE_AUTHORITY,
+    bogieProfileAuthority: BOGIE_PROFILE_AUTHORITY,
+    maxBranchViewCosine: MAX_BRANCH_VIEW_COSINE,
+    maxBranchViewImbalance: MAX_BRANCH_VIEW_IMBALANCE,
+    minTerminalApronOffset: MIN_TERMINAL_APRON_OFFSET_METERS,
+    minBogieApronOffset: MIN_BOGIE_APRON_OFFSET_METERS,
+  }, { timeout: 30000, polling: 100 });
 }
 
 async function selectCameraView(page, value) {
@@ -153,7 +187,6 @@ async function selectCameraView(page, value) {
   await selectSubview(page, 'terminal-joint');
   await page.waitForTimeout(750);
   const terminalData = await canvas.evaluate(element => ({ ...element.dataset }));
-  if (!subviewAuthorityAccepted(terminalData.inspectionCameraEndpointSubviewAuthority)) throw new Error(`Unexpected A1 terminal-joint subview authority: ${terminalData.inspectionCameraEndpointSubviewAuthority}`);
   const visibleLeg = numeric(terminalData.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters, 'visible vestibule');
   const realWallDistance = numeric(terminalData.terminal4A1JetwayWallDistance, 'real wall distance');
   if (!(visibleLeg > 0.15 && visibleLeg < MAX_VISIBLE_TERMINAL_LEG_METERS)) {
@@ -185,5 +218,5 @@ async function selectCameraView(page, value) {
   fs.writeFileSync(`${evidenceDir}/report.json`, JSON.stringify({ pageUrl, capturedAtUtc: new Date().toISOString(), consoleErrors, pageErrors, terminalTelemetry: terminalData, bogieTelemetry: bogieData, assemblyTelemetry: assemblyData }, null, 2));
   await browser.close();
   if (pageErrors.length) throw new Error(`A1 evidence page errors: ${pageErrors.join(' | ')}`);
-  console.log(`A1 TERMINAL JOINT EVIDENCE READY: ${JSON.stringify({ vestibule: visibleLeg, wallDistance: realWallDistance, bogieClearanceMeters: finalBogieClearance, subviewAuthority: terminalData.inspectionCameraEndpointSubviewAuthority })}`);
+  console.log(`A1 TERMINAL JOINT EVIDENCE READY: ${JSON.stringify({ vestibule: visibleLeg, wallDistance: realWallDistance, bogieClearanceMeters: finalBogieClearance, subviewAuthority: terminalData.inspectionCameraEndpointSubviewAuthority, aircraftSideShiftMeters: terminalData.inspectionCameraEndpointJointAircraftSideShiftMeters || '0' })}`);
 })().catch(error => { console.error(error.stack || error.message || String(error)); process.exit(1); });
