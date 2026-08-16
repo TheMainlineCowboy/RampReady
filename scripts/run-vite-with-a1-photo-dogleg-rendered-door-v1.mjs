@@ -73,17 +73,19 @@ if (preparedRenderedDoorSource.includes("terminalDirection.dot(bridgeDirection)"
   throw new Error("A1 photo-aware rendered-door bundle still contains the invalid direct wall-to-bridge continuity test");
 }
 
-// The fleet readiness module runs after the final A1 geometry pass. Its tracked
-// baseline still assumes the retired short A1 sleeve (3-7 m synthetic extension,
-// <12 m wall/visible-leg spans). Make only the A1 branch photo-aware for the
-// production bundle. The 57 static gates retain their existing strict checks.
+// The fleet readiness module can contain more than one generated A1 readiness
+// branch after the late runtime preparers. Make every equivalent A1 branch photo-
+// aware; otherwise one surviving compact branch can still reject the exact same
+// geometry later in module execution. The 57 static gates retain their own
+// existing strict checks and are not touched by these A1-variable replacements.
 let preparedReadinessSource = originalReadinessSource;
 const readinessTelemetryAnchor = `          const terminalDirectionMagnitude = Math.hypot(\n            Number(a1TerminalDirection[0] ?? NaN),\n            Number(a1TerminalDirection[1] ?? NaN),\n          );`;
 const readinessPhotoTelemetry = `${readinessTelemetryAnchor}\n          // ${PHOTO_READINESS_AUTHORITY}\n          const photoDoglegAuthority = String(group.userData.uploadedJetwayA1FixedCorridorDoglegAuthority || "");\n          const photoSupportAuthority = String(group.userData.uploadedJetwayA1PermanentFixedSupportAuthority || "");\n          const photoSupportCount = Number(group.userData.uploadedJetwayA1PermanentFixedSupportColumnCount ?? -1);\n          const photoGeometryActive = photoDoglegAuthority === "${PHOTO_DOGLEG_AUTHORITY}"\n            && group.userData.uploadedJetwayA1FixedCorridorDogleg === true\n            && photoSupportAuthority === "${PHOTO_SUPPORT_AUTHORITY}"\n            && photoSupportCount === 2;`;
-if (!preparedReadinessSource.includes(readinessTelemetryAnchor)) {
+const telemetryCount = preparedReadinessSource.split(readinessTelemetryAnchor).length - 1;
+if (telemetryCount < 1) {
   throw new Error("A1 readiness terminal-direction telemetry anchor is missing");
 }
-preparedReadinessSource = preparedReadinessSource.replace(readinessTelemetryAnchor, readinessPhotoTelemetry);
+preparedReadinessSource = preparedReadinessSource.split(readinessTelemetryAnchor).join(readinessPhotoTelemetry);
 
 const readinessReplacements = [
   [
@@ -100,10 +102,11 @@ const readinessReplacements = [
   ],
 ];
 for (const [before, after] of readinessReplacements) {
-  if (!preparedReadinessSource.includes(before)) {
+  const count = preparedReadinessSource.split(before).length - 1;
+  if (count < 1) {
     throw new Error(`A1 readiness compact validator anchor is missing: ${before}`);
   }
-  preparedReadinessSource = preparedReadinessSource.replace(before, after);
+  preparedReadinessSource = preparedReadinessSource.split(before).join(after);
 }
 
 const readinessErrorAnchor = "connector=${connectorVisibleLength}/${connectorRibCount}, source=${exactModelGuard.authority}";
@@ -111,7 +114,7 @@ const readinessErrorPhoto = "connector=${connectorVisibleLength}/${connectorRibC
 if (!preparedReadinessSource.includes(readinessErrorAnchor)) {
   throw new Error("A1 readiness mismatch diagnostic anchor is missing");
 }
-preparedReadinessSource = preparedReadinessSource.replace(readinessErrorAnchor, readinessErrorPhoto);
+preparedReadinessSource = preparedReadinessSource.split(readinessErrorAnchor).join(readinessErrorPhoto);
 
 for (const required of [
   PHOTO_READINESS_AUTHORITY,
@@ -171,4 +174,4 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log(`Bundled ${TEMPORARY_VALIDATOR_AUTHORITY} + ${PHOTO_READINESS_AUTHORITY}: A1 must retain the Aug. 15 dogleg, exactly two permanent fixed support columns, zero synthetic source extension, and a 6-48 m real-wall/fixed-corridor envelope; tracked validator sources were restored exactly.`);
+console.log(`Bundled ${TEMPORARY_VALIDATOR_AUTHORITY} + ${PHOTO_READINESS_AUTHORITY}: every generated A1 readiness branch must retain the Aug. 15 dogleg, exactly two permanent fixed support columns, zero synthetic source extension, and a 6-48 m real-wall/fixed-corridor envelope; tracked validator sources were restored exactly.`);
