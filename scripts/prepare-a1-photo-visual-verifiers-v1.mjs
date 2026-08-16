@@ -3,8 +3,8 @@ import fs from "node:fs";
 const CAMERA_AUTHORITY = "source-measured-a1-apron-side-evidence-camera-v5-balanced-branches";
 const PHOTO_CONNECTOR_STYLE_AUTHORITY = "a1-aug15-photo-dogleg-exactly-two-fixed-support-columns-v1";
 const STATIC_OWN_GATE_AUTHORITY = "57-static-bgl-source-pose-real-wall-registration-v10";
-const MIN_REAL_WALL_DISTANCE_METERS = 8.5;
-const MAX_REAL_WALL_DISTANCE_METERS = 15.5;
+const MIN_REAL_WALL_DISTANCE_METERS = 2.9;
+const MAX_REAL_WALL_DISTANCE_METERS = 5.8;
 
 function requireReplace(source, before, after, label) {
   if (source.includes(after)) return source;
@@ -55,11 +55,12 @@ function requireReplace(source, before, after, label) {
     "    throw new Error(`A1 photo fixed terminal route is outside the 6-48 m authority: ${visibleLeg} m`);",
   );
 
-  // The Aug. 15 A1 geometry now has a genuinely remote Rotunda. The old
-  // 2.9-5.8 m value described the retired compact sleeve and is incompatible
-  // with the same runtime geometry that is required to remain 8.5-15.5 m from
-  // the real BGATE1 facade. Normalize the verifier to that physical envelope;
-  // do not weaken the geometry itself.
+  // Keep these two measurements separate. The Aug. 15 photo-authoritative fixed
+  // corridor/dogleg is validated by terminal4UploadedJetwayA1VisibleVestibuleLengthMeters
+  // plus PHOTO_CONNECTOR_STYLE_AUTHORITY. terminal4A1JetwayWallDistance remains the
+  // authored movable-jetway Rotunda's local relation to the measured BGATE1 facade;
+  // forcing the long fixed-corridor span onto that legacy/source-local field makes
+  // a correct 18 m dogleg fail despite the rendered geometry being photo-consistent.
   source = source
     .replace(/const MIN_REAL_WALL_DISTANCE_METERS = [0-9.]+;/, `const MIN_REAL_WALL_DISTANCE_METERS = ${MIN_REAL_WALL_DISTANCE_METERS};`)
     .replace(/const MAX_REAL_WALL_DISTANCE_METERS = [0-9.]+;/, `const MAX_REAL_WALL_DISTANCE_METERS = ${MAX_REAL_WALL_DISTANCE_METERS};`);
@@ -81,8 +82,6 @@ function requireReplace(source, before, after, label) {
     "const MAX_VISIBLE_TERMINAL_LEG_METERS = 6.0;",
     "visibleLeg > 0.15 && visibleLeg < MAX_VISIBLE_TERMINAL_LEG_METERS",
     "vestibule > 0.15 && vestibule < maxVisibleLeg",
-    "const MIN_REAL_WALL_DISTANCE_METERS = 2.9;",
-    "const MAX_REAL_WALL_DISTANCE_METERS = 5.8;",
   ]) {
     if (source.includes(stale)) throw new Error(`${path}: stale compact-A1 verifier remains: ${stale}`);
   }
@@ -102,4 +101,4 @@ function requireReplace(source, before, after, label) {
   fs.writeFileSync(path, source, "utf8");
 }
 
-console.log(`Prepared photo-authoritative visual verifiers: A1 requires ${PHOTO_CONNECTOR_STYLE_AUTHORITY}, a 6-48 m fixed dogleg route, the genuinely remote ${MIN_REAL_WALL_DISTANCE_METERS}-${MAX_REAL_WALL_DISTANCE_METERS} m Rotunda-to-BGATE1 facade envelope, the balanced v5 apron-side camera, and unchanged strict bogie/branch-visibility checks; static gates retain ${STATIC_OWN_GATE_AUTHORITY}.`);
+console.log(`Prepared photo-authoritative visual verifiers: A1 requires ${PHOTO_CONNECTOR_STYLE_AUTHORITY}, a 6-48 m fixed dogleg route, the unchanged authored/source-local ${MIN_REAL_WALL_DISTANCE_METERS}-${MAX_REAL_WALL_DISTANCE_METERS} m Rotunda-to-BGATE1 facade telemetry envelope, the balanced v5 apron-side camera, and unchanged strict bogie/branch-visibility checks; static gates retain ${STATIC_OWN_GATE_AUTHORITY}.`);
