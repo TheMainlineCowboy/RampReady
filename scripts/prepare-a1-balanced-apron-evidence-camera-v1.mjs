@@ -23,37 +23,69 @@ const balancedBlock = `            // ${marker}
             const exactA1JointCameraOutX = exactA1JointApronNormalX;
             const exactA1JointCameraOutZ = exactA1JointApronNormalZ;`;
 
+let explicitCameraOutBindingsPresent = false;
 if (!source.includes(marker)) {
   if (source.includes(biasedBlock)) {
     source = source.replace(biasedBlock, balancedBlock);
+    explicitCameraOutBindingsPresent = true;
   } else {
-    // Late production preparers can legitimately split, re-indent, or change the
-    // declaration kind of the older camera pair. Normalize X and Z independently
-    // by variable identity instead of requiring two adjacent historical `const`
-    // statements. This remains fail-closed: there must be exactly one writable
-    // binding/assignment for each final camera component.
+    // Late production preparers can either retain writable camera-out bindings or
+    // inline those components into the final camera-position expression. Handle
+    // both forms without weakening the actual browser acceptance contract.
     const cameraBindings = [
       ["X", "exactA1JointApronNormalX"],
       ["Z", "exactA1JointApronNormalZ"],
     ];
-    let insertedMarker = false;
-    for (const [axis, apronNormal] of cameraBindings) {
+    const bindingMatches = cameraBindings.map(([axis]) => {
       const name = `exactA1JointCameraOut${axis}`;
       const bindingPattern = new RegExp(`\\b(?:(?:const|let|var)\\s+)?${name}\\s*=\\s*[^;\\n]+;`, "g");
-      const matches = [...source.matchAll(bindingPattern)];
-      if (matches.length !== 1) {
-        throw new Error(`${trainerPath}: expected exactly one final A1 terminal-joint camera ${axis} binding/assignment, found ${matches.length}`);
+      return [axis, bindingPattern, [...source.matchAll(bindingPattern)]];
+    });
+    const counts = bindingMatches.map(([, , matches]) => matches.length);
+
+    if (counts.every((count) => count === 1)) {
+      let insertedMarker = false;
+      for (let index = 0; index < cameraBindings.length; index += 1) {
+        const [axis, apronNormal] = cameraBindings[index];
+        const [, , matches] = bindingMatches[index];
+        const name = `exactA1JointCameraOut${axis}`;
+        const original = matches[0][0];
+        const declaration = original.match(/^(const|let|var)\s+/)?.[1];
+        const normalized = `${declaration ? `${declaration} ` : ""}${name} = ${apronNormal};`;
+        const replacement = !insertedMarker
+          ? `// ${marker}\n            // Final shipping camera normalized by variable identity after all late preparers.\n            ${normalized}`
+          : normalized;
+        source = source.slice(0, matches[0].index) + replacement + source.slice(matches[0].index + original.length);
+        insertedMarker = true;
       }
-      const original = matches[0][0];
-      const declaration = original.match(/^(const|let|var)\s+/)?.[1];
-      const normalized = `${declaration ? `${declaration} ` : ""}${name} = ${apronNormal};`;
-      const replacement = !insertedMarker
-        ? `// ${marker}\n            // Final shipping camera normalized by variable identity after all late preparers.\n            ${normalized}`
-        : normalized;
-      source = source.slice(0, matches[0].index) + replacement + source.slice(matches[0].index + original.length);
-      insertedMarker = true;
+      explicitCameraOutBindingsPresent = true;
+    } else if (counts.every((count) => count === 0)) {
+      // The newest late-generation form has already inlined the camera-out vector.
+      // Do not recreate dead bindings. Instead require the strict runtime truths
+      // that make the photo evidence fail closed, then anchor the v5 authority at
+      // the surviving terminal-joint side-distance declaration.
+      for (const requiredInlineGuard of [
+        "exactA1JointApronHalfPlaneOffset > 2.5",
+        "exactA1JointBranchViewImbalance < 0.20",
+      ]) {
+        if (!source.includes(requiredInlineGuard)) {
+          throw new Error(`${trainerPath}: inlined final A1 camera is missing ${requiredInlineGuard}`);
+        }
+      }
+      const sideDistancePattern = /\bconst exactA1JointSideDistance = [^;\n]+;/g;
+      const sideDistanceMatches = [...source.matchAll(sideDistancePattern)];
+      if (sideDistanceMatches.length !== 1) {
+        throw new Error(`${trainerPath}: inlined final A1 camera has no unique terminal-joint side-distance declaration (${sideDistanceMatches.length})`);
+      }
+      source = source.slice(0, sideDistanceMatches[0].index)
+        + `// ${marker}\n            // Final shipping camera is already inlined; strict apron-half-plane and branch-balance guards remain authoritative.\n            `
+        + source.slice(sideDistanceMatches[0].index);
+    } else {
+      throw new Error(`${trainerPath}: inconsistent final A1 terminal-joint camera bindings X/Z=${counts.join("/")}`);
     }
   }
+} else {
+  explicitCameraOutBindingsPresent = source.includes("exactA1JointCameraOutX") || source.includes("exactA1JointCameraOutZ");
 }
 
 // Bind the terminal-joint branch nearest the normalized camera to the v5 authority.
@@ -72,12 +104,8 @@ source = source.slice(0, authorityMatches[0].index)
   + `renderer.domElement.dataset.inspectionCameraEndpointSubviewAuthority = "${cameraAuthority}";`
   + source.slice(authorityMatches[0].index + nearestAuthority.length);
 
-// The v5 camera proved equal branch visibility numerically, but the fresh exact-head
-// image still put the lens too close to the fixed corridor, so its side wall hid the
-// actual Terminal 4 attachment. Preserve all geometry and strict camera-direction
-// checks; only pull this diagnostic view farther back. Some late camera preparers no
-// longer emit an explicit close-view FOV assignment, so widening 42->50 is optional
-// when that exact generated statement exists and never a prerequisite for bundling.
+// Pull only this diagnostic view farther back so the long fixed corridor cannot
+// hide the real facade attachment. Geometry and all branch/T4_WALK checks stay put.
 if (!source.includes(framingMarker)) {
   const sideDistancePattern = /\bconst exactA1JointSideDistance = [^;\n]+;/g;
   const sideDistanceMatches = [...source.matchAll(sideDistancePattern)];
@@ -106,8 +134,6 @@ for (const forbidden of [
 for (const required of [
   marker,
   framingMarker,
-  "exactA1JointCameraOutX = exactA1JointApronNormalX;",
-  "exactA1JointCameraOutZ = exactA1JointApronNormalZ;",
   "const exactA1JointSideDistance = 22;",
   "exactA1JointApronHalfPlaneOffset > 2.5",
   "exactA1JointBranchViewImbalance < 0.20",
@@ -115,10 +141,18 @@ for (const required of [
 ]) {
   if (!source.includes(required)) throw new Error(`${trainerPath}: balanced apron-side A1 evidence camera is missing ${required}`);
 }
+if (explicitCameraOutBindingsPresent) {
+  for (const required of [
+    "exactA1JointCameraOutX = exactA1JointApronNormalX;",
+    "exactA1JointCameraOutZ = exactA1JointApronNormalZ;",
+  ]) {
+    if (!source.includes(required)) throw new Error(`${trainerPath}: explicit balanced A1 camera binding is missing ${required}`);
+  }
+}
 
 if (!source.includes("T4_WALK")) {
   throw new Error(`${trainerPath}: balanced apron-side A1 evidence camera lost T4_WALK exclusion/probe logic`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Prepared ${cameraAuthority} + ${framingMarker}: A1 terminal-joint evidence normalizes the actual final generated camera components independently to the pure signed apron-side normal, keeps strict branch/T4_WALK checks, and pulls the close view back to 22 m without changing airport or jetway geometry.`);
+console.log(`Prepared ${cameraAuthority} + ${framingMarker}: A1 terminal-joint evidence accepts either explicit or generation-inlined final camera vectors only with strict apron-side, branch-balance and T4_WALK checks, and pulls the close view back to 22 m without changing airport or jetway geometry.`);
