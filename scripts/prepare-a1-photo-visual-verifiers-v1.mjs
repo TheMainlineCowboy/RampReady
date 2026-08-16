@@ -5,6 +5,7 @@ const PHOTO_CONNECTOR_STYLE_AUTHORITY = "a1-aug15-photo-dogleg-exactly-two-fixed
 const STATIC_OWN_GATE_AUTHORITY = "57-static-bgl-source-pose-real-wall-registration-v10";
 const MIN_REAL_WALL_DISTANCE_METERS = 2.9;
 const MAX_REAL_WALL_DISTANCE_METERS = 5.8;
+const MAX_A1_DOOR_VERTICAL_ERROR_METERS = 0.25;
 
 function requireReplace(source, before, after, label) {
   if (source.includes(after)) return source;
@@ -23,7 +24,21 @@ function requireReplace(source, before, after, label) {
     /const STATIC_OWN_GATE_AUTHORITY = '[^']+';/,
     `const STATIC_OWN_GATE_AUTHORITY = '${STATIC_OWN_GATE_AUTHORITY}';`,
   );
-  for (const required of [CAMERA_AUTHORITY, STATIC_OWN_GATE_AUTHORITY]) {
+  source = requireReplace(
+    source,
+    "const MAXIMUM_DEFERRED_A1_VERTICAL_ERROR_METERS = 6;",
+    `const MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS = ${MAX_A1_DOOR_VERTICAL_ERROR_METERS};`,
+    path,
+  );
+  const deferredVerticalBlock = `  const verticalError = finiteNumber(a1.inspectionAircraftDoorVerticalErrorMeters);\n  if (verticalError === null || Math.abs(verticalError) > MAXIMUM_DEFERRED_A1_VERTICAL_ERROR_METERS) {\n    geometryFailures.push(\`A1 deferred door-height gap escaped safe bounds: \${a1.inspectionAircraftDoorVerticalErrorMeters} m\`);\n  } else if (Math.abs(verticalError) > 0.5) {\n    deferredGeometry.push(\`A1 bridge lift remains deferred: vertical gap=\${verticalError.toFixed(3)} m; aircraft and exact bogie remain grounded.\`);\n  }`;
+  const strictVerticalBlock = `  const verticalError = finiteNumber(a1.inspectionAircraftDoorVerticalErrorMeters);\n  if (verticalError === null || Math.abs(verticalError) > MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS) {\n    geometryFailures.push(\`A1 visible door/Cab vertical error is unacceptable while attached: \${a1.inspectionAircraftDoorVerticalErrorMeters} m\`);\n  }`;
+  source = requireReplace(source, deferredVerticalBlock, strictVerticalBlock, path);
+  for (const required of [
+    CAMERA_AUTHORITY,
+    STATIC_OWN_GATE_AUTHORITY,
+    `const MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS = ${MAX_A1_DOOR_VERTICAL_ERROR_METERS};`,
+    "A1 visible door/Cab vertical error is unacceptable while attached",
+  ]) {
     if (!source.includes(required)) throw new Error(`${path}: current photo visual verifier is missing ${required}`);
   }
   fs.writeFileSync(path, source, "utf8");
@@ -42,6 +57,12 @@ function requireReplace(source, before, after, label) {
     `const MIN_VISIBLE_TERMINAL_LEG_METERS = 6.0;\nconst MAX_VISIBLE_TERMINAL_LEG_METERS = 48.0;\nconst PHOTO_CONNECTOR_STYLE_AUTHORITY = '${PHOTO_CONNECTOR_STYLE_AUTHORITY}';`,
     path,
   );
+  source = requireReplace(
+    source,
+    "const MAX_BOGIE_CLEARANCE_METERS = 0.015;",
+    `const MAX_A1_DOOR_VERTICAL_ERROR_METERS = ${MAX_A1_DOOR_VERTICAL_ERROR_METERS};\nconst MAX_BOGIE_CLEARANCE_METERS = 0.015;`,
+    path,
+  );
   source = source.replaceAll(
     "vestibule > 0.15 && vestibule < maxVisibleLeg",
     `vestibule >= ${6.0} && vestibule <= maxVisibleLeg\n        && data?.terminal4UploadedJetwayA1ConnectorStyleAuthority === '${PHOTO_CONNECTOR_STYLE_AUTHORITY}'`,
@@ -58,7 +79,7 @@ function requireReplace(source, before, after, label) {
   // Keep these two measurements separate. The Aug. 15 photo-authoritative fixed
   // corridor/dogleg is validated by terminal4UploadedJetwayA1VisibleVestibuleLengthMeters
   // plus PHOTO_CONNECTOR_STYLE_AUTHORITY. terminal4A1JetwayWallDistance remains the
-  // authored movable-jetway Rotunda's local relation to the measured BGATE1 facade;
+  // authored movable-jetway Rotunda's local/source relation to the measured BGATE1 facade;
   // forcing the long fixed-corridor span onto that legacy/source-local field makes
   // a correct 18 m dogleg fail despite the rendered geometry being photo-consistent.
   source = source
@@ -73,6 +94,9 @@ function requireReplace(source, before, after, label) {
       `  if (terminalData.terminal4UploadedJetwayA1ConnectorStyleAuthority !== PHOTO_CONNECTOR_STYLE_AUTHORITY) {\n    throw new Error(\`A1 long terminal route lacks the dogleg/exact-two-support photo authority: \${terminalData.terminal4UploadedJetwayA1ConnectorStyleAuthority}\`);\n  }\n${directWallAssertion}`,
     );
   }
+  const wallAssertionBlock = `  if (!(realWallDistance > MIN_REAL_WALL_DISTANCE_METERS && realWallDistance < MAX_REAL_WALL_DISTANCE_METERS)) {\n    throw new Error(\`A1 transformed Rotunda-to-wall distance is outside the measured envelope: \${realWallDistance} m\`);\n  }`;
+  const strictDoorHeightBlock = `${wallAssertionBlock}\n  const doorVerticalError = numeric(terminalData.inspectionAircraftDoorVerticalErrorMeters, 'visible door/Cab vertical error');\n  if (Math.abs(doorVerticalError) > MAX_A1_DOOR_VERTICAL_ERROR_METERS) {\n    throw new Error(\`A1 visible door/Cab vertical error is unacceptable while attached: \${doorVerticalError} m\`);\n  }`;
+  source = requireReplace(source, wallAssertionBlock, strictDoorHeightBlock, path);
   source = source.replace(
     "vestibule=${dataset.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters || 'missing'} wall=",
     "fixedRoute=${dataset.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters || 'missing'} photo=${dataset.terminal4UploadedJetwayA1ConnectorStyleAuthority || 'missing'} wall=",
@@ -94,6 +118,9 @@ function requireReplace(source, before, after, label) {
     "terminal4UploadedJetwayA1ConnectorStyleAuthority",
     `const MIN_REAL_WALL_DISTANCE_METERS = ${MIN_REAL_WALL_DISTANCE_METERS};`,
     `const MAX_REAL_WALL_DISTANCE_METERS = ${MAX_REAL_WALL_DISTANCE_METERS};`,
+    `const MAX_A1_DOOR_VERTICAL_ERROR_METERS = ${MAX_A1_DOOR_VERTICAL_ERROR_METERS};`,
+    "inspectionAircraftDoorVerticalErrorMeters",
+    "A1 visible door/Cab vertical error is unacceptable while attached",
     "const MAX_BRANCH_VIEW_IMBALANCE = 0.20;",
   ]) {
     if (!source.includes(required)) throw new Error(`${path}: photo-authoritative A1 verifier is missing ${required}`);
@@ -101,4 +128,4 @@ function requireReplace(source, before, after, label) {
   fs.writeFileSync(path, source, "utf8");
 }
 
-console.log(`Prepared photo-authoritative visual verifiers: A1 requires ${PHOTO_CONNECTOR_STYLE_AUTHORITY}, a 6-48 m fixed dogleg route, the unchanged authored/source-local ${MIN_REAL_WALL_DISTANCE_METERS}-${MAX_REAL_WALL_DISTANCE_METERS} m Rotunda-to-BGATE1 facade telemetry envelope, the balanced v5 apron-side camera, and unchanged strict bogie/branch-visibility checks; static gates retain ${STATIC_OWN_GATE_AUTHORITY}.`);
+console.log(`Prepared photo-authoritative visual verifiers: A1 requires ${PHOTO_CONNECTOR_STYLE_AUTHORITY}, a 6-48 m fixed dogleg route, the unchanged authored/source-local ${MIN_REAL_WALL_DISTANCE_METERS}-${MAX_REAL_WALL_DISTANCE_METERS} m Rotunda-to-BGATE1 facade telemetry envelope, <=${MAX_A1_DOOR_VERTICAL_ERROR_METERS} m attached visible door/Cab vertical error, the balanced v5 apron-side camera, and unchanged strict bogie/branch-visibility checks; static gates retain ${STATIC_OWN_GATE_AUTHORITY}.`);
