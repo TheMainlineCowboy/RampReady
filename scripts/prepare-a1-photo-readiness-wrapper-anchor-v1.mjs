@@ -21,11 +21,13 @@ let lines = source.split("\n");
 
 // Several late readiness preparers correctly rewrite A1 away from the retired
 // compact sleeve contract before the final photo-aware Vite wrapper runs. The
-// wrapper deliberately performs one atomic A1-only replacement, so normalize
-// only the three validator lines it owns back to stable textual anchors here.
-// This does not change runtime geometry, the terminal, aircraft placement, or
-// Airport_Jetway.glb; the immediately-following bundle wrapper replaces these
-// temporary anchors with the Aug. 15 dogleg + two-column photo conditions.
+// generated module currently contains more than one equivalent A1 readiness
+// branch, so normalize every final guard line that owns one of these three A1
+// variables instead of assuming a single textual occurrence. This remains a
+// validator-only preparation: no runtime geometry, airport/aircraft placement,
+// or Airport_Jetway.glb content is changed. The immediately-following bundle
+// wrapper replaces every normalized guard with the Aug. 15 dogleg + two-column
+// photo conditions.
 for (const { variable, expression } of compactGuards) {
   const matches = [];
   for (let index = 0; index < lines.length; index += 1) {
@@ -33,14 +35,14 @@ for (const { variable, expression } of compactGuards) {
     if (trimmed.startsWith("||") && trimmed.includes(variable)) matches.push(index);
   }
 
-  if (matches.length !== 1) {
-    const contexts = matches.map((index) => `${index + 1}:${lines[index]}`).join("\n");
-    throw new Error(`${readinessPath}: expected exactly one final readiness guard for ${variable}, found ${matches.length}${contexts ? `\n${contexts}` : ""}`);
+  if (matches.length < 1) {
+    throw new Error(`${readinessPath}: expected at least one final readiness guard for ${variable}, found 0`);
   }
 
-  const index = matches[0];
-  const indentation = lines[index].match(/^\s*/)?.[0] || "            ";
-  lines[index] = `${indentation}|| ${expression}`;
+  for (const index of matches) {
+    const indentation = lines[index].match(/^\s*/)?.[0] || "            ";
+    lines[index] = `${indentation}|| ${expression}`;
+  }
 }
 
 source = lines.join("\n");
@@ -48,9 +50,10 @@ fs.writeFileSync(readinessPath, source, "utf8");
 
 for (const { variable, expression } of compactGuards) {
   const expected = `|| ${expression}`;
-  if (!source.includes(expected)) {
+  const count = source.split(expected).length - 1;
+  if (count < 1) {
     throw new Error(`${readinessPath}: photo readiness wrapper anchor was not installed for ${variable}`);
   }
 }
 
-console.log("Prepared stable A1 photo-readiness wrapper anchors for zero-extension, wall-distance and visible-corridor guards; geometry remains unchanged.");
+console.log("Prepared stable A1 photo-readiness wrapper anchors across every generated A1 readiness branch for zero-extension, wall-distance and visible-corridor guards; geometry remains unchanged.");
