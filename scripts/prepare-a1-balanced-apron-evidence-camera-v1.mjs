@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const marker = "a1-balanced-apron-side-terminal-joint-camera-v1";
+const framingMarker = "a1-terminal-joint-photo-framing-v1";
 const cameraAuthority = "source-measured-a1-apron-side-evidence-camera-v5-balanced-branches";
 let source = fs.readFileSync(trainerPath, "utf8");
 
@@ -33,6 +34,41 @@ if (!source.includes(marker)) {
   );
 }
 
+// The v5 camera proved equal branch visibility numerically, but the fresh exact-head
+// image still placed the lens too close to the fixed corridor: its side wall filled
+// most of the frame and hid the real Terminal 4 attachment. Keep the same strict
+// apron-side normal and branch-balance geometry, but pull the evidence camera back,
+// raise it above passenger center, and widen only this diagnostic view. Nothing in
+// the terminal, aircraft, dogleg, Rotunda, supports or supplied GLB is transformed.
+if (!source.includes(framingMarker)) {
+  const sideDistancePattern = /\bconst exactA1JointSideDistance = [^;\n]+;/g;
+  const cameraHeightPattern = /\bconst exactA1JointCameraHeight = [^;\n]+;/g;
+  const sideDistanceMatches = [...source.matchAll(sideDistancePattern)];
+  const cameraHeightMatches = [...source.matchAll(cameraHeightPattern)];
+  if (sideDistanceMatches.length !== 1) {
+    throw new Error(`${trainerPath}: expected exactly one A1 terminal-joint side-distance declaration, found ${sideDistanceMatches.length}`);
+  }
+  if (cameraHeightMatches.length !== 1) {
+    throw new Error(`${trainerPath}: expected exactly one A1 terminal-joint camera-height declaration, found ${cameraHeightMatches.length}`);
+  }
+  source = source.replace(
+    sideDistancePattern,
+    `// ${framingMarker}\n            const exactA1JointSideDistance = 22;`,
+  );
+  source = source.replace(
+    cameraHeightPattern,
+    "const exactA1JointCameraHeight = Math.max(4.25, exactA1PassengerCenterY - exactA1ImportedGroundY + 2.0);",
+  );
+
+  const fovNeedle = "inspectionCamera.fov = 42;";
+  const fovCount = source.split(fovNeedle).length - 1;
+  if (fovCount < 1) {
+    throw new Error(`${trainerPath}: A1 terminal-joint FOV anchor is missing`);
+  }
+  // The terminal-joint callback is the first prepared close-evidence FOV assignment.
+  source = source.replace(fovNeedle, "inspectionCamera.fov = 50;");
+}
+
 for (const forbidden of [
   "exactA1JointBiasedOutX",
   "exactA1JointBiasedOutZ",
@@ -43,8 +79,11 @@ for (const forbidden of [
 }
 for (const required of [
   marker,
+  framingMarker,
   "const exactA1JointCameraOutX = exactA1JointApronNormalX;",
   "const exactA1JointCameraOutZ = exactA1JointApronNormalZ;",
+  "const exactA1JointSideDistance = 22;",
+  "const exactA1JointCameraHeight = Math.max(4.25, exactA1PassengerCenterY - exactA1ImportedGroundY + 2.0);",
   "exactA1JointApronHalfPlaneOffset > 2.5",
   "exactA1JointBranchViewImbalance < 0.20",
   `inspectionCameraEndpointSubviewAuthority = "${cameraAuthority}"`,
@@ -62,4 +101,4 @@ if (!source.includes("T4_WALK")) {
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Prepared ${cameraAuthority}: the A1 terminal-joint camera now uses the pure signed apron-side through-axis normal, preserving equal branch visibility while retaining the >2.5 m terminal-half-plane clearance and T4_WALK occlusion guards.`);
+console.log(`Prepared ${cameraAuthority} + ${framingMarker}: A1 terminal-joint evidence keeps the pure signed apron-side normal and strict branch/T4_WALK checks, while the camera is pulled back to 22 m, raised for a slight downward view and widened so the fixed corridor cannot hide the real facade joint.`);
