@@ -27,15 +27,32 @@ if (!source.includes(marker)) {
   if (source.includes(biasedBlock)) {
     source = source.replace(biasedBlock, balancedBlock);
   } else {
-    // Late production preparers can legitimately rewrite the older v4 bias block
-    // before this final shipping pass. Normalize the actual final camera pair by
-    // variable identity instead of requiring one historical implementation.
-    const finalCameraPairPattern = /\bconst exactA1JointCameraOutX = [^;\n]+;\s*\n\s*const exactA1JointCameraOutZ = [^;\n]+;/g;
-    const finalCameraPairMatches = [...source.matchAll(finalCameraPairPattern)];
-    if (finalCameraPairMatches.length !== 1) {
-      throw new Error(`${trainerPath}: expected exactly one final A1 terminal-joint camera X/Z pair, found ${finalCameraPairMatches.length}`);
+    // Late production preparers can legitimately split, re-indent, or change the
+    // declaration kind of the older camera pair. Normalize X and Z independently
+    // by variable identity instead of requiring two adjacent historical `const`
+    // statements. This remains fail-closed: there must be exactly one writable
+    // binding/assignment for each final camera component.
+    const cameraBindings = [
+      ["X", "exactA1JointApronNormalX"],
+      ["Z", "exactA1JointApronNormalZ"],
+    ];
+    let insertedMarker = false;
+    for (const [axis, apronNormal] of cameraBindings) {
+      const name = `exactA1JointCameraOut${axis}`;
+      const bindingPattern = new RegExp(`\\b(?:(?:const|let|var)\\s+)?${name}\\s*=\\s*[^;\\n]+;`, "g");
+      const matches = [...source.matchAll(bindingPattern)];
+      if (matches.length !== 1) {
+        throw new Error(`${trainerPath}: expected exactly one final A1 terminal-joint camera ${axis} binding/assignment, found ${matches.length}`);
+      }
+      const original = matches[0][0];
+      const declaration = original.match(/^(const|let|var)\s+/)?.[1];
+      const normalized = `${declaration ? `${declaration} ` : ""}${name} = ${apronNormal};`;
+      const replacement = !insertedMarker
+        ? `// ${marker}\n            // Final shipping camera normalized by variable identity after all late preparers.\n            ${normalized}`
+        : normalized;
+      source = source.slice(0, matches[0].index) + replacement + source.slice(matches[0].index + original.length);
+      insertedMarker = true;
     }
-    source = source.replace(finalCameraPairPattern, balancedBlock.trimStart());
   }
 }
 
@@ -89,8 +106,8 @@ for (const forbidden of [
 for (const required of [
   marker,
   framingMarker,
-  "const exactA1JointCameraOutX = exactA1JointApronNormalX;",
-  "const exactA1JointCameraOutZ = exactA1JointApronNormalZ;",
+  "exactA1JointCameraOutX = exactA1JointApronNormalX;",
+  "exactA1JointCameraOutZ = exactA1JointApronNormalZ;",
   "const exactA1JointSideDistance = 22;",
   "exactA1JointApronHalfPlaneOffset > 2.5",
   "exactA1JointBranchViewImbalance < 0.20",
@@ -104,4 +121,4 @@ if (!source.includes("T4_WALK")) {
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Prepared ${cameraAuthority} + ${framingMarker}: A1 terminal-joint evidence normalizes the actual final generated camera pair to the pure signed apron-side normal, keeps strict branch/T4_WALK checks, and pulls the close view back to 22 m without changing airport or jetway geometry.`);
+console.log(`Prepared ${cameraAuthority} + ${framingMarker}: A1 terminal-joint evidence normalizes the actual final generated camera components independently to the pure signed apron-side normal, keeps strict branch/T4_WALK checks, and pulls the close view back to 22 m without changing airport or jetway geometry.`);
