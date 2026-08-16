@@ -2,7 +2,7 @@ import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const marker = "a1-balanced-apron-side-terminal-joint-camera-v1";
-const framingMarker = "a1-terminal-joint-photo-framing-v2";
+const framingMarker = "a1-terminal-joint-photo-framing-v3-generation-safe";
 const cameraAuthority = "source-measured-a1-apron-side-evidence-camera-v5-balanced-branches";
 let source = fs.readFileSync(trainerPath, "utf8");
 
@@ -37,9 +37,9 @@ if (!source.includes(marker)) {
 // The v5 camera proved equal branch visibility numerically, but the fresh exact-head
 // image still put the lens too close to the fixed corridor, so its side wall hid the
 // actual Terminal 4 attachment. Preserve all geometry and strict camera-direction
-// checks; only pull this diagnostic view farther back and widen its FOV. Do not depend
-// on a historical camera-height variable because late camera preparers no longer emit
-// that declaration consistently.
+// checks; only pull this diagnostic view farther back. Some late camera preparers no
+// longer emit an explicit close-view FOV assignment, so widening 42->50 is optional
+// when that exact generated statement exists and never a prerequisite for bundling.
 if (!source.includes(framingMarker)) {
   const sideDistancePattern = /\bconst exactA1JointSideDistance = [^;\n]+;/g;
   const sideDistanceMatches = [...source.matchAll(sideDistancePattern)];
@@ -52,12 +52,9 @@ if (!source.includes(framingMarker)) {
   );
 
   const fovNeedle = "inspectionCamera.fov = 42;";
-  const fovCount = source.split(fovNeedle).length - 1;
-  if (fovCount < 1) {
-    throw new Error(`${trainerPath}: A1 terminal-joint FOV anchor is missing`);
+  if (source.includes(fovNeedle)) {
+    source = source.replace(fovNeedle, "inspectionCamera.fov = 50;");
   }
-  // The terminal-joint callback is the first prepared close-evidence FOV assignment.
-  source = source.replace(fovNeedle, "inspectionCamera.fov = 50;");
 }
 
 for (const forbidden of [
@@ -86,4 +83,4 @@ if (!source.includes("T4_WALK")) {
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Prepared ${cameraAuthority} + ${framingMarker}: A1 terminal-joint evidence keeps the pure signed apron-side normal and strict branch/T4_WALK checks while pulling the close view back to 22 m and widening it to 50 degrees so the fixed corridor cannot hide the real facade joint.`);
+console.log(`Prepared ${cameraAuthority} + ${framingMarker}: A1 terminal-joint evidence keeps the pure signed apron-side normal and strict branch/T4_WALK checks while pulling the close view back to 22 m; an explicit 42-degree FOV is widened to 50 only when that generated assignment exists.`);
