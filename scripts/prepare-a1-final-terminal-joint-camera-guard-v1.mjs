@@ -1,13 +1,5 @@
 import fs from "node:fs";
 
-// The Aug. 15 photo-authoritative verifier expects the final shipping browser
-// bundle to expose the balanced v5 apron-side A1 terminal-joint camera. Several
-// legacy production preparers rewrite this camera after the earlier camera pass,
-// so normalize the actual final generated camera here immediately before the
-// final branch-visibility guard and Vite bundling. The preparer is idempotent
-// and changes only evidence framing/telemetry, never jetway or airport geometry.
-await import(`./prepare-a1-balanced-apron-evidence-camera-v1.mjs?final-shipping-camera=${Date.now()}`);
-
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const marker = "a1-final-terminal-joint-camera-branch-visibility-v1";
 let source = fs.readFileSync(trainerPath, "utf8");
@@ -33,6 +25,19 @@ if (!source.includes(marker)) {
     source = source.replace(legacySideOnGuard, replacement);
   }
 }
+
+// Persist the actual final branch-visibility form before normalizing the evidence
+// camera. Late production generation can inline the camera-out vector, and that
+// form must be validated against the guards that really exist at this stage—not
+// against an earlier half-plane symbol that may already have been folded away.
+fs.writeFileSync(trainerPath, source, "utf8");
+
+// The Aug. 15 photo-authoritative verifier expects the final shipping browser
+// bundle to expose the balanced v5 apron-side A1 terminal-joint camera. Run this
+// only after the final perpendicular branch guard above has been generated. The
+// preparer changes evidence framing/telemetry only, never airport or jetway geometry.
+await import(`./prepare-a1-balanced-apron-evidence-camera-v1.mjs?final-shipping-camera=${Date.now()}`);
+source = fs.readFileSync(trainerPath, "utf8");
 
 for (const token of [
   marker,
@@ -60,4 +65,4 @@ for (const stale of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Finalized the shipping A1 terminal-joint evidence camera with balanced v5 apron-side framing plus perpendicular branch-visibility and balance checks; the evidence view is normalized after late preparers without changing airport or jetway geometry.");
+console.log("Finalized the shipping A1 terminal-joint evidence camera after final guard generation with balanced v5 apron-side framing plus perpendicular branch-visibility and balance checks; airport and jetway geometry remain unchanged.");
