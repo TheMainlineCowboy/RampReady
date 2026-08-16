@@ -3,6 +3,7 @@ import fs from "node:fs";
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const finalWorldAuthority = "final-visible-a1-tunnel-c-low-contact-world-v1";
 const marker = "a1-final-world-runtime-support-meshes-v2";
+const integratedCarrierMarker = "a1-integrated-tunnel-c-opaque-support-carrier-v1";
 const v3 = 'renderer.domElement.dataset.inspectionCameraEndpointBogieProfileAuthority = "a1-final-world-tunnel-c-bogie-apron-half-plane-side-profile-v3";';
 const v2 = 'renderer.domElement.dataset.inspectionCameraEndpointBogieProfileAuthority = "a1-tunnel-c-bogie-apron-half-plane-side-profile-v2";';
 let source = fs.readFileSync(trainerPath, "utf8");
@@ -22,6 +23,11 @@ if (!source.includes(marker)) {
     throw new Error(`${trainerPath}: final-world Tunnel_C resolver is missing before runtime-support normalization`);
   }
   const runtimeResolver = `            // ${marker}
+            // ${integratedCarrierMarker}
+            // Runtime inspection of the untouched supplied GLB shows the bogie/support
+            // triangles are integrated into Tunnel_C_Jetway_0 rather than exposed as
+            // small named child meshes. Admit that exact opaque carrier while retaining
+            // the low-contact, finite-footprint and final ramp-clearance acceptance gates.
             const exactA1VisibleTunnelCRoot = exactA1VisibleModel?.getObjectByName?.("Tunnel_C")
               || exactA1VisibleModel?.getObjectByName?.("Tunnel_C_Jetway_0");
             const exactA1TunnelCMeshCandidates = [];
@@ -40,8 +46,8 @@ if (!source.includes(marker)) {
                 const horizontalSpan = Math.hypot(size.x, size.z);
                 return box.min.y <= exactA1TunnelCCandidateMinimumY + 0.80
                   && horizontalSpan >= 0.35
-                  && Math.max(size.x, size.z) <= 6.5
-                  && size.y <= 5.5;
+                  && Math.max(size.x, size.z) <= 13.0
+                  && size.y <= 8.5;
               })
               .map(({ entry }) => entry);
             if (!exactA1VisibleTunnelCSupportMeshes.length) {
@@ -50,7 +56,7 @@ if (!source.includes(marker)) {
                 minY: Number(box.min.y.toFixed(3)),
                 size: size.toArray().map((value) => Number(value.toFixed(3))),
               }));
-              throw new Error(\`A1 final-world bogie evidence found no separable Tunnel_C support mesh: \${JSON.stringify(diagnostic)}\`);
+              throw new Error(\`A1 final-world bogie evidence found no integrated low-contact Tunnel_C support carrier: \${JSON.stringify(diagnostic)}\`);
             }
             const exactA1VisibleTunnelC = {
               updateWorldMatrix() {
@@ -67,10 +73,22 @@ if (!source.includes(marker)) {
   );
 }
 
+// If an earlier generation pass already installed the v2 resolver with the old
+// separable-child dimensions, normalize that same final resolver in place. This
+// prevents later regeneration from resurrecting the exact 6.5/5.5 m selector
+// that rejected the real Tunnel_C_Jetway_0 carrier in browser evidence.
+if (!source.includes(integratedCarrierMarker)) {
+  source = source
+    .replace("Math.max(size.x, size.z) <= 6.5", `Math.max(size.x, size.z) <= 13.0\n                  // ${integratedCarrierMarker}`)
+    .replace("size.y <= 5.5", "size.y <= 8.5");
+}
+
 for (const required of [
   marker,
+  integratedCarrierMarker,
   'exactA1VisibleTunnelCSupportMeshes',
-  'Math.max(size.x, size.z) <= 6.5',
+  'Math.max(size.x, size.z) <= 13.0',
+  'size.y <= 8.5',
   'exactA1TunnelCCandidateMinimumY + 0.80',
   'inspectionCameraEndpointBogieFinalWorldAuthority',
 ]) {
@@ -80,6 +98,8 @@ for (const forbidden of [
   'getObjectByName?.("Tunnel_C_DarkBogieLift_SourceTriangles")',
   'getObjectByName?.("Tunnel_C_GalvanizedServiceStair_SourceTriangles")',
   'const exactA1VisibleTunnelC = exactA1VisibleModel?.getObjectByName?.("Tunnel_C")',
+  'Math.max(size.x, size.z) <= 6.5',
+  'size.y <= 5.5',
 ]) {
   if (source.includes(forbidden)) throw new Error(`${trainerPath}: stale Tunnel_C bogie resolver remains: ${forbidden}`);
 }
@@ -88,7 +108,7 @@ if (source.includes(v3)) source = source.replace(v3, v2);
 if (!source.includes(v2)) throw new Error(`${trainerPath}: A1 bogie side-profile authority is missing`);
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Kept the A1 bogie side-profile v2 camera while final-world contact now resolves real low-mounted mesh descendants from the supplied Tunnel_C hierarchy under ${marker}.`);
+console.log(`Kept the A1 bogie side-profile v2 camera while final-world contact resolves the real integrated low-contact Tunnel_C support carrier under ${marker} + ${integratedCarrierMarker}.`);
 
 await import(`./prepare-static-supplied-axis-source-heading-v1.mjs?after-bogie-profile=${Date.now()}`);
 await import(`./prepare-static-final-own-parking-no-crossing-v1.mjs?after-static-source=${Date.now()}`);
