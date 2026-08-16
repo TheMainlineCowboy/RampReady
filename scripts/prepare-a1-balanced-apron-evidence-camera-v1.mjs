@@ -24,15 +24,36 @@ const balancedBlock = `            // ${marker}
             const exactA1JointCameraOutZ = exactA1JointApronNormalZ;`;
 
 if (!source.includes(marker)) {
-  if (!source.includes(biasedBlock)) {
-    throw new Error(`${trainerPath}: A1 v4 apron-side terminal camera bias block is missing`);
+  if (source.includes(biasedBlock)) {
+    source = source.replace(biasedBlock, balancedBlock);
+  } else {
+    // Late production preparers can legitimately rewrite the older v4 bias block
+    // before this final shipping pass. Normalize the actual final camera pair by
+    // variable identity instead of requiring one historical implementation.
+    const finalCameraPairPattern = /\bconst exactA1JointCameraOutX = [^;\n]+;\s*\n\s*const exactA1JointCameraOutZ = [^;\n]+;/g;
+    const finalCameraPairMatches = [...source.matchAll(finalCameraPairPattern)];
+    if (finalCameraPairMatches.length !== 1) {
+      throw new Error(`${trainerPath}: expected exactly one final A1 terminal-joint camera X/Z pair, found ${finalCameraPairMatches.length}`);
+    }
+    source = source.replace(finalCameraPairPattern, balancedBlock.trimStart());
   }
-  source = source.replace(biasedBlock, balancedBlock);
-  source = source.replace(
-    'renderer.domElement.dataset.inspectionCameraEndpointSubviewAuthority = "source-measured-a1-apron-side-evidence-camera-v4";',
-    `renderer.domElement.dataset.inspectionCameraEndpointSubviewAuthority = "${cameraAuthority}";`,
-  );
 }
+
+// Bind the terminal-joint branch nearest the normalized camera to the v5 authority.
+// Do not replace unrelated bogie/full-assembly subview authorities elsewhere.
+const markerIndex = source.indexOf(marker);
+if (markerIndex < 0) {
+  throw new Error(`${trainerPath}: balanced A1 terminal-joint camera marker was not created`);
+}
+const authorityPattern = /renderer\.domElement\.dataset\.inspectionCameraEndpointSubviewAuthority = "[^"]+";/g;
+const authorityMatches = [...source.matchAll(authorityPattern)].filter(match => match.index > markerIndex);
+if (authorityMatches.length < 1) {
+  throw new Error(`${trainerPath}: final A1 terminal-joint subview authority assignment is missing after the balanced camera`);
+}
+const nearestAuthority = authorityMatches[0][0];
+source = source.slice(0, authorityMatches[0].index)
+  + `renderer.domElement.dataset.inspectionCameraEndpointSubviewAuthority = "${cameraAuthority}";`
+  + source.slice(authorityMatches[0].index + nearestAuthority.length);
 
 // The v5 camera proved equal branch visibility numerically, but the fresh exact-head
 // image still put the lens too close to the fixed corridor, so its side wall hid the
@@ -83,4 +104,4 @@ if (!source.includes("T4_WALK")) {
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Prepared ${cameraAuthority} + ${framingMarker}: A1 terminal-joint evidence keeps the pure signed apron-side normal and strict branch/T4_WALK checks while pulling the close view back to 22 m; an explicit 42-degree FOV is widened to 50 only when that generated assignment exists.`);
+console.log(`Prepared ${cameraAuthority} + ${framingMarker}: A1 terminal-joint evidence normalizes the actual final generated camera pair to the pure signed apron-side normal, keeps strict branch/T4_WALK checks, and pulls the close view back to 22 m without changing airport or jetway geometry.`);
