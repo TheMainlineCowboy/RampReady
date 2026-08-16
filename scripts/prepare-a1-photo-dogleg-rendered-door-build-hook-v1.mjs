@@ -1,13 +1,14 @@
 import fs from "node:fs";
 
 const buildPath = "scripts/build-production.mjs";
-const marker = "a1-photo-dogleg-rendered-door-build-hook-v9-final-photo-telemetry";
+const marker = "a1-photo-dogleg-rendered-door-build-hook-v10-physical-door-fit-rebase";
 const baseline = '  await run(npmCommand, ["exec", "--", "vite", "build"]);';
-const replacement = `  // ${marker}\n  // Reapply the Aug. 15 photo-authoritative A1 geometry after every legacy\n  // runtime preparer and immediately before Vite. First republish the explicit\n  // BGATE1 facade endpoint, restore the measured/photo inputs, bind final runtime\n  // construction to that explicit facade point, then put the COMPLETE exact A1\n  // parent at a genuinely remote Rotunda without moving Terminal 4 or aircraft.\n  await run(process.execPath, ["scripts/prepare-a1-photo-explicit-terminal-wall-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-real-photo-fixed-corridor-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-final-explicit-photo-wall-runtime-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-photo-remote-rotunda-placement-v2.mjs"]);\n  // Rebind environment/browser wall evidence to the FINAL remote Rotunda and\n  // explicit BGATE1 facade before the dogleg and cameras consume those endpoints.\n  await run(process.execPath, ["scripts/prepare-a1-final-photo-telemetry-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-real-photo-dogleg-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-photo-fixed-support-columns-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-terminal-shell-passenger-y-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-final-marker-compat-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-balanced-apron-evidence-camera-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-bogie-footprint-camera-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-photo-readiness-wrapper-anchor-v1.mjs"]);\n  await run(process.execPath, ["scripts/run-vite-with-a1-photo-dogleg-rendered-door-v2.mjs"]);`;
+const replacement = `  // ${marker}\n  // Reapply the Aug. 15 photo-authoritative A1 geometry after every legacy\n  // runtime preparer and immediately before Vite. First republish the explicit\n  // BGATE1 facade endpoint, restore the measured/photo inputs, bind final runtime\n  // construction to that explicit facade point, then put the COMPLETE exact A1\n  // parent at a genuinely remote Rotunda without moving Terminal 4 or aircraft.\n  await run(process.execPath, ["scripts/prepare-a1-photo-explicit-terminal-wall-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-real-photo-fixed-corridor-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-final-explicit-photo-wall-runtime-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-photo-remote-rotunda-placement-v2.mjs"]);\n  // Rebind environment/browser wall evidence to the FINAL remote Rotunda and\n  // explicit BGATE1 facade before the dogleg and cameras consume those endpoints.\n  await run(process.execPath, ["scripts/prepare-a1-final-photo-telemetry-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-real-photo-dogleg-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-photo-fixed-support-columns-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-terminal-shell-passenger-y-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-final-marker-compat-v1.mjs"]);\n  // With the terminal/fixed A1 path now final, articulate only the exact supplied\n  // movable GLB to the CRJ door and rebase its deployment controller on that pose.\n  await run(process.execPath, ["scripts/prepare-a1-final-physical-door-fit-controller-rebase-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-balanced-apron-evidence-camera-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-bogie-footprint-camera-v1.mjs"]);\n  await run(process.execPath, ["scripts/prepare-a1-photo-readiness-wrapper-anchor-v1.mjs"]);\n  await run(process.execPath, ["scripts/run-vite-with-a1-photo-dogleg-rendered-door-v2.mjs"]);`;
 
 let source = fs.readFileSync(buildPath, "utf8");
 if (!source.includes(marker)) {
   const olderMarkers = [
+    "a1-photo-dogleg-rendered-door-build-hook-v9-final-photo-telemetry",
     "a1-photo-dogleg-rendered-door-build-hook-v8-explicit-bgate1-wall",
     "a1-photo-dogleg-rendered-door-build-hook-v7-genuinely-remote-rotunda",
     "a1-photo-dogleg-rendered-door-build-hook-v6-bogie-footprint-camera",
@@ -60,6 +61,7 @@ for (const required of [
   "prepare-a1-photo-fixed-support-columns-v1.mjs",
   "prepare-a1-terminal-shell-passenger-y-v1.mjs",
   "prepare-a1-final-marker-compat-v1.mjs",
+  "prepare-a1-final-physical-door-fit-controller-rebase-v1.mjs",
   "prepare-a1-balanced-apron-evidence-camera-v1.mjs",
   "prepare-a1-bogie-footprint-camera-v1.mjs",
   "prepare-a1-photo-readiness-wrapper-anchor-v1.mjs",
@@ -73,4 +75,4 @@ if (source.includes(baseline)) {
   throw new Error(`${buildPath}: unwrapped Vite build survived A1 photo-dogleg hook`);
 }
 
-console.log(`Installed ${marker}: final Vite bundling binds A1's fixed corridor and browser telemetry to the explicit BGATE1 facade/final remote Rotunda, rebuilds only A1's dogleg/two supports, keeps Terminal 4 and aircraft fixed, validates the actual Tunnel_C bogie footprint, and leaves Airport_Jetway.glb geometry/textures untouched.`);
+console.log(`Installed ${marker}: final Vite bundling binds A1's fixed corridor and browser telemetry to the explicit BGATE1 facade/final remote Rotunda, then physically articulates only the exact supplied movable bridge to the CRJ door, re-grounds Tunnel-C support subsets, rebases attached deployment, validates the bogie footprint, and leaves Terminal 4, aircraft, Airport_Jetway.glb geometry/textures, and A3+ short/direct connectors untouched.`);
