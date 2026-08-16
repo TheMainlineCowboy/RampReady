@@ -1,5 +1,11 @@
 import fs from "node:fs";
 
+// The final terminal-joint/evidence stage is the last geometry-sensitive stage
+// before Vite. Apply the physical movable-bridge fit here so every browser and
+// runtime evidence path sees the same photo-authoritative fixed A1 corridor and
+// remote Rotunda, with only the supplied movable bridge articulated to the CRJ.
+await import(`./prepare-a1-final-physical-door-fit-controller-rebase-v1.mjs?final-evidence=${Date.now()}`);
+
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const marker = "a1-final-terminal-joint-camera-branch-visibility-v1";
 let source = fs.readFileSync(trainerPath, "utf8");
