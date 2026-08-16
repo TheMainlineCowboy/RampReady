@@ -5,6 +5,7 @@ const elbowPath = "src/environment/sourceRegisteredA1RenderedDoorElbowV4.js";
 const doorFitPath = "src/environment/uploadedAirportJetwayA1DoorFitV11.js";
 const marker = "a1-final-physical-door-fit-controller-rebase-v1";
 const contactNormalMarker = "a1-horizontal-contact-normal-validation-v1";
+const modelFrameYawMarker = "a1-model-frame-aware-cab-yaw-v1";
 
 let doorFitSource = fs.readFileSync(doorFitPath, "utf8");
 if (!doorFitSource.includes(contactNormalMarker)) {
@@ -14,8 +15,16 @@ if (!doorFitSource.includes(contactNormalMarker)) {
   }
   const horizontalNormalBlock = `  // ${contactNormalMarker}\n  // The hinge/yaw solve above intentionally works in the horizontal ramp plane.\n  // Validate Cab heading and fuselage penetration in that same contact plane so\n  // aircraft-model pitch/roll cannot masquerade as a yaw error or penetration.\n  // The strict 2-degree normal and 0.30 m penetration limits remain unchanged.\n  const desiredCabNormalWorld = new THREE.Vector3(1, 0, 0)\n    .transformDirection(group.matrixWorld)\n    .setY(0)\n    .normalize();\n  const actualCabNormalWorld = cabFacingDirection.clone()\n    .transformDirection(model.matrixWorld)\n    .setY(0)\n    .normalize();`;
   doorFitSource = doorFitSource.replace(normalNeedle, horizontalNormalBlock);
-  fs.writeFileSync(doorFitPath, doorFitSource, "utf8");
 }
+if (!doorFitSource.includes(modelFrameYawMarker)) {
+  const yawNeedle = `  const cabRelativeYawRadians = desiredCabDirectionAngle\n    - correctedYawRadians\n    - sourceCabDirectionAngle;`;
+  if (!doorFitSource.includes(yawNeedle)) {
+    throw new Error(`${doorFitPath}: Cab relative-yaw solve anchor is missing`);
+  }
+  const modelFrameYawBlock = `  // ${modelFrameYawMarker}\n  // sourceCabDirectionAngle is measured in model-local coordinates, while the\n  // desired direction lives in the anchor-parent frame. Account for the supplied\n  // model's own normalized yaw inside the anchor before solving the Cab hinge yaw.\n  const modelForwardInAnchor = transformDirectionToParent(\n    THREE,\n    model,\n    new THREE.Vector3(0, 0, 1),\n    anchor,\n  );\n  const modelYawInAnchor = angleFromPositiveZ(modelForwardInAnchor);\n  const cabRelativeYawRadians = desiredCabDirectionAngle\n    - correctedYawRadians\n    - modelYawInAnchor\n    - sourceCabDirectionAngle;`;
+  doorFitSource = doorFitSource.replace(yawNeedle, modelFrameYawBlock);
+}
+fs.writeFileSync(doorFitPath, doorFitSource, "utf8");
 
 let fleetSource = fs.readFileSync(fleetPath, "utf8");
 if (!fleetSource.includes(marker)) {
@@ -56,8 +65,10 @@ doorFitSource = fs.readFileSync(doorFitPath, "utf8");
 for (const [path, source] of [[fleetPath, fleetSource], [elbowPath, elbowSource]]) {
   if (!source.includes(marker)) throw new Error(`${path}: final physical door-fit/controller-rebase marker is missing`);
 }
-if (!doorFitSource.includes(contactNormalMarker)) {
-  throw new Error(`${doorFitPath}: horizontal Cab contact-normal validation marker is missing`);
+for (const requiredMarker of [contactNormalMarker, modelFrameYawMarker]) {
+  if (!doorFitSource.includes(requiredMarker)) {
+    throw new Error(`${doorFitPath}: ${requiredMarker} is missing`);
+  }
 }
 for (const required of [
   "fitUploadedA1JetwayToRenderedCrjDoor",
@@ -72,12 +83,13 @@ for (const required of [
 for (const required of [
   ".transformDirection(group.matrixWorld)\n    .setY(0)\n    .normalize()",
   ".transformDirection(model.matrixWorld)\n    .setY(0)\n    .normalize()",
+  "modelYawInAnchor",
   "MAX_CAB_NORMAL_ERROR_DEGREES",
   "MAX_CAB_FUSELAGE_PENETRATION_METERS",
 ]) {
   if (!doorFitSource.includes(required)) {
-    throw new Error(`A1 horizontal contact-normal validation is missing ${required}`);
+    throw new Error(`A1 physical door-fit normalization is missing ${required}`);
   }
 }
 
-console.log(`Installed ${marker} + ${contactNormalMarker}: final photo-registered A1 keeps its real fixed corridor/remote Rotunda, articulates only the exact supplied movable GLB to the CRJ door, validates Cab contact in the same horizontal ramp plane used by the physical solve, re-grounds authored Tunnel-C support subsets, and rebases attached deployment on that fitted pose.`);
+console.log(`Installed ${marker} + ${contactNormalMarker} + ${modelFrameYawMarker}: final photo-registered A1 keeps its real fixed corridor/remote Rotunda, articulates only the exact supplied movable GLB to the CRJ door, solves Cab yaw in the supplied model frame, validates Cab contact in the same horizontal ramp plane, re-grounds authored Tunnel-C support subsets, and rebases attached deployment on that fitted pose.`);
