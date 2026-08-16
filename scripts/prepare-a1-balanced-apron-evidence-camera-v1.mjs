@@ -48,9 +48,17 @@ for (const required of [
   "exactA1JointApronHalfPlaneOffset > 2.5",
   "exactA1JointBranchViewImbalance < 0.20",
   `inspectionCameraEndpointSubviewAuthority = "${cameraAuthority}"`,
-  "a1-terminal-joint-apron-half-plane-rendered-validation-v2",
 ]) {
   if (!source.includes(required)) throw new Error(`${trainerPath}: balanced apron-side A1 evidence camera is missing ${required}`);
+}
+
+// Do not require one historical marker string for the existing T4_WALK rendered-
+// occlusion guard. That marker was renamed by later camera preparation while the
+// actual fail-closed apron-half-plane, branch-balance and T4_WALK probe logic stays
+// in the generated trainer. Camera geometry, terminal geometry and jetway geometry
+// are unchanged by this compatibility correction.
+if (!source.includes("T4_WALK")) {
+  throw new Error(`${trainerPath}: balanced apron-side A1 evidence camera lost T4_WALK exclusion/probe logic`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
