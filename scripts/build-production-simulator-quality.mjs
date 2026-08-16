@@ -7,6 +7,7 @@ const protectedSourcePaths = Object.freeze([
   "src/environment/sourcePlacedTerminal4Jetways.js",
   "src/environment/uploadedAirportJetwayFleet.js",
   "src/environment/uploadedAirportJetwayFleetReadyV2.js",
+  "src/environment/uploadedAirportJetwayA1DoorFitV11.js",
   "src/environment/correctUploadedJetwayInstallationV1.js",
   "src/environment/authoredTerminal4Visual.js",
   "src/environment/authoredKphxGround.js",
