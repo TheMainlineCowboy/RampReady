@@ -2,7 +2,7 @@ import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const marker = "a1-balanced-apron-side-terminal-joint-camera-v1";
-const framingMarker = "a1-terminal-joint-photo-framing-v1";
+const framingMarker = "a1-terminal-joint-photo-framing-v2";
 const cameraAuthority = "source-measured-a1-apron-side-evidence-camera-v5-balanced-branches";
 let source = fs.readFileSync(trainerPath, "utf8");
 
@@ -35,29 +35,20 @@ if (!source.includes(marker)) {
 }
 
 // The v5 camera proved equal branch visibility numerically, but the fresh exact-head
-// image still placed the lens too close to the fixed corridor: its side wall filled
-// most of the frame and hid the real Terminal 4 attachment. Keep the same strict
-// apron-side normal and branch-balance geometry, but pull the evidence camera back,
-// raise it above passenger center, and widen only this diagnostic view. Nothing in
-// the terminal, aircraft, dogleg, Rotunda, supports or supplied GLB is transformed.
+// image still put the lens too close to the fixed corridor, so its side wall hid the
+// actual Terminal 4 attachment. Preserve all geometry and strict camera-direction
+// checks; only pull this diagnostic view farther back and widen its FOV. Do not depend
+// on a historical camera-height variable because late camera preparers no longer emit
+// that declaration consistently.
 if (!source.includes(framingMarker)) {
   const sideDistancePattern = /\bconst exactA1JointSideDistance = [^;\n]+;/g;
-  const cameraHeightPattern = /\bconst exactA1JointCameraHeight = [^;\n]+;/g;
   const sideDistanceMatches = [...source.matchAll(sideDistancePattern)];
-  const cameraHeightMatches = [...source.matchAll(cameraHeightPattern)];
   if (sideDistanceMatches.length !== 1) {
     throw new Error(`${trainerPath}: expected exactly one A1 terminal-joint side-distance declaration, found ${sideDistanceMatches.length}`);
-  }
-  if (cameraHeightMatches.length !== 1) {
-    throw new Error(`${trainerPath}: expected exactly one A1 terminal-joint camera-height declaration, found ${cameraHeightMatches.length}`);
   }
   source = source.replace(
     sideDistancePattern,
     `// ${framingMarker}\n            const exactA1JointSideDistance = 22;`,
-  );
-  source = source.replace(
-    cameraHeightPattern,
-    "const exactA1JointCameraHeight = Math.max(4.25, exactA1PassengerCenterY - exactA1ImportedGroundY + 2.0);",
   );
 
   const fovNeedle = "inspectionCamera.fov = 42;";
@@ -83,7 +74,6 @@ for (const required of [
   "const exactA1JointCameraOutX = exactA1JointApronNormalX;",
   "const exactA1JointCameraOutZ = exactA1JointApronNormalZ;",
   "const exactA1JointSideDistance = 22;",
-  "const exactA1JointCameraHeight = Math.max(4.25, exactA1PassengerCenterY - exactA1ImportedGroundY + 2.0);",
   "exactA1JointApronHalfPlaneOffset > 2.5",
   "exactA1JointBranchViewImbalance < 0.20",
   `inspectionCameraEndpointSubviewAuthority = "${cameraAuthority}"`,
@@ -91,14 +81,9 @@ for (const required of [
   if (!source.includes(required)) throw new Error(`${trainerPath}: balanced apron-side A1 evidence camera is missing ${required}`);
 }
 
-// Do not require one historical marker string for the existing T4_WALK rendered-
-// occlusion guard. That marker was renamed by later camera preparation while the
-// actual fail-closed apron-half-plane, branch-balance and T4_WALK probe logic stays
-// in the generated trainer. Camera geometry, terminal geometry and jetway geometry
-// are unchanged by this compatibility correction.
 if (!source.includes("T4_WALK")) {
   throw new Error(`${trainerPath}: balanced apron-side A1 evidence camera lost T4_WALK exclusion/probe logic`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Prepared ${cameraAuthority} + ${framingMarker}: A1 terminal-joint evidence keeps the pure signed apron-side normal and strict branch/T4_WALK checks, while the camera is pulled back to 22 m, raised for a slight downward view and widened so the fixed corridor cannot hide the real facade joint.`);
+console.log(`Prepared ${cameraAuthority} + ${framingMarker}: A1 terminal-joint evidence keeps the pure signed apron-side normal and strict branch/T4_WALK checks while pulling the close view back to 22 m and widening it to 50 degrees so the fixed corridor cannot hide the real facade joint.`);
