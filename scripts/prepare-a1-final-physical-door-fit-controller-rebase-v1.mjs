@@ -6,6 +6,7 @@ const doorFitPath = "src/environment/uploadedAirportJetwayA1DoorFitV11.js";
 const marker = "a1-final-physical-door-fit-controller-rebase-v1";
 const contactNormalMarker = "a1-horizontal-contact-normal-validation-v1";
 const modelFrameYawMarker = "a1-model-frame-aware-cab-yaw-v1";
+const measuredCabFaceMarker = "a1-measured-cab-face-direction-v1";
 
 let doorFitSource = fs.readFileSync(doorFitPath, "utf8");
 if (!doorFitSource.includes(contactNormalMarker)) {
@@ -23,6 +24,14 @@ if (!doorFitSource.includes(modelFrameYawMarker)) {
   }
   const modelFrameYawBlock = `  // ${modelFrameYawMarker}\n  // sourceCabDirectionAngle is measured in model-local coordinates, while the\n  // desired direction lives in the anchor-parent frame. Account for the supplied\n  // model's own normalized yaw inside the anchor before solving the Cab hinge yaw.\n  const modelForwardInAnchor = transformDirectionToParent(\n    THREE,\n    model,\n    new THREE.Vector3(0, 0, 1),\n    anchor,\n  );\n  const modelYawInAnchor = angleFromPositiveZ(modelForwardInAnchor);\n  const cabRelativeYawRadians = desiredCabDirectionAngle\n    - correctedYawRadians\n    - modelYawInAnchor\n    - sourceCabDirectionAngle;`;
   doorFitSource = doorFitSource.replace(yawNeedle, modelFrameYawBlock);
+}
+if (!doorFitSource.includes(measuredCabFaceMarker)) {
+  const facingNeedle = `  const cabFacingDirection = sourceFacingDirection.clone()\n    .applyAxisAngle(new THREE.Vector3(0, 1, 0), cabRelativeYawRadians)\n    .setY(0)\n    .normalize();`;
+  if (!doorFitSource.includes(facingNeedle)) {
+    throw new Error(`${doorFitPath}: derived Cab facing-direction anchor is missing`);
+  }
+  const measuredFacingBlock = `  // ${measuredCabFaceMarker}\n  // Yaw is solved from the measured Cab front-to-hinge vector, so carry that same\n  // physical face direction forward for final face selection and normal validation.\n  // The Rotunda-to-Cab centerline is only a coarse source-side face selector.\n  const cabFacingDirection = sourceCab.frontOffset.clone()\n    .setY(0)\n    .normalize()\n    .applyAxisAngle(new THREE.Vector3(0, 1, 0), cabRelativeYawRadians)\n    .setY(0)\n    .normalize();`;
+  doorFitSource = doorFitSource.replace(facingNeedle, measuredFacingBlock);
 }
 fs.writeFileSync(doorFitPath, doorFitSource, "utf8");
 
@@ -65,7 +74,7 @@ doorFitSource = fs.readFileSync(doorFitPath, "utf8");
 for (const [path, source] of [[fleetPath, fleetSource], [elbowPath, elbowSource]]) {
   if (!source.includes(marker)) throw new Error(`${path}: final physical door-fit/controller-rebase marker is missing`);
 }
-for (const requiredMarker of [contactNormalMarker, modelFrameYawMarker]) {
+for (const requiredMarker of [contactNormalMarker, modelFrameYawMarker, measuredCabFaceMarker]) {
   if (!doorFitSource.includes(requiredMarker)) {
     throw new Error(`${doorFitPath}: ${requiredMarker} is missing`);
   }
@@ -84,6 +93,7 @@ for (const required of [
   ".transformDirection(group.matrixWorld)\n    .setY(0)\n    .normalize()",
   ".transformDirection(model.matrixWorld)\n    .setY(0)\n    .normalize()",
   "modelYawInAnchor",
+  "sourceCab.frontOffset.clone()",
   "MAX_CAB_NORMAL_ERROR_DEGREES",
   "MAX_CAB_FUSELAGE_PENETRATION_METERS",
 ]) {
@@ -92,4 +102,4 @@ for (const required of [
   }
 }
 
-console.log(`Installed ${marker} + ${contactNormalMarker} + ${modelFrameYawMarker}: final photo-registered A1 keeps its real fixed corridor/remote Rotunda, articulates only the exact supplied movable GLB to the CRJ door, solves Cab yaw in the supplied model frame, validates Cab contact in the same horizontal ramp plane, re-grounds authored Tunnel-C support subsets, and rebases attached deployment on that fitted pose.`);
+console.log(`Installed ${marker} + ${contactNormalMarker} + ${modelFrameYawMarker} + ${measuredCabFaceMarker}: final photo-registered A1 keeps its real fixed corridor/remote Rotunda, articulates only the exact supplied movable GLB to the CRJ door, solves and validates Cab yaw from the same measured Cab face vector, validates contact in the horizontal ramp plane, re-grounds authored Tunnel-C support subsets, and rebases attached deployment on that fitted pose.`);
