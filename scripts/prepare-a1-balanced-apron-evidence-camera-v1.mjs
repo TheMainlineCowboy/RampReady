@@ -61,11 +61,14 @@ if (!source.includes(marker)) {
       explicitCameraOutBindingsPresent = true;
     } else if (counts.every((count) => count === 0)) {
       // The newest late-generation form has already inlined the camera-out vector.
-      // Do not recreate dead bindings. Instead require the strict runtime truths
-      // that make the photo evidence fail closed, then anchor the v5 authority at
-      // the surviving terminal-joint side-distance declaration.
+      // Do not recreate dead bindings. At this final stage require the concrete
+      // perpendicular wall/Tunnel-A visibility and branch-balance guards that are
+      // actually shipped, plus the T4_WALK exclusion checked below. Older camera
+      // preparers may have folded away their intermediate half-plane scalar.
       for (const requiredInlineGuard of [
-        "exactA1JointApronHalfPlaneOffset > 2.5",
+        "a1-final-terminal-joint-camera-branch-visibility-v1",
+        "exactA1JointWallPerpendicularVisibility > 0.34",
+        "exactA1JointTunnelAPerpendicularVisibility > 0.34",
         "exactA1JointBranchViewImbalance < 0.20",
       ]) {
         if (!source.includes(requiredInlineGuard)) {
@@ -78,7 +81,7 @@ if (!source.includes(marker)) {
         throw new Error(`${trainerPath}: inlined final A1 camera has no unique terminal-joint side-distance declaration (${sideDistanceMatches.length})`);
       }
       source = source.slice(0, sideDistanceMatches[0].index)
-        + `// ${marker}\n            // Final shipping camera is already inlined; strict apron-half-plane and branch-balance guards remain authoritative.\n            `
+        + `// ${marker}\n            // Final shipping camera is already inlined; final perpendicular branch visibility, branch balance and T4_WALK exclusion remain authoritative.\n            `
         + source.slice(sideDistanceMatches[0].index);
     } else {
       throw new Error(`${trainerPath}: inconsistent final A1 terminal-joint camera bindings X/Z=${counts.join("/")}`);
@@ -135,7 +138,9 @@ for (const required of [
   marker,
   framingMarker,
   "const exactA1JointSideDistance = 22;",
-  "exactA1JointApronHalfPlaneOffset > 2.5",
+  "a1-final-terminal-joint-camera-branch-visibility-v1",
+  "exactA1JointWallPerpendicularVisibility > 0.34",
+  "exactA1JointTunnelAPerpendicularVisibility > 0.34",
   "exactA1JointBranchViewImbalance < 0.20",
   `inspectionCameraEndpointSubviewAuthority = "${cameraAuthority}"`,
 ]) {
@@ -155,4 +160,4 @@ if (!source.includes("T4_WALK")) {
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Prepared ${cameraAuthority} + ${framingMarker}: A1 terminal-joint evidence accepts either explicit or generation-inlined final camera vectors only with strict apron-side, branch-balance and T4_WALK checks, and pulls the close view back to 22 m without changing airport or jetway geometry.`);
+console.log(`Prepared ${cameraAuthority} + ${framingMarker}: A1 terminal-joint evidence accepts either explicit balanced camera outputs or a generation-inlined final camera only with perpendicular branch visibility, branch balance and T4_WALK checks, and pulls the close view back to 22 m without changing airport or jetway geometry.`);
