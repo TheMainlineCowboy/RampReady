@@ -1,5 +1,13 @@
 import fs from "node:fs";
 
+// The Aug. 15 photo-authoritative verifier expects the final shipping browser
+// bundle to expose the balanced v5 apron-side A1 terminal-joint camera. Several
+// legacy production preparers rewrite this camera after the earlier camera pass,
+// so normalize the actual final generated camera here immediately before the
+// final branch-visibility guard and Vite bundling. The preparer is idempotent
+// and changes only evidence framing/telemetry, never jetway or airport geometry.
+await import(`./prepare-a1-balanced-apron-evidence-camera-v1.mjs?final-shipping-camera=${Date.now()}`);
+
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const marker = "a1-final-terminal-joint-camera-branch-visibility-v1";
 let source = fs.readFileSync(trainerPath, "utf8");
@@ -28,6 +36,9 @@ if (!source.includes(marker)) {
 
 for (const token of [
   marker,
+  "a1-balanced-apron-side-terminal-joint-camera-v1",
+  "a1-terminal-joint-photo-framing-v3-generation-safe",
+  'inspectionCameraEndpointSubviewAuthority = "source-measured-a1-apron-side-evidence-camera-v5-balanced-branches"',
   "exactA1JointWallPerpendicularVisibility",
   "exactA1JointTunnelAPerpendicularVisibility",
   "exactA1JointBranchViewImbalance < 0.20",
@@ -41,11 +52,12 @@ for (const stale of [
   "exactA1JointTunnelAViewCosine < 0.82",
   "wallSideOn < 0.44",
   "tunnelASideOn < 0.44",
+  'inspectionCameraEndpointSubviewAuthority = "source-measured-a1-apron-side-evidence-camera-v4"',
 ]) {
   if (source.includes(stale)) {
-    throw new Error(`${trainerPath}: stale A1 camera visibility cutoff remains: ${stale}`);
+    throw new Error(`${trainerPath}: stale A1 camera visibility/framing authority remains: ${stale}`);
   }
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Finalized the shipping A1 terminal-joint evidence camera with perpendicular branch-visibility and balance checks; balanced passenger-height elbow views pass while axis-on hidden branches still fail closed.");
+console.log("Finalized the shipping A1 terminal-joint evidence camera with balanced v5 apron-side framing plus perpendicular branch-visibility and balance checks; the evidence view is normalized after late preparers without changing airport or jetway geometry.");
