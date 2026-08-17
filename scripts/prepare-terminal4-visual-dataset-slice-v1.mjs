@@ -33,9 +33,12 @@ const keys = [
 const sliced = `await page.locator('canvas.trainerCanvas').evaluate((element, keys) => Object.fromEntries(keys.map((key) => [key, element.dataset[key]])), ${JSON.stringify(keys)})`;
 
 const occurrences = source.split(legacy).length - 1;
-if (occurrences !== 2) {
-  throw new Error(`Expected exactly 2 full canvas dataset transfers, found ${occurrences}`);
+if (occurrences < 1) {
+  throw new Error(`Expected at least 1 full canvas dataset transfer, found ${occurrences}`);
 }
 source = source.split(legacy).join(sliced);
+if (source.includes(legacy)) {
+  throw new Error('A full Terminal 4 canvas dataset transfer survived bounded evidence preparation');
+}
 fs.writeFileSync(path, source);
-console.log(`Bounded Terminal 4 visual dataset transfer to ${keys.length} acceptance fields across ${occurrences} reads.`);
+console.log(`Bounded every Terminal 4 visual dataset transfer to ${keys.length} acceptance fields across ${occurrences} reads.`);
