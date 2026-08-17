@@ -9,28 +9,38 @@ let source = fs.readFileSync(trainerPath, "utf8");
 let doorFitSource = fs.readFileSync(doorFitPath, "utf8");
 
 // Runtime inspection of the exact GLB proves Tunnel_C exposes one substantial
-// opaque mesh (Tunnel_C_Jetway_0, about 12.65 m long) plus a tiny glass mesh.
-// The bogie/support triangles are therefore integrated into the opaque carrier,
-// not separate Object3D children. Widen only the support-carrier selector enough
-// to admit that exact opaque mesh while still excluding unrelated airport-scale
-// geometry and the high glass pane. The exact GLB bytes and vertices are unchanged.
+// opaque mesh plus a tiny glass mesh. After final articulation the opaque carrier
+// reaches roughly 13.67 m horizontal and 9.61 m vertical AABB extent, so use the
+// same bounded 14.5/10.5 m envelope as the final physical-fit normalizer.
 if (!doorFitSource.includes(integratedCarrierMarker)) {
-  if (!doorFitSource.includes("maximumHorizontalDimension <= 6.5") || !doorFitSource.includes("size.y <= 5.5")) {
-    throw new Error(`${doorFitPath}: separable-support selector is missing before integrated-carrier normalization`);
+  if (doorFitSource.includes("maximumHorizontalDimension <= 6.5") && doorFitSource.includes("size.y <= 5.5")) {
+    doorFitSource = doorFitSource
+      .replace("maximumHorizontalDimension <= 6.5", `maximumHorizontalDimension <= 14.5\n      // ${integratedCarrierMarker}`)
+      .replace("size.y <= 5.5", "size.y <= 10.5");
+  } else if (doorFitSource.includes("maximumHorizontalDimension <= 14.5") && doorFitSource.includes("size.y <= 10.5")) {
+    doorFitSource = doorFitSource.replace(
+      "maximumHorizontalDimension <= 14.5",
+      `maximumHorizontalDimension <= 14.5\n      // ${integratedCarrierMarker}`,
+    );
+  } else {
+    throw new Error(`${doorFitPath}: integrated Tunnel-C carrier selector is missing or inconsistent`);
   }
-  doorFitSource = doorFitSource
-    .replace("maximumHorizontalDimension <= 6.5", `maximumHorizontalDimension <= 13.0\n      // ${integratedCarrierMarker}`)
-    .replace("size.y <= 5.5", "size.y <= 8.5");
   fs.writeFileSync(doorFitPath, doorFitSource, "utf8");
 }
 
 if (!source.includes(integratedCarrierMarker)) {
-  if (!source.includes("Math.max(size.x, size.z) <= 6.5") || !source.includes("size.y <= 5.5")) {
-    throw new Error(`${trainerPath}: final-world support selector is missing before integrated-carrier normalization`);
+  if (source.includes("Math.max(size.x, size.z) <= 6.5") && source.includes("size.y <= 5.5")) {
+    source = source
+      .replace("Math.max(size.x, size.z) <= 6.5", `Math.max(size.x, size.z) <= 14.5\n                  // ${integratedCarrierMarker}`)
+      .replace("size.y <= 5.5", "size.y <= 10.5");
+  } else if (source.includes("Math.max(size.x, size.z) <= 14.5") && source.includes("size.y <= 10.5")) {
+    source = source.replace(
+      "Math.max(size.x, size.z) <= 14.5",
+      `Math.max(size.x, size.z) <= 14.5\n                  // ${integratedCarrierMarker}`,
+    );
+  } else {
+    throw new Error(`${trainerPath}: final-world integrated Tunnel-C carrier selector is missing or inconsistent`);
   }
-  source = source
-    .replace("Math.max(size.x, size.z) <= 6.5", `Math.max(size.x, size.z) <= 13.0\n                  // ${integratedCarrierMarker}`)
-    .replace("size.y <= 5.5", "size.y <= 8.5");
 }
 
 const obsoleteGuard = `            if (!(exactA1TunnelCLateralOffset < 4.0)) {\n              throw new Error(\`A1 final-world Tunnel_C contact is too far off the Rotunda-to-Cab axis: lateral=\${exactA1TunnelCLateralOffset}\`);\n            }`;
@@ -48,7 +58,8 @@ for (const required of [
   runtimeSupportMarker,
   integratedCarrierMarker,
   "exactA1VisibleTunnelCSupportMeshes",
-  "Math.max(size.x, size.z) <= 13.0",
+  "Math.max(size.x, size.z) <= 14.5",
+  "size.y <= 10.5",
   "exactA1TunnelCLowBand.expandByPoint",
   "exactA1TunnelCLowPointCount >= 4",
   "exactA1TunnelCHorizontalSpan >= 0.35",
@@ -60,7 +71,7 @@ for (const required of [
     throw new Error(`${trainerPath}: final-world Tunnel_C support-footprint camera is missing ${required}`);
   }
 }
-for (const required of [integratedCarrierMarker, "maximumHorizontalDimension <= 13.0", "size.y <= 8.5"]) {
+for (const required of [integratedCarrierMarker, "maximumHorizontalDimension <= 14.5", "size.y <= 10.5"]) {
   if (!doorFitSource.includes(required)) throw new Error(`${doorFitPath}: integrated Tunnel-C carrier fit is missing ${required}`);
 }
 for (const forbidden of [
@@ -76,4 +87,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Prepared ${marker} + ${integratedCarrierMarker}: the exact GLB's integrated opaque Tunnel-C support carrier is grounded and measured in final world space; strict aircraft-side footprint and ramp-contact checks remain unchanged.`);
+console.log(`Prepared ${marker} + ${integratedCarrierMarker}: the exact GLB's integrated opaque Tunnel-C carrier uses the final articulated bounds envelope while strict aircraft-side footprint and ramp-contact checks remain unchanged.`);
