@@ -12,6 +12,7 @@ import {
 
 const READY_AUTHORITY = "exact-uploaded-airport-jetway-complete-58-gates-v1";
 const FINAL_VISIBLE_FIT_AUTHORITY = "a1-final-visible-fleet-ready-physical-door-fit-v1";
+const PHYSICAL_FIT_AUTHORITY = "supplied-a1-full-3d-crj-door-fit-v11";
 const EXPECTED_GATE_COUNT = 58;
 const LOAD_TIMEOUT_MS = 120_000;
 const STATIC_PORTAL_AUTHORITY = "57-static-terminal-portals-paired-vestibule-doors-v1";
@@ -146,13 +147,8 @@ function waitForFleet(THREE, group, placements, controller) {
             );
           }
 
-          // The checks above prove the supplied source hierarchy is intact before
-          // articulation. Now fit the one visible animated A1 bridge to the actual
-          // grounded CRJ door on the SAME runtime path that owns the browser model.
-          // This deliberately happens after source-integrity validation so pitch/
-          // extension are operational articulation, not a mutation of the GLB.
           const finalVisibleFit = fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placements);
-          if (!finalVisibleFit || finalVisibleFit.authority !== "source-registered-a1-rendered-crj-door-fit-v11") {
+          if (!finalVisibleFit || finalVisibleFit.authority !== PHYSICAL_FIT_AUTHORITY) {
             throw new Error(`A1 final visible physical fit returned invalid authority: ${finalVisibleFit?.authority || "missing"}`);
           }
           if (!(Math.abs(finalVisibleFit.verticalGapMeters) <= 0.08)) {
