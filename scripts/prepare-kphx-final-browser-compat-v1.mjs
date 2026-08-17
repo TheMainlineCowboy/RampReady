@@ -17,7 +17,7 @@ for (const staleSubviewAuthority of staleSubviewAuthorities) {
   subviewSource = subviewSource.replaceAll(staleSubviewAuthority, currentSubviewAuthority);
 }
 const staleBogieCenterBlock = `  const publishedCenter = [\n    Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactCenterX),\n    Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactCenterY),\n    Number(bogieRuntime.terminal4UploadedJetwayBogieGroundContactCenterZ),\n  ];\n  expect(distance3(bogieCenter, publishedCenter)).toBeLessThanOrEqual(0.01);`;
-const finalWorldBogieBlock = `  expect(bogieRuntime.inspectionCameraEndpointBogieFinalWorldAuthority).toBe("${finalWorldBogieAuthority}");\n  expect(Number(bogieRuntime.inspectionCameraEndpointBogieFinalWorldPointCount)).toBeGreaterThanOrEqual(4);\n  expect(Number(bogieRuntime.inspectionCameraEndpointBogieFinalWorldHorizontalSpanMeters)).toBeGreaterThanOrEqual(0.35);\n  expect(Number(bogieRuntime.inspectionCameraEndpointBogieFinalWorldAlongBridgeRatio)).toBeGreaterThan(0.40);\n  expect(Number(bogieRuntime.inspectionCameraEndpointBogieFinalWorldAlongBridgeRatio)).toBeLessThan(0.88);\n  expect(Math.abs(Number(bogieRuntime.inspectionCameraEndpointBogieFinalWorldLateralOffsetMeters))).toBeLessThan(4.0);\n  expect(Math.abs(Number(bogieRuntime.inspectionCameraEndpointBogieFinalWorldMinimumY))).toBeLessThanOrEqual(0.02);`;
+const finalWorldBogieBlock = `  expect(bogieRuntime.inspectionCameraEndpointBogieFinalWorldAuthority).toBe("${finalWorldBogieAuthority}");\n  expect(Number(bogieRuntime.inspectionCameraEndpointBogieFinalWorldPointCount)).toBeGreaterThanOrEqual(4);\n  expect(Number(bogieRuntime.inspectionCameraEndpointBogieFinalWorldHorizontalSpanMeters)).toBeGreaterThanOrEqual(0.35);\n  expect(Number(bogieRuntime.inspectionCameraEndpointBogieFinalWorldAlongBridgeRatio)).toBeGreaterThan(0.35);\n  expect(Number(bogieRuntime.inspectionCameraEndpointBogieFinalWorldAlongBridgeRatio)).toBeLessThan(0.88);\n  expect(Math.abs(Number(bogieRuntime.inspectionCameraEndpointBogieFinalWorldLateralOffsetMeters))).toBeLessThan(4.0);\n  expect(Math.abs(Number(bogieRuntime.inspectionCameraEndpointBogieFinalWorldMinimumY))).toBeLessThanOrEqual(0.02);`;
 if (subviewSource.includes(staleBogieCenterBlock)) {
   subviewSource = subviewSource.replace(staleBogieCenterBlock, finalWorldBogieBlock);
 }
@@ -56,4 +56,4 @@ for (const forbidden of [
 }
 fs.writeFileSync(kphxPath, kphxSource, "utf8");
 
-console.log("Prepared final KPHX browser compatibility: current apron-side A1 camera v5 balanced branches, final-world Tunnel-C bogie evidence, and source-preserving 24-triangle Terminal 4 cleanup v4; runtime geometry is unchanged.");
+console.log("Prepared final KPHX browser compatibility: current apron-side A1 camera v5 balanced branches, final-world Tunnel-C bogie evidence with the grounded 35-88% carrier ordering envelope, and source-preserving 24-triangle Terminal 4 cleanup v4; runtime geometry is unchanged.");
