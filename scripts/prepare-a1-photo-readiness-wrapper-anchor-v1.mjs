@@ -16,7 +16,36 @@ const compactGuards = Object.freeze([
   },
 ]);
 
+const staleCompactPreFitGuard = `          if (!(a1TerminalWallDistance > 2.9 && a1TerminalWallDistance < 5.8)
+            || !(connectorVisibleLength > 1.2 && connectorVisibleLength < 3.6)) {
+            throw new Error(\`A1 compact-stage wall/leg physical guard failed before final visible fit: wall=\${a1TerminalWallDistance} leg=\${connectorVisibleLength}\`);
+          }`;
+const photoAuthoritativePreFitGuard = `          if (!(a1TerminalWallDistance > 18 && a1TerminalWallDistance < 30)
+            || !(connectorVisibleLength > 6 && connectorVisibleLength < 48)) {
+            throw new Error(\`A1 Aug. 15 long fixed-route physical guard failed before final visible fit: wall=\${a1TerminalWallDistance} leg=\${connectorVisibleLength}\`);
+          }`;
+
 let source = fs.readFileSync(readinessPath, "utf8");
+
+// The historical compact-wall compatibility pass can insert a standalone
+// pre-fit guard immediately before the live Cab/door solver. By the time this
+// final photo-readiness pass runs, A1 has already been restored to the Aug. 15
+// long fixed corridor/dogleg and remote Rotunda. Letting the old 2.9-5.8 m /
+// 1.2-3.6 m gate survive here makes the correct final route fail before the
+// physical door fit can execute. Replace only that exact legacy guard with the
+// bounded photo-authoritative route envelope; A3+ and supplied GLB geometry are
+// untouched and the later Vite wrapper still owns final fail-closed acceptance.
+const stalePreFitCount = source.split(staleCompactPreFitGuard).length - 1;
+if (stalePreFitCount > 1) {
+  throw new Error(`${readinessPath}: found ${stalePreFitCount} stale compact A1 pre-fit guards; expected at most one`);
+}
+if (stalePreFitCount === 1) {
+  source = source.replace(staleCompactPreFitGuard, photoAuthoritativePreFitGuard);
+}
+if (source.includes("A1 compact-stage wall/leg physical guard failed before final visible fit")) {
+  throw new Error(`${readinessPath}: stale compact A1 pre-fit runtime guard survived photo normalization`);
+}
+
 let lines = source.split("\n");
 
 function replaceNegatedGuardPreservingSuffix(line, replacementExpression) {
@@ -105,6 +134,10 @@ for (const { variable, expression } of compactGuards) {
   }
 }
 
+if (stalePreFitCount === 1 && !source.includes("A1 Aug. 15 long fixed-route physical guard failed before final visible fit")) {
+  throw new Error(`${readinessPath}: photo-authoritative A1 pre-fit runtime guard was not retained after normalization`);
+}
+
 // Catch the exact malformed shape that previously escaped the normalizer:
 // a final `||` parenthesized readiness guard followed immediately by `throw`
 // without an outer condition close/open block.
@@ -112,4 +145,4 @@ if (/\|\|\s*!\([^\n]+\)\s*\n\s*throw new Error/.test(source)) {
   throw new Error(`${readinessPath}: normalized readiness guard lost its outer if-condition closing syntax`);
 }
 
-console.log("Prepared stable A1 photo-readiness wrapper anchors across every generated A1 readiness branch, including the already-zero-extension guard form, while preserving outer if-condition syntax; geometry remains unchanged.");
+console.log(`Prepared stable A1 photo-readiness wrapper anchors across every generated A1 readiness branch, replaced ${stalePreFitCount} stale compact pre-fit runtime guard(s) with the bounded Aug. 15 long-route envelope, and preserved outer if-condition syntax; geometry remains unchanged.`);
