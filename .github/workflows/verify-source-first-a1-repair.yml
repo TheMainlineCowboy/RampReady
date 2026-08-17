@@ -33,6 +33,7 @@ on:
       - 'scripts/prepare-simulator-render-quality.mjs'
       - 'scripts/prepare-direct-inspection-launch-v28.mjs'
       - 'scripts/prepare-phx-runtime-evidence.mjs'
+      - 'scripts/prepare-source-first-a1-photo-route-verifier-v1.mjs'
       - 'tests/source-first-a1-repair-contract.test.mjs'
       - 'tests/terminal4-jetway-visual-upgrade-contract.test.mjs'
       - 'tests/terminal4-fixed-walkway-source-contract.test.mjs'
@@ -84,6 +85,9 @@ jobs:
         run: |
           npm install --no-save @playwright/test@1.55.0
           npx playwright install --with-deps chromium
+
+      - name: Prepare Aug. 15 photo-authoritative A1 route verifier
+        run: node scripts/prepare-source-first-a1-photo-route-verifier-v1.mjs
 
       - name: Capture focused A1, mode-pose, tug-launch and physical-collision evidence
         run: npx playwright test tests/browser/a1-mode-pose-regression.spec.js tests/browser/source-first-a1-repair.spec.js --reporter=line --workers=1
