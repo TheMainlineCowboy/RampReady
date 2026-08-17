@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 
@@ -7,7 +7,12 @@ const SOURCE_COMMIT = "7ee8f9b4712f842706f00aa5a307e8861b601620";
 const SOURCE_BGL_PATH = "scenery/KPHX_ADEX.BGL";
 const SOURCE_BGL_BYTES = 183_319;
 const SOURCE_BGL_GIT_BLOB_SHA1 = "fa185427e154eb92058e755b9fbdb1ad799317ed";
-const SOURCE_ROOT = `https://raw.githubusercontent.com/TheMainlineCowboy/SkyHarborPhx/${SOURCE_COMMIT}`;
+const SOURCE_OWNER = "TheMainlineCowboy";
+const SOURCE_REPOSITORY = "SkyHarborPhx";
+const SOURCE_ROOT = `https://raw.githubusercontent.com/${SOURCE_OWNER}/${SOURCE_REPOSITORY}/${SOURCE_COMMIT}`;
+const ARCHIVE_URL = `https://codeload.github.com/${SOURCE_OWNER}/${SOURCE_REPOSITORY}/zip/${SOURCE_COMMIT}`;
+const ARCHIVE_ROOT = path.resolve(`.cache/kphx-ground-source-archive/${SOURCE_COMMIT}`);
+const ARCHIVE_PATH = path.join(ARCHIVE_ROOT, "source.zip");
 const OUTPUT_DIR = path.resolve("public/models/kphx-ground");
 const CACHE_DIR = path.resolve(".cache/kphx-ground-source");
 const EXPECTED = Object.freeze({
@@ -31,12 +36,77 @@ const gitBlobSha1 = (bytes) => createHash("sha1")
   .update(bytes)
   .digest("hex");
 const nearlyEqual = (a, b, tolerance = 1e-6) => Math.abs(a - b) <= tolerance;
+const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+async function existingSize(filePath) {
+  try {
+    return (await stat(filePath)).size;
+  } catch (error) {
+    if (error?.code === "ENOENT") return -1;
+    throw error;
+  }
+}
+
+async function downloadPinnedArchive() {
+  await mkdir(ARCHIVE_ROOT, { recursive: true });
+  if (await existingSize(ARCHIVE_PATH) > 1_000_000) return;
+
+  let finalError = null;
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    try {
+      const response = await fetch(ARCHIVE_URL, {
+        headers: {
+          Accept: "application/zip",
+          "User-Agent": "RampReady-KPHX-Ground-Pinned-Archive",
+        },
+        redirect: "follow",
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const bytes = Buffer.from(await response.arrayBuffer());
+      if (bytes.length <= 1_000_000) throw new Error(`archive was unexpectedly small (${bytes.length} bytes)`);
+      await writeFile(ARCHIVE_PATH, bytes);
+      return;
+    } catch (error) {
+      finalError = error;
+      if (attempt < 5) await sleep(attempt * 1_250);
+    }
+  }
+  throw new Error(`Pinned KPHX source archive download failed after retries: ${finalError?.message || finalError}`);
+}
+
+function readPinnedArchiveEntry(relativePath) {
+  const result = spawnSync("unzip", ["-p", ARCHIVE_PATH, `*/${relativePath}`], {
+    encoding: null,
+    stdio: ["ignore", "pipe", "pipe"],
+    maxBuffer: 16 * 1024 * 1024,
+    timeout: 120_000,
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0 || !result.stdout?.length) {
+    throw new Error(`Pinned KPHX source archive is missing ${relativePath}: ${result.stderr?.toString("utf8") || `unzip exit ${result.status}`}`);
+  }
+  return Buffer.from(result.stdout);
+}
 
 async function download(relativePath) {
-  const url = `${SOURCE_ROOT}/${relativePath}`;
-  const response = await fetch(url, { headers: { "User-Agent": "RampReady-KPHX-Ground-Materializer" } });
-  if (!response.ok) throw new Error(`Failed to download ${url}: HTTP ${response.status}`);
-  return Buffer.from(await response.arrayBuffer());
+  await downloadPinnedArchive();
+  try {
+    return readPinnedArchiveEntry(relativePath);
+  } catch (archiveError) {
+    let finalError = archiveError;
+    const url = `${SOURCE_ROOT}/${relativePath}`;
+    for (let attempt = 1; attempt <= 4; attempt += 1) {
+      try {
+        const response = await fetch(url, { headers: { "User-Agent": "RampReady-KPHX-Ground-Materializer" } });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return Buffer.from(await response.arrayBuffer());
+      } catch (error) {
+        finalError = error;
+        if (attempt < 4) await sleep(attempt * 1_000);
+      }
+    }
+    throw new Error(`Failed to materialize pinned ${relativePath} from ${ARCHIVE_URL} or ${url}: ${finalError?.message || finalError}`);
+  }
 }
 
 await rm(CACHE_DIR, { recursive: true, force: true });
@@ -137,6 +207,7 @@ const runtimeManifest = {
   sourceBytes: bgl.length,
   sourceGitBlobSha1: sourceBlobSha,
   sourceSha256: sha256(bgl),
+  sourceDeliveryAuthority: "pinned-codeload-archive-first-with-raw-retry-fallback-v1",
   coordinateFrame: groundManifest.coordinateFrame,
   detailLevel: groundManifest.detailLevel,
   anchor: groundManifest.anchor,
