@@ -11,6 +11,8 @@ const staleMultilineAssertion = /expect\(Math\.abs\(\s*Number\(([^)]+)\.a1ExactR
 const anyCompactWaitPattern = /Math\.abs\(Number\(data\?\.a1ExactRotundaToWallWorldMeters\)\s*-\s*Number\(data\?\.terminal4A1JetwayWallDistance\)\)\s*<=\s*0\.05/;
 const longWaitPattern = /Number\(data\?\.a1ExactRotundaToWallWorldMeters\)\s*>\s*18[\s\S]{0,180}Number\(data\?\.a1ExactRotundaToWallWorldMeters\)\s*<\s*30/;
 const longAssertionPattern = /a1ExactRotundaToWallWorldMeters\)\)\.toBeGreaterThan\(18\)[\s\S]{0,180}a1ExactRotundaToWallWorldMeters\)\)\.toBeLessThan\(30\)/;
+const longConstantAuthorityPattern = /const\s+MIN_A1_FIXED_ROUTE_METERS\s*=\s*18\s*;[\s\S]{0,180}const\s+MAX_A1_FIXED_ROUTE_METERS\s*=\s*30\s*;/;
+const longConstantUsagePattern = /finalRotundaToWall\s*>=\s*minFixedRoute[\s\S]{0,220}finalRotundaToWall\s*<=\s*maxFixedRoute|finalRotundaToWall\)\.toBeGreaterThanOrEqual\(MIN_A1_FIXED_ROUTE_METERS\)[\s\S]{0,220}finalRotundaToWall\)\.toBeLessThanOrEqual\(MAX_A1_FIXED_ROUTE_METERS\)/;
 
 for (const path of paths) {
   let source = fs.readFileSync(path, 'utf8');
@@ -36,10 +38,12 @@ for (const path of paths) {
   if (!source.includes('a1ExactRotundaToWallWorldMeters')) {
     throw new Error(`${path}: final A1 Rotunda-to-wall telemetry is missing`);
   }
-  if (!longWaitPattern.test(source) && !longAssertionPattern.test(source)) {
+  const hasLiteralAuthority = longWaitPattern.test(source) || longAssertionPattern.test(source);
+  const hasConstantAuthority = longConstantAuthorityPattern.test(source) && longConstantUsagePattern.test(source);
+  if (!hasLiteralAuthority && !hasConstantAuthority) {
     throw new Error(`${path}: Aug. 15 long A1 route 18-30 m authority is missing after normalization`);
   }
 
   fs.writeFileSync(path, source);
-  console.log(`${path}: final Aug. 15 A1 photo-route authority applied (${replacements} stale compact equalities removed).`);
+  console.log(`${path}: final Aug. 15 A1 photo-route authority applied (${replacements} stale compact equalities removed; ${hasConstantAuthority ? 'constant-based' : 'literal'} route guard verified).`);
 }
