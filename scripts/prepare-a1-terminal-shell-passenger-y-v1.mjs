@@ -24,9 +24,6 @@ if (doglegPrepared) {
     throw new Error(`${sourcePath}: dogleg A1 fixed corridor legs are not both constructed at passengerCenterY`);
   }
 
-  // doglegElbowPoint is solved earlier, before passengerCenterY exists, so its
-  // X/Z route remains an early geometry value. Create a render-only clone after
-  // passengerCenterY is initialized and use that clone for the elbow enclosure.
   const frameAnchor = `  ${firstCorrect}`;
   const renderPointBlock = "  const doglegElbowRenderPoint = doglegElbowPoint.clone();\n  doglegElbowRenderPoint.y = passengerCenterY;\n";
   if (!source.includes("const doglegElbowRenderPoint = doglegElbowPoint.clone();")) {
@@ -41,13 +38,6 @@ if (doglegPrepared) {
     throw new Error(`${sourcePath}: A1 dogleg elbow render point is not locked to passengerCenterY`);
   }
 
-  // The earlier endpoint-continuity preparer was written for the retired
-  // single straight terminal shell and publishes two centerline checks against
-  // shellStart. The dogleg transformer intentionally removes shellStart and
-  // renders both fixed legs with passengerCenterY passed directly into
-  // addContinuousShell. Normalize those stale telemetry expressions to the
-  // actual rendered dogleg invariant instead of leaving an undefined variable
-  // in the production browser bundle.
   source = source.replaceAll("Math.abs(shellStart.y - passengerCenterY)", "0");
   source = source.replaceAll("Math.abs(passengerCenterY - shellStart.y)", "0");
   if (/\bshellStart\b/.test(source)) {
@@ -76,20 +66,30 @@ if (!source.includes("connector.userData.renderedShellCenterlineAuthority")) {
 }
 
 const groupAnchor = "  group.userData.uploadedJetwayA1PassengerCenterY = passengerCenterY;";
+const doglegGroupAnchor = "  group.userData.uploadedJetwayA1FixedCorridorDogleg = true;";
 if (!source.includes("uploadedJetwayA1RenderedShellCenterlineAuthority")) {
-  if (!source.includes(groupAnchor)) {
+  const errorExpression = doglegPrepared ? "0" : "Math.abs(passengerCenterY - shellStart.y)";
+  const groupTelemetry = `  group.userData.uploadedJetwayA1PassengerCenterY = passengerCenterY;\n  group.userData.uploadedJetwayA1RenderedShellCenterlineAuthority = "${AUTHORITY}";\n  group.userData.uploadedJetwayA1RenderedShellCenterY = passengerCenterY;\n  group.userData.uploadedJetwayA1RenderedShellCenterlineErrorMeters = ${errorExpression};`;
+  if (source.includes(groupAnchor)) {
+    source = source.replace(
+      groupAnchor,
+      `${groupAnchor}\n  group.userData.uploadedJetwayA1RenderedShellCenterlineAuthority = "${AUTHORITY}";\n  group.userData.uploadedJetwayA1RenderedShellCenterY = passengerCenterY;\n  group.userData.uploadedJetwayA1RenderedShellCenterlineErrorMeters = ${errorExpression};`,
+    );
+  } else if (doglegPrepared && source.includes(doglegGroupAnchor)) {
+    // On a repeated production preparation pass, the photo-dogleg transformer can
+    // already own the group telemetry block and the older standalone passenger-Y
+    // line is no longer present. Recreate the same read-only passenger centerline
+    // telemetry beside the stable dogleg authority instead of failing on history.
+    source = source.replace(doglegGroupAnchor, `${doglegGroupAnchor}\n${groupTelemetry}`);
+  } else {
     throw new Error(`${sourcePath}: A1 passenger-centerline group telemetry anchor is missing`);
   }
-  const errorExpression = doglegPrepared ? "0" : "Math.abs(passengerCenterY - shellStart.y)";
-  source = source.replace(
-    groupAnchor,
-    `${groupAnchor}\n  group.userData.uploadedJetwayA1RenderedShellCenterlineAuthority = "${AUTHORITY}";\n  group.userData.uploadedJetwayA1RenderedShellCenterY = passengerCenterY;\n  group.userData.uploadedJetwayA1RenderedShellCenterlineErrorMeters = ${errorExpression};`,
-  );
 }
 
 for (const required of [
   `renderedShellCenterlineAuthority = "${AUTHORITY}"`,
   `uploadedJetwayA1RenderedShellCenterlineAuthority = "${AUTHORITY}"`,
+  "group.userData.uploadedJetwayA1PassengerCenterY = passengerCenterY;",
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${sourcePath}: final A1 passenger-shell invariant is missing ${required}`);
@@ -113,4 +113,4 @@ if (doglegPrepared) {
 }
 
 fs.writeFileSync(sourcePath, source, "utf8");
-console.log(`Prepared ${AUTHORITY}: ${doglegPrepared ? "both A1 fixed dogleg legs and the deferred elbow render clone, with stale straight-shell centerline telemetry removed" : "the visible A1 building-side shell"} render at Tunnel A passengerCenterY instead of the Rotunda-plus-pedestal bounds center.`);
+console.log(`Prepared ${AUTHORITY}: ${doglegPrepared ? "both A1 fixed dogleg legs and the deferred elbow render clone, with repeated-pass group telemetry rebound to the stable dogleg authority" : "the visible A1 building-side shell"} render at Tunnel A passengerCenterY instead of the Rotunda-plus-pedestal bounds center.`);
