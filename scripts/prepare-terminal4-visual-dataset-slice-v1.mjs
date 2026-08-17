@@ -4,6 +4,10 @@ const path = 'scripts/verify-terminal4-fleet-visual.cjs';
 let source = fs.readFileSync(path, 'utf8');
 
 const keys = [
+  'inspectionMode',
+  'terminal4UploadedJetwayLoadState',
+  'terminal4UploadedJetwayCount',
+  'terminal4UploadedJetwayConnectorCount',
   'terminal4UploadedJetwayA1VisualAcceptanceAuthority',
   'terminal4UploadedJetwayA1AssemblyPartCount',
   'terminal4UploadedJetwayA1IsolatedNodeRotationCount',
@@ -82,12 +86,16 @@ if (!source.includes('delete window.__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER_
 }
 
 for (const required of [
+  'inspectionMode',
+  'terminal4UploadedJetwayLoadState',
+  'terminal4UploadedJetwayCount',
+  'terminal4UploadedJetwayConnectorCount',
   '__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER__',
   'setInterval(keepAttached, 12)',
   'delete window.__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER__',
 ]) {
-  if (!source.includes(required)) throw new Error(`Persistent A1 visual attachment is missing ${required}`);
+  if (!source.includes(required)) throw new Error(`Bounded Terminal 4 visual evidence is missing ${required}`);
 }
 
 fs.writeFileSync(path, source);
-console.log(`Bounded every Terminal 4 visual dataset transfer to ${keys.length} acceptance fields across ${occurrences} direct page-context reads and held the existing evidence-only A1 controller attachment through the A1 capture window.`);
+console.log(`Bounded every Terminal 4 visual dataset transfer to ${keys.length} readiness/acceptance fields across ${occurrences} direct page-context reads and held the existing evidence-only A1 controller attachment through the A1 capture window.`);
