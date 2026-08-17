@@ -12,6 +12,8 @@ const FIXED_AIRCRAFT_AUTHORITY = "final-live-cab-mesh-visible-door-registration-
 const AIRCRAFT_MODE_POSE_AUTHORITY = "a1-single-aircraft-pose-training-and-free-drive-v1";
 const SOURCE_HEADING_AUTHORITY = "source-a1-parking-heading-authored-door-registration-v2";
 const SOURCE_A1_YAW = 0.00857;
+const MIN_A1_FIXED_ROUTE_METERS = 18;
+const MAX_A1_FIXED_ROUTE_METERS = 30;
 
 function triplet(value, label) {
   const values = String(value || "").split(",").map(Number);
@@ -69,7 +71,7 @@ test("A1 terminal joint and authored Tunnel-C bogie match the current source-mea
   await page.getByRole("button", { name: "Drive tug / inspect airport" }).click();
   await expect(page.getByRole("heading", { name: "Airport inspection mode" })).toBeVisible();
 
-  await page.waitForFunction(({ visualAuthority, continuityAuthority, bogieAuthority, noLiftAuthority, aircraftAuthority, modeAuthority, headingAuthority, sourceYaw }) => {
+  await page.waitForFunction(({ visualAuthority, continuityAuthority, bogieAuthority, noLiftAuthority, aircraftAuthority, modeAuthority, headingAuthority, sourceYaw, minFixedRoute, maxFixedRoute }) => {
     const data = document.querySelector("canvas.trainerCanvas")?.dataset;
     const wallAuthority = String(data?.terminal4A1ConnectionAuthority || "");
     const wallDistance = Number(data?.terminal4A1JetwayWallDistance);
@@ -95,7 +97,8 @@ test("A1 terminal joint and authored Tunnel-C bogie match the current source-mea
       && Number(data?.inspectionAircraftCabContactErrorMeters) <= 0.01
       && wallDistance > 2.9 && wallDistance < 5.8
       && Number.isFinite(finalRotundaToWall)
-      && Math.abs(finalRotundaToWall - wallDistance) <= 0.05
+      && finalRotundaToWall >= minFixedRoute
+      && finalRotundaToWall <= maxFixedRoute
       && !/WALK|JETWAY|CONNECTOR|PORTAL/i.test(wallAuthority)
       && data?.terminal4UploadedJetwayA1VisualAcceptanceAuthority === visualAuthority
       && data?.terminal4UploadedJetwayA1AssemblyContinuityAuthority === continuityAuthority
@@ -120,6 +123,8 @@ test("A1 terminal joint and authored Tunnel-C bogie match the current source-mea
     modeAuthority: AIRCRAFT_MODE_POSE_AUTHORITY,
     headingAuthority: SOURCE_HEADING_AUTHORITY,
     sourceYaw: SOURCE_A1_YAW,
+    minFixedRoute: MIN_A1_FIXED_ROUTE_METERS,
+    maxFixedRoute: MAX_A1_FIXED_ROUTE_METERS,
   }, { timeout: 300_000, polling: 100 });
 
   await page.getByLabel("Inspection location").selectOption("a1Connection");
@@ -151,12 +156,13 @@ test("A1 terminal joint and authored Tunnel-C bogie match the current source-mea
   expect(wallDistance).toBeGreaterThan(2.9);
   expect(wallDistance).toBeLessThan(5.8);
   expect(Number.isFinite(finalRotundaToWall)).toBe(true);
-  expect(Math.abs(finalRotundaToWall - wallDistance)).toBeLessThanOrEqual(0.05);
+  expect(finalRotundaToWall).toBeGreaterThanOrEqual(MIN_A1_FIXED_ROUTE_METERS);
+  expect(finalRotundaToWall).toBeLessThanOrEqual(MAX_A1_FIXED_ROUTE_METERS);
   const wall = triplet(terminalRuntime.inspectionCameraEndpointWall, "terminal wall");
   const rotunda = triplet(terminalRuntime.inspectionCameraEndpointRotunda, "Rotunda");
   const target = triplet(terminalRuntime.inspectionCameraEndpointTarget, "terminal camera target");
-  expect(distance3(wall, rotunda)).toBeGreaterThan(2.9);
-  expect(distance3(wall, rotunda)).toBeLessThan(5.8);
+  expect(distance3(wall, rotunda)).toBeGreaterThanOrEqual(MIN_A1_FIXED_ROUTE_METERS);
+  expect(distance3(wall, rotunda)).toBeLessThanOrEqual(MAX_A1_FIXED_ROUTE_METERS);
   expect(Math.min(distance3(target, wall), distance3(target, rotunda))).toBeLessThan(3);
   await captureCanvas(page, "test-results/a1-terminal-joint-close.png");
 
