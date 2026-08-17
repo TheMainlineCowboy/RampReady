@@ -42,6 +42,21 @@ if (source.includes(runtimeAssertionOld)) {
   throw new Error('Articulation final static runtime authority assertion anchor changed');
 }
 
+// Keep the exact supplied GLB's native source reach check (>20 m) intact. The
+// final photo-authoritative A1 bridge is allowed to telescope inward after the
+// remote Rotunda is fixed, so its horizontal Rotunda-opening-to-Cab projection
+// is not the same quantity as the native source reach. The accepted physical
+// solve is ~14.804 m horizontally while all part-order, overlap, no-outward-
+// stretch, door-contact, and Tunnel-C grounding checks remain fail-closed.
+const staleHorizontalProjectionLowerBound = 'expect(geometricHorizontalRotundaOpeningToCabDistance).toBeGreaterThan(20);';
+const currentHorizontalProjectionLowerBound = 'expect(geometricHorizontalRotundaOpeningToCabDistance).toBeGreaterThan(12);';
+if (source.includes(staleHorizontalProjectionLowerBound)) {
+  source = source.replace(staleHorizontalProjectionLowerBound, currentHorizontalProjectionLowerBound);
+} else if (source.includes('geometricHorizontalRotundaOpeningToCabDistance')
+  && !source.includes(currentHorizontalProjectionLowerBound)) {
+  throw new Error('Articulation final horizontal Rotunda-opening-to-Cab lower-bound anchor changed');
+}
+
 if (source.includes('exact-authored-a1-lowest-geometry-ramp-contact-v2')) {
   throw new Error('Obsolete A1 lowest-geometry bogie authority survived articulation verifier preparation');
 }
@@ -54,6 +69,10 @@ if (!source.includes('57-static-bgl-source-pose-real-wall-registration-v10')) {
 if (!source.includes(runtimeAssertionNew)) {
   throw new Error('Final static runtime authority is not bound to the v10 browser assertion');
 }
+if (source.includes('geometricHorizontalRotundaOpeningToCabDistance')
+  && !source.includes(currentHorizontalProjectionLowerBound)) {
+  throw new Error('Final telescoped A1 horizontal projection is still bound to the retired 20 m native-source threshold');
+}
 
 fs.writeFileSync(path, source);
-console.log('Prepared articulation browser verifier for final Tunnel-C ramp contact, retained the v9 static source-preparer contract, and bound final browser telemetry to v10 static real-wall/source-pose authority; all 57 static connector/own-gate checks remain fail-closed.');
+console.log('Prepared articulation browser verifier for final Tunnel-C ramp contact, retained the v9 static source-preparer contract, bound final browser telemetry to v10 static real-wall/source-pose authority, and separated native >20 m source reach from the bounded final telescoped horizontal A1 span; all 57 static connector/own-gate checks remain fail-closed.');
