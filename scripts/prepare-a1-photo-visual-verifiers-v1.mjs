@@ -6,6 +6,7 @@ const STATIC_OWN_GATE_AUTHORITY = "57-static-bgl-source-pose-real-wall-registrat
 const MIN_REAL_WALL_DISTANCE_METERS = 2.9;
 const MAX_REAL_WALL_DISTANCE_METERS = 5.8;
 const MAX_A1_DOOR_VERTICAL_ERROR_METERS = 0.25;
+const ATTACHED_EVIDENCE_AUTHORITY = "a1-terminal-connection-attached-evidence-v1";
 
 function requireReplace(source, before, after, label) {
   if (source.includes(after)) return source;
@@ -33,11 +34,18 @@ function requireReplace(source, before, after, label) {
   const deferredVerticalBlock = `  const verticalError = finiteNumber(a1.inspectionAircraftDoorVerticalErrorMeters);\n  if (verticalError === null || Math.abs(verticalError) > MAXIMUM_DEFERRED_A1_VERTICAL_ERROR_METERS) {\n    geometryFailures.push(\`A1 deferred door-height gap escaped safe bounds: \${a1.inspectionAircraftDoorVerticalErrorMeters} m\`);\n  } else if (Math.abs(verticalError) > 0.5) {\n    deferredGeometry.push(\`A1 bridge lift remains deferred: vertical gap=\${verticalError.toFixed(3)} m; aircraft and exact bogie remain grounded.\`);\n  }`;
   const strictVerticalBlock = `  const verticalError = finiteNumber(a1.inspectionAircraftDoorVerticalErrorMeters);\n  if (verticalError === null || Math.abs(verticalError) > MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS) {\n    geometryFailures.push(\`A1 visible door/Cab vertical error is unacceptable while attached: \${a1.inspectionAircraftDoorVerticalErrorMeters} m\`);\n  }`;
   source = requireReplace(source, deferredVerticalBlock, strictVerticalBlock, path);
+
+  const a1PresetAnchor = `  await waitForPreset(page, 'a1Connection');`;
+  const attachedEvidenceCall = `${a1PresetAnchor}\n\n  const attachedEvidenceState = await page.evaluate(() => {\n    const attach = window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__;\n    if (typeof attach !== 'function') throw new Error('A1 attached visual-evidence bridge is missing');\n    return attach();\n  });\n  if (attachedEvidenceState === 'not-ready') {\n    throw new Error('A1 attached visual-evidence bridge ran before the supplied jetway controller was ready');\n  }\n  await page.waitForFunction((authority) => (\n    document.querySelector('canvas.trainerCanvas')?.dataset?.a1InspectionAttachedEvidenceAuthority === authority\n  ), '${ATTACHED_EVIDENCE_AUTHORITY}', { timeout: 30000, polling: 100 });`;
+  source = requireReplace(source, a1PresetAnchor, attachedEvidenceCall, path);
+
   for (const required of [
     CAMERA_AUTHORITY,
     STATIC_OWN_GATE_AUTHORITY,
     `const MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS = ${MAX_A1_DOOR_VERTICAL_ERROR_METERS};`,
     "A1 visible door/Cab vertical error is unacceptable while attached",
+    "__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__",
+    ATTACHED_EVIDENCE_AUTHORITY,
   ]) {
     if (!source.includes(required)) throw new Error(`${path}: current photo visual verifier is missing ${required}`);
   }
@@ -128,4 +136,4 @@ function requireReplace(source, before, after, label) {
   fs.writeFileSync(path, source, "utf8");
 }
 
-console.log(`Prepared photo-authoritative visual verifiers: A1 requires ${PHOTO_CONNECTOR_STYLE_AUTHORITY}, a 6-48 m fixed dogleg route, the unchanged authored/source-local ${MIN_REAL_WALL_DISTANCE_METERS}-${MAX_REAL_WALL_DISTANCE_METERS} m Rotunda-to-BGATE1 facade telemetry envelope, <=${MAX_A1_DOOR_VERTICAL_ERROR_METERS} m attached visible door/Cab vertical error, the balanced v5 apron-side camera, and unchanged strict bogie/branch-visibility checks; static gates retain ${STATIC_OWN_GATE_AUTHORITY}.`);
+console.log(`Prepared photo-authoritative visual verifiers: A1 requires ${PHOTO_CONNECTOR_STYLE_AUTHORITY}, a 6-48 m fixed dogleg route, the unchanged authored/source-local ${MIN_REAL_WALL_DISTANCE_METERS}-${MAX_REAL_WALL_DISTANCE_METERS} m Rotunda-to-BGATE1 facade telemetry envelope, <=${MAX_A1_DOOR_VERTICAL_ERROR_METERS} m attached visible door/Cab vertical error, explicit attached evidence via ${ATTACHED_EVIDENCE_AUTHORITY}, the balanced v5 apron-side camera, and unchanged strict bogie/branch-visibility checks; static gates retain ${STATIC_OWN_GATE_AUTHORITY}.`);
