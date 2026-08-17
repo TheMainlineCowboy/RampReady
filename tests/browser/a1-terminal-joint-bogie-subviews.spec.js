@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { expect, test } from "@playwright/test";
 
-const SUBVIEW_AUTHORITY = "source-measured-a1-terminal-joint-camera-v3";
+const SUBVIEW_AUTHORITY = "source-measured-a1-apron-side-evidence-camera-v5-balanced-branches";
 const CAMERA_AUTHORITY = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const LOCK_AUTHORITY = "exact-a1-evidence-camera-direct-lock-v1";
 const VISUAL_AUTHORITY = "same-day-a1-continuous-source-measured-solid-closed-grounded-v2";
