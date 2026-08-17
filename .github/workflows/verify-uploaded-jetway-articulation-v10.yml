@@ -76,7 +76,7 @@ jobs:
             echo 'Stale A1 bogie authority survived immediately before Playwright' >&2
             exit 1
           fi
-          npx playwright test tests/browser/uploaded-jetway-articulation-v10.spec.js --reporter=line --workers=1
+          PLAYWRIGHT_WEB_SERVER_COMMAND='npm run preview -- --port 4173 --strictPort' npx playwright test tests/browser/uploaded-jetway-articulation-v10.spec.js --reporter=line --workers=1
 
       - name: Upload exact jetway evidence
         if: always()
