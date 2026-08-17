@@ -76,13 +76,26 @@ if (!source.includes("uploadedJetwayA1RenderedShellCenterlineAuthority")) {
       `${groupAnchor}\n  group.userData.uploadedJetwayA1RenderedShellCenterlineAuthority = "${AUTHORITY}";\n  group.userData.uploadedJetwayA1RenderedShellCenterY = passengerCenterY;\n  group.userData.uploadedJetwayA1RenderedShellCenterlineErrorMeters = ${errorExpression};`,
     );
   } else if (doglegPrepared && source.includes(doglegGroupAnchor)) {
-    // On a repeated production preparation pass, the photo-dogleg transformer can
-    // already own the group telemetry block and the older standalone passenger-Y
-    // line is no longer present. Recreate the same read-only passenger centerline
-    // telemetry beside the stable dogleg authority instead of failing on history.
     source = source.replace(doglegGroupAnchor, `${doglegGroupAnchor}\n${groupTelemetry}`);
   } else {
     throw new Error(`${sourcePath}: A1 passenger-centerline group telemetry anchor is missing`);
+  }
+}
+
+if (doglegPrepared && !source.includes("group.userData.uploadedJetwayA1TerminalCenterlineErrorMeters = 0;")) {
+  const renderedErrorAnchor = "  group.userData.uploadedJetwayA1RenderedShellCenterlineErrorMeters = 0;";
+  if (source.includes(renderedErrorAnchor)) {
+    source = source.replace(
+      renderedErrorAnchor,
+      `${renderedErrorAnchor}\n  group.userData.uploadedJetwayA1TerminalCenterlineErrorMeters = 0;`,
+    );
+  } else if (source.includes(doglegGroupAnchor)) {
+    source = source.replace(
+      doglegGroupAnchor,
+      `${doglegGroupAnchor}\n  group.userData.uploadedJetwayA1TerminalCenterlineErrorMeters = 0;`,
+    );
+  } else {
+    throw new Error(`${sourcePath}: cannot republish dogleg terminal centerline error telemetry`);
   }
 }
 
@@ -113,4 +126,4 @@ if (doglegPrepared) {
 }
 
 fs.writeFileSync(sourcePath, source, "utf8");
-console.log(`Prepared ${AUTHORITY}: ${doglegPrepared ? "both A1 fixed dogleg legs and the deferred elbow render clone, with repeated-pass group telemetry rebound to the stable dogleg authority" : "the visible A1 building-side shell"} render at Tunnel A passengerCenterY instead of the Rotunda-plus-pedestal bounds center.`);
+console.log(`Prepared ${AUTHORITY}: ${doglegPrepared ? "both A1 fixed dogleg legs and the deferred elbow render clone, with repeated-pass group and zero-centerline telemetry rebound to the stable dogleg authority" : "the visible A1 building-side shell"} render at Tunnel A passengerCenterY instead of the Rotunda-plus-pedestal bounds center.`);
