@@ -36,13 +36,28 @@ const EXACT_RECOVERED_LIGHTMAP_SOURCES = Object.freeze({
 });
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
+const TRANSIENT_DOWNLOAD_STATUSES = new Set([429, 500, 502, 503, 504]);
+const DOWNLOAD_ATTEMPTS = 5;
+const DOWNLOAD_BASE_DELAY_MS = 750;
 
 async function download(relativePath) {
-  const response = await fetch(`${SOURCE_ROOT}/${relativePath}`, {
-    headers: { "User-Agent": "RampReady-Terminal4-Lightmap-Materializer" },
-  });
-  if (!response.ok) throw new Error(`Failed to download exact Terminal 4 lightmap ${relativePath}: HTTP ${response.status}`);
-  return Buffer.from(await response.arrayBuffer());
+  let lastStatus = null;
+  for (let attempt = 1; attempt <= DOWNLOAD_ATTEMPTS; attempt += 1) {
+    const url = new URL(`${SOURCE_ROOT}/${relativePath}`);
+    if (attempt > 1) url.searchParams.set("rrLightmapRetry", String(attempt));
+    const response = await fetch(url, {
+      headers: { "User-Agent": "RampReady-Terminal4-Lightmap-Materializer" },
+    });
+    if (response.ok) return Buffer.from(await response.arrayBuffer());
+    lastStatus = response.status;
+    if (!TRANSIENT_DOWNLOAD_STATUSES.has(response.status) || attempt >= DOWNLOAD_ATTEMPTS) break;
+    const retryAfterSeconds = Number(response.headers.get("retry-after"));
+    const retryDelayMs = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+      ? Math.min(retryAfterSeconds * 1000, 8000)
+      : DOWNLOAD_BASE_DELAY_MS * attempt;
+    await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+  }
+  throw new Error(`Failed to download exact Terminal 4 lightmap ${relativePath} after ${DOWNLOAD_ATTEMPTS} attempts: HTTP ${lastStatus}`);
 }
 
 function rgb565(value) {
