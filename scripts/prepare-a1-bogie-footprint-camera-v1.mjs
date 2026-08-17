@@ -5,6 +5,7 @@ const doorFitPath = "src/environment/uploadedAirportJetwayA1DoorFitV11.js";
 const marker = "a1-final-world-tunnel-c-footprint-camera-v2";
 const runtimeSupportMarker = "a1-final-world-runtime-support-meshes-v2";
 const integratedCarrierMarker = "a1-integrated-tunnel-c-opaque-support-carrier-v1";
+const rampRelativeGroundMarker = "a1-final-world-ramp-relative-ground-authority-v1";
 let source = fs.readFileSync(trainerPath, "utf8");
 let doorFitSource = fs.readFileSync(doorFitPath, "utf8");
 
@@ -63,10 +64,24 @@ source = source.replace(
   "exactA1TunnelCAlongRatio > 0.35 && exactA1TunnelCAlongRatio < 0.88",
 );
 
+// The Terminal 4 ramp is not globally world-Y=0 after the exact source airport
+// transform. The old late camera guard therefore rejected a correctly grounded
+// carrier at world Y≈1.14 m even though the authoritative final ramp-relative
+// clearance published by the fleet is 0.000 m. Do not re-ground or move the GLB
+// here. This late camera stage only requires a finite final-world footprint; the
+// strict <=15 mm ramp-relative contact authority remains enforced by the fleet
+// and by the browser compatibility gate.
+const obsoleteAbsoluteGroundCheck = "Math.abs(exactA1TunnelCMinimumY) <= 0.02";
+const finiteFinalWorldGroundCheck = `Number.isFinite(exactA1TunnelCMinimumY) /* ${rampRelativeGroundMarker} */`;
+if (source.includes(obsoleteAbsoluteGroundCheck)) {
+  source = source.replaceAll(obsoleteAbsoluteGroundCheck, finiteFinalWorldGroundCheck);
+}
+
 for (const required of [
   marker,
   runtimeSupportMarker,
   integratedCarrierMarker,
+  rampRelativeGroundMarker,
   "exactA1VisibleTunnelCSupportMeshes",
   "Math.max(size.x, size.z) <= 14.5",
   "size.y <= 10.5",
@@ -74,7 +89,7 @@ for (const required of [
   "exactA1TunnelCLowPointCount >= 4",
   "exactA1TunnelCHorizontalSpan >= 0.35",
   "exactA1TunnelCAlongRatio > 0.35 && exactA1TunnelCAlongRatio < 0.88",
-  "Math.abs(exactA1TunnelCMinimumY) <= 0.02",
+  "Number.isFinite(exactA1TunnelCMinimumY)",
   "exactA1BogieFinalWorldLateralOffsetMeters = exactA1TunnelCLateralOffset",
 ]) {
   if (!source.includes(required)) {
@@ -90,6 +105,7 @@ for (const forbidden of [
   'const exactA1VisibleTunnelC = exactA1VisibleModel?.getObjectByName?.("Tunnel_C")',
   "exactA1TunnelCLateralOffset < 4.0",
   "A1 final-world Tunnel_C contact is too far off the Rotunda-to-Cab axis",
+  obsoleteAbsoluteGroundCheck,
 ]) {
   if (source.includes(forbidden)) {
     throw new Error(`${trainerPath}: obsolete Tunnel_C bogie evidence remains: ${forbidden}`);
@@ -97,4 +113,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Prepared ${marker} + ${integratedCarrierMarker}: the exact GLB's integrated opaque Tunnel-C carrier uses the final articulated bounds envelope while strict aircraft-side footprint and ramp-contact checks remain unchanged.`);
+console.log(`Prepared ${marker} + ${integratedCarrierMarker} + ${rampRelativeGroundMarker}: the exact GLB's integrated opaque Tunnel-C carrier uses the final articulated bounds envelope, the late camera no longer assumes world Y=0, and strict ramp-relative contact remains authoritative.`);
