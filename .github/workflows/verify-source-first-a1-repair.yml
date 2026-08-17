@@ -95,7 +95,7 @@ jobs:
             echo 'Stale compact A1 wall equality survived immediately before Playwright' >&2
             exit 1
           fi
-          npx playwright test tests/browser/a1-mode-pose-regression.spec.js tests/browser/source-first-a1-repair.spec.js --reporter=line --workers=1
+          PLAYWRIGHT_WEB_SERVER_COMMAND='npm run preview -- --port 4173 --strictPort' npx playwright test tests/browser/a1-mode-pose-regression.spec.js tests/browser/source-first-a1-repair.spec.js --reporter=line --workers=1
 
       - name: Upload repair evidence
         if: always()
