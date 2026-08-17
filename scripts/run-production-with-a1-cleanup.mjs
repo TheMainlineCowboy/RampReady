@@ -36,6 +36,12 @@ try {
   // remains mandatory and no supplied jetway geometry is changed.
   await import(`./prepare-a1-bgateg1-main-facade-after-split-v1.mjs?final-bgateg1=${Date.now()}`);
   await import(`./prepare-a1-original-bgateg1-node-authority-v1.mjs?final-source-node=${Date.now()}`);
+  // Late production preparers above this wrapper can rewrite the trainer after
+  // the ordinary inspection-control stage. Reinstall only the evidence-only A1
+  // attach command at the final handoff so the browser artifact itself exposes
+  // the already-existing controller at deployment=1. build-production.mjs then
+  // bundles it and restores the protected trainer source afterward.
+  await import(`./prepare-a1-final-visual-evidence-attach-runtime-v1.mjs?final-evidence-attach=${Date.now()}`);
   await import("./build-production.mjs");
 } catch (error) {
   buildError = error;
