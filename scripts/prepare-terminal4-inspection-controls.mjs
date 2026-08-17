@@ -32,12 +32,6 @@ for (const path of targets) {
     "shell state",
   );
 
-  if (!source.includes("a1-terminal-connection-attached-evidence-v1")) {
-    const anchor = `    setCameraMode("chase");\n    const canvas = sim.renderer.domElement;\n    canvas.dataset.inspectionPreset = preset.id;`;
-    const replacement = `    setCameraMode("chase");\n    if (preset.id === "a1Connection") {\n      const attachedEvidenceDeployment = 1;\n      jetwayRef.current.target = attachedEvidenceDeployment;\n      jetwayRef.current.deployment = attachedEvidenceDeployment;\n      jetwayRef.current.transitionStartDeployment = attachedEvidenceDeployment;\n      jetwayRef.current.transitionStartedAt = 0;\n      jetwayRef.current.retractionRequested = false;\n      jetwayRef.current.controller?.setDeployment(attachedEvidenceDeployment);\n    }\n    const canvas = sim.renderer.domElement;\n    canvas.dataset.a1InspectionAttachedEvidenceAuthority = preset.id === "a1Connection"\n      ? "a1-terminal-connection-attached-evidence-v1"\n      : "not-a1-terminal-connection";\n    canvas.dataset.inspectionPreset = preset.id;`;
-    source = replaceRequired(source, anchor, replacement, path, "A1 attached evidence preset");
-  }
-
   if (!source.includes("window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__")) {
     // prepare-terminal4-runtime regenerates this trainer immediately before this
     // preparer runs. Therefore the evidence bridge must not depend on callbacks
@@ -88,7 +82,6 @@ for (const path of targets) {
   for (const token of [
     'className="rr-inspection-toggle"',
     'data-inspection-mode={inspectionMode ? "active" : "training"}',
-    "a1-terminal-connection-attached-evidence-v1",
     "window.__RAMPREADY_VISUAL_EVIDENCE_ENABLE_INSPECTION__",
     "window.__RAMPREADY_VISUAL_EVIDENCE_SET_PRESET__",
     "const keyboardForward = inspectionActive",
@@ -108,4 +101,4 @@ if (!css.includes(cssMarker)) {
 
 await import("./prepare-a1-terminal-connector-v11.mjs");
 await import("./prepare-inspection-elapsed-motion.mjs");
-console.log("Prepared the active Terminal 4 free-drive controls with a regeneration-safe visual-evidence activation/preset bridge, full keyboard power, elapsed-motion integration, an attached A1 terminal-connection evidence preset and the measured A1 wall connector. The final camera stage replaces only the temporary preset geometry with the real inspection callback.");
+console.log("Prepared the active Terminal 4 free-drive controls with a regeneration-safe visual-evidence activation/preset bridge, full keyboard power, elapsed-motion integration and the measured A1 wall connector. The final camera stage replaces only the temporary preset geometry with the real inspection callback.");
