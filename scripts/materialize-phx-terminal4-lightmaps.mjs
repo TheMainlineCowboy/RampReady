@@ -5,6 +5,7 @@ import { deflateSync } from "node:zlib";
 
 const SOURCE_COMMIT = "2e6642778c9c88eac6a82b21063763cc78be7cfe";
 const SOURCE_ROOT = `https://raw.githubusercontent.com/TheMainlineCowboy/SkyHarborPhx/${SOURCE_COMMIT}`;
+const PACKAGE_ROOT = path.resolve(`.cache/skyharborphx-package/${SOURCE_COMMIT}`);
 const OUTPUT_DIR = path.resolve("public/models/phx-terminal4");
 const TEXTURE_DIR = path.join(OUTPUT_DIR, "textures");
 const MANIFEST_PATH = path.join(OUTPUT_DIR, "texture-manifest.json");
@@ -40,7 +41,23 @@ const TRANSIENT_DOWNLOAD_STATUSES = new Set([429, 500, 502, 503, 504]);
 const DOWNLOAD_ATTEMPTS = 5;
 const DOWNLOAD_BASE_DELAY_MS = 750;
 
+async function readPinnedPackageLightmap(relativePath) {
+  const packagePath = path.resolve(PACKAGE_ROOT, "texture", relativePath);
+  if (packagePath !== PACKAGE_ROOT && !packagePath.startsWith(`${PACKAGE_ROOT}${path.sep}`)) {
+    throw new Error(`Terminal 4 lightmap package path escaped cache root: ${relativePath}`);
+  }
+  try {
+    return await readFile(packagePath);
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
+}
+
 async function download(relativePath) {
+  const packageBytes = await readPinnedPackageLightmap(relativePath);
+  if (packageBytes) return packageBytes;
+
   let lastStatus = null;
   for (let attempt = 1; attempt <= DOWNLOAD_ATTEMPTS; attempt += 1) {
     const url = new URL(`${SOURCE_ROOT}/${relativePath}`);
