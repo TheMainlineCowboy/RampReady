@@ -1,4 +1,4 @@
-const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v2";
+const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v3";
 const MAX_GROUNDING_EXTENSION_METERS = 3.0;
 const MAX_FINAL_CLEARANCE_METERS = 0.015;
 const MAX_TOP_MOUNT_DRIFT_METERS = 0.015;
@@ -173,10 +173,11 @@ export function groundA1TunnelCVisibleSupportHardware(THREE, model) {
   const position = geometry.getAttribute("position");
   const components = findTriangleComponents(position);
 
-  // A source-owned low carrier triangle gives the already-proved ramp plane, but
-  // it is never accepted as visible support contact by itself.
-  const carrierBox = new THREE.Box3().setFromObject(mesh);
-  const rampY = carrierBox.min.y;
+  // The KPHX ramp is the world-space Y=0 physical plane used by the aircraft,
+  // tug and prior exact Tunnel-C grounding passes. Do not derive the ramp from
+  // Tunnel_C_Jetway_0's hidden lowest carrier triangle: that was the loophole
+  // which let visibly suspended legs validate against an unrelated mesh vertex.
+  const rampY = 0;
   const rotundaWorld = centerOfObject(THREE, model.getObjectByName("Rotunda"));
   const cabWorld = centerOfObject(THREE, model.getObjectByName("Cab"));
   const measurements = components.map((triangles) =>
@@ -184,25 +185,24 @@ export function groundA1TunnelCVisibleSupportHardware(THREE, model) {
 
   const isAircraftSide = (entry) => (
     Number.isFinite(entry.alongRatio)
-    && entry.alongRatio >= 0.50
-    && entry.alongRatio <= 0.94
+    && entry.alongRatio >= 0.35
+    && entry.alongRatio <= 1.05
     && Number.isFinite(entry.lateralDistance)
-    && entry.lateralDistance <= 4.0
+    && entry.lateralDistance <= 5.5
   );
 
-  // Preserve the previously identified detailed bogie/support pods, but also
-  // include the narrow vertical load-bearing islands plainly visible in the
-  // side/aircraft-side screenshots. Those rods were the loophole: they could
-  // remain suspended while an unrelated lower carrier triangle reported zero.
+  // Include every compact, predominantly vertical, aircraft-side load-bearing
+  // island. The prior v2 bounds were too narrow and selected only a subset of
+  // the rods visible in the final aircraft-side/bogie screenshots.
   const detailedPods = measurements.filter((entry) => (
     isAircraftSide(entry)
     && entry.stairTriangleCount === 0
-    && entry.triangleCount >= 900
-    && entry.triangleCount <= 1400
-    && entry.size.y >= 0.70
-    && entry.size.y <= 1.50
-    && entry.horizontalSpan >= 0.35
-    && entry.horizontalSpan <= 1.60
+    && entry.triangleCount >= 600
+    && entry.triangleCount <= 1800
+    && entry.size.y >= 0.55
+    && entry.size.y <= 2.20
+    && entry.horizontalSpan >= 0.25
+    && entry.horizontalSpan <= 1.80
     && entry.clearanceMeters > MAX_FINAL_CLEARANCE_METERS
     && entry.clearanceMeters <= MAX_GROUNDING_EXTENSION_METERS
   ));
@@ -210,13 +210,13 @@ export function groundA1TunnelCVisibleSupportHardware(THREE, model) {
   const visibleLoadLegs = measurements.filter((entry) => (
     isAircraftSide(entry)
     && entry.stairTriangleCount === 0
-    && entry.triangleCount >= 8
-    && entry.triangleCount <= 1800
-    && entry.size.y >= 0.35
-    && entry.size.y <= 2.30
-    && entry.horizontalSpan >= 0.06
-    && entry.horizontalSpan <= 1.25
-    && entry.verticalAspect >= 1.15
+    && entry.triangleCount >= 4
+    && entry.triangleCount <= 2200
+    && entry.size.y >= 0.25
+    && entry.size.y <= 3.20
+    && entry.horizontalSpan >= 0.04
+    && entry.horizontalSpan <= 1.80
+    && entry.verticalAspect >= 1.05
     && entry.clearanceMeters > MAX_FINAL_CLEARANCE_METERS
     && entry.clearanceMeters <= MAX_GROUNDING_EXTENSION_METERS
   ));
@@ -226,13 +226,13 @@ export function groundA1TunnelCVisibleSupportHardware(THREE, model) {
     unique.set(entry.triangles[0], entry);
   }
   const selected = [...unique.values()].sort((a, b) => a.lateralDistance - b.lateralDistance);
-  if (selected.length < 2 || selected.length > 10) {
+  if (selected.length < 2 || selected.length > 20) {
     const diagnostic = measurements
       .filter((entry) => entry.triangleCount >= 4 && isAircraftSide(entry))
       .sort((a, b) => a.clearanceMeters - b.clearanceMeters)
-      .slice(0, 40)
+      .slice(0, 60)
       .map(diagnosticEntry);
-    throw new Error(`A1 visible Tunnel-C support grounding expected 2-10 load-bearing source components, found ${selected.length}: ${JSON.stringify(diagnostic)}`);
+    throw new Error(`A1 visible Tunnel-C support grounding expected 2-20 load-bearing source components, found ${selected.length}: ${JSON.stringify(diagnostic)}`);
   }
 
   const extensions = selected.map((entry) => telescopeComponentToRamp(THREE, mesh, position, entry, rampY));
@@ -255,12 +255,35 @@ export function groundA1TunnelCVisibleSupportHardware(THREE, model) {
     throw new Error(`A1 visible Tunnel-C support top mounts drifted: ${maximumTopMountDriftMeters}`);
   }
 
+  // Fail closed if any remaining compact vertical aircraft-side support island
+  // is still visibly suspended. This prevents a selected subset from reporting
+  // success while neighboring rods hang above the ramp in the rendered view.
+  const remainingMeasurements = components.map((triangles) =>
+    componentMeasurement(THREE, mesh, position, triangles, rampY, rotundaWorld, cabWorld));
+  const remainingSuspendedSupports = remainingMeasurements.filter((entry) => (
+    isAircraftSide(entry)
+    && entry.stairTriangleCount === 0
+    && entry.triangleCount >= 4
+    && entry.triangleCount <= 2200
+    && entry.size.y >= 0.25
+    && entry.size.y <= 3.20
+    && entry.horizontalSpan >= 0.04
+    && entry.horizontalSpan <= 1.80
+    && entry.verticalAspect >= 1.05
+    && entry.clearanceMeters > MAX_FINAL_CLEARANCE_METERS
+    && entry.clearanceMeters <= MAX_GROUNDING_EXTENSION_METERS
+  ));
+  if (remainingSuspendedSupports.length) {
+    throw new Error(`A1 visible Tunnel-C supports remain suspended after grounding: ${JSON.stringify(remainingSuspendedSupports.map(diagnosticEntry))}`);
+  }
+
   return Object.freeze({
     authority: AUTHORITY,
     groundedComponentCount: selected.length,
     groundedTriangleCount: selected.reduce((sum, entry) => sum + entry.triangleCount, 0),
     detailedPodCount: detailedPods.length,
     visibleLoadLegCount: visibleLoadLegs.length,
+    remainingSuspendedSupportCount: 0,
     maximumBeforeClearanceMeters: Math.max(...selected.map((entry) => entry.clearanceMeters)),
     maximumExtensionMeters: Math.max(...extensions.map((entry) => entry.extensionMeters)),
     maximumFinalClearanceMeters,
