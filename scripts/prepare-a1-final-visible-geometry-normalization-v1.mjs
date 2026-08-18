@@ -4,13 +4,13 @@ const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const doorFitPath = "src/environment/uploadedAirportJetwayA1DoorFitV11.js";
 const marker = "a1-final-visible-grounded-door-and-integrated-tunnel-c-v1";
 const contactFootprintMarker = "a1-visible-cab-door-contact-footprint-v1";
-const renderedDoorWorldY = 3.0;
+const renderedDoorWorldY = 1.73;
 
 let doorFit = fs.readFileSync(doorFitPath, "utf8");
 
 if (!doorFit.includes(marker)) {
   const oldTarget = `function toWorldTarget(THREE, group) {\n  return group.localToWorld(new THREE.Vector3(\n    CRJ_FORWARD_LEFT_DOOR.x,\n    CRJ_FORWARD_LEFT_DOOR.sillY,\n    CRJ_FORWARD_LEFT_DOOR.z,\n  ));\n}`;
-  const newTarget = `function toWorldTarget(THREE, group) {\n  // ${marker}\n  // X/Z still come from the fixed A1 aircraft registration, but Y must match the\n  // actually rendered grounded CRJ door. The environment group carries its own\n  // vertical transform, so group.localToWorld(... sillY ...) incorrectly targeted\n  // roughly 6.35 m while the visible grounded door is at about 3.00 m.\n  const target = group.localToWorld(new THREE.Vector3(\n    CRJ_FORWARD_LEFT_DOOR.x,\n    0,\n    CRJ_FORWARD_LEFT_DOOR.z,\n  ));\n  target.y = ${renderedDoorWorldY};\n  return target;\n}`;
+  const newTarget = `function toWorldTarget(THREE, group) {\n  // ${marker}\n  // X/Z still come from the fixed A1 aircraft registration. Y is the official\n  // grounded CRJ700 forward passenger-door sill height: 1.73 m above ramp. The\n  // environment group carries its own vertical transform, so applying sillY through\n  // group.localToWorld would double-count that transform and place the Cab too high.\n  const target = group.localToWorld(new THREE.Vector3(\n    CRJ_FORWARD_LEFT_DOOR.x,\n    0,\n    CRJ_FORWARD_LEFT_DOOR.z,\n  ));\n  target.y = ${renderedDoorWorldY};\n  return target;\n}`;
   if (!doorFit.includes(oldTarget)) {
     throw new Error(`${doorFitPath}: stale environment-frame CRJ door target is missing`);
   }
@@ -92,4 +92,4 @@ for (const stale of [
 }
 fs.writeFileSync(trainerPath, trainer, "utf8");
 
-console.log(`Prepared ${marker} + ${contactFootprintMarker}: A1 targets the visible grounded CRJ door at world Y=${renderedDoorWorldY.toFixed(2)}, validates exact Cab hood-plane/lateral coverage instead of an averaged-point proxy, keeps bounded fuselage penetration and strict Tunnel-C ramp contact, and pulls the terminal-joint camera back to expose the dogleg/remote Rotunda.`);
+console.log(`Prepared ${marker} + ${contactFootprintMarker}: A1 targets the grounded CRJ700 forward passenger-door sill at world Y=${renderedDoorWorldY.toFixed(2)}, validates exact Cab hood-plane/lateral coverage instead of an averaged-point proxy, keeps bounded fuselage penetration and strict Tunnel-C ramp contact, and pulls the terminal-joint camera back to expose the dogleg/remote Rotunda.`);
