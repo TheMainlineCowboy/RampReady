@@ -4,6 +4,7 @@ const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const doorFitPath = "src/environment/uploadedAirportJetwayA1DoorFitV11.js";
 const marker = "a1-final-visible-grounded-door-and-integrated-tunnel-c-v1";
 const contactFootprintMarker = "a1-visible-cab-door-contact-footprint-v1";
+const pitchEnvelopeMarker = "a1-measured-door-low-slope-pitch-envelope-v1";
 const renderedDoorWorldY = 1.73;
 
 let doorFit = fs.readFileSync(doorFitPath, "utf8");
@@ -24,6 +25,15 @@ if (!doorFit.includes(marker)) {
     throw new Error(`${doorFitPath}: stale environment-frame CRJ door target is missing`);
   }
   doorFit = doorFit.replace(oldTarget, newTarget);
+}
+
+if (!doorFit.includes(pitchEnvelopeMarker)) {
+  const oldPitchGuard = `  if (!(pitchRadians > 0.02 && pitchRadians < 0.14)) {\n    throw new Error(\`Supplied A1 corrected pitch is outside the physical range: \${pitchRadians}\`);\n  }`;
+  const newPitchGuard = `  // ${pitchEnvelopeMarker}\n  // The corrected 1.73 m CRJ sill produces a shallow ~1.1 degree downward tunnel\n  // slope. Keep this fail-closed, but do not reject a physically normal near-level\n  // bridge merely because the obsolete high-door target implied >=1.15 degrees.\n  if (!(pitchRadians > 0.005 && pitchRadians < 0.14)) {\n    throw new Error(\`Supplied A1 corrected pitch is outside the physical range: \${pitchRadians}\`);\n  }`;
+  if (!doorFit.includes(oldPitchGuard)) {
+    throw new Error(`${doorFitPath}: stale corrected-pitch guard is missing`);
+  }
+  doorFit = doorFit.replace(oldPitchGuard, newPitchGuard);
 }
 
 // The exact supplied GLB exposes the bogie/support inside the opaque
@@ -57,9 +67,11 @@ if (!doorFit.includes(contactFootprintMarker)) {
 for (const required of [
   marker,
   contactFootprintMarker,
+  pitchEnvelopeMarker,
   "x: -1.34",
   "z: 7.32",
   `target.y = ${renderedDoorWorldY};`,
+  "pitchRadians > 0.005",
   "maximumHorizontalDimension <= 14.5",
   "size.y <= 10.5",
   "cabContactPlaneCovered",
@@ -103,4 +115,4 @@ for (const stale of [
 }
 fs.writeFileSync(trainerPath, trainer, "utf8");
 
-console.log(`Prepared ${marker} + ${contactFootprintMarker}: A1 targets the measured CRJ700 forward passenger door at 7.32 m aft / 1.34 m left and grounded sill world Y=${renderedDoorWorldY.toFixed(2)}, validates exact Cab hood-plane/lateral coverage instead of an averaged-point proxy, keeps bounded fuselage penetration and strict Tunnel-C ramp contact, and pulls the terminal-joint camera back to expose the dogleg/remote Rotunda.`);
+console.log(`Prepared ${marker} + ${contactFootprintMarker} + ${pitchEnvelopeMarker}: A1 targets the measured CRJ700 forward passenger door at 7.32 m aft / 1.34 m left and grounded sill world Y=${renderedDoorWorldY.toFixed(2)}, accepts a bounded shallow real-door tunnel slope, validates exact Cab hood-plane/lateral coverage instead of an averaged-point proxy, keeps bounded fuselage penetration and strict Tunnel-C ramp contact, and pulls the terminal-joint camera back to expose the dogleg/remote Rotunda.`);
