@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const marker = "a1-aircraft-side-reference-subviews-v1";
+const bogieFramingMarker = "a1-bogie-contact-visible-outboard-camera-v3";
 const subviewAuthority = "source-measured-a1-apron-side-evidence-camera-v5-balanced-branches";
 const sideProfileAuthority = "a1-rotunda-cab-outboard-side-profile-v1";
 const aircraftSideAuthority = "a1-cab-tunnel-c-aircraft-side-close-v1";
@@ -100,13 +101,65 @@ if (!source.includes(marker)) {
   source = source.replace(anchor, `${insertion}\n${anchor}`);
 }
 
+// The earlier bogie camera proved the correct low-contact footprint, but its
+// camera itself sat nearly on the ramp underneath the integrated Tunnel-C shell.
+// That produced a grey occluded frame even while the numerical contact test
+// passed. Reframe only the evidence camera here, after final Tunnel-C measurement,
+// from the same derived outboard half-plane used by the aircraft-side views.
+if (!source.includes(bogieFramingMarker)) {
+  const authorityAnchor = '            renderer.domElement.dataset.inspectionCameraEndpointBogieProfileAuthority = "a1-tunnel-c-bogie-apron-half-plane-side-profile-v2";';
+  const occurrences = source.split(authorityAnchor).length - 1;
+  if (occurrences !== 1) {
+    throw new Error(`${trainerPath}: expected one final bogie profile authority anchor, found ${occurrences}`);
+  }
+  const visibleBogieCamera = `            // ${bogieFramingMarker}
+            const exactA1VisibleBogieAxisX = exactA1CameraCabX - exactA1CameraRotundaX;
+            const exactA1VisibleBogieAxisZ = exactA1CameraCabZ - exactA1CameraRotundaZ;
+            const exactA1VisibleBogieSpan = Math.hypot(exactA1VisibleBogieAxisX, exactA1VisibleBogieAxisZ);
+            if (!(exactA1VisibleBogieSpan > 8 && exactA1VisibleBogieSpan < 44)) {
+              throw new Error(\`A1 visible bogie camera received invalid Rotunda-to-Cab span: \${exactA1VisibleBogieSpan}\`);
+            }
+            const exactA1VisibleBogieUnitX = exactA1VisibleBogieAxisX / exactA1VisibleBogieSpan;
+            const exactA1VisibleBogieUnitZ = exactA1VisibleBogieAxisZ / exactA1VisibleBogieSpan;
+            const exactA1VisibleBogieNormalX = exactA1VisibleBogieUnitZ;
+            const exactA1VisibleBogieNormalZ = -exactA1VisibleBogieUnitX;
+            const exactA1VisibleBogieAircraftCenter = exactA1CameraAircraftBounds.getCenter(new THREE.Vector3());
+            const exactA1VisibleBogieCabFromAircraftX = exactA1CameraCabX - exactA1VisibleBogieAircraftCenter.x;
+            const exactA1VisibleBogieCabFromAircraftZ = exactA1CameraCabZ - exactA1VisibleBogieAircraftCenter.z;
+            const exactA1VisibleBogieOutboardDot = exactA1VisibleBogieCabFromAircraftX * exactA1VisibleBogieNormalX
+              + exactA1VisibleBogieCabFromAircraftZ * exactA1VisibleBogieNormalZ;
+            const exactA1VisibleBogieSign = exactA1VisibleBogieOutboardDot >= 0 ? 1 : -1;
+            const exactA1VisibleBogieDistance = 9.5;
+            exactA1CameraPositionX = exactA1TunnelCLowCenter.x
+              + exactA1VisibleBogieNormalX * exactA1VisibleBogieSign * exactA1VisibleBogieDistance
+              - exactA1VisibleBogieUnitX * 0.8;
+            exactA1CameraPositionY = Math.max(exactA1TunnelCLowCenter.y + 3.2, 3.8);
+            exactA1CameraPositionZ = exactA1TunnelCLowCenter.z
+              + exactA1VisibleBogieNormalZ * exactA1VisibleBogieSign * exactA1VisibleBogieDistance
+              - exactA1VisibleBogieUnitZ * 0.8;
+            exactA1CameraTargetX = exactA1TunnelCLowCenter.x;
+            exactA1CameraTargetY = exactA1TunnelCLowCenter.y + 0.65;
+            exactA1CameraTargetZ = exactA1TunnelCLowCenter.z;
+            inspectionCamera.fov = 46;
+            renderer.domElement.dataset.inspectionCameraEndpointBogieFramingAuthority = "${bogieFramingMarker}";
+            renderer.domElement.dataset.inspectionCameraEndpointBogieFramingDistanceMeters = exactA1VisibleBogieDistance.toFixed(6);
+            renderer.domElement.dataset.inspectionCameraEndpointBogieFramingHeightMeters = exactA1CameraPositionY.toFixed(6);
+            renderer.domElement.dataset.inspectionCameraEndpointBogieFramingOutboardDot = exactA1VisibleBogieOutboardDot.toFixed(6);
+${authorityAnchor}`;
+  source = source.replace(authorityAnchor, visibleBogieCamera);
+}
+
 for (const required of [
   marker,
+  bogieFramingMarker,
   'exactA1EvidenceSubview === "side-profile"',
   'exactA1EvidenceSubview === "aircraft-side"',
   `inspectionCameraEndpointSideProfileAuthority = "${sideProfileAuthority}"`,
   `inspectionCameraEndpointAircraftSideAuthority = "${aircraftSideAuthority}"`,
+  `inspectionCameraEndpointBogieFramingAuthority = "${bogieFramingMarker}"`,
   `inspectionCameraEndpointSubviewAuthority = "${subviewAuthority}"`,
+  'exactA1TunnelCLowCenter.y + 3.2',
+  'const exactA1VisibleBogieDistance = 9.5;',
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${trainerPath}: aircraft-side A1 evidence subviews are missing ${required}`);
@@ -114,4 +167,4 @@ for (const required of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Prepared ${marker}: final A1 evidence now includes dedicated outboard side-profile and aircraft-side close cameras derived only from the final Rotunda, Cab and rendered-aircraft bounds.`);
+console.log(`Prepared ${marker} + ${bogieFramingMarker}: final A1 evidence includes dedicated outboard side-profile, aircraft-side and visibly elevated bogie-contact cameras derived only from final Rotunda/Cab/aircraft bounds and the measured Tunnel-C low-contact footprint.`);
