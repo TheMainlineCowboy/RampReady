@@ -1,7 +1,8 @@
-const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v5-carrier-floor-reference-visible-proof";
+const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v6-kphx-world-ramp-visible-proof";
 const MAX_GROUNDING_EXTENSION_METERS = 3.0;
 const MAX_FINAL_CLEARANCE_METERS = 0.015;
 const MAX_TOP_MOUNT_DRIFT_METERS = 0.015;
+const KPHX_WORLD_RAMP_Y = 0;
 const VERTEX_KEY_SCALE = 10000;
 const LOWER_RIGID_FRACTION = 0.30;
 const UPPER_RIGID_FRACTION = 0.76;
@@ -150,12 +151,12 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
   const rotundaWorld = objectCenter(THREE, model.getObjectByName("Rotunda"));
   const cabWorld = objectCenter(THREE, model.getObjectByName("Cab"));
 
-  // The integrated opaque carrier's validated lowest exact-source contact is used
-  // only as the transformed ramp-coordinate reference. It is NOT accepted as proof
-  // that visible supports are grounded. Every visible load-bearing component below
-  // is independently extended to this plane and re-measured after deformation.
-  const rampY = new THREE.Box3().setFromObject(mesh).min.y;
-  if (!Number.isFinite(rampY)) throw new Error("A1 visible support proof has no finite transformed ramp reference");
+  // KPHX's authored pavement plane is world Y=0. The earlier physical A1 fitter
+  // already uses this same world-ramp authority for separable Tunnel-C hardware.
+  // Never infer pavement from Tunnel_C_Jetway_0's overall minimum: that mesh has
+  // hidden/buried source triangles several metres below the rendered apron, which
+  // caused the old v5 pass to "ground" the wrong islands while visible rods hung.
+  const rampY = KPHX_WORLD_RAMP_Y;
 
   const isAircraftSide = (entry) => Number.isFinite(entry.alongRatio)
     && entry.alongRatio >= 0.35
@@ -178,7 +179,17 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
     && entry.clearanceMeters > MAX_FINAL_CLEARANCE_METERS
     && entry.clearanceMeters <= MAX_GROUNDING_EXTENSION_METERS);
   if (selected.length < 2 || selected.length > 20) {
-    throw new Error(`A1 visible support proof expected 2-20 suspended support components, found ${selected.length}`);
+    const diagnostic = measurements
+      .filter((entry) => visibleSupport(entry))
+      .map((entry) => ({
+        triangles: entry.triangleCount,
+        minimumWorldY: Number(entry.box.min.y.toFixed(3)),
+        maximumWorldY: Number(entry.box.max.y.toFixed(3)),
+        clearance: Number(entry.clearanceMeters.toFixed(3)),
+        along: Number(entry.alongRatio.toFixed(3)),
+        lateral: Number(entry.lateralDistance.toFixed(3)),
+      }));
+    throw new Error(`A1 visible support proof expected 2-20 suspended support components above KPHX ramp Y=0, found ${selected.length}: ${JSON.stringify(diagnostic)}`);
   }
 
   const extensions = selected.map((entry) => telescopeToRamp(THREE, mesh, position, entry, rampY));
@@ -206,7 +217,7 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
     && entry.clearanceMeters > MAX_FINAL_CLEARANCE_METERS
     && entry.clearanceMeters <= MAX_GROUNDING_EXTENSION_METERS);
   if (remaining.length) {
-    throw new Error(`A1 visible support proof found ${remaining.length} support component(s) still suspended`);
+    throw new Error(`A1 visible support proof found ${remaining.length} support component(s) still suspended above KPHX ramp Y=0`);
   }
 
   return Object.freeze({
