@@ -19,8 +19,12 @@ function components(THREE,mesh,position){
 }
 function measure(THREE,mesh,position,tris){const b=new THREE.Box3(),local=new THREE.Vector3(),world=new THREE.Vector3();for(const t of tris)for(let c=0;c<3;c++){local.fromBufferAttribute(position,t*3+c);b.expandByPoint(world.copy(local).applyMatrix4(mesh.matrixWorld));}return b;}
 export function groundA1TunnelCVisibleSupportHardwareV3(THREE,model){
-  groundV11(THREE,model); const root=sceneRoot(model),g=ground(root); root.updateWorldMatrix?.(true,true);model.updateWorldMatrix(true,true); const findings=[];
+  const base=groundV11(THREE,model); const root=sceneRoot(model),g=ground(root); root.updateWorldMatrix?.(true,true);model.updateWorldMatrix(true,true); const findings=[];
   for(const name of NAMES){const mesh=model?.getObjectByName?.(name);if(!mesh?.isMesh)continue;mesh.updateWorldMatrix(true,false);const geom=mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry;const pos=geom.getAttribute("position");for(const tris of components(THREE,mesh,pos)){const b=measure(THREE,mesh,pos,tris);if(!intersects(b))continue;const s=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3()),gy=groundY(THREE,g,c.x,c.z,b.max.y),clear=Number.isFinite(gy)?b.min.y-gy:null;findings.push({mesh:name,tris:tris.length,min:b.min.toArray().map(v=>+v.toFixed(4)),max:b.max.toArray().map(v=>+v.toFixed(4)),size:s.toArray().map(v=>+v.toFixed(4)),center:c.toArray().map(v=>+v.toFixed(4)),clearance:clear===null?null:+clear.toFixed(4)});}}
-  findings.sort((a,b)=>(b.clearance??-999)-(a.clearance??-999)||b.tris-a.tris); throw new Error(`A1 V13 ACTUAL CONNECTED SUPPORT COMPONENTS ${JSON.stringify(findings.slice(0,80))}`);
+  findings.sort((a,b)=>(b.clearance??-999)-(a.clearance??-999)||b.tris-a.tris);
+  const concise=findings.slice(0,80);
+  console.error(`A1 V13 ACTUAL CONNECTED SUPPORT COMPONENTS ${JSON.stringify(concise)}`);
+  model.userData.a1V13ActualConnectedSupportComponents=concise;
+  return Object.freeze({...base,v13ActualConnectedSupportComponentCount:concise.length});
 }
 export { A1_TUNNEL_C_VISIBLE_SUPPORT_GROUNDING_V3_AUTHORITY, A1_TUNNEL_C_VISIBLE_SUPPORT_SECONDARY_MESH_AUTHORITY } from "./a1TunnelCVisibleSupportGroundingV5.js";
