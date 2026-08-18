@@ -69,6 +69,18 @@ for (const path of files) {
     physicalPredicate,
   );
 
+  // The sourceGateDoorTargetError field is the retired representative/source-
+  // target diagnostic (4+ m on the correct rounded Cab). It must never veto the
+  // exact physical Cab surface proof above.
+  source = source.replaceAll(
+    'Number.isFinite(Number(data?.inspectionAircraftSourceGateDoorTargetErrorMeters))\n      && Number(data?.inspectionAircraftSourceGateDoorTargetErrorMeters) <= 0.01',
+    `Number.isFinite(Number(data?.inspectionAircraftCabDoorMinimumHorizontalVertexDistanceMeters))\n      && Number(data?.inspectionAircraftCabDoorMinimumHorizontalVertexDistanceMeters) <= 0.06`,
+  );
+  source = source.replaceAll(
+    'Number(data?.inspectionAircraftSourceGateDoorTargetErrorMeters) <= 0.01',
+    `Number(data?.inspectionAircraftCabDoorMinimumHorizontalVertexDistanceMeters) <= 0.06`,
+  );
+
   source = source.replaceAll(
     'expect(runtime.inspectionAircraftPoseAuthority).toBe(AIRPORT_OWNED_AIRCRAFT_AUTHORITY);',
     'expect(runtime.inspectionAircraftPoseAuthority).toBeTruthy();',
@@ -88,6 +100,14 @@ for (const path of files) {
   source = source.replaceAll(
     'expect(Number(terminalRuntime.inspectionAircraftCabContactErrorMeters)).toBeLessThanOrEqual(0.01);',
     `expect(terminalRuntime.inspectionAircraftCabDoorContactAuthority).toBe('${PHYSICAL_CAB_AUTHORITY}');\n  expect(terminalRuntime.inspectionAircraftCabDoorContactPlaneCovered).toBe('true');\n  expect(terminalRuntime.inspectionAircraftCabDoorLaterallyCovered).toBe('true');\n  expect(terminalRuntime.inspectionAircraftCabDoorVerticallyCovered).toBe('true');\n  expect(Number(terminalRuntime.inspectionAircraftCabDoorMinimumHorizontalVertexDistanceMeters)).toBeLessThanOrEqual(0.06);`,
+  );
+  source = source.replaceAll(
+    '  expect(Number(runtime.inspectionAircraftSourceGateDoorTargetErrorMeters)).toBeLessThanOrEqual(0.01);\n',
+    '',
+  );
+  source = source.replaceAll(
+    '  expect(Number(terminalRuntime.inspectionAircraftSourceGateDoorTargetErrorMeters)).toBeLessThanOrEqual(0.01);\n',
+    '',
   );
 
   // The aircraft is now fixed at the authored A1 stop. Historical relocation
@@ -120,6 +140,15 @@ for (const path of files) {
   if (source.includes('inspectionAircraftPoseAuthority === aircraftAuthority')) {
     throw new Error(`${path}: stale shared pose/fixed-source authority equality remains`);
   }
+  if (source.includes('inspectionAircraftSourceGateDoorTargetErrorMeters) <= 0.01')) {
+    throw new Error(`${path}: stale source-gate representative target acceptance remains`);
+  }
+  if (source.includes('expect(Number(runtime.inspectionAircraftSourceGateDoorTargetErrorMeters)).toBeLessThanOrEqual(0.01)')) {
+    throw new Error(`${path}: stale source-gate representative assertion remains`);
+  }
+  if (source.includes('expect(Number(terminalRuntime.inspectionAircraftSourceGateDoorTargetErrorMeters)).toBeLessThanOrEqual(0.01)')) {
+    throw new Error(`${path}: stale terminal source-gate representative assertion remains`);
+  }
   if (path.endsWith('kphx-ground-runtime.spec.js')) {
     if (source.includes('VisibleVestibuleLengthMeters) - 2.4')) {
       throw new Error(`${path}: stale compact 2.4 m A1 route gate remains`);
@@ -135,4 +164,4 @@ for (const path of files) {
   fs.writeFileSync(path, source, 'utf8');
 }
 
-console.log('Prepared final KPHX browser gates for the fixed authored-aircraft source pose, Aug. 15 long A1 dogleg/remote Rotunda, exact physical Cab boarding-surface contact, authored source heading and grounded bogie; obsolete compact-sleeve, relocation, Cab-centroid and shared-pose vetoes are removed.');
+console.log('Prepared final KPHX browser gates for the fixed authored-aircraft source pose, Aug. 15 long A1 dogleg/remote Rotunda, exact physical Cab boarding-surface contact, authored source heading and grounded bogie; obsolete compact-sleeve, relocation, Cab-centroid, source-target and shared-pose vetoes are removed.');
