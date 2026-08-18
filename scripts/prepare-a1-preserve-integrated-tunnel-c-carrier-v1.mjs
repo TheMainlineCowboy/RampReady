@@ -26,13 +26,16 @@ if (!source.includes(marker)) {
   source = source.replace(oldBlock, newBlock);
 }
 
-if (!source.includes(pitchMarker)) {
-  const oldPitchGuard = `  if (!(pitchRadians > 0.02 && pitchRadians < 0.14)) {\n    throw new Error(\`Supplied A1 corrected pitch is outside the physical range: \${pitchRadians}\`);\n  }`;
-  const newPitchGuard = `  // ${pitchMarker}\n  // With the rendered CRJ door correctly targeted at world Y=3.00, the exact\n  // bridge solves to 0.019341 rad (~1.108 deg). The historical 0.020-rad cutoff\n  // rejects that physically valid near-level pose by 0.000659 rad. Keep a narrow\n  // fail-closed lower bound without restoring the obsolete 1.73-world-Y workaround.\n  if (!(pitchRadians > 0.018 && pitchRadians < 0.14)) {\n    throw new Error(\`Supplied A1 corrected pitch is outside the measured physical range: \${pitchRadians}\`);\n  }`;
-  if (!source.includes(oldPitchGuard)) {
-    throw new Error(`${doorFitPath}: expected 0.020-rad pitch guard is missing before measured rendered-door normalization`);
-  }
+const oldPitchGuard = `  if (!(pitchRadians > 0.02 && pitchRadians < 0.14)) {\n    throw new Error(\`Supplied A1 corrected pitch is outside the physical range: \${pitchRadians}\`);\n  }`;
+const newPitchGuard = `  // ${pitchMarker}\n  // With the rendered CRJ door correctly targeted at world Y=3.00, the exact\n  // bridge solves to 0.019341 rad (~1.108 deg). The historical 0.020-rad cutoff\n  // rejects that physically valid near-level pose by 0.000659 rad. Keep a narrow\n  // fail-closed lower bound without restoring the obsolete 1.73-world-Y workaround.\n  if (!(pitchRadians > 0.018 && pitchRadians < 0.14)) {\n    throw new Error(\`Supplied A1 corrected pitch is outside the measured physical range: \${pitchRadians}\`);\n  }`;
+
+// Do not trust the marker alone: a later regeneration pass can preserve comments
+// while restoring the stale numeric guard. Normalize the executable guard every
+// time this final stage runs, then fail closed if the old browser error can survive.
+if (source.includes(oldPitchGuard)) {
   source = source.replace(oldPitchGuard, newPitchGuard);
+} else if (!(source.includes(pitchMarker) && source.includes("pitchRadians > 0.018"))) {
+  throw new Error(`${doorFitPath}: final rendered-door pitch guard is neither stale nor normalized`);
 }
 
 for (const required of [
@@ -48,9 +51,16 @@ for (const required of [
     throw new Error(`${doorFitPath}: final A1 carrier/pitch preservation is missing ${required}`);
   }
 }
-if (source.includes("a1-measured-door-low-slope-pitch-envelope-v1") || source.includes("pitchRadians > 0.005")) {
-  throw new Error(`${doorFitPath}: obsolete low-door shallow-pitch workaround survived carrier preservation`);
+for (const forbidden of [
+  "a1-measured-door-low-slope-pitch-envelope-v1",
+  "pitchRadians > 0.005",
+  "pitchRadians > 0.02",
+  "Supplied A1 corrected pitch is outside the physical range",
+]) {
+  if (source.includes(forbidden)) {
+    throw new Error(`${doorFitPath}: stale A1 pitch/door guard survived final carrier preservation: ${forbidden}`);
+  }
 }
 
 fs.writeFileSync(doorFitPath, source, "utf8");
-console.log(`Prepared ${marker} + ${pitchMarker}: the exact supplied Tunnel-C passenger carrier can no longer be vertically translated as bogie/stair grounding, and the correctly rendered 3.00 m CRJ door uses a narrow measured near-level pitch envelope without restoring the bad 1.73 m world target.`);
+console.log(`Prepared ${marker} + ${pitchMarker}: the exact supplied Tunnel-C passenger carrier can no longer be vertically translated as bogie/stair grounding, and the final executable browser pitch guard is normalized to the measured 0.018-0.14 rad envelope.`);
