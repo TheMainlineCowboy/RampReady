@@ -1,16 +1,20 @@
 import fs from "node:fs";
 
 const path = "src/environment/uploadedAirportJetwayA1DoorFitV11.js";
-const marker = "a1-exact-authored-crj-forward-left-door-target-v1";
+const marker = "a1-exact-authored-crj-forward-left-door-target-v2-sill-and-center";
 const finalVisibleMarker = "a1-final-visible-grounded-door-and-integrated-tunnel-c-v1";
 
 // These values are measured directly from the committed user-painted CRJ GLB,
 // not inferred from the nose or copied from a planning-manual station. The
 // forward-left passenger-door component occupies x=-1.291842 at the exterior
-// skin, is centered vertically at y=2.769294, has a lower sill/bounds edge at
+// skin, is centered vertically at y=2.769294, has its physical lower sill at
 // y=1.802860, and is centered longitudinally at z=2.240745 in the exact authored
-// aircraft coordinate frame. Jetway hood contact targets the door-opening center;
-// the lower bounds edge is retained only as source telemetry, not as the hood aim.
+// aircraft coordinate frame.
+//
+// IMPORTANT: a passenger bridge has two different vertical constraints. Its floor
+// must meet the DOOR SILL, while its hood/opening must surround the DOOR CENTER.
+// Treating the center as the floor target raises the complete boarding interface by
+// almost one metre and is the source of the visibly high aircraft-side articulation.
 const fixedAircraftPose = Object.freeze({
   x: -3.822373,
   y: -0.002196,
@@ -44,7 +48,7 @@ if (!source.includes(marker)) {
     throw new Error(`${path}: stale nose-derived/final-visible door target is missing`);
   }
 
-  const exactTarget = `// ${finalVisibleMarker}\n// ${marker}\nconst FIXED_A1_RENDERED_AIRCRAFT_POSE = Object.freeze({\n  x: ${fixedAircraftPose.x},\n  y: ${fixedAircraftPose.y},\n  z: ${fixedAircraftPose.z},\n  yaw: ${fixedAircraftPose.yaw},\n});\nconst EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR = Object.freeze({\n  x: ${authoredDoorLocal.x},\n  centerY: ${authoredDoorLocal.centerY},\n  sillY: ${authoredDoorLocal.sillY},\n  z: ${authoredDoorLocal.z},\n});\n\nfunction toWorldTarget(THREE) {\n  // The aircraft is fixed. Rotate the exact GLB door-opening contact center by the\n  // fixed A1 stand yaw and translate it by the fixed nose-gear/root pose. The\n  // jetway must reach this point; no terminal or aircraft transform is allowed to\n  // compensate. The lower door bounds edge is not the hood contact point.\n  const cosYaw = Math.cos(FIXED_A1_RENDERED_AIRCRAFT_POSE.yaw);\n  const sinYaw = Math.sin(FIXED_A1_RENDERED_AIRCRAFT_POSE.yaw);\n  return new THREE.Vector3(\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.x\n      + cosYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.x\n      + sinYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.z,\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.y\n      + EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.centerY,\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.z\n      - sinYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.x\n      + cosYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.z,\n  );\n}`;
+  const exactTarget = `// ${finalVisibleMarker}\n// ${marker}\nconst FIXED_A1_RENDERED_AIRCRAFT_POSE = Object.freeze({\n  x: ${fixedAircraftPose.x},\n  y: ${fixedAircraftPose.y},\n  z: ${fixedAircraftPose.z},\n  yaw: ${fixedAircraftPose.yaw},\n});\nconst EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR = Object.freeze({\n  x: ${authoredDoorLocal.x},\n  centerY: ${authoredDoorLocal.centerY},\n  sillY: ${authoredDoorLocal.sillY},\n  z: ${authoredDoorLocal.z},\n});\n\nfunction toWorldTarget(THREE) {\n  // The aircraft is fixed. X/Z come from the exact authored door component and Y\n  // is the physical door SILL because this target drives tunnel pitch and boarding\n  // floor height. Hood coverage of centerY is verified separately after fitting.\n  const cosYaw = Math.cos(FIXED_A1_RENDERED_AIRCRAFT_POSE.yaw);\n  const sinYaw = Math.sin(FIXED_A1_RENDERED_AIRCRAFT_POSE.yaw);\n  return new THREE.Vector3(\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.x\n      + cosYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.x\n      + sinYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.z,\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.y\n      + EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.sillY,\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.z\n      - sinYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.x\n      + cosYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.z,\n  );\n}\n\nfunction exactAuthoredCrjDoorCenterWorldY() {\n  return FIXED_A1_RENDERED_AIRCRAFT_POSE.y\n    + EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.centerY;\n}`;
   source = source.replace(oldTarget, exactTarget);
 }
 
@@ -59,7 +63,8 @@ for (const required of [
   "z: 2.240745",
   "x: -3.822373",
   "z: 10.25382",
-  "EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.centerY",
+  "EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.sillY",
+  "exactAuthoredCrjDoorCenterWorldY",
 ]) {
   if (!source.includes(required)) throw new Error(`${path}: exact authored-door target is missing ${required}`);
 }
@@ -78,6 +83,7 @@ fs.writeFileSync(path, source, "utf8");
 const cosYaw = Math.cos(fixedAircraftPose.yaw);
 const sinYaw = Math.sin(fixedAircraftPose.yaw);
 const worldX = fixedAircraftPose.x + cosYaw * authoredDoorLocal.x + sinYaw * authoredDoorLocal.z;
-const worldY = fixedAircraftPose.y + authoredDoorLocal.centerY;
+const worldSillY = fixedAircraftPose.y + authoredDoorLocal.sillY;
+const worldCenterY = fixedAircraftPose.y + authoredDoorLocal.centerY;
 const worldZ = fixedAircraftPose.z - sinYaw * authoredDoorLocal.x + cosYaw * authoredDoorLocal.z;
-console.log(`Prepared ${marker}: fixed A1 aircraft pose stays unchanged; exact authored CRJ forward-left door contact-center target is world [${worldX.toFixed(6)}, ${worldY.toFixed(6)}, ${worldZ.toFixed(6)}].`);
+console.log(`Prepared ${marker}: fixed A1 aircraft pose stays unchanged; exact authored CRJ forward-left door sill target is world [${worldX.toFixed(6)}, ${worldSillY.toFixed(6)}, ${worldZ.toFixed(6)}], while hood center Y=${worldCenterY.toFixed(6)} is retained as a separate coverage constraint.`);
