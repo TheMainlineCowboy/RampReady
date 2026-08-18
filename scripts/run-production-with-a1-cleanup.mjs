@@ -43,6 +43,11 @@ try {
   // build now owns the final aircraft-side stair correction at its true pre-Vite
   // geometry hook, after visible Tunnel-C/Cab normalization.
   await import(`./prepare-a1-final-visual-evidence-attach-runtime-v1.mjs?final-evidence-attach=${Date.now()}`);
+  // Final photo-judgement cameras must be installed after every late trainer
+  // rewrite and immediately before Vite. They move no airport, aircraft or
+  // supplied jetway geometry; they expose true side/profile views so projection
+  // overlap cannot masquerade as Tunnel-C/fuselage contact.
+  await import(`./prepare-a1-aircraft-side-evidence-subviews-v1.mjs?final-aircraft-side-evidence=${Date.now()}`);
   await import("./build-production.mjs");
 } catch (error) {
   buildError = error;
@@ -68,4 +73,4 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, applied the final exact-source A1 service-stair aircraft clearance at the final pre-Vite geometry stage, then restored the committed jetway source byte-for-byte.");
+console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, applied the final exact-source A1 service-stair aircraft clearance, installed dedicated side/profile aircraft evidence cameras at the final pre-Vite stage, then restored the committed jetway source byte-for-byte.");
