@@ -7,13 +7,14 @@ const MOVABLE_PART_WEIGHTS = Object.freeze({
   Cab: 1,
 });
 
-// Measured directly from the exact authored CRJ. The visible forward entry
-// door extends down as an integrated airstair, but the passenger-cabin threshold
-// where a jetway hood meets the fuselage is approximately 2.52 m above grade.
+// Bombardier CRJ700 Airport Planning Manual CSP B-020, 00-02-04:
+// passenger-door sill is 1.73 m above ground; 00-02-02 gives a 1.78 m
+// passenger-door height, so the nominal opening center is about 2.62 m.
+// The bridge floor/hood must register to the sill, not to the door-window band.
 const CRJ_FORWARD_LEFT_DOOR = Object.freeze({
   x: -1.35,
-  centerY: 3.10,
-  sillY: 2.52,
+  centerY: 2.62,
+  sillY: 1.73,
   z: 2.22,
 });
 const CONTACT_BAND_METERS = 0.22;
