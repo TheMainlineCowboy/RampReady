@@ -78,19 +78,24 @@ if (survivingFullDatasetTransfer) {
 // stable frame. Re-issue the existing evidence-only attach bridge on a bounded
 // timer during A1 capture, then release it before representative fleet views.
 const attachWaitAnchor = `  // Critical acceptance boundary: measure the actual visible CRJ door against\n  // the actual final Cab while A1 is physically in its attached deployment.`;
-const persistentAttachBlock = `  await page.evaluate(() => {\n    const attach = window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__;\n    if (typeof attach !== 'function') throw new Error('A1 attached visual-evidence bridge is missing');\n    if (window.__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER__) {\n      clearInterval(window.__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER__);\n    }\n    const keepAttached = () => {\n      const state = attach();\n      if (state === 'not-ready') return false;\n      return true;\n    };\n    if (!keepAttached()) throw new Error('A1 attached visual-evidence bridge ran before the supplied jetway controller was ready');\n    window.__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER__ = setInterval(keepAttached, 12);\n  });\n\n${attachWaitAnchor}`;
+const directAttachAnchor = `  if (typeof (await page.evaluate(() => window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__)) === 'undefined') {`;
+const persistentAttachBlock = `  await page.evaluate(() => {\n    const attach = window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__;\n    if (typeof attach !== 'function') throw new Error('A1 attached visual-evidence bridge is missing');\n    if (window.__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER__) {\n      clearInterval(window.__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER__);\n    }\n    const keepAttached = () => {\n      const state = attach();\n      if (state === 'not-ready') return false;\n      return true;\n    };\n    if (!keepAttached()) throw new Error('A1 attached visual-evidence bridge ran before the supplied jetway controller was ready');\n    window.__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER__ = setInterval(keepAttached, 12);\n  });`;
 if (!source.includes('__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER__')) {
-  if (!source.includes(attachWaitAnchor)) throw new Error('A1 attached-evidence capture anchor is missing');
-  source = source.replace(attachWaitAnchor, persistentAttachBlock);
+  if (source.includes(attachWaitAnchor)) {
+    source = source.replace(attachWaitAnchor, `${persistentAttachBlock}\n\n${attachWaitAnchor}`);
+  } else if (source.includes(directAttachAnchor)) {
+    // Current verifier explicitly invokes the evidence attach bridge rather than
+    // carrying the legacy comment marker. Start the bounded persistence timer
+    // immediately before that equivalent attach boundary.
+    source = source.replace(directAttachAnchor, `${persistentAttachBlock}\n\n${directAttachAnchor}`);
+  } else {
+    throw new Error('A1 attached-evidence capture anchor is missing');
+  }
 }
 
 // The old browser acceptance proved the Cab and bogie but never measured the
-// visible service stair against the actual rendered CRJ. That is how an aircraft-
-// side visual concern could remain green. Require the live post-calibration solve
-// and its exact source-triangle count before taking any A1 screenshot. The sliced
-// key list above also contains the telemetry field name, so use the unique runtime
-// authority as the idempotence marker instead of mistaking the key declaration for
-// an already-installed acceptance block.
+// visible service stair against the actual rendered CRJ. Require the live post-
+// calibration solve and exact source-triangle count before any A1 screenshot.
 const verticalErrorAnchor = `  const verticalError = finiteNumber(a1.inspectionAircraftDoorVerticalErrorMeters);`;
 const serviceStairAcceptance = `  const serviceStairPenetration = finiteNumber(a1.terminal4UploadedJetwayA1ServiceStairFuselagePenetrationMeters);\n  const serviceStairSwingDegrees = finiteNumber(a1.terminal4UploadedJetwayA1ServiceStairSwingDegrees);\n  const serviceStairOutboardClearance = finiteNumber(a1.terminal4UploadedJetwayA1ServiceStairOutboardClearanceMeters);\n  if (a1.terminal4UploadedJetwayA1ServiceStairClearanceAuthority !== '${SERVICE_STAIR_AUTHORITY}') {\n    geometryFailures.push(\`A1 live service-stair authority is wrong: \${a1.terminal4UploadedJetwayA1ServiceStairClearanceAuthority}\`);\n  }\n  if (a1.terminal4UploadedJetwayA1ServiceStairTriangleCount !== '2352') {\n    geometryFailures.push(\`A1 exact service-stair triangle selection changed: \${a1.terminal4UploadedJetwayA1ServiceStairTriangleCount}\`);\n  }\n  if (serviceStairPenetration === null || serviceStairPenetration > 0.001) {\n    geometryFailures.push(\`A1 service stair penetrates the live rendered CRJ envelope: \${a1.terminal4UploadedJetwayA1ServiceStairFuselagePenetrationMeters} m\`);\n  }\n  if (serviceStairSwingDegrees === null || Math.abs(serviceStairSwingDegrees) > 88) {\n    geometryFailures.push(\`A1 service-stair swing is invalid: \${a1.terminal4UploadedJetwayA1ServiceStairSwingDegrees} deg\`);\n  }\n  if (serviceStairOutboardClearance === null || serviceStairOutboardClearance < -0.001) {\n    geometryFailures.push(\`A1 service stair has no outboard clearance: \${a1.terminal4UploadedJetwayA1ServiceStairOutboardClearanceMeters} m\`);\n  }\n\n${verticalErrorAnchor}`;
 if (!source.includes(SERVICE_STAIR_AUTHORITY)) {
