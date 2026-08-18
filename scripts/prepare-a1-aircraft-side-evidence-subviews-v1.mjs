@@ -129,17 +129,27 @@ if (!source.includes(bogieFramingMarker)) {
             const exactA1VisibleBogieOutboardDot = exactA1VisibleBogieCabFromAircraftX * exactA1VisibleBogieNormalX
               + exactA1VisibleBogieCabFromAircraftZ * exactA1VisibleBogieNormalZ;
             const exactA1VisibleBogieSign = exactA1VisibleBogieOutboardDot >= 0 ? 1 : -1;
+            // Preserve the prior v2 branch's already-proved Tunnel-C low-contact
+            // target before replacing only the camera position/framing. This
+            // avoids inventing a second bogie locator and keeps the camera tied
+            // to the exact final visible support footprint.
+            const exactA1VisibleBogieTargetX = exactA1CameraTargetX;
+            const exactA1VisibleBogieTargetY = exactA1CameraTargetY;
+            const exactA1VisibleBogieTargetZ = exactA1CameraTargetZ;
+            if (![exactA1VisibleBogieTargetX, exactA1VisibleBogieTargetY, exactA1VisibleBogieTargetZ].every(Number.isFinite)) {
+              throw new Error("A1 visible bogie camera received no finite measured Tunnel-C low-contact target");
+            }
             const exactA1VisibleBogieDistance = 9.5;
-            exactA1CameraPositionX = exactA1TunnelCLowCenter.x
+            exactA1CameraPositionX = exactA1VisibleBogieTargetX
               + exactA1VisibleBogieNormalX * exactA1VisibleBogieSign * exactA1VisibleBogieDistance
               - exactA1VisibleBogieUnitX * 0.8;
-            exactA1CameraPositionY = Math.max(exactA1TunnelCLowCenter.y + 3.2, 3.8);
-            exactA1CameraPositionZ = exactA1TunnelCLowCenter.z
+            exactA1CameraPositionY = Math.max(exactA1VisibleBogieTargetY + 3.2, 3.8);
+            exactA1CameraPositionZ = exactA1VisibleBogieTargetZ
               + exactA1VisibleBogieNormalZ * exactA1VisibleBogieSign * exactA1VisibleBogieDistance
               - exactA1VisibleBogieUnitZ * 0.8;
-            exactA1CameraTargetX = exactA1TunnelCLowCenter.x;
-            exactA1CameraTargetY = exactA1TunnelCLowCenter.y + 0.65;
-            exactA1CameraTargetZ = exactA1TunnelCLowCenter.z;
+            exactA1CameraTargetX = exactA1VisibleBogieTargetX;
+            exactA1CameraTargetY = exactA1VisibleBogieTargetY + 0.65;
+            exactA1CameraTargetZ = exactA1VisibleBogieTargetZ;
             inspectionCamera.fov = 46;
             renderer.domElement.dataset.inspectionCameraEndpointBogieFramingAuthority = "${bogieFramingMarker}";
             renderer.domElement.dataset.inspectionCameraEndpointBogieFramingDistanceMeters = exactA1VisibleBogieDistance.toFixed(6);
@@ -158,11 +168,21 @@ for (const required of [
   `inspectionCameraEndpointAircraftSideAuthority = "${aircraftSideAuthority}"`,
   `inspectionCameraEndpointBogieFramingAuthority = "${bogieFramingMarker}"`,
   `inspectionCameraEndpointSubviewAuthority = "${subviewAuthority}"`,
-  'exactA1TunnelCLowCenter.y + 3.2',
+  'const exactA1VisibleBogieTargetX = exactA1CameraTargetX;',
   'const exactA1VisibleBogieDistance = 9.5;',
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${trainerPath}: aircraft-side A1 evidence subviews are missing ${required}`);
+  }
+}
+
+for (const forbidden of [
+  'exactA1TunnelCLowCenter.x',
+  'exactA1TunnelCLowCenter.y',
+  'exactA1TunnelCLowCenter.z',
+]) {
+  if (source.includes(forbidden)) {
+    throw new Error(`${trainerPath}: stale undefined bogie camera target survived: ${forbidden}`);
   }
 }
 
