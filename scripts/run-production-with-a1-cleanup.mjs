@@ -39,13 +39,11 @@ try {
   // Late production preparers above this wrapper can rewrite the trainer after
   // the ordinary inspection-control stage. Reinstall only the evidence-only A1
   // attach command at the final handoff so the browser artifact itself exposes
-  // the already-existing controller at deployment=1.
+  // the already-existing controller at deployment=1. The prepared production
+  // build now owns the final aircraft-side stair correction at its true pre-Vite
+  // geometry hook, after visible Tunnel-C/Cab normalization.
   await import(`./prepare-a1-final-visual-evidence-attach-runtime-v1.mjs?final-evidence-attach=${Date.now()}`);
-  // Run the aircraft-side service-stair correction only after prepare:runtime has
-  // regenerated the final A1 fitter, immediately before the production Vite build.
-  // The final fitter imports the normal runtime solver module rather than embedding
-  // generated JavaScript; the wrapper restores build-production.mjs byte-for-byte.
-  await import("./build-production-with-a1-stair-clearance-v1.mjs");
+  await import("./build-production.mjs");
 } catch (error) {
   buildError = error;
 }
@@ -70,4 +68,4 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, applied the final exact-source A1 service-stair aircraft clearance, then restored generated build/source files byte-for-byte.");
+console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, applied the final exact-source A1 service-stair aircraft clearance at the final pre-Vite geometry stage, then restored the committed jetway source byte-for-byte.");
