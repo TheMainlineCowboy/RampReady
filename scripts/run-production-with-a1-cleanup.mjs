@@ -43,7 +43,8 @@ try {
   await import(`./prepare-a1-final-visual-evidence-attach-runtime-v1.mjs?final-evidence-attach=${Date.now()}`);
   // Run the aircraft-side service-stair correction only after prepare:runtime has
   // regenerated the final A1 fitter, immediately before the production Vite build.
-  // The wrapper restores build-production.mjs byte-for-byte afterward.
+  // The final fitter imports the normal runtime solver module rather than embedding
+  // generated JavaScript; the wrapper restores build-production.mjs byte-for-byte.
   await import("./build-production-with-a1-stair-clearance-v1.mjs");
 } catch (error) {
   buildError = error;
