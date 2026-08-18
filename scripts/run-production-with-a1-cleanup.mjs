@@ -43,6 +43,12 @@ try {
   // build now owns the final aircraft-side stair correction at its true pre-Vite
   // geometry hook, after visible Tunnel-C/Cab normalization.
   await import(`./prepare-a1-final-visual-evidence-attach-runtime-v1.mjs?final-evidence-attach=${Date.now()}`);
+  // The supplied Tunnel-C opaque carrier contains disconnected mechanical support
+  // islands. Ground those visible exact-source islands only after the final live
+  // service-stair solver has been installed, immediately before the Vite bundle.
+  // This prevents an unrelated low carrier triangle from masquerading as grounded
+  // bogie hardware while leaving the passenger shell/aircraft/terminal untouched.
+  await import(`./prepare-a1-visible-tunnel-c-support-grounding-v1.mjs?final-visible-support-grounding=${Date.now()}`);
   await import("./build-production.mjs");
 } catch (error) {
   buildError = error;
@@ -68,4 +74,4 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, applied the final exact-source A1 service-stair aircraft clearance at the final pre-Vite geometry stage, then restored the committed jetway source byte-for-byte.");
+console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, applied the final exact-source A1 service-stair aircraft clearance and visible Tunnel-C support grounding at the final pre-Vite geometry stage, then restored the committed jetway source byte-for-byte.");
