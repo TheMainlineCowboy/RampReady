@@ -156,7 +156,16 @@ export function articulateA1ServiceStairClearOfAircraft(THREE, aircraftRoot, mod
 
   let maximumStairY = Number.NEGATIVE_INFINITY;
   for (const point of baseModelPoints) maximumStairY = Math.max(maximumStairY, point.y);
-  const upperAttachmentBand = baseModelPoints.filter((point) => point.y >= maximumStairY - 0.24);
+  let upperAttachmentBand = baseModelPoints.filter((point) => point.y >= maximumStairY - 0.24);
+  if (upperAttachmentBand.length < 3) {
+    // A lower real CRJ sill changes the final Tunnel-C pitch enough that the exact
+    // stair can expose only two vertices inside the old 24 cm cap. Preserve the
+    // exact supplied triangles and derive the same upper hinge from the highest
+    // available source vertices instead of failing before visual clearance can run.
+    upperAttachmentBand = [...baseModelPoints]
+      .sort((a, b) => b.y - a.y)
+      .slice(0, Math.min(12, baseModelPoints.length));
+  }
   if (upperAttachmentBand.length < 3) {
     throw new Error(`A1 exact service stair has no measurable upper attachment band: ${upperAttachmentBand.length}`);
   }
