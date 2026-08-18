@@ -42,3 +42,8 @@ console.log("No surviving generated decoded-KPHX terminal-side elbow guard was f
 // 2.9-5.8 m wall / 1.2-3.6 m vestibule assumptions. The wrapper restores the
 // tracked rendered-door source immediately after Vite finishes.
 await import(`./prepare-a1-photo-dogleg-rendered-door-build-hook-v1.mjs?final-guard=${Date.now()}`);
+// The photo bundle hook above creates the true final pre-Vite camera sequence.
+// Add the two aircraft-side reference subviews there, after final Tunnel-C stair
+// and bogie normalization, so perspective overlap can be judged without changing
+// terminal, aircraft or exact supplied jetway geometry.
+await import(`./prepare-a1-aircraft-side-evidence-build-hook-v1.mjs?final-aircraft-side-hook=${Date.now()}`);
