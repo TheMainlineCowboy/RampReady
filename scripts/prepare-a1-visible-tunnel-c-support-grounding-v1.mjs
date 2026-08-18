@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
-const marker = "a1-visible-tunnel-c-support-grounding-runtime-v15-all-rendered-meshes";
+const marker = "a1-visible-tunnel-c-support-grounding-runtime-v16-all-rendered-meshes-stable";
 const authority = "exact-supplied-tunnel-c-visible-support-components-grounded-v16-rendered-pavement-triangle-rod-clusters";
 const secondaryAuthority = "a1-visible-support-all-rendered-mesh-secondary-scan-v1";
 const stairMarker = "a1-service-stair-live-rendered-crj-clearance-v4";
@@ -27,6 +27,7 @@ for (const oldMarker of [
   "a1-visible-tunnel-c-support-grounding-runtime-v10-complete-pavement-scan","a1-visible-tunnel-c-support-grounding-runtime-v11-crossing-branch-scan",
   "a1-visible-tunnel-c-support-grounding-runtime-v12-mixed-vertex-branch-scan","a1-visible-tunnel-c-support-grounding-runtime-v13-spatial-rod-clusters",
   "a1-visible-tunnel-c-support-grounding-runtime-v14-triangle-rod-clusters",
+  "a1-visible-tunnel-c-support-grounding-runtime-v15-all-rendered-meshes",
 ]) {
   if (!source.includes(oldMarker) || source.includes(marker)) continue;
   const start = source.indexOf(`          // ${oldMarker}`);
