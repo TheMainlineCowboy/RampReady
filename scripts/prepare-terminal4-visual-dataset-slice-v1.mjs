@@ -3,6 +3,7 @@ import fs from 'node:fs';
 const path = 'scripts/verify-terminal4-fleet-visual.cjs';
 let source = fs.readFileSync(path, 'utf8');
 const SERVICE_STAIR_AUTHORITY = 'exact-supplied-tunnel-c-service-stair-live-rendered-crj-clearance-v4';
+const LAUNCH_NORMALIZATION_MARKER = 'terminal4-visual-current-inspection-launch-v1';
 
 const keys = [
   'inspectionMode',
@@ -37,6 +38,17 @@ const keys = [
   'inspectionAircraftLiveVisibleCabEndpointVertexCount',
   'inspectionAircraftLiveVisibleDoorCabHorizontalErrorMeters',
   'inspectionAircraftDoorVerticalErrorMeters',
+  'inspectionAircraftCabDoorContactPlaneCovered',
+  'inspectionAircraftCabDoorLaterallyCovered',
+  'inspectionAircraftCabDoorVerticallyCovered',
+  'inspectionAircraftCabDoorFacingVertexCount',
+  'inspectionAircraftCabDoorMinimumHorizontalVertexDistanceMeters',
+  'inspectionAircraftCabDoorMinimumNormalMeters',
+  'inspectionAircraftCabDoorMaximumNormalMeters',
+  'inspectionAircraftCabDoorMinimumLateralMeters',
+  'inspectionAircraftCabDoorMaximumLateralMeters',
+  'inspectionAircraftCabDoorMinimumHeightMeters',
+  'inspectionAircraftCabDoorMaximumHeightMeters',
   'inspectionAircraftJetwayAuthoredBogieGroundPreserved',
   'terminal4TerminalConnectedJetwayCount',
   'terminal4UploadedJetwayStaticOwnGateTargetAuthority',
@@ -72,6 +84,29 @@ if (survivingFullDatasetTransfer) {
   throw new Error(`A locator-based Terminal 4 full canvas dataset transfer survived bounded evidence preparation: ${survivingFullDatasetTransfer}`);
 }
 
+// Some legacy evidence-generation paths wait for the Three.js canvas before
+// entering inspection mode. The current app does not mount that canvas until the
+// user launches "Drive tug / inspect airport", so that ordering is a guaranteed
+// timeout. Normalize the final generated verifier after every other preparer.
+if (!source.includes(LAUNCH_NORMALIZATION_MARKER)) {
+  const legacyPreCanvasWait = `  await page.waitForSelector('canvas.trainerCanvas', { state: 'visible', timeout: 60000 });`;
+  if (source.includes(legacyPreCanvasWait)) {
+    const currentLaunch = `  // ${LAUNCH_NORMALIZATION_MARKER}\n  const inspectionLaunch = page.getByRole('button', { name: 'Drive tug / inspect airport' });\n  await inspectionLaunch.waitFor({ state: 'visible', timeout: 30000 });\n  await inspectionLaunch.click();\n  await page.waitForSelector('canvas.trainerCanvas', { state: 'visible', timeout: 60000 });`;
+    source = source.replace(legacyPreCanvasWait, currentLaunch);
+    // Retire the old post-canvas button path if this generated variant has it.
+    source = source.replace(
+      `  const inspectionButton = page.getByRole('button', { name: 'Free-drive inspection' });\n  if (await inspectionButton.count()) await inspectionButton.click();\n`,
+      '',
+    );
+  } else {
+    const currentLaunchNeedle = `const inspectionLaunch = page.getByRole('button', { name: 'Drive tug / inspect airport' });`;
+    if (!source.includes(currentLaunchNeedle)) {
+      throw new Error('Terminal 4 visual verifier has neither current inspection launch nor recognized legacy pre-canvas launch');
+    }
+    source = source.replace(currentLaunchNeedle, `// ${LAUNCH_NORMALIZATION_MARKER}\n  ${currentLaunchNeedle}`);
+  }
+}
+
 // Inspection mode normally owns A1's parked/retracted state. The photo evidence
 // verifier needs the same controller held in its physically attached deployment
 // long enough for the live Cab/door monitor and screenshots to observe one
@@ -84,9 +119,6 @@ if (!source.includes('__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER__')) {
   if (source.includes(attachWaitAnchor)) {
     source = source.replace(attachWaitAnchor, `${persistentAttachBlock}\n\n${attachWaitAnchor}`);
   } else if (source.includes(directAttachAnchor)) {
-    // Current verifier explicitly invokes the evidence attach bridge rather than
-    // carrying the legacy comment marker. Start the bounded persistence timer
-    // immediately before that equivalent attach boundary.
     source = source.replace(directAttachAnchor, `${persistentAttachBlock}\n\n${directAttachAnchor}`);
   } else {
     throw new Error('A1 attached-evidence capture anchor is missing');
@@ -96,11 +128,17 @@ if (!source.includes('__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER__')) {
 // The old browser acceptance proved the Cab and bogie but never measured the
 // visible service stair against the actual rendered CRJ. Require the live post-
 // calibration solve and exact source-triangle count before any A1 screenshot.
-const verticalErrorAnchor = `  const verticalError = finiteNumber(a1.inspectionAircraftDoorVerticalErrorMeters);`;
-const serviceStairAcceptance = `  const serviceStairPenetration = finiteNumber(a1.terminal4UploadedJetwayA1ServiceStairFuselagePenetrationMeters);\n  const serviceStairSwingDegrees = finiteNumber(a1.terminal4UploadedJetwayA1ServiceStairSwingDegrees);\n  const serviceStairOutboardClearance = finiteNumber(a1.terminal4UploadedJetwayA1ServiceStairOutboardClearanceMeters);\n  if (a1.terminal4UploadedJetwayA1ServiceStairClearanceAuthority !== '${SERVICE_STAIR_AUTHORITY}') {\n    geometryFailures.push(\`A1 live service-stair authority is wrong: \${a1.terminal4UploadedJetwayA1ServiceStairClearanceAuthority}\`);\n  }\n  if (a1.terminal4UploadedJetwayA1ServiceStairTriangleCount !== '2352') {\n    geometryFailures.push(\`A1 exact service-stair triangle selection changed: \${a1.terminal4UploadedJetwayA1ServiceStairTriangleCount}\`);\n  }\n  if (serviceStairPenetration === null || serviceStairPenetration > 0.001) {\n    geometryFailures.push(\`A1 service stair penetrates the live rendered CRJ envelope: \${a1.terminal4UploadedJetwayA1ServiceStairFuselagePenetrationMeters} m\`);\n  }\n  if (serviceStairSwingDegrees === null || Math.abs(serviceStairSwingDegrees) > 88) {\n    geometryFailures.push(\`A1 service-stair swing is invalid: \${a1.terminal4UploadedJetwayA1ServiceStairSwingDegrees} deg\`);\n  }\n  if (serviceStairOutboardClearance === null || serviceStairOutboardClearance < -0.001) {\n    geometryFailures.push(\`A1 service stair has no outboard clearance: \${a1.terminal4UploadedJetwayA1ServiceStairOutboardClearanceMeters} m\`);\n  }\n\n${verticalErrorAnchor}`;
+const cabSurfaceAnchor = `  const cabDoorFacingVertexCount = finiteNumber(a1.inspectionAircraftCabDoorFacingVertexCount);`;
+const legacyVerticalAnchor = `  const verticalError = finiteNumber(a1.inspectionAircraftDoorVerticalErrorMeters);`;
+const serviceStairAcceptancePrefix = `  const serviceStairPenetration = finiteNumber(a1.terminal4UploadedJetwayA1ServiceStairFuselagePenetrationMeters);\n  const serviceStairSwingDegrees = finiteNumber(a1.terminal4UploadedJetwayA1ServiceStairSwingDegrees);\n  const serviceStairOutboardClearance = finiteNumber(a1.terminal4UploadedJetwayA1ServiceStairOutboardClearanceMeters);\n  if (a1.terminal4UploadedJetwayA1ServiceStairClearanceAuthority !== '${SERVICE_STAIR_AUTHORITY}') {\n    geometryFailures.push(\`A1 live service-stair authority is wrong: \${a1.terminal4UploadedJetwayA1ServiceStairClearanceAuthority}\`);\n  }\n  if (a1.terminal4UploadedJetwayA1ServiceStairTriangleCount !== '2352') {\n    geometryFailures.push(\`A1 exact service-stair triangle selection changed: \${a1.terminal4UploadedJetwayA1ServiceStairTriangleCount}\`);\n  }\n  if (serviceStairPenetration === null || serviceStairPenetration > 0.001) {\n    geometryFailures.push(\`A1 service stair penetrates the live rendered CRJ envelope: \${a1.terminal4UploadedJetwayA1ServiceStairFuselagePenetrationMeters} m\`);\n  }\n  if (serviceStairSwingDegrees === null || Math.abs(serviceStairSwingDegrees) > 88) {\n    geometryFailures.push(\`A1 service-stair swing is invalid: \${a1.terminal4UploadedJetwayA1ServiceStairSwingDegrees} deg\`);\n  }\n  if (serviceStairOutboardClearance === null || serviceStairOutboardClearance < -0.001) {\n    geometryFailures.push(\`A1 service stair has no outboard clearance: \${a1.terminal4UploadedJetwayA1ServiceStairOutboardClearanceMeters} m\`);\n  }`;
 if (!source.includes(SERVICE_STAIR_AUTHORITY)) {
-  if (!source.includes(verticalErrorAnchor)) throw new Error('A1 service-stair visual acceptance anchor is missing');
-  source = source.replace(verticalErrorAnchor, serviceStairAcceptance);
+  if (source.includes(cabSurfaceAnchor)) {
+    source = source.replace(cabSurfaceAnchor, `${serviceStairAcceptancePrefix}\n\n${cabSurfaceAnchor}`);
+  } else if (source.includes(legacyVerticalAnchor)) {
+    source = source.replace(legacyVerticalAnchor, `${serviceStairAcceptancePrefix}\n\n${legacyVerticalAnchor}`);
+  } else {
+    throw new Error('A1 service-stair visual acceptance anchor is missing');
+  }
 }
 
 const fleetLoopAnchor = `  for (const [preset, label, filename, cameraView] of fleetViews) {`;
@@ -111,10 +149,17 @@ if (!source.includes('delete window.__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER_
 }
 
 for (const required of [
+  LAUNCH_NORMALIZATION_MARKER,
+  "getByRole('button', { name: 'Drive tug / inspect airport' })",
   'inspectionMode',
   'terminal4UploadedJetwayLoadState',
   'terminal4UploadedJetwayCount',
   'terminal4UploadedJetwayConnectorCount',
+  'inspectionAircraftCabDoorContactPlaneCovered',
+  'inspectionAircraftCabDoorLaterallyCovered',
+  'inspectionAircraftCabDoorVerticallyCovered',
+  'inspectionAircraftCabDoorMinimumHeightMeters',
+  'inspectionAircraftCabDoorMaximumHeightMeters',
   'terminal4UploadedJetwayA1ServiceStairClearanceAuthority',
   'terminal4UploadedJetwayA1ServiceStairFuselagePenetrationMeters',
   SERVICE_STAIR_AUTHORITY,
@@ -125,5 +170,11 @@ for (const required of [
   if (!source.includes(required)) throw new Error(`Bounded Terminal 4 visual evidence is missing ${required}`);
 }
 
+const preCanvasIndex = source.indexOf("waitForSelector('canvas.trainerCanvas'");
+const launchClickIndex = source.indexOf('await inspectionLaunch.click()');
+if (preCanvasIndex >= 0 && (launchClickIndex < 0 || launchClickIndex > preCanvasIndex)) {
+  throw new Error('Terminal 4 visual verifier still waits for the canvas before launching inspection mode');
+}
+
 fs.writeFileSync(path, source);
-console.log(`Bounded every Terminal 4 visual dataset transfer to ${keys.length} readiness/acceptance fields across ${occurrences} direct page-context reads, held A1 attached through capture, and made live exact service-stair/CRJ clearance a fail-closed visual gate.`);
+console.log(`Bounded every Terminal 4 visual dataset transfer to ${keys.length} readiness/acceptance fields across ${occurrences} direct page-context reads, restored the current inspection launch before any canvas wait, held A1 attached through capture, retained exact final Cab-surface telemetry, and made live exact service-stair/CRJ clearance a fail-closed visual gate.`);
