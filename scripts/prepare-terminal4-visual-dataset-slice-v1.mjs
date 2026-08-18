@@ -5,6 +5,9 @@ let source = fs.readFileSync(path, 'utf8');
 const SERVICE_STAIR_AUTHORITY = 'exact-supplied-tunnel-c-service-stair-live-rendered-crj-clearance-v4';
 const LAUNCH_NORMALIZATION_MARKER = 'terminal4-visual-current-inspection-launch-v1';
 const ATTACH_PROBE_MARKER = 'terminal4-visual-serializable-a1-attach-probe-v1';
+const PHYSICAL_CAB_NORMALIZATION_MARKER = 'terminal4-visual-physical-cab-surface-acceptance-v2';
+const CURRENT_FIXED_AIRCRAFT_AUTHORITY = 'fixed-current-a1-aircraft-pose-exact-authored-door-v1';
+const CURRENT_STATIC_AUTHORITY = '57-static-bgl-source-pose-real-wall-registration-v10';
 
 const keys = [
   'inspectionMode', 'terminal4UploadedJetwayLoadState', 'terminal4UploadedJetwayCount',
@@ -34,6 +37,23 @@ const keys = [
   'terminal4UploadedJetwayStaticOwnGateTargetAuthority', 'terminal4UploadedJetwayStaticOwnGateTargetCount',
   'terminal4UploadedJetwayStaticMaximumOwnGateHeadingErrorRadians', 'terminal4UploadedJetwayStaticMaximumTerminalFacingDot',
 ];
+
+// The rounded Cab's historical representative/centroid point is not the boarding
+// surface and can sit metres from the CRJ door even while the real supplied hood
+// face is correctly registered. Final acceptance must use the measured exact
+// aircraft-facing Cab surface, while retaining all coverage, bogie and stair gates.
+if (!source.includes(PHYSICAL_CAB_NORMALIZATION_MARKER)) {
+  source = source
+    .replaceAll('a1.terminal4UploadedJetwayA1VisualAuthority', 'a1.terminal4UploadedJetwayA1VisualAcceptanceAuthority')
+    .replaceAll('fleet.terminal4UploadedJetwayA1VisualAuthority', 'fleet.terminal4UploadedJetwayA1VisualAcceptanceAuthority')
+    .replaceAll('inspectionAircraftLiveVisibleDoorCabHorizontalErrorMeters', 'inspectionAircraftCabDoorMinimumHorizontalVertexDistanceMeters')
+    .replace(/const A1_FIXED_SOURCE_GATE_AUTHORITY = '[^']+';/, `const A1_FIXED_SOURCE_GATE_AUTHORITY = '${CURRENT_FIXED_AIRCRAFT_AUTHORITY}';`)
+    .replace(/const STATIC_OWN_GATE_AUTHORITY = '[^']+';/, `const STATIC_OWN_GATE_AUTHORITY = '${CURRENT_STATIC_AUTHORITY}';`);
+  const markerAnchor = source.includes('const A1_VISUAL_AUTHORITY =')
+    ? 'const A1_VISUAL_AUTHORITY ='
+    : 'const CURRENT_SUBVIEW_AUTHORITY =';
+  source = source.replace(markerAnchor, `// ${PHYSICAL_CAB_NORMALIZATION_MARKER}\n${markerAnchor}`);
+}
 
 const sliced = `await page.evaluate((keys) => { const element = document.querySelector('canvas.trainerCanvas'); if (!(element instanceof HTMLCanvasElement)) throw new Error('Three.js canvas is missing'); return Object.fromEntries(keys.map((key) => [key, element.dataset[key]])); }, ${JSON.stringify(keys)})`;
 const fullDatasetTransferPatterns = [
@@ -71,8 +91,6 @@ const unserializableProbe = `  if (typeof (await page.evaluate(() => window.__RA
 const serializableProbe = `  // ${ATTACH_PROBE_MARKER}\n  const hasA1AttachBridge = await page.evaluate(() => typeof window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__ === 'function');\n  if (!hasA1AttachBridge) {\n    throw new Error('A1 attached visual-evidence bridge is missing');\n  }`;
 if (source.includes(unserializableProbe)) source = source.replace(unserializableProbe, serializableProbe);
 else if (!source.includes(ATTACH_PROBE_MARKER) && source.includes("window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__")) {
-  // No legacy probe is required in verifier variants that call the function
-  // directly. Mark the final source after proving the callable token is present.
   source = source.replace(
     `  const attachedEvidenceState = await page.evaluate(() => {`,
     `  // ${ATTACH_PROBE_MARKER}\n  const attachedEvidenceState = await page.evaluate(() => {`,
@@ -106,9 +124,11 @@ if (!source.includes('delete window.__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER_
 }
 
 for (const required of [
-  LAUNCH_NORMALIZATION_MARKER, ATTACH_PROBE_MARKER,
+  LAUNCH_NORMALIZATION_MARKER, ATTACH_PROBE_MARKER, PHYSICAL_CAB_NORMALIZATION_MARKER,
+  CURRENT_FIXED_AIRCRAFT_AUTHORITY, CURRENT_STATIC_AUTHORITY,
   "getByRole('button', { name: 'Drive tug / inspect airport' })",
   'inspectionMode', 'terminal4UploadedJetwayLoadState', 'terminal4UploadedJetwayCount', 'terminal4UploadedJetwayConnectorCount',
+  'terminal4UploadedJetwayA1VisualAcceptanceAuthority', 'inspectionAircraftCabDoorMinimumHorizontalVertexDistanceMeters',
   'inspectionAircraftCabDoorContactPlaneCovered', 'inspectionAircraftCabDoorLaterallyCovered',
   'inspectionAircraftCabDoorVerticallyCovered', 'inspectionAircraftCabDoorMinimumHeightMeters',
   'inspectionAircraftCabDoorMaximumHeightMeters', 'terminal4UploadedJetwayA1ServiceStairClearanceAuthority',
@@ -116,6 +136,9 @@ for (const required of [
   '__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER__', 'setInterval(keepAttached, 12)',
   'delete window.__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER__',
 ]) if (!source.includes(required)) throw new Error(`Bounded Terminal 4 visual evidence is missing ${required}`);
+if (source.includes('a1.terminal4UploadedJetwayA1VisualAuthority')) throw new Error('Stale A1 visual-authority field survived final visual normalization');
+if (source.includes('inspectionAircraftLiveVisibleDoorCabHorizontalErrorMeters')) throw new Error('Stale Cab centroid horizontal acceptance survived final visual normalization');
+if (source.includes("const A1_FIXED_SOURCE_GATE_AUTHORITY = 'final-live-cab-mesh-visible-door-registration-v7';")) throw new Error('Stale A1 fixed-aircraft authority survived final visual normalization');
 if (source.includes("typeof (await page.evaluate(() => window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__))")) {
   throw new Error('Unserializable A1 attach function probe survived visual evidence preparation');
 }
@@ -124,4 +147,4 @@ const launchClickIndex = source.indexOf('await inspectionLaunch.click()');
 if (preCanvasIndex >= 0 && (launchClickIndex < 0 || launchClickIndex > preCanvasIndex)) throw new Error('Terminal 4 visual verifier still waits for the canvas before launching inspection mode');
 
 fs.writeFileSync(path, source);
-console.log(`Bounded every Terminal 4 visual dataset transfer to ${keys.length} readiness/acceptance fields across ${occurrences} direct page-context reads, restored the current inspection launch, converted the A1 attach probe to a serializable browser boolean, held A1 attached through capture, retained exact final Cab-surface telemetry, and kept live exact service-stair/CRJ clearance fail-closed.`);
+console.log(`Bounded every Terminal 4 visual dataset transfer to ${keys.length} readiness/acceptance fields across ${occurrences} direct page-context reads, normalized stale Cab centroid and authority checks to the exact physical Cab surface/current fixed-aircraft contracts, restored the current inspection launch, held A1 attached through capture, and kept live service-stair/CRJ and grounded-bogie clearance fail-closed.`);
