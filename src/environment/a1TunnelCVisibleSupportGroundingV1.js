@@ -1,10 +1,10 @@
-const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v1";
+const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v2";
 const MAX_GROUNDING_EXTENSION_METERS = 3.0;
 const MAX_FINAL_CLEARANCE_METERS = 0.015;
 const MAX_TOP_MOUNT_DRIFT_METERS = 0.015;
 const VERTEX_KEY_SCALE = 10000;
-const LOWER_RIGID_FRACTION = 0.28;
-const UPPER_RIGID_FRACTION = 0.72;
+const LOWER_RIGID_FRACTION = 0.30;
+const UPPER_RIGID_FRACTION = 0.76;
 
 function vertexKey(position, index) {
   return `${Math.round(position.getX(index) * VERTEX_KEY_SCALE)},${Math.round(position.getY(index) * VERTEX_KEY_SCALE)},${Math.round(position.getZ(index) * VERTEX_KEY_SCALE)}`;
@@ -95,6 +95,7 @@ function componentMeasurement(THREE, mesh, position, triangles, rampY, rotundaWo
       lateralDistance = Math.hypot(center.x - projected.x, center.z - projected.z);
     }
   }
+  const horizontalSpan = Math.max(size.x, size.z);
   return {
     triangles,
     triangleCount: triangles.length,
@@ -102,6 +103,8 @@ function componentMeasurement(THREE, mesh, position, triangles, rampY, rotundaWo
     worldBox,
     size,
     center,
+    horizontalSpan,
+    verticalAspect: size.y / Math.max(horizontalSpan, 0.01),
     clearanceMeters: worldBox.min.y - rampY,
     alongRatio,
     lateralDistance,
@@ -113,10 +116,9 @@ function telescopeComponentToRamp(THREE, mesh, position, measurement, rampY) {
   const beforeMaxY = measurement.worldBox.max.y;
   const height = beforeMaxY - beforeMinY;
   const extension = beforeMinY - rampY;
-  if (!(height > 0.2) || !(extension > 0)) {
+  if (!(height > 0.18) || !(extension > 0)) {
     throw new Error(`A1 Tunnel-C support component cannot telescope: height=${height}, extension=${extension}`);
   }
-
   const inverseWorld = mesh.matrixWorld.clone().invert();
   const local = new THREE.Vector3();
   const world = new THREE.Vector3();
@@ -130,16 +132,10 @@ function telescopeComponentToRamp(THREE, mesh, position, measurement, rampY) {
       world.copy(local).applyMatrix4(mesh.matrixWorld);
       const fraction = Math.max(0, Math.min(1, (world.y - beforeMinY) / height));
       let downwardOffset;
-      if (fraction <= LOWER_RIGID_FRACTION) {
-        // Preserve the wheel/base geometry as one rigid lower assembly.
-        downwardOffset = extension;
-      } else if (fraction >= UPPER_RIGID_FRACTION) {
-        // Preserve the exact upper attachment to Tunnel-C.
-        downwardOffset = 0;
-      } else {
-        // Telescope only the middle support shaft between fixed upper and lower ends.
-        const blend = (fraction - LOWER_RIGID_FRACTION)
-          / (UPPER_RIGID_FRACTION - LOWER_RIGID_FRACTION);
+      if (fraction <= LOWER_RIGID_FRACTION) downwardOffset = extension;
+      else if (fraction >= UPPER_RIGID_FRACTION) downwardOffset = 0;
+      else {
+        const blend = (fraction - LOWER_RIGID_FRACTION) / (UPPER_RIGID_FRACTION - LOWER_RIGID_FRACTION);
         downwardOffset = extension * (1 - blend);
       }
       world.y -= downwardOffset;
@@ -150,6 +146,18 @@ function telescopeComponentToRamp(THREE, mesh, position, measurement, rampY) {
   return { extensionMeters: extension, beforeTopY: beforeMaxY };
 }
 
+function diagnosticEntry(entry) {
+  return {
+    triangles: entry.triangleCount,
+    stairTriangles: entry.stairTriangleCount,
+    clearance: Number(entry.clearanceMeters.toFixed(3)),
+    size: entry.size.toArray().map((value) => Number(value.toFixed(3))),
+    aspect: Number(entry.verticalAspect.toFixed(2)),
+    along: Number.isFinite(entry.alongRatio) ? Number(entry.alongRatio.toFixed(3)) : null,
+    lateral: Number.isFinite(entry.lateralDistance) ? Number(entry.lateralDistance.toFixed(3)) : null,
+  };
+}
+
 export function groundA1TunnelCVisibleSupportHardware(THREE, model) {
   const mesh = model?.getObjectByName?.("Tunnel_C_Jetway_0");
   if (!mesh?.isMesh || !mesh.geometry?.getAttribute?.("position")) {
@@ -158,16 +166,15 @@ export function groundA1TunnelCVisibleSupportHardware(THREE, model) {
   model.updateWorldMatrix(true, true);
   mesh.updateWorldMatrix(true, false);
 
-  // Operate on the CURRENT final A1 clone so the already-proved exact service-stair
-  // swing is retained. The committed GLB, prototype, and all 57 static instances
-  // remain untouched. Only the two disconnected source bogie/support pods telescope.
+  // Work only on the final animated A1 clone. The committed GLB, source prototype,
+  // static fleet, passenger tunnel, Cab, aircraft and terminal remain untouched.
   const geometry = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
   mesh.geometry = geometry;
   const position = geometry.getAttribute("position");
   const components = findTriangleComponents(position);
 
-  // The integrated carrier's known source-grounded low triangle is used only as
-  // the pavement plane reference. It is no longer accepted as visible bogie proof.
+  // A source-owned low carrier triangle gives the already-proved ramp plane, but
+  // it is never accepted as visible support contact by itself.
   const carrierBox = new THREE.Box3().setFromObject(mesh);
   const rampY = carrierBox.min.y;
   const rotundaWorld = centerOfObject(THREE, model.getObjectByName("Rotunda"));
@@ -175,45 +182,59 @@ export function groundA1TunnelCVisibleSupportHardware(THREE, model) {
   const measurements = components.map((triangles) =>
     componentMeasurement(THREE, mesh, position, triangles, rampY, rotundaWorld, cabWorld));
 
-  // Current exact source topology exposes the visible bogie/support pair as two
-  // high-detail ~1 m pods (1174 triangles each) below the aircraft-side Tunnel-C.
-  // Select by topology + physical envelope rather than mesh name or lowest vertex.
-  // This intentionally rejects tiny bolts, the broad underframe, passenger shell,
-  // and the separately articulated 2352-triangle service stair.
-  const candidates = measurements.filter((entry) => (
-    entry.triangleCount >= 900
-    && entry.triangleCount <= 1400
-    && entry.stairTriangleCount === 0
-    && entry.size.y >= 0.75
-    && entry.size.y <= 1.40
-    && Math.max(entry.size.x, entry.size.z) >= 0.45
-    && Math.max(entry.size.x, entry.size.z) <= 1.50
-    && entry.clearanceMeters > 1.50
-    && entry.clearanceMeters <= MAX_GROUNDING_EXTENSION_METERS
-    && Number.isFinite(entry.alongRatio)
-    && entry.alongRatio >= 0.55
-    && entry.alongRatio <= 0.90
+  const isAircraftSide = (entry) => (
+    Number.isFinite(entry.alongRatio)
+    && entry.alongRatio >= 0.50
+    && entry.alongRatio <= 0.94
     && Number.isFinite(entry.lateralDistance)
     && entry.lateralDistance <= 4.0
+  );
+
+  // Preserve the previously identified detailed bogie/support pods, but also
+  // include the narrow vertical load-bearing islands plainly visible in the
+  // side/aircraft-side screenshots. Those rods were the loophole: they could
+  // remain suspended while an unrelated lower carrier triangle reported zero.
+  const detailedPods = measurements.filter((entry) => (
+    isAircraftSide(entry)
+    && entry.stairTriangleCount === 0
+    && entry.triangleCount >= 900
+    && entry.triangleCount <= 1400
+    && entry.size.y >= 0.70
+    && entry.size.y <= 1.50
+    && entry.horizontalSpan >= 0.35
+    && entry.horizontalSpan <= 1.60
+    && entry.clearanceMeters > MAX_FINAL_CLEARANCE_METERS
+    && entry.clearanceMeters <= MAX_GROUNDING_EXTENSION_METERS
   ));
 
-  if (candidates.length !== 2) {
+  const visibleLoadLegs = measurements.filter((entry) => (
+    isAircraftSide(entry)
+    && entry.stairTriangleCount === 0
+    && entry.triangleCount >= 8
+    && entry.triangleCount <= 1800
+    && entry.size.y >= 0.35
+    && entry.size.y <= 2.30
+    && entry.horizontalSpan >= 0.06
+    && entry.horizontalSpan <= 1.25
+    && entry.verticalAspect >= 1.15
+    && entry.clearanceMeters > MAX_FINAL_CLEARANCE_METERS
+    && entry.clearanceMeters <= MAX_GROUNDING_EXTENSION_METERS
+  ));
+
+  const unique = new Map();
+  for (const entry of [...detailedPods, ...visibleLoadLegs]) {
+    unique.set(entry.triangles[0], entry);
+  }
+  const selected = [...unique.values()].sort((a, b) => a.lateralDistance - b.lateralDistance);
+  if (selected.length < 2 || selected.length > 10) {
     const diagnostic = measurements
-      .filter((entry) => entry.triangleCount >= 4)
+      .filter((entry) => entry.triangleCount >= 4 && isAircraftSide(entry))
       .sort((a, b) => a.clearanceMeters - b.clearanceMeters)
-      .slice(0, 30)
-      .map((entry) => ({
-        triangles: entry.triangleCount,
-        stairTriangles: entry.stairTriangleCount,
-        clearance: Number(entry.clearanceMeters.toFixed(3)),
-        size: entry.size.toArray().map((value) => Number(value.toFixed(3))),
-        along: Number.isFinite(entry.alongRatio) ? Number(entry.alongRatio.toFixed(3)) : null,
-        lateral: Number.isFinite(entry.lateralDistance) ? Number(entry.lateralDistance.toFixed(3)) : null,
-      }));
-    throw new Error(`A1 visible Tunnel-C support grounding expected exactly two source bogie/support pods, found ${candidates.length}: ${JSON.stringify(diagnostic)}`);
+      .slice(0, 40)
+      .map(diagnosticEntry);
+    throw new Error(`A1 visible Tunnel-C support grounding expected 2-10 load-bearing source components, found ${selected.length}: ${JSON.stringify(diagnostic)}`);
   }
 
-  const selected = candidates.sort((a, b) => a.lateralDistance - b.lateralDistance);
   const extensions = selected.map((entry) => telescopeComponentToRamp(THREE, mesh, position, entry, rampY));
   position.needsUpdate = true;
   geometry.computeBoundingBox();
@@ -238,6 +259,8 @@ export function groundA1TunnelCVisibleSupportHardware(THREE, model) {
     authority: AUTHORITY,
     groundedComponentCount: selected.length,
     groundedTriangleCount: selected.reduce((sum, entry) => sum + entry.triangleCount, 0),
+    detailedPodCount: detailedPods.length,
+    visibleLoadLegCount: visibleLoadLegs.length,
     maximumBeforeClearanceMeters: Math.max(...selected.map((entry) => entry.clearanceMeters)),
     maximumExtensionMeters: Math.max(...extensions.map((entry) => entry.extensionMeters)),
     maximumFinalClearanceMeters,
