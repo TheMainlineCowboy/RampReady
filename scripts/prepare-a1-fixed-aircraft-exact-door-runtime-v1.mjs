@@ -5,7 +5,9 @@ const marker = "a1-fixed-aircraft-exact-authored-door-runtime-v1";
 const doorAuthority = "exact-authored-crj-forward-left-door-component-v1";
 const poseAuthority = "fixed-current-a1-aircraft-pose-exact-authored-door-v1";
 const fixedPose = Object.freeze({ x: -3.822373, y: -0.002196, z: 10.253820, yaw: 0.008570 });
-const doorLocal = Object.freeze({ x: -1.291842, y: 1.802860, z: 2.240745 });
+// Jetway hood contact is measured against the center of the authored passenger-door
+// opening. The door component's lower bounds edge (1.802860) is not the hood aim.
+const doorLocal = Object.freeze({ x: -1.291842, y: 2.769294, z: 2.240745 });
 
 let source = fs.readFileSync(path, "utf8");
 if (!source.includes("a1-service-stair-live-rendered-crj-clearance-v4")) {
@@ -27,7 +29,7 @@ source = source.replaceAll("storedResetAircraftPose?.y ?? 0", "storedResetAircra
 source = source.replaceAll("storedToggleAircraftPose?.y ?? 0", "storedToggleAircraftPose?.y ?? A1_INSPECTION_NOSE_GEAR_Y");
 
 const oldDoorLocal = `          const authoredDoorLocal = new THREE.Vector3(\n            -1.262,\n            3,\n            3.9,\n          );`;
-const newDoorLocal = `          // ${marker}\n          // ${doorAuthority}\n          // Exact committed crj700-user.glb forward-left passenger-door component:\n          // exterior skin X, physical sill Y, and component longitudinal center Z.\n          const authoredDoorLocal = new THREE.Vector3(\n            ${doorLocal.x},\n            ${doorLocal.y},\n            ${doorLocal.z},\n          );\n          // Establish the fixed A1 aircraft pose before any jetway-contact proof.\n          // This pose is not solved from the Cab; the bridge must reach the plane.\n          sim.aircraft.position.set(\n            A1_INSPECTION_NOSE_GEAR_X,\n            A1_INSPECTION_NOSE_GEAR_Y,\n            A1_INSPECTION_NOSE_GEAR_Z,\n          );\n          sim.aircraft.rotation.y = A1_INSPECTION_AIRCRAFT_YAW;\n          sim.aircraft.updateMatrixWorld(true);\n          renderedAircraft.updateMatrixWorld(true);`;
+const newDoorLocal = `          // ${marker}\n          // ${doorAuthority}\n          // Exact committed crj700-user.glb forward-left passenger-door component:\n          // exterior skin X, door-opening contact-center Y, and component longitudinal Z.\n          const authoredDoorLocal = new THREE.Vector3(\n            ${doorLocal.x},\n            ${doorLocal.y},\n            ${doorLocal.z},\n          );\n          // Establish the fixed A1 aircraft pose before any jetway-contact proof.\n          // This pose is not solved from the Cab; the bridge must reach the plane.\n          sim.aircraft.position.set(\n            A1_INSPECTION_NOSE_GEAR_X,\n            A1_INSPECTION_NOSE_GEAR_Y,\n            A1_INSPECTION_NOSE_GEAR_Z,\n          );\n          sim.aircraft.rotation.y = A1_INSPECTION_AIRCRAFT_YAW;\n          sim.aircraft.updateMatrixWorld(true);\n          renderedAircraft.updateMatrixWorld(true);`;
 if (!source.includes(marker)) {
   if (!source.includes(oldDoorLocal)) throw new Error(`${path}: stale authored-door local point is missing`);
   source = source.replace(oldDoorLocal, newDoorLocal);
@@ -100,4 +102,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Prepared ${marker}: CRJ stays fixed at [${fixedPose.x}, ${fixedPose.y}, ${fixedPose.z}] yaw=${fixedPose.yaw}; runtime measures the exact authored forward-left door at local [${doorLocal.x}, ${doorLocal.y}, ${doorLocal.z}] and fails unless the supplied jetway reaches it.`);
+console.log(`Prepared ${marker}: CRJ stays fixed at [${fixedPose.x}, ${fixedPose.y}, ${fixedPose.z}] yaw=${fixedPose.yaw}; runtime measures the exact authored forward-left door contact center at local [${doorLocal.x}, ${doorLocal.y}, ${doorLocal.z}] and fails unless the supplied jetway reaches it.`);
