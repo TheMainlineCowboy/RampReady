@@ -1,10 +1,11 @@
-const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v7-complete-set-carrier-ramp-reference";
+const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v8-kphx-pavement-plane";
 const MAX_GROUNDING_EXTENSION_METERS = 4.0;
 const MAX_FINAL_CLEARANCE_METERS = 0.015;
 const MAX_TOP_MOUNT_DRIFT_METERS = 0.015;
 const VERTEX_KEY_SCALE = 10000;
 const LOWER_RIGID_FRACTION = 0.30;
 const UPPER_RIGID_FRACTION = 0.76;
+const KPHX_PAVEMENT_WORLD_Y = 0;
 
 function vertexKey(position, index) {
   return `${Math.round(position.getX(index) * VERTEX_KEY_SCALE)},${Math.round(position.getY(index) * VERTEX_KEY_SCALE)},${Math.round(position.getZ(index) * VERTEX_KEY_SCALE)}`;
@@ -110,7 +111,7 @@ function telescopeToRamp(THREE, mesh, position, measurement, rampY) {
   const height = beforeMaxY - beforeMinY;
   const extension = beforeMinY - rampY;
   if (!(height > 0.18) || !(extension > 0) || extension > MAX_GROUNDING_EXTENSION_METERS) {
-    throw new Error(`A1 visible support cannot telescope to ramp: height=${height}, extension=${extension}`);
+    throw new Error(`A1 visible support cannot telescope to pavement: height=${height}, extension=${extension}`);
   }
   const inverseWorld = mesh.matrixWorld.clone().invert();
   const local = new THREE.Vector3();
@@ -150,13 +151,12 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
   const rotundaWorld = objectCenter(THREE, model.getObjectByName("Rotunda"));
   const cabWorld = objectCenter(THREE, model.getObjectByName("Cab"));
 
-  // The integrated opaque Tunnel-C carrier already owns the final transformed
-  // low-contact coordinate used by the established bogie/ramp proof. Use that
-  // point only as the ramp-plane coordinate; it does not satisfy visible-support
-  // acceptance. Every qualifying visible support island must independently reach
-  // this same plane after deformation.
-  const rampY = new THREE.Box3().setFromObject(mesh).min.y;
-  if (!Number.isFinite(rampY)) throw new Error("A1 visible support proof has no finite transformed ramp reference");
+  // KPHX runtime, aircraft tire contact, apron markings, and the rendered pavement
+  // all share world Y=0. The previous carrier-minimum authority was self-referential:
+  // a suspended/buried Tunnel-C triangle could define a false "ramp" several metres
+  // below the visible apron. Visible supports must instead terminate on the actual
+  // airport pavement plane without moving the passenger carrier or upper mounts.
+  const rampY = KPHX_PAVEMENT_WORLD_Y;
 
   const isAircraftSide = (entry) => Number.isFinite(entry.alongRatio)
     && entry.alongRatio >= 0.35
@@ -192,7 +192,7 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
       along: Number(entry.alongRatio.toFixed(3)),
       lateral: Number(entry.lateralDistance.toFixed(3)),
     }));
-    throw new Error(`A1 visible support proof found support components outside the 4 m grounding envelope: ${JSON.stringify(diagnostic)}`);
+    throw new Error(`A1 visible support proof found support components outside the 4 m pavement-grounding envelope: ${JSON.stringify(diagnostic)}`);
   }
 
   const extensions = selected.map((entry) => telescopeToRamp(THREE, mesh, position, entry, rampY));
@@ -212,7 +212,7 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
     }))
     : 0;
   if (maximumFinalClearanceMeters > MAX_FINAL_CLEARANCE_METERS) {
-    throw new Error(`A1 visible support proof still floats/intersects ramp: clearance=${maximumFinalClearanceMeters}`);
+    throw new Error(`A1 visible support proof still floats/intersects pavement: clearance=${maximumFinalClearanceMeters}`);
   }
   if (maximumTopMountDriftMeters > MAX_TOP_MOUNT_DRIFT_METERS) {
     throw new Error(`A1 visible support proof moved an upper mount: drift=${maximumTopMountDriftMeters}`);
@@ -220,7 +220,7 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
 
   const remaining = finalSupportSet.filter((entry) => Math.abs(entry.clearanceMeters) > MAX_FINAL_CLEARANCE_METERS);
   if (remaining.length) {
-    throw new Error(`A1 visible support proof found ${remaining.length} support component(s) not seated on the final ramp plane`);
+    throw new Error(`A1 visible support proof found ${remaining.length} support component(s) not seated on KPHX pavement`);
   }
 
   return Object.freeze({
