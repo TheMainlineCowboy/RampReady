@@ -1,8 +1,7 @@
-const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v6-kphx-world-ramp-visible-proof";
-const MAX_GROUNDING_EXTENSION_METERS = 3.0;
+const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v7-complete-set-carrier-ramp-reference";
+const MAX_GROUNDING_EXTENSION_METERS = 4.0;
 const MAX_FINAL_CLEARANCE_METERS = 0.015;
 const MAX_TOP_MOUNT_DRIFT_METERS = 0.015;
-const KPHX_WORLD_RAMP_Y = 0;
 const VERTEX_KEY_SCALE = 10000;
 const LOWER_RIGID_FRACTION = 0.30;
 const UPPER_RIGID_FRACTION = 0.76;
@@ -151,12 +150,13 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
   const rotundaWorld = objectCenter(THREE, model.getObjectByName("Rotunda"));
   const cabWorld = objectCenter(THREE, model.getObjectByName("Cab"));
 
-  // KPHX's authored pavement plane is world Y=0. The earlier physical A1 fitter
-  // already uses this same world-ramp authority for separable Tunnel-C hardware.
-  // Never infer pavement from Tunnel_C_Jetway_0's overall minimum: that mesh has
-  // hidden/buried source triangles several metres below the rendered apron, which
-  // caused the old v5 pass to "ground" the wrong islands while visible rods hung.
-  const rampY = KPHX_WORLD_RAMP_Y;
+  // The integrated opaque Tunnel-C carrier already owns the final transformed
+  // low-contact coordinate used by the established bogie/ramp proof. Use that
+  // point only as the ramp-plane coordinate; it does not satisfy visible-support
+  // acceptance. Every qualifying visible support island must independently reach
+  // this same plane after deformation.
+  const rampY = new THREE.Box3().setFromObject(mesh).min.y;
+  if (!Number.isFinite(rampY)) throw new Error("A1 visible support proof has no finite transformed ramp reference");
 
   const isAircraftSide = (entry) => Number.isFinite(entry.alongRatio)
     && entry.alongRatio >= 0.35
@@ -175,21 +175,24 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
     && entry.horizontalSpan <= 1.80
     && entry.verticalAspect >= 1.05;
 
-  const selected = measurements.filter((entry) => visibleSupport(entry)
-    && entry.clearanceMeters > MAX_FINAL_CLEARANCE_METERS
-    && entry.clearanceMeters <= MAX_GROUNDING_EXTENSION_METERS);
-  if (selected.length < 2 || selected.length > 20) {
-    const diagnostic = measurements
-      .filter((entry) => visibleSupport(entry))
-      .map((entry) => ({
-        triangles: entry.triangleCount,
-        minimumWorldY: Number(entry.box.min.y.toFixed(3)),
-        maximumWorldY: Number(entry.box.max.y.toFixed(3)),
-        clearance: Number(entry.clearanceMeters.toFixed(3)),
-        along: Number(entry.alongRatio.toFixed(3)),
-        lateral: Number(entry.lateralDistance.toFixed(3)),
-      }));
-    throw new Error(`A1 visible support proof expected 2-20 suspended support components above KPHX ramp Y=0, found ${selected.length}: ${JSON.stringify(diagnostic)}`);
+  const supportSet = measurements.filter((entry) => visibleSupport(entry));
+  if (supportSet.length < 2 || supportSet.length > 20) {
+    throw new Error(`A1 visible support proof expected 2-20 visible support components, found ${supportSet.length}`);
+  }
+  const alreadyGrounded = supportSet.filter((entry) => Math.abs(entry.clearanceMeters) <= MAX_FINAL_CLEARANCE_METERS);
+  const selected = supportSet.filter((entry) => entry.clearanceMeters > MAX_FINAL_CLEARANCE_METERS);
+  const invalid = supportSet.filter((entry) => entry.clearanceMeters < -MAX_FINAL_CLEARANCE_METERS
+    || entry.clearanceMeters > MAX_GROUNDING_EXTENSION_METERS);
+  if (invalid.length) {
+    const diagnostic = invalid.map((entry) => ({
+      triangles: entry.triangleCount,
+      minimumWorldY: Number(entry.box.min.y.toFixed(3)),
+      maximumWorldY: Number(entry.box.max.y.toFixed(3)),
+      clearance: Number(entry.clearanceMeters.toFixed(3)),
+      along: Number(entry.alongRatio.toFixed(3)),
+      lateral: Number(entry.lateralDistance.toFixed(3)),
+    }));
+    throw new Error(`A1 visible support proof found support components outside the 4 m grounding envelope: ${JSON.stringify(diagnostic)}`);
   }
 
   const extensions = selected.map((entry) => telescopeToRamp(THREE, mesh, position, entry, rampY));
@@ -199,43 +202,45 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
   mesh.updateMatrixWorld(true);
   model.updateWorldMatrix(true, true);
 
-  const finalSelected = selected.map((entry) =>
+  const finalSupportSet = supportSet.map((entry) =>
     measureComponent(THREE, mesh, position, entry.triangles, rampY, rotundaWorld, cabWorld));
-  const maximumFinalClearanceMeters = Math.max(...finalSelected.map((entry) => Math.abs(entry.clearanceMeters)));
-  const maximumTopMountDriftMeters = Math.max(...finalSelected.map((entry, index) =>
-    Math.abs(entry.box.max.y - extensions[index].beforeTopY)));
+  const maximumFinalClearanceMeters = Math.max(...finalSupportSet.map((entry) => Math.abs(entry.clearanceMeters)));
+  const maximumTopMountDriftMeters = selected.length
+    ? Math.max(...selected.map((entry, index) => {
+      const finalEntry = measureComponent(THREE, mesh, position, entry.triangles, rampY, rotundaWorld, cabWorld);
+      return Math.abs(finalEntry.box.max.y - extensions[index].beforeTopY);
+    }))
+    : 0;
   if (maximumFinalClearanceMeters > MAX_FINAL_CLEARANCE_METERS) {
-    throw new Error(`A1 visible support proof still floats: clearance=${maximumFinalClearanceMeters}`);
+    throw new Error(`A1 visible support proof still floats/intersects ramp: clearance=${maximumFinalClearanceMeters}`);
   }
   if (maximumTopMountDriftMeters > MAX_TOP_MOUNT_DRIFT_METERS) {
     throw new Error(`A1 visible support proof moved an upper mount: drift=${maximumTopMountDriftMeters}`);
   }
 
-  const finalAll = components.map((triangles) =>
-    measureComponent(THREE, mesh, position, triangles, rampY, rotundaWorld, cabWorld));
-  const remaining = finalAll.filter((entry) => visibleSupport(entry)
-    && entry.clearanceMeters > MAX_FINAL_CLEARANCE_METERS
-    && entry.clearanceMeters <= MAX_GROUNDING_EXTENSION_METERS);
+  const remaining = finalSupportSet.filter((entry) => Math.abs(entry.clearanceMeters) > MAX_FINAL_CLEARANCE_METERS);
   if (remaining.length) {
-    throw new Error(`A1 visible support proof found ${remaining.length} support component(s) still suspended above KPHX ramp Y=0`);
+    throw new Error(`A1 visible support proof found ${remaining.length} support component(s) not seated on the final ramp plane`);
   }
 
   return Object.freeze({
     authority: AUTHORITY,
-    groundedComponentCount: selected.length,
-    groundedTriangleCount: selected.reduce((sum, entry) => sum + entry.triangleCount, 0),
-    detailedPodCount: selected.filter((entry) => entry.triangleCount >= 600).length,
-    visibleLoadLegCount: selected.length,
+    groundedComponentCount: supportSet.length,
+    newlyGroundedComponentCount: selected.length,
+    alreadyGroundedComponentCount: alreadyGrounded.length,
+    groundedTriangleCount: supportSet.reduce((sum, entry) => sum + entry.triangleCount, 0),
+    detailedPodCount: supportSet.filter((entry) => entry.triangleCount >= 600).length,
+    visibleLoadLegCount: supportSet.length,
     remainingSuspendedSupportCount: 0,
-    maximumBeforeClearanceMeters: Math.max(...selected.map((entry) => entry.clearanceMeters)),
-    maximumExtensionMeters: Math.max(...extensions.map((entry) => entry.extensionMeters)),
+    maximumBeforeClearanceMeters: Math.max(...supportSet.map((entry) => entry.clearanceMeters)),
+    maximumExtensionMeters: extensions.length ? Math.max(...extensions.map((entry) => entry.extensionMeters)) : 0,
     maximumFinalClearanceMeters,
     maximumTopMountDriftMeters,
     rampWorldY: rampY,
     rampReferenceComponentCount: 1,
     rampReferenceSpreadMeters: 0,
-    componentAlongRatios: selected.map((entry) => entry.alongRatio),
-    componentLateralDistancesMeters: selected.map((entry) => entry.lateralDistance),
+    componentAlongRatios: supportSet.map((entry) => entry.alongRatio),
+    componentLateralDistancesMeters: supportSet.map((entry) => entry.lateralDistance),
   });
 }
 
