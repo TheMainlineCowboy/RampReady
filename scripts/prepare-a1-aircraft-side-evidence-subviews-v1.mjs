@@ -101,11 +101,6 @@ if (!source.includes(marker)) {
   source = source.replace(anchor, `${insertion}\n${anchor}`);
 }
 
-// The earlier bogie camera proved the correct low-contact footprint, but its
-// camera itself sat nearly on the ramp underneath the integrated Tunnel-C shell.
-// That produced a grey occluded frame even while the numerical contact test
-// passed. Reframe only the evidence camera here, after final Tunnel-C measurement,
-// from the same derived outboard half-plane used by the aircraft-side views.
 if (!source.includes(bogieFramingMarker)) {
   const authorityAnchor = '            renderer.domElement.dataset.inspectionCameraEndpointBogieProfileAuthority = "a1-tunnel-c-bogie-apron-half-plane-side-profile-v2";';
   const occurrences = source.split(authorityAnchor).length - 1;
@@ -129,10 +124,6 @@ if (!source.includes(bogieFramingMarker)) {
             const exactA1VisibleBogieOutboardDot = exactA1VisibleBogieCabFromAircraftX * exactA1VisibleBogieNormalX
               + exactA1VisibleBogieCabFromAircraftZ * exactA1VisibleBogieNormalZ;
             const exactA1VisibleBogieSign = exactA1VisibleBogieOutboardDot >= 0 ? 1 : -1;
-            // Preserve the prior v2 branch's already-proved Tunnel-C low-contact
-            // target before replacing only the camera position/framing. This
-            // avoids inventing a second bogie locator and keeps the camera tied
-            // to the exact final visible support footprint.
             const exactA1VisibleBogieTargetX = exactA1CameraTargetX;
             const exactA1VisibleBogieTargetY = exactA1CameraTargetY;
             const exactA1VisibleBogieTargetZ = exactA1CameraTargetZ;
@@ -150,7 +141,6 @@ if (!source.includes(bogieFramingMarker)) {
             exactA1CameraTargetX = exactA1VisibleBogieTargetX;
             exactA1CameraTargetY = exactA1VisibleBogieTargetY + 0.65;
             exactA1CameraTargetZ = exactA1VisibleBogieTargetZ;
-            inspectionCamera.fov = 46;
             renderer.domElement.dataset.inspectionCameraEndpointBogieFramingAuthority = "${bogieFramingMarker}";
             renderer.domElement.dataset.inspectionCameraEndpointBogieFramingDistanceMeters = exactA1VisibleBogieDistance.toFixed(6);
             renderer.domElement.dataset.inspectionCameraEndpointBogieFramingHeightMeters = exactA1CameraPositionY.toFixed(6);
