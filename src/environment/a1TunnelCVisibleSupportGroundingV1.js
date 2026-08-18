@@ -1,10 +1,11 @@
-const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v3";
+const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v4-multi-component-ramp-envelope";
 const MAX_GROUNDING_EXTENSION_METERS = 3.0;
 const MAX_FINAL_CLEARANCE_METERS = 0.015;
 const MAX_TOP_MOUNT_DRIFT_METERS = 0.015;
 const VERTEX_KEY_SCALE = 10000;
 const LOWER_RIGID_FRACTION = 0.30;
 const UPPER_RIGID_FRACTION = 0.76;
+const RAMP_REFERENCE_COMPONENT_COUNT = 12;
 
 function vertexKey(position, index) {
   return `${Math.round(position.getX(index) * VERTEX_KEY_SCALE)},${Math.round(position.getY(index) * VERTEX_KEY_SCALE)},${Math.round(position.getZ(index) * VERTEX_KEY_SCALE)}`;
@@ -111,6 +112,44 @@ function componentMeasurement(THREE, mesh, position, triangles, rampY, rotundaWo
   };
 }
 
+function median(values) {
+  const ordered = [...values].sort((a, b) => a - b);
+  if (!ordered.length) return NaN;
+  const middle = Math.floor(ordered.length / 2);
+  return ordered.length % 2 ? ordered[middle] : (ordered[middle - 1] + ordered[middle]) / 2;
+}
+
+function deriveRampWorldY(measurements, isAircraftSide) {
+  // The final KPHX scene is allowed to carry a parent/world Y offset. Do not
+  // assume world Y=0, and do not use one hidden carrier vertex as ramp truth.
+  // Instead derive the aircraft-side ramp plane from a lower envelope shared by
+  // multiple independent compact exact-source components. A real ramp plane is
+  // repeated across the hardware footprint; a stray buried triangle is not.
+  const candidates = measurements.filter((entry) => (
+    isAircraftSide(entry)
+    && entry.stairTriangleCount === 0
+    && entry.triangleCount >= 4
+    && entry.triangleCount <= 2200
+    && entry.size.y >= 0.02
+    && entry.size.y <= 3.20
+    && entry.horizontalSpan >= 0.04
+    && entry.horizontalSpan <= 1.80
+    && Number.isFinite(entry.worldBox.min.y)
+  )).sort((a, b) => a.worldBox.min.y - b.worldBox.min.y);
+  if (candidates.length < 6) {
+    throw new Error(`A1 visible Tunnel-C support grounding cannot derive a multi-component ramp envelope: candidates=${candidates.length}`);
+  }
+  const lowerEnvelope = candidates
+    .slice(0, Math.min(RAMP_REFERENCE_COMPONENT_COUNT, candidates.length))
+    .map((entry) => entry.worldBox.min.y);
+  const rampY = median(lowerEnvelope);
+  const spread = Math.max(...lowerEnvelope) - Math.min(...lowerEnvelope);
+  if (!Number.isFinite(rampY) || spread > 0.75) {
+    throw new Error(`A1 visible Tunnel-C ramp envelope is not planar enough: y=${rampY}, spread=${spread}`);
+  }
+  return { rampY, referenceCount: lowerEnvelope.length, spreadMeters: spread };
+}
+
 function telescopeComponentToRamp(THREE, mesh, position, measurement, rampY) {
   const beforeMinY = measurement.worldBox.min.y;
   const beforeMaxY = measurement.worldBox.max.y;
@@ -172,16 +211,8 @@ export function groundA1TunnelCVisibleSupportHardware(THREE, model) {
   mesh.geometry = geometry;
   const position = geometry.getAttribute("position");
   const components = findTriangleComponents(position);
-
-  // The KPHX ramp is the world-space Y=0 physical plane used by the aircraft,
-  // tug and prior exact Tunnel-C grounding passes. Do not derive the ramp from
-  // Tunnel_C_Jetway_0's hidden lowest carrier triangle: that was the loophole
-  // which let visibly suspended legs validate against an unrelated mesh vertex.
-  const rampY = 0;
   const rotundaWorld = centerOfObject(THREE, model.getObjectByName("Rotunda"));
   const cabWorld = centerOfObject(THREE, model.getObjectByName("Cab"));
-  const measurements = components.map((triangles) =>
-    componentMeasurement(THREE, mesh, position, triangles, rampY, rotundaWorld, cabWorld));
 
   const isAircraftSide = (entry) => (
     Number.isFinite(entry.alongRatio)
@@ -190,6 +221,13 @@ export function groundA1TunnelCVisibleSupportHardware(THREE, model) {
     && Number.isFinite(entry.lateralDistance)
     && entry.lateralDistance <= 5.5
   );
+
+  const provisionalMeasurements = components.map((triangles) =>
+    componentMeasurement(THREE, mesh, position, triangles, 0, rotundaWorld, cabWorld));
+  const rampEnvelope = deriveRampWorldY(provisionalMeasurements, isAircraftSide);
+  const rampY = rampEnvelope.rampY;
+  const measurements = components.map((triangles) =>
+    componentMeasurement(THREE, mesh, position, triangles, rampY, rotundaWorld, cabWorld));
 
   // Include every compact, predominantly vertical, aircraft-side load-bearing
   // island. The prior v2 bounds were too narrow and selected only a subset of
@@ -232,7 +270,7 @@ export function groundA1TunnelCVisibleSupportHardware(THREE, model) {
       .sort((a, b) => a.clearanceMeters - b.clearanceMeters)
       .slice(0, 60)
       .map(diagnosticEntry);
-    throw new Error(`A1 visible Tunnel-C support grounding expected 2-20 load-bearing source components, found ${selected.length}: ${JSON.stringify(diagnostic)}`);
+    throw new Error(`A1 visible Tunnel-C support grounding expected 2-20 load-bearing source components, found ${selected.length}; rampY=${rampY.toFixed(3)} spread=${rampEnvelope.spreadMeters.toFixed(3)}: ${JSON.stringify(diagnostic)}`);
   }
 
   const extensions = selected.map((entry) => telescopeComponentToRamp(THREE, mesh, position, entry, rampY));
@@ -289,6 +327,8 @@ export function groundA1TunnelCVisibleSupportHardware(THREE, model) {
     maximumFinalClearanceMeters,
     maximumTopMountDriftMeters,
     rampWorldY: rampY,
+    rampReferenceComponentCount: rampEnvelope.referenceCount,
+    rampReferenceSpreadMeters: rampEnvelope.spreadMeters,
     componentAlongRatios: selected.map((entry) => entry.alongRatio),
     componentLateralDistancesMeters: selected.map((entry) => entry.lateralDistance),
   });
