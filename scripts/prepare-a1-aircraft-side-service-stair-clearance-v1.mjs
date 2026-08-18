@@ -1,74 +1,79 @@
 import fs from "node:fs";
 
+const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const doorFitPath = "src/environment/uploadedAirportJetwayA1DoorFitV11.js";
-const marker = "a1-service-stair-exact-crj-envelope-clearance-v3";
-const authority = "exact-supplied-tunnel-c-service-stair-exact-crj-envelope-clearance-v3";
+const marker = "a1-service-stair-live-rendered-crj-clearance-v4";
+const authority = "exact-supplied-tunnel-c-service-stair-live-rendered-crj-clearance-v4";
 const finalVisibleMarker = "a1-final-visible-grounded-door-and-integrated-tunnel-c-v1";
 const runtimeSupportMarker = "a1-runtime-tunnel-c-separable-support-meshes-v1";
-const importLine = 'import { articulateA1ServiceStairClearOfAircraft } from "./a1ServiceStairClearanceV1.js";';
+const importLine = 'import { articulateA1ServiceStairClearOfAircraft } from "../environment/a1ServiceStairClearanceV1.js";';
 
-let source = fs.readFileSync(doorFitPath, "utf8");
-
-if (!source.includes(finalVisibleMarker)) {
-  throw new Error(`${doorFitPath}: service-stair clearance must run after final visible door normalization`);
+const doorFit = fs.readFileSync(doorFitPath, "utf8");
+if (!doorFit.includes(finalVisibleMarker)) {
+  throw new Error(`${doorFitPath}: live service-stair clearance must run after final visible door normalization`);
 }
-if (!source.includes(runtimeSupportMarker)) {
-  throw new Error(`${doorFitPath}: service-stair clearance requires final Tunnel-C support normalization`);
+if (!doorFit.includes(runtimeSupportMarker)) {
+  throw new Error(`${doorFitPath}: live service-stair clearance requires final Tunnel-C support normalization`);
+}
+// V1-V3 attempted to solve against the environment group before the final CRJ
+// object was calibrated. They are intentionally forbidden in the shipping fitter.
+for (const stale of [
+  "a1-service-stair-cab-side-swing-clearance-v1",
+  "a1-service-stair-rendered-crj-envelope-clearance-v2",
+  "a1-service-stair-exact-crj-envelope-clearance-v3",
+  "const serviceStairClearance = articulateA1ServiceStairClearOfAircraft(",
+]) {
+  if (doorFit.includes(stale)) {
+    throw new Error(`${doorFitPath}: stale pre-aircraft service-stair solve survived: ${stale}`);
+  }
 }
 
-if (!source.includes(marker)) {
-  const importAnchor = 'const AUTHORITY = "supplied-a1-full-3d-crj-door-fit-v11";';
-  if (!source.includes(importAnchor)) {
-    throw new Error(`${doorFitPath}: final A1 fitter import anchor is missing`);
+let trainer = fs.readFileSync(trainerPath, "utf8");
+if (!trainer.includes(marker)) {
+  const importAnchor = 'import { buildCRJ700Aircraft } from "./aircraft/crj700Model.js";';
+  if (!trainer.includes(importAnchor)) {
+    throw new Error(`${trainerPath}: CRJ import anchor is missing for live service-stair solver`);
   }
-  source = source.replace(importAnchor, `${importLine}\n// ${marker}\n${importAnchor}`);
+  if (!trainer.includes(importLine)) {
+    trainer = trainer.replace(importAnchor, `${importAnchor}\n${importLine}`);
+  }
 
-  const solveAnchor = `  anchor.rotation.y = correctedYawRadians;\n  anchor.updateMatrixWorld(true);\n  model.updateMatrixWorld(true);\n  cabAssembly = measureCabAssembly(THREE, model, cabFacingDirection);`;
-  if (!source.includes(solveAnchor)) {
-    throw new Error(`${doorFitPath}: final parent-yaw service-stair insertion anchor is missing`);
+  const browserTruthAnchor = `          // Browser-time visual truth. Several older readiness layers still`;
+  if (!trainer.includes(browserTruthAnchor)) {
+    throw new Error(`${trainerPath}: final live-Cab browser-truth anchor is missing`);
   }
-  source = source.replace(
-    solveAnchor,
-    `${solveAnchor}\n\n  const serviceStairClearance = articulateA1ServiceStairClearOfAircraft(\n    THREE, group, model, targetWorld, cabRelativeYawRadians,\n  );`,
-  );
-
-  const resultAnchor = `    contactWidthMeters: cabAssembly.contactWidth,\n    stairGrounding,`;
-  if (!source.includes(resultAnchor)) {
-    throw new Error(`${doorFitPath}: service-stair result telemetry anchor is missing`);
-  }
-  source = source.replace(
-    resultAnchor,
-    `    contactWidthMeters: cabAssembly.contactWidth,\n    serviceStairClearance,\n    stairGrounding,`,
-  );
-
-  const telemetryAnchor = `  group.userData.uploadedJetwayA1DoorFitContactWidthMeters = cabAssembly.contactWidth;\n  return result;`;
-  if (!source.includes(telemetryAnchor)) {
-    throw new Error(`${doorFitPath}: service-stair dataset telemetry anchor is missing`);
-  }
-  source = source.replace(
-    telemetryAnchor,
-    `  group.userData.uploadedJetwayA1DoorFitContactWidthMeters = cabAssembly.contactWidth;\n  group.userData.uploadedJetwayA1ServiceStairClearanceAuthority = serviceStairClearance.authority;\n  group.userData.uploadedJetwayA1ServiceStairTriangleCount = serviceStairClearance.stairTriangleCount;\n  group.userData.uploadedJetwayA1ServiceStairSwingDegrees = serviceStairClearance.swingDegrees;\n  group.userData.uploadedJetwayA1ServiceStairFuselagePenetrationMeters = serviceStairClearance.afterFuselageEnvelopePenetrationMeters;\n  group.userData.uploadedJetwayA1ServiceStairOutboardClearanceMeters = serviceStairClearance.minimumOutboardClearanceMeters;\n  group.userData.uploadedJetwayA1ServiceStairFuselageMeshName = serviceStairClearance.fuselageMeshName;\n  return result;`,
-  );
+  const liveSolve = `          // ${marker}\n          // This is deliberately after the final live Cab has calibrated the real\n          // rendered CRJ pose. The earlier fitter owns Cab contact; only now do we\n          // have both actual object hierarchies needed to prove the exact supplied\n          // Tunnel-C service stair clears the fuselage. A vertical-axis swing keeps\n          // the upper attachment and ramp height intact and cannot move the Cab,\n          // Rotunda, terminal, aircraft or bogie.\n          const finalA1ServiceStairClearance = articulateA1ServiceStairClearOfAircraft(\n            THREE, sim.aircraft, finalA1Model,\n          );\n          if (\n            finalA1ServiceStairClearance.authority !== "${authority}"\n            || finalA1ServiceStairClearance.stairTriangleCount !== 2352\n            || !Number.isFinite(finalA1ServiceStairClearance.swingDegrees)\n            || Math.abs(finalA1ServiceStairClearance.swingDegrees) > 88\n            || !Number.isFinite(finalA1ServiceStairClearance.afterFuselageEnvelopePenetrationMeters)\n            || finalA1ServiceStairClearance.afterFuselageEnvelopePenetrationMeters > 0.001\n          ) {\n            throw new Error(\`A1 live service-stair clearance failed: \${JSON.stringify(finalA1ServiceStairClearance)}\`);\n          }\n          exactA1Fleet.updateWorldMatrix(true, true);\n          finalA1Model.updateWorldMatrix(true, true);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1ServiceStairClearanceAuthority = finalA1ServiceStairClearance.authority;\n          renderer.domElement.dataset.terminal4UploadedJetwayA1ServiceStairTriangleCount = String(finalA1ServiceStairClearance.stairTriangleCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1ServiceStairSwingDegrees = finalA1ServiceStairClearance.swingDegrees.toFixed(3);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1ServiceStairBeforeFuselagePenetrationMeters = finalA1ServiceStairClearance.beforeFuselageEnvelopePenetrationMeters.toFixed(6);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1ServiceStairFuselagePenetrationMeters = finalA1ServiceStairClearance.afterFuselageEnvelopePenetrationMeters.toFixed(6);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1ServiceStairOutboardClearanceMeters = finalA1ServiceStairClearance.minimumOutboardClearanceMeters.toFixed(6);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1ServiceStairBoxSeparationMeters = finalA1ServiceStairClearance.minimumFuselageBoxSeparationMeters.toFixed(6);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1ServiceStairMeasuredFuselageBandPointCount = String(finalA1ServiceStairClearance.measuredFuselageBandPointCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1ServiceStairFuselageMeshName = finalA1ServiceStairClearance.fuselageMeshName;\n          renderer.domElement.dataset.terminal4UploadedJetwayA1ServiceStairServiceSideSign = String(finalA1ServiceStairClearance.serviceSideSign);\n\n`;
+  trainer = trainer.replace(browserTruthAnchor, `${liveSolve}${browserTruthAnchor}`);
 }
 
 for (const required of [
   marker,
   importLine,
-  "articulateA1ServiceStairClearOfAircraft",
-  "serviceStairClearance",
-  "uploadedJetwayA1ServiceStairSwingDegrees",
-  "uploadedJetwayA1ServiceStairFuselagePenetrationMeters",
-  "uploadedJetwayA1ServiceStairOutboardClearanceMeters",
-  "afterFuselageEnvelopePenetrationMeters",
+  authority,
+  "finalA1ServiceStairClearance",
+  "sim.aircraft, finalA1Model",
+  "stairTriangleCount !== 2352",
+  "afterFuselageEnvelopePenetrationMeters > 0.001",
+  "terminal4UploadedJetwayA1ServiceStairClearanceAuthority",
+  "terminal4UploadedJetwayA1ServiceStairFuselagePenetrationMeters",
+  "terminal4UploadedJetwayA1ServiceStairMeasuredFuselageBandPointCount",
 ]) {
-  if (!source.includes(required)) {
-    throw new Error(`${doorFitPath}: final A1 service-stair clearance is missing ${required}`);
+  if (!trainer.includes(required)) {
+    throw new Error(`${trainerPath}: final live A1 service-stair clearance is missing ${required}`);
   }
 }
 
-if (!fs.readFileSync("src/environment/a1ServiceStairClearanceV1.js", "utf8").includes(authority)) {
-  throw new Error("A1 service-stair runtime module is missing its exact CRJ envelope authority");
+const solver = fs.readFileSync("src/environment/a1ServiceStairClearanceV1.js", "utf8");
+for (const required of [
+  authority,
+  "findLiveRenderedCrjFuselageBounds",
+  "EXPECTED_SERVICE_STAIR_TRIANGLE_COUNT = 2352",
+  "aircraftRoot.updateWorldMatrix(true, true)",
+]) {
+  if (!solver.includes(required)) {
+    throw new Error(`A1 live service-stair runtime solver is missing ${required}`);
+  }
 }
 
-fs.writeFileSync(doorFitPath, source, "utf8");
-console.log(`Prepared ${marker}: the final A1 fitter uses the exact authored CRJ fuselage primitive bounds in the same local frame as its door target, swings only the supplied Tunnel-C service-stair triangles outboard, and publishes fail-closed clearance telemetry before production Vite bundling.`);
+fs.writeFileSync(trainerPath, trainer, "utf8");
+console.log(`Prepared ${marker}: A1 now evaluates and, only if necessary, swings the exact 2352-triangle supplied Tunnel-C service stair after the final rendered CRJ pose exists; the browser publishes fail-closed live fuselage-clearance evidence before capture.`);
