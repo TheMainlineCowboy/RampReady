@@ -4,15 +4,18 @@ const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const doorFitPath = "src/environment/uploadedAirportJetwayA1DoorFitV11.js";
 const marker = "a1-final-visible-grounded-door-and-integrated-tunnel-c-v1";
 const contactFootprintMarker = "a1-visible-cab-door-contact-footprint-v1";
-const pitchEnvelopeMarker = "a1-measured-door-low-slope-pitch-envelope-v1";
-const renderedDoorWorldY = 1.73;
+// This is a WORLD-space coordinate in the rendered RampReady scene, not the
+// aircraft-relative CRJ700 sill dimension. Fresh accepted-head telemetry places
+// the visible grounded forward door at ~2.998 m world Y. Using 1.73 here treated
+// an aircraft-relative planning-manual dimension as an absolute scene coordinate
+// and pulled the articulated bridge down into a visibly broken stacked pose.
+const renderedDoorWorldY = 3.0;
 
 let doorFit = fs.readFileSync(doorFitPath, "utf8");
 
-// Keep the final physical fitter on the same measured CRJ700 door registration
-// already enforced by the airport/jetway source contract: 7.32 m aft of the nose
-// gear and 1.34 m left of centerline. The stale 2.22 m longitudinal value visibly
-// pulled the Cab/hood over the cockpit even while circular endpoint telemetry passed.
+// Keep the final physical fitter on the same measured/source-registered CRJ700
+// longitudinal door location already enforced by the airport/jetway contract.
+// The stale 2.22 m longitudinal value visibly pulled the Cab/hood over the cockpit.
 doorFit = doorFit.replace(
   `  x: -1.35,\n  centerY: 2.62,\n  sillY: 1.73,\n  z: 2.22,`,
   `  x: -1.34,\n  centerY: 2.62,\n  sillY: 1.73,\n  z: 7.32,`,
@@ -20,26 +23,17 @@ doorFit = doorFit.replace(
 
 if (!doorFit.includes(marker)) {
   const oldTarget = `function toWorldTarget(THREE, group) {\n  return group.localToWorld(new THREE.Vector3(\n    CRJ_FORWARD_LEFT_DOOR.x,\n    CRJ_FORWARD_LEFT_DOOR.sillY,\n    CRJ_FORWARD_LEFT_DOOR.z,\n  ));\n}`;
-  const newTarget = `function toWorldTarget(THREE, group) {\n  // ${marker}\n  // X/Z still come from the fixed A1 aircraft registration. Y is the official\n  // grounded CRJ700 forward passenger-door sill height: 1.73 m above ramp. The\n  // environment group carries its own vertical transform, so applying sillY through\n  // group.localToWorld would double-count that transform and place the Cab too high.\n  const target = group.localToWorld(new THREE.Vector3(\n    CRJ_FORWARD_LEFT_DOOR.x,\n    0,\n    CRJ_FORWARD_LEFT_DOOR.z,\n  ));\n  target.y = ${renderedDoorWorldY};\n  return target;\n}`;
+  const newTarget = `function toWorldTarget(THREE, group) {\n  // ${marker}\n  // X/Z come from the fixed A1 aircraft registration. Y must match the actually\n  // rendered grounded CRJ door in WORLD space. The 1.73 m planning-manual sill\n  // dimension is aircraft-relative and must not be substituted for scene world Y.\n  const target = group.localToWorld(new THREE.Vector3(\n    CRJ_FORWARD_LEFT_DOOR.x,\n    0,\n    CRJ_FORWARD_LEFT_DOOR.z,\n  ));\n  target.y = ${renderedDoorWorldY};\n  return target;\n}`;
   if (!doorFit.includes(oldTarget)) {
     throw new Error(`${doorFitPath}: stale environment-frame CRJ door target is missing`);
   }
   doorFit = doorFit.replace(oldTarget, newTarget);
 }
 
-if (!doorFit.includes(pitchEnvelopeMarker)) {
-  const oldPitchGuard = `  if (!(pitchRadians > 0.02 && pitchRadians < 0.14)) {\n    throw new Error(\`Supplied A1 corrected pitch is outside the physical range: \${pitchRadians}\`);\n  }`;
-  const newPitchGuard = `  // ${pitchEnvelopeMarker}\n  // The corrected 1.73 m CRJ sill produces a shallow ~1.1 degree downward tunnel\n  // slope. Keep this fail-closed, but do not reject a physically normal near-level\n  // bridge merely because the obsolete high-door target implied >=1.15 degrees.\n  if (!(pitchRadians > 0.005 && pitchRadians < 0.14)) {\n    throw new Error(\`Supplied A1 corrected pitch is outside the physical range: \${pitchRadians}\`);\n  }`;
-  if (!doorFit.includes(oldPitchGuard)) {
-    throw new Error(`${doorFitPath}: stale corrected-pitch guard is missing`);
-  }
-  doorFit = doorFit.replace(oldPitchGuard, newPitchGuard);
-}
-
 // The exact supplied GLB exposes the bogie/support inside the opaque
 // Tunnel_C_Jetway_0 carrier, not as a small child object. Runtime articulation can
-// expand its world AABB to about 5.84 x 9.61 x 13.67 m. Keep the selector bounded
-// to that exact carrier envelope rather than rejecting the real mesh as "too big".
+// expand its world AABB to about 5.84 x 9.61 x 13.67 m. This selector is measurement
+// authority only; a later integrity stage forbids translating this whole carrier.
 doorFit = doorFit
   .replace("maximumHorizontalDimension <= 6.5", "maximumHorizontalDimension <= 14.5")
   .replace("size.y <= 5.5", "size.y <= 10.5")
@@ -47,7 +41,7 @@ doorFit = doorFit
 
 if (!doorFit.includes(contactFootprintMarker)) {
   const oldValidation = `  const cabVertices = collectModelLocalVertices(THREE, model, cabAssembly.cab);\n  let cabFuselagePenetrationMeters = Number.NEGATIVE_INFINITY;\n  for (const vertex of cabVertices) {\n    const worldVertex = model.localToWorld(vertex.clone());\n    const penetration = worldVertex.sub(targetWorld).dot(desiredCabNormalWorld);\n    cabFuselagePenetrationMeters = Math.max(cabFuselagePenetrationMeters, penetration);\n  }\n\n  if (\n    vectorGap > 0.12\n    || horizontalGap > 0.08\n    || verticalGap > 0.08\n    || cabNormalErrorDegrees > MAX_CAB_NORMAL_ERROR_DEGREES\n    || cabFuselagePenetrationMeters > MAX_CAB_FUSELAGE_PENETRATION_METERS\n  ) {`;
-  const newValidation = `  const cabVertices = collectModelLocalVertices(THREE, model, cabAssembly.cab);\n  let cabFuselagePenetrationMeters = Number.NEGATIVE_INFINITY;\n  for (const vertex of cabVertices) {\n    const worldVertex = model.localToWorld(vertex.clone());\n    const penetration = worldVertex.sub(targetWorld).dot(desiredCabNormalWorld);\n    cabFuselagePenetrationMeters = Math.max(cabFuselagePenetrationMeters, penetration);\n  }\n\n  // ${contactFootprintMarker}\n  // The supplied Cab hood is rounded/angled, so one averaged representative point\n  // is not a physical contact test. Measure the exact transformed front-band\n  // vertices against the aircraft contact plane instead. The door must lie inside\n  // the hood's normal-depth interval and inside its lateral span, while the floor\n  // remains at sill height and total fuselage penetration stays strictly bounded.\n  const cabSideWorld = new THREE.Vector3(-desiredCabNormalWorld.z, 0, desiredCabNormalWorld.x).normalize();\n  let cabContactMinimumNormalMeters = Number.POSITIVE_INFINITY;\n  let cabContactMaximumNormalMeters = Number.NEGATIVE_INFINITY;\n  let cabContactMinimumLateralMeters = Number.POSITIVE_INFINITY;\n  let cabContactMaximumLateralMeters = Number.NEGATIVE_INFINITY;\n  let cabContactWorldPointCount = 0;\n  for (const vertex of cabAssembly.front.vertices) {\n    const worldVertex = model.localToWorld(vertex.clone());\n    const fromDoor = worldVertex.clone().sub(targetWorld);\n    const normalOffset = fromDoor.dot(desiredCabNormalWorld);\n    const lateralOffset = fromDoor.dot(cabSideWorld);\n    if (!(Number.isFinite(normalOffset) && Number.isFinite(lateralOffset))) continue;\n    cabContactMinimumNormalMeters = Math.min(cabContactMinimumNormalMeters, normalOffset);\n    cabContactMaximumNormalMeters = Math.max(cabContactMaximumNormalMeters, normalOffset);\n    cabContactMinimumLateralMeters = Math.min(cabContactMinimumLateralMeters, lateralOffset);\n    cabContactMaximumLateralMeters = Math.max(cabContactMaximumLateralMeters, lateralOffset);\n    cabContactWorldPointCount += 1;\n  }\n  const cabContactPlaneCovered = cabContactMinimumNormalMeters <= 0.02\n    && cabContactMaximumNormalMeters >= -0.02;\n  const cabDoorLaterallyCovered = cabContactMinimumLateralMeters <= 0.05\n    && cabContactMaximumLateralMeters >= -0.05;\n\n  if (\n    cabContactWorldPointCount < 4\n    || !cabContactPlaneCovered\n    || !cabDoorLaterallyCovered\n    || horizontalGap > 0.25\n    || verticalGap > 0.08\n    || cabNormalErrorDegrees > MAX_CAB_NORMAL_ERROR_DEGREES\n    || cabFuselagePenetrationMeters > MAX_CAB_FUSELAGE_PENETRATION_METERS\n  ) {`;
+  const newValidation = `  const cabVertices = collectModelLocalVertices(THREE, model, cabAssembly.cab);\n  let cabFuselagePenetrationMeters = Number.NEGATIVE_INFINITY;\n  for (const vertex of cabVertices) {\n    const worldVertex = model.localToWorld(vertex.clone());\n    const penetration = worldVertex.sub(targetWorld).dot(desiredCabNormalWorld);\n    cabFuselagePenetrationMeters = Math.max(cabFuselagePenetrationMeters, penetration);\n  }\n\n  // ${contactFootprintMarker}\n  // The supplied Cab hood is rounded/angled, so one averaged representative point\n  // is not a physical contact test. Measure the exact transformed front-band\n  // vertices against the aircraft contact plane instead. The door must lie inside\n  // the hood's normal-depth interval and inside its lateral span, while the floor\n  // remains at the rendered door height and total fuselage penetration stays bounded.\n  const cabSideWorld = new THREE.Vector3(-desiredCabNormalWorld.z, 0, desiredCabNormalWorld.x).normalize();\n  let cabContactMinimumNormalMeters = Number.POSITIVE_INFINITY;\n  let cabContactMaximumNormalMeters = Number.NEGATIVE_INFINITY;\n  let cabContactMinimumLateralMeters = Number.POSITIVE_INFINITY;\n  let cabContactMaximumLateralMeters = Number.NEGATIVE_INFINITY;\n  let cabContactWorldPointCount = 0;\n  for (const vertex of cabAssembly.front.vertices) {\n    const worldVertex = model.localToWorld(vertex.clone());\n    const fromDoor = worldVertex.clone().sub(targetWorld);\n    const normalOffset = fromDoor.dot(desiredCabNormalWorld);\n    const lateralOffset = fromDoor.dot(cabSideWorld);\n    if (!(Number.isFinite(normalOffset) && Number.isFinite(lateralOffset))) continue;\n    cabContactMinimumNormalMeters = Math.min(cabContactMinimumNormalMeters, normalOffset);\n    cabContactMaximumNormalMeters = Math.max(cabContactMaximumNormalMeters, normalOffset);\n    cabContactMinimumLateralMeters = Math.min(cabContactMinimumLateralMeters, lateralOffset);\n    cabContactMaximumLateralMeters = Math.max(cabContactMaximumLateralMeters, lateralOffset);\n    cabContactWorldPointCount += 1;\n  }\n  const cabContactPlaneCovered = cabContactMinimumNormalMeters <= 0.02\n    && cabContactMaximumNormalMeters >= -0.02;\n  const cabDoorLaterallyCovered = cabContactMinimumLateralMeters <= 0.05\n    && cabContactMaximumLateralMeters >= -0.05;\n\n  if (\n    cabContactWorldPointCount < 4\n    || !cabContactPlaneCovered\n    || !cabDoorLaterallyCovered\n    || horizontalGap > 0.25\n    || verticalGap > 0.08\n    || cabNormalErrorDegrees > MAX_CAB_NORMAL_ERROR_DEGREES\n    || cabFuselagePenetrationMeters > MAX_CAB_FUSELAGE_PENETRATION_METERS\n  ) {`;
   if (!doorFit.includes(oldValidation)) {
     throw new Error(`${doorFitPath}: stale Cab point-gap validation block is missing before contact-footprint normalization`);
   }
@@ -67,11 +61,9 @@ if (!doorFit.includes(contactFootprintMarker)) {
 for (const required of [
   marker,
   contactFootprintMarker,
-  pitchEnvelopeMarker,
   "x: -1.34",
   "z: 7.32",
   `target.y = ${renderedDoorWorldY};`,
-  "pitchRadians > 0.005",
   "maximumHorizontalDimension <= 14.5",
   "size.y <= 10.5",
   "cabContactPlaneCovered",
@@ -81,20 +73,21 @@ for (const required of [
 ]) {
   if (!doorFit.includes(required)) throw new Error(`${doorFitPath}: final visible geometry normalization is missing ${required}`);
 }
+if (doorFit.includes("a1-measured-door-low-slope-pitch-envelope-v1")) {
+  throw new Error(`${doorFitPath}: obsolete 1.73-world-Y shallow-pitch workaround survived final normalization`);
+}
 fs.writeFileSync(doorFitPath, doorFit, "utf8");
 
 let trainer = fs.readFileSync(trainerPath, "utf8");
 
 // Match final-world evidence to the same integrated carrier envelope used by the
-// fitter. This does not relax the actual contact proof: the low cluster must still
-// be aircraft-side and within 2 cm of world ramp Y=0.
+// fitter. This is measurement only; carrier integrity is enforced before bundling.
 trainer = trainer
   .replaceAll("Math.max(size.x, size.z) <= 13.0", "Math.max(size.x, size.z) <= 14.5")
   .replaceAll("size.y <= 8.5", "size.y <= 10.5");
 
-// The 22 m diagnostic view still let the long A1 fixed corridor fill the frame and
-// hide the elbow/Rotunda. Pull only this evidence camera farther onto the apron and
-// widen it slightly. No airport, aircraft, jetway or terminal geometry is changed.
+// Pull only this evidence camera farther onto the apron and widen it slightly so
+// the long fixed corridor/elbow/remote Rotunda remain visible in one frame.
 trainer = trainer
   .replace("const exactA1JointSideDistance = 22;", "const exactA1JointSideDistance = 34;")
   .replace("inspectionCamera.fov = 50;", "inspectionCamera.fov = 55;");
@@ -115,4 +108,4 @@ for (const stale of [
 }
 fs.writeFileSync(trainerPath, trainer, "utf8");
 
-console.log(`Prepared ${marker} + ${contactFootprintMarker} + ${pitchEnvelopeMarker}: A1 targets the measured CRJ700 forward passenger door at 7.32 m aft / 1.34 m left and grounded sill world Y=${renderedDoorWorldY.toFixed(2)}, accepts a bounded shallow real-door tunnel slope, validates exact Cab hood-plane/lateral coverage instead of an averaged-point proxy, keeps bounded fuselage penetration and strict Tunnel-C ramp contact, and pulls the terminal-joint camera back to expose the dogleg/remote Rotunda.`);
+console.log(`Prepared ${marker} + ${contactFootprintMarker}: A1 targets the source-registered CRJ forward door at 7.32 m aft / 1.34 m left and the measured rendered world Y=${renderedDoorWorldY.toFixed(2)}, validates exact Cab hood-plane/lateral coverage, preserves the normal physical pitch guard, and keeps final evidence framed on the dogleg/remote Rotunda.`);
