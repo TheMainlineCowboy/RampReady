@@ -38,7 +38,13 @@ if (!source.includes(marker)) {
         break;
       }
       if (/error|failed|failure/i.test(loadState) || pageErrors.length > 0) {
-        checkpoint('fleet-load-error', { loadState, dataset: data, pageErrors, consoleErrors: consoleErrors.slice(-20), failedRequests: failedRequests.slice(-20) });
+        checkpoint('fleet-load-error', {
+          loadState,
+          dataset: data,
+          pageErrors,
+          consoleErrors: consoleErrors.slice(-20),
+          failedRequests: failedRequests.slice(-20),
+        });
         throw new Error(\`Terminal 4 jetway fleet loader failed before visual readiness: state=\${loadState || 'unset'}; pageErrors=\${JSON.stringify(pageErrors)}; consoleErrors=\${JSON.stringify(consoleErrors.slice(-20))}; failedRequests=\${JSON.stringify(failedRequests.slice(-20))}; dataset=\${JSON.stringify(data)}\`);
       }
     }
@@ -48,10 +54,18 @@ if (!source.includes(marker)) {
     const data = await page.locator('canvas.trainerCanvas').count()
       ? await page.locator('canvas.trainerCanvas').evaluate((element) => ({ ...element.dataset }))
       : {};
-    checkpoint('fleet-ready-timeout', { dataset: data, pageErrors, consoleErrors: consoleErrors.slice(-20), failedRequests: failedRequests.slice(-20) });
+    checkpoint('fleet-ready-timeout', {
+      dataset: data,
+      pageErrors,
+      consoleErrors: consoleErrors.slice(-20),
+      failedRequests: failedRequests.slice(-20),
+    });
     throw new Error(\`Terminal 4 jetway fleet did not become ready in 180000 ms: pageErrors=\${JSON.stringify(pageErrors)}; consoleErrors=\${JSON.stringify(consoleErrors.slice(-20))}; dataset=\${JSON.stringify(data)}\`);
   }
-  checkpoint('fleet-ready', { loadState: fleetReadyDataset.terminal4UploadedJetwayLoadState, selectedA1Material: fleetReadyDataset.terminal4UploadedJetwayA1SelectedMaterialReference || null });`;
+  checkpoint('fleet-ready', {
+    loadState: fleetReadyDataset.terminal4UploadedJetwayLoadState,
+    selectedA1Material: fleetReadyDataset.terminal4UploadedJetwayA1SelectedMaterialReference || null,
+  });`;
 
   if (source.includes(oldWait)) {
     source = source.replace(oldWait, failFastWait);
@@ -86,18 +100,12 @@ if (!source.includes(sourcePoseVisualMarker)) {
   source = source.replace(oldHeadingChecks, sourcePoseChecks);
 }
 
-// The actual final browser camera publishes Joint*/EndpointBogie* fields. Older
-// evidence code waited on retired Terminal*/CameraBogie* aliases and therefore
-// timed out even after the v5 camera had visibly moved. Require the live fields
-// emitted by the shipping camera, keeping apron-side, obstruction, branch-balance
-// and ground-clearance checks fail-closed.
 if (!source.includes(apronCameraMarker)) {
   source = source.replace(
     /(?:\/\/ terminal4-a1-apron-side-subview-acceptance-v1\n)?const CURRENT_SUBVIEW_AUTHORITY = '[^']+';/,
     `// ${apronCameraMarker}\nconst CURRENT_SUBVIEW_AUTHORITY = '${apronSubviewAuthority}';`,
   );
 
-  const oldSubviewReadyPattern = /    (?:const shared = )?data\?\.inspectionCameraEndpointSubview === subview[\s\S]*?    return true;/;
   const originalSimple = `    return data?.inspectionCameraEndpointSubview === subview
       && [currentAuthority, legacyAuthority].includes(data?.inspectionCameraEndpointSubviewAuthority)
       && data?.inspectionCameraEndpointAuthority === cameraAuthority
@@ -142,6 +150,7 @@ if (!source.includes(apronCameraMarker)) {
 
 for (const required of [
   marker, sourcePoseVisualMarker, apronCameraMarker, sourcePoseAuthority, apronSubviewAuthority,
+  `checkpoint('fleet-ready', {\n    loadState: fleetReadyDataset.terminal4UploadedJetwayLoadState,`,
   'inspectionCameraEndpointJointProfileAuthority', 'inspectionCameraEndpointJointClearSideAuthority',
   'inspectionCameraEndpointJointT4WalkOccluded', 'inspectionCameraEndpointJointRenderedApronHalfPlaneOffsetMeters',
   'inspectionCameraEndpointJointBranchViewImbalance', 'inspectionCameraEndpointBogieProfileAuthority',
@@ -159,4 +168,4 @@ for (const stale of [
 }
 
 fs.writeFileSync(verifierPath, source, "utf8");
-console.log(`Prepared ${marker} + ${sourcePoseVisualMarker} + ${apronCameraMarker}: visual evidence fails fast on loader errors, judges the static fleet under final source-pose authority, and accepts A1 close cameras only from the live v5 apron-side browser telemetry.`);
+console.log(`Prepared ${marker} + ${sourcePoseVisualMarker} + ${apronCameraMarker}: visual evidence fails fast on loader errors, preserves the fleet-first checkpoint contract, judges the static fleet under final source-pose authority, and accepts A1 close cameras only from the live v5 apron-side browser telemetry.`);
