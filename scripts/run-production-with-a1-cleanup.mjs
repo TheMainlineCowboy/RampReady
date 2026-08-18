@@ -39,16 +39,13 @@ try {
   // Late production preparers above this wrapper can rewrite the trainer after
   // the ordinary inspection-control stage. Reinstall only the evidence-only A1
   // attach command at the final handoff so the browser artifact itself exposes
-  // the already-existing controller at deployment=1. The prepared production
-  // build now owns the final aircraft-side stair correction at its true pre-Vite
-  // geometry hook, after visible Tunnel-C/Cab normalization.
+  // the already-existing controller at deployment=1.
   await import(`./prepare-a1-final-visual-evidence-attach-runtime-v1.mjs?final-evidence-attach=${Date.now()}`);
-  // The supplied Tunnel-C opaque carrier contains disconnected mechanical support
-  // islands. Ground those visible exact-source islands only after the final live
-  // service-stair solver has been installed, immediately before the Vite bundle.
-  // This prevents an unrelated low carrier triangle from masquerading as grounded
-  // bogie hardware while leaving the passenger shell/aircraft/terminal untouched.
-  await import(`./prepare-a1-visible-tunnel-c-support-grounding-v1.mjs?final-visible-support-grounding=${Date.now()}`);
+  // Patch the already-generated final pre-Vite geometry sequence so visible
+  // Tunnel-C support grounding runs AFTER the exact service-stair solve and BEFORE
+  // final bogie/contact evidence. This hook changes sequencing only; the actual
+  // support solver remains fail-closed and touches only disconnected A1 source islands.
+  await import(`./prepare-a1-visible-support-build-hook-v1.mjs?final-visible-support-hook=${Date.now()}`);
   await import("./build-production.mjs");
 } catch (error) {
   buildError = error;
@@ -74,4 +71,4 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, applied the final exact-source A1 service-stair aircraft clearance and visible Tunnel-C support grounding at the final pre-Vite geometry stage, then restored the committed jetway source byte-for-byte.");
+console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, sequenced final exact-source service-stair and visible Tunnel-C support corrections before bogie evidence, then restored the committed jetway source byte-for-byte.");
