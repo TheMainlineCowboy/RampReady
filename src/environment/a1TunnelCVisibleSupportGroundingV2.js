@@ -1,4 +1,4 @@
-const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v9-transformed-gate-anchor-plane";
+const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v10-fleet-parent-ramp-plane";
 const MAX_GROUNDING_EXTENSION_METERS = 4.0;
 const MAX_FINAL_CLEARANCE_METERS = 0.015;
 const MAX_TOP_MOUNT_DRIFT_METERS = 0.015;
@@ -120,8 +120,12 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
   const mesh = model?.getObjectByName?.("Tunnel_C_Jetway_0");
   if (!mesh?.isMesh || !mesh.geometry?.getAttribute?.("position")) throw new Error("A1 visible support proof cannot resolve Tunnel_C_Jetway_0");
   const placementAnchor = model.parent;
-  if (!placementAnchor?.isObject3D) throw new Error("A1 visible support proof cannot resolve the transformed gate-placement anchor");
-  placementAnchor.updateWorldMatrix(true, true);
+  const fleet = placementAnchor?.parent;
+  const fleetParent = fleet?.parent;
+  if (!placementAnchor?.isObject3D || !fleet?.isObject3D || !fleetParent?.isObject3D) {
+    throw new Error("A1 visible support proof cannot resolve model -> gate anchor -> fleet -> fleet-parent hierarchy");
+  }
+  fleetParent.updateWorldMatrix(true, true);
   model.updateWorldMatrix(true, true);
   mesh.updateWorldMatrix(true, false);
 
@@ -132,14 +136,14 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
   const rotundaWorld = objectCenter(THREE, model.getObjectByName("Rotunda"));
   const cabWorld = objectCenter(THREE, model.getObjectByName("Cab"));
 
-  // The exact-GLB prototype is normalized to ground contact before cloning and the
-  // A1 model is mounted beneath its gate-placement anchor. Therefore anchor-local
-  // Y=0 is the independent pavement registration plane in whatever final parent
-  // frame is active. Transform that plane to scene world space instead of assuming
-  // global Y=0 or deriving ground from any Tunnel-C vertex.
-  const rampReferenceWorld = placementAnchor.localToWorld(new THREE.Vector3(0, 0, 0));
+  // The existing exact A1 bogie grounding contract measures Tunnel-C in fleet-parent
+  // coordinates, translates the fleet until that measured contact reaches local Y=0,
+  // and then verifies the result. Therefore fleetParent local Y=0 is the independent
+  // ramp plane already used by the shipping geometry. Transform that known plane to
+  // scene world space here; do not infer pavement from the carrier or support islands.
+  const rampReferenceWorld = fleetParent.localToWorld(new THREE.Vector3(0, 0, 0));
   const rampY = rampReferenceWorld.y;
-  if (!Number.isFinite(rampY)) throw new Error("A1 visible support proof has no finite transformed gate-anchor pavement plane");
+  if (!Number.isFinite(rampY)) throw new Error("A1 visible support proof has no finite transformed fleet-parent ramp plane");
 
   const isAircraftSide = (entry) => Number.isFinite(entry.alongRatio) && entry.alongRatio >= 0.35 && entry.alongRatio <= 1.05
     && Number.isFinite(entry.lateralDistance) && entry.lateralDistance <= 5.5;
@@ -149,8 +153,9 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
     && entry.horizontalSpan <= 1.80 && entry.verticalAspect >= 1.05;
 
   const supportSet = measurements.filter((entry) => visibleSupport(entry));
-  if (supportSet.length !== 5 || supportSet.reduce((sum, entry) => sum + entry.triangleCount, 0) !== 1311) {
-    throw new Error(`A1 visible support proof expected the complete five-island/1311-triangle support set, found ${supportSet.length}/${supportSet.reduce((sum, entry) => sum + entry.triangleCount, 0)}`);
+  const supportTriangleCount = supportSet.reduce((sum, entry) => sum + entry.triangleCount, 0);
+  if (supportSet.length !== 5 || supportTriangleCount !== 1311) {
+    throw new Error(`A1 visible support proof expected the complete five-island/1311-triangle support set, found ${supportSet.length}/${supportTriangleCount}`);
   }
   const alreadyGrounded = supportSet.filter((entry) => Math.abs(entry.clearanceMeters) <= MAX_FINAL_CLEARANCE_METERS);
   const selected = supportSet.filter((entry) => entry.clearanceMeters > MAX_FINAL_CLEARANCE_METERS);
@@ -159,7 +164,7 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
     const diagnostic = invalid.map((entry) => ({ triangles: entry.triangleCount, minimumWorldY: Number(entry.box.min.y.toFixed(3)),
       maximumWorldY: Number(entry.box.max.y.toFixed(3)), clearance: Number(entry.clearanceMeters.toFixed(3)),
       along: Number(entry.alongRatio.toFixed(3)), lateral: Number(entry.lateralDistance.toFixed(3)) }));
-    throw new Error(`A1 visible support proof found support components outside the transformed gate-anchor pavement envelope rampY=${rampY.toFixed(3)}: ${JSON.stringify(diagnostic)}`);
+    throw new Error(`A1 visible support proof found support components outside the transformed fleet-parent ramp envelope rampY=${rampY.toFixed(3)}: ${JSON.stringify(diagnostic)}`);
   }
 
   const extensions = selected.map((entry) => telescopeToRamp(THREE, mesh, position, entry, rampY));
@@ -176,7 +181,7 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
   if (maximumFinalClearanceMeters > MAX_FINAL_CLEARANCE_METERS) throw new Error(`A1 visible support proof still floats/intersects pavement: clearance=${maximumFinalClearanceMeters}`);
   if (maximumTopMountDriftMeters > MAX_TOP_MOUNT_DRIFT_METERS) throw new Error(`A1 visible support proof moved an upper mount: drift=${maximumTopMountDriftMeters}`);
   const remaining = finalSupportSet.filter((entry) => Math.abs(entry.clearanceMeters) > MAX_FINAL_CLEARANCE_METERS);
-  if (remaining.length) throw new Error(`A1 visible support proof found ${remaining.length} support component(s) not seated on transformed gate-anchor pavement`);
+  if (remaining.length) throw new Error(`A1 visible support proof found ${remaining.length} support component(s) not seated on transformed fleet-parent ramp`);
 
   return Object.freeze({ authority: AUTHORITY, groundedComponentCount: supportSet.length, newlyGroundedComponentCount: selected.length,
     alreadyGroundedComponentCount: alreadyGrounded.length, groundedTriangleCount: 1311,
@@ -185,7 +190,7 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
     maximumExtensionMeters: extensions.length ? Math.max(...extensions.map((entry) => entry.extensionMeters)) : 0,
     maximumFinalClearanceMeters, maximumTopMountDriftMeters, rampWorldY: rampY,
     rampReferenceComponentCount: 1, rampReferenceSpreadMeters: 0,
-    rampReferenceAuthority: "transformed-uploaded-a1-gate-anchor-local-y0", componentAlongRatios: supportSet.map((entry) => entry.alongRatio),
+    rampReferenceAuthority: "transformed-uploaded-a1-fleet-parent-local-y0", componentAlongRatios: supportSet.map((entry) => entry.alongRatio),
     componentLateralDistancesMeters: supportSet.map((entry) => entry.lateralDistance) });
 }
 
