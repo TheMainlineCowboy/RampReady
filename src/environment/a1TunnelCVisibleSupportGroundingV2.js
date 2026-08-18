@@ -1,4 +1,4 @@
-const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v13-rendered-pavement-branch-scan";
+const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v14-rendered-pavement-vertex-branch-scan";
 const MAX_GROUNDING_EXTENSION_METERS = 4.0;
 const MAX_FINAL_CLEARANCE_METERS = 0.015;
 const MAX_TOP_MOUNT_DRIFT_METERS = 0.015;
@@ -6,27 +6,31 @@ const MAX_PAVEMENT_SAMPLE_SPREAD_METERS = 0.08;
 const VERTEX_KEY_SCALE = 10000;
 const LOWER_RIGID_FRACTION = 0.30;
 const UPPER_RIGID_FRACTION = 0.76;
-const ABOVE_PAVEMENT_BRANCH_MARGIN_METERS = 0.025;
+const ABOVE_PAVEMENT_MARGIN_METERS = 0.02;
 const PHOTO_GROUND_NAMES = Object.freeze([
   "PHX_KPHX_SourceAuthoredPhotoGround_Tiled",
   "PHX_KPHX_SourceAuthoredPhotoGround",
 ]);
 
-function vertexKey(position, index) {
-  return `${Math.round(position.getX(index) * VERTEX_KEY_SCALE)},${Math.round(position.getY(index) * VERTEX_KEY_SCALE)},${Math.round(position.getZ(index) * VERTEX_KEY_SCALE)}`;
+function vertexKeyXYZ(x, y, z) {
+  return `${Math.round(x * VERTEX_KEY_SCALE)},${Math.round(y * VERTEX_KEY_SCALE)},${Math.round(z * VERTEX_KEY_SCALE)}`;
 }
 
-function findTriangleComponents(position, triangleIndices = null) {
-  if (!position || position.count % 3 !== 0) throw new Error(`A1 Tunnel-C visible support proof requires triangle-addressable geometry: vertices=${position?.count}`);
-  const triangles = triangleIndices || Array.from({ length: position.count / 3 }, (_, index) => index);
-  if (!triangles.length) return [];
-  const parent = new Map(triangles.map((triangle) => [triangle, triangle]));
+function vertexKey(position, index) {
+  return vertexKeyXYZ(position.getX(index), position.getY(index), position.getZ(index));
+}
+
+function findTriangleComponents(position) {
+  if (!position || position.count % 3 !== 0) throw new Error(`A1 Tunnel-C support proof requires triangle-addressable geometry: vertices=${position?.count}`);
+  const triangleCount = position.count / 3;
+  const parent = new Int32Array(triangleCount);
+  for (let i = 0; i < triangleCount; i += 1) parent[i] = i;
   const find = (value) => {
     let root = value;
-    while (parent.get(root) !== root) root = parent.get(root);
-    while (parent.get(value) !== value) {
-      const next = parent.get(value);
-      parent.set(value, root);
+    while (parent[root] !== root) root = parent[root];
+    while (parent[value] !== value) {
+      const next = parent[value];
+      parent[value] = root;
       value = next;
     }
     return root;
@@ -34,20 +38,19 @@ function findTriangleComponents(position, triangleIndices = null) {
   const union = (a, b) => {
     const ra = find(a);
     const rb = find(b);
-    if (ra !== rb) parent.set(rb, ra);
+    if (ra !== rb) parent[rb] = ra;
   };
   const firstTriangleByVertex = new Map();
-  for (const triangle of triangles) {
+  for (let triangle = 0; triangle < triangleCount; triangle += 1) {
     for (let corner = 0; corner < 3; corner += 1) {
-      const index = triangle * 3 + corner;
-      const key = vertexKey(position, index);
+      const key = vertexKey(position, triangle * 3 + corner);
       const first = firstTriangleByVertex.get(key);
       if (first === undefined) firstTriangleByVertex.set(key, triangle);
       else union(triangle, first);
     }
   }
   const byRoot = new Map();
-  for (const triangle of triangles) {
+  for (let triangle = 0; triangle < triangleCount; triangle += 1) {
     const root = find(triangle);
     if (!byRoot.has(root)) byRoot.set(root, []);
     byRoot.get(root).push(triangle);
@@ -59,21 +62,7 @@ function objectCenter(THREE, object) {
   return object ? new THREE.Box3().setFromObject(object).getCenter(new THREE.Vector3()) : null;
 }
 
-function measureComponent(THREE, mesh, position, triangles, rotundaWorld, cabWorld) {
-  const box = new THREE.Box3();
-  const local = new THREE.Vector3();
-  const world = new THREE.Vector3();
-  for (const triangle of triangles) {
-    const base = triangle * 3;
-    for (let corner = 0; corner < 3; corner += 1) {
-      local.fromBufferAttribute(position, base + corner);
-      world.copy(local).applyMatrix4(mesh.matrixWorld);
-      box.expandByPoint(world);
-    }
-  }
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
-  const horizontalSpan = Math.max(size.x, size.z);
+function bridgeLocation(THREE, center, rotundaWorld, cabWorld) {
   let alongRatio = NaN;
   let lateralDistance = NaN;
   if (rotundaWorld && cabWorld) {
@@ -86,6 +75,23 @@ function measureComponent(THREE, mesh, position, triangles, rotundaWorld, cabWor
       lateralDistance = Math.hypot(center.x - projected.x, center.z - projected.z);
     }
   }
+  return { alongRatio, lateralDistance };
+}
+
+function measureTriangles(THREE, mesh, position, triangles, rotundaWorld, cabWorld) {
+  const box = new THREE.Box3();
+  const local = new THREE.Vector3();
+  const world = new THREE.Vector3();
+  for (const triangle of triangles) {
+    for (let corner = 0; corner < 3; corner += 1) {
+      local.fromBufferAttribute(position, triangle * 3 + corner);
+      world.copy(local).applyMatrix4(mesh.matrixWorld);
+      box.expandByPoint(world);
+    }
+  }
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const horizontalSpan = Math.max(size.x, size.z);
   return {
     triangles,
     triangleCount: triangles.length,
@@ -94,8 +100,31 @@ function measureComponent(THREE, mesh, position, triangles, rotundaWorld, cabWor
     size,
     horizontalSpan,
     verticalAspect: size.y / Math.max(horizontalSpan, 0.01),
-    alongRatio,
-    lateralDistance,
+    ...bridgeLocation(THREE, center, rotundaWorld, cabWorld),
+  };
+}
+
+function measureVertexIndices(THREE, mesh, position, vertexIndices, rotundaWorld, cabWorld) {
+  const box = new THREE.Box3();
+  const local = new THREE.Vector3();
+  const world = new THREE.Vector3();
+  for (const index of vertexIndices) {
+    local.fromBufferAttribute(position, index);
+    world.copy(local).applyMatrix4(mesh.matrixWorld);
+    box.expandByPoint(world);
+  }
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const horizontalSpan = Math.max(size.x, size.z);
+  return {
+    vertexIndices,
+    vertexCount: vertexIndices.length,
+    box,
+    center,
+    size,
+    horizontalSpan,
+    verticalAspect: size.y / Math.max(horizontalSpan, 0.01),
+    ...bridgeLocation(THREE, center, rotundaWorld, cabWorld),
   };
 }
 
@@ -125,49 +154,6 @@ function sampleRenderedPavementY(THREE, photoGround, x, z, highY) {
   return hit.point.y;
 }
 
-function triangleMinimumWorldY(THREE, mesh, position, triangle) {
-  const local = new THREE.Vector3();
-  const world = new THREE.Vector3();
-  let minimum = Number.POSITIVE_INFINITY;
-  for (let corner = 0; corner < 3; corner += 1) {
-    local.fromBufferAttribute(position, triangle * 3 + corner);
-    world.copy(local).applyMatrix4(mesh.matrixWorld);
-    minimum = Math.min(minimum, world.y);
-  }
-  return minimum;
-}
-
-function telescopeToRamp(THREE, mesh, position, measurement, rampY) {
-  const beforeMinY = measurement.box.min.y;
-  const beforeMaxY = measurement.box.max.y;
-  const height = beforeMaxY - beforeMinY;
-  const extension = beforeMinY - rampY;
-  if (!(height > 0.15) || !(extension > 0) || extension > MAX_GROUNDING_EXTENSION_METERS) {
-    throw new Error(`A1 visible support cannot telescope to rendered pavement: height=${height}, extension=${extension}, rampY=${rampY}`);
-  }
-  const inverseWorld = mesh.matrixWorld.clone().invert();
-  const local = new THREE.Vector3();
-  const world = new THREE.Vector3();
-  for (const triangle of measurement.triangles) {
-    for (let corner = 0; corner < 3; corner += 1) {
-      const index = triangle * 3 + corner;
-      local.fromBufferAttribute(position, index);
-      world.copy(local).applyMatrix4(mesh.matrixWorld);
-      const fraction = Math.max(0, Math.min(1, (world.y - beforeMinY) / height));
-      let downward = 0;
-      if (fraction <= LOWER_RIGID_FRACTION) downward = extension;
-      else if (fraction < UPPER_RIGID_FRACTION) {
-        const blend = (fraction - LOWER_RIGID_FRACTION) / (UPPER_RIGID_FRACTION - LOWER_RIGID_FRACTION);
-        downward = extension * (1 - blend);
-      }
-      world.y -= downward;
-      local.copy(world).applyMatrix4(inverseWorld);
-      position.setXYZ(index, local.x, local.y, local.z);
-    }
-  }
-  return { extensionMeters: extension, beforeTopY: beforeMaxY };
-}
-
 function isAircraftSide(entry) {
   return Number.isFinite(entry.alongRatio)
     && entry.alongRatio >= 0.35
@@ -187,31 +173,100 @@ function compactVerticalHardware(entry) {
     && entry.verticalAspect >= 0.8;
 }
 
-function crossingHangingBranch(entry) {
-  return isAircraftSide(entry)
-    && entry.triangleCount >= 4
-    && entry.triangleCount <= 1200
-    && entry.size.y >= 0.25
-    && entry.size.y <= 3.2
-    && entry.horizontalSpan >= 0.02
-    && entry.horizontalSpan <= 0.85
-    && entry.verticalAspect >= 1.15;
+function telescopeIndicesToRamp(THREE, mesh, position, indices, beforeMinY, beforeMaxY, rampY) {
+  const height = beforeMaxY - beforeMinY;
+  const extension = beforeMinY - rampY;
+  if (!(height > 0.08) || !(extension > 0) || extension > MAX_GROUNDING_EXTENSION_METERS) {
+    throw new Error(`A1 visible support cannot telescope to rendered pavement: height=${height}, extension=${extension}, rampY=${rampY}`);
+  }
+  const inverseWorld = mesh.matrixWorld.clone().invert();
+  const local = new THREE.Vector3();
+  const world = new THREE.Vector3();
+  for (const index of indices) {
+    local.fromBufferAttribute(position, index);
+    world.copy(local).applyMatrix4(mesh.matrixWorld);
+    const fraction = Math.max(0, Math.min(1, (world.y - beforeMinY) / height));
+    let downward = 0;
+    if (fraction <= LOWER_RIGID_FRACTION) downward = extension;
+    else if (fraction < UPPER_RIGID_FRACTION) {
+      const blend = (fraction - LOWER_RIGID_FRACTION) / (UPPER_RIGID_FRACTION - LOWER_RIGID_FRACTION);
+      downward = extension * (1 - blend);
+    }
+    world.y -= downward;
+    local.copy(world).applyMatrix4(inverseWorld);
+    position.setXYZ(index, local.x, local.y, local.z);
+  }
+  return { extensionMeters: extension, beforeTopY: beforeMaxY };
 }
 
-function resolveCrossingHangingBranches(THREE, mesh, position, crossingCandidates, rotundaWorld, cabWorld) {
-  const branches = [];
-  for (const candidate of crossingCandidates) {
-    const aboveTriangles = candidate.triangles.filter((triangle) => (
-      triangleMinimumWorldY(THREE, mesh, position, triangle) > candidate.rampY + ABOVE_PAVEMENT_BRANCH_MARGIN_METERS
-    ));
-    for (const triangles of findTriangleComponents(position, aboveTriangles)) {
-      const measured = measureComponent(THREE, mesh, position, triangles, rotundaWorld, cabWorld);
-      measured.rampY = candidate.rampY;
-      measured.clearanceMeters = measured.box.min.y - measured.rampY;
-      if (crossingHangingBranch(measured) && measured.clearanceMeters > MAX_FINAL_CLEARANCE_METERS) {
-        branches.push(measured);
-      }
+function triangleVertexIndices(triangles) {
+  const indices = [];
+  for (const triangle of triangles) indices.push(triangle * 3, triangle * 3 + 1, triangle * 3 + 2);
+  return indices;
+}
+
+function resolveAbovePavementVertexBranches(THREE, mesh, position, candidate, rotundaWorld, cabWorld) {
+  const local = new THREE.Vector3();
+  const world = new THREE.Vector3();
+  const keyToIndices = new Map();
+  const parent = new Map();
+  const find = (key) => {
+    let root = key;
+    while (parent.get(root) !== root) root = parent.get(root);
+    while (parent.get(key) !== key) {
+      const next = parent.get(key);
+      parent.set(key, root);
+      key = next;
     }
+    return root;
+  };
+  const union = (a, b) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent.set(rb, ra);
+  };
+
+  for (const triangle of candidate.triangles) {
+    const aboveKeys = [];
+    for (let corner = 0; corner < 3; corner += 1) {
+      const index = triangle * 3 + corner;
+      local.fromBufferAttribute(position, index);
+      world.copy(local).applyMatrix4(mesh.matrixWorld);
+      if (world.y <= candidate.rampY + ABOVE_PAVEMENT_MARGIN_METERS) continue;
+      const key = vertexKey(position, index);
+      if (!parent.has(key)) parent.set(key, key);
+      if (!keyToIndices.has(key)) keyToIndices.set(key, []);
+      keyToIndices.get(key).push(index);
+      aboveKeys.push(key);
+    }
+    for (let i = 1; i < aboveKeys.length; i += 1) union(aboveKeys[0], aboveKeys[i]);
+  }
+
+  const keysByRoot = new Map();
+  for (const key of parent.keys()) {
+    const root = find(key);
+    if (!keysByRoot.has(root)) keysByRoot.set(root, []);
+    keysByRoot.get(root).push(key);
+  }
+
+  const branches = [];
+  for (const keys of keysByRoot.values()) {
+    const indices = [...new Set(keys.flatMap((key) => keyToIndices.get(key) || []))];
+    if (indices.length < 6) continue;
+    const measured = measureVertexIndices(THREE, mesh, position, indices, rotundaWorld, cabWorld);
+    measured.rampY = candidate.rampY;
+    measured.clearanceMeters = measured.box.min.y - measured.rampY;
+    if (
+      isAircraftSide(measured)
+      && measured.vertexCount >= 6
+      && measured.size.y >= 0.12
+      && measured.size.y <= 3.5
+      && measured.horizontalSpan >= 0.01
+      && measured.horizontalSpan <= 1.35
+      && measured.verticalAspect >= 0.9
+      && measured.clearanceMeters > MAX_FINAL_CLEARANCE_METERS
+      && measured.clearanceMeters <= MAX_GROUNDING_EXTENSION_METERS
+    ) branches.push(measured);
   }
   return branches;
 }
@@ -232,82 +287,61 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
   const components = findTriangleComponents(position);
   const rotundaWorld = objectCenter(THREE, model.getObjectByName("Rotunda"));
   const cabWorld = objectCenter(THREE, model.getObjectByName("Cab"));
-
-  const measurements = components.map((triangles) => measureComponent(THREE, mesh, position, triangles, rotundaWorld, cabWorld));
+  const measurements = components.map((triangles) => measureTriangles(THREE, mesh, position, triangles, rotundaWorld, cabWorld));
   const candidates = measurements.filter((entry) => compactVerticalHardware(entry));
   if (!candidates.length) throw new Error("A1 visible support proof found no compact aircraft-side Tunnel-C hardware candidates");
+
   const highY = Math.max(...candidates.map((entry) => entry.box.max.y), 1) + 40;
   for (const entry of candidates) {
     entry.rampY = sampleRenderedPavementY(THREE, photoGround, entry.center.x, entry.center.z, highY);
     entry.clearanceMeters = entry.box.min.y - entry.rampY;
   }
-
-  const abovePavement = candidates.filter((entry) => entry.clearanceMeters > MAX_FINAL_CLEARANCE_METERS
-    && entry.clearanceMeters <= MAX_GROUNDING_EXTENSION_METERS);
+  const abovePavement = candidates.filter((entry) => entry.clearanceMeters > MAX_FINAL_CLEARANCE_METERS && entry.clearanceMeters <= MAX_GROUNDING_EXTENSION_METERS);
   const alreadySeated = candidates.filter((entry) => Math.abs(entry.clearanceMeters) <= MAX_FINAL_CLEARANCE_METERS);
   const buried = candidates.filter((entry) => entry.box.max.y < entry.rampY - MAX_FINAL_CLEARANCE_METERS);
-  const crossingPavement = candidates.filter((entry) => entry.box.min.y < entry.rampY - MAX_FINAL_CLEARANCE_METERS
-    && entry.box.max.y >= entry.rampY - MAX_FINAL_CLEARANCE_METERS);
-
+  const crossingPavement = candidates.filter((entry) => entry.box.min.y < entry.rampY - MAX_FINAL_CLEARANCE_METERS && entry.box.max.y >= entry.rampY - MAX_FINAL_CLEARANCE_METERS);
   if (!abovePavement.length) throw new Error("A1 visible support proof found no wholly suspended compact support candidates");
 
-  const crossingBranches = resolveCrossingHangingBranches(
-    THREE, mesh, position, crossingPavement, rotundaWorld, cabWorld,
-  );
+  const crossingBranches = crossingPavement.flatMap((entry) => resolveAbovePavementVertexBranches(THREE, mesh, position, entry, rotundaWorld, cabWorld));
   if (!crossingBranches.length) {
-    const diagnostic = crossingPavement.map((entry) => ({
-      triangles: entry.triangleCount,
-      minY: Number(entry.box.min.y.toFixed(3)),
-      maxY: Number(entry.box.max.y.toFixed(3)),
-      pavementY: Number(entry.rampY.toFixed(3)),
-      horizontal: Number(entry.horizontalSpan.toFixed(3)),
-      aspect: Number(entry.verticalAspect.toFixed(3)),
-    }));
-    throw new Error(`A1 visible support proof found no hanging branch inside pavement-crossing hardware: ${JSON.stringify(diagnostic)}`);
+    throw new Error(`A1 visible support proof found no above-pavement vertex branches inside ${crossingPavement.length} mixed support components`);
   }
 
-  const rampYs = [
-    ...abovePavement.map((entry) => entry.rampY),
-    ...crossingBranches.map((entry) => entry.rampY),
-  ];
+  const rampYs = [...abovePavement.map((entry) => entry.rampY), ...crossingBranches.map((entry) => entry.rampY)];
   const rampReferenceSpreadMeters = Math.max(...rampYs) - Math.min(...rampYs);
-  if (rampReferenceSpreadMeters > MAX_PAVEMENT_SAMPLE_SPREAD_METERS) {
-    throw new Error(`A1 visible support rendered pavement samples disagree by ${rampReferenceSpreadMeters} m: ${JSON.stringify(rampYs)}`);
+  if (rampReferenceSpreadMeters > MAX_PAVEMENT_SAMPLE_SPREAD_METERS) throw new Error(`A1 visible support pavement samples disagree by ${rampReferenceSpreadMeters} m`);
+
+  const corrections = [];
+  for (const entry of abovePavement) {
+    const indices = triangleVertexIndices(entry.triangles);
+    const result = telescopeIndicesToRamp(THREE, mesh, position, indices, entry.box.min.y, entry.box.max.y, entry.rampY);
+    corrections.push({ kind: "whole", indices, rampY: entry.rampY, beforeTopY: result.beforeTopY, extensionMeters: result.extensionMeters });
+  }
+  for (const branch of crossingBranches) {
+    const result = telescopeIndicesToRamp(THREE, mesh, position, branch.vertexIndices, branch.box.min.y, branch.box.max.y, branch.rampY);
+    corrections.push({ kind: "mixed-vertex-branch", indices: branch.vertexIndices, rampY: branch.rampY, beforeTopY: result.beforeTopY, extensionMeters: result.extensionMeters });
   }
 
-  const correctionEntries = [...abovePavement, ...crossingBranches];
-  const extensionByTriangles = new Map();
-  for (const entry of correctionEntries) {
-    extensionByTriangles.set(entry.triangles, telescopeToRamp(THREE, mesh, position, entry, entry.rampY));
-  }
   position.needsUpdate = true;
   geometry.computeBoundingBox();
   geometry.computeBoundingSphere();
   mesh.updateMatrixWorld(true);
   model.updateWorldMatrix(true, true);
 
-  const finalCorrected = correctionEntries.map((entry) => {
-    const measured = measureComponent(THREE, mesh, position, entry.triangles, rotundaWorld, cabWorld);
-    measured.rampY = sampleRenderedPavementY(THREE, photoGround, measured.center.x, measured.center.z, highY);
-    measured.clearanceMeters = measured.box.min.y - measured.rampY;
-    return measured;
-  });
-  const remainingSuspendedCorrected = finalCorrected.filter((entry) => Math.abs(entry.clearanceMeters) > MAX_FINAL_CLEARANCE_METERS);
-  const maximumFinalClearanceMeters = Math.max(...finalCorrected.map((entry) => Math.abs(entry.clearanceMeters)));
+  let maximumFinalClearanceMeters = 0;
   let maximumTopMountDriftMeters = 0;
-  for (const finalEntry of finalCorrected) {
-    const extension = extensionByTriangles.get(finalEntry.triangles);
-    maximumTopMountDriftMeters = Math.max(maximumTopMountDriftMeters, Math.abs(finalEntry.box.max.y - extension.beforeTopY));
+  let remainingSuspendedSupportCount = 0;
+  for (const correction of corrections) {
+    const measured = measureVertexIndices(THREE, mesh, position, correction.indices, rotundaWorld, cabWorld);
+    const rampY = sampleRenderedPavementY(THREE, photoGround, measured.center.x, measured.center.z, highY);
+    const clearance = measured.box.min.y - rampY;
+    maximumFinalClearanceMeters = Math.max(maximumFinalClearanceMeters, Math.abs(clearance));
+    maximumTopMountDriftMeters = Math.max(maximumTopMountDriftMeters, Math.abs(measured.box.max.y - correction.beforeTopY));
+    if (Math.abs(clearance) > MAX_FINAL_CLEARANCE_METERS) remainingSuspendedSupportCount += 1;
   }
-  if (maximumFinalClearanceMeters > MAX_FINAL_CLEARANCE_METERS) {
-    throw new Error(`A1 visible support proof still floats/intersects rendered pavement: clearance=${maximumFinalClearanceMeters}`);
-  }
-  if (maximumTopMountDriftMeters > MAX_TOP_MOUNT_DRIFT_METERS) {
-    throw new Error(`A1 visible support proof moved an upper mount: drift=${maximumTopMountDriftMeters}`);
-  }
-  if (remainingSuspendedCorrected.length) {
-    throw new Error(`A1 visible support proof found ${remainingSuspendedCorrected.length} corrected support/branch set(s) still suspended`);
-  }
+  if (maximumFinalClearanceMeters > MAX_FINAL_CLEARANCE_METERS) throw new Error(`A1 visible support proof still floats/intersects rendered pavement: clearance=${maximumFinalClearanceMeters}`);
+  if (maximumTopMountDriftMeters > MAX_TOP_MOUNT_DRIFT_METERS) throw new Error(`A1 visible support proof moved an upper mount: drift=${maximumTopMountDriftMeters}`);
+  if (remainingSuspendedSupportCount) throw new Error(`A1 visible support proof found ${remainingSuspendedSupportCount} corrected support set(s) still suspended`);
 
   return Object.freeze({
     authority: AUTHORITY,
@@ -318,21 +352,20 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
     buriedCandidateCount: buried.length,
     pavementCrossingCandidateCount: crossingPavement.length,
     crossingHangingBranchCount: crossingBranches.length,
-    crossingHangingBranchTriangleCount: crossingBranches.reduce((sum, entry) => sum + entry.triangleCount, 0),
-    correctedSupportSetCount: correctionEntries.length,
-    visibleLoadLegCount: abovePavement.length + crossingBranches.length,
-    remainingSuspendedSupportCount: 0,
-    maximumBeforeClearanceMeters: Math.max(...correctionEntries.map((entry) => entry.clearanceMeters)),
-    maximumExtensionMeters: Math.max(...correctionEntries.map((entry) => extensionByTriangles.get(entry.triangles).extensionMeters)),
+    crossingHangingBranchVertexCount: crossingBranches.reduce((sum, entry) => sum + entry.vertexCount, 0),
+    correctedSupportSetCount: corrections.length,
+    visibleLoadLegCount: corrections.length,
+    remainingSuspendedSupportCount,
+    maximumBeforeClearanceMeters: Math.max(...abovePavement.map((entry) => entry.clearanceMeters), ...crossingBranches.map((entry) => entry.clearanceMeters)),
+    maximumExtensionMeters: Math.max(...corrections.map((entry) => entry.extensionMeters)),
     maximumFinalClearanceMeters,
     maximumTopMountDriftMeters,
     rampWorldY: rampYs.reduce((sum, value) => sum + value, 0) / rampYs.length,
     rampReferenceComponentCount: rampYs.length,
     rampReferenceSpreadMeters,
-    rampReferenceAuthority: "rendered-kphx-source-aerial-raycast-under-wholly-suspended-and-crossing-hanging-branches",
+    rampReferenceAuthority: "rendered-kphx-source-aerial-raycast-under-whole-and-mixed-vertex-support-branches",
     groundedTriangleCounts: abovePavement.map((entry) => entry.triangleCount),
-    crossingHangingBranchTriangleCounts: crossingBranches.map((entry) => entry.triangleCount),
-    componentRampWorldYs: rampYs,
+    crossingBranchVertexCounts: crossingBranches.map((entry) => entry.vertexCount),
   });
 }
 
