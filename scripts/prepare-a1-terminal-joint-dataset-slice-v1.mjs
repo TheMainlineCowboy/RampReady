@@ -7,6 +7,10 @@ const keys = [
   'terminal4UploadedJetwayLoadState','terminal4UploadedJetwayCount',
   'terminal4UploadedJetwayA1VisibleVestibuleLengthMeters','terminal4UploadedJetwayA1ConnectorStyleAuthority','terminal4A1JetwayWallDistance',
   'inspectionAircraftDoorVerticalErrorMeters',
+  'inspectionAircraftCabDoorFacingVertexCount','inspectionAircraftCabDoorMinimumHorizontalVertexDistanceMeters',
+  'inspectionAircraftCabDoorContactPlaneCovered','inspectionAircraftCabDoorLaterallyCovered','inspectionAircraftCabDoorVerticallyCovered',
+  'inspectionAircraftCabDoorMinimumHeightMeters','inspectionAircraftCabDoorMaximumHeightMeters',
+  'inspectionAircraftCabDoorContactAuthority','inspectionAircraftFixedSourceGateAuthority',
   'terminal4UploadedJetwayBogieGroundContactAuthority','terminal4UploadedJetwayBogieGroundClearanceMeters',
   'inspectionCameraEndpointSubviewAuthority','inspectionCameraEndpointJointAircraftSideShiftMeters',
   'inspectionCameraEndpointSubview','inspectionCameraEndpointAuthority','inspectionCameraEndpointLockAuthority',
@@ -22,7 +26,12 @@ const keys = [
   'terminal4UploadedJetwayBogieGroundContactClusterCount','terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters',
   'terminal4A1ConnectionAuthority','inspectionMode','inspectionPreset','a1JetwayDeployment','a1JetwayState'
 ];
-const requiredPhotoFields = ['terminal4UploadedJetwayA1ConnectorStyleAuthority','inspectionAircraftDoorVerticalErrorMeters'];
+const requiredPhotoFields = [
+  'terminal4UploadedJetwayA1ConnectorStyleAuthority',
+  'inspectionAircraftCabDoorFacingVertexCount','inspectionAircraftCabDoorMinimumHorizontalVertexDistanceMeters',
+  'inspectionAircraftCabDoorContactPlaneCovered','inspectionAircraftCabDoorLaterallyCovered','inspectionAircraftCabDoorVerticallyCovered',
+  'inspectionAircraftCabDoorMinimumHeightMeters','inspectionAircraftCabDoorMaximumHeightMeters'
+];
 for (const key of requiredPhotoFields) {
   if (!keys.includes(key)) throw new Error(`A1 terminal-joint evidence slice is missing required photo field: ${key}`);
 }
@@ -34,4 +43,4 @@ if (source.includes(legacy) || source.includes('canvas.evaluate((element, keys)'
   throw new Error('A locator-based A1 terminal-joint dataset transfer survived bounded evidence preparation');
 }
 fs.writeFileSync(path, source);
-console.log(`Bounded A1 terminal-joint dataset transfer to ${keys.length} fields across ${occurrences} direct page-context reads, retaining photo connector and door-fit authority.`);
+console.log(`Bounded A1 terminal-joint dataset transfer to ${keys.length} fields across ${occurrences} direct page-context reads, retaining exact Cab surface, photo connector and grounded-bogie authority.`);
