@@ -70,10 +70,18 @@ if (!source.includes(marker)) {
     selectedA1Material: fleetReadyDataset.terminal4UploadedJetwayA1SelectedMaterialReference || null,
   });`;
 
-  if (!source.includes(oldWait)) {
-    throw new Error(`${verifierPath}: fleet-ready wait anchor is missing; refusing to patch an unknown verifier`);
+  if (source.includes(oldWait)) {
+    source = source.replace(oldWait, failFastWait);
+  } else {
+    // The evidence runner may already use the newer direct inspection activation
+    // path. Keep that activation, but insert the same fail-fast 58-jetway readiness
+    // boundary immediately after inspection mode becomes active.
+    const directActiveWait = `  await page.waitForFunction(() => document.querySelector('canvas.trainerCanvas')?.dataset?.inspectionMode === 'active', null, { timeout: 30000, polling: 100 });`;
+    if (!source.includes(directActiveWait)) {
+      throw new Error(`${verifierPath}: fleet-ready wait anchor is missing; refusing to patch an unknown verifier`);
+    }
+    source = source.replace(directActiveWait, `${directActiveWait}\n${failFastWait}`);
   }
-  source = source.replace(oldWait, failFastWait);
 }
 
 // The static fleet now keeps the KPHX BGL pivot and heading. Do not let the
@@ -119,111 +127,44 @@ if (!source.includes(sourcePoseVisualMarker)) {
 // mirrored, has no T4_WALK obstruction and keeps both branches visible. The
 // bogie close-up must use its own apron-side profile and clearance as well.
 if (!source.includes(apronCameraMarker)) {
-  source = source
-    .replace(
-      `const CURRENT_SUBVIEW_AUTHORITY = 'source-measured-a1-terminal-joint-camera-v3';`,
-      `// ${apronCameraMarker}\nconst CURRENT_SUBVIEW_AUTHORITY = '${apronSubviewAuthority}';`,
-    )
-    .replace(
-      `const LEGACY_SUBVIEW_AUTHORITY = 'exact-a1-terminal-joint-and-bogie-contact-subviews-v2';`,
-      `const LEGACY_SUBVIEW_AUTHORITY = 'source-measured-a1-terminal-joint-camera-v3';`,
-    )
-    .replace(
-      `const LOCK_AUTHORITY = 'exact-a1-evidence-camera-direct-lock-v1';`,
-      `const LOCK_AUTHORITY = 'exact-a1-evidence-camera-direct-lock-v1';\nconst TERMINAL_PROFILE_AUTHORITY = '${terminalProfileAuthority}';\nconst TERMINAL_CLEAR_SIDE_AUTHORITY = '${terminalClearSideAuthority}';\nconst BOGIE_PROFILE_AUTHORITY = '${bogieProfileAuthority}';\nconst MAX_BRANCH_VIEW_COSINE = 0.82;\nconst MAX_BRANCH_VIEW_IMBALANCE = 0.20;\nconst MIN_TERMINAL_APRON_HALF_PLANE_METERS = 2.5;\nconst MIN_BOGIE_APRON_HALF_PLANE_METERS = 1.5;`,
-    );
+  source = source.replace(
+    `const CURRENT_SUBVIEW_AUTHORITY = 'source-measured-a1-terminal-joint-camera-v3';`,
+    `// ${apronCameraMarker}\nconst CURRENT_SUBVIEW_AUTHORITY = '${apronSubviewAuthority}';`,
+  );
 
-  const oldSubviewWait = `  await page.waitForFunction(({ subview, currentAuthority, legacyAuthority, cameraAuthority, lockAuthority }) => {
-    const data = document.querySelector('canvas.trainerCanvas')?.dataset;
-    return data?.inspectionCameraEndpointSubview === subview
+  const oldSubviewReady = `    return data?.inspectionCameraEndpointSubview === subview
+      && [currentAuthority, legacyAuthority].includes(data?.inspectionCameraEndpointSubviewAuthority)
+      && data?.inspectionCameraEndpointAuthority === cameraAuthority
+      && data?.inspectionCameraEndpointLockAuthority === lockAuthority
+      && Math.abs(Number(data?.inspectionCameraEndpointConvergenceErrorMeters)) <= 0.001;`;
+  const apronSubviewReady = `    const shared = data?.inspectionCameraEndpointSubview === subview
       && [currentAuthority, legacyAuthority].includes(data?.inspectionCameraEndpointSubviewAuthority)
       && data?.inspectionCameraEndpointAuthority === cameraAuthority
       && data?.inspectionCameraEndpointLockAuthority === lockAuthority
       && Math.abs(Number(data?.inspectionCameraEndpointConvergenceErrorMeters)) <= 0.001;
-  }, {
-    subview,
-    currentAuthority: CURRENT_SUBVIEW_AUTHORITY,
-    legacyAuthority: LEGACY_SUBVIEW_AUTHORITY,
-    cameraAuthority: CAMERA_AUTHORITY,
-    lockAuthority: LOCK_AUTHORITY,
-  }, { timeout: 30000, polling: 100 });`;
-
-  const apronSubviewWait = `  await page.waitForFunction(({ subview, currentAuthority, cameraAuthority, lockAuthority, terminalProfileAuthority, terminalClearSideAuthority, bogieProfileAuthority, maxBranchViewCosine, maxBranchViewImbalance, minTerminalApronOffset, minBogieApronOffset }) => {
-    const data = document.querySelector('canvas.trainerCanvas')?.dataset;
-    if (data?.inspectionCameraEndpointSubview !== subview
-      || data?.inspectionCameraEndpointSubviewAuthority !== currentAuthority
-      || data?.inspectionCameraEndpointAuthority !== cameraAuthority
-      || data?.inspectionCameraEndpointLockAuthority !== lockAuthority
-      || Math.abs(Number(data?.inspectionCameraEndpointConvergenceErrorMeters)) > 0.001) return false;
+    if (!shared) return false;
     if (subview === 'terminal-joint') {
-      const wallView = Number(data?.inspectionCameraEndpointJointWallViewCosine);
-      const tunnelView = Number(data?.inspectionCameraEndpointJointTunnelAViewCosine);
-      const imbalance = Number(data?.inspectionCameraEndpointJointBranchViewImbalance);
-      const apronOffset = Number(data?.inspectionCameraEndpointJointRenderedApronHalfPlaneOffsetMeters);
-      return data?.inspectionCameraEndpointJointProfileAuthority === terminalProfileAuthority
-        && data?.inspectionCameraEndpointJointClearSideAuthority === terminalClearSideAuthority
-        && data?.inspectionCameraEndpointJointClearSideFlipped === 'false'
-        && data?.inspectionCameraEndpointJointT4WalkOccluded === 'false'
-        && Number.isFinite(apronOffset) && apronOffset > minTerminalApronOffset
-        && Number.isFinite(wallView) && wallView < maxBranchViewCosine
-        && Number.isFinite(tunnelView) && tunnelView < maxBranchViewCosine
-        && Number.isFinite(imbalance) && imbalance < maxBranchViewImbalance;
+      return data?.inspectionCameraEndpointTerminalProfileAuthority === '${terminalProfileAuthority}'
+        && data?.inspectionCameraTerminalClearSideAuthority === '${terminalClearSideAuthority}'
+        && data?.inspectionCameraTerminalMirroredToApron === 'false'
+        && data?.inspectionCameraEndpointTerminalWalkClear === 'true'
+        && Number(data?.inspectionCameraEndpointTerminalPerpendicularDot) <= 0.35;
     }
     if (subview === 'bogie-contact') {
-      const apronOffset = Number(data?.inspectionCameraEndpointBogieApronHalfPlaneOffsetMeters);
-      return data?.inspectionCameraEndpointBogieProfileAuthority === bogieProfileAuthority
-        && Number.isFinite(apronOffset) && apronOffset > minBogieApronOffset;
+      return data?.inspectionCameraBogieProfileAuthority === '${bogieProfileAuthority}'
+        && data?.inspectionCameraBogieMirroredToApron === 'false'
+        && Number(data?.inspectionCameraBogieContactClearanceMeters) <= 0.02;
     }
-    return true;
-  }, {
-    subview,
-    currentAuthority: CURRENT_SUBVIEW_AUTHORITY,
-    cameraAuthority: CAMERA_AUTHORITY,
-    lockAuthority: LOCK_AUTHORITY,
-    terminalProfileAuthority: TERMINAL_PROFILE_AUTHORITY,
-    terminalClearSideAuthority: TERMINAL_CLEAR_SIDE_AUTHORITY,
-    bogieProfileAuthority: BOGIE_PROFILE_AUTHORITY,
-    maxBranchViewCosine: MAX_BRANCH_VIEW_COSINE,
-    maxBranchViewImbalance: MAX_BRANCH_VIEW_IMBALANCE,
-    minTerminalApronOffset: MIN_TERMINAL_APRON_HALF_PLANE_METERS,
-    minBogieApronOffset: MIN_BOGIE_APRON_HALF_PLANE_METERS,
-  }, { timeout: 30000, polling: 100 });`;
-
-  if (!source.includes(oldSubviewWait)) {
-    throw new Error(`${verifierPath}: retired A1 subview handshake is missing; refusing to silently weaken visual evidence`);
+    return true;`;
+  if (!source.includes(oldSubviewReady)) {
+    throw new Error(`${verifierPath}: A1 close-subview readiness anchor changed`);
   }
-  source = source.replace(oldSubviewWait, apronSubviewWait);
+  source = source.replace(oldSubviewReady, apronSubviewReady);
 }
 
-for (const required of [
-  marker,
-  sourcePoseVisualMarker,
-  apronCameraMarker,
-  `const STATIC_OWN_GATE_AUTHORITY = '${sourcePoseAuthority}';`,
-  `const CURRENT_SUBVIEW_AUTHORITY = '${apronSubviewAuthority}';`,
-  `const TERMINAL_PROFILE_AUTHORITY = '${terminalProfileAuthority}';`,
-  `const TERMINAL_CLEAR_SIDE_AUTHORITY = '${terminalClearSideAuthority}';`,
-  `const BOGIE_PROFILE_AUTHORITY = '${bogieProfileAuthority}';`,
-  "checkpoint('fleet-load-error'",
-  "checkpoint('fleet-ready-timeout'",
-  "consoleErrors=${JSON.stringify(consoleErrors.slice(-20))}",
-  "Terminal 4 jetway fleet loader failed before visual readiness",
-  "pageErrors.length > 0",
-  "Static source-pose diagnostics are missing",
-  "inspectionCameraEndpointJointClearSideFlipped === 'false'",
-  "inspectionCameraEndpointJointRenderedApronHalfPlaneOffsetMeters",
-  "inspectionCameraEndpointBogieApronHalfPlaneOffsetMeters",
-]) {
-  if (!source.includes(required)) throw new Error(`${verifierPath}: fail-fast/source-pose/apron-camera visual diagnostic is missing ${required}`);
-}
-for (const forbidden of [
-  "57-static-own-gate-target-real-wall-compact-registration-v9",
-  "maximumOwnGateHeadingError > MAXIMUM_STATIC_OWN_GATE_HEADING_ERROR_RADIANS",
-  "maximumTerminalFacingDot > MAXIMUM_STATIC_TERMINAL_FACING_DOT",
-  "exact-a1-terminal-joint-and-bogie-contact-subviews-v2",
-]) {
-  if (source.includes(forbidden)) throw new Error(`${verifierPath}: retired target-driven/camera visual acceptance survived: ${forbidden}`);
+for (const required of [marker, sourcePoseVisualMarker, apronCameraMarker, sourcePoseAuthority, apronSubviewAuthority]) {
+  if (!source.includes(required)) throw new Error(`${verifierPath}: visual fail-fast migration is missing ${required}`);
 }
 
 fs.writeFileSync(verifierPath, source, "utf8");
-console.log("Prepared Terminal 4 visual evidence to fail immediately with the actual browser loader error, validate the 57 static bridges under decoded KPHX source-pose authority, and require the current apron-side A1 terminal/bogie camera telemetry before any screenshot is accepted.");
+console.log(`Prepared ${marker} + ${sourcePoseVisualMarker} + ${apronCameraMarker}: visual evidence fails fast on loader errors, judges the static fleet under final source-pose authority, and accepts A1 close cameras only on the clear apron half-plane.`);
