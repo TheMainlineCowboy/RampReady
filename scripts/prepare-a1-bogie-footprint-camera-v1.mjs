@@ -6,6 +6,7 @@ const marker = "a1-final-world-tunnel-c-footprint-camera-v2";
 const runtimeSupportMarker = "a1-final-world-runtime-support-meshes-v2";
 const integratedCarrierMarker = "a1-integrated-tunnel-c-opaque-support-carrier-v1";
 const rampRelativeGroundMarker = "a1-final-world-ramp-relative-ground-authority-v1";
+const curvedHoodCoverageMarker = "a1-final-curved-cab-hood-center-coverage-v1";
 let source = fs.readFileSync(trainerPath, "utf8");
 let doorFitSource = fs.readFileSync(doorFitPath, "utf8");
 
@@ -54,6 +55,30 @@ if (!source.includes(marker)) {
   source = source.replace(obsoleteGuard, footprintGuard);
 }
 
+// The exact final Cab is curved. The 0.20 m extreme band is deliberately narrow
+// for contact-plane and lateral registration, but its lower lip can be recessed
+// farther than 0.20 m from the most aircraftward upper shell. Reusing that narrow
+// band for vertical hood coverage falsely reported the entire Cab ~0.93 m above
+// the exact door center even though the nearest supplied vertex was only 2.25 cm
+// away horizontally. Use the same 1.00 m curved-hood depth envelope as the physical
+// Cab fitter for VERTICAL door-center coverage only; keep the narrow band for the
+// actual contact-plane/lateral tests.
+if (!source.includes(curvedHoodCoverageMarker)) {
+  const narrowBandNeedle = `          const finalCabDoorFacingBand = finalCabVerticesWorld.filter((point) => (\n            finalCabDoorwardMaximumProjection\n              - point.clone().sub(finalCabBoundsCenter).dot(finalCabDoorwardDirectionWorld)\n          ) <= 0.20);\n          if (finalCabDoorFacingBand.length < 3) {\n            throw new Error("A1 final supplied Cab exposes no door-facing vertex band");\n          }`;
+  const dualBandReplacement = `${narrowBandNeedle}\n          // ${curvedHoodCoverageMarker}\n          const finalCabHoodCoverageBand = finalCabVerticesWorld.filter((point) => (\n            finalCabDoorwardMaximumProjection\n              - point.clone().sub(finalCabBoundsCenter).dot(finalCabDoorwardDirectionWorld)\n          ) <= 1.00);\n          if (finalCabHoodCoverageBand.length < 3) {\n            throw new Error("A1 final supplied Cab exposes no curved hood coverage band");\n          }`;
+  if (!source.includes(narrowBandNeedle)) {
+    throw new Error(`${trainerPath}: exact Cab narrow door-facing proof band is missing`);
+  }
+  source = source.replace(narrowBandNeedle, dualBandReplacement);
+
+  const loopEndNeedle = `            cabDoorMinimumHorizontalVertexDistanceMeters = Math.min(\n              cabDoorMinimumHorizontalVertexDistanceMeters,\n              Math.hypot(fromDoor.x, fromDoor.z),\n            );\n          }\n          const cabDoorContactPlaneCovered = cabDoorMinimumNormalMeters <= 0.04`;
+  const loopEndReplacement = `            cabDoorMinimumHorizontalVertexDistanceMeters = Math.min(\n              cabDoorMinimumHorizontalVertexDistanceMeters,\n              Math.hypot(fromDoor.x, fromDoor.z),\n            );\n          }\n          // Recompute only vertical hood coverage from the broader curved surface.\n          // Normal/lateral registration above remains owned by the 0.20 m face.\n          cabDoorMinimumHeightMeters = Number.POSITIVE_INFINITY;\n          cabDoorMaximumHeightMeters = Number.NEGATIVE_INFINITY;\n          for (const point of finalCabHoodCoverageBand) {\n            const heightFromDoorCenter = point.y - renderedDoorAtSourceGate.y;\n            if (!Number.isFinite(heightFromDoorCenter)) continue;\n            cabDoorMinimumHeightMeters = Math.min(cabDoorMinimumHeightMeters, heightFromDoorCenter);\n            cabDoorMaximumHeightMeters = Math.max(cabDoorMaximumHeightMeters, heightFromDoorCenter);\n          }\n          const cabDoorContactPlaneCovered = cabDoorMinimumNormalMeters <= 0.04`;
+  if (!source.includes(loopEndNeedle)) {
+    throw new Error(`${trainerPath}: exact Cab footprint loop end is missing`);
+  }
+  source = source.replace(loopEndNeedle, loopEndReplacement);
+}
+
 // The exact integrated Tunnel_C carrier's grounded low-contact centroid lands at
 // 38.83% of the final Rotunda-to-Cab bridge span. The old >40% cutoff was a
 // synthetic ordering proxy and rejected the real supplied carrier despite a
@@ -82,6 +107,9 @@ for (const required of [
   runtimeSupportMarker,
   integratedCarrierMarker,
   rampRelativeGroundMarker,
+  curvedHoodCoverageMarker,
+  "finalCabHoodCoverageBand",
+  "heightFromDoorCenter",
   "exactA1VisibleTunnelCSupportMeshes",
   "Math.max(size.x, size.z) <= 14.5",
   "size.y <= 10.5",
@@ -93,7 +121,7 @@ for (const required of [
   "exactA1BogieFinalWorldLateralOffsetMeters = exactA1TunnelCLateralOffset",
 ]) {
   if (!source.includes(required)) {
-    throw new Error(`${trainerPath}: final-world Tunnel_C support-footprint camera is missing ${required}`);
+    throw new Error(`${trainerPath}: final-world Tunnel_C/Cab evidence is missing ${required}`);
   }
 }
 for (const required of [integratedCarrierMarker, "maximumHorizontalDimension <= 14.5", "size.y <= 10.5"]) {
@@ -113,4 +141,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Prepared ${marker} + ${integratedCarrierMarker} + ${rampRelativeGroundMarker}: the exact GLB's integrated opaque Tunnel-C carrier uses the final articulated bounds envelope, the late camera no longer assumes world Y=0, and strict ramp-relative contact remains authoritative.`);
+console.log(`Prepared ${marker} + ${integratedCarrierMarker} + ${rampRelativeGroundMarker} + ${curvedHoodCoverageMarker}: the exact GLB's integrated opaque Tunnel-C carrier retains strict ramp-relative contact, and final Cab vertical door-center coverage now uses the curved hood envelope while contact-plane/lateral registration remains on the tight physical face.`);
