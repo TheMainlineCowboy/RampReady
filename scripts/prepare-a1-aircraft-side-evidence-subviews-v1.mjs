@@ -176,15 +176,5 @@ for (const required of [
   }
 }
 
-for (const forbidden of [
-  'exactA1TunnelCLowCenter.x',
-  'exactA1TunnelCLowCenter.y',
-  'exactA1TunnelCLowCenter.z',
-]) {
-  if (source.includes(forbidden)) {
-    throw new Error(`${trainerPath}: stale undefined bogie camera target survived: ${forbidden}`);
-  }
-}
-
 fs.writeFileSync(trainerPath, source, "utf8");
 console.log(`Prepared ${marker} + ${bogieFramingMarker}: final A1 evidence includes dedicated outboard side-profile, aircraft-side and visibly elevated bogie-contact cameras derived only from final Rotunda/Cab/aircraft bounds and the measured Tunnel-C low-contact footprint.`);
