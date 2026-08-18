@@ -87,10 +87,13 @@ if (!source.includes('__RAMPREADY_VISUAL_EVIDENCE_A1_ATTACH_TIMER__')) {
 // The old browser acceptance proved the Cab and bogie but never measured the
 // visible service stair against the actual rendered CRJ. That is how an aircraft-
 // side visual concern could remain green. Require the live post-calibration solve
-// and its exact source-triangle count before taking any A1 screenshot.
+// and its exact source-triangle count before taking any A1 screenshot. The sliced
+// key list above also contains the telemetry field name, so use the unique runtime
+// authority as the idempotence marker instead of mistaking the key declaration for
+// an already-installed acceptance block.
 const verticalErrorAnchor = `  const verticalError = finiteNumber(a1.inspectionAircraftDoorVerticalErrorMeters);`;
 const serviceStairAcceptance = `  const serviceStairPenetration = finiteNumber(a1.terminal4UploadedJetwayA1ServiceStairFuselagePenetrationMeters);\n  const serviceStairSwingDegrees = finiteNumber(a1.terminal4UploadedJetwayA1ServiceStairSwingDegrees);\n  const serviceStairOutboardClearance = finiteNumber(a1.terminal4UploadedJetwayA1ServiceStairOutboardClearanceMeters);\n  if (a1.terminal4UploadedJetwayA1ServiceStairClearanceAuthority !== '${SERVICE_STAIR_AUTHORITY}') {\n    geometryFailures.push(\`A1 live service-stair authority is wrong: \${a1.terminal4UploadedJetwayA1ServiceStairClearanceAuthority}\`);\n  }\n  if (a1.terminal4UploadedJetwayA1ServiceStairTriangleCount !== '2352') {\n    geometryFailures.push(\`A1 exact service-stair triangle selection changed: \${a1.terminal4UploadedJetwayA1ServiceStairTriangleCount}\`);\n  }\n  if (serviceStairPenetration === null || serviceStairPenetration > 0.001) {\n    geometryFailures.push(\`A1 service stair penetrates the live rendered CRJ envelope: \${a1.terminal4UploadedJetwayA1ServiceStairFuselagePenetrationMeters} m\`);\n  }\n  if (serviceStairSwingDegrees === null || Math.abs(serviceStairSwingDegrees) > 88) {\n    geometryFailures.push(\`A1 service-stair swing is invalid: \${a1.terminal4UploadedJetwayA1ServiceStairSwingDegrees} deg\`);\n  }\n  if (serviceStairOutboardClearance === null || serviceStairOutboardClearance < -0.001) {\n    geometryFailures.push(\`A1 service stair has no outboard clearance: \${a1.terminal4UploadedJetwayA1ServiceStairOutboardClearanceMeters} m\`);\n  }\n\n${verticalErrorAnchor}`;
-if (!source.includes('terminal4UploadedJetwayA1ServiceStairClearanceAuthority')) {
+if (!source.includes(SERVICE_STAIR_AUTHORITY)) {
   if (!source.includes(verticalErrorAnchor)) throw new Error('A1 service-stair visual acceptance anchor is missing');
   source = source.replace(verticalErrorAnchor, serviceStairAcceptance);
 }
