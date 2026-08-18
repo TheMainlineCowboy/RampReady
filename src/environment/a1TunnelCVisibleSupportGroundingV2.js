@@ -1,4 +1,4 @@
-const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v12-rendered-pavement-suspended-set";
+const AUTHORITY = "exact-supplied-tunnel-c-visible-support-components-grounded-v13-rendered-pavement-branch-scan";
 const MAX_GROUNDING_EXTENSION_METERS = 4.0;
 const MAX_FINAL_CLEARANCE_METERS = 0.015;
 const MAX_TOP_MOUNT_DRIFT_METERS = 0.015;
@@ -6,6 +6,7 @@ const MAX_PAVEMENT_SAMPLE_SPREAD_METERS = 0.08;
 const VERTEX_KEY_SCALE = 10000;
 const LOWER_RIGID_FRACTION = 0.30;
 const UPPER_RIGID_FRACTION = 0.76;
+const ABOVE_PAVEMENT_BRANCH_MARGIN_METERS = 0.025;
 const PHOTO_GROUND_NAMES = Object.freeze([
   "PHX_KPHX_SourceAuthoredPhotoGround_Tiled",
   "PHX_KPHX_SourceAuthoredPhotoGround",
@@ -15,31 +16,38 @@ function vertexKey(position, index) {
   return `${Math.round(position.getX(index) * VERTEX_KEY_SCALE)},${Math.round(position.getY(index) * VERTEX_KEY_SCALE)},${Math.round(position.getZ(index) * VERTEX_KEY_SCALE)}`;
 }
 
-function findTriangleComponents(position) {
+function findTriangleComponents(position, triangleIndices = null) {
   if (!position || position.count % 3 !== 0) throw new Error(`A1 Tunnel-C visible support proof requires triangle-addressable geometry: vertices=${position?.count}`);
-  const triangleCount = position.count / 3;
-  const parent = new Int32Array(triangleCount);
-  for (let i = 0; i < triangleCount; i += 1) parent[i] = i;
+  const triangles = triangleIndices || Array.from({ length: position.count / 3 }, (_, index) => index);
+  if (!triangles.length) return [];
+  const parent = new Map(triangles.map((triangle) => [triangle, triangle]));
   const find = (value) => {
     let root = value;
-    while (parent[root] !== root) root = parent[root];
-    while (parent[value] !== value) {
-      const next = parent[value]; parent[value] = root; value = next;
+    while (parent.get(root) !== root) root = parent.get(root);
+    while (parent.get(value) !== value) {
+      const next = parent.get(value);
+      parent.set(value, root);
+      value = next;
     }
     return root;
   };
-  const union = (a, b) => { const ra = find(a); const rb = find(b); if (ra !== rb) parent[rb] = ra; };
+  const union = (a, b) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent.set(rb, ra);
+  };
   const firstTriangleByVertex = new Map();
-  for (let triangle = 0; triangle < triangleCount; triangle += 1) {
+  for (const triangle of triangles) {
     for (let corner = 0; corner < 3; corner += 1) {
       const index = triangle * 3 + corner;
       const key = vertexKey(position, index);
       const first = firstTriangleByVertex.get(key);
-      if (first === undefined) firstTriangleByVertex.set(key, triangle); else union(triangle, first);
+      if (first === undefined) firstTriangleByVertex.set(key, triangle);
+      else union(triangle, first);
     }
   }
   const byRoot = new Map();
-  for (let triangle = 0; triangle < triangleCount; triangle += 1) {
+  for (const triangle of triangles) {
     const root = find(triangle);
     if (!byRoot.has(root)) byRoot.set(root, []);
     byRoot.get(root).push(triangle);
@@ -117,6 +125,18 @@ function sampleRenderedPavementY(THREE, photoGround, x, z, highY) {
   return hit.point.y;
 }
 
+function triangleMinimumWorldY(THREE, mesh, position, triangle) {
+  const local = new THREE.Vector3();
+  const world = new THREE.Vector3();
+  let minimum = Number.POSITIVE_INFINITY;
+  for (let corner = 0; corner < 3; corner += 1) {
+    local.fromBufferAttribute(position, triangle * 3 + corner);
+    world.copy(local).applyMatrix4(mesh.matrixWorld);
+    minimum = Math.min(minimum, world.y);
+  }
+  return minimum;
+}
+
 function telescopeToRamp(THREE, mesh, position, measurement, rampY) {
   const beforeMinY = measurement.box.min.y;
   const beforeMaxY = measurement.box.max.y;
@@ -148,6 +168,54 @@ function telescopeToRamp(THREE, mesh, position, measurement, rampY) {
   return { extensionMeters: extension, beforeTopY: beforeMaxY };
 }
 
+function isAircraftSide(entry) {
+  return Number.isFinite(entry.alongRatio)
+    && entry.alongRatio >= 0.35
+    && entry.alongRatio <= 1.08
+    && Number.isFinite(entry.lateralDistance)
+    && entry.lateralDistance <= 6.0;
+}
+
+function compactVerticalHardware(entry) {
+  return isAircraftSide(entry)
+    && entry.triangleCount >= 4
+    && entry.triangleCount <= 2200
+    && entry.size.y >= 0.15
+    && entry.size.y <= 4.5
+    && entry.horizontalSpan >= 0.02
+    && entry.horizontalSpan <= 2.2
+    && entry.verticalAspect >= 0.8;
+}
+
+function crossingHangingBranch(entry) {
+  return isAircraftSide(entry)
+    && entry.triangleCount >= 4
+    && entry.triangleCount <= 1200
+    && entry.size.y >= 0.25
+    && entry.size.y <= 3.2
+    && entry.horizontalSpan >= 0.02
+    && entry.horizontalSpan <= 0.85
+    && entry.verticalAspect >= 1.15;
+}
+
+function resolveCrossingHangingBranches(THREE, mesh, position, crossingCandidates, rotundaWorld, cabWorld) {
+  const branches = [];
+  for (const candidate of crossingCandidates) {
+    const aboveTriangles = candidate.triangles.filter((triangle) => (
+      triangleMinimumWorldY(THREE, mesh, position, triangle) > candidate.rampY + ABOVE_PAVEMENT_BRANCH_MARGIN_METERS
+    ));
+    for (const triangles of findTriangleComponents(position, aboveTriangles)) {
+      const measured = measureComponent(THREE, mesh, position, triangles, rotundaWorld, cabWorld);
+      measured.rampY = candidate.rampY;
+      measured.clearanceMeters = measured.box.min.y - measured.rampY;
+      if (crossingHangingBranch(measured) && measured.clearanceMeters > MAX_FINAL_CLEARANCE_METERS) {
+        branches.push(measured);
+      }
+    }
+  }
+  return branches;
+}
+
 export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
   const mesh = model?.getObjectByName?.("Tunnel_C_Jetway_0");
   if (!mesh?.isMesh || !mesh.geometry?.getAttribute?.("position")) throw new Error("A1 visible support proof cannot resolve Tunnel_C_Jetway_0");
@@ -165,20 +233,6 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
   const rotundaWorld = objectCenter(THREE, model.getObjectByName("Rotunda"));
   const cabWorld = objectCenter(THREE, model.getObjectByName("Cab"));
 
-  const isAircraftSide = (entry) => Number.isFinite(entry.alongRatio)
-    && entry.alongRatio >= 0.35
-    && entry.alongRatio <= 1.08
-    && Number.isFinite(entry.lateralDistance)
-    && entry.lateralDistance <= 6.0;
-  const compactVerticalHardware = (entry) => isAircraftSide(entry)
-    && entry.triangleCount >= 4
-    && entry.triangleCount <= 2200
-    && entry.size.y >= 0.15
-    && entry.size.y <= 4.5
-    && entry.horizontalSpan >= 0.02
-    && entry.horizontalSpan <= 2.2
-    && entry.verticalAspect >= 0.8;
-
   const measurements = components.map((triangles) => measureComponent(THREE, mesh, position, triangles, rotundaWorld, cabWorld));
   const candidates = measurements.filter((entry) => compactVerticalHardware(entry));
   if (!candidates.length) throw new Error("A1 visible support proof found no compact aircraft-side Tunnel-C hardware candidates");
@@ -195,30 +249,35 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
   const crossingPavement = candidates.filter((entry) => entry.box.min.y < entry.rampY - MAX_FINAL_CLEARANCE_METERS
     && entry.box.max.y >= entry.rampY - MAX_FINAL_CLEARANCE_METERS);
 
-  if (!abovePavement.length) {
-    const diagnostic = candidates.map((entry) => ({
+  if (!abovePavement.length) throw new Error("A1 visible support proof found no wholly suspended compact support candidates");
+
+  const crossingBranches = resolveCrossingHangingBranches(
+    THREE, mesh, position, crossingPavement, rotundaWorld, cabWorld,
+  );
+  if (!crossingBranches.length) {
+    const diagnostic = crossingPavement.map((entry) => ({
       triangles: entry.triangleCount,
       minY: Number(entry.box.min.y.toFixed(3)),
       maxY: Number(entry.box.max.y.toFixed(3)),
       pavementY: Number(entry.rampY.toFixed(3)),
-      clearance: Number(entry.clearanceMeters.toFixed(3)),
-      height: Number(entry.size.y.toFixed(3)),
       horizontal: Number(entry.horizontalSpan.toFixed(3)),
       aspect: Number(entry.verticalAspect.toFixed(3)),
-      along: Number(entry.alongRatio.toFixed(3)),
-      lateral: Number(entry.lateralDistance.toFixed(3)),
     }));
-    throw new Error(`A1 visible support proof found no above-pavement compact support candidate; candidates=${JSON.stringify(diagnostic)}`);
+    throw new Error(`A1 visible support proof found no hanging branch inside pavement-crossing hardware: ${JSON.stringify(diagnostic)}`);
   }
 
-  const rampYs = abovePavement.map((entry) => entry.rampY);
+  const rampYs = [
+    ...abovePavement.map((entry) => entry.rampY),
+    ...crossingBranches.map((entry) => entry.rampY),
+  ];
   const rampReferenceSpreadMeters = Math.max(...rampYs) - Math.min(...rampYs);
   if (rampReferenceSpreadMeters > MAX_PAVEMENT_SAMPLE_SPREAD_METERS) {
     throw new Error(`A1 visible support rendered pavement samples disagree by ${rampReferenceSpreadMeters} m: ${JSON.stringify(rampYs)}`);
   }
 
+  const correctionEntries = [...abovePavement, ...crossingBranches];
   const extensionByTriangles = new Map();
-  for (const entry of abovePavement) {
+  for (const entry of correctionEntries) {
     extensionByTriangles.set(entry.triangles, telescopeToRamp(THREE, mesh, position, entry, entry.rampY));
   }
   position.needsUpdate = true;
@@ -227,19 +286,16 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
   mesh.updateMatrixWorld(true);
   model.updateWorldMatrix(true, true);
 
-  const finalCandidates = candidates.map((entry) => {
+  const finalCorrected = correctionEntries.map((entry) => {
     const measured = measureComponent(THREE, mesh, position, entry.triangles, rotundaWorld, cabWorld);
     measured.rampY = sampleRenderedPavementY(THREE, photoGround, measured.center.x, measured.center.z, highY);
     measured.clearanceMeters = measured.box.min.y - measured.rampY;
     return measured;
   });
-  const finalGrounded = finalCandidates.filter((entry) => extensionByTriangles.has(entry.triangles));
-  const remainingSuspended = finalCandidates.filter((entry) => compactVerticalHardware(entry)
-    && entry.clearanceMeters > MAX_FINAL_CLEARANCE_METERS
-    && entry.clearanceMeters <= MAX_GROUNDING_EXTENSION_METERS);
-  const maximumFinalClearanceMeters = Math.max(...finalGrounded.map((entry) => Math.abs(entry.clearanceMeters)));
+  const remainingSuspendedCorrected = finalCorrected.filter((entry) => Math.abs(entry.clearanceMeters) > MAX_FINAL_CLEARANCE_METERS);
+  const maximumFinalClearanceMeters = Math.max(...finalCorrected.map((entry) => Math.abs(entry.clearanceMeters)));
   let maximumTopMountDriftMeters = 0;
-  for (const finalEntry of finalGrounded) {
+  for (const finalEntry of finalCorrected) {
     const extension = extensionByTriangles.get(finalEntry.triangles);
     maximumTopMountDriftMeters = Math.max(maximumTopMountDriftMeters, Math.abs(finalEntry.box.max.y - extension.beforeTopY));
   }
@@ -249,8 +305,8 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
   if (maximumTopMountDriftMeters > MAX_TOP_MOUNT_DRIFT_METERS) {
     throw new Error(`A1 visible support proof moved an upper mount: drift=${maximumTopMountDriftMeters}`);
   }
-  if (remainingSuspended.length) {
-    throw new Error(`A1 visible support proof found ${remainingSuspended.length} compact aircraft-side component(s) still suspended after grounding`);
+  if (remainingSuspendedCorrected.length) {
+    throw new Error(`A1 visible support proof found ${remainingSuspendedCorrected.length} corrected support/branch set(s) still suspended`);
   }
 
   return Object.freeze({
@@ -261,17 +317,21 @@ export function groundA1TunnelCVisibleSupportHardwareV2(THREE, model) {
     alreadyGroundedComponentCount: alreadySeated.length,
     buriedCandidateCount: buried.length,
     pavementCrossingCandidateCount: crossingPavement.length,
-    visibleLoadLegCount: abovePavement.length,
+    crossingHangingBranchCount: crossingBranches.length,
+    crossingHangingBranchTriangleCount: crossingBranches.reduce((sum, entry) => sum + entry.triangleCount, 0),
+    correctedSupportSetCount: correctionEntries.length,
+    visibleLoadLegCount: abovePavement.length + crossingBranches.length,
     remainingSuspendedSupportCount: 0,
-    maximumBeforeClearanceMeters: Math.max(...abovePavement.map((entry) => entry.clearanceMeters)),
-    maximumExtensionMeters: Math.max(...abovePavement.map((entry) => extensionByTriangles.get(entry.triangles).extensionMeters)),
+    maximumBeforeClearanceMeters: Math.max(...correctionEntries.map((entry) => entry.clearanceMeters)),
+    maximumExtensionMeters: Math.max(...correctionEntries.map((entry) => extensionByTriangles.get(entry.triangles).extensionMeters)),
     maximumFinalClearanceMeters,
     maximumTopMountDriftMeters,
     rampWorldY: rampYs.reduce((sum, value) => sum + value, 0) / rampYs.length,
     rampReferenceComponentCount: rampYs.length,
     rampReferenceSpreadMeters,
-    rampReferenceAuthority: "rendered-kphx-source-aerial-raycast-under-suspended-compact-hardware",
+    rampReferenceAuthority: "rendered-kphx-source-aerial-raycast-under-wholly-suspended-and-crossing-hanging-branches",
     groundedTriangleCounts: abovePavement.map((entry) => entry.triangleCount),
+    crossingHangingBranchTriangleCounts: crossingBranches.map((entry) => entry.triangleCount),
     componentRampWorldYs: rampYs,
   });
 }
