@@ -50,5 +50,5 @@ for (const required of [
   }
 }
 
-fs.writeFileSync(path, source, "utf8");
+fs.writeFileSync(trainerPath, source, "utf8");
 console.log(`Prepared ${marker}: final A1 browser geometry grounds every compact visible exact-source Tunnel-C load-bearing support island to the real KPHX ramp, rejects any remaining suspended support, and preserves upper mounts plus the passenger shell.`);
