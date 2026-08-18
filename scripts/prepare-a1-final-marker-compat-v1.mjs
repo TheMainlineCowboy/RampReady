@@ -140,20 +140,10 @@ for (const required of [
   if (!readiness.includes(required)) throw new Error(`${readinessPath}: Tunnel-C bogie readiness is missing ${required}`);
 }
 
-// The green 44cbf7e2 evidence proved the Cab was on the CRJ door while the
-// exact supplied Tunnel-C service stair still crossed the forward fuselage.
-// Apply the stair-only rigid aircraft-clearance solve after the physical door fit
-// and before any final browser/Vite evidence is accepted.
-await import(`./prepare-a1-service-stair-aircraft-clearance-v1.mjs?final-compat=${Date.now()}`);
-const clearedDoorFit = fs.readFileSync("src/environment/uploadedAirportJetwayA1DoorFitV11.js", "utf8");
-for (const required of [
-  "a1-service-stair-aircraft-clearance-v1",
-  "keepA1ServiceStairClearOfAircraft",
-  "uploadedJetwayA1ServiceStairAfterPenetrationMeters",
-]) {
-  if (!clearedDoorFit.includes(required)) {
-    throw new Error(`A1 final compatibility did not install service-stair aircraft clearance: ${required}`);
-  }
-}
+// Do not translate the supplied service stair away from Tunnel-C here. The final
+// Vite hook installs the aircraft-side stair solver only after the final visible
+// Cab/door normalization, where it swings the measured supplied stair triangles
+// around their upper attachment and verifies clearance against the exact CRJ
+// fuselage envelope. This compatibility stage remains geometry-neutral.
 
-console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. Final A1 compatibility now accepts ${usesRealPhotoGeometry ? photoAuthority : "the legacy measured-wall layout"} without changing terminal/aircraft geometry; exact supplied hierarchy, Tunnel-C bogie ramp authority, and aircraft-clear service stair remain enforced.`);
+console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. Final A1 compatibility now accepts ${usesRealPhotoGeometry ? photoAuthority : "the legacy measured-wall layout"} without changing terminal/aircraft geometry; exact supplied hierarchy and Tunnel-C bogie ramp authority remain enforced, while service-stair articulation is deferred to the final visible-geometry hook.`);
