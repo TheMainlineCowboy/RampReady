@@ -17,7 +17,8 @@ const fixedAircraftPose = Object.freeze({
 });
 const authoredDoorLocal = Object.freeze({
   x: -1.291842,
-  y: 1.802860,
+  centerY: 2.769294,
+  sillY: 1.802860,
   z: 2.240745,
 });
 
@@ -26,13 +27,22 @@ if (!source.includes(finalVisibleMarker)) {
   throw new Error(`${path}: exact authored-door target must run after final visible normalization`);
 }
 
+// Final visible normalization deliberately exposes its stale 7.32/1.34 target so
+// this final source-authoritative stage can replace it with measurements from the
+// actual rendered CRJ GLB. Do not leave the obsolete values available to later
+// readiness or telemetry layers.
+source = source.replace(
+  `  x: -1.34,\n  centerY: 2.62,\n  sillY: 1.73,\n  z: 7.32,`,
+  `  x: ${authoredDoorLocal.x},\n  centerY: ${authoredDoorLocal.centerY},\n  sillY: ${authoredDoorLocal.sillY},\n  z: ${authoredDoorLocal.z},`,
+);
+
 if (!source.includes(marker)) {
   const oldTarget = `function toWorldTarget(THREE, group) {\n  // ${finalVisibleMarker}\n  // X/Z come from the fixed A1 aircraft registration. Y must match the actually\n  // rendered grounded CRJ door in WORLD space. The 1.73 m planning-manual sill\n  // dimension is aircraft-relative and must not be substituted for scene world Y.\n  const target = group.localToWorld(new THREE.Vector3(\n    CRJ_FORWARD_LEFT_DOOR.x,\n    0,\n    CRJ_FORWARD_LEFT_DOOR.z,\n  ));\n  target.y = 3;\n  return target;\n}`;
   if (!source.includes(oldTarget)) {
     throw new Error(`${path}: stale nose-derived/final-visible door target is missing`);
   }
 
-  const exactTarget = `// ${marker}\nconst FIXED_A1_RENDERED_AIRCRAFT_POSE = Object.freeze({\n  x: ${fixedAircraftPose.x},\n  y: ${fixedAircraftPose.y},\n  z: ${fixedAircraftPose.z},\n  yaw: ${fixedAircraftPose.yaw},\n});\nconst EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR = Object.freeze({\n  x: ${authoredDoorLocal.x},\n  sillY: ${authoredDoorLocal.y},\n  z: ${authoredDoorLocal.z},\n});\n\nfunction toWorldTarget(THREE) {\n  // The aircraft is fixed. Rotate the exact GLB door point by the fixed A1 stand\n  // yaw and translate it by the fixed nose-gear/root pose. The jetway must reach\n  // this point; no terminal or aircraft transform is allowed to compensate.\n  const cosYaw = Math.cos(FIXED_A1_RENDERED_AIRCRAFT_POSE.yaw);\n  const sinYaw = Math.sin(FIXED_A1_RENDERED_AIRCRAFT_POSE.yaw);\n  return new THREE.Vector3(\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.x\n      + cosYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.x\n      + sinYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.z,\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.y\n      + EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.sillY,\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.z\n      - sinYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.x\n      + cosYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.z,\n  );\n}`;
+  const exactTarget = `// ${marker}\nconst FIXED_A1_RENDERED_AIRCRAFT_POSE = Object.freeze({\n  x: ${fixedAircraftPose.x},\n  y: ${fixedAircraftPose.y},\n  z: ${fixedAircraftPose.z},\n  yaw: ${fixedAircraftPose.yaw},\n});\nconst EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR = Object.freeze({\n  x: ${authoredDoorLocal.x},\n  sillY: ${authoredDoorLocal.sillY},\n  z: ${authoredDoorLocal.z},\n});\n\nfunction toWorldTarget(THREE) {\n  // The aircraft is fixed. Rotate the exact GLB door point by the fixed A1 stand\n  // yaw and translate it by the fixed nose-gear/root pose. The jetway must reach\n  // this point; no terminal or aircraft transform is allowed to compensate.\n  const cosYaw = Math.cos(FIXED_A1_RENDERED_AIRCRAFT_POSE.yaw);\n  const sinYaw = Math.sin(FIXED_A1_RENDERED_AIRCRAFT_POSE.yaw);\n  return new THREE.Vector3(\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.x\n      + cosYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.x\n      + sinYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.z,\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.y\n      + EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.sillY,\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.z\n      - sinYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.x\n      + cosYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.z,\n  );\n}`;
   source = source.replace(oldTarget, exactTarget);
 }
 
@@ -41,6 +51,7 @@ for (const required of [
   "FIXED_A1_RENDERED_AIRCRAFT_POSE",
   "EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR",
   "x: -1.291842",
+  "centerY: 2.769294",
   "sillY: 1.80286",
   "z: 2.240745",
   "x: -3.822373",
@@ -52,6 +63,8 @@ for (const forbidden of [
   "target.y = 3;",
   "z: 7.32,",
   "x: -1.34,",
+  "centerY: 2.62,",
+  "sillY: 1.73,",
 ]) {
   if (source.includes(forbidden)) throw new Error(`${path}: stale inferred CRJ door target survived: ${forbidden}`);
 }
@@ -61,6 +74,6 @@ fs.writeFileSync(path, source, "utf8");
 const cosYaw = Math.cos(fixedAircraftPose.yaw);
 const sinYaw = Math.sin(fixedAircraftPose.yaw);
 const worldX = fixedAircraftPose.x + cosYaw * authoredDoorLocal.x + sinYaw * authoredDoorLocal.z;
-const worldY = fixedAircraftPose.y + authoredDoorLocal.y;
+const worldY = fixedAircraftPose.y + authoredDoorLocal.sillY;
 const worldZ = fixedAircraftPose.z - sinYaw * authoredDoorLocal.x + cosYaw * authoredDoorLocal.z;
 console.log(`Prepared ${marker}: fixed A1 aircraft pose stays unchanged; exact authored CRJ forward-left door sill target is world [${worldX.toFixed(6)}, ${worldY.toFixed(6)}, ${worldZ.toFixed(6)}].`);
