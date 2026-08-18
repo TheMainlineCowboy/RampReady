@@ -1,8 +1,8 @@
 import fs from "node:fs";
 
 const doorFitPath = "src/environment/uploadedAirportJetwayA1DoorFitV11.js";
-const marker = "a1-service-stair-rendered-crj-envelope-clearance-v2";
-const authority = "exact-supplied-tunnel-c-service-stair-aircraft-envelope-clearance-v2";
+const marker = "a1-service-stair-exact-crj-envelope-clearance-v3";
+const authority = "exact-supplied-tunnel-c-service-stair-exact-crj-envelope-clearance-v3";
 const finalVisibleMarker = "a1-final-visible-grounded-door-and-integrated-tunnel-c-v1";
 const runtimeSupportMarker = "a1-runtime-tunnel-c-separable-support-meshes-v1";
 const importLine = 'import { articulateA1ServiceStairClearOfAircraft } from "./a1ServiceStairClearanceV1.js";';
@@ -54,7 +54,6 @@ if (!source.includes(marker)) {
 for (const required of [
   marker,
   importLine,
-  authority,
   "articulateA1ServiceStairClearOfAircraft",
   "serviceStairClearance",
   "uploadedJetwayA1ServiceStairSwingDegrees",
@@ -62,14 +61,14 @@ for (const required of [
   "uploadedJetwayA1ServiceStairOutboardClearanceMeters",
   "afterFuselageEnvelopePenetrationMeters",
 ]) {
-  if (!source.includes(required) && required !== authority) {
+  if (!source.includes(required)) {
     throw new Error(`${doorFitPath}: final A1 service-stair clearance is missing ${required}`);
   }
 }
 
 if (!fs.readFileSync("src/environment/a1ServiceStairClearanceV1.js", "utf8").includes(authority)) {
-  throw new Error("A1 service-stair runtime module is missing its rendered-aircraft-envelope authority");
+  throw new Error("A1 service-stair runtime module is missing its exact CRJ envelope authority");
 }
 
 fs.writeFileSync(doorFitPath, source, "utf8");
-console.log(`Prepared ${marker}: the final A1 fitter derives the rendered CRJ fuselage envelope, swings only the exact supplied Tunnel-C service-stair triangles outboard of that envelope, and publishes fail-closed clearance telemetry before production Vite bundling.`);
+console.log(`Prepared ${marker}: the final A1 fitter uses the exact authored CRJ fuselage primitive bounds in the same local frame as its door target, swings only the supplied Tunnel-C service-stair triangles outboard, and publishes fail-closed clearance telemetry before production Vite bundling.`);
