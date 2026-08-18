@@ -1,15 +1,9 @@
-const AUTHORITY = "exact-supplied-tunnel-c-service-stair-exact-crj-envelope-clearance-v3";
+const AUTHORITY = "exact-supplied-tunnel-c-service-stair-live-rendered-crj-clearance-v4";
 const MAX_SWING_DEGREES = 88;
 const FUSELAGE_OUTBOARD_CLEARANCE_METERS = 0.15;
 const UPPER_ATTACHMENT_EXEMPT_HEIGHT_METERS = 0.7;
 const UPPER_ATTACHMENT_EXEMPT_RADIUS_METERS = 0.9;
-
-// Measured from primitive 0 of the exact authored CRJ GLB that RampReady verifies
-// at 32.50 m length / 23.64 m span. The A1 fitter already expresses its rendered
-// door target in this same CRJ-local coordinate frame, so these are source bounds,
-// not a guessed world-space collision proxy.
-const EXACT_CRJ_FUSELAGE_MIN = Object.freeze([-1.9402, 1.10, -1.981]);
-const EXACT_CRJ_FUSELAGE_MAX = Object.freeze([1.9402, 4.36, 27.36]);
+const EXPECTED_SERVICE_STAIR_TRIANGLE_COUNT = 2352;
 
 function yawAround(THREE, pivotX, pivotZ, radians) {
   const toPivot = new THREE.Matrix4().makeTranslation(pivotX, 0, pivotZ);
@@ -24,6 +18,9 @@ function selectExactServiceStairVertices(THREE, geometry) {
     throw new Error(`A1 exact Tunnel-C geometry is not triangle-addressable: vertices=${position?.count}`);
   }
 
+  // Exact supplied Tunnel_C_Jetway_0 primitive-local region measured from the
+  // immutable Airport_Jetway.glb. This is the galvanized diagonal service stair
+  // and rails; no procedural replacement geometry is introduced.
   const selected = [];
   const a = new THREE.Vector3();
   const b = new THREE.Vector3();
@@ -35,40 +32,111 @@ function selectExactServiceStairVertices(THREE, geometry) {
     const centerX = (a.x + b.x + c.x) / 3;
     const centerY = (a.y + b.y + c.y) / 3;
     const centerZ = (a.z + b.z + c.z) / 3;
-    // Exact supplied Tunnel_C_Jetway_0 primitive-local stair/rail region measured
-    // by the earlier source decoder. No procedural replacement triangles are used.
     if (centerX > 16.4 && centerY < -1.55 && centerZ < 4.8) {
       selected.push(index, index + 1, index + 2);
     }
   }
   const triangleCount = selected.length / 3;
-  if (!(triangleCount >= 40 && triangleCount <= 6000)) {
-    throw new Error(`A1 exact service-stair triangle selection is invalid: ${triangleCount}`);
+  if (triangleCount !== EXPECTED_SERVICE_STAIR_TRIANGLE_COUNT) {
+    throw new Error(
+      `A1 exact service-stair triangle selection changed: ${triangleCount} != ${EXPECTED_SERVICE_STAIR_TRIANGLE_COUNT}`,
+    );
   }
   return { selected, triangleCount };
 }
 
-export function articulateA1ServiceStairClearOfAircraft(
-  THREE,
-  aircraftFrame,
-  model,
-  targetWorld,
-  cabRelativeYawRadians,
-) {
+function objectBoundsInAircraftLocal(THREE, aircraftRoot, object, worldToAircraft) {
+  const geometry = object.geometry;
+  if (!geometry?.getAttribute?.("position")) return null;
+  if (!geometry.boundingBox) geometry.computeBoundingBox();
+  const source = geometry.boundingBox;
+  if (!source || source.isEmpty()) return null;
+
+  object.updateWorldMatrix(true, false);
+  const box = new THREE.Box3();
+  const corner = new THREE.Vector3();
+  for (const x of [source.min.x, source.max.x]) {
+    for (const y of [source.min.y, source.max.y]) {
+      for (const z of [source.min.z, source.max.z]) {
+        corner.set(x, y, z).applyMatrix4(object.matrixWorld).applyMatrix4(worldToAircraft);
+        box.expandByPoint(corner);
+      }
+    }
+  }
+  return box;
+}
+
+function findLiveRenderedCrjFuselageBounds(THREE, aircraftRoot) {
+  if (!aircraftRoot?.isObject3D) {
+    throw new Error("A1 service-stair clearance is missing the live rendered aircraft root");
+  }
+  aircraftRoot.updateWorldMatrix(true, true);
+  const worldToAircraft = new THREE.Matrix4().copy(aircraftRoot.matrixWorld).invert();
+  const size = new THREE.Vector3();
+  let best = null;
+
+  aircraftRoot.traverse((entry) => {
+    if (!entry.isMesh || entry.visible === false) return;
+    const box = objectBoundsInAircraftLocal(THREE, aircraftRoot, entry, worldToAircraft);
+    if (!box) return;
+    box.getSize(size);
+
+    // The authored CRJ fuselage primitive is uniquely long and narrow in the
+    // actual aircraft-root frame. Wings, tail, gear and retained training markers
+    // fail these bounds. This runs only after the real GLB and final A1 pose exist.
+    if (!(size.x >= 2.5 && size.x <= 5.5)) return;
+    if (!(size.y >= 2.0 && size.y <= 5.5)) return;
+    if (!(size.z >= 20 && size.z <= 32)) return;
+    const score = size.z - Math.abs(size.x - 3.9) * 0.5 - Math.abs(size.y - 3.3) * 0.5;
+    if (!best || score > best.score) {
+      best = {
+        box: box.clone(),
+        size: size.clone(),
+        score,
+        meshName: entry.name || entry.parent?.name || "unnamed-crj-fuselage-primitive",
+      };
+    }
+  });
+
+  if (!best) {
+    const diagnostic = [];
+    aircraftRoot.traverse((entry) => {
+      if (!entry.isMesh || entry.visible === false || diagnostic.length >= 20) return;
+      const box = objectBoundsInAircraftLocal(THREE, aircraftRoot, entry, worldToAircraft);
+      if (!box) return;
+      const meshSize = box.getSize(new THREE.Vector3());
+      diagnostic.push({
+        name: entry.name || entry.parent?.name || "unnamed",
+        size: meshSize.toArray().map((value) => Number(value.toFixed(3))),
+      });
+    });
+    throw new Error(`A1 service-stair clearance cannot resolve live CRJ fuselage: ${JSON.stringify(diagnostic)}`);
+  }
+  return { ...best, worldToAircraft };
+}
+
+function distanceToBox(point, box) {
+  const dx = Math.max(box.min.x - point.x, 0, point.x - box.max.x);
+  const dy = Math.max(box.min.y - point.y, 0, point.y - box.max.y);
+  const dz = Math.max(box.min.z - point.z, 0, point.z - box.max.z);
+  return Math.hypot(dx, dy, dz);
+}
+
+export function articulateA1ServiceStairClearOfAircraft(THREE, aircraftRoot, model) {
   const tunnelCMesh = model?.getObjectByName?.("Tunnel_C_Jetway_0");
   if (!tunnelCMesh?.isMesh || !tunnelCMesh.geometry?.getAttribute?.("position")) {
     throw new Error("A1 service-stair clearance cannot resolve exact Tunnel_C_Jetway_0 geometry");
   }
-  if (!aircraftFrame?.matrixWorld) {
-    throw new Error("A1 service-stair clearance is missing the CRJ-local aircraft frame");
-  }
 
-  if (!tunnelCMesh.userData.a1ServiceStairSourceGeometry) {
-    tunnelCMesh.userData.a1ServiceStairSourceGeometry = tunnelCMesh.geometry.index
+  // Keep a pristine A1-only non-indexed copy so the solve is deterministic even
+  // if browser calibration runs more than once. The shared source GLB and 57
+  // static instances are never mutated.
+  if (!tunnelCMesh.userData.a1ServiceStairSourceGeometryV4) {
+    tunnelCMesh.userData.a1ServiceStairSourceGeometryV4 = tunnelCMesh.geometry.index
       ? tunnelCMesh.geometry.toNonIndexed()
       : tunnelCMesh.geometry.clone();
   }
-  const geometry = tunnelCMesh.userData.a1ServiceStairSourceGeometry.clone();
+  const geometry = tunnelCMesh.userData.a1ServiceStairSourceGeometryV4.clone();
   tunnelCMesh.geometry = geometry;
   const position = geometry.getAttribute("position");
   const normal = geometry.getAttribute("normal");
@@ -77,16 +145,12 @@ export function articulateA1ServiceStairClearOfAircraft(
 
   model.updateWorldMatrix(true, true);
   tunnelCMesh.updateWorldMatrix(true, false);
-  aircraftFrame.updateWorldMatrix(true, false);
+  aircraftRoot.updateWorldMatrix(true, true);
+  const fuselage = findLiveRenderedCrjFuselageBounds(THREE, aircraftRoot);
   const modelInverse = new THREE.Matrix4().copy(model.matrixWorld).invert();
   const meshToModel = new THREE.Matrix4().multiplyMatrices(modelInverse, tunnelCMesh.matrixWorld);
   const modelToMesh = meshToModel.clone().invert();
   const modelToWorld = model.matrixWorld.clone();
-  const worldToAircraft = new THREE.Matrix4().copy(aircraftFrame.matrixWorld).invert();
-  const fuselageBox = new THREE.Box3(
-    new THREE.Vector3(...EXACT_CRJ_FUSELAGE_MIN),
-    new THREE.Vector3(...EXACT_CRJ_FUSELAGE_MAX),
-  );
   const baseModelPoints = stairVertexIndices.map((vertexIndex) =>
     new THREE.Vector3().fromBufferAttribute(position, vertexIndex).applyMatrix4(meshToModel));
 
@@ -100,25 +164,19 @@ export function articulateA1ServiceStairClearOfAircraft(
   for (const point of upperAttachmentBand) pivot.add(point);
   pivot.multiplyScalar(1 / upperAttachmentBand.length);
 
-  // Fail closed if the fitter's target is not actually expressed in the same CRJ
-  // frame as the verified authored fuselage bounds. The target should sit on the
-  // left forward fuselage, near the known A1 door coordinates.
-  const targetAircraftLocal = targetWorld.clone().applyMatrix4(worldToAircraft);
-  if (
-    !(targetAircraftLocal.x < 0 && targetAircraftLocal.x > -2.5)
-    || !(targetAircraftLocal.y > 1.8 && targetAircraftLocal.y < 3.8)
-    || !(targetAircraftLocal.z > 0 && targetAircraftLocal.z < 8)
-  ) {
-    throw new Error(`A1 service-stair CRJ frame mismatch at target ${targetAircraftLocal.toArray().join(",")}`);
-  }
-
-  const preferredSign = Math.sign(cabRelativeYawRadians || 1) || 1;
+  const cabObject = model.getObjectByName("Cab") || model.getObjectByName("Cab_Jetway_0");
+  if (!cabObject) throw new Error("A1 service-stair clearance cannot resolve the live Cab side");
+  const cabWorld = new THREE.Box3().setFromObject(cabObject).getCenter(new THREE.Vector3());
+  const cabAircraftLocal = cabWorld.clone().applyMatrix4(fuselage.worldToAircraft);
+  const fuselageCenterX = (fuselage.box.min.x + fuselage.box.max.x) / 2;
+  const serviceSideSign = cabAircraftLocal.x <= fuselageCenterX ? -1 : 1;
 
   function measureCandidate(angleRadians) {
     const correction = yawAround(THREE, pivot.x, pivot.z, angleRadians);
     let maximumFuselageEnvelopePenetrationMeters = Number.NEGATIVE_INFINITY;
     let measuredFuselageBandPointCount = 0;
     let minimumOutboardClearanceMeters = Number.POSITIVE_INFINITY;
+    let minimumFuselageBoxSeparationMeters = Number.POSITIVE_INFINITY;
     const candidate = new THREE.Vector3();
     const aircraftLocal = new THREE.Vector3();
 
@@ -132,39 +190,53 @@ export function articulateA1ServiceStairClearOfAircraft(
       candidate.copy(basePoint)
         .applyMatrix4(correction)
         .applyMatrix4(modelToWorld)
-        .applyMatrix4(worldToAircraft);
+        .applyMatrix4(fuselage.worldToAircraft);
       aircraftLocal.copy(candidate);
+      minimumFuselageBoxSeparationMeters = Math.min(
+        minimumFuselageBoxSeparationMeters,
+        distanceToBox(aircraftLocal, fuselage.box),
+      );
 
-      const insideVerticalBand = aircraftLocal.y >= fuselageBox.min.y - 0.05
-        && aircraftLocal.y <= fuselageBox.max.y + 0.05;
-      const insideLongitudinalBand = aircraftLocal.z >= fuselageBox.min.z - 0.15
-        && aircraftLocal.z <= fuselageBox.max.z + 0.15;
+      const insideVerticalBand = aircraftLocal.y >= fuselage.box.min.y - 0.05
+        && aircraftLocal.y <= fuselage.box.max.y + 0.05;
+      const insideLongitudinalBand = aircraftLocal.z >= fuselage.box.min.z - 0.15
+        && aircraftLocal.z <= fuselage.box.max.z + 0.15;
       if (!insideVerticalBand || !insideLongitudinalBand) continue;
 
-      // A1 serves the aircraft's left side: negative CRJ-local X is outboard.
-      // Below the small top landing/hinge exemption, every stair/rail vertex must
-      // remain beyond the exact fuselage's left skin plus 15 cm clearance.
-      const requiredMaximumX = fuselageBox.min.x - FUSELAGE_OUTBOARD_CLEARANCE_METERS;
-      const penetration = aircraftLocal.x - requiredMaximumX;
+      let penetration;
+      let outboardClearance;
+      if (serviceSideSign < 0) {
+        const requiredMaximumX = fuselage.box.min.x - FUSELAGE_OUTBOARD_CLEARANCE_METERS;
+        penetration = aircraftLocal.x - requiredMaximumX;
+        outboardClearance = requiredMaximumX - aircraftLocal.x;
+      } else {
+        const requiredMinimumX = fuselage.box.max.x + FUSELAGE_OUTBOARD_CLEARANCE_METERS;
+        penetration = requiredMinimumX - aircraftLocal.x;
+        outboardClearance = aircraftLocal.x - requiredMinimumX;
+      }
       maximumFuselageEnvelopePenetrationMeters = Math.max(
         maximumFuselageEnvelopePenetrationMeters,
         penetration,
       );
-      minimumOutboardClearanceMeters = Math.min(
-        minimumOutboardClearanceMeters,
-        requiredMaximumX - aircraftLocal.x,
-      );
+      minimumOutboardClearanceMeters = Math.min(minimumOutboardClearanceMeters, outboardClearance);
       measuredFuselageBandPointCount += 1;
     }
 
+    // No point entering the fuselage's vertical/longitudinal slab is a legitimate
+    // clear condition, but publish a finite negative margin so acceptance cannot
+    // accidentally serialize Infinity/-Infinity as a false pass.
     if (!measuredFuselageBandPointCount) {
-      maximumFuselageEnvelopePenetrationMeters = Number.NEGATIVE_INFINITY;
-      minimumOutboardClearanceMeters = Number.POSITIVE_INFINITY;
+      const separation = Number.isFinite(minimumFuselageBoxSeparationMeters)
+        ? minimumFuselageBoxSeparationMeters
+        : 0;
+      maximumFuselageEnvelopePenetrationMeters = -Math.max(separation, FUSELAGE_OUTBOARD_CLEARANCE_METERS);
+      minimumOutboardClearanceMeters = Math.max(separation, FUSELAGE_OUTBOARD_CLEARANCE_METERS);
     }
     return {
       angleRadians,
       maximumFuselageEnvelopePenetrationMeters,
       minimumOutboardClearanceMeters,
+      minimumFuselageBoxSeparationMeters,
       measuredFuselageBandPointCount,
     };
   }
@@ -173,7 +245,7 @@ export function articulateA1ServiceStairClearOfAircraft(
   let selected = before.maximumFuselageEnvelopePenetrationMeters <= 0 ? before : null;
   if (!selected) {
     for (let degrees = 2; degrees <= MAX_SWING_DEGREES && !selected; degrees += 2) {
-      const candidates = [preferredSign, -preferredSign]
+      const candidates = [1, -1]
         .map((sign) => measureCandidate(THREE.MathUtils.degToRad(degrees * sign)))
         .sort((a, b) => a.maximumFuselageEnvelopePenetrationMeters - b.maximumFuselageEnvelopePenetrationMeters);
       selected = candidates.find((candidate) => candidate.maximumFuselageEnvelopePenetrationMeters <= 0) || null;
@@ -181,9 +253,9 @@ export function articulateA1ServiceStairClearOfAircraft(
   }
   if (!selected) {
     throw new Error(
-      `A1 exact service stair cannot clear exact CRJ fuselage within ${MAX_SWING_DEGREES} degrees: `
-      + `beforePenetration=${before.maximumFuselageEnvelopePenetrationMeters}; `
-      + `targetLocal=${targetAircraftLocal.toArray().join(",")}`,
+      `A1 exact service stair cannot clear the live rendered CRJ within ${MAX_SWING_DEGREES} degrees: `
+      + `before=${before.maximumFuselageEnvelopePenetrationMeters}; `
+      + `fuselage=${fuselage.meshName}/${fuselage.size.toArray().join(",")}; side=${serviceSideSign}`,
     );
   }
 
@@ -207,7 +279,7 @@ export function articulateA1ServiceStairClearOfAircraft(
   geometry.computeBoundingSphere();
   tunnelCMesh.updateMatrixWorld(true);
 
-  return Object.freeze({
+  const result = Object.freeze({
     authority: AUTHORITY,
     stairTriangleCount,
     upperAttachmentPointCount: upperAttachmentBand.length,
@@ -215,13 +287,18 @@ export function articulateA1ServiceStairClearOfAircraft(
     beforeFuselageEnvelopePenetrationMeters: before.maximumFuselageEnvelopePenetrationMeters,
     afterFuselageEnvelopePenetrationMeters: selected.maximumFuselageEnvelopePenetrationMeters,
     minimumOutboardClearanceMeters: selected.minimumOutboardClearanceMeters,
+    minimumFuselageBoxSeparationMeters: selected.minimumFuselageBoxSeparationMeters,
     measuredFuselageBandPointCount: selected.measuredFuselageBandPointCount,
-    fuselageMeshName: "exact-authored-crj-primitive-0-envelope",
-    fuselageBoundsMin: fuselageBox.min.toArray(),
-    fuselageBoundsMax: fuselageBox.max.toArray(),
-    targetAircraftLocal: targetAircraftLocal.toArray(),
+    fuselageMeshName: fuselage.meshName,
+    fuselageBoundsMin: fuselage.box.min.toArray(),
+    fuselageBoundsMax: fuselage.box.max.toArray(),
+    fuselageSize: fuselage.size.toArray(),
+    serviceSideSign,
+    cabAircraftLocal: cabAircraftLocal.toArray(),
     pivotModel: pivot.toArray(),
   });
+  tunnelCMesh.userData.a1ServiceStairClearance = result;
+  return result;
 }
 
 export { AUTHORITY as A1_SERVICE_STAIR_CLEARANCE_AUTHORITY };
