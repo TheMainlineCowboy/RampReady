@@ -5,14 +5,22 @@ const PHOTO_CONNECTOR_STYLE_AUTHORITY = "a1-aug15-photo-dogleg-exactly-two-fixed
 const STATIC_OWN_GATE_AUTHORITY = "57-static-bgl-source-pose-real-wall-registration-v10";
 const MIN_REAL_WALL_DISTANCE_METERS = 2.9;
 const MAX_REAL_WALL_DISTANCE_METERS = 5.8;
-const MAX_A1_DOOR_VERTICAL_ERROR_METERS = 0.25;
 const ATTACHED_EVIDENCE_AUTHORITY = "a1-terminal-connection-attached-evidence-v1";
+const EXACT_CAB_SURFACE_AUTHORITY = "a1-final-exact-cab-footprint-door-contact-v2";
 
 function requireReplace(source, before, after, label) {
   if (source.includes(after)) return source;
   if (!source.includes(before)) throw new Error(`${label}: expected verifier anchor is missing: ${before}`);
   return source.replace(before, after);
 }
+
+const exactCabSurfaceAcceptance = (datasetExpression, failureTarget = "geometryFailures.push") => {
+  const d = datasetExpression;
+  if (failureTarget === "throw") {
+    return `  const cabDoorFacingVertexCount = numeric(${d}.inspectionAircraftCabDoorFacingVertexCount, 'Cab door-facing vertex count');\n  const cabDoorMinimumHeightMeters = numeric(${d}.inspectionAircraftCabDoorMinimumHeightMeters, 'Cab door-facing minimum height');\n  const cabDoorMaximumHeightMeters = numeric(${d}.inspectionAircraftCabDoorMaximumHeightMeters, 'Cab door-facing maximum height');\n  if (\n    ${d}.inspectionAircraftCabDoorContactPlaneCovered !== 'true'\n    || ${d}.inspectionAircraftCabDoorLaterallyCovered !== 'true'\n    || ${d}.inspectionAircraftCabDoorVerticallyCovered !== 'true'\n    || cabDoorFacingVertexCount < 3\n    || cabDoorMinimumHeightMeters > 0.08\n    || cabDoorMaximumHeightMeters < -0.08\n  ) {\n    throw new Error(\`A1 exact fixed CRJ door is outside the final supplied Cab boarding surface: plane=\${${d}.inspectionAircraftCabDoorContactPlaneCovered}, lateral=\${${d}.inspectionAircraftCabDoorLaterallyCovered}, vertical=\${${d}.inspectionAircraftCabDoorVerticallyCovered}, vertices=\${cabDoorFacingVertexCount}, height=[\${cabDoorMinimumHeightMeters},\${cabDoorMaximumHeightMeters}]\`);\n  }`;
+  }
+  return `  const cabDoorFacingVertexCount = finiteNumber(${d}.inspectionAircraftCabDoorFacingVertexCount);\n  const cabDoorMinimumHeightMeters = finiteNumber(${d}.inspectionAircraftCabDoorMinimumHeightMeters);\n  const cabDoorMaximumHeightMeters = finiteNumber(${d}.inspectionAircraftCabDoorMaximumHeightMeters);\n  if (\n    ${d}.inspectionAircraftCabDoorContactPlaneCovered !== 'true'\n    || ${d}.inspectionAircraftCabDoorLaterallyCovered !== 'true'\n    || ${d}.inspectionAircraftCabDoorVerticallyCovered !== 'true'\n    || cabDoorFacingVertexCount === null || cabDoorFacingVertexCount < 3\n    || cabDoorMinimumHeightMeters === null || cabDoorMinimumHeightMeters > 0.08\n    || cabDoorMaximumHeightMeters === null || cabDoorMaximumHeightMeters < -0.08\n  ) {\n    geometryFailures.push(\`A1 exact fixed CRJ door is outside the final supplied Cab boarding surface: plane=\${${d}.inspectionAircraftCabDoorContactPlaneCovered}, lateral=\${${d}.inspectionAircraftCabDoorLaterallyCovered}, vertical=\${${d}.inspectionAircraftCabDoorVerticallyCovered}, vertices=\${cabDoorFacingVertexCount}, height=[\${cabDoorMinimumHeightMeters},\${cabDoorMaximumHeightMeters}]\`);\n  }`;
+};
 
 {
   const path = "scripts/verify-terminal4-fleet-visual.cjs";
@@ -25,15 +33,19 @@ function requireReplace(source, before, after, label) {
     /const STATIC_OWN_GATE_AUTHORITY = '[^']+';/,
     `const STATIC_OWN_GATE_AUTHORITY = '${STATIC_OWN_GATE_AUTHORITY}';`,
   );
-  source = requireReplace(
-    source,
-    "const MAXIMUM_DEFERRED_A1_VERTICAL_ERROR_METERS = 6;",
-    `const MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS = ${MAX_A1_DOOR_VERTICAL_ERROR_METERS};`,
-    path,
+  source = source.replace(
+    /const MAXIMUM_(?:DEFERRED_A1_VERTICAL_ERROR_METERS|A1_DOOR_VERTICAL_ERROR_METERS) = [0-9.]+;/,
+    `const EXACT_CAB_SURFACE_AUTHORITY = '${EXACT_CAB_SURFACE_AUTHORITY}';`,
   );
+
   const deferredVerticalBlock = `  const verticalError = finiteNumber(a1.inspectionAircraftDoorVerticalErrorMeters);\n  if (verticalError === null || Math.abs(verticalError) > MAXIMUM_DEFERRED_A1_VERTICAL_ERROR_METERS) {\n    geometryFailures.push(\`A1 deferred door-height gap escaped safe bounds: \${a1.inspectionAircraftDoorVerticalErrorMeters} m\`);\n  } else if (Math.abs(verticalError) > 0.5) {\n    deferredGeometry.push(\`A1 bridge lift remains deferred: vertical gap=\${verticalError.toFixed(3)} m; aircraft and exact bogie remain grounded.\`);\n  }`;
-  const strictVerticalBlock = `  const verticalError = finiteNumber(a1.inspectionAircraftDoorVerticalErrorMeters);\n  if (verticalError === null || Math.abs(verticalError) > MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS) {\n    geometryFailures.push(\`A1 visible door/Cab vertical error is unacceptable while attached: \${a1.inspectionAircraftDoorVerticalErrorMeters} m\`);\n  }`;
-  source = requireReplace(source, deferredVerticalBlock, strictVerticalBlock, path);
+  const priorStrictVerticalBlock = `  const verticalError = finiteNumber(a1.inspectionAircraftDoorVerticalErrorMeters);\n  if (verticalError === null || Math.abs(verticalError) > MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS) {\n    geometryFailures.push(\`A1 visible door/Cab vertical error is unacceptable while attached: \${a1.inspectionAircraftDoorVerticalErrorMeters} m\`);\n  }`;
+  const surfaceBlock = `  // ${EXACT_CAB_SURFACE_AUTHORITY}\n  // inspectionAircraftDoorVerticalErrorMeters is a retired representative-point\n  // diagnostic on a rounded Cab. Judge the actual aircraft-facing supplied Cab\n  // vertex band against the fixed authored CRJ door instead.\n${exactCabSurfaceAcceptance("a1")}`;
+  if (source.includes(priorStrictVerticalBlock)) source = source.replace(priorStrictVerticalBlock, surfaceBlock);
+  else if (source.includes(deferredVerticalBlock)) source = source.replace(deferredVerticalBlock, surfaceBlock);
+  else if (!source.includes(EXACT_CAB_SURFACE_AUTHORITY)) {
+    throw new Error(`${path}: Cab surface acceptance anchor is missing`);
+  }
 
   const a1PresetAnchor = `  await waitForPreset(page, 'a1Connection');`;
   const attachedEvidenceCall = `${a1PresetAnchor}\n\n  const attachedEvidenceState = await page.evaluate(() => {\n    const attach = window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__;\n    if (typeof attach !== 'function') throw new Error('A1 attached visual-evidence bridge is missing');\n    return attach();\n  });\n  if (attachedEvidenceState === 'not-ready') {\n    throw new Error('A1 attached visual-evidence bridge ran before the supplied jetway controller was ready');\n  }\n  await page.waitForFunction((authority) => (\n    document.querySelector('canvas.trainerCanvas')?.dataset?.a1InspectionAttachedEvidenceAuthority === authority\n  ), '${ATTACHED_EVIDENCE_AUTHORITY}', { timeout: 30000, polling: 100 });`;
@@ -42,12 +54,18 @@ function requireReplace(source, before, after, label) {
   for (const required of [
     CAMERA_AUTHORITY,
     STATIC_OWN_GATE_AUTHORITY,
-    `const MAXIMUM_A1_DOOR_VERTICAL_ERROR_METERS = ${MAX_A1_DOOR_VERTICAL_ERROR_METERS};`,
-    "A1 visible door/Cab vertical error is unacceptable while attached",
+    EXACT_CAB_SURFACE_AUTHORITY,
+    "inspectionAircraftCabDoorContactPlaneCovered",
+    "inspectionAircraftCabDoorLaterallyCovered",
+    "inspectionAircraftCabDoorVerticallyCovered",
+    "inspectionAircraftCabDoorFacingVertexCount",
     "__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__",
     ATTACHED_EVIDENCE_AUTHORITY,
   ]) {
     if (!source.includes(required)) throw new Error(`${path}: current photo visual verifier is missing ${required}`);
+  }
+  if (source.includes("A1 visible door/Cab vertical error is unacceptable while attached")) {
+    throw new Error(`${path}: stale representative-point vertical visual veto survived`);
   }
   fs.writeFileSync(path, source, "utf8");
 }
@@ -65,11 +83,18 @@ function requireReplace(source, before, after, label) {
     `const MIN_VISIBLE_TERMINAL_LEG_METERS = 6.0;\nconst MAX_VISIBLE_TERMINAL_LEG_METERS = 48.0;\nconst PHOTO_CONNECTOR_STYLE_AUTHORITY = '${PHOTO_CONNECTOR_STYLE_AUTHORITY}';`,
     path,
   );
-  source = requireReplace(
-    source,
+  source = source.replace(
+    /const MAX_A1_DOOR_VERTICAL_ERROR_METERS = [0-9.]+;\nconst MAX_BOGIE_CLEARANCE_METERS = 0\.015;/,
+    `const EXACT_CAB_SURFACE_AUTHORITY = '${EXACT_CAB_SURFACE_AUTHORITY}';\nconst MAX_BOGIE_CLEARANCE_METERS = 0.015;`,
+  );
+  source = source.replace(
     "const MAX_BOGIE_CLEARANCE_METERS = 0.015;",
-    `const MAX_A1_DOOR_VERTICAL_ERROR_METERS = ${MAX_A1_DOOR_VERTICAL_ERROR_METERS};\nconst MAX_BOGIE_CLEARANCE_METERS = 0.015;`,
-    path,
+    `const EXACT_CAB_SURFACE_AUTHORITY = '${EXACT_CAB_SURFACE_AUTHORITY}';\nconst MAX_BOGIE_CLEARANCE_METERS = 0.015;`,
+  );
+  // Avoid duplicate declaration if the prior strict form was normalized above.
+  source = source.replace(
+    `const EXACT_CAB_SURFACE_AUTHORITY = '${EXACT_CAB_SURFACE_AUTHORITY}';\nconst EXACT_CAB_SURFACE_AUTHORITY = '${EXACT_CAB_SURFACE_AUTHORITY}';`,
+    `const EXACT_CAB_SURFACE_AUTHORITY = '${EXACT_CAB_SURFACE_AUTHORITY}';`,
   );
   source = source.replaceAll(
     "vestibule > 0.15 && vestibule < maxVisibleLeg",
@@ -84,12 +109,6 @@ function requireReplace(source, before, after, label) {
     "    throw new Error(`A1 photo fixed terminal route is outside the 6-48 m authority: ${visibleLeg} m`);",
   );
 
-  // Keep these two measurements separate. The Aug. 15 photo-authoritative fixed
-  // corridor/dogleg is validated by terminal4UploadedJetwayA1VisibleVestibuleLengthMeters
-  // plus PHOTO_CONNECTOR_STYLE_AUTHORITY. terminal4A1JetwayWallDistance remains the
-  // authored movable-jetway Rotunda's local/source relation to the measured BGATE1 facade;
-  // forcing the long fixed-corridor span onto that legacy/source-local field makes
-  // a correct 18 m dogleg fail despite the rendered geometry being photo-consistent.
   source = source
     .replace(/const MIN_REAL_WALL_DISTANCE_METERS = [0-9.]+;/, `const MIN_REAL_WALL_DISTANCE_METERS = ${MIN_REAL_WALL_DISTANCE_METERS};`)
     .replace(/const MAX_REAL_WALL_DISTANCE_METERS = [0-9.]+;/, `const MAX_REAL_WALL_DISTANCE_METERS = ${MAX_REAL_WALL_DISTANCE_METERS};`);
@@ -103,8 +122,12 @@ function requireReplace(source, before, after, label) {
     );
   }
   const wallAssertionBlock = `  if (!(realWallDistance > MIN_REAL_WALL_DISTANCE_METERS && realWallDistance < MAX_REAL_WALL_DISTANCE_METERS)) {\n    throw new Error(\`A1 transformed Rotunda-to-wall distance is outside the measured envelope: \${realWallDistance} m\`);\n  }`;
-  const strictDoorHeightBlock = `${wallAssertionBlock}\n  const doorVerticalError = numeric(terminalData.inspectionAircraftDoorVerticalErrorMeters, 'visible door/Cab vertical error');\n  if (Math.abs(doorVerticalError) > MAX_A1_DOOR_VERTICAL_ERROR_METERS) {\n    throw new Error(\`A1 visible door/Cab vertical error is unacceptable while attached: \${doorVerticalError} m\`);\n  }`;
-  source = requireReplace(source, wallAssertionBlock, strictDoorHeightBlock, path);
+  const priorStrictDoorHeightBlock = `${wallAssertionBlock}\n  const doorVerticalError = numeric(terminalData.inspectionAircraftDoorVerticalErrorMeters, 'visible door/Cab vertical error');\n  if (Math.abs(doorVerticalError) > MAX_A1_DOOR_VERTICAL_ERROR_METERS) {\n    throw new Error(\`A1 visible door/Cab vertical error is unacceptable while attached: \${doorVerticalError} m\`);\n  }`;
+  const strictSurfaceBlock = `${wallAssertionBlock}\n  // ${EXACT_CAB_SURFACE_AUTHORITY}\n  // Use the actual final Cab door-facing surface footprint, not the retired\n  // representative-point vertical diagnostic.\n${exactCabSurfaceAcceptance("terminalData", "throw")}`;
+  if (source.includes(priorStrictDoorHeightBlock)) source = source.replace(priorStrictDoorHeightBlock, strictSurfaceBlock);
+  else if (source.includes(wallAssertionBlock) && !source.includes("inspectionAircraftCabDoorVerticallyCovered")) {
+    source = source.replace(wallAssertionBlock, strictSurfaceBlock);
+  }
   source = source.replace(
     "vestibule=${dataset.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters || 'missing'} wall=",
     "fixedRoute=${dataset.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters || 'missing'} photo=${dataset.terminal4UploadedJetwayA1ConnectorStyleAuthority || 'missing'} wall=",
@@ -114,8 +137,10 @@ function requireReplace(source, before, after, label) {
     "const MAX_VISIBLE_TERMINAL_LEG_METERS = 6.0;",
     "visibleLeg > 0.15 && visibleLeg < MAX_VISIBLE_TERMINAL_LEG_METERS",
     "vestibule > 0.15 && vestibule < maxVisibleLeg",
+    "A1 visible door/Cab vertical error is unacceptable while attached",
+    "MAX_A1_DOOR_VERTICAL_ERROR_METERS",
   ]) {
-    if (source.includes(stale)) throw new Error(`${path}: stale compact-A1 verifier remains: ${stale}`);
+    if (source.includes(stale)) throw new Error(`${path}: stale compact/representative-point A1 verifier remains: ${stale}`);
   }
   for (const required of [
     CAMERA_AUTHORITY,
@@ -126,9 +151,10 @@ function requireReplace(source, before, after, label) {
     "terminal4UploadedJetwayA1ConnectorStyleAuthority",
     `const MIN_REAL_WALL_DISTANCE_METERS = ${MIN_REAL_WALL_DISTANCE_METERS};`,
     `const MAX_REAL_WALL_DISTANCE_METERS = ${MAX_REAL_WALL_DISTANCE_METERS};`,
-    `const MAX_A1_DOOR_VERTICAL_ERROR_METERS = ${MAX_A1_DOOR_VERTICAL_ERROR_METERS};`,
-    "inspectionAircraftDoorVerticalErrorMeters",
-    "A1 visible door/Cab vertical error is unacceptable while attached",
+    EXACT_CAB_SURFACE_AUTHORITY,
+    "inspectionAircraftCabDoorContactPlaneCovered",
+    "inspectionAircraftCabDoorLaterallyCovered",
+    "inspectionAircraftCabDoorVerticallyCovered",
     "const MAX_BRANCH_VIEW_IMBALANCE = 0.20;",
   ]) {
     if (!source.includes(required)) throw new Error(`${path}: photo-authoritative A1 verifier is missing ${required}`);
@@ -136,4 +162,4 @@ function requireReplace(source, before, after, label) {
   fs.writeFileSync(path, source, "utf8");
 }
 
-console.log(`Prepared photo-authoritative visual verifiers: A1 requires ${PHOTO_CONNECTOR_STYLE_AUTHORITY}, a 6-48 m fixed dogleg route, the unchanged authored/source-local ${MIN_REAL_WALL_DISTANCE_METERS}-${MAX_REAL_WALL_DISTANCE_METERS} m Rotunda-to-BGATE1 facade telemetry envelope, <=${MAX_A1_DOOR_VERTICAL_ERROR_METERS} m attached visible door/Cab vertical error, explicit attached evidence via ${ATTACHED_EVIDENCE_AUTHORITY}, the balanced v5 apron-side camera, and unchanged strict bogie/branch-visibility checks; static gates retain ${STATIC_OWN_GATE_AUTHORITY}.`);
+console.log(`Prepared photo-authoritative visual verifiers: A1 requires ${PHOTO_CONNECTOR_STYLE_AUTHORITY}, a 6-48 m fixed dogleg route, the unchanged authored/source-local ${MIN_REAL_WALL_DISTANCE_METERS}-${MAX_REAL_WALL_DISTANCE_METERS} m Rotunda-to-BGATE1 facade telemetry envelope, the exact final supplied Cab door-facing surface footprint under ${EXACT_CAB_SURFACE_AUTHORITY}, explicit attached evidence via ${ATTACHED_EVIDENCE_AUTHORITY}, the balanced v5 apron-side camera, and unchanged strict bogie/branch-visibility checks; static gates retain ${STATIC_OWN_GATE_AUTHORITY}.`);
