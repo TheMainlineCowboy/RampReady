@@ -135,7 +135,7 @@ function measureTriangles(THREE, mesh, position, triangles, rotundaWorld, cabWor
 function isAircraftSide(entry) {
   return Number.isFinite(entry.alongRatio)
     && entry.alongRatio >= 0.35
-    && entry.alongRatio <= 1.10
+    && entry.alongRatio <= 1.08
     && Number.isFinite(entry.lateralDistance)
     && entry.lateralDistance <= 6.0;
 }
