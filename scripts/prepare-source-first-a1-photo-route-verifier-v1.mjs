@@ -2,7 +2,7 @@ import fs from "node:fs";
 
 const testPath = "tests/browser/source-first-a1-repair.spec.js";
 let source = fs.readFileSync(testPath, "utf8");
-const FIXED_AIRCRAFT_AUTHORITY = "fixed-current-a1-aircraft-pose-exact-authored-door-v1";
+const FIXED_AIRCRAFT_AUTHORITY = "fixed-source-a1-parking-center-exact-authored-door-v2";
 const PHYSICAL_CAB_AUTHORITY = "a1-final-exact-cab-footprint-door-contact-v2";
 const marker = "source-first-a1-physical-cab-surface-verifier-v4-fixed-door";
 
@@ -104,4 +104,4 @@ if (source.includes("expect(Number(runtime.inspectionAircraftSourceGateDoorTarge
 }
 
 fs.writeFileSync(testPath, source);
-console.log("Prepared source-first A1 verifier with the fixed exact authored door, serialized physical Cab authority, Aug. 15 long dogleg/remote Rotunda acceptance, 360 s production readiness window, and no obsolete centroid/source-local/shared-authority vetoes.");
+console.log("Prepared source-first A1 verifier with the centered fixed exact authored door, serialized physical Cab authority, Aug. 15 long dogleg/remote Rotunda acceptance, 360 s production readiness window, and no obsolete centroid/source-local/shared-authority vetoes.");
