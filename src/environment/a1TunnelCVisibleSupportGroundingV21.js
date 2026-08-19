@@ -149,8 +149,6 @@ export function groundA1TunnelCVisibleSupportHardwareV3(THREE, model) {
     mesh.updateMatrixWorld(true);
   }
 
-  // Every diagnosed visible rod window must own real rendered vertices. This
-  // prevents another silent no-op from passing CI.
   const missingTargets = [...targetHits.entries()].filter(([, count]) => count < MIN_SELECTED_VERTICES);
   if (missingTargets.length) {
     throw new Error(`A1 V21 missing rendered rod vertices ${JSON.stringify(missingTargets)}`);
@@ -162,11 +160,6 @@ export function groundA1TunnelCVisibleSupportHardwareV3(THREE, model) {
   let maximumExtensionMeters = base.maximumExtensionMeters;
   let correctedVertexCount = 0;
 
-  // The selected vertex identities are the physical rendered rod strips. Verify
-  // those exact vertices after deformation. Do not re-run the pre-correction
-  // collector here: by definition that collector excludes vertices now seated
-  // within 1.5 cm of pavement, which produced a false post-pass failure by
-  // measuring the next vertex up the correctly grounded rod.
   for (const correction of corrections) {
     const after = measureSelected(THREE, correction.mesh, correction.position, correction.indices);
     const clearance = after.minY - correction.rampY;
@@ -194,7 +187,7 @@ export function groundA1TunnelCVisibleSupportHardwareV3(THREE, model) {
 
   return Object.freeze({
     ...base,
-    correctedSupportSetCount,
+    correctedSupportSetCount: correctedSetCount,
     visibleLoadLegCount: correctedSetCount,
     remainingSuspendedSupportCount: 0,
     maximumFinalClearanceMeters,
