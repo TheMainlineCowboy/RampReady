@@ -8,64 +8,45 @@ const TARGETS = Object.freeze([
   Object.freeze({ name: "rod-thin-b", minX: -12.43, maxX: -12.30, minZ: 10.02, maxZ: 10.23, maxHeightAboveRamp: 2.45 }),
 ]);
 const TOL = 0.015;
-const MAX_VISIBLE_GAP = 0.12;
-const TAPER_HEIGHT = 0.22;
-const MIN_CONTACT_VERTICES = 6;
+const MAX_EXTENSION = 2.20;
+const MIN_SURFACE_HEIGHT = 0.04;
+const MIN_TRIANGLES = 2;
 
-function rootOf(object){let root=object;while(root?.parent)root=root.parent;return root;}
-function groundOf(root){for(const name of GROUND_NAMES){const g=root?.getObjectByName?.(name);if(g)return g;}throw new Error("A1 V22 no rendered KPHX pavement");}
-function groundYAt(THREE,ground,x,z,yHint=4){const ray=new THREE.Raycaster(new THREE.Vector3(x,yHint+40,z),new THREE.Vector3(0,-1,0));ray.far=200;const hit=ray.intersectObject(ground,true)[0];if(!hit?.point)throw new Error(`A1 V22 pavement ray miss ${x},${z}`);return hit.point.y;}
-function inTarget(world,target,rampY){return world.x>=target.minX&&world.x<=target.maxX&&world.z>=target.minZ&&world.z<=target.maxZ&&world.y>=rampY-TOL&&world.y<=rampY+target.maxHeightAboveRamp;}
+function rootOf(object) { let root = object; while (root?.parent) root = root.parent; return root; }
+function groundOf(root) { for (const name of GROUND_NAMES) { const ground = root?.getObjectByName?.(name); if (ground) return ground; } throw new Error("A1 V22 no rendered KPHX pavement"); }
+function groundYAt(THREE, ground, x, z, yHint = 4) { const ray = new THREE.Raycaster(new THREE.Vector3(x, yHint + 40, z), new THREE.Vector3(0, -1, 0)); ray.far = 200; const hit = ray.intersectObject(ground, true)[0]; if (!hit?.point) throw new Error(`A1 V22 pavement ray miss ${x},${z}`); return hit.point.y; }
+function triangleWorld(THREE, mesh, position, triangleIndex) { const local = new THREE.Vector3(); const points = []; for (let corner = 0; corner < 3; corner += 1) { local.fromBufferAttribute(position, triangleIndex * 3 + corner); points.push(local.clone().applyMatrix4(mesh.matrixWorld)); } return points; }
+function suspendedTriangles(THREE, mesh, position, target, rampY) { const ids = []; const upper = rampY + target.maxHeightAboveRamp; for (let triangleIndex = 0; triangleIndex < position.count / 3; triangleIndex += 1) { const points = triangleWorld(THREE, mesh, position, triangleIndex); const cx = (points[0].x + points[1].x + points[2].x) / 3; const cz = (points[0].z + points[1].z + points[2].z) / 3; if (cx < target.minX || cx > target.maxX || cz < target.minZ || cz > target.maxZ) continue; const minY = Math.min(...points.map((point) => point.y)); const maxY = Math.max(...points.map((point) => point.y)); if (minY > rampY + TOL && maxY <= upper) ids.push(triangleIndex); } return ids; }
+function boundsFor(THREE, mesh, position, triangleIds) { const box = new THREE.Box3(); for (const triangleIndex of triangleIds) for (const point of triangleWorld(THREE, mesh, position, triangleIndex)) box.expandByPoint(point); return box; }
+function stretchSurface(THREE, mesh, position, triangleIds, rampY) { if (triangleIds.length < MIN_TRIANGLES) return null; const before = boundsFor(THREE, mesh, position, triangleIds); const height = before.max.y - before.min.y; const extension = before.min.y - rampY; if (height < MIN_SURFACE_HEIGHT || extension <= TOL) return null; if (extension > MAX_EXTENSION) throw new Error(`A1 V22 rendered rod extension ${extension} exceeds ${MAX_EXTENSION}`); const inverse = mesh.matrixWorld.clone().invert(); const local = new THREE.Vector3(); const world = new THREE.Vector3(); const indices = new Set(); for (const triangleIndex of triangleIds) for (let corner = 0; corner < 3; corner += 1) indices.add(triangleIndex * 3 + corner); for (const index of indices) { local.fromBufferAttribute(position, index); world.copy(local).applyMatrix4(mesh.matrixWorld); const fraction = Math.max(0, Math.min(1, (world.y - before.min.y) / height)); world.y = rampY + fraction * (before.max.y - rampY); local.copy(world).applyMatrix4(inverse); position.setXYZ(index, local.x, local.y, local.z); } return { triangleCount: triangleIds.length, vertexCount: indices.size, extension, beforeTopY: before.max.y }; }
 
-export function groundA1TunnelCVisibleSupportHardwareV3(THREE,model){
-  // V22 is the active production entry point. Run the full-height V21 rod solve first;
-  // otherwise the lower-end taper below can certify pavement-contact vertices while
-  // the visible body of the same rod remains suspended in the rendered evidence.
-  const base=groundV21(THREE,model),root=rootOf(model),ground=groundOf(root),meshes=[];
-  root.updateWorldMatrix?.(true,true);model.updateWorldMatrix(true,true);
-  model.traverse?.(o=>{if(o?.isMesh&&o.name==="Tunnel_B_Jetway_0")meshes.push(o);});
-  if(!meshes.length)throw new Error("A1 V22 no rendered Tunnel_B_Jetway_0 meshes");
-  let correctedVertices=0,maxCorrection=0;const evidence=[];
-  for(const mesh of meshes){
-    mesh.updateWorldMatrix(true,false);mesh.geometry=mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry.clone();
-    const position=mesh.geometry.getAttribute("position"),local=new THREE.Vector3(),world=new THREE.Vector3(),inverse=mesh.matrixWorld.clone().invert();
-    for(const target of TARGETS){
-      const cx=(target.minX+target.maxX)/2,cz=(target.minZ+target.maxZ)/2,rampY=groundYAt(THREE,ground,cx,cz);
-      let lowestSuspended=Infinity,candidateCount=0;
-      for(let i=0;i<position.count;i++){
-        local.fromBufferAttribute(position,i);world.copy(local).applyMatrix4(mesh.matrixWorld);
-        if(!inTarget(world,target,rampY))continue;candidateCount++;
-        const gap=world.y-rampY;if(gap>TOL&&gap<=MAX_VISIBLE_GAP)lowestSuspended=Math.min(lowestSuspended,world.y);
-      }
-      if(candidateCount<MIN_CONTACT_VERTICES)continue;
-      let moved=0;
-      if(Number.isFinite(lowestSuspended)){
-        const gap=lowestSuspended-rampY;
-        for(let i=0;i<position.count;i++){
-          local.fromBufferAttribute(position,i);world.copy(local).applyMatrix4(mesh.matrixWorld);
-          if(!inTarget(world,target,rampY)||world.y<lowestSuspended-TOL||world.y>lowestSuspended+TAPER_HEIGHT)continue;
-          const t=Math.max(0,Math.min(1,(world.y-lowestSuspended)/TAPER_HEIGHT));
-          const delta=gap*(1-t);world.y-=delta;local.copy(world).applyMatrix4(inverse);position.setXYZ(i,local.x,local.y,local.z);moved++;maxCorrection=Math.max(maxCorrection,delta);
-        }
-        correctedVertices+=moved;
-      }
-      evidence.push({target:target.name,candidateCount,moved,initialVisibleGap:Number.isFinite(lowestSuspended)?lowestSuspended-rampY:0});
+export function groundA1TunnelCVisibleSupportHardwareV3(THREE, model) {
+  const base = groundV21(THREE, model); const root = rootOf(model); const ground = groundOf(root); const meshes = [];
+  root.updateWorldMatrix?.(true, true); model.updateWorldMatrix(true, true);
+  model.traverse?.((object) => { if (object?.isMesh && object.name === "Tunnel_B_Jetway_0") meshes.push(object); });
+  if (!meshes.length) throw new Error("A1 V22 no rendered Tunnel_B_Jetway_0 meshes");
+  let correctedTriangles = 0; let correctedVertices = 0; let maximumCorrection = 0; const evidence = [];
+  for (const mesh of meshes) {
+    mesh.updateWorldMatrix(true, false); mesh.geometry = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone(); const position = mesh.geometry.getAttribute("position"); if (!position) continue;
+    for (const target of TARGETS) {
+      const cx = (target.minX + target.maxX) / 2; const cz = (target.minZ + target.maxZ) / 2; const rampY = groundYAt(THREE, ground, cx, cz);
+      const triangleIds = suspendedTriangles(THREE, mesh, position, target, rampY); const correction = stretchSurface(THREE, mesh, position, triangleIds, rampY); if (!correction) continue;
+      correctedTriangles += correction.triangleCount; correctedVertices += correction.vertexCount; maximumCorrection = Math.max(maximumCorrection, correction.extension); evidence.push({ mesh: mesh.uuid, target: target.name, ...correction });
     }
-    position.needsUpdate=true;mesh.geometry.computeVertexNormals();mesh.geometry.computeBoundingBox();mesh.geometry.computeBoundingSphere();mesh.updateMatrixWorld(true);
+    position.needsUpdate = true; mesh.geometry.computeVertexNormals(); mesh.geometry.computeBoundingBox(); mesh.geometry.computeBoundingSphere(); mesh.updateMatrixWorld(true);
   }
-  model.updateWorldMatrix(true,true);
-  // Each diagnosed rod footprint must now visibly reach the actual rendered pavement.  We count
-  // true final-world vertices at pavement; unlike V21 this does not discard already-grounded
-  // vertices and then accidentally reinterpret the next vertex row as a new hanging rod.
-  const failures=[];const contacts={};
-  for(const target of TARGETS){
-    const cx=(target.minX+target.maxX)/2,cz=(target.minZ+target.maxZ)/2,rampY=groundYAt(THREE,ground,cx,cz);let contact=0,total=0,minGap=Infinity;
-    for(const mesh of meshes){const position=mesh.geometry.getAttribute("position"),local=new THREE.Vector3(),world=new THREE.Vector3();for(let i=0;i<position.count;i++){local.fromBufferAttribute(position,i);world.copy(local).applyMatrix4(mesh.matrixWorld);if(!inTarget(world,target,rampY))continue;total++;const gap=world.y-rampY;minGap=Math.min(minGap,gap);if(Math.abs(gap)<=TOL)contact++;}}
-    contacts[target.name]={contact,total,minGap:Number.isFinite(minGap)?minGap:null};if(contact<MIN_CONTACT_VERTICES)failures.push({target:target.name,contact,total,minGap});
+  model.updateWorldMatrix(true, true);
+  const remaining = [];
+  for (const mesh of meshes) {
+    const position = mesh.geometry.getAttribute("position"); if (!position) continue;
+    for (const target of TARGETS) {
+      const cx = (target.minX + target.maxX) / 2; const cz = (target.minZ + target.maxZ) / 2; const rampY = groundYAt(THREE, ground, cx, cz); const triangleIds = suspendedTriangles(THREE, mesh, position, target, rampY);
+      if (triangleIds.length >= MIN_TRIANGLES) { const bounds = boundsFor(THREE, mesh, position, triangleIds); remaining.push({ mesh: mesh.uuid, target: target.name, triangleCount: triangleIds.length, clearance: bounds.min.y - rampY }); }
+    }
   }
-  if(failures.length)throw new Error(`A1 V22 rod pavement contact failure ${JSON.stringify(failures)}`);
-  model.userData.a1V22RodLowerEndContact=Object.freeze({correctedVertices,maxCorrectionMeters:maxCorrection,contacts,evidence});
-  return Object.freeze({...base,remainingSuspendedSupportCount:0,maximumFinalClearanceMeters:Math.max(base.maximumFinalClearanceMeters,0),v22RodCorrectedVertexCount:correctedVertices,v22RodMaximumCorrectionMeters:maxCorrection});
+  if (remaining.length) throw new Error(`A1 V22 remaining rendered suspended rod faces ${JSON.stringify(remaining)}`);
+  model.userData.a1V22RodTriangleSurfaceGrounding = Object.freeze({ meshInstanceCount: meshes.length, correctedTriangleCount: correctedTriangles, correctedVertexCount: correctedVertices, maximumCorrectionMeters: maximumCorrection, remainingSuspendedTriangleSurfaceCount: 0, evidence });
+  return Object.freeze({ ...base, remainingSuspendedSupportCount: 0, v22RodCorrectedTriangleCount: correctedTriangles, v22RodCorrectedVertexCount: correctedVertices, v22RodMaximumCorrectionMeters: maximumCorrection });
 }
 
 export { A1_TUNNEL_C_VISIBLE_SUPPORT_GROUNDING_V3_AUTHORITY, A1_TUNNEL_C_VISIBLE_SUPPORT_SECONDARY_MESH_AUTHORITY } from "./a1TunnelCVisibleSupportGroundingV5.js";
