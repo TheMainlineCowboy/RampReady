@@ -10,23 +10,50 @@ const marker = "a1-final-source-parking-center-v1";
 // convention uses the source 270.491-degree parking heading as +0.491 degrees.
 const pose = Object.freeze({ x: 0, y: -0.002196, z: 6.2, yaw: 0.008570 });
 
-function replaceConst(source, name, value) {
+function replaceConst(source, name, value, { optional = false } = {}) {
   const pattern = new RegExp(`const ${name} = [^;]+;`);
-  if (!pattern.test(source)) throw new Error(`${trainerPath}: missing ${name}`);
+  if (!pattern.test(source)) {
+    if (optional) return source;
+    throw new Error(`${trainerPath}: missing ${name}`);
+  }
   return source.replace(pattern, `const ${name} = ${value};`);
 }
 
 let trainer = fs.readFileSync(trainerPath, "utf8");
 trainer = replaceConst(trainer, "A1_INSPECTION_NOSE_GEAR_X", pose.x);
-trainer = replaceConst(trainer, "A1_INSPECTION_NOSE_GEAR_Y", pose.y);
 trainer = replaceConst(trainer, "A1_INSPECTION_NOSE_GEAR_Z", pose.z);
 trainer = replaceConst(trainer, "A1_INSPECTION_AIRCRAFT_YAW", pose.yaw);
+
+// Some clean/regenerated trainer variants do not declare a dedicated Y constant
+// until the later fixed-aircraft preparer. Install it here when absent so the
+// final source-parking correction is independent of preparer order.
+if (/const A1_INSPECTION_NOSE_GEAR_Y = [^;]+;/.test(trainer)) {
+  trainer = replaceConst(trainer, "A1_INSPECTION_NOSE_GEAR_Y", pose.y, { optional: true });
+} else {
+  const zLine = `const A1_INSPECTION_NOSE_GEAR_Z = ${pose.z};`;
+  if (!trainer.includes(zLine)) throw new Error(`${trainerPath}: cannot insert A1_INSPECTION_NOSE_GEAR_Y after Z pose`);
+  trainer = trainer.replace(zLine, `${zLine}\nconst A1_INSPECTION_NOSE_GEAR_Y = ${pose.y};`);
+}
+
 if (!trainer.includes(marker)) {
   const yawLine = `const A1_INSPECTION_AIRCRAFT_YAW = ${pose.yaw};`;
   trainer = trainer.replace(yawLine, `${yawLine}\n// ${marker}`);
 }
-for (const forbidden of ["const A1_INSPECTION_NOSE_GEAR_X = -3.822373;", "const A1_INSPECTION_NOSE_GEAR_Z = 10.25382;", "const A1_INSPECTION_NOSE_GEAR_Z = 10.253820;"]) {
+for (const forbidden of [
+  "const A1_INSPECTION_NOSE_GEAR_X = -3.822373;",
+  "const A1_INSPECTION_NOSE_GEAR_Z = 10.25382;",
+  "const A1_INSPECTION_NOSE_GEAR_Z = 10.253820;",
+]) {
   if (trainer.includes(forbidden)) throw new Error(`${trainerPath}: Cab-fitted aircraft pose survived: ${forbidden}`);
+}
+for (const required of [
+  `const A1_INSPECTION_NOSE_GEAR_X = ${pose.x};`,
+  `const A1_INSPECTION_NOSE_GEAR_Y = ${pose.y};`,
+  `const A1_INSPECTION_NOSE_GEAR_Z = ${pose.z};`,
+  `const A1_INSPECTION_AIRCRAFT_YAW = ${pose.yaw};`,
+  marker,
+]) {
+  if (!trainer.includes(required)) throw new Error(`${trainerPath}: final source parking pose is missing ${required}`);
 }
 fs.writeFileSync(trainerPath, trainer, "utf8");
 
