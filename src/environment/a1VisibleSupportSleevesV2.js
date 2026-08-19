@@ -1,4 +1,4 @@
-const AUTHORITY = "a1-live-visible-support-lower-sleeves-to-rendered-pavement-v3";
+const AUTHORITY = "a1-live-visible-support-lower-sleeves-to-rendered-pavement-v2";
 const GROUND_NAMES = Object.freeze([
   "PHX_KPHX_AuthoredAirportWideGround",
   "PHX_KPHX_SourceAuthoredPhotoGround_Tiled",
