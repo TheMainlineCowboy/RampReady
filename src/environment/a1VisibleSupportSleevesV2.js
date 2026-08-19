@@ -8,18 +8,21 @@ const REQUIRED_COUNT = 4;
 const MAX_EXTENSION = 4.0;
 const TOP_OVERLAP = 0.08;
 const PAVEMENT_BURY = 0.08;
-const MIN_DISTINCT_CENTER_METERS = 0.045;
+// Only collapse effectively coincident disconnected surfaces. The four real
+// narrow support members sit close together, so a centimetre-scale identity
+// threshold must not merge neighbouring rods into one candidate.
+const MIN_DISTINCT_CENTER_METERS = 0.01;
 const KEY_SCALE = 10000;
 
 function rootOf(object) { let root = object; while (root?.parent) root = root.parent; return root; }
 function groundOf(root) {
   for (const name of GROUND_NAMES) { const ground = root?.getObjectByName?.(name); if (ground) return ground; }
-  throw new Error("A1 V3 support sleeves cannot resolve rendered KPHX pavement");
+  throw new Error("A1 V4 support sleeves cannot resolve rendered KPHX pavement");
 }
 function groundYAt(THREE, ground, x, z, hint) {
   const ray = new THREE.Raycaster(new THREE.Vector3(x, Math.max(20, hint + 30), z), new THREE.Vector3(0, -1, 0), 0, 200);
   const hit = ray.intersectObject(ground, true)[0];
-  if (!hit?.point) throw new Error(`A1 V3 support pavement ray miss ${x},${z}`);
+  if (!hit?.point) throw new Error(`A1 V4 support pavement ray miss ${x},${z}`);
   return hit.point.y;
 }
 function centerOf(THREE, object) {
@@ -53,7 +56,7 @@ function bridgeLocation(center, rotunda, cab) {
 }
 function collectCandidates(THREE, model, ground) {
   const rotunda=centerOf(THREE,model.getObjectByName("Rotunda")), cab=centerOf(THREE,model.getObjectByName("Cab"));
-  if(!rotunda||!cab) throw new Error("A1 V3 support sleeves cannot resolve Rotunda/Cab axis");
+  if(!rotunda||!cab) throw new Error("A1 V4 support sleeves cannot resolve Rotunda/Cab axis");
   const found=[];
   model.traverse((mesh)=>{
     if(!mesh?.isMesh||mesh.visible===false||!/(?:Tunnel_B|Tunnel_C)_Jetway_0/.test(mesh.name||"")) return;
@@ -75,13 +78,16 @@ function collectCandidates(THREE, model, ground) {
     if(selected.some((prior)=>Math.hypot(prior.center.x-candidate.center.x,prior.center.z-candidate.center.z)<MIN_DISTINCT_CENTER_METERS)) continue;
     selected.push(candidate); if(selected.length===REQUIRED_COUNT) break;
   }
-  if(selected.length!==REQUIRED_COUNT) throw new Error(`A1 V3 support sleeves resolved ${selected.length}/${REQUIRED_COUNT} visible suspended members from ${found.length} candidates`);
+  if(selected.length!==REQUIRED_COUNT) {
+    const diagnostic=found.map((candidate)=>({mesh:candidate.mesh.name,x:Number(candidate.center.x.toFixed(4)),z:Number(candidate.center.z.toFixed(4)),gap:Number(candidate.extension.toFixed(4)),triangles:candidate.tris.length}));
+    throw new Error(`A1 V4 support sleeves resolved ${selected.length}/${REQUIRED_COUNT} visible suspended members from ${found.length} candidates: ${JSON.stringify(diagnostic)}`);
+  }
   return selected;
 }
-function material(THREE){return new THREE.MeshStandardMaterial({name:"A1 visible lower support sleeve V3",color:0x24292c,roughness:0.82,metalness:0.3});}
+function material(THREE){return new THREE.MeshStandardMaterial({name:"A1 visible lower support sleeve V4",color:0x24292c,roughness:0.82,metalness:0.3});}
 
 export function addA1VisibleSupportSleevesToPavementV2(THREE, model) {
-  if(!model?.isObject3D) throw new Error("A1 V3 support sleeves require final exact A1 model");
+  if(!model?.isObject3D) throw new Error("A1 V4 support sleeves require final exact A1 model");
   const existing=model.getObjectByName?.("A1VisibleSupportSleevesToPavementV2"); if(existing) return existing.userData.report;
   const root=rootOf(model), ground=groundOf(root); root.updateWorldMatrix?.(true,true); model.updateWorldMatrix(true,true);
   const selected=collectCandidates(THREE,model,ground), group=new THREE.Group(); group.name="A1VisibleSupportSleevesToPavementV2"; model.add(group); model.updateWorldMatrix(true,true);
@@ -95,7 +101,7 @@ export function addA1VisibleSupportSleevesToPavementV2(THREE, model) {
     evidence.push(Object.freeze({sourceMesh:s.mesh.name,triangleCount:s.tris.length,x:s.center.x,z:s.center.z,sourceBottomY:s.box.min.y,rampY:s.rampY,extension:s.extension,alongRatio:s.along,lateralDistance:s.lateral}));
   }
   group.updateWorldMatrix(true,true);
-  const report=Object.freeze({authority:AUTHORITY,sleeveCount:group.children.length,maximumExtensionMeters:maxExtension,maximumFinalClearanceMeters:maxClearance,sourceGeometryMutated:false,detectionAuthority:"four-distinct-live-suspended-tunnel-b-c-members-v3",distinctCenterThresholdMeters:MIN_DISTINCT_CENTER_METERS,evidence});
+  const report=Object.freeze({authority:AUTHORITY,sleeveCount:group.children.length,maximumExtensionMeters:maxExtension,maximumFinalClearanceMeters:maxClearance,sourceGeometryMutated:false,detectionAuthority:"four-distinct-live-suspended-tunnel-b-c-members-v4",distinctCenterThresholdMeters:MIN_DISTINCT_CENTER_METERS,evidence});
   group.userData.report=report; model.userData.a1VisibleSupportSleevesV2=report; return report;
 }
 export { AUTHORITY as A1_VISIBLE_SUPPORT_SLEEVE_V2_AUTHORITY };
