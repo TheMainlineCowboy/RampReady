@@ -4,6 +4,9 @@ const REGION = Object.freeze({ minX: -13.8, maxX: -10.8, minY: 0.45, maxY: 3.15,
 const NAMES = Object.freeze(["Tunnel_B_Jetway_0", "Tunnel_C_Jetway_0"]);
 const PHOTO_GROUND_NAMES = Object.freeze(["PHX_KPHX_SourceAuthoredPhotoGround_Tiled", "PHX_KPHX_SourceAuthoredPhotoGround"]);
 const KEY_SCALE = 10000;
+const MAX_FINAL_CLEARANCE_METERS = 0.015;
+const MAX_EXTENSION_METERS = 2.2;
+const MAX_TOP_MOUNT_DRIFT_METERS = 0.015;
 function sceneRoot(o){let r=o;while(r?.parent)r=r.parent;return r;}
 function ground(root){for(const n of PHOTO_GROUND_NAMES){const g=root?.getObjectByName?.(n);if(g)return g;}throw new Error("A1 V13 no ground");}
 function groundY(THREE,g,x,z,y){const r=new THREE.Raycaster(new THREE.Vector3(x,y+40,z),new THREE.Vector3(0,-1,0));r.far=200;return r.intersectObject(g,true)[0]?.point?.y;}
@@ -25,21 +28,31 @@ function clusterSelected(selected){
   const seen=new Map();for(let i=0;i<n;i++)for(const k of selected[i].keys){const prior=seen.get(k);if(prior===undefined)seen.set(k,i);else union(i,prior);}
   const groups=new Map();for(let i=0;i<n;i++){const r=find(i);if(!groups.has(r))groups.set(r,[]);groups.get(r).push(selected[i]);}return [...groups.values()];
 }
+function candidate(group,box,clearance){
+  const s=box.getSize({x:0,y:0,z:0});
+  return clearance>MAX_FINAL_CLEARANCE_METERS&&clearance<=MAX_EXTENSION_METERS&&s.y>=0.30&&s.y<=2.7&&s.x<=0.65&&s.z<=0.9&&group.length>=8&&group.length<=180;
+}
+function stretchGroup(THREE,mesh,position,group,rampY){
+  const before=new THREE.Box3();for(const item of group)before.union(item.box);const minY=before.min.y,maxY=before.max.y,height=maxY-minY,extension=minY-rampY;
+  if(!(height>0.03)||!(extension>MAX_FINAL_CLEARANCE_METERS)||extension>MAX_EXTENSION_METERS)throw new Error(`A1 V13 invalid rod extension ${extension}`);
+  const inverse=mesh.matrixWorld.clone().invert(),local=new THREE.Vector3(),world=new THREE.Vector3();
+  const indices=new Set();for(const item of group)for(let c=0;c<3;c++)indices.add(item.triangle*3+c);
+  for(const index of indices){local.fromBufferAttribute(position,index);world.copy(local).applyMatrix4(mesh.matrixWorld);const f=Math.max(0,Math.min(1,(world.y-minY)/height));world.y=rampY+f*(maxY-rampY);local.copy(world).applyMatrix4(inverse);position.setXYZ(index,local.x,local.y,local.z);}
+  return {extension,beforeTopY:maxY};
+}
 export function groundA1TunnelCVisibleSupportHardwareV3(THREE,model){
-  const base=groundV11(THREE,model);const root=sceneRoot(model),g=ground(root);root.updateWorldMatrix?.(true,true);model.updateWorldMatrix(true,true);const findings=[];
+  const base=groundV11(THREE,model),root=sceneRoot(model),g=ground(root);root.updateWorldMatrix?.(true,true);model.updateWorldMatrix(true,true);const corrections=[];
   for(const name of NAMES){
     const mesh=model?.getObjectByName?.(name);if(!mesh?.isMesh)continue;mesh.updateWorldMatrix(true,false);
-    const geom=mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry;const pos=geom.getAttribute("position");if(!pos||pos.count%3!==0)continue;
-    const selected=selectRegionTriangles(THREE,mesh,pos);
-    for(const group of clusterSelected(selected)){
-      const box=new THREE.Box3();for(const item of group)box.union(item.box);const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
-      const gy=groundY(THREE,g,center.x,center.z,box.max.y),clear=Number.isFinite(gy)?box.min.y-gy:null;
-      findings.push({mesh:name,tris:group.length,min:box.min.toArray().map(v=>+v.toFixed(4)),max:box.max.toArray().map(v=>+v.toFixed(4)),size:size.toArray().map(v=>+v.toFixed(4)),center:center.toArray().map(v=>+v.toFixed(4)),clearance:clear===null?null:+clear.toFixed(4)});
-    }
+    const geom=mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry.clone();mesh.geometry=geom;const pos=geom.getAttribute("position");if(!pos||pos.count%3!==0)continue;
+    for(const group of clusterSelected(selectRegionTriangles(THREE,mesh,pos))){const box=new THREE.Box3();for(const item of group)box.union(item.box);const center=box.getCenter(new THREE.Vector3()),gy=groundY(THREE,g,center.x,center.z,box.max.y),clear=Number.isFinite(gy)?box.min.y-gy:null;if(clear!==null&&candidate(group,box,clear)){const result=stretchGroup(THREE,mesh,pos,group,gy);corrections.push({mesh,name,group,rampY:gy,...result});}}
+    pos.needsUpdate=true;geom.computeVertexNormals();geom.computeBoundingBox();geom.computeBoundingSphere();mesh.updateMatrixWorld(true);
   }
-  findings.sort((a,b)=>(b.clearance??-999)-(a.clearance??-999)||b.tris-a.tris);const concise=findings.slice(0,80);
-  console.error(`A1 V13 ACTUAL CONNECTED SUPPORT COMPONENTS ${JSON.stringify(concise)}`);
-  model.userData.a1V13ActualConnectedSupportComponents=concise;
-  return Object.freeze({...base,v13ActualConnectedSupportComponentCount:concise.length});
+  model.updateWorldMatrix(true,true);let maxClear=base.maximumFinalClearanceMeters,maxDrift=base.maximumTopMountDriftMeters;
+  for(const c of corrections){const pos=c.mesh.geometry.getAttribute("position"),box=new THREE.Box3(),local=new THREE.Vector3(),world=new THREE.Vector3();for(const item of c.group)for(let k=0;k<3;k++){local.fromBufferAttribute(pos,item.triangle*3+k);box.expandByPoint(world.copy(local).applyMatrix4(c.mesh.matrixWorld));}const center=box.getCenter(new THREE.Vector3()),gy=groundY(THREE,g,center.x,center.z,box.max.y),clear=box.min.y-gy,drift=Math.abs(box.max.y-c.beforeTopY);maxClear=Math.max(maxClear,Math.abs(clear));maxDrift=Math.max(maxDrift,drift);if(Math.abs(clear)>MAX_FINAL_CLEARANCE_METERS)throw new Error(`A1 V13 rod final clearance ${clear}`);if(drift>MAX_TOP_MOUNT_DRIFT_METERS)throw new Error(`A1 V13 rod top drift ${drift}`);}
+  const findings=[];for(const name of NAMES){const mesh=model?.getObjectByName?.(name);if(!mesh?.isMesh)continue;mesh.updateWorldMatrix(true,false);const pos=mesh.geometry.getAttribute("position");for(const group of clusterSelected(selectRegionTriangles(THREE,mesh,pos))){const box=new THREE.Box3();for(const item of group)box.union(item.box);const center=box.getCenter(new THREE.Vector3()),gy=groundY(THREE,g,center.x,center.z,box.max.y),clear=Number.isFinite(gy)?box.min.y-gy:null;if(clear!==null&&candidate(group,box,clear))findings.push({mesh:name,tris:group.length,clearance:+clear.toFixed(4)});}}
+  if(findings.length)throw new Error(`A1 V13 remaining suspended visible rods ${JSON.stringify(findings)}`);
+  const extraTriangles=corrections.reduce((s,c)=>s+c.group.length,0),extra=corrections.length,correctedSupportSetCount=base.correctedSupportSetCount+extra;
+  return Object.freeze({...base,secondaryMeshGroundedCount:base.secondaryMeshGroundedCount+extra,secondaryMeshGroundedTriangleCount:base.secondaryMeshGroundedTriangleCount+extraTriangles,spatialRodClusterCount:base.spatialRodClusterCount+extra,spatialRodTriangleCount:base.spatialRodTriangleCount+extraTriangles,spatialRodVertexCount:base.spatialRodVertexCount+extraTriangles*3,correctedSupportSetCount,visibleLoadLegCount:correctedSupportSetCount,remainingSuspendedSupportCount:0,maximumFinalClearanceMeters:maxClear,maximumTopMountDriftMeters:maxDrift,maximumExtensionMeters:Math.max(base.maximumExtensionMeters,...corrections.map(c=>c.extension)),rampReferenceComponentCount:correctedSupportSetCount,v13ConnectedRodGroundedCount:extra,v13ConnectedRodTriangleCount:extraTriangles});
 }
 export { A1_TUNNEL_C_VISIBLE_SUPPORT_GROUNDING_V3_AUTHORITY, A1_TUNNEL_C_VISIBLE_SUPPORT_SECONDARY_MESH_AUTHORITY } from "./a1TunnelCVisibleSupportGroundingV5.js";
