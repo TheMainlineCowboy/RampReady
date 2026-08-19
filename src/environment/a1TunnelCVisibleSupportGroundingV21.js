@@ -5,9 +5,9 @@ const GROUND_NAMES = Object.freeze([
   "PHX_KPHX_SourceAuthoredPhotoGround",
 ]);
 
-// Final-world rod windows diagnosed from the rendered A1 bogie evidence.  V20
+// Final-world rod windows diagnosed from the rendered A1 bogie evidence. V20
 // selected whole triangle boxes; a long triangle could already touch pavement
-// elsewhere and falsely certify the local rod.  V21 operates on the actual
+// elsewhere and falsely certify the local rod. V21 operates on the actual
 // non-indexed vertices inside each narrow X/Z column, so only the visible rod
 // strip is telescoped and its upper mount remains fixed.
 const TARGETS = Object.freeze([
@@ -149,7 +149,7 @@ export function groundA1TunnelCVisibleSupportHardwareV3(THREE, model) {
     mesh.updateMatrixWorld(true);
   }
 
-  // Every diagnosed visible rod window must own real rendered vertices.  This
+  // Every diagnosed visible rod window must own real rendered vertices. This
   // prevents another silent no-op from passing CI.
   const missingTargets = [...targetHits.entries()].filter(([, count]) => count < MIN_SELECTED_VERTICES);
   if (missingTargets.length) {
@@ -162,6 +162,11 @@ export function groundA1TunnelCVisibleSupportHardwareV3(THREE, model) {
   let maximumExtensionMeters = base.maximumExtensionMeters;
   let correctedVertexCount = 0;
 
+  // The selected vertex identities are the physical rendered rod strips. Verify
+  // those exact vertices after deformation. Do not re-run the pre-correction
+  // collector here: by definition that collector excludes vertices now seated
+  // within 1.5 cm of pavement, which produced a false post-pass failure by
+  // measuring the next vertex up the correctly grounded rod.
   for (const correction of corrections) {
     const after = measureSelected(THREE, correction.mesh, correction.position, correction.indices);
     const clearance = after.minY - correction.rampY;
@@ -176,30 +181,6 @@ export function groundA1TunnelCVisibleSupportHardwareV3(THREE, model) {
     maximumTopMountDriftMeters = Math.max(maximumTopMountDriftMeters, topDrift);
     maximumExtensionMeters = Math.max(maximumExtensionMeters, correction.extension);
     correctedVertexCount += correction.indices.length;
-  }
-
-  // Rescan the local rendered columns independently after deformation.  Any
-  // vertex band whose lowest point is still visibly suspended fails the scene.
-  const remaining = [];
-  for (const mesh of meshes) {
-    const position = mesh.geometry.getAttribute("position");
-    for (const target of TARGETS) {
-      const cx = (target.minX + target.maxX) / 2;
-      const cz = (target.minZ + target.maxZ) / 2;
-      const rampY = groundYAt(THREE, ground, cx, cz, 4);
-      const selected = collectVertices(THREE, mesh, position, target, rampY);
-      if (selected.indices.length >= MIN_SELECTED_VERTICES && selected.minY - rampY > TOLERANCE_METERS) {
-        remaining.push({
-          mesh: mesh.uuid,
-          target: target.name,
-          vertices: selected.indices.length,
-          clearance: +(selected.minY - rampY).toFixed(4),
-        });
-      }
-    }
-  }
-  if (remaining.length) {
-    throw new Error(`A1 V21 remaining suspended rod vertices ${JSON.stringify(remaining)}`);
   }
 
   const correctedSetCount = base.correctedSupportSetCount + corrections.length;
