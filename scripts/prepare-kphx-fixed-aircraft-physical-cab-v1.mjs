@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-const FIXED_AIRCRAFT_AUTHORITY = 'fixed-current-a1-aircraft-pose-exact-authored-door-v1';
+const FIXED_AIRCRAFT_AUTHORITY = 'fixed-source-a1-parking-center-exact-authored-door-v2';
 const PHYSICAL_CAB_AUTHORITY = 'a1-final-exact-cab-footprint-door-contact-v2';
 const SOURCE_HEADING_AUTHORITY = 'source-a1-parking-heading-authored-door-registration-v2';
 const SOURCE_A1_YAW = 0.00857;
