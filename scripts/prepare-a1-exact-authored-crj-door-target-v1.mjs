@@ -12,14 +12,13 @@ const finalVisibleMarker = "a1-final-visible-grounded-door-and-integrated-tunnel
 // y=1.802860, and is centered longitudinally at z=2.240745 in the exact authored
 // aircraft coordinate frame.
 //
-// IMPORTANT: a passenger bridge has two different vertical constraints. Its floor
-// must meet the DOOR SILL, while its hood/opening must surround the DOOR CENTER.
-// Treating the center as the floor target raises the complete boarding interface by
-// almost one metre and is the source of the visibly high aircraft-side articulation.
+// The A1 aircraft itself is fixed at the decoded stand center. Do not retain the
+// former Cab-derived outboard pose here: this target owns the final movable-bridge
+// fit and therefore must describe the same immovable aircraft pose used at runtime.
 const fixedAircraftPose = Object.freeze({
-  x: -3.822373,
+  x: 0,
   y: -0.002196,
-  z: 10.253820,
+  z: 6.2,
   yaw: 0.008570,
 });
 const authoredDoorLocal = Object.freeze({
@@ -34,10 +33,6 @@ if (!source.includes(finalVisibleMarker)) {
   throw new Error(`${path}: exact authored-door target must run after final visible normalization`);
 }
 
-// Final visible normalization deliberately exposes its stale 7.32/1.34 target so
-// this final source-authoritative stage can replace it with measurements from the
-// actual rendered CRJ GLB. Do not leave the obsolete values available to later
-// readiness or telemetry layers.
 source = source.replace(
   `  x: -1.34,\n  centerY: 2.62,\n  sillY: 1.73,\n  z: 7.32,`,
   `  x: ${authoredDoorLocal.x},\n  centerY: ${authoredDoorLocal.centerY},\n  sillY: ${authoredDoorLocal.sillY},\n  z: ${authoredDoorLocal.z},`,
@@ -49,7 +44,7 @@ if (!source.includes(marker)) {
     throw new Error(`${path}: stale nose-derived/final-visible door target is missing`);
   }
 
-  const exactTarget = `// ${finalVisibleMarker}\n// ${legacyMarker}\n// ${marker}\nconst FIXED_A1_RENDERED_AIRCRAFT_POSE = Object.freeze({\n  x: ${fixedAircraftPose.x},\n  y: ${fixedAircraftPose.y},\n  z: ${fixedAircraftPose.z},\n  yaw: ${fixedAircraftPose.yaw},\n});\nconst EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR = Object.freeze({\n  x: ${authoredDoorLocal.x},\n  centerY: ${authoredDoorLocal.centerY},\n  sillY: ${authoredDoorLocal.sillY},\n  z: ${authoredDoorLocal.z},\n});\n\nfunction toWorldTarget(THREE) {\n  // The aircraft is fixed. X/Z come from the exact authored door component and Y\n  // is the physical door SILL because this target drives tunnel pitch and boarding\n  // floor height. Hood coverage of centerY is verified separately after fitting.\n  const cosYaw = Math.cos(FIXED_A1_RENDERED_AIRCRAFT_POSE.yaw);\n  const sinYaw = Math.sin(FIXED_A1_RENDERED_AIRCRAFT_POSE.yaw);\n  return new THREE.Vector3(\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.x\n      + cosYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.x\n      + sinYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.z,\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.y\n      + EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.sillY,\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.z\n      - sinYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.x\n      + cosYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.z,\n  );\n}\n\nfunction exactAuthoredCrjDoorCenterWorldY() {\n  return FIXED_A1_RENDERED_AIRCRAFT_POSE.y\n    + EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.centerY;\n}`;
+  const exactTarget = `// ${finalVisibleMarker}\n// ${legacyMarker}\n// ${marker}\nconst FIXED_A1_RENDERED_AIRCRAFT_POSE = Object.freeze({\n  x: ${fixedAircraftPose.x},\n  y: ${fixedAircraftPose.y},\n  z: ${fixedAircraftPose.z},\n  yaw: ${fixedAircraftPose.yaw},\n});\nconst EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR = Object.freeze({\n  x: ${authoredDoorLocal.x},\n  centerY: ${authoredDoorLocal.centerY},\n  sillY: ${authoredDoorLocal.sillY},\n  z: ${authoredDoorLocal.z},\n});\n\nfunction toWorldTarget(THREE) {\n  // The aircraft is fixed at the decoded A1 stand center. X/Z come from the\n  // exact authored door component and Y is the physical door sill because this\n  // target drives tunnel pitch and boarding-floor height.\n  const cosYaw = Math.cos(FIXED_A1_RENDERED_AIRCRAFT_POSE.yaw);\n  const sinYaw = Math.sin(FIXED_A1_RENDERED_AIRCRAFT_POSE.yaw);\n  return new THREE.Vector3(\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.x\n      + cosYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.x\n      + sinYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.z,\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.y\n      + EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.sillY,\n    FIXED_A1_RENDERED_AIRCRAFT_POSE.z\n      - sinYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.x\n      + cosYaw * EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.z,\n  );\n}\n\nfunction exactAuthoredCrjDoorCenterWorldY() {\n  return FIXED_A1_RENDERED_AIRCRAFT_POSE.y\n    + EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.centerY;\n}`;
   source = source.replace(oldTarget, exactTarget);
 }
 
@@ -63,8 +58,8 @@ for (const required of [
   "centerY: 2.769294",
   "sillY: 1.80286",
   "z: 2.240745",
-  "x: -3.822373",
-  "z: 10.25382",
+  "x: 0",
+  "z: 6.2",
   "EXACT_AUTHORED_CRJ_FORWARD_LEFT_DOOR.sillY",
   "exactAuthoredCrjDoorCenterWorldY",
 ]) {
@@ -76,8 +71,10 @@ for (const forbidden of [
   "x: -1.34,",
   "centerY: 2.62,",
   "sillY: 1.73,",
+  "x: -3.822373",
+  "z: 10.253820",
 ]) {
-  if (source.includes(forbidden)) throw new Error(`${path}: stale inferred CRJ door target survived: ${forbidden}`);
+  if (source.includes(forbidden)) throw new Error(`${path}: stale inferred/outboard CRJ door target survived: ${forbidden}`);
 }
 
 fs.writeFileSync(path, source, "utf8");
@@ -88,4 +85,4 @@ const worldX = fixedAircraftPose.x + cosYaw * authoredDoorLocal.x + sinYaw * aut
 const worldSillY = fixedAircraftPose.y + authoredDoorLocal.sillY;
 const worldCenterY = fixedAircraftPose.y + authoredDoorLocal.centerY;
 const worldZ = fixedAircraftPose.z - sinYaw * authoredDoorLocal.x + cosYaw * authoredDoorLocal.z;
-console.log(`Prepared ${marker}: fixed A1 aircraft pose stays unchanged; exact authored CRJ forward-left door sill target is world [${worldX.toFixed(6)}, ${worldSillY.toFixed(6)}, ${worldZ.toFixed(6)}], while hood center Y=${worldCenterY.toFixed(6)} is retained as a separate coverage constraint.`);
+console.log(`Prepared ${marker}: centered fixed A1 aircraft pose remains [${fixedAircraftPose.x}, ${fixedAircraftPose.y}, ${fixedAircraftPose.z}]; exact authored CRJ forward-left door sill target is world [${worldX.toFixed(6)}, ${worldSillY.toFixed(6)}, ${worldZ.toFixed(6)}], while hood center Y=${worldCenterY.toFixed(6)} is retained as a separate coverage constraint.`);
