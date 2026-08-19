@@ -11,7 +11,7 @@ const TOL = 0.015;
 const MAX_EXTENSION = 2.20;
 const MIN_SURFACE_HEIGHT = 0.04;
 const MIN_TRIANGLES = 2;
-const MAX_PASSES_PER_TARGET = 12;
+const MAX_PROGRESS_PASSES = 256;
 
 function rootOf(object) { let root = object; while (root?.parent) root = root.parent; return root; }
 function groundOf(root) { for (const name of GROUND_NAMES) { const ground = root?.getObjectByName?.(name); if (ground) return ground; } throw new Error("A1 V22 no rendered KPHX pavement"); }
@@ -31,14 +31,17 @@ export function groundA1TunnelCVisibleSupportHardwareV3(THREE, model) {
     mesh.updateWorldMatrix(true, false); mesh.geometry = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone(); const position = mesh.geometry.getAttribute("position"); if (!position) continue;
     for (const target of TARGETS) {
       const cx = (target.minX + target.maxX) / 2; const cz = (target.minZ + target.maxZ) / 2; const rampY = groundYAt(THREE, ground, cx, cz);
-      for (let pass = 1; pass <= MAX_PASSES_PER_TARGET; pass += 1) {
+      let previousCount = Number.POSITIVE_INFINITY;
+      for (let pass = 1; pass <= MAX_PROGRESS_PASSES; pass += 1) {
         const triangleIds = suspendedTriangles(THREE, mesh, position, target, rampY);
         if (triangleIds.length < MIN_TRIANGLES) break;
+        if (triangleIds.length >= previousCount) throw new Error(`A1 V22 ${target.name} stopped converging at ${triangleIds.length} suspended rendered faces on pass ${pass}`);
+        previousCount = triangleIds.length;
         const correction = stretchSurface(THREE, mesh, position, triangleIds, rampY);
-        if (!correction) break;
-        correctedTriangles += correction.triangleCount; correctedVertices += correction.vertexCount; maximumCorrection = Math.max(maximumCorrection, correction.extension); evidence.push({ mesh: mesh.uuid, target: target.name, pass, ...correction });
+        if (!correction) throw new Error(`A1 V22 ${target.name} could not correct ${triangleIds.length} suspended rendered faces on pass ${pass}`);
+        correctedTriangles += correction.triangleCount; correctedVertices += correction.vertexCount; maximumCorrection = Math.max(maximumCorrection, correction.extension); evidence.push({ mesh: mesh.uuid, target: target.name, pass, suspendedBefore: triangleIds.length, ...correction });
         position.needsUpdate = true; mesh.geometry.computeBoundingBox(); mesh.geometry.computeBoundingSphere(); mesh.updateMatrixWorld(true);
-        if (pass === MAX_PASSES_PER_TARGET) throw new Error(`A1 V22 ${target.name} did not converge after ${MAX_PASSES_PER_TARGET} rendered-surface passes`);
+        if (pass === MAX_PROGRESS_PASSES) throw new Error(`A1 V22 ${target.name} exceeded ${MAX_PROGRESS_PASSES} strictly-progressing rendered-surface passes`);
       }
     }
     position.needsUpdate = true; mesh.geometry.computeVertexNormals(); mesh.geometry.computeBoundingBox(); mesh.geometry.computeBoundingSphere(); mesh.updateMatrixWorld(true);
