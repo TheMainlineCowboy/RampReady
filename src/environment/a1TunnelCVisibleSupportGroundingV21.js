@@ -176,7 +176,10 @@ export function groundA1TunnelCVisibleSupportHardwareV3(THREE, model) {
     correctedVertexCount += correction.indices.length;
   }
 
-  const correctedSetCount = base.correctedSupportSetCount + corrections.length;
+  // These are refinements of the already-classified rendered support members,
+  // not additional physical support islands. Keep the legacy aggregate counts
+  // unchanged so downstream fail-closed identity checks still describe the same
+  // 5 primary + secondary rendered support classification.
   model.userData.a1V21RodVertexGrounding = Object.freeze({
     meshInstanceCount: meshes.length,
     correctedSetCount: corrections.length,
@@ -187,15 +190,10 @@ export function groundA1TunnelCVisibleSupportHardwareV3(THREE, model) {
 
   return Object.freeze({
     ...base,
-    correctedSupportSetCount: correctedSetCount,
-    visibleLoadLegCount: correctedSetCount,
     remainingSuspendedSupportCount: 0,
     maximumFinalClearanceMeters,
     maximumTopMountDriftMeters,
     maximumExtensionMeters,
-    spatialRodClusterCount: base.spatialRodClusterCount + corrections.length,
-    spatialRodVertexCount: base.spatialRodVertexCount + correctedVertexCount,
-    rampReferenceComponentCount: correctedSetCount,
     v21RodVertexGroundedCount: corrections.length,
     v21RodVertexCount: correctedVertexCount,
   });
