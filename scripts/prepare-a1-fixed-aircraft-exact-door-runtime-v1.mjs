@@ -3,8 +3,10 @@ import fs from "node:fs";
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const marker = "a1-fixed-aircraft-exact-authored-door-runtime-v1";
 const doorAuthority = "exact-authored-crj-forward-left-door-component-v1";
-const poseAuthority = "fixed-current-a1-aircraft-pose-exact-authored-door-v1";
-const fixedPose = Object.freeze({ x: -3.822373, y: -0.002196, z: 10.253820, yaw: 0.008570 });
+const poseAuthority = "fixed-source-a1-parking-center-exact-authored-door-v2";
+// Decoded KPHX A1 parking is local [0,0]; the Terminal 4/A1 scene frame carries
+// the authored +6.2 m Z offset. This is the stand center, not a Cab-derived pose.
+const fixedPose = Object.freeze({ x: 0, y: -0.002196, z: 6.2, yaw: 0.008570 });
 // Jetway hood contact is measured against the center of the authored passenger-door
 // opening. The door component's lower bounds edge (1.802860) is not the hood aim.
 const doorLocal = Object.freeze({ x: -1.291842, y: 2.769294, z: 2.240745 });
@@ -14,16 +16,22 @@ if (!source.includes("a1-service-stair-live-rendered-crj-clearance-v4")) {
   throw new Error(`${path}: fixed-aircraft finalization must run after the live service-stair stage`);
 }
 
-source = source
-  .replace("const A1_INSPECTION_NOSE_GEAR_X = 12.353412;", `const A1_INSPECTION_NOSE_GEAR_X = ${fixedPose.x};`)
-  .replace("const A1_INSPECTION_NOSE_GEAR_Z = -12.486888;", `const A1_INSPECTION_NOSE_GEAR_Z = ${fixedPose.z};`)
-  .replace("const A1_INSPECTION_AIRCRAFT_YAW = (0.491 * Math.PI) / 180;", `const A1_INSPECTION_AIRCRAFT_YAW = ${fixedPose.yaw};`)
-  .replace(/const A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "[^"]+";/, `const A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "${poseAuthority}";`);
+function setPoseConst(name, value) {
+  const pattern = new RegExp(`const ${name} = [^;]+;`);
+  if (!pattern.test(source)) throw new Error(`${path}: fixed aircraft pose constant ${name} is missing`);
+  source = source.replace(pattern, `const ${name} = ${value};`);
+}
+setPoseConst("A1_INSPECTION_NOSE_GEAR_X", fixedPose.x);
+setPoseConst("A1_INSPECTION_NOSE_GEAR_Z", fixedPose.z);
+setPoseConst("A1_INSPECTION_AIRCRAFT_YAW", fixedPose.yaw);
+source = source.replace(/const A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "[^"]+";/, `const A1_INSPECTION_AIRCRAFT_POSE_AUTHORITY = "${poseAuthority}";`);
 
 if (!source.includes("const A1_INSPECTION_NOSE_GEAR_Y =")) {
   const zNeedle = `const A1_INSPECTION_NOSE_GEAR_Z = ${fixedPose.z};`;
   if (!source.includes(zNeedle)) throw new Error(`${path}: fixed Z pose anchor is missing`);
   source = source.replace(zNeedle, `${zNeedle}\nconst A1_INSPECTION_NOSE_GEAR_Y = ${fixedPose.y};`);
+} else {
+  setPoseConst("A1_INSPECTION_NOSE_GEAR_Y", fixedPose.y);
 }
 source = source.replaceAll("storedResetAircraftPose?.y ?? 0", "storedResetAircraftPose?.y ?? A1_INSPECTION_NOSE_GEAR_Y");
 source = source.replaceAll("storedToggleAircraftPose?.y ?? 0", "storedToggleAircraftPose?.y ?? A1_INSPECTION_NOSE_GEAR_Y");
@@ -64,7 +72,6 @@ source = source
   .replaceAll('"a1-fixed-aircraft-calibrated-to-attached-live-cab-v1"', '"a1-fixed-aircraft-exact-door-jetway-fit-v1"')
   .replaceAll('"visible-airframe-forward-left-door-registration-v1"', `"${doorAuthority}"`);
 
-// The old labels implied that a Cab calibration was allowed to move the plane.
 source = source.replaceAll(
   "Register the actual rendered forward-left door of the loaded authored\n        // CRJ directly to the measured final aircraft-facing end of the supplied\n        // Cab mesh.",
   "Measure the actual rendered forward-left door of the loaded authored\n        // CRJ at its fixed A1 pose and require the supplied Cab mesh to reach it.",
@@ -97,9 +104,11 @@ for (const forbidden of [
   "sim.aircraft.position.x += requiredParentLocalDelta.x",
   "sim.aircraft.position.z += requiredParentLocalDelta.z",
   "const authoredDoorLocal = new THREE.Vector3(\n            -1.262,\n            3,\n            3.9,",
+  "const A1_INSPECTION_NOSE_GEAR_X = -3.822373;",
+  "const A1_INSPECTION_NOSE_GEAR_Z = 10.253820;",
 ]) {
   if (source.includes(forbidden)) throw new Error(`${path}: aircraft-to-jetway cheating survived finalization: ${forbidden}`);
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Prepared ${marker}: CRJ stays fixed at [${fixedPose.x}, ${fixedPose.y}, ${fixedPose.z}] yaw=${fixedPose.yaw}; runtime measures the exact authored forward-left door contact center at local [${doorLocal.x}, ${doorLocal.y}, ${doorLocal.z}] and fails unless the supplied jetway reaches it.`);
+console.log(`Prepared ${marker}: CRJ stays fixed at authored A1 stand center [${fixedPose.x}, ${fixedPose.y}, ${fixedPose.z}] yaw=${fixedPose.yaw}; runtime measures the exact authored forward-left door contact center at local [${doorLocal.x}, ${doorLocal.y}, ${doorLocal.z}] and fails unless the supplied jetway reaches it.`);
