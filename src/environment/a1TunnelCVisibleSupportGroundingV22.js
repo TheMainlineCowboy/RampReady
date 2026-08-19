@@ -1,4 +1,4 @@
-import { groundA1TunnelCVisibleSupportHardwareV3 as groundV20 } from "./a1TunnelCVisibleSupportGroundingV20.js";
+import { groundA1TunnelCVisibleSupportHardwareV3 as groundV21 } from "./a1TunnelCVisibleSupportGroundingV21.js";
 
 const GROUND_NAMES = Object.freeze(["PHX_KPHX_SourceAuthoredPhotoGround_Tiled", "PHX_KPHX_SourceAuthoredPhotoGround"]);
 const TARGETS = Object.freeze([
@@ -18,7 +18,10 @@ function groundYAt(THREE,ground,x,z,yHint=4){const ray=new THREE.Raycaster(new T
 function inTarget(world,target,rampY){return world.x>=target.minX&&world.x<=target.maxX&&world.z>=target.minZ&&world.z<=target.maxZ&&world.y>=rampY-TOL&&world.y<=rampY+target.maxHeightAboveRamp;}
 
 export function groundA1TunnelCVisibleSupportHardwareV3(THREE,model){
-  const base=groundV20(THREE,model),root=rootOf(model),ground=groundOf(root),meshes=[];
+  // V22 is the active production entry point. Run the full-height V21 rod solve first;
+  // otherwise the lower-end taper below can certify pavement-contact vertices while
+  // the visible body of the same rod remains suspended in the rendered evidence.
+  const base=groundV21(THREE,model),root=rootOf(model),ground=groundOf(root),meshes=[];
   root.updateWorldMatrix?.(true,true);model.updateWorldMatrix(true,true);
   model.traverse?.(o=>{if(o?.isMesh&&o.name==="Tunnel_B_Jetway_0")meshes.push(o);});
   if(!meshes.length)throw new Error("A1 V22 no rendered Tunnel_B_Jetway_0 meshes");
