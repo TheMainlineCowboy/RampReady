@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const path = "src/environment/uploadedAirportJetwayFleet.js";
-const marker = "rendered-kphx-pavement-per-gate-v4-authored-ground-registration";
+const marker = "rendered-kphx-pavement-per-gate-v5-authored-ground-node-registration";
 let source = fs.readFileSync(path, "utf8");
 
 const oldHelper = `function renderedPavementYAt(THREE, group, x, z) {
@@ -19,27 +19,30 @@ const oldHelper = `function renderedPavementYAt(THREE, group, x, z) {
 }`;
 
 const newHelper = `// ${marker}
-function findAirportEnvironment(group) {
+function findAttachedAuthoredGround(group) {
+  // installAuthoredKphxGround attaches the returned GLTF scene directly beneath
+  // the shared RampReady environment and names it explicitly. It does NOT store
+  // the Object3D on environment.userData. Walk the actual parent hierarchy and
+  // resolve that real attached node instead of waiting on a nonexistent field.
   let current = group;
   while (current) {
-    if (current.userData?.authoredGround) return current;
+    const ground = current.getObjectByName?.("PHX_KPHX_AuthoredAirportWideGround") || null;
+    if (ground?.isObject3D) return ground;
     current = current.parent;
   }
   return null;
 }
 
 async function waitForRenderedGround(group) {
-  // Terminal 4 and KPHX load concurrently. The full 199-tile aerial can arrive
-  // much later than the actual ADEX pavement; fleet grounding must therefore use
-  // environment.userData.authoredGround as soon as that authoritative pavement
-  // is attached, rather than timing out while waiting for the decorative aerial.
+  // Terminal 4 and KPHX load concurrently. As soon as the source-authored ADEX
+  // scene is attached anywhere under the common environment ancestor, use it.
+  // The slower decorative photo aerial is irrelevant to rigid gate grounding.
   for (let attempt = 0; attempt < 3750; attempt += 1) {
-    const environment = findAirportEnvironment(group);
-    const ground = environment?.userData?.authoredGround || null;
-    if (ground?.isObject3D) return ground;
+    const ground = findAttachedAuthoredGround(group);
+    if (ground) return ground;
     await new Promise((resolve) => setTimeout(resolve, 16));
   }
-  throw new Error("Exact jetway fleet timed out waiting for attached authored KPHX pavement");
+  throw new Error("Exact jetway fleet timed out waiting for PHX_KPHX_AuthoredAirportWideGround scene attachment");
 }
 
 function renderedPavementYAt(THREE, group, x, z, ground) {
@@ -100,7 +103,7 @@ async function registerFleetToRenderedPavement(THREE, group, fleet, staticFleet,
 `;
 
 if (!source.includes(marker)) {
-  if (!source.includes(oldHelper)) throw new Error(`${path}: V4 pavement helper anchor is missing`);
+  if (!source.includes(oldHelper)) throw new Error(`${path}: V5 pavement helper anchor is missing`);
   source = source.replace(oldHelper, newHelper);
 
   const oldGroundMap = `  const groundYByGate = new Map(staticPlacements.map((placement) => [
@@ -113,12 +116,12 @@ if (!source.includes(marker)) {
     placement.gate,
     LEGACY_FINAL_FLEET_SHIFT_METERS,
   ]));`;
-  if (!source.includes(oldGroundMap)) throw new Error(`${path}: V4 static ground-map anchor is missing`);
+  if (!source.includes(oldGroundMap)) throw new Error(`${path}: V5 static ground-map anchor is missing`);
   source = source.replace(oldGroundMap, initialGroundMap);
 
   const oldA1Ground = `          const a1GroundY = renderedPavementYAt(THREE, group, placement.x, placement.z) + LEGACY_FINAL_FLEET_SHIFT_METERS;`;
   const initialA1Ground = `          const a1GroundY = LEGACY_FINAL_FLEET_SHIFT_METERS;`;
-  if (!source.includes(oldA1Ground)) throw new Error(`${path}: V4 A1 ground anchor is missing`);
+  if (!source.includes(oldA1Ground)) throw new Error(`${path}: V5 A1 ground anchor is missing`);
   source = source.replace(oldA1Ground, initialA1Ground);
 
   source = source.replace(
@@ -131,7 +134,7 @@ if (!source.includes(marker)) {
   );
 
   const readyAnchor = `      group.userData.uploadedJetwayLoadState = "ready";`;
-  if (!source.includes(readyAnchor)) throw new Error(`${path}: V4 readiness anchor is missing`);
+  if (!source.includes(readyAnchor)) throw new Error(`${path}: V5 readiness anchor is missing`);
   source = source.replace(readyAnchor, `      group.userData.uploadedJetwayLoadState = "ground-registering";`);
   source = source.replace(
     `      group.userData.uploadedJetwayGroundRegistrationAuthority = "rendered-kphx-pavement-per-gate-v1";`,
@@ -139,7 +142,7 @@ if (!source.includes(marker)) {
   );
 
   const finalTelemetryAnchor = `      group.userData.proceduralProjectedUvCount = 0;`;
-  if (!source.includes(finalTelemetryAnchor)) throw new Error(`${path}: V4 final telemetry anchor is missing`);
+  if (!source.includes(finalTelemetryAnchor)) throw new Error(`${path}: V5 final telemetry anchor is missing`);
   source = source.replace(
     finalTelemetryAnchor,
     `${finalTelemetryAnchor}\n      registerFleetToRenderedPavement(THREE, group, fleet, staticFleet, placements).catch((error) => {\n        group.userData.uploadedJetwayLoadState = "error";\n        group.userData.uploadedJetwayLoadError = error instanceof Error ? error.message : String(error);\n        console.error("Exact Airport_Jetway.glb authored-pavement registration failed", error);\n      });`,
@@ -148,7 +151,7 @@ if (!source.includes(marker)) {
 
 for (const required of [
   marker,
-  "environment?.userData?.authoredGround",
+  "PHX_KPHX_AuthoredAirportWideGround",
   "async function registerFleetToRenderedPavement",
   "group.localToWorld(new THREE.Vector3(x, 0, z))",
   "group.worldToLocal(hit.point.clone()).y",
@@ -156,11 +159,11 @@ for (const required of [
   `group.userData.uploadedJetwayLoadState = "ready";`,
   "registerFleetToRenderedPavement(THREE, group, fleet, staticFleet, placements).catch",
 ]) {
-  if (!source.includes(required)) throw new Error(`${path}: authored pavement registration V4 missing ${required}`);
+  if (!source.includes(required)) throw new Error(`${path}: authored pavement registration V5 missing ${required}`);
 }
 if (source.includes(".then(async (prototype) =>")) {
-  throw new Error(`${path}: V4 still blocks the GLB load promise waiting for scene attachment`);
+  throw new Error(`${path}: V5 still blocks the GLB load promise waiting for scene attachment`);
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Prepared ${marker}: all 58 rigid exact jetway parent/instance Y transforms register against the attached source-authored KPHX ADEX pavement as soon as it is available; the slower photo-aerial load cannot deadlock or time out fleet readiness.`);
+console.log(`Prepared ${marker}: all 58 rigid exact jetway parent/instance Y transforms register against the real attached PHX_KPHX_AuthoredAirportWideGround scene node; no nonexistent userData ground handle or photo-aerial timing dependency remains.`);
