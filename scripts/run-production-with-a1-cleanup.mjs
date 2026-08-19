@@ -46,6 +46,11 @@ try {
   // instance Y transforms to the rendered KPHX pavement. Readiness stays withheld
   // until this deferred registration has completed.
   await import(`./prepare-final-fleet-pavement-registration-v3.mjs?final-fleet-pavement=${Date.now()}`);
+  // Break the parent-attachment/readiness deadlock: authoredTerminal4Visual used
+  // to await the exact fleet before adding that fleet to the same environment
+  // that owns the concurrently loaded ADEX ground. Attach only the jetway group
+  // before that await; the terminal still joins at the normal validated handoff.
+  await import(`./prepare-terminal4-preawait-jetway-parent-attachment-v1.mjs?preawait-parent=${Date.now()}`);
   // Patch the already-generated final pre-Vite geometry sequence so visible
   // Tunnel-C support grounding runs AFTER the exact service-stair solve and BEFORE
   // final bogie/contact evidence. This hook changes sequencing only; the actual
@@ -76,4 +81,4 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, applied deferred scene-ready rigid per-gate pavement registration, sequenced final exact-source service-stair and visible Tunnel-C support corrections before bogie evidence, then restored the committed jetway source byte-for-byte.");
+console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, attached the exact jetway group to the live environment before deferred pavement readiness, applied scene-ready rigid per-gate pavement registration, sequenced final exact-source service-stair and visible Tunnel-C support corrections before bogie evidence, then restored the committed jetway source byte-for-byte.");
