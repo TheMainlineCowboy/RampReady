@@ -29,8 +29,8 @@ function clusterSelected(selected){
   const groups=new Map();for(let i=0;i<n;i++){const r=find(i);if(!groups.has(r))groups.set(r,[]);groups.get(r).push(selected[i]);}return [...groups.values()];
 }
 function candidate(group,box,clearance){
-  const s=box.getSize({x:0,y:0,z:0});
-  return clearance>MAX_FINAL_CLEARANCE_METERS&&clearance<=MAX_EXTENSION_METERS&&s.y>=0.30&&s.y<=2.7&&s.x<=0.65&&s.z<=0.9&&group.length>=8&&group.length<=180;
+  const sx=box.max.x-box.min.x,sy=box.max.y-box.min.y,sz=box.max.z-box.min.z;
+  return clearance>MAX_FINAL_CLEARANCE_METERS&&clearance<=MAX_EXTENSION_METERS&&sy>=0.30&&sy<=2.7&&sx<=0.65&&sz<=0.9&&group.length>=8&&group.length<=180;
 }
 function stretchGroup(THREE,mesh,position,group,rampY){
   const before=new THREE.Box3();for(const item of group)before.union(item.box);const minY=before.min.y,maxY=before.max.y,height=maxY-minY,extension=minY-rampY;
