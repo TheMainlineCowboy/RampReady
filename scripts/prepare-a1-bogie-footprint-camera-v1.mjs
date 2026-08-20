@@ -6,7 +6,7 @@ const marker = "a1-final-world-tunnel-c-footprint-camera-v2";
 const runtimeSupportMarker = "a1-final-world-runtime-support-meshes-v2";
 const integratedCarrierMarker = "a1-integrated-tunnel-c-opaque-support-carrier-v1";
 const rampRelativeGroundMarker = "a1-final-world-ramp-relative-ground-authority-v1";
-const scopedCabProofMarker = "a1-final-exact-cab-footprint-door-contact-v4-scoped-hood-envelope";
+const scopedCabProofMarker = "a1-final-exact-cab-footprint-door-contact-v5-cab-only-vertical-fit";
 let source = fs.readFileSync(trainerPath, "utf8");
 let doorFitSource = fs.readFileSync(doorFitPath, "utf8");
 
@@ -53,19 +53,18 @@ if (!source.includes(marker)) {
   source = source.replace(obsoleteGuard, footprintGuard);
 }
 
-// The final Cab proof is now installed earlier as a scoped physical face/hood
-// proof. Do NOT regenerate the retired finalCabDoorFacingBand block here: doing so
-// makes this late camera preparer depend on obsolete generated variable names and
-// can stop production before any screenshot is rendered. The scoped proof already
-// uses a tight 0.20 m face for plane/lateral contact and a 1.25 m rounded hood for
-// vertical door coverage against the fixed authored CRJ door.
+// The final Cab proof is installed earlier as a scoped physical face/hood proof.
+// This stage must consume the CURRENT proof generation rather than pinning an old
+// marker name. The v5 proof uses a tight 0.20 m face for plane/lateral contact, a
+// 1.25 m rounded hood for vertical door coverage, and bounded Cab-only Y articulation.
 if (!(source.includes(scopedCabProofMarker)
   && source.includes("const physicalFace = finalCabVerticesWorld.filter")
   && source.includes("const physicalHood = finalCabVerticesWorld.filter")
   && source.includes(") <= 0.20);")
   && source.includes(") <= 1.25);")
-  && source.includes("const verticalCovered = minHeight <= 0.08 && maxHeight >= -0.08;"))) {
-  throw new Error(`${trainerPath}: scoped final Cab face/hood proof is missing before bogie-camera preparation`);
+  && source.includes("const verticalCovered = minHeight <= 0.08 && maxHeight >= -0.08;")
+  && source.includes("inspectionAircraftCabVerticalCorrectionMeters"))) {
+  throw new Error(`${trainerPath}: current scoped final Cab face/hood proof is missing before bogie-camera preparation`);
 }
 
 // The exact integrated Tunnel_C carrier's grounded low-contact centroid lands at
@@ -94,6 +93,7 @@ for (const required of [
   "physicalFace",
   "physicalHood",
   "verticalCovered",
+  "inspectionAircraftCabVerticalCorrectionMeters",
   "exactA1VisibleTunnelCSupportMeshes",
   "Math.max(size.x, size.z) <= 14.5",
   "size.y <= 10.5",
@@ -119,10 +119,8 @@ for (const forbidden of [
   "A1 final-world Tunnel_C contact is too far off the Rotunda-to-Cab axis",
   obsoleteAbsoluteGroundCheck,
 ]) {
-  if (source.includes(forbidden)) {
-    throw new Error(`${trainerPath}: obsolete Tunnel_C bogie evidence remains: ${forbidden}`);
-  }
+  if (source.includes(forbidden)) throw new Error(`${trainerPath}: obsolete Tunnel_C/Cab evidence survived: ${forbidden}`);
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Prepared ${marker} + ${integratedCarrierMarker} + ${rampRelativeGroundMarker}: Tunnel-C camera evidence now consumes the scoped fixed-aircraft Cab face/hood proof instead of regenerating obsolete Cab-band variables.`);
+console.log(`Prepared ${marker} + ${scopedCabProofMarker}: final-world Tunnel-C evidence consumes the current v5 scoped Cab face/hood proof and preserves ramp-relative bogie/contact authority.`);
