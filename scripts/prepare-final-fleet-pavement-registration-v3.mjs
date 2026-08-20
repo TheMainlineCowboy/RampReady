@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const path = "src/environment/uploadedAirportJetwayFleet.js";
-const marker = "rendered-kphx-pavement-per-gate-v5-authored-ground-node-registration";
+const marker = "rendered-kphx-pavement-per-gate-v6-a1-tunnel-c-rigid-ground-registration";
 let source = fs.readFileSync(path, "utf8");
 
 const oldHelper = `function renderedPavementYAt(THREE, group, x, z) {
@@ -20,10 +20,6 @@ const oldHelper = `function renderedPavementYAt(THREE, group, x, z) {
 
 const newHelper = `// ${marker}
 function findAttachedAuthoredGround(group) {
-  // installAuthoredKphxGround attaches the returned GLTF scene directly beneath
-  // the shared RampReady environment and names it explicitly. It does NOT store
-  // the Object3D on environment.userData. Walk the actual parent hierarchy and
-  // resolve that real attached node instead of waiting on a nonexistent field.
   let current = group;
   while (current) {
     const ground = current.getObjectByName?.("PHX_KPHX_AuthoredAirportWideGround") || null;
@@ -34,9 +30,6 @@ function findAttachedAuthoredGround(group) {
 }
 
 async function waitForRenderedGround(group) {
-  // Terminal 4 and KPHX load concurrently. As soon as the source-authored ADEX
-  // scene is attached anywhere under the common environment ancestor, use it.
-  // The slower decorative photo aerial is irrelevant to rigid gate grounding.
   for (let attempt = 0; attempt < 3750; attempt += 1) {
     const ground = findAttachedAuthoredGround(group);
     if (ground) return ground;
@@ -56,10 +49,44 @@ function renderedPavementYAt(THREE, group, x, z, ground) {
     0,
     240,
   );
-  const hits = ray.intersectObject(ground, true).filter((hit) => hit?.object?.visible !== false);
-  const hit = hits[0];
+  const hit = ray.intersectObject(ground, true).find((candidate) => candidate?.object?.visible !== false);
   if (!hit?.point) throw new Error(\`Exact jetway fleet pavement ray missed local \${x},\${z} / world \${worldProbe.x},\${worldProbe.z}\`);
   return group.worldToLocal(hit.point.clone()).y;
+}
+
+function registerA1RigidlyFromTunnelC(THREE, group, fleet, a1Anchor, ground, fallbackGroundY) {
+  fleet.updateWorldMatrix(true, true);
+  const carrier = a1Anchor.getObjectByName("Tunnel_C_Jetway_0");
+  if (!carrier?.isMesh) throw new Error("A1 rigid pavement registration cannot resolve Tunnel_C_Jetway_0");
+  carrier.updateWorldMatrix(true, false);
+  let carrierBox = new THREE.Box3().setFromObject(carrier);
+  if (carrierBox.isEmpty()) throw new Error("A1 Tunnel-C carrier bounds are empty during rigid pavement registration");
+  let centerWorld = carrierBox.getCenter(new THREE.Vector3());
+  let centerLocal = group.worldToLocal(centerWorld.clone());
+  const carrierGroundY = renderedPavementYAt(THREE, group, centerLocal.x, centerLocal.z, ground);
+  const bottomLocalY = group.worldToLocal(new THREE.Vector3(centerWorld.x, carrierBox.min.y, centerWorld.z)).y;
+  const correction = carrierGroundY - bottomLocalY + 0.01;
+  if (!Number.isFinite(correction) || Math.abs(correction) > 2.0) {
+    throw new Error(\`A1 rigid Tunnel-C grounding correction is implausible: \${correction} m (carrierBottom=\${bottomLocalY}, ramp=\${carrierGroundY}, fallbackRamp=\${fallbackGroundY})\`);
+  }
+  a1Anchor.position.y += correction;
+  a1Anchor.updateMatrix();
+  fleet.updateWorldMatrix(true, true);
+
+  carrierBox = new THREE.Box3().setFromObject(carrier);
+  centerWorld = carrierBox.getCenter(new THREE.Vector3());
+  centerLocal = group.worldToLocal(centerWorld.clone());
+  const finalGroundY = renderedPavementYAt(THREE, group, centerLocal.x, centerLocal.z, ground);
+  const finalBottomLocalY = group.worldToLocal(new THREE.Vector3(centerWorld.x, carrierBox.min.y, centerWorld.z)).y;
+  const finalClearance = finalBottomLocalY - finalGroundY;
+  if (!Number.isFinite(finalClearance) || Math.abs(finalClearance - 0.01) > 0.015) {
+    throw new Error(\`A1 rigid Tunnel-C registration missed pavement: clearance=\${finalClearance} m\`);
+  }
+  a1Anchor.userData.renderedPavementGroundY = finalGroundY;
+  a1Anchor.userData.a1RigidTunnelCGroundCorrectionMeters = correction;
+  a1Anchor.userData.a1RigidTunnelCFinalClearanceMeters = finalClearance;
+  a1Anchor.userData.a1RigidTunnelCGroundAuthority = "${marker}";
+  return { correction, clearance: finalClearance, groundY: finalGroundY };
 }
 
 async function registerFleetToRenderedPavement(THREE, group, fleet, staticFleet, placements) {
@@ -90,20 +117,22 @@ async function registerFleetToRenderedPavement(THREE, group, fleet, staticFleet,
   const a1Placement = placements.find((placement) => placement.gate === "A1");
   const a1Anchor = fleet.getObjectByName("UploadedAirportJetway_A1");
   if (!a1Placement || !a1Anchor) throw new Error("Deferred pavement registration lost A1 placement/anchor");
-  const a1LocalGroundY = renderedPavementYAt(THREE, group, a1Placement.x, a1Placement.z, ground);
-  a1Anchor.position.y = a1LocalGroundY + LEGACY_FINAL_FLEET_SHIFT_METERS;
-  a1Anchor.userData.renderedPavementGroundY = a1LocalGroundY;
+  const a1PlacementGroundY = renderedPavementYAt(THREE, group, a1Placement.x, a1Placement.z, ground);
+  a1Anchor.position.y = a1PlacementGroundY + LEGACY_FINAL_FLEET_SHIFT_METERS;
   a1Anchor.updateMatrix();
   fleet.updateWorldMatrix(true, true);
+  const a1Ground = registerA1RigidlyFromTunnelC(THREE, group, fleet, a1Anchor, ground, a1PlacementGroundY);
 
   group.userData.uploadedJetwayGroundRegistrationAuthority = "${marker}";
+  group.userData.uploadedJetwayA1RigidTunnelCGroundCorrectionMeters = a1Ground.correction;
+  group.userData.uploadedJetwayA1RigidTunnelCFinalClearanceMeters = a1Ground.clearance;
   group.userData.uploadedJetwayGroundRegisteredGateCount = registeredStaticCount + 1;
   group.userData.uploadedJetwayLoadState = "ready";
 }
 `;
 
 if (!source.includes(marker)) {
-  if (!source.includes(oldHelper)) throw new Error(`${path}: V5 pavement helper anchor is missing`);
+  if (!source.includes(oldHelper)) throw new Error(`${path}: V6 pavement helper anchor is missing`);
   source = source.replace(oldHelper, newHelper);
 
   const oldGroundMap = `  const groundYByGate = new Map(staticPlacements.map((placement) => [
@@ -116,12 +145,12 @@ if (!source.includes(marker)) {
     placement.gate,
     LEGACY_FINAL_FLEET_SHIFT_METERS,
   ]));`;
-  if (!source.includes(oldGroundMap)) throw new Error(`${path}: V5 static ground-map anchor is missing`);
+  if (!source.includes(oldGroundMap)) throw new Error(`${path}: V6 static ground-map anchor is missing`);
   source = source.replace(oldGroundMap, initialGroundMap);
 
   const oldA1Ground = `          const a1GroundY = renderedPavementYAt(THREE, group, placement.x, placement.z) + LEGACY_FINAL_FLEET_SHIFT_METERS;`;
   const initialA1Ground = `          const a1GroundY = LEGACY_FINAL_FLEET_SHIFT_METERS;`;
-  if (!source.includes(oldA1Ground)) throw new Error(`${path}: V5 A1 ground anchor is missing`);
+  if (!source.includes(oldA1Ground)) throw new Error(`${path}: V6 A1 ground anchor is missing`);
   source = source.replace(oldA1Ground, initialA1Ground);
 
   source = source.replace(
@@ -134,7 +163,7 @@ if (!source.includes(marker)) {
   );
 
   const readyAnchor = `      group.userData.uploadedJetwayLoadState = "ready";`;
-  if (!source.includes(readyAnchor)) throw new Error(`${path}: V5 readiness anchor is missing`);
+  if (!source.includes(readyAnchor)) throw new Error(`${path}: V6 readiness anchor is missing`);
   source = source.replace(readyAnchor, `      group.userData.uploadedJetwayLoadState = "ground-registering";`);
   source = source.replace(
     `      group.userData.uploadedJetwayGroundRegistrationAuthority = "rendered-kphx-pavement-per-gate-v1";`,
@@ -142,7 +171,7 @@ if (!source.includes(marker)) {
   );
 
   const finalTelemetryAnchor = `      group.userData.proceduralProjectedUvCount = 0;`;
-  if (!source.includes(finalTelemetryAnchor)) throw new Error(`${path}: V5 final telemetry anchor is missing`);
+  if (!source.includes(finalTelemetryAnchor)) throw new Error(`${path}: V6 final telemetry anchor is missing`);
   source = source.replace(
     finalTelemetryAnchor,
     `${finalTelemetryAnchor}\n      registerFleetToRenderedPavement(THREE, group, fleet, staticFleet, placements).catch((error) => {\n        group.userData.uploadedJetwayLoadState = "error";\n        group.userData.uploadedJetwayLoadError = error instanceof Error ? error.message : String(error);\n        console.error("Exact Airport_Jetway.glb authored-pavement registration failed", error);\n      });`,
@@ -152,18 +181,18 @@ if (!source.includes(marker)) {
 for (const required of [
   marker,
   "PHX_KPHX_AuthoredAirportWideGround",
-  "async function registerFleetToRenderedPavement",
-  "group.localToWorld(new THREE.Vector3(x, 0, z))",
-  "group.worldToLocal(hit.point.clone()).y",
+  "registerA1RigidlyFromTunnelC",
+  "Tunnel_C_Jetway_0",
+  "a1RigidTunnelCFinalClearanceMeters",
   `group.userData.uploadedJetwayLoadState = "ground-registering";`,
   `group.userData.uploadedJetwayLoadState = "ready";`,
   "registerFleetToRenderedPavement(THREE, group, fleet, staticFleet, placements).catch",
 ]) {
-  if (!source.includes(required)) throw new Error(`${path}: authored pavement registration V5 missing ${required}`);
+  if (!source.includes(required)) throw new Error(`${path}: authored pavement registration V6 missing ${required}`);
 }
 if (source.includes(".then(async (prototype) =>")) {
-  throw new Error(`${path}: V5 still blocks the GLB load promise waiting for scene attachment`);
+  throw new Error(`${path}: V6 still blocks the GLB load promise waiting for scene attachment`);
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Prepared ${marker}: all 58 rigid exact jetway parent/instance Y transforms register against the real attached PHX_KPHX_AuthoredAirportWideGround scene node; no nonexistent userData ground handle or photo-aerial timing dependency remains.`);
+console.log(`Prepared ${marker}: static gates retain authored ground registration while A1 is rigidly lowered/raised as one intact supplied assembly until the final Tunnel-C carrier sits 1 cm above the rendered KPHX pavement.`);
