@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const marker = "a1-final-exact-cab-footprint-door-contact-v4-scoped-hood-envelope";
+const representativeMarker = "a1-early-cab-representative-distance-diagnostic-v1";
 const fixedAircraftMarker = "a1-fixed-aircraft-exact-authored-door-runtime-v1";
 
 let source = fs.readFileSync(path, "utf8");
@@ -16,7 +17,7 @@ source = source
   .replaceAll("fixedFinalDoorHorizontalErrorMeters > 0.08", "!Number.isFinite(fixedFinalDoorHorizontalErrorMeters)");
 
 const staleEarlyGuard = `          if (cabContactErrorMeters > 0.01) {\n            throw new Error(\`A1 visible rendered forward-left door missed the measured final Cab by \${cabContactErrorMeters} m\`);\n          }`;
-const finiteEarlyGuard = `          // ${marker}-representative-diagnostic\n          if (!Number.isFinite(cabContactErrorMeters)) {\n            throw new Error("A1 early Cab representative-point distance is not finite");\n          }`;
+const finiteEarlyGuard = `          // ${representativeMarker}\n          if (!Number.isFinite(cabContactErrorMeters)) {\n            throw new Error("A1 early Cab representative-point distance is not finite");\n          }`;
 if (source.includes(staleEarlyGuard)) source = source.replace(staleEarlyGuard, finiteEarlyGuard);
 
 if (!source.includes(marker)) {
