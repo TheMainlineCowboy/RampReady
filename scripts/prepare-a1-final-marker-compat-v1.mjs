@@ -11,6 +11,7 @@ const workflowMarker = "final-a1-acceptance-authority-after-all-preparers-v1";
 const sourceOwnershipAuthority = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";
 const photoAuthority = "a1-real-photo-remote-rotunda-fixed-corridor-v1";
 const bogieAuthority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
+const readinessAuthority = "a1-final-visible-fit-physical-surface-readiness-v4-defer-center-y-to-final-proof";
 const compatibilityComment = `// ${workflowMarker} compatibility-alias-only; geometry remains ${finalMarker}`;
 
 if (!source.includes(finalMarker)) {
@@ -65,8 +66,8 @@ await import(`./prepare-a1-tunnel-c-bogie-report-publication-v1.mjs?final-compat
 await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?final-compat=${Date.now()}`);
 // Remove the obsolete representative Cab-front-point vertical veto at the same
 // final compatibility stage that republishes the actual Tunnel-C/door evidence.
-// The physical Cab hood plane/lateral/door-center footprint and Tunnel-C seam stay
-// fail-closed; only the known nonphysical multi-metre proxy is retired.
+// Fleet readiness owns only stable preconditions here; the later fixed-aircraft
+// live Cab footprint proof remains the fail-closed vertical authority.
 await import(`./prepare-a1-final-visible-fit-surface-readiness-v1.mjs?final-compat=${Date.now()}`);
 
 const readiness = fs.readFileSync(readinessPath, "utf8");
@@ -141,7 +142,10 @@ for (const required of [
   "bogieGroundContactPointCount < 4",
   "bogieGroundContactClusterCount < 1",
   "bogieGroundHorizontalContactSpan < 0.35",
-  "a1-final-visible-fit-physical-surface-readiness-v3-door-center-coverage",
+  readinessAuthority,
+  "finalVisibleFit.correctedCabContactPlaneCovered === true",
+  "finalVisibleFit.correctedCabDoorLaterallyCovered === true",
+  "finalVisibleFit.cabTunnelCSeamGapMeters <= 0.12",
 ]) {
   if (!readiness.includes(required)) throw new Error(`${readinessPath}: Tunnel-C/Cab readiness is missing ${required}`);
 }
@@ -155,4 +159,4 @@ if (readiness.includes("A1 final visible Cab did not reach grounded CRJ door")) 
 // around their upper attachment and verifies clearance against the exact CRJ
 // fuselage envelope. This compatibility stage remains geometry-neutral.
 
-console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. Final A1 compatibility now accepts ${usesRealPhotoGeometry ? photoAuthority : "the legacy measured-wall layout"} without changing terminal/aircraft geometry; exact supplied hierarchy, Tunnel-C bogie ramp authority, and physical Cab hood/door contact remain enforced, while the stale representative Cab-height proxy is rejected.`);
+console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. Final A1 compatibility now accepts ${usesRealPhotoGeometry ? photoAuthority : "the legacy measured-wall layout"} without changing terminal/aircraft geometry; exact supplied hierarchy, Tunnel-C bogie ramp authority, and staged physical Cab hood/door contact remain enforced, while the stale representative Cab-height proxy is rejected.`);
