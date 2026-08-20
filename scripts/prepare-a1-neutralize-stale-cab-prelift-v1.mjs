@@ -13,12 +13,20 @@ for (const required of [exactDoorMarker, carrierMarker]) {
 }
 
 if (!source.includes(marker)) {
-  const oldBlock = `  // Keep the cab level and place its threshold exactly at the cabin sill. The\n  // tunnel end slopes down to this level; the cab itself does not lean across the\n  // fuselage like the previous one-point fit did.\n  const cabVerticalAdjustment = targetYInAnchor - cabAssembly.front.floorY;\n  applyModelSpaceMatrix(\n    THREE,\n    model,\n    cabAssembly.cab,\n    translationMatrix(THREE, 0, cabVerticalAdjustment, 0),\n  );`;
+  const oldBlockForTarget = (targetExpression) => `  // Keep the cab level and place its threshold exactly at the cabin sill. The\n  // tunnel end slopes down to this level; the cab itself does not lean across the\n  // fuselage like the previous one-point fit did.\n  const cabVerticalAdjustment = ${targetExpression} - cabAssembly.front.floorY;\n  applyModelSpaceMatrix(\n    THREE,\n    model,\n    cabAssembly.cab,\n    translationMatrix(THREE, 0, cabVerticalAdjustment, 0),\n  );`;
+  // The pitch preparer now converts the door target from the obsolete anchor frame
+  // into model-local coordinates before this neutralizer runs. Accept either spelling
+  // of the same legacy Cab pre-lift so build ordering cannot make the repair non-idempotent.
+  const oldBlocks = [
+    oldBlockForTarget("targetYInAnchor"),
+    oldBlockForTarget("targetYInModel"),
+  ];
   const replacement = `  // ${marker}\n  // cabAssembly.front.floorY is the minimum of a broad Cab face band that also\n  // contains low under-Cab mechanical/support vertices. It is not the passenger\n  // threshold. The old pre-lift used that machinery minimum to raise the entire\n  // Cab by nearly two metres before the exact passenger-surface fitter ran. Keep\n  // this legacy value as zero telemetry only; the later final Cab surface stage is\n  // the sole owner of vertical boarding-sill articulation.\n  const cabVerticalAdjustment = 0;`;
-  if (!source.includes(oldBlock)) {
+  const matched = oldBlocks.find((block) => source.includes(block));
+  if (!matched) {
     throw new Error(`${path}: stale under-Cab mechanical pre-lift block is missing`);
   }
-  source = source.replace(oldBlock, replacement);
+  source = source.replace(matched, replacement);
 }
 
 for (const required of [
@@ -30,10 +38,11 @@ for (const required of [
 }
 for (const forbidden of [
   "const cabVerticalAdjustment = targetYInAnchor - cabAssembly.front.floorY;",
+  "const cabVerticalAdjustment = targetYInModel - cabAssembly.front.floorY;",
   "translationMatrix(THREE, 0, cabVerticalAdjustment, 0)",
 ]) {
   if (source.includes(forbidden)) throw new Error(`${path}: stale Cab pre-lift survived: ${forbidden}`);
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Prepared ${marker}: removed the obsolete under-Cab mechanical-minimum pre-lift; final supplied passenger-surface sill fit now owns Cab Y while aircraft, terminal and Tunnel-C remain fixed.`);
+console.log(`Prepared ${marker}: removed the obsolete under-Cab mechanical-minimum pre-lift in either legacy coordinate spelling; final supplied passenger-surface sill fit now owns Cab Y while aircraft, terminal and Tunnel-C remain fixed.`);
