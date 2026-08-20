@@ -23,32 +23,48 @@ const staleFixedFinalGuard = `          if (!Number.isFinite(fixedFinalDoorHoriz
 const finiteFixedFinalGuard = `          if (!Number.isFinite(fixedFinalDoorHorizontalErrorMeters)) {\n            throw new Error("A1 FINAL live Cab representative-point error is not finite");\n          }`;
 if (source.includes(staleFixedFinalGuard)) source = source.replace(staleFixedFinalGuard, finiteFixedFinalGuard);
 
-const proofStartNeedles = [
-  `          const sourceGateDoorTargetErrorMeters = Math.hypot(\n            renderedDoorAtSourceGate.x - sourceGateDoorTargetWorldX,\n            renderedDoorAtSourceGate.z - sourceGateDoorTargetWorldZ,\n          );\n          const sourceGateCabSeparationMeters = renderedDoorAtSourceGate.distanceTo(\n            new THREE.Vector3(finalVisibleCabWorld.x, renderedDoorAtSourceGate.y, finalVisibleCabWorld.z),\n          );\n\n          // a1-final-exact-cab-footprint-door-contact-v1`,
-  `          const sourceGateDoorTargetErrorMeters = Math.hypot(\n            renderedDoorAtSourceGate.x - sourceGateDoorTargetWorldX,\n            renderedDoorAtSourceGate.z - sourceGateDoorTargetWorldZ,\n          );\n          const sourceGateCabSeparationMeters = renderedDoorAtSourceGate.distanceTo(\n            new THREE.Vector3(finalVisibleCabWorld.x, renderedDoorAtSourceGate.y, finalVisibleCabWorld.z),\n          );\n\n          // a1-final-exact-cab-footprint-door-contact-v2`,
-];
-
 const exactFootprintProof = `          const sourceGateDoorTargetErrorMeters = Math.hypot(\n            renderedDoorAtSourceGate.x - sourceGateDoorTargetWorldX,\n            renderedDoorAtSourceGate.z - sourceGateDoorTargetWorldZ,\n          );\n          const sourceGateCabSeparationMeters = renderedDoorAtSourceGate.distanceTo(\n            new THREE.Vector3(finalVisibleCabWorld.x, renderedDoorAtSourceGate.y, finalVisibleCabWorld.z),\n          );\n\n          // ${marker}\n          // The rounded supplied Cab hood slopes back/down from its foremost contact\n          // edge. Use a tight 0.20 m band for normal/lateral contact-plane proof, but\n          // use the deeper 1.25 m physical hood envelope for vertical door coverage.\n          // This prevents an upper-shell front edge from falsely claiming the whole\n          // Cab sits above the CRJ door, without moving the aircraft or any geometry.\n          const finalCabBoundsCenter = new THREE.Box3().setFromObject(finalA1Cab)\n            .getCenter(new THREE.Vector3());\n          const finalCabDoorwardDirectionWorld = renderedDoorAtSourceGate.clone()\n            .sub(finalCabBoundsCenter).setY(0);\n          if (finalCabDoorwardDirectionWorld.lengthSq() < 0.25) {\n            throw new Error("A1 final Cab center-to-fixed-door direction is degenerate");\n          }\n          finalCabDoorwardDirectionWorld.normalize();\n          let finalCabDoorwardMaximumProjection = Number.NEGATIVE_INFINITY;\n          for (const point of finalCabVerticesWorld) {\n            finalCabDoorwardMaximumProjection = Math.max(\n              finalCabDoorwardMaximumProjection,\n              point.clone().sub(finalCabBoundsCenter).dot(finalCabDoorwardDirectionWorld),\n            );\n          }\n          const finalCabDoorFacingBand = finalCabVerticesWorld.filter((point) => (\n            finalCabDoorwardMaximumProjection\n              - point.clone().sub(finalCabBoundsCenter).dot(finalCabDoorwardDirectionWorld)\n          ) <= 0.20);\n          const finalCabDoorFacingHoodBand = finalCabVerticesWorld.filter((point) => (\n            finalCabDoorwardMaximumProjection\n              - point.clone().sub(finalCabBoundsCenter).dot(finalCabDoorwardDirectionWorld)\n          ) <= 1.25);\n          if (finalCabDoorFacingBand.length < 3 || finalCabDoorFacingHoodBand.length < 3) {\n            throw new Error("A1 final supplied Cab exposes no measurable door-facing hood envelope");\n          }\n          const finalCabSideWorld = new THREE.Vector3(\n            -finalCabDoorwardDirectionWorld.z, 0, finalCabDoorwardDirectionWorld.x,\n          ).normalize();\n          let cabDoorMinimumNormalMeters = Number.POSITIVE_INFINITY;\n          let cabDoorMaximumNormalMeters = Number.NEGATIVE_INFINITY;\n          let cabDoorMinimumLateralMeters = Number.POSITIVE_INFINITY;\n          let cabDoorMaximumLateralMeters = Number.NEGATIVE_INFINITY;\n          let cabDoorMinimumHorizontalVertexDistanceMeters = Number.POSITIVE_INFINITY;\n          for (const point of finalCabDoorFacingBand) {\n            const fromDoor = point.clone().sub(renderedDoorAtSourceGate);\n            const normalOffset = fromDoor.dot(finalCabDoorwardDirectionWorld);\n            const lateralOffset = fromDoor.dot(finalCabSideWorld);\n            if (!(Number.isFinite(normalOffset) && Number.isFinite(lateralOffset))) continue;\n            cabDoorMinimumNormalMeters = Math.min(cabDoorMinimumNormalMeters, normalOffset);\n            cabDoorMaximumNormalMeters = Math.max(cabDoorMaximumNormalMeters, normalOffset);\n            cabDoorMinimumLateralMeters = Math.min(cabDoorMinimumLateralMeters, lateralOffset);\n            cabDoorMaximumLateralMeters = Math.max(cabDoorMaximumLateralMeters, lateralOffset);\n            cabDoorMinimumHorizontalVertexDistanceMeters = Math.min(\n              cabDoorMinimumHorizontalVertexDistanceMeters,\n              Math.hypot(fromDoor.x, fromDoor.z),\n            );\n          }\n          let cabDoorMinimumHeightMeters = Number.POSITIVE_INFINITY;\n          let cabDoorMaximumHeightMeters = Number.NEGATIVE_INFINITY;\n          for (const point of finalCabDoorFacingHoodBand) {\n            const heightOffset = point.y - renderedDoorAtSourceGate.y;\n            if (!Number.isFinite(heightOffset)) continue;\n            cabDoorMinimumHeightMeters = Math.min(cabDoorMinimumHeightMeters, heightOffset);\n            cabDoorMaximumHeightMeters = Math.max(cabDoorMaximumHeightMeters, heightOffset);\n          }\n          const cabDoorContactPlaneCovered = cabDoorMinimumNormalMeters <= 0.04\n            && cabDoorMaximumNormalMeters >= -0.04;\n          const cabDoorLaterallyCovered = cabDoorMinimumLateralMeters <= 0.05\n            && cabDoorMaximumLateralMeters >= -0.05;\n          const cabDoorVerticallyCovered = cabDoorMinimumHeightMeters <= 0.08\n            && cabDoorMaximumHeightMeters >= -0.08;\n          if (!(\n            Number.isFinite(cabDoorMinimumHorizontalVertexDistanceMeters)\n            && Number.isFinite(cabDoorMinimumHeightMeters)\n            && cabDoorContactPlaneCovered\n            && cabDoorLaterallyCovered\n            && cabDoorVerticallyCovered\n          )) {\n            throw new Error(\`A1 exact fixed CRJ door is outside the FINAL supplied Cab hood: legacyMidpoint=\${sourceGateDoorTargetErrorMeters}, nearestVertex=\${cabDoorMinimumHorizontalVertexDistanceMeters}, normal=[\${cabDoorMinimumNormalMeters},\${cabDoorMaximumNormalMeters}], lateral=[\${cabDoorMinimumLateralMeters},\${cabDoorMaximumLateralMeters}], hoodHeight=[\${cabDoorMinimumHeightMeters},\${cabDoorMaximumHeightMeters}]\`);\n          }\n          renderer.domElement.dataset.inspectionAircraftCabDoorContactAuthority = "${marker}";\n          renderer.domElement.dataset.inspectionAircraftCabDoorContactPlaneCovered = String(cabDoorContactPlaneCovered);\n          renderer.domElement.dataset.inspectionAircraftCabDoorLaterallyCovered = String(cabDoorLaterallyCovered);\n          renderer.domElement.dataset.inspectionAircraftCabDoorVerticallyCovered = String(cabDoorVerticallyCovered);\n          renderer.domElement.dataset.inspectionAircraftCabDoorFacingVertexCount = String(finalCabDoorFacingBand.length);\n          renderer.domElement.dataset.inspectionAircraftCabDoorHoodVertexCount = String(finalCabDoorFacingHoodBand.length);\n          renderer.domElement.dataset.inspectionAircraftCabDoorMinimumHorizontalVertexDistanceMeters = cabDoorMinimumHorizontalVertexDistanceMeters.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftCabDoorMinimumNormalMeters = cabDoorMinimumNormalMeters.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftCabDoorMaximumNormalMeters = cabDoorMaximumNormalMeters.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftCabDoorMinimumLateralMeters = cabDoorMinimumLateralMeters.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftCabDoorMaximumLateralMeters = cabDoorMaximumLateralMeters.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftCabDoorMinimumHeightMeters = cabDoorMinimumHeightMeters.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftCabDoorMaximumHeightMeters = cabDoorMaximumHeightMeters.toFixed(6);`;
 
-// The early representative diagnostic intentionally carries a derivative of the
-// marker. Do not use marker presence as proof that the final physical hood block is
-// installed; require the actual final-band symbol so build-order text cannot skip it.
+// Build-order-safe replacement: late preparers can rewrite the prior marker text,
+// but the sourceGateDoorTargetErrorMeters block and its final telemetry are stable
+// semantic anchors. Replace that entire prior proof regardless of whether it was v1,
+// v2, or another generated compatibility spelling.
 if (!source.includes("finalCabDoorFacingBand")) {
-  let replaced = false;
-  for (const startNeedle of proofStartNeedles) {
-    const start = source.indexOf(startNeedle);
-    if (start < 0) continue;
-    const endNeedle = `          renderer.domElement.dataset.inspectionAircraftCabDoorMaximumLateralMeters = cabDoorMaximumLateralMeters.toFixed(6);`;
-    const endStart = source.indexOf(endNeedle, start);
-    if (endStart < 0) throw new Error(`${path}: prior Cab footprint proof end is missing`);
-    let end = endStart + endNeedle.length;
-    const oldHeightTail = `\n          renderer.domElement.dataset.inspectionAircraftCabDoorMinimumHeightMeters = cabDoorMinimumHeightMeters.toFixed(6);\n          renderer.domElement.dataset.inspectionAircraftCabDoorMaximumHeightMeters = cabDoorMaximumHeightMeters.toFixed(6);`;
-    if (source.slice(end).startsWith(oldHeightTail)) end += oldHeightTail.length;
-    source = source.slice(0, start) + exactFootprintProof + source.slice(end);
-    replaced = true;
-    break;
+  const startToken = "          const sourceGateDoorTargetErrorMeters = Math.hypot(";
+  const start = source.indexOf(startToken);
+  if (start < 0) throw new Error(`${path}: source-gate Cab proof start is missing`);
+
+  const endCandidates = [
+    "          renderer.domElement.dataset.inspectionAircraftCabDoorMaximumHeightMeters = cabDoorMaximumHeightMeters.toFixed(6);",
+    "          renderer.domElement.dataset.inspectionAircraftCabDoorMaximumLateralMeters = cabDoorMaximumLateralMeters.toFixed(6);",
+    "          renderer.domElement.dataset.inspectionAircraftCabDoorMinimumHorizontalVertexDistanceMeters = cabDoorMinimumHorizontalVertexDistanceMeters.toFixed(6);",
+  ];
+  let end = -1;
+  for (const endToken of endCandidates) {
+    const candidate = source.indexOf(endToken, start);
+    if (candidate >= 0) {
+      end = candidate + endToken.length;
+      break;
+    }
   }
-  if (!replaced) throw new Error(`${path}: final live-Cab proof anchor is missing`);
+  if (end < 0) {
+    // Older generated proofs may end immediately before the final source-gate pose
+    // publication. Use that stable boundary rather than depending on old marker text.
+    const boundaryCandidates = [
+      "          const renderedDoorAtSourceGate = measureVisibleAirframeDoor().point;",
+      "          renderer.domElement.dataset.inspectionAircraftDoorRegistrationAuthority",
+      "          renderer.domElement.dataset.inspectionAircraftDoorContact",
+    ];
+    for (const boundary of boundaryCandidates) {
+      const candidate = source.indexOf(boundary, start + startToken.length);
+      if (candidate > start) {
+        end = candidate;
+        break;
+      }
+    }
+  }
+  if (end < 0 || end <= start) throw new Error(`${path}: final live-Cab proof end is missing`);
+  source = source.slice(0, start) + exactFootprintProof + source.slice(end);
 }
 
 for (const required of [
