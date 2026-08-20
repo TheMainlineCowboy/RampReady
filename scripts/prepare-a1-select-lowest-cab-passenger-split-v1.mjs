@@ -36,7 +36,7 @@ if (!source.includes(marker)) {
 for (const required of [
   marker,
   `const cabPassengerSillCorrectionMeters = ${FINAL_MEASURED_CAB_SILL_CORRECTION_METERS};`,
-  "final browser",
+  "aircraft-side evidence independently enforces <=8 cm rendered door-height error",
 ]) {
   if (!source.includes(required)) throw new Error(`${path}: final measured Cab calibration is missing ${required}`);
 }
