@@ -3,6 +3,7 @@ import fs from "node:fs";
 const doorFitPath = "src/environment/uploadedAirportJetwayA1DoorFitV11.js";
 const marker = "a1-preserve-integrated-tunnel-c-carrier-v1";
 const pitchMarker = "a1-photo-attached-state-pitch-envelope-v2";
+const modelTargetMarker = "a1-final-pitch-target-in-model-space-v1";
 const runtimeSupportMarker = "a1-runtime-tunnel-c-separable-support-meshes-v1";
 const finalVisibleMarker = "a1-final-visible-grounded-door-and-integrated-tunnel-c-v1";
 
@@ -24,6 +25,17 @@ if (!source.includes(marker)) {
   source = source.replace(oldBlock, newBlock);
 }
 
+if (!source.includes(modelTargetMarker)) {
+  const staleTarget = `  const targetYInAnchor = targetInParent.y - anchor.position.y;\n  const pitchRadians = solvePitchRadians({\n    floorY: cabAssembly.front.floorY,\n    floorZ: cabAssembly.front.point.z,\n    pivotY: rotundaCenter.y,\n    pivotZ: rotundaCenter.z,\n    targetY: targetYInAnchor,\n  });`;
+  const modelTarget = `  // ${modelTargetMarker}\n  // Pitch is solved in model-local coordinates, so the door target must be transformed\n  // into that same frame. Subtracting only anchor.position.y ignores the final model\n  // registration offset and created the visibly false 6.78-degree downhill bridge.\n  model.updateWorldMatrix(true, true);\n  const targetYInModel = model.worldToLocal(targetWorld.clone()).y;\n  const pitchRadians = solvePitchRadians({\n    floorY: cabAssembly.front.floorY,\n    floorZ: cabAssembly.front.point.z,\n    pivotY: rotundaCenter.y,\n    pivotZ: rotundaCenter.z,\n    targetY: targetYInModel,\n  });`;
+  if (!source.includes(staleTarget)) throw new Error(`${doorFitPath}: stale anchor-space pitch target is missing`);
+  source = source.replace(staleTarget, modelTarget);
+  source = source.replace(
+    `  const cabVerticalAdjustment = targetYInAnchor - cabAssembly.front.floorY;`,
+    `  const cabVerticalAdjustment = targetYInModel - cabAssembly.front.floorY;`,
+  );
+}
+
 const pitchGuardPattern = /  \/\/ a1-rendered-door-measured-pitch-envelope-v1[\s\S]*?  if \(!\(pitchRadians > 0\.018 && pitchRadians < 0\.14\)\) \{\n    throw new Error\(`Supplied A1 corrected pitch is outside the measured physical range: \$\{pitchRadians\}`\);\n  \}/;
 const oldPitchGuard = `  if (!(pitchRadians > 0.02 && pitchRadians < 0.14)) {\n    throw new Error(\`Supplied A1 corrected pitch is outside the physical range: \${pitchRadians}\`);\n  }`;
 const newPitchGuard = `  // ${pitchMarker}\n  // The Aug. 17 attached-state references show a near-level telescoping bridge,\n  // not the visibly steep ramp accepted by the old 8-degree ceiling. Keep the\n  // measured ~1.1-degree solution valid but reject any final attached pitch above\n  // 4 degrees so a bad Rotunda/door geometry cannot hide behind extreme slope.\n  const maximumPhotoAttachedPitchRadians = THREE.MathUtils.degToRad(4);\n  if (!(pitchRadians > 0.018 && pitchRadians < maximumPhotoAttachedPitchRadians)) {\n    throw new Error(\`Supplied A1 corrected pitch contradicts attached-state reference: \${THREE.MathUtils.radToDeg(pitchRadians)} deg\`);\n  }`;
@@ -31,12 +43,12 @@ if (pitchGuardPattern.test(source)) source = source.replace(pitchGuardPattern, n
 else if (source.includes(oldPitchGuard)) source = source.replace(oldPitchGuard, newPitchGuard);
 else if (!source.includes(pitchMarker)) throw new Error(`${doorFitPath}: final pitch guard is not recognizable`);
 
-for (const required of [marker, pitchMarker, 'object.name === "Tunnel_C_Jetway_0"', "maximumPhotoAttachedPitchRadians", "degToRad(4)"]) {
+for (const required of [marker, pitchMarker, modelTargetMarker, 'object.name === "Tunnel_C_Jetway_0"', "maximumPhotoAttachedPitchRadians", "degToRad(4)", "targetYInModel"]) {
   if (!source.includes(required)) throw new Error(`${doorFitPath}: final A1 carrier/pitch preservation is missing ${required}`);
 }
-for (const forbidden of ["pitchRadians < 0.14", "a1-rendered-door-measured-pitch-envelope-v1"]) {
-  if (source.includes(forbidden)) throw new Error(`${doorFitPath}: stale steep-pitch guard survived: ${forbidden}`);
+for (const forbidden of ["pitchRadians < 0.14", "a1-rendered-door-measured-pitch-envelope-v1", "targetYInAnchor"]) {
+  if (source.includes(forbidden)) throw new Error(`${doorFitPath}: stale A1 pitch target/guard survived: ${forbidden}`);
 }
 
 fs.writeFileSync(doorFitPath, source, "utf8");
-console.log(`Prepared ${marker} + ${pitchMarker}: preserved the integrated Tunnel-C carrier and limited final attached bridge pitch to the photo-authoritative <=4 degree envelope.`);
+console.log(`Prepared ${marker} + ${modelTargetMarker} + ${pitchMarker}: preserved the integrated Tunnel-C carrier, solved pitch in the correct model-local frame, and limited final attached bridge pitch to the photo-authoritative <=4 degree envelope.`);
