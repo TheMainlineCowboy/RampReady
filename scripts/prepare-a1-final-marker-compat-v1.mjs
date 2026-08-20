@@ -63,6 +63,11 @@ if (sourcePlaced.includes('yaw: jetway.g === "A1" ? yaw : sourceJetwayYaw')) {
 // already proved. This is telemetry/report plumbing only; it does not move A1.
 await import(`./prepare-a1-tunnel-c-bogie-report-publication-v1.mjs?final-compat=${Date.now()}`);
 await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?final-compat=${Date.now()}`);
+// Remove the obsolete representative Cab-front-point vertical veto at the same
+// final compatibility stage that republishes the actual Tunnel-C/door evidence.
+// The physical Cab hood plane/lateral/door-center footprint and Tunnel-C seam stay
+// fail-closed; only the known nonphysical multi-metre proxy is retired.
+await import(`./prepare-a1-final-visible-fit-surface-readiness-v1.mjs?final-compat=${Date.now()}`);
 
 const readiness = fs.readFileSync(readinessPath, "utf8");
 const elbow = fs.readFileSync(elbowPath, "utf8");
@@ -136,8 +141,12 @@ for (const required of [
   "bogieGroundContactPointCount < 4",
   "bogieGroundContactClusterCount < 1",
   "bogieGroundHorizontalContactSpan < 0.35",
+  "a1-final-visible-fit-physical-surface-readiness-v3-door-center-coverage",
 ]) {
-  if (!readiness.includes(required)) throw new Error(`${readinessPath}: Tunnel-C bogie readiness is missing ${required}`);
+  if (!readiness.includes(required)) throw new Error(`${readinessPath}: Tunnel-C/Cab readiness is missing ${required}`);
+}
+if (readiness.includes("A1 final visible Cab did not reach grounded CRJ door")) {
+  throw new Error(`${readinessPath}: stale representative Cab-height veto survived final compatibility`);
 }
 
 // Do not translate the supplied service stair away from Tunnel-C here. The final
@@ -146,4 +155,4 @@ for (const required of [
 // around their upper attachment and verifies clearance against the exact CRJ
 // fuselage envelope. This compatibility stage remains geometry-neutral.
 
-console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. Final A1 compatibility now accepts ${usesRealPhotoGeometry ? photoAuthority : "the legacy measured-wall layout"} without changing terminal/aircraft geometry; exact supplied hierarchy and Tunnel-C bogie ramp authority remain enforced, while service-stair articulation is deferred to the final visible-geometry hook.`);
+console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. Final A1 compatibility now accepts ${usesRealPhotoGeometry ? photoAuthority : "the legacy measured-wall layout"} without changing terminal/aircraft geometry; exact supplied hierarchy, Tunnel-C bogie ramp authority, and physical Cab hood/door contact remain enforced, while the stale representative Cab-height proxy is rejected.`);
