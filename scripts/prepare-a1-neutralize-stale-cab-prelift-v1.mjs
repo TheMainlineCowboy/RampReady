@@ -2,8 +2,9 @@ import fs from "node:fs";
 
 const path = "src/environment/uploadedAirportJetwayA1DoorFitV11.js";
 const marker = "a1-neutralize-under-cab-mechanical-prelift-v1";
-const pitchTargetMarker = "a1-connected-pitch-targets-level-cab-opening-center-v2";
-const priorPitchTargetMarker = "a1-connected-pitch-targets-cab-opening-center-v1";
+const pitchTargetMarker = "a1-connected-pitch-targets-level-cab-opening-center-v3-face-center";
+const priorPitchTargetMarker = "a1-connected-pitch-targets-level-cab-opening-center-v2";
+const olderPitchTargetMarker = "a1-connected-pitch-targets-cab-opening-center-v1";
 const exactDoorMarker = "a1-exact-authored-crj-forward-left-door-target-v2-sill-and-center";
 const carrierMarker = "a1-preserve-integrated-tunnel-c-carrier-v1";
 
@@ -16,20 +17,22 @@ for (const required of [exactDoorMarker, carrierMarker]) {
 
 // applyPitchToTunnels moves the Cab through the same Rotunda-centered pitch arc as
 // Tunnel A/B/C and then counter-pitches the Cab about its transformed REAR hinge so
-// the passenger hood remains level. Therefore the final aircraft-facing opening Y
-// is not the simple rotated front.point Y used by the old pitch solve. The browser
-// evidence on f429a65 showed the exact consequence: horizontal contact was 4.85 cm,
-// but the final level Cab reference remained 0.500584 m above the fixed CRJ door.
-// Solve the connected bridge pitch from the rear hinge instead. Put the transformed
-// rear hinge at doorY minus the Cab's original front-to-rear vertical offset; after
-// the counter-pitch, the level Cab opening then lands at the actual door center.
+// the passenger hood remains level. The final aircraft-facing opening therefore has
+// to be solved from the visible Cab face CENTER, not measureCabFace().point.y: that
+// point is deliberately the face-band minimum/floor. Targeting that minimum at the
+// CRJ door center leaves the visible Cab opening about half a metre too high. The
+// exact b7d6 render exposed that error as 0.55403 m. Use front.centerY against the
+// actual rear-hinge pivot so the final level Cab opening center lands on the fixed
+// authored CRJ door without moving the aircraft or applying a disconnected Cab drop.
 if (!source.includes(pitchTargetMarker)) {
-  const oldOpeningTarget = `  // ${priorPitchTargetMarker}\n  // The fixed CRJ target is the passenger-door opening center, so solve the\n  // connected bridge pitch from the Cab aircraft-facing opening reference point,\n  // not from the lower floor/minimum edge of the broad Cab face band.\n  const requestedDoorPitchRadians = solvePitchRadians({\n    floorY: cabAssembly.front.point.y,\n    floorZ: cabAssembly.front.point.z,\n    pivotY: rotundaCenter.y,\n    pivotZ: rotundaCenter.z,\n    targetY: targetYInModel,\n  });`;
+  const priorV2Target = `  // ${priorPitchTargetMarker}\n  // The Cab is counter-pitched about its transformed rear hinge to stay level.\n  // Target that hinge so the final level aircraft-facing opening, not a pre-pitch\n  // proxy, lands on the fixed CRJ passenger-door center.\n  const cabOpeningVerticalOffsetFromRearHinge = cabAssembly.front.point.y - cabAssembly.rear.point.y;\n  const connectedCabRearHingeTargetY = targetYInModel - cabOpeningVerticalOffsetFromRearHinge;\n  const requestedDoorPitchRadians = solvePitchRadians({\n    floorY: cabAssembly.rear.point.y,\n    floorZ: cabAssembly.rear.point.z,\n    pivotY: rotundaCenter.y,\n    pivotZ: rotundaCenter.z,\n    targetY: connectedCabRearHingeTargetY,\n  });`;
+  const oldOpeningTarget = `  // ${olderPitchTargetMarker}\n  // The fixed CRJ target is the passenger-door opening center, so solve the\n  // connected bridge pitch from the Cab aircraft-facing opening reference point,\n  // not from the lower floor/minimum edge of the broad Cab face band.\n  const requestedDoorPitchRadians = solvePitchRadians({\n    floorY: cabAssembly.front.point.y,\n    floorZ: cabAssembly.front.point.z,\n    pivotY: rotundaCenter.y,\n    pivotZ: rotundaCenter.z,\n    targetY: targetYInModel,\n  });`;
   const staleFloorTarget = `  const requestedDoorPitchRadians = solvePitchRadians({\n    floorY: cabAssembly.front.floorY,\n    floorZ: cabAssembly.front.point.z,\n    pivotY: rotundaCenter.y,\n    pivotZ: rotundaCenter.z,\n    targetY: targetYInModel,\n  });`;
-  const correctedPitchTarget = `  // ${pitchTargetMarker}\n  // The Cab is counter-pitched about its transformed rear hinge to stay level.\n  // Target that hinge so the final level aircraft-facing opening, not a pre-pitch\n  // proxy, lands on the fixed CRJ passenger-door center.\n  const cabOpeningVerticalOffsetFromRearHinge = cabAssembly.front.point.y - cabAssembly.rear.point.y;\n  const connectedCabRearHingeTargetY = targetYInModel - cabOpeningVerticalOffsetFromRearHinge;\n  const requestedDoorPitchRadians = solvePitchRadians({\n    floorY: cabAssembly.rear.point.y,\n    floorZ: cabAssembly.rear.point.z,\n    pivotY: rotundaCenter.y,\n    pivotZ: rotundaCenter.z,\n    targetY: connectedCabRearHingeTargetY,\n  });`;
-  if (source.includes(oldOpeningTarget)) source = source.replace(oldOpeningTarget, correctedPitchTarget);
+  const correctedPitchTarget = `  // ${pitchTargetMarker}\n  // The Cab is counter-pitched about its transformed rear hinge to stay level.\n  // measureCabFace().point.y is the face-band MINIMUM, not the visible boarding\n  // opening center. Target the measured front face center relative to the actual\n  // rear-hinge pivot so the final level hood opening lands at the CRJ door center.\n  const cabOpeningVerticalOffsetFromRearHinge = cabAssembly.front.centerY - cabAssembly.rear.point.y;\n  const connectedCabRearHingeTargetY = targetYInModel - cabOpeningVerticalOffsetFromRearHinge;\n  const requestedDoorPitchRadians = solvePitchRadians({\n    floorY: cabAssembly.rear.point.y,\n    floorZ: cabAssembly.rear.point.z,\n    pivotY: rotundaCenter.y,\n    pivotZ: rotundaCenter.z,\n    targetY: connectedCabRearHingeTargetY,\n  });`;
+  if (source.includes(priorV2Target)) source = source.replace(priorV2Target, correctedPitchTarget);
+  else if (source.includes(oldOpeningTarget)) source = source.replace(oldOpeningTarget, correctedPitchTarget);
   else if (source.includes(staleFloorTarget)) source = source.replace(staleFloorTarget, correctedPitchTarget);
-  else throw new Error(`${path}: connected A1 pitch has no recognizable pre-v2 target`);
+  else throw new Error(`${path}: connected A1 pitch has no recognizable pre-v3 target`);
 }
 
 if (!source.includes(marker)) {
@@ -51,6 +54,7 @@ for (const required of [
   pitchTargetMarker,
   "cabAssembly.rear.point.y",
   "cabAssembly.rear.point.z",
+  "cabAssembly.front.centerY",
   "connectedCabRearHingeTargetY",
   "cabOpeningVerticalOffsetFromRearHinge",
   "const cabVerticalAdjustment = 0;",
@@ -59,14 +63,16 @@ for (const required of [
 }
 for (const forbidden of [
   priorPitchTargetMarker,
+  olderPitchTargetMarker,
+  "cabAssembly.front.point.y - cabAssembly.rear.point.y",
   "const requestedDoorPitchRadians = solvePitchRadians({\n    floorY: cabAssembly.front.floorY,",
   "const requestedDoorPitchRadians = solvePitchRadians({\n    floorY: cabAssembly.front.point.y,",
   "const cabVerticalAdjustment = targetYInAnchor - cabAssembly.front.floorY;",
   "const cabVerticalAdjustment = targetYInModel - cabAssembly.front.floorY;",
-  "translationMatrix(THREE, 0, cabVerticalAdjustment, 0)",
+  "translationMatrix(THREE, 0, cabVerticalAdjustment, 0)"
 ]) {
   if (source.includes(forbidden)) throw new Error(`${path}: stale Cab pitch/pre-lift survived: ${forbidden}`);
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Prepared ${marker} + ${pitchTargetMarker}: connected A1 pitch now targets the transformed rear hinge so the final level Cab opening lands on the fixed CRJ door center; isolated under-Cab pre-lift remains removed.`);
+console.log(`Prepared ${marker} + ${pitchTargetMarker}: connected A1 pitch now targets the visible Cab face center through the transformed rear hinge, eliminating the half-metre high-Cab error without moving the fixed CRJ or disconnecting the Cab.`);
