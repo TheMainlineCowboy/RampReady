@@ -6,7 +6,7 @@ const marker = "a1-final-world-tunnel-c-footprint-camera-v2";
 const runtimeSupportMarker = "a1-final-world-runtime-support-meshes-v2";
 const integratedCarrierMarker = "a1-integrated-tunnel-c-opaque-support-carrier-v1";
 const rampRelativeGroundMarker = "a1-final-world-ramp-relative-ground-authority-v1";
-const scopedCabProofMarker = "a1-final-exact-cab-footprint-door-contact-v6-bounded-lateral-and-vertical-fit";
+const scopedCabProofMarker = "a1-final-exact-cab-footprint-door-contact-v7-bounded-lateral-hood-fit";
 let source = fs.readFileSync(trainerPath, "utf8");
 let doorFitSource = fs.readFileSync(doorFitPath, "utf8");
 
@@ -53,10 +53,10 @@ if (!source.includes(marker)) {
   source = source.replace(obsoleteGuard, footprintGuard);
 }
 
-// The final Cab proof is installed earlier as the current v6 scoped physical proof.
+// The final Cab proof is installed earlier as the current v7 scoped physical proof.
 // Consume semantic symbols from that proof rather than stale generation-specific
 // variable names. The proof measures a tight 0.20 m face, a 1.25 m hood envelope,
-// and bounded <=15 cm lateral/vertical Cab articulation before final acceptance.
+// and bounded <=28 cm lateral / <=15 cm vertical Cab articulation before final acceptance.
 if (!(source.includes(scopedCabProofMarker)
   && source.includes("const measurePhysicalCab = () =>")
   && source.includes("const face = liveCabVerticesWorld.filter")
@@ -66,7 +66,7 @@ if (!(source.includes(scopedCabProofMarker)
   && source.includes("const verticalCovered = physical.minHeight <= 0.08 && physical.maxHeight >= -0.08;")
   && source.includes("inspectionAircraftCabLateralCorrectionMeters")
   && source.includes("inspectionAircraftCabVerticalCorrectionMeters"))) {
-  throw new Error(`${trainerPath}: current v6 scoped final Cab face/hood proof is missing before bogie-camera preparation`);
+  throw new Error(`${trainerPath}: current v7 scoped final Cab face/hood proof is missing before bogie-camera preparation`);
 }
 
 // The exact integrated Tunnel_C carrier's grounded low-contact centroid lands at
@@ -127,4 +127,4 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log(`Prepared ${marker} + ${scopedCabProofMarker}: final-world Tunnel-C evidence consumes the current v6 scoped Cab face/hood proof and preserves ramp-relative bogie/contact authority.`);
+console.log(`Prepared ${marker} + ${scopedCabProofMarker}: final-world Tunnel-C evidence consumes the current v7 scoped Cab face/hood proof and preserves ramp-relative bogie/contact authority.`);
