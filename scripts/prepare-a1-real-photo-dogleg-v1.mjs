@@ -3,6 +3,7 @@ import fs from "node:fs";
 const sourcePath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const PHOTO_AUTHORITY = "a1-real-photo-remote-rotunda-fixed-corridor-v1";
 const DOGLEG_AUTHORITY = "a1-aug15-photo-fixed-corridor-dogleg-v1";
+const REFERENCE_MATCHED_AUTHORITY = "a1-aug15-reference-matched-dogleg-v2";
 const ELBOW_OVERLAP_METERS = 0.32;
 const MINIMUM_TOTAL_CORRIDOR_METERS = 6;
 const MAXIMUM_TOTAL_CORRIDOR_METERS = 48;
@@ -74,28 +75,46 @@ if (!source.includes(DOGLEG_AUTHORITY)) {
   );
 }
 
-for (const required of [
+const referenceMatched = source.includes(REFERENCE_MATCHED_AUTHORITY);
+const requiredOutput = [
   DOGLEG_AUTHORITY,
-  "const rotundaTerminalBranchDirection = bridgeDirection.clone().multiplyScalar(-1).normalize();",
-  "const doglegElbowPoint = rotundaSurfacePoint.clone().addScaledVector(rotundaTerminalBranchDirection",
+  "const doglegElbowPoint =",
   "const firstFrame = addContinuousShell",
   "const secondFrame = addContinuousShell",
   "UploadedAirportJetwayA1FixedCorridorDoglegRoof",
   "uploadedJetwayA1FixedCorridorDoglegAuthority",
-  "bridgeDirection.clone().multiplyScalar(-1).normalize().dot(bridgeDirection)",
   "const bridgeSealStartLocal = pointFromFleetToObjectLocal",
   "const bridgeSealEndLocal = pointFromFleetToObjectLocal",
   "const removedGeneratedTerminalObjects = removeGeneratedA1TerminalGeometry(fleet);",
-]) {
+];
+if (referenceMatched) {
+  requiredOutput.push(REFERENCE_MATCHED_AUTHORITY);
+} else {
+  requiredOutput.push(
+    "const rotundaTerminalBranchDirection = bridgeDirection.clone().multiplyScalar(-1).normalize();",
+    "const doglegElbowPoint = rotundaSurfacePoint.clone().addScaledVector(rotundaTerminalBranchDirection",
+    "bridgeDirection.clone().multiplyScalar(-1).normalize().dot(bridgeDirection)",
+  );
+}
+for (const required of requiredOutput) {
   if (!source.includes(required)) throw new Error(`${sourcePath}: A1 dogleg output is missing ${required}`);
 }
-for (const forbidden of [
+
+const forbiddenOutput = [
   "const frame = addContinuousShell(THREE, connector, materials, shellStart, shellVector, shellLength",
   "terminalDirection.dot(bridgeDirection)",
   "rotundaTerminalBranchDirection.dot(bridgeDirection)",
-]) {
+];
+if (referenceMatched) {
+  // v2 intentionally replaces the v1 opposite-hemisphere terminal branch with
+  // the Aug. 15 reference-matched aircraft-side elbow geometry. A repeated v1
+  // preparation pass must validate that newer authority rather than demanding
+  // the retired branch expression and aborting production before rendering.
+  forbiddenOutput.push("const rotundaTerminalBranchDirection = bridgeDirection.clone().multiplyScalar(-1).normalize();");
+}
+for (const forbidden of forbiddenOutput) {
   if (source.includes(forbidden)) throw new Error(`${sourcePath}: obsolete/TDZ-prone straight A1 terminal branch survived dogleg preparation: ${forbidden}`);
 }
 
 fs.writeFileSync(sourcePath, source, "utf8");
-console.log(`Prepared ${DOGLEG_AUTHORITY}: only A1 now uses two elevated fixed corridor legs and an elbow from the exact BGATE1 facade to the remote supplied Rotunda; A3+ retain their short/direct terminal-side connectors, Airport_Jetway.glb remains untouched, the early continuity guard is TDZ-safe, and the exact Rotunda-to-Tunnel-A bellows setup is preserved.`);
+console.log(`Prepared ${DOGLEG_AUTHORITY}${referenceMatched ? ` with ${REFERENCE_MATCHED_AUTHORITY} preserved` : ""}: only A1 uses the photo-authoritative fixed corridor dogleg; A3+ retain their short/direct terminal-side connectors, Airport_Jetway.glb remains untouched, and repeated production preparation cannot re-impose the retired opposite-hemisphere v1 branch.`);
