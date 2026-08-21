@@ -3,6 +3,7 @@ import fs from "node:fs";
 const sourcePath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const photoAuthority = "a1-real-photo-remote-rotunda-fixed-corridor-v1";
 const doglegAuthority = "a1-aug15-photo-fixed-corridor-dogleg-v1";
+const referenceMatchAuthority = "a1-aug15-reference-matched-dogleg-v2";
 const supportAuthority = "a1-aug15-photo-two-permanent-fixed-support-columns-v1";
 const authority = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";
 const targetAuthority = "a1-aircraft-target-follows-intact-parent-relocation-v1";
@@ -78,18 +79,30 @@ await import(`./prepare-a1-real-photo-fixed-corridor-v1.mjs?real-photo=${Date.no
 // pose is restored, convert only A1's fixed terminal-side span into the visible
 // two-leg corridor + elbow. A3 and the rest of the static fleet retain their
 // own short/direct measured terminal connectors.
-await import(`./prepare-a1-real-photo-dogleg-v1.mjs?real-photo-dogleg=${Date.now()}`);
+//
+// Once the later reference-matching pass has corrected the elbow to the
+// aircraft-side hemisphere, do NOT rerun the older v1 dogleg verifier: its
+// historical postconditions explicitly demand the now-retired opposite-
+// hemisphere branch and would abort the build even though the corrected v2
+// geometry is already present. The v2 support/reference pass below remains the
+// authoritative idempotent validator for the photographed route.
+let doglegSource = fs.readFileSync(sourcePath, "utf8");
+if (!doglegSource.includes(referenceMatchAuthority)) {
+  await import(`./prepare-a1-real-photo-dogleg-v1.mjs?real-photo-dogleg=${Date.now()}`);
+}
 
 // The same A1 photo also shows a permanent structural support pair beneath the
 // fixed corridor before the remote Rotunda. Install exactly two ramp-supported
 // fixed columns here; they are not part of the movable supplied GLB and never
-// rise, telescope or rotate with the wheel-supported bridge.
+// rise, telescope or rotate with the wheel-supported bridge. This pass also
+// owns the reference-matched v2 dogleg validation on repeated builds.
 await import(`./prepare-a1-photo-fixed-support-columns-v1.mjs?fixed-supports=${Date.now()}`);
 
 source = fs.readFileSync(sourcePath, "utf8");
 for (const required of [
   photoAuthority,
   doglegAuthority,
+  referenceMatchAuthority,
   supportAuthority,
   authority,
   targetAuthority,
@@ -101,10 +114,12 @@ for (const required of [
   "uploadedJetwayA1RemoteSourceRotunda",
   "uploadedJetwayA1LongFixedTerminalCorridor",
   "uploadedJetwayA1FixedCorridorDoglegAuthority",
+  "uploadedJetwayA1ReferenceMatchedDoglegAuthority",
   "uploadedJetwayA1PermanentFixedSupportAuthority",
   "uploadedJetwayA1PermanentFixedSupportColumnCount = 2",
   "UploadedAirportJetwayA1PermanentFixedSupportColumn_",
   "const rotundaTerminalBranchDirection = bridgeDirection.clone().normalize();",
+  "terminalWallDistance * 0.40",
   "const firstFrame = addContinuousShell",
   "const secondFrame = addContinuousShell",
   "const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.5;",
@@ -122,10 +137,11 @@ for (const forbidden of [
   "same-day-a1-photo-compact-solid-terminal-leg-fixed-wall",
   "const frame = addContinuousShell(THREE, connector, materials, shellStart, shellVector, shellLength",
   "terminalDirection.dot(bridgeDirection)",
+  "const rotundaTerminalBranchDirection = bridgeDirection.clone().multiplyScalar(-1).normalize();",
 ]) {
   if (source.includes(forbidden)) {
     throw new Error(`${sourcePath}: obsolete compact/destructive/straight A1 behavior survived final real-photo normalization: ${forbidden}`);
   }
 }
 
-console.log(`Prepared A1 under ${photoAuthority} + ${doglegAuthority} + ${supportAuthority}: the complete exact Airport_Jetway.glb uses the decoded source model origin and calibrated physical bridge heading, its Rotunda remains remote, the real Terminal 4 facade is connected by the A1-only fixed dogleg corridor carried by exactly two permanent ramp-supported columns, A3+ keep their short/direct connectors, and neither supplied children nor the aircraft target are moved to hide a bad terminal attachment.`);
+console.log(`Prepared A1 under ${photoAuthority} + ${doglegAuthority} + ${referenceMatchAuthority} + ${supportAuthority}: the complete exact Airport_Jetway.glb uses the decoded source model origin and calibrated physical bridge heading, its Rotunda remains remote, the real Terminal 4 facade is connected by the A1-only reference-matched fixed dogleg corridor carried by exactly two permanent ramp-supported columns, A3+ keep their short/direct connectors, and neither supplied children nor the aircraft target are moved to hide a bad terminal attachment.`);
