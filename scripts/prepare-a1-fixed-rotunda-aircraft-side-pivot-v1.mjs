@@ -104,7 +104,7 @@ for (const required of [
   "uploadedJetwayA1PermanentFixedSupportAuthority",
   "uploadedJetwayA1PermanentFixedSupportColumnCount = 2",
   "UploadedAirportJetwayA1PermanentFixedSupportColumn_",
-  "const rotundaTerminalBranchDirection = bridgeDirection.clone().multiplyScalar(-1).normalize();",
+  "const rotundaTerminalBranchDirection = bridgeDirection.clone().normalize();",
   "const firstFrame = addContinuousShell",
   "const secondFrame = addContinuousShell",
   "const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.5;",
