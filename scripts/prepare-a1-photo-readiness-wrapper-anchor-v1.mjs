@@ -153,13 +153,13 @@ fs.writeFileSync(doorFitPath, doorFit, "utf8");
 if (doorFit.includes(coarseFootprintToken)) throw new Error(`${doorFitPath}: coarse Cab footprint veto survived`);
 
 // The final browser proof is the authoritative physical contact check. Add a
-// bounded door-normal correction in addition to its existing lateral correction,
-// and permit up to 22 cm of seam-safe Cab hood articulation in either horizontal
-// axis. The aircraft, terminal, Rotunda and Tunnel-C carrier remain fixed.
+// bounded door-normal correction to the current v7 Cab hood proof. The current
+// v7 lateral articulation remains capped at 28 cm; door-normal correction is
+// capped at 22 cm. Aircraft, terminal, Rotunda and Tunnel-C remain fixed.
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let trainer = fs.readFileSync(trainerPath, "utf8");
-const finalProofMarker = "a1-final-exact-cab-footprint-door-contact-v6-bounded-lateral-and-vertical-fit";
-if (!trainer.includes(finalProofMarker)) throw new Error(`${trainerPath}: final Cab proof missing before photo readiness normalization`);
+const finalProofMarker = "a1-final-exact-cab-footprint-door-contact-v7-bounded-lateral-hood-fit";
+if (!trainer.includes(finalProofMarker)) throw new Error(`${trainerPath}: current final Cab proof missing before photo readiness normalization`);
 trainer = trainer.replace(
   "return { face, hood, side, minNormal, maxNormal, minLateral, maxLateral, nearestHorizontal, minHeight, maxHeight };",
   "return { face, hood, doorward, side, minNormal, maxNormal, minLateral, maxLateral, nearestHorizontal, minHeight, maxHeight };",
@@ -170,15 +170,20 @@ if (!trainer.includes("finalCabNormalCorrectionMeters")) {
   if (!trainer.includes(normalAnchor)) throw new Error(`${trainerPath}: final Cab normal-correction insertion anchor missing`);
   trainer = trainer.replace(normalAnchor, normalBlock);
 }
-trainer = trainer.replaceAll("Math.abs(finalCabLateralCorrectionMeters) > 0.15", "Math.abs(finalCabLateralCorrectionMeters) > 0.22");
-trainer = trainer.replaceAll("Lateral correction is bounded to 15 cm", "Door-normal and lateral correction are each bounded to 22 cm");
+trainer = trainer.replaceAll("Math.abs(finalCabLateralCorrectionMeters) > 0.15", "Math.abs(finalCabLateralCorrectionMeters) > 0.28");
+trainer = trainer.replaceAll("Lateral correction is bounded to 15 cm", "Door-normal correction is bounded to 22 cm and lateral correction to 28 cm");
 trainer = trainer.replace(
   "renderer.domElement.dataset.inspectionAircraftCabLateralCorrectionMeters = finalCabLateralCorrectionMeters.toFixed(6);",
   "renderer.domElement.dataset.inspectionAircraftCabNormalCorrectionMeters = finalCabNormalCorrectionMeters.toFixed(6);\n            renderer.domElement.dataset.inspectionAircraftCabLateralCorrectionMeters = finalCabLateralCorrectionMeters.toFixed(6);",
 );
 fs.writeFileSync(trainerPath, trainer, "utf8");
-for (const required of ["finalCabNormalCorrectionMeters", "inspectionAircraftCabNormalCorrectionMeters", "Math.abs(finalCabLateralCorrectionMeters) > 0.22"]) {
+for (const required of [
+  "finalCabNormalCorrectionMeters",
+  "inspectionAircraftCabNormalCorrectionMeters",
+  "Math.abs(finalCabNormalCorrectionMeters) > 0.22",
+  "Math.abs(finalCabLateralCorrectionMeters) > 0.28",
+]) {
   if (!trainer.includes(required)) throw new Error(`${trainerPath}: final Cab photo-normalized proof missing ${required}`);
 }
 
-console.log(`Prepared stable A1 photo-readiness anchors, deferred coarse pre-render Cab footprint vetoes, and added bounded final rendered Cab door-normal/lateral articulation while keeping the fixed CRJ and Tunnel-C carrier authoritative.`);
+console.log(`Prepared stable A1 photo-readiness anchors, deferred coarse pre-render Cab footprint vetoes, and aligned the final rendered Cab proof with current v7 bounded door-normal/lateral articulation while keeping the fixed CRJ and Tunnel-C carrier authoritative.`);
