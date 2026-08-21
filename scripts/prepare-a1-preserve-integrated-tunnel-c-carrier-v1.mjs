@@ -2,8 +2,8 @@ import fs from "node:fs";
 
 const doorFitPath = "src/environment/uploadedAirportJetwayA1DoorFitV11.js";
 const marker = "a1-preserve-integrated-tunnel-c-carrier-v1";
-const pitchMarker = "a1-photo-attached-state-pitch-envelope-v3";
-const modelTargetMarker = "a1-final-pitch-target-in-model-space-v2";
+const pitchMarker = "a1-photo-attached-state-pitch-envelope-v4-corrected-door-frame";
+const modelTargetMarker = "a1-final-pitch-target-in-model-space-v3-corrected-door-frame";
 const runtimeSupportMarker = "a1-runtime-tunnel-c-separable-support-meshes-v1";
 const finalVisibleMarker = "a1-final-visible-grounded-door-and-integrated-tunnel-c-v1";
 
@@ -28,8 +28,10 @@ if (!source.includes(marker)) {
 if (!source.includes(modelTargetMarker)) {
   const staleTarget = `  const targetYInAnchor = targetInParent.y - anchor.position.y;\n  const pitchRadians = solvePitchRadians({\n    floorY: cabAssembly.front.floorY,\n    floorZ: cabAssembly.front.point.z,\n    pivotY: rotundaCenter.y,\n    pivotZ: rotundaCenter.z,\n    targetY: targetYInAnchor,\n  });`;
   const priorModelTarget = `  // a1-final-pitch-target-in-model-space-v1\n  // Pitch is solved in model-local coordinates, so the door target must be transformed\n  // into that same frame. Subtracting only anchor.position.y ignores the final model\n  // registration offset and created the visibly false 6.78-degree downhill bridge.\n  model.updateWorldMatrix(true, true);\n  const targetYInModel = model.worldToLocal(targetWorld.clone()).y;\n  const pitchRadians = solvePitchRadians({\n    floorY: cabAssembly.front.floorY,\n    floorZ: cabAssembly.front.point.z,\n    pivotY: rotundaCenter.y,\n    pivotZ: rotundaCenter.z,\n    targetY: targetYInModel,\n  });`;
-  const modelTarget = `  // ${modelTargetMarker}\n  // Solve the door-implied pitch in the same model-local frame, but do NOT let that\n  // one-point solution drag the entire supplied Tunnel A/B/C mass down toward a CRJ.\n  // The Aug. 17 attached-state photos show a near-level main bridge with the Cab/hood\n  // doing the final door-height work. Preserve that visual/physical hierarchy here.\n  model.updateWorldMatrix(true, true);\n  const targetYInModel = model.worldToLocal(targetWorld.clone()).y;\n  const requestedDoorPitchRadians = solvePitchRadians({\n    floorY: cabAssembly.front.floorY,\n    floorZ: cabAssembly.front.point.z,\n    pivotY: rotundaCenter.y,\n    pivotZ: rotundaCenter.z,\n    targetY: targetYInModel,\n  });\n  const maximumPhotoAttachedPitchRadians = THREE.MathUtils.degToRad(3.5);\n  const pitchRadians = Math.min(requestedDoorPitchRadians, maximumPhotoAttachedPitchRadians);`;
-  if (source.includes(priorModelTarget)) source = source.replace(priorModelTarget, modelTarget);
+  const priorCappedTarget = `  // a1-final-pitch-target-in-model-space-v2\n  // Solve the door-implied pitch in the same model-local frame, but do NOT let that\n  // one-point solution drag the entire supplied Tunnel A/B/C mass down toward a CRJ.\n  // The Aug. 17 attached-state photos show a near-level main bridge with the Cab/hood\n  // doing the final door-height work. Preserve that visual/physical hierarchy here.\n  model.updateWorldMatrix(true, true);\n  const targetYInModel = model.worldToLocal(targetWorld.clone()).y;\n  const requestedDoorPitchRadians = solvePitchRadians({\n    floorY: cabAssembly.front.floorY,\n    floorZ: cabAssembly.front.point.z,\n    pivotY: rotundaCenter.y,\n    pivotZ: rotundaCenter.z,\n    targetY: targetYInModel,\n  });\n  const maximumPhotoAttachedPitchRadians = THREE.MathUtils.degToRad(3.5);\n  const pitchRadians = Math.min(requestedDoorPitchRadians, maximumPhotoAttachedPitchRadians);`;
+  const modelTarget = `  // ${modelTargetMarker}\n  // The earlier 6.78-degree result was rejected because it had been computed across\n  // mismatched coordinate frames. That frame bug is now removed: the door target,\n  // Rotunda pivot and supplied Cab floor are all measured in the same final model\n  // frame. Let the CONNECTED Tunnel A/B/C assembly take that physically requested\n  // pitch instead of forcing an 0.85 m Cab-only drop that disconnects the hood.\n  // Keep a hard 7-degree ceiling and verify the resulting bogie/aircraft massing in\n  // the fixed reference-angle screenshots.\n  model.updateWorldMatrix(true, true);\n  const targetYInModel = model.worldToLocal(targetWorld.clone()).y;\n  const requestedDoorPitchRadians = solvePitchRadians({\n    floorY: cabAssembly.front.floorY,\n    floorZ: cabAssembly.front.point.z,\n    pivotY: rotundaCenter.y,\n    pivotZ: rotundaCenter.z,\n    targetY: targetYInModel,\n  });\n  const maximumPhotoAttachedPitchRadians = THREE.MathUtils.degToRad(7.0);\n  const pitchRadians = Math.min(requestedDoorPitchRadians, maximumPhotoAttachedPitchRadians);`;
+  if (source.includes(priorCappedTarget)) source = source.replace(priorCappedTarget, modelTarget);
+  else if (source.includes(priorModelTarget)) source = source.replace(priorModelTarget, modelTarget);
   else if (source.includes(staleTarget)) source = source.replace(staleTarget, modelTarget);
   else throw new Error(`${doorFitPath}: A1 pitch-target block is missing`);
   source = source.replace(
@@ -38,9 +40,9 @@ if (!source.includes(modelTargetMarker)) {
   );
 }
 
-const pitchGuardPattern = /  \/\/ a1-(?:rendered-door-measured-pitch-envelope-v1|photo-attached-state-pitch-envelope-v2)[\s\S]*?  if \(!\(pitchRadians > 0\.018 && pitchRadians < [^)]+\)\) \{\n    throw new Error\(`Supplied A1 corrected pitch[^`]*`\);\n  \}/;
+const pitchGuardPattern = /  \/\/ a1-(?:rendered-door-measured-pitch-envelope-v1|photo-attached-state-pitch-envelope-v2|photo-attached-state-pitch-envelope-v3)[\s\S]*?  if \(!\(pitchRadians > 0\.018 && pitchRadians [<]=? [^)]+\)\) \{\n    throw new Error\(`Supplied A1 [^`]*`\);\n  \}/;
 const oldPitchGuard = `  if (!(pitchRadians > 0.02 && pitchRadians < 0.14)) {\n    throw new Error(\`Supplied A1 corrected pitch is outside the physical range: \${pitchRadians}\`);\n  }`;
-const newPitchGuard = `  // ${pitchMarker}\n  // Fail closed on the ACTUAL applied main-bridge pitch. The larger one-point door\n  // solution is diagnostic only because using it to rotate all three tunnel sections\n  // produced the visibly steep, pavement-buried assembly rejected by the user.\n  if (!(pitchRadians > 0.018 && pitchRadians <= maximumPhotoAttachedPitchRadians + 1e-6)) {\n    throw new Error(\`Supplied A1 applied pitch contradicts attached-state reference: \${THREE.MathUtils.radToDeg(pitchRadians)} deg\`);\n  }`;
+const newPitchGuard = `  // ${pitchMarker}\n  // Fail closed on the applied connected-bridge pitch. The corrected same-frame\n  // door solution may be steeper than the prior 3.5-degree artificial cap, but it\n  // may never exceed 7 degrees and must still pass the final bogie/reference views.\n  if (!(pitchRadians > 0.018 && pitchRadians <= maximumPhotoAttachedPitchRadians + 1e-6)) {\n    throw new Error(\`Supplied A1 connected bridge pitch is outside the bounded attached range: \${THREE.MathUtils.radToDeg(pitchRadians)} deg\`);\n  }`;
 if (pitchGuardPattern.test(source)) source = source.replace(pitchGuardPattern, newPitchGuard);
 else if (source.includes(oldPitchGuard)) source = source.replace(oldPitchGuard, newPitchGuard);
 else if (!source.includes(pitchMarker)) throw new Error(`${doorFitPath}: final pitch guard is not recognizable`);
@@ -50,12 +52,12 @@ if (source.includes(telemetryNeedle) && !source.includes("requestedDoorPitchDegr
   source = source.replace(telemetryNeedle, `${telemetryNeedle}\n    requestedDoorPitchDegrees: THREE.MathUtils.radToDeg(requestedDoorPitchRadians),`);
 }
 
-for (const required of [marker, pitchMarker, modelTargetMarker, 'object.name === "Tunnel_C_Jetway_0"', "maximumPhotoAttachedPitchRadians", "degToRad(3.5)", "targetYInModel", "requestedDoorPitchRadians"]) {
+for (const required of [marker, pitchMarker, modelTargetMarker, 'object.name === "Tunnel_C_Jetway_0"', "maximumPhotoAttachedPitchRadians", "degToRad(7.0)", "targetYInModel", "requestedDoorPitchRadians"]) {
   if (!source.includes(required)) throw new Error(`${doorFitPath}: final A1 carrier/pitch preservation is missing ${required}`);
 }
-for (const forbidden of ["pitchRadians < 0.14", "a1-rendered-door-measured-pitch-envelope-v1", "targetYInAnchor"]) {
+for (const forbidden of ["pitchRadians < 0.14", "a1-rendered-door-measured-pitch-envelope-v1", "targetYInAnchor", "degToRad(3.5)"]) {
   if (source.includes(forbidden)) throw new Error(`${doorFitPath}: stale A1 pitch target/guard survived: ${forbidden}`);
 }
 
 fs.writeFileSync(doorFitPath, source, "utf8");
-console.log(`Prepared ${marker} + ${modelTargetMarker} + ${pitchMarker}: preserved the integrated Tunnel-C carrier, kept the applied A1 main-bridge pitch within 3.5 degrees, and left the live Cab/hood fit to close the CRJ door-height residual.`);
+console.log(`Prepared ${marker} + ${modelTargetMarker} + ${pitchMarker}: preserved the integrated Tunnel-C carrier and let the connected same-frame door solution own pitch up to 7 degrees; Cab-only articulation remains tightly bounded.`);
