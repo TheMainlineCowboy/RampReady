@@ -1,53 +1,43 @@
 import fs from "node:fs";
 
 const path = "scripts/capture-a1-aircraft-side-reference-evidence.cjs";
-const marker = "a1-aircraft-side-physical-cab-evidence-v1";
-const currentAuthority = "a1-final-exact-cab-footprint-door-contact-v5-cab-only-vertical-fit";
+const marker = "a1-aircraft-side-physical-cab-evidence-v2-reference-massing";
+const currentAuthority = "a1-final-exact-cab-footprint-door-contact-v6-bounded-lateral-and-vertical-fit";
 
 let source = fs.readFileSync(path, "utf8");
 
 source = source.replace(
-  "const CAB_SURFACE_AUTHORITY = 'a1-final-exact-cab-footprint-door-contact-v2';",
+  /const CAB_SURFACE_AUTHORITY = 'a1-final-exact-cab-footprint-door-contact-v\d[^']*';/,
   `const CAB_SURFACE_AUTHORITY = '${currentAuthority}';`,
 );
 
 if (!source.includes(marker)) {
-  const staleMeasurements = `    const renderedCabDoorVerticalError = finite(attached.inspectionAircraftDoorVerticalErrorMeters, 'rendered Cab/door vertical error');\n    const cabDoorFacingVertexCount = finite(attached.inspectionAircraftCabDoorFacingVertexCount, 'Cab door-facing vertex count');`;
-  const physicalMeasurements = `    // ${marker}\n    // The old representative Cab point is not the rounded boarding hood and can remain\n    // more than a metre from the door after the physical Cab surface is correctly fitted.\n    // Acceptance therefore uses the exact final supplied Cab face/hood envelope itself.\n    const cabDoorMinimumHeight = finite(attached.inspectionAircraftCabDoorMinimumHeightMeters, 'Cab hood minimum height');\n    const cabDoorMaximumHeight = finite(attached.inspectionAircraftCabDoorMaximumHeightMeters, 'Cab hood maximum height');\n    const cabVerticalArticulation = finite(attached.inspectionAircraftCabVerticalCorrectionMeters, 'Cab vertical articulation');\n    const renderedCabDoorVerticalError = finite(attached.inspectionAircraftDoorVerticalErrorMeters, 'legacy representative Cab/door vertical diagnostic');\n    const cabDoorFacingVertexCount = finite(attached.inspectionAircraftCabDoorFacingVertexCount, 'Cab door-facing vertex count');`;
-  if (!source.includes(staleMeasurements)) throw new Error(`${path}: stale Cab measurement anchor is missing`);
-  source = source.replace(staleMeasurements, physicalMeasurements);
+  const measurementAnchor = `    const bogieGroundClearance = finite(attached.terminal4UploadedJetwayBogieGroundClearanceMeters, 'bogie ground clearance');`;
+  if (!source.includes(measurementAnchor)) throw new Error(`${path}: physical evidence measurement anchor is missing`);
+  const measurementPatch = `${measurementAnchor}\n    // ${marker}\n    // The Aug. 17 attached-state photos show only the Cab/hood terminating at the\n    // forward door. A tiny nearest-vertex distance is not sufficient if the whole\n    // Cab mass is displaced alongside the nose. Keep a coarse, independent massing\n    // backstop between the live Cab center and the fixed authored door center.\n    const liveCabX = finite(attached.inspectionAircraftLiveVisibleCabWorldX, 'live Cab center X');\n    const liveCabZ = finite(attached.inspectionAircraftLiveVisibleCabWorldZ, 'live Cab center Z');\n    const liveDoorX = finite(attached.inspectionAircraftLiveVisibleDoorWorldX, 'live door X');\n    const liveDoorZ = finite(attached.inspectionAircraftLiveVisibleDoorWorldZ, 'live door Z');\n    const cabCenterDoorHorizontalMeters = Math.hypot(liveCabX - liveDoorX, liveCabZ - liveDoorZ);`;
+  source = source.replace(measurementAnchor, measurementPatch);
 
-  const staleGuard = `    if (Math.abs(renderedCabDoorVerticalError) > MAX_RENDERED_CAB_DOOR_VERTICAL_ERROR_METERS) {\n      throw new Error(\`A1 rendered Cab is visibly too high/low for the fixed CRJ door: vertical=\${renderedCabDoorVerticalError} m\`);\n    }`;
-  const physicalGuard = `    if (cabDoorMinimumHeight > 0.08 || cabDoorMaximumHeight < -0.08) {\n      throw new Error(\`A1 physical supplied Cab hood misses the fixed CRJ door vertically: hood=[\${cabDoorMinimumHeight},\${cabDoorMaximumHeight}] m, articulation=\${cabVerticalArticulation} m, legacyRepresentative=\${renderedCabDoorVerticalError} m\`);\n    }`;
-  if (!source.includes(staleGuard)) throw new Error(`${path}: stale representative-height fatal guard is missing`);
-  source = source.replace(staleGuard, physicalGuard);
+  const guardAnchor = `    if (Math.abs(bogieGroundClearance) > MAX_BOGIE_GROUND_CLEARANCE_METERS) throw new Error(\`A1 bogie is not grounded: \${bogieGroundClearance} m\`);`;
+  if (!source.includes(guardAnchor)) throw new Error(`${path}: bogie guard anchor is missing`);
+  source = source.replace(guardAnchor, `${guardAnchor}\n    if (cabCenterDoorHorizontalMeters > 3.5) {\n      throw new Error(\`A1 attached-state Cab massing is inconsistent with the reference photos: Cab center is \${cabCenterDoorHorizontalMeters} m from the fixed CRJ door even though the nearest hood vertex is \${doorCabSurfaceDistance} m away\`);\n    }`);
 
-  source = source.replace(
-    `        renderedVerticalErrorMeters: renderedCabDoorVerticalError,`,
-    `        legacyRepresentativeVerticalErrorMeters: renderedCabDoorVerticalError,\n        minimumHoodHeightMeters: cabDoorMinimumHeight,\n        maximumHoodHeightMeters: cabDoorMaximumHeight,\n        cabVerticalArticulationMeters: cabVerticalArticulation,`,
-  );
-  source = source.replace(
-    `vertical=\${renderedCabDoorVerticalError.toFixed(3)} m, bogie=\${bogieGroundClearance.toFixed(3)} m.`,
-    `hoodY=[\${cabDoorMinimumHeight.toFixed(3)},\${cabDoorMaximumHeight.toFixed(3)}] m, legacyRepresentativeY=\${renderedCabDoorVerticalError.toFixed(3)} m, bogie=\${bogieGroundClearance.toFixed(3)} m.`,
-  );
+  const reportAnchor = `        verticallyCovered: attached.inspectionAircraftCabDoorVerticallyCovered,`;
+  if (!source.includes(reportAnchor)) throw new Error(`${path}: Cab report anchor is missing`);
+  source = source.replace(reportAnchor, `${reportAnchor}\n        cabCenterDoorHorizontalMeters,`);
 }
 
 for (const required of [
   marker,
   currentAuthority,
-  "inspectionAircraftCabDoorMinimumHeightMeters",
-  "inspectionAircraftCabDoorMaximumHeightMeters",
-  "inspectionAircraftCabVerticalCorrectionMeters",
-  "cabDoorMinimumHeight > 0.08 || cabDoorMaximumHeight < -0.08",
+  "inspectionAircraftLiveVisibleCabWorldX",
+  "inspectionAircraftLiveVisibleDoorWorldX",
+  "cabCenterDoorHorizontalMeters > 3.5",
 ]) {
-  if (!source.includes(required)) throw new Error(`${path}: physical Cab evidence is missing ${required}`);
+  if (!source.includes(required)) throw new Error(`${path}: reference-massing Cab evidence is missing ${required}`);
 }
-for (const stale of [
-  "A1 rendered Cab is visibly too high/low for the fixed CRJ door",
-  "if (Math.abs(renderedCabDoorVerticalError) > MAX_RENDERED_CAB_DOOR_VERTICAL_ERROR_METERS)",
-]) {
-  if (source.includes(stale)) throw new Error(`${path}: stale representative Cab-height veto survived: ${stale}`);
+if (source.includes("a1-final-exact-cab-footprint-door-contact-v2")) {
+  throw new Error(`${path}: stale v2 Cab evidence authority survived`);
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Prepared ${marker}: aircraft-side evidence now judges the exact final supplied Cab hood/face against the fixed CRJ door; the old representative-point vertical gap is diagnostic only.`);
+console.log(`Prepared ${marker}: aircraft-side evidence consumes ${currentAuthority} and rejects the false-green case where a tiny hood vertex reaches the door while the supplied Cab mass remains grossly displaced beside the nose.`);
