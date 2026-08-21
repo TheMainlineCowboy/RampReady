@@ -1,7 +1,8 @@
 import fs from "node:fs";
 
 const buildPath = "scripts/build-production.mjs";
-const marker = "a1-final-rigid-scene-registration-hook-v1";
+const oldMarker = "a1-final-rigid-scene-registration-hook-v1";
+const marker = "a1-final-rigid-scene-registration-hook-v2-source-wheel-contact";
 const stairRun = '  await run(process.execPath, ["scripts/prepare-a1-aircraft-side-service-stair-clearance-v1.mjs"]);';
 const oldSupportRun = '  await run(process.execPath, ["scripts/prepare-a1-visible-tunnel-c-support-grounding-v1.mjs"]);';
 const oldSupportV2Run = '  await run(process.execPath, ["scripts/prepare-a1-visible-tunnel-c-support-grounding-v2.mjs"]);';
@@ -11,39 +12,36 @@ const supportSleeveRun = '  await run(process.execPath, ["scripts/prepare-a1-vis
 const bogieRun = '  await run(process.execPath, ["scripts/prepare-a1-bogie-footprint-camera-v1.mjs"]);';
 
 let source = fs.readFileSync(buildPath, "utf8");
-if (!source.includes(stairRun)) {
-  throw new Error(`${buildPath}: final service-stair solve hook is missing`);
-}
-if (!source.includes(bogieRun)) {
-  throw new Error(`${buildPath}: final bogie evidence hook is missing`);
-}
+if (!source.includes(stairRun)) throw new Error(`${buildPath}: final service-stair solve hook is missing`);
+if (!source.includes(bogieRun)) throw new Error(`${buildPath}: final bogie evidence hook is missing`);
 
-// Retire the V1/V2 support-mesh deformation chain. It was stretching selected
-// Tunnel-B/Tunnel-C vertices to pavement and can visibly skew a structural leg.
-// The supplied GLB remains rigid; whole-gate Y registration plus independent
-// lower support sleeves provide visible pavement contact without source mutation.
-source = source.replaceAll(`${oldSupportRun}\n`, "");
-source = source.replaceAll(`${oldSupportV2Run}\n`, "");
-source = source.replaceAll(oldSupportRun, "");
-source = source.replaceAll(oldSupportV2Run, "");
+// Do not mutate supplied support vertices and do not draw synthetic black columns
+// beneath whichever small disconnected component a detector happened to find.
+// V9 fleet registration now seats the intact A1 parent from compact supplied
+// Tunnel-C wheel/contact geometry. The original support/wheel geometry must be
+// visible at pavement by itself; otherwise final bogie evidence must fail.
+for (const obsolete of [oldSupportRun, oldSupportV2Run, supportSleeveRun]) {
+  source = source.replaceAll(`${obsolete}\n`, "");
+  source = source.replaceAll(obsolete, "");
+}
 
 if (!source.includes(marker)) {
-  source = source.replace(
-    stairRun,
-    `${stairRun}\n  // ${marker}\n  // Final photo geometry is solved as rigid assemblies: seal A1 into the real\n  // terminal facade, return the CRJ to the decoded A1 parking center, then add\n  // non-destructive lower sleeves beneath the four visible hanging support rods.\n${terminalContinuityRun}\n${sourceParkingRun}\n${supportSleeveRun}`,
-  );
-} else if (!source.includes(supportSleeveRun)) {
-  if (!source.includes(sourceParkingRun)) {
-    throw new Error(`${buildPath}: source parking registration is missing before support sleeve insertion`);
+  // Preserve the final terminal seal and fixed aircraft registration stages, but
+  // eliminate the synthetic sleeve stage that produced disconnected hanging bars.
+  if (!source.includes(terminalContinuityRun)) {
+    source = source.replace(stairRun, `${stairRun}\n  // ${marker}\n${terminalContinuityRun}\n${sourceParkingRun}`);
+  } else if (!source.includes(sourceParkingRun)) {
+    source = source.replace(terminalContinuityRun, `${terminalContinuityRun}\n${sourceParkingRun}`);
   }
-  source = source.replace(sourceParkingRun, `${sourceParkingRun}\n${supportSleeveRun}`);
+  if (source.includes(oldMarker)) source = source.replaceAll(oldMarker, marker);
+  else if (!source.includes(marker)) source = source.replace(stairRun, `${stairRun}\n  // ${marker}`);
 }
 
-for (const required of [marker, stairRun, terminalContinuityRun, sourceParkingRun, supportSleeveRun, bogieRun]) {
-  if (!source.includes(required)) throw new Error(`${buildPath}: final rigid registration hook is missing ${required}`);
+for (const required of [marker, stairRun, terminalContinuityRun, sourceParkingRun, bogieRun]) {
+  if (!source.includes(required)) throw new Error(`${buildPath}: final source-wheel registration hook is missing ${required}`);
 }
-for (const forbidden of [oldSupportRun, oldSupportV2Run]) {
-  if (source.includes(forbidden)) throw new Error(`${buildPath}: destructive support deformation survived: ${forbidden}`);
+for (const forbidden of [oldSupportRun, oldSupportV2Run, supportSleeveRun]) {
+  if (source.includes(forbidden)) throw new Error(`${buildPath}: obsolete support deformation/sleeves survived: ${forbidden}`);
 }
 if (!(source.indexOf(terminalContinuityRun) > source.indexOf(stairRun))) {
   throw new Error(`${buildPath}: terminal continuity must run after service-stair preparation`);
@@ -51,12 +49,9 @@ if (!(source.indexOf(terminalContinuityRun) > source.indexOf(stairRun))) {
 if (!(source.indexOf(sourceParkingRun) > source.indexOf(terminalContinuityRun))) {
   throw new Error(`${buildPath}: source parking registration must run after final terminal continuity`);
 }
-if (!(source.indexOf(supportSleeveRun) > source.indexOf(sourceParkingRun))) {
-  throw new Error(`${buildPath}: support sleeves must run after final source parking registration`);
-}
-if (!(source.indexOf(supportSleeveRun) < source.indexOf(bogieRun))) {
-  throw new Error(`${buildPath}: support sleeves must be installed before final bogie/evidence capture`);
+if (!(source.indexOf(sourceParkingRun) < source.indexOf(bogieRun))) {
+  throw new Error(`${buildPath}: source parking registration must precede final bogie/evidence capture`);
 }
 
 fs.writeFileSync(buildPath, source, "utf8");
-console.log(`Installed ${marker}: removed per-vertex support stretching, sealed A1 to Terminal 4, locked the CRJ to the decoded A1 stand center, and added separate lower support sleeves to pavement before final bogie/evidence capture.`);
+console.log(`Installed ${marker}: retired synthetic lower support sleeves; final A1 must show its supplied Tunnel-C wheel/support geometry at pavement after rigid wheel-contact registration.`);
