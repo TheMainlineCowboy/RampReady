@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 
 const FIXED_AIRCRAFT_AUTHORITY = 'fixed-source-a1-parking-center-exact-authored-door-v2';
-const PHYSICAL_CAB_AUTHORITY = 'a1-final-exact-cab-footprint-door-contact-v6-bounded-lateral-and-vertical-fit';
+const PHYSICAL_CAB_AUTHORITY = 'a1-final-exact-cab-footprint-door-contact-v7-bounded-lateral-hood-fit';
 const SOURCE_HEADING_AUTHORITY = 'source-a1-parking-heading-authored-door-registration-v2';
 const SOURCE_A1_YAW = 0.00857;
 const MIN_A1_FIXED_ROUTE_METERS = 18;
@@ -38,6 +38,14 @@ for (const path of files) {
     'expect(Math.abs(Number(runtime.terminal4UploadedJetwayA1VisibleVestibuleLengthMeters) - 2.4)).toBeLessThanOrEqual(0.05);',
     `const finalA1FixedRouteMeters = Number(runtime.a1ExactRotundaToWallWorldMeters);\n  expect(Number.isFinite(finalA1FixedRouteMeters)).toBe(true);\n  expect(finalA1FixedRouteMeters).toBeGreaterThanOrEqual(${MIN_A1_FIXED_ROUTE_METERS});\n  expect(finalA1FixedRouteMeters).toBeLessThanOrEqual(${MAX_A1_FIXED_ROUTE_METERS});`,
   );
+
+  // Keep every KPHX browser gate aligned with the exact Cab proof that the
+  // production bundle actually installs. A stale v6 authority caused the latest
+  // exact head to wait five minutes for a state that could never become true even
+  // though the scene had already published the current v7 contact evidence.
+  source = source
+    .replaceAll('a1-final-exact-cab-footprint-door-contact-v6-bounded-lateral-and-vertical-fit', PHYSICAL_CAB_AUTHORITY)
+    .replaceAll('a1-final-exact-cab-footprint-door-contact-v2', PHYSICAL_CAB_AUTHORITY);
 
   const physicalPredicate = `data?.inspectionAircraftCabDoorContactAuthority === '${PHYSICAL_CAB_AUTHORITY}'
       && data?.inspectionAircraftCabDoorContactPlaneCovered === "true"
@@ -101,7 +109,12 @@ for (const path of files) {
   if (!source.includes(PHYSICAL_CAB_AUTHORITY)) throw new Error(`${path}: current physical Cab authority was not installed`);
   if (!source.includes('inspectionAircraftCabDoorMinimumHorizontalVertexDistanceMeters')) throw new Error(`${path}: physical Cab surface acceptance was not installed`);
   if (source.includes('inspectionAircraftPoseAuthority === aircraftAuthority')) throw new Error(`${path}: stale shared pose/fixed-source authority equality remains`);
-  if (source.includes('a1-final-exact-cab-footprint-door-contact-v2')) throw new Error(`${path}: stale v2 Cab authority remains`);
+  for (const staleAuthority of [
+    'a1-final-exact-cab-footprint-door-contact-v2',
+    'a1-final-exact-cab-footprint-door-contact-v6-bounded-lateral-and-vertical-fit',
+  ]) {
+    if (source.includes(staleAuthority)) throw new Error(`${path}: stale Cab authority remains: ${staleAuthority}`);
+  }
   if (path.endsWith('kphx-ground-runtime.spec.js')) {
     if (source.includes('VisibleVestibuleLengthMeters) - 2.4')) throw new Error(`${path}: stale compact 2.4 m A1 route gate remains`);
     if (!source.includes('a1ExactRotundaToWallWorldMeters')) throw new Error(`${path}: long A1 fixed-route authority is missing`);
