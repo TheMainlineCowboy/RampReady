@@ -1,15 +1,16 @@
 import fs from "node:fs";
 
 const path = "src/environment/sourcePlacedTerminal4Jetways.js";
-const marker = "a1-final-runtime-facade-cone-v9-preserve-origin-owned-with-optional-fallback-reinforcement";
+const marker = "a1-final-runtime-facade-cone-v10-remove-out-of-scope-derived-threshold";
 const originOwnedMarker = "a1-bgate1-preferred-facade-cone-v6-origin-owned";
 let source = fs.readFileSync(path, "utf8");
 
 // Last A1 wall-normalization pass before Vite. Earlier production preparers own the
 // resolver's ray-search implementation and may inline, rename or remove individual
-// fallback locals. Do not require one transient cast/radial/nearest-vertex spelling.
-// The resolver-local v6 authority is the primary source of truth. This pass only
-// reinforces recognizable fallback paths and forbids the retired T4_WALK override.
+// fallback locals. The resolver-local origin-owned authority is the primary source
+// of truth. This pass makes that authority self-contained and removes any stale
+// derived-threshold guards that earlier global text preparation accidentally placed
+// outside the resolver scope.
 if (!source.includes(originOwnedMarker)) {
   throw new Error(`${path}: origin-owned A1 facade cone authority is missing before final runtime normalization`);
 }
@@ -28,6 +29,9 @@ if (!resolver.includes(preferredNeedle)) {
   throw new Error(`${path}: final resolver preferred-direction anchor is missing`);
 }
 
+// Strip every older resolver-local threshold declaration, regardless of formatting,
+// then replace every legacy derived-threshold reference in this resolver with the
+// final self-contained threshold below.
 resolver = resolver.replace(
   /\n\s*const\s+a1FinalOriginIsA1\s*=\s*Math\.hypot\([\s\S]*?;\s*\n\s*const\s+a1FinalMinimumPreferredDot\s*=\s*a1FinalOriginIsA1[\s\S]*?;\s*/g,
   "\n",
@@ -52,7 +56,7 @@ if (resolver.includes(castNeedle)
 }
 
 // Reinforce a recognizable radial fallback when present. Absence is allowed because
-// the origin-owned v6 resolver may already have folded this restriction into the
+// the origin-owned resolver may already have folded this restriction into the
 // raycast implementation or removed the generic radial fallback entirely.
 const radialPatterns = [
   /(^\s*const\s+direction\s*=\s*new THREE\.Vector3\(Math\.sin\(angle\),\s*0,\s*Math\.cos\(angle\)\);)/m,
@@ -71,7 +75,7 @@ if (!resolver.includes("direction.dot(preferred) < a1FinalMinimumPreferredDot) c
 
 // Reinforce the nearest-authored-vertex fallback when its current implementation is
 // recognizable. Do not fail when a later preparer has replaced this fallback with a
-// different source-wall path; the origin-owned v6 authority remains mandatory.
+// different source-wall path; the origin-owned authority remains mandatory.
 const distancePattern = /(^\s*const\s+distance\s*=\s*Math\.hypot\(dx,\s*dz\);)/m;
 if (distancePattern.test(resolver)
   && !resolver.includes("(dx * preferred.x + dz * preferred.z) / distance")) {
@@ -82,6 +86,13 @@ if (distancePattern.test(resolver)
 }
 
 source = source.slice(0, resolverStart) + resolver + source.slice(resolverEnd);
+
+// Earlier preparers historically searched the whole generated file when inserting
+// cone guards. That could leave an effectiveMinimumPreferredDot reference in an
+// unrelated function where the declaration can never exist. Neutralize only those
+// stale out-of-resolver references after the real resolver has been normalized.
+// The A1 resolver above remains strictly cone-limited by a1FinalMinimumPreferredDot.
+source = source.replace(/\beffectiveMinimumPreferredDot\b/g, "-1");
 
 // A1 must never be redirected to the retired hard-coded T4_WALK portal.
 source = source.replace(
@@ -106,8 +117,8 @@ for (const required of [
     throw new Error(`${path}: final resolver lost required A1 facade-cone runtime guard: ${required}`);
   }
 }
-if (finalResolver.includes("effectiveMinimumPreferredDot")) {
-  throw new Error(`${path}: stale derived A1 facade threshold survived final normalization`);
+if (source.includes("effectiveMinimumPreferredDot")) {
+  throw new Error(`${path}: stale derived A1 facade threshold survived final normalization anywhere in generated source`);
 }
 if (!source.includes(originOwnedMarker)) {
   throw new Error(`${path}: A1 origin-owned facade cone authority was lost`);
@@ -117,4 +128,4 @@ if (source.includes("exact-T4_WALK-A1-terminal-portal-v25")) {
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Prepared ${marker}: preserved the generation-order-safe origin-owned A1 facade cone, reinforced recognizable fallback paths without requiring transient resolver locals, and kept A3+ unrestricted.`);
+console.log(`Prepared ${marker}: preserved the resolver-local A1 facade cone, removed every stale out-of-scope derived threshold, and kept A3+ unrestricted.`);
