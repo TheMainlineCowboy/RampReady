@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
-const authority = "a1-final-cab-door-normal-fit-v1";
+const authority = "a1-final-cab-door-normal-fit-v2-nearest-face-residual";
 const currentCabProof = "a1-final-exact-cab-footprint-door-contact-v7-bounded-lateral-hood-fit";
 
 let source = fs.readFileSync(path, "utf8");
@@ -15,7 +15,7 @@ if (!source.includes(authority)) {
     throw new Error(`${path}: final Cab lateral-to-vertical articulation anchor is missing`);
   }
 
-  const replacement = `            if (Math.abs(finalCabLateralCorrectionMeters) > 0.002) {\n              moveCabWorld(physical.side.clone().multiplyScalar(finalCabLateralCorrectionMeters));\n              physical = measurePhysicalCab();\n            }\n\n            // ${authority}\n            // Lateral hood articulation can leave the entire door-facing face a few\n            // centimetres behind or beyond the fixed CRJ door plane. Correct only that\n            // remaining door-normal residual on the supplied Cab, remeasure the actual\n            // rendered vertices, and keep the aircraft plus Tunnel-C carrier fixed.\n            let finalCabDoorNormalCorrectionMeters = 0;\n            if (physical.maxNormal < -0.04) {\n              finalCabDoorNormalCorrectionMeters = 0.02 - physical.maxNormal;\n            } else if (physical.minNormal > 0.04) {\n              finalCabDoorNormalCorrectionMeters = -0.02 - physical.minNormal;\n            }\n            if (!Number.isFinite(finalCabDoorNormalCorrectionMeters)\n              || Math.abs(finalCabDoorNormalCorrectionMeters) > 0.22) {\n              throw new Error(\`A1 final Cab requires excessive door-normal hood articulation: \${finalCabDoorNormalCorrectionMeters} m from normal [\${physical.minNormal},\${physical.maxNormal}]; solve connected bridge telescope instead\`);\n            }\n            if (Math.abs(finalCabDoorNormalCorrectionMeters) > 0.002) {\n              const cabBoundsCenter = new THREE.Box3().setFromObject(finalA1Cab).getCenter(new THREE.Vector3());\n              const finalCabDoorward = renderedDoorAtSourceGate.clone().sub(cabBoundsCenter).setY(0);\n              if (finalCabDoorward.lengthSq() < 0.25) {\n                throw new Error("A1 final Cab door-normal correction direction is degenerate");\n              }\n              finalCabDoorward.normalize();\n              moveCabWorld(finalCabDoorward.multiplyScalar(finalCabDoorNormalCorrectionMeters));\n              physical = measurePhysicalCab();\n            }\n\n            let finalCabVerticalCorrectionMeters = 0;`;
+  const replacement = `            if (Math.abs(finalCabLateralCorrectionMeters) > 0.002) {\n              moveCabWorld(physical.side.clone().multiplyScalar(finalCabLateralCorrectionMeters));\n              physical = measurePhysicalCab();\n            }\n\n            // ${authority}\n            // The coarse normal/lateral envelopes can each bracket the door while no\n            // single rendered Cab-face vertex is actually close enough to the fixed CRJ\n            // doorway. Resolve only that small final horizontal residual from the real\n            // nearest door-facing vertex, then remeasure the actual rendered geometry.\n            // The aircraft and Tunnel-C carrier remain fixed and this correction is\n            // bounded so a bad connected-bridge placement cannot be hidden here.\n            let finalCabDoorNormalCorrectionMeters = 0;\n            let nearestFacePoint = null;\n            let nearestFaceDistance = Number.POSITIVE_INFINITY;\n            for (const point of physical.face) {\n              const dx = point.x - renderedDoorAtSourceGate.x;\n              const dz = point.z - renderedDoorAtSourceGate.z;\n              const distance = Math.hypot(dx, dz);\n              if (Number.isFinite(distance) && distance < nearestFaceDistance) {\n                nearestFaceDistance = distance;\n                nearestFacePoint = point.clone();\n              }\n            }\n            if (!nearestFacePoint || !Number.isFinite(nearestFaceDistance)) {\n              throw new Error("A1 final Cab nearest physical face point is unavailable");\n            }\n            if (nearestFaceDistance > 0.055) {\n              const finalCabResidualWorld = renderedDoorAtSourceGate.clone().sub(nearestFacePoint).setY(0);\n              finalCabDoorNormalCorrectionMeters = finalCabResidualWorld.length();\n              if (!Number.isFinite(finalCabDoorNormalCorrectionMeters)\n                || finalCabDoorNormalCorrectionMeters > 0.10) {\n                throw new Error(\`A1 final Cab nearest-face residual is too large for bounded hood articulation: \${finalCabDoorNormalCorrectionMeters} m; solve connected bridge yaw/telescope instead\`);\n              }\n              if (finalCabDoorNormalCorrectionMeters > 0.002) {\n                moveCabWorld(finalCabResidualWorld);\n                physical = measurePhysicalCab();\n              }\n            }\n\n            let finalCabVerticalCorrectionMeters = 0;`;
   source = source.replace(anchor, replacement);
 
   const telemetryAnchor = `            renderer.domElement.dataset.inspectionAircraftCabLateralCorrectionMeters = finalCabLateralCorrectionMeters.toFixed(6);\n            renderer.domElement.dataset.inspectionAircraftCabVerticalCorrectionMeters = finalCabVerticalCorrectionMeters.toFixed(6);`;
@@ -30,12 +30,13 @@ if (!source.includes(authority)) {
 
 for (const required of [
   authority,
-  "finalCabDoorNormalCorrectionMeters",
+  "nearestFacePoint",
+  "nearestFaceDistance",
+  "finalCabDoorNormalCorrectionMeters > 0.10",
   "inspectionAircraftCabDoorNormalCorrectionMeters",
-  "Math.abs(finalCabDoorNormalCorrectionMeters) > 0.22",
 ]) {
-  if (!source.includes(required)) throw new Error(`${path}: final Cab door-normal fit is missing ${required}`);
+  if (!source.includes(required)) throw new Error(`${path}: final Cab nearest-face fit is missing ${required}`);
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Prepared ${authority}: the final supplied Cab may close only a bounded <=22 cm residual in the fixed-door normal axis, then the existing strict physical hood proof remeasures the rendered geometry.`);
+console.log(`Prepared ${authority}: a <=10 cm final horizontal residual from the actual nearest supplied Cab face vertex may be closed before the strict <=6 cm fixed-door proof, with aircraft and Tunnel-C fixed.`);
