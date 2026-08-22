@@ -5,10 +5,48 @@ const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js
 const marker = "a1-real-photo-explicit-terminal-wall-v2";
 const compatibilityMarker = "a1-real-photo-explicit-terminal-wall-v1";
 const frameMarker = "a1-bgate1-wall-world-to-source-group-local-v2";
+const facadeConeMarker = "a1-bgate1-preferred-facade-cone-v3";
 const photoAuthority = "a1-real-photo-remote-rotunda-fixed-corridor-v1";
 
 let placement = fs.readFileSync(placementPath, "utf8");
 let installation = fs.readFileSync(installationPath, "utf8");
+
+// The Aug. 15 ramp-level photos show A1 leaving the main apron-facing A1 facade,
+// not the perpendicular parking-structure/side wall. The legacy radial fallback
+// searched all 360 degrees and simply chose the nearest structural hit, which can
+// select that visibly wrong side building at this corner. Constrain A1's fallback
+// search to the terminal-facing hemisphere around the source preferred direction.
+// A3+ keep the existing unrestricted source wall resolver.
+if (!placement.includes(facadeConeMarker)) {
+  const signature = "function findTerminalWallConnection(THREE, terminal, originX, originZ, preferredX, preferredZ, height) {";
+  const patchedSignature = `// ${facadeConeMarker}\nfunction findTerminalWallConnection(THREE, terminal, originX, originZ, preferredX, preferredZ, height, minimumPreferredDot = -1) {`;
+  if (!placement.includes(signature)) {
+    throw new Error(`${placementPath}: terminal wall resolver signature is missing`);
+  }
+  placement = placement.replace(signature, patchedSignature);
+
+  const radialDirection = `    const direction = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle));\n    const hit = cast(direction);`;
+  const constrainedRadialDirection = `    const direction = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle));\n    if (direction.dot(preferred) < minimumPreferredDot) continue;\n    const hit = cast(direction);`;
+  if (!placement.includes(radialDirection)) {
+    throw new Error(`${placementPath}: radial authored-wall search anchor is missing`);
+  }
+  placement = placement.replace(radialDirection, constrainedRadialDirection);
+
+  const a1Call = `      -uz,\n      rotundaY,\n    ) || {};`;
+  const a1ConstrainedCall = `      -uz,\n      rotundaY,\n      jetway.g === "A1" ? 0.5 : -1,\n    ) || {};`;
+  if (!placement.includes(a1Call)) {
+    throw new Error(`${placementPath}: terminal wall resolver call anchor is missing`);
+  }
+  placement = placement.replace(a1Call, a1ConstrainedCall);
+
+  // Retire the early hard-coded T4_WALK portal override. It is the exact wrong
+  // architectural object for A1 in the user's reference photos and can overwrite
+  // the direction/distance even after a correct authored-facade hit was found.
+  const legacyWalkwayOverride = `    if (jetway.g === "A1") {\n      const exactWalkwayPortalX = -30.16857013;\n      const exactWalkwayPortalZ = jetway.z;\n      const exactDx = exactWalkwayPortalX - jetway.x;\n      const exactDz = exactWalkwayPortalZ - jetway.z;\n      const exactDistance = Math.hypot(exactDx, exactDz);\n      Object.assign(terminalConnection, {\n        distance: exactDistance,\n        towardX: exactDx / exactDistance,\n        towardZ: exactDz / exactDistance,\n        authority: "exact-T4_WALK-A1-terminal-portal-v25",\n      });\n    }`;
+  if (placement.includes(legacyWalkwayOverride)) {
+    placement = placement.replace(legacyWalkwayOverride, `    // ${facadeConeMarker}: A1 uses the real authored apron-facing facade hit; no T4_WALK portal override.`);
+  }
+}
 
 // Publish the real BGATE1 facade hit at a stable point in the per-gate loop.
 // Older versions anchored this to a legacy validator-copy comment that newer
@@ -65,6 +103,10 @@ for (const required of [
   marker,
   compatibilityMarker,
   frameMarker,
+  facadeConeMarker,
+  "minimumPreferredDot = -1",
+  "direction.dot(preferred) < minimumPreferredDot",
+  'jetway.g === "A1" ? 0.5 : -1',
   "wallNormalX: normal.x",
   "wallNormalZ: normal.z",
   "groupLocalPointX",
@@ -82,6 +124,8 @@ for (const forbidden of [
   'terminalWallX: jetway.g === "A1" ? Number(resolvedTerminalConnection?.pointX)',
   'terminalWallZ: jetway.g === "A1" ? Number(resolvedTerminalConnection?.pointZ)',
   "const wallToAuthoredStandZ = targetZ - Number(terminalConnection.pointZ);",
+  "exact-T4_WALK-A1-terminal-portal-v25",
+  "const exactWalkwayPortalX = -30.16857013;",
   "yaw: physicalPlacementYaw",
   "a1-decoded-kphx-bgl-heading-provenance-only-v2",
 ]) {
@@ -93,4 +137,4 @@ for (const required of [marker, compatibilityMarker, "explicitTerminalWallX", "e
 
 fs.writeFileSync(placementPath, placement, "utf8");
 fs.writeFileSync(installationPath, installation, "utf8");
-console.log(`Prepared ${photoAuthority} explicit BGATE1 wall endpoint through stable terminalConnection publication (${marker}); the A1 photo corridor remains real-wall anchored without changing Terminal 4, aircraft placement, or exact supplied jetway child transforms.`);
+console.log(`Prepared ${photoAuthority} explicit BGATE1 wall endpoint through ${facadeConeMarker}: A1 now rejects perpendicular/side-building radial hits and the retired T4_WALK portal override before publishing its real apron-facing facade endpoint.`);
