@@ -29,8 +29,10 @@ let installation = fs.readFileSync(installationPath, "utf8");
   }
 
   const preferredAnchor = "  const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();";
-  const ownershipMarker = "a1OriginIsExactA1";
-  if (!placement.includes(ownershipMarker)) {
+  // Do not key this insertion off the marker/name anywhere in the whole generated
+  // file. Later preparers can leave a stale marker or guard outside the resolver;
+  // the runtime threshold itself must exist in the resolver scope on every pass.
+  if (!placement.includes("const effectiveMinimumPreferredDot =")) {
     if (!placement.includes(preferredAnchor)) throw new Error(`${placementPath}: preferred wall direction anchor is missing`);
     placement = placement.replace(
       preferredAnchor,
