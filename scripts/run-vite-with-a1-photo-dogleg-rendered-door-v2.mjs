@@ -20,6 +20,7 @@ let runError;
 let restorationError;
 try {
   await writeFile(wrapperPath, preparedWrapperSource, "utf8");
+  await import(`./prepare-a1-facade-cone-final-runtime-v1.mjs?final-cone=${Date.now()}`);
   await import(`./run-vite-with-a1-photo-dogleg-rendered-door-v1.mjs?diagnostic-compat=${Date.now()}`);
 } catch (error) {
   runError = error;
@@ -41,4 +42,4 @@ if (runError && restorationError) {
 if (restorationError) throw restorationError;
 if (runError) throw runError;
 
-console.log("Ran photo-authoritative A1 Vite bundle with diagnostic wording tolerance only; all geometry/readiness guards remain fail-closed and tracked wrapper source was restored exactly.");
+console.log("Ran photo-authoritative A1 Vite bundle with final runtime-safe facade cone normalization and diagnostic wording tolerance; all geometry/readiness guards remain fail-closed and tracked wrapper source was restored exactly.");
