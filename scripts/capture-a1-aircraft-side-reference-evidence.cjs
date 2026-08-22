@@ -10,9 +10,10 @@ const SIDE_PROFILE_AUTHORITY = 'a1-rotunda-cab-outboard-side-profile-v1';
 const AIRCRAFT_SIDE_AUTHORITY = 'a1-cab-tunnel-c-aircraft-side-close-v1';
 const SERVICE_STAIR_AUTHORITY = 'exact-supplied-tunnel-c-service-stair-live-rendered-crj-clearance-v4';
 const ATTACH_AUTHORITY = 'a1-terminal-connection-attached-evidence-v1';
-const CAB_SURFACE_AUTHORITY = 'a1-final-exact-cab-footprint-door-contact-v2';
+const CAB_SURFACE_AUTHORITY = 'a1-final-exact-cab-footprint-door-contact-v7-bounded-lateral-hood-fit';
 const MAX_DOOR_CAB_SURFACE_DISTANCE_METERS = 0.06;
 const MAX_RENDERED_CAB_DOOR_VERTICAL_ERROR_METERS = 0.08;
+const MAX_CAB_CENTER_HORIZONTAL_SEPARATION_METERS = 3.5;
 const MAX_BOGIE_GROUND_CLEARANCE_METERS = 0.015;
 const MIN_SERVICE_STAIR_CLEARANCE_METERS = 0.15;
 
@@ -105,9 +106,17 @@ async function selectSubview(page, subview, specialAuthorityField, specialAuthor
     const renderedCabDoorVerticalError = finite(attached.inspectionAircraftDoorVerticalErrorMeters, 'rendered Cab/door vertical error');
     const cabDoorFacingVertexCount = finite(attached.inspectionAircraftCabDoorFacingVertexCount, 'Cab door-facing vertex count');
     const bogieGroundClearance = finite(attached.terminal4UploadedJetwayBogieGroundClearanceMeters, 'bogie ground clearance');
+    const cabCenterX = finite(attached.inspectionAircraftLiveVisibleCabWorldX, 'live Cab center X');
+    const cabCenterZ = finite(attached.inspectionAircraftLiveVisibleCabWorldZ, 'live Cab center Z');
+    const doorCenterX = finite(attached.inspectionAircraftLiveVisibleDoorWorldX, 'live door center X');
+    const doorCenterZ = finite(attached.inspectionAircraftLiveVisibleDoorWorldZ, 'live door center Z');
+    const cabCenterHorizontalSeparation = Math.hypot(cabCenterX - doorCenterX, cabCenterZ - doorCenterZ);
     if (penetration > 0.001) throw new Error(`A1 exact service stair penetrates CRJ envelope by ${penetration} m`);
     if (outboardClearance < MIN_SERVICE_STAIR_CLEARANCE_METERS) throw new Error(`A1 service stair outboard clearance is only ${outboardClearance} m`);
     if (boxSeparation < MIN_SERVICE_STAIR_CLEARANCE_METERS) throw new Error(`A1 service stair fuselage-box separation is only ${boxSeparation} m`);
+    if (cabCenterHorizontalSeparation > MAX_CAB_CENTER_HORIZONTAL_SEPARATION_METERS) {
+      throw new Error(`A1 Cab mass is visibly misplaced relative to the fixed CRJ door: center separation=${cabCenterHorizontalSeparation} m`);
+    }
     if (Math.abs(renderedCabDoorVerticalError) > MAX_RENDERED_CAB_DOOR_VERTICAL_ERROR_METERS) {
       throw new Error(`A1 rendered Cab is visibly too high/low for the fixed CRJ door: vertical=${renderedCabDoorVerticalError} m`);
     }
@@ -141,6 +150,7 @@ async function selectSubview(page, subview, specialAuthorityField, specialAuthor
         authority: CAB_SURFACE_AUTHORITY,
         minimumHorizontalVertexDistanceMeters: doorCabSurfaceDistance,
         renderedVerticalErrorMeters: renderedCabDoorVerticalError,
+        cabCenterHorizontalSeparationMeters: cabCenterHorizontalSeparation,
         doorFacingVertexCount: cabDoorFacingVertexCount,
         contactPlaneCovered: attached.inspectionAircraftCabDoorContactPlaneCovered,
         laterallyCovered: attached.inspectionAircraftCabDoorLaterallyCovered,
@@ -165,6 +175,6 @@ async function selectSubview(page, subview, specialAuthorityField, specialAuthor
     };
     fs.writeFileSync(`${evidenceDirectory}/a1-aircraft-side-reference-evidence.json`, `${JSON.stringify(report, null, 2)}\n`);
     if (pageErrors.length) throw new Error(`A1 aircraft-side evidence page errors: ${pageErrors.join(' | ')}`);
-    console.log(`A1 side/reference evidence passed: penetration=${penetration.toFixed(3)} m, outboard=${outboardClearance.toFixed(3)} m, box-separation=${boxSeparation.toFixed(3)} m, Cab surface=${doorCabSurfaceDistance.toFixed(3)} m, vertical=${renderedCabDoorVerticalError.toFixed(3)} m, bogie=${bogieGroundClearance.toFixed(3)} m.`);
+    console.log(`A1 side/reference evidence passed: penetration=${penetration.toFixed(3)} m, outboard=${outboardClearance.toFixed(3)} m, box-separation=${boxSeparation.toFixed(3)} m, Cab surface=${doorCabSurfaceDistance.toFixed(3)} m, Cab center=${cabCenterHorizontalSeparation.toFixed(3)} m, vertical=${renderedCabDoorVerticalError.toFixed(3)} m, bogie=${bogieGroundClearance.toFixed(3)} m.`);
   } finally { await browser.close(); }
 })().catch((error) => { console.error(error.stack || error.message || error); process.exit(1); });
