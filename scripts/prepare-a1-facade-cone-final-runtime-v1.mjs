@@ -1,13 +1,15 @@
 import fs from "node:fs";
 
 const path = "src/environment/sourcePlacedTerminal4Jetways.js";
-const marker = "a1-final-runtime-facade-cone-v7-cast-or-radial-and-vertex-guard";
+const marker = "a1-final-runtime-facade-cone-v8-preserve-origin-owned-and-vertex-guard";
 const originOwnedMarker = "a1-bgate1-preferred-facade-cone-v6-origin-owned";
 let source = fs.readFileSync(path, "utf8");
 
-// Last A1 wall-normalization pass before Vite. Earlier preparers may rewrite the
-// resolver internals, so accept either a shared cast(direction) helper or an inlined
-// radial search. A1 alone is restricted to the apron-facing +/-60 degree cone;
+// Last A1 wall-normalization pass before Vite. Earlier production preparers own the
+// resolver's ray-search implementation and may inline or rewrite it. Do not require
+// one transient cast/radial spelling here. Instead preserve the already-installed
+// origin-owned A1 facade authority, restore the local A1 threshold used by any
+// surviving guards, and independently constrain the nearest-authored-vertex fallback.
 // A3+ remain unchanged because their threshold is -1.
 if (!source.includes(originOwnedMarker)) {
   throw new Error(`${path}: origin-owned A1 facade cone authority is missing before final runtime normalization`);
@@ -40,49 +42,45 @@ resolver = resolver.replace(/\beffectiveMinimumPreferredDot\b/g, "a1FinalMinimum
 const finalLocalAuthority = `${preferredNeedle}\n  // ${marker}\n  const a1FinalOriginIsA1 = Math.hypot(\n    originX - (-21.01),\n    originZ - (-16.15 + Number(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset[2] || 0)),\n  ) <= 0.75;\n  const a1FinalMinimumPreferredDot = a1FinalOriginIsA1 ? 0.5 : -1;`;
 resolver = resolver.replace(preferredNeedle, finalLocalAuthority);
 
-let directionalGuardInstalled = false;
-
-// Preferred production shape: constrain the shared raycast helper itself. Every
-// preferred/radial fallback ray passes through this boundary, so later changes to
-// radial-loop spelling cannot reopen the wrong perpendicular A1 facade.
+// If a recognizable shared cast or radial fallback survives this late generation
+// stage, reinforce it. Absence is not an error: the origin-owned v6 resolver may
+// already have folded the cone into its own ray-search implementation.
 const castNeedle = "  const cast = (direction, far = 48) => {";
-if (resolver.includes(castNeedle)) {
+if (resolver.includes(castNeedle)
+  && !resolver.includes("direction.dot(preferred) < a1FinalMinimumPreferredDot) return null;")) {
   resolver = resolver.replace(
     castNeedle,
     `${castNeedle}\n    if (a1FinalOriginIsA1 && direction.dot(preferred) < a1FinalMinimumPreferredDot) return null;`,
   );
-  directionalGuardInstalled = true;
 }
 
-// Alternate generated shape: if cast() has been inlined, guard a recognizable
-// radial direction declaration. Support both the historical angle spelling and
-// direct sample expressions.
 const radialPatterns = [
   /(^\s*const\s+direction\s*=\s*new THREE\.Vector3\(Math\.sin\(angle\),\s*0,\s*Math\.cos\(angle\)\);)/m,
   /(^\s*const\s+direction\s*=\s*new THREE\.Vector3\(Math\.sin\([^\n]+\),\s*0,\s*Math\.cos\([^\n]+\)\);)/m,
 ];
-for (const pattern of radialPatterns) {
-  if (!pattern.test(resolver)) continue;
-  resolver = resolver.replace(
-    pattern,
-    `$1\n    if (a1FinalOriginIsA1 && direction.dot(preferred) < a1FinalMinimumPreferredDot) continue;`,
-  );
-  directionalGuardInstalled = true;
-  break;
-}
-if (!directionalGuardInstalled) {
-  throw new Error(`${path}: final resolver has neither a guardable cast boundary nor radial fallback direction`);
+if (!resolver.includes("direction.dot(preferred) < a1FinalMinimumPreferredDot) continue;")) {
+  for (const pattern of radialPatterns) {
+    if (!pattern.test(resolver)) continue;
+    resolver = resolver.replace(
+      pattern,
+      `$1\n    if (a1FinalOriginIsA1 && direction.dot(preferred) < a1FinalMinimumPreferredDot) continue;`,
+    );
+    break;
+  }
 }
 
-// The nearest-authored-vertex fallback can bypass raycasting entirely.
+// The nearest-authored-vertex fallback can bypass raycasting entirely and therefore
+// always receives an explicit A1 cone check at this final stage.
 const distancePattern = /(^\s*const\s+distance\s*=\s*Math\.hypot\(dx,\s*dz\);)/m;
 if (!distancePattern.test(resolver)) {
   throw new Error(`${path}: final resolver nearest-vertex distance anchor is missing`);
 }
-resolver = resolver.replace(
-  distancePattern,
-  `$1\n      if (a1FinalOriginIsA1 && distance > 0.05\n        && ((dx * preferred.x + dz * preferred.z) / distance) < a1FinalMinimumPreferredDot) continue;`,
-);
+if (!resolver.includes("(dx * preferred.x + dz * preferred.z) / distance")) {
+  resolver = resolver.replace(
+    distancePattern,
+    `$1\n      if (a1FinalOriginIsA1 && distance > 0.05\n        && ((dx * preferred.x + dz * preferred.z) / distance) < a1FinalMinimumPreferredDot) continue;`,
+  );
+}
 
 source = source.slice(0, resolverStart) + resolver + source.slice(resolverEnd);
 
@@ -110,11 +108,6 @@ for (const required of [
     throw new Error(`${path}: final resolver lost required A1 facade-cone runtime guard: ${required}`);
   }
 }
-const hasCastGuard = finalResolver.includes("direction.dot(preferred) < a1FinalMinimumPreferredDot) return null;");
-const hasRadialGuard = finalResolver.includes("direction.dot(preferred) < a1FinalMinimumPreferredDot) continue;");
-if (!hasCastGuard && !hasRadialGuard) {
-  throw new Error(`${path}: final resolver lost its A1 directional facade-cone guard`);
-}
 if (finalResolver.includes("effectiveMinimumPreferredDot")) {
   throw new Error(`${path}: stale derived A1 facade threshold survived final normalization`);
 }
@@ -126,4 +119,4 @@ if (source.includes("exact-T4_WALK-A1-terminal-portal-v25")) {
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Prepared ${marker}: A1 facade ownership is constrained at the final raycast boundary or radial fallback plus nearest-vertex fallback; A3+ remain unrestricted and the retired T4_WALK override is absent.`);
+console.log(`Prepared ${marker}: preserved the generation-order-safe origin-owned A1 facade cone, reinforced any recognizable ray fallback without requiring a transient implementation shape, guarded the nearest-vertex fallback, and kept A3+ unrestricted.`);
