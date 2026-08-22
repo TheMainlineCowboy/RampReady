@@ -5,7 +5,7 @@ const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js
 const marker = "a1-real-photo-explicit-terminal-wall-v2";
 const compatibilityMarker = "a1-real-photo-explicit-terminal-wall-v1";
 const frameMarker = "a1-bgate1-wall-world-to-source-group-local-v2";
-const facadeConeMarker = "a1-bgate1-preferred-facade-cone-v3";
+const facadeConeMarker = "a1-bgate1-preferred-facade-cone-v4-generation-safe";
 const photoAuthority = "a1-real-photo-remote-rotunda-fixed-corridor-v1";
 
 let placement = fs.readFileSync(placementPath, "utf8");
@@ -28,19 +28,48 @@ let installation = fs.readFileSync(installationPath, "utf8");
     placement = placement.replace(resolverMatch[0], `// ${facadeConeMarker}\n${resolverMatch[0]}`);
   }
 
-  // Apply the A1 cone at the resolver's cast boundary instead of depending on
-  // one particular radial-loop spelling. Later preparers rewrite that loop, but
-  // every fallback direction still passes through cast(direction).
+  // Constrain fallback directions at stable semantic points rather than relying
+  // on a particular local raycast helper name. Later preparers have repeatedly
+  // rewritten `cast(...)`; the radial direction and nearest-vertex candidate
+  // math remain stable and are sufficient to prevent A1 from selecting the
+  // perpendicular parking-structure/side facade.
+  const radialGuard = "minimumPreferredDot > -1 && direction.dot(preferred) < minimumPreferredDot";
+  if (!placement.includes(radialGuard)) {
+    const directionPattern = /(const direction = new THREE\.Vector3\([^;]+\);)/;
+    if (directionPattern.test(placement)) {
+      placement = placement.replace(
+        directionPattern,
+        `$1\n    if (${radialGuard}) continue;`,
+      );
+    }
+  }
+
+  const vertexConeGuard = "minimumPreferredDot > -1 && ((dx * preferred.x + dz * preferred.z) / distance) < minimumPreferredDot";
+  if (!placement.includes(vertexConeGuard)) {
+    const vertexDistancePattern = /(const distance = Math\.hypot\(dx, dz\);)/;
+    if (vertexDistancePattern.test(placement)) {
+      placement = placement.replace(
+        vertexDistancePattern,
+        `$1\n      if (distance > 0.05 && ${vertexConeGuard}) continue;`,
+      );
+    }
+  }
+
+  // If the current generated resolver still exposes a cast(direction) helper,
+  // also apply the cone there. This is additive, not required for idempotence.
   const castConeGuard = "minimumPreferredDot > -1 && direction.dot(preferred) < minimumPreferredDot";
-  if (!placement.includes(castConeGuard)) {
-    const castPattern = /(const cast = \(direction, far = 48\) => \{\s*)/;
-    if (castPattern.test(placement)) {
+  if (!placement.includes(`if (${castConeGuard}) return null;`)) {
+    const castPatterns = [
+      /(const cast = \(direction, far = 48\) => \{\s*)/,
+      /(const cast = \(direction, far = [0-9.]+\) => \{\s*)/,
+      /(const [A-Za-z0-9_]*cast[A-Za-z0-9_]* = \(direction, far = [0-9.]+\) => \{\s*)/,
+    ];
+    const castPattern = castPatterns.find((pattern) => pattern.test(placement));
+    if (castPattern) {
       placement = placement.replace(
         castPattern,
         `$1if (${castConeGuard}) return null;\n    `,
       );
-    } else if (!placement.includes("direction.dot(preferred) < minimumPreferredDot")) {
-      throw new Error(`${placementPath}: authored-wall cast anchor is missing`);
     }
   }
 
@@ -114,7 +143,7 @@ if (!installation.includes(marker)) {
 }
 
 const hasConeGuard = placement.includes("minimumPreferredDot > -1 && direction.dot(preferred) < minimumPreferredDot")
-  || placement.includes("direction.dot(preferred) < minimumPreferredDot");
+  || placement.includes("((dx * preferred.x + dz * preferred.z) / distance) < minimumPreferredDot");
 for (const required of [
   marker,
   compatibilityMarker,
@@ -137,4 +166,4 @@ for (const forbidden of [
 
 fs.writeFileSync(placementPath, placement, "utf8");
 fs.writeFileSync(installationPath, installation, "utf8");
-console.log(`Prepared ${photoAuthority} through ${facadeConeMarker}: A1 wall repair is repeat-safe, rejects side-building/T4_WALK fallbacks, and preserves A3+ wall resolution.`);
+console.log(`Prepared ${photoAuthority} through ${facadeConeMarker}: A1 wall repair is generation-order safe, rejects side-building/T4_WALK fallbacks, and preserves A3+ wall resolution.`);
