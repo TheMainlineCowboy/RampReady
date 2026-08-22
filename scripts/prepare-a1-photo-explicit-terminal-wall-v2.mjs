@@ -5,7 +5,7 @@ const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js
 const marker = "a1-real-photo-explicit-terminal-wall-v2";
 const compatibilityMarker = "a1-real-photo-explicit-terminal-wall-v1";
 const frameMarker = "a1-bgate1-wall-world-to-source-group-local-v2";
-const facadeConeMarker = "a1-bgate1-preferred-facade-cone-v4-generation-safe";
+const facadeConeMarker = "a1-bgate1-preferred-facade-cone-v5-generation-safe-call";
 const photoAuthority = "a1-real-photo-remote-rotunda-fixed-corridor-v1";
 
 let placement = fs.readFileSync(placementPath, "utf8");
@@ -28,19 +28,11 @@ let installation = fs.readFileSync(installationPath, "utf8");
     placement = placement.replace(resolverMatch[0], `// ${facadeConeMarker}\n${resolverMatch[0]}`);
   }
 
-  // Constrain fallback directions at stable semantic points rather than relying
-  // on a particular local raycast helper name. Later preparers have repeatedly
-  // rewritten `cast(...)`; the radial direction and nearest-vertex candidate
-  // math remain stable and are sufficient to prevent A1 from selecting the
-  // perpendicular parking-structure/side facade.
   const radialGuard = "minimumPreferredDot > -1 && direction.dot(preferred) < minimumPreferredDot";
   if (!placement.includes(radialGuard)) {
     const directionPattern = /(const direction = new THREE\.Vector3\([^;]+\);)/;
     if (directionPattern.test(placement)) {
-      placement = placement.replace(
-        directionPattern,
-        `$1\n    if (${radialGuard}) continue;`,
-      );
+      placement = placement.replace(directionPattern, `$1\n    if (${radialGuard}) continue;`);
     }
   }
 
@@ -55,8 +47,6 @@ let installation = fs.readFileSync(installationPath, "utf8");
     }
   }
 
-  // If the current generated resolver still exposes a cast(direction) helper,
-  // also apply the cone there. This is additive, not required for idempotence.
   const castConeGuard = "minimumPreferredDot > -1 && direction.dot(preferred) < minimumPreferredDot";
   if (!placement.includes(`if (${castConeGuard}) return null;`)) {
     const castPatterns = [
@@ -66,19 +56,21 @@ let installation = fs.readFileSync(installationPath, "utf8");
     ];
     const castPattern = castPatterns.find((pattern) => pattern.test(placement));
     if (castPattern) {
-      placement = placement.replace(
-        castPattern,
-        `$1if (${castConeGuard}) return null;\n    `,
-      );
+      placement = placement.replace(castPattern, `$1if (${castConeGuard}) return null;\n    `);
     }
   }
 
-  // Add the A1-only cone threshold at the main per-gate resolver call. Preserve
-  // all other gates' unrestricted fallback behavior.
+  // A1 only: add the cone at the actual terminalConnection call. Match by the
+  // semantic assignment + final rotundaY argument, not the exact generated
+  // preferred-direction spelling; several later preparers legitimately rewrite
+  // those middle arguments.
   if (!placement.includes('jetway.g === "A1" ? 0.5 : -1')) {
-    const callPattern = /(const terminalConnection = findTerminalWallConnection\([\s\S]*?\n\s*-uz,\n\s*rotundaY,)(\n\s*\) \|\| \{\};)/;
-    if (!callPattern.test(placement)) throw new Error(`${placementPath}: terminal wall resolver call anchor is missing`);
-    placement = placement.replace(callPattern, `$1\n      jetway.g === "A1" ? 0.5 : -1,$2`);
+    const callPattern = /(const terminalConnection = findTerminalWallConnection\([\s\S]*?\brotundaY\s*,?)(\s*\)\s*\|\|\s*\{\}\s*;)/;
+    if (!callPattern.test(placement)) throw new Error(`${placementPath}: semantic terminal wall resolver call anchor is missing`);
+    placement = placement.replace(
+      callPattern,
+      `$1\n      jetway.g === "A1" ? 0.5 : -1,$2`,
+    );
   }
 
   // Remove the legacy T4_WALK portal override if it still exists in any generated
@@ -89,8 +81,6 @@ let installation = fs.readFileSync(installationPath, "utf8");
   );
 }
 
-// Publish structural wall normals when the richer structural candidate pass is
-// present. Earlier/later generated variants may already contain these fields.
 if (!placement.includes("wallNormalX: normal.x") || !placement.includes("wallNormalZ: normal.z")) {
   const candidateAnchor = `          pointZ: closest.z,\n          nodeSpanX: nodeSize.x,`;
   if (placement.includes(candidateAnchor)) {
@@ -101,7 +91,6 @@ if (!placement.includes("wallNormalX: normal.x") || !placement.includes("wallNor
   }
 }
 
-// Publish the exact A1 terminal facade point in source-group local coordinates.
 if (!placement.includes(marker)) {
   const publicationAnchors = [
     `    const terminalWallDistance = terminalConnection?.distance ?? null;`,
@@ -114,9 +103,6 @@ if (!placement.includes(marker)) {
   placement = placement.replace(publicationAnchor, publication);
 }
 
-// Generated source variants later in the chain expose resolvedTerminalConnection
-// placement telemetry. Add the explicit wall fields when that provenance object is
-// present, but do not fail early source variants that have not generated it yet.
 if (!placement.includes("explicitTerminalWallAuthorityV2")) {
   const provenanceAnchor = `      sourceJetwayYawRadians: sourceJetwayYaw,\n      sourceHeadingAuthority: jetway.g === "A1" ? "a1-decoded-kphx-bgl-heading-preserved-v1" : "57-static-bgl-jetway-heading-provenance-v3",`;
   if (placement.includes(provenanceAnchor)) {
@@ -125,8 +111,6 @@ if (!placement.includes("explicitTerminalWallAuthorityV2")) {
   }
 }
 
-// Final installation must use the explicit measured wall endpoint whenever the
-// late placement telemetry exists. Stay idempotent across repeated preparers.
 if (!installation.includes(marker)) {
   const wallAnchor = `  const terminalWallX = a1Placement.x + terminalDirection.x * sourceTerminalDistance;\n  const terminalWallZ = a1Placement.z + terminalDirection.z * sourceTerminalDistance;`;
   if (installation.includes(wallAnchor)) {
