@@ -28,17 +28,23 @@ let installation = fs.readFileSync(installationPath, "utf8");
     placement = placement.replace(resolverMatch[0], `// ${facadeConeMarker}\n${resolverMatch[0]}`);
   }
 
+  // IMPORTANT: resolve the preferred-direction anchor inside this resolver, not the
+  // first matching line elsewhere in the generated file. Earlier preparers can emit
+  // similar helper code; using a global first match left the actual resolver guards
+  // referencing an undeclared effectiveMinimumPreferredDot at runtime.
+  const resolverStart = Math.max(0, Number(resolverMatch.index || 0));
   const preferredAnchor = "  const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();";
-  const preferredIndex = placement.indexOf(preferredAnchor);
-  if (preferredIndex < 0) throw new Error(`${placementPath}: preferred wall direction anchor is missing`);
-  // Scope this check to the resolver body near `preferred`. A stale declaration or
-  // marker elsewhere in generated source must never suppress the runtime variable.
-  const resolverThresholdWindow = placement.slice(preferredIndex, preferredIndex + 1800);
+  const preferredIndex = placement.indexOf(preferredAnchor, resolverStart);
+  if (preferredIndex < 0) throw new Error(`${placementPath}: preferred wall direction anchor is missing in resolver scope`);
+  const nextFunctionIndex = placement.indexOf("\nfunction ", preferredIndex + preferredAnchor.length);
+  const resolverEnd = nextFunctionIndex >= 0 ? nextFunctionIndex : placement.length;
+  const resolverThresholdWindow = placement.slice(preferredIndex, resolverEnd);
   if (!resolverThresholdWindow.includes("const effectiveMinimumPreferredDot =")) {
-    placement = placement.replace(
-      preferredAnchor,
-      `${preferredAnchor}\n  // ${facadeConeMarker}: infer A1 from the exact decoded AIR_Jetway01 source pivot.\n  // sourcePlacedTerminal4Jetways passes originZ after the profile's +6.2 m scene offset.\n  const a1OriginIsExactA1 = Math.hypot(\n    originX - (-21.01),\n    originZ - (-16.15 + Number(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset[2] || 0)),\n  ) <= 0.75;\n  const effectiveMinimumPreferredDot = a1OriginIsExactA1\n    ? Math.max(Number(minimumPreferredDot), 0.5)\n    : Number(minimumPreferredDot);`,
-    );
+    placement = placement.slice(0, preferredIndex)
+      + placement.slice(preferredIndex).replace(
+        preferredAnchor,
+        `${preferredAnchor}\n  // ${facadeConeMarker}: infer A1 from the exact decoded AIR_Jetway01 source pivot.\n  // sourcePlacedTerminal4Jetways passes originZ after the profile's +6.2 m scene offset.\n  const a1OriginIsExactA1 = Math.hypot(\n    originX - (-21.01),\n    originZ - (-16.15 + Number(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset[2] || 0)),\n  ) <= 0.75;\n  const effectiveMinimumPreferredDot = a1OriginIsExactA1\n    ? Math.max(Number(minimumPreferredDot), 0.5)\n    : Number(minimumPreferredDot);`,
+      );
   }
 
   placement = placement
