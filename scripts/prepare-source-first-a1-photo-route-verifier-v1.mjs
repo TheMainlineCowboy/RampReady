@@ -3,8 +3,8 @@ import fs from "node:fs";
 const testPath = "tests/browser/source-first-a1-repair.spec.js";
 let source = fs.readFileSync(testPath, "utf8");
 const FIXED_AIRCRAFT_AUTHORITY = "fixed-source-a1-parking-center-exact-authored-door-v2";
-const PHYSICAL_CAB_AUTHORITY = "a1-final-exact-cab-footprint-door-contact-v2";
-const marker = "source-first-a1-physical-cab-surface-verifier-v4-fixed-door";
+const PHYSICAL_CAB_AUTHORITY = "a1-final-exact-cab-footprint-door-contact-v7-bounded-lateral-hood-fit";
+const marker = "source-first-a1-physical-cab-surface-verifier-v5-current-v7";
 
 const staleWait = `      && Number.isFinite(Number(data?.a1ExactRotundaToWallWorldMeters))\n      && Math.abs(Number(data?.a1ExactRotundaToWallWorldMeters) - Number(data?.terminal4A1JetwayWallDistance)) <= 0.05`;
 const photoWait = `      && Number.isFinite(Number(data?.a1ExactRotundaToWallWorldMeters))\n      && Number(data?.a1ExactRotundaToWallWorldMeters) > 18\n      && Number(data?.a1ExactRotundaToWallWorldMeters) < 30`;
@@ -104,4 +104,4 @@ if (source.includes("expect(Number(runtime.inspectionAircraftSourceGateDoorTarge
 }
 
 fs.writeFileSync(testPath, source);
-console.log("Prepared source-first A1 verifier with the centered fixed exact authored door, serialized physical Cab authority, Aug. 15 long dogleg/remote Rotunda acceptance, 360 s production readiness window, and no obsolete centroid/source-local/shared-authority vetoes.");
+console.log("Prepared source-first A1 verifier with the current v7 physical Cab authority, centered fixed exact authored door, Aug. 15 long dogleg/remote Rotunda acceptance, 360 s production readiness window, and no obsolete centroid/source-local/shared-authority vetoes.");
