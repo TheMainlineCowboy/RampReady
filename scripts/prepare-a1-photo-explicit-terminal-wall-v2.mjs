@@ -5,16 +5,16 @@ const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js
 const marker = "a1-real-photo-explicit-terminal-wall-v2";
 const compatibilityMarker = "a1-real-photo-explicit-terminal-wall-v1";
 const frameMarker = "a1-bgate1-wall-world-to-source-group-local-v2";
-const facadeConeMarker = "a1-bgate1-preferred-facade-cone-v5-generation-safe-call";
+const facadeConeMarker = "a1-bgate1-preferred-facade-cone-v6-origin-owned";
 const photoAuthority = "a1-real-photo-remote-rotunda-fixed-corridor-v1";
 
 let placement = fs.readFileSync(placementPath, "utf8");
 let installation = fs.readFileSync(installationPath, "utf8");
 
 // Aug. 15 photo authority: A1 must resolve against the apron-facing Terminal 4
-// facade, never the perpendicular parking-structure/side wall. This script runs
-// more than once in production, after other preparers may have already rewritten
-// the resolver, so every edit below is deliberately semantic/idempotent.
+// facade, never the perpendicular parking-structure/side wall. Do this inside the
+// resolver from A1's exact source origin so later preparers can freely rewrite the
+// call site without silently removing the A1-only cone. A3+ remain unrestricted.
 {
   const resolverMatch = placement.match(/function findTerminalWallConnection\(([^)]*)\)\s*\{/);
   if (!resolverMatch) throw new Error(`${placementPath}: terminal wall resolver signature is missing`);
@@ -28,15 +28,39 @@ let installation = fs.readFileSync(installationPath, "utf8");
     placement = placement.replace(resolverMatch[0], `// ${facadeConeMarker}\n${resolverMatch[0]}`);
   }
 
-  const radialGuard = "minimumPreferredDot > -1 && direction.dot(preferred) < minimumPreferredDot";
-  if (!placement.includes(radialGuard)) {
-    const directionPattern = /(const direction = new THREE\.Vector3\([^;]+\);)/;
-    if (directionPattern.test(placement)) {
-      placement = placement.replace(directionPattern, `$1\n    if (${radialGuard}) continue;`);
-    }
+  const preferredAnchor = "  const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();";
+  const ownershipMarker = "a1OriginIsExactA1";
+  if (!placement.includes(ownershipMarker)) {
+    if (!placement.includes(preferredAnchor)) throw new Error(`${placementPath}: preferred wall direction anchor is missing`);
+    placement = placement.replace(
+      preferredAnchor,
+      `${preferredAnchor}\n  // ${facadeConeMarker}: infer A1 from the exact decoded AIR_Jetway01 source pivot.\n  // sourcePlacedTerminal4Jetways passes originZ after the profile's +6.2 m scene offset.\n  const a1OriginIsExactA1 = Math.hypot(\n    originX - (-21.01),\n    originZ - (-16.15 + Number(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset[2] || 0)),\n  ) <= 0.75;\n  const effectiveMinimumPreferredDot = a1OriginIsExactA1\n    ? Math.max(Number(minimumPreferredDot), 0.5)\n    : Number(minimumPreferredDot);`,
+    );
   }
 
-  const vertexConeGuard = "minimumPreferredDot > -1 && ((dx * preferred.x + dz * preferred.z) / distance) < minimumPreferredDot";
+  // Normalize any earlier v5 guards to the origin-owned effective threshold.
+  placement = placement
+    .replaceAll("minimumPreferredDot > -1 && direction.dot(preferred) < minimumPreferredDot", "effectiveMinimumPreferredDot > -1 && direction.dot(preferred) < effectiveMinimumPreferredDot")
+    .replaceAll("minimumPreferredDot > -1 && ((dx * preferred.x + dz * preferred.z) / distance) < minimumPreferredDot", "effectiveMinimumPreferredDot > -1 && ((dx * preferred.x + dz * preferred.z) / distance) < effectiveMinimumPreferredDot");
+
+  const castConeGuard = "effectiveMinimumPreferredDot > -1 && direction.dot(preferred) < effectiveMinimumPreferredDot";
+  if (!placement.includes(`if (${castConeGuard}) return null;`)) {
+    const castPatterns = [
+      /(const cast = \(direction, far = 48\) => \{\s*)/,
+      /(const cast = \(direction, far = [0-9.]+\) => \{\s*)/,
+      /(const [A-Za-z0-9_]*cast[A-Za-z0-9_]* = \(direction, far = [0-9.]+\) => \{\s*)/,
+    ];
+    const castPattern = castPatterns.find((pattern) => pattern.test(placement));
+    if (castPattern) placement = placement.replace(castPattern, `$1if (${castConeGuard}) return null;\n    `);
+  }
+
+  const radialGuard = `if (${castConeGuard}) continue;`;
+  if (!placement.includes(radialGuard)) {
+    const directionPattern = /(const direction = new THREE\.Vector3\([^;]+\);)/;
+    if (directionPattern.test(placement)) placement = placement.replace(directionPattern, `$1\n    ${radialGuard}`);
+  }
+
+  const vertexConeGuard = "effectiveMinimumPreferredDot > -1 && ((dx * preferred.x + dz * preferred.z) / distance) < effectiveMinimumPreferredDot";
   if (!placement.includes(vertexConeGuard)) {
     const vertexDistancePattern = /(const distance = Math\.hypot\(dx, dz\);)/;
     if (vertexDistancePattern.test(placement)) {
@@ -47,34 +71,8 @@ let installation = fs.readFileSync(installationPath, "utf8");
     }
   }
 
-  const castConeGuard = "minimumPreferredDot > -1 && direction.dot(preferred) < minimumPreferredDot";
-  if (!placement.includes(`if (${castConeGuard}) return null;`)) {
-    const castPatterns = [
-      /(const cast = \(direction, far = 48\) => \{\s*)/,
-      /(const cast = \(direction, far = [0-9.]+\) => \{\s*)/,
-      /(const [A-Za-z0-9_]*cast[A-Za-z0-9_]* = \(direction, far = [0-9.]+\) => \{\s*)/,
-    ];
-    const castPattern = castPatterns.find((pattern) => pattern.test(placement));
-    if (castPattern) {
-      placement = placement.replace(castPattern, `$1if (${castConeGuard}) return null;\n    `);
-    }
-  }
-
-  // A1 only: add the cone at the actual terminalConnection call. Match by the
-  // semantic assignment + final rotundaY argument, not the exact generated
-  // preferred-direction spelling; several later preparers legitimately rewrite
-  // those middle arguments.
-  if (!placement.includes('jetway.g === "A1" ? 0.5 : -1')) {
-    const callPattern = /(const terminalConnection = findTerminalWallConnection\([\s\S]*?\brotundaY\s*,?)(\s*\)\s*\|\|\s*\{\}\s*;)/;
-    if (!callPattern.test(placement)) throw new Error(`${placementPath}: semantic terminal wall resolver call anchor is missing`);
-    placement = placement.replace(
-      callPattern,
-      `$1\n      jetway.g === "A1" ? 0.5 : -1,$2`,
-    );
-  }
-
-  // Remove the legacy T4_WALK portal override if it still exists in any generated
-  // pass. This exact override is visibly the wrong building relationship at A1.
+  // Remove the legacy T4_WALK portal override on every generated pass. This was
+  // the wrong building relationship visible in the user's screenshots.
   placement = placement.replace(
     /\n\s*if \(jetway\.g === "A1"\) \{\s*const exactWalkwayPortalX = -30\.16857013;[\s\S]*?authority: "exact-T4_WALK-A1-terminal-portal-v25",\s*\}\);\s*\}/,
     `\n    // ${facadeConeMarker}: A1 keeps the authored apron-facing facade hit; no T4_WALK portal override.`,
@@ -106,8 +104,10 @@ if (!placement.includes(marker)) {
 if (!placement.includes("explicitTerminalWallAuthorityV2")) {
   const provenanceAnchor = `      sourceJetwayYawRadians: sourceJetwayYaw,\n      sourceHeadingAuthority: jetway.g === "A1" ? "a1-decoded-kphx-bgl-heading-preserved-v1" : "57-static-bgl-jetway-heading-provenance-v3",`;
   if (placement.includes(provenanceAnchor)) {
-    const provenancePatch = `      sourceJetwayYawRadians: sourceJetwayYaw,\n      terminalWallX: jetway.g === "A1" ? Number(resolvedTerminalConnection?.groupLocalPointX) : null,\n      terminalWallZ: jetway.g === "A1" ? Number(resolvedTerminalConnection?.groupLocalPointZ) : null,\n      terminalWallCoordinateAuthority: jetway.g === "A1" ? "${frameMarker}" : null,\n      terminalWallNormalX: jetway.g === "A1" ? Number(resolvedTerminalConnection?.terminalNormalX) : null,\n      terminalWallNormalZ: jetway.g === "A1" ? Number(resolvedTerminalConnection?.terminalNormalZ) : null,\n      apronWallNormalX: jetway.g === "A1" ? Number(resolvedTerminalConnection?.apronNormalX) : null,\n      apronWallNormalZ: jetway.g === "A1" ? Number(resolvedTerminalConnection?.apronNormalZ) : null,\n      explicitTerminalWallAuthority: jetway.g === "A1" ? "${compatibilityMarker}" : null,\n      explicitTerminalWallAuthorityV2: jetway.g === "A1" ? "${marker}" : null,\n      sourceHeadingAuthority: jetway.g === "A1" ? "a1-decoded-kphx-bgl-heading-preserved-v1" : "57-static-bgl-jetway-heading-provenance-v3",`;
-    placement = placement.replace(provenanceAnchor, provenancePatch);
+    placement = placement.replace(
+      provenanceAnchor,
+      `      sourceJetwayYawRadians: sourceJetwayYaw,\n      terminalWallX: jetway.g === "A1" ? Number(resolvedTerminalConnection?.groupLocalPointX) : null,\n      terminalWallZ: jetway.g === "A1" ? Number(resolvedTerminalConnection?.groupLocalPointZ) : null,\n      terminalWallCoordinateAuthority: jetway.g === "A1" ? "${frameMarker}" : null,\n      terminalWallNormalX: jetway.g === "A1" ? Number(resolvedTerminalConnection?.terminalNormalX) : null,\n      terminalWallNormalZ: jetway.g === "A1" ? Number(resolvedTerminalConnection?.terminalNormalZ) : null,\n      apronWallNormalX: jetway.g === "A1" ? Number(resolvedTerminalConnection?.apronNormalX) : null,\n      apronWallNormalZ: jetway.g === "A1" ? Number(resolvedTerminalConnection?.apronNormalZ) : null,\n      explicitTerminalWallAuthority: jetway.g === "A1" ? "${compatibilityMarker}" : null,\n      explicitTerminalWallAuthorityV2: jetway.g === "A1" ? "${marker}" : null,\n      sourceHeadingAuthority: jetway.g === "A1" ? "a1-decoded-kphx-bgl-heading-preserved-v1" : "57-static-bgl-jetway-heading-provenance-v3",`,
+    );
   }
 }
 
@@ -126,15 +126,16 @@ if (!installation.includes(marker)) {
   }
 }
 
-const hasConeGuard = placement.includes("minimumPreferredDot > -1 && direction.dot(preferred) < minimumPreferredDot")
-  || placement.includes("((dx * preferred.x + dz * preferred.z) / distance) < minimumPreferredDot");
+const hasConeGuard = placement.includes("effectiveMinimumPreferredDot > -1 && direction.dot(preferred) < effectiveMinimumPreferredDot")
+  || placement.includes("((dx * preferred.x + dz * preferred.z) / distance) < effectiveMinimumPreferredDot");
 for (const required of [
   marker,
   compatibilityMarker,
   frameMarker,
   facadeConeMarker,
   "minimumPreferredDot = -1",
-  'jetway.g === "A1" ? 0.5 : -1',
+  "a1OriginIsExactA1",
+  "effectiveMinimumPreferredDot",
   "groupLocalPointX",
   "groupLocalPointZ",
 ]) {
@@ -150,4 +151,4 @@ for (const forbidden of [
 
 fs.writeFileSync(placementPath, placement, "utf8");
 fs.writeFileSync(installationPath, installation, "utf8");
-console.log(`Prepared ${photoAuthority} through ${facadeConeMarker}: A1 wall repair is generation-order safe, rejects side-building/T4_WALK fallbacks, and preserves A3+ wall resolution.`);
+console.log(`Prepared ${photoAuthority} through ${facadeConeMarker}: A1 facade ownership is resolver-local and generation-order safe; A3+ remain unrestricted.`);
