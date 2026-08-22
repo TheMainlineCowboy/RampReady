@@ -9,6 +9,7 @@ const oldSupportV2Run = '  await run(process.execPath, ["scripts/prepare-a1-visi
 const terminalContinuityRun = '  await run(process.execPath, ["scripts/prepare-a1-terminal-continuity-final-v1.mjs"]);';
 const sourceParkingRun = '  await run(process.execPath, ["scripts/prepare-a1-source-parking-final-v1.mjs"]);';
 const supportSleeveRun = '  await run(process.execPath, ["scripts/prepare-a1-visible-support-sleeves-v1.mjs"]);';
+const cabNormalRun = '  await run(process.execPath, ["scripts/prepare-a1-final-cab-door-normal-fit-v1.mjs"]);';
 const bogieRun = '  await run(process.execPath, ["scripts/prepare-a1-bogie-footprint-camera-v1.mjs"]);';
 
 let source = fs.readFileSync(buildPath, "utf8");
@@ -37,7 +38,15 @@ if (!source.includes(marker)) {
   else if (!source.includes(marker)) source = source.replace(stairRun, `${stairRun}\n  // ${marker}`);
 }
 
-for (const required of [marker, stairRun, terminalContinuityRun, sourceParkingRun, bogieRun]) {
+// The final fixed-aircraft Cab proof is generated before bogie evidence. Patch its
+// residual door-normal fit immediately before the final bogie/camera stage so the
+// strict proof remeasures the actual rendered Cab and no camera can observe a stale
+// pre-fit state. Repeated hook runs remain idempotent.
+if (!source.includes(cabNormalRun)) {
+  source = source.replace(bogieRun, `${cabNormalRun}\n${bogieRun}`);
+}
+
+for (const required of [marker, stairRun, terminalContinuityRun, sourceParkingRun, cabNormalRun, bogieRun]) {
   if (!source.includes(required)) throw new Error(`${buildPath}: final source-wheel registration hook is missing ${required}`);
 }
 for (const forbidden of [oldSupportRun, oldSupportV2Run, supportSleeveRun]) {
@@ -49,9 +58,12 @@ if (!(source.indexOf(terminalContinuityRun) > source.indexOf(stairRun))) {
 if (!(source.indexOf(sourceParkingRun) > source.indexOf(terminalContinuityRun))) {
   throw new Error(`${buildPath}: source parking registration must run after final terminal continuity`);
 }
-if (!(source.indexOf(sourceParkingRun) < source.indexOf(bogieRun))) {
-  throw new Error(`${buildPath}: source parking registration must precede final bogie/evidence capture`);
+if (!(source.indexOf(sourceParkingRun) < source.indexOf(cabNormalRun))) {
+  throw new Error(`${buildPath}: source parking registration must precede final Cab door-normal fit`);
+}
+if (!(source.indexOf(cabNormalRun) < source.indexOf(bogieRun))) {
+  throw new Error(`${buildPath}: final Cab door-normal fit must precede final bogie/evidence capture`);
 }
 
 fs.writeFileSync(buildPath, source, "utf8");
-console.log(`Installed ${marker}: retired synthetic lower support sleeves; final A1 must show its supplied Tunnel-C wheel/support geometry at pavement after rigid wheel-contact registration.`);
+console.log(`Installed ${marker}: retired synthetic lower support sleeves, kept supplied Tunnel-C wheel/support grounding, and sequenced bounded final Cab door-normal fit before bogie evidence.`);
