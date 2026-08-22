@@ -28,13 +28,20 @@ let installation = fs.readFileSync(installationPath, "utf8");
     placement = placement.replace(resolverMatch[0], `// ${facadeConeMarker}\n${resolverMatch[0]}`);
   }
 
-  if (!placement.includes("direction.dot(preferred) < minimumPreferredDot")) {
-    const radialPattern = /(const direction = new THREE\.Vector3\(Math\.sin\(angle\), 0, Math\.cos\(angle\)\);\s*)(const hit = cast\(direction\);)/;
-    if (!radialPattern.test(placement)) throw new Error(`${placementPath}: radial authored-wall search anchor is missing`);
-    placement = placement.replace(
-      radialPattern,
-      `$1if (direction.dot(preferred) < minimumPreferredDot) continue;\n    $2`,
-    );
+  // Apply the A1 cone at the resolver's cast boundary instead of depending on
+  // one particular radial-loop spelling. Later preparers rewrite that loop, but
+  // every fallback direction still passes through cast(direction).
+  const castConeGuard = "minimumPreferredDot > -1 && direction.dot(preferred) < minimumPreferredDot";
+  if (!placement.includes(castConeGuard)) {
+    const castPattern = /(const cast = \(direction, far = 48\) => \{\s*)/;
+    if (castPattern.test(placement)) {
+      placement = placement.replace(
+        castPattern,
+        `$1if (${castConeGuard}) return null;\n    `,
+      );
+    } else if (!placement.includes("direction.dot(preferred) < minimumPreferredDot")) {
+      throw new Error(`${placementPath}: authored-wall cast anchor is missing`);
+    }
   }
 
   // Add the A1-only cone threshold at the main per-gate resolver call. Preserve
@@ -106,19 +113,21 @@ if (!installation.includes(marker)) {
   }
 }
 
+const hasConeGuard = placement.includes("minimumPreferredDot > -1 && direction.dot(preferred) < minimumPreferredDot")
+  || placement.includes("direction.dot(preferred) < minimumPreferredDot");
 for (const required of [
   marker,
   compatibilityMarker,
   frameMarker,
   facadeConeMarker,
   "minimumPreferredDot = -1",
-  "direction.dot(preferred) < minimumPreferredDot",
   'jetway.g === "A1" ? 0.5 : -1',
   "groupLocalPointX",
   "groupLocalPointZ",
 ]) {
   if (!placement.includes(required)) throw new Error(`${placementPath}: photo-safe explicit wall contract is missing ${required}`);
 }
+if (!hasConeGuard) throw new Error(`${placementPath}: A1 facade cone guard is missing`);
 for (const forbidden of [
   "exact-T4_WALK-A1-terminal-portal-v25",
   "const exactWalkwayPortalX = -30.16857013;",
