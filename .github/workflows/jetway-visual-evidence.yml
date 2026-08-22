@@ -75,7 +75,13 @@ jobs:
           set -o pipefail
           node scripts/prepare-terminal4-visual-failfast-v1.mjs 2>&1 | tee jetway-visual-evidence/preflight.log
           node scripts/prepare-terminal4-fleet-first-evidence-v1.mjs 2>&1 | tee -a jetway-visual-evidence/preflight.log
+          node scripts/prepare-a1-photo-visual-verifiers-v1.mjs 2>&1 | tee -a jetway-visual-evidence/preflight.log
+          node scripts/prepare-a1-aircraft-side-physical-cab-evidence-v1.mjs 2>&1 | tee -a jetway-visual-evidence/preflight.log
+          node scripts/prepare-terminal4-visual-cab-normalization-reset-v1.mjs 2>&1 | tee -a jetway-visual-evidence/preflight.log
+          node scripts/prepare-terminal4-visual-dataset-slice-v1.mjs 2>&1 | tee -a jetway-visual-evidence/preflight.log
+          node scripts/prepare-terminal4-visual-current-fixed-aircraft-authority-v1.mjs 2>&1 | tee -a jetway-visual-evidence/preflight.log
           node scripts/verify-terminal4-fleet-visual.cjs 2>&1 | tee jetway-visual-evidence/workflow.log
+          node scripts/capture-a1-aircraft-side-reference-evidence.cjs 2>&1 | tee -a jetway-visual-evidence/workflow.log
 
       - name: Upload one-day jetway visual evidence
         if: always()

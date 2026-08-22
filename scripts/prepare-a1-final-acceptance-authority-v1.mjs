@@ -1,5 +1,10 @@
 import fs from "node:fs";
 
+// The final acceptance stage owns the last geometry mutation point. Run the
+// physical door-fit/controller-rebase here, after the decoded-KPHX wall and
+// photo dogleg preparers but before acceptance inspects the generated runtime.
+await import(`./prepare-a1-final-physical-door-fit-controller-rebase-v1.mjs?final-acceptance=${Date.now()}`);
+
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const sourceElbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const generatedAuthorityPaths = Object.freeze([

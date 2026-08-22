@@ -27,12 +27,23 @@ function walk(directory) {
 
 walk(sourceRoot);
 
-if (matches.length === 0) {
-  console.log("No surviving generated decoded-KPHX terminal-side elbow guard was found anywhere in the final generated src tree.");
-  process.exit(0);
+if (matches.length > 0) {
+  const detail = matches
+    .map(({ entryPath, context }, matchIndex) => `MATCH_${matchIndex + 1}_FILE=${entryPath}\n${context}`)
+    .join("\n---NEXT_MATCH---\n");
+  throw new Error(`SURVIVING_A1_DECODED_KPHX_ELBOW_GUARD_CONTEXT_BEGIN\n${detail}\nSURVIVING_A1_DECODED_KPHX_ELBOW_GUARD_CONTEXT_END`);
 }
 
-const detail = matches
-  .map(({ entryPath, context }, matchIndex) => `MATCH_${matchIndex + 1}_FILE=${entryPath}\n${context}`)
-  .join("\n---NEXT_MATCH---\n");
-throw new Error(`SURVIVING_A1_DECODED_KPHX_ELBOW_GUARD_CONTEXT_BEGIN\n${detail}\nSURVIVING_A1_DECODED_KPHX_ELBOW_GUARD_CONTEXT_END`);
+console.log("No surviving generated decoded-KPHX terminal-side elbow guard was found anywhere in the final generated src tree.");
+
+// The old rendered-door module is bundled only after all A1 preparers have
+// finished. Install a temporary Vite wrapper now so that module validates the
+// Aug. 15 photo-authoritative long fixed dogleg instead of the retired compact
+// 2.9-5.8 m wall / 1.2-3.6 m vestibule assumptions. The wrapper restores the
+// tracked rendered-door source immediately after Vite finishes.
+await import(`./prepare-a1-photo-dogleg-rendered-door-build-hook-v1.mjs?final-guard=${Date.now()}`);
+// The photo bundle hook above creates the true final pre-Vite camera sequence.
+// Add the two aircraft-side reference subviews there, after final Tunnel-C stair
+// and bogie normalization, so perspective overlap can be judged without changing
+// terminal, aircraft or exact supplied jetway geometry.
+await import(`./prepare-a1-aircraft-side-evidence-build-hook-v1.mjs?final-aircraft-side-hook=${Date.now()}`);

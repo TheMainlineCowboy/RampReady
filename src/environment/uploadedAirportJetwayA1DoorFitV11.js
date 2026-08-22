@@ -7,13 +7,14 @@ const MOVABLE_PART_WEIGHTS = Object.freeze({
   Cab: 1,
 });
 
-// Measured directly from the exact authored CRJ. The visible forward entry
-// door extends down as an integrated airstair, but the passenger-cabin threshold
-// where a jetway hood meets the fuselage is approximately 2.52 m above grade.
+// Bombardier CRJ700 Airport Planning Manual CSP B-020, 00-02-04:
+// passenger-door sill is 1.73 m above ground; 00-02-02 gives a 1.78 m
+// passenger-door height, so the nominal opening center is about 2.62 m.
+// The bridge floor/hood must register to the sill, not to the door-window band.
 const CRJ_FORWARD_LEFT_DOOR = Object.freeze({
   x: -1.35,
-  centerY: 3.10,
-  sillY: 2.52,
+  centerY: 2.62,
+  sillY: 1.73,
   z: 2.22,
 });
 const CONTACT_BAND_METERS = 0.22;
@@ -93,6 +94,16 @@ function measureCabFace(THREE, model, cab, facingDirection, front, bandMeters) {
   point.x /= selected.length;
   point.z /= selected.length;
   point.y = box.min.y;
+
+  // The selected band exists only to make the face measurement robust against
+  // sparse/rounded hood topology. Its centroid can sit well behind the actual
+  // contact plane (about 0.16 m on the supplied Cab), which falsely reports a
+  // horizontal door gap even when the outer hood face is already at the door.
+  // Preserve the stable lateral centroid/floor height but project the reported
+  // point onto the measured extreme face plane itself. This changes no geometry.
+  const centroidProjection = point.dot(direction);
+  point.addScaledVector(direction, extreme - centroidProjection);
+
   return {
     point,
     centerY: (box.min.y + box.max.y) / 2,
@@ -418,47 +429,28 @@ export function fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placem
 
   const result = Object.freeze({
     authority: AUTHORITY,
-    targetDoorLocal: Object.freeze([
-      CRJ_FORWARD_LEFT_DOOR.x,
-      CRJ_FORWARD_LEFT_DOOR.sillY,
-      CRJ_FORWARD_LEFT_DOOR.z,
-    ]),
-    targetDoorWorld: Object.freeze([targetWorld.x, targetWorld.y, targetWorld.z]),
-    actualContactWorld: Object.freeze([actualWorld.x, actualWorld.y, actualWorld.z]),
+    targetWorld: targetWorld.toArray(),
+    actualWorld: actualWorld.toArray(),
+    extensionMeters: extension,
+    parentYawDegrees: THREE.MathUtils.radToDeg(correctedYawRadians),
+    cabRelativeYawDegrees: THREE.MathUtils.radToDeg(cabRelativeYawRadians),
+    pitchDegrees: THREE.MathUtils.radToDeg(pitchRadians),
+    cabVerticalAdjustmentMeters: cabVerticalAdjustment,
     vectorGapMeters: vectorGap,
     horizontalGapMeters: horizontalGap,
     verticalGapMeters: verticalGap,
-    correctedExtensionMeters: extension,
-    pitchRadians,
-    pitchDegrees: THREE.MathUtils.radToDeg(pitchRadians),
-    correctedYawRadians,
-    cabRelativeYawRadians,
-    cabRelativeYawDegrees: THREE.MathUtils.radToDeg(cabRelativeYawRadians),
     cabNormalErrorDegrees,
     cabFuselagePenetrationMeters,
-    cabContactWidthMeters: cabAssembly.contactWidth,
-    cabVerticalAdjustmentMeters: cabVerticalAdjustment,
+    contactWidthMeters: cabAssembly.contactWidth,
     stairGrounding,
     mechanicalGrounding,
   });
-
-  anchor.userData.uploadedJetwayFull3dDoorFit = result;
-  group.userData.uploadedJetwayA1Full3dDoorFitAuthority = AUTHORITY;
-  group.userData.uploadedJetwayA1DoorTargetWorld = result.targetDoorWorld.join(",");
-  group.userData.uploadedJetwayA1ActualContactWorld = result.actualContactWorld.join(",");
-  group.userData.uploadedJetwayA1VectorDoorGapMeters = result.vectorGapMeters;
-  group.userData.uploadedJetwayA1HorizontalDoorGapMeters = result.horizontalGapMeters;
-  group.userData.uploadedJetwayA1VerticalDoorGapMeters = result.verticalGapMeters;
-  group.userData.uploadedJetwayA1CorrectedPitchDegrees = result.pitchDegrees;
-  group.userData.uploadedJetwayA1CorrectedYawRadians = result.correctedYawRadians;
-  group.userData.uploadedJetwayA1CorrectedExtensionMeters = result.correctedExtensionMeters;
-  group.userData.uploadedJetwayA1CabRelativeYawDegrees = result.cabRelativeYawDegrees;
-  group.userData.uploadedJetwayA1CabNormalErrorDegrees = result.cabNormalErrorDegrees;
-  group.userData.uploadedJetwayA1CabFuselagePenetrationMeters = result.cabFuselagePenetrationMeters;
-  group.userData.uploadedJetwayA1CabVerticalAdjustmentMeters = result.cabVerticalAdjustmentMeters;
-  group.userData.uploadedJetwayA1StairMinimumHeightMeters = result.stairGrounding.minimumY;
-  group.userData.uploadedJetwayA1MechanicalMinimumHeightMeters = result.mechanicalGrounding.minimumY;
+  group.userData.uploadedJetwayA1DoorFitAuthority = AUTHORITY;
+  group.userData.uploadedJetwayA1DoorFitVectorGapMeters = vectorGap;
+  group.userData.uploadedJetwayA1DoorFitHorizontalGapMeters = horizontalGap;
+  group.userData.uploadedJetwayA1DoorFitVerticalGapMeters = verticalGap;
+  group.userData.uploadedJetwayA1DoorFitCabNormalErrorDegrees = cabNormalErrorDegrees;
+  group.userData.uploadedJetwayA1DoorFitCabFuselagePenetrationMeters = cabFuselagePenetrationMeters;
+  group.userData.uploadedJetwayA1DoorFitContactWidthMeters = cabAssembly.contactWidth;
   return result;
 }
-
-export { AUTHORITY as UPLOADED_A1_FULL_3D_DOOR_FIT_AUTHORITY };

@@ -5,6 +5,7 @@ import { deflateSync } from "node:zlib";
 
 const SOURCE_COMMIT = "2e6642778c9c88eac6a82b21063763cc78be7cfe";
 const SOURCE_ROOT = `https://raw.githubusercontent.com/TheMainlineCowboy/SkyHarborPhx/${SOURCE_COMMIT}`;
+const PACKAGE_ROOT = path.resolve(`.cache/skyharborphx-package/${SOURCE_COMMIT}`);
 const OUTPUT_DIR = path.resolve("public/models/phx-terminal4");
 const TEXTURE_DIR = path.join(OUTPUT_DIR, "textures");
 const MANIFEST_PATH = path.join(OUTPUT_DIR, "texture-manifest.json");
@@ -36,13 +37,44 @@ const EXACT_RECOVERED_LIGHTMAP_SOURCES = Object.freeze({
 });
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
+const TRANSIENT_DOWNLOAD_STATUSES = new Set([429, 500, 502, 503, 504]);
+const DOWNLOAD_ATTEMPTS = 5;
+const DOWNLOAD_BASE_DELAY_MS = 750;
+
+async function readPinnedPackageLightmap(relativePath) {
+  const packagePath = path.resolve(PACKAGE_ROOT, "texture", relativePath);
+  if (packagePath !== PACKAGE_ROOT && !packagePath.startsWith(`${PACKAGE_ROOT}${path.sep}`)) {
+    throw new Error(`Terminal 4 lightmap package path escaped cache root: ${relativePath}`);
+  }
+  try {
+    return await readFile(packagePath);
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
+}
 
 async function download(relativePath) {
-  const response = await fetch(`${SOURCE_ROOT}/${relativePath}`, {
-    headers: { "User-Agent": "RampReady-Terminal4-Lightmap-Materializer" },
-  });
-  if (!response.ok) throw new Error(`Failed to download exact Terminal 4 lightmap ${relativePath}: HTTP ${response.status}`);
-  return Buffer.from(await response.arrayBuffer());
+  const packageBytes = await readPinnedPackageLightmap(relativePath);
+  if (packageBytes) return packageBytes;
+
+  let lastStatus = null;
+  for (let attempt = 1; attempt <= DOWNLOAD_ATTEMPTS; attempt += 1) {
+    const url = new URL(`${SOURCE_ROOT}/${relativePath}`);
+    if (attempt > 1) url.searchParams.set("rrLightmapRetry", String(attempt));
+    const response = await fetch(url, {
+      headers: { "User-Agent": "RampReady-Terminal4-Lightmap-Materializer" },
+    });
+    if (response.ok) return Buffer.from(await response.arrayBuffer());
+    lastStatus = response.status;
+    if (!TRANSIENT_DOWNLOAD_STATUSES.has(response.status) || attempt >= DOWNLOAD_ATTEMPTS) break;
+    const retryAfterSeconds = Number(response.headers.get("retry-after"));
+    const retryDelayMs = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+      ? Math.min(retryAfterSeconds * 1000, 8000)
+      : DOWNLOAD_BASE_DELAY_MS * attempt;
+    await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+  }
+  throw new Error(`Failed to download exact Terminal 4 lightmap ${relativePath} after ${DOWNLOAD_ATTEMPTS} attempts: HTTP ${lastStatus}`);
 }
 
 function rgb565(value) {

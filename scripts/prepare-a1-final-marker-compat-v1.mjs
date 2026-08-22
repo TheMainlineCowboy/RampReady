@@ -9,7 +9,9 @@ let source = fs.readFileSync(trainerPath, "utf8");
 const finalMarker = "final-a1-acceptance-authority-after-all-preparers-v7-intact-source-bogie";
 const workflowMarker = "final-a1-acceptance-authority-after-all-preparers-v1";
 const sourceOwnershipAuthority = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";
+const photoAuthority = "a1-real-photo-remote-rotunda-fixed-corridor-v1";
 const bogieAuthority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
+const readinessAuthority = "a1-final-visible-fit-physical-surface-readiness-v4-defer-center-y-to-final-proof";
 const compatibilityComment = `// ${workflowMarker} compatibility-alias-only; geometry remains ${finalMarker}`;
 
 if (!source.includes(finalMarker)) {
@@ -62,39 +64,99 @@ if (sourcePlaced.includes('yaw: jetway.g === "A1" ? yaw : sourceJetwayYaw')) {
 // already proved. This is telemetry/report plumbing only; it does not move A1.
 await import(`./prepare-a1-tunnel-c-bogie-report-publication-v1.mjs?final-compat=${Date.now()}`);
 await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?final-compat=${Date.now()}`);
+// Remove the obsolete representative Cab-front-point vertical veto at the same
+// final compatibility stage that republishes the actual Tunnel-C/door evidence.
+// Fleet readiness owns only stable preconditions here; the later fixed-aircraft
+// live Cab footprint proof remains the fail-closed vertical authority.
+await import(`./prepare-a1-final-visible-fit-surface-readiness-v1.mjs?final-compat=${Date.now()}`);
 
 const readiness = fs.readFileSync(readinessPath, "utf8");
 const elbow = fs.readFileSync(elbowPath, "utf8");
-for (const required of [
-  sourceOwnershipAuthority,
-  "const sourceRotundaTarget = fixedRotundaCenter.clone();",
-  "const rawBglPlacementX = Number(placement.x);",
-  "anchor.rotation.y = Number(placement.yaw)",
-  "const rotatedSourceHeadingRotundaCenter = objectCenterInFleet",
-  "A1 FINAL wall-registered Rotunda-to-real-wall distance is invalid",
-  "const yawDelta = 0;",
-]) {
-  if (!elbow.includes(required)) throw new Error(`${elbowPath}: compatibility step found measured-wall intact A1 ownership missing ${required}`);
+const usesRealPhotoGeometry = elbow.includes(photoAuthority);
+
+if (usesRealPhotoGeometry) {
+  // The Aug. 15 A1/A3 overhead reference supersedes the old near-wall Rotunda
+  // compatibility assumptions. Preserve only the harmless historical ownership
+  // marker while verifying the actual final geometry: source model origin,
+  // calibrated complete-parent bridge heading, remote Rotunda, long fixed
+  // terminal corridor, zero aircraft-target relocation, and intact GLB children.
+  for (const required of [
+    sourceOwnershipAuthority,
+    photoAuthority,
+    "const sourceRotundaTarget = fixedRotundaCenter.clone();",
+    "const rawBglPlacementX = Number(placement.x);",
+    "anchor.position.x = rawBglPlacementX;",
+    "anchor.position.z = rawBglPlacementZ;",
+    "anchor.rotation.y = Number(placement.yaw)",
+    "anchor.rotation.y += sourceAxisYawDelta;",
+    "const sourceModelOriginRelocationX = 0;",
+    "const sourceModelOriginRelocationZ = 0;",
+    "uploadedJetwayA1RemoteSourceRotunda",
+    "uploadedJetwayA1LongFixedTerminalCorridor",
+    "const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = 3.5;",
+    "const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = 30;",
+    "const yawDelta = 0;",
+  ]) {
+    if (!elbow.includes(required)) throw new Error(`${elbowPath}: real-photo A1 compatibility is missing ${required}`);
+  }
+  for (const forbidden of [
+    "UploadedAirportJetwayA1AircraftSidePivot",
+    "bridgePivot.attach(root)",
+    "bridgePivot.rotation.y = yawDelta",
+    "anchor.rotation.y += yawDelta",
+    "a1-fixed-terminal-rotunda-aircraft-side-pivot-v1",
+    "const sourceRotundaTarget = new THREE.Vector3(Number(placement.x)",
+    "const sourceModelOriginRelocationX = anchor.position.x - rawBglPlacementX;",
+    "same-day-a1-photo-compact-solid-terminal-leg-fixed-wall",
+  ]) {
+    if (elbow.includes(forbidden)) throw new Error(`${elbowPath}: real-photo A1 compatibility found obsolete compact/destructive behavior ${forbidden}`);
+  }
+} else {
+  for (const required of [
+    sourceOwnershipAuthority,
+    "const sourceRotundaTarget = fixedRotundaCenter.clone();",
+    "const rawBglPlacementX = Number(placement.x);",
+    "anchor.rotation.y = Number(placement.yaw)",
+    "const rotatedSourceHeadingRotundaCenter = objectCenterInFleet",
+    "A1 FINAL wall-registered Rotunda-to-real-wall distance is invalid",
+    "const yawDelta = 0;",
+  ]) {
+    if (!elbow.includes(required)) throw new Error(`${elbowPath}: compatibility step found measured-wall intact A1 ownership missing ${required}`);
+  }
+  for (const forbidden of [
+    "UploadedAirportJetwayA1AircraftSidePivot",
+    "bridgePivot.attach(root)",
+    "bridgePivot.rotation.y = yawDelta",
+    "anchor.rotation.y += yawDelta",
+    "a1-fixed-terminal-rotunda-aircraft-side-pivot-v1",
+    "const sourceRotundaTarget = new THREE.Vector3(Number(placement.x)",
+    "A1 source Rotunda-to-real-wall distance is invalid",
+  ]) {
+    if (elbow.includes(forbidden)) throw new Error(`${elbowPath}: compatibility step found destructive/raw-origin A1 behavior ${forbidden}`);
+  }
 }
-for (const forbidden of [
-  "UploadedAirportJetwayA1AircraftSidePivot",
-  "bridgePivot.attach(root)",
-  "bridgePivot.rotation.y = yawDelta",
-  "anchor.rotation.y += yawDelta",
-  "a1-fixed-terminal-rotunda-aircraft-side-pivot-v1",
-  "const sourceRotundaTarget = new THREE.Vector3(Number(placement.x)",
-  "A1 source Rotunda-to-real-wall distance is invalid",
-]) {
-  if (elbow.includes(forbidden)) throw new Error(`${elbowPath}: compatibility step found destructive/raw-origin A1 behavior ${forbidden}`);
-}
+
 for (const required of [
   `bogieGroundContactAuthority !== "${bogieAuthority}"`,
   "Math.abs(bogieGroundClearance) > 0.015",
   "bogieGroundContactPointCount < 4",
   "bogieGroundContactClusterCount < 1",
   "bogieGroundHorizontalContactSpan < 0.35",
+  readinessAuthority,
+  "finalVisibleFit.correctedCabContactPlaneCovered === true",
+  "finalVisibleFit.correctedCabDoorLaterallyCovered === true",
+  "finalVisibleFit.cabTunnelCSeamGapMeters <= 0.12",
 ]) {
-  if (!readiness.includes(required)) throw new Error(`${readinessPath}: Tunnel-C bogie readiness is missing ${required}`);
+  if (!readiness.includes(required)) throw new Error(`${readinessPath}: Tunnel-C/Cab readiness is missing ${required}`);
+}
+if (readiness.includes("A1 final visible Cab did not reach grounded CRJ door")) {
+  throw new Error(`${readinessPath}: stale representative Cab-height veto survived final compatibility`);
 }
 
-console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. No A1 geometry preparer ran: measured structural-wall Rotunda position, decoded KPHX complete-parent heading, intact supplied hierarchy and Tunnel-C bogie ramp authority remain untouched.`);
+// Do not translate the supplied service stair away from Tunnel-C here. The final
+// Vite hook installs the aircraft-side stair solver only after the final visible
+// Cab/door normalization, where it swings the measured supplied stair triangles
+// around their upper attachment and verifies clearance against the exact CRJ
+// fuselage envelope. This compatibility stage remains geometry-neutral.
+
+console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. Final A1 compatibility now accepts ${usesRealPhotoGeometry ? photoAuthority : "the legacy measured-wall layout"} without changing terminal/aircraft geometry; exact supplied hierarchy, Tunnel-C bogie ramp authority, and staged physical Cab hood/door contact remain enforced, while the stale representative Cab-height proxy is rejected.`);

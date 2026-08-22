@@ -36,6 +36,26 @@ try {
   // remains mandatory and no supplied jetway geometry is changed.
   await import(`./prepare-a1-bgateg1-main-facade-after-split-v1.mjs?final-bgateg1=${Date.now()}`);
   await import(`./prepare-a1-original-bgateg1-node-authority-v1.mjs?final-source-node=${Date.now()}`);
+  // Late production preparers above this wrapper can rewrite the trainer after
+  // the ordinary inspection-control stage. Reinstall only the evidence-only A1
+  // attach command at the final handoff so the browser artifact itself exposes
+  // the already-existing controller at deployment=1.
+  await import(`./prepare-a1-final-visual-evidence-attach-runtime-v1.mjs?final-evidence-attach=${Date.now()}`);
+  // Construct the exact fleet first, let the outer Terminal 4 builder attach its
+  // group to the airport scene, then rigidly raycast-register all 58 gate parent/
+  // instance Y transforms to the rendered KPHX pavement. Readiness stays withheld
+  // until this deferred registration has completed.
+  await import(`./prepare-final-fleet-pavement-registration-v3.mjs?final-fleet-pavement=${Date.now()}`);
+  // Break the parent-attachment/readiness deadlock: authoredTerminal4Visual used
+  // to await the exact fleet before adding that fleet to the same environment
+  // that owns the concurrently loaded ADEX ground. Attach only the jetway group
+  // before that await; the terminal still joins at the normal validated handoff.
+  await import(`./prepare-terminal4-preawait-jetway-parent-attachment-v1.mjs?preawait-parent=${Date.now()}`);
+  // Patch the already-generated final pre-Vite geometry sequence so visible
+  // Tunnel-C support grounding runs AFTER the exact service-stair solve and BEFORE
+  // final bogie/contact evidence. This hook changes sequencing only; the actual
+  // support solver remains fail-closed and touches only disconnected A1 source islands.
+  await import(`./prepare-a1-visible-support-build-hook-v1.mjs?final-visible-support-hook=${Date.now()}`);
   await import("./build-production.mjs");
 } catch (error) {
   buildError = error;
@@ -55,10 +75,10 @@ try {
 if (buildError && restorationError) {
   throw new AggregateError(
     [buildError, restorationError],
-    "RampReady production build failed and exact jetway source restoration also failed.",
+    "RampReady production build failed and exact jetway source restoration also failed",
   );
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, then restored the committed jetway source byte-for-byte.");
+console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, attached the exact jetway group to the live environment before deferred pavement readiness, applied scene-ready rigid per-gate pavement registration, sequenced final exact-source service-stair and visible Tunnel-C support corrections before bogie evidence, then restored the committed jetway source byte-for-byte.");

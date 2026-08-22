@@ -10,6 +10,7 @@ const MAX_REAL_WALL_DISTANCE_METERS = 5.8;
 const MIN_REAL_WALL_DISTANCE_METERS = 2.9;
 const MIN_VISIBLE_FIXED_LEG_METERS = 1.2;
 const MAX_VISIBLE_FIXED_LEG_METERS = 3.6;
+const LIVE_FIT_AUTHORITY = "a1-final-visible-fleet-ready-physical-door-fit-v1";
 
 function read(path) {
   return fs.readFileSync(path, "utf8");
@@ -44,9 +45,9 @@ sourcePlaced = sourcePlaced.replace(
 write(sourcePlacedPath, sourcePlaced);
 
 // The supplied Rotunda stays intact, but the same-day A1 photos and overhead do
-// not show a tens-of-meters generated corridor. Keep the final wall->Rotunda leg
-// inside the authored/photo-registered envelope rather than widening it to a
-// generic structural-search distance.
+// not show a tens-of-meters generated corridor. Keep this historical compact-wall
+// stage bounded; the later Aug. 15 photo-dogleg stage deliberately replaces this
+// envelope with the long two-leg fixed route immediately before the final bundle.
 let installation = read(installationPath);
 installation = replaceAllKnown(
   installation,
@@ -130,11 +131,10 @@ for (const required of [
 }
 write(installationPath, installation);
 
-// Readiness must reject the long-corridor regression. Normalize every spelling
-// to the same-day A1 wall/Rotunda envelope. Late static-fleet preparers have
-// changed the exact text surrounding the mismatch predicate several times, so
-// the finalizer must seed the physical guards into the predicate generically
-// rather than depend on one historical A1-authority or chain-condition line.
+// Readiness must reject the compact-stage wall/Rotunda regression while also
+// accepting the current runtime architecture, where the physical V11 Cab fit is
+// performed directly on the visible fleet-ready path after source-integrity
+// validation. Do not depend on one historical shape of the big mismatch `if`.
 let readiness = read(readinessPath);
 const finalWallGuard = `a1TerminalWallDistance > ${MIN_REAL_WALL_DISTANCE_METERS} && a1TerminalWallDistance < ${MAX_REAL_WALL_DISTANCE_METERS}`;
 const finalVisibleLegGuard = `connectorVisibleLength > ${MIN_VISIBLE_FIXED_LEG_METERS} && connectorVisibleLength < ${MAX_VISIBLE_FIXED_LEG_METERS}`;
@@ -199,13 +199,28 @@ if (missingPhysicalConditions.length) {
     "          if (\n            count !== 58",
   ];
   const mismatchAnchor = mismatchAnchors.find((anchor) => readiness.includes(anchor));
-  if (!mismatchAnchor) {
-    throw new Error(`${readinessPath}: cannot locate final fleet readiness mismatch block for A1 physical guard insertion`);
+  if (mismatchAnchor) {
+    readiness = readiness.replace(
+      mismatchAnchor,
+      `          if (\n            ${missingPhysicalConditions.join("\n            || ")}\n            || ${mismatchAnchor.split("            ")[1]}`,
+    );
+  } else {
+    const liveFitAnchor = "          const finalVisibleFit = fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placements);";
+    const liveFitContract = [
+      liveFitAnchor,
+      `const FINAL_VISIBLE_FIT_AUTHORITY = "${LIVE_FIT_AUTHORITY}";`,
+      "if (!(Math.abs(finalVisibleFit.verticalGapMeters) <= 0.08))",
+      "controller.bind(a1Anchor);",
+      "controller.setDeployment(1);",
+    ];
+    for (const required of liveFitContract) {
+      if (!readiness.includes(required)) {
+        throw new Error(`${readinessPath}: final visible A1 physical-fit path is missing ${required}`);
+      }
+    }
+    const explicitGuard = `          if (${missingPhysicalConditions.join("\n            || ")}) {\n            throw new Error(\`A1 compact-stage wall/leg physical guard failed before final visible fit: wall=\${a1TerminalWallDistance} leg=\${connectorVisibleLength}\`);\n          }\n\n${liveFitAnchor}`;
+    readiness = readiness.replace(liveFitAnchor, explicitGuard);
   }
-  readiness = readiness.replace(
-    mismatchAnchor,
-    `          if (\n            ${missingPhysicalConditions.join("\n            || ")}\n            || ${mismatchAnchor.split("            ")[1]}`,
-  );
 }
 
 for (const forbidden of [
@@ -221,6 +236,16 @@ for (const forbidden of [
 for (const required of [finalWallGuard, finalVisibleLegGuard]) {
   if (!readiness.includes(required)) {
     throw new Error(`${readinessPath}: final photo-matched readiness is missing ${required}`);
+  }
+}
+if (readiness.includes("fitUploadedA1JetwayToRenderedCrjDoor")) {
+  for (const required of [
+    `const FINAL_VISIBLE_FIT_AUTHORITY = "${LIVE_FIT_AUTHORITY}";`,
+    "if (!(Math.abs(finalVisibleFit.verticalGapMeters) <= 0.08))",
+    "controller.bind(a1Anchor);",
+    "controller.setDeployment(1);",
+  ]) {
+    if (!readiness.includes(required)) throw new Error(`${readinessPath}: live A1 physical-fit guard is missing ${required}`);
   }
 }
 write(readinessPath, readiness);
@@ -277,4 +302,4 @@ for (const required of [
 }
 write(elbowPath, elbow);
 
-console.log(`Finalized A1 against the actual structural Terminal 4 wall with the same-day photo envelope: no T4_WALK target, wall distance ${MIN_REAL_WALL_DISTANCE_METERS}-${MAX_REAL_WALL_DISTANCE_METERS} m, visible terminal leg ${MIN_VISIBLE_FIXED_LEG_METERS}-${MAX_VISIBLE_FIXED_LEG_METERS} m, exact supplied Rotunda preserved, and only 0.18/0.12 m hidden seam overlaps.`);
+console.log(`Finalized A1 compact-stage wall guard with live fleet-ready V11 compatibility: no T4_WALK target, wall distance ${MIN_REAL_WALL_DISTANCE_METERS}-${MAX_REAL_WALL_DISTANCE_METERS} m, visible terminal leg ${MIN_VISIBLE_FIXED_LEG_METERS}-${MAX_VISIBLE_FIXED_LEG_METERS} m, exact supplied Rotunda preserved, live Cab fit/rebind required when present, and only 0.18/0.12 m hidden seam overlaps.`);
