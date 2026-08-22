@@ -29,18 +29,18 @@ let installation = fs.readFileSync(installationPath, "utf8");
   }
 
   const preferredAnchor = "  const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();";
-  // Do not key this insertion off the marker/name anywhere in the whole generated
-  // file. Later preparers can leave a stale marker or guard outside the resolver;
-  // the runtime threshold itself must exist in the resolver scope on every pass.
-  if (!placement.includes("const effectiveMinimumPreferredDot =")) {
-    if (!placement.includes(preferredAnchor)) throw new Error(`${placementPath}: preferred wall direction anchor is missing`);
+  const preferredIndex = placement.indexOf(preferredAnchor);
+  if (preferredIndex < 0) throw new Error(`${placementPath}: preferred wall direction anchor is missing`);
+  // Scope this check to the resolver body near `preferred`. A stale declaration or
+  // marker elsewhere in generated source must never suppress the runtime variable.
+  const resolverThresholdWindow = placement.slice(preferredIndex, preferredIndex + 1800);
+  if (!resolverThresholdWindow.includes("const effectiveMinimumPreferredDot =")) {
     placement = placement.replace(
       preferredAnchor,
       `${preferredAnchor}\n  // ${facadeConeMarker}: infer A1 from the exact decoded AIR_Jetway01 source pivot.\n  // sourcePlacedTerminal4Jetways passes originZ after the profile's +6.2 m scene offset.\n  const a1OriginIsExactA1 = Math.hypot(\n    originX - (-21.01),\n    originZ - (-16.15 + Number(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset[2] || 0)),\n  ) <= 0.75;\n  const effectiveMinimumPreferredDot = a1OriginIsExactA1\n    ? Math.max(Number(minimumPreferredDot), 0.5)\n    : Number(minimumPreferredDot);`,
     );
   }
 
-  // Normalize any earlier v5 guards to the origin-owned effective threshold.
   placement = placement
     .replaceAll("minimumPreferredDot > -1 && direction.dot(preferred) < minimumPreferredDot", "effectiveMinimumPreferredDot > -1 && direction.dot(preferred) < effectiveMinimumPreferredDot")
     .replaceAll("minimumPreferredDot > -1 && ((dx * preferred.x + dz * preferred.z) / distance) < minimumPreferredDot", "effectiveMinimumPreferredDot > -1 && ((dx * preferred.x + dz * preferred.z) / distance) < effectiveMinimumPreferredDot");
@@ -73,8 +73,6 @@ let installation = fs.readFileSync(installationPath, "utf8");
     }
   }
 
-  // Remove the legacy T4_WALK portal override on every generated pass. This was
-  // the wrong building relationship visible in the user's screenshots.
   placement = placement.replace(
     /\n\s*if \(jetway\.g === "A1"\) \{\s*const exactWalkwayPortalX = -30\.16857013;[\s\S]*?authority: "exact-T4_WALK-A1-terminal-portal-v25",\s*\}\);\s*\}/,
     `\n    // ${facadeConeMarker}: A1 keeps the authored apron-facing facade hit; no T4_WALK portal override.`,
