@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const path = "src/environment/sourcePlacedTerminal4Jetways.js";
-const marker = "a1-final-runtime-facade-cone-v10-remove-out-of-scope-derived-threshold";
+const marker = "a1-final-runtime-facade-cone-v11-unify-a1-origin-predicate";
 const originOwnedMarker = "a1-bgate1-preferred-facade-cone-v6-origin-owned";
 let source = fs.readFileSync(path, "utf8");
 
@@ -9,8 +9,8 @@ let source = fs.readFileSync(path, "utf8");
 // resolver's ray-search implementation and may inline, rename or remove individual
 // fallback locals. The resolver-local origin-owned authority is the primary source
 // of truth. This pass makes that authority self-contained and removes any stale
-// derived-threshold guards that earlier global text preparation accidentally placed
-// outside the resolver scope.
+// derived-threshold guards or stale A1-origin predicate names that earlier text
+// preparation left behind inside the resolver.
 if (!source.includes(originOwnedMarker)) {
   throw new Error(`${path}: origin-owned A1 facade cone authority is missing before final runtime normalization`);
 }
@@ -29,9 +29,10 @@ if (!resolver.includes(preferredNeedle)) {
   throw new Error(`${path}: final resolver preferred-direction anchor is missing`);
 }
 
-// Strip every older resolver-local threshold declaration, regardless of formatting,
-// then replace every legacy derived-threshold reference in this resolver with the
-// final self-contained threshold below.
+// Strip older local threshold declarations. The BGATE1 identity pass may have
+// inserted ray/vertex predicates that still reference a1OriginIsExactA1. Normalize
+// every such predicate to the final local authority before adding it back so the
+// browser cannot reach an undeclared variable after production generation.
 resolver = resolver.replace(
   /\n\s*const\s+a1FinalOriginIsA1\s*=\s*Math\.hypot\([\s\S]*?;\s*\n\s*const\s+a1FinalMinimumPreferredDot\s*=\s*a1FinalOriginIsA1[\s\S]*?;\s*/g,
   "\n",
@@ -41,6 +42,7 @@ resolver = resolver.replace(
   "\n",
 );
 resolver = resolver.replace(/\beffectiveMinimumPreferredDot\b/g, "a1FinalMinimumPreferredDot");
+resolver = resolver.replace(/\ba1OriginIsExactA1\b/g, "a1FinalOriginIsA1");
 
 const finalLocalAuthority = `${preferredNeedle}\n  // ${marker}\n  const a1FinalOriginIsA1 = Math.hypot(\n    originX - (-21.01),\n    originZ - (-16.15 + Number(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset[2] || 0)),\n  ) <= 0.75;\n  const a1FinalMinimumPreferredDot = a1FinalOriginIsA1 ? 0.5 : -1;`;
 resolver = resolver.replace(preferredNeedle, finalLocalAuthority);
@@ -88,10 +90,9 @@ if (distancePattern.test(resolver)
 source = source.slice(0, resolverStart) + resolver + source.slice(resolverEnd);
 
 // Earlier preparers historically searched the whole generated file when inserting
-// cone guards. That could leave an effectiveMinimumPreferredDot reference in an
-// unrelated function where the declaration can never exist. Neutralize only those
-// stale out-of-resolver references after the real resolver has been normalized.
-// The A1 resolver above remains strictly cone-limited by a1FinalMinimumPreferredDot.
+// cone guards. A stale derived threshold outside the resolver has no valid scope and
+// is diagnostic-only, so neutralize it. The A1 resolver above remains strictly
+// cone-limited by a1FinalMinimumPreferredDot.
 source = source.replace(/\beffectiveMinimumPreferredDot\b/g, "-1");
 
 // A1 must never be redirected to the retired hard-coded T4_WALK portal.
@@ -117,6 +118,9 @@ for (const required of [
     throw new Error(`${path}: final resolver lost required A1 facade-cone runtime guard: ${required}`);
   }
 }
+if (finalResolver.includes("a1OriginIsExactA1")) {
+  throw new Error(`${path}: stale A1 origin predicate survived inside final wall resolver`);
+}
 if (source.includes("effectiveMinimumPreferredDot")) {
   throw new Error(`${path}: stale derived A1 facade threshold survived final normalization anywhere in generated source`);
 }
@@ -128,4 +132,4 @@ if (source.includes("exact-T4_WALK-A1-terminal-portal-v25")) {
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Prepared ${marker}: preserved the resolver-local A1 facade cone, removed every stale out-of-scope derived threshold, and kept A3+ unrestricted.`);
+console.log(`Prepared ${marker}: unified A1 origin predicates inside the final wall resolver, preserved the BGATE1 facade cone, and kept A3+ unrestricted.`);
