@@ -7,7 +7,7 @@ const REMOTE_AUTHORITY = "a1-aug15-photo-genuinely-remote-rotunda-placement-v2";
 const TELEMETRY_AUTHORITY = "a1-final-photo-remote-rotunda-wall-telemetry-v1";
 const FINAL_ENDPOINT_AUTHORITY = "a1-final-photo-remote-rotunda-endpoint-republication-v1";
 const MIN_WALL_METERS = 18;
-const MAX_WALL_METERS = 30;
+const MAX_WALL_METERS = 35;
 
 let elbow = fs.readFileSync(elbowPath, "utf8");
 let placements = fs.readFileSync(placementsPath, "utf8");
