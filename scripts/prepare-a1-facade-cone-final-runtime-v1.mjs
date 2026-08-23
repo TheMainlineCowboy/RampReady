@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const path = "src/environment/sourcePlacedTerminal4Jetways.js";
-const marker = "a1-final-runtime-facade-cone-v13-normalize-reference-origin-global";
+const marker = "a1-final-runtime-facade-cone-v14-normalize-early-origin-global";
 const legacyOriginOwnedMarker = "a1-bgate1-preferred-facade-cone-v6-origin-owned";
 const earlyBgate1Marker = "a1-aug15-bgate1-facade-identity-before-wall-resolution-v1";
 const acceptedOriginAuthorities = [earlyBgate1Marker, legacyOriginOwnedMarker];
@@ -50,6 +50,7 @@ resolver = resolver.replace(
 resolver = resolver.replace(/\beffectiveMinimumPreferredDot\b/g, "a1FinalMinimumPreferredDot");
 resolver = resolver.replace(/\ba1OriginIsExactA1\b/g, "a1FinalOriginIsA1");
 resolver = resolver.replace(/\ba1ReferenceFacadeOriginIsA1\b/g, "a1FinalOriginIsA1");
+resolver = resolver.replace(/\ba1EarlyOriginIsA1\b/g, "a1FinalOriginIsA1");
 
 const finalLocalAuthority = `${preferredNeedle}\n  // ${marker}\n  const a1FinalOriginIsA1 = Math.min(\n    Math.hypot(originX - (-21.01), originZ - (-16.15)),\n    Math.hypot(originX - (-21.01), originZ - (-16.15 + Number(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset[2] || 0))),\n  ) <= 0.75;\n  const a1FinalMinimumPreferredDot = a1FinalOriginIsA1 ? 0.5 : -1;`;
 resolver = resolver.replace(preferredNeedle, finalLocalAuthority);
@@ -102,6 +103,7 @@ source = source.slice(0, resolverStart) + resolver + source.slice(resolverEnd);
 // resolver above retains the only authoritative A1 origin predicate.
 source = source.replace(/\ba1OriginIsExactA1\b/g, "false");
 source = source.replace(/\ba1ReferenceFacadeOriginIsA1\b/g, "false");
+source = source.replace(/\ba1EarlyOriginIsA1\b/g, "false");
 
 // Likewise, a stale derived threshold outside the resolver has no valid scope and is
 // diagnostic-only, so neutralize it. The A1 resolver above remains strictly
@@ -131,7 +133,7 @@ for (const required of [
     throw new Error(`${path}: final resolver lost required A1 facade-cone runtime guard: ${required}`);
   }
 }
-for (const stale of ["a1OriginIsExactA1", "a1ReferenceFacadeOriginIsA1", "effectiveMinimumPreferredDot"]) {
+for (const stale of ["a1OriginIsExactA1", "a1ReferenceFacadeOriginIsA1", "a1EarlyOriginIsA1", "effectiveMinimumPreferredDot"]) {
   if (finalResolver.includes(stale)) {
     throw new Error(`${path}: stale A1 facade predicate survived inside final wall resolver: ${stale}`);
   }
