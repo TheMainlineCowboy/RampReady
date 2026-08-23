@@ -42,18 +42,31 @@ if (!source.includes(authority)) {
 // material predicate while preserving the same material extraction. A3+ remain
 // unchanged because the filter is keyed to the exact A1 source origin.
 if (!placement.includes(facadeAuthority)) {
-  if (!placement.includes("const a1OriginIsExactA1 = Math.hypot(")
-    && !placement.includes("const a1FinalOriginIsA1 = Math.hypot(")) {
-    throw new Error(`${placementPath}: A1 origin-owned facade resolver is missing before BGATE1 identity lock`);
-  }
-
   const resolverStart = placement.indexOf("function findTerminalWallConnection(");
   const resolverEnd = placement.indexOf("\nfunction findTerminalWallDistance(", resolverStart);
   if (resolverStart < 0 || resolverEnd < 0) {
     throw new Error(`${placementPath}: terminal wall resolver boundaries are missing`);
   }
   let resolver = placement.slice(resolverStart, resolverEnd);
-  const a1Predicate = resolver.includes("a1OriginIsExactA1") ? "a1OriginIsExactA1" : "a1FinalOriginIsA1";
+
+  // Do not depend on a predicate installed by an earlier/later preparer. This
+  // stage can run against the clean tracked placement source, so establish A1
+  // ownership inside the resolver itself from the exact decoded A1 source
+  // origin. Accept both the raw BGL-local Z and the scene-offset Z form.
+  let a1Predicate = "a1ReferenceFacadeOriginIsA1";
+  if (!resolver.includes(`const ${a1Predicate} =`)) {
+    const preferredAnchor = "  const preferred = new THREE.Vector3(preferredX, 0, preferredZ).normalize();";
+    if (!resolver.includes(preferredAnchor)) {
+      throw new Error(`${placementPath}: preferred wall direction anchor is missing before BGATE1 identity lock`);
+    }
+    const rawA1X = -21.01;
+    const rawA1Z = -16.15;
+    const sceneA1Z = rawA1Z + 6.2;
+    resolver = resolver.replace(
+      preferredAnchor,
+      `${preferredAnchor}\n  const ${a1Predicate} = Math.min(\n    Math.hypot(originX - (${rawA1X}), originZ - (${rawA1Z})),\n    Math.hypot(originX - (${rawA1X}), originZ - (${sceneA1Z})),\n  ) <= 0.35;`,
+    );
+  }
 
   if (!resolver.includes("a1CandidateMaterialName")) {
     const materialAnchorPatterns = [
@@ -129,6 +142,7 @@ if (source.includes("const rotundaTerminalBranchDirection = bridgeDirection.clon
 
 for (const required of [
   facadeAuthority,
+  "a1ReferenceFacadeOriginIsA1",
   "a1CandidateMaterialName",
   "BGATE1",
   "a1CandidateMaterialNames",
