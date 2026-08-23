@@ -19,27 +19,34 @@ if (!preparedWrapperSource.includes("a1-photo-readiness-diagnostic-wording-toler
 }
 
 // The real Aug. 17 attached-state photos show a nearly level passenger bridge and
-// a continuous Tunnel-C/Cab joint. The old fitter could certify a steep tunnel and
-// then translate the Cab vertically by a large independent amount, producing the
-// visibly disconnected geometry that the screenshots exposed. Make those two gross
-// visual failures impossible to bundle while the connected-geometry repair proceeds.
+// a continuous Tunnel-C/Cab joint. The production chain can run this wrapper after
+// another preparer has already installed either guard, so make this pass idempotent:
+// preserve a current <=4 degree pitch guard and <=15 cm independent Cab correction,
+// otherwise install them from the known legacy forms. Never fail just because the
+// same fail-closed rule was installed earlier in the generation chain.
 const pitchGuardBefore = "  if (!(pitchRadians > 0.02 && pitchRadians < 0.14)) {";
 const pitchGuardAfter = "  if (!(pitchRadians > 0.02 && pitchRadians <= THREE.MathUtils.degToRad(4))) {";
 const cabAdjustmentAnchor = "  const cabVerticalAdjustment = targetYInAnchor - cabAssembly.front.floorY;";
-const cabAdjustmentGuard = `${cabAdjustmentAnchor}\n  // a1-aug17-attached-continuity-failclosed-v1\n  if (Math.abs(cabVerticalAdjustment) > 0.15) {\n    throw new Error(\`A1 attached Cab would disconnect from Tunnel-C: independent vertical adjustment=\${cabVerticalAdjustment} m; solve the connected bridge/support geometry instead\`);\n  }`;
+const continuityMarker = "a1-aug17-attached-continuity-failclosed-v1";
+const cabAdjustmentGuard = `${cabAdjustmentAnchor}\n  // ${continuityMarker}\n  if (Math.abs(cabVerticalAdjustment) > 0.15) {\n    throw new Error(\`A1 attached Cab would disconnect from Tunnel-C: independent vertical adjustment=\${cabVerticalAdjustment} m; solve the connected bridge/support geometry instead\`);\n  }`;
 
-if (!originalDoorFitSource.includes(pitchGuardBefore)) {
-  throw new Error("A1 door fitter lost the attached-state pitch guard anchor");
+let preparedDoorFitSource = originalDoorFitSource;
+if (preparedDoorFitSource.includes(pitchGuardBefore)) {
+  preparedDoorFitSource = preparedDoorFitSource.replace(pitchGuardBefore, pitchGuardAfter);
+} else if (!preparedDoorFitSource.includes("pitchRadians <= THREE.MathUtils.degToRad(4)")) {
+  throw new Error("A1 door fitter has neither the legacy nor current attached-state pitch guard; inspect generated fitter before adapting it");
 }
-if (!originalDoorFitSource.includes(cabAdjustmentAnchor)) {
-  throw new Error("A1 door fitter lost the Cab vertical-adjustment anchor");
+
+if (!preparedDoorFitSource.includes(continuityMarker)) {
+  if (!preparedDoorFitSource.includes(cabAdjustmentAnchor)) {
+    throw new Error("A1 door fitter has neither the Cab vertical-adjustment anchor nor the current attached-continuity guard");
+  }
+  preparedDoorFitSource = preparedDoorFitSource.replace(cabAdjustmentAnchor, cabAdjustmentGuard);
 }
-let preparedDoorFitSource = originalDoorFitSource
-  .replace(pitchGuardBefore, pitchGuardAfter)
-  .replace(cabAdjustmentAnchor, cabAdjustmentGuard);
+
 for (const required of [
   "THREE.MathUtils.degToRad(4)",
-  "a1-aug17-attached-continuity-failclosed-v1",
+  continuityMarker,
   "Math.abs(cabVerticalAdjustment) > 0.15",
 ]) {
   if (!preparedDoorFitSource.includes(required)) {
