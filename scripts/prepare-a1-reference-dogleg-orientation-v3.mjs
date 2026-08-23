@@ -36,30 +36,50 @@ if (!source.includes(authority)) {
   );
 }
 
-// The reference photos also make the terminal ownership unambiguous: A1 leaves
-// the tan BGATE1 Terminal 4 facade. A generic BGATE/DGATE/PHX_TERM400 hit is not
-// sufficient at this corner because the parking-side/perpendicular structures
-// are closer and previously won the fallback search. Keep A3+ unchanged, but
-// when the resolver is operating from the exact A1 source origin, reject every
-// ray/vertex candidate that is not BGATE1 source-facade geometry.
+// The reference photos make terminal ownership unambiguous: A1 leaves the tan
+// BGATE1 Terminal 4 facade. Do this inside the resolver body, and make the patch
+// tolerant of earlier preparers that may already have normalized material-name
+// handling. A3+ remain completely unchanged because the gate test is keyed to
+// the exact A1 source origin.
 if (!placement.includes(facadeAuthority)) {
   if (!placement.includes("const a1OriginIsExactA1 = Math.hypot(")) {
     throw new Error(`${placementPath}: A1 origin-owned facade resolver is missing before BGATE1 identity lock`);
   }
 
-  const castMaterialBlock = `      const material = materials[entry.face?.materialIndex ?? 0] ?? materials[0];\n      return /BGATE|DGATE|PHX_TERM400/i.test(material?.name || "");`;
-  const castReplacement = `      const material = materials[entry.face?.materialIndex ?? 0] ?? materials[0];\n      const materialName = String(material?.name || "");\n      // ${facadeAuthority}: the real A1 corridor belongs to BGATE1, never the nearby parking/side structure.\n      if (a1OriginIsExactA1 && !/BGATE1/i.test(materialName)) return false;\n      return /BGATE|DGATE|PHX_TERM400/i.test(materialName);`;
-  if (!placement.includes(castMaterialBlock)) {
-    throw new Error(`${placementPath}: authored-wall ray material filter is missing before BGATE1 identity lock`);
+  const resolverStart = placement.indexOf("function findTerminalWallConnection(");
+  const resolverEnd = placement.indexOf("\nfunction findTerminalWallDistance(", resolverStart);
+  if (resolverStart < 0 || resolverEnd < 0) {
+    throw new Error(`${placementPath}: terminal wall resolver boundaries are missing`);
   }
-  placement = placement.replace(castMaterialBlock, castReplacement);
+  let resolver = placement.slice(resolverStart, resolverEnd);
 
-  const vertexMaterialBlock = `    const materials = Array.isArray(node.material) ? node.material : [node.material];\n    if (!materials.some((material) => /BGATE|DGATE|PHX_TERM400/i.test(material?.name || ""))) return;`;
-  const vertexReplacement = `    const materials = Array.isArray(node.material) ? node.material : [node.material];\n    const materialNames = materials.map((material) => String(material?.name || ""));\n    if (a1OriginIsExactA1 && !materialNames.some((name) => /BGATE1/i.test(name))) return;\n    if (!materialNames.some((name) => /BGATE|DGATE|PHX_TERM400/i.test(name))) return;`;
-  if (!placement.includes(vertexMaterialBlock)) {
-    throw new Error(`${placementPath}: authored-wall vertex material filter is missing before BGATE1 identity lock`);
+  if (!resolver.includes("a1CandidateMaterialName")) {
+    const rayReturnPattern = /([ \t]*)return \/BGATE\|DGATE\|PHX_TERM400\/i\.test\((?:material\?\.name \|\| ""|materialName)\);/;
+    const rayMatch = resolver.match(rayReturnPattern);
+    if (!rayMatch) {
+      throw new Error(`${placementPath}: authored-wall ray material return is missing before BGATE1 identity lock`);
+    }
+    const indent = rayMatch[1];
+    resolver = resolver.replace(
+      rayReturnPattern,
+      `${indent}const a1CandidateMaterialName = String(typeof materialName !== "undefined" ? materialName : (material?.name || ""));\n${indent}// ${facadeAuthority}: A1 must hit the actual BGATE1 source facade, never the nearby parking/side structure.\n${indent}if (a1OriginIsExactA1 && !/BGATE1/i.test(a1CandidateMaterialName)) return false;\n${indent}return /BGATE|DGATE|PHX_TERM400/i.test(a1CandidateMaterialName);`,
+    );
   }
-  placement = placement.replace(vertexMaterialBlock, vertexReplacement);
+
+  if (!resolver.includes("a1CandidateMaterialNames")) {
+    const vertexPattern = /([ \t]*)if \(!materials\.some\(\(material\) => \/BGATE\|DGATE\|PHX_TERM400\/i\.test\(material\?\.name \|\| ""\)\)\) return;/;
+    const vertexMatch = resolver.match(vertexPattern);
+    if (!vertexMatch) {
+      throw new Error(`${placementPath}: authored-wall vertex material return is missing before BGATE1 identity lock`);
+    }
+    const indent = vertexMatch[1];
+    resolver = resolver.replace(
+      vertexPattern,
+      `${indent}const a1CandidateMaterialNames = materials.map((material) => String(material?.name || ""));\n${indent}if (a1OriginIsExactA1 && !a1CandidateMaterialNames.some((name) => /BGATE1/i.test(name))) return;\n${indent}if (!a1CandidateMaterialNames.some((name) => /BGATE|DGATE|PHX_TERM400/i.test(name))) return;`,
+    );
+  }
+
+  placement = placement.slice(0, resolverStart) + resolver + placement.slice(resolverEnd);
 }
 
 for (const required of [
@@ -78,8 +98,8 @@ if (source.includes("const rotundaTerminalBranchDirection = bridgeDirection.clon
 
 for (const required of [
   facadeAuthority,
-  "if (a1OriginIsExactA1 && !/BGATE1/i.test(materialName)) return false;",
-  "if (a1OriginIsExactA1 && !materialNames.some((name) => /BGATE1/i.test(name))) return;",
+  "if (a1OriginIsExactA1 && !/BGATE1/i.test(a1CandidateMaterialName)) return false;",
+  "if (a1OriginIsExactA1 && !a1CandidateMaterialNames.some((name) => /BGATE1/i.test(name))) return;",
 ]) {
   if (!placement.includes(required)) {
     throw new Error(`${placementPath}: final A1 BGATE1 facade identity output is missing ${required}`);
