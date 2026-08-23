@@ -12,13 +12,30 @@ if (!placement.includes(authority)) {
   }
   let resolver = placement.slice(resolverStart, resolverEnd);
 
-  const originPredicate = resolver.includes("a1FinalOriginIsA1")
+  let originPredicate = resolver.includes("a1FinalOriginIsA1")
     ? "a1FinalOriginIsA1"
     : resolver.includes("a1OriginIsExactA1")
       ? "a1OriginIsExactA1"
-      : null;
+      : resolver.includes("a1EarlyOriginIsA1")
+        ? "a1EarlyOriginIsA1"
+        : null;
+
+  // This pass intentionally runs before the later wall-normalization stages, so
+  // do not require a predicate that those later stages have not installed yet.
+  // Establish an early A1 identity directly from the decoded source placement.
+  // Accept both the raw BGL-local Z and the scene-offset Z so the lock remains
+  // valid before or after the placement offset has been applied.
   if (!originPredicate) {
-    throw new Error(`${placementPath}: A1 origin-owned wall resolver is missing before early BGATE1 lock`);
+    const preferredAnchor = resolver.match(/(^\s*const\s+preferred\s*=\s*new\s+THREE\.Vector3\([^\n]+\);)/m);
+    if (!preferredAnchor) {
+      throw new Error(`${placementPath}: preferred wall direction is missing before early BGATE1 lock`);
+    }
+    const indent = preferredAnchor[1].match(/^\s*/)?.[0] ?? "  ";
+    resolver = resolver.replace(
+      preferredAnchor[0],
+      `${preferredAnchor[0]}\n${indent}const a1EarlyOriginIsA1 = Math.min(\n${indent}  Math.hypot(originX - (-21.01), originZ - (-16.15)),\n${indent}  Math.hypot(originX - (-21.01), originZ - (-16.15 + (SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset?.[2] || 0))),\n${indent}) <= 1.0;`,
+    );
+    originPredicate = "a1EarlyOriginIsA1";
   }
 
   // Apply the photographic facade identity BEFORE the explicit A1 wall endpoint
@@ -76,6 +93,9 @@ if (!placement.includes(authority)) {
 
 for (const required of [authority, "a1EarlyCandidateMaterialName", "BGATE1", "a1EarlyCandidateMaterialNames"]) {
   if (!placement.includes(required)) throw new Error(`${placementPath}: early A1 BGATE1 wall lock is missing ${required}`);
+}
+if (!["a1FinalOriginIsA1", "a1OriginIsExactA1", "a1EarlyOriginIsA1"].some((token) => placement.includes(token))) {
+  throw new Error(`${placementPath}: early A1 BGATE1 wall lock has no A1 origin authority`);
 }
 
 fs.writeFileSync(placementPath, placement, "utf8");
