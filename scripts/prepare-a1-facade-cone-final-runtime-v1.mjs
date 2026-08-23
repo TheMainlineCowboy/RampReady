@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const path = "src/environment/sourcePlacedTerminal4Jetways.js";
-const marker = "a1-final-runtime-facade-cone-v11-unify-a1-origin-predicate";
+const marker = "a1-final-runtime-facade-cone-v12-neutralize-stale-a1-origin-global";
 const originOwnedMarker = "a1-bgate1-preferred-facade-cone-v6-origin-owned";
 let source = fs.readFileSync(path, "utf8");
 
@@ -90,8 +90,13 @@ if (distancePattern.test(resolver)
 source = source.slice(0, resolverStart) + resolver + source.slice(resolverEnd);
 
 // Earlier preparers historically searched the whole generated file when inserting
-// cone guards. A stale derived threshold outside the resolver has no valid scope and
-// is diagnostic-only, so neutralize it. The A1 resolver above remains strictly
+// A1 cone guards. Any stale a1OriginIsExactA1 reference outside the resolver has no
+// valid scope. Neutralize it fail-safe instead of allowing a browser ReferenceError.
+// The resolver above retains the only authoritative A1 origin predicate.
+source = source.replace(/\ba1OriginIsExactA1\b/g, "false");
+
+// Likewise, a stale derived threshold outside the resolver has no valid scope and is
+// diagnostic-only, so neutralize it. The A1 resolver above remains strictly
 // cone-limited by a1FinalMinimumPreferredDot.
 source = source.replace(/\beffectiveMinimumPreferredDot\b/g, "-1");
 
@@ -121,6 +126,9 @@ for (const required of [
 if (finalResolver.includes("a1OriginIsExactA1")) {
   throw new Error(`${path}: stale A1 origin predicate survived inside final wall resolver`);
 }
+if (source.includes("a1OriginIsExactA1")) {
+  throw new Error(`${path}: stale A1 origin predicate survived final normalization anywhere in generated source`);
+}
 if (source.includes("effectiveMinimumPreferredDot")) {
   throw new Error(`${path}: stale derived A1 facade threshold survived final normalization anywhere in generated source`);
 }
@@ -132,4 +140,4 @@ if (source.includes("exact-T4_WALK-A1-terminal-portal-v25")) {
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Prepared ${marker}: unified A1 origin predicates inside the final wall resolver, preserved the BGATE1 facade cone, and kept A3+ unrestricted.`);
+console.log(`Prepared ${marker}: unified A1 origin predicates inside the final wall resolver, neutralized stale out-of-scope A1 predicates, preserved the BGATE1 facade cone, and kept A3+ unrestricted.`);
