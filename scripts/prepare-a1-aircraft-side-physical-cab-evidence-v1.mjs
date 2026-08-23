@@ -27,6 +27,14 @@ if (!source.includes(measurementAnchor)) throw new Error(`${path}: physical evid
 if (!source.includes("cabCenterHorizontalSeparation = Math.hypot")) {
   const patch = `${measurementAnchor}\n    // ${marker}\n    const cabCenterX = finite(attached.inspectionAircraftLiveVisibleCabWorldX, 'live Cab center X');\n    const cabCenterZ = finite(attached.inspectionAircraftLiveVisibleCabWorldZ, 'live Cab center Z');\n    const doorCenterX = finite(attached.inspectionAircraftLiveVisibleDoorWorldX, 'live door center X');\n    const doorCenterZ = finite(attached.inspectionAircraftLiveVisibleDoorWorldZ, 'live door center Z');\n    const cabCenterHorizontalSeparation = Math.hypot(cabCenterX - doorCenterX, cabCenterZ - doorCenterZ);`;
   source = source.replace(measurementAnchor, patch);
+} else if (!source.includes(marker)) {
+  // The capture script may already contain the current physical measurements from a
+  // prior preparation pass. In that case, stamp the current authority beside the
+  // stable first measurement instead of incorrectly treating the missing comment
+  // marker as missing geometry/evidence logic.
+  const existingMeasurement = `    const cabCenterX = finite(attached.inspectionAircraftLiveVisibleCabWorldX, 'live Cab center X');`;
+  if (!source.includes(existingMeasurement)) throw new Error(`${path}: existing Cab-center measurement is missing`);
+  source = source.replace(existingMeasurement, `    // ${marker}\n${existingMeasurement}`);
 }
 
 const bogieGuard = `    if (Math.abs(bogieGroundClearance) > MAX_BOGIE_GROUND_CLEARANCE_METERS) throw new Error(\`A1 bogie is not grounded: \${bogieGroundClearance} m\`);`;
