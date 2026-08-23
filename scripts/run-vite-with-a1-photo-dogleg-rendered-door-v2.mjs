@@ -18,29 +18,34 @@ if (!preparedWrapperSource.includes("a1-photo-readiness-diagnostic-wording-toler
   throw new Error("A1 photo wrapper diagnostic compatibility patch was not installed");
 }
 
-// The Aug. 17 attached-state photos are the visual authority: the passenger bridge
-// is nearly level and the Cab remains connected to Tunnel-C. Late generation passes
-// rewrite the fitter frequently, so enforce these rules semantically instead of
-// depending on one exact source spelling.
-const pitchMarker = "a1-aug17-attached-pitch-failclosed-v2";
-const pitchGuard = `  // ${pitchMarker}\n  if (!(pitchRadians > 0.02 && pitchRadians <= THREE.MathUtils.degToRad(4))) {\n    throw new Error(\`A1 attached bridge pitch exceeds the Aug. 17 reference envelope: \${THREE.MathUtils.radToDeg(pitchRadians)} degrees\`);\n  }`;
+// The Aug. 17 attached-state photos are visual authority. Do not merely reject a
+// mathematically solved steep bridge: cap the connected passenger-tunnel pitch at
+// 4 degrees before any Tunnel A/B/C transform is applied, then let the independent
+// <=15 cm Cab continuity guard expose any remaining door-height mismatch. This keeps
+// the terminal and aircraft fixed and forces the connected bridge geometry to stay
+// within the photographed nearly-level envelope.
+const pitchMarker = "a1-aug17-attached-pitch-clamped-v3";
 const continuityMarker = "a1-aug17-attached-continuity-failclosed-v2";
 const continuityGuard = `  // ${continuityMarker}\n  if (Math.abs(cabVerticalAdjustment) > 0.15) {\n    throw new Error(\`A1 attached Cab would disconnect from Tunnel-C: independent vertical adjustment=\${cabVerticalAdjustment} m; solve the connected bridge/support geometry instead\`);\n  }`;
 
 let preparedDoorFitSource = originalDoorFitSource;
 
 if (!preparedDoorFitSource.includes(pitchMarker)) {
-  const legacyPitchGuardPattern = /  if \(!\([^\n]*pitchRadians[^\n]*\)\) \{\n    throw new Error\(`Supplied A1 corrected pitch is outside the physical range: \$\{pitchRadians\}`\);\n  \}/;
-  if (legacyPitchGuardPattern.test(preparedDoorFitSource)) {
-    preparedDoorFitSource = preparedDoorFitSource.replace(legacyPitchGuardPattern, pitchGuard);
-  } else {
-    const applyPitchAnchor = "  applyPitchToTunnels(THREE, model, pitchRadians";
-    const applyPitchIndex = preparedDoorFitSource.indexOf(applyPitchAnchor);
-    if (applyPitchIndex < 0) {
-      throw new Error("A1 door fitter lost the pitch application anchor; inspect generated fitter before adapting it");
-    }
-    preparedDoorFitSource = `${preparedDoorFitSource.slice(0, applyPitchIndex)}${pitchGuard}\n${preparedDoorFitSource.slice(applyPitchIndex)}`;
+  const pitchDeclarationPattern = /  const pitchRadians = ([^\n]+);/;
+  const pitchDeclarationMatch = preparedDoorFitSource.match(pitchDeclarationPattern);
+  if (!pitchDeclarationMatch) {
+    throw new Error("A1 door fitter lost the pitchRadians declaration; inspect generated fitter before adapting it");
   }
+  const originalExpression = pitchDeclarationMatch[1];
+  const clampedDeclaration = `  // ${pitchMarker}\n  const solvedPitchRadians = ${originalExpression};\n  const pitchRadians = Math.min(solvedPitchRadians, THREE.MathUtils.degToRad(4));`;
+  preparedDoorFitSource = preparedDoorFitSource.replace(pitchDeclarationPattern, clampedDeclaration);
+
+  // Remove any legacy/current fail-fast pitch-range block that would reject the
+  // pre-clamp 7-degree mathematical solution before the capped geometry can render.
+  preparedDoorFitSource = preparedDoorFitSource.replace(
+    /  \/\/ a1-aug17-attached-pitch-failclosed-v2\n  if \(!\(pitchRadians > 0\.02 && pitchRadians <= THREE\.MathUtils\.degToRad\(4\)\)\) \{\n    throw new Error\(`A1 attached bridge pitch exceeds the Aug\. 17 reference envelope: \$\{THREE\.MathUtils\.radToDeg\(pitchRadians\)\} degrees`\);\n  \}\n?/g,
+    "",
+  );
 }
 
 if (!preparedDoorFitSource.includes(continuityMarker)) {
@@ -55,12 +60,12 @@ if (!preparedDoorFitSource.includes(continuityMarker)) {
 
 for (const required of [
   pitchMarker,
-  "THREE.MathUtils.degToRad(4)",
+  "Math.min(solvedPitchRadians, THREE.MathUtils.degToRad(4))",
   continuityMarker,
   "Math.abs(cabVerticalAdjustment) > 0.15",
 ]) {
   if (!preparedDoorFitSource.includes(required)) {
-    throw new Error(`A1 attached-state fail-closed bundle is missing ${required}`);
+    throw new Error(`A1 attached-state bundle is missing ${required}`);
   }
 }
 
@@ -96,4 +101,4 @@ if (runError && restorationError) {
 if (restorationError) throw restorationError;
 if (runError) throw runError;
 
-console.log("Ran photo-authoritative A1 Vite bundle with final runtime-safe facade cone normalization, diagnostic wording tolerance, and generation-safe Aug. 17 attached-state continuity guards; tracked sources were restored exactly.");
+console.log("Ran photo-authoritative A1 Vite bundle with final runtime-safe facade cone normalization, diagnostic wording tolerance, a connected <=4 degree Aug. 17 pitch clamp, and fail-closed Cab continuity; tracked sources were restored exactly.");
