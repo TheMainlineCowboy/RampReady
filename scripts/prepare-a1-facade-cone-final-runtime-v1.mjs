@@ -1,18 +1,12 @@
 import fs from "node:fs";
 
 const path = "src/environment/sourcePlacedTerminal4Jetways.js";
-const marker = "a1-final-runtime-facade-cone-v14-normalize-early-origin-global";
+const marker = "a1-final-runtime-facade-cone-v15-dedupe-final-origin";
 const legacyOriginOwnedMarker = "a1-bgate1-preferred-facade-cone-v6-origin-owned";
 const earlyBgate1Marker = "a1-aug15-bgate1-facade-identity-before-wall-resolution-v1";
 const acceptedOriginAuthorities = [earlyBgate1Marker, legacyOriginOwnedMarker];
 let source = fs.readFileSync(path, "utf8");
 
-// Last A1 wall-normalization pass before Vite. Earlier production preparers own the
-// resolver's ray-search implementation and may inline, rename or remove individual
-// fallback locals. The resolver-local origin-owned authority is the primary source
-// of truth. The newer Aug. 15 BGATE1 lock runs earlier, before the explicit wall,
-// Rotunda and dogleg are built; accept that stronger authority as the preferred
-// source while retaining the older origin-owned marker for compatibility.
 if (!acceptedOriginAuthorities.some((authority) => source.includes(authority))) {
   throw new Error(`${path}: A1 origin-owned/BGATE1 facade authority is missing before final runtime normalization`);
 }
@@ -31,22 +25,41 @@ if (!resolver.includes(preferredNeedle)) {
   throw new Error(`${path}: final resolver preferred-direction anchor is missing`);
 }
 
-// Strip older local threshold declarations. The BGATE1 identity pass may have
-// inserted ray/vertex predicates that still reference older A1-origin names.
-// Normalize every such predicate to the final local authority before adding it
-// back so the browser cannot reach an undeclared variable after production generation.
+// Final-pass dedupe is deliberately broader than the historical cleanup. Earlier
+// BGATE1 preparers have emitted both Math.hypot(...) and Math.min(...) variants of
+// the same local A1-origin authority. Remove every complete declaration of the
+// final/legacy origin predicates and their derived thresholds before inserting one
+// canonical resolver-local authority. This prevents duplicate `const` declarations
+// from surviving into Vite while keeping the resolver semantics unchanged.
 resolver = resolver.replace(
-  /\n\s*const\s+a1FinalOriginIsA1\s*=\s*Math\.hypot\([\s\S]*?;\s*\n\s*const\s+a1FinalMinimumPreferredDot\s*=\s*a1FinalOriginIsA1[\s\S]*?;\s*/g,
+  /\n\s*const\s+a1FinalOriginIsA1\s*=\s*Math\.min\([\s\S]*?\)\s*<=\s*0\.75;\s*/g,
   "\n",
 );
 resolver = resolver.replace(
-  /\n\s*const\s+a1OriginIsExactA1\s*=\s*Math\.hypot\([\s\S]*?;\s*\n\s*const\s+effectiveMinimumPreferredDot\s*=\s*a1OriginIsExactA1[\s\S]*?;\s*/g,
+  /\n\s*const\s+a1FinalOriginIsA1\s*=\s*Math\.hypot\([\s\S]*?;\s*/g,
+  "\n",
+);
+resolver = resolver.replace(
+  /\n\s*const\s+a1FinalMinimumPreferredDot\s*=\s*a1FinalOriginIsA1\s*\?\s*0\.5\s*:\s*-1;\s*/g,
+  "\n",
+);
+resolver = resolver.replace(
+  /\n\s*const\s+a1OriginIsExactA1\s*=\s*Math\.hypot\([\s\S]*?;\s*/g,
+  "\n",
+);
+resolver = resolver.replace(
+  /\n\s*const\s+effectiveMinimumPreferredDot\s*=\s*a1OriginIsExactA1[\s\S]*?;\s*/g,
   "\n",
 );
 resolver = resolver.replace(
   /\n\s*const\s+a1ReferenceFacadeOriginIsA1\s*=\s*Math\.min\([\s\S]*?\)\s*<=\s*0\.35;\s*/g,
   "\n",
 );
+resolver = resolver.replace(
+  /\n\s*const\s+a1EarlyOriginIsA1\s*=\s*Math\.min\([\s\S]*?\)\s*<=\s*[0-9.]+;\s*/g,
+  "\n",
+);
+
 resolver = resolver.replace(/\beffectiveMinimumPreferredDot\b/g, "a1FinalMinimumPreferredDot");
 resolver = resolver.replace(/\ba1OriginIsExactA1\b/g, "a1FinalOriginIsA1");
 resolver = resolver.replace(/\ba1ReferenceFacadeOriginIsA1\b/g, "a1FinalOriginIsA1");
@@ -55,7 +68,6 @@ resolver = resolver.replace(/\ba1EarlyOriginIsA1\b/g, "a1FinalOriginIsA1");
 const finalLocalAuthority = `${preferredNeedle}\n  // ${marker}\n  const a1FinalOriginIsA1 = Math.min(\n    Math.hypot(originX - (-21.01), originZ - (-16.15)),\n    Math.hypot(originX - (-21.01), originZ - (-16.15 + Number(SOURCE_PLACED_TERMINAL4_JETWAY_PROFILE.sceneOffset[2] || 0))),\n  ) <= 0.75;\n  const a1FinalMinimumPreferredDot = a1FinalOriginIsA1 ? 0.5 : -1;`;
 resolver = resolver.replace(preferredNeedle, finalLocalAuthority);
 
-// Reinforce a shared cast helper when it survives this late generation stage.
 const castNeedle = "  const cast = (direction, far = 48) => {";
 if (resolver.includes(castNeedle)
   && !resolver.includes("direction.dot(preferred) < a1FinalMinimumPreferredDot) return null;")) {
@@ -65,9 +77,6 @@ if (resolver.includes(castNeedle)
   );
 }
 
-// Reinforce a recognizable radial fallback when present. Absence is allowed because
-// the origin-owned resolver may already have folded this restriction into the
-// raycast implementation or removed the generic radial fallback entirely.
 const radialPatterns = [
   /(^\s*const\s+direction\s*=\s*new THREE\.Vector3\(Math\.sin\(angle\),\s*0,\s*Math\.cos\(angle\)\);)/m,
   /(^\s*const\s+direction\s*=\s*new THREE\.Vector3\(Math\.sin\([^\n]+\),\s*0,\s*Math\.cos\([^\n]+\)\);)/m,
@@ -83,9 +92,6 @@ if (!resolver.includes("direction.dot(preferred) < a1FinalMinimumPreferredDot) c
   }
 }
 
-// Reinforce the nearest-authored-vertex fallback when its current implementation is
-// recognizable. Do not fail when a later preparer has replaced this fallback with a
-// different source-wall path; the accepted early/origin-owned authority remains mandatory.
 const distancePattern = /(^\s*const\s+distance\s*=\s*Math\.hypot\(dx,\s*dz\);)/m;
 if (distancePattern.test(resolver)
   && !resolver.includes("(dx * preferred.x + dz * preferred.z) / distance")) {
@@ -95,22 +101,22 @@ if (distancePattern.test(resolver)
   );
 }
 
+// A duplicate here means a future preparer emitted another authority shape that this
+// final normalizer does not understand. Fail before Vite rather than producing an
+// invalid bundle or silently choosing one declaration.
+const finalOriginDeclarationCount = (resolver.match(/\bconst\s+a1FinalOriginIsA1\b/g) || []).length;
+const finalThresholdDeclarationCount = (resolver.match(/\bconst\s+a1FinalMinimumPreferredDot\b/g) || []).length;
+if (finalOriginDeclarationCount !== 1 || finalThresholdDeclarationCount !== 1) {
+  throw new Error(`${path}: final A1 facade authority was not deduplicated cleanly (origin=${finalOriginDeclarationCount}, threshold=${finalThresholdDeclarationCount})`);
+}
+
 source = source.slice(0, resolverStart) + resolver + source.slice(resolverEnd);
 
-// Earlier preparers historically searched the whole generated file when inserting
-// A1 facade guards. Any stale A1-origin predicate outside the resolver has no valid
-// scope. Neutralize it fail-safe instead of allowing a browser ReferenceError. The
-// resolver above retains the only authoritative A1 origin predicate.
 source = source.replace(/\ba1OriginIsExactA1\b/g, "false");
 source = source.replace(/\ba1ReferenceFacadeOriginIsA1\b/g, "false");
 source = source.replace(/\ba1EarlyOriginIsA1\b/g, "false");
-
-// Likewise, a stale derived threshold outside the resolver has no valid scope and is
-// diagnostic-only, so neutralize it. The A1 resolver above remains strictly
-// cone-limited by a1FinalMinimumPreferredDot.
 source = source.replace(/\beffectiveMinimumPreferredDot\b/g, "-1");
 
-// A1 must never be redirected to the retired hard-coded T4_WALK portal.
 source = source.replace(
   /\n\s*if \(jetway\.g === "A1"\) \{\s*const exactWalkwayPortalX = -30\.16857013;[\s\S]*?authority: "exact-T4_WALK-A1-terminal-portal-v25",\s*\}\);\s*\}/g,
   `\n    // ${marker}: preserve the authored apron-facing BGATE1 facade hit; no T4_WALK portal override.`,
@@ -141,6 +147,10 @@ for (const stale of ["a1OriginIsExactA1", "a1ReferenceFacadeOriginIsA1", "a1Earl
     throw new Error(`${path}: stale A1 facade predicate survived final normalization anywhere in generated source: ${stale}`);
   }
 }
+if ((finalResolver.match(/\bconst\s+a1FinalOriginIsA1\b/g) || []).length !== 1
+  || (finalResolver.match(/\bconst\s+a1FinalMinimumPreferredDot\b/g) || []).length !== 1) {
+  throw new Error(`${path}: duplicate final A1 facade declarations survived normalization`);
+}
 if (!acceptedOriginAuthorities.some((authority) => source.includes(authority))) {
   throw new Error(`${path}: A1 origin-owned/BGATE1 facade authority was lost`);
 }
@@ -149,4 +159,4 @@ if (source.includes("exact-T4_WALK-A1-terminal-portal-v25")) {
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Prepared ${marker}: accepted the early BGATE1 authority, unified all A1 facade-origin predicates inside the final wall resolver, neutralized stale out-of-scope predicates, preserved the BGATE1 facade cone, and kept A3+ unrestricted.`);
+console.log(`Prepared ${marker}: deduplicated A1 facade-origin declarations, preserved the early BGATE1 authority and cone, neutralized stale out-of-scope predicates, and kept A3+ unrestricted.`);
