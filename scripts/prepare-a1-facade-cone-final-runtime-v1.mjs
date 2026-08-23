@@ -2,17 +2,19 @@ import fs from "node:fs";
 
 const path = "src/environment/sourcePlacedTerminal4Jetways.js";
 const marker = "a1-final-runtime-facade-cone-v12-neutralize-stale-a1-origin-global";
-const originOwnedMarker = "a1-bgate1-preferred-facade-cone-v6-origin-owned";
+const legacyOriginOwnedMarker = "a1-bgate1-preferred-facade-cone-v6-origin-owned";
+const earlyBgate1Marker = "a1-aug15-bgate1-facade-identity-before-wall-resolution-v1";
+const acceptedOriginAuthorities = [earlyBgate1Marker, legacyOriginOwnedMarker];
 let source = fs.readFileSync(path, "utf8");
 
 // Last A1 wall-normalization pass before Vite. Earlier production preparers own the
 // resolver's ray-search implementation and may inline, rename or remove individual
 // fallback locals. The resolver-local origin-owned authority is the primary source
-// of truth. This pass makes that authority self-contained and removes any stale
-// derived-threshold guards or stale A1-origin predicate names that earlier text
-// preparation left behind inside the resolver.
-if (!source.includes(originOwnedMarker)) {
-  throw new Error(`${path}: origin-owned A1 facade cone authority is missing before final runtime normalization`);
+// of truth. The newer Aug. 15 BGATE1 lock runs earlier, before the explicit wall,
+// Rotunda and dogleg are built; accept that stronger authority as the preferred
+// source while retaining the older origin-owned marker for compatibility.
+if (!acceptedOriginAuthorities.some((authority) => source.includes(authority))) {
+  throw new Error(`${path}: A1 origin-owned/BGATE1 facade authority is missing before final runtime normalization`);
 }
 
 const resolverMatch = source.match(/function findTerminalWallConnection\(([^)]*)\)\s*\{/);
@@ -77,7 +79,7 @@ if (!resolver.includes("direction.dot(preferred) < a1FinalMinimumPreferredDot) c
 
 // Reinforce the nearest-authored-vertex fallback when its current implementation is
 // recognizable. Do not fail when a later preparer has replaced this fallback with a
-// different source-wall path; the origin-owned authority remains mandatory.
+// different source-wall path; the accepted early/origin-owned authority remains mandatory.
 const distancePattern = /(^\s*const\s+distance\s*=\s*Math\.hypot\(dx,\s*dz\);)/m;
 if (distancePattern.test(resolver)
   && !resolver.includes("(dx * preferred.x + dz * preferred.z) / distance")) {
@@ -132,12 +134,12 @@ if (source.includes("a1OriginIsExactA1")) {
 if (source.includes("effectiveMinimumPreferredDot")) {
   throw new Error(`${path}: stale derived A1 facade threshold survived final normalization anywhere in generated source`);
 }
-if (!source.includes(originOwnedMarker)) {
-  throw new Error(`${path}: A1 origin-owned facade cone authority was lost`);
+if (!acceptedOriginAuthorities.some((authority) => source.includes(authority))) {
+  throw new Error(`${path}: A1 origin-owned/BGATE1 facade authority was lost`);
 }
 if (source.includes("exact-T4_WALK-A1-terminal-portal-v25")) {
   throw new Error(`${path}: wrong T4_WALK A1 override survived final runtime normalization`);
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Prepared ${marker}: unified A1 origin predicates inside the final wall resolver, neutralized stale out-of-scope A1 predicates, preserved the BGATE1 facade cone, and kept A3+ unrestricted.`);
+console.log(`Prepared ${marker}: accepted the early BGATE1 authority, unified A1 origin predicates inside the final wall resolver, neutralized stale out-of-scope A1 predicates, preserved the BGATE1 facade cone, and kept A3+ unrestricted.`);
