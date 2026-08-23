@@ -40,7 +40,7 @@ if (!source.includes("cabCenterHorizontalSeparation = Math.hypot")) {
 const bogieGuard = `    if (Math.abs(bogieGroundClearance) > MAX_BOGIE_GROUND_CLEARANCE_METERS) throw new Error(\`A1 bogie is not grounded: \${bogieGroundClearance} m\`);`;
 if (!source.includes(bogieGuard)) throw new Error(`${path}: bogie guard anchor is missing`);
 if (!source.includes("Aug. 17 outboard attached-state envelope")) {
-  source = source.replace(bogieGuard, `${bogieGuard}\n    if (cabCenterHorizontalSeparation < ${minimumCabCenterSeparationMeters}\n      || cabCenterHorizontalSeparation > ${maximumCabCenterSeparationMeters}) {\n      throw new Error(\`A1 Cab body is not in the Aug. 17 outboard attached-state envelope: center separation=\${cabCenterHorizontalSeparation} m\`);\n    }`);
+  source = source.replace(bogieGuard, `${bogieGuard}\n    if (cabCenterHorizontalSeparation < MIN_CAB_CENTER_HORIZONTAL_SEPARATION_METERS\n      || cabCenterHorizontalSeparation > MAX_CAB_CENTER_HORIZONTAL_SEPARATION_METERS) {\n      throw new Error(\`A1 Cab body is not in the Aug. 17 outboard attached-state envelope: center separation=\${cabCenterHorizontalSeparation} m\`);\n    }`);
 }
 
 const reportAnchor = `        verticallyCovered: attached.inspectionAircraftCabDoorVerticallyCovered,`;
@@ -54,8 +54,10 @@ for (const required of [
   currentAuthority,
   "inspectionAircraftLiveVisibleCabWorldX",
   "inspectionAircraftLiveVisibleDoorWorldX",
-  "cabCenterHorizontalSeparation < 2",
-  "cabCenterHorizontalSeparation > 6",
+  "MIN_CAB_CENTER_HORIZONTAL_SEPARATION_METERS = 2.0",
+  "MAX_CAB_CENTER_HORIZONTAL_SEPARATION_METERS = 6.0",
+  "cabCenterHorizontalSeparation < MIN_CAB_CENTER_HORIZONTAL_SEPARATION_METERS",
+  "cabCenterHorizontalSeparation > MAX_CAB_CENTER_HORIZONTAL_SEPARATION_METERS",
   "Aug. 17 outboard attached-state envelope",
 ]) {
   if (!source.includes(required)) throw new Error(`${path}: photo-authoritative Cab evidence is missing ${required}`);
