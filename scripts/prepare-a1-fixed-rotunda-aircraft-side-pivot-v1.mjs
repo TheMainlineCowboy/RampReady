@@ -144,4 +144,32 @@ for (const forbidden of [
   }
 }
 
-console.log(`Prepared A1 under ${photoAuthority} + ${doglegAuthority} + ${referenceMatchAuthority} + ${supportAuthority}: the complete exact Airport_Jetway.glb uses the decoded source model origin and calibrated physical bridge heading, its Rotunda remains remote, the real Terminal 4 facade is connected by the A1-only reference-matched fixed dogleg corridor carried by exactly two permanent ramp-supported columns, A3+ keep their short/direct connectors, and neither supplied children nor the aircraft target are moved to hide a bad terminal attachment.`);
+// The route launcher passes an exact inspection preset for browser evidence, but
+// prepare-terminal4-runtime regenerates the trainer without accepting that prop.
+// Re-assert the prop at the final runtime stage and apply it through the existing
+// real moveInspectionToPreset callback once the simulation is mounted. This is
+// evidence-only camera/inspection state; it does not move terminal, aircraft, or
+// any jetway geometry.
+const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
+let trainer = fs.readFileSync(trainerPath, "utf8");
+if (!trainer.includes('initialInspectionPreset = "a1",')) {
+  const signatureAnchor = '  initialInspectionMode = false,\n';
+  if (!trainer.includes(signatureAnchor)) throw new Error(`${trainerPath}: initial inspection mode signature anchor is missing`);
+  trainer = trainer.replace(signatureAnchor, `${signatureAnchor}  initialInspectionPreset = "a1",\n`);
+}
+const oldInitialInspectionEffect = `  useEffect(() => {\n    if (!initialInspectionMode) return undefined;\n    let cancelled = false;\n    let frameId = 0;\n    let attempts = 0;\n    const activate = () => {\n      if (cancelled) return;\n      attempts += 1;\n      if (simRef.current) {\n        if (!inspectionRef.current) toggleInspectionDrive();\n        return;\n      }\n      if (attempts < 600) frameId = window.requestAnimationFrame(activate);\n    };\n    frameId = window.requestAnimationFrame(activate);\n    return () => {\n      cancelled = true;\n      window.cancelAnimationFrame(frameId);\n    };\n  }, [initialInspectionMode, toggleInspectionDrive]);`;
+const newInitialInspectionEffect = `  useEffect(() => {\n    if (!initialInspectionMode) return undefined;\n    let cancelled = false;\n    let frameId = 0;\n    let attempts = 0;\n    const activate = () => {\n      if (cancelled) return;\n      attempts += 1;\n      if (simRef.current) {\n        if (!inspectionRef.current) toggleInspectionDrive();\n        const requestedPreset = Object.prototype.hasOwnProperty.call(INSPECTION_PRESETS, initialInspectionPreset)\n          ? initialInspectionPreset\n          : "a1";\n        moveInspectionToPreset(requestedPreset);\n        return;\n      }\n      if (attempts < 600) frameId = window.requestAnimationFrame(activate);\n    };\n    frameId = window.requestAnimationFrame(activate);\n    return () => {\n      cancelled = true;\n      window.cancelAnimationFrame(frameId);\n    };\n  }, [initialInspectionMode, initialInspectionPreset, moveInspectionToPreset, toggleInspectionDrive]);`;
+if (!trainer.includes(newInitialInspectionEffect)) {
+  if (!trainer.includes(oldInitialInspectionEffect)) throw new Error(`${trainerPath}: initial inspection activation effect anchor is missing`);
+  trainer = trainer.replace(oldInitialInspectionEffect, newInitialInspectionEffect);
+}
+for (const required of [
+  'initialInspectionPreset = "a1",',
+  "moveInspectionToPreset(requestedPreset);",
+  "[initialInspectionMode, initialInspectionPreset, moveInspectionToPreset, toggleInspectionDrive]",
+]) {
+  if (!trainer.includes(required)) throw new Error(`${trainerPath}: exact initial inspection preset wiring is missing ${required}`);
+}
+fs.writeFileSync(trainerPath, trainer, "utf8");
+
+console.log(`Prepared A1 under ${photoAuthority} + ${doglegAuthority} + ${referenceMatchAuthority} + ${supportAuthority}: the complete exact Airport_Jetway.glb uses the decoded source model origin and calibrated physical bridge heading, its Rotunda remains remote, the real Terminal 4 facade is connected by the A1-only reference-matched fixed dogleg corridor carried by exactly two permanent ramp-supported columns, A3+ keep their short/direct connectors, neither supplied children nor the aircraft target are moved to hide a bad terminal attachment, and exact requested inspection presets survive final runtime regeneration.`);
