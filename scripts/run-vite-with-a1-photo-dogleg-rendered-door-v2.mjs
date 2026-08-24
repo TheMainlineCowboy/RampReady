@@ -75,6 +75,12 @@ try {
   await writeFile(wrapperPath, preparedWrapperSource, "utf8");
   await writeFile(doorFitPath, preparedDoorFitSource, "utf8");
   await import(`./prepare-a1-facade-cone-final-runtime-v1.mjs?final-cone=${Date.now()}`);
+  // Final runtime ownership is fixed-aircraft-first: the historical inspection
+  // pose stage may leave a cached-Cab prerequisite in the generated trainer even
+  // though later physical contact uses the fixed authored CRJ. Remove that stale
+  // prerequisite immediately before the exact Vite bundle so it cannot put the
+  // whole airport into load-error before the live Cab-surface solver runs.
+  await import(`./prepare-a1-retire-inspection-cab-prerequisite-v1.mjs?final-fixed-aircraft=${Date.now()}`);
   await import(`./run-vite-with-a1-photo-dogleg-rendered-door-v1.mjs?diagnostic-compat=${Date.now()}`);
 } catch (error) {
   runError = error;
@@ -101,4 +107,4 @@ if (runError && restorationError) {
 if (restorationError) throw restorationError;
 if (runError) throw runError;
 
-console.log("Ran photo-authoritative A1 Vite bundle with final runtime-safe facade cone normalization, diagnostic wording tolerance, a connected <=4 degree Aug. 17 pitch clamp, and fail-closed Cab continuity; tracked sources were restored exactly.");
+console.log("Ran photo-authoritative A1 Vite bundle with final runtime-safe facade cone normalization, retired cached-Cab inspection prerequisite, diagnostic wording tolerance, a connected <=4 degree Aug. 17 pitch clamp, and fail-closed Cab continuity; tracked sources were restored exactly.");
