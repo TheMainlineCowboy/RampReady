@@ -3,6 +3,7 @@ import RampReadyStandupTrainer from "./RampReadyStandupTrainerTerminal4.jsx";
 import {
   DEFAULT_EQUIPMENT_ID,
   EQUIPMENT_PROFILES,
+  INSPECTION_EQUIPMENT_ID,
   getEquipmentProfile,
   isEquipmentLaunchable,
 } from "../config/equipmentProfiles.js";
@@ -63,16 +64,15 @@ export default function PushbackTrainer() {
 
   const launch = useCallback((mode) => {
     setLaunchMode(mode);
-    setActiveEquipmentId(selectedEquipmentId);
+    setActiveEquipmentId(mode === "inspection" ? INSPECTION_EQUIPMENT_ID : selectedEquipmentId);
   }, [selectedEquipmentId]);
 
-  // Keep the equipment selector as the real default route. The query string is
-  // an evidence-only launch request applied after the normal initial state has
-  // mounted, so production/user navigation remains unchanged without a query.
+  // Evidence URLs launch the same manager inspection vehicle as the user-facing
+  // Inspect button. The selected pushback tug is training equipment only.
   useEffect(() => {
     if (!initialInspectionPreset || activeEquipmentId) return;
     setLaunchMode("inspection");
-    setActiveEquipmentId(DEFAULT_EQUIPMENT_ID);
+    setActiveEquipmentId(INSPECTION_EQUIPMENT_ID);
   }, [activeEquipmentId, initialInspectionPreset]);
 
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function PushbackTrainer() {
         <section className="rr-equipment-panel">
           <p className="rr-equipment-kicker">RampReady · PHX Terminal 4</p>
           <h1 id="equipment-heading">Choose pushback equipment</h1>
-          <p className="rr-equipment-intro">Train the pushback procedure, or launch directly into an unrestricted tug inspection of the airport.</p>
+          <p className="rr-equipment-intro">Choose a pushback tug for training, or use the manager Kubota RTV to inspect the airport.</p>
           <div className="rr-equipment-grid" role="radiogroup" aria-label="Pushback equipment">
             {EQUIPMENT_PROFILES.map((profile) => {
               const selected = profile.id === selectedEquipmentId;
@@ -151,11 +151,11 @@ export default function PushbackTrainer() {
           <div className="rr-equipment-actions">
             <div>
               <b>Selected:</b> {selectedEquipment.label}<br />
-              <span>{selectedEquipment.available ? "Available in the current simulator runtime." : "Cannot launch until its actual runtime model is committed and verified."}</span>
+              <span>{selectedEquipment.available ? "Available for pushback training." : "Cannot launch until its actual runtime model is committed and verified."}</span>
             </div>
             <div className="rr-launch-actions">
               <button type="button" disabled={!launchable} onClick={() => launch("training")}>Start training</button>
-              <button type="button" disabled={!launchable} onClick={() => launch("inspection")}>Drive tug / inspect airport</button>
+              <button type="button" onClick={() => launch("inspection")}>Manager Kubota / inspect airport</button>
             </div>
           </div>
         </section>
