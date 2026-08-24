@@ -6,27 +6,28 @@ const elbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const sourcePlacedPath = "src/environment/sourcePlacedTerminal4Jetways.js";
 let source = fs.readFileSync(trainerPath, "utf8");
 
-const finalMarker = "final-a1-acceptance-authority-after-all-preparers-v7-intact-source-bogie";
+const legacyFinalMarker = "final-a1-acceptance-authority-after-all-preparers-v7-intact-source-bogie";
 const workflowMarker = "final-a1-acceptance-authority-after-all-preparers-v1";
 const sourceOwnershipAuthority = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";
 const photoAuthority = "a1-real-photo-remote-rotunda-fixed-corridor-v1";
 const bogieAuthority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
 const readinessAuthority = "a1-final-visible-fit-physical-surface-readiness-v4-defer-center-y-to-final-proof";
-const compatibilityComment = `// ${workflowMarker} compatibility-alias-only; geometry remains ${finalMarker}`;
+const compatibilityComment = `// ${workflowMarker} compatibility-alias-only; geometry remains ${photoAuthority}`;
 
-if (!source.includes(finalMarker)) {
-  throw new Error(`${trainerPath}: current intact-source A1 final marker is missing`);
-}
-if (!source.includes(compatibilityComment)) {
-  const markerIndex = source.indexOf(`// ${finalMarker}`);
-  if (markerIndex < 0) throw new Error(`${trainerPath}: cannot locate v7 final marker for compatibility alias`);
-  const lineEnd = source.indexOf("\n", markerIndex);
-  const insertAt = lineEnd >= 0 ? lineEnd + 1 : source.length;
+// The Aug. 15 long-route A1 path retired the compact-era v7 final marker. Do not
+// make production depend on that historical token: the current source files below
+// are independently checked for the photo-authoritative corridor/Rotunda ownership,
+// exact Tunnel-C bogie contact, fixed-aircraft Cab proof and intact supplied GLB.
+// Keep accepting the old marker when it is present on an older prepared tree, but
+// never require or recreate it.
+if (!source.includes(workflowMarker)) {
+  const stableEvidenceToken = "terminal4UploadedJetwayBogieGroundContactAuthority";
+  const evidenceIndex = source.indexOf(stableEvidenceToken);
+  const insertAt = evidenceIndex >= 0 ? source.lastIndexOf("\n", evidenceIndex) + 1 : 0;
   source = `${source.slice(0, insertAt)}${compatibilityComment}\n${source.slice(insertAt)}`;
 }
 
 for (const token of [
-  finalMarker,
   workflowMarker,
   "inspectionAircraftLandingGearContactPatchCount",
   "inspectionAircraftNoseTireContact",
@@ -159,4 +160,4 @@ if (readiness.includes("A1 final visible Cab did not reach grounded CRJ door")) 
 // around their upper attachment and verifies clearance against the exact CRJ
 // fuselage envelope. This compatibility stage remains geometry-neutral.
 
-console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${finalMarker}. Final A1 compatibility now accepts ${usesRealPhotoGeometry ? photoAuthority : "the legacy measured-wall layout"} without changing terminal/aircraft geometry; exact supplied hierarchy, Tunnel-C bogie ramp authority, and staged physical Cab hood/door contact remain enforced, while the stale representative Cab-height proxy is rejected.`);
+console.log(`Published ${workflowMarker} as a compatibility-only token while retaining ${usesRealPhotoGeometry ? photoAuthority : "the legacy measured-wall layout"}. Historical marker ${legacyFinalMarker} is optional. Final A1 compatibility verifies exact supplied hierarchy, Tunnel-C bogie ramp authority, and staged physical Cab hood/door contact without restoring compact-era geometry or the stale representative Cab-height proxy.`);
