@@ -112,6 +112,7 @@ try {
   await runNode("scripts/prepare-a1-unified-aircraft-pose-v1.mjs");
   await runNode("scripts/prepare-a1-fixed-rotunda-aircraft-side-pivot-v1.mjs");
   await runNode("scripts/prepare-a1-final-physical-door-fit-controller-rebase-v1.mjs");
+  await runNode("scripts/prepare-a1-aircraft-side-tunnel-c-support-v2.mjs");
   await runNode("scripts/prepare-a1-final-walkway-hierarchy-exclusion-v1.mjs");
   await runNode("scripts/prepare-a1-final-source-direction-candidate-filter-v1.mjs");
   await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
