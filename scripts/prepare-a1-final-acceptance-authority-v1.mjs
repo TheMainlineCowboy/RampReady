@@ -23,7 +23,10 @@ const staleAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
 const finalAuthority = "a1-single-aircraft-pose-training-and-free-drive-v1";
 const cameraAuthority = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const cameraLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";
-const visualAuthority = "same-day-a1-continuous-source-measured-solid-closed-grounded-v2";
+// The retired same-day compact visual authority was removed with the short-wall
+// A1 model. Final acceptance must now require the Aug. 15 long fixed corridor /
+// dogleg / remote-Rotunda authority that is produced by the current A1 path.
+const visualAuthority = "a1-real-photo-remote-rotunda-fixed-corridor-v1";
 const jetwayGroundAuthority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
 const sourceOwnershipAuthority = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";
 const sourceWallAuthority = "a1-measured-real-wall-preserved-rotunda-v2";
@@ -166,6 +169,7 @@ for (const required of [
 for (const forbidden of [
   staleAuthority,
   "same-day-a1-continuous-compact-solid-closed-grounded-v1",
+  "same-day-a1-continuous-source-measured-solid-closed-grounded-v2",
   "inspectionAircraftLandingGearContactClusterCount",
   "named-landing-gear-wheel-bounds-v1",
   "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2",
