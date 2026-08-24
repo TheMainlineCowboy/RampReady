@@ -27,6 +27,9 @@ if (!source.includes(workflowMarker)) {
   source = `${source.slice(0, insertAt)}${compatibilityComment}\n${source.slice(insertAt)}`;
 }
 
+// Require only live evidence that still belongs to the Aug. 15/Aug. 17 A1 path.
+// The compact-era apron-opening/glass-corridor booleans were produced by the old
+// short wall-sleeve finalizer and are intentionally not part of long-route A1.
 for (const token of [
   workflowMarker,
   "inspectionAircraftLandingGearContactPatchCount",
@@ -40,8 +43,6 @@ for (const token of [
   "terminal4UploadedJetwayBogieGroundContactPointCount",
   "terminal4UploadedJetwayBogieGroundContactClusterCount",
   "terminal4UploadedJetwayBogieGroundHorizontalContactSpanMeters",
-  "terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed",
-  "terminal4UploadedJetwayA1NoGeneratedGlassCorridor",
 ]) {
   if (!source.includes(token)) throw new Error(`${trainerPath}: final compatible A1 marker is missing acceptance evidence ${token}`);
 }
