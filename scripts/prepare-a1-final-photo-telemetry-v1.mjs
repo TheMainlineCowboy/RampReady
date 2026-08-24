@@ -6,12 +6,29 @@ const readyPath = "src/environment/uploadedAirportJetwayFleetReadyV2.js";
 const REMOTE_AUTHORITY = "a1-aug15-photo-genuinely-remote-rotunda-placement-v2";
 const TELEMETRY_AUTHORITY = "a1-final-photo-remote-rotunda-wall-telemetry-v1";
 const FINAL_ENDPOINT_AUTHORITY = "a1-final-photo-remote-rotunda-endpoint-republication-v1";
+const EXPLICIT_WALL_AUTHORITY = "a1-real-photo-explicit-terminal-wall-v1";
+const ENDPOINT_BINDING_AUTHORITY = "a1-final-photo-remote-rotunda-explicit-bgate1-endpoints-v2";
 const MIN_WALL_METERS = 18;
 const MAX_WALL_METERS = 35;
 
 let elbow = fs.readFileSync(elbowPath, "utf8");
 let placements = fs.readFileSync(placementsPath, "utf8");
 let ready = fs.readFileSync(readyPath, "utf8");
+
+// The Aug. 15 remote-Rotunda generator historically reintroduced the old
+// group.userData measured-wall read after the early BGATE1 lock had already
+// moved wall ownership onto the explicit placement fields. At browser time that
+// legacy userData value is not guaranteed to exist yet, causing a load-error
+// before any visual evidence can render. Bind the final remote-Rotunda solve to
+// the same explicit BGATE1 endpoint that constructed the fixed corridor.
+const staleEndpointBlock = `  const measuredWallX = Number(group.userData.uploadedJetwayA1MeasuredTerminalWallX);\n  const measuredWallZ = Number(group.userData.uploadedJetwayA1MeasuredTerminalWallZ);\n  const rawTargetXForRotunda = Number(placement.targetX);\n  const rawTargetZForRotunda = Number(placement.targetZ);\n  if (![measuredWallX, measuredWallZ, rawTargetXForRotunda, rawTargetZForRotunda].every(Number.isFinite)) {\n    throw new Error("A1 photo remote-Rotunda wall/aircraft endpoints are missing");\n  }`;
+const explicitEndpointBlock = `  // ${ENDPOINT_BINDING_AUTHORITY}\n  const remotePhotoWallAuthority = String(placement.explicitTerminalWallAuthority || "");\n  if (remotePhotoWallAuthority !== "${EXPLICIT_WALL_AUTHORITY}") {\n    throw new Error(\`A1 remote-Rotunda explicit BGATE1 wall authority is invalid: \${remotePhotoWallAuthority}\`);\n  }\n  const measuredWallX = Number(placement.terminalWallX);\n  const measuredWallZ = Number(placement.terminalWallZ);\n  const rawTargetXForRotunda = Number(placement.targetX);\n  const rawTargetZForRotunda = Number(placement.targetZ);\n  if (![measuredWallX, measuredWallZ, rawTargetXForRotunda, rawTargetZForRotunda].every(Number.isFinite)) {\n    throw new Error(\`A1 photo remote-Rotunda explicit endpoints are missing: wall=\${measuredWallX},\${measuredWallZ}; aircraft=\${rawTargetXForRotunda},\${rawTargetZForRotunda}\`);\n  }\n  group.userData.uploadedJetwayA1MeasuredTerminalWallX = measuredWallX;\n  group.userData.uploadedJetwayA1MeasuredTerminalWallZ = measuredWallZ;`;
+if (!elbow.includes(ENDPOINT_BINDING_AUTHORITY)) {
+  if (!elbow.includes(staleEndpointBlock)) {
+    throw new Error(`${elbowPath}: stale remote-Rotunda endpoint block is missing before explicit BGATE1 endpoint repair`);
+  }
+  elbow = elbow.replace(staleEndpointBlock, explicitEndpointBlock);
+}
 
 // Publish the actual final endpoints used by the photo-authoritative A1 geometry.
 // Older environment telemetry was computed before the complete A1 parent moved to
@@ -49,6 +66,10 @@ if (!ready.includes(FINAL_ENDPOINT_AUTHORITY)) {
 }
 
 for (const required of [
+  ENDPOINT_BINDING_AUTHORITY,
+  "placement.explicitTerminalWallAuthority",
+  "const measuredWallX = Number(placement.terminalWallX);",
+  "const measuredWallZ = Number(placement.terminalWallZ);",
   TELEMETRY_AUTHORITY,
   "uploadedJetwayA1PhotoRemoteRotundaX",
   "uploadedJetwayA1PhotoRemoteRotundaY",
@@ -78,4 +99,4 @@ for (const required of [
 fs.writeFileSync(elbowPath, elbow, "utf8");
 fs.writeFileSync(placementsPath, placements, "utf8");
 fs.writeFileSync(readyPath, ready, "utf8");
-console.log(`Prepared ${TELEMETRY_AUTHORITY}/${FINAL_ENDPOINT_AUTHORITY}: browser A1 Final* endpoint evidence now republishes the actually rendered Aug. 15 remote Rotunda and explicit BGATE1 wall after the final A1 source passes, while the separate source-local wall metric remains untouched; geometry is unchanged.`);
+console.log(`Prepared ${TELEMETRY_AUTHORITY}/${FINAL_ENDPOINT_AUTHORITY}/${ENDPOINT_BINDING_AUTHORITY}: browser A1 Final* endpoint evidence now republishes the actually rendered Aug. 15 remote Rotunda and explicit BGATE1 wall after the final A1 source passes; remote-Rotunda construction reads the same explicit placement endpoint, and the separate source-local wall metric remains untouched; geometry is unchanged.`);
