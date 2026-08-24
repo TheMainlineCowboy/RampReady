@@ -3,8 +3,29 @@ import fs from "node:fs";
 const runtimePath = "src/environment/correctUploadedJetwayInstallationV1.js";
 const marker = "a1-explicit-measured-wall-to-exact-rotunda-collar-v17";
 const endpointAuthority = "explicit-bgateg1-wall-point-to-exact-rotunda-collar-v17";
+const doglegOpeningAuthority = "a1-aug15-remote-rotunda-dogleg-opening-v18";
 let source = fs.readFileSync(runtimePath, "utf8");
 let migrationApplied = source.includes(marker);
+
+// Aug. 15 reference authority: A1 reaches the remote Rotunda through a fixed
+// dogleg. Therefore the terminal facade is not required to lie on the exact
+// opposite extension of the Rotunda->Tunnel-A movable-bridge axis. That old
+// collinearity rule belonged to the retired compact straight-sleeve model and
+// currently aborts the correct long-route scene (fresh exact head measured
+// terminalFacingDot=-0.0933). Preserve the authored opening direction and dot as
+// diagnostics, but do not rotate the exact GLB or reject a valid dogleg because
+// the facade is off-axis.
+const obsoleteFacingGuard = `  const terminalFacingDot = openingDirection.dot(terminalDirection);\n  if (terminalFacingDot < 0.4) {\n    throw new Error(\`A1 exact authored Rotunda opening does not face the measured terminal wall: \${terminalFacingDot}\`);\n  }`;
+const diagnosticFacingGuard = `  const terminalFacingDot = openingDirection.dot(terminalDirection);\n  // ${doglegOpeningAuthority}\n  // Diagnostic only: A1's real fixed terminal corridor contains an elbow, so the\n  // BGATE1 wall vector is intentionally not collinear with the authored Rotunda\n  // opening / movable Tunnel-A axis. Do not rotate the supplied GLB to force it.\n  const terminalFacingThroughDogleg = Number.isFinite(terminalFacingDot);\n  if (!terminalFacingThroughDogleg) {\n    throw new Error(\"A1 exact authored Rotunda opening diagnostic is non-finite\");\n  }`;
+if (source.includes(obsoleteFacingGuard)) {
+  source = source.replace(obsoleteFacingGuard, diagnosticFacingGuard);
+}
+if (source.includes("A1 exact authored Rotunda opening does not face the measured terminal wall")) {
+  throw new Error(`${runtimePath}: retired compact straight-line Rotunda/wall facing veto survived Aug. 15 dogleg migration`);
+}
+if (!source.includes(doglegOpeningAuthority)) {
+  throw new Error(`${runtimePath}: Aug. 15 dogleg Rotunda opening authority was not installed`);
+}
 
 if (!migrationApplied) {
   const syntheticEndpoint = `  const terminalPoint = new THREE.Vector3(\n    rotundaOpening.centerX + terminalDirection.x * terminalDistance,\n    rotundaOpening.centerY,\n    rotundaOpening.centerZ + terminalDirection.z * terminalDistance,\n  );\n  const collarPoint = new THREE.Vector3(rotundaOpening.collarX, rotundaOpening.centerY, rotundaOpening.collarZ);`;
@@ -16,13 +37,13 @@ if (!migrationApplied) {
   // resurrect a scalar short sleeve merely to satisfy this legacy migration hook.
   if (!source.includes(syntheticEndpoint)) {
     fs.writeFileSync(runtimePath, source, "utf8");
-    console.log("Skipped retired A1 synthetic wall-endpoint migration; the Aug. 15 BGATE1 long fixed corridor/dogleg/remote-Rotunda path has already removed the compact endpoint.");
+    console.log("Preserved Aug. 15 A1 dogleg Rotunda-opening authority and skipped retired synthetic wall-endpoint migration; BGATE1 long fixed corridor/dogleg/remote-Rotunda path remains authoritative.");
     process.exit(0);
   }
 
   source = source.replace(
     syntheticEndpoint,
-    `  // ${marker}\n  // The final wall lock already carries the exact selected BGATE1 wall point in\n  // the same fleet-local coordinate frame as the transformed Rotunda. Do not\n  // rebuild that endpoint from a scalar distance along connectorToward: the\n  // authored Rotunda opening can differ from the wall normal by several degrees,\n  // which previously left the rendered sleeve beside the wall in overhead views.\n  const explicitTerminalWallX = Number(placement.terminalWallX);\n  const explicitTerminalWallZ = Number(placement.terminalWallZ);\n  if (![explicitTerminalWallX, explicitTerminalWallZ].every(Number.isFinite)) {\n    throw new Error("A1 explicit measured Terminal 4 wall point is missing from the final placement");\n  }\n  const syntheticTerminalPoint = new THREE.Vector3(\n    rotundaOpening.centerX + terminalDirection.x * terminalDistance,\n    rotundaOpening.centerY,\n    rotundaOpening.centerZ + terminalDirection.z * terminalDistance,\n  );\n  const terminalPoint = new THREE.Vector3(\n    explicitTerminalWallX,\n    rotundaOpening.centerY,\n    explicitTerminalWallZ,\n  );\n  const syntheticWallEndpointMissMeters = Math.hypot(\n    syntheticTerminalPoint.x - terminalPoint.x,\n    syntheticTerminalPoint.z - terminalPoint.z,\n  );\n  const collarPoint = new THREE.Vector3(rotundaOpening.collarX, rotundaOpening.centerY, rotundaOpening.collarZ);`,
+    `  // ${marker}\n  // The final wall lock already carries the exact selected BGATE1 wall point in\n  // the same fleet-local coordinate frame as the transformed Rotunda. Do not\n  // rebuild that endpoint from a scalar distance along connectorToward: the\n  // authored Rotunda opening can differ from the wall normal by several degrees,\n  // which previously left the rendered sleeve beside the wall in overhead views.\n  const explicitTerminalWallX = Number(placement.terminalWallX);\n  const explicitTerminalWallZ = Number(placement.terminalWallZ);\n  if (![explicitTerminalWallX, explicitTerminalWallZ].every(Number.isFinite)) {\n    throw new Error(\"A1 explicit measured Terminal 4 wall point is missing from the final placement\");\n  }\n  const syntheticTerminalPoint = new THREE.Vector3(\n    rotundaOpening.centerX + terminalDirection.x * terminalDistance,\n    rotundaOpening.centerY,\n    rotundaOpening.centerZ + terminalDirection.z * terminalDistance,\n  );\n  const terminalPoint = new THREE.Vector3(\n    explicitTerminalWallX,\n    rotundaOpening.centerY,\n    explicitTerminalWallZ,\n  );\n  const syntheticWallEndpointMissMeters = Math.hypot(\n    syntheticTerminalPoint.x - terminalPoint.x,\n    syntheticTerminalPoint.z - terminalPoint.z,\n  );\n  const collarPoint = new THREE.Vector3(rotundaOpening.collarX, rotundaOpening.centerY, rotundaOpening.collarZ);`,
   );
 
   const shellAnchor = `  const shellLength = visibleLength + rotundaOverlap + TERMINAL_HIDDEN_OVERLAP_METERS;`;
@@ -73,4 +94,4 @@ if (migrationApplied) {
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log("Connected A1's solid terminal sleeve from the exact measured BGATE1 wall point to the exact transformed Rotunda collar, retaining 0.18 m terminal and 0.12 m Rotunda hidden overlaps; the old scalar-direction endpoint is diagnostic only.");
+console.log("Preserved A1's authored Rotunda opening as movable-bridge authority while allowing the Aug. 15 fixed dogleg to approach BGATE1 off-axis; compact straight-wall facing validation is retired.");
