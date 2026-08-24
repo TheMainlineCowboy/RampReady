@@ -4,12 +4,22 @@ const runtimePath = "src/environment/correctUploadedJetwayInstallationV1.js";
 const marker = "a1-explicit-measured-wall-to-exact-rotunda-collar-v17";
 const endpointAuthority = "explicit-bgateg1-wall-point-to-exact-rotunda-collar-v17";
 let source = fs.readFileSync(runtimePath, "utf8");
+let migrationApplied = source.includes(marker);
 
-if (!source.includes(marker)) {
+if (!migrationApplied) {
   const syntheticEndpoint = `  const terminalPoint = new THREE.Vector3(\n    rotundaOpening.centerX + terminalDirection.x * terminalDistance,\n    rotundaOpening.centerY,\n    rotundaOpening.centerZ + terminalDirection.z * terminalDistance,\n  );\n  const collarPoint = new THREE.Vector3(rotundaOpening.collarX, rotundaOpening.centerY, rotundaOpening.collarZ);`;
+
+  // Aug. 15 long-route preparation intentionally retires the old compact/synthetic
+  // A1 terminal endpoint before this compatibility stage runs. In that state there
+  // is nothing for v17 to migrate: the BGATE1 facade -> fixed dogleg -> remote
+  // Rotunda path is owned by the later photo-authoritative route builders. Do not
+  // resurrect a scalar short sleeve merely to satisfy this legacy migration hook.
   if (!source.includes(syntheticEndpoint)) {
-    throw new Error(`${runtimePath}: final A1 synthetic wall endpoint is missing before explicit-wall migration`);
+    fs.writeFileSync(runtimePath, source, "utf8");
+    console.log("Skipped retired A1 synthetic wall-endpoint migration; the Aug. 15 BGATE1 long fixed corridor/dogleg/remote-Rotunda path has already removed the compact endpoint.");
+    process.exit(0);
   }
+
   source = source.replace(
     syntheticEndpoint,
     `  // ${marker}\n  // The final wall lock already carries the exact selected BGATE1 wall point in\n  // the same fleet-local coordinate frame as the transformed Rotunda. Do not\n  // rebuild that endpoint from a scalar distance along connectorToward: the\n  // authored Rotunda opening can differ from the wall normal by several degrees,\n  // which previously left the rendered sleeve beside the wall in overhead views.\n  const explicitTerminalWallX = Number(placement.terminalWallX);\n  const explicitTerminalWallZ = Number(placement.terminalWallZ);\n  if (![explicitTerminalWallX, explicitTerminalWallZ].every(Number.isFinite)) {\n    throw new Error("A1 explicit measured Terminal 4 wall point is missing from the final placement");\n  }\n  const syntheticTerminalPoint = new THREE.Vector3(\n    rotundaOpening.centerX + terminalDirection.x * terminalDistance,\n    rotundaOpening.centerY,\n    rotundaOpening.centerZ + terminalDirection.z * terminalDistance,\n  );\n  const terminalPoint = new THREE.Vector3(\n    explicitTerminalWallX,\n    rotundaOpening.centerY,\n    explicitTerminalWallZ,\n  );\n  const syntheticWallEndpointMissMeters = Math.hypot(\n    syntheticTerminalPoint.x - terminalPoint.x,\n    syntheticTerminalPoint.z - terminalPoint.z,\n  );\n  const collarPoint = new THREE.Vector3(rotundaOpening.collarX, rotundaOpening.centerY, rotundaOpening.collarZ);`,
@@ -42,21 +52,24 @@ if (!source.includes(marker)) {
     groupAnchor,
     `${groupAnchor}\n  group.userData.uploadedJetwayA1ConnectorEndpointAuthority = report.connectorEndpointAuthority;\n  group.userData.uploadedJetwayA1ConnectorSyntheticWallEndpointMissMeters = report.connectorSyntheticWallEndpointMissMeters;\n  group.userData.uploadedJetwayA1ConnectorWallHiddenOverlapMeters = report.connectorWallHiddenOverlapMeters;\n  group.userData.uploadedJetwayA1ConnectorRotundaHiddenOverlapMeters = report.connectorRotundaHiddenOverlapMeters;`,
   );
+  migrationApplied = true;
 }
 
-for (const required of [
-  marker,
-  endpointAuthority,
-  "const explicitTerminalWallX = Number(placement.terminalWallX);",
-  "const explicitTerminalWallZ = Number(placement.terminalWallZ);",
-  "syntheticWallEndpointMissMeters",
-  "connectorEndpointAuthority",
-  "uploadedJetwayA1ConnectorEndpointAuthority",
-]) {
-  if (!source.includes(required)) throw new Error(`${runtimePath}: final A1 explicit-wall connector is missing ${required}`);
-}
-if (source.includes("rotundaOpening.centerX + terminalDirection.x * terminalDistance,\n    rotundaOpening.centerY,\n    rotundaOpening.centerZ + terminalDirection.z * terminalDistance,\n  );\n  const collarPoint")) {
-  throw new Error(`${runtimePath}: stale synthetic A1 terminal endpoint survived explicit-wall migration`);
+if (migrationApplied) {
+  for (const required of [
+    marker,
+    endpointAuthority,
+    "const explicitTerminalWallX = Number(placement.terminalWallX);",
+    "const explicitTerminalWallZ = Number(placement.terminalWallZ);",
+    "syntheticWallEndpointMissMeters",
+    "connectorEndpointAuthority",
+    "uploadedJetwayA1ConnectorEndpointAuthority",
+  ]) {
+    if (!source.includes(required)) throw new Error(`${runtimePath}: final A1 explicit-wall connector is missing ${required}`);
+  }
+  if (source.includes("rotundaOpening.centerX + terminalDirection.x * terminalDistance,\n    rotundaOpening.centerY,\n    rotundaOpening.centerZ + terminalDirection.z * terminalDistance,\n  );\n  const collarPoint")) {
+    throw new Error(`${runtimePath}: stale synthetic A1 terminal endpoint survived explicit-wall migration`);
+  }
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
