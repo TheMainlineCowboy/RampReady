@@ -49,7 +49,7 @@ export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
     ? "RampReady_StandupPhysicsRig"
     : equipmentId === "manager-kubota"
       ? "RampReady_ManagerKubotaPhysicsRig"
-      : "RampReady_Lektro88PhysicsRig";
+      : "RampReady_LektroRig";
 
   const visual = new THREE.Group();
   visual.name = "VehicleFallbackVisual";
@@ -101,7 +101,8 @@ export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
     steeringPivots.push(profile.steeringMode === "rear" ? rearPivot : frontPivot);
   }
 
-  const captureAnchor = namedAnchor(THREE, "CaptureAnchor", [0, 0.34, profile.cradleOffset]);
+  const captureAnchorPosition = profile.captureAnchor || [0, 0.34, profile.cradleOffset];
+  const captureAnchor = namedAnchor(THREE, "CaptureAnchor", captureAnchorPosition);
   const operatorEye = namedAnchor(THREE, "OperatorEye", profile.operatorEye);
   const forwardLook = namedAnchor(THREE, "OperatorLook", profile.operatorLook);
   root.add(captureAnchor, operatorEye, forwardLook);
