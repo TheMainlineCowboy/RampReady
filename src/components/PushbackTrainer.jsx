@@ -3,7 +3,6 @@ import RampReadyStandupTrainer from "./RampReadyStandupTrainerTerminal4.jsx";
 import {
   DEFAULT_EQUIPMENT_ID,
   EQUIPMENT_PROFILES,
-  INSPECTION_EQUIPMENT_ID,
   getEquipmentProfile,
   isEquipmentLaunchable,
 } from "../config/equipmentProfiles.js";
@@ -64,15 +63,16 @@ export default function PushbackTrainer() {
 
   const launch = useCallback((mode) => {
     setLaunchMode(mode);
-    setActiveEquipmentId(mode === "inspection" ? INSPECTION_EQUIPMENT_ID : selectedEquipmentId);
+    setActiveEquipmentId(mode === "inspection" ? "manager-kubota" : selectedEquipmentId);
   }, [selectedEquipmentId]);
 
-  // Evidence URLs launch the same manager inspection vehicle as the user-facing
-  // Inspect button. The selected pushback tug is training equipment only.
+  // Keep the equipment selector as the real default route. The query string is
+  // an evidence-only launch request applied after the normal initial state has
+  // mounted, so production/user navigation remains unchanged without a query.
   useEffect(() => {
     if (!initialInspectionPreset || activeEquipmentId) return;
     setLaunchMode("inspection");
-    setActiveEquipmentId(INSPECTION_EQUIPMENT_ID);
+    setActiveEquipmentId("manager-kubota");
   }, [activeEquipmentId, initialInspectionPreset]);
 
   useEffect(() => {
@@ -155,7 +155,7 @@ export default function PushbackTrainer() {
             </div>
             <div className="rr-launch-actions">
               <button type="button" disabled={!launchable} onClick={() => launch("training")}>Start training</button>
-              <button type="button" onClick={() => launch("inspection")}>Manager Kubota / inspect airport</button>
+              <button type="button" onClick={() => launch("inspection")}>Drive tug / inspect airport — Manager Kubota</button>
             </div>
           </div>
         </section>
