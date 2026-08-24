@@ -10,6 +10,14 @@ on:
       - scripts/export-rendered-airport-obj.mjs
       - scripts/prepare-user-repair-export-hook.mjs
       - .github/workflows/export-user-repair-assets.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - scripts/export-glb-repair-pieces.mjs
+      - scripts/export-rendered-airport-obj.mjs
+      - scripts/prepare-user-repair-export-hook.mjs
+      - .github/workflows/export-user-repair-assets.yml
 
 permissions:
   contents: read
