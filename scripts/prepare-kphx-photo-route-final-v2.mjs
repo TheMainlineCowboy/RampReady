@@ -46,7 +46,11 @@ for (const path of paths) {
 
   source = source.replace(staleWaitPattern, (_match, indent) => {
     replacements += 1;
-    return `${indent}&& Number(data?.a1ExactRotundaToWallWorldMeters) >= ${MIN_FIXED_ROUTE_METERS}\n${indent}&& Number(data?.a1ExactRotundaToWallWorldMeters) <= ${MAX_FIXED_ROUTE_METERS}`;
+    // Keep this as a strict open lower bound because the exact-head KPHX workflow
+    // intentionally verifies the generated gate text with `> 18` before browser launch.
+    // The geometry envelope is unchanged in practice: a route exactly on the lower
+    // boundary is not photo-authoritative and should not certify readiness.
+    return `${indent}&& Number(data?.a1ExactRotundaToWallWorldMeters) > ${MIN_FIXED_ROUTE_METERS}\n${indent}&& Number(data?.a1ExactRotundaToWallWorldMeters) <= ${MAX_FIXED_ROUTE_METERS}`;
   });
   source = source.replace(staleInlineAssertion, (_match, runtimeName) => {
     replacements += 1;
