@@ -58,11 +58,10 @@ const result = await page.evaluate(() => {
     const position = geometry?.attributes?.position;
     if (!position || position.itemSize < 3) return { offset: offsetStart, triangles: 0, vertices: 0 };
     const index = geometry.index;
-    const vertex = new window.THREE.Vector3();
-    // window.THREE is not guaranteed to exist; use a tiny matrix-vector helper instead.
     const e = matrix.elements;
     const transform = (x, y, z) => {
-      const w = 1 / (e[3] * x + e[7] * y + e[11] * z + e[15] || 1);
+      const denominator = e[3] * x + e[7] * y + e[11] * z + e[15];
+      const w = denominator ? 1 / denominator : 1;
       return [
         (e[0] * x + e[4] * y + e[8] * z + e[12]) * w,
         (e[1] * x + e[5] * y + e[9] * z + e[13]) * w,
@@ -84,7 +83,6 @@ const result = await page.evaluate(() => {
       acceptedFaces.push(face);
     }
     if (!acceptedFaces.length) return { offset: offsetStart, triangles: 0, vertices: 0 };
-    // Keep original vertex indexing simple: write all vertices for every included mesh.
     lines.push(`o ${String(label || 'mesh').replace(/[^A-Za-z0-9._-]+/g, '_')}`);
     transformed.forEach((p) => lines.push(`v ${num(p[0])} ${num(p[1])} ${num(p[2])}`));
     acceptedFaces.forEach((f) => lines.push(`f ${f[0] + offsetStart} ${f[1] + offsetStart} ${f[2] + offsetStart}`));
