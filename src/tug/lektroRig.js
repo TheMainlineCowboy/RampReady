@@ -1,29 +1,8 @@
-export const LEKTRO_RIG_PROFILE = Object.freeze({
-  id: "lektro-standup-reference",
-  wheelbase: 3.6,
-  trackWidth: 2.28,
-  cradleOffset: 3.45,
-  operatorEye: Object.freeze([-0.45, 1.35, -2.15]),
-  operatorLook: Object.freeze([-0.45, 1.2, 8]),
-  captureAnchor: Object.freeze([0, 0.34, 3.45]),
-  liftTravel: 0.24,
-  bodyBounds: Object.freeze([2.35, 1.45, 5.5]),
-  steeringMode: "rear",
-});
+import { getVehiclePhysicsProfile } from "../config/vehiclePhysicsProfiles.js";
 
-export const STANDUP_RIG_PROFILE = Object.freeze({
-  id: "standup-authored-reference",
-  wheelbase: 2.7,
-  trackWidth: 1.32,
-  cradleOffset: 3.45,
-  // Operator stands on the right-hand platform behind the wheel, facing the capture end.
-  operatorEye: Object.freeze([0.58, 1.64, -1.28]),
-  operatorLook: Object.freeze([0.52, 1.15, 3.2]),
-  captureAnchor: Object.freeze([0, 0.34, 3.45]),
-  liftTravel: 0.24,
-  bodyBounds: Object.freeze([1.4161, 1.6721, 4.5855]),
-  steeringMode: "rear",
-});
+export const LEKTRO_RIG_PROFILE = getVehiclePhysicsProfile("lektro-88");
+export const STANDUP_RIG_PROFILE = getVehiclePhysicsProfile("standup-tug");
+export const MANAGER_KUBOTA_RIG_PROFILE = getVehiclePhysicsProfile("manager-kubota");
 
 function makeMaterial(THREE, color, roughness = 0.62, metalness = 0.05) {
   return new THREE.MeshStandardMaterial({ color, roughness, metalness });
@@ -60,38 +39,51 @@ function namedAnchor(THREE, name, position) {
 }
 
 export function getTugRigProfile(equipmentId) {
-  return equipmentId === "standup-tug" ? STANDUP_RIG_PROFILE : LEKTRO_RIG_PROFILE;
+  return getVehiclePhysicsProfile(equipmentId);
 }
 
 export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
   const profile = getTugRigProfile(equipmentId);
   const root = new THREE.Group();
-  root.name = equipmentId === "standup-tug" ? "RampReady_StandupPhysicsRig" : "RampReady_LektroRig";
+  root.name = equipmentId === "standup-tug"
+    ? "RampReady_StandupPhysicsRig"
+    : equipmentId === "manager-kubota"
+      ? "RampReady_ManagerKubotaPhysicsRig"
+      : "RampReady_Lektro88PhysicsRig";
 
   const visual = new THREE.Group();
-  visual.name = "TugVisual";
+  visual.name = "VehicleFallbackVisual";
   root.add(visual);
 
-  visual.add(box(THREE, 2.35, 0.42, 5.5, 0xb42324, 0, 0.55, -0.15));
-  visual.add(box(THREE, 2.08, 0.11, 4.95, 0x20242b, 0, 0.82, -0.2));
-  visual.add(box(THREE, 1.42, 0.32, 1.22, 0xb42324, 0, 0.92, -1.43));
+  const [bodyWidth, bodyHeight, bodyLength] = profile.bodyBounds;
+  const fallbackColor = equipmentId === "manager-kubota" ? 0xe56b17 : 0xb42324;
+  visual.add(box(THREE, bodyWidth, Math.min(0.48, bodyHeight * 0.34), bodyLength, fallbackColor, 0, 0.46, 0));
+  visual.add(box(THREE, bodyWidth * 0.88, 0.10, bodyLength * 0.86, 0x20242b, 0, 0.73, -0.06));
 
   const cradleLift = new THREE.Group();
   cradleLift.name = "CradleLift";
-  cradleLift.add(box(THREE, 1.8, 0.1, 0.95, 0x111318, 0, 0.22, 2.75));
-  cradleLift.add(box(THREE, 1.7, 0.12, 0.9, 0x111318, 0, 0.34, profile.cradleOffset));
-  for (const side of [-1, 1]) {
-    cradleLift.add(box(THREE, 0.16, 0.56, 0.85, 0xffcc00, side * 0.62, 0.55, profile.cradleOffset));
+  if (profile.role === "towbarless-pushback") {
+    const cradleWidth = Math.min(bodyWidth * 0.82, 1.8);
+    cradleLift.add(box(THREE, cradleWidth, 0.1, 0.80, 0x111318, 0, 0.22, profile.cradleOffset - 0.48));
+    cradleLift.add(box(THREE, cradleWidth * 0.94, 0.12, 0.72, 0x111318, 0, 0.34, profile.cradleOffset));
+    for (const side of [-1, 1]) {
+      cradleLift.add(box(THREE, 0.14, 0.50, 0.70, 0xffcc00, side * cradleWidth * 0.35, 0.51, profile.cradleOffset));
+    }
   }
   visual.add(cradleLift);
 
   const rollingWheels = [];
   const steeringPivots = [];
+  const axleHalfTrack = profile.trackWidth / 2;
+  const halfWheelbase = profile.wheelbase / 2;
+  const wheelRadius = equipmentId === "manager-kubota" ? 0.31 : equipmentId === "standup-tug" ? 0.22 : 0.48;
+  const wheelWidth = equipmentId === "manager-kubota" ? 0.20 : equipmentId === "standup-tug" ? 0.16 : 0.36;
+
   for (const side of [-1, 1]) {
     const rearPivot = new THREE.Group();
     rearPivot.name = side < 0 ? "RearSteer_L" : "RearSteer_R";
-    rearPivot.position.set(side * 1.14, 0.48, -1.65);
-    const rear = cylinder(THREE, 0.55, 0.42, 0x0c0d0f, 0, 0, 0);
+    rearPivot.position.set(side * axleHalfTrack, wheelRadius, -halfWheelbase);
+    const rear = cylinder(THREE, wheelRadius, wheelWidth, 0x0c0d0f, 0, 0, 0);
     rear.name = side < 0 ? "RearWheel_L" : "RearWheel_R";
     rearPivot.add(rear);
     rollingWheels.push(rear);
@@ -99,8 +91,8 @@ export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
 
     const frontPivot = new THREE.Group();
     frontPivot.name = side < 0 ? "FrontSteer_L" : "FrontSteer_R";
-    frontPivot.position.set(side * 1.12, 0.47, 1.95);
-    const front = cylinder(THREE, 0.5, 0.38, 0x0c0d0f, 0, 0, 0);
+    frontPivot.position.set(side * axleHalfTrack, wheelRadius, halfWheelbase);
+    const front = cylinder(THREE, wheelRadius, wheelWidth, 0x0c0d0f, 0, 0, 0);
     front.name = side < 0 ? "FrontWheel_L" : "FrontWheel_R";
     frontPivot.add(front);
     rollingWheels.push(front);
@@ -109,19 +101,18 @@ export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
     steeringPivots.push(profile.steeringMode === "rear" ? rearPivot : frontPivot);
   }
 
-  const captureAnchor = namedAnchor(THREE, "CaptureAnchor", profile.captureAnchor);
+  const captureAnchor = namedAnchor(THREE, "CaptureAnchor", [0, 0.34, profile.cradleOffset]);
   const operatorEye = namedAnchor(THREE, "OperatorEye", profile.operatorEye);
   const forwardLook = namedAnchor(THREE, "OperatorLook", profile.operatorLook);
   root.add(captureAnchor, operatorEye, forwardLook);
 
   function setSteering(angle) {
-    // A left steering-wheel command turns a rear-steer axle the opposite physical direction.
     const physicalWheelAngle = profile.steeringMode === "rear" ? -angle : angle;
     for (const pivot of steeringPivots) pivot.rotation.y = physicalWheelAngle;
   }
 
   function rotateWheels(distance) {
-    const radians = distance / 0.5;
+    const radians = distance / Math.max(0.12, wheelRadius);
     for (const wheel of rollingWheels) wheel.rotation.x += radians;
   }
 
@@ -165,5 +156,6 @@ export function validateTugRig(rig) {
   if (!Number.isFinite(rig?.profile?.cradleOffset) || rig.profile.cradleOffset <= 0) failures.push("invalid cradle offset");
   if (!Number.isFinite(rig?.profile?.wheelbase) || rig.profile.wheelbase <= 0) failures.push("invalid wheelbase");
   if (!["front", "rear"].includes(rig?.profile?.steeringMode)) failures.push("invalid steering mode");
+  if (!Number.isFinite(rig?.profile?.freeMaxSpeed) || rig.profile.freeMaxSpeed <= 0) failures.push("invalid free speed");
   return failures;
 }
