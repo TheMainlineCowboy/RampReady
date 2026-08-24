@@ -63,6 +63,7 @@ jobs:
       - name: Prepare photo-authoritative A1 visual verifier
         run: |
           node scripts/prepare-a1-photo-visual-verifiers-v1.mjs
+          node scripts/prepare-a1-final-reference-verifier-authority-v1.mjs
           node scripts/prepare-a1-terminal-joint-dataset-slice-v1.mjs
 
       - name: Capture A1 terminal-joint camera diagnostics
