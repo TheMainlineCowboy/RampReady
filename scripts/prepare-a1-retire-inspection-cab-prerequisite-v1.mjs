@@ -10,11 +10,21 @@ let source = fs.readFileSync(trainerPath, "utf8");
 // is fixed at the decoded A1 stand center and the supplied jetway must reach it.
 //
 // This final pre-Vite pass must be generation-order safe. Earlier preparers are
-// allowed to have already retired or rewritten the stale guard; absence of one
-// exact historical spelling is therefore not an error. The only fail-closed
-// requirement here is that the stale loader throw cannot survive and the current
-// fixed-aircraft / physical Cab-surface authorities must still be present.
-const staleFiniteGuard = /        if \(!\[exactA1CabContactX,[\s\S]*?exactA1CabDirectionZ\]\.every\(Number\.isFinite\)\) \{\n          throw new Error\("A1 inspection aircraft is missing the measured final Cab contact"\);\n        \}/;
+// allowed to have already retired or rewritten the stale guard. Remove the stale
+// loader veto semantically wherever it survives instead of depending on one exact
+// historical formatting of the surrounding if block.
+const staleLoaderThrow = /throw\s+new\s+Error\s*\(\s*["'`]A1 inspection aircraft is missing the measured final Cab contact["'`]\s*\)\s*;?/g;
+if (staleLoaderThrow.test(source)) {
+  source = source.replace(
+    staleLoaderThrow,
+    `void 0; // ${marker}: cached Cab contact is diagnostic-only; fixed aircraft remains authoritative`,
+  );
+}
+
+// Also retire the common historical finite-contact guard when its recognizable
+// structure survives. This is optional; the semantic throw cleanup above is the
+// fail-safe that prevents a regenerated spelling from aborting the browser.
+const staleFiniteGuard = /        if \(!\[exactA1CabContactX,[\s\S]*?exactA1CabDirectionZ\]\.every\(Number\.isFinite\)\) \{\n[\s\S]*?\n        \}/;
 if (staleFiniteGuard.test(source)) {
   source = source.replace(
     staleFiniteGuard,
@@ -32,7 +42,7 @@ if (source.includes(staleCoarseBlock)) {
   source = source.replace(staleCoarseBlock, fixedCoarseBlock);
 }
 
-// If an earlier stage already retired both historical blocks, stamp only a
+// If an earlier stage already retired the historical blocks, stamp only a
 // harmless source comment so repeated production preparation remains idempotent.
 if (!source.includes(marker)) {
   const anchor = "fixed-source-a1-parking-center-exact-authored-door-v2";
@@ -42,7 +52,10 @@ if (!source.includes(marker)) {
   source = source.replace(anchor, `${marker} ${anchor}`);
 }
 
-if (source.includes('throw new Error("A1 inspection aircraft is missing the measured final Cab contact")')) {
+// The stale loader message may be emitted by several historical code shapes. Its
+// mere survival is forbidden, independent of indentation, quote style or whether
+// the enclosing guard was rewritten by another preparer.
+if (/A1 inspection aircraft is missing the measured final Cab contact/.test(source)) {
   throw new Error(`${trainerPath}: stale inspection-aircraft Cab prerequisite survived final normalization`);
 }
 for (const required of [
