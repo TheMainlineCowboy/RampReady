@@ -1,97 +1,48 @@
 import fs from "node:fs";
 
 const runtimePath = "src/environment/correctUploadedJetwayInstallationV1.js";
-const marker = "a1-explicit-measured-wall-to-exact-rotunda-collar-v17";
-const endpointAuthority = "explicit-bgateg1-wall-point-to-exact-rotunda-collar-v17";
 const doglegOpeningAuthority = "a1-aug15-remote-rotunda-dogleg-opening-v18";
 let source = fs.readFileSync(runtimePath, "utf8");
-let migrationApplied = source.includes(marker);
 
-// Aug. 15 reference authority: A1 reaches the remote Rotunda through a fixed
-// dogleg. Therefore the terminal facade is not required to lie on the exact
-// opposite extension of the Rotunda->Tunnel-A movable-bridge axis. That old
-// collinearity rule belonged to the retired compact straight-sleeve model and
-// currently aborts the correct long-route scene (fresh exact head measured
-// terminalFacingDot=-0.0933). Preserve the authored opening direction and dot as
-// diagnostics, but do not rotate the exact GLB or reject a valid dogleg because
-// the facade is off-axis.
-const obsoleteFacingGuard = `  const terminalFacingDot = openingDirection.dot(terminalDirection);\n  if (terminalFacingDot < 0.4) {\n    throw new Error(\`A1 exact authored Rotunda opening does not face the measured terminal wall: \${terminalFacingDot}\`);\n  }`;
-const diagnosticFacingGuard = `  const terminalFacingDot = openingDirection.dot(terminalDirection);\n  // ${doglegOpeningAuthority}\n  // Diagnostic only: A1's real fixed terminal corridor contains an elbow, so the\n  // BGATE1 wall vector is intentionally not collinear with the authored Rotunda\n  // opening / movable Tunnel-A axis. Do not rotate the supplied GLB to force it.\n  const terminalFacingThroughDogleg = Number.isFinite(terminalFacingDot);\n  if (!terminalFacingThroughDogleg) {\n    throw new Error(\"A1 exact authored Rotunda opening diagnostic is non-finite\");\n  }`;
-if (source.includes(obsoleteFacingGuard)) {
-  source = source.replace(obsoleteFacingGuard, diagnosticFacingGuard);
+// Aug. 15 photo authority: A1 reaches the remote Rotunda through a fixed
+// terminal-side dogleg. The terminal facade therefore does NOT have to lie on
+// the straight opposite extension of the Rotunda -> Tunnel-A movable-bridge
+// axis. Any compact-era straight-line facing veto is invalid for A1 and must
+// never rotate the exact supplied Airport_Jetway.glb or reject the long route.
+//
+// This preparer runs more than once in production and later preparers can
+// regenerate the legacy guard with slightly different whitespace/thresholds.
+// Remove the actual throw semantically instead of matching one complete block.
+const staleFacingThrow = /throw\s+new\s+Error\(\s*`A1 exact authored Rotunda opening does not face the measured terminal wall:\s*\$\{terminalFacingDot\}`\s*\);/g;
+const staleFacingMessage = "A1 exact authored Rotunda opening does not face the measured terminal wall";
+
+if (staleFacingThrow.test(source)) {
+  staleFacingThrow.lastIndex = 0;
+  source = source.replace(
+    staleFacingThrow,
+    `/* ${doglegOpeningAuthority}: terminalFacingDot is diagnostic only for the real A1 fixed dogleg. */ void terminalFacingDot;`,
+  );
 }
-if (source.includes("A1 exact authored Rotunda opening does not face the measured terminal wall")) {
+
+// Stamp the current dogleg authority beside the diagnostic even when an older
+// preparer has already removed the throw. This keeps repeated preparation
+// idempotent without resurrecting the retired compact connector.
+if (!source.includes(doglegOpeningAuthority)) {
+  const dotAnchor = "const terminalFacingDot = openingDirection.dot(terminalDirection);";
+  if (source.includes(dotAnchor)) {
+    source = source.replace(dotAnchor, `${dotAnchor}\n  // ${doglegOpeningAuthority}`);
+  } else {
+    source += `\n// ${doglegOpeningAuthority}\n`;
+  }
+}
+
+if (source.includes(staleFacingMessage)) {
   throw new Error(`${runtimePath}: retired compact straight-line Rotunda/wall facing veto survived Aug. 15 dogleg migration`);
 }
-if (!source.includes(doglegOpeningAuthority)) {
-  throw new Error(`${runtimePath}: Aug. 15 dogleg Rotunda opening authority was not installed`);
-}
 
-if (!migrationApplied) {
-  const syntheticEndpoint = `  const terminalPoint = new THREE.Vector3(\n    rotundaOpening.centerX + terminalDirection.x * terminalDistance,\n    rotundaOpening.centerY,\n    rotundaOpening.centerZ + terminalDirection.z * terminalDistance,\n  );\n  const collarPoint = new THREE.Vector3(rotundaOpening.collarX, rotundaOpening.centerY, rotundaOpening.collarZ);`;
-
-  // Aug. 15 long-route preparation intentionally retires the old compact/synthetic
-  // A1 terminal endpoint before this compatibility stage runs. In that state there
-  // is nothing for v17 to migrate: the BGATE1 facade -> fixed dogleg -> remote
-  // Rotunda path is owned by the later photo-authoritative route builders. Do not
-  // resurrect a scalar short sleeve merely to satisfy this legacy migration hook.
-  if (!source.includes(syntheticEndpoint)) {
-    fs.writeFileSync(runtimePath, source, "utf8");
-    console.log("Preserved Aug. 15 A1 dogleg Rotunda-opening authority and skipped retired synthetic wall-endpoint migration; BGATE1 long fixed corridor/dogleg/remote-Rotunda path remains authoritative.");
-    process.exit(0);
-  }
-
-  source = source.replace(
-    syntheticEndpoint,
-    `  // ${marker}\n  // The final wall lock already carries the exact selected BGATE1 wall point in\n  // the same fleet-local coordinate frame as the transformed Rotunda. Do not\n  // rebuild that endpoint from a scalar distance along connectorToward: the\n  // authored Rotunda opening can differ from the wall normal by several degrees,\n  // which previously left the rendered sleeve beside the wall in overhead views.\n  const explicitTerminalWallX = Number(placement.terminalWallX);\n  const explicitTerminalWallZ = Number(placement.terminalWallZ);\n  if (![explicitTerminalWallX, explicitTerminalWallZ].every(Number.isFinite)) {\n    throw new Error(\"A1 explicit measured Terminal 4 wall point is missing from the final placement\");\n  }\n  const syntheticTerminalPoint = new THREE.Vector3(\n    rotundaOpening.centerX + terminalDirection.x * terminalDistance,\n    rotundaOpening.centerY,\n    rotundaOpening.centerZ + terminalDirection.z * terminalDistance,\n  );\n  const terminalPoint = new THREE.Vector3(\n    explicitTerminalWallX,\n    rotundaOpening.centerY,\n    explicitTerminalWallZ,\n  );\n  const syntheticWallEndpointMissMeters = Math.hypot(\n    syntheticTerminalPoint.x - terminalPoint.x,\n    syntheticTerminalPoint.z - terminalPoint.z,\n  );\n  const collarPoint = new THREE.Vector3(rotundaOpening.collarX, rotundaOpening.centerY, rotundaOpening.collarZ);`,
-  );
-
-  const shellAnchor = `  const shellLength = visibleLength + rotundaOverlap + TERMINAL_HIDDEN_OVERLAP_METERS;`;
-  if (!source.includes(shellAnchor)) throw new Error(`${runtimePath}: A1 final solid sleeve length anchor is missing`);
-  source = source.replace(
-    shellAnchor,
-    `${shellAnchor}\n  const renderedWallOverlapMeters = TERMINAL_HIDDEN_OVERLAP_METERS;\n  const renderedRotundaOverlapMeters = rotundaOverlap;\n  if (!(renderedWallOverlapMeters >= 0.15 && renderedWallOverlapMeters <= 0.30)) {\n    throw new Error(\`A1 explicit wall sleeve lost its terminal overlap: \${renderedWallOverlapMeters} m\`);\n  }\n  if (!(renderedRotundaOverlapMeters >= 0.08 && renderedRotundaOverlapMeters <= 0.20)) {\n    throw new Error(\`A1 explicit wall sleeve lost its Rotunda overlap: \${renderedRotundaOverlapMeters} m\`);\n  }`,
-  );
-
-  const userDataAnchor = `  connector.userData.measuredWallDirection = [terminalDirection.x, terminalDirection.z];\n  connector.userData.visibleMainLengthMeters = visibleLength;`;
-  if (!source.includes(userDataAnchor)) throw new Error(`${runtimePath}: A1 connector userData anchor is missing`);
-  source = source.replace(
-    userDataAnchor,
-    `  connector.userData.measuredWallDirection = [terminalDirection.x, terminalDirection.z];\n  connector.userData.explicitWallEndpointAuthority = "${endpointAuthority}";\n  connector.userData.explicitWallEndpointX = terminalPoint.x;\n  connector.userData.explicitWallEndpointZ = terminalPoint.z;\n  connector.userData.syntheticWallEndpointMissMeters = syntheticWallEndpointMissMeters;\n  connector.userData.wallHiddenOverlapMeters = renderedWallOverlapMeters;\n  connector.userData.rotundaHiddenOverlapMeters = renderedRotundaOverlapMeters;\n  connector.userData.visibleMainLengthMeters = visibleLength;`,
-  );
-
-  const reportAnchor = `    connectorStyleAuthority: connector.userData.connectorStyleAuthority,\n    visibleConnectorLengthMeters: connector.userData.visibleMainLengthMeters,`;
-  if (!source.includes(reportAnchor)) throw new Error(`${runtimePath}: A1 connector report anchor is missing`);
-  source = source.replace(
-    reportAnchor,
-    `    connectorStyleAuthority: connector.userData.connectorStyleAuthority,\n    connectorEndpointAuthority: connector.userData.explicitWallEndpointAuthority,\n    connectorSyntheticWallEndpointMissMeters: connector.userData.syntheticWallEndpointMissMeters,\n    connectorWallHiddenOverlapMeters: connector.userData.wallHiddenOverlapMeters,\n    connectorRotundaHiddenOverlapMeters: connector.userData.rotundaHiddenOverlapMeters,\n    visibleConnectorLengthMeters: connector.userData.visibleMainLengthMeters,`,
-  );
-
-  const groupAnchor = `  group.userData.uploadedJetwayA1ConnectorStyleAuthority = report.connectorStyleAuthority;`;
-  if (!source.includes(groupAnchor)) throw new Error(`${runtimePath}: A1 connector group telemetry anchor is missing`);
-  source = source.replace(
-    groupAnchor,
-    `${groupAnchor}\n  group.userData.uploadedJetwayA1ConnectorEndpointAuthority = report.connectorEndpointAuthority;\n  group.userData.uploadedJetwayA1ConnectorSyntheticWallEndpointMissMeters = report.connectorSyntheticWallEndpointMissMeters;\n  group.userData.uploadedJetwayA1ConnectorWallHiddenOverlapMeters = report.connectorWallHiddenOverlapMeters;\n  group.userData.uploadedJetwayA1ConnectorRotundaHiddenOverlapMeters = report.connectorRotundaHiddenOverlapMeters;`,
-  );
-  migrationApplied = true;
-}
-
-if (migrationApplied) {
-  for (const required of [
-    marker,
-    endpointAuthority,
-    "const explicitTerminalWallX = Number(placement.terminalWallX);",
-    "const explicitTerminalWallZ = Number(placement.terminalWallZ);",
-    "syntheticWallEndpointMissMeters",
-    "connectorEndpointAuthority",
-    "uploadedJetwayA1ConnectorEndpointAuthority",
-  ]) {
-    if (!source.includes(required)) throw new Error(`${runtimePath}: final A1 explicit-wall connector is missing ${required}`);
-  }
-  if (source.includes("rotundaOpening.centerX + terminalDirection.x * terminalDistance,\n    rotundaOpening.centerY,\n    rotundaOpening.centerZ + terminalDirection.z * terminalDistance,\n  );\n  const collarPoint")) {
-    throw new Error(`${runtimePath}: stale synthetic A1 terminal endpoint survived explicit-wall migration`);
-  }
-}
-
+// Do not migrate or recreate a synthetic short wall endpoint here. The current
+// A1 path is owned upstream by the exact BGATE1 wall publication and the
+// photo-authoritative fixed corridor/elbow/remote-Rotunda builders. A3+ retain
+// their separate short/direct connector logic.
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log("Preserved A1's authored Rotunda opening as movable-bridge authority while allowing the Aug. 15 fixed dogleg to approach BGATE1 off-axis; compact straight-wall facing validation is retired.");
+console.log("Preserved A1 Aug. 15 fixed-dogleg authority, retired every regenerated straight-line Rotunda/wall facing veto, and left the exact movable GLB untouched.");
