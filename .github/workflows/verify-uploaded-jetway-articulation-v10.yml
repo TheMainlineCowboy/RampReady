@@ -18,6 +18,7 @@ on:
       - 'scripts/prepare-terminal4-crj-runtime-evidence.mjs'
       - 'scripts/prepare-articulation-bogie-ground-authority-v1.mjs'
       - 'scripts/prepare-a1-final-live-cab-span-browser-v1.mjs'
+      - 'scripts/prepare-a1-final-visual-evidence-attach-runtime-v1.mjs'
       - 'scripts/prepare-browser-evidence-native-screenshot-v1.mjs'
       - 'scripts/verify-exact-airport-jetway-runtime.mjs'
       - 'scripts/verify-uploaded-airport-jetway-fleet.mjs'
