@@ -54,32 +54,41 @@ if (!articulation.includes(runtimeClearanceAssertion)) {
   articulation = articulation.replace(runtimeAuthorityAssertion, `${runtimeAuthorityAssertion}\n${runtimeClearanceAssertion}`);
 }
 
-// a1-live-rendered-cab-span-authority-v1
-// The final fixed-aircraft surface checks deliberately treat inspectionAircraftCabContactX/Z
-// as a legacy representative-point diagnostic: that proxy can sit well inside the rounded
-// hood even when the actual supplied Cab is correctly outboard. Do not then reuse that same
-// demoted proxy as the Rotunda-to-Cab massing authority. The Aug. 17 attached-state rule is
-// about the visible supplied Cab body relative to the remote Rotunda, so keep the existing
-// >12 m fail-closed threshold but measure it against the live rendered Cab body center.
+// a1-live-rendered-cab-span-authority-v2
+// The legacy inspectionAircraftCabContactX/Z point is only a representative Cab-axis
+// diagnostic and must never own the Aug. 17 visible-massing check. Keep the original
+// >12 m fail-closed threshold, but bind it to the live rendered supplied Cab body center.
+// Be tolerant of harmless whitespace/parenthesis changes made by earlier preparers.
 const staleCabDeclarations = `  const measuredCabX = Number(returnedRuntime.inspectionAircraftCabContactX);\n  const measuredCabZ = Number(returnedRuntime.inspectionAircraftCabContactZ);`;
 const liveCabDeclarations = `${staleCabDeclarations}\n  const liveRenderedCabCenterX = Number(returnedRuntime.inspectionAircraftLiveVisibleCabWorldX);\n  const liveRenderedCabCenterZ = Number(returnedRuntime.inspectionAircraftLiveVisibleCabWorldZ);`;
-if (articulation.includes(staleCabDeclarations) && !articulation.includes("liveRenderedCabCenterX")) {
+if (articulation.includes(staleCabDeclarations) && !articulation.includes("const liveRenderedCabCenterX")) {
   articulation = articulation.replace(staleCabDeclarations, liveCabDeclarations);
 }
-const staleSpan = `  const geometricHorizontalRotundaOpeningToCabDistance = Math.hypot(\n    measuredCabX - exactRotundaWorldX,\n    measuredCabZ - exactRotundaWorldZ,\n  );`;
-const liveSpan = `  const geometricHorizontalRotundaOpeningToCabDistance = Math.hypot(\n    liveRenderedCabCenterX - exactRotundaWorldX,\n    liveRenderedCabCenterZ - exactRotundaWorldZ,\n  );`;
-if (articulation.includes(staleSpan)) articulation = articulation.replace(staleSpan, liveSpan);
-if (articulation.includes("geometricHorizontalRotundaOpeningToCabDistance") && !articulation.includes(liveSpan)) {
+
+const staleSpanPattern = /const\s+geometricHorizontalRotundaOpeningToCabDistance\s*=\s*Math\.hypot\(\s*measuredCabX\s*-\s*exactRotundaWorldX\s*,\s*measuredCabZ\s*-\s*exactRotundaWorldZ\s*,?\s*\);/m;
+const liveSpan = `const geometricHorizontalRotundaOpeningToCabDistance = Math.hypot(\n    liveRenderedCabCenterX - exactRotundaWorldX,\n    liveRenderedCabCenterZ - exactRotundaWorldZ,\n  );`;
+if (staleSpanPattern.test(articulation)) articulation = articulation.replace(staleSpanPattern, liveSpan);
+
+const liveSpanPattern = /const\s+geometricHorizontalRotundaOpeningToCabDistance\s*=\s*Math\.hypot\(\s*liveRenderedCabCenterX\s*-\s*exactRotundaWorldX\s*,\s*liveRenderedCabCenterZ\s*-\s*exactRotundaWorldZ\s*,?\s*\);/m;
+if (articulation.includes("geometricHorizontalRotundaOpeningToCabDistance") && !liveSpanPattern.test(articulation)) {
   throw new Error(`${articulationPath}: Rotunda-to-Cab span is not bound to the live rendered supplied Cab body`);
 }
+
 const finiteAnchor = `    geometricHorizontalRotundaOpeningToCabDistance,\n  ].every(Number.isFinite)).toBe(true);`;
 const finiteLive = `    geometricHorizontalRotundaOpeningToCabDistance, liveRenderedCabCenterX, liveRenderedCabCenterZ,\n  ].every(Number.isFinite)).toBe(true);`;
 if (articulation.includes(finiteAnchor)) articulation = articulation.replace(finiteAnchor, finiteLive);
-if (!articulation.includes("liveRenderedCabCenterX") || !articulation.includes("inspectionAircraftLiveVisibleCabWorldX")) {
+
+if (!articulation.includes("inspectionAircraftLiveVisibleCabWorldX")
+  || !articulation.includes("inspectionAircraftLiveVisibleCabWorldZ")
+  || !articulation.includes("liveRenderedCabCenterX")
+  || !articulation.includes("liveRenderedCabCenterZ")) {
   throw new Error(`${articulationPath}: live rendered Cab-center span evidence is missing`);
 }
-if (articulation.includes("measuredCabX - exactRotundaWorldX") || articulation.includes("measuredCabZ - exactRotundaWorldZ")) {
+if (/measuredCab[ZX]\s*-\s*exactRotundaWorld[ZX]/.test(articulation)) {
   throw new Error(`${articulationPath}: stale representative Cab point still owns the Rotunda-to-Cab span`);
+}
+if (!/expect\(geometricHorizontalRotundaOpeningToCabDistance\)\.toBeGreaterThan\(12\)/.test(articulation)) {
+  throw new Error(`${articulationPath}: unchanged >12 m live Cab massing guard is missing`);
 }
 
 fs.writeFileSync(articulationPath, articulation, "utf8");
@@ -103,11 +112,13 @@ for (const required of [
   "terminal4UploadedJetwayBogieGroundClearanceMeters",
   runtimeClearanceAssertion.trim(),
   "inspectionAircraftLiveVisibleCabWorldX",
-  "liveRenderedCabCenterX - exactRotundaWorldX",
-  "geometricHorizontalRotundaOpeningToCabDistance).toBeGreaterThan(12)",
+  "inspectionAircraftLiveVisibleCabWorldZ",
+  "liveRenderedCabCenterX",
+  "liveRenderedCabCenterZ",
+  "geometricHorizontalRotundaOpeningToCabDistance",
 ]) {
   if (!articulation.includes(required)) throw new Error(`${articulationPath}: Tunnel-C/bodied-Cab browser gate is missing ${required}`);
 }
 
-console.log(`Migrated ${changed} browser suite(s) to ${bogieAuthority}; articulation now requires both the Tunnel-C authority and <=1.5 cm published bogie/ramp clearance, measures the unchanged >12 m remote-Rotunda-to-Cab massing guard from the live rendered supplied Cab body instead of a demoted representative hood point, and ${authorityConsumerCount} consumers reject the old whole-model-minimum authority.`);
+console.log(`Migrated ${changed} browser suite(s) to ${bogieAuthority}; articulation now requires both the Tunnel-C authority and <=1.5 cm published bogie/ramp clearance, keeps the unchanged >12 m remote-Rotunda-to-Cab massing guard bound to the live rendered supplied Cab body with formatting-tolerant verification, and ${authorityConsumerCount} consumers reject the old whole-model-minimum authority.`);
 await import(`./prepare-fixed-a1-browser-regressions-v1.mjs?fixed-a1-browser=${Date.now()}`);
