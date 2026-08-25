@@ -10,29 +10,42 @@ let source = fs.readFileSync(runtimePath, "utf8");
 
 if (!source.includes(marker)) {
   const sourceYawLine = "  const yaw = sourceAxisRegistrationYaw;";
-  if (!source.includes(sourceYawLine)) throw new Error(`${runtimePath}: decoded-BGL whole-bridge yaw is missing before final static correction`);
-  source = source.replace(
-    sourceYawLine,
-    `  // ${marker}\n  // AIR_Jetway01 is articulated: decoded BGL yaw is stock base provenance,\n  // while the KPHX jetway->own-parking geometry owns the rigid replacement arm.\n  const yaw = targetRegistrationYaw;`,
-  );
+  const ownGateYawLine = "  const yaw = targetRegistrationYaw;";
+  const markedOwnGateYaw = `  // ${marker}\n  // AIR_Jetway01 is articulated: decoded BGL yaw is stock base provenance,\n  // while the KPHX jetway->own-parking geometry owns the rigid replacement arm.\n  const yaw = targetRegistrationYaw;`;
+  if (source.includes(sourceYawLine)) {
+    source = source.replace(sourceYawLine, markedOwnGateYaw);
+  } else if (source.includes(ownGateYawLine)) {
+    // Earlier late-stage own-gate registration may already have removed the
+    // unsafe decoded-BGL yaw ownership. Preserve that correct geometry and
+    // only attach this final authority marker instead of demanding a stale
+    // regression be reintroduced merely so this preparer can replace it.
+    source = source.replace(ownGateYawLine, markedOwnGateYaw);
+  } else {
+    throw new Error(`${runtimePath}: final static own-gate yaw authority is missing`);
+  }
 
   const oldSourceFailure = `  if (sourceBridgeHeadingErrorRadians > 1e-9) {\n    throw new Error(\`Static jetway \${placement.gate} visible bridge axis escaped decoded KPHX heading: \${sourceBridgeHeadingErrorRadians} rad\`);\n  }`;
-  if (!source.includes(oldSourceFailure)) throw new Error(`${runtimePath}: static BGL visible-axis hard failure is missing`);
-  source = source.replace(oldSourceFailure, "");
+  if (source.includes(oldSourceFailure)) source = source.replace(oldSourceFailure, "");
 
   const ownGateAnchor = "  const ownGateHeadingErrorRadians = Math.abs(wrapYaw(THREE, resolvedBridgeHeading - targetHeading));";
+  const ownGateFailureText = "escaped its KPHX-authored own-parking centerline";
   if (!source.includes(ownGateAnchor)) throw new Error(`${runtimePath}: own-gate heading telemetry is missing`);
-  source = source.replace(
-    ownGateAnchor,
-    `${ownGateAnchor}\n  if (ownGateHeadingErrorRadians > 0.002) {\n    throw new Error(\`Static jetway \${placement.gate} escaped its KPHX-authored own-parking centerline: \${ownGateHeadingErrorRadians} rad\`);\n  }`,
-  );
+  if (!source.includes(ownGateFailureText)) {
+    source = source.replace(
+      ownGateAnchor,
+      `${ownGateAnchor}\n  if (ownGateHeadingErrorRadians > 0.002) {\n    throw new Error(\`Static jetway \${placement.gate} escaped its KPHX-authored own-parking centerline: \${ownGateHeadingErrorRadians} rad\`);\n  }`,
+    );
+  }
 
   const terminalDotAnchor = "  const terminalFacingDot = bridgeUnitX * ux + bridgeUnitZ * uz;";
+  const terminalFacingFailureText = "points back toward Terminal 4 instead of its own KPHX stand";
   if (!source.includes(terminalDotAnchor)) throw new Error(`${runtimePath}: terminal-facing telemetry is missing`);
-  source = source.replace(
-    terminalDotAnchor,
-    `${terminalDotAnchor}\n  if (terminalFacingDot > 0.25) {\n    throw new Error(\`Static jetway \${placement.gate} points back toward Terminal 4 instead of its own KPHX stand: dot=\${terminalFacingDot}\`);\n  }`,
-  );
+  if (!source.includes(terminalFacingFailureText)) {
+    source = source.replace(
+      terminalDotAnchor,
+      `${terminalDotAnchor}\n  if (terminalFacingDot > 0.25) {\n    throw new Error(\`Static jetway \${placement.gate} points back toward Terminal 4 instead of its own KPHX stand: dot=\${terminalFacingDot}\`);\n  }`,
+    );
+  }
 
   const exportAnchor = "export function registerStaticJetwayFleetToFacade(THREE, group, fleet, placements) {";
   if (!source.includes(exportAnchor)) throw new Error(`${runtimePath}: static registration export is missing`);
