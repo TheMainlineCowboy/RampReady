@@ -50,7 +50,10 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
   }
 
   const isInspectionVehicle = equipmentId === "manager-kubota";
-  const modelFile = isInspectionVehicle ? "manager-kubota.glb" : "standup-v3.glb";
+  // The stand-up build materializes the verified authored payload at this stable
+  // public URL. Keep that release contract intact while the revised-V3 source is
+  // staged behind the same verified runtime identity.
+  const modelFile = isInspectionVehicle ? "manager-kubota.glb" : "standup-tug.glb";
   const url = `${import.meta.env.BASE_URL}models/${modelFile}`;
   const gltf = await new GLTFLoader().loadAsync(url);
   const scene = prepareAuthoredVehicle(
@@ -68,10 +71,10 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
   }
 
   // Revised V3 is the user's geometry authority. Do not recolor it and do not
-  // add the old synthetic wheel/console/guard overlay. The actual supplied tug
-  // remains visible in driver view so the camera sees its dashboard and wheel.
+  // add the old synthetic wheel/console/guard overlay. The stable runtime source
+  // label is retained for production/live-verification compatibility.
   return installAuthoredVehicle(rig, scene, {
-    source: "user-standup-revised-v3",
+    source: "authored-standup",
     url,
     operatorStation: "standing-reference-camera",
     operatorControls: "supplied-v3-controls-not-final",
