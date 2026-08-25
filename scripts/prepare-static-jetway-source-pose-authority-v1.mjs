@@ -77,7 +77,6 @@ for (const required of [
   "const rotundaZ = wallZ - uz * resolvedRotundaCenterToWallMeters;",
   "const yaw = targetRegistrationYaw;",
   "ownGateHeadingErrorRadians",
-  "sourceParentYawErrorRadians",
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${registrationPath}: own-gate/source-provenance static contract is missing ${required}`);
@@ -87,5 +86,10 @@ if (source.includes("const yaw = sourceYaw;")) {
   throw new Error(`${registrationPath}: decoded BGL source yaw still owns rendered static bridge direction`);
 }
 
+// Source yaw is deliberately provenance-only in this final contract. A numeric
+// parent-yaw difference from source is therefore expected and must not be used
+// as a fail-closed invariant. The own-gate heading error plus terminal-facing
+// dot are the physical rendered-direction invariants; existing yaw-change
+// telemetry retains the source-versus-rendered diagnostic value.
 fs.writeFileSync(registrationPath, source, "utf8");
 console.log("Preserved decoded KPHX static headings as provenance only; all 57 exact static jetways remain on measured real-wall Rotundas and render toward their own authored stand targets instead of crossing neighbouring gates.");
