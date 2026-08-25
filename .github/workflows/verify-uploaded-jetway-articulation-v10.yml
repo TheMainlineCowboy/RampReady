@@ -17,6 +17,7 @@ on:
       - 'scripts/prepare-uploaded-airport-jetway-readiness-v2.mjs'
       - 'scripts/prepare-terminal4-crj-runtime-evidence.mjs'
       - 'scripts/prepare-articulation-bogie-ground-authority-v1.mjs'
+      - 'scripts/prepare-browser-evidence-native-screenshot-v1.mjs'
       - 'scripts/verify-exact-airport-jetway-runtime.mjs'
       - 'scripts/verify-uploaded-airport-jetway-fleet.mjs'
       - 'scripts/verify-uploaded-airport-jetway-articulation-v10.mjs'
@@ -71,6 +72,7 @@ jobs:
       - name: Render and measure the articulated supplied A1 jetway
         run: |
           node scripts/prepare-articulation-bogie-ground-authority-v1.mjs
+          node scripts/prepare-browser-evidence-native-screenshot-v1.mjs
           grep -q 'exact-authored-a1-tunnel-c-bogie-ramp-contact-v3' tests/browser/uploaded-jetway-articulation-v10.spec.js
           if grep -q 'exact-authored-a1-lowest-geometry-ramp-contact-v2' tests/browser/uploaded-jetway-articulation-v10.spec.js; then
             echo 'Stale A1 bogie authority survived immediately before Playwright' >&2
