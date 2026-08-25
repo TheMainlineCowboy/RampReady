@@ -31,13 +31,12 @@ const buildRestorerCompatibilityMarker = `/* A1_RESTORER_BASELINE_COMPATIBILITY
 */`;
 
 // The final evidence preparer intentionally changed free-drive inspection so it
-// preserves the already-solved attached A1 state at deployment=1 and does not
-// replay stale controller matrices. build-production.mjs still reverse-matches
-// the older toggle block while reconstructing its tracked-source baseline. Keep
-// that old baseline text only as a build-restorer comment so the reverser can
-// identify its contract without changing the live attached-state code that Vite
-// must bundle. This marker is removed by the exact terminal-trainer restoration
-// below and therefore cannot leak into tracked source.
+// restores the post-fit rebased A1 controller at deployment=1 after any normal
+// training retraction. build-production.mjs still reverse-matches the older
+// toggle block while reconstructing its tracked-source baseline. Keep that old
+// baseline text only as a build-restorer comment so the reverser can identify
+// its contract without changing the live attached-state code that Vite bundles.
+// This marker is removed by exact terminal-trainer restoration below.
 const inspectionRestorerCompatibilityMarker = `/* A1_INSPECTION_RESTORER_BASELINE_COMPATIBILITY
       const inspectionJetwayDeployment = next ? 0 : 1;
       jetwayRef.current.target = inspectionJetwayDeployment;
@@ -64,11 +63,16 @@ try {
   // Late production preparers above this wrapper can rewrite the trainer after
   // the ordinary inspection-control stage. Reinstall only the evidence-only A1
   // attach command at the final handoff so the browser artifact itself exposes
-  // the already-existing controller at deployment=1.
+  // the already-existing post-fit rebased controller at deployment=1.
   await import(`./prepare-a1-final-visual-evidence-attach-runtime-v1.mjs?final-evidence-attach=${Date.now()}`);
   let preparedTerminal4TrainerSource = fs.readFileSync(terminal4TrainerPath, "utf8");
-  if (!preparedTerminal4TrainerSource.includes("a1-inspection-lifecycle-preserves-final-attached-fit-v1")) {
-    throw new Error("Final Terminal 4 trainer lost the attached-state inspection lifecycle before production bundling.");
+  const hasRebasedAttachedInspectionLifecycle =
+    preparedTerminal4TrainerSource.includes("a1-inspection-lifecycle-restores-rebased-attached-fit-v2")
+    && preparedTerminal4TrainerSource.includes("const inspectionJetwayDeployment = 1;")
+    && preparedTerminal4TrainerSource.includes("controller?.setDeployment(inspectionJetwayDeployment)")
+    && !preparedTerminal4TrainerSource.includes("const inspectionJetwayDeployment = next ? 0 : 1;");
+  if (!hasRebasedAttachedInspectionLifecycle) {
+    throw new Error("Final Terminal 4 trainer lost the post-fit rebased attached-state inspection lifecycle before production bundling.");
   }
   if (!preparedTerminal4TrainerSource.includes("A1_INSPECTION_RESTORER_BASELINE_COMPATIBILITY")) {
     preparedTerminal4TrainerSource = `${preparedTerminal4TrainerSource.trimEnd()}\n\n${inspectionRestorerCompatibilityMarker}\n`;
@@ -119,4 +123,4 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, kept inspection on the final attached A1 state without stale controller replay, attached the exact jetway group to the live environment before deferred pavement readiness, applied scene-ready rigid per-gate pavement registration, sequenced final exact-source service-stair and visible Tunnel-C support corrections before bogie evidence, then restored both the committed jetway and Terminal 4 trainer sources byte-for-byte.");
+console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, restored inspection through the final post-fit rebased attached A1 controller, attached the exact jetway group to the live environment before deferred pavement readiness, applied scene-ready rigid per-gate pavement registration, sequenced final exact-source service-stair and visible Tunnel-C support corrections before bogie evidence, then restored both the committed jetway and Terminal 4 trainer sources byte-for-byte.");
