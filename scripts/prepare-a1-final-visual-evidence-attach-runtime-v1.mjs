@@ -3,6 +3,7 @@ import fs from "node:fs";
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const marker = "a1-final-visual-evidence-attach-runtime-v2-preserve-final-fit";
 const inspectionLifecycleMarker = "a1-inspection-lifecycle-preserves-final-attached-fit-v1";
+const calibrationLifecycleMarker = "a1-aircraft-calibration-preserves-final-attached-fit-v1";
 let source = fs.readFileSync(path, "utf8");
 
 const priorStart = source.indexOf("  // a1-final-visual-evidence-attach-runtime-v1\n");
@@ -17,7 +18,7 @@ if (priorStart >= 0) {
 // force A1 to deployment 0 and replay the controller's pre-fit child matrices.
 // That created the exact false attached-state seen in the latest trace: the canvas
 // reported a1JetwayDeployment=0.000 and the visible Rotunda-to-Cab body collapsed
-// to ~9.56 m even though the final pre-Vite Cab/hood fit had already been solved.
+// even though the final pre-Vite Cab/hood fit had already been solved.
 // Keep the already-fitted attached geometry through inspection/training toggles.
 // The normal training departure sequence still owns intentional retraction when
 // the operator advances from stage 0; this changes no supplied GLB vertices,
@@ -29,6 +30,54 @@ if (!source.includes(inspectionLifecycleMarker)) {
     throw new Error(`${path}: inspection jetway lifecycle anchor is missing`);
   }
   source = source.replace(toggleNeedle, toggleReplacement);
+}
+
+// The attached-state trace on 651ba442 proved there is a second deployment owner:
+// the fixed-aircraft calibration intentionally deploys A1 to 1 for its exact door
+// solve, then restores the previously cached deployment (0). That late restore
+// collapses Tunnel B/C/Cab again before evidence capture even though inspection
+// entry itself has already been fixed. Patch only the LAST controller deployment
+// immediately before the calibration's RestoredDeployment telemetry. This is the
+// restore call by construction; the earlier calibration setDeployment(1) remains
+// intact. Leaving that controller at 1 lets the downstream final physical-fit and
+// Tunnel-C/support stages operate on the attached bridge. The evidence hook below
+// then synchronizes the logical deployment state without replaying controller
+// matrices over those later physical corrections.
+if (!source.includes(calibrationLifecycleMarker)) {
+  const telemetryProperty = "inspectionAircraftCalibrationJetwayRestoredDeployment";
+  const telemetryIndex = source.indexOf(telemetryProperty);
+  if (telemetryIndex < 0) {
+    throw new Error(`${path}: fixed-aircraft calibration restored-deployment telemetry is missing`);
+  }
+  const calibrationWindowStart = Math.max(0, telemetryIndex - 12000);
+  const calibrationWindow = source.slice(calibrationWindowStart, telemetryIndex);
+  const deploymentCallPattern = /(?:[A-Za-z_$][\w$]*\??\.)*setDeployment\(\s*([^\n;)]+?)\s*\)\s*;/g;
+  const deploymentCalls = [...calibrationWindow.matchAll(deploymentCallPattern)];
+  if (deploymentCalls.length < 2) {
+    throw new Error(`${path}: expected calibration deploy + restore calls before ${telemetryProperty}, found ${deploymentCalls.length}`);
+  }
+  const restoreCall = deploymentCalls.at(-1);
+  const restoreCallAbsoluteStart = calibrationWindowStart + restoreCall.index;
+  const restoreCallAbsoluteEnd = restoreCallAbsoluteStart + restoreCall[0].length;
+  const restoreCallPrefix = restoreCall[0].slice(0, restoreCall[0].indexOf("(") + 1);
+  source = source.slice(0, restoreCallAbsoluteStart)
+    + `${restoreCallPrefix}1); // ${calibrationLifecycleMarker}`
+    + source.slice(restoreCallAbsoluteEnd);
+
+  const patchedTelemetryIndex = source.indexOf(telemetryProperty);
+  const telemetryLineStart = source.lastIndexOf("\n", patchedTelemetryIndex) + 1;
+  const telemetryLineEnd = source.indexOf("\n", patchedTelemetryIndex);
+  if (telemetryLineEnd < 0) throw new Error(`${path}: calibration restored-deployment telemetry line is unterminated`);
+  const telemetryLine = source.slice(telemetryLineStart, telemetryLineEnd);
+  const telemetryAssignmentPattern = /^(\s*[^\n]*inspectionAircraftCalibrationJetwayRestoredDeployment\s*=\s*)[^;]+;/;
+  if (!telemetryAssignmentPattern.test(telemetryLine)) {
+    throw new Error(`${path}: calibration restored-deployment telemetry assignment could not be normalized`);
+  }
+  const normalizedTelemetryLine = telemetryLine.replace(
+    telemetryAssignmentPattern,
+    '$1"1.000000";',
+  );
+  source = source.slice(0, telemetryLineStart) + normalizedTelemetryLine + source.slice(telemetryLineEnd);
 }
 
 if (!source.includes(marker)) {
@@ -45,7 +94,9 @@ if (!source.includes(marker)) {
 for (const required of [
   marker,
   inspectionLifecycleMarker,
+  calibrationLifecycleMarker,
   "const inspectionJetwayDeployment = 1;",
+  "inspectionAircraftCalibrationJetwayRestoredDeployment",
   "window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__",
   "a1-terminal-connection-attached-evidence-v1",
   "preserve-final-pre-vite-physical-fit-no-controller-replay-v1",
@@ -62,4 +113,4 @@ if (source.includes("jetway.controller.setDeployment(attachedEvidenceDeployment)
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Installed a1-final-visual-evidence-attach-runtime-v2-preserve-final-fit + a1-inspection-lifecycle-preserves-final-attached-fit-v1: free-drive inspection now keeps the final physically attached A1 geometry instead of retracting/replaying stale controller matrices; normal training departure still owns intentional retraction.");
+console.log("Installed a1-final-visual-evidence-attach-runtime-v2-preserve-final-fit + attached inspection/calibration lifecycle guards: free-drive inspection and the fixed-aircraft calibration now keep A1 at deployment 1 through the final physical Cab/Tunnel-C/service-stair fit; normal training departure still owns intentional retraction.");
