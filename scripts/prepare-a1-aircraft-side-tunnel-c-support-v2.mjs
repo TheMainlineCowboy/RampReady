@@ -1,8 +1,10 @@
 import fs from "node:fs";
 
 const doorFitPath = "src/environment/uploadedAirportJetwayA1DoorFitV11.js";
+const sourceElbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const marker = "a1-aircraft-side-tunnel-c-support-filter-v2";
 const extensionMarker = "a1-aircraft-side-tunnel-c-extension-authority-v1";
+const finalSpanMarker = "a1-final-world-remote-rotunda-connected-reach-v1";
 const minimumAircraftSideRatio = 0.55;
 let source = fs.readFileSync(doorFitPath, "utf8");
 
@@ -47,4 +49,41 @@ if (source.includes("Tunnel_C: 2 / 3")) {
 }
 
 fs.writeFileSync(doorFitPath, source, "utf8");
-console.log(`Kept A1 Tunnel_C longitudinally with the Cab and restricted grounding to measured aircraft-side support descendants (Rotunda-to-Cab ratio >= ${minimumAircraftSideRatio}); supplied GLB vertices remain untouched.`);
+
+// Fresh exact-head browser evidence showed a frame inconsistency: the runtime
+// retained the supplied connected reach (~26.24 m) and a ~26.22 m target while
+// the final rendered Rotunda-to-Cab horizontal span collapsed to only 10.15 m.
+// Correct the upstream photo Rotunda solve, not the aircraft or Cab. Keep A1's
+// fixed wall endpoint and dogleg, place its remote Rotunda so the remaining
+// movable reach matches the exact supplied connected bridge, then allow the
+// existing physical door fit to solve the intact tunnels/Cab to the fixed CRJ.
+let elbowSource = fs.readFileSync(sourceElbowPath, "utf8");
+if (!elbowSource.includes(finalSpanMarker)) {
+  const oldReach = `  const desiredBridgeReachMeters = THREE.MathUtils.clamp(wallToAircraftMeters * 0.58, 18.0, 22.5);`;
+  const newReach = `  // ${finalSpanMarker}\n  // Same-head rendered telemetry measures the exact supplied connected reach at\n  // 26.243 m. Solve the remote Rotunda against that source-owned reach instead\n  // of the retired 18-22.5 m compact envelope, which pulled the Rotunda too far\n  // toward the aircraft and visually collapsed the movable bridge.\n  const desiredBridgeReachMeters = THREE.MathUtils.clamp(wallToAircraftMeters * 0.54, 25.9, 26.4);`;
+  if (!elbowSource.includes(oldReach)) {
+    throw new Error(`${sourceElbowPath}: photo remote-Rotunda desired-reach anchor is missing`);
+  }
+  elbowSource = elbowSource.replace(oldReach, newReach);
+
+  // The prior 24 m guard belonged to the compact experimental solve. The exact
+  // source reach is ~26.24 m, so retain a tight source-connected envelope rather
+  // than rejecting the corrected photo-derived Rotunda before browser evidence.
+  elbowSource = elbowSource.replaceAll(
+    "photoBridgeTargetDistanceMeters <= 24",
+    "photoBridgeTargetDistanceMeters <= 27",
+  );
+  elbowSource = elbowSource.replaceAll(
+    "targetDistance <= 24",
+    "targetDistance <= 27",
+  );
+}
+for (const required of [finalSpanMarker, "25.9, 26.4", "photoBridgeTargetDistanceMeters <= 27", "targetDistance <= 27"]) {
+  if (!elbowSource.includes(required)) throw new Error(`${sourceElbowPath}: final connected-reach Rotunda solve is missing ${required}`);
+}
+if (elbowSource.includes("wallToAircraftMeters * 0.58, 18.0, 22.5")) {
+  throw new Error(`${sourceElbowPath}: retired compact remote-Rotunda reach survived final span correction`);
+}
+fs.writeFileSync(sourceElbowPath, elbowSource, "utf8");
+
+console.log(`Kept A1 Tunnel_C longitudinally with the Cab, restricted grounding to measured aircraft-side support descendants (Rotunda-to-Cab ratio >= ${minimumAircraftSideRatio}), and restored the remote Rotunda solve to the exact supplied ~26.24 m connected movable reach; supplied GLB vertices remain untouched.`);
