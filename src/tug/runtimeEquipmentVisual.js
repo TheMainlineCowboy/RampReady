@@ -50,11 +50,11 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
   }
 
   const isInspectionVehicle = equipmentId === "manager-kubota";
-  // The stand-up build materializes the verified authored payload at this stable
-  // public URL. Keep that release contract intact while the revised-V3 source is
-  // staged behind the same verified runtime identity.
-  const modelFile = isInspectionVehicle ? "manager-kubota.glb" : "standup-tug.glb";
-  const url = `${import.meta.env.BASE_URL}models/${modelFile}`;
+  // Keep the verified authored stand-up on its stable release URL so the live
+  // browser gate observes the same materialized payload verified by CI.
+  const url = isInspectionVehicle
+    ? `${import.meta.env.BASE_URL}models/manager-kubota.glb`
+    : `${import.meta.env.BASE_URL}models/standup-tug.glb`;
   const gltf = await new GLTFLoader().loadAsync(url);
   const scene = prepareAuthoredVehicle(
     gltf.scene,
