@@ -33,7 +33,7 @@ const sourceWallAuthority = "a1-measured-real-wall-preserved-rotunda-v2";
 const legacyRawBglRotundaAuthority = "a1-decoded-kphx-bgl-rotunda-and-heading-own-physical-jetway-v1";
 const noLiftAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const staticRigidAuthority = "57-static-exact-glb-own-gate-inward-telescope-v2";
-const staticSourcePlacementAuthority = "57-static-bgl-source-pose-real-wall-registration-v10";
+const staticSourcePlacementAuthority = "57-static-own-gate-target-real-wall-source-heading-provenance-v11";
 const marker = "final-a1-acceptance-authority-after-all-preparers-v8-long-fixed-route";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
@@ -179,4 +179,4 @@ for (const forbidden of [
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs?grounded-pose=${Date.now()}`);
-console.log("Finalized Terminal 4 with A1 preserved at its measured real-wall Rotunda position as one intact decoded-KPHX supplied assembly, with Tunnel-C aircraft-side bogie/support geometry required on the ramp. Retired compact-A1 browser publications are no longer accepted as geometry authority.");
+console.log("Finalized Terminal 4 with A1 preserved at its measured real-wall Rotunda position as one intact decoded-KPHX supplied assembly, with Tunnel-C aircraft-side bogie/support geometry required on the ramp. Static gates retain decoded KPHX heading as provenance while their rendered bridge axes remain own-gate registered. Retired compact-A1 browser publications are no longer accepted as geometry authority.");
