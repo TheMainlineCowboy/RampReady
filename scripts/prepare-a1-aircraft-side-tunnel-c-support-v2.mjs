@@ -2,8 +2,26 @@ import fs from "node:fs";
 
 const doorFitPath = "src/environment/uploadedAirportJetwayA1DoorFitV11.js";
 const marker = "a1-aircraft-side-tunnel-c-support-filter-v2";
+const extensionMarker = "a1-aircraft-side-tunnel-c-extension-authority-v1";
 const minimumAircraftSideRatio = 0.55;
 let source = fs.readFileSync(doorFitPath, "utf8");
+
+// The supplied Tunnel-C bogie/service-stair hardware is integrated into the
+// Tunnel_C source part. In attached state the prior progressive 2/3 weighting
+// moved Tunnel_C materially less than Cab, leaving the low support footprint
+// around one-third of the Rotunda-to-Cab span even though the Cab reached the
+// CRJ door. Keep final Tunnel_C longitudinal motion with the Cab so its intact
+// source hardware stays on the aircraft-side portion of the telescoping bridge.
+// This changes only the authored part transform used for articulation; it does
+// not alter, stretch, or regenerate any supplied Airport_Jetway.glb vertices.
+if (!source.includes(extensionMarker)) {
+  const oldWeights = `const MOVABLE_PART_WEIGHTS = Object.freeze({\n  Tunnel_A: 0,\n  Tunnel_B: 1 / 3,\n  Tunnel_C: 2 / 3,\n  Cab: 1,\n});`;
+  const newWeights = `// ${extensionMarker}\nconst MOVABLE_PART_WEIGHTS = Object.freeze({\n  Tunnel_A: 0,\n  Tunnel_B: 1 / 3,\n  Tunnel_C: 1,\n  Cab: 1,\n});`;
+  if (!source.includes(oldWeights)) {
+    throw new Error(`${doorFitPath}: expected progressive Tunnel_C extension weights are missing`);
+  }
+  source = source.replace(oldWeights, newWeights);
+}
 
 if (!source.includes(marker)) {
   const oldBlock = `  const minimumY = Math.min(...candidates.map(({ box }) => box.min.y));\n  const support = candidates.filter(({ box, size }) => {\n    const horizontalSpan = Math.hypot(size.x, size.z);\n    const maximumHorizontalDimension = Math.max(size.x, size.z);\n    return box.min.y <= minimumY + 0.80\n      && horizontalSpan >= 0.35\n      && maximumHorizontalDimension <= 6.5\n      && size.y <= 5.5;\n  });`;
@@ -15,13 +33,18 @@ if (!source.includes(marker)) {
 }
 
 for (const required of [
+  extensionMarker,
   marker,
+  "Tunnel_C: 1",
   "uploadedJetwayTunnelCSupportAlongRatio",
   `alongRatio >= ${minimumAircraftSideRatio}`,
   "minimumAircraftSideY",
 ]) {
-  if (!source.includes(required)) throw new Error(`${doorFitPath}: aircraft-side Tunnel_C support filter is missing ${required}`);
+  if (!source.includes(required)) throw new Error(`${doorFitPath}: aircraft-side Tunnel_C support authority is missing ${required}`);
+}
+if (source.includes("Tunnel_C: 2 / 3")) {
+  throw new Error(`${doorFitPath}: stale two-thirds Tunnel_C extension remains`);
 }
 
 fs.writeFileSync(doorFitPath, source, "utf8");
-console.log(`Restricted A1 Tunnel_C grounding to measured aircraft-side support descendants (Rotunda-to-Cab ratio >= ${minimumAircraftSideRatio}) so terminal-side/mid-span low geometry cannot masquerade as the bogie contact.`);
+console.log(`Kept A1 Tunnel_C longitudinally with the Cab and restricted grounding to measured aircraft-side support descendants (Rotunda-to-Cab ratio >= ${minimumAircraftSideRatio}); supplied GLB vertices remain untouched.`);
