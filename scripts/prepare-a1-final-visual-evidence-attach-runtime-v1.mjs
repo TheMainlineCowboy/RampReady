@@ -1,45 +1,51 @@
 import fs from "node:fs";
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
-const marker = "a1-final-visual-evidence-attach-runtime-v2-preserve-final-fit";
-const inspectionLifecycleMarker = "a1-inspection-lifecycle-preserves-final-attached-fit-v1";
+const marker = "a1-final-visual-evidence-attach-runtime-v3-replay-rebased-attached-fit";
+const inspectionLifecycleMarker = "a1-inspection-lifecycle-restores-rebased-attached-fit-v2";
 const calibrationLifecycleMarker = "a1-aircraft-calibration-preserves-final-attached-fit-v1";
 let source = fs.readFileSync(path, "utf8");
 
-const priorStart = source.indexOf("  // a1-final-visual-evidence-attach-runtime-v1\n");
-if (priorStart >= 0) {
-  const priorEndNeedle = "  const advance = useCallback(() => {";
-  const priorEnd = source.indexOf(priorEndNeedle, priorStart);
-  if (priorEnd < 0) throw new Error(`${path}: prior A1 evidence attach hook has no advance anchor`);
-  source = source.slice(0, priorStart) + source.slice(priorEnd);
+// Remove any older evidence-only hook before installing the current one. The
+// shipping trainer is regenerated during production, so this must be safe both
+// from a clean HEAD and after an earlier preparation pass.
+for (const priorMarker of [
+  "a1-final-visual-evidence-attach-runtime-v1",
+  "a1-final-visual-evidence-attach-runtime-v2-preserve-final-fit",
+]) {
+  const priorStart = source.indexOf(`  // ${priorMarker}\n`);
+  if (priorStart >= 0) {
+    const priorEndNeedle = "  const advance = useCallback(() => {";
+    const priorEnd = source.indexOf(priorEndNeedle, priorStart);
+    if (priorEnd < 0) throw new Error(`${path}: prior A1 evidence attach hook has no advance anchor`);
+    source = source.slice(0, priorStart) + source.slice(priorEnd);
+  }
 }
 
-// Free-drive inspection is the reference-photo evidence mode. Entering it used to
-// force A1 to deployment 0 and replay the controller's pre-fit child matrices.
-// That created the exact false attached-state seen in the latest trace: the canvas
-// reported a1JetwayDeployment=0.000 and the visible Rotunda-to-Cab body collapsed
-// even though the final pre-Vite Cab/hood fit had already been solved.
-// Keep the already-fitted attached geometry through inspection/training toggles.
-// The normal training departure sequence still owns intentional retraction when
-// the operator advances from stage 0; this changes no supplied GLB vertices,
-// terminal pose, aircraft pose, or 57 static-gate geometry.
+// The final physical-door-fit stage explicitly re-binds the A1 model-space
+// controller AFTER the Cab/Tunnel-C/service-stair fit. Its deployment=1 base is
+// therefore the finished attached geometry, not the stale pre-fit hierarchy.
+// Training is allowed to retract that rebased geometry. Re-entering inspection
+// must actively replay deployment=1; merely changing the logical deployment
+// leaves the physical bridge parked at deployment 0, which the fbfa5a4d trace
+// proved with a 9.558 m Rotunda-to-live-Cab span.
 if (!source.includes(inspectionLifecycleMarker)) {
-  const toggleNeedle = `      const inspectionJetwayDeployment = next ? 0 : 1;\n      jetwayRef.current.target = inspectionJetwayDeployment;\n      jetwayRef.current.deployment = inspectionJetwayDeployment;\n      jetwayRef.current.transitionStartDeployment = inspectionJetwayDeployment;\n      jetwayRef.current.transitionStartedAt = 0;\n      jetwayRef.current.retractionRequested = false;\n      jetwayRef.current.controller?.setDeployment(inspectionJetwayDeployment);`;
-  const toggleReplacement = `      // ${inspectionLifecycleMarker}\n      // Inspection must show the final physically attached A1 reference state.\n      // Do not replay controller.setDeployment(1) here: the controller was bound\n      // before the final Cab/Tunnel-C/service-stair micro-fit and would overwrite\n      // those accepted child transforms with stale matrices.\n      const inspectionJetwayDeployment = 1;\n      jetwayRef.current.target = inspectionJetwayDeployment;\n      jetwayRef.current.deployment = inspectionJetwayDeployment;\n      jetwayRef.current.transitionStartDeployment = inspectionJetwayDeployment;\n      jetwayRef.current.transitionStartedAt = 0;\n      jetwayRef.current.retractionRequested = false;`;
-  if (!source.includes(toggleNeedle)) {
+  const originalToggle = `      const inspectionJetwayDeployment = next ? 0 : 1;\n      jetwayRef.current.target = inspectionJetwayDeployment;\n      jetwayRef.current.deployment = inspectionJetwayDeployment;\n      jetwayRef.current.transitionStartDeployment = inspectionJetwayDeployment;\n      jetwayRef.current.transitionStartedAt = 0;\n      jetwayRef.current.retractionRequested = false;\n      jetwayRef.current.controller?.setDeployment(inspectionJetwayDeployment);`;
+  const priorPreparedToggle = `      // a1-inspection-lifecycle-preserves-final-attached-fit-v1\n      // Inspection must show the final physically attached A1 reference state.\n      // Do not replay controller.setDeployment(1) here: the controller was bound\n      // before the final Cab/Tunnel-C/service-stair micro-fit and would overwrite\n      // those accepted child transforms with stale matrices.\n      const inspectionJetwayDeployment = 1;\n      jetwayRef.current.target = inspectionJetwayDeployment;\n      jetwayRef.current.deployment = inspectionJetwayDeployment;\n      jetwayRef.current.transitionStartDeployment = inspectionJetwayDeployment;\n      jetwayRef.current.transitionStartedAt = 0;\n      jetwayRef.current.retractionRequested = false;`;
+  const replacement = `      // ${inspectionLifecycleMarker}\n      // Inspection is attached-state evidence. The final physical-fit stage has\n      // already rebound the controller to the fitted Tunnel-B/Tunnel-C/Cab local\n      // matrices, so deployment 1 safely restores that exact finished state after\n      // a training-mode retraction without moving the terminal or aircraft.\n      const inspectionJetwayDeployment = 1;\n      jetwayRef.current.target = inspectionJetwayDeployment;\n      jetwayRef.current.deployment = inspectionJetwayDeployment;\n      jetwayRef.current.transitionStartDeployment = inspectionJetwayDeployment;\n      jetwayRef.current.transitionStartedAt = 0;\n      jetwayRef.current.retractionRequested = false;\n      jetwayRef.current.controller?.setDeployment(inspectionJetwayDeployment);`;
+  if (source.includes(originalToggle)) {
+    source = source.replace(originalToggle, replacement);
+  } else if (source.includes(priorPreparedToggle)) {
+    source = source.replace(priorPreparedToggle, replacement);
+  } else {
     throw new Error(`${path}: inspection jetway lifecycle anchor is missing`);
   }
-  source = source.replace(toggleNeedle, toggleReplacement);
 }
 
-// The attached-state trace on 651ba442 proved there can be a second deployment
-// owner in fixed-aircraft calibration: calibration deploys A1 to 1 for its exact
-// door solve and older generated runtimes then restored a cached deployment 0.
-// Current production regeneration can already remove both controller calls before
-// this final evidence pass. Treat that zero-call state as valid rather than forcing
-// the retired restore contract back into the generated trainer. If the legacy pair
-// is still present, patch only its final restore to 1. A single surviving call is
-// accepted only when it is already an attached-state deployment; otherwise fail.
+// Fixed-aircraft calibration may still contain a legacy deploy/restore pair.
+// Pin a surviving restore to attached deployment 1. A regenerated calibration
+// with no controller replay is also valid; the inspection lifecycle above owns
+// re-entry restoration after normal training intentionally retracts the bridge.
 if (!source.includes(calibrationLifecycleMarker)) {
   const telemetryProperty = "inspectionAircraftCalibrationJetwayRestoredDeployment";
   const telemetryIndex = source.indexOf(telemetryProperty);
@@ -70,8 +76,6 @@ if (!source.includes(calibrationLifecycleMarker)) {
       + ` // ${calibrationLifecycleMarker}`
       + source.slice(callAbsoluteEnd);
   } else {
-    // A later-generation calibration may already have no controller replay at all.
-    // Mark that lifecycle explicitly so repeated production preparation is stable.
     const telemetryLineStart = source.lastIndexOf("\n", telemetryIndex) + 1;
     source = source.slice(0, telemetryLineStart)
       + `  // ${calibrationLifecycleMarker}: calibration controller replay already absent after regeneration\n`
@@ -87,11 +91,9 @@ if (!source.includes(calibrationLifecycleMarker)) {
   if (!telemetryAssignmentPattern.test(telemetryLine)) {
     throw new Error(`${path}: calibration restored-deployment telemetry assignment could not be normalized`);
   }
-  const normalizedTelemetryLine = telemetryLine.replace(
-    telemetryAssignmentPattern,
-    '$1"1.000000";',
-  );
-  source = source.slice(0, telemetryLineStart) + normalizedTelemetryLine + source.slice(telemetryLineEnd);
+  source = source.slice(0, telemetryLineStart)
+    + telemetryLine.replace(telemetryAssignmentPattern, '$1"1.000000";')
+    + source.slice(telemetryLineEnd);
 }
 
 if (!source.includes(marker)) {
@@ -99,9 +101,7 @@ if (!source.includes(marker)) {
   if (!source.includes(anchor)) {
     throw new Error(`${path}: final A1 evidence attach anchor is missing immediately before production bundling`);
   }
-
-  const hook = `  // ${marker}\n  // The final pre-Vite A1 stages physically fit the supplied Cab, Tunnel-C and\n  // exact service stair after the model-space controller's original bind. Calling\n  // controller.setDeployment(1) here would restore stale pre-fit child matrices\n  // and visibly pull the Cab away from the CRJ door. Evidence attachment therefore\n  // holds only the already-final logical deployment and never replays controller\n  // geometry over the accepted final fit.\n  useEffect(() => {\n    window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__ = () => {\n      const sim = simRef.current;\n      const jetway = jetwayRef.current;\n      if (!sim || !jetway?.controller) return \"not-ready\";\n      const attachedEvidenceDeployment = 1;\n      jetway.target = attachedEvidenceDeployment;\n      jetway.deployment = attachedEvidenceDeployment;\n      if (\"transitionStartDeployment\" in jetway) jetway.transitionStartDeployment = attachedEvidenceDeployment;\n      if (\"transitionStartedAt\" in jetway) jetway.transitionStartedAt = 0;\n      jetway.retractionRequested = false;\n      const canvas = sim.renderer?.domElement;\n      if (!canvas) return \"not-ready\";\n      canvas.dataset.a1InspectionAttachedEvidenceAuthority = \"a1-terminal-connection-attached-evidence-v1\";\n      canvas.dataset.a1JetwayDeployment = attachedEvidenceDeployment.toFixed(3);\n      canvas.dataset.a1JetwayState = \"attached-to-aircraft-door\";\n      canvas.dataset.a1EvidenceAttachGeometryAuthority = \"preserve-final-pre-vite-physical-fit-no-controller-replay-v1\";\n      return canvas.dataset.a1JetwayState;\n    };\n    return () => {\n      delete window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__;\n    };\n  }, []);\n\n${anchor}`;
-
+  const hook = `  // ${marker}\n  // This callback is used only by visual evidence. The A1 controller has already\n  // been rebound after final physical door fit, so replaying deployment=1 restores\n  // the exact fitted attached matrices after any prior training retraction.\n  useEffect(() => {\n    window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__ = () => {\n      const sim = simRef.current;\n      const jetway = jetwayRef.current;\n      if (!sim || !jetway?.controller) return \"not-ready\";\n      const attachedEvidenceDeployment = 1;\n      jetway.target = attachedEvidenceDeployment;\n      jetway.deployment = attachedEvidenceDeployment;\n      if (\"transitionStartDeployment\" in jetway) jetway.transitionStartDeployment = attachedEvidenceDeployment;\n      if (\"transitionStartedAt\" in jetway) jetway.transitionStartedAt = 0;\n      jetway.retractionRequested = false;\n      jetway.controller.setDeployment(attachedEvidenceDeployment);\n      const canvas = sim.renderer?.domElement;\n      if (!canvas) return \"not-ready\";\n      canvas.dataset.a1InspectionAttachedEvidenceAuthority = \"a1-terminal-connection-attached-evidence-v2-rebased-controller\";\n      canvas.dataset.a1JetwayDeployment = attachedEvidenceDeployment.toFixed(3);\n      canvas.dataset.a1JetwayState = jetway.controller.getState?.() || \"attached-to-aircraft-door\";\n      canvas.dataset.a1EvidenceAttachGeometryAuthority = \"restore-final-rebased-physical-fit-v2\";\n      return canvas.dataset.a1JetwayState;\n    };\n    return () => {\n      delete window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__;\n    };\n  }, []);\n\n${anchor}`;
   source = source.replace(anchor, hook);
 }
 
@@ -110,10 +110,12 @@ for (const required of [
   inspectionLifecycleMarker,
   calibrationLifecycleMarker,
   "const inspectionJetwayDeployment = 1;",
+  "controller?.setDeployment(inspectionJetwayDeployment)",
   "inspectionAircraftCalibrationJetwayRestoredDeployment",
   "window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__",
-  "a1-terminal-connection-attached-evidence-v1",
-  "preserve-final-pre-vite-physical-fit-no-controller-replay-v1",
+  "jetway.controller.setDeployment(attachedEvidenceDeployment)",
+  "a1-terminal-connection-attached-evidence-v2-rebased-controller",
+  "restore-final-rebased-physical-fit-v2",
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${path}: final A1 evidence attach runtime is missing ${required}`);
@@ -122,9 +124,6 @@ for (const required of [
 if (source.includes("const inspectionJetwayDeployment = next ? 0 : 1;")) {
   throw new Error(`${path}: inspection lifecycle still retracts A1 on entry`);
 }
-if (source.includes("jetway.controller.setDeployment(attachedEvidenceDeployment)")) {
-  throw new Error(`${path}: stale evidence attach geometry replay remains`);
-}
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Installed a1-final-visual-evidence-attach-runtime-v2-preserve-final-fit + regeneration-safe attached inspection/calibration lifecycle guards: free-drive inspection stays attached, legacy calibration restores are pinned to 1 when present, and already-removed controller replay is preserved without reintroducing it.");
+console.log("Installed a1-final-visual-evidence-attach-runtime-v3-replay-rebased-attached-fit: inspection re-entry now restores the controller's final post-fit deployment=1 matrices after training retraction; calibration remains attached and normal training departure still owns intentional retraction.");
