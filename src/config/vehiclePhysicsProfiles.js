@@ -73,8 +73,8 @@ export const VEHICLE_PHYSICS_PROFILES = Object.freeze({
     massKg: 1485 * LB_TO_KG,
     collisionRadius: 0.60,
     collisionHeights: Object.freeze([0.30, 0.78, 1.25]),
-    operatorEye: Object.freeze([0.28, 1.62, -0.62]),
-    operatorLook: Object.freeze([0.0, 1.57, 4.8]),
+    operatorEye: Object.freeze([0.46, 1.62, -0.95]),
+    operatorLook: Object.freeze([0.12, 1.57, 4.8]),
     sourceFacts: Object.freeze({
       emptySpeedMph: 5,
       loadedSpeedMph: 3,
