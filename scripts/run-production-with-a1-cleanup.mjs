@@ -2,13 +2,22 @@ import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 
 const jetwayPath = "src/environment/sourcePlacedTerminal4Jetways.js";
+const terminal4TrainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const committedSource = execFileSync(
   "git",
   ["show", `HEAD:${jetwayPath}`],
   { encoding: "utf8" },
 );
+const committedTerminal4TrainerSource = execFileSync(
+  "git",
+  ["show", `HEAD:${terminal4TrainerPath}`],
+  { encoding: "utf8" },
+);
 if (!committedSource.includes("buildSourcePlacedTerminal4Jetways")) {
   throw new Error("Could not read the committed Terminal 4 jetway baseline from HEAD.");
+}
+if (!committedTerminal4TrainerSource.includes("RampReadyStandupTrainer")) {
+  throw new Error("Could not read the committed Terminal 4 trainer baseline from HEAD.");
 }
 
 // build-production.mjs still recognizes these legacy baseline tokens while the
@@ -19,6 +28,22 @@ const buildRestorerCompatibilityMarker = `/* A1_RESTORER_BASELINE_COMPATIBILITY
       if (!(longitudinal > 0.05 && longitudinal <= 24)) continue;
       if (lateral <= 4.5) nearest = Math.min(nearest, longitudinal);
   group.userData.terminalConnectionAuthority = "raycast-and-source-vertex-fit-to-authored-terminal-mesh";
+*/`;
+
+// The final evidence preparer intentionally changed free-drive inspection so it
+// preserves the already-solved attached A1 state at deployment=1 and does not
+// replay stale controller matrices. build-production.mjs still reverse-matches
+// the older toggle block while reconstructing its tracked-source baseline. Keep
+// that old baseline text only as a build-restorer comment so the reverser can
+// identify its contract without changing the live attached-state code that Vite
+// must bundle. This marker is removed by the exact terminal-trainer restoration
+// below and therefore cannot leak into tracked source.
+const inspectionRestorerCompatibilityMarker = `/* A1_INSPECTION_RESTORER_BASELINE_COMPATIBILITY
+      const inspectionJetwayDeployment = next ? 0 : 1;
+      jetwayRef.current.target = inspectionJetwayDeployment;
+      jetwayRef.current.deployment = inspectionJetwayDeployment;
+      jetwayRef.current.retractionRequested = false;
+      jetwayRef.current.controller?.setDeployment(inspectionJetwayDeployment);
 */`;
 
 let preparedSource = fs.readFileSync(jetwayPath, "utf8");
@@ -41,6 +66,14 @@ try {
   // attach command at the final handoff so the browser artifact itself exposes
   // the already-existing controller at deployment=1.
   await import(`./prepare-a1-final-visual-evidence-attach-runtime-v1.mjs?final-evidence-attach=${Date.now()}`);
+  let preparedTerminal4TrainerSource = fs.readFileSync(terminal4TrainerPath, "utf8");
+  if (!preparedTerminal4TrainerSource.includes("a1-inspection-lifecycle-preserves-final-attached-fit-v1")) {
+    throw new Error("Final Terminal 4 trainer lost the attached-state inspection lifecycle before production bundling.");
+  }
+  if (!preparedTerminal4TrainerSource.includes("A1_INSPECTION_RESTORER_BASELINE_COMPATIBILITY")) {
+    preparedTerminal4TrainerSource = `${preparedTerminal4TrainerSource.trimEnd()}\n\n${inspectionRestorerCompatibilityMarker}\n`;
+    fs.writeFileSync(terminal4TrainerPath, preparedTerminal4TrainerSource, "utf8");
+  }
   // Construct the exact fleet first, let the outer Terminal 4 builder attach its
   // group to the airport scene, then rigidly raycast-register all 58 gate parent/
   // instance Y transforms to the rendered KPHX pavement. Readiness stays withheld
@@ -64,9 +97,14 @@ try {
 let restorationError;
 try {
   fs.writeFileSync(jetwayPath, committedSource, "utf8");
+  fs.writeFileSync(terminal4TrainerPath, committedTerminal4TrainerSource, "utf8");
   const restoredSource = fs.readFileSync(jetwayPath, "utf8");
+  const restoredTerminal4TrainerSource = fs.readFileSync(terminal4TrainerPath, "utf8");
   if (restoredSource !== committedSource) {
     throw new Error("RampReady failed to restore the committed jetway source byte-for-byte.");
+  }
+  if (restoredTerminal4TrainerSource !== committedTerminal4TrainerSource) {
+    throw new Error("RampReady failed to restore the committed Terminal 4 trainer source byte-for-byte.");
   }
 } catch (error) {
   restorationError = error;
@@ -75,10 +113,10 @@ try {
 if (buildError && restorationError) {
   throw new AggregateError(
     [buildError, restorationError],
-    "RampReady production build failed and exact jetway source restoration also failed",
+    "RampReady production build failed and exact source restoration also failed",
   );
 }
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, attached the exact jetway group to the live environment before deferred pavement readiness, applied scene-ready rigid per-gate pavement registration, sequenced final exact-source service-stair and visible Tunnel-C support corrections before bogie evidence, then restored the committed jetway source byte-for-byte.");
+console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, kept inspection on the final attached A1 state without stale controller replay, attached the exact jetway group to the live environment before deferred pavement readiness, applied scene-ready rigid per-gate pavement registration, sequenced final exact-source service-stair and visible Tunnel-C support corrections before bogie evidence, then restored both the committed jetway and Terminal 4 trainer sources byte-for-byte.");
