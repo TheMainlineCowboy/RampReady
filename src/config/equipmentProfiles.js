@@ -18,10 +18,10 @@ export const EQUIPMENT_PROFILES = Object.freeze([
     label: "Stand-up pushback",
     shortLabel: "Stand-up",
     manufacturer: "User revised V3 model",
-    status: "revised-v3",
-    statusLabel: "Revised V3",
+    status: "verified-runtime",
+    statusLabel: "Verified runtime",
     available: true,
-    description: "The user-supplied revised V3 stand-up tug is the visual authority, paired with compact LEKTRO AP8360-class speed, wheelbase and turning behavior for the initial physics profile.",
+    description: "The user-supplied revised V3 stand-up tug is the verified visual authority, paired with compact LEKTRO AP8360-class speed, wheelbase and turning behavior for the initial physics profile.",
     capabilities: Object.freeze(["User revised V3 model", "Rear-steer pushback training", "Reference-matched standing operator view"]),
   }),
 ]);
