@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const path = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const marker = "a1-final-visual-evidence-attach-runtime-v2-preserve-final-fit";
+const inspectionLifecycleMarker = "a1-inspection-lifecycle-preserves-final-attached-fit-v1";
 let source = fs.readFileSync(path, "utf8");
 
 const priorStart = source.indexOf("  // a1-final-visual-evidence-attach-runtime-v1\n");
@@ -10,6 +11,24 @@ if (priorStart >= 0) {
   const priorEnd = source.indexOf(priorEndNeedle, priorStart);
   if (priorEnd < 0) throw new Error(`${path}: prior A1 evidence attach hook has no advance anchor`);
   source = source.slice(0, priorStart) + source.slice(priorEnd);
+}
+
+// Free-drive inspection is the reference-photo evidence mode. Entering it used to
+// force A1 to deployment 0 and replay the controller's pre-fit child matrices.
+// That created the exact false attached-state seen in the latest trace: the canvas
+// reported a1JetwayDeployment=0.000 and the visible Rotunda-to-Cab body collapsed
+// to ~9.56 m even though the final pre-Vite Cab/hood fit had already been solved.
+// Keep the already-fitted attached geometry through inspection/training toggles.
+// The normal training departure sequence still owns intentional retraction when
+// the operator advances from stage 0; this changes no supplied GLB vertices,
+// terminal pose, aircraft pose, or 57 static-gate geometry.
+if (!source.includes(inspectionLifecycleMarker)) {
+  const toggleNeedle = `      const inspectionJetwayDeployment = next ? 0 : 1;\n      jetwayRef.current.target = inspectionJetwayDeployment;\n      jetwayRef.current.deployment = inspectionJetwayDeployment;\n      jetwayRef.current.transitionStartDeployment = inspectionJetwayDeployment;\n      jetwayRef.current.transitionStartedAt = 0;\n      jetwayRef.current.retractionRequested = false;\n      jetwayRef.current.controller?.setDeployment(inspectionJetwayDeployment);`;
+  const toggleReplacement = `      // ${inspectionLifecycleMarker}\n      // Inspection must show the final physically attached A1 reference state.\n      // Do not replay controller.setDeployment(1) here: the controller was bound\n      // before the final Cab/Tunnel-C/service-stair micro-fit and would overwrite\n      // those accepted child transforms with stale matrices.\n      const inspectionJetwayDeployment = 1;\n      jetwayRef.current.target = inspectionJetwayDeployment;\n      jetwayRef.current.deployment = inspectionJetwayDeployment;\n      jetwayRef.current.transitionStartDeployment = inspectionJetwayDeployment;\n      jetwayRef.current.transitionStartedAt = 0;\n      jetwayRef.current.retractionRequested = false;`;
+  if (!source.includes(toggleNeedle)) {
+    throw new Error(`${path}: inspection jetway lifecycle anchor is missing`);
+  }
+  source = source.replace(toggleNeedle, toggleReplacement);
 }
 
 if (!source.includes(marker)) {
@@ -25,6 +44,8 @@ if (!source.includes(marker)) {
 
 for (const required of [
   marker,
+  inspectionLifecycleMarker,
+  "const inspectionJetwayDeployment = 1;",
   "window.__RAMPREADY_VISUAL_EVIDENCE_ATTACH_A1__",
   "a1-terminal-connection-attached-evidence-v1",
   "preserve-final-pre-vite-physical-fit-no-controller-replay-v1",
@@ -33,9 +54,12 @@ for (const required of [
     throw new Error(`${path}: final A1 evidence attach runtime is missing ${required}`);
   }
 }
+if (source.includes("const inspectionJetwayDeployment = next ? 0 : 1;")) {
+  throw new Error(`${path}: inspection lifecycle still retracts A1 on entry`);
+}
 if (source.includes("jetway.controller.setDeployment(attachedEvidenceDeployment)")) {
   throw new Error(`${path}: stale evidence attach geometry replay remains`);
 }
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Installed a1-final-visual-evidence-attach-runtime-v2-preserve-final-fit: evidence mode holds the already-fitted A1 attached state without replaying stale model-space controller child matrices over the final Cab/Tunnel-C/service-stair geometry.");
+console.log("Installed a1-final-visual-evidence-attach-runtime-v2-preserve-final-fit + a1-inspection-lifecycle-preserves-final-attached-fit-v1: free-drive inspection now keeps the final physically attached A1 geometry instead of retracting/replaying stale controller matrices; normal training departure still owns intentional retraction.");
