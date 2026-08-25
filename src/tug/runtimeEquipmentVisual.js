@@ -71,8 +71,10 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
   }
 
   // Revised V3 is the user's geometry authority. Do not recolor it and do not
-  // add the old synthetic wheel/console/guard overlay. The stable runtime source
-  // label is retained for production/live-verification compatibility.
+  // add the old synthetic wheel/console/guard overlay. Keep the explicit source
+  // assignment because the live-release gate intentionally verifies this exact
+  // stable production identity before browser evidence is allowed to run.
+  rig.root.userData.runtimeVisualSource = "authored-standup";
   return installAuthoredVehicle(rig, scene, {
     source: "authored-standup",
     url,
