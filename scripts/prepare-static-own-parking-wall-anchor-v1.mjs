@@ -3,7 +3,24 @@ import fs from "node:fs";
 const runtimePath = "src/environment/sourcePlacedTerminal4Jetways.js";
 const marker = "static-own-parking-terminal-wall-anchor-v1";
 const cornerMarker = "static-a10-a12-corner-source-pivot-wall-plane-v2";
+const compactLengthMarker = "static-a3plus-photo-compact-gate-specific-bridge-end-v1";
 let source = fs.readFileSync(runtimePath, "utf8");
+
+// A1 is intentionally excluded: its real Terminal 4 architecture is the long
+// fixed elevated corridor + dogleg + remote Rotunda, followed by the supplied
+// movable bridge. A3+ use much shorter/direct terminal-side Rotunda connections.
+// Keep those static movable bridges gate-specific, but compact enough that the
+// supplied hood/bellows do not turn a short parked bridge into a full-reach span.
+// This only changes the articulation target; the exact supplied GLB meshes,
+// hierarchy, materials and UVs remain untouched and may telescope inward only.
+const staleCompactLength = '      : 11.9 + (exactUploadedGateCode % 4) * 0.65;';
+const photoCompactLength = `      // ${compactLengthMarker}\n      : 8.2 + (exactUploadedGateCode % 5) * 0.45;`;
+if (!source.includes(compactLengthMarker)) {
+  if (!source.includes(staleCompactLength)) {
+    throw new Error(`${runtimePath}: static A3+ compact bridge-end anchor is missing`);
+  }
+  source = source.replace(staleCompactLength, photoCompactLength);
+}
 
 // Replace the first-generation nearest-point corner helper if it is already
 // present. The v1 helper still collapsed A10/A12 because it chose a point;
@@ -55,22 +72,25 @@ if (source.includes(placementAnchor) && !source.includes("staticCornerWallPlaneA
 for (const required of [
   marker,
   cornerMarker,
+  compactLengthMarker,
   "function findStaticCornerWallPlane",
   'jetway.g === "A10" || jetway.g === "A12"',
   "staticCornerWallPointX",
   "staticCornerWallNormalX",
   "staticCornerWallPlaneAuthority",
   ': (cornerWallPlane || terminalConnection || sourceHeadingTerminalConnection);',
+  ': 8.2 + (exactUploadedGateCode % 5) * 0.45;',
 ]) {
-  if (!source.includes(required)) throw new Error(`${runtimePath}: static corner wall-plane contract is missing ${required}`);
+  if (!source.includes(required)) throw new Error(`${runtimePath}: static corner/photo-compact contract is missing ${required}`);
 }
 for (const forbidden of [
   "function findNearestStaticCornerTerminalConnection",
   ': (sourceHeadingTerminalConnection || terminalConnection);',
   ': (terminalConnection || sourceHeadingTerminalConnection);',
+  staleCompactLength,
 ]) {
-  if (source.includes(forbidden)) throw new Error(`${runtimePath}: stale static corner contract survived: ${forbidden}`);
+  if (source.includes(forbidden)) throw new Error(`${runtimePath}: stale static corner/length contract survived: ${forbidden}`);
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log("Resolved A10/A12 to authored terminal face planes while preserving each original KPHX source pivot's tangential spacing; no corner hit point is used as the Rotunda anchor.");
+console.log("Resolved A10/A12 to authored terminal face planes and tightened only A3+ to photo-compact gate-specific inward telescope targets; A1 remains excluded with its long fixed corridor/dogleg/remote-Rotunda architecture and no supplied GLB geometry is stretched or replaced.");
