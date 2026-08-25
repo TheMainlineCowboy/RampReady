@@ -147,6 +147,7 @@ if (buildError) throw buildError;
 await runNode("scripts/prepare-current-head-browser-expectations-v1.mjs");
 await runNode("scripts/prepare-a1-post-lifecycle-evidence-v1.mjs");
 await runNode("scripts/prepare-a1-bogie-centroid-browser-authority-v1.mjs");
+await runNode("scripts/prepare-a1-final-live-cab-span-browser-v1.mjs");
 
 const articulationTestPath = new URL("../tests/browser/uploaded-jetway-articulation-v10.spec.js", import.meta.url);
 const preparedArticulationTest = await readFile(articulationTestPath, "utf8");
@@ -165,8 +166,16 @@ for (const required of [
   "grounded-jetway-door-gap-reported-no-child-lift-v1",
   "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
   "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3",
+  "inspectionAircraftLiveVisibleCabWorldX",
+  "inspectionAircraftLiveVisibleCabWorldZ",
+  "liveRenderedCabCenterX",
+  "liveRenderedCabCenterZ",
+  "expect(geometricHorizontalRotundaOpeningToCabDistance).toBeGreaterThan(12)",
 ]) {
   if (!preparedArticulationTest.includes(required)) throw new Error(`Post-restoration browser preparation is missing ${required}`);
 }
+if (/geometricHorizontalRotundaOpeningToCabDistance\s*=\s*Math\.hypot\([\s\S]{0,180}measuredCab[ZX]/m.test(preparedArticulationTest)) {
+  throw new Error("Post-restoration browser preparation let the representative Cab contact point retake A1 span authority.");
+}
 
-console.log("RampReady simulator-quality production build requires the intact source-owned A1 assembly and aircraft-side Tunnel-C bogie/support ramp contact; a grounded terminal pedestal can no longer masquerade as a grounded jetway bogie.");
+console.log("RampReady simulator-quality production build requires the intact source-owned A1 assembly and aircraft-side Tunnel-C bogie/support ramp contact; a grounded terminal pedestal can no longer masquerade as a grounded jetway bogie, and the final A1 massing span is measured to the live rendered supplied Cab body.");
