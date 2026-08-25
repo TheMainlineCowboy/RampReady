@@ -35,25 +35,52 @@ if (!source.includes(marker)) {
 
 // Preserve source-vs-rendered diagnostics without asserting equality. A nonzero
 // difference is expected whenever raw source heading would cross a neighboring
-// stand after measured-wall Rotunda registration.
+// stand after measured-wall Rotunda registration. Publish this on every static
+// placement using values that are guaranteed to exist in buildRegisteredPlacement.
+if (!source.includes("staticSourceHeadingProvenanceDeltaRadians:")) {
+  const placementAnchor = "    staticFacadeRegistrationYawChangeRadians: yawChange,";
+  if (!source.includes(placementAnchor)) {
+    throw new Error(`${runtimePath}: static placement yaw telemetry anchor is missing`);
+  }
+  source = source.replace(
+    placementAnchor,
+    `${placementAnchor}\n    staticSourceHeadingProvenanceDeltaRadians: Math.abs(wrapYaw(THREE, yaw - sourceYaw)),`,
+  );
+}
+
+// Some generations name the rendered heading explicitly. Keep that richer
+// diagnostic when available, but never depend on it for the fail-closed field.
 const telemetryAnchor = "    staticTerminalFacingDot: terminalFacingDot,";
-if (source.includes(telemetryAnchor) && !source.includes("staticSourceHeadingProvenanceDeltaRadians")) {
+if (source.includes(telemetryAnchor) && !source.includes("staticResolvedBridgeHeadingProvenanceDeltaRadians")) {
   source = source.replace(
     telemetryAnchor,
-    `    staticSourceHeadingProvenanceDeltaRadians: Math.abs(wrapYaw(THREE, resolvedBridgeHeading - sourceYaw)),\n${telemetryAnchor}`,
+    `    staticResolvedBridgeHeadingProvenanceDeltaRadians: Math.abs(wrapYaw(THREE, resolvedBridgeHeading - sourceYaw)),\n${telemetryAnchor}`,
   );
 }
 
 const aggregateAnchor = "  const maximumYawChange = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticFacadeRegistrationYawChangeRadians));";
-if (source.includes(aggregateAnchor) && !source.includes("maximumSourceHeadingProvenanceDelta")) {
+if (!source.includes("const maximumSourceHeadingProvenanceDelta =")) {
+  if (!source.includes(aggregateAnchor)) {
+    throw new Error(`${runtimePath}: static maximum yaw aggregate anchor is missing`);
+  }
   source = source.replace(
     aggregateAnchor,
     `${aggregateAnchor}\n  const maximumSourceHeadingProvenanceDelta = Math.max(...staticRegisteredPlacements.map((placement) => Number(placement.staticSourceHeadingProvenanceDeltaRadians) || 0));`,
   );
 }
 
-const publicationAnchor = "  group.userData.uploadedJetwayStaticMaximumRegistrationYawChangeRadians = maximumYawChange;";
-if (source.includes(publicationAnchor) && !source.includes("uploadedJetwayStaticMaximumSourceHeadingProvenanceDeltaRadians")) {
+// The registration module has used both "MaximumRegistrationYawChange" and
+// "MaximumYawChange" publication names across preparation generations. Bind to
+// whichever one survives rather than silently dropping provenance telemetry.
+if (!source.includes("uploadedJetwayStaticMaximumSourceHeadingProvenanceDeltaRadians")) {
+  const publicationAnchors = [
+    "  group.userData.uploadedJetwayStaticMaximumRegistrationYawChangeRadians = maximumYawChange;",
+    "  group.userData.uploadedJetwayStaticFacadeMaximumYawChangeRadians = maximumYawChange;",
+  ];
+  const publicationAnchor = publicationAnchors.find((candidate) => source.includes(candidate));
+  if (!publicationAnchor) {
+    throw new Error(`${runtimePath}: static maximum yaw publication anchor is missing`);
+  }
   source = source.replace(
     publicationAnchor,
     `${publicationAnchor}\n  group.userData.uploadedJetwayStaticMaximumSourceHeadingProvenanceDeltaRadians = maximumSourceHeadingProvenanceDelta;`,
