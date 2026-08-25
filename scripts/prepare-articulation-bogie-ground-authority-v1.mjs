@@ -20,7 +20,7 @@ const staticAuthorityPatterns = [
   'const STATIC_SOURCE_PLACEMENT_AUTHORITY = "57-static-own-gate-target-real-wall-compact-registration-v9";',
   'const STATIC_SOURCE_PLACEMENT_AUTHORITY = "57-static-exact-bgl-source-placement-no-facade-relocation-v1";',
 ];
-const splitStaticAuthorities = 'const STATIC_SOURCE_PLACEMENT_AUTHORITY = "57-static-own-gate-target-real-wall-compact-registration-v9";\nconst STATIC_RUNTIME_PLACEMENT_AUTHORITY = "57-static-bgl-source-pose-real-wall-registration-v10";';
+const splitStaticAuthorities = 'const STATIC_SOURCE_PLACEMENT_AUTHORITY = "57-static-own-gate-target-real-wall-compact-registration-v9";\nconst STATIC_RUNTIME_PLACEMENT_AUTHORITY = "57-static-own-gate-target-real-wall-source-heading-provenance-v11";';
 if (!source.includes(splitStaticAuthorities)) {
   let staticMatches = 0;
   for (const stale of staticAuthorityPatterns) {
@@ -31,7 +31,15 @@ if (!source.includes(splitStaticAuthorities)) {
       staticMatches += 1;
     }
   }
-  if (staticMatches !== 1) throw new Error(`Articulation static authority source anchor changed (migrated=${staticMatches})`);
+  if (staticMatches !== 1) {
+    const staleRuntime = 'const STATIC_RUNTIME_PLACEMENT_AUTHORITY = "57-static-bgl-source-pose-real-wall-registration-v10";';
+    const currentRuntime = 'const STATIC_RUNTIME_PLACEMENT_AUTHORITY = "57-static-own-gate-target-real-wall-source-heading-provenance-v11";';
+    if (source.includes(staleRuntime)) {
+      source = source.replace(staleRuntime, currentRuntime);
+    } else if (!source.includes(currentRuntime)) {
+      throw new Error(`Articulation static authority source anchor changed (migrated=${staticMatches})`);
+    }
+  }
 }
 
 const runtimeAssertionOld = 'expect(runtime.terminal4UploadedJetwayStaticOwnGateTargetAuthority).toBe(STATIC_SOURCE_PLACEMENT_AUTHORITY);';
@@ -83,11 +91,14 @@ if (source.includes('exact-authored-a1-lowest-geometry-ramp-contact-v2')) {
 if (!source.includes('57-static-own-gate-target-real-wall-compact-registration-v9')) {
   throw new Error('Intermediate v9 static source-preparer authority disappeared from articulation source-integrity verification');
 }
-if (!source.includes('57-static-bgl-source-pose-real-wall-registration-v10')) {
-  throw new Error('Final v10 static browser runtime authority is missing from articulation verification');
+if (!source.includes('57-static-own-gate-target-real-wall-source-heading-provenance-v11')) {
+  throw new Error('Final v11 static browser runtime authority is missing from articulation verification');
+}
+if (source.includes('57-static-bgl-source-pose-real-wall-registration-v10')) {
+  throw new Error('Retired v10 static browser runtime authority survived articulation verification preparation');
 }
 if (!source.includes(runtimeAssertionNew)) {
-  throw new Error('Final static runtime authority is not bound to the v10 browser assertion');
+  throw new Error('Final static runtime authority is not bound to the v11 browser assertion');
 }
 if (source.includes('geometricHorizontalRotundaOpeningToCabDistance')
   && !source.includes(currentHorizontalProjectionLowerBound)) {
@@ -104,4 +115,4 @@ for (const required of [
 }
 
 fs.writeFileSync(path, source);
-console.log('Prepared articulation browser verifier for final Tunnel-C ramp contact and fixed-aircraft physical Cab-hood contact; stale representative Cab-point distances are diagnostic only, while the exact door must be bracketed by the supplied hood surface in plane, lateral position and height with a nearby real vertex.');
+console.log('Prepared articulation browser verifier for final Tunnel-C ramp contact, current own-gate real-wall static authority, and fixed-aircraft physical Cab-hood contact; stale representative Cab-point distances are diagnostic only, while the exact door must be bracketed by the supplied hood surface in plane, lateral position and height with a nearby real vertex.');
