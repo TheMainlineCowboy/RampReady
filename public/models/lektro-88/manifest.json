@@ -1,13 +1,25 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "lektro-88",
-  "source": "Aircraft_Tug_REVISED_V2.obj",
+  "sources": [
+    {
+      "model": "Aircraft_Tug_REVISED_V3.obj",
+      "bytes": 6997892,
+      "sha256": "db58d341cbc4500f1d754c96c48a37c528ed1359acf99e6e95f57786a00697a6"
+    },
+    {
+      "model": "Aircraft_Tug_REVISED_V3.mtl",
+      "bytes": 1073,
+      "sha256": "749bc6ce401f089c13a06920a8fea6d8617b6e1879251b1b6e7deb1b17b726f0"
+    }
+  ],
   "runtimePath": "public/models/lektro-88.glb",
-  "chunkPath": "public/models/lektro-88/chunks/chunk-{index}.b64",
-  "chunkCount": 5,
-  "base64Chars": 25264,
-  "brotliBytes": 18948,
-  "brotliSha256": "d726b96f21c86993fe31340c791cd7bef2112d67a919d50be1deba514120e1ff",
-  "glbBytes": 42808,
-  "glbSha256": "046d1a6b88c9898dc389b38c5626bafd4237b2ea65ad7c2509176d13c1a66afb"
+  "directCommittedExactGlb": true,
+  "glbBytes": 8162248,
+  "glbSha256": "9cf0ec6fc6fe40a8d5effedda0ec8b4b3f3f00763d6767bb00c16a19bb08c3c4",
+  "preservation": {
+    "geometry": "Aircraft_Tug_REVISED_V3 OBJ geometry and material assignments retained; no V2 or procedural visual substitute",
+    "textures": "Full source tug01.png and tug_tow.png atlases embedded",
+    "steering": "two exact rear wheel triangle islands parented to AuthoredSteerPivot_L/R; front wheels remain fixed"
+  }
 }
