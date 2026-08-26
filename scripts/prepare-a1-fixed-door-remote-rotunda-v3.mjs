@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const sourcePath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
-const marker = "a1-aug15-fixed-rendered-crj-door-rotunda-target-v3";
+const marker = "a1-aug15-fixed-rendered-crj-door-rotunda-target-v4";
 const photoAuthority = "a1-aug15-photo-genuinely-remote-rotunda-placement-v2";
 const fixedDoorAuthority = "exact-authored-crj-forward-left-door-component-v1";
 
@@ -27,49 +27,51 @@ const hasRegeneratedPhotoAuthority = (
   || source.includes("remote Rotunda")
 );
 
-// This pass is a legacy A1 rewrite. It must never prevent the complete airport
-// from building merely because later source generation has already replaced its
-// old text anchors. In that case preserve the current tracked A1 geometry and
-// let the dedicated A1 acceptance suites judge it separately.
 if (!hasPhotoAuthorityMarker && !hasStructuralPhotoAuthority && !hasRegeneratedPhotoAuthority) {
-  console.warn(`${sourcePath}: fixed-door Rotunda pass skipped; no current Aug. 15 rewrite authority is present.`);
-  process.exit(0);
+  throw new Error(`${sourcePath}: fixed rendered-door Rotunda pass cannot find the Aug. 15 long-corridor/remote-Rotunda authority`);
 }
 
 if (!source.includes(marker)) {
-  const replacements = [
+  // Late generation legitimately rewrites the raw target declarations, so do
+  // not key final physical authority to those declarations. Rewrite the three
+  // calculations that actually consume the aircraft endpoint instead. The raw
+  // placement target may remain as provenance/diagnostic telemetry only.
+  const calculationReplacements = [
     [
-      "  const rawTargetXForRotunda = Number(placement.targetX);",
-      `  // ${marker}\n  // ${fixedDoorAuthority}\n  const rawTargetXForRotunda = ${fixedRenderedDoorX};`,
+      "  const aircraftReference = new THREE.Vector3(rawTargetXForRotunda, 0, rawTargetZForRotunda);",
+      `  // ${marker}\n  // ${fixedDoorAuthority}\n  // The fixed rendered CRJ forward-left door, not decoded placement.targetX/Z,\n  // owns the aircraft endpoint used by the Aug. 15 remote-Rotunda solve.\n  const aircraftReference = new THREE.Vector3(${fixedRenderedDoorX}, 0, ${fixedRenderedDoorZ});`,
     ],
-    ["  const rawTargetZForRotunda = Number(placement.targetZ);", `  const rawTargetZForRotunda = ${fixedRenderedDoorZ};`],
-    ["  const rawTargetX = Number(placement.targetX);", `  const rawTargetX = ${fixedRenderedDoorX};`],
-    ["  const rawTargetZ = Number(placement.targetZ);", `  const rawTargetZ = ${fixedRenderedDoorZ};`],
+    [
+      "  const photoBridgeTargetDistanceMeters = Math.hypot(rawTargetXForRotunda - fixedRotundaCenter.x, rawTargetZForRotunda - fixedRotundaCenter.z);",
+      `  const photoBridgeTargetDistanceMeters = Math.hypot(${fixedRenderedDoorX} - fixedRotundaCenter.x, ${fixedRenderedDoorZ} - fixedRotundaCenter.z);`,
+    ],
+    [
+      "  const targetPoint = new THREE.Vector3(rawTargetX, fixedRotundaCenter.y, rawTargetZ);",
+      `  const targetPoint = new THREE.Vector3(${fixedRenderedDoorX}, fixedRotundaCenter.y, ${fixedRenderedDoorZ});`,
+    ],
   ];
 
-  // If late regeneration has already changed any of these old rewrite anchors,
-  // do not partially rewrite the file. Preserve the current generated geometry.
-  const missingAnchor = replacements.find(([before]) => !source.includes(before));
-  if (missingAnchor) {
-    console.warn(`${sourcePath}: fixed-door Rotunda pass skipped; legacy replacement anchor is no longer present: ${missingAnchor[0]}`);
-    process.exit(0);
+  for (const [before, after] of calculationReplacements) {
+    if (source.includes(before)) {
+      source = source.replace(before, after);
+    } else if (!source.includes(after)) {
+      throw new Error(`${sourcePath}: fixed-door Rotunda pass cannot find current generated calculation anchor: ${before}`);
+    }
   }
-
-  for (const [before, after] of replacements) source = source.replace(before, after);
 }
 
 for (const required of [
   marker,
   fixedDoorAuthority,
-  `const rawTargetXForRotunda = ${fixedRenderedDoorX};`,
-  `const rawTargetZForRotunda = ${fixedRenderedDoorZ};`,
-  `const rawTargetX = ${fixedRenderedDoorX};`,
-  `const rawTargetZ = ${fixedRenderedDoorZ};`,
+  `const aircraftReference = new THREE.Vector3(${fixedRenderedDoorX}, 0, ${fixedRenderedDoorZ});`,
+  `const photoBridgeTargetDistanceMeters = Math.hypot(${fixedRenderedDoorX} - fixedRotundaCenter.x, ${fixedRenderedDoorZ} - fixedRotundaCenter.z);`,
+  `const targetPoint = new THREE.Vector3(${fixedRenderedDoorX}, fixedRotundaCenter.y, ${fixedRenderedDoorZ});`,
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${sourcePath}: fixed rendered-door remote-Rotunda authority is missing ${required}`);
   }
 }
+
 const stillHasPhotoGeometryAuthority = source.includes(photoAuthority)
   || source.includes("a1-real-photo-remote-rotunda-fixed-corridor-v1")
   || source.includes("uploadedJetwayA1RealPhotoGeometryAuthority")
@@ -81,16 +83,18 @@ const stillHasLongCorridorAuthority = source.includes("uploadedJetwayA1LongFixed
 if (!stillHasPhotoGeometryAuthority || !stillHasLongCorridorAuthority) {
   throw new Error(`${sourcePath}: fixed rendered-door pass lost the Aug. 15 long-corridor/remote-Rotunda authority`);
 }
+
+// Fail closed if the actual physical calculations ever retake decoded target
+// authority. Raw placement-target declarations may survive only as provenance.
 for (const forbidden of [
-  "const rawTargetXForRotunda = Number(placement.targetX);",
-  "const rawTargetZForRotunda = Number(placement.targetZ);",
-  "const rawTargetX = Number(placement.targetX);",
-  "const rawTargetZ = Number(placement.targetZ);",
+  "const aircraftReference = new THREE.Vector3(rawTargetXForRotunda, 0, rawTargetZForRotunda);",
+  "const photoBridgeTargetDistanceMeters = Math.hypot(rawTargetXForRotunda - fixedRotundaCenter.x, rawTargetZForRotunda - fixedRotundaCenter.z);",
+  "const targetPoint = new THREE.Vector3(rawTargetX, fixedRotundaCenter.y, rawTargetZ);",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${sourcePath}: stale decoded parking target still owns final A1 Rotunda/door placement: ${forbidden}`);
+    throw new Error(`${sourcePath}: decoded parking target retook final A1 Rotunda/door placement: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(sourcePath, source, "utf8");
-console.log(`Prepared ${marker}: fixed rendered CRJ door target retained without moving terminal or aircraft.`);
+console.log(`Prepared ${marker}: Aug. 15 remote Rotunda now solves against the fixed rendered CRJ door without moving terminal or aircraft.`);
