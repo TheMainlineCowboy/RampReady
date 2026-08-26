@@ -93,6 +93,16 @@ try {
   // final bogie/contact evidence. This hook changes sequencing only; the actual
   // support solver remains fail-closed and touches only disconnected A1 source islands.
   await import(`./prepare-a1-visible-support-build-hook-v1.mjs?final-visible-support-hook=${Date.now()}`);
+  // preserveDrawingBuffer is intentionally disabled for normal simulator runtime.
+  // Install a production-only browser evidence hook immediately before Vite so
+  // capture can force the CURRENT scene/camera through the live renderer and
+  // encode it synchronously before WebGL discards the backbuffer. The outer
+  // restoration below still restores the tracked trainer byte-for-byte.
+  await import(`./prepare-live-rendered-canvas-capture-hook-v1.mjs?final-live-capture=${Date.now()}`);
+  const capturePreparedTrainer = fs.readFileSync(terminal4TrainerPath, "utf8");
+  if (!capturePreparedTrainer.includes("live-threejs-render-then-encode-evidence-v1")) {
+    throw new Error("Final Terminal 4 trainer lost the live render-then-encode evidence hook before production bundling.");
+  }
   await import("./build-production.mjs");
 } catch (error) {
   buildError = error;
@@ -123,4 +133,4 @@ if (buildError && restorationError) {
 if (restorationError) throw restorationError;
 if (buildError) throw buildError;
 
-console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, restored inspection through the final post-fit rebased attached A1 controller, attached the exact jetway group to the live environment before deferred pavement readiness, applied scene-ready rigid per-gate pavement registration, sequenced final exact-source service-stair and visible Tunnel-C support corrections before bogie evidence, then restored both the committed jetway and Terminal 4 trainer sources byte-for-byte.");
+console.log("RampReady production wrapper preserved the prepared structural A1 wall fit, framed arched fixed walkway, source-shaped lower facade and nearest-wall attachment, restored inspection through the final post-fit rebased attached A1 controller, attached the exact jetway group to the live environment before deferred pavement readiness, applied scene-ready rigid per-gate pavement registration, sequenced final exact-source service-stair and visible Tunnel-C support corrections before bogie evidence, installed live render-then-encode browser capture before Vite, then restored both the committed jetway and Terminal 4 trainer sources byte-for-byte.");
