@@ -12,25 +12,38 @@ const a1RotundaSource = fileURLToPath(new URL("./src/environment/sourceRegistere
 const finalA1PhotoTelemetryPreparer = fileURLToPath(new URL("./scripts/prepare-a1-final-photo-telemetry-v1.mjs", import.meta.url));
 
 function attachTerminal4BeforeJetwayReadiness() {
-  const source = fs.readFileSync(terminal4Visual, "utf8");
-  const earlyAttach = `  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, authored, jetwayTextures);\n  environment.add(authored, sourcePlacedJetways);\n  authored.updateMatrixWorld(true);\n  sourcePlacedJetways.updateMatrixWorld(true);\n  if (!sourcePlacedJetways.userData.uploadedJetwayReady) {`;
-  if (source.includes(earlyAttach)) return;
+  let source = fs.readFileSync(terminal4Visual, "utf8");
+  const buildPattern = /(const\s+sourcePlacedJetways\s*=\s*buildSourcePlacedTerminal4Jetways\([^;]+\);\s*\n)/;
+  const attachmentPattern = /\n\s*environment\.add\(authored,\s*sourcePlacedJetways\);\s*\n\s*authored\.updateMatrixWorld\(true\);\s*\n\s*sourcePlacedJetways\.updateMatrixWorld\(true\);\s*/g;
+  const buildMatch = buildPattern.exec(source);
+  const readinessIndex = source.indexOf("await sourcePlacedJetways.userData.uploadedJetwayReady;");
+  const attachmentIndex = source.indexOf("environment.add(authored, sourcePlacedJetways);");
 
-  const before = `  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, authored, jetwayTextures);\n  if (!sourcePlacedJetways.userData.uploadedJetwayReady) {`;
-  const lateAttach = `  environment.add(authored, sourcePlacedJetways);\n  authored.updateMatrixWorld(true);\n  sourcePlacedJetways.updateMatrixWorld(true);\n\n  const terminalBounds = new THREE.Box3().setFromObject(authored);`;
-  const terminalBounds = `  const terminalBounds = new THREE.Box3().setFromObject(authored);`;
-
-  if (!source.includes(before)) {
-    throw new Error("Terminal 4 source no longer contains the expected pre-readiness construction boundary");
+  if (!buildMatch) {
+    throw new Error("Terminal 4 source no longer constructs sourcePlacedJetways through the expected builder");
   }
-  if (!source.includes(lateAttach)) {
-    throw new Error("Terminal 4 source no longer contains the expected late attachment boundary");
+  if (readinessIndex < 0) {
+    throw new Error("Terminal 4 source no longer awaits uploaded-jetway readiness");
   }
 
-  const patched = source
-    .replace(before, earlyAttach)
-    .replace(lateAttach, terminalBounds);
-  fs.writeFileSync(terminal4Visual, patched);
+  const buildIndex = buildMatch.index;
+  if (attachmentIndex > buildIndex && attachmentIndex < readinessIndex) {
+    console.log("Verified authored Terminal 4 and exact jetways are already attached before uploaded-jetway readiness.");
+    return;
+  }
+
+  source = source.replace(attachmentPattern, "\n");
+  const canonicalAttachment = `${buildMatch[1]}  environment.add(authored, sourcePlacedJetways);\n  authored.updateMatrixWorld(true);\n  sourcePlacedJetways.updateMatrixWorld(true);\n`;
+  source = source.replace(buildPattern, canonicalAttachment);
+
+  const finalBuildIndex = source.indexOf("buildSourcePlacedTerminal4Jetways");
+  const finalAttachmentIndex = source.indexOf("environment.add(authored, sourcePlacedJetways);");
+  const finalReadinessIndex = source.indexOf("await sourcePlacedJetways.userData.uploadedJetwayReady;");
+  if (!(finalBuildIndex >= 0 && finalAttachmentIndex > finalBuildIndex && finalAttachmentIndex < finalReadinessIndex)) {
+    throw new Error("Terminal 4 pre-readiness attachment ordering could not be established");
+  }
+
+  fs.writeFileSync(terminal4Visual, source, "utf8");
   console.log("Attached authored Terminal 4 and source-placed jetways before uploaded-jetway readiness/pavement validation.");
 }
 
@@ -61,12 +74,12 @@ function finalA1PhotoRotundaAuthority() {
     buildStart() {
       // The uploaded-jetway readiness chain performs world-space pavement and
       // terminal checks. The authored terminal/jetway group must already be a
-      // descendant of the live environment when that promise runs; otherwise
-      // its pavement raycasts cannot see the KPHX ground even though the model
-      // itself is valid. Keep every readiness assertion, but fix the ordering.
+      // descendant of the live environment when that promise runs. Verify the
+      // semantic order after every preparer instead of depending on one exact
+      // generated text layout. Every readiness assertion remains unchanged.
       attachTerminal4BeforeJetwayReadiness();
 
-      // a1-final-vite-buildstart-photo-rotunda-authority-v6-current-rendered-door-anchor
+      // a1-final-vite-buildstart-photo-rotunda-authority-v7-semantic-preawait-order
       // Export User Repair Assets performs a second Vite build after the verified
       // production build has restored tracked runtime source to exact HEAD. That
       // one-time export build deliberately injects only a read-only scene handle;
