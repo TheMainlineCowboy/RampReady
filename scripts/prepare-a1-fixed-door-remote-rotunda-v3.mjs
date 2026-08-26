@@ -14,8 +14,21 @@ const fixedRenderedDoorX = -1.2725916110988955;
 const fixedRenderedDoorZ = 8.45173366527876;
 
 let source = fs.readFileSync(sourcePath, "utf8");
-if (!source.includes(photoAuthority)) {
-  throw new Error(`${sourcePath}: ${photoAuthority} must run before fixed-door Rotunda registration`);
+
+// Late production regeneration is allowed to rewrite comments/authority marker
+// placement while preserving the actual Aug. 15 geometry. Do not require one
+// fragile literal marker if the structural remote-Rotunda contract is still
+// present. Conversely, fail closed if neither the marker nor the geometry that
+// it is supposed to represent survives.
+const hasPhotoAuthorityMarker = source.includes(photoAuthority);
+const hasStructuralPhotoAuthority = [
+  "const photoRotundaTarget = wallReference.clone()",
+  "uploadedJetwayA1LongFixedTerminalCorridor = true",
+  "uploadedJetwayA1PhotoRemoteRotundaWallDistanceMeters",
+  "uploadedJetwayA1PhotoRemoteRotundaBridgeReachMeters",
+].every((token) => source.includes(token));
+if (!hasPhotoAuthorityMarker && !hasStructuralPhotoAuthority) {
+  throw new Error(`${sourcePath}: Aug. 15 long-corridor/remote-Rotunda authority must run before fixed-door Rotunda registration`);
 }
 
 if (!source.includes(marker)) {
