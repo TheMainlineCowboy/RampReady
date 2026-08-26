@@ -22,20 +22,13 @@ replaceFunction(
     throw new Error("Three.js canvas is missing or not visibly rendered");
   }
   fs.mkdirSync("test-results", { recursive: true });
-  const dataUrl = await canvas.evaluate((node) => new Promise((resolve, reject) => {
-    requestAnimationFrame(() => {
-      try {
-        const encoded = node.toDataURL("image/png");
-        if (!encoded || !encoded.startsWith("data:image/png;base64,")) {
-          reject(new Error("Three.js canvas did not return PNG evidence"));
-          return;
-        }
-        resolve(encoded);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }));
+  const dataUrl = await canvas.evaluate((node) => {
+    const encoded = node.toDataURL("image/png");
+    if (!encoded || !encoded.startsWith("data:image/png;base64,")) {
+      throw new Error("Three.js canvas did not return PNG evidence");
+    }
+    return encoded;
+  });
   const png = Buffer.from(dataUrl.slice("data:image/png;base64,".length), "base64");
   fs.writeFileSync(path, png);
   expect(png.length).toBeGreaterThan(50_000);
@@ -53,20 +46,13 @@ replaceFunction(
   if (!box || box.width <= 100 || box.height <= 100) {
     throw new Error(\`\${filename} cannot capture a visible Three.js canvas\`);
   }
-  const dataUrl = await canvas.evaluate((node) => new Promise((resolve, reject) => {
-    requestAnimationFrame(() => {
-      try {
-        const encoded = node.toDataURL('image/png');
-        if (!encoded || !encoded.startsWith('data:image/png;base64,')) {
-          reject(new Error('Three.js canvas did not return PNG evidence'));
-          return;
-        }
-        resolve(encoded);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }));
+  const dataUrl = await canvas.evaluate((node) => {
+    const encoded = node.toDataURL('image/png');
+    if (!encoded || !encoded.startsWith('data:image/png;base64,')) {
+      throw new Error('Three.js canvas did not return PNG evidence');
+    }
+    return encoded;
+  });
   const png = Buffer.from(dataUrl.slice('data:image/png;base64,'.length), 'base64');
   fs.writeFileSync(outputPath, png);
   if (png.length < 10000) throw new Error(\`\${filename} screenshot is implausibly small: \${png.length} bytes\`);
@@ -74,4 +60,4 @@ replaceFunction(
 }`,
 );
 
-console.log("Replaced compositor screenshots with direct rendered-canvas PNG capture; geometry/readiness assertions remain unchanged.");
+console.log("Replaced compositor screenshots with frame-independent direct rendered-canvas PNG capture; geometry/readiness assertions remain unchanged.");
