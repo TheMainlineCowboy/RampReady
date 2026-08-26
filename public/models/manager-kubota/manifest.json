@@ -1,17 +1,15 @@
 {
   "schemaVersion": 1,
   "id": "manager-kubota",
-  "source": "cart_with_new_grate_roof_colored.obj (source vertex-cluster runtime, adaptive 0.02-0.11 m source grid)",
+  "source": "RTVManagersKubota.3mf source-derived runtime mesh; NO procedural replacement",
   "runtimePath": "public/models/manager-kubota.glb",
   "chunkPath": "public/models/manager-kubota/chunks/chunk-{index}.b64",
-  "chunkCount": 20,
-  "base64Chars": 148400,
-  "brotliBytes": 111298,
-  "brotliSha256": "a5c6105f704020f2f59fbd05ec72321eb63fecea66adcbfbef3c2ed2b2d222a6",
-  "glbBytes": 255696,
-  "glbSha256": "0f1033204827b72d7ab0c00f7815b39d8355b2ac4eaba0f07991922e948150e4",
-  "runtimeVertices": 6402,
-  "runtimeFaces": 13874,
-  "runtimeBoundsMeters": [1.605, 2.02, 3.055],
-  "axisMap": "runtime x=source y; runtime y=source z; runtime +z=source -x"
+  "chunkCount": 5,
+  "base64Chars": 22488,
+  "brotliBytes": 16865,
+  "brotliSha256": "76306329cd142502866510cccf81d494de54a71796d7788e76a09e976558a8a5",
+  "glbBytes": 76376,
+  "glbSha256": "47eb811f4a4d6d143e7f7ea2af26e98fcb922a95ee8d7bee5084f8d41fa6140c",
+  "runtimeBoundsMeters": [1.8, 2.4, 3.4],
+  "note": "This is source-derived authored geometry, not the basic Three.js Kubota stand-in."
 }
