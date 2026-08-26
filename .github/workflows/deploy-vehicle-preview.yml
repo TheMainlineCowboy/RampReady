@@ -33,6 +33,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Materialize required runtime assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run materialize:authored-aircraft
+          npm run materialize:standup-tug
+          npm run materialize:phx-terminal4
+          npm run materialize:kphx-ground
+          node scripts/materialize-exact-airport-jetway.mjs
+
       - name: Stamp exact preview commit
         shell: bash
         run: |
@@ -41,8 +51,8 @@ jobs:
           mkdir -p public/releases
           printf '%s\n' "${GITHUB_SHA}" > "public/releases/${GITHUB_SHA}.txt"
 
-      - name: Build current vehicle preview
-        run: npm run build
+      - name: Build current tracked vehicle runtime directly
+        run: npx vite build
 
       - name: Verify preview artifact
         shell: bash
