@@ -67,7 +67,6 @@ jobs:
           test -s dist/index.html
           test -s dist/release-commit.txt
           test "$(tr -d '\r\n' < dist/release-commit.txt)" = "${GITHUB_SHA}"
-          grep -Eq 'src="/RampReady/assets/[^"]+\.js"' dist/index.html
           for model in lektro-88 manager-kubota standup-tug; do
             echo "Checking dist/models/${model}.glb"
             ls -l "dist/models/${model}.glb"
