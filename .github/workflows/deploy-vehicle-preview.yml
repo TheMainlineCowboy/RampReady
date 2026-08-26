@@ -47,6 +47,19 @@ jobs:
       - name: Build complete RampReady runtime
         run: npm run build
 
+      - name: Restore authored vehicles into completed artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/materialize-authored-equipment-models.mjs
+          npm run materialize:standup-tug
+          mkdir -p dist/models dist/releases
+          cp public/models/lektro-88.glb dist/models/lektro-88.glb
+          cp public/models/manager-kubota.glb dist/models/manager-kubota.glb
+          cp public/models/standup-tug.glb dist/models/standup-tug.glb
+          printf '%s\n' "${GITHUB_SHA}" > dist/release-commit.txt
+          printf '%s\n' "${GITHUB_SHA}" > "dist/releases/${GITHUB_SHA}.txt"
+
       - name: Verify preview artifact and vehicle models
         shell: bash
         run: |
@@ -56,10 +69,13 @@ jobs:
           test "$(tr -d '\r\n' < dist/release-commit.txt)" = "${GITHUB_SHA}"
           grep -Eq 'src="/RampReady/assets/[^"]+\.js"' dist/index.html
           for model in lektro-88 manager-kubota standup-tug; do
+            echo "Checking dist/models/${model}.glb"
+            ls -l "dist/models/${model}.glb"
             test -s "dist/models/${model}.glb"
             printf 'glTF' | cmp -n 4 - "dist/models/${model}.glb"
           done
           test -s dist/models/kphx-photo/photo-manifest.json
+          echo "Full KPHX artifact and all three authored vehicle files are present."
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
