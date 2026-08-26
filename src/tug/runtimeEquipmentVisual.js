@@ -54,7 +54,7 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
   const scene = prepareAuthoredVehicle(gltf.scene, "RampReady_StandupRevisedV3");
 
   return installAuthoredVehicle(rig, scene, {
-    source: "authored-standup-v3",
+    source: "authored-standup",
     url,
     operatorStation: "standing-reference-camera",
     operatorControls: "supplied-v3-controls-not-final",
