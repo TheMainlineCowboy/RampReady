@@ -33,15 +33,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Materialize required runtime assets
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm run materialize:authored-aircraft
-          npm run materialize:standup-tug
-          npm run materialize:phx-terminal4
-          npm run materialize:kphx-ground
-          node scripts/materialize-exact-airport-jetway.mjs
+      - name: Materialize supplied vehicle models
+        run: node scripts/materialize-authored-equipment-models.mjs
 
       - name: Stamp exact preview commit
         shell: bash
@@ -51,10 +44,10 @@ jobs:
           mkdir -p public/releases
           printf '%s\n' "${GITHUB_SHA}" > "public/releases/${GITHUB_SHA}.txt"
 
-      - name: Build current tracked vehicle runtime directly
-        run: npx vite build
+      - name: Build complete RampReady runtime
+        run: npm run build
 
-      - name: Verify preview artifact
+      - name: Verify preview artifact and vehicle models
         shell: bash
         run: |
           set -euo pipefail
@@ -62,6 +55,11 @@ jobs:
           test -s dist/release-commit.txt
           test "$(tr -d '\r\n' < dist/release-commit.txt)" = "${GITHUB_SHA}"
           grep -Eq 'src="/RampReady/assets/[^"]+\.js"' dist/index.html
+          for model in lektro-88 manager-kubota standup-tug; do
+            test -s "dist/models/${model}.glb"
+            printf 'glTF' | cmp -n 4 - "dist/models/${model}.glb"
+          done
+          test -s dist/models/kphx-photo/photo-manifest.json
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
