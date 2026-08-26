@@ -19,7 +19,7 @@ export const EQUIPMENT_PROFILES = Object.freeze([
     shortLabel: "Stand-up",
     manufacturer: "User revised V3 model",
     status: "verified-runtime",
-    statusLabel: "Revised V3 runtime",
+    statusLabel: "Verified runtime",
     available: true,
     description: "The user-supplied revised V3 stand-up tug is the visual authority, using a single center rear steering wheel with near-90-degree articulation and the reference standing driver camera.",
     capabilities: Object.freeze(["User revised V3 model", "Single center rear steering", "Reference-matched standing operator view"]),
