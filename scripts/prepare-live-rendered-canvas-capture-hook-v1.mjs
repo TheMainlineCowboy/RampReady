@@ -1,5 +1,11 @@
 import fs from "node:fs";
 
+// The Aug. 15 A1 geometry correction must be applied after all earlier legacy
+// Rotunda/source-target preparers and immediately before the final Vite bundle.
+// Keep it adjacent to the last production handoff so no later decoded parking
+// target can retake authority from the already-fixed rendered CRJ door.
+await import(`./prepare-a1-fixed-door-remote-rotunda-v3.mjs?final-fixed-door-rotunda=${Date.now()}`);
+
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 const authority = "live-threejs-render-then-encode-evidence-v1";
@@ -25,4 +31,4 @@ for (const required of [
   if (!source.includes(required)) throw new Error(`Rendered-canvas evidence hook is missing ${required}`);
 }
 
-console.log("Installed live Three.js render-then-encode evidence hook immediately after simulator construction; geometry and camera state are unchanged.");
+console.log("Applied the final fixed-rendered-door A1 Rotunda authority, then installed the live Three.js render-then-encode evidence hook immediately after simulator construction.");
