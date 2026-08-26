@@ -33,7 +33,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Materialize supplied vehicle models
+      - name: Prepare the complete KPHX runtime used by the browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run materialize:authored-aircraft
+          npm run materialize:standup-tug
+          npm run materialize:phx-terminal4
+          npm run materialize:kphx-ground
+          npm run verify:kphx-v181
+          npm run prepare:terminal4-runtime
+
+      - name: Materialize supplied vehicle models after runtime preparation
         run: node scripts/materialize-authored-equipment-models.mjs
 
       - name: Stamp exact preview commit
@@ -44,36 +55,21 @@ jobs:
           mkdir -p public/releases
           printf '%s\n' "${GITHUB_SHA}" > "public/releases/${GITHUB_SHA}.txt"
 
-      - name: Build complete RampReady runtime
-        run: npm run build
+      - name: Bundle the prepared browser runtime
+        run: npx vite build
 
-      - name: Restore authored vehicles into completed artifact
+      - name: Verify full airport and authored vehicle files
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/materialize-authored-equipment-models.mjs
-          npm run materialize:standup-tug
-          mkdir -p dist/models dist/releases
-          cp public/models/lektro-88.glb dist/models/lektro-88.glb
-          cp public/models/manager-kubota.glb dist/models/manager-kubota.glb
-          cp public/models/standup-tug.glb dist/models/standup-tug.glb
-          printf '%s\n' "${GITHUB_SHA}" > dist/release-commit.txt
-          printf '%s\n' "${GITHUB_SHA}" > "dist/releases/${GITHUB_SHA}.txt"
-
-      - name: Verify preview artifact and vehicle models
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "Preview artifact root:"
-          ls -la dist | head -40
+          test -s dist/index.html
+          test -s dist/models/kphx-photo/photo-manifest.json
           for model in lektro-88 manager-kubota standup-tug; do
-            echo "Checking dist/models/${model}.glb"
             test -s "dist/models/${model}.glb"
             stat -c '%n %s bytes' "dist/models/${model}.glb"
             printf 'glTF' | cmp -n 4 - "dist/models/${model}.glb"
           done
-          test -s dist/models/kphx-photo/photo-manifest.json
-          echo "Full KPHX data and all three authored vehicle files are present."
+          echo "Prepared KPHX browser artifact contains Terminal 4 data and all three vehicle GLBs."
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
