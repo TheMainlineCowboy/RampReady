@@ -1,6 +1,6 @@
 import fs from "node:fs";
 
-const AUTHORITY = "a1-final-16m-remote-distance-roundoff-tolerance-v1";
+const AUTHORITY = "a1-final-16m-remote-distance-roundoff-tolerance-v2";
 const EPSILON_METERS = 0.002;
 
 const patches = [
@@ -13,6 +13,10 @@ const patches = [
       ],
       [
         `terminalWallDistance >= 18 - ${EPSILON_METERS} && terminalWallDistance <= 30`,
+        `terminalWallDistance >= 16 - ${EPSILON_METERS} && terminalWallDistance <= 30`,
+      ],
+      [
+        "terminalWallDistance >= 16 && terminalWallDistance <= 30",
         `terminalWallDistance >= 16 - ${EPSILON_METERS} && terminalWallDistance <= 30`,
       ],
     ],
@@ -28,6 +32,10 @@ const patches = [
         `finalA1WallDistance >= 18 - ${EPSILON_METERS} && finalA1WallDistance <= 35`,
         `finalA1WallDistance >= 16 - ${EPSILON_METERS} && finalA1WallDistance <= 35`,
       ],
+      [
+        "finalA1WallDistance >= 16 && finalA1WallDistance <= 35",
+        `finalA1WallDistance >= 16 - ${EPSILON_METERS} && finalA1WallDistance <= 35`,
+      ],
     ],
   },
   {
@@ -39,6 +47,10 @@ const patches = [
       ],
       [
         `photoWallDistance >= 18 - ${EPSILON_METERS} && photoWallDistance <= 35`,
+        `photoWallDistance >= 16 - ${EPSILON_METERS} && photoWallDistance <= 35`,
+      ],
+      [
+        "photoWallDistance >= 16 && photoWallDistance <= 35",
         `photoWallDistance >= 16 - ${EPSILON_METERS} && photoWallDistance <= 35`,
       ],
     ],
