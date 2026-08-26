@@ -7,13 +7,44 @@ import react from "@vitejs/plugin-react";
 const legacyAircraftModel = fileURLToPath(new URL("./src/components/aircraft/crj700Model.js", import.meta.url));
 const runtimeAircraftModel = fileURLToPath(new URL("./src/components/aircraft/crj700RuntimeModel.js", import.meta.url));
 const terminal4Trainer = fileURLToPath(new URL("./src/components/RampReadyStandupTrainerTerminal4.jsx", import.meta.url));
+const terminal4Visual = fileURLToPath(new URL("./src/environment/authoredTerminal4Visual.js", import.meta.url));
 const a1RotundaSource = fileURLToPath(new URL("./src/environment/sourceRegisteredA1RotundaElbowV3.js", import.meta.url));
+
+function attachTerminal4BeforeJetwayReadiness() {
+  const source = fs.readFileSync(terminal4Visual, "utf8");
+  const earlyAttach = `  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, authored, jetwayTextures);\n  environment.add(authored, sourcePlacedJetways);\n  authored.updateMatrixWorld(true);\n  sourcePlacedJetways.updateMatrixWorld(true);\n  if (!sourcePlacedJetways.userData.uploadedJetwayReady) {`;
+  if (source.includes(earlyAttach)) return;
+
+  const before = `  const sourcePlacedJetways = buildSourcePlacedTerminal4Jetways(THREE, authored, jetwayTextures);\n  if (!sourcePlacedJetways.userData.uploadedJetwayReady) {`;
+  const lateAttach = `  environment.add(authored, sourcePlacedJetways);\n  authored.updateMatrixWorld(true);\n  sourcePlacedJetways.updateMatrixWorld(true);\n\n  const terminalBounds = new THREE.Box3().setFromObject(authored);`;
+  const terminalBounds = `  const terminalBounds = new THREE.Box3().setFromObject(authored);`;
+
+  if (!source.includes(before)) {
+    throw new Error("Terminal 4 source no longer contains the expected pre-readiness construction boundary");
+  }
+  if (!source.includes(lateAttach)) {
+    throw new Error("Terminal 4 source no longer contains the expected late attachment boundary");
+  }
+
+  const patched = source
+    .replace(before, earlyAttach)
+    .replace(lateAttach, terminalBounds);
+  fs.writeFileSync(terminal4Visual, patched);
+  console.log("Attached authored Terminal 4 and source-placed jetways before uploaded-jetway readiness/pavement validation.");
+}
 
 function finalA1PhotoRotundaAuthority() {
   return {
     name: "rampready-final-a1-photo-rotunda-authority",
     apply: "build",
     buildStart() {
+      // The uploaded-jetway readiness chain performs world-space pavement and
+      // terminal checks. The authored terminal/jetway group must already be a
+      // descendant of the live environment when that promise runs; otherwise
+      // its pavement raycasts cannot see the KPHX ground even though the model
+      // itself is valid. Keep every readiness assertion, but fix the ordering.
+      attachTerminal4BeforeJetwayReadiness();
+
       // a1-final-vite-buildstart-photo-rotunda-authority-v5-export-safe-roundoff
       // Export User Repair Assets performs a second Vite build after the verified
       // production build has restored tracked runtime source to exact HEAD. That
