@@ -1,12 +1,14 @@
 import fs from "node:fs";
 
 const sourcePath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
-const marker = "a1-aug15-fixed-rendered-crj-door-rotunda-target-v6";
+const marker = "a1-aug15-fixed-rendered-crj-door-rotunda-target-v7";
 const photoAuthority = "a1-aug15-photo-genuinely-remote-rotunda-placement-v2";
 const fixedDoorAuthority = "exact-authored-crj-forward-left-door-component-v1";
+const finalWallDistanceAuthority = "a1-aug15-photo-final-20m-wall-remote-rotunda-v1";
 
 const fixedRenderedDoorX = -1.2725916110988955;
 const fixedRenderedDoorZ = 8.45173366527876;
+const finalRotundaWallDistanceMeters = 20.0;
 
 let source = fs.readFileSync(sourcePath, "utf8");
 
@@ -37,10 +39,8 @@ const fixedAircraftReference = `  const aircraftReference = new THREE.Vector3(${
 const fixedPhotoBridgeDistance = `  const photoBridgeTargetDistanceMeters = Math.hypot(${fixedRenderedDoorX} - fixedRotundaCenter.x, ${fixedRenderedDoorZ} - fixedRotundaCenter.z);`;
 const fixedTargetPoint = `  const targetPoint = new THREE.Vector3(${fixedRenderedDoorX}, fixedRotundaCenter.y, ${fixedRenderedDoorZ});`;
 
-// The remote-Rotunda position itself is solved from wallToAircraft, so changing
-// only targetPoint can rotate a bridge toward the right door while leaving the
-// Rotunda in the old aircraft-side location. Bind the upstream aircraftReference
-// consumed by photoRotundaTarget to the same fixed rendered CRJ forward-left door.
+// Bind the upstream wall-to-aircraft solve to the exact rendered CRJ forward-left
+// door. Decoded parking targets remain provenance only.
 if (!source.includes(fixedAircraftReference)) {
   const aircraftReferencePattern = /^\s*const\s+aircraftReference\s*=\s*new\s+THREE\.Vector3\([^\n;]*\);/m;
   if (!aircraftReferencePattern.test(source)) {
@@ -52,40 +52,50 @@ if (!source.includes(fixedAircraftReference)) {
   );
 }
 
-// The published remaining movable-bridge reach must use that same physical door
-// or the late acceptance/runtime can report a different reach than the Rotunda
-// solver actually reserved.
+// The same-head browser evidence on 38e93fab measured the final Rotunda at
+// 24.543 m from the real A1 wall while the terminal connection telemetry was
+// ~19.965 m, leaving only 10.345 m of Rotunda-to-live-Cab separation. Re-solve
+// the final photo Rotunda from the REAL wall toward the fixed rendered door at a
+// 20 m direct wall distance, preserving the Aug. 15 dogleg lateral offset. This
+// moves only the complete supplied A1 parent terminal-side; Terminal 4 and the
+// CRJ remain fixed and all Airport_Jetway.glb child geometry remains untouched.
+const finalPhotoTargetPattern = /  const photoRotundaTarget = wallReference\.clone\(\)\n    \.addScaledVector\(wallToAircraft, photoAlongMeters\)\n    \.addScaledVector\(wallSide, photoSideSign \* photoLateralMeters\);/;
+const finalPhotoTargetReplacement = `  // ${finalWallDistanceAuthority}\n  const fixedDoorWallVector = new THREE.Vector3(${fixedRenderedDoorX}, 0, ${fixedRenderedDoorZ})\n    .sub(wallReference)\n    .setY(0);\n  const fixedDoorWallSpanMeters = fixedDoorWallVector.length();\n  if (!(fixedDoorWallSpanMeters > ${finalRotundaWallDistanceMeters + 8})) {\n    throw new Error(\`A1 fixed-door wall span is too short for a genuinely remote Rotunda: \${fixedDoorWallSpanMeters}\`);\n  }\n  fixedDoorWallVector.normalize();\n  const fixedDoorWallSide = new THREE.Vector3(fixedDoorWallVector.z, 0, -fixedDoorWallVector.x).normalize();\n  const finalPhotoLateralMeters = Math.min(photoLateralMeters, ${finalRotundaWallDistanceMeters - 0.5});\n  const finalPhotoAlongMeters = Math.sqrt(Math.max(\n    1,\n    ${finalRotundaWallDistanceMeters} * ${finalRotundaWallDistanceMeters} - finalPhotoLateralMeters * finalPhotoLateralMeters,\n  ));\n  const photoRotundaTarget = wallReference.clone()\n    .addScaledVector(fixedDoorWallVector, finalPhotoAlongMeters)\n    .addScaledVector(fixedDoorWallSide, photoSideSign * finalPhotoLateralMeters);`;
+if (!source.includes(finalWallDistanceAuthority)) {
+  if (!finalPhotoTargetPattern.test(source)) {
+    throw new Error(`${sourcePath}: fixed-door Rotunda pass cannot find the final photoRotundaTarget solve`);
+  }
+  source = source.replace(finalPhotoTargetPattern, finalPhotoTargetReplacement);
+}
+
+// The published remaining movable-bridge reach must use the same physical door.
 if (!source.includes(fixedPhotoBridgeDistance)) {
   const photoBridgeDistancePattern = /^\s*const\s+photoBridgeTargetDistanceMeters\s*=\s*Math\.hypot\([\s\S]{0,260}?\);/m;
   if (!photoBridgeDistancePattern.test(source)) {
     throw new Error(`${sourcePath}: fixed-door Rotunda pass cannot find the photo bridge-distance calculation`);
   }
-  source = source.replace(
-    photoBridgeDistancePattern,
-    fixedPhotoBridgeDistance,
-  );
+  source = source.replace(photoBridgeDistancePattern, fixedPhotoBridgeDistance);
 }
 
-// Bind the actual aircraft-side bridge heading/contact consumer to the identical
-// fixed rendered door. This keeps the movable bridge and Rotunda solve in one
-// physical frame without moving the terminal or aircraft.
+// Bind the aircraft-side bridge heading/contact consumer to the identical fixed
+// rendered door. This keeps the movable bridge and Rotunda solve in one frame.
 if (!source.includes(fixedTargetPoint)) {
   const targetPointPattern = /^\s*const\s+targetPoint\s*=\s*new\s+THREE\.Vector3\([^\n;]*\);/m;
   if (!targetPointPattern.test(source)) {
     throw new Error(`${sourcePath}: fixed-door Rotunda pass cannot find regenerated targetPoint calculation`);
   }
-  source = source.replace(
-    targetPointPattern,
-    fixedTargetPoint,
-  );
+  source = source.replace(targetPointPattern, fixedTargetPoint);
 }
 
 for (const required of [
   marker,
   fixedDoorAuthority,
+  finalWallDistanceAuthority,
   fixedAircraftReference,
   fixedPhotoBridgeDistance,
   fixedTargetPoint,
+  `const finalPhotoAlongMeters = Math.sqrt(Math.max(`,
+  `const fixedDoorWallVector = new THREE.Vector3(${fixedRenderedDoorX}, 0, ${fixedRenderedDoorZ})`,
   "const wallToAircraft = aircraftReference.clone().sub(wallReference).setY(0);",
   "const photoRotundaTarget = wallReference.clone()",
   "const targetDirection = targetPoint.clone().sub(fixedRotundaCenter);",
@@ -123,4 +133,4 @@ for (const forbiddenPattern of [
 }
 
 fs.writeFileSync(sourcePath, source, "utf8");
-console.log(`Prepared ${marker}: Aug. 15 remote Rotunda position, remaining movable reach and bridge heading now all solve against the fixed rendered CRJ door without moving terminal or aircraft.`);
+console.log(`Prepared ${marker}: final A1 remote Rotunda is solved from the real wall toward the fixed rendered CRJ door at ${finalRotundaWallDistanceMeters.toFixed(1)} m direct wall distance, while movable reach and bridge heading remain fixed-door authoritative.`);
