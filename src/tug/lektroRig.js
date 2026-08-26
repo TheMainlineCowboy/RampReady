@@ -9,22 +9,16 @@ function makeMaterial(THREE, color, roughness = 0.62, metalness = 0.05) {
 }
 
 function box(THREE, width, height, depth, color, x, y, z) {
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(width, height, depth),
-    makeMaterial(THREE, color),
-  );
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), makeMaterial(THREE, color));
   mesh.position.set(x, y, z);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   return mesh;
 }
 
-function cylinder(THREE, radius, depth, color, x, y, z) {
-  const mesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(radius, radius, depth, 32),
-    makeMaterial(THREE, color, 0.78, 0.04),
-  );
-  mesh.position.set(x, y, z);
+function wheelMesh(THREE, radius, width, name) {
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, width, 32), makeMaterial(THREE, 0x0c0d0f, 0.88, 0.02));
+  mesh.name = name;
   mesh.rotation.z = Math.PI / 2;
   mesh.castShadow = true;
   mesh.receiveShadow = true;
@@ -66,9 +60,6 @@ export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
     const cradleWidth = Math.min(bodyWidth * 0.82, 1.8);
     cradleLift.add(box(THREE, cradleWidth, 0.1, 0.80, 0x111318, 0, 0.22, profile.cradleOffset - 0.48));
     cradleLift.add(box(THREE, cradleWidth * 0.94, 0.12, 0.72, 0x111318, 0, 0.34, profile.cradleOffset));
-    for (const side of [-1, 1]) {
-      cradleLift.add(box(THREE, 0.14, 0.50, 0.70, 0xffcc00, side * cradleWidth * 0.35, 0.51, profile.cradleOffset));
-    }
   }
   visual.add(cradleLift);
 
@@ -76,29 +67,39 @@ export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
   const steeringPivots = [];
   const axleHalfTrack = profile.trackWidth / 2;
   const halfWheelbase = profile.wheelbase / 2;
-  const wheelRadius = equipmentId === "manager-kubota" ? 0.31 : equipmentId === "standup-tug" ? 0.22 : 0.48;
-  const wheelWidth = equipmentId === "manager-kubota" ? 0.20 : equipmentId === "standup-tug" ? 0.16 : 0.36;
+  const layout = profile.steeringLayout || (profile.steeringMode === "rear" ? "rear-pair" : "front-pair");
 
-  for (const side of [-1, 1]) {
-    const rearPivot = new THREE.Group();
-    rearPivot.name = side < 0 ? "RearSteer_L" : "RearSteer_R";
-    rearPivot.position.set(side * axleHalfTrack, wheelRadius, -halfWheelbase);
-    const rear = cylinder(THREE, wheelRadius, wheelWidth, 0x0c0d0f, 0, 0, 0);
-    rear.name = side < 0 ? "RearWheel_L" : "RearWheel_R";
-    rearPivot.add(rear);
-    rollingWheels.push(rear);
-    visual.add(rearPivot);
+  const frontRadius = equipmentId === "lektro-88" ? 0.292 : equipmentId === "manager-kubota" ? 0.31 : 0.22;
+  const rearRadius = equipmentId === "lektro-88" ? 0.267 : equipmentId === "manager-kubota" ? 0.31 : 0.22;
+  const frontWidth = equipmentId === "lektro-88" ? 0.254 : equipmentId === "manager-kubota" ? 0.20 : 0.16;
+  const rearWidth = equipmentId === "lektro-88" ? 0.203 : equipmentId === "manager-kubota" ? 0.20 : 0.18;
 
-    const frontPivot = new THREE.Group();
-    frontPivot.name = side < 0 ? "FrontSteer_L" : "FrontSteer_R";
-    frontPivot.position.set(side * axleHalfTrack, wheelRadius, halfWheelbase);
-    const front = cylinder(THREE, wheelRadius, wheelWidth, 0x0c0d0f, 0, 0, 0);
-    front.name = side < 0 ? "FrontWheel_L" : "FrontWheel_R";
-    frontPivot.add(front);
-    rollingWheels.push(front);
-    visual.add(frontPivot);
+  const addAxleWheel = ({ side, z, radius, width, steer, prefix }) => {
+    const pivot = new THREE.Group();
+    const sideName = side === 0 ? "C" : side < 0 ? "L" : "R";
+    pivot.name = `${prefix}${steer ? "Steer" : "Fixed"}_${sideName}`;
+    pivot.position.set(side * axleHalfTrack, radius, z);
+    const wheel = wheelMesh(THREE, radius, width, `${prefix}Wheel_${sideName}`);
+    pivot.add(wheel);
+    rollingWheels.push(wheel);
+    if (steer) steeringPivots.push(pivot);
+    visual.add(pivot);
+  };
 
-    steeringPivots.push(profile.steeringMode === "rear" ? rearPivot : frontPivot);
+  if (layout === "rear-single") {
+    addAxleWheel({ side: -1, z: halfWheelbase, radius: frontRadius, width: frontWidth, steer: false, prefix: "Front" });
+    addAxleWheel({ side: 1, z: halfWheelbase, radius: frontRadius, width: frontWidth, steer: false, prefix: "Front" });
+    addAxleWheel({ side: 0, z: -halfWheelbase, radius: rearRadius, width: rearWidth, steer: true, prefix: "Rear" });
+  } else if (layout === "front-pair") {
+    for (const side of [-1, 1]) {
+      addAxleWheel({ side, z: -halfWheelbase, radius: rearRadius, width: rearWidth, steer: false, prefix: "Rear" });
+      addAxleWheel({ side, z: halfWheelbase, radius: frontRadius, width: frontWidth, steer: true, prefix: "Front" });
+    }
+  } else {
+    for (const side of [-1, 1]) {
+      addAxleWheel({ side, z: halfWheelbase, radius: frontRadius, width: frontWidth, steer: false, prefix: "Front" });
+      addAxleWheel({ side, z: -halfWheelbase, radius: rearRadius, width: rearWidth, steer: true, prefix: "Rear" });
+    }
   }
 
   const captureAnchorPosition = profile.captureAnchor || [0, 0.34, profile.cradleOffset];
@@ -113,8 +114,10 @@ export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
   }
 
   function rotateWheels(distance) {
-    const radians = distance / Math.max(0.12, wheelRadius);
-    for (const wheel of rollingWheels) wheel.rotation.x += radians;
+    for (const wheel of rollingWheels) {
+      const radius = Number(wheel.geometry?.parameters?.radiusTop) || 0.25;
+      wheel.rotation.x += distance / Math.max(0.12, radius);
+    }
   }
 
   function setLiftProgress(progress) {
@@ -152,11 +155,15 @@ export function validateTugRig(rig) {
   if (!rig?.captureAnchor) failures.push("missing capture anchor");
   if (!rig?.operatorEye) failures.push("missing operator eye anchor");
   if (!rig?.cradleLift) failures.push("missing cradle lift group");
-  if (rig?.rollingWheels?.length !== 4) failures.push("expected four rolling wheels");
-  if (rig?.steeringPivots?.length !== 2) failures.push("expected two steering pivots");
+  const layout = rig?.profile?.steeringLayout || (rig?.profile?.steeringMode === "rear" ? "rear-pair" : "front-pair");
+  const expectedWheels = layout === "rear-single" ? 3 : 4;
+  const expectedSteerPivots = layout === "rear-single" ? 1 : 2;
+  if (rig?.rollingWheels?.length !== expectedWheels) failures.push(`expected ${expectedWheels} rolling wheels for ${layout}`);
+  if (rig?.steeringPivots?.length !== expectedSteerPivots) failures.push(`expected ${expectedSteerPivots} steering pivots for ${layout}`);
   if (!Number.isFinite(rig?.profile?.cradleOffset) || rig.profile.cradleOffset <= 0) failures.push("invalid cradle offset");
   if (!Number.isFinite(rig?.profile?.wheelbase) || rig.profile.wheelbase <= 0) failures.push("invalid wheelbase");
   if (!["front", "rear"].includes(rig?.profile?.steeringMode)) failures.push("invalid steering mode");
+  if (!["front-pair", "rear-pair", "rear-single"].includes(layout)) failures.push("invalid steering layout");
   if (!Number.isFinite(rig?.profile?.freeMaxSpeed) || rig.profile.freeMaxSpeed <= 0) failures.push("invalid free speed");
   return failures;
 }
