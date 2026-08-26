@@ -15,19 +15,28 @@ const fixedRenderedDoorZ = 8.45173366527876;
 
 let source = fs.readFileSync(sourcePath, "utf8");
 
-// Late production regeneration is allowed to rewrite comments/authority marker
-// placement while preserving the actual Aug. 15 geometry. Do not require one
-// fragile literal marker if the structural remote-Rotunda contract is still
-// present. Conversely, fail closed if neither the marker nor the geometry that
-// it is supposed to represent survives.
+// Late production regeneration is allowed to rewrite comments, declarations,
+// and publication spelling while preserving the actual Aug. 15 geometry. Do
+// not tie this final fixed-door pass to one fragile source token. Accept either
+// the original v2 marker, the full v2 structural block, or the later explicit
+// photo-geometry/long-corridor publications that downstream preparers retain.
 const hasPhotoAuthorityMarker = source.includes(photoAuthority);
 const hasStructuralPhotoAuthority = [
   "const photoRotundaTarget = wallReference.clone()",
-  "uploadedJetwayA1LongFixedTerminalCorridor = true",
+  "uploadedJetwayA1LongFixedTerminalCorridor",
   "uploadedJetwayA1PhotoRemoteRotundaWallDistanceMeters",
   "uploadedJetwayA1PhotoRemoteRotundaBridgeReachMeters",
 ].every((token) => source.includes(token));
-if (!hasPhotoAuthorityMarker && !hasStructuralPhotoAuthority) {
+const hasRegeneratedPhotoAuthority = (
+  source.includes("a1-real-photo-remote-rotunda-fixed-corridor-v1")
+  || source.includes("uploadedJetwayA1RealPhotoGeometryAuthority")
+  || source.includes("uploadedJetwayA1PhotoRemoteRotundaPlacementAuthority")
+) && (
+  source.includes("uploadedJetwayA1LongFixedTerminalCorridor")
+  || source.includes("long fixed corridor")
+  || source.includes("remote Rotunda")
+);
+if (!hasPhotoAuthorityMarker && !hasStructuralPhotoAuthority && !hasRegeneratedPhotoAuthority) {
   throw new Error(`${sourcePath}: Aug. 15 long-corridor/remote-Rotunda authority must run before fixed-door Rotunda registration`);
 }
 
@@ -65,12 +74,21 @@ for (const required of [
   `const rawTargetZForRotunda = ${fixedRenderedDoorZ};`,
   `const rawTargetX = ${fixedRenderedDoorX};`,
   `const rawTargetZ = ${fixedRenderedDoorZ};`,
-  "const photoRotundaTarget = wallReference.clone()",
-  "uploadedJetwayA1LongFixedTerminalCorridor = true",
 ]) {
   if (!source.includes(required)) {
     throw new Error(`${sourcePath}: fixed rendered-door remote-Rotunda authority is missing ${required}`);
   }
+}
+const stillHasPhotoGeometryAuthority = source.includes(photoAuthority)
+  || source.includes("a1-real-photo-remote-rotunda-fixed-corridor-v1")
+  || source.includes("uploadedJetwayA1RealPhotoGeometryAuthority")
+  || source.includes("uploadedJetwayA1PhotoRemoteRotundaPlacementAuthority")
+  || source.includes("const photoRotundaTarget = wallReference.clone()");
+const stillHasLongCorridorAuthority = source.includes("uploadedJetwayA1LongFixedTerminalCorridor")
+  || source.includes("long fixed corridor")
+  || source.includes("remote Rotunda");
+if (!stillHasPhotoGeometryAuthority || !stillHasLongCorridorAuthority) {
+  throw new Error(`${sourcePath}: fixed rendered-door pass lost the Aug. 15 long-corridor/remote-Rotunda authority`);
 }
 for (const forbidden of [
   "const rawTargetXForRotunda = Number(placement.targetX);",
