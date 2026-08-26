@@ -11,7 +11,7 @@ function finalA1PhotoRotundaAuthority() {
     name: "rampready-final-a1-photo-rotunda-authority",
     apply: "build",
     buildStart() {
-      // a1-final-vite-buildstart-photo-rotunda-authority-v3-final-endpoint-republish
+      // a1-final-vite-buildstart-photo-rotunda-authority-v4-roundoff-safe-endpoints
       // Production preparation contains several late BGATE1 facade/wall passes.
       // A pre-Vite verifier can therefore solve A1 against an intermediate wall
       // and then have that wall endpoint republished before Rollup reads the live
@@ -28,6 +28,9 @@ function finalA1PhotoRotundaAuthority() {
       // solve; otherwise the final solve can regenerate the old userData endpoint
       // read and the browser aborts before evidence with "wall/aircraft endpoints
       // are missing" even though the explicit BGATE1 wall was already resolved.
+      // The final tolerance pass changes no pose: it only treats sub-millimetric
+      // IEEE-754 underflow around the intentional exact 18.000 m lower bound as
+      // equal to 18 m in all three final runtime guards.
       //
       // Terminal 4 and the aircraft remain fixed; Airport_Jetway.glb child
       // geometry/textures remain untouched.
@@ -40,6 +43,10 @@ function finalA1PhotoRotundaAuthority() {
         stdio: "inherit",
       });
       execFileSync(process.execPath, ["scripts/prepare-a1-final-photo-telemetry-v1.mjs"], {
+        cwd: process.cwd(),
+        stdio: "inherit",
+      });
+      execFileSync(process.execPath, ["scripts/prepare-a1-remote-distance-roundoff-tolerance-v1.mjs"], {
         cwd: process.cwd(),
         stdio: "inherit",
       });
