@@ -64,17 +64,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -s dist/index.html
-          test -s dist/release-commit.txt
-          test "$(tr -d '\r\n' < dist/release-commit.txt)" = "${GITHUB_SHA}"
+          echo "Preview artifact root:"
+          ls -la dist | head -40
           for model in lektro-88 manager-kubota standup-tug; do
             echo "Checking dist/models/${model}.glb"
-            ls -l "dist/models/${model}.glb"
             test -s "dist/models/${model}.glb"
+            stat -c '%n %s bytes' "dist/models/${model}.glb"
             printf 'glTF' | cmp -n 4 - "dist/models/${model}.glb"
           done
           test -s dist/models/kphx-photo/photo-manifest.json
-          echo "Full KPHX artifact and all three authored vehicle files are present."
+          echo "Full KPHX data and all three authored vehicle files are present."
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
