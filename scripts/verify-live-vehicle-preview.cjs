@@ -41,6 +41,27 @@ async function captureCanvas(page, canvas, path) {
   } finally { await session.detach(); }
 }
 
+async function runtimeTelemetry(page) {
+  return page.evaluate(() => {
+    const c = document.querySelector('canvas.trainerCanvas');
+    const message = document.querySelector('.rr-hud > p')?.textContent || '';
+    if (!c) return { canvas: null, message };
+    const wanted = [
+      'equipmentId', 'tugSource', 'steeringMode', 'inspectionMode', 'inspectionPreset',
+      'environmentSource', 'groundSource', 'photoGroundSource', 'kphxVersion', 'kphxDetailLevel',
+      'terminal4UploadedJetwayLoadState', 'terminal4UploadedJetwayCount',
+      'terminal4UploadedJetwayConnectorCount', 'terminal4UploadedJetwayVerifiedModelCount',
+      'terminal4UploadedJetwayReadyAuthority', 'terminal4UploadedJetwayArticulationAuthority',
+      'terminal4TerminalConnectedJetwayCount', 'terminal4A1PortalSealAuthority',
+      'airportCollisionReady', 'airportCollisionTargetCount', 'photoRuntimeTileCount',
+    ];
+    return {
+      message,
+      canvas: Object.fromEntries(wanted.map(key => [key, c.dataset[key] ?? null])),
+    };
+  });
+}
+
 async function waitRuntime(page, expectedId, expectedSource) {
   const canvas = page.locator('canvas.trainerCanvas');
   await canvas.waitFor({ state: 'visible', timeout: 45000 });
@@ -48,14 +69,22 @@ async function waitRuntime(page, expectedId, expectedSource) {
     const c = document.querySelector('canvas.trainerCanvas');
     return c?.dataset.equipmentId === id && c?.dataset.tugSource === source;
   }, { id: expectedId, source: expectedSource }, { timeout: 90000 });
-  await page.waitForFunction(() => {
-    const c = document.querySelector('canvas.trainerCanvas');
-    return c && c.dataset.environmentSource && c.dataset.environmentSource !== 'loading-authored-phx-terminal4-textured'
-      && c.dataset.environmentSource !== 'load-error'
-      && c.dataset.groundSource && !/^loading|load-error$/.test(c.dataset.groundSource)
-      && c.dataset.photoGroundSource && !/^loading|load-error$/.test(c.dataset.photoGroundSource)
-      && c.dataset.terminal4UploadedJetwayLoadState === 'ready';
-  }, null, { timeout: 120000 });
+
+  try {
+    await page.waitForFunction(() => {
+      const c = document.querySelector('canvas.trainerCanvas');
+      return c && c.dataset.environmentSource && c.dataset.environmentSource !== 'loading-authored-phx-terminal4-textured'
+        && c.dataset.environmentSource !== 'load-error'
+        && c.dataset.groundSource && !/^loading|load-error$/.test(c.dataset.groundSource)
+        && c.dataset.photoGroundSource && !/^loading|load-error$/.test(c.dataset.photoGroundSource)
+        && c.dataset.terminal4UploadedJetwayLoadState === 'ready';
+    }, null, { timeout: 150000 });
+  } catch (error) {
+    const telemetry = await runtimeTelemetry(page).catch(telemetryError => ({ telemetryError: telemetryError.message }));
+    fs.writeFileSync(`${OUT}/runtime-timeout-${expectedId}.json`, JSON.stringify(telemetry, null, 2));
+    await captureCanvas(page, canvas, `${OUT}/runtime-timeout-${expectedId}.png`).catch(() => {});
+    throw new Error(`${expectedId}: Terminal 4/ground readiness timeout: ${JSON.stringify(telemetry)}; ${error.message}`);
+  }
   return canvas;
 }
 
