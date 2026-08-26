@@ -1,0 +1,63 @@
+name: Verify exact vehicle preview live
+
+on:
+  push:
+    branches: [fix/a1-real-fixed-corridor]
+
+permissions:
+  contents: read
+
+env:
+  PAGE_URL: https://themainlinecowboy.github.io/RampReady/
+
+jobs:
+  browser-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Wait for this exact Pages release
+        shell: bash
+        run: |
+          set -euo pipefail
+          marker="${PAGE_URL}releases/${GITHUB_SHA}.txt"
+          for attempt in $(seq 1 80); do
+            value=$(curl -LfsS -H 'Cache-Control: no-cache' "${marker}?attempt=${attempt}" 2>/dev/null | tr -d '\r\n' || true)
+            if [ "${value}" = "${GITHUB_SHA}" ]; then
+              echo "Exact Pages release ${GITHUB_SHA} is live."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Exact Pages release marker never became live: ${GITHUB_SHA}" >&2
+          exit 1
+
+      - name: Check out exact deployed commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install browser runtime
+        run: |
+          npm ci
+          npm install --no-save --package-lock=false playwright@1.53.1
+          npx playwright install --with-deps chromium
+
+      - name: Capture exact vehicles and Terminal 4
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: node scripts/verify-live-vehicle-preview.cjs
+
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exact-vehicle-preview-${{ github.sha }}-${{ github.run_id }}
+          path: vehicle-preview-evidence/
+          if-no-files-found: error
+          retention-days: 1
