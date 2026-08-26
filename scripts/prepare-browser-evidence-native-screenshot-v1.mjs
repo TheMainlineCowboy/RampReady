@@ -21,14 +21,12 @@ replaceFunction(
   if (!box || box.width <= 100 || box.height <= 100) {
     throw new Error("Three.js canvas is missing or not visibly rendered");
   }
+  await page.waitForFunction(() => typeof window.__rampReadyCaptureEvidencePng === "function", null, { timeout: 15000 });
   fs.mkdirSync("test-results", { recursive: true });
-  const dataUrl = await canvas.evaluate((node) => {
-    const encoded = node.toDataURL("image/png");
-    if (!encoded || !encoded.startsWith("data:image/png;base64,")) {
-      throw new Error("Three.js canvas did not return PNG evidence");
-    }
-    return encoded;
-  });
+  const dataUrl = await page.evaluate(() => window.__rampReadyCaptureEvidencePng());
+  if (!dataUrl || !dataUrl.startsWith("data:image/png;base64,")) {
+    throw new Error("Live Three.js render hook did not return PNG evidence");
+  }
   const png = Buffer.from(dataUrl.slice("data:image/png;base64,".length), "base64");
   fs.writeFileSync(path, png);
   expect(png.length).toBeGreaterThan(50_000);
@@ -46,13 +44,11 @@ replaceFunction(
   if (!box || box.width <= 100 || box.height <= 100) {
     throw new Error(\`\${filename} cannot capture a visible Three.js canvas\`);
   }
-  const dataUrl = await canvas.evaluate((node) => {
-    const encoded = node.toDataURL('image/png');
-    if (!encoded || !encoded.startsWith('data:image/png;base64,')) {
-      throw new Error('Three.js canvas did not return PNG evidence');
-    }
-    return encoded;
-  });
+  await page.waitForFunction(() => typeof window.__rampReadyCaptureEvidencePng === 'function', null, { timeout: 15000 });
+  const dataUrl = await page.evaluate(() => window.__rampReadyCaptureEvidencePng());
+  if (!dataUrl || !dataUrl.startsWith('data:image/png;base64,')) {
+    throw new Error('Live Three.js render hook did not return PNG evidence');
+  }
   const png = Buffer.from(dataUrl.slice('data:image/png;base64,'.length), 'base64');
   fs.writeFileSync(outputPath, png);
   if (png.length < 10000) throw new Error(\`\${filename} screenshot is implausibly small: \${png.length} bytes\`);
@@ -60,4 +56,4 @@ replaceFunction(
 }`,
 );
 
-console.log("Replaced compositor screenshots with frame-independent direct rendered-canvas PNG capture; geometry/readiness assertions remain unchanged.");
+console.log("Replaced stale-backbuffer canvas reads with synchronous live Three.js render-then-encode PNG capture; geometry/readiness assertions remain unchanged.");
