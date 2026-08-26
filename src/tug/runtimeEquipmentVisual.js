@@ -1,9 +1,30 @@
-import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { installDetailedLektro88Visual } from "./lektro88DetailedVisual.js";
-import { installDetailedManagerKubotaVisual } from "./managerKubotaDetailedVisual.js";
 
-const SUPPORTED_EQUIPMENT = new Set(["lektro-88", "standup-tug", "manager-kubota"]);
+const AUTHORED_EQUIPMENT = Object.freeze({
+  "lektro-88": Object.freeze({
+    file: "lektro-88.glb",
+    name: "RampReady_LEKTRO88_UserAuthored",
+    source: "user-authored-lektro-88-model",
+    operatorStation: "seated-operator-camera",
+    operatorControls: "authored-model-physics-rig",
+  }),
+  "standup-tug": Object.freeze({
+    file: "standup-tug.glb",
+    name: "RampReady_StandupRevisedV3",
+    source: "user-authored-standup-model",
+    operatorStation: "standing-reference-camera",
+    operatorControls: "authored-model-physics-rig",
+  }),
+  "manager-kubota": Object.freeze({
+    file: "manager-kubota.glb",
+    name: "RampReady_ManagerKubota_UserAuthored",
+    source: "user-authored-manager-kubota-model",
+    operatorStation: "seated-manager-driver",
+    operatorControls: "authored-model-physics-rig",
+  }),
+});
+
+const SUPPORTED_EQUIPMENT = new Set(Object.keys(AUTHORED_EQUIPMENT));
 
 export function supportsRuntimeEquipmentVisual(equipmentId) {
   return SUPPORTED_EQUIPMENT.has(equipmentId);
@@ -22,6 +43,8 @@ function prepareAuthoredVehicle(scene, name) {
 }
 
 function installAuthoredVehicle(rig, scene, metadata) {
+  // The procedural rig remains only as the invisible physics/anchor rig.
+  // The visible vehicle is always the supplied/source-derived authored model.
   rig.visual.visible = false;
   rig.root.add(scene);
   rig.operatorEye.position.fromArray(rig.profile.operatorEye);
@@ -37,26 +60,15 @@ function installAuthoredVehicle(rig, scene, metadata) {
 }
 
 export async function installRuntimeEquipmentVisual(rig, equipmentId) {
-  if (!supportsRuntimeEquipmentVisual(equipmentId)) {
-    throw new Error(`Unsupported runtime equipment visual: ${equipmentId}`);
-  }
+  const metadata = AUTHORED_EQUIPMENT[equipmentId];
+  if (!metadata) throw new Error(`Unsupported runtime equipment visual: ${equipmentId}`);
 
-  if (equipmentId === "lektro-88") {
-    return installDetailedLektro88Visual(rig);
-  }
-
-  if (equipmentId === "manager-kubota") {
-    return installDetailedManagerKubotaVisual(rig);
-  }
-
-  const url = `${import.meta.env.BASE_URL}models/standup-tug.glb`;
+  const url = `${import.meta.env.BASE_URL}models/${metadata.file}`;
   const gltf = await new GLTFLoader().loadAsync(url);
-  const scene = prepareAuthoredVehicle(gltf.scene, "RampReady_StandupRevisedV3");
+  const scene = prepareAuthoredVehicle(gltf.scene, metadata.name);
 
   return installAuthoredVehicle(rig, scene, {
-    source: "authored-standup",
+    ...metadata,
     url,
-    operatorStation: "standing-reference-camera",
-    operatorControls: "supplied-v3-controls-not-final",
   });
 }
