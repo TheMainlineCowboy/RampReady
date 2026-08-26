@@ -3,25 +3,28 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 const AUTHORED_EQUIPMENT = Object.freeze({
   "lektro-88": Object.freeze({
     file: "lektro-88.glb",
-    name: "RampReady_LEKTRO88_UserAuthored",
-    source: "user-authored-lektro-88-model",
+    name: "RampReady_LEKTRO88_RevisedV3",
+    source: "Aircraft_Tug_REVISED_V3.obj+mtl",
     operatorStation: "seated-operator-camera",
     operatorControls: "authored-model-physics-rig",
+    steeringNodes: Object.freeze(["AuthoredSteerPivot_L", "AuthoredSteerPivot_R"]),
   }),
   "standup-tug": Object.freeze({
     file: "standup-tug.glb",
     runtimePath: "models/standup-tug.glb",
     name: "RampReady_StandupRevisedV3",
-    source: "authored-standup",
+    source: "Aircraft_Standup_REVISED_V3.3mf",
     operatorStation: "standing-reference-camera",
     operatorControls: "authored-model-physics-rig",
+    steeringNodes: Object.freeze(["AuthoredSteerPivot_C"]),
   }),
   "manager-kubota": Object.freeze({
     file: "manager-kubota.glb",
-    name: "RampReady_ManagerKubota_UserAuthored",
-    source: "user-authored-manager-kubota-model",
+    name: "RampReady_ManagerKubota_Exact",
+    source: "RTVManagersKubota.3mf",
     operatorStation: "seated-manager-driver",
     operatorControls: "authored-model-physics-rig",
+    steeringNodes: Object.freeze(["AuthoredSteerPivot_L", "AuthoredSteerPivot_R"]),
   }),
 });
 
@@ -43,9 +46,21 @@ function prepareAuthoredVehicle(scene, name) {
   return scene;
 }
 
+function bindAuthoredSteering(rig, scene, steeringNodeNames = []) {
+  const pivots = steeringNodeNames.map((name) => scene.getObjectByName(name));
+  if (pivots.some((pivot) => !pivot)) {
+    const missing = steeringNodeNames.filter((name, index) => !pivots[index]);
+    throw new Error(`Authored vehicle is missing steering pivot(s): ${missing.join(", ")}`);
+  }
+  rig.root.userData.authoredSteeringPivots = pivots;
+  const currentAngle = Number(rig.root.userData.authoredSteeringAngle || 0);
+  for (const pivot of pivots) pivot.rotation.y = currentAngle;
+}
+
 function installAuthoredVehicle(rig, scene, metadata) {
   // The procedural rig remains only as the invisible physics/anchor rig.
-  // The visible vehicle is always the supplied/source-derived authored model.
+  // The visible vehicle is always the exact supplied/source-derived model.
+  bindAuthoredSteering(rig, scene, metadata.steeringNodes);
   rig.visual.visible = false;
   rig.root.add(scene);
   rig.operatorEye.position.fromArray(rig.profile.operatorEye);
@@ -57,6 +72,7 @@ function installAuthoredVehicle(rig, scene, metadata) {
   rig.root.userData.vehicleReferenceModel = rig.profile.referenceModel;
   rig.root.userData.operatorStation = metadata.operatorStation;
   rig.root.userData.operatorControls = metadata.operatorControls;
+  rig.root.userData.authoredSteeringNodeNames = [...metadata.steeringNodes];
   return metadata.source;
 }
 
@@ -69,14 +85,8 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
   const gltf = await new GLTFLoader().loadAsync(url);
   const scene = prepareAuthoredVehicle(gltf.scene, metadata.name);
 
-  const source = installAuthoredVehicle(rig, scene, {
+  return installAuthoredVehicle(rig, scene, {
     ...metadata,
     url,
   });
-  if (equipmentId === "standup-tug") {
-    // Keep the stable release-gate identity explicit. The runtime asset itself is
-    // the materialized public/models/standup-tug.glb produced and hash-verified by CI.
-    rig.root.userData.runtimeVisualSource = "authored-standup";
-  }
-  return source;
 }
