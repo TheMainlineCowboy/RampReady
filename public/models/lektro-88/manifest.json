@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "lektro-88",
+  "source": "Aircraft_Tug_REVISED_V2.obj",
+  "runtimePath": "public/models/lektro-88.glb",
+  "chunkPath": "public/models/lektro-88/chunks/chunk-{index}.b64",
+  "chunkCount": 5,
+  "base64Chars": 25264,
+  "brotliBytes": 18948,
+  "brotliSha256": "d726b96f21c86993fe31340c791cd7bef2112d67a919d50be1deba514120e1ff",
+  "glbBytes": 42808,
+  "glbSha256": "046d1a6b88c9898dc389b38c5626bafd4237b2ea65ad7c2509176d13c1a66afb"
+}
