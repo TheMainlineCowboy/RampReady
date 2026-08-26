@@ -44,3 +44,11 @@ console.log("Prepared runtime kinematics parity verified against shared capture,
 // Vite. Normalize the generated A1 terminal-joint camera here, after every late
 // production rewrite and before the exact browser artifact is bundled.
 await import(`./prepare-a1-final-terminal-joint-camera-guard-v1.mjs?pre-vite=${Date.now()}`);
+
+// The Aug. 15 remote-Rotunda module is regenerated inside verify-prepared-runtime,
+// which runs after the earlier fixed-door pass. Reassert the fixed rendered CRJ
+// forward-door endpoint here at the true final pre-Vite handoff so no later
+// decoded parking-target regeneration can collapse the movable A1 span again.
+// This changes only the generated A1 target calculation; Terminal 4, the CRJ and
+// the exact supplied Airport_Jetway.glb geometry/textures remain untouched.
+await import(`./prepare-a1-fixed-door-remote-rotunda-v3.mjs?final-pre-vite-fixed-door=${Date.now()}`);
