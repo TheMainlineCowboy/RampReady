@@ -16,14 +16,21 @@ replaceFunction(
   "async function captureCanvas(page, path) {",
   "async function captureInspectionPreset",
   `async function captureCanvas(page, path) {
-  const canvas = page.locator("canvas.trainerCanvas");
-  const box = await canvas.boundingBox();
-  if (!box || box.width <= 100 || box.height <= 100) {
-    throw new Error("Three.js canvas is missing or not visibly rendered");
-  }
-  await page.waitForFunction(() => typeof window.__rampReadyCaptureEvidencePng === "function", null, { timeout: 15000 });
   fs.mkdirSync("test-results", { recursive: true });
-  const dataUrl = await page.evaluate(() => window.__rampReadyCaptureEvidencePng());
+  // Heavy Three.js frames make every separate Playwright/renderer round trip
+  // expensive. Validate the visible canvas, force the live render and encode the
+  // PNG in one browser turn so four evidence views do not consume the entire
+  // articulation timeout merely crossing the protocol boundary.
+  const dataUrl = await page.evaluate(() => {
+    const canvas = document.querySelector("canvas.trainerCanvas");
+    if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Three.js canvas is missing");
+    const bounds = canvas.getBoundingClientRect();
+    if (bounds.width <= 100 || bounds.height <= 100) throw new Error("Three.js canvas is not visibly rendered");
+    if (typeof window.__rampReadyCaptureEvidencePng !== "function") {
+      throw new Error("Live Three.js render hook is unavailable");
+    }
+    return window.__rampReadyCaptureEvidencePng();
+  });
   if (!dataUrl || !dataUrl.startsWith("data:image/png;base64,")) {
     throw new Error("Live Three.js render hook did not return PNG evidence");
   }
@@ -39,13 +46,16 @@ replaceFunction(
   "(async () => {",
   `async function capture(page, filename) {
   const outputPath = \`\${evidenceDirectory}/\${filename}\`;
-  const canvas = page.locator('canvas.trainerCanvas');
-  const box = await canvas.boundingBox();
-  if (!box || box.width <= 100 || box.height <= 100) {
-    throw new Error(\`\${filename} cannot capture a visible Three.js canvas\`);
-  }
-  await page.waitForFunction(() => typeof window.__rampReadyCaptureEvidencePng === 'function', null, { timeout: 15000 });
-  const dataUrl = await page.evaluate(() => window.__rampReadyCaptureEvidencePng());
+  const dataUrl = await page.evaluate(() => {
+    const canvas = document.querySelector('canvas.trainerCanvas');
+    if (!(canvas instanceof HTMLCanvasElement)) throw new Error('Three.js canvas is missing');
+    const bounds = canvas.getBoundingClientRect();
+    if (bounds.width <= 100 || bounds.height <= 100) throw new Error('Three.js canvas is not visibly rendered');
+    if (typeof window.__rampReadyCaptureEvidencePng !== 'function') {
+      throw new Error('Live Three.js render hook is unavailable');
+    }
+    return window.__rampReadyCaptureEvidencePng();
+  });
   if (!dataUrl || !dataUrl.startsWith('data:image/png;base64,')) {
     throw new Error('Live Three.js render hook did not return PNG evidence');
   }
@@ -56,4 +66,14 @@ replaceFunction(
 }`,
 );
 
-console.log("Replaced stale-backbuffer canvas reads with synchronous live Three.js render-then-encode PNG capture; geometry/readiness assertions remain unchanged.");
+const articulationPath = "tests/browser/uploaded-jetway-articulation-v10.spec.js";
+let articulationSource = fs.readFileSync(articulationPath, "utf8");
+if (articulationSource.includes("test.setTimeout(780_000);")) {
+  articulationSource = articulationSource.replace("test.setTimeout(780_000);", "test.setTimeout(1_200_000);");
+}
+if (!articulationSource.includes("test.setTimeout(1_200_000);")) {
+  throw new Error(`${articulationPath}: articulation evidence timeout could not be extended for the heavy exact scene`);
+}
+fs.writeFileSync(articulationPath, articulationSource, "utf8");
+
+console.log("Replaced stale-backbuffer canvas reads with one-turn live Three.js render/encode capture and extended only the browser evidence budget; all geometry/readiness assertions remain unchanged.");
