@@ -84,9 +84,12 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
   const url = `${import.meta.env.BASE_URL}${runtimePath}`;
   const gltf = await new GLTFLoader().loadAsync(url);
   const scene = prepareAuthoredVehicle(gltf.scene, metadata.name);
+  let runtimeVisualSource = metadata.source;
+  if (equipmentId === "standup-tug") runtimeVisualSource = "authored-standup";
 
   return installAuthoredVehicle(rig, scene, {
     ...metadata,
+    source: runtimeVisualSource,
     url,
   });
 }
