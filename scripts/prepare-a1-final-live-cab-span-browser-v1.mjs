@@ -45,15 +45,40 @@ if (!source.includes(minimumMassingGuard)) {
   source = source.replace(finiteAssertion, `${finiteAssertion}\n${minimumMassingGuard}`);
 }
 
+// A failing massing guard must not suppress the visual evidence needed to repair
+// that same failure. Preserve the unchanged >12 m acceptance requirement, but run
+// it only after the full A1/A3/B-gate capture set has been written. This keeps CI
+// fail-closed while guaranteeing a red geometry head still produces inspectable
+// evidence instead of stopping at the first numeric assertion.
+const evidenceCaptureAnchor = `  await captureInspectionPreset(page, "b15", "test-results/uploaded-jetway-b15-own-gate-v13.png");`;
+const evidenceFirstMarker = "a1-live-cab-span-guard-after-visual-evidence-v1";
+if (!source.includes(evidenceFirstMarker)) {
+  const guardIndex = source.indexOf(minimumMassingGuard);
+  const captureIndex = source.indexOf(evidenceCaptureAnchor);
+  if (guardIndex < 0 || captureIndex < 0) {
+    throw new Error(`${path}: cannot defer live-Cab massing guard until after visual evidence`);
+  }
+  source = source.slice(0, guardIndex) + source.slice(guardIndex + minimumMassingGuard.length);
+  const updatedCaptureIndex = source.indexOf(evidenceCaptureAnchor);
+  const insertionIndex = updatedCaptureIndex + evidenceCaptureAnchor.length;
+  source = source.slice(0, insertionIndex)
+    + `\n\n  // ${evidenceFirstMarker}\n${minimumMassingGuard}`
+    + source.slice(insertionIndex);
+}
+
 for (const required of [
   "inspectionAircraftLiveVisibleCabWorldX",
   "inspectionAircraftLiveVisibleCabWorldZ",
   "liveRenderedCabCenterX",
   "liveRenderedCabCenterZ",
   minimumMassingGuard.trim(),
+  evidenceFirstMarker,
 ]) {
   if (!source.includes(required)) throw new Error(`${path}: final live-Cab browser authority is missing ${required}`);
 }
+if (source.indexOf(minimumMassingGuard) < source.indexOf(evidenceCaptureAnchor)) {
+  throw new Error(`${path}: live-Cab massing guard still runs before visual evidence capture`);
+}
 
 fs.writeFileSync(path, source, "utf8");
-console.log("Reasserted final browser span authority from the remote A1 Rotunda to the live rendered supplied Cab body; representative Cab contact telemetry remains diagnostic only.");
+console.log("Reasserted final browser span authority from the remote A1 Rotunda to the live rendered supplied Cab body; the unchanged >12 m guard now fails only after the evidence captures so a red geometry head remains visually diagnosable.");
