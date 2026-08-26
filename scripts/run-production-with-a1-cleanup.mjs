@@ -103,11 +103,16 @@ try {
   if (!capturePreparedTrainer.includes("live-threejs-render-then-encode-evidence-v1")) {
     throw new Error("Final Terminal 4 trainer lost the live render-then-encode evidence hook before production bundling.");
   }
-  // This wrapper can be reached after build-production.mjs has already been loaded
-  // by another preparation path in the same Node process. Force a fresh module
-  // evaluation here; otherwise ESM caching can silently skip the required final
-  // verification + Vite build and leave dist/ absent even though preparation passed.
-  await import(`./build-production.mjs?final-vite-build=${Date.now()}`);
+  // Execute the final verifier + Vite build in a fresh Node process. This wrapper
+  // is reached through several nested ESM preparation modules; importing
+  // build-production.mjs from the same module graph can be satisfied by cache or
+  // a cyclic evaluation state and falsely report success without ever producing
+  // dist/. A child process makes the handoff explicit and guarantees the final
+  // production stage actually executes.
+  execFileSync(process.execPath, ["scripts/build-production.mjs"], {
+    stdio: "inherit",
+    env: process.env,
+  });
 } catch (error) {
   buildError = error;
 }
