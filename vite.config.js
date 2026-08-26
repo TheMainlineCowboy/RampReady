@@ -9,6 +9,7 @@ const runtimeAircraftModel = fileURLToPath(new URL("./src/components/aircraft/cr
 const terminal4Trainer = fileURLToPath(new URL("./src/components/RampReadyStandupTrainerTerminal4.jsx", import.meta.url));
 const terminal4Visual = fileURLToPath(new URL("./src/environment/authoredTerminal4Visual.js", import.meta.url));
 const a1RotundaSource = fileURLToPath(new URL("./src/environment/sourceRegisteredA1RotundaElbowV3.js", import.meta.url));
+const finalA1PhotoTelemetryPreparer = fileURLToPath(new URL("./scripts/prepare-a1-final-photo-telemetry-v1.mjs", import.meta.url));
 
 function attachTerminal4BeforeJetwayReadiness() {
   const source = fs.readFileSync(terminal4Visual, "utf8");
@@ -33,6 +34,26 @@ function attachTerminal4BeforeJetwayReadiness() {
   console.log("Attached authored Terminal 4 and source-placed jetways before uploaded-jetway readiness/pavement validation.");
 }
 
+function alignFinalA1PhotoTelemetryPreparer() {
+  let source = fs.readFileSync(finalA1PhotoTelemetryPreparer, "utf8");
+  const legacyMinimum = "const MIN_WALL_METERS = 18;";
+  const currentMinimum = "const MIN_WALL_METERS = 16;";
+  if (source.includes(legacyMinimum)) source = source.replace(legacyMinimum, currentMinimum);
+  if (!source.includes(currentMinimum)) {
+    throw new Error("Final A1 photo telemetry preparer is missing the 16 m remote-Rotunda lower bound");
+  }
+
+  const legacyReadyAnchor = 'const readyAnchor = "          const renderedDoorA1Elbow = enforceRenderedDoorA1Elbow(THREE, group, fleet, placements);";';
+  const currentReadyAnchor = 'const readyAnchor = "          const finalVisibleFit = fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placements);";';
+  if (source.includes(legacyReadyAnchor)) source = source.replace(legacyReadyAnchor, currentReadyAnchor);
+  if (!source.includes(currentReadyAnchor)) {
+    throw new Error("Final A1 photo telemetry preparer is missing the current rendered-door fit anchor");
+  }
+
+  fs.writeFileSync(finalA1PhotoTelemetryPreparer, source, "utf8");
+  console.log("Aligned final A1 photo telemetry with the current 16 m rendered-door runtime anchor.");
+}
+
 function finalA1PhotoRotundaAuthority() {
   return {
     name: "rampready-final-a1-photo-rotunda-authority",
@@ -45,7 +66,7 @@ function finalA1PhotoRotundaAuthority() {
       // itself is valid. Keep every readiness assertion, but fix the ordering.
       attachTerminal4BeforeJetwayReadiness();
 
-      // a1-final-vite-buildstart-photo-rotunda-authority-v5-export-safe-roundoff
+      // a1-final-vite-buildstart-photo-rotunda-authority-v6-current-rendered-door-anchor
       // Export User Repair Assets performs a second Vite build after the verified
       // production build has restored tracked runtime source to exact HEAD. That
       // one-time export build deliberately injects only a read-only scene handle;
@@ -63,25 +84,12 @@ function finalA1PhotoRotundaAuthority() {
       // Production preparation contains several late BGATE1 facade/wall passes.
       // A pre-Vite verifier can therefore solve A1 against an intermediate wall
       // and then have that wall endpoint republished before Rollup reads the live
-      // runtime modules. The bfef1c8f browser evidence proved that failure mode:
-      // the preparer reported an 18.0 m wall-to-Rotunda solve, while the bundled
-      // runtime still measured 24.543422 m and only 10.344991 m Rotunda-to-Cab.
-      //
-      // Vite buildStart is the last source-preparation boundary before module
-      // transformation. Execute the final source-authority preparers as real Node
-      // processes here rather than query-suffixed dynamic imports. Vite's config
-      // bundler rewrites non-literal dynamic imports into import-glob lookups, so
-      // child Node processes guarantee each pass executes once, in order, against
-      // the final wall. The endpoint republisher must run after the 18 m fixed-door
-      // solve; otherwise the final solve can regenerate the old userData endpoint
-      // read and the browser aborts before evidence with "wall/aircraft endpoints
-      // are missing" even though the explicit BGATE1 wall was already resolved.
-      // The final tolerance pass changes no pose: it only treats sub-millimetric
-      // IEEE-754 underflow around the intentional exact 18.000 m lower bound as
-      // equal to 18 m in all three final runtime guards.
-      //
+      // runtime modules. The final build boundary must therefore regenerate the
+      // photo-authoritative remote Rotunda, bind it to the fixed rendered CRJ door,
+      // then republish the final endpoints against the current readiness runtime.
       // Terminal 4 and the aircraft remain fixed; Airport_Jetway.glb child
       // geometry/textures remain untouched.
+      alignFinalA1PhotoTelemetryPreparer();
       execFileSync(process.execPath, ["scripts/prepare-a1-photo-remote-rotunda-placement-v2.mjs"], {
         cwd: process.cwd(),
         stdio: "inherit",
