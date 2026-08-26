@@ -110,7 +110,14 @@ export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
 
   function setSteering(angle) {
     const physicalWheelAngle = profile.steeringMode === "rear" ? -angle : angle;
+    root.userData.authoredSteeringAngle = physicalWheelAngle;
     for (const pivot of steeringPivots) pivot.rotation.y = physicalWheelAngle;
+    const authoredPivots = root.userData.authoredSteeringPivots;
+    if (Array.isArray(authoredPivots)) {
+      for (const pivot of authoredPivots) {
+        if (pivot) pivot.rotation.y = physicalWheelAngle;
+      }
+    }
   }
 
   function rotateWheels(distance) {
