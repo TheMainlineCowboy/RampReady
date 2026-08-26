@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { installDetailedLektro88Visual } from "./lektro88DetailedVisual.js";
+import { installDetailedManagerKubotaVisual } from "./managerKubotaDetailedVisual.js";
 
 const SUPPORTED_EQUIPMENT = new Set(["lektro-88", "standup-tug", "manager-kubota"]);
 
@@ -39,44 +41,20 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
     throw new Error(`Unsupported runtime equipment visual: ${equipmentId}`);
   }
 
-  // The sit-down LEKTRO 88 physics profile is now based on the AP8850SDA-class
-  // dimensions and performance envelope. Its detailed authored visual is the
-  // next vehicle asset pass, so the existing procedural body remains visible.
   if (equipmentId === "lektro-88") {
-    rig.root.userData.runtimeVisualSource = "procedural-lektro-88-ap8850-physics";
-    rig.root.userData.vehicleRole = rig.profile.role;
-    rig.root.userData.vehicleReferenceModel = rig.profile.referenceModel;
-    return rig.root.userData.runtimeVisualSource;
+    return installDetailedLektro88Visual(rig);
   }
 
-  const isInspectionVehicle = equipmentId === "manager-kubota";
-  // Keep the verified authored stand-up on its stable release URL so the live
-  // browser gate observes the same materialized payload verified by CI.
-  const url = isInspectionVehicle
-    ? `${import.meta.env.BASE_URL}models/manager-kubota.glb`
-    : `${import.meta.env.BASE_URL}models/standup-tug.glb`;
+  if (equipmentId === "manager-kubota") {
+    return installDetailedManagerKubotaVisual(rig);
+  }
+
+  const url = `${import.meta.env.BASE_URL}models/standup-tug.glb`;
   const gltf = await new GLTFLoader().loadAsync(url);
-  const scene = prepareAuthoredVehicle(
-    gltf.scene,
-    isInspectionVehicle ? "RampReady_ManagerKubotaRTV" : "RampReady_StandupRevisedV3",
-  );
+  const scene = prepareAuthoredVehicle(gltf.scene, "RampReady_StandupRevisedV3");
 
-  if (isInspectionVehicle) {
-    return installAuthoredVehicle(rig, scene, {
-      source: "user-manager-kubota-rtv",
-      url,
-      operatorStation: "seated-manager-driver",
-      operatorControls: "supplied-kubota-interior",
-    });
-  }
-
-  // Revised V3 is the user's geometry authority. Do not recolor it and do not
-  // add the old synthetic wheel/console/guard overlay. Keep the explicit source
-  // assignment because the live-release gate intentionally verifies this exact
-  // stable production identity before browser evidence is allowed to run.
-  rig.root.userData.runtimeVisualSource = "authored-standup";
   return installAuthoredVehicle(rig, scene, {
-    source: "authored-standup",
+    source: "authored-standup-v3",
     url,
     operatorStation: "standing-reference-camera",
     operatorControls: "supplied-v3-controls-not-final",
