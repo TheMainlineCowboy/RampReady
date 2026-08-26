@@ -1,14 +1,14 @@
 import fs from "node:fs";
 
 const sourcePath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
-const marker = "a1-aug15-fixed-rendered-crj-door-rotunda-target-v7";
+const marker = "a1-aug15-fixed-rendered-crj-door-rotunda-target-v8";
 const photoAuthority = "a1-aug15-photo-genuinely-remote-rotunda-placement-v2";
 const fixedDoorAuthority = "exact-authored-crj-forward-left-door-component-v1";
-const finalWallDistanceAuthority = "a1-aug15-photo-final-18m-wall-remote-rotunda-v2";
+const finalWallDistanceAuthority = "a1-aug15-photo-final-16m-wall-remote-rotunda-v1";
 
 const fixedRenderedDoorX = -1.2725916110988955;
 const fixedRenderedDoorZ = 8.45173366527876;
-const finalRotundaWallDistanceMeters = 18.0;
+const finalRotundaWallDistanceMeters = 16.0;
 
 let source = fs.readFileSync(sourcePath, "utf8");
 
@@ -52,17 +52,18 @@ if (!source.includes(fixedAircraftReference)) {
   );
 }
 
-// Same-head rendered evidence on 17eb44b measured only 10.344991 m from the
-// final round Rotunda to the live supplied Cab body. The 20.0 m direct wall solve
-// still placed the Rotunda about two meters too far aircraft-side: the full-chain
-// render shows the Rotunda/main mass crowded over the CRJ nose while the movable
-// tunnel remains visually compressed. Re-solve the final photo Rotunda 18.0 m
-// from the REAL Terminal 4 wall toward the fixed rendered door. Eighteen meters
-// remains a genuinely long A1-only elevated fixed corridor, but returns the
-// missing reach to the supplied telescoping body. Preserve the Aug. 15 dogleg
-// lateral offset. This moves only the complete supplied A1 parent terminal-side;
-// Terminal 4 and the CRJ remain fixed and all Airport_Jetway.glb child geometry
-// remains untouched.
+// Same-head rendered evidence on 7e5e4cb2 measured only 10.695824 m from the
+// final round Rotunda to the live supplied Cab body with the intentional 18.0 m
+// wall solve. The full-chain render still shows the Rotunda/main mass crowded over
+// the CRJ nose while the movable tunnel remains visibly compressed. The geometry
+// deficit to the unchanged >12 m attached-state minimum is about 1.30 m, so move
+// the complete A1 parent a conservative 2.0 m terminal-side and re-solve the final
+// photo Rotunda 16.0 m from the REAL Terminal 4 wall toward the fixed rendered
+// door. Sixteen meters remains a genuinely long A1-only elevated fixed corridor,
+// especially with the preserved Aug. 15 dogleg lateral offset, while returning
+// roughly two meters of reach to the supplied telescoping body. This moves only
+// the complete supplied A1 parent terminal-side; Terminal 4 and the CRJ remain
+// fixed and all Airport_Jetway.glb child geometry remains untouched.
 const finalPhotoTargetPattern = /  const photoRotundaTarget = wallReference\.clone\(\)\n    \.addScaledVector\(wallToAircraft, photoAlongMeters\)\n    \.addScaledVector\(wallSide, photoSideSign \* photoLateralMeters\);/;
 const finalPhotoTargetReplacement = `  // ${finalWallDistanceAuthority}\n  const fixedDoorWallVector = new THREE.Vector3(${fixedRenderedDoorX}, 0, ${fixedRenderedDoorZ})\n    .sub(wallReference)\n    .setY(0);\n  const fixedDoorWallSpanMeters = fixedDoorWallVector.length();\n  if (!(fixedDoorWallSpanMeters > ${finalRotundaWallDistanceMeters + 8})) {\n    throw new Error(\`A1 fixed-door wall span is too short for a genuinely remote Rotunda: \${fixedDoorWallSpanMeters}\`);\n  }\n  fixedDoorWallVector.normalize();\n  const fixedDoorWallSide = new THREE.Vector3(fixedDoorWallVector.z, 0, -fixedDoorWallVector.x).normalize();\n  const finalPhotoLateralMeters = Math.min(photoLateralMeters, ${finalRotundaWallDistanceMeters - 0.5});\n  const finalPhotoAlongMeters = Math.sqrt(Math.max(\n    1,\n    ${finalRotundaWallDistanceMeters} * ${finalRotundaWallDistanceMeters} - finalPhotoLateralMeters * finalPhotoLateralMeters,\n  ));\n  const photoRotundaTarget = wallReference.clone()\n    .addScaledVector(fixedDoorWallVector, finalPhotoAlongMeters)\n    .addScaledVector(fixedDoorWallSide, photoSideSign * finalPhotoLateralMeters);`;
 if (!source.includes(finalWallDistanceAuthority)) {
