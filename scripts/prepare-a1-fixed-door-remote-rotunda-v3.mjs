@@ -32,30 +32,26 @@ if (!hasPhotoAuthorityMarker && !hasStructuralPhotoAuthority && !hasRegeneratedP
 }
 
 if (!source.includes(marker)) {
-  // Late generation legitimately rewrites the raw target declarations, so do
-  // not key final physical authority to those declarations. Rewrite the three
-  // calculations that actually consume the aircraft endpoint instead. The raw
-  // placement target may remain as provenance/diagnostic telemetry only.
-  const calculationReplacements = [
-    [
-      "  const aircraftReference = new THREE.Vector3(rawTargetXForRotunda, 0, rawTargetZForRotunda);",
-      `  // ${marker}\n  // ${fixedDoorAuthority}\n  // The fixed rendered CRJ forward-left door, not decoded placement.targetX/Z,\n  // owns the aircraft endpoint used by the Aug. 15 remote-Rotunda solve.\n  const aircraftReference = new THREE.Vector3(${fixedRenderedDoorX}, 0, ${fixedRenderedDoorZ});`,
-    ],
-    [
-      "  const photoBridgeTargetDistanceMeters = Math.hypot(rawTargetXForRotunda - fixedRotundaCenter.x, rawTargetZForRotunda - fixedRotundaCenter.z);",
-      `  const photoBridgeTargetDistanceMeters = Math.hypot(${fixedRenderedDoorX} - fixedRotundaCenter.x, ${fixedRenderedDoorZ} - fixedRotundaCenter.z);`,
-    ],
-    [
-      "  const targetPoint = new THREE.Vector3(rawTargetX, fixedRotundaCenter.y, rawTargetZ);",
-      `  const targetPoint = new THREE.Vector3(${fixedRenderedDoorX}, fixedRotundaCenter.y, ${fixedRenderedDoorZ});`,
-    ],
-  ];
+  // Late preparation legitimately rewrites declaration spelling and intermediate
+  // variable names. Bind the three physical consumers of the aircraft endpoint
+  // structurally instead of depending on one stale generated source string.
+  const aircraftReferencePattern = /(^\s*const\s+aircraftReference\s*=\s*new\s+THREE\.Vector3\([^\n;]*\);)/m;
+  const bridgeDistancePattern = /(^\s*const\s+photoBridgeTargetDistanceMeters\s*=\s*Math\.hypot\([^\n;]*fixedRotundaCenter\.x[^\n;]*fixedRotundaCenter\.z[^\n;]*\);)/m;
+  const targetPointPattern = /(^\s*const\s+targetPoint\s*=\s*new\s+THREE\.Vector3\([^\n;]*fixedRotundaCenter\.y[^\n;]*\);)/m;
 
-  for (const [before, after] of calculationReplacements) {
-    if (source.includes(before)) {
-      source = source.replace(before, after);
-    } else if (!source.includes(after)) {
-      throw new Error(`${sourcePath}: fixed-door Rotunda pass cannot find current generated calculation anchor: ${before}`);
+  const fixedAircraftReference = `  // ${marker}\n  // ${fixedDoorAuthority}\n  // The fixed rendered CRJ forward-left door, not decoded placement.targetX/Z,\n  // owns the aircraft endpoint used by the Aug. 15 remote-Rotunda solve.\n  const aircraftReference = new THREE.Vector3(${fixedRenderedDoorX}, 0, ${fixedRenderedDoorZ});`;
+  const fixedBridgeDistance = `  const photoBridgeTargetDistanceMeters = Math.hypot(${fixedRenderedDoorX} - fixedRotundaCenter.x, ${fixedRenderedDoorZ} - fixedRotundaCenter.z);`;
+  const fixedTargetPoint = `  const targetPoint = new THREE.Vector3(${fixedRenderedDoorX}, fixedRotundaCenter.y, ${fixedRenderedDoorZ});`;
+
+  for (const [pattern, replacement, label] of [
+    [aircraftReferencePattern, fixedAircraftReference, "aircraftReference"],
+    [bridgeDistancePattern, fixedBridgeDistance, "photoBridgeTargetDistanceMeters"],
+    [targetPointPattern, fixedTargetPoint, "targetPoint"],
+  ]) {
+    if (pattern.test(source)) {
+      source = source.replace(pattern, replacement);
+    } else if (!source.includes(replacement)) {
+      throw new Error(`${sourcePath}: fixed-door Rotunda pass cannot find regenerated ${label} calculation`);
     }
   }
 }
@@ -84,15 +80,15 @@ if (!stillHasPhotoGeometryAuthority || !stillHasLongCorridorAuthority) {
   throw new Error(`${sourcePath}: fixed rendered-door pass lost the Aug. 15 long-corridor/remote-Rotunda authority`);
 }
 
-// Fail closed if the actual physical calculations ever retake decoded target
-// authority. Raw placement-target declarations may survive only as provenance.
-for (const forbidden of [
-  "const aircraftReference = new THREE.Vector3(rawTargetXForRotunda, 0, rawTargetZForRotunda);",
-  "const photoBridgeTargetDistanceMeters = Math.hypot(rawTargetXForRotunda - fixedRotundaCenter.x, rawTargetZForRotunda - fixedRotundaCenter.z);",
-  "const targetPoint = new THREE.Vector3(rawTargetX, fixedRotundaCenter.y, rawTargetZ);",
+// Fail closed if any final physical consumer retakes decoded placement-target
+// authority. Raw placement declarations may survive only as provenance.
+for (const forbiddenPattern of [
+  /const\s+aircraftReference\s*=\s*new\s+THREE\.Vector3\([^\n;]*(?:rawTarget|placement\.target)[^\n;]*\);/,
+  /const\s+photoBridgeTargetDistanceMeters\s*=\s*Math\.hypot\([^\n;]*(?:rawTarget|placement\.target)[^\n;]*\);/,
+  /const\s+targetPoint\s*=\s*new\s+THREE\.Vector3\([^\n;]*(?:rawTarget|placement\.target)[^\n;]*\);/,
 ]) {
-  if (source.includes(forbidden)) {
-    throw new Error(`${sourcePath}: decoded parking target retook final A1 Rotunda/door placement: ${forbidden}`);
+  if (forbiddenPattern.test(source)) {
+    throw new Error(`${sourcePath}: decoded parking target retook final A1 Rotunda/door placement`);
   }
 }
 
