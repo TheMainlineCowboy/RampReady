@@ -1,0 +1,73 @@
+name: Deploy vehicle preview to GitHub Pages
+
+on:
+  push:
+    branches: [fix/a1-real-fixed-corridor]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: rampready-pages-vehicle-preview
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out exact preview commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Stamp exact preview commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s\n' "${GITHUB_SHA}" > public/release-commit.txt
+          mkdir -p public/releases
+          printf '%s\n' "${GITHUB_SHA}" > "public/releases/${GITHUB_SHA}.txt"
+
+      - name: Build current vehicle preview
+        run: npm run build
+
+      - name: Verify preview artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          test -s dist/release-commit.txt
+          test "$(tr -d '\r\n' < dist/release-commit.txt)" = "${GITHUB_SHA}"
+          grep -Eq 'src="/RampReady/assets/[^"]+\.js"' dist/index.html
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload preview Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy vehicle preview
+        id: deployment
+        uses: actions/deploy-pages@v4
