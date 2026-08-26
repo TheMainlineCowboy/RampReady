@@ -103,7 +103,11 @@ try {
   if (!capturePreparedTrainer.includes("live-threejs-render-then-encode-evidence-v1")) {
     throw new Error("Final Terminal 4 trainer lost the live render-then-encode evidence hook before production bundling.");
   }
-  await import("./build-production.mjs");
+  // This wrapper can be reached after build-production.mjs has already been loaded
+  // by another preparation path in the same Node process. Force a fresh module
+  // evaluation here; otherwise ESM caching can silently skip the required final
+  // verification + Vite build and leave dist/ absent even though preparation passed.
+  await import(`./build-production.mjs?final-vite-build=${Date.now()}`);
 } catch (error) {
   buildError = error;
 }
