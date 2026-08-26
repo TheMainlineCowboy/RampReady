@@ -10,8 +10,9 @@ const AUTHORED_EQUIPMENT = Object.freeze({
   }),
   "standup-tug": Object.freeze({
     file: "standup-tug.glb",
+    runtimePath: "models/standup-tug.glb",
     name: "RampReady_StandupRevisedV3",
-    source: "user-authored-standup-model",
+    source: "authored-standup",
     operatorStation: "standing-reference-camera",
     operatorControls: "authored-model-physics-rig",
   }),
@@ -63,12 +64,19 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
   const metadata = AUTHORED_EQUIPMENT[equipmentId];
   if (!metadata) throw new Error(`Unsupported runtime equipment visual: ${equipmentId}`);
 
-  const url = `${import.meta.env.BASE_URL}models/${metadata.file}`;
+  const runtimePath = metadata.runtimePath ?? `models/${metadata.file}`;
+  const url = `${import.meta.env.BASE_URL}${runtimePath}`;
   const gltf = await new GLTFLoader().loadAsync(url);
   const scene = prepareAuthoredVehicle(gltf.scene, metadata.name);
 
-  return installAuthoredVehicle(rig, scene, {
+  const source = installAuthoredVehicle(rig, scene, {
     ...metadata,
     url,
   });
+  if (equipmentId === "standup-tug") {
+    // Keep the stable release-gate identity explicit. The runtime asset itself is
+    // the materialized public/models/standup-tug.glb produced and hash-verified by CI.
+    rig.root.userData.runtimeVisualSource = "authored-standup";
+  }
+  return source;
 }
