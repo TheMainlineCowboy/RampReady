@@ -1,15 +1,21 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "manager-kubota",
-  "source": "RTVManagersKubota.3mf source-derived runtime mesh; NO procedural replacement",
+  "source": {
+    "model": "RTVManagersKubota.3mf",
+    "bytes": 22319758,
+    "sha256": "b5e0d97f48f99737306f8fb27a44bb51703296b89b15859f6e65a48366dd0e7a"
+  },
   "runtimePath": "public/models/manager-kubota.glb",
-  "chunkPath": "public/models/manager-kubota/chunks/chunk-{index}.b64",
-  "chunkCount": 5,
-  "base64Chars": 22488,
-  "brotliBytes": 16865,
-  "brotliSha256": "76306329cd142502866510cccf81d494de54a71796d7788e76a09e976558a8a5",
-  "glbBytes": 76376,
-  "glbSha256": "47eb811f4a4d6d143e7f7ea2af26e98fcb922a95ee8d7bee5084f8d41fa6140c",
-  "runtimeBoundsMeters": [1.8, 2.4, 3.4],
-  "note": "This is source-derived authored geometry, not the basic Three.js Kubota stand-in."
+  "directCommittedExactGlb": true,
+  "glbBytes": 23988388,
+  "glbSha256": "726fdcb3511e6d52990da11118be4ca8a8b73c5d5c8f5bde4f934131e3c31b7d",
+  "sourceMeshObjectCount": 417,
+  "sourceTriangleCount": 1789026,
+  "authoredMaterialCount": 15,
+  "preservation": {
+    "geometry": "All 417 source mesh objects and 1,789,026 source triangles retained; no procedural or reduced visual substitute",
+    "materials": "All 15 3MF authored base-material assignments retained",
+    "steering": "exact front wheel assemblies under AuthoredSteerPivot_L/R; rear wheels remain fixed"
+  }
 }
