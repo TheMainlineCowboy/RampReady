@@ -4,7 +4,7 @@
   "source": "cart_with_new_grate_roof_colored.obj (source vertex-cluster runtime, adaptive 0.02-0.11 m source grid)",
   "runtimePath": "public/models/manager-kubota.glb",
   "chunkPath": "public/models/manager-kubota/chunks/chunk-{index}.b64",
-  "chunkCount": 5,
+  "chunkCount": 20,
   "base64Chars": 148400,
   "brotliBytes": 111298,
   "brotliSha256": "a5c6105f704020f2f59fbd05ec72321eb63fecea66adcbfbef3c2ed2b2d222a6",
