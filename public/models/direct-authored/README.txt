@@ -1,0 +1,1 @@
+Exact/source-derived authored vehicle payloads are stored as Brotli-compressed binary blobs and materialized during build. Do not replace these with procedural stand-ins.
