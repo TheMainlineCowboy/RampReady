@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "manager-kubota",
+  "source": "cart_with_new_grate_roof_colored.obj",
+  "runtimePath": "public/models/manager-kubota.glb",
+  "chunkPath": "public/models/manager-kubota/chunks/chunk-{index}.b64",
+  "chunkCount": 5,
+  "base64Chars": 26424,
+  "brotliBytes": 19818,
+  "brotliSha256": "4bc5457f829cb9a237d0a0038c960cc95258c84ddc96a726c09257dfd6f509ec",
+  "glbBytes": 47284,
+  "glbSha256": "6677d085f4e876757d7b6b949eb80085391f3301ecc925cf3709fe3ac008bbd9"
+}
