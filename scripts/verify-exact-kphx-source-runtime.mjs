@@ -89,6 +89,32 @@ async function verifyWedJetwayPlacements() {
   return { count: payload.placements.length, nodeCount, bytes: bytes.length, sha256: actualHash };
 }
 
+async function verifyWedGroundGeometry() {
+  const expected = manifest.wed?.groundGeometry;
+  if (!expected) throw new Error("exact KPHX manifest is missing WED ground artifact identity");
+  const bytes = await readFile(new URL(`../${expected.path}`, import.meta.url));
+  const actualHash = sha256(bytes);
+  if (bytes.length !== expected.bytes || actualHash !== expected.sha256) {
+    throw new Error(`WED ground identity mismatch ${bytes.length}/${actualHash}; expected ${expected.bytes}/${expected.sha256}`);
+  }
+  const payload = JSON.parse(bytes.toString("utf8"));
+  if (payload.schemaVersion !== 1 || payload.authority !== "KPHX-1.75.1-earth.wed.xml-ground") {
+    throw new Error("WED ground artifact has wrong schema/source authority");
+  }
+  if (payload.source?.bytes !== manifest.wed.bytes || payload.source?.sha256 !== manifest.wed.sha256) {
+    throw new Error("WED ground artifact does not identify the pinned earth.wed.xml source");
+  }
+  const expectedCounts = expected.counts;
+  if (JSON.stringify(payload.counts) !== JSON.stringify(expectedCounts)) {
+    throw new Error(`WED ground counts drifted: ${JSON.stringify(payload.counts)} != ${JSON.stringify(expectedCounts)}`);
+  }
+  const collections = payload.placements ?? payload.features ?? payload.objects;
+  if (!collections || typeof collections !== "object") {
+    throw new Error("WED ground artifact is missing its preserved source objects");
+  }
+  return { counts: payload.counts, bytes: bytes.length, sha256: actualHash };
+}
+
 if (!wrapper.includes('from "./sourceKphxTerminal4.js"') || !wrapper.includes("installSourceKphxTerminal4Visual")) {
   throw new Error("Terminal 4 compatibility entry point does not delegate to exact KPHX source loader");
 }
@@ -107,9 +133,10 @@ for (const required of [
   if (!loader.includes(required)) throw new Error(`Exact KPHX loader is missing source-authority token: ${required}`);
 }
 
-const [terminal4North, terminal4South, wedJetways] = await Promise.all([
+const [terminal4North, terminal4South, wedJetways, wedGround] = await Promise.all([
   verifyRuntime("terminal4North"),
   verifyRuntime("terminal4South"),
   verifyWedJetwayPlacements(),
+  verifyWedGroundGeometry(),
 ]);
-console.log(JSON.stringify({ authority: manifest.authority, results: [terminal4North, terminal4South], wedJetways }, null, 2));
+console.log(JSON.stringify({ authority: manifest.authority, results: [terminal4North, terminal4South], wedJetways, wedGround }, null, 2));
