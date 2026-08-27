@@ -75,10 +75,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(wc -c < public/models/kphx/Terminal4b.exact.glb)" -eq 19728408
-          echo '442292f0cdb614ccff3e7e124e0d5b9f7371306a5e22e0a18a72005b8ccf6bab  public/models/kphx/Terminal4b.exact.glb' | sha256sum --check --strict
-          test "$(wc -c < public/models/kphx/Terminal4.exact.glb)" -eq 19786112
-          echo '1f880b74e264e8bdf034c6b47f136ba40a4911634bd09f8a7e318eba9d31d845  public/models/kphx/Terminal4.exact.glb' | sha256sum --check --strict
+          test "$(wc -c < public/models/kphx/Terminal4b.exact.glb)" -eq 19728400
+          echo '1380cb6b1f33a3beca14a44ca4f17ef765bcf718c099769d6a723f0dbc10ab43  public/models/kphx/Terminal4b.exact.glb' | sha256sum --check --strict
+          test "$(wc -c < public/models/kphx/Terminal4.exact.glb)" -eq 19786104
+          echo '1899c3d3258922868f835b62dbd1b85713871017d52d34167d80c136f8b6d8b2  public/models/kphx/Terminal4.exact.glb' | sha256sum --check --strict
 
       - name: Commit exact Terminal 4 runtime assets to private source-airport branch
         if: github.event_name != 'pull_request'

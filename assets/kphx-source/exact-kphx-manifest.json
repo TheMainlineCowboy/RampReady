@@ -49,8 +49,8 @@
     },
     "runtimeGlb": {
       "path": "public/models/kphx/Terminal4b.exact.glb",
-      "bytes": 19728408,
-      "sha256": "442292f0cdb614ccff3e7e124e0d5b9f7371306a5e22e0a18a72005b8ccf6bab",
+      "bytes": 19728400,
+      "sha256": "1380cb6b1f33a3beca14a44ca4f17ef765bcf718c099769d6a723f0dbc10ab43",
       "preserves": ["positions", "normals", "uvs", "index-order", "decoded-day-texture-pixels", "decoded-lit-texture-pixels"]
     }
   },
@@ -87,8 +87,8 @@
     },
     "runtimeGlb": {
       "path": "public/models/kphx/Terminal4.exact.glb",
-      "bytes": 19786112,
-      "sha256": "1f880b74e264e8bdf034c6b47f136ba40a4911634bd09f8a7e318eba9d31d845",
+      "bytes": 19786104,
+      "sha256": "1899c3d3258922868f835b62dbd1b85713871017d52d34167d80c136f8b6d8b2",
       "preserves": ["positions", "normals", "uvs", "index-order", "decoded-day-texture-pixels", "decoded-lit-texture-pixels"]
     }
   }
