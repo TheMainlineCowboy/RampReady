@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 2,
+  "id": "lektro-88",
+  "sourceArchive": {
+    "model": "b2ec109e708a44108192adc455e77be6 (1).zip",
+    "bytes": 6928332,
+    "sha256": "5956a8d5257d19ce876e9223f085270cd2e37bbfb5e5b6fe033eda094e9ae233"
+  },
+  "sources": [
+    {
+      "model": "3DModel.obj",
+      "bytes": 14425349,
+      "sha256": "5fdb31888f697d7ef1dfacd9f02a9c5d14fe4659bebb89720560242b297beddb",
+      "vertices": 63007,
+      "triangles": 126113
+    },
+    {
+      "model": "3DModel.mtl",
+      "bytes": 217,
+      "sha256": "b958e8dc559ea9f83ed298ec647bd721d532e32b130fe7634ec6c3f402d9732c"
+    },
+    {
+      "model": "3DModel.jpg",
+      "bytes": 2832027,
+      "sha256": "d3fc03c8d24eb0a6c8feb34359a738134d62434981a4753253de9b3d5b43e7da"
+    }
+  ],
+  "sourceAuthority": "user-supplied KIRI Engine sit-down tug scan",
+  "runtimePath": "public/models/lektro-88.glb",
+  "directCommittedExactGlb": true,
+  "glbBytes": 4822692,
+  "glbSha256": "34ba7384dfae8610ac51c1a54d4959bea9626b4a970bf8cbd21c340f460cb4a8",
+  "runtime": {
+    "rootNode": "RampReady_LEKTRO88_KIRI_UserScan",
+    "meshCount": 3,
+    "runtimeTriangles": 122916,
+    "embeddedImages": 1,
+    "materials": 1,
+    "bodyMesh": "LEKTRO_KIRI_Clean_Body",
+    "rearSteeringMeshes": [
+      "LEKTRO_KIRI_RearSteerWheel_L",
+      "LEKTRO_KIRI_RearSteerWheel_R"
+    ],
+    "rearSteeringPivots": [
+      "AuthoredSteerPivot_L",
+      "AuthoredSteerPivot_R"
+    ]
+  },
+  "cleanup": {
+    "policy": "conservative scan cleanup only; no procedural visible substitute",
+    "removedDisconnectedNoiseTriangles": 265,
+    "removedFlatScanFloorTriangles": 2932,
+    "texture": "exact supplied 3DModel.jpg photographic atlas retained"
+  },
+  "calibrationMeters": {
+    "factoryReferenceLength": 5.288,
+    "width": 2.051,
+    "height": 0.99,
+    "wheelbase": 2.33934,
+    "rearTrack": 1.72
+  },
+  "preservation": {
+    "geometry": "KIRI scan remains the visible body authority; only disconnected scan junk and bounded flat floor fragments are removed",
+    "textures": "Exact supplied KIRI photographic texture is embedded",
+    "steering": "two source-derived rear wheel surfaces are parented to AuthoredSteerPivot_L/R for near-90-degree rear steering; front scanned wheels remain fixed"
+  }
+}

@@ -1,32 +1,27 @@
 {
   "schemaVersion": 1,
   "source": {
-    "archive": "Standup Pushback GLB.zip",
-    "model": "Aircraft_Tug.glb",
-    "bytes": 26243284,
-    "sha256": "6f2e9da495e407cb95ad677a9110b1767139fbc69e2e9e62b4bcd059aece5504"
+    "archive": null,
+    "model": "Aircraft_Standup_REVISED_V3.3mf",
+    "bytes": 7971148,
+    "sha256": "8818fa9bba0eb4c587a4392b69cd0ed090c322f711566abc8d4af2fedf608faf"
   },
   "runtime": {
-    "glbBytes": 121472,
-    "glbSha256": "7f9faf6437a4ba3a5ba4216263590d1d4b16c5f585e129472f424719e8887aa4",
-    "brotliBytes": 83286,
-    "brotliSha256": "97e584a253476f5c3f76568b75cef9f8e768313d38c892c1a8ef5cbdd331b07b",
-    "base64Chars": 111048,
-    "chunkChars": 12000,
-    "chunkCount": 10,
-    "chunkPath": "public/models/standup-tug/livepayload/part-{index}.b64"
+    "directCommittedExactGlb": true,
+    "glbBytes": 9260016,
+    "glbSha256": "a14fbce34d5e72a814a75bdc9eb691054b6773453738b4f91fc5ce4e925310ff"
   },
   "profile": {
-    "lengthMeters": 4.5854875,
-    "widthMeters": 1.41609921,
-    "heightMeters": 1.67207713,
-    "capturePlaneZ": 3.45,
-    "orientation": "Y-up, capture end toward +Z"
+    "lengthMeters": 3.1589468,
+    "widthMeters": 0.97793865,
+    "heightMeters": 1.152202,
+    "orientation": "Y-up, front/tow end toward +Z",
+    "steering": "single center rear authored wheel, near-90-degree steering"
   },
-  "optimization": {
-    "geometry": "Real uploaded stand-up tug web runtime; four authored Tug mesh primitives retained with coarse geometry clustering for the first live integration; normals regenerated at runtime",
-    "uv": "Authored UV mapping retained at reduced web sampling precision",
-    "textures": "Two authored painted base-color textures retained as 64px embedded web textures",
-    "detachedAssembly": "polySurface487_dash_handle removed"
+  "preservation": {
+    "geometry": "29 source mesh objects retained from Aircraft_Standup_REVISED_V3.3mf; no procedural visual substitute",
+    "textures": "Both 2048x2048 source texture atlases retained in the runtime GLB",
+    "materials": "3MF base materials and texture-group assignments retained",
+    "steeringNode": "AuthoredSteerPivot_C"
   }
 }

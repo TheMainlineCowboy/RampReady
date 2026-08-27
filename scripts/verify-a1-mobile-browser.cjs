@@ -4,8 +4,8 @@ const fs = require('node:fs');
 const pageUrl = process.env.PAGE_URL || 'http://127.0.0.1:4173/RampReady/';
 const evidenceDir = process.env.EVIDENCE_DIR || 'a1-terminal-joint-evidence';
 const MOBILE_VIEWPORT = Object.freeze({ width: 448, height: 998 });
-const CURRENT_SUBVIEW_AUTHORITY = 'source-measured-a1-apron-side-evidence-camera-v4';
-const LEGACY_SUBVIEW_AUTHORITY = 'source-measured-a1-terminal-joint-camera-v3';
+const CURRENT_SUBVIEW_AUTHORITY = 'source-measured-a1-apron-side-evidence-camera-v5-balanced-branches';
+const LEGACY_SUBVIEW_AUTHORITY = 'source-measured-a1-apron-side-evidence-camera-v4';
 const CAMERA_AUTHORITY = 'exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2';
 const LOCK_AUTHORITY = 'exact-a1-evidence-camera-direct-lock-v1';
 const PROFILE_AUTHORITY = 'rotunda-terminal-and-tunnel-a-through-axis-normal-profile-v5-midheight';
@@ -126,6 +126,9 @@ async function selectByValue(page, ariaLabel, value) {
   }
   if (telemetry.inspectionCameraEndpointSubview !== 'terminal-joint') {
     throw new Error(`Pixel evidence did not retain the terminal-joint camera: ${telemetry.inspectionCameraEndpointSubview}`);
+  }
+  if (telemetry.inspectionCameraEndpointSubviewAuthority !== CURRENT_SUBVIEW_AUTHORITY) {
+    throw new Error(`Pixel evidence did not use the final balanced v5 terminal-joint camera: ${telemetry.inspectionCameraEndpointSubviewAuthority}`);
   }
   if (telemetry.inspectionCameraEndpointJointProfileAuthority !== PROFILE_AUTHORITY) {
     throw new Error(`Pixel evidence did not retain the source-through-axis profile: ${telemetry.inspectionCameraEndpointJointProfileAuthority}`);

@@ -13,6 +13,8 @@ on:
       - 'scripts/run-production-with-a1-cleanup.mjs'
       - 'scripts/verify-terminal4-runtime-integration.mjs'
       - 'scripts/prepare-kphx-post-build-current-head-v1.mjs'
+      - 'scripts/prepare-kphx-photo-route-final-v2.mjs'
+      - 'scripts/prepare-kphx-fixed-aircraft-physical-cab-v1.mjs'
       - 'tests/browser/kphx-ground-runtime.spec.js'
       - 'tests/browser/full-airport-inspection.spec.js'
       - 'tests/browser/a1-terminal-joint-bogie-subviews.spec.js'
@@ -51,7 +53,20 @@ jobs:
         run: npm run build
 
       - name: Reapply exact-head KPHX browser acceptance gates
-        run: node scripts/prepare-kphx-post-build-current-head-v1.mjs
+        run: |
+          node scripts/prepare-kphx-post-build-current-head-v1.mjs
+          node scripts/prepare-kphx-photo-route-final-v2.mjs
+          node scripts/prepare-kphx-fixed-aircraft-physical-cab-v1.mjs
+          grep -q 'a1ExactRotundaToWallWorldMeters) > 18' tests/browser/kphx-ground-runtime.spec.js
+          grep -q 'inspectionAircraftCabDoorMinimumHorizontalVertexDistanceMeters' tests/browser/kphx-ground-runtime.spec.js
+          if grep -q 'Math.abs(Number(data?.a1ExactRotundaToWallWorldMeters) - Number(data?.terminal4A1JetwayWallDistance)) <= 0.05' tests/browser/kphx-ground-runtime.spec.js; then
+            echo 'Stale compact A1 wall equality survived KPHX final preparation' >&2
+            exit 1
+          fi
+          if grep -q 'inspectionAircraftPoseAuthority === aircraftAuthority' tests/browser/kphx-ground-runtime.spec.js tests/browser/a1-terminal-joint-bogie-subviews.spec.js; then
+            echo 'Stale shared aircraft-pose authority survived KPHX final preparation' >&2
+            exit 1
+          fi
 
       - name: Install browser verifier and Chromium
         run: |

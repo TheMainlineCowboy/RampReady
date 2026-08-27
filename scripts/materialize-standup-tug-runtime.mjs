@@ -1,42 +1,23 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import zlib from "node:zlib";
 
 const root = process.cwd();
-const manifestPath = path.join(root, "public/models/standup-tug/manifest.json");
 const outputPath = path.join(root, "public/models/standup-tug.glb");
+const expected = Object.freeze({
+  bytes: 9260016,
+  sha256: "a14fbce34d5e72a814a75bdc9eb691054b6773453738b4f91fc5ce4e925310ff",
+  source: "Aircraft_Standup_REVISED_V3.3mf",
+});
 
-function sha256(buffer) {
-  return crypto.createHash("sha256").update(buffer).digest("hex");
+const sha256 = (buffer) => crypto.createHash("sha256").update(buffer).digest("hex");
+if (!fs.existsSync(outputPath)) {
+  throw new Error(`Exact stand-up V3 runtime is missing: ${path.relative(root, outputPath)}`);
 }
-
-const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-if (manifest.schemaVersion !== 1) throw new Error("Unsupported stand-up runtime manifest schema");
-
-const parts = [];
-for (let index = 0; index < manifest.runtime.chunkCount; index += 1) {
-  const relative = manifest.runtime.chunkPath.replace("{index}", String(index).padStart(2, "0"));
-  const partPath = path.join(root, relative);
-  if (!fs.existsSync(partPath)) throw new Error(`Missing stand-up runtime part: ${relative}`);
-  parts.push(fs.readFileSync(partPath, "utf8").replace(/\s+/g, ""));
+const glb = fs.readFileSync(outputPath);
+if (glb.length !== expected.bytes) {
+  throw new Error(`Exact stand-up V3 runtime bytes ${glb.length} != ${expected.bytes}`);
 }
-
-const encoded = parts.join("");
-if (encoded.length !== manifest.runtime.base64Chars) {
-  throw new Error(`Stand-up base64 length ${encoded.length} != ${manifest.runtime.base64Chars}`);
-}
-const compressed = Buffer.from(encoded, "base64");
-if (compressed.length !== manifest.runtime.brotliBytes) {
-  throw new Error(`Stand-up Brotli length ${compressed.length} != ${manifest.runtime.brotliBytes}`);
-}
-if (sha256(compressed) !== manifest.runtime.brotliSha256) throw new Error("Stand-up Brotli SHA-256 mismatch");
-
-const glb = zlib.brotliDecompressSync(compressed);
-if (glb.length !== manifest.runtime.glbBytes) throw new Error(`Stand-up GLB length ${glb.length} != ${manifest.runtime.glbBytes}`);
-if (sha256(glb) !== manifest.runtime.glbSha256) throw new Error("Stand-up GLB SHA-256 mismatch");
-if (glb.subarray(0, 4).toString("ascii") !== "glTF") throw new Error("Materialized stand-up asset is not GLB");
-
-fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-fs.writeFileSync(outputPath, glb);
-console.log(`Materialized verified stand-up tug: ${path.relative(root, outputPath)} (${glb.length} bytes, ${manifest.runtime.glbSha256})`);
+if (sha256(glb) !== expected.sha256) throw new Error("Exact stand-up V3 runtime SHA-256 mismatch");
+if (glb.subarray(0, 4).toString("ascii") !== "glTF") throw new Error("Exact stand-up V3 runtime is not GLB");
+console.log(`Using exact supplied stand-up V3 runtime: ${path.relative(root, outputPath)} (${glb.length} bytes, ${expected.sha256})`);

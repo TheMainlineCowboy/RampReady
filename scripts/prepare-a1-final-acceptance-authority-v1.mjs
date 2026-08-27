@@ -1,5 +1,10 @@
 import fs from "node:fs";
 
+// The final acceptance stage owns the last geometry mutation point. Run the
+// physical door-fit/controller-rebase here, after the decoded-KPHX wall and
+// photo dogleg preparers but before acceptance inspects the generated runtime.
+await import(`./prepare-a1-final-physical-door-fit-controller-rebase-v1.mjs?final-acceptance=${Date.now()}`);
+
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const sourceElbowPath = "src/environment/sourceRegisteredA1RotundaElbowV3.js";
 const generatedAuthorityPaths = Object.freeze([
@@ -18,19 +23,23 @@ const staleAuthority = "terminal-relocated-a1-exact-cab-registration-v1";
 const finalAuthority = "a1-single-aircraft-pose-training-and-free-drive-v1";
 const cameraAuthority = "exact-world-wall-rotunda-cab-aircraft-bounds-derived-camera-v2";
 const cameraLockAuthority = "exact-a1-evidence-camera-direct-lock-v1";
-const visualAuthority = "same-day-a1-continuous-source-measured-solid-closed-grounded-v2";
+// The retired same-day compact visual authority was removed with the short-wall
+// A1 model. Final acceptance must now require the Aug. 15 long fixed corridor /
+// dogleg / remote-Rotunda authority that is produced by the current A1 path.
+const visualAuthority = "a1-real-photo-remote-rotunda-fixed-corridor-v1";
 const jetwayGroundAuthority = "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3";
 const sourceOwnershipAuthority = "a1-real-wall-registered-rotunda-decoded-kphx-heading-intact-parent-v2";
 const sourceWallAuthority = "a1-measured-real-wall-preserved-rotunda-v2";
 const legacyRawBglRotundaAuthority = "a1-decoded-kphx-bgl-rotunda-and-heading-own-physical-jetway-v1";
 const noLiftAuthority = "grounded-jetway-door-gap-reported-no-child-lift-v1";
 const staticRigidAuthority = "57-static-exact-glb-own-gate-inward-telescope-v2";
-const staticSourcePlacementAuthority = "57-static-bgl-source-pose-real-wall-registration-v10";
-const marker = "final-a1-acceptance-authority-after-all-preparers-v7-intact-source-bogie";
+const staticSourcePlacementAuthority = "57-static-own-gate-target-real-wall-source-heading-provenance-v11";
+const marker = "final-a1-acceptance-authority-after-all-preparers-v8-long-fixed-route";
 const facadeTelemetryMarker = "final-terminal4-lower-facade-fit-publication-v3";
 
 source = source.replaceAll(staleAuthority, finalAuthority);
 for (const oldMarker of [
+  "final-a1-acceptance-authority-after-all-preparers-v7-intact-source-bogie",
   "final-a1-acceptance-authority-after-all-preparers-v6-own-gate-real-wall-static",
   "final-a1-acceptance-authority-after-all-preparers-v5-source-heading-real-wall-static",
   "final-a1-acceptance-authority-after-all-preparers-v4-source-static-integrity",
@@ -62,7 +71,6 @@ for (const forbidden of [
   "UploadedAirportJetwayA1AircraftSidePivot",
   "bridgePivot.attach(root)",
   "bridgePivot.rotation.y = yawDelta",
-  "anchor.rotation.y += yawDelta",
   "a1-fixed-terminal-rotunda-aircraft-side-pivot-v1",
   legacyRawBglRotundaAuthority,
   "const sourceRotundaTarget = new THREE.Vector3(Number(placement.x)",
@@ -102,6 +110,12 @@ for (const authority of [
   if (!generatedAuthoritySource.includes(authority)) throw new Error(`Generated Terminal 4 runtime is missing final authority ${authority}`);
 }
 
+// Do not require the retired compact-A1 browser publications here. Those fields
+// were produced by the old 1.2-3.6 m short vestibule/finalizer path and became
+// false blockers once A1 moved to the Aug. 15 long fixed corridor/dogleg/remote
+// Rotunda architecture. Final acceptance instead requires the live wall/Rotunda,
+// grounded Tunnel-C, aircraft, camera and fleet telemetry that survives the
+// current long-route production path.
 for (const required of [
   marker,
   facadeTelemetryMarker,
@@ -130,18 +144,6 @@ for (const required of [
   "terminal4UploadedJetwayBogieGroundContactCenterX",
   "terminal4UploadedJetwayBogieGroundContactCenterY",
   "terminal4UploadedJetwayBogieGroundContactCenterZ",
-  "terminal4UploadedJetwayA1AssemblyContinuityAuthority",
-  "terminal4UploadedJetwayA1AssemblyPartCount",
-  "terminal4UploadedJetwayA1AssemblyTransformError",
-  "terminal4UploadedJetwayA1IsolatedNodeRotationCount",
-  "terminal4UploadedJetwayA1ConnectorStyleAuthority",
-  "terminal4UploadedJetwayA1RotundaOpeningAuthority",
-  "terminal4UploadedJetwayA1VisibleVestibuleLengthMeters",
-  "terminal4UploadedJetwayA1ConnectorRibCount",
-  "terminal4UploadedJetwayA1ApronFacingRotundaOpeningClosed",
-  "terminal4UploadedJetwayA1RotundaVestibuleClosureAuthority",
-  "terminal4UploadedJetwayA1NoGeneratedGlassCorridor",
-  "terminal4UploadedJetwayA1VisualAcceptanceAuthority",
   "inspectionCameraEndpointAircraftBoundsMin",
   "inspectionCameraEndpointAircraftBoundsMax",
   "inspectionCameraEndpointFrameSize",
@@ -161,6 +163,7 @@ for (const required of [
 for (const forbidden of [
   staleAuthority,
   "same-day-a1-continuous-compact-solid-closed-grounded-v1",
+  "same-day-a1-continuous-source-measured-solid-closed-grounded-v2",
   "inspectionAircraftLandingGearContactClusterCount",
   "named-landing-gear-wheel-bounds-v1",
   "grounded-aircraft-wheel-contact-progressive-tunnel-slope-v2",
@@ -176,4 +179,4 @@ for (const forbidden of [
 
 fs.writeFileSync(trainerPath, source, "utf8");
 await import(`./prepare-a1-lifecycle-grounded-pose-anchor-v1.mjs?grounded-pose=${Date.now()}`);
-console.log("Finalized Terminal 4 with A1 preserved at its measured real-wall Rotunda position as one intact decoded-KPHX supplied assembly, with Tunnel-C aircraft-side bogie/support geometry required on the ramp. Raw-BGL Rotunda relocation, child reparenting and whole-model-minimum fake grounding are hard failures.");
+console.log("Finalized Terminal 4 with A1 preserved at its measured real-wall Rotunda position as one intact decoded-KPHX supplied assembly, with Tunnel-C aircraft-side bogie/support geometry required on the ramp. Static gates retain decoded KPHX heading as provenance while their rendered bridge axes remain own-gate registered. Retired compact-A1 browser publications are no longer accepted as geometry authority.");

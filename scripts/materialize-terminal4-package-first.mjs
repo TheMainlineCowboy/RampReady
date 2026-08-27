@@ -16,6 +16,7 @@ const MANIFEST_PATH = path.join(PACKAGE_ROOT, "rampready-package-manifest.json")
 const REQUIRED_PACKAGE_FILES = Object.freeze([
   "scenery/term4.BGL",
   "scenery/KPHX_ADEX.BGL",
+  "scripts/extract-terminal4-mdlx.mjs",
 ]);
 const PACKAGE_FILE_PATTERN = /\.(?:bgl|bmp|dds|agn|mdl|xml|fx|ini)$/i;
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -114,6 +115,7 @@ const packageEntries = extractedFiles
   .filter((entry) => (
     entry.path.startsWith("scenery/")
     || entry.path.startsWith("texture/")
+    || entry.path === "scripts/extract-terminal4-mdlx.mjs"
     || (!entry.path.includes("/") && PACKAGE_FILE_PATTERN.test(entry.path))
   ))
   .sort((a, b) => a.path.localeCompare(b.path));

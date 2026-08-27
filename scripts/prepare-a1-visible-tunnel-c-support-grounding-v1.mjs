@@ -1,0 +1,61 @@
+import fs from "node:fs";
+
+const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
+const marker = "a1-visible-tunnel-c-support-grounding-runtime-v16-all-rendered-meshes-stable";
+const authority = "exact-supplied-tunnel-c-visible-support-components-grounded-v16-rendered-pavement-triangle-rod-clusters";
+const secondaryAuthority = "a1-visible-support-all-rendered-mesh-secondary-scan-v1";
+const stairMarker = "a1-service-stair-live-rendered-crj-clearance-v4";
+const importLine = 'import { groundA1TunnelCVisibleSupportHardwareV3 } from "../environment/a1TunnelCVisibleSupportGroundingV3.js";';
+const browserTruthAnchor = `          // Browser-time visual truth. Several older readiness layers still`;
+const EXPECTED_INSPECTED_COMPONENT_COUNT = 25;
+const EXPECTED_WHOLE_SUSPENDED_COMPONENT_COUNT = 5;
+const EXPECTED_WHOLE_SUSPENDED_TRIANGLE_COUNT = 590;
+const EXPECTED_BURIED_COMPONENT_COUNT = 12;
+const EXPECTED_PAVEMENT_CROSSING_COMPONENT_COUNT = 8;
+
+let source = fs.readFileSync(trainerPath, "utf8");
+if (!source.includes(stairMarker)) throw new Error(`${trainerPath}: visible Tunnel-C support grounding must run after the live exact service-stair solve`);
+for (const staleImport of [
+  'import { groundA1TunnelCVisibleSupportHardware } from "../environment/a1TunnelCVisibleSupportGroundingV1.js";\n',
+  'import { groundA1TunnelCVisibleSupportHardwareV2 } from "../environment/a1TunnelCVisibleSupportGroundingV2.js";\n',
+]) source = source.replace(staleImport, "");
+for (const oldMarker of [
+  "a1-visible-tunnel-c-support-grounding-runtime-v2","a1-visible-tunnel-c-support-grounding-runtime-v3",
+  "a1-visible-tunnel-c-support-grounding-runtime-v4","a1-visible-tunnel-c-support-grounding-runtime-v5-kphx-pavement",
+  "a1-visible-tunnel-c-support-grounding-runtime-v6-transformed-gate-anchor","a1-visible-tunnel-c-support-grounding-runtime-v7-fleet-parent-ramp",
+  "a1-visible-tunnel-c-support-grounding-runtime-v8-rendered-pavement-raycast","a1-visible-tunnel-c-support-grounding-runtime-v9-rendered-suspended-set",
+  "a1-visible-tunnel-c-support-grounding-runtime-v10-complete-pavement-scan","a1-visible-tunnel-c-support-grounding-runtime-v11-crossing-branch-scan",
+  "a1-visible-tunnel-c-support-grounding-runtime-v12-mixed-vertex-branch-scan","a1-visible-tunnel-c-support-grounding-runtime-v13-spatial-rod-clusters",
+  "a1-visible-tunnel-c-support-grounding-runtime-v14-triangle-rod-clusters",
+  "a1-visible-tunnel-c-support-grounding-runtime-v15-all-rendered-meshes",
+]) {
+  if (!source.includes(oldMarker) || source.includes(marker)) continue;
+  const start = source.indexOf(`          // ${oldMarker}`);
+  const end = source.indexOf(browserTruthAnchor, start);
+  if (start < 0 || end < 0) throw new Error(`${trainerPath}: cannot replace stale visible-support ${oldMarker} block`);
+  source = source.slice(0, start) + source.slice(end);
+}
+if (!source.includes(marker)) {
+  const aircraftImport = 'import { buildCRJ700Aircraft } from "./aircraft/crj700Model.js";';
+  if (!source.includes(importLine)) {
+    if (!source.includes(aircraftImport)) throw new Error(`${trainerPath}: aircraft import anchor is missing`);
+    source = source.replace(aircraftImport, `${aircraftImport}\n${importLine}`);
+  }
+  if (!source.includes(browserTruthAnchor)) throw new Error(`${trainerPath}: final browser-truth anchor is missing for visible support grounding`);
+  const runtimeBlock = `          // ${marker}\n          // Preserve the proven Tunnel_C_Jetway_0 25-component classification, ground\n          // its five wholly suspended islands, then scan every other rendered supplied\n          // mesh for narrow aircraft-side support members that still end above pavement.\n          const finalA1VisibleSupportGrounding = groundA1TunnelCVisibleSupportHardwareV3(THREE, finalA1Model);\n          if (\n            finalA1VisibleSupportGrounding.authority !== "${authority}"\n            || finalA1VisibleSupportGrounding.secondaryMeshAuthority !== "${secondaryAuthority}"\n            || finalA1VisibleSupportGrounding.rampReferenceAuthority !== "rendered-kphx-source-aerial-raycast-under-whole-and-all-rendered-mesh-supports"\n            || finalA1VisibleSupportGrounding.inspectedCandidateCount !== ${EXPECTED_INSPECTED_COMPONENT_COUNT}\n            || finalA1VisibleSupportGrounding.groundedComponentCount !== ${EXPECTED_WHOLE_SUSPENDED_COMPONENT_COUNT}\n            || finalA1VisibleSupportGrounding.groundedTriangleCount !== ${EXPECTED_WHOLE_SUSPENDED_TRIANGLE_COUNT}\n            || finalA1VisibleSupportGrounding.buriedCandidateCount !== ${EXPECTED_BURIED_COMPONENT_COUNT}\n            || finalA1VisibleSupportGrounding.pavementCrossingCandidateCount !== ${EXPECTED_PAVEMENT_CROSSING_COMPONENT_COUNT}\n            || !Number.isFinite(finalA1VisibleSupportGrounding.secondaryMeshGroundedCount)\n            || !(finalA1VisibleSupportGrounding.secondaryMeshGroundedCount >= 1)\n            || !Number.isFinite(finalA1VisibleSupportGrounding.secondaryMeshGroundedTriangleCount)\n            || !(finalA1VisibleSupportGrounding.secondaryMeshGroundedTriangleCount >= 2)\n            || !Array.isArray(finalA1VisibleSupportGrounding.secondaryMeshNames)\n            || !(finalA1VisibleSupportGrounding.secondaryMeshNames.length >= 1)\n            || finalA1VisibleSupportGrounding.spatialRodClusterCount !== finalA1VisibleSupportGrounding.secondaryMeshGroundedCount\n            || finalA1VisibleSupportGrounding.spatialRodTriangleCount !== finalA1VisibleSupportGrounding.secondaryMeshGroundedTriangleCount\n            || !(finalA1VisibleSupportGrounding.spatialRodVertexCount >= 6)\n            || finalA1VisibleSupportGrounding.correctedSupportSetCount !== finalA1VisibleSupportGrounding.groundedComponentCount + finalA1VisibleSupportGrounding.secondaryMeshGroundedCount\n            || finalA1VisibleSupportGrounding.visibleLoadLegCount !== finalA1VisibleSupportGrounding.correctedSupportSetCount\n            || finalA1VisibleSupportGrounding.remainingSuspendedSupportCount !== 0\n            || finalA1VisibleSupportGrounding.rampReferenceComponentCount !== finalA1VisibleSupportGrounding.correctedSupportSetCount\n            || !Number.isFinite(finalA1VisibleSupportGrounding.rampReferenceSpreadMeters)\n            || !(finalA1VisibleSupportGrounding.rampReferenceSpreadMeters <= 0.08)\n            || !Number.isFinite(finalA1VisibleSupportGrounding.maximumExtensionMeters)\n            || !(finalA1VisibleSupportGrounding.maximumExtensionMeters <= 4.0)\n            || !Number.isFinite(finalA1VisibleSupportGrounding.maximumFinalClearanceMeters)\n            || !(finalA1VisibleSupportGrounding.maximumFinalClearanceMeters <= 0.015)\n            || !Number.isFinite(finalA1VisibleSupportGrounding.maximumTopMountDriftMeters)\n            || !(finalA1VisibleSupportGrounding.maximumTopMountDriftMeters <= 0.015)\n          ) throw new Error(\`A1 visible Tunnel-C all-rendered-mesh grounding failed: \${JSON.stringify(finalA1VisibleSupportGrounding)}\`);\n          exactA1Fleet.updateWorldMatrix(true, true);\n          finalA1Model.updateWorldMatrix(true, true);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportGroundingAuthority = finalA1VisibleSupportGrounding.authority;\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportSecondaryMeshAuthority = finalA1VisibleSupportGrounding.secondaryMeshAuthority;\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportRampReferenceAuthority = finalA1VisibleSupportGrounding.rampReferenceAuthority;\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportCandidateCount = String(finalA1VisibleSupportGrounding.inspectedCandidateCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportGroundedComponentCount = String(finalA1VisibleSupportGrounding.groundedComponentCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportGroundedTriangleCount = String(finalA1VisibleSupportGrounding.groundedTriangleCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportBuriedCandidateCount = String(finalA1VisibleSupportGrounding.buriedCandidateCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportPavementCrossingCandidateCount = String(finalA1VisibleSupportGrounding.pavementCrossingCandidateCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportSecondaryMeshGroundedCount = String(finalA1VisibleSupportGrounding.secondaryMeshGroundedCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportSecondaryMeshGroundedTriangleCount = String(finalA1VisibleSupportGrounding.secondaryMeshGroundedTriangleCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportSecondaryMeshNames = finalA1VisibleSupportGrounding.secondaryMeshNames.join(",");\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportSpatialRodClusterCount = String(finalA1VisibleSupportGrounding.spatialRodClusterCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportSpatialRodVertexCount = String(finalA1VisibleSupportGrounding.spatialRodVertexCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportSpatialRodTriangleCount = String(finalA1VisibleSupportGrounding.spatialRodTriangleCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportCorrectedSetCount = String(finalA1VisibleSupportGrounding.correctedSupportSetCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportLoadLegCount = String(finalA1VisibleSupportGrounding.visibleLoadLegCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportRemainingSuspendedCount = String(finalA1VisibleSupportGrounding.remainingSuspendedSupportCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportFinalClearanceMeters = finalA1VisibleSupportGrounding.maximumFinalClearanceMeters.toFixed(6);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportTopMountDriftMeters = finalA1VisibleSupportGrounding.maximumTopMountDriftMeters.toFixed(6);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportExtensionMeters = finalA1VisibleSupportGrounding.maximumExtensionMeters.toFixed(6);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportRampWorldY = finalA1VisibleSupportGrounding.rampWorldY.toFixed(6);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportRampReferenceCount = String(finalA1VisibleSupportGrounding.rampReferenceComponentCount);\n          renderer.domElement.dataset.terminal4UploadedJetwayA1VisibleSupportRampReferenceSpreadMeters = finalA1VisibleSupportGrounding.rampReferenceSpreadMeters.toFixed(6);\n\n`;
+  source = source.replace(browserTruthAnchor, `${runtimeBlock}${browserTruthAnchor}`);
+}
+for (const required of [marker, importLine, authority, secondaryAuthority,
+  "rendered-kphx-source-aerial-raycast-under-whole-and-all-rendered-mesh-supports",
+  `finalA1VisibleSupportGrounding.inspectedCandidateCount !== ${EXPECTED_INSPECTED_COMPONENT_COUNT}`,
+  `finalA1VisibleSupportGrounding.groundedComponentCount !== ${EXPECTED_WHOLE_SUSPENDED_COMPONENT_COUNT}`,
+  `finalA1VisibleSupportGrounding.groundedTriangleCount !== ${EXPECTED_WHOLE_SUSPENDED_TRIANGLE_COUNT}`,
+  "finalA1VisibleSupportGrounding.secondaryMeshGroundedCount >= 1",
+  "finalA1VisibleSupportGrounding.secondaryMeshGroundedTriangleCount >= 2",
+  "finalA1VisibleSupportGrounding.remainingSuspendedSupportCount !== 0",
+  "finalA1VisibleSupportGrounding.maximumFinalClearanceMeters <= 0.015",
+  "finalA1VisibleSupportGrounding.maximumTopMountDriftMeters <= 0.015"]) {
+  if (!source.includes(required)) throw new Error(`${trainerPath}: visible Tunnel-C all-rendered-mesh grounding missing ${required}`);
+}
+fs.writeFileSync(trainerPath, source, "utf8");
+console.log(`Prepared ${marker}: primary Tunnel-C identity stays strict while every other rendered supplied mesh is scanned for suspended aircraft-side support members and grounded to actual KPHX pavement.`);
