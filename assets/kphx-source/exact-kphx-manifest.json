@@ -62,6 +62,34 @@
       "headingDegrees": 0.0,
       "wedObjectId": 2327
     },
-    "status": "source-identities-pending-ingest"
+    "obj": {
+      "bytes": 2354455,
+      "sha256": "e93807a1239377e1223eb325c2b7048e6c84f968d9c790fd0cd6cc5da050cd80",
+      "vertices": 21720,
+      "indices": 42501,
+      "drawRanges": 12
+    },
+    "dayTexture": {
+      "resource": "Terminals/Terminal4_comb.dds",
+      "bytes": 11184952,
+      "sha256": "84667f356e16d83065773fadcba30cc222b4d6a2a739b4000545cca265f53186",
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA"
+    },
+    "litTexture": {
+      "resource": "Terminals/Terminal4_LIT.dds",
+      "bytes": 11184952,
+      "sha256": "65937e43b6eff0b95480496d64d98d3b59779b2fe4b7af9c984f1e404624b17f",
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA"
+    },
+    "runtimeGlb": {
+      "path": "public/models/kphx/Terminal4.exact.glb",
+      "bytes": 19786112,
+      "sha256": "1f880b74e264e8bdf034c6b47f136ba40a4911634bd09f8a7e318eba9d31d845",
+      "preserves": ["positions", "normals", "uvs", "index-order", "decoded-day-texture-pixels", "decoded-lit-texture-pixels"]
+    }
   }
 }
