@@ -3,8 +3,8 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 const AUTHORED_EQUIPMENT = Object.freeze({
   "lektro-88": Object.freeze({
     file: "lektro-88.glb",
-    name: "RampReady_LEKTRO88_RevisedV3",
-    source: "Aircraft_Tug_REVISED_V3.obj+mtl",
+    name: "RampReady_LEKTRO88_KIRI_UserScan",
+    source: "KIRI Engine 3DModel.obj+mtl+jpg",
     operatorStation: "seated-operator-camera",
     operatorControls: "authored-model-physics-rig",
     steeringNodes: Object.freeze(["AuthoredSteerPivot_L", "AuthoredSteerPivot_R"]),
