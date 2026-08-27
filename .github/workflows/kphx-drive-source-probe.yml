@@ -9,6 +9,14 @@ on:
       - '.github/workflows/kphx-drive-source-probe.yml'
       - 'tools/kphx/convert-xplane-obj-to-glb.py'
       - 'assets/kphx-source/exact-kphx-manifest.json'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/kphx-drive-source-probe.yml'
+      - 'tools/kphx/convert-xplane-obj-to-glb.py'
+      - 'assets/kphx-source/exact-kphx-manifest.json'
+      - 'public/models/kphx/**'
 
 permissions:
   contents: write
@@ -58,6 +66,7 @@ jobs:
           echo '442292f0cdb614ccff3e7e124e0d5b9f7371306a5e22e0a18a72005b8ccf6bab  public/models/kphx/Terminal4b.exact.glb' | sha256sum --check --strict
 
       - name: Commit exact runtime asset to private source-airport branch
+        if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
