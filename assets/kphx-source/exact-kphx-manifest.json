@@ -1,0 +1,67 @@
+{
+  "authority": "user-drive-kphx-1.75.1-exact-source-v1",
+  "sourceRoot": "Google Drive/RampReady/New KPHX",
+  "wed": {
+    "file": "earth.wed.xml",
+    "bytes": 24885640,
+    "sha256": "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498"
+  },
+  "apt": {
+    "file": "Earth nav data/apt.dat",
+    "bytes": 169169,
+    "sha256": "97732a161b9ad9721d9cdb4375693a974887af538f9873f83585072ef7f994e2"
+  },
+  "sam": {
+    "file": "sam.xml",
+    "bytes": 3523,
+    "sha256": "29e8275d1202c50b0a6d680db10f53e511622332850327835e4a915099ada72c"
+  },
+  "terminal4North": {
+    "resource": "Terminals/Terminal4b.obj",
+    "placement": {
+      "latitude": 33.436209533,
+      "longitude": -111.996664410,
+      "headingDegrees": 0.0,
+      "wedObjectId": 5301
+    },
+    "obj": {
+      "bytes": 4444277,
+      "sha256": "acbefef71c59942eb8e336996b9f2b9c8e8a87c6ec5cc64046292e5332ce48bc",
+      "vertices": 40773,
+      "indices": 70725,
+      "drawRanges": 24
+    },
+    "dayTexture": {
+      "resource": "Terminals/Terminal4b_comb.dds",
+      "bytes": 11184952,
+      "sha256": "11a129f33940c99de15c2941faac041af42834c869ab6bdae974d134c54bc00b",
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA"
+    },
+    "litTexture": {
+      "resource": "Terminals/Terminal4b_LIT.dds",
+      "bytes": 11184952,
+      "sha256": "90cff1e29f629570d6ea1ee237a3f8dd337860aef36dfd4d478d0ee8057f90f9",
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA"
+    },
+    "runtimeGlb": {
+      "path": "public/models/kphx/Terminal4b.exact.glb",
+      "bytes": 19728408,
+      "sha256": "442292f0cdb614ccff3e7e124e0d5b9f7371306a5e22e0a18a72005b8ccf6bab",
+      "preserves": ["positions", "normals", "uvs", "index-order", "decoded-day-texture-pixels", "decoded-lit-texture-pixels"]
+    }
+  },
+  "terminal4South": {
+    "resource": "Terminals/Terminal4.obj",
+    "placement": {
+      "latitude": 33.434761986,
+      "longitude": -111.996702473,
+      "headingDegrees": 0.0,
+      "wedObjectId": 2327
+    },
+    "status": "source-identities-pending-ingest"
+  }
+}
