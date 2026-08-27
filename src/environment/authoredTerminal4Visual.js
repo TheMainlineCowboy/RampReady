@@ -12,6 +12,7 @@ import {
   SOURCE_KPHX_LANDMARK_OBJECTS,
   installSourceKphxLandmarks,
 } from "./sourceKphxLandmarks.js";
+import { installSourceKphxWEDJetways } from "./sourceKphxJetways.js";
 
 export const AUTHORED_TERMINAL4_PROFILE = Object.freeze({
   source: "Google Drive/RampReady/New KPHX/KPHX 1.75.1",
@@ -27,6 +28,10 @@ export const AUTHORED_TERMINAL4_PROFILE = Object.freeze({
 
 export async function installAuthoredTerminal4Visual(THREE, environment) {
   const sourceAirportFrame = await installSourceKphxTerminal4Visual(THREE, environment);
-  await installSourceKphxLandmarks(THREE, environment, sourceAirportFrame);
+  await Promise.all([
+    installSourceKphxLandmarks(THREE, environment, sourceAirportFrame),
+    installSourceKphxWEDJetways(THREE, environment, sourceAirportFrame),
+  ]);
+  environment.userData.environmentSource = "exact-user-drive-kphx-1.75.1-authored-airport-objects-and-WED-jetways";
   return sourceAirportFrame;
 }
