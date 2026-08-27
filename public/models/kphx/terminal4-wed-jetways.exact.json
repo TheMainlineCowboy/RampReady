@@ -1,0 +1,1845 @@
+{
+  "schemaVersion": 1,
+  "authority": "KPHX-1.75.1-earth.wed.xml-terminal4-jetway-ramp-association-v1",
+  "source": {
+    "bytes": 24885640,
+    "sha256": "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498"
+  },
+  "origin": {
+    "gate": "A1",
+    "latitude": 33.436530675,
+    "longitude": -111.998921221,
+    "headingDegrees": -90.08
+  },
+  "association": {
+    "maximumRampToFacadeMeters": 15.0,
+    "rule": "nearest-facade-per-T4-ramp-then-closest-ramp-wins-shared-facade"
+  },
+  "jetwayCount": 76,
+  "placements": [
+    {
+      "gate": "A1",
+      "rampWedObjectId": 27855,
+      "facadeWedObjectId": 104804,
+      "facadeNodeCount": 7,
+      "rampToFacadeMeters": 2.607615,
+      "x": -20.911335,
+      "z": 1.765962,
+      "yawRadians": 1.152857005,
+      "bridgeEnd": 23.860805,
+      "aircraftDoorDistance": 23.860805,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -20.911335,
+          1.765962
+        ],
+        "cab": [
+          0.895706,
+          11.450538
+        ]
+      }
+    },
+    {
+      "gate": "A2",
+      "rampWedObjectId": 20719,
+      "facadeWedObjectId": 105851,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 2.811909,
+      "x": -48.491582,
+      "z": -14.507736,
+      "yawRadians": -1.010275329,
+      "bridgeEnd": 28.663966,
+      "aircraftDoorDistance": 28.663966,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -48.491582,
+          -14.507736
+        ],
+        "cab": [
+          -72.769337,
+          0.730817
+        ]
+      }
+    },
+    {
+      "gate": "A3",
+      "rampWedObjectId": 20713,
+      "facadeWedObjectId": 104845,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 6.886725,
+      "x": -20.460832,
+      "z": -20.261512,
+      "yawRadians": 1.973109478,
+      "bridgeEnd": 18.885605,
+      "aircraftDoorDistance": 18.885605,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -20.460832,
+          -20.261512
+        ],
+        "cab": [
+          -3.083096,
+          -27.65613
+        ]
+      }
+    },
+    {
+      "gate": "A4",
+      "rampWedObjectId": 27864,
+      "facadeWedObjectId": 105843,
+      "facadeNodeCount": 6,
+      "rampToFacadeMeters": 4.708305,
+      "x": -53.015628,
+      "z": -50.357461,
+      "yawRadians": -1.087735123,
+      "bridgeEnd": 21.873714,
+      "aircraftDoorDistance": 21.873714,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -53.015628,
+          -50.357461
+        ],
+        "cab": [
+          -72.38649,
+          -40.19729
+        ]
+      }
+    },
+    {
+      "gate": "A5",
+      "rampWedObjectId": 27870,
+      "facadeWedObjectId": 104874,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 6.984191,
+      "x": -19.791043,
+      "z": -65.445159,
+      "yawRadians": 1.83634879,
+      "bridgeEnd": 21.411668,
+      "aircraftDoorDistance": 21.411668,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -19.791043,
+          -65.445159
+        ],
+        "cab": [
+          0.870096,
+          -71.064489
+        ]
+      }
+    },
+    {
+      "gate": "A6",
+      "rampWedObjectId": 20718,
+      "facadeWedObjectId": 105837,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 4.716256,
+      "x": -48.543737,
+      "z": -83.686631,
+      "yawRadians": -1.496597204,
+      "bridgeEnd": 22.596933,
+      "aircraftDoorDistance": 22.596933,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -48.543737,
+          -83.686631
+        ],
+        "cab": [
+          -71.078495,
+          -82.011496
+        ]
+      }
+    },
+    {
+      "gate": "A7",
+      "rampWedObjectId": 20714,
+      "facadeWedObjectId": 104897,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 7.581356,
+      "x": -18.873829,
+      "z": -91.386328,
+      "yawRadians": 2.409619507,
+      "bridgeEnd": 22.721681,
+      "aircraftDoorDistance": 22.721681,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -18.873829,
+          -91.386328
+        ],
+        "cab": [
+          -3.688051,
+          -108.288013
+        ]
+      }
+    },
+    {
+      "gate": "A8",
+      "rampWedObjectId": 27876,
+      "facadeWedObjectId": 105830,
+      "facadeNodeCount": 5,
+      "rampToFacadeMeters": 5.358048,
+      "x": -47.434193,
+      "z": -112.013334,
+      "yawRadians": -2.020373791,
+      "bridgeEnd": 28.376235,
+      "aircraftDoorDistance": 28.376235,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -47.434193,
+          -112.013334
+        ],
+        "cab": [
+          -72.990705,
+          -124.345221
+        ]
+      }
+    },
+    {
+      "gate": "A9",
+      "rampWedObjectId": 27882,
+      "facadeWedObjectId": 104920,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 7.356336,
+      "x": -19.425633,
+      "z": -133.107971,
+      "yawRadians": 2.287344336,
+      "bridgeEnd": 29.188394,
+      "aircraftDoorDistance": 29.188394,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -19.425633,
+          -133.107971
+        ],
+        "cab": [
+          2.584676,
+          -152.278486
+        ]
+      }
+    },
+    {
+      "gate": "A10",
+      "rampWedObjectId": 20717,
+      "facadeWedObjectId": 105343,
+      "facadeNodeCount": 7,
+      "rampToFacadeMeters": 5.111705,
+      "x": -46.483772,
+      "z": -143.051695,
+      "yawRadians": -2.4319483,
+      "bridgeEnd": 37.603145,
+      "aircraftDoorDistance": 37.603145,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -46.483772,
+          -143.051695
+        ],
+        "cab": [
+          -70.984629,
+          -171.577202
+        ]
+      }
+    },
+    {
+      "gate": "A11",
+      "rampWedObjectId": 20715,
+      "facadeWedObjectId": 105256,
+      "facadeNodeCount": 5,
+      "rampToFacadeMeters": 4.466094,
+      "x": -18.754464,
+      "z": -157.440543,
+      "yawRadians": 2.389722999,
+      "bridgeEnd": 30.502807,
+      "aircraftDoorDistance": 30.502807,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -18.754464,
+          -157.440543
+        ],
+        "cab": [
+          2.079123,
+          -179.720195
+        ]
+      }
+    },
+    {
+      "gate": "A12",
+      "rampWedObjectId": 27889,
+      "facadeWedObjectId": 105335,
+      "facadeNodeCount": 6,
+      "rampToFacadeMeters": 5.984835,
+      "x": -45.065673,
+      "z": -159.415293,
+      "yawRadians": -2.475500016,
+      "bridgeEnd": 38.303033,
+      "aircraftDoorDistance": 38.303033,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -45.065673,
+          -159.415293
+        ],
+        "cab": [
+          -68.733829,
+          -189.530749
+        ]
+      }
+    },
+    {
+      "gate": "A13",
+      "rampWedObjectId": 27895,
+      "facadeWedObjectId": 105286,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 4.787827,
+      "x": -28.86076,
+      "z": -159.609522,
+      "yawRadians": 2.923974344,
+      "bridgeEnd": 30.042172,
+      "aircraftDoorDistance": 30.042172,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -28.86076,
+          -159.609522
+        ],
+        "cab": [
+          -22.374513,
+          -188.943133
+        ]
+      }
+    },
+    {
+      "gate": "A14",
+      "rampWedObjectId": 20716,
+      "facadeWedObjectId": 105329,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 8.019688,
+      "x": -40.216006,
+      "z": -159.942945,
+      "yawRadians": -2.955248513,
+      "bridgeEnd": 33.939828,
+      "aircraftDoorDistance": 33.939828,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -40.216006,
+          -159.942945
+        ],
+        "cab": [
+          -46.503955,
+          -193.29521
+        ]
+      }
+    },
+    {
+      "gate": "A17",
+      "rampWedObjectId": 20720,
+      "facadeWedObjectId": 106033,
+      "facadeNodeCount": 5,
+      "rampToFacadeMeters": 3.44762,
+      "x": -251.422953,
+      "z": 5.90091,
+      "yawRadians": 1.387924075,
+      "bridgeEnd": 20.897537,
+      "aircraftDoorDistance": 20.897537,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -251.422953,
+          5.90091
+        ],
+        "cab": [
+          -230.873874,
+          9.701225
+        ]
+      }
+    },
+    {
+      "gate": "A18",
+      "rampWedObjectId": 20727,
+      "facadeWedObjectId": 106147,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 3.454094,
+      "x": -284.432781,
+      "z": -17.476871,
+      "yawRadians": -1.018119565,
+      "bridgeEnd": 33.867864,
+      "aircraftDoorDistance": 33.867864,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -284.432781,
+          -17.476871
+        ],
+        "cab": [
+          -313.258477,
+          0.302652
+        ]
+      }
+    },
+    {
+      "gate": "A19",
+      "rampWedObjectId": 20721,
+      "facadeWedObjectId": 106040,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 5.223577,
+      "x": -249.676185,
+      "z": -18.997916,
+      "yawRadians": 2.310313017,
+      "bridgeEnd": 19.83639,
+      "aircraftDoorDistance": 19.83639,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -249.676185,
+          -18.997916
+        ],
+        "cab": [
+          -235.021171,
+          -32.366273
+        ]
+      }
+    },
+    {
+      "gate": "A20",
+      "rampWedObjectId": 27901,
+      "facadeWedObjectId": 106159,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 5.507044,
+      "x": -284.120984,
+      "z": -47.634773,
+      "yawRadians": -1.500175303,
+      "bridgeEnd": 30.17343,
+      "aircraftDoorDistance": 30.17343,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -284.120984,
+          -47.634773
+        ],
+        "cab": [
+          -314.219203,
+          -45.505665
+        ]
+      }
+    },
+    {
+      "gate": "A21",
+      "rampWedObjectId": 27907,
+      "facadeWedObjectId": 106052,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 2.632307,
+      "x": -250.55824,
+      "z": -59.136296,
+      "yawRadians": 2.312110035,
+      "bridgeEnd": 24.212513,
+      "aircraftDoorDistance": 24.212513,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -250.55824,
+          -59.136296
+        ],
+        "cab": [
+          -232.699524,
+          -75.485976
+        ]
+      }
+    },
+    {
+      "gate": "A22",
+      "rampWedObjectId": 20726,
+      "facadeWedObjectId": 106141,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 4.91759,
+      "x": -284.728477,
+      "z": -94.838089,
+      "yawRadians": -1.42253798,
+      "bridgeEnd": 26.16541,
+      "aircraftDoorDistance": 26.16541,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -284.728477,
+          -94.838089
+        ],
+        "cab": [
+          -310.606849,
+          -90.973044
+        ]
+      }
+    },
+    {
+      "gate": "A23",
+      "rampWedObjectId": 20722,
+      "facadeWedObjectId": 106058,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 6.184865,
+      "x": -251.213444,
+      "z": -79.618173,
+      "yawRadians": 2.695702165,
+      "bridgeEnd": 37.038407,
+      "aircraftDoorDistance": 37.038407,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -251.213444,
+          -79.618173
+        ],
+        "cab": [
+          -235.240206,
+          -113.035224
+        ]
+      }
+    },
+    {
+      "gate": "A24",
+      "rampWedObjectId": 27913,
+      "facadeWedObjectId": 106153,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 4.133491,
+      "x": -284.25199,
+      "z": -135.456317,
+      "yawRadians": -1.49634684,
+      "bridgeEnd": 32.953831,
+      "aircraftDoorDistance": 32.953831,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -284.25199,
+          -135.456317
+        ],
+        "cab": [
+          -317.114536,
+          -133.005187
+        ]
+      }
+    },
+    {
+      "gate": "A25",
+      "rampWedObjectId": 27919,
+      "facadeWedObjectId": 106064,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 6.145122,
+      "x": -250.052122,
+      "z": -137.247298,
+      "yawRadians": 2.282714381,
+      "bridgeEnd": 24.709699,
+      "aircraftDoorDistance": 24.709699,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -250.052122,
+          -137.247298
+        ],
+        "cab": [
+          -231.344156,
+          -153.389827
+        ]
+      }
+    },
+    {
+      "gate": "A26",
+      "rampWedObjectId": 20725,
+      "facadeWedObjectId": 106261,
+      "facadeNodeCount": 6,
+      "rampToFacadeMeters": 3.43537,
+      "x": -282.532924,
+      "z": -150.302014,
+      "yawRadians": -2.012290562,
+      "bridgeEnd": 36.56776,
+      "aircraftDoorDistance": 36.56776,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -282.532924,
+          -150.302014
+        ],
+        "cab": [
+          -315.594355,
+          -165.927085
+        ]
+      }
+    },
+    {
+      "gate": "A27",
+      "rampWedObjectId": 20723,
+      "facadeWedObjectId": 106183,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 2.685018,
+      "x": -249.376698,
+      "z": -154.100929,
+      "yawRadians": 2.663294151,
+      "bridgeEnd": 33.902844,
+      "aircraftDoorDistance": 33.902844,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -249.376698,
+          -154.100929
+        ],
+        "cab": [
+          -233.77226,
+          -184.199174
+        ]
+      }
+    },
+    {
+      "gate": "A29",
+      "rampWedObjectId": 20724,
+      "facadeWedObjectId": 106206,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 4.585421,
+      "x": -256.838988,
+      "z": -157.469273,
+      "yawRadians": 3.079340734,
+      "bridgeEnd": 33.28063,
+      "aircraftDoorDistance": 33.28063,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -256.838988,
+          -157.469273
+        ],
+        "cab": [
+          -254.768543,
+          -190.685437
+        ]
+      }
+    },
+    {
+      "gate": "A30",
+      "rampWedObjectId": 27933,
+      "facadeWedObjectId": 106238,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 9.200883,
+      "x": -267.692233,
+      "z": -158.941873,
+      "yawRadians": -2.388475158,
+      "bridgeEnd": 34.289027,
+      "aircraftDoorDistance": 34.289027,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -267.692233,
+          -158.941873
+        ],
+        "cab": [
+          -291.143064,
+          -183.957786
+        ]
+      }
+    },
+    {
+      "gate": "B2",
+      "rampWedObjectId": 20735,
+      "facadeWedObjectId": 104690,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 3.126773,
+      "x": 181.972594,
+      "z": -16.282585,
+      "yawRadians": -0.839774185,
+      "bridgeEnd": 34.07686,
+      "aircraftDoorDistance": 34.07686,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          181.972594,
+          -16.282585
+        ],
+        "cab": [
+          156.602632,
+          6.468181
+        ]
+      }
+    },
+    {
+      "gate": "B3",
+      "rampWedObjectId": 27939,
+      "facadeWedObjectId": 101067,
+      "facadeNodeCount": 5,
+      "rampToFacadeMeters": 4.470471,
+      "x": 212.349061,
+      "z": -14.288538,
+      "yawRadians": 1.906968477,
+      "bridgeEnd": 27.808216,
+      "aircraftDoorDistance": 27.808216,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          212.349061,
+          -14.288538
+        ],
+        "cab": [
+          238.600692,
+          -23.461799
+        ]
+      }
+    },
+    {
+      "gate": "B4",
+      "rampWedObjectId": 27947,
+      "facadeWedObjectId": 104665,
+      "facadeNodeCount": 6,
+      "rampToFacadeMeters": 2.153732,
+      "x": 172.033888,
+      "z": -55.713565,
+      "yawRadians": -0.067422249,
+      "bridgeEnd": 25.129993,
+      "aircraftDoorDistance": 25.129993,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          172.033888,
+          -55.713565
+        ],
+        "cab": [
+          170.340851,
+          -30.640668
+        ]
+      }
+    },
+    {
+      "gate": "B5",
+      "rampWedObjectId": 20730,
+      "facadeWedObjectId": 101099,
+      "facadeNodeCount": 6,
+      "rampToFacadeMeters": 5.635464,
+      "x": 209.479342,
+      "z": -58.216335,
+      "yawRadians": 1.446038761,
+      "bridgeEnd": 27.556571,
+      "aircraftDoorDistance": 27.556571,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          209.479342,
+          -58.216335
+        ],
+        "cab": [
+          236.821739,
+          -54.787356
+        ]
+      }
+    },
+    {
+      "gate": "B6",
+      "rampWedObjectId": 27953,
+      "facadeWedObjectId": 104619,
+      "facadeNodeCount": 5,
+      "rampToFacadeMeters": 2.894215,
+      "x": 179.162282,
+      "z": -91.107884,
+      "yawRadians": -0.743539322,
+      "bridgeEnd": 23.495652,
+      "aircraftDoorDistance": 23.495652,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          179.162282,
+          -91.107884
+        ],
+        "cab": [
+          163.258138,
+          -73.813266
+        ]
+      }
+    },
+    {
+      "gate": "B7",
+      "rampWedObjectId": 27959,
+      "facadeWedObjectId": 101121,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 3.067728,
+      "x": 211.9158,
+      "z": -88.046773,
+      "yawRadians": 2.110045287,
+      "bridgeEnd": 21.97138,
+      "aircraftDoorDistance": 21.97138,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          211.9158,
+          -88.046773
+        ],
+        "cab": [
+          230.769322,
+          -99.328894
+        ]
+      }
+    },
+    {
+      "gate": "B8",
+      "rampWedObjectId": 27966,
+      "facadeWedObjectId": 102825,
+      "facadeNodeCount": 5,
+      "rampToFacadeMeters": 6.735673,
+      "x": 182.333582,
+      "z": -115.894797,
+      "yawRadians": -1.637169608,
+      "bridgeEnd": 21.080214,
+      "aircraftDoorDistance": 21.080214,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          182.333582,
+          -115.894797
+        ],
+        "cab": [
+          161.299785,
+          -117.292932
+        ]
+      }
+    },
+    {
+      "gate": "B9",
+      "rampWedObjectId": 20731,
+      "facadeWedObjectId": 101772,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 4.805354,
+      "x": 212.155978,
+      "z": -133.321427,
+      "yawRadians": 2.048431569,
+      "bridgeEnd": 22.668137,
+      "aircraftDoorDistance": 22.668137,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          212.155978,
+          -133.321427
+        ],
+        "cab": [
+          232.287198,
+          -143.741524
+        ]
+      }
+    },
+    {
+      "gate": "B10",
+      "rampWedObjectId": 20734,
+      "facadeWedObjectId": 102789,
+      "facadeNodeCount": 5,
+      "rampToFacadeMeters": 5.281859,
+      "x": 183.075937,
+      "z": -146.293692,
+      "yawRadians": -2.080348539,
+      "bridgeEnd": 26.56938,
+      "aircraftDoorDistance": 26.56938,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          183.075937,
+          -146.293692
+        ],
+        "cab": [
+          159.881851,
+          -159.253875
+        ]
+      }
+    },
+    {
+      "gate": "B11",
+      "rampWedObjectId": 27972,
+      "facadeWedObjectId": 101799,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 3.644377,
+      "x": 211.81883,
+      "z": -155.86695,
+      "yawRadians": 2.179597421,
+      "bridgeEnd": 29.12713,
+      "aircraftDoorDistance": 29.12713,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          211.81883,
+          -155.86695
+        ],
+        "cab": [
+          235.712811,
+          -172.5243
+        ]
+      }
+    },
+    {
+      "gate": "B12",
+      "rampWedObjectId": 20733,
+      "facadeWedObjectId": 102756,
+      "facadeNodeCount": 5,
+      "rampToFacadeMeters": 4.94869,
+      "x": 184.097888,
+      "z": -159.692172,
+      "yawRadians": -2.294812584,
+      "bridgeEnd": 32.717848,
+      "aircraftDoorDistance": 32.717848,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          184.097888,
+          -159.692172
+        ],
+        "cab": [
+          159.587266,
+          -181.364435
+        ]
+      }
+    },
+    {
+      "gate": "B13",
+      "rampWedObjectId": 102680,
+      "facadeWedObjectId": 102675,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 5.606313,
+      "x": 201.661439,
+      "z": -157.995393,
+      "yawRadians": 2.941375561,
+      "bridgeEnd": 22.4013,
+      "aircraftDoorDistance": 22.4013,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          201.661439,
+          -157.995393
+        ],
+        "cab": [
+          206.116656,
+          -179.949191
+        ]
+      }
+    },
+    {
+      "gate": "B14",
+      "rampWedObjectId": 27978,
+      "facadeWedObjectId": 102705,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 5.676788,
+      "x": 189.246542,
+      "z": -158.224627,
+      "yawRadians": -3.01933328,
+      "bridgeEnd": 29.521383,
+      "aircraftDoorDistance": 29.521383,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          189.246542,
+          -158.224627
+        ],
+        "cab": [
+          185.646261,
+          -187.525652
+        ]
+      }
+    },
+    {
+      "gate": "B16",
+      "rampWedObjectId": 20754,
+      "facadeWedObjectId": 100652,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 4.3764,
+      "x": 416.188343,
+      "z": -16.709662,
+      "yawRadians": -0.957395141,
+      "bridgeEnd": 44.610368,
+      "aircraftDoorDistance": 44.610368,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          416.188343,
+          -16.709662
+        ],
+        "cab": [
+          379.710674,
+          8.970382
+        ]
+      }
+    },
+    {
+      "gate": "B17",
+      "rampWedObjectId": 20748,
+      "facadeWedObjectId": 99956,
+      "facadeNodeCount": 6,
+      "rampToFacadeMeters": 4.937561,
+      "x": 442.093638,
+      "z": 0.778234,
+      "yawRadians": 1.636937694,
+      "bridgeEnd": 36.862653,
+      "aircraftDoorDistance": 36.862653,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          442.093638,
+          0.778234
+        ],
+        "cab": [
+          478.875689,
+          -1.658135
+        ]
+      }
+    },
+    {
+      "gate": "B18",
+      "rampWedObjectId": 20753,
+      "facadeWedObjectId": 100627,
+      "facadeNodeCount": 5,
+      "rampToFacadeMeters": 3.136694,
+      "x": 412.008393,
+      "z": -45.210374,
+      "yawRadians": -0.850590102,
+      "bridgeEnd": 23.396266,
+      "aircraftDoorDistance": 23.396266,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          412.008393,
+          -45.210374
+        ],
+        "cab": [
+          394.422128,
+          -29.779608
+        ]
+      }
+    },
+    {
+      "gate": "B19",
+      "rampWedObjectId": 27995,
+      "facadeWedObjectId": 100113,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 6.714214,
+      "x": 442.963774,
+      "z": -30.863023,
+      "yawRadians": 1.97140655,
+      "bridgeEnd": 33.025105,
+      "aircraftDoorDistance": 33.025105,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          442.963774,
+          -30.863023
+        ],
+        "cab": [
+          473.374057,
+          -43.742165
+        ]
+      }
+    },
+    {
+      "gate": "B20",
+      "rampWedObjectId": 28003,
+      "facadeWedObjectId": 100604,
+      "facadeNodeCount": 5,
+      "rampToFacadeMeters": 2.478457,
+      "x": 415.776169,
+      "z": -44.121036,
+      "yawRadians": -2.207764182,
+      "bridgeEnd": 31.430434,
+      "aircraftDoorDistance": 31.430434,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          415.776169,
+          -44.121036
+        ],
+        "cab": [
+          390.509153,
+          -62.81462
+        ]
+      }
+    },
+    {
+      "gate": "B21A",
+      "rampWedObjectId": 100127,
+      "facadeWedObjectId": 100163,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 1.908409,
+      "x": 443.539239,
+      "z": -70.574444,
+      "yawRadians": 1.709969241,
+      "bridgeEnd": 33.219064,
+      "aircraftDoorDistance": 33.219064,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          443.539239,
+          -70.574444
+        ],
+        "cab": [
+          476.437111,
+          -75.182728
+        ]
+      }
+    },
+    {
+      "gate": "B22",
+      "rampWedObjectId": 20752,
+      "facadeWedObjectId": 100587,
+      "facadeNodeCount": 5,
+      "rampToFacadeMeters": 5.357127,
+      "x": 413.260365,
+      "z": -94.881392,
+      "yawRadians": -1.378906602,
+      "bridgeEnd": 23.878294,
+      "aircraftDoorDistance": 23.878294,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          413.260365,
+          -94.881392
+        ],
+        "cab": [
+          389.820343,
+          -90.32746
+        ]
+      }
+    },
+    {
+      "gate": "B23A",
+      "rampWedObjectId": 28010,
+      "facadeWedObjectId": 100194,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 4.44788,
+      "x": 443.144083,
+      "z": -119.574083,
+      "yawRadians": 1.93357883,
+      "bridgeEnd": 19.738392,
+      "aircraftDoorDistance": 19.738392,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          443.144083,
+          -119.574083
+        ],
+        "cab": [
+          461.597763,
+          -126.578784
+        ]
+      }
+    },
+    {
+      "gate": "B24",
+      "rampWedObjectId": 28016,
+      "facadeWedObjectId": 100559,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 7.103395,
+      "x": 414.734223,
+      "z": -125.010167,
+      "yawRadians": -1.576703996,
+      "bridgeEnd": 23.428022,
+      "aircraftDoorDistance": 23.428022,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          414.734223,
+          -125.010167
+        ],
+        "cab": [
+          391.30661,
+          -125.148571
+        ]
+      }
+    },
+    {
+      "gate": "B25",
+      "rampWedObjectId": 20750,
+      "facadeWedObjectId": 100250,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 7.586889,
+      "x": 443.388993,
+      "z": -149.639972,
+      "yawRadians": 1.988620803,
+      "bridgeEnd": 37.339466,
+      "aircraftDoorDistance": 37.339466,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          443.388993,
+          -149.639972
+        ],
+        "cab": [
+          477.516289,
+          -164.791321
+        ]
+      }
+    },
+    {
+      "gate": "B27",
+      "rampWedObjectId": 28029,
+      "facadeWedObjectId": 100461,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 6.12774,
+      "x": 438.051119,
+      "z": -161.760978,
+      "yawRadians": 2.967533193,
+      "bridgeEnd": 20.546339,
+      "aircraftDoorDistance": 20.546339,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          438.051119,
+          -161.760978
+        ],
+        "cab": [
+          441.609373,
+          -181.996859
+        ]
+      }
+    },
+    {
+      "gate": "B28",
+      "rampWedObjectId": 20751,
+      "facadeWedObjectId": 100497,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 4.668366,
+      "x": 415.887016,
+      "z": -160.344228,
+      "yawRadians": -2.925827284,
+      "bridgeEnd": 26.65412,
+      "aircraftDoorDistance": 26.65412,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          415.887016,
+          -160.344228
+        ],
+        "cab": [
+          410.1805,
+          -186.380314
+        ]
+      }
+    },
+    {
+      "gate": "C1",
+      "rampWedObjectId": 107059,
+      "facadeWedObjectId": 107105,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 2.559311,
+      "x": 184.414615,
+      "z": 228.321547,
+      "yawRadians": -1.470347026,
+      "bridgeEnd": 21.565801,
+      "aircraftDoorDistance": 21.565801,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          184.414615,
+          228.321547
+        ],
+        "cab": [
+          162.957523,
+          230.484175
+        ]
+      }
+    },
+    {
+      "gate": "C2",
+      "rampWedObjectId": 107103,
+      "facadeWedObjectId": 107148,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 5.72264,
+      "x": 212.827646,
+      "z": 248.686645,
+      "yawRadians": 2.011650305,
+      "bridgeEnd": 17.637504,
+      "aircraftDoorDistance": 17.637504,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          212.827646,
+          248.686645
+        ],
+        "cab": [
+          228.778786,
+          241.160511
+        ]
+      }
+    },
+    {
+      "gate": "C3",
+      "rampWedObjectId": 107062,
+      "facadeWedObjectId": 107112,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 4.348089,
+      "x": 182.084035,
+      "z": 248.811919,
+      "yawRadians": -0.776774344,
+      "bridgeEnd": 30.329296,
+      "aircraftDoorDistance": 30.329296,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          182.084035,
+          248.811919
+        ],
+        "cab": [
+          160.823726,
+          270.442117
+        ]
+      }
+    },
+    {
+      "gate": "C4",
+      "rampWedObjectId": 20700,
+      "facadeWedObjectId": 107142,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 1.285157,
+      "x": 213.495418,
+      "z": 273.452773,
+      "yawRadians": 1.617332919,
+      "bridgeEnd": 20.455238,
+      "aircraftDoorDistance": 20.455238,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          213.495418,
+          273.452773
+        ],
+        "cab": [
+          233.92851,
+          272.5012
+        ]
+      }
+    },
+    {
+      "gate": "C6",
+      "rampWedObjectId": 107087,
+      "facadeWedObjectId": 107136,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 1.816323,
+      "x": 212.75583,
+      "z": 293.427549,
+      "yawRadians": 1.017507503,
+      "bridgeEnd": 30.742005,
+      "aircraftDoorDistance": 30.742005,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          212.75583,
+          293.427549
+        ],
+        "cab": [
+          238.911156,
+          309.58211
+        ]
+      }
+    },
+    {
+      "gate": "C7",
+      "rampWedObjectId": 107067,
+      "facadeWedObjectId": 107118,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 1.506757,
+      "x": 182.408248,
+      "z": 298.121065,
+      "yawRadians": -0.886148024,
+      "bridgeEnd": 29.039725,
+      "aircraftDoorDistance": 29.039725,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          182.408248,
+          298.121065
+        ],
+        "cab": [
+          159.912872,
+          316.485805
+        ]
+      }
+    },
+    {
+      "gate": "C8",
+      "rampWedObjectId": 107074,
+      "facadeWedObjectId": 107130,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 1.936528,
+      "x": 212.240562,
+      "z": 300.632479,
+      "yawRadians": 0.133355145,
+      "bridgeEnd": 32.801865,
+      "aircraftDoorDistance": 32.801865,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          212.240562,
+          300.632479
+        ],
+        "cab": [
+          216.601906,
+          333.143109
+        ]
+      }
+    },
+    {
+      "gate": "C9",
+      "rampWedObjectId": 107071,
+      "facadeWedObjectId": 107124,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 1.972186,
+      "x": 183.757055,
+      "z": 299.639319,
+      "yawRadians": -0.099494558,
+      "bridgeEnd": 31.461353,
+      "aircraftDoorDistance": 31.461353,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          183.757055,
+          299.639319
+        ],
+        "cab": [
+          180.631983,
+          330.945079
+        ]
+      }
+    },
+    {
+      "gate": "C11",
+      "rampWedObjectId": 109063,
+      "facadeWedObjectId": 109069,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 5.546334,
+      "x": 412.528546,
+      "z": 225.069644,
+      "yawRadians": -1.541006599,
+      "bridgeEnd": 19.855684,
+      "aircraftDoorDistance": 19.855684,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          412.528546,
+          225.069644
+        ],
+        "cab": [
+          392.681672,
+          225.661052
+        ]
+      }
+    },
+    {
+      "gate": "C12",
+      "rampWedObjectId": 109067,
+      "facadeWedObjectId": 109111,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 5.770696,
+      "x": 443.89235,
+      "z": 249.861959,
+      "yawRadians": 1.997472209,
+      "bridgeEnd": 21.439427,
+      "aircraftDoorDistance": 21.439427,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          443.89235,
+          249.861959
+        ],
+        "cab": [
+          463.409656,
+          240.989317
+        ]
+      }
+    },
+    {
+      "gate": "C13",
+      "rampWedObjectId": 109051,
+      "facadeWedObjectId": 109075,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 3.710145,
+      "x": 411.85317,
+      "z": 244.41679,
+      "yawRadians": -0.605751939,
+      "bridgeEnd": 33.793851,
+      "aircraftDoorDistance": 33.793851,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          411.85317,
+          244.41679
+        ],
+        "cab": [
+          392.611614,
+          272.197843
+        ]
+      }
+    },
+    {
+      "gate": "C14",
+      "rampWedObjectId": 109065,
+      "facadeWedObjectId": 109105,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 0.80033,
+      "x": 441.884387,
+      "z": 273.279954,
+      "yawRadians": 1.510253301,
+      "bridgeEnd": 31.133584,
+      "aircraftDoorDistance": 31.133584,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          441.884387,
+          273.279954
+        ],
+        "cab": [
+          472.960929,
+          275.163724
+        ]
+      }
+    },
+    {
+      "gate": "C16",
+      "rampWedObjectId": 109057,
+      "facadeWedObjectId": 109099,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 0.257861,
+      "x": 443.607129,
+      "z": 298.809712,
+      "yawRadians": 1.155035887,
+      "bridgeEnd": 35.17127,
+      "aircraftDoorDistance": 35.17127,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          443.607129,
+          298.809712
+        ],
+        "cab": [
+          475.782139,
+          313.014886
+        ]
+      }
+    },
+    {
+      "gate": "C17",
+      "rampWedObjectId": 109052,
+      "facadeWedObjectId": 109081,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 5.546642,
+      "x": 412.008713,
+      "z": 298.337183,
+      "yawRadians": -0.779752706,
+      "bridgeEnd": 29.662253,
+      "aircraftDoorDistance": 29.662253,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          412.008713,
+          298.337183
+        ],
+        "cab": [
+          391.153076,
+          319.429638
+        ]
+      }
+    },
+    {
+      "gate": "C18",
+      "rampWedObjectId": 109055,
+      "facadeWedObjectId": 109093,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 6.413808,
+      "x": 439.882501,
+      "z": 301.029143,
+      "yawRadians": 0.301279221,
+      "bridgeEnd": 30.202881,
+      "aircraftDoorDistance": 30.202881,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          439.882501,
+          301.029143
+        ],
+        "cab": [
+          448.844966,
+          329.871616
+        ]
+      }
+    },
+    {
+      "gate": "C19",
+      "rampWedObjectId": 109061,
+      "facadeWedObjectId": 109087,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 3.265952,
+      "x": 416.580675,
+      "z": 301.494797,
+      "yawRadians": 0.036793147,
+      "bridgeEnd": 27.201266,
+      "aircraftDoorDistance": 27.201266,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          416.580675,
+          301.494797
+        ],
+        "cab": [
+          417.58127,
+          328.677654
+        ]
+      }
+    },
+    {
+      "gate": "D1",
+      "rampWedObjectId": 20705,
+      "facadeWedObjectId": 106788,
+      "facadeNodeCount": 6,
+      "rampToFacadeMeters": 5.595221,
+      "x": -50.084987,
+      "z": 257.553984,
+      "yawRadians": -2.1277548,
+      "bridgeEnd": 33.280081,
+      "aircraftDoorDistance": 33.280081,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -50.084987,
+          257.553984
+        ],
+        "cab": [
+          -78.335343,
+          239.961907
+        ]
+      }
+    },
+    {
+      "gate": "D2",
+      "rampWedObjectId": 115970,
+      "facadeWedObjectId": 115964,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 3.654803,
+      "x": -15.078529,
+      "z": 260.361552,
+      "yawRadians": 2.511128099,
+      "bridgeEnd": 32.820488,
+      "aircraftDoorDistance": 32.820488,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -15.078529,
+          260.361552
+        ],
+        "cab": [
+          4.269807,
+          233.850681
+        ]
+      }
+    },
+    {
+      "gate": "D3",
+      "rampWedObjectId": 106804,
+      "facadeWedObjectId": 106815,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 6.195732,
+      "x": -51.330896,
+      "z": 283.494623,
+      "yawRadians": -1.647431568,
+      "bridgeEnd": 28.36574,
+      "aircraftDoorDistance": 28.36574,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -51.330896,
+          283.494623
+        ],
+        "cab": [
+          -79.613381,
+          281.322935
+        ]
+      }
+    },
+    {
+      "gate": "D4",
+      "rampWedObjectId": 20701,
+      "facadeWedObjectId": 106887,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 1.574751,
+      "x": -16.605951,
+      "z": 282.394696,
+      "yawRadians": 2.167888026,
+      "bridgeEnd": 19.053852,
+      "aircraftDoorDistance": 19.053852,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -16.605951,
+          282.394696
+        ],
+        "cab": [
+          -0.848906,
+          271.681863
+        ]
+      }
+    },
+    {
+      "gate": "D5",
+      "rampWedObjectId": 20704,
+      "facadeWedObjectId": 106821,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 5.077192,
+      "x": -52.271974,
+      "z": 287.027546,
+      "yawRadians": -0.812904034,
+      "bridgeEnd": 36.375,
+      "aircraftDoorDistance": 36.375,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -52.271974,
+          287.027546
+        ],
+        "cab": [
+          -78.690643,
+          312.031436
+        ]
+      }
+    },
+    {
+      "gate": "D6",
+      "rampWedObjectId": 106894,
+      "facadeWedObjectId": 106879,
+      "facadeNodeCount": 4,
+      "rampToFacadeMeters": 1.204309,
+      "x": -16.551714,
+      "z": 289.714237,
+      "yawRadians": 0.970226938,
+      "bridgeEnd": 26.922617,
+      "aircraftDoorDistance": 26.922617,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -16.551714,
+          289.714237
+        ],
+        "cab": [
+          5.659822,
+          304.92854
+        ]
+      }
+    },
+    {
+      "gate": "D7",
+      "rampWedObjectId": 106848,
+      "facadeWedObjectId": 106842,
+      "facadeNodeCount": 5,
+      "rampToFacadeMeters": 5.311257,
+      "x": -54.412131,
+      "z": 310.090217,
+      "yawRadians": -0.049590653,
+      "bridgeEnd": 21.201461,
+      "aircraftDoorDistance": 21.201461,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -54.412131,
+          310.090217
+        ],
+        "cab": [
+          -55.463095,
+          331.265614
+        ]
+      }
+    },
+    {
+      "gate": "D7",
+      "rampWedObjectId": 106850,
+      "facadeWedObjectId": 106853,
+      "facadeNodeCount": 5,
+      "rampToFacadeMeters": 0.337646,
+      "x": -15.443766,
+      "z": 308.007044,
+      "yawRadians": 0.282796037,
+      "bridgeEnd": 27.442967,
+      "aircraftDoorDistance": 27.442967,
+      "aircraftContactClearanceMeters": 0,
+      "skipGeneratedTerminalConnector": true,
+      "sourceAxis": {
+        "rotunda": [
+          -15.443766,
+          308.007044
+        ],
+        "cab": [
+          -7.786033,
+          334.359948
+        ]
+      }
+    }
+  ]
+}

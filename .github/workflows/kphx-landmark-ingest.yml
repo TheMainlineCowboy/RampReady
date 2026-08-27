@@ -1,0 +1,119 @@
+name: KPHX Exact Landmark Ingest
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/source-kphx-airport
+    paths:
+      - '.github/workflows/kphx-landmark-ingest.yml'
+      - 'tools/kphx/convert-xplane-obj-to-glb-v2.py'
+      - 'assets/kphx-source/exact-landmarks.json'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/kphx-landmark-ingest.yml'
+      - 'tools/kphx/convert-xplane-obj-to-glb-v2.py'
+      - 'assets/kphx-source/exact-landmarks.json'
+      - 'public/models/kphx/SkyTrain.exact.glb'
+      - 'public/models/kphx/Tower.exact.glb'
+      - 'public/models/kphx/FireStation.exact.glb'
+      - 'public/models/kphx/FireStation2.exact.glb'
+      - 'public/models/kphx/BaggageStand.exact.glb'
+      - 'public/models/kphx/SkyTrainDepot.exact.glb'
+
+permissions:
+  contents: write
+
+jobs:
+  ingest-landmarks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/source-kphx-airport
+          fetch-depth: 0
+
+      - name: Install deterministic converter dependency
+        run: python -m pip install --disable-pip-version-check pillow==12.3.0
+
+      - name: Download exact landmark source from Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-drive/SkyTrain .kphx-drive/Misc public/models/kphx
+          download() {
+            local id="$1" out="$2"
+            curl -L --fail --silent --show-error "https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t" -o "$out"
+          }
+          download '1L7BO64uuIilhPN6bDdHknAB5ZzqJljR9' '.kphx-drive/SkyTrain/SkyTrain.obj'
+          download '1RJycIA5fq_1pT9Iuy8oJIOYeKlwr9Y8p' '.kphx-drive/SkyTrain/SkyTrain.dds'
+          download '1urbxI0lp76GF0AxkuirdfxEzU6s6V3Rs' '.kphx-drive/Misc/Tower.obj'
+          download '1EmqhcAcPufVaK8gT0yxMVRPLXdfVlb9E' '.kphx-drive/Misc/Tower.dds'
+          download '1vOPKBgs8nWH1jlQ0cqNhLLGiomKkz_hE' '.kphx-drive/Misc/Tower_LIT.dds'
+          download '189P3taSgbcW_XKXPS7DIlO8nIhEX8HVY' '.kphx-drive/Misc/FireStation.obj'
+          download '1m3WxeumlBYq-tqidod0Woq5KF51y6_tZ' '.kphx-drive/Misc/FireStation2.obj'
+          download '1aTNV2s7T33a_ry5MhOynKLE0roFlRJoj' '.kphx-drive/Misc/FireStation.dds'
+          download '1NeRN9noHdwel01osBW-st-DxTyQdEaSK' '.kphx-drive/Misc/BaggageStand.obj'
+          download '13w-r2REx09jU2PYA0qfzeJwXfOObP-ZB' '.kphx-drive/Misc/BaggageStand.dds'
+          download '1-nBEckFOCqUsSzqCZWofDqWpDD4e6M76' '.kphx-drive/Misc/SkyTrainDepot.obj'
+          download '1GaOP9139zG3cIOiCgxSwlyZUIT5FuNb6' '.kphx-drive/Misc/SkyTrainDepot.dds'
+
+          echo '6f31980bc9b838ea2da26ee24e737e47604d8706068786b443adca3957b0dab3  .kphx-drive/SkyTrain/SkyTrain.obj' | sha256sum --check --strict
+          echo 'e755d09241de78dd4307bc08dc6117838ed34d3aeae06fd0fb60aa37be36fb80  .kphx-drive/SkyTrain/SkyTrain.dds' | sha256sum --check --strict
+          echo '673da0b0bcdcc55b86bde4765fad0ec7378225b2e4c276099bb8c7acedb6b091  .kphx-drive/Misc/Tower.obj' | sha256sum --check --strict
+          echo '639699a5cf705a0a73b18ed4f2fef1e21dbb2b61352470887c0dd022c37d9615  .kphx-drive/Misc/Tower.dds' | sha256sum --check --strict
+          echo '4870595b9ab6964ef507cd822029d63cbda724e905eaaba17fded22c7b6d2ddf  .kphx-drive/Misc/Tower_LIT.dds' | sha256sum --check --strict
+          echo '3ce531322e40e83da763eabe84aef4d4a41529f4acb312c52e9a92e90b90670c  .kphx-drive/Misc/FireStation.obj' | sha256sum --check --strict
+          echo '35c54df2d136a625393438437b02274450101c67696db82f8461447f73dbbb23  .kphx-drive/Misc/FireStation2.obj' | sha256sum --check --strict
+          echo '1fcd43c67dc10c6665a7b04f616457e7c4bc7b0452583ac6fe5616bab2cb5642  .kphx-drive/Misc/FireStation.dds' | sha256sum --check --strict
+          echo '1747d895d7156dd952adf375a6756ba923bd579532ae7abc9965c971354d110d  .kphx-drive/Misc/BaggageStand.obj' | sha256sum --check --strict
+          echo '2e5cc178f5fa6bf3fde629761d637c18933c5812fa927a098b79f536b75a4aa7  .kphx-drive/Misc/BaggageStand.dds' | sha256sum --check --strict
+          echo 'da86fa04ec5411d3d6c750b3048d96627e507fa026c5780031d07d362777ea1f  .kphx-drive/Misc/SkyTrainDepot.obj' | sha256sum --check --strict
+          echo 'c67a7cb72b0de1f42c72f10d2a61d2f9891b7565343edda44a7f3e1eacaf20b6  .kphx-drive/Misc/SkyTrainDepot.dds' | sha256sum --check --strict
+
+      - name: Convert exact landmark source to browser GLBs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/kphx/convert-xplane-obj-to-glb-v2.py .kphx-drive/SkyTrain/SkyTrain.obj .kphx-drive/SkyTrain/SkyTrain.dds - public/models/kphx/SkyTrain.exact.glb
+          python tools/kphx/convert-xplane-obj-to-glb-v2.py .kphx-drive/Misc/Tower.obj .kphx-drive/Misc/Tower.dds .kphx-drive/Misc/Tower_LIT.dds public/models/kphx/Tower.exact.glb
+          python tools/kphx/convert-xplane-obj-to-glb-v2.py .kphx-drive/Misc/FireStation.obj .kphx-drive/Misc/FireStation.dds - public/models/kphx/FireStation.exact.glb
+          python tools/kphx/convert-xplane-obj-to-glb-v2.py .kphx-drive/Misc/FireStation2.obj .kphx-drive/Misc/FireStation.dds - public/models/kphx/FireStation2.exact.glb
+          python tools/kphx/convert-xplane-obj-to-glb-v2.py .kphx-drive/Misc/BaggageStand.obj .kphx-drive/Misc/BaggageStand.dds - public/models/kphx/BaggageStand.exact.glb
+          python tools/kphx/convert-xplane-obj-to-glb-v2.py .kphx-drive/Misc/SkyTrainDepot.obj .kphx-drive/Misc/SkyTrainDepot.dds - public/models/kphx/SkyTrainDepot.exact.glb
+
+      - name: Verify generated landmark runtime identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(wc -c < public/models/kphx/SkyTrain.exact.glb)" -eq 8066472
+          echo '539b6b8f380005b5299113546254a465a5b4a6ff76600350631169cd55bc3d5c  public/models/kphx/SkyTrain.exact.glb' | sha256sum --check --strict
+          test "$(wc -c < public/models/kphx/Tower.exact.glb)" -eq 19981364
+          echo 'c3c7ef387880e813bbff9312991c3143344c1e896044ffa512851bc1eb7e3b5b  public/models/kphx/Tower.exact.glb' | sha256sum --check --strict
+          test "$(wc -c < public/models/kphx/FireStation.exact.glb)" -eq 3743904
+          echo '77f319d345c5ac31daaab8582e82460bcf108f3714aa4120ff4689dfe46cb62d  public/models/kphx/FireStation.exact.glb' | sha256sum --check --strict
+          test "$(wc -c < public/models/kphx/FireStation2.exact.glb)" -eq 3737504
+          echo '4a9b485276c132771f2545d0954d9c81f8d148762c57653d7ef449d45e1d5055  public/models/kphx/FireStation2.exact.glb' | sha256sum --check --strict
+          test "$(wc -c < public/models/kphx/BaggageStand.exact.glb)" -eq 3966348
+          echo 'f3a2567b3f2b0b67d19925fa3a5013f3b08c800955232426250c397e08efec0b  public/models/kphx/BaggageStand.exact.glb' | sha256sum --check --strict
+          test "$(wc -c < public/models/kphx/SkyTrainDepot.exact.glb)" -eq 3064488
+          echo 'a81f8c474742aa29e1bc08dd2145154cc74aa09137a46ccc1b63be05d491ef11  public/models/kphx/SkyTrainDepot.exact.glb' | sha256sum --check --strict
+
+      - name: Commit exact landmark runtime assets to private source-airport branch
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- public/models/kphx/SkyTrain.exact.glb public/models/kphx/Tower.exact.glb public/models/kphx/FireStation.exact.glb public/models/kphx/FireStation2.exact.glb public/models/kphx/BaggageStand.exact.glb public/models/kphx/SkyTrainDepot.exact.glb)" ]; then
+            echo 'Exact landmark runtime assets are already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/models/kphx/SkyTrain.exact.glb public/models/kphx/Tower.exact.glb public/models/kphx/FireStation.exact.glb public/models/kphx/FireStation2.exact.glb public/models/kphx/BaggageStand.exact.glb public/models/kphx/SkyTrainDepot.exact.glb
+          git commit -m 'Materialize exact KPHX landmark models'
+          git pull --rebase origin feat/source-kphx-airport
+          git push origin HEAD:feat/source-kphx-airport

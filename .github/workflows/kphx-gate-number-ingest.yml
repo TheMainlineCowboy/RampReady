@@ -1,0 +1,103 @@
+name: KPHX Exact Gate Number Ingest
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/source-kphx-airport]
+    paths:
+      - '.github/workflows/kphx-gate-number-ingest.yml'
+      - 'tools/kphx/combine-draped-obj-group-to-glb.py'
+      - 'assets/kphx-source/exact-gate-numbers.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/kphx-gate-number-ingest.yml'
+      - 'tools/kphx/combine-draped-obj-group-to-glb.py'
+      - 'assets/kphx-source/exact-gate-numbers.json'
+      - 'public/models/kphx/GateNumbers.exact.glb'
+
+permissions:
+  contents: write
+
+jobs:
+  ingest-gate-numbers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/source-kphx-airport
+          fetch-depth: 0
+
+      - name: Install deterministic converter dependency
+        run: python -m pip install --disable-pip-version-check pillow==12.3.0
+
+      - name: Download and verify exact gate-number source from Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-drive/GateNumbers public/models/kphx
+          node --input-type=module <<'NODE' > /tmp/gate-number-sources.tsv
+          import fs from 'node:fs';
+          const manifest = JSON.parse(fs.readFileSync('assets/kphx-source/exact-gate-numbers.json', 'utf8'));
+          const all = [manifest.texture, ...manifest.meshes];
+          for (const item of all) {
+            const name = item.resource.split('/').at(-1);
+            process.stdout.write(`${item.driveId}\t${item.sha256}\t${name}\n`);
+          }
+          NODE
+          while IFS=$'\t' read -r drive_id expected_sha name; do
+            out=".kphx-drive/GateNumbers/${name}"
+            curl -L --fail --silent --show-error \
+              "https://drive.usercontent.google.com/download?id=${drive_id}&export=download&confirm=t" \
+              -o "${out}"
+            printf '%s  %s\n' "${expected_sha}" "${out}" | sha256sum --check --strict
+          done < /tmp/gate-number-sources.tsv
+
+      - name: Package exact draped gate-number meshes with shared atlas
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t mesh_paths < <(node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const manifest = JSON.parse(fs.readFileSync('assets/kphx-source/exact-gate-numbers.json', 'utf8'));
+          for (const mesh of manifest.meshes) console.log(`.kphx-drive/GateNumbers/${mesh.resource.split('/').at(-1)}`);
+          NODE
+          )
+          python tools/kphx/combine-draped-obj-group-to-glb.py \
+            --texture .kphx-drive/GateNumbers/GateNumbers.dds \
+            --resource-prefix GateNumbers \
+            --out public/models/kphx/GateNumbers.exact.glb \
+            "${mesh_paths[@]}"
+
+      - name: Verify exact gate-number runtime identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          const manifest = JSON.parse(fs.readFileSync('assets/kphx-source/exact-gate-numbers.json', 'utf8'));
+          const file = 'public/models/kphx/GateNumbers.exact.glb';
+          const bytes = fs.statSync(file).size;
+          const sha256 = crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+          if (bytes !== manifest.runtime.bytes) throw new Error(`GateNumbers bytes ${bytes} != ${manifest.runtime.bytes}`);
+          if (sha256 !== manifest.runtime.sha256) throw new Error(`GateNumbers sha256 ${sha256} != ${manifest.runtime.sha256}`);
+          console.log(`Verified exact gate-number runtime: ${bytes} bytes, ${sha256}`);
+          NODE
+
+      - name: Commit exact gate-number runtime asset to private source-airport branch
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- public/models/kphx/GateNumbers.exact.glb)" ]; then
+            echo 'Exact gate-number runtime asset is already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/models/kphx/GateNumbers.exact.glb
+          git commit -m 'Materialize exact KPHX gate-number meshes'
+          git pull --rebase origin feat/source-kphx-airport
+          git push origin HEAD:feat/source-kphx-airport
