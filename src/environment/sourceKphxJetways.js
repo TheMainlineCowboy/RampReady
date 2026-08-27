@@ -1,16 +1,21 @@
+import { installSourceKphxWedJetwayFleet } from "./sourceKphxWedJetwayFleet.js";
+
 const WED_JETWAY_URL = "models/kphx/wed-jetways.exact.json";
 const EXPECTED_FACADE_RESOURCE = "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac";
 const EXPECTED_PLACEMENT_COUNT = 108;
+const T4_VISIBLE_JETWAY_COUNT = 76;
 const A1_FACADE_OBJECT_ID = 104804;
 
 export const SOURCE_KPHX_JETWAY_AUTHORITY = Object.freeze({
   source: "KPHX 1.75.1 earth.wed.xml",
   placementArtifact: WED_JETWAY_URL,
   placementCount: EXPECTED_PLACEMENT_COUNT,
-  visibleGeometryResource: EXPECTED_FACADE_RESOURCE,
-  visibleGeometryStatus: "blocked-missing-exact-xplane-Jetway_1_solid.fac",
-  substitutionPolicy: "forbidden",
-  detailLevel: "exact-WED-footprints-anchors-only-visible-geometry-fail-closed-v1",
+  sourceFacadeResource: EXPECTED_FACADE_RESOURCE,
+  movableVisibleGeometry: "models/airport-jetway/Airport_Jetway.glb",
+  movableVisibleGeometryAuthority: "exact-user-supplied-airport-jetway-glb",
+  placementPolicy: "WED owns gate association, rotunda/cab axis and source-airport coordinates",
+  geometryPolicy: "verified user-supplied exact movable bridge; no generated visible bridge replacement",
+  detailLevel: "exact-WED-footprints-plus-user-supplied-exact-movable-jetway-v2",
 });
 
 function manifestUrl() {
@@ -45,48 +50,42 @@ async function loadManifest() {
       }
     }
   }
-  if (!ids.has(A1_FACADE_OBJECT_ID)) throw new Error(`Exact WED A1 jetway facade ${A1_FACADE_OBJECT_ID} is missing`);
+  const a1 = manifest.placements.find((placement) => placement.wedObjectId === A1_FACADE_OBJECT_ID);
+  if (!a1) throw new Error(`Exact WED A1 jetway facade ${A1_FACADE_OBJECT_ID} is missing`);
+  if (a1.rings[0].nodes.length !== 7) throw new Error(`Exact WED A1 jetway must preserve seven nodes, received ${a1.rings[0].nodes.length}`);
   return manifest;
 }
 
 export async function installSourceKphxWEDJetways(THREE, environment, sourceAirportFrame) {
   if (!environment?.isGroup || !sourceAirportFrame?.isGroup) throw new Error("Exact KPHX WED jetway authority requires the source airport frame");
-  environment.userData.authoredTerminal4UploadedJetwayLoadState = "loading-exact-WED-placement-authority";
+  environment.userData.authoredTerminal4UploadedJetwayLoadState = "loading-exact-WED-placement-and-supplied-GLB";
   const manifest = await loadManifest();
 
-  // Preserve the exact authored WED footprints/anchors in the live airport frame,
-  // but intentionally create no visible jetway mesh until the actual X-Plane
-  // Jetway_1_solid.fac resource is available. A differently supplied model is
-  // not a source-equivalent substitute for this package resource.
-  const group = new THREE.Group();
-  group.name = "KPHX_1_75_1_WED_JetwayPlacementAuthority";
-  group.userData.sourceAuthority = "KPHX-1.75.1-earth.wed.xml";
-  group.userData.placementArtifact = manifestUrl();
-  group.userData.placementCount = manifest.placements.length;
-  group.userData.a1FacadeObjectId = A1_FACADE_OBJECT_ID;
-  group.userData.visibleGeometryResource = EXPECTED_FACADE_RESOURCE;
-  group.userData.visibleGeometryStatus = SOURCE_KPHX_JETWAY_AUTHORITY.visibleGeometryStatus;
-  group.userData.substitutionPolicy = SOURCE_KPHX_JETWAY_AUTHORITY.substitutionPolicy;
-  sourceAirportFrame.add(group);
+  const footprintAuthority = new THREE.Group();
+  footprintAuthority.name = "KPHX_1_75_1_WED_JetwayPlacementAuthority";
+  footprintAuthority.userData.sourceAuthority = "KPHX-1.75.1-earth.wed.xml";
+  footprintAuthority.userData.placementArtifact = manifestUrl();
+  footprintAuthority.userData.placementCount = manifest.placements.length;
+  footprintAuthority.userData.a1FacadeObjectId = A1_FACADE_OBJECT_ID;
+  footprintAuthority.userData.a1FacadeNodeCount = 7;
+  footprintAuthority.userData.sourceFacadeResource = EXPECTED_FACADE_RESOURCE;
+  footprintAuthority.userData.visibleMovableGeometryAuthority = SOURCE_KPHX_JETWAY_AUTHORITY.movableVisibleGeometryAuthority;
+  footprintAuthority.userData.placementPolicy = SOURCE_KPHX_JETWAY_AUTHORITY.placementPolicy;
+  sourceAirportFrame.add(footprintAuthority);
+
+  const rendered = await installSourceKphxWedJetwayFleet(THREE, environment, sourceAirportFrame);
+  if (rendered.map.jetwayCount !== T4_VISIBLE_JETWAY_COUNT) {
+    throw new Error(`Exact T4 WED-mapped visible jetway count is ${rendered.map.jetwayCount}, expected ${T4_VISIBLE_JETWAY_COUNT}`);
+  }
   sourceAirportFrame.updateMatrixWorld(true);
 
-  environment.userData.authoredTerminal4Jetways = group;
-  environment.userData.authoredTerminal4A1JetwayController = null;
-  environment.userData.authoredTerminal4A1JetwayAnimationAuthority = null;
-  environment.userData.authoredTerminal4UploadedJetwayLoadState = SOURCE_KPHX_JETWAY_AUTHORITY.visibleGeometryStatus;
-  environment.userData.authoredTerminal4UploadedJetwayPlacementCount = EXPECTED_PLACEMENT_COUNT;
-  environment.userData.authoredTerminal4UploadedJetwayCount = 0;
-  environment.userData.authoredTerminal4UploadedJetwayVerifiedModelCount = 0;
-  environment.userData.authoredTerminal4UploadedJetwayConnectorCount = 0;
-  environment.userData.authoredTerminal4UploadedJetwayReadyAuthority = "exact-KPHX-WED-placement-only-visible-geometry-unresolved";
-  environment.userData.authoredTerminal4UploadedJetwayArticulationAuthority = "blocked-until-exact-X-Plane-facade-geometry-is-ingested";
-  environment.userData.authoredTerminal4JetwaySourceGeometryMode = "fail-closed-missing-lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac";
-  environment.userData.authoredTerminal4RequiresOriginalJetwayMesh = true;
-  environment.userData.authoredTerminal4TerminalConnectedJetwayCount = 0;
-  environment.userData.authoredTerminal4JetwayDetailLevel = SOURCE_KPHX_JETWAY_AUTHORITY.detailLevel;
   environment.userData.sourceJetwayCount = EXPECTED_PLACEMENT_COUNT;
-  environment.userData.terminal4JetwayCount = EXPECTED_PLACEMENT_COUNT;
-  environment.userData.exactKphxJetwayUnresolvedResource = EXPECTED_FACADE_RESOURCE;
+  environment.userData.terminal4JetwayCount = T4_VISIBLE_JETWAY_COUNT;
+  environment.userData.exactKphxJetwaySourceFacadeResource = EXPECTED_FACADE_RESOURCE;
+  environment.userData.exactKphxJetwayVisibleGeometryAuthority = SOURCE_KPHX_JETWAY_AUTHORITY.movableVisibleGeometryAuthority;
+  environment.userData.exactKphxJetwayPlacementAuthority = SOURCE_KPHX_JETWAY_AUTHORITY.placementPolicy;
   environment.userData.exactKphxJetwaySubstitutionAllowed = false;
-  return group;
+  environment.userData.exactKphxJetwayGeneratedVisibleGeometryCount = 0;
+  environment.userData.authoredTerminal4JetwayDetailLevel = SOURCE_KPHX_JETWAY_AUTHORITY.detailLevel;
+  return rendered.group;
 }
