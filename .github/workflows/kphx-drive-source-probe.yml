@@ -1,27 +1,72 @@
-name: KPHX Drive Source Probe
+name: KPHX Exact Source Ingest
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - feat/source-kphx-airport
     paths:
       - '.github/workflows/kphx-drive-source-probe.yml'
-  workflow_dispatch:
+      - 'tools/kphx/convert-xplane-obj-to-glb.py'
+      - 'assets/kphx-source/exact-kphx-manifest.json'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  probe-drive-source:
+  ingest-terminal4-north:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
-      - name: Probe exact SAM source from Drive
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/source-kphx-airport
+          fetch-depth: 0
+
+      - name: Install converter dependency
+        run: python -m pip install --disable-pip-version-check pillow
+
+      - name: Download exact KPHX Terminal 4 North source from Drive
         shell: bash
         run: |
           set -euo pipefail
-          url='https://drive.usercontent.google.com/download?id=1Lgc9F-VbyoQumkY8NfrCqznJxsiKQkmF&export=download&confirm=t'
-          curl -L --fail --silent --show-error "$url" -o sam.xml
-          test "$(wc -c < sam.xml)" -eq 3523
-          echo '29e8275d1202c50b0a6d680db10f53e511622332850327835e4a915099ada72c  sam.xml' | sha256sum --check --strict
-          head -n 2 sam.xml
+          mkdir -p .kphx-drive/Terminals public/models/kphx
+          download() {
+            local id="$1" out="$2"
+            curl -L --fail --silent --show-error "https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t" -o "$out"
+          }
+          download '1wZQu8UnCk7OljIkuUmRHN86qc4m4sa9v' '.kphx-drive/Terminals/Terminal4b.obj'
+          download '1Tj7rzga7j1qc_7YybQ-b8HclSupFiH-1' '.kphx-drive/Terminals/Terminal4b_comb.dds'
+          download '1uVtiWbvU1IKjQOJLNJDgskIr_IFx6R6K' '.kphx-drive/Terminals/Terminal4b_LIT.dds'
+          echo 'acbefef71c59942eb8e336996b9f2b9c8e8a87c6ec5cc64046292e5332ce48bc  .kphx-drive/Terminals/Terminal4b.obj' | sha256sum --check --strict
+          echo '11a129f33940c99de15c2941faac041af42834c869ab6bdae974d134c54bc00b  .kphx-drive/Terminals/Terminal4b_comb.dds' | sha256sum --check --strict
+          echo '90cff1e29f629570d6ea1ee237a3f8dd337860aef36dfd4d478d0ee8057f90f9  .kphx-drive/Terminals/Terminal4b_LIT.dds' | sha256sum --check --strict
+
+      - name: Convert exact X-Plane source to browser GLB
+        run: |
+          python tools/kphx/convert-xplane-obj-to-glb.py \
+            .kphx-drive/Terminals/Terminal4b.obj \
+            .kphx-drive/Terminals/Terminal4b_comb.dds \
+            .kphx-drive/Terminals/Terminal4b_LIT.dds \
+            public/models/kphx/Terminal4b.exact.glb
+
+      - name: Verify generated runtime identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(wc -c < public/models/kphx/Terminal4b.exact.glb)" -eq 19728408
+          echo '442292f0cdb614ccff3e7e124e0d5b9f7371306a5e22e0a18a72005b8ccf6bab  public/models/kphx/Terminal4b.exact.glb' | sha256sum --check --strict
+
+      - name: Commit exact runtime asset to private source-airport branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- public/models/kphx/Terminal4b.exact.glb; then
+            echo 'Exact Terminal 4 North runtime asset is already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/models/kphx/Terminal4b.exact.glb
+          git commit -m 'Materialize exact KPHX Terminal 4 North model'
+          git push origin HEAD:feat/source-kphx-airport
