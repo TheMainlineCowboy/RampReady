@@ -48,6 +48,47 @@ async function verifyRuntime(key) {
   return { key, bytes: bytes.length, sha256: actualHash, vertices: positionAccessor.count, indices: indexAccessor.count };
 }
 
+async function verifyWedJetwayPlacements() {
+  const expected = manifest.wed?.jetwayFacades;
+  if (!expected) throw new Error("exact KPHX manifest is missing WED jetway facade artifact identity");
+  const bytes = await readFile(new URL(`../${expected.path}`, import.meta.url));
+  const actualHash = sha256(bytes);
+  if (bytes.length !== expected.bytes || actualHash !== expected.sha256) {
+    throw new Error(`WED jetway placement identity mismatch ${bytes.length}/${actualHash}; expected ${expected.bytes}/${expected.sha256}`);
+  }
+  const payload = JSON.parse(bytes.toString("utf8"));
+  if (payload.schemaVersion !== 1 || payload.authority !== "KPHX-1.75.1-earth.wed.xml") {
+    throw new Error("WED jetway placement artifact has wrong schema/source authority");
+  }
+  if (payload.source?.bytes !== manifest.wed.bytes || payload.source?.sha256 !== manifest.wed.sha256) {
+    throw new Error("WED jetway placement artifact does not identify the pinned earth.wed.xml source");
+  }
+  if (payload.jetwayFacadeCount !== expected.count || payload.placements?.length !== expected.count) {
+    throw new Error(`WED jetway facade count ${payload.placements?.length}/${payload.jetwayFacadeCount} != ${expected.count}`);
+  }
+  const ids = new Set();
+  let nodeCount = 0;
+  for (const placement of payload.placements) {
+    if (!Number.isInteger(placement.wedObjectId) || ids.has(placement.wedObjectId)) {
+      throw new Error(`WED jetway placement has duplicate/invalid id ${placement.wedObjectId}`);
+    }
+    ids.add(placement.wedObjectId);
+    if (placement.resource !== "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac") {
+      throw new Error(`WED jetway ${placement.wedObjectId}: unexpected facade resource ${placement.resource}`);
+    }
+    if (!Array.isArray(placement.rings) || placement.rings.length !== 1 || !placement.rings[0].nodes?.length) {
+      throw new Error(`WED jetway ${placement.wedObjectId}: exact ordered facade ring is missing`);
+    }
+    for (const node of placement.rings[0].nodes) {
+      if (!/^[-+]?\d+\.\d+$/.test(node.latitude) || !/^[-+]?\d+\.\d+$/.test(node.longitude) || !node.wallType) {
+        throw new Error(`WED jetway ${placement.wedObjectId}: source coordinate/wall-type text was not preserved`);
+      }
+      nodeCount += 1;
+    }
+  }
+  return { count: payload.placements.length, nodeCount, bytes: bytes.length, sha256: actualHash };
+}
+
 if (!wrapper.includes('from "./sourceKphxTerminal4.js"') || !wrapper.includes("installSourceKphxTerminal4Visual")) {
   throw new Error("Terminal 4 compatibility entry point does not delegate to exact KPHX source loader");
 }
@@ -66,5 +107,9 @@ for (const required of [
   if (!loader.includes(required)) throw new Error(`Exact KPHX loader is missing source-authority token: ${required}`);
 }
 
-const results = await Promise.all([verifyRuntime("terminal4North"), verifyRuntime("terminal4South")]);
-console.log(JSON.stringify({ authority: manifest.authority, results }, null, 2));
+const [terminal4North, terminal4South, wedJetways] = await Promise.all([
+  verifyRuntime("terminal4North"),
+  verifyRuntime("terminal4South"),
+  verifyWedJetwayPlacements(),
+]);
+console.log(JSON.stringify({ authority: manifest.authority, results: [terminal4North, terminal4South], wedJetways }, null, 2));
