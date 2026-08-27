@@ -6,9 +6,9 @@ const root = process.cwd();
 const expected = Object.freeze({
   "lektro-88": Object.freeze({
     runtimePath: "public/models/lektro-88.glb",
-    bytes: 8162248,
-    sha256: "9cf0ec6fc6fe40a8d5effedda0ec8b4b3f3f00763d6767bb00c16a19bb08c3c4",
-    source: "Aircraft_Tug_REVISED_V3.obj + Aircraft_Tug_REVISED_V3.mtl",
+    bytes: 4822692,
+    sha256: "34ba7384dfae8610ac51c1a54d4959bea9626b4a970bf8cbd21c340f460cb4a8",
+    source: "user-supplied KIRI Engine 3DModel.obj + 3DModel.mtl + 3DModel.jpg",
   }),
   "manager-kubota": Object.freeze({
     runtimePath: "public/models/manager-kubota.glb",
