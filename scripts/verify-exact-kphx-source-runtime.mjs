@@ -5,8 +5,10 @@ import { readFile } from "node:fs/promises";
 
 const manifest = JSON.parse(await readFile(new URL("../assets/kphx-source/exact-kphx-manifest.json", import.meta.url), "utf8"));
 const garageManifest = JSON.parse(await readFile(new URL("../assets/kphx-source/exact-parking-garages.json", import.meta.url), "utf8"));
+const landmarkManifest = JSON.parse(await readFile(new URL("../assets/kphx-source/exact-landmarks.json", import.meta.url), "utf8"));
 const wrapper = await readFile(new URL("../src/environment/authoredTerminal4Visual.js", import.meta.url), "utf8");
 const loader = await readFile(new URL("../src/environment/sourceKphxTerminal4.js", import.meta.url), "utf8");
+const landmarkLoader = await readFile(new URL("../src/environment/sourceKphxLandmarks.js", import.meta.url), "utf8");
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
@@ -63,13 +65,11 @@ async function verifyWedJetwayPlacements() {
   if (!expected) throw new Error("exact KPHX manifest is missing WED jetway facade artifact identity");
   const bytes = await readFile(new URL(`../${expected.path}`, import.meta.url));
   const actualHash = sha256(bytes);
-  if (bytes.length !== expected.bytes || actualHash !== expected.sha256) {
-    throw new Error(`WED jetway placement identity mismatch ${bytes.length}/${actualHash}; expected ${expected.bytes}/${expected.sha256}`);
-  }
+  if (bytes.length !== expected.bytes || actualHash !== expected.sha256) throw new Error("WED jetway placement identity mismatch");
   const payload = JSON.parse(bytes.toString("utf8"));
   if (payload.schemaVersion !== 1 || payload.authority !== "KPHX-1.75.1-earth.wed.xml") throw new Error("WED jetway placement artifact has wrong schema/source authority");
   if (payload.source?.bytes !== manifest.wed.bytes || payload.source?.sha256 !== manifest.wed.sha256) throw new Error("WED jetway artifact does not identify pinned earth.wed.xml");
-  if (payload.jetwayFacadeCount !== expected.count || payload.placements?.length !== expected.count) throw new Error(`WED jetway facade count drifted`);
+  if (payload.jetwayFacadeCount !== expected.count || payload.placements?.length !== expected.count) throw new Error("WED jetway facade count drifted");
   const ids = new Set();
   let nodeCount = 0;
   for (const placement of payload.placements) {
@@ -90,11 +90,11 @@ async function verifyWedGroundGeometry() {
   if (!expected) throw new Error("exact KPHX manifest is missing WED ground artifact identity");
   const bytes = await readFile(new URL(`../${expected.path}`, import.meta.url));
   const actualHash = sha256(bytes);
-  if (bytes.length !== expected.bytes || actualHash !== expected.sha256) throw new Error(`WED ground identity mismatch`);
+  if (bytes.length !== expected.bytes || actualHash !== expected.sha256) throw new Error("WED ground identity mismatch");
   const payload = JSON.parse(bytes.toString("utf8"));
   if (payload.schemaVersion !== 1 || payload.authority !== "KPHX-1.75.1-earth.wed.xml-ground") throw new Error("WED ground artifact has wrong source authority");
   if (payload.source?.bytes !== manifest.wed.bytes || payload.source?.sha256 !== manifest.wed.sha256) throw new Error("WED ground artifact does not identify pinned earth.wed.xml");
-  if (JSON.stringify(payload.counts) !== JSON.stringify(expected.counts)) throw new Error(`WED ground counts drifted`);
+  if (JSON.stringify(payload.counts) !== JSON.stringify(expected.counts)) throw new Error("WED ground counts drifted");
   return { counts: payload.counts, bytes: bytes.length, sha256: actualHash };
 }
 
@@ -103,7 +103,7 @@ async function verifyWedObjectPlacements() {
   if (!expected) throw new Error("exact KPHX manifest is missing WED object placement authority");
   const bytes = await readFile(new URL(`../${expected.path}`, import.meta.url));
   const actualHash = sha256(bytes);
-  if (bytes.length !== expected.bytes || actualHash !== expected.sha256) throw new Error(`WED object placement identity mismatch`);
+  if (bytes.length !== expected.bytes || actualHash !== expected.sha256) throw new Error("WED object placement identity mismatch");
   const payload = JSON.parse(bytes.toString("utf8"));
   if (payload.schemaVersion !== 1 || payload.authority !== "KPHX-1.75.1-earth.wed.xml") throw new Error("WED object placement artifact has wrong source authority");
   if (payload.source?.bytes !== manifest.wed.bytes || payload.source?.sha256 !== manifest.wed.sha256) throw new Error("WED object placement artifact does not identify pinned earth.wed.xml");
@@ -111,13 +111,15 @@ async function verifyWedObjectPlacements() {
   const requiredResources = new Set([
     "Terminals/Terminal3a.obj", "Terminals/Terminal3Garage.obj", "Terminals/Terminal4b.obj", "Terminals/Terminal4.obj",
     ...garageManifest.models.map((entry) => entry.resource),
+    ...landmarkManifest.models.map((entry) => entry.resource),
   ]);
   for (const placement of payload.placements) requiredResources.delete(placement.resource);
-  if (requiredResources.size) throw new Error(`WED object artifact lost authored building resources: ${[...requiredResources].join(", ")}`);
+  if (requiredResources.size) throw new Error(`WED object artifact lost authored runtime resources: ${[...requiredResources].join(", ")}`);
   return { count: payload.objectPlacementCount, uniqueResources: payload.uniqueResourceCount, bytes: bytes.length, sha256: actualHash };
 }
 
-if (!wrapper.includes('from "./sourceKphxTerminal4.js"') || !wrapper.includes("installSourceKphxTerminal4Visual")) throw new Error("Terminal 4 compatibility entry point does not delegate to exact KPHX source loader");
+if (!wrapper.includes('from "./sourceKphxTerminal4.js"') || !wrapper.includes("installSourceKphxTerminal4Visual")) throw new Error("Compatibility entry point does not delegate to exact KPHX building loader");
+if (!wrapper.includes('from "./sourceKphxLandmarks.js"') || !wrapper.includes("installSourceKphxLandmarks")) throw new Error("Compatibility entry point does not attach exact KPHX landmarks");
 for (const forbidden of ["buildSourcePlacedTerminal4Jetways", "BoxGeometry", "CylinderGeometry", "source-atlas", "facadeInfill"]) {
   if (wrapper.includes(forbidden)) throw new Error(`Reconstructed Terminal 4 authority survived in compatibility wrapper: ${forbidden}`);
 }
@@ -128,7 +130,13 @@ for (const required of [
   "KPHX_1_75_1_WED_Source_Frame", "KPHX_Terminal4_Source_Objects", "KPHX_Terminal3_Source_Objects", "KPHX_ParkingGarage_Source_Objects",
   "sourceKphxAuthoredBuildingCount", "exact-user-drive-kphx-1.75.1",
 ]) {
-  if (!loader.includes(required)) throw new Error(`Exact KPHX loader is missing source-authority token: ${required}`);
+  if (!loader.includes(required)) throw new Error(`Exact KPHX building loader is missing source-authority token: ${required}`);
+}
+for (const required of [
+  "SkyTrain.exact.glb", "Tower.exact.glb", "FireStation.exact.glb", "FireStation2.exact.glb", "BaggageStand.exact.glb", "SkyTrainDepot.exact.glb",
+  "KPHX_Landmark_Source_Objects", "sourceKphxLandmarkObjectCount", "exact-user-drive-kphx-1.75.1",
+]) {
+  if (!landmarkLoader.includes(required)) throw new Error(`Exact KPHX landmark loader is missing source-authority token: ${required}`);
 }
 
 const authoredBuildings = await Promise.all([
@@ -142,11 +150,16 @@ const authoredBuildings = await Promise.all([
     dayTexture: garageManifest.sharedTextures[entry.texture],
   })),
 ]);
+const landmarks = await Promise.all(landmarkManifest.models.map((entry) => verifyRuntimeEntry(entry.name, {
+  ...entry,
+  obj: { vertices: entry.vertices, indices: entry.indices, sha256: entry.sourceSha256 },
+})));
 if (authoredBuildings.length !== 10) throw new Error(`Expected 10 exact authored KPHX building models, received ${authoredBuildings.length}`);
+if (landmarks.length !== 6) throw new Error(`Expected 6 exact authored KPHX landmark models, received ${landmarks.length}`);
 
 const [wedJetways, wedGround, wedObjects] = await Promise.all([
   verifyWedJetwayPlacements(),
   verifyWedGroundGeometry(),
   verifyWedObjectPlacements(),
 ]);
-console.log(JSON.stringify({ authority: manifest.authority, authoredBuildings, wedJetways, wedGround, wedObjects }, null, 2));
+console.log(JSON.stringify({ authority: manifest.authority, authoredBuildings, landmarks, totalExactRuntimeModels: authoredBuildings.length + landmarks.length, wedJetways, wedGround, wedObjects }, null, 2));
