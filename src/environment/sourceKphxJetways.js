@@ -56,8 +56,8 @@ export async function installSourceKphxWEDJetways(THREE, environment, sourceAirp
 
   // Preserve the exact authored WED footprints/anchors in the live airport frame,
   // but intentionally create no visible jetway mesh until the actual X-Plane
-  // Jetway_1_solid.fac resource is available. Airport_Jetway.glb and any other
-  // model are not source-equivalent substitutes for this package resource.
+  // Jetway_1_solid.fac resource is available. A differently supplied model is
+  // not a source-equivalent substitute for this package resource.
   const group = new THREE.Group();
   group.name = "KPHX_1_75_1_WED_JetwayPlacementAuthority";
   group.userData.sourceAuthority = "KPHX-1.75.1-earth.wed.xml";
