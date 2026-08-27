@@ -1,0 +1,27 @@
+name: KPHX Drive Source Probe
+
+on:
+  push:
+    branches:
+      - feat/source-kphx-airport
+    paths:
+      - '.github/workflows/kphx-drive-source-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe-drive-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe exact SAM source from Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://drive.usercontent.google.com/download?id=1Lgc9F-VbyoQumkY8NfrCqznJxsiKQkmF&export=download&confirm=t'
+          curl -L --fail --silent --show-error "$url" -o sam.xml
+          test "$(wc -c < sam.xml)" -eq 3523
+          echo '29e8275d1202c50b0a6d680db10f53e511622332850327835e4a915099ada72c  sam.xml' | sha256sum --check --strict
+          head -n 2 sam.xml
