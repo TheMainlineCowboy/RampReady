@@ -24,6 +24,14 @@
         "WED_Runway": 3
       },
       "preserves": ["wed-object-id", "parent-id", "child-order", "latitude-text", "longitude-text", "bezier-controls", "texture-coordinates", "resource", "surface", "runway-width", "source-hierarchy"]
+    },
+    "objectPlacements": {
+      "path": "public/models/kphx/wed-objects.exact.json",
+      "count": 4691,
+      "uniqueResources": 345,
+      "bytes": 1770974,
+      "sha256": "e932b1a5431780e1455dbecd4323ef080b88af42ccf65e7e44c592e0b522f3f7",
+      "preserves": ["source-order", "wed-object-id", "parent-id", "resource", "show-level", "custom-msl", "msl", "latitude-text", "longitude-text", "heading-text"]
     }
   },
   "apt": {
