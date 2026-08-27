@@ -15,8 +15,8 @@ export const AUTHORED_KPHX_GROUND_PROFILE = Object.freeze({
   detailLevel: "exact-kphx-1.75.1-wed-ground-readiness-v1",
   surfaceMaterialMode: "exact-WED-geometry; visible source materials fail-closed until resource ingest",
   sourceJetwayCount: 108,
-  terminal4JetwayCount: 108,
-  terminal4ParkingCount: 0,
+  terminal4JetwayCount: 76,
+  terminal4ParkingCount: 84,
 });
 
 function sourceLocalFromWED(latitude, longitude) {
