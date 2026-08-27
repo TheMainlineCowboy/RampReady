@@ -1,0 +1,111 @@
+name: KPHX Exact Parking Garage Ingest
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/source-kphx-airport
+    paths:
+      - '.github/workflows/kphx-parking-garage-ingest.yml'
+      - 'tools/kphx/convert-xplane-obj-to-glb-v2.py'
+      - 'assets/kphx-source/exact-kphx-manifest.json'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/kphx-parking-garage-ingest.yml'
+      - 'tools/kphx/convert-xplane-obj-to-glb-v2.py'
+      - 'assets/kphx-source/exact-kphx-manifest.json'
+      - 'public/models/kphx/Garage*.exact.glb'
+
+permissions:
+  contents: write
+
+jobs:
+  ingest-garages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/source-kphx-airport
+          fetch-depth: 0
+
+      - name: Install deterministic converter dependency
+        run: python -m pip install --disable-pip-version-check pillow==12.3.0
+
+      - name: Download exact KPHX garage source from Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-drive/ParkingGarages public/models/kphx
+          download() {
+            local id="$1" out="$2"
+            curl -L --fail --silent --show-error "https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t" -o "$out"
+          }
+          download '1PAP__QuGokPQFKmoeHdR0aSDacBhwO5Z' '.kphx-drive/ParkingGarages/Garage1.obj'
+          download '1KK_GYHcJPpquSHI7_Va5xTEypydLJlwB' '.kphx-drive/ParkingGarages/Garage2.obj'
+          download '14nYMV8xCbxha6dP3RuTZD-fbT8qkyoBU' '.kphx-drive/ParkingGarages/Garage3.obj'
+          download '1Z4PmQ_wz1nZ1c1mjooAyfbtaon8Muyyf' '.kphx-drive/ParkingGarages/Garage4.obj'
+          download '1EalixyaQ08lSHHxR4ccOOp1h7HN76nx1' '.kphx-drive/ParkingGarages/Garage5.obj'
+          download '1dIcIkuRIAjwmFZ0zzK5ROMO4iFPNoHuO' '.kphx-drive/ParkingGarages/Garage6.obj'
+          download '18nuAalTdvka9LXe3QPdoPmgnxk8RMSYz' '.kphx-drive/ParkingGarages/garage1.dds'
+          download '13HuKijtfcyiqp8sbO426P1am0OlJY2SV' '.kphx-drive/ParkingGarages/garage.dds'
+
+          echo '4220eefd706451a0edd1db0c5987baf5c69a8a95b56bd63a3ff53eed85e74891  .kphx-drive/ParkingGarages/Garage1.obj' | sha256sum --check --strict
+          echo '8dc2c4fc99f2c0b2518f66ec047cb6c55cac5e58827900a9745171cbfecc698d  .kphx-drive/ParkingGarages/Garage2.obj' | sha256sum --check --strict
+          echo 'd84e436d214bc1edf57f77f789299abe9c5e10a65e92e3b22f47749d0d4dd32a  .kphx-drive/ParkingGarages/Garage3.obj' | sha256sum --check --strict
+          echo 'f75ddf1ffb8443c7dc0ba0fcebf068a3c81d59df0e046bc9f5e0e03b24fc37f6  .kphx-drive/ParkingGarages/Garage4.obj' | sha256sum --check --strict
+          echo '26a2757ebea9dcc094cd54c6058b5108593e68b7bbf0929ae55dd79bc28705f7  .kphx-drive/ParkingGarages/Garage5.obj' | sha256sum --check --strict
+          echo '0817390b57200a170beccc9c3907938399461c61a0a41c174811b5d6209e40db  .kphx-drive/ParkingGarages/Garage6.obj' | sha256sum --check --strict
+          echo 'e0f14f8013b6769d2567594fa31115bae61c39f8a3113814f13e0c68006ef70f  .kphx-drive/ParkingGarages/garage1.dds' | sha256sum --check --strict
+          echo 'ec02c46c01c303ba3f353d0b0b3fc3f7be0e67be1196647a5ddbdb317b45e162  .kphx-drive/ParkingGarages/garage.dds' | sha256sum --check --strict
+
+      - name: Convert exact KPHX garage source to browser GLBs
+        shell: bash
+        run: |
+          set -euo pipefail
+          for n in 1 2 3 5 6; do
+            python tools/kphx/convert-xplane-obj-to-glb-v2.py \
+              ".kphx-drive/ParkingGarages/Garage${n}.obj" \
+              .kphx-drive/ParkingGarages/garage1.dds \
+              - \
+              "public/models/kphx/Garage${n}.exact.glb"
+          done
+          python tools/kphx/convert-xplane-obj-to-glb-v2.py \
+            .kphx-drive/ParkingGarages/Garage4.obj \
+            .kphx-drive/ParkingGarages/garage.dds \
+            - \
+            public/models/kphx/Garage4.exact.glb
+
+      - name: Verify generated garage runtime identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(wc -c < public/models/kphx/Garage1.exact.glb)" -eq 5214792
+          echo '82de257843b0433caa8a7253b2899ce25b96d0409aafb9ad0f77e41068be83bc  public/models/kphx/Garage1.exact.glb' | sha256sum --check --strict
+          test "$(wc -c < public/models/kphx/Garage2.exact.glb)" -eq 4678624
+          echo '1d81dbfa7e4286fffa2d5535f393e128117686abd0faef6d8c13bcf9f65cd5f1  public/models/kphx/Garage2.exact.glb' | sha256sum --check --strict
+          test "$(wc -c < public/models/kphx/Garage3.exact.glb)" -eq 4757512
+          echo '7f22fe3e463f146cd3cb08edbb85ef4b2714ccc89e3ccacda1869f79f593bfbd  public/models/kphx/Garage3.exact.glb' | sha256sum --check --strict
+          test "$(wc -c < public/models/kphx/Garage4.exact.glb)" -eq 4773192
+          echo 'd49a3f16caddaf4a92660c6972e5f930463d03c7bf2780605e713e91f84f44d9  public/models/kphx/Garage4.exact.glb' | sha256sum --check --strict
+          test "$(wc -c < public/models/kphx/Garage5.exact.glb)" -eq 4704812
+          echo '18aaaf22ee4c6c1a92fd6b28a6a34f896933338547ad8dd6e0a61739dd376e0d  public/models/kphx/Garage5.exact.glb' | sha256sum --check --strict
+          test "$(wc -c < public/models/kphx/Garage6.exact.glb)" -eq 4675624
+          echo '7cef68a716bfbc967c9a5e7ecec9680a7ddcefad4b73da6d125577a60bff785d  public/models/kphx/Garage6.exact.glb' | sha256sum --check --strict
+
+      - name: Commit exact garage runtime assets to private source-airport branch
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- public/models/kphx/Garage*.exact.glb)" ]; then
+            echo 'Exact parking garage runtime assets are already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/models/kphx/Garage*.exact.glb
+          git commit -m 'Materialize exact KPHX parking garages'
+          git push origin HEAD:feat/source-kphx-airport
