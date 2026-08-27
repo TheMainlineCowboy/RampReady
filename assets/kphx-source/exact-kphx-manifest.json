@@ -11,6 +11,19 @@
       "bytes": 211513,
       "sha256": "fe8502e66f689c6a515d2bab4d873cf46042ba8b945bda0e5bc27b48a87b6c65",
       "preserves": ["wed-object-id", "child-order", "latitude-text", "longitude-text", "bezier-controls", "wall-type", "facade-height", "facade-resource"]
+    },
+    "groundGeometry": {
+      "path": "public/models/kphx/wed-ground.exact.json",
+      "bytes": 6837207,
+      "sha256": "d13538a2504cfe953004c32486f690e5e415e07cd0b557769c44c2eeb88315fb",
+      "counts": {
+        "WED_PolygonPlacement": 302,
+        "WED_LinePlacement": 1158,
+        "WED_DrapedOrthophoto": 955,
+        "WED_Taxiway": 5,
+        "WED_Runway": 3
+      },
+      "preserves": ["wed-object-id", "parent-id", "child-order", "latitude-text", "longitude-text", "bezier-controls", "texture-coordinates", "resource", "surface", "runway-width", "source-hierarchy"]
     }
   },
   "apt": {
