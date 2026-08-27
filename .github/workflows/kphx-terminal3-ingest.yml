@@ -80,7 +80,7 @@ jobs:
           echo '1c5f2d0ffd7b9b0103cc0b5f16606377f52ff6bf43e6da98d1561158ad564d1d  public/models/kphx/Terminal3Garage.exact.glb' | sha256sum --check --strict
 
       - name: Commit exact Terminal 3 runtime assets to private source-airport branch
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         shell: bash
         run: |
           set -euo pipefail
@@ -92,4 +92,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add public/models/kphx/Terminal3a.exact.glb public/models/kphx/Terminal3Garage.exact.glb
           git commit -m 'Materialize exact KPHX Terminal 3 models'
+          git pull --rebase origin feat/source-kphx-airport
           git push origin HEAD:feat/source-kphx-airport
