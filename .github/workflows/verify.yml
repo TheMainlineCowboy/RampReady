@@ -27,7 +27,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install locked dependencies
@@ -42,6 +42,7 @@ jobs:
 
       - name: Upload build diagnostics
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: rampready-build-log-${{ github.sha }}
@@ -69,9 +70,13 @@ jobs:
           grep -q 'href="/RampReady/manifest.webmanifest"' dist/index.html
           find dist/assets -type f -size +0c | grep -q .
           test -s dist/models/crj700-mobile.glb
-          echo "Production bundle contains Pages-scoped index, manifest, non-empty hashed assets, and the CRJ700 GLB."
+          test -s dist/models/kphx/Terminal4.exact.glb
+          test -s dist/models/kphx/Terminal4b.exact.glb
+          echo "Production bundle contains Pages-scoped app assets, aircraft, and exact KPHX Terminal 4 GLBs."
 
       - name: Upload production bundle
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: rampready-dist-${{ github.sha }}
