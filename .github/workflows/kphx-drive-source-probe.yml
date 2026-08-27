@@ -22,9 +22,9 @@ permissions:
   contents: write
 
 jobs:
-  ingest-terminal4-north:
+  ingest-terminal4:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +34,7 @@ jobs:
       - name: Install converter dependency
         run: python -m pip install --disable-pip-version-check pillow
 
-      - name: Download exact KPHX Terminal 4 North source from Drive
+      - name: Download exact KPHX Terminal 4 source from Drive
         shell: bash
         run: |
           set -euo pipefail
@@ -43,39 +43,54 @@ jobs:
             local id="$1" out="$2"
             curl -L --fail --silent --show-error "https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t" -o "$out"
           }
+
           download '1wZQu8UnCk7OljIkuUmRHN86qc4m4sa9v' '.kphx-drive/Terminals/Terminal4b.obj'
           download '1Tj7rzga7j1qc_7YybQ-b8HclSupFiH-1' '.kphx-drive/Terminals/Terminal4b_comb.dds'
           download '1uVtiWbvU1IKjQOJLNJDgskIr_IFx6R6K' '.kphx-drive/Terminals/Terminal4b_LIT.dds'
+          download '1_dk9mIUJjTQF7mv_Jqi-j04p-j8wy0oi' '.kphx-drive/Terminals/Terminal4.obj'
+          download '1FTTuGgQgFNmX_k3FD4biPDUavBZQ-b0B' '.kphx-drive/Terminals/Terminal4_comb.dds'
+          download '1Epwd5VsQa7j9Taud1F-TrregSG7OuCU_' '.kphx-drive/Terminals/Terminal4_LIT.dds'
+
           echo 'acbefef71c59942eb8e336996b9f2b9c8e8a87c6ec5cc64046292e5332ce48bc  .kphx-drive/Terminals/Terminal4b.obj' | sha256sum --check --strict
           echo '11a129f33940c99de15c2941faac041af42834c869ab6bdae974d134c54bc00b  .kphx-drive/Terminals/Terminal4b_comb.dds' | sha256sum --check --strict
           echo '90cff1e29f629570d6ea1ee237a3f8dd337860aef36dfd4d478d0ee8057f90f9  .kphx-drive/Terminals/Terminal4b_LIT.dds' | sha256sum --check --strict
+          echo 'e93807a1239377e1223eb325c2b7048e6c84f968d9c790fd0cd6cc5da050cd80  .kphx-drive/Terminals/Terminal4.obj' | sha256sum --check --strict
+          echo '84667f356e16d83065773fadcba30cc222b4d6a2a739b4000545cca265f53186  .kphx-drive/Terminals/Terminal4_comb.dds' | sha256sum --check --strict
+          echo '65937e43b6eff0b95480496d64d98d3b59779b2fe4b7af9c984f1e404624b17f  .kphx-drive/Terminals/Terminal4_LIT.dds' | sha256sum --check --strict
 
-      - name: Convert exact X-Plane source to browser GLB
+      - name: Convert exact X-Plane Terminal 4 source to browser GLBs
         run: |
           python tools/kphx/convert-xplane-obj-to-glb.py \
             .kphx-drive/Terminals/Terminal4b.obj \
             .kphx-drive/Terminals/Terminal4b_comb.dds \
             .kphx-drive/Terminals/Terminal4b_LIT.dds \
             public/models/kphx/Terminal4b.exact.glb
+          python tools/kphx/convert-xplane-obj-to-glb.py \
+            .kphx-drive/Terminals/Terminal4.obj \
+            .kphx-drive/Terminals/Terminal4_comb.dds \
+            .kphx-drive/Terminals/Terminal4_LIT.dds \
+            public/models/kphx/Terminal4.exact.glb
 
-      - name: Verify generated runtime identity
+      - name: Verify generated Terminal 4 runtime identities
         shell: bash
         run: |
           set -euo pipefail
           test "$(wc -c < public/models/kphx/Terminal4b.exact.glb)" -eq 19728408
           echo '442292f0cdb614ccff3e7e124e0d5b9f7371306a5e22e0a18a72005b8ccf6bab  public/models/kphx/Terminal4b.exact.glb' | sha256sum --check --strict
+          test "$(wc -c < public/models/kphx/Terminal4.exact.glb)" -eq 19786112
+          echo '1f880b74e264e8bdf034c6b47f136ba40a4911634bd09f8a7e318eba9d31d845  public/models/kphx/Terminal4.exact.glb' | sha256sum --check --strict
 
-      - name: Commit exact runtime asset to private source-airport branch
+      - name: Commit exact Terminal 4 runtime assets to private source-airport branch
         if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- public/models/kphx/Terminal4b.exact.glb; then
-            echo 'Exact Terminal 4 North runtime asset is already current.'
+          if git diff --quiet -- public/models/kphx/Terminal4b.exact.glb public/models/kphx/Terminal4.exact.glb; then
+            echo 'Exact Terminal 4 runtime assets are already current.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add public/models/kphx/Terminal4b.exact.glb
-          git commit -m 'Materialize exact KPHX Terminal 4 North model'
+          git add public/models/kphx/Terminal4b.exact.glb public/models/kphx/Terminal4.exact.glb
+          git commit -m 'Materialize exact KPHX Terminal 4 models'
           git push origin HEAD:feat/source-kphx-airport
