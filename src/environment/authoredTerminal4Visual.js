@@ -32,6 +32,6 @@ export async function installAuthoredTerminal4Visual(THREE, environment) {
     installSourceKphxLandmarks(THREE, environment, sourceAirportFrame),
     installSourceKphxWEDJetways(THREE, environment, sourceAirportFrame),
   ]);
-  environment.userData.environmentSource = "exact-user-drive-kphx-1.75.1-authored-airport-objects-and-WED-jetways";
+  environment.userData.environmentSource = "exact-user-drive-kphx-1.75.1-authored-airport-objects-and-WED-jetway-placement-authority";
   return sourceAirportFrame;
 }
