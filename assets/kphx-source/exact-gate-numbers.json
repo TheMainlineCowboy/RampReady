@@ -1,0 +1,42 @@
+{
+  "authority": "KPHX-1.75.1-earth.wed.xml-and-user-drive-source",
+  "placementAuthority": {
+    "artifact": "public/models/kphx/wed-objects.exact.json",
+    "placementCount": 307,
+    "uniqueResourceCount": 15,
+    "resourcePrefix": "GateNumbers/"
+  },
+  "texture": {
+    "resource": "GateNumbers/GateNumbers.dds",
+    "driveId": "1jbkZQg3rA4Te0iCOGP6B-BCJqMvRIplV",
+    "bytes": 2796368,
+    "sha256": "ef8788656770b336ec1a9a30533c8d2242fb062881b0d2d29a786d2b3961f6ac",
+    "width": 2048,
+    "height": 1024
+  },
+  "runtime": {
+    "path": "public/models/kphx/GateNumbers.exact.glb",
+    "bytes": 687456,
+    "sha256": "b0fc28b14882935685bbb72a4e10a5c649a5c493c9ca187b8b25457e70357c07",
+    "meshCount": 15,
+    "sourceMeshBytes": 12270,
+    "packaging": "15 exact TEXTURE_DRAPED OBJ meshes sharing one exact authored atlas"
+  },
+  "meshes": [
+    {"name":"A","resource":"GateNumbers/A.obj","driveId":"1RdAwROEMUrZbiPRH8_cCiQ-8uxmfLpnE","bytes":818,"sha256":"909f4f65b9debb03ab653ea3655bbc00a26185732d654835a66e8e3247988846","vertices":4,"indices":6,"drawRanges":1},
+    {"name":"B","resource":"GateNumbers/B.obj","driveId":"1am0-oag8OnfSZdTzbL8xuw8cvN23P38t","bytes":818,"sha256":"b5bee8eb2e5744b0834c20015a14f046041d6af976c23324953999b644bcba73","vertices":4,"indices":6,"drawRanges":1},
+    {"name":"D","resource":"GateNumbers/D.obj","driveId":"1VrZBMm2ZJ2qqSvWk_2GFz4O9D8IuivOr","bytes":818,"sha256":"ced82cb71cc2d1fcd9e890fe1dc8882d83df630589818177e8241a1f00c2ce9f","vertices":4,"indices":6,"drawRanges":1},
+    {"name":"Empty","resource":"GateNumbers/Empty.obj","driveId":"15gKPHEgbWYpiOTHQQeYCljsIUQnJSA4R","bytes":818,"sha256":"ab43c96ab89dad899a05a6531e49f36715f07febcc0a355eb508c5943b5935f2","vertices":4,"indices":6,"drawRanges":1},
+    {"name":"EmptyLarge","resource":"GateNumbers/EmptyLarge.obj","driveId":"16ZsoJblpZ3INnMotNBo68eoOHU9ZWg4N","bytes":818,"sha256":"2e66224a0eab4b3b24567236265fc589ad4d8e81e0496a5ea66e246a936e1485","vertices":4,"indices":6,"drawRanges":1},
+    {"name":"single0","resource":"GateNumbers/single0.obj","driveId":"1ejehFHAFRmJRKV8yR58_ePM616lLWnwg","bytes":818,"sha256":"2db84dc5d36712d96da0a4723c41dcdade2abf28b819b79c93aea5f10e0adc30","vertices":4,"indices":6,"drawRanges":1},
+    {"name":"single1","resource":"GateNumbers/single1.obj","driveId":"1Rwz9V3_KlUDG3c3rKsobxcWVUOChCNF-","bytes":818,"sha256":"d6921290be4c25b5bb368af1ab79c37466b8de1d9c56db65e3b0c5a3e7460c91","vertices":4,"indices":6,"drawRanges":1},
+    {"name":"single2","resource":"GateNumbers/single2.obj","driveId":"1W9nEoFQHYAwYUjXsVypgEgW61HJqIhjW","bytes":818,"sha256":"b8e28d2f1b9a8bcc4ecd239a19e818263b1187d54cb3afea45b776e142ca50b8","vertices":4,"indices":6,"drawRanges":1},
+    {"name":"single3","resource":"GateNumbers/single3.obj","driveId":"1MsWSSK2whHKIXfL7qRD1wrroh87WEGz6","bytes":818,"sha256":"5460ebbf72b8c10dd5bde7cf2fa2bf7fd39703ae1406dcc12833260c13751e96","vertices":4,"indices":6,"drawRanges":1},
+    {"name":"single4","resource":"GateNumbers/single4.obj","driveId":"1PcWMD7vs51On-xOcw9gUEm5iHSaJsDIk","bytes":818,"sha256":"85291de86afd1b695057bfee2fefaeb879ac59697d0ab61b146eba2caad7dd8d","vertices":4,"indices":6,"drawRanges":1},
+    {"name":"single5","resource":"GateNumbers/single5.obj","driveId":"1rsvjaHA7-b93PgzyrLNQ84Jg8yVObJM5","bytes":818,"sha256":"a183427eeb73125bd87b3008b86b8b36a9c3f9cbb33f8a1536e65f9654dbcca1","vertices":4,"indices":6,"drawRanges":1},
+    {"name":"single6","resource":"GateNumbers/single6.obj","driveId":"1YbxD6iOIvYdLOSnc-5Y28pojDyaDngEV","bytes":818,"sha256":"e0e296809a5da3888f3c47ce7b5ffc7a1666625d53d0616882050b3232589e12","vertices":4,"indices":6,"drawRanges":1},
+    {"name":"single7","resource":"GateNumbers/single7.obj","driveId":"1zhBEA6x2XyJgUP0HDEwbzPwu8dZpejL2","bytes":818,"sha256":"47f732fb1d963aadaecf9afd9ba2169e6bb5a27c74fe4a1667c573005027f18a","vertices":4,"indices":6,"drawRanges":1},
+    {"name":"single8","resource":"GateNumbers/single8.obj","driveId":"1bO_-ysZ67KhNILYG3Z9jc8MxshLcbopk","bytes":818,"sha256":"8a61bde66dce6212e663df9fe17b5c47b774a5cd1e329d8f89477a209316b052","vertices":4,"indices":6,"drawRanges":1},
+    {"name":"single9","resource":"GateNumbers/single9.obj","driveId":"1v2NrIMmFGu7C_WYbOIjScZoE5msbKhnp","bytes":818,"sha256":"7cc3be565a405c01434492fb1022241c386d408c57f3b6a1812ed4d9fa93fa1c","vertices":4,"indices":6,"drawRanges":1}
+  ]
+}
