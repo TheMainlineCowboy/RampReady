@@ -4,7 +4,14 @@
   "wed": {
     "file": "earth.wed.xml",
     "bytes": 24885640,
-    "sha256": "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498"
+    "sha256": "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498",
+    "jetwayFacades": {
+      "path": "public/models/kphx/wed-jetways.exact.json",
+      "count": 108,
+      "bytes": 211513,
+      "sha256": "fe8502e66f689c6a515d2bab4d873cf46042ba8b945bda0e5bc27b48a87b6c65",
+      "preserves": ["wed-object-id", "child-order", "latitude-text", "longitude-text", "bezier-controls", "wall-type", "facade-height", "facade-resource"]
+    }
   },
   "apt": {
     "file": "Earth nav data/apt.dat",
