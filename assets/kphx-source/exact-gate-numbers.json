@@ -16,8 +16,8 @@
   },
   "runtime": {
     "path": "public/models/kphx/GateNumbers.exact.glb",
-    "bytes": 687456,
-    "sha256": "b0fc28b14882935685bbb72a4e10a5c649a5c493c9ca187b8b25457e70357c07",
+    "bytes": 687460,
+    "sha256": "b5fccaf0912584de5f878922f6be14b98fae11b5bc99fbf096df59811a3d4bf9",
     "meshCount": 15,
     "sourceMeshBytes": 12270,
     "packaging": "15 exact TEXTURE_DRAPED OBJ meshes sharing one exact authored atlas"
