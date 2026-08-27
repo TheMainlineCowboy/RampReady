@@ -28,10 +28,22 @@ export const AUTHORED_TERMINAL4_PROFILE = Object.freeze({
 
 export async function installAuthoredTerminal4Visual(THREE, environment) {
   const sourceAirportFrame = await installSourceKphxTerminal4Visual(THREE, environment);
-  await Promise.all([
+  const [, terminal4Jetways] = await Promise.all([
     installSourceKphxLandmarks(THREE, environment, sourceAirportFrame),
     installSourceKphxWedJetwayFleet(THREE, environment, sourceAirportFrame),
   ]);
+
+  // Keep airport-wide facade count (108) distinct from the 76 exact WED
+  // facades associated to Terminal 4 ramps. Do not claim fixed-corridor
+  // connectors before the native Jetway_1_solid.fac resource is materialized.
+  environment.userData.terminal4JetwayCount = terminal4Jetways.map.jetwayCount;
+  environment.userData.authoredTerminal4UploadedJetwayConnectorCount = 0;
+  environment.userData.authoredTerminal4TerminalConnectedJetwayCount = 0;
+
+  // Never publish a synthetic zero for A1 contact error. Until the native fixed
+  // corridor is present, report the exact supplied-GLB/WED measured gap.
+  const measuredA1Gap = environment.userData.authoredTerminal4UploadedJetwayA1ActualDoorGapMeters;
+  environment.userData.authoredTerminal4UploadedJetwayA1PredictedDoorGapMeters = measuredA1Gap;
   environment.userData.environmentSource = "exact-user-drive-kphx-1.75.1-authored-airport-objects-and-WED-terminal4-jetways";
   return sourceAirportFrame;
 }
