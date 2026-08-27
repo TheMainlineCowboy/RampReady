@@ -7,7 +7,7 @@
   "scripts": {
     "materialize:authored-aircraft": "node scripts/materialize-authored-aircraft-clean.mjs",
     "materialize:standup-tug": "node scripts/materialize-standup-tug-runtime.mjs",
-    "materialize:kphx-source": "node scripts/verify-exact-kphx-source-runtime.mjs",
+    "materialize:kphx-source": "node scripts/verify-exact-kphx-line-definitions.mjs && node scripts/verify-exact-kphx-source-runtime.mjs",
     "materialize:phx-terminal4": "npm run materialize:kphx-source",
     "materialize:kphx-ground": "node scripts/prepare-kphx-marking-contact.mjs && node scripts/prepare-kphx-simulator-ground-builder.mjs && node scripts/materialize-kphx-ground.mjs",
     "verify:kphx-v181": "npm run materialize:kphx-source",
