@@ -1,0 +1,75 @@
+name: Deploy exact KPHX source preview
+
+on:
+  push:
+    branches: [deploy/source-kphx-preview]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: rampready-pages-source-kphx-preview
+  cancel-in-progress: true
+
+env:
+  SOURCE_SHA: 374c08178908a90bdfb144340ee1c3970cec5764
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact source-airport workstream head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Stamp exact source workstream commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s\n' "${SOURCE_SHA}" > public/release-commit.txt
+          mkdir -p public/releases
+          printf '%s\n' "${SOURCE_SHA}" > "public/releases/${SOURCE_SHA}.txt"
+
+      - name: Build exact KPHX source workstream
+        run: npm run build
+
+      - name: Verify preview artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          test -s dist/release-commit.txt
+          test "$(tr -d '\r\n' < dist/release-commit.txt)" = "${SOURCE_SHA}"
+          grep -Eq 'src="/RampReady/assets/[^"]+\.js"' dist/index.html
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload exact-source Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: vehicle-preview-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy exact KPHX source preview
+        id: deployment
+        uses: actions/deploy-pages@v4
