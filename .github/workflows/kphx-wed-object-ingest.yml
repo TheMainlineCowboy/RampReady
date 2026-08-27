@@ -1,0 +1,81 @@
+name: KPHX Exact WED Object Ingest
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/source-kphx-airport
+    paths:
+      - '.github/workflows/kphx-wed-object-ingest.yml'
+      - 'tools/kphx/extract-wed-object-placements.py'
+      - 'assets/kphx-source/exact-kphx-manifest.json'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/kphx-wed-object-ingest.yml'
+      - 'tools/kphx/extract-wed-object-placements.py'
+      - 'assets/kphx-source/exact-kphx-manifest.json'
+      - 'public/models/kphx/wed-objects.exact.json'
+
+permissions:
+  contents: write
+
+jobs:
+  ingest-objects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/source-kphx-airport
+          fetch-depth: 0
+
+      - name: Download exact KPHX WED source from Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-drive public/models/kphx
+          curl -L --fail --silent --show-error \
+            'https://drive.usercontent.google.com/download?id=1oUuiZQiWbqIMXtqSQMklZ9E_jbsg_T2d&export=download&confirm=t' \
+            -o .kphx-drive/earth.wed.xml
+          test "$(wc -c < .kphx-drive/earth.wed.xml)" -eq 24885640
+          echo '59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498  .kphx-drive/earth.wed.xml' | sha256sum --check --strict
+
+      - name: Extract exact authored object placements
+        run: |
+          python tools/kphx/extract-wed-object-placements.py \
+            .kphx-drive/earth.wed.xml \
+            public/models/kphx/wed-objects.exact.json
+
+      - name: Verify exact object placement artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(wc -c < public/models/kphx/wed-objects.exact.json)" -eq 1770974
+          echo 'e932b1a5431780e1455dbecd4323ef080b88af42ccf65e7e44c592e0b522f3f7  public/models/kphx/wed-objects.exact.json' | sha256sum --check --strict
+          node --input-type=module - <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const payload = JSON.parse(readFileSync('public/models/kphx/wed-objects.exact.json', 'utf8'));
+          if (payload.authority !== 'KPHX-1.75.1-earth.wed.xml') throw new Error('wrong WED authority');
+          if (payload.objectPlacementCount !== 4691 || payload.placements.length !== 4691) throw new Error('wrong object placement count');
+          if (payload.uniqueResourceCount !== 345) throw new Error('wrong unique resource count');
+          for (const p of payload.placements) {
+            if (!Number.isInteger(p.wedObjectId) || !p.resource || !p.latitude || !p.longitude || !p.heading) throw new Error(`incomplete WED placement ${p.wedObjectId}`);
+          }
+          NODE
+
+      - name: Commit exact WED object placements to private source-airport branch
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- public/models/kphx/wed-objects.exact.json)" ]; then
+            echo 'Exact WED object placements are already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/models/kphx/wed-objects.exact.json
+          git commit -m 'Materialize exact KPHX WED object placements'
+          git push origin HEAD:feat/source-kphx-airport
