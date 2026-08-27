@@ -36,6 +36,74 @@
     "bytes": 3523,
     "sha256": "29e8275d1202c50b0a6d680db10f53e511622332850327835e4a915099ada72c"
   },
+  "terminal3Main": {
+    "resource": "Terminals/Terminal3a.obj",
+    "placement": {
+      "latitude": 33.436168819,
+      "longitude": -112.008763064,
+      "headingDegrees": 0.0,
+      "wedObjectId": 7424
+    },
+    "obj": {
+      "bytes": 739499,
+      "sha256": "4283b54b22abf73eef75259f22318153705efc8372a667fd3de89fbe8db70ea3",
+      "vertices": 6922,
+      "indices": 12138,
+      "drawRanges": 4
+    },
+    "dayTexture": {
+      "resource": "Terminals/Terminal4b_comb.dds",
+      "bytes": 11184952,
+      "sha256": "11a129f33940c99de15c2941faac041af42834c869ab6bdae974d134c54bc00b",
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA"
+    },
+    "litTexture": {
+      "resource": "Terminals/Terminal4b_LIT.dds",
+      "bytes": 11184952,
+      "sha256": "90cff1e29f629570d6ea1ee237a3f8dd337860aef36dfd4d478d0ee8057f90f9",
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA"
+    },
+    "runtimeGlb": {
+      "path": "public/models/kphx/Terminal3a.exact.glb",
+      "bytes": 18527808,
+      "sha256": "0297c2435a9f17a7aaf564c6f0198b6533637b527f2d0628bc918c383d894aa7",
+      "preserves": ["positions", "normals", "uvs", "index-order", "decoded-day-texture-pixels", "decoded-lit-texture-pixels"]
+    }
+  },
+  "terminal3Garage": {
+    "resource": "Terminals/Terminal3Garage.obj",
+    "placement": {
+      "latitude": 33.435447284,
+      "longitude": -112.008758475,
+      "headingDegrees": 0.0,
+      "wedObjectId": 11792
+    },
+    "obj": {
+      "bytes": 372241,
+      "sha256": "2767c7903df08c24fe1b1e23ab12c22574f51dea64cba0cdd6fce41372a7cc18",
+      "vertices": 3457,
+      "indices": 6882,
+      "drawRanges": 15
+    },
+    "dayTexture": {
+      "resource": "Terminals/Terminal3Garage.dds",
+      "bytes": 2796344,
+      "sha256": "b64c35e90b5075ca7b9d2f1aa8b4aa10b3d21bb3e4d28cbe0dc347ab2e439e27",
+      "width": 2048,
+      "height": 2048,
+      "mode": "RGBA"
+    },
+    "runtimeGlb": {
+      "path": "public/models/kphx/Terminal3Garage.exact.glb",
+      "bytes": 2462736,
+      "sha256": "1c5f2d0ffd7b9b0103cc0b5f16606377f52ff6bf43e6da98d1561158ad564d1d",
+      "preserves": ["positions", "normals", "uvs", "index-order", "decoded-day-texture-pixels"]
+    }
+  },
   "terminal4North": {
     "resource": "Terminals/Terminal4b.obj",
     "placement": {
