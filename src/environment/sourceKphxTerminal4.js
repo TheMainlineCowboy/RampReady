@@ -23,8 +23,8 @@ export const SOURCE_KPHX_TERMINAL4_OBJECTS = Object.freeze([
     vertices: 40773,
     indices: 70725,
     sourceSha256: "acbefef71c59942eb8e336996b9f2b9c8e8a87c6ec5cc64046292e5332ce48bc",
-    runtimeBytes: 19728408,
-    runtimeSha256: "442292f0cdb614ccff3e7e124e0d5b9f7371306a5e22e0a18a72005b8ccf6bab",
+    runtimeBytes: 19728400,
+    runtimeSha256: "1380cb6b1f33a3beca14a44ca4f17ef765bcf718c099769d6a723f0dbc10ab43",
   }),
   Object.freeze({
     name: "KPHX_Terminal4_South_Exact",
@@ -37,8 +37,8 @@ export const SOURCE_KPHX_TERMINAL4_OBJECTS = Object.freeze([
     vertices: 21720,
     indices: 42501,
     sourceSha256: "e93807a1239377e1223eb325c2b7048e6c84f968d9c790fd0cd6cc5da050cd80",
-    runtimeBytes: 19786112,
-    runtimeSha256: "1f880b74e264e8bdf034c6b47f136ba40a4911634bd09f8a7e318eba9d31d845",
+    runtimeBytes: 19786104,
+    runtimeSha256: "1899c3d3258922868f835b62dbd1b85713871017d52d34167d80c136f8b6d8b2",
   }),
 ]);
 
