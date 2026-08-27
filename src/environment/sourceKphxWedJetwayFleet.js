@@ -200,19 +200,26 @@ function buildStaticInstancedFleet(THREE, prototype, placements, sourceContactDi
   const finalMatrix = new THREE.Matrix4();
   let maximumOutwardReachShortfallMeters = 0;
   let maximumStaticRetractionMeters = 0;
-  const articulationByGate = new Map(staticPlacements.map((placement) => {
+  const articulationByRampWedObjectId = new Map(staticPlacements.map((placement) => {
+    if (!Number.isInteger(placement.rampWedObjectId)) {
+      throw new Error(`Exact WED jetway ${placement.gate} is missing rampWedObjectId`);
+    }
     const articulation = computeUploadedJetwayArticulation(placement, sourceContactDistance);
     maximumOutwardReachShortfallMeters = Math.max(maximumOutwardReachShortfallMeters, articulation.outwardReachShortfallMeters || 0);
     maximumStaticRetractionMeters = Math.max(maximumStaticRetractionMeters, articulation.staticRetractionMeters || 0);
-    return [placement.gate, articulation];
+    return [placement.rampWedObjectId, articulation];
   }));
+  if (articulationByRampWedObjectId.size !== staticPlacements.length) {
+    throw new Error("Exact WED static jetway articulation lost unique ramp object identity");
+  }
   prototypeMeshes.forEach((meshDefinition, primitiveIndex) => {
     const batch = new THREE.InstancedMesh(meshDefinition.geometry, meshDefinition.material, staticPlacements.length);
     batch.name = `KPHX_WED_StaticJetway_${primitiveIndex}_${meshDefinition.name}`;
     batch.instanceMatrix.setUsage(THREE.StaticDrawUsage);
     batch.receiveShadow = true;
     staticPlacements.forEach((placement, instanceIndex) => {
-      const articulation = articulationByGate.get(placement.gate);
+      const articulation = articulationByRampWedObjectId.get(placement.rampWedObjectId);
+      if (!articulation) throw new Error(`Missing exact WED articulation for ramp object ${placement.rampWedObjectId}`);
       const offset = articulation.partOffsets[meshDefinition.sourcePartName] || 0;
       placementMatrix.makeRotationY(placement.yawRadians);
       placementMatrix.setPosition(placement.x, 0, placement.z);
@@ -240,10 +247,12 @@ async function loadPlacementMap() {
   if (!response.ok) throw new Error(`KPHX Terminal 4 WED jetway map returned HTTP ${response.status}`);
   const map = await response.json();
   const a1 = map.placements?.find((placement) => placement.gate === "A1");
+  const rampWedObjectIds = new Set(map.placements?.map((placement) => placement.rampWedObjectId));
   if (
     map.authority !== PLACEMENT_AUTHORITY
     || map.jetwayCount !== 76
     || map.placements?.length !== 76
+    || rampWedObjectIds.size !== 76
     || a1?.facadeWedObjectId !== 104804
     || a1?.facadeNodeCount !== 7
   ) throw new Error("KPHX Terminal 4 WED jetway map failed its exact-source contract");
