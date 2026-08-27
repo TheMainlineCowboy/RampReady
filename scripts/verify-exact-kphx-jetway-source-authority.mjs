@@ -89,10 +89,24 @@ if (
   || !(a1?.bridgeEnd > 23.8 && a1?.bridgeEnd < 23.9)
 ) throw new Error(`Canonical A1 WED jetway mapping is invalid: ${JSON.stringify(a1)}`);
 
-const gates = new Set();
+const rampWedObjectIds = new Set();
+const placementObjectPairs = new Set();
+const gateLabelCounts = new Map();
 for (const placement of terminal4Map.placements) {
-  if (!placement?.gate || gates.has(placement.gate)) throw new Error(`Duplicate/invalid T4 WED gate mapping: ${placement?.gate}`);
-  gates.add(placement.gate);
+  if (typeof placement?.gate !== "string" || !placement.gate.trim()) {
+    throw new Error(`Invalid T4 WED gate label: ${placement?.gate}`);
+  }
+  if (!Number.isInteger(placement.rampWedObjectId) || !Number.isInteger(placement.facadeWedObjectId)) {
+    throw new Error(`T4 WED gate ${placement.gate} is missing exact WED object identity`);
+  }
+  if (rampWedObjectIds.has(placement.rampWedObjectId)) {
+    throw new Error(`Duplicate T4 WED ramp object identity: ${placement.rampWedObjectId}`);
+  }
+  rampWedObjectIds.add(placement.rampWedObjectId);
+  const objectPair = `${placement.rampWedObjectId}:${placement.facadeWedObjectId}`;
+  if (placementObjectPairs.has(objectPair)) throw new Error(`Duplicate T4 WED ramp/facade placement identity: ${objectPair}`);
+  placementObjectPairs.add(objectPair);
+  gateLabelCounts.set(placement.gate, (gateLabelCounts.get(placement.gate) || 0) + 1);
   if (!Number.isFinite(placement.x) || !Number.isFinite(placement.z) || !Number.isFinite(placement.yawRadians)) {
     throw new Error(`T4 WED gate ${placement.gate} has invalid source transform`);
   }
@@ -100,11 +114,24 @@ for (const placement of terminal4Map.placements) {
     throw new Error(`T4 WED gate ${placement.gate} allows a generated terminal connector`);
   }
 }
+if (rampWedObjectIds.size !== terminal4Map.jetwayCount) {
+  throw new Error(`T4 WED ramp object identity count mismatch: ${rampWedObjectIds.size}`);
+}
+const duplicateAuthoredGateLabels = [...gateLabelCounts.entries()].filter(([, count]) => count > 1);
+if (
+  duplicateAuthoredGateLabels.length !== 1
+  || duplicateAuthoredGateLabels[0][0] !== "D7"
+  || duplicateAuthoredGateLabels[0][1] !== 2
+) {
+  throw new Error(`Unexpected authored duplicate T4 gate labels: ${JSON.stringify(duplicateAuthoredGateLabels)}`);
+}
 
 console.log(JSON.stringify({
   authority: "KPHX-1.75.1-WED-placement-plus-user-supplied-exact-jetway-v2",
   airportWideWedFacadeCount: 108,
   terminal4WedAssociatedJetwayCount: terminal4Map.jetwayCount,
+  terminal4UniqueRampWedObjectCount: rampWedObjectIds.size,
+  duplicateAuthoredGateLabels: Object.fromEntries(duplicateAuthoredGateLabels),
   terminal4A1FacadeObjectId: a1.facadeWedObjectId,
   terminal4A1FacadeNodeCount: a1.facadeNodeCount,
   sourceFacadeResource,
