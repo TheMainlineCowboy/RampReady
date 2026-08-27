@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "id": "lektro-88-v3",
+  "role": "sit-down-pushback",
+  "sourceAuthority": "user-supplied Aircraft_Tug_REVISED_V3.obj and matching Aircraft_Tug_REVISED_V3.mtl",
+  "source": {
+    "model": "Aircraft_Tug_REVISED_V3.obj",
+    "materialLibrary": "Aircraft_Tug_REVISED_V3.mtl",
+    "units": "meters",
+    "axes": {
+      "front": "+X",
+      "up": "+Y",
+      "lateral": "+Z"
+    },
+    "requiredTextures": [
+      "tug_tow.png",
+      "tug_tow_alpha.png",
+      "tug01.png",
+      "tug_NRM.png",
+      "tug_SPEC.png"
+    ],
+    "requiredObjectMarkers": [
+      "Automatic_Winch_Drum",
+      "Automatic_Winch_Motor",
+      "Automatic_Winch_Motor_Gearbox",
+      "Automatic_Winch_Left_Bearing",
+      "Automatic_Winch_Right_Bearing",
+      "Lower_Horizontal_Roller",
+      "Lower_Roller_Mount_Left",
+      "Lower_Roller_Mount_Right"
+    ],
+    "revisionNotes": [
+      "Circled front mechanism components removed in Revised V3",
+      "Lower horizontal roller present",
+      "Automatic winch geometry retained"
+    ]
+  },
+  "driveStaging": {
+    "folderId": "1TnGnSyPQPV3KNV3iBhpC2sX-waBZy5mj",
+    "folderName": "Lektro 88 Revised V3"
+  },
+  "runtime": {
+    "path": "public/models/lektro-88-v3.glb",
+    "visibleGeometryPolicy": "exact-v3-only",
+    "materialPolicy": "preserve-source-material-assignments-and-texture-maps",
+    "allowKiriScan": false,
+    "allowProceduralVisibleSubstitute": false,
+    "allowGlobalRedRetint": false,
+    "allowV2": false,
+    "kinematics": {
+      "frontWheelsSteer": false,
+      "rearWheelsSteer": true,
+      "rearWheelCount": 2,
+      "targetRearSteerDegrees": 88,
+      "allFourWheelsRoll": true
+    }
+  },
+  "status": {
+    "sourceObjAvailableInChatFileLibrary": true,
+    "sourceMtlAvailableInChatFileLibrary": true,
+    "driveRuntimeGlbUploaded": false,
+    "runtimeVerified": false,
+    "visualVerified": false
+  }
+}
