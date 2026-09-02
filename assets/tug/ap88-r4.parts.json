@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "encoding": "base64-concatenated-brotli",
+  "model": "LEKTRO AP88 TVO914 Simulator R4",
+  "sourceLicense": "CDDL-1.0",
+  "glbByteLength": 1308512,
+  "glbSha256": "24e6eb2dfdd5cfd3ef4bee1b2ecb2e517e9cff55613aba90abee2f9360d60c73",
+  "compressedByteLength": 349052,
+  "compressedSha256": "637872b2a3454625381cd285f841efca71aade30119b6d37140e75c5ea34516a",
+  "partCount": 8,
+  "totalBase64Characters": 465404,
+  "parts": [
+    {"path":"assets/tug/ap88-r4.glb.br.parts/part-000.b64","charLength":60000,"sha256":"d3ad30ec7bb2b58929fc132cbe52f66ba119915dd98e72388c8b4a3ae0ad51de"},
+    {"path":"assets/tug/ap88-r4.glb.br.parts/part-001.b64","charLength":60000,"sha256":"7c2a2d3225ade621ceba069eca598ff14218047785803f9e6461097666b75b0f"},
+    {"path":"assets/tug/ap88-r4.glb.br.parts/part-002.b64","charLength":60000,"sha256":"e9d5447c70448af5c2493d6942e571633c373e2f2ac63c4e2fb6f8ce9ab58cd1"},
+    {"path":"assets/tug/ap88-r4.glb.br.parts/part-003.b64","charLength":60000,"sha256":"5588e8d5fdd6338c6e9e0208fe04543d37dbb380c1fc9ceb25adf84506f467ee"},
+    {"path":"assets/tug/ap88-r4.glb.br.parts/part-004.b64","charLength":60000,"sha256":"405eb1d28d4788a915cfe0fbaf95d2e92148bb3f63fb53fbf61a236a4f482256"},
+    {"path":"assets/tug/ap88-r4.glb.br.parts/part-005.b64","charLength":60000,"sha256":"3d3eb231888b856df2a4820a2735d6c679b81b829ad6725a32ea3841338dd5e6"},
+    {"path":"assets/tug/ap88-r4.glb.br.parts/part-006.b64","charLength":60000,"sha256":"3c22f9048fef73f36b177627a7343b2c1f261d9e72ba82cc1b65f6eceedaa556"},
+    {"path":"assets/tug/ap88-r4.glb.br.parts/part-007.b64","charLength":45404,"sha256":"c6629e815f1a1f29add378e91608ec48a6630ca2ce3a20c5be65423a40f81d78"}
+  ]
+}
