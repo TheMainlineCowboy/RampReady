@@ -1,14 +1,18 @@
 export const LEKTRO_RIG_PROFILE = Object.freeze({
-  id: "lektro-standup-reference",
-  wheelbase: 3.6,
-  trackWidth: 2.28,
-  cradleOffset: 3.45,
-  operatorEye: Object.freeze([-0.45, 1.35, -2.15]),
-  operatorLook: Object.freeze([-0.45, 1.2, 8]),
-  captureAnchor: Object.freeze([0, 0.34, 3.45]),
-  liftTravel: 0.24,
-  bodyBounds: Object.freeze([2.35, 1.45, 5.5]),
+  id: "lektro-ap88-r4",
+  // BetterPushback AP88 info.cfg: front_z 0.77, rear_z -1.575.
+  wheelbase: 2.345,
+  trackWidth: 1.89,
+  cradleOffset: 2.69,
+  operatorEye: Object.freeze([0.44, 1.40, -1.90]),
+  operatorLook: Object.freeze([0.44, 1.12, 4.40]),
+  captureAnchor: Object.freeze([0, 0.08, 2.69]),
+  liftTravel: 0.13,
+  bodyBounds: Object.freeze([2.1821, 1.1032, 5.368]),
   steeringMode: "rear",
+  steerWheelRadius: 0.265,
+  driveWheelRadius: 0.304,
+  maxSteer: (60 * Math.PI) / 180,
 });
 
 export const STANDUP_RIG_PROFILE = Object.freeze({
@@ -78,7 +82,7 @@ export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
 
   const cradleLift = new THREE.Group();
   cradleLift.name = "CradleLift";
-  cradleLift.add(box(THREE, 1.8, 0.1, 0.95, 0x111318, 0, 0.22, 2.75));
+  cradleLift.add(box(THREE, 1.8, 0.1, 0.95, 0x111318, 0, 0.22, Math.max(2.0, profile.cradleOffset - 0.7)));
   cradleLift.add(box(THREE, 1.7, 0.12, 0.9, 0x111318, 0, 0.34, profile.cradleOffset));
   for (const side of [-1, 1]) {
     cradleLift.add(box(THREE, 0.16, 0.56, 0.85, 0xffcc00, side * 0.62, 0.55, profile.cradleOffset));
@@ -86,24 +90,31 @@ export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
   visual.add(cradleLift);
 
   const rollingWheels = [];
+  const rollingWheelRadii = [];
   const steeringPivots = [];
   for (const side of [-1, 1]) {
     const rearPivot = new THREE.Group();
     rearPivot.name = side < 0 ? "RearSteer_L" : "RearSteer_R";
-    rearPivot.position.set(side * 1.14, 0.48, -1.65);
-    const rear = cylinder(THREE, 0.55, 0.42, 0x0c0d0f, 0, 0, 0);
+    const lektroRearZ = equipmentId === "standup-tug" ? -1.65 : -0.77;
+    const lektroRearRadius = equipmentId === "standup-tug" ? 0.55 : profile.steerWheelRadius;
+    rearPivot.position.set(side * (profile.trackWidth / 2), lektroRearRadius, lektroRearZ);
+    const rear = cylinder(THREE, lektroRearRadius, equipmentId === "standup-tug" ? 0.42 : 0.34, 0x0c0d0f, 0, 0, 0);
     rear.name = side < 0 ? "RearWheel_L" : "RearWheel_R";
     rearPivot.add(rear);
     rollingWheels.push(rear);
+    rollingWheelRadii.push(lektroRearRadius);
     visual.add(rearPivot);
 
     const frontPivot = new THREE.Group();
     frontPivot.name = side < 0 ? "FrontSteer_L" : "FrontSteer_R";
-    frontPivot.position.set(side * 1.12, 0.47, 1.95);
-    const front = cylinder(THREE, 0.5, 0.38, 0x0c0d0f, 0, 0, 0);
+    const lektroFrontZ = equipmentId === "standup-tug" ? 1.95 : 1.575;
+    const lektroFrontRadius = equipmentId === "standup-tug" ? 0.5 : profile.driveWheelRadius;
+    frontPivot.position.set(side * (profile.trackWidth / 2), lektroFrontRadius, lektroFrontZ);
+    const front = cylinder(THREE, lektroFrontRadius, equipmentId === "standup-tug" ? 0.38 : 0.38, 0x0c0d0f, 0, 0, 0);
     front.name = side < 0 ? "FrontWheel_L" : "FrontWheel_R";
     frontPivot.add(front);
     rollingWheels.push(front);
+    rollingWheelRadii.push(lektroFrontRadius);
     visual.add(frontPivot);
 
     steeringPivots.push(profile.steeringMode === "rear" ? rearPivot : frontPivot);
@@ -121,8 +132,10 @@ export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
   }
 
   function rotateWheels(distance) {
-    const radians = distance / 0.5;
-    for (const wheel of rollingWheels) wheel.rotation.x += radians;
+    rollingWheels.forEach((wheel, index) => {
+      const radius = rollingWheelRadii[index] || 0.5;
+      wheel.rotation.x += distance / radius;
+    });
   }
 
   function setLiftProgress(progress) {
