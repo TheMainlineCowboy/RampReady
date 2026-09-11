@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "equipmentId": "lektro-88",
+  "manufacturer": "LEKTRO",
+  "model": "AP88",
+  "unit": "TVO914",
+  "revision": "R187A",
+  "status": "sim-ready-final",
+  "asset": "LEKTRO_AP88_TVO914.glb",
+  "bytes": 25063872,
+  "sha256": "1a199a43b5339924693a20bd55d5c8c05f15019e6845a085b0be669fc38bd140",
+  "runtime": {
+    "rearSteer": true,
+    "wheelbaseMeters": 2.33934,
+    "turningRadiusMeters": 4.572,
+    "cradleLiftMeters": 0.2286,
+    "embeddedAnimations": 5,
+    "punctualLights": 7
+  }
+}
