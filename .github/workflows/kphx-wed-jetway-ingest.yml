@@ -1,0 +1,72 @@
+name: KPHX Exact WED Jetway Ingest
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/source-kphx-airport
+    paths:
+      - '.github/workflows/kphx-wed-jetway-ingest.yml'
+      - 'tools/kphx/extract-wed-jetway-facades.py'
+      - 'assets/kphx-source/exact-kphx-manifest.json'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/kphx-wed-jetway-ingest.yml'
+      - 'tools/kphx/extract-wed-jetway-facades.py'
+      - 'assets/kphx-source/exact-kphx-manifest.json'
+      - 'public/models/kphx/wed-jetways.exact.json'
+
+permissions:
+  contents: write
+
+jobs:
+  ingest-wed-jetways:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/source-kphx-airport
+          fetch-depth: 0
+
+      - name: Download exact KPHX WED source from Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-drive public/models/kphx
+          curl -L --fail --silent --show-error \
+            'https://drive.usercontent.google.com/download?id=1oUuiZQiWbqIMXtqSQMklZ9E_jbsg_T2d&export=download&confirm=t' \
+            -o .kphx-drive/earth.wed.xml
+          test "$(wc -c < .kphx-drive/earth.wed.xml)" -eq 24885640
+          echo '59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498  .kphx-drive/earth.wed.xml' | sha256sum --check --strict
+
+      - name: Extract exact WED jetway facade placements
+        run: |
+          python tools/kphx/extract-wed-jetway-facades.py \
+            .kphx-drive/earth.wed.xml \
+            public/models/kphx/wed-jetways.exact.json
+
+      - name: Verify deterministic WED jetway placement identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(python -c 'import json; print(json.load(open("public/models/kphx/wed-jetways.exact.json"))["jetwayFacadeCount"])')" -eq 108
+          test "$(wc -c < public/models/kphx/wed-jetways.exact.json)" -eq 211513
+          echo 'fe8502e66f689c6a515d2bab4d873cf46042ba8b945bda0e5bc27b48a87b6c65  public/models/kphx/wed-jetways.exact.json' | sha256sum --check --strict
+
+      - name: Commit exact WED jetway placements to private source-airport branch
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- public/models/kphx/wed-jetways.exact.json)" ]; then
+            echo 'Exact WED jetway placement artifact is already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/models/kphx/wed-jetways.exact.json
+          git commit -m 'Materialize exact KPHX WED jetway placements'
+          git push origin HEAD:feat/source-kphx-airport

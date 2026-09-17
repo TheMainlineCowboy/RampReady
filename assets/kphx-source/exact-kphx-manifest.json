@@ -1,0 +1,191 @@
+{
+  "authority": "user-drive-kphx-1.75.1-exact-source-v1",
+  "sourceRoot": "Google Drive/RampReady/New KPHX",
+  "wed": {
+    "file": "earth.wed.xml",
+    "bytes": 24885640,
+    "sha256": "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498",
+    "jetwayFacades": {
+      "path": "public/models/kphx/wed-jetways.exact.json",
+      "count": 108,
+      "bytes": 211513,
+      "sha256": "fe8502e66f689c6a515d2bab4d873cf46042ba8b945bda0e5bc27b48a87b6c65",
+      "preserves": ["wed-object-id", "child-order", "latitude-text", "longitude-text", "bezier-controls", "wall-type", "facade-height", "facade-resource"]
+    },
+    "groundGeometry": {
+      "path": "public/models/kphx/wed-ground.exact.json",
+      "bytes": 6837207,
+      "sha256": "38ec6a4626db3802e9d69dab447f15dcbe34bb00c1fe7732901044c75eda054b",
+      "counts": {
+        "WED_PolygonPlacement": 302,
+        "WED_LinePlacement": 1158,
+        "WED_DrapedOrthophoto": 955,
+        "WED_Taxiway": 5,
+        "WED_Runway": 3
+      },
+      "preserves": ["wed-object-id", "parent-id", "child-order", "latitude-text", "longitude-text", "bezier-controls", "texture-coordinates", "resource", "surface", "runway-width", "source-hierarchy"]
+    },
+    "objectPlacements": {
+      "path": "public/models/kphx/wed-objects.exact.json",
+      "count": 4691,
+      "uniqueResources": 345,
+      "bytes": 1770974,
+      "sha256": "e932b1a5431780e1455dbecd4323ef080b88af42ccf65e7e44c592e0b522f3f7",
+      "preserves": ["source-order", "wed-object-id", "parent-id", "resource", "show-level", "custom-msl", "msl", "latitude-text", "longitude-text", "heading-text"]
+    }
+  },
+  "apt": {
+    "file": "Earth nav data/apt.dat",
+    "bytes": 169169,
+    "sha256": "97732a161b9ad9721d9cdb4375693a974887af538f9873f83585072ef7f994e2"
+  },
+  "sam": {
+    "file": "sam.xml",
+    "bytes": 3523,
+    "sha256": "29e8275d1202c50b0a6d680db10f53e511622332850327835e4a915099ada72c"
+  },
+  "terminal3Main": {
+    "resource": "Terminals/Terminal3a.obj",
+    "placement": {
+      "latitude": 33.436168819,
+      "longitude": -112.008763064,
+      "headingDegrees": 0.0,
+      "wedObjectId": 7424
+    },
+    "obj": {
+      "bytes": 739499,
+      "sha256": "4283b54b22abf73eef75259f22318153705efc8372a667fd3de89fbe8db70ea3",
+      "vertices": 6922,
+      "indices": 12138,
+      "drawRanges": 4
+    },
+    "dayTexture": {
+      "resource": "Terminals/Terminal4b_comb.dds",
+      "bytes": 11184952,
+      "sha256": "11a129f33940c99de15c2941faac041af42834c869ab6bdae974d134c54bc00b",
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA"
+    },
+    "litTexture": {
+      "resource": "Terminals/Terminal4b_LIT.dds",
+      "bytes": 11184952,
+      "sha256": "90cff1e29f629570d6ea1ee237a3f8dd337860aef36dfd4d478d0ee8057f90f9",
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA"
+    },
+    "runtimeGlb": {
+      "path": "public/models/kphx/Terminal3a.exact.glb",
+      "bytes": 18527808,
+      "sha256": "0297c2435a9f17a7aaf564c6f0198b6533637b527f2d0628bc918c383d894aa7",
+      "preserves": ["positions", "normals", "uvs", "index-order", "decoded-day-texture-pixels", "decoded-lit-texture-pixels"]
+    }
+  },
+  "terminal3Garage": {
+    "resource": "Terminals/Terminal3Garage.obj",
+    "placement": {
+      "latitude": 33.435447284,
+      "longitude": -112.008758475,
+      "headingDegrees": 0.0,
+      "wedObjectId": 11792
+    },
+    "obj": {
+      "bytes": 372241,
+      "sha256": "2767c7903df08c24fe1b1e23ab12c22574f51dea64cba0cdd6fce41372a7cc18",
+      "vertices": 3457,
+      "indices": 6882,
+      "drawRanges": 15
+    },
+    "dayTexture": {
+      "resource": "Terminals/Terminal3Garage.dds",
+      "bytes": 2796344,
+      "sha256": "b64c35e90b5075ca7b9d2f1aa8b4aa10b3d21bb3e4d28cbe0dc347ab2e439e27",
+      "width": 2048,
+      "height": 2048,
+      "mode": "RGBA"
+    },
+    "runtimeGlb": {
+      "path": "public/models/kphx/Terminal3Garage.exact.glb",
+      "bytes": 2462736,
+      "sha256": "1c5f2d0ffd7b9b0103cc0b5f16606377f52ff6bf43e6da98d1561158ad564d1d",
+      "preserves": ["positions", "normals", "uvs", "index-order", "decoded-day-texture-pixels"]
+    }
+  },
+  "terminal4North": {
+    "resource": "Terminals/Terminal4b.obj",
+    "placement": {
+      "latitude": 33.436209533,
+      "longitude": -111.996664410,
+      "headingDegrees": 0.0,
+      "wedObjectId": 5301
+    },
+    "obj": {
+      "bytes": 4444277,
+      "sha256": "acbefef71c59942eb8e336996b9f2b9c8e8a87c6ec5cc64046292e5332ce48bc",
+      "vertices": 40773,
+      "indices": 70725,
+      "drawRanges": 24
+    },
+    "dayTexture": {
+      "resource": "Terminals/Terminal4b_comb.dds",
+      "bytes": 11184952,
+      "sha256": "11a129f33940c99de15c2941faac041af42834c869ab6bdae974d134c54bc00b",
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA"
+    },
+    "litTexture": {
+      "resource": "Terminals/Terminal4b_LIT.dds",
+      "bytes": 11184952,
+      "sha256": "90cff1e29f629570d6ea1ee237a3f8dd337860aef36dfd4d478d0ee8057f90f9",
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA"
+    },
+    "runtimeGlb": {
+      "path": "public/models/kphx/Terminal4b.exact.glb",
+      "bytes": 19728400,
+      "sha256": "1380cb6b1f33a3beca14a44ca4f17ef765bcf718c099769d6a723f0dbc10ab43",
+      "preserves": ["positions", "normals", "uvs", "index-order", "decoded-day-texture-pixels", "decoded-lit-texture-pixels"]
+    }
+  },
+  "terminal4South": {
+    "resource": "Terminals/Terminal4.obj",
+    "placement": {
+      "latitude": 33.434761986,
+      "longitude": -111.996702473,
+      "headingDegrees": 0.0,
+      "wedObjectId": 2327
+    },
+    "obj": {
+      "bytes": 2354455,
+      "sha256": "e93807a1239377e1223eb325c2b7048e6c84f968d9c790fd0cd6cc5da050cd80",
+      "vertices": 21720,
+      "indices": 42501,
+      "drawRanges": 12
+    },
+    "dayTexture": {
+      "resource": "Terminals/Terminal4_comb.dds",
+      "bytes": 11184952,
+      "sha256": "84667f356e16d83065773fadcba30cc222b4d6a2a739b4000545cca265f53186",
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA"
+    },
+    "litTexture": {
+      "resource": "Terminals/Terminal4_LIT.dds",
+      "bytes": 11184952,
+      "sha256": "65937e43b6eff0b95480496d64d98d3b59779b2fe4b7af9c984f1e404624b17f",
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA"
+    },
+    "runtimeGlb": {
+      "path": "public/models/kphx/Terminal4.exact.glb",
+      "bytes": 19786104,
+      "sha256": "1899c3d3258922868f835b62dbd1b85713871017d52d34167d80c136f8b6d8b2",
+      "preserves": ["positions", "normals", "uvs", "index-order", "decoded-day-texture-pixels", "decoded-lit-texture-pixels"]
+    }
+  }
+}

@@ -4,6 +4,12 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'assets/kphx-source/exact-kphx-manifest.json'
+      - 'public/models/kphx/wed-jetways.exact.json'
+      - 'public/models/kphx/wed-ground.exact.json'
+      - 'public/models/kphx/Terminal4.exact.glb'
+      - 'public/models/kphx/Terminal4b.exact.glb'
+      - 'scripts/verify-exact-kphx-source-runtime.mjs'
       - 'public/models/airport-jetway/Airport_Jetway.glb'
       - 'src/environment/sourcePlacedTerminal4Jetways.js'
       - 'src/environment/uploadedAirportJetwayFleet.js'
@@ -44,7 +50,23 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Prepare and verify exact GLB, 58 placements, textures, fleet, and articulation
+      - name: Detect exact KPHX source migration
+        id: source-mode
+        shell: bash
+        run: |
+          if test -f assets/kphx-source/exact-kphx-manifest.json; then
+            echo 'exact=true' >> "$GITHUB_OUTPUT"
+            echo 'Exact KPHX source authority is present; retired 58-placement/A1 preparers will not run.'
+          else
+            echo 'exact=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify exact KPHX source airport authority
+        if: steps.source-mode.outputs.exact == 'true'
+        run: npm run materialize:kphx-source
+
+      - name: Prepare and verify legacy supplied GLB articulation
+        if: steps.source-mode.outputs.exact != 'true'
         run: |
           node scripts/materialize-exact-airport-jetway.mjs
           node scripts/prepare-exact-airport-jetway-source-wiring.mjs
@@ -62,16 +84,19 @@ jobs:
       - name: Build exact production artifact
         run: npm run build
 
-      - name: Install browser verifier
+      - name: Install legacy browser verifier
+        if: steps.source-mode.outputs.exact != 'true'
         run: |
           npm install --no-save @playwright/test@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Render and measure the articulated supplied A1 jetway
+      - name: Render and measure legacy articulated supplied A1 jetway
+        if: steps.source-mode.outputs.exact != 'true'
         run: npx playwright test tests/browser/uploaded-jetway-articulation-v10.spec.js --reporter=line --workers=1
 
-      - name: Upload exact jetway evidence
-        if: always()
+      - name: Upload legacy exact jetway evidence
+        if: always() && steps.source-mode.outputs.exact != 'true'
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: exact-supplied-jetway-articulation-${{ github.sha }}

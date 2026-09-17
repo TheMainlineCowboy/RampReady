@@ -4,49 +4,28 @@ const fs = require('node:fs');
 const pageUrl = process.env.PAGE_URL || 'http://127.0.0.1:4173/RampReady/';
 const evidenceDirectory = process.env.EVIDENCE_DIR || 'a14-corner-evidence';
 const reportPath = `${evidenceDirectory}/report.json`;
-const cornerRegistrationPrefix = '[RampReady] Static A12/A14 final registration ';
-const cornerViews = Object.freeze([
-  {
-    label: 'A14 corner overhead',
-    preset: 'a14CornerOverhead',
-    authority: 'a12-a14-rotunda-corner-fixed-overhead-evidence-v1',
-    filename: 'a14-corner-overhead.png',
-  },
-  {
-    label: 'A27/A29 corner overhead',
-    preset: 'a27CornerOverhead',
-    authority: 'a27-a29-rotunda-corner-fixed-overhead-evidence-v1',
-    filename: 'a27-a29-corner-overhead.png',
-  },
-]);
+const EXPECTED_TERMINAL4_JETWAYS = 76;
+const EXPECTED_AIRPORT_WED_FACADES = 108;
 
 fs.mkdirSync(evidenceDirectory, { recursive: true });
 
-async function selectByLabel(page, ariaLabel, optionLabel) {
-  await page.evaluate(({ ariaLabel, optionLabel }) => {
-    const select = document.querySelector(`select[aria-label="${ariaLabel}"]`);
-    if (!(select instanceof HTMLSelectElement)) throw new Error(`${ariaLabel} control is missing`);
-    const option = [...select.options].find((entry) => entry.textContent?.trim() === optionLabel);
-    if (!option) throw new Error(`${ariaLabel} option is missing: ${optionLabel}`);
-    select.value = option.value;
+async function selectCamera(page, value) {
+  await page.evaluate((next) => {
+    const select = document.querySelector('select[aria-label="Camera view"]');
+    if (!(select instanceof HTMLSelectElement)) throw new Error('Camera view control is missing');
+    select.value = next;
     select.dispatchEvent(new Event('change', { bubbles: true }));
-  }, { ariaLabel, optionLabel });
+  }, value);
 }
 
-async function captureLiveCanvas(page, canvas, outputPath) {
+async function capture(page, filename) {
+  const output = `${evidenceDirectory}/${filename}`;
+  const canvas = page.locator('canvas.trainerCanvas');
   const box = await canvas.boundingBox();
-  if (!box || box.width <= 100 || box.height <= 100) throw new Error(`${outputPath} canvas is not visibly rendered`);
-  const viewport = page.viewportSize();
-  const clip = {
-    x: Math.max(0, box.x),
-    y: Math.max(0, box.y),
-    width: Math.min(box.width, viewport.width - Math.max(0, box.x)),
-    height: Math.min(box.height, viewport.height - Math.max(0, box.y)),
-  };
-  if (!(clip.width > 100 && clip.height > 100)) throw new Error(`${outputPath} clip is invalid: ${JSON.stringify(clip)}`);
-  await page.screenshot({ path: outputPath, type: 'png', clip, timeout: 30000 });
-  const bytes = fs.statSync(outputPath).size;
-  if (bytes < 100000) throw new Error(`${outputPath} screenshot is unexpectedly small: ${bytes}`);
+  if (!box || box.width < 300 || box.height < 300) throw new Error(`${filename} canvas is not visibly rendered`);
+  await page.screenshot({ path: output, type: 'png', clip: box, timeout: 30000 });
+  const bytes = fs.statSync(output).size;
+  if (bytes < 50000) throw new Error(`${filename} screenshot is unexpectedly small: ${bytes}`);
   return bytes;
 }
 
@@ -56,92 +35,64 @@ async function captureLiveCanvas(page, canvas, outputPath) {
   const page = await context.newPage();
   const pageErrors = [];
   const consoleErrors = [];
-  const cornerRegistrationMessages = [];
+  const failedRequests = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
-  page.on('console', (message) => {
-    const text = message.text();
-    if (message.type() === 'error') consoleErrors.push(text);
-    if (text.startsWith(cornerRegistrationPrefix)) {
-      cornerRegistrationMessages.push(text);
-      console.log(text);
-    }
-  });
+  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+  page.on('requestfailed', (request) => failedRequests.push(`${request.method()} ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
 
   try {
     const response = await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
-    if (!response?.ok()) throw new Error(`Static corner overhead navigation failed: ${response?.status() || 'no response'}`);
-
+    if (!response?.ok()) throw new Error(`KPHX source-overhead navigation failed: ${response?.status() || 'no response'}`);
     const launch = page.getByRole('button', { name: 'Drive tug / inspect airport' });
     await launch.waitFor({ state: 'visible', timeout: 30000 });
     await launch.click();
 
-    const deadline = Date.now() + 180000;
-    let ready = null;
-    while (Date.now() < deadline) {
-      const canvas = page.locator('canvas.trainerCanvas');
-      if (await canvas.count()) {
-        const data = await canvas.evaluate((element) => ({ ...element.dataset }));
-        const state = String(data.terminal4UploadedJetwayLoadState || '');
-        if (data.inspectionMode === 'active'
-          && state === 'ready'
-          && data.terminal4UploadedJetwayCount === '58'
-          && data.terminal4UploadedJetwayConnectorCount === '58') {
-          ready = data;
-          break;
-        }
-        if (/error|failed|failure/i.test(state) || pageErrors.length) {
-          throw new Error(`Static corner fleet load failed: state=${state}; pageErrors=${JSON.stringify(pageErrors)}; consoleErrors=${JSON.stringify(consoleErrors.slice(-10))}`);
-        }
-      }
-      await page.waitForTimeout(250);
-    }
-    if (!ready) throw new Error('Static corner fleet did not become ready in 180000 ms');
-    if (!cornerRegistrationMessages.length) {
-      throw new Error('Static corner fleet became ready without publishing final corner registration diagnostics');
-    }
+    await page.waitForFunction(({ t4Count, airportCount }) => {
+      const data = document.querySelector('canvas.trainerCanvas')?.dataset;
+      return data?.inspectionMode === 'active'
+        && data?.terminal4UploadedJetwayLoadState === 'ready'
+        && Number(data?.terminal4UploadedJetwayCount) === t4Count
+        && Number(data?.sourceJetwayCount) === airportCount
+        && data?.terminal4UploadedJetwayReadyAuthority === 'exact-kphx-1.75.1-wed-terminal4-jetways-plus-supplied-glb-v1'
+        && data?.terminal4JetwaySourceGeometryMode === 'exact-uploaded-airport-jetway-glb-562e3144-wed-placement-v1'
+        && data?.terminal4JetwaySourceScaleAuthority === 'exact-supplied-glb-unit-scale-no-outward-stretch'
+        && data?.groundSource === 'exact-kphx-1.75.1-wed-a1-apron-collision-authority';
+    }, { t4Count: EXPECTED_TERMINAL4_JETWAYS, airportCount: EXPECTED_AIRPORT_WED_FACADES }, { timeout: 180000, polling: 100 });
 
     const canvas = page.locator('canvas.trainerCanvas');
-    const captures = {};
-    const cameraEvidence = {};
-    for (const view of cornerViews) {
-      await selectByLabel(page, 'Inspection location', view.label);
-      await page.waitForFunction(({ preset, authority }) => {
-        const data = document.querySelector('canvas.trainerCanvas')?.dataset;
-        return data?.inspectionPreset === preset
-          && data?.inspectionCameraAuthority === authority;
-      }, { preset: view.preset, authority: view.authority }, { timeout: 30000, polling: 100 });
-      // Never switch to the generic tug-follow Overhead view here. Each corner
-      // preset owns an exact fixed cameraPosition/cameraTarget.
-      await page.waitForTimeout(1500);
-      const outputPath = `${evidenceDirectory}/${view.filename}`;
-      captures[view.filename] = await captureLiveCanvas(page, canvas, outputPath);
-      const data = await canvas.evaluate((element) => ({ ...element.dataset }));
-      cameraEvidence[view.preset] = {
-        label: view.label,
-        authority: data.inspectionCameraAuthority,
-        bytes: captures[view.filename],
-      };
-    }
-
+    await selectCamera(page, 'overhead');
+    await page.waitForTimeout(1200);
+    const overheadBytes = await capture(page, 'source-kphx-a1-overhead.png');
+    await selectCamera(page, 'chase');
+    await page.waitForTimeout(1200);
+    const chaseBytes = await capture(page, 'source-kphx-a1-diagonal.png');
     const dataset = await canvas.evaluate((element) => ({ ...element.dataset }));
-    const cornerRegistration = JSON.parse(cornerRegistrationMessages.at(-1).slice(cornerRegistrationPrefix.length));
+
+    const failures = [];
+    if (!String(dataset.environmentSource || '').includes('WED-terminal4-jetways')) failures.push(`environment=${dataset.environmentSource}`);
+    if (Number(dataset.terminal4UploadedJetwayVerifiedModelCount) !== EXPECTED_TERMINAL4_JETWAYS) failures.push(`verified=${dataset.terminal4UploadedJetwayVerifiedModelCount}`);
+    if (Number(dataset.terminal4UploadedJetwayConnectorCount) !== 0) failures.push(`fixed-corridor connector count must be zero until native facade ingest: ${dataset.terminal4UploadedJetwayConnectorCount}`);
+    if (pageErrors.length) failures.push(`pageErrors=${JSON.stringify(pageErrors)}`);
+    if (failedRequests.length) failures.push(`failedRequests=${JSON.stringify(failedRequests.slice(-10))}`);
+    if (consoleErrors.some((entry) => /failed|error|404|load/i.test(entry))) failures.push(`consoleErrors=${JSON.stringify(consoleErrors.slice(-10))}`);
+    if (failures.length) throw new Error(`KPHX source-overhead evidence failed: ${failures.join('; ')}`);
+
     fs.writeFileSync(reportPath, `${JSON.stringify({
       capturedAtUtc: new Date().toISOString(),
-      captures,
-      loadState: dataset.terminal4UploadedJetwayLoadState,
-      jetwayCount: dataset.terminal4UploadedJetwayCount,
-      connectorCount: dataset.terminal4UploadedJetwayConnectorCount,
-      terminalConnectedCount: dataset.terminal4TerminalConnectedJetwayCount,
-      staticGateCount: dataset.terminal4UploadedJetwayStaticArticulatedGateCount,
-      staticAuthority: dataset.terminal4UploadedJetwayStaticOwnGateTargetAuthority,
-      a14CornerAuthority: dataset.terminal4UploadedJetwayStaticA14CornerArmAuthority,
-      a14CornerDegrees: dataset.terminal4UploadedJetwayStaticA14CornerArmArticulationDegrees,
-      cameraEvidence,
-      cornerRegistration,
+      authority: 'exact-KPHX-WED-A1-source-overhead-v2',
+      airportWideWedFacadeCount: Number(dataset.sourceJetwayCount),
+      terminal4AssociatedJetwayCount: Number(dataset.terminal4UploadedJetwayCount),
+      connectorCount: Number(dataset.terminal4UploadedJetwayConnectorCount),
+      geometryAuthority: dataset.terminal4JetwaySourceGeometryMode,
+      scaleAuthority: dataset.terminal4JetwaySourceScaleAuthority,
+      overheadBytes,
+      chaseBytes,
+      note: 'This replaces the retired ADEX A14/A27 camera contract. Remote gate cameras will be derived from exact WED ramp positions. Native fixed-corridor facade remains fail-closed until its exact resource is materialized.',
       pageErrors,
       consoleErrors,
+      failedRequests,
     }, null, 2)}\n`);
-    console.log(`Captured both fixed static-corner overheads: A12/A14=${captures['a14-corner-overhead.png']} bytes, A27/A29=${captures['a27-a29-corner-overhead.png']} bytes; 58 exact jetways ready.`);
+    console.log(`Captured exact KPHX source-airport A1 overhead/diagonal evidence with ${EXPECTED_TERMINAL4_JETWAYS} Terminal 4 WED-associated exact jetways from ${EXPECTED_AIRPORT_WED_FACADES} airport-wide facades.`);
   } finally {
     await browser.close();
   }

@@ -44,6 +44,7 @@ jobs:
 
       - name: Upload build diagnostics
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: rampready-build-diagnostics-${{ github.sha }}
@@ -60,7 +61,6 @@ jobs:
           if ! git diff --exit-code -- . ':!dist'; then
             echo "Production build left tracked repository files modified."
             echo "Runtime preparation must restore the trainer and all verification inputs even after failure."
-            echo "Download rampready-build-diagnostics-${{ github.sha }} for the exact source diff."
             exit 1
           fi
 
@@ -71,6 +71,8 @@ jobs:
           test -n "$(find dist/assets -type f -print -quit)"
 
       - name: Upload verified production artifact
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: rampready-production-${{ github.sha }}

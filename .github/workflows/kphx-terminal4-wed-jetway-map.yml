@@ -1,0 +1,76 @@
+name: KPHX Terminal 4 WED Jetway Map
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/source-kphx-airport
+    paths:
+      - '.github/workflows/kphx-terminal4-wed-jetway-map.yml'
+      - 'tools/kphx/extract-terminal4-wed-jetway-map.py'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/kphx-terminal4-wed-jetway-map.yml'
+      - 'tools/kphx/extract-terminal4-wed-jetway-map.py'
+      - 'public/models/kphx/terminal4-wed-jetways.exact.json'
+
+permissions:
+  contents: write
+
+jobs:
+  map-terminal4-jetways:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/source-kphx-airport
+          fetch-depth: 0
+
+      - name: Download exact KPHX WED source from Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-drive public/models/kphx
+          curl -L --fail --silent --show-error \
+            'https://drive.usercontent.google.com/download?id=1oUuiZQiWbqIMXtqSQMklZ9E_jbsg_T2d&export=download&confirm=t' \
+            -o .kphx-drive/earth.wed.xml
+          test "$(wc -c < .kphx-drive/earth.wed.xml)" -eq 24885640
+          echo '59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498  .kphx-drive/earth.wed.xml' | sha256sum --check --strict
+
+      - name: Extract exact Terminal 4 gate-to-jetway map
+        run: python tools/kphx/extract-terminal4-wed-jetway-map.py .kphx-drive/earth.wed.xml public/models/kphx/terminal4-wed-jetways.exact.json
+
+      - name: Verify canonical exact map
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(wc -c < public/models/kphx/terminal4-wed-jetways.exact.json)" -eq 44705
+          echo '375c164cc3c5743bf425b594d405952d1f06142c1402562044ffe0e95966c3aa  public/models/kphx/terminal4-wed-jetways.exact.json' | sha256sum --check --strict
+          python - <<'PY'
+          import json
+          p=json.load(open('public/models/kphx/terminal4-wed-jetways.exact.json'))
+          assert p['jetwayCount'] == 76
+          a1=next(x for x in p['placements'] if x['gate']=='A1')
+          assert a1['facadeWedObjectId'] == 104804
+          assert a1['facadeNodeCount'] == 7
+          assert 23.8 < a1['bridgeEnd'] < 23.9
+          print('Exact T4 WED jetway map verified:', p['jetwayCount'], a1)
+          PY
+
+      - name: Commit canonical map to private source-airport branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- public/models/kphx/terminal4-wed-jetways.exact.json)" ]; then
+            echo 'Canonical T4 WED jetway map is already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/models/kphx/terminal4-wed-jetways.exact.json
+          git commit -m 'Materialize canonical T4 WED jetway map'
+          git pull --rebase origin feat/source-kphx-airport
+          git push origin HEAD:feat/source-kphx-airport

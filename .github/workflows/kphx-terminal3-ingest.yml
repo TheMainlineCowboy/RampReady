@@ -1,0 +1,96 @@
+name: KPHX Exact Terminal 3 Ingest
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/source-kphx-airport
+    paths:
+      - '.github/workflows/kphx-terminal3-ingest.yml'
+      - 'tools/kphx/convert-xplane-obj-to-glb-v2.py'
+      - 'assets/kphx-source/exact-kphx-manifest.json'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/kphx-terminal3-ingest.yml'
+      - 'tools/kphx/convert-xplane-obj-to-glb-v2.py'
+      - 'assets/kphx-source/exact-kphx-manifest.json'
+      - 'public/models/kphx/Terminal3a.exact.glb'
+      - 'public/models/kphx/Terminal3Garage.exact.glb'
+
+permissions:
+  contents: write
+
+jobs:
+  ingest-terminal3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/source-kphx-airport
+          fetch-depth: 0
+
+      - name: Install deterministic converter dependency
+        run: python -m pip install --disable-pip-version-check pillow==12.3.0
+
+      - name: Download exact KPHX Terminal 3 source from Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-drive/Terminals public/models/kphx
+          download() {
+            local id="$1" out="$2"
+            curl -L --fail --silent --show-error "https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t" -o "$out"
+          }
+
+          download '1z5fQlQcaHzCB29M1O1O1XY66ZY9KZkqj' '.kphx-drive/Terminals/Terminal3a.obj'
+          download '1Tj7rzga7j1qc_7YybQ-b8HclSupFiH-1' '.kphx-drive/Terminals/Terminal4b_comb.dds'
+          download '1uVtiWbvU1IKjQOJLNJDgskIr_IFx6R6K' '.kphx-drive/Terminals/Terminal4b_LIT.dds'
+          download '1GN5KNqUuiLhfP5NnZ9VBD5pa1i3FtTpU' '.kphx-drive/Terminals/Terminal3Garage.obj'
+          download '1iG6VCZaSp45tGI7ueCmH7vqCpJcRffbi' '.kphx-drive/Terminals/Terminal3Garage.dds'
+
+          echo '4283b54b22abf73eef75259f22318153705efc8372a667fd3de89fbe8db70ea3  .kphx-drive/Terminals/Terminal3a.obj' | sha256sum --check --strict
+          echo '11a129f33940c99de15c2941faac041af42834c869ab6bdae974d134c54bc00b  .kphx-drive/Terminals/Terminal4b_comb.dds' | sha256sum --check --strict
+          echo '90cff1e29f629570d6ea1ee237a3f8dd337860aef36dfd4d478d0ee8057f90f9  .kphx-drive/Terminals/Terminal4b_LIT.dds' | sha256sum --check --strict
+          echo '2767c7903df08c24fe1b1e23ab12c22574f51dea64cba0cdd6fce41372a7cc18  .kphx-drive/Terminals/Terminal3Garage.obj' | sha256sum --check --strict
+          echo 'b64c35e90b5075ca7b9d2f1aa8b4aa10b3d21bb3e4d28cbe0dc347ab2e439e27  .kphx-drive/Terminals/Terminal3Garage.dds' | sha256sum --check --strict
+
+      - name: Convert exact Terminal 3 source to browser GLBs
+        run: |
+          python tools/kphx/convert-xplane-obj-to-glb-v2.py \
+            .kphx-drive/Terminals/Terminal3a.obj \
+            .kphx-drive/Terminals/Terminal4b_comb.dds \
+            .kphx-drive/Terminals/Terminal4b_LIT.dds \
+            public/models/kphx/Terminal3a.exact.glb
+          python tools/kphx/convert-xplane-obj-to-glb-v2.py \
+            .kphx-drive/Terminals/Terminal3Garage.obj \
+            .kphx-drive/Terminals/Terminal3Garage.dds \
+            - \
+            public/models/kphx/Terminal3Garage.exact.glb
+
+      - name: Verify generated Terminal 3 runtime identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(wc -c < public/models/kphx/Terminal3a.exact.glb)" -eq 18527808
+          echo '0297c2435a9f17a7aaf564c6f0198b6533637b527f2d0628bc918c383d894aa7  public/models/kphx/Terminal3a.exact.glb' | sha256sum --check --strict
+          test "$(wc -c < public/models/kphx/Terminal3Garage.exact.glb)" -eq 2462736
+          echo '1c5f2d0ffd7b9b0103cc0b5f16606377f52ff6bf43e6da98d1561158ad564d1d  public/models/kphx/Terminal3Garage.exact.glb' | sha256sum --check --strict
+
+      - name: Commit exact Terminal 3 runtime assets to private source-airport branch
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- public/models/kphx/Terminal3a.exact.glb public/models/kphx/Terminal3Garage.exact.glb)" ]; then
+            echo 'Exact Terminal 3 runtime assets are already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/models/kphx/Terminal3a.exact.glb public/models/kphx/Terminal3Garage.exact.glb
+          git commit -m 'Materialize exact KPHX Terminal 3 models'
+          git pull --rebase origin feat/source-kphx-airport
+          git push origin HEAD:feat/source-kphx-airport

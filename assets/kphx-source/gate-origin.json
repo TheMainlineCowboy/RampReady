@@ -1,0 +1,24 @@
+{
+  "authority": "KPHX 1.75.1 earth.wed.xml",
+  "origin": {
+    "name": "T4 Gate A1",
+    "wedRampPositionId": 27855,
+    "latitude": 33.436530675,
+    "longitude": -111.998921221,
+    "headingDegrees": -90.08
+  },
+  "terminal4North": {
+    "wedObjectId": 5301,
+    "latitude": 33.436209533,
+    "longitude": -111.996664410,
+    "headingDegrees": 0.0,
+    "resource": "Terminals/Terminal4b.obj"
+  },
+  "terminal4South": {
+    "wedObjectId": 2327,
+    "latitude": 33.434761986,
+    "longitude": -111.996702473,
+    "headingDegrees": 0.0,
+    "resource": "Terminals/Terminal4.obj"
+  }
+}
