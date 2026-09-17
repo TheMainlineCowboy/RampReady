@@ -121,19 +121,21 @@ for (const forbidden of [
   }
 }
 
-// This preparation must explicitly find the retired random gate-code expression,
-// replace it with the decoded per-gate bridgeEnd, and fail if the retired formula
-// survives in the generated runtime. The old expression necessarily appears as
-// a search string in this migrator, so its mere text presence is not a failure.
+// The final static length stage must preserve the Aug. 15 photo-compact A3+
+// deployment even when later source-measured connector preparation invokes it
+// again. Decoded bridgeEnd remains A1/provenance authority, but may not retake
+// rendered length authority for the 57 static bridges and re-extend them.
 for (const token of [
-  "const randomLengthBlock =",
-  "const ownGateLengthBlock =",
-  "const exactBridgeEnd = bridgeEnd;",
-  "source = source.replace(randomLengthBlock, ownGateLengthBlock)",
-  "arbitrary static jetway length formula survived",
-  "decoded source bridge distance",
+  'compactLengthMarker = "static-a3plus-photo-compact-gate-specific-bridge-end-v1"',
+  "const photoCompactLengthBlock =",
+  'const exactBridgeEnd = jetway.g === "A1"',
+  ': 8.2 + (exactUploadedGateCode % 5) * 0.45;',
+  "source.includes(decodedSourceLengthBlock)",
+  "source.replace(decodedSourceLengthBlock, photoCompactLengthBlock)",
+  "stale static jetway length authority survived",
+  "can no longer re-extend the 57 static bridges",
 ]) {
-  if (!ownGateLengthPreparation.includes(token)) throw new Error(`Decoded static jetway length migration is missing ${token}`);
+  if (!ownGateLengthPreparation.includes(token)) throw new Error(`Photo-compact static jetway final length authority is missing ${token}`);
 }
 
 for (const token of [
@@ -167,4 +169,4 @@ for (const token of [
   if (!continuity.includes(token)) throw new Error(`Terminal 4 runtime preparation is missing ${token}`);
 }
 
-console.log("Terminal 4 jetway contract passed: exact supplied GLB at 58 gates; A1 keeps decoded KPHX source yaw as its physical airport authority; static gates use compact real-wall Rotunda sleeves, own-gate aircraft-side headings, decoded per-gate lengths and inward-only telescoping with no arbitrary fixed length or cross-stand source-heading ownership.");
+console.log("Terminal 4 jetway contract passed: exact supplied GLB at 58 gates; A1 keeps decoded KPHX source yaw and decoded bridge length as its physical airport authority; static gates use compact real-wall Rotunda sleeves, own-gate aircraft-side headings, final 8.2-10.0 m photo-compact inward telescope targets, decoded source distance as provenance only, and no cross-stand source-heading ownership.");

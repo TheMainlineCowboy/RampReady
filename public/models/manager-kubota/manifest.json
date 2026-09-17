@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "manager-kubota",
+  "source": {
+    "model": "RTVManagersKubota.3mf",
+    "bytes": 22319758,
+    "sha256": "b5e0d97f48f99737306f8fb27a44bb51703296b89b15859f6e65a48366dd0e7a"
+  },
+  "runtimePath": "public/models/manager-kubota.glb",
+  "directCommittedExactGlb": true,
+  "glbBytes": 23988388,
+  "glbSha256": "726fdcb3511e6d52990da11118be4ca8a8b73c5d5c8f5bde4f934131e3c31b7d",
+  "sourceMeshObjectCount": 417,
+  "sourceTriangleCount": 1789026,
+  "authoredMaterialCount": 15,
+  "preservation": {
+    "geometry": "All 417 source mesh objects and 1,789,026 source triangles retained; no procedural or reduced visual substitute",
+    "materials": "All 15 3MF authored base-material assignments retained",
+    "steering": "exact front wheel assemblies under AuthoredSteerPivot_L/R; rear wheels remain fixed"
+  }
+}

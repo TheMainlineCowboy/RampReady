@@ -1,9 +1,11 @@
 import fs from "node:fs";
 
-// The rigid-parent preparer historically reintroduced a 12 m terminal span.
-// Enforce the exact photo-visible 2.4 m vestibule before any endpoint-axis
-// replacement reads or extends that generated block.
-await import(`./prepare-a1-rigid-compact-span-v1.mjs?post-rigid=${Date.now()}`);
+// Aug. 15 photo authority owns A1 terminal geometry now:
+// BGATE1 facade -> long fixed corridor -> elbow/dogleg -> remote Rotunda ->
+// untouched supplied movable Airport_Jetway.glb.  This preparer is retained
+// only as a compatibility cleanup for older generated trees.  It must never
+// re-introduce the retired 2.4 m/12 m compact-terminal model or move the
+// complete supplied parent merely to satisfy a terminal-wall relationship.
 
 const installationPath = "src/environment/correctUploadedJetwayInstallationV1.js";
 let source = fs.readFileSync(installationPath, "utf8");
@@ -23,12 +25,10 @@ const oldBlock = `  const rotundaAxisCenter = vertexCentroid(
   }
   measuredOpeningDirection.normalize();`;
 
-const newBlock = `  // Determine terminal/apron orientation from the complete supplied bridge,
-  // not from a local Rotunda-to-Tunnel-A opening vector. In the authored
-  // hierarchy the Rotunda is the terminal endpoint and the Cab is the aircraft
-  // endpoint, so Cab -> Rotunda is the only unambiguous terminal direction.
-  // Rotate only the complete parent around the fixed Cab; every GLB child
-  // transform remains untouched.
+const newBlock = `  // Compatibility only: determine terminal/apron orientation from the complete
+  // supplied bridge without changing any child transform.  Current Aug. 15
+  // production geometry normally arrives here already normalized by the
+  // photo-authoritative remote-Rotunda path, so this block may be absent.
   const rotundaTerminalCenter = objectBoundsCenterInFleet(THREE, fleet, rotundaEndpoint);
   const cabAircraftCenter = objectBoundsCenterInFleet(THREE, fleet, cabEndpoint);
   const measuredOpeningDirection = rotundaTerminalCenter.clone().sub(cabAircraftCenter);
@@ -38,36 +38,27 @@ const newBlock = `  // Determine terminal/apron orientation from the complete su
   }
   measuredOpeningDirection.normalize();`;
 
-if (!source.includes(oldBlock)) {
-  throw new Error(`${installationPath}: local Rotunda-to-Tunnel-A orientation block is missing`);
+if (source.includes(oldBlock)) {
+  source = source.replace(oldBlock, newBlock);
 }
-source = source.replace(oldBlock, newBlock);
 
+// Preserve a useful provenance marker when the declaration still exists, but
+// do not require legacy orientation code to survive later photo-authoritative
+// preparers.
 source = source.replace(
   /const A1_PARENT_ORIENTATION_AUTHORITY = "[^"]+";/,
-  'const A1_PARENT_ORIENTATION_AUTHORITY = "same-day-photo-complete-cab-to-rotunda-parent-axis-v6";',
+  'const A1_PARENT_ORIENTATION_AUTHORITY = "aug15-photo-remote-rotunda-complete-parent-axis-v7";',
 );
 
-for (const token of [
-  "post-rigid-a1-exact-visible-vestibule-span-v1",
-  "const rotundaTerminalCenter = objectBoundsCenterInFleet",
-  "const cabAircraftCenter = objectBoundsCenterInFleet",
-  "rotundaTerminalCenter.clone().sub(cabAircraftCenter)",
-  'A1_PARENT_ORIENTATION_AUTHORITY = "same-day-photo-complete-cab-to-rotunda-parent-axis-v6"',
-]) {
-  if (!source.includes(token)) {
-    throw new Error(`${installationPath}: complete endpoint-axis output is missing ${token}`);
-  }
-}
 for (const forbidden of [
-  "const rotundaAxisCenter = vertexCentroid",
   "terminalDistance < 12",
-  "terminalDistance < 28",
+  "post-rigid-a1-exact-visible-vestibule-span-v1",
+  "exact 2.4 m terminal vestibule",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${installationPath}: stale endpoint or long terminal span remains: ${forbidden}`);
+    throw new Error(`${installationPath}: retired compact A1 endpoint logic remains: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(installationPath, source, "utf8");
-console.log("Aligned the complete A1 parent from the authored Cab-to-Rotunda endpoint axis after enforcing the exact 2.4 m terminal vestibule, preserving every supplied child transform.");
+console.log("Preserved Aug. 15 A1 long fixed corridor/dogleg/remote-Rotunda authority; retired compact endpoint-axis assumptions remain disabled.");

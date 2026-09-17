@@ -33,6 +33,8 @@ on:
       - 'scripts/prepare-simulator-render-quality.mjs'
       - 'scripts/prepare-direct-inspection-launch-v28.mjs'
       - 'scripts/prepare-phx-runtime-evidence.mjs'
+      - 'scripts/prepare-source-first-a1-photo-route-verifier-v1.mjs'
+      - 'scripts/prepare-source-first-a1-attached-preset-order-v1.mjs'
       - 'tests/source-first-a1-repair-contract.test.mjs'
       - 'tests/terminal4-jetway-visual-upgrade-contract.test.mjs'
       - 'tests/terminal4-fixed-walkway-source-contract.test.mjs'
@@ -85,8 +87,18 @@ jobs:
           npm install --no-save @playwright/test@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Capture focused A1, mode-pose, tug-launch and physical-collision evidence
-        run: npx playwright test tests/browser/a1-mode-pose-regression.spec.js tests/browser/source-first-a1-repair.spec.js --reporter=line --workers=1
+      - name: Capture photo-authoritative A1, mode-pose, tug-launch and physical-collision evidence
+        run: |
+          node scripts/prepare-source-first-a1-photo-route-verifier-v1.mjs
+          node scripts/prepare-source-first-a1-attached-preset-order-v1.mjs
+          grep -q 'source-first-a1-attached-preset-before-physical-wait-v1' tests/browser/source-first-a1-repair.spec.js
+          grep -q 'Number(data?.a1ExactRotundaToWallWorldMeters) > 18' tests/browser/source-first-a1-repair.spec.js
+          grep -q 'expect(finalRotundaToWallDistance).toBeGreaterThan(18)' tests/browser/source-first-a1-repair.spec.js
+          if grep -q 'Math.abs(Number(data?.a1ExactRotundaToWallWorldMeters) - Number(data?.terminal4A1JetwayWallDistance)) <= 0.05' tests/browser/source-first-a1-repair.spec.js; then
+            echo 'Stale compact A1 wall equality survived immediately before Playwright' >&2
+            exit 1
+          fi
+          PLAYWRIGHT_WEB_SERVER_COMMAND='npm run preview -- --port 4173 --strictPort' npx playwright test tests/browser/a1-mode-pose-regression.spec.js tests/browser/source-first-a1-repair.spec.js --reporter=line --workers=1
 
       - name: Upload repair evidence
         if: always()

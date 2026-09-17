@@ -13,20 +13,37 @@ const browserSpecs = Object.freeze([
   "tests/browser/uploaded-jetway-articulation-v10.spec.js",
 ]);
 
-for (const path of browserSpecs) {
+function restoreCommittedPath(path) {
   let committed;
   try {
     committed = execFileSync("git", ["show", `HEAD:${path}`], { encoding: "utf8" });
   } catch (error) {
-    throw new Error(`Production build could not restore committed browser spec ${path}: ${error.message}`);
+    throw new Error(`Production build could not restore committed tracked path ${path}: ${error.message}`);
   }
   fs.writeFileSync(path, committed, "utf8");
 }
 
-// Browser-acceptance migrations are runner-only compatibility transforms. A
-// generic production Build/Verify must finish with the exact committed tree,
-// so only reapply the transforms when the current workflow will immediately
-// execute one of the affected browser specs after npm run build.
+// Production preparation intentionally rewrites a number of tracked source modules
+// before Vite bundles dist/. Those rewrites are build-time transforms only. Once the
+// bundle exists, restore every tracked text path changed by preparation so a generic
+// Build/Verify finishes with the exact committed tree rather than leaking generated
+// runtime source back into the checkout.
+const changedTrackedPaths = execFileSync("git", ["diff", "--name-only", "--diff-filter=M", "HEAD", "--"], {
+  encoding: "utf8",
+})
+  .split(/\r?\n/)
+  .map((value) => value.trim())
+  .filter(Boolean);
+
+for (const path of changedTrackedPaths) restoreCommittedPath(path);
+
+// Keep the explicit browser list as a fail-closed contract: these acceptance specs
+// must always be exact HEAD before any workflow-specific post-build migration.
+for (const path of browserSpecs) restoreCommittedPath(path);
+
+// Browser-acceptance migrations are runner-only compatibility transforms. Reapply
+// them only when the current workflow immediately executes the affected browser spec
+// against the already-built dist artifact. Generic Build/Verify stays byte-clean.
 const workflow = String(process.env.GITHUB_WORKFLOW || "");
 const needsPostBuildBrowserMigration = new Set([
   "Verify exact supplied jetway articulation",
@@ -40,7 +57,7 @@ if (needsPostBuildBrowserMigration) {
   execFileSync(process.execPath, ["scripts/prepare-compact-mobile-browser-regression-v1.mjs"], {
     stdio: "inherit",
   });
-  console.log(`Restored ${browserSpecs.length} browser acceptance specs to exact HEAD, then reapplied connected-A1 and compact-mobile browser expectations for ${workflow}.`);
+  console.log(`Restored ${changedTrackedPaths.length} tracked production-preparation path(s) and ${browserSpecs.length} browser acceptance specs to exact HEAD, then reapplied connected-A1 and compact-mobile browser expectations for ${workflow}.`);
 } else {
-  console.log(`Restored ${browserSpecs.length} browser acceptance specs to exact HEAD; ${workflow || "local build"} does not consume the migrated articulation/CRJ specs, so the tracked tree remains clean.`);
+  console.log(`Restored ${changedTrackedPaths.length} tracked production-preparation path(s) and ${browserSpecs.length} browser acceptance specs to exact HEAD; ${workflow || "local build"} leaves the tracked tree clean.`);
 }

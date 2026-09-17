@@ -52,7 +52,11 @@ try {
   await import(`./prepare-static-corner-plane-registration-v1.mjs?final-static-corner-plane=${Date.now()}`);
   await import(`./verify-static-corner-plane-registration-v1.mjs?final-static-corner-plane-verify=${Date.now()}`);
   await import(`./prepare-a1-tunnel-c-bogie-readiness-v1.mjs?post-airport-ownership=${Date.now()}`);
-  await import("./run-production-with-a1-cleanup.mjs");
+  // This wrapper can be touched by earlier runtime preparation in the same Node
+  // process. Force a fresh evaluation at the final production handoff so its
+  // exact source cleanup, final geometry hooks, and child-process Vite build
+  // cannot be silently skipped by ESM caching.
+  await import(`./run-production-with-a1-cleanup.mjs?final-production-cleanup=${Date.now()}`);
 } catch (error) {
   buildError = error;
 }

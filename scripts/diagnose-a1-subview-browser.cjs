@@ -9,6 +9,37 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function requestSubview(page, canvas, subview) {
+  await page.evaluate(nextSubview => {
+    const target = document.querySelector('canvas.trainerCanvas');
+    if (!(target instanceof HTMLCanvasElement)) throw new Error('A1 evidence canvas is missing');
+    target.dataset.a1EvidenceSubview = nextSubview;
+  }, subview);
+  await sleep(2500);
+  const dataset = await canvas.evaluate(element => ({ ...element.dataset })).catch(() => ({}));
+  await page.screenshot({ path: `${evidenceDir}/a1-${subview}-subview-diagnostic.png`, fullPage: false });
+  return {
+    requestedSubview: subview,
+    dataset,
+    acknowledgement: {
+      subview: dataset.inspectionCameraEndpointSubview || null,
+      subviewAuthority: dataset.inspectionCameraEndpointSubviewAuthority || null,
+      cameraAuthority: dataset.inspectionCameraEndpointAuthority || null,
+      lockAuthority: dataset.inspectionCameraEndpointLockAuthority || null,
+      convergenceErrorMeters: dataset.inspectionCameraEndpointConvergenceErrorMeters || null,
+      terminalProfileAuthority: dataset.inspectionCameraEndpointJointProfileAuthority || null,
+      terminalClearSideAuthority: dataset.inspectionCameraEndpointJointClearSideAuthority || null,
+      terminalT4WalkOccluded: dataset.inspectionCameraEndpointJointT4WalkOccluded || null,
+      terminalApronOffsetMeters: dataset.inspectionCameraEndpointJointRenderedApronHalfPlaneOffsetMeters || null,
+      terminalBranchImbalance: dataset.inspectionCameraEndpointJointBranchViewImbalance || null,
+      bogieProfileAuthority: dataset.inspectionCameraEndpointBogieProfileAuthority || null,
+      bogieApronOffsetMeters: dataset.inspectionCameraEndpointBogieApronHalfPlaneOffsetMeters || null,
+      bogieGroundAuthority: dataset.terminal4UploadedJetwayBogieGroundContactAuthority || null,
+      bogieGroundClearanceMeters: dataset.terminal4UploadedJetwayBogieGroundClearanceMeters || null,
+    },
+  };
+}
+
 (async () => {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -48,34 +79,23 @@ function sleep(ms) {
 
     await page.addStyleTag({ content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}' });
     const before = await canvas.evaluate(element => ({ ...element.dataset }));
-
-    await page.evaluate(() => {
-      const target = document.querySelector('canvas.trainerCanvas');
-      if (!(target instanceof HTMLCanvasElement)) throw new Error('A1 evidence canvas is missing');
-      target.dataset.a1EvidenceSubview = 'terminal-joint';
-    });
-
-    await sleep(2500);
-    const after = await canvas.evaluate(element => ({ ...element.dataset })).catch(() => ({}));
-    await page.screenshot({ path: `${evidenceDir}/a1-terminal-joint-subview-diagnostic.png`, fullPage: false });
+    const subviews = [];
+    for (const subview of ['terminal-joint', 'bogie-contact', 'full-assembly']) {
+      subviews.push(await requestSubview(page, canvas, subview));
+    }
 
     const diagnostic = {
       capturedAtUtc: new Date().toISOString(),
-      requestedSubview: 'terminal-joint',
       before,
-      after,
+      subviews,
       consoleErrors,
       pageErrors,
-      acknowledgement: {
-        subview: after.inspectionCameraEndpointSubview || null,
-        subviewAuthority: after.inspectionCameraEndpointSubviewAuthority || null,
-        cameraAuthority: after.inspectionCameraEndpointAuthority || null,
-        lockAuthority: after.inspectionCameraEndpointLockAuthority || null,
-        convergenceErrorMeters: after.inspectionCameraEndpointConvergenceErrorMeters || null,
-      },
     };
+    fs.writeFileSync(`${evidenceDir}/a1-all-subviews-diagnostic.json`, JSON.stringify(diagnostic, null, 2));
+    // Preserve the historical filename for workflow artifact consumers while making
+    // the payload explicit that all three exact evidence subviews were inspected.
     fs.writeFileSync(`${evidenceDir}/a1-terminal-joint-subview-diagnostic.json`, JSON.stringify(diagnostic, null, 2));
-    console.log(`A1 SUBVIEW DIAGNOSTIC: ${JSON.stringify({ acknowledgement: diagnostic.acknowledgement, consoleErrors, pageErrors })}`);
+    console.log(`A1 ALL-SUBVIEW DIAGNOSTIC: ${JSON.stringify({ acknowledgements: subviews.map(entry => entry.acknowledgement), consoleErrors, pageErrors })}`);
   } catch (error) {
     await page.screenshot({ path: `${evidenceDir}/a1-terminal-joint-subview-diagnostic-fatal.png`, fullPage: false }).catch(() => {});
     fs.writeFileSync(`${evidenceDir}/a1-terminal-joint-subview-diagnostic-fatal.json`, JSON.stringify({

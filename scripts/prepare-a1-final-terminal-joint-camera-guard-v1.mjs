@@ -1,5 +1,41 @@
 import fs from "node:fs";
 
+// The final terminal-joint/evidence stage is the last geometry-sensitive stage
+// before Vite. Apply the physical movable-bridge fit here so every browser and
+// runtime evidence path sees the same photo-authoritative fixed A1 corridor and
+// remote Rotunda, with only the supplied movable bridge articulated to the CRJ.
+await import(`./prepare-a1-final-physical-door-fit-controller-rebase-v1.mjs?final-evidence=${Date.now()}`);
+
+// The rendered-door source stage publishes its Cab endpoint before the final
+// physical CRJ-door fit above. Once that fit articulates the supplied movable
+// bridge, keeping the old Cab world coordinate mixes a pre-fit Cab with the final
+// remote Rotunda and can fabricate a ~46 m Rotunda-to-Cab span. Republish the
+// actual fitted Cab contact returned by the physical solver. This is telemetry
+// only: no terminal, aircraft, Rotunda, or supplied GLB child is moved here.
+const elbowPath = "src/environment/sourceRegisteredA1RenderedDoorElbowV4.js";
+const finalCabTelemetryMarker = "a1-final-physical-cab-world-telemetry-v1";
+let elbowSource = fs.readFileSync(elbowPath, "utf8");
+if (!elbowSource.includes(finalCabTelemetryMarker)) {
+  const telemetryAnchor = "  group.userData.uploadedJetwayA1FinalPhysicalDoorCabVerticalAdjustmentMeters = physicalDoorFit.cabVerticalAdjustmentMeters;";
+  if (!elbowSource.includes(telemetryAnchor)) {
+    throw new Error(`${elbowPath}: final physical Cab telemetry insertion anchor is missing`);
+  }
+  const telemetryPatch = `${telemetryAnchor}\n  // ${finalCabTelemetryMarker}\n  const finalPhysicalCabWorld = physicalDoorFit.actualWorld;\n  if (!Array.isArray(finalPhysicalCabWorld)\n    || finalPhysicalCabWorld.length < 3\n    || !finalPhysicalCabWorld.slice(0, 3).every(Number.isFinite)) {\n    throw new Error(\"A1 final physical Cab world telemetry is invalid\");\n  }\n  group.userData.uploadedJetwayA1CabContactWorldX = finalPhysicalCabWorld[0];\n  group.userData.uploadedJetwayA1CabContactWorldY = finalPhysicalCabWorld[1];\n  group.userData.uploadedJetwayA1CabContactWorldZ = finalPhysicalCabWorld[2];\n  group.userData.uploadedJetwayA1FinalCabContactWorldX = finalPhysicalCabWorld[0];\n  group.userData.uploadedJetwayA1FinalCabContactWorldY = finalPhysicalCabWorld[1];\n  group.userData.uploadedJetwayA1FinalCabContactWorldZ = finalPhysicalCabWorld[2];\n  group.userData.uploadedJetwayA1FinalCabContactTelemetryAuthority = \"${finalCabTelemetryMarker}\";`;
+  elbowSource = elbowSource.replace(telemetryAnchor, telemetryPatch);
+  fs.writeFileSync(elbowPath, elbowSource, "utf8");
+}
+for (const required of [
+  finalCabTelemetryMarker,
+  "physicalDoorFit.actualWorld",
+  "uploadedJetwayA1CabContactWorldX = finalPhysicalCabWorld[0]",
+  "uploadedJetwayA1CabContactWorldY = finalPhysicalCabWorld[1]",
+  "uploadedJetwayA1CabContactWorldZ = finalPhysicalCabWorld[2]",
+]) {
+  if (!elbowSource.includes(required)) {
+    throw new Error(`${elbowPath}: final physical Cab telemetry is missing ${required}`);
+  }
+}
+
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 const marker = "a1-final-terminal-joint-camera-branch-visibility-v1";
 let source = fs.readFileSync(trainerPath, "utf8");
@@ -26,8 +62,24 @@ if (!source.includes(marker)) {
   }
 }
 
+// Persist the actual final branch-visibility form before normalizing the evidence
+// camera. Late production generation can inline the camera-out vector, and that
+// form must be validated against the guards that really exist at this stage—not
+// against an earlier half-plane symbol that may already have been folded away.
+fs.writeFileSync(trainerPath, source, "utf8");
+
+// The Aug. 15 photo-authoritative verifier expects the final shipping browser
+// bundle to expose the balanced v5 apron-side A1 terminal-joint camera. Run this
+// only after the final perpendicular branch guard above has been generated. The
+// preparer changes evidence framing/telemetry only, never airport or jetway geometry.
+await import(`./prepare-a1-balanced-apron-evidence-camera-v1.mjs?final-shipping-camera=${Date.now()}`);
+source = fs.readFileSync(trainerPath, "utf8");
+
 for (const token of [
   marker,
+  "a1-balanced-apron-side-terminal-joint-camera-v1",
+  "a1-terminal-joint-photo-framing-v3-generation-safe",
+  'inspectionCameraEndpointSubviewAuthority = "source-measured-a1-apron-side-evidence-camera-v5-balanced-branches"',
   "exactA1JointWallPerpendicularVisibility",
   "exactA1JointTunnelAPerpendicularVisibility",
   "exactA1JointBranchViewImbalance < 0.20",
@@ -41,11 +93,12 @@ for (const stale of [
   "exactA1JointTunnelAViewCosine < 0.82",
   "wallSideOn < 0.44",
   "tunnelASideOn < 0.44",
+  'inspectionCameraEndpointSubviewAuthority = "source-measured-a1-apron-side-evidence-camera-v4"',
 ]) {
   if (source.includes(stale)) {
-    throw new Error(`${trainerPath}: stale A1 camera visibility cutoff remains: ${stale}`);
+    throw new Error(`${trainerPath}: stale A1 camera visibility/framing authority remains: ${stale}`);
   }
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Finalized the shipping A1 terminal-joint evidence camera with perpendicular branch-visibility and balance checks; balanced passenger-height elbow views pass while axis-on hidden branches still fail closed.");
+console.log("Finalized the shipping A1 terminal-joint evidence camera after final guard generation with balanced v5 apron-side framing, final fitted-Cab world telemetry, plus perpendicular branch-visibility and balance checks; airport and jetway geometry remain unchanged.");

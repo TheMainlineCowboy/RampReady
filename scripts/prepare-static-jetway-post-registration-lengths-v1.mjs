@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const path = "src/environment/registerStaticJetwayFleetToFacadeV1.js";
-const AUTHORITY = "57-static-real-wall-own-gate-post-registration-inward-length-v1";
+const AUTHORITY = "57-static-real-wall-own-gate-preserve-source-retraction-v2";
 const MINIMUM_EXTENSION_METERS = -14.5;
 const MAXIMUM_EXTENSION_METERS = 0;
 const PART_WEIGHTS = Object.freeze({
@@ -70,12 +70,21 @@ function applyPostRegistrationLengthToStaticInstances(
       throw new Error(\`Static jetway \${after.gate} is missing pre/post registration target distance evidence\`);
     }
 
+    // Preserve the source-derived inward telescope after the complete supplied
+    // parent is moved to its measured short real-wall Rotunda connection. The
+    // old implementation recomputed extension from registeredTargetDistance;
+    // because that distance includes the deliberate Rotunda relocation toward
+    // the facade, 56/57 gates appeared to need more than full supplied reach and
+    // were therefore clamped back to zero retraction. That produced the repeated
+    // full-length A-gate fleet seen in browser evidence. Parent registration may
+    // change x/z/yaw, but it must not erase each gate's already-authored inward
+    // deployment of Tunnel B/C/Cab.
     const existingExtension = clampStaticPostRegistrationExtension(originalTargetDistance - sourceContactDistance);
-    const desiredExtension = clampStaticPostRegistrationExtension(registeredTargetDistance - sourceContactDistance);
-    const correction = desiredExtension - existingExtension;
+    const desiredExtension = existingExtension;
+    const correction = 0;
     const predictedContactDistance = sourceContactDistance + desiredExtension;
+    const registeredEndpointGapMeters = Math.abs(predictedContactDistance - registeredTargetDistance);
     const outwardReachShortfallMeters = Math.max(0, registeredTargetDistance - sourceContactDistance);
-    const targetErrorMeters = Math.abs(predictedContactDistance - registeredTargetDistance);
 
     after.staticPreRegistrationTargetDistanceMeters = originalTargetDistance;
     after.staticRegisteredOwnGateTargetDistanceMeters = registeredTargetDistance;
@@ -84,7 +93,7 @@ function applyPostRegistrationLengthToStaticInstances(
     after.staticPostRegistrationLengthCorrectionMeters = correction;
     after.staticPostRegistrationPredictedContactDistanceMeters = predictedContactDistance;
     after.staticPostRegistrationOutwardReachShortfallMeters = outwardReachShortfallMeters;
-    after.staticPostRegistrationTargetErrorMeters = targetErrorMeters;
+    after.staticPostRegistrationTargetErrorMeters = registeredEndpointGapMeters;
     after.staticPostRegistrationLengthAuthority = STATIC_POST_REGISTRATION_LENGTH_AUTHORITY;
 
     euler.set(0, Number(after.yaw), 0);
@@ -195,7 +204,7 @@ if (!source.includes("postRegistrationLengthAuthority: STATIC_POST_REGISTRATION_
 for (const token of [
   `STATIC_POST_REGISTRATION_LENGTH_AUTHORITY = "${AUTHORITY}"`,
   "batch.userData?.sourcePartName",
-  "registeredTargetDistance - sourceContactDistance",
+  "const desiredExtension = existingExtension;",
   "staticPostRegistrationExtensionMeters",
   "applyPostRegistrationLengthToStaticInstances(",
   "uploadedJetwayStaticPostRegistrationLengthGateCount = 57",
@@ -204,6 +213,9 @@ for (const token of [
 ]) {
   if (!source.includes(token)) throw new Error(`${path}: post-registration static length contract is missing ${token}`);
 }
+if (source.includes("const desiredExtension = clampStaticPostRegistrationExtension(registeredTargetDistance - sourceContactDistance);")) {
+  throw new Error(`${path}: registered Rotunda relocation is still incorrectly re-extending static bridges`);
+}
 
 fs.writeFileSync(path, source, "utf8");
-console.log(`Applied static exact-GLB length only after real-wall Rotunda registration (${AUTHORITY}): each of 57 gates now uses its registered Rotunda-to-own-gate distance, telescopes Tunnel B/C/Cab inward only, and never stretches the supplied hierarchy outward.`);
+console.log(`Preserved source-derived inward telescope after real-wall Rotunda registration (${AUTHORITY}): 57 static gates keep their gate-specific Tunnel B/C/Cab retraction while the rigid supplied parent is registered and aimed at its own stand.`);

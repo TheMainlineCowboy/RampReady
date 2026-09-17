@@ -1,0 +1,91 @@
+name: Deploy vehicle preview to GitHub Pages
+
+on:
+  push:
+    branches: [fix/a1-real-fixed-corridor]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: rampready-pages-vehicle-preview
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out exact preview commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare the complete KPHX runtime used by the browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run materialize:authored-aircraft
+          npm run materialize:standup-tug
+          npm run materialize:phx-terminal4
+          npm run materialize:kphx-ground
+          npm run verify:kphx-v181
+          npm run prepare:terminal4-runtime
+
+      - name: Materialize supplied vehicle models after runtime preparation
+        run: node scripts/materialize-authored-equipment-models.mjs
+
+      - name: Stamp exact preview commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s\n' "${GITHUB_SHA}" > public/release-commit.txt
+          mkdir -p public/releases
+          printf '%s\n' "${GITHUB_SHA}" > "public/releases/${GITHUB_SHA}.txt"
+
+      - name: Bundle the prepared browser runtime
+        run: npx vite build
+
+      - name: Verify full airport and authored vehicle files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          test -s dist/models/kphx-photo/photo-manifest.json
+          for model in lektro-88 manager-kubota standup-tug; do
+            test -s "dist/models/${model}.glb"
+            stat -c '%n %s bytes' "dist/models/${model}.glb"
+            printf 'glTF' | cmp -n 4 - "dist/models/${model}.glb"
+          done
+          echo "Prepared KPHX browser artifact contains Terminal 4 data and all three vehicle GLBs."
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload preview Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: vehicle-preview-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy vehicle preview
+        id: deployment
+        uses: actions/deploy-pages@v4

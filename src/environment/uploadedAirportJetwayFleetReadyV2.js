@@ -1,6 +1,7 @@
 import { installUploadedAirportJetwayFleet as installUploadedAirportJetwayFleetBase } from "./uploadedAirportJetwayFleet.js";
 import { installStaticJetwayPortalClosures } from "./staticJetwayPortalClosures.js";
 import { enforceExactUploadedJetwayVisualAuthority } from "./uploadedAirportJetwayExactModelGuard.js";
+import { fitUploadedA1JetwayToRenderedCrjDoor } from "./uploadedAirportJetwayA1DoorFitV11.js";
 import { UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY } from "./uploadedAirportJetwayArticulationV10.js";
 import {
   correctUploadedJetwayInstallation,
@@ -10,6 +11,8 @@ import {
 } from "./correctUploadedJetwayInstallationV1.js";
 
 const READY_AUTHORITY = "exact-uploaded-airport-jetway-complete-58-gates-v1";
+const FINAL_VISIBLE_FIT_AUTHORITY = "a1-final-visible-fleet-ready-physical-door-fit-v1";
+const PHYSICAL_FIT_AUTHORITY = "supplied-a1-full-3d-crj-door-fit-v11";
 const EXPECTED_GATE_COUNT = 58;
 const LOAD_TIMEOUT_MS = 120_000;
 const STATIC_PORTAL_AUTHORITY = "57-static-terminal-portals-paired-vestibule-doors-v1";
@@ -17,7 +20,7 @@ const EXACT_MODEL_AUTHORITY = "supplied-airport-jetway-source-hierarchy-meshes-u
 const MATERIAL_AUTHORITY = "exact-seven-embedded-airport-jetway-textures-v1";
 const PERFORMANCE_AUTHORITY = "57-static-exact-glb-instances-plus-1-animated-a1-v1";
 
-function waitForFleet(THREE, group, placements) {
+function waitForFleet(THREE, group, placements, controller) {
   const startedAt = performance.now();
   const expectedModelNames = new Set(placements.map((placement) => `UploadedAirportJetway_${placement.gate}`));
   return new Promise((resolve, reject) => {
@@ -144,6 +147,28 @@ function waitForFleet(THREE, group, placements) {
             );
           }
 
+          const finalVisibleFit = fitUploadedA1JetwayToRenderedCrjDoor(THREE, group, fleet, placements);
+          if (!finalVisibleFit || finalVisibleFit.authority !== PHYSICAL_FIT_AUTHORITY) {
+            throw new Error(`A1 final visible physical fit returned invalid authority: ${finalVisibleFit?.authority || "missing"}`);
+          }
+          if (!(Math.abs(finalVisibleFit.verticalGapMeters) <= 0.08)) {
+            throw new Error(`A1 final visible Cab did not reach grounded CRJ door: vertical=${finalVisibleFit.verticalGapMeters}`);
+          }
+          if (!controller?.bind || !controller?.setDeployment) {
+            throw new Error("A1 final visible physical fit cannot rebase the live deployment controller");
+          }
+          controller.bind(a1Anchor);
+          controller.setDeployment(1);
+          a1Model.updateWorldMatrix(true, true);
+          group.userData.uploadedJetwayA1FinalVisibleFitAuthority = FINAL_VISIBLE_FIT_AUTHORITY;
+          group.userData.uploadedJetwayA1FinalPhysicalDoorFitAuthority = finalVisibleFit.authority;
+          group.userData.uploadedJetwayA1FinalPhysicalDoorVerticalGapMeters = finalVisibleFit.verticalGapMeters;
+          group.userData.uploadedJetwayA1FinalPhysicalDoorHorizontalGapMeters = finalVisibleFit.horizontalGapMeters;
+          group.userData.uploadedJetwayA1FinalPhysicalDoorVectorGapMeters = finalVisibleFit.vectorGapMeters;
+          group.userData.uploadedJetwayA1FinalPhysicalDoorPitchDegrees = finalVisibleFit.pitchDegrees;
+          group.userData.uploadedJetwayA1FinalPhysicalDoorStairMinimumHeightMeters = finalVisibleFit.stairGrounding.minimumY;
+          group.userData.uploadedJetwayA1FinalPhysicalDoorMechanicalMinimumHeightMeters = finalVisibleFit.mechanicalGrounding.minimumY;
+
           group.userData.uploadedJetwayReadyAuthority = READY_AUTHORITY;
           group.userData.uploadedJetwayVerifiedModelCount = loadedModelNames.size;
           group.userData.uploadedJetwayVerifiedGateNames = [...loadedModelNames].sort().join(",");
@@ -184,6 +209,7 @@ function waitForFleet(THREE, group, placements) {
             a1PredictedDoorGap,
             a1ActualDoorGap,
             installationCorrection,
+            finalVisibleFit,
             exactModelGuard,
             staticPortalClosures,
             authority: READY_AUTHORITY,
@@ -209,7 +235,7 @@ function waitForFleet(THREE, group, placements) {
 
 export function installUploadedAirportJetwayFleet(THREE, group, placements, sourceTextures = {}) {
   const controller = installUploadedAirportJetwayFleetBase(THREE, group, placements, sourceTextures);
-  const ready = waitForFleet(THREE, group, placements);
+  const ready = waitForFleet(THREE, group, placements, controller);
   group.userData.uploadedJetwayReady = ready;
   group.userData.uploadedJetwayReadyAuthority = "waiting-for-exact-airport-jetway-glb";
   controller.ready = ready;

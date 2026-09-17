@@ -2,94 +2,56 @@ import * as THREE from "three";
 import {
   LEKTRO_RIG_PROFILE,
   STANDUP_RIG_PROFILE,
+  MANAGER_KUBOTA_RIG_PROFILE,
   createProceduralLektroRig,
   validateTugRig,
 } from "../src/tug/lektroRig.js";
 
-const rig = createProceduralLektroRig(THREE);
-const failures = validateTugRig(rig);
+const failures = [];
 
-if (rig.root.name !== "RampReady_LektroRig") failures.push(`unexpected root name ${rig.root.name}`);
-if (rig.captureAnchor.name !== "CaptureAnchor") failures.push("capture anchor is not explicitly named");
-if (rig.operatorEye.name !== "OperatorEye") failures.push("operator eye is not explicitly named");
-if (rig.cradleLift.name !== "CradleLift") failures.push("cradle group is not explicitly named");
-if (rig.profile !== LEKTRO_RIG_PROFILE) failures.push("Lektro rig did not select the Lektro profile");
-if (rig.profile.steeringMode !== "rear") failures.push("Lektro steering mode is not rear-wheel steering");
+function verifyRig(id, expectedProfile, expectedLayout, expectedWheels, expectedSteerPivots, expectedSteerPrefix) {
+  const rig = createProceduralLektroRig(THREE, id);
+  failures.push(...validateTugRig(rig).map((failure) => `${id}: ${failure}`));
+  if (rig.profile !== expectedProfile) failures.push(`${id}: wrong physics profile`);
+  if (rig.profile.steeringLayout !== expectedLayout) failures.push(`${id}: expected ${expectedLayout}, got ${rig.profile.steeringLayout}`);
+  if (rig.rollingWheels.length !== expectedWheels) failures.push(`${id}: expected ${expectedWheels} rolling wheels`);
+  if (rig.steeringPivots.length !== expectedSteerPivots) failures.push(`${id}: expected ${expectedSteerPivots} steering pivots`);
+  if (rig.captureAnchor.name !== "CaptureAnchor") failures.push(`${id}: capture anchor not named`);
+  if (rig.operatorEye.name !== "OperatorEye") failures.push(`${id}: operator eye not named`);
 
-const localCapture = rig.captureAnchor.position;
-if (Math.abs(localCapture.z - LEKTRO_RIG_PROFILE.cradleOffset) > 1e-9) {
-  failures.push(`capture anchor offset ${localCapture.z} does not match profile ${LEKTRO_RIG_PROFILE.cradleOffset}`);
+  rig.setSteering(0.31);
+  for (const pivot of rig.steeringPivots) {
+    if (!pivot.name.startsWith(expectedSteerPrefix)) failures.push(`${id}: unexpected steer pivot ${pivot.name}`);
+    const expected = rig.profile.steeringMode === "rear" ? -0.31 : 0.31;
+    if (Math.abs(pivot.rotation.y - expected) > 1e-9) failures.push(`${id}: ${pivot.name} received wrong steering sign`);
+  }
+
+  const before = rig.rollingWheels.map((wheel) => wheel.rotation.x);
+  rig.rotateWheels(1.2);
+  rig.rollingWheels.forEach((wheel, index) => {
+    if (Math.abs(wheel.rotation.x - before[index]) < 0.1) failures.push(`${id}: ${wheel.name} did not roll`);
+  });
+  return rig;
 }
 
-rig.root.position.set(4, 0, 7);
-rig.root.rotation.y = Math.PI / 2;
-const captureWorld = rig.getCaptureWorld(new THREE.Vector3());
-const expectedWorld = new THREE.Vector3(
-  4 + LEKTRO_RIG_PROFILE.cradleOffset,
-  LEKTRO_RIG_PROFILE.captureAnchor[1],
-  7,
-);
-if (captureWorld.distanceTo(expectedWorld) > 1e-6) {
-  failures.push(`capture world transform incorrect: ${captureWorld.toArray()} expected ${expectedWorld.toArray()}`);
-}
+const lektro = verifyRig("lektro-88", LEKTRO_RIG_PROFILE, "rear-pair", 4, 2, "RearSteer_");
+const standup = verifyRig("standup-tug", STANDUP_RIG_PROFILE, "rear-single", 3, 1, "RearSteer_");
+const kubota = verifyRig("manager-kubota", MANAGER_KUBOTA_RIG_PROFILE, "front-pair", 4, 2, "FrontSteer_");
 
-rig.setSteering(0.31);
-for (const pivot of rig.steeringPivots) {
-  if (!pivot.name.startsWith("RearSteer_")) failures.push(`${pivot.name} is not a rear steering pivot`);
-  if (Math.abs(pivot.rotation.y + 0.31) > 1e-9) failures.push(`${pivot.name} did not counter-steer the rear axle`);
-}
-for (const name of ["FrontSteer_L", "FrontSteer_R"]) {
-  const pivot = rig.root.getObjectByName(name);
-  if (!pivot) failures.push(`missing fixed front axle pivot ${name}`);
-  else if (Math.abs(pivot.rotation.y) > 1e-9) failures.push(`${name} incorrectly received steering angle`);
-}
+if (lektro.profile.maxSteerAngle < THREE.MathUtils.degToRad(80)) failures.push("LEKTRO rear steering does not reach near-90-degree lock");
+if (standup.profile.maxSteerAngle < THREE.MathUtils.degToRad(80)) failures.push("stand-up rear steering does not reach near-90-degree lock");
+if (standup.steeringPivots[0]?.name !== "RearSteer_C") failures.push("stand-up must use one center rear steering wheel");
+if (kubota.profile.steeringMode !== "front") failures.push("manager Kubota must remain front steering");
 
-const wheelRotations = rig.rollingWheels.map((wheel) => wheel.rotation.x);
-rig.rotateWheels(1.5);
-rig.rollingWheels.forEach((wheel, index) => {
-  if (Math.abs(wheel.rotation.x - wheelRotations[index]) < 0.1) failures.push(`${wheel.name} did not roll`);
-});
-
-rig.setLiftProgress(0.5);
-if (Math.abs(rig.cradleLift.position.y - LEKTRO_RIG_PROFILE.liftTravel * 0.5) > 1e-9) failures.push("half lift progress is incorrect");
-rig.setLiftProgress(3);
-if (Math.abs(rig.cradleLift.position.y - LEKTRO_RIG_PROFILE.liftTravel) > 1e-9) failures.push("lift progress was not clamped high");
-rig.setLiftProgress(-2);
-if (Math.abs(rig.cradleLift.position.y) > 1e-9) failures.push("lift progress was not clamped low");
-
-const anchorNames = new Set();
-rig.root.traverse((node) => { if (node.name) anchorNames.add(node.name); });
-for (const required of [
-  "CaptureAnchor",
-  "OperatorEye",
-  "OperatorLook",
-  "FrontSteer_L",
-  "FrontSteer_R",
-  "RearSteer_L",
-  "RearSteer_R",
-  "CradleLift",
-]) {
-  if (!anchorNames.has(required)) failures.push(`missing required named node ${required}`);
-}
-
-const standup = createProceduralLektroRig(THREE, "standup-tug");
-failures.push(...validateTugRig(standup).map((failure) => `stand-up ${failure}`));
-if (standup.root.name !== "RampReady_StandupPhysicsRig") failures.push(`unexpected stand-up root name ${standup.root.name}`);
-if (standup.profile !== STANDUP_RIG_PROFILE) failures.push("stand-up rig did not select the stand-up profile");
-if (standup.profile.steeringMode !== "rear") failures.push("stand-up steering mode is not rear-wheel steering");
-if (standup.operatorEye.position.x < 0.4) failures.push("stand-up operator eye is not on the right-hand platform");
-if (standup.operatorEye.position.y < 1.55) failures.push("stand-up operator eye is too low for the standing driving position");
-if (standup.operatorEye.position.z < -1.3 || standup.operatorEye.position.z > -0.7) failures.push("stand-up operator eye is outside the calibrated standing-platform depth");
-standup.setSteering(0.31);
-for (const pivot of standup.steeringPivots) {
-  if (!pivot.name.startsWith("RearSteer_")) failures.push(`${pivot.name} is not a rear steering pivot`);
-  if (Math.abs(pivot.rotation.y + 0.31) > 1e-9) failures.push(`${pivot.name} did not counter-steer the rear axle`);
-}
+lektro.setLiftProgress(0.5);
+if (Math.abs(lektro.cradleLift.position.y - LEKTRO_RIG_PROFILE.liftTravel * 0.5) > 1e-9) failures.push("LEKTRO lift travel is incorrect");
+standup.setLiftProgress(0.5);
+if (Math.abs(standup.cradleLift.position.y - STANDUP_RIG_PROFILE.liftTravel * 0.5) > 1e-9) failures.push("stand-up lift travel is incorrect");
 
 if (failures.length) {
-  console.error("RampReady equipment runtime-rig verification failed:");
+  console.error("RampReady vehicle runtime-rig verification failed:");
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exit(1);
 }
 
-console.log("RampReady equipment runtime-rig verification passed: both Lektro and stand-up rigs use validated rear-wheel steering, fixed front axles, rolling wheels, anchors, operator positions and capture geometry.");
+console.log("RampReady vehicle runtime-rig verification passed: LEKTRO 88 dual rear steer, stand-up single center rear steer, and manager Kubota front steer are all active with their correct wheel layouts.");

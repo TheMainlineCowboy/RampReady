@@ -19,8 +19,29 @@ const cornerViews = Object.freeze([
     filename: 'a27-a29-corner-overhead.png',
   },
 ]);
+const evidenceKeys = Object.freeze([
+  'inspectionMode',
+  'inspectionPreset',
+  'inspectionCameraAuthority',
+  'terminal4UploadedJetwayLoadState',
+  'terminal4UploadedJetwayCount',
+  'terminal4UploadedJetwayConnectorCount',
+  'terminal4TerminalConnectedJetwayCount',
+  'terminal4UploadedJetwayStaticArticulatedGateCount',
+  'terminal4UploadedJetwayStaticOwnGateTargetAuthority',
+  'terminal4UploadedJetwayStaticA14CornerArmAuthority',
+  'terminal4UploadedJetwayStaticA14CornerArmArticulationDegrees',
+]);
 
 fs.mkdirSync(evidenceDirectory, { recursive: true });
+
+async function readEvidenceDataset(page) {
+  return page.evaluate((keys) => {
+    const canvas = document.querySelector('canvas.trainerCanvas');
+    if (!(canvas instanceof HTMLCanvasElement)) return null;
+    return Object.fromEntries(keys.map((key) => [key, canvas.dataset[key]]));
+  }, evidenceKeys);
+}
 
 async function selectByLabel(page, ariaLabel, optionLabel) {
   await page.evaluate(({ ariaLabel, optionLabel }) => {
@@ -78,9 +99,8 @@ async function captureLiveCanvas(page, canvas, outputPath) {
     const deadline = Date.now() + 180000;
     let ready = null;
     while (Date.now() < deadline) {
-      const canvas = page.locator('canvas.trainerCanvas');
-      if (await canvas.count()) {
-        const data = await canvas.evaluate((element) => ({ ...element.dataset }));
+      const data = await readEvidenceDataset(page);
+      if (data) {
         const state = String(data.terminal4UploadedJetwayLoadState || '');
         if (data.inspectionMode === 'active'
           && state === 'ready'
@@ -115,15 +135,16 @@ async function captureLiveCanvas(page, canvas, outputPath) {
       await page.waitForTimeout(1500);
       const outputPath = `${evidenceDirectory}/${view.filename}`;
       captures[view.filename] = await captureLiveCanvas(page, canvas, outputPath);
-      const data = await canvas.evaluate((element) => ({ ...element.dataset }));
+      const data = await readEvidenceDataset(page);
       cameraEvidence[view.preset] = {
         label: view.label,
-        authority: data.inspectionCameraAuthority,
+        authority: data?.inspectionCameraAuthority,
         bytes: captures[view.filename],
       };
     }
 
-    const dataset = await canvas.evaluate((element) => ({ ...element.dataset }));
+    const dataset = await readEvidenceDataset(page);
+    if (!dataset) throw new Error('Static corner evidence canvas disappeared before report publication');
     const cornerRegistration = JSON.parse(cornerRegistrationMessages.at(-1).slice(cornerRegistrationPrefix.length));
     fs.writeFileSync(reportPath, `${JSON.stringify({
       capturedAtUtc: new Date().toISOString(),

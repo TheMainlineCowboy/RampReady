@@ -1,4 +1,5 @@
 import { clamp, normalizeAngle, updateAircraftTowPose } from "./towKinematics.js";
+import { getVehiclePhysicsProfile } from "../config/vehiclePhysicsProfiles.js";
 
 export const TUG_WHEELBASE = 2.35;
 export const FREE_MAX_SPEED = 3.2;
@@ -16,10 +17,26 @@ function finite(value, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
 }
 
+function positive(value, fallback) {
+  const resolved = finite(value, fallback);
+  return resolved > 0 ? resolved : fallback;
+}
+
+function nonnegative(value, fallback) {
+  const resolved = finite(value, fallback);
+  return resolved >= 0 ? resolved : fallback;
+}
+
 function moveToward(value, target, maxDelta) {
   if (value < target) return Math.min(target, value + maxDelta);
   if (value > target) return Math.max(target, value - maxDelta);
   return value;
+}
+
+function inferredProfile(command, steeringMode, wheelbase) {
+  if (command.vehicleId) return getVehiclePhysicsProfile(command.vehicleId);
+  if (steeringMode === "front") return getVehiclePhysicsProfile("manager-kubota");
+  return getVehiclePhysicsProfile(wheelbase < 2 ? "standup-tug" : "lektro-88");
 }
 
 export function createPushbackState({ tugX = 0, tugZ = 0, tugYaw = 0, aircraftX = 0, aircraftZ = 6.2, aircraftYaw = 0 } = {}) {
@@ -49,40 +66,52 @@ export function stepPushbackDynamics(state, command, dt) {
   const steerInput = clamp(finite(command.steer, 0), -1, 1);
   const steeringMode = command.steeringMode === "rear" ? "rear" : "front";
   const wheelbase = Math.max(0.5, finite(command.wheelbase, TUG_WHEELBASE));
-  const maxSpeed = connected ? TOW_MAX_SPEED : FREE_MAX_SPEED;
-  const acceleration = connected ? TOW_ACCELERATION : FREE_ACCELERATION;
+  const profile = inferredProfile(command, steeringMode, wheelbase);
 
-  const speedRatio = maxSpeed > 0 ? Math.min(1, Math.abs(state.speed) / maxSpeed) : 0;
-  const speedSteerScale = 1 - 0.48 * speedRatio;
-  let requestedSteer = steerInput * MAX_STEER_ANGLE * speedSteerScale;
+  const freeMaxSpeed = positive(command.freeMaxSpeed, profile.freeMaxSpeed ?? FREE_MAX_SPEED);
+  const towMaxSpeed = positive(command.towMaxSpeed, profile.towMaxSpeed || TOW_MAX_SPEED);
+  const freeAcceleration = positive(command.freeAcceleration, profile.freeAcceleration ?? FREE_ACCELERATION);
+  const towAcceleration = positive(command.towAcceleration, profile.towAcceleration || TOW_ACCELERATION);
+  const serviceBrakeDeceleration = positive(command.serviceBrakeDeceleration, profile.serviceBrakeDeceleration ?? SERVICE_BRAKE_DECELERATION);
+  const coastDeceleration = nonnegative(command.coastDeceleration, profile.coastDeceleration ?? COAST_DECELERATION);
+  const maxSteerAngle = positive(command.maxSteerAngle, profile.maxSteerAngle ?? MAX_STEER_ANGLE);
+  const kinematicMaxSteerAngle = positive(command.kinematicMaxSteerAngle, profile.kinematicMaxSteerAngle ?? maxSteerAngle);
+  const maxSteerRate = positive(command.maxSteerRate, profile.maxSteerRate ?? MAX_STEER_RATE);
+  const fullLockSpeedScale = clamp(finite(command.fullLockSpeedScale, profile.fullLockSpeedScale ?? 0.52), 0.04, 1);
+  const maxSpeed = connected ? towMaxSpeed : freeMaxSpeed;
+  const acceleration = connected ? towAcceleration : freeAcceleration;
 
+  let requestedSteer = steerInput * maxSteerAngle;
   const currentArticulation = normalizeAngle(finite(state.aircraftYaw) - finite(state.tugYaw));
   const warning = connected && Math.abs(currentArticulation) >= JACKKNIFE_WARNING;
   const limited = connected && Math.abs(currentArticulation) >= JACKKNIFE_LIMIT;
 
-  if (warning && Math.sign(requestedSteer) === Math.sign(currentArticulation)) requestedSteer *= 0.22;
+  if (warning && Math.sign(requestedSteer) === Math.sign(currentArticulation)) requestedSteer *= 0.42;
   if (limited && Math.sign(requestedSteer) === Math.sign(currentArticulation)) requestedSteer = 0;
 
-  const steerAngle = moveToward(finite(state.steerAngle), requestedSteer, MAX_STEER_RATE * safeDt);
-  const targetSpeed = throttle * direction * maxSpeed;
+  const steerAngle = moveToward(finite(state.steerAngle), requestedSteer, maxSteerRate * safeDt);
+  const physicalSteerRatio = maxSteerAngle > 0 ? Math.min(1, Math.abs(steerAngle) / maxSteerAngle) : 0;
+  const steerSpeedScale = 1 - (1 - fullLockSpeedScale) * physicalSteerRatio * physicalSteerRatio;
+  const targetSpeed = throttle * direction * maxSpeed * steerSpeedScale;
   let speed = finite(state.speed);
 
-  if (brake) speed = moveToward(speed, 0, SERVICE_BRAKE_DECELERATION * safeDt);
+  if (brake) speed = moveToward(speed, 0, serviceBrakeDeceleration * safeDt);
   else if (throttle > 0.001) speed = moveToward(speed, targetSpeed, acceleration * safeDt);
-  else speed = moveToward(speed, 0, COAST_DECELERATION * safeDt);
+  else speed = moveToward(speed, 0, coastDeceleration * safeDt);
 
-  if (limited && Math.sign(speed) === Math.sign(targetSpeed)) speed = moveToward(speed, 0, SERVICE_BRAKE_DECELERATION * 0.65 * safeDt);
+  if (limited && Math.sign(speed) === Math.sign(targetSpeed)) speed = moveToward(speed, 0, serviceBrakeDeceleration * 0.65 * safeDt);
 
+  const effectiveSteer = clamp(steerAngle, -kinematicMaxSteerAngle, kinematicMaxSteerAngle);
   let tugYaw;
   let travelYaw;
   if (steeringMode === "rear") {
-    const rearAxleAngle = -steerAngle;
+    const rearAxleAngle = -effectiveSteer;
     const slipAngle = Math.atan(0.5 * Math.tan(rearAxleAngle));
     const yawRate = -(speed / wheelbase) * Math.cos(slipAngle) * Math.tan(rearAxleAngle);
     tugYaw = normalizeAngle(finite(state.tugYaw) + yawRate * safeDt);
     travelYaw = tugYaw + slipAngle;
   } else {
-    tugYaw = normalizeAngle(finite(state.tugYaw) + (speed / wheelbase) * Math.tan(steerAngle) * safeDt);
+    tugYaw = normalizeAngle(finite(state.tugYaw) + (speed / wheelbase) * Math.tan(effectiveSteer) * safeDt);
     travelYaw = tugYaw;
   }
 

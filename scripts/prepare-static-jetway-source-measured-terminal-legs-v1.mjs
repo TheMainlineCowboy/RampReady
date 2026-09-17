@@ -3,7 +3,7 @@ import fs from "node:fs";
 await import(`./prepare-static-jetway-own-gate-lengths-v1.mjs?own-gate-lengths=${Date.now()}`);
 
 const registrationPath = "src/environment/registerStaticJetwayFleetToFacadeV1.js";
-const SOURCE_POSE_AUTHORITY = "57-static-bgl-source-pose-real-wall-registration-v10";
+const SOURCE_POSE_AUTHORITY = "57-static-own-gate-target-real-wall-source-heading-provenance-v11";
 const CONNECTOR_IMPORT = 'import { addStaticSolidTerminalVestibules } from "./staticSourceMeasuredTerminalConnectorsV2.js";';
 const OLD_CONNECTOR_IMPORT = 'import { addStaticSolidTerminalVestibules } from "./staticSolidTerminalVestibulesV1.js";';
 const MIN_VISIBLE_METERS = 0.25;
@@ -19,11 +19,11 @@ if (!registration.includes(CONNECTOR_IMPORT)) {
 }
 
 // Enforce the compact measured-wall sleeve and reject the retired giant-corridor policy.
-// The replacement GLB Rotunda stays registered to the measured Terminal 4
-// facade. Only the decoded KPHX heading owns rigid-parent yaw. This pass may
-// recalculate telescope length and connector detail, but it must never restore
-// raw BGL x/z as the Rotunda or steer the parent toward a training-aircraft
-// target.
+// The replacement GLB Rotunda stays registered to the measured Terminal 4 facade.
+// Decoded KPHX heading remains source provenance, while the final rigid-parent yaw
+// must keep the Rotunda fixed and aim the movable bridge at its own authored stand.
+// This pass may recalculate telescope length and connector detail, but it must never
+// restore raw BGL x/z as the Rotunda or reassert source yaw as rendered authority.
 registration = registration
   .replace(/const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = [0-9.]+;/, `const MINIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MIN_VISIBLE_METERS};`)
   .replace(/const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = [0-9.]+;/, `const MAXIMUM_VISIBLE_TERMINAL_LEG_METERS = ${MAX_VISIBLE_METERS};`)
@@ -36,8 +36,8 @@ registration = registration
     "Static compact real-wall vestibule envelope is invalid",
   );
 
-if (!registration.includes(`const AUTHORITY = "${SOURCE_POSE_AUTHORITY}";`)) {
-  throw new Error(`${registrationPath}: decoded KPHX source-heading/real-wall authority is missing`);
+if (!registration.includes(SOURCE_POSE_AUTHORITY)) {
+  throw new Error(`${registrationPath}: own-gate real-wall/source-heading-provenance authority is missing`);
 }
 for (const required of [
   CONNECTOR_IMPORT,
@@ -48,25 +48,25 @@ for (const required of [
   "const terminalWallOverlapMeters = 0.18;",
   "const rotundaX = wallX - ux * resolvedRotundaCenterToWallMeters;",
   "const rotundaZ = wallZ - uz * resolvedRotundaCenterToWallMeters;",
-  "const yaw = sourceYaw;",
-  "sourceParentYawErrorRadians",
+  "const yaw = targetRegistrationYaw;",
+  "ownGateHeadingErrorRadians",
 ]) {
   if (!registration.includes(required)) {
-    throw new Error(`${registrationPath}: real-wall/source-heading static fleet envelope is missing ${required}`);
+    throw new Error(`${registrationPath}: real-wall/own-gate static fleet envelope is missing ${required}`);
   }
 }
 for (const forbidden of [
-  "const yaw = targetRegistrationYaw;",
+  "const yaw = sourceYaw;",
   "const rotundaX = sourceX;",
   "const rotundaZ = sourceZ;",
   "authored source-pose terminal span is invalid",
   OLD_CONNECTOR_IMPORT,
 ]) {
   if (registration.includes(forbidden)) {
-    throw new Error(`${registrationPath}: raw-origin/target-driven static placement survived terminal-leg preparation: ${forbidden}`);
+    throw new Error(`${registrationPath}: raw-origin/source-yaw static placement survived terminal-leg preparation: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(registrationPath, registration, "utf8");
 await import(`./prepare-static-jetway-post-registration-lengths-v1.mjs?post-wall-lengths=${Date.now()}`);
-console.log(`Preserved measured real-wall Rotunda registration and decoded KPHX parent yaw through static terminal-leg preparation, retained the ${MIN_VISIBLE_METERS}-${MAX_VISIBLE_METERS} m compact facade sleeve with expected ${EXPECTED_VISIBLE_METERS} m visible leg, and recalculated bridge lengths without re-aiming fixed jetways.`);
+console.log(`Preserved measured real-wall Rotunda registration and own-gate rendered yaw through static terminal-leg preparation, retained decoded KPHX heading as provenance, kept the ${MIN_VISIBLE_METERS}-${MAX_VISIBLE_METERS} m compact facade sleeve with expected ${EXPECTED_VISIBLE_METERS} m visible leg, and recalculated bridge lengths without crossing neighbouring stands.`);

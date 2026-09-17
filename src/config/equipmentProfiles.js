@@ -1,27 +1,28 @@
 export const DEFAULT_EQUIPMENT_ID = "lektro-88";
+export const INSPECTION_EQUIPMENT_ID = "manager-kubota";
 
 export const EQUIPMENT_PROFILES = Object.freeze([
   Object.freeze({
     id: "lektro-88",
-    label: "Lektro 88",
-    shortLabel: "Lektro",
-    manufacturer: "LEKTRO",
-    status: "prototype-ready",
-    statusLabel: "Prototype ready",
+    label: "LEKTRO 88 sit-down pushback",
+    shortLabel: "LEKTRO 88",
+    manufacturer: "LEKTRO / Oshkosh AeroTech",
+    status: "detailed-runtime",
+    statusLabel: "Detailed runtime",
     available: true,
-    description: "Active RampReady training equipment using the current Lektro handling, cradle, steering and towing profile while the cleaned scan replaces the temporary geometry.",
-    capabilities: Object.freeze(["Nose-gear capture", "Articulated towing", "Operator and chase views"]),
+    description: "Detailed sit-down towbarless LEKTRO 88 / AP8850SDA-class model with dual rear steering, fixed front drive wheels, cradle, horizontal winch, strap, three-roller stack, dual seats and operator controls.",
+    capabilities: Object.freeze(["Nose-gear cradle and strap", "Dual rear steer wheels near 90 degrees", "Sit-down operator and chase views"]),
   }),
   Object.freeze({
     id: "standup-tug",
     label: "Stand-up pushback",
     shortLabel: "Stand-up",
-    manufacturer: "Uploaded reference model",
+    manufacturer: "User revised V3 model",
     status: "verified-runtime",
     statusLabel: "Verified runtime",
     available: true,
-    description: "The exact uploaded stand-up pushback model is normalized, web-optimized, cryptographically verified and connected to the RampReady towing runtime.",
-    capabilities: Object.freeze(["Real uploaded model", "Nose-gear pushback training", "Operator and chase views"]),
+    description: "The user-supplied revised V3 stand-up tug is the visual authority, using a single center rear steering wheel with near-90-degree articulation and the reference standing driver camera.",
+    capabilities: Object.freeze(["User revised V3 model", "Single center rear steering", "Reference-matched standing operator view"]),
   }),
 ]);
 

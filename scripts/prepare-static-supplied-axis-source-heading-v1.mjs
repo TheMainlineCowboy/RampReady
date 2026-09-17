@@ -1,71 +1,114 @@
 import fs from "node:fs";
 
 const runtimePath = "src/environment/registerStaticJetwayFleetToFacadeV1.js";
-const marker = "static-exact-bridge-axis-aligned-to-decoded-kphx-heading-v1";
-const authority = "57-static-bgl-bridge-axis-real-wall-registration-v11";
+const marker = "static-exact-bridge-axis-own-gate-source-heading-provenance-v2";
+const authority = "57-static-own-gate-target-real-wall-source-heading-provenance-v11";
 let source = fs.readFileSync(runtimePath, "utf8");
 
+// This late compatibility stage used to reinterpret decoded BGL yaw as the
+// visible replacement-bridge heading and overwrite the own-gate registration.
+// Fresh fleet evidence showed that doing so sweeps bridges across neighboring
+// stands. The exact supplied GLB's local Rotunda->Tunnel-A axis is already
+// measured by the real-wall registration stage; keep its final parent yaw aimed
+// at the gate's own authored target. Decoded source yaw remains diagnostic
+// provenance only and must never become late rendered-direction authority.
+if (!source.includes(authority)) {
+  throw new Error(`${runtimePath}: own-gate real-wall static authority is missing before final-world verification`);
+}
+if (!source.includes("const yaw = targetRegistrationYaw;")) {
+  throw new Error(`${runtimePath}: final static parent yaw is not owned by the own-gate target registration`);
+}
+if (!source.includes("ownGateHeadingErrorRadians")) {
+  throw new Error(`${runtimePath}: own-gate heading error guard is missing`);
+}
+if (source.includes("const yaw = sourceYaw;") || source.includes("const yaw = sourceAxisRegistrationYaw;")) {
+  throw new Error(`${runtimePath}: a late decoded-source-heading parent-yaw override survived`);
+}
+
 if (!source.includes(marker)) {
+  const anchor = `  const yaw = targetRegistrationYaw;`;
   source = source.replace(
-    'const AUTHORITY = "57-static-bgl-source-pose-real-wall-registration-v10";',
-    `const AUTHORITY = "${authority}";`,
+    anchor,
+    `  // ${marker}\n  // Decoded KPHX heading is retained as source provenance only; rendered\n  // bridge direction remains the already-validated own-gate target direction.\n${anchor}`,
   );
+}
 
-  const oldBlock = `  const targetRegistrationYaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);\n  const sourceHeadingTargetDeltaRadians = Math.abs(wrapYaw(THREE, targetRegistrationYaw - sourceYaw));\n  // Static gates keep source heading as provenance only because their fixed\n  // Rotundas are facade-registered and their aircraft-side bridge must point at\n  // that same gate's authored target. A1 is excluded from this static path.\n  // The decoded BGL heading owns the rigid supplied-parent yaw.\n  const yaw = sourceYaw;\n\n  const resolvedBridgeHeading = wrapYaw(THREE, yaw + sourceBridgeAxisHeading);\n  // Own-gate target error remains diagnostic only. The fixed airport mounting\n  // must stay on its measured wall pivot and retain decoded KPHX yaw.\n  const ownGateHeadingErrorRadians = Math.abs(wrapYaw(THREE, resolvedBridgeHeading - targetHeading));\n  const sourceParentYawErrorRadians = Math.abs(wrapYaw(THREE, yaw - sourceYaw));\n  if (sourceParentYawErrorRadians > 1e-9) {\n    throw new Error(\`Static jetway \${placement.gate} escaped its decoded KPHX source yaw: \${sourceParentYawErrorRadians} rad\`);\n  }`;
-
-  const newBlock = `  const targetRegistrationYaw = wrapYaw(THREE, targetHeading - sourceBridgeAxisHeading);\n  // ${marker}\n  // The KPHX BGL yaw describes the physical AIR_Jetway01 bridge heading. The\n  // replacement GLB has its own measured local Rotunda->Tunnel-A axis, so the\n  // parent must compensate for that local-axis angle. Never mistake parent +Z\n  // for the visible supplied bridge direction.\n  const sourceAxisRegistrationYaw = wrapYaw(THREE, sourceYaw - sourceBridgeAxisHeading);\n  const sourceHeadingTargetDeltaRadians = Math.abs(wrapYaw(THREE, targetRegistrationYaw - sourceAxisRegistrationYaw));\n  const yaw = sourceAxisRegistrationYaw;\n\n  const resolvedBridgeHeading = wrapYaw(THREE, yaw + sourceBridgeAxisHeading);\n  const ownGateHeadingErrorRadians = Math.abs(wrapYaw(THREE, resolvedBridgeHeading - targetHeading));\n  const sourceBridgeHeadingErrorRadians = Math.abs(wrapYaw(THREE, resolvedBridgeHeading - sourceYaw));\n  const sourceParentYawAdjustmentRadians = Math.abs(wrapYaw(THREE, yaw - sourceYaw));\n  // Compatibility telemetry continues to publish a zero source error, but it\n  // now measures the visible bridge axis instead of the irrelevant parent yaw.\n  const sourceParentYawErrorRadians = sourceBridgeHeadingErrorRadians;\n  if (sourceBridgeHeadingErrorRadians > 1e-9) {\n    throw new Error(\`Static jetway \${placement.gate} visible bridge axis escaped decoded KPHX heading: \${sourceBridgeHeadingErrorRadians} rad\`);\n  }`;
-
-  if (!source.includes(oldBlock)) {
-    throw new Error(`${runtimePath}: stale parent-yaw static registration block is missing`);
+// Preserve source-vs-rendered diagnostics without asserting equality. A nonzero
+// difference is expected whenever raw source heading would cross a neighboring
+// stand after measured-wall Rotunda registration. Publish this on every static
+// placement using values that are guaranteed to exist in buildRegisteredPlacement.
+if (!source.includes("staticSourceHeadingProvenanceDeltaRadians:")) {
+  const placementAnchor = "    staticFacadeRegistrationYawChangeRadians: yawChange,";
+  if (!source.includes(placementAnchor)) {
+    throw new Error(`${runtimePath}: static placement yaw telemetry anchor is missing`);
   }
-  source = source.replace(oldBlock, newBlock);
-
   source = source.replace(
-    `    staticSourceParentYawErrorRadians: sourceParentYawErrorRadians,\n    staticTerminalFacingDot: terminalFacingDot,`,
-    `    staticSourceParentYawErrorRadians: sourceParentYawErrorRadians,\n    staticSourceBridgeHeadingErrorRadians: sourceBridgeHeadingErrorRadians,\n    staticSourceParentYawAdjustmentRadians: sourceParentYawAdjustmentRadians,\n    staticTerminalFacingDot: terminalFacingDot,`,
+    placementAnchor,
+    `${placementAnchor}\n    staticSourceHeadingProvenanceDeltaRadians: Math.abs(wrapYaw(THREE, yaw - sourceYaw)),`,
   );
+}
 
+// Some generations name the rendered heading explicitly. Keep that richer
+// diagnostic when available, but never depend on it for the fail-closed field.
+const telemetryAnchor = "    staticTerminalFacingDot: terminalFacingDot,";
+if (source.includes(telemetryAnchor) && !source.includes("staticResolvedBridgeHeadingProvenanceDeltaRadians")) {
   source = source.replace(
-    'group.userData.uploadedJetwayStaticSourcePoseAuthority = "57-static-bgl-source-pose-real-wall-registration-v10";',
-    `group.userData.uploadedJetwayStaticSourcePoseAuthority = "${authority}";`,
+    telemetryAnchor,
+    `    staticResolvedBridgeHeadingProvenanceDeltaRadians: Math.abs(wrapYaw(THREE, resolvedBridgeHeading - sourceYaw)),\n${telemetryAnchor}`,
   );
+}
 
-  const maxParentAnchor = `  const maximumSourceParentYawError = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticSourceParentYawErrorRadians));`;
-  const maxParentBlock = `${maxParentAnchor}\n  const maximumSourceBridgeHeadingError = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticSourceBridgeHeadingErrorRadians));\n  const maximumSourceParentYawAdjustment = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticSourceParentYawAdjustmentRadians));`;
-  if (!source.includes(maxParentAnchor)) {
-    throw new Error(`${runtimePath}: static source-error aggregate anchor is missing`);
+const aggregateAnchor = "  const maximumYawChange = Math.max(...staticRegisteredPlacements.map((placement) => placement.staticFacadeRegistrationYawChangeRadians));";
+if (!source.includes("const maximumSourceHeadingProvenanceDelta =")) {
+  if (!source.includes(aggregateAnchor)) {
+    throw new Error(`${runtimePath}: static maximum yaw aggregate anchor is missing`);
   }
-  source = source.replace(maxParentAnchor, maxParentBlock);
-
   source = source.replace(
-    `  group.userData.uploadedJetwayStaticMaximumSourceParentYawErrorRadians = maximumSourceParentYawError;`,
-    `  group.userData.uploadedJetwayStaticMaximumSourceParentYawErrorRadians = maximumSourceParentYawError;\n  group.userData.uploadedJetwayStaticMaximumSourceBridgeHeadingErrorRadians = maximumSourceBridgeHeadingError;\n  group.userData.uploadedJetwayStaticMaximumSourceParentYawAdjustmentRadians = maximumSourceParentYawAdjustment;`,
+    aggregateAnchor,
+    `${aggregateAnchor}\n  const maximumSourceHeadingProvenanceDelta = Math.max(...staticRegisteredPlacements.map((placement) => Number(placement.staticSourceHeadingProvenanceDeltaRadians) || 0));`,
+  );
+}
+
+// The registration module has used both "MaximumRegistrationYawChange" and
+// "MaximumYawChange" publication names across preparation generations. Bind to
+// whichever one survives rather than silently dropping provenance telemetry.
+if (!source.includes("uploadedJetwayStaticMaximumSourceHeadingProvenanceDeltaRadians")) {
+  const publicationAnchors = [
+    "  group.userData.uploadedJetwayStaticMaximumRegistrationYawChangeRadians = maximumYawChange;",
+    "  group.userData.uploadedJetwayStaticFacadeMaximumYawChangeRadians = maximumYawChange;",
+  ];
+  const publicationAnchor = publicationAnchors.find((candidate) => source.includes(candidate));
+  if (!publicationAnchor) {
+    throw new Error(`${runtimePath}: static maximum yaw publication anchor is missing`);
+  }
+  source = source.replace(
+    publicationAnchor,
+    `${publicationAnchor}\n  group.userData.uploadedJetwayStaticMaximumSourceHeadingProvenanceDeltaRadians = maximumSourceHeadingProvenanceDelta;`,
   );
 }
 
 for (const required of [
   marker,
   authority,
-  "const sourceAxisRegistrationYaw = wrapYaw(THREE, sourceYaw - sourceBridgeAxisHeading);",
-  "const yaw = sourceAxisRegistrationYaw;",
-  "visible bridge axis escaped decoded KPHX heading",
-  "staticSourceBridgeHeadingErrorRadians",
-  "uploadedJetwayStaticMaximumSourceBridgeHeadingErrorRadians",
-  "uploadedJetwayStaticMaximumSourceParentYawAdjustmentRadians",
+  "const yaw = targetRegistrationYaw;",
+  "ownGateHeadingErrorRadians",
+  "staticSourceHeadingProvenanceDeltaRadians",
+  "uploadedJetwayStaticMaximumSourceHeadingProvenanceDeltaRadians",
 ]) {
   if (!source.includes(required)) {
-    throw new Error(`${runtimePath}: static exact-axis source-heading contract is missing ${required}`);
+    throw new Error(`${runtimePath}: final own-gate/source-provenance contract is missing ${required}`);
   }
 }
 for (const forbidden of [
   "const yaw = sourceYaw;",
-  "escaped its decoded KPHX source yaw",
-  'const AUTHORITY = "57-static-bgl-source-pose-real-wall-registration-v10";',
+  "const yaw = sourceAxisRegistrationYaw;",
+  "visible bridge axis escaped decoded KPHX heading",
+  "static-exact-bridge-axis-aligned-to-decoded-kphx-heading-v1",
 ]) {
   if (source.includes(forbidden)) {
-    throw new Error(`${runtimePath}: stale static parent-yaw ownership survived: ${forbidden}`);
+    throw new Error(`${runtimePath}: stale decoded-heading rendered authority survived: ${forbidden}`);
   }
 }
 
 fs.writeFileSync(runtimePath, source, "utf8");
-console.log("Aligned every static exact supplied Rotunda-to-Tunnel-A physical axis to its decoded KPHX BGL jetway heading while preserving measured wall Rotundas and all supplied child transforms.");
+console.log("Preserved all 57 static exact jetways on measured real-wall Rotundas with their supplied Rotunda-to-Tunnel-A axes aimed at each gate's own authored target; decoded KPHX headings remain provenance telemetry only and cannot re-cross neighboring stands late in production.");

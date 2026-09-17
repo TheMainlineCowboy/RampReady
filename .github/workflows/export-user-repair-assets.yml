@@ -1,0 +1,95 @@
+name: Export User Repair Assets
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix/a1-real-fixed-corridor
+    paths:
+      - scripts/export-glb-repair-pieces.mjs
+      - scripts/export-rendered-airport-obj.mjs
+      - scripts/prepare-user-repair-export-hook.mjs
+      - .github/workflows/export-user-repair-assets.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - scripts/export-glb-repair-pieces.mjs
+      - scripts/export-rendered-airport-obj.mjs
+      - scripts/prepare-user-repair-export-hook.mjs
+      - .github/workflows/export-user-repair-assets.yml
+
+permissions:
+  contents: read
+
+jobs:
+  export-repair-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact repair head
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install project dependencies
+        run: npm ci
+
+      - name: Export supplied jetway and CRJ to OBJ
+        run: node scripts/export-glb-repair-pieces.mjs
+
+      - name: Build current Terminal 4 scene
+        run: npm run build
+
+      - name: Expose rendered scene for one-time export
+        run: |
+          node scripts/prepare-user-repair-export-hook.mjs
+          npx vite build
+
+      - name: Install Chromium export runner
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start exact preview
+        run: |
+          nohup npx vite preview --host 127.0.0.1 --port 4173 >/tmp/rampready-export-preview.log 2>&1 &
+          echo $! > /tmp/rampready-export-preview.pid
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/rampready-export-preview.log
+          exit 1
+
+      - name: Export rendered KPHX Terminal 4 setup to OBJ
+        run: node scripts/export-rendered-airport-obj.mjs
+
+      - name: Include airport source textures and export notes
+        run: |
+          mkdir -p user-repair-assets/airport/source-textures
+          cp source-assets/kphx-exact-terminal4/*.DDS user-repair-assets/airport/source-textures/ 2>/dev/null || true
+          cp source-assets/kphx-exact-terminal4/*.BMP user-repair-assets/airport/source-textures/ 2>/dev/null || true
+          cp source-assets/kphx-exact-terminal4/manifest.json user-repair-assets/airport/source-textures/source_manifest.json
+          cp public/models/kphx-photo/phx-airport-photo.webp user-repair-assets/airport/ 2>/dev/null || true
+          printf '%s\n' "Exact export commit: $GITHUB_SHA" > user-repair-assets/EXPORT_COMMIT.txt
+
+      - name: List deliverables
+        run: |
+          find user-repair-assets -maxdepth 3 -type f -printf '%p %k KB\n' | sort
+          du -sh user-repair-assets
+
+      - name: Package repair files
+        run: zip -9 -r RampReady_KPHX_A1_User_Repair_Assets.zip user-repair-assets
+
+      - name: Upload editable repair package
+        uses: actions/upload-artifact@v4
+        with:
+          name: RampReady-KPHX-A1-user-repair-assets-${{ github.sha }}
+          path: RampReady_KPHX_A1_User_Repair_Assets.zip
+          if-no-files-found: error
+          retention-days: 7

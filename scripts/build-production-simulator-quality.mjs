@@ -7,6 +7,7 @@ const protectedSourcePaths = Object.freeze([
   "src/environment/sourcePlacedTerminal4Jetways.js",
   "src/environment/uploadedAirportJetwayFleet.js",
   "src/environment/uploadedAirportJetwayFleetReadyV2.js",
+  "src/environment/uploadedAirportJetwayA1DoorFitV11.js",
   "src/environment/correctUploadedJetwayInstallationV1.js",
   "src/environment/authoredTerminal4Visual.js",
   "src/environment/authoredKphxGround.js",
@@ -16,6 +17,7 @@ const protectedSourcePaths = Object.freeze([
   "src/environment/staticJetwayPortalClosures.js",
   "src/environment/registerStaticJetwayFleetToFacadeV1.js",
   "src/environment/sourceRegisteredA1RotundaElbowV3.js",
+  "src/environment/sourceRegisteredA1RenderedDoorElbowV4.js",
   "tests/browser/a1-close-readiness-diagnostic.spec.js",
   "tests/browser/a1-ground-contact-evidence.spec.js",
   "tests/browser/a1-jetway-contact-clusters.spec.js",
@@ -108,28 +110,14 @@ try {
   await runNode("scripts/prepare-static-jetway-source-placement-integrity-v1.mjs");
   await runNode("scripts/prepare-static-jetway-source-pose-authority-v1.mjs");
   await runNode("scripts/prepare-a1-unified-aircraft-pose-v1.mjs");
-  // Normalize A1 as one intact supplied hierarchy at its measured real-wall
-  // Rotunda position after every legacy geometry preparer has run. Final
-  // acceptance verifies this state; it does not create it.
   await runNode("scripts/prepare-a1-fixed-rotunda-aircraft-side-pivot-v1.mjs");
-  // The final wall selector must reject the elevated T4_WALK hierarchy after
-  // every late A1 geometry rewrite. This guard also hard-fails any surviving
-  // explicit walkway portal target before acceptance can report green.
+  await runNode("scripts/prepare-a1-final-physical-door-fit-controller-rebase-v1.mjs");
+  await runNode("scripts/prepare-a1-aircraft-side-tunnel-c-support-v2.mjs");
   await runNode("scripts/prepare-a1-final-walkway-hierarchy-exclusion-v1.mjs");
-  // The grounded search must also remain aligned with the decoded A1 terminal-
-  // side source axis. Filtering candidates here prevents a nearer connector-side
-  // facade from winning merely because it carries a terminal-looking material.
   await runNode("scripts/prepare-a1-final-source-direction-candidate-filter-v1.mjs");
   await runNode("scripts/prepare-a1-final-acceptance-authority-v1.mjs");
   await runNode("scripts/prepare-a1-final-marker-compat-v1.mjs");
-  // Camera evidence is generated and rewritten by several legacy preparers.
-  // Normalize the FINAL generated terminal-joint guard only after those passes
-  // so a balanced wall/Tunnel-A view cannot be rejected by the obsolete 0.82
-  // cosine cutoff before the browser can acknowledge the requested subview.
   await runNode("scripts/prepare-a1-final-terminal-joint-camera-guard-v1.mjs");
-  // Diagnostic only: fail before Vite if any late preparer has reintroduced the
-  // retired decoded-KPHX visible-elbow assertion, and print its exact generated
-  // source context so the responsible guard can be replaced structurally.
   await runNode("scripts/prepare-a1-final-elbow-guard-diagnostic-v1.mjs");
   await runNode("scripts/prepare-jetway-readiness-airport-ownership-v1.mjs");
   await import(`./run-production-with-a1-authored-filter-cleanup.mjs?simulator-quality=${Date.now()}`);
@@ -159,6 +147,7 @@ if (buildError) throw buildError;
 await runNode("scripts/prepare-current-head-browser-expectations-v1.mjs");
 await runNode("scripts/prepare-a1-post-lifecycle-evidence-v1.mjs");
 await runNode("scripts/prepare-a1-bogie-centroid-browser-authority-v1.mjs");
+await runNode("scripts/prepare-a1-final-live-cab-span-browser-v1.mjs");
 
 const articulationTestPath = new URL("../tests/browser/uploaded-jetway-articulation-v10.spec.js", import.meta.url);
 const preparedArticulationTest = await readFile(articulationTestPath, "utf8");
@@ -177,8 +166,16 @@ for (const required of [
   "grounded-jetway-door-gap-reported-no-child-lift-v1",
   "inspectionAircraftJetwayAuthoredBogieGroundPreserved",
   "exact-authored-a1-tunnel-c-bogie-ramp-contact-v3",
+  "inspectionAircraftLiveVisibleCabWorldX",
+  "inspectionAircraftLiveVisibleCabWorldZ",
+  "liveRenderedCabCenterX",
+  "liveRenderedCabCenterZ",
+  "expect(geometricHorizontalRotundaOpeningToCabDistance).toBeGreaterThan(12)",
 ]) {
   if (!preparedArticulationTest.includes(required)) throw new Error(`Post-restoration browser preparation is missing ${required}`);
 }
+if (/geometricHorizontalRotundaOpeningToCabDistance\s*=\s*Math\.hypot\([\s\S]{0,180}measuredCab[ZX]/m.test(preparedArticulationTest)) {
+  throw new Error("Post-restoration browser preparation let the representative Cab contact point retake A1 span authority.");
+}
 
-console.log("RampReady simulator-quality production build requires the intact source-owned A1 assembly and aircraft-side Tunnel-C bogie/support ramp contact; a grounded terminal pedestal can no longer masquerade as a grounded jetway bogie.");
+console.log("RampReady simulator-quality production build requires the intact source-owned A1 assembly and aircraft-side Tunnel-C bogie/support ramp contact; a grounded terminal pedestal can no longer masquerade as a grounded jetway bogie, and the final A1 massing span is measured to the live rendered supplied Cab body.");

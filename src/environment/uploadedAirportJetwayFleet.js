@@ -23,9 +23,31 @@ const A1_RETRACTION = Object.freeze({
 const SOURCE_PART_NAMES = Object.freeze(["Rotunda", "Tunnel_A", "Tunnel_B", "Tunnel_C", "Cab"]);
 const HIDE_REPLACED = /^(?:AIR_Jetway01_|Terminal4_LowerFacadeInfillPanels|Terminal4_ClosedServiceDoors|Terminal4_FacadeVentGrilles)/i;
 const EXACT_GLB_URL = "models/airport-jetway/Airport_Jetway.glb";
+const GROUND_NAMES = Object.freeze(["PHX_KPHX_SourceAuthoredPhotoGround_Tiled", "PHX_KPHX_SourceAuthoredPhotoGround"]);
+const LEGACY_FINAL_FLEET_SHIFT_METERS = 0.06;
 
 function modelUrl() {
   return `${import.meta.env.BASE_URL || "/"}${EXACT_GLB_URL}`;
+}
+
+function rootOf(object) {
+  let root = object;
+  while (root?.parent) root = root.parent;
+  return root;
+}
+
+function renderedPavementYAt(THREE, group, x, z) {
+  const root = rootOf(group);
+  let ground = null;
+  for (const name of GROUND_NAMES) {
+    ground = root?.getObjectByName?.(name) || null;
+    if (ground) break;
+  }
+  if (!ground) throw new Error(`Exact jetway fleet cannot resolve rendered KPHX pavement at ${x},${z}`);
+  const ray = new THREE.Raycaster(new THREE.Vector3(x, 60, z), new THREE.Vector3(0, -1, 0), 0, 200);
+  const hit = ray.intersectObject(ground, true)[0];
+  if (!hit?.point) throw new Error(`Exact jetway fleet pavement ray missed ${x},${z}`);
+  return hit.point.y;
 }
 
 function countTriangles(root) {
@@ -87,11 +109,6 @@ async function loadExactPrototype(THREE) {
   });
   const validation = validateExactHierarchy(sourceScene);
 
-  // The uploaded GLB preserves its exporter-authored root transforms. Its
-  // longitudinal Rotunda-to-Cab axis is therefore diagonal in the GLB scene,
-  // not parent-local +Z. Normalize only the parent scene transform so gate yaw,
-  // telescoping offsets and contact measurements share one longitudinal axis.
-  // No source node, mesh, geometry, UV, normal, material or scale is replaced.
   sourceScene.updateMatrixWorld(true);
   const sourceRotunda = sourceScene.getObjectByName("Rotunda");
   const sourceCab = sourceScene.getObjectByName("Cab");
@@ -211,7 +228,7 @@ function collectPrototypeMeshes(prototype) {
   return meshes;
 }
 
-function buildStaticInstancedFleet(THREE, prototype, placements, sourceContactDistance) {
+function buildStaticInstancedFleet(THREE, group, prototype, placements, sourceContactDistance) {
   const staticPlacements = placements.filter((placement) => placement.gate !== "A1");
   if (staticPlacements.length !== 57) throw new Error(`Exact jetway fleet expected 57 static gates, received ${staticPlacements.length}`);
   const prototypeMeshes = collectPrototypeMeshes(prototype);
@@ -222,6 +239,10 @@ function buildStaticInstancedFleet(THREE, prototype, placements, sourceContactDi
   const articulatedLocalMatrix = new THREE.Matrix4();
   const finalMatrix = new THREE.Matrix4();
   let maximumContactError = 0;
+  const groundYByGate = new Map(staticPlacements.map((placement) => [
+    placement.gate,
+    renderedPavementYAt(THREE, group, placement.x, placement.z) + LEGACY_FINAL_FLEET_SHIFT_METERS,
+  ]));
   const articulationByGate = new Map(staticPlacements.map((placement) => {
     const articulation = computeUploadedJetwayArticulation(placement, sourceContactDistance);
     maximumContactError = Math.max(maximumContactError, Math.abs(articulation.contactError));
@@ -238,7 +259,7 @@ function buildStaticInstancedFleet(THREE, prototype, placements, sourceContactDi
       const articulation = articulationByGate.get(placement.gate);
       const partOffset = articulation.partOffsets[meshDefinition.sourcePartName] || 0;
       placementMatrix.makeRotationY(placement.yaw);
-      placementMatrix.setPosition(placement.x, 0, placement.z);
+      placementMatrix.setPosition(placement.x, groundYByGate.get(placement.gate), placement.z);
       articulationMatrix.makeTranslation(0, 0, partOffset);
       articulatedLocalMatrix.multiplyMatrices(articulationMatrix, meshDefinition.localMatrix);
       finalMatrix.multiplyMatrices(placementMatrix, articulatedLocalMatrix);
@@ -256,6 +277,7 @@ function buildStaticInstancedFleet(THREE, prototype, placements, sourceContactDi
     primitiveBatchCount: prototypeMeshes.length,
     articulatedGateCount: staticPlacements.length,
     maximumContactError,
+    groundYByGate,
   };
 }
 
@@ -301,12 +323,8 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, _sou
       if (!reach.partOrderValid) throw new Error("Exact Airport_Jetway.glb authored parts are not ordered from Rotunda to Cab");
       const fleet = new THREE.Group();
       fleet.name = "UploadedAirportJetwayFleet";
-      const staticFleet = buildStaticInstancedFleet(THREE, prototype, placements, reach.sourceContactDistance);
+      const staticFleet = buildStaticInstancedFleet(THREE, group, prototype, placements, reach.sourceContactDistance);
       fleet.add(staticFleet.batches);
-      // Static terminal vestibules are intentionally deferred until
-      // registerStaticJetwayFleetToFacade has measured each supplied Rotunda
-      // against its real terminal wall. Raw source placements do not yet carry
-      // staticAuthoredRotundaRadiusMeters/staticVisibleTerminalLegMeters.
 
       for (const placement of placements) {
         const anchor = new THREE.Group();
@@ -315,7 +333,8 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, _sou
           ? "individual-animated-exact-glb"
           : "static-articulated-exact-glb-instance-marker";
         if (placement.gate === "A1") {
-          anchor.position.set(placement.x, 0, placement.z);
+          const a1GroundY = renderedPavementYAt(THREE, group, placement.x, placement.z) + LEGACY_FINAL_FLEET_SHIFT_METERS;
+          anchor.position.set(placement.x, a1GroundY, placement.z);
           anchor.rotation.y = placement.yaw;
           const model = prototype.clone(true);
           model.name = "UploadedAirportJetwayModel_A1";
@@ -330,9 +349,12 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, _sou
           articulation.partCenters = attachedReach.partCenters;
           articulation.partOrderValid = attachedReach.partOrderValid;
           anchor.userData.uploadedJetwayArticulation = articulation;
+          anchor.userData.renderedPavementGroundY = a1GroundY - LEGACY_FINAL_FLEET_SHIFT_METERS;
           anchor.add(model);
           controller.bind(anchor);
           addUploadedAirportJetwayTerminalConnector(THREE, fleet, placement);
+        } else {
+          anchor.userData.renderedPavementGroundY = staticFleet.groundYByGate.get(placement.gate) - LEGACY_FINAL_FLEET_SHIFT_METERS;
         }
         fleet.add(anchor);
       }
@@ -349,8 +371,6 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, _sou
       group.userData.uploadedJetwayStaticInstancedGateCount = staticFleet.staticGateCount;
       group.userData.uploadedJetwayAnimatedIndividualGateCount = 1;
       group.userData.uploadedJetwayStaticPrimitiveBatchCount = staticFleet.primitiveBatchCount;
-      // Measured facade registration owns these final values. Mark this
-      // pre-registration phase explicitly instead of fabricating connectors.
       group.userData.uploadedJetwayStaticConnectorGateCount = 0;
       group.userData.uploadedJetwayStaticConnectorBatchCount = 0;
       group.userData.uploadedJetwayStaticConnectorInstanceCount = 0;
@@ -373,6 +393,7 @@ export function installUploadedAirportJetwayFleet(THREE, group, placements, _sou
       group.userData.uploadedJetwayA1ActualDoorGapMeters = a1Articulation?.actualDoorGap;
       group.userData.uploadedJetwayA1PartOrderValid = a1Articulation?.partOrderValid === true;
       group.userData.uploadedJetwayA1PartCentersMeters = JSON.stringify(a1Articulation?.partCenters || {});
+      group.userData.uploadedJetwayGroundRegistrationAuthority = "rendered-kphx-pavement-per-gate-v1";
       group.userData.sourceGeometryMode = MODEL_AUTHORITY;
       group.userData.visualAuthority = MODEL_AUTHORITY;
       group.userData.requiresOriginalSourceMesh = true;
