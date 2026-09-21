@@ -27,6 +27,10 @@ const drawState = {
   shade: "smooth",
   depthTest: true,
   drawEnabled: true,
+  draped: false,
+  layerGroupDraped: null,
+  lodDraped: null,
+  emissionRgb: [0, 0, 0],
 };
 
 const bump = (key) => commands.set(key, (commands.get(key) || 0) + 1);
@@ -102,6 +106,9 @@ const harmless = new Set([
   "ATTR_blend", "ATTR_no_blend",
   "ATTR_draw_enable", "ATTR_draw_disable",
   "ATTR_draped", "ATTR_no_draped",
+  "ATTR_emission_rgb",
+  "ATTR_LOD_draped",
+  "ATTR_layer_group_draped",
   "ATTR_no_solid_camera", "ATTR_solid_camera",
 ]);
 const unsupported = [...commands.keys()].filter((command) => !harmless.has(command));
@@ -220,7 +227,13 @@ if (litUri && !/^none$/i.test(litUri)) {
 const materialByState = new Map();
 const materials = [];
 function materialIndexForState(state) {
-  const key = JSON.stringify({ alphaMode: state.alphaMode, doubleSided: state.doubleSided });
+  const key = JSON.stringify({
+    alphaMode: state.alphaMode,
+    doubleSided: state.doubleSided,
+    draped: state.draped,
+    layerGroupDraped: state.layerGroupDraped,
+    emissionRgb: state.emissionRgb,
+  });
   if (materialByState.has(key)) return materialByState.get(key);
   const material = {
     name: `${name} source material ${materials.length}`,
@@ -231,6 +244,13 @@ function materialIndexForState(state) {
     },
     doubleSided: state.doubleSided,
     alphaMode: state.alphaMode,
+    emissiveFactor: state.emissionRgb,
+    extras: {
+      xPlaneDraped: state.draped === true,
+      xPlaneLayerGroupDraped: state.layerGroupDraped,
+      xPlaneLodDraped: state.lodDraped,
+      xPlaneEmissionRgb: state.emissionRgb,
+    },
   };
   if (images.length > 1) {
     material.emissiveTexture = xPlaneTextureInfo(1);
@@ -259,6 +279,9 @@ const primitives = drawRanges.map((range) => {
     indices: accessor,
     material: materialIndexForState(range.state),
     mode: 4,
+    extras: {
+      xPlaneDrawState: range.state,
+    },
   };
 });
 
