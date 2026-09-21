@@ -5,8 +5,18 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const execFile = promisify(execFileCallback);
-const [, , sourceRootArg, runtimeRootArg] = process.argv;
+const [, , sourceRootArg, runtimeRootArg, ...optionArgs] = process.argv;
+const options = Object.fromEntries(optionArgs
+  .filter((entry) => entry.startsWith("--") && entry.includes("="))
+  .map((entry) => {
+    const [key, ...value] = entry.slice(2).split("=");
+    return [key, value.join("=")];
+  }));
 const sourceRoot = path.resolve(sourceRootArg || process.env.KPHX_FULL_AIRPORT_SOURCE_DIR || "");
+const includeExternalPrefixes = new Set((options["include-external-prefixes"] || "").split(",").map((entry) => entry.trim()).filter(Boolean));
+const libraryMapPath = options["library-map"] ? path.resolve(options["library-map"]) : null;
+const libraryMapPayload = libraryMapPath ? JSON.parse(await fs.readFile(libraryMapPath, "utf8")) : null;
+const libraryResourceMap = libraryMapPayload?.resources || {};
 const runtimeRoot = path.resolve(runtimeRootArg || "public/models/kphx-full-airport/surfaces");
 const reportPath = path.resolve("reports/kphx-wed-surface-network.json");
 const manifestPath = path.join(runtimeRoot, "manifest.json");
@@ -154,7 +164,7 @@ function parsePol(source, sourceResource) {
     else if (command === "DECAL_LIB") parsed.decalLib = parts.slice(1).join(" ");
     else if (!["A", "850", "DRAPED_POLYGON"].includes(command)) parsed.unsupported.push(raw);
   }
-  if (!parsed.texture || !parsed.scaleMeters) throw new Error(`POL missing required texture/scale: ${sourceResource}`);
+  if (!parsed.texture) throw new Error(`POL missing required texture: ${sourceResource}`);
   return parsed;
 }
 
@@ -226,9 +236,16 @@ async function materializeDcl(resourcePath, outputDirectory) {
   return { ...parsed, decals, sourceSha256: await sha256(resourcePath) };
 }
 
+function sourcePathForResource(resource) {
+  const safeResource = safeRelative(resource);
+  const mapped = libraryResourceMap[safeResource];
+  if (mapped?.physicalPath) return mapped.physicalPath;
+  return path.join(sourceRoot, safeResource);
+}
+
 async function materializeArtResource(resource) {
   const safeResource = safeRelative(resource);
-  const sourcePath = path.join(sourceRoot, safeResource);
+  const sourcePath = sourcePathForResource(safeResource);
   if (!(await exists(sourcePath))) throw new Error(`Surface art resource missing: ${safeResource}`);
   const extension = path.extname(safeResource).toLowerCase();
   if (![".pol", ".lin"].includes(extension)) throw new Error(`Unsupported surface resource extension: ${safeResource}`);
@@ -283,10 +300,18 @@ await execFile(process.execPath, [
 ], { maxBuffer: 64 * 1024 * 1024 });
 
 const network = JSON.parse(await fs.readFile(reportPath, "utf8"));
-const records = [
+const packageRecords = [
   ...network.polygons.filter((entry) => entry.sourceClass === "package-owned"),
   ...network.lines.filter((entry) => entry.sourceClass === "package-owned"),
 ];
+const externalRecords = [
+  ...network.polygons,
+  ...network.lines,
+  ...network.drapedOrthophotos,
+].filter((entry) => entry.sourceClass === "external-library" && includeExternalPrefixes.has(entry.resourcePrefix));
+const records = [...packageRecords, ...externalRecords];
+const packageResources = [...new Set(packageRecords.map((entry) => normalizeResource(entry.resource)))].sort();
+const externalResources = [...new Set(externalRecords.map((entry) => normalizeResource(entry.resource)))].sort();
 const resources = [...new Set(records.map((entry) => normalizeResource(entry.resource)))].sort();
 
 const materialized = {};
@@ -315,10 +340,14 @@ const manifest = {
     lines: "WED-authored chains and Bezier controls; LIN TEX_WIDTH/SCALE/S_OFFSET width and UV authority",
     textures: "browser PNG generated only when decoded RGBA bytes equal source image at original dimensions",
     unsupportedCommands: "fail materialization rather than silently approximate",
-    externalResources: "tracked in WED network and not substituted",
+    externalResources: "only explicitly resolved library resources are materialized; unresolved virtual resources are never substituted",
+    libraryMap: libraryMapPath,
+    externalPrefixes: [...includeExternalPrefixes],
   },
-  packageOwnedResourceCount: resources.length,
-  materializedResourceCount: Object.keys(materialized).length,
+  packageOwnedResourceCount: packageResources.length,
+  materializedResourceCount: packageResources.filter((resource) => materialized[resource]).length,
+  resolvedExternalResourceCount: externalResources.filter((resource) => materialized[resource]).length,
+  expectedResolvedExternalResourceCount: externalResources.length,
   resources: materialized,
   failures,
 };
@@ -330,7 +359,10 @@ if (failures.length) throw new Error(`KPHX surface materialization failed for ${
 console.log(JSON.stringify({
   manifestPath,
   networkOutputPath,
-  packageOwnedResourceCount: resources.length,
+  packageOwnedResourceCount: packageResources.length,
+  resolvedExternalResourceCount: externalResources.filter((resource) => materialized[resource]).length,
   polygonPlacementCount: network.polygons.filter((entry) => entry.sourceClass === "package-owned").length,
   linePlacementCount: network.lines.filter((entry) => entry.sourceClass === "package-owned").length,
+  resolvedExternalPrefixes: [...includeExternalPrefixes],
+  resolvedDrapedOrthophotoPlacements: network.drapedOrthophotos.filter((entry) => includeExternalPrefixes.has(entry.resourcePrefix)).length,
 }, null, 2));
