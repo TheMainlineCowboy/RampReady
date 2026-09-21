@@ -11,8 +11,18 @@ import {
 
 const execFile = promisify(execFileCallback);
 
-const [, , sourceRootArg, runtimeRootArg] = process.argv;
+const [, , sourceRootArg, runtimeRootArg, ...optionArgs] = process.argv;
+const options = Object.fromEntries(optionArgs
+  .filter((entry) => entry.startsWith("--") && entry.includes("="))
+  .map((entry) => {
+    const [key, ...value] = entry.slice(2).split("=");
+    return [key, value.join("=")];
+  }));
 const sourceRoot = path.resolve(sourceRootArg || process.env.KPHX_FULL_AIRPORT_SOURCE_DIR || "");
+const includeExternalPrefixes = new Set((options["include-external-prefixes"] || "").split(",").map((entry) => entry.trim()).filter(Boolean));
+const libraryMapPath = options["library-map"] ? path.resolve(options["library-map"]) : null;
+const libraryMapPayload = libraryMapPath ? JSON.parse(await fs.readFile(libraryMapPath, "utf8")) : null;
+const libraryResourceMap = libraryMapPayload?.resources || {};
 const runtimeRoot = path.resolve(runtimeRootArg || "public/models/kphx-full-airport");
 const reportRoot = path.resolve("reports");
 const placementReportPath = path.join(reportRoot, "kphx-full-airport-wed-placements.json");
@@ -150,6 +160,13 @@ async function materializeTexture(sourcePath, requested, outputDirectory) {
   };
 }
 
+function sourcePathForResource(resource) {
+  const safeResource = safeRelative(resource);
+  const mapped = libraryResourceMap[safeResource];
+  if (mapped?.physicalPath) return mapped.physicalPath;
+  return path.join(sourceRoot, safeResource);
+}
+
 async function convertObject(resource) {
   const safeResource = safeRelative(resource);
 
@@ -181,11 +198,12 @@ async function convertObject(resource) {
     };
   }
 
-  const sourcePath = path.join(sourceRoot, safeResource);
-  if (!(await exists(sourcePath))) throw new Error(`Package-owned WED resource missing: ${safeResource}`);
+  const sourcePath = sourcePathForResource(safeResource);
+  if (!(await exists(sourcePath))) throw new Error(`WED resource missing after exact library resolution: ${safeResource}`);
 
   const parsed = path.parse(safeResource);
-  const relativeAssetDirectory = path.join("package-owned", parsed.dir, parsed.name);
+  const mappedExternal = Boolean(libraryResourceMap[safeResource]);
+  const relativeAssetDirectory = path.join(mappedExternal ? "external" : "package-owned", parsed.dir, parsed.name);
   const outputDirectory = path.join(runtimeRoot, relativeAssetDirectory);
   await fs.mkdir(outputDirectory, { recursive: true });
 
@@ -245,7 +263,10 @@ await execFile(process.execPath, [
 
 const placementReport = JSON.parse(await fs.readFile(placementReportPath, "utf8"));
 const packagePlacements = placementReport.placements.packageOwned;
-const uniqueResources = [...new Set(packagePlacements.map((entry) => normalizeResource(entry.resource)))].sort();
+const externalPlacements = placementReport.placements.externalLibraries
+  .filter((entry) => includeExternalPrefixes.has(entry.resourcePrefix));
+const selectedPlacements = [...packagePlacements, ...externalPlacements];
+const uniqueResources = [...new Set(selectedPlacements.map((entry) => normalizeResource(entry.resource)))].sort();
 
 const resources = {};
 const failures = [];
@@ -262,16 +283,25 @@ for (const [index, resource] of uniqueResources.entries()) {
   }
 }
 
-const runtimePlacements = packagePlacements
-  .filter((placement) => resources[normalizeResource(placement.resource)])
-  .map((placement) => ({
+const runtimePlacement = (placement) => ({
     ...placement,
     resource: normalizeResource(placement.resource),
     assetUrl: resources[normalizeResource(placement.resource)].assetUrl,
     packedMeshName: resources[normalizeResource(placement.resource)].packedMeshName || null,
     recoveredExact: resources[normalizeResource(placement.resource)].recoveredExact === true,
     layerGroupDraped: resources[normalizeResource(placement.resource)].layerGroupDraped || null,
-  }));
+  });
+const runtimePlacements = packagePlacements
+  .filter((placement) => resources[normalizeResource(placement.resource)])
+  .map(runtimePlacement);
+const runtimeExternalPlacements = externalPlacements
+  .filter((placement) => resources[normalizeResource(placement.resource)])
+  .map(runtimePlacement);
+
+/* legacy map body removed */
+const _unusedLegacyPlacementMap = null;
+/*
+*/
 
 const manifest = {
   schemaVersion: 1,
@@ -286,7 +316,8 @@ const manifest = {
     geometry: "source positions/normals/UVs/indices preserved; no remesh or decimation",
     textures: "source texture decoded to browser PNG at original dimensions with decoded-RGBA hash equality required",
     placement: "earth.wed.xml authored lat/lon/heading; no manual placement",
-    externalLibraries: "not substituted; tracked separately until exact dependencies are supplied",
+    externalLibraries: "only explicitly resolved library resources are materialized; unresolved virtual paths are never substituted",
+    libraryMap: libraryMapPath,
   },
   packageOwned: {
     expectedPlacementCount: packagePlacements.length,
@@ -295,6 +326,12 @@ const manifest = {
     materializedUniqueResourceCount: Object.keys(resources).length,
     resources,
     placements: runtimePlacements,
+  },
+  resolvedExternal: {
+    prefixes: [...includeExternalPrefixes],
+    materializedPlacementCount: runtimeExternalPlacements.length,
+    materializedUniqueResourceCount: new Set(runtimeExternalPlacements.map((entry) => entry.resource)).size,
+    placements: runtimeExternalPlacements,
   },
   externalLibraries: {
     placementCount: placementReport.externalLibraries.placementCount,
@@ -316,6 +353,8 @@ console.log(JSON.stringify({
   materializationReportPath,
   packageOwnedPlacements: runtimePlacements.length,
   packageOwnedUniqueResources: Object.keys(resources).length,
+  resolvedExternalPlacements: runtimeExternalPlacements.length,
+  resolvedExternalPrefixes: [...includeExternalPrefixes],
   externalLibraryPlacementsTracked: manifest.externalLibraries.placementCount,
   externalLibraryUniqueResourcesTracked: manifest.externalLibraries.uniqueResourceCount,
 }, null, 2));
