@@ -9,7 +9,7 @@ const source = fs.readFileSync(sourcePath, "utf8");
 const importAnchor = 'import { createProceduralLektroRig, validateTugRig } from "../tug/lektroRig.js";';
 const equipmentImport = 'import { installRuntimeEquipmentVisual, supportsRuntimeEquipmentVisual } from "../tug/runtimeEquipmentVisual.js";';
 const environmentImport = 'import { buildTerminal4RampEnvironment } from "../environment/terminal4RampEnvironment.js";';
-const authoredEnvironmentImport = 'import { installSourceKphxTerminal4Visual } from "../environment/sourceKphxTerminal4.js";\nimport { installSourceKphxLandmarks } from "../environment/sourceKphxLandmarks.js";\nimport { installSourceKphxWEDJetways } from "../environment/sourceKphxJetways.js";';
+const authoredEnvironmentImport = 'import { installSourceKphxTerminal4Visual } from "../environment/sourceKphxTerminal4.js";\nimport { installSourceKphxLandmarks } from "../environment/sourceKphxLandmarks.js";\nimport { installSourceKphxWEDJetways } from "../environment/sourceKphxJetways.js";\nimport { installKphxPackageOwnedObjectLayer } from "../environment/kphxFullAirport/installPackageOwnedObjectLayer.js";\nimport { KPHX_EXACT_RECOVERED_ASSETS } from "../environment/kphxFullAirport/exactAssetCatalog.js";';
 const authoredGroundImport = 'import { installAuthoredKphxGround } from "../environment/authoredKphxGround.js";';
 const authoredPhotoGroundImport = 'import { installAuthoredKphxPhotoGround } from "../environment/authoredKphxPhotoGround.js";';
 const groundStart = source.indexOf("function buildGround(scene) {");
@@ -119,6 +119,23 @@ prepared = prepared
         setMessage(\`PHX Terminal 4 failed to load: \${error.message}\`);
         throw error;
       });
+    const packageObjectLoad = terminalLoad
+      .then(() => installKphxPackageOwnedObjectLayer(THREE, environment, {
+        strict: true,
+        excludeResources: Object.keys(KPHX_EXACT_RECOVERED_ASSETS.singleResourceAssets),
+      }))
+      .then((result) => {
+        renderer.domElement.dataset.kphxPackageObjectPlacements = String(result.layer.userData.loadedPlacementCount);
+        renderer.domElement.dataset.kphxPackageObjectResources = String(result.layer.userData.loadedUniqueAssetCount);
+        return result;
+      })
+      .catch((error) => {
+        renderer.domElement.dataset.kphxPackageObjectPlacements = "load-error";
+        renderer.domElement.dataset.kphxPackageObjectResources = "load-error";
+        console.error("RampReady KPHX package object layer failed", error);
+        setMessage(`PHX package object layer failed to load: ${error.message}`);
+        throw error;
+      });
     const groundLoad = installAuthoredKphxGround(THREE, environment)
       .then((ground) => {
         renderer.domElement.dataset.groundSource = environment.userData.groundSource;
@@ -166,7 +183,7 @@ prepared = prepared
         setMessage(\`PHX source aerial failed to load: \${error.message}\`);
         throw error;
       });
-    void Promise.all([terminalLoad, groundLoad, photoGroundLoad])
+    void Promise.all([terminalLoad, packageObjectLoad, groundLoad, photoGroundLoad])
       .then(() => {
         renderer.domElement.dataset.environmentSource = environment.userData.environmentSource;
         renderer.domElement.dataset.groundSource = environment.userData.groundSource;
@@ -232,7 +249,9 @@ if (!prepared.includes('dataset.b15CorridorMeters = environment.userData.trainin
 if (!prepared.includes("installSourceKphxTerminal4Visual(THREE, environment)")) throw new Error("Exact KPHX source terminal runtime loader was not connected");\nif (!prepared.includes("installSourceKphxLandmarks(THREE, environment, sourceAirportFrame)")) throw new Error("Exact KPHX source landmark runtime loader was not connected");\nif (!prepared.includes("installSourceKphxWEDJetways(THREE, environment, sourceAirportFrame)")) throw new Error("Exact KPHX WED jetway runtime loader was not connected");
 if (!prepared.includes("installAuthoredKphxGround(THREE, environment)")) throw new Error("Updated KPHX ground runtime loader was not connected");
 if (!prepared.includes("installAuthoredKphxPhotoGround(THREE, environment)")) throw new Error("Full-airport PHX aerial runtime loader was not connected");
-if (!prepared.includes("Promise.all([terminalLoad, groundLoad, photoGroundLoad])")) throw new Error("Combined PHX terminal/ground/aerial readiness gate was not injected");
+if (!prepared.includes("installKphxPackageOwnedObjectLayer(THREE, environment")) throw new Error("Full KPHX package-owned object layer was not connected");
+if (!prepared.includes("excludeResources: Object.keys(KPHX_EXACT_RECOVERED_ASSETS.singleResourceAssets)")) throw new Error("Recovered exact KPHX objects are not protected from duplicate loading");
+if (!prepared.includes("Promise.all([terminalLoad, packageObjectLoad, groundLoad, photoGroundLoad])")) throw new Error("Combined PHX exact object/ground/aerial readiness gate was not injected");
 if (!prepared.includes('dataset.b15Anchors = environment.userData.b15Anchors?.length === 2 ? "ready" : "missing"')) throw new Error("B15 runtime evidence was not injected");
 if (!prepared.includes("new THREE.PerspectiveCamera(58, 1, 0.1, 8000)")) throw new Error("Airport-wide camera far plane was not injected");
 if (!prepared.includes("new THREE.Fog(0x9fc4e6, 2400, 6500)")) throw new Error("Airport-wide fog range was not injected");
