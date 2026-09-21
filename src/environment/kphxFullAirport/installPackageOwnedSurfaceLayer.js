@@ -1,0 +1,405 @@
+import {
+  KPHX_FULL_AIRPORT_SOURCE,
+} from "./sourceAuthority.js";
+import {
+  KPHX_WED_CURVE_POLICY,
+  flattenWedChain,
+} from "./wedCurves.js";
+
+const DEFAULT_MANIFEST_URL = "/models/kphx-full-airport/surfaces/manifest.json";
+const DEFAULT_NETWORK_URL = "/models/kphx-full-airport/surfaces/surface-network.json";
+
+const LAYER_GROUP_ORDER = Object.freeze({
+  terrain: 0,
+  beaches: 100,
+  shoulders: 200,
+  taxiways: 300,
+  runways: 400,
+  markings: 500,
+  airports: 600,
+  roads: 700,
+  objects: 800,
+  light_objects: 900,
+  cars: 1000,
+});
+
+function layerOrder(layerGroup, fallbackGroup) {
+  const group = layerGroup?.group || fallbackGroup;
+  const offset = Number(layerGroup?.offset || 0);
+  return (LAYER_GROUP_ORDER[group] ?? LAYER_GROUP_ORDER[fallbackGroup] ?? 0) + offset;
+}
+
+function resourceAssetUrl(resource, image) {
+  if (!image) return null;
+  return `${resource.outputBaseUrl}/${image.outputName}`;
+}
+
+async function loadTexture(THREE, loader, url, { color = true } = {}) {
+  if (!url) return null;
+  const texture = await loader.loadAsync(url);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function polygonUv(point, headingDegrees, scaleMeters) {
+  const heading = Number(headingDegrees || 0) * Math.PI / 180;
+  const east = point.z - KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition[2];
+  const north = point.x - KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition[0];
+  const cos = Math.cos(heading);
+  const sin = Math.sin(heading);
+  const uMeters = east * cos + north * sin;
+  const vMeters = -east * sin + north * cos;
+  return [
+    uMeters / scaleMeters[0],
+    vMeters / scaleMeters[1],
+  ];
+}
+
+function triangulateRings(THREE, rings) {
+  const flatRings = rings
+    .map((ring) => flattenWedChain(ring.nodes, { closed: true }))
+    .filter((ring) => ring.length >= 3);
+  if (!flatRings.length) return null;
+
+  const contour = flatRings[0].map((point) => new THREE.Vector2(point.x, point.z));
+  const holes = flatRings.slice(1).map((ring) => ring.map((point) => new THREE.Vector2(point.x, point.z)));
+  const faces = THREE.ShapeUtils.triangulateShape(contour, holes);
+  const points = [...flatRings[0], ...flatRings.slice(1).flat()];
+  return { flatRings, points, faces };
+}
+
+function createPolygonGeometry(THREE, placement, art) {
+  const data = triangulateRings(THREE, placement.rings || []);
+  if (!data) return null;
+  const positions = [];
+  const normals = [];
+  const uvs = [];
+  for (const point of data.points) {
+    positions.push(point.x, 0, point.z);
+    normals.push(0, 1, 0);
+    uvs.push(...polygonUv(point, placement.placement?.heading, art.scaleMeters));
+  }
+  const indices = data.faces.flat();
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  return geometry;
+}
+
+function lineFrames(points, closed) {
+  const frames = [];
+  const count = points.length;
+  for (let index = 0; index < count; index += 1) {
+    const current = points[index];
+    const previous = points[index > 0 ? index - 1 : (closed ? count - 1 : 0)];
+    const next = points[index < count - 1 ? index + 1 : (closed ? 0 : count - 1)];
+    let tx = next.x - previous.x;
+    let tz = next.z - previous.z;
+    let length = Math.hypot(tx, tz);
+    if (length < 1e-8) {
+      tx = next.x - current.x;
+      tz = next.z - current.z;
+      length = Math.hypot(tx, tz) || 1;
+    }
+    tx /= length;
+    tz /= length;
+    frames.push({ nx: -tz, nz: tx });
+  }
+  return frames;
+}
+
+function lineDistances(points, closed) {
+  const distance = [0];
+  for (let index = 1; index < points.length; index += 1) {
+    distance[index] = distance[index - 1] + Math.hypot(
+      points[index].x - points[index - 1].x,
+      points[index].z - points[index - 1].z,
+    );
+  }
+  if (closed) {
+    distance.closedLength = distance.at(-1) + Math.hypot(
+      points[0].x - points.at(-1).x,
+      points[0].z - points.at(-1).z,
+    );
+  }
+  return distance;
+}
+
+function createLineGeometry(THREE, placement, art, offset) {
+  const closed = placement.closed === true;
+  const points = flattenWedChain(placement.nodes || [], { closed });
+  if (points.length < 2) return null;
+
+  const leftMeters = (offset.center - offset.left) / art.textureWidth * art.scaleMeters[0];
+  const rightMeters = (offset.right - offset.center) / art.textureWidth * art.scaleMeters[0];
+  const frames = lineFrames(points, closed);
+  const distances = lineDistances(points, closed);
+  const positions = [];
+  const normals = [];
+  const uvs = [];
+
+  const appendCrossSection = (point, frame, v) => {
+    const columns = [
+      { distance: leftMeters, u: offset.left / art.textureWidth },
+      { distance: 0, u: offset.center / art.textureWidth },
+      { distance: -rightMeters, u: offset.right / art.textureWidth },
+    ];
+    for (const column of columns) {
+      positions.push(
+        point.x + frame.nx * column.distance,
+        0,
+        point.z + frame.nz * column.distance,
+      );
+      normals.push(0, 1, 0);
+      uvs.push(column.u, v);
+    }
+  };
+
+  for (let index = 0; index < points.length; index += 1) {
+    appendCrossSection(points[index], frames[index], distances[index] / art.scaleMeters[1]);
+  }
+  if (closed) {
+    appendCrossSection(points[0], frames[0], distances.closedLength / art.scaleMeters[1]);
+  }
+
+  const crossSectionCount = closed ? points.length + 1 : points.length;
+  const indices = [];
+  for (let index = 0; index < crossSectionCount - 1; index += 1) {
+    const a = index * 3;
+    const b = (index + 1) * 3;
+    indices.push(
+      a, b, a + 1,
+      a + 1, b, b + 1,
+      a + 1, b + 1, a + 2,
+      a + 2, b + 1, b + 2,
+    );
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  geometry.userData = {
+    xPlaneLineLeftMeters: leftMeters,
+    xPlaneLineRightMeters: rightMeters,
+    xPlaneMirror: art.mirror === true,
+    xPlaneSOffset: offset,
+  };
+  return geometry;
+}
+
+function installDecalShader(THREE, material, decalResource, decalTexture) {
+  if (!decalResource?.decals?.length || !decalTexture) return;
+  if (decalResource.decals.length !== 1) {
+    throw new Error("KPHX runtime currently supports exactly one DECAL_PARAMS effect per local decal file");
+  }
+  const decal = decalResource.decals[0];
+  if (decal.type !== "DECAL_PARAMS") throw new Error(`Unsupported decal type: ${decal.type}`);
+  if (Math.abs(decal.rgbKey[4]) > 1e-12 || Math.abs(decal.alphaKey[4]) > 1e-12) {
+    throw new Error("KPHX runtime refuses non-zero X-Plane decal modulator terms without a documented shader input");
+  }
+
+  material.userData.xPlaneDecal = decal;
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.kphxDecalMap = { value: decalTexture };
+    shader.uniforms.kphxDecalScale = { value: decal.scaleRatio };
+    shader.uniforms.kphxDecalRgbKey = { value: new THREE.Vector4(...decal.rgbKey.slice(0, 4)) };
+    shader.uniforms.kphxDecalRgbConstant = { value: decal.rgbKey[5] };
+    shader.uniforms.kphxDecalAlphaKey = { value: new THREE.Vector4(...decal.alphaKey.slice(0, 4)) };
+    shader.uniforms.kphxDecalAlphaConstant = { value: decal.alphaKey[5] };
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        "#include <map_pars_fragment>",
+        `#include <map_pars_fragment>
+uniform sampler2D kphxDecalMap;
+uniform float kphxDecalScale;
+uniform vec4 kphxDecalRgbKey;
+uniform float kphxDecalRgbConstant;
+uniform vec4 kphxDecalAlphaKey;
+uniform float kphxDecalAlphaConstant;
+vec3 kphxHardLight(vec3 base, vec3 blend) {
+  vec3 low = 2.0 * base * blend;
+  vec3 high = 1.0 - 2.0 * (1.0 - base) * (1.0 - blend);
+  return mix(low, high, step(vec3(0.5), blend));
+}`,
+      )
+      .replace(
+        "#include <map_fragment>",
+        `#include <map_fragment>
+#ifdef USE_MAP
+  vec4 kphxDetail = texture2D(kphxDecalMap, vMapUv * kphxDecalScale);
+  float kphxRgbWeight = clamp(dot(diffuseColor, kphxDecalRgbKey) + kphxDecalRgbConstant, 0.0, 1.0);
+  float kphxAlphaWeight = clamp(dot(diffuseColor, kphxDecalAlphaKey) + kphxDecalAlphaConstant, 0.0, 1.0);
+  diffuseColor.rgb = mix(diffuseColor.rgb, kphxHardLight(diffuseColor.rgb, kphxDetail.rgb), kphxRgbWeight);
+  diffuseColor.rgb = mix(diffuseColor.rgb, kphxHardLight(diffuseColor.rgb, vec3(kphxDetail.a)), kphxAlphaWeight);
+#endif`,
+      );
+    material.userData.kphxShader = shader;
+  };
+  material.customProgramCacheKey = () => `kphx-xplane-decal-${JSON.stringify(decal)}`;
+}
+
+async function createArtMaterial(THREE, textureLoader, art, fallbackGroup) {
+  const map = await loadTexture(THREE, textureLoader, resourceAssetUrl(art, art.texture), { color: true });
+  const normalMap = await loadTexture(THREE, textureLoader, resourceAssetUrl(art, art.normal), { color: false });
+  const material = new THREE.MeshStandardMaterial({
+    map,
+    normalMap,
+    roughness: 0.9,
+    metalness: 0,
+    transparent: art.noAlpha !== true,
+    alphaTest: art.noAlpha === true ? 0 : 0.001,
+    side: THREE.DoubleSide,
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1,
+  });
+  if (normalMap && Number.isFinite(art.normalScale)) {
+    material.normalScale.set(art.normalScale, art.normalScale);
+  }
+  const order = layerOrder(art.layerGroup, fallbackGroup);
+  material.userData.xPlaneLayerOrder = order;
+  material.userData.xPlaneArtResource = art.sourceResource;
+
+  if (art.decal?.decals?.length) {
+    const decalImage = art.decal.decals[0].image;
+    const decalTexture = await loadTexture(THREE, textureLoader, resourceAssetUrl(art, decalImage), { color: true });
+    installDecalShader(THREE, material, art.decal, decalTexture);
+    material.userData.xPlaneDecalTexture = decalTexture;
+  }
+  return material;
+}
+
+export async function installKphxPackageOwnedSurfaceLayer(
+  THREE,
+  environment,
+  {
+    manifestUrl = DEFAULT_MANIFEST_URL,
+    networkUrl = DEFAULT_NETWORK_URL,
+    textureLoader = new THREE.TextureLoader(),
+    strict = true,
+  } = {},
+) {
+  if (!environment?.add) throw new Error("KPHX surface loader requires a Three.js environment group");
+
+  const [manifestResponse, networkResponse] = await Promise.all([
+    fetch(manifestUrl, { cache: "no-cache" }),
+    fetch(networkUrl, { cache: "no-cache" }),
+  ]);
+  if (!manifestResponse.ok) throw new Error(`KPHX surface manifest returned HTTP ${manifestResponse.status}`);
+  if (!networkResponse.ok) throw new Error(`KPHX surface network returned HTTP ${networkResponse.status}`);
+  const [manifest, network] = await Promise.all([manifestResponse.json(), networkResponse.json()]);
+
+  if (manifest?.source?.version !== KPHX_FULL_AIRPORT_SOURCE.packageVersion) {
+    throw new Error(`KPHX surface/source version mismatch: ${manifest?.source?.version || "unknown"}`);
+  }
+  if (strict && manifest.failures?.length) {
+    throw new Error(`KPHX surface manifest contains ${manifest.failures.length} materialization failures`);
+  }
+
+  const layer = new THREE.Group();
+  layer.name = "KPHX_FULL_AIRPORT_PACKAGE_SURFACES";
+  const materials = new Map();
+  const failures = [];
+  let polygonCount = 0;
+  let lineMeshCount = 0;
+
+  async function materialFor(resourceName, fallbackGroup) {
+    const key = `${resourceName}|${fallbackGroup}`;
+    if (materials.has(key)) return materials.get(key);
+    const art = manifest.resources?.[resourceName];
+    if (!art) throw new Error(`Materialized KPHX surface resource missing from manifest: ${resourceName}`);
+    const material = await createArtMaterial(THREE, textureLoader, art, fallbackGroup);
+    materials.set(key, material);
+    return material;
+  }
+
+  for (const placement of network.polygons.filter((entry) => entry.sourceClass === "package-owned")) {
+    try {
+      const art = manifest.resources[placement.resource];
+      const geometry = createPolygonGeometry(THREE, placement, art);
+      if (!geometry) continue;
+      const material = await materialFor(placement.resource, "taxiways");
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = `KPHX_POL_${placement.id}_${placement.name}`;
+      mesh.renderOrder = material.userData.xPlaneLayerOrder;
+      mesh.receiveShadow = true;
+      mesh.userData = {
+        kphxFullAirport: true,
+        kphxSurface: true,
+        wedObjectId: placement.id,
+        sourceResource: placement.resource,
+        physicalSurface: art.surface,
+        xPlaneLayerGroup: art.layerGroup,
+      };
+      layer.add(mesh);
+      polygonCount += 1;
+    } catch (error) {
+      failures.push({ type: "polygon", id: placement.id, resource: placement.resource, message: error instanceof Error ? error.message : String(error) });
+    }
+  }
+
+  for (const placement of network.lines.filter((entry) => entry.sourceClass === "package-owned")) {
+    try {
+      const art = manifest.resources[placement.resource];
+      const material = await materialFor(placement.resource, "markings");
+      for (const offset of art.sOffsets) {
+        const geometry = createLineGeometry(THREE, placement, art, offset);
+        if (!geometry) continue;
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.name = `KPHX_LIN_${placement.id}_L${offset.layer}_${placement.name}`;
+        mesh.renderOrder = material.userData.xPlaneLayerOrder + offset.layer * 0.001;
+        mesh.receiveShadow = true;
+        mesh.userData = {
+          kphxFullAirport: true,
+          kphxSurface: true,
+          wedObjectId: placement.id,
+          sourceResource: placement.resource,
+          xPlaneLayerGroup: art.layerGroup,
+          xPlaneLineLayer: offset.layer,
+          xPlaneMirror: art.mirror,
+        };
+        layer.add(mesh);
+        lineMeshCount += 1;
+      }
+    } catch (error) {
+      failures.push({ type: "line", id: placement.id, resource: placement.resource, message: error instanceof Error ? error.message : String(error) });
+    }
+  }
+
+  layer.userData = {
+    kphxFullAirport: true,
+    sourceVersion: manifest.source.version,
+    curvePolicy: KPHX_WED_CURVE_POLICY,
+    polygonCount,
+    lineMeshCount,
+    materialCount: materials.size,
+    failures,
+    ready: failures.length === 0,
+    externalPolygonCount: network.polygons.filter((entry) => entry.sourceClass !== "package-owned").length,
+    externalLineCount: network.lines.filter((entry) => entry.sourceClass !== "package-owned").length,
+  };
+
+  if (strict && failures.length) {
+    materials.forEach((material) => material.dispose());
+    layer.traverse((child) => child.geometry?.dispose?.());
+    throw new Error(`KPHX package surface layer failed for ${failures.length} WED placements`);
+  }
+
+  environment.add(layer);
+  environment.userData = {
+    ...(environment.userData || {}),
+    kphxFullAirportSurfaces: { ...layer.userData },
+  };
+  return { layer, manifest, network, ready: layer.userData.ready, failures };
+}
