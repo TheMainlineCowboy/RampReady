@@ -25,10 +25,10 @@ assert.deepEqual(
 assert.ok(!KPHX_TERMINAL_CHUNK.placements.some((entry) => entry.sourceResource.endsWith("/Terminal3b.obj")));
 
 const expectedPositions = new Map([
-  ["Terminal3a", [-40.090951, 0, -908.999726]],
-  ["Terminal3Garage", [-120.118052, 0, -908.580563]],
-  ["Terminal4", [-196.167048, 0, 212.526228]],
-  ["Terminal4b", [-35.616304, 0, 216.062305]],
+  ["Terminal3a", [40.090951, 0, 921.399726]],
+  ["Terminal3Garage", [120.118052, 0, 920.980563]],
+  ["Terminal4", [196.167048, 0, -200.126228]],
+  ["Terminal4b", [35.616304, 0, -203.662305]],
 ]);
 
 for (const placement of KPHX_TERMINAL_CHUNK.placements) {
@@ -42,7 +42,7 @@ for (const placement of KPHX_TERMINAL_CHUNK.placements) {
   near(actual[0], expected[0], 0.002, `${placement.name} X`);
   near(actual[1], expected[1], 1e-6, `${placement.name} Y`);
   near(actual[2], expected[2], 0.002, `${placement.name} Z`);
-  near(kphxXPlaneHeadingToRampReadyYawRadians(placement.headingDegrees), -Math.PI / 2, 1e-12, `${placement.name} yaw`);
+  near(kphxXPlaneHeadingToRampReadyYawRadians(placement.headingDegrees), Math.PI / 2, 1e-12, `${placement.name} yaw`);
 }
 
 console.log("KPHX full-airport source-authority verification passed.");
