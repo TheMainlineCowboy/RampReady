@@ -124,7 +124,11 @@ export async function installKphxPackageOwnedObjectLayer(
 
   const allowedPrefixes = resourcePrefixes ? new Set(resourcePrefixes) : null;
   const excluded = new Set(excludeResources || []);
-  const placements = (manifest.packageOwned?.placements || []).filter((placement) => {
+  const allPlacements = [
+    ...(manifest.packageOwned?.placements || []),
+    ...(manifest.resolvedExternal?.placements || []),
+  ];
+  const placements = allPlacements.filter((placement) => {
     if (excluded.has(placement.resource)) return false;
     if (!allowedPrefixes) return true;
     return allowedPrefixes.has(placement.resourcePrefix);
@@ -216,6 +220,8 @@ export async function installKphxPackageOwnedObjectLayer(
       loadedPlacementCount,
       uniqueAssetCount: assetUrls.length,
       loadedUniqueAssetCount: templates.size,
+      resolvedExternalPlacementCount: manifest.resolvedExternal?.materializedPlacementCount || 0,
+      resolvedExternalUniqueResourceCount: manifest.resolvedExternal?.materializedUniqueResourceCount || 0,
       externalLibraryPlacementCount: manifest.externalLibraries?.placementCount || 0,
       externalLibraryUniqueResourceCount: manifest.externalLibraries?.uniqueResourceCount || 0,
     },
