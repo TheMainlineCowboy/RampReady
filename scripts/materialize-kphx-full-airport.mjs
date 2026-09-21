@@ -266,6 +266,8 @@ const packagePlacements = placementReport.placements.packageOwned;
 const externalPlacements = placementReport.placements.externalLibraries
   .filter((entry) => includeExternalPrefixes.has(entry.resourcePrefix));
 const selectedPlacements = [...packagePlacements, ...externalPlacements];
+const packageUniqueResources = [...new Set(packagePlacements.map((entry) => normalizeResource(entry.resource)))].sort();
+const externalUniqueResources = [...new Set(externalPlacements.map((entry) => normalizeResource(entry.resource)))].sort();
 const uniqueResources = [...new Set(selectedPlacements.map((entry) => normalizeResource(entry.resource)))].sort();
 
 const resources = {};
@@ -322,15 +324,16 @@ const manifest = {
   packageOwned: {
     expectedPlacementCount: packagePlacements.length,
     materializedPlacementCount: runtimePlacements.length,
-    expectedUniqueResourceCount: uniqueResources.length,
-    materializedUniqueResourceCount: Object.keys(resources).length,
+    expectedUniqueResourceCount: packageUniqueResources.length,
+    materializedUniqueResourceCount: packageUniqueResources.filter((resource) => resources[resource]).length,
     resources,
     placements: runtimePlacements,
   },
   resolvedExternal: {
     prefixes: [...includeExternalPrefixes],
     materializedPlacementCount: runtimeExternalPlacements.length,
-    materializedUniqueResourceCount: new Set(runtimeExternalPlacements.map((entry) => entry.resource)).size,
+    expectedUniqueResourceCount: externalUniqueResources.length,
+    materializedUniqueResourceCount: externalUniqueResources.filter((resource) => resources[resource]).length,
     placements: runtimeExternalPlacements,
   },
   externalLibraries: {
@@ -345,14 +348,15 @@ await fs.writeFile(runtimeManifestPath, `${JSON.stringify(manifest, null, 2)}\n`
 await fs.writeFile(materializationReportPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 
 if (failures.length) {
-  throw new Error(`KPHX full-airport materialization incomplete: ${failures.length} of ${uniqueResources.length} package-owned resources failed. See ${materializationReportPath}`);
+  throw new Error(`KPHX full-airport materialization incomplete: ${failures.length} of ${uniqueResources.length} selected WED resources failed. See ${materializationReportPath}`);
 }
 
 console.log(JSON.stringify({
   runtimeManifestPath,
   materializationReportPath,
   packageOwnedPlacements: runtimePlacements.length,
-  packageOwnedUniqueResources: Object.keys(resources).length,
+  packageOwnedUniqueResources: packageUniqueResources.filter((resource) => resources[resource]).length,
+  resolvedExternalUniqueResources: externalUniqueResources.filter((resource) => resources[resource]).length,
   resolvedExternalPlacements: runtimeExternalPlacements.length,
   resolvedExternalPrefixes: [...includeExternalPrefixes],
   externalLibraryPlacementsTracked: manifest.externalLibraries.placementCount,
