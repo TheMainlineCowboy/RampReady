@@ -94,7 +94,7 @@ for (const range of drawRanges) {
 
 const harmless = new Set([
   "I", "800", "OBJ", "TEXTURE", "TEXTURE_LIT", "POINT_COUNTS",
-  "VT", "IDX", "IDX10", "TRIS", "#",
+  "VT", "IDX", "IDX10", "TRIS", "LIGHT_PARAM", "#",
   "ATTR_shade_smooth", "ATTR_shade_flat",
   "ATTR_no_hard", "ATTR_hard",
   "ATTR_cull", "ATTR_no_cull",
@@ -273,7 +273,7 @@ const gltf = {
   textures,
   materials,
   meshes: [{ name, primitives }],
-  nodes: [{ name, mesh: 0 }],
+  nodes: [{ name, mesh: 0, extras: { xPlaneParameterizedLights: parameterizedLights } }],
   scenes: [{ nodes: [0] }],
   scene: 0,
   extras: {
