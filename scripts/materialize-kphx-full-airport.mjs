@@ -3,6 +3,11 @@ import { execFile as execFileCallback, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import fs from "node:fs/promises";
 import path from "node:path";
+import {
+  KPHX_EXACT_RECOVERED_ASSETS,
+  kphxExactAssetForResource,
+  kphxExactPackedMeshNameForResource,
+} from "../src/environment/kphxFullAirport/exactAssetCatalog.js";
 
 const execFile = promisify(execFileCallback);
 
@@ -53,7 +58,12 @@ async function readObjTextureRefs(objPath) {
   let lit = null;
   for (const line of source.split(/\r?\n/)) {
     const trimmed = line.trim();
-    if (trimmed.startsWith("TEXTURE\t") || trimmed.startsWith("TEXTURE ")) {
+    if (
+      trimmed.startsWith("TEXTURE\t")
+      || trimmed.startsWith("TEXTURE ")
+      || trimmed.startsWith("TEXTURE_DRAPED\t")
+      || trimmed.startsWith("TEXTURE_DRAPED ")
+    ) {
       diffuse = trimmed.split(/\s+/).slice(1).join(" ");
     } else if (trimmed.startsWith("TEXTURE_LIT\t") || trimmed.startsWith("TEXTURE_LIT ")) {
       lit = trimmed.split(/\s+/).slice(1).join(" ");
@@ -142,6 +152,34 @@ async function materializeTexture(sourcePath, requested, outputDirectory) {
 
 async function convertObject(resource) {
   const safeResource = safeRelative(resource);
+
+  const exactSingle = kphxExactAssetForResource(safeResource);
+  if (exactSingle) {
+    return {
+      sourceResource: safeResource,
+      recoveredExact: true,
+      sourceAuthority: "verified-recovered-exact-kphx-runtime",
+      sourceSha256: exactSingle.sourceSha256,
+      assetUrl: exactSingle.assetUrl,
+      runtimeSha256: exactSingle.runtimeSha256,
+      runtimeBytes: exactSingle.runtimeBytes,
+    };
+  }
+
+  const packedMeshName = kphxExactPackedMeshNameForResource(safeResource);
+  if (packedMeshName) {
+    const pack = KPHX_EXACT_RECOVERED_ASSETS.packedAssets.gateNumbers;
+    return {
+      sourceResource: safeResource,
+      recoveredExact: true,
+      sourceAuthority: "assets/kphx-source/exact-gate-numbers.json",
+      assetUrl: pack.assetUrl,
+      packedMeshName,
+      runtimeSha256: pack.runtimeSha256,
+      runtimeBytes: pack.runtimeBytes,
+    };
+  }
+
   const sourcePath = path.join(sourceRoot, safeResource);
   if (!(await exists(sourcePath))) throw new Error(`Package-owned WED resource missing: ${safeResource}`);
 
@@ -229,6 +267,8 @@ const runtimePlacements = packagePlacements
     ...placement,
     resource: normalizeResource(placement.resource),
     assetUrl: resources[normalizeResource(placement.resource)].assetUrl,
+    packedMeshName: resources[normalizeResource(placement.resource)].packedMeshName || null,
+    recoveredExact: resources[normalizeResource(placement.resource)].recoveredExact === true,
   }));
 
 const manifest = {
