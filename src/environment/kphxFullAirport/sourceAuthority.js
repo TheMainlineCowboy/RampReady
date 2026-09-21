@@ -28,7 +28,7 @@ export const KPHX_FULL_AIRPORT_SOURCE = Object.freeze({
     rampReadyPosition: Object.freeze([0, 0, 6.2]),
   }),
   geometryPolicy: "preserve-source-positions-normals-uvs-indices-no-remesh-no-decimation",
-  placementPolicy: "derive-all-runtime-transforms-from-earth.wed.xml-relative-to-a1",
+  placementPolicy: "derive-all-runtime-transforms-from-earth.wed.xml-relative-to-a1-and-match-verified-source-airport-frame",
 });
 
 function degreesToRadians(value) {
@@ -74,16 +74,16 @@ export function kphxWedToRampReadyPosition(latitudeDegrees, longitudeDegrees, el
     + cosAnchorLatitude * dz;
 
   return [
-    north + KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition[0],
+    -north + KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition[0],
     elevationMeters + KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition[1],
-    east + KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition[2],
+    -east + KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition[2],
   ];
 }
 
 export function kphxXPlaneHeadingToRampReadyYawRadians(headingDegrees = 0) {
-  return degreesToRadians(-90 - headingDegrees);
+  return degreesToRadians(90 - headingDegrees);
 }
 
 export function kphxObj8VectorToRampReady([x, y, z]) {
-  return [-z, y, x];
+  return [z, y, -x];
 }
