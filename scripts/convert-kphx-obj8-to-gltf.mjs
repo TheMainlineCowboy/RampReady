@@ -18,6 +18,7 @@ const vertices = [];
 const indices = [];
 const drawRanges = [];
 const commands = new Map();
+const parameterizedLights = [];
 let sourceTexture = null;
 let sourceLitTexture = null;
 let pointCounts = null;
@@ -31,6 +32,7 @@ const drawState = {
   layerGroupDraped: null,
   lodDraped: null,
   emissionRgb: [0, 0, 0],
+  lodRange: null,
 };
 
 const bump = (key) => commands.set(key, (commands.get(key) || 0) + 1);
@@ -51,6 +53,26 @@ for (const rawLine of source.split(/\r?\n/)) {
     vertices.push(parts.slice(1, 9).map(Number));
   } else if (command === "IDX" || command === "IDX10") {
     indices.push(...parts.slice(1).map(Number));
+  } else if (command === "LIGHT_PARAM") {
+    if (parts.length < 5) throw new Error(`Malformed LIGHT_PARAM record: ${line}`);
+    parameterizedLights.push({
+      name: parts[1],
+      position: parts.slice(2, 5).map(Number),
+      params: parts.slice(5).map(Number),
+      raw: line,
+    });
+  } else if (command === "ATTR_draped") drawState.draped = true;
+  else if (command === "ATTR_no_draped") drawState.draped = false;
+  else if (command === "ATTR_layer_group_draped") {
+    if (parts.length < 3) throw new Error(`Malformed ATTR_layer_group_draped record: ${line}`);
+    drawState.layerGroupDraped = { group: parts[1], offset: Number(parts[2]) };
+  } else if (command === "ATTR_LOD_draped") {
+    drawState.lodDraped = Number(parts[1]);
+  } else if (command === "ATTR_LOD") {
+    if (parts.length < 3) throw new Error(`Malformed ATTR_LOD record: ${line}`);
+    drawState.lodRange = [Number(parts[1]), Number(parts[2])];
+  } else if (command === "ATTR_emission_rgb") {
+    drawState.emissionRgb = parts.slice(1, 4).map(Number);
   } else if (command === "TRIS") {
     if (parts.length !== 3) throw new Error(`Malformed TRIS record: ${line}`);
     if (drawState.drawEnabled) {
@@ -108,6 +130,7 @@ const harmless = new Set([
   "ATTR_draped", "ATTR_no_draped",
   "ATTR_emission_rgb",
   "ATTR_LOD_draped",
+  "ATTR_LOD",
   "ATTR_layer_group_draped",
   "ATTR_no_solid_camera", "ATTR_solid_camera",
 ]);
@@ -233,6 +256,7 @@ function materialIndexForState(state) {
     draped: state.draped,
     layerGroupDraped: state.layerGroupDraped,
     emissionRgb: state.emissionRgb,
+    lodRange: state.lodRange,
   });
   if (materialByState.has(key)) return materialByState.get(key);
   const material = {
@@ -250,6 +274,7 @@ function materialIndexForState(state) {
       xPlaneLayerGroupDraped: state.layerGroupDraped,
       xPlaneLodDraped: state.lodDraped,
       xPlaneEmissionRgb: state.emissionRgb,
+      xPlaneLodRange: state.lodRange,
     },
   };
   if (images.length > 1) {
@@ -310,6 +335,8 @@ const gltf = {
     indexCount: indices.length,
     triangleCount: drawRanges.reduce((sum, range) => sum + range.count, 0) / 3,
     drawRanges,
+    parameterizedLightCount: parameterizedLights.length,
+    parameterizedLights,
     sourceBounds: { min: accessors[positionAccessor].min, max: accessors[positionAccessor].max },
     geometryPolicy: "preserve-source-positions-normals-uvs-indices-no-remesh-no-decimation",
     drawStatePolicy: "preserve-supported-per-TRIS-blend-and-cull-state;reject-unsupported-render-state",
