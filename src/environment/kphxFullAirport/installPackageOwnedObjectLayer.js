@@ -7,6 +7,25 @@ import {
 
 const DEFAULT_MANIFEST_URL = "/models/kphx-full-airport/manifest.json";
 
+const XPLANE_LAYER_ORDER = Object.freeze({
+  terrain: 0,
+  beaches: 100,
+  shoulders: 200,
+  taxiways: 300,
+  runways: 400,
+  markings: 500,
+  airports: 600,
+  roads: 700,
+  objects: 800,
+  light_objects: 900,
+  cars: 1000,
+});
+
+function xPlaneLayerOrder(layer) {
+  if (!layer?.group) return null;
+  return (XPLANE_LAYER_ORDER[layer.group] ?? 0) + Number(layer.offset || 0);
+}
+
 async function mapWithConcurrency(items, limit, worker) {
   const results = new Array(items.length);
   let cursor = 0;
@@ -52,11 +71,26 @@ function preparePlacementRoot(root, placement) {
     node.castShadow = true;
     node.receiveShadow = true;
     node.frustumCulled = true;
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    let authoredLayer = placement.layerGroupDraped || null;
+    for (const material of materials) {
+      const materialLayer = material?.userData?.xPlaneLayerGroupDraped || null;
+      if (materialLayer) authoredLayer = materialLayer;
+      if (authoredLayer && material) {
+        material.polygonOffset = true;
+        material.polygonOffsetFactor = -1;
+        material.polygonOffsetUnits = -1;
+        material.needsUpdate = true;
+      }
+    }
+    const renderOrder = xPlaneLayerOrder(authoredLayer);
+    if (renderOrder !== null) node.renderOrder = renderOrder;
     node.userData = {
       ...(node.userData || {}),
       kphxFullAirport: true,
       sourceResource: placement.resource,
       wedObjectId: placement.id,
+      xPlaneLayerGroupDraped: authoredLayer,
     };
   });
 
