@@ -42,7 +42,8 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y p7zip-full imagemagick
+          sudo apt-get install -y p7zip-full imagemagick git-lfs
+          git lfs install
           mkdir -p "$HOME/bin"
           cat > "$HOME/bin/magick" <<'SH'
           #!/usr/bin/env bash
@@ -90,18 +91,86 @@ jobs:
             cp "$SOURCE_ROOT/sam.xml" assets/kphx-source/KPHX-1.75.1/sam.xml
           fi
 
+      - name: Extract WED dependency requests
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node scripts/extract-kphx-wed-object-placements.mjs             "${{ steps.source.outputs.wed }}"             reports/kphx-full-airport-wed-placements.json
+          node scripts/extract-kphx-wed-surface-network.mjs             "${{ steps.source.outputs.wed }}"             reports/kphx-wed-surface-network.json             reports/kphx-zdp-requested-resources.json             reports/kphx-zdp-library-map.json             assets/kphx-source/dependencies/ZDP_Library-1.2.0
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const objects = JSON.parse(fs.readFileSync("reports/kphx-full-airport-wed-placements.json", "utf8"));
+          const surfaces = JSON.parse(fs.readFileSync("reports/kphx-wed-surface-network.json", "utf8"));
+          const requested = new Set();
+          for (const placement of objects.placements.externalLibraries) {
+            if (placement.resourcePrefix === "ZDP_Library") requested.add(placement.resource);
+          }
+          for (const group of ["polygons", "lines", "drapedOrthophotos", "strings"]) {
+            for (const placement of surfaces[group] || []) {
+              if (placement.resourcePrefix === "ZDP_Library") requested.add(placement.resource);
+            }
+          }
+          const resources = [...requested].sort();
+          fs.writeFileSync("reports/kphx-zdp-requested-resources.json", JSON.stringify({
+            authority: "KPHX-1.75.1-earth.wed.xml",
+            dependency: "ZDP_Library",
+            tag: "1.2.0",
+            commitPrefix: "4b44b673",
+            resources,
+          }, null, 2) + "\n");
+          console.log(`KPHX requests ${resources.length} unique ZDP virtual resources.`);
+          NODE
+
+      - name: Fetch exact ZDP Library 1.2.0 dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .kphx-deps/zdp-library
+          mkdir -p .kphx-deps
+          git clone --depth 1 --branch 1.2.0             https://gitlab.com/StableSystem/zdp-library.git             .kphx-deps/zdp-library
+          (
+            cd .kphx-deps/zdp-library
+            git lfs pull
+            COMMIT="$(git rev-parse HEAD)"
+            case "$COMMIT" in
+              4b44b673*) ;;
+              *) echo "Unexpected ZDP 1.2.0 commit: $COMMIT" >&2; exit 1 ;;
+            esac
+          )
+          mkdir -p assets/kphx-source/dependencies/ZDP_Library-1.2.0
+          find .kphx-deps/zdp-library -maxdepth 1 -type f \(             -iname 'license*' -o -iname 'readme*' -o -iname 'library.txt'           \) -exec cp '{}' assets/kphx-source/dependencies/ZDP_Library-1.2.0/ \;
+          cat > assets/kphx-source/dependencies/ZDP_Library-1.2.0/SOURCE.json <<'JSON'
+          {
+            "name": "Zero Dollar Payware Library",
+            "virtualPrefix": "ZDP_Library",
+            "version": "1.2.0",
+            "tag": "1.2.0",
+            "commitPrefix": "4b44b673",
+            "source": "https://gitlab.com/StableSystem/zdp-library",
+            "license": "CC BY-NC 4.0",
+            "purpose": "Exact KPHX 1.75.1 WED dependency; no substitute assets"
+          }
+          JSON
+
+      - name: Resolve exact ZDP virtual resources used by KPHX
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/resolve-xplane-library.mjs             .kphx-deps/zdp-library             reports/kphx-zdp-requested-resources.json             reports/kphx-zdp-library-map.json             --virtual-prefix=ZDP_Library
+
       - name: Materialize all package-owned WED object resources
         shell: bash
         run: |
           set -euo pipefail
           rm -rf public/models/kphx-full-airport
-          node scripts/materialize-kphx-full-airport.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport
+          node scripts/materialize-kphx-full-airport.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport             --library-map=reports/kphx-zdp-library-map.json             --include-external-prefixes=ZDP_Library
 
       - name: Materialize exact WED pavement and painted-line resources
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/materialize-kphx-surface-resources.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport/surfaces
+          node scripts/materialize-kphx-surface-resources.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport/surfaces             --library-map=reports/kphx-zdp-library-map.json             --include-external-prefixes=ZDP_Library
 
       - name: Verify exact source contracts
         shell: bash
@@ -120,6 +189,19 @@ jobs:
             throw new Error("Package-owned WED resource count is incomplete");
           }
           NODE
+
+      - name: Preserve exact ZDP dependency source in GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ZDP_ARCHIVE=".kphx-source/ZDP_Library-1.2.0.tar.gz"
+          tar --exclude='.git' -czf "$ZDP_ARCHIVE" -C .kphx-deps zdp-library
+          if ! gh release view "kphx-dependency-zdp-1.2.0" >/dev/null 2>&1; then
+            gh release create "kphx-dependency-zdp-1.2.0"               --target kphx-full-airport-import               --title "KPHX dependency: ZDP Library 1.2.0"               --notes "Exact ZDP Library 1.2.0 source dependency used by KPHX 1.75.1. Upstream license: CC BY-NC 4.0. Upstream: https://gitlab.com/StableSystem/zdp-library"
+          fi
+          gh release upload "kphx-dependency-zdp-1.2.0" "$ZDP_ARCHIVE" --clobber
 
       - name: Preserve untouched source archive in GitHub release
         shell: bash
