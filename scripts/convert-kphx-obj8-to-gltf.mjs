@@ -21,10 +21,16 @@ const commands = new Map();
 let sourceTexture = null;
 let sourceLitTexture = null;
 let pointCounts = null;
-let alphaMode = "OPAQUE";
-let doubleSided = true;
+const drawState = {
+  alphaMode: "OPAQUE",
+  doubleSided: true,
+  shade: "smooth",
+  depthTest: true,
+  drawEnabled: true,
+};
 
 const bump = (key) => commands.set(key, (commands.get(key) || 0) + 1);
+const snapshotState = () => ({ ...drawState });
 
 for (const rawLine of source.split(/\r?\n/)) {
   const line = rawLine.trim();
@@ -43,11 +49,23 @@ for (const rawLine of source.split(/\r?\n/)) {
     indices.push(...parts.slice(1).map(Number));
   } else if (command === "TRIS") {
     if (parts.length !== 3) throw new Error(`Malformed TRIS record: ${line}`);
-    drawRanges.push({ start: Number(parts[1]), count: Number(parts[2]) });
-  } else if (command === "ATTR_blend") alphaMode = "BLEND";
-  else if (command === "ATTR_no_blend") alphaMode = "OPAQUE";
-  else if (command === "ATTR_cull") doubleSided = false;
-  else if (command === "ATTR_no_cull") doubleSided = true;
+    if (drawState.drawEnabled) {
+      drawRanges.push({
+        start: Number(parts[1]),
+        count: Number(parts[2]),
+        state: snapshotState(),
+      });
+    }
+  } else if (command === "ATTR_blend") drawState.alphaMode = "BLEND";
+  else if (command === "ATTR_no_blend") drawState.alphaMode = "OPAQUE";
+  else if (command === "ATTR_cull") drawState.doubleSided = false;
+  else if (command === "ATTR_no_cull") drawState.doubleSided = true;
+  else if (command === "ATTR_shade_smooth") drawState.shade = "smooth";
+  else if (command === "ATTR_shade_flat") drawState.shade = "flat";
+  else if (command === "ATTR_depth") drawState.depthTest = true;
+  else if (command === "ATTR_no_depth") drawState.depthTest = false;
+  else if (command === "ATTR_draw_enable") drawState.drawEnabled = true;
+  else if (command === "ATTR_draw_disable") drawState.drawEnabled = false;
 }
 
 if (!pointCounts) throw new Error("OBJ8 POINT_COUNTS record is missing");
@@ -66,6 +84,12 @@ for (const range of drawRanges) {
     throw new Error(`Invalid TRIS draw range: ${JSON.stringify(range)}`);
   }
   if (range.count % 3 !== 0) throw new Error(`TRIS range is not triangle-aligned: ${JSON.stringify(range)}`);
+  if (!range.state.depthTest) {
+    throw new Error("OBJ8 ATTR_no_depth is not yet supported because glTF has no core per-material depth-test control");
+  }
+  if (range.state.shade === "flat") {
+    throw new Error("OBJ8 ATTR_shade_flat is not yet supported without changing source normals");
+  }
 }
 
 const harmless = new Set([
@@ -87,7 +111,7 @@ if (unsupported.length) {
 const name = options.name || path.basename(inputPath).replace(/\.[^.]+$/, "");
 const diffuseUri = options.diffuse || sourceTexture;
 const litUri = options.lit || sourceLitTexture;
-if (!diffuseUri) throw new Error("OBJ8 source has no diffuse texture reference");
+if (!diffuseUri || /^none$/i.test(diffuseUri)) throw new Error("OBJ8 source has no usable diffuse texture reference");
 
 const positions = vertices.map((row) => row.slice(0, 3));
 const normals = vertices.map((row) => row.slice(3, 6));
@@ -175,6 +199,48 @@ binaryByteLength += indexChunk.length;
 const indexBufferView = bufferViews.length;
 bufferViews.push({ buffer: 0, byteOffset: indexByteOffset, byteLength: indexChunk.length, target: 34963 });
 
+const xPlaneTextureInfo = (index) => ({
+  index,
+  extensions: {
+    KHR_texture_transform: {
+      offset: [0, 1],
+      scale: [1, -1],
+    },
+  },
+});
+
+const images = [{ uri: diffuseUri }];
+const textures = [{ sampler: 0, source: 0 }];
+if (litUri && !/^none$/i.test(litUri)) {
+  images.push({ uri: litUri });
+  textures.push({ sampler: 0, source: 1 });
+}
+
+const materialByState = new Map();
+const materials = [];
+function materialIndexForState(state) {
+  const key = JSON.stringify({ alphaMode: state.alphaMode, doubleSided: state.doubleSided });
+  if (materialByState.has(key)) return materialByState.get(key);
+  const material = {
+    name: `${name} source material ${materials.length}`,
+    pbrMetallicRoughness: {
+      baseColorTexture: xPlaneTextureInfo(0),
+      metallicFactor: 0,
+      roughnessFactor: 1,
+    },
+    doubleSided: state.doubleSided,
+    alphaMode: state.alphaMode,
+  };
+  if (images.length > 1) {
+    material.emissiveTexture = xPlaneTextureInfo(1);
+    material.emissiveFactor = [1, 1, 1];
+  }
+  const index = materials.length;
+  materials.push(material);
+  materialByState.set(key, index);
+  return index;
+}
+
 const primitives = drawRanges.map((range) => {
   const bounds = indexBounds(range.start, range.count);
   const accessor = accessors.length;
@@ -190,43 +256,14 @@ const primitives = drawRanges.map((range) => {
   return {
     attributes: { POSITION: positionAccessor, NORMAL: normalAccessor, TEXCOORD_0: uvAccessor },
     indices: accessor,
-    material: 0,
+    material: materialIndexForState(range.state),
     mode: 4,
   };
 });
 
-const xPlaneTextureInfo = (index) => ({
-  index,
-  extensions: {
-    KHR_texture_transform: {
-      offset: [0, 1],
-      scale: [1, -1],
-    },
-  },
-});
-
-const images = [{ uri: diffuseUri }];
-const textures = [{ sampler: 0, source: 0 }];
-const material = {
-  name: `${name} source material`,
-  pbrMetallicRoughness: {
-    baseColorTexture: xPlaneTextureInfo(0),
-    metallicFactor: 0,
-    roughnessFactor: 1,
-  },
-  doubleSided,
-  alphaMode,
-};
-if (litUri) {
-  images.push({ uri: litUri });
-  textures.push({ sampler: 0, source: 1 });
-  material.emissiveTexture = xPlaneTextureInfo(1);
-  material.emissiveFactor = [1, 1, 1];
-}
-
 const outputBinary = Buffer.concat(chunks, binaryByteLength);
 const gltf = {
-  asset: { version: "2.0", generator: "RampReady exact X-Plane OBJ8 converter v1" },
+  asset: { version: "2.0", generator: "RampReady exact X-Plane OBJ8 converter v2" },
   extensionsUsed: ["KHR_texture_transform"],
   buffers: [{ uri: `${name}.bin`, byteLength: outputBinary.length }],
   bufferViews,
@@ -234,7 +271,7 @@ const gltf = {
   images,
   samplers: [{ magFilter: 9729, minFilter: 9987, wrapS: 10497, wrapT: 10497 }],
   textures,
-  materials: [material],
+  materials,
   meshes: [{ name, primitives }],
   nodes: [{ name, mesh: 0 }],
   scenes: [{ nodes: [0] }],
@@ -251,6 +288,7 @@ const gltf = {
     drawRanges,
     sourceBounds: { min: accessors[positionAccessor].min, max: accessors[positionAccessor].max },
     geometryPolicy: "preserve-source-positions-normals-uvs-indices-no-remesh-no-decimation",
+    drawStatePolicy: "preserve-supported-per-TRIS-blend-and-cull-state;reject-unsupported-render-state",
     textureCoordinatePolicy: "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin",
   },
 };
@@ -268,9 +306,11 @@ console.log(JSON.stringify({
   indexCount: indices.length,
   triangleCount: gltf.extras.triangleCount,
   drawRangeCount: drawRanges.length,
+  materialCount: materials.length,
   sourceBounds: gltf.extras.sourceBounds,
   diffuseUri,
-  litUri: litUri || null,
+  litUri: images.length > 1 ? litUri : null,
   geometryPolicy: gltf.extras.geometryPolicy,
+  drawStatePolicy: gltf.extras.drawStatePolicy,
   textureCoordinatePolicy: gltf.extras.textureCoordinatePolicy,
 }, null, 2));
