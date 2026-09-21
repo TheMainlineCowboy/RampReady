@@ -1,0 +1,336 @@
+import { createHash } from "node:crypto";
+import { execFile as execFileCallback, spawn } from "node:child_process";
+import { promisify } from "node:util";
+import fs from "node:fs/promises";
+import path from "node:path";
+
+const execFile = promisify(execFileCallback);
+const [, , sourceRootArg, runtimeRootArg] = process.argv;
+const sourceRoot = path.resolve(sourceRootArg || process.env.KPHX_FULL_AIRPORT_SOURCE_DIR || "");
+const runtimeRoot = path.resolve(runtimeRootArg || "public/models/kphx-full-airport/surfaces");
+const reportPath = path.resolve("reports/kphx-wed-surface-network.json");
+const manifestPath = path.join(runtimeRoot, "manifest.json");
+const networkOutputPath = path.join(runtimeRoot, "surface-network.json");
+const magick = process.env.KPHX_MAGICK_BIN || "magick";
+
+if (!sourceRootArg && !process.env.KPHX_FULL_AIRPORT_SOURCE_DIR) {
+  throw new Error("Provide the expanded KPHX 1.75.1 package root or set KPHX_FULL_AIRPORT_SOURCE_DIR");
+}
+
+async function exists(filePath) {
+  try { await fs.access(filePath); return true; } catch { return false; }
+}
+
+async function sha256(filePath) {
+  return createHash("sha256").update(await fs.readFile(filePath)).digest("hex");
+}
+
+function normalizeResource(value = "") {
+  return value.replaceAll("\\", "/").replace(/^\.\//, "");
+}
+
+function safeRelative(value) {
+  const normalized = normalizeResource(value);
+  if (path.isAbsolute(normalized) || normalized.startsWith("../")) {
+    throw new Error(`Unsafe package resource path: ${value}`);
+  }
+  return normalized;
+}
+
+async function identify(filePath) {
+  const { stdout } = await execFile(magick, ["identify", "-format", "%w %h %[channels]", filePath], { maxBuffer: 4 * 1024 * 1024 });
+  const [width, height, ...channels] = stdout.trim().split(/\s+/);
+  return { width: Number(width), height: Number(height), channels: channels.join(" ") };
+}
+
+async function decodedRgbaSha256(filePath) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(magick, [filePath, "rgba:-"], { stdio: ["ignore", "pipe", "pipe"] });
+    const hash = createHash("sha256");
+    let stderr = "";
+    child.stdout.on("data", (chunk) => hash.update(chunk));
+    child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code) reject(new Error(`ImageMagick decode failed for ${filePath}: ${stderr.trim()}`));
+      else resolve(hash.digest("hex"));
+    });
+  });
+}
+
+async function resolveImage(parentDirectory, requested) {
+  if (!requested || /^none$/i.test(requested)) return null;
+  const relative = safeRelative(requested);
+  const parsed = path.parse(relative);
+  const candidates = [
+    path.resolve(parentDirectory, relative),
+    path.resolve(parentDirectory, path.join(parsed.dir, `${parsed.name}.dds`)),
+    path.resolve(parentDirectory, path.join(parsed.dir, `${parsed.name}.DDS`)),
+    path.resolve(parentDirectory, path.join(parsed.dir, `${parsed.name}.png`)),
+    path.resolve(parentDirectory, path.join(parsed.dir, `${parsed.name}.PNG`)),
+  ];
+  for (const candidate of [...new Set(candidates)]) if (await exists(candidate)) return candidate;
+  throw new Error(`Referenced image not found: ${requested} relative to ${parentDirectory}`);
+}
+
+async function materializeImage(sourcePath, requested, outputDirectory) {
+  if (!sourcePath) return null;
+  const outputName = `${path.parse(requested || sourcePath).name}.png`;
+  const outputPath = path.join(outputDirectory, outputName);
+  const sourceInfo = await identify(sourcePath);
+  const sourceDecoded = await decodedRgbaSha256(sourcePath);
+
+  if (/\.png$/i.test(sourcePath)) await fs.copyFile(sourcePath, outputPath);
+  else await execFile(magick, [sourcePath, "-define", "png:color-type=6", outputPath], { maxBuffer: 16 * 1024 * 1024 });
+
+  const outputInfo = await identify(outputPath);
+  const outputDecoded = await decodedRgbaSha256(outputPath);
+  if (sourceInfo.width !== outputInfo.width || sourceInfo.height !== outputInfo.height) {
+    throw new Error(`Texture dimensions changed: ${sourcePath}`);
+  }
+  if (sourceDecoded !== outputDecoded) {
+    throw new Error(`Decoded RGBA pixels changed: ${sourcePath}`);
+  }
+
+  return {
+    requested,
+    sourcePath: path.relative(sourceRoot, sourcePath).replaceAll("\\", "/"),
+    sourceSha256: await sha256(sourcePath),
+    sourceDecodedRgbaSha256: sourceDecoded,
+    outputName,
+    outputUrl: outputName,
+    outputSha256: await sha256(outputPath),
+    outputDecodedRgbaSha256: outputDecoded,
+    width: outputInfo.width,
+    height: outputInfo.height,
+  };
+}
+
+function tokenize(source) {
+  return source
+    .split(/\r?\n/)
+    .map((line) => line.replace(/#.*/, "").trim())
+    .filter(Boolean)
+    .map((line) => ({ raw: line, parts: line.split(/\s+/) }));
+}
+
+function parseLayer(parts) {
+  if (parts.length < 3) return null;
+  const a = parts[1];
+  const b = parts[2];
+  if (/^[+-]?\d+$/.test(a)) return { group: b, offset: Number(a) };
+  return { group: a, offset: Number(b) };
+}
+
+function parsePol(source, sourceResource) {
+  const commands = tokenize(source);
+  const parsed = {
+    kind: "DRAPED_POLYGON",
+    sourceResource,
+    texture: null,
+    textureLit: null,
+    textureNormal: null,
+    normalScale: null,
+    scaleMeters: null,
+    layerGroup: null,
+    surface: null,
+    noAlpha: false,
+    weather: null,
+    decalLib: null,
+    unsupported: [],
+  };
+  for (const { raw, parts } of commands.slice(3)) {
+    const command = parts[0];
+    if (command === "TEXTURE" || command === "TEXTURE_NOWRAP") parsed.texture = parts.slice(1).join(" ");
+    else if (command === "TEXTURE_LIT" || command === "TEXTURE_LIT_NOWRAP") parsed.textureLit = parts.slice(1).join(" ");
+    else if (command === "TEXTURE_NORMAL") {
+      parsed.normalScale = Number(parts[1]);
+      parsed.textureNormal = parts.slice(2).join(" ");
+    } else if (command === "SCALE") parsed.scaleMeters = [Number(parts[1]), Number(parts[2])];
+    else if (command === "LAYER_GROUP") parsed.layerGroup = parseLayer(parts);
+    else if (command === "SURFACE") parsed.surface = parts[1] || null;
+    else if (command === "NO_ALPHA") parsed.noAlpha = true;
+    else if (command === "WEATHER") parsed.weather = parts.slice(1).join(" ");
+    else if (command === "DECAL_LIB") parsed.decalLib = parts.slice(1).join(" ");
+    else if (!["A", "850", "DRAPED_POLYGON"].includes(command)) parsed.unsupported.push(raw);
+  }
+  if (!parsed.texture || !parsed.scaleMeters) throw new Error(`POL missing required texture/scale: ${sourceResource}`);
+  return parsed;
+}
+
+function parseLin(source, sourceResource) {
+  const commands = tokenize(source);
+  const parsed = {
+    kind: "LINE_PAINT",
+    sourceResource,
+    texture: null,
+    scaleMeters: null,
+    textureWidth: null,
+    layerGroup: null,
+    lodMeters: null,
+    mirror: false,
+    sOffsets: [],
+    unsupported: [],
+  };
+  for (const { raw, parts } of commands.slice(3)) {
+    const command = parts[0];
+    if (command === "TEXTURE") parsed.texture = parts.slice(1).join(" ");
+    else if (command === "SCALE") parsed.scaleMeters = [Number(parts[1]), Number(parts[2])];
+    else if (command === "TEX_WIDTH") parsed.textureWidth = Number(parts[1]);
+    else if (command === "LAYER_GROUP") parsed.layerGroup = parseLayer(parts);
+    else if (command === "LOD") parsed.lodMeters = Number(parts[1]);
+    else if (command === "MIRROR") parsed.mirror = true;
+    else if (command === "S_OFFSET") parsed.sOffsets.push({
+      layer: Number(parts[1]),
+      left: Number(parts[2]),
+      center: Number(parts[3]),
+      right: Number(parts[4]),
+    });
+    else if (!["A", "850", "LINE_PAINT"].includes(command)) parsed.unsupported.push(raw);
+  }
+  if (!parsed.texture || !parsed.scaleMeters || !parsed.textureWidth || !parsed.sOffsets.length) {
+    throw new Error(`LIN missing required texture/scale/offset fields: ${sourceResource}`);
+  }
+  return parsed;
+}
+
+function parseDcl(source, sourceResource) {
+  const commands = tokenize(source);
+  const decals = [];
+  const unsupported = [];
+  for (const { raw, parts } of commands.slice(3)) {
+    if (parts[0] === "DECAL_PARAMS") {
+      if (parts.length < 16) throw new Error(`Malformed DECAL_PARAMS in ${sourceResource}: ${raw}`);
+      decals.push({
+        type: "DECAL_PARAMS",
+        scaleRatio: Number(parts[1]),
+        dither: Number(parts[2]),
+        rgbKey: parts.slice(3, 9).map(Number),
+        alphaKey: parts.slice(9, 15).map(Number),
+        texture: parts.slice(15).join(" "),
+      });
+    } else if (!["A", "1000", "DECAL"].includes(parts[0])) unsupported.push(raw);
+  }
+  return { kind: "DECAL", sourceResource, decals, unsupported };
+}
+
+async function materializeDcl(resourcePath, outputDirectory) {
+  const source = await fs.readFile(resourcePath, "utf8");
+  const parsed = parseDcl(source, path.relative(sourceRoot, resourcePath).replaceAll("\\", "/"));
+  const parent = path.dirname(resourcePath);
+  const decals = [];
+  for (const decal of parsed.decals) {
+    const sourceImage = await resolveImage(parent, decal.texture);
+    decals.push({ ...decal, image: await materializeImage(sourceImage, decal.texture, outputDirectory) });
+  }
+  return { ...parsed, decals, sourceSha256: await sha256(resourcePath) };
+}
+
+async function materializeArtResource(resource) {
+  const safeResource = safeRelative(resource);
+  const sourcePath = path.join(sourceRoot, safeResource);
+  if (!(await exists(sourcePath))) throw new Error(`Surface art resource missing: ${safeResource}`);
+  const extension = path.extname(safeResource).toLowerCase();
+  if (![".pol", ".lin"].includes(extension)) throw new Error(`Unsupported surface resource extension: ${safeResource}`);
+
+  const relativeOutputDirectory = path.join("resources", path.dirname(safeResource), path.basename(safeResource, extension));
+  const outputDirectory = path.join(runtimeRoot, relativeOutputDirectory);
+  await fs.mkdir(outputDirectory, { recursive: true });
+  const source = await fs.readFile(sourcePath, "utf8");
+  const parsed = extension === ".pol" ? parsePol(source, safeResource) : parseLin(source, safeResource);
+  if (parsed.unsupported.length) throw new Error(`Unsupported ${extension} commands in ${safeResource}: ${parsed.unsupported.join(" | ")}`);
+
+  const parent = path.dirname(sourcePath);
+  const texture = await materializeImage(await resolveImage(parent, parsed.texture), parsed.texture, outputDirectory);
+  let lit = null;
+  let normal = null;
+  let weather = null;
+  let decal = null;
+
+  if (parsed.textureLit) lit = await materializeImage(await resolveImage(parent, parsed.textureLit), parsed.textureLit, outputDirectory);
+  if (parsed.textureNormal) normal = await materializeImage(await resolveImage(parent, parsed.textureNormal), parsed.textureNormal, outputDirectory);
+  if (parsed.weather) weather = await materializeImage(await resolveImage(parent, parsed.weather), parsed.weather, outputDirectory);
+  if (parsed.decalLib) {
+    const decalResource = safeRelative(path.join(path.dirname(safeResource), parsed.decalLib));
+    const decalPath = path.join(sourceRoot, decalResource);
+    if (!(await exists(decalPath))) throw new Error(`Local DECAL_LIB resource missing: ${decalResource}`);
+    decal = await materializeDcl(decalPath, outputDirectory);
+  }
+
+  const runtime = {
+    ...parsed,
+    sourceSha256: await sha256(sourcePath),
+    outputBaseUrl: `/models/kphx-full-airport/surfaces/${relativeOutputDirectory.split(path.sep).join("/")}`,
+    texture,
+    lit,
+    normal,
+    weather,
+    decal,
+  };
+  await fs.writeFile(path.join(outputDirectory, "resource.json"), `${JSON.stringify(runtime, null, 2)}\n`, "utf8");
+  return runtime;
+}
+
+await fs.mkdir(runtimeRoot, { recursive: true });
+await fs.mkdir(path.dirname(reportPath), { recursive: true });
+
+const wedPath = path.join(sourceRoot, "earth.wed.xml");
+if (!(await exists(wedPath))) throw new Error(`earth.wed.xml missing: ${wedPath}`);
+await execFile(process.execPath, [
+  path.resolve("scripts/extract-kphx-wed-surface-network.mjs"),
+  wedPath,
+  reportPath,
+], { maxBuffer: 64 * 1024 * 1024 });
+
+const network = JSON.parse(await fs.readFile(reportPath, "utf8"));
+const records = [
+  ...network.polygons.filter((entry) => entry.sourceClass === "package-owned"),
+  ...network.lines.filter((entry) => entry.sourceClass === "package-owned"),
+];
+const resources = [...new Set(records.map((entry) => normalizeResource(entry.resource)))].sort();
+
+const materialized = {};
+const failures = [];
+for (const [index, resource] of resources.entries()) {
+  try {
+    materialized[resource] = await materializeArtResource(resource);
+    console.log(`[${index + 1}/${resources.length}] surface resource ${resource}`);
+  } catch (error) {
+    const failure = { resource, message: error instanceof Error ? error.message : String(error) };
+    failures.push(failure);
+    console.error(`[${index + 1}/${resources.length}] FAILED ${resource}: ${failure.message}`);
+  }
+}
+
+const manifest = {
+  schemaVersion: 1,
+  generatedAtUtc: new Date().toISOString(),
+  source: {
+    package: network.source.package,
+    version: network.source.version,
+    wedSha256: await sha256(wedPath),
+  },
+  policy: {
+    polygons: "WED-authored rings and Bezier controls; POL texture scale/heading/layer authority",
+    lines: "WED-authored chains and Bezier controls; LIN TEX_WIDTH/SCALE/S_OFFSET width and UV authority",
+    textures: "browser PNG generated only when decoded RGBA bytes equal source image at original dimensions",
+    unsupportedCommands: "fail materialization rather than silently approximate",
+    externalResources: "tracked in WED network and not substituted",
+  },
+  packageOwnedResourceCount: resources.length,
+  materializedResourceCount: Object.keys(materialized).length,
+  resources: materialized,
+  failures,
+};
+
+await fs.copyFile(reportPath, networkOutputPath);
+await fs.writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+
+if (failures.length) throw new Error(`KPHX surface materialization failed for ${failures.length}/${resources.length} resources`);
+console.log(JSON.stringify({
+  manifestPath,
+  networkOutputPath,
+  packageOwnedResourceCount: resources.length,
+  polygonPlacementCount: network.polygons.filter((entry) => entry.sourceClass === "package-owned").length,
+  linePlacementCount: network.lines.filter((entry) => entry.sourceClass === "package-owned").length,
+}, null, 2));
