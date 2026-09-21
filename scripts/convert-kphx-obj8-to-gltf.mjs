@@ -195,12 +195,22 @@ const primitives = drawRanges.map((range) => {
   };
 });
 
+const xPlaneTextureInfo = (index) => ({
+  index,
+  extensions: {
+    KHR_texture_transform: {
+      offset: [0, 1],
+      scale: [1, -1],
+    },
+  },
+});
+
 const images = [{ uri: diffuseUri }];
 const textures = [{ sampler: 0, source: 0 }];
 const material = {
   name: `${name} source material`,
   pbrMetallicRoughness: {
-    baseColorTexture: { index: 0 },
+    baseColorTexture: xPlaneTextureInfo(0),
     metallicFactor: 0,
     roughnessFactor: 1,
   },
@@ -210,13 +220,14 @@ const material = {
 if (litUri) {
   images.push({ uri: litUri });
   textures.push({ sampler: 0, source: 1 });
-  material.emissiveTexture = { index: 1 };
+  material.emissiveTexture = xPlaneTextureInfo(1);
   material.emissiveFactor = [1, 1, 1];
 }
 
 const outputBinary = Buffer.concat(chunks, binaryByteLength);
 const gltf = {
   asset: { version: "2.0", generator: "RampReady exact X-Plane OBJ8 converter v1" },
+  extensionsUsed: ["KHR_texture_transform"],
   buffers: [{ uri: `${name}.bin`, byteLength: outputBinary.length }],
   bufferViews,
   accessors,
@@ -240,6 +251,7 @@ const gltf = {
     drawRanges,
     sourceBounds: { min: accessors[positionAccessor].min, max: accessors[positionAccessor].max },
     geometryPolicy: "preserve-source-positions-normals-uvs-indices-no-remesh-no-decimation",
+    textureCoordinatePolicy: "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin",
   },
 };
 
@@ -260,4 +272,5 @@ console.log(JSON.stringify({
   diffuseUri,
   litUri: litUri || null,
   geometryPolicy: gltf.extras.geometryPolicy,
+  textureCoordinatePolicy: gltf.extras.textureCoordinatePolicy,
 }, null, 2));
