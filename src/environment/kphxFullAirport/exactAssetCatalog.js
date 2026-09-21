@@ -110,6 +110,7 @@ export const KPHX_EXACT_RECOVERED_ASSETS = Object.freeze({
       runtimeBytes: 687460,
       placementCount: 307,
       resourcePrefix: "GateNumbers/",
+      layerGroupDraped: Object.freeze({ group: "markings", offset: 4 }),
       sourceMeshNames: Object.freeze([
         "A", "B", "D", "Empty", "EmptyLarge",
         "single0", "single1", "single2", "single3", "single4",
