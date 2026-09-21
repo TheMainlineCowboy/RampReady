@@ -71,6 +71,7 @@ export async function installKphxPackageOwnedObjectLayer(
     loader = new GLTFLoader(),
     strict = true,
     resourcePrefixes = null,
+    excludeResources = [],
     assetConcurrency = 6,
   } = {},
 ) {
@@ -88,7 +89,9 @@ export async function installKphxPackageOwnedObjectLayer(
   }
 
   const allowedPrefixes = resourcePrefixes ? new Set(resourcePrefixes) : null;
+  const excluded = new Set(excludeResources || []);
   const placements = (manifest.packageOwned?.placements || []).filter((placement) => {
+    if (excluded.has(placement.resource)) return false;
     if (!allowedPrefixes) return true;
     return allowedPrefixes.has(placement.resourcePrefix);
   });
