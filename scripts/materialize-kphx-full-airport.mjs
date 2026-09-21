@@ -177,6 +177,7 @@ async function convertObject(resource) {
       packedMeshName,
       runtimeSha256: pack.runtimeSha256,
       runtimeBytes: pack.runtimeBytes,
+      layerGroupDraped: pack.layerGroupDraped,
     };
   }
 
@@ -269,6 +270,7 @@ const runtimePlacements = packagePlacements
     assetUrl: resources[normalizeResource(placement.resource)].assetUrl,
     packedMeshName: resources[normalizeResource(placement.resource)].packedMeshName || null,
     recoveredExact: resources[normalizeResource(placement.resource)].recoveredExact === true,
+    layerGroupDraped: resources[normalizeResource(placement.resource)].layerGroupDraped || null,
   }));
 
 const manifest = {
