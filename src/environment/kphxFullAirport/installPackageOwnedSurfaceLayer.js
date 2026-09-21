@@ -72,6 +72,9 @@ function triangulateRings(THREE, rings) {
 }
 
 function createPolygonGeometry(THREE, placement, art) {
+  if (!Array.isArray(art.scaleMeters) || art.scaleMeters.length < 2) {
+    throw new Error(`WED polygon resource requires POL SCALE but none was materialized: ${placement.resource}`);
+  }
   const data = triangulateRings(THREE, placement.rings || []);
   if (!data) return null;
   const positions = [];
@@ -90,6 +93,34 @@ function createPolygonGeometry(THREE, placement, art) {
   geometry.setIndex(indices);
   geometry.computeBoundingBox();
   geometry.computeBoundingSphere();
+  return geometry;
+}
+
+function createOrthophotoGeometry(THREE, placement) {
+  const data = triangulateRings(THREE, placement.rings || []);
+  if (!data) return null;
+  const positions = [];
+  const normals = [];
+  const uvs = [];
+  for (const point of data.points) {
+    if (!Number.isFinite(point.s) || !Number.isFinite(point.t)) {
+      throw new Error(`Draped orthophoto ${placement.id} is missing an authored WED texture coordinate`);
+    }
+    positions.push(point.x, 0, point.z);
+    normals.push(0, 1, 0);
+    uvs.push(point.s, point.t);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(data.faces.flat());
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  geometry.userData = {
+    wedAuthoredTextureCoordinates: true,
+    textureCoordinatePolicy: "use-WED-s-t-directly-no-generated-UVs",
+  };
   return geometry;
 }
 
@@ -312,7 +343,13 @@ export async function installKphxPackageOwnedSurfaceLayer(
   const materials = new Map();
   const failures = [];
   let polygonCount = 0;
+  let drapedOrthophotoCount = 0;
   let lineMeshCount = 0;
+  const resolvedExternalPrefixes = new Set(manifest.policy?.externalPrefixes || []);
+  const isSelectedSurfacePlacement = (entry) => (
+    entry.sourceClass === "package-owned"
+    || resolvedExternalPrefixes.has(entry.resourcePrefix)
+  );
 
   async function materialFor(resourceName, fallbackGroup) {
     const key = `${resourceName}|${fallbackGroup}`;
@@ -324,7 +361,7 @@ export async function installKphxPackageOwnedSurfaceLayer(
     return material;
   }
 
-  for (const placement of network.polygons.filter((entry) => entry.sourceClass === "package-owned")) {
+  for (const placement of network.polygons.filter(isSelectedSurfacePlacement)) {
     try {
       const art = manifest.resources[placement.resource];
       const geometry = createPolygonGeometry(THREE, placement, art);
@@ -349,7 +386,34 @@ export async function installKphxPackageOwnedSurfaceLayer(
     }
   }
 
-  for (const placement of network.lines.filter((entry) => entry.sourceClass === "package-owned")) {
+  for (const placement of network.drapedOrthophotos.filter(isSelectedSurfacePlacement)) {
+    try {
+      const art = manifest.resources[placement.resource];
+      if (!art) throw new Error(`Materialized KPHX draped resource missing: ${placement.resource}`);
+      const geometry = createOrthophotoGeometry(THREE, placement);
+      if (!geometry) continue;
+      const material = await materialFor(placement.resource, "markings");
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = `KPHX_ORTHO_${placement.id}_${placement.name}`;
+      mesh.renderOrder = material.userData.xPlaneLayerOrder;
+      mesh.receiveShadow = true;
+      mesh.userData = {
+        kphxFullAirport: true,
+        kphxSurface: true,
+        wedDrapedOrthophoto: true,
+        wedObjectId: placement.id,
+        sourceResource: placement.resource,
+        xPlaneLayerGroup: art.layerGroup,
+        textureCoordinatePolicy: "earth.wed.xml texture_node s/t",
+      };
+      layer.add(mesh);
+      drapedOrthophotoCount += 1;
+    } catch (error) {
+      failures.push({ type: "drapedOrthophoto", id: placement.id, resource: placement.resource, message: error instanceof Error ? error.message : String(error) });
+    }
+  }
+
+  for (const placement of network.lines.filter(isSelectedSurfacePlacement)) {
     try {
       const art = manifest.resources[placement.resource];
       const material = await materialFor(placement.resource, "markings");
@@ -382,11 +446,14 @@ export async function installKphxPackageOwnedSurfaceLayer(
     sourceVersion: manifest.source.version,
     curvePolicy: KPHX_WED_CURVE_POLICY,
     polygonCount,
+    drapedOrthophotoCount,
     lineMeshCount,
     materialCount: materials.size,
     failures,
     ready: failures.length === 0,
+    resolvedExternalPrefixes: [...resolvedExternalPrefixes],
     externalPolygonCount: network.polygons.filter((entry) => entry.sourceClass !== "package-owned").length,
+    externalDrapedOrthophotoCount: network.drapedOrthophotos.filter((entry) => entry.sourceClass !== "package-owned").length,
     externalLineCount: network.lines.filter((entry) => entry.sourceClass !== "package-owned").length,
   };
 
