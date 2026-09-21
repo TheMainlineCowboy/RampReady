@@ -14,7 +14,6 @@ const options = Object.fromEntries(args
   }));
 
 const source = await fs.readFile(inputPath, "utf8");
-const lines = source.split(/\r?\n/);
 const vertices = [];
 const indices = [];
 const drawRanges = [];
@@ -27,7 +26,7 @@ let doubleSided = true;
 
 const bump = (key) => commands.set(key, (commands.get(key) || 0) + 1);
 
-for (const rawLine of lines) {
+for (const rawLine of source.split(/\r?\n/)) {
   const line = rawLine.trim();
   if (!line) continue;
   const parts = line.split(/\s+/);
@@ -58,9 +57,7 @@ if (pointCounts[0] !== vertices.length) {
 if (pointCounts[3] !== indices.length) {
   throw new Error(`OBJ8 index count mismatch: header=${pointCounts[3]} parsed=${indices.length}`);
 }
-if (!vertices.length || !indices.length || !drawRanges.length) {
-  throw new Error("OBJ8 geometry is incomplete");
-}
+if (!vertices.length || !indices.length || !drawRanges.length) throw new Error("OBJ8 geometry is incomplete");
 if (indices.some((index) => !Number.isInteger(index) || index < 0 || index >= vertices.length)) {
   throw new Error("OBJ8 contains an out-of-range vertex index");
 }
@@ -95,18 +92,34 @@ if (!diffuseUri) throw new Error("OBJ8 source has no diffuse texture reference")
 const positions = vertices.map((row) => row.slice(0, 3));
 const normals = vertices.map((row) => row.slice(3, 6));
 const uvs = vertices.map((row) => row.slice(6, 8));
-
-const binary = [];
+const chunks = [];
+let binaryByteLength = 0;
 const bufferViews = [];
 const accessors = [];
 
-const align4 = () => {
-  while (binary.length % 4) binary.push(0);
-};
+function appendPadding() {
+  const padding = (4 - (binaryByteLength % 4)) % 4;
+  if (padding) {
+    chunks.push(Buffer.alloc(padding));
+    binaryByteLength += padding;
+  }
+}
+
+function componentBounds(rows, componentCount) {
+  const min = Array(componentCount).fill(Infinity);
+  const max = Array(componentCount).fill(-Infinity);
+  for (const row of rows) {
+    for (let index = 0; index < componentCount; index += 1) {
+      min[index] = Math.min(min[index], row[index]);
+      max[index] = Math.max(max[index], row[index]);
+    }
+  }
+  return { min, max };
+}
 
 function appendFloatAccessor(rows, componentCount, target) {
-  align4();
-  const byteOffset = binary.length;
+  appendPadding();
+  const byteOffset = binaryByteLength;
   const chunk = Buffer.alloc(rows.length * componentCount * 4);
   let cursor = 0;
   for (const row of rows) {
@@ -115,43 +128,55 @@ function appendFloatAccessor(rows, componentCount, target) {
       cursor += 4;
     }
   }
-  binary.push(...chunk);
+  chunks.push(chunk);
+  binaryByteLength += chunk.length;
   const bufferView = bufferViews.length;
   bufferViews.push({ buffer: 0, byteOffset, byteLength: chunk.length, target });
-  const min = Array.from({ length: componentCount }, (_, i) => Math.min(...rows.map((row) => row[i])));
-  const max = Array.from({ length: componentCount }, (_, i) => Math.max(...rows.map((row) => row[i])));
+  const bounds = componentBounds(rows, componentCount);
   const accessor = accessors.length;
   accessors.push({
     bufferView,
     componentType: 5126,
     count: rows.length,
     type: componentCount === 2 ? "VEC2" : "VEC3",
-    min,
-    max,
+    min: bounds.min,
+    max: bounds.max,
   });
   return accessor;
+}
+
+function indexBounds(start, count) {
+  let min = Infinity;
+  let max = -Infinity;
+  for (let cursor = start; cursor < start + count; cursor += 1) {
+    min = Math.min(min, indices[cursor]);
+    max = Math.max(max, indices[cursor]);
+  }
+  return { min, max };
 }
 
 const positionAccessor = appendFloatAccessor(positions, 3, 34962);
 const normalAccessor = appendFloatAccessor(normals, 3, 34962);
 const uvAccessor = appendFloatAccessor(uvs, 2, 34962);
 
-const maxIndex = Math.max(...indices);
+let maxIndex = -Infinity;
+for (const index of indices) maxIndex = Math.max(maxIndex, index);
 const indexComponentType = maxIndex <= 65535 ? 5123 : 5125;
 const indexBytes = indexComponentType === 5123 ? 2 : 4;
-align4();
-const indexByteOffset = binary.length;
+appendPadding();
+const indexByteOffset = binaryByteLength;
 const indexChunk = Buffer.alloc(indices.length * indexBytes);
 indices.forEach((value, index) => {
   if (indexComponentType === 5123) indexChunk.writeUInt16LE(value, index * indexBytes);
   else indexChunk.writeUInt32LE(value, index * indexBytes);
 });
-binary.push(...indexChunk);
+chunks.push(indexChunk);
+binaryByteLength += indexChunk.length;
 const indexBufferView = bufferViews.length;
 bufferViews.push({ buffer: 0, byteOffset: indexByteOffset, byteLength: indexChunk.length, target: 34963 });
 
 const primitives = drawRanges.map((range) => {
-  const selection = indices.slice(range.start, range.start + range.count);
+  const bounds = indexBounds(range.start, range.count);
   const accessor = accessors.length;
   accessors.push({
     bufferView: indexBufferView,
@@ -159,8 +184,8 @@ const primitives = drawRanges.map((range) => {
     componentType: indexComponentType,
     count: range.count,
     type: "SCALAR",
-    min: [Math.min(...selection)],
-    max: [Math.max(...selection)],
+    min: [bounds.min],
+    max: [bounds.max],
   });
   return {
     attributes: { POSITION: positionAccessor, NORMAL: normalAccessor, TEXCOORD_0: uvAccessor },
@@ -189,7 +214,7 @@ if (litUri) {
   material.emissiveFactor = [1, 1, 1];
 }
 
-const outputBinary = Buffer.from(binary);
+const outputBinary = Buffer.concat(chunks, binaryByteLength);
 const gltf = {
   asset: { version: "2.0", generator: "RampReady exact X-Plane OBJ8 converter v1" },
   buffers: [{ uri: `${name}.bin`, byteLength: outputBinary.length }],
@@ -213,10 +238,7 @@ const gltf = {
     indexCount: indices.length,
     triangleCount: drawRanges.reduce((sum, range) => sum + range.count, 0) / 3,
     drawRanges,
-    sourceBounds: {
-      min: accessors[positionAccessor].min,
-      max: accessors[positionAccessor].max,
-    },
+    sourceBounds: { min: accessors[positionAccessor].min, max: accessors[positionAccessor].max },
     geometryPolicy: "preserve-source-positions-normals-uvs-indices-no-remesh-no-decimation",
   },
 };
