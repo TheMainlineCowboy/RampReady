@@ -44,6 +44,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y p7zip-full imagemagick git-lfs
           git lfs install
+          python -m pip install --disable-pip-version-check gdown==5.2.0
           mkdir -p "$HOME/bin"
           cat > "$HOME/bin/magick" <<'SH'
           #!/usr/bin/env bash
@@ -97,29 +98,31 @@ jobs:
           set -euo pipefail
           mkdir -p reports
           node scripts/extract-kphx-wed-object-placements.mjs             "${{ steps.source.outputs.wed }}"             reports/kphx-full-airport-wed-placements.json
-          node scripts/extract-kphx-wed-surface-network.mjs             "${{ steps.source.outputs.wed }}"             reports/kphx-wed-surface-network.json             reports/kphx-zdp-requested-resources.json             reports/kphx-zdp-library-map.json             assets/kphx-source/dependencies/ZDP_Library-1.2.0
+          node scripts/extract-kphx-wed-surface-network.mjs             "${{ steps.source.outputs.wed }}"             reports/kphx-wed-surface-network.json             reports/kphx-zdp-requested-resources.json             reports/kphx-misterx-requested-resources.json             reports/kphx-cdb-requested-resources.json             reports/kphx-zdp-library-map.json             reports/kphx-misterx-library-map.json             reports/kphx-cdb-library-map.json             reports/kphx-external-library-map.json             assets/kphx-source/dependencies/ZDP_Library-1.2.0             assets/kphx-source/dependencies/MisterX_Library_2.0c             assets/kphx-source/dependencies/CDB-Library
           node --input-type=module <<'NODE'
           import fs from "node:fs";
           const objects = JSON.parse(fs.readFileSync("reports/kphx-full-airport-wed-placements.json", "utf8"));
           const surfaces = JSON.parse(fs.readFileSync("reports/kphx-wed-surface-network.json", "utf8"));
-          const requested = new Set();
-          for (const placement of objects.placements.externalLibraries) {
-            if (placement.resourcePrefix === "ZDP_Library") requested.add(placement.resource);
-          }
-          for (const group of ["polygons", "lines", "drapedOrthophotos", "strings"]) {
-            for (const placement of surfaces[group] || []) {
-              if (placement.resourcePrefix === "ZDP_Library") requested.add(placement.resource);
+          const prefixes = ["ZDP_Library", "MisterX_Library", "CDB-Library"];
+          for (const prefix of prefixes) {
+            const requested = new Set();
+            for (const placement of objects.placements.externalLibraries) {
+              if (placement.resourcePrefix === prefix) requested.add(placement.resource);
             }
+            for (const group of ["polygons", "lines", "drapedOrthophotos", "strings", "facades", "forests", "roads"]) {
+              for (const placement of surfaces[group] || []) {
+                if (placement.resourcePrefix === prefix) requested.add(placement.resource);
+              }
+            }
+            const resources = [...requested].sort();
+            const slug = prefix === "ZDP_Library" ? "zdp" : prefix === "MisterX_Library" ? "misterx" : "cdb";
+            fs.writeFileSync(`reports/kphx-${slug}-requested-resources.json`, JSON.stringify({
+              authority: "KPHX-1.75.1-earth.wed.xml",
+              dependency: prefix,
+              resources,
+            }, null, 2) + "\n");
+            console.log(`KPHX requests ${resources.length} unique ${prefix} virtual resources.`);
           }
-          const resources = [...requested].sort();
-          fs.writeFileSync("reports/kphx-zdp-requested-resources.json", JSON.stringify({
-            authority: "KPHX-1.75.1-earth.wed.xml",
-            dependency: "ZDP_Library",
-            tag: "1.2.0",
-            commitPrefix: "4b44b673",
-            resources,
-          }, null, 2) + "\n");
-          console.log(`KPHX requests ${resources.length} unique ZDP virtual resources.`);
           NODE
 
       - name: Fetch exact ZDP Library 1.2.0 dependency
@@ -153,24 +156,57 @@ jobs:
           }
           JSON
 
+      - name: Fetch exact user-supplied MisterX and CDB dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .kphx-deps/misterx-drive .kphx-deps/cdb-drive
+          mkdir -p .kphx-deps/misterx-drive .kphx-deps/cdb-drive
+          gdown --folder --remaining-ok             "https://drive.google.com/drive/folders/184a-IZlYQik7TASjtviPcozlYVsgHmvc"             -O .kphx-deps/misterx-drive
+          gdown --folder --remaining-ok             "https://drive.google.com/drive/folders/1i9-aDrkYIYxC6LBAZj9jzj5khhMFszXo"             -O .kphx-deps/cdb-drive
+          mkdir -p             assets/kphx-source/dependencies/MisterX_Library_2.0c             assets/kphx-source/dependencies/CDB-Library
+          find .kphx-deps/misterx-drive -type f -iname 'library.txt' -print -quit | xargs -r -I{} cp '{}' assets/kphx-source/dependencies/MisterX_Library_2.0c/library.txt
+          find .kphx-deps/cdb-drive -type f -iname 'library.txt' -print -quit | xargs -r -I{} cp '{}' assets/kphx-source/dependencies/CDB-Library/library.txt
+          cat > assets/kphx-source/dependencies/MisterX_Library_2.0c/SOURCE.json <<'JSON'
+          {
+            "name": "MisterX Library",
+            "version": "2.0c",
+            "virtualPrefix": "MisterX_Library",
+            "sourceDriveFolderId": "184a-IZlYQik7TASjtviPcozlYVsgHmvc",
+            "purpose": "Exact user-supplied KPHX 1.75.1 dependency"
+          }
+          JSON
+          cat > assets/kphx-source/dependencies/CDB-Library/SOURCE.json <<'JSON'
+          {
+            "name": "CDB-Library",
+            "versionFromLibraryTxt": "2.5",
+            "virtualPrefix": "CDB-Library",
+            "sourceDriveFolderId": "1i9-aDrkYIYxC6LBAZj9jzj5khhMFszXo",
+            "purpose": "Exact user-supplied KPHX 1.75.1 dependency"
+          }
+          JSON
+
       - name: Resolve exact ZDP virtual resources used by KPHX
         shell: bash
         run: |
           set -euo pipefail
           node scripts/resolve-xplane-library.mjs             .kphx-deps/zdp-library             reports/kphx-zdp-requested-resources.json             reports/kphx-zdp-library-map.json             --virtual-prefix=ZDP_Library
+          node scripts/resolve-xplane-library.mjs             .kphx-deps/misterx-drive             reports/kphx-misterx-requested-resources.json             reports/kphx-misterx-library-map.json             --virtual-prefix=MisterX_Library
+          node scripts/resolve-xplane-library.mjs             .kphx-deps/cdb-drive             reports/kphx-cdb-requested-resources.json             reports/kphx-cdb-library-map.json             --virtual-prefix=CDB-Library
+          node scripts/merge-xplane-library-maps.mjs             reports/kphx-external-library-map.json             reports/kphx-zdp-library-map.json             reports/kphx-misterx-library-map.json             reports/kphx-cdb-library-map.json
 
       - name: Materialize all package-owned WED object resources
         shell: bash
         run: |
           set -euo pipefail
           rm -rf public/models/kphx-full-airport
-          node scripts/materialize-kphx-full-airport.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport             --library-map=reports/kphx-zdp-library-map.json             --include-external-prefixes=ZDP_Library
+          node scripts/materialize-kphx-full-airport.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport             --library-map=reports/kphx-external-library-map.json             --include-external-prefixes=ZDP_Library,MisterX_Library,CDB-Library
 
       - name: Materialize exact WED pavement and painted-line resources
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/materialize-kphx-surface-resources.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport/surfaces             --library-map=reports/kphx-zdp-library-map.json             --include-external-prefixes=ZDP_Library
+          node scripts/materialize-kphx-surface-resources.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport/surfaces             --library-map=reports/kphx-external-library-map.json             --include-external-prefixes=ZDP_Library,MisterX_Library,CDB-Library
 
       - name: Verify exact source contracts
         shell: bash
