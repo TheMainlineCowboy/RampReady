@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "authority": "user-drive-kphx-1.75.1-exact-line-definitions-v1",
+  "sourceRoot": "Google Drive/RampReady/New KPHX/KPHX - Phoenix Sky Harbor Intl_V1.75.1/Lines",
+  "definitions": [
+    {
+      "resource": "Lines/Taxiline.lin",
+      "path": "assets/kphx-source/lines/Taxiline.lin",
+      "driveFileId": "1zht-8I2hFzcxVGm3nGvb13wxbKC9jct5",
+      "bytes": 133,
+      "sha256": "6bcec708876863ae64ff72ca1fe6334d5f76dc977fdb15a6750fc822cefc105f",
+      "textureDirective": "taxilines.png",
+      "layerGroup": "markings +1",
+      "lod": 10000,
+      "texWidth": 2048,
+      "scale": [15, 15],
+      "sOffset": [0, 220, 290, 360],
+      "mirror": true,
+      "textureStatus": "unresolved-source-dependency",
+      "textureBlocker": "Ground_Textures/taxilines.png has not yet been resolved in the supplied Drive/library tree; no substitute is permitted"
+    },
+    {
+      "resource": "Lines/edge.lin",
+      "path": "assets/kphx-source/lines/edge.lin",
+      "driveFileId": "1neaUl1A-Rw2tti-VlTza70KpDogoGT6V",
+      "bytes": 118,
+      "sha256": "b56594f4d5285dcc01e3f51de0cb1b405aac18c0e06b47c633d4af9b9f28f5db",
+      "textureDirective": "edge.png",
+      "layerGroup": "taxiways 0",
+      "lod": 10000,
+      "texWidth": 1024,
+      "scale": [12, 48],
+      "sOffset": [0, 10, 1014, 1024],
+      "mirror": false,
+      "textureSource": {
+        "resource": "Lines/edge.dds",
+        "driveFileId": "1fiAUie84itFE1pNJ_Sm6eRhzshSix7_4",
+        "bytes": 2796360,
+        "sha256": "16de015476ef803c16e84b04238ae8936c4d2761e4044f03946a31bd08c9911c",
+        "ddsFormat": "DXT1",
+        "width": 1024,
+        "height": 4096,
+        "materializationStatus": "pinned-drive-binary-pending-repository-transfer"
+      }
+    },
+    {
+      "resource": "Lines/edge_gray.lin",
+      "path": "assets/kphx-source/lines/edge_gray.lin",
+      "driveFileId": "1AY1dhsf9wo0z2pgpUbNRZBulFR3EDZm6",
+      "bytes": 123,
+      "sha256": "ddb9c7f3df04a65fa5041cd3f8da2cd76897618ca715ebda71ed51d4a066e24f",
+      "textureDirective": "edge_gray.png",
+      "layerGroup": "taxiways 0",
+      "lod": 10000,
+      "texWidth": 1024,
+      "scale": [12, 48],
+      "sOffset": [0, 32, 1014, 1024],
+      "mirror": false,
+      "textureSource": {
+        "resource": "Lines/edge_gray.dds",
+        "driveFileId": "1mQYY7D1ovH6UPwlYHPh6R1IddJBIAwZ1",
+        "bytes": 2796360,
+        "sha256": "085d41d461ca8f9cef9bbc0448c66416ff2141d67a46c70e2ad3ceb1916b74c4",
+        "ddsFormat": "DXT1",
+        "width": 1024,
+        "height": 4096,
+        "materializationStatus": "pinned-drive-binary-pending-repository-transfer"
+      }
+    },
+    {
+      "resource": "Lines/Road.lin",
+      "path": "assets/kphx-source/lines/Road.lin",
+      "driveFileId": "1ko9ZXk9F687Z2AJISYjzVcVJennEyMtv",
+      "bytes": 123,
+      "sha256": "12902b50ecbcf284ef892a4cc51fb8b08961a0d30b9179c7bbaf12197cd0cfd5",
+      "textureDirective": "road.png",
+      "layerGroup": "markings +3",
+      "lod": 3000,
+      "texWidth": 512,
+      "scale": [6, 6],
+      "sOffset": [0, 0, 256, 512],
+      "mirror": true,
+      "textureSource": {
+        "resource": "Lines/road.dds",
+        "driveFileId": "1XrzNTCfzL4zlZO6fw6vGD-xr096ZAD-U",
+        "bytes": 174904,
+        "sha256": "e62ffb06403aa679fe2a685b1aa524ef048d32458c055645e37eadc71c157c03",
+        "ddsFormat": "DXT1",
+        "width": 512,
+        "height": 512,
+        "materializationStatus": "pinned-drive-binary-pending-repository-transfer"
+      }
+    }
+  ],
+  "policy": {
+    "preserve": ["source-bytes", "directive-order", "texture-resource", "layer-group", "LOD", "TEX_WIDTH", "SCALE", "S_OFFSET", "MIRROR"],
+    "visibleMaterialRule": "fail-closed until the exact referenced texture source is materialized; do not substitute or procedurally redraw"
+  }
+}
