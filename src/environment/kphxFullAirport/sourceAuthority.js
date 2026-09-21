@@ -35,7 +35,7 @@ function degreesToRadians(value) {
   return value * Math.PI / 180;
 }
 
-function geodeticToEcef(latitudeDegrees, longitudeDegrees, altitudeMeters = 0) {
+function geodeticToEcef(latitudeDegrees, longitudeDegrees) {
   const latitude = degreesToRadians(latitudeDegrees);
   const longitude = degreesToRadians(longitudeDegrees);
   const sinLatitude = Math.sin(latitude);
@@ -45,16 +45,15 @@ function geodeticToEcef(latitudeDegrees, longitudeDegrees, altitudeMeters = 0) {
   const primeVerticalRadius = WGS84_A / Math.sqrt(1 - WGS84_E2 * sinLatitude * sinLatitude);
 
   return [
-    (primeVerticalRadius + altitudeMeters) * cosLatitude * cosLongitude,
-    (primeVerticalRadius + altitudeMeters) * cosLatitude * sinLongitude,
-    (primeVerticalRadius * (1 - WGS84_E2) + altitudeMeters) * sinLatitude,
+    primeVerticalRadius * cosLatitude * cosLongitude,
+    primeVerticalRadius * cosLatitude * sinLongitude,
+    primeVerticalRadius * (1 - WGS84_E2) * sinLatitude,
   ];
 }
 
 const anchorEcef = geodeticToEcef(
   KPHX_FULL_AIRPORT_SOURCE.anchor.latitude,
   KPHX_FULL_AIRPORT_SOURCE.anchor.longitude,
-  0,
 );
 const anchorLatitudeRadians = degreesToRadians(KPHX_FULL_AIRPORT_SOURCE.anchor.latitude);
 const anchorLongitudeRadians = degreesToRadians(KPHX_FULL_AIRPORT_SOURCE.anchor.longitude);
@@ -63,8 +62,8 @@ const cosAnchorLatitude = Math.cos(anchorLatitudeRadians);
 const sinAnchorLongitude = Math.sin(anchorLongitudeRadians);
 const cosAnchorLongitude = Math.cos(anchorLongitudeRadians);
 
-export function kphxWedToRampReadyPosition(latitudeDegrees, longitudeDegrees, altitudeMeters = 0) {
-  const pointEcef = geodeticToEcef(latitudeDegrees, longitudeDegrees, altitudeMeters);
+export function kphxWedToRampReadyPosition(latitudeDegrees, longitudeDegrees, elevationMeters = 0) {
+  const pointEcef = geodeticToEcef(latitudeDegrees, longitudeDegrees);
   const dx = pointEcef[0] - anchorEcef[0];
   const dy = pointEcef[1] - anchorEcef[1];
   const dz = pointEcef[2] - anchorEcef[2];
@@ -73,13 +72,10 @@ export function kphxWedToRampReadyPosition(latitudeDegrees, longitudeDegrees, al
   const north = -sinAnchorLatitude * cosAnchorLongitude * dx
     - sinAnchorLatitude * sinAnchorLongitude * dy
     + cosAnchorLatitude * dz;
-  const up = cosAnchorLatitude * cosAnchorLongitude * dx
-    + cosAnchorLatitude * sinAnchorLongitude * dy
-    + sinAnchorLatitude * dz;
 
   return [
     north + KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition[0],
-    up + KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition[1],
+    elevationMeters + KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition[1],
     east + KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition[2],
   ];
 }
