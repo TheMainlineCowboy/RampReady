@@ -1,4 +1,4 @@
-name: KPHX 1.75.1 Exact Full Airport Ingest
+name: KPHX Core + ZDP Exact Ingest
 
 on:
   workflow_dispatch:
@@ -22,7 +22,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: kphx-1751-exact-ingest
+  group: kphx-core-zdp-exact-ingest
   cancel-in-progress: true
 
 jobs:
@@ -35,8 +35,6 @@ jobs:
       KPHX_RELEASE_TAG: kphx-source-1.75.1
       ZDP_TAG: 1.2.0
       ZDP_COMMIT_PREFIX: 4b44b673
-      MISTERX_DRIVE_FOLDER_ID: 184a-IZlYQik7TASjtviPcozlYVsgHmvc
-      CDB_DRIVE_FOLDER_ID: 1i9-aDrkYIYxC6LBAZj9jzj5khhMFszXo
 
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +49,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y p7zip-full imagemagick git-lfs
           git lfs install
-          python -m pip install --disable-pip-version-check gdown==5.2.0
           mkdir -p "$HOME/bin"
           cat > "$HOME/bin/magick" <<'SH'
           #!/usr/bin/env bash
@@ -111,7 +108,7 @@ jobs:
           import fs from "node:fs";
           const objects = JSON.parse(fs.readFileSync("reports/kphx-full-airport-wed-placements.json", "utf8"));
           const surfaces = JSON.parse(fs.readFileSync("reports/kphx-wed-surface-network.json", "utf8"));
-          const prefixes = ["ZDP_Library", "MisterX_Library", "CDB-Library"];
+          const prefixes = ["ZDP_Library"];
           const groups = ["polygons", "lines", "drapedOrthophotos", "strings", "facades", "forests", "roads"];
           for (const prefix of prefixes) {
             const requested = new Set();
@@ -124,7 +121,7 @@ jobs:
               }
             }
             const resources = [...requested].sort();
-            const slug = prefix === "ZDP_Library" ? "zdp" : prefix === "MisterX_Library" ? "misterx" : "cdb";
+            const slug = "zdp";
             fs.writeFileSync(`reports/kphx-${slug}-requested-resources.json`, JSON.stringify({
               authority: "KPHX-1.75.1-earth.wed.xml",
               dependency: prefix,
@@ -164,59 +161,24 @@ jobs:
           }
           JSON
 
-      - name: Fetch exact user-supplied MisterX 2.0c and CDB libraries
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf .kphx-deps/misterx-drive .kphx-deps/cdb-drive
-          mkdir -p .kphx-deps/misterx-drive .kphx-deps/cdb-drive
-          gdown --folder --remaining-ok             "https://drive.google.com/drive/folders/${MISTERX_DRIVE_FOLDER_ID}"             -O .kphx-deps/misterx-drive
-          gdown --folder --remaining-ok             "https://drive.google.com/drive/folders/${CDB_DRIVE_FOLDER_ID}"             -O .kphx-deps/cdb-drive
-          mkdir -p             assets/kphx-source/dependencies/MisterX_Library_2.0c             assets/kphx-source/dependencies/CDB-Library
-          find .kphx-deps/misterx-drive -type f -iname 'library.txt' -print -quit |             xargs -r -I{} cp '{}' assets/kphx-source/dependencies/MisterX_Library_2.0c/library.txt
-          find .kphx-deps/cdb-drive -type f -iname 'library.txt' -print -quit |             xargs -r -I{} cp '{}' assets/kphx-source/dependencies/CDB-Library/library.txt
-          test -f assets/kphx-source/dependencies/MisterX_Library_2.0c/library.txt
-          test -f assets/kphx-source/dependencies/CDB-Library/library.txt
-          cat > assets/kphx-source/dependencies/MisterX_Library_2.0c/SOURCE.json <<'JSON'
-          {
-            "name": "MisterX Library",
-            "version": "2.0c",
-            "virtualPrefix": "MisterX_Library",
-            "sourceDriveFolderId": "184a-IZlYQik7TASjtviPcozlYVsgHmvc",
-            "purpose": "Exact user-supplied KPHX 1.75.1 dependency"
-          }
-          JSON
-          cat > assets/kphx-source/dependencies/CDB-Library/SOURCE.json <<'JSON'
-          {
-            "name": "CDB-Library",
-            "versionFromLibraryTxt": "2.5",
-            "virtualPrefix": "CDB-Library",
-            "sourceDriveFolderId": "1i9-aDrkYIYxC6LBAZj9jzj5khhMFszXo",
-            "purpose": "Exact user-supplied KPHX 1.75.1 dependency"
-          }
-          JSON
-
       - name: Resolve exact X-Plane virtual library paths
         shell: bash
         run: |
           set -euo pipefail
           node scripts/resolve-xplane-library.mjs             .kphx-deps/zdp-library             reports/kphx-zdp-requested-resources.json             reports/kphx-zdp-library-map.json             --virtual-prefix=ZDP_Library
-          node scripts/resolve-xplane-library.mjs             .kphx-deps/misterx-drive             reports/kphx-misterx-requested-resources.json             reports/kphx-misterx-library-map.json             --virtual-prefix=MisterX_Library
-          node scripts/resolve-xplane-library.mjs             .kphx-deps/cdb-drive             reports/kphx-cdb-requested-resources.json             reports/kphx-cdb-library-map.json             --virtual-prefix=CDB-Library
-          node scripts/merge-xplane-library-maps.mjs             reports/kphx-external-library-map.json             reports/kphx-zdp-library-map.json             reports/kphx-misterx-library-map.json             reports/kphx-cdb-library-map.json
 
       - name: Materialize exact WED object resources
         shell: bash
         run: |
           set -euo pipefail
           rm -rf public/models/kphx-full-airport
-          node scripts/materialize-kphx-full-airport.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport             --library-map=reports/kphx-external-library-map.json             --include-external-prefixes=ZDP_Library,MisterX_Library,CDB-Library
+          node scripts/materialize-kphx-full-airport.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport             --library-map=reports/kphx-zdp-library-map.json             --include-external-prefixes=ZDP_Library
 
       - name: Materialize exact WED surface resources
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/materialize-kphx-surface-resources.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport/surfaces             --library-map=reports/kphx-external-library-map.json             --include-external-prefixes=ZDP_Library,MisterX_Library,CDB-Library
+          node scripts/materialize-kphx-surface-resources.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport/surfaces             --library-map=reports/kphx-zdp-library-map.json             --include-external-prefixes=ZDP_Library
 
       - name: Verify exact source contracts
         shell: bash
@@ -275,11 +237,10 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add             assets/kphx-source/KPHX-1.75.1             assets/kphx-source/dependencies             public/models/kphx-full-airport             reports/kphx-full-airport-wed-placements.json             reports/kphx-full-airport-materialization.json             reports/kphx-wed-surface-network.json             reports/kphx-zdp-requested-resources.json             reports/kphx-misterx-requested-resources.json             reports/kphx-cdb-requested-resources.json             reports/kphx-zdp-library-map.json             reports/kphx-misterx-library-map.json             reports/kphx-cdb-library-map.json             reports/kphx-external-library-map.json
-          if git diff --cached --quiet; then
+          git add             assets/kphx-source/KPHX-1.75.1             assets/kphx-source/dependencies             public/models/kphx-full-airport             reports/kphx-full-airport-wed-placements.json             reports/kphx-full-airport-materialization.json             reports/kphx-wed-surface-network.json             reports/kphx-zdp-requested-resources.json reports/kphx-zdp-library-map.json if git diff --cached --quiet; then
             echo "Exact KPHX runtime assets are already current."
             exit 0
           fi
-          git commit -m "Materialize exact KPHX 1.75.1 airport runtime"
+          git commit -m "Materialize exact KPHX core and ZDP runtime"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
