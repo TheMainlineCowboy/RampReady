@@ -138,7 +138,21 @@ export async function installKphxPackageOwnedObjectLayer(
       });
       continue;
     }
-    const instance = preparePlacementRoot(template.clone(true), placement);
+    let sourceRoot = template;
+    if (placement.packedMeshName) {
+      sourceRoot = template.getObjectByName(placement.packedMeshName);
+      if (!sourceRoot) {
+        placementFailures.push({
+          wedObjectId: placement.id,
+          sourceResource: placement.resource,
+          assetUrl: placement.assetUrl,
+          packedMeshName: placement.packedMeshName,
+          message: "Packed exact source mesh was not found in recovered GLB",
+        });
+        continue;
+      }
+    }
+    const instance = preparePlacementRoot(sourceRoot.clone(true), placement);
     layer.add(instance);
     loadedPlacementCount += 1;
   }
