@@ -39,7 +39,7 @@ for (const rawLine of source.split(/\r?\n/)) {
   const command = parts[0];
   bump(command);
 
-  if (command === "TEXTURE") sourceTexture = parts.slice(1).join(" ");
+  if (command === "TEXTURE" || command === "TEXTURE_DRAPED") sourceTexture = parts.slice(1).join(" ");
   else if (command === "TEXTURE_LIT") sourceLitTexture = parts.slice(1).join(" ");
   else if (command === "POINT_COUNTS") pointCounts = parts.slice(1).map(Number);
   else if (command === "VT") {
@@ -93,7 +93,7 @@ for (const range of drawRanges) {
 }
 
 const harmless = new Set([
-  "I", "800", "OBJ", "TEXTURE", "TEXTURE_LIT", "POINT_COUNTS",
+  "I", "800", "OBJ", "TEXTURE", "TEXTURE_DRAPED", "TEXTURE_LIT", "POINT_COUNTS",
   "VT", "IDX", "IDX10", "TRIS", "LIGHT_PARAM", "#",
   "ATTR_shade_smooth", "ATTR_shade_flat",
   "ATTR_no_hard", "ATTR_hard",
@@ -101,6 +101,7 @@ const harmless = new Set([
   "ATTR_depth", "ATTR_no_depth",
   "ATTR_blend", "ATTR_no_blend",
   "ATTR_draw_enable", "ATTR_draw_disable",
+  "ATTR_draped", "ATTR_no_draped",
   "ATTR_no_solid_camera", "ATTR_solid_camera",
 ]);
 const unsupported = [...commands.keys()].filter((command) => !harmless.has(command));
