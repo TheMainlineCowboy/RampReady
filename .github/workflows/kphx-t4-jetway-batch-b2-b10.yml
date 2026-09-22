@@ -1,0 +1,128 @@
+name: KPHX T4 Exact Jetway Batch B2-B10
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-t4-jetway-batch-b2-b10.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kphx-t4-jetway-batch-b2-b10
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            package.json
+            package-lock.json
+            index.html
+            vite.config.js
+            src
+            reports/kphx-a1-source-jetway-authority.json
+            public/models/kphx
+            public/models/xplane11-stock/jetway1
+          sparse-checkout-cone-mode: false
+
+      - name: Install browser verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npx vite --host 127.0.0.1 --port 4173 >/tmp/t4-b2-b10-vite.log 2>&1 &
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/t4-b2-b10-vite.log
+          exit 1
+
+      - name: Capture B2-B10 exact stock jetways
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1800,height:1100}});
+          const errors=[],failed=[],httpErrors=[];
+          page.on("console",m=>{if(m.type()==="error")errors.push(m.text())});
+          page.on("pageerror",e=>errors.push(String(e)));
+          page.on("requestfailed",r=>failed.push({url:r.url(),error:r.failure()?.errorText||"unknown"}));
+          page.on("response",r=>{if(r.status()>=400)httpErrors.push({url:r.url(),status:r.status()})});
+          let waitError=null;
+          await page.goto("http://127.0.0.1:4173/RampReady/?kphxT4Jetways=1&batch=B2-B10",{waitUntil:"domcontentloaded",timeout:60000});
+          try{
+            await page.waitForFunction(()=>{
+              const c=document.querySelector("canvas.kphxT4JetwayBatchVerifierCanvas");
+              return ["ready","error"].includes(c?.dataset?.kphxT4JetwayBatchVerifier);
+            },null,{timeout:120000});
+          }catch(e){waitError=String(e)}
+          const evidence=await page.evaluate(()=>{
+            const c=document.querySelector("canvas.kphxT4JetwayBatchVerifierCanvas");
+            return c?{dataset:{...c.dataset}}:{dataset:{}};
+          });
+          await page.screenshot({path:"reports/kphx-t4-jetways-b2-b10.png",fullPage:true});
+          fs.writeFileSync("reports/kphx-t4-jetways-b2-b10.json",JSON.stringify({evidence,errors,failed,httpErrors,waitError},null,2)+"\n");
+          await browser.close();
+          NODE
+
+      - name: Enforce B2-B10 source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const r=JSON.parse(fs.readFileSync("reports/kphx-t4-jetways-b2-b10.json","utf8"));
+          const d=r.evidence?.dataset||{};
+          const f=[];
+          if(d.kphxT4JetwayBatchVerifier!=="ready")f.push(d.kphxT4JetwayBatchError||`state=${d.kphxT4JetwayBatchVerifier}`);
+          if(d.kphxT4JetwayBatchName!=="B2-B10")f.push(`batch=${d.kphxT4JetwayBatchName}`);
+          if(d.kphxT4JetwayBatchGates!=="B2,B3,B4,B5,B6,B7,B8,B9,B10")f.push(`gates=${d.kphxT4JetwayBatchGates}`);
+          if(d.kphxT4JetwayBatchCount!=="9")f.push(`count=${d.kphxT4JetwayBatchCount}`);
+          if(d.kphxT4JetwayBatchResource!=="lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac")f.push(`resource=${d.kphxT4JetwayBatchResource}`);
+          if(d.kphxT4JetwayBatchOldAirportJetwayGlbLoaded!=="false")f.push("old substitute GLB loaded");
+          if(r.waitError)f.push(r.waitError);
+          if(r.errors?.length)f.push(`browser=${r.errors.join(" | ")}`);
+          if(r.failed?.length)f.push(`failed=${JSON.stringify(r.failed)}`);
+          if(r.httpErrors?.length)f.push(`http=${JSON.stringify(r.httpErrors)}`);
+          if(f.length)throw new Error(f.join("; "));
+          const ev=JSON.parse(d.kphxT4JetwayBatchEvidence||"[]");
+          if(ev.length!==9)throw new Error(`evidence count=${ev.length}`);
+          for(const gate of ev){
+            if(gate.ringMode!==0)throw new Error(`${gate.gate} ring=${gate.ringMode}`);
+            if(gate.renderedEdgeCount!==gate.nodeCount-1)throw new Error(`${gate.gate} open-edge count mismatch`);
+          }
+          console.log(JSON.stringify({batch:d.kphxT4JetwayBatchName,totalEdges:d.kphxT4JetwayBatchTotalEdges,evidence:ev},null,2));
+          NODE
+
+      - name: Upload B2-B10 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kphx-t4-jetways-b2-b10
+          path: |
+            reports/kphx-t4-jetways-b2-b10.png
+            reports/kphx-t4-jetways-b2-b10.json
+          if-no-files-found: warn
+          compression-level: 0
