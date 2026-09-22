@@ -43,9 +43,13 @@ jobs:
           gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1Gs2bxkYBXhGHSiYg3M2eVpVpQ29tB9C7" -O "$BASE/Cargo_Dollies"
           find "$BASE/Cargo_Dollies" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-02A-SHA256SUMS.txt
           git add "$BASE/Cargo_Dollies" assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-02A-SHA256SUMS.txt
-          git commit -m "Move exact MisterX Cargo Dollies source"
-          git pull --rebase origin kphx-full-airport-import
-          git push origin HEAD:kphx-full-airport-import
+          if git diff --cached --quiet; then
+            echo "Cargo Dollies already exact; no commit needed."
+          else
+            git commit -m "Move exact MisterX Cargo Dollies source"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
 
       - name: GPUs exact source
         shell: bash
@@ -56,9 +60,13 @@ jobs:
           gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1EjrUa1Bu9NxNqXrxWM6IMQf8EGdKc9_V" -O "$BASE/GPUs"
           find "$BASE/GPUs" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-02B-SHA256SUMS.txt
           git add "$BASE/GPUs" assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-02B-SHA256SUMS.txt
-          git commit -m "Move exact MisterX GPU source"
-          git pull --rebase origin kphx-full-airport-import
-          git push origin HEAD:kphx-full-airport-import
+          if git diff --cached --quiet; then
+            echo "GPUs already exact; no commit needed."
+          else
+            git commit -m "Move exact MisterX GPU source"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
 
       - name: Pushback Trucks exact source
         shell: bash
@@ -69,8 +77,12 @@ jobs:
           gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1hk1hDfgooevN4rpzQA2M3aTQYboy_P_0" -O "$BASE/Pushback_Trucks"
           find "$BASE/Pushback_Trucks" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-02C-SHA256SUMS.txt
           git add "$BASE/Pushback_Trucks" assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-02C-SHA256SUMS.txt
-          git commit -m "Move exact MisterX Pushback Trucks source"
-          git pull --rebase origin kphx-full-airport-import
-          git push origin HEAD:kphx-full-airport-import
+          if git diff --cached --quiet; then
+            echo "Pushback Trucks already exact; no commit needed."
+          else
+            git commit -m "Move exact MisterX Pushback Trucks source"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
 
 # T4 completeness trigger 2026-09-22
