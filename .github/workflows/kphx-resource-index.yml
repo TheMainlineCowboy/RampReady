@@ -1,0 +1,35 @@
+name: KPHX Exact Dependency Index
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-resource-index.yml"
+      - "scripts/index-kphx-external-resources.mjs"
+      - "public/models/kphx/wed-objects.exact.json"
+      - "public/models/kphx/wed-ground.exact.json"
+      - "public/models/kphx/wed-jetways.exact.json"
+
+permissions:
+  contents: write
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+      - name: Build exact dependency index
+        run: node scripts/index-kphx-external-resources.mjs
+      - name: Commit index
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-external-resource-index.json
+          git commit -m "Index exact KPHX external resources"
+          git push origin HEAD:kphx-full-airport-import
