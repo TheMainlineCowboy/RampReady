@@ -1,0 +1,99 @@
+name: Import Exact XP11 Stock Jetway Source
+on:
+  push:
+    branches: [kphx-full-airport-import]
+    paths: [".github/workflows/import-exact-xp11-jetway-source.yml"]
+permissions:
+  contents: write
+concurrency:
+  group: import-exact-xp11-jetway-source
+  cancel-in-progress: true
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 20
+          sparse-checkout: |
+            .github/workflows
+            source/xplane11-stock
+          sparse-checkout-cone-mode: false
+      - name: Download and verify exact Drive archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --output /tmp/Ramp_Equipment.zip 'https://sdmntprcentralus.oaiusercontent.com/files/00000000-0110-81f5-980d-4faeeed07c65/raw?se=2026-09-22T08%3A31%3A07Z&sp=r&sv=2026-02-06&sr=b&scid=a3d0593b-8e2e-5729-a63b-31fa2318e70e&skoid=18c14e53-ea0c-429b-8d09-d22d66ca7169&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-22T05%3A34%3A52Z&ske=2026-09-23T05%3A34%3A52Z&sks=b&skv=2026-02-06&sig=YFqyO03ptiPEriFqWil0G3G8HtMjLD2P2Qy4tvlNPVo%3D'
+          curl --fail --location --retry 3 --output /tmp/textures.zip 'https://sdmntprnorthcentralus.oaiusercontent.com/files/00000000-ac28-822f-95d3-41af326f0e21/raw?se=2026-09-22T08%3A31%3A10Z&sp=r&sv=2026-02-06&sr=b&scid=9244e31a-de5a-55d6-94e0-24454b8e4816&skoid=18c14e53-ea0c-429b-8d09-d22d66ca7169&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-22T01%3A56%3A57Z&ske=2026-09-23T01%3A56%3A57Z&sks=b&skv=2026-02-06&sig=fLiU4TG0lmoYeEuDe81iQwLIsrSWCuFJM8gDbMlWBk4%3D'
+          echo "f913ee182c9ddb4d46c86567ac9e2d14c36bbbb5fbce70be5f745cbbc9e3384b  /tmp/Ramp_Equipment.zip" | sha256sum --check --strict
+          echo "e6419a2b1a7b0be4f8ee8f572d588b2d8331c085873f87c31d6348e7b8fbefdd  /tmp/textures.zip" | sha256sum --check --strict
+      - name: Extract exact stock jetway dependency only
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/ramp /tmp/textures source/xplane11-stock/jetway-1-solid
+          mkdir -p /tmp/ramp /tmp/textures
+          unzip -q /tmp/Ramp_Equipment.zip -d /tmp/ramp
+          unzip -q /tmp/textures.zip -d /tmp/textures
+          OUT=source/xplane11-stock/jetway-1-solid
+          mkdir -p "$OUT/Ramp_Equipment/jetways" "$OUT/textures"
+          cp /tmp/ramp/Ramp_Equipment/jetways/jetway_1_solid.fac "$OUT/Ramp_Equipment/jetways/"
+          python - <<'PY'
+          from pathlib import Path
+          import shutil
+          fac=Path('/tmp/ramp/Ramp_Equipment/jetways/jetway_1_solid.fac')
+          src=fac.parent
+          out=Path('source/xplane11-stock/jetway-1-solid/Ramp_Equipment/jetways')
+          objs=[line.split(None,1)[1] for line in fac.read_text().splitlines() if line.startswith('OBJ ')]
+          assert len(objs)==18, objs
+          for name in objs:
+              p=src/name
+              assert p.is_file(), name
+              shutil.copy2(p,out/name)
+          PY
+          cp /tmp/textures/textures/jetway_1_ALB.dds "$OUT/textures/"
+          cp /tmp/textures/textures/jetway_1_LIT.dds "$OUT/textures/"
+          cp /tmp/textures/textures/jetway_1_NML.png "$OUT/textures/"
+      - name: Verify exact extracted file hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd source/xplane11-stock/jetway-1-solid
+          cat > /tmp/expected.sha256 <<'EOF'
+a98a61b6de28a0db6548f748163494fc24513267dee40322502d5800eff8feb5  Ramp_Equipment/jetways/jetway_1_solid.fac
+4dc2612b8be029cb1d5a52cb50f4415155dc5361d218681757a9aca0e364ba06  Ramp_Equipment/jetways/jw_cabin_1a.obj
+5f7b1516a597b4ca5ab1a97fc8d9bab29a618fd738462f9a17c2036921004d37  Ramp_Equipment/jetways/jw_cabin_1b.obj
+12c2e0d33b02c3aa3d504e06bd983af2335adde63fc46daa9e375460cd4a49ea  Ramp_Equipment/jetways/jw_joint_1a.obj
+84959cdc64845d434c757a53c608461a9e70479f9e8d34582a942465e5939a95  Ramp_Equipment/jetways/jw_joint_1b.obj
+7ae99754f2887d068c8d9b0d3cec2bccb2ea8e772e580796ef753c7e730b8021  Ramp_Equipment/jetways/jw_joint_1c.obj
+87937119b58e8933135ed80046ee9e80b6bacbe2cc750d564e3d187b02477ba3  Ramp_Equipment/jetways/jw_rotunda_1a.obj
+79b3a13d5741054c5cdf904f6964f3f8e6d69321bb37e27b9363b22cfca9027b  Ramp_Equipment/jetways/jw_rotunda_1b.obj
+12b3fdee316cfa555481097779a7fbe10133396906045134c53c9f50b7cb0e36  Ramp_Equipment/jetways/jw_rotunda_1c.obj
+c1ddd447a72474d133c347161d23ed2a54f8e4dec47350b515972441924d97c9  Ramp_Equipment/jetways/jw_tunnel_2_11a.obj
+df7c4d93561ba60746f1eaf26ba2f72235164517095c02ed4dadf1d430ae00ca  Ramp_Equipment/jetways/jw_tunnel_2_11b.obj
+5c214ce3e26ffb760512a66fff39980bbf5656d1915d8bd42a3874219c0fadc8  Ramp_Equipment/jetways/jw_tunnel_2_13a.obj
+24ce6b8c0d4bfc41c935727a29882fd3122330463e9d762b6416ef0715bff4b4  Ramp_Equipment/jetways/jw_tunnel_2_13b.obj
+eb0508d976831cdabeda81a11edf3540eef83cd89c6c35616b611ec90aea1880  Ramp_Equipment/jetways/jw_tunnel_2_5a.obj
+499feebf39b81d57744af51b64a8795651b1b40312f5f8c95a6272b989c3a8bb  Ramp_Equipment/jetways/jw_tunnel_2_5b.obj
+a6c9d5100453ff1a446ebef7601f2859442d67dad3fa3fecf0a9c17e0b9a23a8  Ramp_Equipment/jetways/jw_tunnel_2_7a.obj
+da956abd17b3cbd6eae83f836bc49c0b4784dc886ee72775cda4ad807df17df9  Ramp_Equipment/jetways/jw_tunnel_2_7b.obj
+fb0284d20dd8c540ad27482601ac7453bde8dcfbe7263b9c49c17036a9f4e2c7  Ramp_Equipment/jetways/jw_tunnel_2_9a.obj
+cc33d998d52f3fb06710fe641730512c21df7bdbabd739b47c7b197c604a51f1  Ramp_Equipment/jetways/jw_tunnel_2_9b.obj
+fa988bfd30807376113aa0c9075e173ae9c2f9b5f5e75f01828e1c8279bbf59e  textures/jetway_1_ALB.dds
+64e28d9546c0b9884a11d0555b3ab5287ceec3f248d3d9da4dbfdf0e87edf127  textures/jetway_1_LIT.dds
+ded40b58230e1c0cbcef8f4e126ee97733f03f02ac52aebce53a1b12ed16e233  textures/jetway_1_NML.png
+EOF
+          sha256sum --check --strict /tmp/expected.sha256
+          cp /tmp/expected.sha256 SHA256SUMS.txt
+      - name: Commit exact stock source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add source/xplane11-stock/jetway-1-solid
+          git commit -m "Import exact XP11 stock jetway facade dependency"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
