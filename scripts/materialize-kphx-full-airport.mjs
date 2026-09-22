@@ -22,6 +22,7 @@ const sourceRoot = path.resolve(sourceRootArg || process.env.KPHX_FULL_AIRPORT_S
 const includeExternalPrefixes = new Set((options["include-external-prefixes"] || "").split(",").map((entry) => entry.trim()).filter(Boolean));
 const includePackagePrefixes = new Set((options["package-prefixes"] || "").split(",").map((entry) => entry.trim()).filter(Boolean));
 const batchName = options["batch-name"] || null;
+const placementReportInputPath = options["placement-report"] ? path.resolve(options["placement-report"]) : null;
 const libraryMapPath = options["library-map"] ? path.resolve(options["library-map"]) : null;
 const libraryMapPayload = libraryMapPath ? JSON.parse(await fs.readFile(libraryMapPath, "utf8")) : null;
 const libraryResourceMap = libraryMapPayload?.resources || {};
@@ -285,6 +286,7 @@ async function convertObject(resource) {
     binSha256: await sha256(binPath),
     diffuse,
     lit,
+    normal,
     converter: converterResult,
   };
 }
@@ -292,17 +294,22 @@ async function convertObject(resource) {
 await fs.mkdir(runtimeRoot, { recursive: true });
 await fs.mkdir(reportRoot, { recursive: true });
 
-if (!(await exists(wedPath))) {
-  throw new Error(`earth.wed.xml not found in KPHX source root: ${wedPath}`);
+let placementReportReadPath = placementReportInputPath;
+if (!placementReportReadPath) {
+  if (!(await exists(wedPath))) {
+    throw new Error(`earth.wed.xml not found in KPHX source root: ${wedPath}`);
+  }
+  await execFile(process.execPath, [
+    path.resolve("scripts/extract-kphx-wed-object-placements.mjs"),
+    wedPath,
+    placementReportPath,
+  ], { maxBuffer: 16 * 1024 * 1024 });
+  placementReportReadPath = placementReportPath;
 }
-
-await execFile(process.execPath, [
-  path.resolve("scripts/extract-kphx-wed-object-placements.mjs"),
-  wedPath,
-  placementReportPath,
-], { maxBuffer: 16 * 1024 * 1024 });
-
-const placementReport = JSON.parse(await fs.readFile(placementReportPath, "utf8"));
+if (!(await exists(placementReportReadPath))) {
+  throw new Error(`KPHX WED placement report not found: ${placementReportReadPath}`);
+}
+const placementReport = JSON.parse(await fs.readFile(placementReportReadPath, "utf8"));
 const allPackagePlacements = placementReport.placements.packageOwned;
 const packagePlacements = allPackagePlacements.filter((entry) => (
   includePackagePrefixes.size === 0 || includePackagePrefixes.has(entry.resourcePrefix)
@@ -355,7 +362,8 @@ const manifest = {
   source: {
     package: placementReport.source.package,
     version: placementReport.source.version,
-    wedSha256: await sha256(wedPath),
+    wedSha256: placementReport.source?.wedSha256
+      || ((await exists(wedPath)) ? await sha256(wedPath) : null),
     masterAnchor: placementReport.masterAnchor,
   },
   policy: {
@@ -366,6 +374,7 @@ const manifest = {
     packagePrefixes: [...includePackagePrefixes],
     externalLibraries: "only explicitly resolved library resources are materialized; unresolved virtual paths are never substituted",
     libraryMap: libraryMapPath,
+    placementReport: placementReportReadPath,
   },
   packageOwned: {
     totalSourcePlacementCount: allPackagePlacements.length,
