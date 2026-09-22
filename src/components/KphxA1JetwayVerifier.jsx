@@ -12,7 +12,6 @@ import {
   loadPlacementMap,
 } from "../environment/sourceKphxWedJetwayFleet.js";
 import { computeUploadedJetwayArticulation } from "../environment/uploadedAirportJetwayArticulationV10.js";
-import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
 import {
   kphxWedToRampReadyPosition,
   kphxXPlaneHeadingToRampReadyYawRadians,
@@ -78,37 +77,24 @@ export default function KphxA1JetwayVerifier() {
     const load = async () => {
       const loader = new GLTFLoader();
 
-      for (const object of SOURCE_KPHX_TERMINAL4_OBJECTS) {
-        const gltf = await loader.loadAsync(runtimeUrl(`/models/kphx/${object.runtime}`));
-        const model = gltf.scene;
-        model.name = object.name;
-        model.position.fromArray(kphxWedToRampReadyPosition(object.latitude, object.longitude, 0));
-        model.rotation.y = kphxXPlaneHeadingToRampReadyYawRadians(object.headingDegrees);
-        model.traverse((node) => {
-          if (!node.isMesh) return;
-          node.castShadow = true;
-          node.receiveShadow = true;
-          const materials = Array.isArray(node.material) ? node.material : [node.material];
-          for (const material of materials) {
-            if (material?.map) material.map.colorSpace = THREE.SRGBColorSpace;
-          }
-        });
-        root.add(model);
-      }
+      const object = SOURCE_KPHX_TERMINAL4_OBJECTS.find((entry) => entry.resource === "Terminals/Terminal4b.obj");
+      if (!object) throw new Error("Exact Terminal4b source object is missing");
+      const terminalGltf = await loader.loadAsync(runtimeUrl(`/models/kphx/${object.runtime}`));
+      const terminal = terminalGltf.scene;
+      terminal.name = object.name;
+      terminal.position.fromArray(kphxWedToRampReadyPosition(object.latitude, object.longitude, 0));
+      terminal.rotation.y = kphxXPlaneHeadingToRampReadyYawRadians(object.headingDegrees);
+      terminal.traverse((node) => {
+        if (!node.isMesh) return;
+        node.castShadow = true;
+        node.receiveShadow = true;
+        const materials = Array.isArray(node.material) ? node.material : [node.material];
+        for (const material of materials) {
+          if (material?.map) material.map.colorSpace = THREE.SRGBColorSpace;
+        }
+      });
+      root.add(terminal);
 
-      await installKphxPackageOwnedSurfaceLayer(THREE, root, {
-        manifestUrl: "/models/kphx-full-airport/surfaces/manifest.json",
-        networkUrl: "/models/kphx-full-airport/surfaces/surface-network.json",
-        strict: true,
-      });
-      const localSurfaces = await installKphxPackageOwnedSurfaceLayer(THREE, root, {
-        manifestUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json",
-        networkUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/surface-network.json",
-        strict: false,
-      });
-      if (localSurfaces.failures.length) {
-        throw new Error(`A1 local surface failures: ${JSON.stringify(localSurfaces.failures)}`);
-      }
 
       const [map, rawFacadeResponse, prototype] = await Promise.all([
         loadPlacementMap(),
