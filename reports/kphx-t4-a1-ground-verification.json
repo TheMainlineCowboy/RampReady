@@ -1,0 +1,22 @@
+{
+  "evidence": {
+    "dataset": {
+      "engine": "three.js r171",
+      "kphxT4GroundVerifier": "ready",
+      "kphxT4ObjectCount": "2",
+      "kphxA1RadiusMeters": "250",
+      "kphxZdpPlacements": "40",
+      "kphxZdpResources": "14",
+      "kphxZdpPolygons": "14",
+      "kphxZdpDraped": "0",
+      "kphxZdpLineMeshes": "26",
+      "kphxPackagePolygons": "13",
+      "kphxPackageLineMeshes": "35",
+      "kphxMaxPositionDeltaMeters": "0",
+      "kphxMaxYawDeltaRadians": "0"
+    }
+  },
+  "errors": [],
+  "failed": [],
+  "httpErrors": []
+}
