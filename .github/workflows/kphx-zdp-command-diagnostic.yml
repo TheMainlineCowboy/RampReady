@@ -1,0 +1,58 @@
+name: KPHX ZDP Command Diagnostic
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-zdp-command-diagnostic.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Clone exact ZDP 1.2.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch 1.2.0 https://gitlab.com/StableSystem/zdp-library.git .zdp
+          test "$(git -C .zdp rev-parse HEAD)" = "4b44b673ac023bac67f92a1c991a28df1b1da82c"
+
+      - name: Record exact command syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          {
+            echo "=== painted text A_yellow ==="
+            grep -n -E '^(TEXTURE|TEXTURE_NORMAL|TEXTURE_DRAPED_NORMAL|WEATHER|SPECULAR|ATTR_shiny_rat|ATTR_layer_group|GLOBAL_no_shadow)'               .zdp/markings/painted_text/clean/large/A_yellow.obj || true
+            echo
+            echo "=== runway 2 ==="
+            grep -n -E '^(TEXTURE|TEXTURE_NORMAL|TEXTURE_DRAPED_NORMAL|WEATHER|SPECULAR|ATTR_shiny_rat|ATTR_layer_group|GLOBAL_no_shadow)'               .zdp/markings/runway_markings/large/clean/2.obj || true
+            echo
+            echo "=== source headers ==="
+            head -80 .zdp/markings/painted_text/clean/large/A_yellow.obj
+            echo
+            head -80 .zdp/markings/runway_markings/large/clean/2.obj
+          } > reports/kphx-zdp-command-syntax.txt
+
+      - name: Commit diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-zdp-command-syntax.txt
+          git commit -m "Record exact ZDP OBJ8 normal and weather syntax"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
