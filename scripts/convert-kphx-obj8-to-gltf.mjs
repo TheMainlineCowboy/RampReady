@@ -126,6 +126,12 @@ for (const rawLine of source.split(/\r?\n/)) {
         state: snapshotState(),
       });
     }
+  } else if (command === "GLOBAL_no_blend") {
+    const cutoff = Number(parts[1]);
+    globalAlphaCutoff = Number.isFinite(cutoff) ? cutoff : 0.5;
+  } else if (command === "GLOBAL_specular") {
+    const value = Number(parts[1]);
+    globalSpecular = Number.isFinite(value) ? value : parts.slice(1).join(" ");
   } else if (command === "ATTR_blend") drawState.alphaMode = "BLEND";
   else if (command === "ATTR_no_blend") drawState.alphaMode = "OPAQUE";
   else if (command === "ATTR_cull") drawState.doubleSided = false;
@@ -318,7 +324,7 @@ const materialByState = new Map();
 const materials = [];
 function materialIndexForState(state) {
   const key = JSON.stringify({
-    alphaMode: state.alphaMode,
+    alphaMode: state.alphaMode === "OPAQUE" && globalAlphaCutoff !== null ? "MASK" : state.alphaMode,
     alphaCutoff: state.alphaCutoff ?? globalAlphaCutoff,
     doubleSided: state.doubleSided,
     draped: state.draped,
@@ -337,8 +343,10 @@ function materialIndexForState(state) {
       roughnessFactor: 1,
     },
     doubleSided: state.doubleSided,
-    alphaMode: state.alphaMode,
-    ...(state.alphaMode === "MASK" ? { alphaCutoff: state.alphaCutoff ?? globalAlphaCutoff ?? 0.5 } : {}),
+    alphaMode: state.alphaMode === "OPAQUE" && globalAlphaCutoff !== null ? "MASK" : state.alphaMode,
+    ...((state.alphaMode === "MASK" || (state.alphaMode === "OPAQUE" && globalAlphaCutoff !== null))
+      ? { alphaCutoff: state.alphaCutoff ?? globalAlphaCutoff ?? 0.5 }
+      : {}),
     emissiveFactor: state.emissionRgb,
     extras: {
       xPlaneDraped: state.draped === true,
