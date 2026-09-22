@@ -138,8 +138,8 @@ jobs:
             if (d.kphxA1WallCount !== "6") failures.push(`${view}:walls=${d.kphxA1WallCount}`);
             if (d.kphxA1ObjectInstanceCount !== "16") failures.push(`${view}:objects=${d.kphxA1ObjectInstanceCount}`);
             if (d.kphxJetwaySourcePlacementCount !== "108") failures.push(`${view}:sourceCount=${d.kphxJetwaySourcePlacementCount}`);
-            if (d.kphxJetwayReadyStraightPlacementCount !== "107") failures.push(`${view}:readyCount=${d.kphxJetwayReadyStraightPlacementCount}`);
-            if (d.kphxJetwayBlockedCurveIds !== "99713") failures.push(`${view}:curveBlock=${d.kphxJetwayBlockedCurveIds}`);
+            if (d.kphxJetwayReadyStraightPlacementCount !== "108") failures.push(`${view}:readyCount=${d.kphxJetwayReadyStraightPlacementCount}`);
+            if (d.kphxJetwayBlockedCurveIds !== "") failures.push(`${view}:curveBlock=${d.kphxJetwayBlockedCurveIds}`);
             if (d.kphxLegacyAirportJetwayGlbLoaded !== "false") failures.push(`${view}:legacyGlb=${d.kphxLegacyAirportJetwayGlbLoaded}`);
             if (d.kphxA1WallSequence !== "Wall 1,Wall 1,Wall 1,Wall 1,Wall 5,Wall 4") failures.push(`${view}:wallSequence=${d.kphxA1WallSequence}`);
             if ((result.errors || []).length) failures.push(`${view}:browser=${result.errors.join(" | ")}`);
@@ -152,6 +152,7 @@ jobs:
           NODE
 
       - name: Upload exact A1 XP11 evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: kphx-a1-exact-xp11-jetway-verification
