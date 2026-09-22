@@ -1,0 +1,88 @@
+name: KPHX MisterX Fuel Trucks Exact Files
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-misterx-fuel-files.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-misterx-fuel-files
+  cancel-in-progress: false
+
+jobs:
+  move-files:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install Drive downloader
+        run: python -m pip install --disable-pip-version-check gdown==5.2.0
+
+      - name: Configure checkpoint commits
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Large ASIG texture
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIR="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Fuel_Trucks/Large"
+          mkdir -p "$DIR"
+          gdown "https://drive.google.com/uc?id=1DlJ-8V2FXCdKisk7SVFjTlifuoXTtVGP" -O "$DIR/ASIG.dds"
+          sha256sum "$DIR/ASIG.dds" > assets/kphx-source/dependencies/MisterX_Library_2.0c/FUEL-LARGE-TEXTURE-SHA256.txt
+          git add "$DIR/ASIG.dds" assets/kphx-source/dependencies/MisterX_Library_2.0c/FUEL-LARGE-TEXTURE-SHA256.txt
+          git commit -m "Move exact MisterX large ASIG fuel texture"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Large ASIG object
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          DIR="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Fuel_Trucks/Large"
+          gdown "https://drive.google.com/uc?id=1jJjldh0CRLqcmmOQppdb6b4LMry9NWl1" -O "$DIR/ASIG.obj"
+          sha256sum "$DIR/ASIG.obj" > assets/kphx-source/dependencies/MisterX_Library_2.0c/FUEL-LARGE-OBJ-SHA256.txt
+          git add "$DIR/ASIG.obj" assets/kphx-source/dependencies/MisterX_Library_2.0c/FUEL-LARGE-OBJ-SHA256.txt
+          git commit -m "Move exact MisterX large ASIG fuel object"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Medium ASIG texture
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          DIR="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Fuel_Trucks/Medium"
+          mkdir -p "$DIR"
+          gdown "https://drive.google.com/uc?id=1WnS2IuV9BgcQBCL-6bqzJG55d0OP72Q2" -O "$DIR/ASIG.dds"
+          sha256sum "$DIR/ASIG.dds" > assets/kphx-source/dependencies/MisterX_Library_2.0c/FUEL-MEDIUM-TEXTURE-SHA256.txt
+          git add "$DIR/ASIG.dds" assets/kphx-source/dependencies/MisterX_Library_2.0c/FUEL-MEDIUM-TEXTURE-SHA256.txt
+          git commit -m "Move exact MisterX medium ASIG fuel texture"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Medium ASIG object
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          DIR="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Fuel_Trucks/Medium"
+          gdown "https://drive.google.com/uc?id=13c7U5YDXxKOit_yODfDc-A2-GulL34Rc" -O "$DIR/ASIG.obj"
+          sha256sum "$DIR/ASIG.obj" > assets/kphx-source/dependencies/MisterX_Library_2.0c/FUEL-MEDIUM-OBJ-SHA256.txt
+          git add "$DIR/ASIG.obj" assets/kphx-source/dependencies/MisterX_Library_2.0c/FUEL-MEDIUM-OBJ-SHA256.txt
+          git commit -m "Move exact MisterX medium ASIG fuel object"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
