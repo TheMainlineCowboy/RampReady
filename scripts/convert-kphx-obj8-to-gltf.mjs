@@ -19,6 +19,8 @@ const indices = [];
 const drawRanges = [];
 const commands = new Map();
 const parameterizedLights = [];
+const vertexLights = [];
+const namedLights = [];
 let sourceTexture = null;
 let sourceLitTexture = null;
 let pointCounts = null;
@@ -58,6 +60,21 @@ for (const rawLine of source.split(/\r?\n/)) {
     parameterizedLights.push({
       name: parts[1],
       position: parts.slice(2, 5).map(Number),
+      params: parts.slice(5).map(Number),
+      raw: line,
+    });
+  } else if (command === "VLIGHT") {
+    if (parts.length < 7) throw new Error(`Malformed VLIGHT record: ${line}`);
+    vertexLights.push({
+      position: parts.slice(1, 4).map(Number),
+      rgb: parts.slice(4, 7).map(Number),
+      raw: line,
+    });
+  } else if (command === "LIGHT_NAMED") {
+    if (parts.length < 5) throw new Error(`Malformed LIGHT_NAMED record: ${line}`);
+    namedLights.push({
+      position: parts.slice(1, 4).map(Number),
+      name: parts[4],
       params: parts.slice(5).map(Number),
       raw: line,
     });
@@ -337,6 +354,10 @@ const gltf = {
     drawRanges,
     parameterizedLightCount: parameterizedLights.length,
     parameterizedLights,
+    vertexLightCount: vertexLights.length,
+    vertexLights,
+    namedLightCount: namedLights.length,
+    namedLights,
     sourceBounds: { min: accessors[positionAccessor].min, max: accessors[positionAccessor].max },
     geometryPolicy: "preserve-source-positions-normals-uvs-indices-no-remesh-no-decimation",
     drawStatePolicy: "preserve-supported-per-TRIS-blend-and-cull-state;reject-unsupported-render-state",
