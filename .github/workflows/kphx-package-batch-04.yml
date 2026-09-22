@@ -102,6 +102,7 @@ jobs:
             reports/kphx-full-airport-wed-placements-service-cargo-downtown.json \
             reports/kphx-full-airport-materialization-service-cargo-downtown.json
           git commit -m "KPHX exact package batch: service cargo downtown"
+          git restore -- public/models/kphx-full-airport/manifest.json
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
 
