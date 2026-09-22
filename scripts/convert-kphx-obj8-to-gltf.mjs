@@ -3,7 +3,7 @@ import path from "node:path";
 
 const [, , inputPath, outputDirectory, ...args] = process.argv;
 if (!inputPath || !outputDirectory) {
-  throw new Error("Usage: node scripts/convert-kphx-obj8-to-gltf.mjs <input.obj> <output-dir> [--name=AssetName] [--diffuse=texture.png] [--lit=texture_LIT.png] [--normal=texture_NML.png] [--normal-scale=1] [--weather=weather.png]");
+  throw new Error("Usage: node scripts/convert-kphx-obj8-to-gltf.mjs <input.obj> <output-dir> [--name=AssetName] [--diffuse=texture.png] [--draped-diffuse=shadow.png] [--lit=texture_LIT.png] [--normal=texture_NML.png] [--normal-scale=1] [--draped-normal=shadow_NML.png] [--draped-normal-scale=1] [--weather=weather.png]");
 }
 
 const options = Object.fromEntries(args
@@ -22,9 +22,12 @@ const parameterizedLights = [];
 const vertexLights = [];
 const namedLights = [];
 let sourceTexture = null;
+let sourceDrapedTexture = null;
 let sourceLitTexture = null;
 let sourceNormalTexture = null;
 let sourceNormalScale = null;
+let sourceDrapedNormalTexture = null;
+let sourceDrapedNormalScale = null;
 let sourceWeatherTexture = null;
 let globalNoShadow = false;
 let globalSpecular = null;
@@ -57,17 +60,22 @@ for (const rawLine of source.split(/\r?\n/)) {
   const command = parts[0];
   bump(command);
 
-  if (command === "TEXTURE" || command === "TEXTURE_DRAPED") sourceTexture = parts.slice(1).join(" ");
+  if (command === "TEXTURE") sourceTexture = parts.slice(1).join(" ");
+  else if (command === "TEXTURE_DRAPED") sourceDrapedTexture = parts.slice(1).join(" ");
   else if (command === "TEXTURE_LIT") sourceLitTexture = parts.slice(1).join(" ");
-  else if (command === "TEXTURE_DRAPED_NORMAL" || command === "TEXTURE_NORMAL") {
+  else if (command === "TEXTURE_NORMAL" || command === "TEXTURE_DRAPED_NORMAL") {
     if (parts.length < 2) throw new Error(`Malformed ${command} record: ${line}`);
     const maybeScale = Number(parts[1]);
-    if (Number.isFinite(maybeScale) && parts.length >= 3) {
-      sourceNormalScale = maybeScale;
-      sourceNormalTexture = parts.slice(2).join(" ");
+    const scale = Number.isFinite(maybeScale) && parts.length >= 3 ? maybeScale : 1;
+    const texture = Number.isFinite(maybeScale) && parts.length >= 3
+      ? parts.slice(2).join(" ")
+      : parts.slice(1).join(" ");
+    if (command === "TEXTURE_DRAPED_NORMAL") {
+      sourceDrapedNormalScale = scale;
+      sourceDrapedNormalTexture = texture;
     } else {
-      sourceNormalScale = 1;
-      sourceNormalTexture = parts.slice(1).join(" ");
+      sourceNormalScale = scale;
+      sourceNormalTexture = texture;
     }
   } else if (command === "WEATHER") {
     if (parts.length < 2) throw new Error(`Malformed WEATHER record: ${line}`);
@@ -201,9 +209,12 @@ if (unsupported.length) {
 
 const name = options.name || path.basename(inputPath).replace(/\.[^.]+$/, "");
 const diffuseUri = options.diffuse || sourceTexture;
+const drapedDiffuseUri = options["draped-diffuse"] || sourceDrapedTexture;
 const litUri = options.lit || sourceLitTexture;
 const normalUri = options.normal || sourceNormalTexture;
 const normalScale = Number(options["normal-scale"] ?? sourceNormalScale ?? 1);
+const drapedNormalUri = options["draped-normal"] || sourceDrapedNormalTexture;
+const drapedNormalScale = Number(options["draped-normal-scale"] ?? sourceDrapedNormalScale ?? 1);
 const weatherUri = options.weather || sourceWeatherTexture;
 if (!diffuseUri || /^none$/i.test(diffuseUri)) throw new Error("OBJ8 source has no usable diffuse texture reference");
 
@@ -314,8 +325,15 @@ const xPlaneTextureInfo = (index) => ({
 
 const images = [{ uri: diffuseUri }];
 const textures = [{ sampler: 0, source: 0 }];
+let drapedDiffuseTextureIndex = null;
 let litTextureIndex = null;
 let normalTextureIndex = null;
+let drapedNormalTextureIndex = null;
+if (drapedDiffuseUri && !/^none$/i.test(drapedDiffuseUri)) {
+  images.push({ uri: drapedDiffuseUri });
+  textures.push({ sampler: 0, source: images.length - 1 });
+  drapedDiffuseTextureIndex = textures.length - 1;
+}
 if (litUri && !/^none$/i.test(litUri)) {
   images.push({ uri: litUri });
   textures.push({ sampler: 0, source: images.length - 1 });
@@ -325,6 +343,11 @@ if (normalUri && !/^none$/i.test(normalUri)) {
   images.push({ uri: normalUri });
   textures.push({ sampler: 0, source: images.length - 1 });
   normalTextureIndex = textures.length - 1;
+}
+if (drapedNormalUri && !/^none$/i.test(drapedNormalUri)) {
+  images.push({ uri: drapedNormalUri });
+  textures.push({ sampler: 0, source: images.length - 1 });
+  drapedNormalTextureIndex = textures.length - 1;
 }
 let weatherImageIndex = null;
 if (weatherUri && !/^none$/i.test(weatherUri)) {
@@ -350,7 +373,11 @@ function materialIndexForState(state) {
   const material = {
     name: `${name} source material ${materials.length}`,
     pbrMetallicRoughness: {
-      baseColorTexture: xPlaneTextureInfo(0),
+      baseColorTexture: xPlaneTextureInfo(
+        state.draped && drapedDiffuseTextureIndex !== null
+          ? drapedDiffuseTextureIndex
+          : 0
+      ),
       metallicFactor: 0,
       roughnessFactor: 1,
     },
@@ -373,14 +400,20 @@ function materialIndexForState(state) {
       xPlaneNormalMetalness: normalMetalness,
     },
   };
-  if (litTextureIndex !== null) {
+  if (!state.draped && litTextureIndex !== null) {
     material.emissiveTexture = xPlaneTextureInfo(litTextureIndex);
     material.emissiveFactor = [1, 1, 1];
   }
-  if (normalTextureIndex !== null) {
+  const selectedNormalTextureIndex = state.draped && drapedNormalTextureIndex !== null
+    ? drapedNormalTextureIndex
+    : normalTextureIndex;
+  const selectedNormalScale = state.draped && drapedNormalTextureIndex !== null
+    ? drapedNormalScale
+    : normalScale;
+  if (selectedNormalTextureIndex !== null) {
     material.normalTexture = {
-      ...xPlaneTextureInfo(normalTextureIndex),
-      scale: Number.isFinite(normalScale) ? normalScale : 1,
+      ...xPlaneTextureInfo(selectedNormalTextureIndex),
+      scale: Number.isFinite(selectedNormalScale) ? selectedNormalScale : 1,
     };
   }
   const index = materials.length;
@@ -442,9 +475,12 @@ const gltf = {
     sourceFormat: "X-Plane OBJ8",
     sourceFile: path.basename(inputPath),
     sourceTexture,
+    sourceDrapedTexture,
     sourceLitTexture,
     sourceNormalTexture,
     sourceNormalScale,
+    sourceDrapedNormalTexture,
+    sourceDrapedNormalScale,
     sourceWeatherTexture,
     globalNoShadow,
     globalSpecular,
@@ -484,9 +520,12 @@ console.log(JSON.stringify({
   materialCount: materials.length,
   sourceBounds: gltf.extras.sourceBounds,
   diffuseUri,
+  drapedDiffuseUri: drapedDiffuseTextureIndex !== null ? drapedDiffuseUri : null,
   litUri: litTextureIndex !== null ? litUri : null,
   normalUri: normalTextureIndex !== null ? normalUri : null,
   normalScale: normalTextureIndex !== null ? normalScale : null,
+  drapedNormalUri: drapedNormalTextureIndex !== null ? drapedNormalUri : null,
+  drapedNormalScale: drapedNormalTextureIndex !== null ? drapedNormalScale : null,
   weatherUri: weatherImageIndex !== null ? weatherUri : null,
   globalNoShadow,
   globalSpecular,
