@@ -148,7 +148,7 @@ for (const segment of segments.values()) {
 
 if (objects.length !== 18) throw new Error(`Expected 18 stock jetway OBJ references, found ${objects.length}`);
 if (segments.size !== 24) throw new Error(`Expected 24 regular facade segments, found ${segments.size}`);
-if (walls.length !== 9) throw new Error(`Expected 9 facade wall definitions, found ${walls.length}`);
+if (walls.length !== 10) throw new Error(`Expected 10 facade wall definitions, found ${walls.length}`);
 if (ringMode !== 0) throw new Error(`Expected stock jetway facade RING 0 open-path behavior, found RING ${ringMode}`);
 if (!graded) throw new Error("Expected stock jetway facade to be GRADED");
 
