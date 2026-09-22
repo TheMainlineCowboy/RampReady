@@ -1,0 +1,212 @@
+2.0c:
+- Added weather maps to ground textures
+- Flagged markings as WEATHER_TRANSPARENT to improve rendering with weather effects
+
+2.0b:
+- Old grass library paths remapped to more similar asset
+
+2.0:
+Aircraft:
+- New liveries:
+	- Airbus A320-200: Austrian (new), Laudamotion, S7 Airlines
+	- Boeing 737-700: Luxair
+	- Boeing 757-300: Arkia
+- Fixed some minor "marching ants" artifacts on 757
+
+Airport:
+- Added several 3D fences
+- Added several taxiway lights (wig-wags and edge lights)
+- Reworked airport lights 1/2 with PBR textures, added color variants
+- Reworked yellow poles
+
+Ground markings:
+- Added a new set of freshly painted taxi lines
+- Added a new set of modular ground markings as polygons
+	- Various fill colors and outlines
+	- Normal and specular maps
+	- Easy placement with WED subtextures feature
+- Added runway markings
+- Reworked fuel hatch texture, added variant without red square
+
+Ground textures:
+- Added dirt marks
+- Added new 4k concrete and asphalt textures
+- Added more tar marks
+- Added rain/snow overlay
+- Added sand texture
+- Improved grass texture
+- Improved tar line texture
+- Reworked skid marks: Added end caps (smooth fade out), normal map
+
+Objects:
+- Added crane
+- Added road curb facades
+
+Vegetation:
+- Reworked grass: Improved textures, different colors/heights
+
+Vehicles:
+- Added new and updated PBR models:
+	- Actros
+	- Belt Loader
+	- Cargo Dollies (2 models)
+	- GPU (medium and large)
+	- Random cars
+	- Trailer (DHL)
+	- Van
+- Reworked parked cars: New textures, stops/lines now optional, added double variant
+
+
+1.61:
+New Content:
+- Added three terrain textures to cover large areas (grass, dirt, semi-dry grass)
+- Added two roads as line files (dirt and asphalt)
+- Moved decals to separate folder, now accessible via the library system
+- Added All Nippon Airways Boeing 777-200ER
+
+Bugfixes/Improvements:
+- Improved skid marks texture (now closer to 1.5 version)
+- Fixed 767 Fedex shadow
+- Fixed 767 Icelandair mirrored text
+- Fixed perpendicular jetway animation
+- Removed United 747 (no longer in service)
+
+1.6:
+- Visual update for all taxilines
+	- Completely revamped all textures, added normal maps
+	- Fixed an issue where black outlines were overlapping with yellow centerlines at intersections
+	- Improved naming conventions
+	- All lines are now available with or without a black outline
+- Added taxisign night lighting
+	- Small concrete platforms with dynamic lights, to be placed under taxiway signs
+- Added detailed jetways with AutoGate support
+- New static aircraft models:
+	- Boeing 777-200ER/LR/F
+	- Fixed misaligned nav lights for older static aircraft
+- New static aircraft liveries:
+	- Renamed Bombardier C-Series to Airbus A220
+	- Airbus A220-300: Air Baltic, Jetblue, Korean Air
+	- Airbus A320-200: Alaska Airlines, Allegiant Air, Air Canada (new), Brussels Airlines, Jetblue (Bubbles), Joon, Lufthansa (new), QantasLink, South African, Swiss, Tigerair, Wow Air
+	- Boeing 737-700: Air Do, Alaska Air Cargo, Southwest (Canyon Blue)
+	- Boeing 737-800: SAS, Skymark, Sun Country
+	- Boeing 757-200F: Cargojet, UPS
+	- Boeing 767-300ER: Icelandair, Westjet
+	- Boeing 767-300F: ABX Air, Fedex
+	- Embraer 175: Air Canada (new)
+- New and improved ground textures:
+	- Added new ramp markings, reworked existing ones
+	- Replaced Asphalt_1, Asphalt_2, Concrete_2 and Gravel with new textures, including normal maps
+	- Added new asphalt, concrete and grass textures
+	- Added normal maps to all textures
+	- Added edges to smoothly transition into surrounding grass/dirt
+	- Improved skid marks
+- New vegetation assets:
+	- Added more trees and shrubs
+	- Improved palm trees, added more variants
+	- Improved grass, added dry grass
+	- Improved 3d birch tree, added new variant
+- Vehicles:
+	- New baggage carts and tractors with PBR materials, more variants
+	- Added new trucks and trailers with PBR materials and more variants
+	- Added VW Jetta
+- Misc: 
+	- Added new flood lights, parking lights
+	- Added 5 different fuel tanks with PBR materials, fuel station, small fuel tank
+	- Added a new modern concrete barrier, updated red and white plastic barriers
+	- Added toll booth
+	- Added firefighter training plane
+	
+
+1.51:
+- Static aircraft:
+    - Fixed 737-700 non-scimitar winglets
+    - Fixed an issue where shadows appear as a black square at night
+    - Fixed reflective shadows
+    - Fixed E175 American Eagle: now uses correct texture
+    - Added new liveries:
+        A320-200: Aegean Airlines, Aer Lingus, Austrian Airlines, Finnair, Iberia, TAP Portugal
+        B757-300: United Airlines
+
+1.5:
+- Static aircraft:
+    - All static aircraft will be exported to the global library, and can now spawn at ramp starts
+    - Updated all static aircraft with new nav lights (now has visible splash on the ground)
+    - Reworked A320, B737-800, B757-200, B767-300, Embraer E175
+         - Added dynamic reflections (X-Plane 11 only)
+         - Improved modelling and textures
+         - Added a ton of liveries from all over the world
+         - Added night textures
+    - Added B737-700, B737-900ER, B757-300, B767-400ER, Bombardier CS100, Bombardier CS300
+         - Dynamic reflections, night textures, accurate 3d models
+         - Liveries for all major operators
+- Ground textures:
+    - Added one new asphalt and one new concrete texture, each with multiple variants
+- Added some more box truck variants (UPS, DHL)
+- Fixed an issue with unintentional light sources in some objects
+
+
+
+1.2:
+- Added shadows to all vehicles. Updated shadows for aircraft
+- Static aircraft:
+    - Added Bombardier Global Express
+    - Added Cessna 402C
+    - Added deHavilland DHC-6
+    - Added Embraer 175
+    - Added Learjet 35
+    - Added several new liveries to existing aircraft
+- Airport vehicles:
+    - Added jetBlue variants for catering trucks, belt loaders and carts
+    - Added new pushback truck
+    - Added two new fire engines (Oshkosh T-3000 6x6 and Oshkosh Striker 8x8)
+    - Added two new fuel trucks (large and small)
+    - Added two more variants to medium fuel truck
+    - Added GPU
+- Added ASR-9 radar
+- Added new airport floodlight
+- Added fuel hydrant ground markings
+- Harbor
+    - Added stacks of containers
+    - Added new cranes
+- Added several miscellaneous objects
+- Added 18 3D people
+- Cars:
+    - Added Toyota Camry and Honda CR-V
+    - Adjust pool of random cars
+- Added bulldozer
+- Ships:
+    - Added large cruise ship (Serenade of the Seas)
+    - Added small cruise ship (Silver Shadow)
+    - Added small container ship
+    - Added vehicles carrier (Sentosa Leader)
+    - Added fireboat (Massport)
+
+- Added "damage" ground markings (tar lines)
+- Added skid marks
+
+1.11:
+- Fixed Boeing 767-300ER United
+
+1.1:
+- Added more ground textures
+- Added more variants for existing static aircraft
+- Added Airbus A380
+- Added Boing 747-400
+- Added Boeing 777-200ER
+- Added Boeing 777-300ER
+- Added Cessna 172
+- Added more Variants for Cessna 208 Caravan
+- Added various boats and ships
+- Added several harbor related objects like containers and cranes
+- Added "California Coastal" forest and palm trees
+- Added Supertug
+- Added van
+- Added more trucks
+- Added more fences
+- Added taxi sign ground markings
+- Added airport lights
+- Added ramp marking
+- Added T-markings
+- Fixed "ILS hold line"
+- Slightly improved taxilines
+
