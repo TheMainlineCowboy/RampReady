@@ -1,0 +1,144 @@
+name: KPHX A1 Exact Jetway Verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-a1-exact-jetway-verification.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            package.json
+            package-lock.json
+            index.html
+            vite.config.js
+            src
+            public/models/airport-jetway/Airport_Jetway.glb
+            public/models/kphx/Terminal4.exact.glb
+            public/models/kphx/Terminal4b.exact.glb
+            public/models/kphx/terminal4-wed-jetways.exact.json
+            public/models/kphx/wed-jetways.exact.json
+            public/models/kphx-full-airport/surfaces
+            public/models/kphx-full-airport/t4-a1-zdp-surfaces
+          sparse-checkout-cone-mode: false
+
+      - name: Verify exact uploaded jetway GLB
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="public/models/airport-jetway/Airport_Jetway.glb"
+          test "$(stat -c%s "$FILE")" = "31459796"
+          echo "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0  $FILE" | sha256sum --check --strict
+
+      - name: Install verifier browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npx vite --host 127.0.0.1 --port 4173 >/tmp/a1-jetway-vite.log 2>&1 &
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/a1-jetway-vite.log
+          exit 1
+
+      - name: Capture A1 exact jetway evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+
+          const browser = await chromium.launch({ headless: true });
+          const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+          const errors = [];
+          const failed = [];
+          const httpErrors = [];
+          page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+          page.on("pageerror", (e) => errors.push(String(e)));
+          page.on("requestfailed", (r) => failed.push({ url: r.url(), error: r.failure()?.errorText || "unknown" }));
+          page.on("response", (r) => { if (r.status() >= 400) httpErrors.push({ url: r.url(), status: r.status() }); });
+
+          let waitError = null;
+          await page.goto("http://127.0.0.1:4173/RampReady/?kphxA1Jetway=1", {
+            waitUntil: "domcontentloaded",
+            timeout: 60000,
+          });
+          try {
+            await page.waitForFunction(() => {
+              const c = document.querySelector("canvas.kphxA1JetwayVerifierCanvas");
+              return ["ready", "error"].includes(c?.dataset?.kphxA1JetwayVerifier);
+            }, null, { timeout: 120000 });
+          } catch (error) {
+            waitError = String(error);
+          }
+
+          const evidence = await page.evaluate(() => {
+            const c = document.querySelector("canvas.kphxA1JetwayVerifierCanvas");
+            return c ? { dataset: { ...c.dataset } } : { dataset: {} };
+          });
+          await page.screenshot({ path: "reports/kphx-a1-exact-jetway-verification.png", fullPage: true });
+          fs.writeFileSync(
+            "reports/kphx-a1-exact-jetway-verification.json",
+            JSON.stringify({ evidence, errors, failed, httpErrors, waitError }, null, 2) + "\n",
+          );
+          await browser.close();
+          NODE
+
+      - name: Upload A1 exact jetway evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: kphx-a1-exact-jetway-verification
+          path: |
+            reports/kphx-a1-exact-jetway-verification.png
+            reports/kphx-a1-exact-jetway-verification.json
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Enforce A1 exact jetway contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const result = JSON.parse(fs.readFileSync("reports/kphx-a1-exact-jetway-verification.json", "utf8"));
+          const d = result.evidence?.dataset || {};
+          const failures = [];
+          if (d.kphxA1JetwayVerifier !== "ready") failures.push(d.kphxA1JetwayError || `state=${d.kphxA1JetwayVerifier || "missing"}`);
+          if (d.kphxA1RampWedObjectId !== "27855") failures.push(`ramp=${d.kphxA1RampWedObjectId}`);
+          if (d.kphxA1FacadeWedObjectId !== "104804") failures.push(`facade=${d.kphxA1FacadeWedObjectId}`);
+          if (d.kphxA1FacadeNodeCount !== "7") failures.push(`nodes=${d.kphxA1FacadeNodeCount}`);
+          if (d.kphxA1JetwayGlbSha256 !== "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0") failures.push("GLB SHA authority mismatch");
+          if (Number(d.kphxA1AnchorErrorMeters) > 0.001) failures.push(`anchorError=${d.kphxA1AnchorErrorMeters}`);
+          if (Number(d.kphxA1ActualDoorGapMeters) > 0.05) failures.push(`doorGap=${d.kphxA1ActualDoorGapMeters}`);
+          if (d.kphxA1PartOrderValid !== "true") failures.push("source part order invalid");
+          if (result.waitError) failures.push(`wait=${result.waitError}`);
+          if ((result.errors || []).length) failures.push(`browser=${result.errors.join(" | ")}`);
+          if ((result.failed || []).length) failures.push(`failedRequests=${JSON.stringify(result.failed)}`);
+          if ((result.httpErrors || []).length) failures.push(`httpErrors=${JSON.stringify(result.httpErrors)}`);
+          if (failures.length) throw new Error(`A1 exact jetway verification failed: ${failures.join("; ")}`);
+          console.log(JSON.stringify(d, null, 2));
+          NODE
