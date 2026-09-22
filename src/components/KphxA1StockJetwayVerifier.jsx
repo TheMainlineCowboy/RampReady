@@ -7,6 +7,7 @@ import {
   kphxXPlaneHeadingToRampReadyYawRadians,
 } from "../environment/kphxFullAirport/sourceAuthority.js";
 import A1_SOURCE_AUTHORITY from "../../reports/kphx-a1-source-jetway-authority.json";
+import { applyExactXp11Obj8MaskCompatibility } from "../environment/kphxFullAirport/obj8RenderCompatibility.js";
 
 const EXPECTED_WALL_SEQUENCE = [
   "Rotunda_extension",
@@ -145,6 +146,11 @@ export default function KphxA1StockJetwayVerifier() {
       if (!t4b) throw new Error("Exact Terminal4b source record missing");
       const terminalGltf = await gltfLoader.loadAsync(runtimeUrl(`/models/kphx/${t4b.runtime}`));
       const terminal = terminalGltf.scene;
+      applyExactXp11Obj8MaskCompatibility(THREE, terminal, {
+        label: t4b.resource,
+        alphaCutoff: 0.5,
+        windingAlreadyConverted: false,
+      });
       terminal.name = t4b.name;
       terminal.position.fromArray(kphxWedToRampReadyPosition(t4b.latitude, t4b.longitude, 0));
       terminal.rotation.y = kphxXPlaneHeadingToRampReadyYawRadians(t4b.headingDegrees);
@@ -231,6 +237,11 @@ export default function KphxA1StockJetwayVerifier() {
         const record = manifest.objects[index];
         if (!record || record.index !== index) throw new Error(`Missing stock OBJ manifest index ${index}`);
         const gltf = await gltfLoader.loadAsync(runtimeUrl(`/models/kphx-stock-jetways/${record.runtimeGltf}`));
+        applyExactXp11Obj8MaskCompatibility(THREE, gltf.scene, {
+          label: record.sourceName,
+          alphaCutoff: 0.5,
+          windingAlreadyConverted: false,
+        });
         objectPrototypeByIndex.set(index, gltf.scene);
       }));
 
