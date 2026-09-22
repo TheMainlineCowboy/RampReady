@@ -1,0 +1,69 @@
+name: KPHX MisterX Raw Batch 01 GSE
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-misterx-raw-batch-01.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-misterx-raw-batch-01
+  cancel-in-progress: false
+
+jobs:
+  move-raw:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install Drive downloader
+        run: python -m pip install --disable-pip-version-check gdown==5.2.0
+
+      - name: Download exact MisterX metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library"
+          mkdir -p "$ROOT"
+          gdown "https://drive.google.com/uc?id=1DhsJn994MQw90zCTzXGJd9MS6W4Ccva4" -O "$ROOT/library.txt"
+          gdown "https://drive.google.com/uc?id=1reBQXOx6R0kdto_SMXYN2rOCmGGov42e" -O "$ROOT/version.txt"
+          gdown "https://drive.google.com/uc?id=16lCdl3tbtSbvKGI57IaueuKCpqyX_c4n" -O "$ROOT/changelog.txt"
+
+      - name: Download exact GSE folders in bounded chunks
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles"
+          mkdir -p "$BASE"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1ETZY988U6nCagh1iigGE1i0E2d4pEjz8" -O "$BASE/Baggage_Carts"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1xdYeQP15cIrPAuggXoksomNMgiMElTID" -O "$BASE/Baggage_Tractors"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1tC5sFwR6pYP-r3yEerKQH-RKPFk07Pp-" -O "$BASE/Baggage_Trains"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/15i1TV6V1DdO2ZnKgnwypCsP1rBRXzX5c" -O "$BASE/Belt_Loaders"
+
+      - name: Record exact source hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library"
+          find "$ROOT" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-01-SHA256SUMS.txt
+          find "$ROOT" -type f | sort > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-01-FILES.txt
+
+      - name: Commit exact raw MisterX batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/kphx-source/dependencies/MisterX_Library_2.0c
+          git commit -m "Move exact MisterX GSE raw batch 01"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
