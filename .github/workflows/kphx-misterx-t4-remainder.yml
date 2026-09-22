@@ -75,7 +75,6 @@ jobs:
           git pull --rebase origin kphx-full-airport-import
           BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft"
           gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1usB-at-1_QermwlOQgoZ0r0x0INDxzef" -O "$BASE/Embraer_175"
-          find "$BASE/Emraer_175" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-E175-SHA256SUMS.txt 2>/dev/null || true
           find "$BASE/Embraer_175" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-E175-SHA256SUMS.txt
           git add "$BASE/Embraer_175" assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-E175-SHA256SUMS.txt
           if git diff --cached --quiet; then
