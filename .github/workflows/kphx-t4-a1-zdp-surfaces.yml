@@ -1,0 +1,151 @@
+name: KPHX T4 A1 Exact ZDP Surfaces
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-t4-a1-zdp-surfaces.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            scripts
+            public/models/kphx-full-airport/surfaces/surface-network.json
+          sparse-checkout-cone-mode: false
+
+      - name: Install exact conversion tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y imagemagick git-lfs
+          git lfs install
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/magick" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ "${1:-}" = "identify" ]; then
+            shift
+            exec identify "$@"
+          fi
+          exec convert "$@"
+          SH
+          chmod +x "$HOME/bin/magick"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Clone exact ZDP 1.2.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch 1.2.0 https://gitlab.com/StableSystem/zdp-library.git .zdp
+          (
+            cd .zdp
+            git lfs pull
+            test "$(git rev-parse HEAD)" = "4b44b673ac023bac67f92a1c991a28df1b1da82c"
+          )
+
+      - name: Build exact 150m A1 ZDP network
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const input="public/models/kphx-full-airport/surfaces/surface-network.json";
+          const network=JSON.parse(fs.readFileSync(input,"utf8"));
+          const R=6378137;
+          const anchor={lat:33.436530675,lon:-111.998921221,x:0,z:6.2};
+          const lat0=anchor.lat*Math.PI/180;
+          const radius=150;
+
+          function project(lat,lon){
+            const east=(lon-anchor.lon)*Math.PI/180*R*Math.cos(lat0);
+            const north=(lat-anchor.lat)*Math.PI/180*R;
+            return {x:-north,z:-east+anchor.z};
+          }
+          function points(entry){
+            const out=[];
+            const add=n=>{
+              const lat=Number(n?.latitude),lon=Number(n?.longitude);
+              if(Number.isFinite(lat)&&Number.isFinite(lon)) out.push(project(lat,lon));
+            };
+            for(const ring of entry.rings||[]) for(const n of ring.nodes||[]) add(n);
+            for(const n of entry.nodes||[]) add(n);
+            return out;
+          }
+          function distance(entry){
+            const p=points(entry);
+            if(!p.length) return Infinity;
+            const xs=p.map(q=>q.x), zs=p.map(q=>q.z);
+            const minX=Math.min(...xs),maxX=Math.max(...xs),minZ=Math.min(...zs),maxZ=Math.max(...zs);
+            const dx=anchor.x<minX?minX-anchor.x:anchor.x>maxX?anchor.x-maxX:0;
+            const dz=anchor.z<minZ?minZ-anchor.z:anchor.z>maxZ?anchor.z-maxZ:0;
+            return Math.hypot(dx,dz);
+          }
+          const keep=e=>e.resourcePrefix==="ZDP_Library" && distance(e)<=radius;
+          const filtered={
+            ...network,
+            polygons:(network.polygons||[]).filter(keep),
+            drapedOrthophotos:(network.drapedOrthophotos||[]).filter(keep),
+            lines:(network.lines||[]).filter(keep),
+            facades:[], strings:[], forests:[], roads:[], signs:[], lightFixtures:[], runways:[], taxiways:[]
+          };
+          const records=[...filtered.polygons,...filtered.drapedOrthophotos,...filtered.lines];
+          const resources=[...new Set(records.map(e=>e.resource))].sort();
+          if(records.length!==20) throw new Error(`Expected 20 ZDP A1 placements, got ${records.length}`);
+          if(resources.length!==12) throw new Error(`Expected 12 ZDP A1 resources, got ${resources.length}`);
+          fs.writeFileSync("reports/kphx-t4-a1-zdp-network.json",JSON.stringify(filtered,null,2)+"\n");
+          fs.writeFileSync("reports/kphx-t4-a1-zdp-resources.json",JSON.stringify({
+            authority:input,
+            dependency:"ZDP_Library",
+            version:"1.2.0",
+            radiusMeters:radius,
+            resources
+          },null,2)+"\n");
+          console.log(JSON.stringify({placements:records.length,resources:resources.length,list:resources},null,2));
+          NODE
+
+      - name: Resolve exact ZDP virtual surface paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/resolve-xplane-library.mjs             .zdp             reports/kphx-t4-a1-zdp-resources.json             reports/kphx-t4-a1-zdp-library-map.json             --virtual-prefix=ZDP_Library
+
+      - name: Materialize exact T4 A1 ZDP surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/materialize-kphx-surface-resources.mjs             .zdp             public/models/kphx-full-airport/t4-a1-zdp-surfaces             --placement-report=reports/kphx-t4-a1-zdp-network.json             --library-map=reports/kphx-t4-a1-zdp-library-map.json             --include-external-prefixes=ZDP_Library
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const m=JSON.parse(fs.readFileSync("public/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json","utf8"));
+          const n=JSON.parse(fs.readFileSync("public/models/kphx-full-airport/t4-a1-zdp-surfaces/surface-network.json","utf8"));
+          const placements=[...(n.polygons||[]),...(n.drapedOrthophotos||[]),...(n.lines||[])];
+          if(m.failures?.length) throw new Error(`Surface failures: ${m.failures.length}`);
+          if(m.resolvedExternalResourceCount!==12) throw new Error(`Expected 12 resources, got ${m.resolvedExternalResourceCount}`);
+          if(placements.length!==20) throw new Error(`Expected 20 placements, got ${placements.length}`);
+          console.log(JSON.stringify({resources:m.resolvedExternalResourceCount,placements:placements.length,status:"PASS"},null,2));
+          NODE
+
+      - name: Commit exact T4 A1 ZDP surface checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             public/models/kphx-full-airport/t4-a1-zdp-surfaces             reports/kphx-t4-a1-zdp-network.json             reports/kphx-t4-a1-zdp-resources.json             reports/kphx-t4-a1-zdp-library-map.json
+          git commit -m "Move exact T4 A1 ZDP surface checkpoint"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
