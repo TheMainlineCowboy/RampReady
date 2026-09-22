@@ -1,11 +1,12 @@
 {
   "placementCount": 108,
-  "readyPlacementCount": 107,
-  "blockedCurvePlacements": [
+  "readyPlacementCount": 108,
+  "blockedCurvePlacements": [],
+  "placementsWithAuthoredBezier": [
     99713
   ],
-  "objectInstanceCount": 840,
-  "wallMeshChunkCount": 854,
+  "objectInstanceCount": 847,
+  "wallMeshChunkCount": 861,
   "a1": {
     "wedObjectId": 104804,
     "height": 3,
@@ -5571,6 +5572,8 @@
         ]
       }
     ],
-    "blockedExactCurve": false
+    "blockedExactCurve": false,
+    "sourceBezierEdges": [],
+    "visualCurvePolicy": "Laminar-WED-FacadePreview-endpoint-chord-v1"
   }
 }
