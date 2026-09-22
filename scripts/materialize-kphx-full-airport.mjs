@@ -65,10 +65,31 @@ function safeRelative(relativePath) {
   return normalized;
 }
 
+function resolvedLibraryRoot(resolution) {
+  if (!resolution?.physicalPath || !resolution?.physicalResource) return null;
+  let root = path.dirname(path.resolve(resolution.physicalPath));
+  const directorySegments = normalizeResource(resolution.physicalResource).split("/").slice(0, -1);
+  for (let index = 0; index < directorySegments.length; index += 1) root = path.dirname(root);
+  return root;
+}
+
+function safeResolvedTexturePath(sourceDirectory, requested, allowedRoot) {
+  if (!requested || path.isAbsolute(requested)) throw new Error(`Unsafe source texture path: ${requested}`);
+  const normalized = normalizeResource(requested);
+  const resolved = path.resolve(sourceDirectory, normalized);
+  const root = path.resolve(allowedRoot);
+  if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) {
+    throw new Error(`Texture path escapes exact source root: ${requested}`);
+  }
+  return resolved;
+}
+
 async function readObjTextureRefs(objPath) {
   const source = await fs.readFile(objPath, "utf8");
   let diffuse = null;
   let lit = null;
+  let normal = null;
+  let normalScale = null;
   for (const line of source.split(/\r?\n/)) {
     const trimmed = line.trim();
     if (
@@ -80,21 +101,32 @@ async function readObjTextureRefs(objPath) {
       diffuse = trimmed.split(/\s+/).slice(1).join(" ");
     } else if (trimmed.startsWith("TEXTURE_LIT\t") || trimmed.startsWith("TEXTURE_LIT ")) {
       lit = trimmed.split(/\s+/).slice(1).join(" ");
+    } else if (trimmed.startsWith("TEXTURE_DRAPED_NORMAL\t") || trimmed.startsWith("TEXTURE_DRAPED_NORMAL ")) {
+      const parts = trimmed.split(/\s+/);
+      const maybeScale = Number(parts[1]);
+      if (Number.isFinite(maybeScale) && parts.length >= 3) {
+        normalScale = maybeScale;
+        normal = parts.slice(2).join(" ");
+      } else {
+        normalScale = 1;
+        normal = parts.slice(1).join(" ");
+      }
     }
   }
-  return { diffuse, lit };
+  return { diffuse, lit, normal, normalScale };
 }
 
-async function resolveTexture(sourceDirectory, requested) {
+async function resolveTexture(sourceDirectory, requested, allowedRoot) {
   if (!requested || /^none$/i.test(requested)) return null;
-  const relative = safeRelative(requested);
-  const parsed = path.parse(relative);
+  const normalized = normalizeResource(requested);
+  const baseCandidate = safeResolvedTexturePath(sourceDirectory, normalized, allowedRoot);
+  const parsed = path.parse(baseCandidate);
   const candidates = [
-    path.resolve(sourceDirectory, relative),
-    path.resolve(sourceDirectory, path.join(parsed.dir, `${parsed.name}.dds`)),
-    path.resolve(sourceDirectory, path.join(parsed.dir, `${parsed.name}.DDS`)),
-    path.resolve(sourceDirectory, path.join(parsed.dir, `${parsed.name}.png`)),
-    path.resolve(sourceDirectory, path.join(parsed.dir, `${parsed.name}.PNG`)),
+    baseCandidate,
+    path.join(parsed.dir, `${parsed.name}.dds`),
+    path.join(parsed.dir, `${parsed.name}.DDS`),
+    path.join(parsed.dir, `${parsed.name}.png`),
+    path.join(parsed.dir, `${parsed.name}.PNG`),
   ];
   for (const candidate of [...new Set(candidates)]) {
     if (await exists(candidate)) return candidate;
@@ -205,7 +237,9 @@ async function convertObject(resource) {
   if (!(await exists(sourcePath))) throw new Error(`WED resource missing after exact library resolution: ${safeResource}`);
 
   const parsed = path.parse(safeResource);
-  const mappedExternal = Boolean(libraryResourceMap[safeResource]);
+  const resolution = libraryResourceMap[safeResource] || null;
+  const mappedExternal = Boolean(resolution);
+  const textureRoot = mappedExternal ? resolvedLibraryRoot(resolution) : sourceRoot;
   const relativeAssetDirectory = path.join(mappedExternal ? "external" : "package-owned", parsed.dir, parsed.name);
   const outputDirectory = path.join(runtimeRoot, relativeAssetDirectory);
   await fs.mkdir(outputDirectory, { recursive: true });
@@ -216,10 +250,12 @@ async function convertObject(resource) {
   }
 
   const sourceDirectory = path.dirname(sourcePath);
-  const diffuseSource = await resolveTexture(sourceDirectory, refs.diffuse);
-  const litSource = await resolveTexture(sourceDirectory, refs.lit);
+  const diffuseSource = await resolveTexture(sourceDirectory, refs.diffuse, textureRoot);
+  const litSource = await resolveTexture(sourceDirectory, refs.lit, textureRoot);
+  const normalSource = await resolveTexture(sourceDirectory, refs.normal, textureRoot);
   const diffuse = await materializeTexture(diffuseSource, refs.diffuse, outputDirectory);
   const lit = litSource ? await materializeTexture(litSource, refs.lit, outputDirectory) : null;
+  const normal = normalSource ? await materializeTexture(normalSource, refs.normal, outputDirectory) : null;
 
   const converterPath = path.resolve("scripts/convert-kphx-obj8-to-gltf.mjs");
   const converterArgs = [
@@ -230,6 +266,8 @@ async function convertObject(resource) {
     `--diffuse=${diffuse.outputName}`,
   ];
   if (lit) converterArgs.push(`--lit=${lit.outputName}`);
+  if (normal) converterArgs.push(`--normal=${normal.outputName}`);
+  if (normal && Number.isFinite(refs.normalScale)) converterArgs.push(`--normal-scale=${refs.normalScale}`);
 
   const { stdout } = await execFile(process.execPath, converterArgs, {
     maxBuffer: 16 * 1024 * 1024,
