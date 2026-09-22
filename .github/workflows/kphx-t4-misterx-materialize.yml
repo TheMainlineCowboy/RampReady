@@ -104,3 +104,5 @@ jobs:
 # rerun after exact A320/shadow/conditional fixes
 
 # rerun after exact ramps/people/vans/construction staging
+
+# rerun after draped-only and keyframed GroundTraffic fixes
