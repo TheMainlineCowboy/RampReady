@@ -96,7 +96,7 @@ jobs:
           if (m.ringMode !== 0) throw new Error("stock jetway facade is not RING 0");
           if (m.objects.length !== 18) throw new Error("stock jetway OBJ count mismatch");
           if (m.segments.length !== 24) throw new Error("stock jetway segment count mismatch");
-          if (m.walls.length !== 9) throw new Error("stock jetway wall count mismatch");
+          if (m.walls.length !== 10) throw new Error("stock jetway wall count mismatch");
           console.log({
             facadeSha256: m.sourceFacadeSha256,
             ringMode: m.ringMode,
