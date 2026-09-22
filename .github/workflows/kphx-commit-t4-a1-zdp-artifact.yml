@@ -1,0 +1,65 @@
+name: Commit T4 A1 ZDP Surface Artifact
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-commit-t4-a1-zdp-artifact.yml"
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+          sparse-checkout: |
+            public/models/kphx-full-airport/t4-a1-zdp-surfaces
+            reports/kphx-t4-a1-zdp-network.json
+            reports/kphx-t4-a1-zdp-resources.json
+            reports/kphx-t4-a1-zdp-library-map.json
+          sparse-checkout-cone-mode: false
+
+      - name: Download already-verified surface artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run download 35683617354             --repo TheMainlineCowboy/RampReady             --name kphx-t4-a1-zdp-surfaces             --dir .
+          test -f public/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json
+          test -f public/models/kphx-full-airport/t4-a1-zdp-surfaces/surface-network.json
+
+      - name: Verify preserved checkpoint before commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const m=JSON.parse(fs.readFileSync("public/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json","utf8"));
+          const n=JSON.parse(fs.readFileSync("public/models/kphx-full-airport/t4-a1-zdp-surfaces/surface-network.json","utf8"));
+          const placements=[...(n.polygons||[]),...(n.drapedOrthophotos||[]),...(n.lines||[])];
+          if(m.failures?.length) throw new Error(`Surface failures: ${m.failures.length}`);
+          if(m.resolvedExternalResourceCount!==12) throw new Error(`Expected 12 resources, got ${m.resolvedExternalResourceCount}`);
+          if(placements.length!==20) throw new Error(`Expected 20 placements, got ${placements.length}`);
+          console.log(JSON.stringify({resources:12,placements:20,status:"PASS"},null,2));
+          NODE
+
+      - name: Commit preserved T4 A1 surface checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             public/models/kphx-full-airport/t4-a1-zdp-surfaces             reports/kphx-t4-a1-zdp-network.json             reports/kphx-t4-a1-zdp-resources.json             reports/kphx-t4-a1-zdp-library-map.json
+          git commit -m "Move exact T4 A1 ZDP surface checkpoint"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
