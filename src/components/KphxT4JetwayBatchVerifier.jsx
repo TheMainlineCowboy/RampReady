@@ -65,7 +65,7 @@ export default function KphxT4JetwayBatchVerifier() {
     scene.add(sun);
 
     const root = new THREE.Group();
-    root.name = "KPHX_T4_A1_A8_XP11_STOCK_JETWAY_VERIFIER";
+    root.name = "KPHX_T4_XP11_STOCK_JETWAY_BATCH_VERIFIER";
     scene.add(root);
 
     let disposed = false;
