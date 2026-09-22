@@ -14,6 +14,7 @@ const options = Object.fromEntries(optionArgs
   }));
 const sourceRoot = path.resolve(sourceRootArg || process.env.KPHX_FULL_AIRPORT_SOURCE_DIR || "");
 const includeExternalPrefixes = new Set((options["include-external-prefixes"] || "").split(",").map((entry) => entry.trim()).filter(Boolean));
+const skipPackageOwned = options["skip-package-owned"] === "true";
 const placementReportInputPath = options["placement-report"] ? path.resolve(options["placement-report"]) : null;
 const libraryMapPath = options["library-map"] ? path.resolve(options["library-map"]) : null;
 const libraryMapPayload = libraryMapPath ? JSON.parse(await fs.readFile(libraryMapPath, "utf8")) : null;
@@ -340,7 +341,7 @@ if (!networkReadPath) {
 }
 if (!(await exists(networkReadPath))) throw new Error(`KPHX surface placement report missing: ${networkReadPath}`);
 const network = JSON.parse(await fs.readFile(networkReadPath, "utf8"));
-const packageRecords = [
+const packageRecords = skipPackageOwned ? [] : [
   ...network.polygons.filter((entry) => entry.sourceClass === "package-owned"),
   ...network.lines.filter((entry) => entry.sourceClass === "package-owned"),
 ];
@@ -384,6 +385,7 @@ const manifest = {
     libraryMap: libraryMapPath,
     placementReport: networkReadPath,
     externalPrefixes: [...includeExternalPrefixes],
+    skipPackageOwned,
   },
   packageOwnedResourceCount: packageResources.length,
   materializedResourceCount: packageResources.filter((resource) => materialized[resource]).length,
