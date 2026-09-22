@@ -1,0 +1,1 @@
+8391e151393516dc79aa8f66aa253bddb73d25f930cf1799fb342af72c373c41  assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Fuel_Trucks/Large/ASIG.obj
