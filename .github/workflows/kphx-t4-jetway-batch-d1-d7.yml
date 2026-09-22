@@ -99,8 +99,8 @@ jobs:
           const f=[];
           if(d.kphxT4JetwayBatchVerifier!=="ready")f.push(d.kphxT4JetwayBatchError||`state=${d.kphxT4JetwayBatchVerifier}`);
           if(d.kphxT4JetwayBatchName!=="D1-D7")f.push(`batch=${d.kphxT4JetwayBatchName}`);
-          if(d.kphxT4JetwayBatchGates!=="D1,D2,D3,D4,D5,D6,D7")f.push(`gates=${d.kphxT4JetwayBatchGates}`);
-          if(d.kphxT4JetwayBatchCount!=="7")f.push(`count=${d.kphxT4JetwayBatchCount}`);
+          if(d.kphxT4JetwayBatchGates!=="D1,D2,D3,D4,D5,D6,D7,D7")f.push(`gates=${d.kphxT4JetwayBatchGates}`);
+          if(d.kphxT4JetwayBatchCount!=="8")f.push(`count=${d.kphxT4JetwayBatchCount}`);
           if(d.kphxT4JetwayBatchResource!=="lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac")f.push(`resource=${d.kphxT4JetwayBatchResource}`);
           if(d.kphxT4JetwayBatchOldAirportJetwayGlbLoaded!=="false")f.push("old substitute GLB loaded");
           if(r.waitError)f.push(r.waitError);
@@ -109,10 +109,17 @@ jobs:
           if(r.httpErrors?.length)f.push(`http=${JSON.stringify(r.httpErrors)}`);
           if(f.length)throw new Error(f.join("; "));
           const ev=JSON.parse(d.kphxT4JetwayBatchEvidence||"[]");
-          if(ev.length!==7)throw new Error(`evidence count=${ev.length}`);
-          for(const gate of ev){
-            if(gate.ringMode!==0)throw new Error(`${gate.gate} ring=${gate.ringMode}`);
-            if(gate.renderedEdgeCount!==gate.nodeCount-1)throw new Error(`${gate.gate} open-edge count mismatch`);
+          if(ev.length!==8)throw new Error(`evidence count=${ev.length}`);
+          const expected=[
+            ["D1",106788,6],["D2",115964,4],["D3",106815,4],["D4",106887,4],
+            ["D5",106821,4],["D6",106879,4],["D7",106842,5],["D7",106853,5]
+          ];
+          for(const [gate,id,nodes] of expected){
+            const e=ev.find(x=>x.gate===gate && x.facadeWedObjectId===id);
+            if(!e)throw new Error(`missing ${gate} facade ${id}`);
+            if(e.nodeCount!==nodes)throw new Error(`${gate} ${id} nodes=${e.nodeCount}`);
+            if(e.ringMode!==0)throw new Error(`${gate} ${id} ring=${e.ringMode}`);
+            if(e.renderedEdgeCount!==nodes-1)throw new Error(`${gate} ${id} open-edge count mismatch`);
           }
           console.log(JSON.stringify({batch:d.kphxT4JetwayBatchName,totalEdges:d.kphxT4JetwayBatchTotalEdges,evidence:ev},null,2));
           NODE
