@@ -1,4 +1,4 @@
-# rerun exact A1 route cleanup
+# rerun A1 exact open facade
 name: KPHX A1 Exact XP11 Stock Jetway
 
 on:
@@ -166,6 +166,8 @@ jobs:
           if(d.kphxA1FacadeNodeCount!=="7")f.push(`nodes=${d.kphxA1FacadeNodeCount}`);
           if(d.kphxA1WallChoices!=="1,1,1,1,5,4,1")f.push(`walls=${d.kphxA1WallChoices}`);
           if(d.kphxA1SourceMode!=="XP11-stock-type2-facade")f.push(`mode=${d.kphxA1SourceMode}`);
+          if(d.kphxA1FacadeRingMode!=="0")f.push(`ring=${d.kphxA1FacadeRingMode}`);
+          if(d.kphxA1RenderedEdgeCount!=="6")f.push(`edges=${d.kphxA1RenderedEdgeCount}`);
           if(d.kphxA1OldAirportJetwayGlbLoaded!=="false")f.push("old substitute GLB loaded");
           if(r.waitError)f.push(r.waitError);
           if(r.errors?.length)f.push(`browser=${r.errors.join(" | ")}`);
