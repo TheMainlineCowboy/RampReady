@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { installKphxPackageOwnedObjectLayer } from "../environment/kphxFullAirport/installPackageOwnedObjectLayer.js";
 import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
+import { installKphxTerminal4StockJetways } from "../environment/kphxFullAirport/installTerminal4StockJetways.js";
 
 const OBJECT_MANIFESTS = Object.freeze([
   "/models/kphx-full-airport/batches/structures.manifest.json",
@@ -84,6 +85,10 @@ export default function KphxFullAirportVerifier() {
         strict: true,
       });
 
+      const terminal4Jetways = await installKphxTerminal4StockJetways(THREE, environment, {
+        strict: true,
+      });
+
       const objectPlacements = objectResults.reduce(
         (sum, result) => sum + Number(result.layer.userData.loadedPlacementCount || 0),
         0,
@@ -101,6 +106,9 @@ export default function KphxFullAirportVerifier() {
       if (sourceResources !== 96) throw new Error(`Expected 96 native KPHX source resources, loaded ${sourceResources}`);
       if (surfaces.layer.userData.polygonCount !== 13) throw new Error(`Expected 13 package polygons, loaded ${surfaces.layer.userData.polygonCount}`);
       if (surfaces.layer.userData.lineMeshCount < 35) throw new Error(`Expected at least 35 package line meshes, loaded ${surfaces.layer.userData.lineMeshCount}`);
+      if (terminal4Jetways.layer.userData.jetwayCount !== 76) {
+        throw new Error(`Expected 76 exact T4 jetways, loaded ${terminal4Jetways.layer.userData.jetwayCount}`);
+      }
 
       renderer.domElement.dataset.kphxFullAirportVerifier = "ready";
       renderer.domElement.dataset.kphxPackagePlacements = String(objectPlacements);
@@ -109,7 +117,10 @@ export default function KphxFullAirportVerifier() {
       renderer.domElement.dataset.kphxPackagePolygons = String(surfaces.layer.userData.polygonCount);
       renderer.domElement.dataset.kphxPackageLineMeshes = String(surfaces.layer.userData.lineMeshCount);
       renderer.domElement.dataset.kphxSourceVersion = "1.75.1";
-      setStatus(`KPHX 1.75.1 native checkpoint ready · ${objectPlacements} placements · ${sourceResources} source resources · ${loadedAssetFiles} asset files`);
+      renderer.domElement.dataset.kphxT4ExactJetwayCount = String(terminal4Jetways.layer.userData.jetwayCount);
+      renderer.domElement.dataset.kphxT4ExactJetwayOpenEdges = String(terminal4Jetways.layer.userData.authoredOpenEdgeCount);
+      renderer.domElement.dataset.kphxT4OldAirportJetwayGlbUsed = "false";
+      setStatus(`KPHX 1.75.1 native checkpoint ready · ${objectPlacements} placements · ${sourceResources} source resources · ${loadedAssetFiles} asset files · ${terminal4Jetways.layer.userData.jetwayCount} exact T4 jetways`);
     };
 
     load().catch((error) => {
