@@ -3,7 +3,7 @@ import path from "node:path";
 
 const [, , inputPath, outputDirectory, ...args] = process.argv;
 if (!inputPath || !outputDirectory) {
-  throw new Error("Usage: node scripts/convert-kphx-obj8-to-gltf.mjs <input.obj> <output-dir> [--name=AssetName] [--diffuse=texture.png] [--lit=texture_LIT.png] [--normal=texture_NML.png] [--normal-scale=1]");
+  throw new Error("Usage: node scripts/convert-kphx-obj8-to-gltf.mjs <input.obj> <output-dir> [--name=AssetName] [--diffuse=texture.png] [--lit=texture_LIT.png] [--normal=texture_NML.png] [--normal-scale=1] [--weather=weather.png]");
 }
 
 const options = Object.fromEntries(args
@@ -25,6 +25,7 @@ let sourceTexture = null;
 let sourceLitTexture = null;
 let sourceNormalTexture = null;
 let sourceNormalScale = null;
+let sourceWeatherTexture = null;
 let globalNoShadow = false;
 let globalSpecular = null;
 let pointCounts = null;
@@ -55,8 +56,8 @@ for (const rawLine of source.split(/\r?\n/)) {
 
   if (command === "TEXTURE" || command === "TEXTURE_DRAPED") sourceTexture = parts.slice(1).join(" ");
   else if (command === "TEXTURE_LIT") sourceLitTexture = parts.slice(1).join(" ");
-  else if (command === "TEXTURE_DRAPED_NORMAL") {
-    if (parts.length < 2) throw new Error(`Malformed TEXTURE_DRAPED_NORMAL record: ${line}`);
+  else if (command === "TEXTURE_DRAPED_NORMAL" || command === "TEXTURE_NORMAL") {
+    if (parts.length < 2) throw new Error(`Malformed ${command} record: ${line}`);
     const maybeScale = Number(parts[1]);
     if (Number.isFinite(maybeScale) && parts.length >= 3) {
       sourceNormalScale = maybeScale;
@@ -65,6 +66,9 @@ for (const rawLine of source.split(/\r?\n/)) {
       sourceNormalScale = 1;
       sourceNormalTexture = parts.slice(1).join(" ");
     }
+  } else if (command === "WEATHER") {
+    if (parts.length < 2) throw new Error(`Malformed WEATHER record: ${line}`);
+    sourceWeatherTexture = parts.slice(1).join(" ");
   } else if (command === "GLOBAL_no_shadow") globalNoShadow = true;
   else if (command === "SPECULAR") {
     const value = Number(parts[1]);
@@ -157,7 +161,7 @@ for (const range of drawRanges) {
 }
 
 const harmless = new Set([
-  "I", "800", "OBJ", "TEXTURE", "TEXTURE_DRAPED", "TEXTURE_LIT", "TEXTURE_DRAPED_NORMAL", "POINT_COUNTS",
+  "I", "800", "OBJ", "TEXTURE", "TEXTURE_DRAPED", "TEXTURE_LIT", "TEXTURE_DRAPED_NORMAL", "TEXTURE_NORMAL", "WEATHER", "POINT_COUNTS",
   "VT", "IDX", "IDX10", "TRIS", "LIGHT_PARAM", "VLIGHT", "LIGHT_NAMED", "#",
   "ATTR_shade_smooth", "ATTR_shade_flat",
   "ATTR_no_hard", "ATTR_hard",
@@ -186,6 +190,7 @@ const diffuseUri = options.diffuse || sourceTexture;
 const litUri = options.lit || sourceLitTexture;
 const normalUri = options.normal || sourceNormalTexture;
 const normalScale = Number(options["normal-scale"] ?? sourceNormalScale ?? 1);
+const weatherUri = options.weather || sourceWeatherTexture;
 if (!diffuseUri || /^none$/i.test(diffuseUri)) throw new Error("OBJ8 source has no usable diffuse texture reference");
 
 const positions = vertices.map((row) => row.slice(0, 3));
@@ -298,6 +303,11 @@ if (normalUri && !/^none$/i.test(normalUri)) {
   textures.push({ sampler: 0, source: images.length - 1 });
   normalTextureIndex = textures.length - 1;
 }
+let weatherImageIndex = null;
+if (weatherUri && !/^none$/i.test(weatherUri)) {
+  images.push({ uri: weatherUri });
+  weatherImageIndex = images.length - 1;
+}
 
 const materialByState = new Map();
 const materials = [];
@@ -394,6 +404,7 @@ const gltf = {
       xPlaneNamedLights: namedLights,
       xPlaneGlobalNoShadow: globalNoShadow,
       xPlaneGlobalSpecular: globalSpecular,
+      xPlaneWeatherTexture: weatherImageIndex !== null ? weatherUri : null,
     },
   }],
   scenes: [{ nodes: [0] }],
@@ -405,6 +416,7 @@ const gltf = {
     sourceLitTexture,
     sourceNormalTexture,
     sourceNormalScale,
+    sourceWeatherTexture,
     globalNoShadow,
     globalSpecular,
     pointCounts,
@@ -444,6 +456,7 @@ console.log(JSON.stringify({
   litUri: litTextureIndex !== null ? litUri : null,
   normalUri: normalTextureIndex !== null ? normalUri : null,
   normalScale: normalTextureIndex !== null ? normalScale : null,
+  weatherUri: weatherImageIndex !== null ? weatherUri : null,
   globalNoShadow,
   globalSpecular,
   geometryPolicy: gltf.extras.geometryPolicy,
