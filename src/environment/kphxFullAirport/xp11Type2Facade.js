@@ -1,6 +1,9 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
+const parsedFacadeCache = new Map();
+const sharedFacadeAssetCache = new Map();
+
 function runtimeUrl(url) {
   const base = String(import.meta.env?.BASE_URL || "/").replace(/\/$/, "");
   const clean = String(url).startsWith("/") ? url : `/${url}`;
@@ -156,14 +159,44 @@ function meshGeometry(templateMesh, boundsZ, miFirst, miLast, isFirst, isLast) {
   return g;
 }
 
-async function loadObjectPrototypes(facade, basePath) {
-  const loader = new GLTFLoader();
-  const pairs = await Promise.all(facade.objects.map(async (fileName, index) => {
-    const stem = fileName.replace(/\.obj$/i, "");
-    const gltf = await loader.loadAsync(runtimeUrl(`${basePath}/objects/${stem}.gltf`));
-    return [index, gltf.scene];
-  }));
-  return new Map(pairs);
+async function loadSharedFacadeAssets(facade, basePath) {
+  const key = `${basePath}|${facade.objects.join("|")}`;
+  if (!sharedFacadeAssetCache.has(key)) {
+    sharedFacadeAssetCache.set(key, (async () => {
+      const loader = new GLTFLoader();
+      const textureLoader = new THREE.TextureLoader();
+      const [pairs, diffuse, lit, normal] = await Promise.all([
+        Promise.all(facade.objects.map(async (fileName, index) => {
+          const stem = fileName.replace(/\.obj$/i, "");
+          const gltf = await loader.loadAsync(runtimeUrl(`${basePath}/objects/${stem}.gltf`));
+          return [index, gltf.scene];
+        })),
+        textureLoader.loadAsync(runtimeUrl(`${basePath}/textures/jetway_1_ALB.png`)),
+        textureLoader.loadAsync(runtimeUrl(`${basePath}/textures/jetway_1_LIT.png`)),
+        textureLoader.loadAsync(runtimeUrl(`${basePath}/textures/jetway_1_NML.png`)),
+      ]);
+      diffuse.colorSpace = THREE.SRGBColorSpace;
+      lit.colorSpace = THREE.SRGBColorSpace;
+      const wallMaterial = new THREE.MeshStandardMaterial({
+        map: diffuse,
+        emissiveMap: lit,
+        emissive: new THREE.Color(1, 1, 1),
+        normalMap: normal,
+        roughness: 1,
+        metalness: 0,
+        side: THREE.DoubleSide,
+        alphaTest: 0.5,
+      });
+      return {
+        objectPrototypes: new Map(pairs),
+        diffuse,
+        lit,
+        normal,
+        wallMaterial,
+      };
+    })());
+  }
+  return sharedFacadeAssetCache.get(key);
 }
 
 export async function buildXp11Type2Facade({
@@ -172,29 +205,19 @@ export async function buildXp11Type2Facade({
   wallChoices,
   basePath = "/models/xplane11-stock/jetway1",
 }) {
-  const facade = parseXp11Type2Facade(facadeText);
+  let facade = parsedFacadeCache.get(facadeText);
+  if (!facade) {
+    facade = parseXp11Type2Facade(facadeText);
+    parsedFacadeCache.set(facadeText, facade);
+  }
   if (footprint.length !== wallChoices.length) throw new Error("Facade footprint/wall choice count mismatch");
   const wallCount = facade.ringMode === 0 ? footprint.length - 1 : footprint.length;
   if (wallCount < 1) throw new Error("Facade has no renderable wall segments");
 
-  const [objectPrototypes, diffuse, lit, normal] = await Promise.all([
-    loadObjectPrototypes(facade, basePath),
-    new THREE.TextureLoader().loadAsync(runtimeUrl(`${basePath}/textures/jetway_1_ALB.png`)),
-    new THREE.TextureLoader().loadAsync(runtimeUrl(`${basePath}/textures/jetway_1_LIT.png`)),
-    new THREE.TextureLoader().loadAsync(runtimeUrl(`${basePath}/textures/jetway_1_NML.png`)),
-  ]);
-  diffuse.colorSpace = THREE.SRGBColorSpace;
-  lit.colorSpace = THREE.SRGBColorSpace;
-  const wallMaterial = new THREE.MeshStandardMaterial({
-    map: diffuse,
-    emissiveMap: lit,
-    emissive: new THREE.Color(1,1,1),
-    normalMap: normal,
-    roughness: 1,
-    metalness: 0,
-    side: THREE.DoubleSide,
-    alphaTest: 0.5,
-  });
+  const {
+    objectPrototypes,
+    wallMaterial,
+  } = await loadSharedFacadeAssets(facade, basePath);
 
   const root = new THREE.Group();
   root.name = "XP11_Jetway_1_solid_fac_exact";
