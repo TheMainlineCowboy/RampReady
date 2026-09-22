@@ -1,0 +1,256 @@
+{
+  "schemaVersion": 1,
+  "authority": "User-supplied MisterX_Library_2.0c; exports verified from library.txt",
+  "resources": {
+    "MisterX_Library/Airport/Aircraft/Airbus_A320_200/Delta_Airlines.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft/Airbus_A320_200/Delta_Airlines.obj",
+      "physicalResource": "Airport/Aircraft/Airbus_A320_200/Delta_Airlines.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Aircraft/Airbus_A320_200/Delta_Airlines.obj\tAirport/Aircraft/Airbus_A320_200/Delta_Airlines.obj"
+    },
+    "MisterX_Library/Airport/Aircraft/Airbus_A320_200/Frontier.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft/Airbus_A320_200/Frontier.obj",
+      "physicalResource": "Airport/Aircraft/Airbus_A320_200/Frontier.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Aircraft/Airbus_A320_200/Frontier.obj\tAirport/Aircraft/Airbus_A320_200/Frontier.obj"
+    },
+    "MisterX_Library/Airport/Aircraft/Airbus_A320_200/Spirit_Airlines.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft/Airbus_A320_200/Spirit_Airlines.obj",
+      "physicalResource": "Airport/Aircraft/Airbus_A320_200/Spirit_Airlines.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Aircraft/Airbus_A320_200/Spirit_Airlines.obj\tAirport/Aircraft/Airbus_A320_200/Spirit_Airlines.obj"
+    },
+    "MisterX_Library/Airport/Aircraft/Boeing_757_300/Delta.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft/Boeing_757_300/Delta.obj",
+      "physicalResource": "Airport/Aircraft/Boeing_757_300/Delta.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Aircraft/Boeing_757_300/Delta.obj\tAirport/Aircraft/Boeing_757_300/Delta.obj"
+    },
+    "MisterX_Library/Airport/Aircraft/Embraer_175/American_Eagle_new.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft/Embraer_175/American_Eagle_new.obj",
+      "physicalResource": "Airport/Aircraft/Embraer_175/American_Eagle_new.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Aircraft/Embraer_175/American_Eagle_new.obj\tAirport/Aircraft/Embraer_175/American_Eagle_new.obj"
+    },
+    "MisterX_Library/Airport/Ramps/Ramp_1_nL.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Ramps/Ramp_1_nL.obj",
+      "physicalResource": "Airport/Ramps/Ramp_1_nL.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Ramps/Ramp_1_nL.obj\tAirport/Ramps/Ramp_1_nL.obj"
+    },
+    "MisterX_Library/Airport/Ramps/Ramp_1_Stripes_nL.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Ramps/Ramp_1_Stripes_nL.obj",
+      "physicalResource": "Airport/Ramps/Ramp_1_Stripes_nL.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Ramps/Ramp_1_Stripes_nL.obj\tAirport/Ramps/Ramp_1_Stripes_nL.obj"
+    },
+    "MisterX_Library/Airport/Ramps/Ramp_Southwest_Med.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Ramps/Ramp_Southwest_Med.obj",
+      "physicalResource": "Airport/Ramps/Ramp_Southwest_Med.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Ramps/Ramp_Southwest_Med.obj\tAirport/Ramps/Ramp_Southwest_Med.obj"
+    },
+    "MisterX_Library/Airport/Ramps/Ramp_Southwest_Med_nL.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Ramps/Ramp_Southwest_Med_nL.obj",
+      "physicalResource": "Airport/Ramps/Ramp_Southwest_Med_nL.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Ramps/Ramp_Southwest_Med_nL.obj\tAirport/Ramps/Ramp_Southwest_Med_nL.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Baggage_Carts/American.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Baggage_Carts/American.obj",
+      "physicalResource": "Airport/Vehicles/Baggage_Carts/American.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Baggage_Carts/American.obj\tAirport/Vehicles/Baggage_Carts/American.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Baggage_Carts/American_Eagle.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Baggage_Carts/American_Eagle.obj",
+      "physicalResource": "Airport/Vehicles/Baggage_Carts/American_Eagle.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Baggage_Carts/American_Eagle.obj\tAirport/Vehicles/Baggage_Carts/American_Eagle.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Baggage_Carts/American_Eagle_Open.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Baggage_Carts/American_Eagle_Open.obj",
+      "physicalResource": "Airport/Vehicles/Baggage_Carts/American_Eagle_Open.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Baggage_Carts/American_Eagle_Open.obj\tAirport/Vehicles/Baggage_Carts/American_Eagle_Open.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Baggage_Carts/American_Open.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Baggage_Carts/American_Open.obj",
+      "physicalResource": "Airport/Vehicles/Baggage_Carts/American_Open.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Baggage_Carts/American_Open.obj\tAirport/Vehicles/Baggage_Carts/American_Open.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Baggage_Carts/Southwest_Old_Open.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Baggage_Carts/Southwest_Old_Open.obj",
+      "physicalResource": "Airport/Vehicles/Baggage_Carts/Southwest_Old_Open.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Baggage_Carts/Southwest_Old_Open.obj\tAirport/Vehicles/Baggage_Carts/Southwest_Old_Open.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Baggage_Carts/Southwest_Open.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Baggage_Carts/Southwest_Open.obj",
+      "physicalResource": "Airport/Vehicles/Baggage_Carts/Southwest_Open.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Baggage_Carts/Southwest_Open.obj\tAirport/Vehicles/Baggage_Carts/Southwest_Open.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Baggage_Tractors/American.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Baggage_Tractors/American.obj",
+      "physicalResource": "Airport/Vehicles/Baggage_Tractors/American.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Baggage_Tractors/American.obj\tAirport/Vehicles/Baggage_Tractors/American.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Baggage_Tractors/Southwest.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Baggage_Tractors/Southwest.obj",
+      "physicalResource": "Airport/Vehicles/Baggage_Tractors/Southwest.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Baggage_Tractors/Southwest.obj\tAirport/Vehicles/Baggage_Tractors/Southwest.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Baggage_Trains/Cart2_Southwest.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Baggage_Trains/Cart2_Southwest.obj",
+      "physicalResource": "Airport/Vehicles/Baggage_Trains/Cart2_Southwest.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Baggage_Trains/Cart2_Southwest.obj\tAirport/Vehicles/Baggage_Trains/Cart2_Southwest.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Baggage_Trains/Cart2_Southwest_Full.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Baggage_Trains/Cart2_Southwest_Full.obj",
+      "physicalResource": "Airport/Vehicles/Baggage_Trains/Cart2_Southwest_Full.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Baggage_Trains/Cart2_Southwest_Full.obj\tAirport/Vehicles/Baggage_Trains/Cart2_Southwest_Full.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Belt_Loaders/American.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Belt_Loaders/American.obj",
+      "physicalResource": "Airport/Vehicles/Belt_Loaders/American.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Belt_Loaders/American.obj\tAirport/Vehicles/Belt_Loaders/American.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Belt_Loaders/Southwest.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Belt_Loaders/Southwest.obj",
+      "physicalResource": "Airport/Vehicles/Belt_Loaders/Southwest.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Belt_Loaders/Southwest.obj\tAirport/Vehicles/Belt_Loaders/Southwest.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Belt_Loaders/Active/American.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Belt_Loaders/Active/American.obj",
+      "physicalResource": "Airport/Vehicles/Belt_Loaders/Active/American.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Belt_Loaders/Active/American.obj\tAirport/Vehicles/Belt_Loaders/Active/American.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Cargo_Dollies/Cargo_Dolly_Large.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Cargo_Dollies/Cargo_Dolly_Large.obj",
+      "physicalResource": "Airport/Vehicles/Cargo_Dollies/Cargo_Dolly_Large.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Cargo_Dollies/Cargo_Dolly_Large.obj\tAirport/Vehicles/Cargo_Dollies/Cargo_Dolly_Large.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Cargo_Dollies/ULD_American_Dolly.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Cargo_Dollies/ULD_American_Dolly.obj",
+      "physicalResource": "Airport/Vehicles/Cargo_Dollies/ULD_American_Dolly.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Cargo_Dollies/ULD_American_Dolly.obj\tAirport/Vehicles/Cargo_Dollies/ULD_American_Dolly.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Catering_Trucks/Medium/LSG.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Catering_Trucks/Medium/LSG.obj",
+      "physicalResource": "Airport/Vehicles/Catering_Trucks/Medium/LSG.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Catering_Trucks/Medium/LSG.obj\tAirport/Vehicles/Catering_Trucks/Medium/LSG.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/De_Icing_Trucks/Generic.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/De_Icing_Trucks/Generic.obj",
+      "physicalResource": "Airport/Vehicles/De_Icing_Trucks/Generic.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/De_Icing_Trucks/Generic.obj\tAirport/Vehicles/De_Icing_Trucks/Generic.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Fuel_Trucks/Large/ASIG.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Fuel_Trucks/Large/ASIG.obj",
+      "physicalResource": "Airport/Vehicles/Fuel_Trucks/Large/ASIG.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Fuel_Trucks/Large/ASIG.obj\tAirport/Vehicles/Fuel_Trucks/Large/ASIG.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Fuel_Trucks/Medium/ASIG.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Fuel_Trucks/Medium/ASIG.obj",
+      "physicalResource": "Airport/Vehicles/Fuel_Trucks/Medium/ASIG.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Fuel_Trucks/Medium/ASIG.obj\tAirport/Vehicles/Fuel_Trucks/Medium/ASIG.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/GPUs/Large/Generic_Stowed.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/GPUs/Large/Generic_Stowed.obj",
+      "physicalResource": "Airport/Vehicles/GPUs/Large/Generic_Stowed.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/GPUs/Large/Generic_Stowed.obj\tAirport/Vehicles/GPUs/Large/Generic_Stowed.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/GPUs/Medium/Generic_Stowed.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/GPUs/Medium/Generic_Stowed.obj",
+      "physicalResource": "Airport/Vehicles/GPUs/Medium/Generic_Stowed.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/GPUs/Medium/Generic_Stowed.obj\tAirport/Vehicles/GPUs/Medium/Generic_Stowed.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Pushback_Trucks/Medium/Generic.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Pushback_Trucks/Medium/Generic.obj",
+      "physicalResource": "Airport/Vehicles/Pushback_Trucks/Medium/Generic.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Pushback_Trucks/Medium/Generic.obj\tAirport/Vehicles/Pushback_Trucks/Medium/Generic.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Pushback_Trucks/Medium/Southwest.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Pushback_Trucks/Medium/Southwest.obj",
+      "physicalResource": "Airport/Vehicles/Pushback_Trucks/Medium/Southwest.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Pushback_Trucks/Medium/Southwest.obj\tAirport/Vehicles/Pushback_Trucks/Medium/Southwest.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Trucks/Pickup_White.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Trucks/Pickup_White.obj",
+      "physicalResource": "Airport/Vehicles/Trucks/Pickup_White.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Trucks/Pickup_White.obj\tAirport/Vehicles/Trucks/Pickup_White.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Trucks/Active/Pickup_Blue.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Trucks/Active/Pickup_Blue.obj",
+      "physicalResource": "Airport/Vehicles/Trucks/Active/Pickup_Blue.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Trucks/Active/Pickup_Blue.obj\tAirport/Vehicles/Trucks/Active/Pickup_Blue.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Trucks/Active/Pickup_White.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Trucks/Active/Pickup_White.obj",
+      "physicalResource": "Airport/Vehicles/Trucks/Active/Pickup_White.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/Trucks/Active/Pickup_White.obj\tAirport/Vehicles/Trucks/Active/Pickup_White.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/ULD_Loaders/Generic.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/ULD_Loaders/Generic.obj",
+      "physicalResource": "Airport/Vehicles/ULD_Loaders/Generic.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Airport/Vehicles/ULD_Loaders/Generic.obj\tAirport/Vehicles/ULD_Loaders/Generic.obj"
+    },
+    "MisterX_Library/Objects/Construction/Garbage_Container_Red.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Objects/Construction/Garbage_Container_Red.obj",
+      "physicalResource": "Objects/Construction/Garbage_Container_Red.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Objects/Construction/Garbage_Container_Red.obj\tObjects/Construction/Garbage_Container_Red.obj"
+    },
+    "MisterX_Library/People/Man_Jacket_1.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/People/Man_Jacket_1.obj",
+      "physicalResource": "People/Man_Jacket_1.obj",
+      "exportLine": "EXPORT\tMisterX_Library/People/Man_Jacket_1.obj\tPeople/Man_Jacket_1.obj"
+    },
+    "MisterX_Library/People/Man_Shirt_1.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/People/Man_Shirt_1.obj",
+      "physicalResource": "People/Man_Shirt_1.obj",
+      "exportLine": "EXPORT\tMisterX_Library/People/Man_Shirt_1.obj\tPeople/Man_Shirt_1.obj"
+    },
+    "MisterX_Library/People/Man_Shirt_2.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/People/Man_Shirt_2.obj",
+      "physicalResource": "People/Man_Shirt_2.obj",
+      "exportLine": "EXPORT\tMisterX_Library/People/Man_Shirt_2.obj\tPeople/Man_Shirt_2.obj"
+    },
+    "MisterX_Library/People/Man_Suit_1.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/People/Man_Suit_1.obj",
+      "physicalResource": "People/Man_Suit_1.obj",
+      "exportLine": "EXPORT\tMisterX_Library/People/Man_Suit_1.obj\tPeople/Man_Suit_1.obj"
+    },
+    "MisterX_Library/People/Woman_1.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/People/Woman_1.obj",
+      "physicalResource": "People/Woman_1.obj",
+      "exportLine": "EXPORT\tMisterX_Library/People/Woman_1.obj\tPeople/Woman_1.obj"
+    },
+    "MisterX_Library/People/Woman_2.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/People/Woman_2.obj",
+      "physicalResource": "People/Woman_2.obj",
+      "exportLine": "EXPORT\tMisterX_Library/People/Woman_2.obj\tPeople/Woman_2.obj"
+    },
+    "MisterX_Library/People/Woman_3.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/People/Woman_3.obj",
+      "physicalResource": "People/Woman_3.obj",
+      "exportLine": "EXPORT\tMisterX_Library/People/Woman_3.obj\tPeople/Woman_3.obj"
+    },
+    "MisterX_Library/People/Woman_4.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/People/Woman_4.obj",
+      "physicalResource": "People/Woman_4.obj",
+      "exportLine": "EXPORT\tMisterX_Library/People/Woman_4.obj\tPeople/Woman_4.obj"
+    },
+    "MisterX_Library/Vehicles/Trucks/Van_White.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Vehicles/Trucks/Van_White.obj",
+      "physicalResource": "Vehicles/Trucks/Van_White.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Vehicles/Trucks/Van_White.obj\tVehicles/Trucks/Van_White.obj"
+    },
+    "MisterX_Library/Vehicles/Trucks/Van_White_2.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Vehicles/Trucks/Van_White_2.obj",
+      "physicalResource": "Vehicles/Trucks/Van_White_2.obj",
+      "exportLine": "EXPORT\tMisterX_Library/Vehicles/Trucks/Van_White_2.obj\tVehicles/Trucks/Van_White_2.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Trucks/Van_White.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Vehicles/Trucks/Van_White.obj",
+      "physicalResource": "Vehicles/Trucks/Van_White.obj",
+      "exportLine": "EXPORT MisterX_Library/Airport/Vehicles/Trucks/Van_White.obj Vehicles/Trucks/Van_White.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Trucks/Van_White_2.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Vehicles/Trucks/Van_White_2.obj",
+      "physicalResource": "Vehicles/Trucks/Van_White_2.obj",
+      "exportLine": "EXPORT MisterX_Library/Airport/Vehicles/Trucks/Van_White_2.obj Vehicles/Trucks/Van_White_2.obj"
+    },
+    "MisterX_Library/Airport/Vehicles/Trucks/Active/Van_White.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Vehicles/Trucks/Active/Van_White.obj",
+      "physicalResource": "Vehicles/Trucks/Active/Van_White.obj",
+      "exportLine": "EXPORT MisterX_Library/Airport/Vehicles/Trucks/Active/Van_White.obj Vehicles/Trucks/Active/Van_White.obj"
+    }
+  }
+}
