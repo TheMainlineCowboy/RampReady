@@ -1,6 +1,4 @@
-const WGS84_A = 6378137.0;
-const WGS84_F = 1 / 298.257223563;
-const WGS84_E2 = WGS84_F * (2 - WGS84_F);
+const EARTH_RADIUS_METERS = 6378137;
 
 export const KPHX_FULL_AIRPORT_SOURCE = Object.freeze({
   packageName: "KPHX - Phoenix Sky Harbor Intl",
@@ -35,48 +33,19 @@ function degreesToRadians(value) {
   return value * Math.PI / 180;
 }
 
-function geodeticToEcef(latitudeDegrees, longitudeDegrees) {
-  const latitude = degreesToRadians(latitudeDegrees);
-  const longitude = degreesToRadians(longitudeDegrees);
-  const sinLatitude = Math.sin(latitude);
-  const cosLatitude = Math.cos(latitude);
-  const sinLongitude = Math.sin(longitude);
-  const cosLongitude = Math.cos(longitude);
-  const primeVerticalRadius = WGS84_A / Math.sqrt(1 - WGS84_E2 * sinLatitude * sinLatitude);
-
-  return [
-    primeVerticalRadius * cosLatitude * cosLongitude,
-    primeVerticalRadius * cosLatitude * sinLongitude,
-    primeVerticalRadius * (1 - WGS84_E2) * sinLatitude,
-  ];
-}
-
-const anchorEcef = geodeticToEcef(
-  KPHX_FULL_AIRPORT_SOURCE.anchor.latitude,
-  KPHX_FULL_AIRPORT_SOURCE.anchor.longitude,
-);
-const anchorLatitudeRadians = degreesToRadians(KPHX_FULL_AIRPORT_SOURCE.anchor.latitude);
-const anchorLongitudeRadians = degreesToRadians(KPHX_FULL_AIRPORT_SOURCE.anchor.longitude);
-const sinAnchorLatitude = Math.sin(anchorLatitudeRadians);
-const cosAnchorLatitude = Math.cos(anchorLatitudeRadians);
-const sinAnchorLongitude = Math.sin(anchorLongitudeRadians);
-const cosAnchorLongitude = Math.cos(anchorLongitudeRadians);
-
 export function kphxWedToRampReadyPosition(latitudeDegrees, longitudeDegrees, elevationMeters = 0) {
-  const pointEcef = geodeticToEcef(latitudeDegrees, longitudeDegrees);
-  const dx = pointEcef[0] - anchorEcef[0];
-  const dy = pointEcef[1] - anchorEcef[1];
-  const dz = pointEcef[2] - anchorEcef[2];
-
-  const east = -sinAnchorLongitude * dx + cosAnchorLongitude * dy;
-  const north = -sinAnchorLatitude * cosAnchorLongitude * dx
-    - sinAnchorLatitude * sinAnchorLongitude * dy
-    + cosAnchorLatitude * dz;
+  const anchor = KPHX_FULL_AIRPORT_SOURCE.anchor;
+  const latitude0 = degreesToRadians(anchor.latitude);
+  const east = degreesToRadians(longitudeDegrees - anchor.longitude)
+    * EARTH_RADIUS_METERS
+    * Math.cos(latitude0);
+  const north = degreesToRadians(latitudeDegrees - anchor.latitude)
+    * EARTH_RADIUS_METERS;
 
   return [
-    -north + KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition[0],
-    elevationMeters + KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition[1],
-    -east + KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition[2],
+    -north + anchor.rampReadyPosition[0],
+    elevationMeters + anchor.rampReadyPosition[1],
+    -east + anchor.rampReadyPosition[2],
   ];
 }
 
