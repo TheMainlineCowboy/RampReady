@@ -76,7 +76,7 @@ jobs:
               "--diffuse=../textures/jetway_1_ALB.png" \
               "--lit=../textures/jetway_1_LIT.png" \
               "--normal=../textures/jetway_1_NML.png"
-          done < <(tr -d '\\r' < "$OUT/jetway_1_solid.fac" | awk '$1=="OBJ"{print $2}')
+          done < <(tr -d '\r' < "$OUT/jetway_1_solid.fac" | awk '$1=="OBJ"{print $2}')
 
           python - <<'PY'
           import hashlib, json
