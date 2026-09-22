@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: kphx-a1-exact-jetway-verification
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -27,12 +31,9 @@ jobs:
             vite.config.js
             src
             public/models/airport-jetway/Airport_Jetway.glb
-            public/models/kphx/Terminal4.exact.glb
             public/models/kphx/Terminal4b.exact.glb
             public/models/kphx/terminal4-wed-jetways.exact.json
             public/models/kphx/wed-jetways.exact.json
-            public/models/kphx-full-airport/surfaces
-            public/models/kphx-full-airport/t4-a1-zdp-surfaces
           sparse-checkout-cone-mode: false
 
       - name: Verify exact uploaded jetway GLB
