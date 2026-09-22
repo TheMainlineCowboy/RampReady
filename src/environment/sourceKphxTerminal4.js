@@ -309,7 +309,7 @@ export async function installSourceKphxTerminal4Visual(THREE, environment) {
   environment.userData.authoredTerminal4ExactTextureCount = 4;
   environment.userData.authoredTerminal4FallbackTextureCount = 0;
   environment.userData.authoredTerminal4TexturedMaterialCount = 2;
-  environment.userData.authoredTerminal4SourceCutoutMaterialCount = 0;
+  environment.userData.authoredTerminal4SourceCutoutMaterialCount = 2;
   environment.userData.authoredTerminal4FacadeInfillCount = 0;
   environment.userData.authoredTerminal4OpenServiceBayCount = 0;
   environment.userData.authoredTerminal4LowerFacadeFitCount = 0;
