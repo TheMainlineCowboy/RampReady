@@ -1,0 +1,229 @@
+commit=4b44b673ac023bac67f92a1c991a28df1b1da82c
+library files:
+.zdp/library.txt
+
+sample requested resource:
+
+sample exports:
+.zdp/library.txt:50:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/black.lin									markings/lines/clean/black.lin
+.zdp/library.txt:51:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/black_small.lin							markings/lines/clean/black_small.lin
+.zdp/library.txt:52:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/black_smallish.lin							markings/lines/clean/black_smallish.lin
+.zdp/library.txt:53:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/blue.lin									markings/lines/clean/blue.lin
+.zdp/library.txt:54:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/centerline.lin								markings/lines/clean/centerline.lin
+.zdp/library.txt:55:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/centerline_bold.lin						markings/lines/clean/centerline_bold.lin
+.zdp/library.txt:56:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/centerline_border.lin						markings/lines/clean/centerline_border.lin
+.zdp/library.txt:57:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/centerline_no_border.lin					markings/lines/clean/centerline_no_border.lin
+.zdp/library.txt:58:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/centerline_vbold.lin						markings/lines/clean/centerline_vbold.lin
+.zdp/library.txt:59:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/dashed_black_yellow.lin					markings/lines/clean/dashed_black_yellow.lin
+.zdp/library.txt:60:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/double_yellow.lin							markings/lines/clean/double_yellow.lin
+.zdp/library.txt:61:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/double_yellow_sm.lin						markings/lines/clean/double_yellow_sm.lin
+.zdp/library.txt:62:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/enhanced_centerline.lin					markings/lines/clean/enhanced_centerline.lin
+.zdp/library.txt:63:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/ILS_hold.lin								markings/lines/clean/ILS_hold.lin
+.zdp/library.txt:64:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/intermediate_hold.lin						markings/lines/clean/intermediate_hold.lin
+.zdp/library.txt:65:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/intermediate_hold_sm.lin					markings/lines/clean/intermediate_hold_sm.lin
+.zdp/library.txt:66:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/red.lin									markings/lines/clean/red.lin
+.zdp/library.txt:67:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/red_white.lin								markings/lines/clean/red_white.lin
+.zdp/library.txt:68:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/removed_black.lin							markings/lines/clean/removed_black.lin
+.zdp/library.txt:69:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/removed_white.lin							markings/lines/clean/removed_white.lin
+.zdp/library.txt:70:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/removed_black_bold.lin						markings/lines/clean/removed_black_bold.lin
+.zdp/library.txt:71:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/removed_white_bold.lin						markings/lines/clean/removed_white_bold.lin
+.zdp/library.txt:72:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/rwy_hold.lin								markings/lines/clean/rwy_hold.lin
+.zdp/library.txt:73:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/rwy_hold_sm.lin							markings/lines/clean/rwy_hold_sm.lin
+.zdp/library.txt:74:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_sm.lin								markings/lines/clean/white_sm.lin
+.zdp/library.txt:75:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white.lin									markings/lines/clean/white.lin
+.zdp/library.txt:76:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_bold.lin								markings/lines/clean/white_bold.lin
+.zdp/library.txt:77:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_vbold.lin							markings/lines/clean/white_vbold.lin
+.zdp/library.txt:78:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_centerline.lin						markings/lines/clean/white_centerline.lin
+.zdp/library.txt:79:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_centerline_bold.lin					markings/lines/clean/white_centerline_bold.lin
+.zdp/library.txt:80:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_centerline_vbold.lin					markings/lines/clean/white_centerline_vbold.lin
+.zdp/library.txt:81:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_centerline_road.lin					markings/lines/clean/white_centerline_road.lin
+.zdp/library.txt:82:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_dashed.lin							markings/lines/clean/white_dashed.lin
+.zdp/library.txt:83:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_dashed_short.lin						markings/lines/clean/white_dashed_short.lin
+.zdp/library.txt:84:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_no_border.lin						markings/lines/clean/white_no_border.lin
+.zdp/library.txt:85:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_no_border_bold.lin					markings/lines/clean/white_no_border_bold.lin
+.zdp/library.txt:86:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow.lin									markings/lines/clean/yellow.lin
+.zdp/library.txt:87:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_bold.lin							markings/lines/clean/yellow_bold.lin
+.zdp/library.txt:88:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_centerline_road.lin					markings/lines/clean/yellow_centerline_road.lin
+.zdp/library.txt:89:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_dashed.lin							markings/lines/clean/yellow_dashed.lin
+.zdp/library.txt:90:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_dashed_short.lin					markings/lines/clean/yellow_dashed_short.lin
+.zdp/library.txt:91:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/zipper.lin									markings/lines/clean/zipper.lin
+.zdp/library.txt:92:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/green.lin									markings/lines/clean/green.lin
+.zdp/library.txt:93:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/green_sm.lin								markings/lines/clean/green_sm.lin
+.zdp/library.txt:94:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_red_yellow.lin						markings/lines/clean/yellow_red_yellow.lin
+.zdp/library.txt:95:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_red_yellow_sm.lin					markings/lines/clean/yellow_red_yellow_sm.lin
+.zdp/library.txt:96:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_red.lin								markings/lines/clean/yellow_red.lin
+.zdp/library.txt:97:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_red_sm.lin							markings/lines/clean/yellow_red_sm.lin
+.zdp/library.txt:98:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/red_dashed.lin								markings/lines/clean/red_dashed.lin
+.zdp/library.txt:99:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/red_dashed_short.lin						markings/lines/clean/red_dashed_short.lin
+.zdp/library.txt:100:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/crosswalk.lin								markings/lines/clean/crosswalk.lin
+.zdp/library.txt:101:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/drain.lin									markings/lines/clean/drain.lin
+.zdp/library.txt:102:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/edge_marker_short.lin						markings/lines/clean/edge_marker_short.lin
+.zdp/library.txt:103:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/edge_marker_short_curve.lin				markings/lines/clean/edge_marker_short_curve.lin
+.zdp/library.txt:104:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/orange.lin									markings/lines/clean/orange.lin
+.zdp/library.txt:105:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_white.lin							markings/lines/clean/yellow_white.lin
+.zdp/library.txt:106:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/blue_border.lin							markings/lines/clean/blue_border.lin
+.zdp/library.txt:107:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/orange_border.lin							markings/lines/clean/orange_border.lin
+.zdp/library.txt:108:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/red_border.lin								markings/lines/clean/red_border.lin
+.zdp/library.txt:109:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/green_border.lin							markings/lines/clean/green_border.lin
+.zdp/library.txt:110:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_dashed_noborder.lin					markings/lines/clean/yellow_dashed_noborder.lin
+.zdp/library.txt:111:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_dashed_short_noborder.lin			markings/lines/clean/yellow_dashed_short_noborder.lin
+.zdp/library.txt:112:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/zipper_black.lin							markings/lines/clean/zipper_black.lin
+.zdp/library.txt:113:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/ILS_hold_noborder.lin						markings/lines/clean/ILS_hold_noborder.lin
+.zdp/library.txt:114:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/rwy_hold_noborder.lin						markings/lines/clean/rwy_hold_noborder.lin
+.zdp/library.txt:115:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/rwy_hold_sm_noborder.lin					markings/lines/clean/rwy_hold_sm_noborder.lin
+.zdp/library.txt:118:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/runway_shoulder_r.str						markings/lines/clean/runway_shoulder_r.str
+.zdp/library.txt:119:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/runway_shoulder_l.str						markings/lines/clean/runway_shoulder_l.str
+.zdp/library.txt:120:EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/shoulder_marker.str						markings/lines/clean/shoulder_marker.str
+.zdp/library.txt:123:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/black.lin									markings/lines/worn/black.lin
+.zdp/library.txt:124:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/black_small.lin								markings/lines/worn/black_small.lin
+.zdp/library.txt:125:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/black_smallish.lin							markings/lines/worn/black_smallish.lin
+.zdp/library.txt:126:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/blue.lin									markings/lines/worn/blue.lin
+.zdp/library.txt:127:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/centerline.lin								markings/lines/worn/centerline.lin
+.zdp/library.txt:128:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/centerline_bold.lin							markings/lines/worn/centerline_bold.lin
+.zdp/library.txt:129:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/centerline_no_border.lin					markings/lines/worn/centerline_no_border.lin
+.zdp/library.txt:130:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/centerline_border.lin						markings/lines/worn/centerline_border.lin
+.zdp/library.txt:131:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/centerline_vbold.lin						markings/lines/worn/centerline_vbold.lin
+.zdp/library.txt:132:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/dashed_black_yellow.lin						markings/lines/worn/dashed_black_yellow.lin
+.zdp/library.txt:133:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/double_yellow.lin							markings/lines/worn/double_yellow.lin
+.zdp/library.txt:134:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/double_yellow_sm.lin						markings/lines/worn/double_yellow_sm.lin
+.zdp/library.txt:135:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/enhanced_centerline.lin						markings/lines/worn/enhanced_centerline.lin
+.zdp/library.txt:136:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/ILS_hold.lin								markings/lines/worn/ILS_hold.lin
+.zdp/library.txt:137:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/intermediate_hold.lin						markings/lines/worn/intermediate_hold.lin
+.zdp/library.txt:138:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/intermediate_hold_sm.lin					markings/lines/worn/intermediate_hold_sm.lin
+.zdp/library.txt:139:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/red.lin										markings/lines/worn/red.lin
+.zdp/library.txt:140:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/red_white.lin								markings/lines/worn/red_white.lin
+.zdp/library.txt:141:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/removed_black.lin							markings/lines/worn/removed_black.lin
+.zdp/library.txt:142:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/removed_white.lin							markings/lines/worn/removed_white.lin
+.zdp/library.txt:143:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/removed_black_bold.lin						markings/lines/worn/removed_black_bold.lin
+.zdp/library.txt:144:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/removed_white_bold.lin						markings/lines/worn/removed_white_bold.lin
+.zdp/library.txt:145:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/rwy_hold.lin								markings/lines/worn/rwy_hold.lin
+.zdp/library.txt:146:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/rwy_hold_sm.lin								markings/lines/worn/rwy_hold_sm.lin
+.zdp/library.txt:147:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white.lin									markings/lines/worn/white.lin
+.zdp/library.txt:148:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_centerline.lin						markings/lines/worn/white_centerline.lin
+.zdp/library.txt:149:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_centerline_bold.lin					markings/lines/worn/white_centerline_bold.lin
+.zdp/library.txt:150:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_centerline_vbold.lin					markings/lines/worn/white_centerline_vbold.lin
+.zdp/library.txt:151:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_centerline_road.lin					markings/lines/worn/white_centerline_road.lin
+.zdp/library.txt:152:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_dashed.lin							markings/lines/worn/white_dashed.lin
+.zdp/library.txt:153:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_dashed_short.lin						markings/lines/worn/white_dashed_short.lin
+.zdp/library.txt:154:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_no_border.lin							markings/lines/worn/white_no_border.lin
+.zdp/library.txt:155:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_bold.lin								markings/lines/worn/white_bold.lin
+.zdp/library.txt:156:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_vbold.lin								markings/lines/worn/white_vbold.lin
+.zdp/library.txt:157:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_no_border_bold.lin					markings/lines/worn/white_no_border_bold.lin
+.zdp/library.txt:158:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_sm.lin								markings/lines/worn/white_sm.lin
+.zdp/library.txt:159:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_vbold.lin								markings/lines/worn/white_vbold.lin
+.zdp/library.txt:160:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow.lin									markings/lines/worn/yellow.lin
+.zdp/library.txt:161:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_bold.lin								markings/lines/worn/yellow_bold.lin
+.zdp/library.txt:162:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_centerline_road.lin					markings/lines/worn/yellow_centerline_road.lin
+.zdp/library.txt:163:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_dashed.lin							markings/lines/worn/yellow_dashed.lin
+.zdp/library.txt:164:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_dashed_short.lin						markings/lines/worn/yellow_dashed_short.lin
+.zdp/library.txt:165:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/zipper.lin									markings/lines/worn/zipper.lin
+.zdp/library.txt:166:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/green.lin									markings/lines/worn/green.lin
+.zdp/library.txt:167:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/green_sm.lin								markings/lines/worn/green_sm.lin
+.zdp/library.txt:168:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_red_yellow.lin						markings/lines/worn/yellow_red_yellow.lin
+.zdp/library.txt:169:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_red_yellow_sm.lin					markings/lines/worn/yellow_red_yellow_sm.lin
+.zdp/library.txt:170:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_red.lin								markings/lines/worn/yellow_red.lin
+.zdp/library.txt:171:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_red_sm.lin							markings/lines/worn/yellow_red_sm.lin
+.zdp/library.txt:172:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/red_dashed.lin								markings/lines/worn/red_dashed.lin
+.zdp/library.txt:173:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/red_dashed_short.lin						markings/lines/worn/red_dashed_short.lin
+.zdp/library.txt:174:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/crosswalk.lin								markings/lines/worn/crosswalk.lin
+.zdp/library.txt:175:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/drain.lin									markings/lines/worn/drain.lin
+.zdp/library.txt:176:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/edge_marker_short.lin						markings/lines/worn/edge_marker_short.lin
+.zdp/library.txt:177:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/edge_marker_short_curve.lin					markings/lines/worn/edge_marker_short_curve.lin
+.zdp/library.txt:178:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/orange.lin									markings/lines/worn/orange.lin
+.zdp/library.txt:179:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_white.lin							markings/lines/worn/yellow_white.lin
+.zdp/library.txt:180:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/blue_border.lin								markings/lines/worn/blue_border.lin
+.zdp/library.txt:181:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/orange_border.lin							markings/lines/worn/orange_border.lin
+.zdp/library.txt:182:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/red_border.lin								markings/lines/worn/red_border.lin
+.zdp/library.txt:183:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/green_border.lin							markings/lines/worn/green_border.lin
+.zdp/library.txt:184:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_dashed_noborder.lin					markings/lines/worn/yellow_dashed_noborder.lin
+.zdp/library.txt:185:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_dashed_short_noborder.lin			markings/lines/worn/yellow_dashed_short_noborder.lin
+.zdp/library.txt:186:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/zipper_black.lin							markings/lines/worn/zipper_black.lin
+.zdp/library.txt:187:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/ILS_hold_noborder.lin						markings/lines/worn/ILS_hold_noborder.lin
+.zdp/library.txt:188:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/rwy_hold_noborder.lin						markings/lines/worn/rwy_hold_noborder.lin
+.zdp/library.txt:189:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/rwy_hold_sm_noborder.lin					markings/lines/worn/rwy_hold_sm_noborder.lin
+.zdp/library.txt:192:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/runway_shoulder_r.str						markings/lines/worn/runway_shoulder_r.str
+.zdp/library.txt:193:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/runway_shoulder_l.str						markings/lines/worn/runway_shoulder_l.str
+.zdp/library.txt:194:EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/shoulder_marker.str							markings/lines/worn/shoulder_marker.str
+.zdp/library.txt:198:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_black_clean.pol							markings/paint/paint_black_clean.pol
+.zdp/library.txt:199:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_blue_clean.pol								markings/paint/paint_blue_clean.pol
+.zdp/library.txt:200:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_green_clean.pol							markings/paint/paint_green_clean.pol
+.zdp/library.txt:201:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_red_clean.pol								markings/paint/paint_red_clean.pol
+.zdp/library.txt:202:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_white_clean.pol							markings/paint/paint_white_clean.pol
+.zdp/library.txt:203:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_yellow_clean.pol							markings/paint/paint_yellow_clean.pol
+.zdp/library.txt:204:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_black_worn.pol								markings/paint/paint_black_worn.pol
+.zdp/library.txt:205:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_blue_worn.pol								markings/paint/paint_blue_worn.pol
+.zdp/library.txt:206:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_green_worn.pol								markings/paint/paint_green_worn.pol
+.zdp/library.txt:207:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_red_worn.pol								markings/paint/paint_red_worn.pol
+.zdp/library.txt:208:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_white_worn.pol								markings/paint/paint_white_worn.pol
+.zdp/library.txt:209:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_yellow_worn.pol							markings/paint/paint_yellow_worn.pol
+.zdp/library.txt:212:EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_white.pol								markings/paint/stripes_white.pol
+.zdp/library.txt:213:EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_white_worn.pol							markings/paint/stripes_white_worn.pol
+.zdp/library.txt:214:EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_white_lg.pol								markings/paint/stripes_white_lg.pol
+.zdp/library.txt:215:EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_white_lg_worn.pol						markings/paint/stripes_white_lg_worn.pol
+.zdp/library.txt:216:EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_red.pol									markings/paint/stripes_red.pol
+.zdp/library.txt:217:EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_red_worn.pol								markings/paint/stripes_red_worn.pol
+.zdp/library.txt:218:EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_red_lg.pol								markings/paint/stripes_red_lg.pol
+.zdp/library.txt:219:EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_red_lg_worn.pol							markings/paint/stripes_red_lg_worn.pol
+.zdp/library.txt:220:EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_yellow.pol								markings/paint/stripes_yellow.pol
+.zdp/library.txt:221:EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_yellow_worn.pol							markings/paint/stripes_yellow_worn.pol
+.zdp/library.txt:222:EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_yellow_lg.pol							markings/paint/stripes_yellow_lg.pol
+.zdp/library.txt:223:EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_yellow_lg_worn.pol						markings/paint/stripes_yellow_lg_worn.pol
+.zdp/library.txt:226:EXPORT_EXCLUDE	ZDP_Library/markings/signs/clean/DrapedDirSigns.pol							markings/signs/clean/DrapedDirSigns.pol
+.zdp/library.txt:227:EXPORT_EXCLUDE	ZDP_Library/markings/signs/clean/DrapedLocSigns.pol							markings/signs/clean/DrapedLocSigns.pol
+.zdp/library.txt:228:EXPORT_EXCLUDE	ZDP_Library/markings/signs/clean/DrapedRedText.pol							markings/signs/clean/DrapedRedText.pol
+.zdp/library.txt:229:EXPORT_EXCLUDE	ZDP_Library/markings/signs/clean/DrapedRwySigns.pol							markings/signs/clean/DrapedRwySigns.pol
+.zdp/library.txt:230:EXPORT_EXCLUDE	ZDP_Library/markings/signs/worn/DrapedDirSigns.pol							markings/signs/worn/DrapedDirSigns.pol
+.zdp/library.txt:231:EXPORT_EXCLUDE	ZDP_Library/markings/signs/worn/DrapedLocSigns.pol							markings/signs/worn/DrapedLocSigns.pol
+.zdp/library.txt:232:EXPORT_EXCLUDE	ZDP_Library/markings/signs/worn/DrapedRedText.pol							markings/signs/worn/DrapedRedText.pol
+.zdp/library.txt:233:EXPORT_EXCLUDE	ZDP_Library/markings/signs/worn/DrapedRwySigns.pol							markings/signs/worn/DrapedRwySigns.pol
+.zdp/library.txt:236:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_black_clean.lin						markings/paint/paint_border_black_clean.lin
+.zdp/library.txt:237:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_white_clean.lin						markings/paint/paint_border_white_clean.lin
+.zdp/library.txt:238:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_red_clean.lin						markings/paint/paint_border_red_clean.lin
+.zdp/library.txt:239:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_blue_clean.lin						markings/paint/paint_border_blue_clean.lin
+.zdp/library.txt:240:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_green_clean.lin						markings/paint/paint_border_green_clean.lin
+.zdp/library.txt:241:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_yellow_clean.lin					markings/paint/paint_border_yellow_clean.lin
+.zdp/library.txt:242:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_black_worn.lin						markings/paint/paint_border_black_worn.lin
+.zdp/library.txt:243:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_white_worn.lin						markings/paint/paint_border_white_worn.lin
+.zdp/library.txt:244:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_red_worn.lin						markings/paint/paint_border_red_worn.lin
+.zdp/library.txt:245:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_blue_worn.lin						markings/paint/paint_border_blue_worn.lin
+.zdp/library.txt:246:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_green_worn.lin						markings/paint/paint_border_green_worn.lin
+.zdp/library.txt:247:EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_yellow_worn.lin						markings/paint/paint_border_yellow_worn.lin
+.zdp/library.txt:250:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.text.pol							markings/painted_text/clean/text.pol
+.zdp/library.txt:252:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/0.obj								markings/painted_text/clean/0.obj
+.zdp/library.txt:253:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/1.obj								markings/painted_text/clean/1.obj
+.zdp/library.txt:254:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/2.obj								markings/painted_text/clean/2.obj
+.zdp/library.txt:255:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/3.obj								markings/painted_text/clean/3.obj
+.zdp/library.txt:256:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/4.obj								markings/painted_text/clean/4.obj
+.zdp/library.txt:257:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/5.obj								markings/painted_text/clean/5.obj
+.zdp/library.txt:258:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/6.obj								markings/painted_text/clean/6.obj
+.zdp/library.txt:259:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/7.obj								markings/painted_text/clean/7.obj
+.zdp/library.txt:260:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/8.obj								markings/painted_text/clean/8.obj
+.zdp/library.txt:261:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/9.obj								markings/painted_text/clean/9.obj
+.zdp/library.txt:262:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/A.obj								markings/painted_text/clean/A.obj
+.zdp/library.txt:263:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/B.obj								markings/painted_text/clean/B.obj
+.zdp/library.txt:264:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/C.obj								markings/painted_text/clean/C.obj
+.zdp/library.txt:265:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/D.obj								markings/painted_text/clean/D.obj
+.zdp/library.txt:266:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/E.obj								markings/painted_text/clean/E.obj
+.zdp/library.txt:267:EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/F.obj								markings/painted_text/clean/F.obj
+
+top directories:
+.zdp
+.zdp/.git
+.zdp/.git/hooks
+.zdp/.git/info
+.zdp/.git/lfs
+.zdp/.git/logs
+.zdp/.git/objects
+.zdp/.git/refs
+.zdp/markings
+.zdp/markings/aircraft_stop_markers
+.zdp/markings/grunge
+.zdp/markings/lines
+.zdp/markings/paint
+.zdp/markings/painted_text
+.zdp/markings/runway_markings
+.zdp/markings/signs
+.zdp/polygons
+.zdp/polygons/asphalt
+.zdp/polygons/concrete
+.zdp/polygons/decals
