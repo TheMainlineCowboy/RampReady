@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
 import {
   KPHX_FULL_AIRPORT_SOURCE,
   kphxWedToRampReadyPosition,
@@ -152,6 +153,22 @@ export default function KphxT4FrameVerifier() {
       camera.lookAt(center.x, 8, center.z);
       camera.updateProjectionMatrix();
 
+      const surfaces = await installKphxPackageOwnedSurfaceLayer(THREE, root, {
+        manifestUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json",
+        networkUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/surface-network.json",
+        strict: true,
+      });
+      const zdpPlacementCount =
+        Number(surfaces.layer.userData.polygonCount || 0)
+        + Number(surfaces.layer.userData.drapedOrthophotoCount || 0)
+        + (surfaces.network.lines || []).length;
+      if (zdpPlacementCount !== 20) {
+        throw new Error(`Expected 20 exact A1 ZDP surface placements, loaded ${zdpPlacementCount}`);
+      }
+      if (surfaces.manifest.resolvedExternalResourceCount !== 12) {
+        throw new Error(`Expected 12 exact A1 ZDP surface resources, loaded ${surfaces.manifest.resolvedExternalResourceCount}`);
+      }
+
       renderer.domElement.dataset.kphxT4FrameVerifier = "ready";
       renderer.domElement.dataset.kphxT4ObjectCount = String(loaded.length);
       renderer.domElement.dataset.kphxT4MaxPositionDeltaMeters = String(Math.max(...checks.map((c) => c.positionDeltaMeters)));
@@ -159,7 +176,10 @@ export default function KphxT4FrameVerifier() {
       renderer.domElement.dataset.kphxA1Latitude = String(KPHX_FULL_AIRPORT_SOURCE.anchor.latitude);
       renderer.domElement.dataset.kphxA1Longitude = String(KPHX_FULL_AIRPORT_SOURCE.anchor.longitude);
       renderer.domElement.dataset.kphxT4Checks = JSON.stringify(checks);
-      setStatus("T4 + T4b + A1 · exact verified source frame");
+      renderer.domElement.dataset.kphxA1ZdpSurfaceResources = String(surfaces.manifest.resolvedExternalResourceCount);
+      renderer.domElement.dataset.kphxA1ZdpSurfacePlacements = String(zdpPlacementCount);
+      renderer.domElement.dataset.kphxA1ExcludedDefaultLinePlacements = "5";
+      setStatus("T4 + T4b + A1 · exact frame · 20 exact ZDP surface placements · 5 default-X-Plane lines intentionally excluded");
     };
 
     load().catch((error) => {
