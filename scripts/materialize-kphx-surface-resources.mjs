@@ -19,6 +19,8 @@ const libraryMapPath = options["library-map"] ? path.resolve(options["library-ma
 const libraryMapPayload = libraryMapPath ? JSON.parse(await fs.readFile(libraryMapPath, "utf8")) : null;
 const libraryResourceMap = libraryMapPayload?.resources || {};
 const runtimeRoot = path.resolve(runtimeRootArg || "public/models/kphx-full-airport/surfaces");
+const publicRoot = path.resolve("public");
+const runtimeBaseUrl = `/${path.relative(publicRoot, runtimeRoot).replaceAll("\\", "/")}`;
 const reportPath = path.resolve("reports/kphx-wed-surface-network.json");
 const manifestPath = path.join(runtimeRoot, "manifest.json");
 const networkOutputPath = path.join(runtimeRoot, "surface-network.json");
@@ -311,7 +313,7 @@ async function materializeArtResource(resource) {
   const runtime = {
     ...parsed,
     sourceSha256: await sha256(sourcePath),
-    outputBaseUrl: `/models/kphx-full-airport/surfaces/${relativeOutputDirectory.split(path.sep).join("/")}`,
+    outputBaseUrl: `${runtimeBaseUrl}/${relativeOutputDirectory.split(path.sep).join("/")}`,
     texture,
     lit,
     normal,
