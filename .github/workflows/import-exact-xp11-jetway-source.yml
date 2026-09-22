@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: import-exact-xp11-jetway-source
+  cancel-in-progress: true
+
 jobs:
   import-source:
     runs-on: ubuntu-latest
@@ -20,6 +24,10 @@ jobs:
         with:
           ref: kphx-full-airport-import
           fetch-depth: 1
+          sparse-checkout: |
+            scripts/convert-kphx-obj8-to-gltf.mjs
+            .github/workflows/import-exact-xp11-jetway-source.yml
+          sparse-checkout-cone-mode: false
 
       - name: Download exact user-supplied XP11 source archives
         shell: bash
