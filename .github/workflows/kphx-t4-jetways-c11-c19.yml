@@ -1,0 +1,153 @@
+name: KPHX T4 XP11 Jetways C11-C19
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-t4-jetways-c11-c19.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kphx-t4-jetways-c11-c19
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            package.json
+            package-lock.json
+            index.html
+            vite.config.js
+            src
+            reports/kphx-a1-source-jetway-authority.json
+            public/models/kphx/Terminal4.exact.glb
+            public/models/kphx/Terminal4b.exact.glb
+            public/models/kphx/wed-jetways.exact.json
+            public/models/kphx/terminal4-wed-jetways.exact.json
+            public/models/xplane11-stock/jetway1
+          sparse-checkout-cone-mode: false
+
+      - name: Verify committed stock jetway authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f public/models/xplane11-stock/jetway1/manifest.json
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const m=JSON.parse(fs.readFileSync("public/models/xplane11-stock/jetway1/manifest.json","utf8"));
+          if(m.sourceJetwaysZipSha256!=="b64fe7f83e2a286bb52c5b4255953eda46f04b1b5c0d9928faffe4b9371f595f")throw new Error("jetway source zip mismatch");
+          if(m.facade!=="jetway_1_solid.fac")throw new Error("stock facade mismatch");
+          NODE
+
+      - name: Install verifier browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npx vite --host 127.0.0.1 --port 4173 >/tmp/t4-c11-c19-vite.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/t4-c11-c19-vite.log
+          exit 1
+
+      - name: Capture C11-C19 exact jetways
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1800,height:1100}});
+          const errors=[],failed=[],httpErrors=[];
+          page.on("console",m=>{if(m.type()==="error")errors.push(m.text())});
+          page.on("pageerror",e=>errors.push(String(e)));
+          page.on("requestfailed",r=>failed.push({url:r.url(),error:r.failure()?.errorText||"unknown"}));
+          page.on("response",r=>{if(r.status()>=400)httpErrors.push({url:r.url(),status:r.status()})});
+          let waitError=null;
+          await page.goto("http://127.0.0.1:4173/RampReady/?kphxT4Jetways=1&batch=C11-C19",{waitUntil:"domcontentloaded",timeout:60000});
+          try{
+            await page.waitForFunction(()=>{
+              const c=document.querySelector("canvas.kphxT4JetwayBatchVerifierCanvas");
+              return ["ready","error"].includes(c?.dataset?.kphxT4JetwayBatchVerifier);
+            },null,{timeout:120000});
+          }catch(e){waitError=String(e)}
+          const evidence=await page.evaluate(()=>{
+            const c=document.querySelector("canvas.kphxT4JetwayBatchVerifierCanvas");
+            return c?{dataset:{...c.dataset}}:{dataset:{}};
+          });
+          await page.screenshot({path:"reports/kphx-t4-jetways-c11-c19.png",fullPage:true});
+          fs.writeFileSync("reports/kphx-t4-jetways-c11-c19.json",JSON.stringify({evidence,errors,failed,httpErrors,waitError},null,2)+"\n");
+          await browser.close();
+          NODE
+
+      - name: Enforce C11-C19 source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const r=JSON.parse(fs.readFileSync("reports/kphx-t4-jetways-c11-c19.json","utf8"));
+          const d=r.evidence?.dataset||{};
+          const f=[];
+          if(d.kphxT4JetwayBatchVerifier!=="ready")f.push(d.kphxT4JetwayBatchError||"not ready");
+          if(d.kphxT4JetwayBatchName!=="C11-C19")f.push("batch="+d.kphxT4JetwayBatchName);
+          if(d.kphxT4JetwayBatchGates!=="C11,C12,C13,C14,C16,C17,C18,C19")f.push("gates="+d.kphxT4JetwayBatchGates);
+          if(d.kphxT4JetwayBatchCount!=="8")f.push("count="+d.kphxT4JetwayBatchCount);
+          if(d.kphxT4JetwayBatchTotalEdges!=="24")f.push("edges="+d.kphxT4JetwayBatchTotalEdges);
+          if(d.kphxT4JetwayBatchResource!=="lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac")f.push("resource");
+          if(d.kphxT4JetwayBatchOldAirportJetwayGlbLoaded!=="false")f.push("old substitute GLB");
+          let ev=[]; try{ev=JSON.parse(d.kphxT4JetwayBatchEvidence||"[]")}catch{f.push("evidence-json")}
+          const expected=[
+            ["C11",109069,4],["C12",109111,4],["C13",109075,4],["C14",109105,4],
+            ["C16",109099,4],["C17",109081,4],["C18",109093,4],["C19",109087,4]
+          ];
+          if(ev.length!==8)f.push("evidence-count="+ev.length);
+          for(const [gate,id,nodes] of expected){
+            const e=ev.find(x=>x.gate===gate);
+            if(!e)f.push("missing "+gate);
+            else{
+              if(e.facadeWedObjectId!==id)f.push(gate+" facade="+e.facadeWedObjectId);
+              if(e.nodeCount!==nodes)f.push(gate+" nodes="+e.nodeCount);
+              if(e.ringMode!==0)f.push(gate+" ring="+e.ringMode);
+              if(e.renderedEdgeCount!==nodes-1)f.push(gate+" edges="+e.renderedEdgeCount);
+            }
+          }
+          if(r.waitError)f.push("wait="+r.waitError);
+          if(r.errors?.length)f.push("browser="+r.errors.join(" | "));
+          if(r.failed?.length)f.push("failed="+JSON.stringify(r.failed));
+          if(r.httpErrors?.length)f.push("http="+JSON.stringify(r.httpErrors));
+          if(f.length)throw new Error("T4 C11-C19 verification failed: "+f.join("; "));
+          NODE
+
+      - name: Upload C11-C19 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kphx-t4-jetways-c11-c19
+          path: |
+            reports/kphx-t4-jetways-c11-c19.png
+            reports/kphx-t4-jetways-c11-c19.json
+          if-no-files-found: warn
+          compression-level: 0
