@@ -68,6 +68,8 @@ export function parseXp11Type2Facade(source) {
   let currentWall = null;
   let curved = false;
   let ringMode = 1;
+  let shaderTarget = "wall";
+  const wallShader = { alphaMode: "BLEND", alphaCutoff: null };
 
   for (const raw of source.split(/\r?\n/)) {
     const line = raw.trim();
@@ -77,6 +79,14 @@ export function parseXp11Type2Facade(source) {
 
     if (cmd === "RING") {
       ringMode = Number(p[1]);
+    } else if (cmd === "SHADER_WALL") {
+      shaderTarget = "wall";
+    } else if (cmd === "SHADER_ROOF") {
+      shaderTarget = "roof";
+    } else if (cmd === "NO_BLEND" && shaderTarget === "wall") {
+      const cutoff = Number(p[1]);
+      wallShader.alphaMode = "MASK";
+      wallShader.alphaCutoff = Number.isFinite(cutoff) ? cutoff : 0.5;
     } else if (cmd === "OBJ") {
       objects.push(p.slice(1).join(" "));
     } else if (cmd === "SEGMENT") {
@@ -140,7 +150,7 @@ export function parseXp11Type2Facade(source) {
     }
     wall.spellings.sort((a, b) => a.total - b.total);
   }
-  return { objects, templates, walls, ringMode };
+  return { objects, templates, walls, ringMode, wallShader };
 }
 
 export function pickLaminarWedSpelling(spellings, lengthMeters) {
@@ -209,7 +219,7 @@ function meshGeometry(templateMesh, boundsZ, miFirst, miLast, isFirst, isLast) {
 }
 
 async function loadSharedFacadeAssets(facade, basePath) {
-  const key = `${basePath}|${facade.objects.join("|")}`;
+  const key = `${basePath}|${facade.objects.join("|")}|${JSON.stringify(facade.wallShader)}`;
   if (!sharedFacadeAssetCache.has(key)) {
     sharedFacadeAssetCache.set(key, (async () => {
       const loader = new GLTFLoader();
@@ -234,7 +244,9 @@ async function loadSharedFacadeAssets(facade, basePath) {
         roughness: 1,
         metalness: 0,
         side: THREE.FrontSide,
-        alphaTest: 0.5,
+        transparent: facade.wallShader.alphaMode === "BLEND",
+        alphaTest: facade.wallShader.alphaMode === "MASK" ? facade.wallShader.alphaCutoff : 0,
+        depthWrite: true,
       });
       return {
         objectPrototypes: new Map(pairs),
@@ -370,6 +382,7 @@ export async function buildXp11Type2Facade({
   }
 
   root.userData.xPlaneFacadeAuthority = "Laminar WED type-2 preview transform order";
+  root.userData.xPlaneFacadeWallShader = facade.wallShader;
   root.userData.xPlaneFacadeRingMode = facade.ringMode;
   root.userData.renderedWallCount = wallCount;
   root.userData.wallEvidence = wallEvidence;
