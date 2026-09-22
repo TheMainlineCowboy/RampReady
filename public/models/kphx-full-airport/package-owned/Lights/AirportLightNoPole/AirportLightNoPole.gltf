@@ -382,6 +382,10 @@
         "raw": "LIGHT_PARAM\tsodium_flood_BB\t0.00000000\t20.10865593\t-0.88739556\t-.2 -.71 -.67 8"
       }
     ],
+    "vertexLightCount": 0,
+    "vertexLights": [],
+    "namedLightCount": 0,
+    "namedLights": [],
     "sourceBounds": {
       "min": [
         -1.38928986,

@@ -259,6 +259,10 @@
     ],
     "parameterizedLightCount": 0,
     "parameterizedLights": [],
+    "vertexLightCount": 0,
+    "vertexLights": [],
+    "namedLightCount": 0,
+    "namedLights": [],
     "sourceBounds": {
       "min": [
         -0.75,

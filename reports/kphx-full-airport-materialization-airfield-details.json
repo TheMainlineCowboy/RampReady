@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAtUtc": "2026-09-22T00:13:47.410Z",
+  "generatedAtUtc": "2026-09-22T01:03:15.634Z",
   "source": {
     "package": "KPHX - Phoenix Sky Harbor Intl",
     "version": "1.75.1",
@@ -48,7 +48,7 @@
         "sourceResource": "GroundMarkings/0.obj",
         "sourceSha256": "1aa176ab13ee077fe378cb52a690febcaca9c3ee9e3355b5c7f6cca9df507e3f",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/0/0.gltf",
-        "gltfSha256": "08472364c7ef8707ab0ee5a3e7c41dbc33c048c8ac79d3040693f19388313d50",
+        "gltfSha256": "ec250a81c0fe917cad3b7cbf3efde8254f77ea5a40ff44820dac729762a2aa7f",
         "binSha256": "afca87e2105a68fe18347c35250ec44cfe4a7848f4dd55925254d37443aaadaf",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -94,7 +94,7 @@
         "sourceResource": "GroundMarkings/1.obj",
         "sourceSha256": "2001f796a3d0896d1745c8fb0c849ebae0fca0bd37b6ecebbef8683b081bb334",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/1/1.gltf",
-        "gltfSha256": "f3d63f68d7b6d5da58e2b8b432024b16abdc3d947119ca5de41bba996fca090e",
+        "gltfSha256": "08a5e70b77488d35b647a1396c2a9051e6b63c6e58107740c2701eda6c0b5ab6",
         "binSha256": "b8e4b5d78869e881d36ad05d2e44a024bac61855e07b86fab0db785a8eba9dd1",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -140,7 +140,7 @@
         "sourceResource": "GroundMarkings/2.obj",
         "sourceSha256": "01b3fab5cb151665ae7b3b71aa078c4dc2bf018adb8e15a98b59071b8844befd",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/2/2.gltf",
-        "gltfSha256": "d65b7cf597de853ca1931e4aec196c213c7fa0f8c32d95c07053097e4b4b1233",
+        "gltfSha256": "5c1d1ef46a9a6717509e3d3e2f1f4f1dd4e8b6899b45f61b996704a1c7a1850d",
         "binSha256": "decefb621bd87d69d4ca1bc3b346ac8cb08936dd8c67f8c59dcbcbc0f2970cc3",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -186,7 +186,7 @@
         "sourceResource": "GroundMarkings/26_8.obj",
         "sourceSha256": "89a425da935e5289b719b884bd145480141ff989367021d11d4e10ddf6aa99f7",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/26_8/26_8.gltf",
-        "gltfSha256": "39a8f4c43c01c1101f6f551c84cd349527cbe1ef6f22be3f3a7e8a8bc5bbf54c",
+        "gltfSha256": "dcc613934a4db78732f7b8c0e37c8582b80997c7e4cb1ca295ef6025978908f8",
         "binSha256": "7f1361ec1b697a281c4a9084ba178fdb0c7fbe1bd5f7f1ea21be44e408a0dab2",
         "diffuse": {
           "requested": "RunwaySigns.png",
@@ -194,7 +194,7 @@
           "sourceSha256": "322e40c13bc7d466fc07b11efa1e6c2758d2eacc5c9e29151c647f1371668684",
           "sourceDecodedRgbaSha256": "27beb337aa027d3a879081dd34949af37c1951a8ae80d5eb85b7bcb78d03cc6b",
           "outputName": "RunwaySigns.png",
-          "outputSha256": "60d9c13391c4632b05896f0b4d0038eeb534245f1e119b7ebd1eba0c6b4a488a",
+          "outputSha256": "1ed8140abb98c1accd751b1a02e8fea7d907650cd0b541fdefcade5aa66d3c0e",
           "outputDecodedRgbaSha256": "27beb337aa027d3a879081dd34949af37c1951a8ae80d5eb85b7bcb78d03cc6b",
           "width": 2048,
           "height": 1024,
@@ -232,7 +232,7 @@
         "sourceResource": "GroundMarkings/3.obj",
         "sourceSha256": "a5e8a5112430c1dd683f9be00800e69d9acf42c5c6ec80f161d4d72b293ba944",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/3/3.gltf",
-        "gltfSha256": "22c349d91f150bbc2e830cc73cf28cd00160f66dea4d4186f7aeaa12d3f4b547",
+        "gltfSha256": "4547b53def925d8a5ddccaf999604db9582c7ce91a0c113448067cad7ba9bcf4",
         "binSha256": "875710f0d9b9eab6272288bbbae818d8b1118760d837755c2734a99b37ffaf87",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -278,7 +278,7 @@
         "sourceResource": "GroundMarkings/6.obj",
         "sourceSha256": "2b65e0c9acdf7d6db0a35603d92001a9b33b60514485067d55b56d58bfdbeb91",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/6/6.gltf",
-        "gltfSha256": "bd9e8d52b3e0270ff89401ab0fd614ed2c0056d45a7866ae72bbf9b960f061a6",
+        "gltfSha256": "243972ccef7e3c8a4f05bc00b3f3e066c7f60aa6ccfb7de1d23a8918b211e52a",
         "binSha256": "b8d5d0f89160cf37cfc1be8cc5981d82331a05d90371d341c34c687586e8b361",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -324,7 +324,7 @@
         "sourceResource": "GroundMarkings/8.obj",
         "sourceSha256": "e9a85e77d58915b1f4d190a1cf5782ffffb0dcb1bd689dd174a1bf8a3a574519",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/8/8.gltf",
-        "gltfSha256": "84f73ce70756229e05a770722a0d0f75fc2aba845bbca1b4d8b841d8a03a5e81",
+        "gltfSha256": "d8f5faa65611991e610e979be0c95dad3399178eebb066cdf1b40e3c655de48e",
         "binSha256": "2eea0bfe8eefb4c31cf0a44aae6c5919bb1e79e1b9baddf595eb564fbdaf0385",
         "diffuse": {
           "requested": "RunwaySigns.png",
@@ -332,7 +332,7 @@
           "sourceSha256": "322e40c13bc7d466fc07b11efa1e6c2758d2eacc5c9e29151c647f1371668684",
           "sourceDecodedRgbaSha256": "27beb337aa027d3a879081dd34949af37c1951a8ae80d5eb85b7bcb78d03cc6b",
           "outputName": "RunwaySigns.png",
-          "outputSha256": "348b24b5e55120e55c0a617e7abd744bee281f8c46b573b1618ce769124ac1d8",
+          "outputSha256": "cc7b8ac1a094870d0ead665a0f396a3129580572b2bca9d19edb8e0b5c841ea4",
           "outputDecodedRgbaSha256": "27beb337aa027d3a879081dd34949af37c1951a8ae80d5eb85b7bcb78d03cc6b",
           "width": 2048,
           "height": 1024,
@@ -370,7 +370,7 @@
         "sourceResource": "GroundMarkings/8twy.obj",
         "sourceSha256": "e65b4812056454473006fe485a693c2daa31cd540884954762fa9b5160b28d26",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/8twy/8twy.gltf",
-        "gltfSha256": "a7ffde5a044644ca2fdd24c5749f1aa6552875e0ccb52d048eb6b693cc2d1712",
+        "gltfSha256": "a7b22704654ed8984fd9b81d3c91e85c70e8e2f12e1c4cad0d40be3e2521c3d8",
         "binSha256": "a8d72c15b41dd29c62b9b51fb130971eb00903fa548acece6646abff03eee80b",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -416,7 +416,7 @@
         "sourceResource": "GroundMarkings/BackgroundBlack.obj",
         "sourceSha256": "ef0b9be3824bdcf26a6fb51da8fd69d5aa51355f78135b6145b52449a3a3953d",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/BackgroundBlack/BackgroundBlack.gltf",
-        "gltfSha256": "be45855baf2965fbe73e41639b3b0ed16b6ffca75d192310961cd8b8d6fc5cd3",
+        "gltfSha256": "d8670cc98d18931655b0a71f59531894630e83704a8745eb992a65fe8e01fd8e",
         "binSha256": "091c19e73c001f8948716556235ff58f6909d184fac127875ca4edeed33c2a23",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -462,7 +462,7 @@
         "sourceResource": "GroundMarkings/BackgroundBlackHalf.obj",
         "sourceSha256": "14741383e15e1578e4d5c00247cda85f59b9f50e2e91313862f8bd49c25370bb",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/BackgroundBlackHalf/BackgroundBlackHalf.gltf",
-        "gltfSha256": "270c8a473e5e8efa1804e28d50ec86912fe6dbf0be533ff57fc4b46ed83b7e9d",
+        "gltfSha256": "6ca9b79fc4300cdf0d1e4a9e712ec795b7c7f547bd644f3b5218199e0955dab5",
         "binSha256": "3fda9efd8c8cd781818839e62a5bb971ad877263a6ce79b5bb4705b59f5b97d2",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -508,7 +508,7 @@
         "sourceResource": "GroundMarkings/HoldBay.obj",
         "sourceSha256": "3d60f79693cf28b0e708b600641e471f03b04154b14e0430a11e08fe51d8c7fb",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/HoldBay/HoldBay.gltf",
-        "gltfSha256": "7c1ee5b9eb818da826cc67291b1fd284cd6380291c16864c212357cfdc448e88",
+        "gltfSha256": "ed4338818493ffe65e04e660157756cbc6ed058fc416a63018d74a1494a21be4",
         "binSha256": "a4a8c018c5cf3e2fa1650245011e26202af5c860e7bb5d2a1e67a5a40a044abc",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -554,7 +554,7 @@
         "sourceResource": "GroundMarkings/yA.obj",
         "sourceSha256": "8d5df8db22bbad1473b6fd0e7de5005deef3afa77421ff62136c29d1985f8a6e",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/yA/yA.gltf",
-        "gltfSha256": "3f93d4d858349508f51604da3ac3ca1eb0b5165e76ef66e3472fcfcab8944d46",
+        "gltfSha256": "d63465b60ada7e09611fd7bf67acb5eb23e55e2c671f20f33b1e86d30c03eb82",
         "binSha256": "1b5823020e82c6f01b638d393d15f4b20b2deba29cd39d3235e362fe77c5af36",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -600,7 +600,7 @@
         "sourceResource": "GroundMarkings/yB.obj",
         "sourceSha256": "17ee43cb281a0b8bfa5f6299fdfde232a67c0ecbdf3d6fbe0e23737a89b58c7e",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/yB/yB.gltf",
-        "gltfSha256": "2b2d12c5748c5cf6e9910b644ee7dab18463e899566a1db1c68219dc7f5017a8",
+        "gltfSha256": "8d1f9465defda785629c82ac838aaf2d55223645d4a785cc7f3d5a740869a250",
         "binSha256": "c9c5f30539eb7cb8f12bfa90673419b2b0663321800d80dba0e72e98babdcd87",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -646,7 +646,7 @@
         "sourceResource": "GroundMarkings/yD.obj",
         "sourceSha256": "f72862019be12f5cecdbda6adc21c78c1965b1e8735f37b96f726d60cc6987fb",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/yD/yD.gltf",
-        "gltfSha256": "eca117be34102f5a9f8f195b2084ce3140d0d933aca717ca82a18c4c828b1da1",
+        "gltfSha256": "a23586352d83266bcc4f7a90c2ede87d0e39c44461945d41069eead939d724b0",
         "binSha256": "9e0cb9212891e9ce75693f25484d2755ed5c4d0cb3bb1c30d7951179e68e9042",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -692,7 +692,7 @@
         "sourceResource": "GroundMarkings/yE.obj",
         "sourceSha256": "e385997fc958ae58f0d676c7cfa10648a3be1ad0676e773153695472b366ae69",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/yE/yE.gltf",
-        "gltfSha256": "701d641958f56f4fe6a9e51f87fa5a4ccbcc158bf1889f1d12146f849839b81f",
+        "gltfSha256": "1d70d6de36edb950366d943173b91eb9d3641556298399a509d2da583b6c7a5c",
         "binSha256": "e7ec3698ea4227c82c9ac9f22239fd025e26e2a7c5523193226db5abe50cab44",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -738,7 +738,7 @@
         "sourceResource": "GroundMarkings/yJ.obj",
         "sourceSha256": "85efe78586c70abedcdb9b041587a088a54cd105942ae48be6baeeb2222944e6",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/yJ/yJ.gltf",
-        "gltfSha256": "fd41870fa5625bef44c47d380464f94979175d13bbc85bc352773fd18f10dad7",
+        "gltfSha256": "45a443e4fa108cb8694e18f44bb981d360c130579738297037c3f78491c94c29",
         "binSha256": "c515d3a9f6be71e3b9677d2778635b7867b3b4d0e2c68973c3484a2536d47ae3",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -784,7 +784,7 @@
         "sourceResource": "GroundMarkings/yK.obj",
         "sourceSha256": "78ace706b2b30872a747a5920f441f4f0765ea6ad92f406ca4ee48dcecc27c89",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/yK/yK.gltf",
-        "gltfSha256": "2907434365f36476eab5fe9e7ae104ac58e7a377a48b621770420987be8ade11",
+        "gltfSha256": "d67b19a118b88749206b464d5a4a70f93ace3f3300f3d9f6bd1f282cd94c54f1",
         "binSha256": "24d528fd0a4a6278c41ca55adef147af0e4e6c58a64624c16a2cdb8e7824c200",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -830,7 +830,7 @@
         "sourceResource": "GroundMarkings/yN.obj",
         "sourceSha256": "e0f974efd23efd57f40d264b36e23328f58844d8ccbe749c690e69bf244d36b3",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/yN/yN.gltf",
-        "gltfSha256": "4fb9ec12778563ad81c5a2b627b27be2912120adfa678d41aeaffdc79561c17a",
+        "gltfSha256": "eb57b1c4a66fb72d9779ec0192551a5a7c48267ba17020d705f719e61fc09e14",
         "binSha256": "0c7b1ea206110be0dc3ba17e7fad6c45bad7d389bb2831491e48ab44b2cefc24",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -876,7 +876,7 @@
         "sourceResource": "GroundMarkings/yP.obj",
         "sourceSha256": "beacaea4370420ae8bb3522dac6e71dd66e2647776b21dcfecdf325aef177de7",
         "assetUrl": "/models/kphx-full-airport/package-owned/GroundMarkings/yP/yP.gltf",
-        "gltfSha256": "c3e791506e0ce0a431c31bf8a24da4012fbb698d0ecf228b7e1ae504b3b69869",
+        "gltfSha256": "b519acfaf92a737bc1706a9069da1473fc7452ae2bd59774462469bd6dd3ad00",
         "binSha256": "d59dd7d42b5e53c214a66a33c654b109d8748d4fd380b9f7b0f7caaaffa5fad5",
         "diffuse": {
           "requested": "TaxiSigns.png",
@@ -922,7 +922,7 @@
         "sourceResource": "Lights/AirportLight.obj",
         "sourceSha256": "f331f09775ef71646011b1c0611b975fd50e1ddd1e67f38f574e379d1d1cba34",
         "assetUrl": "/models/kphx-full-airport/package-owned/Lights/AirportLight/AirportLight.gltf",
-        "gltfSha256": "8d1a7fef256a45274fc459ec88f9bd2e2523781435543af0d8a8354a42dd24d6",
+        "gltfSha256": "898aa1da95300d6a77a42559fb40adb1101a4bcaa812bd0be049447fa93ca57c",
         "binSha256": "14dcad68b3aaaa425d906929a46c75cbf1cafade76fa91dafa0e966e544c46c5",
         "diffuse": {
           "requested": "AirportLight.png",
@@ -930,7 +930,7 @@
           "sourceSha256": "7333ae8295916306f1f4b570fe8efce34d194648f700dec58cd6b1cb5e86d2bd",
           "sourceDecodedRgbaSha256": "99fb2046afb26b4a49e80e2ba532a9637adba1c7f08f36d1b6f5ace651a485f5",
           "outputName": "AirportLight.png",
-          "outputSha256": "6c76eaf02477075ca7de48da33d90cdd35500a1d61ee55725457370ce64485be",
+          "outputSha256": "ad3dc7a8afa59cab7daaabbdc6ed6a7dec1df345af510eb27c719e9e51208aef",
           "outputDecodedRgbaSha256": "99fb2046afb26b4a49e80e2ba532a9637adba1c7f08f36d1b6f5ace651a485f5",
           "width": 1024,
           "height": 1024,
@@ -968,7 +968,7 @@
         "sourceResource": "Lights/AirportLightNoPole.obj",
         "sourceSha256": "bb75923e2b0422bcb7440933246d0eaa8fc0ba6c00d7961988468578a979ba00",
         "assetUrl": "/models/kphx-full-airport/package-owned/Lights/AirportLightNoPole/AirportLightNoPole.gltf",
-        "gltfSha256": "1deb5aaf509af8020d21986e2bd4584b46f5af4742abc5bcc94c466de99ac412",
+        "gltfSha256": "d10bb509cefea0d4a89a70ecd3c13c993febc234a636e82e1bd54049c7c7bebc",
         "binSha256": "ae6f180225a2d7ada2c7ed56459e93e5dca9dbd4a493682eed258d172a4c417c",
         "diffuse": {
           "requested": "AirportLight.png",
@@ -976,7 +976,7 @@
           "sourceSha256": "7333ae8295916306f1f4b570fe8efce34d194648f700dec58cd6b1cb5e86d2bd",
           "sourceDecodedRgbaSha256": "99fb2046afb26b4a49e80e2ba532a9637adba1c7f08f36d1b6f5ace651a485f5",
           "outputName": "AirportLight.png",
-          "outputSha256": "6c76eaf02477075ca7de48da33d90cdd35500a1d61ee55725457370ce64485be",
+          "outputSha256": "ad3dc7a8afa59cab7daaabbdc6ed6a7dec1df345af510eb27c719e9e51208aef",
           "outputDecodedRgbaSha256": "99fb2046afb26b4a49e80e2ba532a9637adba1c7f08f36d1b6f5ace651a485f5",
           "width": 1024,
           "height": 1024,
@@ -1014,7 +1014,7 @@
         "sourceResource": "Runways/Blastpad.obj",
         "sourceSha256": "da3d4e624da8b62538cfa853b99ebb65c3be24eb1503d58249ba43bbff4594b3",
         "assetUrl": "/models/kphx-full-airport/package-owned/Runways/Blastpad/Blastpad.gltf",
-        "gltfSha256": "c5581ed7aae6f5c16fa5fd58e2259968c93093b18f4ad9f7892b0644c9fd92b0",
+        "gltfSha256": "908cba4a71a5cdfb7ab7bdc98b0756a5aa8d310a62a0e0c995b703bc55efacca",
         "binSha256": "cbaa1f12f49b9d8de1c13efd56bd4878f7be69be9f82d751a7576e966c04259e",
         "diffuse": {
           "requested": "blastpad.png",
@@ -1022,7 +1022,7 @@
           "sourceSha256": "9e496630f0dbb056492f5dd86446ba33739e07fa4199e8e9e27ca9167516759f",
           "sourceDecodedRgbaSha256": "44a78f0eeed47b9db32e9977634d989fdf87ffa67f584b815a7bfefd9a4e16f6",
           "outputName": "blastpad.png",
-          "outputSha256": "e7af5d19c89623d071559bc335fc2f8279caeba7d71b8e60d6e97ac116391604",
+          "outputSha256": "afe1047a1df812eb4f26245c86f5c21139aaa38e053bdc5b2aedb492f97cff0d",
           "outputDecodedRgbaSha256": "44a78f0eeed47b9db32e9977634d989fdf87ffa67f584b815a7bfefd9a4e16f6",
           "width": 2048,
           "height": 2048,
@@ -1060,7 +1060,7 @@
         "sourceResource": "Runways/bigArrow.obj",
         "sourceSha256": "c93511c5585c8fcfd1c3cdf6d60863c731eaa736b6eb6c286fc68c3a834b2ff8",
         "assetUrl": "/models/kphx-full-airport/package-owned/Runways/bigArrow/bigArrow.gltf",
-        "gltfSha256": "ec455675a8e982352cdb16b7f84c871ace1a6af3183e5667695159a3847606b8",
+        "gltfSha256": "fb48ca98c81590cc74a464bd5a467cf3e28e57b4a2847f68c67be2c93b142203",
         "binSha256": "80acf3d365eb27247643b4ecdb01aeb27a6ccc6918be89677cacd56a1b06c2d4",
         "diffuse": {
           "requested": "arrows.png",
@@ -1106,7 +1106,7 @@
         "sourceResource": "Runways/smallArrow.obj",
         "sourceSha256": "dae850fa0747426292c7ca33b92412e5d0c0d1048da203e162125f21f8a1a8e8",
         "assetUrl": "/models/kphx-full-airport/package-owned/Runways/smallArrow/smallArrow.gltf",
-        "gltfSha256": "6c03c4929330e85159277cb2c3da4b426b2a2a07429306a9891e147caea491dd",
+        "gltfSha256": "7d98713d4d1105ab7b7feacfab71b5294a5720a1533e6f344e6fef09b85cfcce",
         "binSha256": "dfeb0b87174a16f3a188c8d970eb87fa8818608b5d195942f58b13eeaa0759d0",
         "diffuse": {
           "requested": "arrows.png",
