@@ -6,79 +6,7 @@ import {
   kphxWedToRampReadyPosition,
   kphxXPlaneHeadingToRampReadyYawRadians,
 } from "../environment/kphxFullAirport/sourceAuthority.js";
-
-const A1_SOURCE_AUTHORITY = Object.freeze({
-  "authority": "KPHX 1.75.1 earth.wed.xml",
-  "earthWedSha256": "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498",
-  "gate": "A1",
-  "ramp": {
-    "wedObjectId": 27855,
-    "latitude": 33.436530675,
-    "longitude": -111.998921221,
-    "headingDegrees": -90.08
-  },
-  "jetwayFacade": {
-    "wedObjectId": 104804,
-    "parentGroupId": 122306,
-    "parentGroupName": "Default Jetways",
-    "resource": "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac",
-    "heightMeters": 3,
-    "pickWalls": 1,
-    "ringWedObjectId": 104803,
-    "nodeCount": 7,
-    "nodes": [
-      {
-        "wedObjectId": 104805,
-        "name": "Node 1",
-        "latitude": 33.436502737,
-        "longitude": -111.999152752,
-        "wallType": "Wall 1"
-      },
-      {
-        "wedObjectId": 104806,
-        "name": "Node 2",
-        "latitude": 33.436502466,
-        "longitude": -111.999103109,
-        "wallType": "Wall 1"
-      },
-      {
-        "wedObjectId": 104807,
-        "name": "Node 3",
-        "latitude": 33.436476123,
-        "longitude": -111.998972787,
-        "wallType": "Wall 1"
-      },
-      {
-        "wedObjectId": 104808,
-        "name": "Node 4",
-        "latitude": 33.436374948,
-        "longitude": -111.998970019,
-        "wallType": "Wall 1"
-      },
-      {
-        "wedObjectId": 104809,
-        "name": "Node 5",
-        "latitude": 33.436375763,
-        "longitude": -111.998939279,
-        "wallType": "Wall 5"
-      },
-      {
-        "wedObjectId": 104810,
-        "name": "Node 6",
-        "latitude": 33.436450447,
-        "longitude": -111.998899735,
-        "wallType": "Wall 4"
-      },
-      {
-        "wedObjectId": 104811,
-        "name": "Node 7",
-        "latitude": 33.436517699,
-        "longitude": -111.998897851,
-        "wallType": "Wall 1"
-      }
-    ]
-  }
-});
+import A1_SOURCE_AUTHORITY from "../../reports/kphx-a1-source-jetway-authority.json";
 
 const EXPECTED_WALL_SEQUENCE = [
   "Rotunda_extension",
@@ -113,6 +41,20 @@ function chooseSpelling(wall, edgeLength, segmentByIndex) {
   return candidates[0];
 }
 
+function xPlaneFacadeIndicesToThree(indices) {
+  if (indices.length % 3 !== 0) {
+    throw new Error(`FAC index count is not triangle-aligned: ${indices.length}`);
+  }
+
+  const converted = [];
+  for (let index = 0; index < indices.length; index += 3) {
+    // X-Plane FAC triangle winding is opposite Three.js/glTF front-face winding.
+    // Swap the second and third index only; authored positions/normals/UVs stay unchanged.
+    converted.push(indices[index], indices[index + 2], indices[index + 1]);
+  }
+  return converted;
+}
+
 function makeFacadeMesh(segment, meshDefinition, stretch, cumulative, material) {
   const positions = [];
   const normals = [];
@@ -129,7 +71,7 @@ function makeFacadeMesh(segment, meshDefinition, stretch, cumulative, material) 
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
   geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
-  geometry.setIndex(meshDefinition.indices);
+  geometry.setIndex(xPlaneFacadeIndicesToThree(meshDefinition.indices));
   geometry.computeBoundingBox();
   geometry.computeBoundingSphere();
 
@@ -374,6 +316,7 @@ export default function KphxA1StockJetwayVerifier() {
       renderer.domElement.dataset.kphxA1StockAttachmentCount = String(attachmentCount);
       renderer.domElement.dataset.kphxA1StockObjectPrototypeCount = String(objectPrototypeByIndex.size);
       renderer.domElement.dataset.kphxA1StockFacadeSha256 = manifest.sourceFacadeSha256;
+      renderer.domElement.dataset.kphxA1FacadeWinding = "xplane-to-three-reversed";
       renderer.domElement.dataset.kphxA1StockSpellings = JSON.stringify(spellingRecords);
       renderer.domElement.dataset.kphxA1OldUploadedGlbUsed = "false";
 
