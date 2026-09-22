@@ -144,6 +144,7 @@ function tokenize(source) {
     .split(/\r?\n/)
     .map((line) => line.replace(/#.*/, "").trim())
     .filter(Boolean)
+    .filter((line) => !/^-+$/.test(line))
     .map((line) => ({ raw: line, parts: line.split(/\s+/) }));
 }
 
