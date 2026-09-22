@@ -88,19 +88,19 @@ function safeResolvedTexturePath(sourceDirectory, requested, allowedRoot) {
 async function readObjTextureRefs(objPath) {
   const source = await fs.readFile(objPath, "utf8");
   let diffuse = null;
+  let drapedDiffuse = null;
   let lit = null;
   let normal = null;
   let normalScale = null;
+  let drapedNormal = null;
+  let drapedNormalScale = null;
   let weather = null;
   for (const line of source.split(/\r?\n/)) {
     const trimmed = line.trim();
-    if (
-      trimmed.startsWith("TEXTURE\t")
-      || trimmed.startsWith("TEXTURE ")
-      || trimmed.startsWith("TEXTURE_DRAPED\t")
-      || trimmed.startsWith("TEXTURE_DRAPED ")
-    ) {
+    if (trimmed.startsWith("TEXTURE\t") || trimmed.startsWith("TEXTURE ")) {
       diffuse = trimmed.split(/\s+/).slice(1).join(" ");
+    } else if (trimmed.startsWith("TEXTURE_DRAPED\t") || trimmed.startsWith("TEXTURE_DRAPED ")) {
+      drapedDiffuse = trimmed.split(/\s+/).slice(1).join(" ");
     } else if (trimmed.startsWith("TEXTURE_LIT\t") || trimmed.startsWith("TEXTURE_LIT ")) {
       lit = trimmed.split(/\s+/).slice(1).join(" ");
     } else if (
@@ -111,18 +111,22 @@ async function readObjTextureRefs(objPath) {
     ) {
       const parts = trimmed.split(/\s+/);
       const maybeScale = Number(parts[1]);
-      if (Number.isFinite(maybeScale) && parts.length >= 3) {
-        normalScale = maybeScale;
-        normal = parts.slice(2).join(" ");
+      const scale = Number.isFinite(maybeScale) && parts.length >= 3 ? maybeScale : 1;
+      const texture = Number.isFinite(maybeScale) && parts.length >= 3
+        ? parts.slice(2).join(" ")
+        : parts.slice(1).join(" ");
+      if (trimmed.startsWith("TEXTURE_DRAPED_NORMAL")) {
+        drapedNormalScale = scale;
+        drapedNormal = texture;
       } else {
-        normalScale = 1;
-        normal = parts.slice(1).join(" ");
+        normalScale = scale;
+        normal = texture;
       }
     } else if (trimmed.startsWith("WEATHER\t") || trimmed.startsWith("WEATHER ")) {
       weather = trimmed.split(/\s+/).slice(1).join(" ");
     }
   }
-  return { diffuse, lit, normal, normalScale, weather };
+  return { diffuse, drapedDiffuse, lit, normal, normalScale, drapedNormal, drapedNormalScale, weather };
 }
 
 async function resolveTexture(sourceDirectory, requested, allowedRoot) {
@@ -260,12 +264,20 @@ async function convertObject(resource) {
 
   const sourceDirectory = path.dirname(sourcePath);
   const diffuseSource = await resolveTexture(sourceDirectory, refs.diffuse, textureRoot);
+  const drapedDiffuseSource = await resolveTexture(sourceDirectory, refs.drapedDiffuse, textureRoot);
   const litSource = await resolveTexture(sourceDirectory, refs.lit, textureRoot);
   const normalSource = await resolveTexture(sourceDirectory, refs.normal, textureRoot);
+  const drapedNormalSource = await resolveTexture(sourceDirectory, refs.drapedNormal, textureRoot);
   const weatherSource = await resolveTexture(sourceDirectory, refs.weather, textureRoot);
   const diffuse = await materializeTexture(diffuseSource, refs.diffuse, outputDirectory);
+  const drapedDiffuse = drapedDiffuseSource
+    ? await materializeTexture(drapedDiffuseSource, refs.drapedDiffuse, outputDirectory)
+    : null;
   const lit = litSource ? await materializeTexture(litSource, refs.lit, outputDirectory) : null;
   const normal = normalSource ? await materializeTexture(normalSource, refs.normal, outputDirectory) : null;
+  const drapedNormal = drapedNormalSource
+    ? await materializeTexture(drapedNormalSource, refs.drapedNormal, outputDirectory)
+    : null;
   const weather = weatherSource ? await materializeTexture(weatherSource, refs.weather, outputDirectory) : null;
 
   const converterPath = path.resolve("scripts/convert-kphx-obj8-to-gltf.mjs");
@@ -276,9 +288,12 @@ async function convertObject(resource) {
     `--name=${parsed.name}`,
     `--diffuse=${diffuse.outputName}`,
   ];
+  if (drapedDiffuse) converterArgs.push(`--draped-diffuse=${drapedDiffuse.outputName}`);
   if (lit) converterArgs.push(`--lit=${lit.outputName}`);
   if (normal) converterArgs.push(`--normal=${normal.outputName}`);
   if (normal && Number.isFinite(refs.normalScale)) converterArgs.push(`--normal-scale=${refs.normalScale}`);
+  if (drapedNormal) converterArgs.push(`--draped-normal=${drapedNormal.outputName}`);
+  if (drapedNormal && Number.isFinite(refs.drapedNormalScale)) converterArgs.push(`--draped-normal-scale=${refs.drapedNormalScale}`);
   if (weather) converterArgs.push(`--weather=${weather.outputName}`);
 
   const { stdout } = await execFile(process.execPath, converterArgs, {
@@ -296,8 +311,10 @@ async function convertObject(resource) {
     gltfSha256: await sha256(gltfPath),
     binSha256: await sha256(binPath),
     diffuse,
+    drapedDiffuse,
     lit,
     normal,
+    drapedNormal,
     weather,
     converter: converterResult,
   };
