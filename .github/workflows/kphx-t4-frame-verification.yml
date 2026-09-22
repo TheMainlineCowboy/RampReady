@@ -99,6 +99,16 @@ jobs:
           await browser.close();
           NODE
 
+      - name: Upload T4 verification artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kphx-t4-frame-verification
+          path: |
+            reports/kphx-t4-frame-verification.png
+            reports/kphx-t4-frame-verification.json
+          if-no-files-found: error
+          compression-level: 0
+
       - name: Commit T4 verification evidence
         shell: bash
         run: |
