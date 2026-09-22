@@ -20,14 +20,17 @@ const options = Object.fromEntries(optionArgs
   }));
 const sourceRoot = path.resolve(sourceRootArg || process.env.KPHX_FULL_AIRPORT_SOURCE_DIR || "");
 const includeExternalPrefixes = new Set((options["include-external-prefixes"] || "").split(",").map((entry) => entry.trim()).filter(Boolean));
+const includePackagePrefixes = new Set((options["package-prefixes"] || "").split(",").map((entry) => entry.trim()).filter(Boolean));
+const batchName = options["batch-name"] || null;
 const libraryMapPath = options["library-map"] ? path.resolve(options["library-map"]) : null;
 const libraryMapPayload = libraryMapPath ? JSON.parse(await fs.readFile(libraryMapPath, "utf8")) : null;
 const libraryResourceMap = libraryMapPayload?.resources || {};
 const runtimeRoot = path.resolve(runtimeRootArg || "public/models/kphx-full-airport");
 const reportRoot = path.resolve("reports");
-const placementReportPath = path.join(reportRoot, "kphx-full-airport-wed-placements.json");
+const reportSuffix = batchName ? `-${batchName}` : "";
+const placementReportPath = path.join(reportRoot, `kphx-full-airport-wed-placements${reportSuffix}.json`);
 const runtimeManifestPath = path.join(runtimeRoot, "manifest.json");
-const materializationReportPath = path.join(reportRoot, "kphx-full-airport-materialization.json");
+const materializationReportPath = path.join(reportRoot, `kphx-full-airport-materialization${reportSuffix}.json`);
 const magick = process.env.KPHX_MAGICK_BIN || "magick";
 
 if (!sourceRootArg && !process.env.KPHX_FULL_AIRPORT_SOURCE_DIR) {
@@ -262,7 +265,10 @@ await execFile(process.execPath, [
 ], { maxBuffer: 16 * 1024 * 1024 });
 
 const placementReport = JSON.parse(await fs.readFile(placementReportPath, "utf8"));
-const packagePlacements = placementReport.placements.packageOwned;
+const allPackagePlacements = placementReport.placements.packageOwned;
+const packagePlacements = allPackagePlacements.filter((entry) => (
+  includePackagePrefixes.size === 0 || includePackagePrefixes.has(entry.resourcePrefix)
+));
 const externalPlacements = placementReport.placements.externalLibraries
   .filter((entry) => includeExternalPrefixes.has(entry.resourcePrefix));
 const selectedPlacements = [...packagePlacements, ...externalPlacements];
@@ -318,10 +324,13 @@ const manifest = {
     geometry: "source positions/normals/UVs/indices preserved; no remesh or decimation",
     textures: "source texture decoded to browser PNG at original dimensions with decoded-RGBA hash equality required",
     placement: "earth.wed.xml authored lat/lon/heading; no manual placement",
+    packageBatch: batchName,
+    packagePrefixes: [...includePackagePrefixes],
     externalLibraries: "only explicitly resolved library resources are materialized; unresolved virtual paths are never substituted",
     libraryMap: libraryMapPath,
   },
   packageOwned: {
+    totalSourcePlacementCount: allPackagePlacements.length,
     expectedPlacementCount: packagePlacements.length,
     materializedPlacementCount: runtimePlacements.length,
     expectedUniqueResourceCount: packageUniqueResources.length,
@@ -354,6 +363,8 @@ if (failures.length) {
 console.log(JSON.stringify({
   runtimeManifestPath,
   materializationReportPath,
+  batchName,
+  packagePrefixes: [...includePackagePrefixes],
   packageOwnedPlacements: runtimePlacements.length,
   packageOwnedUniqueResources: packageUniqueResources.filter((resource) => resources[resource]).length,
   resolvedExternalUniqueResources: externalUniqueResources.filter((resource) => resources[resource]).length,
