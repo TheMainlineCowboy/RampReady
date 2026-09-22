@@ -1,0 +1,100 @@
+name: KPHX MisterX Raw Batch 04 Aircraft A
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-misterx-raw-batch-04-aircraft-a.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-misterx-aircraft-a
+  cancel-in-progress: false
+
+jobs:
+  move-raw:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install Drive downloader
+        run: python -m pip install --disable-pip-version-check gdown==5.2.0
+
+      - name: Configure checkpoint commits
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Airbus A320-200 exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft"
+          mkdir -p "$BASE"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1SLvpkA1x2vUB3l7_A6c9ofHcl7iFkoqW" -O "$BASE/Airbus_A320_200"
+          find "$BASE/Airbus_A320_200" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-04A1-SHA256SUMS.txt
+          git add "$BASE/Airbus_A320_200" assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-04A1-SHA256SUMS.txt
+          git commit -m "Move exact MisterX Airbus A320-200 source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Beechcraft 99A exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/15iyRYYje1Cs89-NY0Z6IfJ_QkgJKXRU3" -O "$BASE/Beechcraft_99A"
+          find "$BASE/Beechcraft_99A" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-04A2-SHA256SUMS.txt
+          git add "$BASE/Beechcraft_99A" assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-04A2-SHA256SUMS.txt
+          git commit -m "Move exact MisterX Beechcraft 99A source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Boeing 737-700 exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1uA3hyvGIv2yCGTj-JAYGmxuP_eUehv7Q" -O "$BASE/Boeing_737_700"
+          find "$BASE/Boeing_737_700" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-04A3-SHA256SUMS.txt
+          git add "$BASE/Boeing_737_700" assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-04A3-SHA256SUMS.txt
+          git commit -m "Move exact MisterX Boeing 737-700 source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Boeing 737-800 exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/17fPrYodGvUH-ESDhPjfH7uFOizYVOxUy" -O "$BASE/Boeing_737_800"
+          find "$BASE/Boeing_737_800" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-04A4-SHA256SUMS.txt
+          git add "$BASE/Boeing_737_800" assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-04A4-SHA256SUMS.txt
+          git commit -m "Move exact MisterX Boeing 737-800 source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Boeing 737-900ER exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1tgXvyVoGpFi9tGEoSjSU3OoM6dmXkBFk" -O "$BASE/Boeing_737_900ER"
+          find "$BASE/Boeing_737_900ER" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-04A5-SHA256SUMS.txt
+          git add "$BASE/Boeing_737_900ER" assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-04A5-SHA256SUMS.txt
+          git commit -m "Move exact MisterX Boeing 737-900ER source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
