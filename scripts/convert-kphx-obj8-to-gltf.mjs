@@ -28,6 +28,8 @@ let sourceNormalScale = null;
 let sourceWeatherTexture = null;
 let globalNoShadow = false;
 let globalSpecular = null;
+let globalAlphaCutoff = null;
+let normalMetalness = false;
 let pointCounts = null;
 const drawState = {
   alphaMode: "OPAQUE",
@@ -177,6 +179,9 @@ const harmless = new Set([
   "ATTR_layer_group",
   "ATTR_shiny_rat",
   "GLOBAL_no_shadow",
+  "GLOBAL_no_blend",
+  "GLOBAL_specular",
+  "NORMAL_METALNESS",
   "SPECULAR",
   "ATTR_no_solid_camera", "ATTR_solid_camera",
 ]);
@@ -314,6 +319,7 @@ const materials = [];
 function materialIndexForState(state) {
   const key = JSON.stringify({
     alphaMode: state.alphaMode,
+    alphaCutoff: state.alphaCutoff ?? globalAlphaCutoff,
     doubleSided: state.doubleSided,
     draped: state.draped,
     layerGroupDraped: state.layerGroupDraped,
@@ -332,6 +338,7 @@ function materialIndexForState(state) {
     },
     doubleSided: state.doubleSided,
     alphaMode: state.alphaMode,
+    ...(state.alphaMode === "MASK" ? { alphaCutoff: state.alphaCutoff ?? globalAlphaCutoff ?? 0.5 } : {}),
     emissiveFactor: state.emissionRgb,
     extras: {
       xPlaneDraped: state.draped === true,
@@ -342,6 +349,8 @@ function materialIndexForState(state) {
       xPlaneLodRange: state.lodRange,
       xPlaneShinyRatio: state.shinyRatio,
       xPlaneGlobalSpecular: globalSpecular,
+      xPlaneGlobalAlphaCutoff: globalAlphaCutoff,
+      xPlaneNormalMetalness: normalMetalness,
     },
   };
   if (litTextureIndex !== null) {
@@ -419,6 +428,8 @@ const gltf = {
     sourceWeatherTexture,
     globalNoShadow,
     globalSpecular,
+    globalAlphaCutoff,
+    normalMetalness,
     pointCounts,
     vertexCount: vertices.length,
     indexCount: indices.length,
@@ -459,6 +470,8 @@ console.log(JSON.stringify({
   weatherUri: weatherImageIndex !== null ? weatherUri : null,
   globalNoShadow,
   globalSpecular,
+  globalAlphaCutoff,
+  normalMetalness,
   geometryPolicy: gltf.extras.geometryPolicy,
   drawStatePolicy: gltf.extras.drawStatePolicy,
   textureCoordinatePolicy: gltf.extras.textureCoordinatePolicy,
