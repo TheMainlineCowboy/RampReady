@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "authority": "CDB-Library supplied by user; export verified from library.txt",
+  "resources": {
+    "CDB-Library/Airport/GSE/others/objects_airConditionerBig.obj": {
+      "physicalPath": "assets/kphx-source/dependencies/CDB-Library/Airport/GSE/others/objects_airConditionerBig.obj",
+      "physicalResource": "Airport/GSE/others/objects_airConditionerBig.obj",
+      "exportLine": "EXPORT CDB-Library/Airport/GSE/others/objects_airConditionerBig.obj Airport/GSE/others/objects_airConditionerBig.obj"
+    }
+  }
+}
