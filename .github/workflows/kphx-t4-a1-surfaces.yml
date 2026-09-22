@@ -1,0 +1,155 @@
+name: KPHX T4 A1 Exact Surface Checkpoint
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-t4-a1-surfaces.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  surfaces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      KPHX_RELEASE_TAG: kphx-source-1.75.1
+      KPHX_WED_SHA256: 59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+          sparse-checkout: |
+            scripts
+            src/environment/kphxFullAirport
+            public/models/kphx-full-airport/surfaces/surface-network.json
+          sparse-checkout-cone-mode: false
+
+      - name: Install exact conversion tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y p7zip-full imagemagick git-lfs
+          git lfs install
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/magick" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ "${1:-}" = "identify" ]; then
+            shift
+            exec identify "$@"
+          fi
+          exec convert "$@"
+          SH
+          chmod +x "$HOME/bin/magick"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Download locked KPHX source
+        id: source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-source .kphx-extracted
+          gh release download "${KPHX_RELEASE_TAG}" --pattern '*.7z' --dir .kphx-source
+          ARCHIVE="$(find .kphx-source -type f -name '*.7z' -print -quit)"
+          test -n "$ARCHIVE"
+          7z t "$ARCHIVE"
+          7z x -y "$ARCHIVE" -o.kphx-extracted >/dev/null
+          WED="$(find .kphx-extracted -type f -name earth.wed.xml -print -quit)"
+          test -n "$WED"
+          printf '%s  %s\n' "${KPHX_WED_SHA256}" "$WED" | sha256sum --check --strict
+          echo "source_root=$(dirname "$WED")" >> "$GITHUB_OUTPUT"
+
+      - name: Clone pinned ZDP 1.2.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch 1.2.0 https://gitlab.com/StableSystem/zdp-library.git .zdp
+          (
+            cd .zdp
+            git lfs pull
+            test "$(git rev-parse HEAD)" = "4b44b673ac023bac67f92a1c991a28df1b1da82c"
+          )
+
+      - name: Filter exact WED surface network around A1
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node scripts/filter-kphx-surface-network-near-a1.mjs             public/models/kphx-full-airport/surfaces/surface-network.json             reports/kphx-t4-a1-surface-network.json             450
+
+      - name: Build exact ZDP request set for T4 A1
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const network=JSON.parse(fs.readFileSync("reports/kphx-t4-a1-surface-network.json","utf8"));
+          const records=[
+            ...(network.polygons||[]),
+            ...(network.drapedOrthophotos||[]),
+            ...(network.lines||[]),
+          ].filter(x=>x.resourcePrefix==="ZDP_Library");
+          const resources=[...new Set(records.map(x=>x.resource))].sort();
+          fs.writeFileSync("reports/kphx-t4-a1-zdp-resources.json",JSON.stringify({
+            authority:"reports/kphx-t4-a1-surface-network.json",
+            dependency:"ZDP_Library",
+            version:"1.2.0",
+            resources
+          },null,2)+"\n");
+          console.log(JSON.stringify({placements:records.length,resources:resources.length,list:resources},null,2));
+          NODE
+
+      - name: Resolve exact ZDP virtual paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/resolve-xplane-library.mjs             .zdp             reports/kphx-t4-a1-zdp-resources.json             reports/kphx-t4-a1-zdp-library-map.json             --virtual-prefix=ZDP_Library
+
+      - name: Materialize exact package plus ZDP T4 A1 surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/materialize-kphx-surface-resources.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport/t4-a1-surfaces             --placement-report=reports/kphx-t4-a1-surface-network.json             --library-map=reports/kphx-t4-a1-zdp-library-map.json             --include-external-prefixes=ZDP_Library
+
+      - name: Verify T4 A1 surface checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const manifest=JSON.parse(fs.readFileSync("public/models/kphx-full-airport/t4-a1-surfaces/manifest.json","utf8"));
+          const network=JSON.parse(fs.readFileSync("public/models/kphx-full-airport/t4-a1-surfaces/surface-network.json","utf8"));
+          if(manifest.failures?.length) throw new Error(`Surface failures: ${manifest.failures.length}`);
+          const selected=[
+            ...(network.polygons||[]).filter(x=>x.sourceClass==="package-owned"||x.resourcePrefix==="ZDP_Library"),
+            ...(network.drapedOrthophotos||[]).filter(x=>x.resourcePrefix==="ZDP_Library"),
+            ...(network.lines||[]).filter(x=>x.sourceClass==="package-owned"||x.resourcePrefix==="ZDP_Library"),
+          ];
+          if(!selected.length) throw new Error("No exact T4/A1 surface placements selected");
+          console.log(JSON.stringify({
+            radiusMeters:network.scope?.radiusMeters,
+            selectedPlacements:selected.length,
+            packageResources:manifest.packageOwnedResourceCount,
+            zdpResources:manifest.resolvedExternalResourceCount,
+            status:"PASS"
+          },null,2));
+          NODE
+
+      - name: Commit T4 A1 surface checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             public/models/kphx-full-airport/t4-a1-surfaces             reports/kphx-t4-a1-surface-network.json             reports/kphx-t4-a1-zdp-resources.json             reports/kphx-t4-a1-zdp-library-map.json
+          git commit -m "Move exact T4 A1 package and ZDP surface checkpoint"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
