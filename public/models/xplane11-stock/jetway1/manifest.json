@@ -1,0 +1,170 @@
+{
+  "authority": "exact-X-Plane-11-stock-jetway-source-from-user-upload",
+  "sourceJetwaysZipSha256": "b64fe7f83e2a286bb52c5b4255953eda46f04b1b5c0d9928faffe4b9371f595f",
+  "sourceTexturesZipSha256": "a1d5d6c1e6066394d68ed09b513b22c85b1260715858c878b2096102d6327aa3",
+  "facade": "jetway_1_solid.fac",
+  "texturePolicy": "DDS decoded to PNG for browser sampling; source ZIP retained unchanged",
+  "geometryPolicy": "OBJ8 source positions/normals/UVs/indices preserved; no remesh or decimation",
+  "files": {
+    "jetway_1_solid.fac": {
+      "bytes": 46307,
+      "sha256": "a98a61b6de28a0db6548f748163494fc24513267dee40322502d5800eff8feb5"
+    },
+    "objects/jw_cabin_1a.bin": {
+      "bytes": 31792,
+      "sha256": "38aed71d248ce5b99502c625376d28908b263d001a5d5031a9fc632f09e52299"
+    },
+    "objects/jw_cabin_1a.gltf": {
+      "bytes": 10114,
+      "sha256": "6e8a6b28b58fed3e82d7fe3a84c21e391dc668df259d1219f245d0742c4bf4ec"
+    },
+    "objects/jw_cabin_1b.bin": {
+      "bytes": 60620,
+      "sha256": "59673cc93d7cb573660eaea7deaa892ffb88825a24bc6079df2fc442d9f3c191"
+    },
+    "objects/jw_cabin_1b.gltf": {
+      "bytes": 10128,
+      "sha256": "b7f79aecaa9a91fcecfbfe434d57c26573aa6f007b35582e26f3302db9cbed8f"
+    },
+    "objects/jw_joint_1a.bin": {
+      "bytes": 1400,
+      "sha256": "9202e18f218e72e7151b797b1b623e749e564f57469a675d4810c6301c9fa72e"
+    },
+    "objects/jw_joint_1a.gltf": {
+      "bytes": 6855,
+      "sha256": "4c367b7d3cdf9ee6b41ed9747f5fa0f9c20147b4b9d8a597344bd977a5910a5e"
+    },
+    "objects/jw_joint_1b.bin": {
+      "bytes": 700,
+      "sha256": "9606aef747b7659d665725bd2bd3d71703812662575f9d43924f7fa323f55b03"
+    },
+    "objects/jw_joint_1b.gltf": {
+      "bytes": 6837,
+      "sha256": "77fa922617e4881e6ef73ee44ce7f73ef745e55b60c8ca2c531e45a71078bc30"
+    },
+    "objects/jw_joint_1c.bin": {
+      "bytes": 1260,
+      "sha256": "0606af783a4914188b79c0cce2d701a8a6f7f9dcd5cf73870d5e93a15e732cf3"
+    },
+    "objects/jw_joint_1c.gltf": {
+      "bytes": 6858,
+      "sha256": "0eec0987e76e9a0821e1c6e9841b810cc62884a0ff3684e0031d9ccbcb93e43f"
+    },
+    "objects/jw_rotunda_1a.bin": {
+      "bytes": 25352,
+      "sha256": "1ed8d7298ceb9f718f88ef67658c026c3cdc182aa583ac9491bea4fe10e188ba"
+    },
+    "objects/jw_rotunda_1a.gltf": {
+      "bytes": 13561,
+      "sha256": "c5b47b3fc3f967220b50c2247ce64fc6217e1a2271fa8c906a91164d2fc7abce"
+    },
+    "objects/jw_rotunda_1b.bin": {
+      "bytes": 9964,
+      "sha256": "7f0ad704419e075bff151533927288ff58a72ec32acb95e8d55b69ae532ccabb"
+    },
+    "objects/jw_rotunda_1b.gltf": {
+      "bytes": 10115,
+      "sha256": "aaceefd17e904e859d432a6159134bd3902be92298152816949d121a7c538907"
+    },
+    "objects/jw_rotunda_1c.bin": {
+      "bytes": 18632,
+      "sha256": "7f620b9f393fbedd18611102d9616fb50f6af7b0c74f6e79e4269fd55ccc1a40"
+    },
+    "objects/jw_rotunda_1c.gltf": {
+      "bytes": 13558,
+      "sha256": "53a4308045bf79a56c2ac8e2b0909cc8e8b166983db54dc984fff11aaae6eb00"
+    },
+    "objects/jw_tunnel_2_11a.bin": {
+      "bytes": 20844,
+      "sha256": "ec1493226448072bd5b9a447b5ebb43612ba8049820c57af0de3f6d9911ecd7d"
+    },
+    "objects/jw_tunnel_2_11a.gltf": {
+      "bytes": 11722,
+      "sha256": "ab4c50a43df48813973ee6c8abbaa6fd77a7ff974cacc79cb7c389e98194aee3"
+    },
+    "objects/jw_tunnel_2_11b.bin": {
+      "bytes": 60192,
+      "sha256": "2c69eddd6c71191aa6da411f7e0bbc2a94970224ce02cd6a314e847fd0f9b6a9"
+    },
+    "objects/jw_tunnel_2_11b.gltf": {
+      "bytes": 10157,
+      "sha256": "7720e1f030bee8162cc3f8a05f62c3e7aea73c18b5c79adff739594d6697251c"
+    },
+    "objects/jw_tunnel_2_13a.bin": {
+      "bytes": 20844,
+      "sha256": "4c47d670670e3c81309beea4baed69e4b8186369ab8791dd17a1566e1e3f4cd3"
+    },
+    "objects/jw_tunnel_2_13a.gltf": {
+      "bytes": 11722,
+      "sha256": "c4dc69721d8d00411c48c201a168dfcc170c7145cea22d73a6a1fa9ab5ff0bc6"
+    },
+    "objects/jw_tunnel_2_13b.bin": {
+      "bytes": 65244,
+      "sha256": "7d2cf00dcc0fba140fe2be43ce986074bab0bfe2dbd197aff8827b02b7766ff1"
+    },
+    "objects/jw_tunnel_2_13b.gltf": {
+      "bytes": 10157,
+      "sha256": "b5090cd126908e117f45df52143c7a3299883cf4fd070a8c526256bfcccb992e"
+    },
+    "objects/jw_tunnel_2_5a.bin": {
+      "bytes": 20284,
+      "sha256": "2e3660cdb3110e6c5989510a09b347f94cfb2e15dbfdb07f11fda53d76de3007"
+    },
+    "objects/jw_tunnel_2_5a.gltf": {
+      "bytes": 11714,
+      "sha256": "9f5f0a7f0ffe58cca6e46640e13ead4b4b1fe0cbff208524bfc5483a48f0ea7a"
+    },
+    "objects/jw_tunnel_2_5b.bin": {
+      "bytes": 48896,
+      "sha256": "b8fcd55f3adde2d65a75c63432eb46e170d7667def81953f3ea4e63aff9c1f6f"
+    },
+    "objects/jw_tunnel_2_5b.gltf": {
+      "bytes": 10149,
+      "sha256": "850d794106bc0d52e7d1f5e8f25359aa61fafa227325ca93cd265e0ad9ef6bda"
+    },
+    "objects/jw_tunnel_2_7a.bin": {
+      "bytes": 20284,
+      "sha256": "376ade469b1549e7884e6b877901a34c297ec4d65f8b0f54783c12d01c2afa95"
+    },
+    "objects/jw_tunnel_2_7a.gltf": {
+      "bytes": 11716,
+      "sha256": "6d71311c20bec7beb774bec024c47ee066e5942ee76515d19da3903f22668caf"
+    },
+    "objects/jw_tunnel_2_7b.bin": {
+      "bytes": 55128,
+      "sha256": "13fbfd6295f9407b0cc18f5655d3bec0bc474d0b7b563e95bdfcb018eb9751a0"
+    },
+    "objects/jw_tunnel_2_7b.gltf": {
+      "bytes": 10151,
+      "sha256": "46d4750a1ab59248e31f176bd0c3a813f5042cbeb42926b56af4a6ad18ab8495"
+    },
+    "objects/jw_tunnel_2_9a.bin": {
+      "bytes": 20564,
+      "sha256": "6aa3950e50f55b99e58212a31b98c7d716874a15ae672c9c9dd9064f73b08263"
+    },
+    "objects/jw_tunnel_2_9a.gltf": {
+      "bytes": 11716,
+      "sha256": "aca06185b20b069d1244b0d10d0c06d81f58256ecf4264b3b7597852733d246e"
+    },
+    "objects/jw_tunnel_2_9b.bin": {
+      "bytes": 58808,
+      "sha256": "1fb4cfc5c4c5ca262da52235d58640f369767e054a1966f21be65f1ea6c71bb5"
+    },
+    "objects/jw_tunnel_2_9b.gltf": {
+      "bytes": 10151,
+      "sha256": "8bc5ea6a7a55ee4d0dfb676c07f66713a5f4549dee1ec650e0fde0c494dcd1c9"
+    },
+    "textures/jetway_1_ALB.png": {
+      "bytes": 718371,
+      "sha256": "94407ad305c9592dc7cbff58ecf8a93b0193f7f898a15fcc3f6511bdc74a8f65"
+    },
+    "textures/jetway_1_LIT.png": {
+      "bytes": 137636,
+      "sha256": "798c1b82e8e3feaa5479ff793dd3ecc8d70292865d76b5e096f6bd26f26ba05d"
+    },
+    "textures/jetway_1_NML.png": {
+      "bytes": 856666,
+      "sha256": "ded40b58230e1c0cbcef8f4e126ee97733f03f02ac52aebce53a1b12ed16e233"
+    }
+  }
+}
