@@ -88,23 +88,28 @@ export default function KphxFullAirportVerifier() {
         (sum, result) => sum + Number(result.layer.userData.loadedPlacementCount || 0),
         0,
       );
-      const objectResources = objectResults.reduce(
+      const sourceResources = objectResults.reduce(
+        (sum, result) => sum + Number(result.manifest.packageOwned?.materializedUniqueResourceCount || 0),
+        0,
+      );
+      const loadedAssetFiles = objectResults.reduce(
         (sum, result) => sum + Number(result.layer.userData.loadedUniqueAssetCount || 0),
         0,
       );
 
       if (objectPlacements !== 655) throw new Error(`Expected 655 native KPHX placements, loaded ${objectPlacements}`);
-      if (objectResources !== 96) throw new Error(`Expected 96 native KPHX resources, loaded ${objectResources}`);
+      if (sourceResources !== 96) throw new Error(`Expected 96 native KPHX source resources, loaded ${sourceResources}`);
       if (surfaces.layer.userData.polygonCount !== 13) throw new Error(`Expected 13 package polygons, loaded ${surfaces.layer.userData.polygonCount}`);
       if (surfaces.layer.userData.lineMeshCount < 35) throw new Error(`Expected at least 35 package line meshes, loaded ${surfaces.layer.userData.lineMeshCount}`);
 
       renderer.domElement.dataset.kphxFullAirportVerifier = "ready";
       renderer.domElement.dataset.kphxPackagePlacements = String(objectPlacements);
-      renderer.domElement.dataset.kphxPackageResources = String(objectResources);
+      renderer.domElement.dataset.kphxPackageResources = String(sourceResources);
+      renderer.domElement.dataset.kphxLoadedAssetFiles = String(loadedAssetFiles);
       renderer.domElement.dataset.kphxPackagePolygons = String(surfaces.layer.userData.polygonCount);
       renderer.domElement.dataset.kphxPackageLineMeshes = String(surfaces.layer.userData.lineMeshCount);
       renderer.domElement.dataset.kphxSourceVersion = "1.75.1";
-      setStatus(`KPHX 1.75.1 native checkpoint ready · ${objectPlacements} placements · ${objectResources} resources`);
+      setStatus(`KPHX 1.75.1 native checkpoint ready · ${objectPlacements} placements · ${sourceResources} source resources · ${loadedAssetFiles} asset files`);
     };
 
     load().catch((error) => {
