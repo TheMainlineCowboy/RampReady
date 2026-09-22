@@ -1,0 +1,1 @@
+de518b2776a6cb1c769d50def036b76d7fefa5a99027f3f8b9697b39e5f1548a  assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles/Fuel_Trucks/Medium/ASIG.dds
