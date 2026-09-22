@@ -1,0 +1,354 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "RampReady exact X-Plane OBJ8 converter v2"
+  },
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ],
+  "buffers": [
+    {
+      "uri": "Hangar1.bin",
+      "byteLength": 31520
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 10632,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 10632,
+      "byteLength": 10632,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 21264,
+      "byteLength": 7088,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 28352,
+      "byteLength": 3168,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 886,
+      "type": "VEC3",
+      "min": [
+        -17.56556511,
+        -0.50000149,
+        -33.63166428
+      ],
+      "max": [
+        37.01286697,
+        12.50000095,
+        11.86613941
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 886,
+      "type": "VEC3",
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "max": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 886,
+      "type": "VEC2",
+      "min": [
+        0.00120801,
+        0.00118763
+      ],
+      "max": [
+        0.99879193,
+        0.99881238
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 1584,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        885
+      ]
+    }
+  ],
+  "images": [
+    {
+      "uri": "Hangar1.png"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    }
+  ],
+  "materials": [
+    {
+      "name": "Hangar1 source material 0",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extras": {
+        "xPlaneDraped": false,
+        "xPlaneLayerGroupDraped": null,
+        "xPlaneLayerGroup": null,
+        "xPlaneLodDraped": null,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": null,
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": null
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Hangar1",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": false,
+              "layerGroupDraped": null,
+              "layerGroup": null,
+              "lodDraped": null,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": null,
+              "shinyRatio": null
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Hangar1",
+      "mesh": 0,
+      "extras": {
+        "xPlaneParameterizedLights": [
+          {
+            "name": "sodium_flood_XYZBTSS",
+            "position": [
+              3.17187285,
+              10.65749264,
+              12.41620064
+            ],
+            "params": [
+              0,
+              -1,
+              0,
+              1,
+              200,
+              0.5,
+              10
+            ],
+            "raw": "LIGHT_PARAM\tsodium_flood_XYZBTSS\t3.17187285\t10.65749264\t12.41620064\t0 -1 0  1  200  0.5  10"
+          }
+        ],
+        "xPlaneVertexLights": [
+          {
+            "position": [
+              0,
+              159.67745972,
+              -0.00000698
+            ],
+            "rgb": [
+              1,
+              1,
+              1
+            ],
+            "raw": "VLIGHT\t0.00000000\t159.67745972\t-0.00000698\t1.00000000\t1.00000000\t1.00000000"
+          }
+        ],
+        "xPlaneNamedLights": [],
+        "xPlaneGlobalNoShadow": false,
+        "xPlaneGlobalSpecular": null
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0,
+  "extras": {
+    "sourceFormat": "X-Plane OBJ8",
+    "sourceFile": "Hangar1.obj",
+    "sourceTexture": "Hangar1.png",
+    "sourceLitTexture": null,
+    "sourceNormalTexture": null,
+    "sourceNormalScale": null,
+    "globalNoShadow": false,
+    "globalSpecular": null,
+    "pointCounts": [
+      886,
+      0,
+      1,
+      1584
+    ],
+    "vertexCount": 886,
+    "indexCount": 1584,
+    "triangleCount": 528,
+    "drawRanges": [
+      {
+        "start": 0,
+        "count": 1584,
+        "state": {
+          "alphaMode": "BLEND",
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": false,
+          "layerGroupDraped": null,
+          "layerGroup": null,
+          "lodDraped": null,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": null,
+          "shinyRatio": null
+        }
+      }
+    ],
+    "parameterizedLightCount": 1,
+    "parameterizedLights": [
+      {
+        "name": "sodium_flood_XYZBTSS",
+        "position": [
+          3.17187285,
+          10.65749264,
+          12.41620064
+        ],
+        "params": [
+          0,
+          -1,
+          0,
+          1,
+          200,
+          0.5,
+          10
+        ],
+        "raw": "LIGHT_PARAM\tsodium_flood_XYZBTSS\t3.17187285\t10.65749264\t12.41620064\t0 -1 0  1  200  0.5  10"
+      }
+    ],
+    "vertexLightCount": 1,
+    "vertexLights": [
+      {
+        "position": [
+          0,
+          159.67745972,
+          -0.00000698
+        ],
+        "rgb": [
+          1,
+          1,
+          1
+        ],
+        "raw": "VLIGHT\t0.00000000\t159.67745972\t-0.00000698\t1.00000000\t1.00000000\t1.00000000"
+      }
+    ],
+    "namedLightCount": 0,
+    "namedLights": [],
+    "sourceBounds": {
+      "min": [
+        -17.56556511,
+        -0.50000149,
+        -33.63166428
+      ],
+      "max": [
+        37.01286697,
+        12.50000095,
+        11.86613941
+      ]
+    },
+    "geometryPolicy": "preserve-source-positions-normals-uvs-indices-no-remesh-no-decimation",
+    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;reject-unsupported-render-state",
+    "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
+  }
+}

@@ -1,0 +1,342 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "RampReady exact X-Plane OBJ8 converter v2"
+  },
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ],
+  "buffers": [
+    {
+      "uri": "Boeing_KC135R.bin",
+      "byteLength": 115244
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 34536,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 34536,
+      "byteLength": 34536,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 69072,
+      "byteLength": 23024,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 92096,
+      "byteLength": 23148,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 2878,
+      "type": "VEC3",
+      "min": [
+        -20.93939209,
+        0.03773652,
+        -20.87900162
+      ],
+      "max": [
+        20.93939209,
+        13.23406696,
+        21.45876122
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 2878,
+      "type": "VEC3",
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "max": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 2878,
+      "type": "VEC2",
+      "min": [
+        0.00563153,
+        0.00793486
+      ],
+      "max": [
+        0.9926967,
+        0.99125373
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 11574,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        2877
+      ]
+    }
+  ],
+  "images": [
+    {
+      "uri": "Boeing_KC135R.png"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    }
+  ],
+  "materials": [
+    {
+      "name": "Boeing_KC135R source material 0",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extras": {
+        "xPlaneDraped": false,
+        "xPlaneLayerGroupDraped": null,
+        "xPlaneLayerGroup": null,
+        "xPlaneLodDraped": null,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": null,
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": null
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Boeing_KC135R",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": false,
+              "layerGroupDraped": null,
+              "layerGroup": null,
+              "lodDraped": null,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": null,
+              "shinyRatio": null
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Boeing_KC135R",
+      "mesh": 0,
+      "extras": {
+        "xPlaneParameterizedLights": [
+          {
+            "name": "airplane_nav_right_size",
+            "position": [
+              20.89999962,
+              5.13809061,
+              6.17664194
+            ],
+            "params": [
+              0.5,
+              1
+            ],
+            "raw": "LIGHT_PARAM\tairplane_nav_right_size\t20.89999962\t5.13809061\t6.17664194\t0.5 1"
+          },
+          {
+            "name": "airplane_nav_left_size",
+            "position": [
+              -20.89999962,
+              5.13809061,
+              6.17664194
+            ],
+            "params": [
+              0.5,
+              1
+            ],
+            "raw": "LIGHT_PARAM\tairplane_nav_left_size\t-20.89999962\t5.13809061\t6.17664194\t0.5 1"
+          }
+        ],
+        "xPlaneVertexLights": [],
+        "xPlaneNamedLights": [],
+        "xPlaneGlobalNoShadow": false,
+        "xPlaneGlobalSpecular": null
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0,
+  "extras": {
+    "sourceFormat": "X-Plane OBJ8",
+    "sourceFile": "Boeing_KC135R.obj",
+    "sourceTexture": "Boeing_KC135R.pxr",
+    "sourceLitTexture": null,
+    "sourceNormalTexture": null,
+    "sourceNormalScale": null,
+    "globalNoShadow": false,
+    "globalSpecular": null,
+    "pointCounts": [
+      2878,
+      0,
+      0,
+      11574
+    ],
+    "vertexCount": 2878,
+    "indexCount": 11574,
+    "triangleCount": 3858,
+    "drawRanges": [
+      {
+        "start": 0,
+        "count": 11574,
+        "state": {
+          "alphaMode": "BLEND",
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": false,
+          "layerGroupDraped": null,
+          "layerGroup": null,
+          "lodDraped": null,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": null,
+          "shinyRatio": null
+        }
+      }
+    ],
+    "parameterizedLightCount": 2,
+    "parameterizedLights": [
+      {
+        "name": "airplane_nav_right_size",
+        "position": [
+          20.89999962,
+          5.13809061,
+          6.17664194
+        ],
+        "params": [
+          0.5,
+          1
+        ],
+        "raw": "LIGHT_PARAM\tairplane_nav_right_size\t20.89999962\t5.13809061\t6.17664194\t0.5 1"
+      },
+      {
+        "name": "airplane_nav_left_size",
+        "position": [
+          -20.89999962,
+          5.13809061,
+          6.17664194
+        ],
+        "params": [
+          0.5,
+          1
+        ],
+        "raw": "LIGHT_PARAM\tairplane_nav_left_size\t-20.89999962\t5.13809061\t6.17664194\t0.5 1"
+      }
+    ],
+    "vertexLightCount": 0,
+    "vertexLights": [],
+    "namedLightCount": 0,
+    "namedLights": [],
+    "sourceBounds": {
+      "min": [
+        -20.93939209,
+        0.03773652,
+        -20.87900162
+      ],
+      "max": [
+        20.93939209,
+        13.23406696,
+        21.45876122
+      ]
+    },
+    "geometryPolicy": "preserve-source-positions-normals-uvs-indices-no-remesh-no-decimation",
+    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;reject-unsupported-render-state",
+    "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
+  }
+}

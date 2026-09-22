@@ -1,0 +1,2450 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "RampReady exact X-Plane OBJ8 converter v2"
+  },
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ],
+  "buffers": [
+    {
+      "uri": "Building2.bin",
+      "byteLength": 505616
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 171768,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 171768,
+      "byteLength": 171768,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 343536,
+      "byteLength": 114512,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 458048,
+      "byteLength": 47568,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 14314,
+      "type": "VEC3",
+      "min": [
+        -19.53841972,
+        -0.00000625,
+        -143.03501892
+      ],
+      "max": [
+        19.53841972,
+        22.21366882,
+        259.73504639
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 14314,
+      "type": "VEC3",
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "max": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 14314,
+      "type": "VEC2",
+      "min": [
+        0.00221375,
+        0.00221475
+      ],
+      "max": [
+        0.99778622,
+        0.99778521
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 23784,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        14313
+      ]
+    }
+  ],
+  "images": [
+    {
+      "uri": "building2.png"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    }
+  ],
+  "materials": [
+    {
+      "name": "Building2 source material 0",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extras": {
+        "xPlaneDraped": false,
+        "xPlaneLayerGroupDraped": null,
+        "xPlaneLayerGroup": null,
+        "xPlaneLodDraped": null,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": null,
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": null
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Building2",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": false,
+              "layerGroupDraped": null,
+              "layerGroup": null,
+              "lodDraped": null,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": null,
+              "shinyRatio": null
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Building2",
+      "mesh": 0,
+      "extras": {
+        "xPlaneParameterizedLights": [],
+        "xPlaneVertexLights": [],
+        "xPlaneNamedLights": [
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44135332
+            ],
+            "name": "253.94230652",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44135332\t253.94230652"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44135284
+            ],
+            "name": "242.75230408",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44135284\t242.75230408"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44135237
+            ],
+            "name": "231.56230164",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44135237\t231.56230164"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44135189
+            ],
+            "name": "220.37229919",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44135189\t220.37229919"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44135141
+            ],
+            "name": "209.18229675",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44135141\t209.18229675"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44135094
+            ],
+            "name": "197.99229431",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44135094\t197.99229431"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44135046
+            ],
+            "name": "186.80229187",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44135046\t186.80229187"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134998
+            ],
+            "name": "175.61228943",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134998\t175.61228943"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134951
+            ],
+            "name": "164.42228699",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134951\t164.42228699"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134903
+            ],
+            "name": "153.23228455",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134903\t153.23228455"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134855
+            ],
+            "name": "142.04228210",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134855\t142.04228210"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134808
+            ],
+            "name": "130.85227966",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134808\t130.85227966"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.4413476
+            ],
+            "name": "119.66227722",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134760\t119.66227722"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134712
+            ],
+            "name": "108.47227478",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134712\t108.47227478"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134665
+            ],
+            "name": "97.28227234",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134665\t97.28227234"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134617
+            ],
+            "name": "86.09226990",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134617\t86.09226990"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134569
+            ],
+            "name": "74.90226746",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134569\t74.90226746"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134521
+            ],
+            "name": "63.71226883",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134521\t63.71226883"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134474
+            ],
+            "name": "52.52227020",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134474\t52.52227020"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134426
+            ],
+            "name": "41.33227158",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134426\t41.33227158"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134378
+            ],
+            "name": "30.14227295",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134378\t30.14227295"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134331
+            ],
+            "name": "18.95227432",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134331\t18.95227432"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134283
+            ],
+            "name": "7.76227427",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134283\t7.76227427"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134235
+            ],
+            "name": "-3.42772508",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134235\t-3.42772508"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134188
+            ],
+            "name": "-14.61772442",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134188\t-14.61772442"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.4413414
+            ],
+            "name": "-25.80772400",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134140\t-25.80772400"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134092
+            ],
+            "name": "-36.99772263",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134092\t-36.99772263"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44134045
+            ],
+            "name": "-48.18772125",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134045\t-48.18772125"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44133997
+            ],
+            "name": "-59.37771988",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133997\t-59.37771988"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44133949
+            ],
+            "name": "-70.56771851",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133949\t-70.56771851"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44133902
+            ],
+            "name": "-81.75772095",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133902\t-81.75772095"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44133806
+            ],
+            "name": "-92.94772339",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133806\t-92.94772339"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44133759
+            ],
+            "name": "-104.13772583",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133759\t-104.13772583"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44133711
+            ],
+            "name": "-115.32772827",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133711\t-115.32772827"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44133663
+            ],
+            "name": "-126.51773071",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133663\t-126.51773071"
+          },
+          {
+            "position": [
+              null,
+              16.82768822,
+              6.44133615
+            ],
+            "name": "-137.70773315",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133615\t-137.70773315"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44135332
+            ],
+            "name": "253.94230652",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44135332\t253.94230652"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44135284
+            ],
+            "name": "242.75230408",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44135284\t242.75230408"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44135237
+            ],
+            "name": "231.56230164",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44135237\t231.56230164"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44135189
+            ],
+            "name": "220.37229919",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44135189\t220.37229919"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44135141
+            ],
+            "name": "209.18229675",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44135141\t209.18229675"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44135094
+            ],
+            "name": "197.99229431",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44135094\t197.99229431"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44135046
+            ],
+            "name": "186.80229187",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44135046\t186.80229187"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134998
+            ],
+            "name": "175.61228943",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134998\t175.61228943"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134951
+            ],
+            "name": "164.42228699",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134951\t164.42228699"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134903
+            ],
+            "name": "153.23228455",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134903\t153.23228455"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134855
+            ],
+            "name": "142.04228210",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134855\t142.04228210"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134808
+            ],
+            "name": "130.85227966",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134808\t130.85227966"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.4413476
+            ],
+            "name": "119.66227722",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134760\t119.66227722"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134712
+            ],
+            "name": "108.47227478",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134712\t108.47227478"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134665
+            ],
+            "name": "97.28227234",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134665\t97.28227234"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134617
+            ],
+            "name": "86.09226990",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134617\t86.09226990"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134569
+            ],
+            "name": "74.90226746",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134569\t74.90226746"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134521
+            ],
+            "name": "63.71226883",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134521\t63.71226883"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134474
+            ],
+            "name": "52.52227020",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134474\t52.52227020"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134426
+            ],
+            "name": "41.33227158",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134426\t41.33227158"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134378
+            ],
+            "name": "30.14227295",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134378\t30.14227295"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134331
+            ],
+            "name": "18.95227432",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134331\t18.95227432"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134283
+            ],
+            "name": "7.76227427",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134283\t7.76227427"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134235
+            ],
+            "name": "-3.42772508",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134235\t-3.42772508"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134188
+            ],
+            "name": "-14.61772442",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134188\t-14.61772442"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.4413414
+            ],
+            "name": "-25.80772400",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134140\t-25.80772400"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134092
+            ],
+            "name": "-36.99772263",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134092\t-36.99772263"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44134045
+            ],
+            "name": "-48.18772125",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134045\t-48.18772125"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44133997
+            ],
+            "name": "-59.37771988",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133997\t-59.37771988"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44133949
+            ],
+            "name": "-70.56771851",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133949\t-70.56771851"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44133902
+            ],
+            "name": "-81.75772095",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133902\t-81.75772095"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44133806
+            ],
+            "name": "-92.94772339",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133806\t-92.94772339"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44133759
+            ],
+            "name": "-104.13772583",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133759\t-104.13772583"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44133711
+            ],
+            "name": "-115.32772827",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133711\t-115.32772827"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44133663
+            ],
+            "name": "-126.51773071",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133663\t-126.51773071"
+          },
+          {
+            "position": [
+              null,
+              -16.82768822,
+              6.44133615
+            ],
+            "name": "-137.70773315",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133615\t-137.70773315"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57149506
+            ],
+            "name": "248.25317383",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57149506\t248.25317383"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57149315
+            ],
+            "name": "225.87316895",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57149315\t225.87316895"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57149315
+            ],
+            "name": "203.49316406",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57149315\t203.49316406"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57149124
+            ],
+            "name": "181.11315918",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57149124\t181.11315918"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57149124
+            ],
+            "name": "158.73315430",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57149124\t158.73315430"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57148933
+            ],
+            "name": "136.35314941",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148933\t136.35314941"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57148933
+            ],
+            "name": "113.97314453",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148933\t113.97314453"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57148743
+            ],
+            "name": "91.59314728",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148743\t91.59314728"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57148743
+            ],
+            "name": "69.21315002",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148743\t69.21315002"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57148552
+            ],
+            "name": "46.83315277",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148552\t46.83315277"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57148552
+            ],
+            "name": "24.45315361",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148552\t24.45315361"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57148361
+            ],
+            "name": "2.07315350",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148361\t2.07315350"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57148361
+            ],
+            "name": "-20.30684471",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148361\t-20.30684471"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.5714817
+            ],
+            "name": "-42.68684387",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148170\t-42.68684387"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.5714817
+            ],
+            "name": "-65.06684113",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148170\t-65.06684113"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.5714798
+            ],
+            "name": "-87.44683838",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57147980\t-87.44683838"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57147789
+            ],
+            "name": "-109.82683563",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57147789\t-109.82683563"
+          },
+          {
+            "position": [
+              null,
+              18.21030807,
+              21.57147789
+            ],
+            "name": "-132.20683289",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57147789\t-132.20683289"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57149506
+            ],
+            "name": "248.25317383",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57149506\t248.25317383"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57149315
+            ],
+            "name": "225.87316895",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57149315\t225.87316895"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57149315
+            ],
+            "name": "203.49316406",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57149315\t203.49316406"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57149124
+            ],
+            "name": "181.11315918",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57149124\t181.11315918"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57149124
+            ],
+            "name": "158.73315430",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57149124\t158.73315430"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57148933
+            ],
+            "name": "136.35314941",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148933\t136.35314941"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57148933
+            ],
+            "name": "113.97314453",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148933\t113.97314453"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57148743
+            ],
+            "name": "91.59314728",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148743\t91.59314728"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57148743
+            ],
+            "name": "69.21315002",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148743\t69.21315002"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57148552
+            ],
+            "name": "46.83315277",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148552\t46.83315277"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57148552
+            ],
+            "name": "24.45315361",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148552\t24.45315361"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57148361
+            ],
+            "name": "2.07315350",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148361\t2.07315350"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57148361
+            ],
+            "name": "-20.30684471",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148361\t-20.30684471"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.5714817
+            ],
+            "name": "-42.68684387",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148170\t-42.68684387"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.5714817
+            ],
+            "name": "-65.06684113",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148170\t-65.06684113"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.5714798
+            ],
+            "name": "-87.44683838",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57147980\t-87.44683838"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57147789
+            ],
+            "name": "-109.82683563",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57147789\t-109.82683563"
+          },
+          {
+            "position": [
+              null,
+              -18.21030807,
+              21.57147789
+            ],
+            "name": "-132.20683289",
+            "params": [],
+            "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57147789\t-132.20683289"
+          }
+        ],
+        "xPlaneGlobalNoShadow": false,
+        "xPlaneGlobalSpecular": null
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0,
+  "extras": {
+    "sourceFormat": "X-Plane OBJ8",
+    "sourceFile": "Building2.obj",
+    "sourceTexture": "building2.png",
+    "sourceLitTexture": null,
+    "sourceNormalTexture": null,
+    "sourceNormalScale": null,
+    "globalNoShadow": false,
+    "globalSpecular": null,
+    "pointCounts": [
+      14314,
+      0,
+      0,
+      23784
+    ],
+    "vertexCount": 14314,
+    "indexCount": 23784,
+    "triangleCount": 7928,
+    "drawRanges": [
+      {
+        "start": 0,
+        "count": 23784,
+        "state": {
+          "alphaMode": "BLEND",
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": false,
+          "layerGroupDraped": null,
+          "layerGroup": null,
+          "lodDraped": null,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": null,
+          "shinyRatio": null
+        }
+      }
+    ],
+    "parameterizedLightCount": 0,
+    "parameterizedLights": [],
+    "vertexLightCount": 0,
+    "vertexLights": [],
+    "namedLightCount": 108,
+    "namedLights": [
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44135332
+        ],
+        "name": "253.94230652",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44135332\t253.94230652"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44135284
+        ],
+        "name": "242.75230408",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44135284\t242.75230408"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44135237
+        ],
+        "name": "231.56230164",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44135237\t231.56230164"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44135189
+        ],
+        "name": "220.37229919",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44135189\t220.37229919"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44135141
+        ],
+        "name": "209.18229675",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44135141\t209.18229675"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44135094
+        ],
+        "name": "197.99229431",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44135094\t197.99229431"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44135046
+        ],
+        "name": "186.80229187",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44135046\t186.80229187"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134998
+        ],
+        "name": "175.61228943",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134998\t175.61228943"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134951
+        ],
+        "name": "164.42228699",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134951\t164.42228699"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134903
+        ],
+        "name": "153.23228455",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134903\t153.23228455"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134855
+        ],
+        "name": "142.04228210",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134855\t142.04228210"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134808
+        ],
+        "name": "130.85227966",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134808\t130.85227966"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.4413476
+        ],
+        "name": "119.66227722",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134760\t119.66227722"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134712
+        ],
+        "name": "108.47227478",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134712\t108.47227478"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134665
+        ],
+        "name": "97.28227234",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134665\t97.28227234"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134617
+        ],
+        "name": "86.09226990",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134617\t86.09226990"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134569
+        ],
+        "name": "74.90226746",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134569\t74.90226746"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134521
+        ],
+        "name": "63.71226883",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134521\t63.71226883"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134474
+        ],
+        "name": "52.52227020",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134474\t52.52227020"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134426
+        ],
+        "name": "41.33227158",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134426\t41.33227158"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134378
+        ],
+        "name": "30.14227295",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134378\t30.14227295"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134331
+        ],
+        "name": "18.95227432",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134331\t18.95227432"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134283
+        ],
+        "name": "7.76227427",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134283\t7.76227427"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134235
+        ],
+        "name": "-3.42772508",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134235\t-3.42772508"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134188
+        ],
+        "name": "-14.61772442",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134188\t-14.61772442"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.4413414
+        ],
+        "name": "-25.80772400",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134140\t-25.80772400"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134092
+        ],
+        "name": "-36.99772263",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134092\t-36.99772263"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44134045
+        ],
+        "name": "-48.18772125",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44134045\t-48.18772125"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44133997
+        ],
+        "name": "-59.37771988",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133997\t-59.37771988"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44133949
+        ],
+        "name": "-70.56771851",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133949\t-70.56771851"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44133902
+        ],
+        "name": "-81.75772095",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133902\t-81.75772095"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44133806
+        ],
+        "name": "-92.94772339",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133806\t-92.94772339"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44133759
+        ],
+        "name": "-104.13772583",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133759\t-104.13772583"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44133711
+        ],
+        "name": "-115.32772827",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133711\t-115.32772827"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44133663
+        ],
+        "name": "-126.51773071",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133663\t-126.51773071"
+      },
+      {
+        "position": [
+          null,
+          16.82768822,
+          6.44133615
+        ],
+        "name": "-137.70773315",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t16.82768822\t6.44133615\t-137.70773315"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44135332
+        ],
+        "name": "253.94230652",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44135332\t253.94230652"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44135284
+        ],
+        "name": "242.75230408",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44135284\t242.75230408"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44135237
+        ],
+        "name": "231.56230164",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44135237\t231.56230164"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44135189
+        ],
+        "name": "220.37229919",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44135189\t220.37229919"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44135141
+        ],
+        "name": "209.18229675",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44135141\t209.18229675"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44135094
+        ],
+        "name": "197.99229431",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44135094\t197.99229431"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44135046
+        ],
+        "name": "186.80229187",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44135046\t186.80229187"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134998
+        ],
+        "name": "175.61228943",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134998\t175.61228943"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134951
+        ],
+        "name": "164.42228699",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134951\t164.42228699"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134903
+        ],
+        "name": "153.23228455",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134903\t153.23228455"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134855
+        ],
+        "name": "142.04228210",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134855\t142.04228210"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134808
+        ],
+        "name": "130.85227966",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134808\t130.85227966"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.4413476
+        ],
+        "name": "119.66227722",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134760\t119.66227722"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134712
+        ],
+        "name": "108.47227478",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134712\t108.47227478"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134665
+        ],
+        "name": "97.28227234",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134665\t97.28227234"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134617
+        ],
+        "name": "86.09226990",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134617\t86.09226990"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134569
+        ],
+        "name": "74.90226746",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134569\t74.90226746"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134521
+        ],
+        "name": "63.71226883",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134521\t63.71226883"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134474
+        ],
+        "name": "52.52227020",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134474\t52.52227020"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134426
+        ],
+        "name": "41.33227158",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134426\t41.33227158"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134378
+        ],
+        "name": "30.14227295",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134378\t30.14227295"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134331
+        ],
+        "name": "18.95227432",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134331\t18.95227432"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134283
+        ],
+        "name": "7.76227427",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134283\t7.76227427"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134235
+        ],
+        "name": "-3.42772508",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134235\t-3.42772508"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134188
+        ],
+        "name": "-14.61772442",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134188\t-14.61772442"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.4413414
+        ],
+        "name": "-25.80772400",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134140\t-25.80772400"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134092
+        ],
+        "name": "-36.99772263",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134092\t-36.99772263"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44134045
+        ],
+        "name": "-48.18772125",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44134045\t-48.18772125"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44133997
+        ],
+        "name": "-59.37771988",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133997\t-59.37771988"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44133949
+        ],
+        "name": "-70.56771851",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133949\t-70.56771851"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44133902
+        ],
+        "name": "-81.75772095",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133902\t-81.75772095"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44133806
+        ],
+        "name": "-92.94772339",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133806\t-92.94772339"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44133759
+        ],
+        "name": "-104.13772583",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133759\t-104.13772583"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44133711
+        ],
+        "name": "-115.32772827",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133711\t-115.32772827"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44133663
+        ],
+        "name": "-126.51773071",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133663\t-126.51773071"
+      },
+      {
+        "position": [
+          null,
+          -16.82768822,
+          6.44133615
+        ],
+        "name": "-137.70773315",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-16.82768822\t6.44133615\t-137.70773315"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57149506
+        ],
+        "name": "248.25317383",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57149506\t248.25317383"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57149315
+        ],
+        "name": "225.87316895",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57149315\t225.87316895"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57149315
+        ],
+        "name": "203.49316406",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57149315\t203.49316406"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57149124
+        ],
+        "name": "181.11315918",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57149124\t181.11315918"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57149124
+        ],
+        "name": "158.73315430",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57149124\t158.73315430"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57148933
+        ],
+        "name": "136.35314941",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148933\t136.35314941"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57148933
+        ],
+        "name": "113.97314453",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148933\t113.97314453"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57148743
+        ],
+        "name": "91.59314728",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148743\t91.59314728"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57148743
+        ],
+        "name": "69.21315002",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148743\t69.21315002"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57148552
+        ],
+        "name": "46.83315277",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148552\t46.83315277"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57148552
+        ],
+        "name": "24.45315361",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148552\t24.45315361"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57148361
+        ],
+        "name": "2.07315350",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148361\t2.07315350"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57148361
+        ],
+        "name": "-20.30684471",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148361\t-20.30684471"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.5714817
+        ],
+        "name": "-42.68684387",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148170\t-42.68684387"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.5714817
+        ],
+        "name": "-65.06684113",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57148170\t-65.06684113"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.5714798
+        ],
+        "name": "-87.44683838",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57147980\t-87.44683838"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57147789
+        ],
+        "name": "-109.82683563",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57147789\t-109.82683563"
+      },
+      {
+        "position": [
+          null,
+          18.21030807,
+          21.57147789
+        ],
+        "name": "-132.20683289",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t18.21030807\t21.57147789\t-132.20683289"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57149506
+        ],
+        "name": "248.25317383",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57149506\t248.25317383"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57149315
+        ],
+        "name": "225.87316895",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57149315\t225.87316895"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57149315
+        ],
+        "name": "203.49316406",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57149315\t203.49316406"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57149124
+        ],
+        "name": "181.11315918",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57149124\t181.11315918"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57149124
+        ],
+        "name": "158.73315430",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57149124\t158.73315430"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57148933
+        ],
+        "name": "136.35314941",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148933\t136.35314941"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57148933
+        ],
+        "name": "113.97314453",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148933\t113.97314453"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57148743
+        ],
+        "name": "91.59314728",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148743\t91.59314728"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57148743
+        ],
+        "name": "69.21315002",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148743\t69.21315002"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57148552
+        ],
+        "name": "46.83315277",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148552\t46.83315277"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57148552
+        ],
+        "name": "24.45315361",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148552\t24.45315361"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57148361
+        ],
+        "name": "2.07315350",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148361\t2.07315350"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57148361
+        ],
+        "name": "-20.30684471",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148361\t-20.30684471"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.5714817
+        ],
+        "name": "-42.68684387",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148170\t-42.68684387"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.5714817
+        ],
+        "name": "-65.06684113",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57148170\t-65.06684113"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.5714798
+        ],
+        "name": "-87.44683838",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57147980\t-87.44683838"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57147789
+        ],
+        "name": "-109.82683563",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57147789\t-109.82683563"
+      },
+      {
+        "position": [
+          null,
+          -18.21030807,
+          21.57147789
+        ],
+        "name": "-132.20683289",
+        "params": [],
+        "raw": "LIGHT_NAMED\tHwy20Deg1_var3\t-18.21030807\t21.57147789\t-132.20683289"
+      }
+    ],
+    "sourceBounds": {
+      "min": [
+        -19.53841972,
+        -0.00000625,
+        -143.03501892
+      ],
+      "max": [
+        19.53841972,
+        22.21366882,
+        259.73504639
+      ]
+    },
+    "geometryPolicy": "preserve-source-positions-normals-uvs-indices-no-remesh-no-decimation",
+    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;reject-unsupported-render-state",
+    "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
+  }
+}
