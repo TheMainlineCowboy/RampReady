@@ -97,3 +97,5 @@ jobs:
           git commit -m "Materialize exact T4 CDB runtime"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
+
+# materialization trigger 2026-09-22
