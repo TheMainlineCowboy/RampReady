@@ -15,7 +15,11 @@ const BATCHES = Object.freeze({
   "B21A-B28": Object.freeze(["B21A","B22","B23A","B24","B25","B27","B28"]),
   "C1-C9": Object.freeze(["C1","C2","C3","C4","C6","C7","C8","C9"]),
   "C11-C19": Object.freeze(["C11","C12","C13","C14","C16","C17","C18","C19"]),
-  "D1-D7": Object.freeze(["D1","D2","D3","D4","D5","D6","D7"]),
+  "D1-D7": Object.freeze([
+    "D1","D2","D3","D4","D5","D6",
+    Object.freeze({ gate: "D7", facadeWedObjectId: 106842 }),
+    Object.freeze({ gate: "D7", facadeWedObjectId: 106853 }),
+  ]),
 });
 
 function resolveBatch() {
@@ -90,6 +94,7 @@ export default function KphxT4JetwayBatchVerifier() {
 
     const load = async () => {
       const { name: batchName, gates } = resolveBatch();
+      const batchLabels = gates.map((entry) => typeof entry === "string" ? entry : entry.gate);
       const loader = new GLTFLoader();
 
       for (const object of SOURCE_KPHX_TERMINAL4_OBJECTS) {
@@ -126,9 +131,18 @@ export default function KphxT4JetwayBatchVerifier() {
       const allPoints = [];
       let totalEdges = 0;
 
-      for (const gate of gates) {
-        const gateMap = map.placements.find((entry) => entry.gate === gate);
-        if (!gateMap) throw new Error(`Missing T4 gate mapping for ${gate}`);
+      for (const gateSelector of gates) {
+        const selector = typeof gateSelector === "string"
+          ? { gate: gateSelector, facadeWedObjectId: null }
+          : gateSelector;
+        const gate = selector.gate;
+        const gateMap = map.placements.find((entry) => (
+          entry.gate === gate
+          && (selector.facadeWedObjectId == null || entry.facadeWedObjectId === selector.facadeWedObjectId)
+        ));
+        if (!gateMap) {
+          throw new Error(`Missing T4 gate mapping for ${gate}${selector.facadeWedObjectId ? ` facade ${selector.facadeWedObjectId}` : ""}`);
+        }
 
         const placement = wed.placements.find((entry) => entry.wedObjectId === gateMap.facadeWedObjectId);
         if (!placement) throw new Error(`Missing WED facade ${gateMap.facadeWedObjectId} for ${gate}`);
@@ -200,13 +214,13 @@ export default function KphxT4JetwayBatchVerifier() {
 
       renderer.domElement.dataset.kphxT4JetwayBatchVerifier = "ready";
       renderer.domElement.dataset.kphxT4JetwayBatchName = batchName;
-      renderer.domElement.dataset.kphxT4JetwayBatchGates = gates.join(",");
+      renderer.domElement.dataset.kphxT4JetwayBatchGates = batchLabels.join(",");
       renderer.domElement.dataset.kphxT4JetwayBatchCount = String(evidence.length);
       renderer.domElement.dataset.kphxT4JetwayBatchTotalEdges = String(totalEdges);
       renderer.domElement.dataset.kphxT4JetwayBatchResource = RESOURCE;
       renderer.domElement.dataset.kphxT4JetwayBatchOldAirportJetwayGlbLoaded = "false";
       renderer.domElement.dataset.kphxT4JetwayBatchEvidence = JSON.stringify(evidence);
-      setStatus(`T4 exact XP11 stock jetways · ${gates.join("–")} · ${totalEdges} authored open edges · no substitute GLB`);
+      setStatus(`T4 exact XP11 stock jetways · ${batchLabels.join("–")} · ${totalEdges} authored open edges · no substitute GLB`);
     };
 
     load().catch((error) => {
