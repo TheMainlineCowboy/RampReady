@@ -213,95 +213,43 @@ export async function loadPlacementMap() {
 }
 
 export async function installSourceKphxWedJetwayFleet(THREE, environment, sourceAirportFrame) {
-  if (!environment?.isGroup || !sourceAirportFrame?.isGroup) throw new Error("Exact KPHX WED jetways require the source airport frame");
-  const [map, prototype] = await Promise.all([loadPlacementMap(), loadExactPrototype(THREE)]);
-  const reach = measurePrototypeReach(THREE, prototype);
-  if (!reach.partOrderValid) throw new Error("Exact supplied jetway source parts are not ordered Rotunda to Cab");
+  if (!environment?.isGroup || !sourceAirportFrame?.isGroup) {
+    throw new Error("Exact KPHX WED jetways require the source airport frame");
+  }
+
+  const map = await loadPlacementMap();
+  const a1Placement = map.placements.find((placement) => placement.gate === "A1");
+  const exactMissingResource = "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac";
 
   const jetwayGroup = new THREE.Group();
-  jetwayGroup.name = "KPHX_T4_WED_ExactJetwayFleet";
-  jetwayGroup.userData.uploadedJetwayLoadState = "loading";
-  const staticFleet = buildStaticInstancedFleet(THREE, prototype, map.placements);
-  jetwayGroup.add(staticFleet.batches);
-
-  const a1Placement = map.placements.find((placement) => placement.gate === "A1");
-  const controller = null;
-
-  jetwayGroup.userData.uploadedJetwayLoadState = "ready";
-  jetwayGroup.userData.uploadedJetwayCount = map.jetwayCount;
-  jetwayGroup.userData.uploadedJetwayVerifiedModelCount = map.jetwayCount;
-  jetwayGroup.userData.uploadedJetwayReadyAuthority = READY_AUTHORITY;
-  jetwayGroup.userData.uploadedJetwayModelAuthority = MODEL_AUTHORITY;
-  jetwayGroup.userData.uploadedJetwayMaterialAuthority = MATERIAL_AUTHORITY;
-  jetwayGroup.userData.uploadedJetwayPerformanceAuthority = PERFORMANCE_AUTHORITY;
+  jetwayGroup.name = "KPHX_T4_WED_Jetways_BlockedUntilExactFacadeAvailable";
+  jetwayGroup.userData.uploadedJetwayLoadState = "blocked-missing-exact-source-dependency";
+  jetwayGroup.userData.uploadedJetwayCount = 0;
+  jetwayGroup.userData.uploadedJetwayVerifiedModelCount = 0;
   jetwayGroup.userData.uploadedJetwayPlacementAuthority = map.authority;
-  jetwayGroup.userData.uploadedJetwayExactGlbSha256 = EXACT_GLB_SHA256;
-  jetwayGroup.userData.uploadedJetwaySourceTriangleCount = prototype.userData.sourceTriangleCount;
-  jetwayGroup.userData.uploadedJetwayMaximumPositionErrorMeters = 0;
-  jetwayGroup.userData.uploadedJetwayMaximumUvError = 0;
-  jetwayGroup.userData.uploadedJetwayStaticInstancedGateCount = staticFleet.staticGateCount;
-  jetwayGroup.userData.uploadedJetwayAnimatedIndividualGateCount = 0;
-  jetwayGroup.userData.uploadedJetwayStaticPrimitiveBatchCount = staticFleet.primitiveBatchCount;
-  jetwayGroup.userData.uploadedJetwayStaticConnectorGateCount = 0;
-  jetwayGroup.userData.uploadedJetwayIndividualConnectorGateCount = 0;
-  jetwayGroup.userData.uploadedJetwayArticulationAuthority = "none-original-zip-internal-pose-preserved";
-  jetwayGroup.userData.uploadedJetwaySourceContactDistanceMeters = reach.sourceContactDistance;
-  jetwayGroup.userData.uploadedJetwayStaticArticulatedGateCount = staticFleet.staticGateCount;
-  jetwayGroup.userData.uploadedJetwayStaticMaximumContactErrorMeters = 0;
-  jetwayGroup.userData.uploadedJetwayStaticMaximumOutwardReachShortfallMeters = 0;
-  jetwayGroup.userData.uploadedJetwayStaticMaximumRetractionMeters = 0;
-  jetwayGroup.userData.uploadedJetwayA1TargetDoorDistanceMeters = a1Placement.aircraftDoorDistance;
-  jetwayGroup.userData.uploadedJetwayA1AttachedExtensionMeters = 0;
-  jetwayGroup.userData.uploadedJetwayA1PredictedDoorGapMeters = null;
-  jetwayGroup.userData.uploadedJetwayA1PredictedContactDistanceMeters = reach.sourceContactDistance;
-  jetwayGroup.userData.uploadedJetwayA1ActualContactDistanceMeters = reach.sourceContactDistance;
-  jetwayGroup.userData.uploadedJetwayA1ActualDoorGapMeters = null;
-  jetwayGroup.userData.uploadedJetwayA1PartOrderValid = reach.partOrderValid === true;
-  jetwayGroup.userData.uploadedJetwayA1PartCentersMeters = JSON.stringify(reach.partCenters || {});
-  jetwayGroup.userData.uploadedJetwayA1RetractionAuthority = NATIVE_RETRACTION_AUTHORITY;
-  jetwayGroup.userData.sourceGeometryMode = MODEL_AUTHORITY;
-  jetwayGroup.userData.visualAuthority = MODEL_AUTHORITY;
-  jetwayGroup.userData.requiresOriginalSourceMesh = true;
-  jetwayGroup.userData.proceduralJetwayStairCount = 0;
-  jetwayGroup.userData.proceduralProjectedUvCount = 0;
+  jetwayGroup.userData.missingExactJetwayResource = exactMissingResource;
+  jetwayGroup.userData.substitutionPolicy = "none";
   jetwayGroup.userData.wedA1FacadeObjectId = a1Placement.facadeWedObjectId;
   jetwayGroup.userData.wedA1FacadeNodeCount = a1Placement.facadeNodeCount;
-  jetwayGroup.userData.wedA1FacadeSpanMeters = a1Placement.bridgeEnd;
   sourceAirportFrame.add(jetwayGroup);
 
   environment.userData.authoredTerminal4Jetways = jetwayGroup;
-  environment.userData.authoredTerminal4A1JetwayController = controller;
-  environment.userData.authoredTerminal4A1JetwayAnimationAuthority = A1_ANIMATION_AUTHORITY;
-  environment.userData.authoredTerminal4UploadedJetwayLoadState = "ready";
-  environment.userData.authoredTerminal4UploadedJetwayCount = map.jetwayCount;
-  environment.userData.authoredTerminal4UploadedJetwayConnectorCount = 0;
-  environment.userData.authoredTerminal4UploadedJetwayVerifiedModelCount = map.jetwayCount;
-  environment.userData.authoredTerminal4UploadedJetwayReadyAuthority = READY_AUTHORITY;
-  environment.userData.authoredTerminal4UploadedJetwayArticulationAuthority = jetwayGroup.userData.uploadedJetwayArticulationAuthority;
-  environment.userData.authoredTerminal4UploadedJetwaySourceContactDistanceMeters = reach.sourceContactDistance;
-  environment.userData.authoredTerminal4UploadedJetwayStaticArticulatedGateCount = staticFleet.staticGateCount;
-  environment.userData.authoredTerminal4UploadedJetwayStaticMaximumContactErrorMeters = 0;
-  environment.userData.authoredTerminal4UploadedJetwayA1TargetDoorDistanceMeters = a1Placement.aircraftDoorDistance;
-  environment.userData.authoredTerminal4UploadedJetwayA1AttachedExtensionMeters = 0;
-  environment.userData.authoredTerminal4UploadedJetwayA1PredictedDoorGapMeters = null;
-  environment.userData.authoredTerminal4UploadedJetwayA1PredictedContactDistanceMeters = reach.sourceContactDistance;
-  environment.userData.authoredTerminal4UploadedJetwayA1ActualContactDistanceMeters = reach.sourceContactDistance;
-  environment.userData.authoredTerminal4UploadedJetwayA1ActualDoorGapMeters = null;
-  environment.userData.authoredTerminal4UploadedJetwayA1PartOrderValid = reach.partOrderValid === true;
-  environment.userData.authoredTerminal4UploadedJetwayA1PartCentersMeters = JSON.stringify(reach.partCenters || {});
-  environment.userData.authoredTerminal4TerminalConnectedJetwayCount = map.jetwayCount;
-  environment.userData.authoredTerminal4A1JetwayWallDistance = a1Placement.bridgeEnd;
-  environment.userData.authoredTerminal4JetwaySourceScaleAuthority = "exact-supplied-glb-unit-scale-no-outward-stretch";
-  environment.userData.authoredTerminal4JetwaySourceGeometryMode = MODEL_AUTHORITY;
-  environment.userData.authoredTerminal4RequiresOriginalJetwayMesh = true;
-  environment.userData.authoredTerminal4JetwayInitialState = "original-zip-pose-at-source-WED-root";
-  environment.userData.authoredTerminal4JetwayRequiredPrePushSequence = "placement-verification-before-animation";
-  environment.userData.authoredTerminal4JetwayDetailLevel = READY_AUTHORITY;
-  environment.userData.authoredTerminal4JetwayTextureAuthority = MATERIAL_AUTHORITY;
-  environment.userData.authoredTerminal4ExactJetwayTextureActive = true;
+  environment.userData.authoredTerminal4A1JetwayController = null;
+  environment.userData.authoredTerminal4UploadedJetwayLoadState = "blocked-missing-exact-source-dependency";
+  environment.userData.authoredTerminal4UploadedJetwayCount = 0;
+  environment.userData.authoredTerminal4UploadedJetwayVerifiedModelCount = 0;
   environment.userData.sourceKphxTerminal4JetwayMap = map;
-  environment.userData.sourceKphxTerminal4JetwayCount = map.jetwayCount;
+  environment.userData.sourceKphxTerminal4JetwayCount = 0;
   environment.userData.sourceKphxA1JetwayFacadeObjectId = a1Placement.facadeWedObjectId;
   environment.userData.sourceKphxA1JetwayFacadeNodeCount = a1Placement.facadeNodeCount;
-  return { group: jetwayGroup, controller, map };
+  environment.userData.sourceKphxMissingExactJetwayResource = exactMissingResource;
+  environment.userData.sourceKphxJetwaySubstitutionPolicy = "none";
+
+  return {
+    group: jetwayGroup,
+    controller: null,
+    map,
+    blocked: true,
+    missingExactResource: exactMissingResource,
+  };
 }
