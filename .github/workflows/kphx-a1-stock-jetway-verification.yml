@@ -43,8 +43,8 @@ jobs:
           set -euo pipefail
           python -m pip install --quiet gdown pillow
           mkdir -p /tmp/xp11-jetways /tmp/xp11-textures /tmp/runtime-textures
-          gdown --id 1uxoZcKcZpQUpoUSMl6c2jdGM9sOC-zEA -O /tmp/XP11_Jetways.zip
-          gdown --id 1ouKCCP82gySCF3murkHfV-H3bgybKamZ -O /tmp/textures.zip
+          gdown 1uxoZcKcZpQUpoUSMl6c2jdGM9sOC-zEA -O /tmp/XP11_Jetways.zip
+          gdown 1ouKCCP82gySCF3murkHfV-H3bgybKamZ -O /tmp/textures.zip
           echo "b64fe7f83e2a286bb52c5b4255953eda46f04b1b5c0d9928faffe4b9371f595f  /tmp/XP11_Jetways.zip" | sha256sum --check --strict
           echo "e6419a2b1a7b0be4f8ee8f572d588b2d8331c085873f87c31d6348e7b8fbefdd  /tmp/textures.zip" | sha256sum --check --strict
           unzip -q /tmp/XP11_Jetways.zip -d /tmp/xp11-jetways
