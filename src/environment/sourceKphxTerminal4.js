@@ -1,4 +1,5 @@
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { applyExactXp11Obj8MaskCompatibility } from "./kphxFullAirport/obj8RenderCompatibility.js";
 
 const EARTH_RADIUS_METERS = 6378137;
 
@@ -25,6 +26,7 @@ export const SOURCE_KPHX_TERMINAL4_OBJECTS = Object.freeze([
     sourceSha256: "acbefef71c59942eb8e336996b9f2b9c8e8a87c6ec5cc64046292e5332ce48bc",
     runtimeBytes: 19728400,
     runtimeSha256: "1380cb6b1f33a3beca14a44ca4f17ef765bcf718c099769d6a723f0dbc10ab43",
+    sourceObj8Render: Object.freeze({ winding: "clockwise", cull: "ATTR_cull", blend: "ATTR_no_blend", alphaCutoff: 0.5 }),
   }),
   Object.freeze({
     name: "KPHX_Terminal4_South_Exact",
@@ -39,6 +41,7 @@ export const SOURCE_KPHX_TERMINAL4_OBJECTS = Object.freeze([
     sourceSha256: "e93807a1239377e1223eb325c2b7048e6c84f968d9c790fd0cd6cc5da050cd80",
     runtimeBytes: 19786104,
     runtimeSha256: "1899c3d3258922868f835b62dbd1b85713871017d52d34167d80c136f8b6d8b2",
+    sourceObj8Render: Object.freeze({ winding: "clockwise", cull: "ATTR_cull", blend: "ATTR_no_blend", alphaCutoff: 0.5 }),
   }),
 ]);
 
@@ -187,6 +190,13 @@ function hideLegacyCalibrationTerminal(environment) {
 }
 
 function configureExactModel(THREE, scene, object) {
+  if (object.sourceObj8Render) {
+    applyExactXp11Obj8MaskCompatibility(THREE, scene, {
+      label: object.resource,
+      alphaCutoff: object.sourceObj8Render.alphaCutoff,
+      windingAlreadyConverted: false,
+    });
+  }
   const placement = sourceLocalFromWED(object.latitude, object.longitude);
   scene.name = object.name;
   scene.position.set(placement.x, 0, placement.z);
