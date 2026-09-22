@@ -1,0 +1,99 @@
+name: KPHX T4 CDB Exact Materialization
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-t4-cdb-materialize.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-t4-cdb-materialize
+  cancel-in-progress: true
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install exact conversion tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/magick" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ "${1:-}" = "identify" ]; then
+            shift
+            exec identify "$@"
+          fi
+          exec convert "$@"
+          SH
+          chmod +x "$HOME/bin/magick"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Materialize exact T4 CDB object
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .kphx-t4-cdb-runtime
+          node scripts/materialize-kphx-full-airport.mjs             .             .kphx-t4-cdb-runtime             --placement-report=reports/kphx-t4-cdb-wed-placements.json             --library-map=reports/kphx-t4-cdb-library-map.json             --include-external-prefixes=CDB-Library             --batch-name=t4-cdb
+
+      - name: Verify CDB source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const manifest = JSON.parse(fs.readFileSync(".kphx-t4-cdb-runtime/manifest.json", "utf8"));
+          if (manifest.failures?.length) throw new Error(`CDB materialization failures: ${manifest.failures.length}`);
+          if (manifest.resolvedExternal.materializedPlacementCount !== 23) {
+            throw new Error(`Expected 23 CDB placements, got ${manifest.resolvedExternal.materializedPlacementCount}`);
+          }
+          if (manifest.resolvedExternal.expectedUniqueResourceCount !== 1
+              || manifest.resolvedExternal.materializedUniqueResourceCount !== 1) {
+            throw new Error("Expected exactly one resolved CDB resource");
+          }
+          const resource = "CDB-Library/Airport/GSE/others/objects_airConditionerBig.obj";
+          const record = manifest.packageOwned.resources?.[resource];
+          if (!record) throw new Error("CDB resource record missing");
+          if (!record.assetUrl?.startsWith("/models/kphx-full-airport/external/")) {
+            throw new Error(`Unexpected CDB asset URL: ${record.assetUrl}`);
+          }
+          console.log("KPHX T4 CDB exact materialization contract passed.");
+          NODE
+
+      - name: Install CDB runtime batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/models/kphx-full-airport/external public/models/kphx-full-airport/batches
+          cp -a .kphx-t4-cdb-runtime/external/. public/models/kphx-full-airport/external/
+          cp .kphx-t4-cdb-runtime/manifest.json public/models/kphx-full-airport/batches/t4-cdb.manifest.json
+
+      - name: Commit exact CDB runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             public/models/kphx-full-airport/external/CDB-Library             public/models/kphx-full-airport/batches/t4-cdb.manifest.json             reports/kphx-full-airport-materialization-t4-cdb.json
+          if git diff --cached --quiet; then
+            echo "Exact T4 CDB runtime already current."
+            exit 0
+          fi
+          git commit -m "Materialize exact T4 CDB runtime"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
