@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: kphx-t4-a1-zdp-fast
+  cancel-in-progress: true
+
 jobs:
   surfaces:
     runs-on: ubuntu-latest
