@@ -113,14 +113,16 @@ for (const requestedResourceRaw of requested) {
   const requestedResource = normalize(requestedResourceRaw);
   if (virtualPrefix && !requestedResource.startsWith(`${virtualPrefix}/`)) continue;
 
-  const candidates = (mappings.get(requestedResource) || [])
-    .filter((entry) => entry.region === null || entry.region === "default")
+  const allCandidates = (mappings.get(requestedResource) || [])
     .sort((a, b) => priority(a.command) - priority(b.command));
 
-  if (!candidates.length) {
-    unresolved.push({ resource: requestedResource, reason: "no default/unscoped library export" });
+  if (!allCandidates.length) {
+    unresolved.push({ resource: requestedResource, reason: "no library export" });
     continue;
   }
+
+  const preferredCandidates = allCandidates.filter((entry) => entry.region === null || entry.region === "default");
+  const candidates = preferredCandidates.length ? preferredCandidates : allCandidates;
 
   const existing = [];
   for (const candidate of candidates) {
@@ -132,7 +134,11 @@ for (const requestedResourceRaw of requested) {
     unresolved.push({
       resource: requestedResource,
       reason: "library export exists but physical resource is missing",
-      candidates,
+      candidates: candidates.map((entry) => ({
+        command: entry.command,
+        region: entry.region,
+        physicalResource: entry.physicalResource,
+      })),
     });
     continue;
   }
@@ -144,6 +150,9 @@ for (const requestedResourceRaw of requested) {
   if (uniquePhysical.length > 1) {
     ambiguous.push({
       resource: requestedResource,
+      reason: preferredCandidates.length
+        ? "multiple exact default/unscoped physical resources"
+        : "multiple exact region-scoped physical resources; geographic selection required",
       candidates: best.map((entry) => ({
         command: entry.command,
         region: entry.region,
