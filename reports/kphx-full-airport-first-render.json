@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-09-22T02:47:14.209Z",
+  "capturedAtUtc": "2026-09-22T02:48:22.869Z",
   "navigationError": null,
   "waitError": null,
   "state": {
@@ -28,7 +28,7 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A070200064280000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A07020008C370000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "error",
@@ -40,19 +40,19 @@
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x172c006fc600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0xd6400f3e300]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x172c006fc600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0xd6400f3e300]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x172c006fc600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0xd6400f3e300]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x172c006fc600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      "text": "[.WebGL-0xd6400f3e300]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
     }
   ],
   "pageErrors": [],
