@@ -1,0 +1,75 @@
+name: RampReady Swissport Fuelers Exact Files
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/rampready-swissport-fuelers.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rampready-swissport-fuelers
+  cancel-in-progress: false
+
+jobs:
+  move-files:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install Drive downloader
+        run: python -m pip install --disable-pip-version-check gdown==5.2.0
+
+      - name: Configure checkpoint commits
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Swissport medium texture
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIR="assets/rampready-phx-operations/MisterX_Library_2.0c/Airport/Vehicles/Fuel_Trucks/Medium"
+          mkdir -p "$DIR"
+          gdown "https://drive.google.com/uc?id=1BpOcV7M-RglF-QJaPCPQWG2m423_uMVH" -O "$DIR/Swissport.dds"
+          sha256sum "$DIR/Swissport.dds" > "$DIR/Swissport.dds.sha256"
+          git add "$DIR/Swissport.dds" "$DIR/Swissport.dds.sha256"
+          git commit -m "Add exact PHX Swissport fueler texture"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Swissport medium static object
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          DIR="assets/rampready-phx-operations/MisterX_Library_2.0c/Airport/Vehicles/Fuel_Trucks/Medium"
+          gdown "https://drive.google.com/uc?id=1aeQOvLfINfsLERyfVNOVNT_P16tRQ1ci" -O "$DIR/Swissport.obj"
+          sha256sum "$DIR/Swissport.obj" > "$DIR/Swissport.obj.sha256"
+          git add "$DIR/Swissport.obj" "$DIR/Swissport.obj.sha256"
+          git commit -m "Add exact PHX Swissport fueler object"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Swissport medium active object
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          DIR="assets/rampready-phx-operations/MisterX_Library_2.0c/Airport/Vehicles/Fuel_Trucks/Medium/Active"
+          mkdir -p "$DIR"
+          gdown "https://drive.google.com/uc?id=1_EbopMMivrEY5glnmLRaD-YvPNfkltCo" -O "$DIR/Swissport.obj"
+          sha256sum "$DIR/Swissport.obj" > "$DIR/Swissport.obj.sha256"
+          git add "$DIR/Swissport.obj" "$DIR/Swissport.obj.sha256"
+          git commit -m "Add exact active PHX Swissport fueler object"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
