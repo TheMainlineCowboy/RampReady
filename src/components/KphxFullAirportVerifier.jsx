@@ -1,0 +1,152 @@
+import React, { useEffect, useRef, useState } from "react";
+import * as THREE from "three";
+import { installKphxPackageOwnedObjectLayer } from "../environment/kphxFullAirport/installPackageOwnedObjectLayer.js";
+import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
+
+const OBJECT_MANIFESTS = Object.freeze([
+  "/models/kphx-full-airport/batches/structures.manifest.json",
+  "/models/kphx-full-airport/batches/gate-numbers.manifest.json",
+  "/models/kphx-full-airport/batches/airfield-details.manifest.json",
+  "/models/kphx-full-airport/batches/service-cargo-downtown.manifest.json",
+]);
+
+export default function KphxFullAirportVerifier() {
+  const mountRef = useRef(null);
+  const [status, setStatus] = useState("Loading exact KPHX 1.75.1…");
+
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount) return undefined;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xa9c9e7);
+    scene.fog = new THREE.Fog(0xa9c9e7, 1800, 6200);
+
+    const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 9000);
+    camera.position.set(220, 145, 250);
+    camera.lookAt(0, 12, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.domElement.className = "kphxFullAirportVerifierCanvas";
+    renderer.domElement.dataset.kphxFullAirportVerifier = "loading";
+    mount.appendChild(renderer.domElement);
+
+    const environment = new THREE.Group();
+    environment.name = "KPHX_FULL_AIRPORT_VERIFIER";
+    scene.add(environment);
+
+    scene.add(new THREE.HemisphereLight(0xf0f6ff, 0x6e685f, 2.0));
+    const sun = new THREE.DirectionalLight(0xffffff, 3.0);
+    sun.position.set(500, 700, 250);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left = -1800;
+    sun.shadow.camera.right = 1800;
+    sun.shadow.camera.top = 1800;
+    sun.shadow.camera.bottom = -1800;
+    scene.add(sun);
+
+    let frame = 0;
+    let disposed = false;
+    const resize = () => {
+      if (disposed) return;
+      const width = Math.max(1, mount.clientWidth);
+      const height = Math.max(1, mount.clientHeight);
+      renderer.setSize(width, height, false);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const render = () => {
+      if (disposed) return;
+      renderer.render(scene, camera);
+      frame = requestAnimationFrame(render);
+    };
+    render();
+
+    const load = async () => {
+      const objectResults = [];
+      for (const manifestUrl of OBJECT_MANIFESTS) {
+        objectResults.push(await installKphxPackageOwnedObjectLayer(THREE, environment, {
+          manifestUrl,
+          strict: true,
+          assetConcurrency: 8,
+        }));
+      }
+
+      const surfaces = await installKphxPackageOwnedSurfaceLayer(THREE, environment, {
+        strict: true,
+      });
+
+      const objectPlacements = objectResults.reduce(
+        (sum, result) => sum + Number(result.layer.userData.loadedPlacementCount || 0),
+        0,
+      );
+      const objectResources = objectResults.reduce(
+        (sum, result) => sum + Number(result.layer.userData.loadedUniqueAssetCount || 0),
+        0,
+      );
+
+      if (objectPlacements !== 655) throw new Error(`Expected 655 native KPHX placements, loaded ${objectPlacements}`);
+      if (objectResources !== 96) throw new Error(`Expected 96 native KPHX resources, loaded ${objectResources}`);
+      if (surfaces.layer.userData.polygonCount !== 13) throw new Error(`Expected 13 package polygons, loaded ${surfaces.layer.userData.polygonCount}`);
+      if (surfaces.layer.userData.lineMeshCount < 35) throw new Error(`Expected at least 35 package line meshes, loaded ${surfaces.layer.userData.lineMeshCount}`);
+
+      renderer.domElement.dataset.kphxFullAirportVerifier = "ready";
+      renderer.domElement.dataset.kphxPackagePlacements = String(objectPlacements);
+      renderer.domElement.dataset.kphxPackageResources = String(objectResources);
+      renderer.domElement.dataset.kphxPackagePolygons = String(surfaces.layer.userData.polygonCount);
+      renderer.domElement.dataset.kphxPackageLineMeshes = String(surfaces.layer.userData.lineMeshCount);
+      renderer.domElement.dataset.kphxSourceVersion = "1.75.1";
+      setStatus(`KPHX 1.75.1 native checkpoint ready · ${objectPlacements} placements · ${objectResources} resources`);
+    };
+
+    load().catch((error) => {
+      renderer.domElement.dataset.kphxFullAirportVerifier = "error";
+      renderer.domElement.dataset.kphxFullAirportVerifierError = error instanceof Error ? error.message : String(error);
+      setStatus(`KPHX verifier failed: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("KPHX full-airport verifier failed", error);
+    });
+
+    return () => {
+      disposed = true;
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", resize);
+      environment.traverse((node) => {
+        node.geometry?.dispose?.();
+        const materials = node.material ? (Array.isArray(node.material) ? node.material : [node.material]) : [];
+        for (const material of materials) material?.dispose?.();
+      });
+      renderer.dispose();
+      if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
+    };
+  }, []);
+
+  return (
+    <main style={{ position: "fixed", inset: 0, background: "#111", overflow: "hidden" }}>
+      <div ref={mountRef} style={{ position: "absolute", inset: 0 }} />
+      <div
+        style={{
+          position: "absolute",
+          left: 16,
+          top: 16,
+          padding: "10px 12px",
+          borderRadius: 8,
+          background: "rgba(0,0,0,.72)",
+          color: "white",
+          font: "600 13px/1.35 system-ui, sans-serif",
+          pointerEvents: "none",
+          maxWidth: "min(92vw, 620px)",
+        }}
+      >
+        {status}
+      </div>
+    </main>
+  );
+}
