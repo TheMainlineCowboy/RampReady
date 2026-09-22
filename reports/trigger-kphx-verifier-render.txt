@@ -1,2 +1,3 @@
 Trigger first exact KPHX 1.75.1 package verification render after native surfaces passed.
 Diagnostic rerun after readiness-state capture fix.
+Rerun after packed GateNumbers resource accounting fix.
