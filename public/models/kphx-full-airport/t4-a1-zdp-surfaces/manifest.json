@@ -67,7 +67,7 @@
       "decalLib": null,
       "unsupported": [],
       "sourceSha256": "f028bc3721cb6f0bf7e8a84654c4292eb865e3f2999c8556f316855ced2531bb",
-      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/ground_textures/asphalt/grooved/overlays/Darkest",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-a1-zdp-surfaces/resources/ZDP_Library/ground_textures/asphalt/grooved/overlays/Darkest",
       "lit": null,
       "normal": {
         "requested": "../../Asphalt_Grooved_NRM.png",
@@ -127,7 +127,7 @@
       "decalLib": "../decals/DECAL_dirty2.dcl",
       "unsupported": [],
       "sourceSha256": "14b249e6e1478a70a48c524375dc9b1d3c433405a1ee81dd6e94531f327ff5fc",
-      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/ground_textures/asphalt/smooth1/smooth1_worn_dirty",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-a1-zdp-surfaces/resources/ZDP_Library/ground_textures/asphalt/smooth1/smooth1_worn_dirty",
       "lit": null,
       "normal": {
         "requested": "../Smooth1_rough_NRM.png",
@@ -262,7 +262,7 @@
       "decalLib": null,
       "unsupported": [],
       "sourceSha256": "11cd06c43719fa8994acb5c7b5b6a8f77c81940de30f7b38433c4bcdd89772f7",
-      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-a1-zdp-surfaces/resources/ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform",
       "lit": null,
       "normal": {
         "requested": "../Rough_High_NRM.png",
@@ -322,7 +322,7 @@
       "decalLib": null,
       "unsupported": [],
       "sourceSha256": "11cd06c43719fa8994acb5c7b5b6a8f77c81940de30f7b38433c4bcdd89772f7",
-      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/ground_textures/concrete/flat/new_uniform",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-a1-zdp-surfaces/resources/ZDP_Library/ground_textures/concrete/flat/new_uniform",
       "lit": null,
       "normal": {
         "requested": "../Rough_High_NRM.png",
@@ -382,7 +382,7 @@
       "decalLib": null,
       "unsupported": [],
       "sourceSha256": "e16a09f7e792c4314295cc58ea928f22aa5773eb11754b3a27809c2a6e4d1611",
-      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/ground_textures/concrete/flat/overlays/dark",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-a1-zdp-surfaces/resources/ZDP_Library/ground_textures/concrete/flat/overlays/dark",
       "lit": null,
       "normal": {
         "requested": "../../Rough_High_NRM.png",
@@ -442,7 +442,7 @@
       "decalLib": null,
       "unsupported": [],
       "sourceSha256": "3d10fde08e877611875caf719cc7b10765ae7e142fe6271205ff9f9a1752cf43",
-      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/ground_textures/concrete/flat/overlays/yellow_dark",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-a1-zdp-surfaces/resources/ZDP_Library/ground_textures/concrete/flat/overlays/yellow_dark",
       "lit": null,
       "normal": {
         "requested": "../../Rough_High_NRM.png",
@@ -510,7 +510,7 @@
       ],
       "unsupported": [],
       "sourceSha256": "663f505ae2e062b1b3bb181134993983d414ba43fbb69bb91d8ac1676ff34c3e",
-      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/markings/lines/worn/blue_border",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-a1-zdp-surfaces/resources/ZDP_Library/markings/lines/worn/blue_border",
       "lit": null,
       "normal": {
         "requested": "../../paint/textures/paint_clean_NML.png",
@@ -578,7 +578,7 @@
       ],
       "unsupported": [],
       "sourceSha256": "32854cf888050a5324b9b245cacd0bbd5cdb562188d9411dc858188426c4d71d",
-      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/markings/lines/worn/centerline",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-a1-zdp-surfaces/resources/ZDP_Library/markings/lines/worn/centerline",
       "lit": null,
       "normal": {
         "requested": "../../paint/textures/paint_clean_NML.png",
@@ -646,7 +646,7 @@
       ],
       "unsupported": [],
       "sourceSha256": "f4e038005e7a05e57b852bf91d301ad47718c946ce7d3fa1d2c614dd1a4c18e6",
-      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/markings/lines/worn/dashed_black_yellow",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-a1-zdp-surfaces/resources/ZDP_Library/markings/lines/worn/dashed_black_yellow",
       "lit": null,
       "normal": {
         "requested": "../../paint/textures/paint_clean_NML.png",
@@ -714,7 +714,7 @@
       ],
       "unsupported": [],
       "sourceSha256": "cc0b57e4646e29aa73a8337e96455ebd3a019efcad4d782328a1e003423c0bbe",
-      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/markings/lines/worn/intermediate_hold",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-a1-zdp-surfaces/resources/ZDP_Library/markings/lines/worn/intermediate_hold",
       "lit": null,
       "normal": {
         "requested": "../../paint/textures/paint_clean_NML.png",
@@ -782,7 +782,7 @@
       ],
       "unsupported": [],
       "sourceSha256": "e2ac5f2bfc09b7b53f40a7d9d66ea822dc56c18f1ea2231fe9d970a7c6dada77",
-      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/markings/lines/worn/white",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-a1-zdp-surfaces/resources/ZDP_Library/markings/lines/worn/white",
       "lit": null,
       "normal": {
         "requested": "../../paint/textures/paint_clean_NML.png",
@@ -850,7 +850,7 @@
       ],
       "unsupported": [],
       "sourceSha256": "2afc50b9b190de6fc62a28c76387ac20970dc4f8dcd40a4860aae6e4c5821b36",
-      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/markings/lines/worn/white_centerline_road",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-a1-zdp-surfaces/resources/ZDP_Library/markings/lines/worn/white_centerline_road",
       "lit": null,
       "normal": {
         "requested": "../../paint/textures/paint_clean_NML.png",
