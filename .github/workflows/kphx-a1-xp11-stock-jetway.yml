@@ -1,0 +1,194 @@
+name: KPHX A1 Exact XP11 Stock Jetway
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-a1-xp11-stock-jetway.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-a1-xp11-stock-jetway
+  cancel-in-progress: true
+
+jobs:
+  materialize-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            package.json
+            package-lock.json
+            index.html
+            vite.config.js
+            src
+            scripts/convert-kphx-obj8-to-gltf.mjs
+            source/xplane11-stock/jetways
+            public/models/kphx/Terminal4.exact.glb
+            public/models/kphx/Terminal4b.exact.glb
+            public/models/kphx/wed-jetways.exact.json
+          sparse-checkout-cone-mode: false
+
+      - name: Verify exact source ZIPs
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "b64fe7f83e2a286bb52c5b4255953eda46f04b1b5c0d9928faffe4b9371f595f  source/xplane11-stock/jetways/XP11_Jetways.zip" | sha256sum --check --strict
+          echo "a1d5d6c1e6066394d68ed09b513b22c85b1260715858c878b2096102d6327aa3  source/xplane11-stock/jetways/XP11_Jetway_Textures.zip" | sha256sum --check --strict
+
+      - name: Materialize exact XP11 jetway source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/xp11-jw /tmp/xp11-jwtex public/models/xplane11-stock/jetway1
+          mkdir -p /tmp/xp11-jw /tmp/xp11-jwtex
+          unzip -q source/xplane11-stock/jetways/XP11_Jetways.zip -d /tmp/xp11-jw
+          unzip -q source/xplane11-stock/jetways/XP11_Jetway_Textures.zip -d /tmp/xp11-jwtex
+
+          OUT=public/models/xplane11-stock/jetway1
+          mkdir -p "$OUT/objects" "$OUT/textures"
+          cp /tmp/xp11-jw/jetways/jetway_1_solid.fac "$OUT/jetway_1_solid.fac"
+          cp /tmp/xp11-jwtex/jetway_1_NML.png "$OUT/textures/jetway_1_NML.png"
+
+          python -m pip install --quiet pillow
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          src=Path("/tmp/xp11-jwtex")
+          dst=Path("public/models/xplane11-stock/jetway1/textures")
+          for name in ["jetway_1_ALB","jetway_1_LIT"]:
+              Image.open(src/f"{name}.dds").save(dst/f"{name}.png")
+          PY
+
+          while read -r obj; do
+            stem="${obj%.obj}"
+            node scripts/convert-kphx-obj8-to-gltf.mjs               "/tmp/xp11-jw/jetways/$obj" "$OUT/objects"               "--name=$stem"               "--diffuse=../textures/jetway_1_ALB.png"               "--lit=../textures/jetway_1_LIT.png"               "--normal=../textures/jetway_1_NML.png"
+          done < <(awk '$1=="OBJ"{print $2}' "$OUT/jetway_1_solid.fac")
+
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          base=Path("public/models/xplane11-stock/jetway1")
+          files={}
+          for p in sorted(base.rglob("*")):
+              if p.is_file():
+                  files[str(p.relative_to(base))]={"bytes":p.stat().st_size,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()}
+          manifest={
+              "authority":"exact-X-Plane-11-stock-jetway-source-from-user-upload",
+              "sourceJetwaysZipSha256":"b64fe7f83e2a286bb52c5b4255953eda46f04b1b5c0d9928faffe4b9371f595f",
+              "sourceTexturesZipSha256":"a1d5d6c1e6066394d68ed09b513b22c85b1260715858c878b2096102d6327aa3",
+              "facade":"jetway_1_solid.fac",
+              "texturePolicy":"DDS decoded to PNG for browser sampling; source ZIP retained unchanged",
+              "geometryPolicy":"OBJ8 source positions/normals/UVs/indices preserved; no remesh or decimation",
+              "files":files,
+          }
+          (base/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
+          PY
+
+      - name: Install browser verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npx vite --host 127.0.0.1 --port 4173 >/tmp/a1-xp11-vite.log 2>&1 &
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/a1-xp11-vite.log
+          exit 1
+
+      - name: Capture exact A1 XP11 jetway evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1600,height:1000}});
+          const errors=[],failed=[],httpErrors=[];
+          page.on("console",m=>{if(m.type()==="error")errors.push(m.text())});
+          page.on("pageerror",e=>errors.push(String(e)));
+          page.on("requestfailed",r=>failed.push({url:r.url(),error:r.failure()?.errorText||"unknown"}));
+          page.on("response",r=>{if(r.status()>=400)httpErrors.push({url:r.url(),status:r.status()})});
+          let waitError=null;
+          await page.goto("http://127.0.0.1:4173/RampReady/?kphxA1Jetway=1",{waitUntil:"domcontentloaded",timeout:60000});
+          try {
+            await page.waitForFunction(()=>{
+              const c=document.querySelector("canvas.kphxA1JetwayVerifierCanvas");
+              return ["ready","error"].includes(c?.dataset?.kphxA1JetwayVerifier);
+            },null,{timeout:120000});
+          } catch(e){ waitError=String(e); }
+          const evidence=await page.evaluate(()=>{
+            const c=document.querySelector("canvas.kphxA1JetwayVerifierCanvas");
+            return c?{dataset:{...c.dataset}}:{dataset:{}};
+          });
+          await page.screenshot({path:"reports/kphx-a1-xp11-stock-jetway.png",fullPage:true});
+          fs.writeFileSync("reports/kphx-a1-xp11-stock-jetway.json",JSON.stringify({evidence,errors,failed,httpErrors,waitError},null,2)+"\n");
+          await browser.close();
+          NODE
+
+      - name: Enforce exact A1 source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const r=JSON.parse(fs.readFileSync("reports/kphx-a1-xp11-stock-jetway.json","utf8"));
+          const d=r.evidence?.dataset||{};
+          const f=[];
+          if(d.kphxA1JetwayVerifier!=="ready")f.push(d.kphxA1JetwayError||`state=${d.kphxA1JetwayVerifier}`);
+          if(d.kphxA1FacadeWedObjectId!=="104804")f.push(`facade=${d.kphxA1FacadeWedObjectId}`);
+          if(d.kphxA1FacadeResource!=="lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac")f.push("wrong facade resource");
+          if(d.kphxA1FacadeNodeCount!=="7")f.push(`nodes=${d.kphxA1FacadeNodeCount}`);
+          if(d.kphxA1WallChoices!=="1,1,1,1,5,4,1")f.push(`walls=${d.kphxA1WallChoices}`);
+          if(d.kphxA1SourceMode!=="XP11-stock-type2-facade")f.push(`mode=${d.kphxA1SourceMode}`);
+          if(d.kphxA1OldAirportJetwayGlbLoaded!=="false")f.push("old substitute GLB loaded");
+          if(r.waitError)f.push(r.waitError);
+          if(r.errors?.length)f.push(`browser=${r.errors.join(" | ")}`);
+          if(r.failed?.length)f.push(`failed=${JSON.stringify(r.failed)}`);
+          if(r.httpErrors?.length)f.push(`http=${JSON.stringify(r.httpErrors)}`);
+          if(f.length)throw new Error(f.join("; "));
+          console.log(JSON.stringify(d,null,2));
+          NODE
+
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kphx-a1-xp11-stock-jetway
+          path: |
+            reports/kphx-a1-xp11-stock-jetway.png
+            reports/kphx-a1-xp11-stock-jetway.json
+          if-no-files-found: warn
+          compression-level: 0
+
+      - name: Commit exact materialized stock jetway assets
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/models/xplane11-stock/jetway1
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Materialize exact XP11 stock jetway facade assets"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
