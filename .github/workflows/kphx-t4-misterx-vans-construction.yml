@@ -1,0 +1,62 @@
+name: KPHX T4 MisterX Vans Construction Exact Source
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-t4-misterx-vans-construction.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-t4-misterx-vans-construction
+  cancel-in-progress: true
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install Drive downloader
+        run: python -m pip install --disable-pip-version-check gdown==5.2.0
+
+      - name: Download exact T4 van and construction sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library"
+          mkdir -p "$ROOT/Vehicles/Trucks/Active" "$ROOT/Objects/Construction"
+
+          gdown "https://drive.google.com/uc?id=1Iw00JY0eNSFU7h5aIMVuGqc3Cvoqbgt2" -O "$ROOT/Vehicles/Trucks/Van_White.obj"
+          gdown "https://drive.google.com/uc?id=1FPWQjlJCIE2bY0Oxazp5Hw9BUkeAOnQ7" -O "$ROOT/Vehicles/Trucks/Van_White_2.obj"
+          gdown "https://drive.google.com/uc?id=1vKp_HHkXzF9hATgVXCB3aLrg6viXZ6Yy" -O "$ROOT/Vehicles/Trucks/Active/Van_White.obj"
+          gdown "https://drive.google.com/uc?id=1Rz8Oh1QXz_Ty3mEZ7QXB3Z7VzyW8c9Qn" -O "$ROOT/Vehicles/Trucks/Van_White.dds"
+          gdown "https://drive.google.com/uc?id=1MF_16wGxEp4rm_VbovQtNh24yfx3c24T" -O "$ROOT/Vehicles/Trucks/Van_White_2.dds"
+          gdown "https://drive.google.com/uc?id=1MluIsPVdErnXa4limhUXfddryr3m6pdh" -O "$ROOT/Vehicles/Trucks/Van_White_2_NML.png"
+
+          gdown "https://drive.google.com/uc?id=1RknstMJcQCCdxHojIGKb1qwJK8gVH4je" -O "$ROOT/Objects/Construction/Garbage_Container_Red.obj"
+          gdown "https://drive.google.com/uc?id=1g8Vx3GDEu-KSJsgBnyAyxhQz6oBfDRYl" -O "$ROOT/Objects/Construction/Container_Red.dds"
+
+      - name: Commit exact T4 van and construction sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library"
+          git add "$ROOT/Vehicles/Trucks" "$ROOT/Objects/Construction/Garbage_Container_Red.obj" "$ROOT/Objects/Construction/Container_Red.dds"
+          if git diff --cached --quiet; then
+            echo "Exact T4 vans/construction already current."
+            exit 0
+          fi
+          git commit -m "Stage exact T4 MisterX vans and construction"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
