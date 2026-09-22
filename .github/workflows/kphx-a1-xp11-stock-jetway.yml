@@ -69,9 +69,14 @@ jobs:
           PY
 
           while IFS= read -r obj; do
-            obj="${obj%
-            node scripts/convert-kphx-obj8-to-gltf.mjs               "/tmp/xp11-jw/jetways/$obj" "$OUT/objects"               "--name=$stem"               "--diffuse=../textures/jetway_1_ALB.png"               "--lit=../textures/jetway_1_LIT.png"               "--normal=../textures/jetway_1_NML.png"
-          done < <(awk '$1=="OBJ"{print $2}' "$OUT/jetway_1_solid.fac")
+            stem="${obj%.obj}"
+            node scripts/convert-kphx-obj8-to-gltf.mjs \
+              "/tmp/xp11-jw/jetways/$obj" "$OUT/objects" \
+              "--name=$stem" \
+              "--diffuse=../textures/jetway_1_ALB.png" \
+              "--lit=../textures/jetway_1_LIT.png" \
+              "--normal=../textures/jetway_1_NML.png"
+          done < <(tr -d '\\r' < "$OUT/jetway_1_solid.fac" | awk '$1=="OBJ"{print $2}')
 
           python - <<'PY'
           import hashlib, json
