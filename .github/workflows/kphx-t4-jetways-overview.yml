@@ -1,0 +1,159 @@
+name: KPHX T4 Jetway Overview Verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-t4-jetways-overview.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kphx-t4-jetways-overview
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            package.json
+            package-lock.json
+            index.html
+            vite.config.js
+            src
+            public/models/kphx
+            public/models/xplane11-stock/jetway1
+          sparse-checkout-cone-mode: false
+
+      - name: Install browser verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npx vite --host 127.0.0.1 --port 4173 >/tmp/t4-overview-vite.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/t4-overview-vite.log
+          exit 1
+
+      - name: Capture A B and CD overview evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports/t4-overview
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+
+          const browser=await chromium.launch({headless:true});
+          const batches=["A-ALL","B-ALL","CD-ALL"];
+          const summary={};
+
+          for(const batch of batches){
+            const page=await browser.newPage({viewport:{width:2000,height:1300}});
+            const errors=[],failed=[],httpErrors=[];
+            page.on("console",m=>{if(m.type()==="error")errors.push(m.text())});
+            page.on("pageerror",e=>errors.push(String(e)));
+            page.on("requestfailed",r=>failed.push({url:r.url(),error:r.failure()?.errorText||"unknown"}));
+            page.on("response",r=>{if(r.status()>=400)httpErrors.push({url:r.url(),status:r.status()})});
+
+            let waitError=null;
+            await page.goto(`http://127.0.0.1:4173/RampReady/?kphxT4Jetways=1&batch=${batch}`,{
+              waitUntil:"domcontentloaded",
+              timeout:60000,
+            });
+            try{
+              await page.waitForFunction(()=>{
+                const c=document.querySelector("canvas.kphxT4JetwayBatchVerifierCanvas");
+                return ["ready","error"].includes(c?.dataset?.kphxT4JetwayBatchVerifier);
+              },null,{timeout:150000});
+            }catch(e){waitError=String(e)}
+            const evidence=await page.evaluate(()=>{
+              const c=document.querySelector("canvas.kphxT4JetwayBatchVerifierCanvas");
+              return c?{dataset:{...c.dataset}}:{dataset:{}};
+            });
+            const slug=batch.toLowerCase().replace(/[^a-z0-9]+/g,"-");
+            await page.screenshot({path:`reports/t4-overview/${slug}.png`,fullPage:true});
+            const result={evidence,errors,failed,httpErrors,waitError};
+            fs.writeFileSync(`reports/t4-overview/${slug}.json`,JSON.stringify(result,null,2)+"\n");
+            summary[batch]=result;
+            await page.close();
+          }
+
+          fs.writeFileSync("reports/t4-overview/summary.json",JSON.stringify(summary,null,2)+"\n");
+          await browser.close();
+          NODE
+
+      - name: Enforce overview source contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const map=JSON.parse(fs.readFileSync("public/models/kphx/terminal4-wed-jetways.exact.json","utf8"));
+          const summary=JSON.parse(fs.readFileSync("reports/t4-overview/summary.json","utf8"));
+          const filters={
+            "A-ALL":p=>p.gate.startsWith("A"),
+            "B-ALL":p=>p.gate.startsWith("B"),
+            "CD-ALL":p=>p.gate.startsWith("C")||p.gate.startsWith("D"),
+          };
+          const failures=[];
+          for(const [batch,filter] of Object.entries(filters)){
+            const expected=map.placements.filter(filter);
+            const result=summary[batch];
+            const d=result?.evidence?.dataset||{};
+            if(d.kphxT4JetwayBatchVerifier!=="ready")failures.push(`${batch} not ready: ${d.kphxT4JetwayBatchError||""}`);
+            if(d.kphxT4JetwayBatchName!==batch)failures.push(`${batch} name=${d.kphxT4JetwayBatchName}`);
+            if(Number(d.kphxT4JetwayBatchCount)!==expected.length)failures.push(`${batch} count=${d.kphxT4JetwayBatchCount} expected=${expected.length}`);
+            if(d.kphxT4JetwayBatchResource!=="lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac")failures.push(`${batch} wrong resource`);
+            if(d.kphxT4JetwayBatchOldAirportJetwayGlbLoaded!=="false")failures.push(`${batch} old GLB loaded`);
+            let ev=[];
+            try{ev=JSON.parse(d.kphxT4JetwayBatchEvidence||"[]")}catch{failures.push(`${batch} evidence invalid`)}
+            if(ev.length!==expected.length)failures.push(`${batch} evidence=${ev.length}`);
+            for(const p of expected){
+              const e=ev.find(x=>x.gate===p.gate&&x.facadeWedObjectId===p.facadeWedObjectId);
+              if(!e){failures.push(`${batch} missing ${p.gate}/${p.facadeWedObjectId}`);continue}
+              if(e.nodeCount!==p.facadeNodeCount)failures.push(`${p.gate}/${p.facadeWedObjectId} nodes=${e.nodeCount}`);
+              if(e.ringMode!==0)failures.push(`${p.gate}/${p.facadeWedObjectId} ring=${e.ringMode}`);
+              if(e.renderedEdgeCount!==p.facadeNodeCount-1)failures.push(`${p.gate}/${p.facadeWedObjectId} edges=${e.renderedEdgeCount}`);
+            }
+            if(result?.waitError)failures.push(`${batch} wait=${result.waitError}`);
+            if(result?.errors?.length)failures.push(`${batch} browser=${result.errors.join(" | ")}`);
+            if(result?.failed?.length)failures.push(`${batch} failed=${JSON.stringify(result.failed)}`);
+            if(result?.httpErrors?.length)failures.push(`${batch} http=${JSON.stringify(result.httpErrors)}`);
+          }
+          if(failures.length)throw new Error("T4 overview verification failed: "+failures.join("; "));
+          console.log(JSON.stringify({
+            A:map.placements.filter(filters["A-ALL"]).length,
+            B:map.placements.filter(filters["B-ALL"]).length,
+            CD:map.placements.filter(filters["CD-ALL"]).length,
+            total:map.placements.length,
+          },null,2));
+          NODE
+
+      - name: Upload overview evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kphx-t4-jetway-overviews
+          path: reports/t4-overview
+          if-no-files-found: error
+          compression-level: 0
