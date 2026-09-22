@@ -1,0 +1,67 @@
+{
+  "capturedAtUtc": "2026-09-22T02:47:14.209Z",
+  "navigationError": null,
+  "waitError": null,
+  "state": {
+    "canvasPresent": true,
+    "dataset": {
+      "engine": "three.js r171",
+      "kphxFullAirportVerifier": "error",
+      "kphxFullAirportVerifierError": "KPHX runtime manifest returned HTTP 404: /models/kphx-full-airport/batches/structures.manifest.json"
+    },
+    "overlayText": "KPHX verifier failed: KPHX runtime manifest returned HTTP 404: /models/kphx-full-airport/batches/structures.manifest.json",
+    "title": "RampReady",
+    "bodyText": "KPHX verifier failed: KPHX runtime manifest returned HTTP 404: /models/kphx-full-airport/batches/structures.manifest.json"
+  },
+  "consoleMessages": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "warning",
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A070200064280000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "type": "error",
+      "text": "KPHX full-airport verifier failed Error: KPHX runtime manifest returned HTTP 404: /models/kphx-full-airport/batches/structures.manifest.json\n    at installKphxPackageOwnedObjectLayer (http://127.0.0.1:4173/RampReady/src/environment/kphxFullAirport/installPackageOwnedObjectLayer.js:131:27)\n    at async load (http://127.0.0.1:4173/RampReady/src/components/KphxFullAirportVerifier.jsx:85:28)"
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x172c006fc600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x172c006fc600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x172c006fc600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x172c006fc600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    }
+  ],
+  "pageErrors": [],
+  "failedRequests": [],
+  "httpErrors": [
+    {
+      "url": "http://127.0.0.1:4173/models/kphx-full-airport/batches/structures.manifest.json",
+      "status": 404,
+      "statusText": "Not Found"
+    }
+  ]
+}
