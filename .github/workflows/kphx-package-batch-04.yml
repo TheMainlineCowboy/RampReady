@@ -1,0 +1,117 @@
+name: KPHX Package Batch 04 Retry
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-package-batch-04.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  batch04:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      KPHX_RELEASE_TAG: kphx-source-1.75.1
+      KPHX_WED_SHA256: 59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install conversion tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y p7zip-full imagemagick
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/magick" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ "${1:-}" = "identify" ]; then
+            shift
+            exec identify "$@"
+          fi
+          exec convert "$@"
+          SH
+          chmod +x "$HOME/bin/magick"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Download locked KPHX source from GitHub release
+        id: source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-source .kphx-extracted
+          gh release download "${KPHX_RELEASE_TAG}" --pattern '*.7z' --dir .kphx-source
+          ARCHIVE="$(find .kphx-source -type f -name '*.7z' -print -quit)"
+          test -n "$ARCHIVE"
+          7z t "$ARCHIVE"
+          7z x -y "$ARCHIVE" -o.kphx-extracted >/dev/null
+          WED="$(find .kphx-extracted -type f -name earth.wed.xml -print -quit)"
+          test -n "$WED"
+          printf '%s  %s\n' "${KPHX_WED_SHA256}" "$WED" | sha256sum --check --strict
+          echo "source_root=$(dirname "$WED")" >> "$GITHUB_OUTPUT"
+
+      - name: Materialize exact cargo service downtown batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/materialize-kphx-full-airport.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport             --batch-name=service-cargo-downtown             --package-prefixes=CargoBuildings,Vehicles,StaticAircraft,Downtown,Construction
+          cp public/models/kphx-full-airport/manifest.json             public/models/kphx-full-airport/batches/service-cargo-downtown.manifest.json
+
+      - name: Verify batch 04 exactness
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const m = JSON.parse(fs.readFileSync("public/models/kphx-full-airport/batches/service-cargo-downtown.manifest.json","utf8"));
+          if (m.failures?.length) throw new Error(`Batch 04 failures: ${m.failures.length}`);
+          if (m.packageOwned.materializedPlacementCount !== m.packageOwned.expectedPlacementCount) throw new Error("Batch 04 placement mismatch");
+          if (m.packageOwned.materializedUniqueResourceCount !== m.packageOwned.expectedUniqueResourceCount) throw new Error("Batch 04 resource mismatch");
+          console.log(JSON.stringify({
+            placements:m.packageOwned.materializedPlacementCount,
+            resources:m.packageOwned.materializedUniqueResourceCount,
+            status:"PASS"
+          },null,2));
+          NODE
+
+      - name: Commit exact batch 04
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/models/kphx-full-airport             reports/kphx-full-airport-wed-placements-service-cargo-downtown.json             reports/kphx-full-airport-materialization-service-cargo-downtown.json
+          git commit -m "KPHX exact package batch: service cargo downtown"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Verify all package batch manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const names=["structures","gate-numbers","airfield-details","service-cargo-downtown"];
+          let placements=0, resources=0;
+          for (const name of names) {
+            const p=`public/models/kphx-full-airport/batches/${name}.manifest.json`;
+            const m=JSON.parse(fs.readFileSync(p,"utf8"));
+            if (m.failures?.length) throw new Error(`${name}: failures remain`);
+            placements += m.packageOwned.materializedPlacementCount;
+            resources += m.packageOwned.materializedUniqueResourceCount;
+          }
+          if (placements !== 655) throw new Error(`Expected 655 package placements, got ${placements}`);
+          if (resources !== 96) throw new Error(`Expected 96 package resources, got ${resources}`);
+          console.log(JSON.stringify({placements,resources,status:"PACKAGE-OWNED COMPLETE"},null,2));
+          NODE
