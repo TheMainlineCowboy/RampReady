@@ -28,12 +28,24 @@ let currentSegment = null;
 let currentMesh = null;
 let currentWall = null;
 let segmentMode = null;
+let ringMode = 1;
+let graded = false;
 
 for (const rawLine of source.split(/\r?\n/)) {
   const line = rawLine.trim();
   if (!line || line.startsWith("#")) continue;
   const parts = line.split(/\s+/);
   const command = parts[0];
+
+  if (command === "RING") {
+    ringMode = Number(parts[1]);
+    continue;
+  }
+
+  if (command === "GRADED") {
+    graded = true;
+    continue;
+  }
 
   if (command === "OBJ") {
     objects.push(parts.slice(1).join(" "));
@@ -137,6 +149,8 @@ for (const segment of segments.values()) {
 if (objects.length !== 18) throw new Error(`Expected 18 stock jetway OBJ references, found ${objects.length}`);
 if (segments.size !== 24) throw new Error(`Expected 24 regular facade segments, found ${segments.size}`);
 if (walls.length !== 9) throw new Error(`Expected 9 facade wall definitions, found ${walls.length}`);
+if (ringMode !== 0) throw new Error(`Expected stock jetway facade RING 0 open-path behavior, found RING ${ringMode}`);
+if (!graded) throw new Error("Expected stock jetway facade to be GRADED");
 
 await fsp.rm(outputDir, { recursive: true, force: true });
 await fsp.mkdir(path.join(outputDir, "objects"), { recursive: true });
@@ -185,6 +199,8 @@ const manifest = {
   sourceResource: "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac",
   sourceFacadeFile: "jetway_1_solid.fac",
   sourceFacadeSha256: await sha256File(facPath),
+  ringMode,
+  graded,
   sourceGeometryPolicy: "FAC spellings/segments/attachments are parsed directly; attached OBJ8 geometry is converted without remesh or decimation",
   wedWallNumberPolicy: "WED labels Wall N are human-readable one-based labels for zero-based FAC wall index N-1",
   spellingFitPolicy: "choose the source spelling with nominal segment length closest to the authored wall edge length; stretch/squish along the wall axis as specified by X-Plane facade rules",
