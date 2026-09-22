@@ -1,3 +1,4 @@
+# rerun for 108-of-108 Laminar WED preview semantics
 # rerun after stock OBJ A-header support
 name: Materialize Exact XP11 KPHX Jetways
 
@@ -109,8 +110,15 @@ jobs:
           const a1 = layout.placements.find((p) => p.wedObjectId === 104804);
           if (layout.isRing !== false) throw new Error("Stock jetway facade must remain RING 0/open chain");
           if (layout.placements.length !== 108) throw new Error(`Expected 108 stock jetway facades, got ${layout.placements.length}`);
-          if (ready.length !== 107) throw new Error(`Expected 107 exact straight facades, got ${ready.length}`);
-          if (blocked.length !== 1 || blocked[0].wedObjectId !== 99713) throw new Error("Unexpected authored curve blocker set");
+          if (ready.length !== 108) throw new Error(`Expected 108 exact WED-preview facades, got ${ready.length}`);
+          if (blocked.length !== 0) throw new Error(`Unexpected blocked facade set: ${blocked.map((p) => p.wedObjectId).join(",")}`);
+          const bezierPlacements = layout.placements.filter((p) => (p.sourceBezierEdges || []).length);
+          if (bezierPlacements.length !== 1 || bezierPlacements[0].wedObjectId !== 99713) {
+            throw new Error("Authored Bezier metadata set changed");
+          }
+          if (bezierPlacements[0].visualCurvePolicy !== "Laminar-WED-FacadePreview-endpoint-chord-v1") {
+            throw new Error("Laminar WED preview curve policy missing");
+          }
           if (!a1 || a1.blockedExactCurve) throw new Error("A1 must be exact and unblocked");
           if (a1.nodeCount !== 7 || a1.wallCount !== 6 || a1.edges.length !== 6) throw new Error("A1 open-chain WED contract failed");
           const a1WallTypes = a1.edges.map((e) => e.wallType).join(",");
@@ -122,6 +130,7 @@ jobs:
             placementCount: layout.placements.length,
             readyPlacementCount: ready.length,
             blockedCurveWedObjectIds: blocked.map((p) => p.wedObjectId),
+            authoredBezierWedObjectIds: layout.placements.filter((p) => (p.sourceBezierEdges || []).length).map((p) => p.wedObjectId),
             a1NodeCount: a1.nodeCount,
             a1WallCount: a1.wallCount,
             a1ObjectInstanceCount: a1.objectInstances.length,
