@@ -1,0 +1,101 @@
+name: KPHX T4 MisterX Missing Sources
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-t4-misterx-missing-sources.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-t4-misterx-missing-sources
+  cancel-in-progress: true
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install Drive downloader
+        run: python -m pip install --disable-pip-version-check gdown==5.2.0
+
+      - name: Configure Git
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Stage exact Ramps source
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport"
+          mkdir -p "$ROOT"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1TJM8RzfRXzJuJ33Hj4bjP3GdHKSamqTN" -O "$ROOT/Ramps"
+          git add "$ROOT/Ramps"
+          if git diff --cached --quiet; then
+            echo "Ramps already exact."
+          else
+            git commit -m "Stage exact T4 MisterX ramps source"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
+
+      - name: Stage exact People source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/10AJ4-aihaY06Fb_7RvmfXgFAp8IQ3SvM" -O "$ROOT/People"
+          git add "$ROOT/People"
+          if git diff --cached --quiet; then
+            echo "People already exact."
+          else
+            git commit -m "Stage exact T4 MisterX people source"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
+
+      - name: Stage exact physical Trucks source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Vehicles"
+          mkdir -p "$ROOT"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1AiUGHanRiuX-P7jfJwOYC9Twzet4TCLU" -O "$ROOT/Trucks"
+          git add "$ROOT/Trucks"
+          if git diff --cached --quiet; then
+            echo "Physical Trucks already exact."
+          else
+            git commit -m "Stage exact T4 MisterX truck exports"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
+
+      - name: Stage exact Construction source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Objects"
+          mkdir -p "$ROOT"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1koQgOiB1K3Oswbr1g7NLTzHmBWPBnmos" -O "$ROOT/Construction"
+          git add "$ROOT/Construction"
+          if git diff --cached --quiet; then
+            echo "Construction already exact."
+          else
+            git commit -m "Stage exact T4 MisterX construction source"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
