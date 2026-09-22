@@ -3,7 +3,7 @@ import path from "node:path";
 
 const [, , inputPath, outputDirectory, ...args] = process.argv;
 if (!inputPath || !outputDirectory) {
-  throw new Error("Usage: node scripts/convert-kphx-obj8-to-gltf.mjs <input.obj> <output-dir> [--name=AssetName] [--diffuse=texture.png] [--lit=texture_LIT.png]");
+  throw new Error("Usage: node scripts/convert-kphx-obj8-to-gltf.mjs <input.obj> <output-dir> [--name=AssetName] [--diffuse=texture.png] [--lit=texture_LIT.png] [--normal=texture_NML.png] [--normal-scale=1]");
 }
 
 const options = Object.fromEntries(args
@@ -23,6 +23,10 @@ const vertexLights = [];
 const namedLights = [];
 let sourceTexture = null;
 let sourceLitTexture = null;
+let sourceNormalTexture = null;
+let sourceNormalScale = null;
+let globalNoShadow = false;
+let globalSpecular = null;
 let pointCounts = null;
 const drawState = {
   alphaMode: "OPAQUE",
@@ -32,9 +36,11 @@ const drawState = {
   drawEnabled: true,
   draped: false,
   layerGroupDraped: null,
+  layerGroup: null,
   lodDraped: null,
   emissionRgb: [0, 0, 0],
   lodRange: null,
+  shinyRatio: null,
 };
 
 const bump = (key) => commands.set(key, (commands.get(key) || 0) + 1);
@@ -49,6 +55,21 @@ for (const rawLine of source.split(/\r?\n/)) {
 
   if (command === "TEXTURE" || command === "TEXTURE_DRAPED") sourceTexture = parts.slice(1).join(" ");
   else if (command === "TEXTURE_LIT") sourceLitTexture = parts.slice(1).join(" ");
+  else if (command === "TEXTURE_DRAPED_NORMAL") {
+    if (parts.length < 2) throw new Error(`Malformed TEXTURE_DRAPED_NORMAL record: ${line}`);
+    const maybeScale = Number(parts[1]);
+    if (Number.isFinite(maybeScale) && parts.length >= 3) {
+      sourceNormalScale = maybeScale;
+      sourceNormalTexture = parts.slice(2).join(" ");
+    } else {
+      sourceNormalScale = 1;
+      sourceNormalTexture = parts.slice(1).join(" ");
+    }
+  } else if (command === "GLOBAL_no_shadow") globalNoShadow = true;
+  else if (command === "SPECULAR") {
+    const value = Number(parts[1]);
+    globalSpecular = Number.isFinite(value) ? value : parts.slice(1).join(" ");
+  }
   else if (command === "POINT_COUNTS") pointCounts = parts.slice(1).map(Number);
   else if (command === "VT") {
     if (parts.length < 9) throw new Error(`Malformed VT record: ${line}`);
@@ -136,7 +157,7 @@ for (const range of drawRanges) {
 }
 
 const harmless = new Set([
-  "I", "800", "OBJ", "TEXTURE", "TEXTURE_DRAPED", "TEXTURE_LIT", "POINT_COUNTS",
+  "I", "800", "OBJ", "TEXTURE", "TEXTURE_DRAPED", "TEXTURE_LIT", "TEXTURE_DRAPED_NORMAL", "POINT_COUNTS",
   "VT", "IDX", "IDX10", "TRIS", "LIGHT_PARAM", "VLIGHT", "LIGHT_NAMED", "#",
   "ATTR_shade_smooth", "ATTR_shade_flat",
   "ATTR_no_hard", "ATTR_hard",
@@ -149,6 +170,10 @@ const harmless = new Set([
   "ATTR_LOD_draped",
   "ATTR_LOD",
   "ATTR_layer_group_draped",
+  "ATTR_layer_group",
+  "ATTR_shiny_rat",
+  "GLOBAL_no_shadow",
+  "SPECULAR",
   "ATTR_no_solid_camera", "ATTR_solid_camera",
 ]);
 const unsupported = [...commands.keys()].filter((command) => !harmless.has(command));
@@ -159,6 +184,8 @@ if (unsupported.length) {
 const name = options.name || path.basename(inputPath).replace(/\.[^.]+$/, "");
 const diffuseUri = options.diffuse || sourceTexture;
 const litUri = options.lit || sourceLitTexture;
+const normalUri = options.normal || sourceNormalTexture;
+const normalScale = Number(options["normal-scale"] ?? sourceNormalScale ?? 1);
 if (!diffuseUri || /^none$/i.test(diffuseUri)) throw new Error("OBJ8 source has no usable diffuse texture reference");
 
 const positions = vertices.map((row) => row.slice(0, 3));
@@ -259,9 +286,17 @@ const xPlaneTextureInfo = (index) => ({
 
 const images = [{ uri: diffuseUri }];
 const textures = [{ sampler: 0, source: 0 }];
+let litTextureIndex = null;
+let normalTextureIndex = null;
 if (litUri && !/^none$/i.test(litUri)) {
   images.push({ uri: litUri });
-  textures.push({ sampler: 0, source: 1 });
+  textures.push({ sampler: 0, source: images.length - 1 });
+  litTextureIndex = textures.length - 1;
+}
+if (normalUri && !/^none$/i.test(normalUri)) {
+  images.push({ uri: normalUri });
+  textures.push({ sampler: 0, source: images.length - 1 });
+  normalTextureIndex = textures.length - 1;
 }
 
 const materialByState = new Map();
@@ -272,8 +307,10 @@ function materialIndexForState(state) {
     doubleSided: state.doubleSided,
     draped: state.draped,
     layerGroupDraped: state.layerGroupDraped,
+    layerGroup: state.layerGroup,
     emissionRgb: state.emissionRgb,
     lodRange: state.lodRange,
+    shinyRatio: state.shinyRatio,
   });
   if (materialByState.has(key)) return materialByState.get(key);
   const material = {
@@ -289,14 +326,23 @@ function materialIndexForState(state) {
     extras: {
       xPlaneDraped: state.draped === true,
       xPlaneLayerGroupDraped: state.layerGroupDraped,
+      xPlaneLayerGroup: state.layerGroup,
       xPlaneLodDraped: state.lodDraped,
       xPlaneEmissionRgb: state.emissionRgb,
       xPlaneLodRange: state.lodRange,
+      xPlaneShinyRatio: state.shinyRatio,
+      xPlaneGlobalSpecular: globalSpecular,
     },
   };
-  if (images.length > 1) {
-    material.emissiveTexture = xPlaneTextureInfo(1);
+  if (litTextureIndex !== null) {
+    material.emissiveTexture = xPlaneTextureInfo(litTextureIndex);
     material.emissiveFactor = [1, 1, 1];
+  }
+  if (normalTextureIndex !== null) {
+    material.normalTexture = {
+      ...xPlaneTextureInfo(normalTextureIndex),
+      scale: Number.isFinite(normalScale) ? normalScale : 1,
+    };
   }
   const index = materials.length;
   materials.push(material);
@@ -339,7 +385,17 @@ const gltf = {
   textures,
   materials,
   meshes: [{ name, primitives }],
-  nodes: [{ name, mesh: 0, extras: { xPlaneParameterizedLights: parameterizedLights } }],
+  nodes: [{
+    name,
+    mesh: 0,
+    extras: {
+      xPlaneParameterizedLights: parameterizedLights,
+      xPlaneVertexLights: vertexLights,
+      xPlaneNamedLights: namedLights,
+      xPlaneGlobalNoShadow: globalNoShadow,
+      xPlaneGlobalSpecular: globalSpecular,
+    },
+  }],
   scenes: [{ nodes: [0] }],
   scene: 0,
   extras: {
@@ -347,6 +403,10 @@ const gltf = {
     sourceFile: path.basename(inputPath),
     sourceTexture,
     sourceLitTexture,
+    sourceNormalTexture,
+    sourceNormalScale,
+    globalNoShadow,
+    globalSpecular,
     pointCounts,
     vertexCount: vertices.length,
     indexCount: indices.length,
@@ -381,7 +441,11 @@ console.log(JSON.stringify({
   materialCount: materials.length,
   sourceBounds: gltf.extras.sourceBounds,
   diffuseUri,
-  litUri: images.length > 1 ? litUri : null,
+  litUri: litTextureIndex !== null ? litUri : null,
+  normalUri: normalTextureIndex !== null ? normalUri : null,
+  normalScale: normalTextureIndex !== null ? normalScale : null,
+  globalNoShadow,
+  globalSpecular,
   geometryPolicy: gltf.extras.geometryPolicy,
   drawStatePolicy: gltf.extras.drawStatePolicy,
   textureCoordinatePolicy: gltf.extras.textureCoordinatePolicy,
