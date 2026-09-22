@@ -1,0 +1,34 @@
+name: KPHX Verification Render Export
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-verification-render-export.yml"
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+      - name: Verify committed render exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s reports/kphx-full-airport-first-render.png
+          test -s reports/kphx-full-airport-first-render.json
+          sha256sum reports/kphx-full-airport-first-render.png
+      - name: Upload exact render evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: kphx-full-airport-first-render
+          path: |
+            reports/kphx-full-airport-first-render.png
+            reports/kphx-full-airport-first-render.json
+          if-no-files-found: error
+          retention-days: 7
