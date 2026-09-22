@@ -4,8 +4,8 @@
   "libraryTxt": "/home/runner/work/RampReady/RampReady/.zdp/library.txt",
   "libraryTxtSha256": "8330b471c1a5061e273b534d787c6efa3cf589a1980c5583d65db6b67fff981b",
   "virtualPrefix": "ZDP_Library",
-  "requestedCount": 12,
-  "resolvedCount": 12,
+  "requestedCount": 14,
+  "resolvedCount": 14,
   "unresolved": [],
   "ambiguous": [],
   "resources": {
@@ -57,6 +57,14 @@
       "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/polygons/concrete/colors/rough_yellow_dark.pol",
       "sha256": "3d10fde08e877611875caf719cc7b10765ae7e142fe6271205ff9f9a1752cf43"
     },
+    "ZDP_Library/markings/lines/clean/centerline.lin": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/lines/clean/centerline.lin",
+      "physicalResource": "markings/lines/clean/centerline.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/lines/clean/centerline.lin",
+      "sha256": "72f9a85cae3b76cc81a913711634e8ac55d47997600d5d56e5105051ac5a8af5"
+    },
     "ZDP_Library/markings/lines/worn/blue_border.lin": {
       "command": "EXPORT_EXCLUDE",
       "region": "Default",
@@ -104,6 +112,14 @@
       "physicalResource": "markings/lines/worn/white_centerline_road.lin",
       "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/lines/worn/white_centerline_road.lin",
       "sha256": "2afc50b9b190de6fc62a28c76387ac20970dc4f8dcd40a4860aae6e4c5821b36"
+    },
+    "ZDP_Library/markings/lines/worn/yellow_centerline_road.lin": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/lines/worn/yellow_centerline_road.lin",
+      "physicalResource": "markings/lines/worn/yellow_centerline_road.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/lines/worn/yellow_centerline_road.lin",
+      "sha256": "9884ab307cdcb7612257328cf82837d9d2802b37b247f6b3b09a39d14b908c13"
     }
   }
 }
