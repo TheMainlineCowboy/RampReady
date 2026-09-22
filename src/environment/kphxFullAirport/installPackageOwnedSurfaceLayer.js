@@ -6,6 +6,14 @@ import {
   flattenWedChain,
 } from "./wedCurves.js";
 
+function kphxRuntimeUrl(url) {
+  if (!url || !url.startsWith("/")) return url;
+  const base = String(import.meta.env?.BASE_URL || "/").replace(/\/$/, "");
+  if (!base || base === "/") return url;
+  if (url === base || url.startsWith(`${base}/`)) return url;
+  return `${base}${url}`;
+}
+
 const DEFAULT_MANIFEST_URL = "/models/kphx-full-airport/surfaces/manifest.json";
 const DEFAULT_NETWORK_URL = "/models/kphx-full-airport/surfaces/surface-network.json";
 
@@ -36,7 +44,7 @@ function resourceAssetUrl(resource, image) {
 
 async function loadTexture(THREE, loader, url, { color = true } = {}) {
   if (!url) return null;
-  const texture = await loader.loadAsync(url);
+  const texture = await loader.loadAsync(kphxRuntimeUrl(url));
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;
@@ -323,9 +331,11 @@ export async function installKphxPackageOwnedSurfaceLayer(
 ) {
   if (!environment?.add) throw new Error("KPHX surface loader requires a Three.js environment group");
 
+  const resolvedManifestUrl = kphxRuntimeUrl(manifestUrl);
+  const resolvedNetworkUrl = kphxRuntimeUrl(networkUrl);
   const [manifestResponse, networkResponse] = await Promise.all([
-    fetch(manifestUrl, { cache: "no-cache" }),
-    fetch(networkUrl, { cache: "no-cache" }),
+    fetch(resolvedManifestUrl, { cache: "no-cache" }),
+    fetch(resolvedNetworkUrl, { cache: "no-cache" }),
   ]);
   if (!manifestResponse.ok) throw new Error(`KPHX surface manifest returned HTTP ${manifestResponse.status}`);
   if (!networkResponse.ok) throw new Error(`KPHX surface network returned HTTP ${networkResponse.status}`);
