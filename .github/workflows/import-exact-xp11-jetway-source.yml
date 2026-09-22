@@ -1,0 +1,93 @@
+name: Import Exact XP11 Jetway Source
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/import-exact-xp11-jetway-source.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  import-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+
+      - name: Download exact user-supplied XP11 source archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 \
+            'https://sdmntprcentralus.oaiusercontent.com/files/00000000-1330-81f5-a17a-fad9f5e1f96f/raw?se=2026-09-22T09%3A40%3A48Z&sp=r&sv=2026-02-06&sr=b&scid=65d962f8-8a8a-50fd-b9a2-2840328051af&skoid=18c14e53-ea0c-429b-8d09-d22d66ca7169&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-22T08%3A44%3A16Z&ske=2026-09-23T08%3A44%3A16Z&sks=b&skv=2026-02-06&sig=DvaZ1VPveH0WwiD7AxdAnQPCnuswSFsSFnEe8cwKrzw%3D' \
+            -o /tmp/Ramp_Equipment.zip
+          curl -fL --retry 3 --retry-delay 2 \
+            'https://sdmntprwestcentralus.oaiusercontent.com/files/00000000-a1ac-81fb-a458-f88127ecbcbb/raw?se=2026-09-22T09%3A40%3A53Z&sp=r&sv=2026-02-06&sr=b&scid=56efe1be-6486-5ac9-ac5d-ec971335e800&skoid=18c14e53-ea0c-429b-8d09-d22d66ca7169&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-22T06%3A28%3A43Z&ske=2026-09-23T06%3A28%3A43Z&sks=b&skv=2026-02-06&sig=ZYCu2OanAip1dYAJNNcXzGE1d7A9a6AAar6W6yz11c8%3D' \
+            -o /tmp/textures.zip
+          sha256sum /tmp/Ramp_Equipment.zip /tmp/textures.zip
+
+      - name: Extract only exact Jetway_1_solid dependency closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/ramp /tmp/tex
+          mkdir -p /tmp/ramp /tmp/tex
+          unzip -q /tmp/Ramp_Equipment.zip -d /tmp/ramp
+          unzip -q /tmp/textures.zip -d /tmp/tex
+
+          SRC="$(find /tmp/ramp -type f -iname 'jetway_1_solid.fac' -printf '%h\n' | head -1)"
+          TEX="$(find /tmp/tex -type f -iname 'jetway_1_ALB.dds' -printf '%h\n' | head -1)"
+          test -n "$SRC"
+          test -n "$TEX"
+
+          rm -rf assets/xp11-stock/ramp-equipment/jetways assets/xp11-stock/textures
+          mkdir -p assets/xp11-stock/ramp-equipment/jetways assets/xp11-stock/textures
+
+          cp "$SRC/jetway_1_solid.fac" assets/xp11-stock/ramp-equipment/jetways/
+
+          python - "$SRC" <<'PY'
+          import pathlib, re, shutil, sys
+          src = pathlib.Path(sys.argv[1])
+          fac = (src / "jetway_1_solid.fac").read_text(errors="strict")
+          refs = [line.split(None,1)[1].strip() for line in fac.splitlines() if line.startswith("OBJ ")]
+          if len(refs) != 18:
+              raise SystemExit(f"expected 18 OBJ refs, got {len(refs)}")
+          out = pathlib.Path("assets/xp11-stock/ramp-equipment/jetways")
+          missing = []
+          for ref in refs:
+              p = src / ref
+              if not p.exists():
+                  missing.append(ref)
+              else:
+                  shutil.copy2(p, out / p.name)
+          if missing:
+              raise SystemExit("missing exact OBJ refs: " + ", ".join(missing))
+          print("\n".join(refs))
+          PY
+
+          cp "$TEX/jetway_1_ALB.dds" assets/xp11-stock/textures/
+          cp "$TEX/jetway_1_LIT.dds" assets/xp11-stock/textures/
+          cp "$TEX/jetway_1_NML.png" assets/xp11-stock/textures/
+
+          find assets/xp11-stock -type f -print0 | sort -z | xargs -0 sha256sum > assets/xp11-stock/SHA256SUMS.txt
+          test "$(find assets/xp11-stock/ramp-equipment/jetways -maxdepth 1 -type f | wc -l)" = "19"
+          test "$(find assets/xp11-stock/textures -maxdepth 1 -type f | wc -l)" = "3"
+
+      - name: Commit exact XP11 source checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/xp11-stock
+          git diff --cached --quiet && exit 0
+          git commit -m "Import exact XP11 stock jetway source dependency"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
