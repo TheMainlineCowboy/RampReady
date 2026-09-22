@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "authority": "user-supplied KPHX 1.75.1 OBJ8 + Laminar XP11 stock Jetway_1_solid.fac/OBJ dependencies",
+  "policy": "render-format conversion only; no remesh, no substitute geometry, no authored placement changes",
+  "findings": {
+    "terminal4": {
+      "sourceResource": "Terminals/Terminal4.obj",
+      "sourceSha256": "e93807a1239377e1223eb325c2b7048e6c84f968d9c790fd0cd6cc5da050cd80",
+      "sourceDrawState": [
+        "ATTR_cull",
+        "ATTR_no_blend"
+      ],
+      "alphaCutoff": 0.5,
+      "triangles": 14167,
+      "nondegenerateTriangles": 14159,
+      "degenerateTriangles": 8,
+      "sourceWindingAgainstAuthoredNormals": {
+        "aligned": 0,
+        "opposite": 14159
+      },
+      "convertedWindingAgainstAuthoredNormals": {
+        "aligned": 14159,
+        "opposite": 0
+      },
+      "diffuseSha256": "84667f356e16d83065773fadcba30cc222b4d6a2a739b4000545cca265f53186",
+      "diffuseAlpha": {
+        "transparentPixels": 824802,
+        "semitransparentPixels": 0,
+        "opaquePixels": 15952414
+      }
+    },
+    "terminal4b": {
+      "sourceResource": "Terminals/Terminal4b.obj",
+      "sourceSha256": "acbefef71c59942eb8e336996b9f2b9c8e8a87c6ec5cc64046292e5332ce48bc",
+      "sourceDrawState": [
+        "ATTR_cull",
+        "ATTR_no_blend"
+      ],
+      "alphaCutoff": 0.5,
+      "triangles": 23575,
+      "nondegenerateTriangles": 23168,
+      "degenerateTriangles": 407,
+      "sourceWindingAgainstAuthoredNormals": {
+        "aligned": 0,
+        "opposite": 23168
+      },
+      "convertedWindingAgainstAuthoredNormals": {
+        "aligned": 23168,
+        "opposite": 0
+      },
+      "diffuseSha256": "11a129f33940c99de15c2941faac041af42834c869ab6bdae974d134c54bc00b",
+      "diffuseAlpha": {
+        "transparentPixels": 826844,
+        "semitransparentPixels": 0,
+        "opaquePixels": 15950372
+      }
+    },
+    "stockJetwayAttachments": {
+      "facadeSha256": "a98a61b6de28a0db6548f748163494fc24513267dee40322502d5800eff8feb5",
+      "referencedObjCount": 18,
+      "sourceDrawState": "GLOBAL_no_blend 0.5 + default one-sided culling",
+      "totalTriangles": 11580,
+      "nondegenerateSourceTrianglesOppositeAuthoredNormals": 11580,
+      "convertedTrianglesAlignedToAuthoredNormals": 11580,
+      "diffuseSourceSha256": "fa988bfd30807376113aa0c9075e173ae9c2f9b5f5e75f01828e1c8279bbf59e",
+      "litSourceSha256": "64e28d9546c0b9884a11d0555b3ab5287ceec3f248d3d9da4dbfdf0e87edf127",
+      "normalSourceSha256": "ded40b58230e1c0cbcef8f4e126ee97733f03f02ac52aebce53a1b12ed16e233",
+      "diffuseAlpha": {
+        "transparentPixels": 42475,
+        "semitransparentPixels": 0,
+        "opaquePixels": 1006101
+      }
+    },
+    "stockJetwayFacadeWalls": {
+      "sourceShader": "SHADER_WALL",
+      "explicitNoBlendDirective": false,
+      "runtimePolicy": "preserve source facade blend mode; convert FAC triangle winding to Three.js/glTF front-face winding"
+    }
+  },
+  "implementation": {
+    "converterCommit": "eb7030149abe27dd8a7b01dcde801e805e1a3c58",
+    "jetwayRuntimeCompatibilityCommit": "f999dfd2bdcc2f9e8d783dace423b1ddf24f891d",
+    "terminalSourceLoaderCommit": "84f26ed65ff239ac62cb4dac5d44085f6a08f1d2",
+    "fullAirportTerminalLoaderCommit": "27632d156c397c7ed0310500de066b349aa29450",
+    "a1VerifierCompatibilityCommit": "185c80d883c0180e5d18bf479963f4f762fca1d2",
+    "batchVerifierCompatibilityCommit": "f165d61142ace5f02410393545a4f3a81121f7b4",
+    "sourceCutoutEvidenceCommit": "02e6bb43176ba3baf41dd677630fa5af13631464",
+    "facadeShaderCommit": "25298f77a55002989f408615f564fd72580ca8c4",
+    "a1FacadeShaderCommit": "fdda3d3015aed7a9c634b2af88cd2e19ad578547"
+  }
+}
