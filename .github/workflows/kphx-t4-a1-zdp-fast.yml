@@ -1,5 +1,3 @@
-# rerun with bounded surface concurrency
-# rerun after hyphen separator support
 name: KPHX T4 A1 ZDP Fast Surface Checkpoint
 
 on:
@@ -68,43 +66,46 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p reports
-          node scripts/filter-kphx-surface-network-near-a1.mjs             public/models/kphx-full-airport/surfaces/surface-network.json             reports/kphx-t4-a1-surface-network-all.json             450
+          node scripts/filter-kphx-surface-network-near-a1.mjs             public/models/kphx-full-airport/surfaces/surface-network.json             reports/kphx-t4-a1-surface-network-all.json             250
+
           node --input-type=module <<'NODE'
           import fs from "node:fs";
-          const all=JSON.parse(fs.readFileSync("reports/kphx-t4-a1-surface-network-all.json","utf8"));
-          const onlyZdp=(items)=>items.filter(x=>x.resourcePrefix==="ZDP_Library");
-          const zdp={
+          const all = JSON.parse(fs.readFileSync("reports/kphx-t4-a1-surface-network-all.json","utf8"));
+          const onlyZdp = (items) => items.filter((x) => x.resourcePrefix === "ZDP_Library");
+          const zdp = {
             ...all,
-            scope:{...all.scope,resourceScope:"ZDP_Library only; package-owned surfaces remain in locked package checkpoint"},
-            polygons:onlyZdp(all.polygons||[]),
-            drapedOrthophotos:onlyZdp(all.drapedOrthophotos||[]),
-            lines:onlyZdp(all.lines||[]),
+            scope: {
+              ...all.scope,
+              resourceScope: "ZDP_Library only; package-owned surfaces remain in locked package checkpoint",
+            },
+            polygons: onlyZdp(all.polygons || []),
+            drapedOrthophotos: onlyZdp(all.drapedOrthophotos || []),
+            lines: onlyZdp(all.lines || []),
           };
-          zdp.counts={
-            ...(all.counts||{}),
-            zdpPolygons:zdp.polygons.length,
-            zdpDrapedOrthophotos:zdp.drapedOrthophotos.length,
-            zdpLines:zdp.lines.length,
+          zdp.counts = {
+            ...(all.counts || {}),
+            zdpPolygons: zdp.polygons.length,
+            zdpDrapedOrthophotos: zdp.drapedOrthophotos.length,
+            zdpLines: zdp.lines.length,
           };
-          fs.writeFileSync("reports/kphx-t4-a1-zdp-surface-network.json",JSON.stringify(zdp,null,2)+"\n");
-          const records=[...zdp.polygons,...zdp.drapedOrthophotos,...zdp.lines];
-          const resources=[...new Set(records.map(x=>x.resource))].sort();
-          if(!records.length) throw new Error("A1 radius selected no ZDP surface placements");
-          fs.writeFileSync("reports/kphx-t4-a1-zdp-resources.json",JSON.stringify({
-            authority:"reports/kphx-t4-a1-zdp-surface-network.json",
-            dependency:"ZDP_Library",
-            version:"1.2.0",
-            resources
+          fs.writeFileSync("reports/kphx-t4-a1-zdp-surface-network.json", JSON.stringify(zdp,null,2)+"\n");
+          const records = [...zdp.polygons, ...zdp.drapedOrthophotos, ...zdp.lines];
+          const resources = [...new Set(records.map((x) => x.resource))].sort();
+          if (!records.length) throw new Error("A1 radius selected no ZDP surface placements");
+          fs.writeFileSync("reports/kphx-t4-a1-zdp-resources.json", JSON.stringify({
+            authority: "reports/kphx-t4-a1-zdp-surface-network.json",
+            dependency: "ZDP_Library",
+            version: "1.2.0",
+            resources,
           },null,2)+"\n");
           console.log(JSON.stringify({
-            radiusMeters:zdp.scope.radiusMeters,
-            polygons:zdp.polygons.length,
-            draped:zdp.drapedOrthophotos.length,
-            lines:zdp.lines.length,
-            placements:records.length,
-            resources:resources.length,
-            list:resources
-          },null,2));
+            radiusMeters: zdp.scope.radiusMeters,
+            polygons: zdp.polygons.length,
+            draped: zdp.drapedOrthophotos.length,
+            lines: zdp.lines.length,
+            placements: records.length,
+            resources: resources.length,
+          }, null, 2));
           NODE
 
       - name: Resolve exact ZDP paths
@@ -117,7 +118,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/materialize-kphx-surface-resources.mjs             .             public/models/kphx-full-airport/t4-a1-zdp-surfaces             --placement-report=reports/kphx-t4-a1-zdp-surface-network.json             --library-map=reports/kphx-t4-a1-zdp-library-map.json             --include-external-prefixes=ZDP_Library             --skip-package-owned=true
+          node scripts/materialize-kphx-surface-resources.mjs             .             public/models/kphx-full-airport/t4-a1-zdp-surfaces             --placement-report=reports/kphx-t4-a1-zdp-surface-network.json             --library-map=reports/kphx-t4-a1-zdp-library-map.json             --include-external-prefixes=ZDP_Library             --skip-package-owned=true             --concurrency=3
 
       - name: Verify exact local ZDP checkpoint
         shell: bash
@@ -125,21 +126,25 @@ jobs:
           set -euo pipefail
           node --input-type=module <<'NODE'
           import fs from "node:fs";
-          const m=JSON.parse(fs.readFileSync("public/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json","utf8"));
-          const n=JSON.parse(fs.readFileSync("public/models/kphx-full-airport/t4-a1-zdp-surfaces/surface-network.json","utf8"));
-          const placements=(n.polygons||[]).length+(n.drapedOrthophotos||[]).length+(n.lines||[]).length;
-          if(m.failures?.length) throw new Error(`Materialization failures: ${m.failures.length}`);
-          if(m.packageOwnedResourceCount!==0) throw new Error(`Expected external-only checkpoint, got ${m.packageOwnedResourceCount} package resources`);
-          if(m.resolvedExternalResourceCount!==m.expectedResolvedExternalResourceCount) {
+          const m = JSON.parse(fs.readFileSync("public/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json","utf8"));
+          const n = JSON.parse(fs.readFileSync("public/models/kphx-full-airport/t4-a1-zdp-surfaces/surface-network.json","utf8"));
+          const placements = (n.polygons||[]).length + (n.drapedOrthophotos||[]).length + (n.lines||[]).length;
+          if (m.failures?.length) throw new Error(`Materialization failures: ${m.failures.length}`);
+          if (m.packageOwnedResourceCount !== 0) throw new Error(`Expected external-only checkpoint, got ${m.packageOwnedResourceCount} package resources`);
+          if (m.resolvedExternalResourceCount !== m.expectedResolvedExternalResourceCount) {
             throw new Error(`Resolved ${m.resolvedExternalResourceCount}/${m.expectedResolvedExternalResourceCount} ZDP resources`);
           }
-          if(!placements) throw new Error("No ZDP placements in local network");
+          if (n.scope?.radiusMeters !== 250) throw new Error(`Expected 250m filter, got ${n.scope?.radiusMeters}`);
+          if (!placements) throw new Error("No ZDP placements in local network");
           console.log(JSON.stringify({
-            radiusMeters:n.scope?.radiusMeters,
+            radiusMeters: n.scope.radiusMeters,
+            polygons: (n.polygons||[]).length,
+            drapedOrthophotos: (n.drapedOrthophotos||[]).length,
+            lines: (n.lines||[]).length,
             placements,
-            resources:m.resolvedExternalResourceCount,
-            status:"PASS"
-          },null,2));
+            resources: m.resolvedExternalResourceCount,
+            status: "PASS",
+          }, null, 2));
           NODE
 
       - name: Commit exact T4 A1 ZDP surface checkpoint
@@ -148,7 +153,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add             public/models/kphx-full-airport/t4-a1-zdp-surfaces             reports/kphx-t4-a1-surface-network-all.json             reports/kphx-t4-a1-zdp-surface-network.json             reports/kphx-t4-a1-zdp-resources.json             reports/kphx-t4-a1-zdp-library-map.json
-          git commit -m "Move exact T4 A1 ZDP ground and markings checkpoint"
+          git add --sparse             public/models/kphx-full-airport/t4-a1-zdp-surfaces             reports/kphx-t4-a1-surface-network-all.json             reports/kphx-t4-a1-zdp-surface-network.json             reports/kphx-t4-a1-zdp-resources.json             reports/kphx-t4-a1-zdp-library-map.json
+          git commit -m "Move exact 250m T4 A1 ZDP ground and markings checkpoint"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
