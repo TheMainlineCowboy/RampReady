@@ -53,6 +53,7 @@ const drawState = {
 const bump = (key) => commands.set(key, (commands.get(key) || 0) + 1);
 let currentAnimationTranslation = [0, 0, 0];
 const animationStack = [];
+let activeTranslation = null;
 let activeRotation = null;
 const snapshotState = () => ({
   ...drawState,
@@ -91,6 +92,7 @@ for (const rawLine of source.split(/\r?\n/)) {
   if (command === "ANIM_end") {
     bump(command);
     if (!animationStack.length) throw new Error("OBJ8 ANIM_end without matching ANIM_begin");
+    if (activeTranslation) throw new Error("OBJ8 ANIM_end reached before ANIM_trans_end");
     if (activeRotation) throw new Error("OBJ8 ANIM_end reached before ANIM_rotate_end");
     currentAnimationTranslation = animationStack.pop();
     continue;
@@ -108,6 +110,39 @@ for (const rawLine of source.split(/\r?\n/)) {
       throw new Error(`Animated OBJ8 translation cannot be reduced to exact rest pose: ${line}`);
     }
     currentAnimationTranslation = currentAnimationTranslation.map((value, index) => value + start[index]);
+    continue;
+  }
+  if (command === "ANIM_trans_begin") {
+    bump(command);
+    if (parts.length < 2) throw new Error(`Malformed ANIM_trans_begin record: ${line}`);
+    const dataref = parts.slice(1).join(" ");
+    if (dataref !== "marginal/groundtraffic/distance") {
+      throw new Error(`Unsupported OBJ8 translation dataref: ${dataref}`);
+    }
+    if (activeTranslation || activeRotation) throw new Error("Nested OBJ8 animation operation is unsupported");
+    activeTranslation = { dataref, keys: [], loop: null };
+    continue;
+  }
+  if (command === "ANIM_trans_key") {
+    bump(command);
+    if (!activeTranslation || parts.length < 5) throw new Error(`Malformed ANIM_trans_key record: ${line}`);
+    const value = Number(parts[1]);
+    const position = parts.slice(2, 5).map(Number);
+    if (!Number.isFinite(value) || position.some((entry) => !Number.isFinite(entry))) {
+      throw new Error(`Malformed ANIM_trans_key values: ${line}`);
+    }
+    activeTranslation.keys.push({ value, position });
+    continue;
+  }
+  if (command === "ANIM_trans_end") {
+    bump(command);
+    if (!activeTranslation) throw new Error("OBJ8 ANIM_trans_end without ANIM_trans_begin");
+    const zeroKey = activeTranslation.keys.find((key) => Math.abs(key.value) <= 1e-7);
+    if (!zeroKey) throw new Error("GroundTraffic translation animation has no exact zero-distance rest key");
+    currentAnimationTranslation = currentAnimationTranslation.map(
+      (value, index) => value + zeroKey.position[index],
+    );
+    activeTranslation = null;
     continue;
   }
   if (command === "ANIM_rotate_begin") {
@@ -134,10 +169,13 @@ for (const rawLine of source.split(/\r?\n/)) {
   }
   if (command === "ANIM_keyframe_loop") {
     bump(command);
-    if (!activeRotation || parts.length < 2) throw new Error(`Malformed ANIM_keyframe_loop record: ${line}`);
+    if ((!activeTranslation && !activeRotation) || parts.length < 2) {
+      throw new Error(`Malformed ANIM_keyframe_loop record: ${line}`);
+    }
     const loop = Number(parts[1]);
     if (!Number.isFinite(loop) || loop <= 0) throw new Error(`Malformed ANIM_keyframe_loop value: ${line}`);
-    activeRotation.loop = loop;
+    if (activeTranslation) activeTranslation.loop = loop;
+    if (activeRotation) activeRotation.loop = loop;
     continue;
   }
   if (command === "ANIM_rotate_end") {
@@ -254,7 +292,7 @@ for (const rawLine of source.split(/\r?\n/)) {
   else if (command === "ATTR_draw_disable") drawState.drawEnabled = false;
 }
 
-if (animationStack.length || activeRotation) throw new Error("OBJ8 animation block is unterminated");
+if (animationStack.length || activeTranslation || activeRotation) throw new Error("OBJ8 animation block is unterminated");
 if (!pointCounts) throw new Error("OBJ8 POINT_COUNTS record is missing");
 if (pointCounts[0] !== vertices.length) {
   throw new Error(`OBJ8 vertex count mismatch: header=${pointCounts[0]} parsed=${vertices.length}`);
@@ -302,8 +340,8 @@ const harmless = new Set([
   "SPECULAR",
   "ATTR_no_solid_camera", "ATTR_solid_camera",
   "IF", "ENDIF", "ATTR_poly_os",
-  "ANIM_begin", "ANIM_trans", "ANIM_rotate_begin", "ANIM_rotate_key",
-  "ANIM_keyframe_loop", "ANIM_rotate_end", "ANIM_end",
+  "ANIM_begin", "ANIM_trans", "ANIM_trans_begin", "ANIM_trans_key", "ANIM_trans_end",
+  "ANIM_rotate_begin", "ANIM_rotate_key", "ANIM_keyframe_loop", "ANIM_rotate_end", "ANIM_end",
 ]);
 const unsupported = [...commands.keys()].filter((command) => !harmless.has(command));
 if (unsupported.length) {
@@ -319,7 +357,14 @@ const normalScale = Number(options["normal-scale"] ?? sourceNormalScale ?? 1);
 const drapedNormalUri = options["draped-normal"] || sourceDrapedNormalTexture;
 const drapedNormalScale = Number(options["draped-normal-scale"] ?? sourceDrapedNormalScale ?? 1);
 const weatherUri = options.weather || sourceWeatherTexture;
-if (!diffuseUri || /^none$/i.test(diffuseUri)) throw new Error("OBJ8 source has no usable diffuse texture reference");
+const hasDiffuseTexture = Boolean(diffuseUri && !/^none$/i.test(diffuseUri));
+const hasDrapedDiffuseTexture = Boolean(drapedDiffuseUri && !/^none$/i.test(drapedDiffuseUri));
+if (!hasDiffuseTexture && !hasDrapedDiffuseTexture) {
+  throw new Error("OBJ8 source has no usable diffuse or draped texture reference");
+}
+if (!hasDiffuseTexture && drawRanges.some((range) => range.state.draped !== true)) {
+  throw new Error("OBJ8 source has non-draped draw ranges but no regular diffuse texture");
+}
 
 const positions = vertices.map((row) => row.slice(0, 3));
 const normals = vertices.map((row) => row.slice(3, 6));
@@ -442,16 +487,21 @@ const xPlaneTextureInfo = (index) => ({
   },
 });
 
-const images = [{ uri: diffuseUri }];
-const textures = [{ sampler: 0, source: 0 }];
+const images = [];
+const textures = [];
+const addTexture = (uri) => {
+  images.push({ uri });
+  textures.push({ sampler: 0, source: images.length - 1 });
+  return textures.length - 1;
+};
+let diffuseTextureIndex = null;
 let drapedDiffuseTextureIndex = null;
+if (hasDiffuseTexture) diffuseTextureIndex = addTexture(diffuseUri);
 let litTextureIndex = null;
 let normalTextureIndex = null;
 let drapedNormalTextureIndex = null;
-if (drapedDiffuseUri && !/^none$/i.test(drapedDiffuseUri)) {
-  images.push({ uri: drapedDiffuseUri });
-  textures.push({ sampler: 0, source: images.length - 1 });
-  drapedDiffuseTextureIndex = textures.length - 1;
+if (hasDrapedDiffuseTexture) {
+  drapedDiffuseTextureIndex = addTexture(drapedDiffuseUri);
 }
 if (litUri && !/^none$/i.test(litUri)) {
   images.push({ uri: litUri });
@@ -495,7 +545,7 @@ function materialIndexForState(state) {
       baseColorTexture: xPlaneTextureInfo(
         state.draped && drapedDiffuseTextureIndex !== null
           ? drapedDiffuseTextureIndex
-          : 0
+          : diffuseTextureIndex
       ),
       metallicFactor: 0,
       roughnessFactor: 1,
@@ -618,7 +668,7 @@ const gltf = {
     namedLights,
     sourceBounds: { min: accessors[positionAccessor].min, max: accessors[positionAccessor].max },
     geometryPolicy: "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
-    drawStatePolicy: "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;bake-exact-zero-distance-GroundTraffic-rest-translation;reject-unsupported-render-state",
+    drawStatePolicy: "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
     sceneryShadowsEnabled,
     textureCoordinatePolicy: "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin",
   },
@@ -639,7 +689,7 @@ console.log(JSON.stringify({
   drawRangeCount: drawRanges.length,
   materialCount: materials.length,
   sourceBounds: gltf.extras.sourceBounds,
-  diffuseUri,
+  diffuseUri: diffuseTextureIndex !== null ? diffuseUri : null,
   drapedDiffuseUri: drapedDiffuseTextureIndex !== null ? drapedDiffuseUri : null,
   litUri: litTextureIndex !== null ? litUri : null,
   normalUri: normalTextureIndex !== null ? normalUri : null,
