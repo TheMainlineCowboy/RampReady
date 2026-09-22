@@ -1,0 +1,84 @@
+name: KPHX Package Surface Checkpoint
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-package-surfaces.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-package-surfaces
+  cancel-in-progress: false
+
+jobs:
+  surfaces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      KPHX_RELEASE_TAG: kphx-source-1.75.1
+      KPHX_WED_SHA256: 59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install exact conversion tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y p7zip-full imagemagick
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/magick" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ "${1:-}" = "identify" ]; then
+            shift
+            exec identify "$@"
+          fi
+          exec convert "$@"
+          SH
+          chmod +x "$HOME/bin/magick"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Download locked KPHX source
+        id: source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-source .kphx-extracted
+          gh release download "${KPHX_RELEASE_TAG}" --pattern '*.7z' --dir .kphx-source
+          ARCHIVE="$(find .kphx-source -type f -name '*.7z' -print -quit)"
+          test -n "$ARCHIVE"
+          7z t "$ARCHIVE"
+          7z x -y "$ARCHIVE" -o.kphx-extracted >/dev/null
+          WED="$(find .kphx-extracted -type f -name earth.wed.xml -print -quit)"
+          test -n "$WED"
+          printf '%s  %s\n' "${KPHX_WED_SHA256}" "$WED" | sha256sum --check --strict
+          echo "source_root=$(dirname "$WED")" >> "$GITHUB_OUTPUT"
+
+      - name: Materialize exact package surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/materialize-kphx-surface-resources.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport/surfaces
+          node scripts/verify-kphx-surface-source-contract.mjs             public/models/kphx-full-airport/surfaces/manifest.json             public/models/kphx-full-airport/surfaces/surface-network.json
+
+      - name: Commit exact package surface checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             public/models/kphx-full-airport/surfaces             reports/kphx-wed-surface-network.json
+          git commit -m "Move exact KPHX package-owned pavement and line checkpoint"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
