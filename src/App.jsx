@@ -1,14 +1,14 @@
 import PushbackTrainer from "./components/PushbackTrainer.jsx";
 import KphxFullAirportVerifier from "./components/KphxFullAirportVerifier.jsx";
 import KphxT4FrameVerifier from "./components/KphxT4FrameVerifier.jsx";
-import KphxT4GroundVerifier from "./components/KphxT4GroundVerifier.jsx";
+import KphxT4GroundVerifier from "./components/KphxT4GroundVerifier.jsx";\nimport KphxA1JetwayVerifier from "./components/KphxA1JetwayVerifier.jsx";
 
 export default function App() {
   const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const t4FrameVerifier = params?.get("kphxT4Frame") === "1";
-  const t4GroundVerifier = params?.get("kphxT4Ground") === "1";
+  const t4GroundVerifier = params?.get("kphxT4Ground") === "1";\n  const a1JetwayVerifier = params?.get("kphxA1Jetway") === "1";
   const fullAirportVerifier = params?.get("kphxFullAirport") === "1";
-  if (t4GroundVerifier) return <KphxT4GroundVerifier />;
+  if (a1JetwayVerifier) return <KphxA1JetwayVerifier />;\n  if (t4GroundVerifier) return <KphxT4GroundVerifier />;
   if (t4FrameVerifier) return <KphxT4FrameVerifier />;
   return fullAirportVerifier ? <KphxFullAirportVerifier /> : <PushbackTrainer />;
 }
