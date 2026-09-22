@@ -11,11 +11,11 @@ export const SOURCE_KPHX_JETWAY_AUTHORITY = Object.freeze({
   placementArtifact: WED_JETWAY_URL,
   placementCount: EXPECTED_PLACEMENT_COUNT,
   sourceFacadeResource: EXPECTED_FACADE_RESOURCE,
-  movableVisibleGeometry: "models/airport-jetway/Airport_Jetway.glb",
-  movableVisibleGeometryAuthority: "exact-user-supplied-airport-jetway-glb",
-  placementPolicy: "WED owns gate association, rotunda/cab axis and source-airport coordinates",
-  geometryPolicy: "verified user-supplied exact movable bridge; no generated visible bridge replacement",
-  detailLevel: "exact-WED-footprints-plus-user-supplied-exact-movable-jetway-v2",
+  movableVisibleGeometry: "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac",
+  movableVisibleGeometryAuthority: "exact-XP11-stock-Jetway_1_solid.fac-from-user-supplied-stock-library",
+  placementPolicy: "WED owns exact open-facade node path, wall choices, gate association and source-airport coordinates",
+  geometryPolicy: "exact XP11 stock facade segments and attached OBJ8 pieces; no substitute bridge geometry",
+  detailLevel: "exact-WED-open-facade-paths-plus-XP11-stock-Jetway_1_solid.fac-v1",
 });
 
 function manifestUrl() {
@@ -58,7 +58,7 @@ async function loadManifest() {
 
 export async function installSourceKphxWEDJetways(THREE, environment, sourceAirportFrame) {
   if (!environment?.isGroup || !sourceAirportFrame?.isGroup) throw new Error("Exact KPHX WED jetway authority requires the source airport frame");
-  environment.userData.authoredTerminal4UploadedJetwayLoadState = "loading-exact-WED-placement-and-supplied-GLB";
+  environment.userData.authoredTerminal4UploadedJetwayLoadState = "loading-exact-WED-placement-and-XP11-stock-facade";
   const manifest = await loadManifest();
 
   const footprintAuthority = new THREE.Group();
