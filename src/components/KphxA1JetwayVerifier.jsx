@@ -11,7 +11,7 @@ import {
   applyIndividualArticulation,
   loadPlacementMap,
 } from "../environment/sourceKphxWedJetwayFleet.js";
-import { computeUploadedJetwayArticulation } from "../environment/uploadedAirportJetwayArticulationV10.js";
+import { computeUploadedJetwayWedParkedArticulation } from "../environment/uploadedAirportJetwayArticulationV10.js";
 import {
   kphxWedToRampReadyPosition,
   kphxXPlaneHeadingToRampReadyYawRadians,
@@ -117,12 +117,12 @@ export default function KphxA1JetwayVerifier() {
       }
 
       const reach = measurePrototypeReach(THREE, prototype);
-      const articulation = computeUploadedJetwayArticulation(a1, reach.sourceContactDistance);
+      const articulation = computeUploadedJetwayWedParkedArticulation(a1, reach.sourceContactDistance);
       const a1Model = prototype.clone(true);
       a1Model.name = "KPHX_A1_EXACT_AIRPORT_JETWAY";
       applyIndividualArticulation(a1Model, articulation);
       const attachedReach = measurePrototypeReach(THREE, a1Model);
-      const actualDoorGap = Math.abs(a1.aircraftDoorDistance - attachedReach.sourceContactDistance);
+      const actualDoorGap = Math.abs(a1.bridgeEnd - attachedReach.sourceContactDistance);
       if (!attachedReach.partOrderValid) throw new Error("A1 jetway source-part order changed");
       if (actualDoorGap > 0.05) throw new Error(`A1 exact jetway door-gap error is ${actualDoorGap.toFixed(4)}m`);
 
