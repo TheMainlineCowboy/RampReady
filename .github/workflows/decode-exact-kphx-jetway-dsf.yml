@@ -1,0 +1,179 @@
+name: Decode Exact KPHX Jetway DSF
+
+on:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/decode-exact-kphx-jetway-dsf.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  decode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 20
+          sparse-checkout: |
+            public/models/kphx/wed-jetways.exact.json
+            reports
+            .github/workflows
+          sparse-checkout-cone-mode: false
+
+      - name: Download Laminar DSFTool and shipped KPHX DSF
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            -o /tmp/xptools.zip \
+            "https://files.x-plane.com/public/xptools/xptools_lin_24-5.zip"
+          unzip -q /tmp/xptools.zip -d /tmp/xptools
+          TOOL="$(find /tmp/xptools -type f -name DSFTool | head -1)"
+          test -n "$TOOL"
+          chmod +x "$TOOL"
+          "$TOOL" --version || true
+          echo "$TOOL" > /tmp/dsftool-path
+
+          curl --fail --location --retry 3 \
+            -o /tmp/+33-112.dsf \
+            'https://sdmntprwestcentralus.oaiusercontent.com/files/00000000-6550-81fb-a27c-db8525fe6b8b/raw?se=2026-09-22T09%3A20%3A59Z&sp=r&sv=2026-02-06&sr=b&scid=96694c0a-04f9-5512-b230-187506ac0d4d&skoid=18c14e53-ea0c-429b-8d09-d22d66ca7169&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-22T06%3A33%3A46Z&ske=2026-09-23T06%3A33%3A46Z&sks=b&skv=2026-02-06&sig=7MQNEmkhD38otD6y3GcPyjPeXQsYUmpCe9PeEXdZYWM%3D'
+          test "$(stat -c%s /tmp/+33-112.dsf)" = "66980"
+          sha256sum /tmp/+33-112.dsf
+
+      - name: Decode shipped DSF with Laminar DSFTool
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOL="$(cat /tmp/dsftool-path)"
+          "$TOOL" -dsf2text /tmp/+33-112.dsf /tmp/kphx.dsf.txt
+          test -s /tmp/kphx.dsf.txt
+          grep -n "Jetway_1_solid.fac" /tmp/kphx.dsf.txt | head -20 || true
+
+      - name: Extract exact exported polygon for WED 99713
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python - <<'PY'
+          import json, math, pathlib, re
+
+          dsf_path=pathlib.Path('/tmp/kphx.dsf.txt')
+          lines=dsf_path.read_text(errors='replace').splitlines()
+          target_resource='lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac'
+
+          defs=[]
+          for line in lines:
+              if line.startswith('POLYGON_DEF '):
+                  defs.append(line[len('POLYGON_DEF '):].strip())
+
+          matching=[i for i,p in enumerate(defs) if p.replace('\\','/')==target_resource]
+          if not matching:
+              raise RuntimeError(f'Jetway facade polygon definition missing; defs={len(defs)}')
+          def_index=matching[0]
+
+          polygons=[]
+          current=None
+          winding=None
+          for lineno,line in enumerate(lines,1):
+              if line.startswith('BEGIN_POLYGON '):
+                  parts=line.split()
+                  current={
+                      'beginLine':lineno,
+                      'definitionIndex':int(parts[1]),
+                      'parameters':parts[2:],
+                      'windings':[],
+                      'raw':[line],
+                  }
+              elif current is not None:
+                  current['raw'].append(line)
+                  if line.startswith('BEGIN_WINDING'):
+                      winding=[]
+                  elif line.startswith('POLYGON_POINT '):
+                      vals=[float(x) for x in line.split()[1:]]
+                      if winding is None: winding=[]
+                      winding.append(vals)
+                  elif line.startswith('END_WINDING'):
+                      if winding is not None:
+                          current['windings'].append(winding)
+                      winding=None
+                  elif line.startswith('END_POLYGON'):
+                      if current['definitionIndex']==def_index:
+                          polygons.append(current)
+                      current=None
+                      winding=None
+
+          wed=json.loads(pathlib.Path('public/models/kphx/wed-jetways.exact.json').read_text())
+          placement=next(p for p in wed['placements'] if p['wedObjectId']==99713)
+          nodes=placement['rings'][0]['nodes']
+          target_lon=sum(float(n['longitude']) for n in nodes)/len(nodes)
+          target_lat=sum(float(n['latitude']) for n in nodes)/len(nodes)
+
+          def centroid(poly):
+              pts=[p for w in poly['windings'] for p in w]
+              if not pts:return (999,999)
+              return (sum(p[0] for p in pts)/len(pts),sum(p[1] for p in pts)/len(pts))
+          def meters(lon,lat):
+              dx=math.radians(lon-target_lon)*6378137*math.cos(math.radians(target_lat))
+              dy=math.radians(lat-target_lat)*6378137
+              return math.hypot(dx,dy)
+
+          ranked=[]
+          for p in polygons:
+              lon,lat=centroid(p)
+              p['centroid']=[lon,lat]
+              p['distanceToWed99713CentroidMeters']=meters(lon,lat)
+              ranked.append(p)
+          ranked.sort(key=lambda p:p['distanceToWed99713CentroidMeters'])
+          if not ranked:
+              raise RuntimeError('No exported jetway facade polygons found')
+          chosen=ranked[0]
+          if chosen['distanceToWed99713CentroidMeters']>100:
+              raise RuntimeError(f'Nearest exported jetway polygon too far: {chosen["distanceToWed99713CentroidMeters"]:.3f}m')
+
+          report={
+              'authority':'shipped KPHX +33-112.dsf decoded by Laminar DSFTool 24-5',
+              'resource':target_resource,
+              'polygonDefinitionIndex':def_index,
+              'jetwayPolygonCount':len(polygons),
+              'targetWedObjectId':99713,
+              'targetWedNodes':nodes,
+              'nearestExportedPolygon':{
+                  k:v for k,v in chosen.items() if k!='raw'
+              },
+              'nearestCandidates':[
+                  {
+                      'beginLine':p['beginLine'],
+                      'parameters':p['parameters'],
+                      'centroid':p['centroid'],
+                      'distanceToWed99713CentroidMeters':p['distanceToWed99713CentroidMeters'],
+                      'windings':p['windings'],
+                  }
+                  for p in ranked[:5]
+              ],
+          }
+          pathlib.Path('reports/kphx-jetway-99713-exported-dsf.json').write_text(json.dumps(report,indent=2)+'\n')
+          pathlib.Path('reports/kphx-jetway-99713-exported-dsf.txt').write_text('\n'.join(chosen['raw'])+'\n')
+          print(json.dumps({
+              'definitionIndex':def_index,
+              'jetwayPolygonCount':len(polygons),
+              'distanceMeters':chosen['distanceToWed99713CentroidMeters'],
+              'parameters':chosen['parameters'],
+              'windings':chosen['windings'],
+          },indent=2))
+          PY
+
+      - name: Commit exact DSF export evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-jetway-99713-exported-dsf.json reports/kphx-jetway-99713-exported-dsf.txt
+          git commit -m "Decode exact exported KPHX curved jetway from shipped DSF"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
