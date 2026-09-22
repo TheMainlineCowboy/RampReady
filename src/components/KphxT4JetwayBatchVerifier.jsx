@@ -4,6 +4,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { SOURCE_KPHX_TERMINAL4_OBJECTS } from "../environment/sourceKphxTerminal4.js";
 import { kphxWedToRampReadyPosition, kphxXPlaneHeadingToRampReadyYawRadians } from "../environment/kphxFullAirport/sourceAuthority.js";
 import { buildXp11Type2Facade } from "../environment/kphxFullAirport/xp11Type2Facade.js";
+import { applyExactXp11Obj8MaskCompatibility } from "../environment/kphxFullAirport/obj8RenderCompatibility.js";
 
 const BATCHES = Object.freeze({
   "A1-A8": Object.freeze(["A1","A2","A3","A4","A5","A6","A7","A8"]),
@@ -110,6 +111,11 @@ export default function KphxT4JetwayBatchVerifier() {
       for (const object of SOURCE_KPHX_TERMINAL4_OBJECTS) {
         const gltf = await loader.loadAsync(runtimeUrl(`/models/kphx/${object.runtime}`));
         const model = gltf.scene;
+        applyExactXp11Obj8MaskCompatibility(THREE, model, {
+          label: object.resource,
+          alphaCutoff: 0.5,
+          windingAlreadyConverted: false,
+        });
         model.name = object.name;
         model.position.fromArray(kphxWedToRampReadyPosition(object.latitude, object.longitude, 0));
         model.rotation.y = kphxXPlaneHeadingToRampReadyYawRadians(object.headingDegrees);
