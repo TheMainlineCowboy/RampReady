@@ -99,3 +99,5 @@ jobs:
           git push origin HEAD:kphx-full-airport-import
 
 # materialization trigger 2026-09-22
+
+# retrigger after OBJ8 comment parser fix
