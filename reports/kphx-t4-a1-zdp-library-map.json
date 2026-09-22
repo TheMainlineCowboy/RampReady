@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "libraryRoot": "/home/runner/work/RampReady/RampReady/.zdp",
+  "libraryTxt": "/home/runner/work/RampReady/RampReady/.zdp/library.txt",
+  "libraryTxtSha256": "8330b471c1a5061e273b534d787c6efa3cf589a1980c5583d65db6b67fff981b",
+  "virtualPrefix": "ZDP_Library",
+  "requestedCount": 12,
+  "resolvedCount": 12,
+  "unresolved": [],
+  "ambiguous": [],
+  "resources": {
+    "ZDP_Library/ground_textures/asphalt/grooved/overlays/Darkest.pol": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/ground_textures/asphalt/grooved/overlays/Darkest.pol",
+      "physicalResource": "polygons/asphalt/Overlays/grooved_darkest.pol",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/polygons/asphalt/Overlays/grooved_darkest.pol",
+      "sha256": "f028bc3721cb6f0bf7e8a84654c4292eb865e3f2999c8556f316855ced2531bb"
+    },
+    "ZDP_Library/ground_textures/asphalt/smooth1/smooth1_worn_dirty.pol": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/ground_textures/asphalt/smooth1/smooth1_worn_dirty.pol",
+      "physicalResource": "polygons/asphalt/smooth1_worn_dirty.pol",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/polygons/asphalt/smooth1_worn_dirty.pol",
+      "sha256": "14b249e6e1478a70a48c524375dc9b1d3c433405a1ee81dd6e94531f327ff5fc"
+    },
+    "ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol": {
+      "command": "EXPORT",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol",
+      "physicalResource": "polygons/concrete/concrete_flat_new_uniform.pol",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/polygons/concrete/concrete_flat_new_uniform.pol",
+      "sha256": "11cd06c43719fa8994acb5c7b5b6a8f77c81940de30f7b38433c4bcdd89772f7"
+    },
+    "ZDP_Library/ground_textures/concrete/flat/new_uniform.pol": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/ground_textures/concrete/flat/new_uniform.pol",
+      "physicalResource": "polygons/concrete/concrete_flat_new_uniform.pol",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/polygons/concrete/concrete_flat_new_uniform.pol",
+      "sha256": "11cd06c43719fa8994acb5c7b5b6a8f77c81940de30f7b38433c4bcdd89772f7"
+    },
+    "ZDP_Library/ground_textures/concrete/flat/overlays/dark.pol": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/ground_textures/concrete/flat/overlays/dark.pol",
+      "physicalResource": "polygons/concrete/colors/rough_dark.pol",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/polygons/concrete/colors/rough_dark.pol",
+      "sha256": "e16a09f7e792c4314295cc58ea928f22aa5773eb11754b3a27809c2a6e4d1611"
+    },
+    "ZDP_Library/ground_textures/concrete/flat/overlays/yellow_dark.pol": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/ground_textures/concrete/flat/overlays/yellow_dark.pol",
+      "physicalResource": "polygons/concrete/colors/rough_yellow_dark.pol",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/polygons/concrete/colors/rough_yellow_dark.pol",
+      "sha256": "3d10fde08e877611875caf719cc7b10765ae7e142fe6271205ff9f9a1752cf43"
+    },
+    "ZDP_Library/markings/lines/worn/blue_border.lin": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/lines/worn/blue_border.lin",
+      "physicalResource": "markings/lines/worn/blue_border.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/lines/worn/blue_border.lin",
+      "sha256": "663f505ae2e062b1b3bb181134993983d414ba43fbb69bb91d8ac1676ff34c3e"
+    },
+    "ZDP_Library/markings/lines/worn/centerline.lin": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/lines/worn/centerline.lin",
+      "physicalResource": "markings/lines/worn/centerline.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/lines/worn/centerline.lin",
+      "sha256": "32854cf888050a5324b9b245cacd0bbd5cdb562188d9411dc858188426c4d71d"
+    },
+    "ZDP_Library/markings/lines/worn/dashed_black_yellow.lin": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/lines/worn/dashed_black_yellow.lin",
+      "physicalResource": "markings/lines/worn/dashed_black_yellow.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/lines/worn/dashed_black_yellow.lin",
+      "sha256": "f4e038005e7a05e57b852bf91d301ad47718c946ce7d3fa1d2c614dd1a4c18e6"
+    },
+    "ZDP_Library/markings/lines/worn/intermediate_hold.lin": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/lines/worn/intermediate_hold.lin",
+      "physicalResource": "markings/lines/worn/intermediate_hold.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/lines/worn/intermediate_hold.lin",
+      "sha256": "cc0b57e4646e29aa73a8337e96455ebd3a019efcad4d782328a1e003423c0bbe"
+    },
+    "ZDP_Library/markings/lines/worn/white.lin": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/lines/worn/white.lin",
+      "physicalResource": "markings/lines/worn/white.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/lines/worn/white.lin",
+      "sha256": "e2ac5f2bfc09b7b53f40a7d9d66ea822dc56c18f1ea2231fe9d970a7c6dada77"
+    },
+    "ZDP_Library/markings/lines/worn/white_centerline_road.lin": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/lines/worn/white_centerline_road.lin",
+      "physicalResource": "markings/lines/worn/white_centerline_road.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/lines/worn/white_centerline_road.lin",
+      "sha256": "2afc50b9b190de6fc62a28c76387ac20970dc4f8dcd40a4860aae6e4c5821b36"
+    }
+  }
+}

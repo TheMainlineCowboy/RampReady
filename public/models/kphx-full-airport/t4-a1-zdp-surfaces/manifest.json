@@ -1,0 +1,871 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-09-22T03:36:23.768Z",
+  "source": {
+    "package": "KPHX - Phoenix Sky Harbor Intl",
+    "version": "1.75.1",
+    "wedSha256": null
+  },
+  "policy": {
+    "polygons": "WED-authored rings and Bezier controls; POL texture scale/heading/layer authority",
+    "lines": "WED-authored chains and Bezier controls; LIN TEX_WIDTH/SCALE/S_OFFSET width and UV authority",
+    "textures": "browser PNG generated only when decoded RGBA bytes equal source image at original dimensions",
+    "unsupportedCommands": "fail materialization rather than silently approximate",
+    "externalResources": "only explicitly resolved library resources are materialized; unresolved virtual resources are never substituted",
+    "libraryMap": "/home/runner/work/RampReady/RampReady/reports/kphx-t4-a1-zdp-library-map.json",
+    "placementReport": "/home/runner/work/RampReady/RampReady/reports/kphx-t4-a1-zdp-network.json",
+    "externalPrefixes": [
+      "ZDP_Library"
+    ]
+  },
+  "packageOwnedResourceCount": 0,
+  "materializedResourceCount": 0,
+  "resolvedExternalResourceCount": 12,
+  "expectedResolvedExternalResourceCount": 12,
+  "resources": {
+    "ZDP_Library/ground_textures/asphalt/grooved/overlays/Darkest.pol": {
+      "kind": "DRAPED_POLYGON",
+      "sourceResource": "ZDP_Library/ground_textures/asphalt/grooved/overlays/Darkest.pol",
+      "texture": {
+        "requested": "darkest.png",
+        "sourcePath": "polygons/asphalt/Overlays/darkest.png",
+        "sourceSha256": "b27eb6e7e2b2cb9fcfbef0d621dde724f86ca3a8e79b409b3d3fd8169fb9379a",
+        "sourceDecodedRgbaSha256": "af5bd91ffabe275d60c0872480fceaa725e20e36e14c3c01be660619a3420026",
+        "outputName": "darkest.png",
+        "outputUrl": "darkest.png",
+        "outputSha256": "b27eb6e7e2b2cb9fcfbef0d621dde724f86ca3a8e79b409b3d3fd8169fb9379a",
+        "outputDecodedRgbaSha256": "af5bd91ffabe275d60c0872480fceaa725e20e36e14c3c01be660619a3420026",
+        "width": 512,
+        "height": 512
+      },
+      "textureLit": null,
+      "textureNormal": "../../Asphalt_Grooved_NRM.png",
+      "normalScale": 1,
+      "scaleMeters": [
+        36,
+        36
+      ],
+      "layerGroup": {
+        "group": "taxiways",
+        "offset": 3
+      },
+      "surface": "concrete",
+      "noAlpha": false,
+      "globalSpecular": 0,
+      "weather": {
+        "requested": "../../asphalt_grooved_WXR.png",
+        "sourcePath": "polygons/asphalt_grooved_WXR.png",
+        "sourceSha256": "c27d1c63129539ff60727d63edd75a11e96b7c203d376a4ea2207626528bb3be",
+        "sourceDecodedRgbaSha256": "b832be5d49a3335cf7e819ca50795a552e5882633398099915c56be5b68139b3",
+        "outputName": "asphalt_grooved_WXR.png",
+        "outputUrl": "asphalt_grooved_WXR.png",
+        "outputSha256": "c27d1c63129539ff60727d63edd75a11e96b7c203d376a4ea2207626528bb3be",
+        "outputDecodedRgbaSha256": "b832be5d49a3335cf7e819ca50795a552e5882633398099915c56be5b68139b3",
+        "width": 1024,
+        "height": 1024
+      },
+      "decalLib": null,
+      "unsupported": [],
+      "sourceSha256": "f028bc3721cb6f0bf7e8a84654c4292eb865e3f2999c8556f316855ced2531bb",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/ground_textures/asphalt/grooved/overlays/Darkest",
+      "lit": null,
+      "normal": {
+        "requested": "../../Asphalt_Grooved_NRM.png",
+        "sourcePath": "polygons/Asphalt_Grooved_NRM.png",
+        "sourceSha256": "f4bbd304a50f6844b01c6a5f5746447409c1d87353364501b7bdd73ffba1bf22",
+        "sourceDecodedRgbaSha256": "8dfbe16de63aa95421ef94c25cd9199ed4486d9a2a954bb4130d06ea0f90cd40",
+        "outputName": "Asphalt_Grooved_NRM.png",
+        "outputUrl": "Asphalt_Grooved_NRM.png",
+        "outputSha256": "f4bbd304a50f6844b01c6a5f5746447409c1d87353364501b7bdd73ffba1bf22",
+        "outputDecodedRgbaSha256": "8dfbe16de63aa95421ef94c25cd9199ed4486d9a2a954bb4130d06ea0f90cd40",
+        "width": 4096,
+        "height": 4096
+      },
+      "decal": null
+    },
+    "ZDP_Library/ground_textures/asphalt/smooth1/smooth1_worn_dirty.pol": {
+      "kind": "DRAPED_POLYGON",
+      "sourceResource": "ZDP_Library/ground_textures/asphalt/smooth1/smooth1_worn_dirty.pol",
+      "texture": {
+        "requested": "../Smooth1_ALB.png",
+        "sourcePath": "polygons/Smooth1_ALB.dds",
+        "sourceSha256": "1b93e8abc48666e8d87408e76f8b20e9bf0b0d9949e0227091d1c75541e07fd9",
+        "sourceDecodedRgbaSha256": "9ff1e9a9e58ac36e0f568aa28baae4e9eaf7702a386fcd4872aa81be65a059bc",
+        "outputName": "Smooth1_ALB.png",
+        "outputUrl": "Smooth1_ALB.png",
+        "outputSha256": "808480bde27b85ce7875c342ba1d66238e28501abc05a40af192f38c77025362",
+        "outputDecodedRgbaSha256": "9ff1e9a9e58ac36e0f568aa28baae4e9eaf7702a386fcd4872aa81be65a059bc",
+        "width": 4096,
+        "height": 4096
+      },
+      "textureLit": null,
+      "textureNormal": "../Smooth1_rough_NRM.png",
+      "normalScale": 1,
+      "scaleMeters": [
+        36,
+        36
+      ],
+      "layerGroup": {
+        "group": "taxiways",
+        "offset": 2
+      },
+      "surface": "concrete",
+      "noAlpha": false,
+      "globalSpecular": null,
+      "weather": {
+        "requested": "../asphalt_smooth_WXR.png",
+        "sourcePath": "polygons/asphalt_smooth_WXR.png",
+        "sourceSha256": "2ac4047590932442512118bcf041600ef5d78bfb7646e1b9e0f38469b5133c08",
+        "sourceDecodedRgbaSha256": "9c5b7c0dee052c88676c08e092bd4cfee5efc16ddb14d756e068493cb3a0f9e6",
+        "outputName": "asphalt_smooth_WXR.png",
+        "outputUrl": "asphalt_smooth_WXR.png",
+        "outputSha256": "2ac4047590932442512118bcf041600ef5d78bfb7646e1b9e0f38469b5133c08",
+        "outputDecodedRgbaSha256": "9c5b7c0dee052c88676c08e092bd4cfee5efc16ddb14d756e068493cb3a0f9e6",
+        "width": 1024,
+        "height": 1024
+      },
+      "decalLib": "../decals/DECAL_dirty2.dcl",
+      "unsupported": [],
+      "sourceSha256": "14b249e6e1478a70a48c524375dc9b1d3c433405a1ee81dd6e94531f327ff5fc",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/ground_textures/asphalt/smooth1/smooth1_worn_dirty",
+      "lit": null,
+      "normal": {
+        "requested": "../Smooth1_rough_NRM.png",
+        "sourcePath": "polygons/Smooth1_rough_NRM.png",
+        "sourceSha256": "a1724fd2fb9a519645d0ff80a4e586b1c741b3e6ae6b19b8bd0320cf71ef1598",
+        "sourceDecodedRgbaSha256": "453689a3483d56f9019bfb4917fb46613e847c0c99282c2dafb1893aa1a19227",
+        "outputName": "Smooth1_rough_NRM.png",
+        "outputUrl": "Smooth1_rough_NRM.png",
+        "outputSha256": "a1724fd2fb9a519645d0ff80a4e586b1c741b3e6ae6b19b8bd0320cf71ef1598",
+        "outputDecodedRgbaSha256": "453689a3483d56f9019bfb4917fb46613e847c0c99282c2dafb1893aa1a19227",
+        "width": 4096,
+        "height": 4096
+      },
+      "decal": {
+        "kind": "DECAL",
+        "sourceResource": "polygons/decals/DECAL_dirty2.dcl",
+        "decals": [
+          {
+            "type": "DECAL_PARAMS",
+            "scaleRatio": 0.15,
+            "dither": 0,
+            "rgbKey": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "alphaKey": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0.1
+            ],
+            "texture": "asphalt_dirty_LF.png",
+            "image": {
+              "requested": "asphalt_dirty_LF.png",
+              "sourcePath": "polygons/decals/asphalt_dirty_LF.png",
+              "sourceSha256": "f69498769803de360c8e913ec0b2cac915079d8f18851aa570050a081903f1b3",
+              "sourceDecodedRgbaSha256": "69fc4a1b34f8b5227187eca121cde7a61804a381ce7af1dff3327213b7946d38",
+              "outputName": "asphalt_dirty_LF.png",
+              "outputUrl": "asphalt_dirty_LF.png",
+              "outputSha256": "f69498769803de360c8e913ec0b2cac915079d8f18851aa570050a081903f1b3",
+              "outputDecodedRgbaSha256": "69fc4a1b34f8b5227187eca121cde7a61804a381ce7af1dff3327213b7946d38",
+              "width": 2048,
+              "height": 2048
+            }
+          },
+          {
+            "type": "DECAL_PARAMS",
+            "scaleRatio": 0.15,
+            "dither": 0,
+            "rgbKey": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "alphaKey": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0.1
+            ],
+            "texture": "asphalt_damage_LF.png",
+            "image": {
+              "requested": "asphalt_damage_LF.png",
+              "sourcePath": "polygons/decals/asphalt_damage_LF.png",
+              "sourceSha256": "a87c3b2acd091ced5820d22e86cecc572d78669750312503843b09f481c91689",
+              "sourceDecodedRgbaSha256": "95c93475b58d23e1ebb11ddd8cc87698b2ddcdacdf6dfe174a7fbd8c7fdd3989",
+              "outputName": "asphalt_damage_LF.png",
+              "outputUrl": "asphalt_damage_LF.png",
+              "outputSha256": "a87c3b2acd091ced5820d22e86cecc572d78669750312503843b09f481c91689",
+              "outputDecodedRgbaSha256": "95c93475b58d23e1ebb11ddd8cc87698b2ddcdacdf6dfe174a7fbd8c7fdd3989",
+              "width": 2048,
+              "height": 2048
+            }
+          }
+        ],
+        "unsupported": [],
+        "sourceSha256": "61f183c91eeb33d6e2edb4af6a340fdb7daf489f8629ff0d523c8429530bd0e5"
+      }
+    },
+    "ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol": {
+      "kind": "DRAPED_POLYGON",
+      "sourceResource": "ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol",
+      "texture": {
+        "requested": "../Rough_High_ALB.png",
+        "sourcePath": "polygons/Rough_High_ALB.dds",
+        "sourceSha256": "7f8d89961bb79963149ab57f16f4bc1f23028e899e9e9f0ae36e39e5854a01bd",
+        "sourceDecodedRgbaSha256": "59b2a5a9f8f6689c99c1838cd7f4d085d6ca73c58e60324a55326deddfffb2b3",
+        "outputName": "Rough_High_ALB.png",
+        "outputUrl": "Rough_High_ALB.png",
+        "outputSha256": "4feecd5f339821c3eecd6d9423faf5bd333886d3c57db539cbd487483aafb70b",
+        "outputDecodedRgbaSha256": "59b2a5a9f8f6689c99c1838cd7f4d085d6ca73c58e60324a55326deddfffb2b3",
+        "width": 4096,
+        "height": 4096
+      },
+      "textureLit": null,
+      "textureNormal": "../Rough_High_NRM.png",
+      "normalScale": 1,
+      "scaleMeters": [
+        36,
+        36
+      ],
+      "layerGroup": {
+        "group": "taxiways",
+        "offset": 2
+      },
+      "surface": "concrete",
+      "noAlpha": false,
+      "globalSpecular": null,
+      "weather": {
+        "requested": "../Concrete_Smooth_WXR.png",
+        "sourcePath": "polygons/Concrete_Smooth_WXR.png",
+        "sourceSha256": "abba64b29ad92ecf0100762dc210f48cbdb8eb0e9dab2a631e3a986083d33571",
+        "sourceDecodedRgbaSha256": "b7a2d00c3a80095c77cc3b24871cde6d46b426abb5a1e0930e814a417d63553f",
+        "outputName": "Concrete_Smooth_WXR.png",
+        "outputUrl": "Concrete_Smooth_WXR.png",
+        "outputSha256": "abba64b29ad92ecf0100762dc210f48cbdb8eb0e9dab2a631e3a986083d33571",
+        "outputDecodedRgbaSha256": "b7a2d00c3a80095c77cc3b24871cde6d46b426abb5a1e0930e814a417d63553f",
+        "width": 1024,
+        "height": 1024
+      },
+      "decalLib": null,
+      "unsupported": [],
+      "sourceSha256": "11cd06c43719fa8994acb5c7b5b6a8f77c81940de30f7b38433c4bcdd89772f7",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform",
+      "lit": null,
+      "normal": {
+        "requested": "../Rough_High_NRM.png",
+        "sourcePath": "polygons/Rough_High_NRM.png",
+        "sourceSha256": "ea053c4c8fafb610f7428094c130f9b0d28d5f82fc80a9baf4af866df76c0c62",
+        "sourceDecodedRgbaSha256": "175d64bf3aac6f24af2f449947c96e419c540183fd19e23b39d4b3f6f7d24b98",
+        "outputName": "Rough_High_NRM.png",
+        "outputUrl": "Rough_High_NRM.png",
+        "outputSha256": "ea053c4c8fafb610f7428094c130f9b0d28d5f82fc80a9baf4af866df76c0c62",
+        "outputDecodedRgbaSha256": "175d64bf3aac6f24af2f449947c96e419c540183fd19e23b39d4b3f6f7d24b98",
+        "width": 4096,
+        "height": 4096
+      },
+      "decal": null
+    },
+    "ZDP_Library/ground_textures/concrete/flat/new_uniform.pol": {
+      "kind": "DRAPED_POLYGON",
+      "sourceResource": "ZDP_Library/ground_textures/concrete/flat/new_uniform.pol",
+      "texture": {
+        "requested": "../Rough_High_ALB.png",
+        "sourcePath": "polygons/Rough_High_ALB.dds",
+        "sourceSha256": "7f8d89961bb79963149ab57f16f4bc1f23028e899e9e9f0ae36e39e5854a01bd",
+        "sourceDecodedRgbaSha256": "59b2a5a9f8f6689c99c1838cd7f4d085d6ca73c58e60324a55326deddfffb2b3",
+        "outputName": "Rough_High_ALB.png",
+        "outputUrl": "Rough_High_ALB.png",
+        "outputSha256": "4feecd5f339821c3eecd6d9423faf5bd333886d3c57db539cbd487483aafb70b",
+        "outputDecodedRgbaSha256": "59b2a5a9f8f6689c99c1838cd7f4d085d6ca73c58e60324a55326deddfffb2b3",
+        "width": 4096,
+        "height": 4096
+      },
+      "textureLit": null,
+      "textureNormal": "../Rough_High_NRM.png",
+      "normalScale": 1,
+      "scaleMeters": [
+        36,
+        36
+      ],
+      "layerGroup": {
+        "group": "taxiways",
+        "offset": 2
+      },
+      "surface": "concrete",
+      "noAlpha": false,
+      "globalSpecular": null,
+      "weather": {
+        "requested": "../Concrete_Smooth_WXR.png",
+        "sourcePath": "polygons/Concrete_Smooth_WXR.png",
+        "sourceSha256": "abba64b29ad92ecf0100762dc210f48cbdb8eb0e9dab2a631e3a986083d33571",
+        "sourceDecodedRgbaSha256": "b7a2d00c3a80095c77cc3b24871cde6d46b426abb5a1e0930e814a417d63553f",
+        "outputName": "Concrete_Smooth_WXR.png",
+        "outputUrl": "Concrete_Smooth_WXR.png",
+        "outputSha256": "abba64b29ad92ecf0100762dc210f48cbdb8eb0e9dab2a631e3a986083d33571",
+        "outputDecodedRgbaSha256": "b7a2d00c3a80095c77cc3b24871cde6d46b426abb5a1e0930e814a417d63553f",
+        "width": 1024,
+        "height": 1024
+      },
+      "decalLib": null,
+      "unsupported": [],
+      "sourceSha256": "11cd06c43719fa8994acb5c7b5b6a8f77c81940de30f7b38433c4bcdd89772f7",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/ground_textures/concrete/flat/new_uniform",
+      "lit": null,
+      "normal": {
+        "requested": "../Rough_High_NRM.png",
+        "sourcePath": "polygons/Rough_High_NRM.png",
+        "sourceSha256": "ea053c4c8fafb610f7428094c130f9b0d28d5f82fc80a9baf4af866df76c0c62",
+        "sourceDecodedRgbaSha256": "175d64bf3aac6f24af2f449947c96e419c540183fd19e23b39d4b3f6f7d24b98",
+        "outputName": "Rough_High_NRM.png",
+        "outputUrl": "Rough_High_NRM.png",
+        "outputSha256": "ea053c4c8fafb610f7428094c130f9b0d28d5f82fc80a9baf4af866df76c0c62",
+        "outputDecodedRgbaSha256": "175d64bf3aac6f24af2f449947c96e419c540183fd19e23b39d4b3f6f7d24b98",
+        "width": 4096,
+        "height": 4096
+      },
+      "decal": null
+    },
+    "ZDP_Library/ground_textures/concrete/flat/overlays/dark.pol": {
+      "kind": "DRAPED_POLYGON",
+      "sourceResource": "ZDP_Library/ground_textures/concrete/flat/overlays/dark.pol",
+      "texture": {
+        "requested": "dark.png",
+        "sourcePath": "polygons/concrete/colors/dark.png",
+        "sourceSha256": "63bbff67fa59c9f58a0da1ea212eed7f3e8a8805379923aa53db180b151e6e80",
+        "sourceDecodedRgbaSha256": "941fa78d05e7ae3e1f840ccc175ecfa823716c3ac43ab13397c3cbb6d43890c8",
+        "outputName": "dark.png",
+        "outputUrl": "dark.png",
+        "outputSha256": "63bbff67fa59c9f58a0da1ea212eed7f3e8a8805379923aa53db180b151e6e80",
+        "outputDecodedRgbaSha256": "941fa78d05e7ae3e1f840ccc175ecfa823716c3ac43ab13397c3cbb6d43890c8",
+        "width": 512,
+        "height": 512
+      },
+      "textureLit": null,
+      "textureNormal": "../../Rough_High_NRM.png",
+      "normalScale": 1,
+      "scaleMeters": [
+        36,
+        36
+      ],
+      "layerGroup": {
+        "group": "taxiways",
+        "offset": 3
+      },
+      "surface": "concrete",
+      "noAlpha": false,
+      "globalSpecular": 0,
+      "weather": {
+        "requested": "../../Concrete_Smooth_WXR.png",
+        "sourcePath": "polygons/Concrete_Smooth_WXR.png",
+        "sourceSha256": "abba64b29ad92ecf0100762dc210f48cbdb8eb0e9dab2a631e3a986083d33571",
+        "sourceDecodedRgbaSha256": "b7a2d00c3a80095c77cc3b24871cde6d46b426abb5a1e0930e814a417d63553f",
+        "outputName": "Concrete_Smooth_WXR.png",
+        "outputUrl": "Concrete_Smooth_WXR.png",
+        "outputSha256": "abba64b29ad92ecf0100762dc210f48cbdb8eb0e9dab2a631e3a986083d33571",
+        "outputDecodedRgbaSha256": "b7a2d00c3a80095c77cc3b24871cde6d46b426abb5a1e0930e814a417d63553f",
+        "width": 1024,
+        "height": 1024
+      },
+      "decalLib": null,
+      "unsupported": [],
+      "sourceSha256": "e16a09f7e792c4314295cc58ea928f22aa5773eb11754b3a27809c2a6e4d1611",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/ground_textures/concrete/flat/overlays/dark",
+      "lit": null,
+      "normal": {
+        "requested": "../../Rough_High_NRM.png",
+        "sourcePath": "polygons/Rough_High_NRM.png",
+        "sourceSha256": "ea053c4c8fafb610f7428094c130f9b0d28d5f82fc80a9baf4af866df76c0c62",
+        "sourceDecodedRgbaSha256": "175d64bf3aac6f24af2f449947c96e419c540183fd19e23b39d4b3f6f7d24b98",
+        "outputName": "Rough_High_NRM.png",
+        "outputUrl": "Rough_High_NRM.png",
+        "outputSha256": "ea053c4c8fafb610f7428094c130f9b0d28d5f82fc80a9baf4af866df76c0c62",
+        "outputDecodedRgbaSha256": "175d64bf3aac6f24af2f449947c96e419c540183fd19e23b39d4b3f6f7d24b98",
+        "width": 4096,
+        "height": 4096
+      },
+      "decal": null
+    },
+    "ZDP_Library/ground_textures/concrete/flat/overlays/yellow_dark.pol": {
+      "kind": "DRAPED_POLYGON",
+      "sourceResource": "ZDP_Library/ground_textures/concrete/flat/overlays/yellow_dark.pol",
+      "texture": {
+        "requested": "yellow_dark.png",
+        "sourcePath": "polygons/concrete/colors/yellow_dark.png",
+        "sourceSha256": "fbddc645fadd03ffa5e73ebdcabfaff3d76e7aa64641fb0f5796ff7432611716",
+        "sourceDecodedRgbaSha256": "c2052a31755a5fb389c7476acdb20d7e4cfc9c4697668547449c12194df148b5",
+        "outputName": "yellow_dark.png",
+        "outputUrl": "yellow_dark.png",
+        "outputSha256": "fbddc645fadd03ffa5e73ebdcabfaff3d76e7aa64641fb0f5796ff7432611716",
+        "outputDecodedRgbaSha256": "c2052a31755a5fb389c7476acdb20d7e4cfc9c4697668547449c12194df148b5",
+        "width": 512,
+        "height": 512
+      },
+      "textureLit": null,
+      "textureNormal": "../../Rough_High_NRM.png",
+      "normalScale": 1,
+      "scaleMeters": [
+        36,
+        36
+      ],
+      "layerGroup": {
+        "group": "taxiways",
+        "offset": 3
+      },
+      "surface": "concrete",
+      "noAlpha": false,
+      "globalSpecular": 0,
+      "weather": {
+        "requested": "../../Concrete_Smooth_WXR.png",
+        "sourcePath": "polygons/Concrete_Smooth_WXR.png",
+        "sourceSha256": "abba64b29ad92ecf0100762dc210f48cbdb8eb0e9dab2a631e3a986083d33571",
+        "sourceDecodedRgbaSha256": "b7a2d00c3a80095c77cc3b24871cde6d46b426abb5a1e0930e814a417d63553f",
+        "outputName": "Concrete_Smooth_WXR.png",
+        "outputUrl": "Concrete_Smooth_WXR.png",
+        "outputSha256": "abba64b29ad92ecf0100762dc210f48cbdb8eb0e9dab2a631e3a986083d33571",
+        "outputDecodedRgbaSha256": "b7a2d00c3a80095c77cc3b24871cde6d46b426abb5a1e0930e814a417d63553f",
+        "width": 1024,
+        "height": 1024
+      },
+      "decalLib": null,
+      "unsupported": [],
+      "sourceSha256": "3d10fde08e877611875caf719cc7b10765ae7e142fe6271205ff9f9a1752cf43",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/ground_textures/concrete/flat/overlays/yellow_dark",
+      "lit": null,
+      "normal": {
+        "requested": "../../Rough_High_NRM.png",
+        "sourcePath": "polygons/Rough_High_NRM.png",
+        "sourceSha256": "ea053c4c8fafb610f7428094c130f9b0d28d5f82fc80a9baf4af866df76c0c62",
+        "sourceDecodedRgbaSha256": "175d64bf3aac6f24af2f449947c96e419c540183fd19e23b39d4b3f6f7d24b98",
+        "outputName": "Rough_High_NRM.png",
+        "outputUrl": "Rough_High_NRM.png",
+        "outputSha256": "ea053c4c8fafb610f7428094c130f9b0d28d5f82fc80a9baf4af866df76c0c62",
+        "outputDecodedRgbaSha256": "175d64bf3aac6f24af2f449947c96e419c540183fd19e23b39d4b3f6f7d24b98",
+        "width": 4096,
+        "height": 4096
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/blue_border.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/blue_border.lin",
+      "texture": {
+        "requested": "../lines2_worn.png",
+        "sourcePath": "markings/lines/lines2_worn.dds",
+        "sourceSha256": "986b61c4f44434bd8db8670538dcf9fe4aa1314dc8046d4f293eb60476f39eb5",
+        "sourceDecodedRgbaSha256": "31ae41835fef371f5fafa0bd6a74afd8b76ff97ca9c9a93f5a745b1e2edfdab2",
+        "outputName": "lines2_worn.png",
+        "outputUrl": "lines2_worn.png",
+        "outputSha256": "a4aaa1ab471814acf8bdbda7a8d1ffd55750cbf5b9c1adf264094e4a9eafbe78",
+        "outputDecodedRgbaSha256": "31ae41835fef371f5fafa0bd6a74afd8b76ff97ca9c9a93f5a745b1e2edfdab2",
+        "width": 4096,
+        "height": 4096
+      },
+      "scaleMeters": [
+        20,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": 4096,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 512,
+          "center": 575,
+          "right": 639
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "663f505ae2e062b1b3bb181134993983d414ba43fbb69bb91d8ac1676ff34c3e",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/markings/lines/worn/blue_border",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/centerline.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/centerline.lin",
+      "texture": {
+        "requested": "../lines1_worn.png",
+        "sourcePath": "markings/lines/lines1_worn.dds",
+        "sourceSha256": "0854e37642d966a6af3b26ba68cb538bd97283630e641079a0a77bbc9b3def89",
+        "sourceDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "outputName": "lines1_worn.png",
+        "outputUrl": "lines1_worn.png",
+        "outputSha256": "c9bff3d36c34b66765a57fae7611842c2555bc0996d64a611b0e0e336556598e",
+        "outputDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "width": 4096,
+        "height": 4096
+      },
+      "scaleMeters": [
+        12,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": null,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 1152,
+          "center": 1279,
+          "right": 1407
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "32854cf888050a5324b9b245cacd0bbd5cdb562188d9411dc858188426c4d71d",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/markings/lines/worn/centerline",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/dashed_black_yellow.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/dashed_black_yellow.lin",
+      "texture": {
+        "requested": "../lines1_worn.png",
+        "sourcePath": "markings/lines/lines1_worn.dds",
+        "sourceSha256": "0854e37642d966a6af3b26ba68cb538bd97283630e641079a0a77bbc9b3def89",
+        "sourceDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "outputName": "lines1_worn.png",
+        "outputUrl": "lines1_worn.png",
+        "outputSha256": "c9bff3d36c34b66765a57fae7611842c2555bc0996d64a611b0e0e336556598e",
+        "outputDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "width": 4096,
+        "height": 4096
+      },
+      "scaleMeters": [
+        12,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": 4096,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 2304,
+          "center": 2367,
+          "right": 2432
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "f4e038005e7a05e57b852bf91d301ad47718c946ce7d3fa1d2c614dd1a4c18e6",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/markings/lines/worn/dashed_black_yellow",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/intermediate_hold.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/intermediate_hold.lin",
+      "texture": {
+        "requested": "../lines1_worn.png",
+        "sourcePath": "markings/lines/lines1_worn.dds",
+        "sourceSha256": "0854e37642d966a6af3b26ba68cb538bd97283630e641079a0a77bbc9b3def89",
+        "sourceDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "outputName": "lines1_worn.png",
+        "outputUrl": "lines1_worn.png",
+        "outputSha256": "c9bff3d36c34b66765a57fae7611842c2555bc0996d64a611b0e0e336556598e",
+        "outputDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "width": 4096,
+        "height": 4096
+      },
+      "scaleMeters": [
+        24,
+        24
+      ],
+      "textureWidth": 4096,
+      "textureHeight": 4096,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 128,
+          "center": 255,
+          "right": 383
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "cc0b57e4646e29aa73a8337e96455ebd3a019efcad4d782328a1e003423c0bbe",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/markings/lines/worn/intermediate_hold",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/white.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/white.lin",
+      "texture": {
+        "requested": "../lines1_worn.png",
+        "sourcePath": "markings/lines/lines1_worn.dds",
+        "sourceSha256": "0854e37642d966a6af3b26ba68cb538bd97283630e641079a0a77bbc9b3def89",
+        "sourceDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "outputName": "lines1_worn.png",
+        "outputUrl": "lines1_worn.png",
+        "outputSha256": "c9bff3d36c34b66765a57fae7611842c2555bc0996d64a611b0e0e336556598e",
+        "outputDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "width": 4096,
+        "height": 4096
+      },
+      "scaleMeters": [
+        12,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": 4096,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 896,
+          "center": 1023,
+          "right": 1151
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "e2ac5f2bfc09b7b53f40a7d9d66ea822dc56c18f1ea2231fe9d970a7c6dada77",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/markings/lines/worn/white",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/white_centerline_road.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/white_centerline_road.lin",
+      "texture": {
+        "requested": "../lines1_worn.png",
+        "sourcePath": "markings/lines/lines1_worn.dds",
+        "sourceSha256": "0854e37642d966a6af3b26ba68cb538bd97283630e641079a0a77bbc9b3def89",
+        "sourceDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "outputName": "lines1_worn.png",
+        "outputUrl": "lines1_worn.png",
+        "outputSha256": "c9bff3d36c34b66765a57fae7611842c2555bc0996d64a611b0e0e336556598e",
+        "outputDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "width": 4096,
+        "height": 4096
+      },
+      "scaleMeters": [
+        12,
+        8
+      ],
+      "textureWidth": 4096,
+      "textureHeight": null,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 640,
+          "center": 703,
+          "right": 767
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "2afc50b9b190de6fc62a28c76387ac20970dc4f8dcd40a4860aae6e4c5821b36",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/ZDP_Library/markings/lines/worn/white_centerline_road",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096
+      },
+      "decal": null
+    }
+  },
+  "failures": []
+}

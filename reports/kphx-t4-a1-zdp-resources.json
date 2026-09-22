@@ -1,0 +1,20 @@
+{
+  "authority": "public/models/kphx-full-airport/surfaces/surface-network.json",
+  "dependency": "ZDP_Library",
+  "version": "1.2.0",
+  "radiusMeters": 150,
+  "resources": [
+    "ZDP_Library/ground_textures/asphalt/grooved/overlays/Darkest.pol",
+    "ZDP_Library/ground_textures/asphalt/smooth1/smooth1_worn_dirty.pol",
+    "ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol",
+    "ZDP_Library/ground_textures/concrete/flat/new_uniform.pol",
+    "ZDP_Library/ground_textures/concrete/flat/overlays/dark.pol",
+    "ZDP_Library/ground_textures/concrete/flat/overlays/yellow_dark.pol",
+    "ZDP_Library/markings/lines/worn/blue_border.lin",
+    "ZDP_Library/markings/lines/worn/centerline.lin",
+    "ZDP_Library/markings/lines/worn/dashed_black_yellow.lin",
+    "ZDP_Library/markings/lines/worn/intermediate_hold.lin",
+    "ZDP_Library/markings/lines/worn/white.lin",
+    "ZDP_Library/markings/lines/worn/white_centerline_road.lin"
+  ]
+}
