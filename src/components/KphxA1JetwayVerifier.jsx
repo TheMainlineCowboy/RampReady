@@ -2,42 +2,101 @@ import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import {
-  SOURCE_KPHX_A1_ORIGIN,
-  SOURCE_KPHX_TERMINAL4_OBJECTS,
-} from "../environment/sourceKphxTerminal4.js";
-import {
-  loadExactPrototype,
-  measurePrototypeReach,
-  applyIndividualArticulation,
-  loadPlacementMap,
-} from "../environment/sourceKphxWedJetwayFleet.js";
-import { computeUploadedJetwayWedParkedArticulation } from "../environment/uploadedAirportJetwayArticulationV10.js";
-import {
   kphxWedToRampReadyPosition,
   kphxXPlaneHeadingToRampReadyYawRadians,
 } from "../environment/kphxFullAirport/sourceAuthority.js";
+import { SOURCE_KPHX_TERMINAL4_OBJECTS } from "../environment/sourceKphxTerminal4.js";
 
-const A1_FACADE_OBJECT_ID = 104804;
-const EXACT_GLB_SHA256 = "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0";
+const A1_WED_OBJECT_ID = 104804;
+const STOCK_FACADE_RESOURCE = "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac";
 
 function runtimeUrl(url) {
   const base = String(import.meta.env?.BASE_URL || "/").replace(/\/$/, "");
   return base && base !== "/" ? `${base}${url}` : url;
 }
 
+function objectRuntimeUrl(objectName) {
+  const stem = objectName.replace(/\.obj$/i, "");
+  return runtimeUrl(`/models/kphx-xp11-jetways/objects/${stem}/${stem}.gltf`);
+}
+
+function buildFacadeWallMesh(placement, material) {
+  const positions = [];
+  const normals = [];
+  const uvs = [];
+  const indices = [];
+  let vertexOffset = 0;
+
+  for (const chunk of placement.meshChunks) {
+    for (const vertex of chunk.vertices) {
+      positions.push(...vertex.position);
+      normals.push(...vertex.normal);
+      uvs.push(...vertex.uv);
+    }
+    for (const index of chunk.indices) indices.push(index + vertexOffset);
+    vertexOffset += chunk.vertices.length;
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.name = "KPHX_A1_XP11_Stock_Facade_WallMesh";
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+async function loadFacadeMaterial() {
+  const loader = new THREE.TextureLoader();
+  const [albedo, lit, normal] = await Promise.all([
+    loader.loadAsync(runtimeUrl("/models/kphx-xp11-jetways/textures/jetway_1_ALB.png")),
+    loader.loadAsync(runtimeUrl("/models/kphx-xp11-jetways/textures/jetway_1_LIT.png")),
+    loader.loadAsync(runtimeUrl("/models/kphx-xp11-jetways/textures/jetway_1_NML.png")),
+  ]);
+
+  albedo.colorSpace = THREE.SRGBColorSpace;
+  lit.colorSpace = THREE.SRGBColorSpace;
+  normal.colorSpace = THREE.NoColorSpace;
+
+  // TextureLoader's default Y flip matches X-Plane's lower-left UV convention
+  // for this directly-authored facade mesh. No UV coordinates are rewritten.
+  return new THREE.MeshStandardMaterial({
+    name: "XP11 jetway_1_solid.fac wall material",
+    map: albedo,
+    emissiveMap: lit,
+    emissive: new THREE.Color(0xffffff),
+    emissiveIntensity: 1,
+    normalMap: normal,
+    alphaTest: 0.5,
+    transparent: false,
+    side: THREE.FrontSide,
+    metalness: 0,
+    roughness: 1,
+  });
+}
+
 export default function KphxA1JetwayVerifier() {
   const mountRef = useRef(null);
-  const [status, setStatus] = useState("Loading exact A1 jet bridge…");
+  const [status, setStatus] = useState("Loading exact XP11 A1 jetway…");
 
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return undefined;
 
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get("view") || "oblique";
+
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xb7d0e2);
-    scene.fog = new THREE.Fog(0xb7d0e2, 500, 1700);
+    scene.fog = new THREE.Fog(0xb7d0e2, 350, 1400);
 
-    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 2500);
+    const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 2200);
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.enabled = true;
@@ -45,13 +104,13 @@ export default function KphxA1JetwayVerifier() {
     renderer.domElement.dataset.kphxA1JetwayVerifier = "loading";
     mount.appendChild(renderer.domElement);
 
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x69645d, 2.2));
-    const sun = new THREE.DirectionalLight(0xffffff, 3.2);
-    sun.position.set(220, 420, 180);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x66615b, 2.2));
+    const sun = new THREE.DirectionalLight(0xffffff, 3.0);
+    sun.position.set(120, 250, 140);
     scene.add(sun);
 
     const root = new THREE.Group();
-    root.name = "KPHX_A1_EXACT_JETWAY_VERIFIER";
+    root.name = "KPHX_A1_EXACT_XP11_STOCK_JETWAY_VERIFIER";
     scene.add(root);
 
     let disposed = false;
@@ -67,136 +126,144 @@ export default function KphxA1JetwayVerifier() {
     window.addEventListener("resize", resize);
     resize();
 
-    const render = () => {
+    const animate = () => {
       if (disposed) return;
       renderer.render(scene, camera);
-      raf = requestAnimationFrame(render);
+      raf = requestAnimationFrame(animate);
     };
-    render();
+    animate();
 
     const load = async () => {
-      const loader = new GLTFLoader();
+      const gltfLoader = new GLTFLoader();
 
-      const object = SOURCE_KPHX_TERMINAL4_OBJECTS.find((entry) => entry.resource === "Terminals/Terminal4b.obj");
-      if (!object) throw new Error("Exact Terminal4b source object is missing");
-      const terminalGltf = await loader.loadAsync(runtimeUrl(`/models/kphx/${object.runtime}`));
-      const terminal = terminalGltf.scene;
-      terminal.name = object.name;
-      terminal.position.fromArray(kphxWedToRampReadyPosition(object.latitude, object.longitude, 0));
-      terminal.rotation.y = kphxXPlaneHeadingToRampReadyYawRadians(object.headingDegrees);
-      terminal.traverse((node) => {
-        if (!node.isMesh) return;
-        node.castShadow = true;
-        node.receiveShadow = true;
-        const materials = Array.isArray(node.material) ? node.material : [node.material];
-        for (const material of materials) {
-          if (material?.map) material.map.colorSpace = THREE.SRGBColorSpace;
-        }
-      });
-      root.add(terminal);
-
-
-      const [map, rawFacadeResponse, prototype] = await Promise.all([
-        loadPlacementMap(),
-        fetch(runtimeUrl("/models/kphx/wed-jetways.exact.json"), { cache: "no-store" }),
-        loadExactPrototype(THREE),
-      ]);
-      if (!rawFacadeResponse.ok) throw new Error(`Raw WED jetway manifest HTTP ${rawFacadeResponse.status}`);
-      const rawFacades = await rawFacadeResponse.json();
-
-      const a1 = map.placements.find((placement) => placement.gate === "A1");
-      const rawA1 = rawFacades.placements.find((placement) => placement.wedObjectId === A1_FACADE_OBJECT_ID);
-      if (!a1 || !rawA1) throw new Error("Exact A1 WED jetway authority is missing");
-      if (a1.rampWedObjectId !== 27855) throw new Error(`A1 ramp authority changed to ${a1.rampWedObjectId}`);
-      if (a1.facadeWedObjectId !== A1_FACADE_OBJECT_ID) throw new Error(`A1 facade authority changed to ${a1.facadeWedObjectId}`);
-      if (a1.facadeNodeCount !== 7 || rawA1.rings?.[0]?.nodes?.length !== 7) {
-        throw new Error("A1 exact WED facade must preserve seven nodes");
-      }
-      if (Math.abs(a1.x - a1.sourceAxis.rotunda[0]) > 1e-9 || Math.abs(a1.z - a1.sourceAxis.rotunda[1]) > 1e-9) {
-        throw new Error("A1 rotunda anchor no longer equals the WED source-axis rotunda");
+      for (const object of SOURCE_KPHX_TERMINAL4_OBJECTS) {
+        const gltf = await gltfLoader.loadAsync(runtimeUrl(`/models/kphx/${object.runtime}`));
+        const model = gltf.scene;
+        model.name = object.name;
+        model.position.fromArray(kphxWedToRampReadyPosition(object.latitude, object.longitude, 0));
+        model.rotation.y = kphxXPlaneHeadingToRampReadyYawRadians(object.headingDegrees);
+        model.traverse((node) => {
+          if (!node.isMesh) return;
+          node.castShadow = true;
+          node.receiveShadow = true;
+          const materials = Array.isArray(node.material) ? node.material : [node.material];
+          for (const material of materials) {
+            if (material?.map) material.map.colorSpace = THREE.SRGBColorSpace;
+          }
+        });
+        root.add(model);
       }
 
-      const reach = measurePrototypeReach(THREE, prototype);
-      const articulation = computeUploadedJetwayWedParkedArticulation(a1, reach.sourceContactDistance);
-      const a1Model = prototype.clone(true);
-      a1Model.name = "KPHX_A1_EXACT_AIRPORT_JETWAY";
-      applyIndividualArticulation(a1Model, articulation);
-      const attachedReach = measurePrototypeReach(THREE, a1Model);
-      const actualDoorGap = Math.abs(a1.bridgeEnd - attachedReach.sourceContactDistance);
-      if (!attachedReach.partOrderValid) throw new Error("A1 jetway source-part order changed");
-      if (actualDoorGap > 0.05) throw new Error(`A1 exact jetway door-gap error is ${actualDoorGap.toFixed(4)}m`);
+      const layoutResponse = await fetch(
+        runtimeUrl("/models/kphx-xp11-jetways/layout.exact.json"),
+        { cache: "no-store" },
+      );
+      if (!layoutResponse.ok) throw new Error(`Jetway layout HTTP ${layoutResponse.status}`);
+      const layout = await layoutResponse.json();
 
-      const sourceFrame = new THREE.Group();
-      sourceFrame.name = "KPHX_A1_JETWAY_SOURCE_FRAME";
-      sourceFrame.position.fromArray(SOURCE_KPHX_A1_ORIGIN.browserPosition);
-      sourceFrame.rotation.y = THREE.MathUtils.degToRad(90);
+      if (layout.facadeResource !== STOCK_FACADE_RESOURCE) {
+        throw new Error(`Unexpected facade resource ${layout.facadeResource}`);
+      }
+      if (layout.isRing !== false) throw new Error("XP11 stock jetway facade must remain RING 0");
+      if (layout.placements.length !== 108) {
+        throw new Error(`Expected 108 authored stock jetways, got ${layout.placements.length}`);
+      }
 
-      const anchor = new THREE.Group();
-      anchor.name = "KPHX_A1_WED_JETWAY_ANCHOR";
-      anchor.position.set(a1.x, 0, a1.z);
-      anchor.rotation.y = a1.yawRadians;
-      anchor.add(a1Model);
-      sourceFrame.add(anchor);
-      root.add(sourceFrame);
+      const a1 = layout.placements.find((entry) => entry.wedObjectId === A1_WED_OBJECT_ID);
+      if (!a1 || a1.blockedExactCurve) throw new Error("A1 exact stock facade is unavailable");
+      if (a1.nodeCount !== 7 || a1.wallCount !== 6 || a1.edges.length !== 6) {
+        throw new Error("A1 WED open-chain contract failed");
+      }
+      const wallSequence = a1.edges.map((edge) => edge.wallType).join(",");
+      if (wallSequence !== "Wall 1,Wall 1,Wall 1,Wall 1,Wall 5,Wall 4") {
+        throw new Error(`A1 wall sequence mismatch: ${wallSequence}`);
+      }
+      if (a1.objectInstances.length !== 16) {
+        throw new Error(`Expected 16 A1 stock object attachments, got ${a1.objectInstances.length}`);
+      }
 
-      const footprintPoints = rawA1.rings[0].nodes.map((node) => {
-        const world = kphxWedToRampReadyPosition(Number(node.latitude), Number(node.longitude), 0.08);
-        return new THREE.Vector3(...world);
-      });
-      footprintPoints.push(footprintPoints[0].clone());
-      const footprintGeometry = new THREE.BufferGeometry().setFromPoints(footprintPoints);
-      const footprint = new THREE.Line(
-        footprintGeometry,
+      const jetway = new THREE.Group();
+      jetway.name = "KPHX_A1_XP11_Jetway_1_solid_Facade";
+      root.add(jetway);
+
+      const wallMaterial = await loadFacadeMaterial();
+      jetway.add(buildFacadeWallMesh(a1, wallMaterial));
+
+      const uniqueObjects = [...new Set(a1.objectInstances.map((entry) => entry.object))];
+      const prototypes = new Map();
+      for (const objectName of uniqueObjects) {
+        const gltf = await gltfLoader.loadAsync(objectRuntimeUrl(objectName));
+        const prototype = gltf.scene;
+        prototype.name = `XP11_${objectName}`;
+        prototype.traverse((node) => {
+          if (!node.isMesh) return;
+          node.castShadow = true;
+          node.receiveShadow = true;
+        });
+        prototypes.set(objectName, prototype);
+      }
+
+      for (const instance of a1.objectInstances) {
+        const model = prototypes.get(instance.object).clone(true);
+        model.name = `A1_${instance.edgeIndex}_${instance.templateIndex}_${instance.object}`;
+        model.position.fromArray(instance.position);
+        model.rotation.y = instance.yawRadians;
+        jetway.add(model);
+      }
+
+      const pathPoints = a1.edges.map((edge) => new THREE.Vector3(edge.start[0], 0.12, edge.start[1]));
+      const last = a1.edges.at(-1).end;
+      pathPoints.push(new THREE.Vector3(last[0], 0.12, last[1]));
+      const pathGeometry = new THREE.BufferGeometry().setFromPoints(pathPoints);
+      const pathLine = new THREE.Line(
+        pathGeometry,
         new THREE.LineBasicMaterial({ color: 0x00ffff }),
       );
-      footprint.name = "KPHX_A1_WED_7_NODE_FOOTPRINT";
-      root.add(footprint);
+      pathLine.name = "KPHX_A1_RAW_WED_OPEN_PATH";
+      root.add(pathLine);
 
-      const a1Marker = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.45, 0.45, 8, 16),
-        new THREE.MeshStandardMaterial({ color: 0xffd100 }),
-      );
-      a1Marker.position.fromArray(SOURCE_KPHX_A1_ORIGIN.browserPosition);
-      a1Marker.position.y = 4;
-      root.add(a1Marker);
+      root.updateMatrixWorld(true);
+      const jetwayBounds = new THREE.Box3().setFromObject(jetway);
+      if (jetwayBounds.isEmpty()) throw new Error("A1 stock jetway rendered empty");
+      const center = jetwayBounds.getCenter(new THREE.Vector3());
+      const size = jetwayBounds.getSize(new THREE.Vector3());
 
-      sourceFrame.updateMatrixWorld(true);
-      anchor.updateMatrixWorld(true);
-      const worldAnchor = new THREE.Vector3();
-      anchor.getWorldPosition(worldAnchor);
-
-      const expectedWorldAnchor = new THREE.Vector3(
-        a1.z,
-        0,
-        -a1.x + SOURCE_KPHX_A1_ORIGIN.browserPosition[2],
-      );
-      const anchorError = worldAnchor.distanceTo(expectedWorldAnchor);
-      if (anchorError > 0.001) throw new Error(`A1 WED anchor transform error ${anchorError.toFixed(6)}m`);
-
-      camera.position.set(worldAnchor.x + 55, 28, worldAnchor.z + 58);
-      camera.lookAt(worldAnchor.x + 3, 4.5, worldAnchor.z + 4);
+      if (view === "top") {
+        camera.position.set(center.x, Math.max(55, size.length() * 1.3), center.z + 0.01);
+        camera.up.set(0, 0, -1);
+      } else if (view === "terminal") {
+        camera.position.set(center.x - 34, 13, center.z + 38);
+      } else {
+        camera.position.set(center.x + 44, 24, center.z + 48);
+      }
+      camera.lookAt(center.x, Math.max(4.5, center.y), center.z);
       camera.updateProjectionMatrix();
 
+      const blocked = layout.placements.filter((entry) => entry.blockedExactCurve);
       renderer.domElement.dataset.kphxA1JetwayVerifier = "ready";
-      renderer.domElement.dataset.kphxA1RampWedObjectId = String(a1.rampWedObjectId);
-      renderer.domElement.dataset.kphxA1FacadeWedObjectId = String(a1.facadeWedObjectId);
-      renderer.domElement.dataset.kphxA1FacadeNodeCount = String(a1.facadeNodeCount);
-      renderer.domElement.dataset.kphxA1JetwayGlbSha256 = EXACT_GLB_SHA256;
-      renderer.domElement.dataset.kphxA1BridgeEndMeters = String(a1.bridgeEnd);
-      renderer.domElement.dataset.kphxA1SourceContactMeters = String(reach.sourceContactDistance);
-      renderer.domElement.dataset.kphxA1ActualContactMeters = String(attachedReach.sourceContactDistance);
-      renderer.domElement.dataset.kphxA1ActualDoorGapMeters = String(actualDoorGap);
-      renderer.domElement.dataset.kphxA1AnchorErrorMeters = String(anchorError);
-      renderer.domElement.dataset.kphxA1YawRadians = String(a1.yawRadians);
-      renderer.domElement.dataset.kphxA1PartOrderValid = String(attachedReach.partOrderValid);
-      setStatus(`A1 exact jet bridge · WED 104804 · 7 nodes · door gap ${actualDoorGap.toFixed(3)}m`);
+      renderer.domElement.dataset.kphxA1FacadeResource = layout.facadeResource;
+      renderer.domElement.dataset.kphxA1WedObjectId = String(a1.wedObjectId);
+      renderer.domElement.dataset.kphxA1NodeCount = String(a1.nodeCount);
+      renderer.domElement.dataset.kphxA1WallCount = String(a1.wallCount);
+      renderer.domElement.dataset.kphxA1ObjectInstanceCount = String(a1.objectInstances.length);
+      renderer.domElement.dataset.kphxJetwaySourcePlacementCount = String(layout.placements.length);
+      renderer.domElement.dataset.kphxJetwayReadyStraightPlacementCount = String(
+        layout.placements.length - blocked.length,
+      );
+      renderer.domElement.dataset.kphxJetwayBlockedCurveIds = blocked.map((entry) => entry.wedObjectId).join(",");
+      renderer.domElement.dataset.kphxLegacyAirportJetwayGlbLoaded = "false";
+      renderer.domElement.dataset.kphxA1WallSequence = wallSequence;
+      renderer.domElement.dataset.kphxA1View = view;
+      renderer.domElement.dataset.kphxA1BoundsMin = jetwayBounds.min.toArray().join(",");
+      renderer.domElement.dataset.kphxA1BoundsMax = jetwayBounds.max.toArray().join(",");
+      setStatus(`A1 exact XP11 stock facade · 6 WED walls · 16 stock OBJ attachments · ${view}`);
     };
 
     load().catch((error) => {
       const message = error instanceof Error ? error.message : String(error);
       renderer.domElement.dataset.kphxA1JetwayVerifier = "error";
       renderer.domElement.dataset.kphxA1JetwayError = message;
-      setStatus(`A1 jetway failed: ${message}`);
+      setStatus(`A1 exact XP11 jetway failed: ${message}`);
       console.error(error);
     });
 
