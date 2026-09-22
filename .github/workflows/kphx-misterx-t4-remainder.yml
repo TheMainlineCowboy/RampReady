@@ -1,0 +1,157 @@
+name: KPHX MisterX T4 Remainder Exact Source
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-misterx-t4-remainder.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-misterx-t4-remainder
+  cancel-in-progress: false
+
+jobs:
+  move-raw:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install Drive downloader
+        run: python -m pip install --disable-pip-version-check gdown==5.2.0
+
+      - name: Configure checkpoint commits
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Airbus A320-200 exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft"
+          mkdir -p "$BASE"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1SLvpkA1x2vUB3l7_A6c9ofHcl7iFkoqW" -O "$BASE/Airbus_A320_200"
+          find "$BASE/Airbus_A320_200" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-A320-SHA256SUMS.txt
+          git add "$BASE/Airbus_A320_200" assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-A320-SHA256SUMS.txt
+          if git diff --cached --quiet; then
+            echo "Airbus A320-200 already exact; no commit needed."
+          else
+            git commit -m "Move exact MisterX T4 Airbus A320 source"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
+
+      - name: Boeing 757-300 exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1X5y6DmuQ0TwXW_4_hZXHGPmiHum0vGc0" -O "$BASE/Boeing_757_300"
+          find "$BASE/Boeing_757_300" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-B757-SHA256SUMS.txt
+          git add "$BASE/Boeing_757_300" assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-B757-SHA256SUMS.txt
+          if git diff --cached --quiet; then
+            echo "Boeing 757-300 already exact; no commit needed."
+          else
+            git commit -m "Move exact MisterX T4 Boeing 757-300 source"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
+
+      - name: Embraer 175 exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1usB-at-1_QermwlOQgoZ0r0x0INDxzef" -O "$BASE/Embraer_175"
+          find "$BASE/Emraer_175" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-E175-SHA256SUMS.txt 2>/dev/null || true
+          find "$BASE/Embraer_175" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-E175-SHA256SUMS.txt
+          git add "$BASE/Embraer_175" assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-E175-SHA256SUMS.txt
+          if git diff --cached --quiet; then
+            echo "Embraer 175 already exact; no commit needed."
+          else
+            git commit -m "Move exact MisterX T4 Embraer 175 source"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
+
+      - name: Ramps exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1TJM8RzfRXzJuJ33Hj4bjP3GdHKSamqTN" -O "$ROOT/Ramps"
+          find "$ROOT/Ramps" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-RAMPS-SHA256SUMS.txt
+          git add "$ROOT/Ramps" assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-RAMPS-SHA256SUMS.txt
+          if git diff --cached --quiet; then
+            echo "Ramps already exact; no commit needed."
+          else
+            git commit -m "Move exact MisterX T4 ramp source"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
+
+      - name: People exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/10AJ4-aihaY06Fb_7RvmfXgFAp8IQ3SvM" -O "$ROOT/People"
+          find "$ROOT/People" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-PEOPLE-SHA256SUMS.txt
+          git add "$ROOT/People" assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-PEOPLE-SHA256SUMS.txt
+          if git diff --cached --quiet; then
+            echo "People already exact; no commit needed."
+          else
+            git commit -m "Move exact MisterX T4 people source"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
+
+      - name: Physical van and truck exports exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Vehicles"
+          mkdir -p "$ROOT"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1AiUGHanRiuX-P7jfJwOYC9Twzet4TCLU" -O "$ROOT/Trucks"
+          find "$ROOT/Trucks" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-TRUCKS-SHA256SUMS.txt
+          git add "$ROOT/Trucks" assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-TRUCKS-SHA256SUMS.txt
+          if git diff --cached --quiet; then
+            echo "Physical Trucks already exact; no commit needed."
+          else
+            git commit -m "Move exact MisterX T4 physical truck exports"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
+
+      - name: Construction exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Objects"
+          mkdir -p "$ROOT"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1koQgOiB1K3Oswbr1g7NLTzHmBWPBnmos" -O "$ROOT/Construction"
+          find "$ROOT/Construction" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-CONSTRUCTION-SHA256SUMS.txt
+          git add "$ROOT/Construction" assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-CONSTRUCTION-SHA256SUMS.txt
+          if git diff --cached --quiet; then
+            echo "Construction already exact; no commit needed."
+          else
+            git commit -m "Move exact MisterX T4 construction source"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
