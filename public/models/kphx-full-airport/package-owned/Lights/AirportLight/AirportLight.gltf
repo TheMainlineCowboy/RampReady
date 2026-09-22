@@ -150,13 +150,16 @@
       "extras": {
         "xPlaneDraped": false,
         "xPlaneLayerGroupDraped": null,
+        "xPlaneLayerGroup": null,
         "xPlaneLodDraped": null,
         "xPlaneEmissionRgb": [
           0,
           0,
           0
         ],
-        "xPlaneLodRange": null
+        "xPlaneLodRange": null,
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": null
       }
     }
   ],
@@ -182,13 +185,15 @@
               "drawEnabled": true,
               "draped": false,
               "layerGroupDraped": null,
+              "layerGroup": null,
               "lodDraped": null,
               "emissionRgb": [
                 0,
                 0,
                 0
               ],
-              "lodRange": null
+              "lodRange": null,
+              "shinyRatio": null
             }
           }
         }
@@ -266,7 +271,11 @@
             ],
             "raw": "LIGHT_PARAM\tsodium_flood_BB\t0.00000000\t20.10865593\t-0.88739556\t-.2 -.71 -.67 8"
           }
-        ]
+        ],
+        "xPlaneVertexLights": [],
+        "xPlaneNamedLights": [],
+        "xPlaneGlobalNoShadow": false,
+        "xPlaneGlobalSpecular": null
       }
     }
   ],
@@ -283,6 +292,10 @@
     "sourceFile": "AirportLight.obj",
     "sourceTexture": "AirportLight.png",
     "sourceLitTexture": null,
+    "sourceNormalTexture": null,
+    "sourceNormalScale": null,
+    "globalNoShadow": false,
+    "globalSpecular": null,
     "pointCounts": [
       317,
       0,
@@ -304,13 +317,15 @@
           "drawEnabled": true,
           "draped": false,
           "layerGroupDraped": null,
+          "layerGroup": null,
           "lodDraped": null,
           "emissionRgb": [
             0,
             0,
             0
           ],
-          "lodRange": null
+          "lodRange": null,
+          "shinyRatio": null
         }
       }
     ],

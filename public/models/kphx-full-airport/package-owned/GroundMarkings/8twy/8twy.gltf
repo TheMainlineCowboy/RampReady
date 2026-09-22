@@ -153,13 +153,16 @@
           "group": "markings",
           "offset": 2
         },
+        "xPlaneLayerGroup": null,
         "xPlaneLodDraped": 4000,
         "xPlaneEmissionRgb": [
           0,
           0,
           0
         ],
-        "xPlaneLodRange": null
+        "xPlaneLodRange": null,
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": null
       }
     }
   ],
@@ -188,13 +191,15 @@
                 "group": "markings",
                 "offset": 2
               },
+              "layerGroup": null,
               "lodDraped": 4000,
               "emissionRgb": [
                 0,
                 0,
                 0
               ],
-              "lodRange": null
+              "lodRange": null,
+              "shinyRatio": null
             }
           }
         }
@@ -206,7 +211,11 @@
       "name": "8twy",
       "mesh": 0,
       "extras": {
-        "xPlaneParameterizedLights": []
+        "xPlaneParameterizedLights": [],
+        "xPlaneVertexLights": [],
+        "xPlaneNamedLights": [],
+        "xPlaneGlobalNoShadow": false,
+        "xPlaneGlobalSpecular": null
       }
     }
   ],
@@ -223,6 +232,10 @@
     "sourceFile": "8twy.obj",
     "sourceTexture": "TaxiSigns.png",
     "sourceLitTexture": null,
+    "sourceNormalTexture": null,
+    "sourceNormalScale": null,
+    "globalNoShadow": false,
+    "globalSpecular": null,
     "pointCounts": [
       24,
       0,
@@ -247,13 +260,15 @@
             "group": "markings",
             "offset": 2
           },
+          "layerGroup": null,
           "lodDraped": 4000,
           "emissionRgb": [
             0,
             0,
             0
           ],
-          "lodRange": null
+          "lodRange": null,
+          "shinyRatio": null
         }
       }
     ],

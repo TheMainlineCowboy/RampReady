@@ -150,13 +150,16 @@
       "extras": {
         "xPlaneDraped": true,
         "xPlaneLayerGroupDraped": null,
+        "xPlaneLayerGroup": null,
         "xPlaneLodDraped": 4000,
         "xPlaneEmissionRgb": [
           0,
           0,
           0
         ],
-        "xPlaneLodRange": null
+        "xPlaneLodRange": null,
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": null
       }
     }
   ],
@@ -182,13 +185,15 @@
               "drawEnabled": true,
               "draped": true,
               "layerGroupDraped": null,
+              "layerGroup": null,
               "lodDraped": 4000,
               "emissionRgb": [
                 0,
                 0,
                 0
               ],
-              "lodRange": null
+              "lodRange": null,
+              "shinyRatio": null
             }
           }
         }
@@ -200,7 +205,11 @@
       "name": "26_8",
       "mesh": 0,
       "extras": {
-        "xPlaneParameterizedLights": []
+        "xPlaneParameterizedLights": [],
+        "xPlaneVertexLights": [],
+        "xPlaneNamedLights": [],
+        "xPlaneGlobalNoShadow": false,
+        "xPlaneGlobalSpecular": null
       }
     }
   ],
@@ -217,6 +226,10 @@
     "sourceFile": "26_8.obj",
     "sourceTexture": "RunwaySigns.png",
     "sourceLitTexture": null,
+    "sourceNormalTexture": null,
+    "sourceNormalScale": null,
+    "globalNoShadow": false,
+    "globalSpecular": null,
     "pointCounts": [
       24,
       0,
@@ -238,13 +251,15 @@
           "drawEnabled": true,
           "draped": true,
           "layerGroupDraped": null,
+          "layerGroup": null,
           "lodDraped": 4000,
           "emissionRgb": [
             0,
             0,
             0
           ],
-          "lodRange": null
+          "lodRange": null,
+          "shinyRatio": null
         }
       }
     ],
