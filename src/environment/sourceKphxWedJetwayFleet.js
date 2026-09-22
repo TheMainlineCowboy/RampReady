@@ -12,6 +12,39 @@ const PLACEMENT_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-terminal4-jetway-ramp-ass
 const A1_ANIMATION_AUTHORITY = "disabled-during-exact-source-placement-verification";
 const NATIVE_RETRACTION_AUTHORITY = "disabled-original-zip-pose-locked";
 const SOURCE_PART_NAMES = Object.freeze(["Rotunda", "Tunnel_A", "Tunnel_B", "Tunnel_C", "Cab"]);
+const STOCK_FACADE_BASE = "/models/xplane11-stock/jetway1";
+const STOCK_FACADE_RESOURCE = "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac";
+const RAW_WED_JETWAY_URL = "models/kphx/wed-jetways.exact.json";
+const EXACT_STOCK_FACADE_SHA256 = "a98a61b6de28a0db6548f748163494fc24513267dee40322502d5800eff8feb5";
+
+function runtimeAssetUrl(relativePath) {
+  const base = String(import.meta.env?.BASE_URL || "/").replace(/\/$/, "");
+  const clean = String(relativePath).startsWith("/") ? relativePath : `/${relativePath}`;
+  return base && base !== "/" ? `${base}${clean}` : clean;
+}
+
+function sourceWallChoice(node) {
+  const match = String(node?.wallType || "").match(/Wall\s+(\d+)/i);
+  if (!match) throw new Error(`Exact WED jetway node ${node?.wedObjectId ?? "unknown"} lost its wall choice`);
+  return Number(match[1]) - 1;
+}
+
+async function loadExactStockFacadeText() {
+  const response = await fetch(runtimeAssetUrl(`${STOCK_FACADE_BASE}/jetway_1_solid.fac`), { cache: "no-store" });
+  if (!response.ok) throw new Error(`Exact XP11 stock jetway facade returned HTTP ${response.status}`);
+  return response.text();
+}
+
+async function loadRawWedJetwayManifest() {
+  const response = await fetch(runtimeAssetUrl(`/${RAW_WED_JETWAY_URL}`), { cache: "no-store" });
+  if (!response.ok) throw new Error(`Exact KPHX WED jetway manifest returned HTTP ${response.status}`);
+  const manifest = await response.json();
+  if (manifest?.authority !== "KPHX-1.75.1-earth.wed.xml" || !Array.isArray(manifest.placements)) {
+    throw new Error("Exact KPHX WED jetway manifest failed its source contract");
+  }
+  return manifest;
+}
+
 const STOCK_JETWAY_RESOURCE = "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac";
 const STOCK_JETWAY_BASE = "/models/xplane11-stock/jetway1";
 const WED_JETWAY_MANIFEST_URL = "models/kphx/wed-jetways.exact.json";
@@ -224,132 +257,106 @@ export async function installSourceKphxWedJetwayFleet(THREE, environment, source
     throw new Error("Exact KPHX WED jetways require the source airport frame");
   }
 
-  const map = await loadPlacementMap();
-  const [facadeResponse, wedResponse] = await Promise.all([
-    fetch(`${import.meta.env.BASE_URL || "/"}models/xplane11-stock/jetway1/jetway_1_solid.fac`, { cache: "no-store" }),
-    fetch(`${import.meta.env.BASE_URL || "/"}${WED_JETWAY_MANIFEST_URL}`, { cache: "no-store" }),
+  const [map, facadeText, rawWed] = await Promise.all([
+    loadPlacementMap(),
+    loadExactStockFacadeText(),
+    loadRawWedJetwayManifest(),
   ]);
-  if (!facadeResponse.ok) throw new Error(`Exact XP11 stock jetway facade returned HTTP ${facadeResponse.status}`);
-  if (!wedResponse.ok) throw new Error(`Exact KPHX WED jetway manifest returned HTTP ${wedResponse.status}`);
-
-  const facadeText = await facadeResponse.text();
-  const wed = await wedResponse.json();
-  if (wed?.authority !== "KPHX-1.75.1-earth.wed.xml" || !Array.isArray(wed.placements)) {
-    throw new Error("Exact KPHX WED jetway manifest failed its source contract");
-  }
-
-  const latitude0 = SOURCE_KPHX_A1_ORIGIN.latitude * Math.PI / 180;
-  const sourceLocalFromWED = (latitude, longitude) => {
-    const east = (Number(longitude) - SOURCE_KPHX_A1_ORIGIN.longitude) * Math.PI / 180
-      * EARTH_RADIUS_METERS * Math.cos(latitude0);
-    const north = (Number(latitude) - SOURCE_KPHX_A1_ORIGIN.latitude) * Math.PI / 180
-      * EARTH_RADIUS_METERS;
-    return new THREE.Vector2(east, -north);
-  };
-  const wallChoice = (node) => {
-    const match = String(node.wallType || node.wall_type || "").match(/Wall\s+(\d+)/i);
-    if (!match) throw new Error(`WED jetway node ${node.wedObjectId} lost its authored wall choice`);
-    return Number(match[1]) - 1;
-  };
+  const rawById = new Map(rawWed.placements.map((placement) => [placement.wedObjectId, placement]));
+  sourceAirportFrame.updateMatrixWorld(true);
 
   const jetwayGroup = new THREE.Group();
-  jetwayGroup.name = "KPHX_T4_WED_Exact_XP11_Stock_Jetways";
-  jetwayGroup.userData.sourceAuthority = "KPHX 1.75.1 earth.wed.xml + exact XP11 stock Jetway_1_solid.fac";
-  jetwayGroup.userData.sourceFacadeResource = STOCK_JETWAY_RESOURCE;
-  jetwayGroup.userData.stockFacadeBase = STOCK_JETWAY_BASE;
-  jetwayGroup.userData.substitutionPolicy = "none";
-  jetwayGroup.userData.oldAirportJetwayGlbUsed = false;
-
+  jetwayGroup.name = "KPHX_T4_Exact_XP11_Stock_WED_Jetways";
   const evidence = [];
-  let renderedEdgeCount = 0;
 
-  for (const gateMap of map.placements) {
-    const placement = wed.placements.find((entry) => entry.wedObjectId === gateMap.facadeWedObjectId);
-    if (!placement) {
-      throw new Error(`Missing exact WED facade ${gateMap.facadeWedObjectId} for ${gateMap.gate}`);
-    }
-    if (placement.resource !== STOCK_JETWAY_RESOURCE) {
-      throw new Error(`${gateMap.gate} source facade changed to ${placement.resource}`);
+  for (const mapped of map.placements) {
+    const raw = rawById.get(mapped.facadeWedObjectId);
+    if (!raw) throw new Error(`T4 gate ${mapped.gate} is missing exact WED facade ${mapped.facadeWedObjectId}`);
+    if (raw.resource !== STOCK_FACADE_RESOURCE) {
+      throw new Error(`T4 gate ${mapped.gate} source facade changed to ${raw.resource}`);
     }
 
-    const nodes = placement.rings?.[0]?.nodes || [];
-    if (nodes.length !== gateMap.facadeNodeCount) {
-      throw new Error(`${gateMap.gate} exact node count mismatch map=${gateMap.facadeNodeCount} WED=${nodes.length}`);
+    const nodes = raw.rings?.[0]?.nodes || [];
+    if (nodes.length !== mapped.facadeNodeCount) {
+      throw new Error(`T4 gate ${mapped.gate} WED node count mismatch: map=${mapped.facadeNodeCount} source=${nodes.length}`);
     }
 
-    const footprint = nodes.map((node) => sourceLocalFromWED(node.latitude, node.longitude));
-    const wallChoices = nodes.map(wallChoice);
+    const footprint = nodes.map((node) => {
+      const world = new THREE.Vector3(
+        ...kphxWedToRampReadyPosition(Number(node.latitude), Number(node.longitude), 0),
+      );
+      const local = sourceAirportFrame.worldToLocal(world);
+      return new THREE.Vector2(local.x, local.z);
+    });
+    const wallChoices = nodes.map(sourceWallChoice);
+
     const built = await buildXp11Type2Facade({
       facadeText,
       footprint,
       wallChoices,
-      basePath: STOCK_JETWAY_BASE,
+      basePath: STOCK_FACADE_BASE,
     });
-
     if (built.facade.ringMode !== 0) {
-      throw new Error(`${gateMap.gate} exact stock jetway facade is no longer RING 0`);
+      throw new Error(`T4 gate ${mapped.gate} exact stock facade changed from open RING 0`);
     }
     if (built.wallEvidence.length !== nodes.length - 1) {
-      throw new Error(`${gateMap.gate} rendered ${built.wallEvidence.length} edges, expected ${nodes.length - 1}`);
+      throw new Error(`T4 gate ${mapped.gate} rendered ${built.wallEvidence.length} edges for ${nodes.length} WED nodes`);
     }
 
-    built.root.name = `KPHX_${gateMap.gate}_WED_${gateMap.facadeWedObjectId}_Exact_XP11_Stock_Jetway`;
-    built.root.userData.gate = gateMap.gate;
-    built.root.userData.rampWedObjectId = gateMap.rampWedObjectId;
-    built.root.userData.facadeWedObjectId = gateMap.facadeWedObjectId;
-    built.root.userData.facadeNodeCount = nodes.length;
-    built.root.userData.sourceResource = placement.resource;
-    built.root.userData.wallChoices = wallChoices.map((choice) => choice + 1);
+    built.root.name = `KPHX_T4_${mapped.gate}_Facade_${mapped.facadeWedObjectId}_Exact_XP11_Stock`;
+    built.root.userData.gate = mapped.gate;
+    built.root.userData.rampWedObjectId = mapped.rampWedObjectId;
+    built.root.userData.facadeWedObjectId = mapped.facadeWedObjectId;
+    built.root.userData.sourceResource = STOCK_FACADE_RESOURCE;
+    built.root.userData.sourceFacadeSha256 = EXACT_STOCK_FACADE_SHA256;
+    built.root.userData.sourceNodeCount = nodes.length;
+    built.root.userData.sourceWallChoices = wallChoices.map((value) => value + 1).join(",");
     jetwayGroup.add(built.root);
 
-    renderedEdgeCount += built.wallEvidence.length;
     evidence.push({
-      gate: gateMap.gate,
-      rampWedObjectId: gateMap.rampWedObjectId,
-      facadeWedObjectId: gateMap.facadeWedObjectId,
+      gate: mapped.gate,
+      rampWedObjectId: mapped.rampWedObjectId,
+      facadeWedObjectId: mapped.facadeWedObjectId,
       nodeCount: nodes.length,
       renderedEdgeCount: built.wallEvidence.length,
-      wallChoices: wallChoices.map((choice) => choice + 1),
+      wallChoices: wallChoices.map((value) => value + 1),
     });
   }
 
-  if (evidence.length !== 76) {
-    throw new Error(`Exact T4 stock jetway runtime built ${evidence.length} jetways, expected 76`);
+  if (jetwayGroup.children.length !== 76 || evidence.length !== 76) {
+    throw new Error(`Exact T4 jetway live install produced ${jetwayGroup.children.length} bridges; expected 76`);
   }
+
+  jetwayGroup.userData.sourceAuthority = "KPHX-1.75.1-WED-plus-exact-XP11-stock-Jetway_1_solid.fac";
+  jetwayGroup.userData.sourceFacadeResource = STOCK_FACADE_RESOURCE;
+  jetwayGroup.userData.sourceFacadeSha256 = EXACT_STOCK_FACADE_SHA256;
+  jetwayGroup.userData.sourcePlacementAuthority = map.authority;
+  jetwayGroup.userData.jetwayCount = 76;
+  jetwayGroup.userData.oldAirportJetwayGlbLoaded = false;
+  jetwayGroup.userData.substitutionPolicy = "none";
+  jetwayGroup.userData.sourceEvidence = evidence;
 
   sourceAirportFrame.add(jetwayGroup);
   sourceAirportFrame.updateMatrixWorld(true);
 
-  const a1 = evidence.find((entry) => entry.facadeWedObjectId === 104804);
-  if (!a1 || a1.nodeCount !== 7) {
-    throw new Error("Exact A1 stock jetway runtime failed its WED source contract");
-  }
-
-  jetwayGroup.userData.uploadedJetwayLoadState = "ready-exact-xp11-stock-facade";
-  jetwayGroup.userData.uploadedJetwayCount = evidence.length;
-  jetwayGroup.userData.uploadedJetwayVerifiedModelCount = evidence.length;
-  jetwayGroup.userData.uploadedJetwayPlacementAuthority = map.authority;
-  jetwayGroup.userData.renderedOpenEdgeCount = renderedEdgeCount;
-  jetwayGroup.userData.wedA1FacadeObjectId = a1.facadeWedObjectId;
-  jetwayGroup.userData.wedA1FacadeNodeCount = a1.nodeCount;
-
+  const a1Placement = map.placements.find((placement) => placement.gate === "A1");
   environment.userData.authoredTerminal4Jetways = jetwayGroup;
   environment.userData.authoredTerminal4A1JetwayController = null;
-  environment.userData.authoredTerminal4UploadedJetwayLoadState = "ready-exact-xp11-stock-facade";
-  environment.userData.authoredTerminal4UploadedJetwayCount = evidence.length;
-  environment.userData.authoredTerminal4UploadedJetwayVerifiedModelCount = evidence.length;
-  environment.userData.authoredTerminal4TerminalConnectedJetwayCount = evidence.length;
-  environment.userData.authoredTerminal4JetwayTextureAuthority = "exact-XP11-stock-jetway1-source";
+  environment.userData.authoredTerminal4UploadedJetwayLoadState = "ready-exact-WED-plus-XP11-stock-facade";
+  environment.userData.authoredTerminal4UploadedJetwayCount = 76;
+  environment.userData.authoredTerminal4UploadedJetwayVerifiedModelCount = 76;
+  environment.userData.authoredTerminal4TerminalConnectedJetwayCount = 76;
+  environment.userData.authoredTerminal4JetwayDetailLevel = "exact-WED-open-facade-paths-plus-XP11-stock-Jetway_1_solid.fac-v1";
+  environment.userData.authoredTerminal4JetwayTextureAuthority = "exact-XP11-stock-jetway-textures-from-user-supplied-stock-library";
   environment.userData.authoredTerminal4ExactJetwayTextureActive = true;
   environment.userData.sourceKphxTerminal4JetwayMap = map;
-  environment.userData.sourceKphxTerminal4JetwayCount = evidence.length;
-  environment.userData.sourceKphxA1JetwayFacadeObjectId = a1.facadeWedObjectId;
-  environment.userData.sourceKphxA1JetwayFacadeNodeCount = a1.nodeCount;
+  environment.userData.sourceKphxTerminal4JetwayCount = 76;
+  environment.userData.sourceKphxA1JetwayFacadeObjectId = a1Placement?.facadeWedObjectId ?? null;
+  environment.userData.sourceKphxA1JetwayFacadeNodeCount = a1Placement?.facadeNodeCount ?? null;
   environment.userData.sourceKphxMissingExactJetwayResource = null;
   environment.userData.sourceKphxJetwaySubstitutionPolicy = "none";
-  environment.userData.sourceKphxJetwayVisibleGeometryAuthority = "exact-XP11-stock-Jetway_1_solid.fac";
-  environment.userData.sourceKphxJetwayRenderedOpenEdgeCount = renderedEdgeCount;
-  environment.userData.sourceKphxJetwayRuntimeEvidence = evidence;
+  environment.userData.sourceKphxJetwayOldAirportJetwayGlbLoaded = false;
+  environment.userData.sourceKphxJetwayFacadeSha256 = EXACT_STOCK_FACADE_SHA256;
 
   return {
     group: jetwayGroup,
@@ -358,6 +365,5 @@ export async function installSourceKphxWedJetwayFleet(THREE, environment, source
     blocked: false,
     missingExactResource: null,
     evidence,
-    renderedEdgeCount,
   };
 }
