@@ -1,4 +1,5 @@
 name: KPHX Package Batch 04 Retry
+# light-record whitelist retry
 
 on:
   workflow_dispatch:
