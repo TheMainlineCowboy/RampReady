@@ -26,6 +26,7 @@ export function parseXp11Type2Facade(source) {
   let currentMesh = null;
   let currentWall = null;
   let curved = false;
+  let ringMode = 1;
 
   for (const raw of source.split(/\r?\n/)) {
     const line = raw.trim();
@@ -33,7 +34,9 @@ export function parseXp11Type2Facade(source) {
     const p = line.split(/\s+/);
     const cmd = p[0];
 
-    if (cmd === "OBJ") {
+    if (cmd === "RING") {
+      ringMode = Number(p[1]);
+    } else if (cmd === "OBJ") {
       objects.push(p.slice(1).join(" "));
     } else if (cmd === "SEGMENT") {
       curved = false;
@@ -96,7 +99,7 @@ export function parseXp11Type2Facade(source) {
     }
     wall.spellings.sort((a, b) => a.total - b.total);
   }
-  return { objects, templates, walls };
+  return { objects, templates, walls, ringMode };
 }
 
 export function pickLaminarWedSpelling(spellings, lengthMeters) {
@@ -171,6 +174,8 @@ export async function buildXp11Type2Facade({
 }) {
   const facade = parseXp11Type2Facade(facadeText);
   if (footprint.length !== wallChoices.length) throw new Error("Facade footprint/wall choice count mismatch");
+  const wallCount = facade.ringMode === 0 ? footprint.length - 1 : footprint.length;
+  if (wallCount < 1) throw new Error("Facade has no renderable wall segments");
 
   const [objectPrototypes, diffuse, lit, normal] = await Promise.all([
     loadObjectPrototypes(facade, basePath),
@@ -196,9 +201,9 @@ export async function buildXp11Type2Facade({
   const wallEvidence = [];
   const n = footprint.length;
 
-  for (let w = 0; w < n; w += 1) {
+  for (let w = 0; w < wallCount; w += 1) {
     const p1 = footprint[w];
-    const p2 = footprint[(w + 1) % n];
+    const p2 = footprint[w + 1 < n ? w + 1 : 0];
     const segDirRaw = new THREE.Vector2(p2.x - p1.x, p2.y - p1.y);
     const wallLength = segDirRaw.length();
     const segDir = normalized(segDirRaw);
@@ -208,19 +213,26 @@ export async function buildXp11Type2Facade({
     const spelling = pickLaminarWedSpelling(wall.spellings, wallLength);
     const stretch = wallLength / spelling.total;
 
-    const prev = footprint[(w - 1 + n) % n];
-    const prevDir = normalized(new THREE.Vector2(p1.x - prev.x, p1.y - prev.y));
-    let tangent = normalized(prevDir.clone().add(segDir));
-    let miter = perpCcw(tangent);
-    miter.multiplyScalar(1 / miter.dot(perpDir));
-    const miFirst = miter.dot(segDir);
+    let miFirst = 0;
+    let miLast = 0;
 
-    const p3 = footprint[(w + 2) % n];
-    const nextDir = normalized(new THREE.Vector2(p3.x - p2.x, p3.y - p2.y));
-    tangent = normalized(nextDir.clone().add(segDir));
-    miter = perpCcw(tangent);
-    miter.multiplyScalar(1 / miter.dot(perpDir));
-    const miLast = -miter.dot(segDir);
+    if (facade.ringMode !== 0 || w > 0) {
+      const prev = footprint[(w - 1 + n) % n];
+      const prevDir = normalized(new THREE.Vector2(p1.x - prev.x, p1.y - prev.y));
+      let tangent = normalized(prevDir.clone().add(segDir));
+      let miter = perpCcw(tangent);
+      miter.multiplyScalar(1 / miter.dot(perpDir));
+      miFirst = miter.dot(segDir);
+    }
+
+    if (facade.ringMode !== 0 || w < wallCount - 1) {
+      const p3 = footprint[(w + 2) % n];
+      const nextDir = normalized(new THREE.Vector2(p3.x - p2.x, p3.y - p2.y));
+      const tangent = normalized(nextDir.clone().add(segDir));
+      const miter = perpCcw(tangent);
+      miter.multiplyScalar(1 / miter.dot(perpDir));
+      miLast = -miter.dot(segDir);
+    }
 
     const wallGroup = new THREE.Group();
     wallGroup.name = `Wall_${w + 1}_${wall.name}`;
@@ -286,6 +298,8 @@ export async function buildXp11Type2Facade({
   }
 
   root.userData.xPlaneFacadeAuthority = "Laminar WED type-2 preview transform order";
+  root.userData.xPlaneFacadeRingMode = facade.ringMode;
+  root.userData.renderedWallCount = wallCount;
   root.userData.wallEvidence = wallEvidence;
   return { root, facade, wallEvidence };
 }
