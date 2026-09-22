@@ -1,0 +1,32 @@
+name: KPHX Verification PNG Fast Artifact
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-verification-png-fast.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch only committed PNG
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api             -H "Accept: application/vnd.github+json"             "/repos/TheMainlineCowboy/RampReady/contents/reports/kphx-full-airport-first-render.png?ref=kphx-full-airport-import"             --jq '.content' | tr -d '\n' | base64 -d > kphx-full-airport-first-render.png
+          test -s kphx-full-airport-first-render.png
+          file kphx-full-airport-first-render.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kphx-verification-png-fast
+          path: kphx-full-airport-first-render.png
+          if-no-files-found: error
+          compression-level: 0
