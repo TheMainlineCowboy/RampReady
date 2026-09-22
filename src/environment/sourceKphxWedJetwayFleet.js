@@ -90,7 +90,7 @@ function sourcePartNameForEntry(entry) {
   return current?.parent?.name === "RootNode" && SOURCE_PART_NAMES.includes(current.name) ? current.name : null;
 }
 
-async function loadExactPrototype(THREE) {
+export async function loadExactPrototype(THREE) {
   const { GLTFLoader } = await import("three/addons/loaders/GLTFLoader.js");
   const gltf = await new GLTFLoader().loadAsync(modelUrl());
   if (!gltf?.scene) throw new Error("Exact Airport_Jetway.glb loaded without a scene");
@@ -135,7 +135,7 @@ async function loadExactPrototype(THREE) {
   return prototype;
 }
 
-function measurePrototypeReach(THREE, prototype) {
+export function measurePrototypeReach(THREE, prototype) {
   prototype.updateMatrixWorld(true);
   const rotunda = findSourcePartRoot(prototype, "Rotunda");
   const cab = findSourcePartRoot(prototype, "Cab");
@@ -160,7 +160,7 @@ function measurePrototypeReach(THREE, prototype) {
   };
 }
 
-function applyIndividualArticulation(model, articulation) {
+export function applyIndividualArticulation(model, articulation) {
   for (const [name, offset] of Object.entries(articulation.partOffsets)) {
     const part = findSourcePartRoot(model, name);
     if (!part) throw new Error(`Exact jetway articulation is missing ${name}`);
@@ -242,7 +242,7 @@ function buildStaticInstancedFleet(THREE, prototype, placements, sourceContactDi
   };
 }
 
-async function loadPlacementMap() {
+export async function loadPlacementMap() {
   const response = await fetch(mapUrl(), { cache: "no-store" });
   if (!response.ok) throw new Error(`KPHX Terminal 4 WED jetway map returned HTTP ${response.status}`);
   const map = await response.json();
