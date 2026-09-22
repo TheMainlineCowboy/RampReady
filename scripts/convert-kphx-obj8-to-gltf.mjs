@@ -32,8 +32,9 @@ let globalAlphaCutoff = null;
 let normalMetalness = false;
 let pointCounts = null;
 const drawState = {
-  alphaMode: "OPAQUE",
-  doubleSided: true,
+  alphaMode: "BLEND",
+  alphaCutoff: null,
+  doubleSided: false,
   shade: "smooth",
   depthTest: true,
   drawEnabled: true,
@@ -129,6 +130,8 @@ for (const rawLine of source.split(/\r?\n/)) {
   } else if (command === "GLOBAL_no_blend") {
     const cutoff = Number(parts[1]);
     globalAlphaCutoff = Number.isFinite(cutoff) ? cutoff : 0.5;
+    drawState.alphaMode = "MASK";
+    drawState.alphaCutoff = globalAlphaCutoff;
   } else if (command === "GLOBAL_specular") {
     const value = Number(parts[1]);
     globalSpecular = Number.isFinite(value) ? value : parts.slice(1).join(" ");
@@ -280,8 +283,17 @@ const indexComponentType = maxIndex <= 65535 ? 5123 : 5125;
 const indexBytes = indexComponentType === 5123 ? 2 : 4;
 appendPadding();
 const indexByteOffset = binaryByteLength;
-const indexChunk = Buffer.alloc(indices.length * indexBytes);
-indices.forEach((value, index) => {
+const convertedIndices = indices.slice();
+for (const range of drawRanges) {
+  for (let cursor = range.start; cursor < range.start + range.count; cursor += 3) {
+    [convertedIndices[cursor + 1], convertedIndices[cursor + 2]] = [
+      convertedIndices[cursor + 2],
+      convertedIndices[cursor + 1],
+    ];
+  }
+}
+const indexChunk = Buffer.alloc(convertedIndices.length * indexBytes);
+convertedIndices.forEach((value, index) => {
   if (indexComponentType === 5123) indexChunk.writeUInt16LE(value, index * indexBytes);
   else indexChunk.writeUInt32LE(value, index * indexBytes);
 });
@@ -324,8 +336,8 @@ const materialByState = new Map();
 const materials = [];
 function materialIndexForState(state) {
   const key = JSON.stringify({
-    alphaMode: state.alphaMode === "OPAQUE" && globalAlphaCutoff !== null ? "MASK" : state.alphaMode,
-    alphaCutoff: state.alphaCutoff ?? globalAlphaCutoff,
+    alphaMode: state.alphaMode,
+    alphaCutoff: state.alphaCutoff,
     doubleSided: state.doubleSided,
     draped: state.draped,
     layerGroupDraped: state.layerGroupDraped,
@@ -343,9 +355,9 @@ function materialIndexForState(state) {
       roughnessFactor: 1,
     },
     doubleSided: state.doubleSided,
-    alphaMode: state.alphaMode === "OPAQUE" && globalAlphaCutoff !== null ? "MASK" : state.alphaMode,
-    ...((state.alphaMode === "MASK" || (state.alphaMode === "OPAQUE" && globalAlphaCutoff !== null))
-      ? { alphaCutoff: state.alphaCutoff ?? globalAlphaCutoff ?? 0.5 }
+    alphaMode: state.alphaMode,
+    ...(state.alphaMode === "MASK"
+      ? { alphaCutoff: state.alphaCutoff ?? 0.5 }
       : {}),
     emissiveFactor: state.emissionRgb,
     extras: {
@@ -450,7 +462,7 @@ const gltf = {
     namedLightCount: namedLights.length,
     namedLights,
     sourceBounds: { min: accessors[positionAccessor].min, max: accessors[positionAccessor].max },
-    geometryPolicy: "preserve-source-positions-normals-uvs-indices-no-remesh-no-decimation",
+    geometryPolicy: "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
     drawStatePolicy: "preserve-supported-per-TRIS-blend-and-cull-state;reject-unsupported-render-state",
     textureCoordinatePolicy: "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin",
   },
