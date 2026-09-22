@@ -1,0 +1,29 @@
+{
+  "policy": "decode-source-image-and-losslessly-reencode-container-only;rgba-pixels-must-match",
+  "textures": {
+    "jetway_1_ALB.dds": {
+      "runtime": "jetway_1_ALB.png",
+      "width": 1024,
+      "height": 1024,
+      "rgbaPixelSha256": "7c8ee7fc7f590b6003fe3ba826677706b4c55ee07fefefe365a78d827eb7a545",
+      "sourceContainerSha256": "fa988bfd30807376113aa0c9075e173ae9c2f9b5f5e75f01828e1c8279bbf59e",
+      "runtimeContainerSha256": "94407ad305c9592dc7cbff58ecf8a93b0193f7f898a15fcc3f6511bdc74a8f65"
+    },
+    "jetway_1_LIT.dds": {
+      "runtime": "jetway_1_LIT.png",
+      "width": 1024,
+      "height": 1024,
+      "rgbaPixelSha256": "011eb298f575283b43307a37cc58402c5734905adf9b0ae4a6d38a6a81d48cfd",
+      "sourceContainerSha256": "64e28d9546c0b9884a11d0555b3ab5287ceec3f248d3d9da4dbfdf0e87edf127",
+      "runtimeContainerSha256": "798c1b82e8e3feaa5479ff793dd3ecc8d70292865d76b5e096f6bd26f26ba05d"
+    },
+    "jetway_1_NML.png": {
+      "runtime": "jetway_1_NML.png",
+      "width": 1024,
+      "height": 1024,
+      "rgbaPixelSha256": "59c82e242bbbba4078bb4e867308bed4ed97ec9d29c644b26c0f8383c90adbc2",
+      "sourceContainerSha256": "ded40b58230e1c0cbcef8f4e126ee97733f03f02ac52aebce53a1b12ed16e233",
+      "runtimeContainerSha256": "ded40b58230e1c0cbcef8f4e126ee97733f03f02ac52aebce53a1b12ed16e233"
+    }
+  }
+}
