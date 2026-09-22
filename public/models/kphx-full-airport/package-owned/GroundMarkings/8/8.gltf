@@ -1,0 +1,269 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "RampReady exact X-Plane OBJ8 converter v2"
+  },
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ],
+  "buffers": [
+    {
+      "uri": "8.bin",
+      "byteLength": 816
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 288,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 576,
+      "byteLength": 192,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 768,
+      "byteLength": 48,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "min": [
+        -1.93450963,
+        -8e-8,
+        -1.93268371
+      ],
+      "max": [
+        1.93450963,
+        8e-8,
+        1.93268371
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "min": [
+        0,
+        1,
+        -4e-8
+      ],
+      "max": [
+        0,
+        1,
+        -4e-8
+      ]
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC2",
+      "min": [
+        0,
+        0.25
+      ],
+      "max": [
+        0.125,
+        0.5
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 24,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        23
+      ]
+    }
+  ],
+  "images": [
+    {
+      "uri": "RunwaySigns.png"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    }
+  ],
+  "materials": [
+    {
+      "name": "8 source material 0",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extras": {
+        "xPlaneDraped": true,
+        "xPlaneLayerGroupDraped": null,
+        "xPlaneLodDraped": 4000,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": null
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "8",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": true,
+              "layerGroupDraped": null,
+              "lodDraped": 4000,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": null
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "8",
+      "mesh": 0,
+      "extras": {
+        "xPlaneParameterizedLights": []
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0,
+  "extras": {
+    "sourceFormat": "X-Plane OBJ8",
+    "sourceFile": "8.obj",
+    "sourceTexture": "RunwaySigns.png",
+    "sourceLitTexture": null,
+    "pointCounts": [
+      24,
+      0,
+      0,
+      24
+    ],
+    "vertexCount": 24,
+    "indexCount": 24,
+    "triangleCount": 8,
+    "drawRanges": [
+      {
+        "start": 0,
+        "count": 24,
+        "state": {
+          "alphaMode": "BLEND",
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": true,
+          "layerGroupDraped": null,
+          "lodDraped": 4000,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": null
+        }
+      }
+    ],
+    "parameterizedLightCount": 0,
+    "parameterizedLights": [],
+    "sourceBounds": {
+      "min": [
+        -1.93450963,
+        -8e-8,
+        -1.93268371
+      ],
+      "max": [
+        1.93450963,
+        8e-8,
+        1.93268371
+      ]
+    },
+    "geometryPolicy": "preserve-source-positions-normals-uvs-indices-no-remesh-no-decimation",
+    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;reject-unsupported-render-state",
+    "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
+  }
+}

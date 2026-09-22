@@ -1,0 +1,401 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "RampReady exact X-Plane OBJ8 converter v2"
+  },
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ],
+  "buffers": [
+    {
+      "uri": "AirportLightNoPole.bin",
+      "byteLength": 11452
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 3804,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 3804,
+      "byteLength": 3804,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 7608,
+      "byteLength": 2536,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 10144,
+      "byteLength": 1308,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 317,
+      "type": "VEC3",
+      "min": [
+        -1.38928986,
+        9,
+        -0.61033314
+      ],
+      "max": [
+        1.38928938,
+        20.32979584,
+        0.13818155
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 317,
+      "type": "VEC3",
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "max": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 317,
+      "type": "VEC2",
+      "min": [
+        0.011345,
+        0.00940612
+      ],
+      "max": [
+        0.98865497,
+        0.99059391
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 654,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        316
+      ]
+    }
+  ],
+  "images": [
+    {
+      "uri": "AirportLight.png"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    }
+  ],
+  "materials": [
+    {
+      "name": "AirportLightNoPole source material 0",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extras": {
+        "xPlaneDraped": false,
+        "xPlaneLayerGroupDraped": null,
+        "xPlaneLodDraped": null,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": null
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "AirportLightNoPole",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": false,
+              "layerGroupDraped": null,
+              "lodDraped": null,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": null
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "AirportLightNoPole",
+      "mesh": 0,
+      "extras": {
+        "xPlaneParameterizedLights": [
+          {
+            "name": "sodium_flood_BB",
+            "position": [
+              -1.20000005,
+              20.10865593,
+              -0.59159738
+            ],
+            "params": [
+              -0.2,
+              -0.71,
+              -0.67,
+              8
+            ],
+            "raw": "LIGHT_PARAM\tsodium_flood_BB\t-1.20000005\t20.10865593\t-0.59159738\t-.2 -.71 -.67 8"
+          },
+          {
+            "name": "sodium_flood_BB",
+            "position": [
+              1.20000005,
+              20.10865593,
+              -0.59159738
+            ],
+            "params": [
+              -0.2,
+              -0.71,
+              -0.67,
+              8
+            ],
+            "raw": "LIGHT_PARAM\tsodium_flood_BB\t1.20000005\t20.10865593\t-0.59159738\t-.2 -.71 -.67 8"
+          },
+          {
+            "name": "full_custom_halo_night",
+            "position": [
+              0,
+              20.10865593,
+              -5.33326054
+            ],
+            "params": [
+              1,
+              0.6,
+              0.2,
+              1,
+              120,
+              0,
+              -1,
+              0,
+              1
+            ],
+            "raw": "LIGHT_PARAM\tfull_custom_halo_night\t0.00000000\t20.10865593\t-5.33326054\t1 .6 .2 1 120 0 -1 0 1"
+          },
+          {
+            "name": "sodium_flood_BB",
+            "position": [
+              0,
+              20.10865593,
+              -0.88739556
+            ],
+            "params": [
+              -0.2,
+              -0.71,
+              -0.67,
+              8
+            ],
+            "raw": "LIGHT_PARAM\tsodium_flood_BB\t0.00000000\t20.10865593\t-0.88739556\t-.2 -.71 -.67 8"
+          }
+        ]
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0,
+  "extras": {
+    "sourceFormat": "X-Plane OBJ8",
+    "sourceFile": "AirportLightNoPole.obj",
+    "sourceTexture": "AirportLight.png",
+    "sourceLitTexture": null,
+    "pointCounts": [
+      317,
+      0,
+      0,
+      654
+    ],
+    "vertexCount": 317,
+    "indexCount": 654,
+    "triangleCount": 218,
+    "drawRanges": [
+      {
+        "start": 0,
+        "count": 654,
+        "state": {
+          "alphaMode": "BLEND",
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": false,
+          "layerGroupDraped": null,
+          "lodDraped": null,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": null
+        }
+      }
+    ],
+    "parameterizedLightCount": 4,
+    "parameterizedLights": [
+      {
+        "name": "sodium_flood_BB",
+        "position": [
+          -1.20000005,
+          20.10865593,
+          -0.59159738
+        ],
+        "params": [
+          -0.2,
+          -0.71,
+          -0.67,
+          8
+        ],
+        "raw": "LIGHT_PARAM\tsodium_flood_BB\t-1.20000005\t20.10865593\t-0.59159738\t-.2 -.71 -.67 8"
+      },
+      {
+        "name": "sodium_flood_BB",
+        "position": [
+          1.20000005,
+          20.10865593,
+          -0.59159738
+        ],
+        "params": [
+          -0.2,
+          -0.71,
+          -0.67,
+          8
+        ],
+        "raw": "LIGHT_PARAM\tsodium_flood_BB\t1.20000005\t20.10865593\t-0.59159738\t-.2 -.71 -.67 8"
+      },
+      {
+        "name": "full_custom_halo_night",
+        "position": [
+          0,
+          20.10865593,
+          -5.33326054
+        ],
+        "params": [
+          1,
+          0.6,
+          0.2,
+          1,
+          120,
+          0,
+          -1,
+          0,
+          1
+        ],
+        "raw": "LIGHT_PARAM\tfull_custom_halo_night\t0.00000000\t20.10865593\t-5.33326054\t1 .6 .2 1 120 0 -1 0 1"
+      },
+      {
+        "name": "sodium_flood_BB",
+        "position": [
+          0,
+          20.10865593,
+          -0.88739556
+        ],
+        "params": [
+          -0.2,
+          -0.71,
+          -0.67,
+          8
+        ],
+        "raw": "LIGHT_PARAM\tsodium_flood_BB\t0.00000000\t20.10865593\t-0.88739556\t-.2 -.71 -.67 8"
+      }
+    ],
+    "sourceBounds": {
+      "min": [
+        -1.38928986,
+        9,
+        -0.61033314
+      ],
+      "max": [
+        1.38928938,
+        20.32979584,
+        0.13818155
+      ]
+    },
+    "geometryPolicy": "preserve-source-positions-normals-uvs-indices-no-remesh-no-decimation",
+    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;reject-unsupported-render-state",
+    "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
+  }
+}

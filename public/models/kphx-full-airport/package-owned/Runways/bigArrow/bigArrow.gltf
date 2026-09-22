@@ -1,0 +1,278 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "RampReady exact X-Plane OBJ8 converter v2"
+  },
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ],
+  "buffers": [
+    {
+      "uri": "bigArrow.bin",
+      "byteLength": 140
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 48,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 48,
+      "byteLength": 48,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 96,
+      "byteLength": 32,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 128,
+      "byteLength": 12,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 4,
+      "type": "VEC3",
+      "min": [
+        -2.75,
+        -8.1e-7,
+        -18.5
+      ],
+      "max": [
+        2.75,
+        8.1e-7,
+        18.5
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 4,
+      "type": "VEC3",
+      "min": [
+        0,
+        1,
+        -4e-8
+      ],
+      "max": [
+        0,
+        1,
+        -4e-8
+      ]
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 4,
+      "type": "VEC2",
+      "min": [
+        0.60064811,
+        0.01776212
+      ],
+      "max": [
+        0.88915259,
+        0.96007055
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 6,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        3
+      ]
+    }
+  ],
+  "images": [
+    {
+      "uri": "arrows.png"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    }
+  ],
+  "materials": [
+    {
+      "name": "bigArrow source material 0",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extras": {
+        "xPlaneDraped": true,
+        "xPlaneLayerGroupDraped": {
+          "group": "markings",
+          "offset": 2
+        },
+        "xPlaneLodDraped": 10000,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": null
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "bigArrow",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": true,
+              "layerGroupDraped": {
+                "group": "markings",
+                "offset": 2
+              },
+              "lodDraped": 10000,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": null
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "bigArrow",
+      "mesh": 0,
+      "extras": {
+        "xPlaneParameterizedLights": []
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0,
+  "extras": {
+    "sourceFormat": "X-Plane OBJ8",
+    "sourceFile": "bigArrow.obj",
+    "sourceTexture": "arrows.png",
+    "sourceLitTexture": null,
+    "pointCounts": [
+      4,
+      0,
+      0,
+      6
+    ],
+    "vertexCount": 4,
+    "indexCount": 6,
+    "triangleCount": 2,
+    "drawRanges": [
+      {
+        "start": 0,
+        "count": 6,
+        "state": {
+          "alphaMode": "BLEND",
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": true,
+          "layerGroupDraped": {
+            "group": "markings",
+            "offset": 2
+          },
+          "lodDraped": 10000,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": null
+        }
+      }
+    ],
+    "parameterizedLightCount": 0,
+    "parameterizedLights": [],
+    "sourceBounds": {
+      "min": [
+        -2.75,
+        -8.1e-7,
+        -18.5
+      ],
+      "max": [
+        2.75,
+        8.1e-7,
+        18.5
+      ]
+    },
+    "geometryPolicy": "preserve-source-positions-normals-uvs-indices-no-remesh-no-decimation",
+    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;reject-unsupported-render-state",
+    "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
+  }
+}
