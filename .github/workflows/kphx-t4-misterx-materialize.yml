@@ -100,3 +100,5 @@ jobs:
           git commit -m "Materialize exact T4 MisterX runtime"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
+
+# rerun after exact A320/shadow/conditional fixes
