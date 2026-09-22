@@ -2,21 +2,6 @@ name: KPHX Core + ZDP Exact Ingest
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-full-airport-ingest.yml"
-      - "scripts/convert-kphx-obj8-to-gltf.mjs"
-      - "scripts/extract-kphx-wed-object-placements.mjs"
-      - "scripts/extract-kphx-wed-surface-network.mjs"
-      - "scripts/materialize-kphx-full-airport.mjs"
-      - "scripts/materialize-kphx-surface-resources.mjs"
-      - "scripts/resolve-xplane-library.mjs"
-      - "scripts/merge-xplane-library-maps.mjs"
-      - "scripts/verify-kphx-full-airport-source-authority.mjs"
-      - "scripts/verify-kphx-surface-source-contract.mjs"
-      - "src/environment/kphxFullAirport/**"
 
 permissions:
   contents: write
