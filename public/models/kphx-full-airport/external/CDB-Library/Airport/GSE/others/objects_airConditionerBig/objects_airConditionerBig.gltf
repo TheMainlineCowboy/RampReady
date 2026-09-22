@@ -1,0 +1,344 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "RampReady exact X-Plane OBJ8 converter v2"
+  },
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ],
+  "buffers": [
+    {
+      "uri": "objects_airConditionerBig.bin",
+      "byteLength": 7036
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 2256,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2256,
+      "byteLength": 2256,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 4512,
+      "byteLength": 1504,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 6016,
+      "byteLength": 1020,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 188,
+      "type": "VEC3",
+      "min": [
+        0,
+        0,
+        -2.4
+      ],
+      "max": [
+        2.4,
+        2.07,
+        0
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 188,
+      "type": "VEC3",
+      "min": [
+        -1,
+        0,
+        -1
+      ],
+      "max": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 188,
+      "type": "VEC2",
+      "min": [
+        0,
+        0
+      ],
+      "max": [
+        1.3588,
+        1.0279
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 510,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        187
+      ]
+    }
+  ],
+  "images": [
+    {
+      "uri": "cdb_others.png"
+    },
+    {
+      "uri": "cdb_others_LIT.png"
+    },
+    {
+      "uri": "cdb_others_NORM.png"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ],
+  "materials": [
+    {
+      "name": "objects_airConditionerBig source material 0",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        1,
+        1,
+        1
+      ],
+      "extras": {
+        "xPlaneDraped": false,
+        "xPlaneLayerGroupDraped": null,
+        "xPlaneLayerGroup": null,
+        "xPlaneLodDraped": null,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": null,
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": null,
+        "xPlaneGlobalAlphaCutoff": null,
+        "xPlaneNormalMetalness": false
+      },
+      "emissiveTexture": {
+        "index": 1,
+        "extensions": {
+          "KHR_texture_transform": {
+            "offset": [
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              -1
+            ]
+          }
+        }
+      },
+      "normalTexture": {
+        "index": 2,
+        "extensions": {
+          "KHR_texture_transform": {
+            "offset": [
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              -1
+            ]
+          }
+        },
+        "scale": 1
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "objects_airConditionerBig",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": false,
+              "layerGroupDraped": null,
+              "layerGroup": null,
+              "lodDraped": null,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": null,
+              "shinyRatio": null
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "objects_airConditionerBig",
+      "mesh": 0,
+      "extras": {
+        "xPlaneParameterizedLights": [],
+        "xPlaneVertexLights": [],
+        "xPlaneNamedLights": [],
+        "xPlaneGlobalNoShadow": false,
+        "xPlaneGlobalSpecular": null,
+        "xPlaneWeatherTexture": null
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0,
+  "extras": {
+    "sourceFormat": "X-Plane OBJ8",
+    "sourceFile": "objects_airConditionerBig.obj",
+    "sourceTexture": "cdb_others.png",
+    "sourceDrapedTexture": null,
+    "sourceLitTexture": "cdb_others_LIT.png",
+    "sourceNormalTexture": "cdb_others_NORM.png",
+    "sourceNormalScale": 1,
+    "sourceDrapedNormalTexture": null,
+    "sourceDrapedNormalScale": null,
+    "sourceWeatherTexture": null,
+    "globalNoShadow": false,
+    "globalSpecular": null,
+    "globalAlphaCutoff": null,
+    "normalMetalness": false,
+    "pointCounts": [
+      188,
+      0,
+      0,
+      510
+    ],
+    "vertexCount": 188,
+    "indexCount": 510,
+    "triangleCount": 170,
+    "drawRanges": [
+      {
+        "start": 0,
+        "count": 510,
+        "state": {
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": false,
+          "layerGroupDraped": null,
+          "layerGroup": null,
+          "lodDraped": null,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": null,
+          "shinyRatio": null
+        }
+      }
+    ],
+    "parameterizedLightCount": 0,
+    "parameterizedLights": [],
+    "vertexLightCount": 0,
+    "vertexLights": [],
+    "namedLightCount": 0,
+    "namedLights": [],
+    "sourceBounds": {
+      "min": [
+        0,
+        0,
+        -2.4
+      ],
+      "max": [
+        2.4,
+        2.07,
+        0
+      ]
+    },
+    "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
+    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;reject-unsupported-render-state",
+    "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
+  }
+}
