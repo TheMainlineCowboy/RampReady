@@ -165,6 +165,7 @@ function parsePol(source, sourceResource) {
     layerGroup: null,
     surface: null,
     noAlpha: false,
+    globalSpecular: null,
     weather: null,
     decalLib: null,
     unsupported: [],
@@ -180,6 +181,7 @@ function parsePol(source, sourceResource) {
     else if (command === "LAYER_GROUP") parsed.layerGroup = parseLayer(parts);
     else if (command === "SURFACE") parsed.surface = parts[1] || null;
     else if (command === "NO_ALPHA") parsed.noAlpha = true;
+    else if (command === "GLOBAL_specular" || command === "SPECULAR") parsed.globalSpecular = Number(parts[1]);
     else if (command === "WEATHER") parsed.weather = parts.slice(1).join(" ");
     else if (command === "DECAL_LIB") parsed.decalLib = parts.slice(1).join(" ");
     else if (!["A", "850", "DRAPED_POLYGON"].includes(command)) parsed.unsupported.push(raw);
@@ -196,6 +198,11 @@ function parseLin(source, sourceResource) {
     texture: null,
     scaleMeters: null,
     textureWidth: null,
+    textureHeight: null,
+    textureNormal: null,
+    normalScale: null,
+    weather: null,
+    globalSpecular: null,
     layerGroup: null,
     lodMeters: null,
     mirror: false,
@@ -205,8 +212,15 @@ function parseLin(source, sourceResource) {
   for (const { raw, parts } of commands.slice(3)) {
     const command = parts[0];
     if (command === "TEXTURE") parsed.texture = parts.slice(1).join(" ");
+    else if (command === "TEXTURE_NORMAL") {
+      parsed.normalScale = Number(parts[1]);
+      parsed.textureNormal = parts.slice(2).join(" ");
+    }
+    else if (command === "WEATHER") parsed.weather = parts.slice(1).join(" ");
+    else if (command === "GLOBAL_specular" || command === "SPECULAR") parsed.globalSpecular = Number(parts[1]);
     else if (command === "SCALE") parsed.scaleMeters = [Number(parts[1]), Number(parts[2])];
     else if (command === "TEX_WIDTH") parsed.textureWidth = Number(parts[1]);
+    else if (command === "TEX_HEIGHT") parsed.textureHeight = Number(parts[1]);
     else if (command === "LAYER_GROUP") parsed.layerGroup = parseLayer(parts);
     else if (command === "LOD") parsed.lodMeters = Number(parts[1]);
     else if (command === "MIRROR") parsed.mirror = true;
