@@ -28,6 +28,7 @@ jobs:
             src
             public/models/kphx/Terminal4.exact.glb
             public/models/kphx/Terminal4b.exact.glb
+            public/models/kphx-full-airport/t4-a1-zdp-surfaces
           sparse-checkout-cone-mode: false
 
       - name: Install verifier browser
@@ -90,6 +91,9 @@ jobs:
           const d=evidence.dataset;
           if(d.kphxT4FrameVerifier!=="ready") throw new Error(d.kphxT4FrameError||"T4 verifier not ready");
           if(d.kphxT4ObjectCount!=="2") throw new Error(`Expected 2 T4 objects, got ${d.kphxT4ObjectCount}`);
+          if(d.kphxA1ZdpSurfaceResources!=="12") throw new Error(`Expected 12 exact A1 ZDP resources, got ${d.kphxA1ZdpSurfaceResources}`);
+          if(d.kphxA1ZdpSurfacePlacements!=="20") throw new Error(`Expected 20 exact A1 ZDP placements, got ${d.kphxA1ZdpSurfacePlacements}`);
+          if(d.kphxA1ExcludedDefaultLinePlacements!=="5") throw new Error("Default-line exclusion accounting mismatch");
           if(Number(d.kphxT4MaxPositionDeltaMeters)>0.05) throw new Error(`Position delta ${d.kphxT4MaxPositionDeltaMeters}m`);
           if(Number(d.kphxT4MaxYawDeltaRadians)>1e-9) throw new Error(`Yaw delta ${d.kphxT4MaxYawDeltaRadians}`);
           if(errors.length) throw new Error(`Browser errors: ${errors.join(" | ")}`);
