@@ -1,4 +1,5 @@
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { applyExactXp11Obj8MaskCompatibility } from "./obj8RenderCompatibility.js";
 import {
   KPHX_FULL_AIRPORT_SOURCE,
   kphxWedToRampReadyPosition,
@@ -14,6 +15,10 @@ function kphxRuntimeUrl(url) {
 }
 
 const DEFAULT_MANIFEST_URL = "/models/kphx-full-airport/manifest.json";
+const EXACT_LEGACY_OBJ8_MASK_RESOURCES = new Set([
+  "Terminals/Terminal4.obj",
+  "Terminals/Terminal4b.obj",
+]);
 
 const XPLANE_LAYER_ORDER = Object.freeze({
   terrain: 0,
@@ -218,7 +223,15 @@ export async function installKphxPackageOwnedObjectLayer(
         continue;
       }
     }
-    const instance = preparePlacementRoot(sourceRoot.clone(true), placement);
+    const clonedRoot = sourceRoot.clone(true);
+    if (EXACT_LEGACY_OBJ8_MASK_RESOURCES.has(placement.resource)) {
+      applyExactXp11Obj8MaskCompatibility(THREE, clonedRoot, {
+        label: placement.resource,
+        alphaCutoff: 0.5,
+        windingAlreadyConverted: false,
+      });
+    }
+    const instance = preparePlacementRoot(clonedRoot, placement);
     layer.add(instance);
     loadedPlacementCount += 1;
   }
