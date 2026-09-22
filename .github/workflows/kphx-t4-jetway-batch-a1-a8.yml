@@ -30,6 +30,7 @@ jobs:
             index.html
             vite.config.js
             src
+            reports/kphx-a1-source-jetway-authority.json
             public/models/kphx
             public/models/xplane11-stock/jetway1
           sparse-checkout-cone-mode: false
