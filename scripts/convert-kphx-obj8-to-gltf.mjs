@@ -137,7 +137,7 @@ for (const range of drawRanges) {
 
 const harmless = new Set([
   "I", "800", "OBJ", "TEXTURE", "TEXTURE_DRAPED", "TEXTURE_LIT", "POINT_COUNTS",
-  "VT", "IDX", "IDX10", "TRIS", "LIGHT_PARAM", "#",
+  "VT", "IDX", "IDX10", "TRIS", "LIGHT_PARAM", "VLIGHT", "LIGHT_NAMED", "#",
   "ATTR_shade_smooth", "ATTR_shade_flat",
   "ATTR_no_hard", "ATTR_hard",
   "ATTR_cull", "ATTR_no_cull",
