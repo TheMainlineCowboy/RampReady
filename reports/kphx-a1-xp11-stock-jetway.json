@@ -1,0 +1,23 @@
+{
+  "evidence": {
+    "dataset": {
+      "engine": "three.js r171",
+      "kphxA1StockJetwayVerifier": "ready",
+      "kphxA1StockResource": "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac",
+      "kphxA1StockFacadeWedObjectId": "104804",
+      "kphxA1StockNodeCount": "7",
+      "kphxA1StockEdgeCount": "6",
+      "kphxA1StockRingMode": "0",
+      "kphxA1StockWallSequence": "Rotunda_extension|Rotunda_extension|Rotunda_extension|Rotunda_extension|Tunnel_11-15.5m|Cabin",
+      "kphxA1StockAttachmentCount": "16",
+      "kphxA1StockObjectPrototypeCount": "7",
+      "kphxA1StockFacadeSha256": "a98a61b6de28a0db6548f748163494fc24513267dee40322502d5800eff8feb5",
+      "kphxA1StockSpellings": "[{\"edge\":1,\"wall\":\"Rotunda_extension\",\"length\":4.6117223733712684,\"nominal\":4.9,\"stretch\":0.9411678313002588,\"spelling\":[21,4,22]},{\"edge\":2,\"wall\":\"Rotunda_extension\",\"length\":12.456461921211272,\"nominal\":12.399999999999999,\"stretch\":1.0045533807428446,\"spelling\":[21,6,5,22]},{\"edge\":3,\"wall\":\"Rotunda_extension\",\"length\":11.265684377694289,\"nominal\":12.399999999999999,\"stretch\":0.9085229336850233,\"spelling\":[21,6,5,22]},{\"edge\":4,\"wall\":\"Rotunda_extension\",\"length\":2.857056194235904,\"nominal\":3.4,\"stretch\":0.8403106453635012,\"spelling\":[3,4,22]},{\"edge\":5,\"wall\":\"Tunnel_11-15.5m\",\"length\":9.089191212315813,\"nominal\":11,\"stretch\":0.8262901102105285,\"spelling\":[10,11]},{\"edge\":6,\"wall\":\"Cabin\",\"length\":7.488503839659493,\"nominal\":8,\"stretch\":0.9360629799574366,\"spelling\":[20]}]",
+      "kphxA1OldUploadedGlbUsed": "false"
+    }
+  },
+  "errors": [],
+  "failed": [],
+  "httpErrors": [],
+  "waitError": null
+}
