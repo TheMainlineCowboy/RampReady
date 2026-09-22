@@ -14,6 +14,7 @@ const options = Object.fromEntries(optionArgs
   }));
 const sourceRoot = path.resolve(sourceRootArg || process.env.KPHX_FULL_AIRPORT_SOURCE_DIR || "");
 const includeExternalPrefixes = new Set((options["include-external-prefixes"] || "").split(",").map((entry) => entry.trim()).filter(Boolean));
+const placementReportInputPath = options["placement-report"] ? path.resolve(options["placement-report"]) : null;
 const libraryMapPath = options["library-map"] ? path.resolve(options["library-map"]) : null;
 const libraryMapPayload = libraryMapPath ? JSON.parse(await fs.readFile(libraryMapPath, "utf8")) : null;
 const libraryResourceMap = libraryMapPayload?.resources || {};
@@ -47,6 +48,25 @@ function safeRelative(value) {
   return normalized;
 }
 
+function resolvedLibraryRoot(resource) {
+  const mapped = libraryResourceMap[normalizeResource(resource)];
+  if (!mapped?.physicalPath || !mapped?.physicalResource) return null;
+  let root = path.dirname(path.resolve(mapped.physicalPath));
+  const directorySegments = normalizeResource(mapped.physicalResource).split("/").slice(0, -1);
+  for (let index = 0; index < directorySegments.length; index += 1) root = path.dirname(root);
+  return root;
+}
+
+function safeResolvedImagePath(parentDirectory, requested, allowedRoot) {
+  if (!requested || path.isAbsolute(requested)) throw new Error(`Unsafe surface image path: ${requested}`);
+  const resolved = path.resolve(parentDirectory, normalizeResource(requested));
+  const root = path.resolve(allowedRoot);
+  if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) {
+    throw new Error(`Surface image path escapes exact source root: ${requested}`);
+  }
+  return resolved;
+}
+
 async function identify(filePath) {
   const { stdout } = await execFile(magick, ["identify", "-format", "%w %h %[channels]", filePath], { maxBuffer: 4 * 1024 * 1024 });
   const [width, height, ...channels] = stdout.trim().split(/\s+/);
@@ -68,16 +88,16 @@ async function decodedRgbaSha256(filePath) {
   });
 }
 
-async function resolveImage(parentDirectory, requested) {
+async function resolveImage(parentDirectory, requested, allowedRoot = sourceRoot) {
   if (!requested || /^none$/i.test(requested)) return null;
-  const relative = safeRelative(requested);
-  const parsed = path.parse(relative);
+  const baseCandidate = safeResolvedImagePath(parentDirectory, requested, allowedRoot);
+  const parsed = path.parse(baseCandidate);
   const candidates = [
-    path.resolve(parentDirectory, relative),
-    path.resolve(parentDirectory, path.join(parsed.dir, `${parsed.name}.dds`)),
-    path.resolve(parentDirectory, path.join(parsed.dir, `${parsed.name}.DDS`)),
-    path.resolve(parentDirectory, path.join(parsed.dir, `${parsed.name}.png`)),
-    path.resolve(parentDirectory, path.join(parsed.dir, `${parsed.name}.PNG`)),
+    baseCandidate,
+    path.join(parsed.dir, `${parsed.name}.dds`),
+    path.join(parsed.dir, `${parsed.name}.DDS`),
+    path.join(parsed.dir, `${parsed.name}.png`),
+    path.join(parsed.dir, `${parsed.name}.PNG`),
   ];
   for (const candidate of [...new Set(candidates)]) if (await exists(candidate)) return candidate;
   throw new Error(`Referenced image not found: ${requested} relative to ${parentDirectory}`);
@@ -224,13 +244,13 @@ function parseDcl(source, sourceResource) {
   return { kind: "DECAL", sourceResource, decals, unsupported };
 }
 
-async function materializeDcl(resourcePath, outputDirectory) {
+async function materializeDcl(resourcePath, outputDirectory, allowedRoot = sourceRoot) {
   const source = await fs.readFile(resourcePath, "utf8");
   const parsed = parseDcl(source, path.relative(sourceRoot, resourcePath).replaceAll("\\", "/"));
   const parent = path.dirname(resourcePath);
   const decals = [];
   for (const decal of parsed.decals) {
-    const sourceImage = await resolveImage(parent, decal.texture);
+    const sourceImage = await resolveImage(parent, decal.texture, allowedRoot);
     decals.push({ ...decal, image: await materializeImage(sourceImage, decal.texture, outputDirectory) });
   }
   return { ...parsed, decals, sourceSha256: await sha256(resourcePath) };
@@ -258,20 +278,20 @@ async function materializeArtResource(resource) {
   if (parsed.unsupported.length) throw new Error(`Unsupported ${extension} commands in ${safeResource}: ${parsed.unsupported.join(" | ")}`);
 
   const parent = path.dirname(sourcePath);
-  const texture = await materializeImage(await resolveImage(parent, parsed.texture), parsed.texture, outputDirectory);
+  const allowedRoot = resolvedLibraryRoot(safeResource) || sourceRoot;
+  const texture = await materializeImage(await resolveImage(parent, parsed.texture, allowedRoot), parsed.texture, outputDirectory);
   let lit = null;
   let normal = null;
   let weather = null;
   let decal = null;
 
-  if (parsed.textureLit) lit = await materializeImage(await resolveImage(parent, parsed.textureLit), parsed.textureLit, outputDirectory);
-  if (parsed.textureNormal) normal = await materializeImage(await resolveImage(parent, parsed.textureNormal), parsed.textureNormal, outputDirectory);
-  if (parsed.weather) weather = await materializeImage(await resolveImage(parent, parsed.weather), parsed.weather, outputDirectory);
+  if (parsed.textureLit) lit = await materializeImage(await resolveImage(parent, parsed.textureLit, allowedRoot), parsed.textureLit, outputDirectory);
+  if (parsed.textureNormal) normal = await materializeImage(await resolveImage(parent, parsed.textureNormal, allowedRoot), parsed.textureNormal, outputDirectory);
+  if (parsed.weather) weather = await materializeImage(await resolveImage(parent, parsed.weather, allowedRoot), parsed.weather, outputDirectory);
   if (parsed.decalLib) {
-    const decalResource = safeRelative(path.join(path.dirname(safeResource), parsed.decalLib));
-    const decalPath = path.join(sourceRoot, decalResource);
-    if (!(await exists(decalPath))) throw new Error(`Local DECAL_LIB resource missing: ${decalResource}`);
-    decal = await materializeDcl(decalPath, outputDirectory);
+    const decalPath = safeResolvedImagePath(parent, parsed.decalLib, allowedRoot);
+    if (!(await exists(decalPath))) throw new Error(`Local DECAL_LIB resource missing: ${parsed.decalLib}`);
+    decal = await materializeDcl(decalPath, outputDirectory, allowedRoot);
   }
 
   const runtime = {
@@ -292,14 +312,18 @@ await fs.mkdir(runtimeRoot, { recursive: true });
 await fs.mkdir(path.dirname(reportPath), { recursive: true });
 
 const wedPath = path.join(sourceRoot, "earth.wed.xml");
-if (!(await exists(wedPath))) throw new Error(`earth.wed.xml missing: ${wedPath}`);
-await execFile(process.execPath, [
-  path.resolve("scripts/extract-kphx-wed-surface-network.mjs"),
-  wedPath,
-  reportPath,
-], { maxBuffer: 64 * 1024 * 1024 });
-
-const network = JSON.parse(await fs.readFile(reportPath, "utf8"));
+let networkReadPath = placementReportInputPath;
+if (!networkReadPath) {
+  if (!(await exists(wedPath))) throw new Error(`earth.wed.xml missing: ${wedPath}`);
+  await execFile(process.execPath, [
+    path.resolve("scripts/extract-kphx-wed-surface-network.mjs"),
+    wedPath,
+    reportPath,
+  ], { maxBuffer: 64 * 1024 * 1024 });
+  networkReadPath = reportPath;
+}
+if (!(await exists(networkReadPath))) throw new Error(`KPHX surface placement report missing: ${networkReadPath}`);
+const network = JSON.parse(await fs.readFile(networkReadPath, "utf8"));
 const packageRecords = [
   ...network.polygons.filter((entry) => entry.sourceClass === "package-owned"),
   ...network.lines.filter((entry) => entry.sourceClass === "package-owned"),
@@ -333,7 +357,7 @@ const manifest = {
   source: {
     package: network.source.package,
     version: network.source.version,
-    wedSha256: await sha256(wedPath),
+    wedSha256: (await exists(wedPath)) ? await sha256(wedPath) : null,
   },
   policy: {
     polygons: "WED-authored rings and Bezier controls; POL texture scale/heading/layer authority",
@@ -342,6 +366,7 @@ const manifest = {
     unsupportedCommands: "fail materialization rather than silently approximate",
     externalResources: "only explicitly resolved library resources are materialized; unresolved virtual resources are never substituted",
     libraryMap: libraryMapPath,
+    placementReport: networkReadPath,
     externalPrefixes: [...includeExternalPrefixes],
   },
   packageOwnedResourceCount: packageResources.length,
@@ -352,7 +377,7 @@ const manifest = {
   failures,
 };
 
-await fs.copyFile(reportPath, networkOutputPath);
+await fs.copyFile(networkReadPath, networkOutputPath);
 await fs.writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 
 if (failures.length) throw new Error(`KPHX surface materialization failed for ${failures.length}/${resources.length} resources`);
