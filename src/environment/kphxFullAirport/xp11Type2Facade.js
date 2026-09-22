@@ -21,6 +21,44 @@ function perpCcw(v) { return new THREE.Vector2(-v.y, v.x); }
 function closerTo(a, b, x) { return Math.abs(x - a) > Math.abs(x - b); }
 function clampIndex(v, max) { return Math.max(0, Math.min(max, v)); }
 
+function reverseIndexedTriangleWinding(geometry) {
+  const index = geometry?.getIndex?.();
+  if (!index) throw new Error("Exact XP11 stock jetway OBJ lost its indexed triangle topology");
+  if (index.count % 3 !== 0) throw new Error("Exact XP11 stock jetway OBJ index count is not triangle-aligned");
+  const array = index.array;
+  for (let cursor = 0; cursor < index.count; cursor += 3) {
+    const tmp = array[cursor + 1];
+    array[cursor + 1] = array[cursor + 2];
+    array[cursor + 2] = tmp;
+  }
+  index.needsUpdate = true;
+}
+
+function normalizeLegacyStockObj8Gltf(THREE, gltf) {
+  const policy = String(gltf?.parser?.json?.extras?.geometryPolicy || "");
+  const alreadyConverted = policy.includes("glTF-counterclockwise-winding");
+  gltf.scene.traverse((node) => {
+    if (!node.isMesh) return;
+    if (!alreadyConverted) reverseIndexedTriangleWinding(node.geometry);
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    for (const material of materials) {
+      if (!material) continue;
+      material.side = THREE.FrontSide;
+      material.transparent = false;
+      material.alphaTest = 0.5;
+      material.depthTest = true;
+      material.depthWrite = true;
+      material.needsUpdate = true;
+    }
+  });
+  gltf.scene.userData.xPlaneObj8Winding = alreadyConverted
+    ? "converter-counterclockwise"
+    : "legacy-runtime-clockwise-to-counterclockwise";
+  gltf.scene.userData.xPlaneBlendMode = "GLOBAL_no_blend 0.5";
+  gltf.scene.userData.xPlaneCullMode = "default-one-sided";
+  return gltf.scene;
+}
+
 export function parseXp11Type2Facade(source) {
   const objects = [];
   const templates = [];
