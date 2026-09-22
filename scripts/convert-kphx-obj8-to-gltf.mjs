@@ -52,12 +52,31 @@ const drawState = {
 
 const bump = (key) => commands.set(key, (commands.get(key) || 0) + 1);
 const snapshotState = () => ({ ...drawState });
+const sceneryShadowsEnabled = String(options["scenery-shadows"] ?? "true").toLowerCase() !== "false";
+let conditionalSkipDepth = 0;
 
 for (const rawLine of source.split(/\r?\n/)) {
   const line = rawLine.trim();
   if (!line || line.startsWith("#")) continue;
   const parts = line.split(/\s+/);
   const command = parts[0];
+
+  if (command === "IF") {
+    const condition = parts.slice(1).join(" ");
+    if (condition !== "NOT SCENERY_SHADOWS") {
+      throw new Error(`Unsupported OBJ8 conditional: ${line}`);
+    }
+    bump(command);
+    if (sceneryShadowsEnabled) conditionalSkipDepth += 1;
+    continue;
+  }
+  if (command === "ENDIF") {
+    bump(command);
+    if (conditionalSkipDepth > 0) conditionalSkipDepth -= 1;
+    continue;
+  }
+  if (conditionalSkipDepth > 0) continue;
+
   bump(command);
 
   if (command === "TEXTURE") sourceTexture = parts.slice(1).join(" ");
@@ -143,6 +162,12 @@ for (const rawLine of source.split(/\r?\n/)) {
   } else if (command === "GLOBAL_specular") {
     const value = Number(parts[1]);
     globalSpecular = Number.isFinite(value) ? value : parts.slice(1).join(" ");
+  } else if (command === "ATTR_poly_os") {
+    const value = Number(parts[1]);
+    if (!Number.isFinite(value)) throw new Error(`Malformed ATTR_poly_os record: ${line}`);
+    if (value !== 0) {
+      throw new Error(`Active OBJ8 ATTR_poly_os ${value} is unsupported because glTF has no core polygon-offset material state`);
+    }
   } else if (command === "ATTR_blend") drawState.alphaMode = "BLEND";
   else if (command === "ATTR_no_blend") drawState.alphaMode = "OPAQUE";
   else if (command === "ATTR_cull") drawState.doubleSided = false;
@@ -201,6 +226,7 @@ const harmless = new Set([
   "NORMAL_METALNESS",
   "SPECULAR",
   "ATTR_no_solid_camera", "ATTR_solid_camera",
+  "IF", "ENDIF", "ATTR_poly_os",
 ]);
 const unsupported = [...commands.keys()].filter((command) => !harmless.has(command));
 if (unsupported.length) {
@@ -499,7 +525,8 @@ const gltf = {
     namedLights,
     sourceBounds: { min: accessors[positionAccessor].min, max: accessors[positionAccessor].max },
     geometryPolicy: "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
-    drawStatePolicy: "preserve-supported-per-TRIS-blend-and-cull-state;reject-unsupported-render-state",
+    drawStatePolicy: "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;reject-unsupported-render-state",
+    sceneryShadowsEnabled,
     textureCoordinatePolicy: "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin",
   },
 };
