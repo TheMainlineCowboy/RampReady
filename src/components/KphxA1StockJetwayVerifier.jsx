@@ -6,6 +6,7 @@ import {
   kphxWedToRampReadyPosition,
   kphxXPlaneHeadingToRampReadyYawRadians,
 } from "../environment/kphxFullAirport/sourceAuthority.js";
+import a1Authority from "../../reports/kphx-a1-source-jetway-authority.json";
 import a1SourceAuthority from "../../reports/kphx-a1-source-jetway-authority.json";
 
 const A1_SOURCE_AUTHORITY = Object.freeze({
