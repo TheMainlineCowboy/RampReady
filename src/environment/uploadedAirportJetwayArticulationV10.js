@@ -47,6 +47,40 @@ function staticInwardPartOffsets(extension) {
   );
 }
 
+export function computeUploadedJetwayWedParkedArticulation(placement, sourceContactDistance) {
+  const sourceDistance = finite(sourceContactDistance, NaN);
+  if (!(sourceDistance > 0)) {
+    throw new Error(`Uploaded jetway source contact distance is invalid: ${sourceContactDistance}`);
+  }
+  const authoredBridgeEnd = finite(placement?.bridgeEnd, NaN);
+  if (!(authoredBridgeEnd > 0)) {
+    throw new Error(`Uploaded jetway ${placement?.gate || "unknown"} has no valid WED bridge end`);
+  }
+  const requestedExtension = authoredBridgeEnd - sourceDistance;
+  const extension = Math.max(
+    EXTENSION_LIMITS.minimum,
+    Math.min(EXTENSION_LIMITS.maximum, requestedExtension),
+  );
+  const predictedContactDistance = sourceDistance + extension;
+  return {
+    authority: "KPHX-1.75.1-WED-parked-footprint-inward-telescope-v1",
+    gate: placement?.gate,
+    sourceContactDistance: sourceDistance,
+    authoredBridgeEnd,
+    targetDistance: authoredBridgeEnd,
+    requestedExtension,
+    extension,
+    staticRetractionMeters: Math.max(0, -extension),
+    predictedContactDistance,
+    contactError: predictedContactDistance - authoredBridgeEnd,
+    partOffsets: staticInwardPartOffsets(extension),
+    clamped: Math.abs(extension - requestedExtension) > 1e-9,
+    rigidSourceHierarchy: false,
+    inwardTelescopeOnly: true,
+    wedParkedAuthority: true,
+  };
+}
+
 export function computeUploadedJetwayArticulation(placement, sourceContactDistance) {
   const sourceDistance = finite(sourceContactDistance, NaN);
   if (!(sourceDistance > 0)) {
