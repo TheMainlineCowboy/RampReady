@@ -2,15 +2,6 @@ name: KPHX Package-Owned Exact Batches
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-package-owned-batches.yml"
-      - "scripts/materialize-kphx-full-airport.mjs"
-      - "scripts/convert-kphx-obj8-to-gltf.mjs"
-      - "scripts/extract-kphx-wed-object-placements.mjs"
-      - "src/environment/kphxFullAirport/exactAssetCatalog.js"
 
 permissions:
   contents: write
