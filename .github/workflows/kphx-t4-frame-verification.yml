@@ -1,0 +1,111 @@
+name: KPHX T4 Frame Verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-t4-frame-verification.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            package.json
+            package-lock.json
+            index.html
+            vite.config.js
+            src
+            public/models/kphx/Terminal4.exact.glb
+            public/models/kphx/Terminal4b.exact.glb
+          sparse-checkout-cone-mode: false
+
+      - name: Install verifier browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npx vite --host 127.0.0.1 --port 4173 >/tmp/t4-vite.log 2>&1 &
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/t4-vite.log
+          exit 1
+
+      - name: Verify and capture T4 source frame
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:1600,height:1000}});
+          const errors=[];
+          const failed=[];
+          page.on("console",m=>{ if(m.type()==="error") errors.push(m.text()); });
+          page.on("pageerror",e=>errors.push(String(e)));
+          page.on("requestfailed",r=>failed.push({url:r.url(),error:r.failure()?.errorText||"unknown"}));
+
+          await page.goto("http://127.0.0.1:4173/RampReady/?kphxT4Frame=1",{
+            waitUntil:"domcontentloaded",
+            timeout:60000
+          });
+          await page.waitForFunction(()=>{
+            const c=document.querySelector("canvas.kphxT4FrameVerifierCanvas");
+            return ["ready","error"].includes(c?.dataset?.kphxT4FrameVerifier);
+          },null,{timeout:60000});
+
+          const evidence=await page.evaluate(()=>{
+            const c=document.querySelector("canvas.kphxT4FrameVerifierCanvas");
+            return {dataset:{...c.dataset}};
+          });
+
+          await page.screenshot({path:"reports/kphx-t4-frame-verification.png",fullPage:true});
+          fs.writeFileSync(
+            "reports/kphx-t4-frame-verification.json",
+            JSON.stringify({evidence,errors,failed},null,2)+"\n"
+          );
+
+          const d=evidence.dataset;
+          if(d.kphxT4FrameVerifier!=="ready") throw new Error(d.kphxT4FrameError||"T4 verifier not ready");
+          if(d.kphxT4ObjectCount!=="2") throw new Error(`Expected 2 T4 objects, got ${d.kphxT4ObjectCount}`);
+          if(Number(d.kphxT4MaxPositionDeltaMeters)>0.05) throw new Error(`Position delta ${d.kphxT4MaxPositionDeltaMeters}m`);
+          if(Number(d.kphxT4MaxYawDeltaRadians)>1e-9) throw new Error(`Yaw delta ${d.kphxT4MaxYawDeltaRadians}`);
+          if(errors.length) throw new Error(`Browser errors: ${errors.join(" | ")}`);
+          if(failed.length) throw new Error(`Failed requests: ${JSON.stringify(failed)}`);
+
+          console.log(JSON.stringify(d,null,2));
+          await browser.close();
+          NODE
+
+      - name: Commit T4 verification evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-t4-frame-verification.png reports/kphx-t4-frame-verification.json
+          git commit -m "Verify exact T4 T4b A1 source frame"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
