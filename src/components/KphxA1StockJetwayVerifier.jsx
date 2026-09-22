@@ -6,8 +6,6 @@ import {
   kphxWedToRampReadyPosition,
   kphxXPlaneHeadingToRampReadyYawRadians,
 } from "../environment/kphxFullAirport/sourceAuthority.js";
-import a1Authority from "../../reports/kphx-a1-source-jetway-authority.json";
-import a1SourceAuthority from "../../reports/kphx-a1-source-jetway-authority.json";
 
 const A1_SOURCE_AUTHORITY = Object.freeze({
   "authority": "KPHX 1.75.1 earth.wed.xml",
@@ -194,7 +192,7 @@ export default function KphxA1StockJetwayVerifier() {
       const manifestResponse = await fetch(runtimeUrl("/models/kphx-stock-jetways/manifest.json"), { cache: "no-store" });
       if (!manifestResponse.ok) throw new Error(`Stock jetway manifest HTTP ${manifestResponse.status}`);
       const manifest = await manifestResponse.json();
-      const authority = a1SourceAuthority;
+      const authority = A1_SOURCE_AUTHORITY;
 
       if (manifest.ringMode !== 0) throw new Error(`Stock jetway must be RING 0, received ${manifest.ringMode}`);
       if (manifest.objects?.length !== 18) throw new Error(`Stock jetway OBJ count changed: ${manifest.objects?.length}`);
