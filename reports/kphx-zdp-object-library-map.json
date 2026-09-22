@@ -1,0 +1,389 @@
+{
+  "schemaVersion": 1,
+  "libraryRoot": "/home/runner/work/RampReady/RampReady/.zdp",
+  "libraryTxt": "/home/runner/work/RampReady/RampReady/.zdp/library.txt",
+  "libraryTxtSha256": "8330b471c1a5061e273b534d787c6efa3cf589a1980c5583d65db6b67fff981b",
+  "virtualPrefix": "ZDP_Library",
+  "requestedCount": 47,
+  "resolvedCount": 47,
+  "unresolved": [],
+  "ambiguous": [],
+  "resources": {
+    "ZDP_Library/ground_textures/grunge/runway_skidmarks/skidmarks_heavy.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/ground_textures/grunge/runway_skidmarks/skidmarks_heavy.obj",
+      "physicalResource": "markings/grunge/runway_skidmarks/skidmarks_heavy.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/grunge/runway_skidmarks/skidmarks_heavy.obj",
+      "sha256": "fb85994502175b85410e0fc300182de3928e61fa314fd55f174aca1d18133256"
+    },
+    "ZDP_Library/ground_textures/grunge/runway_skidmarks/skidmarks_light.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/ground_textures/grunge/runway_skidmarks/skidmarks_light.obj",
+      "physicalResource": "markings/grunge/runway_skidmarks/skidmarks_light.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/grunge/runway_skidmarks/skidmarks_light.obj",
+      "sha256": "17923155b5f4c2d0f825faa73cee57a545d3536f9acb0148db047dca2357e1cb"
+    },
+    "ZDP_Library/ground_textures/grunge/runway_skidmarks/skidmarks_mid.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/ground_textures/grunge/runway_skidmarks/skidmarks_mid.obj",
+      "physicalResource": "markings/grunge/runway_skidmarks/skidmarks_mid.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/grunge/runway_skidmarks/skidmarks_mid.obj",
+      "sha256": "13a87b10fc1b27759b492fc2232ccb32cce519fb5fc9c9ebd6cf4ea0aa2fe902"
+    },
+    "ZDP_Library/ground_textures/grunge/runway_skidmarks/skidmarks_small_light.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/ground_textures/grunge/runway_skidmarks/skidmarks_small_light.obj",
+      "physicalResource": "markings/grunge/runway_skidmarks/skidmarks_small_light.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/grunge/runway_skidmarks/skidmarks_small_light.obj",
+      "sha256": "571dc0f8a8e9f9e06bc7324c048cacd3577327675ae3678fba17cec51ca0bb88"
+    },
+    "ZDP_Library/ground_textures/grunge/spot_grunge/grunge1_L.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/ground_textures/grunge/spot_grunge/grunge1_L.obj",
+      "physicalResource": "markings/grunge/spot_grunge/grunge1_L.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/grunge/spot_grunge/grunge1_L.obj",
+      "sha256": "7183a7633714726e6d62294db79e486340d7f34a1b149eb5562b18e12fad0525"
+    },
+    "ZDP_Library/ground_textures/grunge/spot_grunge/grunge1_M.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/ground_textures/grunge/spot_grunge/grunge1_M.obj",
+      "physicalResource": "markings/grunge/spot_grunge/grunge1_M.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/grunge/spot_grunge/grunge1_M.obj",
+      "sha256": "6925ea6a57926aabdda5df8a34165f56903f4f435f92e7a89f8c8cc2931a3184"
+    },
+    "ZDP_Library/ground_textures/grunge/spot_grunge/grunge1_XL.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/ground_textures/grunge/spot_grunge/grunge1_XL.obj",
+      "physicalResource": "markings/grunge/spot_grunge/grunge1_XL.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/grunge/spot_grunge/grunge1_XL.obj",
+      "sha256": "1fcad6d438b92d86f74537c08d8bee1337555b46e4eb141d95b9bfdf1a332dc8"
+    },
+    "ZDP_Library/markings/aircraft_stop_markers/ICN_C.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/aircraft_stop_markers/ICN_C.obj",
+      "physicalResource": "markings/aircraft_stop_markers/ICN_C.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/aircraft_stop_markers/ICN_C.obj",
+      "sha256": "cb4a98d4af506ef69f9eee1e1ad4a037e1d5ad8c95254f2f9f38712b16cec27a"
+    },
+    "ZDP_Library/markings/aircraft_stop_markers/ICN_D.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/aircraft_stop_markers/ICN_D.obj",
+      "physicalResource": "markings/aircraft_stop_markers/ICN_D.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/aircraft_stop_markers/ICN_D.obj",
+      "sha256": "cc33bd306ab7defbd3b3ac1d19fd717b057b4424d48f46168088d8e1e82ec95a"
+    },
+    "ZDP_Library/markings/aircraft_stop_markers/SDF_code_B.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_B.obj",
+      "physicalResource": "markings/aircraft_stop_markers/SDF_code_B.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/aircraft_stop_markers/SDF_code_B.obj",
+      "sha256": "427000ccde88dd5be97c34134a36e4f3f9961682dc21bc6cf06934746243e6d7"
+    },
+    "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+      "physicalResource": "markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+      "sha256": "51e690af793d126525b6ce81eb9f38fa19ee88687690dfbfafcac8800be879c7"
+    },
+    "ZDP_Library/markings/painted_text/clean/.large/A_yellow.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/painted_text/clean/.large/A_yellow.obj",
+      "physicalResource": "markings/painted_text/clean/large/A_yellow.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/painted_text/clean/large/A_yellow.obj",
+      "sha256": "fb52001ed366bb6a54dd62526ec9be7c563ce6e1709fd7c205647090223ba3b5"
+    },
+    "ZDP_Library/markings/painted_text/clean/.large/C_yellow.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/painted_text/clean/.large/C_yellow.obj",
+      "physicalResource": "markings/painted_text/clean/large/C_yellow.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/painted_text/clean/large/C_yellow.obj",
+      "sha256": "8717d0bf1fe86ad398c561f72b69b0acc963032853f16f4e98401298382b96d7"
+    },
+    "ZDP_Library/markings/painted_text/clean/.large/E_yellow.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/painted_text/clean/.large/E_yellow.obj",
+      "physicalResource": "markings/painted_text/clean/large/E_yellow.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/painted_text/clean/large/E_yellow.obj",
+      "sha256": "38968a23be69adbf4de12bbc35800890e615a44214875673529e38c46ea1844f"
+    },
+    "ZDP_Library/markings/painted_text/clean/.large/J_yellow.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/painted_text/clean/.large/J_yellow.obj",
+      "physicalResource": "markings/painted_text/clean/large/J_yellow.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/painted_text/clean/large/J_yellow.obj",
+      "sha256": "ff262be296456ccfd2fd2511c30ca1b4a2dffd4b8e26c55c1420f558bc321160"
+    },
+    "ZDP_Library/markings/painted_text/clean/.large/K_yellow.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/painted_text/clean/.large/K_yellow.obj",
+      "physicalResource": "markings/painted_text/clean/large/K_yellow.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/painted_text/clean/large/K_yellow.obj",
+      "sha256": "db3828d36a8c0b5e2d20f634db1d3280ec12ff1d1ecb7756784d07bb67c6d854"
+    },
+    "ZDP_Library/markings/painted_text/clean/.large/N_yellow.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/painted_text/clean/.large/N_yellow.obj",
+      "physicalResource": "markings/painted_text/clean/large/N_yellow.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/painted_text/clean/large/N_yellow.obj",
+      "sha256": "83797ef849b9945d9b4766e19701261bdd3e288f7f7ce8ec6d52976b77208aba"
+    },
+    "ZDP_Library/markings/painted_text/clean/.large/O_yellow.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/painted_text/clean/.large/O_yellow.obj",
+      "physicalResource": "markings/painted_text/clean/large/O_yellow.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/painted_text/clean/large/O_yellow.obj",
+      "sha256": "4e77edb3c46cbdead10a29f8b156d4fd80bd2dce3f9cf16bdb5dade52dffa1c1"
+    },
+    "ZDP_Library/markings/painted_text/clean/.large/S_yellow.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/painted_text/clean/.large/S_yellow.obj",
+      "physicalResource": "markings/painted_text/clean/large/S_yellow.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/painted_text/clean/large/S_yellow.obj",
+      "sha256": "cbaaec3c9946c9d2005cc8e23db15a446885adba6123c57e6729de6cd5c72f59"
+    },
+    "ZDP_Library/markings/painted_text/clean/.large/T_yellow.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/painted_text/clean/.large/T_yellow.obj",
+      "physicalResource": "markings/painted_text/clean/large/T_yellow.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/painted_text/clean/large/T_yellow.obj",
+      "sha256": "b8bc6affe1bdd869e1995726c9f782b4679653420da071490a3d39b55cae504f"
+    },
+    "ZDP_Library/markings/runway_markings/clean/_numbers_large/2-border.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/_numbers_large/2-border.obj",
+      "physicalResource": "markings/runway_markings/large/clean/2-border.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/2-border.obj",
+      "sha256": "adab911dafadc06eece3ba0476e76ac8281153871a32930995eb31bc40969855"
+    },
+    "ZDP_Library/markings/runway_markings/clean/_numbers_large/2.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/_numbers_large/2.obj",
+      "physicalResource": "markings/runway_markings/large/clean/2.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/2.obj",
+      "sha256": "a3481701ecad42159a4b45bea59b9d13508e19a9c10c658439ef53d8b10ffc0c"
+    },
+    "ZDP_Library/markings/runway_markings/clean/_numbers_large/5-border.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/_numbers_large/5-border.obj",
+      "physicalResource": "markings/runway_markings/large/clean/5-border.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/5-border.obj",
+      "sha256": "fdd88f7350eb58a9234c89269b35b13f43b4857834c8923c1b6adf3ecd8a10a6"
+    },
+    "ZDP_Library/markings/runway_markings/clean/_numbers_large/5.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/_numbers_large/5.obj",
+      "physicalResource": "markings/runway_markings/large/clean/5.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/5.obj",
+      "sha256": "1bac6b2d0d9a6a253684189d34a19b3fa5aff3b3f7c8b8f97ff6574cd6790bdd"
+    },
+    "ZDP_Library/markings/runway_markings/clean/_numbers_large/6-border.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/_numbers_large/6-border.obj",
+      "physicalResource": "markings/runway_markings/large/clean/6-border.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/6-border.obj",
+      "sha256": "5f5e2b66876f35f18edf8cef49451a1f107596b758c35c18fe62c2f94b93eb6b"
+    },
+    "ZDP_Library/markings/runway_markings/clean/_numbers_large/6.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/_numbers_large/6.obj",
+      "physicalResource": "markings/runway_markings/large/clean/6.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/6.obj",
+      "sha256": "43f6f374526a24dc6e2c0be1cca4b94a3361478983ae0848a74426739a1fbdab"
+    },
+    "ZDP_Library/markings/runway_markings/clean/_numbers_large/7-border.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/_numbers_large/7-border.obj",
+      "physicalResource": "markings/runway_markings/large/clean/7-border.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/7-border.obj",
+      "sha256": "cd640a61568d5c1567eb1578a5c375b132bfecab1483fa9f5694353e3ef9b434"
+    },
+    "ZDP_Library/markings/runway_markings/clean/_numbers_large/7.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/_numbers_large/7.obj",
+      "physicalResource": "markings/runway_markings/large/clean/7.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/7.obj",
+      "sha256": "89b16fe44d039730faca134749a620717a30ee20d78872faedf4e651d78070e9"
+    },
+    "ZDP_Library/markings/runway_markings/clean/_numbers_large/8-border.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/_numbers_large/8-border.obj",
+      "physicalResource": "markings/runway_markings/large/clean/8-border.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/8-border.obj",
+      "sha256": "c52579151199dcf25734047534254d1795d412b1caba17aa5fcf1129271646ee"
+    },
+    "ZDP_Library/markings/runway_markings/clean/_numbers_large/8.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/_numbers_large/8.obj",
+      "physicalResource": "markings/runway_markings/large/clean/8.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/8.obj",
+      "sha256": "e5ecff886a123525c2dd5ba0a490fc435af52b3f8ae93f4e624dd5a989c07936"
+    },
+    "ZDP_Library/markings/runway_markings/clean/_numbers_large/L-border.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/_numbers_large/L-border.obj",
+      "physicalResource": "markings/runway_markings/large/clean/L-border.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/L-border.obj",
+      "sha256": "9cdb6695360ac2b56b8c1d5fc19ac26d1fd20aa08eb7e838615e84605eabf94d"
+    },
+    "ZDP_Library/markings/runway_markings/clean/_numbers_large/L.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/_numbers_large/L.obj",
+      "physicalResource": "markings/runway_markings/large/clean/L.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/L.obj",
+      "sha256": "85b88031ef5693307fa480b45d7fa6b37dc481ad21ccbe349355f12f5c66e262"
+    },
+    "ZDP_Library/markings/runway_markings/clean/_numbers_large/R-border.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/_numbers_large/R-border.obj",
+      "physicalResource": "markings/runway_markings/large/clean/R-border.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/R-border.obj",
+      "sha256": "fddae8f3a65c2cb57a0cf14f06c6f29e7a50962ba3f34bfaecb22a6c122169e8"
+    },
+    "ZDP_Library/markings/runway_markings/clean/_numbers_large/R.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/_numbers_large/R.obj",
+      "physicalResource": "markings/runway_markings/large/clean/R.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/R.obj",
+      "sha256": "fa2608697c649913d5552a4b81674189ab1a3286bfd45181503ab071ef6d22f2"
+    },
+    "ZDP_Library/markings/runway_markings/clean/aim_point-border.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/aim_point-border.obj",
+      "physicalResource": "markings/runway_markings/large/clean/aim_point-border.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/aim_point-border.obj",
+      "sha256": "13179dc8c27d59b2647201b957cb98761e3f8fc9dedd0bad1167cc73bfd0557b"
+    },
+    "ZDP_Library/markings/runway_markings/clean/aim_point.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/aim_point.obj",
+      "physicalResource": "markings/runway_markings/large/clean/aim_point.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/aim_point.obj",
+      "sha256": "36ca372d236b9d370bcd3182619751872a30303041fc2fc3f38702d7059d9ea8"
+    },
+    "ZDP_Library/markings/runway_markings/clean/shoulder_left.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/shoulder_left.obj",
+      "physicalResource": "markings/runway_markings/large/clean/shoulder_left.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/shoulder_left.obj",
+      "sha256": "85c918e3546215c9116d7315f8bbc7b896dab53dd268e334c8611c45fa55023f"
+    },
+    "ZDP_Library/markings/runway_markings/clean/shoulder_right.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/shoulder_right.obj",
+      "physicalResource": "markings/runway_markings/large/clean/shoulder_right.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/shoulder_right.obj",
+      "sha256": "0cb68fbe5ee6d0cf958ee1c2d0c6409445e7151b2847ded4c0903b474a1e6b82"
+    },
+    "ZDP_Library/markings/runway_markings/clean/threshold_6-border.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/threshold_6-border.obj",
+      "physicalResource": "markings/runway_markings/large/clean/threshold_6-border.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/threshold_6-border.obj",
+      "sha256": "f2e7c15195662004fc7b9d3d2a2c5bbecb1f268d7c1d3484373a089d0e905257"
+    },
+    "ZDP_Library/markings/runway_markings/clean/threshold_6.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/threshold_6.obj",
+      "physicalResource": "markings/runway_markings/large/clean/threshold_6.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/threshold_6.obj",
+      "sha256": "b2d676fccb8d606386b0acd6bb096f8dad66af24bbc18991bea05326ccef9fde"
+    },
+    "ZDP_Library/markings/runway_markings/clean/touchdown_point_1-border.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/touchdown_point_1-border.obj",
+      "physicalResource": "markings/runway_markings/large/clean/touchdown_point_1-border.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/touchdown_point_1-border.obj",
+      "sha256": "47af84bb8df617ca43d67f21288728c2239986e28ae0f7f3d71a89fb79571e95"
+    },
+    "ZDP_Library/markings/runway_markings/clean/touchdown_point_1.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/touchdown_point_1.obj",
+      "physicalResource": "markings/runway_markings/large/clean/touchdown_point_1.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/touchdown_point_1.obj",
+      "sha256": "3cda3fe6ae960a9b97ba6001fc8d4157ccaca788e2bce50c0bd8eae48d691946"
+    },
+    "ZDP_Library/markings/runway_markings/clean/touchdown_point_2-border.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/touchdown_point_2-border.obj",
+      "physicalResource": "markings/runway_markings/large/clean/touchdown_point_2-border.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/touchdown_point_2-border.obj",
+      "sha256": "fc93a9b54e5ceda7679989a680dabcc59c774b29969d75daf64e954f9be229df"
+    },
+    "ZDP_Library/markings/runway_markings/clean/touchdown_point_2.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/touchdown_point_2.obj",
+      "physicalResource": "markings/runway_markings/large/clean/touchdown_point_2.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/touchdown_point_2.obj",
+      "sha256": "6232794378d43f421ebd50cec3dfc3ba76e431fd8f95f76419833eac25e8ebbe"
+    },
+    "ZDP_Library/markings/runway_markings/clean/touchdown_point_3-border.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/touchdown_point_3-border.obj",
+      "physicalResource": "markings/runway_markings/large/clean/touchdown_point_3-border.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/touchdown_point_3-border.obj",
+      "sha256": "120e93e60412a087693d4949f1432b795cec32113e47da6290e46a74af41b8dd"
+    },
+    "ZDP_Library/markings/runway_markings/clean/touchdown_point_3.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/clean/touchdown_point_3.obj",
+      "physicalResource": "markings/runway_markings/large/clean/touchdown_point_3.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/clean/touchdown_point_3.obj",
+      "sha256": "b76a0f68044a9a14fbcf2d3a76fc97ad6698ea25cc866e9efed592d447288159"
+    },
+    "ZDP_Library/markings/runway_markings/worn/shoulder_straight.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/runway_markings/worn/shoulder_straight.obj",
+      "physicalResource": "markings/runway_markings/large/worn/shoulder_straight.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/runway_markings/large/worn/shoulder_straight.obj",
+      "sha256": "89d50270a5562ea32c5e936d8bdf14d3bcd81f3b7605066bd1ad82b68610635a"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Zero Dollar Payware Library",
+  "virtualPrefix": "ZDP_Library",
+  "version": "1.2.0",
+  "tag": "1.2.0",
+  "commit": "4b44b673ac023bac67f92a1c991a28df1b1da82c",
+  "source": "https://gitlab.com/StableSystem/zdp-library",
+  "license": "CC BY-NC 4.0",
+  "purpose": "Exact KPHX 1.75.1 WED object dependency; no substitute assets"
+}

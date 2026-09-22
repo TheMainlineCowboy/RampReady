@@ -1,0 +1,1043 @@
+A
+800
+LIBRARY
+
+#v1.0.0
+#3/21/2022
+
+#v1.2.0
+#8/24/2024
+#	asphalt revamp (new variants and improved old variants)
+#	improved existing ground textures
+#	added runway marking objects
+#	added light spot grunge
+
+############################ REGION DEFINITIONS ############################
+
+REGION_DEFINE Default
+REGION_ALL
+
+REGION_DEFINE Wet
+REGION_ALL
+REGION_DREF sim/weather/rain_percent > 0.1
+
+REGION_DEFINE Winter
+REGION_ALL
+REGION_DREF sam/season/winter == 1
+
+REGION_DEFINE DeepWinter
+REGION_ALL
+REGION_DREF sam/season/deepwinter == 1
+
+############################ ASSET DEFINITIONS ############################
+
+REGION Wet
+#NO ASSETS DEFINED
+
+REGION Winter
+#NO ASSETS DEFINED
+
+REGION DeepWinter
+#NO ASSETS DEFINED
+
+REGION Default
+
+
+
+##############################################################		Markings		##############################################################
+
+#lines clean
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/black.lin									markings/lines/clean/black.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/black_small.lin							markings/lines/clean/black_small.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/black_smallish.lin							markings/lines/clean/black_smallish.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/blue.lin									markings/lines/clean/blue.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/centerline.lin								markings/lines/clean/centerline.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/centerline_bold.lin						markings/lines/clean/centerline_bold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/centerline_border.lin						markings/lines/clean/centerline_border.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/centerline_no_border.lin					markings/lines/clean/centerline_no_border.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/centerline_vbold.lin						markings/lines/clean/centerline_vbold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/dashed_black_yellow.lin					markings/lines/clean/dashed_black_yellow.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/double_yellow.lin							markings/lines/clean/double_yellow.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/double_yellow_sm.lin						markings/lines/clean/double_yellow_sm.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/enhanced_centerline.lin					markings/lines/clean/enhanced_centerline.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/ILS_hold.lin								markings/lines/clean/ILS_hold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/intermediate_hold.lin						markings/lines/clean/intermediate_hold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/intermediate_hold_sm.lin					markings/lines/clean/intermediate_hold_sm.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/red.lin									markings/lines/clean/red.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/red_white.lin								markings/lines/clean/red_white.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/removed_black.lin							markings/lines/clean/removed_black.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/removed_white.lin							markings/lines/clean/removed_white.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/removed_black_bold.lin						markings/lines/clean/removed_black_bold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/removed_white_bold.lin						markings/lines/clean/removed_white_bold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/rwy_hold.lin								markings/lines/clean/rwy_hold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/rwy_hold_sm.lin							markings/lines/clean/rwy_hold_sm.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_sm.lin								markings/lines/clean/white_sm.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white.lin									markings/lines/clean/white.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_bold.lin								markings/lines/clean/white_bold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_vbold.lin							markings/lines/clean/white_vbold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_centerline.lin						markings/lines/clean/white_centerline.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_centerline_bold.lin					markings/lines/clean/white_centerline_bold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_centerline_vbold.lin					markings/lines/clean/white_centerline_vbold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_centerline_road.lin					markings/lines/clean/white_centerline_road.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_dashed.lin							markings/lines/clean/white_dashed.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_dashed_short.lin						markings/lines/clean/white_dashed_short.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_no_border.lin						markings/lines/clean/white_no_border.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/white_no_border_bold.lin					markings/lines/clean/white_no_border_bold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow.lin									markings/lines/clean/yellow.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_bold.lin							markings/lines/clean/yellow_bold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_centerline_road.lin					markings/lines/clean/yellow_centerline_road.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_dashed.lin							markings/lines/clean/yellow_dashed.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_dashed_short.lin					markings/lines/clean/yellow_dashed_short.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/zipper.lin									markings/lines/clean/zipper.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/green.lin									markings/lines/clean/green.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/green_sm.lin								markings/lines/clean/green_sm.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_red_yellow.lin						markings/lines/clean/yellow_red_yellow.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_red_yellow_sm.lin					markings/lines/clean/yellow_red_yellow_sm.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_red.lin								markings/lines/clean/yellow_red.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_red_sm.lin							markings/lines/clean/yellow_red_sm.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/red_dashed.lin								markings/lines/clean/red_dashed.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/red_dashed_short.lin						markings/lines/clean/red_dashed_short.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/crosswalk.lin								markings/lines/clean/crosswalk.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/drain.lin									markings/lines/clean/drain.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/edge_marker_short.lin						markings/lines/clean/edge_marker_short.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/edge_marker_short_curve.lin				markings/lines/clean/edge_marker_short_curve.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/orange.lin									markings/lines/clean/orange.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_white.lin							markings/lines/clean/yellow_white.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/blue_border.lin							markings/lines/clean/blue_border.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/orange_border.lin							markings/lines/clean/orange_border.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/red_border.lin								markings/lines/clean/red_border.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/green_border.lin							markings/lines/clean/green_border.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_dashed_noborder.lin					markings/lines/clean/yellow_dashed_noborder.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/yellow_dashed_short_noborder.lin			markings/lines/clean/yellow_dashed_short_noborder.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/zipper_black.lin							markings/lines/clean/zipper_black.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/ILS_hold_noborder.lin						markings/lines/clean/ILS_hold_noborder.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/rwy_hold_noborder.lin						markings/lines/clean/rwy_hold_noborder.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/rwy_hold_sm_noborder.lin					markings/lines/clean/rwy_hold_sm_noborder.lin
+		
+#strings		
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/runway_shoulder_r.str						markings/lines/clean/runway_shoulder_r.str
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/runway_shoulder_l.str						markings/lines/clean/runway_shoulder_l.str
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/clean/shoulder_marker.str						markings/lines/clean/shoulder_marker.str
+		
+#lines worn		
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/black.lin									markings/lines/worn/black.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/black_small.lin								markings/lines/worn/black_small.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/black_smallish.lin							markings/lines/worn/black_smallish.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/blue.lin									markings/lines/worn/blue.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/centerline.lin								markings/lines/worn/centerline.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/centerline_bold.lin							markings/lines/worn/centerline_bold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/centerline_no_border.lin					markings/lines/worn/centerline_no_border.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/centerline_border.lin						markings/lines/worn/centerline_border.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/centerline_vbold.lin						markings/lines/worn/centerline_vbold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/dashed_black_yellow.lin						markings/lines/worn/dashed_black_yellow.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/double_yellow.lin							markings/lines/worn/double_yellow.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/double_yellow_sm.lin						markings/lines/worn/double_yellow_sm.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/enhanced_centerline.lin						markings/lines/worn/enhanced_centerline.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/ILS_hold.lin								markings/lines/worn/ILS_hold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/intermediate_hold.lin						markings/lines/worn/intermediate_hold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/intermediate_hold_sm.lin					markings/lines/worn/intermediate_hold_sm.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/red.lin										markings/lines/worn/red.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/red_white.lin								markings/lines/worn/red_white.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/removed_black.lin							markings/lines/worn/removed_black.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/removed_white.lin							markings/lines/worn/removed_white.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/removed_black_bold.lin						markings/lines/worn/removed_black_bold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/removed_white_bold.lin						markings/lines/worn/removed_white_bold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/rwy_hold.lin								markings/lines/worn/rwy_hold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/rwy_hold_sm.lin								markings/lines/worn/rwy_hold_sm.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white.lin									markings/lines/worn/white.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_centerline.lin						markings/lines/worn/white_centerline.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_centerline_bold.lin					markings/lines/worn/white_centerline_bold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_centerline_vbold.lin					markings/lines/worn/white_centerline_vbold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_centerline_road.lin					markings/lines/worn/white_centerline_road.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_dashed.lin							markings/lines/worn/white_dashed.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_dashed_short.lin						markings/lines/worn/white_dashed_short.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_no_border.lin							markings/lines/worn/white_no_border.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_bold.lin								markings/lines/worn/white_bold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_vbold.lin								markings/lines/worn/white_vbold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_no_border_bold.lin					markings/lines/worn/white_no_border_bold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_sm.lin								markings/lines/worn/white_sm.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/white_vbold.lin								markings/lines/worn/white_vbold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow.lin									markings/lines/worn/yellow.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_bold.lin								markings/lines/worn/yellow_bold.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_centerline_road.lin					markings/lines/worn/yellow_centerline_road.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_dashed.lin							markings/lines/worn/yellow_dashed.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_dashed_short.lin						markings/lines/worn/yellow_dashed_short.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/zipper.lin									markings/lines/worn/zipper.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/green.lin									markings/lines/worn/green.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/green_sm.lin								markings/lines/worn/green_sm.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_red_yellow.lin						markings/lines/worn/yellow_red_yellow.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_red_yellow_sm.lin					markings/lines/worn/yellow_red_yellow_sm.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_red.lin								markings/lines/worn/yellow_red.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_red_sm.lin							markings/lines/worn/yellow_red_sm.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/red_dashed.lin								markings/lines/worn/red_dashed.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/red_dashed_short.lin						markings/lines/worn/red_dashed_short.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/crosswalk.lin								markings/lines/worn/crosswalk.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/drain.lin									markings/lines/worn/drain.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/edge_marker_short.lin						markings/lines/worn/edge_marker_short.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/edge_marker_short_curve.lin					markings/lines/worn/edge_marker_short_curve.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/orange.lin									markings/lines/worn/orange.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_white.lin							markings/lines/worn/yellow_white.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/blue_border.lin								markings/lines/worn/blue_border.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/orange_border.lin							markings/lines/worn/orange_border.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/red_border.lin								markings/lines/worn/red_border.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/green_border.lin							markings/lines/worn/green_border.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_dashed_noborder.lin					markings/lines/worn/yellow_dashed_noborder.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/yellow_dashed_short_noborder.lin			markings/lines/worn/yellow_dashed_short_noborder.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/zipper_black.lin							markings/lines/worn/zipper_black.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/ILS_hold_noborder.lin						markings/lines/worn/ILS_hold_noborder.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/rwy_hold_noborder.lin						markings/lines/worn/rwy_hold_noborder.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/rwy_hold_sm_noborder.lin					markings/lines/worn/rwy_hold_sm_noborder.lin
+		
+#strings		
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/runway_shoulder_r.str						markings/lines/worn/runway_shoulder_r.str
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/runway_shoulder_l.str						markings/lines/worn/runway_shoulder_l.str
+EXPORT_EXCLUDE	ZDP_Library/markings/lines/worn/shoulder_marker.str							markings/lines/worn/shoulder_marker.str
+		
+																	###paint###		
+
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_black_clean.pol							markings/paint/paint_black_clean.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_blue_clean.pol								markings/paint/paint_blue_clean.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_green_clean.pol							markings/paint/paint_green_clean.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_red_clean.pol								markings/paint/paint_red_clean.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_white_clean.pol							markings/paint/paint_white_clean.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_yellow_clean.pol							markings/paint/paint_yellow_clean.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_black_worn.pol								markings/paint/paint_black_worn.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_blue_worn.pol								markings/paint/paint_blue_worn.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_green_worn.pol								markings/paint/paint_green_worn.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_red_worn.pol								markings/paint/paint_red_worn.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_white_worn.pol								markings/paint/paint_white_worn.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_yellow_worn.pol							markings/paint/paint_yellow_worn.pol
+		
+#stripes		
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_white.pol								markings/paint/stripes_white.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_white_worn.pol							markings/paint/stripes_white_worn.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_white_lg.pol								markings/paint/stripes_white_lg.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_white_lg_worn.pol						markings/paint/stripes_white_lg_worn.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_red.pol									markings/paint/stripes_red.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_red_worn.pol								markings/paint/stripes_red_worn.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_red_lg.pol								markings/paint/stripes_red_lg.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_red_lg_worn.pol							markings/paint/stripes_red_lg_worn.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_yellow.pol								markings/paint/stripes_yellow.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_yellow_worn.pol							markings/paint/stripes_yellow_worn.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_yellow_lg.pol							markings/paint/stripes_yellow_lg.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/stripes_yellow_lg_worn.pol						markings/paint/stripes_yellow_lg_worn.pol
+		
+#signs		
+EXPORT_EXCLUDE	ZDP_Library/markings/signs/clean/DrapedDirSigns.pol							markings/signs/clean/DrapedDirSigns.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/signs/clean/DrapedLocSigns.pol							markings/signs/clean/DrapedLocSigns.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/signs/clean/DrapedRedText.pol							markings/signs/clean/DrapedRedText.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/signs/clean/DrapedRwySigns.pol							markings/signs/clean/DrapedRwySigns.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/signs/worn/DrapedDirSigns.pol							markings/signs/worn/DrapedDirSigns.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/signs/worn/DrapedLocSigns.pol							markings/signs/worn/DrapedLocSigns.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/signs/worn/DrapedRedText.pol							markings/signs/worn/DrapedRedText.pol
+EXPORT_EXCLUDE	ZDP_Library/markings/signs/worn/DrapedRwySigns.pol							markings/signs/worn/DrapedRwySigns.pol
+		
+#borders		
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_black_clean.lin						markings/paint/paint_border_black_clean.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_white_clean.lin						markings/paint/paint_border_white_clean.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_red_clean.lin						markings/paint/paint_border_red_clean.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_blue_clean.lin						markings/paint/paint_border_blue_clean.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_green_clean.lin						markings/paint/paint_border_green_clean.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_yellow_clean.lin					markings/paint/paint_border_yellow_clean.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_black_worn.lin						markings/paint/paint_border_black_worn.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_white_worn.lin						markings/paint/paint_border_white_worn.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_red_worn.lin						markings/paint/paint_border_red_worn.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_blue_worn.lin						markings/paint/paint_border_blue_worn.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_green_worn.lin						markings/paint/paint_border_green_worn.lin
+EXPORT_EXCLUDE	ZDP_Library/markings/paint/paint_border_yellow_worn.lin						markings/paint/paint_border_yellow_worn.lin
+
+																## PAINTED TEXT ##
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.text.pol							markings/painted_text/clean/text.pol
+#CLEAN BLACK#
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/0.obj								markings/painted_text/clean/0.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/1.obj								markings/painted_text/clean/1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/2.obj								markings/painted_text/clean/2.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/3.obj								markings/painted_text/clean/3.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/4.obj								markings/painted_text/clean/4.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/5.obj								markings/painted_text/clean/5.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/6.obj								markings/painted_text/clean/6.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/7.obj								markings/painted_text/clean/7.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/8.obj								markings/painted_text/clean/8.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/9.obj								markings/painted_text/clean/9.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/A.obj								markings/painted_text/clean/A.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/B.obj								markings/painted_text/clean/B.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/C.obj								markings/painted_text/clean/C.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/D.obj								markings/painted_text/clean/D.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/E.obj								markings/painted_text/clean/E.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/F.obj								markings/painted_text/clean/F.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/G.obj								markings/painted_text/clean/G.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/H.obj								markings/painted_text/clean/H.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/I.obj								markings/painted_text/clean/I.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/J.obj								markings/painted_text/clean/J.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/K.obj								markings/painted_text/clean/K.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/L.obj								markings/painted_text/clean/L.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/M.obj								markings/painted_text/clean/M.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/N.obj								markings/painted_text/clean/N.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/O.obj								markings/painted_text/clean/O.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/P.obj								markings/painted_text/clean/P.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/Q.obj								markings/painted_text/clean/Q.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/R.obj								markings/painted_text/clean/R.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/S.obj								markings/painted_text/clean/S.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/T.obj								markings/painted_text/clean/T.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/U.obj								markings/painted_text/clean/U.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/V.obj								markings/painted_text/clean/V.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/W.obj								markings/painted_text/clean/W.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/X.obj								markings/painted_text/clean/X.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/Y.obj								markings/painted_text/clean/Y.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/Z.obj								markings/painted_text/clean/Z.obj
+#CLEAN YELLOW#
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/0_yellow.obj						markings/painted_text/clean/0_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/1_yellow.obj						markings/painted_text/clean/1_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/2_yellow.obj						markings/painted_text/clean/2_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/3_yellow.obj						markings/painted_text/clean/3_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/4_yellow.obj						markings/painted_text/clean/4_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/5_yellow.obj						markings/painted_text/clean/5_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/6_yellow.obj						markings/painted_text/clean/6_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/7_yellow.obj						markings/painted_text/clean/7_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/8_yellow.obj						markings/painted_text/clean/8_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/9_yellow.obj						markings/painted_text/clean/9_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/A_yellow.obj						markings/painted_text/clean/A_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/B_yellow.obj						markings/painted_text/clean/B_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/C_yellow.obj						markings/painted_text/clean/C_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/D_yellow.obj						markings/painted_text/clean/D_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/E_yellow.obj						markings/painted_text/clean/E_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/F_yellow.obj						markings/painted_text/clean/F_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/G_yellow.obj						markings/painted_text/clean/G_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/H_yellow.obj						markings/painted_text/clean/H_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/I_yellow.obj						markings/painted_text/clean/I_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/J_yellow.obj						markings/painted_text/clean/J_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/K_yellow.obj						markings/painted_text/clean/K_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/L_yellow.obj						markings/painted_text/clean/L_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/M_yellow.obj						markings/painted_text/clean/M_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/N_yellow.obj						markings/painted_text/clean/N_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/O_yellow.obj						markings/painted_text/clean/O_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/P_yellow.obj						markings/painted_text/clean/P_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/Q_yellow.obj						markings/painted_text/clean/Q_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/R_yellow.obj						markings/painted_text/clean/R_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/S_yellow.obj						markings/painted_text/clean/S_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/T_yellow.obj						markings/painted_text/clean/T_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/U_yellow.obj						markings/painted_text/clean/U_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/V_yellow.obj						markings/painted_text/clean/V_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/W_yellow.obj						markings/painted_text/clean/W_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/X_yellow.obj						markings/painted_text/clean/X_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/Y_yellow.obj						markings/painted_text/clean/Y_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/Z_yellow.obj						markings/painted_text/clean/Z_yellow.obj
+#CLEAN SHAPES#
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/circle_black.obj					markings/painted_text/clean/circle_black.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/circle_black_border.obj				markings/painted_text/clean/circle_black_border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/circle_white.obj					markings/painted_text/clean/circle_white.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/circle_white_border.obj				markings/painted_text/clean/circle_white_border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/circle_red.obj						markings/painted_text/clean/circle_red.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/circle_blue.obj						markings/painted_text/clean/circle_blue.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/circle_green.obj					markings/painted_text/clean/circle_green.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/circle_yellow.obj					markings/painted_text/clean/circle_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/arrow_black.obj						markings/painted_text/clean/arrow_black.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/arrow_white.obj						markings/painted_text/clean/arrow_white.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/arrow_yellow.obj					markings/painted_text/clean/arrow_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/arrow_border_black_1.obj			markings/painted_text/clean/arrow_border_black_1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/arrow_border_black_2.obj			markings/painted_text/clean/arrow_border_black_2.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/arrow_border_white_1.obj			markings/painted_text/clean/arrow_border_white_1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/arrow_border_white_2.obj			markings/painted_text/clean/arrow_border_white_2.obj
+### CLEAN LARGE ###
+#CLEAN BLACK#
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/0.obj						markings/painted_text/clean/large/0.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/1.obj						markings/painted_text/clean/large/1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/2.obj						markings/painted_text/clean/large/2.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/3.obj						markings/painted_text/clean/large/3.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/4.obj						markings/painted_text/clean/large/4.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/5.obj						markings/painted_text/clean/large/5.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/6.obj						markings/painted_text/clean/large/6.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/7.obj						markings/painted_text/clean/large/7.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/8.obj						markings/painted_text/clean/large/8.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/9.obj						markings/painted_text/clean/large/9.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/A.obj						markings/painted_text/clean/large/A.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/B.obj						markings/painted_text/clean/large/B.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/C.obj						markings/painted_text/clean/large/C.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/D.obj						markings/painted_text/clean/large/D.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/E.obj						markings/painted_text/clean/large/E.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/F.obj						markings/painted_text/clean/large/F.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/G.obj						markings/painted_text/clean/large/G.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/H.obj						markings/painted_text/clean/large/H.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/I.obj						markings/painted_text/clean/large/I.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/J.obj						markings/painted_text/clean/large/J.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/K.obj						markings/painted_text/clean/large/K.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/L.obj						markings/painted_text/clean/large/L.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/M.obj						markings/painted_text/clean/large/M.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/N.obj						markings/painted_text/clean/large/N.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/O.obj						markings/painted_text/clean/large/O.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/P.obj						markings/painted_text/clean/large/P.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/Q.obj						markings/painted_text/clean/large/Q.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/R.obj						markings/painted_text/clean/large/R.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/S.obj						markings/painted_text/clean/large/S.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/T.obj						markings/painted_text/clean/large/T.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/U.obj						markings/painted_text/clean/large/U.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/V.obj						markings/painted_text/clean/large/V.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/W.obj						markings/painted_text/clean/large/W.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/X.obj						markings/painted_text/clean/large/X.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/Y.obj						markings/painted_text/clean/large/Y.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/Z.obj						markings/painted_text/clean/large/Z.obj
+#CLEAN YELLOW#
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/0_yellow.obj					markings/painted_text/clean/large/0_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/1_yellow.obj					markings/painted_text/clean/large/1_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/2_yellow.obj					markings/painted_text/clean/large/2_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/3_yellow.obj					markings/painted_text/clean/large/3_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/4_yellow.obj					markings/painted_text/clean/large/4_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/5_yellow.obj					markings/painted_text/clean/large/5_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/6_yellow.obj					markings/painted_text/clean/large/6_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/7_yellow.obj					markings/painted_text/clean/large/7_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/8_yellow.obj					markings/painted_text/clean/large/8_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/9_yellow.obj					markings/painted_text/clean/large/9_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/A_yellow.obj					markings/painted_text/clean/large/A_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/B_yellow.obj					markings/painted_text/clean/large/B_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/C_yellow.obj					markings/painted_text/clean/large/C_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/D_yellow.obj					markings/painted_text/clean/large/D_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/E_yellow.obj					markings/painted_text/clean/large/E_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/F_yellow.obj					markings/painted_text/clean/large/F_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/G_yellow.obj					markings/painted_text/clean/large/G_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/H_yellow.obj					markings/painted_text/clean/large/H_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/I_yellow.obj					markings/painted_text/clean/large/I_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/J_yellow.obj					markings/painted_text/clean/large/J_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/K_yellow.obj					markings/painted_text/clean/large/K_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/L_yellow.obj					markings/painted_text/clean/large/L_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/M_yellow.obj					markings/painted_text/clean/large/M_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/N_yellow.obj					markings/painted_text/clean/large/N_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/O_yellow.obj					markings/painted_text/clean/large/O_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/P_yellow.obj					markings/painted_text/clean/large/P_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/Q_yellow.obj					markings/painted_text/clean/large/Q_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/R_yellow.obj					markings/painted_text/clean/large/R_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/S_yellow.obj					markings/painted_text/clean/large/S_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/T_yellow.obj					markings/painted_text/clean/large/T_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/U_yellow.obj					markings/painted_text/clean/large/U_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/V_yellow.obj					markings/painted_text/clean/large/V_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/W_yellow.obj					markings/painted_text/clean/large/W_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/X_yellow.obj					markings/painted_text/clean/large/X_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/Y_yellow.obj					markings/painted_text/clean/large/Y_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/Z_yellow.obj					markings/painted_text/clean/large/Z_yellow.obj
+#CLEAN SHAPES#
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/circle_black.obj				markings/painted_text/clean/large/circle_black.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/circle_black_border.obj		markings/painted_text/clean/large/circle_black_border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/circle_white.obj				markings/painted_text/clean/large/circle_white.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/circle_white_border.obj		markings/painted_text/clean/large/circle_white_border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/circle_red.obj				markings/painted_text/clean/large/circle_red.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/circle_blue.obj				markings/painted_text/clean/large/circle_blue.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/circle_green.obj				markings/painted_text/clean/large/circle_green.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/circle_yellow.obj			markings/painted_text/clean/large/circle_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/arrow_black.obj				markings/painted_text/clean/large/arrow_black.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/arrow_white.obj				markings/painted_text/clean/large/arrow_white.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/arrow_yellow.obj				markings/painted_text/clean/large/arrow_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/arrow_border_black_1.obj		markings/painted_text/clean/large/arrow_border_black_1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/arrow_border_black_2.obj		markings/painted_text/clean/large/arrow_border_black_2.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/arrow_border_white_1.obj		markings/painted_text/clean/large/arrow_border_white_1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/clean/.large/arrow_border_white_2.obj		markings/painted_text/clean/large/arrow_border_white_2.obj
+
+													### WORN ###
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.text.pol							markings/painted_text/worn/text.pol
+#WORN BLACK#
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/0.obj								markings/painted_text/worn/0.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/1.obj								markings/painted_text/worn/1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/2.obj								markings/painted_text/worn/2.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/3.obj								markings/painted_text/worn/3.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/4.obj								markings/painted_text/worn/4.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/5.obj								markings/painted_text/worn/5.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/6.obj								markings/painted_text/worn/6.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/7.obj								markings/painted_text/worn/7.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/8.obj								markings/painted_text/worn/8.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/9.obj								markings/painted_text/worn/9.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/A.obj								markings/painted_text/worn/A.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/B.obj								markings/painted_text/worn/B.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/C.obj								markings/painted_text/worn/C.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/D.obj								markings/painted_text/worn/D.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/E.obj								markings/painted_text/worn/E.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/F.obj								markings/painted_text/worn/F.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/G.obj								markings/painted_text/worn/G.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/H.obj								markings/painted_text/worn/H.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/I.obj								markings/painted_text/worn/I.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/J.obj								markings/painted_text/worn/J.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/K.obj								markings/painted_text/worn/K.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/L.obj								markings/painted_text/worn/L.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/M.obj								markings/painted_text/worn/M.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/N.obj								markings/painted_text/worn/N.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/O.obj								markings/painted_text/worn/O.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/P.obj								markings/painted_text/worn/P.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/Q.obj								markings/painted_text/worn/Q.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/R.obj								markings/painted_text/worn/R.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/S.obj								markings/painted_text/worn/S.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/T.obj								markings/painted_text/worn/T.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/U.obj								markings/painted_text/worn/U.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/V.obj								markings/painted_text/worn/V.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/W.obj								markings/painted_text/worn/W.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/X.obj								markings/painted_text/worn/X.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/Y.obj								markings/painted_text/worn/Y.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/Z.obj								markings/painted_text/worn/Z.obj
+#WORN YELLOW#
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/0_yellow.obj							markings/painted_text/worn/0_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/1_yellow.obj							markings/painted_text/worn/1_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/2_yellow.obj							markings/painted_text/worn/2_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/3_yellow.obj							markings/painted_text/worn/3_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/4_yellow.obj							markings/painted_text/worn/4_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/5_yellow.obj							markings/painted_text/worn/5_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/6_yellow.obj							markings/painted_text/worn/6_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/7_yellow.obj							markings/painted_text/worn/7_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/8_yellow.obj							markings/painted_text/worn/8_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/9_yellow.obj							markings/painted_text/worn/9_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/A_yellow.obj							markings/painted_text/worn/A_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/B_yellow.obj							markings/painted_text/worn/B_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/C_yellow.obj							markings/painted_text/worn/C_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/D_yellow.obj							markings/painted_text/worn/D_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/E_yellow.obj							markings/painted_text/worn/E_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/F_yellow.obj							markings/painted_text/worn/F_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/G_yellow.obj							markings/painted_text/worn/G_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/H_yellow.obj							markings/painted_text/worn/H_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/I_yellow.obj							markings/painted_text/worn/I_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/J_yellow.obj							markings/painted_text/worn/J_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/K_yellow.obj							markings/painted_text/worn/K_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/L_yellow.obj							markings/painted_text/worn/L_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/M_yellow.obj							markings/painted_text/worn/M_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/N_yellow.obj							markings/painted_text/worn/N_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/O_yellow.obj							markings/painted_text/worn/O_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/P_yellow.obj							markings/painted_text/worn/P_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/Q_yellow.obj							markings/painted_text/worn/Q_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/R_yellow.obj							markings/painted_text/worn/R_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/S_yellow.obj							markings/painted_text/worn/S_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/T_yellow.obj							markings/painted_text/worn/T_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/U_yellow.obj							markings/painted_text/worn/U_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/V_yellow.obj							markings/painted_text/worn/V_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/W_yellow.obj							markings/painted_text/worn/W_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/X_yellow.obj							markings/painted_text/worn/X_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/Y_yellow.obj							markings/painted_text/worn/Y_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/Z_yellow.obj							markings/painted_text/worn/Z_yellow.obj
+#WORN SHAPES#
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/circle_black.obj						markings/painted_text/worn/circle_black.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/circle_black_border.obj				markings/painted_text/worn/circle_black_border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/circle_white.obj						markings/painted_text/worn/circle_white.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/circle_white_border.obj				markings/painted_text/worn/circle_white_border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/circle_red.obj						markings/painted_text/worn/circle_red.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/circle_blue.obj						markings/painted_text/worn/circle_blue.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/circle_green.obj						markings/painted_text/worn/circle_green.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/circle_yellow.obj					markings/painted_text/worn/circle_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/arrow_black.obj						markings/painted_text/worn/arrow_black.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/arrow_white.obj						markings/painted_text/worn/arrow_white.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/arrow_yellow.obj						markings/painted_text/worn/arrow_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/arrow_border_black_1.obj				markings/painted_text/worn/arrow_border_black_1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/arrow_border_black_2.obj				markings/painted_text/worn/arrow_border_black_2.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/arrow_border_white_1.obj				markings/painted_text/worn/arrow_border_white_1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/arrow_border_white_2.obj				markings/painted_text/worn/arrow_border_white_2.obj
+### WORN LARGE ###
+#WORN BLACK#
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/0.obj							markings/painted_text/worn/large/0.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/1.obj							markings/painted_text/worn/large/1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/2.obj							markings/painted_text/worn/large/2.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/3.obj							markings/painted_text/worn/large/3.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/4.obj							markings/painted_text/worn/large/4.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/5.obj							markings/painted_text/worn/large/5.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/6.obj							markings/painted_text/worn/large/6.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/7.obj							markings/painted_text/worn/large/7.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/8.obj							markings/painted_text/worn/large/8.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/9.obj							markings/painted_text/worn/large/9.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/A.obj							markings/painted_text/worn/large/A.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/B.obj							markings/painted_text/worn/large/B.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/C.obj							markings/painted_text/worn/large/C.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/D.obj							markings/painted_text/worn/large/D.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/E.obj							markings/painted_text/worn/large/E.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/F.obj							markings/painted_text/worn/large/F.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/G.obj							markings/painted_text/worn/large/G.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/H.obj							markings/painted_text/worn/large/H.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/I.obj							markings/painted_text/worn/large/I.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/J.obj							markings/painted_text/worn/large/J.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/K.obj							markings/painted_text/worn/large/K.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/L.obj							markings/painted_text/worn/large/L.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/M.obj							markings/painted_text/worn/large/M.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/N.obj							markings/painted_text/worn/large/N.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/O.obj							markings/painted_text/worn/large/O.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/P.obj							markings/painted_text/worn/large/P.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/Q.obj							markings/painted_text/worn/large/Q.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/R.obj							markings/painted_text/worn/large/R.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/S.obj							markings/painted_text/worn/large/S.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/T.obj							markings/painted_text/worn/large/T.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/U.obj							markings/painted_text/worn/large/U.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/V.obj							markings/painted_text/worn/large/V.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/W.obj							markings/painted_text/worn/large/W.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/X.obj							markings/painted_text/worn/large/X.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/Y.obj							markings/painted_text/worn/large/Y.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/Z.obj							markings/painted_text/worn/large/Z.obj
+#WORN YELLOW#
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/0_yellow.obj					markings/painted_text/worn/large/0_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/1_yellow.obj					markings/painted_text/worn/large/1_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/2_yellow.obj					markings/painted_text/worn/large/2_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/3_yellow.obj					markings/painted_text/worn/large/3_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/4_yellow.obj					markings/painted_text/worn/large/4_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/5_yellow.obj					markings/painted_text/worn/large/5_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/6_yellow.obj					markings/painted_text/worn/large/6_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/7_yellow.obj					markings/painted_text/worn/large/7_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/8_yellow.obj					markings/painted_text/worn/large/8_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/9_yellow.obj					markings/painted_text/worn/large/9_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/A_yellow.obj					markings/painted_text/worn/large/A_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/B_yellow.obj					markings/painted_text/worn/large/B_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/C_yellow.obj					markings/painted_text/worn/large/C_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/D_yellow.obj					markings/painted_text/worn/large/D_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/E_yellow.obj					markings/painted_text/worn/large/E_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/F_yellow.obj					markings/painted_text/worn/large/F_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/G_yellow.obj					markings/painted_text/worn/large/G_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/H_yellow.obj					markings/painted_text/worn/large/H_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/I_yellow.obj					markings/painted_text/worn/large/I_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/J_yellow.obj					markings/painted_text/worn/large/J_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/K_yellow.obj					markings/painted_text/worn/large/K_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/L_yellow.obj					markings/painted_text/worn/large/L_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/M_yellow.obj					markings/painted_text/worn/large/M_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/N_yellow.obj					markings/painted_text/worn/large/N_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/O_yellow.obj					markings/painted_text/worn/large/O_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/P_yellow.obj					markings/painted_text/worn/large/P_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/Q_yellow.obj					markings/painted_text/worn/large/Q_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/R_yellow.obj					markings/painted_text/worn/large/R_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/S_yellow.obj					markings/painted_text/worn/large/S_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/T_yellow.obj					markings/painted_text/worn/large/T_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/U_yellow.obj					markings/painted_text/worn/large/U_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/V_yellow.obj					markings/painted_text/worn/large/V_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/W_yellow.obj					markings/painted_text/worn/large/W_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/X_yellow.obj					markings/painted_text/worn/large/X_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/Y_yellow.obj					markings/painted_text/worn/large/Y_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/Z_yellow.obj					markings/painted_text/worn/large/Z_yellow.obj
+#WORN SHAPES#
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/circle_black.obj				markings/painted_text/worn/large/circle_black.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/circle_black_border.obj		markings/painted_text/worn/large/circle_black_border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/circle_white.obj				markings/painted_text/worn/large/circle_white.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/circle_white_border.obj		markings/painted_text/worn/large/circle_white_border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/circle_red.obj				markings/painted_text/worn/large/circle_red.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/circle_blue.obj				markings/painted_text/worn/large/circle_blue.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/circle_green.obj				markings/painted_text/worn/large/circle_green.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/circle_yellow.obj				markings/painted_text/worn/large/circle_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/arrow_black.obj				markings/painted_text/worn/large/arrow_black.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/arrow_white.obj				markings/painted_text/worn/large/arrow_white.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/arrow_yellow.obj				markings/painted_text/worn/large/arrow_yellow.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/arrow_border_black_1.obj		markings/painted_text/worn/large/arrow_border_black_1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/arrow_border_black_2.obj		markings/painted_text/worn/large/arrow_border_black_2.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/arrow_border_white_1.obj		markings/painted_text/worn/large/arrow_border_white_1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/painted_text/worn/.large/arrow_border_white_2.obj		markings/painted_text/worn/large/arrow_border_white_2.obj
+
+#aircraft_stop_markers		
+EXPORT_EXCLUDE	ZDP_Library/markings/aircraft_stop_markers/SDF_code_D.obj					markings/aircraft_stop_markers/SDF_code_D.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_SWA.obj				markings/aircraft_stop_markers/SDF_code_C_SWA.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj				markings/aircraft_stop_markers/SDF_code_C_AAL.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/aircraft_stop_markers/SDF_code_B.obj					markings/aircraft_stop_markers/SDF_code_B.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_DAL.obj				markings/aircraft_stop_markers/SDF_code_C_DAL.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_regional.obj			markings/aircraft_stop_markers/SDF_code_C_regional.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_UAL.obj				markings/aircraft_stop_markers/SDF_code_C_UAL.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/aircraft_stop_markers/LHR_other.obj					markings/aircraft_stop_markers/LHR_other.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/aircraft_stop_markers/LHR_T5A.obj						markings/aircraft_stop_markers/LHR_T5A.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/aircraft_stop_markers/LHR_T5BC.obj						markings/aircraft_stop_markers/LHR_T5BC.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/aircraft_stop_markers/ICN_C.obj						markings/aircraft_stop_markers/ICN_C.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/aircraft_stop_markers/ICN_D.obj						markings/aircraft_stop_markers/ICN_D.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/aircraft_stop_markers/ICN_E.obj						markings/aircraft_stop_markers/ICN_E.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/aircraft_stop_markers/ICN_F.obj						markings/aircraft_stop_markers/ICN_F.obj
+
+##############################################################		RUNWAY MARKINGS		##############################################################
+
+###runway markings		##large		#clean
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/0.obj					markings/runway_markings/large/clean/0.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/1.obj					markings/runway_markings/large/clean/1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/2.obj					markings/runway_markings/large/clean/2.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/3.obj					markings/runway_markings/large/clean/3.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/4.obj					markings/runway_markings/large/clean/4.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/5.obj					markings/runway_markings/large/clean/5.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/6.obj					markings/runway_markings/large/clean/6.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/7.obj					markings/runway_markings/large/clean/7.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/8.obj					markings/runway_markings/large/clean/8.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/9.obj					markings/runway_markings/large/clean/9.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/L.obj					markings/runway_markings/large/clean/L.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/C.obj					markings/runway_markings/large/clean/C.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/R.obj					markings/runway_markings/large/clean/R.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/0-border.obj			markings/runway_markings/large/clean/0-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/1-border.obj			markings/runway_markings/large/clean/1-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/2-border.obj			markings/runway_markings/large/clean/2-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/3-border.obj			markings/runway_markings/large/clean/3-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/4-border.obj			markings/runway_markings/large/clean/4-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/5-border.obj			markings/runway_markings/large/clean/5-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/6-border.obj			markings/runway_markings/large/clean/6-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/7-border.obj			markings/runway_markings/large/clean/7-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/8-border.obj			markings/runway_markings/large/clean/8-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/9-border.obj			markings/runway_markings/large/clean/9-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/L-border.obj			markings/runway_markings/large/clean/L-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/C-border.obj			markings/runway_markings/large/clean/C-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_large/R-border.obj			markings/runway_markings/large/clean/R-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/threshold_single.obj					markings/runway_markings/large/clean/threshold_single.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/threshold_4_typeA.obj				markings/runway_markings/large/clean/threshold_4_typeA.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/threshold_4.obj						markings/runway_markings/large/clean/threshold_4.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/threshold_6.obj						markings/runway_markings/large/clean/threshold_6.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/threshold_6_short.obj				markings/runway_markings/large/clean/threshold_6_short.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/threshold_8.obj						markings/runway_markings/large/clean/threshold_8.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/threshold_single-border.obj			markings/runway_markings/large/clean/threshold_single-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/threshold_4_typeA-border.obj			markings/runway_markings/large/clean/threshold_4_typeA-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/threshold_4-border.obj				markings/runway_markings/large/clean/threshold_4-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/threshold_6-border.obj				markings/runway_markings/large/clean/threshold_6-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/threshold_6_short-border.obj			markings/runway_markings/large/clean/threshold_6_short-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/threshold_8-border.obj				markings/runway_markings/large/clean/threshold_8-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/aim_point.obj						markings/runway_markings/large/clean/aim_point.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/aim_point_single.obj					markings/runway_markings/large/clean/aim_point_single.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/aim_point-border.obj					markings/runway_markings/large/clean/aim_point-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/aim_point_single-border.obj			markings/runway_markings/large/clean/aim_point_single-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/touchdown_point_single.obj			markings/runway_markings/large/clean/touchdown_point_single.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/touchdown_point_1.obj				markings/runway_markings/large/clean/touchdown_point_1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/touchdown_point_2.obj				markings/runway_markings/large/clean/touchdown_point_2.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/touchdown_point_3.obj				markings/runway_markings/large/clean/touchdown_point_3.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/touchdown_point_single-border.obj	markings/runway_markings/large/clean/touchdown_point_single-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/touchdown_point_1-border.obj			markings/runway_markings/large/clean/touchdown_point_1-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/touchdown_point_2-border.obj			markings/runway_markings/large/clean/touchdown_point_2-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/touchdown_point_3-border.obj			markings/runway_markings/large/clean/touchdown_point_3-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/centerline.obj						markings/runway_markings/large/clean/centerline.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/centerline-border.obj				markings/runway_markings/large/clean/centerline-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/centerline.str						markings/runway_markings/large/clean/centerline.str
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/centerline-border.str				markings/runway_markings/large/clean/centerline-border.str
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/shoulder_left.obj					markings/runway_markings/large/clean/shoulder_left.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/shoulder_left.str					markings/runway_markings/large/clean/shoulder_left.str
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/shoulder_straight.obj				markings/runway_markings/large/clean/shoulder_straight.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/shoulder_straight.str				markings/runway_markings/large/clean/shoulder_straight.str
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/shoulder_right.obj					markings/runway_markings/large/clean/shoulder_right.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/shoulder_right.str					markings/runway_markings/large/clean/shoulder_right.str
+
+###runway markings		##large		#worn
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/0.obj					markings/runway_markings/large/worn/0.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/1.obj					markings/runway_markings/large/worn/1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/2.obj					markings/runway_markings/large/worn/2.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/3.obj					markings/runway_markings/large/worn/3.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/4.obj					markings/runway_markings/large/worn/4.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/5.obj					markings/runway_markings/large/worn/5.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/6.obj					markings/runway_markings/large/worn/6.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/7.obj					markings/runway_markings/large/worn/7.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/8.obj					markings/runway_markings/large/worn/8.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/9.obj					markings/runway_markings/large/worn/9.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/L.obj					markings/runway_markings/large/worn/L.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/C.obj					markings/runway_markings/large/worn/C.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/R.obj					markings/runway_markings/large/worn/R.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/0-border.obj			markings/runway_markings/large/worn/0-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/1-border.obj			markings/runway_markings/large/worn/1-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/2-border.obj			markings/runway_markings/large/worn/2-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/3-border.obj			markings/runway_markings/large/worn/3-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/4-border.obj			markings/runway_markings/large/worn/4-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/5-border.obj			markings/runway_markings/large/worn/5-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/6-border.obj			markings/runway_markings/large/worn/6-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/7-border.obj			markings/runway_markings/large/worn/7-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/8-border.obj			markings/runway_markings/large/worn/8-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/9-border.obj			markings/runway_markings/large/worn/9-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/L-border.obj			markings/runway_markings/large/worn/L-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/C-border.obj			markings/runway_markings/large/worn/C-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_large/R-border.obj			markings/runway_markings/large/worn/R-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/threshold_single.obj					markings/runway_markings/large/worn/threshold_single.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/threshold_4_typeA.obj					markings/runway_markings/large/worn/threshold_4_typeA.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/threshold_4.obj						markings/runway_markings/large/worn/threshold_4.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/threshold_6.obj						markings/runway_markings/large/worn/threshold_6.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/threshold_6_short.obj					markings/runway_markings/large/worn/threshold_6_short.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/threshold_8.obj						markings/runway_markings/large/worn/threshold_8.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/threshold_single-border.obj			markings/runway_markings/large/worn/threshold_single-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/threshold_4_typeA-border.obj			markings/runway_markings/large/worn/threshold_4_typeA-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/threshold_4-border.obj				markings/runway_markings/large/worn/threshold_4-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/threshold_6_short-border.obj			markings/runway_markings/large/worn/threshold_6_short-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/threshold_8-border.obj				markings/runway_markings/large/worn/threshold_8-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/aim_point.obj							markings/runway_markings/large/worn/aim_point.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/aim_point_single.obj					markings/runway_markings/large/worn/aim_point_single.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/aim_point-border.obj					markings/runway_markings/large/worn/aim_point-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/aim_point_single-border.obj			markings/runway_markings/large/worn/aim_point_single-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/touchdown_point_single.obj			markings/runway_markings/large/worn/touchdown_point_single.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/touchdown_point_1.obj					markings/runway_markings/large/worn/touchdown_point_1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/touchdown_point_2.obj					markings/runway_markings/large/worn/touchdown_point_2.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/touchdown_point_3.obj					markings/runway_markings/large/worn/touchdown_point_3.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/touchdown_point_single-border.obj		markings/runway_markings/large/worn/touchdown_point_single-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/touchdown_point_1-border.obj			markings/runway_markings/large/worn/touchdown_point_1-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/touchdown_point_2-border.obj			markings/runway_markings/large/worn/touchdown_point_2-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/touchdown_point_3-border.obj			markings/runway_markings/large/worn/touchdown_point_3-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/centerline.obj						markings/runway_markings/large/worn/centerline.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/centerline-border.obj					markings/runway_markings/large/worn/centerline-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/centerline.str						markings/runway_markings/large/worn/centerline.str
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/centerline-border.str					markings/runway_markings/large/worn/centerline-border.str
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/shoulder_left.obj						markings/runway_markings/large/worn/shoulder_left.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/shoulder_left.str						markings/runway_markings/large/worn/shoulder_left.str
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/shoulder_straight.obj					markings/runway_markings/large/worn/shoulder_straight.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/shoulder_straight.str					markings/runway_markings/large/worn/shoulder_straight.str
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/shoulder_right.obj					markings/runway_markings/large/worn/shoulder_right.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/shoulder_right.str					markings/runway_markings/large/worn/shoulder_right.str
+
+###runway markings		##small		#clean
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/0.obj					markings/runway_markings/small/clean/0.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/1.obj					markings/runway_markings/small/clean/1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/2.obj					markings/runway_markings/small/clean/2.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/3.obj					markings/runway_markings/small/clean/3.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/4.obj					markings/runway_markings/small/clean/4.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/5.obj					markings/runway_markings/small/clean/5.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/6.obj					markings/runway_markings/small/clean/6.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/7.obj					markings/runway_markings/small/clean/7.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/8.obj					markings/runway_markings/small/clean/8.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/9.obj					markings/runway_markings/small/clean/9.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/L.obj					markings/runway_markings/small/clean/L.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/C.obj					markings/runway_markings/small/clean/C.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/R.obj					markings/runway_markings/small/clean/R.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/0-border.obj			markings/runway_markings/small/clean/0-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/1-border.obj			markings/runway_markings/small/clean/1-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/2-border.obj			markings/runway_markings/small/clean/2-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/3-border.obj			markings/runway_markings/small/clean/3-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/4-border.obj			markings/runway_markings/small/clean/4-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/5-border.obj			markings/runway_markings/small/clean/5-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/6-border.obj			markings/runway_markings/small/clean/6-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/7-border.obj			markings/runway_markings/small/clean/7-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/8-border.obj			markings/runway_markings/small/clean/8-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/9-border.obj			markings/runway_markings/small/clean/9-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/L-border.obj			markings/runway_markings/small/clean/L-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/C-border.obj			markings/runway_markings/small/clean/C-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/clean/_numbers_small/R-border.obj			markings/runway_markings/small/clean/R-border.obj
+
+###runway markings		##small		#worn
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/0.obj					markings/runway_markings/small/worn/0.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/1.obj					markings/runway_markings/small/worn/1.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/2.obj					markings/runway_markings/small/worn/2.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/3.obj					markings/runway_markings/small/worn/3.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/4.obj					markings/runway_markings/small/worn/4.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/5.obj					markings/runway_markings/small/worn/5.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/6.obj					markings/runway_markings/small/worn/6.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/7.obj					markings/runway_markings/small/worn/7.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/8.obj					markings/runway_markings/small/worn/8.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/9.obj					markings/runway_markings/small/worn/9.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/L.obj					markings/runway_markings/small/worn/L.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/C.obj					markings/runway_markings/small/worn/C.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/R.obj					markings/runway_markings/small/worn/R.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/0-border.obj			markings/runway_markings/small/worn/0-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/1-border.obj			markings/runway_markings/small/worn/1-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/2-border.obj			markings/runway_markings/small/worn/2-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/3-border.obj			markings/runway_markings/small/worn/3-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/4-border.obj			markings/runway_markings/small/worn/4-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/5-border.obj			markings/runway_markings/small/worn/5-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/6-border.obj			markings/runway_markings/small/worn/6-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/7-border.obj			markings/runway_markings/small/worn/7-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/8-border.obj			markings/runway_markings/small/worn/8-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/9-border.obj			markings/runway_markings/small/worn/9-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/L-border.obj			markings/runway_markings/small/worn/L-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/C-border.obj			markings/runway_markings/small/worn/C-border.obj
+EXPORT_EXCLUDE	ZDP_Library/markings/runway_markings/worn/_numbers_small/R-border.obj			markings/runway_markings/small/worn/R-border.obj
+
+
+##############################################################		Ground Textures		##############################################################
+
+																	###	Asphalt ###
+##	smooth1		##
+#	new
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/smooth1_new.pol						polygons/asphalt/smooth1_new.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/smooth1_new_dirty.pol				polygons/asphalt/smooth1_new_dirty.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/smooth1_new_light.pol				polygons/asphalt/smooth1_new_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/smooth1_new_light_dirty.pol			polygons/asphalt/smooth1_new_light_dirty.pol
+#	worn
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/smooth1_worn_damaged.pol			polygons/asphalt/smooth1_worn_damaged.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/smooth1_worn_dirty.pol				polygons/asphalt/smooth1_worn_dirty.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/smooth1_worn_light_damaged.pol		polygons/asphalt/smooth1_worn_light_damaged.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/smooth1_worn_light_dirty.pol		polygons/asphalt/smooth1_worn_light_dirty.pol
+#	overlays
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/overlays/Dark.pol					polygons/asphalt/Overlays/smooth1_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/overlays/Darker.pol					polygons/asphalt/Overlays/smooth1_darker.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/overlays/Darkest.pol				polygons/asphalt/Overlays/smooth1_darkest.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/overlays/Yellow_Light.pol			polygons/asphalt/Overlays/smooth1_yellow_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/overlays/Yellow.pol					polygons/asphalt/Overlays/smooth1_yellow.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/overlays/Yellow_Dark.pol			polygons/asphalt/Overlays/smooth1_yellow_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/overlays/red.pol					polygons/asphalt/Overlays/smooth1_red.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth1/overlays/blue.pol					polygons/asphalt/Overlays/smooth1_blue.pol
+
+##	striped1	##
+#	new
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/striped1_new.pol					polygons/asphalt/striped1_new.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/striped1_new_dirty.pol				polygons/asphalt/striped1_new_dirty.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/striped1_new_light.pol				polygons/asphalt/striped1_new_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/striped1_new_light_dirty.pol		polygons/asphalt/striped1_new_light_dirty.pol
+#	worn
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/striped1_worn_damaged.pol			polygons/asphalt/striped1_worn_damaged.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/striped1_worn_dirty.pol			polygons/asphalt/striped1_worn_dirty.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/striped1_worn_light_damaged.pol	polygons/asphalt/striped1_worn_light_damaged.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/striped1_worn_light_dirty.pol		polygons/asphalt/striped1_worn_light_dirty.pol
+#	overlays
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/overlays/Dark.pol					polygons/asphalt/Overlays/striated1_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/overlays/Darker.pol				polygons/asphalt/Overlays/striated1_darker.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/overlays/Darkest.pol				polygons/asphalt/Overlays/striated1_darkest.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/overlays/Yellow_Light.pol			polygons/asphalt/Overlays/striated1_yellow_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/overlays/Yellow.pol				polygons/asphalt/Overlays/striated1_yellow.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/overlays/Yellow_Dark.pol			polygons/asphalt/Overlays/striated1_yellow_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/overlays/red.pol					polygons/asphalt/Overlays/striated1_red.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped1/overlays/blue.pol					polygons/asphalt/Overlays/striated1_blue.pol
+
+##	striped2	##
+#	new
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/striped2_new.pol					polygons/asphalt/striped2_new.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/striped2_new_dirty.pol				polygons/asphalt/striped2_new_dirty.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/striped2_new_light.pol				polygons/asphalt/striped2_new_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/striped2_new_light_dirty.pol		polygons/asphalt/striped2_new_light_dirty.pol
+#	worn
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/striped2_worn_damaged.pol			polygons/asphalt/striped2_worn_damaged.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/striped2_worn_dirty.pol			polygons/asphalt/striped2_worn_dirty.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/striped2_worn_light_damaged.pol	polygons/asphalt/striped2_worn_light_damaged.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/striped2_worn_light_dirty.pol		polygons/asphalt/striped2_worn_light_dirty.pol
+#	overlays
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/overlays/Dark.pol					polygons/asphalt/Overlays/smooth1_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/overlays/Darker.pol				polygons/asphalt/Overlays/smooth1_darker.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/overlays/Darkest.pol				polygons/asphalt/Overlays/smooth1_darkest.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/overlays/Yellow_Light.pol			polygons/asphalt/Overlays/smooth1_yellow_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/overlays/Yellow.pol				polygons/asphalt/Overlays/smooth1_yellow.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/overlays/Yellow_Dark.pol			polygons/asphalt/Overlays/smooth1_yellow_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/overlays/red.pol					polygons/asphalt/Overlays/smooth1_red.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/overlays/blue.pol					polygons/asphalt/Overlays/smooth1_blue.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/striped2/overlays/teal.pol					polygons/asphalt/Overlays/striped2_teal.pol
+
+##	grooved		##
+#	new
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/grooved_new.pol						polygons/asphalt/grooved_new.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/grooved_new_dirty.pol				polygons/asphalt/grooved_new_dirty.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/grooved_new_light.pol				polygons/asphalt/grooved_new_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/grooved_new_light_dirty.pol			polygons/asphalt/grooved_new_light_dirty.pol
+#	worn
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/grooved_worn_damaged.pol			polygons/asphalt/grooved_worn_damaged.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/grooved_worn_dirty.pol				polygons/asphalt/grooved_worn_dirty.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/grooved_worn_light_damaged.pol		polygons/asphalt/grooved_worn_light_damaged.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/grooved_worn_light_dirty.pol		polygons/asphalt/grooved_worn_light_dirty.pol
+#	overlays
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/overlays/Dark.pol					polygons/asphalt/Overlays/grooved_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/overlays/Darker.pol					polygons/asphalt/Overlays/grooved_darker.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/overlays/Darkest.pol				polygons/asphalt/Overlays/grooved_darkest.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/overlays/Yellow_Light.pol			polygons/asphalt/Overlays/grooved_yellow_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/overlays/Yellow.pol					polygons/asphalt/Overlays/grooved_yellow.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/overlays/Yellow_Dark.pol			polygons/asphalt/Overlays/grooved_yellow_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/overlays/red.pol					polygons/asphalt/Overlays/grooved_red.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/grooved/overlays/blue.pol					polygons/asphalt/Overlays/grooved_blue.pol
+
+
+																	###	Concrete ###
+##	Flat	##
+#	New
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/new_uniform.pol					polygons/concrete/concrete_flat_new_uniform.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/new_uneven.pol					polygons/concrete/concrete_flat_new_uneven.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/new_checkered.pol				polygons/concrete/concrete_flat_new_checker.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/new_dark_Patchy.pol				polygons/concrete/concrete_flat_new_patches_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/new_light_Patchy.pol				polygons/concrete/concrete_flat_new_patches_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/new_striped.pol					polygons/concrete/concrete_flat_new_stripes.pol
+#	Worn
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/worn_uniform.pol					polygons/concrete/concrete_flat_worn_uniform.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/worn_uneven.pol					polygons/concrete/concrete_flat_worn_uneven.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/worn_checkered.pol				polygons/concrete/concrete_flat_worn_checker.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/worn_dark_Patchy.pol				polygons/concrete/concrete_flat_worn_patches_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/worn_light_Patchy.pol			polygons/concrete/concrete_flat_worn_patches_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/worn_striped.pol					polygons/concrete/concrete_flat_worn_stripes.pol
+#	Dirty
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/dirty_uniform.pol				polygons/concrete/concrete_flat_dirty_uniform.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/dirty_uneven.pol					polygons/concrete/concrete_flat_dirty_uneven.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/dirty_checkered.pol				polygons/concrete/concrete_flat_dirty_checker.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/dirty_dark_Patchy.pol			polygons/concrete/concrete_flat_dirty_patches_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/dirty_light_Patchy.pol			polygons/concrete/concrete_flat_dirty_patches_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/dirty_striped.pol				polygons/concrete/concrete_flat_dirty_stripes.pol
+##	Overlays	
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/overlays/yellow.pol					polygons/concrete/colors/rough_yellow.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/overlays/yellow_dark.pol				polygons/concrete/colors/rough_yellow_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/overlays/yellow_light.pol				polygons/concrete/colors/rough_yellow_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/overlays/dark.pol						polygons/concrete/colors/rough_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/overlays/darker.pol					polygons/concrete/colors/rough_darker.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/overlays/darkest.pol					polygons/concrete/colors/rough_darkest.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/flat/overlays/red.pol						polygons/concrete/colors/rough_red.pol
+
+##	Grooved		##
+#	New
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/new_uniform.pol				polygons/concrete/concrete_grooved_new_uniform.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/new_uneven.pol				polygons/concrete/concrete_grooved_new_uneven.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/new_checkered.pol				polygons/concrete/concrete_grooved_new_checker.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/new_dark_Patchy.pol			polygons/concrete/concrete_grooved_new_patches_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/new_light_Patchy.pol			polygons/concrete/concrete_grooved_new_patches_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/new_striped.pol				polygons/concrete/concrete_grooved_new_stripes.pol
+#	Worn
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/worn_uniform.pol				polygons/concrete/concrete_grooved_worn_uniform.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/worn_uneven.pol				polygons/concrete/concrete_grooved_worn_uneven.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/worn_checkered.pol			polygons/concrete/concrete_grooved_worn_checker.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/worn_dark_Patchy.pol			polygons/concrete/concrete_grooved_worn_patches_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/worn_light_Patchy.pol			polygons/concrete/concrete_grooved_worn_patches_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/worn_striped.pol				polygons/concrete/concrete_grooved_worn_stripes.pol
+#	Dirty
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/dirty_uniform.pol				polygons/concrete/concrete_grooved_dirty_uniform.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/dirty_uneven.pol				polygons/concrete/concrete_grooved_dirty_uneven.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/dirty_checkered.pol			polygons/concrete/concrete_grooved_dirty_checker.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/dirty_dark_Patchy.pol			polygons/concrete/concrete_grooved_dirty_patches_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/dirty_light_Patchy.pol		polygons/concrete/concrete_grooved_dirty_patches_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/dirty_striped.pol				polygons/concrete/concrete_grooved_dirty_stripes.pol
+##	Overlays	
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/overlays/yellow.pol				polygons/concrete/colors/grooved_yellow.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/overlays/yellow_dark.pol			polygons/concrete/colors/grooved_yellow_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/overlays/yellow_light.pol			polygons/concrete/colors/grooved_yellow_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/overlays/dark.pol					polygons/concrete/colors/grooved_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/overlays/darker.pol				polygons/concrete/colors/grooved_darker.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/overlays/darkest.pol				polygons/concrete/colors/grooved_darkest.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/concrete/grooved/overlays/red.pol					polygons/concrete/colors/grooved_red.pol
+
+
+
+																	##	Grunge	##
+##	Skid marks		##
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/grunge/runway_skidmarks/skidmarks_light.obj			markings/grunge/runway_skidmarks/skidmarks_light.obj
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/grunge/runway_skidmarks/skidmarks_mid.obj			markings/grunge/runway_skidmarks/skidmarks_mid.obj
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/grunge/runway_skidmarks/skidmarks_heavy.obj			markings/grunge/runway_skidmarks/skidmarks_heavy.obj
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/grunge/runway_skidmarks/skidmarks_small_light.obj	markings/grunge/runway_skidmarks/skidmarks_small_light.obj
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/grunge/runway_skidmarks/skidmarks_small_mid.obj		markings/grunge/runway_skidmarks/skidmarks_small_mid.obj
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/grunge/runway_skidmarks/skidmarks_small_heavy.obj	markings/grunge/runway_skidmarks/skidmarks_small_heavy.obj
+
+##	dark grunge		##
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/grunge/spot_grunge/grunge1_S.obj					markings/grunge/spot_grunge/grunge1_S.obj
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/grunge/spot_grunge/grunge1_M.obj					markings/grunge/spot_grunge/grunge1_M.obj
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/grunge/spot_grunge/grunge1_L.obj					markings/grunge/spot_grunge/grunge1_L.obj
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/grunge/spot_grunge/grunge1_XL.obj					markings/grunge/spot_grunge/grunge1_XL.obj
+
+##	light grunge	##
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/grunge/spot_grunge/grunge1_light_S.obj				markings/grunge/spot_grunge/grunge1_light_S.obj
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/grunge/spot_grunge/grunge1_light_M.obj				markings/grunge/spot_grunge/grunge1_light_M.obj
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/grunge/spot_grunge/grunge1_light_L.obj				markings/grunge/spot_grunge/grunge1_light_L.obj
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/grunge/spot_grunge/grunge1_light_XL.obj				markings/grunge/spot_grunge/grunge1_light_XL.obj
+
+
+
+
+
+
+##############################################################		DEPRECATED		##############################################################
+
+PRIVATE
+
+### ASPHALT ###			#removed in v1.2.0 - path changed for all deprecated assets listed here so that they point to the new polygons (uniform->new, uneven->dirty). Smooth2 depreciated entirely
+EXPORT	ZDP_Library/ground_textures/asphalt/smooth1/smooth1_new_uneven.pol				polygons/asphalt/smooth1_new_dirty.pol
+EXPORT	ZDP_Library/ground_textures/asphalt/smooth1/smooth1_new_uniform.pol				polygons/asphalt/smooth1_new.pol
+EXPORT	ZDP_Library/ground_textures/asphalt/smooth2/smooth2_new_uneven.pol				polygons/asphalt/smooth2_new_dirty.pol
+EXPORT	ZDP_Library/ground_textures/asphalt/smooth2/smooth2_new_uniform.pol				polygons/asphalt/smooth2_new.pol
+EXPORT	ZDP_Library/ground_textures/asphalt/striped1/striped1_new_uniform.pol			polygons/asphalt/striped1_new.pol
+EXPORT	ZDP_Library/ground_textures/asphalt/striped2/striped2_new_uniform.pol			polygons/asphalt/striped2_new.pol
+#	overlays
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth2/overlays/Dark.pol					polygons/asphalt/Overlays/smooth2_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth2/overlays/Darker.pol					polygons/asphalt/Overlays/smooth2_darker.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth2/overlays/Darkest.pol				polygons/asphalt/Overlays/smooth2_darkest.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth2/overlays/Yellow_Light.pol			polygons/asphalt/Overlays/smooth2_yellow_light.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth2/overlays/Yellow.pol					polygons/asphalt/Overlays/smooth2_yellow.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth2/overlays/Yellow_Dark.pol			polygons/asphalt/Overlays/smooth2_yellow_dark.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth2/overlays/red.pol					polygons/asphalt/Overlays/smooth2_red.pol
+EXPORT_EXCLUDE	ZDP_Library/ground_textures/asphalt/smooth2/overlays/blue.pol					polygons/asphalt/Overlays/smooth2_blue.pol
+
+### CONCRETE ###		#removed in v1.2.0 - path changed for all deprecated assets listed here so that they point to the new polygons
+EXPORT	ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol					polygons/concrete/concrete_flat_new_uniform.pol
+EXPORT	ZDP_Library/ground_textures/concrete/flat/Flat_New_Uneven.pol					polygons/concrete/concrete_flat_new_uneven.pol
+EXPORT	ZDP_Library/ground_textures/concrete/flat/Flat_New_Checkered.pol				polygons/concrete/concrete_flat_new_checker.pol
+EXPORT	ZDP_Library/ground_textures/concrete/flat/Flat_New_Dark_Patchy.pol				polygons/concrete/concrete_flat_new_patches_dark.pol
+EXPORT	ZDP_Library/ground_textures/concrete/flat/Flat_New_Light_Patchy.pol				polygons/concrete/concrete_flat_new_patches_light.pol
+EXPORT	ZDP_Library/ground_textures/concrete/flat/Flat_New_Striped.pol					polygons/concrete/concrete_flat_new_stripes.pol
+#	Worn
+EXPORT	ZDP_Library/ground_textures/concrete/flat/Flat_Worn_Uniform.pol					polygons/concrete/concrete_flat_worn_uniform.pol
+EXPORT	ZDP_Library/ground_textures/concrete/flat/Flat_Worn_Uneven.pol					polygons/concrete/concrete_flat_worn_uneven.pol
+EXPORT	ZDP_Library/ground_textures/concrete/flat/Flat_Worn_Checkered.pol				polygons/concrete/concrete_flat_worn_checker.pol
+EXPORT	ZDP_Library/ground_textures/concrete/flat/Flat_Worn_Dark_Patchy.pol				polygons/concrete/concrete_flat_worn_patches_dark.pol
+EXPORT	ZDP_Library/ground_textures/concrete/flat/Flat_Worn_Light_Patchy.pol			polygons/concrete/concrete_flat_worn_patches_light.pol
+EXPORT	ZDP_Library/ground_textures/concrete/flat/Flat_Worn_Striped.pol					polygons/concrete/concrete_flat_worn_stripes.pol
+#	New
+EXPORT	ZDP_Library/ground_textures/concrete/grooved/Grooved_New_Uniform.pol			polygons/concrete/concrete_grooved_new_uniform.pol
+EXPORT	ZDP_Library/ground_textures/concrete/grooved/Grooved_New_Uneven.pol				polygons/concrete/concrete_grooved_new_uneven.pol
+EXPORT	ZDP_Library/ground_textures/concrete/grooved/Grooved_New_Checkered.pol			polygons/concrete/concrete_grooved_new_checker.pol
+EXPORT	ZDP_Library/ground_textures/concrete/grooved/Grooved_New_Dark_Patchy.pol		polygons/concrete/concrete_grooved_new_patches_dark.pol
+EXPORT	ZDP_Library/ground_textures/concrete/grooved/Grooved_New_Light_Patchy.pol		polygons/concrete/concrete_grooved_new_patches_light.pol
+EXPORT	ZDP_Library/ground_textures/concrete/grooved/Grooved_New_Striped.pol			polygons/concrete/concrete_grooved_new_stripes.pol
+#	Worn
+EXPORT	ZDP_Library/ground_textures/concrete/grooved/Grooved_Worn_Uniform.pol			polygons/concrete/concrete_grooved_worn_uniform.pol
+EXPORT	ZDP_Library/ground_textures/concrete/grooved/Grooved_Worn_Uneven.pol			polygons/concrete/concrete_grooved_worn_uneven.pol
+EXPORT	ZDP_Library/ground_textures/concrete/grooved/Grooved_Worn_Checkered.pol			polygons/concrete/concrete_grooved_worn_checker.pol
+EXPORT	ZDP_Library/ground_textures/concrete/grooved/Grooved_Worn_Dark_Patchy.pol		polygons/concrete/concrete_grooved_worn_patches_dark.pol
+EXPORT	ZDP_Library/ground_textures/concrete/grooved/Grooved_Worn_Light_Patchy.pol		polygons/concrete/concrete_grooved_worn_patches_light.pol
+EXPORT	ZDP_Library/ground_textures/concrete/grooved/Grooved_Worn_Striped.pol			polygons/concrete/concrete_grooved_worn_stripes.pol
