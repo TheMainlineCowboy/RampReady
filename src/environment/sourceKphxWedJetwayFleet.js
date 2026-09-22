@@ -1,31 +1,14 @@
-import {
-  computeUploadedJetwayArticulation,
-  UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY,
-} from "./uploadedAirportJetwayArticulationV10.js";
-import {
-  createModelSpaceA1Controller,
-  A1_MODEL_SPACE_RETRACTION_MODE_V7,
-} from "./uploadedAirportJetwayModelSpaceControllerV7.js";
 
 const EXACT_GLB_URL = "models/airport-jetway/Airport_Jetway.glb";
 const EXACT_GLB_SHA256 = "562e3144bd114cc41fad740c69e498d518797e198f301a9c1ea762657c33fed0";
-const MODEL_AUTHORITY = "exact-uploaded-airport-jetway-glb-562e3144-wed-placement-v1";
+const MODEL_AUTHORITY = "exact-uploaded-airport-jetway-glb-562e3144-original-internal-pose-wed-root-placement-v1";
 const MATERIAL_AUTHORITY = "exact-seven-embedded-airport-jetway-textures-v1";
-const READY_AUTHORITY = "exact-kphx-1.75.1-wed-terminal4-jetways-plus-supplied-glb-v1";
-const PERFORMANCE_AUTHORITY = "75-static-exact-glb-instances-plus-1-animated-a1-wed-v1";
+const READY_AUTHORITY = "exact-kphx-1.75.1-wed-terminal4-jetways-plus-untouched-supplied-glb-v2";
+const PERFORMANCE_AUTHORITY = "76-static-exact-glb-instances-original-internal-pose-v1";
 const PLACEMENT_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-terminal4-jetway-ramp-association-v1";
-const A1_ANIMATION_AUTHORITY = "exact-supplied-glb-wed-a1-inward-telescope-v1";
-const NATIVE_RETRACTION_AUTHORITY = "aircraft-door-clearance-without-overtravel-v6";
+const A1_ANIMATION_AUTHORITY = "disabled-during-exact-source-placement-verification";
+const NATIVE_RETRACTION_AUTHORITY = "disabled-original-zip-pose-locked";
 const SOURCE_PART_NAMES = Object.freeze(["Rotunda", "Tunnel_A", "Tunnel_B", "Tunnel_C", "Cab"]);
-const A1_RETRACTION = Object.freeze({
-  rotation: 0,
-  tunnelB: 0.79,
-  tunnelC: 1.59,
-  cab: 2.38,
-  lift: 0.08,
-  totalClearanceMeters: 2.38,
-});
-
 function modelUrl() {
   return `${import.meta.env.BASE_URL || "/"}${EXACT_GLB_URL}`;
 }
@@ -160,16 +143,6 @@ export function measurePrototypeReach(THREE, prototype) {
   };
 }
 
-export function applyIndividualArticulation(model, articulation) {
-  for (const [name, offset] of Object.entries(articulation.partOffsets)) {
-    const part = findSourcePartRoot(model, name);
-    if (!part) throw new Error(`Exact jetway articulation is missing ${name}`);
-    part.position.z += offset;
-    part.userData.uploadedJetwayArticulationOffsetMeters = offset;
-  }
-  model.updateMatrixWorld(true);
-}
-
 function collectPrototypeMeshes(prototype) {
   prototype.updateMatrixWorld(true);
   const meshes = [];
@@ -189,56 +162,36 @@ function collectPrototypeMeshes(prototype) {
   return meshes;
 }
 
-function buildStaticInstancedFleet(THREE, prototype, placements, sourceContactDistance) {
-  const staticPlacements = placements.filter((placement) => placement.gate !== "A1");
+function buildStaticInstancedFleet(THREE, prototype, placements) {
   const prototypeMeshes = collectPrototypeMeshes(prototype);
   const batches = new THREE.Group();
-  batches.name = "KPHX_WED_StaticExactJetwayInstances";
+  batches.name = "KPHX_WED_StaticExactJetwayInstances_OriginalZipPose";
   const placementMatrix = new THREE.Matrix4();
-  const articulationMatrix = new THREE.Matrix4();
-  const articulatedLocalMatrix = new THREE.Matrix4();
   const finalMatrix = new THREE.Matrix4();
-  let maximumOutwardReachShortfallMeters = 0;
-  let maximumStaticRetractionMeters = 0;
-  const articulationByRampWedObjectId = new Map(staticPlacements.map((placement) => {
-    if (!Number.isInteger(placement.rampWedObjectId)) {
-      throw new Error(`Exact WED jetway ${placement.gate} is missing rampWedObjectId`);
-    }
-    const articulation = computeUploadedJetwayArticulation(placement, sourceContactDistance);
-    maximumOutwardReachShortfallMeters = Math.max(maximumOutwardReachShortfallMeters, articulation.outwardReachShortfallMeters || 0);
-    maximumStaticRetractionMeters = Math.max(maximumStaticRetractionMeters, articulation.staticRetractionMeters || 0);
-    return [placement.rampWedObjectId, articulation];
-  }));
-  if (articulationByRampWedObjectId.size !== staticPlacements.length) {
-    throw new Error("Exact WED static jetway articulation lost unique ramp object identity");
-  }
+
   prototypeMeshes.forEach((meshDefinition, primitiveIndex) => {
-    const batch = new THREE.InstancedMesh(meshDefinition.geometry, meshDefinition.material, staticPlacements.length);
+    const batch = new THREE.InstancedMesh(meshDefinition.geometry, meshDefinition.material, placements.length);
     batch.name = `KPHX_WED_StaticJetway_${primitiveIndex}_${meshDefinition.name}`;
     batch.instanceMatrix.setUsage(THREE.StaticDrawUsage);
     batch.receiveShadow = true;
-    staticPlacements.forEach((placement, instanceIndex) => {
-      const articulation = articulationByRampWedObjectId.get(placement.rampWedObjectId);
-      if (!articulation) throw new Error(`Missing exact WED articulation for ramp object ${placement.rampWedObjectId}`);
-      const offset = articulation.partOffsets[meshDefinition.sourcePartName] || 0;
+
+    placements.forEach((placement, instanceIndex) => {
       placementMatrix.makeRotationY(placement.yawRadians);
       placementMatrix.setPosition(placement.x, 0, placement.z);
-      articulationMatrix.makeTranslation(0, 0, offset);
-      articulatedLocalMatrix.multiplyMatrices(articulationMatrix, meshDefinition.localMatrix);
-      finalMatrix.multiplyMatrices(placementMatrix, articulatedLocalMatrix);
+      finalMatrix.multiplyMatrices(placementMatrix, meshDefinition.localMatrix);
       batch.setMatrixAt(instanceIndex, finalMatrix);
     });
+
     batch.instanceMatrix.needsUpdate = true;
     batch.computeBoundingBox();
     batch.computeBoundingSphere();
     batches.add(batch);
   });
+
   return {
     batches,
-    staticGateCount: staticPlacements.length,
+    staticGateCount: placements.length,
     primitiveBatchCount: prototypeMeshes.length,
-    maximumOutwardReachShortfallMeters,
-    maximumStaticRetractionMeters,
   };
 }
 
@@ -268,35 +221,11 @@ export async function installSourceKphxWedJetwayFleet(THREE, environment, source
   const jetwayGroup = new THREE.Group();
   jetwayGroup.name = "KPHX_T4_WED_ExactJetwayFleet";
   jetwayGroup.userData.uploadedJetwayLoadState = "loading";
-  const staticFleet = buildStaticInstancedFleet(THREE, prototype, map.placements, reach.sourceContactDistance);
+  const staticFleet = buildStaticInstancedFleet(THREE, prototype, map.placements);
   jetwayGroup.add(staticFleet.batches);
 
   const a1Placement = map.placements.find((placement) => placement.gate === "A1");
-  const a1Anchor = new THREE.Group();
-  a1Anchor.name = "UploadedAirportJetway_A1";
-  a1Anchor.position.set(a1Placement.x, 0, a1Placement.z);
-  a1Anchor.rotation.y = a1Placement.yawRadians;
-  const a1Model = prototype.clone(true);
-  a1Model.name = "UploadedAirportJetwayModel_A1";
-  a1Model.traverse((entry) => { if (entry.isMesh && !entry.material?.transparent) entry.castShadow = true; });
-  const a1Articulation = computeUploadedJetwayArticulation(a1Placement, reach.sourceContactDistance);
-  applyIndividualArticulation(a1Model, a1Articulation);
-  const attachedReach = measurePrototypeReach(THREE, a1Model);
-  a1Articulation.actualContactDistance = attachedReach.sourceContactDistance;
-  a1Articulation.actualDoorGap = Math.abs(a1Articulation.targetDistance - attachedReach.sourceContactDistance);
-  a1Articulation.partCenters = attachedReach.partCenters;
-  a1Articulation.partOrderValid = attachedReach.partOrderValid;
-  a1Anchor.userData.uploadedJetwayArticulation = a1Articulation;
-  a1Anchor.add(a1Model);
-  jetwayGroup.add(a1Anchor);
-
-  const controller = createModelSpaceA1Controller(THREE, {
-    retraction: A1_RETRACTION,
-    authority: A1_ANIMATION_AUTHORITY,
-    modeAuthority: A1_MODEL_SPACE_RETRACTION_MODE_V7,
-  });
-  controller.bind(a1Anchor);
-  controller.setDeployment(1);
+  const controller = null;
 
   jetwayGroup.userData.uploadedJetwayLoadState = "ready";
   jetwayGroup.userData.uploadedJetwayCount = map.jetwayCount;
@@ -311,24 +240,24 @@ export async function installSourceKphxWedJetwayFleet(THREE, environment, source
   jetwayGroup.userData.uploadedJetwayMaximumPositionErrorMeters = 0;
   jetwayGroup.userData.uploadedJetwayMaximumUvError = 0;
   jetwayGroup.userData.uploadedJetwayStaticInstancedGateCount = staticFleet.staticGateCount;
-  jetwayGroup.userData.uploadedJetwayAnimatedIndividualGateCount = 1;
+  jetwayGroup.userData.uploadedJetwayAnimatedIndividualGateCount = 0;
   jetwayGroup.userData.uploadedJetwayStaticPrimitiveBatchCount = staticFleet.primitiveBatchCount;
   jetwayGroup.userData.uploadedJetwayStaticConnectorGateCount = 0;
   jetwayGroup.userData.uploadedJetwayIndividualConnectorGateCount = 0;
-  jetwayGroup.userData.uploadedJetwayArticulationAuthority = UPLOADED_AIRPORT_JETWAY_ARTICULATION_AUTHORITY;
+  jetwayGroup.userData.uploadedJetwayArticulationAuthority = "none-original-zip-internal-pose-preserved";
   jetwayGroup.userData.uploadedJetwaySourceContactDistanceMeters = reach.sourceContactDistance;
   jetwayGroup.userData.uploadedJetwayStaticArticulatedGateCount = staticFleet.staticGateCount;
   jetwayGroup.userData.uploadedJetwayStaticMaximumContactErrorMeters = 0;
-  jetwayGroup.userData.uploadedJetwayStaticMaximumOutwardReachShortfallMeters = staticFleet.maximumOutwardReachShortfallMeters;
-  jetwayGroup.userData.uploadedJetwayStaticMaximumRetractionMeters = staticFleet.maximumStaticRetractionMeters;
-  jetwayGroup.userData.uploadedJetwayA1TargetDoorDistanceMeters = a1Articulation.targetDistance;
-  jetwayGroup.userData.uploadedJetwayA1AttachedExtensionMeters = a1Articulation.extension;
-  jetwayGroup.userData.uploadedJetwayA1PredictedDoorGapMeters = Math.abs(a1Articulation.contactError || 0);
-  jetwayGroup.userData.uploadedJetwayA1PredictedContactDistanceMeters = a1Articulation.predictedContactDistance;
-  jetwayGroup.userData.uploadedJetwayA1ActualContactDistanceMeters = a1Articulation.actualContactDistance;
-  jetwayGroup.userData.uploadedJetwayA1ActualDoorGapMeters = a1Articulation.actualDoorGap;
-  jetwayGroup.userData.uploadedJetwayA1PartOrderValid = a1Articulation.partOrderValid === true;
-  jetwayGroup.userData.uploadedJetwayA1PartCentersMeters = JSON.stringify(a1Articulation.partCenters || {});
+  jetwayGroup.userData.uploadedJetwayStaticMaximumOutwardReachShortfallMeters = 0;
+  jetwayGroup.userData.uploadedJetwayStaticMaximumRetractionMeters = 0;
+  jetwayGroup.userData.uploadedJetwayA1TargetDoorDistanceMeters = a1Placement.aircraftDoorDistance;
+  jetwayGroup.userData.uploadedJetwayA1AttachedExtensionMeters = 0;
+  jetwayGroup.userData.uploadedJetwayA1PredictedDoorGapMeters = null;
+  jetwayGroup.userData.uploadedJetwayA1PredictedContactDistanceMeters = reach.sourceContactDistance;
+  jetwayGroup.userData.uploadedJetwayA1ActualContactDistanceMeters = reach.sourceContactDistance;
+  jetwayGroup.userData.uploadedJetwayA1ActualDoorGapMeters = null;
+  jetwayGroup.userData.uploadedJetwayA1PartOrderValid = reach.partOrderValid === true;
+  jetwayGroup.userData.uploadedJetwayA1PartCentersMeters = JSON.stringify(reach.partCenters || {});
   jetwayGroup.userData.uploadedJetwayA1RetractionAuthority = NATIVE_RETRACTION_AUTHORITY;
   jetwayGroup.userData.sourceGeometryMode = MODEL_AUTHORITY;
   jetwayGroup.userData.visualAuthority = MODEL_AUTHORITY;
@@ -352,21 +281,21 @@ export async function installSourceKphxWedJetwayFleet(THREE, environment, source
   environment.userData.authoredTerminal4UploadedJetwaySourceContactDistanceMeters = reach.sourceContactDistance;
   environment.userData.authoredTerminal4UploadedJetwayStaticArticulatedGateCount = staticFleet.staticGateCount;
   environment.userData.authoredTerminal4UploadedJetwayStaticMaximumContactErrorMeters = 0;
-  environment.userData.authoredTerminal4UploadedJetwayA1TargetDoorDistanceMeters = a1Articulation.targetDistance;
-  environment.userData.authoredTerminal4UploadedJetwayA1AttachedExtensionMeters = a1Articulation.extension;
-  environment.userData.authoredTerminal4UploadedJetwayA1PredictedDoorGapMeters = 0;
-  environment.userData.authoredTerminal4UploadedJetwayA1PredictedContactDistanceMeters = a1Articulation.predictedContactDistance;
-  environment.userData.authoredTerminal4UploadedJetwayA1ActualContactDistanceMeters = a1Articulation.actualContactDistance;
-  environment.userData.authoredTerminal4UploadedJetwayA1ActualDoorGapMeters = a1Articulation.actualDoorGap;
-  environment.userData.authoredTerminal4UploadedJetwayA1PartOrderValid = a1Articulation.partOrderValid === true;
-  environment.userData.authoredTerminal4UploadedJetwayA1PartCentersMeters = JSON.stringify(a1Articulation.partCenters || {});
+  environment.userData.authoredTerminal4UploadedJetwayA1TargetDoorDistanceMeters = a1Placement.aircraftDoorDistance;
+  environment.userData.authoredTerminal4UploadedJetwayA1AttachedExtensionMeters = 0;
+  environment.userData.authoredTerminal4UploadedJetwayA1PredictedDoorGapMeters = null;
+  environment.userData.authoredTerminal4UploadedJetwayA1PredictedContactDistanceMeters = reach.sourceContactDistance;
+  environment.userData.authoredTerminal4UploadedJetwayA1ActualContactDistanceMeters = reach.sourceContactDistance;
+  environment.userData.authoredTerminal4UploadedJetwayA1ActualDoorGapMeters = null;
+  environment.userData.authoredTerminal4UploadedJetwayA1PartOrderValid = reach.partOrderValid === true;
+  environment.userData.authoredTerminal4UploadedJetwayA1PartCentersMeters = JSON.stringify(reach.partCenters || {});
   environment.userData.authoredTerminal4TerminalConnectedJetwayCount = map.jetwayCount;
   environment.userData.authoredTerminal4A1JetwayWallDistance = a1Placement.bridgeEnd;
   environment.userData.authoredTerminal4JetwaySourceScaleAuthority = "exact-supplied-glb-unit-scale-no-outward-stretch";
   environment.userData.authoredTerminal4JetwaySourceGeometryMode = MODEL_AUTHORITY;
   environment.userData.authoredTerminal4RequiresOriginalJetwayMesh = true;
-  environment.userData.authoredTerminal4JetwayInitialState = "attached-at-source-A1-WED-axis";
-  environment.userData.authoredTerminal4JetwayRequiredPrePushSequence = "verify-clearance-then-retract-exact-A1-model-inward";
+  environment.userData.authoredTerminal4JetwayInitialState = "original-zip-pose-at-source-WED-root";
+  environment.userData.authoredTerminal4JetwayRequiredPrePushSequence = "placement-verification-before-animation";
   environment.userData.authoredTerminal4JetwayDetailLevel = READY_AUTHORITY;
   environment.userData.authoredTerminal4JetwayTextureAuthority = MATERIAL_AUTHORITY;
   environment.userData.authoredTerminal4ExactJetwayTextureActive = true;
