@@ -120,7 +120,7 @@ export default function KphxA1JetwayVerifier() {
       root.add(built.root);
 
       const outlinePoints = footprint.map((p) => new THREE.Vector3(p.x, 0.08, p.y));
-      outlinePoints.push(outlinePoints[0].clone());
+      if (built.facade.ringMode !== 0) outlinePoints.push(outlinePoints[0].clone());
       root.add(new THREE.Line(
         new THREE.BufferGeometry().setFromPoints(outlinePoints),
         new THREE.LineBasicMaterial({ color: 0x00ffff }),
@@ -137,9 +137,11 @@ export default function KphxA1JetwayVerifier() {
       renderer.domElement.dataset.kphxA1FacadeNodeCount = String(nodes.length);
       renderer.domElement.dataset.kphxA1WallChoices = wallChoices.map((v) => v + 1).join(",");
       renderer.domElement.dataset.kphxA1SourceMode = "XP11-stock-type2-facade";
+      renderer.domElement.dataset.kphxA1FacadeRingMode = String(built.facade.ringMode);
+      renderer.domElement.dataset.kphxA1RenderedEdgeCount = String(built.wallEvidence.length);
       renderer.domElement.dataset.kphxA1OldAirportJetwayGlbLoaded = "false";
       renderer.domElement.dataset.kphxA1WallEvidence = JSON.stringify(built.wallEvidence);
-      setStatus("A1 · exact XP11 Jetway_1_solid.fac · 7 WED nodes · no substitute GLB");
+      setStatus(`A1 · exact XP11 Jetway_1_solid.fac · 7 WED nodes / ${built.wallEvidence.length} open edges · no substitute GLB`);
     };
 
     load().catch((error) => {
