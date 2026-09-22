@@ -95,6 +95,7 @@ jobs:
           cp public/models/kphx-full-airport/manifest.json "public/models/kphx-full-airport/batches/${NAME}.manifest.json"
           git add public/models/kphx-full-airport "reports/kphx-full-airport-wed-placements-${NAME}.json" "reports/kphx-full-airport-materialization-${NAME}.json"
           git commit -m "KPHX exact package batch: structures"
+          git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
 
       - name: Batch 2 - exact gate numbers
@@ -107,6 +108,7 @@ jobs:
           cp public/models/kphx-full-airport/manifest.json "public/models/kphx-full-airport/batches/${NAME}.manifest.json"
           git add public/models/kphx-full-airport "reports/kphx-full-airport-wed-placements-${NAME}.json" "reports/kphx-full-airport-materialization-${NAME}.json"
           git commit -m "KPHX exact package batch: gate numbers"
+          git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
 
       - name: Batch 3 - exact lights markings runways
@@ -119,6 +121,7 @@ jobs:
           cp public/models/kphx-full-airport/manifest.json "public/models/kphx-full-airport/batches/${NAME}.manifest.json"
           git add public/models/kphx-full-airport "reports/kphx-full-airport-wed-placements-${NAME}.json" "reports/kphx-full-airport-materialization-${NAME}.json"
           git commit -m "KPHX exact package batch: airfield details"
+          git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
 
       - name: Batch 4 - exact cargo service downtown
@@ -131,6 +134,7 @@ jobs:
           cp public/models/kphx-full-airport/manifest.json "public/models/kphx-full-airport/batches/${NAME}.manifest.json"
           git add public/models/kphx-full-airport "reports/kphx-full-airport-wed-placements-${NAME}.json" "reports/kphx-full-airport-materialization-${NAME}.json"
           git commit -m "KPHX exact package batch: service cargo downtown"
+          git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
 
       - name: Verify package-owned placement total
