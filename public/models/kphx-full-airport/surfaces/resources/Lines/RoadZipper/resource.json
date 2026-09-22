@@ -1,0 +1,42 @@
+{
+  "kind": "LINE_PAINT",
+  "sourceResource": "Lines/RoadZipper.lin",
+  "texture": {
+    "requested": "taxilines.png",
+    "sourcePath": "Lines/taxilines.dds",
+    "sourceSha256": "a7dc16d387e323d559614e9263d6fb77855ee9f3bae63ae073ece7aea2e5537c",
+    "sourceDecodedRgbaSha256": "7fbb6a37187dd5217d8564e5fc503312c0d9a1322308d78ff81ab33a379317f2",
+    "outputName": "taxilines.png",
+    "outputUrl": "taxilines.png",
+    "outputSha256": "27eca7861b71a39a34e06b8337a711aaafe75707e7d114ba8ee130c4a3b08e23",
+    "outputDecodedRgbaSha256": "7fbb6a37187dd5217d8564e5fc503312c0d9a1322308d78ff81ab33a379317f2",
+    "width": 2048,
+    "height": 1024
+  },
+  "scaleMeters": [
+    24,
+    24
+  ],
+  "textureWidth": 2048,
+  "layerGroup": {
+    "group": "markings",
+    "offset": 0
+  },
+  "lodMeters": 3000,
+  "mirror": true,
+  "sOffsets": [
+    {
+      "layer": 0,
+      "left": 0,
+      "center": 45,
+      "right": 90
+    }
+  ],
+  "unsupported": [],
+  "sourceSha256": "ad24029e1e0e4914a13e13a4743a03d664ecd16510399e1f6430f70bd309fc25",
+  "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Lines/RoadZipper",
+  "lit": null,
+  "normal": null,
+  "weather": null,
+  "decal": null
+}

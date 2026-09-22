@@ -1,0 +1,42 @@
+{
+  "kind": "LINE_PAINT",
+  "sourceResource": "Lines/edge_gray.lin",
+  "texture": {
+    "requested": "edge_gray.png",
+    "sourcePath": "Lines/edge_gray.dds",
+    "sourceSha256": "085d41d461ca8f9cef9bbc0448c66416ff2141d67a46c70e2ad3ceb1916b74c4",
+    "sourceDecodedRgbaSha256": "58dcc9fb79f110ec56e6662974866ab2b2fadc00f6851022c33caa9ed54688c7",
+    "outputName": "edge_gray.png",
+    "outputUrl": "edge_gray.png",
+    "outputSha256": "335d047edbddecb29b7db550555111681ef3724c936912c32aef39ab11bbf76d",
+    "outputDecodedRgbaSha256": "58dcc9fb79f110ec56e6662974866ab2b2fadc00f6851022c33caa9ed54688c7",
+    "width": 1024,
+    "height": 4096
+  },
+  "scaleMeters": [
+    12,
+    48
+  ],
+  "textureWidth": 1024,
+  "layerGroup": {
+    "group": "taxiways",
+    "offset": 0
+  },
+  "lodMeters": 10000,
+  "mirror": false,
+  "sOffsets": [
+    {
+      "layer": 0,
+      "left": 32,
+      "center": 1014,
+      "right": 1024
+    }
+  ],
+  "unsupported": [],
+  "sourceSha256": "ddb9c7f3df04a65fa5041cd3f8da2cd76897618ca715ebda71ed51d4a066e24f",
+  "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Lines/edge_gray",
+  "lit": null,
+  "normal": null,
+  "weather": null,
+  "decal": null
+}

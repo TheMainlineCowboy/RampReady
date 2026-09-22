@@ -1,0 +1,42 @@
+{
+  "kind": "LINE_PAINT",
+  "sourceResource": "Lines/Taxiline.lin",
+  "texture": {
+    "requested": "taxilines.png",
+    "sourcePath": "Lines/taxilines.dds",
+    "sourceSha256": "a7dc16d387e323d559614e9263d6fb77855ee9f3bae63ae073ece7aea2e5537c",
+    "sourceDecodedRgbaSha256": "7fbb6a37187dd5217d8564e5fc503312c0d9a1322308d78ff81ab33a379317f2",
+    "outputName": "taxilines.png",
+    "outputUrl": "taxilines.png",
+    "outputSha256": "27eca7861b71a39a34e06b8337a711aaafe75707e7d114ba8ee130c4a3b08e23",
+    "outputDecodedRgbaSha256": "7fbb6a37187dd5217d8564e5fc503312c0d9a1322308d78ff81ab33a379317f2",
+    "width": 2048,
+    "height": 1024
+  },
+  "scaleMeters": [
+    15,
+    15
+  ],
+  "textureWidth": 2048,
+  "layerGroup": {
+    "group": "markings",
+    "offset": 1
+  },
+  "lodMeters": 10000,
+  "mirror": true,
+  "sOffsets": [
+    {
+      "layer": 0,
+      "left": 220,
+      "center": 290,
+      "right": 360
+    }
+  ],
+  "unsupported": [],
+  "sourceSha256": "6bcec708876863ae64ff72ca1fe6334d5f76dc977fdb15a6750fc822cefc105f",
+  "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Lines/Taxiline",
+  "lit": null,
+  "normal": null,
+  "weather": null,
+  "decal": null
+}

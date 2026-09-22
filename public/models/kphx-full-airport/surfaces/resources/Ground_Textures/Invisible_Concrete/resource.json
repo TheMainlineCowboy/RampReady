@@ -1,0 +1,37 @@
+{
+  "kind": "DRAPED_POLYGON",
+  "sourceResource": "Ground_Textures/Invisible_Concrete.pol",
+  "texture": {
+    "requested": "blank.png",
+    "sourcePath": "Ground_Textures/blank.png",
+    "sourceSha256": "210995a08f1923dbce20bb25408b6deb3f531388654c8b2f411ce328c3f1e459",
+    "sourceDecodedRgbaSha256": "6fc6f4524161c3ae0d316812d7088e3fcd372023edaea2d7821093be40ae1060",
+    "outputName": "blank.png",
+    "outputUrl": "blank.png",
+    "outputSha256": "210995a08f1923dbce20bb25408b6deb3f531388654c8b2f411ce328c3f1e459",
+    "outputDecodedRgbaSha256": "6fc6f4524161c3ae0d316812d7088e3fcd372023edaea2d7821093be40ae1060",
+    "width": 1,
+    "height": 1
+  },
+  "textureLit": null,
+  "textureNormal": null,
+  "normalScale": null,
+  "scaleMeters": [
+    0.01,
+    0.01
+  ],
+  "layerGroup": {
+    "group": "runways",
+    "offset": 5
+  },
+  "surface": "concrete",
+  "noAlpha": false,
+  "weather": null,
+  "decalLib": null,
+  "unsupported": [],
+  "sourceSha256": "9d028ae71ca612c5ac5e4b25d54395172ac3a9984c83e8d2748d9c2575c85d63",
+  "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Ground_Textures/Invisible_Concrete",
+  "lit": null,
+  "normal": null,
+  "decal": null
+}

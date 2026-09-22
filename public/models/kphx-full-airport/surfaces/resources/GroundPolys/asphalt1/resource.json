@@ -1,0 +1,48 @@
+{
+  "kind": "DRAPED_POLYGON",
+  "sourceResource": "GroundPolys/asphalt1.pol",
+  "texture": {
+    "requested": "asphalt1.png",
+    "sourcePath": "GroundPolys/asphalt1.dds",
+    "sourceSha256": "0eef5fb987ca32f2ae901c8d48ca65d68c88ddd599b6ca38a96844c96661e194",
+    "sourceDecodedRgbaSha256": "3d7781c7436d76e4ed57d60479e27b1894057f8afe4f76c82d024a88e620a710",
+    "outputName": "asphalt1.png",
+    "outputUrl": "asphalt1.png",
+    "outputSha256": "119cca1dc6c7813f99e2d7050430009250e122b9f4559ecfad7dadb94bc09b4b",
+    "outputDecodedRgbaSha256": "3d7781c7436d76e4ed57d60479e27b1894057f8afe4f76c82d024a88e620a710",
+    "width": 2048,
+    "height": 2048
+  },
+  "textureLit": null,
+  "textureNormal": null,
+  "normalScale": null,
+  "scaleMeters": [
+    20,
+    20
+  ],
+  "layerGroup": {
+    "group": "taxiways",
+    "offset": 2
+  },
+  "surface": "asphalt",
+  "noAlpha": false,
+  "weather": {
+    "requested": "TOGAWXSQ.png",
+    "sourcePath": "GroundPolys/TOGAWXSQ.png",
+    "sourceSha256": "a630d0eb55a8b46ddcbb6642343097879ca8e6a095a0e217b3abcef0e760bd83",
+    "sourceDecodedRgbaSha256": "e1ae0d5b306f2d3e69c2c586cdb979a981dd062dd96abe0a8bd61257c2b7b8b2",
+    "outputName": "TOGAWXSQ.png",
+    "outputUrl": "TOGAWXSQ.png",
+    "outputSha256": "a630d0eb55a8b46ddcbb6642343097879ca8e6a095a0e217b3abcef0e760bd83",
+    "outputDecodedRgbaSha256": "e1ae0d5b306f2d3e69c2c586cdb979a981dd062dd96abe0a8bd61257c2b7b8b2",
+    "width": 1024,
+    "height": 1024
+  },
+  "decalLib": null,
+  "unsupported": [],
+  "sourceSha256": "f40c9a757c49f81ae0934b248dda56036e332380c2a911890bfc6f04d7a9379a",
+  "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/GroundPolys/asphalt1",
+  "lit": null,
+  "normal": null,
+  "decal": null
+}

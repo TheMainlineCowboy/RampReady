@@ -1,0 +1,100 @@
+{
+  "kind": "DRAPED_POLYGON",
+  "sourceResource": "Ground_Textures/Asphalt_2_Base.pol",
+  "texture": {
+    "requested": "Asphalt_2_Base.png",
+    "sourcePath": "Ground_Textures/Asphalt_2_Base.dds",
+    "sourceSha256": "2734dbd542d8fe861c18b354aa7c94f8a6e55045e21db28cd567fb260c52486f",
+    "sourceDecodedRgbaSha256": "f85b71340d419fe3f1923d17c012aa9d08e4f08d7de1f52116e95718aabf9dd5",
+    "outputName": "Asphalt_2_Base.png",
+    "outputUrl": "Asphalt_2_Base.png",
+    "outputSha256": "e4e32ebcd9e79d5c4376a476cf207c3a7078bb591905af076b74d4b7ef5aa4ce",
+    "outputDecodedRgbaSha256": "f85b71340d419fe3f1923d17c012aa9d08e4f08d7de1f52116e95718aabf9dd5",
+    "width": 2048,
+    "height": 2048
+  },
+  "textureLit": null,
+  "textureNormal": "Asphalt_2_NRM.png",
+  "normalScale": 1,
+  "scaleMeters": [
+    30,
+    30
+  ],
+  "layerGroup": {
+    "group": "taxiways",
+    "offset": 2
+  },
+  "surface": "asphalt",
+  "noAlpha": false,
+  "weather": {
+    "requested": "WeatherMap.png",
+    "sourcePath": "Ground_Textures/WeatherMap.png",
+    "sourceSha256": "166b2b03610644a4666e7b8011be67be813eead95194c58f11de348f18730c01",
+    "sourceDecodedRgbaSha256": "5e543dc16ee704c3bee1d4fc1764bd2121a854803016a741ddea60858852f25d",
+    "outputName": "WeatherMap.png",
+    "outputUrl": "WeatherMap.png",
+    "outputSha256": "166b2b03610644a4666e7b8011be67be813eead95194c58f11de348f18730c01",
+    "outputDecodedRgbaSha256": "5e543dc16ee704c3bee1d4fc1764bd2121a854803016a741ddea60858852f25d",
+    "width": 512,
+    "height": 512
+  },
+  "decalLib": "apt_concrete.dcl",
+  "unsupported": [],
+  "sourceSha256": "4371c70a9432bc56b3f05509598187efb0f126c373619c09cd49e435d1f5a07e",
+  "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Ground_Textures/Asphalt_2_Base",
+  "lit": null,
+  "normal": {
+    "requested": "Asphalt_2_NRM.png",
+    "sourcePath": "Ground_Textures/Asphalt_2_NRM.png",
+    "sourceSha256": "ead3d737fcd49b620a4c46806e6200accebca6d5d6c7883459d15082f4b92a79",
+    "sourceDecodedRgbaSha256": "e08418f2b2e1a2f232eb55c45ff8a7d4123bc3af4995a14e91114c1b7a7f7e57",
+    "outputName": "Asphalt_2_NRM.png",
+    "outputUrl": "Asphalt_2_NRM.png",
+    "outputSha256": "ead3d737fcd49b620a4c46806e6200accebca6d5d6c7883459d15082f4b92a79",
+    "outputDecodedRgbaSha256": "e08418f2b2e1a2f232eb55c45ff8a7d4123bc3af4995a14e91114c1b7a7f7e57",
+    "width": 1024,
+    "height": 1024
+  },
+  "decal": {
+    "kind": "DECAL",
+    "sourceResource": "Ground_Textures/apt_concrete.dcl",
+    "decals": [
+      {
+        "type": "DECAL_PARAMS",
+        "scaleRatio": 0.2,
+        "dither": 0,
+        "rgbKey": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "alphaKey": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.7
+        ],
+        "texture": "Road_Decal.png",
+        "image": {
+          "requested": "Road_Decal.png",
+          "sourcePath": "Ground_Textures/Road_Decal.png",
+          "sourceSha256": "cda8b79cff270669ce195d6cd0c1827ce7b153012dbf46d63f7f388141a41015",
+          "sourceDecodedRgbaSha256": "a41b3357a866cf2ee64118fb15e9e44c39e35b3a64fa992e5ff304160e4b25a6",
+          "outputName": "Road_Decal.png",
+          "outputUrl": "Road_Decal.png",
+          "outputSha256": "cda8b79cff270669ce195d6cd0c1827ce7b153012dbf46d63f7f388141a41015",
+          "outputDecodedRgbaSha256": "a41b3357a866cf2ee64118fb15e9e44c39e35b3a64fa992e5ff304160e4b25a6",
+          "width": 2048,
+          "height": 2048
+        }
+      }
+    ],
+    "unsupported": [],
+    "sourceSha256": "9caa9ccc59047682ce6bf029b2e49c5c98c65d915c91091cb838c0d74d0afd94"
+  }
+}

@@ -1,0 +1,535 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-09-22T02:40:42.521Z",
+  "source": {
+    "package": "KPHX - Phoenix Sky Harbor Intl",
+    "version": "1.75.1",
+    "wedSha256": "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498"
+  },
+  "policy": {
+    "polygons": "WED-authored rings and Bezier controls; POL texture scale/heading/layer authority",
+    "lines": "WED-authored chains and Bezier controls; LIN TEX_WIDTH/SCALE/S_OFFSET width and UV authority",
+    "textures": "browser PNG generated only when decoded RGBA bytes equal source image at original dimensions",
+    "unsupportedCommands": "fail materialization rather than silently approximate",
+    "externalResources": "only explicitly resolved library resources are materialized; unresolved virtual resources are never substituted",
+    "libraryMap": null,
+    "externalPrefixes": []
+  },
+  "packageOwnedResourceCount": 11,
+  "materializedResourceCount": 11,
+  "resolvedExternalResourceCount": 0,
+  "expectedResolvedExternalResourceCount": 0,
+  "resources": {
+    "GroundPolys/asphalt1.pol": {
+      "kind": "DRAPED_POLYGON",
+      "sourceResource": "GroundPolys/asphalt1.pol",
+      "texture": {
+        "requested": "asphalt1.png",
+        "sourcePath": "GroundPolys/asphalt1.dds",
+        "sourceSha256": "0eef5fb987ca32f2ae901c8d48ca65d68c88ddd599b6ca38a96844c96661e194",
+        "sourceDecodedRgbaSha256": "3d7781c7436d76e4ed57d60479e27b1894057f8afe4f76c82d024a88e620a710",
+        "outputName": "asphalt1.png",
+        "outputUrl": "asphalt1.png",
+        "outputSha256": "119cca1dc6c7813f99e2d7050430009250e122b9f4559ecfad7dadb94bc09b4b",
+        "outputDecodedRgbaSha256": "3d7781c7436d76e4ed57d60479e27b1894057f8afe4f76c82d024a88e620a710",
+        "width": 2048,
+        "height": 2048
+      },
+      "textureLit": null,
+      "textureNormal": null,
+      "normalScale": null,
+      "scaleMeters": [
+        20,
+        20
+      ],
+      "layerGroup": {
+        "group": "taxiways",
+        "offset": 2
+      },
+      "surface": "asphalt",
+      "noAlpha": false,
+      "weather": {
+        "requested": "TOGAWXSQ.png",
+        "sourcePath": "GroundPolys/TOGAWXSQ.png",
+        "sourceSha256": "a630d0eb55a8b46ddcbb6642343097879ca8e6a095a0e217b3abcef0e760bd83",
+        "sourceDecodedRgbaSha256": "e1ae0d5b306f2d3e69c2c586cdb979a981dd062dd96abe0a8bd61257c2b7b8b2",
+        "outputName": "TOGAWXSQ.png",
+        "outputUrl": "TOGAWXSQ.png",
+        "outputSha256": "a630d0eb55a8b46ddcbb6642343097879ca8e6a095a0e217b3abcef0e760bd83",
+        "outputDecodedRgbaSha256": "e1ae0d5b306f2d3e69c2c586cdb979a981dd062dd96abe0a8bd61257c2b7b8b2",
+        "width": 1024,
+        "height": 1024
+      },
+      "decalLib": null,
+      "unsupported": [],
+      "sourceSha256": "f40c9a757c49f81ae0934b248dda56036e332380c2a911890bfc6f04d7a9379a",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/GroundPolys/asphalt1",
+      "lit": null,
+      "normal": null,
+      "decal": null
+    },
+    "GroundPolys/invis_concrete.pol": {
+      "kind": "DRAPED_POLYGON",
+      "sourceResource": "GroundPolys/invis_concrete.pol",
+      "texture": {
+        "requested": "blank.png",
+        "sourcePath": "GroundPolys/blank.png",
+        "sourceSha256": "210995a08f1923dbce20bb25408b6deb3f531388654c8b2f411ce328c3f1e459",
+        "sourceDecodedRgbaSha256": "6fc6f4524161c3ae0d316812d7088e3fcd372023edaea2d7821093be40ae1060",
+        "outputName": "blank.png",
+        "outputUrl": "blank.png",
+        "outputSha256": "210995a08f1923dbce20bb25408b6deb3f531388654c8b2f411ce328c3f1e459",
+        "outputDecodedRgbaSha256": "6fc6f4524161c3ae0d316812d7088e3fcd372023edaea2d7821093be40ae1060",
+        "width": 1,
+        "height": 1
+      },
+      "textureLit": null,
+      "textureNormal": null,
+      "normalScale": null,
+      "scaleMeters": [
+        0.01,
+        0.01
+      ],
+      "layerGroup": null,
+      "surface": "concrete",
+      "noAlpha": false,
+      "weather": null,
+      "decalLib": null,
+      "unsupported": [],
+      "sourceSha256": "5e2938085a9cef74d2d61bbb747e18b0754a1e479ac1154bed52545db373336a",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/GroundPolys/invis_concrete",
+      "lit": null,
+      "normal": null,
+      "decal": null
+    },
+    "Ground_Textures/Asphalt_2_Base.pol": {
+      "kind": "DRAPED_POLYGON",
+      "sourceResource": "Ground_Textures/Asphalt_2_Base.pol",
+      "texture": {
+        "requested": "Asphalt_2_Base.png",
+        "sourcePath": "Ground_Textures/Asphalt_2_Base.dds",
+        "sourceSha256": "2734dbd542d8fe861c18b354aa7c94f8a6e55045e21db28cd567fb260c52486f",
+        "sourceDecodedRgbaSha256": "f85b71340d419fe3f1923d17c012aa9d08e4f08d7de1f52116e95718aabf9dd5",
+        "outputName": "Asphalt_2_Base.png",
+        "outputUrl": "Asphalt_2_Base.png",
+        "outputSha256": "e4e32ebcd9e79d5c4376a476cf207c3a7078bb591905af076b74d4b7ef5aa4ce",
+        "outputDecodedRgbaSha256": "f85b71340d419fe3f1923d17c012aa9d08e4f08d7de1f52116e95718aabf9dd5",
+        "width": 2048,
+        "height": 2048
+      },
+      "textureLit": null,
+      "textureNormal": "Asphalt_2_NRM.png",
+      "normalScale": 1,
+      "scaleMeters": [
+        30,
+        30
+      ],
+      "layerGroup": {
+        "group": "taxiways",
+        "offset": 2
+      },
+      "surface": "asphalt",
+      "noAlpha": false,
+      "weather": {
+        "requested": "WeatherMap.png",
+        "sourcePath": "Ground_Textures/WeatherMap.png",
+        "sourceSha256": "166b2b03610644a4666e7b8011be67be813eead95194c58f11de348f18730c01",
+        "sourceDecodedRgbaSha256": "5e543dc16ee704c3bee1d4fc1764bd2121a854803016a741ddea60858852f25d",
+        "outputName": "WeatherMap.png",
+        "outputUrl": "WeatherMap.png",
+        "outputSha256": "166b2b03610644a4666e7b8011be67be813eead95194c58f11de348f18730c01",
+        "outputDecodedRgbaSha256": "5e543dc16ee704c3bee1d4fc1764bd2121a854803016a741ddea60858852f25d",
+        "width": 512,
+        "height": 512
+      },
+      "decalLib": "apt_concrete.dcl",
+      "unsupported": [],
+      "sourceSha256": "4371c70a9432bc56b3f05509598187efb0f126c373619c09cd49e435d1f5a07e",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Ground_Textures/Asphalt_2_Base",
+      "lit": null,
+      "normal": {
+        "requested": "Asphalt_2_NRM.png",
+        "sourcePath": "Ground_Textures/Asphalt_2_NRM.png",
+        "sourceSha256": "ead3d737fcd49b620a4c46806e6200accebca6d5d6c7883459d15082f4b92a79",
+        "sourceDecodedRgbaSha256": "e08418f2b2e1a2f232eb55c45ff8a7d4123bc3af4995a14e91114c1b7a7f7e57",
+        "outputName": "Asphalt_2_NRM.png",
+        "outputUrl": "Asphalt_2_NRM.png",
+        "outputSha256": "ead3d737fcd49b620a4c46806e6200accebca6d5d6c7883459d15082f4b92a79",
+        "outputDecodedRgbaSha256": "e08418f2b2e1a2f232eb55c45ff8a7d4123bc3af4995a14e91114c1b7a7f7e57",
+        "width": 1024,
+        "height": 1024
+      },
+      "decal": {
+        "kind": "DECAL",
+        "sourceResource": "Ground_Textures/apt_concrete.dcl",
+        "decals": [
+          {
+            "type": "DECAL_PARAMS",
+            "scaleRatio": 0.2,
+            "dither": 0,
+            "rgbKey": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "alphaKey": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0.7
+            ],
+            "texture": "Road_Decal.png",
+            "image": {
+              "requested": "Road_Decal.png",
+              "sourcePath": "Ground_Textures/Road_Decal.png",
+              "sourceSha256": "cda8b79cff270669ce195d6cd0c1827ce7b153012dbf46d63f7f388141a41015",
+              "sourceDecodedRgbaSha256": "a41b3357a866cf2ee64118fb15e9e44c39e35b3a64fa992e5ff304160e4b25a6",
+              "outputName": "Road_Decal.png",
+              "outputUrl": "Road_Decal.png",
+              "outputSha256": "cda8b79cff270669ce195d6cd0c1827ce7b153012dbf46d63f7f388141a41015",
+              "outputDecodedRgbaSha256": "a41b3357a866cf2ee64118fb15e9e44c39e35b3a64fa992e5ff304160e4b25a6",
+              "width": 2048,
+              "height": 2048
+            }
+          }
+        ],
+        "unsupported": [],
+        "sourceSha256": "9caa9ccc59047682ce6bf029b2e49c5c98c65d915c91091cb838c0d74d0afd94"
+      }
+    },
+    "Ground_Textures/Invisible_Concrete.pol": {
+      "kind": "DRAPED_POLYGON",
+      "sourceResource": "Ground_Textures/Invisible_Concrete.pol",
+      "texture": {
+        "requested": "blank.png",
+        "sourcePath": "Ground_Textures/blank.png",
+        "sourceSha256": "210995a08f1923dbce20bb25408b6deb3f531388654c8b2f411ce328c3f1e459",
+        "sourceDecodedRgbaSha256": "6fc6f4524161c3ae0d316812d7088e3fcd372023edaea2d7821093be40ae1060",
+        "outputName": "blank.png",
+        "outputUrl": "blank.png",
+        "outputSha256": "210995a08f1923dbce20bb25408b6deb3f531388654c8b2f411ce328c3f1e459",
+        "outputDecodedRgbaSha256": "6fc6f4524161c3ae0d316812d7088e3fcd372023edaea2d7821093be40ae1060",
+        "width": 1,
+        "height": 1
+      },
+      "textureLit": null,
+      "textureNormal": null,
+      "normalScale": null,
+      "scaleMeters": [
+        0.01,
+        0.01
+      ],
+      "layerGroup": {
+        "group": "runways",
+        "offset": 5
+      },
+      "surface": "concrete",
+      "noAlpha": false,
+      "weather": null,
+      "decalLib": null,
+      "unsupported": [],
+      "sourceSha256": "9d028ae71ca612c5ac5e4b25d54395172ac3a9984c83e8d2748d9c2575c85d63",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Ground_Textures/Invisible_Concrete",
+      "lit": null,
+      "normal": null,
+      "decal": null
+    },
+    "Lines/RoadZipper.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "Lines/RoadZipper.lin",
+      "texture": {
+        "requested": "taxilines.png",
+        "sourcePath": "Lines/taxilines.dds",
+        "sourceSha256": "a7dc16d387e323d559614e9263d6fb77855ee9f3bae63ae073ece7aea2e5537c",
+        "sourceDecodedRgbaSha256": "7fbb6a37187dd5217d8564e5fc503312c0d9a1322308d78ff81ab33a379317f2",
+        "outputName": "taxilines.png",
+        "outputUrl": "taxilines.png",
+        "outputSha256": "27eca7861b71a39a34e06b8337a711aaafe75707e7d114ba8ee130c4a3b08e23",
+        "outputDecodedRgbaSha256": "7fbb6a37187dd5217d8564e5fc503312c0d9a1322308d78ff81ab33a379317f2",
+        "width": 2048,
+        "height": 1024
+      },
+      "scaleMeters": [
+        24,
+        24
+      ],
+      "textureWidth": 2048,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 0
+      },
+      "lodMeters": 3000,
+      "mirror": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 0,
+          "center": 45,
+          "right": 90
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "ad24029e1e0e4914a13e13a4743a03d664ecd16510399e1f6430f70bd309fc25",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Lines/RoadZipper",
+      "lit": null,
+      "normal": null,
+      "weather": null,
+      "decal": null
+    },
+    "Lines/RunwayLine.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "Lines/RunwayLine.lin",
+      "texture": {
+        "requested": "taxilines.png",
+        "sourcePath": "Lines/taxilines.dds",
+        "sourceSha256": "a7dc16d387e323d559614e9263d6fb77855ee9f3bae63ae073ece7aea2e5537c",
+        "sourceDecodedRgbaSha256": "7fbb6a37187dd5217d8564e5fc503312c0d9a1322308d78ff81ab33a379317f2",
+        "outputName": "taxilines.png",
+        "outputUrl": "taxilines.png",
+        "outputSha256": "27eca7861b71a39a34e06b8337a711aaafe75707e7d114ba8ee130c4a3b08e23",
+        "outputDecodedRgbaSha256": "7fbb6a37187dd5217d8564e5fc503312c0d9a1322308d78ff81ab33a379317f2",
+        "width": 2048,
+        "height": 1024
+      },
+      "scaleMeters": [
+        96,
+        64
+      ],
+      "textureWidth": 2048,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": 10000,
+      "mirror": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 1940,
+          "center": 1975,
+          "right": 2010
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "7c1bb9ed816ed405b5657a44f951e36974483944047327a7505f2627300ffc18",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Lines/RunwayLine",
+      "lit": null,
+      "normal": null,
+      "weather": null,
+      "decal": null
+    },
+    "Lines/Taxiline.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "Lines/Taxiline.lin",
+      "texture": {
+        "requested": "taxilines.png",
+        "sourcePath": "Lines/taxilines.dds",
+        "sourceSha256": "a7dc16d387e323d559614e9263d6fb77855ee9f3bae63ae073ece7aea2e5537c",
+        "sourceDecodedRgbaSha256": "7fbb6a37187dd5217d8564e5fc503312c0d9a1322308d78ff81ab33a379317f2",
+        "outputName": "taxilines.png",
+        "outputUrl": "taxilines.png",
+        "outputSha256": "27eca7861b71a39a34e06b8337a711aaafe75707e7d114ba8ee130c4a3b08e23",
+        "outputDecodedRgbaSha256": "7fbb6a37187dd5217d8564e5fc503312c0d9a1322308d78ff81ab33a379317f2",
+        "width": 2048,
+        "height": 1024
+      },
+      "scaleMeters": [
+        15,
+        15
+      ],
+      "textureWidth": 2048,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 1
+      },
+      "lodMeters": 10000,
+      "mirror": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 220,
+          "center": 290,
+          "right": 360
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "6bcec708876863ae64ff72ca1fe6334d5f76dc977fdb15a6750fc822cefc105f",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Lines/Taxiline",
+      "lit": null,
+      "normal": null,
+      "weather": null,
+      "decal": null
+    },
+    "Lines/Taxiline_Dash.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "Lines/Taxiline_Dash.lin",
+      "texture": {
+        "requested": "taxilines.png",
+        "sourcePath": "Lines/taxilines.dds",
+        "sourceSha256": "a7dc16d387e323d559614e9263d6fb77855ee9f3bae63ae073ece7aea2e5537c",
+        "sourceDecodedRgbaSha256": "7fbb6a37187dd5217d8564e5fc503312c0d9a1322308d78ff81ab33a379317f2",
+        "outputName": "taxilines.png",
+        "outputUrl": "taxilines.png",
+        "outputSha256": "27eca7861b71a39a34e06b8337a711aaafe75707e7d114ba8ee130c4a3b08e23",
+        "outputDecodedRgbaSha256": "7fbb6a37187dd5217d8564e5fc503312c0d9a1322308d78ff81ab33a379317f2",
+        "width": 2048,
+        "height": 1024
+      },
+      "scaleMeters": [
+        16,
+        16
+      ],
+      "textureWidth": 2048,
+      "layerGroup": null,
+      "lodMeters": 3000,
+      "mirror": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 1290,
+          "center": 1340,
+          "right": 1390
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "c17695f753a7dd3ec314859adca683017ef172273e3df8ec530c1ecc9e90a377",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Lines/Taxiline_Dash",
+      "lit": null,
+      "normal": null,
+      "weather": null,
+      "decal": null
+    },
+    "Lines/blueTaxiline.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "Lines/blueTaxiline.lin",
+      "texture": {
+        "requested": "taxilines.png",
+        "sourcePath": "Lines/taxilines.dds",
+        "sourceSha256": "a7dc16d387e323d559614e9263d6fb77855ee9f3bae63ae073ece7aea2e5537c",
+        "sourceDecodedRgbaSha256": "7fbb6a37187dd5217d8564e5fc503312c0d9a1322308d78ff81ab33a379317f2",
+        "outputName": "taxilines.png",
+        "outputUrl": "taxilines.png",
+        "outputSha256": "27eca7861b71a39a34e06b8337a711aaafe75707e7d114ba8ee130c4a3b08e23",
+        "outputDecodedRgbaSha256": "7fbb6a37187dd5217d8564e5fc503312c0d9a1322308d78ff81ab33a379317f2",
+        "width": 2048,
+        "height": 1024
+      },
+      "scaleMeters": [
+        15,
+        15
+      ],
+      "textureWidth": 2048,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 1
+      },
+      "lodMeters": 10000,
+      "mirror": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 1840,
+          "center": 1880,
+          "right": 1920
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "e18f159affe4013929bc13f78c1f43739fdbd8cd4d4f28d428927fad9ffcd75a",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Lines/blueTaxiline",
+      "lit": null,
+      "normal": null,
+      "weather": null,
+      "decal": null
+    },
+    "Lines/edge_gray.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "Lines/edge_gray.lin",
+      "texture": {
+        "requested": "edge_gray.png",
+        "sourcePath": "Lines/edge_gray.dds",
+        "sourceSha256": "085d41d461ca8f9cef9bbc0448c66416ff2141d67a46c70e2ad3ceb1916b74c4",
+        "sourceDecodedRgbaSha256": "58dcc9fb79f110ec56e6662974866ab2b2fadc00f6851022c33caa9ed54688c7",
+        "outputName": "edge_gray.png",
+        "outputUrl": "edge_gray.png",
+        "outputSha256": "335d047edbddecb29b7db550555111681ef3724c936912c32aef39ab11bbf76d",
+        "outputDecodedRgbaSha256": "58dcc9fb79f110ec56e6662974866ab2b2fadc00f6851022c33caa9ed54688c7",
+        "width": 1024,
+        "height": 4096
+      },
+      "scaleMeters": [
+        12,
+        48
+      ],
+      "textureWidth": 1024,
+      "layerGroup": {
+        "group": "taxiways",
+        "offset": 0
+      },
+      "lodMeters": 10000,
+      "mirror": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 32,
+          "center": 1014,
+          "right": 1024
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "ddb9c7f3df04a65fa5041cd3f8da2cd76897618ca715ebda71ed51d4a066e24f",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Lines/edge_gray",
+      "lit": null,
+      "normal": null,
+      "weather": null,
+      "decal": null
+    },
+    "Runways/Runway.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "Runways/Runway.lin",
+      "texture": {
+        "requested": "runwaynew.png",
+        "sourcePath": "Runways/runwaynew.dds",
+        "sourceSha256": "2f61ebb890f51abc3473138e8fdde9d23520bc3ec5bd731b7a0603b44870475a",
+        "sourceDecodedRgbaSha256": "e42382c6e706cf42a1869090b9a438c0257b6a2ad276716668d0827958a9b669",
+        "outputName": "runwaynew.png",
+        "outputUrl": "runwaynew.png",
+        "outputSha256": "da1e5cabd7bf0cbe263615a3787019f107476caf38b5254348078d65f86391e4",
+        "outputDecodedRgbaSha256": "e42382c6e706cf42a1869090b9a438c0257b6a2ad276716668d0827958a9b669",
+        "width": 2048,
+        "height": 2048
+      },
+      "scaleMeters": [
+        46,
+        46
+      ],
+      "textureWidth": 2048,
+      "layerGroup": {
+        "group": "runways",
+        "offset": 2
+      },
+      "lodMeters": 10000,
+      "mirror": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 0,
+          "center": 1024,
+          "right": 2048
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "b7a583f5eb70caabbc26c63e0333d63652959d476a0d229b4cdd53f5b20c0dc3",
+      "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Runways/Runway",
+      "lit": null,
+      "normal": null,
+      "weather": null,
+      "decal": null
+    }
+  },
+  "failures": []
+}

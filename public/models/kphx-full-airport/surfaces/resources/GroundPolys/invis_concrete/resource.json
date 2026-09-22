@@ -1,0 +1,34 @@
+{
+  "kind": "DRAPED_POLYGON",
+  "sourceResource": "GroundPolys/invis_concrete.pol",
+  "texture": {
+    "requested": "blank.png",
+    "sourcePath": "GroundPolys/blank.png",
+    "sourceSha256": "210995a08f1923dbce20bb25408b6deb3f531388654c8b2f411ce328c3f1e459",
+    "sourceDecodedRgbaSha256": "6fc6f4524161c3ae0d316812d7088e3fcd372023edaea2d7821093be40ae1060",
+    "outputName": "blank.png",
+    "outputUrl": "blank.png",
+    "outputSha256": "210995a08f1923dbce20bb25408b6deb3f531388654c8b2f411ce328c3f1e459",
+    "outputDecodedRgbaSha256": "6fc6f4524161c3ae0d316812d7088e3fcd372023edaea2d7821093be40ae1060",
+    "width": 1,
+    "height": 1
+  },
+  "textureLit": null,
+  "textureNormal": null,
+  "normalScale": null,
+  "scaleMeters": [
+    0.01,
+    0.01
+  ],
+  "layerGroup": null,
+  "surface": "concrete",
+  "noAlpha": false,
+  "weather": null,
+  "decalLib": null,
+  "unsupported": [],
+  "sourceSha256": "5e2938085a9cef74d2d61bbb747e18b0754a1e479ac1154bed52545db373336a",
+  "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/GroundPolys/invis_concrete",
+  "lit": null,
+  "normal": null,
+  "decal": null
+}

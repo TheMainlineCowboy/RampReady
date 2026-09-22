@@ -1,0 +1,42 @@
+{
+  "kind": "LINE_PAINT",
+  "sourceResource": "Runways/Runway.lin",
+  "texture": {
+    "requested": "runwaynew.png",
+    "sourcePath": "Runways/runwaynew.dds",
+    "sourceSha256": "2f61ebb890f51abc3473138e8fdde9d23520bc3ec5bd731b7a0603b44870475a",
+    "sourceDecodedRgbaSha256": "e42382c6e706cf42a1869090b9a438c0257b6a2ad276716668d0827958a9b669",
+    "outputName": "runwaynew.png",
+    "outputUrl": "runwaynew.png",
+    "outputSha256": "da1e5cabd7bf0cbe263615a3787019f107476caf38b5254348078d65f86391e4",
+    "outputDecodedRgbaSha256": "e42382c6e706cf42a1869090b9a438c0257b6a2ad276716668d0827958a9b669",
+    "width": 2048,
+    "height": 2048
+  },
+  "scaleMeters": [
+    46,
+    46
+  ],
+  "textureWidth": 2048,
+  "layerGroup": {
+    "group": "runways",
+    "offset": 2
+  },
+  "lodMeters": 10000,
+  "mirror": true,
+  "sOffsets": [
+    {
+      "layer": 0,
+      "left": 0,
+      "center": 1024,
+      "right": 2048
+    }
+  ],
+  "unsupported": [],
+  "sourceSha256": "b7a583f5eb70caabbc26c63e0333d63652959d476a0d229b4cdd53f5b20c0dc3",
+  "outputBaseUrl": "/models/kphx-full-airport/surfaces/resources/Runways/Runway",
+  "lit": null,
+  "normal": null,
+  "weather": null,
+  "decal": null
+}
