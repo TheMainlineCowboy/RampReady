@@ -20,14 +20,14 @@ const BATCHES = Object.freeze({
     Object.freeze({ gate: "D7", facadeWedObjectId: 106842 }),
     Object.freeze({ gate: "D7", facadeWedObjectId: 106853 }),
   ]),
+  "ALL": null,
 });
 
 function resolveBatch() {
   const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const requested = params?.get("batch") || "A1-A8";
-  const gates = BATCHES[requested];
-  if (!gates) throw new Error(`Unknown T4 jetway batch: ${requested}`);
-  return { name: requested, gates };
+  if (!(requested in BATCHES)) throw new Error(`Unknown T4 jetway batch: ${requested}`);
+  return { name: requested, gates: BATCHES[requested] };
 }
 const RESOURCE = "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac";
 const STOCK_BASE = "/models/xplane11-stock/jetway1";
@@ -94,7 +94,6 @@ export default function KphxT4JetwayBatchVerifier() {
 
     const load = async () => {
       const { name: batchName, gates } = resolveBatch();
-      const batchLabels = gates.map((entry) => typeof entry === "string" ? entry : entry.gate);
       const loader = new GLTFLoader();
 
       for (const object of SOURCE_KPHX_TERMINAL4_OBJECTS) {
@@ -126,12 +125,17 @@ export default function KphxT4JetwayBatchVerifier() {
       const facadeText = await facadeResponse.text();
       const wed = await wedResponse.json();
       const map = await mapResponse.json();
+      const resolvedGates = gates ?? map.placements.map((entry) => ({
+        gate: entry.gate,
+        facadeWedObjectId: entry.facadeWedObjectId,
+      }));
+      const batchLabels = resolvedGates.map((entry) => typeof entry === "string" ? entry : entry.gate);
 
       const evidence = [];
       const allPoints = [];
       let totalEdges = 0;
 
-      for (const gateSelector of gates) {
+      for (const gateSelector of resolvedGates) {
         const selector = typeof gateSelector === "string"
           ? { gate: gateSelector, facadeWedObjectId: null }
           : gateSelector;
