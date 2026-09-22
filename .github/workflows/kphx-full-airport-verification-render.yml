@@ -48,7 +48,7 @@ jobs:
           cat /tmp/kphx-vite.log
           exit 1
 
-      - name: Capture exact KPHX verification render
+      - name: Capture exact KPHX verification evidence
         shell: bash
         run: |
           set -euo pipefail
@@ -59,40 +59,91 @@ jobs:
 
           const browser = await chromium.launch({ headless: true });
           const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1 });
-          const consoleErrors = [];
+          const consoleMessages = [];
+          const pageErrors = [];
+          const failedRequests = [];
+          const httpErrors = [];
+
           page.on("console", (message) => {
-            if (message.type() === "error") consoleErrors.push(message.text());
+            consoleMessages.push({ type: message.type(), text: message.text() });
           });
-          page.on("pageerror", (error) => consoleErrors.push(String(error)));
-
-          await page.goto("http://127.0.0.1:4173/RampReady/?kphxFullAirport=1", {
-            waitUntil: "networkidle",
-            timeout: 120000,
+          page.on("pageerror", (error) => pageErrors.push(String(error)));
+          page.on("requestfailed", (request) => {
+            failedRequests.push({
+              url: request.url(),
+              method: request.method(),
+              failure: request.failure()?.errorText || "unknown",
+            });
+          });
+          page.on("response", (response) => {
+            if (response.status() >= 400) {
+              httpErrors.push({ url: response.url(), status: response.status(), statusText: response.statusText() });
+            }
           });
 
-          await page.waitForFunction(() => {
+          let navigationError = null;
+          let waitError = null;
+          try {
+            await page.goto("http://127.0.0.1:4173/RampReady/?kphxFullAirport=1", {
+              waitUntil: "domcontentloaded",
+              timeout: 60000,
+            });
+          } catch (error) {
+            navigationError = String(error);
+          }
+
+          if (!navigationError) {
+            try {
+              await page.waitForFunction(() => {
+                const canvas = document.querySelector("canvas.kphxFullAirportVerifierCanvas");
+                const state = canvas?.dataset?.kphxFullAirportVerifier;
+                return state === "ready" || state === "error";
+              }, null, { timeout: 60000 });
+            } catch (error) {
+              waitError = String(error);
+            }
+          }
+
+          const state = await page.evaluate(() => {
             const canvas = document.querySelector("canvas.kphxFullAirportVerifierCanvas");
-            return canvas?.dataset?.kphxFullAirportVerifier === "ready";
-          }, null, { timeout: 120000 });
+            const overlay = [...document.querySelectorAll("div")]
+              .map((node) => node.textContent?.trim() || "")
+              .find((text) => text.startsWith("KPHX "));
+            return {
+              canvasPresent: Boolean(canvas),
+              dataset: canvas ? { ...canvas.dataset } : {},
+              overlayText: overlay || null,
+              title: document.title,
+              bodyText: document.body?.innerText?.slice(0, 4000) || "",
+            };
+          }).catch((error) => ({
+            canvasPresent: false,
+            dataset: {},
+            overlayText: null,
+            evaluationError: String(error),
+          }));
 
-          const evidence = await page.evaluate(() => {
-            const canvas = document.querySelector("canvas.kphxFullAirportVerifierCanvas");
-            return { ...canvas.dataset };
-          });
-
-          if (evidence.kphxPackagePlacements !== "655") throw new Error(`Expected 655 placements, got ${evidence.kphxPackagePlacements}`);
-          if (evidence.kphxPackageResources !== "96") throw new Error(`Expected 96 resources, got ${evidence.kphxPackageResources}`);
-          if (evidence.kphxPackagePolygons !== "13") throw new Error(`Expected 13 package polygons, got ${evidence.kphxPackagePolygons}`);
-          if (evidence.kphxSourceVersion !== "1.75.1") throw new Error(`Wrong source version: ${evidence.kphxSourceVersion}`);
-          if (consoleErrors.length) throw new Error(`Browser errors: ${consoleErrors.join(" | ")}`);
+          const payload = {
+            capturedAtUtc: new Date().toISOString(),
+            navigationError,
+            waitError,
+            state,
+            consoleMessages,
+            pageErrors,
+            failedRequests,
+            httpErrors,
+          };
 
           await page.screenshot({
             path: "reports/kphx-full-airport-first-render.png",
             fullPage: true,
+          }).catch((error) => {
+            payload.screenshotError = String(error);
           });
+
           fs.writeFileSync(
             "reports/kphx-full-airport-first-render.json",
-            JSON.stringify({ capturedAtUtc: new Date().toISOString(), evidence, consoleErrors }, null, 2) + "\n",
+            JSON.stringify(payload, null, 2) + "\n",
           );
           await browser.close();
           NODE
@@ -105,6 +156,40 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add reports/kphx-full-airport-first-render.png reports/kphx-full-airport-first-render.json
-          git commit -m "Capture first exact KPHX full-airport verification render"
+          git commit -m "Capture exact KPHX full-airport verification evidence"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
+
+      - name: Enforce KPHX verification result
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const result = JSON.parse(fs.readFileSync("reports/kphx-full-airport-first-render.json", "utf8"));
+          const evidence = result.state?.dataset || {};
+          const failures = [];
+          if (evidence.kphxFullAirportVerifier !== "ready") failures.push(`verifier state=${evidence.kphxFullAirportVerifier || "missing"}`);
+          if (evidence.kphxPackagePlacements !== "655") failures.push(`placements=${evidence.kphxPackagePlacements || "missing"}`);
+          if (evidence.kphxPackageResources !== "96") failures.push(`resources=${evidence.kphxPackageResources || "missing"}`);
+          if (evidence.kphxPackagePolygons !== "13") failures.push(`polygons=${evidence.kphxPackagePolygons || "missing"}`);
+          if (evidence.kphxSourceVersion !== "1.75.1") failures.push(`version=${evidence.kphxSourceVersion || "missing"}`);
+          if (result.navigationError) failures.push(`navigation=${result.navigationError}`);
+          if (result.waitError) failures.push(`wait=${result.waitError}`);
+          if ((result.pageErrors || []).length) failures.push(`pageErrors=${result.pageErrors.join(" | ")}`);
+          if ((result.failedRequests || []).length) failures.push(`failedRequests=${result.failedRequests.length}`);
+          if ((result.httpErrors || []).length) failures.push(`httpErrors=${result.httpErrors.length}`);
+          const browserErrors=(result.consoleMessages || []).filter((entry)=>entry.type==="error");
+          if (browserErrors.length) failures.push(`consoleErrors=${browserErrors.map((entry)=>entry.text).join(" | ")}`);
+          if (failures.length) throw new Error(`KPHX verification failed: ${failures.join("; ")}`);
+          console.log(JSON.stringify({
+            state:evidence.kphxFullAirportVerifier,
+            placements:evidence.kphxPackagePlacements,
+            resources:evidence.kphxPackageResources,
+            polygons:evidence.kphxPackagePolygons,
+            lineMeshes:evidence.kphxPackageLineMeshes,
+            version:evidence.kphxSourceVersion,
+            status:"PASS"
+          },null,2));
+          NODE
+
