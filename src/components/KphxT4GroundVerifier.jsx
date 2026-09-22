@@ -143,8 +143,12 @@ export default function KphxT4GroundVerifier() {
       const zdpSurfaces = await installKphxPackageOwnedSurfaceLayer(THREE, root, {
         manifestUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json",
         networkUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/surface-network.json",
-        strict: true,
+        strict: false,
       });
+
+      if (zdpSurfaces.failures.length) {
+        throw new Error(`ZDP runtime placement failures: ${JSON.stringify(zdpSurfaces.failures)}`);
+      }
 
       const zdpNetwork = zdpSurfaces.network;
       const zdpPlacements =
