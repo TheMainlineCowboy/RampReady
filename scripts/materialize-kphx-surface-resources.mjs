@@ -31,6 +31,19 @@ if (!sourceRootArg && !process.env.KPHX_FULL_AIRPORT_SOURCE_DIR) {
   throw new Error("Provide the expanded KPHX 1.75.1 package root or set KPHX_FULL_AIRPORT_SOURCE_DIR");
 }
 
+async function mapWithConcurrency(items, limit, worker) {
+  const results = new Array(items.length);
+  let cursor = 0;
+  async function run() {
+    while (cursor < items.length) {
+      const index = cursor++;
+      results[index] = await worker(items[index], index);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(Math.max(1, limit), items.length) }, () => run()));
+  return results;
+}
+
 async function exists(filePath) {
   try { await fs.access(filePath); return true; } catch { return false; }
 }
@@ -358,7 +371,8 @@ const resources = [...new Set(records.map((entry) => normalizeResource(entry.res
 
 const materialized = {};
 const failures = [];
-for (const [index, resource] of resources.entries()) {
+const materializeConcurrency = Number(options["concurrency"] || 1);
+await mapWithConcurrency(resources, materializeConcurrency, async (resource, index) => {
   try {
     materialized[resource] = await materializeArtResource(resource);
     console.log(`[${index + 1}/${resources.length}] surface resource ${resource}`);
@@ -367,7 +381,7 @@ for (const [index, resource] of resources.entries()) {
     failures.push(failure);
     console.error(`[${index + 1}/${resources.length}] FAILED ${resource}: ${failure.message}`);
   }
-}
+});
 
 const manifest = {
   schemaVersion: 1,
@@ -387,6 +401,7 @@ const manifest = {
     placementReport: networkReadPath,
     externalPrefixes: [...includeExternalPrefixes],
     skipPackageOwned,
+    materializeConcurrency,
   },
   packageOwnedResourceCount: packageResources.length,
   materializedResourceCount: packageResources.filter((resource) => materialized[resource]).length,
