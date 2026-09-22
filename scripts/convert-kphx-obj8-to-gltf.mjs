@@ -51,7 +51,13 @@ const drawState = {
 };
 
 const bump = (key) => commands.set(key, (commands.get(key) || 0) + 1);
-const snapshotState = () => ({ ...drawState });
+let currentAnimationTranslation = [0, 0, 0];
+const animationStack = [];
+let activeRotation = null;
+const snapshotState = () => ({
+  ...drawState,
+  xPlaneRestTranslation: [...currentAnimationTranslation],
+});
 const sceneryShadowsEnabled = String(options["scenery-shadows"] ?? "true").toLowerCase() !== "false";
 let conditionalSkipDepth = 0;
 
@@ -76,6 +82,74 @@ for (const rawLine of source.split(/\r?\n/)) {
     continue;
   }
   if (conditionalSkipDepth > 0) continue;
+
+  if (command === "ANIM_begin") {
+    bump(command);
+    animationStack.push([...currentAnimationTranslation]);
+    continue;
+  }
+  if (command === "ANIM_end") {
+    bump(command);
+    if (!animationStack.length) throw new Error("OBJ8 ANIM_end without matching ANIM_begin");
+    if (activeRotation) throw new Error("OBJ8 ANIM_end reached before ANIM_rotate_end");
+    currentAnimationTranslation = animationStack.pop();
+    continue;
+  }
+  if (command === "ANIM_trans") {
+    bump(command);
+    if (parts.length < 7) throw new Error(`Malformed ANIM_trans record: ${line}`);
+    const start = parts.slice(1, 4).map(Number);
+    const end = parts.slice(4, 7).map(Number);
+    if ([...start, ...end].some((value) => !Number.isFinite(value))) {
+      throw new Error(`Malformed ANIM_trans coordinates: ${line}`);
+    }
+    const delta = end.map((value, index) => Math.abs(value - start[index]));
+    if (delta.some((value) => value > 1e-7)) {
+      throw new Error(`Animated OBJ8 translation cannot be reduced to exact rest pose: ${line}`);
+    }
+    currentAnimationTranslation = currentAnimationTranslation.map((value, index) => value + start[index]);
+    continue;
+  }
+  if (command === "ANIM_rotate_begin") {
+    bump(command);
+    if (parts.length < 5) throw new Error(`Malformed ANIM_rotate_begin record: ${line}`);
+    const axis = parts.slice(1, 4).map(Number);
+    const dataref = parts.slice(4).join(" ");
+    if (axis.some((value) => !Number.isFinite(value))) throw new Error(`Malformed ANIM rotation axis: ${line}`);
+    if (dataref !== "marginal/groundtraffic/distance") {
+      throw new Error(`Unsupported OBJ8 animation dataref: ${dataref}`);
+    }
+    if (activeRotation) throw new Error("Nested ANIM_rotate_begin is unsupported");
+    activeRotation = { axis, dataref, keys: [], loop: null };
+    continue;
+  }
+  if (command === "ANIM_rotate_key") {
+    bump(command);
+    if (!activeRotation || parts.length < 3) throw new Error(`Malformed ANIM_rotate_key record: ${line}`);
+    const value = Number(parts[1]);
+    const angleDegrees = Number(parts[2]);
+    if (!Number.isFinite(value) || !Number.isFinite(angleDegrees)) throw new Error(`Malformed ANIM_rotate_key values: ${line}`);
+    activeRotation.keys.push({ value, angleDegrees });
+    continue;
+  }
+  if (command === "ANIM_keyframe_loop") {
+    bump(command);
+    if (!activeRotation || parts.length < 2) throw new Error(`Malformed ANIM_keyframe_loop record: ${line}`);
+    const loop = Number(parts[1]);
+    if (!Number.isFinite(loop) || loop <= 0) throw new Error(`Malformed ANIM_keyframe_loop value: ${line}`);
+    activeRotation.loop = loop;
+    continue;
+  }
+  if (command === "ANIM_rotate_end") {
+    bump(command);
+    if (!activeRotation) throw new Error("OBJ8 ANIM_rotate_end without ANIM_rotate_begin");
+    const zeroKey = activeRotation.keys.find((key) => Math.abs(key.value) <= 1e-7);
+    if (!zeroKey || Math.abs(zeroKey.angleDegrees) > 1e-7) {
+      throw new Error("GroundTraffic animation does not have an exact zero-distance 0-degree rest pose");
+    }
+    activeRotation = null;
+    continue;
+  }
 
   bump(command);
 
@@ -180,6 +254,7 @@ for (const rawLine of source.split(/\r?\n/)) {
   else if (command === "ATTR_draw_disable") drawState.drawEnabled = false;
 }
 
+if (animationStack.length || activeRotation) throw new Error("OBJ8 animation block is unterminated");
 if (!pointCounts) throw new Error("OBJ8 POINT_COUNTS record is missing");
 if (pointCounts[0] !== vertices.length) {
   throw new Error(`OBJ8 vertex count mismatch: header=${pointCounts[0]} parsed=${vertices.length}`);
@@ -227,6 +302,8 @@ const harmless = new Set([
   "SPECULAR",
   "ATTR_no_solid_camera", "ATTR_solid_camera",
   "IF", "ENDIF", "ATTR_poly_os",
+  "ANIM_begin", "ANIM_trans", "ANIM_rotate_begin", "ANIM_rotate_key",
+  "ANIM_keyframe_loop", "ANIM_rotate_end", "ANIM_end",
 ]);
 const unsupported = [...commands.keys()].filter((command) => !harmless.has(command));
 if (unsupported.length) {
@@ -313,6 +390,22 @@ function indexBounds(start, count) {
 const positionAccessor = appendFloatAccessor(positions, 3, 34962);
 const normalAccessor = appendFloatAccessor(normals, 3, 34962);
 const uvAccessor = appendFloatAccessor(uvs, 2, 34962);
+const restPositionAccessorByTranslation = new Map([["0,0,0", positionAccessor]]);
+
+function positionAccessorForRange(range) {
+  const translation = range.state.xPlaneRestTranslation || [0, 0, 0];
+  const normalized = translation.map((value) => Math.abs(value) <= 1e-12 ? 0 : value);
+  const key = normalized.join(",");
+  if (restPositionAccessorByTranslation.has(key)) return restPositionAccessorByTranslation.get(key);
+  const translated = positions.map((row) => [
+    row[0] + normalized[0],
+    row[1] + normalized[1],
+    row[2] + normalized[2],
+  ]);
+  const accessor = appendFloatAccessor(translated, 3, 34962);
+  restPositionAccessorByTranslation.set(key, accessor);
+  return accessor;
+}
 
 let maxIndex = -Infinity;
 for (const index of indices) maxIndex = Math.max(maxIndex, index);
@@ -461,7 +554,7 @@ const primitives = drawRanges.map((range) => {
     max: [bounds.max],
   });
   return {
-    attributes: { POSITION: positionAccessor, NORMAL: normalAccessor, TEXCOORD_0: uvAccessor },
+    attributes: { POSITION: positionAccessorForRange(range), NORMAL: normalAccessor, TEXCOORD_0: uvAccessor },
     indices: accessor,
     material: materialIndexForState(range.state),
     mode: 4,
@@ -525,7 +618,7 @@ const gltf = {
     namedLights,
     sourceBounds: { min: accessors[positionAccessor].min, max: accessors[positionAccessor].max },
     geometryPolicy: "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
-    drawStatePolicy: "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;reject-unsupported-render-state",
+    drawStatePolicy: "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;bake-exact-zero-distance-GroundTraffic-rest-translation;reject-unsupported-render-state",
     sceneryShadowsEnabled,
     textureCoordinatePolicy: "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin",
   },
