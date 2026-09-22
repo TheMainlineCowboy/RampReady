@@ -66,15 +66,26 @@ function preparePlacementRoot(root, placement) {
     runtimeYawRadians: yaw,
   };
 
+  let xPlaneGlobalNoShadow = false;
+  let xPlaneGlobalSpecular = null;
+  root.traverse((node) => {
+    if (node?.userData?.xPlaneGlobalNoShadow === true) xPlaneGlobalNoShadow = true;
+    if (node?.userData?.xPlaneGlobalSpecular !== undefined && node?.userData?.xPlaneGlobalSpecular !== null) {
+      xPlaneGlobalSpecular = node.userData.xPlaneGlobalSpecular;
+    }
+  });
+
   root.traverse((node) => {
     if (!node?.isMesh) return;
-    node.castShadow = true;
+    node.castShadow = !xPlaneGlobalNoShadow;
     node.receiveShadow = true;
     node.frustumCulled = true;
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     let authoredLayer = placement.layerGroupDraped || null;
     for (const material of materials) {
-      const materialLayer = material?.userData?.xPlaneLayerGroupDraped || null;
+      const materialLayer = material?.userData?.xPlaneLayerGroupDraped
+        || material?.userData?.xPlaneLayerGroup
+        || null;
       if (materialLayer) authoredLayer = materialLayer;
       if (authoredLayer && material) {
         material.polygonOffset = true;
@@ -90,7 +101,12 @@ function preparePlacementRoot(root, placement) {
       kphxFullAirport: true,
       sourceResource: placement.resource,
       wedObjectId: placement.id,
-      xPlaneLayerGroupDraped: authoredLayer,
+      xPlaneLayerGroup: authoredLayer,
+      xPlaneGlobalNoShadow,
+      xPlaneGlobalSpecular,
+      xPlaneShinyRatio: materials
+        .map((material) => material?.userData?.xPlaneShinyRatio)
+        .find((value) => value !== undefined && value !== null) ?? null,
     };
   });
 
