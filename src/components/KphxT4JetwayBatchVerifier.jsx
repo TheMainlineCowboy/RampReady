@@ -5,7 +5,26 @@ import { SOURCE_KPHX_TERMINAL4_OBJECTS } from "../environment/sourceKphxTerminal
 import { kphxWedToRampReadyPosition, kphxXPlaneHeadingToRampReadyYawRadians } from "../environment/kphxFullAirport/sourceAuthority.js";
 import { buildXp11Type2Facade } from "../environment/kphxFullAirport/xp11Type2Facade.js";
 
-const GATES = Object.freeze(["A1","A2","A3","A4","A5","A6","A7","A8"]);
+const BATCHES = Object.freeze({
+  "A1-A8": Object.freeze(["A1","A2","A3","A4","A5","A6","A7","A8"]),
+  "A9-A14": Object.freeze(["A9","A10","A11","A12","A13","A14"]),
+  "A17-A24": Object.freeze(["A17","A18","A19","A20","A21","A22","A23","A24"]),
+  "A25-A30": Object.freeze(["A25","A26","A27","A29","A30"]),
+  "B2-B10": Object.freeze(["B2","B3","B4","B5","B6","B7","B8","B9","B10"]),
+  "B11-B20": Object.freeze(["B11","B12","B13","B14","B16","B17","B18","B19","B20"]),
+  "B21A-B28": Object.freeze(["B21A","B22","B23A","B24","B25","B27","B28"]),
+  "C1-C9": Object.freeze(["C1","C2","C3","C4","C6","C7","C8","C9"]),
+  "C11-C19": Object.freeze(["C11","C12","C13","C14","C16","C17","C18","C19"]),
+  "D1-D7": Object.freeze(["D1","D2","D3","D4","D5","D6","D7"]),
+});
+
+function resolveBatch() {
+  const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const requested = params?.get("batch") || "A1-A8";
+  const gates = BATCHES[requested];
+  if (!gates) throw new Error(`Unknown T4 jetway batch: ${requested}`);
+  return { name: requested, gates };
+}
 const RESOURCE = "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac";
 const STOCK_BASE = "/models/xplane11-stock/jetway1";
 
@@ -23,7 +42,7 @@ function wallChoice(node) {
 
 export default function KphxT4JetwayBatchVerifier() {
   const mountRef = useRef(null);
-  const [status, setStatus] = useState("Loading exact XP11 T4 jetways A1–A8…");
+  const [status, setStatus] = useState("Loading exact XP11 T4 jetway batch…");
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -70,6 +89,7 @@ export default function KphxT4JetwayBatchVerifier() {
     loop();
 
     const load = async () => {
+      const { name: batchName, gates } = resolveBatch();
       const loader = new GLTFLoader();
 
       for (const object of SOURCE_KPHX_TERMINAL4_OBJECTS) {
@@ -106,7 +126,7 @@ export default function KphxT4JetwayBatchVerifier() {
       const allPoints = [];
       let totalEdges = 0;
 
-      for (const gate of GATES) {
+      for (const gate of gates) {
         const gateMap = map.placements.find((entry) => entry.gate === gate);
         if (!gateMap) throw new Error(`Missing T4 gate mapping for ${gate}`);
 
@@ -179,13 +199,14 @@ export default function KphxT4JetwayBatchVerifier() {
       camera.updateProjectionMatrix();
 
       renderer.domElement.dataset.kphxT4JetwayBatchVerifier = "ready";
-      renderer.domElement.dataset.kphxT4JetwayBatchGates = GATES.join(",");
+      renderer.domElement.dataset.kphxT4JetwayBatchName = batchName;
+      renderer.domElement.dataset.kphxT4JetwayBatchGates = gates.join(",");
       renderer.domElement.dataset.kphxT4JetwayBatchCount = String(evidence.length);
       renderer.domElement.dataset.kphxT4JetwayBatchTotalEdges = String(totalEdges);
       renderer.domElement.dataset.kphxT4JetwayBatchResource = RESOURCE;
       renderer.domElement.dataset.kphxT4JetwayBatchOldAirportJetwayGlbLoaded = "false";
       renderer.domElement.dataset.kphxT4JetwayBatchEvidence = JSON.stringify(evidence);
-      setStatus(`T4 exact XP11 stock jetways · ${GATES.join("–")} · ${totalEdges} authored open edges · no substitute GLB`);
+      setStatus(`T4 exact XP11 stock jetways · ${gates.join("–")} · ${totalEdges} authored open edges · no substitute GLB`);
     };
 
     load().catch((error) => {
