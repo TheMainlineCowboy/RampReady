@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: kphx-misterx-t4-remainder
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   move-raw:
@@ -68,17 +68,21 @@ jobs:
             git push origin HEAD:kphx-full-airport-import
           fi
 
-      - name: Embraer 175 exact source
+      - name: Embraer 175 exact T4 source
         shell: bash
         run: |
           set -euo pipefail
           git pull --rebase origin kphx-full-airport-import
-          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft"
-          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1usB-at-1_QermwlOQgoZ0r0x0INDxzef" -O "$BASE/Embraer_175"
-          find "$BASE/Embraer_175" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-E175-SHA256SUMS.txt
-          git add "$BASE/Embraer_175" assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-E175-SHA256SUMS.txt
+          DIR="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft/Embraer_175"
+          mkdir -p "$DIR"
+          gdown "https://drive.google.com/uc?id=1XVVcOGndpl8EeuaqgmUr38JP1Ul4zluf" -O "$DIR/American_Eagle_new.obj"
+          gdown "https://drive.google.com/uc?id=17Tiky7YZnTUFuEDiVdH6Sn2Lh7sMUKkc" -O "$DIR/American_Eagle.dds"
+          gdown "https://drive.google.com/uc?id=1gOpwEk2pDMolBOnY0pnpKsDmaVFlLI59" -O "$DIR/American_Eagle_LIT.png"
+          gdown "https://drive.google.com/uc?id=1zgBCsgAFBBN1-5oFjakFcjM6e3WuxWOp" -O "$DIR/Normal.png"
+          find "$DIR" -maxdepth 1 -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-E175-SHA256SUMS.txt
+          git add "$DIR" assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-E175-SHA256SUMS.txt
           if git diff --cached --quiet; then
-            echo "Embraer 175 already exact; no commit needed."
+            echo "Embraer 175 T4 source already exact; no commit needed."
           else
             git commit -m "Move exact MisterX T4 Embraer 175 source"
             git pull --rebase origin kphx-full-airport-import
