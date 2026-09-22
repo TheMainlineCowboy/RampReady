@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "resource": "MisterX_Library/Airport/Vehicles/Baggage_Carts/American.obj",
+  "placementCount": 96,
+  "sourceFiles": [
+    "source-assets/kphx-t4-libraries/MisterX_Library/Airport/Vehicles/Baggage_Carts/American.obj",
+    "source-assets/kphx-t4-libraries/MisterX_Library/Airport/Vehicles/Baggage_Carts/American.dds",
+    "source-assets/kphx-t4-libraries/MisterX_Library/Airport/Vehicles/Baggage_Carts/Normal.png",
+    "source-assets/kphx-t4-libraries/MisterX_Library/Shared/Vehicle_Shadow.dds"
+  ],
+  "authority": "user-supplied MisterX_Library_2.0c from Google Drive",
+  "substitutions": "none"
+}
