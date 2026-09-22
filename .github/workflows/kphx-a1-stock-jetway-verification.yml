@@ -146,7 +146,7 @@ jobs:
           page.on("response", (r) => { if (r.status() >= 400) httpErrors.push({ url: r.url(), status: r.status() }); });
 
           let waitError = null;
-          await page.goto("http://127.0.0.1:4173/RampReady/?kphxA1StockJetway=1", {
+          await page.goto("http://127.0.0.1:4173/RampReady/?kphxA1Jetway=1", {
             waitUntil: "domcontentloaded",
             timeout: 60000,
           });
