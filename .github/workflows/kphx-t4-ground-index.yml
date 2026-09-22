@@ -9,7 +9,7 @@ on:
       - ".github/workflows/kphx-t4-ground-index.yml"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   index:
@@ -33,34 +33,39 @@ jobs:
           import fs from "node:fs";
           const input="public/models/kphx-full-airport/surfaces/surface-network.json";
           const network=JSON.parse(fs.readFileSync(input,"utf8"));
-          const A1={x:0,z:6.2};
+          const R=6378137;
+          const anchor={lat:33.436530675,lon:-111.998921221,x:0,z:6.2};
+          const lat0=anchor.lat*Math.PI/180;
           const radius=450;
 
-          function points(entry){
+          function project(lat,lon){
+            const east=(lon-anchor.lon)*Math.PI/180*R*Math.cos(lat0);
+            const north=(lat-anchor.lat)*Math.PI/180*R;
+            return {x:-north+anchor.x,z:-east+anchor.z};
+          }
+
+          function projectedPoints(entry){
             const out=[];
-            for(const ring of entry.rings||[]){
-              for(const node of ring.nodes||[]){
-                if(Number.isFinite(node.x)&&Number.isFinite(node.z)) out.push([node.x,node.z]);
-              }
-            }
-            for(const node of entry.nodes||[]){
-              if(Number.isFinite(node.x)&&Number.isFinite(node.z)) out.push([node.x,node.z]);
-            }
+            const add=(node)=>{
+              const lat=Number(node?.latitude), lon=Number(node?.longitude);
+              if(Number.isFinite(lat)&&Number.isFinite(lon)) out.push(project(lat,lon));
+            };
+            for(const ring of entry.rings||[]) for(const node of ring.nodes||[]) add(node);
+            for(const node of entry.nodes||[]) add(node);
             return out;
           }
 
           function bounds(entry){
-            const p=points(entry);
+            const p=projectedPoints(entry);
             if(!p.length) return null;
-            const xs=p.map(([x])=>x);
-            const zs=p.map(([,z])=>z);
+            const xs=p.map(q=>q.x), zs=p.map(q=>q.z);
             return {minX:Math.min(...xs),maxX:Math.max(...xs),minZ:Math.min(...zs),maxZ:Math.max(...zs)};
           }
 
           function distanceToBounds(b){
-            if(!b) return Number.POSITIVE_INFINITY;
-            const dx=A1.x<b.minX?b.minX-A1.x:A1.x>b.maxX?A1.x-b.maxX:0;
-            const dz=A1.z<b.minZ?b.minZ-A1.z:A1.z>b.maxZ?A1.z-b.maxZ:0;
+            if(!b) return Infinity;
+            const dx=anchor.x<b.minX?b.minX-anchor.x:anchor.x>b.maxX?anchor.x-b.maxX:0;
+            const dz=anchor.z<b.minZ?b.minZ-anchor.z:anchor.z>b.maxZ?anchor.z-b.maxZ:0;
             return Math.hypot(dx,dz);
           }
 
@@ -96,9 +101,10 @@ jobs:
             };
           }
           const report={
-            schemaVersion:1,
+            schemaVersion:2,
             authority:input,
-            a1:A1,
+            projection:"verified KPHX A1 local flat-earth source frame",
+            a1:anchor,
             radiusMeters:radius,
             counts:{
               polygons:selected.polygons.length,
@@ -108,21 +114,18 @@ jobs:
               uniqueResources:resources.length
             },
             resourcePrefixes:prefixes,
+            resources,
             byPrefix,
             selected
           };
           fs.writeFileSync("reports/kphx-t4-a1-ground-index.json",JSON.stringify(report,null,2)+"\n");
-          console.log(JSON.stringify(report.counts,null,2));
-          console.log(JSON.stringify(byPrefix,null,2));
+          console.log("COUNTS "+JSON.stringify(report.counts));
+          console.log("PREFIXES "+JSON.stringify(byPrefix));
           NODE
 
-      - name: Commit T4 A1 ground index
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports/kphx-t4-a1-ground-index.json
-          git commit -m "Index exact T4 A1 WED ground neighborhood"
-          git pull --rebase origin kphx-full-airport-import
-          git push origin HEAD:kphx-full-airport-import
+      - name: Upload exact T4 A1 ground index
+        uses: actions/upload-artifact@v4
+        with:
+          name: kphx-t4-a1-ground-index
+          path: reports/kphx-t4-a1-ground-index.json
+          if-no-files-found: error
