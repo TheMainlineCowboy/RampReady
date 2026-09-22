@@ -138,6 +138,17 @@ export function pickLaminarWedSpelling(spellings, lengthMeters) {
   return out;
 }
 
+function xPlaneFacadeIndicesToThree(indices) {
+  if (indices.length % 3 !== 0) {
+    throw new Error(`Facade index count is not triangle-aligned: ${indices.length}`);
+  }
+  const converted = [];
+  for (let index = 0; index < indices.length; index += 3) {
+    converted.push(indices[index], indices[index + 2], indices[index + 1]);
+  }
+  return converted;
+}
+
 function meshGeometry(templateMesh, boundsZ, miFirst, miLast, isFirst, isLast) {
   const pos = templateMesh.positions.slice();
   if (isFirst || isLast) {
@@ -153,7 +164,7 @@ function meshGeometry(templateMesh, boundsZ, miFirst, miLast, isFirst, isLast) {
   g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute("normal", new THREE.Float32BufferAttribute(templateMesh.normals, 3));
   g.setAttribute("uv", new THREE.Float32BufferAttribute(templateMesh.uvs, 2));
-  g.setIndex(templateMesh.indices);
+  g.setIndex(xPlaneFacadeIndicesToThree(templateMesh.indices));
   g.computeBoundingBox();
   g.computeBoundingSphere();
   return g;
@@ -184,7 +195,7 @@ async function loadSharedFacadeAssets(facade, basePath) {
         normalMap: normal,
         roughness: 1,
         metalness: 0,
-        side: THREE.DoubleSide,
+        side: THREE.FrontSide,
         alphaTest: 0.5,
       });
       return {
