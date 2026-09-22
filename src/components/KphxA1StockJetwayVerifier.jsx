@@ -125,7 +125,7 @@ export default function KphxA1StockJetwayVerifier() {
       if (manifest.ringMode !== 0) throw new Error(`Stock jetway must be RING 0, received ${manifest.ringMode}`);
       if (manifest.objects?.length !== 18) throw new Error(`Stock jetway OBJ count changed: ${manifest.objects?.length}`);
       if (manifest.segments?.length !== 24) throw new Error(`Stock jetway segment count changed: ${manifest.segments?.length}`);
-      if (manifest.walls?.length !== 9) throw new Error(`Stock jetway wall count changed: ${manifest.walls?.length}`);
+      if (manifest.walls?.length !== 10) throw new Error(`Stock jetway wall count changed: ${manifest.walls?.length}`);
 
       const t4b = SOURCE_KPHX_TERMINAL4_OBJECTS.find((entry) => entry.resource === "Terminals/Terminal4b.obj");
       if (!t4b) throw new Error("Exact Terminal4b source record missing");
