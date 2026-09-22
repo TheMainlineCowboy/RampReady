@@ -55,7 +55,7 @@ const snapshotState = () => ({ ...drawState });
 
 for (const rawLine of source.split(/\r?\n/)) {
   const line = rawLine.trim();
-  if (!line) continue;
+  if (!line || line.startsWith("#")) continue;
   const parts = line.split(/\s+/);
   const command = parts[0];
   bump(command);
