@@ -237,35 +237,57 @@ function createLineGeometry(THREE, placement, art, offset) {
   return geometry;
 }
 
-function installDecalShader(THREE, material, decalResource, decalTexture) {
-  if (!decalResource?.decals?.length || !decalTexture) return;
-  if (decalResource.decals.length !== 1) {
-    throw new Error("KPHX runtime currently supports exactly one DECAL_PARAMS effect per local decal file");
-  }
-  const decal = decalResource.decals[0];
-  if (decal.type !== "DECAL_PARAMS") throw new Error(`Unsupported decal type: ${decal.type}`);
-  if (Math.abs(decal.rgbKey[4]) > 1e-12 || Math.abs(decal.alphaKey[4]) > 1e-12) {
-    throw new Error("KPHX runtime refuses non-zero X-Plane decal modulator terms without a documented shader input");
+function installDecalShader(THREE, material, decalResource, decalTextures) {
+  const decals = decalResource?.decals || [];
+  if (!decals.length || !Array.isArray(decalTextures) || decalTextures.length !== decals.length) return;
+
+  for (const decal of decals) {
+    if (decal.type !== "DECAL_PARAMS") throw new Error(`Unsupported decal type: ${decal.type}`);
+    if (Math.abs(decal.rgbKey[4]) > 1e-12 || Math.abs(decal.alphaKey[4]) > 1e-12) {
+      throw new Error("KPHX runtime refuses non-zero X-Plane decal modulator terms without a documented shader input");
+    }
+    if (Math.abs(Number(decal.dither || 0)) > 1e-12) {
+      throw new Error("KPHX runtime refuses non-zero X-Plane decal dither without a documented shader input");
+    }
   }
 
-  material.userData.xPlaneDecal = decal;
+  material.userData.xPlaneDecals = decals;
   material.onBeforeCompile = (shader) => {
-    shader.uniforms.kphxDecalMap = { value: decalTexture };
-    shader.uniforms.kphxDecalScale = { value: decal.scaleRatio };
-    shader.uniforms.kphxDecalRgbKey = { value: new THREE.Vector4(...decal.rgbKey.slice(0, 4)) };
-    shader.uniforms.kphxDecalRgbConstant = { value: decal.rgbKey[5] };
-    shader.uniforms.kphxDecalAlphaKey = { value: new THREE.Vector4(...decal.alphaKey.slice(0, 4)) };
-    shader.uniforms.kphxDecalAlphaConstant = { value: decal.alphaKey[5] };
+    const uniformDeclarations = [];
+    const applicationBlocks = [];
+
+    decals.forEach((decal, index) => {
+      const suffix = String(index);
+      shader.uniforms[`kphxDecalMap${suffix}`] = { value: decalTextures[index] };
+      shader.uniforms[`kphxDecalScale${suffix}`] = { value: decal.scaleRatio };
+      shader.uniforms[`kphxDecalRgbKey${suffix}`] = { value: new THREE.Vector4(...decal.rgbKey.slice(0, 4)) };
+      shader.uniforms[`kphxDecalRgbConstant${suffix}`] = { value: decal.rgbKey[5] };
+      shader.uniforms[`kphxDecalAlphaKey${suffix}`] = { value: new THREE.Vector4(...decal.alphaKey.slice(0, 4)) };
+      shader.uniforms[`kphxDecalAlphaConstant${suffix}`] = { value: decal.alphaKey[5] };
+
+      uniformDeclarations.push(
+        `uniform sampler2D kphxDecalMap${suffix};`,
+        `uniform float kphxDecalScale${suffix};`,
+        `uniform vec4 kphxDecalRgbKey${suffix};`,
+        `uniform float kphxDecalRgbConstant${suffix};`,
+        `uniform vec4 kphxDecalAlphaKey${suffix};`,
+        `uniform float kphxDecalAlphaConstant${suffix};`,
+      );
+
+      applicationBlocks.push(
+        `  vec4 kphxDetail${suffix} = texture2D(kphxDecalMap${suffix}, vMapUv * kphxDecalScale${suffix});`,
+        `  float kphxRgbWeight${suffix} = clamp(dot(diffuseColor, kphxDecalRgbKey${suffix}) + kphxDecalRgbConstant${suffix}, 0.0, 1.0);`,
+        `  float kphxAlphaWeight${suffix} = clamp(dot(diffuseColor, kphxDecalAlphaKey${suffix}) + kphxDecalAlphaConstant${suffix}, 0.0, 1.0);`,
+        `  diffuseColor.rgb = mix(diffuseColor.rgb, kphxHardLight(diffuseColor.rgb, kphxDetail${suffix}.rgb), kphxRgbWeight${suffix});`,
+        `  diffuseColor.rgb = mix(diffuseColor.rgb, kphxHardLight(diffuseColor.rgb, vec3(kphxDetail${suffix}.a)), kphxAlphaWeight${suffix});`,
+      );
+    });
+
     shader.fragmentShader = shader.fragmentShader
       .replace(
         "#include <map_pars_fragment>",
         `#include <map_pars_fragment>
-uniform sampler2D kphxDecalMap;
-uniform float kphxDecalScale;
-uniform vec4 kphxDecalRgbKey;
-uniform float kphxDecalRgbConstant;
-uniform vec4 kphxDecalAlphaKey;
-uniform float kphxDecalAlphaConstant;
+${uniformDeclarations.join("\n")}
 vec3 kphxHardLight(vec3 base, vec3 blend) {
   vec3 low = 2.0 * base * blend;
   vec3 high = 1.0 - 2.0 * (1.0 - base) * (1.0 - blend);
@@ -276,16 +298,12 @@ vec3 kphxHardLight(vec3 base, vec3 blend) {
         "#include <map_fragment>",
         `#include <map_fragment>
 #ifdef USE_MAP
-  vec4 kphxDetail = texture2D(kphxDecalMap, vMapUv * kphxDecalScale);
-  float kphxRgbWeight = clamp(dot(diffuseColor, kphxDecalRgbKey) + kphxDecalRgbConstant, 0.0, 1.0);
-  float kphxAlphaWeight = clamp(dot(diffuseColor, kphxDecalAlphaKey) + kphxDecalAlphaConstant, 0.0, 1.0);
-  diffuseColor.rgb = mix(diffuseColor.rgb, kphxHardLight(diffuseColor.rgb, kphxDetail.rgb), kphxRgbWeight);
-  diffuseColor.rgb = mix(diffuseColor.rgb, kphxHardLight(diffuseColor.rgb, vec3(kphxDetail.a)), kphxAlphaWeight);
+${applicationBlocks.join("\n")}
 #endif`,
       );
     material.userData.kphxShader = shader;
   };
-  material.customProgramCacheKey = () => `kphx-xplane-decal-${JSON.stringify(decal)}`;
+  material.customProgramCacheKey = () => `kphx-xplane-decals-${JSON.stringify(decals)}`;
 }
 
 async function createArtMaterial(THREE, textureLoader, art, fallbackGroup) {
@@ -314,10 +332,16 @@ async function createArtMaterial(THREE, textureLoader, art, fallbackGroup) {
   material.userData.xPlaneTextureHeight = Number.isFinite(art.textureHeight) ? art.textureHeight : null;
 
   if (art.decal?.decals?.length) {
-    const decalImage = art.decal.decals[0].image;
-    const decalTexture = await loadTexture(THREE, textureLoader, resourceAssetUrl(art, decalImage), { color: true });
-    installDecalShader(THREE, material, art.decal, decalTexture);
-    material.userData.xPlaneDecalTexture = decalTexture;
+    const decalTextures = await Promise.all(
+      art.decal.decals.map((decal) => loadTexture(
+        THREE,
+        textureLoader,
+        resourceAssetUrl(art, decal.image),
+        { color: true },
+      )),
+    );
+    installDecalShader(THREE, material, art.decal, decalTextures);
+    material.userData.xPlaneDecalTextures = decalTextures;
   }
   return material;
 }
