@@ -1,0 +1,100 @@
+name: KPHX MisterX Raw Batch 03 GSE
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-misterx-raw-batch-03.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-misterx-raw-batch-03
+  cancel-in-progress: false
+
+jobs:
+  move-raw:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install Drive downloader
+        run: python -m pip install --disable-pip-version-check gdown==5.2.0
+
+      - name: Configure checkpoint commits
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Airstairs exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles"
+          mkdir -p "$BASE"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1F_W-R0oxz1FKSqNiLGHVly6PMKtqmGZi" -O "$BASE/Airstairs"
+          find "$BASE/Airstairs" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-03A-SHA256SUMS.txt
+          git add "$BASE/Airstairs" assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-03A-SHA256SUMS.txt
+          git commit -m "Move exact MisterX Airstairs source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Catering Trucks exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1T0MZ5Kc8jNlYRHJ2slvh7sUHRQhNO3WV" -O "$BASE/Catering_Trucks"
+          find "$BASE/Catering_Trucks" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-03B-SHA256SUMS.txt
+          git add "$BASE/Catering_Trucks" assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-03B-SHA256SUMS.txt
+          git commit -m "Move exact MisterX Catering Trucks source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: De-Icing Trucks exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1scstgi3er8_255dzp0SYsLNwtbWKlN5Z" -O "$BASE/De_Icing_Trucks"
+          find "$BASE/De_Icing_Trucks" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-03C-SHA256SUMS.txt
+          git add "$BASE/De_Icing_Trucks" assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-03C-SHA256SUMS.txt
+          git commit -m "Move exact MisterX De-Icing Trucks source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Service Trucks exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/18oiGIj3T3rT2OKaARGZzbajca2m80iwn" -O "$BASE/Trucks"
+          find "$BASE/Trucks" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-03D-SHA256SUMS.txt
+          git add "$BASE/Trucks" assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-03D-SHA256SUMS.txt
+          git commit -m "Move exact MisterX Service Trucks source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: ULD Loaders exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          BASE="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Vehicles"
+          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1vZ7z-_lmYHdrcuXEOQsrFrzPwGU9Gmkf" -O "$BASE/ULD_Loaders"
+          find "$BASE/ULD_Loaders" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-03E-SHA256SUMS.txt
+          git add "$BASE/ULD_Loaders" assets/kphx-source/dependencies/MisterX_Library_2.0c/BATCH-03E-SHA256SUMS.txt
+          git commit -m "Move exact MisterX ULD Loaders source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
