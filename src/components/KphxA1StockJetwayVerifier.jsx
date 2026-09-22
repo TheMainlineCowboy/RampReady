@@ -6,6 +6,7 @@ import {
   kphxWedToRampReadyPosition,
   kphxXPlaneHeadingToRampReadyYawRadians,
 } from "../environment/kphxFullAirport/sourceAuthority.js";
+import a1SourceAuthority from "../../reports/kphx-a1-source-jetway-authority.json";
 
 const EXPECTED_WALL_SEQUENCE = [
   "Rotunda_extension",
@@ -116,14 +117,10 @@ export default function KphxA1StockJetwayVerifier() {
       const gltfLoader = new GLTFLoader();
       const textureLoader = new THREE.TextureLoader();
 
-      const [manifestResponse, authorityResponse] = await Promise.all([
-        fetch(runtimeUrl("/models/kphx-stock-jetways/manifest.json"), { cache: "no-store" }),
-        fetch(runtimeUrl("/reports/kphx-a1-source-jetway-authority.json"), { cache: "no-store" }),
-      ]);
+      const manifestResponse = await fetch(runtimeUrl("/models/kphx-stock-jetways/manifest.json"), { cache: "no-store" });
       if (!manifestResponse.ok) throw new Error(`Stock jetway manifest HTTP ${manifestResponse.status}`);
-      if (!authorityResponse.ok) throw new Error(`A1 WED authority HTTP ${authorityResponse.status}`);
       const manifest = await manifestResponse.json();
-      const authority = await authorityResponse.json();
+      const authority = a1SourceAuthority;
 
       if (manifest.ringMode !== 0) throw new Error(`Stock jetway must be RING 0, received ${manifest.ringMode}`);
       if (manifest.objects?.length !== 18) throw new Error(`Stock jetway OBJ count changed: ${manifest.objects?.length}`);
