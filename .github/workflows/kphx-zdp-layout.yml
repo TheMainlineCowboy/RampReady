@@ -1,0 +1,59 @@
+name: KPHX ZDP Layout Diagnostic
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-zdp-layout.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+      - name: Clone exact ZDP 1.2.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch 1.2.0 https://gitlab.com/StableSystem/zdp-library.git .zdp
+          cd .zdp
+          git lfs pull
+          test "$(git rev-parse HEAD)" = "4b44b673ac023bac67f92a1c991a28df1b1da82c"
+      - name: Record exact ZDP layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          {
+            echo "commit=$(git -C .zdp rev-parse HEAD)"
+            echo "library files:"
+            find .zdp -type f -iname 'library.txt' -print
+            echo
+            echo "sample requested resource:"
+            find .zdp -type f -path '*ground_textures/asphalt/grooved/grooved_new.pol' -print
+            echo
+            echo "sample exports:"
+            grep -Rni --include='library.txt' -E 'grooved_new\.pol|ZDP_Library|ground_textures/asphalt/grooved' .zdp | head -200 || true
+            echo
+            echo "top directories:"
+            find .zdp -maxdepth 2 -type d | sort | head -200
+          } > reports/kphx-zdp-layout.txt
+      - name: Commit diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-zdp-layout.txt
+          git commit -m "Record exact ZDP 1.2.0 library layout"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
