@@ -1,0 +1,463 @@
+{
+  "authority": "KPHX 1.75.1 earth.wed.xml + Laminar X-Plane 11 stock Jetway_1_solid.fac",
+  "status": "LOCKED",
+  "lockedAt": "2026-09-22",
+  "sourceResource": "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac",
+  "sourceFacadeSha256": "a98a61b6de28a0db6548f748163494fc24513267dee40322502d5800eff8feb5",
+  "placementCount": 76,
+  "uniqueGateNameCount": 75,
+  "duplicateAuthoredGateNames": [
+    "D7"
+  ],
+  "sourceBehavior": {
+    "ringMode": 0,
+    "openFacade": true,
+    "oldAirportJetwayGlbAllowed": false,
+    "substitutionsAllowed": false
+  },
+  "batchRuns": {
+    "KPHX T4 Exact Jetway Batch A1-A8": {
+      "runId": 35722263266,
+      "headSha": "6d01ee414dd8418e5491320df8ed239f9f8358c4",
+      "createdAt": "2026-09-22T11:35:10Z",
+      "updatedAt": "2026-09-22T11:36:10Z"
+    },
+    "KPHX T4 Exact Jetway Batch A9-A14": {
+      "runId": 35722479695,
+      "headSha": "d6ac895501932af2689a8a84585aa2f8e0ee89e6",
+      "createdAt": "2026-09-22T11:37:24Z",
+      "updatedAt": "2026-09-22T11:38:23Z"
+    },
+    "KPHX T4 Exact Jetway Batch A17-A24": {
+      "runId": 35722633455,
+      "headSha": "35a43f23f8c7cb8385cbfb0c27bb99c00fd16d0b",
+      "createdAt": "2026-09-22T11:39:06Z",
+      "updatedAt": "2026-09-22T11:40:13Z"
+    },
+    "KPHX T4 Exact Jetway Batch A25-A30": {
+      "runId": 35722836594,
+      "headSha": "4881b83d09efef0964c0834c57098512d6115fec",
+      "createdAt": "2026-09-22T11:41:14Z",
+      "updatedAt": "2026-09-22T11:42:30Z"
+    },
+    "KPHX T4 Exact Jetway Batch B2-B10": {
+      "runId": 35723056409,
+      "headSha": "0d2d3b89f79c9955f9bbf457686e05949c8b89f1",
+      "createdAt": "2026-09-22T11:43:30Z",
+      "updatedAt": "2026-09-22T11:44:24Z"
+    },
+    "KPHX T4 Exact Jetway Batch B11-B20": {
+      "runId": 35723240143,
+      "headSha": "d6550b7434a1d6bd5614320995469e07bd5dca23",
+      "createdAt": "2026-09-22T11:45:27Z",
+      "updatedAt": "2026-09-22T11:46:30Z"
+    },
+    "KPHX T4 Exact Jetway Batch B21A-B28": {
+      "runId": 35723525483,
+      "headSha": "38bd7cee9f59cd511ee242b78432aea6dafac156",
+      "createdAt": "2026-09-22T11:48:31Z",
+      "updatedAt": "2026-09-22T11:49:25Z"
+    },
+    "KPHX T4 Exact Jetway Batch C1-C9": {
+      "runId": 35723737392,
+      "headSha": "aef5c219f5eca9d633d6b6cc1d27a8d8d021b434",
+      "createdAt": "2026-09-22T11:50:46Z",
+      "updatedAt": "2026-09-22T11:51:37Z"
+    },
+    "KPHX T4 Exact Jetway Batch C11-C19": {
+      "runId": 35723874505,
+      "headSha": "089d870f19fb82930f50bc8f31e5650aed99dbe7",
+      "createdAt": "2026-09-22T11:52:15Z",
+      "updatedAt": "2026-09-22T11:53:10Z"
+    },
+    "KPHX T4 Exact Jetway Batch D1-D7": {
+      "runId": 35724123890,
+      "headSha": "837e4b6fb33af61f49a211c651bbc03dcc42331f",
+      "createdAt": "2026-09-22T11:54:56Z",
+      "updatedAt": "2026-09-22T11:56:00Z"
+    }
+  },
+  "placements": [
+    {
+      "gate": "A1",
+      "facadeWedObjectId": 104804,
+      "rampWedObjectId": 27855
+    },
+    {
+      "gate": "A2",
+      "facadeWedObjectId": 105851,
+      "rampWedObjectId": 20719
+    },
+    {
+      "gate": "A3",
+      "facadeWedObjectId": 104845,
+      "rampWedObjectId": 20713
+    },
+    {
+      "gate": "A4",
+      "facadeWedObjectId": 105843,
+      "rampWedObjectId": 27864
+    },
+    {
+      "gate": "A5",
+      "facadeWedObjectId": 104874,
+      "rampWedObjectId": 27870
+    },
+    {
+      "gate": "A6",
+      "facadeWedObjectId": 105837,
+      "rampWedObjectId": 20718
+    },
+    {
+      "gate": "A7",
+      "facadeWedObjectId": 104897,
+      "rampWedObjectId": 20714
+    },
+    {
+      "gate": "A8",
+      "facadeWedObjectId": 105830,
+      "rampWedObjectId": 27876
+    },
+    {
+      "gate": "A9",
+      "facadeWedObjectId": 104920,
+      "rampWedObjectId": 27882
+    },
+    {
+      "gate": "A10",
+      "facadeWedObjectId": 105343,
+      "rampWedObjectId": 20717
+    },
+    {
+      "gate": "A11",
+      "facadeWedObjectId": 105256,
+      "rampWedObjectId": 20715
+    },
+    {
+      "gate": "A12",
+      "facadeWedObjectId": 105335,
+      "rampWedObjectId": 27889
+    },
+    {
+      "gate": "A13",
+      "facadeWedObjectId": 105286,
+      "rampWedObjectId": 27895
+    },
+    {
+      "gate": "A14",
+      "facadeWedObjectId": 105329,
+      "rampWedObjectId": 20716
+    },
+    {
+      "gate": "A17",
+      "facadeWedObjectId": 106033,
+      "rampWedObjectId": 20720
+    },
+    {
+      "gate": "A18",
+      "facadeWedObjectId": 106147,
+      "rampWedObjectId": 20727
+    },
+    {
+      "gate": "A19",
+      "facadeWedObjectId": 106040,
+      "rampWedObjectId": 20721
+    },
+    {
+      "gate": "A20",
+      "facadeWedObjectId": 106159,
+      "rampWedObjectId": 27901
+    },
+    {
+      "gate": "A21",
+      "facadeWedObjectId": 106052,
+      "rampWedObjectId": 27907
+    },
+    {
+      "gate": "A22",
+      "facadeWedObjectId": 106141,
+      "rampWedObjectId": 20726
+    },
+    {
+      "gate": "A23",
+      "facadeWedObjectId": 106058,
+      "rampWedObjectId": 20722
+    },
+    {
+      "gate": "A24",
+      "facadeWedObjectId": 106153,
+      "rampWedObjectId": 27913
+    },
+    {
+      "gate": "A25",
+      "facadeWedObjectId": 106064,
+      "rampWedObjectId": 27919
+    },
+    {
+      "gate": "A26",
+      "facadeWedObjectId": 106261,
+      "rampWedObjectId": 20725
+    },
+    {
+      "gate": "A27",
+      "facadeWedObjectId": 106183,
+      "rampWedObjectId": 20723
+    },
+    {
+      "gate": "A29",
+      "facadeWedObjectId": 106206,
+      "rampWedObjectId": 20724
+    },
+    {
+      "gate": "A30",
+      "facadeWedObjectId": 106238,
+      "rampWedObjectId": 27933
+    },
+    {
+      "gate": "B2",
+      "facadeWedObjectId": 104690,
+      "rampWedObjectId": 20735
+    },
+    {
+      "gate": "B3",
+      "facadeWedObjectId": 101067,
+      "rampWedObjectId": 27939
+    },
+    {
+      "gate": "B4",
+      "facadeWedObjectId": 104665,
+      "rampWedObjectId": 27947
+    },
+    {
+      "gate": "B5",
+      "facadeWedObjectId": 101099,
+      "rampWedObjectId": 20730
+    },
+    {
+      "gate": "B6",
+      "facadeWedObjectId": 104619,
+      "rampWedObjectId": 27953
+    },
+    {
+      "gate": "B7",
+      "facadeWedObjectId": 101121,
+      "rampWedObjectId": 27959
+    },
+    {
+      "gate": "B8",
+      "facadeWedObjectId": 102825,
+      "rampWedObjectId": 27966
+    },
+    {
+      "gate": "B9",
+      "facadeWedObjectId": 101772,
+      "rampWedObjectId": 20731
+    },
+    {
+      "gate": "B10",
+      "facadeWedObjectId": 102789,
+      "rampWedObjectId": 20734
+    },
+    {
+      "gate": "B11",
+      "facadeWedObjectId": 101799,
+      "rampWedObjectId": 27972
+    },
+    {
+      "gate": "B12",
+      "facadeWedObjectId": 102756,
+      "rampWedObjectId": 20733
+    },
+    {
+      "gate": "B13",
+      "facadeWedObjectId": 102675,
+      "rampWedObjectId": 102680
+    },
+    {
+      "gate": "B14",
+      "facadeWedObjectId": 102705,
+      "rampWedObjectId": 27978
+    },
+    {
+      "gate": "B16",
+      "facadeWedObjectId": 100652,
+      "rampWedObjectId": 20754
+    },
+    {
+      "gate": "B17",
+      "facadeWedObjectId": 99956,
+      "rampWedObjectId": 20748
+    },
+    {
+      "gate": "B18",
+      "facadeWedObjectId": 100627,
+      "rampWedObjectId": 20753
+    },
+    {
+      "gate": "B19",
+      "facadeWedObjectId": 100113,
+      "rampWedObjectId": 27995
+    },
+    {
+      "gate": "B20",
+      "facadeWedObjectId": 100604,
+      "rampWedObjectId": 28003
+    },
+    {
+      "gate": "B21A",
+      "facadeWedObjectId": 100163,
+      "rampWedObjectId": 100127
+    },
+    {
+      "gate": "B22",
+      "facadeWedObjectId": 100587,
+      "rampWedObjectId": 20752
+    },
+    {
+      "gate": "B23A",
+      "facadeWedObjectId": 100194,
+      "rampWedObjectId": 28010
+    },
+    {
+      "gate": "B24",
+      "facadeWedObjectId": 100559,
+      "rampWedObjectId": 28016
+    },
+    {
+      "gate": "B25",
+      "facadeWedObjectId": 100250,
+      "rampWedObjectId": 20750
+    },
+    {
+      "gate": "B27",
+      "facadeWedObjectId": 100461,
+      "rampWedObjectId": 28029
+    },
+    {
+      "gate": "B28",
+      "facadeWedObjectId": 100497,
+      "rampWedObjectId": 20751
+    },
+    {
+      "gate": "C1",
+      "facadeWedObjectId": 107105,
+      "rampWedObjectId": 107059
+    },
+    {
+      "gate": "C2",
+      "facadeWedObjectId": 107148,
+      "rampWedObjectId": 107103
+    },
+    {
+      "gate": "C3",
+      "facadeWedObjectId": 107112,
+      "rampWedObjectId": 107062
+    },
+    {
+      "gate": "C4",
+      "facadeWedObjectId": 107142,
+      "rampWedObjectId": 20700
+    },
+    {
+      "gate": "C6",
+      "facadeWedObjectId": 107136,
+      "rampWedObjectId": 107087
+    },
+    {
+      "gate": "C7",
+      "facadeWedObjectId": 107118,
+      "rampWedObjectId": 107067
+    },
+    {
+      "gate": "C8",
+      "facadeWedObjectId": 107130,
+      "rampWedObjectId": 107074
+    },
+    {
+      "gate": "C9",
+      "facadeWedObjectId": 107124,
+      "rampWedObjectId": 107071
+    },
+    {
+      "gate": "C11",
+      "facadeWedObjectId": 109069,
+      "rampWedObjectId": 109063
+    },
+    {
+      "gate": "C12",
+      "facadeWedObjectId": 109111,
+      "rampWedObjectId": 109067
+    },
+    {
+      "gate": "C13",
+      "facadeWedObjectId": 109075,
+      "rampWedObjectId": 109051
+    },
+    {
+      "gate": "C14",
+      "facadeWedObjectId": 109105,
+      "rampWedObjectId": 109065
+    },
+    {
+      "gate": "C16",
+      "facadeWedObjectId": 109099,
+      "rampWedObjectId": 109057
+    },
+    {
+      "gate": "C17",
+      "facadeWedObjectId": 109081,
+      "rampWedObjectId": 109052
+    },
+    {
+      "gate": "C18",
+      "facadeWedObjectId": 109093,
+      "rampWedObjectId": 109055
+    },
+    {
+      "gate": "C19",
+      "facadeWedObjectId": 109087,
+      "rampWedObjectId": 109061
+    },
+    {
+      "gate": "D1",
+      "facadeWedObjectId": 106788,
+      "rampWedObjectId": 20705
+    },
+    {
+      "gate": "D2",
+      "facadeWedObjectId": 115964,
+      "rampWedObjectId": 115970
+    },
+    {
+      "gate": "D3",
+      "facadeWedObjectId": 106815,
+      "rampWedObjectId": 106804
+    },
+    {
+      "gate": "D4",
+      "facadeWedObjectId": 106887,
+      "rampWedObjectId": 20701
+    },
+    {
+      "gate": "D5",
+      "facadeWedObjectId": 106821,
+      "rampWedObjectId": 20704
+    },
+    {
+      "gate": "D6",
+      "facadeWedObjectId": 106879,
+      "rampWedObjectId": 106894
+    },
+    {
+      "gate": "D7",
+      "facadeWedObjectId": 106842,
+      "rampWedObjectId": 106848
+    },
+    {
+      "gate": "D7",
+      "facadeWedObjectId": 106853,
+      "rampWedObjectId": 106850
+    }
+  ],
+  "policy": "Use only exact WED-authored placement/wall selections with the exact XP11 stock facade dependency. Do not use Airport_Jetway.glb or manually reposition internal jetway parts in the KPHX scenery layer."
+}
