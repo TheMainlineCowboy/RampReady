@@ -1,0 +1,128 @@
+name: KPHX T4 A1 Ground Index
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-t4-ground-index.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            public/models/kphx-full-airport/surfaces/surface-network.json
+          sparse-checkout-cone-mode: false
+
+      - name: Extract exact T4 A1 surface neighborhood
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const input="public/models/kphx-full-airport/surfaces/surface-network.json";
+          const network=JSON.parse(fs.readFileSync(input,"utf8"));
+          const A1={x:0,z:6.2};
+          const radius=450;
+
+          function points(entry){
+            const out=[];
+            for(const ring of entry.rings||[]){
+              for(const node of ring.nodes||[]){
+                if(Number.isFinite(node.x)&&Number.isFinite(node.z)) out.push([node.x,node.z]);
+              }
+            }
+            for(const node of entry.nodes||[]){
+              if(Number.isFinite(node.x)&&Number.isFinite(node.z)) out.push([node.x,node.z]);
+            }
+            return out;
+          }
+
+          function bounds(entry){
+            const p=points(entry);
+            if(!p.length) return null;
+            const xs=p.map(([x])=>x);
+            const zs=p.map(([,z])=>z);
+            return {minX:Math.min(...xs),maxX:Math.max(...xs),minZ:Math.min(...zs),maxZ:Math.max(...zs)};
+          }
+
+          function distanceToBounds(b){
+            if(!b) return Number.POSITIVE_INFINITY;
+            const dx=A1.x<b.minX?b.minX-A1.x:A1.x>b.maxX?A1.x-b.maxX:0;
+            const dz=A1.z<b.minZ?b.minZ-A1.z:A1.z>b.maxZ?A1.z-b.maxZ:0;
+            return Math.hypot(dx,dz);
+          }
+
+          function select(list){
+            return (list||[]).map(entry=>{
+              const b=bounds(entry);
+              return {entry,b,d:distanceToBounds(b)};
+            }).filter(item=>item.d<=radius).map(({entry,b,d})=>({
+              id:entry.id,
+              name:entry.name,
+              resource:entry.resource,
+              resourcePrefix:entry.resourcePrefix,
+              sourceClass:entry.sourceClass,
+              distanceToA1BoundsMeters:Number(d.toFixed(3)),
+              bounds:b
+            })).sort((a,b)=>a.distanceToA1BoundsMeters-b.distanceToA1BoundsMeters);
+          }
+
+          const selected={
+            polygons:select(network.polygons),
+            drapedOrthophotos:select(network.drapedOrthophotos),
+            lines:select(network.lines),
+          };
+          const all=[...selected.polygons,...selected.drapedOrthophotos,...selected.lines];
+          const resources=[...new Set(all.map(x=>x.resource))].sort();
+          const prefixes=[...new Set(all.map(x=>x.resourcePrefix))].sort();
+          const byPrefix={};
+          for(const prefix of prefixes){
+            const entries=all.filter(x=>x.resourcePrefix===prefix);
+            byPrefix[prefix]={
+              placements:entries.length,
+              resources:[...new Set(entries.map(x=>x.resource))].sort()
+            };
+          }
+          const report={
+            schemaVersion:1,
+            authority:input,
+            a1:A1,
+            radiusMeters:radius,
+            counts:{
+              polygons:selected.polygons.length,
+              drapedOrthophotos:selected.drapedOrthophotos.length,
+              lines:selected.lines.length,
+              placements:all.length,
+              uniqueResources:resources.length
+            },
+            resourcePrefixes:prefixes,
+            byPrefix,
+            selected
+          };
+          fs.writeFileSync("reports/kphx-t4-a1-ground-index.json",JSON.stringify(report,null,2)+"\n");
+          console.log(JSON.stringify(report.counts,null,2));
+          console.log(JSON.stringify(byPrefix,null,2));
+          NODE
+
+      - name: Commit T4 A1 ground index
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-t4-a1-ground-index.json
+          git commit -m "Index exact T4 A1 WED ground neighborhood"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
