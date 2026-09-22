@@ -5,6 +5,14 @@ import {
   kphxXPlaneHeadingToRampReadyYawRadians,
 } from "./sourceAuthority.js";
 
+function kphxRuntimeUrl(url) {
+  if (!url || !url.startsWith("/")) return url;
+  const base = String(import.meta.env?.BASE_URL || "/").replace(/\/$/, "");
+  if (!base || base === "/") return url;
+  if (url === base || url.startsWith(`${base}/`)) return url;
+  return `${base}${url}`;
+}
+
 const DEFAULT_MANIFEST_URL = "/models/kphx-full-airport/manifest.json";
 
 const XPLANE_LAYER_ORDER = Object.freeze({
@@ -127,8 +135,9 @@ export async function installKphxPackageOwnedObjectLayer(
 ) {
   if (!environment?.add) throw new Error("KPHX full-airport loader requires a Three.js environment group");
 
-  const response = await fetch(manifestUrl, { cache: "no-cache" });
-  if (!response.ok) throw new Error(`KPHX runtime manifest returned HTTP ${response.status}: ${manifestUrl}`);
+  const resolvedManifestUrl = kphxRuntimeUrl(manifestUrl);
+  const response = await fetch(resolvedManifestUrl, { cache: "no-cache" });
+  if (!response.ok) throw new Error(`KPHX runtime manifest returned HTTP ${response.status}: ${resolvedManifestUrl}`);
   const manifest = await response.json();
 
   if (manifest?.source?.version !== KPHX_FULL_AIRPORT_SOURCE.packageVersion) {
@@ -155,7 +164,7 @@ export async function installKphxPackageOwnedObjectLayer(
   const assetFailures = [];
   await mapWithConcurrency(assetUrls, Math.max(1, assetConcurrency), async (assetUrl) => {
     try {
-      const gltf = await loader.loadAsync(assetUrl);
+      const gltf = await loader.loadAsync(kphxRuntimeUrl(assetUrl));
       if (!gltf?.scene) throw new Error("glTF loaded without a scene root");
       templates.set(assetUrl, gltf.scene);
     } catch (error) {
@@ -175,7 +184,7 @@ export async function installKphxPackageOwnedObjectLayer(
   layer.userData = {
     kphxFullAirport: true,
     sourceVersion: manifest.source.version,
-    manifestUrl,
+    manifestUrl: resolvedManifestUrl,
     expectedPlacementCount: placements.length,
     uniqueAssetCount: assetUrls.length,
     loadedUniqueAssetCount: templates.size,
