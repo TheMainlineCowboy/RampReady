@@ -232,11 +232,16 @@ export default function KphxA1JetwayVerifier() {
         camera.position.set(center.x, Math.max(55, size.length() * 1.3), center.z + 0.01);
         camera.up.set(0, 0, -1);
       } else if (view === "terminal") {
-        camera.position.set(center.x - 34, 13, center.z + 38);
+        const connection = a1.edges[0].start;
+        camera.position.set(connection[0] + 18, 14, connection[1] - 25);
+        camera.lookAt(connection[0], 5.2, connection[1] - 1.5);
       } else {
         camera.position.set(center.x + 44, 24, center.z + 48);
+        camera.lookAt(center.x, Math.max(4.5, center.y), center.z);
       }
-      camera.lookAt(center.x, Math.max(4.5, center.y), center.z);
+      if (view === "top") {
+        camera.lookAt(center.x, Math.max(4.5, center.y), center.z);
+      }
       camera.updateProjectionMatrix();
 
       const blocked = layout.placements.filter((entry) => entry.blockedExactCurve);
