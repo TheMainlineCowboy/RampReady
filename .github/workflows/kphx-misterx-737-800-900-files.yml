@@ -1,0 +1,125 @@
+name: KPHX MisterX 737-800 900 Exact Files
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-misterx-737-800-900-files.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-misterx-737-800-900-files
+  cancel-in-progress: false
+
+jobs:
+  move-files:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install Drive downloader
+        run: python -m pip install --disable-pip-version-check gdown==5.2.0
+
+      - name: Configure checkpoint commits
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: 737-800 shared normal
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIR="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft/Boeing_737_800"
+          mkdir -p "$DIR"
+          gdown "https://drive.google.com/uc?id=14a6Htd2Xkq52PFYHu2sbE5mQTw2ScUxE" -O "$DIR/Normal.png"
+          sha256sum "$DIR/Normal.png" > "$DIR/Normal.png.sha256"
+          git add "$DIR/Normal.png" "$DIR/Normal.png.sha256"
+          git commit -m "Move exact MisterX 737-800 normal map"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: 737-800 Alaska exact files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          DIR="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft/Boeing_737_800"
+          gdown "https://drive.google.com/uc?id=1Mt0OSa13LDl7SSBem4gMHpDUPRp3Jjqi" -O "$DIR/Alaska_Airlines.dds"
+          gdown "https://drive.google.com/uc?id=1WNi--fi34tX5lLPdBTXkEyBIEKpzhHBi" -O "$DIR/Alaska_Airlines_LIT.png"
+          gdown "https://drive.google.com/uc?id=1_lGlcGOUfMR27Zs-hfpkhBGGxeq_MqzF" -O "$DIR/Alaska_Airlines_S.obj"
+          sha256sum "$DIR/Alaska_Airlines.dds" "$DIR/Alaska_Airlines_LIT.png" "$DIR/Alaska_Airlines_S.obj" > "$DIR/Alaska_Airlines.sha256"
+          git add "$DIR/Alaska_Airlines.dds" "$DIR/Alaska_Airlines_LIT.png" "$DIR/Alaska_Airlines_S.obj" "$DIR/Alaska_Airlines.sha256"
+          git commit -m "Move exact MisterX Alaska 737-800 source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: 737-800 American exact files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          DIR="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft/Boeing_737_800"
+          gdown "https://drive.google.com/uc?id=1UzZIAe6JSAm31D-PvGs-xVv_PBYlkKnS" -O "$DIR/American_Airlines.dds"
+          gdown "https://drive.google.com/uc?id=1BXV3R5Qql4V-fYF4brkYfTx87n7iQiNV" -O "$DIR/American_Airlines_LIT.png"
+          gdown "https://drive.google.com/uc?id=1ciVwgg1pclNO7u3BzAMSWXgFv2oc2Ouc" -O "$DIR/American_Airlines.obj"
+          sha256sum "$DIR/American_Airlines.dds" "$DIR/American_Airlines_LIT.png" "$DIR/American_Airlines.obj" > "$DIR/American_Airlines.sha256"
+          git add "$DIR/American_Airlines.dds" "$DIR/American_Airlines_LIT.png" "$DIR/American_Airlines.obj" "$DIR/American_Airlines.sha256"
+          git commit -m "Move exact MisterX American 737-800 source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: 737-800 Southwest exact files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          DIR="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft/Boeing_737_800"
+          gdown "https://drive.google.com/uc?id=1cjw_RCL7FQlCklMQacCKkiL0BMoQqwsA" -O "$DIR/Southwest_Airlines.dds"
+          gdown "https://drive.google.com/uc?id=1Yh-fgm5OTY5E_8NN5A-Y4P07Ghpl4E3F" -O "$DIR/Southwest_Airlines_LIT.png"
+          gdown "https://drive.google.com/uc?id=1B8SFvqvmTvm_UtLtbF1MZrQjYI4CAE2j" -O "$DIR/Southwest_Airlines_S.obj"
+          sha256sum "$DIR/Southwest_Airlines.dds" "$DIR/Southwest_Airlines_LIT.png" "$DIR/Southwest_Airlines_S.obj" > "$DIR/Southwest_Airlines.sha256"
+          git add "$DIR/Southwest_Airlines.dds" "$DIR/Southwest_Airlines_LIT.png" "$DIR/Southwest_Airlines_S.obj" "$DIR/Southwest_Airlines.sha256"
+          git commit -m "Move exact MisterX Southwest 737-800 source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: 737-800 United exact files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          DIR="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft/Boeing_737_800"
+          gdown "https://drive.google.com/uc?id=1OXeSzQjM13aqvD0zmsH-VWbVQhvJubhW" -O "$DIR/United_Airlines.dds"
+          gdown "https://drive.google.com/uc?id=1dHx4xrXPhZvyAFNIv9mCl1bbeIofbx1k" -O "$DIR/United_Airlines_LIT.png"
+          gdown "https://drive.google.com/uc?id=1XpeEzMpKo-bwLZKKc7akRpE6lU54IpSI" -O "$DIR/United_Airlines_S.obj"
+          sha256sum "$DIR/United_Airlines.dds" "$DIR/United_Airlines_LIT.png" "$DIR/United_Airlines_S.obj" > "$DIR/United_Airlines.sha256"
+          git add "$DIR/United_Airlines.dds" "$DIR/United_Airlines_LIT.png" "$DIR/United_Airlines_S.obj" "$DIR/United_Airlines.sha256"
+          git commit -m "Move exact MisterX United 737-800 source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: 737-900ER United exact files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          DIR="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft/Boeing_737_900ER"
+          mkdir -p "$DIR"
+          gdown "https://drive.google.com/uc?id=1tNQM078CaWTemImQLAZNm0jU2TbcBiIQ" -O "$DIR/Normal.png"
+          gdown "https://drive.google.com/uc?id=1KsxBPc0SdhthwNxdjZDAstNwDCwahuzJ" -O "$DIR/United_Airlines.dds"
+          gdown "https://drive.google.com/uc?id=1GlCXvWlpLAUu87E8oj3S_2zymA8IOFsz" -O "$DIR/United_Airlines_LIT.png"
+          gdown "https://drive.google.com/uc?id=1TB-Sq6KWV9ORVZrHs3x_rYM1urFcm4NG" -O "$DIR/United_Airlines_S.obj"
+          sha256sum "$DIR/Normal.png" "$DIR/United_Airlines.dds" "$DIR/United_Airlines_LIT.png" "$DIR/United_Airlines_S.obj" > "$DIR/United_Airlines.sha256"
+          git add "$DIR"
+          git commit -m "Move exact MisterX United 737-900ER source"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
