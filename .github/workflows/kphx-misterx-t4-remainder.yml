@@ -89,17 +89,23 @@ jobs:
             git push origin HEAD:kphx-full-airport-import
           fi
 
-      - name: Ramps exact source
+      - name: Ramps exact T4 source
         shell: bash
         run: |
           set -euo pipefail
           git pull --rebase origin kphx-full-airport-import
-          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport"
-          gdown --folder --remaining-ok "https://drive.google.com/drive/folders/1TJM8RzfRXzJuJ33Hj4bjP3GdHKSamqTN" -O "$ROOT/Ramps"
-          find "$ROOT/Ramps" -type f -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-RAMPS-SHA256SUMS.txt
-          git add "$ROOT/Ramps" assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-RAMPS-SHA256SUMS.txt
+          DIR="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Ramps"
+          mkdir -p "$DIR"
+          gdown "https://drive.google.com/uc?id=1OwsCODhX8FrT-Tqb4WlXPMWelOPd_CzJ" -O "$DIR/Ramp_1_nL.obj"
+          gdown "https://drive.google.com/uc?id=1iXKm1BPpmwkRtBsqQonw3hAnQ2yzBZeU" -O "$DIR/Ramp_1_Stripes_nL.obj"
+          gdown "https://drive.google.com/uc?id=1ZgGUcVUb7YsbS83HLQIzUrWhCWmfxJZi" -O "$DIR/Ramp_Southwest_Med.obj"
+          gdown "https://drive.google.com/uc?id=1dquCNOp4VCkwi7lQEcaRXZoDze-xlec7" -O "$DIR/Ramp_Southwest_Med_nL.obj"
+          gdown "https://drive.google.com/uc?id=1e2kqeFax6_UaIeqJhGhaecbqjJJlcLxs" -O "$DIR/Ramp_1.dds"
+          gdown "https://drive.google.com/uc?id=1S2Z6FQE-d3LCgyNhwCh7wOhZ1VJVXtXE" -O "$DIR/Ramp_Southwest.dds"
+          find "$DIR" -maxdepth 1 -type f \( -name 'Ramp_1_nL.obj' -o -name 'Ramp_1_Stripes_nL.obj' -o -name 'Ramp_Southwest_Med.obj' -o -name 'Ramp_Southwest_Med_nL.obj' -o -name 'Ramp_1.dds' -o -name 'Ramp_Southwest.dds' \) -print0 | sort -z | xargs -0 sha256sum > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-RAMPS-SHA256SUMS.txt
+          git add "$DIR/Ramp_1_nL.obj" "$DIR/Ramp_1_Stripes_nL.obj" "$DIR/Ramp_Southwest_Med.obj" "$DIR/Ramp_Southwest_Med_nL.obj" "$DIR/Ramp_1.dds" "$DIR/Ramp_Southwest.dds" assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-REM-RAMPS-SHA256SUMS.txt
           if git diff --cached --quiet; then
-            echo "Ramps already exact; no commit needed."
+            echo "T4 ramps already exact; no commit needed."
           else
             git commit -m "Move exact MisterX T4 ramp source"
             git pull --rebase origin kphx-full-airport-import
