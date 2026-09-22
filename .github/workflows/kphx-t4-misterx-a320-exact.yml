@@ -1,0 +1,46 @@
+name: KPHX T4 MisterX A320 Exact Sources
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [kphx-full-airport-import]
+    paths:
+      - ".github/workflows/kphx-t4-misterx-a320-exact.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+      - run: python -m pip install --disable-pip-version-check gdown==5.2.0
+      - name: Stage exact T4 A320 files
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIR="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Aircraft/Airbus_A320_200"
+          mkdir -p "$DIR"
+          gdown "https://drive.google.com/uc?id=1Cx6l3XPmlMZ1J8qB4sYamyLR97U-RfjS" -O "$DIR/Delta_Airlines.obj"
+          gdown "https://drive.google.com/uc?id=1q7AtAtZ8_qS-pA19anPXQADwc9mqxTWD" -O "$DIR/Delta_Airlines.dds"
+          gdown "https://drive.google.com/uc?id=1BQLJCfuawSJoccz7CGm6sr8SAbJJ3YGh" -O "$DIR/Delta_Airlines_LIT.png"
+          gdown "https://drive.google.com/uc?id=1iXAno6rdLvOXgoA4-42Q9egoQJTnZ0Ku" -O "$DIR/Frontier.obj"
+          gdown "https://drive.google.com/uc?id=14uqJTrNOY0SsK3FwwdMTD9bZeeQLLDLK" -O "$DIR/Frontier.dds"
+          gdown "https://drive.google.com/uc?id=1Rgt9ND5D_llw_2FbcAWIIHlJFvpyNNwJ" -O "$DIR/Frontier_LIT.png"
+          gdown "https://drive.google.com/uc?id=1u86Mg3pN5RKQ08rzmO8xxL1ZuTlT--ZV" -O "$DIR/Spirit_Airlines.obj"
+          gdown "https://drive.google.com/uc?id=16SrUjTYMnlhBQA2CE1N8050m1suHRLPo" -O "$DIR/Spirit_Airlines.dds"
+          gdown "https://drive.google.com/uc?id=1ky8dwgKhNb4yP-4ReLeAz2aIKwdmWIGD" -O "$DIR/Spirit_Airlines_LIT.png"
+          gdown "https://drive.google.com/uc?id=1gQRfer0_TKi9cPt66RvNo5XNq8AmuIXZ" -O "$DIR/Normal.png"
+          sha256sum "$DIR"/Delta_Airlines.* "$DIR"/Frontier.* "$DIR"/Spirit_Airlines.* "$DIR/Normal.png" > assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-A320-EXACT-SHA256SUMS.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$DIR" assets/kphx-source/dependencies/MisterX_Library_2.0c/T4-A320-EXACT-SHA256SUMS.txt
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Stage exact T4 MisterX A320 sources"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
