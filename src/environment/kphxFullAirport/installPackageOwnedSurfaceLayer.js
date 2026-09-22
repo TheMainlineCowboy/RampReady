@@ -309,6 +309,9 @@ async function createArtMaterial(THREE, textureLoader, art, fallbackGroup) {
   const order = layerOrder(art.layerGroup, fallbackGroup);
   material.userData.xPlaneLayerOrder = order;
   material.userData.xPlaneArtResource = art.sourceResource;
+  material.userData.xPlaneGlobalSpecular = Number.isFinite(art.globalSpecular) ? art.globalSpecular : null;
+  material.userData.xPlaneWeatherTexture = art.weather?.outputName || null;
+  material.userData.xPlaneTextureHeight = Number.isFinite(art.textureHeight) ? art.textureHeight : null;
 
   if (art.decal?.decals?.length) {
     const decalImage = art.decal.decals[0].image;
