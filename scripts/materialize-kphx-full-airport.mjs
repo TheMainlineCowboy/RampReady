@@ -91,6 +91,7 @@ async function readObjTextureRefs(objPath) {
   let lit = null;
   let normal = null;
   let normalScale = null;
+  let weather = null;
   for (const line of source.split(/\r?\n/)) {
     const trimmed = line.trim();
     if (
@@ -102,7 +103,12 @@ async function readObjTextureRefs(objPath) {
       diffuse = trimmed.split(/\s+/).slice(1).join(" ");
     } else if (trimmed.startsWith("TEXTURE_LIT\t") || trimmed.startsWith("TEXTURE_LIT ")) {
       lit = trimmed.split(/\s+/).slice(1).join(" ");
-    } else if (trimmed.startsWith("TEXTURE_DRAPED_NORMAL\t") || trimmed.startsWith("TEXTURE_DRAPED_NORMAL ")) {
+    } else if (
+      trimmed.startsWith("TEXTURE_DRAPED_NORMAL\t")
+      || trimmed.startsWith("TEXTURE_DRAPED_NORMAL ")
+      || trimmed.startsWith("TEXTURE_NORMAL\t")
+      || trimmed.startsWith("TEXTURE_NORMAL ")
+    ) {
       const parts = trimmed.split(/\s+/);
       const maybeScale = Number(parts[1]);
       if (Number.isFinite(maybeScale) && parts.length >= 3) {
@@ -112,9 +118,11 @@ async function readObjTextureRefs(objPath) {
         normalScale = 1;
         normal = parts.slice(1).join(" ");
       }
+    } else if (trimmed.startsWith("WEATHER\t") || trimmed.startsWith("WEATHER ")) {
+      weather = trimmed.split(/\s+/).slice(1).join(" ");
     }
   }
-  return { diffuse, lit, normal, normalScale };
+  return { diffuse, lit, normal, normalScale, weather };
 }
 
 async function resolveTexture(sourceDirectory, requested, allowedRoot) {
@@ -254,9 +262,11 @@ async function convertObject(resource) {
   const diffuseSource = await resolveTexture(sourceDirectory, refs.diffuse, textureRoot);
   const litSource = await resolveTexture(sourceDirectory, refs.lit, textureRoot);
   const normalSource = await resolveTexture(sourceDirectory, refs.normal, textureRoot);
+  const weatherSource = await resolveTexture(sourceDirectory, refs.weather, textureRoot);
   const diffuse = await materializeTexture(diffuseSource, refs.diffuse, outputDirectory);
   const lit = litSource ? await materializeTexture(litSource, refs.lit, outputDirectory) : null;
   const normal = normalSource ? await materializeTexture(normalSource, refs.normal, outputDirectory) : null;
+  const weather = weatherSource ? await materializeTexture(weatherSource, refs.weather, outputDirectory) : null;
 
   const converterPath = path.resolve("scripts/convert-kphx-obj8-to-gltf.mjs");
   const converterArgs = [
@@ -269,6 +279,7 @@ async function convertObject(resource) {
   if (lit) converterArgs.push(`--lit=${lit.outputName}`);
   if (normal) converterArgs.push(`--normal=${normal.outputName}`);
   if (normal && Number.isFinite(refs.normalScale)) converterArgs.push(`--normal-scale=${refs.normalScale}`);
+  if (weather) converterArgs.push(`--weather=${weather.outputName}`);
 
   const { stdout } = await execFile(process.execPath, converterArgs, {
     maxBuffer: 16 * 1024 * 1024,
@@ -287,6 +298,7 @@ async function convertObject(resource) {
     diffuse,
     lit,
     normal,
+    weather,
     converter: converterResult,
   };
 }
