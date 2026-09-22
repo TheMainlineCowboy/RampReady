@@ -258,18 +258,24 @@ async function convertObject(resource) {
   await fs.mkdir(outputDirectory, { recursive: true });
 
   const refs = await readObjTextureRefs(sourcePath);
-  if (!refs.diffuse || /^none$/i.test(refs.diffuse)) {
-    throw new Error(`OBJ8 resource has no diffuse texture: ${safeResource}`);
+  const hasDiffuse = Boolean(refs.diffuse && !/^none$/i.test(refs.diffuse));
+  const hasDrapedDiffuse = Boolean(refs.drapedDiffuse && !/^none$/i.test(refs.drapedDiffuse));
+  if (!hasDiffuse && !hasDrapedDiffuse) {
+    throw new Error(`OBJ8 resource has no diffuse or draped texture: ${safeResource}`);
   }
 
   const sourceDirectory = path.dirname(sourcePath);
-  const diffuseSource = await resolveTexture(sourceDirectory, refs.diffuse, textureRoot);
+  const diffuseSource = hasDiffuse
+    ? await resolveTexture(sourceDirectory, refs.diffuse, textureRoot)
+    : null;
   const drapedDiffuseSource = await resolveTexture(sourceDirectory, refs.drapedDiffuse, textureRoot);
   const litSource = await resolveTexture(sourceDirectory, refs.lit, textureRoot);
   const normalSource = await resolveTexture(sourceDirectory, refs.normal, textureRoot);
   const drapedNormalSource = await resolveTexture(sourceDirectory, refs.drapedNormal, textureRoot);
   const weatherSource = await resolveTexture(sourceDirectory, refs.weather, textureRoot);
-  const diffuse = await materializeTexture(diffuseSource, refs.diffuse, outputDirectory);
+  const diffuse = diffuseSource
+    ? await materializeTexture(diffuseSource, refs.diffuse, outputDirectory)
+    : null;
   const drapedDiffuse = drapedDiffuseSource
     ? await materializeTexture(drapedDiffuseSource, refs.drapedDiffuse, outputDirectory)
     : null;
@@ -286,8 +292,8 @@ async function convertObject(resource) {
     sourcePath,
     outputDirectory,
     `--name=${parsed.name}`,
-    `--diffuse=${diffuse.outputName}`,
   ];
+  if (diffuse) converterArgs.push(`--diffuse=${diffuse.outputName}`);
   if (drapedDiffuse) converterArgs.push(`--draped-diffuse=${drapedDiffuse.outputName}`);
   if (lit) converterArgs.push(`--lit=${lit.outputName}`);
   if (normal) converterArgs.push(`--normal=${normal.outputName}`);
