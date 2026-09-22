@@ -1,0 +1,160 @@
+name: KPHX Package-Owned Exact Batches
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-package-owned-batches.yml"
+      - "scripts/materialize-kphx-full-airport.mjs"
+      - "scripts/convert-kphx-obj8-to-gltf.mjs"
+      - "scripts/extract-kphx-wed-object-placements.mjs"
+      - "src/environment/kphxFullAirport/exactAssetCatalog.js"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-package-owned-batches
+  cancel-in-progress: false
+
+jobs:
+  package-owned:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      KPHX_ARCHIVE_ID: 1Zias_t4NlXQprjcV9TQlBIL75jiH2J0I
+      KPHX_WED_SHA256: 59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498
+      KPHX_RELEASE_TAG: kphx-source-1.75.1
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install conversion tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y p7zip-full imagemagick
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/magick" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ "${1:-}" = "identify" ]; then
+            shift
+            exec identify "$@"
+          fi
+          exec convert "$@"
+          SH
+          chmod +x "$HOME/bin/magick"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Download and verify untouched KPHX source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-source .kphx-extracted reports public/models/kphx-full-airport/batches
+          curl -L --fail --retry 5 --retry-delay 5 --show-error             "https://drive.usercontent.google.com/download?id=${KPHX_ARCHIVE_ID}&export=download&confirm=t"             -o ".kphx-source/KPHX - Phoenix Sky Harbor Intl_V1.75.1.7z"
+          7z t ".kphx-source/KPHX - Phoenix Sky Harbor Intl_V1.75.1.7z"
+          7z x -y ".kphx-source/KPHX - Phoenix Sky Harbor Intl_V1.75.1.7z" -o.kphx-extracted >/dev/null
+          WED="$(find .kphx-extracted -type f -name earth.wed.xml -print -quit)"
+          test -n "$WED"
+          printf '%s  %s\n' "${KPHX_WED_SHA256}" "$WED" | sha256sum --check --strict
+          echo "source_root=$(dirname "$WED")" >> "$GITHUB_OUTPUT"
+
+      - name: Preserve untouched KPHX source archive in GitHub
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ARCHIVE=".kphx-source/KPHX - Phoenix Sky Harbor Intl_V1.75.1.7z"
+          if ! gh release view "${KPHX_RELEASE_TAG}" >/dev/null 2>&1; then
+            gh release create "${KPHX_RELEASE_TAG}"               --target kphx-full-airport-import               --title "KPHX 1.75.1 exact source authority"               --notes "Untouched user-supplied KPHX 1.75.1 source archive. Runtime conversions are separately hash-verified."
+          fi
+          gh release upload "${KPHX_RELEASE_TAG}" "$ARCHIVE" --clobber
+
+      - name: Configure checkpoint commits
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Batch 1 - exact structures
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME="structures"
+          PREFIXES="Terminals,ParkingGarages,Misc,SkyTrain"
+          node scripts/materialize-kphx-full-airport.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport             --batch-name="$NAME"             --package-prefixes="$PREFIXES"
+          cp public/models/kphx-full-airport/manifest.json "public/models/kphx-full-airport/batches/${NAME}.manifest.json"
+          git add public/models/kphx-full-airport "reports/kphx-full-airport-wed-placements-${NAME}.json" "reports/kphx-full-airport-materialization-${NAME}.json"
+          git commit -m "KPHX exact package batch: structures"
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Batch 2 - exact gate numbers
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME="gate-numbers"
+          PREFIXES="GateNumbers"
+          node scripts/materialize-kphx-full-airport.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport             --batch-name="$NAME"             --package-prefixes="$PREFIXES"
+          cp public/models/kphx-full-airport/manifest.json "public/models/kphx-full-airport/batches/${NAME}.manifest.json"
+          git add public/models/kphx-full-airport "reports/kphx-full-airport-wed-placements-${NAME}.json" "reports/kphx-full-airport-materialization-${NAME}.json"
+          git commit -m "KPHX exact package batch: gate numbers"
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Batch 3 - exact lights markings runways
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME="airfield-details"
+          PREFIXES="Lights,GroundMarkings,Runways"
+          node scripts/materialize-kphx-full-airport.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport             --batch-name="$NAME"             --package-prefixes="$PREFIXES"
+          cp public/models/kphx-full-airport/manifest.json "public/models/kphx-full-airport/batches/${NAME}.manifest.json"
+          git add public/models/kphx-full-airport "reports/kphx-full-airport-wed-placements-${NAME}.json" "reports/kphx-full-airport-materialization-${NAME}.json"
+          git commit -m "KPHX exact package batch: airfield details"
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Batch 4 - exact cargo service downtown
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME="service-cargo-downtown"
+          PREFIXES="CargoBuildings,Vehicles,StaticAircraft,Downtown,Construction"
+          node scripts/materialize-kphx-full-airport.mjs             "${{ steps.source.outputs.source_root }}"             public/models/kphx-full-airport             --batch-name="$NAME"             --package-prefixes="$PREFIXES"
+          cp public/models/kphx-full-airport/manifest.json "public/models/kphx-full-airport/batches/${NAME}.manifest.json"
+          git add public/models/kphx-full-airport "reports/kphx-full-airport-wed-placements-${NAME}.json" "reports/kphx-full-airport-materialization-${NAME}.json"
+          git commit -m "KPHX exact package batch: service cargo downtown"
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Verify package-owned placement total
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const names = ["structures", "gate-numbers", "airfield-details", "service-cargo-downtown"];
+          let placements = 0;
+          let resources = 0;
+          for (const name of names) {
+            const m = JSON.parse(fs.readFileSync(`public/models/kphx-full-airport/batches/${name}.manifest.json`, "utf8"));
+            if (m.failures?.length) throw new Error(`${name}: ${m.failures.length} failures`);
+            if (m.packageOwned.materializedPlacementCount !== m.packageOwned.expectedPlacementCount) {
+              throw new Error(`${name}: placement count mismatch`);
+            }
+            if (m.packageOwned.materializedUniqueResourceCount !== m.packageOwned.expectedUniqueResourceCount) {
+              throw new Error(`${name}: resource count mismatch`);
+            }
+            placements += m.packageOwned.materializedPlacementCount;
+            resources += m.packageOwned.materializedUniqueResourceCount;
+          }
+          if (placements !== 655) throw new Error(`Expected 655 package-owned placements, got ${placements}`);
+          if (resources !== 96) throw new Error(`Expected 96 unique package-owned resources, got ${resources}`);
+          console.log(JSON.stringify({packageOwnedPlacements:placements,packageOwnedUniqueResources:resources,status:"PASS"},null,2));
+          NODE
