@@ -140,6 +140,18 @@ jobs:
           console.log(JSON.stringify({resources:m.resolvedExternalResourceCount,placements:placements.length,status:"PASS"},null,2));
           NODE
 
+      - name: Upload exact T4 A1 ZDP surface artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kphx-t4-a1-zdp-surfaces
+          path: |
+            public/models/kphx-full-airport/t4-a1-zdp-surfaces
+            reports/kphx-t4-a1-zdp-network.json
+            reports/kphx-t4-a1-zdp-resources.json
+            reports/kphx-t4-a1-zdp-library-map.json
+          if-no-files-found: error
+          compression-level: 0
+
       - name: Commit exact T4 A1 ZDP surface checkpoint
         shell: bash
         run: |
