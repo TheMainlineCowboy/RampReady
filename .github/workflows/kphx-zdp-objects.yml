@@ -141,5 +141,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add             public/models/kphx-full-airport/external/ZDP_Library             public/models/kphx-full-airport/batches/zdp-objects.manifest.json             reports/kphx-zdp-object-resources.json             reports/kphx-zdp-object-library-map.json             reports/kphx-full-airport-materialization-zdp-objects.json             assets/kphx-source/dependencies/ZDP_Library-1.2.0
           git commit -m "Move exact ZDP 1.2.0 KPHX object checkpoint"
+          git restore -- public/models/kphx-full-airport/manifest.json
+          rm -f ZDP_Library-1.2.0.tar.gz
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
