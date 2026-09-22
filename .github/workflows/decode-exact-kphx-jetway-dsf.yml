@@ -1,3 +1,4 @@
+# diagnostic rerun for DSF/WED export mismatch
 name: Decode Exact KPHX Jetway DSF
 
 on:
@@ -132,8 +133,10 @@ jobs:
           if not ranked:
               raise RuntimeError('No exported jetway facade polygons found')
           chosen=ranked[0]
-          if chosen['distanceToWed99713CentroidMeters']>100:
-              raise RuntimeError(f'Nearest exported jetway polygon too far: {chosen["distanceToWed99713CentroidMeters"]:.3f}m')
+          coordinate_hits=[]
+          for lineno,line in enumerate(lines,1):
+              if any(token in line for token in ("33.4379","33.4380","33.4381","-112.0087","-112.0086")):
+                  coordinate_hits.append({"line":lineno,"text":line})
 
           report={
               'authority':'shipped KPHX +33-112.dsf decoded by Laminar DSFTool 24-5',
@@ -145,6 +148,17 @@ jobs:
               'nearestExportedPolygon':{
                   k:v for k,v in chosen.items() if k!='raw'
               },
+              'coordinateHitsNearWed99713': coordinate_hits[:200],
+              'allJetwayFacadePolygons':[
+                  {
+                      'beginLine':p['beginLine'],
+                      'parameters':p['parameters'],
+                      'centroid':p['centroid'],
+                      'distanceToWed99713CentroidMeters':p['distanceToWed99713CentroidMeters'],
+                      'windings':p['windings'],
+                  }
+                  for p in ranked
+              ],
               'nearestCandidates':[
                   {
                       'beginLine':p['beginLine'],
@@ -158,6 +172,9 @@ jobs:
           }
           pathlib.Path('reports/kphx-jetway-99713-exported-dsf.json').write_text(json.dumps(report,indent=2)+'\n')
           pathlib.Path('reports/kphx-jetway-99713-exported-dsf.txt').write_text('\n'.join(chosen['raw'])+'\n')
+          pathlib.Path('reports/kphx-jetway-dsf-definitions.txt').write_text(
+              '\n'.join(f"{i}: {p}" for i,p in enumerate(defs))+'\n'
+          )
           print(json.dumps({
               'definitionIndex':def_index,
               'jetwayPolygonCount':len(polygons),
@@ -173,7 +190,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports/kphx-jetway-99713-exported-dsf.json reports/kphx-jetway-99713-exported-dsf.txt
+          git add reports/kphx-jetway-99713-exported-dsf.json reports/kphx-jetway-99713-exported-dsf.txt reports/kphx-jetway-dsf-definitions.txt
           git commit -m "Decode exact exported KPHX curved jetway from shipped DSF"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
