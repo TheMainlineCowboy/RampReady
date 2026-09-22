@@ -132,9 +132,18 @@ export default function KphxA1StockJetwayVerifier() {
       const gltfLoader = new GLTFLoader();
       const textureLoader = new THREE.TextureLoader();
 
-      const manifestResponse = await fetch(runtimeUrl("/models/kphx-stock-jetways/manifest.json"), { cache: "no-store" });
+      const [manifestResponse, facadeSourceResponse] = await Promise.all([
+        fetch(runtimeUrl("/models/kphx-stock-jetways/manifest.json"), { cache: "no-store" }),
+        fetch(runtimeUrl("/models/kphx-stock-jetways/jetway_1_solid.fac"), { cache: "no-store" }),
+      ]);
       if (!manifestResponse.ok) throw new Error(`Stock jetway manifest HTTP ${manifestResponse.status}`);
-      const manifest = await manifestResponse.json();
+      if (!facadeSourceResponse.ok) throw new Error(`Stock jetway facade HTTP ${facadeSourceResponse.status}`);
+      const [manifest, facadeSourceText] = await Promise.all([
+        manifestResponse.json(),
+        facadeSourceResponse.text(),
+      ]);
+      const wallNoBlend = facadeSourceText.match(/^NO_BLEND(?:\\s+([0-9.]+))?\\s*$/m);
+      const wallAlphaCutoff = wallNoBlend ? Number(wallNoBlend[1] ?? 0.5) : null;
       const authority = A1_SOURCE_AUTHORITY;
 
       if (manifest.ringMode !== 0) throw new Error(`Stock jetway must be RING 0, received ${manifest.ringMode}`);
@@ -181,7 +190,9 @@ export default function KphxA1StockJetwayVerifier() {
         emissiveIntensity: 1,
         roughness: 0.75,
         metalness: 0,
-        alphaTest: 0.5,
+        transparent: wallAlphaCutoff === null,
+        alphaTest: wallAlphaCutoff ?? 0,
+        depthWrite: true,
         side: THREE.FrontSide,
       });
 
@@ -328,6 +339,7 @@ export default function KphxA1StockJetwayVerifier() {
       renderer.domElement.dataset.kphxA1StockObjectPrototypeCount = String(objectPrototypeByIndex.size);
       renderer.domElement.dataset.kphxA1StockFacadeSha256 = manifest.sourceFacadeSha256;
       renderer.domElement.dataset.kphxA1FacadeWinding = "xplane-to-three-reversed";
+      renderer.domElement.dataset.kphxA1FacadeBlendMode = wallAlphaCutoff === null ? "source-blend" : `source-no-blend-${wallAlphaCutoff}`;
       renderer.domElement.dataset.kphxA1StockSpellings = JSON.stringify(spellingRecords);
       renderer.domElement.dataset.kphxA1OldUploadedGlbUsed = "false";
 
