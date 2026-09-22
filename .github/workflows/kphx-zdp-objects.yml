@@ -1,0 +1,144 @@
+name: KPHX ZDP Exact Object Batch
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-zdp-objects.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-zdp-objects
+  cancel-in-progress: false
+
+jobs:
+  zdp-objects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install exact conversion tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y imagemagick git-lfs
+          git lfs install
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/magick" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ "${1:-}" = "identify" ]; then
+            shift
+            exec identify "$@"
+          fi
+          exec convert "$@"
+          SH
+          chmod +x "$HOME/bin/magick"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Clone exact ZDP 1.2.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch 1.2.0 https://gitlab.com/StableSystem/zdp-library.git .zdp
+          (
+            cd .zdp
+            git lfs pull
+            test "$(git rev-parse HEAD)" = "4b44b673ac023bac67f92a1c991a28df1b1da82c"
+          )
+
+      - name: Build exact ZDP object request set
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports assets/kphx-source/dependencies/ZDP_Library-1.2.0
+          cp .zdp/library.txt assets/kphx-source/dependencies/ZDP_Library-1.2.0/library.txt
+          cat > assets/kphx-source/dependencies/ZDP_Library-1.2.0/SOURCE.json <<'JSON'
+          {
+            "name": "Zero Dollar Payware Library",
+            "virtualPrefix": "ZDP_Library",
+            "version": "1.2.0",
+            "tag": "1.2.0",
+            "commit": "4b44b673ac023bac67f92a1c991a28df1b1da82c",
+            "source": "https://gitlab.com/StableSystem/zdp-library",
+            "license": "CC BY-NC 4.0",
+            "purpose": "Exact KPHX 1.75.1 WED object dependency; no substitute assets"
+          }
+          JSON
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const p = "reports/kphx-full-airport-wed-placements-airfield-details.json";
+          const data = JSON.parse(fs.readFileSync(p, "utf8"));
+          const resources = [...new Set(
+            data.placements.externalLibraries
+              .filter(x => x.resourcePrefix === "ZDP_Library")
+              .map(x => x.resource)
+          )].sort();
+          fs.writeFileSync("reports/kphx-zdp-object-resources.json", JSON.stringify({
+            authority: p,
+            dependency: "ZDP_Library",
+            version: "1.2.0",
+            resources
+          }, null, 2) + "\n");
+          if (resources.length !== 47) throw new Error(`Expected 47 ZDP object resources, got ${resources.length}`);
+          NODE
+
+      - name: Resolve exact ZDP virtual paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/resolve-xplane-library.mjs             .zdp             reports/kphx-zdp-object-resources.json             reports/kphx-zdp-object-library-map.json             --virtual-prefix=ZDP_Library
+
+      - name: Materialize exact ZDP object resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/materialize-kphx-full-airport.mjs             .             public/models/kphx-full-airport             --placement-report=reports/kphx-full-airport-wed-placements-airfield-details.json             --library-map=reports/kphx-zdp-object-library-map.json             --include-external-prefixes=ZDP_Library             --package-prefixes=__none__             --batch-name=zdp-objects
+          cp public/models/kphx-full-airport/manifest.json             public/models/kphx-full-airport/batches/zdp-objects.manifest.json
+
+      - name: Verify exact ZDP object checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const m = JSON.parse(fs.readFileSync("public/models/kphx-full-airport/batches/zdp-objects.manifest.json","utf8"));
+          if (m.failures?.length) throw new Error(`ZDP failures: ${m.failures.length}`);
+          if (m.packageOwned.materializedPlacementCount !== 0) throw new Error("ZDP batch unexpectedly included package-owned placements");
+          if (m.resolvedExternal.expectedUniqueResourceCount !== 47) throw new Error(`Expected 47 ZDP object resources, got ${m.resolvedExternal.expectedUniqueResourceCount}`);
+          if (m.resolvedExternal.materializedUniqueResourceCount !== 47) throw new Error(`Materialized only ${m.resolvedExternal.materializedUniqueResourceCount}/47 ZDP object resources`);
+          if (m.resolvedExternal.materializedPlacementCount !== 346) throw new Error(`Expected 346 ZDP object placements, got ${m.resolvedExternal.materializedPlacementCount}`);
+          console.log(JSON.stringify({resources:47,placements:346,status:"PASS"},null,2));
+          NODE
+
+      - name: Preserve exact ZDP 1.2.0 source snapshot in GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tar --exclude='.git' -czf ZDP_Library-1.2.0.tar.gz .zdp
+          if ! gh release view "kphx-dependency-zdp-1.2.0" >/dev/null 2>&1; then
+            gh release create "kphx-dependency-zdp-1.2.0"               --target kphx-full-airport-import               --title "KPHX dependency: ZDP Library 1.2.0"               --notes "Exact ZDP Library 1.2.0 source dependency for KPHX 1.75.1. Upstream CC BY-NC 4.0."
+          fi
+          gh release upload "kphx-dependency-zdp-1.2.0" ZDP_Library-1.2.0.tar.gz --clobber
+
+      - name: Commit exact ZDP object checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             public/models/kphx-full-airport/external/ZDP_Library             public/models/kphx-full-airport/batches/zdp-objects.manifest.json             reports/kphx-zdp-object-resources.json             reports/kphx-zdp-object-library-map.json             reports/kphx-full-airport-materialization-zdp-objects.json             assets/kphx-source/dependencies/ZDP_Library-1.2.0
+          git commit -m "Move exact ZDP 1.2.0 KPHX object checkpoint"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
