@@ -297,15 +297,33 @@ for (const placement of wed.placements.filter(
     objectInstances: [],
     meshChunks: [],
     blockedExactCurve: false,
+    sourceBezierEdges: [],
+    visualCurvePolicy: "Laminar-WED-FacadePreview-endpoint-chord-v1",
   };
 
-  if (Array.from({ length: wallCount }, (_, index) => index).some(
-    (index) => segmentIsCurved(nodes[index], nodes[(index + 1) % nodes.length]),
-  )) {
-    result.blockedExactCurve = true;
-    result.blockReason = "authored-bezier-edge-requires-exact-exported-curve-semantics";
-    output.placements.push(result);
-    continue;
+  for (let index = 0; index < wallCount; index += 1) {
+    const nextIndex = (index + 1) % nodes.length;
+    if (segmentIsCurved(nodes[index], nodes[nextIndex])) {
+      result.sourceBezierEdges.push({
+        edgeIndex: index,
+        startNodeWedObjectId: nodes[index].wedObjectId,
+        endNodeWedObjectId: nodes[nextIndex].wedObjectId,
+        start: {
+          latitude: Number(nodes[index].latitude),
+          longitude: Number(nodes[index].longitude),
+          ctrlLatitudeHi: Number(nodes[index].ctrlLatitudeHi ?? 0),
+          ctrlLongitudeHi: Number(nodes[index].ctrlLongitudeHi ?? 0),
+        },
+        end: {
+          latitude: Number(nodes[nextIndex].latitude),
+          longitude: Number(nodes[nextIndex].longitude),
+          ctrlLatitudeLo: Number(nodes[nextIndex].ctrlLatitudeLo ?? 0),
+          ctrlLongitudeLo: Number(nodes[nextIndex].ctrlLongitudeLo ?? 0),
+        },
+        dsfExportPolicy: "WED_DSFExport-preserves-Bezier-controls",
+        wedPreviewPolicy: "WED_PreviewLayer-preview_facade-uses-b.p1-and-final-b.p2",
+      });
+    }
   }
 
   for (let wallNumber = 0; wallNumber < wallCount; wallNumber += 1) {
@@ -420,9 +438,10 @@ for (const placement of wed.placements.filter(
 await fs.writeFile(outPath, `${JSON.stringify(output)}\n`, "utf8");
 console.log(JSON.stringify({
   placementCount: output.placements.length,
-  readyPlacementCount: output.placements.filter((entry) => !entry.blockedExactCurve).length,
-  blockedCurvePlacements: output.placements
-    .filter((entry) => entry.blockedExactCurve)
+  readyPlacementCount: output.placements.length,
+  blockedCurvePlacements: [],
+  placementsWithAuthoredBezier: output.placements
+    .filter((entry) => entry.sourceBezierEdges.length)
     .map((entry) => entry.wedObjectId),
   objectInstanceCount: output.placements.reduce(
     (sum, entry) => sum + entry.objectInstances.length,
