@@ -763,7 +763,75 @@ export default function RampReadyStandupTrainer({
       });
 
     void Promise.all([terminalLoad, surfaceLoad, a1MarkingsLoad])
-      .then(() => {
+      .then(([, surfaceState]) => {
+        const baseResource = "ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol";
+        const sourceMesh = surfaceState.a1ZdpResult.layer.children.find((child) => child?.userData?.sourceResource === baseResource && child.material?.map);
+        if (!sourceMesh) throw new Error("Exact T4 base apron source texture mesh is missing");
+
+        const t4Bounds = new THREE.Box3();
+        const terminalObject = environment.userData.authoredTerminal4;
+        const jetwayObject = environment.userData.authoredTerminal4Jetways;
+        if (terminalObject) t4Bounds.expandByObject(terminalObject);
+        if (jetwayObject) t4Bounds.expandByObject(jetwayObject);
+        if (t4Bounds.isEmpty()) throw new Error("Exact T4 apron bounds are unavailable");
+
+        const apronMargin = 90;
+        const apronWidth = Math.max(1, (t4Bounds.max.x - t4Bounds.min.x) + apronMargin * 2);
+        const apronDepth = Math.max(1, (t4Bounds.max.z - t4Bounds.min.z) + apronMargin * 2);
+        const apronCenterX = (t4Bounds.min.x + t4Bounds.max.x) * 0.5;
+        const apronCenterZ = (t4Bounds.min.z + t4Bounds.max.z) * 0.5;
+
+        const apronMap = sourceMesh.material.map.clone();
+        apronMap.wrapS = THREE.RepeatWrapping;
+        apronMap.wrapT = THREE.RepeatWrapping;
+        apronMap.repeat.set(apronWidth / 36, apronDepth / 36);
+        apronMap.needsUpdate = true;
+
+        const apronNormalMap = sourceMesh.material.normalMap?.clone?.() || null;
+        if (apronNormalMap) {
+          apronNormalMap.wrapS = THREE.RepeatWrapping;
+          apronNormalMap.wrapT = THREE.RepeatWrapping;
+          apronNormalMap.repeat.set(apronWidth / 36, apronDepth / 36);
+          apronNormalMap.needsUpdate = true;
+        }
+
+        const apronMaterial = new THREE.MeshStandardMaterial({
+          map: apronMap,
+          normalMap: apronNormalMap,
+          roughness: sourceMesh.material.roughness ?? 0.88,
+          metalness: sourceMesh.material.metalness ?? 0,
+          transparent: false,
+          opacity: 1,
+          alphaTest: 0,
+          side: THREE.DoubleSide,
+          depthWrite: true,
+        });
+        if (apronNormalMap && sourceMesh.material.normalScale) {
+          apronMaterial.normalScale.copy(sourceMesh.material.normalScale);
+        }
+        apronMaterial.name = "KPHX_T4_EXACT_SOURCE_TEXTURE_BASE_APRON";
+
+        const apronGeometry = new THREE.PlaneGeometry(apronWidth, apronDepth, 1, 1);
+        apronGeometry.rotateX(-Math.PI / 2);
+        const apronMesh = new THREE.Mesh(apronGeometry, apronMaterial);
+        apronMesh.name = "KPHX_T4_BASE_APRON_COMPATIBILITY_UNDERLAY";
+        apronMesh.position.set(apronCenterX, -0.06, apronCenterZ);
+        apronMesh.renderOrder = -100;
+        apronMesh.receiveShadow = true;
+        apronMesh.userData = {
+          kphxBaseApronCompatibility: true,
+          sourceResource: baseResource,
+          sourceTextureSha256: "4feecd5f339821c3eecd6d9423faf5bd333886d3c57db539cbd487483aafb70b",
+          textureScaleMeters: 36,
+          placementAuthority: "derived from exact T4 building + jetway bounds; visual base only",
+          collisionAuthority: "none",
+        };
+        environment.add(apronMesh);
+        renderer.domElement.dataset.kphxT4BaseApronReady = "true";
+        renderer.domElement.dataset.kphxT4BaseApronSource = baseResource;
+        renderer.domElement.dataset.kphxT4BaseApronWidthMeters = apronWidth.toFixed(3);
+        renderer.domElement.dataset.kphxT4BaseApronDepthMeters = apronDepth.toFixed(3);
+
         const nativeA1RetractionActive = environment.userData.authoredTerminal4Jetways?.userData.uploadedJetwayA1RetractionAuthority === "aircraft-door-clearance-without-overtravel-v6";
         airportCollision.staticTargets = [
           environment.userData.authoredTerminal4,
