@@ -1,0 +1,446 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "RampReady exact X-Plane OBJ8 converter v2"
+  },
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ],
+  "buffers": [
+    {
+      "uri": "White_N526CX.bin",
+      "byteLength": 139144
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 42936,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 42936,
+      "byteLength": 42936,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 85872,
+      "byteLength": 28624,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 114496,
+      "byteLength": 24648,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 3578,
+      "type": "VEC3",
+      "min": [
+        -16.78412819,
+        -0.05502313,
+        -16.7841301
+      ],
+      "max": [
+        16.78412819,
+        7.50102663,
+        16.7841301
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 3578,
+      "type": "VEC3",
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "max": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 3578,
+      "type": "VEC2",
+      "min": [
+        0.00009998,
+        0.00009998
+      ],
+      "max": [
+        0.99990004,
+        0.99990004
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 12318,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        3573
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 24636,
+      "componentType": 5123,
+      "count": 6,
+      "type": "SCALAR",
+      "min": [
+        3574
+      ],
+      "max": [
+        3577
+      ]
+    }
+  ],
+  "images": [
+    {
+      "uri": "White_N526CX.png"
+    },
+    {
+      "uri": "Shadow.png"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    }
+  ],
+  "materials": [
+    {
+      "name": "White_N526CX source material 0",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extras": {
+        "xPlaneDraped": false,
+        "xPlaneLayerGroupDraped": null,
+        "xPlaneLayerGroup": null,
+        "xPlaneLodDraped": null,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": null,
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": null,
+        "xPlaneGlobalAlphaCutoff": null,
+        "xPlaneNormalMetalness": false
+      }
+    },
+    {
+      "name": "White_N526CX source material 1",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extras": {
+        "xPlaneDraped": true,
+        "xPlaneLayerGroupDraped": null,
+        "xPlaneLayerGroup": null,
+        "xPlaneLodDraped": null,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": null,
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": null,
+        "xPlaneGlobalAlphaCutoff": null,
+        "xPlaneNormalMetalness": false
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "White_N526CX",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": false,
+              "layerGroupDraped": null,
+              "layerGroup": null,
+              "lodDraped": null,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": null,
+              "shinyRatio": null,
+              "xPlaneRestTranslation": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 4,
+          "material": 1,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": true,
+              "layerGroupDraped": null,
+              "layerGroup": null,
+              "lodDraped": null,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": null,
+              "shinyRatio": null,
+              "xPlaneRestTranslation": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "White_N526CX",
+      "mesh": 0,
+      "extras": {
+        "xPlaneParameterizedLights": [],
+        "xPlaneVertexLights": [],
+        "xPlaneNamedLights": [],
+        "xPlaneGlobalNoShadow": false,
+        "xPlaneGlobalLodRange": null,
+        "xPlaneTilted": false,
+        "xPlaneGlobalSpecular": null,
+        "xPlaneWeatherTexture": null,
+        "xPlaneWeatherTransparent": false
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0,
+  "extras": {
+    "sourceFormat": "X-Plane OBJ8",
+    "sourceFile": "White_N526CX.obj",
+    "sourceTexture": "White_N526CX.png",
+    "sourceDrapedTexture": "Shadow.png",
+    "sourceLitTexture": null,
+    "sourceNormalTexture": null,
+    "sourceNormalScale": null,
+    "sourceDrapedNormalTexture": null,
+    "sourceDrapedNormalScale": null,
+    "sourceWeatherTexture": null,
+    "sourceWeatherTransparent": false,
+    "globalNoShadow": false,
+    "globalLodRange": null,
+    "sourceTilted": false,
+    "globalSpecular": null,
+    "globalAlphaCutoff": null,
+    "normalMetalness": false,
+    "pointCounts": [
+      3578,
+      0,
+      0,
+      12324
+    ],
+    "vertexCount": 3578,
+    "indexCount": 12324,
+    "triangleCount": 4108,
+    "drawRanges": [
+      {
+        "start": 0,
+        "count": 12318,
+        "state": {
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": false,
+          "layerGroupDraped": null,
+          "layerGroup": null,
+          "lodDraped": null,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": null,
+          "shinyRatio": null,
+          "xPlaneRestTranslation": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      {
+        "start": 12318,
+        "count": 6,
+        "state": {
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": true,
+          "layerGroupDraped": null,
+          "layerGroup": null,
+          "lodDraped": null,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": null,
+          "shinyRatio": null,
+          "xPlaneRestTranslation": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    ],
+    "parameterizedLightCount": 0,
+    "parameterizedLights": [],
+    "vertexLightCount": 0,
+    "vertexLights": [],
+    "namedLightCount": 0,
+    "namedLights": [],
+    "sourceBounds": {
+      "min": [
+        -16.78412819,
+        -0.05502313,
+        -16.7841301
+      ],
+      "max": [
+        16.78412819,
+        7.50102663,
+        16.7841301
+      ]
+    },
+    "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
+    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS-and-IF-NOT-GLOBAL_SHADOWS;preserve-GLOBAL_LOD-and-TILTED-source-semantics;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+    "sceneryShadowsEnabled": true,
+    "globalShadowsEnabled": true,
+    "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
+  }
+}

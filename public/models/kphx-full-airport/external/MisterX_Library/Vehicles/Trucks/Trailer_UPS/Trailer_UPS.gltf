@@ -1,0 +1,509 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "RampReady exact X-Plane OBJ8 converter v2"
+  },
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ],
+  "buffers": [
+    {
+      "uri": "Trailer_UPS.bin",
+      "byteLength": 71212
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 22848,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 22848,
+      "byteLength": 22848,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 45696,
+      "byteLength": 15232,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 60928,
+      "byteLength": 10284,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 1904,
+      "type": "VEC3",
+      "min": [
+        -2.68965149,
+        -0.01253235,
+        -10.16691685
+      ],
+      "max": [
+        2.68965149,
+        4.18181849,
+        10.16691685
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 1904,
+      "type": "VEC3",
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "max": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 1904,
+      "type": "VEC2",
+      "min": [
+        0.0003713,
+        0.00319817
+      ],
+      "max": [
+        0.99851954,
+        0.99780071
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 5136,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        1899
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 10272,
+      "componentType": 5123,
+      "count": 6,
+      "type": "SCALAR",
+      "min": [
+        1900
+      ],
+      "max": [
+        1903
+      ]
+    }
+  ],
+  "images": [
+    {
+      "uri": "Trailer_UPS.png"
+    },
+    {
+      "uri": "Vehicle_Shadow.png"
+    },
+    {
+      "uri": "Trailer_NRM.png"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ],
+  "materials": [
+    {
+      "name": "Trailer_UPS source material 0",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extras": {
+        "xPlaneDraped": false,
+        "xPlaneLayerGroupDraped": null,
+        "xPlaneLayerGroup": null,
+        "xPlaneLodDraped": null,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": [
+          0,
+          2500
+        ],
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": 1,
+        "xPlaneGlobalAlphaCutoff": null,
+        "xPlaneNormalMetalness": false
+      },
+      "normalTexture": {
+        "index": 2,
+        "extensions": {
+          "KHR_texture_transform": {
+            "offset": [
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              -1
+            ]
+          }
+        },
+        "scale": 1
+      }
+    },
+    {
+      "name": "Trailer_UPS source material 1",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extras": {
+        "xPlaneDraped": true,
+        "xPlaneLayerGroupDraped": null,
+        "xPlaneLayerGroup": null,
+        "xPlaneLodDraped": null,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": [
+          0,
+          2500
+        ],
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": 1,
+        "xPlaneGlobalAlphaCutoff": null,
+        "xPlaneNormalMetalness": false
+      },
+      "normalTexture": {
+        "index": 2,
+        "extensions": {
+          "KHR_texture_transform": {
+            "offset": [
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              -1
+            ]
+          }
+        },
+        "scale": 1
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Trailer_UPS",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": false,
+              "layerGroupDraped": null,
+              "layerGroup": null,
+              "lodDraped": null,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": [
+                0,
+                2500
+              ],
+              "shinyRatio": null,
+              "xPlaneRestTranslation": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 4,
+          "material": 1,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": true,
+              "layerGroupDraped": null,
+              "layerGroup": null,
+              "lodDraped": null,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": [
+                0,
+                2500
+              ],
+              "shinyRatio": null,
+              "xPlaneRestTranslation": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Trailer_UPS",
+      "mesh": 0,
+      "extras": {
+        "xPlaneParameterizedLights": [],
+        "xPlaneVertexLights": [],
+        "xPlaneNamedLights": [],
+        "xPlaneGlobalNoShadow": false,
+        "xPlaneGlobalLodRange": [
+          0,
+          2500
+        ],
+        "xPlaneTilted": true,
+        "xPlaneGlobalSpecular": 1,
+        "xPlaneWeatherTexture": null,
+        "xPlaneWeatherTransparent": false
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0,
+  "extras": {
+    "sourceFormat": "X-Plane OBJ8",
+    "sourceFile": "Trailer_UPS.obj",
+    "sourceTexture": "Trailer_UPS.png",
+    "sourceDrapedTexture": "../../Shared/Vehicle_Shadow.png",
+    "sourceLitTexture": null,
+    "sourceNormalTexture": "Trailer_NRM.png",
+    "sourceNormalScale": 1,
+    "sourceDrapedNormalTexture": null,
+    "sourceDrapedNormalScale": null,
+    "sourceWeatherTexture": null,
+    "sourceWeatherTransparent": false,
+    "globalNoShadow": false,
+    "globalLodRange": [
+      0,
+      2500
+    ],
+    "sourceTilted": true,
+    "globalSpecular": 1,
+    "globalAlphaCutoff": null,
+    "normalMetalness": false,
+    "pointCounts": [
+      1904,
+      0,
+      0,
+      5142
+    ],
+    "vertexCount": 1904,
+    "indexCount": 5142,
+    "triangleCount": 1714,
+    "drawRanges": [
+      {
+        "start": 0,
+        "count": 5136,
+        "state": {
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": false,
+          "layerGroupDraped": null,
+          "layerGroup": null,
+          "lodDraped": null,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": [
+            0,
+            2500
+          ],
+          "shinyRatio": null,
+          "xPlaneRestTranslation": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      {
+        "start": 5136,
+        "count": 6,
+        "state": {
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": true,
+          "layerGroupDraped": null,
+          "layerGroup": null,
+          "lodDraped": null,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": [
+            0,
+            2500
+          ],
+          "shinyRatio": null,
+          "xPlaneRestTranslation": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    ],
+    "parameterizedLightCount": 0,
+    "parameterizedLights": [],
+    "vertexLightCount": 0,
+    "vertexLights": [],
+    "namedLightCount": 0,
+    "namedLights": [],
+    "sourceBounds": {
+      "min": [
+        -2.68965149,
+        -0.01253235,
+        -10.16691685
+      ],
+      "max": [
+        2.68965149,
+        4.18181849,
+        10.16691685
+      ]
+    },
+    "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
+    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS-and-IF-NOT-GLOBAL_SHADOWS;preserve-GLOBAL_LOD-and-TILTED-source-semantics;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+    "sceneryShadowsEnabled": true,
+    "globalShadowsEnabled": true,
+    "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
+  }
+}

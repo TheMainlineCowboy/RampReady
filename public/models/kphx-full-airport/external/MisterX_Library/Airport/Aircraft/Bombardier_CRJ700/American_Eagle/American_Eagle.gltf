@@ -1,0 +1,508 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "RampReady exact X-Plane OBJ8 converter v2"
+  },
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ],
+  "buffers": [
+    {
+      "uri": "American_Eagle.bin",
+      "byteLength": 88036
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 25728,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 25728,
+      "byteLength": 25728,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 51456,
+      "byteLength": 17152,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 68608,
+      "byteLength": 19428,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 2144,
+      "type": "VEC3",
+      "min": [
+        -19.97295189,
+        -0.05807491,
+        -19.97295189
+      ],
+      "max": [
+        19.97295189,
+        8.1106205,
+        19.97295189
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 2144,
+      "type": "VEC3",
+      "min": [
+        -1,
+        -0.99996948,
+        -0.99917603
+      ],
+      "max": [
+        1,
+        0.99999994,
+        0.99917603
+      ]
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 2144,
+      "type": "VEC2",
+      "min": [
+        0.00009998,
+        0.00009998
+      ],
+      "max": [
+        0.99990004,
+        0.99990004
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 9708,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        2139
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 19416,
+      "componentType": 5123,
+      "count": 6,
+      "type": "SCALAR",
+      "min": [
+        2140
+      ],
+      "max": [
+        2143
+      ]
+    }
+  ],
+  "images": [
+    {
+      "uri": "American_Eagle.png"
+    },
+    {
+      "uri": "Shadow.png"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    }
+  ],
+  "materials": [
+    {
+      "name": "American_Eagle source material 0",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extras": {
+        "xPlaneDraped": false,
+        "xPlaneLayerGroupDraped": null,
+        "xPlaneLayerGroup": null,
+        "xPlaneLodDraped": null,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": null,
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": 0.2,
+        "xPlaneGlobalAlphaCutoff": null,
+        "xPlaneNormalMetalness": false
+      }
+    },
+    {
+      "name": "American_Eagle source material 1",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extras": {
+        "xPlaneDraped": true,
+        "xPlaneLayerGroupDraped": null,
+        "xPlaneLayerGroup": null,
+        "xPlaneLodDraped": null,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": null,
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": 0.2,
+        "xPlaneGlobalAlphaCutoff": null,
+        "xPlaneNormalMetalness": false
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "American_Eagle",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": false,
+              "layerGroupDraped": null,
+              "layerGroup": null,
+              "lodDraped": null,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": null,
+              "shinyRatio": null,
+              "xPlaneRestTranslation": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 4,
+          "material": 1,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": true,
+              "layerGroupDraped": null,
+              "layerGroup": null,
+              "lodDraped": null,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": null,
+              "shinyRatio": null,
+              "xPlaneRestTranslation": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "American_Eagle",
+      "mesh": 0,
+      "extras": {
+        "xPlaneParameterizedLights": [],
+        "xPlaneVertexLights": [],
+        "xPlaneNamedLights": [
+          {
+            "position": [
+              null,
+              -11.82832813,
+              2.4440887
+            ],
+            "name": "4.56786919",
+            "params": [],
+            "raw": "LIGHT_NAMED\tairplane_nav_left_static -11.82832813 2.4440887 4.56786919"
+          },
+          {
+            "position": [
+              null,
+              0,
+              3.57389164
+            ],
+            "name": "16.11152267",
+            "params": [],
+            "raw": "LIGHT_NAMED\tairplane_nav_tail_static 0 3.57389164 16.11152267"
+          },
+          {
+            "position": [
+              null,
+              11.82832813,
+              2.4440887
+            ],
+            "name": "4.56786919",
+            "params": [],
+            "raw": "LIGHT_NAMED\tairplane_nav_right_static 11.82832813 2.4440887 4.56786919"
+          }
+        ],
+        "xPlaneGlobalNoShadow": false,
+        "xPlaneGlobalLodRange": null,
+        "xPlaneTilted": false,
+        "xPlaneGlobalSpecular": 0.2,
+        "xPlaneWeatherTexture": null,
+        "xPlaneWeatherTransparent": false
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0,
+  "extras": {
+    "sourceFormat": "X-Plane OBJ8",
+    "sourceFile": "American_Eagle.obj",
+    "sourceTexture": "American_Eagle.png",
+    "sourceDrapedTexture": "Shadow.png",
+    "sourceLitTexture": null,
+    "sourceNormalTexture": null,
+    "sourceNormalScale": null,
+    "sourceDrapedNormalTexture": null,
+    "sourceDrapedNormalScale": null,
+    "sourceWeatherTexture": null,
+    "sourceWeatherTransparent": false,
+    "globalNoShadow": false,
+    "globalLodRange": null,
+    "sourceTilted": false,
+    "globalSpecular": 0.2,
+    "globalAlphaCutoff": null,
+    "normalMetalness": false,
+    "pointCounts": [
+      2144,
+      0,
+      1,
+      9714
+    ],
+    "vertexCount": 2144,
+    "indexCount": 9714,
+    "triangleCount": 3238,
+    "drawRanges": [
+      {
+        "start": 0,
+        "count": 9708,
+        "state": {
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": false,
+          "layerGroupDraped": null,
+          "layerGroup": null,
+          "lodDraped": null,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": null,
+          "shinyRatio": null,
+          "xPlaneRestTranslation": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      {
+        "start": 9708,
+        "count": 6,
+        "state": {
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": true,
+          "layerGroupDraped": null,
+          "layerGroup": null,
+          "lodDraped": null,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": null,
+          "shinyRatio": null,
+          "xPlaneRestTranslation": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    ],
+    "parameterizedLightCount": 0,
+    "parameterizedLights": [],
+    "vertexLightCount": 0,
+    "vertexLights": [],
+    "namedLightCount": 3,
+    "namedLights": [
+      {
+        "position": [
+          null,
+          -11.82832813,
+          2.4440887
+        ],
+        "name": "4.56786919",
+        "params": [],
+        "raw": "LIGHT_NAMED\tairplane_nav_left_static -11.82832813 2.4440887 4.56786919"
+      },
+      {
+        "position": [
+          null,
+          0,
+          3.57389164
+        ],
+        "name": "16.11152267",
+        "params": [],
+        "raw": "LIGHT_NAMED\tairplane_nav_tail_static 0 3.57389164 16.11152267"
+      },
+      {
+        "position": [
+          null,
+          11.82832813,
+          2.4440887
+        ],
+        "name": "4.56786919",
+        "params": [],
+        "raw": "LIGHT_NAMED\tairplane_nav_right_static 11.82832813 2.4440887 4.56786919"
+      }
+    ],
+    "sourceBounds": {
+      "min": [
+        -19.97295189,
+        -0.05807491,
+        -19.97295189
+      ],
+      "max": [
+        19.97295189,
+        8.1106205,
+        19.97295189
+      ]
+    },
+    "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
+    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS-and-IF-NOT-GLOBAL_SHADOWS;preserve-GLOBAL_LOD-and-TILTED-source-semantics;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+    "sceneryShadowsEnabled": true,
+    "globalShadowsEnabled": true,
+    "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
+  }
+}

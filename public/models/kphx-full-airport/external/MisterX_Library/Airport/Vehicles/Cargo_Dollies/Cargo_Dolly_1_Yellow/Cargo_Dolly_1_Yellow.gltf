@@ -1,0 +1,503 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "RampReady exact X-Plane OBJ8 converter v2"
+  },
+  "extensionsUsed": [
+    "KHR_texture_transform"
+  ],
+  "buffers": [
+    {
+      "uri": "Cargo_Dolly_1_Yellow.bin",
+      "byteLength": 142124
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 46236,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 46236,
+      "byteLength": 46236,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 92472,
+      "byteLength": 30824,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 123296,
+      "byteLength": 18828,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 3853,
+      "type": "VEC3",
+      "min": [
+        -1.3603553,
+        -0.0060021281,
+        -2.4021702
+      ],
+      "max": [
+        1.3603553,
+        0.73693335,
+        2.2678816
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 3853,
+      "type": "VEC3",
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "max": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 3853,
+      "type": "VEC2",
+      "min": [
+        0.0010925834,
+        0.001092293
+      ],
+      "max": [
+        0.99881291,
+        0.99890655
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 9408,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        3848
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 18816,
+      "componentType": 5123,
+      "count": 6,
+      "type": "SCALAR",
+      "min": [
+        3849
+      ],
+      "max": [
+        3852
+      ]
+    }
+  ],
+  "images": [
+    {
+      "uri": "Cargo_Dolly_1_Yellow.png"
+    },
+    {
+      "uri": "Vehicle_Shadow.png"
+    },
+    {
+      "uri": "Cargo_Dolly_1_NML.png"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ],
+  "materials": [
+    {
+      "name": "Cargo_Dolly_1_Yellow source material 0",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extras": {
+        "xPlaneDraped": false,
+        "xPlaneLayerGroupDraped": null,
+        "xPlaneLayerGroup": null,
+        "xPlaneLodDraped": 1000,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": [
+          0,
+          1200
+        ],
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": 1,
+        "xPlaneGlobalAlphaCutoff": null,
+        "xPlaneNormalMetalness": false
+      },
+      "normalTexture": {
+        "index": 2,
+        "extensions": {
+          "KHR_texture_transform": {
+            "offset": [
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              -1
+            ]
+          }
+        },
+        "scale": 1
+      }
+    },
+    {
+      "name": "Cargo_Dolly_1_Yellow source material 1",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1,
+          "extensions": {
+            "KHR_texture_transform": {
+              "offset": [
+                0,
+                1
+              ],
+              "scale": [
+                1,
+                -1
+              ]
+            }
+          }
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "BLEND",
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "extras": {
+        "xPlaneDraped": true,
+        "xPlaneLayerGroupDraped": null,
+        "xPlaneLayerGroup": null,
+        "xPlaneLodDraped": 1000,
+        "xPlaneEmissionRgb": [
+          0,
+          0,
+          0
+        ],
+        "xPlaneLodRange": [
+          0,
+          1200
+        ],
+        "xPlaneShinyRatio": null,
+        "xPlaneGlobalSpecular": 1,
+        "xPlaneGlobalAlphaCutoff": null,
+        "xPlaneNormalMetalness": false
+      },
+      "normalTexture": {
+        "index": 2,
+        "extensions": {
+          "KHR_texture_transform": {
+            "offset": [
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              -1
+            ]
+          }
+        },
+        "scale": 1
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Cargo_Dolly_1_Yellow",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": false,
+              "layerGroupDraped": null,
+              "layerGroup": null,
+              "lodDraped": 1000,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": [
+                0,
+                1200
+              ],
+              "shinyRatio": null,
+              "xPlaneRestTranslation": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 4,
+          "material": 1,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": true,
+              "layerGroupDraped": null,
+              "layerGroup": null,
+              "lodDraped": 1000,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": [
+                0,
+                1200
+              ],
+              "shinyRatio": null,
+              "xPlaneRestTranslation": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Cargo_Dolly_1_Yellow",
+      "mesh": 0,
+      "extras": {
+        "xPlaneParameterizedLights": [],
+        "xPlaneVertexLights": [],
+        "xPlaneNamedLights": [],
+        "xPlaneGlobalNoShadow": false,
+        "xPlaneGlobalLodRange": null,
+        "xPlaneTilted": false,
+        "xPlaneGlobalSpecular": 1,
+        "xPlaneWeatherTexture": null,
+        "xPlaneWeatherTransparent": false
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0,
+  "extras": {
+    "sourceFormat": "X-Plane OBJ8",
+    "sourceFile": "Cargo_Dolly_1_Yellow.obj",
+    "sourceTexture": "Cargo_Dolly_1_Yellow.png",
+    "sourceDrapedTexture": "../../../Shared/Vehicle_Shadow.png",
+    "sourceLitTexture": null,
+    "sourceNormalTexture": "Cargo_Dolly_1_NML.png",
+    "sourceNormalScale": 1,
+    "sourceDrapedNormalTexture": null,
+    "sourceDrapedNormalScale": null,
+    "sourceWeatherTexture": null,
+    "sourceWeatherTransparent": false,
+    "globalNoShadow": false,
+    "globalLodRange": null,
+    "sourceTilted": false,
+    "globalSpecular": 1,
+    "globalAlphaCutoff": null,
+    "normalMetalness": false,
+    "pointCounts": [
+      3853,
+      0,
+      0,
+      9414
+    ],
+    "vertexCount": 3853,
+    "indexCount": 9414,
+    "triangleCount": 3138,
+    "drawRanges": [
+      {
+        "start": 0,
+        "count": 9408,
+        "state": {
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": false,
+          "layerGroupDraped": null,
+          "layerGroup": null,
+          "lodDraped": 1000,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": [
+            0,
+            1200
+          ],
+          "shinyRatio": null,
+          "xPlaneRestTranslation": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      {
+        "start": 9408,
+        "count": 6,
+        "state": {
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": true,
+          "layerGroupDraped": null,
+          "layerGroup": null,
+          "lodDraped": 1000,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": [
+            0,
+            1200
+          ],
+          "shinyRatio": null,
+          "xPlaneRestTranslation": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    ],
+    "parameterizedLightCount": 0,
+    "parameterizedLights": [],
+    "vertexLightCount": 0,
+    "vertexLights": [],
+    "namedLightCount": 0,
+    "namedLights": [],
+    "sourceBounds": {
+      "min": [
+        -1.3603553,
+        -0.0060021281,
+        -2.4021702
+      ],
+      "max": [
+        1.3603553,
+        0.73693335,
+        2.2678816
+      ]
+    },
+    "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
+    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS-and-IF-NOT-GLOBAL_SHADOWS;preserve-GLOBAL_LOD-and-TILTED-source-semantics;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+    "sceneryShadowsEnabled": true,
+    "globalShadowsEnabled": true,
+    "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
+  }
+}

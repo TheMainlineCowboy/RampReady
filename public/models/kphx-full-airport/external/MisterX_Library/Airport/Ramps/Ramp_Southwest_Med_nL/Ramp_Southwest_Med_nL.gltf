@@ -327,6 +327,8 @@
         "xPlaneVertexLights": [],
         "xPlaneNamedLights": [],
         "xPlaneGlobalNoShadow": false,
+        "xPlaneGlobalLodRange": null,
+        "xPlaneTilted": false,
         "xPlaneGlobalSpecular": 0.5,
         "xPlaneWeatherTexture": null,
         "xPlaneWeatherTransparent": true
@@ -354,6 +356,8 @@
     "sourceWeatherTexture": null,
     "sourceWeatherTransparent": true,
     "globalNoShadow": false,
+    "globalLodRange": null,
+    "sourceTilted": false,
     "globalSpecular": 0.5,
     "globalAlphaCutoff": null,
     "normalMetalness": false,
@@ -480,8 +484,9 @@
       ]
     },
     "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
-    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS-and-IF-NOT-GLOBAL_SHADOWS;preserve-GLOBAL_LOD-and-TILTED-source-semantics;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
     "sceneryShadowsEnabled": true,
+    "globalShadowsEnabled": true,
     "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
   }
 }

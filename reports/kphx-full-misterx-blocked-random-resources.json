@@ -1,0 +1,13 @@
+{
+  "authority": "MisterX_Library library.txt multiple equal-priority EXPORT mappings",
+  "policy": "blocked rather than choose a substitute/random physical aircraft",
+  "placementCount": 25,
+  "uniqueResourceCount": 5,
+  "resources": {
+    "MisterX_Library/Airport/Aircraft/Bombardier_Global_Express/Random.obj": 8,
+    "MisterX_Library/Airport/Aircraft/Cessna_172/Random.obj": 4,
+    "MisterX_Library/Airport/Aircraft/Cessna_208_Caravan/Random_PAX.obj": 1,
+    "MisterX_Library/Airport/Aircraft/Cessna_Citation_II/Random.obj": 9,
+    "MisterX_Library/Airport/Aircraft/Learjet_35/Random.obj": 3
+  }
+}
