@@ -199,8 +199,8 @@
         "metallicFactor": 0,
         "roughnessFactor": 1
       },
-      "doubleSided": true,
-      "alphaMode": "OPAQUE",
+      "doubleSided": false,
+      "alphaMode": "BLEND",
       "emissiveFactor": [
         0,
         0,
@@ -221,7 +221,9 @@
           10000
         ],
         "xPlaneShinyRatio": null,
-        "xPlaneGlobalSpecular": 0.5
+        "xPlaneGlobalSpecular": 0.5,
+        "xPlaneGlobalAlphaCutoff": null,
+        "xPlaneNormalMetalness": false
       },
       "normalTexture": {
         "index": 1,
@@ -256,8 +258,9 @@
           "mode": 4,
           "extras": {
             "xPlaneDrawState": {
-              "alphaMode": "OPAQUE",
-              "doubleSided": true,
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
               "shade": "smooth",
               "depthTest": true,
               "drawEnabled": true,
@@ -274,7 +277,12 @@
                 0,
                 10000
               ],
-              "shinyRatio": null
+              "shinyRatio": null,
+              "xPlaneRestTranslation": [
+                0,
+                0,
+                0
+              ]
             }
           }
         },
@@ -289,8 +297,9 @@
           "mode": 4,
           "extras": {
             "xPlaneDrawState": {
-              "alphaMode": "OPAQUE",
-              "doubleSided": true,
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
               "shade": "smooth",
               "depthTest": true,
               "drawEnabled": true,
@@ -307,7 +316,12 @@
                 0,
                 10000
               ],
-              "shinyRatio": null
+              "shinyRatio": null,
+              "xPlaneRestTranslation": [
+                0,
+                0,
+                0
+              ]
             }
           }
         },
@@ -322,8 +336,9 @@
           "mode": 4,
           "extras": {
             "xPlaneDrawState": {
-              "alphaMode": "OPAQUE",
-              "doubleSided": true,
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
               "shade": "smooth",
               "depthTest": true,
               "drawEnabled": true,
@@ -340,7 +355,12 @@
                 0,
                 10000
               ],
-              "shinyRatio": null
+              "shinyRatio": null,
+              "xPlaneRestTranslation": [
+                0,
+                0,
+                0
+              ]
             }
           }
         },
@@ -355,8 +375,9 @@
           "mode": 4,
           "extras": {
             "xPlaneDrawState": {
-              "alphaMode": "OPAQUE",
-              "doubleSided": true,
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
               "shade": "smooth",
               "depthTest": true,
               "drawEnabled": true,
@@ -373,7 +394,12 @@
                 0,
                 10000
               ],
-              "shinyRatio": null
+              "shinyRatio": null,
+              "xPlaneRestTranslation": [
+                0,
+                0,
+                0
+              ]
             }
           }
         },
@@ -388,8 +414,9 @@
           "mode": 4,
           "extras": {
             "xPlaneDrawState": {
-              "alphaMode": "OPAQUE",
-              "doubleSided": true,
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
               "shade": "smooth",
               "depthTest": true,
               "drawEnabled": true,
@@ -406,7 +433,12 @@
                 0,
                 10000
               ],
-              "shinyRatio": null
+              "shinyRatio": null,
+              "xPlaneRestTranslation": [
+                0,
+                0,
+                0
+              ]
             }
           }
         }
@@ -423,7 +455,8 @@
         "xPlaneNamedLights": [],
         "xPlaneGlobalNoShadow": true,
         "xPlaneGlobalSpecular": 0.5,
-        "xPlaneWeatherTexture": null
+        "xPlaneWeatherTexture": null,
+        "xPlaneWeatherTransparent": false
       }
     }
   ],
@@ -438,13 +471,19 @@
   "extras": {
     "sourceFormat": "X-Plane OBJ8",
     "sourceFile": "SDF_code_B.obj",
-    "sourceTexture": "stop_markers.png",
+    "sourceTexture": null,
+    "sourceDrapedTexture": "stop_markers.png",
     "sourceLitTexture": null,
-    "sourceNormalTexture": "../paint/textures/paint_clean_NML.png",
-    "sourceNormalScale": 1,
+    "sourceNormalTexture": null,
+    "sourceNormalScale": null,
+    "sourceDrapedNormalTexture": "../paint/textures/paint_clean_NML.png",
+    "sourceDrapedNormalScale": 1,
     "sourceWeatherTexture": null,
+    "sourceWeatherTransparent": false,
     "globalNoShadow": true,
     "globalSpecular": 0.5,
+    "globalAlphaCutoff": null,
+    "normalMetalness": false,
     "pointCounts": [
       36,
       0,
@@ -459,8 +498,9 @@
         "start": 0,
         "count": 6,
         "state": {
-          "alphaMode": "OPAQUE",
-          "doubleSided": true,
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
           "shade": "smooth",
           "depthTest": true,
           "drawEnabled": true,
@@ -477,15 +517,21 @@
             0,
             10000
           ],
-          "shinyRatio": null
+          "shinyRatio": null,
+          "xPlaneRestTranslation": [
+            0,
+            0,
+            0
+          ]
         }
       },
       {
         "start": 6,
         "count": 6,
         "state": {
-          "alphaMode": "OPAQUE",
-          "doubleSided": true,
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
           "shade": "smooth",
           "depthTest": true,
           "drawEnabled": true,
@@ -502,15 +548,21 @@
             0,
             10000
           ],
-          "shinyRatio": null
+          "shinyRatio": null,
+          "xPlaneRestTranslation": [
+            0,
+            0,
+            0
+          ]
         }
       },
       {
         "start": 12,
         "count": 6,
         "state": {
-          "alphaMode": "OPAQUE",
-          "doubleSided": true,
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
           "shade": "smooth",
           "depthTest": true,
           "drawEnabled": true,
@@ -527,15 +579,21 @@
             0,
             10000
           ],
-          "shinyRatio": null
+          "shinyRatio": null,
+          "xPlaneRestTranslation": [
+            0,
+            0,
+            0
+          ]
         }
       },
       {
         "start": 18,
         "count": 6,
         "state": {
-          "alphaMode": "OPAQUE",
-          "doubleSided": true,
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
           "shade": "smooth",
           "depthTest": true,
           "drawEnabled": true,
@@ -552,15 +610,21 @@
             0,
             10000
           ],
-          "shinyRatio": null
+          "shinyRatio": null,
+          "xPlaneRestTranslation": [
+            0,
+            0,
+            0
+          ]
         }
       },
       {
         "start": 24,
         "count": 12,
         "state": {
-          "alphaMode": "OPAQUE",
-          "doubleSided": true,
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
           "shade": "smooth",
           "depthTest": true,
           "drawEnabled": true,
@@ -577,7 +641,12 @@
             0,
             10000
           ],
-          "shinyRatio": null
+          "shinyRatio": null,
+          "xPlaneRestTranslation": [
+            0,
+            0,
+            0
+          ]
         }
       }
     ],
@@ -599,8 +668,9 @@
         0.60612369
       ]
     },
-    "geometryPolicy": "preserve-source-positions-normals-uvs-indices-no-remesh-no-decimation",
-    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;reject-unsupported-render-state",
+    "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
+    "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+    "sceneryShadowsEnabled": true,
     "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
   }
 }
