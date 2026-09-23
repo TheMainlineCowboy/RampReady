@@ -17,6 +17,7 @@ const texture = readJson("reports/kphx-t4-texture-pixel-verification.json");
 const shell = readJson("reports/kphx-t4-building-shell-lock.json");
 const lektro = readJson("public/models/lektro-88/current.json");
 const zdp = readJson("public/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json");
+const kubota = readJson("reports/manager-kubota-exact-verification.json");
 const d = live.state?.dataset || {};
 
 assert(pass.status === "PASS", "Live A1 evidence is not PASS");
@@ -93,6 +94,15 @@ assert(lektro.runtime?.wheelbaseMeters === 2.33934, "Final LEKTRO wheelbase drif
 assert(lektro.runtime?.turningRadiusMeters === 4.572, "Final LEKTRO turning radius drifted");
 assert(lektro.runtime?.cradleLiftMeters === 0.2286, "Final LEKTRO cradle lift drifted");
 
+const kubotaPath = "public/models/manager-kubota/RampReady-manager-Kubota-exact.glb";
+assert(kubota.status === "PASS", "Exact manager Kubota verification is not PASS");
+assert(kubota.runtimePath === "/models/manager-kubota/RampReady-manager-Kubota-exact.glb", "Manager Kubota runtime path drifted");
+assert(kubota.bytes === 23988388, "Manager Kubota authority byte count drifted");
+assert(kubota.sha256 === "726fdcb3511e6d52990da11118be4ca8a8b73c5d5c8f5bde4f934131e3c31b7d", "Manager Kubota authority SHA drifted");
+assert(fs.existsSync(kubotaPath), "Exact manager Kubota GLB is missing");
+assert(fs.statSync(kubotaPath).size === 23988388, "Exact manager Kubota byte length drifted");
+assert(sha256(kubotaPath) === kubota.sha256, "Exact manager Kubota SHA256 drifted");
+
 assert((zdp.failures || []).length === 0, "A1 ZDP surface manifest has failures");
 assert(Object.keys(zdp.resources || {}).length === 14, "A1 ZDP exact resource count drifted");
 
@@ -107,10 +117,21 @@ assert(liveInstaller.includes("exactLiveOldAirportJetwayGlbUsed: false"), "Old A
 const equipment = fs.readFileSync("src/tug/runtimeEquipmentVisual.js", "utf8");
 assert(equipment.includes("LEKTRO_AP88_TVO914.glb"), "Live LEKTRO does not load finalized R187A GLB");
 assert(equipment.includes('"lektro-ap88-tvo914-r187a"'), "Live LEKTRO finalized source label missing");
+assert(equipment.includes("RampReady-manager-Kubota-exact.glb"), "Live manager Kubota exact GLB path missing");
+assert(equipment.includes('"manager-kubota-exact"'), "Live manager Kubota exact source label missing");
+assert(equipment.includes("AuthoredSteerPivot_L") && equipment.includes("AuthoredSteerPivot_R"), "Live manager Kubota steering pivot binding missing");
 
 const launcher = fs.readFileSync("src/components/PushbackTrainer.jsx", "utf8");
 assert(launcher.includes("total: 4"), "Four-stage preload screen contract missing");
 assert(launcher.includes("kphxA1ZdpMarkingsReady"), "Preload screen does not wait for exact A1 markings");
+assert(launcher.includes('"manager-kubota-exact"'), "Launcher does not wait for exact manager Kubota");
+assert(launcher.includes('isEquipmentLaunchable(selectedEquipmentId, "training")'), "Launcher training-only availability guard missing");
+assert(launcher.includes('isEquipmentLaunchable(selectedEquipmentId, "inspection")'), "Launcher inspection availability guard missing");
+
+const equipmentProfiles = fs.readFileSync("src/config/equipmentProfiles.js", "utf8");
+assert(equipmentProfiles.includes('id: "manager-kubota"'), "Manager Kubota equipment profile missing");
+assert(equipmentProfiles.includes("trainingAvailable: false"), "Manager Kubota must remain inspection-only");
+assert(equipmentProfiles.includes("inspectionAvailable: true"), "Manager Kubota inspection availability missing");
 
 console.log(JSON.stringify({
   status: "PASS",
@@ -123,5 +144,8 @@ console.log(JSON.stringify({
   a1ZdpUniqueTextureDecodes: 4,
   lektroRevision: lektro.revision,
   lektroSha256: lektro.sha256,
+  managerKubotaBytes: kubota.bytes,
+  managerKubotaSha256: kubota.sha256,
+  managerKubotaInspectionOnly: true,
   browserErrors: 0,
 }, null, 2));
