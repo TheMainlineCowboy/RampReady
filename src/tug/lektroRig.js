@@ -16,6 +16,24 @@ export const LEKTRO_RIG_PROFILE = Object.freeze({
   towMaxSpeed: 1.78816,
 });
 
+export const MANAGER_KUBOTA_RIG_PROFILE = Object.freeze({
+  id: "manager-kubota-exact",
+  wheelbase: 1.94,
+  turningRadius: 3.31,
+  trackWidth: 1.31,
+  cradleOffset: 1.0,
+  operatorEye: Object.freeze([0.38, 1.48, -0.48]),
+  operatorLook: Object.freeze([0.38, 1.25, 4.0]),
+  captureAnchor: Object.freeze([0, 0.34, 1.25]),
+  liftTravel: 0,
+  bodyBounds: Object.freeze([2.3609509468, 2.0657191277, 2.8736947775]),
+  steeringMode: "front",
+  kinematicMaxSteerAngle: 0.58,
+  visualMaxSteerAngle: 0.58,
+  freeMaxSpeed: 9.2,
+  towMaxSpeed: 4.8,
+});
+
 export const STANDUP_RIG_PROFILE = Object.freeze({
   id: "standup-authored-reference",
   wheelbase: 2.7,
@@ -65,13 +83,19 @@ function namedAnchor(THREE, name, position) {
 }
 
 export function getTugRigProfile(equipmentId) {
-  return equipmentId === "standup-tug" ? STANDUP_RIG_PROFILE : LEKTRO_RIG_PROFILE;
+  if (equipmentId === "manager-kubota") return MANAGER_KUBOTA_RIG_PROFILE;
+  if (equipmentId === "standup-tug") return STANDUP_RIG_PROFILE;
+  return LEKTRO_RIG_PROFILE;
 }
 
 export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
   const profile = getTugRigProfile(equipmentId);
   const root = new THREE.Group();
-  root.name = equipmentId === "standup-tug" ? "RampReady_StandupPhysicsRig" : "RampReady_LektroRig";
+  root.name = equipmentId === "manager-kubota"
+    ? "RampReady_ManagerKubotaPhysicsRig"
+    : equipmentId === "standup-tug"
+      ? "RampReady_StandupPhysicsRig"
+      : "RampReady_LektroRig";
 
   const visual = new THREE.Group();
   visual.name = "TugVisual";
