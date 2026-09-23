@@ -170,8 +170,12 @@ jobs:
           const evidence = result.state?.dataset || {};
           const failures = [];
           if (evidence.kphxFullAirportVerifier !== "ready") failures.push(`verifier state=${evidence.kphxFullAirportVerifier || "missing"}`);
-          if (evidence.kphxPackagePlacements !== "655") failures.push(`placements=${evidence.kphxPackagePlacements || "missing"}`);
-          if (evidence.kphxPackageResources !== "96") failures.push(`resources=${evidence.kphxPackageResources || "missing"}`);
+          if (evidence.kphxPackagePlacements !== "1634") failures.push(`placements=${evidence.kphxPackagePlacements || "missing"}`);
+          if (evidence.kphxPackageResources !== "147") failures.push(`resources=${evidence.kphxPackageResources || "missing"}`);
+          if (evidence.kphxT4MisterxPlacements !== "956") failures.push(`t4MisterxPlacements=${evidence.kphxT4MisterxPlacements || "missing"}`);
+          if (evidence.kphxT4MisterxResources !== "50") failures.push(`t4MisterxResources=${evidence.kphxT4MisterxResources || "missing"}`);
+          if (evidence.kphxT4CdbPlacements !== "23") failures.push(`t4CdbPlacements=${evidence.kphxT4CdbPlacements || "missing"}`);
+          if (evidence.kphxT4CdbResources !== "1") failures.push(`t4CdbResources=${evidence.kphxT4CdbResources || "missing"}`);
           if (evidence.kphxPackagePolygons !== "13") failures.push(`polygons=${evidence.kphxPackagePolygons || "missing"}`);
           if (evidence.kphxSourceVersion !== "1.75.1") failures.push(`version=${evidence.kphxSourceVersion || "missing"}`);
           if (result.navigationError) failures.push(`navigation=${result.navigationError}`);
@@ -186,6 +190,8 @@ jobs:
             state:evidence.kphxFullAirportVerifier,
             placements:evidence.kphxPackagePlacements,
             resources:evidence.kphxPackageResources,
+            t4MisterxPlacements:evidence.kphxT4MisterxPlacements,
+            t4CdbPlacements:evidence.kphxT4CdbPlacements,
             polygons:evidence.kphxPackagePolygons,
             lineMeshes:evidence.kphxPackageLineMeshes,
             version:evidence.kphxSourceVersion,
