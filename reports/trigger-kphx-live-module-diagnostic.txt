@@ -1,2 +1,2 @@
 Trigger fast Vite transform diagnostic for exact live T4 integration.
-Sparse-checkout retry after A1 ZDP pavement-only load.
+Regenerate live trainer first; require exact A1 ZDP pavement policy + finalized AP88 + exact T4.
