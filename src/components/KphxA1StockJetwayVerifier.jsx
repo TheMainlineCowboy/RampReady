@@ -159,6 +159,7 @@ export default function KphxA1StockJetwayVerifier() {
         label: t4b.resource,
         alphaCutoff: 0.5,
         windingAlreadyConverted: false,
+        correctLegacyTextureV: true,
       });
       terminal.name = t4b.name;
       terminal.position.fromArray(kphxWedToRampReadyPosition(t4b.latitude, t4b.longitude, 0));
