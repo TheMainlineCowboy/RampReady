@@ -1,36 +1,20 @@
 {
-  "capturedAtUtc": "2026-09-23T02:36:03.963Z",
+  "capturedAtUtc": "2026-09-23T02:51:06.320Z",
   "navigationError": null,
   "waitError": null,
   "state": {
     "canvasPresent": true,
     "dataset": {
       "engine": "three.js r171",
-      "kphxFullAirportVerifier": "ready",
-      "kphxLoadMsJetways": "2717",
-      "kphxLoadMsSurfaces": "3913",
-      "kphxLoadMsObjects": "5200",
-      "kphxT4CameraCenter": "69.76996474373786,3.4975,-75.49463118980168",
-      "kphxT4CameraSpan": "799.3306401130274",
-      "kphxLoadMsFinalRender": "19548",
-      "kphxLoadMsTotal": "24768",
-      "kphxPackagePlacements": "1634",
-      "kphxPackageResources": "147",
-      "kphxT4MisterxPlacements": "956",
-      "kphxT4MisterxResources": "50",
-      "kphxT4CdbPlacements": "23",
-      "kphxT4CdbResources": "1",
-      "kphxLoadedAssetFiles": "133",
-      "kphxPackagePolygons": "13",
-      "kphxPackageLineMeshes": "35",
-      "kphxSourceVersion": "1.75.1",
-      "kphxT4ExactJetwayCount": "76",
-      "kphxT4ExactJetwayOpenEdges": "261",
-      "kphxT4OldAirportJetwayGlbUsed": "false"
+      "kphxFullAirportVerifier": "error",
+      "kphxLoadMsJetways": "3280",
+      "kphxLoadMsSurfaces": "4170",
+      "kphxLoadMsObjects": "6144",
+      "kphxFullAirportVerifierError": "Expected 1072 exact covered T4 objects, made 1059 visible"
     },
-    "overlayText": "KPHX 1.75.1 exact checkpoint ready · 1634 placements · 147 source resources · 133 asset files · 76 exact T4 jetways",
+    "overlayText": "KPHX verifier failed: Expected 1072 exact covered T4 objects, made 1059 visible",
     "title": "RampReady",
-    "bodyText": "KPHX 1.75.1 exact checkpoint ready · 1634 placements · 147 source resources · 133 asset files · 76 exact T4 jetways"
+    "bodyText": "KPHX verifier failed: Expected 1072 exact covered T4 objects, made 1059 visible"
   },
   "consoleMessages": [
     {
@@ -47,19 +31,15 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A07020002C020000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000EC1C0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x2dc40190c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x2f4006aa200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
-      "type": "warning",
-      "text": "[.WebGL-0x2dc40190c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): Running out of reserved outsideRenderPass queueSerial. ending renderPass now."
-    },
-    {
-      "type": "warning",
-      "text": "[.WebGL-0x2dc40190c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "type": "error",
+      "text": "KPHX full-airport verifier failed Error: Expected 1072 exact covered T4 objects, made 1059 visible\n    at load (http://127.0.0.1:4173/RampReady/src/components/KphxFullAirportVerifier.jsx:135:15)"
     }
   ],
   "pageErrors": [],
