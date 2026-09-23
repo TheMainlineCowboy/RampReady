@@ -1,0 +1,159 @@
+name: KPHX Full Exact MisterX Materialization
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-full-misterx-materialize.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-full-misterx-materialize
+  cancel-in-progress: true
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install exact conversion tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          python -m pip install --quiet gdown
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/magick" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ "${1:-}" = "identify" ]; then
+            shift
+            exec identify "$@"
+          fi
+          exec convert "$@"
+          SH
+          chmod +x "$HOME/bin/magick"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch exact KPHX WED authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-source reports
+          gdown --id 1oUuiZQiWbqIMXtqSQMklZ9E_jbsg_T2d -O .kphx-source/earth.wed.xml
+          test "$(sha256sum .kphx-source/earth.wed.xml | awk '{print $1}')" = "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498"
+          node scripts/extract-kphx-wed-object-placements.mjs \
+            .kphx-source/earth.wed.xml \
+            reports/kphx-full-airport-wed-placements-misterx.json
+
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const input=JSON.parse(fs.readFileSync("reports/kphx-full-airport-wed-placements-misterx.json","utf8"));
+          const selected=(input.placements.externalLibraries||[]).filter((p)=>p.resourcePrefix==="MisterX_Library");
+          const resources={};
+          for(const p of selected) resources[p.resource]=(resources[p.resource]||0)+1;
+          const payload={
+            schemaVersion:1,
+            authority:"KPHX 1.75.1 earth.wed.xml exact MisterX object placements",
+            source:{...input.source,wedSha256:"59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498",authority:"user-supplied expanded X-Plane package"},
+            selection:{policy:"all WED_ObjPlacement entries with resourcePrefix MisterX_Library; no radius/area selection"},
+            masterAnchor:input.masterAnchor,
+            totals:{objectPlacementCount:selected.length,uniqueResourceCount:Object.keys(resources).length,packageOwnedPlacementCount:0,externalLibraryPlacementCount:selected.length},
+            packageOwned:{placementCount:0,uniqueResourceCount:0,resources:{}},
+            externalLibraries:{placementCount:selected.length,uniqueResourceCount:Object.keys(resources).length,prefixCounts:{"MisterX_Library":selected.length},resources},
+            placements:{packageOwned:[],externalLibraries:selected},
+            rampStarts:[],
+          };
+          if(selected.length!==2443||Object.keys(resources).length!==113){
+            throw new Error(`MisterX WED authority changed: placements=${selected.length}, resources=${Object.keys(resources).length}`);
+          }
+          fs.writeFileSync("reports/kphx-full-misterx-wed-placements.json",JSON.stringify(payload,null,2)+"\n");
+          fs.writeFileSync("reports/kphx-full-misterx-object-resources.json",JSON.stringify({
+            authority:"reports/kphx-full-misterx-wed-placements.json",
+            dependency:"MisterX_Library",
+            resources:Object.keys(resources).sort(),
+          },null,2)+"\n");
+          NODE
+
+      - name: Fetch supplied exact MisterX library
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .misterx
+          mkdir -p .misterx
+          gdown --folder "https://drive.google.com/drive/folders/1qYJkED8GB83fDfAI_mEVXWjr2lC6IjoB" \
+            -O .misterx \
+            --remaining-ok
+          test -f .misterx/library.txt
+
+      - name: Resolve all exact WED MisterX resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/resolve-xplane-library.mjs \
+            .misterx \
+            reports/kphx-full-misterx-object-resources.json \
+            reports/kphx-full-misterx-library-map.json \
+            --virtual-prefix=MisterX_Library
+
+      - name: Materialize all exact WED MisterX objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .runtime-misterx
+          node scripts/materialize-kphx-full-airport.mjs \
+            .misterx \
+            .runtime-misterx \
+            --placement-report=reports/kphx-full-misterx-wed-placements.json \
+            --library-map=reports/kphx-full-misterx-library-map.json \
+            --include-external-prefixes=MisterX_Library \
+            --batch-name=full-misterx
+
+      - name: Verify full exact MisterX contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const m=JSON.parse(fs.readFileSync(".runtime-misterx/manifest.json","utf8"));
+          if(m.failures?.length) throw new Error(`MisterX failures=${m.failures.length}`);
+          if(m.resolvedExternal.materializedPlacementCount!==2443){
+            throw new Error(`Expected 2443 MisterX placements, got ${m.resolvedExternal.materializedPlacementCount}`);
+          }
+          if(m.resolvedExternal.expectedUniqueResourceCount!==113||m.resolvedExternal.materializedUniqueResourceCount!==113){
+            throw new Error(`Expected 113 MisterX resources, got expected=${m.resolvedExternal.expectedUniqueResourceCount} materialized=${m.resolvedExternal.materializedUniqueResourceCount}`);
+          }
+          console.log(JSON.stringify({placements:2443,resources:113,status:"PASS"},null,2));
+          NODE
+
+      - name: Install and commit full exact MisterX runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/models/kphx-full-airport/external public/models/kphx-full-airport/batches
+          cp -a .runtime-misterx/external/. public/models/kphx-full-airport/external/
+          cp .runtime-misterx/manifest.json public/models/kphx-full-airport/batches/full-misterx.manifest.json
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            public/models/kphx-full-airport/external/MisterX_Library \
+            public/models/kphx-full-airport/batches/full-misterx.manifest.json \
+            reports/kphx-full-airport-wed-placements-misterx.json \
+            reports/kphx-full-misterx-wed-placements.json \
+            reports/kphx-full-misterx-object-resources.json \
+            reports/kphx-full-misterx-library-map.json \
+            reports/kphx-full-airport-materialization-full-misterx.json
+          git commit -m "Materialize full exact KPHX MisterX objects"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
