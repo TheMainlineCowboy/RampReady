@@ -363,6 +363,7 @@ export async function installKphxPackageOwnedSurfaceLayer(
     loadPolygons = true,
     loadDrapedOrthophotos = true,
     loadLines = true,
+    addOpaqueBaseUnderlay = false,
   } = {},
 ) {
   if (!environment?.add) throw new Error("KPHX surface loader requires a Three.js environment group");
@@ -390,6 +391,7 @@ export async function installKphxPackageOwnedSurfaceLayer(
   const textureCache = new Map();
   const failures = [];
   let polygonCount = 0;
+  let opaqueBaseUnderlayCount = 0;
   let drapedOrthophotoCount = 0;
   let lineMeshCount = 0;
   const resolvedExternalPrefixes = new Set(manifest.policy?.externalPrefixes || []);
@@ -414,6 +416,53 @@ export async function installKphxPackageOwnedSurfaceLayer(
       const geometry = createPolygonGeometry(THREE, placement, art);
       if (!geometry) continue;
       const material = await materialFor(placement.resource, "taxiways");
+
+      if (
+        addOpaqueBaseUnderlay
+        && art?.layerGroup?.group === "taxiways"
+        && Number(art?.layerGroup?.offset || 0) <= 2
+        && art?.noAlpha !== true
+      ) {
+        const underlayGeometry = geometry.clone();
+        underlayGeometry.translate(0, -0.02, 0);
+        const underlayMaterial = new THREE.MeshStandardMaterial({
+          map: material.map,
+          normalMap: material.normalMap,
+          roughness: material.roughness,
+          metalness: material.metalness,
+          transparent: false,
+          opacity: 1,
+          alphaTest: 0,
+          side: THREE.DoubleSide,
+          depthWrite: true,
+          polygonOffset: true,
+          polygonOffsetFactor: 0,
+          polygonOffsetUnits: 0,
+        });
+        if (underlayMaterial.normalMap && material.normalScale) {
+          underlayMaterial.normalScale.copy(material.normalScale);
+        }
+        underlayMaterial.name = `KPHX_OPAQUE_BASE_UNDERLAY_${placement.resource}`;
+        underlayMaterial.userData = {
+          kphxOpaqueBaseUnderlay: true,
+          sourceResource: placement.resource,
+          sourcePolicy: "same-authored-base-pavement-geometry-and-texture-alpha-disabled-below-overlay",
+        };
+        const underlayMesh = new THREE.Mesh(underlayGeometry, underlayMaterial);
+        underlayMesh.name = `KPHX_UNDERLAY_${placement.id}_${placement.name}`;
+        underlayMesh.renderOrder = material.userData.xPlaneLayerOrder - 0.25;
+        underlayMesh.receiveShadow = true;
+        underlayMesh.userData = {
+          kphxFullAirport: true,
+          kphxSurface: true,
+          kphxOpaqueBaseUnderlay: true,
+          wedObjectId: placement.id,
+          sourceResource: placement.resource,
+        };
+        layer.add(underlayMesh);
+        opaqueBaseUnderlayCount += 1;
+      }
+
       const mesh = new THREE.Mesh(geometry, material);
       mesh.name = `KPHX_POL_${placement.id}_${placement.name}`;
       mesh.renderOrder = material.userData.xPlaneLayerOrder;
@@ -493,6 +542,7 @@ export async function installKphxPackageOwnedSurfaceLayer(
     sourceVersion: manifest.source.version,
     curvePolicy: KPHX_WED_CURVE_POLICY,
     polygonCount,
+    opaqueBaseUnderlayCount,
     drapedOrthophotoCount,
     lineMeshCount,
     materialCount: materials.size,
@@ -507,6 +557,7 @@ export async function installKphxPackageOwnedSurfaceLayer(
       polygons: loadPolygons,
       drapedOrthophotos: loadDrapedOrthophotos,
       lines: loadLines,
+      opaqueBaseUnderlay: addOpaqueBaseUnderlay,
     },
   };
 
