@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "evidenceCommit": "eb4ddff911240206453b91ed6526c04da4e5d8f0",
+  "authority": "User-supplied KPHX 1.75.1 earth.wed.xml + exact Terminal4/Terminal4b OBJ8 geometry and supplied DDS textures",
+  "policy": "No invented geometry, no filled openings, no placement changes, no material substitutions.",
+  "buildings": [
+    {
+      "resource": "Terminals/Terminal4.obj",
+      "wedObjectId": "2327",
+      "latitude": 33.434761986,
+      "longitude": -111.996702473,
+      "headingDegrees": 0,
+      "sourceObjSha256": "e93807a1239377e1223eb325c2b7048e6c84f968d9c790fd0cd6cc5da050cd80",
+      "runtimeAsset": "/models/kphx/Terminal4.exact.glb",
+      "runtimeSha256": "1899c3d3258922868f835b62dbd1b85713871017d52d34167d80c136f8b6d8b2",
+      "sourceVertexCount": 21720,
+      "sourceIndexCount": 42501,
+      "exactIndexCountMatch": true,
+      "decodedDayTextureMatchesSource": true,
+      "decodedLitTextureMatchesSource": true
+    },
+    {
+      "resource": "Terminals/Terminal4b.obj",
+      "wedObjectId": "5301",
+      "latitude": 33.436209533,
+      "longitude": -111.99666441,
+      "headingDegrees": 0,
+      "sourceObjSha256": "acbefef71c59942eb8e336996b9f2b9c8e8a87c6ec5cc64046292e5332ce48bc",
+      "runtimeAsset": "/models/kphx/Terminal4b.exact.glb",
+      "runtimeSha256": "1380cb6b1f33a3beca14a44ca4f17ef765bcf718c099769d6a723f0dbc10ab43",
+      "sourceVertexCount": 40773,
+      "sourceIndexCount": 70725,
+      "exactIndexCountMatch": true,
+      "decodedDayTextureMatchesSource": true,
+      "decodedLitTextureMatchesSource": true
+    }
+  ],
+  "renderSemantics": {
+    "sourceCullMode": "ATTR_cull / one-sided",
+    "sourceBlendMode": "ATTR_no_blend",
+    "alphaCutoff": 0.5,
+    "windingConvertedToRuntimeFrontFace": true,
+    "legacyTextureVCompatibility": true
+  },
+  "lockedContext": {
+    "terminal4Jetways": 76,
+    "authoredOpenJetwayEdges": 261,
+    "jetwayPlacementChanges": 0,
+    "buildingPlacementChanges": 0,
+    "geometryEdits": 0,
+    "materialSubstitutions": 0
+  },
+  "qaViews": [
+    "A1",
+    "A14",
+    "A30",
+    "B2",
+    "B14",
+    "B28",
+    "C1",
+    "C9",
+    "C19",
+    "D1",
+    "D4",
+    "D7"
+  ],
+  "note": "Some very-close QA cameras intersect the authored shell; those are inspection-camera artifacts only. Source geometry/material/placement evidence is exact. Source-authored ramp-level openings and cutouts must remain open and must never be creatively filled."
+}
