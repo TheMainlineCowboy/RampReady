@@ -1,29 +1,41 @@
 {
-  "capturedAtUtc": "2026-09-23T04:41:08.512Z",
+  "capturedAtUtc": "2026-09-23T04:43:50.191Z",
   "navigationError": null,
   "waitError": null,
   "state": {
     "canvasPresent": true,
     "dataset": {
       "engine": "three.js r171",
-      "kphxFullAirportVerifier": "error",
-      "kphxLoadMsJetways": "3471",
-      "kphxLoadMsT4Zdp": "4161",
-      "kphxLoadMsSurfaces": "4642",
-      "kphxLoadMsObjects": "5757",
+      "kphxFullAirportVerifier": "ready",
+      "kphxLoadMsJetways": "2754",
+      "kphxLoadMsSurfaces": "3480",
+      "kphxLoadMsT4Zdp": "3866",
+      "kphxLoadMsObjects": "5194",
       "kphxT4CameraCenter": "69.76996474373786,3.4975,-75.49463118980168",
       "kphxT4CameraSpan": "799.3306401130274",
-      "kphxLoadMsFinalRender": "13430",
-      "kphxLoadMsTotal": "19206",
+      "kphxLoadMsFinalRender": "11490",
+      "kphxLoadMsTotal": "16697",
       "kphxPackagePlacements": "1634",
       "kphxPackageResources": "147",
       "kphxT4MisterxPlacements": "956",
       "kphxT4MisterxResources": "50",
       "kphxT4CdbPlacements": "23",
       "kphxT4CdbResources": "1",
-      "kphxFullAirportVerifierError": "t4ZdpObjectPlacements is not defined"
+      "kphxT4ZdpPlacements": "13",
+      "kphxT4ZdpResources": "1",
+      "kphxLoadedAssetFiles": "133",
+      "kphxPackagePolygons": "13",
+      "kphxPackageLineMeshes": "35",
+      "kphxSourceVersion": "1.75.1",
+      "kphxT4ExactJetwayCount": "76",
+      "kphxT4ExactJetwayOpenEdges": "261",
+      "kphxT4AuthoredObjectPlacements": "1086",
+      "kphxT4VisibleObjectPlacements": "1072",
+      "kphxT4BlockedObjectPlacements": "14",
+      "kphxT4OldAirportJetwayGlbUsed": "false",
+      "kphxQaObjectsOnly": "true"
     },
-    "bodyText": "KPHX verifier failed: t4ZdpObjectPlacements is not defined"
+    "bodyText": "KPHX 1.75.1 exact checkpoint ready · 1634 placements · 147 source resources · 133 asset files · 76 exact T4 jetways"
   },
   "consoleMessages": [
     {
@@ -40,19 +52,15 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0605C18C40E0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0207910BC260000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0xf440099ce00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
-    },
-    {
-      "type": "error",
-      "text": "KPHX full-airport verifier failed ReferenceError: t4ZdpObjectPlacements is not defined\n    at load (http://127.0.0.1:4173/RampReady/src/components/KphxFullAirportVerifier.jsx:189:70)"
+      "text": "[.WebGL-0x25b4010b4000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0xf440099ce00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      "text": "[.WebGL-0x25b4010b4000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
     }
   ],
   "pageErrors": [],
