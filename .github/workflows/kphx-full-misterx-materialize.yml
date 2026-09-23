@@ -125,44 +125,72 @@ jobs:
           test -f .misterx/library.txt
           test "$(cat .misterx/version.txt)" = "2.0c"
 
-      - name: Supplement only missing exact MisterX source directories
+      - name: Supplement only missing exact MisterX OBJ sources
         shell: bash
         run: |
           set -euo pipefail
+          cat > /tmp/misterx-downloads.txt <<'EOF'
+          16ZkrJxBHfc2hOJ--14nGzaPtPyAlJKv9 .misterx/Airport/Aircraft/Boeing_767_300/UPS_new.obj
+          1ww3SIDJupqq0GkbE5Too7K8xmYLhbyVo .misterx/Airport/Aircraft/Boeing_767_300/UPS.dds
+          1BZ_YtlRVdHrUMIpcSBO6choxEEcqk-LN .misterx/Airport/Aircraft/Boeing_767_300/UPS_LIT.png
+          1QyCa_5hirSV5M3rTJluFBcgtS7s_aPeh .misterx/Airport/Aircraft/Boeing_767_300/Normal_Cargo.png
+          1CdS70QY03vinEJqF1bhyNwcssePqBUKW .misterx/Airport/Aircraft/Boeing_777_200ER/American_Airlines.obj
+          1cgPQ1_CXb1RJEKy_PnYyd5GGvMtClnkG .misterx/Airport/Aircraft/Boeing_777_200ER/American_Airlines.dds
+          13ZVF0qiR1RRr4DlgGGAJ0ml3rtCwcHhm .misterx/Airport/Aircraft/Boeing_777_200ER/American_Airlines_LIT.png
+          1Qa_bjxBEOm2na42gJ90yqIi6utV8PpSV .misterx/Airport/Aircraft/Boeing_777_200ER/Normal.png
+          1DX8w1cnTy5ofm0AycBlKzDXeAFyAtZRv .misterx/Airport/Aircraft/Bombardier_CRJ700/American_Eagle.obj
+          1nSyBho0-xsF_fx2sQiQGksC73vHDqxWR .misterx/Airport/Aircraft/Bombardier_CRJ700/American_Eagle.dds
+          1845i__d-te2OwJote-3H5IDBm9Gmrjjv .misterx/Airport/Aircraft/Bombardier_CRJ700/Shadow.dds
+          1FgElMPwzEqrU2MLVP8jmHdoW1096YjZo .misterx/Airport/Aircraft/Bombardier_Global_Express/Red_N712ZT.obj
+          1_toHobEsy1G8YOJH1XIvkHh0V1v0I0zn .misterx/Airport/Aircraft/Bombardier_Global_Express/Red_N712ZT.dds
+          16abAryb8kGty8T-F3cD_058PCgBH8dGw .misterx/Airport/Aircraft/Bombardier_Global_Express/White_N526CX.obj
+          1HbLq_tAUY_hUodGrzD7C7iw_Je9alFoC .misterx/Airport/Aircraft/Bombardier_Global_Express/White_N526CX.dds
+          1GsfUD1xa32tYSyNXXx2_HaprpFeIn5mk .misterx/Airport/Aircraft/Bombardier_Global_Express/Shadow.dds
+          187L4Sfgsp8d3tX48uVsfWq69VtEfoVlU .misterx/Airport/Aircraft/Cessna_208_Caravan/Fedex.obj
+          1eq6irOvXrxMp-GG3U7KHIZ7ch40-gFBl .misterx/Airport/Aircraft/Cessna_208_Caravan/Fedex.dds
+          1sBR0jmP6eBSW4zFayFgjF0blALB8J38c .misterx/Airport/Aircraft/Cessna_208_Caravan/Shadow.dds
+          179CwGe2FNAL24prQiNVAw7Z4N3SommnF .misterx/Airport/Aircraft/Cessna_Citation_II/N236RM.obj
+          1pbMZdBWxo8Jmd99smPT2Xxb8Egw-AX-p .misterx/Airport/Aircraft/Cessna_Citation_II/N236RM.dds
+          1wdkBGpazi23z2XnZ6THDXIwRa0LikHQR .misterx/Airport/Aircraft/Cessna_Citation_II/N530MX.obj
+          1bTNkRHJ0Xhs3UuRJeYBTTjxK7FwbTaar .misterx/Airport/Aircraft/Cessna_Citation_II/N530MX.dds
+          1YLFo8NE6JuaEwpF5rIeycuf9cBLJYLCA .misterx/Airport/Aircraft/Cessna_Citation_II/Shadow.dds
+          1tKjgSukTE5ceMR3f5_iSayCFdYal2uI6 .misterx/Airport/Aircraft/Learjet_35/Cyan_Yellow_N683BA.obj
+          1aEIdWuBq9HPk5fFNrAhnwtk2pW9kU9Ce .misterx/Airport/Aircraft/Learjet_35/Cyan_Yellow_N683BA.dds
+          1ZLLhzCYdVppMHD6FFzNG1RMpryb0GI8N .misterx/Airport/Aircraft/Learjet_35/Shadow.dds
+          1aO6T0jLUB1ZwVPUiYLNLEqUrX2GplHCD .misterx/Airport/Other/Checkered_Hut.obj
+          1FTUznEieYp5OeZECE_dOtDyFYdj9HA8s .misterx/Airport/Other/Glideslope_Antenna.obj
+          1ePnHW36VmPqkJNMVXBTxau_FBJt68zY1 .misterx/Airport/Other/Checkered_Huts.dds
+          1WqW9NjidGAfNWln_1deqy18LkQoQMoHH .misterx/Airport/Other/ILS_Antennas.obj
+          1UkGwFk1KcqWCA7a8Neg3fudchZc0DUte .misterx/Airport/Other/ILS_Antennas.dds
+          1EYMQ1RJpupm6hSagE2sZN1BeEvnuMFY9 .misterx/Objects/Construction/Garbage_Container_Rusty.obj
+          1JRgWilgj8ADAe5sxFYNakvWzH4pkpMMv .misterx/Objects/Construction/Container_Rusty.dds
+          1KL75ITJuXJv_3M116BTLMWPACH17Rcjh .misterx/Vehicles/Construction/Bulldozer.obj
+          1q1SVndPdgXbGtlU6qNifSlMEQea5J5O3 .misterx/Vehicles/Construction/Bulldozer.dds
+          1h7XahpqS6LFopfRN7RxR7G_GV5PS3g40 .misterx/Vehicles/Construction/Steamroller.obj
+          1yhGVFL5lamyBDIEobpcYoqO3-Sj2rtw2 .misterx/Vehicles/Construction/Steamroller.dds
+          1OpTFow3MZGDMQ2l6yiNc-TVcDr1oHdUN .misterx/Vehicles/Trucks/Box_Truck_Fedex.obj
+          14tgOoiHPxScds4PxcQV6ghVXH8kvWuVp .misterx/Vehicles/Trucks/Box_Truck_UPS.obj
+          1Jw0ObjP7a7RumyaK-R9MIVXMzUGgkRt2 .misterx/Vehicles/Trucks/Box_Truck_White.obj
+          1KhwdpUL9piLf3Q_Ydt9KyaXZJCCroD7Q .misterx/Vehicles/Trucks/Box_Truck.dds
+          1GlBU9PVn7SQYE3tJzJTLaVoJiHFloX64 .misterx/Vehicles/Trucks/Box_Truck_UPS.dds
+          1rw3x1Wjp097VAyv4gSzZzliujx4a2-JQ .misterx/Vehicles/Trucks/Trailer_Fedex.obj
+          1ZCDzkcL9cEYsqy5Y-7_uT9GkL0Ecg89r .misterx/Vehicles/Trucks/Trailer_Fedex.dds
+          14TZV-yzdL_b0jBry2Dc98nrl5BClQ5va .misterx/Vehicles/Trucks/Trailer_UPS.obj
+          1T6tZPiH5N4E9StpgHcR12jZ5AsuTiWh1 .misterx/Vehicles/Trucks/Trailer_UPS.dds
+          1hETPtkVeWnPMECBrktLhgtEKRt50vins .misterx/Vehicles/Trucks/Trailer_NRM.png
+          EOF
 
-          fetch_folder() {
-            local id="$1"
-            local target="$2"
-            local expected="$3"
-            local tmp
-            tmp="$(mktemp -d)"
-            gdown --folder "https://drive.google.com/drive/folders/$id" -O "$tmp"
-            local expected_path
-            expected_path="$(find "$tmp" -type f -name "$expected" -print -quit)"
-            test -n "$expected_path"
-            mkdir -p "$target"
-            cp -a "$(dirname "$expected_path")"/. "$target"/
-            rm -rf "$tmp"
-          }
-
-          fetch_folder "1iXpX2ee01mc7TEOXMKgzInZd17-W5gUM" ".misterx/Airport/Aircraft/Boeing_767_300" "UPS_new.obj"
-          fetch_folder "1MxQFGdudY6TPDnUi7aXIfEj_ipHDkxxG" ".misterx/Airport/Aircraft/Boeing_777_200ER" "American_Airlines.obj"
-          fetch_folder "1PV40Eu-0QMe-j1Rc_5siiGYiS5-5vlFY" ".misterx/Airport/Aircraft/Bombardier_CRJ700" "American_Eagle.obj"
-          fetch_folder "19sN6AKTK7L2nEG0gumOJJdZbQTQWtXfa" ".misterx/Airport/Aircraft/Bombardier_Global_Express" "Red_N712ZT.obj"
-          fetch_folder "1I_vinQOuFzX9Ity85XoH8pR7b78WLUtw" ".misterx/Airport/Aircraft/Cessna_208_Caravan" "Fedex.obj"
-          fetch_folder "1ZhfUWilq56gi-Vk-QwkTd4gG0Zz3ZwvX" ".misterx/Airport/Aircraft/Cessna_Citation_II" "N236RM.obj"
-          fetch_folder "1T-3G-hsAeAt2qBMvTSPjKxxkJVYybPPe" ".misterx/Airport/Aircraft/Learjet_35" "Cyan_Yellow_N683BA.obj"
-
-          fetch_folder "1TFUJhSqdqP3Yvo2tEq-tYER5_vIrLQn8" ".misterx/Airport/Other" "Checkered_Hut.obj"
-          fetch_folder "18oiGIj3T3rT2OKaARGZzbajca2m80iwn" ".misterx/Airport/Vehicles/Trucks" "Box_Truck_White.obj"
-          fetch_folder "1koQgOiB1K3Oswbr1g7NLTzHmBWPBnmos" ".misterx/Objects/Construction" "Garbage_Container_Rusty.obj"
-          fetch_folder "1qeCyUGew8Z-w7-IlfAhQKHGml09YyTDJ" ".misterx/Vehicles/Construction" "Bulldozer.obj"
-          fetch_folder "1AiUGHanRiuX-P7jfJwOYC9Twzet4TCLU" ".misterx/Vehicles/Trucks" "Truck_Fedex.agp"
+          cat /tmp/misterx-downloads.txt | xargs -P 6 -n 2 bash -c '
+            set -euo pipefail
+            id="$1"
+            target="$2"
+            mkdir -p "$(dirname "$target")"
+            gdown "https://drive.google.com/uc?id=$id" -O "$target"
+          ' _
 
           node scripts/resolve-xplane-library.mjs \
             .misterx \
             reports/kphx-full-misterx-object-resources.json \
-            reports/kphx-full-misterx-blocked-random-resources.json \
             reports/kphx-full-misterx-library-map-preflight.json \
             --virtual-prefix=MisterX_Library
 
@@ -173,7 +201,6 @@ jobs:
           node scripts/resolve-xplane-library.mjs \
             .misterx \
             reports/kphx-full-misterx-object-resources.json \
-            reports/kphx-full-misterx-blocked-random-resources.json \
             reports/kphx-full-misterx-library-map.json \
             --virtual-prefix=MisterX_Library
 
@@ -225,6 +252,7 @@ jobs:
             reports/kphx-full-airport-wed-placements-misterx.json \
             reports/kphx-full-misterx-wed-placements.json \
             reports/kphx-full-misterx-object-resources.json \
+            reports/kphx-full-misterx-blocked-random-resources.json \
             reports/kphx-full-misterx-agp-authority.json \
             reports/kphx-full-misterx-library-map.json \
             reports/kphx-full-airport-materialization-full-misterx.json
