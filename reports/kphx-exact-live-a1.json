@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-09-23T23:27:53.652Z",
+  "capturedAtUtc": "2026-09-23T23:50:37.947Z",
   "route": "/RampReady/?inspectionPreset=a1",
   "navigationError": null,
   "waitError": null,
@@ -115,6 +115,8 @@
       "a1EquipmentSpawnZ": "12.399994",
       "a1EquipmentSpawnYawDegrees": "180.08",
       "a1EquipmentApproachOffsetMeters": "6.200",
+      "lektroAuthoredRearSteerRadians": "0.000000",
+      "lektroAuthoredRearSteerDegrees": "0.000",
       "aircraftSource": "user-painted-crj700",
       "inspectionTugX": "0.009",
       "inspectionTugZ": "12.400",
@@ -125,6 +127,8 @@
       "kphxA1ZdpMarkingTextureDecodeCount": "4",
       "kphxA1ZdpMarkingFailureCount": "0",
       "tugModelForwardCorrectionDegrees": "180",
+      "lektroAuthoredRearSteerBinding": "AP88_STEER_L_STEER|AP88_STEER_R_STEER",
+      "lektroAuthoredRearSteerMode": "copy-validated-physics-visual-angle",
       "kphxTransparentConcreteUnderlayCount": "8",
       "kphxSurfaceReady": "true",
       "kphxSurfacePolygonCount": "27",
@@ -153,7 +157,7 @@
       "terminal4A1RetractionRatio": "0.330556",
       "terminal4A1NativeRetractionActive": "false"
     },
-    "bodyText": "FREE DRIVE\nAirport inspection mode\nReturn to training\nA1 ramp\nA1 terminal connection\nA concourse midpoint\nB concourse midpoint\nB15 ramp\nChase view\nOperator view\nOverhead view\nMenu\nTug\nlektro-88\nSpeed\n0.0 mph\nStop\n45.8 m\nArticulation\n0.0°\nConnection\ninspection\nAircraft\nuser-painted-crj700\nInspection\nFREE\nAIRPORT DRIVE\n◀\nBrake\n▶\nFWD\nIdle\nPower 0%\n\nRAMPREADY · PHX\n\nPreparing simulator\n\nLoading exact PHX Terminal 4 and jetways…\n\n75%"
+    "bodyText": "FREE DRIVE\nAirport inspection mode\nReturn to training\nA1 ramp\nA1 terminal connection\nA concourse midpoint\nB concourse midpoint\nB15 ramp\nChase view\nOperator view\nOverhead view\nMenu\nTug\nlektro-88\nSpeed\n0.0 mph\nStop\n45.8 m\nArticulation\n0.0°\nConnection\ninspection\nAircraft\nuser-painted-crj700\nInspection\nFREE\nAIRPORT DRIVE\n◀\nBrake\n▶\nFWD\nIdle\nPower 0%"
   },
   "consoleMessages": [
     {
@@ -170,23 +174,23 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000B4300000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A07020006C150000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x35402cf0000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x343402296a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x35402cf0000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x343402296a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x35402cf0000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x343402296a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x35402cf0000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      "text": "[.WebGL-0x343402296a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
     }
   ],
   "pageErrors": [],
