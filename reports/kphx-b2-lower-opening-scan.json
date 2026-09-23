@@ -1,0 +1,1955 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "authority": "exact Terminal4.exact.glb + Terminal4b.exact.glb at WED placements",
+  "area": "B2/B4 lower-ramp facade scan",
+  "cameraAuthority": "reports/kphx-t4-building-shell-b2.json",
+  "scan": {
+    "heightsMeters": [
+      0.8,
+      1.4,
+      2.0,
+      2.6,
+      3.2,
+      3.8
+    ],
+    "lateralRangeMeters": [
+      -45,
+      45
+    ],
+    "lateralStepMeters": 1,
+    "rayCount": 546
+  },
+  "classification": {
+    "candidateOpenOrRecessedRays": 463,
+    "recessDepth2To12mRays": 129,
+    "deeperThan12mRays": 334,
+    "noHitRays": 0,
+    "interpretation": "Rays deeper than the nearest facade plane but hitting geometry within ~12 m indicate source-authored backed recesses; rays remaining open/no-hit or first hitting >12 m deeper indicate potential through-openings."
+  },
+  "candidateSamples": [
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -45.0,
+      "firstHitMeters": 177.8503447396767,
+      "secondHitMeters": 181.16106065500713,
+      "estimatedDepthBehindFrontMeters": 175.01296965920952,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -44.0,
+      "firstHitMeters": 176.7241626214945,
+      "secondHitMeters": 180.03487853682495,
+      "estimatedDepthBehindFrontMeters": 173.8867875410273,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -43.0,
+      "firstHitMeters": 175.59798050331236,
+      "secondHitMeters": 178.9086964186428,
+      "estimatedDepthBehindFrontMeters": 172.76060542284517,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -42.0,
+      "firstHitMeters": 174.47179838513017,
+      "secondHitMeters": 177.7825143004606,
+      "estimatedDepthBehindFrontMeters": 171.634423304663,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -36.0,
+      "firstHitMeters": 5.178043265621605,
+      "secondHitMeters": 167.71470567603706,
+      "estimatedDepthBehindFrontMeters": 2.3406681851544198,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -35.0,
+      "firstHitMeters": 6.065999115616909,
+      "secondHitMeters": 166.5885235578549,
+      "estimatedDepthBehindFrontMeters": 3.228624035149723,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -34.0,
+      "firstHitMeters": 6.953954965612222,
+      "secondHitMeters": 14.490548774410732,
+      "estimatedDepthBehindFrontMeters": 4.116579885145036,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -33.0,
+      "firstHitMeters": 7.841910815607575,
+      "secondHitMeters": 164.33615932149053,
+      "estimatedDepthBehindFrontMeters": 5.004535735140389,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -32.0,
+      "firstHitMeters": 8.729866665602923,
+      "secondHitMeters": 163.20997720330837,
+      "estimatedDepthBehindFrontMeters": 5.892491585135738,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -31.0,
+      "firstHitMeters": 9.617822515598236,
+      "secondHitMeters": 162.08379508512616,
+      "estimatedDepthBehindFrontMeters": 6.780447435131051,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -30.0,
+      "firstHitMeters": 10.505778365593546,
+      "secondHitMeters": 160.957612966944,
+      "estimatedDepthBehindFrontMeters": 7.66840328512636,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -29.0,
+      "firstHitMeters": 11.393734215588893,
+      "secondHitMeters": 24.26187633808665,
+      "estimatedDepthBehindFrontMeters": 8.556359135121706,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -28.0,
+      "firstHitMeters": 12.281690065584243,
+      "secondHitMeters": 19.772709852396357,
+      "estimatedDepthBehindFrontMeters": 9.444314985117057,
+      "hitCount": 7
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -27.0,
+      "firstHitMeters": 13.169645915579554,
+      "secondHitMeters": 18.906318239864795,
+      "estimatedDepthBehindFrontMeters": 10.332270835112368,
+      "hitCount": 7
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -26.0,
+      "firstHitMeters": 14.057601765574905,
+      "secondHitMeters": 17.78013612168261,
+      "estimatedDepthBehindFrontMeters": 11.220226685107718,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -25.0,
+      "firstHitMeters": 14.945557615570218,
+      "secondHitMeters": 16.653954003500424,
+      "estimatedDepthBehindFrontMeters": 12.108182535103033,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -24.0,
+      "firstHitMeters": 22.5201897541654,
+      "secondHitMeters": 29.316868149065144,
+      "estimatedDepthBehindFrontMeters": 19.682814673698214,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -23.0,
+      "firstHitMeters": 23.408145604160712,
+      "secondHitMeters": 28.190686030882958,
+      "estimatedDepthBehindFrontMeters": 20.570770523693525,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -22.0,
+      "firstHitMeters": 24.29610145415606,
+      "secondHitMeters": 25.054870930382005,
+      "estimatedDepthBehindFrontMeters": 21.458726373688872,
+      "hitCount": 7
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -21.0,
+      "firstHitMeters": 25.18405730415137,
+      "secondHitMeters": 150.82197390330435,
+      "estimatedDepthBehindFrontMeters": 22.346682223684184,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -20.0,
+      "firstHitMeters": 26.072013154146724,
+      "secondHitMeters": 149.69579178512217,
+      "estimatedDepthBehindFrontMeters": 23.234638073679537,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -19.0,
+      "firstHitMeters": 26.95996900414203,
+      "secondHitMeters": 148.56960966694,
+      "estimatedDepthBehindFrontMeters": 24.122593923674845,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -18.0,
+      "firstHitMeters": 27.847924854137382,
+      "secondHitMeters": 147.44342754875782,
+      "estimatedDepthBehindFrontMeters": 25.010549773670196,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -17.0,
+      "firstHitMeters": 28.73588070413269,
+      "secondHitMeters": 146.31724543057567,
+      "estimatedDepthBehindFrontMeters": 25.898505623665503,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -16.0,
+      "firstHitMeters": 29.623836554128037,
+      "secondHitMeters": 30.34794902664531,
+      "estimatedDepthBehindFrontMeters": 26.78646147366085,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -15.0,
+      "firstHitMeters": 29.48946167381918,
+      "secondHitMeters": 144.0648811942113,
+      "estimatedDepthBehindFrontMeters": 26.652086593351992,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -14.0,
+      "firstHitMeters": 28.363279555636993,
+      "secondHitMeters": 142.93869907602908,
+      "estimatedDepthBehindFrontMeters": 25.525904475169806,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -13.0,
+      "firstHitMeters": 27.237097437454807,
+      "secondHitMeters": 141.81251695784692,
+      "estimatedDepthBehindFrontMeters": 24.39972235698762,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -10.0,
+      "firstHitMeters": 28.264895365500188,
+      "secondHitMeters": 35.64571011600427,
+      "estimatedDepthBehindFrontMeters": 25.427520285033,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -9.0,
+      "firstHitMeters": 29.152851215495495,
+      "secondHitMeters": 137.3077884851182,
+      "estimatedDepthBehindFrontMeters": 26.31547613502831,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -8.0,
+      "firstHitMeters": 30.040807065490846,
+      "secondHitMeters": 136.18160636693602,
+      "estimatedDepthBehindFrontMeters": 27.20343198502366,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -7.0,
+      "firstHitMeters": 30.92876291548616,
+      "secondHitMeters": 135.0554242487538,
+      "estimatedDepthBehindFrontMeters": 28.091387835018974,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -6.0,
+      "firstHitMeters": 31.816718765481504,
+      "secondHitMeters": 133.92924213057165,
+      "estimatedDepthBehindFrontMeters": 28.979343685014317,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 1.0,
+      "firstHitMeters": 5.501242630453196,
+      "secondHitMeters": 38.032409715448836,
+      "estimatedDepthBehindFrontMeters": 2.6638675499860103,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 2.0,
+      "firstHitMeters": 6.3891984804485045,
+      "secondHitMeters": 38.92036556544414,
+      "estimatedDepthBehindFrontMeters": 3.551823399981319,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 3.0,
+      "firstHitMeters": 7.2771543304438575,
+      "secondHitMeters": 39.8083214154395,
+      "estimatedDepthBehindFrontMeters": 4.439779249976672,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 4.0,
+      "firstHitMeters": 8.165110180439166,
+      "secondHitMeters": 40.69627726543481,
+      "estimatedDepthBehindFrontMeters": 5.327735099971981,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 5.0,
+      "firstHitMeters": 7.663858543640163,
+      "secondHitMeters": 8.084958536056382,
+      "estimatedDepthBehindFrontMeters": 4.826483463172978,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 6.0,
+      "firstHitMeters": 9.941021880429828,
+      "secondHitMeters": 49.15886525402531,
+      "estimatedDepthBehindFrontMeters": 7.103646799962642,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 7.0,
+      "firstHitMeters": 10.828977730425176,
+      "secondHitMeters": 16.762113754630583,
+      "estimatedDepthBehindFrontMeters": 7.991602649957991,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 8.0,
+      "firstHitMeters": 11.716933580420488,
+      "secondHitMeters": 15.635931636448394,
+      "estimatedDepthBehindFrontMeters": 8.879558499953301,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 9.0,
+      "firstHitMeters": 12.604889430415835,
+      "secondHitMeters": 14.509749518266208,
+      "estimatedDepthBehindFrontMeters": 9.767514349948648,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 10.0,
+      "firstHitMeters": 20.179521569010983,
+      "secondHitMeters": 52.710688654006624,
+      "estimatedDepthBehindFrontMeters": 17.342146488543797,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 11.0,
+      "firstHitMeters": 13.027092685823229,
+      "secondHitMeters": 13.361311327340538,
+      "estimatedDepthBehindFrontMeters": 10.189717605356044,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 12.0,
+      "firstHitMeters": 21.95543326900164,
+      "secondHitMeters": 54.48660035399729,
+      "estimatedDepthBehindFrontMeters": 19.118058188534455,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 13.0,
+      "firstHitMeters": 22.84338911899699,
+      "secondHitMeters": 55.37455620399263,
+      "estimatedDepthBehindFrontMeters": 20.006014038529802,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 14.0,
+      "firstHitMeters": 23.731344968992303,
+      "secondHitMeters": 56.04917010252051,
+      "estimatedDepthBehindFrontMeters": 20.893969888525117,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 15.0,
+      "firstHitMeters": 24.619300818987654,
+      "secondHitMeters": 54.92298798433833,
+      "estimatedDepthBehindFrontMeters": 21.781925738520467,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 16.0,
+      "firstHitMeters": 25.50725666898296,
+      "secondHitMeters": 53.796805866156134,
+      "estimatedDepthBehindFrontMeters": 22.669881588515775,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 17.0,
+      "firstHitMeters": 18.420177662331522,
+      "secondHitMeters": 18.57100762916265,
+      "estimatedDepthBehindFrontMeters": 15.582802581864335,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 18.0,
+      "firstHitMeters": 27.283168368973623,
+      "secondHitMeters": 51.54444162979179,
+      "estimatedDepthBehindFrontMeters": 24.445793288506437,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 19.0,
+      "firstHitMeters": 27.345251443334064,
+      "secondHitMeters": 50.418259511609605,
+      "estimatedDepthBehindFrontMeters": 24.507876362866877,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 20.0,
+      "firstHitMeters": 26.219069325151878,
+      "secondHitMeters": 49.29207739342742,
+      "estimatedDepthBehindFrontMeters": 23.38169424468469,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 21.0,
+      "firstHitMeters": 25.092887206969692,
+      "secondHitMeters": 48.165895275245234,
+      "estimatedDepthBehindFrontMeters": 22.255512126502506,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 22.0,
+      "firstHitMeters": 24.14831548035511,
+      "secondHitMeters": 47.03971315706306,
+      "estimatedDepthBehindFrontMeters": 21.310940399887922,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 23.0,
+      "firstHitMeters": 21.948974935156514,
+      "secondHitMeters": 22.61237905716499,
+      "estimatedDepthBehindFrontMeters": 19.111599854689327,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 24.0,
+      "firstHitMeters": 20.822792816974328,
+      "secondHitMeters": 21.486196938982804,
+      "estimatedDepthBehindFrontMeters": 17.98541773650714,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 25.0,
+      "firstHitMeters": 19.833483734706142,
+      "secondHitMeters": 20.360014820800615,
+      "estimatedDepthBehindFrontMeters": 16.996108654238956,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 26.0,
+      "firstHitMeters": 23.856734819465203,
+      "secondHitMeters": 27.700138880336432,
+      "estimatedDepthBehindFrontMeters": 21.019359738998016,
+      "hitCount": 7
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 27.0,
+      "firstHitMeters": 22.336965319132478,
+      "secondHitMeters": 24.387023664499402,
+      "estimatedDepthBehindFrontMeters": 19.49959023866529,
+      "hitCount": 11
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 28.0,
+      "firstHitMeters": 23.22492116912779,
+      "secondHitMeters": 23.26084154631724,
+      "estimatedDepthBehindFrontMeters": 20.387546088660603,
+      "hitCount": 15
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 29.0,
+      "firstHitMeters": 25.8777846279528,
+      "secondHitMeters": 26.541188749961297,
+      "estimatedDepthBehindFrontMeters": 23.040409547485613,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 30.0,
+      "firstHitMeters": 24.751602509770613,
+      "secondHitMeters": 25.415006631779107,
+      "estimatedDepthBehindFrontMeters": 21.914227429303427,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 31.0,
+      "firstHitMeters": 32.139918130313106,
+      "secondHitMeters": 36.90407409342343,
+      "estimatedDepthBehindFrontMeters": 29.30254304984592,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 32.0,
+      "firstHitMeters": 33.027873980308414,
+      "secondHitMeters": 35.777891975241246,
+      "estimatedDepthBehindFrontMeters": 30.190498899841227,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 33.0,
+      "firstHitMeters": 33.915829830303764,
+      "secondHitMeters": 34.65170985705908,
+      "estimatedDepthBehindFrontMeters": 31.078454749836578,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 34.0,
+      "firstHitMeters": 33.441120384714715,
+      "secondHitMeters": 34.37713333586999,
+      "estimatedDepthBehindFrontMeters": 30.60374530424753,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 35.0,
+      "firstHitMeters": 87.75577528510226,
+      "secondHitMeters": 91.06649120043272,
+      "estimatedDepthBehindFrontMeters": 84.91840020463508,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 36.0,
+      "firstHitMeters": 86.62959316692007,
+      "secondHitMeters": 89.94030908225055,
+      "estimatedDepthBehindFrontMeters": 83.79221808645289,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 37.0,
+      "firstHitMeters": 85.50341104873792,
+      "secondHitMeters": 88.81412696406838,
+      "estimatedDepthBehindFrontMeters": 82.66603596827073,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 38.0,
+      "firstHitMeters": 84.37722893055572,
+      "secondHitMeters": 87.68794484588618,
+      "estimatedDepthBehindFrontMeters": 81.53985385008853,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 39.0,
+      "firstHitMeters": 83.25104681237353,
+      "secondHitMeters": 86.56176272770401,
+      "estimatedDepthBehindFrontMeters": 80.41367173190635,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 40.0,
+      "firstHitMeters": 82.12486469419136,
+      "secondHitMeters": 85.43558060952182,
+      "estimatedDepthBehindFrontMeters": 79.28748961372418,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 41.0,
+      "firstHitMeters": 80.99868257600916,
+      "secondHitMeters": 84.30939849133962,
+      "estimatedDepthBehindFrontMeters": 78.16130749554198,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 42.0,
+      "firstHitMeters": 79.872500457827,
+      "secondHitMeters": 83.18321637315745,
+      "estimatedDepthBehindFrontMeters": 77.03512537735982,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 43.0,
+      "firstHitMeters": 78.74631833964482,
+      "secondHitMeters": 82.05703425497528,
+      "estimatedDepthBehindFrontMeters": 75.90894325917763,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 44.0,
+      "firstHitMeters": 59.556894308952835,
+      "secondHitMeters": 61.01785302982875,
+      "estimatedDepthBehindFrontMeters": 56.71951922848565,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 45.0,
+      "firstHitMeters": 59.452079740796506,
+      "secondHitMeters": 60.33209592544503,
+      "estimatedDepthBehindFrontMeters": 56.61470466032932,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -45.0,
+      "firstHitMeters": 177.8503447396767,
+      "secondHitMeters": 181.16106065500713,
+      "estimatedDepthBehindFrontMeters": 175.01296965920952,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -44.0,
+      "firstHitMeters": 176.7241626214945,
+      "secondHitMeters": 180.03487853682495,
+      "estimatedDepthBehindFrontMeters": 173.8867875410273,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -43.0,
+      "firstHitMeters": 175.59798050331236,
+      "secondHitMeters": 178.9086964186428,
+      "estimatedDepthBehindFrontMeters": 172.76060542284517,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -42.0,
+      "firstHitMeters": 174.47179838513017,
+      "secondHitMeters": 177.7825143004606,
+      "estimatedDepthBehindFrontMeters": 171.634423304663,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -36.0,
+      "firstHitMeters": 5.178043265621605,
+      "secondHitMeters": 167.71470567603706,
+      "estimatedDepthBehindFrontMeters": 2.3406681851544198,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -35.0,
+      "firstHitMeters": 6.065999115616909,
+      "secondHitMeters": 166.5885235578549,
+      "estimatedDepthBehindFrontMeters": 3.228624035149723,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -34.0,
+      "firstHitMeters": 6.953954965612222,
+      "secondHitMeters": 14.490548774410732,
+      "estimatedDepthBehindFrontMeters": 4.116579885145036,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -33.0,
+      "firstHitMeters": 7.841910815607575,
+      "secondHitMeters": 164.33615932149053,
+      "estimatedDepthBehindFrontMeters": 5.004535735140389,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -32.0,
+      "firstHitMeters": 8.729866665602923,
+      "secondHitMeters": 163.20997720330837,
+      "estimatedDepthBehindFrontMeters": 5.892491585135738,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -31.0,
+      "firstHitMeters": 9.617822515598236,
+      "secondHitMeters": 162.08379508512616,
+      "estimatedDepthBehindFrontMeters": 6.780447435131051,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -30.0,
+      "firstHitMeters": 10.505778365593546,
+      "secondHitMeters": 160.957612966944,
+      "estimatedDepthBehindFrontMeters": 7.66840328512636,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -29.0,
+      "firstHitMeters": 11.393734215588893,
+      "secondHitMeters": 24.26187633808665,
+      "estimatedDepthBehindFrontMeters": 8.556359135121706,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -28.0,
+      "firstHitMeters": 12.281690065584243,
+      "secondHitMeters": 19.772709852396357,
+      "estimatedDepthBehindFrontMeters": 9.444314985117057,
+      "hitCount": 7
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -27.0,
+      "firstHitMeters": 13.169645915579554,
+      "secondHitMeters": 18.906318239864795,
+      "estimatedDepthBehindFrontMeters": 10.332270835112368,
+      "hitCount": 7
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -26.0,
+      "firstHitMeters": 14.057601765574905,
+      "secondHitMeters": 17.78013612168261,
+      "estimatedDepthBehindFrontMeters": 11.220226685107718,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -25.0,
+      "firstHitMeters": 14.945557615570218,
+      "secondHitMeters": 16.653954003500424,
+      "estimatedDepthBehindFrontMeters": 12.108182535103033,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -24.0,
+      "firstHitMeters": 22.5201897541654,
+      "secondHitMeters": 24.989493636468318,
+      "estimatedDepthBehindFrontMeters": 19.682814673698214,
+      "hitCount": 9
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -23.0,
+      "firstHitMeters": 23.408145604160712,
+      "secondHitMeters": 28.190686030882958,
+      "estimatedDepthBehindFrontMeters": 20.570770523693525,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -22.0,
+      "firstHitMeters": 24.29610145415606,
+      "secondHitMeters": 25.054870930382005,
+      "estimatedDepthBehindFrontMeters": 21.458726373688872,
+      "hitCount": 7
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -21.0,
+      "firstHitMeters": 25.18405730415137,
+      "secondHitMeters": 150.82197390330435,
+      "estimatedDepthBehindFrontMeters": 22.346682223684184,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -20.0,
+      "firstHitMeters": 26.072013154146724,
+      "secondHitMeters": 149.69579178512217,
+      "estimatedDepthBehindFrontMeters": 23.234638073679537,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -19.0,
+      "firstHitMeters": 26.95996900414203,
+      "secondHitMeters": 148.56960966694,
+      "estimatedDepthBehindFrontMeters": 24.122593923674845,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -18.0,
+      "firstHitMeters": 27.847924854137382,
+      "secondHitMeters": 147.44342754875782,
+      "estimatedDepthBehindFrontMeters": 25.010549773670196,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -17.0,
+      "firstHitMeters": 28.73588070413269,
+      "secondHitMeters": 146.31724543057567,
+      "estimatedDepthBehindFrontMeters": 25.898505623665503,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -16.0,
+      "firstHitMeters": 29.623836554128037,
+      "secondHitMeters": 30.34794902664531,
+      "estimatedDepthBehindFrontMeters": 26.78646147366085,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -15.0,
+      "firstHitMeters": 29.48946167381918,
+      "secondHitMeters": 144.0648811942113,
+      "estimatedDepthBehindFrontMeters": 26.652086593351992,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -14.0,
+      "firstHitMeters": 28.363279555636993,
+      "secondHitMeters": 142.93869907602908,
+      "estimatedDepthBehindFrontMeters": 25.525904475169806,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -13.0,
+      "firstHitMeters": 27.237097437454807,
+      "secondHitMeters": 141.81251695784692,
+      "estimatedDepthBehindFrontMeters": 24.39972235698762,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -10.0,
+      "firstHitMeters": 28.264895365500188,
+      "secondHitMeters": 35.64571011600427,
+      "estimatedDepthBehindFrontMeters": 25.427520285033,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -9.0,
+      "firstHitMeters": 29.152851215495495,
+      "secondHitMeters": 137.3077884851182,
+      "estimatedDepthBehindFrontMeters": 26.31547613502831,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -8.0,
+      "firstHitMeters": 30.040807065490846,
+      "secondHitMeters": 136.18160636693602,
+      "estimatedDepthBehindFrontMeters": 27.20343198502366,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -7.0,
+      "firstHitMeters": 30.92876291548616,
+      "secondHitMeters": 135.0554242487538,
+      "estimatedDepthBehindFrontMeters": 28.091387835018974,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -6.0,
+      "firstHitMeters": 31.816718765481504,
+      "secondHitMeters": 133.92924213057165,
+      "estimatedDepthBehindFrontMeters": 28.979343685014317,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 1.0,
+      "firstHitMeters": 5.501242630453196,
+      "secondHitMeters": 38.032409715448836,
+      "estimatedDepthBehindFrontMeters": 2.6638675499860103,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 2.0,
+      "firstHitMeters": 6.3891984804485045,
+      "secondHitMeters": 38.92036556544414,
+      "estimatedDepthBehindFrontMeters": 3.551823399981319,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 3.0,
+      "firstHitMeters": 7.2771543304438575,
+      "secondHitMeters": 39.8083214154395,
+      "estimatedDepthBehindFrontMeters": 4.439779249976672,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 4.0,
+      "firstHitMeters": 8.165110180439166,
+      "secondHitMeters": 40.69627726543481,
+      "estimatedDepthBehindFrontMeters": 5.327735099971981,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 5.0,
+      "firstHitMeters": 7.663858543640163,
+      "secondHitMeters": 8.084958536056382,
+      "estimatedDepthBehindFrontMeters": 4.826483463172978,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 6.0,
+      "firstHitMeters": 9.941021880429828,
+      "secondHitMeters": 49.15886525402531,
+      "estimatedDepthBehindFrontMeters": 7.103646799962642,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 7.0,
+      "firstHitMeters": 10.828977730425176,
+      "secondHitMeters": 16.762113754630583,
+      "estimatedDepthBehindFrontMeters": 7.991602649957991,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 8.0,
+      "firstHitMeters": 11.716933580420488,
+      "secondHitMeters": 15.635931636448394,
+      "estimatedDepthBehindFrontMeters": 8.879558499953301,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 9.0,
+      "firstHitMeters": 12.604889430415835,
+      "secondHitMeters": 14.509749518266208,
+      "estimatedDepthBehindFrontMeters": 9.767514349948648,
+      "hitCount": 6
+    }
+  ],
+  "deepSamples": [
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -45.0,
+      "firstHitMeters": 177.8503447396767,
+      "secondHitMeters": 181.16106065500713,
+      "estimatedDepthBehindFrontMeters": 175.01296965920952,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -44.0,
+      "firstHitMeters": 176.7241626214945,
+      "secondHitMeters": 180.03487853682495,
+      "estimatedDepthBehindFrontMeters": 173.8867875410273,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -43.0,
+      "firstHitMeters": 175.59798050331236,
+      "secondHitMeters": 178.9086964186428,
+      "estimatedDepthBehindFrontMeters": 172.76060542284517,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -42.0,
+      "firstHitMeters": 174.47179838513017,
+      "secondHitMeters": 177.7825143004606,
+      "estimatedDepthBehindFrontMeters": 171.634423304663,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -25.0,
+      "firstHitMeters": 14.945557615570218,
+      "secondHitMeters": 16.653954003500424,
+      "estimatedDepthBehindFrontMeters": 12.108182535103033,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -24.0,
+      "firstHitMeters": 22.5201897541654,
+      "secondHitMeters": 29.316868149065144,
+      "estimatedDepthBehindFrontMeters": 19.682814673698214,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -23.0,
+      "firstHitMeters": 23.408145604160712,
+      "secondHitMeters": 28.190686030882958,
+      "estimatedDepthBehindFrontMeters": 20.570770523693525,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -22.0,
+      "firstHitMeters": 24.29610145415606,
+      "secondHitMeters": 25.054870930382005,
+      "estimatedDepthBehindFrontMeters": 21.458726373688872,
+      "hitCount": 7
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -21.0,
+      "firstHitMeters": 25.18405730415137,
+      "secondHitMeters": 150.82197390330435,
+      "estimatedDepthBehindFrontMeters": 22.346682223684184,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -20.0,
+      "firstHitMeters": 26.072013154146724,
+      "secondHitMeters": 149.69579178512217,
+      "estimatedDepthBehindFrontMeters": 23.234638073679537,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -19.0,
+      "firstHitMeters": 26.95996900414203,
+      "secondHitMeters": 148.56960966694,
+      "estimatedDepthBehindFrontMeters": 24.122593923674845,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -18.0,
+      "firstHitMeters": 27.847924854137382,
+      "secondHitMeters": 147.44342754875782,
+      "estimatedDepthBehindFrontMeters": 25.010549773670196,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -17.0,
+      "firstHitMeters": 28.73588070413269,
+      "secondHitMeters": 146.31724543057567,
+      "estimatedDepthBehindFrontMeters": 25.898505623665503,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -16.0,
+      "firstHitMeters": 29.623836554128037,
+      "secondHitMeters": 30.34794902664531,
+      "estimatedDepthBehindFrontMeters": 26.78646147366085,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -15.0,
+      "firstHitMeters": 29.48946167381918,
+      "secondHitMeters": 144.0648811942113,
+      "estimatedDepthBehindFrontMeters": 26.652086593351992,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -14.0,
+      "firstHitMeters": 28.363279555636993,
+      "secondHitMeters": 142.93869907602908,
+      "estimatedDepthBehindFrontMeters": 25.525904475169806,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -13.0,
+      "firstHitMeters": 27.237097437454807,
+      "secondHitMeters": 141.81251695784692,
+      "estimatedDepthBehindFrontMeters": 24.39972235698762,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -10.0,
+      "firstHitMeters": 28.264895365500188,
+      "secondHitMeters": 35.64571011600427,
+      "estimatedDepthBehindFrontMeters": 25.427520285033,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -9.0,
+      "firstHitMeters": 29.152851215495495,
+      "secondHitMeters": 137.3077884851182,
+      "estimatedDepthBehindFrontMeters": 26.31547613502831,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -8.0,
+      "firstHitMeters": 30.040807065490846,
+      "secondHitMeters": 136.18160636693602,
+      "estimatedDepthBehindFrontMeters": 27.20343198502366,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -7.0,
+      "firstHitMeters": 30.92876291548616,
+      "secondHitMeters": 135.0554242487538,
+      "estimatedDepthBehindFrontMeters": 28.091387835018974,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": -6.0,
+      "firstHitMeters": 31.816718765481504,
+      "secondHitMeters": 133.92924213057165,
+      "estimatedDepthBehindFrontMeters": 28.979343685014317,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 10.0,
+      "firstHitMeters": 20.179521569010983,
+      "secondHitMeters": 52.710688654006624,
+      "estimatedDepthBehindFrontMeters": 17.342146488543797,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 12.0,
+      "firstHitMeters": 21.95543326900164,
+      "secondHitMeters": 54.48660035399729,
+      "estimatedDepthBehindFrontMeters": 19.118058188534455,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 13.0,
+      "firstHitMeters": 22.84338911899699,
+      "secondHitMeters": 55.37455620399263,
+      "estimatedDepthBehindFrontMeters": 20.006014038529802,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 14.0,
+      "firstHitMeters": 23.731344968992303,
+      "secondHitMeters": 56.04917010252051,
+      "estimatedDepthBehindFrontMeters": 20.893969888525117,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 15.0,
+      "firstHitMeters": 24.619300818987654,
+      "secondHitMeters": 54.92298798433833,
+      "estimatedDepthBehindFrontMeters": 21.781925738520467,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 16.0,
+      "firstHitMeters": 25.50725666898296,
+      "secondHitMeters": 53.796805866156134,
+      "estimatedDepthBehindFrontMeters": 22.669881588515775,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 17.0,
+      "firstHitMeters": 18.420177662331522,
+      "secondHitMeters": 18.57100762916265,
+      "estimatedDepthBehindFrontMeters": 15.582802581864335,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 18.0,
+      "firstHitMeters": 27.283168368973623,
+      "secondHitMeters": 51.54444162979179,
+      "estimatedDepthBehindFrontMeters": 24.445793288506437,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 19.0,
+      "firstHitMeters": 27.345251443334064,
+      "secondHitMeters": 50.418259511609605,
+      "estimatedDepthBehindFrontMeters": 24.507876362866877,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 20.0,
+      "firstHitMeters": 26.219069325151878,
+      "secondHitMeters": 49.29207739342742,
+      "estimatedDepthBehindFrontMeters": 23.38169424468469,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 21.0,
+      "firstHitMeters": 25.092887206969692,
+      "secondHitMeters": 48.165895275245234,
+      "estimatedDepthBehindFrontMeters": 22.255512126502506,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 22.0,
+      "firstHitMeters": 24.14831548035511,
+      "secondHitMeters": 47.03971315706306,
+      "estimatedDepthBehindFrontMeters": 21.310940399887922,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 23.0,
+      "firstHitMeters": 21.948974935156514,
+      "secondHitMeters": 22.61237905716499,
+      "estimatedDepthBehindFrontMeters": 19.111599854689327,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 24.0,
+      "firstHitMeters": 20.822792816974328,
+      "secondHitMeters": 21.486196938982804,
+      "estimatedDepthBehindFrontMeters": 17.98541773650714,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 25.0,
+      "firstHitMeters": 19.833483734706142,
+      "secondHitMeters": 20.360014820800615,
+      "estimatedDepthBehindFrontMeters": 16.996108654238956,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 26.0,
+      "firstHitMeters": 23.856734819465203,
+      "secondHitMeters": 27.700138880336432,
+      "estimatedDepthBehindFrontMeters": 21.019359738998016,
+      "hitCount": 7
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 27.0,
+      "firstHitMeters": 22.336965319132478,
+      "secondHitMeters": 24.387023664499402,
+      "estimatedDepthBehindFrontMeters": 19.49959023866529,
+      "hitCount": 11
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 28.0,
+      "firstHitMeters": 23.22492116912779,
+      "secondHitMeters": 23.26084154631724,
+      "estimatedDepthBehindFrontMeters": 20.387546088660603,
+      "hitCount": 15
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 29.0,
+      "firstHitMeters": 25.8777846279528,
+      "secondHitMeters": 26.541188749961297,
+      "estimatedDepthBehindFrontMeters": 23.040409547485613,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 30.0,
+      "firstHitMeters": 24.751602509770613,
+      "secondHitMeters": 25.415006631779107,
+      "estimatedDepthBehindFrontMeters": 21.914227429303427,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 31.0,
+      "firstHitMeters": 32.139918130313106,
+      "secondHitMeters": 36.90407409342343,
+      "estimatedDepthBehindFrontMeters": 29.30254304984592,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 32.0,
+      "firstHitMeters": 33.027873980308414,
+      "secondHitMeters": 35.777891975241246,
+      "estimatedDepthBehindFrontMeters": 30.190498899841227,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 33.0,
+      "firstHitMeters": 33.915829830303764,
+      "secondHitMeters": 34.65170985705908,
+      "estimatedDepthBehindFrontMeters": 31.078454749836578,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 34.0,
+      "firstHitMeters": 33.441120384714715,
+      "secondHitMeters": 34.37713333586999,
+      "estimatedDepthBehindFrontMeters": 30.60374530424753,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 35.0,
+      "firstHitMeters": 87.75577528510226,
+      "secondHitMeters": 91.06649120043272,
+      "estimatedDepthBehindFrontMeters": 84.91840020463508,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 36.0,
+      "firstHitMeters": 86.62959316692007,
+      "secondHitMeters": 89.94030908225055,
+      "estimatedDepthBehindFrontMeters": 83.79221808645289,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 37.0,
+      "firstHitMeters": 85.50341104873792,
+      "secondHitMeters": 88.81412696406838,
+      "estimatedDepthBehindFrontMeters": 82.66603596827073,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 38.0,
+      "firstHitMeters": 84.37722893055572,
+      "secondHitMeters": 87.68794484588618,
+      "estimatedDepthBehindFrontMeters": 81.53985385008853,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 39.0,
+      "firstHitMeters": 83.25104681237353,
+      "secondHitMeters": 86.56176272770401,
+      "estimatedDepthBehindFrontMeters": 80.41367173190635,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 40.0,
+      "firstHitMeters": 82.12486469419136,
+      "secondHitMeters": 85.43558060952182,
+      "estimatedDepthBehindFrontMeters": 79.28748961372418,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 41.0,
+      "firstHitMeters": 80.99868257600916,
+      "secondHitMeters": 84.30939849133962,
+      "estimatedDepthBehindFrontMeters": 78.16130749554198,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 42.0,
+      "firstHitMeters": 79.872500457827,
+      "secondHitMeters": 83.18321637315745,
+      "estimatedDepthBehindFrontMeters": 77.03512537735982,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 43.0,
+      "firstHitMeters": 78.74631833964482,
+      "secondHitMeters": 82.05703425497528,
+      "estimatedDepthBehindFrontMeters": 75.90894325917763,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 44.0,
+      "firstHitMeters": 59.556894308952835,
+      "secondHitMeters": 61.01785302982875,
+      "estimatedDepthBehindFrontMeters": 56.71951922848565,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 0.8,
+      "lateralOffsetMeters": 45.0,
+      "firstHitMeters": 59.452079740796506,
+      "secondHitMeters": 60.33209592544503,
+      "estimatedDepthBehindFrontMeters": 56.61470466032932,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -45.0,
+      "firstHitMeters": 177.8503447396767,
+      "secondHitMeters": 181.16106065500713,
+      "estimatedDepthBehindFrontMeters": 175.01296965920952,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -44.0,
+      "firstHitMeters": 176.7241626214945,
+      "secondHitMeters": 180.03487853682495,
+      "estimatedDepthBehindFrontMeters": 173.8867875410273,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -43.0,
+      "firstHitMeters": 175.59798050331236,
+      "secondHitMeters": 178.9086964186428,
+      "estimatedDepthBehindFrontMeters": 172.76060542284517,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -42.0,
+      "firstHitMeters": 174.47179838513017,
+      "secondHitMeters": 177.7825143004606,
+      "estimatedDepthBehindFrontMeters": 171.634423304663,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -25.0,
+      "firstHitMeters": 14.945557615570218,
+      "secondHitMeters": 16.653954003500424,
+      "estimatedDepthBehindFrontMeters": 12.108182535103033,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -24.0,
+      "firstHitMeters": 22.5201897541654,
+      "secondHitMeters": 24.989493636468318,
+      "estimatedDepthBehindFrontMeters": 19.682814673698214,
+      "hitCount": 9
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -23.0,
+      "firstHitMeters": 23.408145604160712,
+      "secondHitMeters": 28.190686030882958,
+      "estimatedDepthBehindFrontMeters": 20.570770523693525,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -22.0,
+      "firstHitMeters": 24.29610145415606,
+      "secondHitMeters": 25.054870930382005,
+      "estimatedDepthBehindFrontMeters": 21.458726373688872,
+      "hitCount": 7
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -21.0,
+      "firstHitMeters": 25.18405730415137,
+      "secondHitMeters": 150.82197390330435,
+      "estimatedDepthBehindFrontMeters": 22.346682223684184,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -20.0,
+      "firstHitMeters": 26.072013154146724,
+      "secondHitMeters": 149.69579178512217,
+      "estimatedDepthBehindFrontMeters": 23.234638073679537,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -19.0,
+      "firstHitMeters": 26.95996900414203,
+      "secondHitMeters": 148.56960966694,
+      "estimatedDepthBehindFrontMeters": 24.122593923674845,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -18.0,
+      "firstHitMeters": 27.847924854137382,
+      "secondHitMeters": 147.44342754875782,
+      "estimatedDepthBehindFrontMeters": 25.010549773670196,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -17.0,
+      "firstHitMeters": 28.73588070413269,
+      "secondHitMeters": 146.31724543057567,
+      "estimatedDepthBehindFrontMeters": 25.898505623665503,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -16.0,
+      "firstHitMeters": 29.623836554128037,
+      "secondHitMeters": 30.34794902664531,
+      "estimatedDepthBehindFrontMeters": 26.78646147366085,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -15.0,
+      "firstHitMeters": 29.48946167381918,
+      "secondHitMeters": 144.0648811942113,
+      "estimatedDepthBehindFrontMeters": 26.652086593351992,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -14.0,
+      "firstHitMeters": 28.363279555636993,
+      "secondHitMeters": 142.93869907602908,
+      "estimatedDepthBehindFrontMeters": 25.525904475169806,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -13.0,
+      "firstHitMeters": 27.237097437454807,
+      "secondHitMeters": 141.81251695784692,
+      "estimatedDepthBehindFrontMeters": 24.39972235698762,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -10.0,
+      "firstHitMeters": 28.264895365500188,
+      "secondHitMeters": 35.64571011600427,
+      "estimatedDepthBehindFrontMeters": 25.427520285033,
+      "hitCount": 5
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -9.0,
+      "firstHitMeters": 29.152851215495495,
+      "secondHitMeters": 137.3077884851182,
+      "estimatedDepthBehindFrontMeters": 26.31547613502831,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -8.0,
+      "firstHitMeters": 30.040807065490846,
+      "secondHitMeters": 136.18160636693602,
+      "estimatedDepthBehindFrontMeters": 27.20343198502366,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -7.0,
+      "firstHitMeters": 30.92876291548616,
+      "secondHitMeters": 135.0554242487538,
+      "estimatedDepthBehindFrontMeters": 28.091387835018974,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": -6.0,
+      "firstHitMeters": 31.816718765481504,
+      "secondHitMeters": 133.92924213057165,
+      "estimatedDepthBehindFrontMeters": 28.979343685014317,
+      "hitCount": 3
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 10.0,
+      "firstHitMeters": 20.179521569010983,
+      "secondHitMeters": 52.710688654006624,
+      "estimatedDepthBehindFrontMeters": 17.342146488543797,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 12.0,
+      "firstHitMeters": 21.95543326900164,
+      "secondHitMeters": 54.48660035399729,
+      "estimatedDepthBehindFrontMeters": 19.118058188534455,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 13.0,
+      "firstHitMeters": 22.84338911899699,
+      "secondHitMeters": 55.37455620399263,
+      "estimatedDepthBehindFrontMeters": 20.006014038529802,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 14.0,
+      "firstHitMeters": 23.731344968992303,
+      "secondHitMeters": 56.04917010252051,
+      "estimatedDepthBehindFrontMeters": 20.893969888525117,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 15.0,
+      "firstHitMeters": 24.619300818987654,
+      "secondHitMeters": 54.92298798433833,
+      "estimatedDepthBehindFrontMeters": 21.781925738520467,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 16.0,
+      "firstHitMeters": 25.50725666898296,
+      "secondHitMeters": 53.796805866156134,
+      "estimatedDepthBehindFrontMeters": 22.669881588515775,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 17.0,
+      "firstHitMeters": 18.420177662331522,
+      "secondHitMeters": 18.57100762916265,
+      "estimatedDepthBehindFrontMeters": 15.582802581864335,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 18.0,
+      "firstHitMeters": 27.283168368973623,
+      "secondHitMeters": 51.54444162979179,
+      "estimatedDepthBehindFrontMeters": 24.445793288506437,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 19.0,
+      "firstHitMeters": 27.345251443334064,
+      "secondHitMeters": 50.418259511609605,
+      "estimatedDepthBehindFrontMeters": 24.507876362866877,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 20.0,
+      "firstHitMeters": 26.219069325151878,
+      "secondHitMeters": 49.29207739342742,
+      "estimatedDepthBehindFrontMeters": 23.38169424468469,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 21.0,
+      "firstHitMeters": 25.092887206969692,
+      "secondHitMeters": 48.165895275245234,
+      "estimatedDepthBehindFrontMeters": 22.255512126502506,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 22.0,
+      "firstHitMeters": 24.14831548035511,
+      "secondHitMeters": 47.03971315706306,
+      "estimatedDepthBehindFrontMeters": 21.310940399887922,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 23.0,
+      "firstHitMeters": 21.948974935156514,
+      "secondHitMeters": 22.61237905716499,
+      "estimatedDepthBehindFrontMeters": 19.111599854689327,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 24.0,
+      "firstHitMeters": 20.822792816974328,
+      "secondHitMeters": 21.486196938982804,
+      "estimatedDepthBehindFrontMeters": 17.98541773650714,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 25.0,
+      "firstHitMeters": 19.833483734706142,
+      "secondHitMeters": 20.360014820800615,
+      "estimatedDepthBehindFrontMeters": 16.996108654238956,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 26.0,
+      "firstHitMeters": 24.92896177394975,
+      "secondHitMeters": 25.578405228024106,
+      "estimatedDepthBehindFrontMeters": 22.091586693482565,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 27.0,
+      "firstHitMeters": 24.744690669460546,
+      "secondHitMeters": 28.58809473033178,
+      "estimatedDepthBehindFrontMeters": 21.90731558899336,
+      "hitCount": 9
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 28.0,
+      "firstHitMeters": 23.22492116912779,
+      "secondHitMeters": 27.003966746134985,
+      "estimatedDepthBehindFrontMeters": 20.387546088660603,
+      "hitCount": 13
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 29.0,
+      "firstHitMeters": 24.11287701912314,
+      "secondHitMeters": 25.8777846279528,
+      "estimatedDepthBehindFrontMeters": 21.275501938655953,
+      "hitCount": 9
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 30.0,
+      "firstHitMeters": 24.751602509770613,
+      "secondHitMeters": 25.415006631779107,
+      "estimatedDepthBehindFrontMeters": 21.914227429303427,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 31.0,
+      "firstHitMeters": 32.139918130313106,
+      "secondHitMeters": 36.90407409342343,
+      "estimatedDepthBehindFrontMeters": 29.30254304984592,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 32.0,
+      "firstHitMeters": 33.027873980308414,
+      "secondHitMeters": 35.777891975241246,
+      "estimatedDepthBehindFrontMeters": 30.190498899841227,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 33.0,
+      "firstHitMeters": 33.915829830303764,
+      "secondHitMeters": 34.65170985705908,
+      "estimatedDepthBehindFrontMeters": 31.078454749836578,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 34.0,
+      "firstHitMeters": 33.441120384714715,
+      "secondHitMeters": 34.37713333586999,
+      "estimatedDepthBehindFrontMeters": 30.60374530424753,
+      "hitCount": 6
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 35.0,
+      "firstHitMeters": 87.75577528510226,
+      "secondHitMeters": 91.06649120043272,
+      "estimatedDepthBehindFrontMeters": 84.91840020463508,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 36.0,
+      "firstHitMeters": 86.62959316692007,
+      "secondHitMeters": 89.94030908225055,
+      "estimatedDepthBehindFrontMeters": 83.79221808645289,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 37.0,
+      "firstHitMeters": 85.50341104873792,
+      "secondHitMeters": 88.81412696406838,
+      "estimatedDepthBehindFrontMeters": 82.66603596827073,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 38.0,
+      "firstHitMeters": 84.37722893055572,
+      "secondHitMeters": 87.68794484588618,
+      "estimatedDepthBehindFrontMeters": 81.53985385008853,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 39.0,
+      "firstHitMeters": 83.25104681237353,
+      "secondHitMeters": 86.56176272770401,
+      "estimatedDepthBehindFrontMeters": 80.41367173190635,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 40.0,
+      "firstHitMeters": 82.12486469419136,
+      "secondHitMeters": 85.43558060952182,
+      "estimatedDepthBehindFrontMeters": 79.28748961372418,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 41.0,
+      "firstHitMeters": 80.99868257600916,
+      "secondHitMeters": 84.30939849133962,
+      "estimatedDepthBehindFrontMeters": 78.16130749554198,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 42.0,
+      "firstHitMeters": 79.872500457827,
+      "secondHitMeters": 83.18321637315745,
+      "estimatedDepthBehindFrontMeters": 77.03512537735982,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 43.0,
+      "firstHitMeters": 78.74631833964482,
+      "secondHitMeters": 82.05703425497528,
+      "estimatedDepthBehindFrontMeters": 75.90894325917763,
+      "hitCount": 4
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 44.0,
+      "firstHitMeters": 59.556894308952835,
+      "secondHitMeters": 61.01785302982875,
+      "estimatedDepthBehindFrontMeters": 56.71951922848565,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 1.4,
+      "lateralOffsetMeters": 45.0,
+      "firstHitMeters": 59.452079740796506,
+      "secondHitMeters": 60.33209592544503,
+      "estimatedDepthBehindFrontMeters": 56.61470466032932,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 2.0,
+      "lateralOffsetMeters": -45.0,
+      "firstHitMeters": 177.8503447396767,
+      "secondHitMeters": 181.16106065500713,
+      "estimatedDepthBehindFrontMeters": 175.01296965920952,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 2.0,
+      "lateralOffsetMeters": -44.0,
+      "firstHitMeters": 176.7241626214945,
+      "secondHitMeters": 180.03487853682495,
+      "estimatedDepthBehindFrontMeters": 173.8867875410273,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 2.0,
+      "lateralOffsetMeters": -43.0,
+      "firstHitMeters": 175.59798050331236,
+      "secondHitMeters": 178.9086964186428,
+      "estimatedDepthBehindFrontMeters": 172.76060542284517,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 2.0,
+      "lateralOffsetMeters": -42.0,
+      "firstHitMeters": 174.47179838513017,
+      "secondHitMeters": 177.7825143004606,
+      "estimatedDepthBehindFrontMeters": 171.634423304663,
+      "hitCount": 2
+    },
+    {
+      "heightMeters": 2.0,
+      "lateralOffsetMeters": -25.0,
+      "firstHitMeters": 14.945557615570218,
+      "secondHitMeters": 16.653954003500424,
+      "estimatedDepthBehindFrontMeters": 12.108182535103033,
+      "hitCount": 8
+    },
+    {
+      "heightMeters": 2.0,
+      "lateralOffsetMeters": -24.0,
+      "firstHitMeters": 22.5201897541654,
+      "secondHitMeters": 23.7636007586891,
+      "estimatedDepthBehindFrontMeters": 19.682814673698214,
+      "hitCount": 7
+    }
+  ],
+  "noHitSamples": []
+}

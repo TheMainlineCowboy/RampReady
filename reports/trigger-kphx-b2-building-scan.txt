@@ -1,0 +1,3 @@
+Run exact B2/B4 building ownership and lower-bay depth scan.
+Authority: exact Terminal4/Terminal4b GLBs at WED transforms.
+Question: backed recess vs true drive-through.

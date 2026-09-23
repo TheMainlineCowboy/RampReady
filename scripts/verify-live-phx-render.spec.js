@@ -46,7 +46,7 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   });
   expect(response?.ok()).toBe(true);
 
-  await page.getByRole('heading', { name: 'Choose pushback equipment' }).waitFor({
+  await page.getByRole('heading', { name: 'Choose RampReady equipment' }).waitFor({
     state: 'visible',
     timeout: 30000,
   });
@@ -192,14 +192,14 @@ test('live RampReady serves exact manager Kubota free-drive inspection', async (
   expect(await shell.getAttribute('data-inspection-mode')).toBe('active');
   await expect(page.locator('.rr-runtime-loading')).toHaveCount(0, { timeout: 30000 });
 
-  const speedMetric = page.locator('.rr-metrics').getByText(/mph$/).first();
+  const startZ = Number(await canvas.getAttribute('data-inspection-tug-z'));
   await page.keyboard.down('w');
   await page.waitForTimeout(1400);
+  const movingState = await canvas.evaluate(element => ({ ...element.dataset }));
   await page.keyboard.up('w');
-  await page.waitForTimeout(250);
-  const speedText = await speedMetric.textContent();
-  const movementMph = Number.parseFloat(speedText || '0');
-  expect(movementMph).toBeGreaterThan(0.2);
+  const endZ = Number(movingState.inspectionTugZ);
+  const movementMeters = Math.abs(endZ - startZ);
+  expect(movementMeters).toBeGreaterThan(0.5);
 
   const runtime = await canvas.evaluate(element => ({ ...element.dataset }));
   await page.screenshot({
@@ -211,7 +211,7 @@ test('live RampReady serves exact manager Kubota free-drive inspection', async (
     pageUrl,
     capturedAtUtc: new Date().toISOString(),
     inspectionOnly: true,
-    movementMph,
+    movementMeters,
     runtime,
   }, null, 2)}\n`);
 
@@ -221,6 +221,6 @@ test('live RampReady serves exact manager Kubota free-drive inspection', async (
     managerKubota: runtime.tugSource,
     inspectionOnly: true,
     steeringMode: runtime.steeringMode,
-    movementMph,
+    movementMeters,
   }, null, 2));
 });
