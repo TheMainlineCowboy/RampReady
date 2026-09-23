@@ -3,9 +3,9 @@ import fs from "node:fs";
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
 
-const gatePoseImport = 'import { KPHX_T4_GATE_POSE_SOURCE, getKphxTerminal4GatePoseByRampWedObjectId } from "../environment/kphxFullAirport/terminal4GatePoseAuthority.js";';
+const gatePoseImport = 'import { KPHX_T4_GATE_POSE_SOURCE, createKphxTerminal4GateScenarioPose } from "../environment/kphxFullAirport/terminal4GatePoseAuthority.js";';
 const sourceAuthorityImport = 'import { KPHX_FULL_AIRPORT_SOURCE, kphxXPlaneHeadingToRampReadyYawRadians } from "../environment/kphxFullAirport/sourceAuthority.js";';
-const exactMarker = "same-a1-wed-gate-pose-equipment-spawn-v1";
+const exactMarker = "same-wed-ramp-position-aircraft-equipment-pose-v1";
 
 if (!source.includes(gatePoseImport)) {
   if (!source.includes(sourceAuthorityImport)) throw new Error("A1 exact gate-pose source-authority import anchor is missing");
@@ -18,7 +18,7 @@ const A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPositio
 const A1_SOURCE_HEADING_DEGREES = KPHX_FULL_AIRPORT_SOURCE.anchor.headingDegrees;
 const A1_AIRCRAFT_YAW_RADIANS = kphxXPlaneHeadingToRampReadyYawRadians(A1_SOURCE_HEADING_DEGREES);`;
 
-const exactPoseBlock = `const A1_GATE_POSE = getKphxTerminal4GatePoseByRampWedObjectId(KPHX_FULL_AIRPORT_SOURCE.anchor.wedObjectId);
+const generatedGatePoseBlock = `const A1_GATE_POSE = getKphxTerminal4GatePoseByRampWedObjectId(KPHX_FULL_AIRPORT_SOURCE.anchor.wedObjectId);
 if (!A1_GATE_POSE || A1_GATE_POSE.gate !== "A1") throw new Error("Exact KPHX A1 WED ramp-position pose is missing");
 const A1_AIRCRAFT_START_X = A1_GATE_POSE.runtimePosition[0];
 const NOSE_START_Z = A1_GATE_POSE.runtimePosition[2];
@@ -26,32 +26,32 @@ const STOP_Z = 52;
 const A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPosition-27855";
 const A1_SOURCE_HEADING_DEGREES = A1_GATE_POSE.sourceHeadingDegrees;
 const A1_AIRCRAFT_YAW_RADIANS = A1_GATE_POSE.runtimeYawRadians;
-const A1_EQUIPMENT_APPROACH_OFFSET_METERS = 6.2;
-const A1_EQUIPMENT_SPAWN_AUTHORITY = "same-a1-wed-gate-pose-equipment-spawn-v1";
-const A1_EQUIPMENT_SPAWN = Object.freeze({
-  x: A1_AIRCRAFT_START_X - Math.sin(A1_AIRCRAFT_YAW_RADIANS) * A1_EQUIPMENT_APPROACH_OFFSET_METERS,
-  z: NOSE_START_Z - Math.cos(A1_AIRCRAFT_YAW_RADIANS) * A1_EQUIPMENT_APPROACH_OFFSET_METERS,
-  yaw: A1_AIRCRAFT_YAW_RADIANS,
-});
-function createA1SpawnPushbackState() {
-  return createPushbackState({
-    tugX: A1_EQUIPMENT_SPAWN.x,
-    tugZ: A1_EQUIPMENT_SPAWN.z,
-    tugYaw: A1_EQUIPMENT_SPAWN.yaw,
-    aircraftX: A1_AIRCRAFT_START_X,
-    aircraftZ: NOSE_START_Z,
-    aircraftYaw: A1_AIRCRAFT_YAW_RADIANS,
-  });
-}`;
+const A1_EQUIPMENT_APPROACH_OFFSET_METERS = 6.2;`;
 
-if (!source.includes("const A1_GATE_POSE = getKphxTerminal4GatePoseByRampWedObjectId")) {
-  if (!source.includes(legacyHeadingBlock)) throw new Error("A1 heading block is missing before exact gate-pose enforcement");
-  source = source.replace(legacyHeadingBlock, exactPoseBlock);
-} else if (!source.includes(`A1_EQUIPMENT_SPAWN_AUTHORITY = "${exactMarker}"`)) {
-  source = source.replace(
-    "const A1_EQUIPMENT_APPROACH_OFFSET_METERS = 6.2;",
-    `const A1_EQUIPMENT_APPROACH_OFFSET_METERS = 6.2;\nconst A1_EQUIPMENT_SPAWN_AUTHORITY = "${exactMarker}";`,
-  );
+const exactScenarioBlock = `const A1_SCENARIO_POSE = createKphxTerminal4GateScenarioPose(
+  KPHX_FULL_AIRPORT_SOURCE.anchor.wedObjectId,
+  { equipmentApproachOffsetMeters: 6.2 },
+);
+if (A1_SCENARIO_POSE.gate !== "A1") throw new Error("Exact KPHX A1 WED gate scenario pose is missing");
+const A1_AIRCRAFT_START_X = A1_SCENARIO_POSE.aircraft.x;
+const NOSE_START_Z = A1_SCENARIO_POSE.aircraft.z;
+const STOP_Z = 52;
+const A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPosition-27855";
+const A1_SOURCE_HEADING_DEGREES = A1_SCENARIO_POSE.sourceHeadingDegrees;
+const A1_AIRCRAFT_YAW_RADIANS = A1_SCENARIO_POSE.aircraft.yaw;
+const A1_EQUIPMENT_APPROACH_OFFSET_METERS = A1_SCENARIO_POSE.equipmentApproachOffsetMeters;
+const A1_EQUIPMENT_SPAWN_AUTHORITY = A1_SCENARIO_POSE.authority;
+const A1_EQUIPMENT_SPAWN = A1_SCENARIO_POSE.equipment;`;
+
+if (source.includes(generatedGatePoseBlock)) {
+  const generatedStart = source.indexOf(generatedGatePoseBlock);
+  const generatedTail = source.indexOf("function createA1SpawnPushbackState()", generatedStart);
+  if (generatedTail < 0) throw new Error("Generated A1 gate-pose tail is missing");
+  source = source.slice(0, generatedStart) + exactScenarioBlock + "\n" + source.slice(generatedTail);
+} else if (source.includes(legacyHeadingBlock)) {
+  source = source.replace(legacyHeadingBlock, exactScenarioBlock);
+} else if (!source.includes("const A1_SCENARIO_POSE = createKphxTerminal4GateScenarioPose")) {
+  throw new Error("A1 scenario-pose source block is missing before exact gate-pose enforcement");
 }
 
 source = source.replace(
@@ -136,9 +136,9 @@ if (source.includes(canvasAnchor) && !source.includes("dataset.a1EquipmentSpawnA
 for (const required of [
   gatePoseImport,
   exactMarker,
-  "const A1_GATE_POSE = getKphxTerminal4GatePoseByRampWedObjectId",
-  "const A1_SOURCE_HEADING_DEGREES = A1_GATE_POSE.sourceHeadingDegrees",
-  "const A1_AIRCRAFT_YAW_RADIANS = A1_GATE_POSE.runtimeYawRadians",
+  "const A1_SCENARIO_POSE = createKphxTerminal4GateScenarioPose",
+  "const A1_SOURCE_HEADING_DEGREES = A1_SCENARIO_POSE.sourceHeadingDegrees",
+  "const A1_AIRCRAFT_YAW_RADIANS = A1_SCENARIO_POSE.aircraft.yaw",
   "createA1SpawnPushbackState()",
   "sim.rig.root.position.set(A1_EQUIPMENT_SPAWN.x, 0, A1_EQUIPMENT_SPAWN.z);",
   "sim.rig.root.rotation.y = A1_EQUIPMENT_SPAWN.yaw;",
