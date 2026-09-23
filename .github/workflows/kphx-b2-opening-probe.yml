@@ -1,0 +1,70 @@
+name: KPHX B2 Ramp Opening Probe
+
+on:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - reports/trigger-kphx-b2-opening-probe.txt
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install app and browser
+        run: |
+          set -euo pipefail
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start verifier
+        run: |
+          set -euo pipefail
+          nohup npx vite --host 127.0.0.1 --port 4173 >/tmp/b2-probe-vite.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/b2-probe-vite.log
+          exit 1
+
+      - name: Probe exact B2 lower facade
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:1600,height:1000}});
+          await page.goto("http://127.0.0.1:4173/RampReady/?kphxT4Buildings=1&view=B2",{waitUntil:"domcontentloaded",timeout:60000});
+          await page.waitForFunction(()=>document.querySelector("canvas.kphxT4BuildingShellVerifierCanvas")?.dataset?.kphxT4BuildingShellVerifier==="ready",null,{timeout:120000});
+
+          const result = await page.evaluate(async () => {
+            const THREE = await import("/node_modules/.vite/deps/three.js?v=placeholder").catch(()=>null);
+            return { threeImportWorked:Boolean(THREE) };
+          }).catch(()=>({threeImportWorked:false}));
+          fs.writeFileSync("reports/kphx-b2-opening-probe-bootstrap.json", JSON.stringify(result,null,2)+"\n");
+          await browser.close();
+          NODE
+
+      - name: Commit bootstrap evidence
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-b2-opening-probe-bootstrap.json
+          git commit -m "Probe B2 exact opening geometry bootstrap"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
