@@ -253,3 +253,5 @@ jobs:
           git commit -m "Capture exact T4 building-shell verification evidence"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
+
+# A1 authored-axis verification trigger
