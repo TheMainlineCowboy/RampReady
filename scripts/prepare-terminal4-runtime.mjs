@@ -187,7 +187,30 @@ prepared = prepared
         setMessage("Exact PHX surface layer failed to load: " + error.message);
         throw error;
       });
-    void Promise.all([terminalLoad, packageObjectLoad, surfaceLoad])
+    const a1MarkingsLoad = installKphxPackageOwnedSurfaceLayer(THREE, environment, {
+      strict: true,
+      manifestUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json",
+      networkUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/surface-network.json",
+      loadPolygons: false,
+      loadDrapedOrthophotos: false,
+      loadLines: true,
+    })
+      .then((result) => {
+        const data = result.layer.userData;
+        renderer.domElement.dataset.kphxA1ZdpMarkingsReady = String(data.ready === true);
+        renderer.domElement.dataset.kphxA1ZdpMarkingLineMeshCount = String(data.lineMeshCount ?? 0);
+        renderer.domElement.dataset.kphxA1ZdpMarkingFailureCount = String((data.failures || []).length);
+        renderer.domElement.dataset.groundSource = "KPHX 1.75.1 exact WED package + A1 ZDP pavement + markings";
+        return result;
+      })
+      .catch((error) => {
+        renderer.domElement.dataset.kphxA1ZdpMarkingsReady = "load-error";
+        renderer.domElement.dataset.kphxA1ZdpMarkingFailureCount = "load-error";
+        console.error("RampReady exact A1 ZDP markings load failed", error);
+        setMessage("Exact A1 ramp markings failed to load: " + error.message);
+        throw error;
+      });
+    void Promise.all([terminalLoad, packageObjectLoad, surfaceLoad, a1MarkingsLoad])
       .then(() => {
         renderer.domElement.dataset.environmentSource = environment.userData.environmentSource;
       })
@@ -260,9 +283,12 @@ if (!prepared.includes("installAuthoredTerminal4Visual(THREE, environment)")) th
 if (!prepared.includes("installKphxPackageOwnedSurfaceLayer(THREE, environment")) throw new Error("Exact KPHX surface runtime loader was not connected");
 if (!prepared.includes("/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json")) throw new Error("Exact A1 ZDP pavement manifest was not connected");
 if (!prepared.includes("loadPolygons: true") || !prepared.includes("loadLines: false")) throw new Error("A1 ZDP pavement-first policy was not preserved");
+if (!prepared.includes("const a1MarkingsLoad = installKphxPackageOwnedSurfaceLayer")) throw new Error("Exact A1 ZDP marking preload was not injected");
+if (!prepared.includes("loadPolygons: false") || !prepared.includes("loadLines: true")) throw new Error("A1 ZDP marking-only policy was not preserved");
+if (!prepared.includes("dataset.kphxA1ZdpMarkingLineMeshCount")) throw new Error("A1 ZDP marking runtime evidence was not injected");
 if (!prepared.includes("installKphxPackageOwnedObjectLayer(THREE, environment")) throw new Error("Full KPHX package-owned object layer was not connected");
 if (!prepared.includes("excludeResources: Object.keys(KPHX_EXACT_RECOVERED_ASSETS.singleResourceAssets)")) throw new Error("Recovered exact KPHX objects are not protected from duplicate loading");
-if (!prepared.includes("Promise.all([terminalLoad, packageObjectLoad, surfaceLoad])")) throw new Error("Combined PHX exact object/surface readiness gate was not injected");
+if (!prepared.includes("Promise.all([terminalLoad, packageObjectLoad, surfaceLoad, a1MarkingsLoad])")) throw new Error("Combined PHX exact object/surface/marking readiness gate was not injected");
 
 if (!prepared.includes("new THREE.PerspectiveCamera(58, 1, 0.1, 8000)")) throw new Error("Airport-wide camera far plane was not injected");
 if (!prepared.includes("new THREE.Fog(0x9fc4e6, 2400, 6500)")) throw new Error("Airport-wide fog range was not injected");
