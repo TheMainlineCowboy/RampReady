@@ -18,6 +18,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: kphx-full-airport-import
+          sparse-checkout: |
+            package.json
+            package-lock.json
+            index.html
+            src
+          sparse-checkout-cone-mode: false
 
       - name: Install
         run: npm ci
