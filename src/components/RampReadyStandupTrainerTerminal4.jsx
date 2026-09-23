@@ -718,6 +718,10 @@ export default function RampReadyStandupTrainer({
         if (exactConcreteSourceMesh?.material) {
           for (const child of packageResult.layer.children) {
             if (!child?.isMesh || !invisibleConcreteResources.has(child.userData?.sourceResource)) continue;
+            // X-Plane invisible-concrete helpers carry placement/surface semantics but are not visible scenery.
+            // Preserve their exact authored footprint for the compatibility underlay, then hide the helper itself.
+            child.visible = false;
+            child.userData.kphxInvisibleConcreteSourceHidden = true;
             const geometry = child.geometry.clone();
             geometry.translate(0, -0.015, 0);
             const material = exactConcreteSourceMesh.material.clone();
