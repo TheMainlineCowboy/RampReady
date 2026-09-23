@@ -1,1 +1,2 @@
 Trigger actual RampReady A1 free-drive exact T4 live check.
+Retry after Vite syntax fix + exact live T4 integration + finalized LEKTRO AP88/TVO914 R187A visual/handling wiring.
