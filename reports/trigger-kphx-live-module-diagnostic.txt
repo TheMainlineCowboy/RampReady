@@ -1,0 +1,1 @@
+Trigger fast Vite transform diagnostic for exact live T4 integration.
