@@ -354,6 +354,9 @@ export async function installKphxPackageOwnedSurfaceLayer(
     networkUrl = DEFAULT_NETWORK_URL,
     textureLoader = new THREE.TextureLoader(),
     strict = true,
+    loadPolygons = true,
+    loadDrapedOrthophotos = true,
+    loadLines = true,
   } = {},
 ) {
   if (!environment?.add) throw new Error("KPHX surface loader requires a Three.js environment group");
@@ -398,7 +401,7 @@ export async function installKphxPackageOwnedSurfaceLayer(
     return material;
   }
 
-  for (const placement of network.polygons.filter(isSelectedSurfacePlacement)) {
+  for (const placement of (loadPolygons ? network.polygons : []).filter(isSelectedSurfacePlacement)) {
     try {
       const art = manifest.resources[placement.resource];
       const geometry = createPolygonGeometry(THREE, placement, art);
@@ -423,7 +426,7 @@ export async function installKphxPackageOwnedSurfaceLayer(
     }
   }
 
-  for (const placement of network.drapedOrthophotos.filter(isSelectedSurfacePlacement)) {
+  for (const placement of (loadDrapedOrthophotos ? network.drapedOrthophotos : []).filter(isSelectedSurfacePlacement)) {
     try {
       const art = manifest.resources[placement.resource];
       if (!art) throw new Error(`Materialized KPHX draped resource missing: ${placement.resource}`);
@@ -450,7 +453,7 @@ export async function installKphxPackageOwnedSurfaceLayer(
     }
   }
 
-  for (const placement of network.lines.filter(isSelectedSurfacePlacement)) {
+  for (const placement of (loadLines ? network.lines : []).filter(isSelectedSurfacePlacement)) {
     try {
       const art = manifest.resources[placement.resource];
       const material = await materialFor(placement.resource, "markings");
@@ -492,6 +495,11 @@ export async function installKphxPackageOwnedSurfaceLayer(
     externalPolygonCount: network.polygons.filter((entry) => entry.sourceClass !== "package-owned").length,
     externalDrapedOrthophotoCount: network.drapedOrthophotos.filter((entry) => entry.sourceClass !== "package-owned").length,
     externalLineCount: network.lines.filter((entry) => entry.sourceClass !== "package-owned").length,
+    requestedPlacementTypes: {
+      polygons: loadPolygons,
+      drapedOrthophotos: loadDrapedOrthophotos,
+      lines: loadLines,
+    },
   };
 
   if (strict && failures.length) {
