@@ -2,13 +2,6 @@ name: KPHX T4 Exact Building Shell Verification
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-t4-building-shell-verification.yml"
-      - "src/components/KphxT4BuildingShellVerifier.jsx"
-      - "src/App.jsx"
 
 permissions:
   contents: write
