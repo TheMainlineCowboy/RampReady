@@ -1,3 +1,4 @@
 Trigger exact Terminal 3 building-shell capture after D7 T4 lock.
 Scope: Terminals/Terminal3a.obj only.
-Retry: tighter QA camera only; no geometry, placement, material, or source-authority changes.
+Retry: proven OBJ8 browser compatibility active (MASK 0.5, runtime winding reversal, legacy texture-V correction); wider QA camera only.
+No source geometry, GLB bytes, WED placement, or authored material changes.
