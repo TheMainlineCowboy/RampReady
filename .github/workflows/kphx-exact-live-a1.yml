@@ -81,7 +81,8 @@ jobs:
               await page.waitForFunction(() => {
                 const canvas = document.querySelector("canvas.trainerCanvas");
                 return canvas?.dataset?.kphxExactLiveT4 === "ready"
-                  && canvas?.dataset?.tugSource === "lektro-ap88-tvo914-r187a";
+                  && canvas?.dataset?.tugSource === "lektro-ap88-tvo914-r187a"
+                  && canvas?.dataset?.kphxSurfaceReady === "true";
               }, null, { timeout: 60000 });
             } catch (error) {
               waitError = String(error);
@@ -144,6 +145,10 @@ jobs:
           if (d.rigFreeMaxSpeedMps !== "4.02336") failures.push(`freeMaxSpeed=${d.rigFreeMaxSpeedMps || "missing"}`);
           if (d.rigTowMaxSpeedMps !== "1.78816") failures.push(`towMaxSpeed=${d.rigTowMaxSpeedMps || "missing"}`);
           if (d.rigVisualMaxSteerDegrees !== "84.000") failures.push(`visualSteer=${d.rigVisualMaxSteerDegrees || "missing"}`);
+          if (d.kphxSurfaceReady !== "true") failures.push(`surfaceReady=${d.kphxSurfaceReady || "missing"}`);
+          if (d.kphxVersion !== "1.75.1") failures.push(`surfaceVersion=${d.kphxVersion || "missing"}`);
+          if (d.kphxSurfaceFailureCount !== "0") failures.push(`surfaceFailures=${d.kphxSurfaceFailureCount || "missing"}`);
+          if (d.photoGroundSource !== "not-used-exact-kphx-1.75.1-only") failures.push(`legacyPhotoLayer=${d.photoGroundSource || "missing"}`);
           if (result.navigationError) failures.push(`navigation=${result.navigationError}`);
           if (result.waitError) failures.push(`wait=${result.waitError}`);
           if ((result.pageErrors || []).length) failures.push(`pageErrors=${result.pageErrors.join(" | ")}`);
@@ -168,6 +173,9 @@ jobs:
             lektroFreeMaxSpeedMps:4.02336,
             lektroTowMaxSpeedMps:1.78816,
             lektroVisualRearSteerDegrees:84,
+            exactSurfaceSource:"KPHX 1.75.1 WED package surfaces",
+            legacySkyHarborPhotoLayerUsed:false,
+            surfaceFailureCount:0,
             visualInspectionRequired:true
           },null,2)+"\n");
           NODE
