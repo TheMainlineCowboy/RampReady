@@ -25,6 +25,18 @@ jobs:
           ref: kphx-full-airport-import
           fetch-depth: 0
 
+      - name: Mark exact ZDP job started
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p reports
+          printf 'started\n' > reports/kphx-t4-zdp-object-status.txt
+          git add reports/kphx-t4-zdp-object-status.txt
+          git commit -m "Record exact T4 ZDP materialization start"
+          git push origin HEAD:kphx-full-airport-import
+
       - name: Install exact conversion tools
         shell: bash
         run: |
@@ -116,6 +128,11 @@ jobs:
             git -C .zdp lfs pull --include="$ZDP_TEXTURES"
           fi
 
+          printf 'source-ready\nobject=%s\ntextures=%s\n' "$ZDP_OBJ" "$ZDP_TEXTURES" > reports/kphx-t4-zdp-object-status.txt
+          git add reports/kphx-t4-zdp-object-status.txt
+          git commit -m "Record exact T4 ZDP source readiness"
+          git push origin HEAD:kphx-full-airport-import
+
       - name: Resolve exact ZDP stop-marker resource
         shell: bash
         run: |
@@ -125,6 +142,10 @@ jobs:
             reports/kphx-t4-zdp-object-resources.json \
             reports/kphx-t4-zdp-library-map.json \
             --virtual-prefix=ZDP_Library
+          printf 'resolved\n' > reports/kphx-t4-zdp-object-status.txt
+          git add reports/kphx-t4-zdp-object-status.txt reports/kphx-t4-zdp-library-map.json
+          git commit -m "Record exact T4 ZDP resource resolution"
+          git push origin HEAD:kphx-full-airport-import
 
       - name: Materialize exact authored T4 stop markers
         shell: bash
@@ -188,3 +209,5 @@ jobs:
           git push origin HEAD:kphx-full-airport-import
 
 # targeted-LFS retrigger
+
+# stage-breadcrumb retrigger
