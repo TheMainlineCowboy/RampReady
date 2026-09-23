@@ -29,6 +29,7 @@ let sourceNormalScale = null;
 let sourceDrapedNormalTexture = null;
 let sourceDrapedNormalScale = null;
 let sourceWeatherTexture = null;
+let sourceWeatherTransparent = false;
 let globalNoShadow = false;
 let globalSpecular = null;
 let globalAlphaCutoff = null;
@@ -211,6 +212,8 @@ for (const rawLine of source.split(/\r?\n/)) {
   } else if (command === "WEATHER") {
     if (parts.length < 2) throw new Error(`Malformed WEATHER record: ${line}`);
     sourceWeatherTexture = parts.slice(1).join(" ");
+  } else if (command === "WEATHER_TRANSPARENT") {
+    sourceWeatherTransparent = true;
   } else if (command === "GLOBAL_no_shadow") globalNoShadow = true;
   else if (command === "SPECULAR") {
     const value = Number(parts[1]);
@@ -318,7 +321,7 @@ for (const range of drawRanges) {
 }
 
 const harmless = new Set([
-  "A", "I", "800", "OBJ", "TEXTURE", "TEXTURE_DRAPED", "TEXTURE_LIT", "TEXTURE_DRAPED_NORMAL", "TEXTURE_NORMAL", "WEATHER", "POINT_COUNTS",
+  "A", "I", "800", "OBJ", "TEXTURE", "TEXTURE_DRAPED", "TEXTURE_LIT", "TEXTURE_DRAPED_NORMAL", "TEXTURE_NORMAL", "WEATHER", "WEATHER_TRANSPARENT", "POINT_COUNTS",
   "VT", "IDX", "IDX10", "TRIS", "LIGHT_PARAM", "VLIGHT", "LIGHT_NAMED", "#",
   "ATTR_shade_smooth", "ATTR_shade_flat",
   "ATTR_no_hard", "ATTR_hard",
@@ -636,6 +639,7 @@ const gltf = {
       xPlaneGlobalNoShadow: globalNoShadow,
       xPlaneGlobalSpecular: globalSpecular,
       xPlaneWeatherTexture: weatherImageIndex !== null ? weatherUri : null,
+      xPlaneWeatherTransparent: sourceWeatherTransparent,
     },
   }],
   scenes: [{ nodes: [0] }],
@@ -651,6 +655,7 @@ const gltf = {
     sourceDrapedNormalTexture,
     sourceDrapedNormalScale,
     sourceWeatherTexture,
+    sourceWeatherTransparent,
     globalNoShadow,
     globalSpecular,
     globalAlphaCutoff,
@@ -668,7 +673,7 @@ const gltf = {
     namedLights,
     sourceBounds: { min: accessors[positionAccessor].min, max: accessors[positionAccessor].max },
     geometryPolicy: "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
-    drawStatePolicy: "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+    drawStatePolicy: "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
     sceneryShadowsEnabled,
     textureCoordinatePolicy: "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin",
   },
@@ -697,6 +702,7 @@ console.log(JSON.stringify({
   drapedNormalUri: drapedNormalTextureIndex !== null ? drapedNormalUri : null,
   drapedNormalScale: drapedNormalTextureIndex !== null ? drapedNormalScale : null,
   weatherUri: weatherImageIndex !== null ? weatherUri : null,
+  sourceWeatherTransparent,
   globalNoShadow,
   globalSpecular,
   globalAlphaCutoff,
