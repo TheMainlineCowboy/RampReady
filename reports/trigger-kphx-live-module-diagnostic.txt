@@ -1,2 +1,2 @@
 Trigger fast regenerated Vite probe.
-Verify exact A1 ZDP marking preload survives runtime generation.
+Verify A1 marking texture SHA dedup + four-stage preload.
