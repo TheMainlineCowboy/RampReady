@@ -1,5 +1,6 @@
 import PushbackTrainer from "./components/PushbackTrainer.jsx";
 import KphxFullAirportVerifier from "./components/KphxFullAirportVerifier.jsx";
+import KphxT3BuildingShellVerifier from "./components/KphxT3BuildingShellVerifier.jsx";
 import KphxT4FrameVerifier from "./components/KphxT4FrameVerifier.jsx";
 import KphxT4BuildingShellVerifier from "./components/KphxT4BuildingShellVerifier.jsx";
 import KphxT4GroundVerifier from "./components/KphxT4GroundVerifier.jsx";
@@ -14,6 +15,8 @@ export default function App() {
   const t4JetwayBatchVerifier = params?.get("kphxT4Jetways") === "1";
   const fullAirportVerifier = params?.get("kphxFullAirport") === "1";
   const t4BuildingShellVerifier = params?.get("kphxT4Buildings") === "1";
+  const t3BuildingShellVerifier = params?.get("kphxT3Buildings") === "1";
+  if (t3BuildingShellVerifier) return <KphxT3BuildingShellVerifier />;
   if (t4BuildingShellVerifier) return <KphxT4BuildingShellVerifier />;
   if (t4JetwayBatchVerifier) return <KphxT4JetwayBatchVerifier />;
   if (a1JetwayVerifier) return <KphxA1StockJetwayVerifier />;
