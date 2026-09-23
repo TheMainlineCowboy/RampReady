@@ -339,8 +339,27 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
     throw new Error(`Unsupported runtime equipment visual: ${equipmentId}`);
   }
   if (equipmentId === "lektro-88") {
-    rig.root.userData.runtimeVisualSource = "procedural-lektro";
-    return "procedural-lektro";
+    const url = `${import.meta.env.BASE_URL}models/lektro-88/LEKTRO_AP88_TVO914.glb`;
+    const gltf = await new GLTFLoader().loadAsync(url);
+    if (!gltf?.scene) throw new Error("Finalized LEKTRO AP88 R187A GLB loaded without a scene");
+
+    gltf.scene.name = "RampReady_LEKTRO_AP88_TVO914_R187A";
+    gltf.scene.traverse((node) => {
+      if (!node.isMesh) return;
+      if (!node.geometry.getAttribute("normal")) node.geometry.computeVertexNormals();
+      node.castShadow = true;
+      node.receiveShadow = true;
+    });
+
+    rig.visual.visible = false;
+    rig.root.add(gltf.scene);
+    rig.root.userData.authoredLektroScene = gltf.scene;
+    rig.root.userData.authoredLektroAnimations = gltf.animations || [];
+    rig.root.userData.runtimeVisualSource = "lektro-ap88-tvo914-r187a";
+    rig.root.userData.runtimeVisualUrl = url;
+    rig.root.userData.runtimeVisualRevision = "R187A";
+    rig.root.userData.runtimeVisualSha256 = "1a199a43b5339924693a20bd55d5c8c05f15019e6845a085b0be669fc38bd140";
+    return "lektro-ap88-tvo914-r187a";
   }
 
   const url = `${import.meta.env.BASE_URL}models/standup-tug.glb`;
