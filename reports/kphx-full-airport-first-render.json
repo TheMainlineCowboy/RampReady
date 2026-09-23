@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-09-23T02:31:40.532Z",
+  "capturedAtUtc": "2026-09-23T02:36:03.963Z",
   "navigationError": null,
   "waitError": null,
   "state": {
@@ -7,11 +7,13 @@
     "dataset": {
       "engine": "three.js r171",
       "kphxFullAirportVerifier": "ready",
-      "kphxLoadMsJetways": "3030",
-      "kphxLoadMsSurfaces": "4962",
-      "kphxLoadMsObjects": "5780",
-      "kphxLoadMsFinalRender": "15147",
-      "kphxLoadMsTotal": "20933",
+      "kphxLoadMsJetways": "2717",
+      "kphxLoadMsSurfaces": "3913",
+      "kphxLoadMsObjects": "5200",
+      "kphxT4CameraCenter": "69.76996474373786,3.4975,-75.49463118980168",
+      "kphxT4CameraSpan": "799.3306401130274",
+      "kphxLoadMsFinalRender": "19548",
+      "kphxLoadMsTotal": "24768",
       "kphxPackagePlacements": "1634",
       "kphxPackageResources": "147",
       "kphxT4MisterxPlacements": "956",
@@ -45,15 +47,19 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000042E0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A07020002C020000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x237c00bb6a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x2dc40190c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x237c00bb6a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x2dc40190c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): Running out of reserved outsideRenderPass queueSerial. ending renderPass now."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x2dc40190c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     }
   ],
   "pageErrors": [],
