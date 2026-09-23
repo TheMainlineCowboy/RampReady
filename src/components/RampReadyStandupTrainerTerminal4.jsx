@@ -735,7 +735,31 @@ export default function RampReadyStandupTrainer({
         throw error;
       });
 
-    void Promise.all([terminalLoad, surfaceLoad])
+    const a1MarkingsLoad = installKphxPackageOwnedSurfaceLayer(THREE, environment, {
+      strict: true,
+      manifestUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json",
+      networkUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/surface-network.json",
+      loadPolygons: false,
+      loadDrapedOrthophotos: false,
+      loadLines: true,
+    })
+      .then((result) => {
+        const data = result.layer.userData;
+        renderer.domElement.dataset.kphxA1ZdpMarkingsReady = String(data.ready === true);
+        renderer.domElement.dataset.kphxA1ZdpMarkingLineMeshCount = String(data.lineMeshCount ?? 0);
+        renderer.domElement.dataset.kphxA1ZdpMarkingFailureCount = String((data.failures || []).length);
+        renderer.domElement.dataset.groundSource = "KPHX 1.75.1 exact WED package + A1 ZDP pavement + markings";
+        return result;
+      })
+      .catch((error) => {
+        renderer.domElement.dataset.kphxA1ZdpMarkingsReady = "load-error";
+        renderer.domElement.dataset.kphxA1ZdpMarkingFailureCount = "load-error";
+        console.error("RampReady exact A1 ZDP markings load failed", error);
+        setMessage(`Exact A1 ramp markings failed to load: ${error.message}`);
+        throw error;
+      });
+
+    void Promise.all([terminalLoad, surfaceLoad, a1MarkingsLoad])
       .then(() => {
         const nativeA1RetractionActive = environment.userData.authoredTerminal4Jetways?.userData.uploadedJetwayA1RetractionAuthority === "aircraft-door-clearance-without-overtravel-v6";
         airportCollision.staticTargets = [
