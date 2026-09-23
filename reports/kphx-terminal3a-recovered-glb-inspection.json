@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAtUtc": "2026-09-23T08:35:46.177Z",
+  "generatedAtUtc": "2026-09-23T08:39:50.099Z",
   "authority": "Read-only inspection of recovered exact KPHX 1.75.1 Terminal3a GLB binary",
   "target": {
     "name": "Terminal3a",
@@ -42,6 +42,19 @@
   "textureCount": 2,
   "totalIndexCount": 12138,
   "totalPositionAccessorCount": 6922,
+  "topLevelExtensionsUsed": [],
+  "sourceWindingAgainstAuthoredNormals": {
+    "triangleCount": 4046,
+    "aligned": 0,
+    "opposite": 3939,
+    "degenerate": 107,
+    "runtimeNeedsWindingReversal": true
+  },
+  "runtimeCompatibility": {
+    "windingReversalRequired": true,
+    "legacyTextureVCorrectionRequired": true,
+    "reason": "Exact recovered GLB preserves source index order, UVs, and decoded texture pixels; browser glTF rendering must bridge X-Plane winding and texture-origin conventions without editing source geometry."
+  },
   "materials": [
     {
       "index": 0,
