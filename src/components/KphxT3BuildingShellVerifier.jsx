@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";\nimport { applyExactXp11Obj8MaskCompatibility } from "../environment/kphxFullAirport/obj8RenderCompatibility.js";
 import { preparePlacementRoot } from "../environment/kphxFullAirport/installPackageOwnedObjectLayer.js";
 import { KPHX_EXACT_RECOVERED_ASSETS } from "../environment/kphxFullAirport/exactAssetCatalog.js";
 
@@ -120,6 +120,12 @@ export default function KphxT3BuildingShellVerifier() {
       const gltf = await loader.loadAsync(runtimeUrl(placement.assetUrl));
       if (!gltf?.scene) throw new Error("Terminal3a exact GLB loaded without a scene root");
 
+      applyExactXp11Obj8MaskCompatibility(THREE, gltf.scene, {
+        label: T3_RESOURCE,
+        alphaCutoff: 0.5,
+        windingAlreadyConverted: false,
+        correctLegacyTextureV: true,
+      });
       const root = preparePlacementRoot(gltf.scene, placement);
       environment.add(root);
 
@@ -164,6 +170,9 @@ export default function KphxT3BuildingShellVerifier() {
       renderer.domElement.dataset.kphxT3CameraPosition = position.toArray().join(",");
       renderer.domElement.dataset.kphxT3CameraTarget = target.toArray().join(",");
       renderer.domElement.dataset.kphxT3SubstitutionPolicy = "none";
+      renderer.domElement.dataset.kphxT3LegacyMaskCompatibility = "true";
+      renderer.domElement.dataset.kphxT3WindingReversal = "true";
+      renderer.domElement.dataset.kphxT3LegacyTextureVCorrection = "true";
       renderer.domElement.dataset.kphxT3GeometryEdits = "0";
       renderer.domElement.dataset.kphxT3PlacementEdits = "0";
       renderer.domElement.dataset.kphxT3LoadMs = String(Math.round(performance.now() - startedAt));
