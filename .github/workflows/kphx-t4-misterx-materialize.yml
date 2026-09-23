@@ -108,3 +108,5 @@ jobs:
 # rerun after draped-only and keyframed GroundTraffic fixes
 
 # final rerun trigger after all T4 MisterX source/parser fixes
+
+# final retrigger after WEATHER_TRANSPARENT support
