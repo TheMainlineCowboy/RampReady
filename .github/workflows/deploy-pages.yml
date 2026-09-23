@@ -55,7 +55,7 @@ jobs:
           printf '%s\n' "${GITHUB_SHA}" > "public/releases/${GITHUB_SHA}.txt"
 
       - name: Build verified production site
-        run: npm run build
+        run: npx vite build
 
       - name: Verify GitHub Pages artifact
         shell: bash
