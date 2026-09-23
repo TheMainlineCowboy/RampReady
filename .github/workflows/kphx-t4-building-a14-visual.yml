@@ -103,3 +103,5 @@ jobs:
           git commit -m "Capture exact A14 building close view"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
+
+# retrigger after tighter A14 camera
