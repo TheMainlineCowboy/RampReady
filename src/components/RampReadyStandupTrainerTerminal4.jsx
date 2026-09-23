@@ -34,6 +34,7 @@ const A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPositio
 const A1_SOURCE_HEADING_DEGREES = A1_GATE_POSE.sourceHeadingDegrees;
 const A1_AIRCRAFT_YAW_RADIANS = A1_GATE_POSE.runtimeYawRadians;
 const A1_EQUIPMENT_APPROACH_OFFSET_METERS = 6.2;
+const A1_EQUIPMENT_SPAWN_AUTHORITY = "same-a1-wed-gate-pose-equipment-spawn-v1";
 const A1_EQUIPMENT_SPAWN = Object.freeze({
   x: A1_AIRCRAFT_START_X - Math.sin(A1_AIRCRAFT_YAW_RADIANS) * A1_EQUIPMENT_APPROACH_OFFSET_METERS,
   z: NOSE_START_Z - Math.cos(A1_AIRCRAFT_YAW_RADIANS) * A1_EQUIPMENT_APPROACH_OFFSET_METERS,
@@ -974,6 +975,13 @@ export default function RampReadyStandupTrainer({
     canvas.dataset.a1AircraftRuntimeYawRadians = A1_AIRCRAFT_YAW_RADIANS.toFixed(6);
     canvas.dataset.a1AircraftRuntimeYawDegrees = THREE.MathUtils.radToDeg(A1_AIRCRAFT_YAW_RADIANS).toFixed(2);
     canvas.dataset.a1AircraftModelForwardAxis = "-Z";
+    canvas.dataset.kphxT4SupportedRampPositionCount = String(KPHX_T4_GATE_POSE_SOURCE.supportedRampPositionCount);
+    canvas.dataset.kphxT4SupportedGateNameCount = String(KPHX_T4_GATE_POSE_SOURCE.supportedGateNameCount);
+    canvas.dataset.a1EquipmentSpawnAuthority = A1_EQUIPMENT_SPAWN_AUTHORITY;
+    canvas.dataset.a1EquipmentSpawnX = A1_EQUIPMENT_SPAWN.x.toFixed(6);
+    canvas.dataset.a1EquipmentSpawnZ = A1_EQUIPMENT_SPAWN.z.toFixed(6);
+    canvas.dataset.a1EquipmentSpawnYawDegrees = THREE.MathUtils.radToDeg(A1_EQUIPMENT_SPAWN.yaw).toFixed(2);
+    canvas.dataset.a1EquipmentApproachOffsetMeters = A1_EQUIPMENT_APPROACH_OFFSET_METERS.toFixed(3);
     const syncCameraDataset = () => {
       canvas.dataset.cameraYaw = orbitRef.current.yaw.toFixed(4);
       canvas.dataset.cameraPitch = orbitRef.current.pitch.toFixed(4);
