@@ -11,6 +11,18 @@ export function reverseIndexedTriangleWinding(geometry, label = "OBJ8 mesh") {
   index.needsUpdate = true;
 }
 
+function applyLegacyXPlaneTextureVTransform(texture) {
+  if (!texture || texture.userData?.xPlaneLegacyTextureVCorrected === true) return;
+  texture.matrixAutoUpdate = false;
+  texture.matrix.setUvTransform(0, 1, 1, -1, 0, 0, 0);
+  texture.userData = {
+    ...(texture.userData || {}),
+    xPlaneLegacyTextureVCorrected: true,
+    xPlaneTextureCoordinateTransform: "offset[0,1]-scale[1,-1]",
+  };
+  texture.needsUpdate = true;
+}
+
 export function applyExactXp11Obj8MaskCompatibility(
   THREE,
   root,
@@ -18,6 +30,7 @@ export function applyExactXp11Obj8MaskCompatibility(
     label = "exact XP11 OBJ8",
     alphaCutoff = 0.5,
     windingAlreadyConverted = false,
+    correctLegacyTextureV = false,
   } = {},
 ) {
   if (!root?.traverse) throw new Error(`${label} scene root is required`);
@@ -35,6 +48,11 @@ export function applyExactXp11Obj8MaskCompatibility(
       material.alphaTest = alphaCutoff;
       material.depthTest = true;
       material.depthWrite = true;
+      if (correctLegacyTextureV) {
+        applyLegacyXPlaneTextureVTransform(material.map);
+        applyLegacyXPlaneTextureVTransform(material.emissiveMap);
+        applyLegacyXPlaneTextureVTransform(material.normalMap);
+      }
       material.needsUpdate = true;
     }
   });
@@ -47,6 +65,7 @@ export function applyExactXp11Obj8MaskCompatibility(
       : "legacy-runtime-clockwise-to-counterclockwise",
     xPlaneObj8BlendMode: `no-blend alpha-test ${alphaCutoff}`,
     xPlaneObj8CullMode: "one-sided",
+    xPlaneObj8LegacyTextureVCorrected: correctLegacyTextureV === true,
   };
   return root;
 }
