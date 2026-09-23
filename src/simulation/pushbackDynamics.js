@@ -49,12 +49,15 @@ export function stepPushbackDynamics(state, command, dt) {
   const steerInput = clamp(finite(command.steer, 0), -1, 1);
   const steeringMode = command.steeringMode === "rear" ? "rear" : "front";
   const wheelbase = Math.max(0.5, finite(command.wheelbase, TUG_WHEELBASE));
-  const maxSpeed = connected ? TOW_MAX_SPEED : FREE_MAX_SPEED;
+  const freeMaxSpeed = Math.max(0.1, finite(command.freeMaxSpeed, FREE_MAX_SPEED));
+  const towMaxSpeed = Math.max(0.1, finite(command.towMaxSpeed, TOW_MAX_SPEED));
+  const maxSteerAngle = Math.max(0.05, finite(command.maxSteerAngle, MAX_STEER_ANGLE));
+  const maxSpeed = connected ? towMaxSpeed : freeMaxSpeed;
   const acceleration = connected ? TOW_ACCELERATION : FREE_ACCELERATION;
 
   const speedRatio = maxSpeed > 0 ? Math.min(1, Math.abs(state.speed) / maxSpeed) : 0;
   const speedSteerScale = 1 - 0.48 * speedRatio;
-  let requestedSteer = steerInput * MAX_STEER_ANGLE * speedSteerScale;
+  let requestedSteer = steerInput * maxSteerAngle * speedSteerScale;
 
   const currentArticulation = normalizeAngle(finite(state.aircraftYaw) - finite(state.tugYaw));
   const warning = connected && Math.abs(currentArticulation) >= JACKKNIFE_WARNING;
