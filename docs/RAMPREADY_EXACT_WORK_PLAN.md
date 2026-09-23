@@ -4,9 +4,9 @@ Locked project order from the 2026-09-23 review. Do not reorder without an expli
 
 ## Immediate correctness
 1. ✅ COMPLETE — Remove/hide translucent blue gate geometry without deleting source authority or breaking placement/collision. Root cause: sky visible through exact invisible-concrete helper footprints because the standalone app lacks X-Plane terrain beneath them. Fix: exact helper footprints underlaid with authored A1 ZDP `Flat_New_Uniform.pol` concrete; 8 footprints, no broad fake ground plane.
-2. Verify A1 aircraft heading against authored stand/gate data; fix source-derived spawn logic, not by eye.
-3. Audit parked-aircraft heading at every supported gate.
-4. Fix Kubota/LEKTRO/stand-up equipment spawn orientation from the same gate/aircraft heading logic.
+2. ✅ COMPLETE — Verify/fix A1 aircraft heading from authored KPHX 1.75.1 WED stand data. Source authority: WED_RampPosition `27855`, heading `-90.08°`; runtime/model-axis conversion is `180.08°`. Live browser evidence confirms the aircraft now faces the gate correctly so reverse pushback moves away from the terminal.
+3. ✅ COMPLETE — Audit parked-aircraft heading at every supported T4 gate. Verified 76/76 live ramp-position IDs against the authoritative WED source, covering 75 gate names; D7 correctly retains two distinct authored ramp positions. Audit report passes with zero heading/ID/gate-name failures.
+4. ✅ COMPLETE — Derive Kubota/LEKTRO/stand-up equipment spawn orientation from the same WED-derived gate scenario pose as the aircraft. Shared authority: `same-wed-ramp-position-aircraft-equipment-pose-v1`; aircraft and equipment yaw match at every audited supported ramp position, with the preserved 6.2 m approach offset. A1 live evidence confirms `180.08°` aircraft yaw and `180.08°` equipment yaw.
 5. Verify LEKTRO driving controls and steering in the live app: FWD/REV direction, rear-wheel visual steering, left/right parity, locked 15-ft turning radius, 9 mph empty / 4 mph towing.
 
 ## Exact-source completeness
