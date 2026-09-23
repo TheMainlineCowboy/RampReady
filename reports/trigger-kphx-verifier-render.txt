@@ -3,3 +3,5 @@ Diagnostic rerun after readiness-state capture fix.
 Rerun after packed GateNumbers resource accounting fix.
 Rerun after Vite/GitHub Pages base-path correction.
 Rerun after exact T4 MisterX/CDB integration and 1634-placement verifier update.
+
+Rerun after normalized MisterX runtime texture paths and successful 50-resource materialization.
