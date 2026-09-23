@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "view": "B14",
+  "evidenceCommit": "b0c27bc4d55cd216c969c90a3bee288ce939cd31",
+  "exactSourceGeometry": true,
+  "exactSourceDecodedTexturePixels": true,
+  "wedPlacementLocked": true,
+  "jetwaysLocked": true,
+  "substitutionPolicy": "none",
+  "visualFinding": "Ramp-facing terminal shell is coherent in the B14 inspection view; no obvious missing source faces, invented walls, or culling/material breaks visible.",
+  "policy": "No airport geometry, placement, material, or jetway transform was changed."
+}
