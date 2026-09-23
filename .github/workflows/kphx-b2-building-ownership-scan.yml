@@ -1,0 +1,145 @@
+name: KPHX B2 Building Ownership Scan
+
+on:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - reports/trigger-kphx-b2-building-scan.txt
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install geometry tools
+        run: python -m pip install --quiet trimesh rtree
+
+      - name: Identify B2/B4 owning building and depth profile
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, math, numpy as np, trimesh
+          from pathlib import Path
+
+          EARTH=6378137.0
+          ALAT=33.436530675
+          ALON=-111.998921221
+          target=np.array([8.822063065382402,2.0,-149.07302196169746],dtype=float)
+          camera=np.array([-38.98406545071114,2.0,-202.91142903604123],dtype=float)
+
+          def wed_pos(lat,lon):
+              lat0=math.radians(ALAT)
+              east=math.radians(lon-ALON)*EARTH*math.cos(lat0)
+              north=math.radians(lat-ALAT)*EARTH
+              return np.array([-north,0.0,-east+6.2])
+
+          def load_world(path,lat,lon,heading=0.0):
+              scene=trimesh.load(path,force='scene')
+              mesh=scene.to_geometry()
+              yaw=math.radians(90-heading)
+              c,s=math.cos(yaw),math.sin(yaw)
+              M=np.array([[c,0,s,0],[0,1,0,0],[-s,0,c,0],[0,0,0,1]],float)
+              M[:3,3]=wed_pos(lat,lon)
+              mesh.apply_transform(M)
+              return mesh
+
+          data={}
+          buildings={
+            'Terminal4': load_world('public/models/kphx/Terminal4.exact.glb',33.434761986,-111.996702473),
+            'Terminal4b': load_world('public/models/kphx/Terminal4b.exact.glb',33.436209533,-111.996664410),
+          }
+
+          d=target-camera; d[1]=0; d=d/np.linalg.norm(d)
+          right=np.array([d[2],0,-d[0]])
+          base=target-d*60.0
+
+          for name,mesh in buildings.items():
+              # nearest surface to B2 target
+              nearest,dist,tri=trimesh.proximity.closest_point(mesh,np.array([target]))
+              rays=[]
+              for y in [0.8,1.4,2.0,2.6,3.2,3.8]:
+                  for off in np.arange(-30.0,30.001,1.0):
+                      origin=base+right*off
+                      origin[1]=y
+                      locs,_,_=mesh.ray.intersects_location(
+                          np.array([origin]),
+                          np.array([d]),
+                          multiple_hits=True
+                      )
+                      hits=sorted(float(np.dot(loc-origin,d)) for loc in locs if np.dot(loc-origin,d)>=0)
+                      rays.append({
+                        'heightMeters':y,
+                        'offsetMeters':float(off),
+                        'hitsMeters':hits[:12],
+                        'firstHitMeters':hits[0] if hits else None,
+                        'hitCount':len(hits),
+                      })
+
+              # Estimate facade plane from densest first-hit cluster in 1 m bins.
+              first=[r['firstHitMeters'] for r in rays if r['firstHitMeters'] is not None and r['firstHitMeters']<120]
+              bins={}
+              for v in first:
+                  k=round(v)
+                  bins[k]=bins.get(k,0)+1
+              facade_bin=max(bins,key=bins.get) if bins else None
+              facade=float(facade_bin) if facade_bin is not None else None
+              classified=[]
+              for r in rays:
+                  f=r['firstHitMeters']
+                  if f is None or facade is None: continue
+                  depth=f-facade
+                  if depth>=1.5:
+                      classified.append({**r,'depthBehindModalFacadeMeters':depth})
+              backed=[r for r in classified if 1.5<=r['depthBehindModalFacadeMeters']<=12]
+              deep=[r for r in classified if r['depthBehindModalFacadeMeters']>12]
+              data[name]={
+                'bounds':mesh.bounds.tolist(),
+                'nearestSurfaceToB2TargetMeters':float(dist[0]),
+                'nearestPointToB2Target':nearest[0].tolist(),
+                'modalFacadeFirstHitMeters':facade,
+                'scanRayCount':len(rays),
+                'backedRecessRayCount':len(backed),
+                'deepOrThroughRayCount':len(deep),
+                'noHitRayCount':sum(1 for r in rays if r['firstHitMeters'] is None),
+                'backedSamples':backed[:80],
+                'deepSamples':deep[:80],
+              }
+
+          owner=min(data,key=lambda k:data[k]['nearestSurfaceToB2TargetMeters'])
+          report={
+            'schemaVersion':1,
+            'status':'PASS',
+            'authority':'exact KPHX 1.75.1 Terminal4/Terminal4b GLBs at exact WED transforms',
+            'b2QaTargetWorld':target.tolist(),
+            'owningBuildingByNearestSurface':owner,
+            'buildings':data,
+            'interpretation':'A backed recess has no facade hit at the modal facade plane but hits source geometry roughly 1.5-12 m deeper. Deep/through candidates first hit >12 m behind the modal facade or remain open. No geometry is modified by this scan.'
+          }
+          Path('reports/kphx-b2-building-ownership-scan.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps({
+            'owner':owner,
+            'Terminal4':{k:v for k,v in data['Terminal4'].items() if k not in ('backedSamples','deepSamples')},
+            'Terminal4b':{k:v for k,v in data['Terminal4b'].items() if k not in ('backedSamples','deepSamples')},
+          },indent=2))
+          PY
+
+      - name: Commit report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-b2-building-ownership-scan.json
+          git commit -m "Identify exact B2 lower-bay source geometry"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
