@@ -1,0 +1,144 @@
+name: KPHX B2 Lower Opening Scan
+
+on:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - reports/trigger-kphx-b2-opening-scan.txt
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install geometry tools
+        run: python -m pip install --quiet trimesh rtree
+
+      - name: Scan exact B2/B4 lower facade depth
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, math, numpy as np, trimesh
+          from pathlib import Path
+
+          EARTH=6378137.0
+          ANCHOR_LAT=33.436530675
+          ANCHOR_LON=-111.998921221
+          ANCHOR_X=0.0
+          ANCHOR_Z=6.2
+
+          def wed_pos(lat,lon):
+              lat0=math.radians(ANCHOR_LAT)
+              east=math.radians(lon-ANCHOR_LON)*EARTH*math.cos(lat0)
+              north=math.radians(lat-ANCHOR_LAT)*EARTH
+              return np.array([-north+ANCHOR_X,0.0,-east+ANCHOR_Z])
+
+          def load_world(path, lat, lon, heading=0.0):
+              scene=trimesh.load(path, force='scene')
+              mesh=scene.to_geometry()
+              yaw=math.radians(90-heading)
+              c,s=math.cos(yaw),math.sin(yaw)
+              M=np.array([[c,0,s,0],[0,1,0,0],[-s,0,c,0],[0,0,0,1]],dtype=float)
+              M[:3,3]=wed_pos(lat,lon)
+              mesh.apply_transform(M)
+              return mesh
+
+          meshes=[
+              load_world('public/models/kphx/Terminal4.exact.glb',33.434761986,-111.996702473),
+              load_world('public/models/kphx/Terminal4b.exact.glb',33.436209533,-111.996664410),
+          ]
+          combined=trimesh.util.concatenate(meshes)
+
+          camera=np.array([-38.98406545071114,2.0,-202.91142903604123],dtype=float)
+          target=np.array([8.822063065382402,2.0,-149.07302196169746],dtype=float)
+          d=target-camera
+          d[1]=0
+          d=d/np.linalg.norm(d)
+          right=np.array([d[2],0,-d[0]])
+          base=target-d*80.0
+
+          rays=[]
+          for y in [0.8,1.4,2.0,2.6,3.2,3.8]:
+              origins=[]
+              dirs=[]
+              offsets=[]
+              for off in np.arange(-45.0,45.001,1.0):
+                  o=base+right*off
+                  o[1]=y
+                  origins.append(o)
+                  dirs.append(d)
+                  offsets.append(float(off))
+              origins=np.array(origins); dirs=np.array(dirs)
+              locs, ray_ids, tri_ids=combined.ray.intersects_location(origins,dirs,multiple_hits=True)
+              by={i:[] for i in range(len(origins))}
+              for loc,rid in zip(locs,ray_ids):
+                  t=float(np.dot(loc-origins[rid],d))
+                  if t>=0: by[int(rid)].append(t)
+              first=[min(by[i]) if by[i] else None for i in range(len(origins))]
+              finite=np.array([v for v in first if v is not None],dtype=float)
+              front=float(np.percentile(finite,10)) if len(finite) else None
+              for i,off in enumerate(offsets):
+                  hits=sorted(by[i])
+                  first_t=hits[0] if hits else None
+                  second_t=hits[1] if len(hits)>1 else None
+                  depth=(first_t-front) if first_t is not None and front is not None else None
+                  rays.append({
+                      'heightMeters':y,
+                      'lateralOffsetMeters':off,
+                      'firstHitMeters':first_t,
+                      'secondHitMeters':second_t,
+                      'estimatedDepthBehindFrontMeters':depth,
+                      'hitCount':len(hits),
+                  })
+
+          candidates=[r for r in rays if r['estimatedDepthBehindFrontMeters'] is not None and r['estimatedDepthBehindFrontMeters']>=2.0]
+          recess=[r for r in candidates if r['estimatedDepthBehindFrontMeters']<=12.0]
+          deep=[r for r in candidates if r['estimatedDepthBehindFrontMeters']>12.0]
+          nohit=[r for r in rays if r['firstHitMeters'] is None]
+          report={
+              'schemaVersion':1,
+              'status':'PASS',
+              'authority':'exact Terminal4.exact.glb + Terminal4b.exact.glb at WED placements',
+              'area':'B2/B4 lower-ramp facade scan',
+              'cameraAuthority':'reports/kphx-t4-building-shell-b2.json',
+              'scan':{
+                  'heightsMeters':[0.8,1.4,2.0,2.6,3.2,3.8],
+                  'lateralRangeMeters':[-45,45],
+                  'lateralStepMeters':1,
+                  'rayCount':len(rays),
+              },
+              'classification':{
+                  'candidateOpenOrRecessedRays':len(candidates),
+                  'recessDepth2To12mRays':len(recess),
+                  'deeperThan12mRays':len(deep),
+                  'noHitRays':len(nohit),
+                  'interpretation':'Rays deeper than the nearest facade plane but hitting geometry within ~12 m indicate source-authored backed recesses; rays remaining open/no-hit or first hitting >12 m deeper indicate potential through-openings.',
+              },
+              'candidateSamples':candidates[:120],
+              'deepSamples':deep[:120],
+              'noHitSamples':nohit[:120],
+          }
+          Path('reports/kphx-b2-lower-opening-scan.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps(report['classification'],indent=2))
+          PY
+
+      - name: Commit scan report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-b2-lower-opening-scan.json
+          git commit -m "Record exact B2 lower-opening geometry scan"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
