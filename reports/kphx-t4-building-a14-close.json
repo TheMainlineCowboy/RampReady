@@ -1,0 +1,30 @@
+{
+  "capturedAtUtc": "2026-09-23T07:26:25.092Z",
+  "state": {
+    "dataset": {
+      "engine": "three.js r171",
+      "kphxT4BuildingShellVerifier": "ready",
+      "kphxT4BuildingQaView": "A14",
+      "kphxT4BuildingPlacements": "2",
+      "kphxT4Terminal4WedObjectId": "2327",
+      "kphxT4Terminal4bWedObjectId": "5301",
+      "kphxT4Terminal4Asset": "/models/kphx/Terminal4.exact.glb",
+      "kphxT4Terminal4bAsset": "/models/kphx/Terminal4b.exact.glb",
+      "kphxT4JetwayCount": "76",
+      "kphxT4JetwayOpenEdges": "261",
+      "kphxT4SelectedJetwayCount": "1",
+      "kphxT4CameraPosition": "-276.1102108282136,6,93.7577992801703",
+      "kphxT4CameraTarget": "-181.25317033030652,4.5,48.7340070367529",
+      "kphxT4TerminalBoundsSize": "478.98434929989253,23.260831829999997,738.31990052",
+      "kphxT4SurfacePolygons": "13",
+      "kphxT4SurfaceLines": "35",
+      "kphxT4LegacyMaskCompatibility": "true",
+      "kphxT4SubstitutionPolicy": "none",
+      "kphxT4LoadMs": "3608"
+    },
+    "bodyText": "Exact T4 building shell ready · A14 · 2 source buildings · 76 locked jetways · no substitutions"
+  },
+  "pageErrors": [],
+  "failedRequests": [],
+  "httpErrors": []
+}
