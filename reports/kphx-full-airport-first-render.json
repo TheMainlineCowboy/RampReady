@@ -1,16 +1,34 @@
 {
-  "capturedAtUtc": "2026-09-23T02:05:04.704Z",
+  "capturedAtUtc": "2026-09-23T02:31:40.532Z",
   "navigationError": null,
-  "waitError": "TimeoutError: page.waitForFunction: Timeout 60000ms exceeded.",
+  "waitError": null,
   "state": {
     "canvasPresent": true,
     "dataset": {
       "engine": "three.js r171",
-      "kphxFullAirportVerifier": "loading"
+      "kphxFullAirportVerifier": "ready",
+      "kphxLoadMsJetways": "3030",
+      "kphxLoadMsSurfaces": "4962",
+      "kphxLoadMsObjects": "5780",
+      "kphxLoadMsFinalRender": "15147",
+      "kphxLoadMsTotal": "20933",
+      "kphxPackagePlacements": "1634",
+      "kphxPackageResources": "147",
+      "kphxT4MisterxPlacements": "956",
+      "kphxT4MisterxResources": "50",
+      "kphxT4CdbPlacements": "23",
+      "kphxT4CdbResources": "1",
+      "kphxLoadedAssetFiles": "133",
+      "kphxPackagePolygons": "13",
+      "kphxPackageLineMeshes": "35",
+      "kphxSourceVersion": "1.75.1",
+      "kphxT4ExactJetwayCount": "76",
+      "kphxT4ExactJetwayOpenEdges": "261",
+      "kphxT4OldAirportJetwayGlbUsed": "false"
     },
-    "overlayText": null,
+    "overlayText": "KPHX 1.75.1 exact checkpoint ready · 1634 placements · 147 source resources · 133 asset files · 76 exact T4 jetways",
     "title": "RampReady",
-    "bodyText": "Loading exact KPHX 1.75.1…"
+    "bodyText": "KPHX 1.75.1 exact checkpoint ready · 1634 placements · 147 source resources · 133 asset files · 76 exact T4 jetways"
   },
   "consoleMessages": [
     {
@@ -27,23 +45,15 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A07020002C240000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000042E0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x38ac00b9ce00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x237c00bb6a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x38ac00b9ce00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
-    },
-    {
-      "type": "warning",
-      "text": "[.WebGL-0x38ac00b9ce00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
-    },
-    {
-      "type": "warning",
-      "text": "[.WebGL-0x38ac00b9ce00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      "text": "[.WebGL-0x237c00bb6a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     }
   ],
   "pageErrors": [],
