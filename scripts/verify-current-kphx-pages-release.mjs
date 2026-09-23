@@ -128,16 +128,41 @@ const trainer = fs.readFileSync("src/components/RampReadyStandupTrainerTerminal4
 assert(trainer.includes("KPHX_INVISIBLE_CONCRETE_SOURCE_UNDERLAY"), "Transparent concrete source-compatible underlay missing");
 assert(trainer.includes("ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol"), "Exact A1 source concrete underlay authority missing");
 assert(trainer.includes('A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPosition-27855"'), "Exact A1 WED ramp-position heading authority missing");
-assert(trainer.includes("KPHX_FULL_AIRPORT_SOURCE.anchor.headingDegrees"), "A1 aircraft heading is not derived from KPHX source authority");
-assert(trainer.includes("kphxXPlaneHeadingToRampReadyYawRadians(A1_SOURCE_HEADING_DEGREES)"), "A1 X-Plane heading conversion missing");
+assert(trainer.includes("const A1_GATE_POSE = getKphxTerminal4GatePoseByRampWedObjectId"), "A1 aircraft pose is not resolved from exact T4 gate authority");
+assert(trainer.includes("A1_SOURCE_HEADING_DEGREES = A1_GATE_POSE.sourceHeadingDegrees"), "A1 aircraft heading is not derived from exact WED gate pose");
+assert(trainer.includes("A1_AIRCRAFT_YAW_RADIANS = A1_GATE_POSE.runtimeYawRadians"), "A1 runtime yaw is not derived from exact WED gate pose");
+assert(trainer.includes("aircraft.position.set(A1_AIRCRAFT_START_X, 0, NOSE_START_Z);"), "Initial A1 aircraft source position missing");
 assert(trainer.includes("aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;"), "Initial A1 aircraft source yaw missing");
+assert(trainer.includes("sim.aircraft.position.set(A1_AIRCRAFT_START_X, 0, NOSE_START_Z);"), "A1 aircraft reset source position missing");
 assert(trainer.includes("sim.aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;"), "A1 aircraft reset source yaw missing");
+assert(trainer.includes("sim.rig.root.position.set(A1_EQUIPMENT_SPAWN.x, 0, A1_EQUIPMENT_SPAWN.z);"), "A1 equipment reset source position missing");
+assert(trainer.includes("sim.rig.root.rotation.y = A1_EQUIPMENT_SPAWN.yaw;"), "A1 equipment reset source yaw missing");
+assert(trainer.includes("dynamics: createA1SpawnPushbackState()"), "A1 initial dynamics are not gate-pose aligned");
 assert(!trainer.includes("sim.aircraft.rotation.y = 0;"), "Hard-coded zero A1 aircraft reset yaw remains");
+assert(!trainer.includes("sim.rig.root.position.set(0, 0, 0);"), "Hard-coded zero A1 equipment reset position remains");
+assert(!trainer.includes("sim.rig.root.rotation.y = 0;"), "Hard-coded zero A1 equipment reset yaw remains");
 assert(trainer.includes('dataset.a1AircraftHeadingReady = "true"'), "A1 aircraft heading runtime evidence missing");
+assert(trainer.includes('A1_EQUIPMENT_SPAWN_AUTHORITY = "same-a1-wed-gate-pose-equipment-spawn-v1"'), "A1 equipment spawn authority missing");
+assert(trainer.includes("dataset.a1EquipmentSpawnAuthority = A1_EQUIPMENT_SPAWN_AUTHORITY"), "A1 equipment runtime evidence missing");
 
 const kphxSourceAuthority = fs.readFileSync("src/environment/kphxFullAirport/sourceAuthority.js", "utf8");
 assert(kphxSourceAuthority.includes('wedObjectId: "27855"'), "A1 source WED object drifted");
 assert(kphxSourceAuthority.includes("headingDegrees: -90.08"), "A1 source WED heading drifted from -90.08 degrees");
+
+const gatePoseAuthority = fs.readFileSync("src/environment/kphxFullAirport/terminal4GatePoseAuthority.js", "utf8");
+assert(gatePoseAuthority.includes('sha256: "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498"'), "T4 gate-pose WED source hash drifted");
+assert(gatePoseAuthority.includes("supportedRampPositionCount: 76"), "T4 supported ramp-position count drifted");
+assert(gatePoseAuthority.includes("supportedGateNameCount: 75"), "T4 supported gate-name count drifted");
+assert(gatePoseAuthority.includes('["A1",27855,33.436530675,-111.998921221,-90.08]'), "Exact A1 WED gate pose drifted");
+assert(gatePoseAuthority.includes('["D7",106848') && gatePoseAuthority.includes('["D7",106850'), "Dual D7 ramp-position authority missing");
+
+const exactGatePosePrep = fs.readFileSync("scripts/prepare-a1-exact-gate-pose-v1.mjs", "utf8");
+assert(exactGatePosePrep.includes("same-a1-wed-gate-pose-equipment-spawn-v1"), "Final A1 exact gate-pose prep marker missing");
+assert(exactGatePosePrep.includes("Stale A1 zero-pose reset survived"), "Final A1 exact gate-pose stale-reset guard missing");
+
+const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
+const terminal4PrepareSteps = String(packageJson.scripts?.["prepare:terminal4-runtime"] || "").split(" && ");
+assert(terminal4PrepareSteps.at(-1) === "node scripts/prepare-a1-exact-gate-pose-v1.mjs", "Exact A1 gate-pose enforcement is not the final Terminal 4 preparation step");
 
 const launcher = fs.readFileSync("src/components/PushbackTrainer.jsx", "utf8");
 assert(launcher.includes("total: 4"), "Four-stage preload screen contract missing");
@@ -166,6 +191,10 @@ console.log(JSON.stringify({
   a1ZdpMarkingMeshes: 26,
   a1ZdpUniqueTextureDecodes: 4,
   transparentConcreteUnderlays: 8,
+  supportedT4RampPositions: 76,
+  supportedT4GateNames: 75,
+  a1SourceHeadingDegrees: -90.08,
+  a1EquipmentSpawnAuthority: "same-a1-wed-gate-pose-equipment-spawn-v1",
   lektroRevision: lektro.revision,
   lektroSha256: lektro.sha256,
   managerKubotaBytes: kubota.bytes,
