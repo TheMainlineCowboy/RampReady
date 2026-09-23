@@ -83,6 +83,95 @@ const images = (json.images || []).map((entry, index) => {
   };
 });
 
+function readAccessor(accessorIndex) {
+  const accessor = accessors[accessorIndex];
+  if (!accessor) throw new Error(`Missing accessor ${accessorIndex}`);
+  const view = bufferViews[accessor.bufferView];
+  if (!view) throw new Error(`Accessor ${accessorIndex} references missing bufferView ${accessor.bufferView}`);
+  const componentBytes = accessor.componentType === 5126 || accessor.componentType === 5125 ? 4
+    : accessor.componentType === 5123 ? 2
+      : accessor.componentType === 5121 ? 1
+        : null;
+  if (!componentBytes) throw new Error(`Unsupported accessor component type ${accessor.componentType}`);
+  const componentCount = accessor.type === "SCALAR" ? 1
+    : accessor.type === "VEC2" ? 2
+      : accessor.type === "VEC3" ? 3
+        : accessor.type === "VEC4" ? 4
+          : null;
+  if (!componentCount) throw new Error(`Unsupported accessor type ${accessor.type}`);
+  const stride = Number(view.byteStride || componentBytes * componentCount);
+  const base = Number(view.byteOffset || 0) + Number(accessor.byteOffset || 0);
+  const rows = [];
+  for (let row = 0; row < Number(accessor.count || 0); row += 1) {
+    const values = [];
+    const rowBase = base + row * stride;
+    for (let component = 0; component < componentCount; component += 1) {
+      const offset = rowBase + component * componentBytes;
+      if (accessor.componentType === 5126) values.push(binaryChunk.readFloatLE(offset));
+      else if (accessor.componentType === 5125) values.push(binaryChunk.readUInt32LE(offset));
+      else if (accessor.componentType === 5123) values.push(binaryChunk.readUInt16LE(offset));
+      else values.push(binaryChunk.readUInt8(offset));
+    }
+    rows.push(componentCount === 1 ? values[0] : values);
+  }
+  return rows;
+}
+
+function windingEvidenceForPrimitive(primitive) {
+  if (primitive.mode != null && primitive.mode !== 4) throw new Error("Terminal3a primitive is not TRIANGLES");
+  const positions = readAccessor(primitive.attributes.POSITION);
+  const normals = readAccessor(primitive.attributes.NORMAL);
+  const indices = readAccessor(primitive.indices);
+  let aligned = 0;
+  let opposite = 0;
+  let degenerate = 0;
+  for (let cursor = 0; cursor < indices.length; cursor += 3) {
+    const ia = indices[cursor];
+    const ib = indices[cursor + 1];
+    const ic = indices[cursor + 2];
+    const a = positions[ia], b = positions[ib], c = positions[ic];
+    const ab = [b[0]-a[0], b[1]-a[1], b[2]-a[2]];
+    const ac = [c[0]-a[0], c[1]-a[1], c[2]-a[2]];
+    const cross = [
+      ab[1]*ac[2] - ab[2]*ac[1],
+      ab[2]*ac[0] - ab[0]*ac[2],
+      ab[0]*ac[1] - ab[1]*ac[0],
+    ];
+    const crossLenSq = cross[0]**2 + cross[1]**2 + cross[2]**2;
+    if (crossLenSq <= 1e-18) {
+      degenerate += 1;
+      continue;
+    }
+    const avgNormal = [
+      normals[ia][0] + normals[ib][0] + normals[ic][0],
+      normals[ia][1] + normals[ib][1] + normals[ic][1],
+      normals[ia][2] + normals[ib][2] + normals[ic][2],
+    ];
+    const dot = cross[0]*avgNormal[0] + cross[1]*avgNormal[1] + cross[2]*avgNormal[2];
+    if (dot > 1e-9) aligned += 1;
+    else if (dot < -1e-9) opposite += 1;
+    else degenerate += 1;
+  }
+  return {
+    triangleCount: Math.floor(indices.length / 3),
+    aligned,
+    opposite,
+    degenerate,
+    runtimeNeedsWindingReversal: opposite > aligned,
+  };
+}
+
+const windingEvidence = (json.meshes || []).flatMap((mesh) =>
+  (mesh.primitives || []).map((primitive) => windingEvidenceForPrimitive(primitive))
+);
+const sourceWindingAgainstAuthoredNormals = windingEvidence.reduce((sum, item) => ({
+  triangleCount: sum.triangleCount + item.triangleCount,
+  aligned: sum.aligned + item.aligned,
+  opposite: sum.opposite + item.opposite,
+  degenerate: sum.degenerate + item.degenerate,
+  runtimeNeedsWindingReversal: sum.runtimeNeedsWindingReversal || item.runtimeNeedsWindingReversal,
+}), { triangleCount: 0, aligned: 0, opposite: 0, degenerate: 0, runtimeNeedsWindingReversal: false });
+
 const sourceObjSha256 = json.extras?.source?.obj?.sha256 || null;
 const report = {
   schemaVersion: 1,
@@ -109,6 +198,13 @@ const report = {
   textureCount: (json.textures || []).length,
   totalIndexCount,
   totalPositionAccessorCount,
+  topLevelExtensionsUsed: json.extensionsUsed || [],
+  sourceWindingAgainstAuthoredNormals,
+  runtimeCompatibility: {
+    windingReversalRequired: sourceWindingAgainstAuthoredNormals.runtimeNeedsWindingReversal,
+    legacyTextureVCorrectionRequired: (json.extensionsUsed || []).includes("KHR_texture_transform") === false,
+    reason: "Exact recovered GLB preserves source index order, UVs, and decoded texture pixels; browser glTF rendering must bridge X-Plane winding and texture-origin conventions without editing source geometry.",
+  },
   materials: materials.map((material, index) => ({
     index,
     name: material.name || null,
@@ -146,5 +242,7 @@ console.log(JSON.stringify({
     name, mimeType, embeddedByteLength, embeddedSha256,
   })),
   source: report.extras?.source || null,
+  sourceWindingAgainstAuthoredNormals: report.sourceWindingAgainstAuthoredNormals,
+  runtimeCompatibility: report.runtimeCompatibility,
   status: "PASS",
 }, null, 2));
