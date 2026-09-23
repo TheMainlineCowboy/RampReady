@@ -27,6 +27,23 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
+      - name: Instrument verifier for read-only ray probe
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("src/components/KphxT4BuildingShellVerifier.jsx")
+          s=p.read_text()
+          old='      const framing = frameRampView(camera, terminalLayer, jetways.layer, jetways.map, view);'
+          new='''      const framing = frameRampView(camera, terminalLayer, jetways.layer, jetways.map, view);
+      if (typeof window !== "undefined" && view === "B2") {
+        window.__kphxB2GeometryProbe = { THREE, terminalLayer, framing };
+      }'''
+          if old not in s:
+              raise SystemExit("B2 probe anchor missing")
+          p.write_text(s.replace(old,new))
+          PY
+
       - name: Start verifier
         run: |
           set -euo pipefail
@@ -49,22 +66,80 @@ jobs:
           const browser = await chromium.launch({headless:true});
           const page = await browser.newPage({viewport:{width:1600,height:1000}});
           await page.goto("http://127.0.0.1:4173/RampReady/?kphxT4Buildings=1&view=B2",{waitUntil:"domcontentloaded",timeout:60000});
-          await page.waitForFunction(()=>document.querySelector("canvas.kphxT4BuildingShellVerifierCanvas")?.dataset?.kphxT4BuildingShellVerifier==="ready",null,{timeout:120000});
+          await page.waitForFunction(()=>{
+            const canvas=document.querySelector("canvas.kphxT4BuildingShellVerifierCanvas");
+            return canvas?.dataset?.kphxT4BuildingShellVerifier==="ready" && Boolean(window.__kphxB2GeometryProbe);
+          },null,{timeout:120000});
 
-          const result = await page.evaluate(async () => {
-            const THREE = await import("/node_modules/.vite/deps/three.js?v=placeholder").catch(()=>null);
-            return { threeImportWorked:Boolean(THREE) };
-          }).catch(()=>({threeImportWorked:false}));
-          fs.writeFileSync("reports/kphx-b2-opening-probe-bootstrap.json", JSON.stringify(result,null,2)+"\n");
+          const result = await page.evaluate(() => {
+            const { THREE, terminalLayer, framing } = window.__kphxB2GeometryProbe;
+            const outward = new THREE.Vector3(...framing.derivedOutward).normalize();
+            const inward = outward.clone().multiplyScalar(-1);
+            const tangent = new THREE.Vector3(-outward.z, 0, outward.x).normalize();
+            const focus = new THREE.Vector3(...framing.cameraTarget);
+            const raycaster = new THREE.Raycaster();
+            raycaster.far = 80;
+
+            const offsets = [-15,-12,-9,-6,-3,0,3,6,9,12,15];
+            const heights = [0.6,1.2,1.8,2.4,3.0];
+            const samples = [];
+            for (const y of heights) {
+              for (const offset of offsets) {
+                const origin = focus.clone()
+                  .addScaledVector(outward, 10)
+                  .addScaledVector(tangent, offset);
+                origin.y = y;
+                raycaster.set(origin, inward);
+                const hits = raycaster.intersectObject(terminalLayer, true)
+                  .filter(hit => hit.distance > 0.05)
+                  .slice(0, 6)
+                  .map(hit => ({
+                    distance: Number(hit.distance.toFixed(3)),
+                    object: hit.object?.name || "",
+                    point: hit.point.toArray().map(v=>Number(v.toFixed(3))),
+                  }));
+                samples.push({y, offset, hits});
+              }
+            }
+
+            const rampLevel = samples.filter(s=>s.y<=2.4);
+            const withHits = rampLevel.filter(s=>s.hits.length);
+            const delayedHits = withHits.filter(s=>s.hits[0].distance>12);
+            const noHits = rampLevel.filter(s=>!s.hits.length);
+            return {
+              schemaVersion:1,
+              status:"PASS",
+              view:"B2",
+              authority:"exact Terminal4/Terminal4b GLBs at WED placement",
+              cameraTarget:framing.cameraTarget,
+              outward:framing.derivedOutward,
+              interpretation:{
+                originMetersOutboardOfRotunda:10,
+                recessEvidenceRule:"first hit > 12m means ray passed facade plane and hit deeper geometry/back wall",
+                throughOpeningEvidenceRule:"no hit within 80m along inward ray"
+              },
+              counts:{
+                rampLevelSamples:rampLevel.length,
+                samplesWithHits:withHits.length,
+                delayedBackWallHits:delayedHits.length,
+                noHitThroughRays:noHits.length
+              },
+              samples
+            };
+          });
+
+          fs.writeFileSync("reports/kphx-b2-opening-probe.json", JSON.stringify(result,null,2)+"\n");
+          console.log(JSON.stringify(result.counts,null,2));
           await browser.close();
           NODE
 
-      - name: Commit bootstrap evidence
+      - name: Commit probe evidence
         run: |
           set -euo pipefail
+          git restore -- src/components/KphxT4BuildingShellVerifier.jsx
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports/kphx-b2-opening-probe-bootstrap.json
-          git commit -m "Probe B2 exact opening geometry bootstrap"
+          git add reports/kphx-b2-opening-probe.json
+          git commit -m "Record exact B2 ramp opening geometry probe"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
