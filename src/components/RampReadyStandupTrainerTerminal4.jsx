@@ -705,6 +705,45 @@ export default function RampReadyStandupTrainer({
       .then(([packageResult, a1ZdpResult]) => {
         const packageData = packageResult.layer.userData;
         const zdpData = a1ZdpResult.layer.userData;
+
+        const exactConcreteSourceResource = "ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol";
+        const exactConcreteSourceMesh = a1ZdpResult.layer.children.find(
+          (child) => child?.userData?.sourceResource === exactConcreteSourceResource && child.material,
+        );
+        const invisibleConcreteResources = new Set([
+          "GroundPolys/invis_concrete.pol",
+          "Ground_Textures/Invisible_Concrete.pol",
+        ]);
+        let transparentConcreteUnderlayCount = 0;
+        if (exactConcreteSourceMesh?.material) {
+          for (const child of packageResult.layer.children) {
+            if (!child?.isMesh || !invisibleConcreteResources.has(child.userData?.sourceResource)) continue;
+            const geometry = child.geometry.clone();
+            geometry.translate(0, -0.015, 0);
+            const material = exactConcreteSourceMesh.material.clone();
+            material.name = "KPHX_INVISIBLE_CONCRETE_SOURCE_UNDERLAY";
+            material.transparent = false;
+            material.opacity = 1;
+            material.alphaTest = 0;
+            material.depthWrite = true;
+            material.side = THREE.DoubleSide;
+            const underlay = new THREE.Mesh(geometry, material);
+            underlay.name = `KPHX_INVISIBLE_CONCRETE_UNDERLAY_${child.userData?.wedObjectId || transparentConcreteUnderlayCount}`;
+            underlay.renderOrder = (child.renderOrder || 0) - 0.5;
+            underlay.receiveShadow = true;
+            underlay.userData = {
+              kphxFullAirport: true,
+              kphxSurface: true,
+              kphxTransparentConcreteCompatibilityUnderlay: true,
+              sourceHelperResource: child.userData?.sourceResource,
+              sourceConcreteResource: exactConcreteSourceResource,
+            };
+            environment.add(underlay);
+            transparentConcreteUnderlayCount += 1;
+          }
+        }
+        renderer.domElement.dataset.kphxTransparentConcreteUnderlayCount = String(transparentConcreteUnderlayCount);
+
         const failures = [
           ...(packageData.failures || []),
           ...(zdpData.failures || []),
