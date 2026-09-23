@@ -16,6 +16,7 @@ function kphxRuntimeUrl(url) {
 
 const DEFAULT_MANIFEST_URL = "/models/kphx-full-airport/manifest.json";
 const EXACT_LEGACY_OBJ8_MASK_RESOURCES = new Set([
+  "Terminals/Terminal3a.obj",
   "Terminals/Terminal4.obj",
   "Terminals/Terminal4b.obj",
 ]);
