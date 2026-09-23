@@ -62,30 +62,23 @@ if (!generator.includes('dataset.terminal4A1JetwayWallDistance = "load-error"'))
   if (!generator.includes(oldText)) throw new Error("Terminal runtime failure evidence anchor is missing");
   generator = generator.replace(oldText, newText);
 }
-if (!generator.includes("environment.userData.authoredGroundMarkingContactMode")) {
-  const oldText = `        renderer.domElement.dataset.b15CorridorMeters = environment.userData.trainingCorridor?.distanceMeters?.map((value) => Math.round(value)).join(",") || "missing";
-        return ground;`;
-  const newText = `        renderer.domElement.dataset.b15CorridorMeters = environment.userData.trainingCorridor?.distanceMeters?.map((value) => Math.round(value)).join(",") || "missing";
-        renderer.domElement.dataset.groundMarkingContactMode = environment.userData.authoredGroundMarkingContactMode || "missing";
-        return ground;`;
-  if (!generator.includes(oldText)) throw new Error("Ground marking runtime evidence anchor is missing");
-  generator = generator.replace(oldText, newText);
+if (!generator.includes("dataset.kphxA1ZdpMarkingsReady")) {
+  throw new Error("Exact A1 ZDP marking readiness evidence is missing");
 }
-if (!generator.includes('dataset.groundMarkingContactMode = "load-error"')) {
-  const oldText = `        renderer.domElement.dataset.b15CorridorMeters = "load-error";
-        console.error("RampReady KPHX ground load failed", error);`;
-  const newText = `        renderer.domElement.dataset.b15CorridorMeters = "load-error";
-        renderer.domElement.dataset.groundMarkingContactMode = "load-error";
-        console.error("RampReady KPHX ground load failed", error);`;
-  if (!generator.includes(oldText)) throw new Error("Ground marking failure evidence anchor is missing");
-  generator = generator.replace(oldText, newText);
+if (!generator.includes("dataset.kphxA1ZdpMarkingLineMeshCount")) {
+  throw new Error("Exact A1 ZDP marking mesh-count evidence is missing");
+}
+if (!generator.includes("dataset.kphxA1ZdpMarkingFailureCount")) {
+  throw new Error("Exact A1 ZDP marking failure evidence is missing");
 }
 fs.writeFileSync(generatorPath, generator, "utf8");
 
 for (const [path, tokens] of Object.entries({
   [groundPath]: [
     'contactMode: "pavement-coincident-decals"',
-    "authoredGroundMarkingContactMode",
+    "dataset.kphxA1ZdpMarkingsReady",
+    "dataset.kphxA1ZdpMarkingLineMeshCount",
+    "dataset.kphxA1ZdpMarkingFailureCount",
   ],
   [generatorPath]: [
     'dataset.terminal4A1JetwayWallDistance = "loading"',
@@ -99,4 +92,4 @@ for (const [path, tokens] of Object.entries({
   for (const token of tokens) if (!prepared.includes(token)) throw new Error(`${path}: simulator-quality runtime evidence is missing ${token}`);
 }
 
-console.log("Prepared live simulator-quality evidence for inspection mode, pavement-coincident marking contact, source alpha and terminal-connected jetways.");
+console.log("Prepared live simulator-quality evidence for inspection mode, exact A1 ZDP markings, source alpha and terminal-connected jetways.");
