@@ -1,0 +1,13 @@
+{
+  "authority": "reports/kphx-full-cdb-wed-placements.json",
+  "dependency": "CDB-Library",
+  "resources": [
+    "CDB-Library/Airport/GSE/others/objects_airConditionerBig.obj",
+    "CDB-Library/Airport/GSE/others/objects_scaffolding_wood.obj",
+    "CDB-Library/Airport/GSE/stairs/GSE_A320_stairs.obj",
+    "CDB-Library/Cars/BICI/car_golfcar2.obj",
+    "CDB-Library/Cars/camion/GSE_mini_aerialLift_.obj",
+    "CDB-Library/Cars/cars/Landrover_Mercedez/car_mercedes_old_gray.obj",
+    "CDB-Library/Cars/cars/Landrover_Mercedez/car_rangeRoverE.obj"
+  ]
+}

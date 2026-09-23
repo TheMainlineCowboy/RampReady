@@ -8,33 +8,33 @@
   ],
   "buffers": [
     {
-      "uri": "objects_airConditionerBig.bin",
-      "byteLength": 7036
+      "uri": "GSE_A320_stairs.bin",
+      "byteLength": 31772
     }
   ],
   "bufferViews": [
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 2256,
+      "byteLength": 10488,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2256,
-      "byteLength": 2256,
+      "byteOffset": 10488,
+      "byteLength": 10488,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 4512,
-      "byteLength": 1504,
+      "byteOffset": 20976,
+      "byteLength": 6992,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 6016,
-      "byteLength": 1020,
+      "byteOffset": 27968,
+      "byteLength": 3804,
       "target": 34963
     }
   ],
@@ -42,27 +42,27 @@
     {
       "bufferView": 0,
       "componentType": 5126,
-      "count": 188,
+      "count": 874,
       "type": "VEC3",
       "min": [
-        0,
-        0,
-        -2.4
+        -0.6473,
+        -0.0191,
+        -3.3681
       ],
       "max": [
-        2.4,
-        2.07,
-        0
+        0.653,
+        4.4191,
+        2.7464
       ]
     },
     {
       "bufferView": 1,
       "componentType": 5126,
-      "count": 188,
+      "count": 874,
       "type": "VEC3",
       "min": [
         -1,
-        0,
+        -0.999,
         -1
       ],
       "max": [
@@ -74,40 +74,53 @@
     {
       "bufferView": 2,
       "componentType": 5126,
-      "count": 188,
+      "count": 874,
       "type": "VEC2",
       "min": [
-        0,
-        0
+        0.0037,
+        0.0125
       ],
       "max": [
-        1.3588,
-        1.0279
+        1.4013,
+        1
       ]
     },
     {
       "bufferView": 3,
       "byteOffset": 0,
       "componentType": 5123,
-      "count": 510,
+      "count": 738,
+      "type": "SCALAR",
+      "min": [
+        16
+      ],
+      "max": [
+        873
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 1476,
+      "componentType": 5123,
+      "count": 1164,
       "type": "SCALAR",
       "min": [
         0
       ],
       "max": [
-        187
+        551
       ]
     }
   ],
   "images": [
     {
-      "uri": "cdb_others.png"
+      "uri": "escadas.png"
     },
     {
-      "uri": "cdb_others_LIT.png"
+      "uri": "escadas_LIT.png"
     },
     {
-      "uri": "cdb_others_NORM.png"
+      "uri": "escadas_NORM.png"
     }
   ],
   "samplers": [
@@ -134,7 +147,7 @@
   ],
   "materials": [
     {
-      "name": "objects_airConditionerBig source material 0",
+      "name": "GSE_A320_stairs source material 0",
       "pbrMetallicRoughness": {
         "baseColorTexture": {
           "index": 0,
@@ -212,7 +225,7 @@
   ],
   "meshes": [
     {
-      "name": "objects_airConditionerBig",
+      "name": "GSE_A320_stairs",
       "primitives": [
         {
           "attributes": {
@@ -249,13 +262,49 @@
               ]
             }
           }
+        },
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 4,
+          "material": 0,
+          "mode": 4,
+          "extras": {
+            "xPlaneDrawState": {
+              "alphaMode": "BLEND",
+              "alphaCutoff": null,
+              "doubleSided": false,
+              "shade": "smooth",
+              "depthTest": true,
+              "drawEnabled": true,
+              "draped": false,
+              "layerGroupDraped": null,
+              "layerGroup": null,
+              "lodDraped": null,
+              "emissionRgb": [
+                0,
+                0,
+                0
+              ],
+              "lodRange": null,
+              "shinyRatio": null,
+              "xPlaneRestTranslation": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
         }
       ]
     }
   ],
   "nodes": [
     {
-      "name": "objects_airConditionerBig",
+      "name": "GSE_A320_stairs",
       "mesh": 0,
       "extras": {
         "xPlaneParameterizedLights": [],
@@ -278,11 +327,11 @@
   "scene": 0,
   "extras": {
     "sourceFormat": "X-Plane OBJ8",
-    "sourceFile": "objects_airConditionerBig.obj",
-    "sourceTexture": "cdb_others.png",
+    "sourceFile": "GSE_A320_stairs.obj",
+    "sourceTexture": "../../../shared_texture/escadas.dds",
     "sourceDrapedTexture": null,
-    "sourceLitTexture": "cdb_others_LIT.png",
-    "sourceNormalTexture": "cdb_others_NORM.png",
+    "sourceLitTexture": "../../../shared_texture/escadas_LIT.dds",
+    "sourceNormalTexture": "../../../shared_texture/escadas_NORM.png",
     "sourceNormalScale": 1,
     "sourceDrapedNormalTexture": null,
     "sourceDrapedNormalScale": null,
@@ -293,18 +342,46 @@
     "globalAlphaCutoff": null,
     "normalMetalness": false,
     "pointCounts": [
-      188,
+      874,
       0,
       0,
-      510
+      1902
     ],
-    "vertexCount": 188,
-    "indexCount": 510,
-    "triangleCount": 170,
+    "vertexCount": 874,
+    "indexCount": 1902,
+    "triangleCount": 634,
     "drawRanges": [
       {
         "start": 0,
-        "count": 510,
+        "count": 738,
+        "state": {
+          "alphaMode": "BLEND",
+          "alphaCutoff": null,
+          "doubleSided": false,
+          "shade": "smooth",
+          "depthTest": true,
+          "drawEnabled": true,
+          "draped": false,
+          "layerGroupDraped": null,
+          "layerGroup": null,
+          "lodDraped": null,
+          "emissionRgb": [
+            0,
+            0,
+            0
+          ],
+          "lodRange": null,
+          "shinyRatio": null,
+          "xPlaneRestTranslation": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      {
+        "start": 738,
+        "count": 1164,
         "state": {
           "alphaMode": "BLEND",
           "alphaCutoff": null,
@@ -339,14 +416,14 @@
     "namedLights": [],
     "sourceBounds": {
       "min": [
-        0,
-        0,
-        -2.4
+        -0.6473,
+        -0.0191,
+        -3.3681
       ],
       "max": [
-        2.4,
-        2.07,
-        0
+        0.653,
+        4.4191,
+        2.7464
       ]
     },
     "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",

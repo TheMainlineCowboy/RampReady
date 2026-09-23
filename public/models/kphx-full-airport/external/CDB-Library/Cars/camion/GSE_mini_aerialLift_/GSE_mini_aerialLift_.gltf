@@ -8,33 +8,33 @@
   ],
   "buffers": [
     {
-      "uri": "objects_airConditionerBig.bin",
-      "byteLength": 7036
+      "uri": "GSE_mini_aerialLift_.bin",
+      "byteLength": 237878
     }
   ],
   "bufferViews": [
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 2256,
+      "byteLength": 79104,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2256,
-      "byteLength": 2256,
+      "byteOffset": 79104,
+      "byteLength": 79104,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 4512,
-      "byteLength": 1504,
+      "byteOffset": 158208,
+      "byteLength": 52736,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 6016,
-      "byteLength": 1020,
+      "byteOffset": 210944,
+      "byteLength": 26934,
       "target": 34963
     }
   ],
@@ -42,27 +42,27 @@
     {
       "bufferView": 0,
       "componentType": 5126,
-      "count": 188,
+      "count": 6592,
       "type": "VEC3",
       "min": [
+        -1.0271,
         0,
-        0,
-        -2.4
+        -1.9508
       ],
       "max": [
-        2.4,
-        2.07,
-        0
+        0.022,
+        2.4632,
+        0.32
       ]
     },
     {
       "bufferView": 1,
       "componentType": 5126,
-      "count": 188,
+      "count": 6592,
       "type": "VEC3",
       "min": [
         -1,
-        0,
+        -1,
         -1
       ],
       "max": [
@@ -74,40 +74,34 @@
     {
       "bufferView": 2,
       "componentType": 5126,
-      "count": 188,
+      "count": 6592,
       "type": "VEC2",
       "min": [
-        0,
-        0
+        0.0119,
+        0.012
       ],
       "max": [
-        1.3588,
-        1.0279
+        2.3598,
+        0.9932
       ]
     },
     {
       "bufferView": 3,
       "byteOffset": 0,
       "componentType": 5123,
-      "count": 510,
+      "count": 13467,
       "type": "SCALAR",
       "min": [
         0
       ],
       "max": [
-        187
+        6591
       ]
     }
   ],
   "images": [
     {
-      "uri": "cdb_others.png"
-    },
-    {
-      "uri": "cdb_others_LIT.png"
-    },
-    {
-      "uri": "cdb_others_NORM.png"
+      "uri": "MobileElevator01.png"
     }
   ],
   "samplers": [
@@ -122,19 +116,11 @@
     {
       "sampler": 0,
       "source": 0
-    },
-    {
-      "sampler": 0,
-      "source": 1
-    },
-    {
-      "sampler": 0,
-      "source": 2
     }
   ],
   "materials": [
     {
-      "name": "objects_airConditionerBig source material 0",
+      "name": "GSE_mini_aerialLift_ source material 0",
       "pbrMetallicRoughness": {
         "baseColorTexture": {
           "index": 0,
@@ -157,9 +143,9 @@
       "doubleSided": false,
       "alphaMode": "BLEND",
       "emissiveFactor": [
-        1,
-        1,
-        1
+        0,
+        0,
+        0
       ],
       "extras": {
         "xPlaneDraped": false,
@@ -176,43 +162,12 @@
         "xPlaneGlobalSpecular": null,
         "xPlaneGlobalAlphaCutoff": null,
         "xPlaneNormalMetalness": false
-      },
-      "emissiveTexture": {
-        "index": 1,
-        "extensions": {
-          "KHR_texture_transform": {
-            "offset": [
-              0,
-              1
-            ],
-            "scale": [
-              1,
-              -1
-            ]
-          }
-        }
-      },
-      "normalTexture": {
-        "index": 2,
-        "extensions": {
-          "KHR_texture_transform": {
-            "offset": [
-              0,
-              1
-            ],
-            "scale": [
-              1,
-              -1
-            ]
-          }
-        },
-        "scale": 1
       }
     }
   ],
   "meshes": [
     {
-      "name": "objects_airConditionerBig",
+      "name": "GSE_mini_aerialLift_",
       "primitives": [
         {
           "attributes": {
@@ -255,7 +210,7 @@
   ],
   "nodes": [
     {
-      "name": "objects_airConditionerBig",
+      "name": "GSE_mini_aerialLift_",
       "mesh": 0,
       "extras": {
         "xPlaneParameterizedLights": [],
@@ -278,12 +233,12 @@
   "scene": 0,
   "extras": {
     "sourceFormat": "X-Plane OBJ8",
-    "sourceFile": "objects_airConditionerBig.obj",
-    "sourceTexture": "cdb_others.png",
+    "sourceFile": "GSE_mini_aerialLift_.obj",
+    "sourceTexture": "MobileElevator01.png",
     "sourceDrapedTexture": null,
-    "sourceLitTexture": "cdb_others_LIT.png",
-    "sourceNormalTexture": "cdb_others_NORM.png",
-    "sourceNormalScale": 1,
+    "sourceLitTexture": null,
+    "sourceNormalTexture": null,
+    "sourceNormalScale": null,
     "sourceDrapedNormalTexture": null,
     "sourceDrapedNormalScale": null,
     "sourceWeatherTexture": null,
@@ -293,18 +248,18 @@
     "globalAlphaCutoff": null,
     "normalMetalness": false,
     "pointCounts": [
-      188,
+      6592,
       0,
       0,
-      510
+      13467
     ],
-    "vertexCount": 188,
-    "indexCount": 510,
-    "triangleCount": 170,
+    "vertexCount": 6592,
+    "indexCount": 13467,
+    "triangleCount": 4489,
     "drawRanges": [
       {
         "start": 0,
-        "count": 510,
+        "count": 13467,
         "state": {
           "alphaMode": "BLEND",
           "alphaCutoff": null,
@@ -339,14 +294,14 @@
     "namedLights": [],
     "sourceBounds": {
       "min": [
+        -1.0271,
         0,
-        0,
-        -2.4
+        -1.9508
       ],
       "max": [
-        2.4,
-        2.07,
-        0
+        0.022,
+        2.4632,
+        0.32
       ]
     },
     "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",

@@ -8,33 +8,33 @@
   ],
   "buffers": [
     {
-      "uri": "objects_airConditionerBig.bin",
-      "byteLength": 7036
+      "uri": "car_mercedes_old_gray.bin",
+      "byteLength": 104720
     }
   ],
   "bufferViews": [
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 2256,
+      "byteLength": 32700,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2256,
-      "byteLength": 2256,
+      "byteOffset": 32700,
+      "byteLength": 32700,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 4512,
-      "byteLength": 1504,
+      "byteOffset": 65400,
+      "byteLength": 21800,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 6016,
-      "byteLength": 1020,
+      "byteOffset": 87200,
+      "byteLength": 17520,
       "target": 34963
     }
   ],
@@ -42,27 +42,27 @@
     {
       "bufferView": 0,
       "componentType": 5126,
-      "count": 188,
+      "count": 2725,
       "type": "VEC3",
       "min": [
+        -1.1495,
         0,
-        0,
-        -2.4
+        -2.7257
       ],
       "max": [
-        2.4,
-        2.07,
-        0
+        1.0257,
+        1.7496,
+        2.2336
       ]
     },
     {
       "bufferView": 1,
       "componentType": 5126,
-      "count": 188,
+      "count": 2725,
       "type": "VEC3",
       "min": [
         -1,
-        0,
+        -1,
         -1
       ],
       "max": [
@@ -74,40 +74,37 @@
     {
       "bufferView": 2,
       "componentType": 5126,
-      "count": 188,
+      "count": 2725,
       "type": "VEC2",
       "min": [
-        0,
-        0
+        0.0006,
+        0.0017
       ],
       "max": [
-        1.3588,
-        1.0279
+        1.736,
+        1.454
       ]
     },
     {
       "bufferView": 3,
       "byteOffset": 0,
       "componentType": 5123,
-      "count": 510,
+      "count": 8760,
       "type": "SCALAR",
       "min": [
         0
       ],
       "max": [
-        187
+        2724
       ]
     }
   ],
   "images": [
     {
-      "uri": "cdb_others.png"
+      "uri": "mercedes_gray.png"
     },
     {
-      "uri": "cdb_others_LIT.png"
-    },
-    {
-      "uri": "cdb_others_NORM.png"
+      "uri": "mercedes_Normal.png"
     }
   ],
   "samplers": [
@@ -126,15 +123,11 @@
     {
       "sampler": 0,
       "source": 1
-    },
-    {
-      "sampler": 0,
-      "source": 2
     }
   ],
   "materials": [
     {
-      "name": "objects_airConditionerBig source material 0",
+      "name": "car_mercedes_old_gray source material 0",
       "pbrMetallicRoughness": {
         "baseColorTexture": {
           "index": 0,
@@ -157,9 +150,9 @@
       "doubleSided": false,
       "alphaMode": "BLEND",
       "emissiveFactor": [
-        1,
-        1,
-        1
+        0,
+        0,
+        0
       ],
       "extras": {
         "xPlaneDraped": false,
@@ -177,23 +170,8 @@
         "xPlaneGlobalAlphaCutoff": null,
         "xPlaneNormalMetalness": false
       },
-      "emissiveTexture": {
-        "index": 1,
-        "extensions": {
-          "KHR_texture_transform": {
-            "offset": [
-              0,
-              1
-            ],
-            "scale": [
-              1,
-              -1
-            ]
-          }
-        }
-      },
       "normalTexture": {
-        "index": 2,
+        "index": 1,
         "extensions": {
           "KHR_texture_transform": {
             "offset": [
@@ -212,7 +190,7 @@
   ],
   "meshes": [
     {
-      "name": "objects_airConditionerBig",
+      "name": "car_mercedes_old_gray",
       "primitives": [
         {
           "attributes": {
@@ -255,7 +233,7 @@
   ],
   "nodes": [
     {
-      "name": "objects_airConditionerBig",
+      "name": "car_mercedes_old_gray",
       "mesh": 0,
       "extras": {
         "xPlaneParameterizedLights": [],
@@ -278,11 +256,11 @@
   "scene": 0,
   "extras": {
     "sourceFormat": "X-Plane OBJ8",
-    "sourceFile": "objects_airConditionerBig.obj",
-    "sourceTexture": "cdb_others.png",
+    "sourceFile": "car_mercedes_old_gray.obj",
+    "sourceTexture": "mercedes_gray.png",
     "sourceDrapedTexture": null,
-    "sourceLitTexture": "cdb_others_LIT.png",
-    "sourceNormalTexture": "cdb_others_NORM.png",
+    "sourceLitTexture": null,
+    "sourceNormalTexture": "mercedes_Normal.png",
     "sourceNormalScale": 1,
     "sourceDrapedNormalTexture": null,
     "sourceDrapedNormalScale": null,
@@ -293,18 +271,18 @@
     "globalAlphaCutoff": null,
     "normalMetalness": false,
     "pointCounts": [
-      188,
+      2725,
       0,
       0,
-      510
+      8760
     ],
-    "vertexCount": 188,
-    "indexCount": 510,
-    "triangleCount": 170,
+    "vertexCount": 2725,
+    "indexCount": 8760,
+    "triangleCount": 2920,
     "drawRanges": [
       {
         "start": 0,
-        "count": 510,
+        "count": 8760,
         "state": {
           "alphaMode": "BLEND",
           "alphaCutoff": null,
@@ -339,14 +317,14 @@
     "namedLights": [],
     "sourceBounds": {
       "min": [
+        -1.1495,
         0,
-        0,
-        -2.4
+        -2.7257
       ],
       "max": [
-        2.4,
-        2.07,
-        0
+        1.0257,
+        1.7496,
+        2.2336
       ]
     },
     "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
