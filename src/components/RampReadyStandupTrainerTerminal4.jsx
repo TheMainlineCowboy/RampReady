@@ -699,6 +699,7 @@ export default function RampReadyStandupTrainer({
         loadPolygons: true,
         loadDrapedOrthophotos: false,
         loadLines: false,
+        addOpaqueBaseUnderlay: true,
       }),
     ])
       .then(([packageResult, a1ZdpResult]) => {
@@ -719,6 +720,7 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.kphxSurfaceFailureCount = String(failures.length);
         renderer.domElement.dataset.kphxA1ZdpSurfaceReady = String(zdpData.ready === true);
         renderer.domElement.dataset.kphxA1ZdpSurfacePolygonCount = String(zdpData.polygonCount ?? 0);
+        renderer.domElement.dataset.kphxA1ZdpOpaqueBaseUnderlayCount = String(zdpData.opaqueBaseUnderlayCount ?? 0);
         renderer.domElement.dataset.kphxA1ZdpSurfaceOrthophotoCount = String(zdpData.drapedOrthophotoCount ?? 0);
         renderer.domElement.dataset.kphxA1ZdpSurfaceLineMeshCount = String(zdpData.lineMeshCount ?? 0);
         renderer.domElement.dataset.photoGroundSource = "not-used-exact-kphx-1.75.1-only";
