@@ -159,7 +159,6 @@ jobs:
           1ZLLhzCYdVppMHD6FFzNG1RMpryb0GI8N .misterx/Airport/Aircraft/Learjet_35/Shadow.dds
           1aO6T0jLUB1ZwVPUiYLNLEqUrX2GplHCD .misterx/Airport/Other/Checkered_Hut.obj
           1FTUznEieYp5OeZECE_dOtDyFYdj9HA8s .misterx/Airport/Other/Glideslope_Antenna.obj
-          1ePnHW36VmPqkJNMVXBTxau_FBJt68zY1 .misterx/Airport/Other/Checkered_Huts.dds
           1WqW9NjidGAfNWln_1deqy18LkQoQMoHH .misterx/Airport/Other/ILS_Antennas.obj
           1UkGwFk1KcqWCA7a8Neg3fudchZc0DUte .misterx/Airport/Other/ILS_Antennas.dds
           1EYMQ1RJpupm6hSagE2sZN1BeEvnuMFY9 .misterx/Objects/Construction/Garbage_Container_Rusty.obj
@@ -180,7 +179,7 @@ jobs:
           1hETPtkVeWnPMECBrktLhgtEKRt50vins .misterx/Vehicles/Trucks/Trailer_NRM.png
           EOF
 
-          cat /tmp/misterx-downloads.txt | xargs -P 6 -n 2 bash -c '
+          cat /tmp/misterx-downloads.txt | xargs -P 4 -n 2 bash -c '
             set -euo pipefail
             id="$1"
             target="$2"
