@@ -1,0 +1,106 @@
+name: KPHX T4 C19 Building Visual Check
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-t4-building-c19-visual.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-t4-building-c19-visual
+  cancel-in-progress: true
+
+jobs:
+  c19:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+      - name: Install app and browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npx vite --host 127.0.0.1 --port 4173 > /tmp/kphx-c19-building.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/kphx-c19-building.log
+          exit 1
+      - name: Capture C19
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1600,height:1000},deviceScaleFactor:1});
+          const pageErrors=[],failedRequests=[],httpErrors=[];
+          page.on("pageerror",e=>pageErrors.push(String(e)));
+          page.on("requestfailed",r=>failedRequests.push({url:r.url(),failure:r.failure()?.errorText||"unknown"}));
+          page.on("response",r=>{if(r.status()>=400)httpErrors.push({url:r.url(),status:r.status()});});
+          await page.goto("http://127.0.0.1:4173/RampReady/?kphxT4Buildings=1&view=C19",{waitUntil:"domcontentloaded",timeout:60000});
+          await page.waitForFunction(()=>{
+            const c=document.querySelector("canvas.kphxT4BuildingShellVerifierCanvas");
+            return ["ready","error"].includes(c?.dataset?.kphxT4BuildingShellVerifier);
+          },null,{timeout:60000});
+          const state=await page.evaluate(()=>{
+            const c=document.querySelector("canvas.kphxT4BuildingShellVerifierCanvas");
+            return {dataset:c?{...c.dataset}:{},bodyText:document.body.innerText.slice(0,2000)};
+          });
+          await page.screenshot({path:"reports/kphx-t4-building-c19-close.jpg",type:"jpeg",quality:94,fullPage:true});
+          fs.writeFileSync("reports/kphx-t4-building-c19-close.json",JSON.stringify({capturedAtUtc:new Date().toISOString(),state,pageErrors,failedRequests,httpErrors},null,2)+"\n");
+          await browser.close();
+          NODE
+      - name: Enforce C19 source lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const r=JSON.parse(fs.readFileSync("reports/kphx-t4-building-c19-close.json","utf8"));
+          const d=r.state?.dataset||{};
+          const failures=[];
+          if(d.kphxT4BuildingShellVerifier!=="ready") failures.push("state");
+          if(d.kphxT4BuildingQaView!=="C19") failures.push("view");
+          if(d.kphxT4BuildingPlacements!=="2") failures.push("buildings");
+          if(d.kphxT4Terminal4WedObjectId!=="2327") failures.push("Terminal4WED");
+          if(d.kphxT4Terminal4bWedObjectId!=="5301") failures.push("Terminal4bWED");
+          if(d.kphxT4JetwayCount!=="76") failures.push("jetways");
+          if(d.kphxT4JetwayOpenEdges!=="261") failures.push("edges");
+          if(d.kphxT4SubstitutionPolicy!=="none") failures.push("substitution");
+          const pixels=JSON.parse(fs.readFileSync("reports/kphx-t4-texture-pixel-verification.json","utf8"));
+          for(const t of pixels.targets||[]) if(t.allSourceRawHashesMatchAuthority!==true||t.allDecodedRgbaMatchSource!==true) failures.push(t.name);
+          if(r.pageErrors?.length||r.failedRequests?.length||r.httpErrors?.length) failures.push("browser");
+          if(failures.length) throw new Error("C19 building check failed: "+failures.join(","));
+          console.log(JSON.stringify({status:"PASS",view:"C19",camera:d.kphxT4CameraPosition,target:d.kphxT4CameraTarget},null,2));
+          NODE
+      - name: Commit C19 evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore -- package.json package-lock.json 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-t4-building-c19-close.jpg reports/kphx-t4-building-c19-close.json
+          git commit -m "Capture exact C19 building close view"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
