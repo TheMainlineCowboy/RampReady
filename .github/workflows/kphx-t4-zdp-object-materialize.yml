@@ -49,12 +49,72 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          export GIT_LFS_SKIP_SMUDGE=1
           git clone --depth 1 --branch 1.2.0 https://gitlab.com/StableSystem/zdp-library.git .zdp
-          (
-            cd .zdp
-            git lfs pull
-            test "$(git rev-parse HEAD)" = "4b44b673ac023bac67f92a1c991a28df1b1da82c"
-          )
+          test "$(git -C .zdp rev-parse HEAD)" = "4b44b673ac023bac67f92a1c991a28df1b1da82c"
+
+          node --input-type=module <<'NODE' > /tmp/zdp-object-path.txt
+          import fs from "node:fs";
+          const target="ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj";
+          const src=fs.readFileSync(".zdp/library.txt","utf8");
+          for (const raw of src.split(/\r?\n/)) {
+            const line=raw.replace(/#.*/,"").trim();
+            if (!line) continue;
+            const p=line.split(/\s+/);
+            const cmd=p[0];
+            let virtual=null, physical=null;
+            if (cmd==="EXPORT_RATIO" && p.length>=4) {
+              virtual=p[2];
+              physical=p.slice(3).join(" ");
+            } else if (["EXPORT","EXPORT_EXCLUDE","EXPORT_BACKUP"].includes(cmd) && p.length>=3) {
+              virtual=p[1];
+              physical=p.slice(2).join(" ");
+            }
+            if (virtual===target) {
+              console.log(physical);
+              process.exit(0);
+            }
+          }
+          throw new Error("Exact ZDP stop-marker export not found");
+          NODE
+
+          ZDP_OBJ="$(cat /tmp/zdp-object-path.txt)"
+          git -C .zdp lfs pull --include="$ZDP_OBJ"
+
+          ZDP_OBJ="$ZDP_OBJ" node --input-type=module <<'NODE' > /tmp/zdp-texture-paths.txt
+          import fs from "node:fs";
+          import path from "node:path";
+          const obj=process.env.ZDP_OBJ;
+          const abs=path.join(".zdp",obj);
+          const src=fs.readFileSync(abs,"utf8");
+          const refs=[];
+          for (const raw of src.split(/\r?\n/)) {
+            const line=raw.trim();
+            if (!line) continue;
+            const p=line.split(/\s+/);
+            const cmd=p[0];
+            let requested=null;
+            if (["TEXTURE","TEXTURE_DRAPED","TEXTURE_LIT","WEATHER"].includes(cmd)) {
+              requested=p.slice(1).join(" ");
+            } else if (["TEXTURE_NORMAL","TEXTURE_DRAPED_NORMAL"].includes(cmd)) {
+              const n=Number(p[1]);
+              requested=Number.isFinite(n) && p.length>=3 ? p.slice(2).join(" ") : p.slice(1).join(" ");
+            }
+            if (!requested || /^none$/i.test(requested)) continue;
+            const base=path.normalize(path.join(path.dirname(obj),requested)).replaceAll("\\","/");
+            const parsed=path.posix.parse(base);
+            const candidates=[base,`${parsed.dir}/${parsed.name}.dds`,`${parsed.dir}/${parsed.name}.DDS`,`${parsed.dir}/${parsed.name}.png`,`${parsed.dir}/${parsed.name}.PNG`];
+            const found=[...new Set(candidates)].find((x)=>fs.existsSync(path.join(".zdp",x)));
+            if (!found) throw new Error(`Texture source not found for ${requested}`);
+            refs.push(found);
+          }
+          console.log([...new Set(refs)].join(","));
+          NODE
+
+          ZDP_TEXTURES="$(cat /tmp/zdp-texture-paths.txt)"
+          if [ -n "$ZDP_TEXTURES" ]; then
+            git -C .zdp lfs pull --include="$ZDP_TEXTURES"
+          fi
 
       - name: Resolve exact ZDP stop-marker resource
         shell: bash
@@ -126,3 +186,5 @@ jobs:
           git commit -m "Materialize exact T4 ZDP stop-marker runtime"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
+
+# targeted-LFS retrigger
