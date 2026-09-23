@@ -130,11 +130,11 @@ function frameRampView(camera, terminalLayer, jetwayLayer, jetwayMap, view) {
   outward.normalize();
 
   const span = Math.max(gateSize.x, gateSize.z, exactGate ? 28 : 110);
-  const closeGateQa = view === "A1" || view === "A14" || view === "A30" || view === "B2" || view === "B14" || view === "B28" || view === "C1" || view === "C9";
-  const tightGateFaceQa = view === "A14" || view === "A30" || view === "B2" || view === "B14" || view === "B28" || view === "C1" || view === "C9";
+  const closeGateQa = view === "A1" || view === "A14" || view === "A30" || view === "B2" || view === "B14" || view === "B28" || view === "C1" || view === "C9" || view === "C19";
+  const tightGateFaceQa = view === "A14" || view === "A30" || view === "B2" || view === "B14" || view === "B28" || view === "C1" || view === "C9" || view === "C19";
   const bGateFarQa = view === "B2" || view === "B14";
   const cGateFarQa = view === "C1";
-  const c9TightQa = view === "C9";
+  const c9TightQa = view === "C9" || view === "C19";
   const distance = bGateFarQa
     ? Math.max(120, span * 2.0)
     : cGateFarQa
