@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-09-23T21:38:22.472Z",
+  "capturedAtUtc": "2026-09-23T23:15:26.158Z",
   "route": "/RampReady/?inspectionPreset=a1",
   "navigationError": null,
   "waitError": null,
@@ -102,9 +102,22 @@
       "rigVisualMaxSteerDegrees": "84.000",
       "operatorSide": "left",
       "operatorControls": "not-applicable",
+      "a1AircraftHeadingReady": "true",
+      "a1AircraftHeadingAuthority": "KPHX-1.75.1-earth.wed.xml-WED_RampPosition-27855",
+      "a1AircraftSourceHeadingDegrees": "-90.08",
+      "a1AircraftRuntimeYawRadians": "3.142989",
+      "a1AircraftRuntimeYawDegrees": "180.08",
+      "a1AircraftModelForwardAxis": "-Z",
+      "kphxT4SupportedRampPositionCount": "76",
+      "kphxT4SupportedGateNameCount": "75",
+      "a1EquipmentSpawnAuthority": "same-a1-wed-gate-pose-equipment-spawn-v1",
+      "a1EquipmentSpawnX": "0.008657",
+      "a1EquipmentSpawnZ": "12.399994",
+      "a1EquipmentSpawnYawDegrees": "180.08",
+      "a1EquipmentApproachOffsetMeters": "6.200",
       "aircraftSource": "user-painted-crj700",
-      "inspectionTugX": "0.000",
-      "inspectionTugZ": "0.000",
+      "inspectionTugX": "0.009",
+      "inspectionTugZ": "12.400",
       "inspectionSpeed": "0.000",
       "inspectionTimeIntegration": "elapsed-substep-40ms",
       "kphxA1ZdpMarkingsReady": "true",
@@ -112,13 +125,6 @@
       "kphxA1ZdpMarkingTextureDecodeCount": "4",
       "kphxA1ZdpMarkingFailureCount": "0",
       "tugModelForwardCorrectionDegrees": "180",
-      "kphxExactLiveT4": "ready",
-      "kphxExactLiveT4BuildingCount": "2",
-      "kphxExactLiveT4JetwayCount": "76",
-      "kphxExactLiveT4JetwayOpenEdgeCount": "261",
-      "kphxExactLiveOldAirportJetwayGlbUsed": "false",
-      "kphxExactLiveProceduralTerminalMassing": "false",
-      "kphxExactLiveLegacyFsxTerminal": "false",
       "kphxTransparentConcreteUnderlayCount": "8",
       "kphxSurfaceReady": "true",
       "kphxSurfacePolygonCount": "27",
@@ -131,6 +137,13 @@
       "kphxA1ZdpOpaqueBaseUnderlayCount": "0",
       "kphxA1ZdpSurfaceOrthophotoCount": "0",
       "kphxA1ZdpSurfaceLineMeshCount": "0",
+      "kphxExactLiveT4": "ready",
+      "kphxExactLiveT4BuildingCount": "2",
+      "kphxExactLiveT4JetwayCount": "76",
+      "kphxExactLiveT4JetwayOpenEdgeCount": "261",
+      "kphxExactLiveOldAirportJetwayGlbUsed": "false",
+      "kphxExactLiveProceduralTerminalMassing": "false",
+      "kphxExactLiveLegacyFsxTerminal": "false",
       "kphxT4BaseApronReady": "true",
       "kphxT4BaseApronSource": "ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol",
       "kphxT4BaseApronWidthMeters": "709.148",
@@ -157,23 +170,23 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000AC2E0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000D4090000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x7ec00bdf800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x12cc014fd400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x7ec00bdf800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x12cc014fd400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x7ec00bdf800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x12cc014fd400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x7ec00bdf800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      "text": "[.WebGL-0x12cc014fd400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
     }
   ],
   "pageErrors": [],
