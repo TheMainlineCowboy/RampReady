@@ -784,7 +784,11 @@ export default function RampReadyStandupTrainer({
     const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 8000);
     const rig = createProceduralLektroRig(THREE, equipmentId);
     rig.root.userData.equipmentId = equipmentId;
-    renderer.domElement.dataset.tugSource = equipmentId === "standup-tug" ? "loading" : "procedural-lektro";
+    renderer.domElement.dataset.tugSource = equipmentId === "standup-tug"
+      ? "loading"
+      : equipmentId === "manager-kubota"
+        ? "loading"
+        : "procedural-lektro";
     renderer.domElement.dataset.steeringMode = rig.profile.steeringMode;
     renderer.domElement.dataset.rigProfile = rig.profile.id;
     renderer.domElement.dataset.rigWheelbaseMeters = String(rig.profile.wheelbase);
