@@ -1,2 +1,2 @@
-Trigger actual RampReady A1 free-drive exact T4 live check.
-Require exact T4 + finalized LEKTRO AP88 R187A + 27 pavement polygons + 26 exact A1 ZDP marking meshes + 4 unique exact marking texture decodes.
+Trigger one A1 live capture after opaque backing beneath exact alpha-enabled ZDP base pavement.
+Goal: inspect whether blue sky-through pavement holes disappear. No other changes.
