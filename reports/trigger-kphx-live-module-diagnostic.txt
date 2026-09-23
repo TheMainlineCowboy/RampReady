@@ -1,2 +1,2 @@
 Trigger fast Vite transform diagnostic for exact live T4 integration.
-Regenerate live trainer first; require exact A1 ZDP pavement policy + finalized AP88 + exact T4.
+Regenerate live trainer first after generator escape fix; require exact A1 ZDP pavement + finalized AP88 + exact T4.
