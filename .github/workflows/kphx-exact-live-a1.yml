@@ -152,7 +152,7 @@ jobs:
           if (d.a1AircraftRuntimeYawDegrees !== "180.08") failures.push(`a1RuntimeYaw=${d.a1AircraftRuntimeYawDegrees || "missing"}`);
           if (d.kphxT4SupportedRampPositionCount !== "76") failures.push(`supportedRampPositions=${d.kphxT4SupportedRampPositionCount || "missing"}`);
           if (d.kphxT4SupportedGateNameCount !== "75") failures.push(`supportedGateNames=${d.kphxT4SupportedGateNameCount || "missing"}`);
-          if (d.a1EquipmentSpawnAuthority !== "same-a1-wed-gate-pose-equipment-spawn-v1") failures.push(`equipmentSpawnAuthority=${d.a1EquipmentSpawnAuthority || "missing"}`);
+          if (d.a1EquipmentSpawnAuthority !== "same-wed-ramp-position-aircraft-equipment-pose-v1") failures.push(`equipmentSpawnAuthority=${d.a1EquipmentSpawnAuthority || "missing"}`);
           if (d.a1EquipmentSpawnYawDegrees !== "180.08") failures.push(`equipmentSpawnYaw=${d.a1EquipmentSpawnYawDegrees || "missing"}`);
           if (d.a1EquipmentApproachOffsetMeters !== "6.200") failures.push(`equipmentSpawnOffset=${d.a1EquipmentApproachOffsetMeters || "missing"}`);
           if (d.kphxSurfaceReady !== "true") failures.push(`surfaceReady=${d.kphxSurfaceReady || "missing"}`);
