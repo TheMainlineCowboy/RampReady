@@ -306,9 +306,20 @@ ${applicationBlocks.join("\n")}
   material.customProgramCacheKey = () => `kphx-xplane-decals-${JSON.stringify(decals)}`;
 }
 
-async function createArtMaterial(THREE, textureLoader, art, fallbackGroup) {
-  const map = await loadTexture(THREE, textureLoader, resourceAssetUrl(art, art.texture), { color: true });
-  const normalMap = await loadTexture(THREE, textureLoader, resourceAssetUrl(art, art.normal), { color: false });
+async function createArtMaterial(THREE, textureLoader, textureCache, art, fallbackGroup) {
+  const cachedTexture = async (image, { color }) => {
+    if (!image) return null;
+    const url = resourceAssetUrl(art, image);
+    const identity = image.outputSha256 || image.outputDecodedRgbaSha256 || url;
+    const key = `${identity}|${color ? "srgb" : "linear"}`;
+    if (!textureCache.has(key)) {
+      textureCache.set(key, loadTexture(THREE, textureLoader, url, { color }));
+    }
+    return textureCache.get(key);
+  };
+
+  const map = await cachedTexture(art.texture, { color: true });
+  const normalMap = await cachedTexture(art.normal, { color: false });
   const material = new THREE.MeshStandardMaterial({
     map,
     normalMap,
@@ -333,12 +344,7 @@ async function createArtMaterial(THREE, textureLoader, art, fallbackGroup) {
 
   if (art.decal?.decals?.length) {
     const decalTextures = await Promise.all(
-      art.decal.decals.map((decal) => loadTexture(
-        THREE,
-        textureLoader,
-        resourceAssetUrl(art, decal.image),
-        { color: true },
-      )),
+      art.decal.decals.map((decal) => cachedTexture(decal.image, { color: true })),
     );
     installDecalShader(THREE, material, art.decal, decalTextures);
     material.userData.xPlaneDecalTextures = decalTextures;
@@ -381,6 +387,7 @@ export async function installKphxPackageOwnedSurfaceLayer(
   const layer = new THREE.Group();
   layer.name = "KPHX_FULL_AIRPORT_PACKAGE_SURFACES";
   const materials = new Map();
+  const textureCache = new Map();
   const failures = [];
   let polygonCount = 0;
   let drapedOrthophotoCount = 0;
@@ -396,7 +403,7 @@ export async function installKphxPackageOwnedSurfaceLayer(
     if (materials.has(key)) return materials.get(key);
     const art = manifest.resources?.[resourceName];
     if (!art) throw new Error(`Materialized KPHX surface resource missing from manifest: ${resourceName}`);
-    const material = await createArtMaterial(THREE, textureLoader, art, fallbackGroup);
+    const material = await createArtMaterial(THREE, textureLoader, textureCache, art, fallbackGroup);
     materials.set(key, material);
     return material;
   }
@@ -489,6 +496,7 @@ export async function installKphxPackageOwnedSurfaceLayer(
     drapedOrthophotoCount,
     lineMeshCount,
     materialCount: materials.size,
+    uniqueTextureDecodeCount: textureCache.size,
     failures,
     ready: failures.length === 0,
     resolvedExternalPrefixes: [...resolvedExternalPrefixes],
