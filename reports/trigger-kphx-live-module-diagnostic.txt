@@ -1,2 +1,2 @@
 Trigger fast Vite transform diagnostic for exact live T4 integration.
-Regenerate live trainer after stale legacy assertion removal; require exact A1 ZDP pavement + finalized AP88 + exact T4.
+Probe loading-screen launcher + A1 exact live modules.
