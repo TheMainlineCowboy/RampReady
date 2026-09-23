@@ -1,2 +1,2 @@
 Trigger fast Vite transform diagnostic for exact live T4 integration.
-Retry after exact KPHX 1.75.1 surface swap in live trainer.
+Retry after exact A1 ZDP pavement integration.
