@@ -107,3 +107,5 @@ jobs:
 # retrigger after farther B14 camera
 
 # retrigger after exact authored B14 jetway-axis camera
+
+# retrigger after locked X-Plane to RampReady B14 camera transform
