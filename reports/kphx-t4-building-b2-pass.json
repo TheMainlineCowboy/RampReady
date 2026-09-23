@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "status": "PASS",
   "view": "B2",
-  "evidenceCommit": "b9c4ae0796b39715051bb95222032d7cd4a243fa",
+  "evidenceCommit": "89e9c89727375d608a3fba2ade5e53fd32c6177f",
   "exactSourceGeometry": true,
   "exactSourceDecodedTexturePixels": true,
   "wedPlacementLocked": true,
   "jetwaysLocked": true,
   "substitutionPolicy": "none",
-  "visualFinding": "Ramp-facing terminal shell is coherent in the B2 inspection view; the authored lower-level opening/void and support columns are preserved, with no obvious missing source faces, invented walls, or culling/material breaks visible.",
+  "visualFinding": "Ramp-facing B2 terminal shell is coherent; lower walls, columns, windows, bridge/open section and jetway interfaces show no obvious missing source faces, invented fill, or culling/material break.",
   "policy": "No airport geometry, placement, material, or jetway transform was changed."
 }
