@@ -12,6 +12,7 @@ const environmentImport = 'import { buildKphxExactLiveEnvironment as buildTermin
 const authoredEnvironmentImport = 'import { installKphxPackageOwnedObjectLayer } from "../environment/kphxFullAirport/installPackageOwnedObjectLayer.js";\nimport { KPHX_EXACT_RECOVERED_ASSETS } from "../environment/kphxFullAirport/exactAssetCatalog.js";';
 const exactSurfaceImport = 'import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";';
 const sourceAuthorityImport = 'import { KPHX_FULL_AIRPORT_SOURCE, kphxXPlaneHeadingToRampReadyYawRadians } from "../environment/kphxFullAirport/sourceAuthority.js";';
+const gatePoseAuthorityImport = 'import { KPHX_T4_GATE_POSE_SOURCE, getKphxTerminal4GatePoseByRampWedObjectId } from "../environment/kphxFullAirport/terminal4GatePoseAuthority.js";';
 const groundStart = source.indexOf("function buildGround(scene) {");
 const groundEndMarker = "\nfunction connectionMetrics(sim)";
 const groundEnd = source.indexOf(groundEndMarker, groundStart);
@@ -31,7 +32,7 @@ const replacementGround = `function buildGround(scene) {
 
 let prepared = source.replace(
   importAnchor,
-  `${importAnchor}\n${equipmentImport}\n${environmentImport}\n${authoredEnvironmentImport}\n${exactSurfaceImport}\n${sourceAuthorityImport}`,
+  `${importAnchor}\n${equipmentImport}\n${environmentImport}\n${authoredEnvironmentImport}\n${exactSurfaceImport}\n${sourceAuthorityImport}\n${gatePoseAuthorityImport}`,
 );
 const preparedGroundStart = prepared.indexOf("function buildGround(scene) {");
 const preparedGroundEnd = prepared.indexOf(groundEndMarker, preparedGroundStart);
@@ -39,10 +40,30 @@ prepared = prepared.slice(0, preparedGroundStart) + replacementGround + prepared
 prepared = prepared
   .replace(
     "const STOP_Z = 52;",
-    `const STOP_Z = 52;
+    `const A1_GATE_POSE = getKphxTerminal4GatePoseByRampWedObjectId(KPHX_FULL_AIRPORT_SOURCE.anchor.wedObjectId);
+if (!A1_GATE_POSE || A1_GATE_POSE.gate !== "A1") throw new Error("Exact KPHX A1 WED ramp-position pose is missing");
+const A1_AIRCRAFT_START_X = A1_GATE_POSE.runtimePosition[0];
+const NOSE_START_Z = A1_GATE_POSE.runtimePosition[2];
+const STOP_Z = 52;
 const A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPosition-27855";
-const A1_SOURCE_HEADING_DEGREES = KPHX_FULL_AIRPORT_SOURCE.anchor.headingDegrees;
-const A1_AIRCRAFT_YAW_RADIANS = kphxXPlaneHeadingToRampReadyYawRadians(A1_SOURCE_HEADING_DEGREES);`,
+const A1_SOURCE_HEADING_DEGREES = A1_GATE_POSE.sourceHeadingDegrees;
+const A1_AIRCRAFT_YAW_RADIANS = A1_GATE_POSE.runtimeYawRadians;
+const A1_EQUIPMENT_APPROACH_OFFSET_METERS = 6.2;
+const A1_EQUIPMENT_SPAWN = Object.freeze({
+  x: A1_AIRCRAFT_START_X - Math.sin(A1_AIRCRAFT_YAW_RADIANS) * A1_EQUIPMENT_APPROACH_OFFSET_METERS,
+  z: NOSE_START_Z - Math.cos(A1_AIRCRAFT_YAW_RADIANS) * A1_EQUIPMENT_APPROACH_OFFSET_METERS,
+  yaw: A1_AIRCRAFT_YAW_RADIANS,
+});
+function createA1SpawnPushbackState() {
+  return createPushbackState({
+    tugX: A1_EQUIPMENT_SPAWN.x,
+    tugZ: A1_EQUIPMENT_SPAWN.z,
+    tugYaw: A1_EQUIPMENT_SPAWN.yaw,
+    aircraftX: A1_AIRCRAFT_START_X,
+    aircraftZ: NOSE_START_Z,
+    aircraftYaw: A1_AIRCRAFT_YAW_RADIANS,
+  });
+}`,
   )
   .replaceAll(
     "sim.aircraft.rotation.y = 0;",
@@ -302,6 +323,10 @@ const A1_AIRCRAFT_YAW_RADIANS = kphxXPlaneHeadingToRampReadyYawRadians(A1_SOURCE
   );
 
 if (!prepared.includes(sourceAuthorityImport)) throw new Error("KPHX source-authority heading import was not injected");
+if (!prepared.includes(gatePoseAuthorityImport)) throw new Error("KPHX T4 gate-pose authority import was not injected");
+if (!prepared.includes("const A1_GATE_POSE = getKphxTerminal4GatePoseByRampWedObjectId")) throw new Error("A1 gate-pose lookup was not injected");
+if (!prepared.includes("A1_SOURCE_HEADING_DEGREES = A1_GATE_POSE.sourceHeadingDegrees")) throw new Error("A1 source heading is not gate-pose derived");
+if (!prepared.includes("A1_EQUIPMENT_SPAWN = Object.freeze")) throw new Error("A1 equipment source-frame spawn was not injected");
 if (!prepared.includes('A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPosition-27855"')) throw new Error("Exact A1 WED ramp-position authority was not injected");
 if (!prepared.includes("A1_AIRCRAFT_YAW_RADIANS = kphxXPlaneHeadingToRampReadyYawRadians(A1_SOURCE_HEADING_DEGREES)")) throw new Error("A1 source heading conversion was not injected");
 if (!prepared.includes("aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;")) throw new Error("Initial A1 aircraft source yaw was not injected");
