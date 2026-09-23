@@ -11,6 +11,7 @@ const equipmentImport = 'import { installRuntimeEquipmentVisual, supportsRuntime
 const environmentImport = 'import { buildKphxExactLiveEnvironment as buildTerminal4RampEnvironment, installKphxExactLiveTerminal4 as installAuthoredTerminal4Visual } from "../environment/kphxFullAirport/installLiveTerminal4Exact.js";';
 const authoredEnvironmentImport = 'import { installKphxPackageOwnedObjectLayer } from "../environment/kphxFullAirport/installPackageOwnedObjectLayer.js";\nimport { KPHX_EXACT_RECOVERED_ASSETS } from "../environment/kphxFullAirport/exactAssetCatalog.js";';
 const exactSurfaceImport = 'import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";';
+const sourceAuthorityImport = 'import { KPHX_FULL_AIRPORT_SOURCE, kphxXPlaneHeadingToRampReadyYawRadians } from "../environment/kphxFullAirport/sourceAuthority.js";';
 const groundStart = source.indexOf("function buildGround(scene) {");
 const groundEndMarker = "\nfunction connectionMetrics(sim)";
 const groundEnd = source.indexOf(groundEndMarker, groundStart);
@@ -30,12 +31,42 @@ const replacementGround = `function buildGround(scene) {
 
 let prepared = source.replace(
   importAnchor,
-  `${importAnchor}\n${equipmentImport}\n${environmentImport}\n${authoredEnvironmentImport}\n${exactSurfaceImport}`,
+  `${importAnchor}\n${equipmentImport}\n${environmentImport}\n${authoredEnvironmentImport}\n${exactSurfaceImport}\n${sourceAuthorityImport}`,
 );
 const preparedGroundStart = prepared.indexOf("function buildGround(scene) {");
 const preparedGroundEnd = prepared.indexOf(groundEndMarker, preparedGroundStart);
 prepared = prepared.slice(0, preparedGroundStart) + replacementGround + prepared.slice(preparedGroundEnd);
 prepared = prepared
+  .replace(
+    "const STOP_Z = 52;",
+    `const STOP_Z = 52;
+const A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPosition-27855";
+const A1_SOURCE_HEADING_DEGREES = KPHX_FULL_AIRPORT_SOURCE.anchor.headingDegrees;
+const A1_AIRCRAFT_YAW_RADIANS = kphxXPlaneHeadingToRampReadyYawRadians(A1_SOURCE_HEADING_DEGREES);`,
+  )
+  .replaceAll(
+    "sim.aircraft.rotation.y = 0;",
+    "sim.aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;",
+  )
+  .replace(
+    `    const aircraft = buildCRJ700Aircraft(THREE, material, cylinder);
+    aircraft.position.set(0, 0, NOSE_START_Z);
+    aircraft.scale.setScalar(0.82);`,
+    `    const aircraft = buildCRJ700Aircraft(THREE, material, cylinder);
+    aircraft.position.set(0, 0, NOSE_START_Z);
+    aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;
+    aircraft.scale.setScalar(0.82);`,
+  )
+  .replace(
+    "    const canvas = renderer.domElement;",
+    `    const canvas = renderer.domElement;
+    canvas.dataset.a1AircraftHeadingReady = "true";
+    canvas.dataset.a1AircraftHeadingAuthority = A1_AIRCRAFT_HEADING_AUTHORITY;
+    canvas.dataset.a1AircraftSourceHeadingDegrees = A1_SOURCE_HEADING_DEGREES.toFixed(2);
+    canvas.dataset.a1AircraftRuntimeYawRadians = A1_AIRCRAFT_YAW_RADIANS.toFixed(6);
+    canvas.dataset.a1AircraftRuntimeYawDegrees = THREE.MathUtils.radToDeg(A1_AIRCRAFT_YAW_RADIANS).toFixed(2);
+    canvas.dataset.a1AircraftModelForwardAxis = "-Z";`,
+  )
   .replace(
     "    scene.fog = new THREE.Fog(0x9fc4e6, 70, 140);",
     "    scene.fog = new THREE.Fog(0x9fc4e6, 2400, 6500);",
@@ -270,6 +301,12 @@ prepared = prepared
       });`,
   );
 
+if (!prepared.includes(sourceAuthorityImport)) throw new Error("KPHX source-authority heading import was not injected");
+if (!prepared.includes('A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPosition-27855"')) throw new Error("Exact A1 WED ramp-position authority was not injected");
+if (!prepared.includes("A1_AIRCRAFT_YAW_RADIANS = kphxXPlaneHeadingToRampReadyYawRadians(A1_SOURCE_HEADING_DEGREES)")) throw new Error("A1 source heading conversion was not injected");
+if (!prepared.includes("aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;")) throw new Error("Initial A1 aircraft source yaw was not injected");
+if (prepared.includes("sim.aircraft.rotation.y = 0;")) throw new Error("Hard-coded zero A1 aircraft reset yaw remains");
+if (!prepared.includes('dataset.a1AircraftHeadingReady = "true"')) throw new Error("A1 aircraft heading runtime evidence was not injected");
 if (!prepared.includes(exactSurfaceImport)) throw new Error("Exact KPHX surface loader import was not injected");
 if (!prepared.includes('dataset.tugSource = equipmentId === "standup-tug" ? "loading" : "procedural-lektro"')) throw new Error("Runtime tug visual loader was not injected");
 if (!prepared.includes('dataset.environmentSource = "loading-authored-phx-terminal4-textured"')) throw new Error("Textured authored PHX environment loading evidence was not injected");

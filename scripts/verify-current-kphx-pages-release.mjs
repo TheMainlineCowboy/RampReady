@@ -127,6 +127,17 @@ assert(equipment.includes("AuthoredSteerPivot_L") && equipment.includes("Authore
 const trainer = fs.readFileSync("src/components/RampReadyStandupTrainerTerminal4.jsx", "utf8");
 assert(trainer.includes("KPHX_INVISIBLE_CONCRETE_SOURCE_UNDERLAY"), "Transparent concrete source-compatible underlay missing");
 assert(trainer.includes("ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol"), "Exact A1 source concrete underlay authority missing");
+assert(trainer.includes('A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPosition-27855"'), "Exact A1 WED ramp-position heading authority missing");
+assert(trainer.includes("KPHX_FULL_AIRPORT_SOURCE.anchor.headingDegrees"), "A1 aircraft heading is not derived from KPHX source authority");
+assert(trainer.includes("kphxXPlaneHeadingToRampReadyYawRadians(A1_SOURCE_HEADING_DEGREES)"), "A1 X-Plane heading conversion missing");
+assert(trainer.includes("aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;"), "Initial A1 aircraft source yaw missing");
+assert(trainer.includes("sim.aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;"), "A1 aircraft reset source yaw missing");
+assert(!trainer.includes("sim.aircraft.rotation.y = 0;"), "Hard-coded zero A1 aircraft reset yaw remains");
+assert(trainer.includes('dataset.a1AircraftHeadingReady = "true"'), "A1 aircraft heading runtime evidence missing");
+
+const kphxSourceAuthority = fs.readFileSync("src/environment/kphxFullAirport/sourceAuthority.js", "utf8");
+assert(kphxSourceAuthority.includes('wedObjectId: "27855"'), "A1 source WED object drifted");
+assert(kphxSourceAuthority.includes("headingDegrees: -90.08"), "A1 source WED heading drifted from -90.08 degrees");
 
 const launcher = fs.readFileSync("src/components/PushbackTrainer.jsx", "utf8");
 assert(launcher.includes("total: 4"), "Four-stage preload screen contract missing");

@@ -17,6 +17,7 @@ import { createProceduralLektroRig, validateTugRig } from "../tug/lektroRig.js";
 import { installRuntimeEquipmentVisual, supportsRuntimeEquipmentVisual } from "../tug/runtimeEquipmentVisual.js";
 import { buildKphxExactLiveEnvironment as buildTerminal4RampEnvironment, installKphxExactLiveTerminal4 as installAuthoredTerminal4Visual } from "../environment/kphxFullAirport/installLiveTerminal4Exact.js";
 import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
+import { KPHX_FULL_AIRPORT_SOURCE, kphxXPlaneHeadingToRampReadyYawRadians } from "../environment/kphxFullAirport/sourceAuthority.js";
 import "./RampReadyTrainer.css";
 import "./procedure-gates.css";
 import "./mobile-runtime-recovery.css";
@@ -25,6 +26,9 @@ import "./mobile-hud-v9.css";
 
 const NOSE_START_Z = 6.2;
 const STOP_Z = 52;
+const A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPosition-27855";
+const A1_SOURCE_HEADING_DEGREES = KPHX_FULL_AIRPORT_SOURCE.anchor.headingDegrees;
+const A1_AIRCRAFT_YAW_RADIANS = kphxXPlaneHeadingToRampReadyYawRadians(A1_SOURCE_HEADING_DEGREES);
 const STAGES = [
   "Complete visual equipment check",
   "Align the capture head with the nose gear",
@@ -187,7 +191,7 @@ export default function RampReadyStandupTrainer({
     sim.rig.setSteering(0);
     sim.rig.setLiftProgress(0);
     sim.aircraft.position.set(0, 0, NOSE_START_Z);
-    sim.aircraft.rotation.y = 0;
+    sim.aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;
     const resetJetwayDeployment = inspectionRef.current ? 0 : 1;
     jetwayRef.current.target = resetJetwayDeployment;
     jetwayRef.current.deployment = resetJetwayDeployment;
@@ -264,7 +268,7 @@ export default function RampReadyStandupTrainer({
       sim.rig.setSteering(0);
       sim.rig.setLiftProgress(0);
       sim.aircraft.position.set(0, 0, NOSE_START_Z);
-      sim.aircraft.rotation.y = 0;
+      sim.aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;
       sim.renderer.domElement.dataset.inspectionMode = next ? "active" : "training";
       sim.renderer.domElement.dataset.inspectionPreset = next ? "a1" : "training";
       sim.renderer.domElement.dataset.inspectionPresetLabel = next ? INSPECTION_PRESETS.a1.label : "Training";
@@ -934,6 +938,7 @@ export default function RampReadyStandupTrainer({
     if (rigFailures.length) throw new Error(`Invalid tug rig: ${rigFailures.join(", ")}`);
     const aircraft = buildCRJ700Aircraft(THREE, material, cylinder);
     aircraft.position.set(0, 0, NOSE_START_Z);
+    aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;
     aircraft.scale.setScalar(0.82);
     scene.add(rig.root, aircraft);
 
@@ -941,6 +946,12 @@ export default function RampReadyStandupTrainer({
     simRef.current = sim;
 
     const canvas = renderer.domElement;
+    canvas.dataset.a1AircraftHeadingReady = "true";
+    canvas.dataset.a1AircraftHeadingAuthority = A1_AIRCRAFT_HEADING_AUTHORITY;
+    canvas.dataset.a1AircraftSourceHeadingDegrees = A1_SOURCE_HEADING_DEGREES.toFixed(2);
+    canvas.dataset.a1AircraftRuntimeYawRadians = A1_AIRCRAFT_YAW_RADIANS.toFixed(6);
+    canvas.dataset.a1AircraftRuntimeYawDegrees = THREE.MathUtils.radToDeg(A1_AIRCRAFT_YAW_RADIANS).toFixed(2);
+    canvas.dataset.a1AircraftModelForwardAxis = "-Z";
     const syncCameraDataset = () => {
       canvas.dataset.cameraYaw = orbitRef.current.yaw.toFixed(4);
       canvas.dataset.cameraPitch = orbitRef.current.pitch.toFixed(4);
