@@ -1,0 +1,117 @@
+name: KPHX T4 A1 Building Visual Check
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-t4-building-a1-visual.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-t4-building-a1-visual
+  cancel-in-progress: true
+
+jobs:
+  a1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install app and browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start isolated verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npx vite --host 127.0.0.1 --port 4173 > /tmp/kphx-a1-building.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/kphx-a1-building.log
+          exit 1
+
+      - name: Capture A1 building view
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1600,height:1000},deviceScaleFactor:1});
+          const errors=[], failed=[], http=[];
+          page.on("pageerror",e=>errors.push(String(e)));
+          page.on("requestfailed",r=>failed.push({url:r.url(),failure:r.failure()?.errorText||"unknown"}));
+          page.on("response",r=>{if(r.status()>=400)http.push({url:r.url(),status:r.status()});});
+          await page.goto("http://127.0.0.1:4173/RampReady/?kphxT4Buildings=1&view=A1",{waitUntil:"domcontentloaded",timeout:60000});
+          await page.waitForFunction(()=>{
+            const c=document.querySelector("canvas.kphxT4BuildingShellVerifierCanvas");
+            return ["ready","error"].includes(c?.dataset?.kphxT4BuildingShellVerifier);
+          },null,{timeout:60000});
+          const state=await page.evaluate(()=>{
+            const c=document.querySelector("canvas.kphxT4BuildingShellVerifierCanvas");
+            return {dataset:c?{...c.dataset}:{},bodyText:document.body.innerText.slice(0,2000)};
+          });
+          await page.screenshot({path:"reports/kphx-t4-building-a1-close.jpg",type:"jpeg",quality:94,fullPage:true});
+          fs.writeFileSync("reports/kphx-t4-building-a1-close.json",JSON.stringify({
+            capturedAtUtc:new Date().toISOString(),state,pageErrors:errors,failedRequests:failed,httpErrors:http
+          },null,2)+"\n");
+          await browser.close();
+          NODE
+
+      - name: Enforce A1 exact-source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const r=JSON.parse(fs.readFileSync("reports/kphx-t4-building-a1-close.json","utf8"));
+          const d=r.state?.dataset||{};
+          const failures=[];
+          if(d.kphxT4BuildingShellVerifier!=="ready") failures.push(`state=${d.kphxT4BuildingShellVerifier||"missing"}`);
+          if(d.kphxT4BuildingQaView!=="A1") failures.push(`view=${d.kphxT4BuildingQaView||"missing"}`);
+          if(d.kphxT4BuildingPlacements!=="2") failures.push(`buildings=${d.kphxT4BuildingPlacements||"missing"}`);
+          if(d.kphxT4Terminal4WedObjectId!=="2327") failures.push(`Terminal4WED=${d.kphxT4Terminal4WedObjectId||"missing"}`);
+          if(d.kphxT4Terminal4bWedObjectId!=="5301") failures.push(`Terminal4bWED=${d.kphxT4Terminal4bWedObjectId||"missing"}`);
+          if(d.kphxT4JetwayCount!=="76") failures.push(`jetways=${d.kphxT4JetwayCount||"missing"}`);
+          if(d.kphxT4JetwayOpenEdges!=="261") failures.push(`edges=${d.kphxT4JetwayOpenEdges||"missing"}`);
+          if(d.kphxT4SubstitutionPolicy!=="none") failures.push(`substitution=${d.kphxT4SubstitutionPolicy||"missing"}`);
+          const pixels=JSON.parse(fs.readFileSync("reports/kphx-t4-texture-pixel-verification.json","utf8"));
+          for(const t of pixels.targets||[]){
+            if(t.allSourceRawHashesMatchAuthority!==true) failures.push(`${t.name}:sourceHash`);
+            if(t.allDecodedRgbaMatchSource!==true) failures.push(`${t.name}:rgba`);
+          }
+          if((r.pageErrors||[]).length) failures.push(`pageErrors=${r.pageErrors.length}`);
+          if((r.failedRequests||[]).length) failures.push(`failedRequests=${r.failedRequests.length}`);
+          if((r.httpErrors||[]).length) failures.push(`httpErrors=${r.httpErrors.length}`);
+          if(failures.length) throw new Error(`A1 building check failed: ${failures.join("; ")}`);
+          console.log(JSON.stringify({status:"PASS",view:"A1",camera:d.kphxT4CameraPosition,target:d.kphxT4CameraTarget},null,2));
+          NODE
+
+      - name: Commit A1 evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore -- package.json package-lock.json 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-t4-building-a1-close.jpg reports/kphx-t4-building-a1-close.json
+          git commit -m "Capture exact A1 building close view"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
