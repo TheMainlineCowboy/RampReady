@@ -23,15 +23,20 @@ jobs:
             package-lock.json
             index.html
             src
+            scripts/prepare-terminal4-runtime.mjs
           sparse-checkout-cone-mode: false
 
       - name: Install
         run: npm ci
 
-      - name: Start Vite and probe live modules
+      - name: Regenerate and probe live modules
         shell: bash
         run: |
-          set -u
+          set -euo pipefail
+          node scripts/prepare-terminal4-runtime.mjs
+          grep -q 't4-a1-zdp-surfaces/manifest.json' src/components/RampReadyStandupTrainerTerminal4.jsx
+          grep -q 'loadLines: false' src/components/RampReadyStandupTrainerTerminal4.jsx
+          grep -q 'lektro-ap88-tvo914-r187a' src/tug/lektroRig.js
           nohup npx vite --host 127.0.0.1 --port 4173 > /tmp/vite.log 2>&1 &
           for i in $(seq 1 30); do
             curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null && break
