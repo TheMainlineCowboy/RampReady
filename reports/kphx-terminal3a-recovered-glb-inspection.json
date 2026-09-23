@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-09-23T08:35:46.177Z",
+  "authority": "Read-only inspection of recovered exact KPHX 1.75.1 Terminal3a GLB binary",
+  "target": {
+    "name": "Terminal3a",
+    "resource": "Terminals/Terminal3a.obj",
+    "path": "public/models/kphx/Terminal3a.exact.glb",
+    "expectedSourceObjSha256": "4283b54b22abf73eef75259f22318153705efc8372a667fd3de89fbe8db70ea3",
+    "expectedRuntimeSha256": "0297c2435a9f17a7aaf564c6f0198b6533637b527f2d0628bc918c383d894aa7",
+    "expectedRuntimeBytes": 18527808
+  },
+  "byteLength": 18527808,
+  "runtimeSha256": "0297c2435a9f17a7aaf564c6f0198b6533637b527f2d0628bc918c383d894aa7",
+  "runtimeHashMatchesCatalog": true,
+  "runtimeBytesMatchCatalog": true,
+  "sourceObjSha256": "4283b54b22abf73eef75259f22318153705efc8372a667fd3de89fbe8db70ea3",
+  "sourceObjHashMatchesCatalog": true,
+  "version": 2,
+  "declaredLength": 18527808,
+  "chunks": [
+    {
+      "chunkLength": 2236,
+      "chunkType": "0x4e4f534a"
+    },
+    {
+      "chunkLength": 18525544,
+      "chunkType": "0x4e4942"
+    }
+  ],
+  "asset": {
+    "version": "2.0",
+    "generator": "RampReady exact X-Plane OBJ8 importer v2"
+  },
+  "sceneCount": 1,
+  "nodeCount": 1,
+  "meshCount": 1,
+  "primitiveCount": 1,
+  "accessorCount": 4,
+  "materialCount": 1,
+  "imageCount": 2,
+  "textureCount": 2,
+  "totalIndexCount": 12138,
+  "totalPositionAccessorCount": 6922,
+  "materials": [
+    {
+      "index": 0,
+      "name": "xplane-authored",
+      "alphaMode": "MASK",
+      "alphaCutoff": 0.5,
+      "doubleSided": false,
+      "baseColorTexture": {
+        "index": 0
+      },
+      "emissiveTexture": {
+        "index": 1
+      },
+      "normalTexture": null,
+      "extras": null
+    }
+  ],
+  "images": [
+    {
+      "index": 0,
+      "bufferView": 4,
+      "mimeType": "image/png",
+      "name": "Terminal4b_comb",
+      "embeddedByteLength": 11839038,
+      "embeddedSha256": "eb2d4b0954cdf29d604a89aa69803a06fe7b7ec5a6aefa3319141756a854b9ba"
+    },
+    {
+      "index": 1,
+      "bufferView": 5,
+      "mimeType": "image/png",
+      "name": "Terminal4b_LIT",
+      "embeddedByteLength": 6440721,
+      "embeddedSha256": "c5442c4827eb5ece9cb0da073b9ba5ec577beba84e45145692a0eccf4a384c40"
+    }
+  ],
+  "textures": [
+    {
+      "index": 0,
+      "source": 0
+    },
+    {
+      "index": 1,
+      "source": 1
+    }
+  ],
+  "primitives": [
+    {
+      "meshIndex": 0,
+      "meshName": "Terminal3a",
+      "primitiveIndex": 0,
+      "mode": 4,
+      "materialIndex": 0,
+      "indexAccessor": 3,
+      "indexCount": 12138,
+      "positionAccessor": 0,
+      "positionCount": 6922
+    }
+  ],
+  "extras": {
+    "sourceAuthority": "exact-kphx-xplane-obj8",
+    "source": {
+      "obj": {
+        "bytes": 739499,
+        "sha256": "4283b54b22abf73eef75259f22318153705efc8372a667fd3de89fbe8db70ea3"
+      },
+      "dayTexture": {
+        "bytes": 11184952,
+        "sha256": "11a129f33940c99de15c2941faac041af42834c869ab6bdae974d134c54bc00b"
+      },
+      "litTexture": {
+        "bytes": 11184952,
+        "sha256": "90cff1e29f629570d6ea1ee237a3f8dd337860aef36dfd4d478d0ee8057f90f9"
+      }
+    },
+    "pointCounts": [
+      6922,
+      0,
+      0,
+      12138
+    ],
+    "drawRanges": [
+      [
+        0,
+        180
+      ],
+      [
+        180,
+        11298
+      ],
+      [
+        11478,
+        300
+      ],
+      [
+        11778,
+        360
+      ]
+    ],
+    "decodedTextureSizes": [
+      [
+        4096,
+        4096
+      ],
+      [
+        4096,
+        4096
+      ]
+    ],
+    "sourceTextureRefs": {
+      "day": "Terminal4b_comb.png",
+      "lit": "Terminal4b_LIT.png"
+    }
+  }
+}
