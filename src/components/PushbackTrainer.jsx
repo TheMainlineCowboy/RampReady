@@ -28,7 +28,7 @@ export default function PushbackTrainer() {
   const [runtimeLoading, setRuntimeLoading] = useState({
     active: false,
     completed: 0,
-    total: 3,
+    total: 4,
     label: "Preparing simulator…",
     failed: false,
   });
@@ -65,7 +65,7 @@ export default function PushbackTrainer() {
   const changeEquipment = useCallback(() => {
     stopGyro();
     setLaunchMode("training");
-    setRuntimeLoading({ active: false, completed: 0, total: 3, label: "Preparing simulator…", failed: false });
+    setRuntimeLoading({ active: false, completed: 0, total: 4, label: "Preparing simulator…", failed: false });
     setActiveEquipmentId(null);
   }, [stopGyro]);
 
@@ -73,7 +73,7 @@ export default function PushbackTrainer() {
     setRuntimeLoading({
       active: true,
       completed: 0,
-      total: 3,
+      total: 4,
       label: "Loading selected equipment…",
       failed: false,
     });
@@ -115,31 +115,34 @@ export default function PushbackTrainer() {
         : Boolean(data.tugSource && data.tugSource !== "loading" && data.tugSource !== "load-error");
       const terminalReady = data.kphxExactLiveT4 === "ready";
       const surfacesReady = data.kphxSurfaceReady === "true";
+      const markingsReady = data.kphxA1ZdpMarkingsReady === "true";
       const failed = [
         data.tugSource,
         data.kphxExactLiveT4,
         data.kphxSurfaceReady,
+        data.kphxA1ZdpMarkingsReady,
         data.environmentSource,
       ].includes("load-error");
 
-      const completed = [equipmentReady, terminalReady, surfacesReady].filter(Boolean).length;
+      const completed = [equipmentReady, terminalReady, surfacesReady, markingsReady].filter(Boolean).length;
       let label = "Loading selected equipment…";
       if (equipmentReady && !terminalReady) label = "Loading exact PHX Terminal 4 and jetways…";
       else if (equipmentReady && terminalReady && !surfacesReady) label = "Loading exact KPHX ramp surfaces…";
-      else if (completed === 3) label = "RampReady";
+      else if (equipmentReady && terminalReady && surfacesReady && !markingsReady) label = "Loading exact A1 ramp markings…";
+      else if (completed === 4) label = "RampReady";
 
       setRuntimeLoading((previous) => {
-        const active = completed < 3 && !failed;
+        const active = completed < 4 && !failed;
         if (
           previous.active === active
           && previous.completed === completed
           && previous.label === label
           && previous.failed === failed
         ) return previous;
-        return { active, completed, total: 3, label, failed };
+        return { active, completed, total: 4, label, failed };
       });
 
-      if (completed < 3 && !failed) timer = window.setTimeout(poll, 100);
+      if (completed < 4 && !failed) timer = window.setTimeout(poll, 100);
     };
 
     poll();
