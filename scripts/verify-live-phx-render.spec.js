@@ -76,6 +76,7 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
       && d.rigFreeMaxSpeedMps === '4.02336'
       && d.rigTowMaxSpeedMps === '1.78816'
       && d.rigVisualMaxSteerDegrees === '84.000'
+      && d.tugModelForwardCorrectionDegrees === '180'
       && d.kphxSurfaceReady === 'true'
       && d.kphxSurfacePolygonCount === '27'
       && d.kphxSurfaceFailureCount === '0'
@@ -145,5 +146,81 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
     a1MarkingMeshes: runtime.kphxA1ZdpMarkingLineMeshCount,
     oldAirportJetwayGlbUsed: runtime.kphxExactLiveOldAirportJetwayGlbUsed,
     screenshotBytes: chaseBytes,
+  }, null, 2));
+});
+
+
+test('live RampReady serves exact manager Kubota free-drive inspection', async ({ page }) => {
+  if (!pageUrl || !expectedSha) throw new Error('PAGE_URL and EXPECTED_SHA are required');
+
+  await page.goto(`${pageUrl}?release=${expectedSha}&vehicle=manager-kubota`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 60000,
+  });
+
+  await page.getByRole('heading', { name: 'Choose RampReady equipment' }).waitFor({
+    state: 'visible',
+    timeout: 30000,
+  });
+
+  const kubota = page.getByRole('radio', { name: /Manager Kubota RTV/i });
+  await kubota.click();
+  const training = page.getByRole('button', { name: 'Start training' });
+  const inspection = page.getByRole('button', { name: 'Drive vehicle / inspect airport' });
+  expect(await training.isDisabled()).toBe(true);
+  expect(await inspection.isDisabled()).toBe(false);
+  await inspection.click();
+
+  const canvas = page.locator('canvas.trainerCanvas');
+  await expect(canvas).toBeVisible({ timeout: 30000 });
+  await page.waitForFunction(() => {
+    const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
+    return d.tugSource === 'manager-kubota-exact'
+      && d.rigProfile === 'manager-kubota-exact'
+      && d.steeringMode === 'front'
+      && d.rigWheelbaseMeters === '1.94'
+      && d.rigFreeMaxSpeedMps === '9.2'
+      && d.rigKinematicMaxSteerDegrees === '33.232'
+      && d.tugModelForwardCorrectionDegrees === '0'
+      && d.kphxExactLiveT4 === 'ready'
+      && d.kphxSurfaceReady === 'true'
+      && d.kphxA1ZdpMarkingsReady === 'true';
+  }, null, { timeout: 180000 });
+
+  const shell = page.locator('.rr-shell');
+  expect(await shell.getAttribute('data-equipment-id')).toBe('manager-kubota');
+  expect(await shell.getAttribute('data-inspection-mode')).toBe('active');
+  await expect(page.locator('.rr-runtime-loading')).toHaveCount(0, { timeout: 30000 });
+
+  const speedMetric = page.locator('.rr-metrics').getByText(/mph$/).first();
+  await page.keyboard.down('w');
+  await page.waitForTimeout(1400);
+  await page.keyboard.up('w');
+  await page.waitForTimeout(250);
+  const speedText = await speedMetric.textContent();
+  const movementMph = Number.parseFloat(speedText || '0');
+  expect(movementMph).toBeGreaterThan(0.2);
+
+  const runtime = await canvas.evaluate(element => ({ ...element.dataset }));
+  await page.screenshot({
+    path: `${evidenceDirectory}/exact-manager-kubota-live.png`,
+    fullPage: true,
+  });
+  fs.writeFileSync(`${evidenceDirectory}/manager-kubota-report.json`, `${JSON.stringify({
+    releaseSha: expectedSha,
+    pageUrl,
+    capturedAtUtc: new Date().toISOString(),
+    inspectionOnly: true,
+    movementMph,
+    runtime,
+  }, null, 2)}\n`);
+
+  console.log(JSON.stringify({
+    status: 'PASS',
+    releaseSha: expectedSha,
+    managerKubota: runtime.tugSource,
+    inspectionOnly: true,
+    steeringMode: runtime.steeringMode,
+    movementMph,
   }, null, 2));
 });
