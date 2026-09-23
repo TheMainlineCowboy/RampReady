@@ -10,3 +10,4 @@ Rerun after exact T4-bounds integrated verifier camera framing.
 Rerun with exact WED-ancestry T4-only visual QA visibility contract.
 Rerun after exact 13-placement T4 ZDP integration.
 Capture paired integrated and T4 objects-only QA evidence.
+Capture all-T4 jetway batch QA alongside integrated evidence.
