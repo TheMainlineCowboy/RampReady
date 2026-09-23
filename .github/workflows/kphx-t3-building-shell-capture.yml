@@ -176,6 +176,9 @@ jobs:
           if (d.kphxT3RuntimeSha256 !== "0297c2435a9f17a7aaf564c6f0198b6533637b527f2d0628bc918c383d894aa7") failures.push("runtime-sha-mismatch");
           if (d.kphxT3RuntimeBytes !== "18527808") failures.push(`runtime-bytes=${d.kphxT3RuntimeBytes || "missing"}`);
           if (d.kphxT3SubstitutionPolicy !== "none") failures.push(`substitution=${d.kphxT3SubstitutionPolicy || "missing"}`);
+          if (d.kphxT3LegacyMaskCompatibility !== "true") failures.push(`legacyMaskCompatibility=${d.kphxT3LegacyMaskCompatibility || "missing"}`);
+          if (d.kphxT3WindingReversal !== "true") failures.push(`windingReversal=${d.kphxT3WindingReversal || "missing"}`);
+          if (d.kphxT3LegacyTextureVCorrection !== "true") failures.push(`legacyTextureVCorrection=${d.kphxT3LegacyTextureVCorrection || "missing"}`);
           if (d.kphxT3GeometryEdits !== "0") failures.push(`geometryEdits=${d.kphxT3GeometryEdits || "missing"}`);
           if (d.kphxT3PlacementEdits !== "0") failures.push(`placementEdits=${d.kphxT3PlacementEdits || "missing"}`);
           if (result.navigationError) failures.push(`navigation=${result.navigationError}`);
@@ -202,7 +205,12 @@ jobs:
             geometryEdits: 0,
             placementEdits: 0,
             substitutions: 0,
-            note: "Programmatic source/runtime contract passed. Visual inspection remains required before lock."
+            legacyObj8Compatibility: {
+              alphaMaskCutoff: 0.5,
+              windingReversal: true,
+              legacyTextureVCorrection: true
+            },
+            note: "Programmatic source/runtime contract and proven OBJ8 browser compatibility passed. Visual inspection remains required before lock."
           }, null, 2) + "\n");
           NODE
 
