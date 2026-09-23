@@ -1,0 +1,1318 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "authority": {
+    "authority": "KPHX 1.75.1 earth.wed.xml WED_RampPosition",
+    "bytes": 24885640,
+    "sha256": "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498",
+    "supportedRampPositionCount": 76,
+    "supportedGateNameCount": 75
+  },
+  "liveJetwayRampPositionCount": 76,
+  "uniqueLiveRampPositionCount": 76,
+  "supportedGateNameCount": 75,
+  "duplicateGateNames": [
+    {
+      "gate": "D7",
+      "count": 2
+    }
+  ],
+  "unmappedRampPositionCount": 8,
+  "sharedScenarioAuthority": "same-wed-ramp-position-aircraft-equipment-pose-v1",
+  "equipmentApproachOffsetMeters": 6.2,
+  "failures": [],
+  "gates": [
+    {
+      "gate": "A1",
+      "rampWedObjectId": "27855",
+      "sourceHeadingDegrees": -90.08,
+      "runtimeYawDegrees": 180.08,
+      "aircraft": {
+        "x": 0,
+        "z": 6.2,
+        "yawDegrees": 180.08
+      },
+      "equipment": {
+        "x": 0.008657,
+        "z": 12.399994,
+        "yawDegrees": 180.08,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A2",
+      "rampWedObjectId": "20719",
+      "sourceHeadingDegrees": 90,
+      "runtimeYawDegrees": 0,
+      "aircraft": {
+        "x": 4.732526,
+        "z": 77.071561,
+        "yawDegrees": 0
+      },
+      "equipment": {
+        "x": 4.732526,
+        "z": 70.871561,
+        "yawDegrees": 0,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A3",
+      "rampWedObjectId": "20713",
+      "sourceHeadingDegrees": 269.49,
+      "runtimeYawDegrees": -179.49,
+      "aircraft": {
+        "x": -34.928494,
+        "z": 12.500747,
+        "yawDegrees": -179.49
+      },
+      "equipment": {
+        "x": -34.873307,
+        "z": 18.700502,
+        "yawDegrees": -179.49,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A4",
+      "rampWedObjectId": "27864",
+      "sourceHeadingDegrees": 90,
+      "runtimeYawDegrees": 0,
+      "aircraft": {
+        "x": -35.52884,
+        "z": 75.94232,
+        "yawDegrees": 0
+      },
+      "equipment": {
+        "x": -35.52884,
+        "z": 69.74232,
+        "yawDegrees": 0,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A5",
+      "rampWedObjectId": "27870",
+      "sourceHeadingDegrees": 270.12,
+      "runtimeYawDegrees": -180.12,
+      "aircraft": {
+        "x": -75.503113,
+        "z": 12.500654,
+        "yawDegrees": -180.12
+      },
+      "equipment": {
+        "x": -75.516098,
+        "z": 18.700641,
+        "yawDegrees": -180.12,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A6",
+      "rampWedObjectId": "20718",
+      "sourceHeadingDegrees": 90,
+      "runtimeYawDegrees": 0,
+      "aircraft": {
+        "x": -76.171586,
+        "z": 75.682584,
+        "yawDegrees": 0
+      },
+      "equipment": {
+        "x": -76.171586,
+        "z": 69.482584,
+        "yawDegrees": 0,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A7",
+      "rampWedObjectId": "20714",
+      "sourceHeadingDegrees": -89.89,
+      "runtimeYawDegrees": 179.89,
+      "aircraft": {
+        "x": -116.069605,
+        "z": 12.007006,
+        "yawDegrees": 179.89
+      },
+      "equipment": {
+        "x": -116.081508,
+        "z": 18.206995,
+        "yawDegrees": 179.89,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A8",
+      "rampWedObjectId": "27876",
+      "sourceHeadingDegrees": 90,
+      "runtimeYawDegrees": 0,
+      "aircraft": {
+        "x": -116.852849,
+        "z": 76.332111,
+        "yawDegrees": 0
+      },
+      "equipment": {
+        "x": -116.852849,
+        "z": 70.132111,
+        "yawDegrees": 0,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A9",
+      "rampWedObjectId": "27882",
+      "sourceHeadingDegrees": 270.28,
+      "runtimeYawDegrees": -180.28,
+      "aircraft": {
+        "x": -156.834357,
+        "z": 10.921055,
+        "yawDegrees": -180.28
+      },
+      "equipment": {
+        "x": -156.864656,
+        "z": 17.120981,
+        "yawDegrees": -180.28,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A10",
+      "rampWedObjectId": "20717",
+      "sourceHeadingDegrees": 90,
+      "runtimeYawDegrees": 0,
+      "aircraft": {
+        "x": -157.425352,
+        "z": 76.440334,
+        "yawDegrees": 0
+      },
+      "equipment": {
+        "x": -157.425352,
+        "z": 70.240334,
+        "yawDegrees": 0,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A11",
+      "rampWedObjectId": "20715",
+      "sourceHeadingDegrees": 237.51,
+      "runtimeYawDegrees": -147.51,
+      "aircraft": {
+        "x": -181.880575,
+        "z": 10.404462,
+        "yawDegrees": -147.51
+      },
+      "equipment": {
+        "x": -178.55023,
+        "z": 15.63407,
+        "yawDegrees": -147.51,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A12",
+      "rampWedObjectId": "27889",
+      "sourceHeadingDegrees": 125.94,
+      "runtimeYawDegrees": -35.94,
+      "aircraft": {
+        "x": -182.768904,
+        "z": 79.524009,
+        "yawDegrees": -35.94
+      },
+      "equipment": {
+        "x": -179.12989,
+        "z": 74.50429,
+        "yawDegrees": -35.94,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A13",
+      "rampWedObjectId": "27895",
+      "sourceHeadingDegrees": -154.68,
+      "runtimeYawDegrees": 244.68,
+      "aircraft": {
+        "x": -191.50548,
+        "z": 33.868256,
+        "yawDegrees": 244.68
+      },
+      "equipment": {
+        "x": -185.901094,
+        "z": 36.519831,
+        "yawDegrees": 244.68,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A14",
+      "rampWedObjectId": "20716",
+      "sourceHeadingDegrees": 176.64,
+      "runtimeYawDegrees": -86.64,
+      "aircraft": {
+        "x": -194.423387,
+        "z": 61.951291,
+        "yawDegrees": -86.64
+      },
+      "equipment": {
+        "x": -188.234045,
+        "z": 61.587913,
+        "yawDegrees": -86.64,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A17",
+      "rampWedObjectId": "20720",
+      "sourceHeadingDegrees": 270,
+      "runtimeYawDegrees": -180,
+      "aircraft": {
+        "x": 2.333813,
+        "z": 236.048981,
+        "yawDegrees": -180
+      },
+      "equipment": {
+        "x": 2.333813,
+        "z": 242.248981,
+        "yawDegrees": -180,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A18",
+      "rampWedObjectId": "20727",
+      "sourceHeadingDegrees": 90,
+      "runtimeYawDegrees": 0,
+      "aircraft": {
+        "x": 4.645696,
+        "z": 317.144369,
+        "yawDegrees": 0
+      },
+      "equipment": {
+        "x": 4.645696,
+        "z": 310.944369,
+        "yawDegrees": 0,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A19",
+      "rampWedObjectId": "20721",
+      "sourceHeadingDegrees": 270,
+      "runtimeYawDegrees": -180,
+      "aircraft": {
+        "x": -38.2555,
+        "z": 240.830697,
+        "yawDegrees": -180
+      },
+      "equipment": {
+        "x": -38.2555,
+        "z": 247.030697,
+        "yawDegrees": -180,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A20",
+      "rampWedObjectId": "27901",
+      "sourceHeadingDegrees": 90,
+      "runtimeYawDegrees": 0,
+      "aircraft": {
+        "x": -38.735509,
+        "z": 319.637877,
+        "yawDegrees": 0
+      },
+      "equipment": {
+        "x": -38.735509,
+        "z": 313.437877,
+        "yawDegrees": 0,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A21",
+      "rampWedObjectId": "27907",
+      "sourceHeadingDegrees": 270,
+      "runtimeYawDegrees": -180,
+      "aircraft": {
+        "x": -78.705663,
+        "z": 240.737987,
+        "yawDegrees": -180
+      },
+      "equipment": {
+        "x": -78.705663,
+        "z": 246.937987,
+        "yawDegrees": -180,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A22",
+      "rampWedObjectId": "20726",
+      "sourceHeadingDegrees": 90,
+      "runtimeYawDegrees": 0,
+      "aircraft": {
+        "x": -84.713576,
+        "z": 316.331624,
+        "yawDegrees": 0
+      },
+      "equipment": {
+        "x": -84.713576,
+        "z": 310.131624,
+        "yawDegrees": 0,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A23",
+      "rampWedObjectId": "20722",
+      "sourceHeadingDegrees": 270,
+      "runtimeYawDegrees": -180,
+      "aircraft": {
+        "x": -119.619138,
+        "z": 242.603148,
+        "yawDegrees": -180
+      },
+      "equipment": {
+        "x": -119.619138,
+        "z": 248.803148,
+        "yawDegrees": -180,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A24",
+      "rampWedObjectId": "27913",
+      "sourceHeadingDegrees": 96.9,
+      "runtimeYawDegrees": -6.9,
+      "aircraft": {
+        "x": -127.387235,
+        "z": 321.712053,
+        "yawDegrees": -6.9
+      },
+      "equipment": {
+        "x": -126.642386,
+        "z": 315.556958,
+        "yawDegrees": -6.9,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A25",
+      "rampWedObjectId": "27919",
+      "sourceHeadingDegrees": 270,
+      "runtimeYawDegrees": -180,
+      "aircraft": {
+        "x": -160.19153,
+        "z": 238.597576,
+        "yawDegrees": -180
+      },
+      "equipment": {
+        "x": -160.19153,
+        "z": 244.797576,
+        "yawDegrees": -180,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A26",
+      "rampWedObjectId": "20725",
+      "sourceHeadingDegrees": 132.62,
+      "runtimeYawDegrees": -42.62,
+      "aircraft": {
+        "x": -158.969465,
+        "z": 323.091741,
+        "yawDegrees": -42.62
+      },
+      "equipment": {
+        "x": -154.771241,
+        "z": 318.529404,
+        "yawDegrees": -42.62,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A27",
+      "rampWedObjectId": "20723",
+      "sourceHeadingDegrees": 229.31,
+      "runtimeYawDegrees": -139.31,
+      "aircraft": {
+        "x": -186.892067,
+        "z": 243.741399,
+        "yawDegrees": -139.31
+      },
+      "equipment": {
+        "x": -182.849877,
+        "z": 248.442538,
+        "yawDegrees": -139.31,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A29",
+      "rampWedObjectId": "20724",
+      "sourceHeadingDegrees": 178.84,
+      "runtimeYawDegrees": -88.84,
+      "aircraft": {
+        "x": -190.785577,
+        "z": 267.962108,
+        "yawDegrees": -88.84
+      },
+      "equipment": {
+        "x": -184.586848,
+        "z": 267.836592,
+        "yawDegrees": -88.84,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "A30",
+      "rampWedObjectId": "27933",
+      "sourceHeadingDegrees": 160.99,
+      "runtimeYawDegrees": -70.99,
+      "aircraft": {
+        "x": -188.093649,
+        "z": 305.985918,
+        "yawDegrees": -70.99
+      },
+      "equipment": {
+        "x": -182.231787,
+        "z": 303.966372,
+        "yawDegrees": -70.99,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B2",
+      "rampWedObjectId": "20735",
+      "sourceHeadingDegrees": 101.18,
+      "runtimeYawDegrees": -11.18,
+      "aircraft": {
+        "x": 10.916769,
+        "z": -153.966393,
+        "yawDegrees": -11.18
+      },
+      "equipment": {
+        "x": 12.118898,
+        "z": -160.048735,
+        "yawDegrees": -11.18,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B3",
+      "rampWedObjectId": "27939",
+      "sourceHeadingDegrees": 270,
+      "runtimeYawDegrees": -180,
+      "aircraft": {
+        "x": -30.344469,
+        "z": -229.437129,
+        "yawDegrees": -180
+      },
+      "equipment": {
+        "x": -30.344469,
+        "z": -223.237129,
+        "yawDegrees": -180,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B4",
+      "rampWedObjectId": "27947",
+      "sourceHeadingDegrees": 89.73,
+      "runtimeYawDegrees": 0.27,
+      "aircraft": {
+        "x": -29.556104,
+        "z": -160.680897,
+        "yawDegrees": 0.27
+      },
+      "equipment": {
+        "x": -29.585321,
+        "z": -166.880829,
+        "yawDegrees": 0.27,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B5",
+      "rampWedObjectId": "20730",
+      "sourceHeadingDegrees": 270,
+      "runtimeYawDegrees": -180,
+      "aircraft": {
+        "x": -65.631968,
+        "z": -227.494493,
+        "yawDegrees": -180
+      },
+      "equipment": {
+        "x": -65.631968,
+        "z": -221.294493,
+        "yawDegrees": -180,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B6",
+      "rampWedObjectId": "27953",
+      "sourceHeadingDegrees": 90.17,
+      "runtimeYawDegrees": -0.17,
+      "aircraft": {
+        "x": -69.590934,
+        "z": -159.159915,
+        "yawDegrees": -0.17
+      },
+      "equipment": {
+        "x": -69.572539,
+        "z": -165.359888,
+        "yawDegrees": -0.17,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B7",
+      "rampWedObjectId": "27959",
+      "sourceHeadingDegrees": 270,
+      "runtimeYawDegrees": -180,
+      "aircraft": {
+        "x": -103.210979,
+        "z": -223.554227,
+        "yawDegrees": -180
+      },
+      "equipment": {
+        "x": -103.210979,
+        "z": -217.354227,
+        "yawDegrees": -180,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B8",
+      "rampWedObjectId": "27966",
+      "sourceHeadingDegrees": 90,
+      "runtimeYawDegrees": 0,
+      "aircraft": {
+        "x": -110.252271,
+        "z": -150.594834,
+        "yawDegrees": 0
+      },
+      "equipment": {
+        "x": -110.252271,
+        "z": -156.794834,
+        "yawDegrees": 0,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B9",
+      "rampWedObjectId": "20731",
+      "sourceHeadingDegrees": 270,
+      "runtimeYawDegrees": -180,
+      "aircraft": {
+        "x": -143.592904,
+        "z": -226.050893,
+        "yawDegrees": -180
+      },
+      "equipment": {
+        "x": -143.592904,
+        "z": -219.850893,
+        "yawDegrees": -180,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B10",
+      "rampWedObjectId": "20734",
+      "sourceHeadingDegrees": 90.28,
+      "runtimeYawDegrees": -0.28,
+      "aircraft": {
+        "x": -150.850489,
+        "z": -154.618892,
+        "yawDegrees": -0.28
+      },
+      "equipment": {
+        "x": -150.82019,
+        "z": -160.818818,
+        "yawDegrees": -0.28,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B11",
+      "rampWedObjectId": "27972",
+      "sourceHeadingDegrees": 242.49,
+      "runtimeYawDegrees": -152.49,
+      "aircraft": {
+        "x": -173.483634,
+        "z": -224.401715,
+        "yawDegrees": -152.49
+      },
+      "equipment": {
+        "x": -170.619833,
+        "z": -218.902748,
+        "yawDegrees": -152.49,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B12",
+      "rampWedObjectId": "20733",
+      "sourceHeadingDegrees": 131.83,
+      "runtimeYawDegrees": -41.83,
+      "aircraft": {
+        "x": -177.297662,
+        "z": -147.969415,
+        "yawDegrees": -41.83
+      },
+      "equipment": {
+        "x": -173.162742,
+        "z": -152.589201,
+        "yawDegrees": -41.83,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B13",
+      "rampWedObjectId": "102680",
+      "sourceHeadingDegrees": 209.49,
+      "runtimeYawDegrees": -119.49,
+      "aircraft": {
+        "x": -183.698644,
+        "z": -199.391299,
+        "yawDegrees": -119.49
+      },
+      "equipment": {
+        "x": -178.301906,
+        "z": -196.339215,
+        "yawDegrees": -119.49,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B14",
+      "rampWedObjectId": "27978",
+      "sourceHeadingDegrees": 174.07,
+      "runtimeYawDegrees": -84.07,
+      "aircraft": {
+        "x": -189.118123,
+        "z": -171.726574,
+        "yawDegrees": -84.07
+      },
+      "equipment": {
+        "x": -182.9513,
+        "z": -172.367116,
+        "yawDegrees": -84.07,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B16",
+      "rampWedObjectId": "20754",
+      "sourceHeadingDegrees": 124.03,
+      "runtimeYawDegrees": -34.03,
+      "aircraft": {
+        "x": 14.538993,
+        "z": -374.209024,
+        "yawDegrees": -34.03
+      },
+      "equipment": {
+        "x": 18.00868,
+        "z": -379.347241,
+        "yawDegrees": -34.03,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B17",
+      "rampWedObjectId": "20748",
+      "sourceHeadingDegrees": 240.37,
+      "runtimeYawDegrees": -150.37,
+      "aircraft": {
+        "x": -8.965115,
+        "z": -467.495029,
+        "yawDegrees": -150.37
+      },
+      "equipment": {
+        "x": -5.899853,
+        "z": -462.105764,
+        "yawDegrees": -150.37,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B18",
+      "rampWedObjectId": "20753",
+      "sourceHeadingDegrees": 90.23,
+      "runtimeYawDegrees": -0.23,
+      "aircraft": {
+        "x": -26.269285,
+        "z": -390.375578,
+        "yawDegrees": -0.23
+      },
+      "equipment": {
+        "x": -26.244396,
+        "z": -396.575528,
+        "yawDegrees": -0.23,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B19",
+      "rampWedObjectId": "27995",
+      "sourceHeadingDegrees": 269.05,
+      "runtimeYawDegrees": -179.05,
+      "aircraft": {
+        "x": -50.015402,
+        "z": -461.839443,
+        "yawDegrees": -179.05
+      },
+      "equipment": {
+        "x": -49.912607,
+        "z": -455.640295,
+        "yawDegrees": -179.05,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B20",
+      "rampWedObjectId": "28003",
+      "sourceHeadingDegrees": 90,
+      "runtimeYawDegrees": 0,
+      "aircraft": {
+        "x": -54.893979,
+        "z": -384.947122,
+        "yawDegrees": 0
+      },
+      "equipment": {
+        "x": -54.893979,
+        "z": -391.147122,
+        "yawDegrees": 0,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B21A",
+      "rampWedObjectId": "100127",
+      "sourceHeadingDegrees": 270.33,
+      "runtimeYawDegrees": -180.33,
+      "aircraft": {
+        "x": -79.318588,
+        "z": -467.764705,
+        "yawDegrees": -180.33
+      },
+      "equipment": {
+        "x": -79.354297,
+        "z": -461.564808,
+        "yawDegrees": -180.33,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B22",
+      "rampWedObjectId": "20752",
+      "sourceHeadingDegrees": 90,
+      "runtimeYawDegrees": 0,
+      "aircraft": {
+        "x": -84.058572,
+        "z": -384.835647,
+        "yawDegrees": 0
+      },
+      "equipment": {
+        "x": -84.058572,
+        "z": -391.035647,
+        "yawDegrees": 0,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B23A",
+      "rampWedObjectId": "28010",
+      "sourceHeadingDegrees": 275.06,
+      "runtimeYawDegrees": -185.06,
+      "aircraft": {
+        "x": -130.20629,
+        "z": -458.725391,
+        "yawDegrees": -185.06
+      },
+      "equipment": {
+        "x": -130.753123,
+        "z": -452.549553,
+        "yawDegrees": -185.06,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B24",
+      "rampWedObjectId": "28016",
+      "sourceHeadingDegrees": 104.07,
+      "runtimeYawDegrees": -14.07,
+      "aircraft": {
+        "x": -116.904724,
+        "z": -384.556496,
+        "yawDegrees": -14.07
+      },
+      "equipment": {
+        "x": -115.397459,
+        "z": -390.570492,
+        "yawDegrees": -14.07,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B25",
+      "rampWedObjectId": "20750",
+      "sourceHeadingDegrees": 233.7,
+      "runtimeYawDegrees": -143.7,
+      "aircraft": {
+        "x": -170.549141,
+        "z": -463.468648,
+        "yawDegrees": -143.7
+      },
+      "equipment": {
+        "x": -166.878659,
+        "z": -458.471893,
+        "yawDegrees": -143.7,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B27",
+      "rampWedObjectId": "28029",
+      "sourceHeadingDegrees": 202.46,
+      "runtimeYawDegrees": -112.46,
+      "aircraft": {
+        "x": -188.413025,
+        "z": -432.5365,
+        "yawDegrees": -112.46
+      },
+      "equipment": {
+        "x": -182.683317,
+        "z": -430.167862,
+        "yawDegrees": -112.46,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "B28",
+      "rampWedObjectId": "20751",
+      "sourceHeadingDegrees": 177.27,
+      "runtimeYawDegrees": -87.27,
+      "aircraft": {
+        "x": -186.283483,
+        "z": -397.945839,
+        "yawDegrees": -87.27
+      },
+      "equipment": {
+        "x": -180.09052,
+        "z": -398.241141,
+        "yawDegrees": -87.27,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C1",
+      "rampWedObjectId": "107059",
+      "sourceHeadingDegrees": 77.8,
+      "runtimeYawDegrees": 12.2,
+      "aircraft": {
+        "x": 233.838724,
+        "z": -157.508972,
+        "yawDegrees": 12.2
+      },
+      "equipment": {
+        "x": 232.52851,
+        "z": -163.568951,
+        "yawDegrees": 12.2,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C2",
+      "rampWedObjectId": "107103",
+      "sourceHeadingDegrees": 271.32,
+      "runtimeYawDegrees": -181.32,
+      "aircraft": {
+        "x": 235.488145,
+        "z": -226.03668,
+        "yawDegrees": -181.32
+      },
+      "equipment": {
+        "x": 235.34532,
+        "z": -219.838326,
+        "yawDegrees": -181.32,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C3",
+      "rampWedObjectId": "107062",
+      "sourceHeadingDegrees": 77.8,
+      "runtimeYawDegrees": 12.2,
+      "aircraft": {
+        "x": 276.228964,
+        "z": -156.58308,
+        "yawDegrees": 12.2
+      },
+      "equipment": {
+        "x": 274.91875,
+        "z": -162.643059,
+        "yawDegrees": 12.2,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C4",
+      "rampWedObjectId": "20700",
+      "sourceHeadingDegrees": 291.77,
+      "runtimeYawDegrees": -201.77,
+      "aircraft": {
+        "x": 269.655882,
+        "z": -226.362559,
+        "yawDegrees": -201.77
+      },
+      "equipment": {
+        "x": 267.356416,
+        "z": -220.604742,
+        "yawDegrees": -201.77,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C6",
+      "rampWedObjectId": "107087",
+      "sourceHeadingDegrees": 319.52,
+      "runtimeYawDegrees": -229.52,
+      "aircraft": {
+        "x": 306.420813,
+        "z": -232.99225,
+        "yawDegrees": -229.52
+      },
+      "equipment": {
+        "x": 301.704891,
+        "z": -228.967318,
+        "yawDegrees": -229.52,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C7",
+      "rampWedObjectId": "107067",
+      "sourceHeadingDegrees": 77.8,
+      "runtimeYawDegrees": 12.2,
+      "aircraft": {
+        "x": 320.348997,
+        "z": -155.899739,
+        "yawDegrees": 12.2
+      },
+      "equipment": {
+        "x": 319.038783,
+        "z": -161.959718,
+        "yawDegrees": 12.2,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C8",
+      "rampWedObjectId": "107074",
+      "sourceHeadingDegrees": 2.05,
+      "runtimeYawDegrees": 87.95,
+      "aircraft": {
+        "x": 333.611267,
+        "z": -215.454461,
+        "yawDegrees": 87.95
+      },
+      "equipment": {
+        "x": 327.415235,
+        "z": -215.676245,
+        "yawDegrees": 87.95,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C9",
+      "rampWedObjectId": "107071",
+      "sourceHeadingDegrees": 23.82,
+      "runtimeYawDegrees": 66.18,
+      "aircraft": {
+        "x": 332.411577,
+        "z": -179.269987,
+        "yawDegrees": 66.18
+      },
+      "equipment": {
+        "x": 326.7397,
+        "z": -181.773948,
+        "yawDegrees": 66.18,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C11",
+      "rampWedObjectId": "109063",
+      "sourceHeadingDegrees": 85.96,
+      "runtimeYawDegrees": 4.04,
+      "aircraft": {
+        "x": 232.659406,
+        "z": -388.404702,
+        "yawDegrees": 4.04
+      },
+      "equipment": {
+        "x": 232.222598,
+        "z": -394.589296,
+        "yawDegrees": 4.04,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C12",
+      "rampWedObjectId": "109067",
+      "sourceHeadingDegrees": 272.95,
+      "runtimeYawDegrees": -182.95,
+      "aircraft": {
+        "x": 234.438625,
+        "z": -457.511337,
+        "yawDegrees": -182.95
+      },
+      "equipment": {
+        "x": 234.119545,
+        "z": -451.319553,
+        "yawDegrees": -182.95,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C13",
+      "rampWedObjectId": "109051",
+      "sourceHeadingDegrees": 87.09,
+      "runtimeYawDegrees": 2.91,
+      "aircraft": {
+        "x": 276.837881,
+        "z": -387.953693,
+        "yawDegrees": 2.91
+      },
+      "equipment": {
+        "x": 276.523124,
+        "z": -394.145698,
+        "yawDegrees": 2.91,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C14",
+      "rampWedObjectId": "109065",
+      "sourceHeadingDegrees": 289.07,
+      "runtimeYawDegrees": -199.07,
+      "aircraft": {
+        "x": 271.820489,
+        "z": -466.868447,
+        "yawDegrees": -199.07
+      },
+      "equipment": {
+        "x": 269.794806,
+        "z": -461.008702,
+        "yawDegrees": -199.07,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C16",
+      "rampWedObjectId": "109057",
+      "sourceHeadingDegrees": 306.73,
+      "runtimeYawDegrees": -216.73,
+      "aircraft": {
+        "x": 309.768636,
+        "z": -470.772019,
+        "yawDegrees": -216.73
+      },
+      "equipment": {
+        "x": 306.060757,
+        "z": -465.802951,
+        "yawDegrees": -216.73,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C17",
+      "rampWedObjectId": "109052",
+      "sourceHeadingDegrees": 68.41,
+      "runtimeYawDegrees": 21.59,
+      "aircraft": {
+        "x": 325.774041,
+        "z": -389.44179,
+        "yawDegrees": 21.59
+      },
+      "equipment": {
+        "x": 323.492675,
+        "z": -395.206803,
+        "yawDegrees": 21.59,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C18",
+      "rampWedObjectId": "109055",
+      "sourceHeadingDegrees": 351.37,
+      "runtimeYawDegrees": -261.37,
+      "aircraft": {
+        "x": 328.569607,
+        "z": -450.978629,
+        "yawDegrees": -261.37
+      },
+      "equipment": {
+        "x": 322.439804,
+        "z": -450.0483,
+        "yawDegrees": -261.37,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "C19",
+      "rampWedObjectId": "109061",
+      "sourceHeadingDegrees": 12.97,
+      "runtimeYawDegrees": 77.03,
+      "aircraft": {
+        "x": 331.373077,
+        "z": -415.511961,
+        "yawDegrees": 77.03
+      },
+      "equipment": {
+        "x": 325.331253,
+        "z": -416.903494,
+        "yawDegrees": 77.03,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "D1",
+      "rampWedObjectId": "20705",
+      "sourceHeadingDegrees": 90.08,
+      "runtimeYawDegrees": -0.08,
+      "aircraft": {
+        "x": 248.727038,
+        "z": 86.288863,
+        "yawDegrees": -0.08
+      },
+      "equipment": {
+        "x": 248.735695,
+        "z": 80.088869,
+        "yawDegrees": -0.08,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "D2",
+      "rampWedObjectId": "115970",
+      "sourceHeadingDegrees": 271.9,
+      "runtimeYawDegrees": -181.9,
+      "aircraft": {
+        "x": 235.845815,
+        "z": 4.327686,
+        "yawDegrees": -181.9
+      },
+      "equipment": {
+        "x": 235.640253,
+        "z": 10.524278,
+        "yawDegrees": -181.9,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "D3",
+      "rampWedObjectId": "106804",
+      "sourceHeadingDegrees": 86.44,
+      "runtimeYawDegrees": 3.56,
+      "aircraft": {
+        "x": 289.204252,
+        "z": 86.681347,
+        "yawDegrees": 3.56
+      },
+      "equipment": {
+        "x": 288.819271,
+        "z": 80.493312,
+        "yawDegrees": 3.56,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "D4",
+      "rampWedObjectId": "20701",
+      "sourceHeadingDegrees": -67.89,
+      "runtimeYawDegrees": 157.89,
+      "aircraft": {
+        "x": 268.950116,
+        "z": 7.074706,
+        "yawDegrees": 157.89
+      },
+      "equipment": {
+        "x": 266.616523,
+        "z": 12.818777,
+        "yawDegrees": 157.89,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "D5",
+      "rampWedObjectId": "20704",
+      "sourceHeadingDegrees": 40.72,
+      "runtimeYawDegrees": 49.28,
+      "aircraft": {
+        "x": 317.958856,
+        "z": 80.767325,
+        "yawDegrees": 49.28
+      },
+      "equipment": {
+        "x": 313.259835,
+        "z": 76.722675,
+        "yawDegrees": 49.28,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "D6",
+      "rampWedObjectId": "106894",
+      "sourceHeadingDegrees": 325.94,
+      "runtimeYawDegrees": -235.94,
+      "aircraft": {
+        "x": 301.966364,
+        "z": -0.7957,
+        "yawDegrees": -235.94
+      },
+      "equipment": {
+        "x": 296.829964,
+        "z": 2.676677,
+        "yawDegrees": -235.94,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "D7",
+      "rampWedObjectId": "106848",
+      "sourceHeadingDegrees": 0.61,
+      "runtimeYawDegrees": 89.39,
+      "aircraft": {
+        "x": 333.219422,
+        "z": 55.111842,
+        "yawDegrees": 89.39
+      },
+      "equipment": {
+        "x": 327.019774,
+        "z": 55.045835,
+        "yawDegrees": 89.39,
+        "approachOffsetMeters": 6.2
+      }
+    },
+    {
+      "gate": "D7",
+      "rampWedObjectId": "106850",
+      "sourceHeadingDegrees": 2.4,
+      "runtimeYawDegrees": 87.6,
+      "aircraft": {
+        "x": 333.219422,
+        "z": 11.067923,
+        "yawDegrees": 87.6
+      },
+      "equipment": {
+        "x": 327.024861,
+        "z": 10.808294,
+        "yawDegrees": 87.6,
+        "approachOffsetMeters": 6.2
+      }
+    }
+  ]
+}
