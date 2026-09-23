@@ -1,0 +1,38 @@
+name: Inspect LEKTRO R187A Wheel Nodes
+
+on:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - reports/trigger-lektro-wheel-inspection.txt
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Inspect finalized R187A GLB nodes
+        run: node scripts/inspect-lektro-r187a-glb-nodes.mjs
+
+      - name: Commit inspection report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/lektro-r187a-node-inspection.json
+          git commit -m "Inspect LEKTRO R187A wheel nodes"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
