@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { installKphxPackageOwnedObjectLayer } from "../environment/kphxFullAirport/installPackageOwnedObjectLayer.js";
 import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
 import { installKphxTerminal4StockJetways } from "../environment/kphxFullAirport/installTerminal4StockJetways.js";
+import { installKphxMisterxFedexTruckAgp } from "../environment/kphxFullAirport/installMisterxFedexTruckAgp.js";
 import { KPHX_T4_COVERED_OBJECT_AUTHORITY } from "../environment/kphxFullAirport/t4CoveredObjectAuthority.js";
 
 const T4_ZDP_MANIFEST = "/models/kphx-full-airport/batches/t4-zdp.manifest.json";
@@ -108,11 +109,16 @@ export default function KphxFullAirportVerifier() {
         assetConcurrency: 1,
       }));
 
-      const [objectResults, surfaces, terminal4Jetways, t4Zdp] = await Promise.all([
+      const fedexAgpTask = timed("FedexAgp", installKphxMisterxFedexTruckAgp(THREE, environment, {
+        strict: true,
+      }));
+
+      const [objectResults, surfaces, terminal4Jetways, t4Zdp, fedexAgp] = await Promise.all([
         objectTask,
         surfaceTask,
         jetwayTask,
         t4ZdpTask,
+        fedexAgpTask,
       ]);
 
       const objectPlacements = objectResults.reduce(
@@ -149,6 +155,12 @@ export default function KphxFullAirportVerifier() {
       if (Number(t4Zdp.manifest.resolvedExternal?.materializedUniqueResourceCount || 0) !== 1) {
         throw new Error("Expected 1 exact T4 ZDP source resource");
       }
+      if (Number(fedexAgp.layer.userData.loadedPlacementCount || 0) !== 17) {
+        throw new Error(`Expected 17 exact MisterX FedEx AGP placements, loaded ${fedexAgp.layer.userData.loadedPlacementCount || 0}`);
+      }
+      if (Number(fedexAgp.layer.userData.loadedChildInstanceCount || 0) !== 34) {
+        throw new Error(`Expected 34 exact MisterX FedEx AGP child instances, loaded ${fedexAgp.layer.userData.loadedChildInstanceCount || 0}`);
+      }
       if (t4VisibleObjectPlacements !== KPHX_T4_COVERED_OBJECT_AUTHORITY.coveredObjectPlacementCount) {
         throw new Error(
           `Expected ${KPHX_T4_COVERED_OBJECT_AUTHORITY.coveredObjectPlacementCount} exact covered T4 objects, made ${t4VisibleObjectPlacements} visible`,
@@ -160,6 +172,8 @@ export default function KphxFullAirportVerifier() {
         throw new Error(`Expected 76 exact T4 jetways, loaded ${terminal4Jetways.layer.userData.jetwayCount}`);
       }
 
+      // Full-airport exact source is loaded, but the current locked visual checkpoint is T4-only.
+      fedexAgp.layer.visible = false;
       if (objectsOnlyQa) {
         surfaces.layer.visible = false;
       }
@@ -194,6 +208,9 @@ export default function KphxFullAirportVerifier() {
       renderer.domElement.dataset.kphxT4CdbResources = "1";
       renderer.domElement.dataset.kphxT4ZdpPlacements = String(t4Zdp.layer.userData.loadedPlacementCount);
       renderer.domElement.dataset.kphxT4ZdpResources = String(t4Zdp.manifest.resolvedExternal?.materializedUniqueResourceCount || 0);
+      renderer.domElement.dataset.kphxMisterxFedexAgpPlacements = String(fedexAgp.layer.userData.loadedPlacementCount || 0);
+      renderer.domElement.dataset.kphxMisterxFedexAgpChildInstances = String(fedexAgp.layer.userData.loadedChildInstanceCount || 0);
+      renderer.domElement.dataset.kphxMisterxFedexAgpResources = String(fedexAgp.layer.userData.loadedUniqueAssetCount || 0);
       renderer.domElement.dataset.kphxLoadedAssetFiles = String(loadedAssetFiles);
       renderer.domElement.dataset.kphxPackagePolygons = String(surfaces.layer.userData.polygonCount);
       renderer.domElement.dataset.kphxPackageLineMeshes = String(surfaces.layer.userData.lineMeshCount);
