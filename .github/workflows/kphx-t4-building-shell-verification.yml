@@ -34,6 +34,9 @@ jobs:
           npm ci
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          python -m pip install --quiet gdown
 
       - name: Start isolated RampReady verifier
         shell: bash
@@ -161,6 +164,18 @@ jobs:
           set -euo pipefail
           node scripts/inspect-kphx-terminal4-recovered-glbs.mjs
 
+      - name: Verify exact supplied T4 texture pixels
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .kphx-t4-source-textures
+          mkdir -p .kphx-t4-source-textures
+          gdown "https://drive.google.com/uc?id=1FTTuGgQgFNmX_k3FD4biPDUavBZQ-b0B" -O .kphx-t4-source-textures/Terminal4_comb.dds
+          gdown "https://drive.google.com/uc?id=1Epwd5VsQa7j9Taud1F-TrregSG7OuCU_" -O .kphx-t4-source-textures/Terminal4_LIT.dds
+          gdown "https://drive.google.com/uc?id=1Tj7rzga7j1qc_7YybQ-b8HclSupFiH-1" -O .kphx-t4-source-textures/Terminal4b_comb.dds
+          gdown "https://drive.google.com/uc?id=1uVtiWbvU1IKjQOJLNJDgskIr_IFx6R6K" -O .kphx-t4-source-textures/Terminal4b_LIT.dds
+          node scripts/verify-kphx-t4-texture-pixels.mjs
+
       - name: Verify exact Terminal 4 texture pixels
         shell: bash
         run: |
@@ -241,7 +256,7 @@ jobs:
           git restore -- package.json package-lock.json 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports/kphx-t4-building-shell-*.jpg reports/kphx-t4-building-shell-*.json reports/kphx-terminal4-recovered-glb-inspection.json reports/kphx-terminal4-texture-pixel-verification.json
+          git add reports/kphx-t4-building-shell-*.jpg reports/kphx-t4-building-shell-*.json reports/kphx-terminal4-recovered-glb-inspection.json reports/kphx-t4-texture-pixel-verification.json reports/kphx-terminal4-texture-pixel-verification.json
           git commit -m "Capture exact T4 building-shell verification evidence"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
