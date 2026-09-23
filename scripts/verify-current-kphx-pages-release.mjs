@@ -120,6 +120,10 @@ assert(equipment.includes("LEKTRO_AP88_TVO914.glb"), "Live LEKTRO does not load 
 assert(equipment.includes('"lektro-ap88-tvo914-r187a"'), "Live LEKTRO finalized source label missing");
 assert(equipment.includes("gltf.scene.rotation.y = Math.PI"), "Live LEKTRO 180-degree model-forward correction missing");
 assert(equipment.includes("modelForwardCorrectionDegrees = 180"), "Live LEKTRO orientation evidence missing");
+assert(equipment.includes('getObjectByName("AP88_STEER_L_STEER")'), "Live LEKTRO left authored rear-steer pivot binding missing");
+assert(equipment.includes('getObjectByName("AP88_STEER_R_STEER")'), "Live LEKTRO right authored rear-steer pivot binding missing");
+assert(equipment.includes("const authoredVisualAngle = rig.steeringPivots[0]?.rotation.y ?? 0;"), "Live LEKTRO authored steering does not copy validated visual rear-steer angle");
+assert(equipment.includes('authoredRearSteerMode = "copy-validated-physics-visual-angle"'), "Live LEKTRO authored steering evidence mode missing");
 assert(equipment.includes("RampReady-manager-Kubota-exact.glb"), "Live manager Kubota exact GLB path missing");
 assert(equipment.includes('"manager-kubota-exact"'), "Live manager Kubota exact source label missing");
 assert(equipment.includes("AuthoredSteerPivot_L") && equipment.includes("AuthoredSteerPivot_R"), "Live manager Kubota steering pivot binding missing");
@@ -144,6 +148,8 @@ assert(!trainer.includes("sim.aircraft.rotation.y = 0;"), "Hard-coded zero A1 ai
 assert(!trainer.includes("sim.rig.root.position.set(0, 0, 0);"), "Hard-coded zero A1 equipment reset position remains");
 assert(!trainer.includes("sim.rig.root.rotation.y = 0;"), "Hard-coded zero A1 equipment reset yaw remains");
 assert(trainer.includes('dataset.a1AircraftHeadingReady = "true"'), "A1 aircraft heading runtime evidence missing");
+assert(trainer.includes("dataset.lektroAuthoredRearSteerBinding"), "LEKTRO authored rear-steer binding runtime evidence missing");
+assert(trainer.includes("dataset.lektroAuthoredRearSteerDegrees"), "LEKTRO authored rear-steer angle runtime evidence missing");
 assert(!trainer.includes("same-a1-wed-gate-pose-equipment-spawn-v1"), "Obsolete A1-only equipment spawn authority remains");
 assert(trainer.includes("dataset.a1EquipmentSpawnAuthority = A1_EQUIPMENT_SPAWN_AUTHORITY"), "A1 equipment runtime evidence missing");
 
@@ -183,6 +189,12 @@ assert(gateHeadingAudit.supportedGateNameCount === 75, "Committed T4 gate headin
 assert(Array.isArray(gateHeadingAudit.gates) && gateHeadingAudit.gates.length === 76, "Committed T4 gate heading audit row count drifted");
 assert(gateHeadingAudit.sharedScenarioAuthority === "same-wed-ramp-position-aircraft-equipment-pose-v1", "Committed T4 gate heading audit shared authority drifted");
 
+const lektroRearSteerEvidence = JSON.parse(fs.readFileSync("reports/lektro-r187a-rear-steering-live.json", "utf8"));
+assert(lektroRearSteerEvidence.status === "PASS", "Committed LEKTRO rear-steering visual evidence is not PASS");
+assert(lektroRearSteerEvidence.binding === "AP88_STEER_L_STEER|AP88_STEER_R_STEER", "Committed LEKTRO rear-steering pivot binding drifted");
+assert(Math.abs(lektroRearSteerEvidence.leftSteer?.degrees) >= 80, "Committed LEKTRO rear-steering evidence does not show full visual articulation");
+assert(Math.abs(lektroRearSteerEvidence.centeredAfter?.degrees) < 0.5, "Committed LEKTRO rear-steering evidence does not recenter");
+
 const launcher = fs.readFileSync("src/components/PushbackTrainer.jsx", "utf8");
 assert(launcher.includes("total: 4"), "Four-stage preload screen contract missing");
 assert(launcher.includes("kphxA1ZdpMarkingsReady"), "Preload screen does not wait for exact A1 markings");
@@ -220,5 +232,6 @@ console.log(JSON.stringify({
   managerKubotaBytes: kubota.bytes,
   managerKubotaSha256: kubota.sha256,
   managerKubotaInspectionOnly: true,
+  lektroAuthoredRearSteerVisual: true,
   browserErrors: 0,
 }, null, 2));
