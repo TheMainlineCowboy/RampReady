@@ -16,8 +16,7 @@ import {
 import { createProceduralLektroRig, validateTugRig } from "../tug/lektroRig.js";
 import { installRuntimeEquipmentVisual, supportsRuntimeEquipmentVisual } from "../tug/runtimeEquipmentVisual.js";
 import { buildKphxExactLiveEnvironment as buildTerminal4RampEnvironment, installKphxExactLiveTerminal4 as installAuthoredTerminal4Visual } from "../environment/kphxFullAirport/installLiveTerminal4Exact.js";
-import { installAuthoredKphxGround } from "../environment/authoredKphxGround.js";
-import { installAuthoredKphxPhotoGround } from "../environment/authoredKphxPhotoGround.js";
+import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
 import "./RampReadyTrainer.css";
 import "./procedure-gates.css";
 import "./mobile-runtime-recovery.css";
@@ -691,66 +690,31 @@ export default function RampReadyStandupTrainer({
         setMessage(`PHX Terminal 4 failed to load: ${error.message}`);
         throw error;
       });
-    const groundLoad = installAuthoredKphxGround(THREE, environment)
-      .then((ground) => {
-        renderer.domElement.dataset.groundSource = environment.userData.groundSource;
-        renderer.domElement.dataset.kphxVersion = environment.userData.kphxVersion;
-        renderer.domElement.dataset.kphxDetailLevel = environment.userData.kphxDetailLevel;
-        renderer.domElement.dataset.sourceJetwayCount = String(environment.userData.sourceJetwayCount);
-        renderer.domElement.dataset.terminal4JetwayCount = String(environment.userData.terminal4JetwayCount);
-        renderer.domElement.dataset.terminal4ParkingCount = String(environment.userData.terminal4ParkingCount);
-        renderer.domElement.dataset.b15Anchors = environment.userData.b15Anchors?.length === 2 ? "ready" : "missing";
-        renderer.domElement.dataset.b15CorridorMeters = environment.userData.trainingCorridor?.distanceMeters?.map((value) => Math.round(value)).join(",") || "missing";
-        renderer.domElement.dataset.groundMarkingContactMode = environment.userData.authoredGroundMarkingContactMode || "missing";
-        renderer.domElement.dataset.groundPavementAuthority = environment.userData.authoredGroundPavementAuthority || "missing";
-        renderer.domElement.dataset.groundSourceAerialPriority = String(environment.userData.authoredGroundSourceAerialPriority === true);
-        renderer.domElement.dataset.groundNearfieldDetailOpacity = String(environment.userData.authoredGroundNearfieldDetailOpacity ?? "missing");
-        return ground;
+    const surfaceLoad = installKphxPackageOwnedSurfaceLayer(THREE, environment, { strict: true })
+      .then((result) => {
+        const data = result.layer.userData;
+        renderer.domElement.dataset.groundSource = "KPHX 1.75.1 exact WED package surfaces";
+        renderer.domElement.dataset.kphxVersion = String(data.sourceVersion || "missing");
+        renderer.domElement.dataset.kphxSurfaceReady = String(data.ready === true);
+        renderer.domElement.dataset.kphxSurfacePolygonCount = String(data.polygonCount ?? 0);
+        renderer.domElement.dataset.kphxSurfaceOrthophotoCount = String(data.drapedOrthophotoCount ?? 0);
+        renderer.domElement.dataset.kphxSurfaceLineMeshCount = String(data.lineMeshCount ?? 0);
+        renderer.domElement.dataset.kphxSurfaceMaterialCount = String(data.materialCount ?? 0);
+        renderer.domElement.dataset.kphxSurfaceFailureCount = String((data.failures || []).length);
+        renderer.domElement.dataset.photoGroundSource = "not-used-exact-kphx-1.75.1-only";
+        return result;
       })
       .catch((error) => {
         renderer.domElement.dataset.groundSource = "load-error";
-        renderer.domElement.dataset.kphxDetailLevel = "load-error";
-        renderer.domElement.dataset.b15Anchors = "load-error";
-        renderer.domElement.dataset.b15CorridorMeters = "load-error";
-        renderer.domElement.dataset.groundMarkingContactMode = "load-error";
-        renderer.domElement.dataset.groundPavementAuthority = "load-error";
-        renderer.domElement.dataset.groundSourceAerialPriority = "load-error";
-        renderer.domElement.dataset.groundNearfieldDetailOpacity = "load-error";
-        console.error("RampReady KPHX ground load failed", error);
-        setMessage(`PHX airport ground failed to load: ${error.message}`);
+        renderer.domElement.dataset.kphxSurfaceReady = "false";
+        renderer.domElement.dataset.kphxSurfaceFailureCount = "load-error";
+        renderer.domElement.dataset.photoGroundSource = "not-used-exact-kphx-1.75.1-only";
+        console.error("RampReady exact KPHX surface load failed", error);
+        setMessage(`Exact PHX surface layer failed to load: ${error.message}`);
         throw error;
       });
-    const photoGroundLoad = groundLoad
-      .then(() => installAuthoredKphxPhotoGround(THREE, environment))
-      .then((photoGround) => {
-        renderer.domElement.dataset.photoGroundSource = environment.userData.photoGroundSource;
-        renderer.domElement.dataset.photoDetailLevel = environment.userData.authoredPhotoDetailLevel;
-        renderer.domElement.dataset.photoTextureMode = environment.userData.authoredPhotoTextureMode;
-        renderer.domElement.dataset.photoRuntimeTileCount = String(environment.userData.authoredPhotoRuntimeTileCount);
-        renderer.domElement.dataset.photoMaxTextureDimension = String(environment.userData.authoredPhotoGround?.userData?.maxTextureDimension ?? "missing");
-        renderer.domElement.dataset.photoTileCount = String(environment.userData.authoredPhotoTileCount);
-        renderer.domElement.dataset.photoWidth = String(environment.userData.authoredPhotoWidth);
-        renderer.domElement.dataset.photoHeight = String(environment.userData.authoredPhotoHeight);
-        renderer.domElement.dataset.photoBytes = String(environment.userData.authoredPhotoBytes);
-        renderer.domElement.dataset.hiddenAdexSurfaceMaterials = String(environment.userData.hiddenADEXSurfaceMaterialCount);
-        return photoGround;
-      })
-      .catch((error) => {
-        renderer.domElement.dataset.photoGroundSource = "load-error";
-        renderer.domElement.dataset.photoDetailLevel = "load-error";
-        renderer.domElement.dataset.photoTextureMode = "load-error";
-        renderer.domElement.dataset.photoRuntimeTileCount = "load-error";
-        renderer.domElement.dataset.photoMaxTextureDimension = "load-error";
-        renderer.domElement.dataset.photoTileCount = "load-error";
-        renderer.domElement.dataset.photoWidth = "load-error";
-        renderer.domElement.dataset.photoHeight = "load-error";
-        renderer.domElement.dataset.photoBytes = "load-error";
-        renderer.domElement.dataset.hiddenAdexSurfaceMaterials = "load-error";
-        console.error("RampReady PHX source aerial load failed", error);
-        setMessage(`PHX source aerial failed to load: ${error.message}`);
-        throw error;
-      });
-    void Promise.all([terminalLoad, groundLoad, photoGroundLoad])
+
+    void Promise.all([terminalLoad, surfaceLoad])
       .then(() => {
         const nativeA1RetractionActive = environment.userData.authoredTerminal4Jetways?.userData.uploadedJetwayA1RetractionAuthority === "aircraft-door-clearance-without-overtravel-v6";
         airportCollision.staticTargets = [
@@ -766,8 +730,6 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.terminal4A1RetractionRatio = nativeA1RetractionActive ? "1.000000" : "0.330556";
         renderer.domElement.dataset.terminal4A1NativeRetractionActive = nativeA1RetractionActive ? "true" : "false";
         renderer.domElement.dataset.environmentSource = environment.userData.environmentSource;
-        renderer.domElement.dataset.groundSource = environment.userData.groundSource;
-        renderer.domElement.dataset.photoGroundSource = environment.userData.photoGroundSource;
       })
       .catch(() => {
         renderer.domElement.dataset.environmentSource = "load-error";
