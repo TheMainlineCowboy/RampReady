@@ -699,7 +699,7 @@ export default function RampReadyStandupTrainer({
         loadPolygons: true,
         loadDrapedOrthophotos: false,
         loadLines: false,
-        addOpaqueBaseUnderlay: true,
+        addOpaqueBaseUnderlay: false,
       }),
     ])
       .then(([packageResult, a1ZdpResult]) => {
