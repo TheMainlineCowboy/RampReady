@@ -54,6 +54,51 @@ export function getKphxTerminal4UniqueGatePose(gate) {
   return poses[0];
 }
 
+export function createKphxTerminal4GateScenarioPose(
+  rampWedObjectId,
+  { equipmentApproachOffsetMeters = 6.2 } = {},
+) {
+  const gatePose = getKphxTerminal4GatePoseByRampWedObjectId(rampWedObjectId);
+  if (!gatePose) {
+    throw new Error(`Unknown supported KPHX T4 ramp WED object id: ${rampWedObjectId}`);
+  }
+  if (!Number.isFinite(equipmentApproachOffsetMeters) || equipmentApproachOffsetMeters < 0) {
+    throw new Error(`Invalid KPHX T4 equipment approach offset: ${equipmentApproachOffsetMeters}`);
+  }
+
+  const [aircraftX, aircraftY, aircraftZ] = gatePose.runtimePosition;
+  const yaw = gatePose.runtimeYawRadians;
+  const equipmentX = aircraftX - Math.sin(yaw) * equipmentApproachOffsetMeters;
+  const equipmentZ = aircraftZ - Math.cos(yaw) * equipmentApproachOffsetMeters;
+
+  return Object.freeze({
+    authority: "same-wed-ramp-position-aircraft-equipment-pose-v1",
+    gate: gatePose.gate,
+    rampWedObjectId: gatePose.rampWedObjectId,
+    sourceHeadingDegrees: gatePose.sourceHeadingDegrees,
+    runtimeYawRadians: yaw,
+    equipmentApproachOffsetMeters,
+    aircraft: Object.freeze({
+      x: aircraftX,
+      y: aircraftY,
+      z: aircraftZ,
+      yaw,
+    }),
+    equipment: Object.freeze({
+      x: equipmentX,
+      y: aircraftY,
+      z: equipmentZ,
+      yaw,
+    }),
+  });
+}
+
 export const KPHX_T4_SUPPORTED_RAMP_POSITION_IDS = Object.freeze(
   RAW_SUPPORTED_T4_RAMPS.map((entry) => String(entry[1])),
+);
+
+export const KPHX_T4_SUPPORTED_GATE_SCENARIO_POSES = Object.freeze(
+  KPHX_T4_SUPPORTED_RAMP_POSITION_IDS.map((rampWedObjectId) =>
+    createKphxTerminal4GateScenarioPose(rampWedObjectId),
+  ),
 );
