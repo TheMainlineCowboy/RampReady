@@ -1,22 +1,16 @@
 {
-  "capturedAtUtc": "2026-09-22T02:50:20.120Z",
+  "capturedAtUtc": "2026-09-23T01:06:56.093Z",
   "navigationError": null,
-  "waitError": null,
+  "waitError": "TimeoutError: page.waitForFunction: Timeout 60000ms exceeded.",
   "state": {
     "canvasPresent": true,
     "dataset": {
       "engine": "three.js r171",
-      "kphxFullAirportVerifier": "ready",
-      "kphxPackagePlacements": "655",
-      "kphxPackageResources": "96",
-      "kphxLoadedAssetFiles": "82",
-      "kphxPackagePolygons": "13",
-      "kphxPackageLineMeshes": "35",
-      "kphxSourceVersion": "1.75.1"
+      "kphxFullAirportVerifier": "loading"
     },
-    "overlayText": "KPHX 1.75.1 native checkpoint ready · 655 placements · 96 source resources · 82 asset files",
+    "overlayText": null,
     "title": "RampReady",
-    "bodyText": "KPHX 1.75.1 native checkpoint ready · 655 placements · 96 source resources · 82 asset files"
+    "bodyText": "Loading exact KPHX 1.75.1…"
   },
   "consoleMessages": [
     {
@@ -33,23 +27,43 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000B42C0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000F4030000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0xc7400d3c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x3a1c00692200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0xc7400d3c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x3a1c00692200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0xc7400d3c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x3a1c00692200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0xc7400d3c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      "text": "[.WebGL-0x3a1c00692200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    },
+    {
+      "type": "error",
+      "text": "THREE.GLTFLoader: Couldn't load texture ..\\..\\..\\Shared\\Vehicle_Shadow.png"
+    },
+    {
+      "type": "error",
+      "text": "THREE.GLTFLoader: Couldn't load texture ..\\..\\..\\..\\Shared\\Vehicle_Shadow.png"
+    },
+    {
+      "type": "error",
+      "text": "THREE.GLTFLoader: Couldn't load texture ..\\..\\..\\Shared\\Vehicle_Shadow.png"
+    },
+    {
+      "type": "error",
+      "text": "THREE.GLTFLoader: Couldn't load texture ..\\Van_White.png"
+    },
+    {
+      "type": "error",
+      "text": "THREE.GLTFLoader: Couldn't load texture ..\\..\\Shared\\Vehicle_Shadow.png"
     }
   ],
   "pageErrors": [],
