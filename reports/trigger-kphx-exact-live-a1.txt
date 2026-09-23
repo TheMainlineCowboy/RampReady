@@ -1,1 +1,1 @@
-Capture A1 after disabling only the six ZDP opaque underlay helper meshes. Verify pavement remains and blue patches disappear.
+Capture A1 with both package and ZDP opaque helper underlays disabled. Check blue strips and pavement continuity.
