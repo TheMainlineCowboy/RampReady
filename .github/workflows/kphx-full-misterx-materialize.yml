@@ -67,8 +67,10 @@ jobs:
             "MisterX_Library/Airport/Aircraft/Cessna_Citation_II/Random.obj",
             "MisterX_Library/Airport/Aircraft/Learjet_35/Random.obj",
           ]);
+          const exactAgpResource="MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp";
           const blocked=allMisterX.filter((p)=>ambiguousRandom.has(p.resource));
-          const selected=allMisterX.filter((p)=>!ambiguousRandom.has(p.resource));
+          const agpPlacements=allMisterX.filter((p)=>p.resource===exactAgpResource);
+          const selected=allMisterX.filter((p)=>!ambiguousRandom.has(p.resource)&&p.resource!==exactAgpResource);
           const resources={};
           for(const p of selected) resources[p.resource]=(resources[p.resource]||0)+1;
           const blockedCounts={};
@@ -89,8 +91,8 @@ jobs:
           if(blocked.length!==25||Object.keys(blockedCounts).length!==5){
             throw new Error(`MisterX ambiguous Random contract changed: placements=${blocked.length}, resources=${Object.keys(blockedCounts).length}`);
           }
-          if(selected.length!==2418||Object.keys(resources).length!==108){
-            throw new Error(`Exact MisterX WED authority changed: placements=${selected.length}, resources=${Object.keys(resources).length}`);
+          if(selected.length+agpPlacements.length!==2418||Object.keys(resources).length!==107){
+            throw new Error(`Exact MisterX WED authority changed: objPlacements=${selected.length}, agpPlacements=${agpPlacements.length}, objResources=${Object.keys(resources).length}`);
           }
           fs.writeFileSync("reports/kphx-full-misterx-wed-placements.json",JSON.stringify(payload,null,2)+"\n");
           fs.writeFileSync("reports/kphx-full-misterx-object-resources.json",JSON.stringify({
@@ -104,6 +106,13 @@ jobs:
             placementCount:blocked.length,
             uniqueResourceCount:Object.keys(blockedCounts).length,
             resources:blockedCounts,
+          },null,2)+"\n");
+          fs.writeFileSync("reports/kphx-full-misterx-agp-authority.json",JSON.stringify({
+            authority:"KPHX 1.75.1 earth.wed.xml exact MisterX AGP placement",
+            policy:"tracked separately; never force AGP through OBJ converter",
+            resource:exactAgpResource,
+            placementCount:agpPlacements.length,
+            placements:agpPlacements,
           },null,2)+"\n");
           NODE
 
@@ -145,6 +154,7 @@ jobs:
           fetch_folder "1T-3G-hsAeAt2qBMvTSPjKxxkJVYybPPe" ".misterx/Airport/Aircraft/Learjet_35" "Cyan_Yellow_N683BA.obj"
 
           fetch_folder "1TFUJhSqdqP3Yvo2tEq-tYER5_vIrLQn8" ".misterx/Airport/Other" "Checkered_Hut.obj"
+          fetch_folder "18oiGIj3T3rT2OKaARGZzbajca2m80iwn" ".misterx/Airport/Vehicles/Trucks" "Box_Truck_White.obj"
           fetch_folder "1koQgOiB1K3Oswbr1g7NLTzHmBWPBnmos" ".misterx/Objects/Construction" "Garbage_Container_Rusty.obj"
           fetch_folder "1qeCyUGew8Z-w7-IlfAhQKHGml09YyTDJ" ".misterx/Vehicles/Construction" "Bulldozer.obj"
           fetch_folder "1AiUGHanRiuX-P7jfJwOYC9Twzet4TCLU" ".misterx/Vehicles/Trucks" "Truck_Fedex.agp"
@@ -187,14 +197,16 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from "node:fs";
           const m=JSON.parse(fs.readFileSync(".runtime-misterx/manifest.json","utf8"));
+          const a=JSON.parse(fs.readFileSync("reports/kphx-full-misterx-wed-placements.json","utf8"));
+          const agp=JSON.parse(fs.readFileSync("reports/kphx-full-misterx-agp-authority.json","utf8"));
           if(m.failures?.length) throw new Error(`MisterX failures=${m.failures.length}`);
-          if(m.resolvedExternal.materializedPlacementCount!==2418){
-            throw new Error(`Expected 2418 exact MisterX placements, got ${m.resolvedExternal.materializedPlacementCount}`);
+          if(m.resolvedExternal.materializedPlacementCount!==a.totals.objectPlacementCount){
+            throw new Error(`Expected ${a.totals.objectPlacementCount} exact MisterX OBJ placements, got ${m.resolvedExternal.materializedPlacementCount}`);
           }
-          if(m.resolvedExternal.expectedUniqueResourceCount!==108||m.resolvedExternal.materializedUniqueResourceCount!==108){
-            throw new Error(`Expected 108 exact MisterX resources, got expected=${m.resolvedExternal.expectedUniqueResourceCount} materialized=${m.resolvedExternal.materializedUniqueResourceCount}`);
+          if(m.resolvedExternal.expectedUniqueResourceCount!==107||m.resolvedExternal.materializedUniqueResourceCount!==107){
+            throw new Error(`Expected 107 exact MisterX OBJ resources, got expected=${m.resolvedExternal.expectedUniqueResourceCount} materialized=${m.resolvedExternal.materializedUniqueResourceCount}`);
           }
-          console.log(JSON.stringify({placements:2418,resources:108,blockedRandomPlacements:25,status:"PASS"},null,2));
+          console.log(JSON.stringify({objPlacements:a.totals.objectPlacementCount,objResources:107,agpPlacements:agp.placementCount,blockedRandomPlacements:25,status:"PASS"},null,2));
           NODE
 
       - name: Install and commit full exact MisterX runtime
@@ -213,6 +225,7 @@ jobs:
             reports/kphx-full-airport-wed-placements-misterx.json \
             reports/kphx-full-misterx-wed-placements.json \
             reports/kphx-full-misterx-object-resources.json \
+            reports/kphx-full-misterx-agp-authority.json \
             reports/kphx-full-misterx-library-map.json \
             reports/kphx-full-airport-materialization-full-misterx.json
           git commit -m "Materialize full exact KPHX MisterX objects"
