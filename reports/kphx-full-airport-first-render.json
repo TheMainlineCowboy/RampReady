@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-09-23T03:00:24.380Z",
+  "capturedAtUtc": "2026-09-23T03:03:37.501Z",
   "navigationError": null,
   "waitError": null,
   "state": {
@@ -7,14 +7,14 @@
     "dataset": {
       "engine": "three.js r171",
       "kphxFullAirportVerifier": "ready",
-      "kphxLoadMsJetways": "2444",
-      "kphxLoadMsT4Zdp": "3390",
-      "kphxLoadMsSurfaces": "4042",
-      "kphxLoadMsObjects": "4994",
+      "kphxLoadMsJetways": "2951",
+      "kphxLoadMsT4Zdp": "3829",
+      "kphxLoadMsSurfaces": "4127",
+      "kphxLoadMsObjects": "5642",
       "kphxT4CameraCenter": "69.76996474373786,3.4975,-75.49463118980168",
       "kphxT4CameraSpan": "799.3306401130274",
-      "kphxLoadMsFinalRender": "11527",
-      "kphxLoadMsTotal": "16536",
+      "kphxLoadMsFinalRender": "13783",
+      "kphxLoadMsTotal": "19443",
       "kphxPackagePlacements": "1634",
       "kphxPackageResources": "147",
       "kphxT4MisterxPlacements": "956",
@@ -54,15 +54,15 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000AC200000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000FC0A0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x2bcc00e05c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0xfc000ebf00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x2bcc00e05c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0xfc000ebf00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     }
   ],
   "pageErrors": [],
