@@ -13,3 +13,4 @@ Capture paired integrated and T4 objects-only QA evidence.
 Capture all-T4 jetway batch QA alongside integrated evidence.
 Inspect recovered Terminal4/Terminal4b GLB topology against exact OBJ8 source counts.
 Verify exact Terminal4/Terminal4b legacy texture V correction against paired T4 QA evidence.
+Final T4 object/jetway QA after exact ZDP stop-marker materialization.
