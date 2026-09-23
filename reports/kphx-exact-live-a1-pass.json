@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "route": "actual RampReady A1 free-drive",
+  "buildings": 2,
+  "jetways": 76,
+  "authoredOpenEdges": 261,
+  "oldAirportJetwayGlbUsed": false,
+  "proceduralTerminalMassing": false,
+  "legacyFsxTerminal": false,
+  "lektroVisual": "LEKTRO_AP88_TVO914.glb R187A",
+  "lektroWheelbaseMeters": 2.33934,
+  "lektroTurningRadiusMeters": 4.572,
+  "lektroFreeMaxSpeedMps": 4.02336,
+  "lektroTowMaxSpeedMps": 1.78816,
+  "lektroVisualRearSteerDegrees": 84,
+  "exactSurfaceSource": "KPHX 1.75.1 WED package surfaces",
+  "legacySkyHarborPhotoLayerUsed": false,
+  "surfaceFailureCount": 0,
+  "visualInspectionRequired": true
+}
