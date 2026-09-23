@@ -1,2 +1,2 @@
-Trigger one A1 live capture after opaque backing beneath exact alpha-enabled ZDP base pavement.
-Goal: inspect whether blue sky-through pavement holes disappear. No other changes.
+Verify A1 after enabling package-owned exact pavement underlay.
+Source change: 1c0795b151f92728943285b4dd3b8e4dd952fe58
