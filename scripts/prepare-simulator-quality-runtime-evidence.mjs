@@ -76,16 +76,16 @@ fs.writeFileSync(generatorPath, generator, "utf8");
 for (const [path, tokens] of Object.entries({
   [groundPath]: [
     'contactMode: "pavement-coincident-decals"',
-    "dataset.kphxA1ZdpMarkingsReady",
-    "dataset.kphxA1ZdpMarkingLineMeshCount",
-    "dataset.kphxA1ZdpMarkingFailureCount",
+    "authoredGroundMarkingContactMode",
   ],
   [generatorPath]: [
     'dataset.terminal4A1JetwayWallDistance = "loading"',
     "authoredTerminal4A1JetwayWallDistance",
     "authoredTerminal4TerminalConnectedJetwayCount",
     "authoredTerminal4SourceCutoutMaterialCount",
-    "authoredGroundMarkingContactMode",
+    "dataset.kphxA1ZdpMarkingsReady",
+    "dataset.kphxA1ZdpMarkingLineMeshCount",
+    "dataset.kphxA1ZdpMarkingFailureCount",
   ],
 })) {
   const prepared = fs.readFileSync(path, "utf8");
