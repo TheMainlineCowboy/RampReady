@@ -12,7 +12,13 @@ const T4_RESOURCES = Object.freeze([
   "Terminals/Terminal4.obj",
   "Terminals/Terminal4b.obj",
 ]);
-const ALLOWED_VIEWS = new Set(["A1", "A", "B", "C", "D"]);
+const ALLOWED_VIEWS = new Set([
+  "A", "B", "C", "D",
+  "A1", "A14", "A30",
+  "B2", "B14", "B28",
+  "C1", "C9", "C19",
+  "D1", "D4", "D7",
+]);
 
 function runtimeUrl(url) {
   if (!url || !url.startsWith("/")) return url;
@@ -29,10 +35,10 @@ function boundsForObjects(objects) {
 }
 
 function selectedJetways(layer, view) {
+  const exactGate = /\d/.test(view);
   return layer.children.filter((child) => {
     const gate = String(child.userData?.gate || "");
-    if (view === "A1") return gate === "A1";
-    return gate.startsWith(view);
+    return exactGate ? gate === view : gate.startsWith(view);
   });
 }
 
@@ -58,14 +64,16 @@ function frameRampView(camera, terminalLayer, jetwayLayer, view) {
   if (outward.lengthSq() < 1e-6) throw new Error(`T4 QA view ${view} could not derive ramp-facing direction`);
   outward.normalize();
 
-  const span = Math.max(gateSize.x, gateSize.z, view === "A1" ? 35 : 110);
-  const distance = view === "A1"
-    ? Math.max(58, span * 1.25)
+  const exactGate = /\d/.test(view);
+  const span = Math.max(gateSize.x, gateSize.z, exactGate ? 28 : 110);
+  const distance = exactGate
+    ? Math.max(52, span * 1.15)
     : Math.max(125, span * 0.82);
-  const height = view === "A1" ? 6.5 : 9.5;
+  const height = exactGate ? 4.8 : 9.5;
 
   const focus = gateCenter.clone();
-  focus.y = 5.0;
+  if (exactGate) focus.addScaledVector(outward, -18);
+  focus.y = exactGate ? 4.2 : 5.0;
   const position = gateCenter.clone().addScaledVector(outward, distance);
   position.y = height;
 
