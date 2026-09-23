@@ -82,18 +82,22 @@ function frameRampView(camera, terminalLayer, jetwayLayer, view) {
 
   const span = Math.max(gateSize.x, gateSize.z, exactGate ? 28 : 110);
   const closeGateQa = view === "A1" || view === "A14";
-  const distance = closeGateQa
-    ? Math.max(90, span * 1.8)
-    : exactGate
-      ? Math.max(34, span * 0.72)
-      : Math.max(125, span * 0.82);
+  const distance = view === "A14"
+    ? Math.max(58, span * 1.05)
+    : closeGateQa
+      ? Math.max(90, span * 1.8)
+      : exactGate
+        ? Math.max(34, span * 0.72)
+        : Math.max(125, span * 0.82);
   const height = closeGateQa ? 6.0 : exactGate ? 5.0 : 9.5;
 
-  const focus = closeGateQa
-    ? rampAnchor.clone().addScaledVector(outward, -15)
-    : exactGate
-      ? rampAnchor.clone().addScaledVector(outward, -38)
-      : gateCenter.clone();
+  const focus = view === "A14"
+    ? gateCenter.clone()
+    : closeGateQa
+      ? rampAnchor.clone().addScaledVector(outward, -15)
+      : exactGate
+        ? rampAnchor.clone().addScaledVector(outward, -38)
+        : gateCenter.clone();
   focus.y = closeGateQa ? 4.5 : exactGate ? 4.5 : 5.0;
   const position = exactGate
     ? rampAnchor.clone().addScaledVector(outward, distance)
