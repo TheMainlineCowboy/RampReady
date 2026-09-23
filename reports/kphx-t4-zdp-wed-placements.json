@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 1,
+  "authority": "KPHX 1.75.1 earth.wed.xml exact Terminal 4 object ancestry",
+  "source": {
+    "package": "KPHX - Phoenix Sky Harbor Intl",
+    "version": "1.75.1",
+    "wedFile": "earth.wed.xml",
+    "wedSha256": "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498",
+    "authority": "user-supplied expanded X-Plane package"
+  },
+  "selection": {
+    "parentAuthority": "reports/kphx-t4-wed-object-authority.json",
+    "resource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+    "policy": "exact T4 WED placements only"
+  },
+  "masterAnchor": {
+    "id": "27855",
+    "parentId": "121126",
+    "name": "T4 Gate A1",
+    "latitude": 33.436530675,
+    "longitude": -111.998921221,
+    "headingDegrees": -90.08,
+    "type": "Gate",
+    "traffic": "7",
+    "width": "B",
+    "rampOperationType": "Airline",
+    "airlines": "AAL",
+    "rampReadyPosition": [
+      0,
+      0,
+      6.2
+    ]
+  },
+  "totals": {
+    "objectPlacementCount": 13,
+    "uniqueResourceCount": 1,
+    "packageOwnedPlacementCount": 0,
+    "externalLibraryPlacementCount": 13
+  },
+  "packageOwned": {
+    "placementCount": 0,
+    "uniqueResourceCount": 0,
+    "resources": {}
+  },
+  "externalLibraries": {
+    "placementCount": 13,
+    "uniqueResourceCount": 1,
+    "prefixCounts": {
+      "ZDP_Library": 13
+    },
+    "resources": {
+      "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj": 13
+    }
+  },
+  "placements": {
+    "packageOwned": [],
+    "externalLibraries": [
+      {
+        "id": "119263",
+        "parentId": "5994",
+        "name": "SDF_code_C_AAL.obj",
+        "resource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+        "resourcePrefix": "ZDP_Library",
+        "sourceClass": "external-library",
+        "latitude": 33.437605424,
+        "longitude": -112.001482655,
+        "headingDegrees": 270.76,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default"
+      },
+      {
+        "id": "119039",
+        "parentId": "6026",
+        "name": "SDF_code_C_AAL.obj",
+        "resource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+        "resourcePrefix": "ZDP_Library",
+        "sourceClass": "external-library",
+        "latitude": 33.436878534,
+        "longitude": -112.002278361,
+        "headingDegrees": 90,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default"
+      },
+      {
+        "id": "119043",
+        "parentId": "6023",
+        "name": "SDF_code_C_AAL.obj",
+        "resource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+        "resourcePrefix": "ZDP_Library",
+        "sourceClass": "external-library",
+        "latitude": 33.437291512,
+        "longitude": -112.002242432,
+        "headingDegrees": 90,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default"
+      },
+      {
+        "id": "119238",
+        "parentId": "6007",
+        "name": "SDF_code_C_AAL.obj",
+        "resource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+        "resourcePrefix": "ZDP_Library",
+        "sourceClass": "external-library",
+        "latitude": 33.438207247,
+        "longitude": -112.002143274,
+        "headingDegrees": 162.09,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default"
+      },
+      {
+        "id": "119250",
+        "parentId": "5997",
+        "name": "SDF_code_C_AAL.obj",
+        "resource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+        "resourcePrefix": "ZDP_Library",
+        "sourceClass": "external-library",
+        "latitude": 33.437969694,
+        "longitude": -112.001439293,
+        "headingDegrees": 270.09,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default"
+      },
+      {
+        "id": "119264",
+        "parentId": "5991",
+        "name": "SDF_code_C_AAL.obj",
+        "resource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+        "resourcePrefix": "ZDP_Library",
+        "sourceClass": "external-library",
+        "latitude": 33.437237712,
+        "longitude": -112.001463396,
+        "headingDegrees": 269.63,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default"
+      },
+      {
+        "id": "119051",
+        "parentId": "6020",
+        "name": "SDF_code_C_AAL.obj",
+        "resource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+        "resourcePrefix": "ZDP_Library",
+        "sourceClass": "external-library",
+        "latitude": 33.437672377,
+        "longitude": -112.002300814,
+        "headingDegrees": 97.6,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default"
+      },
+      {
+        "id": "119000",
+        "parentId": "6029",
+        "name": "SDF_code_C_AAL.obj",
+        "resource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+        "resourcePrefix": "ZDP_Library",
+        "sourceClass": "external-library",
+        "latitude": 33.436488942,
+        "longitude": -112.002251872,
+        "headingDegrees": 90,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default"
+      },
+      {
+        "id": "119055",
+        "parentId": "6015",
+        "name": "SDF_code_C_AAL.obj",
+        "resource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+        "resourcePrefix": "ZDP_Library",
+        "sourceClass": "external-library",
+        "latitude": 33.43794864,
+        "longitude": -112.002320037,
+        "headingDegrees": 133.58,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default"
+      },
+      {
+        "id": "119242",
+        "parentId": "6003",
+        "name": "SDF_code_C_AAL.obj",
+        "resource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+        "resourcePrefix": "ZDP_Library",
+        "sourceClass": "external-library",
+        "latitude": 33.438229939,
+        "longitude": -112.001738379,
+        "headingDegrees": 179.31,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default"
+      },
+      {
+        "id": "119246",
+        "parentId": "6000",
+        "name": "SDF_code_C_AAL.obj",
+        "resource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+        "resourcePrefix": "ZDP_Library",
+        "sourceClass": "external-library",
+        "latitude": 33.438200331,
+        "longitude": -112.001490604,
+        "headingDegrees": 228.83,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default"
+      },
+      {
+        "id": "119265",
+        "parentId": "5985",
+        "name": "SDF_code_C_AAL.obj",
+        "resource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+        "resourcePrefix": "ZDP_Library",
+        "sourceClass": "external-library",
+        "latitude": 33.436874156,
+        "longitude": -112.001464084,
+        "headingDegrees": 269.7,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default"
+      },
+      {
+        "id": "119266",
+        "parentId": "5979",
+        "name": "SDF_code_C_AAL.obj",
+        "resource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+        "resourcePrefix": "ZDP_Library",
+        "sourceClass": "external-library",
+        "latitude": 33.436509857,
+        "longitude": -112.001412441,
+        "headingDegrees": 270.41,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default"
+      }
+    ]
+  },
+  "rampStarts": []
+}
