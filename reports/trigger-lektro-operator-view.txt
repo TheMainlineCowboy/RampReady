@@ -1,0 +1,4 @@
+Trigger LEKTRO R187A Operator View driver-seat verification.
+Expected local operator eye: [0.45, 1.35, -2.15]
+Expected model-forward correction: 180 degrees
+Workflow commit: b3a86393926979e16316d2c2fa631eb8161af067
