@@ -1,0 +1,106 @@
+{
+  "generatedAtUtc": "2026-09-23T07:14:33.650Z",
+  "authority": "Decoded RGBA equality between exact KPHX 1.75.1 source DDS textures and recovered Terminal4 GLB embedded PNG textures",
+  "sourceDirectory": "/tmp/kphx-t4-source-textures",
+  "targets": [
+    {
+      "name": "Terminal4",
+      "glbPath": "public/models/kphx/Terminal4.exact.glb",
+      "textures": [
+        {
+          "imageName": "Terminal4_comb",
+          "sourceFile": "Terminal4_comb.dds",
+          "sourceFileBytes": 11184952,
+          "sourceFileSha256": "84667f356e16d83065773fadcba30cc222b4d6a2a739b4000545cca265f53186",
+          "expectedSourceFileSha256": "84667f356e16d83065773fadcba30cc222b4d6a2a739b4000545cca265f53186",
+          "sourceFileHashMatches": true,
+          "embeddedFileBytes": 13012330,
+          "embeddedFileSha256": "1d6bdf13c7674d5462d1fd86e04ab3612999b7ccf8e24ebe10dddb1dbd5dca26",
+          "sourceSize": [
+            4096,
+            4096
+          ],
+          "embeddedSize": [
+            4096,
+            4096
+          ],
+          "decodedSourceRgbaSha256": "1212250946e54ec6652993f90cc81e856cd3e67ae0a9168a9cd929755d59719c",
+          "decodedEmbeddedRgbaSha256": "1212250946e54ec6652993f90cc81e856cd3e67ae0a9168a9cd929755d59719c",
+          "decodedRgbaExactMatch": true
+        },
+        {
+          "imageName": "Terminal4_LIT",
+          "sourceFile": "Terminal4_LIT.dds",
+          "sourceFileBytes": 11184952,
+          "sourceFileSha256": "65937e43b6eff0b95480496d64d98d3b59779b2fe4b7af9c984f1e404624b17f",
+          "expectedSourceFileSha256": "65937e43b6eff0b95480496d64d98d3b59779b2fe4b7af9c984f1e404624b17f",
+          "sourceFileHashMatches": true,
+          "embeddedFileBytes": 5991426,
+          "embeddedFileSha256": "38a78e8493410cbfa659f311ecffae8c6df09eaddd0ff864e59ef75109faaa01",
+          "sourceSize": [
+            4096,
+            4096
+          ],
+          "embeddedSize": [
+            4096,
+            4096
+          ],
+          "decodedSourceRgbaSha256": "d8a0f43d82c69213f4e36e49f8a86ea31777e1ec123c731db6a59bfe551becb2",
+          "decodedEmbeddedRgbaSha256": "d8a0f43d82c69213f4e36e49f8a86ea31777e1ec123c731db6a59bfe551becb2",
+          "decodedRgbaExactMatch": true
+        }
+      ],
+      "allDecodedRgbaExact": true
+    },
+    {
+      "name": "Terminal4b",
+      "glbPath": "public/models/kphx/Terminal4b.exact.glb",
+      "textures": [
+        {
+          "imageName": "Terminal4b_comb",
+          "sourceFile": "Terminal4b_comb.dds",
+          "sourceFileBytes": 11184952,
+          "sourceFileSha256": "11a129f33940c99de15c2941faac041af42834c869ab6bdae974d134c54bc00b",
+          "expectedSourceFileSha256": "11a129f33940c99de15c2941faac041af42834c869ab6bdae974d134c54bc00b",
+          "sourceFileHashMatches": true,
+          "embeddedFileBytes": 11839038,
+          "embeddedFileSha256": "eb2d4b0954cdf29d604a89aa69803a06fe7b7ec5a6aefa3319141756a854b9ba",
+          "sourceSize": [
+            4096,
+            4096
+          ],
+          "embeddedSize": [
+            4096,
+            4096
+          ],
+          "decodedSourceRgbaSha256": "5a9c7c404723ceb8820c089109d245cfd003583cf47b1b93278e1e3804cee2bf",
+          "decodedEmbeddedRgbaSha256": "5a9c7c404723ceb8820c089109d245cfd003583cf47b1b93278e1e3804cee2bf",
+          "decodedRgbaExactMatch": true
+        },
+        {
+          "imageName": "Terminal4b_LIT",
+          "sourceFile": "Terminal4b_LIT.dds",
+          "sourceFileBytes": 11184952,
+          "sourceFileSha256": "90cff1e29f629570d6ea1ee237a3f8dd337860aef36dfd4d478d0ee8057f90f9",
+          "expectedSourceFileSha256": "90cff1e29f629570d6ea1ee237a3f8dd337860aef36dfd4d478d0ee8057f90f9",
+          "sourceFileHashMatches": true,
+          "embeddedFileBytes": 6440721,
+          "embeddedFileSha256": "c5442c4827eb5ece9cb0da073b9ba5ec577beba84e45145692a0eccf4a384c40",
+          "sourceSize": [
+            4096,
+            4096
+          ],
+          "embeddedSize": [
+            4096,
+            4096
+          ],
+          "decodedSourceRgbaSha256": "9821acd41345510be500eb78dd43fb37cff55bd99f5090bb594553f9934f84fe",
+          "decodedEmbeddedRgbaSha256": "9821acd41345510be500eb78dd43fb37cff55bd99f5090bb594553f9934f84fe",
+          "decodedRgbaExactMatch": true
+        }
+      ],
+      "allDecodedRgbaExact": true
+    }
+  ],
+  "allDecodedRgbaExact": true
+}

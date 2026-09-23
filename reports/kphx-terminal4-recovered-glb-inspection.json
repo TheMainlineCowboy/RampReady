@@ -1,5 +1,5 @@
 {
-  "generatedAtUtc": "2026-09-23T06:58:40.793Z",
+  "generatedAtUtc": "2026-09-23T07:14:07.285Z",
   "authority": "Read-only inspection of recovered exact Terminal4 GLB binaries",
   "targets": [
     {
@@ -62,15 +62,24 @@
           "index": 0,
           "bufferView": 4,
           "mimeType": "image/png",
-          "name": "Terminal4_comb"
+          "name": "Terminal4_comb",
+          "embeddedByteLength": 13012330,
+          "embeddedSha256": "1d6bdf13c7674d5462d1fd86e04ab3612999b7ccf8e24ebe10dddb1dbd5dca26",
+          "expectedSourceSha256": "84667f356e16d83065773fadcba30cc222b4d6a2a739b4000545cca265f53186",
+          "sourceHashMatches": false
         },
         {
           "index": 1,
           "bufferView": 5,
           "mimeType": "image/png",
-          "name": "Terminal4_LIT"
+          "name": "Terminal4_LIT",
+          "embeddedByteLength": 5991426,
+          "embeddedSha256": "38a78e8493410cbfa659f311ecffae8c6df09eaddd0ff864e59ef75109faaa01",
+          "expectedSourceSha256": "65937e43b6eff0b95480496d64d98d3b59779b2fe4b7af9c984f1e404624b17f",
+          "sourceHashMatches": false
         }
       ],
+      "embeddedTextureHashesMatchSource": false,
       "textures": [
         {
           "index": 0,
@@ -238,15 +247,24 @@
           "index": 0,
           "bufferView": 4,
           "mimeType": "image/png",
-          "name": "Terminal4b_comb"
+          "name": "Terminal4b_comb",
+          "embeddedByteLength": 11839038,
+          "embeddedSha256": "eb2d4b0954cdf29d604a89aa69803a06fe7b7ec5a6aefa3319141756a854b9ba",
+          "expectedSourceSha256": "11a129f33940c99de15c2941faac041af42834c869ab6bdae974d134c54bc00b",
+          "sourceHashMatches": false
         },
         {
           "index": 1,
           "bufferView": 5,
           "mimeType": "image/png",
-          "name": "Terminal4b_LIT"
+          "name": "Terminal4b_LIT",
+          "embeddedByteLength": 6440721,
+          "embeddedSha256": "c5442c4827eb5ece9cb0da073b9ba5ec577beba84e45145692a0eccf4a384c40",
+          "expectedSourceSha256": "90cff1e29f629570d6ea1ee237a3f8dd337860aef36dfd4d478d0ee8057f90f9",
+          "sourceHashMatches": false
         }
       ],
+      "embeddedTextureHashesMatchSource": false,
       "textures": [
         {
           "index": 0,

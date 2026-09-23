@@ -1,6 +1,6 @@
 {
-  "capturedAtUtc": "2026-09-23T07:12:26.648Z",
-  "view": "A1",
+  "capturedAtUtc": "2026-09-23T07:12:54.090Z",
+  "view": "B2",
   "navigationError": null,
   "waitError": null,
   "state": {
@@ -8,7 +8,7 @@
     "dataset": {
       "engine": "three.js r171",
       "kphxT4BuildingShellVerifier": "ready",
-      "kphxT4BuildingQaView": "A1",
+      "kphxT4BuildingQaView": "B2",
       "kphxT4BuildingPlacements": "2",
       "kphxT4Terminal4WedObjectId": "2327",
       "kphxT4Terminal4bWedObjectId": "5301",
@@ -17,16 +17,16 @@
       "kphxT4JetwayCount": "76",
       "kphxT4JetwayOpenEdges": "261",
       "kphxT4SelectedJetwayCount": "1",
-      "kphxT4CameraPosition": "-21.075356648796507,4.8,56.54303583190424",
-      "kphxT4CameraTarget": "20.83039888483065,4.2,0.47247623815774276",
+      "kphxT4CameraPosition": "-38.605028977693216,4.8,-202.02642396721595",
+      "kphxT4CameraTarget": "7.965486092663118,4.2,-149.76566310323966",
       "kphxT4TerminalBoundsSize": "478.98434929989253,23.260831829999997,738.31990052",
       "kphxT4SurfacePolygons": "13",
       "kphxT4SurfaceLines": "35",
       "kphxT4LegacyMaskCompatibility": "true",
       "kphxT4SubstitutionPolicy": "none",
-      "kphxT4LoadMs": "3530"
+      "kphxT4LoadMs": "3874"
     },
-    "bodyText": "Exact T4 building shell ready · A1 · 2 source buildings · 76 locked jetways · no substitutions"
+    "bodyText": "Exact T4 building shell ready · B2 · 2 source buildings · 76 locked jetways · no substitutions"
   },
   "consoleMessages": [
     {
@@ -43,15 +43,7 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A07020008C290000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
-    },
-    {
-      "type": "warning",
-      "text": "[.WebGL-0x7ec000e3f00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
-    },
-    {
-      "type": "warning",
-      "text": "[.WebGL-0x7ec000e3f00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0B020148C290000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     }
   ],
   "pageErrors": [],
