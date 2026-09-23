@@ -136,30 +136,30 @@ jobs:
             .cdb/Cars/camion \
             .cdb/Cars/cars/Landrover_Mercedez
 
-          gdown --id 1LHUUCD9K3Qf9Y1I7eIRtLVTN16sV8Ocm -O .cdb/library.txt
+          gdown "https://drive.google.com/uc?id=1LHUUCD9K3Qf9Y1I7eIRtLVTN16sV8Ocm" -O .cdb/library.txt
 
-          gdown --id 1JWBWq8Xu0QNgHYKC6-pXEvdCvpCAI0Oa -O .cdb/Airport/GSE/others/objects_airConditionerBig.obj
-          gdown --id 17_sKfFz5pV1A33abAW_gBcVUfDS93jky -O .cdb/Airport/GSE/others/objects_scaffolding_wood.obj
-          gdown --id 118YNinSlLcz4FYRpgJLZ7vgF96kkH2Z4 -O .cdb/Airport/GSE/stairs/GSE_A320_stairs.obj
-          gdown --id 1JFUyDHngYKIWkYqXUe1mzTeB7UT5F-uG -O .cdb/Cars/BICI/car_golfcar2.obj
-          gdown --id 10CyyfgHkP1MDMum0USHusMHnCINUm27Y -O .cdb/Cars/camion/GSE_mini_aerialLift_.obj
-          gdown --id 1LGvyBJMnMcdD_kqg6wGfQ7Y-Oi9S2abT -O .cdb/Cars/cars/Landrover_Mercedez/car_mercedes_old_gray.obj
-          gdown --id 1UTi92SiFH4-tArAF1t4eT9TcWMOOAYbW -O .cdb/Cars/cars/Landrover_Mercedez/car_rangeRoverE.obj
+          gdown "https://drive.google.com/uc?id=1JWBWq8Xu0QNgHYKC6-pXEvdCvpCAI0Oa" -O .cdb/Airport/GSE/others/objects_airConditionerBig.obj
+          gdown "https://drive.google.com/uc?id=17_sKfFz5pV1A33abAW_gBcVUfDS93jky" -O .cdb/Airport/GSE/others/objects_scaffolding_wood.obj
+          gdown "https://drive.google.com/uc?id=118YNinSlLcz4FYRpgJLZ7vgF96kkH2Z4" -O .cdb/Airport/GSE/stairs/GSE_A320_stairs.obj
+          gdown "https://drive.google.com/uc?id=1JFUyDHngYKIWkYqXUe1mzTeB7UT5F-uG" -O .cdb/Cars/BICI/car_golfcar2.obj
+          gdown "https://drive.google.com/uc?id=10CyyfgHkP1MDMum0USHusMHnCINUm27Y" -O .cdb/Cars/camion/GSE_mini_aerialLift_.obj
+          gdown "https://drive.google.com/uc?id=1LGvyBJMnMcdD_kqg6wGfQ7Y-Oi9S2abT" -O .cdb/Cars/cars/Landrover_Mercedez/car_mercedes_old_gray.obj
+          gdown "https://drive.google.com/uc?id=1UTi92SiFH4-tArAF1t4eT9TcWMOOAYbW" -O .cdb/Cars/cars/Landrover_Mercedez/car_rangeRoverE.obj
 
-          gdown --id 1crJ_3RJnSsf6X7u1u0UVbYFi8od-X2Wd -O .cdb/Airport/GSE/others/cdb_others.dds
-          gdown --id 1_5BuTrHdKq-1XVpY-buqdnLpATziyhaS -O .cdb/Airport/GSE/others/cdb_others_LIT.dds
-          gdown --id 1GlNdGuMM90DVHa1ZDo4MV5sCv9gPlWgg -O .cdb/Airport/GSE/others/cdb_others_NORM.png
-          gdown --id 1ymBcmUlOPU4Uxhs-I9tFkYHLIRkx_uPv -O .cdb/Airport/GSE/others/cdb_others2.dds
-          gdown --id 18OJOBISH18NBsY3fiPajRGhpWWy3AokT -O .cdb/Airport/GSE/others/cdb_others2_LIT.dds
-          gdown --id 1n8GM44imYVGZLvKLonZmXsfxhNBhbJr1 -O .cdb/Airport/GSE/others/cdb_others2_NORM.png
-          gdown --id 1ue75p9I4k12RYOPZqm2cnWIaMQXI_xMS -O .cdb/shared_texture/escadas.dds
-          gdown --id 1jZI1utsm6dAoIDtXUipfisxKvprD8b_d -O .cdb/shared_texture/escadas_LIT.dds
-          gdown --id 1_mVWPBzpQ_1uxHse8_mbt5W1pFEjs8Ij -O .cdb/shared_texture/escadas_NORM.png
-          gdown --id 18HsUSwsDyyTOM9CgUc7NPUXW1q63juGo -O .cdb/Cars/BICI/GolfCart01.dds
-          gdown --id 1F8m-8cVcYem_ev7KO4r0sRz7V0UwJef8 -O .cdb/Cars/camion/MobileElevator01.dds
-          gdown --id 1usAVnKfZn55FxAvXMwf3hP30vTP2Nsld -O .cdb/Cars/cars/Landrover_Mercedez/mercedes_gray.dds
-          gdown --id 15iceQtgz4OuIQmZbixSqT2xV8W0XP3DL -O .cdb/Cars/cars/Landrover_Mercedez/mercedes_Normal.png
-          gdown --id 1ZESuc4FF1nZhjpfRHsPOecanM6EHLLg2 -O .cdb/Cars/cars/Landrover_Mercedez/rangeRover.dds
+          gdown "https://drive.google.com/uc?id=1crJ_3RJnSsf6X7u1u0UVbYFi8od-X2Wd" -O .cdb/Airport/GSE/others/cdb_others.dds
+          gdown "https://drive.google.com/uc?id=1_5BuTrHdKq-1XVpY-buqdnLpATziyhaS" -O .cdb/Airport/GSE/others/cdb_others_LIT.dds
+          gdown "https://drive.google.com/uc?id=1GlNdGuMM90DVHa1ZDo4MV5sCv9gPlWgg" -O .cdb/Airport/GSE/others/cdb_others_NORM.png
+          gdown "https://drive.google.com/uc?id=1ymBcmUlOPU4Uxhs-I9tFkYHLIRkx_uPv" -O .cdb/Airport/GSE/others/cdb_others2.dds
+          gdown "https://drive.google.com/uc?id=18OJOBISH18NBsY3fiPajRGhpWWy3AokT" -O .cdb/Airport/GSE/others/cdb_others2_LIT.dds
+          gdown "https://drive.google.com/uc?id=1n8GM44imYVGZLvKLonZmXsfxhNBhbJr1" -O .cdb/Airport/GSE/others/cdb_others2_NORM.png
+          gdown "https://drive.google.com/uc?id=1ue75p9I4k12RYOPZqm2cnWIaMQXI_xMS" -O .cdb/shared_texture/escadas.dds
+          gdown "https://drive.google.com/uc?id=1jZI1utsm6dAoIDtXUipfisxKvprD8b_d" -O .cdb/shared_texture/escadas_LIT.dds
+          gdown "https://drive.google.com/uc?id=1_mVWPBzpQ_1uxHse8_mbt5W1pFEjs8Ij" -O .cdb/shared_texture/escadas_NORM.png
+          gdown "https://drive.google.com/uc?id=18HsUSwsDyyTOM9CgUc7NPUXW1q63juGo" -O .cdb/Cars/BICI/GolfCart01.dds
+          gdown "https://drive.google.com/uc?id=1F8m-8cVcYem_ev7KO4r0sRz7V0UwJef8" -O .cdb/Cars/camion/MobileElevator01.dds
+          gdown "https://drive.google.com/uc?id=1usAVnKfZn55FxAvXMwf3hP30vTP2Nsld" -O .cdb/Cars/cars/Landrover_Mercedez/mercedes_gray.dds
+          gdown "https://drive.google.com/uc?id=15iceQtgz4OuIQmZbixSqT2xV8W0XP3DL" -O .cdb/Cars/cars/Landrover_Mercedez/mercedes_Normal.png
+          gdown "https://drive.google.com/uc?id=1ZESuc4FF1nZhjpfRHsPOecanM6EHLLg2" -O .cdb/Cars/cars/Landrover_Mercedez/rangeRover.dds
 
           node scripts/resolve-xplane-library.mjs \
             .cdb \
