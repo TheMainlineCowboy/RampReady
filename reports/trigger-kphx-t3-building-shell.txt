@@ -1,0 +1,2 @@
+Trigger exact Terminal 3 building-shell capture after D7 T4 lock.
+Scope: Terminals/Terminal3a.obj only.
