@@ -16,6 +16,8 @@ const OBJECT_MANIFESTS = Object.freeze([
   "/models/kphx-full-airport/batches/t4-misterx.manifest.json",
 ]);
 
+const T4_ZDP_OBJECT_MANIFEST = "/models/kphx-full-airport/batches/t4-zdp.manifest.json";
+
 export default function KphxFullAirportVerifier() {
   const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const objectsOnlyQa = params?.get("kphxQaObjectsOnly") === "1";
@@ -190,6 +192,8 @@ export default function KphxFullAirportVerifier() {
       renderer.domElement.dataset.kphxT4MisterxResources = "50";
       renderer.domElement.dataset.kphxT4CdbPlacements = "23";
       renderer.domElement.dataset.kphxT4CdbResources = "1";
+      renderer.domElement.dataset.kphxT4ZdpObjectPlacements = String(t4ZdpObjectPlacements);
+      renderer.domElement.dataset.kphxT4ZdpObjectResources = String(t4ZdpObjectResources);
       renderer.domElement.dataset.kphxT4ZdpPlacements = String(t4Zdp.layer.userData.loadedPlacementCount);
       renderer.domElement.dataset.kphxT4ZdpResources = String(t4Zdp.manifest.resolvedExternal?.materializedUniqueResourceCount || 0);
       renderer.domElement.dataset.kphxLoadedAssetFiles = String(loadedAssetFiles);
