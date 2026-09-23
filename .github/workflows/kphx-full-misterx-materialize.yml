@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: kphx-full-misterx-materialize-split
+  group: kphx-full-misterx-materialize-staged
   cancel-in-progress: true
 
 jobs:
