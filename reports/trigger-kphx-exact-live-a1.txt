@@ -1,5 +1,3 @@
-Trigger exact live A1 + all-supported-T4 gate heading verification.
-Shared scenario authority: same-wed-ramp-position-aircraft-equipment-pose-v1
-Expected supported ramp positions: 76
-Expected supported gate names: 75
-Trigger contract commit: a416a71a75204a242018d8d84cbac171cc2a7de9
+Trigger exact live A1 verification after LEKTRO authored rear-steer fix cleanup.
+Expected authored binding: AP88_STEER_L_STEER|AP88_STEER_R_STEER
+Evidence report: reports/lektro-r187a-rear-steering-live.json
