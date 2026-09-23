@@ -1,2 +1,2 @@
 Trigger fast Vite transform diagnostic for exact live T4 integration.
-Retry after T3 syntax fix + finalized AP88 R187A live wiring.
+Retry after exact KPHX 1.75.1 surface swap in live trainer.
