@@ -1,14 +1,19 @@
 export const LEKTRO_RIG_PROFILE = Object.freeze({
-  id: "lektro-standup-reference",
-  wheelbase: 3.6,
+  id: "lektro-ap88-tvo914-r187a",
+  wheelbase: 2.33934,
+  turningRadius: 4.572,
   trackWidth: 2.28,
   cradleOffset: 3.45,
   operatorEye: Object.freeze([-0.45, 1.35, -2.15]),
   operatorLook: Object.freeze([-0.45, 1.2, 8]),
   captureAnchor: Object.freeze([0, 0.34, 3.45]),
-  liftTravel: 0.24,
+  liftTravel: 0.2286,
   bodyBounds: Object.freeze([2.35, 1.45, 5.5]),
   steeringMode: "rear",
+  kinematicMaxSteerAngle: Math.atan(2.33934 / 4.572),
+  visualMaxSteerAngle: (84 * Math.PI) / 180,
+  freeMaxSpeed: 4.02336,
+  towMaxSpeed: 1.78816,
 });
 
 export const STANDUP_RIG_PROFILE = Object.freeze({
@@ -115,8 +120,17 @@ export function createProceduralLektroRig(THREE, equipmentId = "lektro-88") {
   root.add(captureAnchor, operatorEye, forwardLook);
 
   function setSteering(angle) {
-    // A left steering-wheel command turns a rear-steer axle the opposite physical direction.
-    const physicalWheelAngle = profile.steeringMode === "rear" ? -angle : angle;
+    // Keep the real AP88 visual rear-wheel articulation separate from the
+    // kinematic steering angle used to preserve the 4.572 m swept radius.
+    const kinematicLimit = Number.isFinite(profile.kinematicMaxSteerAngle)
+      ? profile.kinematicMaxSteerAngle
+      : Math.PI / 4;
+    const visualLimit = Number.isFinite(profile.visualMaxSteerAngle)
+      ? profile.visualMaxSteerAngle
+      : kinematicLimit;
+    const normalized = Math.max(-1, Math.min(1, angle / Math.max(0.0001, kinematicLimit)));
+    const visualAngle = normalized * visualLimit;
+    const physicalWheelAngle = profile.steeringMode === "rear" ? -visualAngle : visualAngle;
     for (const pivot of steeringPivots) pivot.rotation.y = physicalWheelAngle;
   }
 
