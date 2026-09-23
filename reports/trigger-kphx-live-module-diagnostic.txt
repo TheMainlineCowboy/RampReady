@@ -1,2 +1,2 @@
-Trigger fast regenerated Vite probe.
-Verify A1 marking texture SHA dedup + four-stage preload.
+Trigger fast Vite transform diagnostic.
+Verify A1 opaque base-pavement backing beneath alpha-enabled exact ZDP surfaces.
