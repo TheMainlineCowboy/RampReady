@@ -691,7 +691,7 @@ export default function RampReadyStandupTrainer({
         throw error;
       });
     const surfaceLoad = Promise.all([
-      installKphxPackageOwnedSurfaceLayer(THREE, environment, { strict: true }),
+      installKphxPackageOwnedSurfaceLayer(THREE, environment, { strict: true, addOpaqueBaseUnderlay: true }),
       installKphxPackageOwnedSurfaceLayer(THREE, environment, {
         strict: true,
         manifestUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json",
