@@ -59,12 +59,12 @@ function frameRampView(camera, terminalLayer, jetwayLayer, jetwayMap, view) {
 
   const exactGate = /\d/.test(view);
 
-  if (view === "B14") {
+  if (view === "B14" || view === "B28") {
     const gateMap = (jetwayMap?.placements || []).find((entry) => entry.gate === view);
     const rotunda2 = gateMap?.sourceAxis?.rotunda;
     const cab2 = gateMap?.sourceAxis?.cab;
     if (!Array.isArray(rotunda2) || !Array.isArray(cab2) || rotunda2.length !== 2 || cab2.length !== 2) {
-      throw new Error("B14 authored jetway source axis is missing");
+      throw new Error(`${view} authored jetway source axis is missing`);
     }
     const anchor = KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition;
     const rotundaLocal = kphxObj8VectorToRampReady([Number(rotunda2[0]), 0, Number(rotunda2[1])]);
@@ -81,7 +81,7 @@ function frameRampView(camera, terminalLayer, jetwayLayer, jetwayMap, view) {
     );
     const outward = cab.clone().sub(rotunda);
     outward.y = 0;
-    if (outward.lengthSq() < 1e-6) throw new Error("B14 authored jetway source axis is degenerate");
+    if (outward.lengthSq() < 1e-6) throw new Error(`${view} authored jetway source axis is degenerate`);
     outward.normalize();
 
     const position = cab.clone().addScaledVector(outward, 68);
