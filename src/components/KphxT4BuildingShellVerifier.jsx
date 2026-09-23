@@ -42,7 +42,7 @@ function selectedJetways(layer, view) {
   });
 }
 
-function frameRampView(camera, terminalLayer, jetwayLayer, view) {
+function frameRampView(camera, terminalLayer, jetwayLayer, jetwayMap, view) {
   const terminals = new THREE.Box3().setFromObject(terminalLayer);
   if (terminals.isEmpty()) throw new Error("Terminal 4 building layer produced empty bounds");
 
@@ -57,6 +57,43 @@ function frameRampView(camera, terminalLayer, jetwayLayer, view) {
   const gateSize = gateBounds.getSize(new THREE.Vector3());
 
   const exactGate = /\d/.test(view);
+
+  if (view === "B14") {
+    const gateMap = (jetwayMap?.placements || []).find((entry) => entry.gate === view);
+    const rotunda2 = gateMap?.sourceAxis?.rotunda;
+    const cab2 = gateMap?.sourceAxis?.cab;
+    if (!Array.isArray(rotunda2) || !Array.isArray(cab2) || rotunda2.length !== 2 || cab2.length !== 2) {
+      throw new Error("B14 authored jetway source axis is missing");
+    }
+    const rotunda = new THREE.Vector3(Number(rotunda2[0]), 4.5, Number(rotunda2[1]));
+    const cab = new THREE.Vector3(Number(cab2[0]), 5.0, Number(cab2[1]));
+    const outward = cab.clone().sub(rotunda);
+    outward.y = 0;
+    if (outward.lengthSq() < 1e-6) throw new Error("B14 authored jetway source axis is degenerate");
+    outward.normalize();
+
+    const position = cab.clone().addScaledVector(outward, 68);
+    position.y = 7.0;
+    const focus = rotunda.clone();
+    focus.y = 4.5;
+
+    camera.position.copy(position);
+    camera.lookAt(focus);
+    camera.updateProjectionMatrix();
+
+    return {
+      view,
+      selectedJetwayCount: gates.length,
+      terminalCenter: terminalCenter.toArray(),
+      gateCenter: gateCenter.toArray(),
+      cameraPosition: position.toArray(),
+      cameraTarget: focus.toArray(),
+      derivedOutward: outward.toArray(),
+      gateSpan: Math.max(gateSize.x, gateSize.z),
+      cameraAuthority: "terminal4-wed-jetways.exact.json sourceAxis rotunda->cab",
+    };
+  }
+
   let rampAnchor = gateCenter.clone();
 
   if (exactGate) {
@@ -250,7 +287,7 @@ export default function KphxT4BuildingShellVerifier() {
         );
       }
 
-      const framing = frameRampView(camera, terminalLayer, jetways.layer, view);
+      const framing = frameRampView(camera, terminalLayer, jetways.layer, jetways.map, view);
       renderer.render(scene, camera);
 
       const terminalBounds = new THREE.Box3().setFromObject(terminalLayer);
