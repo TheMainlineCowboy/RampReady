@@ -59,7 +59,7 @@ function frameRampView(camera, terminalLayer, jetwayLayer, jetwayMap, view) {
 
   const exactGate = /\d/.test(view);
 
-  if (view === "B14" || view === "B28" || view === "C1") {
+  if (view === "B14" || view === "B28" || view === "C1" || view === "D4") {
     const gateMap = (jetwayMap?.placements || []).find((entry) => entry.gate === view);
     const rotunda2 = gateMap?.sourceAxis?.rotunda;
     const cab2 = gateMap?.sourceAxis?.cab;
