@@ -423,7 +423,12 @@ export async function installKphxPackageOwnedSurfaceLayer(
         && Number(art?.layerGroup?.offset || 0) <= 2
         && art?.noAlpha !== true
       ) {
-        const underlayGeometry = geometry.clone();
+        const underlayPlacement = {
+          ...placement,
+          rings: (placement.rings || []).length ? [placement.rings[0]] : [],
+        };
+        const underlayGeometry = createPolygonGeometry(THREE, underlayPlacement, art);
+        if (!underlayGeometry) continue;
         underlayGeometry.translate(0, -0.02, 0);
         const underlayMaterial = new THREE.MeshStandardMaterial({
           map: material.map,
