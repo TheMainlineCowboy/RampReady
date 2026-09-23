@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-const SUPPORTED_EQUIPMENT = new Set(["lektro-88", "standup-tug"]);
+const SUPPORTED_EQUIPMENT = new Set(["lektro-88", "standup-tug", "manager-kubota"]);
 const PIEDMONT_RED = new THREE.Color(0xd01f2d);
 
 export function supportsRuntimeEquipmentVisual(equipmentId) {
@@ -338,6 +338,44 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
   if (!supportsRuntimeEquipmentVisual(equipmentId)) {
     throw new Error(`Unsupported runtime equipment visual: ${equipmentId}`);
   }
+  if (equipmentId === "manager-kubota") {
+    const url = `${import.meta.env.BASE_URL}models/manager-kubota/RampReady-manager-Kubota-exact.glb`;
+    const gltf = await new GLTFLoader().loadAsync(url);
+    if (!gltf?.scene) throw new Error("Exact manager Kubota GLB loaded without a scene");
+
+    gltf.scene.name = "RampReady_ManagerKubota_Exact";
+    gltf.scene.traverse((node) => {
+      if (!node.isMesh) return;
+      if (!node.geometry.getAttribute("normal")) node.geometry.computeVertexNormals();
+      node.castShadow = true;
+      node.receiveShadow = true;
+    });
+
+    const steerLeft = gltf.scene.getObjectByName("AuthoredSteerPivot_L");
+    const steerRight = gltf.scene.getObjectByName("AuthoredSteerPivot_R");
+    if (!steerLeft || !steerRight) {
+      throw new Error("Exact manager Kubota steering pivots are missing");
+    }
+
+    const originalSetSteering = rig.setSteering.bind(rig);
+    rig.setSteering = (angle) => {
+      originalSetSteering(angle);
+      steerLeft.rotation.y = angle;
+      steerRight.rotation.y = angle;
+    };
+
+    rig.visual.visible = false;
+    rig.root.add(gltf.scene);
+    rig.root.userData.authoredManagerKubotaScene = gltf.scene;
+    rig.root.userData.runtimeVisualSource = "manager-kubota-exact";
+    rig.root.userData.runtimeVisualUrl = url;
+    rig.root.userData.runtimeVisualSha256 = "726fdcb3511e6d52990da11118be4ca8a8b73c5d5c8f5bde4f934131e3c31b7d";
+    rig.root.userData.runtimeVisualBytes = 23988388;
+    rig.root.userData.modelForwardCorrectionDegrees = 0;
+    rig.root.userData.inspectionOnly = true;
+    return "manager-kubota-exact";
+  }
+
   if (equipmentId === "lektro-88") {
     const url = `${import.meta.env.BASE_URL}models/lektro-88/LEKTRO_AP88_TVO914.glb`;
     const gltf = await new GLTFLoader().loadAsync(url);
