@@ -17,6 +17,8 @@ const OBJECT_MANIFESTS = Object.freeze([
 ]);
 
 export default function KphxFullAirportVerifier() {
+  const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const objectsOnlyQa = params?.get("kphxQaObjectsOnly") === "1";
   const mountRef = useRef(null);
   const [status, setStatus] = useState("Loading exact KPHX 1.75.1…");
 
@@ -156,6 +158,10 @@ export default function KphxFullAirportVerifier() {
         throw new Error(`Expected 76 exact T4 jetways, loaded ${terminal4Jetways.layer.userData.jetwayCount}`);
       }
 
+      if (objectsOnlyQa) {
+        surfaces.layer.visible = false;
+      }
+
       const t4Bounds = new THREE.Box3().setFromObject(terminal4Jetways.layer);
       if (t4Bounds.isEmpty()) throw new Error("Exact T4 jetway layer produced empty render bounds");
       const t4Center = t4Bounds.getCenter(new THREE.Vector3());
@@ -196,6 +202,7 @@ export default function KphxFullAirportVerifier() {
       renderer.domElement.dataset.kphxT4VisibleObjectPlacements = String(t4VisibleObjectPlacements);
       renderer.domElement.dataset.kphxT4BlockedObjectPlacements = String(KPHX_T4_COVERED_OBJECT_AUTHORITY.blockedObjectPlacementCount);
       renderer.domElement.dataset.kphxT4OldAirportJetwayGlbUsed = "false";
+      renderer.domElement.dataset.kphxQaObjectsOnly = String(objectsOnlyQa);
       setStatus(`KPHX 1.75.1 exact checkpoint ready · ${objectPlacements} placements · ${sourceResources} source resources · ${loadedAssetFiles} asset files · ${terminal4Jetways.layer.userData.jetwayCount} exact T4 jetways`);
     };
 
