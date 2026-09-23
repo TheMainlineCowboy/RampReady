@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-09-23T04:43:50.191Z",
+  "capturedAtUtc": "2026-09-23T06:44:35.656Z",
   "navigationError": null,
   "waitError": null,
   "state": {
@@ -7,14 +7,15 @@
     "dataset": {
       "engine": "three.js r171",
       "kphxFullAirportVerifier": "ready",
-      "kphxLoadMsJetways": "2754",
-      "kphxLoadMsSurfaces": "3480",
-      "kphxLoadMsT4Zdp": "3866",
-      "kphxLoadMsObjects": "5194",
+      "kphxLoadMsFedexAgp": "2902",
+      "kphxLoadMsJetways": "2997",
+      "kphxLoadMsT4Zdp": "3117",
+      "kphxLoadMsSurfaces": "4564",
+      "kphxLoadMsObjects": "5884",
       "kphxT4CameraCenter": "69.76996474373786,3.4975,-75.49463118980168",
       "kphxT4CameraSpan": "799.3306401130274",
-      "kphxLoadMsFinalRender": "11490",
-      "kphxLoadMsTotal": "16697",
+      "kphxLoadMsFinalRender": "13554",
+      "kphxLoadMsTotal": "19455",
       "kphxPackagePlacements": "1634",
       "kphxPackageResources": "147",
       "kphxT4MisterxPlacements": "956",
@@ -23,6 +24,9 @@
       "kphxT4CdbResources": "1",
       "kphxT4ZdpPlacements": "13",
       "kphxT4ZdpResources": "1",
+      "kphxMisterxFedexAgpPlacements": "17",
+      "kphxMisterxFedexAgpChildInstances": "34",
+      "kphxMisterxFedexAgpResources": "2",
       "kphxLoadedAssetFiles": "133",
       "kphxPackagePolygons": "13",
       "kphxPackageLineMeshes": "35",
@@ -52,15 +56,15 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0207910BC260000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0704046943D0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x25b4010b4000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x2f0401b32300]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x25b4010b4000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      "text": "[.WebGL-0x2f0401b32300]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
     }
   ],
   "pageErrors": [],
