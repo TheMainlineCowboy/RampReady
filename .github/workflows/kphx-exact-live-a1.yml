@@ -82,7 +82,8 @@ jobs:
                 const canvas = document.querySelector("canvas.trainerCanvas");
                 return canvas?.dataset?.kphxExactLiveT4 === "ready"
                   && canvas?.dataset?.tugSource === "lektro-ap88-tvo914-r187a"
-                  && canvas?.dataset?.kphxSurfaceReady === "true";
+                  && canvas?.dataset?.kphxSurfaceReady === "true"
+                  && canvas?.dataset?.kphxA1ZdpMarkingsReady === "true";
               }, null, { timeout: 60000 });
             } catch (error) {
               waitError = String(error);
@@ -149,6 +150,9 @@ jobs:
           if (d.kphxA1ZdpSurfaceReady !== "true") failures.push(`a1ZdpSurfaceReady=${d.kphxA1ZdpSurfaceReady || "missing"}`);
           if (d.kphxA1ZdpSurfacePolygonCount !== "14") failures.push(`a1ZdpPolygons=${d.kphxA1ZdpSurfacePolygonCount || "missing"}`);
           if (d.kphxSurfacePolygonCount !== "27") failures.push(`surfacePolygons=${d.kphxSurfacePolygonCount || "missing"}`);
+          if (d.kphxA1ZdpMarkingsReady !== "true") failures.push(`a1MarkingsReady=${d.kphxA1ZdpMarkingsReady || "missing"}`);
+          if (d.kphxA1ZdpMarkingLineMeshCount !== "26") failures.push(`a1MarkingMeshes=${d.kphxA1ZdpMarkingLineMeshCount || "missing"}`);
+          if (d.kphxA1ZdpMarkingFailureCount !== "0") failures.push(`a1MarkingFailures=${d.kphxA1ZdpMarkingFailureCount || "missing"}`);
           if (d.kphxVersion !== "1.75.1") failures.push(`surfaceVersion=${d.kphxVersion || "missing"}`);
           if (d.kphxSurfaceFailureCount !== "0") failures.push(`surfaceFailures=${d.kphxSurfaceFailureCount || "missing"}`);
           if (d.photoGroundSource !== "not-used-exact-kphx-1.75.1-only") failures.push(`legacyPhotoLayer=${d.photoGroundSource || "missing"}`);
