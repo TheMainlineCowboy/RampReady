@@ -31,6 +31,8 @@ let sourceDrapedNormalScale = null;
 let sourceWeatherTexture = null;
 let sourceWeatherTransparent = false;
 let globalNoShadow = false;
+let globalLodRange = null;
+let sourceTilted = false;
 let globalSpecular = null;
 let globalAlphaCutoff = null;
 let normalMetalness = false;
@@ -61,6 +63,7 @@ const snapshotState = () => ({
   xPlaneRestTranslation: [...currentAnimationTranslation],
 });
 const sceneryShadowsEnabled = String(options["scenery-shadows"] ?? "true").toLowerCase() !== "false";
+const globalShadowsEnabled = String(options["global-shadows"] ?? "true").toLowerCase() !== "false";
 let conditionalSkipDepth = 0;
 
 for (const rawLine of source.split(/\r?\n/)) {
@@ -71,11 +74,16 @@ for (const rawLine of source.split(/\r?\n/)) {
 
   if (command === "IF") {
     const condition = parts.slice(1).join(" ");
-    if (condition !== "NOT SCENERY_SHADOWS") {
+    if (condition !== "NOT SCENERY_SHADOWS" && condition !== "NOT GLOBAL_SHADOWS") {
       throw new Error(`Unsupported OBJ8 conditional: ${line}`);
     }
     bump(command);
-    if (sceneryShadowsEnabled) conditionalSkipDepth += 1;
+    if (
+      (condition === "NOT SCENERY_SHADOWS" && sceneryShadowsEnabled)
+      || (condition === "NOT GLOBAL_SHADOWS" && globalShadowsEnabled)
+    ) {
+      conditionalSkipDepth += 1;
+    }
     continue;
   }
   if (command === "ENDIF") {
@@ -214,6 +222,17 @@ for (const rawLine of source.split(/\r?\n/)) {
     sourceWeatherTexture = parts.slice(1).join(" ");
   } else if (command === "WEATHER_TRANSPARENT") {
     sourceWeatherTransparent = true;
+  } else if (command === "GLOBAL_LOD") {
+    if (parts.length < 3) throw new Error(`Malformed GLOBAL_LOD record: ${line}`);
+    const near = Number(parts[1]);
+    const far = Number(parts[2]);
+    if (!Number.isFinite(near) || !Number.isFinite(far) || near < 0 || far <= near) {
+      throw new Error(`Malformed GLOBAL_LOD range: ${line}`);
+    }
+    globalLodRange = [near, far];
+    drawState.lodRange = [...globalLodRange];
+  } else if (command === "TILTED") {
+    sourceTilted = true;
   } else if (command === "GLOBAL_no_shadow") globalNoShadow = true;
   else if (command === "SPECULAR") {
     const value = Number(parts[1]);
@@ -343,6 +362,8 @@ const harmless = new Set([
   "ATTR_layer_group",
   "ATTR_shiny_rat",
   "GLOBAL_no_shadow",
+  "GLOBAL_LOD",
+  "TILTED",
   "GLOBAL_no_blend",
   "GLOBAL_specular",
   "NORMAL_METALNESS",
@@ -643,6 +664,8 @@ const gltf = {
       xPlaneVertexLights: vertexLights,
       xPlaneNamedLights: namedLights,
       xPlaneGlobalNoShadow: globalNoShadow,
+      xPlaneGlobalLodRange: globalLodRange,
+      xPlaneTilted: sourceTilted,
       xPlaneGlobalSpecular: globalSpecular,
       xPlaneWeatherTexture: weatherImageIndex !== null ? weatherUri : null,
       xPlaneWeatherTransparent: sourceWeatherTransparent,
@@ -663,6 +686,8 @@ const gltf = {
     sourceWeatherTexture,
     sourceWeatherTransparent,
     globalNoShadow,
+    globalLodRange,
+    sourceTilted,
     globalSpecular,
     globalAlphaCutoff,
     normalMetalness,
@@ -679,8 +704,9 @@ const gltf = {
     namedLights,
     sourceBounds: { min: accessors[positionAccessor].min, max: accessors[positionAccessor].max },
     geometryPolicy: "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
-    drawStatePolicy: "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+    drawStatePolicy: "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS-and-IF-NOT-GLOBAL_SHADOWS;preserve-GLOBAL_LOD-and-TILTED-source-semantics;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
     sceneryShadowsEnabled,
+    globalShadowsEnabled,
     textureCoordinatePolicy: "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin",
   },
 };
@@ -710,6 +736,8 @@ console.log(JSON.stringify({
   weatherUri: weatherImageIndex !== null ? weatherUri : null,
   sourceWeatherTransparent,
   globalNoShadow,
+  globalLodRange,
+  sourceTilted,
   globalSpecular,
   globalAlphaCutoff,
   normalMetalness,
