@@ -946,6 +946,10 @@ export default function RampReadyStandupTrainer({
       .then((source) => {
         renderer.domElement.dataset.tugSource = source;
         renderer.domElement.dataset.tugModelForwardCorrectionDegrees = String(rig.root.userData.modelForwardCorrectionDegrees ?? 0);
+        if (equipmentId === "lektro-88") {
+          renderer.domElement.dataset.lektroAuthoredRearSteerBinding = String(rig.root.userData.authoredRearSteerBinding ?? "missing");
+          renderer.domElement.dataset.lektroAuthoredRearSteerMode = String(rig.root.userData.authoredRearSteerMode ?? "missing");
+        }
         if (equipmentId === "standup-tug") {
           renderer.domElement.dataset.operatorControls = rig.root.userData.standupSteeringWheel && rig.root.userData.standupBatteryGauge ? "ready" : "missing";
         }
@@ -1191,6 +1195,11 @@ export default function RampReadyStandupTrainer({
       rig.root.position.set(state.tugX, 0, state.tugZ);
       rig.root.rotation.y = state.tugYaw;
       rig.setSteering(state.steerAngle || 0);
+      if (equipmentId === "lektro-88") {
+        const authoredRearSteerRadians = Number(rig.root.userData.authoredRearSteerRadians ?? 0);
+        renderer.domElement.dataset.lektroAuthoredRearSteerRadians = authoredRearSteerRadians.toFixed(6);
+        renderer.domElement.dataset.lektroAuthoredRearSteerDegrees = THREE.MathUtils.radToDeg(authoredRearSteerRadians).toFixed(3);
+      }
       const visualMotionDt = inspectionActive ? Math.min(0.5, rawFrameDt) : dt;
       rig.rotateWheels(state.speed * visualMotionDt);
       if (connectionHasAircraft(sim.connection)) {
