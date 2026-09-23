@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "status": "PASS",
   "view": "B14",
-  "evidenceCommit": "b0c27bc4d55cd216c969c90a3bee288ce939cd31",
+  "evidenceCommit": "9f88d2a272e538e64795dc8ed0c002076d40d11f",
   "exactSourceGeometry": true,
   "exactSourceDecodedTexturePixels": true,
   "wedPlacementLocked": true,
   "jetwaysLocked": true,
   "substitutionPolicy": "none",
-  "visualFinding": "Ramp-facing terminal shell is coherent in the B14 inspection view; no obvious missing source faces, invented walls, or culling/material breaks visible.",
+  "visualFinding": "B14 ramp-facing shell is coherent from the corrected RampReady-frame gate view; lower shell, columns, windows, jetway interfaces and bridge sections show no obvious missing source faces, invented fill, or culling/material break.",
   "policy": "No airport geometry, placement, material, or jetway transform was changed."
 }
