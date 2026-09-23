@@ -143,27 +143,48 @@ prepared = prepared
         setMessage(`PHX package object layer failed to load: ${error.message}`);
         throw error;
       });
-    const surfaceLoad = installKphxPackageOwnedSurfaceLayer(THREE, environment, { strict: true })
-      .then((result) => {
-        const data = result.layer.userData;
-        renderer.domElement.dataset.groundSource = "KPHX 1.75.1 exact WED package surfaces";
-        renderer.domElement.dataset.kphxVersion = String(data.sourceVersion || "missing");
-        renderer.domElement.dataset.kphxSurfaceReady = String(data.ready === true);
-        renderer.domElement.dataset.kphxSurfacePolygonCount = String(data.polygonCount ?? 0);
-        renderer.domElement.dataset.kphxSurfaceOrthophotoCount = String(data.drapedOrthophotoCount ?? 0);
-        renderer.domElement.dataset.kphxSurfaceLineMeshCount = String(data.lineMeshCount ?? 0);
-        renderer.domElement.dataset.kphxSurfaceMaterialCount = String(data.materialCount ?? 0);
-        renderer.domElement.dataset.kphxSurfaceFailureCount = String((data.failures || []).length);
+    const surfaceLoad = Promise.all([
+      installKphxPackageOwnedSurfaceLayer(THREE, environment, { strict: true }),
+      installKphxPackageOwnedSurfaceLayer(THREE, environment, {
+        strict: true,
+        manifestUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json",
+        networkUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/surface-network.json",
+        loadPolygons: true,
+        loadDrapedOrthophotos: false,
+        loadLines: false,
+      }),
+    ])
+      .then(([packageResult, a1ZdpResult]) => {
+        const packageData = packageResult.layer.userData;
+        const zdpData = a1ZdpResult.layer.userData;
+        const failures = [
+          ...(packageData.failures || []),
+          ...(zdpData.failures || []),
+        ];
+        const ready = packageData.ready === true && zdpData.ready === true && failures.length === 0;
+        renderer.domElement.dataset.groundSource = "KPHX 1.75.1 exact WED package + A1 ZDP pavement";
+        renderer.domElement.dataset.kphxVersion = String(packageData.sourceVersion || zdpData.sourceVersion || "missing");
+        renderer.domElement.dataset.kphxSurfaceReady = String(ready);
+        renderer.domElement.dataset.kphxSurfacePolygonCount = String((packageData.polygonCount ?? 0) + (zdpData.polygonCount ?? 0));
+        renderer.domElement.dataset.kphxSurfaceOrthophotoCount = String((packageData.drapedOrthophotoCount ?? 0) + (zdpData.drapedOrthophotoCount ?? 0));
+        renderer.domElement.dataset.kphxSurfaceLineMeshCount = String((packageData.lineMeshCount ?? 0) + (zdpData.lineMeshCount ?? 0));
+        renderer.domElement.dataset.kphxSurfaceMaterialCount = String((packageData.materialCount ?? 0) + (zdpData.materialCount ?? 0));
+        renderer.domElement.dataset.kphxSurfaceFailureCount = String(failures.length);
+        renderer.domElement.dataset.kphxA1ZdpSurfaceReady = String(zdpData.ready === true);
+        renderer.domElement.dataset.kphxA1ZdpSurfacePolygonCount = String(zdpData.polygonCount ?? 0);
+        renderer.domElement.dataset.kphxA1ZdpSurfaceOrthophotoCount = String(zdpData.drapedOrthophotoCount ?? 0);
+        renderer.domElement.dataset.kphxA1ZdpSurfaceLineMeshCount = String(zdpData.lineMeshCount ?? 0);
         renderer.domElement.dataset.photoGroundSource = "not-used-exact-kphx-1.75.1-only";
-        return result;
+        return { packageResult, a1ZdpResult, ready, failures };
       })
       .catch((error) => {
         renderer.domElement.dataset.groundSource = "load-error";
         renderer.domElement.dataset.kphxSurfaceReady = "false";
+        renderer.domElement.dataset.kphxA1ZdpSurfaceReady = "false";
         renderer.domElement.dataset.kphxSurfaceFailureCount = "load-error";
         renderer.domElement.dataset.photoGroundSource = "not-used-exact-kphx-1.75.1-only";
         console.error("RampReady exact KPHX surface load failed", error);
-        setMessage(`Exact PHX surface layer failed to load: ${error.message}`);
+        setMessage("Exact PHX surface layer failed to load: " + error.message);
         throw error;
       });
     void Promise.all([terminalLoad, packageObjectLoad, surfaceLoad])
@@ -238,6 +259,8 @@ if (!prepared.includes('dataset.terminal4Placement = environment.userData.author
 if (!prepared.includes('dataset.b15CorridorMeters = environment.userData.trainingCorridor')) throw new Error("B15 corridor distance evidence was not injected");
 if (!prepared.includes("installAuthoredTerminal4Visual(THREE, environment)")) throw new Error("Exact KPHX T4 live runtime loader was not connected");
 if (!prepared.includes("installKphxPackageOwnedSurfaceLayer(THREE, environment")) throw new Error("Exact KPHX surface runtime loader was not connected");
+if (!prepared.includes("/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json")) throw new Error("Exact A1 ZDP pavement manifest was not connected");
+if (!prepared.includes("loadPolygons: true") || !prepared.includes("loadLines: false")) throw new Error("A1 ZDP pavement-first policy was not preserved");
 if (!prepared.includes("installKphxPackageOwnedObjectLayer(THREE, environment")) throw new Error("Full KPHX package-owned object layer was not connected");
 if (!prepared.includes("excludeResources: Object.keys(KPHX_EXACT_RECOVERED_ASSETS.singleResourceAssets)")) throw new Error("Recovered exact KPHX objects are not protected from duplicate loading");
 if (!prepared.includes("Promise.all([terminalLoad, packageObjectLoad, surfaceLoad])")) throw new Error("Combined PHX exact object/surface readiness gate was not injected");
