@@ -1,0 +1,128 @@
+name: KPHX T4 ZDP Exact Object Materialization
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-t4-zdp-object-materialize.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-t4-zdp-object-materialize
+  cancel-in-progress: true
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install exact conversion tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y imagemagick git-lfs
+          git lfs install
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/magick" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ "${1:-}" = "identify" ]; then
+            shift
+            exec identify "$@"
+          fi
+          exec convert "$@"
+          SH
+          chmod +x "$HOME/bin/magick"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Clone pinned exact ZDP dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch 1.2.0 https://gitlab.com/StableSystem/zdp-library.git .zdp
+          (
+            cd .zdp
+            git lfs pull
+            test "$(git rev-parse HEAD)" = "4b44b673ac023bac67f92a1c991a28df1b1da82c"
+          )
+
+      - name: Resolve exact ZDP stop-marker resource
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/resolve-xplane-library.mjs \
+            .zdp \
+            reports/kphx-t4-zdp-object-resources.json \
+            reports/kphx-t4-zdp-library-map.json \
+            --virtual-prefix=ZDP_Library
+
+      - name: Materialize exact authored T4 stop markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .kphx-t4-zdp-runtime
+          node scripts/materialize-kphx-full-airport.mjs \
+            .zdp \
+            .kphx-t4-zdp-runtime \
+            --placement-report=reports/kphx-t4-zdp-wed-placements.json \
+            --library-map=reports/kphx-t4-zdp-library-map.json \
+            --include-external-prefixes=ZDP_Library \
+            --batch-name=t4-zdp
+
+      - name: Verify exact ZDP object contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const manifest=JSON.parse(fs.readFileSync(".kphx-t4-zdp-runtime/manifest.json","utf8"));
+          if (manifest.failures?.length) throw new Error(`ZDP materialization failures: ${manifest.failures.length}`);
+          if (manifest.resolvedExternal.materializedPlacementCount !== 13) {
+            throw new Error(`Expected 13 exact ZDP placements, got ${manifest.resolvedExternal.materializedPlacementCount}`);
+          }
+          if (manifest.resolvedExternal.expectedUniqueResourceCount !== 1
+              || manifest.resolvedExternal.materializedUniqueResourceCount !== 1) {
+            throw new Error("Expected exactly one exact ZDP object resource");
+          }
+          const expected="ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj";
+          const placements=manifest.resolvedExternal.placements || [];
+          if (!placements.every((p)=>p.resource===expected)) throw new Error("Unexpected ZDP object resource");
+          console.log(JSON.stringify({placements:13,resources:1,status:"PASS"},null,2));
+          NODE
+
+      - name: Install exact ZDP runtime batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/models/kphx-full-airport/external public/models/kphx-full-airport/batches
+          cp -a .kphx-t4-zdp-runtime/external/. public/models/kphx-full-airport/external/
+          cp .kphx-t4-zdp-runtime/manifest.json public/models/kphx-full-airport/batches/t4-zdp.manifest.json
+
+      - name: Commit exact ZDP runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            public/models/kphx-full-airport/external/ZDP_Library \
+            public/models/kphx-full-airport/batches/t4-zdp.manifest.json \
+            reports/kphx-t4-zdp-library-map.json \
+            reports/kphx-full-airport-materialization-t4-zdp.json
+          if git diff --cached --quiet; then
+            echo "Exact T4 ZDP runtime already current."
+            exit 0
+          fi
+          git commit -m "Materialize exact T4 ZDP stop-marker runtime"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
