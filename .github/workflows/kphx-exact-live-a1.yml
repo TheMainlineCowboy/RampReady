@@ -80,8 +80,9 @@ jobs:
             try {
               await page.waitForFunction(() => {
                 const canvas = document.querySelector("canvas.trainerCanvas");
-                return canvas?.dataset?.kphxExactLiveT4 === "ready";
-              }, null, { timeout: 120000 });
+                return canvas?.dataset?.kphxExactLiveT4 === "ready"
+                  && canvas?.dataset?.tugSource === "lektro-ap88-tvo914-r187a";
+              }, null, { timeout: 60000 });
             } catch (error) {
               waitError = String(error);
             }
@@ -136,6 +137,13 @@ jobs:
           if (d.kphxExactLiveProceduralTerminalMassing !== "false") failures.push(`proceduralTerminal=${d.kphxExactLiveProceduralTerminalMassing || "missing"}`);
           if (d.kphxExactLiveLegacyFsxTerminal !== "false") failures.push(`legacyFsxTerminal=${d.kphxExactLiveLegacyFsxTerminal || "missing"}`);
           if (d.terminal4ExactJetwayTextureActive !== "true") failures.push(`jetwayTexture=${d.terminal4ExactJetwayTextureActive || "missing"}`);
+          if (d.tugSource !== "lektro-ap88-tvo914-r187a") failures.push(`tugSource=${d.tugSource || "missing"}`);
+          if (d.rigProfile !== "lektro-ap88-tvo914-r187a") failures.push(`rigProfile=${d.rigProfile || "missing"}`);
+          if (d.rigWheelbaseMeters !== "2.33934") failures.push(`wheelbase=${d.rigWheelbaseMeters || "missing"}`);
+          if (d.rigTurningRadiusMeters !== "4.572") failures.push(`turningRadius=${d.rigTurningRadiusMeters || "missing"}`);
+          if (d.rigFreeMaxSpeedMps !== "4.02336") failures.push(`freeMaxSpeed=${d.rigFreeMaxSpeedMps || "missing"}`);
+          if (d.rigTowMaxSpeedMps !== "1.78816") failures.push(`towMaxSpeed=${d.rigTowMaxSpeedMps || "missing"}`);
+          if (d.rigVisualMaxSteerDegrees !== "84.000") failures.push(`visualSteer=${d.rigVisualMaxSteerDegrees || "missing"}`);
           if (result.navigationError) failures.push(`navigation=${result.navigationError}`);
           if (result.waitError) failures.push(`wait=${result.waitError}`);
           if ((result.pageErrors || []).length) failures.push(`pageErrors=${result.pageErrors.join(" | ")}`);
@@ -154,6 +162,12 @@ jobs:
             oldAirportJetwayGlbUsed:false,
             proceduralTerminalMassing:false,
             legacyFsxTerminal:false,
+            lektroVisual:"LEKTRO_AP88_TVO914.glb R187A",
+            lektroWheelbaseMeters:2.33934,
+            lektroTurningRadiusMeters:4.572,
+            lektroFreeMaxSpeedMps:4.02336,
+            lektroTowMaxSpeedMps:1.78816,
+            lektroVisualRearSteerDegrees:84,
             visualInspectionRequired:true
           },null,2)+"\n");
           NODE
