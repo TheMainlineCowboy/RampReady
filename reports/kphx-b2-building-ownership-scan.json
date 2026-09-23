@@ -1,0 +1,2100 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "authority": "exact KPHX 1.75.1 Terminal4/Terminal4b GLBs at exact WED transforms",
+  "b2QaTargetWorld": [
+    8.822063065382402,
+    2.0,
+    -149.07302196169746
+  ],
+  "owningBuildingByNearestSurface": "Terminal4b",
+  "buildings": {
+    "Terminal4": {
+      "bounds": [
+        [
+          38.88115125913069,
+          -0.5000061988830566,
+          -441.88793632905174
+        ],
+        [
+          315.52184492368144,
+          16.500003814697266,
+          67.19772651274516
+        ]
+      ],
+      "nearestSurfaceToB2TargetMeters": 189.0539583985415,
+      "nearestPointToB2Target": [
+        197.8744497897093,
+        2.7708826065063477,
+        -149.07302196169746
+      ],
+      "modalFacadeFirstHitMeters": null,
+      "scanRayCount": 366,
+      "backedRecessRayCount": 0,
+      "deepOrThroughRayCount": 0,
+      "noHitRayCount": 234,
+      "backedSamples": [],
+      "deepSamples": []
+    },
+    "Terminal4b": {
+      "bounds": [
+        [
+          -163.46250437412107,
+          -0.7997150421142578,
+          -442.54496677644187
+        ],
+        [
+          43.614491475488315,
+          22.461116790771484,
+          295.77493373625344
+        ]
+      ],
+      "nearestSurfaceToB2TargetMeters": 21.027389442126626,
+      "nearestPointToB2Target": [
+        29.835317147637955,
+        2.7708823680877686,
+        -149.07302196169746
+      ],
+      "modalFacadeFirstHitMeters": 2.0,
+      "scanRayCount": 366,
+      "backedRecessRayCount": 148,
+      "deepOrThroughRayCount": 136,
+      "noHitRayCount": 0,
+      "backedSamples": [
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -29.0,
+          "hitsMeters": [
+            4.261876338086649,
+            4.925280460095146,
+            139.8314308487618,
+            143.14214676409227
+          ],
+          "firstHitMeters": 4.261876338086649,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 2.2618763380866493
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -22.0,
+          "hitsMeters": [
+            4.296101454156056,
+            5.054870930382025,
+            5.724724661290169,
+            7.064503912700769,
+            7.727908034709265,
+            131.94815602148654,
+            135.258871936817
+          ],
+          "firstHitMeters": 4.296101454156056,
+          "hitCount": 7,
+          "depthBehindModalFacadeMeters": 2.296101454156056
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -21.0,
+          "hitsMeters": [
+            5.184057304151369,
+            130.82197390330435,
+            134.13268981863484
+          ],
+          "firstHitMeters": 5.184057304151369,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 3.184057304151369
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -20.0,
+          "hitsMeters": [
+            6.072013154146718,
+            129.69579178512217,
+            133.00650770045263
+          ],
+          "firstHitMeters": 6.072013154146718,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 4.072013154146718
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -19.0,
+          "hitsMeters": [
+            6.959969004142031,
+            128.56960966694004,
+            131.8803255822705
+          ],
+          "firstHitMeters": 6.959969004142031,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 4.959969004142031
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -18.0,
+          "hitsMeters": [
+            7.847924854137379,
+            127.44342754875781,
+            130.7541434640883
+          ],
+          "firstHitMeters": 7.847924854137379,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 5.847924854137379
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -17.0,
+          "hitsMeters": [
+            8.735880704132688,
+            126.31724543057565,
+            129.6279613459061
+          ],
+          "firstHitMeters": 8.735880704132688,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 6.735880704132688
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -16.0,
+          "hitsMeters": [
+            9.62383655412804,
+            10.34794902664531,
+            11.061039184743391,
+            125.19106331239345,
+            128.50177922772392
+          ],
+          "firstHitMeters": 9.62383655412804,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 7.62383655412804
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -15.0,
+          "hitsMeters": [
+            9.48946167381918,
+            124.0648811942113,
+            127.37559710954176
+          ],
+          "firstHitMeters": 9.48946167381918,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 7.48946167381918
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -14.0,
+          "hitsMeters": [
+            8.363279555636993,
+            122.9386990760291,
+            126.24941499135956
+          ],
+          "firstHitMeters": 8.363279555636993,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 6.363279555636993
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -13.0,
+          "hitsMeters": [
+            7.237097437454808,
+            121.81251695784692,
+            125.1232328731774
+          ],
+          "firstHitMeters": 7.237097437454808,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 5.237097437454808
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -12.0,
+          "hitsMeters": [
+            6.488983665509525,
+            120.68633483966472,
+            123.9970507549952
+          ],
+          "firstHitMeters": 6.488983665509525,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 4.488983665509525
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -11.0,
+          "hitsMeters": [
+            7.376939515504839,
+            119.56015272148257,
+            122.87086863681303
+          ],
+          "firstHitMeters": 7.376939515504839,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 5.376939515504839
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -10.0,
+          "hitsMeters": [
+            8.264895365500188,
+            15.645710116004265,
+            16.383333577925622,
+            118.43397060330037,
+            121.74468651863083
+          ],
+          "firstHitMeters": 8.264895365500188,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 6.2648953655001876
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -9.0,
+          "hitsMeters": [
+            9.152851215495495,
+            117.30778848511821,
+            120.61850440044867
+          ],
+          "firstHitMeters": 9.152851215495495,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 7.152851215495495
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -8.0,
+          "hitsMeters": [
+            10.040807065490844,
+            116.18160636693601,
+            119.49232228226647
+          ],
+          "firstHitMeters": 10.040807065490844,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 8.040807065490844
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -7.0,
+          "hitsMeters": [
+            10.928762915486157,
+            115.05542424875385,
+            118.36614016408431
+          ],
+          "firstHitMeters": 10.928762915486157,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 8.928762915486157
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -6.0,
+          "hitsMeters": [
+            11.816718765481506,
+            113.92924213057164,
+            117.23995804590211
+          ],
+          "firstHitMeters": 11.816718765481506,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 9.816718765481506
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -5.0,
+          "hitsMeters": [
+            12.704674615476817,
+            112.80306001238948,
+            116.11377592771996
+          ],
+          "firstHitMeters": 12.704674615476817,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 10.704674615476817
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -4.0,
+          "hitsMeters": [
+            13.592630465472167,
+            20.94347120536322,
+            21.705250073209182,
+            111.67687789420728,
+            114.98759380953776
+          ],
+          "firstHitMeters": 13.592630465472167,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 11.592630465472167
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 14.0,
+          "hitsMeters": [
+            3.7313449689923,
+            36.049170102520506,
+            36.32507104694361,
+            36.988665704965285,
+            91.40559976692803,
+            94.7163156822585
+          ],
+          "firstHitMeters": 3.7313449689923,
+          "hitCount": 6,
+          "depthBehindModalFacadeMeters": 1.7313449689923002
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 15.0,
+          "hitsMeters": [
+            4.619300818987648,
+            34.92298798433833,
+            90.27941764874585,
+            93.59013356407633
+          ],
+          "firstHitMeters": 4.619300818987648,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 2.6193008189876483
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 16.0,
+          "hitsMeters": [
+            5.5072566689829605,
+            33.79680586615614,
+            89.15323553056369,
+            92.46395144589414
+          ],
+          "firstHitMeters": 5.5072566689829605,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 3.5072566689829605
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 17.0,
+          "hitsMeters": [
+            6.39521251897831,
+            32.67062374797398,
+            88.02705341238149,
+            91.33776932771195
+          ],
+          "firstHitMeters": 6.39521251897831,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 4.39521251897831
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 18.0,
+          "hitsMeters": [
+            7.283168368973621,
+            31.544441629791788,
+            86.90087129419933,
+            90.2115872095298
+          ],
+          "firstHitMeters": 7.283168368973621,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 5.283168368973621
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 19.0,
+          "hitsMeters": [
+            7.345251443334064,
+            30.418259511609605,
+            85.77468917601715,
+            89.0854050913476
+          ],
+          "firstHitMeters": 7.345251443334064,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 5.345251443334064
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 20.0,
+          "hitsMeters": [
+            6.219069325151878,
+            29.292077393427416,
+            84.64850705783496,
+            87.95922297316542
+          ],
+          "firstHitMeters": 6.219069325151878,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 4.219069325151878
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 21.0,
+          "hitsMeters": [
+            5.092887206969691,
+            28.16589527524523,
+            83.52232493965278,
+            86.83304085498325
+          ],
+          "firstHitMeters": 5.092887206969691,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 3.0928872069696913
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 22.0,
+          "hitsMeters": [
+            4.148315480355107,
+            27.039713157063066,
+            82.39614282147059,
+            85.70685873680107
+          ],
+          "firstHitMeters": 4.148315480355107,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 2.148315480355107
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 26.0,
+          "hitsMeters": [
+            3.856734819465199,
+            7.700138880336428,
+            22.534984684334344,
+            77.89141434874186,
+            81.20213026407234
+          ],
+          "firstHitMeters": 3.856734819465199,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 1.8567348194651991
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 29.0,
+          "hitsMeters": [
+            5.877784627952798,
+            6.541188749961295,
+            10.364006430322437,
+            19.156438329787807,
+            74.51286799419532,
+            77.82358390952578
+          ],
+          "firstHitMeters": 5.877784627952798,
+          "hitCount": 6,
+          "depthBehindModalFacadeMeters": 3.8777846279527983
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 30.0,
+          "hitsMeters": [
+            4.7516025097706125,
+            5.415006631779109,
+            11.251962280317787,
+            18.03025621160562,
+            73.38668587601316,
+            76.69740179134362
+          ],
+          "firstHitMeters": 4.7516025097706125,
+          "hitCount": 6,
+          "depthBehindModalFacadeMeters": 2.7516025097706125
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -29.0,
+          "hitsMeters": [
+            4.261876338086649,
+            4.925280460095146,
+            139.8314308487618,
+            143.14214676409227
+          ],
+          "firstHitMeters": 4.261876338086649,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 2.2618763380866493
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -22.0,
+          "hitsMeters": [
+            4.296101454156056,
+            5.054870930382025,
+            5.724724661290169,
+            7.064503912700769,
+            7.727908034709265,
+            131.94815602148654,
+            135.258871936817
+          ],
+          "firstHitMeters": 4.296101454156056,
+          "hitCount": 7,
+          "depthBehindModalFacadeMeters": 2.296101454156056
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -21.0,
+          "hitsMeters": [
+            5.184057304151369,
+            130.82197390330435,
+            134.13268981863484
+          ],
+          "firstHitMeters": 5.184057304151369,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 3.184057304151369
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -20.0,
+          "hitsMeters": [
+            6.072013154146718,
+            129.69579178512217,
+            133.00650770045263
+          ],
+          "firstHitMeters": 6.072013154146718,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 4.072013154146718
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -19.0,
+          "hitsMeters": [
+            6.959969004142031,
+            128.56960966694004,
+            131.8803255822705
+          ],
+          "firstHitMeters": 6.959969004142031,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 4.959969004142031
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -18.0,
+          "hitsMeters": [
+            7.847924854137379,
+            127.44342754875781,
+            130.7541434640883
+          ],
+          "firstHitMeters": 7.847924854137379,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 5.847924854137379
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -17.0,
+          "hitsMeters": [
+            8.735880704132688,
+            126.31724543057565,
+            129.6279613459061
+          ],
+          "firstHitMeters": 8.735880704132688,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 6.735880704132688
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -16.0,
+          "hitsMeters": [
+            9.62383655412804,
+            10.34794902664531,
+            11.061039184743391,
+            125.19106331239345,
+            128.50177922772392
+          ],
+          "firstHitMeters": 9.62383655412804,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 7.62383655412804
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -15.0,
+          "hitsMeters": [
+            9.48946167381918,
+            124.0648811942113,
+            127.37559710954176
+          ],
+          "firstHitMeters": 9.48946167381918,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 7.48946167381918
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -14.0,
+          "hitsMeters": [
+            8.363279555636993,
+            122.9386990760291,
+            126.24941499135956
+          ],
+          "firstHitMeters": 8.363279555636993,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 6.363279555636993
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -13.0,
+          "hitsMeters": [
+            7.237097437454808,
+            121.81251695784692,
+            125.1232328731774
+          ],
+          "firstHitMeters": 7.237097437454808,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 5.237097437454808
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -12.0,
+          "hitsMeters": [
+            6.488983665509525,
+            120.68633483966472,
+            123.9970507549952
+          ],
+          "firstHitMeters": 6.488983665509525,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 4.488983665509525
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -11.0,
+          "hitsMeters": [
+            7.376939515504839,
+            119.56015272148257,
+            122.87086863681303
+          ],
+          "firstHitMeters": 7.376939515504839,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 5.376939515504839
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -10.0,
+          "hitsMeters": [
+            8.264895365500188,
+            15.645710116004265,
+            16.383333577925622,
+            118.43397060330037,
+            121.74468651863083
+          ],
+          "firstHitMeters": 8.264895365500188,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 6.2648953655001876
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -9.0,
+          "hitsMeters": [
+            9.152851215495495,
+            117.30778848511821,
+            120.61850440044867
+          ],
+          "firstHitMeters": 9.152851215495495,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 7.152851215495495
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -8.0,
+          "hitsMeters": [
+            10.040807065490844,
+            116.18160636693601,
+            119.49232228226647
+          ],
+          "firstHitMeters": 10.040807065490844,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 8.040807065490844
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -7.0,
+          "hitsMeters": [
+            10.928762915486157,
+            115.05542424875385,
+            118.36614016408431
+          ],
+          "firstHitMeters": 10.928762915486157,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 8.928762915486157
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -6.0,
+          "hitsMeters": [
+            11.816718765481506,
+            113.92924213057164,
+            117.23995804590211
+          ],
+          "firstHitMeters": 11.816718765481506,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 9.816718765481506
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -5.0,
+          "hitsMeters": [
+            12.704674615476817,
+            112.80306001238948,
+            116.11377592771996
+          ],
+          "firstHitMeters": 12.704674615476817,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 10.704674615476817
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -4.0,
+          "hitsMeters": [
+            13.592630465472167,
+            20.94347120536322,
+            21.705250073209182,
+            111.67687789420728,
+            114.98759380953776
+          ],
+          "firstHitMeters": 13.592630465472167,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 11.592630465472167
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 14.0,
+          "hitsMeters": [
+            3.7313449689923,
+            36.049170102520506,
+            36.32507104694361,
+            36.988665704965285,
+            91.40559976692803,
+            94.7163156822585
+          ],
+          "firstHitMeters": 3.7313449689923,
+          "hitCount": 6,
+          "depthBehindModalFacadeMeters": 1.7313449689923002
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 15.0,
+          "hitsMeters": [
+            4.619300818987648,
+            34.92298798433833,
+            90.27941764874585,
+            93.59013356407633
+          ],
+          "firstHitMeters": 4.619300818987648,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 2.6193008189876483
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 16.0,
+          "hitsMeters": [
+            5.5072566689829605,
+            33.79680586615614,
+            89.15323553056369,
+            92.46395144589414
+          ],
+          "firstHitMeters": 5.5072566689829605,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 3.5072566689829605
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 17.0,
+          "hitsMeters": [
+            6.39521251897831,
+            32.67062374797398,
+            88.02705341238149,
+            91.33776932771195
+          ],
+          "firstHitMeters": 6.39521251897831,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 4.39521251897831
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 18.0,
+          "hitsMeters": [
+            7.283168368973621,
+            31.544441629791788,
+            86.90087129419933,
+            90.2115872095298
+          ],
+          "firstHitMeters": 7.283168368973621,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 5.283168368973621
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 19.0,
+          "hitsMeters": [
+            7.345251443334064,
+            30.418259511609605,
+            85.77468917601715,
+            89.0854050913476
+          ],
+          "firstHitMeters": 7.345251443334064,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 5.345251443334064
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 20.0,
+          "hitsMeters": [
+            6.219069325151878,
+            29.292077393427416,
+            84.64850705783496,
+            87.95922297316542
+          ],
+          "firstHitMeters": 6.219069325151878,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 4.219069325151878
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 21.0,
+          "hitsMeters": [
+            5.092887206969691,
+            28.16589527524523,
+            83.52232493965278,
+            86.83304085498325
+          ],
+          "firstHitMeters": 5.092887206969691,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 3.0928872069696913
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 22.0,
+          "hitsMeters": [
+            4.148315480355107,
+            27.039713157063066,
+            82.39614282147059,
+            85.70685873680107
+          ],
+          "firstHitMeters": 4.148315480355107,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 2.148315480355107
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 26.0,
+          "hitsMeters": [
+            4.928961773949748,
+            5.5784052280241045,
+            7.700138880336428,
+            22.534984684334344,
+            77.89141434874186,
+            81.20213026407234
+          ],
+          "firstHitMeters": 4.928961773949748,
+          "hitCount": 6,
+          "depthBehindModalFacadeMeters": 2.928961773949748
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 27.0,
+          "hitsMeters": [
+            4.744690669460549,
+            8.588094730331777,
+            21.408802566152158,
+            76.7652322305597,
+            80.07594814589017
+          ],
+          "firstHitMeters": 4.744690669460549,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 2.7446906694605486
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 29.0,
+          "hitsMeters": [
+            4.112877019123136,
+            5.877784627952798,
+            6.541188749961295,
+            10.364006430322437,
+            19.156438329787807,
+            74.51286799419532,
+            77.82358390952578
+          ],
+          "firstHitMeters": 4.112877019123136,
+          "hitCount": 7,
+          "depthBehindModalFacadeMeters": 2.112877019123136
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 30.0,
+          "hitsMeters": [
+            4.7516025097706125,
+            5.415006631779109,
+            11.251962280317787,
+            18.03025621160562,
+            73.38668587601316,
+            76.69740179134362
+          ],
+          "firstHitMeters": 4.7516025097706125,
+          "hitCount": 6,
+          "depthBehindModalFacadeMeters": 2.7516025097706125
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -29.0,
+          "hitsMeters": [
+            4.261876338086649,
+            4.925280460095146,
+            139.8314308487618,
+            143.14214676409227
+          ],
+          "firstHitMeters": 4.261876338086649,
+          "hitCount": 4,
+          "depthBehindModalFacadeMeters": 2.2618763380866493
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -22.0,
+          "hitsMeters": [
+            4.296101454156056,
+            5.054870930382025,
+            5.724724661290169,
+            7.064503912700769,
+            7.727908034709265,
+            131.94815602148654,
+            135.258871936817
+          ],
+          "firstHitMeters": 4.296101454156056,
+          "hitCount": 7,
+          "depthBehindModalFacadeMeters": 2.296101454156056
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -21.0,
+          "hitsMeters": [
+            5.184057304151369,
+            130.82197390330435,
+            134.13268981863484
+          ],
+          "firstHitMeters": 5.184057304151369,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 3.184057304151369
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -20.0,
+          "hitsMeters": [
+            6.072013154146718,
+            129.69579178512217,
+            133.00650770045263
+          ],
+          "firstHitMeters": 6.072013154146718,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 4.072013154146718
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -19.0,
+          "hitsMeters": [
+            6.959969004142031,
+            128.56960966694004,
+            131.8803255822705
+          ],
+          "firstHitMeters": 6.959969004142031,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 4.959969004142031
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -18.0,
+          "hitsMeters": [
+            7.847924854137379,
+            127.44342754875781,
+            130.7541434640883
+          ],
+          "firstHitMeters": 7.847924854137379,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 5.847924854137379
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -17.0,
+          "hitsMeters": [
+            8.735880704132688,
+            126.31724543057565,
+            129.6279613459061
+          ],
+          "firstHitMeters": 8.735880704132688,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 6.735880704132688
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -16.0,
+          "hitsMeters": [
+            9.62383655412804,
+            10.34794902664531,
+            11.061039184743391,
+            125.19106331239345,
+            128.50177922772392
+          ],
+          "firstHitMeters": 9.62383655412804,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 7.62383655412804
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -15.0,
+          "hitsMeters": [
+            9.48946167381918,
+            124.0648811942113,
+            127.37559710954176
+          ],
+          "firstHitMeters": 9.48946167381918,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 7.48946167381918
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -14.0,
+          "hitsMeters": [
+            8.363279555636993,
+            122.9386990760291,
+            126.24941499135956
+          ],
+          "firstHitMeters": 8.363279555636993,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 6.363279555636993
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -13.0,
+          "hitsMeters": [
+            7.237097437454808,
+            121.81251695784692,
+            125.1232328731774
+          ],
+          "firstHitMeters": 7.237097437454808,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 5.237097437454808
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -12.0,
+          "hitsMeters": [
+            6.488983665509525,
+            120.68633483966472,
+            123.9970507549952
+          ],
+          "firstHitMeters": 6.488983665509525,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 4.488983665509525
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -11.0,
+          "hitsMeters": [
+            7.376939515504839,
+            119.56015272148257,
+            122.87086863681303
+          ],
+          "firstHitMeters": 7.376939515504839,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 5.376939515504839
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -10.0,
+          "hitsMeters": [
+            8.264895365500188,
+            15.645710116004265,
+            16.383333577925622,
+            118.43397060330037,
+            121.74468651863083
+          ],
+          "firstHitMeters": 8.264895365500188,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 6.2648953655001876
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -9.0,
+          "hitsMeters": [
+            9.152851215495495,
+            117.30778848511821,
+            120.61850440044867
+          ],
+          "firstHitMeters": 9.152851215495495,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 7.152851215495495
+        }
+      ],
+      "deepSamples": [
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -30.0,
+          "hitsMeters": [
+            140.957612966944,
+            144.26832888227446
+          ],
+          "firstHitMeters": 140.957612966944,
+          "hitCount": 2,
+          "depthBehindModalFacadeMeters": 138.957612966944
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -3.0,
+          "hitsMeters": [
+            14.480586315467479,
+            110.55069577602512,
+            113.86141169135558
+          ],
+          "firstHitMeters": 14.480586315467479,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 12.480586315467479
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -2.0,
+          "hitsMeters": [
+            15.368542165462827,
+            109.42451365784292,
+            112.73522957317338
+          ],
+          "firstHitMeters": 15.368542165462827,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 13.368542165462827
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": -1.0,
+          "hitsMeters": [
+            16.25649801545814,
+            108.29833153966077,
+            111.60904745499123
+          ],
+          "firstHitMeters": 16.25649801545814,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 14.256498015458138
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 0.0,
+          "hitsMeters": [
+            17.144453865453485,
+            107.17214942147857,
+            110.48286533680903
+          ],
+          "firstHitMeters": 17.144453865453485,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 15.144453865453485
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 1.0,
+          "hitsMeters": [
+            18.032409715448836,
+            106.04596730329641,
+            109.35668321862687
+          ],
+          "firstHitMeters": 18.032409715448836,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 16.032409715448836
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 2.0,
+          "hitsMeters": [
+            18.920365565444147,
+            26.241232294722153,
+            27.027167492890314,
+            104.9197851851142,
+            108.23050110044467
+          ],
+          "firstHitMeters": 18.920365565444147,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 16.920365565444147
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 3.0,
+          "hitsMeters": [
+            19.808321415439497,
+            25.364165334248955,
+            26.49499770403933,
+            103.79360306693205,
+            107.10431898226251
+          ],
+          "firstHitMeters": 19.808321415439497,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 17.808321415439497
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 4.0,
+          "hitsMeters": [
+            20.69627726543481,
+            24.23798321606677,
+            27.382953554034643,
+            102.66742094874984,
+            105.97813686408031
+          ],
+          "firstHitMeters": 20.69627726543481,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 18.69627726543481
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 5.0,
+          "hitsMeters": [
+            21.58423311543016,
+            23.111801097884584,
+            28.270909404029993,
+            101.54123883056768,
+            104.85195474589814
+          ],
+          "firstHitMeters": 21.58423311543016,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 19.58423311543016
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 6.0,
+          "hitsMeters": [
+            29.1588652540253,
+            100.41505671238548,
+            103.72577262771594
+          ],
+          "firstHitMeters": 29.1588652540253,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 27.1588652540253
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 7.0,
+          "hitsMeters": [
+            30.04682110402065,
+            99.28887459420332,
+            102.59959050953377
+          ],
+          "firstHitMeters": 30.04682110402065,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 28.04682110402065
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 8.0,
+          "hitsMeters": [
+            30.934776954015963,
+            31.538993384081106,
+            32.349083988173874,
+            98.1626924760211,
+            101.47340839135158
+          ],
+          "firstHitMeters": 30.934776954015963,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 28.934776954015963
+        },
+        {
+          "heightMeters": 0.8,
+          "offsetMeters": 9.0,
+          "hitsMeters": [
+            31.822732804011313,
+            97.03651035783896,
+            100.34722627316943
+          ],
+          "firstHitMeters": 31.822732804011313,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 29.822732804011313
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -30.0,
+          "hitsMeters": [
+            140.957612966944,
+            144.26832888227446
+          ],
+          "firstHitMeters": 140.957612966944,
+          "hitCount": 2,
+          "depthBehindModalFacadeMeters": 138.957612966944
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -3.0,
+          "hitsMeters": [
+            14.480586315467479,
+            110.55069577602512,
+            113.86141169135558
+          ],
+          "firstHitMeters": 14.480586315467479,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 12.480586315467479
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -2.0,
+          "hitsMeters": [
+            15.368542165462827,
+            109.42451365784292,
+            112.73522957317338
+          ],
+          "firstHitMeters": 15.368542165462827,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 13.368542165462827
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": -1.0,
+          "hitsMeters": [
+            16.25649801545814,
+            108.29833153966077,
+            111.60904745499123
+          ],
+          "firstHitMeters": 16.25649801545814,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 14.256498015458138
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 0.0,
+          "hitsMeters": [
+            17.144453865453485,
+            107.17214942147857,
+            110.48286533680903
+          ],
+          "firstHitMeters": 17.144453865453485,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 15.144453865453485
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 1.0,
+          "hitsMeters": [
+            18.032409715448836,
+            106.04596730329641,
+            109.35668321862687
+          ],
+          "firstHitMeters": 18.032409715448836,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 16.032409715448836
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 2.0,
+          "hitsMeters": [
+            18.920365565444147,
+            26.241232294722153,
+            27.027167492890314,
+            104.9197851851142,
+            108.23050110044467
+          ],
+          "firstHitMeters": 18.920365565444147,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 16.920365565444147
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 3.0,
+          "hitsMeters": [
+            19.808321415439497,
+            25.364165334248955,
+            26.49499770403933,
+            103.79360306693205,
+            107.10431898226251
+          ],
+          "firstHitMeters": 19.808321415439497,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 17.808321415439497
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 4.0,
+          "hitsMeters": [
+            20.69627726543481,
+            24.23798321606677,
+            27.382953554034643,
+            102.66742094874984,
+            105.97813686408031
+          ],
+          "firstHitMeters": 20.69627726543481,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 18.69627726543481
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 5.0,
+          "hitsMeters": [
+            21.58423311543016,
+            23.111801097884584,
+            28.270909404029993,
+            101.54123883056768,
+            104.85195474589814
+          ],
+          "firstHitMeters": 21.58423311543016,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 19.58423311543016
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 6.0,
+          "hitsMeters": [
+            29.1588652540253,
+            100.41505671238548,
+            103.72577262771594
+          ],
+          "firstHitMeters": 29.1588652540253,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 27.1588652540253
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 7.0,
+          "hitsMeters": [
+            30.04682110402065,
+            99.28887459420332,
+            102.59959050953377
+          ],
+          "firstHitMeters": 30.04682110402065,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 28.04682110402065
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 8.0,
+          "hitsMeters": [
+            30.934776954015963,
+            31.538993384081106,
+            32.349083988173874,
+            98.1626924760211,
+            101.47340839135158
+          ],
+          "firstHitMeters": 30.934776954015963,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 28.934776954015963
+        },
+        {
+          "heightMeters": 1.4,
+          "offsetMeters": 9.0,
+          "hitsMeters": [
+            31.822732804011313,
+            97.03651035783896,
+            100.34722627316943
+          ],
+          "firstHitMeters": 31.822732804011313,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 29.822732804011313
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -30.0,
+          "hitsMeters": [
+            140.957612966944,
+            144.26832888227446
+          ],
+          "firstHitMeters": 140.957612966944,
+          "hitCount": 2,
+          "depthBehindModalFacadeMeters": 138.957612966944
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -3.0,
+          "hitsMeters": [
+            14.480586315467479,
+            110.55069577602512,
+            113.86141169135558
+          ],
+          "firstHitMeters": 14.480586315467479,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 12.480586315467479
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -2.0,
+          "hitsMeters": [
+            15.368542165462827,
+            109.42451365784292,
+            112.73522957317338
+          ],
+          "firstHitMeters": 15.368542165462827,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 13.368542165462827
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": -1.0,
+          "hitsMeters": [
+            16.25649801545814,
+            108.29833153966077,
+            111.60904745499123
+          ],
+          "firstHitMeters": 16.25649801545814,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 14.256498015458138
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": 0.0,
+          "hitsMeters": [
+            17.144453865453485,
+            107.17214942147857,
+            110.48286533680903
+          ],
+          "firstHitMeters": 17.144453865453485,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 15.144453865453485
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": 1.0,
+          "hitsMeters": [
+            18.032409715448836,
+            106.04596730329641,
+            109.35668321862687
+          ],
+          "firstHitMeters": 18.032409715448836,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 16.032409715448836
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": 2.0,
+          "hitsMeters": [
+            18.920365565444147,
+            26.241232294722153,
+            27.027167492890314,
+            104.9197851851142,
+            108.23050110044467
+          ],
+          "firstHitMeters": 18.920365565444147,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 16.920365565444147
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": 3.0,
+          "hitsMeters": [
+            19.808321415439497,
+            25.364165334248955,
+            26.49499770403933,
+            103.79360306693205,
+            107.10431898226251
+          ],
+          "firstHitMeters": 19.808321415439497,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 17.808321415439497
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": 4.0,
+          "hitsMeters": [
+            20.69627726543481,
+            24.23798321606677,
+            27.382953554034643,
+            102.66742094874984,
+            105.97813686408031
+          ],
+          "firstHitMeters": 20.69627726543481,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 18.69627726543481
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": 5.0,
+          "hitsMeters": [
+            21.58423311543016,
+            23.111801097884584,
+            28.270909404029993,
+            101.54123883056768,
+            104.85195474589814
+          ],
+          "firstHitMeters": 21.58423311543016,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 19.58423311543016
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": 6.0,
+          "hitsMeters": [
+            29.1588652540253,
+            100.41505671238548,
+            103.72577262771594
+          ],
+          "firstHitMeters": 29.1588652540253,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 27.1588652540253
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": 7.0,
+          "hitsMeters": [
+            30.04682110402065,
+            99.28887459420332,
+            102.59959050953377
+          ],
+          "firstHitMeters": 30.04682110402065,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 28.04682110402065
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": 8.0,
+          "hitsMeters": [
+            30.934776954015963,
+            31.538993384081106,
+            32.349083988173874,
+            98.1626924760211,
+            101.47340839135158
+          ],
+          "firstHitMeters": 30.934776954015963,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 28.934776954015963
+        },
+        {
+          "heightMeters": 2.0,
+          "offsetMeters": 9.0,
+          "hitsMeters": [
+            31.822732804011313,
+            97.03651035783896,
+            100.34722627316943
+          ],
+          "firstHitMeters": 31.822732804011313,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 29.822732804011313
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": -30.0,
+          "hitsMeters": [
+            140.957612966944,
+            144.26832888227446
+          ],
+          "firstHitMeters": 140.957612966944,
+          "hitCount": 2,
+          "depthBehindModalFacadeMeters": 138.957612966944
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": -11.0,
+          "hitsMeters": [
+            14.063615804104673,
+            119.56015272148257,
+            122.87086863681303
+          ],
+          "firstHitMeters": 14.063615804104673,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 12.063615804104673
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": -10.0,
+          "hitsMeters": [
+            14.951571654100022,
+            15.645710116004265,
+            16.383333577925622,
+            118.43397060330037,
+            121.74468651863083
+          ],
+          "firstHitMeters": 14.951571654100022,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 12.951571654100022
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": -9.0,
+          "hitsMeters": [
+            15.83952750409533,
+            117.30778848511821,
+            120.61850440044867
+          ],
+          "firstHitMeters": 15.83952750409533,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 13.83952750409533
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": -8.0,
+          "hitsMeters": [
+            16.72748335409068,
+            116.18160636693601,
+            119.49232228226647
+          ],
+          "firstHitMeters": 16.72748335409068,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 14.72748335409068
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": -7.0,
+          "hitsMeters": [
+            17.61543920408599,
+            115.05542424875385,
+            118.36614016408431
+          ],
+          "firstHitMeters": 17.61543920408599,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 15.615439204085991
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": -6.0,
+          "hitsMeters": [
+            18.503395054081338,
+            113.92924213057164,
+            117.23995804590211
+          ],
+          "firstHitMeters": 18.503395054081338,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 16.503395054081338
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": -5.0,
+          "hitsMeters": [
+            19.391350904076653,
+            112.80306001238948,
+            116.11377592771996
+          ],
+          "firstHitMeters": 19.391350904076653,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 17.391350904076653
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": -4.0,
+          "hitsMeters": [
+            20.279306754072003,
+            20.94347120536322,
+            21.705250073209182,
+            111.67687789420728,
+            114.98759380953776
+          ],
+          "firstHitMeters": 20.279306754072003,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 18.279306754072003
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": -3.0,
+          "hitsMeters": [
+            21.16726260406731,
+            110.55069577602512,
+            113.86141169135558
+          ],
+          "firstHitMeters": 21.16726260406731,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 19.16726260406731
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": -2.0,
+          "hitsMeters": [
+            22.05521845406266,
+            109.42451365784292,
+            112.73522957317338
+          ],
+          "firstHitMeters": 22.05521845406266,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 20.05521845406266
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": -1.0,
+          "hitsMeters": [
+            22.943174304057973,
+            108.29833153966077,
+            111.60904745499123
+          ],
+          "firstHitMeters": 22.943174304057973,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 20.943174304057973
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 0.0,
+          "hitsMeters": [
+            23.831130154053323,
+            107.17214942147857,
+            110.48286533680903
+          ],
+          "firstHitMeters": 23.831130154053323,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 21.831130154053323
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 1.0,
+          "hitsMeters": [
+            24.71908600404867,
+            106.04596730329641,
+            109.35668321862687
+          ],
+          "firstHitMeters": 24.71908600404867,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 22.71908600404867
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 2.0,
+          "hitsMeters": [
+            25.607041854043985,
+            26.241232294722153,
+            27.027167492890314,
+            104.9197851851142,
+            108.23050110044467
+          ],
+          "firstHitMeters": 25.607041854043985,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 23.607041854043985
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 3.0,
+          "hitsMeters": [
+            26.49499770403933,
+            103.79360306693205,
+            107.10431898226251
+          ],
+          "firstHitMeters": 26.49499770403933,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 24.49499770403933
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 4.0,
+          "hitsMeters": [
+            27.382953554034643,
+            102.66742094874984,
+            105.97813686408031
+          ],
+          "firstHitMeters": 27.382953554034643,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 25.382953554034643
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 5.0,
+          "hitsMeters": [
+            28.270909404029993,
+            101.54123883056768,
+            104.85195474589814
+          ],
+          "firstHitMeters": 28.270909404029993,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 26.270909404029993
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 6.0,
+          "hitsMeters": [
+            29.1588652540253,
+            100.41505671238548,
+            103.72577262771594
+          ],
+          "firstHitMeters": 29.1588652540253,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 27.1588652540253
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 7.0,
+          "hitsMeters": [
+            30.04682110402065,
+            99.28887459420332,
+            102.59959050953377
+          ],
+          "firstHitMeters": 30.04682110402065,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 28.04682110402065
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 8.0,
+          "hitsMeters": [
+            30.934776954015963,
+            31.538993384081106,
+            32.349083988173874,
+            98.1626924760211,
+            101.47340839135158
+          ],
+          "firstHitMeters": 30.934776954015963,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 28.934776954015963
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 9.0,
+          "hitsMeters": [
+            31.822732804011313,
+            97.03651035783896,
+            100.34722627316943
+          ],
+          "firstHitMeters": 31.822732804011313,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 29.822732804011313
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 10.0,
+          "hitsMeters": [
+            32.710688654006624,
+            95.91032823965675,
+            99.22104415498723
+          ],
+          "firstHitMeters": 32.710688654006624,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 30.710688654006624
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 11.0,
+          "hitsMeters": [
+            33.598644504001975,
+            94.78414612147459,
+            98.09486203680507
+          ],
+          "firstHitMeters": 33.598644504001975,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 31.598644504001975
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 12.0,
+          "hitsMeters": [
+            34.48660035399728,
+            93.6579640032924,
+            96.96867991862285
+          ],
+          "firstHitMeters": 34.48660035399728,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 32.48660035399728
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 13.0,
+          "hitsMeters": [
+            35.37455620399263,
+            92.53178188511025,
+            95.8424978004407
+          ],
+          "firstHitMeters": 35.37455620399263,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 33.37455620399263
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 14.0,
+          "hitsMeters": [
+            36.049170102520506,
+            36.32507104694361,
+            36.988665704965285,
+            91.40559976692803,
+            94.7163156822585
+          ],
+          "firstHitMeters": 36.049170102520506,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 34.049170102520506
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 15.0,
+          "hitsMeters": [
+            34.92298798433833,
+            90.27941764874585,
+            93.59013356407633
+          ],
+          "firstHitMeters": 34.92298798433833,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 32.92298798433833
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 16.0,
+          "hitsMeters": [
+            33.79680586615614,
+            89.15323553056369,
+            92.46395144589414
+          ],
+          "firstHitMeters": 33.79680586615614,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 31.79680586615614
+        },
+        {
+          "heightMeters": 2.6,
+          "offsetMeters": 17.0,
+          "hitsMeters": [
+            32.67062374797398,
+            88.02705341238149,
+            91.33776932771195
+          ],
+          "firstHitMeters": 32.67062374797398,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 30.670623747973977
+        },
+        {
+          "heightMeters": 3.2,
+          "offsetMeters": -30.0,
+          "hitsMeters": [
+            125.43316941257147,
+            144.26832888227446
+          ],
+          "firstHitMeters": 125.43316941257147,
+          "hitCount": 2,
+          "depthBehindModalFacadeMeters": 123.43316941257147
+        },
+        {
+          "heightMeters": 3.2,
+          "offsetMeters": -12.0,
+          "hitsMeters": [
+            14.460020933126918,
+            105.16189128529223,
+            123.9970507549952
+          ],
+          "firstHitMeters": 14.460020933126918,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 12.460020933126918
+        },
+        {
+          "heightMeters": 3.2,
+          "offsetMeters": -11.0,
+          "hitsMeters": [
+            15.34797678312223,
+            104.03570916711006,
+            122.87086863681303
+          ],
+          "firstHitMeters": 15.34797678312223,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 13.34797678312223
+        },
+        {
+          "heightMeters": 3.2,
+          "offsetMeters": -10.0,
+          "hitsMeters": [
+            15.645710116004265,
+            16.23593263311758,
+            16.383333577925622,
+            102.90952704892786,
+            121.74468651863083
+          ],
+          "firstHitMeters": 15.645710116004265,
+          "hitCount": 5,
+          "depthBehindModalFacadeMeters": 13.645710116004265
+        },
+        {
+          "heightMeters": 3.2,
+          "offsetMeters": -9.0,
+          "hitsMeters": [
+            17.12388848311289,
+            101.78334493074571,
+            120.61850440044867
+          ],
+          "firstHitMeters": 17.12388848311289,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 15.12388848311289
+        },
+        {
+          "heightMeters": 3.2,
+          "offsetMeters": -8.0,
+          "hitsMeters": [
+            18.011844333108236,
+            100.6571628125635,
+            119.49232228226647
+          ],
+          "firstHitMeters": 18.011844333108236,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 16.011844333108236
+        },
+        {
+          "heightMeters": 3.2,
+          "offsetMeters": -7.0,
+          "hitsMeters": [
+            18.89980018310355,
+            99.53098069438134,
+            118.36614016408431
+          ],
+          "firstHitMeters": 18.89980018310355,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 16.89980018310355
+        },
+        {
+          "heightMeters": 3.2,
+          "offsetMeters": -6.0,
+          "hitsMeters": [
+            19.787756033098898,
+            98.40479857619914,
+            117.23995804590211
+          ],
+          "firstHitMeters": 19.787756033098898,
+          "hitCount": 3,
+          "depthBehindModalFacadeMeters": 17.787756033098898
+        }
+      ]
+    }
+  },
+  "interpretation": "A backed recess has no facade hit at the modal facade plane but hits source geometry roughly 1.5-12 m deeper. Deep/through candidates first hit >12 m behind the modal facade or remain open. No geometry is modified by this scan."
+}
