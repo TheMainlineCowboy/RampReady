@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "view": "C19",
+  "evidenceCommit": "5c5ad651bdb8fe4372a59fd08c51ba261faf6051",
+  "exactSourceGeometry": true,
+  "exactSourceDecodedTexturePixels": true,
+  "wedPlacementLocked": true,
+  "jetwaysLocked": true,
+  "substitutionPolicy": "none",
+  "visualFinding": "Ramp-facing terminal shell is coherent in the C19 inspection view; lower-level shell, support columns, glazing, and jetway interfaces are present with no obvious missing source faces, invented walls, or culling/material breaks visible.",
+  "policy": "No airport geometry, placement, material, or jetway transform was changed."
+}
