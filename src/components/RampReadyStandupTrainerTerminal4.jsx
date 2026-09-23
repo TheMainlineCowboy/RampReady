@@ -802,6 +802,7 @@ export default function RampReadyStandupTrainer({
     void installRuntimeEquipmentVisual(rig, equipmentId)
       .then((source) => {
         renderer.domElement.dataset.tugSource = source;
+        renderer.domElement.dataset.tugModelForwardCorrectionDegrees = String(rig.root.userData.modelForwardCorrectionDegrees ?? 0);
         if (equipmentId === "standup-tug") {
           renderer.domElement.dataset.operatorControls = rig.root.userData.standupSteeringWheel && rig.root.userData.standupBatteryGauge ? "ready" : "missing";
         }
