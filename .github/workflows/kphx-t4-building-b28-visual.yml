@@ -105,3 +105,5 @@ jobs:
           git push origin HEAD:kphx-full-airport-import
 
 # retrigger after farther B28 camera
+
+# retrigger after exact authored B28 gate-axis camera
