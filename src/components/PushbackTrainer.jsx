@@ -104,7 +104,9 @@ export default function PushbackTrainer() {
       ? "lektro-ap88-tvo914-r187a"
       : activeEquipmentId === "standup-tug"
         ? "authored-standup"
-        : null;
+        : activeEquipmentId === "manager-kubota"
+          ? "manager-kubota-exact"
+          : null;
 
     const poll = () => {
       if (cancelled) return;
@@ -197,14 +199,15 @@ export default function PushbackTrainer() {
   }, [gyroEnabled, activeEquipmentId]);
 
   if (!activeEquipmentId) {
-    const launchable = isEquipmentLaunchable(selectedEquipmentId);
+    const trainingLaunchable = isEquipmentLaunchable(selectedEquipmentId, "training");
+    const inspectionLaunchable = isEquipmentLaunchable(selectedEquipmentId, "inspection");
     return (
       <main className="rr-equipment-setup" aria-labelledby="equipment-heading">
         <section className="rr-equipment-panel">
           <p className="rr-equipment-kicker">RampReady · PHX Terminal 4</p>
-          <h1 id="equipment-heading">Choose pushback equipment</h1>
+          <h1 id="equipment-heading">Choose RampReady equipment</h1>
           <p className="rr-equipment-intro">Train the pushback procedure, or launch directly into an unrestricted tug inspection of the airport.</p>
-          <div className="rr-equipment-grid" role="radiogroup" aria-label="Pushback equipment">
+          <div className="rr-equipment-grid" role="radiogroup" aria-label="RampReady equipment">
             {EQUIPMENT_PROFILES.map((profile) => {
               const selected = profile.id === selectedEquipmentId;
               return (
@@ -228,11 +231,17 @@ export default function PushbackTrainer() {
           <div className="rr-equipment-actions">
             <div>
               <b>Selected:</b> {selectedEquipment.label}<br />
-              <span>{selectedEquipment.available ? "Available in the current simulator runtime." : "Cannot launch until its actual runtime model is committed and verified."}</span>
+              <span>{
+                selectedEquipment.id === "manager-kubota"
+                  ? "Exact manager vehicle available for free-drive airport inspection."
+                  : selectedEquipment.available
+                    ? "Available in the current simulator runtime."
+                    : "Cannot launch until its actual runtime model is committed and verified."
+              }</span>
             </div>
             <div className="rr-launch-actions">
-              <button type="button" disabled={!launchable} onClick={() => launch("training")}>Start training</button>
-              <button type="button" disabled={!launchable} onClick={() => launch("inspection")}>Drive tug / inspect airport</button>
+              <button type="button" disabled={!trainingLaunchable} onClick={() => launch("training")}>Start training</button>
+              <button type="button" disabled={!inspectionLaunchable} onClick={() => launch("inspection")}>Drive vehicle / inspect airport</button>
             </div>
           </div>
         </section>
