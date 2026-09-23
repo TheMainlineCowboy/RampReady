@@ -1,0 +1,312 @@
+{
+  "schemaVersion": 1,
+  "authority": "KPHX 1.75.1 WED placement + exact MisterX_Library 2.0c Truck_Fedex.agp",
+  "source": {
+    "airportPackage": "KPHX - Phoenix Sky Harbor Intl",
+    "airportVersion": "1.75.1",
+    "dependency": "MisterX_Library",
+    "dependencyVersion": "2.0c",
+    "agpPath": "assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+    "agpSha256": "5b9f5d184368e7f4e3c88049c52fa159859b8a58d370e9befe6bf7a3ddd1c05d",
+    "placementAuthority": "reports/kphx-full-misterx-agp-authority.json"
+  },
+  "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+  "placementCount": 17,
+  "tile": {
+    "textureScalePixels": [
+      2048,
+      1024
+    ],
+    "textureWidthMeters": 528.089588,
+    "metersPerPixel": 0.257856244140625,
+    "boundsPixels": [
+      2018.446045,
+      0.847595,
+      2030.725586,
+      92.735779
+    ],
+    "rotationQuarterTurns": 0,
+    "anchorPixel": [
+      2024.5858155,
+      46.791686999999996
+    ],
+    "anchorPolicy": "tile center (AGP default)",
+    "hideTiles": true
+  },
+  "children": [
+    {
+      "objectIndex": 0,
+      "sourceObject": "Trailer_Fedex.obj",
+      "sourceResource": "MisterX_Library/Vehicles/Trucks/Trailer_Fedex.obj",
+      "assetUrl": "/models/kphx-full-airport/external/MisterX_Library/Vehicles/Trucks/Trailer_Fedex/Trailer_Fedex.gltf",
+      "pixel": [
+        2024.716779,
+        10.630705
+      ],
+      "xPlaneLocalOffsetMeters": [
+        0.03376975622951258,
+        0,
+        -9.324335002956746
+      ],
+      "headingOffsetDegrees": 0,
+      "draped": true
+    },
+    {
+      "objectIndex": 1,
+      "sourceObject": "Peterbilt_359_White.obj",
+      "sourceResource": "MisterX_Library/Vehicles/Trucks/Peterbilt_359_White.obj",
+      "assetUrl": "/models/kphx-full-airport/external/MisterX_Library/Vehicles/Trucks/Peterbilt_359_White/Peterbilt_359_White.gltf",
+      "pixel": [
+        2024.716779,
+        46.630705
+      ],
+      "xPlaneLocalOffsetMeters": [
+        0.03376975622951258,
+        0,
+        -0.04151021389424534
+      ],
+      "headingOffsetDegrees": 0,
+      "draped": true
+    }
+  ],
+  "placements": [
+    {
+      "id": "101856",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.425042024,
+      "longitude": -112.015337548,
+      "headingDegrees": 90.38,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101849",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.425670516,
+      "longitude": -112.015338544,
+      "headingDegrees": 90.38,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101862",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.424746076,
+      "longitude": -112.014698705,
+      "headingDegrees": 269.35,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101851",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.425604745,
+      "longitude": -112.015333135,
+      "headingDegrees": 90.38,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101876",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.424012929,
+      "longitude": -112.015395694,
+      "headingDegrees": 90.38,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101848",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.425740823,
+      "longitude": -112.015341248,
+      "headingDegrees": 90.38,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101864",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.424777828,
+      "longitude": -112.014993493,
+      "headingDegrees": 269.35,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101852",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.425568457,
+      "longitude": -112.015334487,
+      "headingDegrees": 90.38,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101850",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.425636496,
+      "longitude": -112.015335839,
+      "headingDegrees": 90.38,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101854",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.425212384,
+      "longitude": -112.015335839,
+      "headingDegrees": 90.38,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101866",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.424752857,
+      "longitude": -112.015409217,
+      "headingDegrees": 90.38,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101865",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.424746077,
+      "longitude": -112.014993493,
+      "headingDegrees": 269.35,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101863",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.424778962,
+      "longitude": -112.014696001,
+      "headingDegrees": 269.35,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101855",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.425368875,
+      "longitude": -112.015365589,
+      "headingDegrees": 90.38,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101853",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.425531035,
+      "longitude": -112.015333135,
+      "headingDegrees": 90.38,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101857",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.425693373,
+      "longitude": -112.015166502,
+      "headingDegrees": 21.19,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    },
+    {
+      "id": "101867",
+      "parentId": "17235",
+      "name": "Truck_Fedex.agp",
+      "resource": "MisterX_Library/Vehicles/Trucks/Truck_Fedex.agp",
+      "resourcePrefix": "MisterX_Library",
+      "sourceClass": "external-library",
+      "latitude": 33.424791413,
+      "longitude": -112.015410569,
+      "headingDegrees": 90.38,
+      "customMsl": false,
+      "mslMeters": 0,
+      "showLevel": "1 Default"
+    }
+  ]
+}
