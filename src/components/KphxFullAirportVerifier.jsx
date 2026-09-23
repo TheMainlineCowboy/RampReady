@@ -124,6 +124,21 @@ export default function KphxFullAirportVerifier() {
         throw new Error(`Expected 76 exact T4 jetways, loaded ${terminal4Jetways.layer.userData.jetwayCount}`);
       }
 
+      const t4Bounds = new THREE.Box3().setFromObject(terminal4Jetways.layer);
+      if (t4Bounds.isEmpty()) throw new Error("Exact T4 jetway layer produced empty render bounds");
+      const t4Center = t4Bounds.getCenter(new THREE.Vector3());
+      const t4Size = t4Bounds.getSize(new THREE.Vector3());
+      const t4Span = Math.max(t4Size.x, t4Size.z, 300);
+      camera.position.set(
+        t4Center.x + t4Span * 0.70,
+        Math.max(180, t4Span * 0.55),
+        t4Center.z + t4Span * 0.82,
+      );
+      camera.lookAt(t4Center.x, 8, t4Center.z);
+      camera.updateProjectionMatrix();
+      renderer.domElement.dataset.kphxT4CameraCenter = [t4Center.x, t4Center.y, t4Center.z].join(",");
+      renderer.domElement.dataset.kphxT4CameraSpan = String(t4Span);
+
       setStatus("KPHX exact source layers assembled · rendering integrated T4 checkpoint…");
       const finalRenderStartedAt = performance.now();
       renderer.render(scene, camera);
