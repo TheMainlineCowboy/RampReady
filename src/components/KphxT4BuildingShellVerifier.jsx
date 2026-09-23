@@ -130,25 +130,28 @@ function frameRampView(camera, terminalLayer, jetwayLayer, jetwayMap, view) {
   outward.normalize();
 
   const span = Math.max(gateSize.x, gateSize.z, exactGate ? 28 : 110);
-  const closeGateQa = view === "A1" || view === "A14" || view === "A30" || view === "B2" || view === "B14" || view === "B28" || view === "C1" || view === "C9" || view === "C19";
-  const tightGateFaceQa = view === "A14" || view === "A30" || view === "B2" || view === "B14" || view === "B28" || view === "C1" || view === "C9" || view === "C19";
+  const closeGateQa = view === "A1" || view === "A14" || view === "A30" || view === "B2" || view === "B14" || view === "B28" || view === "C1" || view === "C9" || view === "C19" || view === "D1";
+  const tightGateFaceQa = view === "A14" || view === "A30" || view === "B2" || view === "B14" || view === "B28" || view === "C1" || view === "C9" || view === "C19" || view === "D1";
   const bGateFarQa = view === "B2" || view === "B14";
   const cGateFarQa = view === "C1";
   const c9TightQa = view === "C9" || view === "C19";
+  const dGateQa = view === "D1";
   const distance = bGateFarQa
     ? Math.max(120, span * 2.0)
     : cGateFarQa
       ? Math.max(110, span * 1.9)
       : c9TightQa
         ? Math.max(72, span * 1.18)
-        : tightGateFaceQa
+        : dGateQa
+          ? Math.max(84, span * 1.35)
+          : tightGateFaceQa
         ? Math.max(58, span * 1.05)
         : closeGateQa
           ? Math.max(90, span * 1.8)
           : exactGate
             ? Math.max(34, span * 0.72)
             : Math.max(125, span * 0.82);
-  const height = bGateFarQa || cGateFarQa ? 7.0 : c9TightQa ? 6.2 : closeGateQa ? 6.0 : exactGate ? 5.0 : 9.5;
+  const height = bGateFarQa || cGateFarQa ? 7.0 : c9TightQa ? 6.2 : dGateQa ? 6.5 : closeGateQa ? 6.0 : exactGate ? 5.0 : 9.5;
 
   const focus = tightGateFaceQa
     ? gateCenter.clone()
