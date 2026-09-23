@@ -25,6 +25,7 @@ function parseGlb(filePath) {
   const declaredLength = bytes.readUInt32LE(8);
   let offset = 12;
   let json = null;
+  let binaryChunk = null;
   const chunks = [];
   while (offset + 8 <= bytes.length) {
     const chunkLength = bytes.readUInt32LE(offset);
@@ -33,11 +34,14 @@ function parseGlb(filePath) {
     chunks.push({ chunkLength, chunkType: `0x${chunkType.toString(16)}` });
     if (chunkType === 0x4e4f534a) {
       json = JSON.parse(bytes.subarray(offset, offset + chunkLength).toString("utf8").replace(/\0+$/g, "").trim());
+    } else if (chunkType === 0x004e4942) {
+      binaryChunk = bytes.subarray(offset, offset + chunkLength);
     }
     offset += chunkLength;
   }
   if (!json) throw new Error(`${filePath}: missing JSON chunk`);
-  return { bytes, version, declaredLength, chunks, json };
+  if (!binaryChunk) throw new Error(`${filePath}: missing BIN chunk`);
+  return { bytes, binaryChunk, version, declaredLength, chunks, json };
 }
 
 const report = {
@@ -47,7 +51,7 @@ const report = {
 };
 
 for (const target of targets) {
-  const { bytes, version, declaredLength, chunks, json } = parseGlb(target.path);
+  const { bytes, binaryChunk, version, declaredLength, chunks, json } = parseGlb(target.path);
   const accessors = json.accessors || [];
   const meshes = json.meshes || [];
   const materials = json.materials || [];
@@ -78,6 +82,31 @@ for (const target of targets) {
   });
 
   const sha256 = createHash("sha256").update(bytes).digest("hex");
+  const bufferViews = json.bufferViews || [];
+  const sourceDaySha256 = json.extras?.source?.dayTexture?.sha256 || null;
+  const sourceLitSha256 = json.extras?.source?.litTexture?.sha256 || null;
+  const imageEvidence = (json.images || []).map((entry, index) => {
+    if (entry.bufferView == null) {
+      return { index, ...entry, embeddedSha256: null, sourceHashMatches: null };
+    }
+    const view = bufferViews[entry.bufferView];
+    if (!view) throw new Error(`${target.path}: image ${index} references missing bufferView ${entry.bufferView}`);
+    const byteOffset = Number(view.byteOffset || 0);
+    const byteLength = Number(view.byteLength || 0);
+    const imageBytes = binaryChunk.subarray(byteOffset, byteOffset + byteLength);
+    const embeddedSha256 = createHash("sha256").update(imageBytes).digest("hex");
+    const isLit = /_LIT$/i.test(String(entry.name || "")) || /lit/i.test(String(entry.name || ""));
+    const expectedSourceSha256 = isLit ? sourceLitSha256 : sourceDaySha256;
+    return {
+      index,
+      ...entry,
+      embeddedByteLength: imageBytes.length,
+      embeddedSha256,
+      expectedSourceSha256,
+      sourceHashMatches: expectedSourceSha256 ? embeddedSha256 === expectedSourceSha256 : null,
+    };
+  });
+
   report.targets.push({
     ...target,
     byteLength: bytes.length,
@@ -113,7 +142,8 @@ for (const target of targets) {
       normalTexture: material.normalTexture || null,
       extras: material.extras || null,
     })),
-    images: (json.images || []).map((entry, index) => ({ index, ...entry })),
+    images: imageEvidence,
+    embeddedTextureHashesMatchSource: imageEvidence.length > 0 && imageEvidence.every((entry) => entry.sourceHashMatches === true),
     textures: (json.textures || []).map((entry, index) => ({ index, ...entry })),
     primitives,
     extras: json.extras || null,
