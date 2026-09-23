@@ -1,2 +1,3 @@
 Trigger read-only exact Terminal3a recovered GLB inspection.
 No geometry, material, placement, or source changes.
+Retry: measure preserved source winding against authored normals.
