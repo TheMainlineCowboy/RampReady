@@ -135,7 +135,7 @@ export default function KphxT3BuildingShellVerifier() {
       const center = bounds.getCenter(new THREE.Vector3());
       const size = bounds.getSize(new THREE.Vector3());
       const longAxisX = size.x >= size.z;
-      const facadeDistance = Math.max(110, (longAxisX ? size.x : size.z) * 0.62);
+      const facadeDistance = Math.max(125, (longAxisX ? size.x : size.z) * 0.78);
       const position = longAxisX
         ? new THREE.Vector3(
           center.x + size.x * 0.06,
