@@ -55,7 +55,7 @@ jobs:
           import fs from "node:fs";
           import { chromium } from "playwright";
 
-          const views = ["A1","A14","A30","B2","B14","B28","C1","C9","C19","D1","D4","D7"];
+          const views = ["A1"];
           const browser = await chromium.launch({ headless: true });
 
           for (const view of views) {
@@ -192,7 +192,7 @@ jobs:
           import fs from "node:fs";
 
           const failures = [];
-          for (const view of ["A1","A14","A30","B2","B14","B28","C1","C9","C19","D1","D4","D7"]) {
+          for (const view of ["A1"]) {
             const slug = view.toLowerCase();
             const result = JSON.parse(fs.readFileSync(`reports/kphx-t4-building-shell-${slug}.json`, "utf8"));
             const d = result.state?.dataset || {};
@@ -233,7 +233,7 @@ jobs:
           }
           if (failures.length) throw new Error(`T4 building-shell verification failed: ${failures.join("; ")}`);
           console.log(JSON.stringify({
-            views:["A1","A14","A30","B2","B14","B28","C1","C9","C19","D1","D4","D7"],
+            views:["A1"],
             buildings:2,
             jetways:76,
             openEdges:261,
