@@ -147,6 +147,8 @@ jobs:
           if (d.rigVisualMaxSteerDegrees !== "84.000") failures.push(`visualSteer=${d.rigVisualMaxSteerDegrees || "missing"}`);
           if (d.kphxSurfaceReady !== "true") failures.push(`surfaceReady=${d.kphxSurfaceReady || "missing"}`);
           if (d.kphxA1ZdpSurfaceReady !== "true") failures.push(`a1ZdpSurfaceReady=${d.kphxA1ZdpSurfaceReady || "missing"}`);
+          if (d.kphxA1ZdpSurfacePolygonCount !== "14") failures.push(`a1ZdpPolygons=${d.kphxA1ZdpSurfacePolygonCount || "missing"}`);
+          if (d.kphxSurfacePolygonCount !== "27") failures.push(`surfacePolygons=${d.kphxSurfacePolygonCount || "missing"}`);
           if (d.kphxVersion !== "1.75.1") failures.push(`surfaceVersion=${d.kphxVersion || "missing"}`);
           if (d.kphxSurfaceFailureCount !== "0") failures.push(`surfaceFailures=${d.kphxSurfaceFailureCount || "missing"}`);
           if (d.photoGroundSource !== "not-used-exact-kphx-1.75.1-only") failures.push(`legacyPhotoLayer=${d.photoGroundSource || "missing"}`);
