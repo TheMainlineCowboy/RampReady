@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "evidenceCommit": "b8b058317872c6ae1a46ab95f15e5044be906508",
+  "source": {
+    "package": "KPHX - Phoenix Sky Harbor Intl",
+    "version": "1.75.1",
+    "authority": "earth.wed.xml exact Terminal 4 WED ancestry; exact resolved library dependencies"
+  },
+  "t4": {
+    "authoredObjectPlacements": 1086,
+    "exactVisibleObjectPlacements": 1072,
+    "blockedExactSourcePlacements": 14,
+    "misterXPlacements": 956,
+    "misterXResources": 50,
+    "cdbPlacements": 23,
+    "cdbResources": 1,
+    "zdpStopMarkerPlacements": 13,
+    "zdpStopMarkerResources": 1,
+    "jetways": 76,
+    "authoredOpenJetwayEdges": 261,
+    "oldAirportJetwayGlbUsed": false
+  },
+  "fullVerifierContract": {
+    "objectPlacements": 1634,
+    "sourceResources": 147,
+    "packagePolygons": 13,
+    "minimumPackageLineMeshes": 35
+  },
+  "browserEvidence": {
+    "fullAirport": "reports/kphx-full-airport-first-render.json",
+    "t4ObjectsOnly": "reports/kphx-t4-objects-only-qa.json",
+    "t4JetwaysAll": "reports/kphx-t4-jetways-all-qa.json",
+    "pageErrors": 0,
+    "failedRequests": 0,
+    "httpErrors": 0
+  },
+  "visualQa": {
+    "status": "PASS",
+    "note": "Exact T4 WED-ancestry view is coherent; 76 authored jetways align with T4 concourse geometry. Non-T4 objects are excluded from this checkpoint. No geometry, positions, headings, or source substitutions were introduced for visual QA."
+  },
+  "blockedResources": [
+    "opensceneryx/objects/airport/vehicles/stairs/3.obj",
+    "lib/airport/Modern_Airports/Terminal_kit/columns/column_4m_80a.obj",
+    "lib/airport/Modern_Airports/Terminal_kit/columns/column_4m_80b.obj",
+    "lib/flags_USA_states/arizona.obj",
+    "lib/flags_world/united_states.obj"
+  ]
+}
