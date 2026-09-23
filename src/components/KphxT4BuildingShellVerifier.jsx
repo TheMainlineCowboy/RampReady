@@ -56,25 +56,41 @@ function frameRampView(camera, terminalLayer, jetwayLayer, view) {
   const gateCenter = gateBounds.getCenter(new THREE.Vector3());
   const gateSize = gateBounds.getSize(new THREE.Vector3());
 
+  const exactGate = /\d/.test(view);
+  let rampAnchor = gateCenter.clone();
+
+  if (exactGate) {
+    const candidates = [
+      new THREE.Vector3(gateBounds.min.x, gateCenter.y, gateBounds.min.z),
+      new THREE.Vector3(gateBounds.min.x, gateCenter.y, gateBounds.max.z),
+      new THREE.Vector3(gateBounds.max.x, gateCenter.y, gateBounds.min.z),
+      new THREE.Vector3(gateBounds.max.x, gateCenter.y, gateBounds.max.z),
+    ];
+    candidates.sort((a, b) => (
+      b.distanceToSquared(terminalCenter) - a.distanceToSquared(terminalCenter)
+    ));
+    rampAnchor = candidates[0];
+  }
+
   const outward = new THREE.Vector3(
-    gateCenter.x - terminalCenter.x,
+    rampAnchor.x - terminalCenter.x,
     0,
-    gateCenter.z - terminalCenter.z,
+    rampAnchor.z - terminalCenter.z,
   );
   if (outward.lengthSq() < 1e-6) throw new Error(`T4 QA view ${view} could not derive ramp-facing direction`);
   outward.normalize();
 
-  const exactGate = /\d/.test(view);
   const span = Math.max(gateSize.x, gateSize.z, exactGate ? 28 : 110);
   const distance = exactGate
-    ? Math.max(52, span * 1.15)
+    ? Math.max(34, span * 0.72)
     : Math.max(125, span * 0.82);
-  const height = exactGate ? 4.8 : 9.5;
+  const height = exactGate ? 5.0 : 9.5;
 
-  const focus = gateCenter.clone();
-  if (exactGate) focus.addScaledVector(outward, -18);
-  focus.y = exactGate ? 4.2 : 5.0;
-  const position = gateCenter.clone().addScaledVector(outward, distance);
+  const focus = exactGate ? rampAnchor.clone().addScaledVector(outward, -38) : gateCenter.clone();
+  focus.y = exactGate ? 4.5 : 5.0;
+  const position = exactGate
+    ? rampAnchor.clone().addScaledVector(outward, distance)
+    : gateCenter.clone().addScaledVector(outward, distance);
   position.y = height;
 
   camera.position.copy(position);
