@@ -94,3 +94,5 @@ jobs:
           git commit -m "Materialize exact MisterX Peterbilt truck"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
+
+# retrigger after NORMAL_METALNESS parser fix
