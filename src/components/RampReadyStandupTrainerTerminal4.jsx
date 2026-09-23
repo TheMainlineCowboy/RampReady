@@ -690,23 +690,41 @@ export default function RampReadyStandupTrainer({
         setMessage(`PHX Terminal 4 failed to load: ${error.message}`);
         throw error;
       });
-    const surfaceLoad = installKphxPackageOwnedSurfaceLayer(THREE, environment, { strict: true })
-      .then((result) => {
-        const data = result.layer.userData;
-        renderer.domElement.dataset.groundSource = "KPHX 1.75.1 exact WED package surfaces";
-        renderer.domElement.dataset.kphxVersion = String(data.sourceVersion || "missing");
-        renderer.domElement.dataset.kphxSurfaceReady = String(data.ready === true);
-        renderer.domElement.dataset.kphxSurfacePolygonCount = String(data.polygonCount ?? 0);
-        renderer.domElement.dataset.kphxSurfaceOrthophotoCount = String(data.drapedOrthophotoCount ?? 0);
-        renderer.domElement.dataset.kphxSurfaceLineMeshCount = String(data.lineMeshCount ?? 0);
-        renderer.domElement.dataset.kphxSurfaceMaterialCount = String(data.materialCount ?? 0);
-        renderer.domElement.dataset.kphxSurfaceFailureCount = String((data.failures || []).length);
+    const surfaceLoad = Promise.all([
+      installKphxPackageOwnedSurfaceLayer(THREE, environment, { strict: true }),
+      installKphxPackageOwnedSurfaceLayer(THREE, environment, {
+        strict: true,
+        manifestUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json",
+        networkUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/surface-network.json",
+      }),
+    ])
+      .then(([packageResult, a1ZdpResult]) => {
+        const packageData = packageResult.layer.userData;
+        const zdpData = a1ZdpResult.layer.userData;
+        const failures = [
+          ...(packageData.failures || []),
+          ...(zdpData.failures || []),
+        ];
+        const ready = packageData.ready === true && zdpData.ready === true && failures.length === 0;
+        renderer.domElement.dataset.groundSource = "KPHX 1.75.1 exact WED package + A1 ZDP surfaces";
+        renderer.domElement.dataset.kphxVersion = String(packageData.sourceVersion || zdpData.sourceVersion || "missing");
+        renderer.domElement.dataset.kphxSurfaceReady = String(ready);
+        renderer.domElement.dataset.kphxSurfacePolygonCount = String((packageData.polygonCount ?? 0) + (zdpData.polygonCount ?? 0));
+        renderer.domElement.dataset.kphxSurfaceOrthophotoCount = String((packageData.drapedOrthophotoCount ?? 0) + (zdpData.drapedOrthophotoCount ?? 0));
+        renderer.domElement.dataset.kphxSurfaceLineMeshCount = String((packageData.lineMeshCount ?? 0) + (zdpData.lineMeshCount ?? 0));
+        renderer.domElement.dataset.kphxSurfaceMaterialCount = String((packageData.materialCount ?? 0) + (zdpData.materialCount ?? 0));
+        renderer.domElement.dataset.kphxSurfaceFailureCount = String(failures.length);
+        renderer.domElement.dataset.kphxA1ZdpSurfaceReady = String(zdpData.ready === true);
+        renderer.domElement.dataset.kphxA1ZdpSurfacePolygonCount = String(zdpData.polygonCount ?? 0);
+        renderer.domElement.dataset.kphxA1ZdpSurfaceOrthophotoCount = String(zdpData.drapedOrthophotoCount ?? 0);
+        renderer.domElement.dataset.kphxA1ZdpSurfaceLineMeshCount = String(zdpData.lineMeshCount ?? 0);
         renderer.domElement.dataset.photoGroundSource = "not-used-exact-kphx-1.75.1-only";
-        return result;
+        return { packageResult, a1ZdpResult, ready, failures };
       })
       .catch((error) => {
         renderer.domElement.dataset.groundSource = "load-error";
         renderer.domElement.dataset.kphxSurfaceReady = "false";
+        renderer.domElement.dataset.kphxA1ZdpSurfaceReady = "false";
         renderer.domElement.dataset.kphxSurfaceFailureCount = "load-error";
         renderer.domElement.dataset.photoGroundSource = "not-used-exact-kphx-1.75.1-only";
         console.error("RampReady exact KPHX surface load failed", error);
