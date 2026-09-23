@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-09-23T07:12:35.983Z",
+  "capturedAtUtc": "2026-09-23T07:18:37.562Z",
   "view": "A14",
   "navigationError": null,
   "waitError": null,
@@ -17,14 +17,14 @@
       "kphxT4JetwayCount": "76",
       "kphxT4JetwayOpenEdges": "261",
       "kphxT4SelectedJetwayCount": "1",
-      "kphxT4CameraPosition": "-223.87348956427678,4.8,73.31960205684109",
-      "kphxT4CameraTarget": "-160.99364252522102,4.2,42.560459735493005",
+      "kphxT4CameraPosition": "-225.51978922932983,5,69.74511008368101",
+      "kphxT4CameraTarget": "-160.47496145933638,4.5,38.87165254533765",
       "kphxT4TerminalBoundsSize": "478.98434929989253,23.260831829999997,738.31990052",
       "kphxT4SurfacePolygons": "13",
       "kphxT4SurfaceLines": "35",
       "kphxT4LegacyMaskCompatibility": "true",
       "kphxT4SubstitutionPolicy": "none",
-      "kphxT4LoadMs": "3893"
+      "kphxT4LoadMs": "3783"
     },
     "bodyText": "Exact T4 building shell ready · A14 · 2 source buildings · 76 locked jetways · no substitutions"
   },
@@ -43,15 +43,15 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A060DB3B8C290000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A020D93B94080000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x7ec000eb100]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x342c00956200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x7ec000eb100]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      "text": "[.WebGL-0x342c00956200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
     }
   ],
   "pageErrors": [],

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "authority": "Exact KPHX 1.75.1 supplied Terminal4/Terminal4b DDS source textures vs recovered GLB embedded PNG decoded RGBA",
   "policy": "Raw DDS and PNG file hashes may differ after lossless format conversion; decoded RGBA must match exactly.",
-  "generatedAtUtc": "2026-09-23T07:14:16.630Z",
+  "generatedAtUtc": "2026-09-23T07:20:11.495Z",
   "targets": [
     {
       "name": "Terminal4",

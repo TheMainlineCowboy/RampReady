@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-09-23T07:13:48.904Z",
+  "capturedAtUtc": "2026-09-23T07:19:46.576Z",
   "view": "D1",
   "navigationError": null,
   "waitError": null,
@@ -17,14 +17,14 @@
       "kphxT4JetwayCount": "76",
       "kphxT4JetwayOpenEdges": "261",
       "kphxT4SelectedJetwayCount": "1",
-      "kphxT4CameraPosition": "288.90530749550487,4.8,105.62419903083114",
-      "kphxT4CameraTarget": "235.3299809427136,4.2,60.57218037725935",
+      "kphxT4CameraPosition": "286.4443849372537,5,109.81348628315087",
+      "kphxT4CameraTarget": "232.1420845695077,4.5,62.534948078473946",
       "kphxT4TerminalBoundsSize": "478.98434929989253,23.260831829999997,738.31990052",
       "kphxT4SurfacePolygons": "13",
       "kphxT4SurfaceLines": "35",
       "kphxT4LegacyMaskCompatibility": "true",
       "kphxT4SubstitutionPolicy": "none",
-      "kphxT4LoadMs": "3884"
+      "kphxT4LoadMs": "3702"
     },
     "bodyText": "Exact T4 building shell ready · D1 · 2 source buildings · 76 locked jetways · no substitutions"
   },
@@ -43,7 +43,7 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0B020148C290000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0B07D3E94080000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     }
   ],
   "pageErrors": [],
