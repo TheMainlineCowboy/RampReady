@@ -1,0 +1,45 @@
+name: KPHX Live Module Diagnostic
+
+on:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - reports/trigger-kphx-live-module-diagnostic.txt
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+
+      - name: Install
+        run: npm ci
+
+      - name: Start Vite and probe live modules
+        shell: bash
+        run: |
+          set -u
+          nohup npx vite --host 127.0.0.1 --port 4173 > /tmp/vite.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null && break
+            sleep 1
+          done
+
+          echo "=== trainer module ==="
+          curl -sS -i http://127.0.0.1:4173/RampReady/src/components/RampReadyStandupTrainerTerminal4.jsx || true
+          echo
+          echo "=== exact live installer ==="
+          curl -sS -i http://127.0.0.1:4173/RampReady/src/environment/kphxFullAirport/installLiveTerminal4Exact.js || true
+          echo
+          echo "=== object loader ==="
+          curl -sS -i http://127.0.0.1:4173/RampReady/src/environment/kphxFullAirport/installPackageOwnedObjectLayer.js || true
+          echo
+          echo "=== VITE LOG ==="
+          cat /tmp/vite.log
