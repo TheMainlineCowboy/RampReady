@@ -104,3 +104,4 @@ jobs:
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
 
+# retrigger after farther B14 camera
