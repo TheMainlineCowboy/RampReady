@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "authority": "user-supplied RampReady-manager-Kubota-exact.glb",
+  "runtimePath": "/models/manager-kubota/RampReady-manager-Kubota-exact.glb",
+  "bytes": 23988388,
+  "sha256": "726fdcb3511e6d52990da11118be4ca8a8b73c5d5c8f5bde4f934131e3c31b7d",
+  "substitution": false,
+  "simplified": false
+}
