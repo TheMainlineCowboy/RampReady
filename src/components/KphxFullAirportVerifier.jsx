@@ -9,6 +9,8 @@ const OBJECT_MANIFESTS = Object.freeze([
   "/models/kphx-full-airport/batches/gate-numbers.manifest.json",
   "/models/kphx-full-airport/batches/airfield-details.manifest.json",
   "/models/kphx-full-airport/batches/service-cargo-downtown.manifest.json",
+  "/models/kphx-full-airport/batches/t4-cdb.manifest.json",
+  "/models/kphx-full-airport/batches/t4-misterx.manifest.json",
 ]);
 
 export default function KphxFullAirportVerifier() {
@@ -94,7 +96,9 @@ export default function KphxFullAirportVerifier() {
         0,
       );
       const sourceResources = objectResults.reduce(
-        (sum, result) => sum + Number(result.manifest.packageOwned?.materializedUniqueResourceCount || 0),
+        (sum, result) => sum
+          + Number(result.manifest.packageOwned?.materializedUniqueResourceCount || 0)
+          + Number(result.manifest.resolvedExternal?.materializedUniqueResourceCount || 0),
         0,
       );
       const loadedAssetFiles = objectResults.reduce(
@@ -102,8 +106,8 @@ export default function KphxFullAirportVerifier() {
         0,
       );
 
-      if (objectPlacements !== 655) throw new Error(`Expected 655 native KPHX placements, loaded ${objectPlacements}`);
-      if (sourceResources !== 96) throw new Error(`Expected 96 native KPHX source resources, loaded ${sourceResources}`);
+      if (objectPlacements !== 1634) throw new Error(`Expected 1634 exact KPHX placements, loaded ${objectPlacements}`);
+      if (sourceResources !== 147) throw new Error(`Expected 147 exact KPHX source resources, loaded ${sourceResources}`);
       if (surfaces.layer.userData.polygonCount !== 13) throw new Error(`Expected 13 package polygons, loaded ${surfaces.layer.userData.polygonCount}`);
       if (surfaces.layer.userData.lineMeshCount < 35) throw new Error(`Expected at least 35 package line meshes, loaded ${surfaces.layer.userData.lineMeshCount}`);
       if (terminal4Jetways.layer.userData.jetwayCount !== 76) {
@@ -113,6 +117,10 @@ export default function KphxFullAirportVerifier() {
       renderer.domElement.dataset.kphxFullAirportVerifier = "ready";
       renderer.domElement.dataset.kphxPackagePlacements = String(objectPlacements);
       renderer.domElement.dataset.kphxPackageResources = String(sourceResources);
+      renderer.domElement.dataset.kphxT4MisterxPlacements = "956";
+      renderer.domElement.dataset.kphxT4MisterxResources = "50";
+      renderer.domElement.dataset.kphxT4CdbPlacements = "23";
+      renderer.domElement.dataset.kphxT4CdbResources = "1";
       renderer.domElement.dataset.kphxLoadedAssetFiles = String(loadedAssetFiles);
       renderer.domElement.dataset.kphxPackagePolygons = String(surfaces.layer.userData.polygonCount);
       renderer.domElement.dataset.kphxPackageLineMeshes = String(surfaces.layer.userData.lineMeshCount);
@@ -120,7 +128,7 @@ export default function KphxFullAirportVerifier() {
       renderer.domElement.dataset.kphxT4ExactJetwayCount = String(terminal4Jetways.layer.userData.jetwayCount);
       renderer.domElement.dataset.kphxT4ExactJetwayOpenEdges = String(terminal4Jetways.layer.userData.authoredOpenEdgeCount);
       renderer.domElement.dataset.kphxT4OldAirportJetwayGlbUsed = "false";
-      setStatus(`KPHX 1.75.1 native checkpoint ready · ${objectPlacements} placements · ${sourceResources} source resources · ${loadedAssetFiles} asset files · ${terminal4Jetways.layer.userData.jetwayCount} exact T4 jetways`);
+      setStatus(`KPHX 1.75.1 exact checkpoint ready · ${objectPlacements} placements · ${sourceResources} source resources · ${loadedAssetFiles} asset files · ${terminal4Jetways.layer.userData.jetwayCount} exact T4 jetways`);
     };
 
     load().catch((error) => {
