@@ -1,0 +1,31 @@
+# RampReady Exact Work Plan
+
+Locked project order from the 2026-09-23 review. Do not reorder without an explicit user decision.
+
+## Immediate correctness
+1. Remove/hide translucent blue gate geometry without deleting source authority or breaking placement/collision.
+2. Verify A1 aircraft heading against authored stand/gate data; fix source-derived spawn logic, not by eye.
+3. Audit parked-aircraft heading at every supported gate.
+4. Fix Kubota/LEKTRO/stand-up equipment spawn orientation from the same gate/aircraft heading logic.
+5. Verify LEKTRO driving controls and steering in the live app: FWD/REV direction, rear-wheel visual steering, left/right parity, locked 15-ft turning radius, 9 mph empty / 4 mph towing.
+
+## Exact-source completeness
+6. Deep-dive the supplied KPHX scenery/dependencies for all authored ramp props/GSE/static placements and produce a loaded/unresolved/omitted inventory.
+7. Import missing static ramp/GSE objects exactly as authored before adding custom ambience.
+8. Inventory static aircraft from the source; separate scenery-only aircraft from any models suitable for pushback training.
+9. Verify the B2↔A1 elevated walkway/road-under structure against source geometry and user photos; do not creatively rebuild before source comparison.
+10. Import remaining exact airport structures/dependencies around T4.
+
+## Immersion
+11. Add authored ambient/static aircraft population, then optional lightweight moving ambience.
+12. Build the airport perimeter/background layer, preferring KPHX/X-Plane source assets before custom PHX horizon scenery.
+13. Enable optional gyro camera in free-drive first, then training.
+14. Consolidate camera architecture for future Quest/VR head-pose input.
+15. Create a professional title/main-menu scene: pushback-driver viewpoint toward ramp, aircraft crossing frame right→left, RampReady title left-center, polished menu.
+16. Final polish/regression pass: loading transitions, audio, lighting, shadows, LOD/performance, mobile controls, VR performance, collision cleanup, gate-by-gate QA.
+
+## Current source-truth constraints
+- Preserve exact KPHX 1.75.1 source geometry/material/placement whenever available.
+- Do not use old Airport_Jetway.glb, procedural terminal massing, legacy FSX terminal fallback, or rejected vehicle placeholders.
+- Do not change locked T4 geometry merely because a visual feature looks unexpected; verify against source first.
+- Production builds must use the immutable exact-runtime release gate and must not regenerate legacy airport runtime.
