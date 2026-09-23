@@ -283,8 +283,14 @@ for (const rawLine of source.split(/\r?\n/)) {
     if (value !== 0) {
       throw new Error(`Active OBJ8 ATTR_poly_os ${value} is unsupported because glTF has no core polygon-offset material state`);
     }
-  } else if (command === "ATTR_blend") drawState.alphaMode = "BLEND";
-  else if (command === "ATTR_no_blend") drawState.alphaMode = "OPAQUE";
+  } else if (command === "ATTR_blend") {
+    drawState.alphaMode = "BLEND";
+    drawState.alphaCutoff = null;
+  } else if (command === "ATTR_no_blend") {
+    const cutoff = Number(parts[1]);
+    drawState.alphaMode = "MASK";
+    drawState.alphaCutoff = Number.isFinite(cutoff) ? cutoff : 0.5;
+  }
   else if (command === "ATTR_cull") drawState.doubleSided = false;
   else if (command === "ATTR_no_cull") drawState.doubleSided = true;
   else if (command === "ATTR_shade_smooth") drawState.shade = "smooth";
