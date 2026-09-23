@@ -106,3 +106,5 @@ jobs:
 # rerun after exact ramps/people/vans/construction staging
 
 # rerun after draped-only and keyframed GroundTraffic fixes
+
+# final rerun trigger after all T4 MisterX source/parser fixes
