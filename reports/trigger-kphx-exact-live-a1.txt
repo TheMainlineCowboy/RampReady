@@ -1,2 +1,2 @@
 Trigger actual RampReady A1 free-drive exact T4 live check.
-Require exact T4 + finalized LEKTRO AP88 R187A + package surfaces + exact A1 ZDP pavement.
+Require exact T4 + finalized LEKTRO AP88 R187A + package surfaces + exact A1 ZDP pavement polygons.
