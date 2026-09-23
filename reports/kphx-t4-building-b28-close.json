@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-09-23T07:42:28.540Z",
+  "capturedAtUtc": "2026-09-23T07:51:55.898Z",
   "state": {
     "dataset": {
       "engine": "three.js r171",
@@ -13,14 +13,14 @@
       "kphxT4JetwayCount": "76",
       "kphxT4JetwayOpenEdges": "261",
       "kphxT4SelectedJetwayCount": "1",
-      "kphxT4CameraPosition": "-223.49613531312914,6,-456.01440958440566",
-      "kphxT4CameraTarget": "-173.64470511945245,4.5,-406.13658130374205",
+      "kphxT4CameraPosition": "-252.8035860997948,7,-389.4220342993631",
+      "kphxT4CameraTarget": "-160.344228,4.5,-409.687016",
       "kphxT4TerminalBoundsSize": "478.98434929989253,23.260831829999997,738.31990052",
       "kphxT4SurfacePolygons": "13",
       "kphxT4SurfaceLines": "35",
       "kphxT4LegacyMaskCompatibility": "true",
       "kphxT4SubstitutionPolicy": "none",
-      "kphxT4LoadMs": "3914"
+      "kphxT4LoadMs": "3794"
     },
     "bodyText": "Exact T4 building shell ready · B28 · 2 source buildings · 76 locked jetways · no substitutions"
   },
