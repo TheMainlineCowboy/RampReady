@@ -1,3 +1,0 @@
-Trigger live LEKTRO R187A rear steering verification.
-Expected binding: AP88_STEER_L_STEER|AP88_STEER_R_STEER
-Verification workflow commit: a57d7a319dc31cf8e5904cd67918c4a3e89e3d3d
