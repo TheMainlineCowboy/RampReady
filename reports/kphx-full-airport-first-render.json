@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-09-23T03:16:59.304Z",
+  "capturedAtUtc": "2026-09-23T03:52:04.452Z",
   "navigationError": null,
   "waitError": null,
   "state": {
@@ -7,14 +7,14 @@
     "dataset": {
       "engine": "three.js r171",
       "kphxFullAirportVerifier": "ready",
-      "kphxLoadMsJetways": "3111",
-      "kphxLoadMsT4Zdp": "3661",
-      "kphxLoadMsSurfaces": "4585",
-      "kphxLoadMsObjects": "5288",
+      "kphxLoadMsJetways": "3499",
+      "kphxLoadMsT4Zdp": "4294",
+      "kphxLoadMsSurfaces": "4686",
+      "kphxLoadMsObjects": "5824",
       "kphxT4CameraCenter": "69.76996474373786,3.4975,-75.49463118980168",
       "kphxT4CameraSpan": "799.3306401130274",
-      "kphxLoadMsFinalRender": "13855",
-      "kphxLoadMsTotal": "19165",
+      "kphxLoadMsFinalRender": "13531",
+      "kphxLoadMsTotal": "19369",
       "kphxPackagePlacements": "1634",
       "kphxPackageResources": "147",
       "kphxT4MisterxPlacements": "956",
@@ -33,7 +33,7 @@
       "kphxT4VisibleObjectPlacements": "1072",
       "kphxT4BlockedObjectPlacements": "14",
       "kphxT4OldAirportJetwayGlbUsed": "false",
-      "kphxQaObjectsOnly": "false"
+      "kphxQaObjectsOnly": "true"
     },
     "overlayText": "KPHX 1.75.1 exact checkpoint ready · 1634 placements · 147 source resources · 133 asset files · 76 exact T4 jetways",
     "title": "RampReady",
@@ -54,15 +54,15 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000C4150000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000FC290000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0xa0c000e3100]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x104c00bc2a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0xa0c000e3100]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x104c00bc2a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     }
   ],
   "pageErrors": [],
