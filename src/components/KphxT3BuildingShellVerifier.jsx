@@ -128,13 +128,20 @@ export default function KphxT3BuildingShellVerifier() {
 
       const center = bounds.getCenter(new THREE.Vector3());
       const size = bounds.getSize(new THREE.Vector3());
-      const span = Math.max(size.x, size.z, 120);
-      const position = new THREE.Vector3(
-        center.x + span * 0.82,
-        Math.max(center.y + 28, size.y * 0.72),
-        center.z + span * 0.96,
-      );
-      const target = new THREE.Vector3(center.x, Math.max(4, center.y + size.y * 0.18), center.z);
+      const longAxisX = size.x >= size.z;
+      const facadeDistance = Math.max(110, (longAxisX ? size.x : size.z) * 0.62);
+      const position = longAxisX
+        ? new THREE.Vector3(
+          center.x + size.x * 0.06,
+          Math.max(center.y + 15, size.y * 0.72),
+          center.z + facadeDistance,
+        )
+        : new THREE.Vector3(
+          center.x + facadeDistance,
+          Math.max(center.y + 15, size.y * 0.72),
+          center.z + size.z * 0.06,
+        );
+      const target = new THREE.Vector3(center.x, Math.max(4, center.y + size.y * 0.12), center.z);
 
       camera.position.copy(position);
       camera.lookAt(target);
