@@ -747,6 +747,7 @@ export default function RampReadyStandupTrainer({
         const data = result.layer.userData;
         renderer.domElement.dataset.kphxA1ZdpMarkingsReady = String(data.ready === true);
         renderer.domElement.dataset.kphxA1ZdpMarkingLineMeshCount = String(data.lineMeshCount ?? 0);
+        renderer.domElement.dataset.kphxA1ZdpMarkingTextureDecodeCount = String(data.uniqueTextureDecodeCount ?? 0);
         renderer.domElement.dataset.kphxA1ZdpMarkingFailureCount = String((data.failures || []).length);
         renderer.domElement.dataset.groundSource = "KPHX 1.75.1 exact WED package + A1 ZDP pavement + markings";
         return result;
