@@ -1,0 +1,2 @@
+Scan exact B2/B4 lower-ramp facade depth against locked Terminal4/Terminal4b geometry.
+No geometry changes.
