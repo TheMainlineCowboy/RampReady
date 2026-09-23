@@ -50,7 +50,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .kphx-source reports
-          gdown --id 1oUuiZQiWbqIMXtqSQMklZ9E_jbsg_T2d -O .kphx-source/earth.wed.xml
+          gdown "https://drive.google.com/uc?id=1oUuiZQiWbqIMXtqSQMklZ9E_jbsg_T2d" -O .kphx-source/earth.wed.xml
           test "$(sha256sum .kphx-source/earth.wed.xml | awk '{print $1}')" = "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498"
           node scripts/extract-kphx-wed-object-placements.mjs \
             .kphx-source/earth.wed.xml \
