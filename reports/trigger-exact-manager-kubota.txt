@@ -1,3 +1,0 @@
-Materialize exact full-fidelity manager Kubota from the user-supplied authority file.
-Expected bytes: 23988388
-Expected SHA-256: 726fdcb3511e6d52990da11118be4ca8a8b73c5d5c8f5bde4f934131e3c31b7d
