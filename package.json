@@ -36,7 +36,8 @@
     "materialize:kphx-surfaces": "node scripts/materialize-kphx-surface-resources.mjs",
     "verify:kphx-surfaces": "node scripts/verify-kphx-surface-source-contract.mjs",
     "materialize:kphx-airport": "npm run materialize:kphx-full-airport && npm run materialize:kphx-surfaces",
-    "verify:exact-kphx-release": "node scripts/verify-current-kphx-pages-release.mjs"
+    "verify:exact-kphx-release": "node scripts/verify-current-kphx-pages-release.mjs",
+    "audit:kphx-t4-gate-headings": "node scripts/audit-kphx-t4-gate-headings.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
