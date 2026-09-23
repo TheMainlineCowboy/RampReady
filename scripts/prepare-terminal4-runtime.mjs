@@ -199,6 +199,7 @@ prepared = prepared
         const data = result.layer.userData;
         renderer.domElement.dataset.kphxA1ZdpMarkingsReady = String(data.ready === true);
         renderer.domElement.dataset.kphxA1ZdpMarkingLineMeshCount = String(data.lineMeshCount ?? 0);
+        renderer.domElement.dataset.kphxA1ZdpMarkingTextureDecodeCount = String(data.uniqueTextureDecodeCount ?? 0);
         renderer.domElement.dataset.kphxA1ZdpMarkingFailureCount = String((data.failures || []).length);
         renderer.domElement.dataset.groundSource = "KPHX 1.75.1 exact WED package + A1 ZDP pavement + markings";
         return result;
@@ -286,6 +287,7 @@ if (!prepared.includes("loadPolygons: true") || !prepared.includes("loadLines: f
 if (!prepared.includes("const a1MarkingsLoad = installKphxPackageOwnedSurfaceLayer")) throw new Error("Exact A1 ZDP marking preload was not injected");
 if (!prepared.includes("loadPolygons: false") || !prepared.includes("loadLines: true")) throw new Error("A1 ZDP marking-only policy was not preserved");
 if (!prepared.includes("dataset.kphxA1ZdpMarkingLineMeshCount")) throw new Error("A1 ZDP marking runtime evidence was not injected");
+if (!prepared.includes("dataset.kphxA1ZdpMarkingTextureDecodeCount")) throw new Error("A1 ZDP marking texture dedup evidence was not injected");
 if (!prepared.includes("installKphxPackageOwnedObjectLayer(THREE, environment")) throw new Error("Full KPHX package-owned object layer was not connected");
 if (!prepared.includes("excludeResources: Object.keys(KPHX_EXACT_RECOVERED_ASSETS.singleResourceAssets)")) throw new Error("Recovered exact KPHX objects are not protected from duplicate loading");
 if (!prepared.includes("Promise.all([terminalLoad, packageObjectLoad, surfaceLoad, a1MarkingsLoad])")) throw new Error("Combined PHX exact object/surface/marking readiness gate was not injected");
