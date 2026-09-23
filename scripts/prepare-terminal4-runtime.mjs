@@ -8,8 +8,8 @@ const outputPath = path.join(root, "src/components/RampReadyStandupTrainerTermin
 const source = fs.readFileSync(sourcePath, "utf8");
 const importAnchor = 'import { createProceduralLektroRig, validateTugRig } from "../tug/lektroRig.js";';
 const equipmentImport = 'import { installRuntimeEquipmentVisual, supportsRuntimeEquipmentVisual } from "../tug/runtimeEquipmentVisual.js";';
-const environmentImport = 'import { buildTerminal4RampEnvironment } from "../environment/terminal4RampEnvironment.js";';
-const authoredEnvironmentImport = 'import { installSourceKphxTerminal4Visual } from "../environment/sourceKphxTerminal4.js";\nimport { installSourceKphxLandmarks } from "../environment/sourceKphxLandmarks.js";\nimport { installSourceKphxWEDJetways } from "../environment/sourceKphxJetways.js";\nimport { installKphxPackageOwnedObjectLayer } from "../environment/kphxFullAirport/installPackageOwnedObjectLayer.js";\nimport { KPHX_EXACT_RECOVERED_ASSETS } from "../environment/kphxFullAirport/exactAssetCatalog.js";';
+const environmentImport = 'import { buildKphxExactLiveEnvironment as buildTerminal4RampEnvironment, installKphxExactLiveTerminal4 as installAuthoredTerminal4Visual } from "../environment/kphxFullAirport/installLiveTerminal4Exact.js";';
+const authoredEnvironmentImport = 'import { installKphxPackageOwnedObjectLayer } from "../environment/kphxFullAirport/installPackageOwnedObjectLayer.js";\nimport { KPHX_EXACT_RECOVERED_ASSETS } from "../environment/kphxFullAirport/exactAssetCatalog.js";';
 const authoredGroundImport = 'import { installAuthoredKphxGround } from "../environment/authoredKphxGround.js";';
 const authoredPhotoGroundImport = 'import { installAuthoredKphxPhotoGround } from "../environment/authoredKphxPhotoGround.js";';
 const groundStart = source.indexOf("function buildGround(scene) {");
@@ -82,6 +82,13 @@ prepared = prepared
     renderer.domElement.dataset.groundMarkingContactMode = "loading";
     const terminalLoad = installAuthoredTerminal4Visual(THREE, environment)
       .then((terminal) => {
+        renderer.domElement.dataset.kphxExactLiveT4 = "ready";
+        renderer.domElement.dataset.kphxExactLiveT4BuildingCount = String(environment.userData.exactLiveT4BuildingCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveT4JetwayCount = String(environment.userData.exactLiveT4JetwayCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveT4JetwayOpenEdgeCount = String(environment.userData.exactLiveT4JetwayOpenEdgeCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveOldAirportJetwayGlbUsed = String(environment.userData.exactLiveOldAirportJetwayGlbUsed === true);
+        renderer.domElement.dataset.kphxExactLiveProceduralTerminalMassing = String(environment.userData.proceduralTerminalMassing === true);
+        renderer.domElement.dataset.kphxExactLiveLegacyFsxTerminal = String(environment.userData.legacyFsxTerminal === true);
         renderer.domElement.dataset.terminal4TextureCount = String(environment.userData.authoredTerminal4TextureCount);
         renderer.domElement.dataset.terminal4ExactTextureCount = String(environment.userData.authoredTerminal4ExactTextureCount);
         renderer.domElement.dataset.terminal4FallbackTextureCount = String(environment.userData.authoredTerminal4FallbackTextureCount);
@@ -103,6 +110,7 @@ prepared = prepared
         return terminal;
       })
       .catch((error) => {
+        renderer.domElement.dataset.kphxExactLiveT4 = "load-error";
         renderer.domElement.dataset.terminal4Position = "load-error";
         renderer.domElement.dataset.terminal4A1NearestGeometryMeters = "load-error";
         renderer.domElement.dataset.terminal4Placement = "load-error";
@@ -206,13 +214,27 @@ prepared = prepared
     "        cradleOffset: rig.profile.cradleOffset,",
     `        cradleOffset: rig.profile.cradleOffset,
         steeringMode: rig.profile.steeringMode,
-        wheelbase: rig.profile.wheelbase,`,
+        wheelbase: rig.profile.wheelbase,
+        freeMaxSpeed: rig.profile.freeMaxSpeed,
+        towMaxSpeed: rig.profile.towMaxSpeed,
+        maxSteerAngle: rig.profile.kinematicMaxSteerAngle,`,
   )
   .replace(
     "    rig.root.userData.equipmentId = equipmentId;",
     `    rig.root.userData.equipmentId = equipmentId;
     renderer.domElement.dataset.tugSource = equipmentId === "standup-tug" ? "loading" : "procedural-lektro";
     renderer.domElement.dataset.steeringMode = rig.profile.steeringMode;
+    renderer.domElement.dataset.rigProfile = rig.profile.id;
+    renderer.domElement.dataset.rigWheelbaseMeters = String(rig.profile.wheelbase);
+    renderer.domElement.dataset.rigTurningRadiusMeters = String(rig.profile.turningRadius ?? "");
+    renderer.domElement.dataset.rigFreeMaxSpeedMps = String(rig.profile.freeMaxSpeed ?? "");
+    renderer.domElement.dataset.rigTowMaxSpeedMps = String(rig.profile.towMaxSpeed ?? "");
+    renderer.domElement.dataset.rigKinematicMaxSteerDegrees = Number.isFinite(rig.profile.kinematicMaxSteerAngle)
+      ? THREE.MathUtils.radToDeg(rig.profile.kinematicMaxSteerAngle).toFixed(3)
+      : "";
+    renderer.domElement.dataset.rigVisualMaxSteerDegrees = Number.isFinite(rig.profile.visualMaxSteerAngle)
+      ? THREE.MathUtils.radToDeg(rig.profile.visualMaxSteerAngle).toFixed(3)
+      : "";
     renderer.domElement.dataset.operatorSide = rig.profile.operatorEye[0] > 0 ? "right" : "left";
     renderer.domElement.dataset.operatorControls = equipmentId === "standup-tug" ? "loading" : "not-applicable";
     void installRuntimeEquipmentVisual(rig, equipmentId)
@@ -246,7 +268,7 @@ if (!prepared.includes('dataset.terminal4Position = environment.userData.authore
 if (!prepared.includes('dataset.terminal4A1NearestGeometryMeters = environment.userData.authoredTerminal4A1NearestGeometryDistance')) throw new Error("A1-to-terminal clearance evidence was not injected");
 if (!prepared.includes('dataset.terminal4Placement = environment.userData.authoredTerminal4Placement')) throw new Error("Source placement authority evidence was not injected");
 if (!prepared.includes('dataset.b15CorridorMeters = environment.userData.trainingCorridor')) throw new Error("B15 corridor distance evidence was not injected");
-if (!prepared.includes("installSourceKphxTerminal4Visual(THREE, environment)")) throw new Error("Exact KPHX source terminal runtime loader was not connected");\nif (!prepared.includes("installSourceKphxLandmarks(THREE, environment, sourceAirportFrame)")) throw new Error("Exact KPHX source landmark runtime loader was not connected");\nif (!prepared.includes("installSourceKphxWEDJetways(THREE, environment, sourceAirportFrame)")) throw new Error("Exact KPHX WED jetway runtime loader was not connected");
+if (!prepared.includes("installAuthoredTerminal4Visual(THREE, environment)")) throw new Error("Exact KPHX T4 live runtime loader was not connected");
 if (!prepared.includes("installAuthoredKphxGround(THREE, environment)")) throw new Error("Updated KPHX ground runtime loader was not connected");
 if (!prepared.includes("installAuthoredKphxPhotoGround(THREE, environment)")) throw new Error("Full-airport PHX aerial runtime loader was not connected");
 if (!prepared.includes("installKphxPackageOwnedObjectLayer(THREE, environment")) throw new Error("Full KPHX package-owned object layer was not connected");
@@ -262,6 +284,9 @@ if (!prepared.includes('dataset.operatorControls = rig.root.userData.standupStee
 if (!prepared.includes("createProceduralLektroRig(THREE, equipmentId)")) throw new Error("Equipment-specific rig profile was not injected");
 if (!prepared.includes("steeringMode: rig.profile.steeringMode")) throw new Error("Equipment-specific steering mode was not injected");
 if (!prepared.includes("wheelbase: rig.profile.wheelbase")) throw new Error("Equipment-specific wheelbase was not injected");
+if (!prepared.includes("freeMaxSpeed: rig.profile.freeMaxSpeed")) throw new Error("Equipment-specific free speed was not injected");
+if (!prepared.includes("towMaxSpeed: rig.profile.towMaxSpeed")) throw new Error("Equipment-specific tow speed was not injected");
+if (!prepared.includes("maxSteerAngle: rig.profile.kinematicMaxSteerAngle")) throw new Error("Equipment-specific turning limit was not injected");
 if (!prepared.includes("const environment = buildGround(scene);")) throw new Error("Terminal 4 environment was not connected to the active scene");
 if (!prepared.includes("camera, environment, rig")) throw new Error("Environment reference was not retained by simulator state");
 if (prepared.includes("new THREE.PlaneGeometry(90, 140)")) throw new Error("Legacy flat ramp geometry remains in active generated trainer");
