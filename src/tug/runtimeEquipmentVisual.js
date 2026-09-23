@@ -344,6 +344,10 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
     if (!gltf?.scene) throw new Error("Finalized LEKTRO AP88 R187A GLB loaded without a scene");
 
     gltf.scene.name = "RampReady_LEKTRO_AP88_TVO914_R187A";
+    // The finalized R187A GLB was authored facing -Z while the physics rig uses +Z as forward.
+    // Correct only the visible model-space orientation; do not invert physics or controls.
+    gltf.scene.rotation.y = Math.PI;
+    gltf.scene.userData.modelForwardCorrectionDegrees = 180;
     gltf.scene.traverse((node) => {
       if (!node.isMesh) return;
       if (!node.geometry.getAttribute("normal")) node.geometry.computeVertexNormals();
@@ -359,6 +363,7 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
     rig.root.userData.runtimeVisualUrl = url;
     rig.root.userData.runtimeVisualRevision = "R187A";
     rig.root.userData.runtimeVisualSha256 = "1a199a43b5339924693a20bd55d5c8c05f15019e6845a085b0be669fc38bd140";
+    rig.root.userData.modelForwardCorrectionDegrees = 180;
     return "lektro-ap88-tvo914-r187a";
   }
 
