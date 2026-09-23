@@ -115,7 +115,6 @@ jobs:
           mkdir -p .misterx
           gdown --folder "https://drive.google.com/drive/folders/1qYJkED8GB83fDfAI_mEVXWjr2lC6IjoB" \
             -O .misterx \
-            --remaining-ok
           test -f .misterx/library.txt
 
       - name: Resolve all exact WED MisterX resources
