@@ -258,3 +258,5 @@ jobs:
           git commit -m "Materialize full exact KPHX MisterX objects"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
+
+# retrigger after exact GLOBAL_SHADOWS / GLOBAL_LOD / TILTED support
