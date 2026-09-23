@@ -25,6 +25,13 @@ export default function PushbackTrainer() {
   const [selectedEquipmentId, setSelectedEquipmentId] = useState(DEFAULT_EQUIPMENT_ID);
   const [activeEquipmentId, setActiveEquipmentId] = useState(null);
   const [launchMode, setLaunchMode] = useState("training");
+  const [runtimeLoading, setRuntimeLoading] = useState({
+    active: false,
+    completed: 0,
+    total: 3,
+    label: "Preparing simulator…",
+    failed: false,
+  });
   const baselineRef = useRef(null);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
   const selectedEquipment = getEquipmentProfile(selectedEquipmentId);
@@ -58,22 +65,89 @@ export default function PushbackTrainer() {
   const changeEquipment = useCallback(() => {
     stopGyro();
     setLaunchMode("training");
+    setRuntimeLoading({ active: false, completed: 0, total: 3, label: "Preparing simulator…", failed: false });
     setActiveEquipmentId(null);
   }, [stopGyro]);
 
+  const beginRuntimeLoading = useCallback(() => {
+    setRuntimeLoading({
+      active: true,
+      completed: 0,
+      total: 3,
+      label: "Loading selected equipment…",
+      failed: false,
+    });
+  }, []);
+
   const launch = useCallback((mode) => {
+    beginRuntimeLoading();
     setLaunchMode(mode);
     setActiveEquipmentId(selectedEquipmentId);
-  }, [selectedEquipmentId]);
+  }, [beginRuntimeLoading, selectedEquipmentId]);
 
   // Keep the equipment selector as the real default route. The query string is
   // an evidence-only launch request applied after the normal initial state has
   // mounted, so production/user navigation remains unchanged without a query.
   useEffect(() => {
     if (!initialInspectionPreset || activeEquipmentId) return;
+    beginRuntimeLoading();
     setLaunchMode("inspection");
     setActiveEquipmentId(DEFAULT_EQUIPMENT_ID);
-  }, [activeEquipmentId, initialInspectionPreset]);
+  }, [activeEquipmentId, beginRuntimeLoading, initialInspectionPreset]);
+
+  useEffect(() => {
+    if (!activeEquipmentId) return undefined;
+    let cancelled = false;
+    let timer = 0;
+
+    const expectedTugSource = activeEquipmentId === "lektro-88"
+      ? "lektro-ap88-tvo914-r187a"
+      : activeEquipmentId === "standup-tug"
+        ? "authored-standup"
+        : null;
+
+    const poll = () => {
+      if (cancelled) return;
+      const canvas = document.querySelector("canvas.trainerCanvas");
+      const data = canvas?.dataset || {};
+      const equipmentReady = expectedTugSource
+        ? data.tugSource === expectedTugSource
+        : Boolean(data.tugSource && data.tugSource !== "loading" && data.tugSource !== "load-error");
+      const terminalReady = data.kphxExactLiveT4 === "ready";
+      const surfacesReady = data.kphxSurfaceReady === "true";
+      const failed = [
+        data.tugSource,
+        data.kphxExactLiveT4,
+        data.kphxSurfaceReady,
+        data.environmentSource,
+      ].includes("load-error");
+
+      const completed = [equipmentReady, terminalReady, surfacesReady].filter(Boolean).length;
+      let label = "Loading selected equipment…";
+      if (equipmentReady && !terminalReady) label = "Loading exact PHX Terminal 4 and jetways…";
+      else if (equipmentReady && terminalReady && !surfacesReady) label = "Loading exact KPHX ramp surfaces…";
+      else if (completed === 3) label = "RampReady";
+
+      setRuntimeLoading((previous) => {
+        const active = completed < 3 && !failed;
+        if (
+          previous.active === active
+          && previous.completed === completed
+          && previous.label === label
+          && previous.failed === failed
+        ) return previous;
+        return { active, completed, total: 3, label, failed };
+      });
+
+      if (completed < 3 && !failed) timer = window.setTimeout(poll, 100);
+    };
+
+    poll();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [activeEquipmentId]);
 
   useEffect(() => {
     if (!gyroEnabled || !activeEquipmentId) return undefined;
@@ -163,16 +237,33 @@ export default function PushbackTrainer() {
     );
   }
 
+  const loadingPercent = Math.round((runtimeLoading.completed / runtimeLoading.total) * 100);
+
   return (
-    <RampReadyLektroPrototypeTrainer
-      key={`${activeEquipmentId}-${launchMode}-${initialInspectionPreset || "manual"}`}
-      equipmentId={activeEquipmentId}
-      initialInspectionMode={launchMode === "inspection"}
-      initialInspectionPreset={initialInspectionPreset || "a1"}
-      onChangeEquipment={changeEquipment}
-      gyroAvailable={gyroAvailable}
-      gyroEnabled={gyroEnabled}
-      onToggleGyro={toggleGyro}
-    />
+    <div className="rr-runtime-host">
+      <RampReadyLektroPrototypeTrainer
+        key={`${activeEquipmentId}-${launchMode}-${initialInspectionPreset || "manual"}`}
+        equipmentId={activeEquipmentId}
+        initialInspectionMode={launchMode === "inspection"}
+        initialInspectionPreset={initialInspectionPreset || "a1"}
+        onChangeEquipment={changeEquipment}
+        gyroAvailable={gyroAvailable}
+        gyroEnabled={gyroEnabled}
+        onToggleGyro={toggleGyro}
+      />
+      {(runtimeLoading.active || runtimeLoading.failed) && (
+        <div className="rr-runtime-loading" role="status" aria-live="polite">
+          <div className="rr-runtime-loading-card">
+            <p className="rr-runtime-loading-kicker">RampReady · PHX</p>
+            <h1>{runtimeLoading.failed ? "Unable to finish loading" : "Preparing simulator"}</h1>
+            <p>{runtimeLoading.failed ? "A required runtime asset failed to load." : runtimeLoading.label}</p>
+            <div className="rr-runtime-loading-track" aria-label="Simulator loading progress">
+              <span style={{ width: `${loadingPercent}%` }} />
+            </div>
+            <b>{loadingPercent}%</b>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
