@@ -51,6 +51,7 @@ const expectedDataset = {
   kphxA1ZdpMarkingLineMeshCount: "26",
   kphxA1ZdpMarkingTextureDecodeCount: "4",
   kphxA1ZdpMarkingFailureCount: "0",
+  kphxTransparentConcreteUnderlayCount: "8",
   photoGroundSource: "not-used-exact-kphx-1.75.1-only",
 };
 for (const [key, expected] of Object.entries(expectedDataset)) {
@@ -123,6 +124,10 @@ assert(equipment.includes("RampReady-manager-Kubota-exact.glb"), "Live manager K
 assert(equipment.includes('"manager-kubota-exact"'), "Live manager Kubota exact source label missing");
 assert(equipment.includes("AuthoredSteerPivot_L") && equipment.includes("AuthoredSteerPivot_R"), "Live manager Kubota steering pivot binding missing");
 
+const trainer = fs.readFileSync("src/components/RampReadyStandupTrainerTerminal4.jsx", "utf8");
+assert(trainer.includes("KPHX_INVISIBLE_CONCRETE_SOURCE_UNDERLAY"), "Transparent concrete source-compatible underlay missing");
+assert(trainer.includes("ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol"), "Exact A1 source concrete underlay authority missing");
+
 const launcher = fs.readFileSync("src/components/PushbackTrainer.jsx", "utf8");
 assert(launcher.includes("total: 4"), "Four-stage preload screen contract missing");
 assert(launcher.includes("kphxA1ZdpMarkingsReady"), "Preload screen does not wait for exact A1 markings");
@@ -149,6 +154,7 @@ console.log(JSON.stringify({
   pavementPolygons: 27,
   a1ZdpMarkingMeshes: 26,
   a1ZdpUniqueTextureDecodes: 4,
+  transparentConcreteUnderlays: 8,
   lektroRevision: lektro.revision,
   lektroSha256: lektro.sha256,
   managerKubotaBytes: kubota.bytes,
