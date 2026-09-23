@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "evidenceCommit": "88102a5b0d3fa63c4a12c422c96439ff843a2dac",
+  "authority": "KPHX 1.75.1 earth.wed.xml + exact recovered Terminal4/Terminal4b OBJ8 geometry and source textures",
+  "policy": {
+    "substitution": "none",
+    "manualGeometry": "forbidden",
+    "manualWallFill": "forbidden",
+    "placementChanges": "forbidden",
+    "jetwayChanges": "forbidden",
+    "rule": "Any wall, opening, column, overhang, recess, window band, or lower-ramp void must remain exactly as authored in the supplied KPHX source."
+  },
+  "buildings": [
+    {
+      "resource": "Terminals/Terminal4.obj",
+      "wedObjectId": "2327",
+      "latitude": 33.434761986,
+      "longitude": -111.996702473,
+      "headingDegrees": 0,
+      "runtimeAsset": "/models/kphx/Terminal4.exact.glb",
+      "sourceSha256": "e93807a1239377e1223eb325c2b7048e6c84f968d9c790fd0cd6cc5da050cd80",
+      "runtimeSha256": "1899c3d3258922868f835b62dbd1b85713871017d52d34167d80c136f8b6d8b2",
+      "vertexCount": 21720,
+      "indexCount": 42501,
+      "decodedDayTextureExact": true,
+      "decodedLitTextureExact": true
+    },
+    {
+      "resource": "Terminals/Terminal4b.obj",
+      "wedObjectId": "5301",
+      "latitude": 33.436209533,
+      "longitude": -111.99666441,
+      "headingDegrees": 0,
+      "runtimeAsset": "/models/kphx/Terminal4b.exact.glb",
+      "sourceSha256": "acbefef71c59942eb8e336996b9f2b9c8e8a87c6ec5cc64046292e5332ce48bc",
+      "runtimeSha256": "1380cb6b1f33a3beca14a44ca4f17ef765bcf718c099769d6a723f0dbc10ab43",
+      "vertexCount": 40773,
+      "indexCount": 70725,
+      "decodedDayTextureExact": true,
+      "decodedLitTextureExact": true
+    }
+  ],
+  "lockedJetwayContext": {
+    "jetwayCount": 76,
+    "authoredOpenEdges": 261,
+    "modifiedDuringBuildingPass": false
+  },
+  "exactSurfaceContext": {
+    "polygonCount": 13,
+    "minimumLineMeshes": 35
+  },
+  "visualQa": {
+    "sampledGateViews": [
+      "A1",
+      "A14",
+      "A30",
+      "B2",
+      "B14",
+      "B28",
+      "C1",
+      "C9",
+      "C19",
+      "D1",
+      "D4",
+      "D7"
+    ],
+    "result": "PASS",
+    "note": "Solid lower walls, open lower-ramp sections, columns, beams, window bands, and terminal-to-jetway relationships are rendered directly from the exact source assets. Some very close QA cameras intersect or sit inside authored open concourse geometry; this is an inspection-camera artifact only and is not treated as missing geometry."
+  },
+  "materialQa": {
+    "sourceTextures": [
+      "Terminal4_comb.dds",
+      "Terminal4_LIT.dds",
+      "Terminal4b_comb.dds",
+      "Terminal4b_LIT.dds"
+    ],
+    "sourceFileHashesVerified": true,
+    "decodedRgbaExactMatch": true
+  }
+}
