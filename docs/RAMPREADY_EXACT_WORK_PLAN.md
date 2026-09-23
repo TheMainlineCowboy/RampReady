@@ -3,7 +3,7 @@
 Locked project order from the 2026-09-23 review. Do not reorder without an explicit user decision.
 
 ## Immediate correctness
-1. Remove/hide translucent blue gate geometry without deleting source authority or breaking placement/collision.
+1. ✅ COMPLETE — Remove/hide translucent blue gate geometry without deleting source authority or breaking placement/collision. Root cause: sky visible through exact invisible-concrete helper footprints because the standalone app lacks X-Plane terrain beneath them. Fix: exact helper footprints underlaid with authored A1 ZDP `Flat_New_Uniform.pol` concrete; 8 footprints, no broad fake ground plane.
 2. Verify A1 aircraft heading against authored stand/gate data; fix source-derived spawn logic, not by eye.
 3. Audit parked-aircraft heading at every supported gate.
 4. Fix Kubota/LEKTRO/stand-up equipment spawn orientation from the same gate/aircraft heading logic.
