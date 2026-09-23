@@ -84,7 +84,7 @@ jobs:
           let navigationError = null;
           let waitError = null;
           try {
-            await page.goto("http://127.0.0.1:4173/RampReady/?kphxFullAirport=1", {
+            await page.goto("http://127.0.0.1:4173/RampReady/?kphxFullAirport=1&kphxQaObjectsOnly=1", {
               waitUntil: "domcontentloaded",
               timeout: 60000,
             });
@@ -324,6 +324,11 @@ jobs:
           if (evidence.kphxT4MisterxResources !== "50") failures.push(`t4MisterxResources=${evidence.kphxT4MisterxResources || "missing"}`);
           if (evidence.kphxT4CdbPlacements !== "23") failures.push(`t4CdbPlacements=${evidence.kphxT4CdbPlacements || "missing"}`);
           if (evidence.kphxT4CdbResources !== "1") failures.push(`t4CdbResources=${evidence.kphxT4CdbResources || "missing"}`);
+          if (evidence.kphxT4ZdpPlacements !== "13") failures.push(`t4ZdpPlacements=${evidence.kphxT4ZdpPlacements || "missing"}`);
+          if (evidence.kphxT4ZdpResources !== "1") failures.push(`t4ZdpResources=${evidence.kphxT4ZdpResources || "missing"}`);
+          if (evidence.kphxT4VisibleObjectPlacements !== "1072") failures.push(`t4VisibleObjectPlacements=${evidence.kphxT4VisibleObjectPlacements || "missing"}`);
+          if (evidence.kphxT4BlockedObjectPlacements !== "14") failures.push(`t4BlockedObjectPlacements=${evidence.kphxT4BlockedObjectPlacements || "missing"}`);
+          if (evidence.kphxQaObjectsOnly !== "true") failures.push(`qaObjectsOnly=${evidence.kphxQaObjectsOnly || "missing"}`);
           if (evidence.kphxPackagePolygons !== "13") failures.push(`polygons=${evidence.kphxPackagePolygons || "missing"}`);
           if (evidence.kphxSourceVersion !== "1.75.1") failures.push(`version=${evidence.kphxSourceVersion || "missing"}`);
           if (result.navigationError) failures.push(`navigation=${result.navigationError}`);
@@ -340,6 +345,9 @@ jobs:
             resources:evidence.kphxPackageResources,
             t4MisterxPlacements:evidence.kphxT4MisterxPlacements,
             t4CdbPlacements:evidence.kphxT4CdbPlacements,
+            t4ZdpPlacements:evidence.kphxT4ZdpPlacements,
+            t4VisibleObjectPlacements:evidence.kphxT4VisibleObjectPlacements,
+            t4BlockedObjectPlacements:evidence.kphxT4BlockedObjectPlacements,
             polygons:evidence.kphxPackagePolygons,
             lineMeshes:evidence.kphxPackageLineMeshes,
             version:evidence.kphxSourceVersion,
