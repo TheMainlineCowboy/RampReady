@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-09-23T03:12:00.297Z",
+  "capturedAtUtc": "2026-09-23T03:17:33.568Z",
   "navigationError": null,
   "waitError": null,
   "state": {
@@ -32,7 +32,7 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0C041755C0B0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0404175C4150000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     }
   ],
   "pageErrors": [],
