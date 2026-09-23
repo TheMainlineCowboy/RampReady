@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "view": "A30",
+  "evidenceCommit": "1f50cac7e48dc6786a526b708d233b11c627f81b",
+  "exactSourceGeometry": true,
+  "exactSourceDecodedTexturePixels": true,
+  "wedPlacementLocked": true,
+  "jetwaysLocked": true,
+  "substitutionPolicy": "none",
+  "visualFinding": "Ramp-facing terminal shell is coherent in the A30 inspection view; no obvious missing source faces, invented walls, or culling/material breaks visible.",
+  "policy": "No airport geometry, placement, material, or jetway transform was changed."
+}
