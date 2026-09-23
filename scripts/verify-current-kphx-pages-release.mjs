@@ -117,6 +117,8 @@ assert(liveInstaller.includes("exactLiveOldAirportJetwayGlbUsed: false"), "Old A
 const equipment = fs.readFileSync("src/tug/runtimeEquipmentVisual.js", "utf8");
 assert(equipment.includes("LEKTRO_AP88_TVO914.glb"), "Live LEKTRO does not load finalized R187A GLB");
 assert(equipment.includes('"lektro-ap88-tvo914-r187a"'), "Live LEKTRO finalized source label missing");
+assert(equipment.includes("gltf.scene.rotation.y = Math.PI"), "Live LEKTRO 180-degree model-forward correction missing");
+assert(equipment.includes("modelForwardCorrectionDegrees = 180"), "Live LEKTRO orientation evidence missing");
 assert(equipment.includes("RampReady-manager-Kubota-exact.glb"), "Live manager Kubota exact GLB path missing");
 assert(equipment.includes('"manager-kubota-exact"'), "Live manager Kubota exact source label missing");
 assert(equipment.includes("AuthoredSteerPivot_L") && equipment.includes("AuthoredSteerPivot_R"), "Live manager Kubota steering pivot binding missing");
@@ -132,6 +134,11 @@ const equipmentProfiles = fs.readFileSync("src/config/equipmentProfiles.js", "ut
 assert(equipmentProfiles.includes('id: "manager-kubota"'), "Manager Kubota equipment profile missing");
 assert(equipmentProfiles.includes("trainingAvailable: false"), "Manager Kubota must remain inspection-only");
 assert(equipmentProfiles.includes("inspectionAvailable: true"), "Manager Kubota inspection availability missing");
+
+const tugRig = fs.readFileSync("src/tug/lektroRig.js", "utf8");
+assert(tugRig.includes('id: "manager-kubota-exact"'), "Manager Kubota exact rig profile missing");
+assert(tugRig.includes('steeringMode: "front"'), "Manager Kubota front-steer authority missing");
+assert(tugRig.includes("wheelbase: 1.94"), "Manager Kubota wheelbase authority missing");
 
 console.log(JSON.stringify({
   status: "PASS",
