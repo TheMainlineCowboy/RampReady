@@ -52,7 +52,6 @@ export default function KphxFullAirportVerifier() {
     sun.shadow.camera.bottom = -1800;
     scene.add(sun);
 
-    let frame = 0;
     let disposed = false;
     const resize = () => {
       if (disposed) return;
@@ -66,30 +65,41 @@ export default function KphxFullAirportVerifier() {
     resize();
     window.addEventListener("resize", resize);
 
-    const render = () => {
-      if (disposed) return;
-      renderer.render(scene, camera);
-      frame = requestAnimationFrame(render);
-    };
-    render();
-
     const load = async () => {
-      const objectResults = [];
-      for (const manifestUrl of OBJECT_MANIFESTS) {
-        objectResults.push(await installKphxPackageOwnedObjectLayer(THREE, environment, {
+      const verifierStartedAt = performance.now();
+      const stageStartedAt = new Map();
+
+      const timed = async (name, task) => {
+        stageStartedAt.set(name, performance.now());
+        const result = await task;
+        const elapsed = Math.round(performance.now() - stageStartedAt.get(name));
+        renderer.domElement.dataset[`kphxLoadMs${name}`] = String(elapsed);
+        return result;
+      };
+
+      setStatus("Loading exact KPHX 1.75.1 · assembling exact source layers…");
+
+      const objectTask = timed("Objects", Promise.all(
+        OBJECT_MANIFESTS.map((manifestUrl) => installKphxPackageOwnedObjectLayer(THREE, environment, {
           manifestUrl,
           strict: true,
           assetConcurrency: 8,
-        }));
-      }
+        })),
+      ));
 
-      const surfaces = await installKphxPackageOwnedSurfaceLayer(THREE, environment, {
+      const surfaceTask = timed("Surfaces", installKphxPackageOwnedSurfaceLayer(THREE, environment, {
         strict: true,
-      });
+      }));
 
-      const terminal4Jetways = await installKphxTerminal4StockJetways(THREE, environment, {
+      const jetwayTask = timed("Jetways", installKphxTerminal4StockJetways(THREE, environment, {
         strict: true,
-      });
+      }));
+
+      const [objectResults, surfaces, terminal4Jetways] = await Promise.all([
+        objectTask,
+        surfaceTask,
+        jetwayTask,
+      ]);
 
       const objectPlacements = objectResults.reduce(
         (sum, result) => sum + Number(result.layer.userData.loadedPlacementCount || 0),
@@ -113,6 +123,12 @@ export default function KphxFullAirportVerifier() {
       if (terminal4Jetways.layer.userData.jetwayCount !== 76) {
         throw new Error(`Expected 76 exact T4 jetways, loaded ${terminal4Jetways.layer.userData.jetwayCount}`);
       }
+
+      setStatus("KPHX exact source layers assembled · rendering integrated T4 checkpoint…");
+      const finalRenderStartedAt = performance.now();
+      renderer.render(scene, camera);
+      renderer.domElement.dataset.kphxLoadMsFinalRender = String(Math.round(performance.now() - finalRenderStartedAt));
+      renderer.domElement.dataset.kphxLoadMsTotal = String(Math.round(performance.now() - verifierStartedAt));
 
       renderer.domElement.dataset.kphxFullAirportVerifier = "ready";
       renderer.domElement.dataset.kphxPackagePlacements = String(objectPlacements);
@@ -140,7 +156,6 @@ export default function KphxFullAirportVerifier() {
 
     return () => {
       disposed = true;
-      cancelAnimationFrame(frame);
       window.removeEventListener("resize", resize);
       environment.traverse((node) => {
         node.geometry?.dispose?.();
