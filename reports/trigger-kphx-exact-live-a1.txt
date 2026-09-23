@@ -1,4 +1,5 @@
-Trigger exact live A1 verification for WED gate-pose alignment.
-Expected source: KPHX 1.75.1 WED_RampPosition 27855, heading -90.08 deg.
-Expected aircraft/equipment runtime yaw: 180.08 deg.
-Verification contract commit: bce1687f0abd21e628c2c6ad498fc26b4e703792
+Trigger exact live A1 + all-supported-T4 gate heading verification.
+Shared scenario authority: same-wed-ramp-position-aircraft-equipment-pose-v1
+Expected supported ramp positions: 76
+Expected supported gate names: 75
+Trigger contract commit: a416a71a75204a242018d8d84cbac171cc2a7de9
