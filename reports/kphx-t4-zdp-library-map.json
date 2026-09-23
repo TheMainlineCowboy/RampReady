@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "libraryRoot": "/home/runner/work/RampReady/RampReady/.zdp",
+  "libraryTxt": "/home/runner/work/RampReady/RampReady/.zdp/library.txt",
+  "libraryTxtSha256": "8330b471c1a5061e273b534d787c6efa3cf589a1980c5583d65db6b67fff981b",
+  "virtualPrefix": "ZDP_Library",
+  "requestedCount": 1,
+  "resolvedCount": 1,
+  "unresolved": [],
+  "ambiguous": [],
+  "resources": {
+    "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj": {
+      "command": "EXPORT_EXCLUDE",
+      "region": "Default",
+      "virtualResource": "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+      "physicalResource": "markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.zdp/markings/aircraft_stop_markers/SDF_code_C_AAL.obj",
+      "sha256": "51e690af793d126525b6ce81eb9f38fa19ee88687690dfbfafcac8800be879c7"
+    }
+  }
+}
