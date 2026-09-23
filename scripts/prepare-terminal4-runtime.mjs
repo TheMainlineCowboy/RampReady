@@ -140,7 +140,7 @@ prepared = prepared
         renderer.domElement.dataset.kphxPackageObjectPlacements = "load-error";
         renderer.domElement.dataset.kphxPackageObjectResources = "load-error";
         console.error("RampReady KPHX package object layer failed", error);
-        setMessage(`PHX package object layer failed to load: ${error.message}`);
+        setMessage(\`PHX package object layer failed to load: \${error.message}\`);
         throw error;
       });
     const surfaceLoad = Promise.all([
