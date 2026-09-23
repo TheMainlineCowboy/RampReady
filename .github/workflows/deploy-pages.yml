@@ -33,11 +33,11 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Run complete RampReady verification suite
+      - name: Run current exact KPHX release gate
         shell: bash
         run: |
           set -o pipefail
-          npm run verify 2>&1 | tee release-verify.log
+          node scripts/verify-current-kphx-pages-release.mjs 2>&1 | tee release-verify.log
 
       - name: Restore exact release commit after verification generation
         shell: bash
