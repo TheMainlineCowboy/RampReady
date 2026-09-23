@@ -1,0 +1,230 @@
+name: KPHX T3 Exact Building Shell Capture
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - reports/trigger-kphx-t3-building-shell.txt
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-t3-building-shell-capture
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install app and browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start isolated RampReady verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npx vite --host 127.0.0.1 --port 4173 > /tmp/kphx-t3-buildings-vite.log 2>&1 &
+          echo $! > /tmp/kphx-t3-buildings-vite.pid
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/kphx-t3-buildings-vite.log
+          exit 1
+
+      - name: Capture isolated exact Terminal 3 shell
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+
+          const browser = await chromium.launch({ headless: true });
+          const page = await browser.newPage({
+            viewport: { width: 1600, height: 1000 },
+            deviceScaleFactor: 1,
+          });
+
+          const consoleMessages = [];
+          const pageErrors = [];
+          const failedRequests = [];
+          const httpErrors = [];
+
+          page.on("console", (message) => consoleMessages.push({ type: message.type(), text: message.text() }));
+          page.on("pageerror", (error) => pageErrors.push(String(error)));
+          page.on("requestfailed", (request) => failedRequests.push({
+            url: request.url(),
+            method: request.method(),
+            failure: request.failure()?.errorText || "unknown",
+          }));
+          page.on("response", (response) => {
+            if (response.status() >= 400) {
+              httpErrors.push({
+                url: response.url(),
+                status: response.status(),
+                statusText: response.statusText(),
+              });
+            }
+          });
+
+          let navigationError = null;
+          let waitError = null;
+          try {
+            await page.goto("http://127.0.0.1:4173/RampReady/?kphxT3Buildings=1", {
+              waitUntil: "domcontentloaded",
+              timeout: 60000,
+            });
+          } catch (error) {
+            navigationError = String(error);
+          }
+
+          if (!navigationError) {
+            try {
+              await page.waitForFunction(() => {
+                const canvas = document.querySelector("canvas.kphxT3BuildingShellVerifierCanvas");
+                const state = canvas?.dataset?.kphxT3BuildingShellVerifier;
+                return state === "ready" || state === "error";
+              }, null, { timeout: 60000 });
+            } catch (error) {
+              waitError = String(error);
+            }
+          }
+
+          const state = await page.evaluate(() => {
+            const canvas = document.querySelector("canvas.kphxT3BuildingShellVerifierCanvas");
+            return {
+              canvasPresent: Boolean(canvas),
+              dataset: canvas ? { ...canvas.dataset } : {},
+              bodyText: document.body?.innerText?.slice(0, 3000) || "",
+            };
+          }).catch((error) => ({
+            canvasPresent: false,
+            dataset: {},
+            evaluationError: String(error),
+          }));
+
+          const payload = {
+            capturedAtUtc: new Date().toISOString(),
+            authority: "KPHX 1.75.1 earth.wed.xml + recovered exact Terminals/Terminal3a.obj runtime GLB",
+            scope: "Terminal3a only; no T3 garage, T4, jetways, or neighboring objects",
+            navigationError,
+            waitError,
+            state,
+            consoleMessages,
+            pageErrors,
+            failedRequests,
+            httpErrors,
+          };
+
+          await page.screenshot({
+            path: "reports/kphx-t3-building-shell-close.jpg",
+            type: "jpeg",
+            quality: 92,
+            fullPage: true,
+          }).catch((error) => {
+            payload.screenshotError = String(error);
+          });
+
+          fs.writeFileSync(
+            "reports/kphx-t3-building-shell-close.json",
+            JSON.stringify(payload, null, 2) + "\n",
+          );
+
+          await page.close();
+          await browser.close();
+          NODE
+
+      - name: Enforce exact Terminal 3 source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+
+          const result = JSON.parse(fs.readFileSync("reports/kphx-t3-building-shell-close.json", "utf8"));
+          const d = result.state?.dataset || {};
+          const failures = [];
+
+          if (d.kphxT3BuildingShellVerifier !== "ready") failures.push(`state=${d.kphxT3BuildingShellVerifier || "missing"}`);
+          if (d.kphxT3BuildingPlacements !== "1") failures.push(`placements=${d.kphxT3BuildingPlacements || "missing"}`);
+          if (d.kphxT3Resource !== "Terminals/Terminal3a.obj") failures.push(`resource=${d.kphxT3Resource || "missing"}`);
+          if (d.kphxT3WedObjectId !== "7424") failures.push(`WED=${d.kphxT3WedObjectId || "missing"}`);
+          if (d.kphxT3Latitude !== "33.436168819") failures.push(`lat=${d.kphxT3Latitude || "missing"}`);
+          if (d.kphxT3Longitude !== "-112.008763064") failures.push(`lon=${d.kphxT3Longitude || "missing"}`);
+          if (d.kphxT3HeadingDegrees !== "0") failures.push(`heading=${d.kphxT3HeadingDegrees || "missing"}`);
+          if (d.kphxT3Asset !== "/models/kphx/Terminal3a.exact.glb") failures.push(`asset=${d.kphxT3Asset || "missing"}`);
+          if (d.kphxT3RecoveredExact !== "true") failures.push(`recoveredExact=${d.kphxT3RecoveredExact || "missing"}`);
+          if (d.kphxT3SourceSha256 !== "4283b54b22abf73eef75259f22318153705efc8372a667fd3de89fbe8db70ea3") failures.push("source-sha-mismatch");
+          if (d.kphxT3RuntimeSha256 !== "0297c2435a9f17a7aaf564c6f0198b6533637b527f2d0628bc918c383d894aa7") failures.push("runtime-sha-mismatch");
+          if (d.kphxT3RuntimeBytes !== "18527808") failures.push(`runtime-bytes=${d.kphxT3RuntimeBytes || "missing"}`);
+          if (d.kphxT3SubstitutionPolicy !== "none") failures.push(`substitution=${d.kphxT3SubstitutionPolicy || "missing"}`);
+          if (d.kphxT3GeometryEdits !== "0") failures.push(`geometryEdits=${d.kphxT3GeometryEdits || "missing"}`);
+          if (d.kphxT3PlacementEdits !== "0") failures.push(`placementEdits=${d.kphxT3PlacementEdits || "missing"}`);
+          if (result.navigationError) failures.push(`navigation=${result.navigationError}`);
+          if (result.waitError) failures.push(`wait=${result.waitError}`);
+          if ((result.pageErrors || []).length) failures.push(`pageErrors=${result.pageErrors.join(" | ")}`);
+          if ((result.failedRequests || []).length) failures.push(`failedRequests=${result.failedRequests.length}`);
+          if ((result.httpErrors || []).length) failures.push(`httpErrors=${result.httpErrors.length}`);
+          const browserErrors=(result.consoleMessages || []).filter((entry)=>entry.type==="error");
+          if (browserErrors.length) failures.push(`consoleErrors=${browserErrors.map((entry)=>entry.text).join(" | ")}`);
+
+          if (failures.length) throw new Error(`T3 exact shell capture failed: ${failures.join("; ")}`);
+
+          fs.writeFileSync("reports/kphx-t3-building-shell-capture.json", JSON.stringify({
+            schemaVersion: 1,
+            status: "CAPTURED",
+            authority: "KPHX 1.75.1 exact source",
+            resource: "Terminals/Terminal3a.obj",
+            wedObjectId: "7424",
+            latitude: 33.436168819,
+            longitude: -112.008763064,
+            headingDegrees: 0,
+            sourceSha256: d.kphxT3SourceSha256,
+            runtimeSha256: d.kphxT3RuntimeSha256,
+            geometryEdits: 0,
+            placementEdits: 0,
+            substitutions: 0,
+            note: "Programmatic source/runtime contract passed. Visual inspection remains required before lock."
+          }, null, 2) + "\n");
+          NODE
+
+      - name: Upload T3 capture artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kphx-t3-building-shell-capture
+          path: |
+            reports/kphx-t3-building-shell-close.jpg
+            reports/kphx-t3-building-shell-close.json
+            reports/kphx-t3-building-shell-capture.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Commit T3 capture evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore -- package.json package-lock.json 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-t3-building-shell-close.jpg reports/kphx-t3-building-shell-close.json reports/kphx-t3-building-shell-capture.json
+          git commit -m "Capture exact Terminal 3 building shell"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
