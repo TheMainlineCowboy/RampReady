@@ -7,3 +7,4 @@ Rerun after exact T4 MisterX/CDB integration and 1634-placement verifier update.
 Rerun after normalized MisterX runtime texture paths and successful 50-resource materialization.
 Rerun after verifier parallel assembly and no-render-during-load performance fix.
 Rerun after exact T4-bounds integrated verifier camera framing.
+Rerun with exact WED-ancestry T4-only visual QA visibility contract.
