@@ -1,0 +1,65 @@
+name: KPHX MisterX FedEx AGP Manifest
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-misterx-fedex-agp-manifest.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-misterx-fedex-agp-manifest
+  cancel-in-progress: true
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Build exact FedEx AGP manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build-kphx-misterx-fedex-agp-manifest.mjs
+
+      - name: Verify exact FedEx AGP manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const p="public/models/kphx-full-airport/batches/full-misterx-fedex-truck-agp.manifest.json";
+          const m=JSON.parse(fs.readFileSync(p,"utf8"));
+          if(m.placementCount!==17||m.placements.length!==17) throw new Error("FedEx AGP placement count changed");
+          if(m.children.length!==2) throw new Error("FedEx AGP child count changed");
+          if(m.tile.rotationQuarterTurns!==0) throw new Error("FedEx AGP rotation changed");
+          if(m.tile.hideTiles!==true) throw new Error("FedEx AGP HIDE_TILES changed");
+          const names=m.children.map(x=>x.sourceObject).sort();
+          if(JSON.stringify(names)!==JSON.stringify(["Peterbilt_359_White.obj","Trailer_Fedex.obj"])) throw new Error("FedEx AGP child resources changed");
+          if(m.children.some(x=>x.headingOffsetDegrees!==0)) throw new Error("FedEx AGP child heading changed");
+          console.log(JSON.stringify({
+            status:"PASS",
+            placements:m.placementCount,
+            children:m.children.map(x=>({sourceObject:x.sourceObject,offset:x.xPlaneLocalOffsetMeters}))
+          },null,2));
+          NODE
+
+      - name: Commit exact FedEx AGP manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/models/kphx-full-airport/batches/full-misterx-fedex-truck-agp.manifest.json
+          git commit -m "Build exact MisterX FedEx truck AGP manifest"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
