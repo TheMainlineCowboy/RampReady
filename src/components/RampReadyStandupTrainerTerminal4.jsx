@@ -696,6 +696,9 @@ export default function RampReadyStandupTrainer({
         strict: true,
         manifestUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json",
         networkUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/surface-network.json",
+        loadPolygons: true,
+        loadDrapedOrthophotos: false,
+        loadLines: false,
       }),
     ])
       .then(([packageResult, a1ZdpResult]) => {
@@ -706,7 +709,7 @@ export default function RampReadyStandupTrainer({
           ...(zdpData.failures || []),
         ];
         const ready = packageData.ready === true && zdpData.ready === true && failures.length === 0;
-        renderer.domElement.dataset.groundSource = "KPHX 1.75.1 exact WED package + A1 ZDP surfaces";
+        renderer.domElement.dataset.groundSource = "KPHX 1.75.1 exact WED package + A1 ZDP pavement";
         renderer.domElement.dataset.kphxVersion = String(packageData.sourceVersion || zdpData.sourceVersion || "missing");
         renderer.domElement.dataset.kphxSurfaceReady = String(ready);
         renderer.domElement.dataset.kphxSurfacePolygonCount = String((packageData.polygonCount ?? 0) + (zdpData.polygonCount ?? 0));
