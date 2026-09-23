@@ -15,8 +15,7 @@ import {
 } from "../simulation/noseGearConnection.js";
 import { createProceduralLektroRig, validateTugRig } from "../tug/lektroRig.js";
 import { installRuntimeEquipmentVisual, supportsRuntimeEquipmentVisual } from "../tug/runtimeEquipmentVisual.js";
-import { buildTerminal4RampEnvironment } from "../environment/terminal4RampEnvironment.js";
-import { installAuthoredTerminal4Visual } from "../environment/authoredTerminal4Visual.js";
+import { buildKphxExactLiveEnvironment as buildTerminal4RampEnvironment, installKphxExactLiveTerminal4 as installAuthoredTerminal4Visual } from "../environment/kphxFullAirport/installLiveTerminal4Exact.js";
 import { installAuthoredKphxGround } from "../environment/authoredKphxGround.js";
 import { installAuthoredKphxPhotoGround } from "../environment/authoredKphxPhotoGround.js";
 import "./RampReadyTrainer.css";
