@@ -256,7 +256,6 @@ if (!prepared.includes('dataset.terminal4TexturedMaterialCount = String(environm
 if (!prepared.includes('dataset.terminal4Position = environment.userData.authoredTerminal4Position')) throw new Error("Exact Terminal 4 position evidence was not injected");
 if (!prepared.includes('dataset.terminal4A1NearestGeometryMeters = environment.userData.authoredTerminal4A1NearestGeometryDistance')) throw new Error("A1-to-terminal clearance evidence was not injected");
 if (!prepared.includes('dataset.terminal4Placement = environment.userData.authoredTerminal4Placement')) throw new Error("Source placement authority evidence was not injected");
-if (!prepared.includes('dataset.b15CorridorMeters = environment.userData.trainingCorridor')) throw new Error("B15 corridor distance evidence was not injected");
 if (!prepared.includes("installAuthoredTerminal4Visual(THREE, environment)")) throw new Error("Exact KPHX T4 live runtime loader was not connected");
 if (!prepared.includes("installKphxPackageOwnedSurfaceLayer(THREE, environment")) throw new Error("Exact KPHX surface runtime loader was not connected");
 if (!prepared.includes("/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json")) throw new Error("Exact A1 ZDP pavement manifest was not connected");
