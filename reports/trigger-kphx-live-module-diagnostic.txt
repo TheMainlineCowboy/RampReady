@@ -1,2 +1,2 @@
 Trigger fast Vite transform diagnostic for exact live T4 integration.
-Retry after exact A1 ZDP pavement integration.
+Sparse-checkout retry after exact A1 ZDP pavement integration.
