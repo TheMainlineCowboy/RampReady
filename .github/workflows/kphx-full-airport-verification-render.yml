@@ -216,6 +216,77 @@ jobs:
             JSON.stringify(qaPayload, null, 2) + "\n",
           );
           await qaPage.close();
+
+          const jetwayPage = await browser.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1 });
+          const jetwayConsoleMessages = [];
+          const jetwayPageErrors = [];
+          const jetwayFailedRequests = [];
+          const jetwayHttpErrors = [];
+          jetwayPage.on("console", (message) => jetwayConsoleMessages.push({ type: message.type(), text: message.text() }));
+          jetwayPage.on("pageerror", (error) => jetwayPageErrors.push(String(error)));
+          jetwayPage.on("requestfailed", (request) => jetwayFailedRequests.push({
+            url: request.url(),
+            method: request.method(),
+            failure: request.failure()?.errorText || "unknown",
+          }));
+          jetwayPage.on("response", (response) => {
+            if (response.status() >= 400) jetwayHttpErrors.push({
+              url: response.url(),
+              status: response.status(),
+              statusText: response.statusText(),
+            });
+          });
+
+          let jetwayNavigationError = null;
+          let jetwayWaitError = null;
+          try {
+            await jetwayPage.goto("http://127.0.0.1:4173/RampReady/?kphxT4Jetways=1&batch=ALL", {
+              waitUntil: "domcontentloaded",
+              timeout: 60000,
+            });
+          } catch (error) {
+            jetwayNavigationError = String(error);
+          }
+          if (!jetwayNavigationError) {
+            try {
+              await jetwayPage.waitForFunction(() => {
+                const canvas = document.querySelector("canvas.kphxT4JetwayBatchVerifierCanvas");
+                const state = canvas?.dataset?.kphxT4JetwayBatchVerifier;
+                return state === "ready" || state === "error";
+              }, null, { timeout: 60000 });
+            } catch (error) {
+              jetwayWaitError = String(error);
+            }
+          }
+          const jetwayState = await jetwayPage.evaluate(() => {
+            const canvas = document.querySelector("canvas.kphxT4JetwayBatchVerifierCanvas");
+            return {
+              canvasPresent: Boolean(canvas),
+              dataset: canvas ? { ...canvas.dataset } : {},
+              bodyText: document.body?.innerText?.slice(0, 4000) || "",
+            };
+          }).catch((error) => ({ canvasPresent: false, dataset: {}, evaluationError: String(error) }));
+          const jetwayPayload = {
+            capturedAtUtc: new Date().toISOString(),
+            navigationError: jetwayNavigationError,
+            waitError: jetwayWaitError,
+            state: jetwayState,
+            consoleMessages: jetwayConsoleMessages,
+            pageErrors: jetwayPageErrors,
+            failedRequests: jetwayFailedRequests,
+            httpErrors: jetwayHttpErrors,
+          };
+          await jetwayPage.screenshot({
+            path: "reports/kphx-t4-jetways-all-qa.png",
+            fullPage: true,
+          }).catch((error) => {
+            jetwayPayload.screenshotError = String(error);
+          });
+          fs.writeFileSync(
+            "reports/kphx-t4-jetways-all-qa.json",
+            JSON.stringify(jetwayPayload, null, 2) + "\n",
+          );
+          await jetwayPage.close();
           await browser.close();
           NODE
 
@@ -226,7 +297,7 @@ jobs:
           git restore -- package.json package-lock.json 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports/kphx-full-airport-first-render.png reports/kphx-full-airport-first-render.json reports/kphx-t4-objects-only-qa.png reports/kphx-t4-objects-only-qa.json
+          git add reports/kphx-full-airport-first-render.png reports/kphx-full-airport-first-render.json reports/kphx-t4-objects-only-qa.png reports/kphx-t4-objects-only-qa.json reports/kphx-t4-jetways-all-qa.png reports/kphx-t4-jetways-all-qa.json
           git commit -m "Capture exact KPHX full-airport verification evidence"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
