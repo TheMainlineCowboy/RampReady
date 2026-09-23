@@ -107,14 +107,21 @@ jobs:
           },null,2)+"\n");
           NODE
 
-      - name: Fetch supplied exact MisterX library
+      - name: Fetch supplied exact MisterX object source branches
         shell: bash
         run: |
           set -euo pipefail
           rm -rf .misterx
-          mkdir -p .misterx
-          gdown --folder "https://drive.google.com/drive/folders/1qYJkED8GB83fDfAI_mEVXWjr2lC6IjoB" \
-            -O .misterx
+          mkdir -p .misterx/Airport .misterx/Objects .misterx/People .misterx/Vehicles .misterx/Shared
+
+          gdown "https://drive.google.com/uc?id=1DhsJn994MQw90zCTzXGJd9MS6W4Ccva4" -O .misterx/library.txt
+
+          gdown --folder "https://drive.google.com/drive/folders/1oh9xH24vaB7RiW4PVeh3p-803doCWQxZ" -O .misterx/Airport
+          gdown --folder "https://drive.google.com/drive/folders/1_N3fs59dgFl8e2kWZ3-UGTWBIKpp-If2" -O .misterx/Objects
+          gdown --folder "https://drive.google.com/drive/folders/10AJ4-aihaY06Fb_7RvmfXgFAp8IQ3SvM" -O .misterx/People
+          gdown --folder "https://drive.google.com/drive/folders/1U5EXTwxYgF7n6COhZz03OcEGsW-udUii" -O .misterx/Vehicles
+          gdown --folder "https://drive.google.com/drive/folders/1lHojO5usMEh__QiHqVZGXKZ7Wr-Zh9Qp" -O .misterx/Shared
+
           test -f .misterx/library.txt
 
       - name: Resolve all exact WED MisterX resources
