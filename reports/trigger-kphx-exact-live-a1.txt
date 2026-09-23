@@ -1,1 +1,1 @@
-Capture A1 with both package and ZDP opaque helper underlays disabled. Check blue strips and pavement continuity.
+Capture A1 with exact-textured T4 base apron compatibility underlay. Verify blue ground holes are gone and authored pavement/markings remain intact.
