@@ -59,7 +59,7 @@ jobs:
           import fs from "node:fs";
           import { chromium } from "playwright";
 
-          const views = ["A1", "A", "B", "C", "D"];
+          const views = ["A1","A14","A30","B2","B14","B28","C1","C9","C19","D1","D4","D7"];
           const browser = await chromium.launch({ headless: true });
 
           for (const view of views) {
@@ -138,7 +138,9 @@ jobs:
 
             const slug = view.toLowerCase();
             await page.screenshot({
-              path: `reports/kphx-t4-building-shell-${slug}.png`,
+              path: `reports/kphx-t4-building-shell-${slug}.jpg`,
+              type: "jpeg",
+              quality: 92,
               fullPage: true,
             }).catch((error) => {
               payload.screenshotError = String(error);
@@ -167,7 +169,7 @@ jobs:
           import fs from "node:fs";
 
           const failures = [];
-          for (const view of ["A1", "A", "B", "C", "D"]) {
+          for (const view of ["A1","A14","A30","B2","B14","B28","C1","C9","C19","D1","D4","D7"]) {
             const slug = view.toLowerCase();
             const result = JSON.parse(fs.readFileSync(`reports/kphx-t4-building-shell-${slug}.json`, "utf8"));
             const d = result.state?.dataset || {};
@@ -192,8 +194,21 @@ jobs:
             const browserErrors=(result.consoleMessages || []).filter((entry)=>entry.type==="error");
             if (browserErrors.length) failures.push(`${view}:consoleErrors=${browserErrors.map(x=>x.text).join(" | ")}`);
           }
+          const inspection = JSON.parse(fs.readFileSync("reports/kphx-terminal4-recovered-glb-inspection.json", "utf8"));
+          for (const target of inspection.targets || []) {
+            if (target.exactIndexCountMatch !== true) failures.push(`${target.name}:index-count-mismatch`);
+            if (target.runtimeHashMatchesCatalog !== true) failures.push(`${target.name}:runtime-hash-mismatch`);
+            if (target.embeddedTextureHashesMatchSource !== true) failures.push(`${target.name}:embedded-texture-hash-mismatch`);
+          }
           if (failures.length) throw new Error(`T4 building-shell verification failed: ${failures.join("; ")}`);
-          console.log(JSON.stringify({views:["A1","A","B","C","D"],buildings:2,jetways:76,openEdges:261,status:"PASS"},null,2));
+          console.log(JSON.stringify({
+            views:["A1","A14","A30","B2","B14","B28","C1","C9","C19","D1","D4","D7"],
+            buildings:2,
+            jetways:76,
+            openEdges:261,
+            embeddedTextureHashesMatchSource:true,
+            status:"PASS"
+          },null,2));
           NODE
 
       - name: Commit T4 building-shell evidence
@@ -203,7 +218,7 @@ jobs:
           git restore -- package.json package-lock.json 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports/kphx-t4-building-shell-*.png reports/kphx-t4-building-shell-*.json reports/kphx-terminal4-recovered-glb-inspection.json
+          git add reports/kphx-t4-building-shell-*.jpg reports/kphx-t4-building-shell-*.json reports/kphx-terminal4-recovered-glb-inspection.json
           git commit -m "Capture exact T4 building-shell verification evidence"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
