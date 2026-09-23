@@ -1230,8 +1230,22 @@ export default function RampReadyStandupTrainer({
 
       const target = inspectionActive ? rig.root.position : connectionHasAircraft(sim.connection) ? aircraft.position : rig.root.position;
       if (cameraRef.current === "driver") {
-        camera.position.lerp(rig.getOperatorEyeWorld(new THREE.Vector3()), 0.28);
-        camera.lookAt(rig.getOperatorLookWorld(new THREE.Vector3()));
+        const operatorEyeWorld = rig.getOperatorEyeWorld(new THREE.Vector3());
+        const operatorLookWorld = rig.getOperatorLookWorld(new THREE.Vector3());
+        camera.position.lerp(operatorEyeWorld, 0.28);
+        camera.lookAt(operatorLookWorld);
+        if (equipmentId === "lektro-88") {
+          canvas.dataset.lektroOperatorEyeLocalX = rig.profile.operatorEye[0].toFixed(3);
+          canvas.dataset.lektroOperatorEyeLocalY = rig.profile.operatorEye[1].toFixed(3);
+          canvas.dataset.lektroOperatorEyeLocalZ = rig.profile.operatorEye[2].toFixed(3);
+          canvas.dataset.lektroOperatorEyeWorldX = operatorEyeWorld.x.toFixed(6);
+          canvas.dataset.lektroOperatorEyeWorldY = operatorEyeWorld.y.toFixed(6);
+          canvas.dataset.lektroOperatorEyeWorldZ = operatorEyeWorld.z.toFixed(6);
+          canvas.dataset.lektroOperatorCameraX = camera.position.x.toFixed(6);
+          canvas.dataset.lektroOperatorCameraY = camera.position.y.toFixed(6);
+          canvas.dataset.lektroOperatorCameraZ = camera.position.z.toFixed(6);
+          canvas.dataset.lektroOperatorViewAuthority = "r187a-driver-seat-after-180deg-model-forward-correction";
+        }
       } else if (cameraRef.current === "overhead") {
         camera.position.lerp(new THREE.Vector3(target.x, 34, target.z + 2), 0.16);
         camera.lookAt(target.x, 0, target.z + 5);
