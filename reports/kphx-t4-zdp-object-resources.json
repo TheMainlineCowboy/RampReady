@@ -1,0 +1,8 @@
+{
+  "authority": "reports/kphx-t4-zdp-wed-placements.json",
+  "dependency": "ZDP_Library",
+  "version": "1.2.0",
+  "resources": [
+    "ZDP_Library/markings/aircraft_stop_markers/SDF_code_C_AAL.obj"
+  ]
+}
