@@ -1,2 +1,2 @@
 Trigger actual RampReady A1 free-drive exact T4 live check.
-Require exact T4 + finalized LEKTRO AP88 R187A + 27 pavement polygons + 26 exact A1 ZDP marking meshes.
+Require exact T4 + finalized LEKTRO AP88 R187A + 27 pavement polygons + 26 exact A1 ZDP marking meshes + 4 unique exact marking texture decodes.
