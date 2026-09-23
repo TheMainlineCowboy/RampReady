@@ -172,7 +172,7 @@ async function decodedRgbaSha256(filePath) {
 
 async function materializeTexture(sourcePath, requested, outputDirectory) {
   if (!sourcePath || !requested) return null;
-  const outputName = `${path.parse(requested).name}.png`;
+  const outputName = `${path.posix.parse(String(requested).replaceAll("\\", "/")).name}.png`;
   const outputPath = path.join(outputDirectory, outputName);
   const sourceInfo = await identify(sourcePath);
   const sourceDecodedHash = await decodedRgbaSha256(sourcePath);
