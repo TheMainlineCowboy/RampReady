@@ -233,6 +233,8 @@ for (const rawLine of source.split(/\r?\n/)) {
     drawState.lodRange = [...globalLodRange];
   } else if (command === "TILTED") {
     sourceTilted = true;
+  } else if (command === "NORMAL_METALNESS") {
+    normalMetalness = true;
   } else if (command === "GLOBAL_no_shadow") globalNoShadow = true;
   else if (command === "SPECULAR") {
     const value = Number(parts[1]);
