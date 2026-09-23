@@ -59,9 +59,20 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from "node:fs";
           const input=JSON.parse(fs.readFileSync("reports/kphx-full-airport-wed-placements-misterx.json","utf8"));
-          const selected=(input.placements.externalLibraries||[]).filter((p)=>p.resourcePrefix==="MisterX_Library");
+          const allMisterX=(input.placements.externalLibraries||[]).filter((p)=>p.resourcePrefix==="MisterX_Library");
+          const ambiguousRandom=new Set([
+            "MisterX_Library/Airport/Aircraft/Bombardier_Global_Express/Random.obj",
+            "MisterX_Library/Airport/Aircraft/Cessna_172/Random.obj",
+            "MisterX_Library/Airport/Aircraft/Cessna_208_Caravan/Random_PAX.obj",
+            "MisterX_Library/Airport/Aircraft/Cessna_Citation_II/Random.obj",
+            "MisterX_Library/Airport/Aircraft/Learjet_35/Random.obj",
+          ]);
+          const blocked=allMisterX.filter((p)=>ambiguousRandom.has(p.resource));
+          const selected=allMisterX.filter((p)=>!ambiguousRandom.has(p.resource));
           const resources={};
           for(const p of selected) resources[p.resource]=(resources[p.resource]||0)+1;
+          const blockedCounts={};
+          for(const p of blocked) blockedCounts[p.resource]=(blockedCounts[p.resource]||0)+1;
           const payload={
             schemaVersion:1,
             authority:"KPHX 1.75.1 earth.wed.xml exact MisterX object placements",
@@ -74,14 +85,25 @@ jobs:
             placements:{packageOwned:[],externalLibraries:selected},
             rampStarts:[],
           };
-          if(selected.length!==2443||Object.keys(resources).length!==113){
-            throw new Error(`MisterX WED authority changed: placements=${selected.length}, resources=${Object.keys(resources).length}`);
+          if(allMisterX.length!==2418) throw new Error(`MisterX WED authority changed: total=${allMisterX.length}`);
+          if(blocked.length!==25||Object.keys(blockedCounts).length!==5){
+            throw new Error(`MisterX ambiguous Random contract changed: placements=${blocked.length}, resources=${Object.keys(blockedCounts).length}`);
+          }
+          if(selected.length!==2418||Object.keys(resources).length!==108){
+            throw new Error(`Exact MisterX WED authority changed: placements=${selected.length}, resources=${Object.keys(resources).length}`);
           }
           fs.writeFileSync("reports/kphx-full-misterx-wed-placements.json",JSON.stringify(payload,null,2)+"\n");
           fs.writeFileSync("reports/kphx-full-misterx-object-resources.json",JSON.stringify({
             authority:"reports/kphx-full-misterx-wed-placements.json",
             dependency:"MisterX_Library",
             resources:Object.keys(resources).sort(),
+          },null,2)+"\n");
+          fs.writeFileSync("reports/kphx-full-misterx-blocked-random-resources.json",JSON.stringify({
+            authority:"MisterX_Library library.txt multiple equal-priority EXPORT mappings",
+            policy:"blocked rather than choose a substitute/random physical aircraft",
+            placementCount:blocked.length,
+            uniqueResourceCount:Object.keys(blockedCounts).length,
+            resources:blockedCounts,
           },null,2)+"\n");
           NODE
 
@@ -103,6 +125,7 @@ jobs:
           node scripts/resolve-xplane-library.mjs \
             .misterx \
             reports/kphx-full-misterx-object-resources.json \
+            reports/kphx-full-misterx-blocked-random-resources.json \
             reports/kphx-full-misterx-library-map.json \
             --virtual-prefix=MisterX_Library
 
@@ -127,13 +150,13 @@ jobs:
           import fs from "node:fs";
           const m=JSON.parse(fs.readFileSync(".runtime-misterx/manifest.json","utf8"));
           if(m.failures?.length) throw new Error(`MisterX failures=${m.failures.length}`);
-          if(m.resolvedExternal.materializedPlacementCount!==2443){
-            throw new Error(`Expected 2443 MisterX placements, got ${m.resolvedExternal.materializedPlacementCount}`);
+          if(m.resolvedExternal.materializedPlacementCount!==2418){
+            throw new Error(`Expected 2418 exact MisterX placements, got ${m.resolvedExternal.materializedPlacementCount}`);
           }
-          if(m.resolvedExternal.expectedUniqueResourceCount!==113||m.resolvedExternal.materializedUniqueResourceCount!==113){
-            throw new Error(`Expected 113 MisterX resources, got expected=${m.resolvedExternal.expectedUniqueResourceCount} materialized=${m.resolvedExternal.materializedUniqueResourceCount}`);
+          if(m.resolvedExternal.expectedUniqueResourceCount!==108||m.resolvedExternal.materializedUniqueResourceCount!==108){
+            throw new Error(`Expected 108 exact MisterX resources, got expected=${m.resolvedExternal.expectedUniqueResourceCount} materialized=${m.resolvedExternal.materializedUniqueResourceCount}`);
           }
-          console.log(JSON.stringify({placements:2443,resources:113,status:"PASS"},null,2));
+          console.log(JSON.stringify({placements:2418,resources:108,blockedRandomPlacements:25,status:"PASS"},null,2));
           NODE
 
       - name: Install and commit full exact MisterX runtime
