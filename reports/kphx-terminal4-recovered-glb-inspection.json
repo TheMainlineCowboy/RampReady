@@ -1,0 +1,406 @@
+{
+  "generatedAtUtc": "2026-09-23T03:12:05.663Z",
+  "authority": "Read-only inspection of recovered exact Terminal4 GLB binaries",
+  "targets": [
+    {
+      "name": "Terminal4",
+      "path": "public/models/kphx/Terminal4.exact.glb",
+      "expectedSourceVertexCount": 21720,
+      "expectedSourceIndexCount": 42501,
+      "expectedRuntimeSha256": "1899c3d3258922868f835b62dbd1b85713871017d52d34167d80c136f8b6d8b2",
+      "byteLength": 19786104,
+      "sha256": "1899c3d3258922868f835b62dbd1b85713871017d52d34167d80c136f8b6d8b2",
+      "runtimeHashMatchesCatalog": true,
+      "version": 2,
+      "declaredLength": 19786104,
+      "chunks": [
+        {
+          "chunkLength": 2272,
+          "chunkType": "0x4e4f534a"
+        },
+        {
+          "chunkLength": 19783804,
+          "chunkType": "0x4e4942"
+        }
+      ],
+      "asset": {
+        "version": "2.0",
+        "generator": "RampReady exact X-Plane OBJ8 importer v1"
+      },
+      "topLevelExtensionsUsed": [],
+      "topLevelExtensionsRequired": [],
+      "sceneCount": 1,
+      "nodeCount": 1,
+      "meshCount": 1,
+      "primitiveCount": 1,
+      "accessorCount": 4,
+      "materialCount": 1,
+      "imageCount": 2,
+      "textureCount": 2,
+      "totalIndexCount": 42501,
+      "exactIndexCountMatch": true,
+      "totalPositionAccessorCount": 21720,
+      "materials": [
+        {
+          "index": 0,
+          "name": "xplane-authored",
+          "alphaMode": "MASK",
+          "alphaCutoff": 0.5,
+          "doubleSided": false,
+          "baseColorTexture": {
+            "index": 0
+          },
+          "emissiveTexture": {
+            "index": 1
+          },
+          "normalTexture": null,
+          "extras": null
+        }
+      ],
+      "images": [
+        {
+          "index": 0,
+          "bufferView": 4,
+          "mimeType": "image/png",
+          "name": "Terminal4_comb"
+        },
+        {
+          "index": 1,
+          "bufferView": 5,
+          "mimeType": "image/png",
+          "name": "Terminal4_LIT"
+        }
+      ],
+      "textures": [
+        {
+          "index": 0,
+          "source": 0
+        },
+        {
+          "index": 1,
+          "source": 1
+        }
+      ],
+      "primitives": [
+        {
+          "meshIndex": 0,
+          "meshName": "Terminal4",
+          "primitiveIndex": 0,
+          "mode": 4,
+          "materialIndex": 0,
+          "indexAccessor": 3,
+          "indexCount": 42501,
+          "positionAccessor": 0,
+          "positionCount": 21720
+        }
+      ],
+      "extras": {
+        "sourceAuthority": "exact-kphx-xplane-obj8",
+        "source": {
+          "obj": {
+            "bytes": 2354455,
+            "sha256": "e93807a1239377e1223eb325c2b7048e6c84f968d9c790fd0cd6cc5da050cd80"
+          },
+          "dayTexture": {
+            "bytes": 11184952,
+            "sha256": "84667f356e16d83065773fadcba30cc222b4d6a2a739b4000545cca265f53186"
+          },
+          "litTexture": {
+            "bytes": 11184952,
+            "sha256": "65937e43b6eff0b95480496d64d98d3b59779b2fe4b7af9c984f1e404624b17f"
+          }
+        },
+        "pointCounts": [
+          21720,
+          0,
+          0,
+          42501
+        ],
+        "drawRanges": [
+          [
+            0,
+            11229
+          ],
+          [
+            11229,
+            180
+          ],
+          [
+            11409,
+            60
+          ],
+          [
+            11469,
+            300
+          ],
+          [
+            11769,
+            420
+          ],
+          [
+            12189,
+            60
+          ],
+          [
+            12249,
+            864
+          ],
+          [
+            13113,
+            864
+          ],
+          [
+            13977,
+            19428
+          ],
+          [
+            33405,
+            1980
+          ],
+          [
+            35385,
+            6228
+          ],
+          [
+            41613,
+            888
+          ]
+        ],
+        "decodedTextureSizes": [
+          [
+            4096,
+            4096
+          ],
+          [
+            4096,
+            4096
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Terminal4b",
+      "path": "public/models/kphx/Terminal4b.exact.glb",
+      "expectedSourceVertexCount": 40773,
+      "expectedSourceIndexCount": 70725,
+      "expectedRuntimeSha256": "1380cb6b1f33a3beca14a44ca4f17ef765bcf718c099769d6a723f0dbc10ab43",
+      "byteLength": 19728400,
+      "sha256": "1380cb6b1f33a3beca14a44ca4f17ef765bcf718c099769d6a723f0dbc10ab43",
+      "runtimeHashMatchesCatalog": true,
+      "version": 2,
+      "declaredLength": 19728400,
+      "chunks": [
+        {
+          "chunkLength": 2420,
+          "chunkType": "0x4e4f534a"
+        },
+        {
+          "chunkLength": 19725952,
+          "chunkType": "0x4e4942"
+        }
+      ],
+      "asset": {
+        "version": "2.0",
+        "generator": "RampReady exact X-Plane OBJ8 importer v1"
+      },
+      "topLevelExtensionsUsed": [],
+      "topLevelExtensionsRequired": [],
+      "sceneCount": 1,
+      "nodeCount": 1,
+      "meshCount": 1,
+      "primitiveCount": 1,
+      "accessorCount": 4,
+      "materialCount": 1,
+      "imageCount": 2,
+      "textureCount": 2,
+      "totalIndexCount": 70725,
+      "exactIndexCountMatch": true,
+      "totalPositionAccessorCount": 40773,
+      "materials": [
+        {
+          "index": 0,
+          "name": "xplane-authored",
+          "alphaMode": "MASK",
+          "alphaCutoff": 0.5,
+          "doubleSided": false,
+          "baseColorTexture": {
+            "index": 0
+          },
+          "emissiveTexture": {
+            "index": 1
+          },
+          "normalTexture": null,
+          "extras": null
+        }
+      ],
+      "images": [
+        {
+          "index": 0,
+          "bufferView": 4,
+          "mimeType": "image/png",
+          "name": "Terminal4b_comb"
+        },
+        {
+          "index": 1,
+          "bufferView": 5,
+          "mimeType": "image/png",
+          "name": "Terminal4b_LIT"
+        }
+      ],
+      "textures": [
+        {
+          "index": 0,
+          "source": 0
+        },
+        {
+          "index": 1,
+          "source": 1
+        }
+      ],
+      "primitives": [
+        {
+          "meshIndex": 0,
+          "meshName": "Terminal4b",
+          "primitiveIndex": 0,
+          "mode": 4,
+          "materialIndex": 0,
+          "indexAccessor": 3,
+          "indexCount": 70725,
+          "positionAccessor": 0,
+          "positionCount": 40773
+        }
+      ],
+      "extras": {
+        "sourceAuthority": "exact-kphx-xplane-obj8",
+        "source": {
+          "obj": {
+            "bytes": 4444277,
+            "sha256": "acbefef71c59942eb8e336996b9f2b9c8e8a87c6ec5cc64046292e5332ce48bc"
+          },
+          "dayTexture": {
+            "bytes": 11184952,
+            "sha256": "11a129f33940c99de15c2941faac041af42834c869ab6bdae974d134c54bc00b"
+          },
+          "litTexture": {
+            "bytes": 11184952,
+            "sha256": "90cff1e29f629570d6ea1ee237a3f8dd337860aef36dfd4d478d0ee8057f90f9"
+          }
+        },
+        "pointCounts": [
+          40773,
+          0,
+          0,
+          70725
+        ],
+        "drawRanges": [
+          [
+            0,
+            1620
+          ],
+          [
+            1620,
+            468
+          ],
+          [
+            2088,
+            2184
+          ],
+          [
+            4272,
+            3276
+          ],
+          [
+            7548,
+            240
+          ],
+          [
+            7788,
+            270
+          ],
+          [
+            8058,
+            480
+          ],
+          [
+            8538,
+            60
+          ],
+          [
+            8598,
+            354
+          ],
+          [
+            8952,
+            480
+          ],
+          [
+            9432,
+            12420
+          ],
+          [
+            21852,
+            1152
+          ],
+          [
+            23004,
+            198
+          ],
+          [
+            23202,
+            126
+          ],
+          [
+            23328,
+            126
+          ],
+          [
+            23454,
+            414
+          ],
+          [
+            23868,
+            60
+          ],
+          [
+            23928,
+            11298
+          ],
+          [
+            35226,
+            12636
+          ],
+          [
+            47862,
+            30
+          ],
+          [
+            47892,
+            576
+          ],
+          [
+            48468,
+            14196
+          ],
+          [
+            62664,
+            5397
+          ],
+          [
+            68061,
+            2664
+          ]
+        ],
+        "decodedTextureSizes": [
+          [
+            4096,
+            4096
+          ],
+          [
+            4096,
+            4096
+          ]
+        ]
+      }
+    }
+  ]
+}
