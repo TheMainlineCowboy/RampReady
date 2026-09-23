@@ -112,9 +112,49 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf .misterx
-          ln -s "$GITHUB_WORKSPACE/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library" .misterx
+          cp -a "$GITHUB_WORKSPACE/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library" .misterx
           test -f .misterx/library.txt
           test "$(cat .misterx/version.txt)" = "2.0c"
+
+      - name: Supplement only missing exact MisterX source directories
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          fetch_folder() {
+            local id="$1"
+            local target="$2"
+            local expected="$3"
+            local tmp
+            tmp="$(mktemp -d)"
+            gdown --folder "https://drive.google.com/drive/folders/$id" -O "$tmp"
+            local expected_path
+            expected_path="$(find "$tmp" -type f -name "$expected" -print -quit)"
+            test -n "$expected_path"
+            mkdir -p "$target"
+            cp -a "$(dirname "$expected_path")"/. "$target"/
+            rm -rf "$tmp"
+          }
+
+          fetch_folder "1iXpX2ee01mc7TEOXMKgzInZd17-W5gUM" ".misterx/Airport/Aircraft/Boeing_767_300" "UPS_new.obj"
+          fetch_folder "1MxQFGdudY6TPDnUi7aXIfEj_ipHDkxxG" ".misterx/Airport/Aircraft/Boeing_777_200ER" "American_Airlines.obj"
+          fetch_folder "1PV40Eu-0QMe-j1Rc_5siiGYiS5-5vlFY" ".misterx/Airport/Aircraft/Bombardier_CRJ700" "American_Eagle.obj"
+          fetch_folder "19sN6AKTK7L2nEG0gumOJJdZbQTQWtXfa" ".misterx/Airport/Aircraft/Bombardier_Global_Express" "Red_N712ZT.obj"
+          fetch_folder "1I_vinQOuFzX9Ity85XoH8pR7b78WLUtw" ".misterx/Airport/Aircraft/Cessna_208_Caravan" "Fedex.obj"
+          fetch_folder "1ZhfUWilq56gi-Vk-QwkTd4gG0Zz3ZwvX" ".misterx/Airport/Aircraft/Cessna_Citation_II" "N236RM.obj"
+          fetch_folder "1T-3G-hsAeAt2qBMvTSPjKxxkJVYybPPe" ".misterx/Airport/Aircraft/Learjet_35" "Cyan_Yellow_N683BA.obj"
+
+          fetch_folder "1TFUJhSqdqP3Yvo2tEq-tYER5_vIrLQn8" ".misterx/Airport/Other" "Checkered_Hut.obj"
+          fetch_folder "1koQgOiB1K3Oswbr1g7NLTzHmBWPBnmos" ".misterx/Objects/Construction" "Garbage_Container_Rusty.obj"
+          fetch_folder "1qeCyUGew8Z-w7-IlfAhQKHGml09YyTDJ" ".misterx/Vehicles/Construction" "Bulldozer.obj"
+          fetch_folder "1AiUGHanRiuX-P7jfJwOYC9Twzet4TCLU" ".misterx/Vehicles/Trucks" "Truck_Fedex.agp"
+
+          node scripts/resolve-xplane-library.mjs \
+            .misterx \
+            reports/kphx-full-misterx-object-resources.json \
+            reports/kphx-full-misterx-blocked-random-resources.json \
+            reports/kphx-full-misterx-library-map-preflight.json \
+            --virtual-prefix=MisterX_Library
 
       - name: Resolve all exact WED MisterX resources
         shell: bash
