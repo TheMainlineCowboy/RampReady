@@ -128,9 +128,11 @@ const trainer = fs.readFileSync("src/components/RampReadyStandupTrainerTerminal4
 assert(trainer.includes("KPHX_INVISIBLE_CONCRETE_SOURCE_UNDERLAY"), "Transparent concrete source-compatible underlay missing");
 assert(trainer.includes("ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol"), "Exact A1 source concrete underlay authority missing");
 assert(trainer.includes('A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPosition-27855"'), "Exact A1 WED ramp-position heading authority missing");
-assert(trainer.includes("const A1_GATE_POSE = getKphxTerminal4GatePoseByRampWedObjectId"), "A1 aircraft pose is not resolved from exact T4 gate authority");
-assert(trainer.includes("A1_SOURCE_HEADING_DEGREES = A1_GATE_POSE.sourceHeadingDegrees"), "A1 aircraft heading is not derived from exact WED gate pose");
-assert(trainer.includes("A1_AIRCRAFT_YAW_RADIANS = A1_GATE_POSE.runtimeYawRadians"), "A1 runtime yaw is not derived from exact WED gate pose");
+assert(trainer.includes("const A1_SCENARIO_POSE = createKphxTerminal4GateScenarioPose"), "A1 does not use shared T4 gate scenario resolver");
+assert(trainer.includes("A1_SOURCE_HEADING_DEGREES = A1_SCENARIO_POSE.sourceHeadingDegrees"), "A1 aircraft heading is not derived from shared WED scenario pose");
+assert(trainer.includes("A1_AIRCRAFT_YAW_RADIANS = A1_SCENARIO_POSE.aircraft.yaw"), "A1 runtime yaw is not derived from shared WED scenario pose");
+assert(trainer.includes("A1_EQUIPMENT_SPAWN = A1_SCENARIO_POSE.equipment"), "A1 equipment pose is not derived from the same shared WED scenario pose");
+assert(trainer.includes("A1_EQUIPMENT_SPAWN_AUTHORITY = A1_SCENARIO_POSE.authority"), "A1 equipment authority is not shared with aircraft gate pose");
 assert(trainer.includes("aircraft.position.set(A1_AIRCRAFT_START_X, 0, NOSE_START_Z);"), "Initial A1 aircraft source position missing");
 assert(trainer.includes("aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;"), "Initial A1 aircraft source yaw missing");
 assert(trainer.includes("sim.aircraft.position.set(A1_AIRCRAFT_START_X, 0, NOSE_START_Z);"), "A1 aircraft reset source position missing");
@@ -142,7 +144,7 @@ assert(!trainer.includes("sim.aircraft.rotation.y = 0;"), "Hard-coded zero A1 ai
 assert(!trainer.includes("sim.rig.root.position.set(0, 0, 0);"), "Hard-coded zero A1 equipment reset position remains");
 assert(!trainer.includes("sim.rig.root.rotation.y = 0;"), "Hard-coded zero A1 equipment reset yaw remains");
 assert(trainer.includes('dataset.a1AircraftHeadingReady = "true"'), "A1 aircraft heading runtime evidence missing");
-assert(trainer.includes('A1_EQUIPMENT_SPAWN_AUTHORITY = "same-a1-wed-gate-pose-equipment-spawn-v1"'), "A1 equipment spawn authority missing");
+assert(!trainer.includes("same-a1-wed-gate-pose-equipment-spawn-v1"), "Obsolete A1-only equipment spawn authority remains");
 assert(trainer.includes("dataset.a1EquipmentSpawnAuthority = A1_EQUIPMENT_SPAWN_AUTHORITY"), "A1 equipment runtime evidence missing");
 
 const kphxSourceAuthority = fs.readFileSync("src/environment/kphxFullAirport/sourceAuthority.js", "utf8");
@@ -155,14 +157,31 @@ assert(gatePoseAuthority.includes("supportedRampPositionCount: 76"), "T4 support
 assert(gatePoseAuthority.includes("supportedGateNameCount: 75"), "T4 supported gate-name count drifted");
 assert(gatePoseAuthority.includes('["A1",27855,33.436530675,-111.998921221,-90.08]'), "Exact A1 WED gate pose drifted");
 assert(gatePoseAuthority.includes('["D7",106848') && gatePoseAuthority.includes('["D7",106850'), "Dual D7 ramp-position authority missing");
+assert(gatePoseAuthority.includes("createKphxTerminal4GateScenarioPose"), "Shared T4 gate scenario resolver missing");
+assert(gatePoseAuthority.includes('"same-wed-ramp-position-aircraft-equipment-pose-v1"'), "Shared aircraft/equipment scenario authority missing");
+assert(gatePoseAuthority.includes("KPHX_T4_SUPPORTED_GATE_SCENARIO_POSES"), "All-supported-gate scenario pose collection missing");
 
 const exactGatePosePrep = fs.readFileSync("scripts/prepare-a1-exact-gate-pose-v1.mjs", "utf8");
-assert(exactGatePosePrep.includes("same-a1-wed-gate-pose-equipment-spawn-v1"), "Final A1 exact gate-pose prep marker missing");
+assert(exactGatePosePrep.includes("same-wed-ramp-position-aircraft-equipment-pose-v1"), "Final shared gate-scenario prep marker missing");
+assert(exactGatePosePrep.includes("createKphxTerminal4GateScenarioPose"), "Final prep does not enforce shared gate-scenario resolver");
 assert(exactGatePosePrep.includes("Stale A1 zero-pose reset survived"), "Final A1 exact gate-pose stale-reset guard missing");
 
 const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
 const terminal4PrepareSteps = String(packageJson.scripts?.["prepare:terminal4-runtime"] || "").split(" && ");
 assert(terminal4PrepareSteps.at(-1) === "node scripts/prepare-a1-exact-gate-pose-v1.mjs", "Exact A1 gate-pose enforcement is not the final Terminal 4 preparation step");
+assert(packageJson.scripts?.["audit:kphx-t4-gate-headings"] === "node scripts/audit-kphx-t4-gate-headings.mjs", "T4 gate heading audit command missing");
+
+const gateHeadingAuditScript = fs.readFileSync("scripts/audit-kphx-t4-gate-headings.mjs", "utf8");
+assert(gateHeadingAuditScript.includes("placements.length !== 76"), "T4 gate heading audit does not enforce all 76 live ramp positions");
+assert(gateHeadingAuditScript.includes("scenario.aircraft.yaw - scenario.equipment.yaw"), "T4 gate heading audit does not compare aircraft/equipment yaw");
+assert(gateHeadingAuditScript.includes('duplicateGateNames[0].gate !== "D7"'), "T4 gate heading audit does not preserve dual D7 disambiguation");
+
+const gateHeadingAudit = JSON.parse(fs.readFileSync("reports/kphx-t4-gate-heading-audit.json", "utf8"));
+assert(gateHeadingAudit.status === "PASS", "Committed T4 gate heading audit is not PASS");
+assert(gateHeadingAudit.liveJetwayRampPositionCount === 76, "Committed T4 gate heading audit ramp-position count drifted");
+assert(gateHeadingAudit.supportedGateNameCount === 75, "Committed T4 gate heading audit gate-name count drifted");
+assert(Array.isArray(gateHeadingAudit.gates) && gateHeadingAudit.gates.length === 76, "Committed T4 gate heading audit row count drifted");
+assert(gateHeadingAudit.sharedScenarioAuthority === "same-wed-ramp-position-aircraft-equipment-pose-v1", "Committed T4 gate heading audit shared authority drifted");
 
 const launcher = fs.readFileSync("src/components/PushbackTrainer.jsx", "utf8");
 assert(launcher.includes("total: 4"), "Four-stage preload screen contract missing");
@@ -194,7 +213,8 @@ console.log(JSON.stringify({
   supportedT4RampPositions: 76,
   supportedT4GateNames: 75,
   a1SourceHeadingDegrees: -90.08,
-  a1EquipmentSpawnAuthority: "same-a1-wed-gate-pose-equipment-spawn-v1",
+  gateScenarioAuthority: "same-wed-ramp-position-aircraft-equipment-pose-v1",
+  t4GateHeadingAudit: "PASS",
   lektroRevision: lektro.revision,
   lektroSha256: lektro.sha256,
   managerKubotaBytes: kubota.bytes,
