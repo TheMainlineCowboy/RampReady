@@ -1,0 +1,96 @@
+name: KPHX MisterX Peterbilt Exact Materialization
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-misterx-peterbilt.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-misterx-peterbilt-exact
+  cancel-in-progress: true
+
+jobs:
+  peterbilt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install image converter
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+
+      - name: Convert exact Peterbilt source
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library"
+          OUT="public/models/kphx-full-airport/external/MisterX_Library/Vehicles/Trucks/Peterbilt_359_White"
+          rm -rf "$OUT"
+          mkdir -p "$OUT"
+
+          convert "$SRC/Vehicles/Trucks/Peterbilt_359_White.dds" -define png:color-type=6 "$OUT/Peterbilt_359_White.png"
+          convert "$SRC/Shared/Vehicle_Shadow.dds" -define png:color-type=6 "$OUT/Vehicle_Shadow.png"
+          cp "$SRC/Vehicles/Trucks/Peterbilt_359_NRM.png" "$OUT/Peterbilt_359_NRM.png"
+
+          test "$(convert "$SRC/Vehicles/Trucks/Peterbilt_359_White.dds" rgba:- | sha256sum | awk '{print $1}')" = "$(convert "$OUT/Peterbilt_359_White.png" rgba:- | sha256sum | awk '{print $1}')"
+          test "$(convert "$SRC/Shared/Vehicle_Shadow.dds" rgba:- | sha256sum | awk '{print $1}')" = "$(convert "$OUT/Vehicle_Shadow.png" rgba:- | sha256sum | awk '{print $1}')"
+
+          node scripts/convert-kphx-obj8-to-gltf.mjs \
+            "$SRC/Vehicles/Trucks/Peterbilt_359_White.obj" \
+            "$OUT" \
+            --name=Peterbilt_359_White \
+            --diffuse=Peterbilt_359_White.png \
+            --draped-diffuse=Vehicle_Shadow.png \
+            --normal=Peterbilt_359_NRM.png \
+            --normal-scale=1
+
+      - name: Verify exact Peterbilt contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import crypto from "node:crypto";
+
+          const root="public/models/kphx-full-airport/external/MisterX_Library/Vehicles/Trucks/Peterbilt_359_White";
+          const gltf=JSON.parse(fs.readFileSync(`${root}/Peterbilt_359_White.gltf`,"utf8"));
+          if(JSON.stringify(gltf.extras?.globalLodRange)!=="[0,2500]") throw new Error("Peterbilt GLOBAL_LOD was not preserved");
+          if(gltf.extras?.sourceTilted!==true) throw new Error("Peterbilt TILTED was not preserved");
+          if(gltf.extras?.normalMetalness!==true) throw new Error("Peterbilt NORMAL_METALNESS was not preserved");
+          for(const file of ["Peterbilt_359_White.gltf","Peterbilt_359_White.bin","Peterbilt_359_White.png","Peterbilt_359_NRM.png","Vehicle_Shadow.png"]){
+            const p=`${root}/${file}`;
+            if(!fs.existsSync(p)) throw new Error(`Missing runtime file: ${p}`);
+          }
+          console.log(JSON.stringify({
+            status:"PASS",
+            source:"MisterX_Library 2.0c/Vehicles/Trucks/Peterbilt_359_White.obj",
+            globalLodRange:gltf.extras.globalLodRange,
+            sourceTilted:gltf.extras.sourceTilted,
+            normalMetalness:gltf.extras.normalMetalness,
+            gltfSha256:crypto.createHash("sha256").update(fs.readFileSync(`${root}/Peterbilt_359_White.gltf`)).digest("hex")
+          },null,2));
+          NODE
+
+      - name: Commit Peterbilt runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/models/kphx-full-airport/external/MisterX_Library/Vehicles/Trucks/Peterbilt_359_White
+          git commit -m "Materialize exact MisterX Peterbilt truck"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
