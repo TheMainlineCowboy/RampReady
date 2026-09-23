@@ -1,0 +1,182 @@
+name: KPHX Exact Live A1 Check
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - reports/trigger-kphx-exact-live-a1.txt
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-exact-live-a1-check
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install app and browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start RampReady
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npx vite --host 127.0.0.1 --port 4173 > /tmp/kphx-live-vite.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/kphx-live-vite.log
+          exit 1
+
+      - name: Capture actual A1 free-drive route
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+
+          const browser = await chromium.launch({ headless: true });
+          const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1 });
+          const consoleMessages = [];
+          const pageErrors = [];
+          const failedRequests = [];
+          const httpErrors = [];
+          page.on("console", (m) => consoleMessages.push({ type: m.type(), text: m.text() }));
+          page.on("pageerror", (e) => pageErrors.push(String(e)));
+          page.on("requestfailed", (r) => failedRequests.push({ url:r.url(), method:r.method(), failure:r.failure()?.errorText || "unknown" }));
+          page.on("response", (r) => { if (r.status() >= 400) httpErrors.push({ url:r.url(), status:r.status(), statusText:r.statusText() }); });
+
+          let navigationError = null;
+          let waitError = null;
+          try {
+            await page.goto("http://127.0.0.1:4173/RampReady/?inspectionPreset=a1", {
+              waitUntil: "domcontentloaded",
+              timeout: 60000,
+            });
+          } catch (error) {
+            navigationError = String(error);
+          }
+
+          if (!navigationError) {
+            try {
+              await page.waitForFunction(() => {
+                const canvas = document.querySelector("canvas.trainerCanvas");
+                return canvas?.dataset?.kphxExactLiveT4 === "ready";
+              }, null, { timeout: 120000 });
+            } catch (error) {
+              waitError = String(error);
+            }
+          }
+
+          const state = await page.evaluate(() => {
+            const canvas = document.querySelector("canvas.trainerCanvas");
+            return {
+              canvasPresent: Boolean(canvas),
+              dataset: canvas ? { ...canvas.dataset } : {},
+              bodyText: document.body?.innerText?.slice(0, 4000) || "",
+            };
+          }).catch((error) => ({ canvasPresent:false, dataset:{}, evaluationError:String(error) }));
+
+          const payload = {
+            capturedAtUtc: new Date().toISOString(),
+            route: "/RampReady/?inspectionPreset=a1",
+            navigationError,
+            waitError,
+            state,
+            consoleMessages,
+            pageErrors,
+            failedRequests,
+            httpErrors,
+          };
+
+          await page.screenshot({
+            path: "reports/kphx-exact-live-a1.jpg",
+            type: "jpeg",
+            quality: 92,
+            fullPage: true,
+          }).catch((error) => { payload.screenshotError = String(error); });
+
+          fs.writeFileSync("reports/kphx-exact-live-a1.json", JSON.stringify(payload, null, 2) + "\n");
+          await browser.close();
+          NODE
+
+      - name: Enforce exact live T4 contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const result = JSON.parse(fs.readFileSync("reports/kphx-exact-live-a1.json","utf8"));
+          const d = result.state?.dataset || {};
+          const failures = [];
+          if (d.kphxExactLiveT4 !== "ready") failures.push(`live=${d.kphxExactLiveT4 || "missing"}`);
+          if (d.kphxExactLiveT4BuildingCount !== "2") failures.push(`buildings=${d.kphxExactLiveT4BuildingCount || "missing"}`);
+          if (d.kphxExactLiveT4JetwayCount !== "76") failures.push(`jetways=${d.kphxExactLiveT4JetwayCount || "missing"}`);
+          if (d.kphxExactLiveT4JetwayOpenEdgeCount !== "261") failures.push(`edges=${d.kphxExactLiveT4JetwayOpenEdgeCount || "missing"}`);
+          if (d.kphxExactLiveOldAirportJetwayGlbUsed !== "false") failures.push(`oldJetwayGlb=${d.kphxExactLiveOldAirportJetwayGlbUsed || "missing"}`);
+          if (d.kphxExactLiveProceduralTerminalMassing !== "false") failures.push(`proceduralTerminal=${d.kphxExactLiveProceduralTerminalMassing || "missing"}`);
+          if (d.kphxExactLiveLegacyFsxTerminal !== "false") failures.push(`legacyFsxTerminal=${d.kphxExactLiveLegacyFsxTerminal || "missing"}`);
+          if (d.terminal4ExactJetwayTextureActive !== "true") failures.push(`jetwayTexture=${d.terminal4ExactJetwayTextureActive || "missing"}`);
+          if (result.navigationError) failures.push(`navigation=${result.navigationError}`);
+          if (result.waitError) failures.push(`wait=${result.waitError}`);
+          if ((result.pageErrors || []).length) failures.push(`pageErrors=${result.pageErrors.join(" | ")}`);
+          if ((result.failedRequests || []).length) failures.push(`failedRequests=${result.failedRequests.length}`);
+          if ((result.httpErrors || []).length) failures.push(`httpErrors=${result.httpErrors.length}`);
+          const browserErrors=(result.consoleMessages || []).filter((entry)=>entry.type==="error");
+          if (browserErrors.length) failures.push(`consoleErrors=${browserErrors.map((entry)=>entry.text).join(" | ")}`);
+          if (failures.length) throw new Error(`Exact live A1 failed: ${failures.join("; ")}`);
+          fs.writeFileSync("reports/kphx-exact-live-a1-pass.json", JSON.stringify({
+            schemaVersion:1,
+            status:"PASS",
+            route:"actual RampReady A1 free-drive",
+            buildings:2,
+            jetways:76,
+            authoredOpenEdges:261,
+            oldAirportJetwayGlbUsed:false,
+            proceduralTerminalMassing:false,
+            legacyFsxTerminal:false,
+            visualInspectionRequired:true
+          },null,2)+"\n");
+          NODE
+
+      - name: Upload live evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: kphx-exact-live-a1
+          path: |
+            reports/kphx-exact-live-a1.jpg
+            reports/kphx-exact-live-a1.json
+            reports/kphx-exact-live-a1-pass.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Commit live evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore -- package.json package-lock.json 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-exact-live-a1.jpg reports/kphx-exact-live-a1.json reports/kphx-exact-live-a1-pass.json
+          git commit -m "Capture exact T4 live A1 evidence"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
