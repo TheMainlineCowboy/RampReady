@@ -25,6 +25,19 @@ jobs:
           ref: kphx-full-airport-import
           fetch-depth: 0
 
+      - name: Mark full dependency job started
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin kphx-full-airport-import
+          mkdir -p reports
+          printf 'started\n' > reports/kphx-full-cdb-zdp-status.txt
+          git add reports/kphx-full-cdb-zdp-status.txt
+          git commit -m "Record full KPHX CDB ZDP materialization start"
+          git push origin HEAD:kphx-full-airport-import
+
       - name: Install exact conversion tools
         shell: bash
         run: |
@@ -149,6 +162,12 @@ jobs:
             reports/kphx-full-cdb-object-resources.json \
             reports/kphx-full-cdb-library-map.json \
             --virtual-prefix=CDB-Library
+
+          printf 'cdb-source-ready\n' > reports/kphx-full-cdb-zdp-status.txt
+          git add reports/kphx-full-cdb-zdp-status.txt reports/kphx-full-cdb-library-map.json
+          git commit -m "Record exact full CDB source readiness"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
 
       - name: Materialize full exact CDB objects
         shell: bash
