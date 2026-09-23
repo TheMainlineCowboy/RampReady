@@ -229,6 +229,7 @@ export async function installKphxPackageOwnedObjectLayer(
         label: placement.resource,
         alphaCutoff: 0.5,
         windingAlreadyConverted: false,
+        correctLegacyTextureV: true,
       });
     }
     const instance = preparePlacementRoot(clonedRoot, placement);
