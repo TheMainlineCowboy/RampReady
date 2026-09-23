@@ -29,6 +29,9 @@ replaceRequired(
         cradleOffset: rig.profile.cradleOffset,
         steeringMode: rig.profile.steeringMode,
         wheelbase: rig.profile.wheelbase,
+        freeMaxSpeed: rig.profile.freeMaxSpeed,
+        towMaxSpeed: rig.profile.towMaxSpeed,
+        maxSteerAngle: rig.profile.kinematicMaxSteerAngle,
       }, dt);`,
   `      const dynamicsCommand = {
         connected: towing,
@@ -39,6 +42,9 @@ replaceRequired(
         cradleOffset: rig.profile.cradleOffset,
         steeringMode: rig.profile.steeringMode,
         wheelbase: rig.profile.wheelbase,
+        freeMaxSpeed: rig.profile.freeMaxSpeed,
+        towMaxSpeed: rig.profile.towMaxSpeed,
+        maxSteerAngle: rig.profile.kinematicMaxSteerAngle,
       };
       if (inspectionActive) {
         let remainingInspectionDt = Math.min(0.5, rawFrameDt);
