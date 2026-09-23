@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install geometry tools
-        run: python -m pip install --quiet trimesh rtree
+        run: python -m pip install --quiet trimesh rtree scipy
 
       - name: Identify B2/B4 owning building and depth profile
         shell: bash
