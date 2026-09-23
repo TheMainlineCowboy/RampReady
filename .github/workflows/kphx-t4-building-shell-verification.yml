@@ -161,6 +161,21 @@ jobs:
           set -euo pipefail
           node scripts/inspect-kphx-terminal4-recovered-glbs.mjs
 
+      - name: Verify exact Terminal 4 texture pixels
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet gdown
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          rm -rf /tmp/kphx-t4-source-textures
+          mkdir -p /tmp/kphx-t4-source-textures
+          gdown "https://drive.google.com/uc?id=1FTTuGgQgFNmX_k3FD4biPDUavBZQ-b0B" -O /tmp/kphx-t4-source-textures/Terminal4_comb.dds
+          gdown "https://drive.google.com/uc?id=1Epwd5VsQa7j9Taud1F-TrregSG7OuCU_" -O /tmp/kphx-t4-source-textures/Terminal4_LIT.dds
+          gdown "https://drive.google.com/uc?id=1Tj7rzga7j1qc_7YybQ-b8HclSupFiH-1" -O /tmp/kphx-t4-source-textures/Terminal4b_comb.dds
+          gdown "https://drive.google.com/uc?id=1uVtiWbvU1IKjQOJLNJDgskIr_IFx6R6K" -O /tmp/kphx-t4-source-textures/Terminal4b_LIT.dds
+          node scripts/verify-kphx-terminal4-texture-pixels.mjs /tmp/kphx-t4-source-textures reports/kphx-terminal4-texture-pixel-verification.json
+
       - name: Enforce exact T4 building-shell contract
         shell: bash
         run: |
@@ -198,7 +213,15 @@ jobs:
           for (const target of inspection.targets || []) {
             if (target.exactIndexCountMatch !== true) failures.push(`${target.name}:index-count-mismatch`);
             if (target.runtimeHashMatchesCatalog !== true) failures.push(`${target.name}:runtime-hash-mismatch`);
-            if (target.embeddedTextureHashesMatchSource !== true) failures.push(`${target.name}:embedded-texture-hash-mismatch`);
+          }
+          const pixelVerification = JSON.parse(fs.readFileSync("reports/kphx-terminal4-texture-pixel-verification.json", "utf8"));
+          if (pixelVerification.allDecodedRgbaExact !== true) failures.push("decoded-texture-pixels-mismatch");
+          for (const target of pixelVerification.targets || []) {
+            if (target.allDecodedRgbaExact !== true) failures.push(`${target.name}:decoded-texture-pixels-mismatch`);
+            for (const texture of target.textures || []) {
+              if (texture.sourceFileHashMatches !== true) failures.push(`${target.name}:${texture.imageName}:source-file-hash-mismatch`);
+              if (texture.decodedRgbaExactMatch !== true) failures.push(`${target.name}:${texture.imageName}:decoded-rgba-mismatch`);
+            }
           }
           if (failures.length) throw new Error(`T4 building-shell verification failed: ${failures.join("; ")}`);
           console.log(JSON.stringify({
@@ -206,7 +229,7 @@ jobs:
             buildings:2,
             jetways:76,
             openEdges:261,
-            embeddedTextureHashesMatchSource:true,
+            decodedTexturePixelsMatchSource:true,
             status:"PASS"
           },null,2));
           NODE
@@ -218,7 +241,7 @@ jobs:
           git restore -- package.json package-lock.json 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports/kphx-t4-building-shell-*.jpg reports/kphx-t4-building-shell-*.json reports/kphx-terminal4-recovered-glb-inspection.json
+          git add reports/kphx-t4-building-shell-*.jpg reports/kphx-t4-building-shell-*.json reports/kphx-terminal4-recovered-glb-inspection.json reports/kphx-terminal4-texture-pixel-verification.json
           git commit -m "Capture exact T4 building-shell verification evidence"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
