@@ -393,6 +393,21 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
       node.receiveShadow = true;
     });
 
+    const authoredRearSteerLeft = gltf.scene.getObjectByName("AP88_STEER_L_STEER");
+    const authoredRearSteerRight = gltf.scene.getObjectByName("AP88_STEER_R_STEER");
+    if (!authoredRearSteerLeft || !authoredRearSteerRight) {
+      throw new Error("Finalized LEKTRO R187A rear steering pivots are missing");
+    }
+
+    const originalSetSteering = rig.setSteering.bind(rig);
+    rig.setSteering = (angle) => {
+      originalSetSteering(angle);
+      const authoredVisualAngle = rig.steeringPivots[0]?.rotation.y ?? 0;
+      authoredRearSteerLeft.rotation.y = authoredVisualAngle;
+      authoredRearSteerRight.rotation.y = authoredVisualAngle;
+      rig.root.userData.authoredRearSteerRadians = authoredVisualAngle;
+    };
+
     rig.visual.visible = false;
     rig.root.add(gltf.scene);
     rig.root.userData.authoredLektroScene = gltf.scene;
@@ -402,6 +417,8 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
     rig.root.userData.runtimeVisualRevision = "R187A";
     rig.root.userData.runtimeVisualSha256 = "1a199a43b5339924693a20bd55d5c8c05f15019e6845a085b0be669fc38bd140";
     rig.root.userData.modelForwardCorrectionDegrees = 180;
+    rig.root.userData.authoredRearSteerBinding = "AP88_STEER_L_STEER|AP88_STEER_R_STEER";
+    rig.root.userData.authoredRearSteerMode = "copy-validated-physics-visual-angle";
     return "lektro-ap88-tvo914-r187a";
   }
 
