@@ -83,14 +83,16 @@ function frameRampView(camera, terminalLayer, jetwayLayer, view) {
   const span = Math.max(gateSize.x, gateSize.z, exactGate ? 28 : 110);
   const closeGateQa = view === "A1" || view === "A14" || view === "A30" || view === "B2";
   const tightGateFaceQa = view === "A14" || view === "A30" || view === "B2";
-  const distance = tightGateFaceQa
-    ? Math.max(58, span * 1.05)
-    : closeGateQa
-      ? Math.max(90, span * 1.8)
-      : exactGate
-        ? Math.max(34, span * 0.72)
-        : Math.max(125, span * 0.82);
-  const height = closeGateQa ? 6.0 : exactGate ? 5.0 : 9.5;
+  const distance = view === "B2"
+    ? Math.max(120, span * 2.0)
+    : tightGateFaceQa
+      ? Math.max(58, span * 1.05)
+      : closeGateQa
+        ? Math.max(90, span * 1.8)
+        : exactGate
+          ? Math.max(34, span * 0.72)
+          : Math.max(125, span * 0.82);
+  const height = view === "B2" ? 7.0 : closeGateQa ? 6.0 : exactGate ? 5.0 : 9.5;
 
   const focus = tightGateFaceQa
     ? gateCenter.clone()
