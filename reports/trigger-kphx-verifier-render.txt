@@ -15,3 +15,4 @@ Inspect recovered Terminal4/Terminal4b GLB topology against exact OBJ8 source co
 Verify exact Terminal4/Terminal4b legacy texture V correction against paired T4 QA evidence.
 Final T4 object/jetway QA after exact ZDP stop-marker materialization.
 Final rerun with exact 13 T4 ZDP stop-marker objects integrated.
+Rerun after fixing undefined T4 ZDP verifier evidence variables.
