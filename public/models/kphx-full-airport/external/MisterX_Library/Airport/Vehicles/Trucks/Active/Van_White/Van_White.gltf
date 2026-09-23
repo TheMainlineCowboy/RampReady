@@ -254,10 +254,10 @@
   ],
   "images": [
     {
-      "uri": "..\\Van_White.png"
+      "uri": "Van_White.png"
     },
     {
-      "uri": "..\\..\\..\\Shared\\Vehicle_Shadow.png"
+      "uri": "Vehicle_Shadow.png"
     }
   ],
   "samplers": [
