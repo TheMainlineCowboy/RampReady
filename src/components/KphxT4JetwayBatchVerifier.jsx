@@ -115,6 +115,7 @@ export default function KphxT4JetwayBatchVerifier() {
           label: object.resource,
           alphaCutoff: 0.5,
           windingAlreadyConverted: false,
+          correctLegacyTextureV: true,
         });
         model.name = object.name;
         model.position.fromArray(kphxWedToRampReadyPosition(object.latitude, object.longitude, 0));
