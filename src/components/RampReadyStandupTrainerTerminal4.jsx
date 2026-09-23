@@ -553,6 +553,13 @@ export default function RampReadyStandupTrainer({
     renderer.domElement.dataset.groundNearfieldDetailOpacity = "loading";
     const terminalLoad = installAuthoredTerminal4Visual(THREE, environment)
       .then((terminal) => {
+        renderer.domElement.dataset.kphxExactLiveT4 = "ready";
+        renderer.domElement.dataset.kphxExactLiveT4BuildingCount = String(environment.userData.exactLiveT4BuildingCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveT4JetwayCount = String(environment.userData.exactLiveT4JetwayCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveT4JetwayOpenEdgeCount = String(environment.userData.exactLiveT4JetwayOpenEdgeCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveOldAirportJetwayGlbUsed = String(environment.userData.exactLiveOldAirportJetwayGlbUsed === true);
+        renderer.domElement.dataset.kphxExactLiveProceduralTerminalMassing = String(environment.userData.proceduralTerminalMassing === true);
+        renderer.domElement.dataset.kphxExactLiveLegacyFsxTerminal = String(environment.userData.legacyFsxTerminal === true);
         renderer.domElement.dataset.terminal4TextureCount = String(environment.userData.authoredTerminal4TextureCount);
         renderer.domElement.dataset.terminal4ExactTextureCount = String(environment.userData.authoredTerminal4ExactTextureCount);
         renderer.domElement.dataset.terminal4A1LegacyBlockRemovedTriangles = String(environment.userData.authoredTerminal4A1LegacyBlockRemovedTriangles ?? 0);
@@ -633,6 +640,7 @@ export default function RampReadyStandupTrainer({
         return terminal;
       })
       .catch((error) => {
+        renderer.domElement.dataset.kphxExactLiveT4 = "load-error";
         renderer.domElement.dataset.terminal4A1LegacyBlockRemovedTriangles = "load-error";
         renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = "load-error";
         renderer.domElement.dataset.terminal4Position = "load-error";
