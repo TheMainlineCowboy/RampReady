@@ -1,0 +1,156 @@
+name: KPHX Full Exact ZDP Surfaces
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-full-zdp-surfaces.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-full-zdp-surfaces
+  cancel-in-progress: true
+
+jobs:
+  surfaces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install exact conversion tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y imagemagick git-lfs
+          git lfs install
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/magick" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ "${1:-}" = "identify" ]; then
+            shift
+            exec identify "$@"
+          fi
+          exec convert "$@"
+          SH
+          chmod +x "$HOME/bin/magick"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Build exact full-airport ZDP surface selection
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const src=JSON.parse(fs.readFileSync("public/models/kphx-full-airport/surfaces/surface-network.json","utf8"));
+          const keep=(x)=>x.resourcePrefix==="ZDP_Library";
+          const out={
+            ...src,
+            scope:{
+              authority:"KPHX 1.75.1 full surface-network WED extraction",
+              resourceScope:"ZDP_Library only; no radius/area selection",
+            },
+            polygons:(src.polygons||[]).filter(keep),
+            drapedOrthophotos:(src.drapedOrthophotos||[]).filter(keep),
+            lines:(src.lines||[]).filter(keep),
+            facades:[],strings:[],forests:[],roads:[],signs:[],lightFixtures:[],runways:[],taxiways:[],
+          };
+          const records=[...out.polygons,...out.drapedOrthophotos,...out.lines];
+          const resources=[...new Set(records.map((x)=>x.resource))].sort();
+          if(out.polygons.length!==279||out.drapedOrthophotos.length!==955||out.lines.length!==827){
+            throw new Error(`ZDP surface WED counts changed: polygons=${out.polygons.length} orthos=${out.drapedOrthophotos.length} lines=${out.lines.length}`);
+          }
+          if(records.length!==2061||resources.length!==49){
+            throw new Error(`ZDP surface authority changed: placements=${records.length} resources=${resources.length}`);
+          }
+          fs.writeFileSync("reports/kphx-full-zdp-surface-network.json",JSON.stringify(out,null,2)+"\n");
+          fs.writeFileSync("reports/kphx-full-zdp-surface-resources.json",JSON.stringify({
+            authority:"public/models/kphx-full-airport/surfaces/surface-network.json",
+            dependency:"ZDP_Library",
+            version:"1.2.0",
+            resources,
+          },null,2)+"\n");
+          console.log(JSON.stringify({polygons:279,drapedOrthophotos:955,lines:827,placements:2061,resources:49},null,2));
+          NODE
+
+      - name: Clone pinned exact ZDP 1.2.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .zdp-surfaces
+          git clone --depth 1 --branch 1.2.0 https://gitlab.com/StableSystem/zdp-library.git .zdp-surfaces
+          (
+            cd .zdp-surfaces
+            git lfs pull
+            test "$(git rev-parse HEAD)" = "4b44b673ac023bac67f92a1c991a28df1b1da82c"
+          )
+
+      - name: Resolve exact ZDP surface resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/resolve-xplane-library.mjs \
+            .zdp-surfaces \
+            reports/kphx-full-zdp-surface-resources.json \
+            reports/kphx-full-zdp-surface-library-map.json \
+            --virtual-prefix=ZDP_Library
+
+      - name: Materialize exact full-airport ZDP surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .runtime-zdp-surfaces
+          node scripts/materialize-kphx-surface-resources.mjs \
+            .zdp-surfaces \
+            .runtime-zdp-surfaces \
+            --placement-report=reports/kphx-full-zdp-surface-network.json \
+            --library-map=reports/kphx-full-zdp-surface-library-map.json \
+            --include-external-prefixes=ZDP_Library \
+            --skip-package-owned=true \
+            --concurrency=3
+
+      - name: Verify and commit exact full ZDP surface checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const m=JSON.parse(fs.readFileSync(".runtime-zdp-surfaces/manifest.json","utf8"));
+          const n=JSON.parse(fs.readFileSync(".runtime-zdp-surfaces/surface-network.json","utf8"));
+          const counts={
+            polygons:(n.polygons||[]).length,
+            orthos:(n.drapedOrthophotos||[]).length,
+            lines:(n.lines||[]).length,
+          };
+          if(m.failures?.length) throw new Error(`ZDP surface failures=${m.failures.length}`);
+          if(m.resolvedExternalResourceCount!==49) throw new Error(`Expected 49 ZDP surface resources, got ${m.resolvedExternalResourceCount}`);
+          if(counts.polygons!==279||counts.orthos!==955||counts.lines!==827){
+            throw new Error(`ZDP surface placement mismatch ${JSON.stringify(counts)}`);
+          }
+          console.log(JSON.stringify({resources:49,...counts,status:"PASS"},null,2));
+          NODE
+
+          rm -rf public/models/kphx-full-airport/full-zdp-surfaces
+          mkdir -p public/models/kphx-full-airport/full-zdp-surfaces
+          cp -a .runtime-zdp-surfaces/. public/models/kphx-full-airport/full-zdp-surfaces/
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            public/models/kphx-full-airport/full-zdp-surfaces \
+            reports/kphx-full-zdp-surface-network.json \
+            reports/kphx-full-zdp-surface-resources.json \
+            reports/kphx-full-zdp-surface-library-map.json
+          git commit -m "Materialize full exact KPHX ZDP surfaces"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
