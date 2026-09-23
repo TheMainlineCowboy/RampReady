@@ -110,3 +110,5 @@ jobs:
 # final rerun trigger after all T4 MisterX source/parser fixes
 
 # final retrigger after WEATHER_TRANSPARENT support
+
+# retrigger after Windows texture-path normalization
