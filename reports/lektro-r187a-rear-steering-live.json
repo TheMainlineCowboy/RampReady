@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "visualSource": "LEKTRO_AP88_TVO914.glb R187A",
+  "binding": "AP88_STEER_L_STEER|AP88_STEER_R_STEER",
+  "mode": "copy-validated-physics-visual-angle",
+  "centeredBefore": {
+    "binding": "AP88_STEER_L_STEER|AP88_STEER_R_STEER",
+    "mode": "copy-validated-physics-visual-angle",
+    "radians": 0,
+    "degrees": 0,
+    "maxVisualDegrees": 84,
+    "steeringMode": "rear"
+  },
+  "leftSteer": {
+    "binding": "AP88_STEER_L_STEER|AP88_STEER_R_STEER",
+    "mode": "copy-validated-physics-visual-angle",
+    "radians": -1.466077,
+    "degrees": -84,
+    "maxVisualDegrees": 84,
+    "steeringMode": "rear"
+  },
+  "centeredAfter": {
+    "binding": "AP88_STEER_L_STEER|AP88_STEER_R_STEER",
+    "mode": "copy-validated-physics-visual-angle",
+    "radians": 0,
+    "degrees": 0,
+    "maxVisualDegrees": 84,
+    "steeringMode": "rear"
+  },
+  "failures": []
+}
