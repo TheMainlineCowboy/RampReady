@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "status": "CAPTURED",
+  "authority": "KPHX 1.75.1 exact source",
+  "resource": "Terminals/Terminal3a.obj",
+  "wedObjectId": "7424",
+  "latitude": 33.436168819,
+  "longitude": -112.008763064,
+  "headingDegrees": 0,
+  "sourceSha256": "4283b54b22abf73eef75259f22318153705efc8372a667fd3de89fbe8db70ea3",
+  "runtimeSha256": "0297c2435a9f17a7aaf564c6f0198b6533637b527f2d0628bc918c383d894aa7",
+  "geometryEdits": 0,
+  "placementEdits": 0,
+  "substitutions": 0,
+  "note": "Programmatic source/runtime contract passed. Visual inspection remains required before lock."
+}

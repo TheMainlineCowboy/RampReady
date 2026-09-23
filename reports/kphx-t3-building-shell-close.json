@@ -1,0 +1,62 @@
+{
+  "capturedAtUtc": "2026-09-23T08:27:54.011Z",
+  "authority": "KPHX 1.75.1 earth.wed.xml + recovered exact Terminals/Terminal3a.obj runtime GLB",
+  "scope": "Terminal3a only; no T3 garage, T4, jetways, or neighboring objects",
+  "navigationError": null,
+  "waitError": null,
+  "state": {
+    "canvasPresent": true,
+    "dataset": {
+      "engine": "three.js r171",
+      "kphxT3BuildingShellVerifier": "ready",
+      "kphxT3BuildingPlacements": "1",
+      "kphxT3Resource": "Terminals/Terminal3a.obj",
+      "kphxT3WedObjectId": "7424",
+      "kphxT3Latitude": "33.436168819",
+      "kphxT3Longitude": "-112.008763064",
+      "kphxT3HeadingDegrees": "0",
+      "kphxT3Asset": "/models/kphx/Terminal3a.exact.glb",
+      "kphxT3RecoveredExact": "true",
+      "kphxT3SourceSha256": "4283b54b22abf73eef75259f22318153705efc8372a667fd3de89fbe8db70ea3",
+      "kphxT3RuntimeSha256": "0297c2435a9f17a7aaf564c6f0198b6533637b527f2d0628bc918c383d894aa7",
+      "kphxT3RuntimeBytes": "18527808",
+      "kphxT3BoundsSize": "251.08390426000003,13.49999809,41.42243957000005",
+      "kphxT3CameraPosition": "172.0774763334491,34.249999045,1163.2355995931453",
+      "kphxT3CameraTarget": "-33.81132515975089,8.6799987012,922.1950515035452",
+      "kphxT3SubstitutionPolicy": "none",
+      "kphxT3GeometryEdits": "0",
+      "kphxT3PlacementEdits": "0",
+      "kphxT3LoadMs": "468"
+    },
+    "bodyText": "Exact Terminal 3 shell ready · WED 7424 · one source building · no substitutions"
+  },
+  "consoleMessages": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "warning",
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A070200044180000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x3e0c000e9500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x3e0c000e9500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    }
+  ],
+  "pageErrors": [],
+  "failedRequests": [],
+  "httpErrors": []
+}
