@@ -163,6 +163,38 @@ jobs:
             --include-external-prefixes=CDB-Library \
             --batch-name=full-cdb
 
+      - name: Verify and commit full exact CDB runtime checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const c=JSON.parse(fs.readFileSync(".runtime-cdb/manifest.json","utf8"));
+          if(c.failures?.length) throw new Error(`CDB failures=${c.failures.length}`);
+          if(c.resolvedExternal.materializedPlacementCount!==53||c.resolvedExternal.materializedUniqueResourceCount!==7){
+            throw new Error(`CDB exact contract mismatch ${c.resolvedExternal.materializedPlacementCount}/${c.resolvedExternal.materializedUniqueResourceCount}`);
+          }
+          console.log(JSON.stringify({cdb:{placements:53,resources:7},status:"PASS"},null,2));
+          NODE
+
+          mkdir -p public/models/kphx-full-airport/external public/models/kphx-full-airport/batches
+          cp -a .runtime-cdb/external/. public/models/kphx-full-airport/external/
+          cp .runtime-cdb/manifest.json public/models/kphx-full-airport/batches/full-cdb.manifest.json
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            public/models/kphx-full-airport/external/CDB-Library \
+            public/models/kphx-full-airport/batches/full-cdb.manifest.json \
+            reports/kphx-full-airport-wed-placements-exact.json \
+            reports/kphx-full-cdb-wed-placements.json \
+            reports/kphx-full-cdb-object-resources.json \
+            reports/kphx-full-cdb-library-map.json \
+            reports/kphx-full-airport-materialization-full-cdb.json
+          git commit -m "Materialize full exact KPHX CDB objects"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
       - name: Fetch pinned exact ZDP dependency subset
         shell: bash
         run: |
@@ -242,52 +274,33 @@ jobs:
             --include-external-prefixes=ZDP_Library \
             --batch-name=full-zdp
 
-      - name: Verify exact full dependency contracts
+      - name: Verify and commit full exact ZDP runtime checkpoint
         shell: bash
         run: |
           set -euo pipefail
           node --input-type=module <<'NODE'
           import fs from "node:fs";
-          const c=JSON.parse(fs.readFileSync(".runtime-cdb/manifest.json","utf8"));
           const z=JSON.parse(fs.readFileSync(".runtime-zdp/manifest.json","utf8"));
-          if(c.failures?.length) throw new Error(`CDB failures=${c.failures.length}`);
           if(z.failures?.length) throw new Error(`ZDP failures=${z.failures.length}`);
-          if(c.resolvedExternal.materializedPlacementCount!==53||c.resolvedExternal.materializedUniqueResourceCount!==7){
-            throw new Error(`CDB exact contract mismatch ${c.resolvedExternal.materializedPlacementCount}/${c.resolvedExternal.materializedUniqueResourceCount}`);
-          }
           if(z.resolvedExternal.materializedPlacementCount!==346||z.resolvedExternal.materializedUniqueResourceCount!==47){
             throw new Error(`ZDP exact contract mismatch ${z.resolvedExternal.materializedPlacementCount}/${z.resolvedExternal.materializedUniqueResourceCount}`);
           }
-          console.log(JSON.stringify({cdb:{placements:53,resources:7},zdp:{placements:346,resources:47},status:"PASS"},null,2));
+          console.log(JSON.stringify({zdp:{placements:346,resources:47},status:"PASS"},null,2));
           NODE
 
-      - name: Install and commit exact full dependency runtimes
-        shell: bash
-        run: |
-          set -euo pipefail
           mkdir -p public/models/kphx-full-airport/external public/models/kphx-full-airport/batches
-          cp -a .runtime-cdb/external/. public/models/kphx-full-airport/external/
           cp -a .runtime-zdp/external/. public/models/kphx-full-airport/external/
-          cp .runtime-cdb/manifest.json public/models/kphx-full-airport/batches/full-cdb.manifest.json
           cp .runtime-zdp/manifest.json public/models/kphx-full-airport/batches/full-zdp.manifest.json
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            public/models/kphx-full-airport/external/CDB-Library \
             public/models/kphx-full-airport/external/ZDP_Library \
-            public/models/kphx-full-airport/batches/full-cdb.manifest.json \
             public/models/kphx-full-airport/batches/full-zdp.manifest.json \
-            reports/kphx-full-airport-wed-placements-exact.json \
-            reports/kphx-full-cdb-wed-placements.json \
-            reports/kphx-full-cdb-object-resources.json \
-            reports/kphx-full-cdb-library-map.json \
             reports/kphx-full-zdp-wed-placements.json \
             reports/kphx-full-zdp-object-resources.json \
             reports/kphx-full-zdp-library-map.json \
-            reports/kphx-full-airport-materialization-full-cdb.json \
             reports/kphx-full-airport-materialization-full-zdp.json
-
-          git commit -m "Materialize full exact KPHX CDB and ZDP objects"
+          git commit -m "Materialize full exact KPHX ZDP objects"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
