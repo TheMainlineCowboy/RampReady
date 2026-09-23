@@ -53,7 +53,7 @@ async function mapWithConcurrency(items, limit, worker) {
   return results;
 }
 
-function preparePlacementRoot(root, placement) {
+export function preparePlacementRoot(root, placement) {
   const position = kphxWedToRampReadyPosition(
     placement.latitude,
     placement.longitude,
