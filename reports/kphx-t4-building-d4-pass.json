@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "view": "D4",
+  "evidenceCommit": "ac1738158fe25159ea80cadf17e6a89131e08110",
+  "exactSourceGeometry": true,
+  "exactSourceDecodedTexturePixels": true,
+  "wedPlacementLocked": true,
+  "jetwaysLocked": true,
+  "substitutionPolicy": "none",
+  "visualFinding": "Ramp-facing terminal shell is coherent in the D4 inspection view; the lower ramp-level shell, glazed/truss upper structure, support columns, and jetway interfaces are present with no obvious missing source faces, invented walls, or culling/material breaks visible.",
+  "policy": "No airport geometry, placement, material, or jetway transform was changed."
+}
