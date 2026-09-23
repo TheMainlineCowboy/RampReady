@@ -18,17 +18,37 @@ import { installRuntimeEquipmentVisual, supportsRuntimeEquipmentVisual } from ".
 import { buildKphxExactLiveEnvironment as buildTerminal4RampEnvironment, installKphxExactLiveTerminal4 as installAuthoredTerminal4Visual } from "../environment/kphxFullAirport/installLiveTerminal4Exact.js";
 import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
 import { KPHX_FULL_AIRPORT_SOURCE, kphxXPlaneHeadingToRampReadyYawRadians } from "../environment/kphxFullAirport/sourceAuthority.js";
+import { KPHX_T4_GATE_POSE_SOURCE, getKphxTerminal4GatePoseByRampWedObjectId } from "../environment/kphxFullAirport/terminal4GatePoseAuthority.js";
 import "./RampReadyTrainer.css";
 import "./procedure-gates.css";
 import "./mobile-runtime-recovery.css";
 import "./inspection-compact-v30.css";
 import "./mobile-hud-v9.css";
 
-const NOSE_START_Z = 6.2;
+const A1_GATE_POSE = getKphxTerminal4GatePoseByRampWedObjectId(KPHX_FULL_AIRPORT_SOURCE.anchor.wedObjectId);
+if (!A1_GATE_POSE || A1_GATE_POSE.gate !== "A1") throw new Error("Exact KPHX A1 WED ramp-position pose is missing");
+const A1_AIRCRAFT_START_X = A1_GATE_POSE.runtimePosition[0];
+const NOSE_START_Z = A1_GATE_POSE.runtimePosition[2];
 const STOP_Z = 52;
 const A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPosition-27855";
-const A1_SOURCE_HEADING_DEGREES = KPHX_FULL_AIRPORT_SOURCE.anchor.headingDegrees;
-const A1_AIRCRAFT_YAW_RADIANS = kphxXPlaneHeadingToRampReadyYawRadians(A1_SOURCE_HEADING_DEGREES);
+const A1_SOURCE_HEADING_DEGREES = A1_GATE_POSE.sourceHeadingDegrees;
+const A1_AIRCRAFT_YAW_RADIANS = A1_GATE_POSE.runtimeYawRadians;
+const A1_EQUIPMENT_APPROACH_OFFSET_METERS = 6.2;
+const A1_EQUIPMENT_SPAWN = Object.freeze({
+  x: A1_AIRCRAFT_START_X - Math.sin(A1_AIRCRAFT_YAW_RADIANS) * A1_EQUIPMENT_APPROACH_OFFSET_METERS,
+  z: NOSE_START_Z - Math.cos(A1_AIRCRAFT_YAW_RADIANS) * A1_EQUIPMENT_APPROACH_OFFSET_METERS,
+  yaw: A1_AIRCRAFT_YAW_RADIANS,
+});
+function createA1SpawnPushbackState() {
+  return createPushbackState({
+    tugX: A1_EQUIPMENT_SPAWN.x,
+    tugZ: A1_EQUIPMENT_SPAWN.z,
+    tugYaw: A1_EQUIPMENT_SPAWN.yaw,
+    aircraftX: A1_AIRCRAFT_START_X,
+    aircraftZ: NOSE_START_Z,
+    aircraftYaw: A1_AIRCRAFT_YAW_RADIANS,
+  });
+}
 const STAGES = [
   "Complete visual equipment check",
   "Align the capture head with the nose gear",
@@ -44,7 +64,7 @@ const INSPECTION_PRESETS = Object.freeze({
   // Each chase camera is placed on the apron side of its tug and looks back
   // toward the actual source jetway/terminal position instead of across an
   // empty taxiway. Positions remain source-gate apron locations.
-  a1: Object.freeze({ id: "a1", label: "A1 ramp", x: 0, z: 0, yaw: 0, cameraYaw: 0.92, cameraDistance: 25 }),
+  a1: Object.freeze({ id: "a1", label: "A1 ramp", x: A1_EQUIPMENT_SPAWN.x, z: A1_EQUIPMENT_SPAWN.z, yaw: A1_EQUIPMENT_SPAWN.yaw, cameraYaw: 0.92, cameraDistance: 25 }),
   // A true side-on architectural view of the measured A1 rotunda-to-T4_WALK
   // corridor. The tug remains freely drivable and the driver/overhead views
   // remain available, while chase mode starts by looking directly at the joint
@@ -185,12 +205,12 @@ export default function RampReadyStandupTrainer({
     const sim = simRef.current;
     if (!sim) return;
     sim.connection = createConnectionState();
-    sim.dynamics = createPushbackState();
-    sim.rig.root.position.set(0, 0, 0);
-    sim.rig.root.rotation.y = 0;
+    sim.dynamics = createA1SpawnPushbackState();
+    sim.rig.root.position.set(A1_EQUIPMENT_SPAWN.x, 0, A1_EQUIPMENT_SPAWN.z);
+    sim.rig.root.rotation.y = A1_EQUIPMENT_SPAWN.yaw;
     sim.rig.setSteering(0);
     sim.rig.setLiftProgress(0);
-    sim.aircraft.position.set(0, 0, NOSE_START_Z);
+    sim.aircraft.position.set(A1_AIRCRAFT_START_X, 0, NOSE_START_Z);
     sim.aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;
     const resetJetwayDeployment = inspectionRef.current ? 0 : 1;
     jetwayRef.current.target = resetJetwayDeployment;
@@ -262,12 +282,12 @@ export default function RampReadyStandupTrainer({
     const sim = simRef.current;
     if (sim) {
       sim.connection = createConnectionState();
-      sim.dynamics = createPushbackState();
-      sim.rig.root.position.set(0, 0, 0);
-      sim.rig.root.rotation.y = 0;
+      sim.dynamics = createA1SpawnPushbackState();
+      sim.rig.root.position.set(A1_EQUIPMENT_SPAWN.x, 0, A1_EQUIPMENT_SPAWN.z);
+      sim.rig.root.rotation.y = A1_EQUIPMENT_SPAWN.yaw;
       sim.rig.setSteering(0);
       sim.rig.setLiftProgress(0);
-      sim.aircraft.position.set(0, 0, NOSE_START_Z);
+      sim.aircraft.position.set(A1_AIRCRAFT_START_X, 0, NOSE_START_Z);
       sim.aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;
       sim.renderer.domElement.dataset.inspectionMode = next ? "active" : "training";
       sim.renderer.domElement.dataset.inspectionPreset = next ? "a1" : "training";
@@ -900,6 +920,8 @@ export default function RampReadyStandupTrainer({
 
     const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 8000);
     const rig = createProceduralLektroRig(THREE, equipmentId);
+    rig.root.position.set(A1_EQUIPMENT_SPAWN.x, 0, A1_EQUIPMENT_SPAWN.z);
+    rig.root.rotation.y = A1_EQUIPMENT_SPAWN.yaw;
     rig.root.userData.equipmentId = equipmentId;
     renderer.domElement.dataset.tugSource = equipmentId === "standup-tug"
       ? "loading"
@@ -937,12 +959,12 @@ export default function RampReadyStandupTrainer({
     const rigFailures = validateTugRig(rig);
     if (rigFailures.length) throw new Error(`Invalid tug rig: ${rigFailures.join(", ")}`);
     const aircraft = buildCRJ700Aircraft(THREE, material, cylinder);
-    aircraft.position.set(0, 0, NOSE_START_Z);
+    aircraft.position.set(A1_AIRCRAFT_START_X, 0, NOSE_START_Z);
     aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;
     aircraft.scale.setScalar(0.82);
     scene.add(rig.root, aircraft);
 
-    const sim = { renderer, scene, camera, environment, rig, aircraft, connection: createConnectionState(), dynamics: createPushbackState(), last: performance.now(), lastHud: 0 };
+    const sim = { renderer, scene, camera, environment, rig, aircraft, connection: createConnectionState(), dynamics: createA1SpawnPushbackState(), last: performance.now(), lastHud: 0 };
     simRef.current = sim;
 
     const canvas = renderer.domElement;
