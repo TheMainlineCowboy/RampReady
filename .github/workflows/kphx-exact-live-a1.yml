@@ -30,6 +30,7 @@ jobs:
         run: |
           set -euo pipefail
           npm ci
+          npm run verify
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
@@ -146,6 +147,13 @@ jobs:
           if (d.rigFreeMaxSpeedMps !== "4.02336") failures.push(`freeMaxSpeed=${d.rigFreeMaxSpeedMps || "missing"}`);
           if (d.rigTowMaxSpeedMps !== "1.78816") failures.push(`towMaxSpeed=${d.rigTowMaxSpeedMps || "missing"}`);
           if (d.rigVisualMaxSteerDegrees !== "84.000") failures.push(`visualSteer=${d.rigVisualMaxSteerDegrees || "missing"}`);
+          if (d.a1AircraftSourceHeadingDegrees !== "-90.08") failures.push(`a1SourceHeading=${d.a1AircraftSourceHeadingDegrees || "missing"}`);
+          if (d.a1AircraftRuntimeYawDegrees !== "180.08") failures.push(`a1RuntimeYaw=${d.a1AircraftRuntimeYawDegrees || "missing"}`);
+          if (d.kphxT4SupportedRampPositionCount !== "76") failures.push(`supportedRampPositions=${d.kphxT4SupportedRampPositionCount || "missing"}`);
+          if (d.kphxT4SupportedGateNameCount !== "75") failures.push(`supportedGateNames=${d.kphxT4SupportedGateNameCount || "missing"}`);
+          if (d.a1EquipmentSpawnAuthority !== "same-a1-wed-gate-pose-equipment-spawn-v1") failures.push(`equipmentSpawnAuthority=${d.a1EquipmentSpawnAuthority || "missing"}`);
+          if (d.a1EquipmentSpawnYawDegrees !== "180.08") failures.push(`equipmentSpawnYaw=${d.a1EquipmentSpawnYawDegrees || "missing"}`);
+          if (d.a1EquipmentApproachOffsetMeters !== "6.200") failures.push(`equipmentSpawnOffset=${d.a1EquipmentApproachOffsetMeters || "missing"}`);
           if (d.kphxSurfaceReady !== "true") failures.push(`surfaceReady=${d.kphxSurfaceReady || "missing"}`);
           if (d.kphxA1ZdpSurfaceReady !== "true") failures.push(`a1ZdpSurfaceReady=${d.kphxA1ZdpSurfaceReady || "missing"}`);
           if (d.kphxA1ZdpSurfacePolygonCount !== "14") failures.push(`a1ZdpPolygons=${d.kphxA1ZdpSurfacePolygonCount || "missing"}`);
