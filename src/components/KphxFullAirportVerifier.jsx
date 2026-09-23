@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { installKphxPackageOwnedObjectLayer } from "../environment/kphxFullAirport/installPackageOwnedObjectLayer.js";
 import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
 import { installKphxTerminal4StockJetways } from "../environment/kphxFullAirport/installTerminal4StockJetways.js";
+import { KPHX_T4_COVERED_OBJECT_AUTHORITY } from "../environment/kphxFullAirport/t4CoveredObjectAuthority.js";
 
 const OBJECT_MANIFESTS = Object.freeze([
   "/models/kphx-full-airport/batches/structures.manifest.json",
@@ -116,8 +117,24 @@ export default function KphxFullAirportVerifier() {
         0,
       );
 
+      const t4CoveredIds = new Set(KPHX_T4_COVERED_OBJECT_AUTHORITY.coveredWedObjectIds);
+      let t4VisibleObjectPlacements = 0;
+      for (const result of objectResults) {
+        for (const placementRoot of result.layer.children) {
+          const wedObjectId = String(placementRoot.userData?.wedObjectId ?? "");
+          const visible = t4CoveredIds.has(wedObjectId);
+          placementRoot.visible = visible;
+          if (visible) t4VisibleObjectPlacements += 1;
+        }
+      }
+
       if (objectPlacements !== 1634) throw new Error(`Expected 1634 exact KPHX placements, loaded ${objectPlacements}`);
       if (sourceResources !== 147) throw new Error(`Expected 147 exact KPHX source resources, loaded ${sourceResources}`);
+      if (t4VisibleObjectPlacements !== KPHX_T4_COVERED_OBJECT_AUTHORITY.coveredObjectPlacementCount) {
+        throw new Error(
+          `Expected ${KPHX_T4_COVERED_OBJECT_AUTHORITY.coveredObjectPlacementCount} exact covered T4 objects, made ${t4VisibleObjectPlacements} visible`,
+        );
+      }
       if (surfaces.layer.userData.polygonCount !== 13) throw new Error(`Expected 13 package polygons, loaded ${surfaces.layer.userData.polygonCount}`);
       if (surfaces.layer.userData.lineMeshCount < 35) throw new Error(`Expected at least 35 package line meshes, loaded ${surfaces.layer.userData.lineMeshCount}`);
       if (terminal4Jetways.layer.userData.jetwayCount !== 76) {
@@ -158,6 +175,9 @@ export default function KphxFullAirportVerifier() {
       renderer.domElement.dataset.kphxSourceVersion = "1.75.1";
       renderer.domElement.dataset.kphxT4ExactJetwayCount = String(terminal4Jetways.layer.userData.jetwayCount);
       renderer.domElement.dataset.kphxT4ExactJetwayOpenEdges = String(terminal4Jetways.layer.userData.authoredOpenEdgeCount);
+      renderer.domElement.dataset.kphxT4AuthoredObjectPlacements = String(KPHX_T4_COVERED_OBJECT_AUTHORITY.authoredObjectPlacementCount);
+      renderer.domElement.dataset.kphxT4VisibleObjectPlacements = String(t4VisibleObjectPlacements);
+      renderer.domElement.dataset.kphxT4BlockedObjectPlacements = String(KPHX_T4_COVERED_OBJECT_AUTHORITY.blockedObjectPlacementCount);
       renderer.domElement.dataset.kphxT4OldAirportJetwayGlbUsed = "false";
       setStatus(`KPHX 1.75.1 exact checkpoint ready · ${objectPlacements} placements · ${sourceResources} source resources · ${loadedAssetFiles} asset files · ${terminal4Jetways.layer.userData.jetwayCount} exact T4 jetways`);
     };
