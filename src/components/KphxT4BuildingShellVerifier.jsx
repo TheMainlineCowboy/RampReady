@@ -81,7 +81,7 @@ function frameRampView(camera, terminalLayer, jetwayLayer, view) {
   outward.normalize();
 
   const span = Math.max(gateSize.x, gateSize.z, exactGate ? 28 : 110);
-  const closeGateQa = view === "A1" || view === "A14";
+  const closeGateQa = view === "A1" || view === "A14" || view === "A30";
   const distance = view === "A14"
     ? Math.max(58, span * 1.05)
     : closeGateQa
