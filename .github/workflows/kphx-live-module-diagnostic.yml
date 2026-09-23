@@ -43,6 +43,9 @@ jobs:
             sleep 1
           done
 
+          echo "=== launcher module ==="
+          curl -sS -i http://127.0.0.1:4173/RampReady/src/components/PushbackTrainer.jsx || true
+          echo
           echo "=== trainer module ==="
           curl -sS -i http://127.0.0.1:4173/RampReady/src/components/RampReadyStandupTrainerTerminal4.jsx || true
           echo
