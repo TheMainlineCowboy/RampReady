@@ -1,1 +1,4 @@
-Capture A1 after exact-footprint invisible-concrete underlay using authored ZDP Flat_New_Uniform source concrete.
+Trigger exact live A1 verification for WED gate-pose alignment.
+Expected source: KPHX 1.75.1 WED_RampPosition 27855, heading -90.08 deg.
+Expected aircraft/equipment runtime yaw: 180.08 deg.
+Verification contract commit: bce1687f0abd21e628c2c6ad498fc26b4e703792
