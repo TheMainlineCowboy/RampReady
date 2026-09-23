@@ -195,6 +195,7 @@ function configureExactModel(THREE, scene, object) {
       label: object.resource,
       alphaCutoff: object.sourceObj8Render.alphaCutoff,
       windingAlreadyConverted: false,
+      correctLegacyTextureV: true,
     });
   }
   const placement = sourceLocalFromWED(object.latitude, object.longitude);
