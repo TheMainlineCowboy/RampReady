@@ -778,6 +778,17 @@ export default function RampReadyStandupTrainer({
     rig.root.userData.equipmentId = equipmentId;
     renderer.domElement.dataset.tugSource = equipmentId === "standup-tug" ? "loading" : "procedural-lektro";
     renderer.domElement.dataset.steeringMode = rig.profile.steeringMode;
+    renderer.domElement.dataset.rigProfile = rig.profile.id;
+    renderer.domElement.dataset.rigWheelbaseMeters = String(rig.profile.wheelbase);
+    renderer.domElement.dataset.rigTurningRadiusMeters = String(rig.profile.turningRadius ?? "");
+    renderer.domElement.dataset.rigFreeMaxSpeedMps = String(rig.profile.freeMaxSpeed ?? "");
+    renderer.domElement.dataset.rigTowMaxSpeedMps = String(rig.profile.towMaxSpeed ?? "");
+    renderer.domElement.dataset.rigKinematicMaxSteerDegrees = Number.isFinite(rig.profile.kinematicMaxSteerAngle)
+      ? THREE.MathUtils.radToDeg(rig.profile.kinematicMaxSteerAngle).toFixed(3)
+      : "";
+    renderer.domElement.dataset.rigVisualMaxSteerDegrees = Number.isFinite(rig.profile.visualMaxSteerAngle)
+      ? THREE.MathUtils.radToDeg(rig.profile.visualMaxSteerAngle).toFixed(3)
+      : "";
     renderer.domElement.dataset.operatorSide = rig.profile.operatorEye[0] > 0 ? "right" : "left";
     renderer.domElement.dataset.operatorControls = equipmentId === "standup-tug" ? "loading" : "not-applicable";
     void installRuntimeEquipmentVisual(rig, equipmentId)
@@ -950,6 +961,9 @@ export default function RampReadyStandupTrainer({
         cradleOffset: rig.profile.cradleOffset,
         steeringMode: rig.profile.steeringMode,
         wheelbase: rig.profile.wheelbase,
+        freeMaxSpeed: rig.profile.freeMaxSpeed,
+        towMaxSpeed: rig.profile.towMaxSpeed,
+        maxSteerAngle: rig.profile.kinematicMaxSteerAngle,
       };
       if (inspectionActive) {
         let remainingInspectionDt = Math.min(0.5, rawFrameDt);
