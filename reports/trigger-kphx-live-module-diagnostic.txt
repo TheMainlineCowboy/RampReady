@@ -1,2 +1,2 @@
-Trigger fast Vite transform diagnostic for exact live T4 integration.
-Probe loading-screen launcher + A1 exact live modules.
+Trigger fast regenerated Vite probe.
+Verify exact A1 ZDP marking preload survives runtime generation.
