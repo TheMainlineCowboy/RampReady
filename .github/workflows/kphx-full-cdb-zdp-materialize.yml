@@ -35,8 +35,12 @@ jobs:
           mkdir -p reports
           printf 'started\n' > reports/kphx-full-cdb-zdp-status.txt
           git add reports/kphx-full-cdb-zdp-status.txt
-          git commit -m "Record full KPHX CDB ZDP materialization start"
-          git push origin HEAD:kphx-full-airport-import
+          if git diff --cached --quiet; then
+            echo "Full KPHX CDB/ZDP start marker already current."
+          else
+            git commit -m "Record full KPHX CDB ZDP materialization start"
+            git push origin HEAD:kphx-full-airport-import
+          fi
 
       - name: Install exact conversion tools
         shell: bash
