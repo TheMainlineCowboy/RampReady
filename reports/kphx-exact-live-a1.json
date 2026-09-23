@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-09-23T21:21:23.107Z",
+  "capturedAtUtc": "2026-09-23T21:38:22.472Z",
   "route": "/RampReady/?inspectionPreset=a1",
   "navigationError": null,
   "waitError": null,
@@ -119,6 +119,7 @@
       "kphxExactLiveOldAirportJetwayGlbUsed": "false",
       "kphxExactLiveProceduralTerminalMassing": "false",
       "kphxExactLiveLegacyFsxTerminal": "false",
+      "kphxTransparentConcreteUnderlayCount": "8",
       "kphxSurfaceReady": "true",
       "kphxSurfacePolygonCount": "27",
       "kphxSurfaceOrthophotoCount": "0",
@@ -130,6 +131,10 @@
       "kphxA1ZdpOpaqueBaseUnderlayCount": "0",
       "kphxA1ZdpSurfaceOrthophotoCount": "0",
       "kphxA1ZdpSurfaceLineMeshCount": "0",
+      "kphxT4BaseApronReady": "true",
+      "kphxT4BaseApronSource": "ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol",
+      "kphxT4BaseApronWidthMeters": "709.148",
+      "kphxT4BaseApronDepthMeters": "979.331",
       "terminal4A1RetractionAuthority": "aircraft-door-clearance-without-overtravel-v6",
       "terminal4A1RetractionClearanceMeters": "2.38",
       "terminal4A1RetractionRatio": "0.330556",
@@ -152,23 +157,23 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000C4360000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000AC2E0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0xc24000e5b00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x7ec00bdf800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0xc24000e5b00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x7ec00bdf800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0xc24000e5b00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x7ec00bdf800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0xc24000e5b00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      "text": "[.WebGL-0x7ec00bdf800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
     }
   ],
   "pageErrors": [],
