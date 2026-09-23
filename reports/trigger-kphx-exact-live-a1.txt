@@ -1,2 +1,1 @@
-Capture A1 after opaque underlay fills interior source cutouts.
-Target runtime fix: 0ae080b5cac88582f0d3ffb11c7b6b2f4c443aa8
+Capture A1 after disabling only the six ZDP opaque underlay helper meshes. Verify pavement remains and blue patches disappear.
