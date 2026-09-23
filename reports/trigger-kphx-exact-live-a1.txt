@@ -1,1 +1,1 @@
-Capture A1 with exact-textured T4 base apron compatibility underlay. Verify blue ground holes are gone and authored pavement/markings remain intact.
+Capture A1 after exact-footprint invisible-concrete underlay using authored ZDP Flat_New_Uniform source concrete.
