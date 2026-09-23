@@ -85,7 +85,7 @@ jobs:
             placements:{packageOwned:[],externalLibraries:selected},
             rampStarts:[],
           };
-          if(allMisterX.length!==2418) throw new Error(`MisterX WED authority changed: total=${allMisterX.length}`);
+          if(allMisterX.length!==2443) throw new Error(`MisterX WED authority changed: total=${allMisterX.length}`);
           if(blocked.length!==25||Object.keys(blockedCounts).length!==5){
             throw new Error(`MisterX ambiguous Random contract changed: placements=${blocked.length}, resources=${Object.keys(blockedCounts).length}`);
           }
