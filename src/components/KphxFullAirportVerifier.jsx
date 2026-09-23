@@ -192,8 +192,6 @@ export default function KphxFullAirportVerifier() {
       renderer.domElement.dataset.kphxT4MisterxResources = "50";
       renderer.domElement.dataset.kphxT4CdbPlacements = "23";
       renderer.domElement.dataset.kphxT4CdbResources = "1";
-      renderer.domElement.dataset.kphxT4ZdpObjectPlacements = String(t4ZdpObjectPlacements);
-      renderer.domElement.dataset.kphxT4ZdpObjectResources = String(t4ZdpObjectResources);
       renderer.domElement.dataset.kphxT4ZdpPlacements = String(t4Zdp.layer.userData.loadedPlacementCount);
       renderer.domElement.dataset.kphxT4ZdpResources = String(t4Zdp.manifest.resolvedExternal?.materializedUniqueResourceCount || 0);
       renderer.domElement.dataset.kphxLoadedAssetFiles = String(loadedAssetFiles);
