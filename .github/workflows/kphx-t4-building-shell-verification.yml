@@ -1,0 +1,209 @@
+name: KPHX T4 Exact Building Shell Verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-t4-building-shell-verification.yml"
+      - "src/components/KphxT4BuildingShellVerifier.jsx"
+      - "src/App.jsx"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-t4-building-shell-verification
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install app and browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start isolated RampReady verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npx vite --host 127.0.0.1 --port 4173 > /tmp/kphx-t4-buildings-vite.log 2>&1 &
+          echo $! > /tmp/kphx-t4-buildings-vite.pid
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/kphx-t4-buildings-vite.log
+          exit 1
+
+      - name: Capture exact T4 building-shell views
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+
+          const views = ["A1", "A", "B", "C", "D"];
+          const browser = await chromium.launch({ headless: true });
+
+          for (const view of views) {
+            const page = await browser.newPage({
+              viewport: { width: 1600, height: 1000 },
+              deviceScaleFactor: 1,
+            });
+            const consoleMessages = [];
+            const pageErrors = [];
+            const failedRequests = [];
+            const httpErrors = [];
+
+            page.on("console", (message) => consoleMessages.push({ type: message.type(), text: message.text() }));
+            page.on("pageerror", (error) => pageErrors.push(String(error)));
+            page.on("requestfailed", (request) => failedRequests.push({
+              url: request.url(),
+              method: request.method(),
+              failure: request.failure()?.errorText || "unknown",
+            }));
+            page.on("response", (response) => {
+              if (response.status() >= 400) {
+                httpErrors.push({
+                  url: response.url(),
+                  status: response.status(),
+                  statusText: response.statusText(),
+                });
+              }
+            });
+
+            let navigationError = null;
+            let waitError = null;
+            const url = `http://127.0.0.1:4173/RampReady/?kphxT4Buildings=1&view=${encodeURIComponent(view)}`;
+
+            try {
+              await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+            } catch (error) {
+              navigationError = String(error);
+            }
+
+            if (!navigationError) {
+              try {
+                await page.waitForFunction(() => {
+                  const canvas = document.querySelector("canvas.kphxT4BuildingShellVerifierCanvas");
+                  const state = canvas?.dataset?.kphxT4BuildingShellVerifier;
+                  return state === "ready" || state === "error";
+                }, null, { timeout: 60000 });
+              } catch (error) {
+                waitError = String(error);
+              }
+            }
+
+            const state = await page.evaluate(() => {
+              const canvas = document.querySelector("canvas.kphxT4BuildingShellVerifierCanvas");
+              return {
+                canvasPresent: Boolean(canvas),
+                dataset: canvas ? { ...canvas.dataset } : {},
+                bodyText: document.body?.innerText?.slice(0, 3000) || "",
+              };
+            }).catch((error) => ({
+              canvasPresent: false,
+              dataset: {},
+              evaluationError: String(error),
+            }));
+
+            const payload = {
+              capturedAtUtc: new Date().toISOString(),
+              view,
+              navigationError,
+              waitError,
+              state,
+              consoleMessages,
+              pageErrors,
+              failedRequests,
+              httpErrors,
+            };
+
+            const slug = view.toLowerCase();
+            await page.screenshot({
+              path: `reports/kphx-t4-building-shell-${slug}.png`,
+              fullPage: true,
+            }).catch((error) => {
+              payload.screenshotError = String(error);
+            });
+            fs.writeFileSync(
+              `reports/kphx-t4-building-shell-${slug}.json`,
+              JSON.stringify(payload, null, 2) + "\n",
+            );
+            await page.close();
+          }
+
+          await browser.close();
+          NODE
+
+      - name: Inspect exact Terminal 4 GLBs
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/inspect-kphx-terminal4-recovered-glbs.mjs
+
+      - name: Enforce exact T4 building-shell contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+
+          const failures = [];
+          for (const view of ["A1", "A", "B", "C", "D"]) {
+            const slug = view.toLowerCase();
+            const result = JSON.parse(fs.readFileSync(`reports/kphx-t4-building-shell-${slug}.json`, "utf8"));
+            const d = result.state?.dataset || {};
+            if (d.kphxT4BuildingShellVerifier !== "ready") failures.push(`${view}:state=${d.kphxT4BuildingShellVerifier || "missing"}`);
+            if (d.kphxT4BuildingQaView !== view) failures.push(`${view}:view=${d.kphxT4BuildingQaView || "missing"}`);
+            if (d.kphxT4BuildingPlacements !== "2") failures.push(`${view}:buildings=${d.kphxT4BuildingPlacements || "missing"}`);
+            if (d.kphxT4Terminal4WedObjectId !== "2327") failures.push(`${view}:Terminal4 WED=${d.kphxT4Terminal4WedObjectId || "missing"}`);
+            if (d.kphxT4Terminal4bWedObjectId !== "5301") failures.push(`${view}:Terminal4b WED=${d.kphxT4Terminal4bWedObjectId || "missing"}`);
+            if (d.kphxT4Terminal4Asset !== "/models/kphx/Terminal4.exact.glb") failures.push(`${view}:Terminal4 asset=${d.kphxT4Terminal4Asset || "missing"}`);
+            if (d.kphxT4Terminal4bAsset !== "/models/kphx/Terminal4b.exact.glb") failures.push(`${view}:Terminal4b asset=${d.kphxT4Terminal4bAsset || "missing"}`);
+            if (d.kphxT4JetwayCount !== "76") failures.push(`${view}:jetways=${d.kphxT4JetwayCount || "missing"}`);
+            if (d.kphxT4JetwayOpenEdges !== "261") failures.push(`${view}:edges=${d.kphxT4JetwayOpenEdges || "missing"}`);
+            if (d.kphxT4SurfacePolygons !== "13") failures.push(`${view}:polygons=${d.kphxT4SurfacePolygons || "missing"}`);
+            if (Number(d.kphxT4SurfaceLines || 0) < 35) failures.push(`${view}:lines=${d.kphxT4SurfaceLines || "missing"}`);
+            if (d.kphxT4LegacyMaskCompatibility !== "true") failures.push(`${view}:mask compatibility=${d.kphxT4LegacyMaskCompatibility || "missing"}`);
+            if (d.kphxT4SubstitutionPolicy !== "none") failures.push(`${view}:substitution=${d.kphxT4SubstitutionPolicy || "missing"}`);
+            if (result.navigationError) failures.push(`${view}:navigation=${result.navigationError}`);
+            if (result.waitError) failures.push(`${view}:wait=${result.waitError}`);
+            if ((result.pageErrors || []).length) failures.push(`${view}:pageErrors=${result.pageErrors.join(" | ")}`);
+            if ((result.failedRequests || []).length) failures.push(`${view}:failedRequests=${result.failedRequests.length}`);
+            if ((result.httpErrors || []).length) failures.push(`${view}:httpErrors=${result.httpErrors.length}`);
+            const browserErrors=(result.consoleMessages || []).filter((entry)=>entry.type==="error");
+            if (browserErrors.length) failures.push(`${view}:consoleErrors=${browserErrors.map(x=>x.text).join(" | ")}`);
+          }
+          if (failures.length) throw new Error(`T4 building-shell verification failed: ${failures.join("; ")}`);
+          console.log(JSON.stringify({views:["A1","A","B","C","D"],buildings:2,jetways:76,openEdges:261,status:"PASS"},null,2));
+          NODE
+
+      - name: Commit T4 building-shell evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore -- package.json package-lock.json 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-t4-building-shell-*.png reports/kphx-t4-building-shell-*.json reports/kphx-terminal4-recovered-glb-inspection.json
+          git commit -m "Capture exact T4 building-shell verification evidence"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
