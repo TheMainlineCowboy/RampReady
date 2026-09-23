@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-09-23T01:06:56.093Z",
+  "capturedAtUtc": "2026-09-23T02:05:04.704Z",
   "navigationError": null,
   "waitError": "TimeoutError: page.waitForFunction: Timeout 60000ms exceeded.",
   "state": {
@@ -27,43 +27,23 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000F4030000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A07020002C240000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x3a1c00692200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x38ac00b9ce00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x3a1c00692200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x38ac00b9ce00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x3a1c00692200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0x38ac00b9ce00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x3a1c00692200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
-    },
-    {
-      "type": "error",
-      "text": "THREE.GLTFLoader: Couldn't load texture ..\\..\\..\\Shared\\Vehicle_Shadow.png"
-    },
-    {
-      "type": "error",
-      "text": "THREE.GLTFLoader: Couldn't load texture ..\\..\\..\\..\\Shared\\Vehicle_Shadow.png"
-    },
-    {
-      "type": "error",
-      "text": "THREE.GLTFLoader: Couldn't load texture ..\\..\\..\\Shared\\Vehicle_Shadow.png"
-    },
-    {
-      "type": "error",
-      "text": "THREE.GLTFLoader: Couldn't load texture ..\\Van_White.png"
-    },
-    {
-      "type": "error",
-      "text": "THREE.GLTFLoader: Couldn't load texture ..\\..\\Shared\\Vehicle_Shadow.png"
+      "text": "[.WebGL-0x38ac00b9ce00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
     }
   ],
   "pageErrors": [],
