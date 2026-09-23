@@ -5,6 +5,8 @@ import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirp
 import { installKphxTerminal4StockJetways } from "../environment/kphxFullAirport/installTerminal4StockJetways.js";
 import { KPHX_T4_COVERED_OBJECT_AUTHORITY } from "../environment/kphxFullAirport/t4CoveredObjectAuthority.js";
 
+const T4_ZDP_MANIFEST = "/models/kphx-full-airport/batches/t4-zdp.manifest.json";
+
 const OBJECT_MANIFESTS = Object.freeze([
   "/models/kphx-full-airport/batches/structures.manifest.json",
   "/models/kphx-full-airport/batches/gate-numbers.manifest.json",
@@ -96,10 +98,17 @@ export default function KphxFullAirportVerifier() {
         strict: true,
       }));
 
-      const [objectResults, surfaces, terminal4Jetways] = await Promise.all([
+      const t4ZdpTask = timed("T4Zdp", installKphxPackageOwnedObjectLayer(THREE, environment, {
+        manifestUrl: T4_ZDP_MANIFEST,
+        strict: true,
+        assetConcurrency: 1,
+      }));
+
+      const [objectResults, surfaces, terminal4Jetways, t4Zdp] = await Promise.all([
         objectTask,
         surfaceTask,
         jetwayTask,
+        t4ZdpTask,
       ]);
 
       const objectPlacements = objectResults.reduce(
@@ -119,7 +128,7 @@ export default function KphxFullAirportVerifier() {
 
       const t4CoveredIds = new Set(KPHX_T4_COVERED_OBJECT_AUTHORITY.coveredWedObjectIds);
       let t4VisibleObjectPlacements = 0;
-      for (const result of objectResults) {
+      for (const result of [...objectResults, t4Zdp]) {
         for (const placementRoot of result.layer.children) {
           const wedObjectId = String(placementRoot.userData?.wedObjectId ?? "");
           const visible = t4CoveredIds.has(wedObjectId);
@@ -130,6 +139,12 @@ export default function KphxFullAirportVerifier() {
 
       if (objectPlacements !== 1634) throw new Error(`Expected 1634 exact KPHX placements, loaded ${objectPlacements}`);
       if (sourceResources !== 147) throw new Error(`Expected 147 exact KPHX source resources, loaded ${sourceResources}`);
+      if (Number(t4Zdp.layer.userData.loadedPlacementCount || 0) !== 13) {
+        throw new Error(`Expected 13 exact T4 ZDP placements, loaded ${t4Zdp.layer.userData.loadedPlacementCount || 0}`);
+      }
+      if (Number(t4Zdp.manifest.resolvedExternal?.materializedUniqueResourceCount || 0) !== 1) {
+        throw new Error("Expected 1 exact T4 ZDP source resource");
+      }
       if (t4VisibleObjectPlacements !== KPHX_T4_COVERED_OBJECT_AUTHORITY.coveredObjectPlacementCount) {
         throw new Error(
           `Expected ${KPHX_T4_COVERED_OBJECT_AUTHORITY.coveredObjectPlacementCount} exact covered T4 objects, made ${t4VisibleObjectPlacements} visible`,
@@ -169,6 +184,8 @@ export default function KphxFullAirportVerifier() {
       renderer.domElement.dataset.kphxT4MisterxResources = "50";
       renderer.domElement.dataset.kphxT4CdbPlacements = "23";
       renderer.domElement.dataset.kphxT4CdbResources = "1";
+      renderer.domElement.dataset.kphxT4ZdpPlacements = String(t4Zdp.layer.userData.loadedPlacementCount);
+      renderer.domElement.dataset.kphxT4ZdpResources = String(t4Zdp.manifest.resolvedExternal?.materializedUniqueResourceCount || 0);
       renderer.domElement.dataset.kphxLoadedAssetFiles = String(loadedAssetFiles);
       renderer.domElement.dataset.kphxPackagePolygons = String(surfaces.layer.userData.polygonCount);
       renderer.domElement.dataset.kphxPackageLineMeshes = String(surfaces.layer.userData.lineMeshCount);
