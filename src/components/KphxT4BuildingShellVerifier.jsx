@@ -6,6 +6,7 @@ import { installKphxTerminal4StockJetways } from "../environment/kphxFullAirport
 import { applyExactXp11Obj8MaskCompatibility } from "../environment/kphxFullAirport/obj8RenderCompatibility.js";
 import { preparePlacementRoot } from "../environment/kphxFullAirport/installPackageOwnedObjectLayer.js";
 import { KPHX_EXACT_RECOVERED_ASSETS } from "../environment/kphxFullAirport/exactAssetCatalog.js";
+import { KPHX_FULL_AIRPORT_SOURCE, kphxObj8VectorToRampReady } from "../environment/kphxFullAirport/sourceAuthority.js";
 
 const STRUCTURES_MANIFEST_URL = "/models/kphx-full-airport/batches/structures.manifest.json";
 const T4_RESOURCES = Object.freeze([
@@ -65,8 +66,19 @@ function frameRampView(camera, terminalLayer, jetwayLayer, jetwayMap, view) {
     if (!Array.isArray(rotunda2) || !Array.isArray(cab2) || rotunda2.length !== 2 || cab2.length !== 2) {
       throw new Error("B14 authored jetway source axis is missing");
     }
-    const rotunda = new THREE.Vector3(Number(rotunda2[0]), 4.5, Number(rotunda2[1]));
-    const cab = new THREE.Vector3(Number(cab2[0]), 5.0, Number(cab2[1]));
+    const anchor = KPHX_FULL_AIRPORT_SOURCE.anchor.rampReadyPosition;
+    const rotundaLocal = kphxObj8VectorToRampReady([Number(rotunda2[0]), 0, Number(rotunda2[1])]);
+    const cabLocal = kphxObj8VectorToRampReady([Number(cab2[0]), 0, Number(cab2[1])]);
+    const rotunda = new THREE.Vector3(
+      rotundaLocal[0] + anchor[0],
+      4.5,
+      rotundaLocal[2] + anchor[2],
+    );
+    const cab = new THREE.Vector3(
+      cabLocal[0] + anchor[0],
+      5.0,
+      cabLocal[2] + anchor[2],
+    );
     const outward = cab.clone().sub(rotunda);
     outward.y = 0;
     if (outward.lengthSq() < 1e-6) throw new Error("B14 authored jetway source axis is degenerate");
