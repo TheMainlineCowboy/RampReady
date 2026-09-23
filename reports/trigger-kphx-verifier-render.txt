@@ -2,3 +2,4 @@ Trigger first exact KPHX 1.75.1 package verification render after native surface
 Diagnostic rerun after readiness-state capture fix.
 Rerun after packed GateNumbers resource accounting fix.
 Rerun after Vite/GitHub Pages base-path correction.
+Rerun after exact T4 MisterX/CDB integration and 1634-placement verifier update.
