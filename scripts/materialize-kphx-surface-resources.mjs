@@ -16,6 +16,11 @@ const sourceRoot = path.resolve(sourceRootArg || process.env.KPHX_FULL_AIRPORT_S
 const includeExternalPrefixes = new Set((options["include-external-prefixes"] || "").split(",").map((entry) => entry.trim()).filter(Boolean));
 const skipPackageOwned = options["skip-package-owned"] === "true";
 const placementReportInputPath = options["placement-report"] ? path.resolve(options["placement-report"]) : null;
+const resourceListPath = options["resource-list"] ? path.resolve(options["resource-list"]) : null;
+const resourceListPayload = resourceListPath ? JSON.parse(await fs.readFile(resourceListPath, "utf8")) : null;
+const selectedResources = resourceListPayload?.resources
+  ? new Set(resourceListPayload.resources.map((entry) => normalizeResource(entry)))
+  : null;
 const libraryMapPath = options["library-map"] ? path.resolve(options["library-map"]) : null;
 const libraryMapPayload = libraryMapPath ? JSON.parse(await fs.readFile(libraryMapPath, "utf8")) : null;
 const libraryResourceMap = libraryMapPayload?.resources || {};
@@ -368,7 +373,9 @@ const externalRecords = [
   ...network.lines,
   ...network.drapedOrthophotos,
 ].filter((entry) => entry.sourceClass === "external-library" && includeExternalPrefixes.has(entry.resourcePrefix));
-const records = [...packageRecords, ...externalRecords];
+const records = [...packageRecords, ...externalRecords].filter((entry) => (
+  !selectedResources || selectedResources.has(normalizeResource(entry.resource))
+));
 const packageResources = [...new Set(packageRecords.map((entry) => normalizeResource(entry.resource)))].sort();
 const externalResources = [...new Set(externalRecords.map((entry) => normalizeResource(entry.resource)))].sort();
 const resources = [...new Set(records.map((entry) => normalizeResource(entry.resource)))].sort();
