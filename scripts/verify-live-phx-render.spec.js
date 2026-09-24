@@ -104,6 +104,8 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
     sourcePoseMaxMatrixDelta: initialA1Runtime.a1JetwaySourcePoseMaxMatrixDelta,
     supportBottomDeltaMeters: initialA1Runtime.a1JetwaySupportBottomDeltaMeters,
     cabinJointGapMeters: initialA1Runtime.a1JetwayCabinJointGapMeters,
+    terminalPivotGapMeters: initialA1Runtime.a1JetwayTerminalPivotGapMeters,
+    cabinVerticalErrorMeters: initialA1Runtime.a1JetwayCabinVerticalErrorMeters,
     fixedWallMotionMaxMeters: initialA1Runtime.a1JetwayFixedWallMotionMaxMeters,
     fixedWallRotationMaxRadians: initialA1Runtime.a1JetwayFixedWallRotationMaxRadians,
   }));
@@ -136,6 +138,8 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   expect(Number(runtime.a1XPlaneAutoGateVertMeters)).toBeCloseTo(-1.9158528682264, 3);
   expect(runtime.a1JetwaySupportTrianglePartitionExact).toBe('true');
   expect(Math.abs(Number(runtime.a1JetwaySupportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
+  expect(Math.abs(Number(runtime.a1JetwayTerminalPivotGapMeters))).toBeLessThanOrEqual(0.001);
+  expect(Math.abs(Number(runtime.a1JetwayCabinVerticalErrorMeters))).toBeLessThanOrEqual(0.02);
   const criticalErrors = consoleErrors.filter(message =>
     /PHX|KPHX|Terminal 4|GLTFLoader|WebGL|ReferenceError|TypeError|SyntaxError/i.test(message)
   );
@@ -250,6 +254,8 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
     state: midRuntime.a1JetwayState,
     supportBottomDeltaMeters: midRuntime.a1JetwaySupportBottomDeltaMeters,
     cabinJointGapMeters: midRuntime.a1JetwayCabinJointGapMeters,
+    terminalPivotGapMeters: midRuntime.a1JetwayTerminalPivotGapMeters,
+    cabinVerticalErrorMeters: midRuntime.a1JetwayCabinVerticalErrorMeters,
     fixedWallMotionMaxMeters: midRuntime.a1JetwayFixedWallMotionMaxMeters,
     fixedWallRotationMaxRadians: midRuntime.a1JetwayFixedWallRotationMaxRadians,
   }));
@@ -257,6 +263,8 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   expect(midRuntime.a1JetwaySupportTrianglePartitionExact).toBe('true');
   expect(Math.abs(Number(midRuntime.a1JetwaySupportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
   expect(Number(midRuntime.a1JetwayCabinJointGapMeters)).toBeLessThanOrEqual(0.08);
+  expect(Math.abs(Number(midRuntime.a1JetwayTerminalPivotGapMeters))).toBeLessThanOrEqual(0.001);
+  expect(Math.abs(Number(midRuntime.a1JetwayCabinVerticalErrorMeters))).toBeLessThanOrEqual(0.02);
   expect(Number(midRuntime.a1JetwayFixedWallMotionMaxMeters)).toBeLessThanOrEqual(0.001);
 
   const midPng = Buffer.from(midEvidence.pngDataUrl.split(',')[1], 'base64');
@@ -279,6 +287,8 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   expect(parkedRuntime.a1JetwaySupportTrianglePartitionExact).toBe('true');
   expect(Number(parkedRuntime.a1JetwayCabinJointGapMeters)).toBeLessThanOrEqual(0.08);
   expect(Math.abs(Number(parkedRuntime.a1JetwaySupportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
+  expect(Math.abs(Number(parkedRuntime.a1JetwayTerminalPivotGapMeters))).toBeLessThanOrEqual(0.001);
+  expect(Math.abs(Number(parkedRuntime.a1JetwayCabinVerticalErrorMeters))).toBeLessThanOrEqual(0.02);
   const parkedBytes = await captureCanvasClip(
     page,
     bounds,
@@ -315,6 +325,9 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
     oldAirportJetwayGlbUsed: runtime.kphxExactLiveOldAirportJetwayGlbUsed,
     supportBottomDeltaMid: midRuntime.a1JetwaySupportBottomDeltaMeters,
     supportBottomDeltaParked: parkedRuntime.a1JetwaySupportBottomDeltaMeters,
+    terminalPivotGapMid: midRuntime.a1JetwayTerminalPivotGapMeters,
+    terminalPivotGapParked: parkedRuntime.a1JetwayTerminalPivotGapMeters,
+    cabinVerticalErrorMid: midRuntime.a1JetwayCabinVerticalErrorMeters,
     sourcePoseMaxMatrixDeltaParked: parkedRuntime.a1JetwaySourcePoseMaxMatrixDelta,
     screenshotBytes: {
       attached: attachedBytes,
