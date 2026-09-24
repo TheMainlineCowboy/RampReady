@@ -1,0 +1,101 @@
+name: KPHX XP12 macOS Demo Source Proof
+
+on:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-macos-demo-proof.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-xp12-macos-demo-proof
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: macos-14
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Download official XP12 macOS installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp12-installer /tmp/xp12-demo reports
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerMac.zip"             -o /tmp/xp12-installer.zip
+          ditto -x -k /tmp/xp12-installer.zip /tmp/xp12-installer
+          BIN="$(find /tmp/xp12-installer -type f -path '*/Contents/MacOS/*' -iname '*Installer*' -print -quit)"
+          if [ -z "$BIN" ]; then
+            BIN="$(find /tmp/xp12-installer -type f -path '*/Contents/MacOS/*' -print -quit)"
+          fi
+          test -n "$BIN"
+          chmod +x "$BIN"
+          echo "$BIN" > /tmp/xp12-bin.txt
+          file "$BIN"
+
+      - name: Run pinned 12.1.2 free-demo QA install
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN="$(cat /tmp/xp12-bin.txt)"
+          cat >/tmp/xp12.qa <<'QA'
+          echo "RAMPREADY_MAC_DEMO_START"
+          dump buttons
+          click "Install a Free Demo of X-Plane"
+          wait 8
+          dump buttons
+          set_installer_destination "/tmp/xp12-demo"
+          wait 2
+          click_if_exists "Continue"
+          wait 4
+          click_if_exists "Continue"
+          wait 90
+          dump buttons
+          echo "RAMPREADY_MAC_DEMO_STOP"
+          quit
+          QA
+
+          set +e
+          timeout 130 "$BIN"             --lang=en             --qa_script=/tmp/xp12.qa             --install_numeric=121212             --install_name="X-Plane 12.1.2-r4-0f2fea01"             --no_web_server             > /tmp/xp12-mac.out 2> /tmp/xp12-mac.err
+          rc=$?
+          set -e
+
+          count="$(find /tmp/xp12-demo -type f 2>/dev/null | wc -l | tr -d ' ')"
+          {
+            echo "installer_rc=$rc"
+            echo "demo_file_count=$count"
+            echo "=== stdout ==="
+            cat /tmp/xp12-mac.out || true
+            echo "=== stderr ==="
+            cat /tmp/xp12-mac.err || true
+            echo "=== installer logs ==="
+            find "$HOME" /tmp/xp12-demo /tmp/xp12-installer -maxdepth 6 -type f               \( -iname '*Installer*Log*.txt' -o -iname 'Log.txt' \) -print 2>/dev/null | while read -r p; do
+                echo "--- $p"
+                tail -500 "$p" || true
+              done
+            echo "=== demo files sample ==="
+            find /tmp/xp12-demo -type f -print 2>/dev/null | head -250
+          } > reports/kphx-xp12-macos-demo-proof.txt
+          cat reports/kphx-xp12-macos-demo-proof.txt
+          test "$count" -gt 0
+
+      - name: Commit proof evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-macos-demo-proof.txt
+          git commit -m "Prove XP12.1.2 demo source on macOS runner"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
