@@ -1,0 +1,146 @@
+name: KPHX OpenSceneryX Exact Checkpoint
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-opensceneryx-exact.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-opensceneryx-exact
+  cancel-in-progress: false
+
+jobs:
+  opensceneryx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      OSX_COMMIT: 0128faa88f10f345bde77392e3a10d5b3bfd6b1e
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install exact conversion tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/magick" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ "${1:-}" = "identify" ]; then
+            shift
+            exec identify "$@"
+          fi
+          exec convert "$@"
+          SH
+          chmod +x "$HOME/bin/magick"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch exact official OpenSceneryX source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="assets/kphx-source/dependencies/OpenSceneryX-${OSX_COMMIT}"
+          MINI=".opensceneryx-mini"
+          STAIRS="files/objects/airport/vehicles/stairs/3"
+          DIRT="files/polygons/surfaces/dirt/1"
+          mkdir -p "$SRC/$STAIRS" "$SRC/$DIRT" "$MINI/$STAIRS" "$MINI/$DIRT"
+
+          base="https://raw.githubusercontent.com/OpenSceneryX/Library/${OSX_COMMIT}"
+
+          for file in object.obj bridge.dds info.txt; do
+            curl -L --fail --retry 4 --show-error "$base/$STAIRS/$file" -o "$SRC/$STAIRS/$file"
+            cp "$SRC/$STAIRS/$file" "$MINI/$STAIRS/$file"
+          done
+
+          for file in polygon.pol Ground_Dirt_01.dds info.txt; do
+            curl -L --fail --retry 4 --show-error "$base/$DIRT/$file" -o "$SRC/$DIRT/$file"
+            cp "$SRC/$DIRT/$file" "$MINI/$DIRT/$file"
+          done
+
+          curl -L --fail --retry 4 --show-error "$base/LICENSE.md" -o "$SRC/LICENSE.md"
+
+          cat > "$SRC/SOURCE.json" <<JSON
+          {
+            "library": "OpenSceneryX",
+            "repository": "https://github.com/OpenSceneryX/Library",
+            "commit": "${OSX_COMMIT}",
+            "stairsVirtualResource": "opensceneryx/objects/airport/vehicles/stairs/3.obj",
+            "stairsPhysicalSource": "$STAIRS/object.obj",
+            "dirtVirtualResource": "opensceneryx/polygons/surfaces/dirt/1.pol",
+            "dirtPhysicalSource": "$DIRT/polygon.pol",
+            "dirtRuntimeBlocker": [
+              "lib/g10/decals/grass_and_stony_dirt_1.dcl",
+              "lib/g10/decals/low_freq_mod_1.dcl"
+            ],
+            "policy": "exact official source files pinned by commit; no substitute assets"
+          }
+          JSON
+
+          cat > "$MINI/library.txt" <<'LIB'
+          A
+          800
+          LIBRARY
+
+          EXPORT opensceneryx/objects/airport/vehicles/stairs/3.obj files/objects/airport/vehicles/stairs/3/object.obj
+          EXPORT opensceneryx/polygons/surfaces/dirt/1.pol files/polygons/surfaces/dirt/1/polygon.pol
+          LIB
+
+          find "$SRC" -type f -print0 | sort -z | xargs -0 sha256sum > "$SRC/SHA256SUMS.txt"
+
+      - name: Build exact stairs request and library map
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          cat > reports/kphx-opensceneryx-object-resources.json <<'JSON'
+          {
+            "resources": [
+              "opensceneryx/objects/airport/vehicles/stairs/3.obj"
+            ]
+          }
+          JSON
+          node scripts/resolve-xplane-library.mjs             .opensceneryx-mini             reports/kphx-opensceneryx-object-resources.json             reports/kphx-opensceneryx-library-map.json             --virtual-prefix=opensceneryx
+
+      - name: Materialize exact OpenSceneryX stairs placement
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/materialize-kphx-full-airport.mjs             .             public/models/kphx-full-airport             --placement-report=reports/kphx-full-airport-wed-placements-airfield-details.json             --library-map=reports/kphx-opensceneryx-library-map.json             --include-external-prefixes=opensceneryx             --package-prefixes=__none__             --batch-name=opensceneryx-stairs
+          cp public/models/kphx-full-airport/manifest.json             public/models/kphx-full-airport/batches/opensceneryx-stairs.manifest.json
+
+      - name: Verify exact OpenSceneryX checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const m = JSON.parse(fs.readFileSync("public/models/kphx-full-airport/batches/opensceneryx-stairs.manifest.json","utf8"));
+          if (m.failures?.length) throw new Error(`OpenSceneryX failures: ${m.failures.length}`);
+          if (m.resolvedExternal.expectedUniqueResourceCount !== 1) throw new Error(`Expected 1 OpenSceneryX OBJ resource, got ${m.resolvedExternal.expectedUniqueResourceCount}`);
+          if (m.resolvedExternal.materializedUniqueResourceCount !== 1) throw new Error(`Materialized ${m.resolvedExternal.materializedUniqueResourceCount}/1 OpenSceneryX OBJ resources`);
+          if (m.resolvedExternal.materializedPlacementCount !== 1) throw new Error(`Expected 1 OpenSceneryX stairs placement, got ${m.resolvedExternal.materializedPlacementCount}`);
+          console.log(JSON.stringify({resources:1,placements:1,status:"PASS"},null,2));
+          NODE
+
+      - name: Commit exact OpenSceneryX checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             assets/kphx-source/dependencies/OpenSceneryX-${OSX_COMMIT}             public/models/kphx-full-airport/external/opensceneryx             public/models/kphx-full-airport/batches/opensceneryx-stairs.manifest.json             reports/kphx-opensceneryx-object-resources.json             reports/kphx-opensceneryx-library-map.json             reports/kphx-full-airport-materialization-opensceneryx-stairs.json
+          git commit -m "Move exact OpenSceneryX KPHX stairs checkpoint"
+          git restore -- public/models/kphx-full-airport/manifest.json 2>/dev/null || true
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
