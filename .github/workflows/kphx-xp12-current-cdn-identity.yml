@@ -1,0 +1,291 @@
+name: KPHX XP12.1.2 Current CDN Identity Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-current-cdn-identity.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-xp12-current-cdn-identity
+  cancel-in-progress: true
+
+jobs:
+  identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/workflows/kphx-xp12-current-cdn-identity.yml
+            reports/kphx-xp12-121212-directory.txt
+            reports/kphx-unresolved-dependency-audit.json
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Prove current CDN bytes against XP12.1.2 manifest MD5s
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import concurrent.futures, hashlib, io, json, os, re, urllib.parse, urllib.request, zipfile
+
+          HIST_PATH="reports/kphx-xp12-121212-directory.txt"
+          AUDIT_PATH="reports/kphx-unresolved-dependency-audit.json"
+          SERVER_LIST="https://lookup.x-plane.com/_lookup_12_/server_list_12.txt"
+
+          def get(url, timeout=45):
+              req=urllib.request.Request(url,headers={"User-Agent":"RampReady-KPHX-XP12-byte-identity/1.0"})
+              with urllib.request.urlopen(req,timeout=timeout) as r:
+                  return r.read()
+
+          def unzip_single(data):
+              with zipfile.ZipFile(io.BytesIO(data)) as z:
+                  names=[n for n in z.namelist() if not n.endswith("/")]
+                  if not names: raise RuntimeError("empty zip")
+                  return z.read(names[0])
+
+          def encode_keep_slash(path):
+              return "/".join(urllib.parse.quote(seg,safe="") for seg in path.split("/"))
+
+          server_text=get(SERVER_LIST).decode("utf-8","replace")
+          host=None; prefix=None; final_path=None
+          lines=server_text.splitlines()
+          for i,line in enumerate(lines):
+              if line.startswith("SERVER "): host=line.split(None,1)[1].strip()
+              elif line.startswith("/") and prefix is None: prefix=line.strip()
+              elif line.strip()=="BRANCH Final":
+                  for nxt in lines[i+1:i+8]:
+                      if nxt.startswith("BRANCH_PATH "):
+                          final_path=nxt.split(None,1)[1].strip()
+                          break
+          if not (host and prefix and final_path):
+              raise SystemExit("Could not parse current XP12 Final CDN path")
+          current_base=f"https://{host}{prefix}{urllib.parse.quote(final_path,safe='')}/"
+
+          def parse_manifest(text, max_build=None):
+              current_dir=""
+              selected={}
+              samples=[]
+              for raw in text.splitlines():
+                  if raw.startswith("DIR "):
+                      current_dir=raw[4:].strip()
+                      continue
+                  if not raw.startswith("FILE "):
+                      continue
+                  parts=raw.split(" ",10)
+                  if len(parts)<11: continue
+                  try: version=int(parts[2])
+                  except: continue
+                  if max_build is not None and version>max_build: continue
+                  filename=parts[10]
+                  full=(current_dir+filename).replace("\\","/")
+                  md5s=[tok.lower() for tok in parts if re.fullmatch(r"[0-9a-fA-F]{32}",tok)]
+                  rec={
+                      "version":version,
+                      "parts":parts,
+                      "raw":raw,
+                      "md5":md5s[-1] if md5s else None,
+                      "filename":filename,
+                  }
+                  prev=selected.get(full)
+                  if prev is None or version>=prev["version"]:
+                      selected[full]=rec
+                  if len(samples)<5 and filename=="library.txt":
+                      samples.append({"path":full,"raw":raw,"parts":parts,"md5Candidates":md5s})
+              return selected,samples
+
+          historical_text=open(HIST_PATH,encoding="utf-8",errors="replace").read()
+          hist,hist_samples=parse_manifest(historical_text,121212)
+
+          current_manifest_zip=get(current_base+"directory.txt.zip")
+          current_manifest_text=unzip_single(current_manifest_zip).decode("utf-8","replace")
+          current,current_samples=parse_manifest(current_manifest_text,None)
+
+          library_paths=sorted(
+              p for p in hist
+              if p.startswith("Resources/default scenery/")
+              and p.endswith("/library.txt")
+              and hist[p]["md5"]
+          )
+
+          def fetch_current_file(path):
+              url=current_base+encode_keep_slash(path)+".zip"
+              try:
+                  body=unzip_single(get(url))
+                  return {
+                      "path":path,
+                      "url":url,
+                      "ok":True,
+                      "size":len(body),
+                      "md5":hashlib.md5(body).hexdigest(),
+                      "text":body.decode("utf-8","replace") if path.endswith("library.txt") else None,
+                  }
+              except Exception as e:
+                  return {"path":path,"url":url,"ok":False,"error":repr(e)}
+
+          libraries=[]
+          with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
+              libraries=list(ex.map(fetch_current_file,library_paths))
+
+          exact_libraries=[]
+          for row in libraries:
+              expected=hist[row["path"]]["md5"]
+              row["historicalMd5"]=expected
+              row["byteIdenticalTo121212"]=row.get("md5")==expected
+              if row["byteIdenticalTo121212"]:
+                  exact_libraries.append(row)
+
+          audit=json.load(open(AUDIT_PATH))
+          requested=set(audit["unresolved"]["lib"]["resources"].keys())
+          requested.update({
+              "lib/g10/decals/grass_and_stony_dirt_1.dcl",
+              "lib/g10/decals/low_freq_mod_1.dcl",
+          })
+
+          candidates={r:[] for r in sorted(requested)}
+          export_re=re.compile(r"^(EXPORT|EXPORT_BACKUP|EXPORT_EXTEND)\s+(\S+)\s+(.+?)\s*$")
+          ratio_re=re.compile(r"^EXPORT_RATIO\s+([0-9.]+)\s+(\S+)\s+(.+?)\s*$")
+
+          for lib in exact_libraries:
+              lib_path=lib["path"]
+              base=os.path.dirname(lib_path)
+              active_regions=[]
+              for ln,raw in enumerate((lib["text"] or "").splitlines(),1):
+                  line=raw.strip()
+                  if not line or line.startswith("#"): continue
+                  toks=line.split()
+                  if toks and toks[0] in ("REGION_DEFINE","REGION_BITMAP","REGION_RECT","REGION_DREF"):
+                      continue
+                  if toks and toks[0]=="REGION":
+                      active_regions=toks[1:]
+                      continue
+                  m=export_re.match(line)
+                  if m:
+                      directive,virtual,physical=m.groups()
+                      if virtual in candidates:
+                          candidates[virtual].append({
+                              "directive":directive,
+                              "physical":os.path.normpath(os.path.join(base,physical)).replace("\\","/"),
+                              "library":lib_path,
+                              "line":ln,
+                              "regions":active_regions[:],
+                          })
+                      continue
+                  m=ratio_re.match(line)
+                  if m:
+                      ratio,virtual,physical=m.groups()
+                      if virtual in candidates:
+                          candidates[virtual].append({
+                              "directive":"EXPORT_RATIO",
+                              "ratio":float(ratio),
+                              "physical":os.path.normpath(os.path.join(base,physical)).replace("\\","/"),
+                              "library":lib_path,
+                              "line":ln,
+                              "regions":active_regions[:],
+                          })
+
+          # Collapse only mappings whose candidate physical path is unambiguous.
+          mapped={}
+          ambiguous={}
+          for virtual,items in candidates.items():
+              physicals=sorted(set(i["physical"] for i in items))
+              if len(physicals)==1:
+                  mapped[virtual]={"physical":physicals[0],"candidates":items}
+              elif len(physicals)>1:
+                  ambiguous[virtual]=items
+
+          # Byte-prove each unique physical file against historical 12.1.2 MD5.
+          physical_paths=sorted(set(v["physical"] for v in mapped.values()))
+          physical_rows={}
+          def prove_physical(path):
+              expected=hist.get(path,{}).get("md5")
+              if not expected:
+                  return {"path":path,"historicalManifestEntry":False,"byteIdenticalTo121212":False}
+              row=fetch_current_file(path)
+              row["historicalManifestEntry"]=True
+              row["historicalMd5"]=expected
+              row["byteIdenticalTo121212"]=row.get("md5")==expected
+              return row
+
+          with concurrent.futures.ThreadPoolExecutor(max_workers=10) as ex:
+              for row in ex.map(prove_physical,physical_paths):
+                  physical_rows[row["path"]]=row
+
+          exact_virtual={}
+          nonexact_virtual={}
+          for virtual,m in mapped.items():
+              proof=physical_rows[m["physical"]]
+              item={"physical":m["physical"],"proof":proof,"candidates":m["candidates"]}
+              if proof.get("byteIdenticalTo121212"):
+                  exact_virtual[virtual]=item
+              else:
+                  nonexact_virtual[virtual]=item
+
+          missing=[r for r,v in candidates.items() if not v]
+
+          report={
+              "authority":{
+                  "historicalBuild":121212,
+                  "historicalBranch":"X-Plane 12.1.2-r4-0f2fea01",
+                  "historicalManifestPath":HIST_PATH,
+                  "currentServerList":SERVER_LIST,
+                  "currentBranchPath":final_path,
+                  "currentBase":current_base,
+                  "acceptanceRule":"Current CDN bytes are usable only when actual MD5 equals pinned XP12.1.2 manifest MD5; current library mappings are trusted only when the library.txt itself is byte-identical to XP12.1.2.",
+              },
+              "manifestSamples":{"historical":hist_samples,"current":current_samples},
+              "librarySummary":{
+                  "historicalLibraryCount":len(library_paths),
+                  "currentDownloadSuccessCount":sum(1 for x in libraries if x.get("ok")),
+                  "byteIdenticalLibraryCount":sum(1 for x in libraries if x.get("byteIdenticalTo121212")),
+                  "changedOrUnavailableLibraryCount":sum(1 for x in libraries if not x.get("byteIdenticalTo121212")),
+              },
+              "libraries":[{k:v for k,v in row.items() if k!="text"} for row in libraries],
+              "requestedCount":len(requested),
+              "resolvedFromExactLibrariesCount":len(mapped),
+              "ambiguousMappingCount":len(ambiguous),
+              "missingMappingCount":len(missing),
+              "exactByteIdenticalVirtualCount":len(exact_virtual),
+              "nonExactOrUnavailableVirtualCount":len(nonexact_virtual),
+              "exactVirtual":exact_virtual,
+              "nonExactVirtual":nonexact_virtual,
+              "ambiguous":ambiguous,
+              "missing":missing,
+          }
+
+          with open("reports/kphx-xp12-121212-current-cdn-identity.json","w") as f:
+              json.dump(report,f,indent=2)
+
+          print(json.dumps({
+              "currentBranchPath":final_path,
+              "historicalLibraries":len(library_paths),
+              "downloadedLibraries":report["librarySummary"]["currentDownloadSuccessCount"],
+              "byteIdenticalLibraries":report["librarySummary"]["byteIdenticalLibraryCount"],
+              "requested":len(requested),
+              "resolvedFromExactLibraries":len(mapped),
+              "ambiguous":len(ambiguous),
+              "missing":len(missing),
+              "exactByteIdenticalVirtual":len(exact_virtual),
+              "nonExactOrUnavailableVirtual":len(nonexact_virtual),
+          },indent=2))
+          PY
+
+      - name: Commit byte identity report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-121212-current-cdn-identity.json
+          git commit -m "Prove current XP12 CDN files against 12.1.2 MD5 authority"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
