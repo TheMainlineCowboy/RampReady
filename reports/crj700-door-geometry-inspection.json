@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "glbPath": "public/models/crj700-user.glb",
+  "bytes": 1873128,
+  "nodeCount": 1,
+  "meshCount": 1,
+  "candidates": [],
+  "allNamed": [
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900"
+    }
+  ]
+}
