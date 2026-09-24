@@ -1,0 +1,93 @@
+name: KPHX XP11.55r2 Server Manifest Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp11-server-manifest-probe.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+
+      - name: Install XP11 installer runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y             xvfb xfonts-base xfonts-75dpi xfonts-100dpi fontconfig             libgl1-mesa-dri libglu1-mesa mesa-utils strace >/dev/null
+          sudo fc-cache -f >/dev/null
+          mkdir -p .xp11-installer reports /tmp/xp11-demo
+          curl -L --fail --retry 5 --show-error             "https://www.x-plane.com/update/installers11/X-Plane11InstallerLinux.zip"             -o .xp11-installer/installer.zip
+          unzip -q .xp11-installer/installer.zip -d .xp11-installer/unpacked
+          BIN="$(find .xp11-installer/unpacked -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          chmod +x "$BIN"
+          echo "$BIN" > .xp11-installer/bin-path.txt
+
+      - name: Fetch official XP11 server list
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "=== HTTPS ==="
+            curl -L --fail --retry 4 --show-error               "https://lookup.x-plane.com/_lookup_11_/server_list_11.txt" || true
+            echo
+            echo "=== HTTP ==="
+            curl -L --fail --retry 4 --show-error               "http://lookup.x-plane.com/_lookup_11_/server_list_11.txt" || true
+          } > reports/kphx-xp11-server-list.txt
+
+      - name: Run XP11 installer QA with network trace
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN="$(cat .xp11-installer/bin-path.txt)"
+          cat > /tmp/xp11.qa <<'QA'
+          echo "RAMPREADY_XP11_QA_STARTED"
+          wait 2
+          dump buttons
+          click "Install a Free Demo of X-Plane"
+          wait 2
+          dump buttons
+          click_if_exists "Continue"
+          wait 8
+          dump buttons
+          echo "RAMPREADY_XP11_QA_DONE"
+          QA
+
+          set +e
+          LIBGL_ALWAYS_SOFTWARE=1 timeout 45s             strace -f -e trace=network -s 4096 -o reports/kphx-xp11-network-strace.txt             xvfb-run -a -s "-screen 0 1280x800x24 -dpi 96" "$BIN"             --qa_script=/tmp/xp11.qa             --install_numeric=115501             --install_name="X-Plane 11.55r2"             --no_web_server             2>&1 | tee reports/kphx-xp11-qa-live.txt
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "installer_rc=$rc" >> reports/kphx-xp11-qa-live.txt
+
+          grep -Eq 'RAMPREADY_XP11_QA_STARTED' reports/kphx-xp11-qa-live.txt
+          {
+            echo "=== URL-like installer output ==="
+            grep -Eo 'https?://[^[:space:]"]+' reports/kphx-xp11-qa-live.txt | sort -u || true
+            echo
+            echo "=== server/directory lines ==="
+            grep -Ei 'server|directory\.txt|11\.55|115501|download|demo' reports/kphx-xp11-qa-live.txt | tail -500 || true
+          } > reports/kphx-xp11-server-manifest-probe.txt
+
+      - name: Commit XP11 server probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             reports/kphx-xp11-server-list.txt             reports/kphx-xp11-qa-live.txt             reports/kphx-xp11-network-strace.txt             reports/kphx-xp11-server-manifest-probe.txt
+          git commit -m "Probe official XP11.55r2 stock server manifest"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
