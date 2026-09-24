@@ -36,6 +36,21 @@ function sourceVerticalPitchRadians(vertMeters) {
   return radians(-AUTOGATE_26M.sourceBridgePitchDegreesAtMinus2 * t);
 }
 
+function solveFixedPivotPitchRadians(y, z, verticalDeltaMeters) {
+  const targetY = y + Number(verticalDeltaMeters || 0);
+  let angle = 0;
+  for (let iteration = 0; iteration < 8; iteration += 1) {
+    const c = Math.cos(angle);
+    const sn = Math.sin(angle);
+    const value = y * c - z * sn - targetY;
+    const derivative = -y * sn - z * c;
+    if (Math.abs(derivative) < 1e-6) break;
+    angle -= value / derivative;
+    angle = clamp(angle, radians(-30), radians(30));
+  }
+  return angle;
+}
+
 function rotate2(x, z, angle) {
   const c = Math.cos(angle);
   const s = Math.sin(angle);
@@ -80,15 +95,44 @@ export function installA1ExactAutoGateController({
   const cabinWall = requireObject(root, "Wall_6_Cabin");
   const terminalTunnelSegment = requireObject(tunnelWall, "Segment_10_0");
   const aircraftTunnelSegment = requireObject(tunnelWall, "Segment_11_1");
+  const terminalTunnelVisual = requireObject(
+    terminalTunnelSegment,
+    "Attached_jw_tunnel_2_5a.obj",
+  );
+  const terminalTunnelVisualPivot = terminalTunnelVisual.parent;
   const cabinHalfB = requireObject(aircraftTunnelSegment, "Attached_jw_cabin_1b.obj");
   const cabinHalfBAttachmentPivot = cabinHalfB.parent;
-  requireObject(terminalTunnelSegment, "Attached_jw_tunnel_2_5a.obj");
   const aircraftTunnelSupport = requireObject(
     aircraftTunnelSegment,
     "Attached_jw_tunnel_2_5b.obj",
   );
   const aircraftTunnelSupportPivot = aircraftTunnelSupport.parent;
   const cabinHalfA = requireObject(cabinWall, "Attached_jw_cabin_1a.obj");
+  const terminalJointVisual = requireObject(
+    fixedWalls[3],
+    "Attached_jw_joint_1a.obj",
+  );
+  const terminalJointPivot = terminalJointVisual.parent;
+
+  // The stock tunnel visual is attached at Y=4.000 m in Jetway_1_solid.fac.
+  // Build the motion hierarchy around that exact joint rather than rotating
+  // Wall 5 around its ground-level origin. The hidden facade control meshes
+  // stay in the authored WED hierarchy; all visible bridge pieces move from
+  // the real terminal joint.
+  const bridgeMotionRoot = new THREE.Group();
+  bridgeMotionRoot.name = "A1_AutoGate_BridgeMotionRoot";
+  bridgeMotionRoot.position.set(0, 4, 0);
+  tunnelWall.add(bridgeMotionRoot);
+  root.updateMatrixWorld(true);
+  bridgeMotionRoot.attach(terminalTunnelSegment);
+  bridgeMotionRoot.attach(aircraftTunnelSegment);
+  root.updateMatrixWorld(true);
+
+  // Cabin A and cabin B must share the same moving endpoint hierarchy.
+  // Re-parent the Cabin wall under the exact Segment-11 cabin attachment pivot
+  // while preserving its authored world transform.
+  cabinHalfBAttachmentPivot.attach(cabinWall);
+  root.updateMatrixWorld(true);
 
   const pivot = footprint[4];
   const attachedCabinJoint = footprint[5];
@@ -117,7 +161,11 @@ export function installA1ExactAutoGateController({
     tunnelPositionY: tunnelWall.position.y,
     tunnelRotationX: tunnelWall.rotation.x,
     tunnelRotationY: tunnelWall.rotation.y,
+    bridgeMotionPosition: bridgeMotionRoot.position.clone(),
+    bridgeMotionRotationX: bridgeMotionRoot.rotation.x,
+    bridgeMotionRotationY: bridgeMotionRoot.rotation.y,
     cabinPosition: cabinWall.position.clone(),
+    cabinRotationX: cabinWall.rotation.x,
     cabinRotationY: cabinWall.rotation.y,
     aircraftTunnelSegmentZ: aircraftTunnelSegment.position.z,
     aircraftTunnelSupportPivotPosition: aircraftTunnelSupportPivot.position.clone(),
@@ -174,15 +222,15 @@ export function installA1ExactAutoGateController({
     const innerTunnelExtensionMeters =
       currentLatMeters * innerTunnelTravelPerLatMeter;
 
-    const bridgePitchDelta = sourceVerticalPitchRadians(currentVertMeters);
-    // MisterX AutoGate-26m.obj uses marginal.org.uk/autogate/vert as a true
-    // metre-space vertical entrance translation in addition to the 4-degree
-    // bridge pitch: vert 0 -> -2 translates the animated bridge 0 -> -2 m
-    // vertically after the source's fixed-axis rotations. Preserve that exact
-    // contract here instead of pitching the stock tunnel without lowering it.
-    tunnelWall.position.y = originals.tunnelPositionY + currentVertMeters;
-    tunnelWall.rotation.x = originals.tunnelRotationX + bridgePitchDelta;
-    tunnelWall.rotation.y = originals.tunnelRotationY + bridgeYawDelta;
+    // Keep Wall 5 itself exactly at the WED-authored transform. The bridge
+    // rotates from the stock Y=4 m tunnel/joint elevation, not from ground.
+    tunnelWall.position.y = originals.tunnelPositionY;
+    tunnelWall.rotation.x = originals.tunnelRotationX;
+    tunnelWall.rotation.y = originals.tunnelRotationY;
+
+    bridgeMotionRoot.position.copy(originals.bridgeMotionPosition);
+    bridgeMotionRoot.rotation.x = originals.bridgeMotionRotationX;
+    bridgeMotionRoot.rotation.y = originals.bridgeMotionRotationY + bridgeYawDelta;
 
     // Exact XP11 spelling [10,11]: Segment 10 is the terminal-side outer
     // tunnel. Segment 11 is the aircraft-side inner section. MisterX's exact
@@ -191,15 +239,28 @@ export function installA1ExactAutoGateController({
     aircraftTunnelSegment.position.z = originals.aircraftTunnelSegmentZ
       - innerTunnelExtensionMeters / tunnelWall.scale.z;
 
-    // The exact stock FAC attaches jw_tunnel_2_5b at Y=4.000 m and that
-    // object's source geometry reaches to Y=-4.000 m, so its support/wheel
-    // carriage is authored to sit exactly on pavement at Y=0. MisterX's
-    // AutoGate hierarchy keeps this support grounded while nested bridge
-    // geometry follows the vert/pitch dataref. Reproduce that hierarchy
-    // without deforming any stock vertices: calculate where the support pivot
-    // would be with the current horizontal articulation but with no vertical
-    // bridge motion, then counter-transform the existing exact support pivot
-    // against the animated parent.
+    // AutoGate's vert dataref describes entrance-height travel. Convert that
+    // entrance displacement to the equivalent pitch of the exact stock bridge
+    // about its fixed Y=4 terminal joint. This preserves the terminal
+    // connection instead of translating the entire bridge away from it.
+    root.updateMatrixWorld(true);
+    const jointBeforePitchWorld =
+      cabinHalfBAttachmentPivot.getWorldPosition(new THREE.Vector3());
+    const jointBeforePitchLocal =
+      bridgeMotionRoot.worldToLocal(jointBeforePitchWorld.clone());
+    const bridgePitchDelta = solveFixedPivotPitchRadians(
+      jointBeforePitchLocal.y,
+      jointBeforePitchLocal.z,
+      currentVertMeters,
+    );
+    bridgeMotionRoot.rotation.x =
+      originals.bridgeMotionRotationX + bridgePitchDelta;
+    root.updateMatrixWorld(true);
+
+    // Preserve the exact support geometry and its inherited yaw/pitch. Only
+    // translate its existing attachment pivot vertically enough to put the
+    // source object's actual lowest point back on pavement. No scale,
+    // quaternion cancellation, or mesh deformation is permitted.
     aircraftTunnelSupportPivot.position.copy(
       originals.aircraftTunnelSupportPivotPosition,
     );
@@ -209,43 +270,36 @@ export function installA1ExactAutoGateController({
     aircraftTunnelSupportPivot.scale.copy(
       originals.aircraftTunnelSupportPivotScale,
     );
-    const animatedTunnelY = tunnelWall.position.y;
-    const animatedTunnelPitch = tunnelWall.rotation.x;
-    tunnelWall.position.y = originals.tunnelPositionY;
-    tunnelWall.rotation.x = originals.tunnelRotationX;
     root.updateMatrixWorld(true);
-    const groundedSupportWorld = aircraftTunnelSupportPivot.matrixWorld.clone();
-    tunnelWall.position.y = animatedTunnelY;
-    tunnelWall.rotation.x = animatedTunnelPitch;
-    root.updateMatrixWorld(true);
-    const supportParentInverse = aircraftTunnelSupportPivot.parent.matrixWorld
-      .clone()
-      .invert();
-    const groundedSupportLocal = supportParentInverse.multiply(groundedSupportWorld);
-    groundedSupportLocal.decompose(
-      aircraftTunnelSupportPivot.position,
-      aircraftTunnelSupportPivot.quaternion,
-      aircraftTunnelSupportPivot.scale,
-    );
+    const supportBox = new THREE.Box3().setFromObject(aircraftTunnelSupport);
+    const supportGroundCorrectionMeters = Number.isFinite(supportBox.min.y)
+      ? -supportBox.min.y
+      : 0;
+    if (Math.abs(supportGroundCorrectionMeters) > 1e-5) {
+      const supportWorld = aircraftTunnelSupportPivot.getWorldPosition(new THREE.Vector3());
+      supportWorld.y += supportGroundCorrectionMeters;
+      const supportLocal =
+        aircraftTunnelSupportPivot.parent.worldToLocal(supportWorld.clone());
+      aircraftTunnelSupportPivot.position.copy(supportLocal);
+      root.updateMatrixWorld(true);
+    }
 
-    // Segment 11 owns the exact stock cabin-half-B attachment pivot. After
-    // telescope/yaw/pitch, use that transformed source joint directly instead
-    // of estimating the Cabin-wall origin with trigonometry. This keeps the
-    // two stock cabin halves physically closed for every AutoGate state while
-    // preserving the WED terminal pivot and authored source objects.
+    // Cabin A and B now share the same moving endpoint parent. Apply the
+    // AutoGate cabin counter-yaw locally to both source halves; their positions
+    // remain fixed in that common hierarchy, so they cannot drift apart.
+    cabinWall.position.copy(originals.cabinPosition);
+    cabinWall.rotation.x = originals.cabinRotationX;
+    cabinWall.rotation.y = originals.cabinRotationY + cabinCounterYawDelta;
+    cabinHalfB.rotation.y = originals.cabinHalfBRotationY + cabinCounterYawDelta;
+
     root.updateMatrixWorld(true);
     const movingCabinJointWorld =
       cabinHalfBAttachmentPivot.getWorldPosition(new THREE.Vector3());
     const movingCabinJointLocal = root.worldToLocal(movingCabinJointWorld.clone());
-    const jointVerticalDelta = movingCabinJointLocal.y - originals.cabinPosition.y;
-    cabinWall.position.copy(movingCabinJointLocal);
-    cabinWall.rotation.y =
-      originals.cabinRotationY + bridgeYawDelta + cabinCounterYawDelta;
-
-    // jw_cabin_1b is attached to the moving tunnel endpoint while cabin_1a is
-    // attached to the Cabin wall. Apply the same AutoGate cabin counter-yaw so
-    // both exact source halves remain aligned.
-    cabinHalfB.rotation.y = originals.cabinHalfBRotationY + cabinCounterYawDelta;
+    const jointVerticalDelta =
+      movingCabinJointLocal.y - root.worldToLocal(
+        terminalTunnelVisualPivot.getWorldPosition(new THREE.Vector3()),
+      ).y;
 
     // The two stock cabin source objects meet at the same authored joint:
     // Segment 11 places jw_cabin_1b at its far endpoint and Cabin Segment 20
@@ -274,10 +328,18 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateBridgePitchDegrees = THREE.MathUtils.radToDeg(bridgePitchDelta);
     root.userData.a1AutoGateCabinVerticalDeltaMeters = jointVerticalDelta;
     root.updateMatrixWorld(true);
-    root.userData.a1AutoGateSupportBottomYMeters =
-      aircraftTunnelSupportPivot.getWorldPosition(new THREE.Vector3()).y - 4;
+    const finalSupportBox = new THREE.Box3().setFromObject(aircraftTunnelSupport);
+    root.userData.a1AutoGateSupportBottomYMeters = finalSupportBox.min.y;
+    root.userData.a1AutoGateSupportGroundCorrectionMeters =
+      supportGroundCorrectionMeters;
     root.userData.a1AutoGateSupportGroundingAuthority =
-      "XP11-Jetway_1_solid-fac-Attach_graded-Y4-plus-jw_tunnel_2_5b-minY-minus4-v1";
+      "XP11-stock-support-exact-world-bounds-Y0-translation-only-v2";
+    const terminalJointWorld =
+      terminalJointPivot.getWorldPosition(new THREE.Vector3());
+    const tunnelStartWorld =
+      terminalTunnelVisualPivot.getWorldPosition(new THREE.Vector3());
+    root.userData.a1AutoGateTerminalJointGapMeters =
+      terminalJointWorld.distanceTo(tunnelStartWorld);
     root.userData.a1AutoGateRetractedMeters = retractMeters;
     root.userData.a1AutoGateInnerTunnelExtensionMeters = innerTunnelExtensionMeters;
     root.userData.a1AutoGateBridgeYawDeltaDegrees = bridgeYaw - restBridgeYaw;
@@ -511,7 +573,7 @@ export function installA1ExactAutoGateController({
   });
 
   root.userData.a1AutoGateControllerAuthority =
-    "exact-WED-rest-plus-XPlane-ACF-and-MisterX-AutoGate-26m-engage-disengage-v5";
+    "exact-WED-rest-plus-XPlane-ACF-fixed-Y4-joint-articulation-v6";
   root.userData.a1AutoGateSourceGeometryAuthority =
     "KPHX-1.75.1-WED-104804-plus-XP11-Jetway_1_solid.fac";
   root.userData.a1AutoGateMotionSource = AUTOGATE_26M.sourceAsset;
@@ -532,7 +594,7 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateCabinHalfA = cabinHalfA.name;
   root.userData.a1AutoGateCabinHalfB = cabinHalfB.name;
   root.userData.a1AutoGateCabinJointAuthority =
-    "Segment-11-attached-cabin-pivot-world-to-Cabin-wall-origin";
+    "Cabin-wall-and-cabin-B-shared-Segment-11-endpoint-hierarchy-v2";
   root.userData.a1AutoGatePivotWedNodeId = 104809;
   root.userData.a1AutoGateCabinJointWedNodeId = 104810;
   root.userData.a1AutoGateAttachedTunnelLengthMeters = attachedTunnelLength;
