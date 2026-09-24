@@ -1,0 +1,136 @@
+name: KPHX XP11 GLX Visual Trace
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp11-glx-visual-trace.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  trace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/workflows/kphx-xp11-glx-visual-trace.yml
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Install trace runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y \
+            gcc libgl-dev libx11-dev \
+            xvfb xauth x11-utils xfonts-base xfonts-75dpi xfonts-100dpi fontconfig \
+            libgl1-mesa-dri libglx-mesa0 libglx0 libgl1 libglu1-mesa mesa-utils \
+            libpangoxft-1.0-0 libgtk2.0-0t64 libxft2 libxi6 libxinerama1 \
+            libxrandr2 libxcursor1 libasound2t64 >/dev/null
+
+      - name: Build glXChooseVisual interceptor
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/glxtrace.c <<'C'
+          #define _GNU_SOURCE
+          #include <GL/glx.h>
+          #include <X11/Xlib.h>
+          #include <dlfcn.h>
+          #include <stdio.h>
+
+          typedef XVisualInfo *(*choose_fn)(Display *, int, int *);
+
+          XVisualInfo *glXChooseVisual(Display *dpy, int screen, int *attrs) {
+            static choose_fn real_choose = NULL;
+            if (!real_choose) real_choose = (choose_fn)dlsym(RTLD_NEXT, "glXChooseVisual");
+            fprintf(stderr, "RAMPREADY_GLX_CHOOSE screen=%d attrs=", screen);
+            if (!attrs) {
+              fprintf(stderr, "(null)");
+            } else {
+              for (int i = 0; i < 128; i++) {
+                int v = attrs[i];
+                fprintf(stderr, "%s%d", i ? "," : "", v);
+                if (v == None) break;
+              }
+            }
+            fprintf(stderr, "\n");
+            XVisualInfo *result = real_choose ? real_choose(dpy, screen, attrs) : NULL;
+            if (result) {
+              fprintf(stderr, "RAMPREADY_GLX_RESULT visualid=0x%lx depth=%d class=%d\n",
+                result->visualid, result->depth, result->class);
+            } else {
+              fprintf(stderr, "RAMPREADY_GLX_RESULT NULL\n");
+            }
+            fflush(stderr);
+            return result;
+          }
+          C
+          gcc -shared -fPIC -O2 -o /tmp/libglxtrace.so /tmp/glxtrace.c -ldl -lGL -lX11
+
+      - name: Start Xvfb and download official XP11 installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          Xvfb :99 -screen 0 1280x800x24 +extension GLX +render -noreset >/tmp/xvfb.log 2>&1 &
+          export DISPLAY=:99
+          for i in $(seq 1 20); do
+            if xdpyinfo >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          mkdir -p /tmp/xp11-installer reports
+          curl -L --fail --retry 4 --show-error \
+            "https://www.x-plane.com/update/installers11/X-Plane11InstallerLinux.zip" \
+            -o /tmp/xp11-installer.zip
+          unzip -q /tmp/xp11-installer.zip -d /tmp/xp11-installer
+          BIN="$(find /tmp/xp11-installer -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          chmod +x "$BIN"
+          echo "$BIN" >/tmp/xp11-bin.txt
+
+      - name: Trace exact XP11 visual requests
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN="$(cat /tmp/xp11-bin.txt)"
+          export DISPLAY=:99
+          set +e
+          LD_PRELOAD=/tmp/libglxtrace.so LIBGL_ALWAYS_SOFTWARE=1 timeout 12s "$BIN" \
+            --install_numeric=115501 \
+            --install_name="X-Plane 11.55r2" \
+            --no_web_server \
+            >/tmp/xp11-stdout.txt 2>/tmp/xp11-stderr.txt
+          rc=$?
+          set -e
+          {
+            echo "installer_rc=$rc"
+            echo "=== intercepted glXChooseVisual calls ==="
+            grep 'RAMPREADY_GLX_' /tmp/xp11-stderr.txt || true
+            echo
+            echo "=== installer stderr ==="
+            cat /tmp/xp11-stderr.txt
+            echo
+            echo "=== Xvfb GLX visual table ==="
+            LIBGL_ALWAYS_SOFTWARE=1 glxinfo -t | head -450
+          } > reports/kphx-xp11-glx-visual-trace.txt
+          grep -q 'RAMPREADY_GLX_CHOOSE' reports/kphx-xp11-glx-visual-trace.txt
+
+      - name: Commit visual trace
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp11-glx-visual-trace.txt
+          git commit -m "Trace exact XP11 GLX visual requests"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
