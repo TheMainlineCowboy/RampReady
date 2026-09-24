@@ -1,0 +1,77 @@
+name: KPHX XP12 Clearance Endpoint Probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Probe Laminar installer endpoints without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python3 - <<'PY'
+          import json, urllib.error, urllib.request
+
+          urls=[
+            "https://clearancedelivery.x-planemobile.com/v1/authenticate",
+            "https://clearancedelivery.x-planemobile.com/v1/download",
+            "https://tower.x-plane.com/v1/sim-download",
+          ]
+          methods=["GET","OPTIONS","POST"]
+          out=[]
+          for url in urls:
+              for method in methods:
+                  data=b"{}" if method=="POST" else None
+                  req=urllib.request.Request(
+                      url,
+                      data=data,
+                      method=method,
+                      headers={
+                          "User-Agent":"X-Plane Installer 5.4.0-r1",
+                          "Accept":"application/json,*/*",
+                          "Content-Type":"application/json",
+                      },
+                  )
+                  item={"url":url,"method":method}
+                  try:
+                      with urllib.request.urlopen(req,timeout=20) as r:
+                          body=r.read(8192).decode("utf-8","replace")
+                          item.update({"status":r.status,"headers":dict(r.headers),"body":body})
+                  except urllib.error.HTTPError as e:
+                      item.update({
+                          "status":e.code,
+                          "headers":dict(e.headers),
+                          "body":e.read(8192).decode("utf-8","replace"),
+                      })
+                  except Exception as e:
+                      item["error"]=repr(e)
+                  out.append(item)
+          open("reports/kphx-xp12-clearance-endpoint-probe.json","w").write(json.dumps(out,indent=2)+"\n")
+          print(json.dumps(out,indent=2))
+          PY
+
+      - name: Commit endpoint evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-clearance-endpoint-probe.json
+          git commit -m "Probe XP12 clearance endpoint request shapes"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
