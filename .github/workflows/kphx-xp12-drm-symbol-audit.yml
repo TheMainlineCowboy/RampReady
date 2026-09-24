@@ -1,0 +1,55 @@
+name: KPHX XP12 DRM Symbol Audit
+
+on:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-drm-symbol-audit.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Extract DRM/auth symbols from official installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y binutils >/dev/null
+          mkdir -p /tmp/xp12 reports
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip"             -o /tmp/xp12.zip
+          unzip -q /tmp/xp12.zip -d /tmp/xp12
+          BIN="$(find /tmp/xp12 -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          {
+            echo "=== nm -C ==="
+            nm -C "$BIN" 2>/dev/null | grep -Ei 'drm|auth|download|installer.*server|server.*installer|clearance|sim.download|checksum' | head -3000 || true
+            echo
+            echo "=== objdump symbols ==="
+            objdump -t -C "$BIN" 2>/dev/null | grep -Ei 'drm|auth|download|installer.*server|server.*installer|clearance|checksum' | head -3000 || true
+          } > reports/kphx-xp12-drm-symbol-audit.txt
+          cat reports/kphx-xp12-drm-symbol-audit.txt
+
+      - name: Commit DRM symbol audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-drm-symbol-audit.txt
+          git commit -m "Audit XP12 installer DRM symbols"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
