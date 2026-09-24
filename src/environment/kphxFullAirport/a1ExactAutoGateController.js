@@ -427,45 +427,72 @@ export function installA1ExactAutoGateController({
     tunnelWall.rotation.y = originals.tunnelRotationY + bridgeYawDelta;
     root.updateMatrixWorld(true);
 
-    const baselineHingeWorld =
-      terminalHingeAttachmentPivot.getWorldPosition(new THREE.Vector3());
     const baselineEntranceWorld =
       aircraftEntranceAttachmentPivot.getWorldPosition(new THREE.Vector3());
-    const hingeInTunnel =
-      tunnelWall.worldToLocal(baselineHingeWorld.clone());
-    const entranceInTunnel =
-      tunnelWall.worldToLocal(baselineEntranceWorld.clone());
-    const solvedBridgePitch = solveFixedPivotPitchRadians({
-      // Object3D applies scale before rotation. Use the scaled hinge-to-
-      // entrance vector so the pitch solve matches the exact WED edge length,
-      // not the unscaled 11 m facade template length.
-      localY:
-        (entranceInTunnel.y - hingeInTunnel.y) * tunnelWall.scale.y,
-      localZ:
-        (entranceInTunnel.z - hingeInTunnel.z) * tunnelWall.scale.z,
-      baselinePitchRadians: originals.tunnelRotationX,
-      verticalDeltaMeters: currentVertMeters,
-    });
-    const bridgePitchDelta = solvedBridgePitch - originals.tunnelRotationX;
-
     const desiredSupportWorldMatrices = lowerSupport.branches.map(
       (branch) => branch.mesh.matrixWorld.clone(),
     );
 
-    // Apply the pitch, then translate the wall object only by the exact rigid
-    // compensation required to keep the elevated Segment-10 attachment hinge
-    // at its source world point. This is rotation ABOUT the physical hinge,
-    // not free vertical motion of the bridge.
-    tunnelWall.rotation.x = solvedBridgePitch;
-    root.updateMatrixWorld(true);
-    const pitchedHingeWorld =
-      terminalHingeAttachmentPivot.getWorldPosition(new THREE.Vector3());
+    // Solve against the actual compiled Three.js hierarchy instead of an
+    // idealized template-space vector. The facade compiler includes WED edge
+    // stretch plus an inverse-stretch attachment parent, so evaluating the
+    // real attachment pivots is the authoritative way to preserve the hinge
+    // and hit AutoGate's metre-space vertical target.
+    const targetEntranceWorldY = baselineEntranceWorld.y + currentVertMeters;
     const sourceHingeInParent =
       tunnelWall.parent.worldToLocal(sourceTerminalHingeWorld.clone());
-    const pitchedHingeInParent =
-      tunnelWall.parent.worldToLocal(pitchedHingeWorld.clone());
-    tunnelWall.position.add(sourceHingeInParent.sub(pitchedHingeInParent));
-    root.updateMatrixWorld(true);
+
+    const applyPitchAtFixedHinge = (pitchRadians) => {
+      tunnelWall.position.copy(originals.tunnelPosition);
+      tunnelWall.rotation.x = pitchRadians;
+      tunnelWall.rotation.y = originals.tunnelRotationY + bridgeYawDelta;
+      root.updateMatrixWorld(true);
+
+      const pitchedHingeWorld =
+        terminalHingeAttachmentPivot.getWorldPosition(new THREE.Vector3());
+      const pitchedHingeInParent =
+        tunnelWall.parent.worldToLocal(pitchedHingeWorld.clone());
+      tunnelWall.position.add(
+        sourceHingeInParent.clone().sub(pitchedHingeInParent),
+      );
+      root.updateMatrixWorld(true);
+
+      return aircraftEntranceAttachmentPivot
+        .getWorldPosition(new THREE.Vector3()).y;
+    };
+
+    const maxPitchDeltaRadians = radians(30);
+    let lowPitch = originals.tunnelRotationX - maxPitchDeltaRadians;
+    let highPitch = originals.tunnelRotationX + maxPitchDeltaRadians;
+    let lowError = applyPitchAtFixedHinge(lowPitch) - targetEntranceWorldY;
+    let highError = applyPitchAtFixedHinge(highPitch) - targetEntranceWorldY;
+    if (lowError * highError > 0) {
+      throw new Error(
+        `A1 fixed elevated hinge cannot reach AutoGate vertical target ${currentVertMeters.toFixed(4)} m`,
+      );
+    }
+
+    for (let iteration = 0; iteration < 32; iteration += 1) {
+      const midPitch = (lowPitch + highPitch) / 2;
+      const midError =
+        applyPitchAtFixedHinge(midPitch) - targetEntranceWorldY;
+      if (Math.abs(midError) <= 0.0001) {
+        lowPitch = midPitch;
+        highPitch = midPitch;
+        break;
+      }
+      if (lowError * midError <= 0) {
+        highPitch = midPitch;
+        highError = midError;
+      } else {
+        lowPitch = midPitch;
+        lowError = midError;
+      }
+    }
+
+    const solvedBridgePitch = (lowPitch + highPitch) / 2;
+    const bridgePitchDelta = solvedBridgePitch - originals.tunnelRotationX;
+    applyPitchAtFixedHinge(solvedBridgePitch);
 
     lowerSupport.branches.forEach((branch, index) => {
       const parentInverse = branch.mesh.parent.matrixWorld.clone().invert();
