@@ -1,3 +1,4 @@
 Trigger lightweight CRJ700 forward-door geometry inspection.
 Goal: recover actual rendered forward-left passenger door vertical center/bounds.
 Run: exact primitive/material bounds pass v2.
+Run: dump all exact primitive bounds v3.
