@@ -1,0 +1,66 @@
+name: KPHX XP12 Public File Address Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-public-file-address-probe.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Inspect exact public XP12.1.2 manifest records
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          BASE='https://desktop.x-plane.com/unsecured/X-Plane%2012.1.2-r4-0f2fea01'
+          curl -L --fail --retry 4 --show-error "$BASE/directory.txt.zip" -o /tmp/directory.zip
+          unzip -p /tmp/directory.zip > /tmp/directory.txt
+          {
+            echo "manifest_sha256=$(sha256sum /tmp/directory.txt | awk '{print $1}')"
+            echo "manifest_bytes=$(wc -c </tmp/directory.txt | tr -d ' ')"
+            echo
+            echo "=== record keywords ==="
+            awk '{print $1}' /tmp/directory.txt | sort | uniq -c | sort -nr | head -40
+            echo
+            for needle in               'Opposing_Flood_Sm.obj'               'Jetway_1_solid.fac'               'HwyLt1GndMnt.obj'               'roads.net'               'PAX_stairs_1_4.6m.obj'               'Sing_Tank_Medium.obj'               'airport scenery/library.txt'               '900 us objects/library.txt'               '1000 roads/library.txt'
+            do
+              echo
+              echo "=== $needle ==="
+              n="$(grep -n -m1 -F "$needle" /tmp/directory.txt | cut -d: -f1 || true)"
+              if [ -n "$n" ]; then
+                a=$((n>12?n-12:1)); b=$((n+8))
+                sed -n "${a},${b}p" /tmp/directory.txt
+              else
+                echo "NOT FOUND"
+              fi
+            done
+          } > reports/kphx-xp12-public-file-address-probe.txt
+          cat reports/kphx-xp12-public-file-address-probe.txt
+
+      - name: Commit probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-public-file-address-probe.txt
+          git commit -m "Inspect XP12.1.2 public manifest file records"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
