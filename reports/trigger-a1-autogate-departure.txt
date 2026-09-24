@@ -1,6 +1,5 @@
-Retrigger exact A1 AutoGate departure verification using proven A1 route.
-Route: /RampReady/?inspectionPreset=a1
+Trigger instrumented exact A1 AutoGate departure verification.
+Checkpoint verifier commit: 1f7ca821c76abe262782c82bac1dbd28d7c47bbd
 Expected attached lat: 6.160 m
 Expected parked lat: 0.000 m
 Expected duration: 15000 ms
-Workflow route commit: 18fb950549baa3e58cabf14a42ec82a717da1f65
