@@ -134,6 +134,8 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   expect(runtime.a1JetwayCabinEndWedNodeId).toBe('104811');
   expect(Number(runtime.a1XPlaneAutoGateLatMeters)).toBeCloseTo(6.1284, 3);
   expect(Number(runtime.a1XPlaneAutoGateVertMeters)).toBeCloseTo(-1.9158528682264, 3);
+  expect(runtime.a1JetwaySupportTrianglePartitionExact).toBe('true');
+  expect(Math.abs(Number(runtime.a1JetwaySupportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
   const criticalErrors = consoleErrors.filter(message =>
     /PHX|KPHX|Terminal 4|GLTFLoader|WebGL|ReferenceError|TypeError|SyntaxError/i.test(message)
   );
@@ -162,16 +164,68 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   expect(bounds.width).toBeGreaterThanOrEqual(1000);
   expect(bounds.height).toBeGreaterThanOrEqual(700);
 
-  const chasePath = `${evidenceDirectory}/exact-kphx-live.png`;
-  const chaseBytes = await captureCanvasClip(page, bounds, chasePath);
-  expect(chaseBytes).toBeGreaterThan(100000);
+  const attachedPath = `${evidenceDirectory}/exact-kphx-live.png`;
+  const attachedBytes = await captureCanvasClip(page, bounds, attachedPath);
+  expect(attachedBytes).toBeGreaterThan(100000);
+
+  await page.evaluate(() => {
+    const ready = [...document.querySelectorAll('button')]
+      .find(button => button.textContent?.trim() === 'Ready');
+    if (!(ready instanceof HTMLButtonElement)) throw new Error('A1 Ready button missing');
+    ready.click();
+  });
+
+  await page.waitForFunction(() => {
+    const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
+    const deployment = Number(d.a1JetwayDeployment);
+    return d.a1JetwayState === 'autogate-disengaging'
+      && Number.isFinite(deployment)
+      && deployment <= 0.55
+      && deployment >= 0.45;
+  }, null, { timeout: 14000, polling: 50 });
+
+  const midRuntime = await canvas.evaluate(element => ({ ...element.dataset }));
+  expect(midRuntime.a1JetwaySupportTrianglePartitionExact).toBe('true');
+  expect(Math.abs(Number(midRuntime.a1JetwaySupportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
+  expect(Number(midRuntime.a1JetwayCabinJointGapMeters)).toBeLessThanOrEqual(0.08);
+  expect(Number(midRuntime.a1JetwayFixedWallMotionMaxMeters)).toBeLessThanOrEqual(0.001);
+  const midBytes = await captureCanvasClip(
+    page,
+    bounds,
+    `${evidenceDirectory}/exact-kphx-mid-disengage.png`,
+  );
+  expect(midBytes).toBeGreaterThan(100000);
+
+  await page.waitForFunction(() => {
+    const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
+    return d.a1JetwayState === 'parked-clear-of-aircraft'
+      && Number(d.a1JetwayDeployment) <= 0.005;
+  }, null, { timeout: 12000, polling: 50 });
+
+  const parkedRuntime = await canvas.evaluate(element => ({ ...element.dataset }));
+  expect(parkedRuntime.a1JetwaySupportTrianglePartitionExact).toBe('true');
+  expect(Math.abs(Number(parkedRuntime.a1JetwaySupportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
+  expect(Number(parkedRuntime.a1JetwayCabinJointGapMeters)).toBeLessThanOrEqual(0.08);
+  expect(Number(parkedRuntime.a1JetwaySourcePoseMaxMatrixDelta)).toBeLessThanOrEqual(0.00001);
+  const parkedBytes = await captureCanvasClip(
+    page,
+    bounds,
+    `${evidenceDirectory}/exact-kphx-parked.png`,
+  );
+  expect(parkedBytes).toBeGreaterThan(100000);
 
   const report = {
     releaseSha: expectedSha,
     pageUrl,
     capturedAtUtc: new Date().toISOString(),
     runtime,
-    screenshotBytes: chaseBytes,
+    midRuntime,
+    parkedRuntime,
+    screenshotBytes: {
+      attached: attachedBytes,
+      mid: midBytes,
+      parked: parkedBytes,
+    },
     consoleErrors,
     pageErrors,
     failedRequests,
@@ -187,7 +241,14 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
     pavementPolygons: runtime.kphxSurfacePolygonCount,
     a1MarkingMeshes: runtime.kphxA1ZdpMarkingLineMeshCount,
     oldAirportJetwayGlbUsed: runtime.kphxExactLiveOldAirportJetwayGlbUsed,
-    screenshotBytes: chaseBytes,
+    supportBottomDeltaMid: midRuntime.a1JetwaySupportBottomDeltaMeters,
+    supportBottomDeltaParked: parkedRuntime.a1JetwaySupportBottomDeltaMeters,
+    sourcePoseMaxMatrixDeltaParked: parkedRuntime.a1JetwaySourcePoseMaxMatrixDelta,
+    screenshotBytes: {
+      attached: attachedBytes,
+      mid: midBytes,
+      parked: parkedBytes,
+    },
   }, null, 2));
 });
 
