@@ -104,6 +104,9 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
     sourcePoseMaxMatrixDelta: initialA1Runtime.a1JetwaySourcePoseMaxMatrixDelta,
     supportBottomDeltaMeters: initialA1Runtime.a1JetwaySupportBottomDeltaMeters,
     cabinJointGapMeters: initialA1Runtime.a1JetwayCabinJointGapMeters,
+    stairAngleDegrees: initialA1Runtime.a1JetwayStairAngleDegrees,
+    stairFootDeltaMeters: initialA1Runtime.a1JetwayStairFootDeltaMeters,
+    stairHingeGapMeters: initialA1Runtime.a1JetwayStairHingeGapMeters,
     terminalPivotGapMeters: initialA1Runtime.a1JetwayTerminalPivotGapMeters,
     cabinVerticalErrorMeters: initialA1Runtime.a1JetwayCabinVerticalErrorMeters,
     fixedWallMotionMaxMeters: initialA1Runtime.a1JetwayFixedWallMotionMaxMeters,
@@ -137,7 +140,10 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   expect(Number(runtime.a1XPlaneAutoGateLatMeters)).toBeCloseTo(6.1284, 3);
   expect(Number(runtime.a1XPlaneAutoGateVertMeters)).toBeCloseTo(-1.9158528682264, 3);
   expect(runtime.a1JetwaySupportTrianglePartitionExact).toBe('true');
+  expect(runtime.a1JetwayStairTrianglePartitionExact).toBe('true');
   expect(Math.abs(Number(runtime.a1JetwaySupportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
+  expect(Math.abs(Number(runtime.a1JetwayStairFootDeltaMeters))).toBeLessThanOrEqual(0.02);
+  expect(Math.abs(Number(runtime.a1JetwayStairHingeGapMeters))).toBeLessThanOrEqual(0.001);
   expect(Math.abs(Number(runtime.a1JetwayTerminalPivotGapMeters))).toBeLessThanOrEqual(0.001);
   expect(Math.abs(Number(runtime.a1JetwayCabinVerticalErrorMeters))).toBeLessThanOrEqual(0.02);
   const criticalErrors = consoleErrors.filter(message =>
@@ -254,6 +260,9 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
     state: midRuntime.a1JetwayState,
     supportBottomDeltaMeters: midRuntime.a1JetwaySupportBottomDeltaMeters,
     cabinJointGapMeters: midRuntime.a1JetwayCabinJointGapMeters,
+    stairAngleDegrees: midRuntime.a1JetwayStairAngleDegrees,
+    stairFootDeltaMeters: midRuntime.a1JetwayStairFootDeltaMeters,
+    stairHingeGapMeters: midRuntime.a1JetwayStairHingeGapMeters,
     terminalPivotGapMeters: midRuntime.a1JetwayTerminalPivotGapMeters,
     cabinVerticalErrorMeters: midRuntime.a1JetwayCabinVerticalErrorMeters,
     fixedWallMotionMaxMeters: midRuntime.a1JetwayFixedWallMotionMaxMeters,
@@ -261,7 +270,10 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   }));
 
   expect(midRuntime.a1JetwaySupportTrianglePartitionExact).toBe('true');
+  expect(midRuntime.a1JetwayStairTrianglePartitionExact).toBe('true');
   expect(Math.abs(Number(midRuntime.a1JetwaySupportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
+  expect(Math.abs(Number(midRuntime.a1JetwayStairFootDeltaMeters))).toBeLessThanOrEqual(0.02);
+  expect(Math.abs(Number(midRuntime.a1JetwayStairHingeGapMeters))).toBeLessThanOrEqual(0.001);
   expect(Number(midRuntime.a1JetwayCabinJointGapMeters)).toBeLessThanOrEqual(0.08);
   expect(Math.abs(Number(midRuntime.a1JetwayTerminalPivotGapMeters))).toBeLessThanOrEqual(0.001);
   expect(Math.abs(Number(midRuntime.a1JetwayCabinVerticalErrorMeters))).toBeLessThanOrEqual(0.02);
@@ -285,8 +297,11 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
 
   const parkedRuntime = await canvas.evaluate(element => ({ ...element.dataset }));
   expect(parkedRuntime.a1JetwaySupportTrianglePartitionExact).toBe('true');
+  expect(parkedRuntime.a1JetwayStairTrianglePartitionExact).toBe('true');
   expect(Number(parkedRuntime.a1JetwayCabinJointGapMeters)).toBeLessThanOrEqual(0.08);
   expect(Math.abs(Number(parkedRuntime.a1JetwaySupportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
+  expect(Math.abs(Number(parkedRuntime.a1JetwayStairFootDeltaMeters))).toBeLessThanOrEqual(0.02);
+  expect(Math.abs(Number(parkedRuntime.a1JetwayStairHingeGapMeters))).toBeLessThanOrEqual(0.001);
   expect(Math.abs(Number(parkedRuntime.a1JetwayTerminalPivotGapMeters))).toBeLessThanOrEqual(0.001);
   expect(Math.abs(Number(parkedRuntime.a1JetwayCabinVerticalErrorMeters))).toBeLessThanOrEqual(0.02);
   const parkedBytes = await captureCanvasClip(
@@ -325,6 +340,10 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
     oldAirportJetwayGlbUsed: runtime.kphxExactLiveOldAirportJetwayGlbUsed,
     supportBottomDeltaMid: midRuntime.a1JetwaySupportBottomDeltaMeters,
     supportBottomDeltaParked: parkedRuntime.a1JetwaySupportBottomDeltaMeters,
+    stairFootDeltaMid: midRuntime.a1JetwayStairFootDeltaMeters,
+    stairFootDeltaParked: parkedRuntime.a1JetwayStairFootDeltaMeters,
+    stairHingeGapMid: midRuntime.a1JetwayStairHingeGapMeters,
+    stairHingeGapParked: parkedRuntime.a1JetwayStairHingeGapMeters,
     terminalPivotGapMid: midRuntime.a1JetwayTerminalPivotGapMeters,
     terminalPivotGapParked: parkedRuntime.a1JetwayTerminalPivotGapMeters,
     cabinVerticalErrorMid: midRuntime.a1JetwayCabinVerticalErrorMeters,
