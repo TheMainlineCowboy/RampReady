@@ -184,6 +184,7 @@ function parsePol(source, sourceResource) {
     noAlpha: false,
     globalSpecular: null,
     weather: null,
+    weatherTransparent: false,
     decalLib: null,
     unsupported: [],
   };
@@ -200,6 +201,7 @@ function parsePol(source, sourceResource) {
     else if (command === "NO_ALPHA") parsed.noAlpha = true;
     else if (command === "GLOBAL_specular" || command === "SPECULAR") parsed.globalSpecular = Number(parts[1]);
     else if (command === "WEATHER") parsed.weather = parts.slice(1).join(" ");
+    else if (command === "WEATHER_TRANSPARENT") parsed.weatherTransparent = true;
     else if (command === "DECAL_LIB") parsed.decalLib = parts.slice(1).join(" ");
     else if (!["A", "850", "DRAPED_POLYGON"].includes(command)) parsed.unsupported.push(raw);
   }
@@ -223,6 +225,7 @@ function parseLin(source, sourceResource) {
     layerGroup: null,
     lodMeters: null,
     mirror: false,
+    weatherTransparent: false,
     sOffsets: [],
     unsupported: [],
   };
@@ -241,6 +244,7 @@ function parseLin(source, sourceResource) {
     else if (command === "LAYER_GROUP") parsed.layerGroup = parseLayer(parts);
     else if (command === "LOD") parsed.lodMeters = Number(parts[1]);
     else if (command === "MIRROR") parsed.mirror = true;
+    else if (command === "WEATHER_TRANSPARENT") parsed.weatherTransparent = true;
     else if (command === "S_OFFSET") parsed.sOffsets.push({
       layer: Number(parts[1]),
       left: Number(parts[2]),
