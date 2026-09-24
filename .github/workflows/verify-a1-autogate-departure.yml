@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: a1-autogate-departure
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -66,12 +70,23 @@ jobs:
             const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
             return d.kphxExactLiveT4 === "ready"
               && d.a1JetwayAnimationAuthority === "exact-WED-104804-XP11-stock-facade-plus-MisterX-AutoGate-26m-horizontal-kinematics-v1";
-          }, null, { timeout: 60000 });
+          }, null, { timeout: 25000 });
+
+          const snapshot = async (label) => {
+            const state = await page.evaluate(() => {
+              const canvas = document.querySelector("canvas.trainerCanvas");
+              return { dataset: canvas ? { ...canvas.dataset } : {}, bodyText: document.body?.innerText?.slice(0, 3000) || "" };
+            });
+            fs.writeFileSync(`reports/a1-autogate-debug-${label}.json`, JSON.stringify(state, null, 2) + "\\n");
+            return state;
+          };
+          await snapshot("exact-t4-ready");
 
           const returnToTraining = page.getByRole("button", { name: "Return to training", exact: true });
           if (await returnToTraining.isVisible().catch(() => false)) {
             await returnToTraining.click();
           }
+          await snapshot("after-training-toggle");
 
           await page.waitForFunction(() => {
             const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
@@ -79,6 +94,7 @@ jobs:
               && d.a1JetwayState === "attached-to-aircraft-door"
               && Number(d.a1JetwayDeployment) >= 0.995;
           }, null, { timeout: 10000 });
+          await snapshot("attached-ready");
 
           const read = () => page.evaluate(() => {
             const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
@@ -107,6 +123,7 @@ jobs:
           const ready = page.getByRole("button", { name: "Ready", exact: true });
           await ready.waitFor({ state: "visible", timeout: 10000 });
           await ready.click();
+          await snapshot("after-ready-click");
 
           await page.waitForFunction(() => {
             const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
@@ -115,6 +132,7 @@ jobs:
           }, null, { timeout: 12000 });
 
           const midpoint = await read();
+          await snapshot("midpoint");
           await page.screenshot({ path: "reports/a1-autogate-mid-disengage.jpg", type: "jpeg", quality: 92, fullPage: true });
 
           await page.waitForFunction(() => {
@@ -124,6 +142,7 @@ jobs:
           }, null, { timeout: 12000 });
 
           const parked = await read();
+          await snapshot("parked");
           await page.screenshot({ path: "reports/a1-autogate-parked.jpg", type: "jpeg", quality: 92, fullPage: true });
 
           const stageAdvanced = await page.getByText("Align the capture head with the nose gear", { exact: true }).isVisible().catch(() => false);
@@ -203,6 +222,7 @@ jobs:
             reports/a1-autogate-attached.jpg
             reports/a1-autogate-mid-disengage.jpg
             reports/a1-autogate-parked.jpg
+            reports/a1-autogate-debug-*.json
 
       - name: Commit passing evidence
         if: success()
