@@ -1,6 +1,7 @@
 import * as THREE_NS from "three";
 import { kphxWedToRampReadyPosition } from "./sourceAuthority.js";
 import { buildXp11Type2Facade } from "./xp11Type2Facade.js";
+import { installA1ExactAutoGateController } from "./a1ExactAutoGateController.js";
 
 const RESOURCE = "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac";
 const STOCK_BASE = "/models/xplane11-stock/jetway1";
@@ -71,6 +72,7 @@ export async function installKphxTerminal4StockJetways(
 
   const evidence = [];
   let totalEdges = 0;
+  let a1Controller = null;
 
   for (const gateMap of map.placements) {
     const placement = wedById.get(gateMap.facadeWedObjectId);
@@ -125,6 +127,18 @@ export async function installKphxTerminal4StockJetways(
     built.root.userData.sourceResource = RESOURCE;
     built.root.userData.sourceWedSha256 = EXPECTED_WED_SHA256;
     built.root.userData.oldAirportJetwayGlbUsed = false;
+
+    if (gateMap.gate === "A1") {
+      a1Controller = installA1ExactAutoGateController({
+        THREE,
+        root: built.root,
+        footprint,
+        wallEvidence: built.wallEvidence,
+        gateMap,
+      });
+      built.root.userData.a1ExactAutoGateControllerInstalled = true;
+    }
+
     layer.add(built.root);
 
     totalEdges += built.wallEvidence.length;
@@ -154,6 +168,14 @@ export async function installKphxTerminal4StockJetways(
   layer.userData.oldAirportJetwayGlbUsed = false;
   layer.userData.substitutionPolicy = "none";
   layer.userData.evidence = evidence;
+  layer.userData.a1JetwayController = a1Controller;
+  layer.userData.a1JetwayAnimationAuthority = a1Controller
+    ? "exact-WED-104804-XP11-stock-facade-plus-MisterX-AutoGate-26m-horizontal-kinematics-v1"
+    : "missing";
+  layer.userData.a1JetwayAttachedLatMeters = a1Controller?.getAttachedLatMeters?.() ?? Number.NaN;
+  layer.userData.a1JetwayMotionDurationMs = a1Controller?.getMotionDurationMs?.() ?? Number.NaN;
+  layer.userData.a1JetwayVerticalResolved = a1Controller?.getDoorTargets?.().verticalResolved === true;
+  layer.userData.a1JetwayFixedWallCount = 4;
 
   environment.add(layer);
 
@@ -163,5 +185,6 @@ export async function installKphxTerminal4StockJetways(
     wed,
     map,
     stockManifest,
+    a1Controller,
   };
 }
