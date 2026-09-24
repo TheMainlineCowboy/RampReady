@@ -1060,7 +1060,11 @@ export default function RampReadyStandupTrainer({
       orbitRef.current.pointerId = event.pointerId;
       orbitRef.current.lastX = event.clientX;
       orbitRef.current.lastY = event.clientY;
-      canvas.setPointerCapture?.(event.pointerId);
+      try {
+        canvas.setPointerCapture?.(event.pointerId);
+      } catch {
+        // Gyro uses synthetic PointerEvents; capture is optional for that path.
+      }
       event.preventDefault();
     };
     const handlePointerMove = (event) => {
@@ -1087,7 +1091,11 @@ export default function RampReadyStandupTrainer({
     const handlePointerUp = (event) => {
       if (orbitRef.current.pointerId !== event.pointerId) return;
       orbitRef.current.pointerId = null;
-      canvas.releasePointerCapture?.(event.pointerId);
+      try {
+        canvas.releasePointerCapture?.(event.pointerId);
+      } catch {
+        // Synthetic gyro pointer IDs may not own browser pointer capture.
+      }
     };
     const handleWheel = (event) => {
       if (cameraRef.current !== "chase") return;
