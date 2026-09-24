@@ -1,0 +1,158 @@
+=== binary ===
+.xp11-installer/unpacked/X-Plane 11 Installer Linux: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.24, BuildID[sha1]=3220e271eb11730c02a8aad4cb2d4ae60be4c170, not stripped
+a14563e2adb3a2248f68da40ca568333687a7c073dd6f96d741782ca8cda8905  .xp11-installer/unpacked/X-Plane 11 Installer Linux
+
+=== help ===
+.xp11-installer/unpacked/X-Plane 11 Installer Linux: error while loading shared libraries: libGLU.so.1: cannot open shared object file: No such file or directory
+
+=== exact build/version/QA strings ===
+ attraverso il processo di installazione di X-Plane 11 Demo.
+ la copia di X-Plane 11 Demo fin qui installata.
+ spazio libero sufficiente per installare X-Plane 11 Demo. E' possibile cambiare il percorso di installazione per utilizzare un disco con pi
+ spazio sufficiente per installare X-Plane 11 Demo.
+ verificato un problema durante l'installazione di X-Plane 11 Demo. Riprovare in un secondo momento oppure contattare il supporto tecnico di Laminar Research.
+ verificato un problema durante l'installazione di X-Plane 11 Demo. Verificare la connessione a internet e riprovare, oppure contattare il supporto tecnico di Laminar Research a info@x-plane.com.
+#STRING This installer will guide you through the process of installing the X-Plane 11 Demo.=====
+#STRING This installer will guide you through the process of installing the X-Plane 11 Demo.====L'installer vi guider
+#STRING This installer will guide you through the process of installing the X-Plane 11 Demo.====Questo programma di installazione vi guider
+#STRING This installer will guide you through the process of installing the X-Plane 11 Demo.====Questo programma vi guider
+#STRING You already have the X-Plane 11 Demo installed on this computer. What would you like to do?====
+--install_name
+--qa_script
+--qa_script=<file>
+/directory.txt.zip
+Are you sure you want to cancel the installation? This will delete the partially installed copy of the X-Plane 11 Demo.
+Install a Free Demo of X-Plane
+Installing X-Plane 11 Demo
+Pick a folder to install the X-Plane 11 Demo into.
+Please pick a name for your X-Plane 11 Demo installation. 
+Please pick which copy of the X-Plane 11 demo you would like to run.
+Run the X-Plane 11 Demo
+STRING Are you sure you want to cancel the installation? This will delete the partially installed copy of the X-Plane 11 Demo.====
+STRING Are you sure you want to cancel the installation? This will delete the partially installed copy of the X-Plane 11 Demo.====Confermate l'annullamento dell'installazione in corso? Questa operazione canceller
+STRING Are you sure you want to cancel the installation? This will delete the partially installed copy of the X-Plane 11 Demo.====Etes-vous s
+STRING Are you sure you want to cancel the installation? This will delete the partially installed copy of the X-Plane 11 Demo.====Tem a certeza que quer cancelar a instala
+STRING Are you sure you want to cancel the installation? This will delete the partially installed copy of the X-Plane 11 Demo.====Wollen Sie die Installation jetzt wirklich abbrechen? Die teilweise installierte X-Plane 11 Demo wird dadurch gel
+STRING Install a Free Demo of X-Plane====
+STRING Install a Free Demo of X-Plane====Instalar uma demo gratuita do X-Plane
+STRING Install a Free Demo of X-Plane====Instalar una Demo gratuita de X-Plane
+STRING Install a Free Demo of X-Plane====Installazione della demo di X-Plane
+STRING Install a Free Demo of X-Plane====Installer la version de d
+STRING Install a Free Demo of X-Plane====Installiere eine Freie Demo von X-Plane
+STRING Install a Free Demo of X-Plane====X-Plane
+STRING Installing X-Plane 11 Demo====
+STRING Installing X-Plane 11 Demo====A instalar a Demonstra
+STRING Installing X-Plane 11 Demo====Die X-Plane 11 Demo wird installiert
+STRING Installing X-Plane 11 Demo====Instalando la demo de X-Plane 11
+STRING Installing X-Plane 11 Demo====Installation de la version d
+STRING Installing X-Plane 11 Demo====Installazione di X-Plane 11 Demo
+STRING Installing X-Plane 11 Demo====X-Plane 11
+STRING Pick a folder to install the X-Plane 11 Demo into.====
+STRING Pick a folder to install the X-Plane 11 Demo into.====Elige una carpeta para instalar la demo de X-Plane 11.
+STRING Pick a folder to install the X-Plane 11 Demo into.====Escolha a pasta para instalar a Demonstra
+STRING Pick a folder to install the X-Plane 11 Demo into.====S
+STRING Pick a folder to install the X-Plane 11 Demo into.====Selezionare una cartella per l'installazione di X-Plane 11 Demo.
+STRING Pick a folder to install the X-Plane 11 Demo into.====W
+STRING Pick a folder to install the X-Plane 11 Demo into.====X-Plane 11
+STRING Please pick a name for your X-Plane 11 Demo installation. ====
+STRING Please pick a name for your X-Plane 11 Demo installation. ====Bitte w
+STRING Please pick a name for your X-Plane 11 Demo installation. ====Choisissez SVP un nom pour votre installation de la version D
+STRING Please pick a name for your X-Plane 11 Demo installation. ====Por favor escolha um nome para a instala
+STRING Please pick a name for your X-Plane 11 Demo installation. ====Por favor, elige un nombre para la instalaci
+STRING Please pick a name for your X-Plane 11 Demo installation. ====Scegliere un nome per l
+STRING Please pick a name for your X-Plane 11 Demo installation. ====X-Plane 11
+STRING Please pick which copy of the X-Plane 11 demo you would like to run.====
+STRING Please pick which copy of the X-Plane 11 demo you would like to run.====Bitte w
+STRING Please pick which copy of the X-Plane 11 demo you would like to run.====Por favor escolha qual a c
+STRING Please pick which copy of the X-Plane 11 demo you would like to run.====Por favor, elige qu
+STRING Please pick which copy of the X-Plane 11 demo you would like to run.====S
+STRING Please pick which copy of the X-Plane 11 demo you would like to run.====Selezionare la copia di X-Plane 11 demo che si desidera eseguire.
+STRING Run the X-Plane 11 Demo====
+STRING Run the X-Plane 11 Demo====D
+STRING Run the X-Plane 11 Demo====Die X-Plane 11 Demo starten
+STRING Run the X-Plane 11 Demo====Ejecutar la demo de X-Plane 11
+STRING Run the X-Plane 11 Demo====Eseguire X-Plane 11 Demo
+STRING Run the X-Plane 11 Demo====Executar a Demonstra
+STRING Run the X-Plane 11 Demo====X-Plane 11
+STRING The X-Plane 11 Demo has finished installing at: %1:file path%.====
+STRING The X-Plane 11 Demo has finished installing at: %1:file path%.====A Demonstra
+STRING The X-Plane 11 Demo has finished installing at: %1:file path%.====Die Installation der X-Plane 11 Demo wurde im Verzeichnis %1:file path% abgeschlossen.
+STRING The X-Plane 11 Demo has finished installing at: %1:file path%.====Ha finalizado la instalaci
+STRING The X-Plane 11 Demo has finished installing at: %1:file path%.====Installazione di X-Plane 11 Demo nella cartella %1:file path% completata.
+STRING The X-Plane 11 Demo has finished installing at: %1:file path%.====L'installation de la D
+STRING The X-Plane 11 Demo has finished installing at: %1:file path%.====X-Plane 11
+STRING The X-Plane 11 Demo has finished installing at: %1:file path%.====X-Plane11
+STRING There was a problem installing the X-Plane 11 Demo. Please check your internet connection and try again, or contact Laminar Research tech support at info@x-plane.com for help.====
+STRING There was a problem installing the X-Plane 11 Demo. Please check your internet connection and try again, or contact Laminar Research tech support at info@x-plane.com for help.====Ha ocurrido un problema al instalar la demo de X-Plane. Por favor, comprueba tu conexi
+STRING There was a problem installing the X-Plane 11 Demo. Please check your internet connection and try again, or contact Laminar Research tech support at info@x-plane.com for help.====Houve um problema na instala
+STRING There was a problem installing the X-Plane 11 Demo. Please check your internet connection and try again, or contact Laminar Research tech support at info@x-plane.com for help.====Il y a eu un probl
+STRING There was a problem installing the X-Plane 11 Demo. Please check your internet connection and try again, or contact Laminar Research tech support at info@x-plane.com for help.====Si 
+STRING There was a problem installing the X-Plane 11 Demo. Please check your internet connection and try again, or contact Laminar Research tech support at info@x-plane.com for help.====W
+STRING There was a problem installing the X-Plane 11 Demo. Please check your internet connection and try again, or contact Laminar Research tech support at info@x-plane.com for help.====X-Plane 11
+STRING There was a problem installing the X-Plane 11 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.====
+STRING There was a problem installing the X-Plane 11 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.====Ha ocurrido un problema al instalar la demo de X-Plane 11. Por favor, ejecuta de nuevo el instalador de la demo, o ponte en contacto con el equipo de asistencia t
+STRING There was a problem installing the X-Plane 11 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.====Houve um problema na instala
+STRING There was a problem installing the X-Plane 11 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.====Il y a eu un probl
+STRING There was a problem installing the X-Plane 11 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.====Si 
+STRING There was a problem installing the X-Plane 11 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.====W
+STRING There was a problem installing the X-Plane 11 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.====X-Plane 11
+STRING This installer will guide you through the process of installing the X-Plane 10 Demo.====Dieses Installationsprogramm wird Sie durch den Installationsprozess der X-Plane 11 Demo f
+STRING This installer will guide you through the process of installing the X-Plane 11 Demo.====L'installer vi guider
+STRING This installer will guide you through the process of upgrading your X-Plane 11 demo to a full installation of X-Plane.====
+STRING This installer will guide you through the process of upgrading your X-Plane 11 demo to a full installation of X-Plane.====Dieses Installationsprogramm f
+STRING This installer will guide you through the process of upgrading your X-Plane 11 demo to a full installation of X-Plane.====Este instalador ir
+STRING This installer will guide you through the process of upgrading your X-Plane 11 demo to a full installation of X-Plane.====Este instalador te guiar
+STRING This installer will guide you through the process of upgrading your X-Plane 11 demo to a full installation of X-Plane.====Le programme d'installation vous guidera dans le processus de mise 
+STRING This installer will guide you through the process of upgrading your X-Plane 11 demo to a full installation of X-Plane.====Questo programma vi guider
+STRING Update the X-Plane 11 Demo====
+STRING Update the X-Plane 11 Demo====Actualizar la demo de X-Plane 11
+STRING Update the X-Plane 11 Demo====Aggiornare X-Plane 11 Demo
+STRING Update the X-Plane 11 Demo====Atualizar a Demonstra
+STRING Update the X-Plane 11 Demo====Die X-Plane 11 Demo updaten
+STRING Update the X-Plane 11 Demo====Mettre 
+STRING Update the X-Plane 11 Demo====X-Plane 11
+STRING You already have the X-Plane 11 Demo installed on this computer.  What would you like to do?====
+STRING You already have the X-Plane 11 Demo installed on this computer.  What would you like to do?====J
+STRING You already have the X-Plane 11 Demo installed on this computer.  What would you like to do?====Sie haben bereits die X-Plane 11 Demo, die auf diesem Computer installiert ist. Was wollen Sie gerne tun?
+STRING You already have the X-Plane 11 Demo installed on this computer.  What would you like to do?====Vous disposez d
+STRING You already have the X-Plane 11 Demo installed on this computer.  What would you like to do?====X-Plane 11
+STRING You already have the X-Plane 11 Demo installed on this computer.  What would you like to do?====X-Plane 11 Demo 
+STRING You already have the X-Plane 11 Demo installed on this computer.  What would you like to do?====Ya tienes la demo de X-Plane 11 instalada en este ordenador. 
+STRING You do not have enough free disk space to install the X-Plane 11 Demo at this location. You can change the install location to a drive with more free disk space.====
+STRING You do not have enough free disk space to install the X-Plane 11 Demo at this location. You can change the install location to a drive with more free disk space.====Es ist nicht ausreichend Speicherplatz an diesem Speicherort vorhanden, um die X-Plane 11 Demo zu installieren. W
+STRING You do not have enough free disk space to install the X-Plane 11 Demo at this location. You can change the install location to a drive with more free disk space.====In questa posizione non c'
+STRING You do not have enough free disk space to install the X-Plane 11 Demo at this location. You can change the install location to a drive with more free disk space.====No tienes suficiente espacio libre en tu disco duro para instalar la demo de X-Plane 11 en esta carpeta. Puedes cambiar la ubicaci
+STRING You do not have enough free disk space to install the X-Plane 11 Demo at this location. You can change the install location to a drive with more free disk space.====O disco r
+STRING You do not have enough free disk space to install the X-Plane 11 Demo at this location. You can change the install location to a drive with more free disk space.====Vous n'avez pas assez d'espace libre pour installer la d
+STRING You have enough free disk space to install the X-Plane 11 Demo at this location.====
+STRING You have enough free disk space to install the X-Plane 11 Demo at this location.====In questa posizione c'
+STRING You have enough free disk space to install the X-Plane 11 Demo at this location.====O disco r
+STRING You have enough free disk space to install the X-Plane 11 Demo at this location.====Sie haben ausreichend Speicherplatz zur Verf
+STRING You have enough free disk space to install the X-Plane 11 Demo at this location.====Tienes suficiente espacio libre en tu disco duro para instalar la demo de X-Plane 11 en esta carpeta.
+STRING You have enough free disk space to install the X-Plane 11 Demo at this location.====Vous avez assez d'espace libre pour installer la version de d
+The X-Plane 11 Demo has finished installing at: %1:file path%.
+There was a problem installing the X-Plane 11 Demo. Please check your internet connection and try again, or contact Laminar Research tech support for help.
+There was a problem installing the X-Plane 11 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.
+This installer will guide you through the process of upgrading your X-Plane 11 demo to a full installation of X-Plane.
+Update the X-Plane 11 Demo
+X-Plane 11 Demo Areas
+You already have the X-Plane 11 Demo installed on this computer.  What would you like to do?
+You do not have enough free disk space to install the X-Plane 11 Demo at this location. You can change the install location to a drive with more free disk space.
+You have enough free disk space to install the X-Plane 11 Demo at this location.
+_Z20UTL_read_server_listRKNSt3__112basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEER20UTL_server_info_list
+_Z24UTL_download_server_listR20UTL_server_info_list
+_ZGVZ24UTL_download_server_listR20UTL_server_info_listE2gf
+_ZZ24UTL_download_server_listR20UTL_server_info_listE2gf
+directory.txt
+gung, um die X-Plane 11 Demo an diesem Speicherort zu installieren.
+hlen Sie aus, welche Kopie der X-Plane 11 Demo sie starten wollen.
+hlen Sie ein Verzeichnis zum Installieren der X-Plane 11 Demo.
+hrend der Installation der X-Plane 11 Demo ist ein Problem aufgetreten. 
+hrend der Installation der X-Plane 11 Demo ist ein Problem aufgetreten. Rufen Sie die Installation der Demo sp
+hrt Sie durch den Prozess, um Ihre X-Plane 11 Demo auf den Status einer Vollinstallation zu bringen.
+http://lookup.x-plane.com/_lookup_11_/server_list_11.txt
+installazione di X-Plane 11 Demo. 
+r Ihre Installation der X-Plane 11 Demo. 
+server_list
+server_list_10.txt
+set_installer_destination <string>
