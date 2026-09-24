@@ -76,7 +76,7 @@ jobs:
         run: |
           set -euo pipefail
           ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library"
-          node scripts/materialize-kphx-surface-resources.mjs             "$ROOT"             public/models/kphx-full-airport/surface-batches/misterx             --surface-network=public/models/kphx-full-airport/surfaces/surface-network.json             --wed-sha256="${KPHX_WED_SHA256}"             --library-map=reports/kphx-misterx-surface-library-map.json             --include-external-prefixes=MisterX_Library             --include-package-owned=false
+          node scripts/materialize-kphx-surface-resources.mjs             "$ROOT"             public/models/kphx-full-airport/surface-batches/misterx             --placement-report=public/models/kphx-full-airport/surfaces/surface-network.json             --library-map=reports/kphx-misterx-surface-library-map.json             --include-external-prefixes=MisterX_Library             --skip-package-owned=true
 
       - name: Verify exact MisterX surface checkpoint
         shell: bash
