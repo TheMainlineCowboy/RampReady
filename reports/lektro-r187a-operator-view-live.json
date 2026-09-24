@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "status": "FAIL",
+  "visualSource": "LEKTRO_AP88_TVO914.glb R187A",
+  "authoredDriverEvidence": {
+    "steeringColumnSourceXApprox": -0.44,
+    "runtimeDriverSeatXAfterModelForwardCorrection": 0.45,
+    "previousPassengerSeatCameraX": -0.45
+  },
+  "state": {
+    "tugSource": "lektro-ap88-tvo914-r187a",
+    "operatorSide": "right",
+    "localEye": [
+      0.45,
+      1.35,
+      -2.15
+    ],
+    "worldEye": [
+      -0.438341,
+      1.35,
+      14.55062
+    ],
+    "camera": [
+      -7.981125,
+      6.559652,
+      25.201662
+    ],
+    "cameraToEyeMeters": 14.052713621131115,
+    "authority": "r187a-driver-seat-after-180deg-model-forward-correction",
+    "modelForwardCorrectionDegrees": 180
+  },
+  "failures": [
+    "camera offset=14.052713621131115"
+  ]
+}
