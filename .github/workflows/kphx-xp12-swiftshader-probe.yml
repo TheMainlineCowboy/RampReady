@@ -1,0 +1,118 @@
+name: KPHX XP12 SwiftShader + Demo Endpoint Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-swiftshader-probe.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/workflows/kphx-xp12-swiftshader-probe.yml
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Install UI and Chromium SwiftShader
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y             xvfb xauth x11-utils xdotool imagemagick             xfonts-base xfonts-75dpi xfonts-100dpi fontconfig             libgl1 libglu1-mesa libx11-6 libxi6 libxinerama1 libxrandr2 libxcursor1             libpangoxft-1.0-0 libgtk2.0-0t64 libxft2 libasound2t64             nodejs npm >/dev/null
+          sudo fc-cache -f >/dev/null
+          mkdir -p /tmp/pw
+          cd /tmp/pw
+          npm init -y >/dev/null 2>&1
+          npm install --silent playwright@1.55.0
+          npx playwright install chromium >/dev/null
+          find "$HOME/.cache/ms-playwright" -type f \( -name 'vk_swiftshader_icd.json' -o -name 'libvk_swiftshader.so' \) -print > /tmp/swiftshader-files.txt
+          cat /tmp/swiftshader-files.txt
+
+      - name: Download official installer and extract hidden demo endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp12-installer /tmp/ui-artifact reports
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip"             -o /tmp/xp12-installer.zip
+          unzip -q /tmp/xp12-installer.zip -d /tmp/xp12-installer
+          BIN="$(find /tmp/xp12-installer -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          chmod +x "$BIN"
+          echo "$BIN" >/tmp/xp12-bin.txt
+
+          strings -a "$BIN" | grep -Ei -B5 -A5             '(_lookup_12_|demo server|demo information|find a demo|web demo|server_list_12|tower\.x-plane|clearancedelivery)'             > reports/kphx-xp12-demo-endpoint-strings.txt || true
+
+      - name: Launch installer with SwiftShader Vulkan
+        shell: bash
+        run: |
+          set -euo pipefail
+          Xvfb :99 -screen 0 1280x800x24 +extension GLX +render -noreset >/tmp/xvfb.log 2>&1 &
+          export DISPLAY=:99
+          for i in $(seq 1 20); do xdpyinfo >/dev/null 2>&1 && break; sleep 1; done
+
+          ICD="$(find "$HOME/.cache/ms-playwright" -type f -name 'vk_swiftshader_icd.json' -print -quit)"
+          test -n "$ICD"
+          export VK_ICD_FILENAMES="$ICD"
+          export VK_DRIVER_FILES="$ICD"
+
+          BIN="$(cat /tmp/xp12-bin.txt)"
+          cat >/tmp/xp12.qa <<'QA'
+          echo "RAMPREADY_XP12_QA_STARTED"
+          dump buttons
+          wait 1
+          quit
+          QA
+
+          "$BIN"             --qa_script=/tmp/xp12.qa             --install_numeric=121212             --install_name="X-Plane 12.1.2-r4-0f2fea01"             --no_web_server             >/tmp/installer.out 2>/tmp/installer.err &
+          PID=$!
+          echo "$PID" >/tmp/installer.pid
+          sleep 12
+
+          {
+            echo "pid=$PID"
+            echo "icd=$ICD"
+            ps -fp "$PID" || true
+            echo
+            echo "=== window tree ==="
+            xwininfo -root -tree || true
+            echo
+            echo "=== stdout ==="
+            cat /tmp/installer.out || true
+            echo
+            echo "=== stderr ==="
+            cat /tmp/installer.err || true
+          } > reports/kphx-xp12-swiftshader-probe.txt
+
+          import -display :99 -window root /tmp/ui-artifact/xp12-swiftshader-screen.png
+          cp reports/kphx-xp12-swiftshader-probe.txt /tmp/ui-artifact/
+          cp reports/kphx-xp12-demo-endpoint-strings.txt /tmp/ui-artifact/
+          kill "$PID" 2>/dev/null || true
+          wait "$PID" 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kphx-xp12-swiftshader-probe
+          path: /tmp/ui-artifact/
+          if-no-files-found: error
+
+      - name: Commit probe evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-swiftshader-probe.txt reports/kphx-xp12-demo-endpoint-strings.txt
+          git commit -m "Probe XP12 installer with SwiftShader and extract demo endpoints"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
