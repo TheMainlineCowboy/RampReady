@@ -1,0 +1,113 @@
+name: KPHX XP11 GLX QA Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp11-glx-qa.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-xp11-glx-qa
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+
+      - name: Install XP11 headless GLX runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y \
+            xvfb xauth x11-utils xfonts-base xfonts-75dpi xfonts-100dpi fontconfig \
+            libgl1-mesa-dri libglx-mesa0 libglx0 libgl1 libglu1-mesa mesa-utils \
+            libpangoxft-1.0-0 libgtk2.0-0t64 libxft2 libxi6 libxinerama1 \
+            libxrandr2 libxcursor1 libasound2t64 >/dev/null
+          sudo fc-cache -f >/dev/null
+
+      - name: Start Xvfb with explicit GLX
+        shell: bash
+        run: |
+          set -euo pipefail
+          Xvfb :99 -screen 0 1280x800x24 +extension GLX +render -noreset >/tmp/xvfb.log 2>&1 &
+          echo $! >/tmp/xvfb.pid
+          export DISPLAY=:99
+          for i in $(seq 1 20); do
+            if xdpyinfo >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          xdpyinfo >/tmp/xdpyinfo.txt
+          LIBGL_ALWAYS_SOFTWARE=1 glxinfo -B >/tmp/glxinfo.txt 2>&1
+          grep -Ei 'direct rendering|OpenGL vendor|OpenGL renderer|OpenGL version' /tmp/glxinfo.txt
+
+      - name: Download official XP11 installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp11-installer reports
+          curl -L --fail --retry 4 --show-error \
+            "https://www.x-plane.com/update/installers11/X-Plane11InstallerLinux.zip" \
+            -o /tmp/xp11-installer.zip
+          unzip -q /tmp/xp11-installer.zip -d /tmp/xp11-installer
+          BIN="$(find /tmp/xp11-installer -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          chmod +x "$BIN"
+          echo "$BIN" >/tmp/xp11-bin.txt
+          sha256sum /tmp/xp11-installer.zip > reports/kphx-xp11-installer-sha256.txt
+
+      - name: Run first-screen QA only
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN="$(cat /tmp/xp11-bin.txt)"
+          cat > /tmp/xp11.qa <<'QA'
+          echo "RAMPREADY_XP11_GLX_QA_STARTED"
+          wait 3
+          dump buttons
+          echo "RAMPREADY_XP11_GLX_QA_DONE"
+          QA
+
+          export DISPLAY=:99
+          set +e
+          LIBGL_ALWAYS_SOFTWARE=1 timeout 20s "$BIN" \
+            --qa_script=/tmp/xp11.qa \
+            --install_numeric=115501 \
+            --install_name="X-Plane 11.55r2" \
+            --no_web_server \
+            2>&1 | tee /tmp/xp11-qa.txt
+          rc=${PIPESTATUS[0]}
+          set -e
+
+          {
+            echo "installer_rc=$rc"
+            echo "=== GLX ==="
+            cat /tmp/glxinfo.txt
+            echo
+            echo "=== QA ==="
+            cat /tmp/xp11-qa.txt
+          } > reports/kphx-xp11-glx-qa.txt
+
+          grep -q 'RAMPREADY_XP11_GLX_QA_STARTED' reports/kphx-xp11-glx-qa.txt
+
+      - name: Commit GLX QA evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp11-installer-sha256.txt reports/kphx-xp11-glx-qa.txt
+          git commit -m "Prove XP11 installer GLX QA environment"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
