@@ -1,0 +1,158 @@
+name: KPHX Full Exact CDB Only
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-full-cdb-only.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-full-cdb-only
+  cancel-in-progress: true
+
+jobs:
+  cdb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install exact conversion tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          python -m pip install --quiet gdown
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/magick" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ "${1:-}" = "identify" ]; then
+            shift
+            exec identify "$@"
+          fi
+          exec convert "$@"
+          SH
+          chmod +x "$HOME/bin/magick"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch exact KPHX WED authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-source reports
+          gdown "https://drive.google.com/uc?id=1oUuiZQiWbqIMXtqSQMklZ9E_jbsg_T2d" -O .kphx-source/earth.wed.xml
+          test "$(sha256sum .kphx-source/earth.wed.xml | awk '{print $1}')" = "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498"
+          node scripts/extract-kphx-wed-object-placements.mjs             .kphx-source/earth.wed.xml             reports/kphx-full-airport-wed-placements-cdb-only.json
+
+      - name: Build exact CDB placement report
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const input=JSON.parse(fs.readFileSync("reports/kphx-full-airport-wed-placements-cdb-only.json","utf8"));
+          const selected=(input.placements.externalLibraries||[]).filter((p)=>p.resourcePrefix==="CDB-Library");
+          const resources={};
+          for(const p of selected) resources[p.resource]=(resources[p.resource]||0)+1;
+          if(selected.length!==53||Object.keys(resources).length!==7){
+            throw new Error(`CDB WED authority changed: placements=${selected.length} resources=${Object.keys(resources).length}`);
+          }
+          const payload={
+            schemaVersion:1,
+            authority:"KPHX 1.75.1 earth.wed.xml exact CDB object placements",
+            source:{...input.source,wedSha256:"59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498",authority:"user-supplied expanded X-Plane package"},
+            masterAnchor:input.masterAnchor,
+            totals:{objectPlacementCount:selected.length,uniqueResourceCount:Object.keys(resources).length,packageOwnedPlacementCount:0,externalLibraryPlacementCount:selected.length},
+            packageOwned:{placementCount:0,uniqueResourceCount:0,resources:{}},
+            externalLibraries:{placementCount:selected.length,uniqueResourceCount:Object.keys(resources).length,prefixCounts:{"CDB-Library":selected.length},resources},
+            placements:{packageOwned:[],externalLibraries:selected},
+            rampStarts:[],
+          };
+          fs.writeFileSync("reports/kphx-full-cdb-wed-placements.json",JSON.stringify(payload,null,2)+"\n");
+          fs.writeFileSync("reports/kphx-full-cdb-object-resources.json",JSON.stringify({
+            authority:"reports/kphx-full-cdb-wed-placements.json",
+            dependency:"CDB-Library",
+            resources:Object.keys(resources).sort(),
+          },null,2)+"\n");
+          console.log(JSON.stringify({placements:selected.length,resources:Object.keys(resources).length},null,2));
+          NODE
+
+      - name: Fetch exact supplied CDB files only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p             .cdb/Airport/GSE/others             .cdb/Airport/GSE/stairs             .cdb/shared_texture             .cdb/Cars/BICI             .cdb/Cars/camion             .cdb/Cars/cars/Landrover_Mercedez
+
+          gdown "https://drive.google.com/uc?id=1LHUUCD9K3Qf9Y1I7eIRtLVTN16sV8Ocm" -O .cdb/library.txt
+
+          cat > /tmp/cdb-downloads.txt <<'EOF'
+          1JWBWq8Xu0QNgHYKC6-pXEvdCvpCAI0Oa .cdb/Airport/GSE/others/objects_airConditionerBig.obj
+          17_sKfFz5pV1A33abAW_gBcVUfDS93jky .cdb/Airport/GSE/others/objects_scaffolding_wood.obj
+          118YNinSlLcz4FYRpgJLZ7vgF96kkH2Z4 .cdb/Airport/GSE/stairs/GSE_A320_stairs.obj
+          1JFUyDHngYKIWkYqXUe1mzTeB7UT5F-uG .cdb/Cars/BICI/car_golfcar2.obj
+          10CyyfgHkP1MDMum0USHusMHnCINUm27Y .cdb/Cars/camion/GSE_mini_aerialLift_.obj
+          1LGvyBJMnMcdD_kqg6wGfQ7Y-Oi9S2abT .cdb/Cars/cars/Landrover_Mercedez/car_mercedes_old_gray.obj
+          1UTi92SiFH4-tArAF1t4eT9TcWMOOAYbW .cdb/Cars/cars/Landrover_Mercedez/car_rangeRoverE.obj
+          1crJ_3RJnSsf6X7u1u0UVbYFi8od-X2Wd .cdb/Airport/GSE/others/cdb_others.dds
+          1_5BuTrHdKq-1XVpY-buqdnLpATziyhaS .cdb/Airport/GSE/others/cdb_others_LIT.dds
+          1GlNdGuMM90DVHa1ZDo4MV5sCv9gPlWgg .cdb/Airport/GSE/others/cdb_others_NORM.png
+          1ymBcmUlOPU4Uxhs-I9tFkYHLIRkx_uPv .cdb/Airport/GSE/others/cdb_others2.dds
+          18OJOBISH18NBsY3fiPajRGhpWWy3AokT .cdb/Airport/GSE/others/cdb_others2_LIT.dds
+          1n8GM44imYVGZLvKLonZmXsfxhNBhbJr1 .cdb/Airport/GSE/others/cdb_others2_NORM.png
+          1ue75p9I4k12RYOPZqm2cnWIaMQXI_xMS .cdb/shared_texture/escadas.dds
+          1jZI1utsm6dAoIDtXUipfisxKvprD8b_d .cdb/shared_texture/escadas_LIT.dds
+          1_mVWPBzpQ_1uxHse8_mbt5W1pFEjs8Ij .cdb/shared_texture/escadas_NORM.png
+          18HsUSwsDyyTOM9CgUc7NPUXW1q63juGo .cdb/Cars/BICI/GolfCart01.dds
+          1F8m-8cVcYem_ev7KO4r0sRz7V0UwJef8 .cdb/Cars/camion/MobileElevator01.dds
+          1usAVnKfZn55FxAvXMwf3hP30vTP2Nsld .cdb/Cars/cars/Landrover_Mercedez/mercedes_gray.dds
+          15iceQtgz4OuIQmZbixSqT2xV8W0XP3DL .cdb/Cars/cars/Landrover_Mercedez/mercedes_Normal.png
+          1ZESuc4FF1nZhjpfRHsPOecanM6EHLLg2 .cdb/Cars/cars/Landrover_Mercedez/rangeRover.dds
+          EOF
+
+          while read -r id target; do
+            mkdir -p "$(dirname "$target")"
+            gdown "https://drive.google.com/uc?id=$id" -O "$target"
+          done < /tmp/cdb-downloads.txt
+
+      - name: Resolve and materialize all 7 exact CDB resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/resolve-xplane-library.mjs             .cdb             reports/kphx-full-cdb-object-resources.json             reports/kphx-full-cdb-library-map.json             --virtual-prefix=CDB-Library
+
+          rm -rf .runtime-cdb
+          node scripts/materialize-kphx-full-airport.mjs             .cdb             .runtime-cdb             --placement-report=reports/kphx-full-cdb-wed-placements.json             --library-map=reports/kphx-full-cdb-library-map.json             --include-external-prefixes=CDB-Library             --package-prefixes=__none__             --batch-name=full-cdb
+
+      - name: Verify and commit full exact CDB checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const m=JSON.parse(fs.readFileSync(".runtime-cdb/manifest.json","utf8"));
+          if(m.failures?.length) throw new Error(`CDB failures=${m.failures.length}`);
+          if(m.resolvedExternal.materializedPlacementCount!==53) throw new Error(`CDB placements=${m.resolvedExternal.materializedPlacementCount}`);
+          if(m.resolvedExternal.materializedUniqueResourceCount!==7) throw new Error(`CDB resources=${m.resolvedExternal.materializedUniqueResourceCount}`);
+          console.log(JSON.stringify({placements:53,resources:7,status:"PASS"},null,2));
+          NODE
+
+          mkdir -p public/models/kphx-full-airport/external public/models/kphx-full-airport/batches
+          cp -a .runtime-cdb/external/. public/models/kphx-full-airport/external/
+          cp .runtime-cdb/manifest.json public/models/kphx-full-airport/batches/full-cdb.manifest.json
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             public/models/kphx-full-airport/external/CDB-Library             public/models/kphx-full-airport/batches/full-cdb.manifest.json             reports/kphx-full-airport-wed-placements-cdb-only.json             reports/kphx-full-cdb-wed-placements.json             reports/kphx-full-cdb-object-resources.json             reports/kphx-full-cdb-library-map.json             reports/kphx-full-airport-materialization-full-cdb.json
+          git commit -m "Materialize all 7 exact KPHX CDB resources"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
