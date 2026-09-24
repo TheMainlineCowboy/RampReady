@@ -109,6 +109,7 @@ export function installA1ExactAutoGateController({
   }));
 
   const originals = Object.freeze({
+    tunnelPositionY: tunnelWall.position.y,
     tunnelRotationX: tunnelWall.rotation.x,
     tunnelRotationY: tunnelWall.rotation.y,
     cabinPosition: cabinWall.position.clone(),
@@ -156,6 +157,12 @@ export function installA1ExactAutoGateController({
     const cabinCounterYawDelta = radians(cabinRelativeYaw - attachedCabinRelativeYaw);
 
     const bridgePitchDelta = sourceVerticalPitchRadians(currentVertMeters);
+    // MisterX AutoGate-26m.obj uses marginal.org.uk/autogate/vert as a true
+    // metre-space vertical entrance translation in addition to the 4-degree
+    // bridge pitch: vert 0 -> -2 translates the animated bridge 0 -> -2 m
+    // vertically after the source's fixed-axis rotations. Preserve that exact
+    // contract here instead of pitching the stock tunnel without lowering it.
+    tunnelWall.position.y = originals.tunnelPositionY + currentVertMeters;
     tunnelWall.rotation.x = originals.tunnelRotationX + bridgePitchDelta;
     tunnelWall.rotation.y = originals.tunnelRotationY + bridgeYawDelta;
 
@@ -396,7 +403,7 @@ export function installA1ExactAutoGateController({
   });
 
   root.userData.a1AutoGateControllerAuthority =
-    "exact-WED-104804-XP11-stock-facade-plus-XPlane-ACF-and-MisterX-AutoGate-26m-kinematics-v3";
+    "exact-WED-104804-XP11-stock-facade-plus-XPlane-ACF-and-MisterX-AutoGate-26m-lat-vert-translation-pitch-v4";
   root.userData.a1AutoGateSourceGeometryAuthority =
     "KPHX-1.75.1-WED-104804-plus-XP11-Jetway_1_solid.fac";
   root.userData.a1AutoGateMotionSource = AUTOGATE_26M.sourceAsset;
