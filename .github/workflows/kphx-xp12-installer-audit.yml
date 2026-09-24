@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: kphx-full-airport-import
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Download official X-Plane 12 Linux demo installer
         shell: bash
