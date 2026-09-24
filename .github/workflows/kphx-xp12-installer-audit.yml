@@ -1,0 +1,74 @@
+name: KPHX XP12 Installer Capability Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-installer-audit.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Download official X-Plane 12 Linux demo installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .xp12-installer reports
+          URL="https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip"
+          curl -L --fail --retry 5 --show-error "$URL" -o .xp12-installer/X-Plane12InstallerLinux.zip
+          sha256sum .xp12-installer/X-Plane12InstallerLinux.zip > reports/kphx-xp12-installer-sha256.txt
+          unzip -l .xp12-installer/X-Plane12InstallerLinux.zip > reports/kphx-xp12-installer-zip-list.txt
+          unzip -q .xp12-installer/X-Plane12InstallerLinux.zip -d .xp12-installer/unpacked
+          find .xp12-installer/unpacked -maxdepth 3 -type f -printf '%p %s bytes\n' | sort > reports/kphx-xp12-installer-files.txt
+
+      - name: Inspect installer CLI and embedded source hints
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN="$(find .xp12-installer/unpacked -maxdepth 3 -type f -perm -111 -print -quit)"
+          if [ -z "$BIN" ]; then
+            BIN="$(find .xp12-installer/unpacked -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          fi
+          test -n "$BIN"
+          chmod +x "$BIN" || true
+
+          {
+            echo "=== binary ==="
+            file "$BIN"
+            sha256sum "$BIN"
+            echo
+            echo "=== --help ==="
+            timeout 10s "$BIN" --help 2>&1 || true
+            echo
+            echo "=== -h ==="
+            timeout 10s "$BIN" -h 2>&1 || true
+            echo
+            echo "=== embedded strings: command-line / demo / manifest / version / server ==="
+            strings -a "$BIN" | grep -Ei               '(^|[^a-z])(help|headless|silent|non.?interactive|command.?line|demo|installer|install|update|version|manifest|server|lookup|download|product|key|scenery|destination|path)([^a-z]|$)'               | head -3000 || true
+            echo
+            echo "=== embedded URLs ==="
+            strings -a "$BIN" | grep -Eo 'https?://[^[:space:]"]+' | sort -u | head -500 || true
+          } > reports/kphx-xp12-installer-capability-audit.txt
+
+      - name: Commit installer audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             reports/kphx-xp12-installer-sha256.txt             reports/kphx-xp12-installer-zip-list.txt             reports/kphx-xp12-installer-files.txt             reports/kphx-xp12-installer-capability-audit.txt
+          git commit -m "Audit official XP12 installer for exact library ingestion"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
