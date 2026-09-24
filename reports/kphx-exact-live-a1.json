@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-09-24T00:06:18.799Z",
+  "capturedAtUtc": "2026-09-24T00:35:56.510Z",
   "route": "/RampReady/?inspectionPreset=a1",
   "navigationError": null,
   "waitError": null,
@@ -50,17 +50,17 @@
       "terminal4JetwaySourceScaleAuthority": "WED coordinates; no manual scaling",
       "terminal4JetwaySourceGeometryMode": "exact XP11 Jetway_1_solid.fac from authored WED wall choices",
       "terminal4RequiresOriginalJetwayMesh": "true",
-      "terminal4JetwayInitialState": "exact-authored-static",
+      "terminal4JetwayInitialState": "attached-to-aircraft-door",
       "terminal4JetwayPrePushSequence": "missing",
       "a1JetwayDeployment": "0.000",
-      "a1JetwayState": "missing",
-      "a1JetwayAnimationAuthority": "not-yet-wired-live; static exact source retained",
+      "a1JetwayState": "parked-clear-of-aircraft",
+      "a1JetwayAnimationAuthority": "exact-WED-104804-XP11-stock-facade-plus-MisterX-AutoGate-26m-horizontal-kinematics-v1",
       "terminal4UploadedJetwayLoadState": "exact-source-ready",
       "terminal4UploadedJetwayCount": "76",
       "terminal4UploadedJetwayConnectorCount": "261",
       "terminal4UploadedJetwayVerifiedModelCount": "76",
       "terminal4UploadedJetwayReadyAuthority": "KPHX 1.75.1 earth.wed.xml + exact XP11 stock Jetway_1_solid.fac",
-      "terminal4UploadedJetwayArticulationAuthority": "exact-authored-static-source",
+      "terminal4UploadedJetwayArticulationAuthority": "A1-exact-stock-facade-AutoGate-horizontal-articulation-v1; other-75-static",
       "terminal4UploadedJetwaySourceContactDistanceMeters": "missing",
       "terminal4UploadedJetwayStaticArticulatedGateCount": "76",
       "terminal4UploadedJetwayStaticMaximumContactErrorMeters": "0.000",
@@ -152,12 +152,19 @@
       "kphxT4BaseApronSource": "ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol",
       "kphxT4BaseApronWidthMeters": "709.148",
       "kphxT4BaseApronDepthMeters": "979.331",
-      "terminal4A1RetractionAuthority": "aircraft-door-clearance-without-overtravel-v6",
-      "terminal4A1RetractionClearanceMeters": "2.38",
-      "terminal4A1RetractionRatio": "0.330556",
-      "terminal4A1NativeRetractionActive": "false"
+      "terminal4A1RetractionAuthority": "exact-WED-104804-XP11-stock-facade-plus-MisterX-AutoGate-26m-horizontal-kinematics-v1",
+      "terminal4A1RetractionClearanceMeters": "6.160",
+      "terminal4A1RetractionRatio": "1.000000",
+      "terminal4A1NativeRetractionActive": "true",
+      "terminal4A1MotionDurationMs": "15000",
+      "terminal4A1VerticalResolved": "false",
+      "a1JetwayStateHistory": "attached-to-aircraft-door,parked-clear-of-aircraft",
+      "a1JetwayLatMeters": "0.000",
+      "a1JetwayRetractedMeters": "6.160",
+      "a1JetwayBridgeYawDeltaDegrees": "-6.245",
+      "a1JetwayCabinCounterYawDeltaDegrees": "5.585"
     },
-    "bodyText": "FREE DRIVE\nAirport inspection mode\nReturn to training\nA1 ramp\nA1 terminal connection\nA concourse midpoint\nB concourse midpoint\nB15 ramp\nChase view\nOperator view\nOverhead view\nMenu\nTug\nlektro-88\nSpeed\n0.0 mph\nStop\n45.8 m\nArticulation\n0.0°\nConnection\ninspection\nAircraft\nuser-painted-crj700\nInspection\nFREE\nAIRPORT DRIVE\n◀\nBrake\n▶\nFWD\nIdle\nPower 0%\n\nRAMPREADY · PHX\n\nPreparing simulator\n\nLoading exact PHX Terminal 4 and jetways…\n\n75%"
+    "bodyText": "FREE DRIVE\nAirport inspection mode\nReturn to training\nA1 ramp\nA1 terminal connection\nA concourse midpoint\nB concourse midpoint\nB15 ramp\nChase view\nOperator view\nOverhead view\nMenu\nTug\nlektro-88\nSpeed\n0.0 mph\nStop\n45.8 m\nArticulation\n0.0°\nConnection\ninspection\nAircraft\nuser-painted-crj700\nInspection\nFREE\nAIRPORT DRIVE\n◀\nBrake\n▶\nFWD\nIdle\nPower 0%"
   },
   "consoleMessages": [
     {
@@ -174,23 +181,23 @@
     },
     {
       "type": "warning",
-      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000EC1E0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A070200024150000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content."
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x312c00e25c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0xd740101cd00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x312c00e25c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0xd740101cd00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x312c00e25c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+      "text": "[.WebGL-0xd740101cd00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
     },
     {
       "type": "warning",
-      "text": "[.WebGL-0x312c00e25c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      "text": "[.WebGL-0xd740101cd00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
     }
   ],
   "pageErrors": [],
