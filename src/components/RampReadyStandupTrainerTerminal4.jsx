@@ -158,7 +158,7 @@ export default function RampReadyStandupTrainer({
     retractionRequested: false,
     transitionStartDeployment: 1,
     transitionStartedAt: 0,
-    transitionDurationMs: 4200,
+    transitionDurationMs: 15000,
   });
   const orbitRef = useRef({
     yaw: -0.64,
@@ -348,7 +348,7 @@ export default function RampReadyStandupTrainer({
       jetwayRef.current.transitionStartedAt = performance.now();
       jetwayRef.current.target = 0;
       jetwayRef.current.retractionRequested = true;
-      setMessage("Jetway departure sequence active: hood clear, telescope in, then rotate to park before tug approach.");
+      setMessage("Jetway departure active: AutoGate disengage is retracting the exact A1 tunnel and rotating the cabin to park.");
     } else if (stageRef.current === 3 && sim.connection.phase === CONNECTION_PHASES.SECURED) {
       stageRef.current = 4;
       setStage(4);
@@ -601,29 +601,10 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.terminal4JetwayInitialState = environment.userData.authoredTerminal4JetwayInitialState || "missing";
         renderer.domElement.dataset.terminal4JetwayPrePushSequence = environment.userData.authoredTerminal4JetwayRequiredPrePushSequence || "missing";
         const a1JetwayController = environment.userData.authoredTerminal4A1JetwayController || null;
-        const nativeA1RetractionActive = environment.userData.authoredTerminal4Jetways?.userData.uploadedJetwayA1RetractionAuthority === "aircraft-door-clearance-without-overtravel-v6";
-        if (a1JetwayController && !a1JetwayController.__rampReadyDoorClearanceWrapped) {
-          const sourceSetDeployment = a1JetwayController.setDeployment.bind(a1JetwayController);
-          let requestedDeployment = 1;
-          a1JetwayController.setDeployment = (value) => {
-            requestedDeployment = Math.max(0, Math.min(1, Number(value) || 0));
-            const visualDeployment = nativeA1RetractionActive
-              ? requestedDeployment
-              : 1 - (1 - requestedDeployment) * 0.330555555556;
-            sourceSetDeployment(visualDeployment);
-          };
-          a1JetwayController.getDeployment = () => requestedDeployment;
-          a1JetwayController.getState = () => requestedDeployment >= 0.995
-            ? "attached-to-aircraft-door"
-            : requestedDeployment <= 0.005
-              ? "parked-clear-of-aircraft"
-              : "retracting-from-aircraft";
-          a1JetwayController.__rampReadyDoorClearanceWrapped = true;
-          a1JetwayController.__rampReadyNativeRetractionActive = nativeA1RetractionActive;
-          a1JetwayController.__rampReadyRetractionAuthority = "aircraft-door-clearance-without-overtravel-v6";
-          a1JetwayController.__rampReadyRetractionClearanceMeters = 2.38;
-        }
         jetwayRef.current.controller = a1JetwayController;
+        if (a1JetwayController?.getMotionDurationMs) {
+          jetwayRef.current.transitionDurationMs = a1JetwayController.getMotionDurationMs();
+        }
         a1JetwayController?.setDeployment(jetwayRef.current.target);
         renderer.domElement.dataset.a1JetwayDeployment = jetwayRef.current.deployment.toFixed(3);
         renderer.domElement.dataset.a1JetwayState = a1JetwayController?.getState?.() || "missing";
@@ -1057,9 +1038,9 @@ export default function RampReadyStandupTrainer({
           const transitionDistance = Math.max(0.001, Math.abs(jetway.target - jetway.transitionStartDeployment));
           const transitionDurationMs = Math.max(900, jetway.transitionDurationMs * transitionDistance);
           const transitionProgress = Math.min(1, transitionElapsedMs / transitionDurationMs);
-          const easedProgress = transitionProgress * transitionProgress * (3 - 2 * transitionProgress);
+          // Marginal AutoGate DISENGAGE uses a linear elapsed-time ratio over 15 seconds.
           jetway.deployment = jetway.transitionStartDeployment
-            + (jetway.target - jetway.transitionStartDeployment) * easedProgress;
+            + (jetway.target - jetway.transitionStartDeployment) * transitionProgress;
           if (transitionProgress >= 1) {
             jetway.deployment = jetway.target;
             jetway.transitionStartDeployment = jetway.target;
