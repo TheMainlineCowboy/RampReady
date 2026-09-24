@@ -17,3 +17,9 @@ Authority: CRJ900 ACF boarding-door + KPHX WED 104804/104811 + AutoGate lat/vert
 - keep Wall 5 WED transform fixed
 - cabin A follows Segment-11 endpoint by world-matrix solve, no scaled reparent
 - support carriage gets translation-only ground correction from exact world bounds
+
+2026-09-24 exact source-pose reset:
+- deployment 1 restores the original XP11 stock facade local transforms exactly
+- no vertical translation, no mesh scaling, no reparenting
+- articulation is horizontal yaw + Segment 11 telescope + cabin counter-yaw only
+- CRJ900 ACF remains aircraft-side authority
