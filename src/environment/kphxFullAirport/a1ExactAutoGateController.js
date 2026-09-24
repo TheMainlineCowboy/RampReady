@@ -231,8 +231,8 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateCabinVerticalDeltaMeters = jointVerticalDelta;
     root.userData.a1AutoGateRetractedMeters = retractMeters;
     root.userData.a1AutoGateInnerTunnelExtensionMeters = innerTunnelExtensionMeters;
-    root.userData.a1AutoGateBridgeYawDeltaDegrees = bridgeYaw - attachedBridgeYaw;
-    root.userData.a1AutoGateCabinCounterYawDeltaDegrees = cabinRelativeYaw - attachedCabinRelativeYaw;
+    root.userData.a1AutoGateBridgeYawDeltaDegrees = bridgeYaw - restBridgeYaw;
+    root.userData.a1AutoGateCabinCounterYawDeltaDegrees = cabinRelativeYaw - restCabinRelativeYaw;
     root.userData.a1AutoGateCabinJointGapMeters = cabinJointGapMeters;
     root.userData.a1AutoGateCabinRelativeYawDriftRadians = cabinRelativeYawDriftRadians;
     root.userData.a1AutoGateState = state;
