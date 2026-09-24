@@ -27,6 +27,45 @@ function sameSourceAuthority(wed, map) {
     && map?.source?.sha256 === EXPECTED_WED_SHA256;
 }
 
+
+function restoreA1ExactStaticRotundaTunnelShells(root) {
+  const restored = [];
+  const fixedWalls = [1, 2, 3, 4].map((number) =>
+    root.getObjectByName(`Wall_${number}_Rotunda_extension`));
+
+  if (fixedWalls.some((wall) => !wall)) {
+    throw new Error("A1 exact static Rotunda_extension walls are incomplete");
+  }
+
+  // XP11 Jetway_1_solid.fac uses Segment 4/5/6 as the actual 1.5 m,
+  // 3.0 m, and 6.0 m enclosed static tunnel shells. The importer hides
+  // facade meshes globally because many other segment meshes are only thin
+  // WED/control planes. Restore ONLY these authored 3D shell templates on
+  // A1's four terminal-side Rotunda_extension walls. Keep Segment 3/21/22
+  // control/end planes hidden so the earlier blade-thin wall regression
+  // does not return.
+  const exactStaticShellName = /^FacadeMesh_(4|5|6)_/;
+  for (const wall of fixedWalls) {
+    wall.traverse((node) => {
+      if (!node.isMesh || !exactStaticShellName.test(node.name || "")) return;
+      node.visible = true;
+      node.userData.kphxStockJetwayFacadePlaneHidden = false;
+      node.userData.a1ExactStaticRotundaTunnelShellRestored = true;
+      restored.push(node.name);
+    });
+  }
+
+  if (!restored.length) {
+    throw new Error("A1 exact static Rotunda tunnel shell meshes were not found");
+  }
+
+  root.userData.a1ExactStaticRotundaTunnelShellCount = restored.length;
+  root.userData.a1ExactStaticRotundaTunnelShells = restored.join("|");
+  root.userData.a1ExactStaticRotundaTunnelAuthority =
+    "XP11-Jetway_1_solid.fac-Segment-4-5-6-on-WED-104804-fixed-Rotunda_extension";
+  return restored;
+}
+
 export async function installKphxTerminal4StockJetways(
   THREE = THREE_NS,
   environment,
@@ -129,6 +168,12 @@ export async function installKphxTerminal4StockJetways(
     built.root.userData.oldAirportJetwayGlbUsed = false;
 
     if (gateMap.gate === "A1") {
+      // Restore the exact XP11 static terminal-side tunnel shells before
+      // installing the already-locked moving-bridge controller. This changes
+      // visibility only on fixed Rotunda_extension Segment 4/5/6 meshes and
+      // does not alter any A1 animation transform/hierarchy.
+      restoreA1ExactStaticRotundaTunnelShells(built.root);
+
       a1Controller = installA1ExactAutoGateController({
         THREE,
         root: built.root,
