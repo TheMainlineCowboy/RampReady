@@ -18,7 +18,8 @@ import { installRuntimeEquipmentVisual, supportsRuntimeEquipmentVisual } from ".
 import { buildKphxExactLiveEnvironment as buildTerminal4RampEnvironment, installKphxExactLiveTerminal4 as installAuthoredTerminal4Visual } from "../environment/kphxFullAirport/installLiveTerminal4Exact.js";
 import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
 import { KPHX_FULL_AIRPORT_SOURCE, kphxXPlaneHeadingToRampReadyYawRadians } from "../environment/kphxFullAirport/sourceAuthority.js";
-import { KPHX_T4_GATE_POSE_SOURCE, createKphxTerminal4GateScenarioPose } from "../environment/kphxFullAirport/terminal4GatePoseAuthority.js";
+import { KPHX_T4_GATE_POSE_SOURCE } from "../environment/kphxFullAirport/terminal4GatePoseAuthority.js";
+import { createA1AircraftDockingScenarioPose } from "../environment/kphxFullAirport/a1AircraftDockingAuthority.js";
 import { getRampReadyAircraftDoorProfile, getRenderedAircraftDoorWorldMarker, getRenderedAircraftDoorOutwardWorldDirection } from "../environment/kphxFullAirport/aircraftDoorAuthority.js";
 import "./RampReadyTrainer.css";
 import "./procedure-gates.css";
@@ -26,11 +27,12 @@ import "./mobile-runtime-recovery.css";
 import "./inspection-compact-v30.css";
 import "./mobile-hud-v9.css";
 
-const A1_SCENARIO_POSE = createKphxTerminal4GateScenarioPose(
-  KPHX_FULL_AIRPORT_SOURCE.anchor.wedObjectId,
+const A1_AIRCRAFT_TYPE = "CRJ700";
+const A1_SCENARIO_POSE = createA1AircraftDockingScenarioPose(
+  A1_AIRCRAFT_TYPE,
   { equipmentApproachOffsetMeters: 6.2 },
 );
-if (A1_SCENARIO_POSE.gate !== "A1") throw new Error("Exact KPHX A1 WED gate scenario pose is missing");
+if (A1_SCENARIO_POSE.gate !== "A1") throw new Error("Exact KPHX A1 ACF/WED docking scenario pose is missing");
 const A1_AIRCRAFT_START_X = A1_SCENARIO_POSE.aircraft.x;
 const NOSE_START_Z = A1_SCENARIO_POSE.aircraft.z;
 const STOP_Z = 52;
@@ -611,13 +613,14 @@ export default function RampReadyStandupTrainer({
 
         const registerRenderedA1DoorContact = () => {
           if (!a1JetwayController?.registerAircraftDoorContact) return false;
-          const profile = getRampReadyAircraftDoorProfile("CRJ700");
+          const profile = getRampReadyAircraftDoorProfile(A1_AIRCRAFT_TYPE);
           const targetWorld = getRenderedAircraftDoorWorldMarker(THREE, aircraft, profile);
           const outwardWorldDirection = getRenderedAircraftDoorOutwardWorldDirection(THREE, aircraft);
           if (!targetWorld || !outwardWorldDirection) return false;
           const contact = a1JetwayController.registerAircraftDoorContact({
             targetWorld,
             outwardWorldDirection,
+            aircraftType: A1_AIRCRAFT_TYPE,
           });
           renderer.domElement.dataset.a1JetwayDoorContactReady = String(contact.ready === true);
           renderer.domElement.dataset.a1JetwayDoorContactGapMeters = Number.isFinite(contact.gapMeters)
@@ -639,17 +642,16 @@ export default function RampReadyStandupTrainer({
           renderer.domElement.dataset.a1RenderedL1DoorWorld =
             [targetWorld.x, targetWorld.y, targetWorld.z].map((value) => value.toFixed(4)).join(",");
           renderer.domElement.dataset.a1JetwayDoorRegistrationAuthority =
-            profile?.renderedDoorMarkerAuthority || "missing";
+            profile?.sourceAuthority || "missing";
+          renderer.domElement.dataset.a1JetwayAircraftSourceAcf =
+            profile?.sourceAcf || "missing";
           if (!contact.ready && !inspectionRef.current) {
             setMessage("A1 jetway door registration is not yet within visible-contact tolerance. Ready is locked.");
           }
           return contact.ready === true;
         };
 
-        if (!registerRenderedA1DoorContact()) {
-          const onAircraftReady = () => registerRenderedA1DoorContact();
-          aircraft.addEventListener("aircraft-model-ready", onAircraftReady, { once: true });
-        }
+        registerRenderedA1DoorContact();
         if (a1JetwayController?.getMotionDurationMs) {
           jetwayRef.current.transitionDurationMs = a1JetwayController.getMotionDurationMs();
         }
@@ -1022,6 +1024,17 @@ export default function RampReadyStandupTrainer({
     canvas.dataset.a1AircraftRuntimeYawRadians = A1_AIRCRAFT_YAW_RADIANS.toFixed(6);
     canvas.dataset.a1AircraftRuntimeYawDegrees = THREE.MathUtils.radToDeg(A1_AIRCRAFT_YAW_RADIANS).toFixed(2);
     canvas.dataset.a1AircraftModelForwardAxis = "-Z";
+    canvas.dataset.a1AircraftType = A1_AIRCRAFT_TYPE;
+    canvas.dataset.a1AircraftDockingAuthority = A1_SCENARIO_POSE.authority;
+    canvas.dataset.a1AircraftSourceAcf = A1_SCENARIO_POSE.sourceAcf;
+    canvas.dataset.a1JetwayCabinEndWedNodeId = String(A1_SCENARIO_POSE.aircraftSideCabinEndWedNodeId);
+    canvas.dataset.a1DoorTargetWorld =
+      [A1_SCENARIO_POSE.doorTarget.x, A1_SCENARIO_POSE.doorTarget.y, A1_SCENARIO_POSE.doorTarget.z]
+        .map((value) => value.toFixed(6)).join(",");
+    canvas.dataset.a1SourceRampToDockedShiftMeters =
+      A1_SCENARIO_POSE.sourceRampToDockedShift.distance.toFixed(6);
+    canvas.dataset.a1XPlaneAutoGateLatMeters = A1_SCENARIO_POSE.autoGateLatMeters.toFixed(6);
+    canvas.dataset.a1XPlaneAutoGateVertMeters = A1_SCENARIO_POSE.autoGateVertMeters.toFixed(6);
     canvas.dataset.kphxT4SupportedRampPositionCount = String(KPHX_T4_GATE_POSE_SOURCE.supportedRampPositionCount);
     canvas.dataset.kphxT4SupportedGateNameCount = String(KPHX_T4_GATE_POSE_SOURCE.supportedGateNameCount);
     canvas.dataset.a1EquipmentSpawnAuthority = A1_EQUIPMENT_SPAWN_AUTHORITY;
