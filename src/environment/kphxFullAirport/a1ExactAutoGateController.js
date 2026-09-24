@@ -256,6 +256,212 @@ function splitExactLowerSupportComponents(THREE, aircraftTunnelVisual) {
   });
 }
 
+
+function splitExactCabinStairComponents(THREE, cabinHalfB) {
+  const sourceMeshes = [];
+  cabinHalfB.traverse((node) => {
+    if (node.isMesh && node.geometry?.getAttribute?.("position") && node.geometry?.getIndex?.()) {
+      sourceMeshes.push(node);
+    }
+  });
+
+  const stairBranches = [];
+  let originalIndexCount = 0;
+  let stairIndexCount = 0;
+  let cabinIndexCount = 0;
+
+  const coordinateKey = (position, index) => {
+    const q = (value) => Math.round(value * 10000);
+    return `${q(position.getX(index))},${q(position.getY(index))},${q(position.getZ(index))}`;
+  };
+
+  for (const mesh of sourceMeshes) {
+    const geometry = mesh.geometry;
+    const position = geometry.getAttribute("position");
+    const sourceIndex = geometry.getIndex();
+    const source = Array.from(sourceIndex.array);
+    if (source.length % 3 !== 0) {
+      throw new Error("A1 exact stock cabin index buffer is not triangular");
+    }
+
+    const triangleCount = source.length / 3;
+    const parent = Array.from({ length: triangleCount }, (_, index) => index);
+    const find = (value) => {
+      let cursor = value;
+      while (parent[cursor] !== cursor) {
+        parent[cursor] = parent[parent[cursor]];
+        cursor = parent[cursor];
+      }
+      return cursor;
+    };
+    const union = (left, right) => {
+      const a = find(left);
+      const b = find(right);
+      if (a !== b) parent[b] = a;
+    };
+
+    const vertexToTriangles = new Map();
+    for (let triangle = 0; triangle < triangleCount; triangle += 1) {
+      const cursor = triangle * 3;
+      for (const vertexIndex of [
+        source[cursor],
+        source[cursor + 1],
+        source[cursor + 2],
+      ]) {
+        const key = coordinateKey(position, vertexIndex);
+        const list = vertexToTriangles.get(key) || [];
+        list.push(triangle);
+        vertexToTriangles.set(key, list);
+      }
+    }
+    for (const triangles of vertexToTriangles.values()) {
+      for (let index = 1; index < triangles.length; index += 1) {
+        union(triangles[0], triangles[index]);
+      }
+    }
+
+    const components = new Map();
+    for (let triangle = 0; triangle < triangleCount; triangle += 1) {
+      const component = find(triangle);
+      const list = components.get(component) || [];
+      list.push(triangle);
+      components.set(component, list);
+    }
+
+    const stairTriangles = new Set();
+    const stairVertices = new Set();
+    for (const triangles of components.values()) {
+      let minX = Number.POSITIVE_INFINITY;
+      let maxX = Number.NEGATIVE_INFINITY;
+      let minY = Number.POSITIVE_INFINITY;
+      let maxY = Number.NEGATIVE_INFINITY;
+      let minZ = Number.POSITIVE_INFINITY;
+      let maxZ = Number.NEGATIVE_INFINITY;
+      const vertices = new Set();
+
+      for (const triangle of triangles) {
+        const cursor = triangle * 3;
+        vertices.add(source[cursor]);
+        vertices.add(source[cursor + 1]);
+        vertices.add(source[cursor + 2]);
+      }
+      for (const vertexIndex of vertices) {
+        const x = position.getX(vertexIndex);
+        const y = position.getY(vertexIndex);
+        const z = position.getZ(vertexIndex);
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+        minZ = Math.min(minZ, z);
+        maxZ = Math.max(maxZ, z);
+      }
+
+      // Exact XP11 jw_cabin_1b stair envelope. These connected source
+      // components are the 19 treads, both long side/hand rails, lower feet,
+      // and upper stair hardware visible in the user's real A1 reference.
+      // The simplified LOD contains no geometry in this envelope.
+      const isExactExteriorStair =
+        minX >= 1.50
+        && maxX <= 2.40
+        && minZ >= 1.45
+        && maxZ <= 8.50
+        && maxY <= 5.25;
+
+      if (isExactExteriorStair) {
+        for (const triangle of triangles) stairTriangles.add(triangle);
+        for (const vertexIndex of vertices) stairVertices.add(vertexIndex);
+      }
+    }
+
+    if (!stairTriangles.size) continue;
+
+    const cabinIndices = [];
+    const stairIndices = [];
+    for (let triangle = 0; triangle < triangleCount; triangle += 1) {
+      const target = stairTriangles.has(triangle) ? stairIndices : cabinIndices;
+      const cursor = triangle * 3;
+      target.push(source[cursor], source[cursor + 1], source[cursor + 2]);
+    }
+
+    const IndexArray = sourceIndex.array.constructor;
+    const cabinGeometry = geometry.clone();
+    cabinGeometry.setIndex(
+      new THREE.BufferAttribute(new IndexArray(cabinIndices), 1),
+    );
+    cabinGeometry.computeBoundingBox();
+    cabinGeometry.computeBoundingSphere();
+
+    const stairGeometry = geometry.clone();
+    stairGeometry.setIndex(
+      new THREE.BufferAttribute(new IndexArray(stairIndices), 1),
+    );
+    stairGeometry.computeBoundingBox();
+    stairGeometry.computeBoundingSphere();
+
+    const stairMesh = mesh.clone(false);
+    stairMesh.name = `${mesh.name}_A1ExactExteriorStairs`;
+    stairMesh.geometry = stairGeometry;
+    stairMesh.material = mesh.material;
+    stairMesh.updateMatrix();
+    stairMesh.matrixAutoUpdate = false;
+    const baselineLocalMatrix = stairMesh.matrix.clone();
+
+    const contactLocalPoints = [];
+    for (const vertexIndex of stairVertices) {
+      const y = position.getY(vertexIndex);
+      const z = position.getZ(vertexIndex);
+      if (y <= 0.12 && z >= 7.0) {
+        contactLocalPoints.push(
+          new THREE.Vector3(
+            position.getX(vertexIndex),
+            y,
+            z,
+          ),
+        );
+      }
+    }
+    if (!contactLocalPoints.length) {
+      throw new Error("A1 exact exterior stairs have no source ground-contact vertices");
+    }
+
+    mesh.geometry = cabinGeometry;
+    mesh.parent.add(stairMesh);
+
+    stairBranches.push({
+      mesh: stairMesh,
+      baselineLocalMatrix,
+      contactLocalPoints,
+    });
+
+    originalIndexCount += source.length;
+    stairIndexCount += stairIndices.length;
+    cabinIndexCount += cabinIndices.length;
+  }
+
+  if (!stairBranches.length) {
+    throw new Error("A1 exact jw_cabin_1b exterior stair components were not found");
+  }
+  if (stairIndexCount + cabinIndexCount !== originalIndexCount) {
+    throw new Error("A1 exact stair split did not preserve every source index");
+  }
+
+  // The stock stair's upper/platform joint is at the cabin-side end of the
+  // first tread/rail pair. Rotation is about the local X axis (across stair
+  // width), so X does not affect the hinge line.
+  const hingeLocal = new THREE.Vector3(0, 4.0, 1.6);
+
+  return Object.freeze({
+    branches: stairBranches,
+    hingeLocal,
+    originalIndexCount,
+    stairIndexCount,
+    cabinIndexCount,
+    authority:
+      "XP11-jw_cabin_1b-exact-connected-stair-components-top-hinge-ground-foot-v1",
+  });
+}
+
 export function installA1ExactAutoGateController({
   THREE,
   root,
@@ -305,6 +511,7 @@ export function installA1ExactAutoGateController({
     aircraftTunnelVisual,
   );
   const cabinHalfA = requireObject(cabinWall, "Attached_jw_cabin_1a.obj");
+  const exteriorStairs = splitExactCabinStairComponents(THREE, cabinHalfB);
   root.updateMatrixWorld(true);
   const measureLowerSupportBottom = () => {
     let minimum = Number.POSITIVE_INFINITY;
@@ -315,6 +522,38 @@ export function installA1ExactAutoGateController({
     return minimum;
   };
   const sourceLowerSupportBottomMeters = measureLowerSupportBottom();
+
+  const stairPivotTranslation = new THREE.Matrix4().makeTranslation(
+    exteriorStairs.hingeLocal.x,
+    exteriorStairs.hingeLocal.y,
+    exteriorStairs.hingeLocal.z,
+  );
+  const stairPivotInverse = new THREE.Matrix4().makeTranslation(
+    -exteriorStairs.hingeLocal.x,
+    -exteriorStairs.hingeLocal.y,
+    -exteriorStairs.hingeLocal.z,
+  );
+  const composeStairLocalMatrix = (branch, angleRadians) => {
+    const aroundHinge = stairPivotTranslation.clone()
+      .multiply(new THREE.Matrix4().makeRotationX(angleRadians))
+      .multiply(stairPivotInverse);
+    return branch.baselineLocalMatrix.clone().multiply(aroundHinge);
+  };
+  const measureStairFootWorldY = (angleRadians) => {
+    let minimum = Number.POSITIVE_INFINITY;
+    for (const branch of exteriorStairs.branches) {
+      const localMatrix = composeStairLocalMatrix(branch, angleRadians);
+      const worldMatrix = branch.mesh.parent.matrixWorld.clone().multiply(localMatrix);
+      for (const point of branch.contactLocalPoints) {
+        minimum = Math.min(
+          minimum,
+          point.clone().applyMatrix4(worldMatrix).y,
+        );
+      }
+    }
+    return minimum;
+  };
+  const sourceStairFootWorldY = measureStairFootWorldY(0);
 
   const pivot = footprint[4];
   const attachedCabinJoint = footprint[5];
@@ -414,6 +653,10 @@ export function installA1ExactAutoGateController({
       - innerTunnelExtensionMeters / tunnelWall.scale.z;
 
     for (const branch of lowerSupport.branches) {
+      branch.mesh.matrix.copy(branch.baselineLocalMatrix);
+      branch.mesh.matrixWorldNeedsUpdate = true;
+    }
+    for (const branch of exteriorStairs.branches) {
       branch.mesh.matrix.copy(branch.baselineLocalMatrix);
       branch.mesh.matrixWorldNeedsUpdate = true;
     }
@@ -541,6 +784,89 @@ export function installA1ExactAutoGateController({
     // attached to the Cabin wall. Apply the same AutoGate cabin counter-yaw so
     // both exact source halves remain aligned.
     cabinHalfB.rotation.y = originals.cabinHalfBRotationY + cabinCounterYawDelta;
+    root.updateMatrixWorld(true);
+
+    // Keep the exact stock exterior stair top attached to the cabin/platform
+    // hinge while forcing its original lower foot vertices to remain on the
+    // source ramp plane. The stair assembly is rigid: only its local-X hinge
+    // angle changes, so the bottom slides horizontally as the bridge height
+    // changes instead of following the cabin below ground.
+    const evaluateStairGroundError = (angleRadians) =>
+      measureStairFootWorldY(angleRadians) - sourceStairFootWorldY;
+    const stairSamples = [-60, -45, -30, -15, 0, 15, 30, 45, 60]
+      .map((degrees) => ({
+        angle: radians(degrees),
+        error: evaluateStairGroundError(radians(degrees)),
+      }));
+
+    let stairAngleRadians = 0;
+    const exactSample = stairSamples
+      .filter((sample) => Math.abs(sample.error) <= 0.001)
+      .sort((a, b) => Math.abs(a.angle) - Math.abs(b.angle))[0];
+    if (exactSample) {
+      stairAngleRadians = exactSample.angle;
+    } else {
+      let bracket = null;
+      for (let index = 0; index < stairSamples.length - 1; index += 1) {
+        const left = stairSamples[index];
+        const right = stairSamples[index + 1];
+        if (left.error * right.error <= 0) {
+          const candidate = { left, right };
+          if (!bracket
+            || Math.abs((left.angle + right.angle) / 2)
+              < Math.abs((bracket.left.angle + bracket.right.angle) / 2)) {
+            bracket = candidate;
+          }
+        }
+      }
+      if (!bracket) {
+        throw new Error("A1 exact exterior stair hinge cannot keep its foot on the ramp");
+      }
+
+      let lowAngle = bracket.left.angle;
+      let highAngle = bracket.right.angle;
+      let lowError = bracket.left.error;
+      for (let iteration = 0; iteration < 12; iteration += 1) {
+        const midAngle = (lowAngle + highAngle) / 2;
+        const midError = evaluateStairGroundError(midAngle);
+        if (Math.abs(midError) <= 0.001) {
+          lowAngle = midAngle;
+          highAngle = midAngle;
+          break;
+        }
+        if (lowError * midError <= 0) {
+          highAngle = midAngle;
+        } else {
+          lowAngle = midAngle;
+          lowError = midError;
+        }
+      }
+      stairAngleRadians = (lowAngle + highAngle) / 2;
+    }
+
+    for (const branch of exteriorStairs.branches) {
+      branch.mesh.matrix.copy(
+        composeStairLocalMatrix(branch, stairAngleRadians),
+      );
+      branch.mesh.matrixWorldNeedsUpdate = true;
+    }
+    root.updateMatrixWorld(true);
+
+    const stairFootDeltaMeters =
+      measureStairFootWorldY(stairAngleRadians) - sourceStairFootWorldY;
+    let stairHingeGapMeters = 0;
+    for (const branch of exteriorStairs.branches) {
+      const expectedHingeWorld = exteriorStairs.hingeLocal.clone().applyMatrix4(
+        branch.mesh.parent.matrixWorld.clone().multiply(branch.baselineLocalMatrix),
+      );
+      const actualHingeWorld = exteriorStairs.hingeLocal.clone().applyMatrix4(
+        branch.mesh.matrixWorld,
+      );
+      stairHingeGapMeters = Math.max(
+        stairHingeGapMeters,
+        expectedHingeWorld.distanceTo(actualHingeWorld),
+      );
+    }
 
     // The two stock cabin source objects meet at the same authored joint:
     // Segment 11 places jw_cabin_1b at its far endpoint and Cabin Segment 20
@@ -574,6 +900,19 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateCabinCounterYawDeltaDegrees = cabinRelativeYaw - restCabinRelativeYaw;
     root.userData.a1AutoGateCabinJointGapMeters = cabinJointGapMeters;
     root.userData.a1AutoGateCabinRelativeYawDriftRadians = cabinRelativeYawDriftRadians;
+    root.userData.a1AutoGateStairAngleDegrees =
+      THREE.MathUtils.radToDeg(stairAngleRadians);
+    root.userData.a1AutoGateStairFootDeltaMeters = stairFootDeltaMeters;
+    root.userData.a1AutoGateStairHingeGapMeters = stairHingeGapMeters;
+    root.userData.a1AutoGateStairOriginalIndexCount =
+      exteriorStairs.originalIndexCount;
+    root.userData.a1AutoGateStairSplitIndexCount =
+      exteriorStairs.stairIndexCount;
+    root.userData.a1AutoGateCabinBodySplitIndexCount =
+      exteriorStairs.cabinIndexCount;
+    root.userData.a1AutoGateStairTrianglePartitionExact =
+      exteriorStairs.stairIndexCount + exteriorStairs.cabinIndexCount
+        === exteriorStairs.originalIndexCount;
     const terminalHingeWorld =
       terminalHingeAttachmentPivot.getWorldPosition(new THREE.Vector3());
     const terminalPivotGapMeters =
@@ -805,6 +1144,11 @@ export function installA1ExactAutoGateController({
     getCabinCounterYawDeltaDegrees: () => root.userData.a1AutoGateCabinCounterYawDeltaDegrees,
     getCabinJointGapMeters: () => root.userData.a1AutoGateCabinJointGapMeters,
     getCabinRelativeYawDriftRadians: () => root.userData.a1AutoGateCabinRelativeYawDriftRadians,
+    getStairAngleDegrees: () => root.userData.a1AutoGateStairAngleDegrees,
+    getStairFootDeltaMeters: () => root.userData.a1AutoGateStairFootDeltaMeters,
+    getStairHingeGapMeters: () => root.userData.a1AutoGateStairHingeGapMeters,
+    isStairTrianglePartitionExact: () =>
+      root.userData.a1AutoGateStairTrianglePartitionExact === true,
     getTerminalPivotGapMeters: () => root.userData.a1AutoGateTerminalPivotGapMeters,
     getCabinVerticalErrorMeters: () => root.userData.a1AutoGateCabinVerticalErrorMeters,
     getSupportBottomMeters: () => root.userData.a1AutoGateSupportBottomMeters,
@@ -837,6 +1181,10 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateTerminalPivotAuthority =
     "WED-104809-Segment10-jw_tunnel_2_5a-ATTACH_GRADED-y4-fixed-rear-hinge";
   root.userData.a1AutoGateLowerSupportAuthority = lowerSupport.authority;
+  root.userData.a1AutoGateExteriorStairAuthority = exteriorStairs.authority;
+  root.userData.a1AutoGateExteriorStairHingeLocal =
+    `${exteriorStairs.hingeLocal.x.toFixed(3)},${exteriorStairs.hingeLocal.y.toFixed(3)},${exteriorStairs.hingeLocal.z.toFixed(3)}`;
+  root.userData.a1AutoGateExteriorStairGroundWorldY = sourceStairFootWorldY;
   root.userData.a1AutoGateSourceGeometryAuthority =
     "KPHX-1.75.1-WED-104804-plus-XP11-Jetway_1_solid.fac";
   root.userData.a1AutoGateMotionSource = AUTOGATE_26M.sourceAsset;
