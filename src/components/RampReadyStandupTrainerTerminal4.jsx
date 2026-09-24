@@ -605,7 +605,16 @@ export default function RampReadyStandupTrainer({
         if (a1JetwayController?.getMotionDurationMs) {
           jetwayRef.current.transitionDurationMs = a1JetwayController.getMotionDurationMs();
         }
-        a1JetwayController?.setDeployment(jetwayRef.current.target);
+        // Controller loading is async. Resolve its initial state from the live
+        // mode ref instead of a potentially stale pre-load target left behind
+        // by inspection/training toggles.
+        const initialJetwayDeployment = inspectionRef.current ? 0 : 1;
+        jetwayRef.current.target = initialJetwayDeployment;
+        jetwayRef.current.deployment = initialJetwayDeployment;
+        jetwayRef.current.transitionStartDeployment = initialJetwayDeployment;
+        jetwayRef.current.transitionStartedAt = 0;
+        jetwayRef.current.retractionRequested = false;
+        a1JetwayController?.setDeployment(initialJetwayDeployment);
         renderer.domElement.dataset.a1JetwayDeployment = jetwayRef.current.deployment.toFixed(3);
         renderer.domElement.dataset.a1JetwayState = a1JetwayController?.getState?.() || "missing";
         renderer.domElement.dataset.a1JetwayAnimationAuthority = environment.userData.authoredTerminal4A1JetwayAnimationAuthority || "missing";
