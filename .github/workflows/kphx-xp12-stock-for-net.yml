@@ -1,0 +1,105 @@
+name: KPHX XP12 Stock FOR NET Chunk
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - "reports/trigger-kphx-xp12-stock-for-net.txt"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-xp12-stock-for-net
+  cancel-in-progress: false
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+          sparse-checkout: |
+            scripts/stage-kphx-xp12-lib.py
+            reports/kphx-unresolved-dependency-audit.json
+            reports/kphx-xp12-121212-directory.txt
+          sparse-checkout-cone-mode: false
+
+      - name: Install Mesa software graphics and UI tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y xvfb xauth x11-utils imagemagick xfonts-base xfonts-75dpi xfonts-100dpi fontconfig libgl1-mesa-dri libglx-mesa0 libglx0 libgl1 libglu1-mesa mesa-vulkan-drivers vulkan-tools libx11-6 libxi6 libxinerama1 libxrandr2 libxcursor1 libpangoxft-1.0-0 libgtk2.0-0t64 libxft2 libasound2t64 >/dev/null
+          sudo fc-cache -f >/dev/null
+
+      - name: Download official XP12 installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp12-installer /tmp/xp12-demo
+          curl -L --fail --retry 4 --show-error "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip" -o /tmp/xp12-installer.zip
+          unzip -q /tmp/xp12-installer.zip -d /tmp/xp12-installer
+          BIN="$(find /tmp/xp12-installer -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          chmod +x "$BIN"
+          echo "$BIN" > /tmp/xp12-bin.txt
+
+      - name: Install pinned XP12.1.2 demo tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          Xvfb :99 -screen 0 1280x800x24 +extension GLX +render -noreset >/tmp/xvfb.log 2>&1 &
+          export DISPLAY=:99
+          for i in $(seq 1 20); do xdpyinfo >/dev/null 2>&1 && break; sleep 1; done
+          export LIBGL_ALWAYS_SOFTWARE=1
+          LVP="$(find /usr/share/vulkan/icd.d -type f \( -iname 'lvp_icd*.json' -o -iname '*lvp*.json' \) -print -quit)"
+          test -n "$LVP"
+          export VK_ICD_FILENAMES="$LVP"
+          export VK_DRIVER_FILES="$LVP"
+          vulkaninfo --summary >/tmp/vulkan-summary.txt 2>&1
+
+          BIN="$(cat /tmp/xp12-bin.txt)"
+          cat >/tmp/xp12.qa <<'QA'
+          click "Install a Free Demo of X-Plane"
+          wait 8
+          set_installer_destination "/tmp/xp12-demo"
+          wait 2
+          click_if_exists "Continue"
+          wait 4
+          click_if_exists "Continue"
+          wait 150
+          quit
+          QA
+
+          set +e
+          timeout 190s "$BIN" --qa_script=/tmp/xp12.qa --install_numeric=121212 --install_name="X-Plane 12.1.2-r4-0f2fea01" --no_web_server >/tmp/xp12-installer.out 2>/tmp/xp12-installer.err
+          rc=$?
+          set -e
+          echo "installer_rc=$rc"
+          count="$(find /tmp/xp12-demo -type f 2>/dev/null | wc -l | tr -d ' ')"
+          echo "demo_file_count=$count"
+          test "$count" -gt 0
+
+      - name: Stage exact .for,.net resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf assets/kphx-source/xp12-121212/for-net
+          python3 scripts/stage-kphx-xp12-lib.py /tmp/xp12-demo reports/kphx-unresolved-dependency-audit.json reports/kphx-xp12-121212-directory.txt assets/kphx-source/xp12-121212/for-net ".for,.net"
+
+      - name: Commit exact XP12 .for,.net checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/kphx-source/xp12-121212/for-net
+          git commit -m "Move exact XP12.1.2 KPHX FOR and NET stock resources"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
