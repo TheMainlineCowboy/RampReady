@@ -24,6 +24,10 @@ jobs:
         with:
           ref: kphx-full-airport-import
           fetch-depth: 1
+          sparse-checkout: |
+            .github/workflows/kphx-xp11-glx-qa.yml
+            reports
+          sparse-checkout-cone-mode: false
 
       - name: Install XP11 headless GLX runtime
         shell: bash
