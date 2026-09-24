@@ -91,6 +91,23 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
 
   await expect(page.locator('.rr-runtime-loading')).toHaveCount(0, { timeout: 30000 });
 
+  await page.waitForTimeout(1500);
+  const initialA1Runtime = await canvas.evaluate(element => ({ ...element.dataset }));
+  console.log('A1_INITIAL_RUNTIME_DATASET=' + JSON.stringify({
+    deployment: initialA1Runtime.a1JetwayDeployment,
+    state: initialA1Runtime.a1JetwayState,
+    doorContactReady: initialA1Runtime.a1JetwayDoorContactReady,
+    doorContactGapMeters: initialA1Runtime.a1JetwayDoorContactGapMeters,
+    doorContactHitObject: initialA1Runtime.a1JetwayDoorContactHitObject,
+    connectedLatMeters: initialA1Runtime.a1JetwayConnectedLatMeters,
+    connectedVertMeters: initialA1Runtime.a1JetwayConnectedVertMeters,
+    sourcePoseMaxMatrixDelta: initialA1Runtime.a1JetwaySourcePoseMaxMatrixDelta,
+    supportBottomDeltaMeters: initialA1Runtime.a1JetwaySupportBottomDeltaMeters,
+    cabinJointGapMeters: initialA1Runtime.a1JetwayCabinJointGapMeters,
+    fixedWallMotionMaxMeters: initialA1Runtime.a1JetwayFixedWallMotionMaxMeters,
+    fixedWallRotationMaxRadians: initialA1Runtime.a1JetwayFixedWallRotationMaxRadians,
+  }));
+
   await page.waitForFunction(() => {
     const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
     const gap = Number(d.a1JetwayDoorContactGapMeters);
