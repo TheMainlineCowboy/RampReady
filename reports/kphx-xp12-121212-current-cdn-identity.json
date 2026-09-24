@@ -1,0 +1,499 @@
+{
+  "authority": {
+    "historicalBuild": 121212,
+    "historicalBranch": "X-Plane 12.1.2-r4-0f2fea01",
+    "historicalManifestPath": "reports/kphx-xp12-121212-directory.txt",
+    "currentServerList": "https://lookup.x-plane.com/_lookup_12_/server_list_12.txt",
+    "currentBranchPath": "X-Plane 12.4.3-r2-15ff1e4d",
+    "currentBase": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/",
+    "acceptanceRule": "Current CDN bytes are usable only when actual MD5 equals pinned XP12.1.2 manifest MD5; current library mappings are trusted only when the library.txt itself is byte-identical to XP12.1.2."
+  },
+  "manifestSamples": {
+    "historical": [
+      {
+        "path": "Resources/default scenery/1000 autogen/library.txt",
+        "raw": "FILE 192 120009 402956437 32760 96927816 24576 12.01 736.00 a9de2dd65ecd4de090b1653564297950 library.txt",
+        "parts": [
+          "FILE",
+          "192",
+          "120009",
+          "402956437",
+          "32760",
+          "96927816",
+          "24576",
+          "12.01",
+          "736.00",
+          "a9de2dd65ecd4de090b1653564297950",
+          "library.txt"
+        ],
+        "md5Candidates": [
+          "a9de2dd65ecd4de090b1653564297950"
+        ]
+      },
+      {
+        "path": "Resources/default scenery/1000 autogen/library.txt",
+        "raw": "FILE 192 120024 4243231 32760 85016648 24576 12.00 736.00 1e13b82a788ad0496a75a5b8ef4eb341 library.txt",
+        "parts": [
+          "FILE",
+          "192",
+          "120024",
+          "4243231",
+          "32760",
+          "85016648",
+          "24576",
+          "12.00",
+          "736.00",
+          "1e13b82a788ad0496a75a5b8ef4eb341",
+          "library.txt"
+        ],
+        "md5Candidates": [
+          "1e13b82a788ad0496a75a5b8ef4eb341"
+        ]
+      },
+      {
+        "path": "Resources/default scenery/1000 autogen/library.txt",
+        "raw": "FILE 192 120031 169668383 32760 1592416 24576 9.95 740.00 e399c8ac78f89da6c1dcc71ef7f4bf7a library.txt",
+        "parts": [
+          "FILE",
+          "192",
+          "120031",
+          "169668383",
+          "32760",
+          "1592416",
+          "24576",
+          "9.95",
+          "740.00",
+          "e399c8ac78f89da6c1dcc71ef7f4bf7a",
+          "library.txt"
+        ],
+        "md5Candidates": [
+          "e399c8ac78f89da6c1dcc71ef7f4bf7a"
+        ]
+      },
+      {
+        "path": "Resources/default scenery/1000 autogen/library.txt",
+        "raw": "FILE 192 120034 328441631 32760 43893088 24576 9.95 740.00 b04b9a32c382e535ebb08e0a742ce81b library.txt",
+        "parts": [
+          "FILE",
+          "192",
+          "120034",
+          "328441631",
+          "32760",
+          "43893088",
+          "24576",
+          "9.95",
+          "740.00",
+          "b04b9a32c382e535ebb08e0a742ce81b",
+          "library.txt"
+        ],
+        "md5Candidates": [
+          "b04b9a32c382e535ebb08e0a742ce81b"
+        ]
+      },
+      {
+        "path": "Resources/default scenery/1000 autogen/library.txt",
+        "raw": "FILE 192 120050 259981087 32760 29311072 24576 9.96 740.00 702fdc8297fb7dd53b997f6bbb384662 library.txt",
+        "parts": [
+          "FILE",
+          "192",
+          "120050",
+          "259981087",
+          "32760",
+          "29311072",
+          "24576",
+          "9.96",
+          "740.00",
+          "702fdc8297fb7dd53b997f6bbb384662",
+          "library.txt"
+        ],
+        "md5Candidates": [
+          "702fdc8297fb7dd53b997f6bbb384662"
+        ]
+      }
+    ],
+    "current": [
+      {
+        "path": "Resources/default scenery/1000 autogen/library.txt",
+        "raw": "FILE 192 120009 402956437 32760 96927816 24576 12.01 736.00 a9de2dd65ecd4de090b1653564297950 library.txt",
+        "parts": [
+          "FILE",
+          "192",
+          "120009",
+          "402956437",
+          "32760",
+          "96927816",
+          "24576",
+          "12.01",
+          "736.00",
+          "a9de2dd65ecd4de090b1653564297950",
+          "library.txt"
+        ],
+        "md5Candidates": [
+          "a9de2dd65ecd4de090b1653564297950"
+        ]
+      },
+      {
+        "path": "Resources/default scenery/1000 autogen/library.txt",
+        "raw": "FILE 192 120024 4243231 32760 85016648 24576 12.00 736.00 1e13b82a788ad0496a75a5b8ef4eb341 library.txt",
+        "parts": [
+          "FILE",
+          "192",
+          "120024",
+          "4243231",
+          "32760",
+          "85016648",
+          "24576",
+          "12.00",
+          "736.00",
+          "1e13b82a788ad0496a75a5b8ef4eb341",
+          "library.txt"
+        ],
+        "md5Candidates": [
+          "1e13b82a788ad0496a75a5b8ef4eb341"
+        ]
+      },
+      {
+        "path": "Resources/default scenery/1000 autogen/library.txt",
+        "raw": "FILE 192 120031 169668383 32760 1592416 24576 9.95 740.00 e399c8ac78f89da6c1dcc71ef7f4bf7a library.txt",
+        "parts": [
+          "FILE",
+          "192",
+          "120031",
+          "169668383",
+          "32760",
+          "1592416",
+          "24576",
+          "9.95",
+          "740.00",
+          "e399c8ac78f89da6c1dcc71ef7f4bf7a",
+          "library.txt"
+        ],
+        "md5Candidates": [
+          "e399c8ac78f89da6c1dcc71ef7f4bf7a"
+        ]
+      },
+      {
+        "path": "Resources/default scenery/1000 autogen/library.txt",
+        "raw": "FILE 192 120034 328441631 32760 43893088 24576 9.95 740.00 b04b9a32c382e535ebb08e0a742ce81b library.txt",
+        "parts": [
+          "FILE",
+          "192",
+          "120034",
+          "328441631",
+          "32760",
+          "43893088",
+          "24576",
+          "9.95",
+          "740.00",
+          "b04b9a32c382e535ebb08e0a742ce81b",
+          "library.txt"
+        ],
+        "md5Candidates": [
+          "b04b9a32c382e535ebb08e0a742ce81b"
+        ]
+      },
+      {
+        "path": "Resources/default scenery/1000 autogen/library.txt",
+        "raw": "FILE 192 120050 259981087 32760 29311072 24576 9.96 740.00 702fdc8297fb7dd53b997f6bbb384662 library.txt",
+        "parts": [
+          "FILE",
+          "192",
+          "120050",
+          "259981087",
+          "32760",
+          "29311072",
+          "24576",
+          "9.96",
+          "740.00",
+          "702fdc8297fb7dd53b997f6bbb384662",
+          "library.txt"
+        ],
+        "md5Candidates": [
+          "702fdc8297fb7dd53b997f6bbb384662"
+        ]
+      }
+    ]
+  },
+  "librarySummary": {
+    "historicalLibraryCount": 16,
+    "currentDownloadSuccessCount": 0,
+    "byteIdenticalLibraryCount": 0,
+    "changedOrUnavailableLibraryCount": 16
+  },
+  "libraries": [
+    {
+      "path": "Resources/default scenery/1000 autogen/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/1000%20autogen/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "8072a65e4bbf7c584d8f29045ca5cee6",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/1000 decals/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/1000%20decals/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "0e229fa8c1b28b21a69a096ff053a9b0",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/1000 roads/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/1000%20roads/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "823590e5716fb052294052839bcb9515",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/1000 world terrain/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/1000%20world%20terrain/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "1b7a6bc04ca55faa5cc55ebd236728f6",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/1200 atc data/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/1200%20atc%20data/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "52f5d31a45be9c107b1e3a6b2febea5d",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/1200 beaches/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/1200%20beaches/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "1ac09b482a7658cd2f2c76af736922c7",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/1200 forests/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/1200%20forests/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "06505a6f0ca9178b9288381bb0598c44",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/700 roads/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/700%20roads/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "7274e62e742d3c65b398b5fc0230ea3b",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/900 beaches/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/900%20beaches/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "29246cc7bf88723af433967dfe1de4f4",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/900 europe objects/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/900%20europe%20objects/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "1728c0dbe77ab932d41bbfb9dadc81aa",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/900 forests/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/900%20forests/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "ddc4614e463e145019fae952dfe0dbb1",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/900 roads/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/900%20roads/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "22fc9580392943193f59dca626915f17",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/900 us objects/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/900%20us%20objects/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "d3b140b24a0f9bf376d6539c7d663fa2",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/900 world object placeholders/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/900%20world%20object%20placeholders/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "7aa38ea37d883fc841f03508a0df2c97",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/airport scenery/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/airport%20scenery/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "3d058117d58043abd3318ccae172bd43",
+      "byteIdenticalTo121212": false
+    },
+    {
+      "path": "Resources/default scenery/sim objects/library.txt",
+      "url": "https://desktop.x-plane.com/unsecured/X-Plane%2012.4.3-r2-15ff1e4d/Resources/default%20scenery/sim%20objects/library.txt.zip",
+      "ok": false,
+      "error": "<HTTPError 403: 'Forbidden'>",
+      "historicalMd5": "4646e5dbf13c6898a1f8af67b4616209",
+      "byteIdenticalTo121212": false
+    }
+  ],
+  "requestedCount": 135,
+  "resolvedFromExactLibrariesCount": 0,
+  "ambiguousMappingCount": 0,
+  "missingMappingCount": 135,
+  "exactByteIdenticalVirtualCount": 0,
+  "nonExactOrUnavailableVirtualCount": 0,
+  "exactVirtual": {},
+  "nonExactVirtual": {},
+  "ambiguous": {},
+  "missing": [
+    "lib/airport/Common_Elements/Fence_Facades/Fence.fac",
+    "lib/airport/Common_Elements/Fuel_Storage/Sing_Tank_Medium.obj",
+    "lib/airport/Common_Elements/Fuel_Storage/Sing_Tank_Small.obj",
+    "lib/airport/Common_Elements/Fueling_Stations/2_horiz_tanks.agp",
+    "lib/airport/Common_Elements/Lighting/Dir_Ramp_Lit_Short.obj",
+    "lib/airport/Common_Elements/Lighting/Dir_Ramp_Lit_Tall.obj",
+    "lib/airport/Common_Elements/Lighting/Omni_Parking_Lit.obj",
+    "lib/airport/Common_Elements/Lighting/Opposing_Flood_Sm.obj",
+    "lib/airport/Common_Elements/Misc_Buildings/Small_Office_1.agp",
+    "lib/airport/Common_Elements/Miscellaneous/AC_fenced.agp",
+    "lib/airport/Common_Elements/Miscellaneous/Blue_Dumpster_w_wall.obj",
+    "lib/airport/Common_Elements/Miscellaneous/transformer_1.obj",
+    "lib/airport/Common_Elements/Miscellaneous/transformer_2.obj",
+    "lib/airport/Common_Elements/Parking/Parking_1.fac",
+    "lib/airport/Common_Elements/Parking/Ticket_Dispense_Station.obj",
+    "lib/airport/Common_Elements/Vehicles/forklifts/forklift_yellow_palette.obj",
+    "lib/airport/Modern_Airports/Facades/terminal_02.fac",
+    "lib/airport/Modern_Airports/Terminal_kit/columns/column_4m_80a.obj",
+    "lib/airport/Modern_Airports/Terminal_kit/columns/column_4m_80b.obj",
+    "lib/airport/Modern_Airports/Terminal_kit/columns/column_row_4m_80a.str",
+    "lib/airport/Modern_Airports/Terminal_kit/entrances/entrance_2_4m.obj",
+    "lib/airport/Modern_Airports/Terminal_kit/term_building_BigHall_01.fac",
+    "lib/airport/Modern_Airports/Terminal_kit/term_building_Ground_02.fac",
+    "lib/airport/Modern_Airports/Terminal_kit/term_building_Ground_03.fac",
+    "lib/airport/Modern_Airports/Terminal_kit/term_building_Levels_01.fac",
+    "lib/airport/Modern_Airports/Terminal_kit/term_building_Tall_01.fac",
+    "lib/airport/Modern_Airports/Terminal_kit/term_building_Tall_03.fac",
+    "lib/airport/Modern_Airports/Terminal_kit/term_roof_level_01.fac",
+    "lib/airport/Ramp_Equipment/Covered_Walkway.fac",
+    "lib/airport/Ramp_Equipment/Jet_Blast_Shield.fac",
+    "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac",
+    "lib/airport/Ramp_Equipment/PAX_stairs_1_3.4m.obj",
+    "lib/airport/Ramp_Equipment/PAX_stairs_1_4.6m.obj",
+    "lib/airport/Ramp_Equipment/Stair_Maint_1.obj",
+    "lib/airport/Ramp_Equipment/Tow_Tractor_1.obj",
+    "lib/airport/Ramp_Equipment/cargo/container_A2_01.obj",
+    "lib/airport/Ramp_Equipment/cargo/loader_ch70w.obj",
+    "lib/airport/Ramp_Equipment/cargo/pallet_01_stack.obj",
+    "lib/airport/Ramp_Equipment/cargo/pallet_02_stack.obj",
+    "lib/airport/Ramp_Equipment/cargo/pallet_05.obj",
+    "lib/airport/Ramp_Equipment/cargo/pallet_P6P_03.obj",
+    "lib/airport/Ramp_Equipment/cargo/pallet_PLA_03.obj",
+    "lib/airport/Ramp_Equipment/jet_blast_deflectors/curved_1.fac",
+    "lib/airport/Ramp_Equipment/traffic_cone_stack_2.obj",
+    "lib/airport/aircraft/general_aviation/turboprop_b.obj",
+    "lib/airport/buildings/utility/red_white/shed_3x5_2.obj",
+    "lib/airport/buildings/utility/red_white/shed_3x6_1.obj",
+    "lib/airport/buildings/utility/red_white/shed_3x6_4.obj",
+    "lib/airport/buildings/utility/sheds/10x24/1.obj",
+    "lib/airport/buildings/utility/sheds/5x12/1.obj",
+    "lib/airport/buildings/warehouses/cargo/beige.fac",
+    "lib/airport/buildings/warehouses/cargo/white.fac",
+    "lib/airport/buildings/warehouses/flat/beige.fac",
+    "lib/airport/ground/pavement/asphalt/patched.pol",
+    "lib/airport/ground/pavement/concrete_L/worn.pol",
+    "lib/airport/ground/pavement_FX/drains/drain_2.lin",
+    "lib/airport/ground/pavement_FX/ramp/grunge_size_C.obj",
+    "lib/airport/ground/pavement_FX/ramp/grunge_size_D.obj",
+    "lib/airport/ground/pavement_FX/ramp/grunge_size_E.obj",
+    "lib/airport/ground/pavement_FX/taxiway_cracks/shoulder/4m.lin",
+    "lib/airport/ground/pavement_FX/taxiway_cracks/shoulder/5m.lin",
+    "lib/airport/ground/pavement_FX/taxiway_cracks/shoulder/6m.lin",
+    "lib/airport/ground/pavement_FX/taxiway_cracks/shoulder/7m.lin",
+    "lib/airport/ground/pavement_FX/taxiway_cracks/shoulder/8m.lin",
+    "lib/airport/ground/pavement_FX/taxiway_cracks/single_crack_1.lin",
+    "lib/airport/ground/pavement_FX/taxiway_dirt/center_double/10m.lin",
+    "lib/airport/ground/pavement_FX/taxiway_dirt/center_double/14m.lin",
+    "lib/airport/ground/pavement_FX/taxiway_seams/dirty/22.5m.lin",
+    "lib/airport/ground/pavement_FX/taxiway_seams/dirty/25m.lin",
+    "lib/airport/ground/pavement_FX/taxiway_seams/dirty/30m.lin",
+    "lib/airport/ground/roads/asphalt/9m.lin",
+    "lib/airport/ground/roads/asphalt_D2/9m.lin",
+    "lib/airport/ground/roads/asphalt_D2/9m_center.lin",
+    "lib/airport/ground/terrain_FX/paths/concrete/light_5m.lin",
+    "lib/airport/hangars/flat/aluminium_01.fac",
+    "lib/airport/hangars/flat/beige_01.fac",
+    "lib/airport/hangars/flat/parts/hangar_door_05.fac",
+    "lib/airport/hangars/flat/parts/interior_01.fac",
+    "lib/airport/hangars/flat/white_01.fac",
+    "lib/airport/hangars/gabled/40x26/beige.agp",
+    "lib/airport/lights/slow/102_edge_twy_B.str",
+    "lib/airport/lines/20_road_edge.lin",
+    "lib/airport/lines/52_single_taxi_dash_b.lin",
+    "lib/airport/lines/74_road_edge_wide_b.lin",
+    "lib/airport/markings/roads/stop_1_bg.agp",
+    "lib/airport/markings/roads/stop_2_bg.agp",
+    "lib/airport/markings/roads/stop_3.obj",
+    "lib/buildings/facades/industrial/warehouse_03_60x60.fac",
+    "lib/constructions/fencing/fence_MeshHigh_08.fac",
+    "lib/constructions/fencing/fence_Wall-2m_01.fac",
+    "lib/constructions/fencing/fence_Wall-2m_02.fac",
+    "lib/constructions/fencing/fence_Wall-2m_04.fac",
+    "lib/constructions/fencing/gates/gate_6mLW_05.obj",
+    "lib/flags_USA_states/arizona.obj",
+    "lib/flags_world/united_states.obj",
+    "lib/g10/US/commercial/canopy_benzoil.obj",
+    "lib/g10/US/commercial/canopy_bp_large.obj",
+    "lib/g10/US/commercial/canopy_bp_small.obj",
+    "lib/g10/US/commercial/canopy_ozgas.obj",
+    "lib/g10/US/commercial/fuel_pump_ozgas.obj",
+    "lib/g10/US/commercial/tool_locker2.obj",
+    "lib/g10/US/industrial/light/Fact30x108A.obj",
+    "lib/g10/US/industrial/light/FactA15x22.obj",
+    "lib/g10/US/industrial/light/FactA60x30.obj",
+    "lib/g10/US/industrial/light/FactB10x30D.obj",
+    "lib/g10/US/industrial/light/FactB30x45.obj",
+    "lib/g10/US/industrial/light/FactC60x60_v1.obj",
+    "lib/g10/US/industrial/light/Shed13x24.obj",
+    "lib/g10/US/industrial/light/SiteOffice3x10.obj",
+    "lib/g10/US/industrial/light/SiteOffice4x14.obj",
+    "lib/g10/US/industrial/light/TinShed10x30Lt.obj",
+    "lib/g10/US/industrial/light/TinShed10x50.obj",
+    "lib/g10/US/industrial/light/Warehse13x30Lt.obj",
+    "lib/g10/US/industrial/light/Warehse15x30Dk.obj",
+    "lib/g10/US/industrial/light/Warehse15x30Lt.obj",
+    "lib/g10/US/industrial/light/Warehse30x30Dk.obj",
+    "lib/g10/US/industrial/light/Warehse30x30Lt.obj",
+    "lib/g10/US/industrial/light/Whs15x22.obj",
+    "lib/g10/US/industrial/light/Whs60x120L.obj",
+    "lib/g10/US/industrial/light/Whs60x60L_v0.obj",
+    "lib/g10/US/industrial/light/Whs60x90L.obj",
+    "lib/g10/decals/grass_and_stony_dirt_1.dcl",
+    "lib/g10/decals/low_freq_mod_1.dcl",
+    "lib/g10/roads.net",
+    "lib/g10/roadsigns/SignBridge6LaneUrbanRHExit.obj",
+    "lib/g10/roadsigns/SignBridge8LaneUrbanRHExit.obj",
+    "lib/g10/roadsigns/SignBridge8LaneUrbanRHSplit.obj",
+    "lib/g10/roadsigns/SignLHShoulderUrbanAdvanceExit.obj",
+    "lib/g10/roadsigns/SignRHShoulderUrbanExit.obj",
+    "lib/g10/streetlights/HwyLt1GndMnt.obj",
+    "lib/vegetation/trees/deciduous/shrubs_big.for",
+    "lib/vegetation/trees/deciduous/shrubs_medium.for",
+    "lib/vegetation/trees/deciduous/shrubs_small.for",
+    "lib/vegetation/trees/evergreen/kapok_tree_medium.for",
+    "lib/vegetation/trees/palm/date_palm_medium.for"
+  ]
+}
