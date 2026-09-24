@@ -66,7 +66,12 @@ jobs:
               if key_re.fullmatch(s) and interesting.search(s):
                   candidate.append({"offset":o,"text":s})
 
-          out={"contexts":contexts,"fieldCandidates":candidate}
+          drm_range=[
+              {"offset":o,"text":s}
+              for o,s in parsed
+              if 16956000 <= o <= 17055000
+          ]
+          out={"contexts":contexts,"fieldCandidates":candidate,"drmRange":drm_range}
           open("reports/kphx-xp12-request-field-audit.json","w").write(json.dumps(out,indent=2)+"\n")
           print(json.dumps(out,indent=2))
           PY
