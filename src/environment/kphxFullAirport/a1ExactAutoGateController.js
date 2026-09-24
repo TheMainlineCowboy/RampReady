@@ -714,7 +714,13 @@ export function installA1ExactAutoGateController({
     // the aircraft, so the signed door-to-cabin ray gap is the correction.
     // Keep the solve tightly bounded around the ACF value; never move the WED
     // terminal anchor or aircraft stand to manufacture contact.
-    const maxVisibleContactCorrectionMeters = 0.45;
+    // The fixed physical hinge changes the stock cabin's visible lip path
+    // relative to the old whole-span translation approximation. Allow the
+    // rendered source cabin-contact solve enough room to reach the real ACF
+    // L1 door while still remaining tightly bounded inside AutoGate's 7.5 m
+    // lateral range. This is contact correction only; the ACF lat target,
+    // aircraft placement, WED hinge, and source geometry remain unchanged.
+    const maxVisibleContactCorrectionMeters = 0.80;
     for (let iteration = 0; iteration < 4; iteration += 1) {
       if (Number.isFinite(solved.gapMeters) && solved.gapMeters <= 0.08) break;
       if (!Number.isFinite(solved.signedGapMeters)) break;
