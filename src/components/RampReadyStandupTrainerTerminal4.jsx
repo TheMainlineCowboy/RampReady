@@ -1232,7 +1232,10 @@ export default function RampReadyStandupTrainer({
       if (cameraRef.current === "driver") {
         const operatorEyeWorld = rig.getOperatorEyeWorld(new THREE.Vector3());
         const operatorLookWorld = rig.getOperatorLookWorld(new THREE.Vector3());
-        camera.position.lerp(operatorEyeWorld, 0.28);
+        // Operator view is a seated viewpoint, not a cinematic transition.
+        // Snap to the calibrated driver-eye anchor so low mobile frame rates cannot
+        // leave the camera stranded between chase view and the operator station.
+        camera.position.copy(operatorEyeWorld);
         camera.lookAt(operatorLookWorld);
         if (equipmentId === "lektro-88") {
           canvas.dataset.lektroOperatorEyeLocalX = rig.profile.operatorEye[0].toFixed(3);
