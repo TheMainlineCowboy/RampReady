@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: kphx-xp12-open-gl3-demo-install
+  cancel-in-progress: true
+
 jobs:
   probe:
     runs-on: ubuntu-latest
@@ -80,7 +84,7 @@ jobs:
 
           BEFORE="$(date +%s)"
           set +e
-          timeout 120s strace -ff -tt -s 4096             -e trace=network,openat,creat,rename,write             -o /tmp/xp12-handshake-strace             "$BIN"               --rendering-driver opengl3               --force_run               --qa_script=/tmp/xp12.qa               --install_numeric=121212               --install_name="X-Plane 12.1.2-r4-0f2fea01"               --no_web_server               >/tmp/installer.out 2>/tmp/installer.err
+          timeout 120s strace -ff -tt -s 4096             -e trace=network,openat,creat,rename,write             -o /tmp/xp12-handshake-strace             "$BIN"               --rendering-driver opengl3               --force_run               --lang=en               --qa_script=/tmp/xp12.qa               --install_numeric=121212               --install_name="X-Plane 12.1.2-r4-0f2fea01"               --no_web_server               >/tmp/installer.out 2>/tmp/installer.err
           RC=$?
           set -e
 
