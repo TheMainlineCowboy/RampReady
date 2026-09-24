@@ -1,0 +1,40 @@
+image_width=912
+image_height=840
+TEXT|424.0|45.8|66.1|14.4|457.0|53.0|X-System
+TEXT|77.9|79.7|226.1|46.6|191.0|103.0|XPLANE12
+TEXT|140.0|169.8|50.1|12.3|165.0|176.0|License
+TEXT|114.0|228.0|100.0|14.0|164.0|235.0|Check Servers
+TEXT|106.0|288.0|116.0|14.0|164.0|295.0|Pick Destination
+TEXT|141.9|345.8|44.1|14.5|164.0|353.0|Install
+TEXT|140.0|406.0|46.0|16.0|163.0|414.0|Finish
+TEXT|296.0|154.0|202.0|18.0|397.0|163.0|End User License Agreement
+TEXT|294.0|182.0|542.0|16.0|565.0|190.0|• If you do not have a commercial-use key, you agree to use X-Plane for non-commercial
+TEXT|294.0|198.0|500.0|16.0|544.0|206.0|purposes only. (See www.-Plane.com/pro for information on professional use.)
+TEXT|294.0|222.0|264.0|16.0|426.0|230.0|• You agree to not make copies of X-Plane.
+TEXT|294.0|248.0|544.0|16.0|566.0|256.0|• You agree to not distribute the artwork from X-Plane, or any derivative thereof, without
+TEXT|294.0|264.0|224.0|14.0|406.0|271.0|permission from Laminar Research.
+TEXT|308.0|298.0|178.0|14.0|397.0|305.0|lagree to the terms of the EULA
+TEXT|295.7|326.5|252.7|25.6|422.0|339.3|Additional Terms for Jeppesen Data
+TEXT|302.0|366.0|506.0|16.0|555.0|374.0|YOU (herein also "End-User") HAVE LICENSED JEPPESEN'S NAVDATA ("DATA")
+TEXT|300.0|382.0|472.0|18.0|536.0|391.0|(called "Products" hereinafter) FROM NAVIGRAPH KB ("OEM") UNDER AN
+TEXT|300.0|398.0|520.0|20.0|560.0|408.0|AGREEMENT (herein "Agreement"). PLEASE READ THE FOLLOWING ADDITIONAL
+TEXT|300.0|414.0|500.0|20.0|550.0|424.0|TERMS ("Additional Terms") PROVIDED TO YOU BY OEM CAREFULLY BEFORE
+TEXT|300.0|430.0|490.0|18.0|545.0|439.0|USING THE PRODUCTS. THESE ADDITIONAL TERMS ARE LEGALLY BINDING
+TEXT|300.0|446.0|502.0|18.0|551.0|455.0|UPON YOU IN ADDITION AND AS AN INTEGRAL PART OF THE AGREEMENT. BY
+TEXT|300.0|462.0|502.0|18.0|551.0|471.0|YOUR BELOW SIGNATURE, END-USER IS AGREEING TO EACH TERM OF THESE
+TEXT|300.0|478.0|440.0|18.0|520.0|487.0|ADDITIONAL TERMS AS PART OF THE AGREEMENT INCLUDING THE
+TEXT|300.0|494.0|500.0|20.0|550.0|504.0|RESTRICTIONS ON USE, DISCLAIMERS AND LIMITATION OF LIABILITIES. ANY
+TEXT|300.0|510.0|484.0|18.0|542.0|519.0|USE OF THE PRODUCTS WILL ALSO CONSTITUTE YOUR AGREEMENT WITH
+TEXT|300.0|526.0|510.0|18.0|555.0|535.0|THESE ADDITIONAL TERMS AS PART OF THE AGREEMENT. In case of a conflict
+TEXT|302.0|542.0|496.0|18.0|550.0|551.0|between the Agreement and anything stated in these Additional Terms, these
+TEXT|302.0|560.0|272.0|16.0|438.0|568.0|Additional Terms shall govern and prevail.
+TEXT|302.0|590.0|166.0|16.0|385.0|598.0|1. ACKNOWLEDGEMENTS
+TEXT|296.0|624.0|520.0|16.0|556.0|632.0|Help make X-Plane better by allowing X-Plane to send us information about how you
+TEXT|294.0|640.0|364.0|16.0|476.0|648.0|use it. We do not collect personally identifying information.
+TEXT|295.8|659.8|310.3|21.5|451.0|670.5|• Send diagnostic and usage data to Laminar Research
+TEXT|88.0|728.0|116.0|14.0|146.0|735.0|Cancel Installation
+TEXT|240.0|728.0|120.0|16.0|300.0|736.0|Buy X-Plane Online
+TEXT|664.0|728.0|34.0|14.0|681.0|735.0|Back
+TEXT|752.0|659.9|76.1|14.3|790.0|667.0|Learn More
+TEXT|797.8|689.4|40.3|13.2|818.0|696.0|5.4.0-г1
+TEXT|760.0|728.0|58.0|14.0|789.0|735.0|Continue
