@@ -376,8 +376,10 @@ const externalRecords = [
 const records = [...packageRecords, ...externalRecords].filter((entry) => (
   !selectedResources || selectedResources.has(normalizeResource(entry.resource))
 ));
-const packageResources = [...new Set(packageRecords.map((entry) => normalizeResource(entry.resource)))].sort();
-const externalResources = [...new Set(externalRecords.map((entry) => normalizeResource(entry.resource)))].sort();
+const selectedPackageRecords = records.filter((entry) => entry.sourceClass === "package-owned");
+const selectedExternalRecords = records.filter((entry) => entry.sourceClass === "external-library");
+const packageResources = [...new Set(selectedPackageRecords.map((entry) => normalizeResource(entry.resource)))].sort();
+const externalResources = [...new Set(selectedExternalRecords.map((entry) => normalizeResource(entry.resource)))].sort();
 const resources = [...new Set(records.map((entry) => normalizeResource(entry.resource)))].sort();
 
 const materialized = {};
