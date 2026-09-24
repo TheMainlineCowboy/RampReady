@@ -17,6 +17,7 @@ const AUTOGATE_26M = Object.freeze({
   bridgeYawDegrees: Object.freeze([58.87485095, 66.4785727]),
   cabinRelativeYawDegrees: Object.freeze([-60.6997204, -67.50015727]),
   sourceTranslationZMeters: Object.freeze([1, -6.5]),
+  innerTunnelTranslationYMeters: Object.freeze([-0.64999994, -7.41999963]),
   vertRangeMeters: Object.freeze([-2, 0]),
   sourceBridgePitchDegreesAtMinus2: 3.99981854,
 });
@@ -119,11 +120,19 @@ export function installA1ExactAutoGateController({
     cabinHalfARotationY: cabinHalfA.rotation.y,
   });
 
-  const attachedBridgeYaw = linearCurve(AUTOGATE_26M.bridgeYawDegrees, attachedLatMeters);
-  const attachedCabinRelativeYaw = linearCurve(
+  // The exact WED stock facade is the authored parked/rest pose. AutoGate's
+  // datarefs are zero in that pose and rise toward the aircraft during ENGAGE.
+  // Therefore all dynamic yaw/telescope deltas are measured from lat=0, not
+  // from the attached lat target.
+  const restBridgeYaw = linearCurve(AUTOGATE_26M.bridgeYawDegrees, 0);
+  const restCabinRelativeYaw = linearCurve(
     AUTOGATE_26M.cabinRelativeYawDegrees,
-    attachedLatMeters,
+    0,
   );
+  const innerTunnelTravelPerLatMeter =
+    (Math.abs(AUTOGATE_26M.innerTunnelTranslationYMeters[1])
+      - Math.abs(AUTOGATE_26M.innerTunnelTranslationYMeters[0]))
+    / AUTOGATE_26M.latRangeMeters[1];
   const history = ["attached-to-aircraft-door"];
   let deployment = 1;
   let connectedLatMeters = attachedLatMeters;
@@ -143,18 +152,20 @@ export function installA1ExactAutoGateController({
     // dataref value rather than bypassing the visible departure motion.
     const currentLatMeters = connectedLatMeters * deployment;
     const currentVertMeters = connectedVertMeters * deployment;
-    const retractMeters = attachedLatMeters - currentLatMeters;
+    const retractMeters = connectedLatMeters - currentLatMeters;
 
-    // AutoGate's top-level lat translation is exactly one metre of entrance
-    // travel per metre of dataref movement. Preserve the authored attached pose
-    // as zero delta and reverse that curve toward the rest state.
+    // WED is lat=0/rest. ENGAGE increases lat toward the ACF door target.
+    // Port the supplied AutoGate-26m yaw and inner-tunnel translation from that
+    // true rest baseline; DISENGAGE simply reverses these same source curves.
     const bridgeYaw = linearCurve(AUTOGATE_26M.bridgeYawDegrees, currentLatMeters);
-    const bridgeYawDelta = radians(bridgeYaw - attachedBridgeYaw);
+    const bridgeYawDelta = radians(bridgeYaw - restBridgeYaw);
     const cabinRelativeYaw = linearCurve(
       AUTOGATE_26M.cabinRelativeYawDegrees,
       currentLatMeters,
     );
-    const cabinCounterYawDelta = radians(cabinRelativeYaw - attachedCabinRelativeYaw);
+    const cabinCounterYawDelta = radians(cabinRelativeYaw - restCabinRelativeYaw);
+    const innerTunnelExtensionMeters =
+      currentLatMeters * innerTunnelTravelPerLatMeter;
 
     const bridgePitchDelta = sourceVerticalPitchRadians(currentVertMeters);
     // MisterX AutoGate-26m.obj uses marginal.org.uk/autogate/vert as a true
@@ -166,12 +177,12 @@ export function installA1ExactAutoGateController({
     tunnelWall.rotation.x = originals.tunnelRotationX + bridgePitchDelta;
     tunnelWall.rotation.y = originals.tunnelRotationY + bridgeYawDelta;
 
-    // Exact XP11 spelling [10,11]: Segment 10 is the 9.5 m terminal-side
-    // outer tunnel and remains completely fixed. Segment 11 is the 1.5 m
-    // aircraft-side inner section with jw_tunnel_2_5b + cabin-half attachments.
-    // Telescope by translating only Segment 11 back inside Segment 10.
+    // Exact XP11 spelling [10,11]: Segment 10 is the terminal-side outer
+    // tunnel. Segment 11 is the aircraft-side inner section. MisterX's exact
+    // AutoGate-26m curve moves the inner section from -0.65 m at lat=0 to
+    // -7.42 m at lat=7.5. Reproduce that delta against the WED rest geometry.
     aircraftTunnelSegment.position.z = originals.aircraftTunnelSegmentZ
-      + retractMeters / tunnelWall.scale.z;
+      - innerTunnelExtensionMeters / tunnelWall.scale.z;
 
     // Segment 11 owns the exact stock cabin-half-B attachment pivot. After
     // telescope/yaw/pitch, use that transformed source joint directly instead
@@ -219,6 +230,7 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateBridgePitchDegrees = THREE.MathUtils.radToDeg(bridgePitchDelta);
     root.userData.a1AutoGateCabinVerticalDeltaMeters = jointVerticalDelta;
     root.userData.a1AutoGateRetractedMeters = retractMeters;
+    root.userData.a1AutoGateInnerTunnelExtensionMeters = innerTunnelExtensionMeters;
     root.userData.a1AutoGateBridgeYawDeltaDegrees = bridgeYaw - attachedBridgeYaw;
     root.userData.a1AutoGateCabinCounterYawDeltaDegrees = cabinRelativeYaw - attachedCabinRelativeYaw;
     root.userData.a1AutoGateCabinJointGapMeters = cabinJointGapMeters;
@@ -403,7 +415,7 @@ export function installA1ExactAutoGateController({
   });
 
   root.userData.a1AutoGateControllerAuthority =
-    "exact-WED-104804-XP11-stock-facade-plus-XPlane-ACF-and-MisterX-AutoGate-26m-lat-vert-translation-pitch-v4";
+    "exact-WED-rest-plus-XPlane-ACF-and-MisterX-AutoGate-26m-engage-disengage-v5";
   root.userData.a1AutoGateSourceGeometryAuthority =
     "KPHX-1.75.1-WED-104804-plus-XP11-Jetway_1_solid.fac";
   root.userData.a1AutoGateMotionSource = AUTOGATE_26M.sourceAsset;
