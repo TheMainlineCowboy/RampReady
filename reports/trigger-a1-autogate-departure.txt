@@ -1,5 +1,5 @@
-Trigger focused exact A1 AutoGate departure verification.
-Source geometry: WED 104804 / XP11 Jetway_1_solid.fac
-CRJ attached AutoGate lat: 6.160 m
+Retrigger focused exact A1 AutoGate departure verification in training mode.
+Expected attached lat: 6.160 m
+Expected parked lat: 0.000 m
 Expected duration: 15000 ms
-Branch head before trigger: 1ec82159a42ab6eb3bb3adee5f244f5478d98f78
+Workflow fix commit: 0c74463927103fbab39f5c99fc931b5a4fc486a2
