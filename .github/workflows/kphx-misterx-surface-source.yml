@@ -1,0 +1,114 @@
+name: KPHX MisterX Surface Source Tail
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-misterx-surface-source.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-misterx-surface-source
+  cancel-in-progress: false
+
+jobs:
+  move-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install Drive downloader
+        run: python -m pip install --disable-pip-version-check gdown==5.2.0
+
+      - name: Configure checkpoint commits
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Move exact MisterX taxiline source tail
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines"
+          mkdir -p "$ROOT/Fresh" "$ROOT/Old/Stripes"
+
+          download() { gdown "https://drive.google.com/uc?id=$1" -O "$2"; }
+
+          download 1C_cOZTdieu8_GL_0dekD8FNaOT34qGIB "$ROOT/Fresh/Runway_Hold_B.lin"
+          download 1Hytwtm8zrYM8toDB-LGz-NJSASJUi0Id "$ROOT/Fresh/Taxilines_NML.png"
+          download 1sgt-_H_H-1FSSancr8LYul6gDJaKNuFR "$ROOT/Fresh/Taxilines.dds"
+
+          download 1M66Tfia403Tj6gvKM72u3QDiWBEI9-qZ "$ROOT/Old/Centerline_B.lin"
+          download 1IS6zlPrnvRwB6b5um9l_fFUuPkJPuKgJ "$ROOT/Old/Red_White_B.lin"
+          download 1ylMGjegfnVKJCa3VXeyTbrS6twvCf4vp "$ROOT/Old/Removed_Line_1.5m.lin"
+          download 15cRRh_97lLtoib3tUi7T9QzTZ_JmPzB2 "$ROOT/Old/Removed_Line_1m.lin"
+          download 1-hjQcK3Iwd_WPJgA2lLq9WDtxgHI07t3 "$ROOT/Old/Removed_Line_2m.lin"
+          download 1duirZmXT-QAPjUsx21ckKJXDkHtCrskY "$ROOT/Old/Enhanced_Centerline_B.lin"
+          download 1IvDZSI44NDbiLagzmqH2ZjmJXAVD2C0h "$ROOT/Old/Hold_B.lin"
+          download 15hfepnlMKi9e0bpq36oLyOKhg9FomGV_ "$ROOT/Old/Road_Dash.lin"
+          download 15rvmDz2GxG_ICJBcFOjwNCHGfYhWY8tH "$ROOT/Old/Taxilines_NML.png"
+          download 1rDb_5a6duHKA7KxX2OVbDF1SNFb7y3iG "$ROOT/Old/Taxilines.dds"
+          download 18ob28-sxDD4kj-y116b7Y7CPe5834393 "$ROOT/Old/Taxilines_removed.dds"
+          download 1MPpP_Qga_S3OYeQC3oU21D1I-gmyW7f4 "$ROOT/Old/Stripes/White_Stripes_small.pol"
+          download 1dM3HxF8Uv2Ids4twgg8dez78ENooKgAm "$ROOT/Old/Stripes/White_Stripes.dds"
+
+          find "$ROOT" -type f -print0 | sort -z | xargs -0 sha256sum             > assets/kphx-source/dependencies/MisterX_Library_2.0c/SURFACE-TAXILINES-SHA256SUMS.txt
+
+          git add "$ROOT" assets/kphx-source/dependencies/MisterX_Library_2.0c/SURFACE-TAXILINES-SHA256SUMS.txt
+          git commit -m "Move exact MisterX KPHX taxiline source tail"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Move exact MisterX ground texture source tail
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Ground_Textures"
+          mkdir -p "$ROOT/Decals"
+
+          download() { gdown "https://drive.google.com/uc?id=$1" -O "$2"; }
+
+          download 1Do30bLPr5HQJNHMVvdTGYfOVPYodAiyC "$ROOT/Asphalt_2_Base.pol"
+          download 1Rk0rfbb6Pp17y7RYWTyTZxLweodEax7e "$ROOT/Asphalt_2_Base.dds"
+          download 1pqVz7W_VgZr14cF-VuwM0KwDtDwV5t9m "$ROOT/Asphalt_2_NRM.png"
+          download 1AL8TGweqjPgPB-GZBlN6rnHEGLfxFNU5 "$ROOT/Asphalt_2_WM.png"
+
+          download 1FfYGvPN_wt8ncNDtrZqBhYifMoxKPxsz "$ROOT/Concrete_3_Brown.pol"
+          download 1-ctsqnHehs7xQe0fzyHHuaBqK_OQYcnN "$ROOT/Concrete_3_Brown.dds"
+          download 1ixb2sMSgtRHLguToYM8ix7oL-YyVTP36 "$ROOT/Concrete_3_NRM.png"
+          download 150HUemtQZiv5tt6xD-6CULE-YdjsQ2Nh "$ROOT/Concrete_3_WM.png"
+
+          download 18UgdLvXFzOJlVFRpV3xXtu5ON8_edYRJ "$ROOT/Decals/apt_asphalt.dcl"
+          download 1QhNmI4K3NBhRYu85zS6sepIlkeMaQJUF "$ROOT/Decals/apt_concrete.dcl"
+          download 1yV1fjy_iwoMAui5kuggeMXNemeD13JJu "$ROOT/Decals/Road_Decal.png"
+          download 1IZ3GyM96d7yvfTjac9PBrlza9jR_pNss "$ROOT/Decals/Clouds.png"
+          download 1imcL49Ka_JXJmDj_gOvTwBIYHStMpc8Z "$ROOT/Decals/Asphalt_Detail.png"
+
+          find "$ROOT" -type f -print0 | sort -z | xargs -0 sha256sum             > assets/kphx-source/dependencies/MisterX_Library_2.0c/SURFACE-GROUND-SHA256SUMS.txt
+
+          git add "$ROOT" assets/kphx-source/dependencies/MisterX_Library_2.0c/SURFACE-GROUND-SHA256SUMS.txt
+          git commit -m "Move exact MisterX KPHX ground texture source tail"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
+
+      - name: Mark MisterX surface source complete
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin kphx-full-airport-import
+          mkdir -p reports
+          printf '%s\n'             'MisterX 2.0c KPHX surface source tail complete.'             '10 taxiline/stripe resources + 2 ground polygons and exact referenced textures/decals moved from user-supplied Drive library.'             > reports/kphx-misterx-surface-source-ready.txt
+          git add reports/kphx-misterx-surface-source-ready.txt
+          git commit -m "Mark exact MisterX surface source ready"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
