@@ -132,11 +132,15 @@ const trainer = fs.readFileSync("src/components/RampReadyStandupTrainerTerminal4
 assert(trainer.includes("KPHX_INVISIBLE_CONCRETE_SOURCE_UNDERLAY"), "Transparent concrete source-compatible underlay missing");
 assert(trainer.includes("ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol"), "Exact A1 source concrete underlay authority missing");
 assert(trainer.includes('A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPosition-27855"'), "Exact A1 WED ramp-position heading authority missing");
-assert(trainer.includes("const A1_SCENARIO_POSE = createKphxTerminal4GateScenarioPose"), "A1 does not use shared T4 gate scenario resolver");
-assert(trainer.includes("A1_SOURCE_HEADING_DEGREES = A1_SCENARIO_POSE.sourceHeadingDegrees"), "A1 aircraft heading is not derived from shared WED scenario pose");
-assert(trainer.includes("A1_AIRCRAFT_YAW_RADIANS = A1_SCENARIO_POSE.aircraft.yaw"), "A1 runtime yaw is not derived from shared WED scenario pose");
-assert(trainer.includes("A1_EQUIPMENT_SPAWN = A1_SCENARIO_POSE.equipment"), "A1 equipment pose is not derived from the same shared WED scenario pose");
-assert(trainer.includes("A1_EQUIPMENT_SPAWN_AUTHORITY = A1_SCENARIO_POSE.authority"), "A1 equipment authority is not shared with aircraft gate pose");
+assert(trainer.includes('const A1_AIRCRAFT_TYPE = "CRJ700"'), "A1 current aircraft profile is not explicitly CRJ700");
+assert(trainer.includes("const A1_SCENARIO_POSE = createA1AircraftDockingScenarioPose"), "A1 does not use the X-Plane ACF/WED docking resolver");
+assert(trainer.includes("A1_SOURCE_HEADING_DEGREES = A1_SCENARIO_POSE.sourceHeadingDegrees"), "A1 aircraft heading is not derived from the source WED docking pose");
+assert(trainer.includes("A1_AIRCRAFT_YAW_RADIANS = A1_SCENARIO_POSE.aircraft.yaw"), "A1 runtime yaw is not derived from the source WED docking pose");
+assert(trainer.includes("A1_EQUIPMENT_SPAWN = A1_SCENARIO_POSE.equipment"), "A1 equipment pose is not derived from the same ACF/WED docking pose");
+assert(trainer.includes("A1_EQUIPMENT_SPAWN_AUTHORITY = A1_SCENARIO_POSE.authority"), "A1 equipment authority is not shared with aircraft docking pose");
+assert(trainer.includes("dataset.a1AircraftDockingAuthority = A1_SCENARIO_POSE.authority"), "A1 ACF/WED docking runtime evidence missing");
+assert(trainer.includes("dataset.a1XPlaneAutoGateLatMeters"), "A1 X-Plane AutoGate lateral target runtime evidence missing");
+assert(trainer.includes("dataset.a1XPlaneAutoGateVertMeters"), "A1 X-Plane AutoGate vertical target runtime evidence missing");
 assert(trainer.includes("aircraft.position.set(A1_AIRCRAFT_START_X, 0, NOSE_START_Z);"), "Initial A1 aircraft source position missing");
 assert(trainer.includes("aircraft.rotation.y = A1_AIRCRAFT_YAW_RADIANS;"), "Initial A1 aircraft source yaw missing");
 assert(trainer.includes("sim.aircraft.position.set(A1_AIRCRAFT_START_X, 0, NOSE_START_Z);"), "A1 aircraft reset source position missing");
@@ -155,6 +159,27 @@ assert(trainer.includes('dataset.lektroOperatorViewAuthority = "r187a-driver-sea
 assert(!trainer.includes("same-a1-wed-gate-pose-equipment-spawn-v1"), "Obsolete A1-only equipment spawn authority remains");
 assert(trainer.includes("dataset.a1EquipmentSpawnAuthority = A1_EQUIPMENT_SPAWN_AUTHORITY"), "A1 equipment runtime evidence missing");
 
+const aircraftDoorAuthority = fs.readFileSync("src/environment/kphxFullAirport/aircraftDoorAuthority.js", "utf8");
+assert(aircraftDoorAuthority.includes("20200329_CRJSeries_Xplane11_v1.zip"), "RobertSV X-Plane CRJ ACF source archive authority missing");
+assert(aircraftDoorAuthority.includes('acfPath: "CRJ7NG/crj700NG.acf"'), "CRJ700 X-Plane ACF docking profile missing");
+assert(aircraftDoorAuthority.includes('acfPath: "CRJ9NG/crj900NG.acf"'), "CRJ900 X-Plane ACF docking profile missing");
+assert(aircraftDoorAuthority.includes("boardingDoorFeet: [-4.5, -2.200000048, 16.299999237]"), "CRJ X-Plane boarding-door source values drifted");
+assert(aircraftDoorAuthority.includes("equilibriumHeightFeet: 7.027759075"), "CRJ700 equilibrium-height source value drifted");
+assert(aircraftDoorAuthority.includes("equilibriumHeightFeet: 7.037753105"), "CRJ900 equilibrium-height source value drifted");
+assert(!aircraftDoorAuthority.includes("aftOfVisibleNoseMeters"), "Obsolete visible-mesh CRJ door guess remains");
+
+const a1DockingAuthority = fs.readFileSync("src/environment/kphxFullAirport/a1AircraftDockingAuthority.js", "utf8");
+assert(a1DockingAuthority.includes("aircraftSideCabinEndWedNodeId: 104811"), "A1 source cabin-end WED node drifted");
+assert(a1DockingAuthority.includes("jetwayFacadeWedObjectId: 104804"), "A1 source jetway facade WED id drifted");
+assert(a1DockingAuthority.includes('createA1AircraftDockingScenarioPose("CRJ900")'), "CRJ900 ACF/WED source sanity cross-check missing");
+assert(a1DockingAuthority.includes("sourceRampToDockedShift.distance > 0.2"), "CRJ900 ACF/WED alignment tolerance guard missing");
+
+const a1AutoGateController = fs.readFileSync("src/environment/kphxFullAirport/a1ExactAutoGateController.js", "utf8");
+assert(a1AutoGateController.includes("exactTargets.latMeters"), "A1 controller does not consume exact ACF lateral target");
+assert(a1AutoGateController.includes("exactTargets.vertMeters"), "A1 controller does not consume exact ACF vertical target");
+assert(!a1AutoGateController.includes("Coarse pass first"), "Obsolete brute-force A1 door search remains");
+assert(a1AutoGateController.includes("doorContactGapMeters <= 0.08"), "A1 visible door-contact tolerance guard missing");
+
 const kphxSourceAuthority = fs.readFileSync("src/environment/kphxFullAirport/sourceAuthority.js", "utf8");
 assert(kphxSourceAuthority.includes('wedObjectId: "27855"'), "A1 source WED object drifted");
 assert(kphxSourceAuthority.includes("headingDegrees: -90.08"), "A1 source WED heading drifted from -90.08 degrees");
@@ -170,9 +195,9 @@ assert(gatePoseAuthority.includes('"same-wed-ramp-position-aircraft-equipment-po
 assert(gatePoseAuthority.includes("KPHX_T4_SUPPORTED_GATE_SCENARIO_POSES"), "All-supported-gate scenario pose collection missing");
 
 const exactGatePosePrep = fs.readFileSync("scripts/prepare-a1-exact-gate-pose-v1.mjs", "utf8");
-assert(exactGatePosePrep.includes("same-wed-ramp-position-aircraft-equipment-pose-v1"), "Final shared gate-scenario prep marker missing");
-assert(exactGatePosePrep.includes("createKphxTerminal4GateScenarioPose"), "Final prep does not enforce shared gate-scenario resolver");
-assert(exactGatePosePrep.includes("Stale A1 zero-pose reset survived"), "Final A1 exact gate-pose stale-reset guard missing");
+assert(exactGatePosePrep.includes("a1-wed-104804-node-104811-plus-xplane-crj-acf-autogate-door-v1"), "Final A1 ACF/WED docking prep marker missing");
+assert(exactGatePosePrep.includes("createA1AircraftDockingScenarioPose"), "Final prep does not enforce A1 X-Plane ACF/WED docking");
+assert(exactGatePosePrep.includes("Stale A1 generic/zero-pose logic survived"), "Final A1 ACF/WED stale-pose guard missing");
 
 const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
 const terminal4PrepareSteps = String(packageJson.scripts?.["prepare:terminal4-runtime"] || "").split(" && ");
@@ -236,7 +261,7 @@ console.log(JSON.stringify({
   supportedT4RampPositions: 76,
   supportedT4GateNames: 75,
   a1SourceHeadingDegrees: -90.08,
-  gateScenarioAuthority: "same-wed-ramp-position-aircraft-equipment-pose-v1",
+  gateScenarioAuthority: "a1-wed-104804-node-104811-plus-xplane-crj-acf-autogate-door-v1",
   t4GateHeadingAudit: "PASS",
   lektroRevision: lektro.revision,
   lektroSha256: lektro.sha256,
