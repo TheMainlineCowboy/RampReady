@@ -1,0 +1,39 @@
+name: KPHX XP12 Installer QA Commands
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-qa-command-audit.yml"
+
+concurrency:
+  group: kphx-xp12-qa-command-audit
+  cancel-in-progress: true
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Extract exact installer QA command table
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip"             -o /tmp/installer.zip
+          rm -rf /tmp/installer
+          mkdir -p /tmp/installer
+          unzip -q /tmp/installer.zip -d /tmp/installer
+          BIN="$(find /tmp/installer -maxdepth 2 -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          strings -a "$BIN" > /tmp/strings.txt
+          n="$(grep -n -m1 -F 'screenshot <string:file_path>' /tmp/strings.txt | cut -d: -f1)"
+          test -n "$n"
+          a=$(( n > 50 ? n-50 : 1 ))
+          b=$(( n+120 ))
+          echo "=== QA COMMAND TABLE CONTEXT ==="
+          sed -n "${a},${b}p" /tmp/strings.txt
+          echo
+          echo "=== INSTALLER-SPECIFIC COMMANDS ==="
+          grep -nE 'set_installer|destination|click|button|clipboard|special_key|wait|WAIT|quit|exit|dump|print.*button|qa_script|CLI script' /tmp/strings.txt | head -500 || true
