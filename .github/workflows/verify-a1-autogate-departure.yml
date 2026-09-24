@@ -57,7 +57,7 @@ jobs:
             if (message.type() === "error") consoleErrors.push(message.text());
           });
 
-          await page.goto("http://127.0.0.1:4173/RampReady/", {
+          await page.goto("http://127.0.0.1:4173/RampReady/?inspectionPreset=a1", {
             waitUntil: "domcontentloaded",
             timeout: 60000,
           });
