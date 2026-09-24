@@ -56,7 +56,7 @@ jobs:
             "Ground_Textures","GateNumbers","gate_number","Downtown","Construction","Digging",
             "DGSs-Marshaller","Ortho"
           ]);
-          const COMPLETE_EXTERNAL=new Set(["MisterX_Library","ZDP_Library","CDB-Library"]);
+          const COMPLETE_EXTERNAL=new Set(["MisterX_Library","ZDP_Library","CDB-Library","opensceneryx"]);
 
           const byPrefix={};
           for(const resource of resources){
@@ -106,6 +106,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add reports/kphx-unresolved-dependency-audit.json
-          git commit -m "Audit unresolved exact KPHX dependency families"
-          git pull --rebase origin kphx-full-airport-import
-          git push origin HEAD:kphx-full-airport-import
+          if git diff --cached --quiet; then
+            echo "Audit unchanged; nothing to commit."
+          else
+            git commit -m "Audit unresolved exact KPHX dependency families"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
