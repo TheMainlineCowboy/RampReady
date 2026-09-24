@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   stage:
-    runs-on: ubuntu-latest
+    runs-on: macos-14
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
@@ -31,22 +31,17 @@ jobs:
             reports/kphx-xp12-121212-directory.txt
           sparse-checkout-cone-mode: false
 
-      - name: Install Mesa software graphics and UI tools
-        shell: bash
-        run: |
-          set -euo pipefail
-          sudo apt-get update >/dev/null
-          sudo apt-get install -y             xvfb xauth x11-utils imagemagick             xfonts-base xfonts-75dpi xfonts-100dpi fontconfig             libgl1-mesa-dri libglx-mesa0 libglx0 libgl1 libglu1-mesa             mesa-vulkan-drivers vulkan-tools             libx11-6 libxi6 libxinerama1 libxrandr2 libxcursor1             libpangoxft-1.0-0 libgtk2.0-0t64 libxft2 libasound2t64 >/dev/null
-          sudo fc-cache -f >/dev/null
-
       - name: Download official XP12 installer
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/xp12-installer /tmp/xp12-demo
-          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip"             -o /tmp/xp12-installer.zip
-          unzip -q /tmp/xp12-installer.zip -d /tmp/xp12-installer
-          BIN="$(find /tmp/xp12-installer -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerMac.zip"             -o /tmp/xp12-installer.zip
+          ditto -x -k /tmp/xp12-installer.zip /tmp/xp12-installer
+          BIN="$(find /tmp/xp12-installer -type f -path '*/Contents/MacOS/*' -iname '*Installer*' -print -quit)"
+          if [ -z "$BIN" ]; then
+            BIN="$(find /tmp/xp12-installer -type f -path '*/Contents/MacOS/*' -print -quit)"
+          fi
           test -n "$BIN"
           chmod +x "$BIN"
           echo "$BIN" > /tmp/xp12-bin.txt
@@ -55,16 +50,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          Xvfb :99 -screen 0 1280x800x24 +extension GLX +render -noreset >/tmp/xvfb.log 2>&1 &
-          export DISPLAY=:99
-          for i in $(seq 1 20); do xdpyinfo >/dev/null 2>&1 && break; sleep 1; done
-          export LIBGL_ALWAYS_SOFTWARE=1
-          LVP="$(find /usr/share/vulkan/icd.d -type f \( -iname 'lvp_icd*.json' -o -iname '*lvp*.json' \) -print -quit)"
-          test -n "$LVP"
-          export VK_ICD_FILENAMES="$LVP"
-          export VK_DRIVER_FILES="$LVP"
-          vulkaninfo --summary >/tmp/vulkan-summary.txt 2>&1
-
           BIN="$(cat /tmp/xp12-bin.txt)"
           cat >/tmp/xp12.qa <<'QA'
           click "Install a Free Demo of X-Plane"
@@ -78,11 +63,24 @@ jobs:
           quit
           QA
 
-          set +e
-          timeout 190s "$BIN"             --qa_script=/tmp/xp12.qa             --install_numeric=121212             --install_name="X-Plane 12.1.2-r4-0f2fea01"             --no_web_server             >/tmp/xp12-installer.out 2>/tmp/xp12-installer.err
-          rc=$?
-          set -e
-          echo "installer_rc=$rc"
+          python3 - <<'PY'
+          import subprocess
+          cmd=[
+              open("/tmp/xp12-bin.txt").read().strip(),
+              "--lang=en",
+              "--qa_script=/tmp/xp12.qa",
+              "--install_numeric=121212",
+              "--install_name=X-Plane 12.1.2-r4-0f2fea01",
+              "--no_web_server",
+          ]
+          with open("/tmp/xp12-installer.out","wb") as out, open("/tmp/xp12-installer.err","wb") as err:
+              try:
+                  p=subprocess.run(cmd,stdout=out,stderr=err,timeout=190)
+                  rc=p.returncode
+              except subprocess.TimeoutExpired:
+                  rc=124
+          print(f"installer_rc={rc}")
+          PY
           count="$(find /tmp/xp12-demo -type f 2>/dev/null | wc -l | tr -d ' ')"
           echo "demo_file_count=$count"
           test "$count" -gt 0
