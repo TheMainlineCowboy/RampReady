@@ -17,6 +17,25 @@ function kphxRuntimeUrl(url) {
 const DEFAULT_MANIFEST_URL = "/models/kphx-full-airport/surfaces/manifest.json";
 const DEFAULT_NETWORK_URL = "/models/kphx-full-airport/surfaces/surface-network.json";
 
+const sharedSurfaceDocumentCache = new Map();
+const sharedSurfaceTextureCache = new Map();
+
+async function fetchSurfaceJson(url, label) {
+  if (!sharedSurfaceDocumentCache.has(url)) {
+    const promise = fetch(url, { cache: "no-cache" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`${label} returned HTTP ${response.status}`);
+        return response.json();
+      })
+      .catch((error) => {
+        sharedSurfaceDocumentCache.delete(url);
+        throw error;
+      });
+    sharedSurfaceDocumentCache.set(url, promise);
+  }
+  return sharedSurfaceDocumentCache.get(url);
+}
+
 const LAYER_GROUP_ORDER = Object.freeze({
   terrain: 0,
   beaches: 100,
@@ -44,12 +63,24 @@ function resourceAssetUrl(resource, image) {
 
 async function loadTexture(THREE, loader, url, { color = true } = {}) {
   if (!url) return null;
-  const texture = await loader.loadAsync(kphxRuntimeUrl(url));
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;
-  texture.needsUpdate = true;
-  return texture;
+  const resolvedUrl = kphxRuntimeUrl(url);
+  const key = `${resolvedUrl}|${color ? "srgb" : "linear"}`;
+  if (!sharedSurfaceTextureCache.has(key)) {
+    const promise = loader.loadAsync(resolvedUrl)
+      .then((texture) => {
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+        texture.needsUpdate = true;
+        return texture;
+      })
+      .catch((error) => {
+        sharedSurfaceTextureCache.delete(key);
+        throw error;
+      });
+    sharedSurfaceTextureCache.set(key, promise);
+  }
+  return sharedSurfaceTextureCache.get(key);
 }
 
 function polygonUv(point, headingDegrees, scaleMeters) {
@@ -370,13 +401,10 @@ export async function installKphxPackageOwnedSurfaceLayer(
 
   const resolvedManifestUrl = kphxRuntimeUrl(manifestUrl);
   const resolvedNetworkUrl = kphxRuntimeUrl(networkUrl);
-  const [manifestResponse, networkResponse] = await Promise.all([
-    fetch(resolvedManifestUrl, { cache: "no-cache" }),
-    fetch(resolvedNetworkUrl, { cache: "no-cache" }),
+  const [manifest, network] = await Promise.all([
+    fetchSurfaceJson(resolvedManifestUrl, "KPHX surface manifest"),
+    fetchSurfaceJson(resolvedNetworkUrl, "KPHX surface network"),
   ]);
-  if (!manifestResponse.ok) throw new Error(`KPHX surface manifest returned HTTP ${manifestResponse.status}`);
-  if (!networkResponse.ok) throw new Error(`KPHX surface network returned HTTP ${networkResponse.status}`);
-  const [manifest, network] = await Promise.all([manifestResponse.json(), networkResponse.json()]);
 
   if (manifest?.source?.version !== KPHX_FULL_AIRPORT_SOURCE.packageVersion) {
     throw new Error(`KPHX surface/source version mismatch: ${manifest?.source?.version || "unknown"}`);
