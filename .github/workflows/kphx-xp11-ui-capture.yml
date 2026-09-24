@@ -60,19 +60,43 @@ jobs:
           unzip -q /tmp/xp11.zip -d /tmp/xp11
           BIN="$(find /tmp/xp11 -type f -iname '*Installer*Linux*' -print -quit)"
           chmod +x "$BIN"
-          LD_PRELOAD=/tmp/libglxcompat.so LIBGL_ALWAYS_SOFTWARE=1 "$BIN"             --install_numeric=115501 --install_name="X-Plane 11.55r2" --no_web_server             >/tmp/stdout 2>/tmp/stderr &
+          LD_PRELOAD=/tmp/libglxcompat.so LIBGL_ALWAYS_SOFTWARE=1 "$BIN" \
+            --install_numeric=115501 --install_name="X-Plane 11.55r2" --no_web_server \
+            >/tmp/first-stdout 2>/tmp/first-stderr &
           PID=$!
-          sleep 5
-          # Captured first-run window is exactly 800x600 at +240,+100.
-          # Set Language button bounds are approximately root x=785..904, y=507..535.
+
+          WID=""
+          for i in $(seq 1 40); do
+            WID="$(xdotool search --onlyvisible --name 'X-System' 2>/dev/null | head -1 || true)"
+            [ -n "$WID" ] && break
+            sleep 0.5
+          done
+          test -n "$WID"
+
           xdotool mousemove --sync 844 521
           xdotool mousedown 1
           sleep 0.2
           xdotool mouseup 1
-          sleep 3
+
+          for i in $(seq 1 20); do
+            VISIBLE="$(xdotool search --onlyvisible --name 'X-System' 2>/dev/null | head -1 || true)"
+            [ -z "$VISIBLE" ] && break
+            sleep 0.25
+          done
+          test -z "$(xdotool search --onlyvisible --name 'X-System' 2>/dev/null | head -1 || true)"
+          kill "$PID2" 2>/dev/null || true
+          wait "$PID2" 2>/dev/null || true
+          sleep 1
+
+          LD_PRELOAD=/tmp/libglxcompat.so LIBGL_ALWAYS_SOFTWARE=1 "$BIN" \
+            --install_numeric=115501 --install_name="X-Plane 11.55r2" --no_web_server \
+            >/tmp/second-stdout 2>/tmp/second-stderr &
+          PID2=$!
+          sleep 6
           import -display :99 -window root /tmp/evidence/xp11-ui.png
           {
-            echo "pid=$PID"
+            echo "first_pid=$PID"
+            echo "second_pid=$PID2"
             echo "clicked_root=844,521"
             echo "=== windows ==="
             xwininfo -root -tree || true
@@ -80,8 +104,10 @@ jobs:
             xdotool search --onlyvisible --name '.*' 2>/dev/null | while read -r id; do
               echo "--- $id"; xdotool getwindowname "$id" 2>/dev/null || true; xdotool getwindowgeometry --shell "$id" 2>/dev/null || true
             done
-            echo "=== stderr ==="
-            tail -300 /tmp/stderr || true
+            echo "=== first stderr ==="
+            tail -200 /tmp/first-stderr || true
+            echo "=== second stderr ==="
+            tail -200 /tmp/second-stderr || true
           } >/tmp/evidence/xp11-ui.txt
           kill "$PID" 2>/dev/null || true
           wait "$PID" 2>/dev/null || true
