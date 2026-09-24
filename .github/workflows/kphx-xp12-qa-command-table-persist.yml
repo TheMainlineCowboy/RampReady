@@ -1,0 +1,59 @@
+name: KPHX XP12 QA Command Table Persist
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-qa-command-table-persist.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            reports
+          sparse-checkout-cone-mode: false
+      - name: Extract supported installer QA commands
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports /tmp/installer
+          curl -L --fail --retry 4 --show-error \
+            "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip" \
+            -o /tmp/installer.zip
+          unzip -q /tmp/installer.zip -d /tmp/installer
+          BIN="$(find /tmp/installer -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          strings -a "$BIN" > /tmp/strings.txt
+          {
+            echo "=== command-table context ==="
+            n="$(grep -n -m1 -F 'screenshot <string:file_path>' /tmp/strings.txt | cut -d: -f1 || true)"
+            if [ -n "$n" ]; then
+              a=$((n>70?n-70:1)); b=$((n+170))
+              sed -n "${a},${b}p" /tmp/strings.txt
+            fi
+            echo
+            echo "=== installer/QA option candidates ==="
+            grep -nEi 'qa_script|set_installer|install.*destination|destination|free demo|install.*demo|click|button|wait|quit|dump buttons|lang=|install_numeric|install_name|no_web_server' /tmp/strings.txt | head -700 || true
+          } > reports/kphx-xp12-qa-command-table.txt
+          cat reports/kphx-xp12-qa-command-table.txt
+      - name: Commit command table
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-qa-command-table.txt
+          git commit -m "Record XP12 installer supported QA commands"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
