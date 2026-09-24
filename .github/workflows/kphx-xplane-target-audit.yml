@@ -1,0 +1,82 @@
+name: KPHX X-Plane Target Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xplane-target-audit.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install archive tools
+        run: sudo apt-get update && sudo apt-get install -y p7zip-full
+
+      - name: Download locked KPHX source archive
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-source .kphx-extracted reports
+          gh release download kphx-source-1.75.1 --pattern '*.7z' --dir .kphx-source
+          ARCHIVE="$(find .kphx-source -type f -name '*.7z' -print -quit)"
+          test -n "$ARCHIVE"
+          7z x -y "$ARCHIVE" -o.kphx-extracted >/dev/null
+          WED="$(find .kphx-extracted -type f -name earth.wed.xml -print -quit)"
+          test -n "$WED"
+          test "$(sha256sum "$WED" | awk '{print $1}')" = "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498"
+
+      - name: Record exact target metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          WED="$(find .kphx-extracted -type f -name earth.wed.xml -print -quit)"
+          ROOT="$(dirname "$WED")"
+          {
+            echo "=== KPHX 1.75.1 WED SHA256 ==="
+            sha256sum "$WED"
+            echo
+            echo "=== earth.wed.xml first 160 lines ==="
+            head -160 "$WED"
+            echo
+            echo "=== WED target/version metadata matches ==="
+            grep -niE 'wed|target|x-plane|xplane|export|version|metadata' "$WED" | head -200 || true
+            echo
+            echo "=== package metadata candidates ==="
+            find "$ROOT" -maxdepth 3 -type f \(               -iname '*readme*' -o               -iname '*version*' -o               -iname '*validation*' -o               -iname 'WXLog.txt' -o               -iname 'apt.dat'             \) -print | sort
+            echo
+            for file in $(find "$ROOT" -maxdepth 3 -type f \( -iname '*readme*' -o -iname '*version*' -o -iname '*validation*' -o -iname 'WXLog.txt' \) -print | sort); do
+              echo
+              echo "=== $file ==="
+              file "$file" || true
+              sed -n '1,240p' "$file" 2>/dev/null || true
+            done
+            echo
+            echo "=== apt.dat header ==="
+            APT="$(find "$ROOT" -type f -name apt.dat -print -quit)"
+            if [ -n "$APT" ]; then head -80 "$APT"; fi
+          } > reports/kphx-xplane-target-audit.txt
+
+      - name: Commit target audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xplane-target-audit.txt
+          git commit -m "Audit exact KPHX X-Plane target metadata"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
