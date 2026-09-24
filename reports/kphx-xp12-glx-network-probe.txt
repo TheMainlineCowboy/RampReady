@@ -1,0 +1,255 @@
+installer_rc=124
+=== GLX shim ===
+
+=== installer stdout ===
+
+=== installer stderr URL / server lines ===
+
+=== network syscalls ===
+2992  +++ exited with 0 +++
+2991  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=2992, si_uid=1001, si_status=0, si_utime=0, si_stime=0} ---
+2991  +++ exited with 0 +++
+2990  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=2991, si_uid=1001, si_status=0, si_utime=0, si_stime=0} ---
+2990  socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC, 0) = 7
+2990  connect(7, {sa_family=AF_UNIX, sun_path=@"/tmp/.X11-unix/X99"}, 21) = 0
+2990  getpeername(7, {sa_family=AF_UNIX, sun_path=@"/tmp/.X11-unix/X99"}, [124 => 21]) = 0
+2990  recvfrom(7, "\1\0\v\0\0\0\207\2", 8, 0, NULL, NULL) = 8
+2990  recvfrom(7, "\223\245\270\0\0\0 \0\377\377\37\0\0\1\0\0\24\0\377\377\1\6\0\0  \10\377\0\0\0\0The X.Org Foundation\1\1 \0\0\0\0\0\4\10 \0\0\0\0\0\10\10 \0\0\0\0\0\20\20 \0\0\0\0\0\30  \0\0\0\0\0   \0\0\0\0\0\37\2\0\0 \0\0\0\377\377\377\0\0\0\0\0\0\0\0\0\0\5 \3E\1\313\0\1\0\1\0!\0\0\0\1\0\30\6\30\0P\0\0\0\0\0!\0\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\"\0\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\275\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\276\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\277\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\300\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\301\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\302\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\303\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\304\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\305\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\306\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\307\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\310\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\311\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\312\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\313\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\314\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\315\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\316\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\317\1\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\320\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\321\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\322\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\323\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\324\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\325\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\326\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\327\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\330\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\331\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\332\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\333\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\334\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\335\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\336\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\337\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\340\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\341\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\342\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\343\1\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\344\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\345\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\346\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\347\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\350\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\351\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\352\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\353\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\354\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\355\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\356\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\357\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\360\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\361\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\362\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\363\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\364\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\365\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\366\1\0\0\5\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\367\1\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\370\1\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\371\1\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\372\1\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\373\1\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\374\1\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\375\1\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\376\1\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\377\1\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\0\2\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\1\2\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\2\2\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\3\2\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\4\2\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\5\2\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\6\2\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\7\2\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\10\2\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\t\2\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\n\2\0\0\5\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\1\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0\10\0\0\0\0\0\0\0\20\0\0\0\0\0\0\0 \0\24\0\0\0\0\0@\0\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\v\2\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\f\2\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\r\2\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\16\2\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\17\2\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\20\2\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\21\2\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\22\2\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\23\2\0\0\4\10\0\1\0\0\377\0\0\377\0\0\377\0\0\0\0\0\0\0\24\2\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\25\2\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\26\2\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\27\2\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\30\2\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\31\2\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\32\2\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\33\2\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\34\2\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0\35\2\0\0\4\10\0\1\377\0\0\0\0\377\0\0\0\0\377\0\0\0\0\0", 2588, 0, NULL, NULL) = 2588
+2990  recvmsg(7, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\1\0\1\0\0\0\0\0\1\205\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", iov_len=4096}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, 0) = 32
+2990  recvmsg(7, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\1\0\2\0\0\0\0\0\377\377?\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", iov_len=4096}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, 0) = 32
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\1\0\4\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", iov_len=4096}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, 0) = 32
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\1\0\5\0\0\0\0\0\1\207U\211\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", iov_len=4096}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, 0) = 32
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\1\1\6\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", iov_len=4096}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, 0) = 32
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\1\0\7\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", iov_len=4096}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, 0) = 32
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\1\0\t\0=\3\0\0\377\377\1\0\3\0\376\377\366\377\0\0\0\0\0\0\3\0\16\0\21\0\20\0\4\0\0\0\0\0\0\0\0\0\377\0\0\0\33\0\0\0\0\0\16\0\4\0\0\1\0\0X\0\0\0\346\0\0\0@\0\0\0\347\0\0\0[\0\0\0\\\0\0\0]\0\0\0^\0\0\0_\0\0\0\350\0\0\0a\0\0\0W\0\0\0b\0\0\0\21\0\0\0;\0\0\0x\0\0\0c\0\0\0d\0\0\0d\0\0\0d\0\0\0e\0\0\0\351\0\0\0g\0\0\0X\0\0\0h\0\0\0i\0\0\0j\0\0\0k\0\0\0B\0\0\0\f\0\0\08\0\0\0\t\0\0\0\352\0\0\0\347\0\0\0=\0\0\0\353\0\0\0>\0\0\0\354\0\0\0\355\0\0\0\356\0\0\0\357\0\0\0002\0\0\0\360\0\0\0002\0\0\0A\0\0\0\347\0\0\0\22\0\0\0\361\0\0\0:\0\0\0\n\0\0\0<\0\0\0\212\0\0\09\0\0\0\n\0\0\0\1\0\n\0\f\0\v\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\5\0\1\0\0\0\0\0\2\0\3\0\5\0\f\0\0\0\0\0\1\0\5\0\6\0\f\0\370\377\0\0\0\0\10\0\t\0\v\0\0\0\0\0\1\0\10\0\t\0\r\0\2\0\0\0\0\0\f\0\16\0\f\0\0\0\0\0\0\0\n\0\v\0\f\0\0\0\0\0\0\0\2\0\3\0\f\0\370\377\0\0\1\0\4\0\6\0\f\0\4\0\0\0\1\0\4\0\6\0\f\0\4\0\0\0\0\0\5\0\6\0\f\0\371\377\0\0\0\0\t\0\n\0\t\0\0\0\0\0\1\0\3\0\4\0\2\0\2\0\0\0\0\0\4\0\5\0\5\0\374\377\0\0\2\0\3\0\4\0\2\0\0\0\0\0\0\0\4\0\5\0\f\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\3\0\6\0\t\0\f\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\0\0\10\0\t\0\f\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\0\0\10\0\t\0\f\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\2\0\3\0\4\0\t\0\0\0\0\0\1\0\3\0\4\0\t\0\2\0\0\0\0\0\t\0\n\0\t\0\0\0\0\0\0\0\10\0\n\0\6\0\376\377\0\0\1\0\n\0\n\0\t\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\1\0\16\0\21\0\f\0\2\0\0\0\0\0\n\0\v\0\f\0\0\0\0\0\1\0\n\0\v\0\f\0\0\0\0\0\1\0\v\0\f\0\f\0\0\0\0\0\1\0\v\0\f\0\f\0\0\0\0\0\1\0\t\0\v\0\f\0\0\0\0\0\1\0\10\0\n\0\f\0\0\0\0\0\1\0\v\0\r\0\f\0\0\0\0\0\1\0\n\0\f\0\f\0\0\0\0\0\1\0\2\0\4\0\f\0\0\0\0\0\0\0\6\0\10\0\f\0\0\0\0\0\1\0\t\0\v\0\f\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\1\0\f\0\r\0\f\0\0\0\0\0\1\0\n\0\f\0\f\0\0\0\0\0\1\0\f\0\r\0\f\0\0\0\0\0\2\0\n\0\v\0\f\0\0\0\0\0\1\0\f\0\r\0\f\0\1\0\0\0\2\0\v\0\f\0\f\0\0\0\0\0\1\0\n\0\v\0\f\0\0\0\0\0\0\0\t\0\n\0\f\0\0\0\0\0\1\0\n\0\f\0\f\0\0\0\0\0\0\0\n\0\v\0\f\0\0\0\0\0\1\0\16\0\17\0\f\0\0\0\0\0\1\0\t\0\v\0\f\0\0\0\0\0\1\0\n\0\v\0\f\0\0\0\0\0\0\0\t\0\n\0\f\0\0\0\0\0\1\0\4\0\5\0\f\0\3\0\0\0\0\0\4\0\5\0\f\0\0\0\0\0\0\0\3\0\5\0\f\0\3\0\0\0\0\0\7\0\10\0\f\0\373\377\0\0\0\0\t\0\t\0\376\377\3\0\0\0\0\0\3\0\6\0\r\0\366\377\0\0\1\0\t\0\t\0\t\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\1\0\10\0\10\0\t\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\1\0\10\0\t\0\t\0\0\0\0\0\1\0\5\0\5\0\f\0\0\0\0\0\1\0\10\0\t\0\t\0\4\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\1\0\2\0\3\0\f\0\0\0\0\0\377\377\2\0\4\0\f\0\4\0\0\0\0\0\7\0\10\0\f\0\0\0\0\0\1\0\2\0\3\0\f\0\0\0\0\0\2\0\r\0\16\0\t\0\0\0\0\0\1\0\10\0\t\0\t\0\0\0\0\0\1\0\10\0\t\0\t\0\0\0\0\0\1\0\10\0\t\0\t\0\4\0\0\0\1\0\10\0\t\0\t\0\4\0\0\0\1\0\5\0\5\0\t\0\0\0\0\0\1\0\7\0\10\0\t\0\0\0\0\0\1\0\5\0\5\0\v\0\0\0\0\0\1\0\10\0\t\0\t\0\0\0\0\0\0\0\7\0\10\0\t\0\0\0\0\0\0\0\v\0\f\0\t\0\0\0\0\0\0\0\7\0\10\0\t\0\0\0\0\0\0\0\7\0\10\0\t\0\3\0\0\0\1\0\7\0\10\0\t\0\0\0\0\0\1\0\4\0\6\0\f\0\4\0\0\0\1\0\2\0\4\0\f\0\4\0\0\0\1\0\4\0\6\0\f\0\4\0\0\0\1\0\t\0\n\0\6\0\374\377\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\5\0\1\0\0\0\0\0\2\0\3\0\6\0\t\0\3\0\0\0\1\0\10\0\t\0\v\0\2\0\0\0\0\0\10\0\t\0\f\0\0\0\0\0\0\0\10\0\t\0\n\0\375\377\0\0\0\0\t\0\t\0\f\0\0\0\0\0\1\0\2\0\4\0\f\0\4\0\0\0\1\0\10\0\t\0\f\0\3\0\0\0\1\0\4\0\5\0\f\0\366\377\0\0\0\0\f\0\f\0\f\0\0\0\0\0\1\0\6\0\6\0\f\0\373\377\0\0\1\0\7\0\t\0\10\0\376\377\0\0\0\0\10\0\n\0\6\0\377\377\0\0\0\0\4\0\5\0\5\0\374\377\0\0\0\0\f\0\f\0\f\0\0\0\0\0\0\0\5\0\6\0\v\0\366\377\0\0\1\0\6\0\7\0\f\0\371\377\0\0\0\0\t\0\n\0\v\0\0\0\0\0\0\0\5\0\6\0\f\0\373\377\0\0\0\0\5\0\6\0\f\0\373\377\0\0\1\0\4\0\6\0\r\0\366\377\0\0\1\0\10\0\t\0\t\0\4\0\0\0\1\0\10\0\t\0\f\0\3\0\0\0\2\0\3\0\5\0\6\0\374\377\0\0\0\0\4\0\6\0\0\0\4\0\0\0\0\0\3\0\6\0\f\0\373\377\0\0\1\0\5\0\6\0\f\0\373\377\0\0\1\0\7\0\t\0\10\0\376\377\0\0\0\0\f\0\16\0\f\0\0\0\0\0\0\0\f\0\16\0\r\0\0\0\0\0\0\0\r\0\16\0\f\0\0\0\0\0\1\0\10\0\n\0\t\0\3\0\0\0\0\0\n\0\v\0\20\0\0\0\0\0\0\0\n\0\v\0\20\0\0\0\0\0\0\0\n\0\v\0\20\0\0\0\0\0\0\0\n\0\v\0\17\0\0\0\0\0\0\0\n\0\v\0\17\0\0\0\0\0\0\0\n\0\v\0\17\0\0\0\0\0\0\0\16\0\20\0\f\0\0\0\0\0\1\0\v\0\f\0\f\0\4\0\0\0\1\0\t\0\v\0\20\0\0\0\0\0\1\0\t\0\v\0\20\0\0\0\0\0\1\0\t\0\v\0\20\0\0\0\0\0\1\0\t\0\v\0\17\0\0\0\0\0\0\0\3\0\4\0\20\0\0\0\0\0\0\0\3\0\4\0\20\0\0\0\0\0\377\377\4\0\4\0\20\0\0\0\0\0\0\0\3\0\4\0\17\0\0\0\0\0\0\0\f\0\f\0\f\0\0\0\0\0\1\0\n\0\f\0\17\0\0\0\0\0\1\0\f\0\r\0\20\0\0\0\0\0\1\0\f\0\r\0\20\0\0\0\0\0\1\0\f\0\r\0\20\0\0\0\0\0\1\0\f\0\r\0\17\0\0\0\0\0\1\0\f\0\r\0\17\0\0\0\0\0\1\0\t\0\n\0\10\0\0\0\0\0\1\0\f\0\r\0\r\0\1\0\0\0\1\0\n\0\f\0\20\0\0\0\0\0\1\0\n\0\f\0\20\0\0\0\0\0\1\0\n\0\f\0\20\0\0\0\0\0\1\0\n\0\f\0\17\0\0\0\0\0\1\0\n\0\v\0\20\0\0\0\0\0\2\0\n\0\v\0\f\0\0\0\0\0\2\0\t\0\n\0\f\0\0\0\0\0\1\0\t\0\t\0\r\0\0\0\0\0\1\0\t\0\t\0\r\0\0\0\0\0\1\0\t\0\t\0\r\0\0\0\0\0\1\0\t\0\t\0\f\0\0\0\0\0\1\0\t\0\t\0\f\0\0\0\0\0\1\0\t\0\t\0\r\0\0\0\0\0\1\0\16\0\17\0\t\0\0\0\0\0\1\0\10\0\10\0\t\0\4\0\0\0\1\0\10\0\t\0\r\0\0\0\0\0\1\0\10\0\t\0\r\0\0\0\0\0\1\0\10\0\t\0\r\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\1\0\4\0\4\0\r\0\0\0\0\0\1\0\4\0\4\0\r\0\0\0\0\0\0\0\5\0\4\0\r\0\0\0\0\0\1\0\4\0\4\0\f\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\1\0\10\0\t\0\r\0\0\0\0\0\1\0\10\0\t\0\r\0\0\0\0\0\1\0\10\0\t\0\r\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\1\0\10\0\n\0\t\0\0\0\0\0\1\0\10\0\n\0\n\0\0\0\0\0\1\0\10\0\t\0\r\0\0\0\0\0\1\0\10\0\t\0\r\0\0\0\0\0\1\0\10\0\t\0\r\0\0\0\0\0\1\0\10\0\t\0\f\0\0\0\0\0\0\0\7\0\10\0\r\0\3\0\0\0\1\0\10\0\t\0\f\0\4\0\0\0\0\0\7\0\10\0\f\0\3\0\0\0", iov_len=4096}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, 0) = 3348
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\1\0\f\0\0\0\0\0\362\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", iov_len=4096}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, 0) = 32
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\1\0\r\0\0\0\0\0\363\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", iov_len=4096}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, 0) = 32
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\26\0\17\0\2\0 \0\2\0 \0\0\0\0\0\23\1\334\0\331\2\212\0\0\0\0\0\0\0\0\0\23\0\22\0\2\0 \0\2\0 \0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", iov_len=4096}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, 0) = 64
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  recvmsg(7, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\f\0\22\0\2\0 \0\0\0\0\0\331\2\212\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", iov_len=4096}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, 0) = 32
+2990  recvmsg(7, {msg_namelen=0}, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+2990  --- SIGTERM {si_signo=SIGTERM, si_code=SI_USER, si_pid=2986, si_uid=1001} ---
+2990  +++ killed by SIGTERM +++
+
+=== generated installer files/logs ===
+/home/runner/actions-runner/cached/2.337.0/_diag/Runner_20260924-034604-utc.log
+/home/runner/actions-runner/cached/2.337.0/_diag/Worker_20260924-034605-utc.log
+/home/runner/X-Plane Installer Log.txt
+/home/runner/work/RampReady/RampReady/reports/kphx-freeware-download-discovery.log
+/home/runner/work/RampReady/RampReady/reports/kphx-exact-texture-recovery.log
+/home/runner/work/RampReady/RampReady/reports/kphx-jetway-terminal-audit.log
+/home/runner/work/RampReady/RampReady/reports/materialize-phx-inspection-pass.log
+--- /home/runner/actions-runner/cached/2.337.0/_diag/Runner_20260924-034604-utc.log
+  "ServerUrl": "",
+  "ServerUrlV2": "https://broker.actions.githubusercontent.com"
+[2026-09-24 03:46:04Z INFO CredentialManager] Creating type OAuthAccessToken
+[2026-09-24 03:46:04Z INFO CredentialManager] Creating credential type: OAuthAccessToken
+[2026-09-24 03:46:04Z INFO OAuthAccessTokenCredential] GetVssCredentials
+[2026-09-24 03:46:04Z INFO OAuthAccessTokenCredential] token retrieved: 1538 chars
+[2026-09-24 03:46:04Z INFO OAuthAccessTokenCredential] cred created
+[2026-09-24 03:46:04Z INFO BrokerMessageListener] Connecting to the Broker Server...
+[2026-09-24 03:46:04Z INFO CredentialManager] Creating type OAuthAccessToken
+[2026-09-24 03:46:04Z INFO CredentialManager] Creating credential type: OAuthAccessToken
+[2026-09-24 03:46:04Z INFO OAuthAccessTokenCredential] GetVssCredentials
+[2026-09-24 03:46:04Z INFO OAuthAccessTokenCredential] token retrieved: 1538 chars
+[2026-09-24 03:46:04Z INFO OAuthAccessTokenCredential] cred created
+[2026-09-24 03:46:04Z INFO CredentialManager] Creating type OAuthAccessToken
+[2026-09-24 03:46:04Z INFO CredentialManager] Creating credential type: OAuthAccessToken
+[2026-09-24 03:46:04Z INFO OAuthAccessTokenCredential] GetVssCredentials
+[2026-09-24 03:46:04Z INFO OAuthAccessTokenCredential] token retrieved: 1538 chars
+[2026-09-24 03:46:04Z INFO OAuthAccessTokenCredential] cred created
+[2026-09-24 03:46:05Z INFO BrokerMessageListener] _getMessagesTokenSource is already disposed.
+--- /home/runner/actions-runner/cached/2.337.0/_diag/Worker_20260924-034605-utc.log
+      "displayNameToken": {
+              "lit": "set -euo pipefail\nsudo apt-get update >/dev/null\nsudo apt-get install -y             gcc libgl-dev libx11-dev strace             xvfb xauth x11-utils xfonts-base xfonts-75dpi xfonts-100dpi fontconfig             libgl1-mesa-dri libglx-mesa0 libglx0 libgl1 libglu1-mesa mesa-utils             libpangoxft-1.0-0 libgtk2.0-0t64 libxft2 libxi6 libxinerama1             libxrandr2 libxcursor1 libasound2t64 >/dev/null\nsudo fc-cache -f >/dev/null\n"
+      "displayNameToken": {
+      "displayNameToken": {
+        "lit": "Start GLX display and download official XP12 installer"
+              "lit": "set -euo pipefail\nXvfb :99 -screen 0 1280x800x24 +extension GLX +render -noreset >/tmp/xvfb.log 2>&1 &\nexport DISPLAY=:99\nfor i in $(seq 1 20); do\n  if xdpyinfo >/dev/null 2>&1; then break; fi\n  sleep 1\ndone\nmkdir -p /tmp/xp12-installer /tmp/xp12-demo reports\ncurl -L --fail --retry 4 --show-error             \"https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip\"             -o /tmp/xp12-installer.zip\nunzip -q /tmp/xp12-installer.zip -d /tmp/xp12-installer\nBIN=\"$(find /tmp/xp12-installer -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)\"\ntest -n \"$BIN\"\nchmod +x \"$BIN\"\necho \"$BIN\" >/tmp/xp12-bin.txt\n"
+      "displayNameToken": {
+        "lit": "Trace official XP12.1.2 installer network path"
+              "lit": "set -euo pipefail\nBIN=\"$(cat /tmp/xp12-bin.txt)\"\ncat >/tmp/xp12.qa <<'QA'\nwait 2\ndump buttons\nclick \"Install a Free Demo of X-Plane\"\nwait 8\ndump buttons\nwait 5\ndump buttons\nquit\nQA\n\nexport DISPLAY=:99\nset +e\nLD_PRELOAD=/tmp/libglxcompat.so LIBGL_ALWAYS_SOFTWARE=1 timeout 40s             strace -f -e trace=network -s 8192 -o /tmp/xp12-network-strace.txt             \"$BIN\"               --qa_script=/tmp/xp12.qa               --install_numeric=121212               --install_name=\"X-Plane 12.1.2-r4-0f2fea01\"               --no_web_server             >/tmp/xp12-stdout.txt 2>/tmp/xp12-stderr.txt\nrc=$?\nset -e\n\n{\n  echo \"installer_rc=$rc\"\n  echo \"=== GLX shim ===\"\n  grep 'RAMPREADY_GLX_COMPAT' /tmp/xp12-stderr.txt || true\n  echo\n  echo \"=== installer stdout ===\"\n  cat /tmp/xp12-stdout.txt\n  echo\n  echo \"=== installer stderr URL / server lines ===\"\n  grep -Ei 'https?://|server|directory\\.txt|download|desktop\\.x-plane|lookup\\.x-plane|cloudfront|12\\.1\\.2|121212|sig=|ttl=|token|auth' /tmp/xp12-stderr.txt | tail -2000 || true\n  echo\n  echo \"=== network syscalls ===\"\n  tail -2500 /tmp/xp12-network-strace.txt || true\n  echo\n  echo \"=== generated installer files/logs ===\"\n  find /tmp/xp12-installer /tmp/xp12-demo \"$HOME\" -maxdepth 5 -type f               \\( -iname '*log*.txt' -o -iname 'directory.txt' -o -iname '*.log' \\)               -print 2>/dev/null | head -200\n  while IFS= read -r LOG; do\n    [ -f \"$LOG\" ] || continue\n    echo \"--- $LOG\"\n    grep -Ei 'https?://|server|directory\\.txt|download|desktop\\.x-plane|lookup\\.x-plane|cloudfront|12\\.1\\.2|121212|sig=|ttl=|token|auth' \"$LOG\" | tail -1200 || true\n  done < <(find /tmp/xp12-installer /tmp/xp12-demo \"$HOME\" -maxdepth 5 -type f               \\( -iname '*log*.txt' -o -iname 'directory.txt' -o -iname '*.log' \\)               -print 2>/dev/null | head -200)\n} > reports/kphx-xp12-glx-network-probe.txt\n\ncat reports/kphx-xp12-glx-network-probe.txt\ntest -s reports/kphx-xp12-glx-network-probe.txt\n"
+      "displayNameToken": {
+        "lit": "Commit XP12.1.2 network evidence"
+              "lit": "set -euo pipefail\ngit config user.name \"github-actions[bot]\"\ngit config user.email \"41898282+github-actions[bot]@users.noreply.github.com\"\ngit add reports/kphx-xp12-glx-network-probe.txt\ngit commit -m \"Capture XP12.1.2 installer network path under GLX shim\"\ngit pull --rebase origin kphx-full-airport-import\ngit push origin HEAD:kphx-full-airport-import\n"
+    "DistributedTask.EnableJobServerQueueTelemetry": {
+    "actions_display_helpful_actions_download_errors": {
+    "actions_use_bearer_token_for_codeload": {
+    "github_token": {
+      "value": "https://launch.actions.githubusercontent.com"
+      "value": "https://results-receiver.actions.githubusercontent.com/"
+    "system.github.token": {
+    "system.github.token.permissions": {
+          "ServerId": "",
+          "ServerName": "",
+          "CacheServerUrl": "https://artifactcache.actions.githubusercontent.com/PggG67mL1jnwTzNeXTNKng1waQ2I3Q71guKqQAYFNIw8GS3Xyd/",
+          "ResultsServiceUrl": "https://results-receiver.actions.githubusercontent.com/",
+          "PipelinesServiceUrl": "https://pipelinesghubeus7.actions.githubusercontent.com/PggG67mL1jnwTzNeXTNKng1waQ2I3Q71guKqQAYFNIw8GS3Xyd/",
+          "GenerateIdTokenUrl": "",
+        "url": "https://run-actions-2-azure-eastus.actions.githubusercontent.com/207/",
+        "authorization": {
+            "AccessToken": "***"
+          "scheme": "OAuth"
+          "v": "KPHX XP12.1.2 GLX Network Probe"
+          "k": "server_url",
+          "v": "https://github.com"
+          "v": "https://api.github.com"
+          "v": "https://api.github.com/graphql"
+                          "k": "author",
+                          "v": "Trace exact XP12.1.2 stock installer network path"
+                          "v": "https://github.com/TheMainlineCowboy/RampReady/commit/9c09308e5e0f46ebd24e306691ce450ae96ed054"
+                "v": "https://github.com/TheMainlineCowboy/RampReady/compare/75523807d775...9c09308e5e0f"
+                      "k": "author",
+                      "v": "Trace exact XP12.1.2 stock installer network path"
+                      "v": "https://github.com/TheMainlineCowboy/RampReady/commit/9c09308e5e0f46ebd24e306691ce450ae96ed054"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/{archive_format}{/ref}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/assignees{/user}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/git/blobs{/sha}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/branches{/branch}"
+                      "v": "https://github.com/TheMainlineCowboy/RampReady.git"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/collaborators{/collaborator}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/comments{/number}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/commits{/sha}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/compare/{base}...{head}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/contents/{+path}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/contributors"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/deployments"
+                      "k": "downloads_url",
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/downloads"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/events"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/forks"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/git/commits{/sha}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/git/refs{/sha}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/git/tags{/sha}"
+                      "k": "has_downloads",
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/hooks"
+                      "v": "https://github.com/TheMainlineCowboy/RampReady"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/issues/comments{/number}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/issues/events{/number}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/issues{/number}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/keys{/key_id}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/labels{/name}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/languages"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/merges"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/milestones{/number}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/notifications{?since,all,participating}"
+                            "v": "https://avatars.githubusercontent.com/u/276410654?v=4"
+                            "v": "https://api.github.com/users/TheMainlineCowboy/events{/privacy}"
+                            "v": "https://api.github.com/users/TheMainlineCowboy/followers"
+                            "v": "https://api.github.com/users/TheMainlineCowboy/following{/other_user}"
+                            "v": "https://api.github.com/users/TheMainlineCowboy/gists{/gist_id}"
+                            "v": "https://github.com/TheMainlineCowboy"
+                            "v": "https://api.github.com/users/TheMainlineCowboy/orgs"
+                            "v": "https://api.github.com/users/TheMainlineCowboy/received_events"
+                            "v": "https://api.github.com/users/TheMainlineCowboy/repos"
+                            "v": "https://api.github.com/users/TheMainlineCowboy/starred{/owner}{/repo}"
+                            "v": "https://api.github.com/users/TheMainlineCowboy/subscriptions"
+                            "v": "https://api.github.com/users/TheMainlineCowboy"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/pulls{/number}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/releases{/id}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/stargazers"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/statuses/{sha}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/subscribers"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/subscription"
+                      "v": "https://github.com/TheMainlineCowboy/RampReady"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/tags"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/teams"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady/git/trees{/sha}"
+                      "v": "https://api.github.com/repos/TheMainlineCowboy/RampReady"
+                      "v": "https://avatars.githubusercontent.com/u/276410654?v=4"
+                      "v": "https://api.github.com/users/TheMainlineCowboy/events{/privacy}"
+                      "v": "https://api.github.com/users/TheMainlineCowboy/followers"
+                      "v": "https://api.github.com/users/TheMainlineCowboy/following{/other_user}"
+                      "v": "https://api.github.com/users/TheMainlineCowboy/gists{/gist_id}"
+                      "v": "https://github.com/TheMainlineCowboy"
+                      "v": "https://api.github.com/users/TheMainlineCowboy/orgs"
+                      "v": "https://api.github.com/users/TheMainlineCowboy/received_events"
+                      "v": "https://api.github.com/users/TheMainlineCowboy/repos"
+                      "v": "https://api.github.com/users/TheMainlineCowboy/starred{/owner}{/repo}"
+                      "v": "https://api.github.com/users/TheMainlineCowboy/subscriptions"
+                      "v": "https://api.github.com/users/TheMainlineCowboy"
+[2026-09-24 03:46:05Z INFO JobServerQueue] Initializing results client
+[2026-09-24 03:46:05Z INFO ResultServer] Creating websocket client ...wss://results-receiver.actions.githubusercontent.com/_ws/ingest.sock
+[2026-09-24 03:46:05Z INFO ResultServer] Attempting to start websocket client with delay 00:00:00.
+[2026-09-24 03:46:05Z INFO JobServerQueue] Start process web console line queue.
+[2026-09-24 03:46:05Z INFO JobServerQueue] Start process file upload queue.
+[2026-09-24 03:46:05Z INFO JobServerQueue] Start results file upload queue.
+[2026-09-24 03:46:05Z INFO JobServerQueue] Starting results-based upload queue...
+[2026-09-24 03:46:05Z INFO JobServerQueue] Start process timeline update queue.
+[2026-09-24 03:46:05Z INFO JobExtension] Downloading actions
+[2026-09-24 03:46:06Z INFO ResultServer] Successfully started websocket client.
+[2026-09-24 03:46:06Z INFO JobServerQueue] Try to append 1 batches web console lines for record '49ea0ddb-3d9c-4b8f-abf9-6d98c2983b08', success rate: 1/1.
+          "lit": "token"
+          "expr": "github.token"
+          "lit": "github-server-url"
+          "lit": "token"
+          "expr": "github.token"
+          "lit": "github-server-url"
+          "lit": "token"
+          "expr": "github.token"
+          "lit": "github-server-url"
+[2026-09-24 03:46:06Z INFO ActionManifestManagerLegacy] Input 'token': default value evaluate result: {
+[2026-09-24 03:46:06Z INFO ActionManifestManagerLegacy] Input 'github-server-url': default value evaluate result: ""
+[2026-09-24 03:46:06Z INFO JobServerQueue] Try to append 1 batches web console lines for record '49ea0ddb-3d9c-4b8f-abf9-6d98c2983b08', success rate: 1/1.
+[2026-09-24 03:46:06Z INFO JobServerQueue] Try to append 1 batches web console lines for record '197797a1-809c-4a40-8052-164b45af5527', success rate: 1/1.
+[2026-09-24 03:46:06Z INFO JobServerQueue] Job timeline record has been updated for the first time.
+[2026-09-24 03:46:06Z INFO JobServerQueue] Try to append 1 batches web console lines for record '197797a1-809c-4a40-8052-164b45af5527', success rate: 1/1.
+[2026-09-24 03:46:06Z INFO JobServerQueue] Got a step log file to send to results service.
+[2026-09-24 03:46:06Z INFO JobServerQueue] Try to upload 1 log files or attachments, success rate: 1/1.
+[2026-09-24 03:46:06Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, /home/runner/actions-runner/cached/2.337.0/_diag/blocks/0c1e2ab4-a87d-4595-ab2c-cd58e4e332ff_49ea0ddb-3d9c-4b8f-abf9-6d98c2983b08.1
+[2026-09-24 03:46:06Z INFO JobServerQueue] Try to append 1 batches web console lines for record '197797a1-809c-4a40-8052-164b45af5527', success rate: 1/1.
+[2026-09-24 03:46:06Z INFO JobServerQueue] Tried to upload 1 file(s) to results, success rate: 1/1.
+[2026-09-24 03:46:07Z INFO JobServerQueue] Try to append 1 batches web console lines for record '197797a1-809c-4a40-8052-164b45af5527', success rate: 1/1.
+[2026-09-24 03:46:07Z INFO JobServerQueue] Try to upload 1 log files or attachments, success rate: 1/1.
+[2026-09-24 03:46:07Z INFO JobServerQueue] Try to append 1 batches web console lines for record '197797a1-809c-4a40-8052-164b45af5527', success rate: 1/1.
+[2026-09-24 03:46:07Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'd64dae8c-c4bf-464e-9deb-4a39fdd45474', success rate: 1/1.
+[2026-09-24 03:46:07Z INFO JobServerQueue] Got a step log file to send to results service.
+[2026-09-24 03:46:07Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, /home/runner/actions-runner/cached/2.337.0/_diag/blocks/0c1e2ab4-a87d-4595-ab2c-cd58e4e332ff_197797a1-809c-4a40-8052-164b45af5527.1
+[2026-09-24 03:46:08Z INFO JobServerQueue] Tried to upload 1 file(s) to results, success rate: 1/1.
+[2026-09-24 03:46:33Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'd64dae8c-c4bf-464e-9deb-4a39fdd45474', success rate: 1/1.
+[2026-09-24 03:46:36Z INFO JobServerQueue] Try to upload 1 log files or attachments, success rate: 1/1.
+[2026-09-24 03:46:36Z INFO JobServerQueue] Try to append 1 batches web console lines for record '530acf2f-bad5-47cb-b30b-2a319949c935', success rate: 1/1.
+[2026-09-24 03:46:36Z INFO StepsRunner] Processing step: DisplayName='Start GLX display and download official XP12 installer'
+[2026-09-24 03:46:37Z INFO JobServerQueue] Got a step log file to send to results service.
+[2026-09-24 03:46:37Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, /home/runner/actions-runner/cached/2.337.0/_diag/blocks/0c1e2ab4-a87d-4595-ab2c-cd58e4e332ff_d64dae8c-c4bf-464e-9deb-4a39fdd45474.1
+[2026-09-24 03:46:37Z INFO JobServerQueue] Try to append 1 batches web console lines for record '84881f58-acb7-483c-9f7c-a92e0bedba56', success rate: 1/1.
+[2026-09-24 03:46:37Z INFO JobServerQueue] Got a step log file to send to results service.
+[2026-09-24 03:46:37Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, /home/runner/actions-runner/cached/2.337.0/_diag/blocks/0c1e2ab4-a87d-4595-ab2c-cd58e4e332ff_530acf2f-bad5-47cb-b30b-2a319949c935.1
+[2026-09-24 03:46:37Z INFO JobServerQueue] Tried to upload 2 file(s) to results, success rate: 2/2.
+[2026-09-24 03:46:37Z INFO JobServerQueue] Try to upload 1 log files or attachments, success rate: 1/1.
+[2026-09-24 03:46:39Z INFO JobServerQueue] Try to append 1 batches web console lines for record '84881f58-acb7-483c-9f7c-a92e0bedba56', success rate: 1/1.
+[2026-09-24 03:46:39Z INFO JobServerQueue] Try to append 1 batches web console lines for record '84881f58-acb7-483c-9f7c-a92e0bedba56', success rate: 1/1.
+[2026-09-24 03:46:40Z INFO JobServerQueue] Try to append 1 batches web console lines for record '84881f58-acb7-483c-9f7c-a92e0bedba56', success rate: 1/1.
+[2026-09-24 03:46:40Z INFO StepsRunner] Processing step: DisplayName='Trace official XP12.1.2 installer network path'
+[2026-09-24 03:46:40Z INFO JobServerQueue] Try to upload 1 log files or attachments, success rate: 1/1.
+[2026-09-24 03:46:40Z INFO JobServerQueue] Try to append 1 batches web console lines for record '637b0c81-0ca4-4e1b-8df4-68ec7dae78bf', success rate: 1/1.
+[2026-09-24 03:46:41Z INFO JobServerQueue] Got a step log file to send to results service.
+[2026-09-24 03:46:41Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, /home/runner/actions-runner/cached/2.337.0/_diag/blocks/0c1e2ab4-a87d-4595-ab2c-cd58e4e332ff_84881f58-acb7-483c-9f7c-a92e0bedba56.1
+[2026-09-24 03:46:41Z INFO JobServerQueue] Tried to upload 1 file(s) to results, success rate: 1/1.
+[2026-09-24 03:47:05Z INFO JobServerQueue] Stop aggressive process web console line queue.
+--- /home/runner/X-Plane Installer Log.txt
+	'--install_name'='X-Plane 12.1.2-r4-0f2fea01'
+	'--install_numeric'='121212'
+	'--no_web_server'
+--- /home/runner/work/RampReady/RampReady/reports/kphx-freeware-download-discovery.log
+  "downloadForms": 4,
+--- /home/runner/work/RampReady/RampReady/reports/kphx-exact-texture-recovery.log
+--- /home/runner/work/RampReady/RampReady/reports/kphx-jetway-terminal-audit.log
+--- /home/runner/work/RampReady/RampReady/reports/materialize-phx-inspection-pass.log
+Verified AIR_Jetway01 source authority: original airport dimensions and textures are preserved, aircraft-specific shrinking is forbidden, and articulation requirements remain explicit while the original mesh is recovered.
+Terminal 4 jetway source authority verified: stock scale 1.00 is protected, exact textures and placement remain active, fallback geometry is disclosed, animation requirements are explicit, facade repetition is reduced, markings are pavement-coincident, and free-drive inspection controls are visible.
