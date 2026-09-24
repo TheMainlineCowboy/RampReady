@@ -1,0 +1,60 @@
+name: KPHX OpenSceneryX Exact Path Diagnostic
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-opensceneryx-paths.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-opensceneryx-paths
+  cancel-in-progress: true
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Inspect pinned official OpenSceneryX source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          git clone --filter=blob:none --no-checkout https://github.com/OpenSceneryX/Library.git .opensceneryx
+          git -C .opensceneryx checkout --detach 0128faa88f10f345bde77392e3a10d5b3bfd6b1e
+          {
+            echo "commit=$(git -C .opensceneryx rev-parse HEAD)"
+            echo
+            echo "stairs virtual-path mappings:"
+            git -C .opensceneryx grep -n -F 'opensceneryx/objects/airport/vehicles/stairs/3.obj' HEAD -- '*' || true
+            echo
+            echo "dirt virtual-path mappings:"
+            git -C .opensceneryx grep -n -F 'opensceneryx/polygons/surfaces/dirt/1.pol' HEAD -- '*' || true
+            echo
+            echo "candidate stairs files:"
+            git -C .opensceneryx ls-tree -r --name-only HEAD | grep -E '(^|/)stairs(/|.*)3\.obj$|3\.obj$' | grep -i 'stairs' | head -100 || true
+            echo
+            echo "candidate dirt files:"
+            git -C .opensceneryx ls-tree -r --name-only HEAD | grep -E '(^|/)dirt(/|.*)1\.pol$|1\.pol$' | grep -i 'dirt' | head -100 || true
+          } > reports/kphx-opensceneryx-exact-paths.txt
+
+      - name: Commit path evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-opensceneryx-exact-paths.txt
+          git commit -m "Resolve exact OpenSceneryX KPHX source paths"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
