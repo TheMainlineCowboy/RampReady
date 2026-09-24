@@ -60,10 +60,10 @@ jobs:
           page.on("console", m => { if (m.type() === "error") consoleErrors.push(m.text()); });
           let waitError = null;
           try {
-            await page.goto("http://127.0.0.1:4173/RampReady/?inspectionPreset=a1", { waitUntil: "domcontentloaded", timeout: 30000 });
+            await page.goto("http://127.0.0.1:4173/RampReady/", { waitUntil: "domcontentloaded", timeout: 30000 });
             await page.waitForFunction(() => {
               const d=document.querySelector("canvas.trainerCanvas")?.dataset||{};
-              return d.kphxExactLiveT4==="ready" && d.aircraftSource==="user-painted-crj700";
+              return d.kphxExactLiveT4==="ready" && d.aircraftSource==="user-painted-crj700" && d.inspectionMode==="training";
             }, null, { timeout: 30000 });
             await page.waitForTimeout(4000);
           } catch (e) {
