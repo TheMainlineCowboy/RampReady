@@ -66,8 +66,8 @@ export function installA1ExactAutoGateController({
     throw new Error("A1 exact AutoGate controller wall sequence changed");
   }
 
-  const profile = getRampReadyAircraftDoorProfile("CRJ700");
-  const doorTargets = getAutoGateDoorTargets(profile);
+  const defaultProfile = getRampReadyAircraftDoorProfile("CRJ700");
+  let doorTargets = getAutoGateDoorTargets(defaultProfile);
   const attachedLatMeters = doorTargets.latMeters;
   if (!(attachedLatMeters > 0 && attachedLatMeters < AUTOGATE_26M.latRangeMeters[1])) {
     throw new Error(`A1 CRJ AutoGate lat target is outside the supplied 26 m curve: ${attachedLatMeters}`);
@@ -126,7 +126,7 @@ export function installA1ExactAutoGateController({
   const history = ["attached-to-aircraft-door"];
   let deployment = 1;
   let connectedLatMeters = attachedLatMeters;
-  let connectedVertMeters = 0;
+  let connectedVertMeters = doorTargets.vertMeters;
   let dockingCorrectionMeters = 0;
   let dockingVerticalCorrectionMeters = 0;
   let doorContactGapMeters = Number.NaN;
@@ -294,57 +294,48 @@ export function installA1ExactAutoGateController({
     };
   }
 
-  function registerAircraftDoorContact({ targetWorld, outwardWorldDirection } = {}) {
+  function registerAircraftDoorContact({
+    targetWorld,
+    outwardWorldDirection,
+    aircraftType = doorTargets.aircraftType,
+  } = {}) {
     if (!targetWorld?.isVector3 || !outwardWorldDirection?.isVector3) {
-      throw new Error("A1 rendered aircraft door contact requires exact world point and outward direction");
+      throw new Error("A1 X-Plane ACF aircraft door contact requires exact world point and outward direction");
     }
 
-    // Solve only within the real supplied AutoGate-26m lat/vert dataref ranges.
-    // Coarse pass first; then refine around the best visible cabin hit.
-    let best = null;
-    const test = (lat, vert) => {
-      const result = evaluateConnectedPose(lat, vert, targetWorld, outwardWorldDirection);
-      if (!Number.isFinite(result.gapMeters)) return;
-      if (!best || result.gapMeters < best.gapMeters) best = result;
-    };
-
-    const low = Math.max(0.05, attachedLatMeters - 0.8);
-    const high = AUTOGATE_26M.latRangeMeters[1];
-    for (let vert = AUTOGATE_26M.vertRangeMeters[0]; vert <= 1e-9; vert += 0.1) {
-      for (let lat = low; lat <= high + 1e-9; lat += 0.1) test(lat, vert);
+    const profile = getRampReadyAircraftDoorProfile(aircraftType);
+    if (!profile) throw new Error(`Unsupported A1 aircraft AutoGate profile: ${aircraftType}`);
+    const exactTargets = getAutoGateDoorTargets(profile);
+    if (Math.abs(exactTargets.latMeters - attachedLatMeters) > 0.001) {
+      throw new Error(
+        `A1 AutoGate lateral source changed from ${attachedLatMeters.toFixed(4)} to ${exactTargets.latMeters.toFixed(4)} m`,
+      );
+    }
+    if (!Number.isFinite(exactTargets.vertMeters)) {
+      throw new Error(`A1 ${profile.aircraftType} ACF has no finite AutoGate vertical target`);
     }
 
-    if (best) {
-      const fineLatLow = Math.max(low, best.connectedLatMeters - 0.12);
-      const fineLatHigh = Math.min(high, best.connectedLatMeters + 0.12);
-      const fineVertLow = Math.max(AUTOGATE_26M.vertRangeMeters[0], best.connectedVertMeters - 0.12);
-      const fineVertHigh = Math.min(0, best.connectedVertMeters + 0.12);
-      for (let vert = fineVertLow; vert <= fineVertHigh + 1e-9; vert += 0.01) {
-        for (let lat = fineLatLow; lat <= fineLatHigh + 1e-9; lat += 0.01) test(lat, vert);
-      }
-    }
+    doorTargets = exactTargets;
+    const exact = evaluateConnectedPose(
+      exactTargets.latMeters,
+      exactTargets.vertMeters,
+      targetWorld,
+      outwardWorldDirection,
+    );
+    connectedLatMeters = exact.connectedLatMeters;
+    connectedVertMeters = exact.connectedVertMeters;
+    dockingCorrectionMeters = exact.correctionMeters;
+    dockingVerticalCorrectionMeters = exact.verticalCorrectionMeters;
+    setDeployment(1);
 
-    if (!best) {
-      connectedLatMeters = attachedLatMeters;
-      connectedVertMeters = 0;
-      dockingCorrectionMeters = 0;
-      dockingVerticalCorrectionMeters = 0;
-      setDeployment(1);
-      doorContactGapMeters = Number.NaN;
-      doorContactHitObject = "no-visible-cabin-hit";
-      doorContactReady = false;
-    } else {
-      connectedLatMeters = best.connectedLatMeters;
-      connectedVertMeters = best.connectedVertMeters;
-      dockingCorrectionMeters = best.correctionMeters;
-      dockingVerticalCorrectionMeters = best.verticalCorrectionMeters;
-      setDeployment(1);
-      const finalHit = measureDoorContactGap(targetWorld, outwardWorldDirection);
-      doorContactGapMeters = finalHit.distance;
-      doorContactHitObject = finalHit.objectName;
-      doorContactReady = Number.isFinite(doorContactGapMeters) && doorContactGapMeters <= 0.08;
-    }
+    const finalHit = measureDoorContactGap(targetWorld, outwardWorldDirection);
+    doorContactGapMeters = finalHit.distance;
+    doorContactHitObject = finalHit.objectName;
+    doorContactReady =
+      Number.isFinite(doorContactGapMeters) && doorContactGapMeters <= 0.08;
 
+    root.userData.a1AutoGateAircraftType = profile.aircraftType;
+    root.userData.a1AutoGateAircraftSourceAcf = profile.sourceAcf;
     root.userData.a1AutoGateConnectedLatMeters = connectedLatMeters;
     root.userData.a1AutoGateConnectedVertMeters = connectedVertMeters;
     root.userData.a1AutoGateDockingCorrectionMeters = dockingCorrectionMeters;
@@ -354,9 +345,11 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateDoorContactReady = doorContactReady;
     root.userData.a1AutoGateVerticalResolved = doorContactReady;
     root.userData.a1AutoGateDoorContactAuthority =
-      "visible-rendered-CRJ-L1-plus-MisterX-AutoGate-26m-lat-vert-to-XP11-stock-cabin-v2";
+      "RobertSV-XPlane11-ACF-dock-port-plus-Marginal-AutoGate-lat-vert-to-XP11-stock-cabin-v1";
 
     return Object.freeze({
+      aircraftType: profile.aircraftType,
+      sourceAcf: profile.sourceAcf,
       connectedLatMeters,
       connectedVertMeters,
       correctionMeters: dockingCorrectionMeters,
@@ -404,7 +397,7 @@ export function installA1ExactAutoGateController({
   });
 
   root.userData.a1AutoGateControllerAuthority =
-    "exact-WED-104804-XP11-stock-facade-plus-MisterX-AutoGate-26m-lat-vert-kinematics-v2";
+    "exact-WED-104804-XP11-stock-facade-plus-XPlane-ACF-and-MisterX-AutoGate-26m-kinematics-v3";
   root.userData.a1AutoGateSourceGeometryAuthority =
     "KPHX-1.75.1-WED-104804-plus-XP11-Jetway_1_solid.fac";
   root.userData.a1AutoGateMotionSource = AUTOGATE_26M.sourceAsset;
@@ -413,8 +406,8 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateAttachedLatMeters = attachedLatMeters;
   root.userData.a1AutoGateConnectedLatMeters = connectedLatMeters;
   root.userData.a1AutoGateConnectedVertMeters = connectedVertMeters;
-  root.userData.a1AutoGateDockingCorrectionMeters = 0;
-  root.userData.a1AutoGateDockingVerticalCorrectionMeters = 0;
+  root.userData.a1AutoGateDockingCorrectionMeters = connectedLatMeters - attachedLatMeters;
+  root.userData.a1AutoGateDockingVerticalCorrectionMeters = connectedVertMeters;
   root.userData.a1AutoGateDoorContactGapMeters = Number.NaN;
   root.userData.a1AutoGateDoorContactHitObject = "unregistered";
   root.userData.a1AutoGateDoorContactReady = false;
