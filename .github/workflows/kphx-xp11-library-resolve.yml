@@ -1,0 +1,200 @@
+name: KPHX XP11.55r2 Library Resolve
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp11-library-resolve.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-xp11-library-resolve
+  cancel-in-progress: true
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+
+      - name: Resolve exact XP11.55r2 stock library paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python - <<'PY'
+          import concurrent.futures, io, json, os, re, urllib.parse, urllib.request, zipfile, hashlib
+
+          BRANCH="X-Plane 11.55r2"
+          BUILD=115501
+          BASE="https://desktop.x-plane.com/unsecured/" + urllib.parse.quote(BRANCH, safe="") + "/"
+          MANIFEST_URL=BASE+"directory.txt.zip"
+          AUDIT_PATH="reports/kphx-unresolved-dependency-audit.json"
+
+          def get(url):
+              req=urllib.request.Request(url,headers={"User-Agent":"RampReady-KPHX-XP11-exact-source/1.0"})
+              with urllib.request.urlopen(req,timeout=45) as r:
+                  return r.read()
+
+          def unzip_single(data):
+              with zipfile.ZipFile(io.BytesIO(data)) as z:
+                  names=[n for n in z.namelist() if not n.endswith("/")]
+                  if not names: raise RuntimeError("empty zip")
+                  return z.read(names[0])
+
+          manifest_zip=get(MANIFEST_URL)
+          manifest=unzip_single(manifest_zip).decode("utf-8","replace")
+          open("reports/kphx-xp11-115501-directory.txt","w",encoding="utf-8").write(manifest)
+          open("reports/kphx-xp11-115501-directory.sha256","w").write(
+              hashlib.sha256(manifest.encode("utf-8")).hexdigest()+"  reports/kphx-xp11-115501-directory.txt\n"
+          )
+
+          audit=json.load(open(AUDIT_PATH))
+          requested=set(audit["unresolved"]["lib"]["resources"].keys())
+
+          current_dir=""
+          selected={}
+          for raw in manifest.splitlines():
+              if raw.startswith("DIR "):
+                  current_dir=raw[4:].strip()
+                  continue
+              if not raw.startswith("FILE "):
+                  continue
+              parts=raw.split(" ",10)
+              if len(parts)<11: continue
+              try: version=int(parts[2])
+              except: continue
+              marker=parts[9]
+              filename=parts[10]
+              full=(current_dir+filename).replace("\\","/")
+              if version>BUILD: continue
+              prev=selected.get(full)
+              if prev is None or version>=prev["version"]:
+                  selected[full]={"version":version,"marker":marker,"line":raw}
+
+          library_paths=sorted(
+              p for p,v in selected.items()
+              if p.startswith("Resources/default scenery/")
+              and p.endswith("/library.txt")
+              and v["marker"]!="GONE"
+          )
+
+          def fetch_library(path):
+              url=BASE+urllib.parse.quote(path,safe="/")+".zip"
+              try:
+                  data=unzip_single(get(url))
+                  return path,data.decode("utf-8","replace"),None
+              except Exception as e:
+                  return path,"",repr(e)
+
+          libraries=[]
+          failures=[]
+          with concurrent.futures.ThreadPoolExecutor(max_workers=12) as ex:
+              for path,text_,err in ex.map(fetch_library,library_paths):
+                  if err: failures.append((path,err))
+                  else: libraries.append((path,text_))
+
+          candidates={r:[] for r in requested}
+          export_re=re.compile(r"^(EXPORT|EXPORT_BACKUP|EXPORT_EXTEND)\s+(\S+)\s+(.+?)\s*$")
+          ratio_re=re.compile(r"^EXPORT_RATIO\s+([0-9.]+)\s+(\S+)\s+(.+?)\s*$")
+
+          for lib_path,text_ in libraries:
+              base=os.path.dirname(lib_path)
+              active_regions=[]
+              for ln,raw in enumerate(text_.splitlines(),1):
+                  line=raw.strip()
+                  if not line or line.startswith("#"): continue
+                  toks=line.split()
+                  if toks and toks[0] in ("REGION_DEFINE","REGION_BITMAP","REGION_RECT","REGION_DREF"):
+                      continue
+                  if toks and toks[0]=="REGION":
+                      active_regions=toks[1:]
+                      continue
+                  m=export_re.match(line)
+                  if m:
+                      directive,virtual,physical=m.groups()
+                      if virtual in candidates:
+                          candidates[virtual].append({
+                              "directive":directive,
+                              "physical":os.path.normpath(os.path.join(base,physical)).replace("\\","/"),
+                              "library":lib_path,
+                              "line":ln,
+                              "regions":active_regions[:],
+                          })
+                      continue
+                  m=ratio_re.match(line)
+                  if m:
+                      ratio,virtual,physical=m.groups()
+                      if virtual in candidates:
+                          candidates[virtual].append({
+                              "directive":"EXPORT_RATIO",
+                              "ratio":float(ratio),
+                              "physical":os.path.normpath(os.path.join(base,physical)).replace("\\","/"),
+                              "library":lib_path,
+                              "line":ln,
+                              "regions":active_regions[:],
+                          })
+
+          missing=[r for r,v in candidates.items() if not v]
+          multi={r:v for r,v in candidates.items() if len(v)>1}
+          unique={r:v[0] for r,v in candidates.items() if len(v)==1}
+
+          report={
+              "authority":{
+                  "branch":BRANCH,
+                  "build":BUILD,
+                  "base":BASE,
+                  "serverListSha256":"238bfa5985142ba469ad00eaa7305bba79c32f05c9f797dbe99e0e143d00dfae"
+              },
+              "requestedCount":len(requested),
+              "manifestSelectedFileCount":len(selected),
+              "libraryTxtCount":len(library_paths),
+              "libraryDownloadFailureCount":len(failures),
+              "libraryDownloadFailures":failures,
+              "resolvedAnyCount":len(requested)-len(missing),
+              "uniqueMappingCount":len(unique),
+              "multiMappingCount":len(multi),
+              "missingMappingCount":len(missing),
+              "missing":missing,
+              "multi":multi,
+              "mappings":candidates,
+          }
+          with open("reports/kphx-xp11-115501-library-map.json","w") as f:
+              json.dump(report,f,indent=2)
+
+          print(json.dumps({
+              "requested":len(requested),
+              "manifestSelectedFiles":len(selected),
+              "libraryTxt":len(library_paths),
+              "libraryDownloadFailures":len(failures),
+              "resolvedAny":len(requested)-len(missing),
+              "unique":len(unique),
+              "multi":len(multi),
+              "missing":len(missing),
+              "missingPaths":missing
+          },indent=2))
+
+          if failures:
+              raise SystemExit(f"{len(failures)} stock library.txt downloads failed")
+          if missing:
+              raise SystemExit(f"{len(missing)} KPHX stock virtual paths did not resolve")
+          PY
+
+      - name: Commit exact XP11 library map
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             reports/kphx-xp11-115501-directory.txt             reports/kphx-xp11-115501-directory.sha256             reports/kphx-xp11-115501-library-map.json
+          git commit -m "Resolve exact XP11.55r2 stock paths for KPHX"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
