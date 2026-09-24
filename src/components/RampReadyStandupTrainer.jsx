@@ -108,6 +108,10 @@ export default function RampReadyStandupTrainer({
     lastX: 0,
     lastY: 0,
   });
+  const operatorLookRef = useRef({
+    yaw: 0,
+    pitch: 0,
+  });
   const driveRef = useRef({ throttle: 0, steer: 0, brake: false, direction: 1 });
   const keysRef = useRef(new Set());
   const scoreRef = useRef(100);
@@ -286,9 +290,12 @@ export default function RampReadyStandupTrainer({
       canvas.dataset.cameraYaw = orbitRef.current.yaw.toFixed(4);
       canvas.dataset.cameraPitch = orbitRef.current.pitch.toFixed(4);
       canvas.dataset.cameraDistance = orbitRef.current.distance.toFixed(3);
+      canvas.dataset.operatorLookYaw = operatorLookRef.current.yaw.toFixed(4);
+      canvas.dataset.operatorLookPitch = operatorLookRef.current.pitch.toFixed(4);
+      canvas.dataset.operatorLookUnlocked = "true";
     };
     const handlePointerDown = (event) => {
-      if (cameraRef.current !== "chase") return;
+      if (!["chase", "driver"].includes(cameraRef.current)) return;
       if (event.pointerType === "mouse" && event.button !== 0) return;
       orbitRef.current.pointerId = event.pointerId;
       orbitRef.current.lastX = event.clientX;
@@ -297,13 +304,23 @@ export default function RampReadyStandupTrainer({
       event.preventDefault();
     };
     const handlePointerMove = (event) => {
-      if (orbitRef.current.pointerId !== event.pointerId || cameraRef.current !== "chase") return;
+      if (orbitRef.current.pointerId !== event.pointerId) return;
+      if (!["chase", "driver"].includes(cameraRef.current)) return;
       const dx = event.clientX - orbitRef.current.lastX;
       const dy = event.clientY - orbitRef.current.lastY;
       orbitRef.current.lastX = event.clientX;
       orbitRef.current.lastY = event.clientY;
-      orbitRef.current.yaw -= dx * 0.006;
-      orbitRef.current.pitch = clamp(orbitRef.current.pitch + dy * 0.0045, 0.08, 1.18);
+      if (cameraRef.current === "driver") {
+        operatorLookRef.current.yaw -= dx * 0.006;
+        operatorLookRef.current.pitch = clamp(
+          operatorLookRef.current.pitch - dy * 0.0045,
+          -1.15,
+          1.15,
+        );
+      } else {
+        orbitRef.current.yaw -= dx * 0.006;
+        orbitRef.current.pitch = clamp(orbitRef.current.pitch + dy * 0.0045, 0.08, 1.18);
+      }
       syncCameraDataset();
       event.preventDefault();
     };
@@ -427,8 +444,28 @@ export default function RampReadyStandupTrainer({
 
       const target = inspectionActive ? rig.root.position : connectionHasAircraft(sim.connection) ? aircraft.position : rig.root.position;
       if (cameraRef.current === "driver") {
-        camera.position.lerp(rig.getOperatorEyeWorld(new THREE.Vector3()), 0.28);
-        camera.lookAt(rig.getOperatorLookWorld(new THREE.Vector3()));
+        const operatorEyeWorld = rig.getOperatorEyeWorld(new THREE.Vector3());
+        const neutralLocal = new THREE.Vector3(
+          rig.profile.operatorLook[0] - rig.profile.operatorEye[0],
+          rig.profile.operatorLook[1] - rig.profile.operatorEye[1],
+          rig.profile.operatorLook[2] - rig.profile.operatorEye[2],
+        );
+        const neutralYaw = Math.atan2(neutralLocal.x, neutralLocal.z);
+        const neutralPitch = Math.atan2(
+          neutralLocal.y,
+          Math.hypot(neutralLocal.x, neutralLocal.z),
+        );
+        const look = operatorLookRef.current;
+        const yaw = neutralYaw + look.yaw;
+        const pitch = clamp(neutralPitch + look.pitch, -1.35, 1.35);
+        const cosPitch = Math.cos(pitch);
+        const lookDirectionWorld = new THREE.Vector3(
+          Math.sin(yaw) * cosPitch,
+          Math.sin(pitch),
+          Math.cos(yaw) * cosPitch,
+        ).applyQuaternion(rig.root.getWorldQuaternion(new THREE.Quaternion()));
+        camera.position.lerp(operatorEyeWorld, 0.28);
+        camera.lookAt(operatorEyeWorld.clone().addScaledVector(lookDirectionWorld, 10));
       } else if (cameraRef.current === "overhead") {
         camera.position.lerp(new THREE.Vector3(target.x, 34, target.z + 2), 0.16);
         camera.lookAt(target.x, 0, target.z + 5);
