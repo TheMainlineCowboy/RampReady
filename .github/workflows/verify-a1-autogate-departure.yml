@@ -65,9 +65,20 @@ jobs:
           await page.waitForFunction(() => {
             const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
             return d.kphxExactLiveT4 === "ready"
-              && d.a1JetwayAnimationAuthority === "exact-WED-104804-XP11-stock-facade-plus-MisterX-AutoGate-26m-horizontal-kinematics-v1"
-              && d.a1JetwayState === "attached-to-aircraft-door";
+              && d.a1JetwayAnimationAuthority === "exact-WED-104804-XP11-stock-facade-plus-MisterX-AutoGate-26m-horizontal-kinematics-v1";
           }, null, { timeout: 60000 });
+
+          const returnToTraining = page.getByRole("button", { name: "Return to training", exact: true });
+          if (await returnToTraining.isVisible().catch(() => false)) {
+            await returnToTraining.click();
+          }
+
+          await page.waitForFunction(() => {
+            const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
+            return d.inspectionMode === "training"
+              && d.a1JetwayState === "attached-to-aircraft-door"
+              && Number(d.a1JetwayDeployment) >= 0.995;
+          }, null, { timeout: 10000 });
 
           const read = () => page.evaluate(() => {
             const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
