@@ -1,0 +1,43 @@
+name: KPHX XP11 Stock HTTP Access Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp11-http-access-probe.yml"
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Probe stock-file HTTP access variants
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://desktop.x-plane.com/unsecured/X-Plane%2011.55r2'
+          PATH_ENC='Resources/default%20scenery/airport%20scenery/library.txt'
+          URL="$BASE/$PATH_ENC.zip"
+          echo "URL=$URL"
+
+          probe () {
+            label="$1"; shift
+            echo "=== $label ==="
+            curl -sS -L -o /tmp/probe.bin -D /tmp/headers.txt -w 'HTTP=%{http_code} SIZE=%{size_download} URL=%{url_effective}\n' "$@" "$URL" || true
+            sed -n '1,30p' /tmp/headers.txt || true
+            file /tmp/probe.bin || true
+            wc -c /tmp/probe.bin || true
+          }
+
+          probe default
+          probe browser -A 'Mozilla/5.0'
+          probe installer1 -A 'X-Plane Installer'
+          probe installer2 -A 'X-Plane Installer 4.05r1'
+          probe referer -A 'X-Plane Installer' -e 'https://www.x-plane.com/'
+          probe directory-ref -A 'X-Plane Installer' -e 'https://desktop.x-plane.com/unsecured/X-Plane%2011.55r2/directory.txt.zip'
+
+          echo "=== HTTP instead of HTTPS ==="
+          URL='http://desktop.x-plane.com/unsecured/X-Plane%2011.55r2/Resources/default%20scenery/airport%20scenery/library.txt.zip'
+          probe http-installer -A 'X-Plane Installer'
