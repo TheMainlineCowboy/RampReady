@@ -65,10 +65,26 @@ jobs:
           quit
           QA
 
-          set +e
-          timeout 130 "$BIN"             --lang=en             --qa_script=/tmp/xp12.qa             --install_numeric=121212             --install_name="X-Plane 12.1.2-r4-0f2fea01"             --no_web_server             > /tmp/xp12-mac.out 2> /tmp/xp12-mac.err
-          rc=$?
-          set -e
+          python3 - <<'PY'
+          import subprocess
+          cmd=[
+              open("/tmp/xp12-bin.txt").read().strip(),
+              "--lang=en",
+              "--qa_script=/tmp/xp12.qa",
+              "--install_numeric=121212",
+              "--install_name=X-Plane 12.1.2-r4-0f2fea01",
+              "--no_web_server",
+          ]
+          with open("/tmp/xp12-mac.out","wb") as out, open("/tmp/xp12-mac.err","wb") as err:
+              try:
+                  p=subprocess.run(cmd,stdout=out,stderr=err,timeout=130)
+                  rc=p.returncode
+              except subprocess.TimeoutExpired:
+                  rc=124
+          open("/tmp/xp12-mac.rc","w").write(str(rc))
+          print(f"installer_rc={rc}")
+          PY
+          rc="$(cat /tmp/xp12-mac.rc)"
 
           count="$(find /tmp/xp12-demo -type f 2>/dev/null | wc -l | tr -d ' ')"
           {
