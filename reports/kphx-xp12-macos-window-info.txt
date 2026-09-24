@@ -1,0 +1,6 @@
+["kCGWindowLayer": 0, "kCGWindowOwnerPID": 1134, "kCGWindowNumber": 24, "kCGWindowBounds": {
+    Height = 728;
+    Width = 800;
+    X = 560;
+    Y = 162;
+}, "kCGWindowAlpha": 1, "kCGWindowIsOnscreen": 1, "kCGWindowName": X-System, "kCGWindowMemoryUsage": 2176, "kCGWindowSharingState": 1, "kCGWindowOwnerName": X-Plane 12 Installer 5.4.0-r1, "kCGWindowStoreType": 1]
