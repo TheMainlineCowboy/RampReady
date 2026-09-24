@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "sourceArchive": "20200329_CRJSeries_Xplane11_v1.zip",
+  "sourceAuthority": "user-supplied RobertSV X-Plane 11 CRJ Series ACF files + Marginal AutoGate semantics",
+  "a1": {
+    "rampWedObjectId": 27855,
+    "jetwayFacadeWedObjectId": 104804,
+    "aircraftSideCabinEndWedNodeId": 104811,
+    "cabinEndLatitude": 33.436517699,
+    "cabinEndLongitude": -111.998897851,
+    "wedSha256": "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498"
+  },
+  "aircraft": {
+    "CRJ700": {
+      "acf": "CRJ7NG/crj700NG.acf",
+      "boardingDoorFeet": [
+        -4.5,
+        -2.200000048,
+        16.299999237
+      ],
+      "cgFeet": {
+        "y": -2,
+        "z": 60
+      },
+      "noseGearFeet": {
+        "x": 0,
+        "y": -2.650000095,
+        "z": 16.899999619
+      },
+      "equilibriumHeightFeet": 7.027759075,
+      "derived": {
+        "doorLateralFromCgMeters": -1.3716,
+        "doorVerticalFromCgMeters": -0.0609600146304,
+        "doorAxialFromCgMeters": -13.3197602325624,
+        "doorFromNoseGearLateralMeters": -1.3716,
+        "doorFromNoseGearAxialMeters": -0.1828801164336,
+        "doorHeightMeters": 2.0811009514296,
+        "autoGateLatMeters": 6.1284,
+        "autoGateVertMeters": -1.9188990485704
+      }
+    },
+    "CRJ900": {
+      "acf": "CRJ9NG/crj900NG.acf",
+      "boardingDoorFeet": [
+        -4.5,
+        -2.200000048,
+        16.299999237
+      ],
+      "cgFeet": {
+        "y": -2,
+        "z": 60
+      },
+      "noseGearFeet": {
+        "x": 0,
+        "y": -2.650000095,
+        "z": 8.899999619
+      },
+      "equilibriumHeightFeet": 7.037753105,
+      "derived": {
+        "doorLateralFromCgMeters": -1.3716,
+        "doorVerticalFromCgMeters": -0.0609600146304,
+        "doorAxialFromCgMeters": -13.3197602325624,
+        "doorFromNoseGearLateralMeters": -1.3716,
+        "doorFromNoseGearAxialMeters": 2.2555198835664,
+        "doorHeightMeters": 2.0841471317736,
+        "autoGateLatMeters": 6.1284,
+        "autoGateVertMeters": -1.9158528682264
+      }
+    }
+  },
+  "expectedA1SolvedNoseGearMeters": {
+    "CRJ700": {
+      "x": 0.0726277009,
+      "z": 3.848061505
+    },
+    "CRJ900": {
+      "x": 0.0760323485,
+      "z": 6.2864591281
+    }
+  },
+  "crj900RampStartCrossCheckMeters": 0.115156,
+  "policy": "Use ACF dock-port metadata for aircraft-side jetway registration; do not substitute hand-measured visible-mesh door offsets."
+}
