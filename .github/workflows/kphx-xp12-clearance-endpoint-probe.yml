@@ -2,6 +2,11 @@ name: KPHX XP12 Clearance Endpoint Probe
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-clearance-endpoint-probe.yml"
 
 permissions:
   contents: write
