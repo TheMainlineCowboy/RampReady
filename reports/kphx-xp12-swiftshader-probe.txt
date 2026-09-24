@@ -1,0 +1,18 @@
+pid=7492
+icd=/home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/vk_swiftshader_icd.json
+UID          PID    PPID  C STIME TTY          TIME CMD
+runner      7492    7481  0 04:03 ?        00:00:00 /tmp/xp12-installer/X-Plane 12 Installer Linux --qa_script=/tmp/xp12.qa --install_numeric=121212 --install_name=X-Plane 12.1.2-r4-0f2fea01 --no_web_server
+
+=== window tree ===
+
+xwininfo: Window id: 0x21f (the root window) (has no name)
+
+  Root window id: 0x21f (the root window) (has no name)
+  Parent window id: 0x0 (none)
+     1 child:
+     0x200002 "X-System": ()  817x142+231+219  +231+219
+
+
+=== stdout ===
+
+=== stderr ===

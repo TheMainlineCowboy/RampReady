@@ -1,0 +1,742 @@
+This will take approximately %1:time% to complete, and it will consume %2:disk space% on your hard drive.
+Change Scenery
+To select less scenery for a faster installation.
+Continue Install
+To keep your current scenery selection (and corresponding long installation time).
+/_lookup_12_/server_list_12.txt
+--list_branches
+%s: %d
+/directory.txt.zip
+directory.txt
+http://
+--
+Please be sure to select the folder that contains the X-Plane application.
+Support btn
+Support btn frame
+Contact Support
+Click here to go to a web page with contact information for Customer Support.
+/_lookup_12_/installer_support_400.html
+Eastern United States
+Western United States
+Eastern Canada, Greenland, & Iceland
+Western Canada & Alaska
+Mexico & Northern South America
+--
+12. EXPORT COMPLIANCE. End-User shall be responsible for its compliance with any applicable export control restrictions, laws and regulations as may be modified from time to time, imposed by the governments of the U.S. and, if applicable, other countries. End-User shall not attempt to, or knowingly export or re-export the Products covered under the Agreement to any country, or national thereof, prohibited from obtaining Products, either directly or indirectly through affiliates, or subsidiaries of End-User. Each party shall, at its sole cost and expense, obtain and maintain in effect all permits, licenses and other consents necessary to conduct its respective activities hereunder. Nothing in this clause releases End-User from any obligation stated elsewhere in the Agreement not to disclose the Products.
+13. GOVERNING LAW. ANY DISPUTE, CONTROVERSY OR CLAIM AGAINST JEPPESEN ARISING OUT OF OR RELATING TO THE PRODUCTS, WHETHER UNDER CONTRACT, TORT OR OTHERWISE, AND THESE ADDITIONAL TERMS ARE GOVERNED BY THE LAWS OF ENGLAND, WITHOUT RECOURSE TO CHOICE OF LAW STATUTES OR PRINCIPLES THAT WOULD OTHERWISE RESULT IN THE APPLICATION OF THE LAW OF ANY OTHER JURISDICTION.
+14. SEVERABILITY. If any term or provision of these Additional Terms is held invalid or unenforceable, such term or provision will be replaced by a valid and enforceable provision containing as close to the original intent of the parties as possible in light of the intent of this Additional Terms. The remainder of this Additional Terms will not be affected thereby and each remaining term and provision of this Additional Terms will be valid and enforceable to the fullest extent permitted by law.
+15. AUTHORIZED SIGNATORY. THE SIGNATORY OF THESE ADDITIONAL TERMS WARRANTS TO BE AUTHORIZED TO SIGN THEM ON BEHALF OF BELOW NAMED COMPANY OR STATE AUTHORITY.
+Read, understood and agreed to.
+/_lookup_12_/installer_about_analytics.html
+%1:rate% kilobyte/second
+%1:rate% kilobytes/second
+ERROR: destination being set but there is no live pick-destination wizard.
+Installation location picker WC
+Installation location packer
+--
+NSt3__110__function6__baseIF10err_code_tvEEE
+19demo_install_wizard
+9demo_done
+NSt3__110__function6__funcIZN19demo_install_wizardC1EP11wizard_funcE3$_0NS_9allocatorIS5_EEF19install_method_typevEEE
+ZN19demo_install_wizardC1EP11wizard_funcE3$_0
+Contacting X-Plane.com to find a demo server.
+Downloading demo information from %1:server name%.
+Checking the net for the latest version of X-Plane 12 right now, and I am %1:progress%% done checking.
+Please pick a name for your X-Plane 12 Demo installation. 
+Pick a folder to install the X-Plane 12 Demo into.
+You have enough free disk space to install the X-Plane 12 Demo at this location.
+You do not have enough free disk space to install the X-Plane 12 Demo at this location. You can change the install location to a drive with more free disk space.
+--
+Installing X-Plane 12 Demo
+An error occurred during installation:
+You can continue with the installation and attempt to repair the damaged files later, or you can cancel the installation.
+the install.
+Finished Demo Installation
+Finished Web Demo Install
+There was a problem installing the X-Plane 12 Demo. Please check your internet connection and try again, or contact Laminar Research tech support for help.
+There was a problem installing the X-Plane 12 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.
+The X-Plane 12 Demo has finished installing at: %1:file path%.
+Fly X-Plane 12 Now
+Are you sure you want to cancel the installation?  This will delete the partially installed copy of X-Plane 12.
+--
+Step text
+icon_check_sm.png
+Wizard step label
+--timeout exceeded; aborting
+Advancing from wizard step "%s" to "%s"
+/_lookup_12_/buy_now_400.html
+INSTALLER SETTINGS
+Installer settings popup inner container
+Operating system to download X-Plane for
+This can be useful if you want to install X-Plane on this computer and copy the entire X-Plane folder to another computer (maybe one without a disc drive or internet access).
+Languages hdiv
+--
+Betas container
+Warning and more info btn
+Check for new betas as well as updates
+If you check this, the latest beta version will be installed when available. Beta versions include the latest features but may contain bugs.
+Leave this off unless you understand the risks of using X-Plane betas!
+/_lookup_12_/installer_betas.html
+9net_start
+13net_pick_dest
+14net_check_disk
+8net_done
+NSt3__110__function6__funcIZN17net_update_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEP11wizard_funcNS2_12install_typeENS2_11require_xddEE3$_0NS6_ISF_EEFv9auth_typeEEE
+--
+Running ping command
+Running traceroute command
+Re-running the checks without proxy
+Proxy not set, skipping no-proxy checks
+Contacting X-Plane server
+https://clearancedelivery.x-planemobile.com/
+Fetching server list
+Fetching from a CDN
+Fetching 
+Server list is empty due to earlier errors, skipping
+Fetching CDN urls
+Installer session key: 
+No XDD, skipping
+No CDN urls, skipping
+clearancedelivery.x-planemobile.com
+ping -c3 -t10 -n 
+ 2>&1
+traceroute -m15 
+Network diagnostics complete
+condition_variable timed_wait failed
+--
+this installer is too old to understand the current directory.txt; aborting
+This demo installer is too old; a newer one is available for download from X-Plane.com.
+This installer is too old; a newer one is available for download from X-Plane.com.
+Click the button below to get the newest installer.
+[ Download Now ]
+/_lookup_12_/new_full_installer_400.html
+The installer is unable to install or update X-Plane. An error occurred while creating new folders. Make sure the directory you are trying to install to is not set as read-only in your operating system.
+Install Location: 
+Install Path:
+Displaying alert:
+	User decided to %s.
+--
+NSt3__120__shared_ptr_pointerIPNS_23mersenne_twister_engineImLm32ELm624ELm397ELm31ELm2567483615ELm11ELm4294967295ELm7ELm2636928640ELm15ELm4022730752ELm18ELm1812433253EEEZN5uuids27basic_uuid_random_generatorIS2_EC1ERS2_EUlT_E_NS_9allocatorIS2_EEEE
+ZN5uuids27basic_uuid_random_generatorINSt3__123mersenne_twister_engineImLm32ELm624ELm397ELm31ELm2567483615ELm11ELm4294967295ELm7ELm2636928640ELm15ELm4022730752ELm18ELm1812433253EEEEC1ERS3_EUlT_E_
+00000000-0000-0000-0000-000000000000
+0123456789abcdef
+22ins_analytics_recorder
+/_lookup_12_/analytics.html
+Content-Type: application/json
+xplane: %s
+install_events
+12.4.3-b3-905b4972
+12.4.3-b3
+--
+Access or Refresh Token failed validity check!
+grant_type=refresh_token&client_id=%s&refresh_token=%s
+Refresh Error Code is: %d
+ Response is: %.*s
+%s?mid=%lld
+https://tower.x-plane.com/v1/inventory
+Authorization: Bearer %s
+Manifest Error Code is: %d
+ Response is: %.*s
+Manifest Token failed validity check!
+Could not retrieve product claim from addon manifest token
+--
+X-Plane_drm_12.prf
+X-Plane_xdd_12.prf
+Unable to write user's XDD to disk at %s.
+ERROR: Digital download file cannot be written!
+Please report this message in the X-Plane bug reporter, available by clicking More Info button below.
+/_lookup_12_/bugreport.html
+/builds/x-plane/design/source_code/core/installer/UTL_drm.cpp
+GDPR 
+Unable to write user's XDD file to disk at %s.
+--xdd
+--gdpr
+--
+Error during DVD scan: The installer cannot extract a file. Please report this to X-Plane technical support via https://x-plane.com/support, and include the information below:
+Error: %1:message%.
+Compressed File: %1:file%.
+Destination Path: %1:file%.
+checksum_id
+https://clearancedelivery.x-planemobile.com/v1/authenticate
+Error contacting the authorization server: %s
+Server response: %s
+Authentication error: %s
+. Check your Internet connection and try again
+can_sign
+--
+Parsing error: %s
+Full response saved to %s
+Cannot save full response to %s
+Received empty auth response
+Unable to parse server JSON response.
+https://clearancedelivery.x-planemobile.com/v1/download
+https://tower.x-plane.com/v1/sim-download
+--no_known_installs
+WARNING: The installer was unable to register this copy of X-Plane; the X-Plane updater may not be able to find and update X-Plane! (The installer could not locate the user's preferences folder.)
+x-plane_install_12.txt
+Registration of X-Plane path skipped 
+ existing entry only differs in slash/case form (new: %s, old: %s)
+--
+STRING %1:seconds% seconds====%1:seconds% 
+STRING %1:minutes% minute====%1:minutes% 
+STRING %1:minutes% minutes====%1:minutes% 
+STRING %1:hours% hour====%1:hours% 
+STRING %1:hours% hours====%1:hours% 
+STRING Contacting X-Plane.com to find a demo server.====
+ X-Plane.com 
+STRING Downloading demo information from %1:server name%.====
+ %1:server name% 
+STRING Cancel====
+STRING the demo installation and delete partial installation.====
+STRING the demo installation process.====
+STRING An error occurred during installation:====
+STRING You can continue with the installation and attempt to repair the damaged files later, or you can cancel the installation.====
+STRING the install.====
+STRING Finished Web Demo Install====
+STRING Check Disk Space====
+STRING Scanning %1:folder path% to see what files need updating.====
+ %1:folder path% 
+STRING Please free some space on your hard drive.====
+STRING the update.====
+--
+STRING Cancel====Annuler
+STRING An error occurred during installation:====Une erreur s'est produite durant l'installation:
+STRING You can continue with the installation and attempt to repair the damaged files later, or you can cancel the installation.====Vous pouvez continuer l'installation et essayer de r
+parer les fichiers endommag
+s plus tard ou bien annuler l'installation.
+STRING Finished Web Demo Install====Installation de la d
+mo Internet termin
+STRING Check Disk Space====V
+rification de l'espace disque
+STRING This copy of X-Plane (%1:install path%) is already up to date.====Cette copie de X-Plane (%1:install path%) est d
+ jour.
+--
+STRING %1:seconds% seconds====%1:seconds% secondes
+STRING %1:minutes% minute====%1:minutes% minute
+STRING %1:minutes% minutes====%1:minutes% minutes
+STRING %1:hours% hour====%1:hours% heure
+STRING %1:hours% hours====%1:hours% heures
+STRING Contacting X-Plane.com to find a demo server.====Contact de X-Plane en cours pour trouver un serveur de d
+STRING Downloading demo information from %1:server name%.====T
+chargement des informations de d
+mo depuis %1:server name%.
+STRING Finished updating %1:install path%.====Mise 
+ jour termin
+e %1:install path%.
+--
+#STRING I Have an X-Plane 12 DVD====J'ai un DVD X-Plane 12
+#STRING I am checking the net for the latest version of X-Plane 10 right now, and I am %1:progress%% done checking.====Je v
+rifie maintenant sur le net la derni
+re version de X-Plane 10 et progresse de %1:progress%%.
+#STRING I am contacting the authorization server to get information about your product.====Je contacte le serveur d'autorisation pour recevoir des informations sur votre produit.
+#STRING I am contacting www.x-plane.com to find a demo server.====Je contacte www.X-Plane.com pour trouver le serveur de d
+#STRING I am contacting www.x-plane.com to find an update server.====Je contacte www.X-plane.com pour trouver le serveur des mises 
+ jour.
+#STRING I am downloading demo info from %1:server name%.====Je t
+charge la d
+mo depuis %1:server name%.
+--
+ num
+rique t
+charg
+#STRING I have an X-Plane 10 DVD====Je poss
+de le DVD X-Plane 10.
+#STRING I have finished installing the X-Plane 10 web demo at: %1:file path%.====Je termine l'installation de la d
+mo web de X-Plane 10 
+: %1:file path%.
+#STRING I have finished updating %1:install path%.====J'ai fini la mise 
+ jour %1:install path%.
+#STRING I have successfully added and removed scenery to match your choices on the map.====J'ai ajout
+--
+#STRING I was unable to shift the scenery.====Je n'ai pas pu changer le paysage.
+#STRING I will create the folder '%1:install name%' inside the folder '%2:parent folder%'.====Je vais cr
+er le dossier '%1:install name%' dans le dossier '%2:parent folder%'.
+#STRING I will dump all the data for the next cycle of X-Plane to the file 'Cycle Dump.txt'.====Je vais exportez toutes les donn
+es pour le prochain cycle de X-Plane dans le fichier 'Cycle Dump.txt'.
+#STRING I will guide you through the process of installing the web demo of X-Plane 10.====Je vous guiderai au travers du processus d'installation de la d
+mo X-Plane 10.
+#STRING I will guide you through the process of updating your copy of X-Plane 10 to the latest version.====Je vais vous guider dans le processus de mise 
+ jour de votre exemplaire X-Plane 10 pour disposer de la derni
+re version.
+#STRING I will let you go ahead and fly into the forest fire, but I suspect that what you are planning to put on the fire will not be enough to extinguish it.====Je vais vous laisser voler en direction de l'incendie, mais je pense que la quantit
+--
+nnen mit der Installation fortfahren und versuchen, die besch
+digten Dateien sp
+ter erneut zu installieren, oder Sie k
+nnen die Installation beenden.
+STRING the install.====Die Installation.
+STRING Finished Web Demo Install====Installation der Web-Demo abgeschlossen
+STRING Check Disk Space====Pr
+fe Speicherplatz
+STRING Finished Web Update====Web-Update abgeschlossen
+STRING This copy of X-Plane (%1:install path%) is already up to date.====Diese Kopie von X-Plane (%1:install path%) ist bereits aktualisiert.
+STRING Fly X-Plane Now====X-Plane jetzt starten
+--
+STRING %1:seconds% seconds====%1:seconds% Sekunden
+STRING %1:minutes% minute====%1:minutes% Minute
+STRING %1:minutes% minutes====%1:minutes% Minuten
+STRING %1:hours% hour====%1:hours% Stunde
+STRING %1:hours% hours====%1:hours% Stunden
+STRING Contacting X-Plane.com to find a demo server.====X-Plane.com wird kontaktiert, um einen Demo-Server zu finden.
+STRING Scanning %1:folder path% to see what files need updating.====%1:folder path% wird 
+berpr
+ft, um die Dateien zu suchen, die ein Update ben
+tigen.
+STRING Please free some space on your hard drive.====Schaffen Sie mehr freien Speicherplatz auf der Festplatte.
+--
+STRING Your product key is in the email confirming your purchase.====Ihr Produktschl
+ssel befindet sich im Mail zur Best
+tigung Ihres Kaufes.
+STRING %1:rate% kilobyte/second====%1:rate% Kilobyte / Sekunde
+STRING %1:rate% kilobytes/second====%1:rate% Kilobyte / Sekunde
+STRING Downloading demo information from %1:server name%.====Informationen zur Demo werden von %1:server name% heruntergeladen.
+STRING the update process.====des Update-Vorgangs.
+STRING Continue====Fortsetzen
+STRING Downloading patch info from %1:server name%.====Informationen zum Patch werden von %1:server name% geladen.
+STRING What would you like to install?====Was wollen Sie gerne installieren?
+STRING INSTALLER SETTINGS====EINSTELLUNGEN DER INSTALLATION
+--
+#STRING I Have an X-Plane 12 DVD====Ich habe eine X-Plane 12 DVD
+#STRING I am about to install:====Ich versuche zu installieren:
+#STRING I am checking the net for the latest version of X-Plane 10 right now, and I am %1:progress%% done checking.====Ich jetzt im Netz nach der neuesten Version von X-Plane 10 und habe %1:progress%% abgeschlossen.
+#STRING I am contacting the authorization server to get information about your product.====Ich kontaktiere den Autorisierungsserver um Informationen 
+ber Ihr Produkt zu erhalten.
+#STRING I am contacting www.x-plane.com to find a demo server.====Ich kontaktiere www.x-plane.com um einen Demo-Server zu finden.
+#STRING I am contacting www.x-plane.com to find an update server.====Ich kontaktiere www.x-plane.com um einen Update-Server zu finden.
+#STRING I am downloading demo info from %1:server name%.====Ich downloade die Demo-Info von %1:server name%.
+#STRING I am downloading patch info from %1:server name%.====Ich lade die Patch-Informationen vom %1:server name%.
+#STRING I am downloading product information and I am %1:progress%% done checking.====Ich lade die Produktinformationen und habe %1:progress%% abgeschlossen.
+#STRING I am installing X-Plane in %1:file path%.====Ich installiere X-Plane in %1:file path%.
+--
+#STRING I found the following copy of X-Plane 10 to add scenery to.====Ich habe folgende Kopie von X-Plane 10 zum Hinzuf
+gen der Szenerie gefunden.
+#STRING I found the following copy of X-Plane 10 to update.====Ich habe folgende Kopie von X-Plane 10 zum Aktualisieren gefunden.
+#STRING I have a digital download product key====Ich habe einen Download-Produkt-Key
+#STRING I have an X-Plane 10 DVD====Ich habe eine X-Plane 10 DVD
+#STRING I have finished installing the X-Plane 10 web demo at: %1:file path%.====Ich habe die Installation der X-Plane 10-Web-Demo beendet in: %1:file path%.
+#STRING I have finished updating %1:install path%.====Ich habe das Update von %1:install path% abgeschlossen.
+#STRING I have successfully added and removed scenery to match your choices on the map.====Ich habe die Szenerie erfolgreich hinzugef
+gt und entfernt entsprechend Ihrer Auswahl auf der Karte.
+#STRING I have successfully installed more scenery to match your choices on the map.====Ich habe die zus
+tzliche Szenerie erfolgreich installiert entsprechend Ihrer Auswahl auf der Karte.
+--
+ufe sind von der Oberfl
+che bis zur Umlaufbahn korrekt.
+#STRING I smell fire!====Ich rieche Feuer!
+#STRING I was unable to shift the scenery.====Die Szenerie konnte nicht verschoben werden.
+#STRING I will create the folder '%1:install name%' inside the folder '%2:parent folder%'.====Ich erstelle den Ordner '%1:install name%' innerhalb des Ordners '%2:parent folder%'.
+#STRING I will guide you through the process of installing the web demo of X-Plane 10.====Ich f
+hre Sie durch die Installation der Web-Demo von X-Plane 10.
+#STRING I will guide you through the process of updating your copy of X-Plane 10 to the latest version.====Ich werde Sie durch den Update-Prozess f
+hren um Ihre Kopie von X-Plane 10 auf die neueste Version zu aktualisieren.
+#STRING I will let you go ahead and fly into the forest fire, but I suspect that what you are planning to put on the fire will not be enough to extinguish it.====Ich 
+berlasse es Ihnen, zum Waldbrand zu fliegen, aber ich sch
+--
+STRING the demo installation process.====il processo di installazione della demo.
+STRING An error occurred during installation:====Durante l'installazione si 
+ presentato un errore:
+STRING You can continue with the installation and attempt to repair the damaged files later, or you can cancel the installation.====E' possibile continuare con l'installazione e tentare di ripristinare i files danneggiati in un secondo momento, oppure cancellare l'installazione.
+STRING the install.====l'installazione.
+STRING Finished Web Demo Install====Installazione della demo terminata
+STRING Check Disk Space====Verifica spazio disco
+STRING Finished Web Update====Aggiornamento terminato
+STRING This copy of X-Plane (%1:install path%) is already up to date.====Questa installazione di X-Plane (%1:install path%) contiene gi
+ l'ultima versione.
+STRING Fly X-Plane Now====Vola con X-Plane
+--
+STRING %1:seconds% seconds====%1:seconds% secondi
+STRING %1:minutes% minute====%1:minutes% minuto
+STRING %1:minutes% minutes====%1:minutes% minuti
+STRING %1:hours% hour====%1:hour% ora
+STRING %1:hours% hours====%1:hours% ore
+STRING Contacting X-Plane.com to find a demo server.====Contattare X-Plane.com per trovare un server demo.
+STRING Downloading demo information from %1:server name%.====Download in corso informazioni versione demo da %1:server name%.
+STRING Scanning %1:folder path% to see what files need updating.====Lettura della cartella %1:folder path% in corso per verificare quali files debbano essere aggiornati.
+STRING Please free some space on your hard drive.====E
+ necessario liberare dello spazio sul disco.
+STRING the update.====l'aggiornamento.
+STRING the update process.====processo di aggiornamento.
+--
+#STRING I Have an X-Plane 11 DVD====Possiedo un DVD di X-Plane 11
+#STRING I Have an X-Plane 12 DVD====Ho un DVD di X-Plane 12
+#STRING I am about to install:====Sto per installare:
+#STRING I am checking the net for the latest version of X-Plane 10 right now, and I am %1:progress%% done checking.====Sto verificando l'ultima versione di X-Plane 10, sono arrivato al %1:progress%%.
+#STRING I am contacting the authorization server to get information about your product.====Sto contattando il server delle autorizzazioni per ottenere informazioni riguardo il tuo prodotto.
+#STRING I am contacting www.x-plane.com to find a demo server.====Mi sto collegando su un server demo di www.x-plane.com.
+#STRING I am contacting www.x-plane.com to find an update server.====Sto contattando www.x-plane.com per trovare un server.
+#STRING I am downloading demo info from %1:server name%.====Sto scaricando la demo da %1:server name%.
+#STRING I am downloading patch info from %1:server name%.====Sto scaricando le informazioni del pacchetto da %1:server name%.
+#STRING I am downloading product information and I am %1:progress%% done checking.====Sto scaricando le informazioni del prodotto e sono arrivato al %1:progress%%.
+#STRING I am installing X-Plane in %1:file path%.====Installazione di X-Plane nel percorso %1:file path%.
+--
+ installato uno scenario per questa area!
+#STRING I found the following copy of X-Plane 10 to add scenery to.====Ho trovato questa installazione di X-Plane nella quale aggiungere gli scenari.
+#STRING I found the following copy of X-Plane 10 to update.====Trovata questa installazione di X-Plane 10 da aggiornare.
+#STRING I have a digital download product key====Sono in possesso di un codice seriale
+#STRING I have an X-Plane 10 DVD====Sono in possesso della versione DVD
+#STRING I have finished installing the X-Plane 10 web demo at: %1:file path%.====Terminata l'installazione della demo di X-Plane 10 su: %1:file path%.
+#STRING I have finished updating %1:install path%.====Aggiornamento %1:install path% terminato.
+#STRING I have successfully added and removed scenery to match your choices on the map.====Ho aggiornato gli scenari in modo da rispecchiare le scelte effettuate sulla mappa.
+#STRING I have successfully installed more scenery to match your choices on the map.====I nuovi scenari selezionati sulla mappa sono stati installati correttamente.
+#STRING I have successfully removed scenery to match your choices on the map.====Gli scenari rimossi dalla mappa sono stati disinstallati correttamente.
+#STRING I have successfully updated scenery to match your choices on the map.====Gli scenari selezionati sulla mappa sono stati aggiornati con successo.
+--
+ uguale a quelle standard di Marte, accurate dalla superficie in su!
+#STRING I smell fire!====Sento odore di fumo!
+#STRING I was unable to shift the scenery.====Non si 
+ stati in grado di cambiare lo scenario.
+#STRING I will create the folder '%1:install name%' inside the folder '%2:parent folder%'.====Creo la cartella '%1:install name%' nel percorso '%2:parent folder%'.
+#STRING I will guide you through the process of installing the web demo of X-Plane 10.====Sarete guidati attraverso il processo di installazione della demo di X-Plane 10.
+#STRING I will guide you through the process of updating your copy of X-Plane 10 to the latest version.====Vi guider
+ attraverso il processo di aggiornamento all'ultima versione di X-Plane 10.
+#STRING I will let you go ahead and fly into the forest fire, but I suspect that what you are planning to put on the fire will not be enough to extinguish it.====Ti lascer
+ continuare a volare verso l
+incendio, ma credo che quello che vorresti gettare sul fuoco non baster
+--
+STRING the demo installation and delete partial installation.====
+STRING the demo installation process.====
+STRING An error occurred during installation:====
+STRING You can continue with the installation and attempt to repair the damaged files later, or you can cancel the installation.====
+STRING the install.====
+STRING Finished Web Demo Install====
+STRING Check Disk Space====
+STRING Finished Web Update====
+STRING This copy of X-Plane (%1:install path%) is already up to date.====
+X-Plane (%1:install path%) 
+STRING Fly X-Plane Now====
+--
+STRING %1:seconds% seconds====%1:seconds% 
+STRING %1:minutes% minute====%1:minutes% 
+STRING %1:minutes% minutes====%1:minutes% 
+STRING %1:hours% hour====%1:hours% 
+STRING %1:hours% hours====%1:hours% 
+STRING Contacting X-Plane.com to find a demo server.====X-Plane.com
+STRING Downloading demo information from %1:server name%.====
+ %1:server name% 
+STRING Scanning %1:folder path% to see what files need updating.====%1:folder path% 
+STRING Please free some space on your hard drive.====
+STRING the update process.====
+STRING Finished updating %1:install path%.====%1:install path% 
+--
+#STRING I am about to install:====
+#STRING I am checking the net for the latest version of X-Plane 10 right now, and I am %1:progress%% done checking.====
+X-Plane 10
+ %1:progress%% 
+#STRING I am contacting the authorization server to get information about your product.====
+#STRING I am contacting www.x-plane.com to find a demo server.====www.x-plane.com
+#STRING I am contacting www.x-plane.com to find an update server.====www.x-plane.com
+#STRING I am downloading demo info from %1:server name%.====%1:server name% 
+#STRING I am downloading patch info from %1:server name%.====%1:server name% 
+#STRING I am downloading product information and I am %1:progress%% done checking.====
+ %1:progress%% 
+--
+X-Plane 10
+#STRING I found the following copy of X-Plane 10 to update.====
+X-Plane 10
+#STRING I have a digital download product key====
+#STRING I have an X-Plane 10 DVD====X-Plane 10 DVD
+#STRING I have finished installing the X-Plane 10 web demo at: %1:file path%.====X-Plane 10
+ %1:file path% 
+#STRING I have finished updating %1:install path%.====%1:install path% 
+#STRING I have successfully added and removed scenery to match your choices on the map.====
+#STRING I have successfully installed more scenery to match your choices on the map.====
+#STRING I have successfully removed scenery to match your choices on the map.====
+--
+%2:parent folder%
+%1:install name%
+#STRING I will dump all the data for the next cycle of X-Plane to the file 'Cycle Dump.txt'.====
+X-Plane
+Cycle Dump.txt
+#STRING I will guide you through the process of installing the web demo of X-Plane 10.====X-Plane 10
+#STRING I will guide you through the process of updating your copy of X-Plane 10 to the latest version.====X-Plane 10
+#STRING I will let you go ahead and fly into the forest fire, but I suspect that what you are planning to put on the fire will not be enough to extinguish it.====
+#STRING I will let you go ahead and fly into the forest fire, but I suspect that what you are planning to put on the fire will not be enough to extinguish it.====
+#STRING I will open the default plane now so you can still fly though.====
+#STRING I will still let you run the simulator, but the frame rate will NOT allow for a good simulation.====
+--
+o parcial.
+STRING the demo installation process.====o processo de instala
+o da demo.
+STRING An error occurred during installation:====Ocorreu um erro durante a instala
+STRING the install.====a instala
+STRING Finished Web Demo Install====Instala
+o da Web Demo terminada
+STRING Check Disk Space====Verificar Espa
+o em Disco
+STRING Finished Installing X-Plane====Instala
+o do X-Plane terminada
+STRING Installation was successful.====Instala
+--
+STRING %1:seconds% seconds====%1:seconds% segundos
+STRING %1:minutes% minute====%1:minutes% minuto
+STRING %1:minutes% minutes====%1:minutes% minutos
+STRING %1:hours% hour====%1:hours% hora
+STRING %1:hours% hours====%1:hours% horas
+STRING Contacting X-Plane.com to find a demo server.====A contactar X-Plane.com para encontrar um servidor com a demonstra
+STRING Please free some space on your hard drive.====Por favor liberte algum espa
+o no seu disco r
+gido.
+STRING the update.====a atualiza
+STRING the update process.====o processo de atualiza
+--
+es do produto... %1:progress%% Conclu
+STRING Downloading at %1:rate% from %2:server%.====A baixar a %1:rate% de %2:server%.
+STRING Unable to download from server %1:server%.====N
+ poss
+vel baixar do servidor %1:server%.
+STRING Downloading demo information from %1:server name%.====A baixar informa
+o da demonstra
+o de %1:server name%.
+STRING Scanning %1:folder path% to see what files need updating.====A pesquisar a pasta %1:folder path% para saber quais os arquivos que necessitam de atualiza
+STRING The installer will take you to the web page where you can download the new installer/updater.====O instalador ir
+ leva-lo 
+--
+#STRING I am checking the net for the latest version of X-Plane 10 right now, and I am %1:progress%% done checking.====Estou a verificar online para obter a mais recente vers
+o do X-Plane 10, falta %1:progress%% para terminar.
+#STRING I am contacting the authorization server to get information about your product.====Estou a contactar o servidor de autentica
+o para obter informa
+o do seu produto.
+#STRING I am contacting www.x-plane.com to find a demo server.====Estou a contactar www.x-plane.com para encontrar um servidor demo.
+#STRING I am contacting www.x-plane.com to find an update server.====Estou a contactar o www.x-plane.com para encontrar um servidor de actualiza
+#STRING I am contacting www.x-plane.com to find an update server.====Estou a contactar o www.x-plane.com para encontrar um servidor de atualiza
+#STRING I am downloading demo info from %1:server name%.====Estou a baixar informa
+o da demo desde %1:server name%.
+#STRING I am downloading demo info from %1:server name%.====Estou a descarregar informa
+--
+pia do X-Plane 10 para actualizar.
+#STRING I found the following copy of X-Plane 10 to update.====Encontrei a seguinte c
+pia do X-Plane 10 para atualizar.
+#STRING I have a digital download product key====Tenho uma chave de produto digital
+#STRING I have an X-Plane 10 DVD====Tenho um DVD do X-Plane 10
+#STRING I have finished installing the X-Plane 10 web demo at: %1:file path%.====Terminei a instala
+o da web demo do X-Plane 10 em: %1:file path%.
+#STRING I have finished updating %1:install path%.====Terminei a actualiza
+o de %1:install path%.
+#STRING I have finished updating %1:install path%.====Terminei a atualiza
+o de %1:install path%.
+#STRING I have successfully added and removed scenery to match your choices on the map.====Adicionei e removi cen
+--
+rbita.
+#STRING I was unable to shift the scenery.====Eu n
+o pude mudar o cen
+rio.
+#STRING I will create the folder '%1:install name%' inside the folder '%2:parent folder%'.====Irei criar a pasta '%1:install name%' dentro da pasta '%2:parent folder%'.
+#STRING I will guide you through the process of installing the web demo of X-Plane 10.====Irei gui
+-lo pelo processo de instala
+o da web demo do X-Plane 10.
+#STRING I will guide you through the process of updating your copy of X-Plane 10 to the latest version.====Vou gui
+-lo no processo de actualiza
+o da sua c
+pia do X-Plane 10 para a vers
+o mais recente.
+--
+STRING the demo installation and delete partial installation.====
+STRING the demo installation process.====
+STRING An error occurred during installation:====
+STRING You can continue with the installation and attempt to repair the damaged files later, or you can cancel the installation.====
+STRING the install.====
+STRING Finished Web Demo Install====
+STRING Check Disk Space====
+STRING Finished Web Update====
+STRING This copy of X-Plane (%1:install path%) is already up to date.====
+ X-Plane (%1:install path%) 
+STRING Fly X-Plane Now====
+--
+STRING %1:seconds% seconds====%1:seconds% 
+STRING %1:minutes% minute====%1:minutes% 
+STRING %1:minutes% minutes====%1:minutes% 
+STRING %1:hours% hour====%1:hours% 
+STRING %1:hours% hours====%1:hours% 
+STRING Contacting X-Plane.com to find a demo server.====
+ X-Plane.com. 
+STRING Downloading demo information from %1:server name%.====
+ %1:server name%
+STRING Scanning %1:folder path% to see what files need updating.====
+  %1:folder path%
+STRING Please free some space on your hard drive.====
+STRING the update.====
+--
+#STRING Find Airport====
+#STRING Find Pitch Stability Derivative====
+#STRING Find Yaw Stability Derivative====
+#STRING Finished Repairing X-Plane.====
+ X-Plane
+#STRING Finished Web Demo Install====
+#STRING Finished Web Update====
+#STRING Finished With Add/Remove Scenery====
+#STRING Finishing Up...====
+#STRING Finshed Web Update====
+#STRING Fire air-to-air selection.====
+--
+#STRING I am checking the net for the latest version of X-Plane 10 right now, and I am %1:progress%% done checking.====
+ X-Plane 10 - %1:progress%% 
+#STRING I am checking the net for the latest version of X-Plane 10 right now, and I am connecting to the server...====
+ X-Plane 10.
+#STRING I am contacting the authorization server to get information about your product.====
+#STRING I am contacting www.x-plane.com to find a demo server.====
+ www.x-plane.com 
+#STRING I am contacting www.x-plane.com to find an update server.====
+ www.x-plane.com 
+#STRING I am downloading demo info from %1:server name%.====
+ %1:server name%.
+--
+#STRING I found the following copy of X-Plane 10 to update.====
+ X-Plane 10 
+#STRING I have a digital download product key====
+#STRING I have an X-Plane 10 DVD====
+ X-Plane 10 DVD
+#STRING I have finished installing the X-Plane 10 web demo at: %1:file path%.====
+ X-Plane 10 
+: %1:file path% 
+#STRING I have finished repairing %1:install path% - click Go Back to return to the main menu.====
+ %1:install path% 
+#STRING I have finished updating %1:install path%.====
+--
+#STRING I shall now switch to the Martian standard atmosphere, temperature, density, pressure, and gravity profiles, accurate from the surface up to orbit.====
+#STRING I was unable to shift the scenery.====
+#STRING I will create the folder '%1:install name%' inside the folder '%2:parent folder%'.====
+ '%1:install name%' 
+ '%2:parent folder%'.
+#STRING I will guide you through the process of installing the web demo of X-Plane 10.====
+ X-Plane 10.
+#STRING I will guide you through the process of updating your copy of X-Plane 10 to the latest version.====
+ X-Plane 10 
+#STRING I will let you go ahead and fly into the forest fire, but I suspect that what you are planning to put on the fire will not be enough to extinguish it.====
+#STRING I will still let you run the simulator, but the frame rate will NOT allow for a good simulation.====
+--
+#STRING There is a newer version of X-Plane 10 available, but you do not have enough free disk space to download and install the update.\n\nPlease free some space on your hard drive.====
+ X-Plane 10, 
+.\n\n
+#STRING There is a newer version of X-Plane 11 available, but you do not have enough free disk space to download and install the update.====
+ X-Plane 11, 
+#STRING There is a newer version of the X-Plane web demo installer available.====
+#STRING There is a newer version of the X-Plane web updater available.====
+#STRING There isn't one in the area.====
+#STRING There was a problem installing X-Plane 10.  Please check your internet connection and try again, or contact Laminar Research tech support for help.====
+ X-Plane 10 
+ Laminar Research.
+--
+ X-Plane 
+.\n\n
+#STRING There were errors during the repair; your copy of X-Plane may not be usable.\n\nYou can click Go Back and use the repair and add-remove scenery functions to try to reinstall any missing or damaged files.====
+ X-Plane, 
+.\n\n
+#STRING There were problem installing the X-Plane 10 web demo - it may not be usable.====
+ X-Plane 10 
+#STRING There were problems updating X-Plane.  You can try this updater again using a different server.====
+ X-Plane 
+#STRING These apps can receive AHRS data from X-Plane, allowing you to use those apps with your simulator as though you were sitting in a real cockpit.====Xavion 
+ FlyQ 
+--
+STRING You can continue with the installation and attempt to repair the damaged files later, or you can cancel the installation.====Puedes continuar con la instalaci
+n e intentar reparar los archivos da
+ados o no disponibles m
+s adelante, o puedes cancelar la instalaci
+STRING the install.====la instalaci
+STRING Finished Web Demo Install====Instalaci
+n de la Demo Web Completada
+STRING Check Disk Space====Verificar Espacio en el disco
+STRING Finished Web Update====Actualizaci
+n Web completada
+STRING This copy of X-Plane (%1:install path%) is already up to date.====Esta copia de X-Plane (%1:install path%) ya est
+--
+STRING %1:seconds% seconds====%1:seconds% segundos
+STRING %1:minutes% minute====%1:minutes% minuto
+STRING %1:minutes% minutes====%1:minutes% minutos
+STRING %1:hours% hour====%1:hours% hora
+STRING %1:hours% hours====%1:hours% horas
+STRING Contacting X-Plane.com to find a demo server.====Contactando con X-Plane.com para encontrar un servidor de demo.
+STRING Downloading demo information from %1:server name%.====Descargando informaci
+n de demo desde el servidor %1:server name%.
+STRING Scanning %1:folder path% to see what files need updating.====Escaneando %1:folder path% para determinar qu
+ archivos necesitan ser actualizados.
+STRING Please free some space on your hard drive.====Por favor, libera espacio en tu disco duro.
+STRING the update.====la actualizaci
+--
+#STRING I Have an X-Plane 12 DVD====Tengo un DVD de X-Plane 12
+#STRING I am about to install:====Voy a instalar
+#STRING I am checking the net for the latest version of X-Plane 10 right now, and I am %1:progress%% done checking.====En este momento estoy comprobando online la versi
+s reciente de X-Plane. He completado el %1:progress%%.
+#STRING I am contacting the authorization server to get information about your product.====Estoy contactando con el servidor de autorizaciones para obtener los datos de tu producto.
+#STRING I am contacting www.x-plane.com to find a demo server.====Estoy contactando con www.x-plane.com para encontrar un servidor demo.
+#STRING I am contacting www.x-plane.com to find an update server.====Estoy contactando con www.x-plane.com para encontrar un servidor de actualizaciones.
+#STRING I am downloading demo info from %1:server name%.====Estoy descargando la informaci
+n de la demo de %1:server name%.
+#STRING I am downloading patch info from %1:server name%.====Estoy descargando los datos de %1:server name%.
+#STRING I am downloading product information and I am %1:progress%% done checking.====Descargando la informaci
+--
+Solo observara agua alrededor de los aeropuertos ya que no se instalaron paisajes para esta area!
+#STRING I found the following copy of X-Plane 10 to add scenery to.====He localizado la siguiente copia de X-Plane 10 a la que agregar los escenarios.
+#STRING I found the following copy of X-Plane 10 to update.====He encontrado la siguiente copia de X-Plane para actualizar.
+#STRING I have a digital download product key====Dispongo de una clave de producto de descarga digital.
+#STRING I have an X-Plane 10 DVD====Tengo un DVD de X-Plane 10
+#STRING I have finished installing the X-Plane 10 web demo at: %1:file path%.====He terminado de instalar la demo web de X-Plane 10 en %1:file path%.
+#STRING I have finished updating %1:install path%.====He completado de actualizar %1:install path%.
+#STRING I have successfully added and removed scenery to match your choices on the map.====He a
+adido o eliminado correctamente los escenarios seg
+n las preferencias indicadas en el mapa.
+#STRING I have successfully installed more scenery to match your choices on the map.====He instalado correctamente m
+--
+#STRING I smell fire!====
+Huelo fuego!
+#STRING I was unable to shift the scenery.====No pude cambiar el paisaje.
+#STRING I will create the folder '%1:install name%' inside the folder '%2:parent folder%'.====Crear
+ la carpeta '%1:install name%' dentro de '%2:parent folder%'.
+#STRING I will guide you through the process of installing the web demo of X-Plane 10.====Te acompa
+ durnate el proceso de instalaci
+n de la demo web de X-Plane 10.
+#STRING I will guide you through the process of updating your copy of X-Plane 10 to the latest version.====Voy a acompa
+arte durante el proceso de actualizaci
+n de tu copia de X-Plane a la versi
+--
+STRING %1:seconds% seconds====%1:seconds% 
+STRING %1:minutes% minute====%1:minutes% 
+STRING %1:minutes% minutes====%1:minutes% 
+STRING %1:hours% hour====%1:hours% 
+STRING %1:hours% hours====%1:hours% 
+STRING Contacting X-Plane.com to find a demo server.====
+ X-Plane.com, 
+STRING Downloading demo information from %1:server name%.====
+ %1:server name%.
+STRING Checking the net for the latest version of X-Plane 12 right now, and I am %1:progress%% done checking.====
+ X-Plane 12, 
+ %1:progress%% 
+STRING Pick a folder to install the X-Plane 12 Demo into.====
+--
+STRING Installing X-Plane 12 Demo====
+ X-Plane 12 
+STRING An error occurred during installation:====
+STRING You can continue with the installation and attempt to repair the damaged files later, or you can cancel the installation.====
+STRING the install.====
+STRING Finished Web Demo Install====
+STRING There was a problem installing the X-Plane 12 Demo. Please check your internet connection and try again, or contact Laminar Research tech support for help.====
+ X-Plane 12 Demo 
+ Laminar Research.
+STRING There was a problem installing the X-Plane 12 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.====
+ X-Plane 12 Demo 
+--
+STRING %1:seconds% seconds====%1:seconds% 
+STRING %1:minutes% minute====%1:minutes% 
+STRING %1:minutes% minutes====%1:minutes% 
+STRING %1:hours% hour====%1:hours% 
+STRING %1:hours% hours====%1:hours% 
+STRING Contacting X-Plane.com to find a demo server.====
+ X-Plane.com
+STRING Downloading demo information from %1:server name%.====%1:server name% 
+STRING Checking the net for the latest version of X-Plane 12 right now, and I am %1:progress%% done checking.====X-Plane 12
+ %1:progress%% 
+STRING Please pick a name for your X-Plane 12 Demo installation. ====X-Plane 12 
+STRING Pick a folder to install the X-Plane 12 Demo into.====X-Plane 12 
+STRING You have enough free disk space to install the X-Plane 12 Demo at this location.====
+--
+STRING the demo installation process.====
+STRING Installing X-Plane 12 Demo====X-Plane 12 
+STRING An error occurred during installation:====
+STRING You can continue with the installation and attempt to repair the damaged files later, or you can cancel the installation.====
+STRING the install.====
+STRING Finished Web Demo Install====
+STRING There was a problem installing the X-Plane 12 Demo. Please check your internet connection and try again, or contact Laminar Research tech support for help.====X-Plane 12 
+ Laminar Research
+STRING There was a problem installing the X-Plane 12 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.====X-Plane 12 
+ Laminar Research
+STRING The X-Plane 12 Demo has finished installing at: %1:file path%.====
