@@ -1,0 +1,1 @@
+Capture the exact XP11 installer UI blocker under the proven GLX shim.\n
