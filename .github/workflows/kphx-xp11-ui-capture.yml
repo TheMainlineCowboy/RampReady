@@ -1,0 +1,85 @@
+name: KPHX XP11 GLX UI Capture
+
+on:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - "reports/trigger-kphx-xp11-ui.txt"
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            reports/trigger-kphx-xp11-ui.txt
+          sparse-checkout-cone-mode: false
+
+      - name: Capture exact XP11 installer blocking UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y gcc libgl-dev libx11-dev xvfb xauth x11-utils xdotool imagemagick             xfonts-base xfonts-75dpi xfonts-100dpi fontconfig libgl1-mesa-dri libglx-mesa0 libglx0 libgl1 libglu1-mesa             libpangoxft-1.0-0 libgtk2.0-0t64 libxft2 libxi6 libxinerama1 libxrandr2 libxcursor1 libasound2t64 >/dev/null
+          sudo fc-cache -f >/dev/null
+
+          cat >/tmp/glxcompat.c <<'C'
+          #define _GNU_SOURCE
+          #include <GL/glx.h>
+          #include <X11/Xlib.h>
+          #include <dlfcn.h>
+          typedef XVisualInfo *(*choose_fn)(Display *, int, int *);
+          XVisualInfo *glXChooseVisual(Display *dpy, int screen, int *attrs) {
+            static choose_fn real_choose = NULL;
+            if (!real_choose) real_choose = (choose_fn)dlsym(RTLD_NEXT, "glXChooseVisual");
+            XVisualInfo *r = real_choose ? real_choose(dpy, screen, attrs) : NULL;
+            if (r) return r;
+            if (attrs && attrs[0] == GLX_SAMPLE_BUFFERS_ARB && attrs[1] == None) {
+              int fb[]={GLX_RGBA,GLX_DOUBLEBUFFER,GLX_RED_SIZE,8,GLX_GREEN_SIZE,8,GLX_BLUE_SIZE,8,GLX_DEPTH_SIZE,24,None};
+              return real_choose ? real_choose(dpy, screen, fb) : NULL;
+            }
+            return NULL;
+          }
+          C
+          gcc -shared -fPIC -O2 -o /tmp/libglxcompat.so /tmp/glxcompat.c -ldl -lGL -lX11
+
+          Xvfb :99 -screen 0 1280x800x24 +extension GLX +render -noreset >/tmp/xvfb.log 2>&1 &
+          export DISPLAY=:99
+          for i in $(seq 1 20); do xdpyinfo >/dev/null 2>&1 && break; sleep 1; done
+
+          mkdir -p /tmp/xp11 /tmp/evidence
+          curl -L --fail --retry 4 --show-error "https://www.x-plane.com/update/installers11/X-Plane11InstallerLinux.zip" -o /tmp/xp11.zip
+          unzip -q /tmp/xp11.zip -d /tmp/xp11
+          BIN="$(find /tmp/xp11 -type f -iname '*Installer*Linux*' -print -quit)"
+          chmod +x "$BIN"
+          LD_PRELOAD=/tmp/libglxcompat.so LIBGL_ALWAYS_SOFTWARE=1 "$BIN"             --install_numeric=115501 --install_name="X-Plane 11.55r2" --no_web_server             >/tmp/stdout 2>/tmp/stderr &
+          PID=$!
+          sleep 10
+          import -display :99 -window root /tmp/evidence/xp11-ui.png
+          {
+            echo "pid=$PID"
+            echo "=== windows ==="
+            xwininfo -root -tree || true
+            echo "=== names/geometry ==="
+            xdotool search --onlyvisible --name '.*' 2>/dev/null | while read -r id; do
+              echo "--- $id"; xdotool getwindowname "$id" 2>/dev/null || true; xdotool getwindowgeometry --shell "$id" 2>/dev/null || true
+            done
+            echo "=== stderr ==="
+            tail -300 /tmp/stderr || true
+          } >/tmp/evidence/xp11-ui.txt
+          kill "$PID" 2>/dev/null || true
+          wait "$PID" 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kphx-xp11-ui
+          path: /tmp/evidence/
+          if-no-files-found: error
