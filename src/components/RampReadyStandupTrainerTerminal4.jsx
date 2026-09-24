@@ -1138,7 +1138,9 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.a1JetwayCabinJointGapMeters = Number(jetway.controller.getCabinJointGapMeters?.() ?? Number.NaN).toFixed(6);
         renderer.domElement.dataset.a1JetwayCabinRelativeYawDriftRadians = Number(jetway.controller.getCabinRelativeYawDriftRadians?.() ?? Number.NaN).toFixed(9);
         renderer.domElement.dataset.a1JetwaySourcePoseMaxMatrixDelta = Number(jetway.controller.getSourcePoseMaxMatrixDelta?.() ?? Number.NaN).toFixed(9);
+        renderer.domElement.dataset.a1JetwaySupportBottomMeters = Number(jetway.controller.getSupportBottomMeters?.() ?? Number.NaN).toFixed(6);
         renderer.domElement.dataset.a1JetwaySupportBottomDeltaMeters = Number(jetway.controller.getSupportBottomDeltaMeters?.() ?? Number.NaN).toFixed(6);
+        renderer.domElement.dataset.a1JetwaySupportTrianglePartitionExact = String(jetway.controller.isSupportTrianglePartitionExact?.() === true);
         renderer.domElement.dataset.a1JetwayFixedWallMotionMaxMeters = Number(jetway.controller.getFixedWallMotionMaxMeters?.() ?? Number.NaN).toFixed(6);
         renderer.domElement.dataset.a1JetwayFixedWallRotationMaxRadians = Number(jetway.controller.getFixedWallRotationMaxRadians?.() ?? Number.NaN).toFixed(9);
         if (!inspectionActive && jetway.retractionRequested && jetway.deployment <= 0.005 && stageRef.current === 0) {
