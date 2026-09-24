@@ -11,23 +11,6 @@ const radians = (degrees) => degrees * Math.PI / 180;
 // User-supplied MisterX AutoGate-26m.obj horizontal articulation.
 // A1's exact WED stock-facade reach is 23.860805 m, making the 26 m
 // AutoGate bridge the closest supplied kinematic reference.
-const STOCK_GROUNDED_BOUNDS = Object.freeze({
-  tunnelB: Object.freeze({ minY: -4.0, maxY: 3.74 }),
-  cabinB: Object.freeze({ minY: 0.0, maxY: 7.995 }),
-});
-
-function applyGroundedVerticalTelescoping(object, original, bounds, vertMeters) {
-  const height = bounds.maxY - bounds.minY;
-  const dropMeters = clamp(-Number(vertMeters || 0), 0, Math.max(0, height - 0.05));
-  const scaleFactor = (height - dropMeters) / height;
-  // Parent bridge drops by dropMeters. Compress from the authored ground end
-  // so that end remains planted while the upper end follows the bridge.
-  object.position.y = original.positionY
-    + dropMeters
-    + bounds.minY * (1 - scaleFactor);
-  object.scale.y = original.scaleY * scaleFactor;
-}
-
 const AUTOGATE_26M = Object.freeze({
   sourceAsset: "MisterX_Library/Airport/Jetways-Steel/AutoGate-26m.obj",
   latRangeMeters: Object.freeze([0, 7.5]),
@@ -100,10 +83,7 @@ export function installA1ExactAutoGateController({
   const cabinHalfB = requireObject(aircraftTunnelSegment, "Attached_jw_cabin_1b.obj");
   const cabinHalfBAttachmentPivot = cabinHalfB.parent;
   requireObject(terminalTunnelSegment, "Attached_jw_tunnel_2_5a.obj");
-  const aircraftTunnelVisual = requireObject(
-    aircraftTunnelSegment,
-    "Attached_jw_tunnel_2_5b.obj",
-  );
+  requireObject(aircraftTunnelSegment, "Attached_jw_tunnel_2_5b.obj");
   const cabinHalfA = requireObject(cabinWall, "Attached_jw_cabin_1a.obj");
 
   const pivot = footprint[4];
@@ -137,10 +117,6 @@ export function installA1ExactAutoGateController({
     cabinRotationY: cabinWall.rotation.y,
     aircraftTunnelSegmentZ: aircraftTunnelSegment.position.z,
     cabinHalfBRotationY: cabinHalfB.rotation.y,
-    cabinHalfBPositionY: cabinHalfB.position.y,
-    cabinHalfBScaleY: cabinHalfB.scale.y,
-    aircraftTunnelVisualPositionY: aircraftTunnelVisual.position.y,
-    aircraftTunnelVisualScaleY: aircraftTunnelVisual.scale.y,
     cabinHalfARotationY: cabinHalfA.rotation.y,
   });
 
@@ -200,31 +176,6 @@ export function installA1ExactAutoGateController({
     tunnelWall.position.y = originals.tunnelPositionY + currentVertMeters;
     tunnelWall.rotation.x = originals.tunnelRotationX + bridgePitchDelta;
     tunnelWall.rotation.y = originals.tunnelRotationY + bridgeYawDelta;
-
-    // The XP11 stock B-side tunnel/cabin objects include their ground-reaching
-    // support structure. The MisterX AutoGate source has separate nested
-    // support compensation; applying only its outer vert translation to the
-    // flattened stock hierarchy drags those supports below the ramp.
-    // Telescope the existing exact stock B objects vertically instead: their
-    // top follows the moving bridge while the authored ground end stays planted.
-    applyGroundedVerticalTelescoping(
-      aircraftTunnelVisual,
-      {
-        positionY: originals.aircraftTunnelVisualPositionY,
-        scaleY: originals.aircraftTunnelVisualScaleY,
-      },
-      STOCK_GROUNDED_BOUNDS.tunnelB,
-      currentVertMeters,
-    );
-    applyGroundedVerticalTelescoping(
-      cabinHalfB,
-      {
-        positionY: originals.cabinHalfBPositionY,
-        scaleY: originals.cabinHalfBScaleY,
-      },
-      STOCK_GROUNDED_BOUNDS.cabinB,
-      currentVertMeters,
-    );
 
     // Exact XP11 spelling [10,11]: Segment 10 is the terminal-side outer
     // tunnel. Segment 11 is the aircraft-side inner section. MisterX's exact
@@ -531,8 +482,6 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateCabinWall = cabinWall.name;
   root.userData.a1AutoGateCabinHalfA = cabinHalfA.name;
   root.userData.a1AutoGateCabinHalfB = cabinHalfB.name;
-  root.userData.a1AutoGateGroundSupportAuthority =
-    "XP11-stock-jw_tunnel_2_5b-and-jw_cabin_1b-source-bounds-grounded-telescoping-v1";
   root.userData.a1AutoGateCabinJointAuthority =
     "Segment-11-attached-cabin-pivot-world-to-Cabin-wall-origin";
   root.userData.a1AutoGatePivotWedNodeId = 104809;
