@@ -2,6 +2,11 @@ name: KPHX XP12 Stock OBJ AGP Chunk
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - "reports/trigger-kphx-xp12-stock-obj-agp.txt"
 
 permissions:
   contents: write
