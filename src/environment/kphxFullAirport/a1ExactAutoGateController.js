@@ -352,6 +352,7 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateDoorContactGapMeters = doorContactGapMeters;
     root.userData.a1AutoGateDoorContactHitObject = doorContactHitObject;
     root.userData.a1AutoGateDoorContactReady = doorContactReady;
+    root.userData.a1AutoGateVerticalResolved = doorContactReady;
     root.userData.a1AutoGateDoorContactAuthority =
       "visible-rendered-CRJ-L1-plus-MisterX-AutoGate-26m-lat-vert-to-XP11-stock-cabin-v2";
 
@@ -392,7 +393,14 @@ export function installA1ExactAutoGateController({
     getDoorContactHitObject: () => doorContactHitObject,
     isDoorContactReady: () => doorContactReady,
     getMotionDurationMs: () => AUTOGATE_REFERENCE.motionDurationSeconds * 1000,
-    getDoorTargets: () => doorTargets,
+    getDoorTargets: () => Object.freeze({
+      ...doorTargets,
+      vertMeters: connectedVertMeters,
+      verticalResolved: doorContactReady,
+      authority: doorContactReady
+        ? "autogate-visible-aircraft-door-lat-vert-solved-v2"
+        : doorTargets.authority,
+    }),
   });
 
   root.userData.a1AutoGateControllerAuthority =
@@ -410,7 +418,7 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateDoorContactGapMeters = Number.NaN;
   root.userData.a1AutoGateDoorContactHitObject = "unregistered";
   root.userData.a1AutoGateDoorContactReady = false;
-  root.userData.a1AutoGateVerticalResolved = doorTargets.verticalResolved;
+  root.userData.a1AutoGateVerticalResolved = false;
   root.userData.a1AutoGateFixedWalls = fixedWalls.map((wall) => wall.name).join("|");
   root.userData.a1AutoGateMovingWall = tunnelWall.name;
   root.userData.a1AutoGateCabinWall = cabinWall.name;
