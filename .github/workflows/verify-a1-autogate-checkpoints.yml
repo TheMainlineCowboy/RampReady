@@ -81,6 +81,8 @@ jobs:
             const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
             return d.inspectionMode === "training"
               && d.a1JetwayState === "attached-to-aircraft-door"
+              && d.a1JetwayDoorContactReady === "true"
+              && Number(d.a1JetwayDoorContactGapMeters) <= 0.08
               && Number(d.a1JetwayDeployment) >= 0.995;
           }, null, { timeout: 10000 });
           const state = await page.evaluate(() => ({ ...document.querySelector("canvas.trainerCanvas").dataset }));
@@ -100,7 +102,12 @@ jobs:
           await page.waitForFunction(() => document.querySelector("canvas.trainerCanvas")?.dataset?.kphxExactLiveT4 === "ready", null, { timeout: 30000 });
           const returnToTraining = page.getByRole("button", { name: "Return to training", exact: true });
           if (await returnToTraining.isVisible().catch(() => false)) await returnToTraining.click();
-          await page.waitForFunction(() => document.querySelector("canvas.trainerCanvas")?.dataset?.a1JetwayState === "attached-to-aircraft-door", null, { timeout: 10000 });
+          await page.waitForFunction(() => {
+            const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
+            return d.a1JetwayState === "attached-to-aircraft-door"
+              && d.a1JetwayDoorContactReady === "true"
+              && Number(d.a1JetwayDoorContactGapMeters) <= 0.08;
+          }, null, { timeout: 15000 });
           await page.getByRole("button", { name: "Ready", exact: true }).click();
           await page.waitForFunction(() => {
             const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
@@ -129,7 +136,12 @@ jobs:
           await page.waitForFunction(() => document.querySelector("canvas.trainerCanvas")?.dataset?.kphxExactLiveT4 === "ready", null, { timeout: 30000 });
           const returnToTraining = page.getByRole("button", { name: "Return to training", exact: true });
           if (await returnToTraining.isVisible().catch(() => false)) await returnToTraining.click();
-          await page.waitForFunction(() => document.querySelector("canvas.trainerCanvas")?.dataset?.a1JetwayState === "attached-to-aircraft-door", null, { timeout: 10000 });
+          await page.waitForFunction(() => {
+            const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
+            return d.a1JetwayState === "attached-to-aircraft-door"
+              && d.a1JetwayDoorContactReady === "true"
+              && Number(d.a1JetwayDoorContactGapMeters) <= 0.08;
+          }, null, { timeout: 15000 });
 
           const attached = await page.evaluate(() => ({ ...document.querySelector("canvas.trainerCanvas").dataset }));
           await page.getByRole("button", { name: "Ready", exact: true }).click();
@@ -149,7 +161,13 @@ jobs:
             if (!Number.isFinite(n) || Math.abs(n - expected) > tolerance) failures.push(`${label}=${actual}`);
           };
           near(attached.a1JetwayDeployment, 1, 0.002, "attached deployment");
-          near(attached.a1JetwayLatMeters, 6.16, 0.01, "attached lat");
+          const connectedLat = Number(attached.a1JetwayConnectedLatMeters);
+          const attachedLat = Number(attached.a1JetwayLatMeters);
+          const doorGap = Number(attached.a1JetwayDoorContactGapMeters);
+          if (!Number.isFinite(connectedLat) || connectedLat <= 0 || connectedLat > 7.5) failures.push(`connectedLat=${attached.a1JetwayConnectedLatMeters}`);
+          if (!Number.isFinite(attachedLat) || Math.abs(attachedLat - connectedLat) > 0.01) failures.push(`attachedLat=${attached.a1JetwayLatMeters}, connectedLat=${attached.a1JetwayConnectedLatMeters}`);
+          if (attached.a1JetwayDoorContactReady !== "true") failures.push(`doorContactReady=${attached.a1JetwayDoorContactReady}`);
+          if (!Number.isFinite(doorGap) || doorGap > 0.08) failures.push(`doorGap=${attached.a1JetwayDoorContactGapMeters}`);
           near(attached.a1JetwayFixedWallMotionMaxMeters, 0, 0.000001, "attached fixed wall motion");
           near(parked.a1JetwayDeployment, 0, 0.005, "parked deployment");
           near(parked.a1JetwayLatMeters, 0, 0.01, "parked lat");
@@ -166,11 +184,20 @@ jobs:
           if (consoleErrors.length) failures.push(`consoleErrors=${consoleErrors.join(" | ")}`);
 
           const report = {
-            schemaVersion: 2,
+            schemaVersion: 3,
             status: failures.length ? "FAIL" : "PASS",
             sourceGeometry: "KPHX WED 104804 + XP11 Jetway_1_solid.fac",
             motionAuthority: "MisterX AutoGate-26m + Marginal AutoGate DISENGAGE",
-            aircraftDoorAuthority: { aircraftType: "CRJ700", aftOfNoseGearMeters: 7.32, leftOfCenterlineMeters: 1.34, attachedLatMeters: 6.16, verticalResolved: false },
+            aircraftDoorAuthority: {
+              aircraftType: "CRJ700",
+              markerAuthority: attached.a1JetwayDoorRegistrationAuthority,
+              markerWorld: attached.a1RenderedL1DoorWorld,
+              connectedLatMeters: attached.a1JetwayConnectedLatMeters,
+              dockingCorrectionMeters: attached.a1JetwayDockCorrectionMeters,
+              visibleDoorGapMeters: attached.a1JetwayDoorContactGapMeters,
+              hitObject: attached.a1JetwayDoorContactHitObject,
+              verticalResolved: attached.terminal4A1VerticalResolved === "true",
+            },
             attached,
             parked,
             stageAdvanced,
