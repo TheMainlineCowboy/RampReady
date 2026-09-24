@@ -1,5 +1,6 @@
-Trigger instrumented exact A1 AutoGate departure verification.
-Checkpoint verifier commit: 1f7ca821c76abe262782c82bac1dbd28d7c47bbd
+Trigger split-checkpoint exact A1 AutoGate departure verification.
+Verifier commit: d48c195e77f87498c8709957fb4fbceca6a0d234
+Checkpoints: route -> attached -> midpoint -> parked/stage advance
 Expected attached lat: 6.160 m
 Expected parked lat: 0.000 m
 Expected duration: 15000 ms
