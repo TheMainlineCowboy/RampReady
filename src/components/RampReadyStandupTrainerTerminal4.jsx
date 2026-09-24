@@ -27,7 +27,7 @@ import "./mobile-runtime-recovery.css";
 import "./inspection-compact-v30.css";
 import "./mobile-hud-v9.css";
 
-const A1_AIRCRAFT_TYPE = "CRJ700";
+const A1_AIRCRAFT_TYPE = "CRJ900";
 const A1_SCENARIO_POSE = createA1AircraftDockingScenarioPose(
   A1_AIRCRAFT_TYPE,
   { equipmentApproachOffsetMeters: 6.2 },
