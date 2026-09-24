@@ -179,6 +179,8 @@ export function installA1ExactAutoGateController({
     getStateHistory: () => [...history],
     getLatMeters: () => root.userData.a1AutoGateLatMeters,
     getRetractedMeters: () => root.userData.a1AutoGateRetractedMeters,
+    getBridgeYawDeltaDegrees: () => root.userData.a1AutoGateBridgeYawDeltaDegrees,
+    getCabinCounterYawDeltaDegrees: () => root.userData.a1AutoGateCabinCounterYawDeltaDegrees,
     getAttachedLatMeters: () => attachedLatMeters,
     getMotionDurationMs: () => AUTOGATE_REFERENCE.motionDurationSeconds * 1000,
     getDoorTargets: () => doorTargets,
