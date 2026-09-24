@@ -1,0 +1,110 @@
+name: KPHX Unresolved Dependency Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-unresolved-dependency-audit.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install downloader
+        run: python -m pip install --quiet gdown
+
+      - name: Fetch exact KPHX WED authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-source reports
+          gdown "https://drive.google.com/uc?id=1oUuiZQiWbqIMXtqSQMklZ9E_jbsg_T2d" -O .kphx-source/earth.wed.xml
+          test "$(sha256sum .kphx-source/earth.wed.xml | awk '{print $1}')" = "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498"
+
+      - name: Build authoritative resource-prefix audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import path from "node:path";
+
+          const xml=fs.readFileSync(".kphx-source/earth.wed.xml","utf8");
+          const resources=[];
+          const re=/resource="([^"]+)"/g;
+          let m;
+          while((m=re.exec(xml))!==null){
+            const resource=m[1].replaceAll("\\","/");
+            resources.push(resource);
+          }
+
+          const PACKAGE_PREFIXES=new Set([
+            "Terminals","Runways","Ramps","ParkingGarages","CargoBuildings","SkyTrain","Vehicles",
+            "StaticAircraft","People","Trees","Misc","Lights","Lines","GroundMarkings","GroundPolys",
+            "Ground_Textures","GateNumbers","gate_number","Downtown","Construction","Digging",
+            "DGSs-Marshaller","Ortho"
+          ]);
+          const COMPLETE_EXTERNAL=new Set(["MisterX_Library","ZDP_Library","CDB-Library"]);
+
+          const byPrefix={};
+          for(const resource of resources){
+            const prefix=resource.includes("/")?resource.split("/")[0]:"(root)";
+            const ext=(path.posix.extname(resource)||"(none)").toLowerCase();
+            byPrefix[prefix]??={placements:0,resources:{},extensions:{}};
+            byPrefix[prefix].placements++;
+            byPrefix[prefix].resources[resource]=(byPrefix[prefix].resources[resource]||0)+1;
+            byPrefix[prefix].extensions[ext]=(byPrefix[prefix].extensions[ext]||0)+1;
+          }
+
+          const normalized=Object.fromEntries(
+            Object.entries(byPrefix)
+              .sort((a,b)=>b[1].placements-a[1].placements||a[0].localeCompare(b[0]))
+              .map(([prefix,value])=>[prefix,{
+                placements:value.placements,
+                uniqueResourceCount:Object.keys(value.resources).length,
+                extensions:value.extensions,
+                resources:Object.fromEntries(Object.entries(value.resources).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))),
+                status:PACKAGE_PREFIXES.has(prefix)?"package-owned":COMPLETE_EXTERNAL.has(prefix)?"materialized-external":"unresolved-external"
+              }])
+          );
+
+          const unresolved=Object.fromEntries(Object.entries(normalized).filter(([,v])=>v.status==="unresolved-external"));
+          const report={
+            schemaVersion:1,
+            authority:{
+              package:"KPHX - Phoenix Sky Harbor Intl",
+              version:"1.75.1",
+              wedSha256:"59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498"
+            },
+            totalResourceAttributes:resources.length,
+            prefixes:normalized,
+            unresolved
+          };
+          fs.writeFileSync("reports/kphx-unresolved-dependency-audit.json",JSON.stringify(report,null,2)+"\n");
+          console.log(JSON.stringify({
+            totalResourceAttributes:resources.length,
+            unresolved:Object.fromEntries(Object.entries(unresolved).map(([k,v])=>[k,{placements:v.placements,uniqueResourceCount:v.uniqueResourceCount,extensions:v.extensions}]))
+          },null,2));
+          NODE
+
+      - name: Commit audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-unresolved-dependency-audit.json
+          git commit -m "Audit unresolved exact KPHX dependency families"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
