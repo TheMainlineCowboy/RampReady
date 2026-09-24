@@ -6,3 +6,8 @@ Authority: CRJ900 ACF boarding-door + KPHX WED 104804/104811 + AutoGate lat/vert
 - align LEKTRO AP88 logical capture point to the authored cradle pivot
 - hide flat stock facade control planes that render as blade-thin gate walls
 - reuse exact KPHX surface documents and texture decodes during preload
+
+2026-09-24 A1 grounded support correction:
+- revert deforming stock support telescoping
+- keep exact jw_tunnel_2_5b rigid
+- preserve FAC ATTACH_GRADED Y=4 / source minY=-4 pavement contact during AutoGate vertical motion
