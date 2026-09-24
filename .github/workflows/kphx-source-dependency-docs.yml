@@ -1,0 +1,90 @@
+name: KPHX Exact Source Dependency Docs
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-source-dependency-docs.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Install archive tool
+        run: sudo apt-get update >/dev/null && sudo apt-get install -y p7zip-full >/dev/null
+
+      - name: Download locked KPHX source archive
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/kphx reports
+          gh release download kphx-source-1.75.1 --pattern '*.7z' --dir /tmp/kphx
+          ARCHIVE="$(find /tmp/kphx -type f -name '*.7z' -print -quit)"
+          test -n "$ARCHIVE"
+          echo "$ARCHIVE" >/tmp/kphx-archive.txt
+          7z t "$ARCHIVE" >/dev/null
+
+      - name: Inspect exact source documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARCHIVE="$(cat /tmp/kphx-archive.txt)"
+          rm -rf /tmp/kphx-docs
+          mkdir -p /tmp/kphx-docs
+          7z l -ba "$ARCHIVE" > /tmp/kphx-list.txt
+          awk '{for(i=6;i<=NF;i++){printf "%s%s",$i,(i<NF?" ":"\n")}}' /tmp/kphx-list.txt             | grep -Ei '(^|/)(readme|read me|install|installation|requirements?|libraries|library|credits?|documentation|docs?)([^/]*)\.(txt|md|pdf|rtf|html?)$'             > /tmp/doc-paths.txt || true
+
+          while IFS= read -r p; do
+            [ -z "$p" ] && continue
+            case "$p" in
+              *.txt|*.TXT|*.md|*.MD|*.rtf|*.RTF|*.html|*.HTML|*.htm|*.HTM)
+                7z e -y "$ARCHIVE" "$p" -o/tmp/kphx-docs >/dev/null 2>&1 || true
+                ;;
+            esac
+          done </tmp/doc-paths.txt
+
+          {
+            echo "=== candidate documentation paths ==="
+            cat /tmp/doc-paths.txt
+            echo
+            echo "=== exact dependency mentions ==="
+            grep -RniE 'RA[_ -]?Library|Fruitstand|Fruit[[:space:]_-]*Stand|A306F|DH8B|SF340|required librar|libraries required|dependency|dependencies' /tmp/kphx-docs 2>/dev/null || true
+            echo
+            echo "=== extracted text documents ==="
+            find /tmp/kphx-docs -maxdepth 1 -type f -printf '%f\n' | sort
+            for f in /tmp/kphx-docs/*; do
+              [ -f "$f" ] || continue
+              echo
+              echo "----- $(basename "$f") -----"
+              sed -n '1,260p' "$f" 2>/dev/null || true
+            done
+          } > reports/kphx-source-dependency-docs.txt
+
+          cat reports/kphx-source-dependency-docs.txt
+
+      - name: Commit documentation audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-source-dependency-docs.txt
+          git commit -m "Audit exact KPHX source dependency documentation"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
