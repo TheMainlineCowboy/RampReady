@@ -235,6 +235,10 @@ export function installA1ExactAutoGateController({
     cabinHalfBRotationY: cabinHalfB.rotation.y,
     cabinHalfARotationY: cabinHalfA.rotation.y,
     lowerSupportLocalMatrix: lowerSupport.sourceLocalMatrix.clone(),
+    tunnelMatrix: tunnelWall.matrix.clone(),
+    cabinMatrix: cabinWall.matrix.clone(),
+    aircraftTunnelSegmentMatrix: aircraftTunnelSegment.matrix.clone(),
+    cabinHalfBMatrix: cabinHalfB.matrix.clone(),
   });
 
   // The exact WED stock facade is the authored parked/rest pose. AutoGate's
@@ -398,6 +402,34 @@ export function installA1ExactAutoGateController({
       lowerSupport.bridgeIndexCount;
     root.userData.a1AutoGateSupportTrianglePartitionExact =
       lowerSupport.exactPartition;
+
+    tunnelWall.updateMatrix();
+    cabinWall.updateMatrix();
+    aircraftTunnelSegment.updateMatrix();
+    cabinHalfB.updateMatrix();
+    const matrixDelta = (current, baseline) => {
+      let max = 0;
+      for (let index = 0; index < 16; index += 1) {
+        max = Math.max(
+          max,
+          Math.abs(current.elements[index] - baseline.elements[index]),
+        );
+      }
+      return max;
+    };
+    root.userData.a1AutoGateSourcePoseMaxMatrixDelta =
+      deployment <= 0.000001
+        ? Math.max(
+          matrixDelta(tunnelWall.matrix, originals.tunnelMatrix),
+          matrixDelta(cabinWall.matrix, originals.cabinMatrix),
+          matrixDelta(
+            aircraftTunnelSegment.matrix,
+            originals.aircraftTunnelSegmentMatrix,
+          ),
+          matrixDelta(cabinHalfB.matrix, originals.cabinHalfBMatrix),
+          matrixDelta(lowerSupport.group.matrix, originals.lowerSupportLocalMatrix),
+        )
+        : Number.NaN;
     root.userData.a1AutoGateState = state;
 
     let fixedWallMotionMaxMeters = 0;
@@ -605,6 +637,8 @@ export function installA1ExactAutoGateController({
     getCabinRelativeYawDriftRadians: () => root.userData.a1AutoGateCabinRelativeYawDriftRadians,
     getSupportBottomMeters: () => root.userData.a1AutoGateSupportBottomMeters,
     getSupportBottomDeltaMeters: () => root.userData.a1AutoGateSupportBottomDeltaMeters,
+    getSourcePoseMaxMatrixDelta: () =>
+      root.userData.a1AutoGateSourcePoseMaxMatrixDelta,
     isSupportTrianglePartitionExact: () =>
       root.userData.a1AutoGateSupportTrianglePartitionExact === true,
     getFixedWallMotionMaxMeters: () => root.userData.a1AutoGateFixedWallMotionMaxMeters,
