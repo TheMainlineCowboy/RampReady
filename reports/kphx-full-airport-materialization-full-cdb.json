@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAtUtc": "2026-09-23T04:52:22.951Z",
+  "generatedAtUtc": "2026-09-24T02:01:25.346Z",
   "source": {
     "package": "KPHX - Phoenix Sky Harbor Intl",
     "version": "1.75.1",
@@ -29,7 +29,9 @@
     "textures": "source texture decoded to browser PNG at original dimensions with decoded-RGBA hash equality required",
     "placement": "earth.wed.xml authored lat/lon/heading; no manual placement",
     "packageBatch": "full-cdb",
-    "packagePrefixes": [],
+    "packagePrefixes": [
+      "__none__"
+    ],
     "externalLibraries": "only explicitly resolved library resources are materialized; unresolved virtual paths are never substituted",
     "libraryMap": "/home/runner/work/RampReady/RampReady/reports/kphx-full-cdb-library-map.json",
     "placementReport": "/home/runner/work/RampReady/RampReady/reports/kphx-full-cdb-wed-placements.json"
@@ -45,7 +47,7 @@
         "sourceResource": "CDB-Library/Airport/GSE/others/objects_airConditionerBig.obj",
         "sourceSha256": "88ec2a393a3e0411a22bad191871486c097fb587185614f33e5030fb8f1ac513",
         "assetUrl": "/models/kphx-full-airport/external/CDB-Library/Airport/GSE/others/objects_airConditionerBig/objects_airConditionerBig.gltf",
-        "gltfSha256": "5c5fa1e375191e2cf2617d5d152a2dec45c97206c81d6ec0264bb65692232b2e",
+        "gltfSha256": "ee5395d0a7771039c4fcf54e164dd41c7bd3f50a37a0e3565e8caeec87726ea3",
         "binSha256": "127b20c740265b1438ba1a646c002e5a6e6845394b07799c573893765bbcdacf",
         "diffuse": {
           "requested": "cdb_others.png",
@@ -116,11 +118,13 @@
           "weatherUri": null,
           "sourceWeatherTransparent": false,
           "globalNoShadow": false,
+          "globalLodRange": null,
+          "sourceTilted": false,
           "globalSpecular": null,
           "globalAlphaCutoff": null,
           "normalMetalness": false,
           "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
-          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS-and-IF-NOT-GLOBAL_SHADOWS;preserve-GLOBAL_LOD-and-TILTED-source-semantics;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
           "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
         }
       },
@@ -128,7 +132,7 @@
         "sourceResource": "CDB-Library/Airport/GSE/others/objects_scaffolding_wood.obj",
         "sourceSha256": "5a04f8ff49131d869d8e01b7dd7102bb55492996db39ceba1a763d4a262fd92d",
         "assetUrl": "/models/kphx-full-airport/external/CDB-Library/Airport/GSE/others/objects_scaffolding_wood/objects_scaffolding_wood.gltf",
-        "gltfSha256": "024512feff49c6cd286a926fd60f55ec0f20404d75948944b0193fbdd9c15ad5",
+        "gltfSha256": "08e5a8441496a2a3fcb903790b76ac5fff8df1fb96c1c3b49cff9af87ee60843",
         "binSha256": "1e81d00dc92330b7306d398a5b557ee46c72ee968a0c2499b6167abee2feac56",
         "diffuse": {
           "requested": "cdb_others2.png",
@@ -199,11 +203,13 @@
           "weatherUri": null,
           "sourceWeatherTransparent": false,
           "globalNoShadow": false,
+          "globalLodRange": null,
+          "sourceTilted": false,
           "globalSpecular": null,
           "globalAlphaCutoff": null,
           "normalMetalness": false,
           "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
-          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS-and-IF-NOT-GLOBAL_SHADOWS;preserve-GLOBAL_LOD-and-TILTED-source-semantics;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
           "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
         }
       },
@@ -211,7 +217,7 @@
         "sourceResource": "CDB-Library/Airport/GSE/stairs/GSE_A320_stairs.obj",
         "sourceSha256": "b996ac52bef7dce4419bf47122424cb7fc53208a6939b0d758d429c300188fc5",
         "assetUrl": "/models/kphx-full-airport/external/CDB-Library/Airport/GSE/stairs/GSE_A320_stairs/GSE_A320_stairs.gltf",
-        "gltfSha256": "5b698fcd7ba66166d013b3dd05f71322a52ae1d31addc19565d85f30ad5de6e0",
+        "gltfSha256": "11a180a7a86888553eb7573c4b36852ea2a2c7b774a0914f2c84fe8c504b3bda",
         "binSha256": "7ca809a1650127a325b4fc6291f19653f7c18afa14a7a6b5ff6ac005366ff3d5",
         "diffuse": {
           "requested": "../../../shared_texture/escadas.dds",
@@ -282,11 +288,13 @@
           "weatherUri": null,
           "sourceWeatherTransparent": false,
           "globalNoShadow": false,
+          "globalLodRange": null,
+          "sourceTilted": false,
           "globalSpecular": null,
           "globalAlphaCutoff": null,
           "normalMetalness": false,
           "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
-          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS-and-IF-NOT-GLOBAL_SHADOWS;preserve-GLOBAL_LOD-and-TILTED-source-semantics;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
           "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
         }
       },
@@ -294,7 +302,7 @@
         "sourceResource": "CDB-Library/Cars/BICI/car_golfcar2.obj",
         "sourceSha256": "bb7a4dc8104e77552e9618bd3463d4374a6bc33caad47ff61cbfe13fd52a8e6e",
         "assetUrl": "/models/kphx-full-airport/external/CDB-Library/Cars/BICI/car_golfcar2/car_golfcar2.gltf",
-        "gltfSha256": "3a176272a4ba50cdd9f3201fd3be4e62e26a6d5a6f7742af90714958edcc0154",
+        "gltfSha256": "a52e01fe210a827e4ad2b74292e94d2792cdfcddde5ddc9d3628cc79d4526467",
         "binSha256": "4603fa39ee72154e451ff43ab201883e4615e7882444a1140cf72191655707f3",
         "diffuse": {
           "requested": "GolfCart01.png",
@@ -343,11 +351,13 @@
           "weatherUri": null,
           "sourceWeatherTransparent": false,
           "globalNoShadow": false,
+          "globalLodRange": null,
+          "sourceTilted": false,
           "globalSpecular": null,
           "globalAlphaCutoff": null,
           "normalMetalness": false,
           "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
-          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS-and-IF-NOT-GLOBAL_SHADOWS;preserve-GLOBAL_LOD-and-TILTED-source-semantics;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
           "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
         }
       },
@@ -355,7 +365,7 @@
         "sourceResource": "CDB-Library/Cars/camion/GSE_mini_aerialLift_.obj",
         "sourceSha256": "9e369edbccb85db6c5155d80c3759382b26e58730576990b406e4b362c672532",
         "assetUrl": "/models/kphx-full-airport/external/CDB-Library/Cars/camion/GSE_mini_aerialLift_/GSE_mini_aerialLift_.gltf",
-        "gltfSha256": "8acd14e3602cebc5b914757d6808aee880025a1e856583a795bbc580a1ccce22",
+        "gltfSha256": "3cd51fe3a0b2ac0dd15ee664c8f5da4c75aeb38f998c42b49d8d466771839d7a",
         "binSha256": "c0015b807135ed61388836de940254df5e25b2fc4b10fc78d8af66bc19a575b1",
         "diffuse": {
           "requested": "MobileElevator01.png",
@@ -363,7 +373,7 @@
           "sourceSha256": "e1ce3f788449dbbecbcf269706ff4508609c318ec476b3475462ac83b3010ca1",
           "sourceDecodedRgbaSha256": "420285a18eddec6aca55e3ae699be80f31716e9dd4100e0161870c66dd0a1d60",
           "outputName": "MobileElevator01.png",
-          "outputSha256": "8baec8998465a3338117e0230c567f4fa006e8da870c0b7b6ff91e036d73178d",
+          "outputSha256": "b973ff038d7ce459ca3cb589d96def31e6feb9f93e3d768fd0e1216f44c18e1f",
           "outputDecodedRgbaSha256": "420285a18eddec6aca55e3ae699be80f31716e9dd4100e0161870c66dd0a1d60",
           "width": 1024,
           "height": 1024,
@@ -404,11 +414,13 @@
           "weatherUri": null,
           "sourceWeatherTransparent": false,
           "globalNoShadow": false,
+          "globalLodRange": null,
+          "sourceTilted": false,
           "globalSpecular": null,
           "globalAlphaCutoff": null,
           "normalMetalness": false,
           "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
-          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS-and-IF-NOT-GLOBAL_SHADOWS;preserve-GLOBAL_LOD-and-TILTED-source-semantics;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
           "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
         }
       },
@@ -416,7 +428,7 @@
         "sourceResource": "CDB-Library/Cars/cars/Landrover_Mercedez/car_mercedes_old_gray.obj",
         "sourceSha256": "f8a226dd694a6d802c4df3b8098f426ceedaf156f67e2beed45701f8b2d97d0a",
         "assetUrl": "/models/kphx-full-airport/external/CDB-Library/Cars/cars/Landrover_Mercedez/car_mercedes_old_gray/car_mercedes_old_gray.gltf",
-        "gltfSha256": "61c6c397727a383be854a2b3d32c09f8e9d38f5789c0ccc1f4defd8ba6485754",
+        "gltfSha256": "e2c5fc8c96e07407d821eab359a9c7969bb4c9f8cef1ff21c67512ef36b47c82",
         "binSha256": "a2116ea1bef49fd790ed869527067e1e09481b3ee09f8a4f0975b65f9227d1f9",
         "diffuse": {
           "requested": "mercedes_gray.png",
@@ -476,11 +488,13 @@
           "weatherUri": null,
           "sourceWeatherTransparent": false,
           "globalNoShadow": false,
+          "globalLodRange": null,
+          "sourceTilted": false,
           "globalSpecular": null,
           "globalAlphaCutoff": null,
           "normalMetalness": false,
           "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
-          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS-and-IF-NOT-GLOBAL_SHADOWS;preserve-GLOBAL_LOD-and-TILTED-source-semantics;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
           "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
         }
       },
@@ -488,7 +502,7 @@
         "sourceResource": "CDB-Library/Cars/cars/Landrover_Mercedez/car_rangeRoverE.obj",
         "sourceSha256": "ca26e65197a5dab46f69654a520a8b96e96f52b50a78f9bc0cf64864fe174be9",
         "assetUrl": "/models/kphx-full-airport/external/CDB-Library/Cars/cars/Landrover_Mercedez/car_rangeRoverE/car_rangeRoverE.gltf",
-        "gltfSha256": "4b38746cac821fc38bd6da4ad6e902e6bd7db680580c03ec0eaff6d0eda8805b",
+        "gltfSha256": "bc5f41c286659c184ae8dbd7db90e9ef1d852286056ab923fc486bec2f0a231d",
         "binSha256": "2164b6621228d5e9a259427ea74443572a2ff5522c4a8082e7d7cab50f942af1",
         "diffuse": {
           "requested": "rangeRover.png",
@@ -537,11 +551,13 @@
           "weatherUri": null,
           "sourceWeatherTransparent": false,
           "globalNoShadow": false,
+          "globalLodRange": null,
+          "sourceTilted": false,
           "globalSpecular": null,
           "globalAlphaCutoff": null,
           "normalMetalness": false,
           "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
-          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS-and-IF-NOT-GLOBAL_SHADOWS;preserve-GLOBAL_LOD-and-TILTED-source-semantics;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
           "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
         }
       }

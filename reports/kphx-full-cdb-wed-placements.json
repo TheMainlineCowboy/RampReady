@@ -8,9 +8,6 @@
     "authority": "user-supplied expanded X-Plane package",
     "wedSha256": "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498"
   },
-  "selection": {
-    "policy": "all WED_ObjPlacement entries with resourcePrefix CDB-Library; no radius/area selection"
-  },
   "masterAnchor": {
     "id": "27855",
     "parentId": "121126",
