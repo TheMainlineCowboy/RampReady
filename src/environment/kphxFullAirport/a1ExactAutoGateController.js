@@ -113,10 +113,20 @@ export function installA1ExactAutoGateController({
   );
   const history = ["attached-to-aircraft-door"];
   let deployment = 1;
+  let connectedLatMeters = attachedLatMeters;
+  let dockingCorrectionMeters = 0;
+  let doorContactGapMeters = Number.NaN;
+  let doorContactHitObject = "unregistered";
+  let doorContactReady = false;
 
   function setDeployment(value) {
     deployment = clamp(Number(value) || 0, 0, 1);
-    const currentLatMeters = attachedLatMeters * deployment;
+    // The WED-authored pose is the exact geometry baseline. Once the rendered
+    // aircraft door is available, connectedLatMeters includes only the small
+    // AutoGate-consistent correction required to put the visible cabin/hood
+    // against that real door. Deployment 0 still returns to the source rest
+    // dataref value rather than bypassing the visible departure motion.
+    const currentLatMeters = connectedLatMeters * deployment;
     const retractMeters = attachedLatMeters - currentLatMeters;
 
     // AutoGate's top-level lat translation is exactly one metre of entrance
@@ -208,8 +218,98 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateFixedWallRotationMaxRadians = fixedWallRotationMaxRadians;
   }
 
+  function measureDoorContactGap(targetWorld, outwardWorldDirection) {
+    if (!targetWorld?.isVector3 || !outwardWorldDirection?.isVector3) {
+      return { distance: Number.POSITIVE_INFINITY, objectName: "invalid-target" };
+    }
+    root.updateMatrixWorld(true);
+    const direction = outwardWorldDirection.clone().normalize();
+    const raycaster = new THREE.Raycaster(targetWorld, direction, 0, 4.5);
+    const hits = raycaster.intersectObjects([cabinHalfA, cabinHalfB], true)
+      .filter((hit) => Number.isFinite(hit.distance) && hit.distance >= 0);
+    if (!hits.length) {
+      return { distance: Number.POSITIVE_INFINITY, objectName: "no-visible-cabin-hit" };
+    }
+    return {
+      distance: hits[0].distance,
+      objectName: hits[0].object?.name || hits[0].object?.parent?.name || "cabin-mesh",
+    };
+  }
+
+  function evaluateConnectedLat(candidateLatMeters, targetWorld, outwardWorldDirection) {
+    connectedLatMeters = clamp(candidateLatMeters, 0.05, AUTOGATE_26M.latRangeMeters[1]);
+    setDeployment(1);
+    const hit = measureDoorContactGap(targetWorld, outwardWorldDirection);
+    return {
+      connectedLatMeters,
+      correctionMeters: connectedLatMeters - attachedLatMeters,
+      gapMeters: hit.distance,
+      objectName: hit.objectName,
+    };
+  }
+
+  function registerAircraftDoorContact({ targetWorld, outwardWorldDirection } = {}) {
+    if (!targetWorld?.isVector3 || !outwardWorldDirection?.isVector3) {
+      throw new Error("A1 rendered aircraft door contact requires exact world point and outward direction");
+    }
+
+    // Search only the real AutoGate horizontal dataref range. Coarse pass first,
+    // then a fine local pass so mobile startup is not burdened with hundreds of
+    // full-scene raycasts.
+    let best = null;
+    const test = (candidate) => {
+      const result = evaluateConnectedLat(candidate, targetWorld, outwardWorldDirection);
+      if (!Number.isFinite(result.gapMeters)) return;
+      if (!best || result.gapMeters < best.gapMeters) best = result;
+    };
+
+    const low = Math.max(0.05, attachedLatMeters - 0.8);
+    const high = AUTOGATE_26M.latRangeMeters[1];
+    for (let value = low; value <= high + 1e-9; value += 0.05) test(value);
+
+    if (best) {
+      const fineLow = Math.max(low, best.connectedLatMeters - 0.08);
+      const fineHigh = Math.min(high, best.connectedLatMeters + 0.08);
+      for (let value = fineLow; value <= fineHigh + 1e-9; value += 0.005) test(value);
+    }
+
+    if (!best) {
+      connectedLatMeters = attachedLatMeters;
+      dockingCorrectionMeters = 0;
+      setDeployment(1);
+      doorContactGapMeters = Number.NaN;
+      doorContactHitObject = "no-visible-cabin-hit";
+      doorContactReady = false;
+    } else {
+      connectedLatMeters = best.connectedLatMeters;
+      dockingCorrectionMeters = best.correctionMeters;
+      setDeployment(1);
+      const finalHit = measureDoorContactGap(targetWorld, outwardWorldDirection);
+      doorContactGapMeters = finalHit.distance;
+      doorContactHitObject = finalHit.objectName;
+      doorContactReady = Number.isFinite(doorContactGapMeters) && doorContactGapMeters <= 0.08;
+    }
+
+    root.userData.a1AutoGateConnectedLatMeters = connectedLatMeters;
+    root.userData.a1AutoGateDockingCorrectionMeters = dockingCorrectionMeters;
+    root.userData.a1AutoGateDoorContactGapMeters = doorContactGapMeters;
+    root.userData.a1AutoGateDoorContactHitObject = doorContactHitObject;
+    root.userData.a1AutoGateDoorContactReady = doorContactReady;
+    root.userData.a1AutoGateDoorContactAuthority =
+      "exact-rendered-CRJ-L1-marker-raycast-to-exact-XP11-stock-cabin-geometry-v1";
+
+    return Object.freeze({
+      connectedLatMeters,
+      correctionMeters: dockingCorrectionMeters,
+      gapMeters: doorContactGapMeters,
+      hitObject: doorContactHitObject,
+      ready: doorContactReady,
+    });
+  }
+
   const controller = Object.freeze({
     setDeployment,
+    registerAircraftDoorContact,
     getDeployment: () => deployment,
     getState: () => root.userData.a1AutoGateState,
     getStateHistory: () => [...history],
@@ -222,6 +322,11 @@ export function installA1ExactAutoGateController({
     getFixedWallMotionMaxMeters: () => root.userData.a1AutoGateFixedWallMotionMaxMeters,
     getFixedWallRotationMaxRadians: () => root.userData.a1AutoGateFixedWallRotationMaxRadians,
     getAttachedLatMeters: () => attachedLatMeters,
+    getConnectedLatMeters: () => connectedLatMeters,
+    getDockingCorrectionMeters: () => dockingCorrectionMeters,
+    getDoorContactGapMeters: () => doorContactGapMeters,
+    getDoorContactHitObject: () => doorContactHitObject,
+    isDoorContactReady: () => doorContactReady,
     getMotionDurationMs: () => AUTOGATE_REFERENCE.motionDurationSeconds * 1000,
     getDoorTargets: () => doorTargets,
   });
@@ -234,6 +339,11 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateHorizontalDataref = AUTOGATE_REFERENCE.horizontalDataref;
   root.userData.a1AutoGateVerticalDataref = AUTOGATE_REFERENCE.verticalDataref;
   root.userData.a1AutoGateAttachedLatMeters = attachedLatMeters;
+  root.userData.a1AutoGateConnectedLatMeters = connectedLatMeters;
+  root.userData.a1AutoGateDockingCorrectionMeters = 0;
+  root.userData.a1AutoGateDoorContactGapMeters = Number.NaN;
+  root.userData.a1AutoGateDoorContactHitObject = "unregistered";
+  root.userData.a1AutoGateDoorContactReady = false;
   root.userData.a1AutoGateVerticalResolved = doorTargets.verticalResolved;
   root.userData.a1AutoGateFixedWalls = fixedWalls.map((wall) => wall.name).join("|");
   root.userData.a1AutoGateMovingWall = tunnelWall.name;
