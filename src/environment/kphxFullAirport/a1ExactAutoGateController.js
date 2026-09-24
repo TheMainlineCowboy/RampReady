@@ -128,11 +128,17 @@ export function installA1ExactAutoGateController({
   bridgeMotionRoot.attach(aircraftTunnelSegment);
   root.updateMatrixWorld(true);
 
-  // Cabin A and cabin B must share the same moving endpoint hierarchy.
-  // Re-parent the Cabin wall under the exact Segment-11 cabin attachment pivot
-  // while preserving its authored world transform.
-  cabinHalfBAttachmentPivot.attach(cabinWall);
+  // Preserve the Cabin wall under its authored root parent. Wall 5 carries a
+  // non-uniform Z stretch, so Object3D.attach across that scaled hierarchy can
+  // introduce shear when matrices are decomposed. Instead retain the exact
+  // baseline Cabin-to-Segment-11 endpoint matrix and reproduce that world
+  // transform each frame.
   root.updateMatrixWorld(true);
+  const cabinEndpointRelativeMatrix =
+    cabinHalfBAttachmentPivot.matrixWorld.clone().invert()
+      .multiply(cabinWall.matrixWorld.clone());
+  const baselineCabinJointWorldY =
+    cabinHalfBAttachmentPivot.getWorldPosition(new THREE.Vector3()).y;
 
   const pivot = footprint[4];
   const attachedCabinJoint = footprint[5];
@@ -284,22 +290,31 @@ export function installA1ExactAutoGateController({
       root.updateMatrixWorld(true);
     }
 
-    // Cabin A and B now share the same moving endpoint parent. Apply the
-    // AutoGate cabin counter-yaw locally to both source halves; their positions
-    // remain fixed in that common hierarchy, so they cannot drift apart.
-    cabinWall.position.copy(originals.cabinPosition);
-    cabinWall.rotation.x = originals.cabinRotationX;
-    cabinWall.rotation.y = originals.cabinRotationY + cabinCounterYawDelta;
+    // Cabin B inherits the bridge endpoint directly. Cabin A remains under its
+    // authored root parent but receives the same endpoint-relative world
+    // transform, avoiding independent position guesses and avoiding scaled
+    // re-parenting.
     cabinHalfB.rotation.y = originals.cabinHalfBRotationY + cabinCounterYawDelta;
-
+    root.updateMatrixWorld(true);
+    const cabinCounterYawMatrix =
+      new THREE.Matrix4().makeRotationY(cabinCounterYawDelta);
+    const desiredCabinWorld =
+      cabinHalfBAttachmentPivot.matrixWorld.clone()
+        .multiply(cabinEndpointRelativeMatrix)
+        .multiply(cabinCounterYawMatrix);
+    const cabinParentInverse = cabinWall.parent.matrixWorld.clone().invert();
+    const desiredCabinLocal = cabinParentInverse.multiply(desiredCabinWorld);
+    desiredCabinLocal.decompose(
+      cabinWall.position,
+      cabinWall.quaternion,
+      cabinWall.scale,
+    );
     root.updateMatrixWorld(true);
     const movingCabinJointWorld =
       cabinHalfBAttachmentPivot.getWorldPosition(new THREE.Vector3());
     const movingCabinJointLocal = root.worldToLocal(movingCabinJointWorld.clone());
     const jointVerticalDelta =
-      movingCabinJointLocal.y - root.worldToLocal(
-        terminalTunnelVisualPivot.getWorldPosition(new THREE.Vector3()),
-      ).y;
+      movingCabinJointWorld.y - baselineCabinJointWorldY;
 
     // The two stock cabin source objects meet at the same authored joint:
     // Segment 11 places jw_cabin_1b at its far endpoint and Cabin Segment 20
@@ -594,7 +609,7 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateCabinHalfA = cabinHalfA.name;
   root.userData.a1AutoGateCabinHalfB = cabinHalfB.name;
   root.userData.a1AutoGateCabinJointAuthority =
-    "Cabin-wall-and-cabin-B-shared-Segment-11-endpoint-hierarchy-v2";
+    "Cabin-A-world-matrix-follows-Segment-11-endpoint-no-scaled-reparent-v3";
   root.userData.a1AutoGatePivotWedNodeId = 104809;
   root.userData.a1AutoGateCabinJointWedNodeId = 104810;
   root.userData.a1AutoGateAttachedTunnelLengthMeters = attachedTunnelLength;
