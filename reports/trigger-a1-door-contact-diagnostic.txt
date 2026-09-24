@@ -1,0 +1,1 @@
+Capture rendered A1 L1-to-jetway contact state after exact model load.\n
