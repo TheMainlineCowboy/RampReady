@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "libraryRoot": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library",
+  "libraryTxt": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/library.txt",
+  "libraryTxtSha256": "eb169b930ae60896bf818e0c1c4b0bffaf422871b2d802dbd1e231ba13a2f82a",
+  "virtualPrefix": "MisterX_Library",
+  "requestedCount": 12,
+  "resolvedCount": 12,
+  "unresolved": [],
+  "ambiguous": [],
+  "resources": {
+    "MisterX_Library/Airport/Taxilines/Fresh/Runway_Hold_B.lin": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/Fresh/Runway_Hold_B.lin",
+      "physicalResource": "Airport/Taxilines/Fresh/Runway_Hold_B.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Fresh/Runway_Hold_B.lin",
+      "sha256": "5664b6c6a23e635996cfa076d22a98b9537e2bb809b9b362be3e22da733fd91b"
+    },
+    "MisterX_Library/Airport/Taxilines/HoldLine.lin": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/HoldLine.lin",
+      "physicalResource": "Airport/Taxilines/Old/Hold_B.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Old/Hold_B.lin",
+      "sha256": "4e7d2de71693148581825f889b5d4b97b8994a475eaac632ee9bf2a22c263c7e"
+    },
+    "MisterX_Library/Airport/Taxilines/ILS_Centerline.lin": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/ILS_Centerline.lin",
+      "physicalResource": "Airport/Taxilines/Old/Enhanced_Centerline_B.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Old/Enhanced_Centerline_B.lin",
+      "sha256": "1eed6ddc7c967b3387c9af3420f935d9f5e160f9d10a86fba4bd34aaccfb0d67"
+    },
+    "MisterX_Library/Airport/Taxilines/Old/Centerline_B.lin": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/Old/Centerline_B.lin",
+      "physicalResource": "Airport/Taxilines/Old/Centerline_B.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Old/Centerline_B.lin",
+      "sha256": "96389c6914eccb9ea5b18db1bc8f937ff35302e31fa2a2c758bc32e54ab8d039"
+    },
+    "MisterX_Library/Airport/Taxilines/Old/Red_White_B.lin": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/Old/Red_White_B.lin",
+      "physicalResource": "Airport/Taxilines/Old/Red_White_B.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Old/Red_White_B.lin",
+      "sha256": "08e7560f2016cd230fbc21aaa855f2f35bacf96f3c83c4a96c02596e6cc28fb7"
+    },
+    "MisterX_Library/Airport/Taxilines/Old/Removed_Line_1.5m.lin": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/Old/Removed_Line_1.5m.lin",
+      "physicalResource": "Airport/Taxilines/Old/Removed_Line_1.5m.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Old/Removed_Line_1.5m.lin",
+      "sha256": "7e0b24fa40cdea9e0d8665c10e7b250f1af96d9ec6be6fe1314748ae3865120c"
+    },
+    "MisterX_Library/Airport/Taxilines/Old/Removed_Line_1m.lin": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/Old/Removed_Line_1m.lin",
+      "physicalResource": "Airport/Taxilines/Old/Removed_Line_1m.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Old/Removed_Line_1m.lin",
+      "sha256": "6f6e6a0c8b9daf8b980c7fe71bf4bfb5b8fb5ee322be781f28428470a2ec7dbe"
+    },
+    "MisterX_Library/Airport/Taxilines/Old/Removed_Line_2m.lin": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/Old/Removed_Line_2m.lin",
+      "physicalResource": "Airport/Taxilines/Old/Removed_Line_2m.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Old/Removed_Line_2m.lin",
+      "sha256": "2d7213c7bf79f1783beac383bed3210cc65307762fad87f6ffe2661d2c6ecfd1"
+    },
+    "MisterX_Library/Airport/Taxilines/Old/Stripes/White_Stripes_small.pol": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/Old/Stripes/White_Stripes_small.pol",
+      "physicalResource": "Airport/Taxilines/Old/Stripes/White_Stripes_small.pol",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Old/Stripes/White_Stripes_small.pol",
+      "sha256": "a63d78bae5efbd41b9dc9a9481f03222d760be64e324e1d7e92bce5d1767c04c"
+    },
+    "MisterX_Library/Airport/Taxilines/RoadBroken.lin": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/RoadBroken.lin",
+      "physicalResource": "Airport/Taxilines/Old/Road_Dash.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Old/Road_Dash.lin",
+      "sha256": "f95e7536fa6bb0659dfbaa98dd2e0c98497b306efdc2ca010be0db7cbc4155ff"
+    },
+    "MisterX_Library/Ground_Textures/Asphalt_2_Base.pol": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Ground_Textures/Asphalt_2_Base.pol",
+      "physicalResource": "Ground_Textures/Asphalt_2_Base.pol",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Ground_Textures/Asphalt_2_Base.pol",
+      "sha256": "7762e31b2ccbb16c0902c92f25998beaf6080de1086a8cc5c21ed0a38b4a5184"
+    },
+    "MisterX_Library/Ground_Textures/Concrete_3_Brown.pol": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Ground_Textures/Concrete_3_Brown.pol",
+      "physicalResource": "Ground_Textures/Concrete_3_Brown.pol",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Ground_Textures/Concrete_3_Brown.pol",
+      "sha256": "39c024257aa948ef4365cf5df2cb90cf91fd1f8fbec9e53f65643e55bc3f3d32"
+    }
+  }
+}

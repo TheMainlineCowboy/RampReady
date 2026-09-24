@@ -1,0 +1,16 @@
+{
+  "resources": [
+    "MisterX_Library/Airport/Taxilines/Fresh/Runway_Hold_B.lin",
+    "MisterX_Library/Airport/Taxilines/HoldLine.lin",
+    "MisterX_Library/Airport/Taxilines/ILS_Centerline.lin",
+    "MisterX_Library/Airport/Taxilines/Old/Centerline_B.lin",
+    "MisterX_Library/Airport/Taxilines/Old/Red_White_B.lin",
+    "MisterX_Library/Airport/Taxilines/Old/Removed_Line_1.5m.lin",
+    "MisterX_Library/Airport/Taxilines/Old/Removed_Line_1m.lin",
+    "MisterX_Library/Airport/Taxilines/Old/Removed_Line_2m.lin",
+    "MisterX_Library/Airport/Taxilines/Old/Stripes/White_Stripes_small.pol",
+    "MisterX_Library/Airport/Taxilines/RoadBroken.lin",
+    "MisterX_Library/Ground_Textures/Asphalt_2_Base.pol",
+    "MisterX_Library/Ground_Textures/Concrete_3_Brown.pol"
+  ]
+}

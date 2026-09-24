@@ -1,0 +1,47 @@
+{
+  "kind": "LINE_PAINT",
+  "sourceResource": "MisterX_Library/Airport/Taxilines/Old/Removed_Line_1.5m.lin",
+  "texture": {
+    "requested": "Taxilines_removed.png",
+    "sourcePath": "Airport/Taxilines/Old/Taxilines_removed.dds",
+    "sourceSha256": "e661548b3ddb86f9115f3561574f0cd931f1383fedaa86e73a74922a1bc9ec2a",
+    "sourceDecodedRgbaSha256": "7ad198aa23e03a091da416b9e25169efcbf4293d482a8db7794863899bf7394a",
+    "outputName": "Taxilines_removed.png",
+    "outputUrl": "Taxilines_removed.png",
+    "outputSha256": "9f4b595ea0b2c39454ddebf10ea40139d2c47eca54a3dcbe8a875729e1bf1509",
+    "outputDecodedRgbaSha256": "7ad198aa23e03a091da416b9e25169efcbf4293d482a8db7794863899bf7394a",
+    "width": 512,
+    "height": 2048
+  },
+  "scaleMeters": [
+    1.5,
+    6
+  ],
+  "textureWidth": 512,
+  "textureHeight": null,
+  "textureNormal": null,
+  "normalScale": null,
+  "weather": null,
+  "globalSpecular": null,
+  "layerGroup": {
+    "group": "markings",
+    "offset": -1
+  },
+  "lodMeters": 10000,
+  "mirror": false,
+  "weatherTransparent": true,
+  "sOffsets": [
+    {
+      "layer": 0,
+      "left": 10,
+      "center": 256,
+      "right": 502
+    }
+  ],
+  "unsupported": [],
+  "sourceSha256": "7e0b24fa40cdea9e0d8665c10e7b250f1af96d9ec6be6fe1314748ae3865120c",
+  "outputBaseUrl": "/models/kphx-full-airport/surface-batches/misterx/resources/MisterX_Library/Airport/Taxilines/Old/Removed_Line_1.5m",
+  "lit": null,
+  "normal": null,
+  "decal": null
+}
