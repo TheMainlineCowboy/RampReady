@@ -168,38 +168,106 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   const attachedBytes = await captureCanvasClip(page, bounds, attachedPath);
   expect(attachedBytes).toBeGreaterThan(100000);
 
-  await hideUiStyle.evaluate((node) => node.remove());
-  await page.getByRole('button', { name: 'Ready', exact: true }).click();
-  await page.waitForFunction(() =>
-    document.querySelector('canvas.trainerCanvas')?.dataset?.a1JetwayState
-      === 'autogate-disengaging',
-    null,
-    { timeout: 5000, polling: 50 },
-  );
-  hideUiStyle = await page.addStyleTag({
-    content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}',
+  // Arm an in-page recorder before Ready is clicked. The exact KPHX scene is
+  // intentionally heavy in headless Chromium, and Playwright action/snapshot
+  // bookkeeping can take several seconds while the real 15-second AutoGate
+  // motion continues. Record the rendered canvas and telemetry when the live
+  // deployment itself passes through the middle 40-60% band instead of
+  // starting a midpoint wait only after the click action has returned.
+  await page.evaluate(() => {
+    const element = document.querySelector('canvas.trainerCanvas');
+    if (!(element instanceof HTMLCanvasElement)) {
+      throw new Error('Three.js canvas is missing before A1 midpoint recorder');
+    }
+
+    window.__rampReadyA1MidpointEvidence = null;
+    window.__rampReadyA1MidpointObserver?.disconnect?.();
+
+    const recordMidpoint = () => {
+      const dataset = { ...element.dataset };
+      const deployment = Number(dataset.a1JetwayDeployment);
+      if (dataset.a1JetwayState !== 'autogate-disengaging'
+        || !Number.isFinite(deployment)
+        || deployment < 0.40
+        || deployment > 0.60) {
+        return;
+      }
+
+      const existing = window.__rampReadyA1MidpointEvidence;
+      if (existing
+        && Math.abs(Number(existing.deployment) - 0.5)
+          <= Math.abs(deployment - 0.5)) {
+        return;
+      }
+
+      window.__rampReadyA1MidpointEvidence = {
+        deployment,
+        dataset,
+        pngDataUrl: element.toDataURL('image/png'),
+      };
+    };
+
+    const observer = new MutationObserver(recordMidpoint);
+    observer.observe(element, {
+      attributes: true,
+      attributeFilter: ['data-a1-jetway-deployment', 'data-a1-jetway-state'],
+    });
+    window.__rampReadyA1MidpointObserver = observer;
+    recordMidpoint();
   });
 
-  await page.waitForFunction(() => {
-    const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
-    const deployment = Number(d.a1JetwayDeployment);
-    return d.a1JetwayState === 'autogate-disengaging'
-      && Number.isFinite(deployment)
-      && deployment <= 0.55
-      && deployment >= 0.45;
-  }, null, { timeout: 14000, polling: 50 });
+  await hideUiStyle.evaluate((node) => node.remove());
+  await page.getByRole('button', { name: 'Ready', exact: true }).click({ timeout: 60000 });
 
-  const midRuntime = await canvas.evaluate(element => ({ ...element.dataset }));
+  // State history proves the real Ready transition occurred even if this very
+  // slow verifier is already several rendered frames further along when the
+  // Playwright click promise finally returns.
+  await page.waitForFunction(() => {
+    const history =
+      document.querySelector('canvas.trainerCanvas')?.dataset?.a1JetwayStateHistory || '';
+    return history.split(',').includes('autogate-disengaging');
+  }, null, { timeout: 10000, polling: 50 });
+
+  await page.waitForFunction(() => {
+    const evidence = window.__rampReadyA1MidpointEvidence;
+    const deployment = Number(evidence?.deployment);
+    return evidence
+      && Number.isFinite(deployment)
+      && deployment >= 0.40
+      && deployment <= 0.60
+      && typeof evidence.pngDataUrl === 'string'
+      && evidence.pngDataUrl.startsWith('data:image/png;base64,')
+      && evidence.pngDataUrl.length > 100000;
+  }, null, { timeout: 20000, polling: 50 });
+
+  const midEvidence = await page.evaluate(() => {
+    window.__rampReadyA1MidpointObserver?.disconnect?.();
+    return window.__rampReadyA1MidpointEvidence;
+  });
+  const midRuntime = midEvidence.dataset;
+  console.log('A1_MIDPOINT_RUNTIME_DATASET=' + JSON.stringify({
+    deployment: midRuntime.a1JetwayDeployment,
+    state: midRuntime.a1JetwayState,
+    supportBottomDeltaMeters: midRuntime.a1JetwaySupportBottomDeltaMeters,
+    cabinJointGapMeters: midRuntime.a1JetwayCabinJointGapMeters,
+    fixedWallMotionMaxMeters: midRuntime.a1JetwayFixedWallMotionMaxMeters,
+    fixedWallRotationMaxRadians: midRuntime.a1JetwayFixedWallRotationMaxRadians,
+  }));
+
   expect(midRuntime.a1JetwaySupportTrianglePartitionExact).toBe('true');
   expect(Math.abs(Number(midRuntime.a1JetwaySupportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
   expect(Number(midRuntime.a1JetwayCabinJointGapMeters)).toBeLessThanOrEqual(0.08);
   expect(Number(midRuntime.a1JetwayFixedWallMotionMaxMeters)).toBeLessThanOrEqual(0.001);
-  const midBytes = await captureCanvasClip(
-    page,
-    bounds,
-    `${evidenceDirectory}/exact-kphx-mid-disengage.png`,
-  );
+
+  const midPng = Buffer.from(midEvidence.pngDataUrl.split(',')[1], 'base64');
+  const midPath = `${evidenceDirectory}/exact-kphx-mid-disengage.png`;
+  fs.writeFileSync(midPath, midPng);
+  const midBytes = midPng.length;
   expect(midBytes).toBeGreaterThan(100000);
+
+  hideUiStyle = await page.addStyleTag({
+    content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}',
+  });
 
   await page.waitForFunction(() => {
     const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
