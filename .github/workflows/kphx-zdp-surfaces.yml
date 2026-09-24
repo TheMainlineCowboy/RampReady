@@ -77,7 +77,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/materialize-kphx-surface-resources.mjs             .zdp             public/models/kphx-full-airport/surface-batches/zdp             --surface-network=public/models/kphx-full-airport/surfaces/surface-network.json             --wed-sha256="${KPHX_WED_SHA256}"             --library-map=reports/kphx-zdp-surface-library-map.json             --include-external-prefixes=ZDP_Library             --include-package-owned=false
+          node scripts/materialize-kphx-surface-resources.mjs             .zdp             public/models/kphx-full-airport/surface-batches/zdp             --placement-report=public/models/kphx-full-airport/surfaces/surface-network.json             --library-map=reports/kphx-zdp-surface-library-map.json             --include-external-prefixes=ZDP_Library             --skip-package-owned=true
 
       - name: Verify exact ZDP surface checkpoint
         shell: bash
