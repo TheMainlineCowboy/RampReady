@@ -22,7 +22,8 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update >/dev/null
-          sudo apt-get install -y xvfb xfonts-base xfonts-75dpi xfonts-100dpi fontconfig libgl1-mesa-dri mesa-utils >/dev/null\n          sudo fc-cache -f >/dev/null
+          sudo apt-get install -y xvfb xfonts-base xfonts-75dpi xfonts-100dpi fontconfig libgl1-mesa-dri mesa-utils >/dev/null
+          sudo fc-cache -f >/dev/null
           curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip"             -o /tmp/installer.zip
           rm -rf /tmp/installer
           mkdir -p /tmp/installer /tmp/xp12-demo
