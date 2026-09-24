@@ -7,6 +7,7 @@ on:
       - kphx-full-airport-import
     paths:
       - ".github/workflows/kphx-misterx-surfaces.yml"
+      - "reports/kphx-misterx-surface-source-ready.txt"
 
 permissions:
   contents: write
