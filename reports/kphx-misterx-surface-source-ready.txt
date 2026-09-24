@@ -1,0 +1,2 @@
+MisterX 2.0c KPHX surface source tail complete.
+10 taxiline/stripe resources + 2 ground polygons and exact referenced textures/decals moved from user-supplied Drive library.
