@@ -1,0 +1,130 @@
+name: KPHX XP12 Installer Startup Matrix
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-startup-matrix.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-xp12-startup-matrix
+  cancel-in-progress: true
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/workflows/kphx-xp12-startup-matrix.yml
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Install headless graphics runtimes
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y             xvfb xauth x11-utils xfonts-base xfonts-75dpi xfonts-100dpi fontconfig             libgl1-mesa-dri libglx-mesa0 libglx0 libgl1 libglu1-mesa mesa-utils             mesa-vulkan-drivers vulkan-tools             libpangoxft-1.0-0 libgtk2.0-0t64 libxft2 libxi6 libxinerama1             libxrandr2 libxcursor1 libasound2t64 >/dev/null
+          sudo fc-cache -f >/dev/null
+          Xvfb :99 -screen 0 1280x800x24 +extension GLX +render -noreset >/tmp/xvfb.log 2>&1 &
+          export DISPLAY=:99
+          for i in $(seq 1 20); do
+            xdpyinfo >/dev/null 2>&1 && break
+            sleep 1
+          done
+          vulkaninfo --summary >/tmp/vulkan-summary.txt 2>&1 || true
+
+      - name: Download official XP12 installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp12-installer reports
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip"             -o /tmp/xp12-installer.zip
+          unzip -q /tmp/xp12-installer.zip -d /tmp/xp12-installer
+          BIN="$(find /tmp/xp12-installer -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          chmod +x "$BIN"
+          echo "$BIN" >/tmp/xp12-bin.txt
+          strings -a "$BIN" | grep -Ei -B4 -A4 -- '(^|[^a-z])(no[_-]?vulkan|vulkan[_-]?off|force[_-]?opengl|opengl[_-]?only|safe_mode|force_run)($|[^a-z])'             > /tmp/xp12-graphics-flag-strings.txt || true
+
+      - name: Probe bounded startup variants
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN="$(cat /tmp/xp12-bin.txt)"
+          cat >/tmp/xp12.qa <<'QA'
+          echo "RAMPREADY_XP12_QA_STARTED"
+          dump buttons
+          quit
+          QA
+
+          export DISPLAY=:99
+          export LIBGL_ALWAYS_SOFTWARE=1
+          LVP="$(find /usr/share/vulkan/icd.d -type f -iname '*lvp*.json' -print -quit || true)"
+
+          : > /tmp/matrix.txt
+
+          run_variant () {
+            label="$1"; shift
+            echo "===== $label =====" >> /tmp/matrix.txt
+            rm -f /tmp/variant.out /tmp/variant.err
+            set +e
+            timeout 10s "$BIN"               --qa_script=/tmp/xp12.qa               --install_numeric=121212               --install_name="X-Plane 12.1.2-r4-0f2fea01"               --no_web_server               "$@"               >/tmp/variant.out 2>/tmp/variant.err
+            rc=$?
+            set -e
+            echo "rc=$rc args=$*" >> /tmp/matrix.txt
+            grep -E 'RAMPREADY_XP12_QA_STARTED|Executing:|button|Vulkan|OpenGL|graphics|driver|ERROR|error'               /tmp/variant.out /tmp/variant.err >> /tmp/matrix.txt || true
+            echo >> /tmp/matrix.txt
+            if grep -q 'RAMPREADY_XP12_QA_STARTED' /tmp/variant.out /tmp/variant.err; then
+              echo "$label|$*" > /tmp/winner.txt
+              return 0
+            fi
+            return 1
+          }
+
+          if [ -n "$LVP" ]; then
+            export VK_ICD_FILENAMES="$LVP"
+            run_variant lavapipe || true
+          fi
+          [ -f /tmp/winner.txt ] || run_variant safe-gfx --safe_mode=GFX || true
+          [ -f /tmp/winner.txt ] || run_variant force-run --force_run || true
+          [ -f /tmp/winner.txt ] || run_variant no-vulkan --no_vulkan || true
+          [ -f /tmp/winner.txt ] || run_variant opengl --opengl || true
+          [ -f /tmp/winner.txt ] || run_variant no-vulkan-safe --no_vulkan --safe_mode=GFX --force_run || true
+          [ -f /tmp/winner.txt ] || run_variant legacy-safe             --no_vbos --no_fbos --no_pbos --no_sprites --no_pixel_counters             --no_fshaders --no_vshaders --no_glsl --no_threaded_ogl --force_run || true
+
+          {
+            echo "=== vulkan summary ==="
+            cat /tmp/vulkan-summary.txt
+            echo
+            echo "=== candidate graphics flag strings ==="
+            cat /tmp/xp12-graphics-flag-strings.txt
+            echo
+            echo "=== startup matrix ==="
+            cat /tmp/matrix.txt
+            echo
+            echo "=== winner ==="
+            cat /tmp/winner.txt 2>/dev/null || echo "NONE"
+          } > reports/kphx-xp12-startup-matrix.txt
+          cat reports/kphx-xp12-startup-matrix.txt
+
+      - name: Commit startup evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-startup-matrix.txt
+          git commit -m "Probe XP12.1.2 installer startup modes"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
