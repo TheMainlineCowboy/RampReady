@@ -166,20 +166,19 @@ export function installA1ExactAutoGateController({
     aircraftTunnelSegment.position.z = originals.aircraftTunnelSegmentZ
       + retractMeters / tunnelWall.scale.z;
 
-    const currentTunnelLength = attachedTunnelLength - retractMeters;
-    const horizontalTunnelLength = currentTunnelLength * Math.cos(bridgePitchDelta);
-    const jointVerticalDelta = currentTunnelLength * Math.sin(bridgePitchDelta);
-    const unrotatedJoint = {
-      x: tunnelUnit.x * horizontalTunnelLength,
-      z: tunnelUnit.z * horizontalTunnelLength,
-    };
-    const rotatedJoint = rotate2(unrotatedJoint.x, unrotatedJoint.z, bridgeYawDelta);
-    cabinWall.position.set(
-      pivot.x + rotatedJoint.x,
-      originals.cabinPosition.y + jointVerticalDelta,
-      pivot.y + rotatedJoint.z,
-    );
-    cabinWall.rotation.y = originals.cabinRotationY + bridgeYawDelta + cabinCounterYawDelta;
+    // Segment 11 owns the exact stock cabin-half-B attachment pivot. After
+    // telescope/yaw/pitch, use that transformed source joint directly instead
+    // of estimating the Cabin-wall origin with trigonometry. This keeps the
+    // two stock cabin halves physically closed for every AutoGate state while
+    // preserving the WED terminal pivot and authored source objects.
+    root.updateMatrixWorld(true);
+    const movingCabinJointWorld =
+      cabinHalfBAttachmentPivot.getWorldPosition(new THREE.Vector3());
+    const movingCabinJointLocal = root.worldToLocal(movingCabinJointWorld.clone());
+    const jointVerticalDelta = movingCabinJointLocal.y - originals.cabinPosition.y;
+    cabinWall.position.copy(movingCabinJointLocal);
+    cabinWall.rotation.y =
+      originals.cabinRotationY + bridgeYawDelta + cabinCounterYawDelta;
 
     // jw_cabin_1b is attached to the moving tunnel endpoint while cabin_1a is
     // attached to the Cabin wall. Apply the same AutoGate cabin counter-yaw so
@@ -417,7 +416,8 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateCabinWall = cabinWall.name;
   root.userData.a1AutoGateCabinHalfA = cabinHalfA.name;
   root.userData.a1AutoGateCabinHalfB = cabinHalfB.name;
-  root.userData.a1AutoGateCabinJointAuthority = "Segment-11-endpoint-equals-Cabin-Segment-20-start";
+  root.userData.a1AutoGateCabinJointAuthority =
+    "Segment-11-attached-cabin-pivot-world-to-Cabin-wall-origin";
   root.userData.a1AutoGatePivotWedNodeId = 104809;
   root.userData.a1AutoGateCabinJointWedNodeId = 104810;
   root.userData.a1AutoGateAttachedTunnelLengthMeters = attachedTunnelLength;
