@@ -1,0 +1,110 @@
+name: KPHX MisterX Exact Surface Checkpoint
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-misterx-surfaces.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-misterx-surfaces
+  cancel-in-progress: false
+
+jobs:
+  misterx-surfaces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      KPHX_WED_SHA256: 59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install exact conversion tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/magick" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ "${1:-}" = "identify" ]; then
+            shift
+            exec identify "$@"
+          fi
+          exec convert "$@"
+          SH
+          chmod +x "$HOME/bin/magick"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Verify exact MisterX source metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library"
+          test -f "$ROOT/library.txt"
+          test -f "$ROOT/version.txt"
+          printf 'MisterX version: '
+          cat "$ROOT/version.txt"
+
+      - name: Build exact MisterX surface request set
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library"
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const index = JSON.parse(fs.readFileSync("reports/kphx-external-resource-index.json","utf8"));
+          const resources = (index.resources?.MisterX_Library || []).filter((r) => /.(pol|lin)$/i.test(r));
+          if (resources.length !== 12) throw new Error(`Expected 12 MisterX POL/LIN resources, got ${resources.length}`);
+          fs.writeFileSync("reports/kphx-misterx-surface-resources.json", JSON.stringify({resources}, null, 2) + "\n");
+          NODE
+          node scripts/resolve-xplane-library.mjs             "$ROOT"             reports/kphx-misterx-surface-resources.json             reports/kphx-misterx-surface-library-map.json             --virtual-prefix=MisterX_Library
+
+      - name: Materialize exact MisterX surface resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library"
+          node scripts/materialize-kphx-surface-resources.mjs             "$ROOT"             public/models/kphx-full-airport/surface-batches/misterx             --surface-network=public/models/kphx-full-airport/surfaces/surface-network.json             --wed-sha256="${KPHX_WED_SHA256}"             --library-map=reports/kphx-misterx-surface-library-map.json             --include-external-prefixes=MisterX_Library             --include-package-owned=false
+
+      - name: Verify exact MisterX surface checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const root = "public/models/kphx-full-airport/surface-batches/misterx";
+          const manifest = JSON.parse(fs.readFileSync(`${root}/manifest.json`,"utf8"));
+          const network = JSON.parse(fs.readFileSync(`${root}/surface-network.json`,"utf8"));
+          if (manifest.failures?.length) throw new Error(`MisterX surface failures: ${manifest.failures.length}`);
+          if (manifest.packageOwnedResourceCount !== 0) throw new Error("MisterX external-only batch included package-owned resources");
+          if (manifest.expectedResolvedExternalResourceCount !== 12) throw new Error(`Expected 12 MisterX surface resources, got ${manifest.expectedResolvedExternalResourceCount}`);
+          if (manifest.resolvedExternalResourceCount !== 12) throw new Error(`Materialized ${manifest.resolvedExternalResourceCount}/12 MisterX surface resources`);
+          const records = [
+            ...network.polygons,
+            ...network.lines,
+            ...network.drapedOrthophotos,
+          ].filter((x) => x.resourcePrefix === "MisterX_Library" && /.(pol|lin)$/i.test(x.resource));
+          console.log(JSON.stringify({resources:12,placements:records.length,status:"PASS"},null,2));
+          NODE
+
+      - name: Commit exact MisterX surface checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             public/models/kphx-full-airport/surface-batches/misterx             reports/kphx-misterx-surface-resources.json             reports/kphx-misterx-surface-library-map.json
+          git commit -m "Move exact MisterX KPHX surface checkpoint"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
