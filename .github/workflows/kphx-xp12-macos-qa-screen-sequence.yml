@@ -1,0 +1,76 @@
+name: KPHX XP12 macOS QA Screen Sequence
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-macos-qa-screen-sequence.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: macos-14
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Download official XP12 installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp12-installer reports
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerMac.zip"             -o /tmp/xp12-installer.zip
+          ditto -x -k /tmp/xp12-installer.zip /tmp/xp12-installer
+          BIN="$(find /tmp/xp12-installer -type f -path '*/Contents/MacOS/*' -iname '*Installer*' -print -quit)"
+          test -n "$BIN"
+          chmod +x "$BIN"
+          echo "$BIN" >/tmp/xp12-bin.txt
+
+      - name: Probe supported QA screen sequence
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN="$(cat /tmp/xp12-bin.txt)"
+          cat >/tmp/xp12.qa <<'QA'
+          wait text "Install a Free Demo of X-Plane" 30
+          dump buttons
+          click "Install a Free Demo of X-Plane"
+          wait 3
+          dump buttons
+          quit
+          QA
+
+          set +e
+          "$BIN"             --lang=en             --qa_script=/tmp/xp12.qa             --install_numeric=121212             --install_name="X-Plane 12.1.2-r4-0f2fea01"             --no_web_server             >/tmp/xp12.out 2>/tmp/xp12.err
+          rc=$?
+          set -e
+          {
+            echo "installer_rc=$rc"
+            echo "=== stdout ==="
+            cat /tmp/xp12.out || true
+            echo
+            echo "=== stderr tail ==="
+            tail -250 /tmp/xp12.err || true
+          } > reports/kphx-xp12-macos-qa-screen-sequence.txt
+          cat reports/kphx-xp12-macos-qa-screen-sequence.txt
+
+      - name: Commit sequence evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-macos-qa-screen-sequence.txt
+          git commit -m "Record XP12 macOS QA installer screen sequence"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
