@@ -1,1 +1,2 @@
 Trigger exact XP11.55r2 stock OBJ/AGP checkpoint after clearing installer language gate.\n
+Two-launch XP11 language-init + QA proof pass.
