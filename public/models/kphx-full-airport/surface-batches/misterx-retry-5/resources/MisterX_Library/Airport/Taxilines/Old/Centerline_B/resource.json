@@ -1,0 +1,64 @@
+{
+  "kind": "LINE_PAINT",
+  "sourceResource": "MisterX_Library/Airport/Taxilines/Old/Centerline_B.lin",
+  "texture": {
+    "requested": "Taxilines.png",
+    "sourcePath": "Airport/Taxilines/Old/Taxilines.dds",
+    "sourceSha256": "ff433e2a629248fee133a8b15e0bb8fd9d5d22bffffaec69c9bc7cf121361b7e",
+    "sourceDecodedRgbaSha256": "40c6d61dda799d7da7f3e8723d06c110cf3330d21123c6e00d262d797e46da6c",
+    "outputName": "Taxilines.png",
+    "outputUrl": "Taxilines.png",
+    "outputSha256": "7934a8ad2bd46b14aee6934929eb6402aa352c6fc511589b2ce2c09a6b7e3262",
+    "outputDecodedRgbaSha256": "40c6d61dda799d7da7f3e8723d06c110cf3330d21123c6e00d262d797e46da6c",
+    "width": 4096,
+    "height": 2048
+  },
+  "scaleMeters": [
+    8,
+    4
+  ],
+  "textureWidth": 4096,
+  "textureHeight": null,
+  "textureNormal": "Taxilines_NRM.png",
+  "normalScale": 1,
+  "weather": null,
+  "globalSpecular": null,
+  "layerGroup": {
+    "group": "markings",
+    "offset": 2
+  },
+  "lodMeters": 10000,
+  "mirror": false,
+  "weatherTransparent": true,
+  "sOffsets": [
+    {
+      "layer": 0,
+      "left": 3640,
+      "center": 3860,
+      "right": 4080
+    },
+    {
+      "layer": 1,
+      "left": 0,
+      "center": 105,
+      "right": 210
+    }
+  ],
+  "unsupported": [],
+  "sourceSha256": "96389c6914eccb9ea5b18db1bc8f937ff35302e31fa2a2c758bc32e54ab8d039",
+  "outputBaseUrl": "/models/kphx-full-airport/surface-batches/misterx-retry-5/resources/MisterX_Library/Airport/Taxilines/Old/Centerline_B",
+  "lit": null,
+  "normal": {
+    "requested": "Taxilines_NRM.png",
+    "sourcePath": "Airport/Taxilines/Old/Taxilines_NRM.png",
+    "sourceSha256": "6a951b2c7c14c4363be3a07750ef869811604b1b661ea598be8fcdca54431acc",
+    "sourceDecodedRgbaSha256": "5db16eea6aeb9e2f73031f5c29c0ed829883d2bf818984c1892742d74bf120b8",
+    "outputName": "Taxilines_NRM.png",
+    "outputUrl": "Taxilines_NRM.png",
+    "outputSha256": "6a951b2c7c14c4363be3a07750ef869811604b1b661ea598be8fcdca54431acc",
+    "outputDecodedRgbaSha256": "5db16eea6aeb9e2f73031f5c29c0ed829883d2bf818984c1892742d74bf120b8",
+    "width": 2048,
+    "height": 1024
+  },
+  "decal": null
+}

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "libraryRoot": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library",
+  "libraryTxt": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/library.txt",
+  "libraryTxtSha256": "eb169b930ae60896bf818e0c1c4b0bffaf422871b2d802dbd1e231ba13a2f82a",
+  "virtualPrefix": "MisterX_Library",
+  "requestedCount": 5,
+  "resolvedCount": 5,
+  "unresolved": [],
+  "ambiguous": [],
+  "resources": {
+    "MisterX_Library/Airport/Taxilines/HoldLine.lin": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/HoldLine.lin",
+      "physicalResource": "Airport/Taxilines/Old/Hold_B.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Old/Hold_B.lin",
+      "sha256": "4e7d2de71693148581825f889b5d4b97b8994a475eaac632ee9bf2a22c263c7e"
+    },
+    "MisterX_Library/Airport/Taxilines/ILS_Centerline.lin": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/ILS_Centerline.lin",
+      "physicalResource": "Airport/Taxilines/Old/Enhanced_Centerline_B.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Old/Enhanced_Centerline_B.lin",
+      "sha256": "1eed6ddc7c967b3387c9af3420f935d9f5e160f9d10a86fba4bd34aaccfb0d67"
+    },
+    "MisterX_Library/Airport/Taxilines/Old/Centerline_B.lin": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/Old/Centerline_B.lin",
+      "physicalResource": "Airport/Taxilines/Old/Centerline_B.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Old/Centerline_B.lin",
+      "sha256": "96389c6914eccb9ea5b18db1bc8f937ff35302e31fa2a2c758bc32e54ab8d039"
+    },
+    "MisterX_Library/Airport/Taxilines/Old/Red_White_B.lin": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/Old/Red_White_B.lin",
+      "physicalResource": "Airport/Taxilines/Old/Red_White_B.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Old/Red_White_B.lin",
+      "sha256": "08e7560f2016cd230fbc21aaa855f2f35bacf96f3c83c4a96c02596e6cc28fb7"
+    },
+    "MisterX_Library/Airport/Taxilines/RoadBroken.lin": {
+      "command": "EXPORT",
+      "region": "default",
+      "virtualResource": "MisterX_Library/Airport/Taxilines/RoadBroken.lin",
+      "physicalResource": "Airport/Taxilines/Old/Road_Dash.lin",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library/Airport/Taxilines/Old/Road_Dash.lin",
+      "sha256": "f95e7536fa6bb0659dfbaa98dd2e0c98497b306efdc2ca010be0db7cbc4155ff"
+    }
+  }
+}

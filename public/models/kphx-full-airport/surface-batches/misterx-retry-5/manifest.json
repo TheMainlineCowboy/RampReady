@@ -1,0 +1,344 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-09-24T02:23:57.347Z",
+  "source": {
+    "package": "KPHX - Phoenix Sky Harbor Intl",
+    "version": "1.75.1",
+    "wedSha256": null
+  },
+  "policy": {
+    "polygons": "WED-authored rings and Bezier controls; POL texture scale/heading/layer authority",
+    "lines": "WED-authored chains and Bezier controls; LIN TEX_WIDTH/SCALE/S_OFFSET width and UV authority",
+    "textures": "browser PNG generated only when decoded RGBA bytes equal source image at original dimensions",
+    "unsupportedCommands": "fail materialization rather than silently approximate",
+    "externalResources": "only explicitly resolved library resources are materialized; unresolved virtual resources are never substituted",
+    "libraryMap": "/home/runner/work/RampReady/RampReady/reports/kphx-misterx-surface-retry-5-library-map.json",
+    "placementReport": "/home/runner/work/RampReady/RampReady/public/models/kphx-full-airport/surfaces/surface-network.json",
+    "externalPrefixes": [
+      "MisterX_Library"
+    ],
+    "skipPackageOwned": true,
+    "materializeConcurrency": 1
+  },
+  "packageOwnedResourceCount": 0,
+  "materializedResourceCount": 0,
+  "resolvedExternalResourceCount": 5,
+  "expectedResolvedExternalResourceCount": 5,
+  "resources": {
+    "MisterX_Library/Airport/Taxilines/HoldLine.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "MisterX_Library/Airport/Taxilines/HoldLine.lin",
+      "texture": {
+        "requested": "Taxilines.png",
+        "sourcePath": "Airport/Taxilines/Old/Taxilines.dds",
+        "sourceSha256": "ff433e2a629248fee133a8b15e0bb8fd9d5d22bffffaec69c9bc7cf121361b7e",
+        "sourceDecodedRgbaSha256": "40c6d61dda799d7da7f3e8723d06c110cf3330d21123c6e00d262d797e46da6c",
+        "outputName": "Taxilines.png",
+        "outputUrl": "Taxilines.png",
+        "outputSha256": "7934a8ad2bd46b14aee6934929eb6402aa352c6fc511589b2ce2c09a6b7e3262",
+        "outputDecodedRgbaSha256": "40c6d61dda799d7da7f3e8723d06c110cf3330d21123c6e00d262d797e46da6c",
+        "width": 4096,
+        "height": 2048
+      },
+      "scaleMeters": [
+        24,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": null,
+      "textureNormal": "Taxilines_NRM.png",
+      "normalScale": 1,
+      "weather": null,
+      "globalSpecular": null,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 5
+      },
+      "lodMeters": 10000,
+      "mirror": false,
+      "weatherTransparent": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 3280,
+          "center": 3335,
+          "right": 3390
+        },
+        {
+          "layer": 1,
+          "left": 400,
+          "center": 443,
+          "right": 486
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "4e7d2de71693148581825f889b5d4b97b8994a475eaac632ee9bf2a22c263c7e",
+      "outputBaseUrl": "/models/kphx-full-airport/surface-batches/misterx-retry-5/resources/MisterX_Library/Airport/Taxilines/HoldLine",
+      "lit": null,
+      "normal": {
+        "requested": "Taxilines_NRM.png",
+        "sourcePath": "Airport/Taxilines/Old/Taxilines_NRM.png",
+        "sourceSha256": "6a951b2c7c14c4363be3a07750ef869811604b1b661ea598be8fcdca54431acc",
+        "sourceDecodedRgbaSha256": "5db16eea6aeb9e2f73031f5c29c0ed829883d2bf818984c1892742d74bf120b8",
+        "outputName": "Taxilines_NRM.png",
+        "outputUrl": "Taxilines_NRM.png",
+        "outputSha256": "6a951b2c7c14c4363be3a07750ef869811604b1b661ea598be8fcdca54431acc",
+        "outputDecodedRgbaSha256": "5db16eea6aeb9e2f73031f5c29c0ed829883d2bf818984c1892742d74bf120b8",
+        "width": 2048,
+        "height": 1024
+      },
+      "decal": null
+    },
+    "MisterX_Library/Airport/Taxilines/ILS_Centerline.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "MisterX_Library/Airport/Taxilines/ILS_Centerline.lin",
+      "texture": {
+        "requested": "Taxilines.png",
+        "sourcePath": "Airport/Taxilines/Old/Taxilines.dds",
+        "sourceSha256": "ff433e2a629248fee133a8b15e0bb8fd9d5d22bffffaec69c9bc7cf121361b7e",
+        "sourceDecodedRgbaSha256": "40c6d61dda799d7da7f3e8723d06c110cf3330d21123c6e00d262d797e46da6c",
+        "outputName": "Taxilines.png",
+        "outputUrl": "Taxilines.png",
+        "outputSha256": "7934a8ad2bd46b14aee6934929eb6402aa352c6fc511589b2ce2c09a6b7e3262",
+        "outputDecodedRgbaSha256": "40c6d61dda799d7da7f3e8723d06c110cf3330d21123c6e00d262d797e46da6c",
+        "width": 4096,
+        "height": 2048
+      },
+      "scaleMeters": [
+        12,
+        6
+      ],
+      "textureWidth": 4096,
+      "textureHeight": null,
+      "textureNormal": "Taxilines_NRM.png",
+      "normalScale": 1,
+      "weather": null,
+      "globalSpecular": null,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 3
+      },
+      "lodMeters": 10000,
+      "mirror": false,
+      "weatherTransparent": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 3620,
+          "center": 3855,
+          "right": 4090
+        },
+        {
+          "layer": 1,
+          "left": 1110,
+          "center": 1290,
+          "right": 1470
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "1eed6ddc7c967b3387c9af3420f935d9f5e160f9d10a86fba4bd34aaccfb0d67",
+      "outputBaseUrl": "/models/kphx-full-airport/surface-batches/misterx-retry-5/resources/MisterX_Library/Airport/Taxilines/ILS_Centerline",
+      "lit": null,
+      "normal": {
+        "requested": "Taxilines_NRM.png",
+        "sourcePath": "Airport/Taxilines/Old/Taxilines_NRM.png",
+        "sourceSha256": "6a951b2c7c14c4363be3a07750ef869811604b1b661ea598be8fcdca54431acc",
+        "sourceDecodedRgbaSha256": "5db16eea6aeb9e2f73031f5c29c0ed829883d2bf818984c1892742d74bf120b8",
+        "outputName": "Taxilines_NRM.png",
+        "outputUrl": "Taxilines_NRM.png",
+        "outputSha256": "6a951b2c7c14c4363be3a07750ef869811604b1b661ea598be8fcdca54431acc",
+        "outputDecodedRgbaSha256": "5db16eea6aeb9e2f73031f5c29c0ed829883d2bf818984c1892742d74bf120b8",
+        "width": 2048,
+        "height": 1024
+      },
+      "decal": null
+    },
+    "MisterX_Library/Airport/Taxilines/Old/Centerline_B.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "MisterX_Library/Airport/Taxilines/Old/Centerline_B.lin",
+      "texture": {
+        "requested": "Taxilines.png",
+        "sourcePath": "Airport/Taxilines/Old/Taxilines.dds",
+        "sourceSha256": "ff433e2a629248fee133a8b15e0bb8fd9d5d22bffffaec69c9bc7cf121361b7e",
+        "sourceDecodedRgbaSha256": "40c6d61dda799d7da7f3e8723d06c110cf3330d21123c6e00d262d797e46da6c",
+        "outputName": "Taxilines.png",
+        "outputUrl": "Taxilines.png",
+        "outputSha256": "7934a8ad2bd46b14aee6934929eb6402aa352c6fc511589b2ce2c09a6b7e3262",
+        "outputDecodedRgbaSha256": "40c6d61dda799d7da7f3e8723d06c110cf3330d21123c6e00d262d797e46da6c",
+        "width": 4096,
+        "height": 2048
+      },
+      "scaleMeters": [
+        8,
+        4
+      ],
+      "textureWidth": 4096,
+      "textureHeight": null,
+      "textureNormal": "Taxilines_NRM.png",
+      "normalScale": 1,
+      "weather": null,
+      "globalSpecular": null,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": 10000,
+      "mirror": false,
+      "weatherTransparent": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 3640,
+          "center": 3860,
+          "right": 4080
+        },
+        {
+          "layer": 1,
+          "left": 0,
+          "center": 105,
+          "right": 210
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "96389c6914eccb9ea5b18db1bc8f937ff35302e31fa2a2c758bc32e54ab8d039",
+      "outputBaseUrl": "/models/kphx-full-airport/surface-batches/misterx-retry-5/resources/MisterX_Library/Airport/Taxilines/Old/Centerline_B",
+      "lit": null,
+      "normal": {
+        "requested": "Taxilines_NRM.png",
+        "sourcePath": "Airport/Taxilines/Old/Taxilines_NRM.png",
+        "sourceSha256": "6a951b2c7c14c4363be3a07750ef869811604b1b661ea598be8fcdca54431acc",
+        "sourceDecodedRgbaSha256": "5db16eea6aeb9e2f73031f5c29c0ed829883d2bf818984c1892742d74bf120b8",
+        "outputName": "Taxilines_NRM.png",
+        "outputUrl": "Taxilines_NRM.png",
+        "outputSha256": "6a951b2c7c14c4363be3a07750ef869811604b1b661ea598be8fcdca54431acc",
+        "outputDecodedRgbaSha256": "5db16eea6aeb9e2f73031f5c29c0ed829883d2bf818984c1892742d74bf120b8",
+        "width": 2048,
+        "height": 1024
+      },
+      "decal": null
+    },
+    "MisterX_Library/Airport/Taxilines/Old/Red_White_B.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "MisterX_Library/Airport/Taxilines/Old/Red_White_B.lin",
+      "texture": {
+        "requested": "Taxilines.png",
+        "sourcePath": "Airport/Taxilines/Old/Taxilines.dds",
+        "sourceSha256": "ff433e2a629248fee133a8b15e0bb8fd9d5d22bffffaec69c9bc7cf121361b7e",
+        "sourceDecodedRgbaSha256": "40c6d61dda799d7da7f3e8723d06c110cf3330d21123c6e00d262d797e46da6c",
+        "outputName": "Taxilines.png",
+        "outputUrl": "Taxilines.png",
+        "outputSha256": "7934a8ad2bd46b14aee6934929eb6402aa352c6fc511589b2ce2c09a6b7e3262",
+        "outputDecodedRgbaSha256": "40c6d61dda799d7da7f3e8723d06c110cf3330d21123c6e00d262d797e46da6c",
+        "width": 4096,
+        "height": 2048
+      },
+      "scaleMeters": [
+        14,
+        7
+      ],
+      "textureWidth": 4096,
+      "textureHeight": null,
+      "textureNormal": "Taxilines_NRM.png",
+      "normalScale": 1,
+      "weather": null,
+      "globalSpecular": null,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 5
+      },
+      "lodMeters": 10000,
+      "mirror": false,
+      "weatherTransparent": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 3400,
+          "center": 3510,
+          "right": 3620
+        },
+        {
+          "layer": 1,
+          "left": 1510,
+          "center": 1580,
+          "right": 1650
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "08e7560f2016cd230fbc21aaa855f2f35bacf96f3c83c4a96c02596e6cc28fb7",
+      "outputBaseUrl": "/models/kphx-full-airport/surface-batches/misterx-retry-5/resources/MisterX_Library/Airport/Taxilines/Old/Red_White_B",
+      "lit": null,
+      "normal": {
+        "requested": "Taxilines_NRM.png",
+        "sourcePath": "Airport/Taxilines/Old/Taxilines_NRM.png",
+        "sourceSha256": "6a951b2c7c14c4363be3a07750ef869811604b1b661ea598be8fcdca54431acc",
+        "sourceDecodedRgbaSha256": "5db16eea6aeb9e2f73031f5c29c0ed829883d2bf818984c1892742d74bf120b8",
+        "outputName": "Taxilines_NRM.png",
+        "outputUrl": "Taxilines_NRM.png",
+        "outputSha256": "6a951b2c7c14c4363be3a07750ef869811604b1b661ea598be8fcdca54431acc",
+        "outputDecodedRgbaSha256": "5db16eea6aeb9e2f73031f5c29c0ed829883d2bf818984c1892742d74bf120b8",
+        "width": 2048,
+        "height": 1024
+      },
+      "decal": null
+    },
+    "MisterX_Library/Airport/Taxilines/RoadBroken.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "MisterX_Library/Airport/Taxilines/RoadBroken.lin",
+      "texture": {
+        "requested": "Taxilines.png",
+        "sourcePath": "Airport/Taxilines/Old/Taxilines.dds",
+        "sourceSha256": "ff433e2a629248fee133a8b15e0bb8fd9d5d22bffffaec69c9bc7cf121361b7e",
+        "sourceDecodedRgbaSha256": "40c6d61dda799d7da7f3e8723d06c110cf3330d21123c6e00d262d797e46da6c",
+        "outputName": "Taxilines.png",
+        "outputUrl": "Taxilines.png",
+        "outputSha256": "7934a8ad2bd46b14aee6934929eb6402aa352c6fc511589b2ce2c09a6b7e3262",
+        "outputDecodedRgbaSha256": "40c6d61dda799d7da7f3e8723d06c110cf3330d21123c6e00d262d797e46da6c",
+        "width": 4096,
+        "height": 2048
+      },
+      "scaleMeters": [
+        20,
+        10
+      ],
+      "textureWidth": 4096,
+      "textureHeight": null,
+      "textureNormal": "Taxilines_NRM.png",
+      "normalScale": 1,
+      "weather": null,
+      "globalSpecular": null,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 1
+      },
+      "lodMeters": 5000,
+      "mirror": false,
+      "weatherTransparent": true,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 3200,
+          "center": 3238,
+          "right": 3276
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "f95e7536fa6bb0659dfbaa98dd2e0c98497b306efdc2ca010be0db7cbc4155ff",
+      "outputBaseUrl": "/models/kphx-full-airport/surface-batches/misterx-retry-5/resources/MisterX_Library/Airport/Taxilines/RoadBroken",
+      "lit": null,
+      "normal": {
+        "requested": "Taxilines_NRM.png",
+        "sourcePath": "Airport/Taxilines/Old/Taxilines_NRM.png",
+        "sourceSha256": "6a951b2c7c14c4363be3a07750ef869811604b1b661ea598be8fcdca54431acc",
+        "sourceDecodedRgbaSha256": "5db16eea6aeb9e2f73031f5c29c0ed829883d2bf818984c1892742d74bf120b8",
+        "outputName": "Taxilines_NRM.png",
+        "outputUrl": "Taxilines_NRM.png",
+        "outputSha256": "6a951b2c7c14c4363be3a07750ef869811604b1b661ea598be8fcdca54431acc",
+        "outputDecodedRgbaSha256": "5db16eea6aeb9e2f73031f5c29c0ed829883d2bf818984c1892742d74bf120b8",
+        "width": 2048,
+        "height": 1024
+      },
+      "decal": null
+    }
+  },
+  "failures": []
+}

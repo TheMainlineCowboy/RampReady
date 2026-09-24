@@ -1,0 +1,9 @@
+{
+  "resources": [
+    "MisterX_Library/Airport/Taxilines/HoldLine.lin",
+    "MisterX_Library/Airport/Taxilines/ILS_Centerline.lin",
+    "MisterX_Library/Airport/Taxilines/Old/Centerline_B.lin",
+    "MisterX_Library/Airport/Taxilines/Old/Red_White_B.lin",
+    "MisterX_Library/Airport/Taxilines/RoadBroken.lin"
+  ]
+}
