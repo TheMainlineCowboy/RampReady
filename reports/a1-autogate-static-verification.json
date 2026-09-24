@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "attachedLatMeters": 6.16,
+  "parkedBridgeYawDeltaDegrees": -6.245190130666664,
+  "parkedCabinCounterYawDeltaDegrees": 5.585425482560005,
+  "fixedWallCount": 4,
+  "motionDurationMs": 15000,
+  "failures": []
+}
