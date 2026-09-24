@@ -11,3 +11,9 @@ Authority: CRJ900 ACF boarding-door + KPHX WED 104804/104811 + AutoGate lat/vert
 - revert deforming stock support telescoping
 - keep exact jw_tunnel_2_5b rigid
 - preserve FAC ATTACH_GRADED Y=4 / source minY=-4 pavement contact during AutoGate vertical motion
+
+2026-09-24 coherent A1 hierarchy rebuild:
+- articulate visible bridge from exact stock Y=4 terminal joint
+- keep Wall 5 WED transform fixed
+- cabin A follows Segment-11 endpoint by world-matrix solve, no scaled reparent
+- support carriage gets translation-only ground correction from exact world bounds
