@@ -41,7 +41,11 @@ async function loadRealCRJ700(THREE, aircraftRoot) {
     realModel.name = result.preserveMaterials
       ? "User-authored American Eagle CRJ"
       : "Prepared CRJ700 fallback";
-    realModel.scale.setScalar(1 / (LEGACY_PARENT_SCALE * PROCEDURAL_INTERNAL_SCALE));
+    // The active trainers apply the legacy 0.82 parent scale after construction.
+    // Compensate only that parent so the user-authored 32.5 m GLB remains 1:1
+    // in world space. PROCEDURAL_INTERNAL_SCALE belongs to the fallback shell,
+    // not to the imported authored aircraft.
+    realModel.scale.setScalar(1 / LEGACY_PARENT_SCALE);
     aircraftRoot.add(realModel);
 
     for (const child of aircraftRoot.children) {
