@@ -1137,6 +1137,10 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.a1JetwayCabinCounterYawDeltaDegrees = Number(jetway.controller.getCabinCounterYawDeltaDegrees?.() ?? Number.NaN).toFixed(3);
         renderer.domElement.dataset.a1JetwayCabinJointGapMeters = Number(jetway.controller.getCabinJointGapMeters?.() ?? Number.NaN).toFixed(6);
         renderer.domElement.dataset.a1JetwayCabinRelativeYawDriftRadians = Number(jetway.controller.getCabinRelativeYawDriftRadians?.() ?? Number.NaN).toFixed(9);
+        renderer.domElement.dataset.a1JetwayStairAngleDegrees = Number(jetway.controller.getStairAngleDegrees?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayStairFootDeltaMeters = Number(jetway.controller.getStairFootDeltaMeters?.() ?? Number.NaN).toFixed(6);
+        renderer.domElement.dataset.a1JetwayStairHingeGapMeters = Number(jetway.controller.getStairHingeGapMeters?.() ?? Number.NaN).toFixed(6);
+        renderer.domElement.dataset.a1JetwayStairTrianglePartitionExact = String(jetway.controller.isStairTrianglePartitionExact?.() === true);
         renderer.domElement.dataset.a1JetwayTerminalPivotGapMeters = Number(jetway.controller.getTerminalPivotGapMeters?.() ?? Number.NaN).toFixed(6);
         renderer.domElement.dataset.a1JetwayCabinVerticalErrorMeters = Number(jetway.controller.getCabinVerticalErrorMeters?.() ?? Number.NaN).toFixed(6);
         renderer.domElement.dataset.a1JetwaySourcePoseMaxMatrixDelta = Number(jetway.controller.getSourcePoseMaxMatrixDelta?.() ?? Number.NaN).toFixed(9);
