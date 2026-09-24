@@ -91,6 +91,15 @@ jobs:
           set -euo pipefail
           rm -rf assets/kphx-source/xp12-121212/obj-agp
           python3 scripts/stage-kphx-xp12-lib.py             /tmp/xp12-demo             reports/kphx-unresolved-dependency-audit.json             reports/kphx-xp12-121212-directory.txt             assets/kphx-source/xp12-121212/obj-agp             ".obj,.agp"
+          python3 - <<'PY'
+          import json
+          p="assets/kphx-source/xp12-121212/obj-agp/kphx-xp12-lib-chunk-manifest.json"
+          j=json.load(open(p))
+          assert j["requestedVirtualCount"] == 77, j["requestedVirtualCount"]
+          assert j["resolvedVirtualCount"] == 77, j["resolvedVirtualCount"]
+          assert j["copiedPhysicalFileCount"] >= 77, j["copiedPhysicalFileCount"]
+          print("verified exact XP12.1.2 OBJ/AGP chunk:", j["resolvedVirtualCount"], "virtual resources,", j["copiedPhysicalFileCount"], "physical files")
+          PY
 
       - name: Commit exact XP12 OBJ/AGP checkpoint
         shell: bash
