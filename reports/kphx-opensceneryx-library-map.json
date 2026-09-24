@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "libraryRoot": "/home/runner/work/RampReady/RampReady/.opensceneryx-mini",
+  "libraryTxt": "/home/runner/work/RampReady/RampReady/.opensceneryx-mini/library.txt",
+  "libraryTxtSha256": "a64577c16c4c0955d01771450c0b50963f375c54d7585dbf6608e6dfcb85b01b",
+  "virtualPrefix": "opensceneryx",
+  "requestedCount": 1,
+  "resolvedCount": 1,
+  "unresolved": [],
+  "ambiguous": [],
+  "resources": {
+    "opensceneryx/objects/airport/vehicles/stairs/3.obj": {
+      "command": "EXPORT",
+      "region": null,
+      "virtualResource": "opensceneryx/objects/airport/vehicles/stairs/3.obj",
+      "physicalResource": "files/objects/airport/vehicles/stairs/3/object.obj",
+      "physicalPath": "/home/runner/work/RampReady/RampReady/.opensceneryx-mini/files/objects/airport/vehicles/stairs/3/object.obj",
+      "sha256": "b76f974c8cf8bf37f6be41b6f593e1b898678dbba9615b0a38a1575757f2cbb8"
+    }
+  }
+}

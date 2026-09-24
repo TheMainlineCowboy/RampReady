@@ -1,0 +1,14 @@
+{
+  "library": "OpenSceneryX",
+  "repository": "https://github.com/OpenSceneryX/Library",
+  "commit": "0128faa88f10f345bde77392e3a10d5b3bfd6b1e",
+  "stairsVirtualResource": "opensceneryx/objects/airport/vehicles/stairs/3.obj",
+  "stairsPhysicalSource": "files/objects/airport/vehicles/stairs/3/object.obj",
+  "dirtVirtualResource": "opensceneryx/polygons/surfaces/dirt/1.pol",
+  "dirtPhysicalSource": "files/polygons/surfaces/dirt/1/polygon.pol",
+  "dirtRuntimeBlocker": [
+    "lib/g10/decals/grass_and_stony_dirt_1.dcl",
+    "lib/g10/decals/low_freq_mod_1.dcl"
+  ],
+  "policy": "exact official source files pinned by commit; no substitute assets"
+}

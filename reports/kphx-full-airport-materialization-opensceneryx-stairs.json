@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-09-24T02:06:56.397Z",
+  "source": {
+    "package": "KPHX - Phoenix Sky Harbor Intl",
+    "version": "1.75.1",
+    "wedSha256": null,
+    "masterAnchor": {
+      "id": "27855",
+      "parentId": "121126",
+      "name": "T4 Gate A1",
+      "latitude": 33.436530675,
+      "longitude": -111.998921221,
+      "headingDegrees": -90.08,
+      "type": "Gate",
+      "traffic": "7",
+      "width": "B",
+      "rampOperationType": "Airline",
+      "airlines": "AAL",
+      "rampReadyPosition": [
+        0,
+        0,
+        6.2
+      ]
+    }
+  },
+  "policy": {
+    "geometry": "source positions/normals/UVs/indices preserved; no remesh or decimation",
+    "textures": "source texture decoded to browser PNG at original dimensions with decoded-RGBA hash equality required",
+    "placement": "earth.wed.xml authored lat/lon/heading; no manual placement",
+    "packageBatch": "opensceneryx-stairs",
+    "packagePrefixes": [
+      "__none__"
+    ],
+    "externalLibraries": "only explicitly resolved library resources are materialized; unresolved virtual paths are never substituted",
+    "libraryMap": "/home/runner/work/RampReady/RampReady/reports/kphx-opensceneryx-library-map.json",
+    "placementReport": "/home/runner/work/RampReady/RampReady/reports/kphx-full-airport-wed-placements-airfield-details.json"
+  },
+  "packageOwned": {
+    "totalSourcePlacementCount": 655,
+    "expectedPlacementCount": 0,
+    "materializedPlacementCount": 0,
+    "expectedUniqueResourceCount": 0,
+    "materializedUniqueResourceCount": 0,
+    "resources": {
+      "opensceneryx/objects/airport/vehicles/stairs/3.obj": {
+        "sourceResource": "opensceneryx/objects/airport/vehicles/stairs/3.obj",
+        "sourceSha256": "b76f974c8cf8bf37f6be41b6f593e1b898678dbba9615b0a38a1575757f2cbb8",
+        "assetUrl": "/models/kphx-full-airport/external/opensceneryx/objects/airport/vehicles/stairs/3/3.gltf",
+        "gltfSha256": "e8907de0b53b16f39e74ab89653cf2d239a8477f4907f2a4d5106b41eb31d38f",
+        "binSha256": "1f2e6dc3a5c68b0538f1c23a643c103dae39d1f74bc32a1663f57684b8cc7239",
+        "diffuse": {
+          "requested": "bridge.dds",
+          "sourcePath": ".opensceneryx-mini/files/objects/airport/vehicles/stairs/3/bridge.dds",
+          "sourceSha256": "bb23e11ce74d291fbb521e000a2791803572c1d049855ae877f2d00be8d72866",
+          "sourceDecodedRgbaSha256": "cca81891dc95dac5fabc2ad1b9081490dba4fa38a3afc6e93f9fb77d2a161387",
+          "outputName": "bridge.png",
+          "outputSha256": "46d4ea10fdf96a9322a068d549d5a1fc6deeeac0afe11c787d57356f50026212",
+          "outputDecodedRgbaSha256": "cca81891dc95dac5fabc2ad1b9081490dba4fa38a3afc6e93f9fb77d2a161387",
+          "width": 1024,
+          "height": 1024,
+          "channels": "srgba"
+        },
+        "drapedDiffuse": null,
+        "lit": null,
+        "normal": null,
+        "drapedNormal": null,
+        "weather": null,
+        "converter": {
+          "name": "3",
+          "source": "/home/runner/work/RampReady/RampReady/.opensceneryx-mini/files/objects/airport/vehicles/stairs/3/object.obj",
+          "vertexCount": 7032,
+          "indexCount": 10836,
+          "triangleCount": 3612,
+          "drawRangeCount": 265,
+          "materialCount": 1,
+          "sourceBounds": {
+            "min": [
+              -2.96474266,
+              -0.0091988,
+              -8.4061327
+            ],
+            "max": [
+              2.41592479,
+              4.86972904,
+              7.55000019
+            ]
+          },
+          "diffuseUri": "bridge.png",
+          "drapedDiffuseUri": null,
+          "litUri": null,
+          "normalUri": null,
+          "normalScale": null,
+          "drapedNormalUri": null,
+          "drapedNormalScale": null,
+          "weatherUri": null,
+          "sourceWeatherTransparent": false,
+          "globalNoShadow": false,
+          "globalLodRange": null,
+          "sourceTilted": true,
+          "globalSpecular": null,
+          "globalAlphaCutoff": null,
+          "normalMetalness": false,
+          "geometryPolicy": "preserve-source-positions-normals-uvs-topology-no-remesh-no-decimation;convert-X-Plane-clockwise-TRIS-to-glTF-counterclockwise-winding",
+          "drawStatePolicy": "preserve-supported-per-TRIS-blend-and-cull-state;honor-IF-NOT-SCENERY_SHADOWS-and-IF-NOT-GLOBAL_SHADOWS;preserve-GLOBAL_LOD-and-TILTED-source-semantics;preserve-WEATHER_TRANSPARENT-as-source-metadata-with-no-browser-weather-overlay;bake-exact-zero-distance-GroundTraffic-rest-translation-including-keyframed-translations;reject-unsupported-render-state",
+          "textureCoordinatePolicy": "preserve-source-uv-buffer-and-flip-v-at-material-level-for-gltf-upper-left-image-origin"
+        }
+      }
+    },
+    "placements": []
+  },
+  "resolvedExternal": {
+    "prefixes": [
+      "opensceneryx"
+    ],
+    "materializedPlacementCount": 4,
+    "expectedUniqueResourceCount": 1,
+    "materializedUniqueResourceCount": 1,
+    "placements": [
+      {
+        "id": "100818",
+        "parentId": "6242",
+        "name": "3.obj",
+        "resource": "opensceneryx/objects/airport/vehicles/stairs/3.obj",
+        "resourcePrefix": "opensceneryx",
+        "sourceClass": "external-library",
+        "latitude": 33.436414104,
+        "longitude": -111.992916889,
+        "headingDegrees": 179.69,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default",
+        "assetUrl": "/models/kphx-full-airport/external/opensceneryx/objects/airport/vehicles/stairs/3/3.gltf",
+        "packedMeshName": null,
+        "recoveredExact": false,
+        "layerGroupDraped": null
+      },
+      {
+        "id": "100819",
+        "parentId": "6243",
+        "name": "3.obj",
+        "resource": "opensceneryx/objects/airport/vehicles/stairs/3.obj",
+        "resourcePrefix": "opensceneryx",
+        "sourceClass": "external-library",
+        "latitude": 33.436371249,
+        "longitude": -111.993453155,
+        "headingDegrees": 221.69,
+        "customMsl": false,
+        "mslMeters": 0,
+        "showLevel": "1 Default",
+        "assetUrl": "/models/kphx-full-airport/external/opensceneryx/objects/airport/vehicles/stairs/3/3.gltf",
+        "packedMeshName": null,
+        "recoveredExact": false,
+        "layerGroupDraped": null
+      },
+      {
+        "id": "100833",
+        "parentId": "6302",
+        "name": "3.obj",
+        "resource": "opensceneryx/objects/airport/vehicles/stairs/3.obj",
+        "resourcePrefix": "opensceneryx",
+        "sourceClass": "external-library",
+        "latitude": 33.436378176,
+        "longitude": -111.99625921,
+        "headingDegrees": 230.15,
+        "customMsl": false,
+        "mslMeters": 0.914,
+        "showLevel": "1 Default",
+        "assetUrl": "/models/kphx-full-airport/external/opensceneryx/objects/airport/vehicles/stairs/3/3.gltf",
+        "packedMeshName": null,
+        "recoveredExact": false,
+        "layerGroupDraped": null
+      },
+      {
+        "id": "100844",
+        "parentId": "6298",
+        "name": "3.obj",
+        "resource": "opensceneryx/objects/airport/vehicles/stairs/3.obj",
+        "resourcePrefix": "opensceneryx",
+        "sourceClass": "external-library",
+        "latitude": 33.436346808,
+        "longitude": -111.995738508,
+        "headingDegrees": 230.15,
+        "customMsl": false,
+        "mslMeters": 0.914,
+        "showLevel": "1 Default",
+        "assetUrl": "/models/kphx-full-airport/external/opensceneryx/objects/airport/vehicles/stairs/3/3.gltf",
+        "packedMeshName": null,
+        "recoveredExact": false,
+        "layerGroupDraped": null
+      }
+    ]
+  },
+  "externalLibraries": {
+    "placementCount": 4036,
+    "uniqueResourceCount": 249,
+    "prefixCounts": {
+      "MisterX_Library": 2443,
+      "lib": 1175,
+      "ZDP_Library": 346,
+      "CDB-Library": 53,
+      "RA_Library": 12,
+      "opensceneryx": 4,
+      "Fruitstand_Aircraft": 3
+    }
+  },
+  "failures": []
+}
