@@ -1,0 +1,16 @@
+=== rodata 0x142b940..0x142b9d0 ===
+
+/tmp/xp12/X-Plane 12 Installer Linux:     file format elf64-x86-64
+
+Contents of section .rodata:
+ 142b940 7272656e 74207363 656e6572 79207365  rrent scenery se
+ 142b950 6c656374 696f6e20 28616e64 20636f72  lection (and cor
+ 142b960 72657370 6f6e6469 6e67206c 6f6e6720  responding long 
+ 142b970 696e7374 616c6c61 74696f6e 2074696d  installation tim
+ 142b980 65292e00 2f5f6c6f 6f6b7570 5f31325f  e)../_lookup_12_
+ 142b990 2f736572 7665725f 6c697374 5f31322e  /server_list_12.
+ 142b9a0 74787400 2d2d6c69 73745f62 72616e63  txt.--list_branc
+ 142b9b0 68657300 25733a20 25640a00 2f646972  hes.%s: %d../dir
+ 142b9c0 6563746f 72792e74 78742e7a 69700064  ectory.txt.zip.d
+
+=== strings near target offsets ===
