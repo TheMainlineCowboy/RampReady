@@ -1,0 +1,62 @@
+name: KPHX XP11 Library URL Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp11-library-url-probe.yml"
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Probe exact XP11 library file URL forms
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import io, urllib.parse, urllib.request, zipfile
+
+          branch="X-Plane 11.55r2"
+          base="https://desktop.x-plane.com/unsecured/"+urllib.parse.quote(branch,safe="")+"/"
+          def get(url):
+              req=urllib.request.Request(url,headers={"User-Agent":"RampReady-KPHX-XP11-probe/1.0"})
+              try:
+                  with urllib.request.urlopen(req,timeout=30) as r:
+                      data=r.read()
+                      print("OK",r.status,len(data),r.headers.get("content-type"),url)
+                      return data
+              except Exception as e:
+                  print("FAIL",repr(e),url)
+                  return None
+
+          raw=get(base+"directory.txt.zip")
+          with zipfile.ZipFile(io.BytesIO(raw)) as z:
+              manifest=z.read([n for n in z.namelist() if not n.endswith("/")][0]).decode("utf-8","replace")
+
+          current=""
+          libs=[]
+          for line in manifest.splitlines():
+              if line.startswith("DIR "):
+                  current=line[4:].strip()
+                  continue
+              if line.startswith("FILE ") and line.rstrip().endswith("library.txt"):
+                  parts=line.split(" ",10)
+                  filename=parts[10] if len(parts)>=11 else "library.txt"
+                  for joiner in ("", "/"):
+                      p=(current.rstrip("/") + joiner + filename).replace("//","/")
+                      if p not in libs: libs.append(p)
+                  print("MANIFEST_LINE",line)
+                  print("CURRENT_DIR",repr(current))
+                  print("PART_COUNT",len(parts),repr(parts[-1]))
+
+          print("LIB_CANDIDATES",len(libs))
+          for p in libs[:6]:
+              enc=urllib.parse.quote(p,safe="/")
+              print("PATH",repr(p))
+              for suffix in (".zip",""):
+                  get(base+enc+suffix)
+          PY
