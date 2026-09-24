@@ -1,0 +1,39 @@
+base=https://desktop.x-plane.com/unsecured/X-Plane%2012.1.2-r4-0f2fea01
+
+=== directory.txt.zip ===
+http=200
+bytes=6359644
+sha256=b056c8183e5eb4852db9ec5e5d63af0321b2995a63dbca9e5eb2cb1f0b4862d0
+content_type=application/zip
+/tmp/xp12-historical/body.bin: Zip archive data, at least v2.0 to extract, compression method=deflate
+Archive:  /tmp/xp12-historical/body.bin
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+ 27680373  2024-10-08 00:52   directory.txt
+---------                     -------
+ 27680373                     1 file
+
+=== Resources/default%20scenery/airport%20scenery/library.txt.zip ===
+http=403
+bytes=243
+sha256=2d9237f1082198a028206a0355a63293eea799e9ccc83c95df46dbc0088c7865
+content_type=application/xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Error><Code>AccessDenied</Code><Message>Access Denied</Message><RequestId>13YVS9KA5JRB5NTQ</RequestId><HostId>GmRUXD1doObpLYuV4lQx/yYKU84l6XRIlwpM5pCANJdGr9ILgmHZUEIhOvus7V8VLxirVw0OD1g=</HostId></Error>
+
+=== Resources/default%20scenery/900%20us%20objects/library.txt.zip ===
+http=403
+bytes=243
+sha256=25da9669475b5c0fab9e68c12d7b32229aea6204df0a3fd612e3b621207db297
+content_type=application/xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Error><Code>AccessDenied</Code><Message>Access Denied</Message><RequestId>8H1DKQEF4AFEEKCV</RequestId><HostId>hwEkZC2dOC5B7MzDQSuzWnBmW8/GMai43W6m2B5HNbqvhMNdVkDS5VVdzxjK+l/mzHl+3n0lARE=</HostId></Error>
+
+=== Resources/default%20scenery/1000%20roads/library.txt.zip ===
+http=403
+bytes=263
+sha256=63b63909356152dd95fef2001c1defe6470bd5d72eafac638c5d00f7d7ae1e17
+content_type=application/xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Error><Code>AccessDenied</Code><Message>Access Denied</Message><RequestId>8H13V0FT4VR90DBC</RequestId><HostId>oC0foHJoJPOy4ePQEqbW8WROXWuX/E2yuY8YTycdgjCVuVwHroNErRPlmObHVZItXdI/Es4t++7DjZX5CFFHEGVeeQVHOdvH</HostId></Error>
+
