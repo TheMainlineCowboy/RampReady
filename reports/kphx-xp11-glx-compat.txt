@@ -1,0 +1,37 @@
+installer_rc=124
+=== compatibility shim ===
+RAMPREADY_GLX_COMPAT replacing unsupported installer probe {GLX_SAMPLE_BUFFERS_ARB,None}
+RAMPREADY_GLX_COMPAT_RESULT visualid=0x1cb depth=24 class=4
+
+=== QA output ===
+
+=== installer stderr ===
+RAMPREADY_GLX_COMPAT replacing unsupported installer probe {GLX_SAMPLE_BUFFERS_ARB,None}
+RAMPREADY_GLX_COMPAT_RESULT visualid=0x1cb depth=24 class=4
+*   Trying 216.239.32.178...
+* Connected to www.google-analytics.com (216.239.32.178) port 80 (#0)
+> POST /collect HTTP/1.1
+Host: www.google-analytics.com
+User-Agent: X-Plane Installer 4.13r1-final-LIN_64bit
+Accept: */*
+Content-Type: application/json
+Content-Length: 355
+
+* upload completely sent off: 355 out of 355 bytes
+< HTTP/1.1 200 OK
+< Access-Control-Allow-Origin: *
+< Date: Thu, 24 Sep 2026 03:30:38 GMT
+< Pragma: no-cache
+< Expires: Fri, 01 Jan 1990 00:00:00 GMT
+< Cache-Control: no-cache, no-store, must-revalidate
+< Last-Modified: Sun, 17 May 1998 03:00:00 GMT
+< X-Content-Type-Options: nosniff
+< Content-Type: image/gif
+< Cross-Origin-Resource-Policy: cross-origin
+< Content-Security-Policy-Report-Only: script-src 'none'; form-action 'none'; frame-src 'none'; report-uri https://csp.withgoogle.com/csp/scaffolding/ascnsrsgac:195:0
+< Cross-Origin-Opener-Policy-Report-Only: same-origin; report-to=ascnsrsgac:195:0
+< Report-To: {"group":"ascnsrsgac:195:0","max_age":2592000,"endpoints":[{"url":"https://csp.withgoogle.com/csp/report-to/scaffolding/ascnsrsgac:195:0"}],}
+< Server: Golfe2
+< Content-Length: 35
+< 
+* Connection #0 to host www.google-analytics.com left intact
