@@ -1,0 +1,89 @@
+name: KPHX XP12 macOS Installer UI Probe
+
+on:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-macos-ui-probe.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: macos-14
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Launch official installer and capture main menu
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp12-installer reports
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerMac.zip"             -o /tmp/xp12-installer.zip
+          ditto -x -k /tmp/xp12-installer.zip /tmp/xp12-installer
+          BIN="$(find /tmp/xp12-installer -type f -path '*/Contents/MacOS/*' -iname '*Installer*' -print -quit)"
+          if [ -z "$BIN" ]; then
+            BIN="$(find /tmp/xp12-installer -type f -path '*/Contents/MacOS/*' -print -quit)"
+          fi
+          test -n "$BIN"
+          chmod +x "$BIN"
+
+          "$BIN" --lang=en --install_numeric=121212             --install_name="X-Plane 12.1.2-r4-0f2fea01"             --no_web_server >/tmp/xp12-ui.out 2>/tmp/xp12-ui.err &
+          PID=$!
+          echo "$PID" >/tmp/xp12-ui.pid
+          sleep 12
+
+          screencapture -x reports/kphx-xp12-macos-main-menu.png || true
+
+          swift - <<'SWIFT' > reports/kphx-xp12-macos-window-info.txt
+          import CoreGraphics
+          import Foundation
+          let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
+          if let info = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] {
+              for w in info {
+                  let owner = w[kCGWindowOwnerName as String] as? String ?? ""
+                  let name = w[kCGWindowName as String] as? String ?? ""
+                  if owner.lowercased().contains("x-plane") || owner.lowercased().contains("x-system") || name.lowercased().contains("x-system") {
+                      print(w)
+                  }
+              }
+          }
+          SWIFT
+
+          {
+            echo "pid=$PID"
+            ps -p "$PID" -o pid,ppid,stat,etime,command || true
+            echo "=== stdout ==="
+            cat /tmp/xp12-ui.out || true
+            echo "=== stderr ==="
+            cat /tmp/xp12-ui.err || true
+            echo "=== installer log tail ==="
+            tail -300 "$HOME/X-Plane Installer Log.txt" 2>/dev/null || true
+          } > reports/kphx-xp12-macos-ui-probe.txt
+
+          kill "$PID" 2>/dev/null || true
+          wait "$PID" 2>/dev/null || true
+
+          test -s reports/kphx-xp12-macos-main-menu.png
+          test -s reports/kphx-xp12-macos-window-info.txt
+          cat reports/kphx-xp12-macos-window-info.txt
+
+      - name: Commit UI evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             reports/kphx-xp12-macos-main-menu.png             reports/kphx-xp12-macos-window-info.txt             reports/kphx-xp12-macos-ui-probe.txt
+          git commit -m "Capture XP12 macOS installer main menu"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
