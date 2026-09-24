@@ -1,0 +1,159 @@
+name: KPHX XP12.1.2 GLX Network Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-glx-network-probe.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-xp12-glx-network-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/workflows/kphx-xp12-glx-network-probe.yml
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Install XP12 headless runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y             gcc libgl-dev libx11-dev strace             xvfb xauth x11-utils xfonts-base xfonts-75dpi xfonts-100dpi fontconfig             libgl1-mesa-dri libglx-mesa0 libglx0 libgl1 libglu1-mesa mesa-utils             libpangoxft-1.0-0 libgtk2.0-0t64 libxft2 libxi6 libxinerama1             libxrandr2 libxcursor1 libasound2t64 >/dev/null
+          sudo fc-cache -f >/dev/null
+
+      - name: Build installer GLX compatibility shim
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/glxcompat.c <<'C'
+          #define _GNU_SOURCE
+          #include <GL/glx.h>
+          #include <X11/Xlib.h>
+          #include <dlfcn.h>
+          #include <stdio.h>
+
+          typedef XVisualInfo *(*choose_fn)(Display *, int, int *);
+
+          XVisualInfo *glXChooseVisual(Display *dpy, int screen, int *attrs) {
+            static choose_fn real_choose = NULL;
+            if (!real_choose) real_choose = (choose_fn)dlsym(RTLD_NEXT, "glXChooseVisual");
+            XVisualInfo *result = real_choose ? real_choose(dpy, screen, attrs) : NULL;
+            if (result) return result;
+
+            if (attrs && attrs[0] == GLX_SAMPLE_BUFFERS_ARB && attrs[1] == None) {
+              int fallback[] = {
+                GLX_RGBA,
+                GLX_DOUBLEBUFFER,
+                GLX_RED_SIZE, 8,
+                GLX_GREEN_SIZE, 8,
+                GLX_BLUE_SIZE, 8,
+                GLX_DEPTH_SIZE, 24,
+                None
+              };
+              fprintf(stderr, "RAMPREADY_GLX_COMPAT replacing unsupported installer visual probe\n");
+              result = real_choose ? real_choose(dpy, screen, fallback) : NULL;
+              if (result) {
+                fprintf(stderr, "RAMPREADY_GLX_COMPAT_RESULT visualid=0x%lx depth=%d class=%d\n",
+                  result->visualid, result->depth, result->class);
+              } else {
+                fprintf(stderr, "RAMPREADY_GLX_COMPAT_RESULT NULL\n");
+              }
+              fflush(stderr);
+            }
+            return result;
+          }
+          C
+          gcc -shared -fPIC -O2 -o /tmp/libglxcompat.so /tmp/glxcompat.c -ldl -lGL -lX11
+
+      - name: Start GLX display and download official XP12 installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          Xvfb :99 -screen 0 1280x800x24 +extension GLX +render -noreset >/tmp/xvfb.log 2>&1 &
+          export DISPLAY=:99
+          for i in $(seq 1 20); do
+            if xdpyinfo >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          mkdir -p /tmp/xp12-installer /tmp/xp12-demo reports
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip"             -o /tmp/xp12-installer.zip
+          unzip -q /tmp/xp12-installer.zip -d /tmp/xp12-installer
+          BIN="$(find /tmp/xp12-installer -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          chmod +x "$BIN"
+          echo "$BIN" >/tmp/xp12-bin.txt
+
+      - name: Trace official XP12.1.2 installer network path
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN="$(cat /tmp/xp12-bin.txt)"
+          cat >/tmp/xp12.qa <<'QA'
+          wait 2
+          dump buttons
+          click "Install a Free Demo of X-Plane"
+          wait 8
+          dump buttons
+          wait 5
+          dump buttons
+          quit
+          QA
+
+          export DISPLAY=:99
+          set +e
+          LD_PRELOAD=/tmp/libglxcompat.so LIBGL_ALWAYS_SOFTWARE=1 timeout 40s             strace -f -e trace=network -s 8192 -o /tmp/xp12-network-strace.txt             "$BIN"               --qa_script=/tmp/xp12.qa               --install_numeric=121212               --install_name="X-Plane 12.1.2-r4-0f2fea01"               --no_web_server             >/tmp/xp12-stdout.txt 2>/tmp/xp12-stderr.txt
+          rc=$?
+          set -e
+
+          {
+            echo "installer_rc=$rc"
+            echo "=== GLX shim ==="
+            grep 'RAMPREADY_GLX_COMPAT' /tmp/xp12-stderr.txt || true
+            echo
+            echo "=== installer stdout ==="
+            cat /tmp/xp12-stdout.txt
+            echo
+            echo "=== installer stderr URL / server lines ==="
+            grep -Ei 'https?://|server|directory\.txt|download|desktop\.x-plane|lookup\.x-plane|cloudfront|12\.1\.2|121212|sig=|ttl=|token|auth' /tmp/xp12-stderr.txt | tail -2000 || true
+            echo
+            echo "=== network syscalls ==="
+            tail -2500 /tmp/xp12-network-strace.txt || true
+            echo
+            echo "=== generated installer files/logs ==="
+            find /tmp/xp12-installer /tmp/xp12-demo "$HOME" -maxdepth 5 -type f               \( -iname '*log*.txt' -o -iname 'directory.txt' -o -iname '*.log' \)               -print 2>/dev/null | head -200
+            while IFS= read -r LOG; do
+              [ -f "$LOG" ] || continue
+              echo "--- $LOG"
+              grep -Ei 'https?://|server|directory\.txt|download|desktop\.x-plane|lookup\.x-plane|cloudfront|12\.1\.2|121212|sig=|ttl=|token|auth' "$LOG" | tail -1200 || true
+            done < <(find /tmp/xp12-installer /tmp/xp12-demo "$HOME" -maxdepth 5 -type f               \( -iname '*log*.txt' -o -iname 'directory.txt' -o -iname '*.log' \)               -print 2>/dev/null | head -200)
+          } > reports/kphx-xp12-glx-network-probe.txt
+
+          cat reports/kphx-xp12-glx-network-probe.txt
+          test -s reports/kphx-xp12-glx-network-probe.txt
+
+      - name: Commit XP12.1.2 network evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-glx-network-probe.txt
+          git commit -m "Capture XP12.1.2 installer network path under GLX shim"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
