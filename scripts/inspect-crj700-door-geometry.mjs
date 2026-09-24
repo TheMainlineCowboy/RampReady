@@ -112,6 +112,7 @@ const report={
   primitiveCount:primitives.length,
   namedCandidates,
   forwardLeftCandidates,
+  primitives,
   materials:materialsSummary,
 };
 fs.mkdirSync("reports",{recursive:true});
