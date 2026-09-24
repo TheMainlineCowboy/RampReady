@@ -129,8 +129,8 @@ jobs:
           if (m.failures?.length) throw new Error(`OpenSceneryX failures: ${m.failures.length}`);
           if (m.resolvedExternal.expectedUniqueResourceCount !== 1) throw new Error(`Expected 1 OpenSceneryX OBJ resource, got ${m.resolvedExternal.expectedUniqueResourceCount}`);
           if (m.resolvedExternal.materializedUniqueResourceCount !== 1) throw new Error(`Materialized ${m.resolvedExternal.materializedUniqueResourceCount}/1 OpenSceneryX OBJ resources`);
-          if (m.resolvedExternal.materializedPlacementCount !== 1) throw new Error(`Expected 1 OpenSceneryX stairs placement, got ${m.resolvedExternal.materializedPlacementCount}`);
-          console.log(JSON.stringify({resources:1,placements:1,status:"PASS"},null,2));
+          if (m.resolvedExternal.materializedPlacementCount !== 4) throw new Error(`Expected 4 OpenSceneryX stairs placements, got ${m.resolvedExternal.materializedPlacementCount}`);
+          console.log(JSON.stringify({resources:1,placements:4,status:"PASS"},null,2));
           NODE
 
       - name: Commit exact OpenSceneryX checkpoint
