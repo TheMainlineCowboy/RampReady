@@ -1,0 +1,61 @@
+{
+  "kind": "DRAPED_POLYGON",
+  "sourceResource": "ZDP_Library/ground_textures/asphalt/smooth1/overlays/Darkest.pol",
+  "texture": {
+    "requested": "darkest.png",
+    "sourcePath": "polygons/asphalt/Overlays/darkest.png",
+    "sourceSha256": "b27eb6e7e2b2cb9fcfbef0d621dde724f86ca3a8e79b409b3d3fd8169fb9379a",
+    "sourceDecodedRgbaSha256": "af5bd91ffabe275d60c0872480fceaa725e20e36e14c3c01be660619a3420026",
+    "outputName": "darkest.png",
+    "outputUrl": "darkest.png",
+    "outputSha256": "b27eb6e7e2b2cb9fcfbef0d621dde724f86ca3a8e79b409b3d3fd8169fb9379a",
+    "outputDecodedRgbaSha256": "af5bd91ffabe275d60c0872480fceaa725e20e36e14c3c01be660619a3420026",
+    "width": 512,
+    "height": 512
+  },
+  "textureLit": null,
+  "textureNormal": "../../Smooth1_NRM.png",
+  "normalScale": 1,
+  "scaleMeters": [
+    36,
+    36
+  ],
+  "layerGroup": {
+    "group": "taxiways",
+    "offset": 3
+  },
+  "surface": "concrete",
+  "noAlpha": false,
+  "globalSpecular": 0,
+  "weather": {
+    "requested": "../../asphalt_smooth_WXR.png",
+    "sourcePath": "polygons/asphalt_smooth_WXR.png",
+    "sourceSha256": "2ac4047590932442512118bcf041600ef5d78bfb7646e1b9e0f38469b5133c08",
+    "sourceDecodedRgbaSha256": "9c5b7c0dee052c88676c08e092bd4cfee5efc16ddb14d756e068493cb3a0f9e6",
+    "outputName": "asphalt_smooth_WXR.png",
+    "outputUrl": "asphalt_smooth_WXR.png",
+    "outputSha256": "2ac4047590932442512118bcf041600ef5d78bfb7646e1b9e0f38469b5133c08",
+    "outputDecodedRgbaSha256": "9c5b7c0dee052c88676c08e092bd4cfee5efc16ddb14d756e068493cb3a0f9e6",
+    "width": 1024,
+    "height": 1024
+  },
+  "weatherTransparent": false,
+  "decalLib": null,
+  "unsupported": [],
+  "sourceSha256": "ce4695b87120b608bfb73370572bf30abaa9806e4685e3eec35749adc1912f8d",
+  "outputBaseUrl": "/models/kphx-full-airport/surface-batches/zdp/resources/ZDP_Library/ground_textures/asphalt/smooth1/overlays/Darkest",
+  "lit": null,
+  "normal": {
+    "requested": "../../Smooth1_NRM.png",
+    "sourcePath": "polygons/Smooth1_NRM.png",
+    "sourceSha256": "88b14f3882a9c051c7d181edf9220d89f8c72c848485942271ee5171ea1c44e4",
+    "sourceDecodedRgbaSha256": "9844d8daac8d23c8ee7c3e584168798f7ec2ca6950c4b20b2a6da10fc8caa3c8",
+    "outputName": "Smooth1_NRM.png",
+    "outputUrl": "Smooth1_NRM.png",
+    "outputSha256": "88b14f3882a9c051c7d181edf9220d89f8c72c848485942271ee5171ea1c44e4",
+    "outputDecodedRgbaSha256": "9844d8daac8d23c8ee7c3e584168798f7ec2ca6950c4b20b2a6da10fc8caa3c8",
+    "width": 4096,
+    "height": 4096
+  },
+  "decal": null
+}

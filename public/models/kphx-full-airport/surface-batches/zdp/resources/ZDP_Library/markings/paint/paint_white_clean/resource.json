@@ -1,0 +1,61 @@
+{
+  "kind": "DRAPED_POLYGON",
+  "sourceResource": "ZDP_Library/markings/paint/paint_white_clean.pol",
+  "texture": {
+    "requested": "textures/paint_white_clean.png",
+    "sourcePath": "markings/paint/textures/paint_white_clean.dds",
+    "sourceSha256": "817ee7e52c2c21e8109b81f4c9bcd7706d6bb16c9ad8e795b8c19dfdecb0cb40",
+    "sourceDecodedRgbaSha256": "9d6fc2da6b6ee455dc7f07223835ada96e9d550e59ea1369f5361f110c48b942",
+    "outputName": "paint_white_clean.png",
+    "outputUrl": "paint_white_clean.png",
+    "outputSha256": "e82fbed70a8a0faaa1b25714d35c537f56419b79be7aaa605c3950139cbe8bf5",
+    "outputDecodedRgbaSha256": "9d6fc2da6b6ee455dc7f07223835ada96e9d550e59ea1369f5361f110c48b942",
+    "width": 4096,
+    "height": 4096
+  },
+  "textureLit": null,
+  "textureNormal": "textures/paint_clean_NML.png",
+  "normalScale": 1,
+  "scaleMeters": [
+    15,
+    15
+  ],
+  "layerGroup": {
+    "group": "markings",
+    "offset": 1
+  },
+  "surface": "asphalt",
+  "noAlpha": false,
+  "globalSpecular": null,
+  "weather": {
+    "requested": "textures/paint_WXR.png",
+    "sourcePath": "markings/paint/textures/paint_WXR.png",
+    "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+    "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+    "outputName": "paint_WXR.png",
+    "outputUrl": "paint_WXR.png",
+    "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+    "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+    "width": 1024,
+    "height": 1024
+  },
+  "weatherTransparent": false,
+  "decalLib": null,
+  "unsupported": [],
+  "sourceSha256": "b373faaa2aed5b7b4bf18a4b08d6048bd3d324ea213637a66548356d9f9f7271",
+  "outputBaseUrl": "/models/kphx-full-airport/surface-batches/zdp/resources/ZDP_Library/markings/paint/paint_white_clean",
+  "lit": null,
+  "normal": {
+    "requested": "textures/paint_clean_NML.png",
+    "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+    "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+    "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+    "outputName": "paint_clean_NML.png",
+    "outputUrl": "paint_clean_NML.png",
+    "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+    "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+    "width": 4096,
+    "height": 4096
+  },
+  "decal": null
+}

@@ -1,0 +1,61 @@
+{
+  "kind": "DRAPED_POLYGON",
+  "sourceResource": "ZDP_Library/ground_textures/concrete/flat/overlays/yellow_light.pol",
+  "texture": {
+    "requested": "yellow_light.png",
+    "sourcePath": "polygons/concrete/colors/yellow_light.png",
+    "sourceSha256": "654c61c327eb8dc1e74b7f2be4586711cb5d0b4b45f603cddb85598983fada41",
+    "sourceDecodedRgbaSha256": "b0a9d9ddac97beff28e3b620fb04b2c85ea870cca87eb0962f269bc6ee75526b",
+    "outputName": "yellow_light.png",
+    "outputUrl": "yellow_light.png",
+    "outputSha256": "654c61c327eb8dc1e74b7f2be4586711cb5d0b4b45f603cddb85598983fada41",
+    "outputDecodedRgbaSha256": "b0a9d9ddac97beff28e3b620fb04b2c85ea870cca87eb0962f269bc6ee75526b",
+    "width": 512,
+    "height": 512
+  },
+  "textureLit": null,
+  "textureNormal": "../../Rough_High_NRM.png",
+  "normalScale": 1,
+  "scaleMeters": [
+    36,
+    36
+  ],
+  "layerGroup": {
+    "group": "taxiways",
+    "offset": 5
+  },
+  "surface": "concrete",
+  "noAlpha": false,
+  "globalSpecular": 0,
+  "weather": {
+    "requested": "../../Concrete_Smooth_WXR.png",
+    "sourcePath": "polygons/Concrete_Smooth_WXR.png",
+    "sourceSha256": "abba64b29ad92ecf0100762dc210f48cbdb8eb0e9dab2a631e3a986083d33571",
+    "sourceDecodedRgbaSha256": "b7a2d00c3a80095c77cc3b24871cde6d46b426abb5a1e0930e814a417d63553f",
+    "outputName": "Concrete_Smooth_WXR.png",
+    "outputUrl": "Concrete_Smooth_WXR.png",
+    "outputSha256": "abba64b29ad92ecf0100762dc210f48cbdb8eb0e9dab2a631e3a986083d33571",
+    "outputDecodedRgbaSha256": "b7a2d00c3a80095c77cc3b24871cde6d46b426abb5a1e0930e814a417d63553f",
+    "width": 1024,
+    "height": 1024
+  },
+  "weatherTransparent": false,
+  "decalLib": null,
+  "unsupported": [],
+  "sourceSha256": "d40a0896c0da07c71cb851eea5d3856e1d0e64fa6d8ea1a790306460bea6ffe4",
+  "outputBaseUrl": "/models/kphx-full-airport/surface-batches/zdp/resources/ZDP_Library/ground_textures/concrete/flat/overlays/yellow_light",
+  "lit": null,
+  "normal": {
+    "requested": "../../Rough_High_NRM.png",
+    "sourcePath": "polygons/Rough_High_NRM.png",
+    "sourceSha256": "ea053c4c8fafb610f7428094c130f9b0d28d5f82fc80a9baf4af866df76c0c62",
+    "sourceDecodedRgbaSha256": "175d64bf3aac6f24af2f449947c96e419c540183fd19e23b39d4b3f6f7d24b98",
+    "outputName": "Rough_High_NRM.png",
+    "outputUrl": "Rough_High_NRM.png",
+    "outputSha256": "ea053c4c8fafb610f7428094c130f9b0d28d5f82fc80a9baf4af866df76c0c62",
+    "outputDecodedRgbaSha256": "175d64bf3aac6f24af2f449947c96e419c540183fd19e23b39d4b3f6f7d24b98",
+    "width": 4096,
+    "height": 4096
+  },
+  "decal": null
+}

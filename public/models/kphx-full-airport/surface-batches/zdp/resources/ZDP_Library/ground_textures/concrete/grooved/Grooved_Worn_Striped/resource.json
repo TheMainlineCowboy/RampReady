@@ -1,0 +1,136 @@
+{
+  "kind": "DRAPED_POLYGON",
+  "sourceResource": "ZDP_Library/ground_textures/concrete/grooved/Grooved_Worn_Striped.pol",
+  "texture": {
+    "requested": "../Concrete_Grooved_ALB.png",
+    "sourcePath": "polygons/Concrete_Grooved_ALB.dds",
+    "sourceSha256": "deb0f95903672d732202d62411ad5160279d106b110e0e86e9717c5c3cf45327",
+    "sourceDecodedRgbaSha256": "d3c3d126640e55dacb7c14e970ebc8e706248d939b18c0a5f7d4e04c6deeb2df",
+    "outputName": "Concrete_Grooved_ALB.png",
+    "outputUrl": "Concrete_Grooved_ALB.png",
+    "outputSha256": "07886e9dc952bd00dfa778c5af2ae8556b11ccc1fc3c1b8a016bb8720cf22876",
+    "outputDecodedRgbaSha256": "d3c3d126640e55dacb7c14e970ebc8e706248d939b18c0a5f7d4e04c6deeb2df",
+    "width": 4096,
+    "height": 4096
+  },
+  "textureLit": null,
+  "textureNormal": "../Concrete_Grooved_worn_NRM.png",
+  "normalScale": 1,
+  "scaleMeters": [
+    36,
+    36
+  ],
+  "layerGroup": {
+    "group": "taxiways",
+    "offset": 2
+  },
+  "surface": "concrete",
+  "noAlpha": false,
+  "globalSpecular": null,
+  "weather": {
+    "requested": "../Concrete_Grooved_WXR.png",
+    "sourcePath": "polygons/Concrete_Grooved_WXR.png",
+    "sourceSha256": "ca29898b788ff4fc7eb200809f1d5ea324b40b4c69a49de66c626d8d92bb6805",
+    "sourceDecodedRgbaSha256": "d8d502827b2bd13c732e3942eef1bd419bda487375e5e64115e6fe4591c8b053",
+    "outputName": "Concrete_Grooved_WXR.png",
+    "outputUrl": "Concrete_Grooved_WXR.png",
+    "outputSha256": "ca29898b788ff4fc7eb200809f1d5ea324b40b4c69a49de66c626d8d92bb6805",
+    "outputDecodedRgbaSha256": "d8d502827b2bd13c732e3942eef1bd419bda487375e5e64115e6fe4591c8b053",
+    "width": 4096,
+    "height": 4096
+  },
+  "weatherTransparent": false,
+  "decalLib": "../decals/DECAL_concrete_stripes_worn.dcl",
+  "unsupported": [],
+  "sourceSha256": "f228e8eda38da6c26e399898d33c58226a824e7981adce3c6fba351b63aa47ba",
+  "outputBaseUrl": "/models/kphx-full-airport/surface-batches/zdp/resources/ZDP_Library/ground_textures/concrete/grooved/Grooved_Worn_Striped",
+  "lit": null,
+  "normal": {
+    "requested": "../Concrete_Grooved_worn_NRM.png",
+    "sourcePath": "polygons/Concrete_Grooved_worn_NRM.png",
+    "sourceSha256": "19295addcd2a6b6562724138977c83d9a026ac3f3920173f20c4fc21af164f32",
+    "sourceDecodedRgbaSha256": "a32277049e48e2481e09bb9646c68b93ee7e0bff650440f5201501cde621bce9",
+    "outputName": "Concrete_Grooved_worn_NRM.png",
+    "outputUrl": "Concrete_Grooved_worn_NRM.png",
+    "outputSha256": "19295addcd2a6b6562724138977c83d9a026ac3f3920173f20c4fc21af164f32",
+    "outputDecodedRgbaSha256": "a32277049e48e2481e09bb9646c68b93ee7e0bff650440f5201501cde621bce9",
+    "width": 4096,
+    "height": 4096
+  },
+  "decal": {
+    "kind": "DECAL",
+    "sourceResource": "polygons/decals/DECAL_concrete_stripes_worn.dcl",
+    "decals": [
+      {
+        "type": "DECAL_PARAMS",
+        "scaleRatio": 0.1875,
+        "dither": 0,
+        "rgbKey": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "alphaKey": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "texture": "dirt_light.png",
+        "image": {
+          "requested": "dirt_light.png",
+          "sourcePath": "polygons/decals/dirt_light.png",
+          "sourceSha256": "74b4ba1339e5a0b25997add5f6f7205960a123e8ee7bcfdd3972c15d3a167ec9",
+          "sourceDecodedRgbaSha256": "f25d8b8ff5b395ad644f7f8bc891dff12ad0f55f9462569a99c11fec3922b3a0",
+          "outputName": "dirt_light.png",
+          "outputUrl": "dirt_light.png",
+          "outputSha256": "74b4ba1339e5a0b25997add5f6f7205960a123e8ee7bcfdd3972c15d3a167ec9",
+          "outputDecodedRgbaSha256": "f25d8b8ff5b395ad644f7f8bc891dff12ad0f55f9462569a99c11fec3922b3a0",
+          "width": 2048,
+          "height": 2048
+        }
+      },
+      {
+        "type": "DECAL_PARAMS",
+        "scaleRatio": 0.1875,
+        "dither": 0,
+        "rgbKey": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "alphaKey": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.4
+        ],
+        "texture": "stripe.png",
+        "image": {
+          "requested": "stripe.png",
+          "sourcePath": "polygons/decals/stripe.png",
+          "sourceSha256": "b240087e53b2b28529b8583f31ca31bf96c245d6e079e206bbaa062f7c21bc19",
+          "sourceDecodedRgbaSha256": "1fd9bbf41e624e258b59af464eea0c567d6c4cc25576f3ff59a14802650a564d",
+          "outputName": "stripe.png",
+          "outputUrl": "stripe.png",
+          "outputSha256": "b240087e53b2b28529b8583f31ca31bf96c245d6e079e206bbaa062f7c21bc19",
+          "outputDecodedRgbaSha256": "1fd9bbf41e624e258b59af464eea0c567d6c4cc25576f3ff59a14802650a564d",
+          "width": 2048,
+          "height": 2048
+        }
+      }
+    ],
+    "unsupported": [],
+    "sourceSha256": "f70ce57e6e0c1b2ffc5e43252ac6e80ffa7c5cb3afdac95dbd187804a1dd5a7b"
+  }
+}

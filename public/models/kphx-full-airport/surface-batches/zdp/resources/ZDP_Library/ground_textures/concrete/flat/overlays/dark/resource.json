@@ -1,0 +1,61 @@
+{
+  "kind": "DRAPED_POLYGON",
+  "sourceResource": "ZDP_Library/ground_textures/concrete/flat/overlays/dark.pol",
+  "texture": {
+    "requested": "dark.png",
+    "sourcePath": "polygons/concrete/colors/dark.png",
+    "sourceSha256": "63bbff67fa59c9f58a0da1ea212eed7f3e8a8805379923aa53db180b151e6e80",
+    "sourceDecodedRgbaSha256": "941fa78d05e7ae3e1f840ccc175ecfa823716c3ac43ab13397c3cbb6d43890c8",
+    "outputName": "dark.png",
+    "outputUrl": "dark.png",
+    "outputSha256": "63bbff67fa59c9f58a0da1ea212eed7f3e8a8805379923aa53db180b151e6e80",
+    "outputDecodedRgbaSha256": "941fa78d05e7ae3e1f840ccc175ecfa823716c3ac43ab13397c3cbb6d43890c8",
+    "width": 512,
+    "height": 512
+  },
+  "textureLit": null,
+  "textureNormal": "../../Rough_High_NRM.png",
+  "normalScale": 1,
+  "scaleMeters": [
+    36,
+    36
+  ],
+  "layerGroup": {
+    "group": "taxiways",
+    "offset": 3
+  },
+  "surface": "concrete",
+  "noAlpha": false,
+  "globalSpecular": 0,
+  "weather": {
+    "requested": "../../Concrete_Smooth_WXR.png",
+    "sourcePath": "polygons/Concrete_Smooth_WXR.png",
+    "sourceSha256": "abba64b29ad92ecf0100762dc210f48cbdb8eb0e9dab2a631e3a986083d33571",
+    "sourceDecodedRgbaSha256": "b7a2d00c3a80095c77cc3b24871cde6d46b426abb5a1e0930e814a417d63553f",
+    "outputName": "Concrete_Smooth_WXR.png",
+    "outputUrl": "Concrete_Smooth_WXR.png",
+    "outputSha256": "abba64b29ad92ecf0100762dc210f48cbdb8eb0e9dab2a631e3a986083d33571",
+    "outputDecodedRgbaSha256": "b7a2d00c3a80095c77cc3b24871cde6d46b426abb5a1e0930e814a417d63553f",
+    "width": 1024,
+    "height": 1024
+  },
+  "weatherTransparent": false,
+  "decalLib": null,
+  "unsupported": [],
+  "sourceSha256": "e16a09f7e792c4314295cc58ea928f22aa5773eb11754b3a27809c2a6e4d1611",
+  "outputBaseUrl": "/models/kphx-full-airport/surface-batches/zdp/resources/ZDP_Library/ground_textures/concrete/flat/overlays/dark",
+  "lit": null,
+  "normal": {
+    "requested": "../../Rough_High_NRM.png",
+    "sourcePath": "polygons/Rough_High_NRM.png",
+    "sourceSha256": "ea053c4c8fafb610f7428094c130f9b0d28d5f82fc80a9baf4af866df76c0c62",
+    "sourceDecodedRgbaSha256": "175d64bf3aac6f24af2f449947c96e419c540183fd19e23b39d4b3f6f7d24b98",
+    "outputName": "Rough_High_NRM.png",
+    "outputUrl": "Rough_High_NRM.png",
+    "outputSha256": "ea053c4c8fafb610f7428094c130f9b0d28d5f82fc80a9baf4af866df76c0c62",
+    "outputDecodedRgbaSha256": "175d64bf3aac6f24af2f449947c96e419c540183fd19e23b39d4b3f6f7d24b98",
+    "width": 4096,
+    "height": 4096
+  },
+  "decal": null
+}

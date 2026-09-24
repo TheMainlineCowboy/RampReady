@@ -1,0 +1,136 @@
+{
+  "kind": "DRAPED_POLYGON",
+  "sourceResource": "ZDP_Library/ground_textures/concrete/flat/dirty_uneven.pol",
+  "texture": {
+    "requested": "../Rough_High_ALB.png",
+    "sourcePath": "polygons/Rough_High_ALB.dds",
+    "sourceSha256": "7f8d89961bb79963149ab57f16f4bc1f23028e899e9e9f0ae36e39e5854a01bd",
+    "sourceDecodedRgbaSha256": "59b2a5a9f8f6689c99c1838cd7f4d085d6ca73c58e60324a55326deddfffb2b3",
+    "outputName": "Rough_High_ALB.png",
+    "outputUrl": "Rough_High_ALB.png",
+    "outputSha256": "4feecd5f339821c3eecd6d9423faf5bd333886d3c57db539cbd487483aafb70b",
+    "outputDecodedRgbaSha256": "59b2a5a9f8f6689c99c1838cd7f4d085d6ca73c58e60324a55326deddfffb2b3",
+    "width": 4096,
+    "height": 4096
+  },
+  "textureLit": null,
+  "textureNormal": "../Rough_High_NRM.png",
+  "normalScale": 1,
+  "scaleMeters": [
+    36,
+    36
+  ],
+  "layerGroup": {
+    "group": "taxiways",
+    "offset": 2
+  },
+  "surface": "concrete",
+  "noAlpha": false,
+  "globalSpecular": null,
+  "weather": {
+    "requested": "../Concrete_Smooth_WXR.png",
+    "sourcePath": "polygons/Concrete_Smooth_WXR.png",
+    "sourceSha256": "abba64b29ad92ecf0100762dc210f48cbdb8eb0e9dab2a631e3a986083d33571",
+    "sourceDecodedRgbaSha256": "b7a2d00c3a80095c77cc3b24871cde6d46b426abb5a1e0930e814a417d63553f",
+    "outputName": "Concrete_Smooth_WXR.png",
+    "outputUrl": "Concrete_Smooth_WXR.png",
+    "outputSha256": "abba64b29ad92ecf0100762dc210f48cbdb8eb0e9dab2a631e3a986083d33571",
+    "outputDecodedRgbaSha256": "b7a2d00c3a80095c77cc3b24871cde6d46b426abb5a1e0930e814a417d63553f",
+    "width": 1024,
+    "height": 1024
+  },
+  "weatherTransparent": false,
+  "decalLib": "../decals/DECAL_concrete_uneven_dirty.dcl",
+  "unsupported": [],
+  "sourceSha256": "e73026ca5419228bd5a3a11baccb5c367dc02bbe728ae22e24278bf2888c7cf2",
+  "outputBaseUrl": "/models/kphx-full-airport/surface-batches/zdp/resources/ZDP_Library/ground_textures/concrete/flat/dirty_uneven",
+  "lit": null,
+  "normal": {
+    "requested": "../Rough_High_NRM.png",
+    "sourcePath": "polygons/Rough_High_NRM.png",
+    "sourceSha256": "ea053c4c8fafb610f7428094c130f9b0d28d5f82fc80a9baf4af866df76c0c62",
+    "sourceDecodedRgbaSha256": "175d64bf3aac6f24af2f449947c96e419c540183fd19e23b39d4b3f6f7d24b98",
+    "outputName": "Rough_High_NRM.png",
+    "outputUrl": "Rough_High_NRM.png",
+    "outputSha256": "ea053c4c8fafb610f7428094c130f9b0d28d5f82fc80a9baf4af866df76c0c62",
+    "outputDecodedRgbaSha256": "175d64bf3aac6f24af2f449947c96e419c540183fd19e23b39d4b3f6f7d24b98",
+    "width": 4096,
+    "height": 4096
+  },
+  "decal": {
+    "kind": "DECAL",
+    "sourceResource": "polygons/decals/DECAL_concrete_uneven_dirty.dcl",
+    "decals": [
+      {
+        "type": "DECAL_PARAMS",
+        "scaleRatio": 0.1875,
+        "dither": 0,
+        "rgbKey": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "alphaKey": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "texture": "dirt_heavy.png",
+        "image": {
+          "requested": "dirt_heavy.png",
+          "sourcePath": "polygons/decals/dirt_heavy.png",
+          "sourceSha256": "22a5e34fb317fdc096c3165953a48fd5852dc1fc42f09e301050b6eb6fefd960",
+          "sourceDecodedRgbaSha256": "423d33bbc61f3c54984b163d4e95c23de6983d113978caaca244015b29299e32",
+          "outputName": "dirt_heavy.png",
+          "outputUrl": "dirt_heavy.png",
+          "outputSha256": "22a5e34fb317fdc096c3165953a48fd5852dc1fc42f09e301050b6eb6fefd960",
+          "outputDecodedRgbaSha256": "423d33bbc61f3c54984b163d4e95c23de6983d113978caaca244015b29299e32",
+          "width": 2048,
+          "height": 2048
+        }
+      },
+      {
+        "type": "DECAL_PARAMS",
+        "scaleRatio": 0.09375,
+        "dither": 0,
+        "rgbKey": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "alphaKey": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.6
+        ],
+        "texture": "noise_omni_dirty.png",
+        "image": {
+          "requested": "noise_omni_dirty.png",
+          "sourcePath": "polygons/decals/noise_omni_dirty.png",
+          "sourceSha256": "fc3c8e13aacf5a54261e2f00fc8caede8e5ed4f2aae5e9c7bc0ed06db021e42c",
+          "sourceDecodedRgbaSha256": "b2c569bd3739b385110e7b64d2352dcbc772c4ba6a846ad521d52fbcd5b17e41",
+          "outputName": "noise_omni_dirty.png",
+          "outputUrl": "noise_omni_dirty.png",
+          "outputSha256": "fc3c8e13aacf5a54261e2f00fc8caede8e5ed4f2aae5e9c7bc0ed06db021e42c",
+          "outputDecodedRgbaSha256": "b2c569bd3739b385110e7b64d2352dcbc772c4ba6a846ad521d52fbcd5b17e41",
+          "width": 2048,
+          "height": 2048
+        }
+      }
+    ],
+    "unsupported": [],
+    "sourceSha256": "4342804e4fcaa5decfa066e69d3f3e4fa6de7205bb40cc936c8930b8f665bfad"
+  }
+}
