@@ -27,13 +27,48 @@ function linearCurve([a, b], valueMeters) {
   return lerp(a, b, t);
 }
 
-function sourceVerticalPitchRadians(vertMeters) {
-  const t = clamp((-Number(vertMeters || 0)) / 2, 0, 1);
-  // MisterX AutoGate-26m.obj:
-  // marginal.org.uk/autogate/vert 0 -> -2 rotates the bridge +3.99981854°
-  // in OBJ8 source space. In the RampReady facade frame, negative local-X
-  // pitch lowers the aircraft end while preserving the terminal pivot.
-  return radians(-AUTOGATE_26M.sourceBridgePitchDegreesAtMinus2 * t);
+function solveFixedPivotPitchRadians({
+  localY,
+  localZ,
+  baselinePitchRadians,
+  verticalDeltaMeters,
+}) {
+  const radius = Math.hypot(localY, localZ);
+  if (!(radius > 0.001)) {
+    throw new Error("A1 exact moving bridge has no finite pivot-to-cabin radius");
+  }
+
+  // Keep the exact WED terminal-side hinge fixed. Solve the bridge pitch that
+  // makes AutoGate's metre-space vert value appear at the aircraft-side cabin
+  // joint instead of translating the entire bridge away from the rotunda.
+  const baselineHeight =
+    localY * Math.cos(baselinePitchRadians)
+    - localZ * Math.sin(baselinePitchRadians);
+  const targetHeight = baselineHeight + verticalDeltaMeters;
+  if (Math.abs(targetHeight) > radius + 1e-6) {
+    throw new Error(
+      `A1 fixed-pivot pitch cannot reach vertical target ${verticalDeltaMeters.toFixed(4)} m`,
+    );
+  }
+
+  const phase = Math.atan2(-localZ, localY);
+  const offset = Math.acos(clamp(targetHeight / radius, -1, 1));
+  const candidates = [phase + offset, phase - offset];
+
+  const nearestEquivalent = (angle, reference) => {
+    let value = angle;
+    while (value - reference > Math.PI) value -= Math.PI * 2;
+    while (value - reference < -Math.PI) value += Math.PI * 2;
+    return value;
+  };
+
+  return candidates
+    .map((angle) => nearestEquivalent(angle, baselinePitchRadians))
+    .sort(
+      (a, b) =>
+        Math.abs(a - baselinePitchRadians)
+        - Math.abs(b - baselinePitchRadians),
+    )[0];
 }
 
 function rotate2(x, z, angle) {
@@ -309,6 +344,9 @@ export function installA1ExactAutoGateController({
     cabinHalfBRotationY: cabinHalfB.rotation.y,
     cabinHalfARotationY: cabinHalfA.rotation.y,
   });
+  root.updateMatrixWorld(true);
+  const sourceTerminalPivotWorld =
+    tunnelWall.getWorldPosition(new THREE.Vector3()).clone();
 
   // The exact WED stock facade is the authored parked/rest pose. AutoGate's
   // datarefs are zero in that pose and rise toward the aircraft during ENGAGE.
@@ -357,49 +395,50 @@ export function installA1ExactAutoGateController({
     const innerTunnelExtensionMeters =
       currentLatMeters * innerTunnelTravelPerLatMeter;
 
-    const bridgePitchDelta = sourceVerticalPitchRadians(currentVertMeters);
-    // MisterX AutoGate-26m.obj uses marginal.org.uk/autogate/vert as a true
-    // metre-space vertical entrance translation in addition to the 4-degree
-    // bridge pitch: vert 0 -> -2 translates the animated bridge 0 -> -2 m
-    // vertically after the source's fixed-axis rotations. Preserve that exact
-    // contract here instead of pitching the stock tunnel without lowering it.
-    tunnelWall.position.y = originals.tunnelPositionY + currentVertMeters;
-    tunnelWall.rotation.x = originals.tunnelRotationX + bridgePitchDelta;
-    tunnelWall.rotation.y = originals.tunnelRotationY + bridgeYawDelta;
-
-    // Exact XP11 spelling [10,11]: Segment 10 is the terminal-side outer
-    // tunnel. Segment 11 is the aircraft-side inner section. MisterX's exact
-    // AutoGate-26m curve moves the inner section from -0.65 m at lat=0 to
-    // -7.42 m at lat=7.5. Reproduce that delta against the WED rest geometry.
+    // Exact XP11 spelling [10,11]: Segment 10 owns jw_tunnel_2_5a at
+    // the terminal-side start of the moving span; Segment 11 owns
+    // jw_tunnel_2_5b plus cabin-half-B at the aircraft-side end. Telescope
+    // Segment 11 using the MisterX lat curve, but never translate the whole
+    // Tunnel wall vertically: its origin is the real rear hinge at WED node
+    // 104809 and must remain physically attached to the fixed support.
     aircraftTunnelSegment.position.z = originals.aircraftTunnelSegmentZ
       - innerTunnelExtensionMeters / tunnelWall.scale.z;
 
-    // Preserve the original intact bridge/cabin animation exactly. Only the
-    // lower support/wheel source components cancel the inherited vertical
-    // translation + pitch. They still inherit the current horizontal yaw and
-    // telescope position, so the upper posts slide inside the lower posts at
-    // the support station instead of dragging the wheels below pavement.
     for (const branch of lowerSupport.branches) {
       branch.mesh.matrix.copy(branch.baselineLocalMatrix);
       branch.mesh.matrixWorldNeedsUpdate = true;
     }
 
-    const animatedTunnelY = tunnelWall.position.y;
-    const animatedTunnelPitch = tunnelWall.rotation.x;
-    const animatedTunnelYaw = tunnelWall.rotation.y;
-
+    // Establish the current telescope/yaw pose with the rear hinge at its
+    // exact source height and with zero additional pitch. This is also the
+    // grounded reference pose for the lower wheel/support stage.
     tunnelWall.position.y = originals.tunnelPositionY;
     tunnelWall.rotation.x = originals.tunnelRotationX;
-    tunnelWall.rotation.y = animatedTunnelYaw;
+    tunnelWall.rotation.y = originals.tunnelRotationY + bridgeYawDelta;
     root.updateMatrixWorld(true);
+
+    const baselineCabinJointWorld =
+      cabinHalfBAttachmentPivot.getWorldPosition(new THREE.Vector3());
+    const baselineCabinJointInTunnel =
+      tunnelWall.worldToLocal(baselineCabinJointWorld.clone());
+    const solvedBridgePitch = solveFixedPivotPitchRadians({
+      localY: baselineCabinJointInTunnel.y,
+      localZ: baselineCabinJointInTunnel.z,
+      baselinePitchRadians: originals.tunnelRotationX,
+      verticalDeltaMeters: currentVertMeters,
+    });
+    const bridgePitchDelta = solvedBridgePitch - originals.tunnelRotationX;
 
     const desiredSupportWorldMatrices = lowerSupport.branches.map(
       (branch) => branch.mesh.matrixWorld.clone(),
     );
 
-    tunnelWall.position.y = animatedTunnelY;
-    tunnelWall.rotation.x = animatedTunnelPitch;
-    tunnelWall.rotation.y = animatedTunnelYaw;
+    // Pitch only about the fixed rear hinge. The terminal-side origin never
+    // moves; the aircraft end changes height because the bridge tilts. The
+    // lower wheel/support source components remain on the pavement while the
+    // stock upper posts stay with the tilting bridge and telescope through
+    // them.
+    tunnelWall.rotation.x = solvedBridgePitch;
     root.updateMatrixWorld(true);
 
     lowerSupport.branches.forEach((branch, index) => {
@@ -462,6 +501,13 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateCabinCounterYawDeltaDegrees = cabinRelativeYaw - restCabinRelativeYaw;
     root.userData.a1AutoGateCabinJointGapMeters = cabinJointGapMeters;
     root.userData.a1AutoGateCabinRelativeYawDriftRadians = cabinRelativeYawDriftRadians;
+    const terminalPivotWorld =
+      tunnelWall.getWorldPosition(new THREE.Vector3());
+    const terminalPivotGapMeters =
+      terminalPivotWorld.distanceTo(sourceTerminalPivotWorld);
+    root.userData.a1AutoGateTerminalPivotGapMeters = terminalPivotGapMeters;
+    root.userData.a1AutoGateCabinVerticalErrorMeters =
+      jointVerticalDelta - currentVertMeters;
     const lowerSupportBottomMeters = measureLowerSupportBottom();
     root.userData.a1AutoGateSupportBottomMeters = lowerSupportBottomMeters;
     root.userData.a1AutoGateSupportBottomDeltaMeters =
@@ -680,6 +726,8 @@ export function installA1ExactAutoGateController({
     getCabinCounterYawDeltaDegrees: () => root.userData.a1AutoGateCabinCounterYawDeltaDegrees,
     getCabinJointGapMeters: () => root.userData.a1AutoGateCabinJointGapMeters,
     getCabinRelativeYawDriftRadians: () => root.userData.a1AutoGateCabinRelativeYawDriftRadians,
+    getTerminalPivotGapMeters: () => root.userData.a1AutoGateTerminalPivotGapMeters,
+    getCabinVerticalErrorMeters: () => root.userData.a1AutoGateCabinVerticalErrorMeters,
     getSupportBottomMeters: () => root.userData.a1AutoGateSupportBottomMeters,
     getSupportBottomDeltaMeters: () => root.userData.a1AutoGateSupportBottomDeltaMeters,
     isSupportTrianglePartitionExact: () =>
@@ -706,7 +754,9 @@ export function installA1ExactAutoGateController({
   });
 
   root.userData.a1AutoGateControllerAuthority =
-    "first-intact-A1-animation-plus-exact-stock-lower-support-telescope-v10";
+    "exact-A1-fixed-terminal-hinge-plus-stock-support-telescope-v11";
+  root.userData.a1AutoGateTerminalPivotAuthority =
+    "WED-104809-fixed-rear-hinge-no-whole-span-vertical-translation";
   root.userData.a1AutoGateLowerSupportAuthority = lowerSupport.authority;
   root.userData.a1AutoGateSourceGeometryAuthority =
     "KPHX-1.75.1-WED-104804-plus-XP11-Jetway_1_solid.fac";
