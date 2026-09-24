@@ -1,0 +1,3521 @@
+=== binary ===
+.xp12-installer/unpacked/X-Plane 12 Installer Linux: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=4c6101c55977208dd55f99b630c48296732e3db4, for GNU/Linux 3.2.0, not stripped
+6fad05d27cf4b762f3b645dd9d4c4c1178e113c5fc2c42692c4e60c76f3cb1b2  .xp12-installer/unpacked/X-Plane 12 Installer Linux
+
+=== --help ===
+Usage: X-Plane [options...]
+
+X-Plane can take a number of command-line flags, in the form of --flag or
+--flag=value.  OpenGL options are available for all X-Plane-related
+applications; the frame-rate test is only for X-Plane itself.  Here is a list of current flags:
+
+--help
+-h
+	Prints this message listing all command-line options, then quits.
+
+--no_sound
+	Runs without initializing sound - can help identify a problem with sound hardware.
+
+--no_joysticks
+	Runs without initializing joysticks, yokes, pedals, or other USB hardware.
+
+--missing_strings
+	Causes X-Plane to output to the log file any string that it cannot find a localization
+	to the current language for.  Since the sim runs natively in English, this option does
+	nothing unless you change languages.
+
+--lang=<lang code>
+	Runs the sim in a specific language (if available).
+	Bypasses the regular system-language detection.
+
+--disable_networking
+	Prevents X-Plane from sending or receiving data over the network, regardless of
+	your in-sim preferences.
+
+--allow_rosetta
+	Normally X-Plane will not run under Rosetta PPC emulation.  Pass this flag to allow
+	ppc execution on an x86 machine.  NOTE: running under Rosetta is storngly discouraged
+	for performance reasons; this option is only provided so that plugin developers can
+	test PPC plugins on an x86 Macintosh.
+
+OPTIONS TO AUTO-CONFIGURE X-PLANE
+
+--pref:<key>=<value>
+	This command line option can be used more than one time, and sets an individual preference
+	to the overloaded value specified on the command line.
+
+--dref:<ref>=<value>
+	This command line option sets a dataref to a value at startup.  Note: because this command line
+	runs early in the sim's life-cycle, it is only appropriate for datarefs created by the sim.
+
+OPTIONS TO DISABLE HARDWARE ACCELERATION
+Normally X-Plane uses all available hardware capabilities to maximize framerate.
+These options force X-Plane not to use some aspects of hardware acceleration.
+This hurts framerate, but can sometimes allow you to work around driver bugs.
+
+--no_vbos
+	This disables the use of vertex buffer objects, as defined by
+	GL_ARB_vertex_buffer_object.  VBOs are used to accelerate all aspects of X-Plane
+	drawing.
+
+--no_fbos
+	Disable the use of framebuffer obects, even if the hardware supports them.
+
+--no_pbos
+	Disable the use of pixelbuffer obects, even if the hardware supports them.
+
+--no_sprites
+	This disables the use of point sprites, as defined by GL_ARB_point_sprite.
+	Point sprites are used to accelerate runway lights, among other things.
+
+--no_pixel_counters
+	This disables pixel counters, as defined by GL_ARB_occlusion_query.  Pixel
+	counters are used to calculate sun glare, among other things.
+
+--no_aniso_filtering
+	This disables anisotropic filtering of textures, as defined by
+	GL_EXT_texture_filter_anisotropic.  Anisotropic filtering is used to make
+	runways look better.
+
+--no_hw_mipmap
+	This disables hardware accelerated mipmap-creation, as defined by
+	GL_SGIS_generate_mipmap.  X-Plane will still use mipmapping, but it will
+	create the mipmap images on the CPU instead of the GPU.
+
+--no_fshaders
+	Disable the use of fragment shaders, even on hardware that reports having them.
+
+--no_vshaders
+	Disable the use of vertex shaders, even on hardware that reports having them.
+
+--no_glsl
+	Disable the use of GLSL, even on hardware theat supports it.
+
+--limited_glsl
+	Force shaders to act as if the graphics hardware has the most limited GLSL, e.g. R300 or NV25.
+
+--unlimited_glsl
+	Override the detection of first-gen graphics hw to run advanced shaders on old machines.
+	WARNING: this may cause X-plane to crash if it exceeds the maximum fragment program length.
+
+--no_threaded_ogl
+	Disable the use of OpenGL via multiple threads.
+
+OPTIONS TO ENABLE INCOMPATIBLE HARDWARE ACCELERATION
+X-Plane will in a few cases intentionally disable hardware acceleration
+to work around known driver compatibility bugs.  You can force X-Plane
+to use the feature anyway (if the card supports it) with these options,
+but they may cause the sim to crash.
+
+--use_vbos
+	Forces the use of VBOs, even on drivers where we at one point found
+	them to be unstable.
+
+--use_sprites
+	Forces the use of point sprites, even on drivers where they cause bugs.
+
+--use_fshaders
+	Force the use of fragment shaders, even if they would not normally be used.
+
+--use_vshaders
+	Force the use of vertex shaders, even if they would not be used.
+
+--use_glsl
+	Force the use of GLSL even on cards where we would avoid it due to driver compatibility problems.
+
+--use_fbos
+	Force the use of FBOs even on hardware where it would not be used due to compatibility problems.
+
+--force_run
+	X-Plane will not run on a machine that does not appear to have some
+	minimum requirements, like at least two texture units.  This will allow
+	X-Plane to run no matter what the hardware looks like.  Please note that
+	most of the time if X-Plane out-right refuses to run, it will probably
+	crash later if --force_run is used.
+
+--fake_vr
+	Normally, X-Plane will not allow enabling VR unless your computer has
+	a VR headset attached, plus the proper driver support. In "fake VR" mode,
+	though, you can enable VR from the settings and see on your normal, 2-D monitor
+	what would be drawn on a VR headset.
+
+WINDOWING OPTIONS
+
+--full=<width>x<height>
+	Launches the simulator in full-screen mode, with your monitor
+	resolution set to the specified width & height. (Requires hardware support).
+
+--window=<width>x<height>
+	Launches the simulator in a window with the specified width & height.
+
+OPTIONS FOR IMPROVING REPRODUCIBILITY
+
+--weather_seed=<number>
+	Seeds the random number generator used in the weather system.
+	Use this to get reproducible weather across runs of the simulator.
+
+--time_seed=<number>
+	Seeds the random number generator used in non-weather systems.
+	Use this to make the simulator more deterministic across runs.
+
+--safe_mode=[GFX|PLG|SCN|ART|UI]
+	Runs X-Plane in a safe mode that disables certain features that may be
+	causing crashes.  Pass one or more of the following options to use safe mode in
+	the corresponding subsystems: GFX (graphics), PLG (plugins), SCN (scenery),
+	ART (art controls), UI (user interface).
+	Options should be separated by a comma (,). If no options are given,
+	all safe mode options are enabled.
+
+FRAMERATE TEST
+
+--fps_test=n
+	This runs X-Plane in frame-rate test mode.  The number indicates a framerate
+	test number, which is 3 digits indicating a combination of camera angle,
+	scenery complexity, and weather settings.  X-Plane will run for 90 seconds
+	and quit, outputting 3 framerates to the Log.txt file for panel view,
+	no-panel view, and paused no-panel view.  This can be used to get repeatable
+	performance measurements without changing preferences.  (The preferences
+	file is ignored when the framerate test is in effect).
+	For more information, see: x-plane.com/kb/frame-rate-test
+
+--verbose
+	Causes the summary printed at the end of the FPS test to include detailed
+	timing information for every frame, rather than just the average frame rate
+	summary.
+
+--require_fps=n
+	When used after --fps_test this puts X-Plane into a pass-fail mode.  The
+	sim will run only one 30 second test with the flight model paused.  The
+	sim will then exit with 0 if the measured fps is higher than N or 1
+	if the fps is lower.  This can be used to create a shell script that will
+	automatically detect whether X-Plane performance is as expected.
+
+--qa_script=<file>
+	This will use the specified text file to run some time-based commands to
+	monitor X-Plane's performance.  See the wiki for more info.
+
+=== -h ===
+Usage: X-Plane [options...]
+
+X-Plane can take a number of command-line flags, in the form of --flag or
+--flag=value.  OpenGL options are available for all X-Plane-related
+applications; the frame-rate test is only for X-Plane itself.  Here is a list of current flags:
+
+--help
+-h
+	Prints this message listing all command-line options, then quits.
+
+--no_sound
+	Runs without initializing sound - can help identify a problem with sound hardware.
+
+--no_joysticks
+	Runs without initializing joysticks, yokes, pedals, or other USB hardware.
+
+--missing_strings
+	Causes X-Plane to output to the log file any string that it cannot find a localization
+	to the current language for.  Since the sim runs natively in English, this option does
+	nothing unless you change languages.
+
+--lang=<lang code>
+	Runs the sim in a specific language (if available).
+	Bypasses the regular system-language detection.
+
+--disable_networking
+	Prevents X-Plane from sending or receiving data over the network, regardless of
+	your in-sim preferences.
+
+--allow_rosetta
+	Normally X-Plane will not run under Rosetta PPC emulation.  Pass this flag to allow
+	ppc execution on an x86 machine.  NOTE: running under Rosetta is storngly discouraged
+	for performance reasons; this option is only provided so that plugin developers can
+	test PPC plugins on an x86 Macintosh.
+
+OPTIONS TO AUTO-CONFIGURE X-PLANE
+
+--pref:<key>=<value>
+	This command line option can be used more than one time, and sets an individual preference
+	to the overloaded value specified on the command line.
+
+--dref:<ref>=<value>
+	This command line option sets a dataref to a value at startup.  Note: because this command line
+	runs early in the sim's life-cycle, it is only appropriate for datarefs created by the sim.
+
+OPTIONS TO DISABLE HARDWARE ACCELERATION
+Normally X-Plane uses all available hardware capabilities to maximize framerate.
+These options force X-Plane not to use some aspects of hardware acceleration.
+This hurts framerate, but can sometimes allow you to work around driver bugs.
+
+--no_vbos
+	This disables the use of vertex buffer objects, as defined by
+	GL_ARB_vertex_buffer_object.  VBOs are used to accelerate all aspects of X-Plane
+	drawing.
+
+--no_fbos
+	Disable the use of framebuffer obects, even if the hardware supports them.
+
+--no_pbos
+	Disable the use of pixelbuffer obects, even if the hardware supports them.
+
+--no_sprites
+	This disables the use of point sprites, as defined by GL_ARB_point_sprite.
+	Point sprites are used to accelerate runway lights, among other things.
+
+--no_pixel_counters
+	This disables pixel counters, as defined by GL_ARB_occlusion_query.  Pixel
+	counters are used to calculate sun glare, among other things.
+
+--no_aniso_filtering
+	This disables anisotropic filtering of textures, as defined by
+	GL_EXT_texture_filter_anisotropic.  Anisotropic filtering is used to make
+	runways look better.
+
+--no_hw_mipmap
+	This disables hardware accelerated mipmap-creation, as defined by
+	GL_SGIS_generate_mipmap.  X-Plane will still use mipmapping, but it will
+	create the mipmap images on the CPU instead of the GPU.
+
+--no_fshaders
+	Disable the use of fragment shaders, even on hardware that reports having them.
+
+--no_vshaders
+	Disable the use of vertex shaders, even on hardware that reports having them.
+
+--no_glsl
+	Disable the use of GLSL, even on hardware theat supports it.
+
+--limited_glsl
+	Force shaders to act as if the graphics hardware has the most limited GLSL, e.g. R300 or NV25.
+
+--unlimited_glsl
+	Override the detection of first-gen graphics hw to run advanced shaders on old machines.
+	WARNING: this may cause X-plane to crash if it exceeds the maximum fragment program length.
+
+--no_threaded_ogl
+	Disable the use of OpenGL via multiple threads.
+
+OPTIONS TO ENABLE INCOMPATIBLE HARDWARE ACCELERATION
+X-Plane will in a few cases intentionally disable hardware acceleration
+to work around known driver compatibility bugs.  You can force X-Plane
+to use the feature anyway (if the card supports it) with these options,
+but they may cause the sim to crash.
+
+--use_vbos
+	Forces the use of VBOs, even on drivers where we at one point found
+	them to be unstable.
+
+--use_sprites
+	Forces the use of point sprites, even on drivers where they cause bugs.
+
+--use_fshaders
+	Force the use of fragment shaders, even if they would not normally be used.
+
+--use_vshaders
+	Force the use of vertex shaders, even if they would not be used.
+
+--use_glsl
+	Force the use of GLSL even on cards where we would avoid it due to driver compatibility problems.
+
+--use_fbos
+	Force the use of FBOs even on hardware where it would not be used due to compatibility problems.
+
+--force_run
+	X-Plane will not run on a machine that does not appear to have some
+	minimum requirements, like at least two texture units.  This will allow
+	X-Plane to run no matter what the hardware looks like.  Please note that
+	most of the time if X-Plane out-right refuses to run, it will probably
+	crash later if --force_run is used.
+
+--fake_vr
+	Normally, X-Plane will not allow enabling VR unless your computer has
+	a VR headset attached, plus the proper driver support. In "fake VR" mode,
+	though, you can enable VR from the settings and see on your normal, 2-D monitor
+	what would be drawn on a VR headset.
+
+WINDOWING OPTIONS
+
+--full=<width>x<height>
+	Launches the simulator in full-screen mode, with your monitor
+	resolution set to the specified width & height. (Requires hardware support).
+
+--window=<width>x<height>
+	Launches the simulator in a window with the specified width & height.
+
+OPTIONS FOR IMPROVING REPRODUCIBILITY
+
+--weather_seed=<number>
+	Seeds the random number generator used in the weather system.
+	Use this to get reproducible weather across runs of the simulator.
+
+--time_seed=<number>
+	Seeds the random number generator used in non-weather systems.
+	Use this to make the simulator more deterministic across runs.
+
+--safe_mode=[GFX|PLG|SCN|ART|UI]
+	Runs X-Plane in a safe mode that disables certain features that may be
+	causing crashes.  Pass one or more of the following options to use safe mode in
+	the corresponding subsystems: GFX (graphics), PLG (plugins), SCN (scenery),
+	ART (art controls), UI (user interface).
+	Options should be separated by a comma (,). If no options are given,
+	all safe mode options are enabled.
+
+FRAMERATE TEST
+
+--fps_test=n
+	This runs X-Plane in frame-rate test mode.  The number indicates a framerate
+	test number, which is 3 digits indicating a combination of camera angle,
+	scenery complexity, and weather settings.  X-Plane will run for 90 seconds
+	and quit, outputting 3 framerates to the Log.txt file for panel view,
+	no-panel view, and paused no-panel view.  This can be used to get repeatable
+	performance measurements without changing preferences.  (The preferences
+	file is ignored when the framerate test is in effect).
+	For more information, see: x-plane.com/kb/frame-rate-test
+
+--verbose
+	Causes the summary printed at the end of the FPS test to include detailed
+	timing information for every frame, rather than just the average frame rate
+	summary.
+
+--require_fps=n
+	When used after --fps_test this puts X-Plane into a pass-fail mode.  The
+	sim will run only one 30 second test with the flight model paused.  The
+	sim will then exit with 0 if the measured fps is higher than N or 1
+	if the fps is lower.  This can be used to create a shell script that will
+	automatically detect whether X-Plane performance is as expected.
+
+--qa_script=<file>
+	This will use the specified text file to run some time-based commands to
+	monitor X-Plane's performance.  See the wiki for more info.
+
+=== embedded strings: command-line / demo / manifest / version / server ===
+pthread_key_create
+pthread_key_delete
+_binary_button_help_white_png_start
+_binary_help_tip_anchor_png_start
+_binary_button_help_white_png_end
+_binary_help_tip_anchor_png_size
+_binary_help_tip_anchor_inverted_png_size
+_binary_button_help_png_start
+_binary_button_help_white_png_size
+_binary_button_help_png_end
+_binary_help_tip_anchor_inverted_png_start
+_binary_help_tip_anchor_png_end
+_binary_help_tip_anchor_inverted_png_end
+_binary_button_help_png_size
+help
+help <stH
+Help tipH
+scenery.H
+Demo
+server%.H
+server%.I
+12 Demo.H
+or help.H
+or help.H
+Update XH
+Update CH
+or help.H
+or help.H
+Install H
+ll Path:H
+le path.H
+ key
+PATH
+D$0PATH
+D$0PATH
+D$0PATH
+D$0PATH
+D$0PATH
+D$0PATH
+server fH3
+key expaH3
+ng path H
+If this does not help, check your graphics card specifications.
+		ID INTEGER PRIMARY KEY,
+		ID INTEGER PRIMARY KEY,
+		ID INTEGER PRIMARY KEY,
+		FOREIGN KEY (command_buffer) REFERENCES CommandBuffer(ID) ON DELETE CASCADE
+		PRIMARY KEY (image, operation),
+		FOREIGN KEY (image) REFERENCES image(ID) ON DELETE CASCADE,
+		FOREIGN KEY (operation) REFERENCES operation(ID) ON DELETE CASCADE
+You can re-install the file using the Installer
+Make sure you have the shaders for your X-Plane version installed
+You can repair your shaders using the Installer
+Unsupported XSV version found: %s
+You can re-install the shader archive using the Installer
+/builds/x-plane/design/source_code/app/Installer-f/../../core/gfx/gfx_command_buffer.h
+copy_destination
+34gfx_descriptor_set_update_template
+40gfx_vk_descriptor_buffer_update_template
+33gfx_vk_descriptor_update_template
+37gfx_vk_descriptor_set_update_template
+Descriptor update failed for descriptor set %i. Here is what we got:
+%1:device name% cannot run Vulkan X-Plane. X-Plane requires Vulkan %2:version:% support or newer
+format_info.capabilities & gfx_texture_capability::copy_destination || (image_info.usage & VK_IMAGE_USAGE_TRANSFER_DST_BIT) == 0
+This is most likely because of a bad graphics driver install. Please re-install your graphics driver and try again.
+Vulkan Version
+Your graphics drivers cannot support Vulkan X-Plane. X-Plane requires at least %1:driver version%
+Installed driver version: %1:driver version%
+VK_KHR_descriptor_update_template
+VK_ERROR_VIDEO_STD_VERSION_NOT_SUPPORTED_KHR
+You may need to remove the third-party add-on that caused this, or rerun the X-Plane installer.
+You can download the latest version from X-Plane.com. The missing file is:
+/builds/x-plane/design/source_code/app/Installer-f/../../core/types/hl_types.h
+brdf_lookup
+--silent
+--version
+X-Plane Installer 5.4.0-r1
+--version_semantic
+--version_numeric
+--version_sha
+--help
+X-Plane Installer 
+Installer log.txt for 
+/proc/version
+Linux kernel version: 
+Unable to read /proc/version: 
+X-Plane can take a number of command-line flags, in the form of --flag or
+--help
+	Prints this message listing all command-line options, then quits.
+	Runs without initializing sound - can help identify a problem with sound hardware.
+--pref:<key>=<value>
+	This command line option can be used more than one time, and sets an individual preference
+	to the overloaded value specified on the command line.
+	This command line option sets a dataref to a value at startup.  Note: because this command line
+	the corresponding subsystems: GFX (graphics), PLG (plugins), SCN (scenery),
+	scenery complexity, and weather settings.  X-Plane will run for 90 seconds
+25gui_single_key_search_box
+FFT butterfly lookup
+/builds/x-plane/design/source_code/app/Installer-f/../../core/types/hl_math.h
+/builds/x-plane/design/source_code/app/Installer-f/../../core/algo/UTL_sparse_vector.h
+Starting CLI script at path: %s
+ERROR: unable to read command line script.
+screenshot <string:file_path>
+Applies a label in the output, and also shows a big text version of the label onscreen for the number of seconds you specify
+help <string>
+Clicks the UI element with the specified text; if no UI element matches, we fall back to searching the help (a.k.a. hover/mouseover/popover) text
+Clicks the UI element with the specified text if it exists; if no UI element matches, we fall back to searching the help (a.k.a. hover/mouseover/popover) text. If we then still don't find the widget, no error is raised
+Double-clicks the UI element with the specified text; if no UI element matches, we fall back to searching the help (a.k.a. hover/mouseover/popover) text
+Clicks the X-Plane digital download key entry field onscreen
+Reads your digital download key from disk and saves the text to the clipboard
+Simulates pressing the %s key/shortcut
+Simulates pressing the %s key/shortcut a number of times
+Prints the button text and help text (where applicable) of all buttons currently in the widget hierarchy
+17CLI_telnet_server
+NSt3__110__function6__funcIZN17CLI_telnet_server9per_frameEvEUlP21CLI_telnet_connectionE_NS_9allocatorIS5_EEFvS4_EEE
+ZN17CLI_telnet_server9per_frameEvEUlP21CLI_telnet_connectionE_
+15cli_special_key
+Could not find the server over the network
+The requested key was not found in the lockbox
+The requested key already exists in the lockbox
+The destination file system is read-only
+The product key you entered is invalid
+The product key you entered has been disabled
+The authentication server could not be reached
+There was a problem with the authentication server
+There was a problem processing data from the authentication server
+The product key you entered is for an older version of X-Plane
+The product key you entered is associated with an X-Plane identity; please log in to use X-Plane
+The product key you entered is for an expired version of X-Plane; please contact Laminar Research to renew it
+Internal Server Error
+UTL_memory_map::open_path(
+offset_from_path(typeinfo_for_var(f), "i") == 0
+offset_from_path(typeinfo_for_var(f), "f") == 8
+dim_from_path(typeinfo_for_var(f), "i") == 2
+dim_from_path(typeinfo_for_var(f), "f") == 0
+fieldinfo_from_path(typeinfo_for_var(f), "i") == typeinfo_for_var(f)->fields
+fieldinfo_from_path(typeinfo_for_var(f), "f") == typeinfo_for_var(f)->fields+1
+offset_from_path(typeinfo_for_var(b), "e") == 0
+offset_from_path(typeinfo_for_var(b), "s") == 8
+offset_from_path(typeinfo_for_var(b), "f") == 32
+offset_from_path(typeinfo_for_var(b), "f[0]") == 32
+offset_from_path(typeinfo_for_var(b), "f[0].i") == 32
+offset_from_path(typeinfo_for_var(b), "f[0].i[0]") == 32
+offset_from_path(typeinfo_for_var(b), "f[0].i[1]") == 36
+offset_from_path(typeinfo_for_var(b), "f[0].f") == 40
+offset_from_path(typeinfo_for_var(b), "f[1]") == 44
+offset_from_path(typeinfo_for_var(b), "f[1].i") == 44
+offset_from_path(typeinfo_for_var(b), "f[1].i[0]") == 44
+offset_from_path(typeinfo_for_var(b), "f[1].i[1]") == 48
+offset_from_path(typeinfo_for_var(b), "f[1].f") == 52
+offset_from_path(typeinfo_for_var(b), "fp") == 56
+dim_from_path(typeinfo_for_var(b), "e") == 2
+dim_from_path(typeinfo_for_var(b), "s") == 0
+dim_from_path(typeinfo_for_var(b), "f") == 2
+dim_from_path(typeinfo_for_var(b), "f[0]") == 0
+dim_from_path(typeinfo_for_var(b), "f[0].i") == 2
+dim_from_path(typeinfo_for_var(b), "f[0].i[0]") == 0
+dim_from_path(typeinfo_for_var(b), "f[0].i[1]") == 0
+dim_from_path(typeinfo_for_var(b), "f[0].f") == 0
+dim_from_path(typeinfo_for_var(b), "f[1]") == 0
+dim_from_path(typeinfo_for_var(b), "f[1].i") == 2
+dim_from_path(typeinfo_for_var(b), "f[1].i[0]") == 0
+dim_from_path(typeinfo_for_var(b), "f[1].i[1]") == 0
+dim_from_path(typeinfo_for_var(b), "f[1].f") == 0
+dim_from_path(typeinfo_for_var(b), "fp") == 0
+fieldinfo_from_path(typeinfo_for_var(b), "e") == typeinfo_for_var(b)->fields
+fieldinfo_from_path(typeinfo_for_var(b), "s") == typeinfo_for_var(b)->fields+1
+fieldinfo_from_path(typeinfo_for_var(b), "f") == typeinfo_for_var(b)->fields+2
+fieldinfo_from_path(typeinfo_for_var(b), "f[0]") == typeinfo_for_var(b)->fields+2
+fieldinfo_from_path(typeinfo_for_var(b), "f[0].i") == typeinfo_for_var(f)->fields
+fieldinfo_from_path(typeinfo_for_var(b), "f[0].i[0]") == typeinfo_for_var(f)->fields
+fieldinfo_from_path(typeinfo_for_var(b), "f[0].i[1]") == typeinfo_for_var(f)->fields
+fieldinfo_from_path(typeinfo_for_var(b), "f[0].f") == typeinfo_for_var(f)->fields+1
+fieldinfo_from_path(typeinfo_for_var(b), "f[1]") == typeinfo_for_var(b)->fields+2
+fieldinfo_from_path(typeinfo_for_var(b), "f[1].i") == typeinfo_for_var(f)->fields
+fieldinfo_from_path(typeinfo_for_var(b), "f[1].i[0]") == typeinfo_for_var(f)->fields
+fieldinfo_from_path(typeinfo_for_var(b), "f[1].i[1]") == typeinfo_for_var(f)->fields
+fieldinfo_from_path(typeinfo_for_var(b), "f[1].f") == typeinfo_for_var(f)->fields+1
+fieldinfo_from_path(typeinfo_for_var(b), "fp") == typeinfo_for_var(b)->fields+3
+offset_from_path(typeinfo_for_var(b), "k") == (size_t)-1
+offset_from_path(typeinfo_for_var(b), "s[0]") == (size_t)-1
+offset_from_path(typeinfo_for_var(b), "f[") == (size_t)-1
+offset_from_path(typeinfo_for_var(b), "f[0") == (size_t)-1
+offset_from_path(typeinfo_for_var(b), "f[0]i") == (size_t)-1
+offset_from_path(typeinfo_for_var(b), "f[0]..i") == (size_t)-1
+offset_from_path(typeinfo_for_var(b), "fp.i") == (size_t)-1
+offset_from_path(typeinfo_for_var(b), "fp[0].i") == (size_t)-1
+dim_from_path(typeinfo_for_var(b), "k") == -1
+dim_from_path(typeinfo_for_var(b), "s[0]") == -1
+dim_from_path(typeinfo_for_var(b), "f[") == -1
+dim_from_path(typeinfo_for_var(b), "f[0") == -1
+dim_from_path(typeinfo_for_var(b), "f[0]i") == -1
+dim_from_path(typeinfo_for_var(b), "f[0]..i") == -1
+dim_from_path(typeinfo_for_var(b), "fp.i") == -1
+dim_from_path(typeinfo_for_var(b), "fp[0].i") == -1
+fieldinfo_from_path(typeinfo_for_var(b), "k") == nullptr
+fieldinfo_from_path(typeinfo_for_var(b), "s[0]") == nullptr
+fieldinfo_from_path(typeinfo_for_var(b), "f[") == nullptr
+fieldinfo_from_path(typeinfo_for_var(b), "f[0") == nullptr
+fieldinfo_from_path(typeinfo_for_var(b), "f[0]i") == nullptr
+fieldinfo_from_path(typeinfo_for_var(b), "f[0]..i") == nullptr
+fieldinfo_from_path(typeinfo_for_var(b), "fp.i") == nullptr
+fieldinfo_from_path(typeinfo_for_var(b), "fp[0].i") == nullptr
+Follow us on social media (@XPlaneOfficial on Twitter and Instagram) for frequent updates or join the conversation on our Discord server 
+X-Plane Installer Log.txt
+Application was launched with the following command line options...
+Some scenery textures could not be loaded.
+This may be an installation problem or you may have a damaged add-on scenery package.
+Run the installer/updater again to get these missing textures.
+KEY%d
+AUTO_UPDATE
+X-Plane Installer.prf
+VERSION_LOW:
+VERSION_LOW
+VERSION_HIGH
+Help tip WC
+Help tip outer packer
+Help tip anchor WC
+help_tip_anchor.png
+help_tip_anchor_inverted.png
+XPLM_VK_HELP
+Help
+not/a/real/path
+could not find the path with a simple readlink! I will assume
+11help_tip_wc
+18help_tip_anchor_wc
+Authorizing Digital Download
+Contacting the authorization server to get information about your product.
+Downloading patch info from %1:server name%.
+Downloading product information... %1:progress%% done checking.
+Scanning X-Plane for Installed Scenery
+Scanning %1:install folder% to see what scenery you already have installed.
+Note: The installer will only check for the scenery that comes with X-Plane.
+This scan will not show any custom scenery add-ons that you have installed.
+Are you sure you want to stop scenery installation? You can add or remove more scenery later.
+the scenery install.
+Installing New Scenery
+Installing Scenery: Please Change DVDs
+An error occurred during scenery installation:
+Main Menu - Add or Remove Scenery
+Adding/removing scenery for %s
+X-Plane 12 Installer
+Welcome to the X-Plane 12 Installer/Updater.
+This installer will guide you through the process of upgrading your X-Plane 12 demo to a full installation of X-Plane.
+This installer will guide you through the process of adding and removing scenery.
+Select an Installation to Add or Remove Scenery
+Select an X-Plane Installation to Add or Remove Scenery
+Defaulting to adding/removing scenery for %s
+The installer found the following copy of X-Plane 12 to add scenery to.
+Please select the copy of X-Plane you would like to add scenery to.
+Select New Scenery
+Select Scenery to Add or Remove
+Click on the world map to select the scenery you would like to install. Scenery that you deselect will be removed; scenery that you select will be installed. If you fly into an area with no scenery installed, you will see only ocean.
+Select Scenery
+You have enough free disk space to install this scenery.
+You do not have enough free disk space to install this scenery.
+Upgrade Demo
+Scenery Installation Complete - Upgrade Your Demo
+Scenery Installation Complete
+Finished Adding/Removing Scenery
+There were errors while updating your scenery.
+There were errors while adding and removing your scenery.
+There were errors while installing your scenery.
+There were errors while removing your scenery.
+Some of your scenery may not be usable. Please check your internet connection and try again, or contact Laminar Research tech support for help.
+Some of your scenery may not be usable. Please try the installer again later or contact Laminar Research tech support for help.
+Your scenery has been updated to match your choices on the map.
+Scenery has been added/removed to match your choices on the map.
+New scenery has been installed to match your choices on the map.
+Scenery has been removed to match your choices on the map.
+35add_remove_scenery_standalone_start
+16dvd_pick_scenery
+16dvd_edit_scenery
+16dvd_done_scenery
+NSt3__110__function6__funcIZN25add_remove_scenery_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEiP11wizard_funcE3$_0NS6_ISD_EEFv9auth_typeEEE
+ZN25add_remove_scenery_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEiP11wizard_funcE3$_0
+NSt3__110__function6__funcIZN25add_remove_scenery_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEiP11wizard_funcE3$_1NS6_ISD_EEFbvEEE
+ZN25add_remove_scenery_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEiP11wizard_funcE3$_1
+NSt3__110__function6__funcIZN25add_remove_scenery_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEiP11wizard_funcE3$_2NS6_ISD_EEF19install_method_typevEEE
+ZN25add_remove_scenery_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEiP11wizard_funcE3$_2
+NSt3__110__function6__funcIZN25add_remove_scenery_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEiP11wizard_funcE3$_3NS6_ISD_EEFSC_vEEE
+ZN25add_remove_scenery_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEiP11wizard_funcE3$_3
+25add_remove_scenery_wizard
+NSt3__110__function6__baseIF19install_method_typevEEE
+15any_run_install
+24any_get_install_info_net
+16any_pick_install
+Found X-Plane DVD at path %s: %s, version %d
+Found a non-X-Plane DVD at path %s
+Disk space needed to install: %3:required disk space%
+Download size: %4:download size% (%5:download time%)
+Disk space needed to install: %3:required disk space%
+install error: %s%s%s
+ path=
+Path: %2:path%
+You have selected a very large amount of scenery to install.
+Change Scenery
+To select less scenery for a faster installation.
+Continue Install
+To keep your current scenery selection (and corresponding long installation time).
+/_lookup_12_/server_list_12.txt
+/builds/x-plane/design/source_code/app/Installer-f/ins_common.cpp
+Error getting server list: %s
+AUTH_SERVER_FAIL
+--install_name
+Beta build %d not selected because manifest goes up to %d
+Final build %d not selected because manifest goes up to %d
+Please pick which copy of the X-Plane 12 demo you would like to run.
+Run Install
+Product: %d
+X-Plane Installer
+Unable to download. Please check your internet connection.
+The installer will try to download again shortly.
+About %1:time% left in the install, downloading at %2:rate% from %3:number% download server.
+About %1:time% left in the install, downloading at %2:rate% from %3:number% download servers.
+Downloading at %1:rate% from %2:server%.
+Unable to download from server %1:server%.
+Contacting %1:server%.
+Global Scenery/installer_receipt.json
+Could not write scenery receipt at '%s'
+Writing scenery receipt for %d
+	"version":1,
+This product key cannot be used to install X-Plane 12.
+Please contact Laminar Research for information on how to re-install X-Plane
+The Digital Product Key (XDD) you entered is already associated with your X-Plane Identity account. Please Login using your X-Plane Identity to continue.
+Pick Destination
+set_installer_destination <string>
+Pick Install Destination for %1:install%.
+Set installation destination to %s
+%1:install name%
+Please change the install name or destination.
+You do not have permission to install X-Plane to the location 
+The installer will create the folder 
+%1:install name%
+Attempting to post-validate the install path %s returned error %s.
+Attempting to validate the install path %s returned error %s.
+product_id
+Verify Product
+Authenticate DVD or Digital Download
+xdd-installer
+Enter Product Key or Insert DVD
+Enter Product Key
+Please enter your product key into the field below and click Continue.
+Your product key is in the email confirming your purchase.
+Pick destination container
+Find other install
+You selected the folder path:
+/_lookup_12_/installer_support_400.html
+Map scenery picker container
+Scenery selection complete! User settled on the following regions:
+Scenery picker WC
+Scenery picker container
+https://lookup.staging.x-plane.com
+https://lookup.x-plane.com
+If you do not have a commercial-use key, you agree to use X-Plane for non-commercial purposes only. (See www.X-Plane.com/pro for information on professional use.)
+Help make X-Plane better by allowing X-Plane to send us information about how you use it. We do not collect personally identifying information.
+/_lookup_12_/installer_about_analytics.html
+ERROR: destination being set but there is no live pick-destination wizard.
+Change Destination
+Select Destination
+21ins_ui_scenery_picker
+19ins_ui_pick_install
+21scenery_picker_widget
+19demo_install_wizard
+9demo_done
+NSt3__110__function6__funcIZN19demo_install_wizardC1EP11wizard_funcE3$_0NS_9allocatorIS5_EEF19install_method_typevEEE
+ZN19demo_install_wizardC1EP11wizard_funcE3$_0
+Contacting X-Plane.com to find a demo server.
+Downloading demo information from %1:server name%.
+Checking the net for the latest version of X-Plane 12 right now, and I am %1:progress%% done checking.
+Please pick a name for your X-Plane 12 Demo installation. 
+Pick a folder to install the X-Plane 12 Demo into.
+You have enough free disk space to install the X-Plane 12 Demo at this location.
+You do not have enough free disk space to install the X-Plane 12 Demo at this location. You can change the install location to a drive with more free disk space.
+Are you sure you want to cancel the installation? This will delete the partially installed copy of the X-Plane 12 Demo.
+the demo installation and delete partial installation.
+the demo installation process.
+Installing X-Plane 12 Demo
+the install.
+Finished Demo Installation
+Finished Web Demo Install
+There was a problem installing the X-Plane 12 Demo. Please check your internet connection and try again, or contact Laminar Research tech support for help.
+There was a problem installing the X-Plane 12 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.
+The X-Plane 12 Demo has finished installing at: %1:file path%.
+Pick a folder to install X-Plane 12 into.
+You have enough free disk space to install X-Plane 12 at this location.
+You do not have enough free disk space to install X-Plane 12 at this location.  You can install to a different location, or save disk space by installing only some of the global scenery.
+X-Plane 12 Installer/Updater
+Welcome to the X-Plane 12 Installer. This installer will guide you through the process of installing X-Plane 12.
+Welcome to the X-Plane 12 Installer. This installer will guide you through the process of installing %1:install name%.
+DVD Scenery Selection
+Click on the world map to select the scenery you would like to install. You can use this installer to add or remove scenery later. If you fly into an area with no scenery installed, you will see only ocean.
+You have enough free disk space to install X-Plane 12 with the selected scenery.
+You do not have enough free disk space to install X-Plane 12 with the selected scenery; change the install location to another hard drive or select less scenery.
+Beginning update of %s
+The simulator has been installed, but some scenery files could not be downloaded. You can attempt to download the missing scenery later by picking "Add or Remove Scenery" in the installer.
+19dvd_scenery_install
+16dvd_done_install
+NSt3__110__function6__funcIZN19full_install_wizardC1EP11wizard_funciE3$_0NS_9allocatorIS5_EEFv9auth_typeEEE
+ZN19full_install_wizardC1EP11wizard_funciE3$_0
+NSt3__110__function6__funcIZN19full_install_wizardC1EP11wizard_funciE3$_1NS_9allocatorIS5_EEFbvEEE
+ZN19full_install_wizardC1EP11wizard_funciE3$_1
+NSt3__110__function6__funcIZN19full_install_wizardC1EP11wizard_funciE3$_2NS_9allocatorIS5_EEF19install_method_typevEEE
+ZN19full_install_wizardC1EP11wizard_funciE3$_2
+NSt3__110__function6__funcIZN19full_install_wizardC1EP11wizard_funciE3$_3NS_9allocatorIS5_EEFS4_vEEE
+ZN19full_install_wizardC1EP11wizard_funciE3$_3
+19full_install_wizard
+Update X-Plane
+Update Scenery Online
+Install a Second Copy of X-Plane
+Welcome to X-Plane 12. This installer will guide you through the process of installing X-Plane.
+What would you like to install?
+Install a Free Demo of X-Plane
+Install an X-Plane Product Purchase
+Main Menu - Existing Demo Installation
+You already have the X-Plane 12 Demo installed on this computer.  What would you like to do?
+Run the X-Plane 12 Demo
+Update the X-Plane 12 Demo
+26main_menu_existing_install
+23main_menu_existing_demo
+33main_menu_existing_install_wizard
+30main_menu_existing_demo_wizard
+[silent] %s
+--silent requires --path=<install-dir>
+--path is not an existing directory: %s
+--path is not a recognised X-System: %s
+/builds/x-plane/design/source_code/app/Installer-f/ins_tasks.cpp
+Server %s had its last error %f seconds ago; resetting error counter.
+Server %s hit error %s and will time out for %f seconds.  Error count is now %d.
+Authorization server failed.  Will wait 30 seconds and retry.
+async send server failure analytics beacon
+Installer UI main
+Installer stack outer container
+Open the installer options
+Installer version
+Installer version frame
+Installer left/right columns
+Hint: You can copy your product key from your email (using %1:copy shortcut%) & paste it into the text box above (using %2:paste shortcut%).
+European law requires us to tell you: when you authorize X-Plane using a product key, Laminar Research collects your computer's IP address.
+We use this information only to verify that your product key has not been stolen.
+/_lookup_12_/buy_now_400.html
+INSTALLER SETTINGS
+Installer settings popup inner container
+Operating system to download X-Plane for
+This can be useful if you want to install X-Plane on this computer and copy the entire X-Plane folder to another computer (maybe one without a disc drive or internet access).
+Restart the installer to apply changes.
+%1:path%
+Contacting X-Plane.com to find an update server.
+Checking the internet for the latest version of X-Plane 12. %1:progress%% done checking.
+Scanning %1:folder path% to see what files need updating.
+Are you sure you want to stop the update? X-Plane 12 will not be usable until the update is finished. You can resume the update later.
+the update process.
+An error occurred during update:
+You can continue with the update and attempt to repair the damaged files later, or you can stop the update and try again later.
+Main Menu - Web Update
+This installer will guide you through the process of updating your copy of X-Plane 12 to the latest version.
+Choose Copy of X-Plane to Update
+The installer found the following copy of X-Plane 12 to update.
+Please select which copy of X-Plane 12 you would like to update.
+Check Disk Space for Update
+insufficient disk space for update; aborting
+There is a newer version of X-Plane 12 available, but you do not have enough free disk space to download and install the update.
+You are about to download %1:download size% of compressed data to update to %2:install name%.
+You have enough free disk space to update X-Plane 12.
+You do not have enough free disk space to update X-Plane 12.
+Update Complete
+Finished Web Update
+update FAILED: %s
+no update needed: %s already up-to-date
+update complete: %s
+Please try the updater again later or contact Laminar Research tech support for help.
+This copy of X-Plane (%1:install path%) is already up to date.
+Finished updating %1:install path%.
+If you check this, the latest beta version will be installed when available. Beta versions include the latest features but may contain bugs.
+/_lookup_12_/installer_betas.html
+NSt3__110__function6__funcIZN17net_update_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEP11wizard_funcNS2_12install_typeENS2_11require_xddEE3$_0NS6_ISF_EEFv9auth_typeEEE
+ZN17net_update_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEP11wizard_funcNS_12install_typeENS_11require_xddEE3$_0
+NSt3__110__function6__funcIZN17net_update_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEP11wizard_funcNS2_12install_typeENS2_11require_xddEE3$_1NS6_ISF_EEFbvEEE
+ZN17net_update_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEP11wizard_funcNS_12install_typeENS_11require_xddEE3$_1
+NSt3__110__function6__funcIZN17net_update_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEP11wizard_funcNS2_12install_typeENS2_11require_xddEE3$_2NS6_ISF_EEFSC_vEEE
+ZN17net_update_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEP11wizard_funcNS_12install_typeENS_11require_xddEE3$_2
+NSt3__110__function6__funcIZN17net_update_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEP11wizard_funcNS2_12install_typeENS2_11require_xddEE3$_3NS6_ISF_EEF19install_method_typevEEE
+ZN17net_update_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEP11wizard_funcNS_12install_typeENS_11require_xddEE3$_3
+17net_update_wizard
+?dvd_version.txt
+--no-scenery
+--path
+silent mode active: path=%s beta=%d timeout=%ds
+Silent start as: sim update (--silent)
+Scripted start as: scenery update
+Scripted start as: scenery add/remove
+Scripted start as: sim update
+Unscripted start as: brand new install (no DVD, no installs
+Unscripted start as: add remove scenery to upgrade existing install - user probably has a product purchase
+Unscripted start as: update existing demo - user needs upgrade, no purchase
+Unscripted start as: existing install main menu
+Unscripted start as: full DVD install - user has DVD and no installs.
+Unscripted start as: add remove/scenery - user needs to upgrade has a DVD
+--no_web_server
+Starting installer... opening wizard step "%s"
+ (proxy server: 
+Server response:
+Cannot parse server list file! Server file contents:
+Connecting to X-Plane auth server
+Getting server list
+Downloading from a random server
+Contacting X-Plane server
+Fetching server list
+Server list is empty due to earlier errors, skipping
+Installer session key: 
+@a newer installer is available at %s; aborting
+There is a newer version of the X-Plane installer/updater available.
+The installer will take you to the web page where you can download the new installer/updater.
+/builds/x-plane/design/source_code/app/Installer-f/utils.cpp
+this installer is too old to understand the current directory.txt; aborting
+This demo installer is too old; a newer one is available for download from X-Plane.com.
+This installer is too old; a newer one is available for download from X-Plane.com.
+Click the button below to get the newest installer.
+[ Download Now ]
+/_lookup_12_/new_full_installer_400.html
+The installer is unable to install or update X-Plane. An error occurred while creating new folders. Make sure the directory you are trying to install to is not set as read-only in your operating system.
+Install Location: 
+Install Path:
+Download of %s succeeded after %d retries of HTTP 5xx error
+We will retry the file to see if we can get a clean download.
+Global Scenery/
+X-Plane 12 Demo Areas
+The installer is about to delete the file:
+The installer is about to install the file:
+Product Type
+New Install
+Add/Remove Scenery
+total_download_size_mb
+download_time_mins
+download_rate_kbps
+download_rate_deviation_kbps
+product_type
+download_complete
+install_type
+product_version
+/_lookup_12_/analytics.html
+install_events
+X-Plane%2012%20Installer%2FUpdater
+Filename and path
+Change destination button frame
+    window.xplane.version = '
+https://example.x-plane.com/api/lockbox/get_key
+Lockbox version mismatch, removing
+Global Scenery
+custom scenery
+Working path does not appear to be a directory!
+Change the permission on the file so it's not read-only, or create the folder listed in the file path.
+The path in question is:
+/builds/x-plane/design/source_code/core/installer/license_mgr.cpp
+Getting receipt manifest from disk...
+Manifest Error Code is: %d
+Manifest Token failed validity check!
+Could not retrieve product claim from addon manifest token
+Could not retrieve x5u from addon manifest token for product_id: %s
+Getting certificate from disk for product_id: %s...
+Certificate not found on disk for product_id: %s
+Disk cache certificates for product_id: %s are invalid.
+Updating certificate cache for product_id: %s from network...
+Certificate for product_id: %s could not be fetched from network. Unable to verify receipt!
+JWT signature verification failed for product_id: %s, attempting certificate refresh...
+Addon manifest token is invalid for product_id: %s
+ERROR: Digital download file cannot be written!
+/_lookup_12_/bugreport.html
+/builds/x-plane/design/source_code/core/installer/UTL_drm.cpp
+Warning: the user's product key is on disk but cannot be decoded.  It is either from another computer or the DRM system is not working.
+BETA_INSTALLER_LIN
+FINAL_INSTALLER_LIN
+SCENERY_BETA_VERSION
+SCENERY_FINAL_VERSION
+MANIFEST
+BRANCH_PATH
+--server
+--add_server
+--server_clone
+/builds/x-plane/design/source_code/core/installer/UTL_installer.cpp
+Error during DVD scan: The installer cannot extract a file. Please report this to X-Plane technical support via https://x-plane.com/support, and include the information below:
+Destination Path: %1:file%.
+Error contacting the authorization server: %s
+Server response: %s
+DRM server returned the unknown product ID %s
+Unable to parse server JSON response.
+https://clearancedelivery.x-planemobile.com/v1/download
+https://tower.x-plane.com/v1/sim-download
+WARNING: The installer was unable to register this copy of X-Plane; the X-Plane updater may not be able to find and update X-Plane! (The installer could not locate the user's preferences folder.)
+x-plane_install_12.txt
+Registration of X-Plane path skipped 
+WARNING: The installer could not write to the file 
+Found duplicated paths in the installer registry: %s, %s
+The installer could not write to the file %s to rewrite the list of X-Plane installations
+0?INSTALLER
+While reading the directory text file, X-Plane found a path that has no file.
+This cannot be used in the installer.
+Please report this to X-Plane customer support via https://x-plane.com/support, and include the path below:
+/builds/x-plane/design/source_code/core/installer/UTL_installer_directory.cpp
+PRODUCT_KEY
+--install_numeric
+Build number selected to %d by command line.
+App Update
+3D Scenery
+Water update
+world update
+Download write error: %s for URL %s
+Using built-in certificate path: %s
+Curl built-in certificate path %s does not exist
+Using fallback certificate path: %s
+Download failed with error: %d for URL %s%s
+Download failed with http error: %d for URL %s%s
+--web_server_port
+/builds/x-plane/design/source_code/core/web/xp_web_server.cpp
+Content-Type, MCP-Protocol-Version
+NSt3__110__function6__funcIZ19xp_web_server_startvE3$_0NS_9allocatorIS2_EEFvRKNS_10shared_ptrIN6drogon11HttpRequestEEERKNS5_INS6_12HttpResponseEEEEEE
+Z19xp_web_server_startvE3$_0
+NSt3__110__function6__funcIZ19xp_web_server_startvE3$_1NS_9allocatorIS2_EEFvRKNS_10shared_ptrIN6drogon11HttpRequestEEERKNS5_INS6_12HttpResponseEEEEEE
+Z19xp_web_server_startvE3$_1
+NSt3__110__function6__funcIZ19xp_web_server_startvE3$_2NS_9allocatorIS2_EEFvvEEE
+Z19xp_web_server_startvE3$_2
+NSt3__110__function6__funcIZ18xp_web_server_stopvE3$_3NS_9allocatorIS2_EEFvvEEE
+Z18xp_web_server_stopvE3$_3
+NSt3__110__function6__funcIZ18xp_web_server_stopvE3$_4NS_9allocatorIS2_EEFvvEEE
+Z18xp_web_server_stopvE3$_4
+NSt3__110__function6__funcIZ18xp_web_server_stopvE3$_5NS_9allocatorIS2_EEFvvEEE
+Z18xp_web_server_stopvE3$_5
+Path,Scale,Format,Flags,Type,Distance,Size,MaxSize
+xscreensaver-command -version
+LINUX: Warning: X11 gave us a key release with no keysym string! This isn't so good. Verify the mapping of whatever key you just hit.
+LINUX: Warning: X11 gave us a key press with no keysym string! This isn't so good. Verify the mapping of whatever key you just hit.
+ is not version 900 or has a bad header.
+error getting key from certificate
+error writing key data in PEM format
+failed to convert key to pem
+failed to load key: bio write failed
+failed to load key: bio read failed
+at least one of public or private key need to be present
+invalid key size
+failed to verify signature: Could not get key
+failed to generate signature: Could not get key
+unordered_map::at: key not found
+Found product %d from DVD.
+10demo_class
+HASP key message: handle not active
+HASP key message: data length too short
+HASP key message: key doesn't do encryption
+HASP key message: failed for unknown reason
+Cannot set monitor res because xrandr is not available on the X server.
+The server requires a username and password.
+/builds/x-plane/design/source_code/app/Installer-f/../../core/browser/xp_browser_native.h
+Problem setting default path.
+Version not supported
+Destination buffer is too small
+Operation on NULL destination buffer
+Destination buffer is wrong
+cannot create thread specific key for __cxa_get_globals()
+the specified attribute path is invalid
+current_path
+temp_directory_path
+cannot access path "%s"
+path "%s" is not a directory
+failed to determine attributes for the specified path
+ is not a valid key length
+ is not a valid derived key length
+GeneratableCryptoMaterial: this object does not support key/parameter generation
+TF_SignerBase: this algorithm does not support message recovery or the key is too short
+TF_SignerBase: the recoverable message part is too long for the given key and algorithm
+ for this key
+: this key is too short to encrypt any messages
+ for this public key
+PK_Signer: key too short for this signature scheme
+multi_done, conn #%ld to %s:%d was shutdown by server, not reusing
+ev update fd=%d, action '%s%s' -> '%s%s' (%d/%d r/w)
+ev update call(fd=%d, ev=%s%s)
+Shutdown send direction error: %d. Broken server? Proceeding as if everything is ok.
+download_write header(type=%x, blen=%zu) -> %d
+download_write body(type=%x, blen=%zu), did not want a BODY
+download_write body(type=%x, blen=%zu) -> %d
+Could not connect to server
+Weird server reply
+FTP: The server failed to connect to data port
+FTP: Accepting server connect has timed out
+FTP: The server did not accept the PRET command.
+Requested range was not delivered by the server
+Could not resume download
+Server returned nothing (no headers, no data)
+SSL peer certificate or SSH remote key was not OK
+Problem with the SSL CA cert (path? access rights?)
+Failed to load CRL file (path? access rights?, format?)
+SSL public key does not match pinned public key
+SSL server certificate status verification FAILED
+Bad path
+Server upgrade does not support multiplex yet, wait
+Server upgrade cannot be used
+Sec-WebSocket-Version
+Sec-WebSocket-Key
+ public key hash: sha256//%s
+ALPN: asked for '%s' from previous session, but server did not confirm it. Refusing to continue.
+ALPN: asked for '%s' from previous session, but server selected '%.*s'. Refusing to continue.
+ALPN: server confirmed to use '%s'
+ALPN: server selected protocol contains NUL. Refusing to continue.
+ALPN: server accepted %.*s
+ALPN: server did not agree on a protocol. Uses default.
+-----BEGIN PUBLIC KEY-----
+-----END PUBLIC KEY-----
+Server accepted %zu bytes of TLS early data.
+Server rejected TLS early data.
+peer entry %zu key recovered: %s
+Accept timeout occurred while waiting server connect
+Error while waiting for server connect
+Ready to accept data connection from server
+nothing heard from the server yet
+Error accept()ing server connect: %s
+Connection accepted from server
+Discarding connection #%ld from %zu to reach destination limit of %zu
+%s cookie %s="%s" for domain %s, path %s, expire %ld
+[SHUTDOWN] update events failed, discarding #%ld
+Failure writing output to destination, passed %zu returned %zd
+lookup word is missing
+/LOOKUP:
+Server denied you to change to the given directory
+Got a %03d ftp-server response when 220 was expected
+ACCT rejected by server: %03d
+Entry path is '%s'
+Failed to figure out path
+ftp server does not support SIZE
+Instructs server to resume from offset %ld
+partial download completed, closing connection
+server did not report OK, got %d
+path contains control characters
+Request has same path as previous transfer
+in shutdown, waiting for server response
+Empty reply from server
+:path
+suppressing chunked transfer encoding on connection using HTTP version 2 or higher
+Unsupported HTTP version in response
+Lying server, not serving HTTP/2
+server sent 101 response while not talking HTTP/1.1
+HTTP server does not seem to support byte ranges. Cannot resume.
+Version mismatch (from HTTP/%u to HTTP/%u)
+Unsupported HTTP version (%u.%d) in response
+Cannot use sigv4 authentication with path-as-is flag
+server disconnected
+server response timeout
+Server prematurely closed the RTSP connection.
+SOCKS5: the destination hostname is too long to be resolved remotely by the proxy.
+Received invalid version in initial SOCKS5 response.
+Unknown SOCKS5 mode attempted to be used by server.
+User was rejected by the SOCKS5 server (%d %d).
+SOCKS5 reply has wrong version, version should be 5.
+SOCKS4 reply has wrong version, version should be 0.
+[SOCKS] cannot complete SOCKS4 connection to %u.%u.%u.%u:%u. (%u), request rejected because SOCKS server cannot connect to identd on the client.
+error adding trust anchors from path: %s
+error setting certificate path, continuing anyway
+QUIC needs at least TLS version 1.3
+Server hello
+Server key exchange
+Client key exchange
+Server finished
+Key update
+could not load PEM client certificate from %s, OpenSSL error %s, (no key found, wrong passphrase, or wrong file format?)
+could not load ASN1 client certificate from %s, OpenSSL error %s, (no key found, wrong passphrase, or wrong file format?)
+unable to set private key file: '%s' type %s
+file type P12 for private key not supported
+not supported file type for private key
+Private key does not match the certificate public key
+unable to use private key from PKCS12 file '%s'
+private key from PKCS12 file '%s' does not match certificate in same file
+failed to load private key from crypto engine
+unable to set private key
+crypto engine not set, cannot load private key
+No private key found in the openssl store: %s
+unable to set private key [%s]
+crypto provider not set, cannot load private key
+Public Key Algorithm
+   Unable to load public key
+RSA Public Key
+  Certificate level %d: Public key type %s%s (%d/%d Bits/secBits), signed using %s
+SSL: public key does not match pinned public key
+SSL_ERROR_WANT_X509_LOOKUP
+tls-server-end-point:
+interpreter-version
+DESTINATION
+product
+  immensetime inset outsatisfyto finddown tolot of Playersin Junequantumnot thetime todistantFinnishsrc = (single help ofGerman law andlabeledforestscookingspace">header-well asStanleybridges/globalCroatia About [0];
+pieces ofcompetingReferencetennesseewhich has version=</span> <</header>gives thehistorianvalue="">padding:0view thattogether,the most was foundsubset ofattack onchildren,points ofpersonal position:allegedlyClevelandwas laterand afterare givenwas stillscrollingdesign ofmakes themuch lessAmericans.
+keywords" content="w3.org/1999/xhtml"><a target="_blank" text/html; charset=" target="_blank"><table cellpadding="autocomplete="off" text-align: center;to last version by background-color: #" href="http://www./div></div><div id=<a href="#" class=""><img src="http://cript" src="http://
+Wrong JPEG library version: library is %d, caller expects %d
+Adobe APP14 marker: version %d, flags 0x%04x 0x%04x, transform %d
+JFIF APP0 marker: version %d.%02d, density %dx%d  %d
+Duplicate key: '
+in Json::Value::resolveReference(key, end): requires objectValue
+master_key
+key_arg
+ssl_server
+SSL_CTX_set_ssl_version
+SSL_CTX_check_private_key
+SSL_check_private_key
+SSL_key_update
+ssl_log_rsa_client_key_exchange
+ssl_set_cert_and_key
+SSLv3/TLS read server hello
+SSLv3/TLS read server certificate
+TLSv1.3 read server compressed certificate
+SSLv3/TLS read server key exchange
+SSLv3/TLS read server certificate request
+SSLv3/TLS read server session ticket
+SSLv3/TLS read server done
+SSLv3/TLS write client key exchange
+SSLv3/TLS write server hello
+TLSv1.3 write server compressed certificate
+SSLv3/TLS write key exchange
+SSLv3/TLS write server done
+SSLv3/TLS read client key exchange
+TLSv1.3 read server certificate verify
+TLSv1.3 write server certificate verify
+TLSv1.3 write server key update
+TLSv1.3 write client key update
+TLSv1.3 read client key update
+TLSv1.3 read server key update
+server finished
+tls1_set_server_sigalgs
+SERVER_HANDSHAKE_TRAFFIC_SECRET
+SERVER_TRAFFIC_SECRET_0
+tls13_update_key
+SERVER_TRAFFIC_SECRET_N
+derive_secret_key_and_iv
+srp_generate_server_master_secret
+srp_verify_server_param
+ossl_quic_key_update
+port_send_version_negotiation
+port version negotiation send failed
+ossl_qrl_enc_level_set_key_update
+ossl_qrl_enc_level_set_key_update_done
+ossl_qrl_enc_level_set_key_cooldown_done
+key-check
+quic_set_protocol_version
+PATH_CHALLENGE
+PATH_RESPONSE
+KEY_UPDATE_ERROR
+NO_VIABLE_PATH
+tls-version
+final_server_name
+final_key_share
+tls_construct_ctos_server_name
+No groups enabled for max supported SSL/TLS version
+tls_construct_ctos_key_share
+tls_parse_stoc_server_name
+tls_parse_stoc_key_share
+tls_construct_ctos_server_cert_type
+tls_parse_stoc_server_cert_type
+add_key_share
+tls_parse_ctos_server_name
+tls_parse_ctos_key_share
+tls_construct_stoc_server_name
+tls_construct_stoc_key_share
+tls_construct_stoc_server_cert_type
+tls_parse_ctos_server_cert_type
+tls_process_server_hello
+tls_process_server_rpk
+tls_process_server_certificate
+tls_post_process_server_certificate
+tls_process_key_exchange
+tls_process_initial_server_flight
+tls_process_server_done
+tls_construct_client_key_exchange
+tls_client_key_exchange_post_work
+tls_post_process_server_rpk
+No ciphers enabled for max supported SSL/TLS version
+The max supported SSL/TLS version needs the MD5-SHA1 digest but it is not available in the loaded providers. Use (D)TLSv1.2 or above, or load different providers
+tls_construct_key_update
+tls_process_key_update
+ssl_choose_client_version
+construct_key_exchange_tbs
+TLS 1.3, server CertificateVerify
+ossl_statem_server_read_transition
+ossl_statem_server_write_transition
+ossl_statem_server_pre_work
+ossl_statem_server_construct_message
+ossl_statem_server_process_message
+ossl_statem_server_post_process_message
+tls_construct_server_hello
+tls_construct_server_key_exchange
+tls_process_client_key_exchange
+tls_post_process_client_key_exchange
+tls_construct_server_certificate
+tls_construct_server_compressed_certificate
+ossl_statem_server13_write_transition
+tls-client-version
+tls-negotiated-version
+ssl3_setup_key_block
+ssl3_generate_key_block
+no_legacy_server_connect
+tls1_setup_key_block
+key expansion
+key_update_error
+no_viable_path
+original_destination_connection_id
+RX key update again too soon
+unsupported protocol version
+NEW_TOKEN can only be sent by a server
+PATH_CHALLENGE valid only in 0/1-RTT
+PATH_CHALLENGE valid only in 1-RTT
+acked packet which initiated a key update without a corresponding key update
+depack_do_frame_path_challenge
+depack_do_frame_path_response
+qlog_version
+PKCS8_PRIV_KEY_INFO
+BIO_lookup_ex
+module=%s, path=%s
+SCT_set_version
+DH Private-Key
+DH Public-Key
+private-key:
+public-key:
+ossl_dh_key_from_pkcs8
+DH_check_pub_key_ex
+DH_check_pub_key
+crypto/dh/dh_key.c
+ossl_dh_compute_key
+ossl_dh_buf2key
+ossl_dh_key2buf
+Public-Key: (%d bit)
+priv_key
+ossl_dsa_key_from_pkcs8
+DSO_global_lookup
+do_EC_KEY_print
+ossl_ec_key_dup
+ossl_ec_key_param_from_x509_algor
+ossl_ec_key_from_pkcs8
+ec_key_point_format_fromdata
+A#crypto/ec/ec_key.c
+EC_KEY_copy
+EC_KEY_generate_key
+EC_KEY_check_key
+ossl_ec_key_public_check_quick
+ossl_ec_key_public_check
+ossl_ec_key_private_check
+ossl_ec_key_pairwise_check
+ossl_ec_key_simple_check_key
+EC_KEY_set_public_key_affine_coordinates
+EC_KEY_priv2oct
+ossl_ec_key_simple_priv2oct
+EC_KEY_oct2priv
+ossl_ec_key_simple_oct2priv
+ossl_ec_key_new_method_int
+ECDH_compute_key
+OpenSSL EC_KEY method
+ossl_ecdh_compute_key
+ossl_ecdh_simple_compute_key
+EC_KEY_print_fp
+%*s<INVALID PRIVATE KEY>
+%*s%s Private-Key:
+%*s<INVALID PUBLIC KEY>
+%*s%s Public-Key:
+ENGINE_load_private_key
+ENGINE_load_public_key
+EVP_CIPHER_CTX_set_key_length
+%s key generation:%s
+%s digest_sign_update:%s
+%s digest_verify_update:%s
+evp_pkey_get0_EC_KEY_int
+EVP_PKEY_get_raw_private_key
+EVP_PKEY_get_raw_public_key
+encoded-pub-key
+keymgmt key type = %s but legacy type = EVP_PKEY_NONE
+key type = %s
+new_raw_key_int
+new_cmac_key_int
+evp_pkey_get0_ECX_KEY
+EVP_SKEY_get0_raw_key
+EVP_PKEY_sign_message_update
+%s sign_message_update:%s
+EVP_PKEY_verify_message_update
+%s verify_message_update:%s
+only one of %s message signing update and final available:%s
+only one of %s message verification update and final available:%s
+only one of %s digest signing update and final available:%s
+only one of %s digest verification update and final available:%s
+openssl-version
+bad hrr version
+bad key share
+bad key update
+bad legacy version
+bad protocol version number
+ca key too small
+dane tlsa bad public key
+dh key too small
+ee key too small
+empty raw public key
+invalid key update type
+invalid raw public key
+can't find SRP server param
+missing tmp dh key
+missing tmp ecdh key
+not server
+no private key assigned
+no suitable key share
+path too long
+private key mismatch
+psk no server cb
+ssl ctx has no default ssl version
+ssl session version mismatch
+tlsv1 alert protocol version
+too many key updates
+unable to find public key parameters
+unknown key exchange type
+unknown ssl version
+unsupported ssl version
+version too high
+version too low
+wrong ssl version
+wrong version number
+Netscape SSL Server Name
+X509v3 Subject Key Identifier
+X509v3 Key Usage
+X509v3 Private Key Usage Period
+X509v3 Authority Key Identifier
+X509v3 Extended Key Usage
+TLS Web Server Authentication
+Microsoft Server Gated Crypto
+Netscape Server Gated Crypto
+Microsoft Local Key set
+Any Extended Key Usage
+ipsec Internet Key Exchange
+SSH Server
+DSTU Gost 28147-2009 key wrap
+CMC Archive Server
+Certificate Management Key Generation Authority
+RPKI Manifest
+Trusted key usage (Oracle)
+X509v3 Subject Alternative Public Key Info
+Trusted Computing Group Key Purposes
+TCG Platform Version
+TPM Version
+Platform Configuration Version 1
+Platform Configuration Version 2
+Platform Configuration Version 3
+Platform Configuration URI Version 3
+Endorsement Key Certificate
+Attestation Identity Key Certificate
+Delta Platform Key Certificate
+Additional Platform Key Certificate
+Platform Firmware Update Compliance Trait
+Public Key Trait
+Platform Version Trait Category
+Platform Firmware Update Compliance Trait Category
+Public Key Trait Category
+    Version: %lu (0x%lx)
+    Version: %lu (0x%lx)
+    This Update: 
+    Next Update: 
+%*sIssuer Key Hash: 
+RSA PRIVATE KEY
+RSA PUBLIC KEY
+DSA PRIVATE KEY
+EC PRIVATE KEY
+ENCRYPTED PRIVATE KEY
+ANY PRIVATE KEY
+%s PRIVATE KEY
+pem_read_bio_key_decoder
+pem_read_bio_key_legacy
+key_enc_algor
+enc_key
+Private-Key: (%d bit, %d primes)
+ossl_rsa_key_from_pkcs8
+OSSL_STORE_SEARCH_by_key_fingerprint
+try_key_value_legacy
+        Subject Public Key Info:
+%12sPublic Key Algorithm: 
+%12sUnable to load Public Key
+        Public key OCSP hash: 
+CRL path validation
+Netscape SSL server
+X509_check_private_key
+ossl_x509_check_private_key
+X509_STORE_add_lookup
+SSL Server
+TSA server
+unable to decode issuer public key
+issuer certificate doesn't have a public key
+authority and subject key identifier mismatch
+key usage does not include certificate signing
+key usage does not include CRL signing
+proxy path length constraint exceeded
+key usage does not include digital signature
+CRL path validation error
+path loop
+Suite B: certificate version invalid
+Suite B: invalid public key algorithm
+EE certificate key too weak
+CA certificate key too weak
+issuer certificate lookup error
+subject signature algorithm and issuer public key algorithm mismatch
+Path length invalid for non-CA cert
+Path length given without key usage keyCertSign
+Key usage keyCertSign invalid for non-CA cert
+Missing Authority Key Identifier
+Missing Subject Key Identifier
+Authority Key Identifier marked critical
+Subject Key Identifier marked critical
+CA cert does not include key usage extension
+Certificate public key has explicit ECC parameters
+Raw public key untrusted, no trusted keys configured
+X509_REQ_set_version
+ALG_ERR: ASYNC AFALG requires kernel version %d.%d.%d or later
+socket set key failed
+OpenSSL AES opaque secret key
+OpenSSL generic opaque secret key
+aes_ocb_block_update_internal
+aes_xts_stream_update
+sm4_xts_stream_update
+tdes_wrap_update
+providers/implementations/encode_decode/decode_der2key.c
+der2key_decode
+der2key_set_ctx_params_decoder
+unexpected parameters with a PKCS#8 %s private key
+unexpected %s public key length: %ld != %ld
+malformed %s public key ASN.1 encoding
+unexpected algorithm OID for an %s public key
+failed to parse %s public key from the input data
+providers/implementations/encode_decode/decode_msblob2key.c
+msblob2key_decode
+DSA PUBLIC KEY
+SM2 PRIVATE KEY
+providers/implementations/encode_decode/decode_pvk2key.c
+pvk2key_set_ctx_params_decoder
+providers/implementations/encode_decode/encode_key2any.c
+key2any_set_ctx_params_decoder
+key2any_encode
+key_to_type_specific_der_bio
+key_to_p8info
+key_to_pubkey
+RSA-PSS PRIVATE KEY
+RSA-PSS PUBLIC KEY
+X9.42 DH PRIVATE KEY
+X9.42 DH PUBLIC KEY
+EC PUBLIC KEY
+SM2 PUBLIC KEY
+ED25519 PRIVATE KEY
+ED448 PRIVATE KEY
+X25519 PRIVATE KEY
+X448 PRIVATE KEY
+SLH-DSA-SHA2-128s PRIVATE KEY
+SLH-DSA-SHA2-128f PRIVATE KEY
+SLH-DSA-SHA2-192s PRIVATE KEY
+SLH-DSA-SHA2-192f PRIVATE KEY
+SLH-DSA-SHA2-256s PRIVATE KEY
+SLH-DSA-SHA2-256f PRIVATE KEY
+SLH-DSA-SHAKE-128s PRIVATE KEY
+SLH-DSA-SHAKE-128f PRIVATE KEY
+SLH-DSA-SHAKE-192s PRIVATE KEY
+SLH-DSA-SHAKE-192f PRIVATE KEY
+SLH-DSA-SHAKE-256s PRIVATE KEY
+SLH-DSA-SHAKE-256f PRIVATE KEY
+ML-KEM-512 PRIVATE KEY
+ML-KEM-768 PRIVATE KEY
+ML-KEM-1024 PRIVATE KEY
+ML-DSA-44 PRIVATE KEY
+ML-DSA-65 PRIVATE KEY
+ML-DSA-87 PRIVATE KEY
+providers/implementations/encode_decode/encode_key2blob.c
+providers/implementations/encode_decode/encode_key2ms.c
+key2pvk_set_ctx_params_decoder
+providers/implementations/encode_decode/encode_key2text.c
+RSA key
+error parsing %s public key from input SPKI
+no matching enabled %s private key input formats
+no %s public key data available
+no %s private key data available
+no matching enabled %s private key output formats
+error encoding %s private key
+ossl_ml_dsa_key_to_text
+no %s key material available
+error storing %s private key seed
+error parsing %s private key
+error encoding %s public key
+ossl_ml_kem_key_to_text
+kdf_argon2_ctx_set_version
+invalid Argon2 version
+Invalid public key
+Invalid sender auth public key
+Invalid enc public key
+Invalid recipient public key
+unexpected %s public key output size: %lu
+mac_key_fromdata
+ml_dsa_key_fromdata
+Invalid %s public key length
+Invalid %s private key length
+explicit %s public key does not match private
+ml_dsa_key_type_params_decoder
+public part of %s private key fails to match private
+private %s key implicit rejection secret does not match seed
+explicit %s private key does not match seed
+ml_kem_key_fromdata
+ml_kem_key_type_params_decoder
+public key output buffer too short: %lu < %lu
+private key output buffer too short: %lu < %lu
+Unexpected %s public key length %lu != %lu
+Unexpected %s private key length %lu != %lu
+duplication of partial key material not supported
+mlx_kem_key_fromdata
+RSA key size = %d, expected minimum = %d
+rsa_signverify_message_update
+providers/common/der/der_rsa_key.c
+ossl_cipher_generic_block_update
+ossl_cipher_generic_stream_update
+ossl_ccm_stream_update
+ossl_gcm_stream_update
+BN_BLINDING_update
+ossl_ecx_key_dup
+ossl_ecx_key_op
+crypto/ec/ecx_key.c
+ossl_ecx_compute_key
+The passed EVP_PKEY must be assigned a key
+dynamic_path
+SO_PATH
+Specifies the path to the new ENGINE shared library
+Specifies to continue even if version checking fails (boolean)
+(TEST_ENG_OPENSSL_RC4) test_init_key() called
+(TEST_ENG_OPENSSL_PKEY)Loading Private key %s
+get_payload_private_key
+get_payload_public_key
+get_payload_public_key_ec
+aesni_init_key
+aes_init_key
+aesni_gcm_init_key
+aes_gcm_init_key
+aesni_xts_init_key
+aes_xts_init_key
+aesni_ccm_init_key
+aes_ccm_init_key
+aes_wrap_init_key
+aesni_ocb_init_key
+aes_ocb_init_key
+aesni_cbc_hmac_sha1_init_key
+aria_init_key
+aria_gcm_init_key
+aria_ccm_init_key
+camellia_init_key
+aes key setup failed
+aria key setup failed
+bad key length
+camellia key setup failed
+different key types
+expecting an hmac key
+expecting an rsa key
+expecting a dh key
+expecting a dsa key
+expecting an ecx key
+expecting an ec key
+expecting a poly1305 key
+expecting a siphash key
+get raw key failed
+inaccessible key
+invalid key length
+no key set
+private key decode error
+private key encode error
+public key not rsa
+signature type and key type incompatible
+unknown key type
+unsupported key derivation function
+unsupported key size
+unsupported key type
+unsupported private key algorithm
+update error
+assertion failed: nkey <= EVP_MAX_KEY_LENGTH
+crypto/evp/evp_key.c
+assertion failed: keylen <= sizeof(key)
+server=http%s://%s%s%s
+%s: HTTP CONNECT failed, bad HTTP version %.*s
+invalid url path
+received wrong http version
+server canceled connection
+param value too large for destination
+%s private key does not match its pubkey part
+crypto/ml_dsa/ml_dsa_key.c
+ossl_ml_dsa_generate_key
+ossl_ml_kem_key_new
+unsupported ML-KEM key type: %d
+missing SHA3 digest algorithms while creating %s key
+internal error while parsing %s public key
+%s public key hash mismatch
+internal error while generating %s private key
+no signer key
+private key does not match certificate
+bad version number
+error converting private key
+expecting dss key blob
+expecting private key blob
+expecting public key blob
+expecting rsa key blob
+read key
+unsupported key components
+unsupported public key type
+unsupported pvk key type
+do_b2i_key
+evp_pkey_new0_key
+do_PVK_key_bio
+do_PVK_body_key
+crypto/pkcs12/p12_key.c
+PKCS12_key_gen_asc_ex
+PKCS12_key_gen_utf8_ex
+key gen error
+encryption not supported for this key type
+signing not supported for this key type
+data too large for key size
+data too small for key size
+digest too big for rsa key
+invalid multi prime key
+key prime num invalid
+key size too small
+missing private key
+n does not equal product of primes
+crypto/slh_dsa/slh_dsa_key.c
+ossl_slh_dsa_key_to_text
+crypto/sm2/sm2_key.c
+ossl_sm2_key_private_check
+not a private key
+not a public key
+path must be absolute
+%*sDigest Type: Public Key
+%*sDigest Type: Public Key Certificate
+addr_validate_path_internal
+Key Encipherment
+Key Agreement
+Key Compromise
+%*sContains Source Of Authority (SOA) Public Key Certificates: 
+v2i_EXTENDED_KEY_USAGE
+empty key usage
+no public key
+policy path length
+policy path length already defined
+can't check dh key
+key type mismatch
+key values mismatch
+public key decode error
+public key encode error
+unable to get certs public key
+wrong lookup type
+ossl_rsa_key_op_get_protect
+no %s private key %s formats are enabled
+bad tls client version
+failed to generate key
+unexpected key parameters
+update call out of order
+digest and key type not supported
+unknown public key type
+wrong public key type
+lookup returned nothing
+private key too large
+cert and key do not match
+failed extracting central gen key
+missing central gen key
+missing key input for creating protection
+missing key usage digitalsignature
+missing private key for popo
+request rejected by server
+unexpected central gen key
+error getting public key
+error setting key
+error unsupported static key agreement
+invalid encrypted key length
+invalid key encryption parameter
+not key agreement
+not key transport
+no key
+no key or cert
+no private key
+peer key error
+unsupported key encryption algorithm
+relative path
+error decrypting symmetric key
+popo inconsistent public key
+popo missing public key
+log conf invalid key
+log conf missing key
+log key invalid
+sct unsupported version
+unknown version
+invalid public key
+failed making public key
+invalid peer key
+invalid private key
+failed loading private key
+failed loading public key
+unimplemented public key method
+version incompatibility
+libpng version 1.6.55
+ libpng version 1.6.55
+unsupported zlib version
+png_read_update_info/png_start_read_image: duplicate call
+png_start_read_image/png_read_update_info: duplicate call
+png_image_begin_read_from_stdio: incorrect PNG_IMAGE_VERSION
+png_image_begin_read_from_file: incorrect PNG_IMAGE_VERSION
+png_image_begin_read_from_memory: incorrect PNG_IMAGE_VERSION
+png_image_finish_read: damaged PNG_IMAGE_VERSION
+invalid after png_start_read_image or png_read_update_info
+info change after png_start_read_image or png_read_update_info
+png_image_write_to_memory: incorrect PNG_IMAGE_VERSION
+png_image_write_to_stdio: incorrect PNG_IMAGE_VERSION
+png_image_write_to_file: incorrect PNG_IMAGE_VERSION
+incompatible version
+source and destination must be distinct
+foreign key
+destination database is in use
+FOREIGN KEY constraint failed
+FOREIGN KEY
+Failed to read ptrmap key=%u
+Bad ptr map entry key=%u expected=(%u,%u) got=(%u,%u)
+data_version
+foreign_key_check
+foreign_key_list
+schema_version
+user_version
+on_update
+qualified table names are not allowed on INSERT, UPDATE, and DELETE statements within triggers
+the INDEXED BY clause is not allowed on UPDATE or DELETE statements within triggers
+the NOT INDEXED clause is not allowed on UPDATE or DELETE statements within triggers
+PRIMARY KEY missing on table %s
+UPDATE %Q.sqlite_master SET type='%s', name=%Q, tbl_name=%Q, rootpage=#%d, sql=%Q WHERE rowid=#%d
+table "%s" has more than one primary key
+AUTOINCREMENT is only allowed on an INTEGER PRIMARY KEY
+generated columns cannot be part of the PRIMARY KEY
+expressions prohibited in PRIMARY KEY and UNIQUE constraints
+foreign key on %s should reference only one column of table %T
+number of columns in foreign key does not match the number of columns in the referenced table
+unknown column "%s" in foreign key definition
+UPDATE %Q.sqlite_master SET rootpage=%d WHERE #%d AND rootpage=#%d
+ USING INTEGER PRIMARY KEY (%s
+foreign key mismatch - "%w" referencing "%w"
+cannot UPDATE generated column "%s"
+%sON CONFLICT clause does not match any PRIMARY KEY or UNIQUE constraint
+index associated with UNIQUE or PRIMARY KEY constraint cannot be dropped
+row not in PRIMARY KEY order for %s
+UPDATE "%w".sqlite_master SET sql = sqlite_rename_table(%Q, type, name, sql, %Q, %Q, %d) WHERE (type!='index' OR tbl_name=%Q COLLATE nocase)AND   name NOT LIKE 'sqliteX_%%' ESCAPE 'X'
+UPDATE %Q.sqlite_master SET tbl_name = %Q, name = CASE WHEN type='table' THEN %Q WHEN name LIKE 'sqliteX_autoindex%%' ESCAPE 'X'      AND type='index' THEN 'sqlite_autoindex_' || %Q || substr(name,%d+18) ELSE name END WHERE tbl_name=%Q COLLATE nocase AND (type='table' OR type='index' OR type='trigger');
+UPDATE "%w".sqlite_sequence set name = %Q WHERE name = %Q
+UPDATE sqlite_temp_schema SET sql = sqlite_rename_table(%Q, type, name, sql, %Q, %Q, 1), tbl_name = CASE WHEN tbl_name=%Q COLLATE nocase AND   sqlite_rename_test(%Q, sql, type, name, 1, 'after rename', 0) THEN %Q ELSE tbl_name END WHERE type IN ('view', 'trigger')
+Cannot add a PRIMARY KEY column
+UPDATE "%w".sqlite_master SET sql = printf('%%.%ds, ',sql) || %Q || substr(sql,1+length(printf('%%.%ds',sql))) WHERE type = 'table' AND name = %Q
+UPDATE "%w".sqlite_master SET sql = sqlite_drop_column(%d, sql, %d) WHERE (type=='table' AND tbl_name=%Q COLLATE nocase)
+UPDATE "%w".sqlite_master SET sql = sqlite_rename_quotefix(%Q, sql)WHERE name NOT LIKE 'sqliteX_%%' ESCAPE 'X' AND sql NOT LIKE 'create virtual%%'
+UPDATE temp.sqlite_master SET sql = sqlite_rename_quotefix('temp', sql)WHERE name NOT LIKE 'sqliteX_%%' ESCAPE 'X' AND sql NOT LIKE 'create virtual%%'
+UPDATE "%w".sqlite_master SET sql = sqlite_rename_column(sql, type, name, %Q, %Q, %d, %Q, %d, %d) WHERE name NOT LIKE 'sqliteX_%%' ESCAPE 'X'  AND (type != 'index' OR tbl_name = %Q)
+UPDATE temp.sqlite_master SET sql = sqlite_rename_column(sql, type, name, %Q, %Q, %d, %Q, %d, 1) WHERE type IN ('trigger', 'view')
+UPDATE %Q.sqlite_master SET type='table', name=%Q, tbl_name=%Q, rootpage=0, sql=%Q WHERE rowid=#%d
+sqlite_version
+bad JSON path: %Q
+CREATE TABLE "%w"."%w_rowid"(rowid INTEGER PRIMARY KEY,nodeno
+);CREATE TABLE "%w"."%w_node"(nodeno INTEGER PRIMARY KEY,data);
+CREATE TABLE "%w"."%w_parent"(nodeno INTEGER PRIMARY KEY,parentnode);
+INSERT INTO"%w"."%w_rowid"(rowid,nodeno)VALUES(?1,?2)ON CONFLICT(rowid)DO UPDATE SET nodeno=excluded.nodeno
+UPDATE "%w"."%w_rowid"SET 
+CREATE TABLE x(key,value,type,atom,id,parent,fullkey,path,json HIDDEN,root HIDDEN)
+<?xml version="1.0" encoding="UTF-8"?>
+<haspformat>  <license_manager>    <attribute name="version" />  </license_manager></haspformat>
+<?xml version="1.0" encoding="UTF-8"?>
+			<update_counter>%u</update_counter>
+<?xml version="1.0" encoding="UTF-8"?>
+/var/hasplm/hasplm.version
+access_demo
+error_demo
+hasp_demo.ini
+Product Activation Module
+New SL Key Pool
+ Product %u
+Demo 3A
+Demo 3B
+Demo 3C
+Demo MB
+Demo MC
+Demo XD
+Demo XE
+Demo XF
+Demo XH
+Demo XI
+Demo XK
+Demo XL
+Demo XM
+Demo XN
+Failed to store the server ID in the fridge
+Invalid server id size
+Unknown OS Version
+<?xml version="1.0" encoding="UTF-8" ?><haspscope><hasp id="%llu" /></haspscope>
+<?xml version="1.0" encoding="UTF-8" ?><network_detach><product id="%u"><duration>%u</duration><seats>%u</seats></product></network_detach>
+<?xml version="1.0" encoding="UTF-8" ?><detach><product id="%u"><duration>%u</duration></product></detach>
+<?xml version="1.0" encoding="UTF-8" ?><rehost><hasp id="%llu" /></rehost>
+<?xml version="1.0" encoding="UTF-8" ?><haspscope/>
+<?xml version="1.0" encoding="UTF-8" ?><cancel><hasp id="%llu" /></cancel>
+SNTL_ADMIN_UPDATE_ERROR
+HASP_INV_UPDATE_OBJ
+HASP_INV_UPDATE_DATA
+HASP_INV_UPDATE_NOTSUPP
+HASP_INV_UPDATE_CNTR
+HASP_UPDATE_BLOCKED
+HASP_UPDATE_TOO_OLD
+HASP_UPDATE_TOO_NEW
+HASP_INV_PRODUCT
+HASP_UPDATE_ALREADY_ADDED
+HASP_IDENTITY_SERVER_NOT_READY
+HASP_UPDATE_OUT_OF_SYNC
+Invalid key '%s', %s
+Error decoding the identity '%s' for server '%s' for missing encryption key
+Error decoding the identity '%s' for server '%s' for wrong encryption key
+Error decoding the identity '%s' for server '%s' for invalid base64 format
+Error decoding the identity '%s' for server '%s' for invalid format
+Error decoding the identity '%s' for server '%s' for generic error
+Unsupported identity '%s' for server '%s'
+Error deriving the identity '%s' for server '%s'
+Multiple identity specified for server '%s'. Using only the first one
+Error in the port format for server '%s'
+Error in the identity format for server '%s'
+Error in the identity identifier for server '%s'
+/product
+/product_3
+api_version
+api_version_major
+api_version_minor
+database_sqlite_path
+dir_path0
+dir_path1
+dir_path2
+dir_path3
+dir_path_size
+download_url
+filter_update
+hw_version
+identity_storage_key
+if_identity_storage_key_missing
+if_identity_storage_key_provided
+key_disabled
+last_update_error
+limit_to_key_id
+lm_version
+lm_version_full
+lm_version_major
+lm_version_minor
+server_rescan
+server_rescan_done
+server_select
+VLIB for vendor %d has a version:%d.%d which doesn't support consume multiple executions count. Please upgrade your VLIB.
+VLIB for vendor %d has a version:%d.%d which doesn't support reserve multiple executions count. Please upgrade your VLIB.
+VLIB for vendor %d has a version %d.%d which doesn't support Certificate licenses. Please upgrade your VLIB
+The update '%s' was too new. Install the pending updates first
+%llu_update%d.%s
+Secure storage entry for feature %d of key %llu seems to be unexpected!
+Error notifying server '%s:%d' (in connect) after %llu [ms] (syserr %u/%s)
+Error notifying server '%s:%d' (in send) after %llu [ms] (syserr %u/%s)
+Error notifying server '%s:%d' (in close) after %llu [ms] (syserr %u/%s)
+Partial data transmission error with %u bytes with header '%s' server '%s' after %llu [ms] (syserr %u/%s)
+The server is not ready
+Server returned error %u
+Error requesting server '%s:%d' (in connect tcp) after %llu [ms] (syserr %u/%s). Failing the command
+Error requesting server '%s:%d' (in send) after %llu [ms] with a %s socket (syserr %u/%s)
+Error requesting server '%s:%d' (in recv) with a %s socket. %s
+Error requesting server '%s:%d' (in close) after %llu [ms] with a %s socket (syserr %u/%s)
+Failed to wait for update thread
+Failed to create update thread
+Server '%s:%d' was too slow to update (in connect tcp) (syserr %u/%s), after %lld [ms] from connect(), and %lld [ms] from search startup
+Error updating server '%s:%d' (in connect tcp) (syserr %u/%s). Failing the command after %lld [ms] from connect(), and %lld [ms] from search startup
+Error updating server '%s:%d' (in send) after %llu [ms] (syserr %u/%s)
+Server '%s:%d' was too slow to answer to feature list, more than %lld [ms]
+Error updating server '%s:%d' (in recv). %s
+Error updating server '%s:%d' (in data) after %llu [ms] (syserr %u/%s)
+Error updating server '%s:%d' (in close) after %llu [ms] (syserr %u/%s)
+Error %s server '%s:%d' (in connect tcp) (syserr %u/%s), now repeating for the %d time after %lld [ms]
+Version: %u (%u.%u.%u.%u)
+-> server_send
+<- server_recv
+Server: 
+Failed server message authentication for missing header from '%s:%d'
+Failed server message authentication for protocol error from '%s:%d'
+Failed server message authentication for unsupported protocol from '%s:%d'
+Failed server message authentication for unknown identity '%s' from '%s:%d'
+Failed server message authentication for signature mismatch with identity '%s' from '%s:%d'
+Failed server message authentication for unknown error '%d' from '%s:%d'
+Error renegotiating server '%s:%d' (in connect) after %llu [ms] (syserr %u/%s)
+Error renegotiating server '%s:%d' (in send) after %llu [ms] (syserr %u/%s)
+Error renegotiating server '%s:%d (in recv). %s
+Error renegotiating server '%s:%d' (in data) after %llu [ms] (syserr %u/%s)
+Error renegotiating server '%s:%d' with id '%s' (in data) after %llu [ms] (syserr %u/%s)
+Error renegotiating server '%s:%d' (in close) after %llu [ms] (syserr %u/%s)
+Error setting lingering to zero for server '%s:%d' (in close) (syserr %u/%s)
+No server found as broadcast is disabled and no user address is specified
+Failed to wait for update worker thread
+Error probing server '%s:%d' (in connect udp) after %llu [ms] (syserr %u/%s)
+Error probing server '%s:%d' (in send) after %llu [ms] (syserr %u/%s)
+Error probing server '%s:%d' (in data) after %llu [ms] (syserr %u/%s)
+Error probing server '%s:%d' (in short data) after %llu [ms] (syserr %u/%s)
+Error probing server '%s:%d' (in close) after %llu [ms] (syserr %u/%s)
+Server '%s:%d' was too slow to probe (in connect tcp) (syserr %u/%s), more than %lld [ms]
+Error probing server '%s:%d' (in connect tcp) after %llu [ms] (syserr %u/%s). Failing the command 
+Server '%s:%d' was too slow to answer to probe, more than %lld [ms]
+Local server ignored. %s
+Remote server '%s:%d' ignored. %s
+Error probing server '%s:%d (in recv). %s
+Error probing user specified server '%s:%d' (in data) after %llu [ms] (syserr %u/%s)
+Error probing user specified server '%s:%d' with id '%s' (in data) after %llu [ms] (syserr %u/%s)
+Error probing user specified server '%s:%d' (in close) after %llu [ms] (syserr %u/%s)
+Error keeping alive server '%s:%d' (in connect tcp) after %llu [ms] (syserr %u/%s). Failing the command
+<?xml version="1.0" encoding="UTF-8"?>
+update_session_req
+update_session_reply
+TCP socket close method set to 'server'
+;* Version %d.%d %s at %s
+Failed to change the server ID
+Failed to create product lock
+Failed to lock product
+Failed to unlock product
+<product>
+</product>
+<location><license_manager id="%s" time="%llu"><hostname>%s</hostname><version>%u.%u.0.0</version><host_fingerprint type="SL-AdminMode" crc="%u">%s</host_fingerprint></license_manager></location>
+Auto-detach license %llu for product %u failed at transmission level with error %d
+Auto-detach license %llu for product %u failed at packet level with error %d
+Auto-detach license %llu for product %u failed at packet decoding with error %d
+Auto-detach license %llu for product %u failed at header decoding with error %d
+Auto-detach license %llu for product %u failed at header checking
+Auto-detach license %llu for product %u failed at stub decoding with error %d
+Auto-detach license %llu for product %u with generation %d requires a more recent License Manager than %d.%d
+Auto-detach license %llu for product %u failed at apply level with HASP error %d
+Auto-detach license %llu for product %u failed at apply level (error 0x%x)
+Duplicate container %llu found in server %s %s
+Update v2c is empty
+Firmware update failed for Sentinel HL key %llu (error 0x%x)
+Sentinel HL %llu failed to update file (error 0x%x)
+Sentinel HL %llu supports unknown protocol revision. Ignoring key
+WALLE driver failed to execute UPDATE_FILE command (error 0x%x)
+Sentinel HL %llu failed to execute UPDATE_FILE command (error 0x%x)
+Firmware update is too old
+Firmware update magic is wrong
+Firmware update checksum is broken
+Firmware update product flag is wrong
+WALLE driver failed to execute KEY_EXCHANGE command (error 0x%x)
+Sentinel HL %llu failed to execute KEY_EXCHANGE command (error 0x%x)
+Sentinel HL %llu feature %d is exported to network, but it's not a NET or Net Licenses on Standalone Key. Ignoring feature
+Sentinel HL %llu feature %d has concurrency, but it's not a NET key or Net Licenses on Standalone Key. Ignoring feature
+Sentinel HL %llu feature %d has net concurrency for %d seats, but it's a key for only %d seats
+Sentinel HL %llu feature %d has unlimited network concurrency, but it's a key for only %d seats
+Sentinel HL %llu feature %d is trial or expiry, but the key has no RTC
+NH_IPX.NH_DATFILE_PATH
+NH_IPX.NH_SERVER_NAME
+NH_TCPIP.NH_SERVER_ADDR
+NH_TCPIP.NH_SERVER_NAME
+UPDATE_SESSION
+update_session
+Failed to apply a v2c update due to HL key type mismatch
+      <product id="%d"/>
+<?xml version="1.0" encoding="UTF-8" ?>
+key_type
+channel_key
+<?xml version="1.0" encoding="UTF-8" ?>
+key_model
+<?xml version="1.0" encoding="UTF-8" ?><%s />
+product id cannot be 0
+Duplicate Key ID found at %s (%s)
+Update %u
+filters: vendor=%u  key=%llu
+Update 
+Update%20
+ <product>
+<table><tr><td colspan=5><b>Product Details</b></td></tr><tr><td colspan=5>Product ID: <b>%u</b></td></tr><tr><td colspan=5>Vendor ID: <b>%u</b></td></tr>
+<tr><td colspan=5>Product is not detachable</td></tr>
+ </product>
+<?xml version="1.0" encoding="UTF-8"?>
+  <error>HASP_UPDATE_BLOCKED</error>
+<?xml version="1.0" encoding="UTF-8"?>
+server: drogon/
+ path for dynamic views
+Log path does not exist!
+Unable to access log path!
+log file path not exist
+Path pattern: 
+sec-websocket-key
+HTTP Version Not Supported
+You can't use https without cert file or key file
+ creating path 
+ -shared -fPIC -undefined dynamic_lookup -o 
+can't open dir,path:
+Redis is not supported by drogon, please install the hiredis library first.
+No database is supported by drogon, please install the database development library first.
+session_cookie_key
+upload_path
+dynamic_views_path
+dynamic_views_output_path
+server_header_field
+enable_server_header
+log_path
+Path=
+please install yaml-cpp library
+Failed to load private key
+edns-key-tag
+ 2014, 2015 Adobe Systems Incorporated (http://www.adobe.com/).Noto Sans CJK SC RegularRegular1.004;GOOG;NotoSansCJKsc-Regular;ADOBEVersion 1.004;PS 1.004;hotconv 1.0.82;makeotf.lib2.5.63406NotoSansCJKsc-RegularNoto is a trademark of Google Inc.Adobe Systems IncorporatedRyoko NISHIZUKA (kana & ideographs); Paul D. Hunt (Latin, Greek & Cyrillic); Wenlong ZHANG (bopomofo); Sandoll Communication, Soo-young JANG & Joo-yeon KANG (hangul elements, letters & syllables)Dr. Ken Lunde (project architect, glyph set definition & overall production); Masataka HATTORI (production & ideograph elements)http://www.google.com/get/noto/http://www.adobe.com/type/This Font Software is licensed under the SIL Open Font License, Version 1.1. This Font Software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the SIL Open Font License for the specific language, permissions and limitations governing your use of this Font Software.http://scripts.sil.org/OFLNoto Sans CJK SC
+STRING Downloading patch info from %1:server name%.====
+STRING Scanning X-Plane for Installed Scenery====
+STRING the scenery install.====
+STRING Installing New Scenery====
+STRING An error occurred during scenery installation:====
+STRING This installer will guide you through the process of adding and removing scenery.====
+STRING Select an X-Plane Installation to Add or Remove Scenery====
+STRING Select New Scenery====
+STRING Click on the world map to select the scenery you would like to install. Scenery that you deselect will be removed; scenery that you select will be installed. If you fly into an area with no scenery installed, you will see only ocean.====
+STRING Select Scenery====
+STRING You have enough free disk space to install this scenery.====
+STRING You do not have enough free disk space to install this scenery.====
+STRING Upgrade Demo====
+STRING Finished Adding/Removing Scenery====
+STRING There were errors while updating your scenery.====
+STRING There were errors while adding and removing your scenery.====
+STRING There were errors while installing your scenery.====
+STRING There were errors while removing your scenery.====
+STRING Some of your scenery may not be usable. Please check your internet connection and try again, or contact Laminar Research tech support for help.====
+STRING Some of your scenery may not be usable. Please try the installer again later or contact Laminar Research tech support for help.====
+STRING Scenery has been added/removed to match your choices on the map.====
+STRING New scenery has been installed to match your choices on the map.====
+STRING Disk size: %1:total disk space%\nFree disk space: %2:free disk space%\nDisk space needed to install: %3:required disk space%\nDownload size: %4:download size% (%5:download time%)\n\n%6:status message%====
+%4:download size% (%5:download time%)\n\n%6:status message%
+STRING Disk size: %1:total disk space%\nFree disk space: %2:free disk space%\nDisk space needed to install: %3:required disk space%\n\n%4:status message%====
+STRING Change Scenery====
+STRING To select less scenery for a faster installation.====
+STRING Continue Install====
+STRING To keep your current scenery selection (and corresponding long installation time).====
+STRING Install====
+STRING Unable to download. Please check your internet connection.====
+STRING The installer will try to download again shortly.====
+STRING Downloading at %1:rate% from %2:server%.====
+ %2:server% 
+STRING Unable to download from server %1:server%.====
+ %1:server% 
+STRING Contacting %1:server%.====
+ %1:server% 
+STRING Change Destination====
+STRING Select Destination====
+STRING Pick Destination====
+STRING Pick Install Destination for %1:install%.====
+ %1:install% 
+%1:install name%
+ %1:install name% 
+STRING Please change the install name or destination.====
+STRING The installer will create the folder 
+%1:install name%
+ %1:install name% 
+STRING Verify Product====
+STRING Enter Product Key or Insert DVD====
+STRING Enter Product Key====
+STRING Please enter your product key into the field below and click Continue.====
+STRING Your product key is in the email confirming your purchase.====
+STRING Hint: You can copy your product key from your email (using %1:copy shortcut%) & paste it into the text box above (using %2:paste shortcut%).====
+STRING You selected the folder path:====
+STRING About %1:time% left in the install, downloading at %2:rate% from %3:number% download server.====
+STRING About %1:time% left in the install, downloading at %2:rate% from %3:number% download servers.====
+STRING Contacting X-Plane.com to find a demo server.====
+STRING Downloading demo information from %1:server name%.====
+ %1:server name% 
+STRING the demo installation and delete partial installation.====
+STRING the demo installation process.====
+STRING the install.====
+STRING Finished Web Demo Install====
+STRING Scanning %1:folder path% to see what files need updating.====
+ %1:folder path% 
+STRING the update.====
+STRING the update process.====
+STRING Finished Web Update====
+STRING This copy of X-Plane (%1:install path%) is already up to date.====
+%1:install path%
+STRING Finished updating %1:install path%.====
+ %1:install path% 
+STRING Add or Remove Scenery====
+STRING Update X-Plane====
+STRING Update Scenery Online====
+STRING Install a Second Copy of X-Plane====
+STRING What would you like to install?====
+STRING Install a Free Demo of X-Plane====
+STRING Install an X-Plane Product Purchase====
+STRING Open the installer options====
+STRING INSTALLER SETTINGS====
+STRING Operating system to download X-Plane for====
+STRING This can be useful if you want to install X-Plane on this computer and copy the entire X-Plane folder to another computer (maybe one without a disc drive or internet access).====
+STRING Restart the installer to apply changes.====
+STRING Contacting X-Plane.com to find an update server.====
+STRING An error occurred during update:====
+STRING You can continue with the update and attempt to repair the damaged files later, or you can stop the update and try again later.====
+STRING You are about to download %1:download size% of compressed data to update to %2:install name%.====
+ %1:download size% 
+ %2:install name% 
+STRING Server is not responding normally.====
+STRING There is a newer version of the X-Plane installer/updater available.====
+STRING The installer will take you to the web page where you can download the new installer/updater.====
+STRING This demo installer is too old; a newer one is available for download from X-Plane.com.====
+STRING This installer is too old; a newer one is available for download from X-Plane.com.====
+STRING Click the button below to get the newest installer.====
+STRING [ Download Now ]====[ 
+STRING The installer is unable to install or update X-Plane. An error occurred while creating new folders. Make sure the directory you are trying to install to is not set as read-only in your operating system.====
+STRING Install Location: ====
+STRING Install Path:====
+STRING The installer is about to delete the file:====
+STRING The installer is about to install the file:====
+STRING The installer cannot extract a file.====
+STRING Destination: ====
+STRING Could not connect to the internet to find the current version of X-Plane at X-Plane.com.====
+STRING Unable to read downloaded version information.====
+t connect to the internet to find latest version.====
+STRING Unable to read version information from the server.====
+STRING Your version of X-Plane is up to date.====
+STRING There is a new version of X-Plane available! Visit X-Plane.com to download the update.====
+STRING There is a newer beta of X-Plane available! Visit X-Plane.com to download the update.====
+STRING This instrument has invalid key frames.  Please re-enter the key frame values.====
+STRING The key frames of your handles go in the wrong direction.  Reverse the key frame table to fix this!\n====
+STRING You installed two incompatible GPS/FMS systems on the copilot side. You probably meant to install one for the pilot and one for the copilot.\n====
+STRING You installed two incompatible GPS/FMS systems on the pilot side. You probably meant to install one for the pilot and one for the copilot.\n====
+STRING Key Frames====
+STRING FREE UPDATE AVAILABLE====
+STRING A new update is available for X-Plane.====
+STRING Updates include new features, improvements to existing features, and bug fixes. We encourage all users to update in order to get the most complete, powerful simulator available.====
+STRING Update to Latest Beta====
+STRING Update X-Plane Now====
+STRING DOWNLOADING UPDATE...====
+STRING READY TO UPDATE====
+STRING The installer is ready to update X-Plane!====
+STRING SCENERY ELEVATION & LAND CLASS====
+STRING SCENERY TEXTURES & FORESTS====
+STRING This is %1:version name% for Pro Use.====
+ %1:version name% 
+STRING This is %1:version name%, for home use only.====
+ %1:version name% 
+STRING Get help for the current screen====
+STRING X-Plane failed to open the following aircraft file, because it was created with an old version of X-Plane:====X-Plane
+STRING X-Plane failed to open the following aircraft files, because they were created with an old version of X-Plane:====X-Plane
+STRING FILE PATH====
+STRING Scenery not available====
+STRING Flight path====
+s flight path in the map.====
+STRING Reset Path====
+STRING Use the X-Plane installer, available at X-Plane.com, to complete your installation.====
+STRING Download Installer Now====
+STRING Contacting authorization server...====
+STRING Use Demo====
+STRING Unlock Full Version====
+STRING FULL VERSION UNLOCKED====
+STRING Your demo time is up, so your flight controls will no longer function until you restart X-Plane.====
+STRING X-Plane was not able to store your product key information to preferences, probably because you have no enabled (or functioning) network adapter.====X-Plane 
+STRING This means you will not be able to use your product key to unlock X-Plane (forcing you to use the time-limited demo version).====
+STRING Doing so will remove the demo restrictions and allow you unlimited flight time.====
+STRING If you have a DVD or digital download product key, you can use it to unlock the full version of X-Plane.====
+STRING X-Plane is operating in demo mode.====X-Plane 
+STRING Get the full version today at X-Plane.com.====
+STRING Or, if you already own the full version, place the Disc 1 DVD in your computer now, or restart X-Plane to enter your digital download product key.====
+STRING The full version of X-Plane includes scenery for the full world between 74
+STRING UPDATE AVAILABLE====
+STRING UPDATE X-PLANE NOW====
+STRING UPDATE FAILED====
+STRING Checking the web for the latest version of X-Plane...====
+STRING An X-Plane update is available!====
+STRING This free update includes both new features and bug fixes.====
+STRING If you choose not to update now, you can always do so later from the Settings > General > About X-Plane screen.====
+STRING The installer has finished downloading.====
+STRING There was an error downloading the installer.====
+STRING X-Plane is up to date; you already have the latest version of the simulator.====X-Plane
+STRING ADD OR REMOVE SCENERY====
+STRING DOWNLOADING INSTALLER====
+STRING ADD OR REMOVE SCENERY NOW====
+STRING FAILED TO DOWNLOAD INSTALLER====
+STRING Checking the web for the latest X-Plane installer...====
+STRING Would you like to add or remove scenery now?====
+STRING X-Plane can automatically download the latest installer from the web and run it for you so that you can change your scenery installation.====X-Plane 
+STRING Your X-Plane installation appears to be incomplete (perhaps because you previously installed the demo, then later purchased the full version).====
+STRING X-Plane can automatically download the latest installer from the web and run it so that you can complete the installation.====X-Plane
+STRING Warn about missing scenery====
+STRING Choose path to save joystick defaults file.====
+ below will undo any key bindings you have made and reconfigure X-Plane to use the %1:keyboard layout name% keyboard shortcuts.\n\nIf this was not your intention, click Cancel.====
+STRING CONFLICTING KEY ASSIGNMENT====
+%1:key%
+====%1:key% 
+%1:key%
+ %1:key% 
+s (useful for linking together many computers to show the scenery), or its view can be independent of this machine (useful if you want to have one machine always display your instrument panel, for instance, even when your master machine is in an external view).====
+STRING Hide Key Shortcuts====
+STRING Show Key Shortcuts====
+STRING Change the permission on the file so it's not read-only, or create the folder listed in the file path.====
+STRING Could not find the server over the network====
+STRING The destination file system is read-only====
+STRING The authentication server could not be reached====
+STRING There was a problem with the authentication server====
+STRING There was a problem processing data from the authentication server====
+STRING Internal Server Error====
+STRING Destination Path: %1:file%.====
+STRING Scenery loading is now disabled.====
+STRING Press the Update button below to do so.====
+STRING Version and Updates====
+STRING Update Available====
+STRING Go to X-Plane.com and get one Pro Key for each copy of X-Plane on your network. These keys will unlock the dome projection without this alert message.====
+STRING Fail when %1:keyboard key% or joystick button are pressed====
+ %1:keyboard key% 
+STRING Fail when %1:keyboard key% is pressed====
+ %1:keyboard key% 
+STRING Loading %1:file path%.====
+ %1:file path%
+STRING Be sure the path requested above really is available.====
+STRING This may be because you have intentionally disabled your network adapter, or you may need to manually install drivers for your network adapter.====
+STRING You can use the X-Plane installer to update X-Plane and restore all missing aircraft.====
+STRING Reading new scenery files.====
+STRING The full global version of X-Plane, of course, includes scenery for the whole world!====
+STRING There is a professional version of X-Plane. Flight schools use it in pilot training. Many commercial cockpit simulators also use X-Plane to drive their instruments and visuals.====X-Plane
+%1:key or button%
+.====%1:key or button% 
+%1:key or button%
+====%1:key or button% 
+%1:key or button%
+ %1:key or button% 
+STRING Quit & Update to the Latest Beta====
+STRING Quit & Update Now====
+STRING Quit & Install Scenery====
+STRING Search by aircraft name, path, or classification====
+STRING No Pro Key found. A Pro Key is needed to get cylindrical or dome projection options without this alert message.====
+STRING The scenery package 
+%1:file path%
+ requires a third-party scenery library that is not installed.====
+ %1:file path% 
+STRING You will need to install (or update) the 
+%1:scenery package name%
+ package in order for your scenery to render correctly.====
+ %1:scenery package name% 
+STRING Click the Learn More button below to download the missing library.====
+ key to disengage your parking brakes.====
+). This will help slow us down a bit.====
+STRING Go ahead and lower the first notch of flaps. This will help slow us down a bit.====
+STRING The key here is not to over-correct. We want to turn just a bit toward the direction the CDI indicates, then wait.====
+STRING Scanning %1:install folder% to see what scenery you already have installed.====
+ %1:install folder% 
+STRING Note: The installer will only check for the scenery that comes with X-Plane.====
+STRING This scan will not show any custom scenery add-ons that you have installed.====
+STRING Re-run the X-Plane installer and choose 
+Update
+STRING European law requires us to tell you: when you authorize X-Plane using a product key, Laminar Research collects your computer's IP address.====
+STRING We use this information only to verify that your product key has not been stolen.====
+STRING Searched path: ====
+ll receive an email with your product key in case you ever need to reinstall the simulator.====
+re missing files included in the full version of the simulator.====
+STRING Failed to initialize the digital download subsystem.====
+STRING Purchase from X-Plane.com to unlock the full version of X-Plane.====
+STRING There was an error communicating with the server, and your purchase could not be confirmed.====
+STRING If your purchase succeeded, you will receive an email with your product key, which you can copy & paste into X-Plane the next time you start the simulator.====
+STRING Your purchase succeeded, but we were unable to automatically activate the full version of the simulator.====
+STRING You will receive an email with your product key, which you can copy & paste into X-Plane the next time you start the simulator.====
+STRING Failed to parse product key.====
+STRING DEMO MODE ACTIVATED====
+STRING NOTE: Since X-Plane was not able to store your product key information to preferences, you will not be able to authorize the simulator using a digital download key.====
+STRING Purchase the X-Plane digital download now to instantly unlock the full simulator.====
+ X-Plane will continue to contact Laminar Research's servers to authorize your digital download copy of X-Plane.====
+ we will not contact our servers, and X-Plane will revert to demo mode in %1:days% days.====
+STRING Rerun the X-Plane installer and choose Update to fix your copy of X-Plane.====
+STRING Some scenery textures could not be loaded.====
+STRING This may be an installation problem or you may have a damaged add-on scenery package.====
+STRING Run the installer/updater again to get these missing textures.====
+STRING You may need to update the airplane or report this to the aircraft
+STRING Missing runways should be reported to the X-Plane Scenery Gateway.====
+ X-Plane Scenery Gateway 
+STRING Missing runways can be reported to the X-Plane Scenery Gateway if your AIRAC cycle is up-to-date.====
+ X-Plane Scenery Gateway 
+STRING X-Plane could not find the scenery file map.====X-Plane 
+STRING You can continue flying, but X-Plane cannot guarantee you have your scenery properly installed.====
+STRING Use the installer (available at X-Plane.com) to update your installation and repair any missing files.====
+STRING Error loading the scenery file:====
+STRING The scenery may not look correct.====
+STRING There was a problem loading the scenery package:====
+STRING The following scenery package has a problem and will therefore not be loaded:====
+STRING It requires an additional library scenery package that is not installed, or it is missing some of its files.====
+STRING If you do not have a commercial-use key, you agree to use X-Plane for non-commercial purposes only. (See www.X-Plane.com/pro for information on professional use.)====
+STRING Load with Shortcut Key====
+STRING [no key assigned]====[
+STRING No Pro-Use Key found. Global ARINC424 data will not be loaded.====
+STRING Go to X-Plane.com and get a Pro Key to unlock Pro functionality.====
+STRING Error loading the scenery package: ====
+STRING You may need to remove the custom scenery package.====
+STRING Authorizing Digital Download====
+STRING Contacting the authorization server to get information about your product.====
+STRING Downloading product information... %1:progress%% done checking.====
+STRING Are you sure you want to stop scenery installation? You can add or remove more scenery later.====
+STRING Installing Scenery: Please Change DVDs====
+STRING Please select the copy of X-Plane you would like to add scenery to.====
+STRING Your scenery has been updated to match your choices on the map.====
+STRING Scenery has been removed to match your choices on the map.====
+STRING You have selected a very large amount of scenery to install.====
+STRING Help make X-Plane better by allowing X-Plane to send us information about how you use it. We do not collect personally identifying information.====
+STRING You do not have permission to install X-Plane to the location 
+STRING Click on the world map to select the scenery you would like to install. You can use this installer to add or remove scenery later. If you fly into an area with no scenery installed, you will see only ocean.====
+STRING Your copy of X-Plane is up to date; you have the latest version.====
+STRING Cycle 3-D Flight Path====
+STRING Reset 3-D Flight Path====
+STRING Reload the Scenery====
+STRING With this checked, X-Plane will warn you if you try to fly to an area where you have no scenery installed.====
+STRING With this checked, X-Plane will require you to confirm all warnings (by hitting the Enter key) when this machine is configured as networked external visuals or controlled by a networked IOS.====
+STRING Forward with scenery====
+STRING The product key you entered is invalid====
+STRING The product key you entered has been disabled====
+STRING The product key you entered is for an older version of X-Plane====
+STRING The product key you entered is for an expired version of X-Plane; please contact Laminar Research to renew it====
+STRING If this does not help, check your graphics card specifications.====
+STRING You can still fly, but you may experience pauses during flight while scenery loads.====
+STRING You should update to take advantage of the improvements.====
+STRING Missing Scenery====
+STRING Leaving demo mode now.====
+STRING You are leaving the demo area!====
+ X-Plane actually models the virtual airflow over the airfoil surfaces of the simulated aircraft. Most simulators use a table lookup scheme which can only approximate a correct flight model.====X-Plane 
+s easy to change the scenery that you
+ve installed with X-Plane at any time. Run the installer and select the option to 
+Add / Remove Scenery.
+ Press the M key or click the map marker icon in the menu.====M 
+STRING Understanding the aerodynamic forces on an airplane will give you a better concept of how the aircraft flies. The four basic forces are weight, lift, thrust, and drag. Understanding the interaction of these forces will help you become a better pilot.====
+STRING Find out if you have the latest X-Plane update by clicking on Settings > About X-Plane. If an update is available there will be an 
+Update X-Plane
+ button in the window. Click the button to download and launch the installer to install the update.====
+s internal scenery tool for building airports is called World Editor or WED. WED can be downloaded for free and even includes a full set of video tutorials designed for the 1st time user. There are now thousands of free 3-D WED airports included with X-Plane updates.====World Editor (
+ key to toggle smoke, or pick a different key in Settings > Keyboard.====
+STRING Scenery and other algorithms by Ben Supnik====
+STRING Scenery elevation and landclass by Andras Fabian====
+STRING Scenery textures and forests by Albert Laubi====
+STRING When you click update button, X-Plane will launch the installer and update to the latest version.====
+STRING You can dismiss this message by pressing the Enter key, or by clicking 
+STRING Your speed is 155 knots. Lower another notch of flaps. This will help keep us from stalling as we slow down.====
+). This will help slow us down a bit.====
+Quit & Install Scenery,
+ X-Plane will launch the installer and allow you to change your scenery installation.====
+ X-Plane will launch the installer and begin installing your missing files.====
+STRING Headless devices aren't supported to run Metal====Metal 
+STRING AIRPORT SCENERY====
+STRING We, the X-Plane community, owe these scenery authors a tremendous debt of gratitude.====
+STRING View All Scenery Contributors====
+STRING The previous file path was: %1:path%====
+%1:path%
+STRING Custom Scenery====Custom Scenery
+STRING Path====
+STRING Scenery Plugin====
+STRING An aircraft's audio files could not be loaded because they are modified copies of another aircraft's audio files. You will need to update a third party aircraft or change your selection of AI aircraft to fix this.====
+STRING Weather download failed: ====
+STRING Destination:====
+STRING Your GPU is incompatible with X-Plane under Metal on this OS version.====
+STRING Installed driver version: ====
+STRING GLOBAL SCENERY REQUIRED====
+re leaving the free scenery region.====
+STRING Subscribe now to unlock global scenery, including over 36,000 airports and access to all aircraft!====
+STRING The scenery is being reloaded because of your graphics level change.====
+STRING AIRPORT SCENERY GATEWAY & WORLD EDITOR====
+ Scenery Gateway 
+STRING Download ====
+STRING Real-Weather Download On!====
+ve selected Real-Weather downloading X-Plane will periodically check the internet for real-world weather reports, and update the weather in the simulator to match those conditions.====
+STRING You are now eligible to download the X-Plane global scenery and complete your upgrade to X-Plane 12 Global.====
+STRING Please enter your X-Plane 12 digital download product key to unlock the full version of X-Plane.====
+STRING Buy the X-Plane 12 digital download now to get instant access to the full simulator!====
+STRING Buy the full version of X-Plane 12 Global on Steam today!====
+STRING Please insert your X-Plane 12 Disc 1 DVD now to unlock the full version of X-Plane.====
+STRING Checking the net for the latest version of X-Plane 12 right now, and I am %1:progress%% done checking.====
+STRING Please pick a name for your X-Plane 12 Demo installation. ====
+STRING Pick a folder to install the X-Plane 12 Demo into.====
+STRING You have enough free disk space to install the X-Plane 12 Demo at this location.====
+STRING You do not have enough free disk space to install the X-Plane 12 Demo at this location. You can change the install location to a drive with more free disk space.====
+STRING Are you sure you want to cancel the installation? This will delete the partially installed copy of the X-Plane 12 Demo.====
+STRING Installing X-Plane 12 Demo====
+STRING There was a problem installing the X-Plane 12 Demo. Please check your internet connection and try again, or contact Laminar Research tech support for help.====
+STRING There was a problem installing the X-Plane 12 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.====
+STRING The X-Plane 12 Demo has finished installing at: %1:file path%.====X-Plane 12 
+%1:file path%
+STRING X-Plane 12 Installer====X-Plane 12 
+STRING Welcome to the X-Plane 12 Installer/Updater.====
+STRING This installer will guide you through the process of upgrading your X-Plane 12 demo to a full installation of X-Plane.====
+STRING The installer found the following copy of X-Plane 12 to add scenery to.====
+STRING Checking the internet for the latest version of X-Plane 12. %1:progress%% done checking.====
+STRING Are you sure you want to stop the update? X-Plane 12 will not be usable until the update is finished. You can resume the update later.====
+STRING This installer will guide you through the process of updating your copy of X-Plane 12 to the latest version.====
+STRING The installer found the following copy of X-Plane 12 to update.====
+STRING Please select which copy of X-Plane 12 you would like to update.====
+STRING There is a newer version of X-Plane 12 available, but you do not have enough free disk space to download and install the update.====X-Plane 12 
+STRING You have enough free disk space to update X-Plane 12.====
+STRING You do not have enough free disk space to update X-Plane 12.====
+STRING Please check your internet connection and try again, or contact Laminar Research tech support for help.====
+STRING Please try the updater again later or contact Laminar Research tech support for help.====
+STRING Pick a folder to install X-Plane 12 into.====
+STRING You have enough free disk space to install X-Plane 12 at this location.====
+STRING You do not have enough free disk space to install X-Plane 12 at this location.  You can install to a different location, or save disk space by installing only some of the global scenery.====
+STRING X-Plane 12 Installer/Updater====X-Plane 12 
+STRING Welcome to the X-Plane 12 Installer. This installer will guide you through the process of installing X-Plane 12.====
+STRING Welcome to the X-Plane 12 Installer. This installer will guide you through the process of installing %1:install name%.====
+ %1:install name%
+STRING You have enough free disk space to install X-Plane 12 with the selected scenery.====
+STRING You do not have enough free disk space to install X-Plane 12 with the selected scenery; change the install location to another hard drive or select less scenery.====
+STRING Please try the installer again later or contact Laminar Research tech support for help.====
+STRING Please pick which copy of the X-Plane 12 demo you would like to run.====
+STRING The path you selected may be protected by the operating system against writing.====
+STRING Welcome to X-Plane 12. This installer will guide you through the process of installing X-Plane.====
+STRING You already have the X-Plane 12 Demo installed on this computer.  What would you like to do?====
+STRING Run the X-Plane 12 Demo====
+STRING Update the X-Plane 12 Demo====
+STRING Download is complete!====
+STRING Select a destination and tap Add to Route.====
+STRING The Fly-In of the Day airport (%1:airport_name%) requires a global scenery subscription.====
+STRING Your chosen route requires access to global scenery.====
+STRING Global scenery, featuring over 36,000 airports====
+STRING GLOBAL SCENERY + ALL AIRCRAFT + MMO====
+STRING GLOBAL SCENERY + AIRCRAFT + MMO====
+STRING GLOBAL SCENERY ONLY====
+STRING A global scenery subscription includes more than 37,000 airports, over 11,500 of which feature 3D terminals, hangars, & more?====
+ button to download the map, aircraft, scenery, and navdata for your entire route!====
+STRING GLOBAL SCENERY IS HERE!====
+STRING Visit more than 11,500 airports with 3D scenery, including terminals, hangars, control towers, & more.====
+STRING Departing %1:airport name% (%2:airport ID%) for %3:destination airport name% (%4:destination airport ID%)====
+ %3:destination airport name% (%4:destination airport ID%)
+STRING Contacting server...====
+STRING Uncontrolled server====
+STRING Controlled server====
+STRING DISCONNECTED FROM MULTIPLAYER SERVER====
+STRING CONNECTION TO MULTIPLAYER SERVER FAILED====
+STRING Reporting this controller could result in them being reprimanded and possibly removed from the server.====
+STRING Error filing with the server====
+STRING An updated version of Navigraph data has been downloaded and the app must restart to use it.====
+STRING Nestled in the Alps, Innsbruck provides some of the most spectacular mountain scenery on the planet. Those mountains also make for a rather difficult approach to the runway. Rather than flying a typical traffic pattern, pilots have to circle the airport to decrease speed and altitude, carefully avoiding the violent winds created by the Alps.====
+STRING Downloading Server List...====
+STRING Downloading Manifest...====
+STRING Parsing Manifest...====
+STRING Download Real Weather!====
+STRING NOW downloading real-weather files! Download percent done: ====
+STRING %1:general error%\n\nPath: %2:path%\n\n%3:specific error%.\n\n%4:options%====%1:general error%\n\n
+: %2:path%\n\n%3:specific error%.\n\n%4:options%
+STRING Zink requires at least %1:driver version% to work====
+ %1:driver version% 
+STRING Download Real Weather====
+STRING The current beta version of X-Plane is now %1:version%.====X-Plane 
+ %1:version%
+STRING The current final, non-beta version of X-Plane is now %1:version%.====X-Plane 
+ %1:version%
+STRING Auto-route requires the destination to be more than %1:min_miles%NM away.====
+STRING VERSION====
+STRING Because X-Plane is operating in demo mode, you can only load scenery for the Portland, OR region. Areas outside of Portland will show only water.====
+STRING Contributed by the X-Plane Scenery Gateway community====
+ X-Plane Scenery Gateway 
+STRING No scenery available outside of Portland while in demo mode====
+STRING Submitting a report will help developers try and solve this problem.====
+STRING Contact tech support via https://x-plane.com/support for help resolving this issue.====
+STRING Demo mode allows you to fly around the Portland area for %1:number% minutes at a time.====
+STRING Go to https://x-plane.com/support if you need help.====
+STRING Reporting this pilot could result in them getting reprimanded and possibly removed from the server.====
+STRING X-Plane 12 is available for Windows, Mac, & Linux? Go to X-Plane.com to try a free demo!====X-Plane 12
+STRING Lost connection to server====
+STRING Your chosen airport requires access to global scenery.====
+STRING You may need to rerun the installer to get the missing file.====
+STRING Error during DVD scan: The installer cannot extract a file. Please report this to X-Plane technical support via https://x-plane.com/support, and include the information below:====DVD
+STRING Follow us on social media (@XPlaneOfficial on Twitter and Instagram) for frequent updates or join the conversation on our Discord server 
+STRING Touch a command... Hit the key you want to use!====
+STRING Don't show warning about the real weather download failing====
+STRING The demo only includes scenery for the Portland (KPDX) area.====
+STRING X-Plane 12 runs on all of the most popular operating systems. X-Plane Desktop is available for Windows, macOS, and Linux. The mobile version of X-Plane is available for both Apple iOS and Android.====X-Plane 12
+STRING Save your flying memories by easily creating screenshots right within X-Plane. Press the Shift key and Spacebar at the same time, or select File > Take Screenshot from the menu bar. Find your screenshots in the Output folder in your main X-Plane folder.====X-Plane
+STRING You can build your own 3-D airports and submit them for inclusion in future updates to X-Plane 12. Visit the X-Plane Scenery Gateway (gateway.x-plane.com) for more information.====
+STRING Diagnostic report has been saved to:\n%1:path%====
+: \n%1:path%
+STRING Connecting to X-Plane auth server====
+STRING Getting server list====
+STRING Downloading from a random server====
+STRING Version 11-Version 12====v11-v12
+STRING SCENERY UPDATE AVAILABLE====
+STRING UPDATE SCENERY NOW====
+STRING Would you like to update scenery now?====
+STRING X-Plane can automatically download the latest installer from the web and run it for you so that you can update your scenery installation.====X-Plane
+Quit & Update Scenery,
+ X-Plane will launch the installer and allow you to update your scenery installation.====
+STRING Quit & Update Scenery====
+STRING Your graphics card doesn't have enough VRAM to meet your texture settings. With the current settings, scenery and aircraft, your textures will appear as if the slider was set to '%1:level%'====
+STRING You may need to rerun the installer or update your graphics drivers.====
+STRING This is most likely because of a bad graphics driver install. Please re-install your graphics driver and try again.====
+STRING The aircraft '%1:acf_path%' could not be found on the external visual machine====
+'%1:acf_path%'
+STRING What's new for this update to X-Plane?====X-Plane
+STRING Scenery debug info dumped to log.====
+STRING MISSING SCENERY====
+STRING This region has missing scenery!====
+STRING Areas with no scenery will have nothing but water around them.====
+STRING You can download the missing scenery for free through Steam.====
+STRING You can use the X-Plane installer to add missing scenery at any time.====
+STRING Install Missing Scenery====
+STRING Would you like to end your flight and install the missing scenery now?====
+STRING Dump Scenery Debugging Info to Log====
+STRING Digital Download Product Key (XDD)====
+STRING If you want to hear speech generated by plugins, you will need to install Apple
+STRING The requested key already exists in the lockbox====
+STRING The requested key was not found in the lockbox====
+STRING X-Plane%2012%20Installer%2FUpdater====X-Plane%2012%20Installer%2FUpdater
+STRING Because X-Plane is operating in demo mode, you can only load scenery for the Salzburg (LOWS) region. Areas outside of Salzburg will show only water.====X-Plane
+STRING No scenery available outside of Salzburg while in demo mode====
+STRING Scenery====
+STRING Only use default scenery for this session. Your other scenery and scenery_packs.ini file will NOT be affected.====
+STRING Demo mode allows you to fly around the Salzburg area for %1:number% minutes at a time.====
+STRING The product key you entered is associated with an X-Plane identity; please log in to use X-Plane====
+STRING You requested safe mode using the commandline.====
+STRING You requested safe mode by holding the Control key during start-up.====
+STRING The demo only includes scenery for the Salzburg (LOWS) area.====
+STRING Show Demo Areas====
+STRING X-Plane 12 Demo - Airport is not available====X-Plane 12
+STRING X-Plane 12 Demo - Selected airport is outside of the demo areas!====X-Plane 12 
+STRING X-Plane 12 - Demo====X-Plane 12
+STRING WELCOME TO THE X-PLANE 12 DEMO====
+STRING Explore four unique demo areas, each featuring detailed landscapes and challenging airports:====
+STRING Demo mode allows you to fly around the demo areas for %1:number% minutes at a time.====
+STRING Click on 'Show Demo Areas' to read more about places to fly to.====
+STRING Get the full version today at X-Plane.com!====
+STRING LEAVING THE DEMO AREA====
+STRING You're approaching the edge of the demo area.====WHOOP WHOOP~
+STRING Beyond this point, only water will be visible - no additional scenery is included in the demo.====
+STRING The full version of X-Plane includes detailed scenery for nearly the entire world, from 74
+STRING Click 'Show Demo Areas' to see which regions are available====
+STRING Modifier Key Internal====
+STRING Modifier Key External====
+STRING Reloading objects & scenery.====
+STRING X-Plane will periodically download real-world weather reports and update the weather in the simulator to match those conditions.====X-Plane
+ Aigen (LOXA) - Follow the river through spectacular mountain scenery====SaZell am See (LOWZ) 
+STRING Try one of these flights in the Alps demo area:====
+STRING Try one of these flights in the Portland demo area:====
+STRING Try one of these flights in the Alaska demo area:====
+STRING Try one of these flights in the Hawaii demo area:====
+STRING The Digital Product Key (XDD) you entered is already associated with your X-Plane Identity account. Please Login using your X-Plane Identity to continue.====
+STRING If you check this, the latest beta version will be installed when available. Beta versions include the latest features but may contain bugs.====
+STRING When handed off enroute, check in automatically and set altimeter/transponder. This will not automate the check-in to your final destination, or non-coordinated handoffs.====
+STRING The aircraft '%1:acf_path%' could not be found locally====
+%1:acf_path%
+#STRING (The folder %1:install name% will appear on your desktop.)==== (
+%1:install name%
+#STRING 1) Go to X-Plane.com and get a key to unlock the G1000 functionality.====1)  
+#STRING 1) Go to X-Plane.com and get a key to unlock the G430 functionality.====1)  
+#STRING 3-D path reset.====3D
+#STRING 3-D path toggle.====3D
+#STRING A Professional-Use USB key is required to interface with real GPS hardware.====
+#STRING ABOUT THE X-PLANE DEMO====
+#STRING AIRPORT SCENERY GATEWAY====
+#STRING Add New Key Assignment====
+#STRING Add or Remove Scenery Now====
+#STRING Are you sure you want to cancel the installation? This will delete the partially installed copy of the X-Plane 11 Demo.====
+#STRING Are you sure you want to stop the update? X-Plane 11 will not be usable until the update is finished. You can resume the update later.====
+#STRING Autopilot flight path angle, current FPA.====Autopilot flight path angle, current FPA
+#STRING Baron B58 6.00 (version 0500.02)====
+#STRING Because X-Plane is operating in demo mode, you can only load scenery for the Seattle region. Areas outside of Seattle will show only water.====
+#STRING Buy the X-Plane 11 digital download now from X-Plane.com to get instant access to the full simulator!====
+#STRING Buy the X-Plane 11 digital download now to get instant access to the full simulator!====
+#STRING Buy the full version of X-Plane 11 Global on Steam today!====
+#STRING Cessna 172S 7.01 (version 0563.00)====
+#STRING Cessna 182T 7.01 (version 0563.00)====
+#STRING Checking the internet for the latest version of X-Plane 11. %1:progress%% done checking.====
+#STRING Checking the net for the latest version of X-Plane 11 right now, and I am %1:progress%% done checking.====
+#STRING Choose a destination for the new FDR file template====
+ below will undo any key bindings you have made and reconfigure X-Plane to use the default keyboard shortcuts.\n\nIf this was not your intention, click Cancel.====
+#STRING Columbia 400 6.00 (version 0530.02)====
+#STRING Contact tech support at info@x-plane.com for help resolving this issue.====
+#STRING DOWNLOAD FAILED====
+#STRING DOWNLOADING UPDATE====
+#STRING Delete Selected Key Assignment====
+#STRING Demo mode allows you to fly around the Seattle area for %1:number% minutes at a time.====
+#STRING Draw shadows on scenery====
+#STRING Email info@x-plane.com if you need help.====
+#STRING Error during DVD scan: The installer cannot extract a file. Please report this to X-Plane techincal support at info@x-plane.com, and include the information below:====
+#STRING FMS2: key_0====FMS2: 0
+#STRING FMS2: key_1====FMS2: 1
+#STRING FMS2: key_2====FMS2: 2
+#STRING FMS2: key_3====FMS2: 3
+#STRING FMS2: key_4====FMS2: 4
+#STRING FMS2: key_5====FMS2: 5
+#STRING FMS2: key_6====FMS2: 6
+#STRING FMS2: key_7====FMS2: 7
+#STRING FMS2: key_8====FMS2: 8
+#STRING FMS2: key_9====FMS2: 9
+#STRING FMS2: key_A====FMS2: A
+#STRING FMS2: key_B====FMS2: B
+#STRING FMS2: key_C====FMS2: C
+#STRING FMS2: key_D====FMS2: D
+#STRING FMS2: key_E====FMS2: E
+#STRING FMS2: key_F====FMS2: F
+#STRING FMS2: key_G====FMS2: G
+#STRING FMS2: key_H====FMS2: H
+#STRING FMS2: key_I====FMS2: I
+#STRING FMS2: key_J====FMS2: J
+#STRING FMS2: key_K====FMS2: K
+#STRING FMS2: key_L====FMS2: L
+#STRING FMS2: key_M====FMS2: M
+#STRING FMS2: key_N====FMS2: N
+#STRING FMS2: key_O====FMS2: O
+#STRING FMS2: key_P====FMS2: P
+#STRING FMS2: key_Q====FMS2: Q
+#STRING FMS2: key_R====FMS2: R
+#STRING FMS2: key_S====FMS2: S
+#STRING FMS2: key_T====FMS2: T
+#STRING FMS2: key_U====FMS2: U
+#STRING FMS2: key_V====FMS2: V
+#STRING FMS2: key_W====FMS2: W
+#STRING FMS2: key_X====FMS2: X
+#STRING FMS2: key_Y====FMS2: Y
+#STRING FMS2: key_Z====FMS2: Z
+#STRING FMS2: key_back====FMS2: 
+#STRING FMS2: key_clear====FMS2: CLEAR
+#STRING FMS2: key_delete====FMS2: DELETE
+#STRING FMS2: key_minus====FMS2: -
+#STRING FMS2: key_period====FMS2: .
+#STRING FMS2: key_slash====FMS2: /
+#STRING FMS2: key_space====FMS2: 
+#STRING FMS: key_0====FMS: 0
+#STRING FMS: key_1====FMS: 1
+#STRING FMS: key_2====FMS: 2
+#STRING FMS: key_3====FMS: 3
+#STRING FMS: key_4====FMS: 4
+#STRING FMS: key_5====FMS: 5
+#STRING FMS: key_6====FMS: 6
+#STRING FMS: key_7====FMS: 7
+#STRING FMS: key_8====FMS: 8
+#STRING FMS: key_9====FMS: 9
+#STRING FMS: key_A====FMS: A
+#STRING FMS: key_B====FMS: B
+#STRING FMS: key_C====FMS: C
+#STRING FMS: key_D====FMS: D
+#STRING FMS: key_E====FMS: E
+#STRING FMS: key_F====FMS: F
+#STRING FMS: key_G====FMS: G
+#STRING FMS: key_H====FMS: H
+#STRING FMS: key_I====FMS: I
+#STRING FMS: key_J====FMS: J
+#STRING FMS: key_K====FMS: K
+#STRING FMS: key_L====FMS: L
+#STRING FMS: key_M====FMS: M
+#STRING FMS: key_N====FMS: N
+#STRING FMS: key_O====FMS: O
+#STRING FMS: key_P====FMS: P
+#STRING FMS: key_Q====FMS: Q
+#STRING FMS: key_R====FMS: R
+#STRING FMS: key_S====FMS: S
+#STRING FMS: key_T====FMS: T
+#STRING FMS: key_U====FMS: U
+#STRING FMS: key_V====FMS: V
+#STRING FMS: key_W====FMS: W
+#STRING FMS: key_X====FMS: X
+#STRING FMS: key_Y====FMS: Y
+#STRING FMS: key_Z====FMS: Z
+#STRING FMS: key_back====FMS: BACK
+#STRING FMS: key_clear====FMS: CLEAR
+#STRING FMS: key_delete====FMS: DEL
+#STRING FMS: key_load====FMS: LOAD
+#STRING FMS: key_minus====FMS: -
+#STRING FMS: key_period====FMS: .
+#STRING FMS: key_save====FMS: SAVE
+#STRING FMS: key_slash====FMS: /
+#STRING FMS: key_space====FMS: 
+#STRING Finally, if you need help, just click on the question mark on the right side of the menu bar.====
+#STRING Finshed Web Update====
+#STRING Force reloading the current scenery.====
+#STRING Force reloading the current scenery.====
+#STRING G1000 software version====G1000
+#STRING GDU version====Garmin
+#STRING GIA version====Garmin
+t Have a Product Key====
+#STRING I Have a Digital Download Product Key====
+#STRING I could not help but notice that you are going after a forest fire with no water to drop on it.====
+#STRING I found an area with no scenery installed! You will see nothing but water around the airports since no scenery is installed for this area!====
+#STRING If that does not help, please report this to customer support, at info@x-plane.com.====
+#STRING If you want to hear air traffic control verbally, you will need to install Apple
+#STRING Ignition key down one notch for engine #%1:index%.====
+#STRING Ignition key up one notch for engine #%1:index%.====
+#STRING In reality, aircraft controls have near-infinite resolution, high displacement-force, and the plane imparts G on you when you pull back. To help make up for the lack of these things in the sim, you can slide these sliders up a bit to add 
+#STRING Install Updates====
+#STRING Installing X-Plane 11 Demo====
+#STRING Installing X-Plane in %1:file path%.====
+%1:file path%
+#STRING NOTE: Since X-Plane was not able to store your product key information to preferences, you will not be able to authorize the simulator using a digital download key. Contact tech support at info@x-plane.com for help resolving this issue.====
+#STRING Near the end, your descent path should be about 20 degrees down, 300 knots indicated.====
+#STRING No Pro-Use Key found. G1000 support will not be allowed.====2)  
+#STRING No Pro-Use Key found. G430 support will not be allowed.====
+#STRING No scenery available outside of Seattle while in demo mode====
+#STRING Or, enter a digital download product key to unlock the full version of X-Plane without a DVD.====
+t have a DVD, you can purchase the X-Plane 11 digital download from X-Plane.com to get instant access to the full simulator.====
+t have a DVD, you can purchase the X-Plane 11 digital download to get instant access to the full simulator.====
+t have a DVD, you can purchase the X-Plane 12 digital download to get instant access to the full simulator.====
+t have a product key, you can purchase the X-Plane 11 digital download from X-Plane.com to get instant access to the full simulator.====
+t have a product key, you can purchase the X-Plane 11 digital download to get instant access to the full simulator.====
+t have a product key, you can purchase the X-Plane 12 digital download to get instant access to the full simulator.====
+#STRING Or, insert an X-Plane 11 Disc 1 DVD now to unlock the full version of X-Plane.====
+#STRING Or, insert an X-Plane 12 Disc 1 DVD now to unlock the full version of X-Plane.====
+#STRING Order a Pro-Use Key Now====
+#STRING Pick a folder to install X-Plane 11 into.====
+#STRING Pick a folder to install the X-Plane 11 Demo into.====
+#STRING Please check your internet connection and try again, or contact Laminar Research tech support at info@x-plane.com for help.====
+#STRING Please enter your X-Plane 11 digital download product key to unlock the full version of X-Plane.====
+#STRING Please insert your X-Plane 11 Disc 1 DVD now to unlock the full version of X-Plane.====
+#STRING Please pick a name for your X-Plane 11 Demo installation. ====
+#STRING Please pick which copy of the X-Plane 11 demo you would like to run.====
+#STRING Please select which copy of X-Plane 11 you would like to update.====
+#STRING Please try the installer again later or contact Laminar Research tech support at info@x-plane.com for help.====
+#STRING Please try the updater again later or contact Laminar Research tech support at info@x-plane.com for help.====
+#STRING Re-run the X-Plane installer and choose "Update" to replace the missing file.====
+#STRING Re-run the X-Plane installer/updater to correct this problem.====
+#STRING Run the X-Plane 11 Demo====
+#STRING Runways follow terrain contours (requires scenery reload)====
+#STRING Select the key you'd like to program from the list on the left of this screen and hit any key you like! Then select the group and item to assign a funtion to that keypress!====
+#STRING Select the method you'd like to use to unlock the full version of X-Plane.====
+#STRING Shortcut Key====
+ X-Plane will periodically check the internet for real-world weather reports, and update the weather in the simulator to match those conditions.====
+#STRING Software version must match the G1000
+t have a Pro-Use USB key.====
+t have a Pro-Use USB key.====
+#STRING The X-Plane 11 Demo has finished installing at: %1:file path%.====X-Plane
+%1:file path%
+#STRING The application has crashed. A report has been automatically generated that will help us understand the problem so that it can be solved in future releases.====QAQ 
+#STRING The demo only includes scenery for the Seattle-Tacoma area.====
+#STRING The installer found the following copy of X-Plane 11 to add scenery to.====
+#STRING The installer found the following copy of X-Plane 11 to update.====
+#STRING There is a newer version of X-Plane 11 available, but you do not have enough free disk space to download and install the update.====
+#STRING There was a problem installing the X-Plane 11 Demo. Please check your internet connection and try again, or contact Laminar Research tech support at info@x-plane.com for help.====
+#STRING There was a problem installing the X-Plane 11 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.====
+#STRING There were problems updating X-Plane.  You can try this updater again using a different server.====X-Plane
+#STRING This copy of X-Plane is a newer version than this update.====
+#STRING This installer will guide you through the process of installing the X-Plane 10 Demo.=====
+#STRING This installer will guide you through the process of installing the X-Plane 11 Demo.=====
+#STRING This installer will guide you through the process of updating your copy of X-Plane 11 to the latest version.====
+#STRING This installer will guide you through the process of upgrading your X-Plane 11 demo to a full installation of X-Plane.====
+#STRING To correct this issue, install the latest version of your graphics driver, available from either Intel or your computer's manufacturer.====
+#STRING Unable to shift the scenery.====
+#STRING Update the X-Plane 11 Demo====
+#STRING Update to the Latest Beta====
+ key to get a closer look.====
+#STRING Vulkan has been disabled by a command line option.====Vulkan
+#STRING Weather download failed.====
+#STRING Welcome to X-Plane 11. This installer will guide you through the process of installing X-Plane.====
+#STRING Welcome to the X-Plane 11 Installer. This installer will guide you through the process of installing %1:install name%.====
+%1:install name%
+#STRING Welcome to the X-Plane 11 Installer. This installer will guide you through the process of installing X-Plane 11.====
+#STRING Welcome to the X-Plane 11 Installer/Updater.====
+#STRING When you click "Quit & Complete Installation," X-Plane will launch the installer and begin installing your missing files.====
+#STRING When you click "Quit & Install Scenery," X-Plane will launch the installer and allow you to change your scenery installation.====
+Add or Remove Scenery Now,
+ X-Plane will launch the installer and allow you to change your scenery installation.====
+ X-Plane will launch the installer and begin installing your missing files.====
+Update X-Plane Now,
+ X-Plane will launch the installer and update to the latest version.====
+ key decreases it.===='[throttle_down]'
+#STRING With this checked, X-Plane will use the latest version of the flight model in the simulation, rather than the most recent stable release.====
+#STRING Would you like to install the missing scenery now?====
+#STRING X-Plane 11 DVD Update====X-Plane 11 DVD 
+#STRING X-Plane 11 Installer/Updater====X-Plane 11
+#STRING X-Plane 11 Installer====X-Plane
+#STRING X-Plane 11 is available for Windows, Mac, & Linux? Go to X-Plane.com to try a free demo!====X-Plane 11
+#STRING X-Plane 11 runs on all of the most popular operating systems. X-Plane Desktop is available for Windows, Mac OS, and Linux. The mobile version of X-Plane is available for both Apple iOS and Android.====X-Plane
+#STRING X-Plane 11 runs on all of the most popular operating systems. X-Plane Desktop is available for Windows, macOS, and Linux. The mobile version of X-Plane is available for both Apple iOS and Android.====X-Plane 11
+#STRING X-Plane was not able to start using the %1:driver name%, and is now using the OpenGL driver. Update your drivers and then re-enable the %2:driver name% in the graphics settings to try again.====X-Plane
+#STRING You already have the X-Plane 11 Demo installed on this computer.  What would you like to do?====
+#STRING You already have the X-Plane 11 Demo installed on this computer. What would you like to do?====
+#STRING You are now eligible to download the X-Plane global scenery and complete your upgrade to X-Plane 11 Global.====
+#STRING You can ask questions and help others on the X-Plane Question & Answer site. Go to questions.x-plane.com to join the community.====
+#STRING You can build your own 3-D airports and submit them for inclusion in future updates to X-Plane 11. Visit the X-Plane Scenery Gateway (gateway.x-plane.com) for more information.====
+X-Plane Scenery Gateway (gateway.x-plane.com) 
+#STRING You can enter a digital download product key to unlock the full version of X-Plane without a DVD.====
+#STRING You can fly for a limited time in demo mode.====
+#STRING You can fly the X-15 rocket plane to the edge of space. Go to Flight Configuration > Location > Customize > Special Starts and pick Air Drop from B-52. Hit the space key to release, add power, and watch the sky turn from blue to black.====
+#STRING You can insert an X-Plane 11 Disc 1 DVD now to unlock the full version of X-Plane.====
+#STRING You can insert an X-Plane 12 Disc 1 DVD now to unlock the full version of X-Plane.====
+#STRING You can purchase a Pro-Use key from X-Plane.com to unlock this functionality.====
+ key increases the throttle.====
+#STRING You do not have enough free disk space to install X-Plane 11 at this location.  You can install to a different location, or save disk space by installing only some of the global scenery.====
+#STRING You do not have enough free disk space to install X-Plane 11 with the selected scenery; change the install location to another hard drive or select less scenery.====
+#STRING You do not have enough free disk space to install the X-Plane 11 Demo at this location. You can change the install location to a drive with more free disk space.====
+#STRING You do not have enough free disk space to update X-Plane 11.====
+#STRING You have enough free disk space to install X-Plane 11 at this location.====
+#STRING You have enough free disk space to install X-Plane 11 with the selected scenery.====
+#STRING You have enough free disk space to install the X-Plane 11 Demo at this location.====
+#STRING You have enough free disk space to update X-Plane 11.====
+#STRING You installed one of the old GPS/FMS units from X-Plane 9. They are no longer available with Plane Maker 11. Install one of the new GPS/FMS instead.\n====
+#STRING Your computer's graphics driver is known to not work with the X-Plane 11 Installer.====
+#STRING Your computer's graphics driver is known to not work with the X-Plane 12 Installer.====
+#STRING Your copy of X-Plane is now unlocked. But, you're missing files included in the full version of the simulator.====
+#STRING beta version====
+#STRING file version====
+#STRING final, non-beta version====
+STRING Installing New Scenery====Installation des nouvelles sc
+STRING An error occurred during scenery installation:====Une erreur s'est produite durant l'installation des sc
+STRING Select Scenery====S
+STRING Change Scenery====Changer les sc
+STRING Continue Install====Continuer l'installation
+STRING Install====Installer
+STRING Change Destination====Changer la Destination
+STRING Select Destination====S
+lectionner la Destination
+STRING Verify Product====V
+STRING You selected the folder path:====Vous avez s
+STRING Finished Web Demo Install====Installation de la d
+STRING This copy of X-Plane (%1:install path%) is already up to date.====Cette copie de X-Plane (%1:install path%) est d
+rification des fichiers install
+STRING An error occurred during update:====Une erreur s'est produite durant la mise 
+STRING You can continue with the update and attempt to repair the damaged files later, or you can stop the update and try again later.====Vous pouvez continuer la mise 
+STRING You are about to download %1:download size% of compressed data to update to %2:install name%.====Vous 
+charger %1:download size% de donn
+ jour %2:install name%.
+STRING Install Location: ====R
+STRING Install Path:====Chemin d'installation
+STRING Destination: ====Destination: 
+STRING Your version of X-Plane is up to date.====Votre version de X-Plane est 
+re version beta de X-Plane.
+STRING Reset Path====RaZ Trajectoire Vol
+STRING Download Installer Now====T
+STRING X-Plane is operating in demo mode.====X-Plane est en mode d
+STRING Or, if you already own the full version, place the Disc 1 DVD in your computer now, or restart X-Plane to enter your digital download product key.====Ou, si vous disposez d
+ de la version compl
+STRING There was a problem with the authentication server====Il y a eu un probl
+STRING There was a problem processing data from the authentication server====Il y a eu un probl
+STRING Destination Path: %1:file%.====Chemin de destination : %1:file%.
+STRING If this does not help, check your graphics card specifications.====Si cela n'aide pas, v
+STRING Version and Updates====
+STRING Update Available====Mise 
+STRING Doing so will remove the demo restrictions and allow you unlimited flight time.====En faisant ainsi, vous mettrez fin aux limitations de la version d
+STRING Scanning X-Plane for Installed Scenery====Scan en cours des sc
+nes X-Plane install
+STRING Scanning %1:install folder% to see what scenery you already have installed.====Scan en cours de %1:install folder% afin de v
+STRING Downloading product information... %1:progress%% done checking.====T
+STRING This installer will guide you through the process of adding and removing scenery.====Ce programme d'installation vous guidera dans le processus d'ajout et de suppression de sc
+STRING Contacting the authorization server to get information about your product.====Contact du serveur d'autorisation en cours afin de recevoir des informations sur votre produit.
+STRING Select an X-Plane Installation to Add or Remove Scenery====S
+STRING Please select the copy of X-Plane you would like to add scenery to.====S
+STRING Finished Adding/Removing Scenery====Ajout/Suppression des sc
+STRING Your scenery has been updated to match your choices on the map.====Les sc
+STRING Scenery has been added/removed to match your choices on the map.====Les sc
+STRING New scenery has been installed to match your choices on the map.====Les nouvelles sc
+ install
+STRING Scenery has been removed to match your choices on the map.====Les sc
+STRING You have selected a very large amount of scenery to install.====Vous avez s
+ installer.
+STRING Downloading at %1:rate% from %2:server%.====T
+ %1:rate% depuis %2:server%.
+STRING Unable to download from server %1:server%.====Impossible de t
+charger depuis le serveur %1:server%.
+STRING Contacting %1:server%.====Contact en cours de %1:server%.
+STRING Please change the install name or destination.====SVP Changer le nom d'installation ou la destination.
+STRING You do not have permission to install X-Plane to the location 
+ installer X-Plane dans le r
+tre install
+STRING The installer will create the folder 
+%1:install name%
+%1:install name%
+STRING Your product key is in the email confirming your purchase.====La cl
+STRING Contacting X-Plane.com to find a demo server.====Contact de X-Plane en cours pour trouver un serveur de d
+STRING Downloading demo information from %1:server name%.====T
+mo depuis %1:server name%.
+STRING Finished updating %1:install path%.====Mise 
+e %1:install path%.
+STRING Downloading patch info from %1:server name%.====T
+chargement en cour d'un patch info depuis %1:server name%.
+STRING Click on the world map to select the scenery you would like to install. You can use this installer to add or remove scenery later. If you fly into an area with no scenery installed, you will see only ocean.====Cliquez sur la mappemonde pour s
+nes que vous souhaitez installer. Vous pouvez utiliser ce programme d'installation pour ajout ou supprimer des sc
+ install
+STRING What would you like to install?====Que souhaitez-vous installer ?
+STRING Contacting X-Plane.com to find an update server.====Contact de X-Plane.com en cours pour trouver un serveur de mise 
+STRING Server is not responding normally.====Le serveur ne r
+STRING There is a newer version of the X-Plane installer/updater available.====Une version plus r
+STRING The installer will take you to the web page where you can download the new installer/updater.====Le programme d'installation vous guidera vers la page web 
+STRING This demo installer is too old; a newer one is available for download from X-Plane.com.====Ce programme d'installation de d
+mo est trop ancien. Une version plus r
+STRING This installer is too old; a newer one is available for download from X-Plane.com.====Ce programme d'installation est trop ancien; une version plus r
+STRING [ Download Now ]====[ T
+STRING The installer is unable to install or update X-Plane. An error occurred while creating new folders. Make sure the directory you are trying to install to is not set as read-only in your operating system.====Le programme d'installation n'a pas pu installer ou mettre 
+STRING The installer is ready to update X-Plane!====Le programme d'installation est pr
+STRING The full version of X-Plane includes scenery for the full world between 74
+ south latitudes.====La Version compl
+%1:key%
+%1:key%
+%1:key%
+%1:key%
+STRING Change the permission on the file so it's not read-only, or create the folder listed in the file path.====Changez les droits en 
+STRING Could not find the server over the network====Le serveur sur le r
+STRING The product key you entered is for an older version of X-Plane====La cl
+ une version ancien de X-Plane.
+STRING You should update to take advantage of the improvements.====Vous devriez effectuer les mises 
+STRING Press the Update button below to do so.====Appuyer sur le bouton de Mise 
+STRING Leaving demo mode now.====Fin mode d
+STRING Be sure the path requested above really is available.====V
+installer X-Plane pour remplacer l'a
+STRING You are leaving the demo area!====Vous quittez la zone de d
+#version 15 novembre 2016
+STRING the scenery install.====l'installation des sc
+STRING You have enough free disk space to install this scenery.====Vous avez assez d'espace libre sur votre disque dur pour installer cette sc
+STRING You do not have enough free disk space to install this scenery.====Vous avez assez d'espace libre sur votre disque dur pour installer cette sc
+STRING Disk size: %1:total disk space%\nFree disk space: %2:free disk space%\nDisk space needed to install: %3:required disk space%\nDownload size: %4:download size% (%5:download time%)\n\n%6:status message%====Taille Disque: %1:total disk space%\nPlace disque disponible: %2:free disk space%\nPlace n
+cessaire pour installer: %3:required disk space%\nDownload size: %4:taille t
+chargement% (%5:download time%)\n\n%6:status message%
+STRING Disk size: %1:total disk space%\nFree disk space: %2:free disk space%\nDisk space needed to install: %3:required disk space%\n\n%4:status message%====Taille Disque: %1:total disk space%\nPlace disque disponible: %2:free disk space%\nPlace n
+cessaire pour installer: %3:required disk space%\n\n%4:status message%
+STRING Help make X-Plane better by allowing X-Plane to send us information about how you use it. We do not collect personally identifying information.====Aidez 
+STRING the update.====la mise 
+STRING the update process.====le process de mise 
+STRING Finished Web Update====Fin de la mise 
+STRING Open the installer options====Ouvrir les options de l'installation
+STRING INSTALLER SETTINGS====OPTIONS D'INSTALLATION
+STRING Operating system to download X-Plane for====T
+STRING This can be useful if you want to install X-Plane on this computer and copy the entire X-Plane folder to another computer (maybe one without a disc drive or internet access).====Ce pourrait 
+ressant si vous voulez installer X-Plane sur cet ordinateur et copier tout le dossier X-Plane sur un autre ordinateur (peut-
+STRING Restart the installer to apply changes.====Red
+STRING The installer is about to delete the file:====L'installation va supprimer le fichier:
+STRING The installer is about to install the file:====L'installation va installer le fichier:
+STRING FILE PATH====CHEMIN D'ACCES
+STRING Flight path====Trac
+STRING Contacting authorization server...====Contact du serveur d'autorisation...
+STRING Use Demo====Utiliser la D
+STRING Unlock Full Version====D
+verrouiller la version compl
+STRING FULL VERSION UNLOCKED====VERSION COMPLETE DEVERROUILLEE
+STRING X-Plane was not able to store your product key information to preferences, probably because you have no enabled (or functioning) network adapter.====X-Plane n'a pas r
+STRING MISSING SCENERY====SCENE MANQUANTE
+STRING Install Missing Scenery====Installer une Sc
+STRING This region has missing scenery!====Cette r
+STRING Areas with no scenery will have nothing but water around them.====Les zones sans sc
+STRING You can download the missing scenery for free through Steam.====Vous pouvez t
+STRING You can use the X-Plane installer to add missing scenery at any time.====Vous pouvez utiliser l'installeur d'X-Plane pour ajouter des sc
+STRING UPDATE AVAILABLE====MISE A JOUR DISPONIBLE
+STRING UPDATE X-PLANE NOW====METTRE A JOUR X-PLANE MAINTENANT
+STRING UPDATE FAILED====LA MISE A JOUR A ECHOUE
+STRING Checking the web for the latest version of X-Plane...====V
+re version d'X-Plane...
+STRING An X-Plane update is available!====Une mise 
+STRING If you choose not to update now, you can always do so later from the Settings > General > About X-Plane screen.====Si vous choisissez de ne pas mettre 
+STRING The installer has finished downloading.====L'installeur a finit le t
+STRING There was an error downloading the installer.====Il y a eu une erreur en t
+STRING X-Plane is up to date; you already have the latest version of the simulator.====X-Plane est 
+re version du simulateur.
+STRING Update X-Plane Now====METTRE A JOUR X-PLANE MAINTENANT
+STRING ADD OR REMOVE SCENERY====AJOUTER OU SUPPRIMER DES SCENES
+STRING DOWNLOADING INSTALLER====TELECHARGEMENT DE L'INSTALLEUR
+STRING ADD OR REMOVE SCENERY NOW====AJOUTER OU SUPPRIMER DES SCENES MAINTENANT
+STRING FAILED TO DOWNLOAD INSTALLER====ECHEC DU TELECHARGEMENT DE L'INSTALLEUR
+STRING Checking the web for the latest X-Plane installer...====V
+re version de l'installeur d'X-Plane...
+STRING Would you like to add or remove scenery now?====Voulez-vous ajouter ou supprimer des sc
+STRING X-Plane can automatically download the latest installer from the web and run it for you so that you can change your scenery installation.====X-Plane peut automatiquement t
+STRING Your X-Plane installation appears to be incomplete (perhaps because you previously installed the demo, then later purchased the full version).====Votre installation de X-Plane semble 
+demment install
+ la version finale par la suite).
+STRING CONFLICTING KEY ASSIGNMENT====CONFLIT D'AFFECTATION DE TOUCHE
+STRING The destination file system is read-only====Le syst
+me de fichiers de destination est en lecture seule
+STRING The authentication server could not be reached====Le serveur d'authentification n'a pu 
+STRING Missing Scenery====Sc
+STRING Add or Remove Scenery====Ajouter ou supprimer des sc
+STRING Install a Second Copy of X-Plane====Installer un deuxi
+#correction installer. THESE STRINGS NEED TO BE REPLACED
+STRING Scenery and other algorithms by Ben Supnik====Paysages et autres algorithmes par Ben Supnik
+STRING Scenery elevation and landclass by Andras Fabian====
+STRING Scenery textures and forests by Albert Laubi====Textures des paysages et for
+STRING Select New Scenery====S
+STRING There were errors while updating your scenery.====Il y a eu des erreurs lors de la mise 
+STRING There were errors while adding and removing your scenery.====Il y a eu des erreurs lors de l'ajout ou la suppression de vos sc
+STRING There were errors while installing your scenery.====Il y a eu des erreurs lors de l'installation de vos sc
+STRING There were errors while removing your scenery.====Il y a eu des erreurs lors de la suppression de vos sc
+STRING To select less scenery for a faster installation.====Pour s
+STRING To keep your current scenery selection (and corresponding long installation time).====Pour conserver votre s
+STRING Unable to download. Please check your internet connection.====
+STRING Pick Destination====Pointez la destination
+STRING Pick Install Destination for %1:install%.====Pointez la destination d'installation de %1:install%.
+STRING Install an X-Plane Product Purchase====Installer une version achet
+STRING Click the button below to get the newest installer.====Cliquez sur le bouton ci-dessous pour avoir la derni
+re version du programme d'installation.
+STRING Key Frames====Fr
+STRING Scanning %1:folder path% to see what files need updating.====Scan en cours de %1:folder path% afin de v
+STRING the demo installation and delete partial installation.====Installation de la d
+STRING Forward with scenery====Vue Avant avec paysage seul
+s (useful for linking together many computers to show the scenery), or its view can be independent of this machine (useful if you want to have one machine always display your instrument panel, for instance, even when your master machine is in an external view).====Chaque 
+s easy to change the scenery that you
+ve installed with X-Plane at any time. Run the installer and select the option to 
+Add / Remove Scenery.
+nes que vous avez install
+STRING Scenery not available====D
+STRING Because X-Plane is operating in demo mode, you can only load scenery for the Portland, OR region. Areas outside of Portland will show only water.====X-Plane 
+STRING Demo mode allows you to fly around the Portland area for %1:number% minutes at a time.====Le mode d
+STRING No scenery available outside of Portland while in demo mode====Vous ne disposez d'aucun d
+STRING The demo only includes scenery for the Portland (KPDX) area.====La d
+STRING Reading new scenery files.====Lecture des nouveaux fichiers de d
+s flight path in the map.====Si coch
+STRING If you have a DVD or digital download product key, you can use it to unlock the full version of X-Plane.====Si vous avez un DVD ou t
+ d'activation, vous pouvez l'utiliser pour avoir la version compl
+STRING Fail when %1:keyboard key% or joystick button are pressed====Panne quand %1:keyboard key% ou bien le bouton de joystick sont press
+STRING Fail when %1:keyboard key% is pressed====Panne quand %1:keyboard key% est press
+# version : 10/8/2017 
+# X-Plane Bundle installer
+STRING Are you sure you want to stop scenery installation? You can add or remove more scenery later.====Etes vous s
+STRING Upgrade Demo====Mise 
+STRING The installer will try to download again shortly.====Le programme d'installation va refaire une tentative de t
+STRING About %1:time% left in the install, downloading at %2:rate% from %3:number% download server.====Il reste encore environ %1:time% d'installation avec une  vitesse de t
+STRING About %1:time% left in the install, downloading at %2:rate% from %3:number% download servers.====Il reste encore environ %1:time% d'installation avec une vitesse de t
+STRING the demo installation process.====le processus d'installation de la d
+STRING the install.====l'installation.
+STRING Update X-Plane====Mettre X-Plane 
+STRING The installer cannot extract a file.====Le programme d'installation ne peut pas extraire un fichier.
+STRING Authorizing Digital Download====Autorisation de t
+STRING This is %1:version name% for Pro Use.====C'est la version de %1:version name%, pour usage professionnel.
+STRING This is %1:version name%, for home use only.====C'est la version de %1:version name%, pour usage personnel seulement.
+STRING Unable to read version information from the server.====Impossible de lire l'information de version depuis le serveur.
+STRING This means you will not be able to use your product key to unlock X-Plane (forcing you to use the time-limited demo version).====Vous ne pourrez donc pas utiliser la Cl
+ la version d
+STRING Get the full version today at X-Plane.com.====La version compl
+STRING Note: The installer will only check for the scenery that comes with X-Plane.====Remarque : Cet installeur v
+STRING This scan will not show any custom scenery add-ons that you have installed.====Ce scan ne listera pas les sc
+es ou add-ons que vous auriez pu installer.
+STRING Please enter your product key into the field below and click Continue.====Saisissez SVP la cl
+STRING The full global version of X-Plane, of course, includes scenery for the whole world!====La version compl
+STRING Installing Scenery: Please Change DVDs====Installation des sc
+installer les fichiers endommag
+STRING Some of your scenery may not be usable. Please check your internet connection and try again, or contact Laminar Research tech support for help.====Il se peut que certains d
+STRING Some of your scenery may not be usable. Please try the installer again later or contact Laminar Research tech support for help.====Il se peut que certains d
+STRING Hint: You can copy your product key from your email (using %1:copy shortcut%) & paste it into the text box above (using %2:paste shortcut%).====Astuce: Vous pouvez copier votre cl
+STRING This free update includes both new features and bug fixes.====Cette mise 
+STRING Could not connect to the internet to find the current version of X-Plane at X-Plane.com.====Impossible de se connecter 
+re version de X-Plane sur X-Plane.com.
+STRING Unable to read downloaded version information.====Impossible de lire l'information de la version t
+t connect to the internet to find latest version.====Impossibilit
+re version.
+STRING There is a new version of X-Plane available! Visit X-Plane.com to download the update.====Il y a une nouvelle version de X-Plane disponible! Allez sur X-Plane.com pour t
+STRING There is a newer beta of X-Plane available! Visit X-Plane.com to download the update.====Il y a une nouvelle beta de X-Plane disponible! Allez sur X-Plane.com pour t
+STRING X-Plane 12 runs on all of the most popular operating systems. X-Plane Desktop is available for Windows, macOS, and Linux. The mobile version of X-Plane is available for both Apple iOS and Android.====X-Plane 12 tourne sur les principaux syst
+mes d'exploitation. X-Plane Desktop est disponible pour Windows, Mac OS et Linux. Une version mobile de X-Plane existe pour Apple IOS et Android
+STRING Loading %1:file path%.====Chargement de %1:file path%.
+STRING Get help for the current screen====Recevoir de l'aide pour cet 
+STRING The key here is not to over-correct. We want to turn just a bit toward the direction the CDI indicates, then wait.====Le "truc", ici, est de ne pas sur-corriger. Nous virons juste un peu dans la direction indiqu
+STRING Hide Key Shortcuts====Masquer les Raccourcis Clavier
+STRING No Pro Key found. A Pro Key is needed to get cylindrical or dome projection options without this alert message.====La cl
+STRING Go to X-Plane.com and get one Pro Key for each copy of X-Plane on your network. These keys will unlock the dome projection without this alert message.====Allez sur X-Plane.com pour obtenir des cl
+STRING Warn about missing scenery====Alerte de sc
+STRING With this checked, X-Plane will warn you if you try to fly to an area where you have no scenery installed.====Si coch
+, X-Plane vous avertit si vous essayez de voler sur une zone dont vous n'avez pas install
+STRING With this checked, X-Plane will require you to confirm all warnings (by hitting the Enter key) when this machine is configured as networked external visuals or controlled by a networked IOS.====Si coch
+STRING Don't show warning about the real weather download failing====Ne pas afficher d'avertissement si erreur au chargement de la m
+STRING FREE UPDATE AVAILABLE====MISE A JOUR GRATUITE DISPONIBLE
+STRING A new update is available for X-Plane.====Une nouvelle mise 
+STRING Update to Latest Beta====Mise 
+STRING READY TO UPDATE====PR
+STRING Your copy of X-Plane is up to date; you have the latest version.====Votre copie d'X-Plane est 
+re version.
+STRING SCENERY ELEVATION & LAND CLASS====SCENES, ELEVATIONS & CLASSIFICATION DU PAYSAGE
+STRING SCENERY TEXTURES & FORESTS====SCENES, TEXTURES & FORETS
+STRING This may be because you have intentionally disabled your network adapter, or you may need to manually install drivers for your network adapter.====Cela est probablement d
+sactivation volontaire de votre adaptateur ethernet, ou vous devriez installer manuellement des drivers pour votre adaptateur ethernet.
+ below will undo any key bindings you have made and reconfigure X-Plane to use the %1:keyboard layout name% keyboard shortcuts.\n\nIf this was not your intention, click Cancel.====En cliquant sur 'R
+STRING The product key you entered is for an expired version of X-Plane; please contact Laminar Research to renew it====La cl
+ produit que vous avez saisi est pour une ancienne version de X-Plane; merci de contacter Laminar Research pour la renouveler
+STRING Internal Server Error====Erreur interne du serveur
+STRING This instrument has invalid key frames.  Please re-enter the key frame values.====Cet instrument a des animations non valides. Veuillez r
+STRING The key frames of your handles go in the wrong direction.  Reverse the key frame table to fix this!\n====Les animations de vos manettes sont 
+STRING The product key you entered is invalid====La Cl
+STRING The product key you entered has been disabled====La Cl
+STRING Scenery loading is now disabled.====Le chargement de d
+installer vos pilotes d'affichage.
+STRING You can still fly, but you may experience pauses during flight while scenery loads.====Vous pouvez quand m
+STRING You installed two incompatible GPS/FMS systems on the copilot side. You probably meant to install one for the pilot and one for the copilot.\n====Vous avez install
+ copilote. Vous vouliez probablement en installer un c
+STRING You installed two incompatible GPS/FMS systems on the pilot side. You probably meant to install one for the pilot and one for the copilot.\n====Vous avez install
+ pilote. Vous vouliez probablement en installer un c
+tre install
+STRING Enter Product Key====Entrez la Cl
+STRING Update Scenery Online====Mise 
+# version : 27/10/2017   17:00  11.10.b5
+STRING Enter Product Key or Insert DVD====Entrez la Cl
+STRING Install a Free Demo of X-Plane====Installer la version de d
+STRING Use the X-Plane installer, available at X-Plane.com, to complete your installation.====Utilisez le programme d'installation disponible sur X-Plane.com pour finir votre installation.
+STRING Updates include new features, improvements to existing features, and bug fixes. We encourage all users to update in order to get the most complete, powerful simulator available.====Les mises 
+STRING X-Plane can automatically download the latest installer from the web and run it so that you can complete the installation.====X-Plane peut t
+STRING Your demo time is up, so your flight controls will no longer function until you restart X-Plane.====Votre utilisation en mode d
+STRING Click on the world map to select the scenery you would like to install. Scenery that you deselect will be removed; scenery that you select will be installed. If you fly into an area with no scenery installed, you will see only ocean.====Cliquer sur la mappemonde pour s
+lectionner la carte que vous souhaitez installer. Les sc
+es seront install
+nes soient install
+%1:install name%
+%1:install name%
+STRING DOWNLOADING UPDATE...====TELECHARGEMENT DE LA MISE A JOUR...
+ X-Plane actually models the virtual airflow over the airfoil surfaces of the simulated aircraft. Most simulators use a table lookup scheme which can only approximate a correct flight model.====X-Plane est bas
+STRING There is a professional version of X-Plane. Flight schools use it in pilot training. Many commercial cockpit simulators also use X-Plane to drive their instruments and visuals.====Il existe une version professionnelle de X-Plane. Certaines 
+ Press the M key or click the map marker icon in the menu.====
+STRING Understanding the aerodynamic forces on an airplane will give you a better concept of how the aircraft flies. The four basic forces are weight, lift, thrust, and drag. Understanding the interaction of these forces will help you become a better pilot.====La connaissance des forces a
+STRING Save your flying memories by easily creating screenshots right within X-Plane. Press the Shift key and Spacebar at the same time, or select File > Take Screenshot from the menu bar. Find your screenshots in the Output folder in your main X-Plane folder.====Cr
+STRING Find out if you have the latest X-Plane update by clicking on Settings > About X-Plane. If an update is available there will be an 
+Update X-Plane
+ button in the window. Click the button to download and launch the installer to install the update.====V
+re version de X-Plane en cliquant 
+. Si une version plus r
+s internal scenery tool for building airports is called World Editor or WED. WED can be downloaded for free and even includes a full set of video tutorials designed for the 1st time user. There are now thousands of free 3-D WED airports included with X-Plane updates.====L'outil de cr
+ key to toggle smoke, or pick a different key in Settings > Keyboard.====Devenez la star du meeting a
+STRING You can build your own 3-D airports and submit them for inclusion in future updates to X-Plane 12. Visit the X-Plane Scenery Gateway (gateway.x-plane.com) for more information.====Vous pouvez dessiner vos a
+STRING You can dismiss this message by pressing the Enter key, or by clicking 
+ key to disengage your parking brakes.====Appuyez sur la touche '[brakes]' pour rel
+). This will help slow us down a bit.====Continuez et baissez un cran de volets (
+STRING Go ahead and lower the first notch of flaps. This will help slow us down a bit.====Continuez et baissez un cran de volets. 
+STRING Show Key Shortcuts====Afficher les Raccourcis-Clavier
+STRING Cycle 3-D Flight Path====Choix de la Trajectoire de Vol 3D
+STRING Reset 3-D Flight Path====R
+STRING Reload the Scenery====Recharger la Sc
+STRING Search by aircraft name, path, or classification====Rechercher par nom d'avion, chemin, ou classification
+STRING Choose path to save joystick defaults file.====Choisir o
+STRING X-Plane failed to open the following aircraft file, because it was created with an old version of X-Plane:====X-Plane n'a pas r
+ avec une ancienne version d'X-Plane.
+STRING X-Plane failed to open the following aircraft files, because they were created with an old version of X-Plane:====X-Plane n'a pas r
+s avec une ancienne version d'X-Plane.
+STRING European law requires us to tell you: when you authorize X-Plane using a product key, Laminar Research collects your computer's IP address.====La l
+STRING We use this information only to verify that your product key has not been stolen.====Cette adresse servira uniquement 
+%1:key or button%
+%1:key or button%
+%1:key or button%
+STRING Searched path: ====Chemin explor
+STRING Your copy of X-Plane is now unlocked.====Votre version de X-Plane est d
+ll receive an email with your product key in case you ever need to reinstall the simulator.====Vous recevrez un E-mail contenant votre cl
+installer X-Plane.
+re missing files included in the full version of the simulator.====Mais il vous manque des fichiers contenus dans la version compl
+STRING Failed to initialize the digital download subsystem.====L'initialisation de la proc
+STRING Purchase from X-Plane.com to unlock the full version of X-Plane.====Acheter Via X-Plane.com pour acc
+ la version compl
+STRING There was an error communicating with the server, and your purchase could not be confirmed.====Votre proc
+STRING If your purchase succeeded, you will receive an email with your product key, which you can copy & paste into X-Plane the next time you start the simulator.====Une fois la proc
+STRING Your purchase succeeded, but we were unable to automatically activate the full version of the simulator.====Votre achat est enregistr
+ d'activer la version compl
+STRING You will receive an email with your product key, which you can copy & paste into X-Plane the next time you start the simulator.====Vous allez recevoir un E-mail avec une cl
+STRING Failed to parse product key.====
+STRING DEMO MODE ACTIVATED====LE MODE D
+STRING NOTE: Since X-Plane was not able to store your product key information to preferences, you will not be able to authorize the simulator using a digital download key.====X-Plane n'a pas pu enregistrer votre cl
+STRING Purchase the X-Plane digital download now to instantly unlock the full simulator.====Achetez la version en t
+STRING Would you like to end your flight and install the missing scenery now?====Voulez-vous mettre fin au vol et installer les sc
+ X-Plane will continue to contact Laminar Research's servers to authorize your digital download copy of X-Plane.====Cliquer 
+ we will not contact our servers, and X-Plane will revert to demo mode in %1:days% days.====Cliquer 
+STRING When you click update button, X-Plane will launch the installer and update to the latest version.====Cliquer 
+re version.
+STRING Quit & Update to the Latest Beta====Quitter et charger le derni
+STRING Quit & Update Now====Quitter & mettre 
+Quit & Install Scenery,
+ X-Plane will launch the installer and allow you to change your scenery installation.====Cliquer sur 
+STRING Quit & Install Scenery====Quitte & Installe les d
+ X-Plane will launch the installer and begin installing your missing files.====Cliquez sur 'Quitte et termine l'installation' et X-Plane lancera l'installeur et commencera 
+ installer vos fichiers manquants.
+STRING Rerun the X-Plane installer and choose Update to fix your copy of X-Plane.====Relancez l'installeur et faites une mise 
+STRING Some scenery textures could not be loaded.====Certaines textures nn'ont pas pu 
+me d'installation, ou alors vous avez install
+STRING This may be an installation problem or you may have a damaged add-on scenery package.====Il peut s'agir d'un probl
+me d'installation, ou alors vous avez install
+STRING Run the installer/updater again to get these missing textures.====Relancez l'Installation/Mise 
+STRING Re-run the X-Plane installer and choose 
+Update
+STRING You may need to update the airplane or report this to the aircraft
+STRING Missing runways should be reported to the X-Plane Scenery Gateway.====Les pistes manquantes peuvent 
+es sur le site X-Plane Scenery Gateway.
+STRING Missing runways can be reported to the X-Plane Scenery Gateway if your AIRAC cycle is up-to-date.====Les pistes manquantes peuvent 
+es sur le site X-Plane Scenery Gateway si votre cycle AIRAC est 
+STRING You can use the X-Plane installer to update X-Plane and restore all missing aircraft.====Il suffit de relancer l'installeur de X-Plane pour recharger les appareils manquants.
+STRING X-Plane could not find the scenery file map.====X-Plane n'a pas trouv
+STRING You can continue flying, but X-Plane cannot guarantee you have your scenery properly installed.====Vous pouvez continuer 
+cors sont bien install
+STRING Use the installer (available at X-Plane.com) to update your installation and repair any missing files.====Le programme d'installation (disponible chez X-Plane.com) met 
+STRING Error loading the scenery file:====Erreur lors du chargement de la sc
+STRING The scenery may not look correct.====Il est probable que la sc
+STRING There was a problem loading the scenery package:====Il y a eu un probl
+STRING The following scenery package has a problem and will therefore not be loaded:====Les d
+STRING It requires an additional library scenery package that is not installed, or it is missing some of its files.====Apparement une sc
+cessaire n'est pas install
+STRING The scenery package 
+%1:file path%
+ requires a third-party scenery library that is not installed.====La sc
+%1:file path%
+cor tiers qui n'est pas install
+STRING You will need to install (or update) the 
+%1:scenery package name%
+ package in order for your scenery to render correctly.====il vous faut installer (ou mettre 
+%1:scenery package name%
+STRING Click the Learn More button below to download the missing library.====Cliquez sur 
+STRING Your speed is 155 knots. Lower another notch of flaps. This will help keep us from stalling as we slow down.====155 noeuds! Continue, rajoute un cran de volets. 
+). This will help slow us down a bit.====Tu es 
+STRING If you do not have a commercial-use key, you agree to use X-Plane for non-commercial purposes only. (See www.X-Plane.com/pro for information on professional use.)====Si vous ne poss
+STRING Load with Shortcut Key====Charger avec la touche de raccourci
+STRING [no key assigned]====[aucune touche assign
+STRING No Pro-Use Key found. Global ARINC424 data will not be loaded.====Aucune cl
+STRING Go to X-Plane.com and get a Pro Key to unlock Pro functionality.====Rendez-vous sur X-Plane.com pour obtenir une cl
+STRING Error loading the scenery package: ====Erreur lors du chargement des packages de sc
+cuter X-Plane avec ce package install
+STRING You may need to remove the custom scenery package.====Il peut 
+ install
+STRING X-Plane is installed on the desktop, but does not have permission to access files. We will open a web page with instructions for giving X-Plane permission to access desktop files.====X-Plane est install
+STRING Headless devices aren't supported to run Metal====Les appareils sans interface graphique ne prennent pas en charge l
+STRING Failed to find Vulkan runtime. Make sure that the vulkan-utils package is installed on your system====Le runtime Vulkan est introuvable. Assurez-vous que le paquet Vulkan-utils est install
+STRING AIRPORT SCENERY====SC
+STRING We, the X-Plane community, owe these scenery authors a tremendous debt of gratitude.====Nous, la communaut
+STRING View All Scenery Contributors====Voir tous les contributeurs/contributrices des sc
+STRING The previous file path was: %1:path%====Le pr
+tait : %1:path%
+STRING Custom Scenery====Sc
+STRING Path====Chemin
+STRING Scenery Plugin====Plugin de sc
+STRING An aircraft's audio files could not be loaded because they are modified copies of another aircraft's audio files. You will need to update a third party aircraft or change your selection of AI aircraft to fix this.====Les fichiers audio de l
+STRING Weather download failed: ====Le t
+STRING Destination:====Destination:
+STRING Your GPU is incompatible with X-Plane under Metal on this OS version.====Votre processeur graphique est incompatible avec X-Plane sous Metal sur la version actuelle du SE.
+STRING Vulkan requires Windows 10 or greater====Vulkan requiert Windows 10 ou toute version ult
+STRING Installed driver version: ====Version du pilote install
+STRING Your graphics drivers cannot support Vulkan X-Plane. X-Plane requires Vulkan 1.3 support or newer====Vos pilotes graphiques ne prennent pas en charge X-Plane avec Vulkan. X-Plane requiert la prise en charge de Vulkan 1.3 ou toute version ult
+STRING GLOBAL SCENERY REQUIRED====SC
+re leaving the free scenery region.====Vous quittez la r
+STRING Subscribe now to unlock global scenery, including over 36,000 airports and access to all aircraft!====Inscrivez-vous d
+STRING The scenery is being reloaded because of your graphics level change.====Le chargement des sc
+STRING AIRPORT SCENERY GATEWAY & WORLD EDITOR====PASSERELLE DES SC
+STRING Download ====T
+STRING Real-Weather Download On!====T
+ve selected Real-Weather downloading X-Plane will periodically check the internet for real-world weather reports, and update the weather in the simulator to match those conditions.====Puisque vous avez s
+STRING You are now eligible to download the X-Plane global scenery and complete your upgrade to X-Plane 12 Global.====Vous 
+STRING Please enter your X-Plane 12 digital download product key to unlock the full version of X-Plane.====Veuillez entrer la cl
+verrouiller la version compl
+STRING Buy the X-Plane 12 digital download now to get instant access to the full simulator!====Acheter le t
+STRING Buy the full version of X-Plane 12 Global on Steam today!====Acheter la version compl
+STRING Please insert your X-Plane 12 Disc 1 DVD now to unlock the full version of X-Plane.====Veuillez ins
+verrouiller la version compl
+STRING Checking the net for the latest version of X-Plane 12 right now, and I am %1:progress%% done checking.====Je v
+re version de X-Plane et ma v
+STRING Please pick a name for your X-Plane 12 Demo installation. ====Veuillez choisir un nom pour l'installation de votre d
+STRING Pick a folder to install the X-Plane 12 Demo into.====Choisissez le dossier dans lequel installer la d
+STRING You have enough free disk space to install the X-Plane 12 Demo at this location.====Vous avez suffisamment d'espace libre sur votre disque pour installer X-Plane 12 
+STRING You do not have enough free disk space to install the X-Plane 12 Demo at this location. You can change the install location to a drive with more free disk space.====Vous n'avez pas suffisamment d'espace libre sur votre disque pour installer la d
+STRING Are you sure you want to cancel the installation? This will delete the partially installed copy of the X-Plane 12 Demo.====
+STRING Installing X-Plane 12 Demo====Installation de la d
+STRING There was a problem installing the X-Plane 12 Demo. Please check your internet connection and try again, or contact Laminar Research tech support for help.====Un probl
+STRING There was a problem installing the X-Plane 12 Demo. Please try the demo installer again later or contact Laminar Research tech support for help.====Un probl
+STRING The X-Plane 12 Demo has finished installing at: %1:file path%.====L'installation de la d
+ l'emplacement suivant : %1:file path%.
+STRING X-Plane 12 Installer====Programme d'installation de X-Plane 12
+STRING Welcome to the X-Plane 12 Installer/Updater.====Bienvenue dans le programme d'installation/mise 
+STRING This installer will guide you through the process of upgrading your X-Plane 12 demo to a full installation of X-Plane.====Celui-ci va vous guider tout au long du processus de mise 
+STRING The installer found the following copy of X-Plane 12 to add scenery to.====Le programme d'installation a trouv
+STRING Checking the internet for the latest version of X-Plane 12. %1:progress%% done checking.====V
+re version de X-Plane 12. La v
+STRING Are you sure you want to stop the update? X-Plane 12 will not be usable until the update is finished. You can resume the update later.====
+STRING This installer will guide you through the process of updating your copy of X-Plane 12 to the latest version.====Celui-ci vous guidera tout au long du processus de mise 
+re version.
+STRING The installer found the following copy of X-Plane 12 to update.====Le programme d'installation a trouv
+STRING Please select which copy of X-Plane 12 you would like to update.====Veuillez s
+STRING There is a newer version of X-Plane 12 available, but you do not have enough free disk space to download and install the update.====Une nouvelle version de X-Plane 12 est disponible, mais vous n'avez pas suffisamment d'espace libre sur votre disque pour t
+charger et installer la mise 
+STRING You have enough free disk space to update X-Plane 12.====Vous avez suffisamment d'espace libre sur votre disque pour mettre 
+STRING You do not have enough free disk space to update X-Plane 12.====Vous n'avez pas suffisamment d'espace libre sur votre disque pour mettre 
+STRING Please check your internet connection and try again, or contact Laminar Research tech support for help.====Veuillez v
+STRING Please try the updater again later or contact Laminar Research tech support for help.====Veuillez relancer ult
+STRING Pick a folder to install X-Plane 12 into.====Choisissez le dossier dans lequel installer X-Plane 12.
+STRING You have enough free disk space to install X-Plane 12 at this location.====Vous avez suffisamment d'espace libre sur votre disque pour installer X-Plane 12 
+STRING You do not have enough free disk space to install X-Plane 12 at this location.  You can install to a different location, or save disk space by installing only some of the global scenery.====Vous n'avez pas suffisamment d'espace libre sur votre disque pour installer X-Plane 12 
+ cet emplacement.  Vous pouvez l'installer 
+STRING X-Plane 12 Installer/Updater====Programme d'installation/mise 
+STRING Welcome to the X-Plane 12 Installer. This installer will guide you through the process of installing X-Plane 12.====Bienvenue dans le programme d'installation de X-Plane 12. Celui-ci va vous guider tout au long du processus d'installation de X-Plane 12.
+STRING Welcome to the X-Plane 12 Installer. This installer will guide you through the process of installing %1:install name%.====Bienvenue dans le programme d'installation de X-Plane 12. Celui-ci va vous guider tout au long du processus d'installation de %1:install name%.
+STRING You have enough free disk space to install X-Plane 12 with the selected scenery.====Vous avez suffisamment d'espace libre sur votre disque pour installer X-Plane 12 avec les sc
+STRING You do not have enough free disk space to install X-Plane 12 with the selected scenery; change the install location to another hard drive or select less scenery.====Vous n'avez pas suffisamment d'espace libre sur votre disque pour installer X-Plane 12 avec les sc
+STRING Please try the installer again later or contact Laminar Research tech support for help.====Veuillez r
+STRING Please pick which copy of the X-Plane 12 demo you would like to run.====Veuillez s
+STRING You have more than one copy of X-Plane 12 installed on this computer.====Vous avez plusieurs copies de X-Plane 12 install
+STRING The path you selected may be protected by the operating system against writing.====Le chemin s
+tre une copie install
+ install
+STRING Welcome to X-Plane 12. This installer will guide you through the process of installing X-Plane.====Bienvenue dans X-Plane 12. Ce programme d'installation va vous guider tout au long du processus d'installation de X-Plane.
+STRING You already have the X-Plane 12 Demo installed on this computer.  What would you like to do?====Vous avez d
+ install
+STRING Run the X-Plane 12 Demo====Ex
+STRING Update the X-Plane 12 Demo====Mettre 
+STRING Download is complete!====Le t
+STRING Select a destination and tap Add to Route.====S
+lectionnez une destination, puis appuyez sur Ajouter 
+STRING The Fly-In of the Day airport (%1:airport_name%) requires a global scenery subscription.====L'a
+STRING Your chosen route requires access to global scenery.====L'itin
+STRING Global scenery, featuring over 36,000 airports====Sc
+STRING GLOBAL SCENERY + ALL AIRCRAFT + MMO====SC
+STRING GLOBAL SCENERY + AIRCRAFT + MMO====SC
+STRING GLOBAL SCENERY ONLY====SC
+STRING A global scenery subscription includes more than 37,000 airports, over 11,500 of which feature 3D terminals, hangars, & more?====L'abonnement aux sc
+ button to download the map, aircraft, scenery, and navdata for your entire route!====Vous pouvez voler sans connexion Internet. Appuyez sur le bouton Compresser vol pour t
+STRING GLOBAL SCENERY IS HERE!====LES SC
+STRING Visit more than 11,500 airports with 3D scenery, including terminals, hangars, control towers, & more.====Rendez-vous dans plus de 11 500 a
+ LA VERSION PRO POUR UN ACC
+STRING Departing %1:airport name% (%2:airport ID%) for %3:destination airport name% (%4:destination airport ID%)====En partance de %1:airport name% (%2:airport ID%) pour %3:destination airport name% (%4:destination airport ID%)
+STRING Contacting server...====Contact avec le serveur en cours...
+STRING Uncontrolled server====Serveur sans contr
+STRING Controlled server====Serveur avec contr
+STRING DISCONNECTED FROM MULTIPLAYER SERVER====D
+STRING CONNECTION TO MULTIPLAYER SERVER FAILED====
+STRING Reporting this controller could result in them being reprimanded and possibly removed from the server.====Signaler ce contr
+STRING Error filing with the server====Erreur lors du d
+STRING An updated version of Navigraph data has been downloaded and the app must restart to use it.====Une version mise 
+STRING Nestled in the Alps, Innsbruck provides some of the most spectacular mountain scenery on the planet. Those mountains also make for a rather difficult approach to the runway. Rather than flying a typical traffic pattern, pilots have to circle the airport to decrease speed and altitude, carefully avoiding the violent winds created by the Alps.====Nich
+STRING Downloading Server List...====T
+STRING Downloading Manifest...====T
+STRING Parsing Manifest...====Analyse du manifeste en cours...
+STRING Download Real Weather!====T
+STRING NOW downloading real-weather files! Download percent done: ====T
+STRING Download Real Weather====T
+STRING The current beta version of X-Plane is now %1:version%.====La version b
+ta actuelle de X-Plane est maintenant la version %1:version%.
+STRING The current final, non-beta version of X-Plane is now %1:version%.====La version finale actuelle non b
+ta de X-Plane est maintenant la version %1:version%.
+STRING Auto-route requires the destination to be more than %1:min_miles%NM away.====L'itin
+raire automatique exige que la destination soit situ
+STRING Submitting a report will help developers try and solve this problem.====L'envoi d'un rapport aidera les d
+STRING Contact tech support via https://x-plane.com/support for help resolving this issue.====Contactez l'assistance technique sur https://x-plane.com/support afin d'obtenir de l'aide pour r
+STRING Go to https://x-plane.com/support if you need help.====Rendez-vous sur https://x-plane.com/support si vous avez besoin d'aide.
+STRING X-Plane 12 is available for Windows, Mac, & Linux? Go to X-Plane.com to try a free demo!====X-Plane 12 est disponible sur Windows, Mac et Linux. Rendez-vous sur X-Plane.com pour essayer une d
+STRING You may need to rerun the installer to get the missing file.====Vous pouvez relancer le programme d'installation pour r
+STRING Error during DVD scan: The installer cannot extract a file. Please report this to X-Plane technical support via https://x-plane.com/support, and include the information below:====Erreur lors de la lecture du DVD : le programme d'installation ne parvient pas 
+
+=== embedded URLs ===
+http://%s
+http://%s:%d/api
+http://);
+http://.css
+http://.jpg|right|thumb|.js
+http://127.0.0.1:%d/login/redirect
+http://127.0.0.1:8080
+http://</a></li><li
+http://<a
+http://<div
+http://An
+http://Descriptionrelatively
+http://In
+http://UA-Compatible
+http://according
+http://addEventListenerresponsible
+http://applicationslink
+http://ator
+http://cript
+http://dejavu.sourceforge.net
+http://dejavu.sourceforge.net/wiki/index.php/License
+http://dictionaryperceptionrevolutionfoundationpx;height:successfulsupportersmillenniumhis
+http://encoding=
+http://familiar
+http://html4/loose.dtd
+http://i
+http://imEnglish
+http://interested
+http://interpreted
+http://iparticipation
+http://link
+http://localhost:8080
+http://ltpwww.gsfc.nasa.gov/tharsis/mola.html
+http://ltpwww.gsfc.nasa.gov/tharsis/mola.html.
+http://ltpwww.gsfc.nasa.gov/tharsis/mola.html.====
+http://ltpwww.gsfc.nasa.gov/tharsis/mola.html.====Die
+http://ltpwww.gsfc.nasa.gov/tharsis/mola.html.====La
+http://ltpwww.gsfc.nasa.gov/tharsis/mola.html.====Por
+http://mathematicsmargin-top:eventually
+http://navigation
+http://ns.adobe.com/exif/1.0/
+http://ns.adobe.com/iX/1.0/'>
+http://ns.adobe.com/photoshop/1.0/
+http://ns.adobe.com/tiff/1.0/
+http://ns.adobe.com/xap/1.0/
+http://ns.adobe.com/xap/1.0/mm/
+http://ns.adobe.com/xap/1.0/sType/ResourceEvent#
+http://ns.adobe.com/xap/1.0/sType/ResourceRef#
+http://option><option
+http://purl.org/dc/elements/1.1/
+http://px;
+http://quicktime.apple.com====http://quicktime.apple.com
+http://s;text-align:centerfont-weight:
+http://scripts.sil.org/OFLNoto
+http://site_name
+http://staticsuggested
+http://style=
+http://w
+http://whether
+http://www-//W3C//DTD
+http://www.
+http://www./div></div><div
+http://www.<li><a
+http://www.C//DTD
+http://www.a
+http://www.adobe.com/).
+http://www.adobe.com/).Noto
+http://www.apple.com/quicktime====http://www.apple.com/quicktime
+http://www.css
+http://www.google.com/get/noto/http://www.adobe.com/type/This
+http://www.hortcut
+http://www.icon
+http://www.interpretation
+http://www.language=
+http://www.microsoft.com/download/et
+http://www.microsoft.com/downloads/
+http://www.style=
+http://www.text-decoration:underthe
+http://www.w3.org/1999/02/22-rdf-syntax-ns#
+http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+http://www.w3.org/shortcut
+http://www.wencodeURIComponent(
+http://www.x-plane.com,
+http://www.x-plane.com/
+http://www.x-plane.com/,
+http://www.x-plane.com/.
+http://www.years
+http://www</a><a
+http://xpfr.org).
+http://xt/css
+https://<div
+https://H
+https://L
+https://aIn
+https://clearancedelivery.x-planemobile.com/
+https://clearancedelivery.x-planemobile.com/v1/authenticate
+https://clearancedelivery.x-planemobile.com/v1/download
+https://curl.se/docs/alt-svc.html
+https://curl.se/docs/hsts.html
+https://curl.se/docs/http-cookies.html
+https://example.x-plane.com/api/lockbox/get_key
+https://github.com/dot-asm>
+https://ident.x-plane.com/.well-known/jwks.json
+https://ident.x-plane.com/oauth2/authorize
+https://ident.x-plane.com/oauth2/login-complete
+https://ident.x-plane.com/oauth2/token
+https://lookup.staging.x-plane.com
+https://lookup.x-plane.com
+https://tower.x-plane.com/v1/inventory
+https://tower.x-plane.com/v1/sim-download
+https://was
+https://www.World
+https://www.recent
+https://x-plane.com/support
+https://x-plane.com/support)
+https://x-plane.com/support).
+https://x-plane.com/support,
+https://x-plane.com/support.
+https://x-plane.com/support.====
+https://x-plane.com/support.====Falls
+https://x-plane.com/support.====If
+https://x-plane.com/support.====Se
+https://x-plane.com/support.====Si
+https://x-plane.com/support.====Sollte
+https://x-plane.com/support.====Wenn
+https://x-plane.com/support====
+https://x-plane.com/support====F
+https://x-plane.com/support====Para
+https://x-plane.com/support====Per
+https://x-plane.com/support====Pour

@@ -1,0 +1,6 @@
+Archive:  .xp12-installer/X-Plane12InstallerLinux.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+ 62989176  2026-06-24 12:14   X-Plane 12 Installer Linux
+---------                     -------
+ 62989176                     1 file
