@@ -1,0 +1,91 @@
+name: KPHX MisterX Surface Retry 5
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-misterx-surfaces-retry-5.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  retry-five:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install exact conversion tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/magick" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ "${1:-}" = "identify" ]; then
+            shift
+            exec identify "$@"
+          fi
+          exec convert "$@"
+          SH
+          chmod +x "$HOME/bin/magick"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Build five-resource retry set
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > reports/kphx-misterx-surface-retry-5.json <<'JSON'
+          {
+            "resources": [
+              "MisterX_Library/Airport/Taxilines/HoldLine.lin",
+              "MisterX_Library/Airport/Taxilines/ILS_Centerline.lin",
+              "MisterX_Library/Airport/Taxilines/Old/Centerline_B.lin",
+              "MisterX_Library/Airport/Taxilines/Old/Red_White_B.lin",
+              "MisterX_Library/Airport/Taxilines/RoadBroken.lin"
+            ]
+          }
+          JSON
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library"
+          node scripts/resolve-xplane-library.mjs             "$ROOT"             reports/kphx-misterx-surface-retry-5.json             reports/kphx-misterx-surface-retry-5-library-map.json             --virtual-prefix=MisterX_Library
+
+      - name: Materialize only five failed MisterX surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="assets/kphx-source/dependencies/MisterX_Library_2.0c/MisterX_Library"
+          node scripts/materialize-kphx-surface-resources.mjs             "$ROOT"             public/models/kphx-full-airport/surface-batches/misterx-retry-5             --placement-report=public/models/kphx-full-airport/surfaces/surface-network.json             --library-map=reports/kphx-misterx-surface-retry-5-library-map.json             --resource-list=reports/kphx-misterx-surface-retry-5.json             --include-external-prefixes=MisterX_Library             --skip-package-owned=true
+
+      - name: Verify five-resource retry
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const root = "public/models/kphx-full-airport/surface-batches/misterx-retry-5";
+          const manifest = JSON.parse(fs.readFileSync(`${root}/manifest.json`, "utf8"));
+          if (manifest.failures?.length) throw new Error(`Failures remain: ${manifest.failures.length}`);
+          if (manifest.expectedResolvedExternalResourceCount !== 5) throw new Error(`Expected 5 resources, got ${manifest.expectedResolvedExternalResourceCount}`);
+          if (manifest.resolvedExternalResourceCount !== 5) throw new Error(`Materialized ${manifest.resolvedExternalResourceCount}/5`);
+          console.log(JSON.stringify({resources:5,status:"PASS"}, null, 2));
+          NODE
+
+      - name: Commit five-resource retry checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             public/models/kphx-full-airport/surface-batches/misterx-retry-5             reports/kphx-misterx-surface-retry-5.json             reports/kphx-misterx-surface-retry-5-library-map.json
+          git commit -m "Verify five exact MisterX surface resources"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
