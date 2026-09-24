@@ -1,5 +1,6 @@
-Retrigger focused exact A1 AutoGate departure verification in training mode.
+Retrigger exact A1 AutoGate departure verification using proven A1 route.
+Route: /RampReady/?inspectionPreset=a1
 Expected attached lat: 6.160 m
 Expected parked lat: 0.000 m
 Expected duration: 15000 ms
-Workflow fix commit: 0c74463927103fbab39f5c99fc931b5a4fc486a2
+Workflow route commit: 18fb950549baa3e58cabf14a42ec82a717da1f65
