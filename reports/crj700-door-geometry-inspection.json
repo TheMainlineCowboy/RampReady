@@ -8,6 +8,3294 @@
   "primitiveCount": 106,
   "namedCandidates": [],
   "forwardLeftCandidates": [],
+  "primitives": [
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 0,
+      "materialIndex": 0,
+      "materialName": "material307",
+      "bounds": {
+        "min": [
+          -1.943088173866272,
+          1.1002365350723267,
+          -1.9805655479431152
+        ],
+        "max": [
+          1.94275963306427,
+          4.364033222198486,
+          27.361249923706055
+        ],
+        "center": [
+          -0.00016427040100097656,
+          2.7321348786354065,
+          12.69034218788147
+        ],
+        "size": [
+          3.885847806930542,
+          3.2637966871261597,
+          29.34181547164917
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 1,
+      "materialIndex": 1,
+      "materialName": "material308",
+      "bounds": {
+        "min": [
+          -1.196786642074585,
+          1.7272546291351318,
+          6.598721981048584
+        ],
+        "max": [
+          -0.9556258320808411,
+          2.529294013977051,
+          22.217451095581055
+        ],
+        "center": [
+          -1.076206237077713,
+          2.1282743215560913,
+          14.40808653831482
+        ],
+        "size": [
+          0.2411608099937439,
+          0.802039384841919,
+          15.61872911453247
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 2,
+      "materialIndex": 2,
+      "materialName": "material309",
+      "bounds": {
+        "min": [
+          -1.291841745376587,
+          1.8754351139068604,
+          4.564704895019531
+        ],
+        "max": [
+          1.291512370109558,
+          2.8156015872955322,
+          10.302192687988281
+        ],
+        "center": [
+          -0.0001646876335144043,
+          2.3455183506011963,
+          7.433448791503906
+        ],
+        "size": [
+          2.583354115486145,
+          0.9401664733886719,
+          5.73748779296875
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 3,
+      "materialIndex": 3,
+      "materialName": "material310",
+      "bounds": {
+        "min": [
+          -1.1872700452804565,
+          2.7541351318359375,
+          -0.5646136403083801
+        ],
+        "max": [
+          1.1869423389434814,
+          3.2175238132476807,
+          0.9804114103317261
+        ],
+        "center": [
+          -0.00016385316848754883,
+          2.985829472541809,
+          0.20789888501167297
+        ],
+        "size": [
+          2.374212384223938,
+          0.46338868141174316,
+          1.5450250506401062
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 4,
+      "materialIndex": 4,
+      "materialName": "material311",
+      "bounds": {
+        "min": [
+          -1.0315210819244385,
+          3.178142547607422,
+          24.05390167236328
+        ],
+        "max": [
+          1.0311933755874634,
+          4.067528247833252,
+          27.341400146484375
+        ],
+        "center": [
+          -0.00016385316848754883,
+          3.622835397720337,
+          25.697650909423828
+        ],
+        "size": [
+          2.062714457511902,
+          0.8893857002258301,
+          3.2874984741210938
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 5,
+      "materialIndex": 5,
+      "materialName": "material312",
+      "bounds": {
+        "min": [
+          -1.032533884048462,
+          1.8849495649337769,
+          23.011091232299805
+        ],
+        "max": [
+          1.0322061777114868,
+          3.873039960861206,
+          27.345809936523438
+        ],
+        "center": [
+          -0.00016385316848754883,
+          2.8789947628974915,
+          25.17845058441162
+        ],
+        "size": [
+          2.0647400617599487,
+          1.9880903959274292,
+          4.334718704223633
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 6,
+      "materialIndex": 6,
+      "materialName": "material313",
+      "bounds": {
+        "min": [
+          -0.5579866766929626,
+          4.018953323364258,
+          24.731916427612305
+        ],
+        "max": [
+          0.5576581358909607,
+          4.179296970367432,
+          26.5244197845459
+        ],
+        "center": [
+          -0.00016427040100097656,
+          4.099125146865845,
+          25.6281681060791
+        ],
+        "size": [
+          1.1156448125839233,
+          0.16034364700317383,
+          1.7925033569335938
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 7,
+      "materialIndex": 7,
+      "materialName": "material314",
+      "bounds": {
+        "min": [
+          -0.9926795959472656,
+          2.594794273376465,
+          23.583498001098633
+        ],
+        "max": [
+          0.9923519492149353,
+          4.2090301513671875,
+          27.348098754882812
+        ],
+        "center": [
+          -0.00016382336616516113,
+          3.401912212371826,
+          25.465798377990723
+        ],
+        "size": [
+          1.985031545162201,
+          1.6142358779907227,
+          3.7646007537841797
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 8,
+      "materialIndex": 8,
+      "materialName": "material315",
+      "bounds": {
+        "min": [
+          -1.291841745376587,
+          2.484391212463379,
+          4.061929225921631
+        ],
+        "max": [
+          1.291512370109558,
+          2.6129918098449707,
+          4.3707275390625
+        ],
+        "center": [
+          -0.0001646876335144043,
+          2.548691511154175,
+          4.216328382492065
+        ],
+        "size": [
+          2.583354115486145,
+          0.1286005973815918,
+          0.30879831314086914
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 9,
+      "materialIndex": 9,
+      "materialName": "material316",
+      "bounds": {
+        "min": [
+          -1.0322458744049072,
+          2.978036642074585,
+          23.892539978027344
+        ],
+        "max": [
+          1.0319173336029053,
+          3.2629010677337646,
+          27.181686401367188
+        ],
+        "center": [
+          -0.00016427040100097656,
+          3.120468854904175,
+          25.537113189697266
+        ],
+        "size": [
+          2.0641632080078125,
+          0.2848644256591797,
+          3.2891464233398438
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 10,
+      "materialIndex": 10,
+      "materialName": "material317",
+      "bounds": {
+        "min": [
+          -1.243140459060669,
+          1.957829236984253,
+          3.7035675048828125
+        ],
+        "max": [
+          1.2428128719329834,
+          2.1809933185577393,
+          4.076789379119873
+        ],
+        "center": [
+          -0.00016379356384277344,
+          2.069411277770996,
+          3.8901784420013428
+        ],
+        "size": [
+          2.4859533309936523,
+          0.22316408157348633,
+          0.37322187423706055
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 11,
+      "materialIndex": 11,
+      "materialName": "material318",
+      "bounds": {
+        "min": [
+          -1.1555157899856567,
+          1.8376599550247192,
+          3.621241331100464
+        ],
+        "max": [
+          1.1551872491836548,
+          1.9670498371124268,
+          4.0438337326049805
+        ],
+        "center": [
+          -0.00016427040100097656,
+          1.902354896068573,
+          3.832537531852722
+        ],
+        "size": [
+          2.3107030391693115,
+          0.12938988208770752,
+          0.4225924015045166
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 12,
+      "materialIndex": 12,
+      "materialName": "material319",
+      "bounds": {
+        "min": [
+          -1.2714256048202515,
+          2.708824396133423,
+          4.210925102233887
+        ],
+        "max": [
+          1.271098017692566,
+          2.816096782684326,
+          4.473273754119873
+        ],
+        "center": [
+          -0.00016379356384277344,
+          2.7624605894088745,
+          4.34209942817688
+        ],
+        "size": [
+          2.5425236225128174,
+          0.10727238655090332,
+          0.26234865188598633
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 13,
+      "materialIndex": 13,
+      "materialName": "material320",
+      "bounds": {
+        "min": [
+          -1.255623459815979,
+          1.721597671508789,
+          3.5417282581329346
+        ],
+        "max": [
+          1.255294919013977,
+          2.25522780418396,
+          4.080983638763428
+        ],
+        "center": [
+          -0.00016427040100097656,
+          1.9884127378463745,
+          3.811355948448181
+        ],
+        "size": [
+          2.510918378829956,
+          0.5336301326751709,
+          0.5392553806304932
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 14,
+      "materialIndex": 14,
+      "materialName": "material321",
+      "bounds": {
+        "min": [
+          -1.2841626405715942,
+          2.6068263053894043,
+          4.1432108879089355
+        ],
+        "max": [
+          1.2838350534439087,
+          2.7145440578460693,
+          4.422000408172607
+        ],
+        "center": [
+          -0.00016379356384277344,
+          2.660685181617737,
+          4.2826056480407715
+        ],
+        "size": [
+          2.567997694015503,
+          0.10771775245666504,
+          0.2787895202636719
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 15,
+      "materialIndex": 15,
+      "materialName": "material322",
+      "bounds": {
+        "min": [
+          -1.2673921585083008,
+          2.0331921577453613,
+          3.9651732444763184
+        ],
+        "max": [
+          1.2670645713806152,
+          2.351497173309326,
+          4.182286739349365
+        ],
+        "center": [
+          -0.00016379356384277344,
+          2.1923446655273438,
+          4.073729991912842
+        ],
+        "size": [
+          2.534456729888916,
+          0.31830501556396484,
+          0.21711349487304688
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 16,
+      "materialIndex": 16,
+      "materialName": "material323",
+      "bounds": {
+        "min": [
+          -1.2842313051223755,
+          2.376863956451416,
+          3.9905447959899902
+        ],
+        "max": [
+          1.28390371799469,
+          2.491091251373291,
+          4.309181213378906
+        ],
+        "center": [
+          -0.00016379356384277344,
+          2.4339776039123535,
+          4.149863004684448
+        ],
+        "size": [
+          2.5681350231170654,
+          0.114227294921875,
+          0.318636417388916
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 17,
+      "materialIndex": 17,
+      "materialName": "material324",
+      "bounds": {
+        "min": [
+          -1.2683069705963135,
+          2.253556966781616,
+          3.769458770751953
+        ],
+        "max": [
+          -1.255623459815979,
+          2.3566927909851074,
+          3.976746082305908
+        ],
+        "center": [
+          -1.2619652152061462,
+          2.305124878883362,
+          3.8731024265289307
+        ],
+        "size": [
+          0.012683510780334473,
+          0.10313582420349121,
+          0.20728731155395508
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 18,
+      "materialIndex": 18,
+      "materialName": "material325",
+      "bounds": {
+        "min": [
+          1.2475301027297974,
+          2.161961793899536,
+          2.7112367153167725
+        ],
+        "max": [
+          1.291512370109558,
+          2.5702285766601562,
+          5.028672218322754
+        ],
+        "center": [
+          1.2695212364196777,
+          2.366095185279846,
+          3.869954466819763
+        ],
+        "size": [
+          0.04398226737976074,
+          0.4082667827606201,
+          2.3174355030059814
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 19,
+      "materialIndex": 19,
+      "materialName": "material326",
+      "bounds": {
+        "min": [
+          -1.2682713270187378,
+          2.2499659061431885,
+          3.9073116779327393
+        ],
+        "max": [
+          -1.254885196685791,
+          2.3565778732299805,
+          3.9999845027923584
+        ],
+        "center": [
+          -1.2615782618522644,
+          2.3032718896865845,
+          3.953648090362549
+        ],
+        "size": [
+          0.013386130332946777,
+          0.10661196708679199,
+          0.09267282485961914
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 20,
+      "materialIndex": 20,
+      "materialName": "material327",
+      "bounds": {
+        "min": [
+          -1.268105387687683,
+          2.24349308013916,
+          3.9274096488952637
+        ],
+        "max": [
+          -1.253995418548584,
+          2.3559017181396484,
+          4.022510528564453
+        ],
+        "center": [
+          -1.2610504031181335,
+          2.2996973991394043,
+          3.9749600887298584
+        ],
+        "size": [
+          0.014109969139099121,
+          0.11240863800048828,
+          0.09510087966918945
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 21,
+      "materialIndex": 21,
+      "materialName": "material328",
+      "bounds": {
+        "min": [
+          -1.2678093910217285,
+          2.2358946800231934,
+          3.946676731109619
+        ],
+        "max": [
+          -1.2529655694961548,
+          2.3541855812072754,
+          4.044371604919434
+        ],
+        "center": [
+          -1.2603874802589417,
+          2.2950401306152344,
+          3.9955241680145264
+        ],
+        "size": [
+          0.01484382152557373,
+          0.11829090118408203,
+          0.09769487380981445
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 22,
+      "materialIndex": 22,
+      "materialName": "material329",
+      "bounds": {
+        "min": [
+          -1.291841745376587,
+          1.8028595447540283,
+          1.7595890760421753
+        ],
+        "max": [
+          1.291512370109558,
+          3.7357280254364014,
+          14.712821006774902
+        ],
+        "center": [
+          -0.0001646876335144043,
+          2.769293785095215,
+          8.236205041408539
+        ],
+        "size": [
+          2.583354115486145,
+          1.932868480682373,
+          12.953231930732727
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 23,
+      "materialIndex": 23,
+      "materialName": "material330",
+      "bounds": {
+        "min": [
+          0.0007313132518902421,
+          0.8894827365875244,
+          3.4529428482055664
+        ],
+        "max": [
+          0.0007313132518902421,
+          4.322511196136475,
+          8.633753776550293
+        ],
+        "center": [
+          0.0007313132518902421,
+          2.6059969663619995,
+          6.04334831237793
+        ],
+        "size": [
+          0,
+          3.43302845954895,
+          5.180810928344727
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 24,
+      "materialIndex": 24,
+      "materialName": "material331",
+      "bounds": {
+        "min": [
+          -0.06297607719898224,
+          1.2097645998001099,
+          5.7174601554870605
+        ],
+        "max": [
+          0.05865863338112831,
+          3.9751927852630615,
+          5.816625595092773
+        ],
+        "center": [
+          -0.002158721908926964,
+          2.5924786925315857,
+          5.767042875289917
+        ],
+        "size": [
+          0.12163471058011055,
+          2.7654281854629517,
+          0.09916543960571289
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 25,
+      "materialIndex": 25,
+      "materialName": "material332",
+      "bounds": {
+        "min": [
+          -2.971381902694702,
+          1.1122878789901733,
+          15.349798202514648
+        ],
+        "max": [
+          2.9224464893341064,
+          1.3553032875061035,
+          16.051855087280273
+        ],
+        "center": [
+          -0.02446770668029785,
+          1.2337955832481384,
+          15.700826644897461
+        ],
+        "size": [
+          5.893828392028809,
+          0.24301540851593018,
+          0.702056884765625
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 26,
+      "materialIndex": 26,
+      "materialName": "material333",
+      "bounds": {
+        "min": [
+          -2.971381902694702,
+          1.3126486539840698,
+          15.552131652832031
+        ],
+        "max": [
+          2.9224464893341064,
+          1.485655426979065,
+          16.040164947509766
+        ],
+        "center": [
+          -0.02446770668029785,
+          1.3991520404815674,
+          15.796148300170898
+        ],
+        "size": [
+          5.893828392028809,
+          0.17300677299499512,
+          0.4880332946777344
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 27,
+      "materialIndex": 27,
+      "materialName": "material334",
+      "bounds": {
+        "min": [
+          -2.162935972213745,
+          1.1114624738693237,
+          -1.3785747289657593
+        ],
+        "max": [
+          2.162607431411743,
+          1.5502073764801025,
+          16.151424407958984
+        ],
+        "center": [
+          -0.00016427040100097656,
+          1.3308349251747131,
+          7.3864248394966125
+        ],
+        "size": [
+          4.325543403625488,
+          0.4387449026107788,
+          17.529999136924744
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 28,
+      "materialIndex": 28,
+      "materialName": "material335",
+      "bounds": {
+        "min": [
+          -2.857208728790283,
+          1.1122878789901733,
+          15.349798202514648
+        ],
+        "max": [
+          2.8082735538482666,
+          1.5602529048919678,
+          16.051855087280273
+        ],
+        "center": [
+          -0.0244675874710083,
+          1.3362703919410706,
+          15.700826644897461
+        ],
+        "size": [
+          5.66548228263855,
+          0.44796502590179443,
+          0.702056884765625
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 29,
+      "materialIndex": 29,
+      "materialName": "material336",
+      "bounds": {
+        "min": [
+          -2.1676924228668213,
+          0.4447062909603119,
+          15.73300552368164
+        ],
+        "max": [
+          2.038182020187378,
+          0.5759341716766357,
+          15.916421890258789
+        ],
+        "center": [
+          -0.06475520133972168,
+          0.5103202313184738,
+          15.824713706970215
+        ],
+        "size": [
+          4.205874443054199,
+          0.13122788071632385,
+          0.18341636657714844
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 30,
+      "materialIndex": 30,
+      "materialName": "material337",
+      "bounds": {
+        "min": [
+          -1.9558982849121094,
+          0.46750393509864807,
+          15.286866188049316
+        ],
+        "max": [
+          -1.8199368715286255,
+          1.682831048965454,
+          16.17247200012207
+        ],
+        "center": [
+          -1.8879175782203674,
+          1.075167492032051,
+          15.729669094085693
+        ],
+        "size": [
+          0.1359614133834839,
+          1.215327113866806,
+          0.8856058120727539
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 31,
+      "materialIndex": 31,
+      "materialName": "material338",
+      "bounds": {
+        "min": [
+          -1.9694128036499023,
+          0.5118470191955566,
+          15.620182991027832
+        ],
+        "max": [
+          1.9775934219360352,
+          1.1071083545684814,
+          15.807866096496582
+        ],
+        "center": [
+          0.004090309143066406,
+          0.809477686882019,
+          15.714024543762207
+        ],
+        "size": [
+          3.9470062255859375,
+          0.5952613353729248,
+          0.18768310546875
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 32,
+      "materialIndex": 32,
+      "materialName": "material339",
+      "bounds": {
+        "min": [
+          -2.0001933574676514,
+          1.1037038564682007,
+          15.666922569274902
+        ],
+        "max": [
+          -1.820649266242981,
+          1.5840113162994385,
+          15.813789367675781
+        ],
+        "center": [
+          -1.9104213118553162,
+          1.3438575863838196,
+          15.740355968475342
+        ],
+        "size": [
+          0.1795440912246704,
+          0.4803074598312378,
+          0.1468667984008789
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 33,
+      "materialIndex": 33,
+      "materialName": "material340",
+      "bounds": {
+        "min": [
+          1.8609497547149658,
+          0.46749329566955566,
+          15.210402488708496
+        ],
+        "max": [
+          1.9969111680984497,
+          1.682820439338684,
+          16.09600830078125
+        ],
+        "center": [
+          1.9289304614067078,
+          1.0751568675041199,
+          15.653205394744873
+        ],
+        "size": [
+          0.1359614133834839,
+          1.2153271436691284,
+          0.8856058120727539
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 34,
+      "materialIndex": 34,
+      "materialName": "material341",
+      "bounds": {
+        "min": [
+          1.8166269063949585,
+          1.1036931276321411,
+          15.59022331237793
+        ],
+        "max": [
+          1.9961987733840942,
+          1.5945757627487183,
+          15.737324714660645
+        ],
+        "center": [
+          1.9064128398895264,
+          1.3491344451904297,
+          15.663774013519287
+        ],
+        "size": [
+          0.17957186698913574,
+          0.49088263511657715,
+          0.14710140228271484
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 35,
+      "materialIndex": 35,
+      "materialName": "material342",
+      "bounds": {
+        "min": [
+          -0.1284380853176117,
+          0.5438045263290405,
+          0.06586011499166489
+        ],
+        "max": [
+          0.11949872970581055,
+          1.1764470338821411,
+          0.4578094184398651
+        ],
+        "center": [
+          -0.004469677805900574,
+          0.8601257801055908,
+          0.261834766715765
+        ],
+        "size": [
+          0.24793681502342224,
+          0.6326425075531006,
+          0.3919493034482002
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 36,
+      "materialIndex": 36,
+      "materialName": "material343",
+      "bounds": {
+        "min": [
+          -0.09080833196640015,
+          0.9570727944374084,
+          -0.10740284621715546
+        ],
+        "max": [
+          0.06935127824544907,
+          1.0253397226333618,
+          0.18764831125736237
+        ],
+        "center": [
+          -0.01072852686047554,
+          0.9912062585353851,
+          0.040122732520103455
+        ],
+        "size": [
+          0.1601596102118492,
+          0.06826692819595337,
+          0.2950511574745178
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 37,
+      "materialIndex": 37,
+      "materialName": "material344",
+      "bounds": {
+        "min": [
+          -0.1284380853176117,
+          0.2517518401145935,
+          -0.1649329662322998
+        ],
+        "max": [
+          0.12019861489534378,
+          1.3087410926818848,
+          0.21924060583114624
+        ],
+        "center": [
+          -0.004119735211133957,
+          0.7802464663982391,
+          0.027153819799423218
+        ],
+        "size": [
+          0.24863670021295547,
+          1.0569892525672913,
+          0.38417357206344604
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 38,
+      "materialIndex": 38,
+      "materialName": "material345",
+      "bounds": {
+        "min": [
+          -0.0945395678281784,
+          0.6341251134872437,
+          -0.09596512466669083
+        ],
+        "max": [
+          0.10648085922002792,
+          0.7446848750114441,
+          0.2125364989042282
+        ],
+        "center": [
+          0.005970645695924759,
+          0.6894049942493439,
+          0.05828568711876869
+        ],
+        "size": [
+          0.20102042704820633,
+          0.11055976152420044,
+          0.30850162357091904
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 39,
+      "materialIndex": 39,
+      "materialName": "material346",
+      "bounds": {
+        "min": [
+          -0.08708512037992477,
+          0.9162442684173584,
+          -0.14403869211673737
+        ],
+        "max": [
+          0.09847185760736465,
+          0.9816969633102417,
+          -0.10376385599374771
+        ],
+        "center": [
+          0.00569336861371994,
+          0.9489706158638,
+          -0.12390127405524254
+        ],
+        "size": [
+          0.18555697798728943,
+          0.0654526948928833,
+          0.040274836122989655
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 40,
+      "materialIndex": 40,
+      "materialName": "material347",
+      "bounds": {
+        "min": [
+          -0.08448796719312668,
+          0.9193546772003174,
+          -0.14162921905517578
+        ],
+        "max": [
+          0.09587469696998596,
+          0.9786651134490967,
+          -0.13438783586025238
+        ],
+        "center": [
+          0.005693364888429642,
+          0.949009895324707,
+          -0.13800852745771408
+        ],
+        "size": [
+          0.18036266416311264,
+          0.0593104362487793,
+          0.007241383194923401
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 41,
+      "materialIndex": 41,
+      "materialName": "material348",
+      "bounds": {
+        "min": [
+          -0.08708512037992477,
+          0.9162442684173584,
+          -0.14403869211673737
+        ],
+        "max": [
+          0.09847185760736465,
+          0.98125159740448,
+          -0.13611279428005219
+        ],
+        "center": [
+          0.00569336861371994,
+          0.9487479329109192,
+          -0.14007574319839478
+        ],
+        "size": [
+          0.18555697798728943,
+          0.06500732898712158,
+          0.00792589783668518
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 42,
+      "materialIndex": 42,
+      "materialName": "material349",
+      "bounds": {
+        "min": [
+          -0.3372045159339905,
+          0.9538111686706543,
+          -1.4135388135910034
+        ],
+        "max": [
+          0.31391260027885437,
+          1.4798245429992676,
+          -0.6501220464706421
+        ],
+        "center": [
+          -0.011645957827568054,
+          1.216817855834961,
+          -1.0318304300308228
+        ],
+        "size": [
+          0.6511171162128448,
+          0.5260133743286133,
+          0.7634167671203613
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 43,
+      "materialIndex": 43,
+      "materialName": "material350",
+      "bounds": {
+        "min": [
+          1.5191569328308105,
+          3.0159642696380615,
+          23.058364868164062
+        ],
+        "max": [
+          2.921673536300659,
+          4.402761936187744,
+          24.385787963867188
+        ],
+        "center": [
+          2.220415234565735,
+          3.709363102912903,
+          23.722076416015625
+        ],
+        "size": [
+          1.4025166034698486,
+          1.3867976665496826,
+          1.327423095703125
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 44,
+      "materialIndex": 44,
+      "materialName": "material351",
+      "bounds": {
+        "min": [
+          1.3835655450820923,
+          2.8912317752838135,
+          20.941082000732422
+        ],
+        "max": [
+          3.057265043258667,
+          4.59241247177124,
+          23.073001861572266
+        ],
+        "center": [
+          2.2204152941703796,
+          3.741822123527527,
+          22.007041931152344
+        ],
+        "size": [
+          1.6736994981765747,
+          1.7011806964874268,
+          2.1319198608398438
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 45,
+      "materialIndex": 45,
+      "materialName": "material352",
+      "bounds": {
+        "min": [
+          1.4758559465408325,
+          2.9480645656585693,
+          20.84881591796875
+        ],
+        "max": [
+          2.9649746417999268,
+          4.488950729370117,
+          21.248409271240234
+        ],
+        "center": [
+          2.2204152941703796,
+          3.7185076475143433,
+          21.048612594604492
+        ],
+        "size": [
+          1.4891186952590942,
+          1.5408861637115479,
+          0.3995933532714844
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 46,
+      "materialIndex": 46,
+      "materialName": "material353",
+      "bounds": {
+        "min": [
+          -2.4514260292053223,
+          3.4991636276245117,
+          21.08782958984375
+        ],
+        "max": [
+          2.4510984420776367,
+          3.998232364654541,
+          21.615131378173828
+        ],
+        "center": [
+          -0.00016379356384277344,
+          3.7486979961395264,
+          21.35148048400879
+        ],
+        "size": [
+          4.902524471282959,
+          0.4990687370300293,
+          0.5273017883300781
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 47,
+      "materialIndex": 47,
+      "materialName": "material354",
+      "bounds": {
+        "min": [
+          1.427039623260498,
+          2.947064161300659,
+          20.819074630737305
+        ],
+        "max": [
+          3.013791084289551,
+          4.539313316345215,
+          20.973655700683594
+        ],
+        "center": [
+          2.2204153537750244,
+          3.743188738822937,
+          20.89636516571045
+        ],
+        "size": [
+          1.5867514610290527,
+          1.5922491550445557,
+          0.15458106994628906
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 48,
+      "materialIndex": 48,
+      "materialName": "material355",
+      "bounds": {
+        "min": [
+          1.4217079877853394,
+          2.9255154132843018,
+          22.234752655029297
+        ],
+        "max": [
+          3.01912260055542,
+          4.541825294494629,
+          23.086734771728516
+        ],
+        "center": [
+          2.2204152941703796,
+          3.7336703538894653,
+          22.660743713378906
+        ],
+        "size": [
+          1.5974146127700806,
+          1.6163098812103271,
+          0.8519821166992188
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 49,
+      "materialIndex": 49,
+      "materialName": "material356",
+      "bounds": {
+        "min": [
+          -2.735576868057251,
+          3.208641290664673,
+          23.062307357788086
+        ],
+        "max": [
+          -1.7059099674224854,
+          4.27410364151001,
+          23.81991195678711
+        ],
+        "center": [
+          -2.220743417739868,
+          3.7413724660873413,
+          23.441109657287598
+        ],
+        "size": [
+          1.0296669006347656,
+          1.065462350845337,
+          0.7576045989990234
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 50,
+      "materialIndex": 50,
+      "materialName": "material357",
+      "bounds": {
+        "min": [
+          -2.50530743598938,
+          3.4292619228363037,
+          23.7763671875
+        ],
+        "max": [
+          -1.9361793994903564,
+          4.018174648284912,
+          24.385787963867188
+        ],
+        "center": [
+          -2.220743417739868,
+          3.723718285560608,
+          24.081077575683594
+        ],
+        "size": [
+          0.5691280364990234,
+          0.5889127254486084,
+          0.6094207763671875
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 51,
+      "materialIndex": 51,
+      "materialName": "material358",
+      "bounds": {
+        "min": [
+          -3.057593584060669,
+          2.8912317752838135,
+          20.941082000732422
+        ],
+        "max": [
+          -1.3838940858840942,
+          4.59241247177124,
+          23.086734771728516
+        ],
+        "center": [
+          -2.2207438349723816,
+          3.741822123527527,
+          22.01390838623047
+        ],
+        "size": [
+          1.6736994981765747,
+          1.7011806964874268,
+          2.1456527709960938
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 52,
+      "materialIndex": 52,
+      "materialName": "material359",
+      "bounds": {
+        "min": [
+          -2.9653031826019287,
+          2.9480645656585693,
+          20.84881591796875
+        ],
+        "max": [
+          -1.476183533668518,
+          4.488950729370117,
+          21.248409271240234
+        ],
+        "center": [
+          -2.2207433581352234,
+          3.7185076475143433,
+          21.048612594604492
+        ],
+        "size": [
+          1.4891196489334106,
+          1.5408861637115479,
+          0.3995933532714844
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 53,
+      "materialIndex": 53,
+      "materialName": "material360",
+      "bounds": {
+        "min": [
+          -2.735576868057251,
+          3.208641290664673,
+          23.062307357788086
+        ],
+        "max": [
+          -1.7059099674224854,
+          4.27410364151001,
+          23.084104537963867
+        ],
+        "center": [
+          -2.220743417739868,
+          3.7413724660873413,
+          23.073205947875977
+        ],
+        "size": [
+          1.0296669006347656,
+          1.065462350845337,
+          0.02179718017578125
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 54,
+      "materialIndex": 54,
+      "materialName": "material361",
+      "bounds": {
+        "min": [
+          -3.0141186714172363,
+          2.947064161300659,
+          20.819074630737305
+        ],
+        "max": [
+          -1.4273672103881836,
+          4.539313316345215,
+          20.973655700683594
+        ],
+        "center": [
+          -2.22074294090271,
+          3.743188738822937,
+          20.89636516571045
+        ],
+        "size": [
+          1.5867514610290527,
+          1.5922491550445557,
+          0.15458106994628906
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 55,
+      "materialIndex": 55,
+      "materialName": "material362",
+      "bounds": {
+        "min": [
+          -3.0194501876831055,
+          2.9255154132843018,
+          22.234752655029297
+        ],
+        "max": [
+          -1.4220365285873413,
+          4.541825294494629,
+          23.086734771728516
+        ],
+        "center": [
+          -2.2207433581352234,
+          3.7336703538894653,
+          22.660743713378906
+        ],
+        "size": [
+          1.5974136590957642,
+          1.6163098812103271,
+          0.8519821166992188
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 56,
+      "materialIndex": 56,
+      "materialName": "material363",
+      "bounds": {
+        "min": [
+          -0.13016684353351593,
+          3.6052629947662354,
+          23.95965003967285
+        ],
+        "max": [
+          0.13163036108016968,
+          7.5,
+          29.94884490966797
+        ],
+        "center": [
+          0.0007317587733268738,
+          5.552631497383118,
+          26.95424747467041
+        ],
+        "size": [
+          0.2617972046136856,
+          3.8947370052337646,
+          5.989194869995117
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 57,
+      "materialIndex": 57,
+      "materialName": "material364",
+      "bounds": {
+        "min": [
+          -0.12167639285326004,
+          3.6548635959625244,
+          24.43832015991211
+        ],
+        "max": [
+          0.12121500819921494,
+          6.203536033630371,
+          28.013534545898438
+        ],
+        "center": [
+          -0.0002306923270225525,
+          4.929199814796448,
+          26.225927352905273
+        ],
+        "size": [
+          0.24289140105247498,
+          2.5486724376678467,
+          3.575214385986328
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 58,
+      "materialIndex": 58,
+      "materialName": "material365",
+      "bounds": {
+        "min": [
+          -0.09571020305156708,
+          6.185243606567383,
+          27.33850860595703
+        ],
+        "max": [
+          0.09692943096160889,
+          6.487912178039551,
+          28.916900634765625
+        ],
+        "center": [
+          0.0006096139550209045,
+          6.336577892303467,
+          28.127704620361328
+        ],
+        "size": [
+          0.19263963401317596,
+          0.30266857147216797,
+          1.5783920288085938
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 59,
+      "materialIndex": 59,
+      "materialName": "material366",
+      "bounds": {
+        "min": [
+          -0.13016684353351593,
+          4.589540481567383,
+          25.192028045654297
+        ],
+        "max": [
+          0.13163036108016968,
+          6.350699424743652,
+          27.39812469482422
+        ],
+        "center": [
+          0.0007317587733268738,
+          5.470119953155518,
+          26.295076370239258
+        ],
+        "size": [
+          0.2617972046136856,
+          1.7611589431762695,
+          2.206096649169922
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 60,
+      "materialIndex": 60,
+      "materialName": "material367",
+      "bounds": {
+        "min": [
+          -0.11165600270032883,
+          4.168560028076172,
+          24.852558135986328
+        ],
+        "max": [
+          0.10822299122810364,
+          6.027507781982422,
+          27.90972137451172
+        ],
+        "center": [
+          -0.0017165057361125946,
+          5.098033905029297,
+          26.381139755249023
+        ],
+        "size": [
+          0.21987899392843246,
+          1.85894775390625,
+          3.0571632385253906
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 61,
+      "materialIndex": 61,
+      "materialName": "material368",
+      "bounds": {
+        "min": [
+          -0.11464901268482208,
+          4.018953800201416,
+          24.731916427612305
+        ],
+        "max": [
+          0.11200683563947678,
+          5.675451278686523,
+          27.702104568481445
+        ],
+        "center": [
+          -0.0013210885226726532,
+          4.84720253944397,
+          26.217010498046875
+        ],
+        "size": [
+          0.22665584832429886,
+          1.6564974784851074,
+          2.9701881408691406
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 62,
+      "materialIndex": 62,
+      "materialName": "material369",
+      "bounds": {
+        "min": [
+          -0.13016684353351593,
+          4.594738483428955,
+          25.383852005004883
+        ],
+        "max": [
+          0.13163036108016968,
+          6.45006799697876,
+          27.52035903930664
+        ],
+        "center": [
+          0.0007317587733268738,
+          5.522403240203857,
+          26.45210552215576
+        ],
+        "size": [
+          0.2617972046136856,
+          1.8553295135498047,
+          2.136507034301758
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 63,
+      "materialIndex": 63,
+      "materialName": "material370",
+      "bounds": {
+        "min": [
+          -0.11575455963611603,
+          4.374774932861328,
+          25.018844604492188
+        ],
+        "max": [
+          0.07836776226758957,
+          5.851479530334473,
+          27.805912017822266
+        ],
+        "center": [
+          -0.01869339868426323,
+          5.1131272315979,
+          26.412378311157227
+        ],
+        "size": [
+          0.1941223219037056,
+          1.4767045974731445,
+          2.787067413330078
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 64,
+      "materialIndex": 64,
+      "materialName": "material371",
+      "bounds": {
+        "min": [
+          -0.13016684353351593,
+          4.606646537780762,
+          25.32822036743164
+        ],
+        "max": [
+          0.13163036108016968,
+          6.358882427215576,
+          27.457744598388672
+        ],
+        "center": [
+          0.0007317587733268738,
+          5.482764482498169,
+          26.392982482910156
+        ],
+        "size": [
+          0.2617972046136856,
+          1.7522358894348145,
+          2.1295242309570312
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 65,
+      "materialIndex": 65,
+      "materialName": "material372",
+      "bounds": {
+        "min": [
+          -0.13016684353351593,
+          4.859288215637207,
+          25.409547805786133
+        ],
+        "max": [
+          0.13163036108016968,
+          6.008744239807129,
+          27.217309951782227
+        ],
+        "center": [
+          0.0007317587733268738,
+          5.434016227722168,
+          26.31342887878418
+        ],
+        "size": [
+          0.2617972046136856,
+          1.1494560241699219,
+          1.8077621459960938
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 66,
+      "materialIndex": 66,
+      "materialName": "material373",
+      "bounds": {
+        "min": [
+          -0.057597216218709946,
+          4.025838851928711,
+          27.032917022705078
+        ],
+        "max": [
+          0.04261922463774681,
+          6.224170207977295,
+          28.774995803833008
+        ],
+        "center": [
+          -0.007488995790481567,
+          5.125004529953003,
+          27.903956413269043
+        ],
+        "size": [
+          0.10021644085645676,
+          2.198331356048584,
+          1.7420787811279297
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 67,
+      "materialIndex": 67,
+      "materialName": "material374",
+      "bounds": {
+        "min": [
+          -0.057597216218709946,
+          4.081307888031006,
+          26.872865676879883
+        ],
+        "max": [
+          0.04261922463774681,
+          5.696836948394775,
+          28.491260528564453
+        ],
+        "center": [
+          -0.007488995790481567,
+          4.889072418212891,
+          27.682063102722168
+        ],
+        "size": [
+          0.10021644085645676,
+          1.6155290603637695,
+          1.6183948516845703
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 68,
+      "materialIndex": 68,
+      "materialName": "material375",
+      "bounds": {
+        "min": [
+          -0.057597216218709946,
+          4.427544116973877,
+          26.966167449951172
+        ],
+        "max": [
+          0.04261922463774681,
+          5.872614860534668,
+          28.585840225219727
+        ],
+        "center": [
+          -0.007488995790481567,
+          5.1500794887542725,
+          27.77600383758545
+        ],
+        "size": [
+          0.10021644085645676,
+          1.445070743560791,
+          1.6196727752685547
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 69,
+      "materialIndex": 69,
+      "materialName": "material376",
+      "bounds": {
+        "min": [
+          -0.057597216218709946,
+          4.2233076095581055,
+          26.855043411254883
+        ],
+        "max": [
+          0.04261922463774681,
+          6.048392295837402,
+          28.680418014526367
+        ],
+        "center": [
+          -0.007488995790481567,
+          5.135849952697754,
+          27.767730712890625
+        ],
+        "size": [
+          0.10021644085645676,
+          1.8250846862792969,
+          1.8253746032714844
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 70,
+      "materialIndex": 70,
+      "materialName": "material377",
+      "bounds": {
+        "min": [
+          -0.057597216218709946,
+          6.203536033630371,
+          28.013534545898438
+        ],
+        "max": [
+          0.04261922463774681,
+          6.439802169799805,
+          28.891014099121094
+        ],
+        "center": [
+          -0.007488995790481567,
+          6.321669101715088,
+          28.452274322509766
+        ],
+        "size": [
+          0.10021644085645676,
+          0.2362661361694336,
+          0.8774795532226562
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 71,
+      "materialIndex": 71,
+      "materialName": "material378",
+      "bounds": {
+        "min": [
+          -0.13016684353351593,
+          4.709709167480469,
+          24.91380500793457
+        ],
+        "max": [
+          0.13163036108016968,
+          6.478382110595703,
+          26.675851821899414
+        ],
+        "center": [
+          0.0007317587733268738,
+          5.594045639038086,
+          25.794828414916992
+        ],
+        "size": [
+          0.2617972046136856,
+          1.7686729431152344,
+          1.7620468139648438
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 72,
+      "materialIndex": 72,
+      "materialName": "material379",
+      "bounds": {
+        "min": [
+          -4.103174209594727,
+          6.638625621795654,
+          27.333650588989258
+        ],
+        "max": [
+          4.090612888336182,
+          7.075834274291992,
+          30.519433975219727
+        ],
+        "center": [
+          -0.006280660629272461,
+          6.857229948043823,
+          28.926542282104492
+        ],
+        "size": [
+          8.193787097930908,
+          0.4372086524963379,
+          3.1857833862304688
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 73,
+      "materialIndex": 73,
+      "materialName": "material380",
+      "bounds": {
+        "min": [
+          -3.915560245513916,
+          6.687319755554199,
+          28.494430541992188
+        ],
+        "max": [
+          3.90299916267395,
+          7.042242527008057,
+          30.437255859375
+        ],
+        "center": [
+          -0.00628054141998291,
+          6.864781141281128,
+          29.465843200683594
+        ],
+        "size": [
+          7.818559408187866,
+          0.3549227714538574,
+          1.9428253173828125
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 74,
+      "materialIndex": 74,
+      "materialName": "material381",
+      "bounds": {
+        "min": [
+          -3.9296059608459473,
+          6.638625621795654,
+          27.037275314331055
+        ],
+        "max": [
+          3.9170451164245605,
+          7.062160491943359,
+          29.61719512939453
+        ],
+        "center": [
+          -0.006280422210693359,
+          6.850393056869507,
+          28.327235221862793
+        ],
+        "size": [
+          7.846651077270508,
+          0.4235348701477051,
+          2.5799198150634766
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 75,
+      "materialIndex": 75,
+      "materialName": "material382",
+      "bounds": {
+        "min": [
+          -1.2628897428512573,
+          2.7475426197052,
+          3.0908427238464355
+        ],
+        "max": [
+          1.2625612020492554,
+          3.5731430053710938,
+          20.350072860717773
+        ],
+        "center": [
+          -0.00016427040100097656,
+          3.160342812538147,
+          11.720457792282104
+        ],
+        "size": [
+          2.5254509449005127,
+          0.8256003856658936,
+          17.259230136871338
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 76,
+      "materialIndex": 76,
+      "materialName": "material383",
+      "bounds": {
+        "min": [
+          -0.4112407863140106,
+          2.5825858116149902,
+          -0.7335901260375977
+        ],
+        "max": [
+          0.3963947296142578,
+          3.2052862644195557,
+          0.018164675682783127
+        ],
+        "center": [
+          -0.007423028349876404,
+          2.893936038017273,
+          -0.35771272517740726
+        ],
+        "size": [
+          0.8076355159282684,
+          0.6227004528045654,
+          0.7517548017203808
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 77,
+      "materialIndex": 77,
+      "materialName": "material384",
+      "bounds": {
+        "min": [
+          -11.022027969360352,
+          1.1813673973083496,
+          13.174315452575684
+        ],
+        "max": [
+          11.021699905395508,
+          2.3433542251586914,
+          18.963838577270508
+        ],
+        "center": [
+          -0.000164031982421875,
+          1.7623608112335205,
+          16.069077014923096
+        ],
+        "size": [
+          22.04372787475586,
+          1.1619868278503418,
+          5.789523124694824
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 78,
+      "materialIndex": 78,
+      "materialName": "material385",
+      "bounds": {
+        "min": [
+          -3.0614218711853027,
+          1.6257892847061157,
+          13.561217308044434
+        ],
+        "max": [
+          3.0610926151275635,
+          1.8056530952453613,
+          16.04267120361328
+        ],
+        "center": [
+          -0.0001646280288696289,
+          1.7157211899757385,
+          14.801944255828857
+        ],
+        "size": [
+          6.122514486312866,
+          0.1798638105392456,
+          2.4814538955688477
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 79,
+      "materialIndex": 79,
+      "materialName": "material386",
+      "bounds": {
+        "min": [
+          -3.0240256786346436,
+          1.6285202503204346,
+          13.596317291259766
+        ],
+        "max": [
+          3.023699998855591,
+          1.8042116165161133,
+          16.04051971435547
+        ],
+        "center": [
+          -0.0001628398895263672,
+          1.716365933418274,
+          14.818418502807617
+        ],
+        "size": [
+          6.047725677490234,
+          0.1756913661956787,
+          2.444202423095703
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 80,
+      "materialIndex": 80,
+      "materialName": "material387",
+      "bounds": {
+        "min": [
+          -2.303900957107544,
+          1.2007641792297363,
+          12.487207412719727
+        ],
+        "max": [
+          2.303572416305542,
+          1.7679749727249146,
+          13.57213306427002
+        ],
+        "center": [
+          -0.00016427040100097656,
+          1.4843695759773254,
+          13.029670238494873
+        ],
+        "size": [
+          4.607473373413086,
+          0.5672107934951782,
+          1.084925651550293
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 81,
+      "materialIndex": 81,
+      "materialName": "material388",
+      "bounds": {
+        "min": [
+          -9.3487548828125,
+          1.9565165042877197,
+          17.336814880371094
+        ],
+        "max": [
+          9.348426818847656,
+          2.1769890785217285,
+          18.397933959960938
+        ],
+        "center": [
+          -0.000164031982421875,
+          2.066752791404724,
+          17.867374420166016
+        ],
+        "size": [
+          18.697181701660156,
+          0.2204725742340088,
+          1.0611190795898438
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 82,
+      "materialIndex": 82,
+      "materialName": "material389",
+      "bounds": {
+        "min": [
+          -6.481444835662842,
+          1.5940475463867188,
+          15.964369773864746
+        ],
+        "max": [
+          6.481116771697998,
+          1.974510669708252,
+          17.093250274658203
+        ],
+        "center": [
+          -0.000164031982421875,
+          1.7842791080474854,
+          16.528810024261475
+        ],
+        "size": [
+          12.96256160736084,
+          0.3804631233215332,
+          1.128880500793457
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 83,
+      "materialIndex": 83,
+      "materialName": "material390",
+      "bounds": {
+        "min": [
+          -10.458504676818848,
+          1.332497477531433,
+          12.95986270904541
+        ],
+        "max": [
+          10.458175659179688,
+          2.2766611576080322,
+          17.708192825317383
+        ],
+        "center": [
+          -0.00016450881958007812,
+          1.8045793175697327,
+          15.334027767181396
+        ],
+        "size": [
+          20.916680335998535,
+          0.9441636800765991,
+          4.748330116271973
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 84,
+      "materialIndex": 84,
+      "materialName": "material391",
+      "bounds": {
+        "min": [
+          10.90640640258789,
+          2.2575888633728027,
+          17.741539001464844
+        ],
+        "max": [
+          11.819835662841797,
+          3.4471943378448486,
+          19.803909301757812
+        ],
+        "center": [
+          11.363121032714844,
+          2.8523916006088257,
+          18.772724151611328
+        ],
+        "size": [
+          0.9134292602539062,
+          1.189605474472046,
+          2.0623703002929688
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 85,
+      "materialIndex": 85,
+      "materialName": "material392",
+      "bounds": {
+        "min": [
+          -11.820164680480957,
+          2.2575888633728027,
+          17.741539001464844
+        ],
+        "max": [
+          -10.906734466552734,
+          3.4471943378448486,
+          19.803909301757812
+        ],
+        "center": [
+          -11.363449573516846,
+          2.8523916006088257,
+          18.772724151611328
+        ],
+        "size": [
+          0.9134302139282227,
+          1.189605474472046,
+          2.0623703002929688
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 86,
+      "materialIndex": 86,
+      "materialName": "material393",
+      "bounds": {
+        "min": [
+          -7.366224765777588,
+          1.3451915979385376,
+          15.511768341064453
+        ],
+        "max": [
+          7.365897178649902,
+          1.9725592136383057,
+          17.774110794067383
+        ],
+        "center": [
+          -0.00016379356384277344,
+          1.6588754057884216,
+          16.642939567565918
+        ],
+        "size": [
+          14.73212194442749,
+          0.6273676156997681,
+          2.2623424530029297
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 87,
+      "materialIndex": 87,
+      "materialName": "material394",
+      "bounds": {
+        "min": [
+          1.2103639841079712,
+          1.328020691871643,
+          16.242019653320312
+        ],
+        "max": [
+          7.586580753326416,
+          2.036583423614502,
+          17.8768310546875
+        ],
+        "center": [
+          4.398472368717194,
+          1.6823020577430725,
+          17.059425354003906
+        ],
+        "size": [
+          6.376216769218445,
+          0.7085627317428589,
+          1.6348114013671875
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 88,
+      "materialIndex": 88,
+      "materialName": "material395",
+      "bounds": {
+        "min": [
+          -7.58690881729126,
+          1.328020691871643,
+          16.242019653320312
+        ],
+        "max": [
+          -1.2106916904449463,
+          2.036583423614502,
+          17.8768310546875
+        ],
+        "center": [
+          -4.398800253868103,
+          1.6823020577430725,
+          17.059425354003906
+        ],
+        "size": [
+          6.3762171268463135,
+          0.7085627317428589,
+          1.6348114013671875
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 89,
+      "materialIndex": 89,
+      "materialName": "material396",
+      "bounds": {
+        "min": [
+          -1.2243380546569824,
+          2.704171895980835,
+          -0.6470845341682434
+        ],
+        "max": [
+          1.2240095138549805,
+          3.2651255130767822,
+          1.0326786041259766
+        ],
+        "center": [
+          -0.00016427040100097656,
+          2.9846487045288086,
+          0.19279703497886658
+        ],
+        "size": [
+          2.448347568511963,
+          0.5609536170959473,
+          1.67976313829422
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 90,
+      "materialIndex": 90,
+      "materialName": "material397",
+      "bounds": {
+        "min": [
+          -0.4797287881374359,
+          2.9817371368408203,
+          27.339187622070312
+        ],
+        "max": [
+          0.47940024733543396,
+          3.972309112548828,
+          28.22287940979004
+        ],
+        "center": [
+          -0.00016427040100097656,
+          3.477023124694824,
+          27.781033515930176
+        ],
+        "size": [
+          0.9591290354728699,
+          0.9905719757080078,
+          0.8836917877197266
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 91,
+      "materialIndex": 91,
+      "materialName": "material398",
+      "bounds": {
+        "min": [
+          -0.2526663839817047,
+          3.296504259109497,
+          27.730316162109375
+        ],
+        "max": [
+          0.2523387372493744,
+          3.8302206993103027,
+          28.22287940979004
+        ],
+        "center": [
+          -0.00016382336616516113,
+          3.5633624792099,
+          27.976597785949707
+        ],
+        "size": [
+          0.5050051212310791,
+          0.5337164402008057,
+          0.49256324768066406
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 92,
+      "materialIndex": 92,
+      "materialName": "material401",
+      "bounds": {
+        "min": [
+          -2.2779123783111572,
+          0.0068443152122199535,
+          15.304495811462402
+        ],
+        "max": [
+          2.3080899715423584,
+          1.003137230873108,
+          16.306882858276367
+        ],
+        "center": [
+          0.015088796615600586,
+          0.5049907730426639,
+          15.805689334869385
+        ],
+        "size": [
+          4.586002349853516,
+          0.996292915660888,
+          1.0023870468139648
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 93,
+      "materialIndex": 93,
+      "materialName": "material402",
+      "bounds": {
+        "min": [
+          -0.24776451289653778,
+          0.0026736685540527105,
+          -0.24430769681930542
+        ],
+        "max": [
+          0.24776406586170197,
+          0.5364549160003662,
+          0.2380656749010086
+        ],
+        "center": [
+          -2.2351741790771484e-7,
+          0.26956429227720946,
+          -0.003121010959148407
+        ],
+        "size": [
+          0.49552857875823975,
+          0.5337812474463135,
+          0.482373371720314
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 94,
+      "materialIndex": 94,
+      "materialName": "material405",
+      "bounds": {
+        "min": [
+          -2.206075668334961,
+          0.0021959810983389616,
+          15.299955368041992
+        ],
+        "max": [
+          2.236698865890503,
+          1.007785439491272,
+          16.311424255371094
+        ],
+        "center": [
+          0.015311598777770996,
+          0.5049907102948055,
+          15.805689811706543
+        ],
+        "size": [
+          4.442774534225464,
+          1.005589458392933,
+          1.0114688873291016
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 95,
+      "materialIndex": 95,
+      "materialName": "material406",
+      "bounds": {
+        "min": [
+          -0.19984868168830872,
+          0,
+          -0.24647560715675354
+        ],
+        "max": [
+          0.1998482346534729,
+          0.539128303527832,
+          0.2402333915233612
+        ],
+        "center": [
+          -2.2351741790771484e-7,
+          0.269564151763916,
+          -0.003121107816696167
+        ],
+        "size": [
+          0.3996969163417816,
+          0.539128303527832,
+          0.48670899868011475
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 96,
+      "materialIndex": 96,
+      "materialName": "material408",
+      "bounds": {
+        "min": [
+          -2.272916078567505,
+          3.6762843132019043,
+          21.08782958984375
+        ],
+        "max": [
+          2.2725884914398193,
+          3.799422264099121,
+          21.090572357177734
+        ],
+        "center": [
+          -0.00016379356384277344,
+          3.7378532886505127,
+          21.089200973510742
+        ],
+        "size": [
+          4.545504570007324,
+          0.1231379508972168,
+          0.002742767333984375
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 97,
+      "materialIndex": 97,
+      "materialName": "material411",
+      "bounds": {
+        "min": [
+          -2.284482479095459,
+          0.03973373770713806,
+          15.322531700134277
+        ],
+        "max": [
+          2.315105676651001,
+          0.9834418892860413,
+          16.28884506225586
+        ],
+        "center": [
+          0.015311598777770996,
+          0.5115878134965897,
+          15.805688381195068
+        ],
+        "size": [
+          4.59958815574646,
+          0.9437081515789032,
+          0.966313362121582
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 98,
+      "materialIndex": 98,
+      "materialName": "material412",
+      "bounds": {
+        "min": [
+          -0.25209933519363403,
+          0.013284923508763313,
+          -0.22896559536457062
+        ],
+        "max": [
+          0.2520989179611206,
+          0.5258219838142395,
+          0.22857064008712769
+        ],
+        "center": [
+          -2.086162567138672e-7,
+          0.2695534536615014,
+          -0.00019747763872146606
+        ],
+        "size": [
+          0.5041982531547546,
+          0.5125370603054762,
+          0.4575362354516983
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 99,
+      "materialIndex": 99,
+      "materialName": "material414",
+      "bounds": {
+        "min": [
+          -2.955249786376953,
+          2.983555316925049,
+          21.3636474609375
+        ],
+        "max": [
+          2.9549221992492676,
+          4.5189971923828125,
+          21.59680938720703
+        ],
+        "center": [
+          -0.00016379356384277344,
+          3.7512762546539307,
+          21.480228424072266
+        ],
+        "size": [
+          5.910171985626221,
+          1.5354418754577637,
+          0.23316192626953125
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 100,
+      "materialIndex": 100,
+      "materialName": "material417",
+      "bounds": {
+        "min": [
+          -2.2651004791259766,
+          0.25190550088882446,
+          15.526801109313965
+        ],
+        "max": [
+          2.2957239151000977,
+          0.7580761313438416,
+          16.084577560424805
+        ],
+        "center": [
+          0.015311717987060547,
+          0.504990816116333,
+          15.805689334869385
+        ],
+        "size": [
+          4.560824394226074,
+          0.5061706304550171,
+          0.5577764511108398
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 101,
+      "materialIndex": 101,
+      "materialName": "material418",
+      "bounds": {
+        "min": [
+          -0.23909930884838104,
+          0.13365304470062256,
+          -0.12571114301681519
+        ],
+        "max": [
+          0.23909975588321686,
+          0.40547552704811096,
+          0.11946912854909897
+        ],
+        "center": [
+          2.2351741790771484e-7,
+          0.26956428587436676,
+          -0.0031210072338581085
+        ],
+        "size": [
+          0.4781990647315979,
+          0.2718224823474884,
+          0.24518027156591415
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 102,
+      "materialIndex": 102,
+      "materialName": "material421",
+      "bounds": {
+        "min": [
+          -2.2650487422943115,
+          0.28612399101257324,
+          15.557723045349121
+        ],
+        "max": [
+          2.2956721782684326,
+          0.7238577008247375,
+          16.05365562438965
+        ],
+        "center": [
+          0.015311717987060547,
+          0.5049908459186554,
+          15.805689334869385
+        ],
+        "size": [
+          4.560720920562744,
+          0.4377337098121643,
+          0.49593257904052734
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 103,
+      "materialIndex": 103,
+      "materialName": "material422",
+      "bounds": {
+        "min": [
+          -0.23904314637184143,
+          0.15187214314937592,
+          -0.10914265364408493
+        ],
+        "max": [
+          0.23904269933700562,
+          0.3872564435005188,
+          0.10290063917636871
+        ],
+        "center": [
+          -2.2351741790771484e-7,
+          0.26956429332494736,
+          -0.0031210072338581085
+        ],
+        "size": [
+          0.47808584570884705,
+          0.23538430035114288,
+          0.21204329282045364
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 104,
+      "materialIndex": 104,
+      "materialName": "material424",
+      "bounds": {
+        "min": [
+          -1.2743206024169922,
+          2.504957437515259,
+          19.406949996948242
+        ],
+        "max": [
+          1.273992896080017,
+          2.834994077682495,
+          19.8831729888916
+        ],
+        "center": [
+          -0.00016385316848754883,
+          2.669975757598877,
+          19.645061492919922
+        ],
+        "size": [
+          2.5483134984970093,
+          0.33003664016723633,
+          0.4762229919433594
+        ]
+      }
+    },
+    {
+      "nodeIndex": 0,
+      "nodeName": "American Eagle CRJ900 authored aircraft",
+      "meshIndex": 0,
+      "meshName": "American Eagle CRJ900",
+      "primitiveIndex": 105,
+      "materialIndex": 105,
+      "materialName": "material426",
+      "bounds": {
+        "min": [
+          -1.1804298162460327,
+          3.0247650146484375,
+          2.739696502685547
+        ],
+        "max": [
+          -1.1180312633514404,
+          3.179628849029541,
+          2.878695487976074
+        ],
+        "center": [
+          -1.1492305397987366,
+          3.1021969318389893,
+          2.8091959953308105
+        ],
+        "size": [
+          0.062398552894592285,
+          0.15486383438110352,
+          0.13899898529052734
+        ]
+      }
+    }
+  ],
   "materials": [
     {
       "index": 0,
