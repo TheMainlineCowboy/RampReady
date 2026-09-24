@@ -92,6 +92,13 @@ insertAfter(
 const runtimePath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 insertAfter(
   runtimePath,
+  'import { buildCRJ700Aircraft } from "./aircraft/crj700Model.js";',
+  'import { getRampReadyAircraftDoorProfile, getRenderedAircraftDoorWorldMarker, getRenderedAircraftDoorOutwardWorldDirection } from "../environment/kphxFullAirport/aircraftDoorAuthority.js";',
+  "getRenderedAircraftDoorWorldMarker",
+  "visible CRJ L1 authority import",
+);
+insertAfter(
+  runtimePath,
   "  const inspectionRef = useRef(false);",
   `  const jetwayRef = useRef({
     controller: null,
@@ -132,6 +139,11 @@ replaceRequired(
       setMessage("Approach directly from the front and stop inside the capture envelope.");`,
   `    if (stageRef.current === 0) {
       if (jetwayRef.current.retractionRequested) return;
+      const controller = jetwayRef.current.controller;
+      if (!controller?.isDoorContactReady?.()) {
+        setMessage("Waiting for the A1 jetway to make verified contact with the rendered CRJ L1 door.");
+        return;
+      }
       jetwayRef.current.target = 0;
       jetwayRef.current.retractionRequested = true;
       setMessage("Jetway departure sequence active: hood clear, telescope in, then rotate to park before tug approach.");`,
@@ -158,6 +170,48 @@ insertAfterAny(
   ],
   `        const a1JetwayController = environment.userData.authoredTerminal4A1JetwayController || null;
         jetwayRef.current.controller = a1JetwayController;
+
+        const registerRenderedA1DoorContact = () => {
+          if (!a1JetwayController?.registerAircraftDoorContact) return false;
+          const profile = getRampReadyAircraftDoorProfile("CRJ700");
+          const targetWorld = getRenderedAircraftDoorWorldMarker(THREE, aircraft, profile);
+          const outwardWorldDirection = getRenderedAircraftDoorOutwardWorldDirection(THREE, aircraft);
+          if (!targetWorld || !outwardWorldDirection) return false;
+          const contact = a1JetwayController.registerAircraftDoorContact({
+            targetWorld,
+            outwardWorldDirection,
+          });
+          renderer.domElement.dataset.a1JetwayDoorContactReady = String(contact.ready === true);
+          renderer.domElement.dataset.a1JetwayDoorContactGapMeters = Number.isFinite(contact.gapMeters)
+            ? contact.gapMeters.toFixed(4)
+            : "missing";
+          renderer.domElement.dataset.a1JetwayDockCorrectionMeters = Number.isFinite(contact.correctionMeters)
+            ? contact.correctionMeters.toFixed(4)
+            : "missing";
+          renderer.domElement.dataset.a1JetwayConnectedLatMeters = Number.isFinite(contact.connectedLatMeters)
+            ? contact.connectedLatMeters.toFixed(4)
+            : "missing";
+          renderer.domElement.dataset.a1JetwayConnectedVertMeters = Number.isFinite(contact.connectedVertMeters)
+            ? contact.connectedVertMeters.toFixed(4)
+            : "missing";
+          renderer.domElement.dataset.a1JetwayDockVerticalCorrectionMeters = Number.isFinite(contact.verticalCorrectionMeters)
+            ? contact.verticalCorrectionMeters.toFixed(4)
+            : "missing";
+          renderer.domElement.dataset.a1JetwayDoorContactHitObject = contact.hitObject || "missing";
+          renderer.domElement.dataset.a1RenderedL1DoorWorld =
+            [targetWorld.x, targetWorld.y, targetWorld.z].map((value) => value.toFixed(4)).join(",");
+          renderer.domElement.dataset.a1JetwayDoorRegistrationAuthority =
+            profile?.renderedDoorMarkerAuthority || "missing";
+          if (!contact.ready && !inspectionRef.current) {
+            setMessage("A1 jetway door registration is not yet within visible-contact tolerance. Ready is locked.");
+          }
+          return contact.ready === true;
+        };
+
+        if (!registerRenderedA1DoorContact()) {
+          const onAircraftReady = () => registerRenderedA1DoorContact();
+          aircraft.addEventListener("aircraft-model-ready", onAircraftReady, { once: true });
+        }
         a1JetwayController?.setDeployment(jetwayRef.current.target);
         renderer.domElement.dataset.a1JetwayDeployment = jetwayRef.current.deployment.toFixed(3);
         renderer.domElement.dataset.a1JetwayState = a1JetwayController?.getState?.() || "missing";
@@ -190,6 +244,10 @@ insertAfter(
         }
         renderer.domElement.dataset.a1JetwayDeployment = jetway.deployment.toFixed(3);
         renderer.domElement.dataset.a1JetwayState = jetway.controller.getState?.() || "unknown";
+        renderer.domElement.dataset.a1JetwayLatMeters = Number(jetway.controller.getLatMeters?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayVertMeters = Number(jetway.controller.getVertMeters?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayBridgePitchDegrees = Number(jetway.controller.getBridgePitchDegrees?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayCabinVerticalDeltaMeters = Number(jetway.controller.getCabinVerticalDeltaMeters?.() ?? Number.NaN).toFixed(3);
         if (!inspectionActive && jetway.retractionRequested && jetway.deployment <= 0.005 && stageRef.current === 0) {
           jetway.retractionRequested = false;
           stageRef.current = 1;
