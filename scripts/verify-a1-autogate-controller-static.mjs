@@ -22,6 +22,11 @@ expect(!controller.includes("terminalTunnelMeshScaleZ"),"Outer Segment 10 scale 
 expect(controller.includes('Segment 10 is the 9.5 m terminal-side'),"Exact Segment 10 fixed-tunnel authority missing");
 expect(controller.includes("cabinWall.rotation.y"),"A1 cabin articulation missing");
 expect(controller.includes("cabinHalfB.rotation.y"),"A1 cabin half counter-rotation missing");
+expect(controller.includes('const cabinHalfA = requireObject(cabinWall, "Attached_jw_cabin_1a.obj")'),"A1 cabin half A source binding missing");
+expect(controller.includes('const cabinHalfB = requireObject(aircraftTunnelSegment, "Attached_jw_cabin_1b.obj")'),"A1 cabin half B source binding missing");
+expect(controller.includes("a1AutoGateCabinJointGapMeters"),"A1 cabin joint gap invariant missing");
+expect(controller.includes("a1AutoGateCabinRelativeYawDriftRadians"),"A1 cabin relative-yaw invariant missing");
+expect(controller.includes('Segment-11-endpoint-equals-Cabin-Segment-20-start'),"A1 cabin joint source authority missing");
 expect(controller.includes('deployment <= 0.005'),"A1 parked threshold missing");
 expect(installer.includes('if (gateMap.gate === "A1")'),"A1-only controller scope missing");
 expect(installer.includes("installA1ExactAutoGateController"),"A1 controller installer missing");
