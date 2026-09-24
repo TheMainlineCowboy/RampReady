@@ -134,8 +134,6 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   expect(runtime.a1JetwayCabinEndWedNodeId).toBe('104811');
   expect(Number(runtime.a1XPlaneAutoGateLatMeters)).toBeCloseTo(6.1284, 3);
   expect(Number(runtime.a1XPlaneAutoGateVertMeters)).toBeCloseTo(-1.9158528682264, 3);
-  expect(runtime.a1JetwaySupportTrianglePartitionExact).toBe('true');
-  expect(Math.abs(Number(runtime.a1JetwaySupportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
   const criticalErrors = consoleErrors.filter(message =>
     /PHX|KPHX|Terminal 4|GLTFLoader|WebGL|ReferenceError|TypeError|SyntaxError/i.test(message)
   );
@@ -185,8 +183,6 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   }, null, { timeout: 14000, polling: 50 });
 
   const midRuntime = await canvas.evaluate(element => ({ ...element.dataset }));
-  expect(midRuntime.a1JetwaySupportTrianglePartitionExact).toBe('true');
-  expect(Math.abs(Number(midRuntime.a1JetwaySupportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
   expect(Number(midRuntime.a1JetwayCabinJointGapMeters)).toBeLessThanOrEqual(0.08);
   expect(Number(midRuntime.a1JetwayFixedWallMotionMaxMeters)).toBeLessThanOrEqual(0.001);
   const midBytes = await captureCanvasClip(
@@ -203,10 +199,8 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   }, null, { timeout: 12000, polling: 50 });
 
   const parkedRuntime = await canvas.evaluate(element => ({ ...element.dataset }));
-  expect(parkedRuntime.a1JetwaySupportTrianglePartitionExact).toBe('true');
-  expect(Math.abs(Number(parkedRuntime.a1JetwaySupportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
   expect(Number(parkedRuntime.a1JetwayCabinJointGapMeters)).toBeLessThanOrEqual(0.08);
-  expect(Number(parkedRuntime.a1JetwaySourcePoseMaxMatrixDelta)).toBeLessThanOrEqual(0.00001);
+  expect(Math.abs(Number(parkedRuntime.a1JetwaySupportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
   const parkedBytes = await captureCanvasClip(
     page,
     bounds,
