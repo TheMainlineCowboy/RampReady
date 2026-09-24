@@ -1,0 +1,84 @@
+name: KPHX XP12.1.2 Manifest Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-121212-manifest-probe.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+
+      - name: Probe historical Laminar 12.1.2-r4 manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .xp12-manifest reports
+
+          cat > /tmp/candidates.txt <<'EOF'
+          X-Plane 12.1.2-r4-0f2fea01
+          X-Plane 12.1.2-r4-2f2360bd
+          X-Plane 12.1.2-r4
+          EOF
+
+          : > reports/kphx-xp12-121212-manifest-probe.txt
+          found=""
+          while IFS= read -r name; do
+            enc="$(printf '%s' "$name" | sed 's/ /%20/g')"
+            url="https://desktop.x-plane.com/unsecured/$enc/directory.txt.zip"
+            echo "=== $name ===" | tee -a reports/kphx-xp12-121212-manifest-probe.txt
+            code="$(curl -L -sS -o /tmp/directory.txt.zip -w '%{http_code}' "$url" || true)"
+            bytes="$(wc -c </tmp/directory.txt.zip 2>/dev/null || echo 0)"
+            type="$(file -b /tmp/directory.txt.zip 2>/dev/null || true)"
+            printf 'url=%s\nhttp=%s\nbytes=%s\ntype=%s\n\n' "$url" "$code" "$bytes" "$type"               | tee -a reports/kphx-xp12-121212-manifest-probe.txt
+            if [ "$code" = "200" ] && unzip -t /tmp/directory.txt.zip >/dev/null 2>&1; then
+              cp /tmp/directory.txt.zip .xp12-manifest/directory.txt.zip
+              printf '%s\n' "$name" > .xp12-manifest/build-name.txt
+              found="$name"
+              break
+            fi
+          done < /tmp/candidates.txt
+
+          if [ -n "$found" ]; then
+            unzip -q .xp12-manifest/directory.txt.zip -d .xp12-manifest/unpacked
+            manifest="$(find .xp12-manifest/unpacked -type f -name 'directory.txt' -print -quit)"
+            test -n "$manifest"
+            cp "$manifest" reports/kphx-xp12-121212-directory.txt
+            {
+              echo
+              echo "=== selected historical manifest ==="
+              echo "$found"
+              echo
+              echo "=== known KPHX lib references found in manifest ==="
+              grep -F                 -e "Resources/default scenery/airport scenery/objects/Common_Elements/Lighting/Opposing_Flood_Sm.obj"                 -e "Resources/default scenery/airport scenery/objects/Ramp_Equipment/Jetways/Jetway_1_solid.fac"                 -e "Resources/default scenery/1000 roads/roads.net"                 -e "Resources/default scenery/airport scenery/objects/Modern_Airports/Terminal_kit/term_building_Levels_01.fac"                 "$manifest" || true
+              echo
+              echo "=== manifest header ==="
+              head -80 "$manifest"
+            } >> reports/kphx-xp12-121212-manifest-probe.txt
+          fi
+
+      - name: Commit manifest probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-121212-manifest-probe.txt
+          if [ -f reports/kphx-xp12-121212-directory.txt ]; then
+            git add reports/kphx-xp12-121212-directory.txt
+          fi
+          git commit -m "Probe exact XP12.1.2-r4 Laminar manifest"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
