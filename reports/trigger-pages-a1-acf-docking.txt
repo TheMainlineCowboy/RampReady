@@ -31,3 +31,10 @@ Authority: CRJ900 ACF boarding-door + KPHX WED 104804/104811 + AutoGate lat/vert
 - upper posts remain with moving bridge for telescoping overlap
 - no source vertices remeshed, scaled, substituted, or re-authored
 - live verifier now captures attached, midpoint, and parked frames
+
+2026-09-24 minimal sinking fix candidate:
+- restored first intact A1 articulated controller from 8f76b32d
+- removed only whole-Wall-5 vertical translation that dragged the support below pavement
+- retained original pitch, yaw, telescope, and cabin articulation
+- no mesh splitting, reparenting, scaling, or support counter-transform
+- verifier captures attached, midpoint, and parked frames
