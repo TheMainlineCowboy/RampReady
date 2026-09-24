@@ -89,6 +89,14 @@ export function installA1ExactAutoGateController({
     z: attachedTunnelVector.z / attachedTunnelLength,
   };
 
+  const fixedWallOriginals = fixedWalls.map((wall) => Object.freeze({
+    name: wall.name,
+    x: wall.position.x,
+    y: wall.position.y,
+    z: wall.position.z,
+    rotationY: wall.rotation.y,
+  }));
+
   const originals = Object.freeze({
     tunnelRotationY: tunnelWall.rotation.y,
     cabinPosition: cabinWall.position.clone(),
@@ -170,6 +178,26 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateBridgeYawDeltaDegrees = bridgeYaw - attachedBridgeYaw;
     root.userData.a1AutoGateCabinCounterYawDeltaDegrees = cabinRelativeYaw - attachedCabinRelativeYaw;
     root.userData.a1AutoGateState = state;
+
+    let fixedWallMotionMaxMeters = 0;
+    let fixedWallRotationMaxRadians = 0;
+    fixedWalls.forEach((wall, index) => {
+      const baseline = fixedWallOriginals[index];
+      fixedWallMotionMaxMeters = Math.max(
+        fixedWallMotionMaxMeters,
+        Math.hypot(
+          wall.position.x - baseline.x,
+          wall.position.y - baseline.y,
+          wall.position.z - baseline.z,
+        ),
+      );
+      fixedWallRotationMaxRadians = Math.max(
+        fixedWallRotationMaxRadians,
+        Math.abs(wall.rotation.y - baseline.rotationY),
+      );
+    });
+    root.userData.a1AutoGateFixedWallMotionMaxMeters = fixedWallMotionMaxMeters;
+    root.userData.a1AutoGateFixedWallRotationMaxRadians = fixedWallRotationMaxRadians;
   }
 
   const controller = Object.freeze({
@@ -181,6 +209,8 @@ export function installA1ExactAutoGateController({
     getRetractedMeters: () => root.userData.a1AutoGateRetractedMeters,
     getBridgeYawDeltaDegrees: () => root.userData.a1AutoGateBridgeYawDeltaDegrees,
     getCabinCounterYawDeltaDegrees: () => root.userData.a1AutoGateCabinCounterYawDeltaDegrees,
+    getFixedWallMotionMaxMeters: () => root.userData.a1AutoGateFixedWallMotionMaxMeters,
+    getFixedWallRotationMaxRadians: () => root.userData.a1AutoGateFixedWallRotationMaxRadians,
     getAttachedLatMeters: () => attachedLatMeters,
     getMotionDurationMs: () => AUTOGATE_REFERENCE.motionDurationSeconds * 1000,
     getDoorTargets: () => doorTargets,
