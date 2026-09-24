@@ -1,0 +1,175 @@
+name: KPHX XP11 Stock OBJ AGP Chunk
+
+on:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - "reports/trigger-kphx-xp11-stock-obj-agp.txt"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-xp11-stock-obj-agp
+  cancel-in-progress: false
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+          sparse-checkout: |
+            scripts/stage-kphx-xp11-lib.py
+            reports/kphx-unresolved-dependency-audit.json
+            reports/trigger-kphx-xp11-stock-obj-agp.txt
+          sparse-checkout-cone-mode: false
+
+      - name: Install XP11 headless runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y \
+            gcc libgl-dev libx11-dev xvfb xauth x11-utils xdotool \
+            xfonts-base xfonts-75dpi xfonts-100dpi fontconfig \
+            libgl1-mesa-dri libglx-mesa0 libglx0 libgl1 libglu1-mesa \
+            libpangoxft-1.0-0 libgtk2.0-0t64 libxft2 libxi6 libxinerama1 \
+            libxrandr2 libxcursor1 libasound2t64 >/dev/null
+          sudo fc-cache -f >/dev/null
+
+      - name: Build proven XP11 GLX compatibility shim
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat >/tmp/glxcompat.c <<'C'
+          #define _GNU_SOURCE
+          #include <GL/glx.h>
+          #include <X11/Xlib.h>
+          #include <dlfcn.h>
+          typedef XVisualInfo *(*choose_fn)(Display *, int, int *);
+          XVisualInfo *glXChooseVisual(Display *dpy, int screen, int *attrs) {
+            static choose_fn real_choose = NULL;
+            if (!real_choose) real_choose = (choose_fn)dlsym(RTLD_NEXT, "glXChooseVisual");
+            XVisualInfo *r = real_choose ? real_choose(dpy, screen, attrs) : NULL;
+            if (r) return r;
+            if (attrs && attrs[0] == GLX_SAMPLE_BUFFERS_ARB && attrs[1] == None) {
+              int fb[]={GLX_RGBA,GLX_DOUBLEBUFFER,GLX_RED_SIZE,8,GLX_GREEN_SIZE,8,GLX_BLUE_SIZE,8,GLX_DEPTH_SIZE,24,None};
+              return real_choose ? real_choose(dpy, screen, fb) : NULL;
+            }
+            return NULL;
+          }
+          C
+          gcc -shared -fPIC -O2 -o /tmp/libglxcompat.so /tmp/glxcompat.c -ldl -lGL -lX11
+
+      - name: Download official XP11 installer and pinned 11.55r2 manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp11-installer /tmp/xp11-demo /tmp/xp11-manifest
+          curl -L --fail --retry 4 --show-error \
+            "https://www.x-plane.com/update/installers11/X-Plane11InstallerLinux.zip" \
+            -o /tmp/xp11-installer.zip
+          unzip -q /tmp/xp11-installer.zip -d /tmp/xp11-installer
+          BIN="$(find /tmp/xp11-installer -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          chmod +x "$BIN"
+          echo "$BIN" >/tmp/xp11-bin.txt
+
+          curl -L --fail --retry 4 --show-error \
+            "https://desktop.x-plane.com/unsecured/X-Plane%2011.55r2/directory.txt.zip" \
+            -o /tmp/xp11-directory.zip
+          unzip -p /tmp/xp11-directory.zip > /tmp/xp11-manifest/directory.txt
+          grep -q '^I' /tmp/xp11-manifest/directory.txt || true
+          test -s /tmp/xp11-manifest/directory.txt
+
+      - name: Install exact XP11.55r2 demo tree after clearing language screen
+        shell: bash
+        run: |
+          set -euo pipefail
+          Xvfb :99 -screen 0 1280x800x24 +extension GLX +render -noreset >/tmp/xvfb.log 2>&1 &
+          export DISPLAY=:99
+          for i in $(seq 1 20); do xdpyinfo >/dev/null 2>&1 && break; sleep 1; done
+
+          BIN="$(cat /tmp/xp11-bin.txt)"
+          cat >/tmp/xp11.qa <<'QA'
+          echo "RAMPREADY_XP11_QA_STARTED"
+          dump buttons
+          click "Install a Free Demo of X-Plane"
+          wait 4
+          dump buttons
+          set_installer_destination "/tmp/xp11-demo"
+          wait 2
+          click_if_exists "Continue"
+          wait 5
+          dump buttons
+          click_if_exists "Continue"
+          wait 130
+          echo "RAMPREADY_XP11_QA_FINISH"
+          quit
+          QA
+
+          LD_PRELOAD=/tmp/libglxcompat.so LIBGL_ALWAYS_SOFTWARE=1 "$BIN" \
+            --qa_script=/tmp/xp11.qa \
+            --install_numeric=115501 \
+            --install_name="X-Plane 11.55r2" \
+            --no_web_server \
+            >/tmp/xp11.out 2>/tmp/xp11.err &
+          PID=$!
+
+          WID=""
+          for i in $(seq 1 40); do
+            WID="$(xdotool search --onlyvisible --name 'X-System' 2>/dev/null | head -1 || true)"
+            [ -n "$WID" ] && break
+            sleep 0.5
+          done
+          test -n "$WID"
+
+          # Exact first-run screen captured by RampReady: 800x600 X-System window,
+          # English already selected, Set Language button centered at window-local ~604,421.
+          xdotool mousemove --window "$WID" 604 421 click 1
+          sleep 3
+
+          set +e
+          timeout 165s tail --pid="$PID" -f /dev/null
+          wait_rc=$?
+          set -e
+          if kill -0 "$PID" 2>/dev/null; then kill "$PID" 2>/dev/null || true; fi
+          wait "$PID" 2>/dev/null || true
+
+          echo "tail_wait_rc=$wait_rc"
+          echo "=== QA stdout ==="
+          cat /tmp/xp11.out || true
+          echo "=== installer stderr tail ==="
+          tail -300 /tmp/xp11.err || true
+          count="$(find /tmp/xp11-demo -type f 2>/dev/null | wc -l | tr -d ' ')"
+          echo "demo_file_count=$count"
+          grep -q 'RAMPREADY_XP11_QA_STARTED' /tmp/xp11.out
+          test "$count" -gt 0
+
+      - name: Stage exact XP11 OBJ and AGP resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf assets/kphx-source/xp11-115501/obj-agp
+          python3 scripts/stage-kphx-xp11-lib.py \
+            /tmp/xp11-demo \
+            reports/kphx-unresolved-dependency-audit.json \
+            /tmp/xp11-manifest/directory.txt \
+            assets/kphx-source/xp11-115501/obj-agp \
+            ".obj,.agp"
+
+      - name: Commit exact XP11 OBJ AGP checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/kphx-source/xp11-115501/obj-agp
+          git commit -m "Move exact XP11.55r2 KPHX OBJ and AGP stock resources"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
