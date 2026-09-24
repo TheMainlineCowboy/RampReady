@@ -5,3 +5,4 @@ Expected attached lat: 6.160 m
 Expected parked lat: 0.000 m
 Expected duration: 15000 ms
 Run: rendered L1 visible-contact registration + authored CRJ scale v3.
+Run: visible-airframe L1 registration horizontal truth pass.
