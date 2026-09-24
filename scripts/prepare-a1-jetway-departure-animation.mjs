@@ -173,13 +173,14 @@ insertAfterAny(
 
         const registerRenderedA1DoorContact = () => {
           if (!a1JetwayController?.registerAircraftDoorContact) return false;
-          const profile = getRampReadyAircraftDoorProfile("CRJ700");
+          const profile = getRampReadyAircraftDoorProfile(A1_AIRCRAFT_TYPE);
           const targetWorld = getRenderedAircraftDoorWorldMarker(THREE, aircraft, profile);
           const outwardWorldDirection = getRenderedAircraftDoorOutwardWorldDirection(THREE, aircraft);
           if (!targetWorld || !outwardWorldDirection) return false;
           const contact = a1JetwayController.registerAircraftDoorContact({
             targetWorld,
             outwardWorldDirection,
+            aircraftType: A1_AIRCRAFT_TYPE,
           });
           renderer.domElement.dataset.a1JetwayDoorContactReady = String(contact.ready === true);
           renderer.domElement.dataset.a1JetwayDoorContactGapMeters = Number.isFinite(contact.gapMeters)
