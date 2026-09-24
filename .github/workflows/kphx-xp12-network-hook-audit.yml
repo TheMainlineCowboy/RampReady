@@ -1,0 +1,61 @@
+name: KPHX XP12 Network Hook Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-network-hook-audit.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/workflows/kphx-xp12-network-hook-audit.yml
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Audit installer dynamic networking symbols
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp12-installer reports
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip"             -o /tmp/xp12-installer.zip
+          unzip -q /tmp/xp12-installer.zip -d /tmp/xp12-installer
+          BIN="$(find /tmp/xp12-installer -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          {
+            echo "=== file ==="
+            file "$BIN"
+            echo
+            echo "=== ldd ==="
+            ldd "$BIN" || true
+            echo
+            echo "=== imported curl / ssl symbols ==="
+            objdump -T "$BIN" 2>/dev/null | grep -Ei 'curl_easy|curl_multi|SSL_write|SSL_read|BIO_|gnutls|mbedtls' || true
+            echo
+            echo "=== dynamic deps ==="
+            readelf -d "$BIN" | grep NEEDED || true
+          } > reports/kphx-xp12-network-hook-audit.txt
+          cat reports/kphx-xp12-network-hook-audit.txt
+
+      - name: Commit network hook audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-network-hook-audit.txt
+          git commit -m "Audit XP12 installer networking hooks"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
