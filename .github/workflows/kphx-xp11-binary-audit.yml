@@ -1,0 +1,95 @@
+name: KPHX XP11 Installer Binary Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp11-binary-audit.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-xp11-binary-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/workflows/kphx-xp11-binary-audit.yml
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Download official XP11 installer binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp11-installer reports
+          curl -L --fail --retry 4 --show-error \
+            "https://www.x-plane.com/update/installers11/X-Plane11InstallerLinux.zip" \
+            -o /tmp/xp11-installer.zip
+          unzip -q /tmp/xp11-installer.zip -d /tmp/xp11-installer
+          BIN="$(find /tmp/xp11-installer -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          chmod +x "$BIN"
+          printf '%s\n' "$BIN" >/tmp/xp11-bin.txt
+
+      - name: Extract GLX and QA requirements
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN="$(cat /tmp/xp11-bin.txt)"
+          strings -a "$BIN" >/tmp/xp11-strings.txt
+          {
+            echo "=== binary ==="
+            file "$BIN"
+            sha256sum "$BIN"
+            echo
+            echo "=== dynamic dependencies ==="
+            ldd "$BIN" || true
+            echo
+            echo "=== ELF NEEDED ==="
+            readelf -d "$BIN" | grep -E 'NEEDED|RPATH|RUNPATH' || true
+            echo
+            echo "=== GLX / visual / framebuffer strings ==="
+            grep -inE 'GLX|XVisual|FBConfig|visual|frame.?buffer|double.?buffer|depth.?buffer|stencil|OpenGL|Mesa|glXChoose|glXGet|glXCreate' /tmp/xp11-strings.txt | head -1200 || true
+            echo
+            echo "=== exact failure context ==="
+            n="$(grep -in -m1 -F "failed to get a GLX visual" /tmp/xp11-strings.txt | cut -d: -f1 || true)"
+            if [ -n "$n" ]; then
+              a=$(( n > 120 ? n-120 : 1 ))
+              b=$(( n+220 ))
+              sed -n "${a},${b}p" /tmp/xp11-strings.txt
+            fi
+            echo
+            echo "=== QA command table context ==="
+            n="$(grep -n -m1 -F 'screenshot <string:file_path>' /tmp/xp11-strings.txt | cut -d: -f1 || true)"
+            if [ -n "$n" ]; then
+              a=$(( n > 80 ? n-80 : 1 ))
+              b=$(( n+180 ))
+              sed -n "${a},${b}p" /tmp/xp11-strings.txt
+            fi
+            echo
+            echo "=== installer-specific QA commands ==="
+            grep -inE 'set_installer|destination|click|button|clipboard|special_key|wait|quit|exit|dump|qa_script|CLI script' /tmp/xp11-strings.txt | head -1000 || true
+          } > reports/kphx-xp11-installer-binary-audit.txt
+
+      - name: Commit binary audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp11-installer-binary-audit.txt
+          git commit -m "Audit XP11 installer GLX and QA requirements"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
