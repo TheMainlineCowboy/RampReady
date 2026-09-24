@@ -17,6 +17,9 @@ expect(controller.includes('requireObject(root, "Wall_5_Tunnel_11-15.5m")'),"A1 
 expect(controller.includes('requireObject(root, "Wall_6_Cabin")'),"A1 moving cabin wall missing");
 expect(controller.includes('a1AutoGateFixedWalls'),"A1 fixed rotunda evidence missing");
 expect(controller.includes("aircraftTunnelSegment.position.z"),"A1 telescope segment translation missing");
+expect(!controller.includes("terminalTunnelMesh.scale"),"Outer Segment 10 must never be scaled during telescope");
+expect(!controller.includes("terminalTunnelMeshScaleZ"),"Outer Segment 10 scale state must remain untouched");
+expect(controller.includes('Segment 10 is the 9.5 m terminal-side'),"Exact Segment 10 fixed-tunnel authority missing");
 expect(controller.includes("cabinWall.rotation.y"),"A1 cabin articulation missing");
 expect(controller.includes("cabinHalfB.rotation.y"),"A1 cabin half counter-rotation missing");
 expect(controller.includes('deployment <= 0.005'),"A1 parked threshold missing");
