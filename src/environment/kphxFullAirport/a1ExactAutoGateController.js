@@ -68,7 +68,6 @@ export function installA1ExactAutoGateController({
   const cabinWall = requireObject(root, "Wall_6_Cabin");
   const terminalTunnelSegment = requireObject(tunnelWall, "Segment_10_0");
   const aircraftTunnelSegment = requireObject(tunnelWall, "Segment_11_1");
-  const terminalTunnelMesh = requireObject(terminalTunnelSegment, "FacadeMesh_10_0");
   const cabinHalfB = requireObject(aircraftTunnelSegment, "Attached_jw_cabin_1b.obj");
   requireObject(terminalTunnelSegment, "Attached_jw_tunnel_2_5a.obj");
   requireObject(aircraftTunnelSegment, "Attached_jw_tunnel_2_5b.obj");
@@ -102,7 +101,6 @@ export function installA1ExactAutoGateController({
     cabinPosition: cabinWall.position.clone(),
     cabinRotationY: cabinWall.rotation.y,
     aircraftTunnelSegmentZ: aircraftTunnelSegment.position.z,
-    terminalTunnelMeshScaleZ: terminalTunnelMesh.scale.z,
     cabinHalfBRotationY: cabinHalfB.rotation.y,
   });
 
@@ -111,7 +109,6 @@ export function installA1ExactAutoGateController({
     AUTOGATE_26M.cabinRelativeYawDegrees,
     attachedLatMeters,
   );
-  const terminalTunnelWorldLength = 9.5 * tunnelWall.scale.z;
   const history = ["attached-to-aircraft-door"];
   let deployment = 1;
 
@@ -133,19 +130,12 @@ export function installA1ExactAutoGateController({
 
     tunnelWall.rotation.y = originals.tunnelRotationY + bridgeYawDelta;
 
-    // The exact wall spelling [10,11] uses jw_tunnel_2_5a at the rotunda end
-    // and jw_tunnel_2_5b at the aircraft end. Slide the aircraft-side source
-    // segment back over the terminal-side source segment instead of scaling
-    // either source OBJ.
+    // Exact XP11 spelling [10,11]: Segment 10 is the 9.5 m terminal-side
+    // outer tunnel and remains completely fixed. Segment 11 is the 1.5 m
+    // aircraft-side inner section with jw_tunnel_2_5b + cabin-half attachments.
+    // Telescope by translating only Segment 11 back inside Segment 10.
     aircraftTunnelSegment.position.z = originals.aircraftTunnelSegmentZ
       + retractMeters / tunnelWall.scale.z;
-
-    // Shrink only the facade's zero-thickness longitudinal filler plane so it
-    // terminates at the moving inner tunnel. The exact tunnel OBJ geometry is
-    // never scaled, remeshed, or substituted.
-    const remainingFillerMeters = Math.max(0.2, terminalTunnelWorldLength - retractMeters);
-    terminalTunnelMesh.scale.z = originals.terminalTunnelMeshScaleZ
-      * (remainingFillerMeters / terminalTunnelWorldLength);
 
     const currentTunnelLength = attachedTunnelLength - retractMeters;
     const unrotatedJoint = {
