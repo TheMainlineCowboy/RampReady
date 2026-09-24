@@ -1,0 +1,182 @@
+name: KPHX XP12.1.2 Library Resolve Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-library-resolve-probe.yml"
+
+concurrency:
+  group: kphx-xp12-library-resolve-probe
+  cancel-in-progress: true
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Resolve KPHX lib paths from exact XP12.1.2 libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import concurrent.futures, io, json, os, re, urllib.parse, urllib.request, zipfile
+
+          BRANCH="X-Plane 12.1.2-r4-0f2fea01"
+          BASE="https://desktop.x-plane.com/unsecured/" + urllib.parse.quote(BRANCH, safe="") + "/"
+          MANIFEST_URL=BASE+"directory.txt.zip"
+          AUDIT_URL="https://raw.githubusercontent.com/TheMainlineCowboy/RampReady/kphx-full-airport-import/reports/kphx-unresolved-dependency-audit.json"
+
+          def get(url):
+              req=urllib.request.Request(url,headers={"User-Agent":"RampReady-KPHX-exact-source/1.0"})
+              with urllib.request.urlopen(req,timeout=30) as r:
+                  return r.read()
+
+          def unzip_single(data):
+              with zipfile.ZipFile(io.BytesIO(data)) as z:
+                  names=[n for n in z.namelist() if not n.endswith("/")]
+                  if not names: raise RuntimeError("empty zip")
+                  return z.read(names[0])
+
+          manifest=unzip_single(get(MANIFEST_URL)).decode("utf-8","replace")
+          audit=json.loads(get(AUDIT_URL))
+          requested=set(audit["unresolved"]["lib"]["resources"].keys())
+          requested.update({
+              "lib/g10/decals/grass_and_stony_dirt_1.dcl",
+              "lib/g10/decals/low_freq_mod_1.dcl",
+          })
+
+          current_dir=""
+          selected={}
+          for raw in manifest.splitlines():
+              if raw.startswith("DIR "):
+                  current_dir=raw[4:].strip()
+                  continue
+              if not raw.startswith("FILE "):
+                  continue
+              parts=raw.split(" ",10)
+              if len(parts)<11: continue
+              try: version=int(parts[2])
+              except: continue
+              marker=parts[9]
+              filename=parts[10]
+              full=(current_dir+filename).replace("\\","/")
+              if version>121212: continue
+              prev=selected.get(full)
+              if prev is None or version>=prev["version"]:
+                  selected[full]={"version":version,"marker":marker,"line":raw}
+
+          library_paths=sorted(
+              p for p,v in selected.items()
+              if p.startswith("Resources/default scenery/")
+              and p.endswith("/library.txt")
+              and v["marker"]!="GONE"
+          )
+          print(f"manifest_files_selected={len(selected)}")
+          print(f"default_scenery_library_txt={len(library_paths)}")
+
+          def fetch_library(path):
+              url=BASE+urllib.parse.quote(path,safe="/")+".zip"
+              try:
+                  data=unzip_single(get(url))
+                  return path,data.decode("utf-8","replace"),None
+              except Exception as e:
+                  return path,"",repr(e)
+
+          libraries=[]
+          failures=[]
+          with concurrent.futures.ThreadPoolExecutor(max_workers=12) as ex:
+              for path,text_,err in ex.map(fetch_library,library_paths):
+                  if err: failures.append((path,err))
+                  else: libraries.append((path,text_))
+          print(f"library_download_success={len(libraries)}")
+          print(f"library_download_failures={len(failures)}")
+          for p,e in failures[:20]: print("LIB_FAIL",p,e)
+
+          candidates={r:[] for r in requested}
+          export_re=re.compile(r"^(EXPORT|EXPORT_BACKUP|EXPORT_EXTEND)\s+(\S+)\s+(.+?)\s*$")
+          ratio_re=re.compile(r"^EXPORT_RATIO\s+([0-9.]+)\s+(\S+)\s+(.+?)\s*$")
+          region_stack=[]
+
+          for lib_path,text_ in libraries:
+              base=os.path.dirname(lib_path)
+              active_regions=[]
+              for ln,raw in enumerate(text_.splitlines(),1):
+                  line=raw.strip()
+                  if not line or line.startswith("#"): continue
+                  toks=line.split()
+                  if toks and toks[0] in ("REGION_DEFINE","REGION_BITMAP","REGION_RECT","REGION_DREF"):
+                      continue
+                  if toks and toks[0]=="REGION":
+                      active_regions=toks[1:]
+                      continue
+                  m=export_re.match(line)
+                  if m:
+                      directive,virtual,physical=m.groups()
+                      if virtual in candidates:
+                          candidates[virtual].append({
+                              "directive":directive,
+                              "physical":os.path.normpath(os.path.join(base,physical)).replace("\\","/"),
+                              "library":lib_path,
+                              "line":ln,
+                              "regions":active_regions[:],
+                          })
+                      continue
+                  m=ratio_re.match(line)
+                  if m:
+                      ratio,virtual,physical=m.groups()
+                      if virtual in candidates:
+                          candidates[virtual].append({
+                              "directive":"EXPORT_RATIO",
+                              "ratio":ratio,
+                              "physical":os.path.normpath(os.path.join(base,physical)).replace("\\","/"),
+                              "library":lib_path,
+                              "line":ln,
+                              "regions":active_regions[:],
+                          })
+
+          missing=[r for r,v in candidates.items() if not v]
+          unique=[r for r,v in candidates.items() if len(v)==1]
+          multi=[r for r,v in candidates.items() if len(v)>1]
+          print(f"requested={len(requested)}")
+          print(f"resolved_any={len(requested)-len(missing)}")
+          print(f"unique_mapping={len(unique)}")
+          print(f"multi_mapping={len(multi)}")
+          print(f"missing_mapping={len(missing)}")
+          for r in missing: print("MISSING",r)
+          for r in multi:
+              print("MULTI",r,json.dumps(candidates[r],separators=(",",":")))
+
+          print("=== SPOT MAPS ===")
+          for r in [
+              "lib/airport/Common_Elements/Lighting/Opposing_Flood_Sm.obj",
+              "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac",
+              "lib/airport/Modern_Airports/Terminal_kit/term_building_Levels_01.fac",
+              "lib/g10/roads.net",
+              "lib/g10/decals/grass_and_stony_dirt_1.dcl",
+              "lib/g10/decals/low_freq_mod_1.dcl",
+          ]:
+              print(r,json.dumps(candidates.get(r,[]),separators=(",",":")))
+
+          report={
+              "branch":BRANCH,
+              "manifestSha256":"6afc472e36af7d5c9c2a3337f7c2afb67eee1ecd4d43a5646716e21d5e8ec96f",
+              "requestedCount":len(requested),
+              "libraryTxtCount":len(library_paths),
+              "libraryDownloadFailures":failures,
+              "missing":missing,
+              "multi":{r:candidates[r] for r in multi},
+              "mappings":candidates,
+          }
+          with open("/tmp/kphx-xp12-library-map-probe.json","w") as f:
+              json.dump(report,f,indent=2)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kphx-xp12-library-map-probe
+          path: /tmp/kphx-xp12-library-map-probe.json
+          if-no-files-found: error
+          retention-days: 7
