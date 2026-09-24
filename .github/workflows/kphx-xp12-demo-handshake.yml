@@ -25,18 +25,18 @@ jobs:
             reports
           sparse-checkout-cone-mode: false
 
-      - name: Install bounded UI/network tools
+      - name: Install bounded OpenGL UI/network tools
         shell: bash
         run: |
           set -euo pipefail
           sudo apt-get update >/dev/null
-          sudo apt-get install -y             xvfb xauth x11-utils xdotool imagemagick strace             xfonts-base xfonts-75dpi xfonts-100dpi fontconfig             libgl1 libglu1-mesa libx11-6 libxi6 libxinerama1 libxrandr2 libxcursor1             libpangoxft-1.0-0 libgtk2.0-0t64 libxft2 libasound2t64             nodejs npm >/dev/null
+          sudo apt-get install -y \
+            xvfb xauth x11-utils xdotool imagemagick strace \
+            xfonts-base xfonts-75dpi xfonts-100dpi fontconfig \
+            libgl1-mesa-dri libglx-mesa0 libglx0 libgl1 libglu1-mesa mesa-utils \
+            libpangoxft-1.0-0 libgtk2.0-0t64 libxft2 libxi6 libxinerama1 \
+            libxrandr2 libxcursor1 libasound2t64 >/dev/null
           sudo fc-cache -f >/dev/null
-          mkdir -p /tmp/pw
-          cd /tmp/pw
-          npm init -y >/dev/null 2>&1
-          npm install --silent playwright@1.55.0
-          npx playwright install chromium >/dev/null
 
       - name: Download official XP12 installer
         shell: bash
@@ -58,11 +58,7 @@ jobs:
           export DISPLAY=:99
           for i in $(seq 1 20); do xdpyinfo >/dev/null 2>&1 && break; sleep 1; done
 
-          ICD="$(find "$HOME/.cache/ms-playwright" -type f -name 'vk_swiftshader_icd.json' -print -quit)"
-          test -n "$ICD"
-          export VK_ICD_FILENAMES="$ICD"
-          export VK_DRIVER_FILES="$ICD"
-
+          export LIBGL_ALWAYS_SOFTWARE=1
           BIN="$(cat /tmp/xp12-bin.txt)"
           cat >/tmp/xp12.qa <<'QA'
           echo "RAMPREADY_DEMO_HANDSHAKE_START"
