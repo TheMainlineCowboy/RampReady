@@ -1,0 +1,45 @@
+name: KPHX XP12.1.2 Manifest Structure
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-manifest-structure.yml"
+
+concurrency:
+  group: kphx-xp12-manifest-structure
+  cancel-in-progress: true
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download and inspect exact 12.1.2-r4 manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://desktop.x-plane.com/unsecured/X-Plane%2012.1.2-r4-0f2fea01/directory.txt.zip"
+          curl -L --fail --retry 4 --show-error "$url" -o /tmp/directory.txt.zip
+          unzip -p /tmp/directory.txt.zip > /tmp/directory.txt
+          echo "sha256=$(sha256sum /tmp/directory.txt | awk '{print $1}')"
+          echo "bytes=$(wc -c </tmp/directory.txt)"
+          echo
+          echo "=== first DIR/FILE structure ==="
+          grep -nE '^(DIR|FILE|ENDDIR|END_DIR|POP|END) ' /tmp/directory.txt | head -120 || true
+          echo
+          for needle in             Opposing_Flood_Sm.obj             Jetway_1_solid.fac             term_building_Levels_01.fac             roads.net             grass_and_stony_dirt_1.dcl             low_freq_mod_1.dcl             library.txt
+          do
+            echo
+            echo "=== $needle ==="
+            n="$(grep -n -m1 -F "$needle" /tmp/directory.txt | cut -d: -f1 || true)"
+            if [ -n "$n" ]; then
+              a=$(( n > 35 ? n-35 : 1 ))
+              b=$(( n+20 ))
+              sed -n "${a},${b}p" /tmp/directory.txt
+            else
+              echo "NOT FOUND"
+            fi
+          done
