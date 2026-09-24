@@ -880,7 +880,6 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.kphxT4BaseApronWidthMeters = apronWidth.toFixed(3);
         renderer.domElement.dataset.kphxT4BaseApronDepthMeters = apronDepth.toFixed(3);
 
-        const nativeA1RetractionActive = environment.userData.authoredTerminal4Jetways?.userData.uploadedJetwayA1RetractionAuthority === "aircraft-door-clearance-without-overtravel-v6";
         airportCollision.staticTargets = [
           environment.userData.authoredTerminal4,
           environment.userData.authoredTerminal4Jetways,
@@ -889,10 +888,17 @@ export default function RampReadyStandupTrainer({
         airportCollision.ready = airportCollision.staticTargets.length === 2;
         renderer.domElement.dataset.airportCollisionReady = airportCollision.ready ? "true" : "false";
         renderer.domElement.dataset.airportCollisionTargetCount = String(airportCollision.staticTargets.length);
-        renderer.domElement.dataset.terminal4A1RetractionAuthority = "aircraft-door-clearance-without-overtravel-v6";
-        renderer.domElement.dataset.terminal4A1RetractionClearanceMeters = "2.38";
-        renderer.domElement.dataset.terminal4A1RetractionRatio = nativeA1RetractionActive ? "1.000000" : "0.330556";
-        renderer.domElement.dataset.terminal4A1NativeRetractionActive = nativeA1RetractionActive ? "true" : "false";
+        renderer.domElement.dataset.terminal4A1RetractionAuthority =
+          environment.userData.authoredTerminal4A1JetwayAnimationAuthority || "missing";
+        renderer.domElement.dataset.terminal4A1RetractionClearanceMeters =
+          Number(environment.userData.authoredTerminal4A1JetwayAttachedLatMeters).toFixed(3);
+        renderer.domElement.dataset.terminal4A1RetractionRatio = "1.000000";
+        renderer.domElement.dataset.terminal4A1NativeRetractionActive =
+          environment.userData.authoredTerminal4A1JetwayController ? "true" : "false";
+        renderer.domElement.dataset.terminal4A1MotionDurationMs =
+          String(environment.userData.authoredTerminal4A1JetwayMotionDurationMs ?? "missing");
+        renderer.domElement.dataset.terminal4A1VerticalResolved =
+          String(environment.userData.authoredTerminal4A1JetwayVerticalResolved === true);
         renderer.domElement.dataset.environmentSource = environment.userData.environmentSource;
       })
       .catch(() => {
@@ -1052,6 +1058,10 @@ export default function RampReadyStandupTrainer({
         const currentA1JetwayState = jetway.controller.getState?.() || "unknown";
         renderer.domElement.dataset.a1JetwayState = currentA1JetwayState;
         renderer.domElement.dataset.a1JetwayStateHistory = jetway.controller.getStateHistory?.().join(",") || currentA1JetwayState;
+        renderer.domElement.dataset.a1JetwayLatMeters = Number(jetway.controller.getLatMeters?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayRetractedMeters = Number(jetway.controller.getRetractedMeters?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayBridgeYawDeltaDegrees = Number(jetway.controller.getBridgeYawDeltaDegrees?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayCabinCounterYawDeltaDegrees = Number(jetway.controller.getCabinCounterYawDeltaDegrees?.() ?? Number.NaN).toFixed(3);
         if (!inspectionActive && jetway.retractionRequested && jetway.deployment <= 0.005 && stageRef.current === 0) {
           jetway.retractionRequested = false;
           stageRef.current = 1;
