@@ -3,12 +3,12 @@ export const LEKTRO_RIG_PROFILE = Object.freeze({
   wheelbase: 2.33934,
   turningRadius: 4.572,
   trackWidth: 2.28,
-  cradleOffset: 3.45,
+  cradleOffset: 2.30,
   // Final R187A visual is rotated 180 degrees in runtime; the authored driver station
   // therefore lands on +X in the physics frame (the previous -X camera sat in the passenger seat).
   operatorEye: Object.freeze([0.45, 1.35, -2.15]),
   operatorLook: Object.freeze([0.45, 1.2, 8]),
-  captureAnchor: Object.freeze([0, 0.34, 3.45]),
+  captureAnchor: Object.freeze([0, 0.34, 2.30]),
   liftTravel: 0.2286,
   bodyBounds: Object.freeze([2.35, 1.45, 5.5]),
   steeringMode: "rear",
