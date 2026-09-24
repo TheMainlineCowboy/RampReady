@@ -19,6 +19,7 @@ import { buildKphxExactLiveEnvironment as buildTerminal4RampEnvironment, install
 import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
 import { KPHX_FULL_AIRPORT_SOURCE, kphxXPlaneHeadingToRampReadyYawRadians } from "../environment/kphxFullAirport/sourceAuthority.js";
 import { KPHX_T4_GATE_POSE_SOURCE, createKphxTerminal4GateScenarioPose } from "../environment/kphxFullAirport/terminal4GatePoseAuthority.js";
+import { getRampReadyAircraftDoorProfile, getRenderedAircraftDoorWorldMarker, getRenderedAircraftDoorOutwardWorldDirection } from "../environment/kphxFullAirport/aircraftDoorAuthority.js";
 import "./RampReadyTrainer.css";
 import "./procedure-gates.css";
 import "./mobile-runtime-recovery.css";
@@ -344,6 +345,11 @@ export default function RampReadyStandupTrainer({
     if (!sim || inspectionRef.current) return;
     if (stageRef.current === 0) {
       if (jetwayRef.current.retractionRequested) return;
+      const controller = jetwayRef.current.controller;
+      if (!controller?.isDoorContactReady?.()) {
+        setMessage("Waiting for the A1 jetway to make verified contact with the rendered CRJ L1 door.");
+        return;
+      }
       jetwayRef.current.transitionStartDeployment = jetwayRef.current.deployment;
       jetwayRef.current.transitionStartedAt = performance.now();
       jetwayRef.current.target = 0;
@@ -602,6 +608,42 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.terminal4JetwayPrePushSequence = environment.userData.authoredTerminal4JetwayRequiredPrePushSequence || "missing";
         const a1JetwayController = environment.userData.authoredTerminal4A1JetwayController || null;
         jetwayRef.current.controller = a1JetwayController;
+
+        const registerRenderedA1DoorContact = () => {
+          if (!a1JetwayController?.registerAircraftDoorContact) return false;
+          const profile = getRampReadyAircraftDoorProfile("CRJ700");
+          const targetWorld = getRenderedAircraftDoorWorldMarker(THREE, aircraft, profile);
+          const outwardWorldDirection = getRenderedAircraftDoorOutwardWorldDirection(THREE, aircraft);
+          if (!targetWorld || !outwardWorldDirection) return false;
+          const contact = a1JetwayController.registerAircraftDoorContact({
+            targetWorld,
+            outwardWorldDirection,
+          });
+          renderer.domElement.dataset.a1JetwayDoorContactReady = String(contact.ready === true);
+          renderer.domElement.dataset.a1JetwayDoorContactGapMeters = Number.isFinite(contact.gapMeters)
+            ? contact.gapMeters.toFixed(4)
+            : "missing";
+          renderer.domElement.dataset.a1JetwayDockCorrectionMeters = Number.isFinite(contact.correctionMeters)
+            ? contact.correctionMeters.toFixed(4)
+            : "missing";
+          renderer.domElement.dataset.a1JetwayConnectedLatMeters = Number.isFinite(contact.connectedLatMeters)
+            ? contact.connectedLatMeters.toFixed(4)
+            : "missing";
+          renderer.domElement.dataset.a1JetwayDoorContactHitObject = contact.hitObject || "missing";
+          renderer.domElement.dataset.a1RenderedL1DoorWorld =
+            [targetWorld.x, targetWorld.y, targetWorld.z].map((value) => value.toFixed(4)).join(",");
+          renderer.domElement.dataset.a1JetwayDoorRegistrationAuthority =
+            profile?.renderedDoorMarkerAuthority || "missing";
+          if (!contact.ready && !inspectionRef.current) {
+            setMessage("A1 jetway door registration is not yet within visible-contact tolerance. Ready is locked.");
+          }
+          return contact.ready === true;
+        };
+
+        if (!registerRenderedA1DoorContact()) {
+          const onAircraftReady = () => registerRenderedA1DoorContact();
+          aircraft.addEventListener("aircraft-model-ready", onAircraftReady, { once: true });
+        }
         if (a1JetwayController?.getMotionDurationMs) {
           jetwayRef.current.transitionDurationMs = a1JetwayController.getMotionDurationMs();
         }
