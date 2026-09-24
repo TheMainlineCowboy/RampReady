@@ -154,6 +154,18 @@ assert(trainer.includes("camera.position.copy(operatorEyeWorld)"), "LEKTRO Opera
 assert(trainer.includes('dataset.lektroOperatorViewAuthority = "r187a-driver-seat-after-180deg-model-forward-correction"'), "LEKTRO Operator View runtime authority missing");
 assert(!trainer.includes("same-a1-wed-gate-pose-equipment-spawn-v1"), "Obsolete A1-only equipment spawn authority remains");
 assert(trainer.includes("dataset.a1EquipmentSpawnAuthority = A1_EQUIPMENT_SPAWN_AUTHORITY"), "A1 equipment runtime evidence missing");
+assert(trainer.includes("const initialJetwayDeployment = inspectionRef.current ? 0 : 1;"), "A1 async controller mode handoff guard missing");
+assert(trainer.includes("jetwayRef.current.target = initialJetwayDeployment;"), "A1 controller target is not reset from live mode");
+assert(trainer.includes("a1JetwayController?.setDeployment(initialJetwayDeployment);"), "A1 controller initial deployment is not resolved from live mode");
+assert(!trainer.includes("a1JetwayController?.setDeployment(jetwayRef.current.target);"), "Stale A1 controller target handoff remains");
+assert(trainer.includes("transitionDurationMs: 15000"), "A1 AutoGate disengage duration drifted from 15 seconds");
+assert(!trainer.includes("0.330555555556"), "Obsolete A1 33-percent retraction limiter remains");
+assert(!trainer.includes("aircraft-door-clearance-without-overtravel-v6"), "Obsolete A1 retraction authority remains");
+
+const a1AutoGateController = fs.readFileSync("src/environment/kphxFullAirport/a1ExactAutoGateController.js", "utf8");
+assert(a1AutoGateController.includes('MisterX_Library/Airport/Jetways-Steel/AutoGate-26m.obj'), "A1 AutoGate 26m motion source missing");
+assert(a1AutoGateController.includes("getMotionDurationMs: () => AUTOGATE_REFERENCE.motionDurationSeconds * 1000"), "A1 AutoGate 15-second motion contract missing");
+assert(a1AutoGateController.includes('a1AutoGateFixedWalls'), "A1 fixed-wall articulation authority missing");
 
 const kphxSourceAuthority = fs.readFileSync("src/environment/kphxFullAirport/sourceAuthority.js", "utf8");
 assert(kphxSourceAuthority.includes('wedObjectId: "27855"'), "A1 source WED object drifted");
