@@ -1,0 +1,62 @@
+name: KPHX XP12 Auth Schema Strings
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-auth-schema-strings.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/workflows/kphx-xp12-auth-schema-strings.yml
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Extract auth/download schema-adjacent strings
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp12 reports
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip"             -o /tmp/xp12/installer.zip
+          unzip -q /tmp/xp12/installer.zip -d /tmp/xp12/unpacked
+          BIN="$(find /tmp/xp12/unpacked -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          strings -a "$BIN" > /tmp/xp12/strings.txt
+          {
+            for needle in               'https://clearancedelivery.x-planemobile.com/v1/authenticate'               'https://clearancedelivery.x-planemobile.com/v1/download'               'https://tower.x-plane.com/v1/sim-download'               'checksum_id'               'Installer session key:'               'Authorization: Bearer %s'               'Content-Type: application/json'
+            do
+              echo "===== $needle ====="
+              n="$(grep -n -m1 -F "$needle" /tmp/xp12/strings.txt | cut -d: -f1 || true)"
+              if [ -n "$n" ]; then
+                a=$(( n > 80 ? n-80 : 1 ))
+                b=$(( n+120 ))
+                sed -n "${a},${b}p" /tmp/xp12/strings.txt
+              fi
+              echo
+            done
+          } > reports/kphx-xp12-auth-schema-strings.txt
+          cat reports/kphx-xp12-auth-schema-strings.txt
+
+      - name: Commit schema evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-auth-schema-strings.txt
+          git commit -m "Extract XP12 auth and download schema strings"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
