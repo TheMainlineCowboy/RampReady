@@ -1,4 +1,5 @@
-Trigger exact live A1 verification after LEKTRO fixes.
-Rear steering evidence: reports/lektro-r187a-rear-steering-live.json
-Operator View evidence: reports/lektro-r187a-operator-view-live.json
-Expected driver eye: [0.45, 1.35, -2.15]
+Trigger exact live A1 verification for native AutoGate articulation.
+Expected A1 source: WED facade 104804 / XP11 Jetway_1_solid.fac
+Expected CRJ AutoGate lat: 6.160 m
+Expected disengage duration: 15000 ms
+Controller commit: 3ab1208940ac333f905ab344309aae3ccdfa7f13
