@@ -1,0 +1,142 @@
+name: KPHX XP12 macOS Free Demo Click
+
+on:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-macos-free-demo-click.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  click:
+    runs-on: macos-14
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Click only the official Free Demo choice and capture next screen
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp12-installer reports
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerMac.zip"             -o /tmp/xp12-installer.zip
+          ditto -x -k /tmp/xp12-installer.zip /tmp/xp12-installer
+          BIN="$(find /tmp/xp12-installer -type f -path '*/Contents/MacOS/*' -iname '*Installer*' -print -quit)"
+          if [ -z "$BIN" ]; then
+            BIN="$(find /tmp/xp12-installer -type f -path '*/Contents/MacOS/*' -print -quit)"
+          fi
+          test -n "$BIN"
+          chmod +x "$BIN"
+
+          "$BIN" --lang=en --install_numeric=121212             --install_name="X-Plane 12.1.2-r4-0f2fea01"             --no_web_server >/tmp/xp12-click.out 2>/tmp/xp12-click.err &
+          PID=$!
+          echo "$PID" >/tmp/xp12-click.pid
+          sleep 12
+
+          swift - "$PID" <<'SWIFT'
+          import AppKit
+          import CoreGraphics
+          import Foundation
+
+          let pid = pid_t(Int(CommandLine.arguments[1])!)
+          NSRunningApplication(processIdentifier: pid)?.activate(options: [.activateIgnoringOtherApps])
+          usleep(700_000)
+
+          let opts: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
+          guard let info = CGWindowListCopyWindowInfo(opts, kCGNullWindowID) as? [[String:Any]] else { fatalError("windows") }
+          guard let w = info.first(where: {
+              let p = ($0[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value ?? -1
+              let layer = ($0[kCGWindowLayer as String] as? NSNumber)?.intValue ?? -1
+              return p == pid && layer == 0
+          }) else { fatalError("installer window missing") }
+          guard let dict = w[kCGWindowBounds as String] as? NSDictionary,
+                let bounds = CGRect(dictionaryRepresentation: dict) else { fatalError("bounds") }
+
+          let fx = 430.0 / 912.0
+          let fy = 275.0 / 840.0
+          let point = CGPoint(x: bounds.minX + bounds.width * fx,
+                              y: bounds.minY + bounds.height * fy)
+          print("window_bounds=\(bounds)")
+          print("click_point=\(point)")
+
+          CGEvent(mouseEventSource:nil, mouseType:.mouseMoved, mouseCursorPosition:point, mouseButton:.left)?.post(tap:.cghidEventTap)
+          usleep(200_000)
+          CGEvent(mouseEventSource:nil, mouseType:.leftMouseDown, mouseCursorPosition:point, mouseButton:.left)?.post(tap:.cghidEventTap)
+          usleep(120_000)
+          CGEvent(mouseEventSource:nil, mouseType:.leftMouseUp, mouseCursorPosition:point, mouseButton:.left)?.post(tap:.cghidEventTap)
+          SWIFT
+
+          sleep 8
+
+          WINID="$(swift - "$PID" <<'SWIFT'
+          import CoreGraphics
+          import Foundation
+          let pid = pid_t(Int(CommandLine.arguments[1])!)
+          let opts: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
+          if let info = CGWindowListCopyWindowInfo(opts, kCGNullWindowID) as? [[String:Any]] {
+              for w in info {
+                  let p = (w[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value ?? -1
+                  let layer = (w[kCGWindowLayer as String] as? NSNumber)?.intValue ?? -1
+                  if p == pid && layer == 0 {
+                      print((w[kCGWindowNumber as String] as? NSNumber)?.intValue ?? 0)
+                      break
+                  }
+              }
+          }
+          SWIFT
+          )"
+          WINID="$(echo "$WINID" | tail -1 | tr -d '[:space:]')"
+          test "$WINID" -gt 0
+          screencapture -x -l "$WINID" reports/kphx-xp12-macos-after-free-demo.png
+
+          swift - reports/kphx-xp12-macos-after-free-demo.png <<'SWIFT' > reports/kphx-xp12-macos-after-free-demo-text.txt
+          import Foundation
+          import Vision
+          import AppKit
+          let url=URL(fileURLWithPath:CommandLine.arguments[1])
+          guard let image=NSImage(contentsOf:url),
+                let cg=image.cgImage(forProposedRect:nil,context:nil,hints:nil) else { fatalError("image") }
+          let width=Double(cg.width), height=Double(cg.height)
+          let req=VNRecognizeTextRequest()
+          req.recognitionLevel = .accurate
+          req.recognitionLanguages = ["en-US"]
+          try VNImageRequestHandler(cgImage:cg,options:[:]).perform([req])
+          print("image_width=\(Int(width))")
+          print("image_height=\(Int(height))")
+          for obs in req.results ?? [] {
+              guard let top=obs.topCandidates(1).first else { continue }
+              let b=obs.boundingBox
+              let x=b.origin.x*width, y=(1.0-b.origin.y-b.size.height)*height
+              let w=b.size.width*width, h=b.size.height*height
+              print(String(format:"TEXT|%.1f|%.1f|%.1f|%.1f|%.1f|%.1f|%@",x,y,w,h,x+w/2,y+h/2,top.string))
+          }
+          SWIFT
+
+          cat reports/kphx-xp12-macos-after-free-demo-text.txt
+          if grep -q 'What would you like to install' reports/kphx-xp12-macos-after-free-demo-text.txt; then
+            echo "ERROR: Free Demo click did not advance the wizard."
+            exit 1
+          fi
+
+          kill "$PID" 2>/dev/null || true
+          wait "$PID" 2>/dev/null || true
+
+      - name: Commit next-screen evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             reports/kphx-xp12-macos-after-free-demo.png             reports/kphx-xp12-macos-after-free-demo-text.txt
+          git commit -m "Advance XP12 macOS installer into free demo flow"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
