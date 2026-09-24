@@ -1,0 +1,509 @@
+=== KPHX 1.75.1 WED SHA256 ===
+59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498  .kphx-extracted/KPHX - Phoenix Sky Harbor Intl_V1.75.1/earth.wed.xml
+
+=== earth.wed.xml first 160 lines ===
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- written by WED 2.6.0r2 -->
+<doc>
+  <objects>
+    <object class="WED_Ring" id="78681" parent_id="78680">
+      <children>
+        <child id="78682"/>
+        <child id="78683"/>
+        <child id="78684"/>
+        <child id="78685"/>
+      </children>
+      <hierarchy name="Image Boundary" locked="0" hidden="0"/>
+    </object>
+    <object class="WED_SimpleBezierBoundaryNode" id="52638" parent_id="56692">
+      <children/>
+      <hierarchy name="Point 0/27" locked="0" hidden="0"/>
+      <point latitude="33.431584268" longitude="-112.013134680" split="1" ctrl_latitude_lo="0.000106336" ctrl_longitude_lo="-0.000038148" ctrl_latitude_hi="-0.000272755" ctrl_longitude_hi="0.000144961"/>
+    </object>
+    <object class="WED_OverlayImage" id="79406" parent_id="57025">
+      <children>
+        <child id="79407"/>
+      </children>
+      <hierarchy name="0231022021233221103" locked="0" hidden="0"/>
+      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022021233221103.jpg" alpha="1.0"/>
+    </object>
+    <object class="WED_TextureNode" id="78024" parent_id="78021">
+      <children/>
+      <hierarchy name="unnamed entity" locked="0" hidden="0"/>
+      <point latitude="33.439463000" longitude="-112.009735000"/>
+      <texture_node s="1.0000" t="1.0000"/>
+    </object>
+    <object class="WED_AirportNode" id="1398" parent_id="0">
+      <children/>
+      <hierarchy name="unnamed entity" locked="0" hidden="0"/>
+      <point latitude="33.431918450" longitude="-112.026148090" split="0" ctrl_latitude_lo="0.0" ctrl_longitude_lo="0.0" ctrl_latitude_hi="0.0" ctrl_longitude_hi="0.0"/>
+      <markings/>
+    </object>
+    <object class="WED_TextureNode" id="71310" parent_id="71307">
+      <children/>
+      <hierarchy name="unnamed entity" locked="0" hidden="0"/>
+      <point latitude="33.449203000" longitude="-112.022781000"/>
+      <texture_node s="1.0000" t="1.0000"/>
+    </object>
+    <object class="WED_AirportNode" id="225" parent_id="208">
+      <children/>
+      <hierarchy name="unnamed entity" locked="0" hidden="0"/>
+      <point latitude="33.441641909" longitude="-112.029782523" split="1" ctrl_latitude_lo="0.000284020" ctrl_longitude_lo="0.000017910" ctrl_latitude_hi="-0.000089690" ctrl_longitude_hi="0.0"/>
+      <markings/>
+    </object>
+    <object class="WED_TextureNode" id="75390" parent_id="75387">
+      <children/>
+      <hierarchy name="unnamed entity" locked="0" hidden="0"/>
+      <point latitude="33.425137000" longitude="-112.015228000"/>
+      <texture_node s="1.0000" t="1.0000"/>
+    </object>
+    <object class="WED_AirportNode" id="100133" parent_id="100132">
+      <children/>
+      <hierarchy name="Node 1" locked="0" hidden="0"/>
+      <point latitude="33.437250370" longitude="-111.993818769" split="0" ctrl_latitude_lo="0.0" ctrl_longitude_lo="0.0" ctrl_latitude_hi="0.0" ctrl_longitude_hi="0.0"/>
+      <markings>
+        <marking value="Single Taxi Wide"/>
+      </markings>
+    </object>
+    <object class="WED_SimpleBezierBoundaryNode" id="139210" parent_id="139208">
+      <children/>
+      <hierarchy name="Node 2" locked="0" hidden="0"/>
+      <point latitude="33.440179389" longitude="-112.020163367" split="1" ctrl_latitude_lo="0.000292782" ctrl_longitude_lo="0.000007630" ctrl_latitude_hi="-0.000342374" ctrl_longitude_hi="-0.000015259"/>
+    </object>
+    <object class="WED_OverlayImage" id="70322" parent_id="57025">
+      <children>
+        <child id="70323"/>
+      </children>
+      <hierarchy name="0231022021232312033" locked="0" hidden="0"/>
+      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022021232312033.jpg" alpha="1.0"/>
+    </object>
+    <object class="WED_OverlayImage" id="61778" parent_id="57025">
+      <children>
+        <child id="61779"/>
+      </children>
+      <hierarchy name="0231022023010011212" locked="0" hidden="0"/>
+      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022023010011212.jpg" alpha="1.0"/>
+    </object>
+    <object class="WED_TextureBezierNode" id="123932" parent_id="123930">
+      <children/>
+      <hierarchy name="Node 2" locked="0" hidden="0"/>
+      <point latitude="33.431904879" longitude="-112.013302498" split="0" ctrl_latitude_lo="0.0" ctrl_longitude_lo="0.0" ctrl_latitude_hi="0.0" ctrl_longitude_hi="0.0"/>
+      <texture_node s="0.8545" t="0.2510" sc_lo="0.0" tc_lo="0.0" sc_hi="0.0" tc_hi="0.0"/>
+    </object>
+    <object class="WED_TextureNode" id="95137" parent_id="95133">
+      <children/>
+      <hierarchy name="unnamed entity" locked="0" hidden="0"/>
+      <point latitude="33.433733000" longitude="-111.976776000"/>
+      <texture_node s="0.0" t="1.0000"/>
+    </object>
+    <object class="WED_Runway" id="9" parent_id="4893">
+      <children>
+        <child id="10"/>
+        <child id="11"/>
+      </children>
+      <hierarchy name="07L/25R" locked="1" hidden="0"/>
+      <line width="46.02"/>
+      <runway surface="Transparent" shoulder="None" shoulder_width="0.0" roughness="0.0" center_lites="0" edge_lites="HIRL" distance_signs="0" displaced1="0.0" blastpad1="0.0" markings1="Precision (US)" app_lites1="MALSR" TDZL1="0" REIL1="None" displaced2="0.0" blastpad2="0.0" markings2="Precision (US)" app_lites2="None" TDZL2="0" REIL2="None"/>
+    </object>
+    <object class="WED_SimpleBezierBoundaryNode" id="134905" parent_id="134900">
+      <children/>
+      <hierarchy name="Node 4" locked="0" hidden="0"/>
+      <point latitude="33.432796961" longitude="-112.003204648" split="0" ctrl_latitude_lo="0.0" ctrl_longitude_lo="0.0" ctrl_latitude_hi="0.0" ctrl_longitude_hi="0.0"/>
+    </object>
+    <object class="WED_TextureNode" id="70561" parent_id="70557">
+      <children/>
+      <hierarchy name="unnamed entity" locked="0" hidden="0"/>
+      <point latitude="33.421126000" longitude="-112.025527000"/>
+      <texture_node s="0.0" t="1.0000"/>
+    </object>
+    <object class="WED_TextureNode" id="69840" parent_id="69837">
+      <children/>
+      <hierarchy name="unnamed entity" locked="0" hidden="0"/>
+      <point latitude="33.423418000" longitude="-112.026214000"/>
+      <texture_node s="1.0000" t="1.0000"/>
+    </object>
+    <object class="WED_OverlayImage" id="79502" parent_id="57025">
+      <children>
+        <child id="79503"/>
+      </children>
+      <hierarchy name="0231022023011001103" locked="0" hidden="0"/>
+      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022023011001103.jpg" alpha="1.0"/>
+    </object>
+    <object class="WED_SimpleBezierBoundaryNode" id="8417" parent_id="8346">
+      <children/>
+      <hierarchy name="Node 70" locked="0" hidden="0"/>
+      <point latitude="33.441042485" longitude="-112.001535797" split="0" ctrl_latitude_lo="0.0" ctrl_longitude_lo="0.0" ctrl_latitude_hi="0.0" ctrl_longitude_hi="0.0"/>
+    </object>
+    <object class="WED_OverlayImage" id="60830" parent_id="57025">
+      <children>
+        <child id="60831"/>
+      </children>
+      <hierarchy name="0231022023010030313" locked="0" hidden="0"/>
+      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022023010030313.jpg" alpha="1.0"/>
+    </object>
+    <object class="WED_AirportNode" id="138993" parent_id="138992">
+      <children/>
+      <hierarchy name="Node 1" locked="0" hidden="0"/>
+      <point latitude="33.440645923" longitude="-112.013591333" split="0" ctrl_latitude_lo="0.0" ctrl_longitude_lo="0.0" ctrl_latitude_hi="0.0" ctrl_longitude_hi="0.0"/>
+      <markings>
+        <marking value="Hold Short Centerline Lights (Amber/Green)"/>
+      </markings>
+    </object>
+    <object class="WED_TextureNode" id="70489" parent_id="70485">
+      <children/>
+      <hierarchy name="unnamed entity" locked="0" hidden="0"/>
+      <point latitude="33.428003000" longitude="-112.025527000"/>
+      <texture_node s="0.0" t="1.0000"/>
+    </object>
+    <object class="WED_Root" id="1" parent_id="0">
+      <children>
+        <child id="2"/>
+        <child id="3"/>
+        <child id="4"/>
+      </children>
+      <hierarchy name="root"/>
+
+=== WED target/version metadata matches ===
+1:<?xml version="1.0" encoding="UTF-8"?>
+2:<!-- written by WED 2.6.0r2 -->
+5:    <object class="WED_Ring" id="78681" parent_id="78680">
+14:    <object class="WED_SimpleBezierBoundaryNode" id="52638" parent_id="56692">
+19:    <object class="WED_OverlayImage" id="79406" parent_id="57025">
+24:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022021233221103.jpg" alpha="1.0"/>
+26:    <object class="WED_TextureNode" id="78024" parent_id="78021">
+32:    <object class="WED_AirportNode" id="1398" parent_id="0">
+38:    <object class="WED_TextureNode" id="71310" parent_id="71307">
+44:    <object class="WED_AirportNode" id="225" parent_id="208">
+50:    <object class="WED_TextureNode" id="75390" parent_id="75387">
+56:    <object class="WED_AirportNode" id="100133" parent_id="100132">
+64:    <object class="WED_SimpleBezierBoundaryNode" id="139210" parent_id="139208">
+69:    <object class="WED_OverlayImage" id="70322" parent_id="57025">
+74:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022021232312033.jpg" alpha="1.0"/>
+76:    <object class="WED_OverlayImage" id="61778" parent_id="57025">
+81:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022023010011212.jpg" alpha="1.0"/>
+83:    <object class="WED_TextureBezierNode" id="123932" parent_id="123930">
+89:    <object class="WED_TextureNode" id="95137" parent_id="95133">
+95:    <object class="WED_Runway" id="9" parent_id="4893">
+104:    <object class="WED_SimpleBezierBoundaryNode" id="134905" parent_id="134900">
+109:    <object class="WED_TextureNode" id="70561" parent_id="70557">
+115:    <object class="WED_TextureNode" id="69840" parent_id="69837">
+121:    <object class="WED_OverlayImage" id="79502" parent_id="57025">
+126:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022023011001103.jpg" alpha="1.0"/>
+128:    <object class="WED_SimpleBezierBoundaryNode" id="8417" parent_id="8346">
+133:    <object class="WED_OverlayImage" id="60830" parent_id="57025">
+138:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022023010030313.jpg" alpha="1.0"/>
+140:    <object class="WED_AirportNode" id="138993" parent_id="138992">
+148:    <object class="WED_TextureNode" id="70489" parent_id="70485">
+154:    <object class="WED_Root" id="1" parent_id="0">
+162:    <object class="WED_Ring" id="62715" parent_id="62714">
+171:    <object class="WED_OverlayImage" id="66092" parent_id="57025">
+176:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022021232300131.jpg" alpha="1.0"/>
+178:    <object class="WED_FacadeRing" id="108933" parent_id="108932">
+187:    <object class="WED_TextureNode" id="71886" parent_id="71883">
+193:    <object class="WED_TextureNode" id="81305" parent_id="81303">
+199:    <object class="WED_TextureNode" id="81241" parent_id="81237">
+205:    <object class="WED_SimpleBoundaryNode" id="45167" parent_id="45166">
+210:    <object class="WED_TextureNode" id="79918" parent_id="79917">
+216:    <object class="WED_OverlayImage" id="81608" parent_id="57025">
+221:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022023011010211.jpg" alpha="1.0"/>
+223:    <object class="WED_AirportNode" id="8624" parent_id="208">
+229:    <object class="WED_LinePlacement" id="45962" parent_id="45031">
+237:    <object class="WED_Ring" id="73113" parent_id="73112">
+246:    <object class="WED_AirportNode" id="577" parent_id="527">
+252:    <object class="WED_TextureNode" id="61342" parent_id="61341">
+258:    <object class="WED_TextureNode" id="73049" parent_id="73047">
+264:    <object class="WED_AirportNode" id="513" parent_id="511">
+270:    <object class="WED_TextureNode" id="73416" parent_id="73413">
+276:    <object class="WED_TextureNode" id="69025" parent_id="69021">
+282:    <object class="WED_AirportNode" id="521" parent_id="511">
+288:    <object class="WED_TextureNode" id="62290" parent_id="62289">
+294:    <object class="WED_ObjPlacement" id="106383" parent_id="12555">
+300:    <object class="WED_TextureNode" id="67638" parent_id="67635">
+306:    <object class="WED_Ring" id="65229" parent_id="65228">
+315:    <object class="WED_Ring" id="62499" parent_id="62498">
+324:    <object class="WED_TextureNode" id="69328" parent_id="69327">
+330:    <object class="WED_TextureNode" id="61768" parent_id="61767">
+336:    <object class="WED_AirportNode" id="105482" parent_id="105476">
+342:    <object class="WED_Ring" id="69471" parent_id="69470">
+351:    <object class="WED_RunwayNode" id="7" parent_id="6">
+356:    <object class="WED_TextureNode" id="71910" parent_id="71907">
+362:    <object class="WED_TextureNode" id="77249" parent_id="77247">
+368:    <object class="WED_TextureNode" id="75862" parent_id="75861">
+374:    <object class="WED_TextureNode" id="76332" parent_id="76329">
+380:    <object class="WED_TextureNode" id="98693" parent_id="98691">
+386:    <object class="WED_TextureNode" id="78030" parent_id="78027">
+392:    <object class="WED_TextureNode" id="77663" parent_id="77661">
+398:    <object class="WED_AirportNode" id="472" parent_id="466">
+404:    <object class="WED_FacadeNode" id="104717" parent_id="104705">
+410:    <object class="WED_SimpleBoundaryNode" id="141979" parent_id="141975">
+415:    <object class="WED_AirportNode" id="105148" parent_id="0">
+423:    <object class="WED_TextureNode" id="67367" parent_id="67365">
+429:    <object class="WED_Ring" id="69057" parent_id="69056">
+438:    <object class="WED_TextureNode" id="77520" parent_id="77517">
+444:    <object class="WED_TextureNode" id="57037" parent_id="57033">
+450:    <object class="WED_OverlayImage" id="75830" parent_id="57025">
+455:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022021233200013.jpg" alpha="1.0"/>
+457:    <object class="WED_Ring" id="77217" parent_id="77216">
+466:    <object class="WED_SimpleBezierBoundaryNode" id="130777" parent_id="130776">
+471:    <object class="WED_Select" id="2" parent_id="1">
+476:    <object class="WED_TextureNode" id="95857" parent_id="95853">
+482:    <object class="WED_TextureNode" id="70912" parent_id="70911">
+488:    <object class="WED_SimpleBezierBoundaryNode" id="136475" parent_id="136468">
+493:    <object class="WED_TextureNode" id="75955" parent_id="75951">
+499:    <object class="WED_Ring" id="76389" parent_id="76388">
+508:    <object class="WED_SimpleBezierBoundaryNode" id="45672" parent_id="45671">
+513:    <object class="WED_AirportNode" id="600" parent_id="527">
+519:    <object class="WED_TextureNode" id="79104" parent_id="79101">
+525:    <object class="WED_AirportNode" id="514" parent_id="511">
+531:    <object class="WED_TextureNode" id="76901" parent_id="76899">
+537:    <object class="WED_SimpleBezierBoundaryNode" id="134979" parent_id="134967">
+542:    <object class="WED_LinePlacement" id="45160" parent_id="45031">
+550:    <object class="WED_Ring" id="81699" parent_id="81698">
+559:    <object class="WED_TextureNode" id="79309" parent_id="79305">
+565:    <object class="WED_TextureNode" id="79954" parent_id="79953">
+571:    <object class="WED_TextureNode" id="73603" parent_id="73599">
+577:    <object class="WED_TextureNode" id="66064" parent_id="66063">
+583:    <object class="WED_AirportNode" id="1970" parent_id="0">
+591:    <object class="WED_TextureNode" id="69834" parent_id="69831">
+597:    <object class="WED_KeyObjects" id="3" parent_id="1">
+604:    <object class="WED_TextureNode" id="71515" parent_id="71511">
+610:    <object class="WED_TextureNode" id="71117" parent_id="71115">
+616:    <object class="WED_Ring" id="79707" parent_id="79706">
+625:    <object class="WED_SimpleBezierBoundaryNode" id="45396" parent_id="45382">
+630:    <object class="WED_OverlayImage" id="78026" parent_id="57025">
+635:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022021233221023.jpg" alpha="1.0"/>
+637:    <object class="WED_SimpleBezierBoundaryNode" id="45605" parent_id="45596">
+642:    <object class="WED_TextureNode" id="98689" parent_id="98685">
+648:    <object class="WED_TextureNode" id="80424" parent_id="80421">
+654:    <object class="WED_AirportNode" id="105783" parent_id="105774">
+662:    <object class="WED_SimpleBezierBoundaryNode" id="133520" parent_id="133514">
+667:    <object class="WED_TextureNode" id="61216" parent_id="61215">
+673:    <object class="WED_TextureNode" id="68728" parent_id="68727">
+679:    <object class="WED_AirportNode" id="515" parent_id="511">
+685:    <object class="WED_TextureNode" id="69979" parent_id="69975">
+691:    <object class="WED_Ring" id="140531" parent_id="140530">
+706:    <object class="WED_TextureBezierNode" id="132339" parent_id="132335">
+712:    <object class="WED_Ring" id="78171" parent_id="78170">
+721:    <object class="WED_SimpleBezierBoundaryNode" id="45908" parent_id="45906">
+726:    <object class="WED_OverlayImage" id="79562" parent_id="57025">
+731:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022023011003123.jpg" alpha="1.0"/>
+733:    <object class="WED_ObjPlacement" id="103648" parent_id="103558">
+739:    <object class="WED_TextureBezierNode" id="136355" parent_id="136353">
+745:    <object class="WED_TextureNode" id="65803" parent_id="65799">
+751:    <object class="WED_SimpleBezierBoundaryNode" id="136146" parent_id="136143">
+756:    <object class="WED_TextureNode" id="67258" parent_id="67257">
+762:    <object class="WED_FacadeNode" id="104305" parent_id="56234">
+768:    <object class="WED_TextureNode" id="71665" parent_id="71661">
+774:    <object class="WED_Ring" id="124383" parent_id="124382">
+783:    <object class="WED_OverlayImage" id="70214" parent_id="57025">
+788:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022023010130032.jpg" alpha="1.0"/>
+790:    <object class="WED_Taxiway" id="526" parent_id="4893">
+797:    <object class="WED_AirportSign" id="15679" parent_id="14809">
+803:    <object class="WED_TextureNode" id="78977" parent_id="78975">
+809:    <object class="WED_TextureNode" id="78102" parent_id="78099">
+815:    <object class="WED_Group" id="4" parent_id="1">
+821:    <object class="WED_AirportNode" id="105171" parent_id="0">
+829:    <object class="WED_FacadePlacement" id="106183" parent_id="122306">
+836:    <object class="WED_SimpleBezierBoundaryNode" id="143000" parent_id="142997">
+841:    <object class="WED_SimpleBezierBoundaryNode" id="124704" parent_id="124701">
+846:    <object class="WED_Ring" id="70251" parent_id="70250">
+855:    <object class="WED_Ring" id="78945" parent_id="78944">
+864:    <object class="WED_TextureNode" id="71472" parent_id="71469">
+870:    <object class="WED_Ring" id="62727" parent_id="62726">
+879:    <object class="WED_OverlayImage" id="69074" parent_id="57025">
+884:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022023010101133.jpg" alpha="1.0"/>
+886:    <object class="WED_OverlayImage" id="75584" parent_id="57025">
+891:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022021233220030.jpg" alpha="1.0"/>
+893:    <object class="WED_Group" id="7487" parent_id="28030">
+899:    <object class="WED_Ring" id="137199" parent_id="137200">
+908:    <object class="WED_TextureNode" id="61588" parent_id="61587">
+914:    <object class="WED_TextureNode" id="69910" parent_id="69909">
+920:    <object class="WED_TextureNode" id="62309" parent_id="62307">
+926:    <object class="WED_TextureNode" id="79391" parent_id="79389">
+932:    <object class="WED_ObjPlacement" id="104958" parent_id="12555">
+938:    <object class="WED_OverlayImage" id="62648" parent_id="57025">
+943:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022021232213101.jpg" alpha="1.0"/>
+945:    <object class="WED_TextureNode" id="75082" parent_id="75081">
+951:    <object class="WED_RunwayNode" id="14" parent_id="12">
+956:    <object class="WED_AirportNode" id="1465" parent_id="0">
+965:    <object class="WED_TextureNode" id="72289" parent_id="72285">
+971:    <object class="WED_OverlayImage" id="81164" parent_id="57025">
+976:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022021233230210.jpg" alpha="1.0"/>
+978:    <object class="WED_ObjPlacement" id="102182" parent_id="102289">
+984:    <object class="WED_TextureNode" id="80063" parent_id="80061">
+990:    <object class="WED_Ring" id="73341" parent_id="73340">
+999:    <object class="WED_DrapedOrthophoto" id="138021" parent_id="100436">
+1006:    <object class="WED_AirportNode" id="516" parent_id="511">
+1012:    <object class="WED_ObjPlacement" id="103635" parent_id="103558">
+1018:    <object class="WED_Ring" id="80481" parent_id="80480">
+1027:    <object class="WED_Group" id="5481" parent_id="27854">
+1035:    <object class="WED_TextureNode" id="76096" parent_id="76095">
+1041:    <object class="WED_RoadEdge" id="142376" parent_id="105073">
+1051:    <object class="WED_TextureNode" id="72972" parent_id="72969">
+1057:    <object class="WED_ObjPlacement" id="109137" parent_id="12434">
+1063:    <object class="WED_AirportNode" id="135830" parent_id="135829">
+1071:    <object class="WED_TextureNode" id="62227" parent_id="62223">
+1077:    <object class="WED_OverlayImage" id="62594" parent_id="57025">
+1082:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022021232033323.jpg" alpha="1.0"/>
+1084:    <object class="WED_AirportNode" id="2118" parent_id="0">
+1090:    <object class="WED_TextureNode" id="67374" parent_id="67371">
+1096:    <object class="WED_TextureNode" id="65503" parent_id="65499">
+1102:    <object class="WED_ObjPlacement" id="103539" parent_id="12800">
+1108:    <object class="WED_SimpleBezierBoundaryNode" id="136368" parent_id="136362">
+1113:    <object class="WED_TextureNode" id="65992" parent_id="65991">
+1119:    <object class="WED_TextureNode" id="63805" parent_id="63801">
+1125:    <object class="WED_TextureNode" id="79903" parent_id="79899">
+1131:    <object class="WED_Group" id="6294" parent_id="27854">
+1138:    <object class="WED_TextureNode" id="71550" parent_id="71547">
+1144:    <object class="WED_Group" id="5991" parent_id="27854">
+1152:    <object class="WED_AirportNode" id="2141" parent_id="0">
+1158:    <object class="WED_TextureNode" id="76789" parent_id="76785">
+1164:    <object class="WED_Ring" id="70059" parent_id="70058">
+1173:    <object class="WED_TextureNode" id="71386" parent_id="71385">
+1179:    <object class="WED_OverlayImage" id="78422" parent_id="57025">
+1184:      <overlay_image file_path="..\..\..\..\..\..\..\Users\Zach\wedbing\tempfilestore\0231022021233223032.jpg" alpha="1.0"/>
+1186:    <object class="WED_SimpleBezierBoundaryNode" id="45635" parent_id="45633">
+1191:    <object class="WED_TextureNode" id="75697" parent_id="75693">
+
+=== package metadata candidates ===
+.kphx-extracted/KPHX - Phoenix Sky Harbor Intl_V1.75.1/Earth nav data/apt.dat
+.kphx-extracted/KPHX - Phoenix Sky Harbor Intl_V1.75.1/WXLog.txt
+.kphx-extracted/KPHX - Phoenix Sky Harbor Intl_V1.75.1/validation_report.txt
+.kphx-extracted/KPHX - Phoenix Sky Harbor Intl_V1.75.1/world-models/README.md
+
+
+=== .kphx-extracted/KPHX ===
+.kphx-extracted/KPHX: cannot open `.kphx-extracted/KPHX' (No such file or directory)
+
+=== - ===
+/dev/stdin: empty
+
+=== Phoenix ===
+Phoenix: cannot open `Phoenix' (No such file or directory)
+
+=== Sky ===
+Sky: cannot open `Sky' (No such file or directory)
+
+=== Harbor ===
+Harbor: cannot open `Harbor' (No such file or directory)
+
+=== Intl_V1.75.1/WXLog.txt ===
+Intl_V1.75.1/WXLog.txt: cannot open `Intl_V1.75.1/WXLog.txt' (No such file or directory)
+
+=== .kphx-extracted/KPHX ===
+.kphx-extracted/KPHX: cannot open `.kphx-extracted/KPHX' (No such file or directory)
+
+=== - ===
+/dev/stdin: empty
+
+=== Phoenix ===
+Phoenix: cannot open `Phoenix' (No such file or directory)
+
+=== Sky ===
+Sky: cannot open `Sky' (No such file or directory)
+
+=== Harbor ===
+Harbor: cannot open `Harbor' (No such file or directory)
+
+=== Intl_V1.75.1/validation_report.txt ===
+Intl_V1.75.1/validation_report.txt: cannot open `Intl_V1.75.1/validation_report.txt' (No such file or directory)
+
+=== .kphx-extracted/KPHX ===
+.kphx-extracted/KPHX: cannot open `.kphx-extracted/KPHX' (No such file or directory)
+
+=== - ===
+/dev/stdin: empty
+
+=== Phoenix ===
+Phoenix: cannot open `Phoenix' (No such file or directory)
+
+=== Sky ===
+Sky: cannot open `Sky' (No such file or directory)
+
+=== Harbor ===
+Harbor: cannot open `Harbor' (No such file or directory)
+
+=== Intl_V1.75.1/world-models/README.md ===
+Intl_V1.75.1/world-models/README.md: cannot open `Intl_V1.75.1/world-models/README.md' (No such file or directory)
+
+=== apt.dat header ===
+I
+1200 Generated by WorldEditor 2.6.0r2
+
+1   1134 0 0 KPHX Phoenix Sky Harbor Intl
+1302 city Phoenix
+1302 datum_lat 33.434277778
+1302 datum_lon -112.011583333
+1302 faa_code PHX
+1302 gui_label 3D
+1302 iata_code PHX
+1302 icao_code KPHX
+1302 region_code K2
+1302 state Arizona
+1302 transition_alt 18000
+1302 transition_level 18000
+100 46.02 15 0 0.00 0 3 0  08  33.44086812 -112.02980209 274 0 3 9 0 0 26  33.44082972 -111.99214451 0 0 3 0 0 1
+100 46.02 15 0 0.00 0 3 0 07L  33.43105964 -112.02709913 0 0 3 8 0 0 25R  33.43103998 -111.99334719 0 0 3 0 0 0
+100 46.02 15 0 0.00 0 3 0 07R  33.42885845 -112.02710296 0 0 3 8 0 0 25L  33.42884355 -112.00153904 0 0 3 8 0 0
+110 15 0.00 0.0 Taxiway A1-A3
+111  33.44106186 -112.02920512
+112  33.44144000 -112.02945578  33.44181223 -112.02946462
+112  33.44179876 -112.02898120  33.44179129 -112.02879311
+111  33.44179876 -112.02898120
+112  33.44179876 -112.02898120  33.44179129 -112.02879311
+112  33.44142422 -112.02854996  33.44109176 -112.02855228
+111  33.44105135 -112.02883790
+111  33.44105882 -112.02788848
+112  33.44144941 -112.02815918  33.44182868 -112.02816150
+111  33.44179792 -112.02779206
+112  33.44181413 -112.02744249  33.44180859 -112.02735954
+111  33.44177655 -112.02712317
+112  33.44144000 -112.02688401  33.44111114 -112.02688401
+111  33.44107217 -112.02711714
+111  33.44106924 -112.02622056
+112  33.44143444 -112.02648346  33.44179359 -112.02647643
+111  33.44143444 -112.02648346
+112  33.44143444 -112.02648346  33.44180045 -112.02647562
+111  33.44179519 -112.02604915
+111  33.44205009 -112.02605409
+111  33.44205228 -112.02931715
+112  33.44164191 -112.02978252  33.44135789 -112.02980043
+111  33.44164191 -112.02978252
+112  33.44164191 -112.02978252  33.44155222 -112.02978252
+113  33.44106393 -112.02976940
+110 15 0.00 90.0 Holding pen
+111  33.43621422 -112.00723422
+111  33.43640605 -112.00720267
+111  33.43687062 -112.00639812
+111  33.43813687 -112.00639751
+111  33.43812582 -112.00489073
+111  33.43812972 -112.00484950
+111  33.43860272 -112.00489401
+111  33.43874636 -112.00507232
+111  33.43882370 -112.00533094
+113  33.43883469 -112.00722467
+110 15 0.00 90.1 Taxiway B/C
+111  33.43924597 -111.99501718
+111  33.43915693 -111.99426473
+111  33.43915892 -111.99346649
+111  33.43927152 -111.99271592
+112  33.43938654 -111.99263238  33.43947557 -111.99263238
+111  33.43950256 -111.99271949
+111  33.43962492 -111.99356026
+111  33.43962492 -111.99428936
+111  33.43951994 -111.99506662
+114  33.43938186 -111.99519314  33.43929283 -111.99519314
+112  33.43938401 -111.99799798  33.43947305 -111.99799798
+111  33.43951658 -111.99785429
+111  33.43961498 -111.99708500
+111  33.43961340 -111.99677725
+111  33.43951328 -111.99601453
+112  33.43937917 -111.99590767  33.43930888 -111.99591328
+111  33.43937917 -111.99590767
+112  33.43937917 -111.99590767  33.43930888 -111.99591328
+111  33.43926728 -111.99600461
+111  33.43915810 -111.99675779
+111  33.43915576 -111.99709749
+113  33.43926156 -111.99787236
+111  33.43925656 -112.00779827
+111  33.43912014 -112.00857663
