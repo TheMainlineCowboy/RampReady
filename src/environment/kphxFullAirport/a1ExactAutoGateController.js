@@ -83,8 +83,14 @@ export function installA1ExactAutoGateController({
   const cabinHalfB = requireObject(aircraftTunnelSegment, "Attached_jw_cabin_1b.obj");
   const cabinHalfBAttachmentPivot = cabinHalfB.parent;
   requireObject(terminalTunnelSegment, "Attached_jw_tunnel_2_5a.obj");
-  requireObject(aircraftTunnelSegment, "Attached_jw_tunnel_2_5b.obj");
+  const aircraftTunnelVisual = requireObject(
+    aircraftTunnelSegment,
+    "Attached_jw_tunnel_2_5b.obj",
+  );
   const cabinHalfA = requireObject(cabinWall, "Attached_jw_cabin_1a.obj");
+  root.updateMatrixWorld(true);
+  const sourceSupportBottomMeters =
+    new THREE.Box3().setFromObject(aircraftTunnelVisual).min.y;
 
   const pivot = footprint[4];
   const attachedCabinJoint = footprint[5];
@@ -236,6 +242,11 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateCabinCounterYawDeltaDegrees = cabinRelativeYaw - restCabinRelativeYaw;
     root.userData.a1AutoGateCabinJointGapMeters = cabinJointGapMeters;
     root.userData.a1AutoGateCabinRelativeYawDriftRadians = cabinRelativeYawDriftRadians;
+    const supportBottomMeters =
+      new THREE.Box3().setFromObject(aircraftTunnelVisual).min.y;
+    root.userData.a1AutoGateSupportBottomMeters = supportBottomMeters;
+    root.userData.a1AutoGateSupportBottomDeltaMeters =
+      supportBottomMeters - sourceSupportBottomMeters;
     root.userData.a1AutoGateState = state;
 
     let fixedWallMotionMaxMeters = 0;
@@ -441,6 +452,8 @@ export function installA1ExactAutoGateController({
     getCabinCounterYawDeltaDegrees: () => root.userData.a1AutoGateCabinCounterYawDeltaDegrees,
     getCabinJointGapMeters: () => root.userData.a1AutoGateCabinJointGapMeters,
     getCabinRelativeYawDriftRadians: () => root.userData.a1AutoGateCabinRelativeYawDriftRadians,
+    getSupportBottomMeters: () => root.userData.a1AutoGateSupportBottomMeters,
+    getSupportBottomDeltaMeters: () => root.userData.a1AutoGateSupportBottomDeltaMeters,
     getFixedWallMotionMaxMeters: () => root.userData.a1AutoGateFixedWallMotionMaxMeters,
     getFixedWallRotationMaxRadians: () => root.userData.a1AutoGateFixedWallRotationMaxRadians,
     getAttachedLatMeters: () => attachedLatMeters,
