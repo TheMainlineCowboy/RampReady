@@ -629,6 +629,12 @@ export default function RampReadyStandupTrainer({
           renderer.domElement.dataset.a1JetwayConnectedLatMeters = Number.isFinite(contact.connectedLatMeters)
             ? contact.connectedLatMeters.toFixed(4)
             : "missing";
+          renderer.domElement.dataset.a1JetwayConnectedVertMeters = Number.isFinite(contact.connectedVertMeters)
+            ? contact.connectedVertMeters.toFixed(4)
+            : "missing";
+          renderer.domElement.dataset.a1JetwayDockVerticalCorrectionMeters = Number.isFinite(contact.verticalCorrectionMeters)
+            ? contact.verticalCorrectionMeters.toFixed(4)
+            : "missing";
           renderer.domElement.dataset.a1JetwayDoorContactHitObject = contact.hitObject || "missing";
           renderer.domElement.dataset.a1RenderedL1DoorWorld =
             [targetWorld.x, targetWorld.y, targetWorld.z].map((value) => value.toFixed(4)).join(",");
@@ -1110,6 +1116,9 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.a1JetwayState = currentA1JetwayState;
         renderer.domElement.dataset.a1JetwayStateHistory = jetway.controller.getStateHistory?.().join(",") || currentA1JetwayState;
         renderer.domElement.dataset.a1JetwayLatMeters = Number(jetway.controller.getLatMeters?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayVertMeters = Number(jetway.controller.getVertMeters?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayBridgePitchDegrees = Number(jetway.controller.getBridgePitchDegrees?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayCabinVerticalDeltaMeters = Number(jetway.controller.getCabinVerticalDeltaMeters?.() ?? Number.NaN).toFixed(3);
         renderer.domElement.dataset.a1JetwayRetractedMeters = Number(jetway.controller.getRetractedMeters?.() ?? Number.NaN).toFixed(3);
         renderer.domElement.dataset.a1JetwayBridgeYawDeltaDegrees = Number(jetway.controller.getBridgeYawDeltaDegrees?.() ?? Number.NaN).toFixed(3);
         renderer.domElement.dataset.a1JetwayCabinCounterYawDeltaDegrees = Number(jetway.controller.getCabinCounterYawDeltaDegrees?.() ?? Number.NaN).toFixed(3);
