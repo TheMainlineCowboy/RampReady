@@ -1,4 +1,0 @@
-Trigger LEKTRO Operator View driver-seat verification after snap-to-eye fix.
-Expected local operator eye: [0.45, 1.35, -2.15]
-Expected camera-to-eye distance: < 0.05 m
-Fix commit: b9ee1537346a5db728ef5406ad2caeed01f795da
