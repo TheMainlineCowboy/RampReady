@@ -115,5 +115,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add             public/models/kphx-full-airport/surface-batches/zdp             reports/kphx-zdp-surface-resources.json             reports/kphx-zdp-surface-library-map.json
           git commit -m "Move exact ZDP KPHX surface checkpoint"
-          git pull --rebase origin kphx-full-airport-import
-          git push origin HEAD:kphx-full-airport-import
+          for attempt in 1 2 3 4 5; do
+            git fetch origin kphx-full-airport-import
+            git rebase origin/kphx-full-airport-import
+            if git push origin HEAD:kphx-full-airport-import; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "ZDP surface checkpoint push failed after 5 rebased attempts" >&2
+          exit 1
