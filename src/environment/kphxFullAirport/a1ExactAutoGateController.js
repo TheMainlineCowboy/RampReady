@@ -290,11 +290,16 @@ export function installA1ExactAutoGateController({
   const aircraftTunnelSegment = requireObject(tunnelWall, "Segment_11_1");
   const cabinHalfB = requireObject(aircraftTunnelSegment, "Attached_jw_cabin_1b.obj");
   const cabinHalfBAttachmentPivot = cabinHalfB.parent;
-  requireObject(terminalTunnelSegment, "Attached_jw_tunnel_2_5a.obj");
+  const terminalTunnelVisual = requireObject(
+    terminalTunnelSegment,
+    "Attached_jw_tunnel_2_5a.obj",
+  );
+  const terminalHingeAttachmentPivot = terminalTunnelVisual.parent;
   const aircraftTunnelVisual = requireObject(
     aircraftTunnelSegment,
     "Attached_jw_tunnel_2_5b.obj",
   );
+  const aircraftEntranceAttachmentPivot = aircraftTunnelVisual.parent;
   const lowerSupport = splitExactLowerSupportComponents(
     THREE,
     aircraftTunnelVisual,
@@ -335,6 +340,7 @@ export function installA1ExactAutoGateController({
   }));
 
   const originals = Object.freeze({
+    tunnelPosition: tunnelWall.position.clone(),
     tunnelPositionY: tunnelWall.position.y,
     tunnelRotationX: tunnelWall.rotation.x,
     tunnelRotationY: tunnelWall.rotation.y,
@@ -345,8 +351,10 @@ export function installA1ExactAutoGateController({
     cabinHalfARotationY: cabinHalfA.rotation.y,
   });
   root.updateMatrixWorld(true);
-  const sourceTerminalPivotWorld =
-    tunnelWall.getWorldPosition(new THREE.Vector3()).clone();
+  const sourceTerminalHingeWorld =
+    terminalHingeAttachmentPivot.getWorldPosition(new THREE.Vector3()).clone();
+  const sourceAircraftEntranceWorld =
+    aircraftEntranceAttachmentPivot.getWorldPosition(new THREE.Vector3()).clone();
 
   // The exact WED stock facade is the authored parked/rest pose. AutoGate's
   // datarefs are zero in that pose and rise toward the aircraft during ENGAGE.
@@ -409,21 +417,27 @@ export function installA1ExactAutoGateController({
       branch.mesh.matrixWorldNeedsUpdate = true;
     }
 
-    // Establish the current telescope/yaw pose with the rear hinge at its
-    // exact source height and with zero additional pitch. This is also the
-    // grounded reference pose for the lower wheel/support stage.
-    tunnelWall.position.y = originals.tunnelPositionY;
+    // Establish the current telescope/yaw pose with the exact source
+    // transform and no additional pitch. Segment 10's stock attachment pivot
+    // is the real elevated hinge (ATTACH_GRADED y=4.0), not the WED ground
+    // origin. Segment 11's jw_tunnel_2_5b attachment is the aircraft-side
+    // entrance reference at the same nominal 4.0 m height.
+    tunnelWall.position.copy(originals.tunnelPosition);
     tunnelWall.rotation.x = originals.tunnelRotationX;
     tunnelWall.rotation.y = originals.tunnelRotationY + bridgeYawDelta;
     root.updateMatrixWorld(true);
 
-    const baselineCabinJointWorld =
-      cabinHalfBAttachmentPivot.getWorldPosition(new THREE.Vector3());
-    const baselineCabinJointInTunnel =
-      tunnelWall.worldToLocal(baselineCabinJointWorld.clone());
+    const baselineHingeWorld =
+      terminalHingeAttachmentPivot.getWorldPosition(new THREE.Vector3());
+    const baselineEntranceWorld =
+      aircraftEntranceAttachmentPivot.getWorldPosition(new THREE.Vector3());
+    const hingeInTunnel =
+      tunnelWall.worldToLocal(baselineHingeWorld.clone());
+    const entranceInTunnel =
+      tunnelWall.worldToLocal(baselineEntranceWorld.clone());
     const solvedBridgePitch = solveFixedPivotPitchRadians({
-      localY: baselineCabinJointInTunnel.y,
-      localZ: baselineCabinJointInTunnel.z,
+      localY: entranceInTunnel.y - hingeInTunnel.y,
+      localZ: entranceInTunnel.z - hingeInTunnel.z,
       baselinePitchRadians: originals.tunnelRotationX,
       verticalDeltaMeters: currentVertMeters,
     });
@@ -433,12 +447,19 @@ export function installA1ExactAutoGateController({
       (branch) => branch.mesh.matrixWorld.clone(),
     );
 
-    // Pitch only about the fixed rear hinge. The terminal-side origin never
-    // moves; the aircraft end changes height because the bridge tilts. The
-    // lower wheel/support source components remain on the pavement while the
-    // stock upper posts stay with the tilting bridge and telescope through
-    // them.
+    // Apply the pitch, then translate the wall object only by the exact rigid
+    // compensation required to keep the elevated Segment-10 attachment hinge
+    // at its source world point. This is rotation ABOUT the physical hinge,
+    // not free vertical motion of the bridge.
     tunnelWall.rotation.x = solvedBridgePitch;
+    root.updateMatrixWorld(true);
+    const pitchedHingeWorld =
+      terminalHingeAttachmentPivot.getWorldPosition(new THREE.Vector3());
+    const sourceHingeInParent =
+      tunnelWall.parent.worldToLocal(sourceTerminalHingeWorld.clone());
+    const pitchedHingeInParent =
+      tunnelWall.parent.worldToLocal(pitchedHingeWorld.clone());
+    tunnelWall.position.add(sourceHingeInParent.sub(pitchedHingeInParent));
     root.updateMatrixWorld(true);
 
     lowerSupport.branches.forEach((branch, index) => {
@@ -459,7 +480,10 @@ export function installA1ExactAutoGateController({
     const movingCabinJointWorld =
       cabinHalfBAttachmentPivot.getWorldPosition(new THREE.Vector3());
     const movingCabinJointLocal = root.worldToLocal(movingCabinJointWorld.clone());
-    const jointVerticalDelta = movingCabinJointLocal.y - originals.cabinPosition.y;
+    const movingAircraftEntranceWorld =
+      aircraftEntranceAttachmentPivot.getWorldPosition(new THREE.Vector3());
+    const entranceVerticalDelta =
+      movingAircraftEntranceWorld.y - sourceAircraftEntranceWorld.y;
     cabinWall.position.copy(movingCabinJointLocal);
     cabinWall.rotation.y =
       originals.cabinRotationY + bridgeYawDelta + cabinCounterYawDelta;
@@ -494,20 +518,20 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateLatMeters = currentLatMeters;
     root.userData.a1AutoGateVertMeters = currentVertMeters;
     root.userData.a1AutoGateBridgePitchDegrees = THREE.MathUtils.radToDeg(bridgePitchDelta);
-    root.userData.a1AutoGateCabinVerticalDeltaMeters = jointVerticalDelta;
+    root.userData.a1AutoGateCabinVerticalDeltaMeters = entranceVerticalDelta;
     root.userData.a1AutoGateRetractedMeters = retractMeters;
     root.userData.a1AutoGateInnerTunnelExtensionMeters = innerTunnelExtensionMeters;
     root.userData.a1AutoGateBridgeYawDeltaDegrees = bridgeYaw - restBridgeYaw;
     root.userData.a1AutoGateCabinCounterYawDeltaDegrees = cabinRelativeYaw - restCabinRelativeYaw;
     root.userData.a1AutoGateCabinJointGapMeters = cabinJointGapMeters;
     root.userData.a1AutoGateCabinRelativeYawDriftRadians = cabinRelativeYawDriftRadians;
-    const terminalPivotWorld =
-      tunnelWall.getWorldPosition(new THREE.Vector3());
+    const terminalHingeWorld =
+      terminalHingeAttachmentPivot.getWorldPosition(new THREE.Vector3());
     const terminalPivotGapMeters =
-      terminalPivotWorld.distanceTo(sourceTerminalPivotWorld);
+      terminalHingeWorld.distanceTo(sourceTerminalHingeWorld);
     root.userData.a1AutoGateTerminalPivotGapMeters = terminalPivotGapMeters;
     root.userData.a1AutoGateCabinVerticalErrorMeters =
-      jointVerticalDelta - currentVertMeters;
+      entranceVerticalDelta - currentVertMeters;
     const lowerSupportBottomMeters = measureLowerSupportBottom();
     root.userData.a1AutoGateSupportBottomMeters = lowerSupportBottomMeters;
     root.userData.a1AutoGateSupportBottomDeltaMeters =
@@ -756,7 +780,7 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateControllerAuthority =
     "exact-A1-fixed-terminal-hinge-plus-stock-support-telescope-v11";
   root.userData.a1AutoGateTerminalPivotAuthority =
-    "WED-104809-fixed-rear-hinge-no-whole-span-vertical-translation";
+    "WED-104809-Segment10-jw_tunnel_2_5a-ATTACH_GRADED-y4-fixed-rear-hinge";
   root.userData.a1AutoGateLowerSupportAuthority = lowerSupport.authority;
   root.userData.a1AutoGateSourceGeometryAuthority =
     "KPHX-1.75.1-WED-104804-plus-XP11-Jetway_1_solid.fac";
