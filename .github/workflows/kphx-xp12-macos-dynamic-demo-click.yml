@@ -1,0 +1,200 @@
+name: KPHX XP12 macOS Dynamic Demo Click
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-macos-dynamic-demo-click.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: macos-14
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Download and launch official XP12 installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp12-installer reports
+          curl -L --fail --retry 4 --show-error \
+            "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerMac.zip" \
+            -o /tmp/xp12-installer.zip
+          ditto -x -k /tmp/xp12-installer.zip /tmp/xp12-installer
+          BIN="$(find /tmp/xp12-installer -type f -path '*/Contents/MacOS/*' -iname '*Installer*' -print -quit)"
+          test -n "$BIN"
+          chmod +x "$BIN"
+          "$BIN" --lang=en --install_numeric=121212 \
+            --install_name="X-Plane 12.1.2-r4-0f2fea01" \
+            --no_web_server >/tmp/xp12.out 2>/tmp/xp12.err &
+          echo $! >/tmp/xp12.pid
+          sleep 10
+
+      - name: OCR and click exact Free Demo control
+        shell: bash
+        run: |
+          set -euo pipefail
+          PID="$(cat /tmp/xp12.pid)"
+          swift - "$PID" <<'SWIFT'
+          import AppKit
+          import CoreGraphics
+          import Foundation
+          import Vision
+
+          let pid = pid_t(Int(CommandLine.arguments[1])!)
+          NSRunningApplication(processIdentifier: pid)?.activate(options: [.activateIgnoringOtherApps])
+          usleep(800_000)
+
+          func installerWindow() -> (CGWindowID, CGRect) {
+              let opts: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
+              guard let info = CGWindowListCopyWindowInfo(opts, kCGNullWindowID) as? [[String: Any]] else {
+                  fatalError("no window info")
+              }
+              for w in info {
+                  let ownerPid = (w[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value ?? -1
+                  let layer = (w[kCGWindowLayer as String] as? NSNumber)?.intValue ?? -1
+                  if ownerPid == pid && layer == 0 {
+                      let id = CGWindowID((w[kCGWindowNumber as String] as? NSNumber)?.uint32Value ?? 0)
+                      if let dict = w[kCGWindowBounds as String] as? CFDictionary,
+                         let rect = CGRect(dictionaryRepresentation: dict) {
+                          return (id, rect)
+                      }
+                  }
+              }
+              fatalError("installer window not found")
+          }
+
+          func capture(_ id: CGWindowID, path: String) -> CGImage {
+              guard let image = CGWindowListCreateImage(.null, .optionIncludingWindow, id, [.boundsIgnoreFraming]) else {
+                  fatalError("capture failed")
+              }
+              let rep = NSBitmapImageRep(cgImage: image)
+              guard let data = rep.representation(using: .png, properties: [:]) else { fatalError("png failed") }
+              try! data.write(to: URL(fileURLWithPath: path))
+              return image
+          }
+
+          let (windowId, bounds) = installerWindow()
+          let image = capture(windowId, path: "reports/kphx-xp12-macos-before-click.png")
+          let width = Double(image.width), height = Double(image.height)
+
+          let req = VNRecognizeTextRequest()
+          req.recognitionLevel = .accurate
+          req.recognitionLanguages = ["en-US"]
+          try! VNImageRequestHandler(cgImage: image, options: [:]).perform([req])
+
+          var target: CGPoint? = nil
+          var evidence = [
+              "window_x=\(bounds.origin.x)",
+              "window_y=\(bounds.origin.y)",
+              "window_width=\(bounds.width)",
+              "window_height=\(bounds.height)",
+              "image_width=\(image.width)",
+              "image_height=\(image.height)"
+          ]
+          for obs in req.results ?? [] {
+              guard let top = obs.topCandidates(1).first else { continue }
+              let b = obs.boundingBox
+              let px = b.origin.x * width
+              let pyTop = (1.0 - b.origin.y - b.size.height) * height
+              let pw = b.size.width * width
+              let ph = b.size.height * height
+              let cx = px + pw / 2.0
+              let cy = pyTop + ph / 2.0
+              evidence.append(String(format:"TEXT|%.1f|%.1f|%.1f|%.1f|%@", cx,cy,pw,ph,top.string))
+              if top.string.localizedCaseInsensitiveContains("Install a Free Demo of X-Plane") {
+                  let localX = CGFloat(cx / width) * bounds.width
+                  let localY = CGFloat(cy / height) * bounds.height
+                  target = CGPoint(x: bounds.origin.x + localX, y: bounds.origin.y + localY)
+              }
+          }
+          try! (evidence.joined(separator:"\n") + "\n").write(
+              to: URL(fileURLWithPath:"reports/kphx-xp12-macos-before-click.txt"),
+              atomically:true,
+              encoding:.utf8
+          )
+          guard let point = target else { fatalError("Free Demo text not found") }
+          print("CLICK_GLOBAL \(point.x) \(point.y)")
+          let down = CGEvent(mouseEventSource:nil, mouseType:.leftMouseDown, mouseCursorPosition:point, mouseButton:.left)!
+          let up = CGEvent(mouseEventSource:nil, mouseType:.leftMouseUp, mouseCursorPosition:point, mouseButton:.left)!
+          down.post(tap:.cghidEventTap)
+          usleep(120_000)
+          up.post(tap:.cghidEventTap)
+          SWIFT
+          sleep 4
+
+      - name: Capture screen after Free Demo click
+        shell: bash
+        run: |
+          set -euo pipefail
+          PID="$(cat /tmp/xp12.pid)"
+          swift - "$PID" <<'SWIFT' > reports/kphx-xp12-macos-after-click.txt
+          import AppKit
+          import CoreGraphics
+          import Foundation
+          import Vision
+
+          let pid = pid_t(Int(CommandLine.arguments[1])!)
+          NSRunningApplication(processIdentifier: pid)?.activate(options: [.activateIgnoringOtherApps])
+          usleep(500_000)
+          let opts: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
+          guard let info = CGWindowListCopyWindowInfo(opts, kCGNullWindowID) as? [[String: Any]] else { fatalError("windows") }
+          var found: (CGWindowID, CGRect)? = nil
+          for w in info {
+              let p = (w[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value ?? -1
+              let layer = (w[kCGWindowLayer as String] as? NSNumber)?.intValue ?? -1
+              if p == pid && layer == 0 {
+                  let id = CGWindowID((w[kCGWindowNumber as String] as? NSNumber)?.uint32Value ?? 0)
+                  if let dict = w[kCGWindowBounds as String] as? CFDictionary,
+                     let rect = CGRect(dictionaryRepresentation: dict) { found=(id,rect); break }
+              }
+          }
+          guard let (id,bounds)=found,
+                let image=CGWindowListCreateImage(.null,.optionIncludingWindow,id,[.boundsIgnoreFraming]) else { fatalError("capture") }
+          let rep=NSBitmapImageRep(cgImage:image)
+          try! rep.representation(using:.png,properties:[:])!.write(to:URL(fileURLWithPath:"reports/kphx-xp12-macos-after-click.png"))
+
+          print("window=\(bounds)")
+          print("image_width=\(image.width)")
+          print("image_height=\(image.height)")
+          let req=VNRecognizeTextRequest()
+          req.recognitionLevel = .accurate
+          req.recognitionLanguages=["en-US"]
+          try! VNImageRequestHandler(cgImage:image,options:[:]).perform([req])
+          let width=Double(image.width), height=Double(image.height)
+          for obs in req.results ?? [] {
+              guard let top=obs.topCandidates(1).first else { continue }
+              let b=obs.boundingBox
+              let cx=(b.origin.x+b.size.width/2)*width
+              let cy=(1.0-b.origin.y-b.size.height/2)*height
+              print(String(format:"TEXT|%.1f|%.1f|%@",cx,cy,top.string))
+          }
+          SWIFT
+          cat reports/kphx-xp12-macos-after-click.txt
+          kill "$(cat /tmp/xp12.pid)" 2>/dev/null || true
+
+      - name: Commit click evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-macos-before-click.png \
+                  reports/kphx-xp12-macos-before-click.txt \
+                  reports/kphx-xp12-macos-after-click.png \
+                  reports/kphx-xp12-macos-after-click.txt
+          git commit -m "Probe XP12 macOS Free Demo click transition"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
