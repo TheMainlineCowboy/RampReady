@@ -1,0 +1,105 @@
+name: KPHX XP12 OpenGL3 Installer Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-opengl3-probe.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/workflows/kphx-xp12-opengl3-probe.yml
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Install headless OpenGL runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y             xvfb xauth x11-utils xdotool imagemagick             xfonts-base xfonts-75dpi xfonts-100dpi fontconfig             libgl1-mesa-dri libglx-mesa0 libglx0 libgl1 libglu1-mesa mesa-utils             libpangoxft-1.0-0 libgtk2.0-0t64 libxft2 libxi6 libxinerama1             libxrandr2 libxcursor1 libasound2t64 >/dev/null
+          sudo fc-cache -f >/dev/null
+          Xvfb :99 -screen 0 1280x800x24 +extension GLX +render -noreset >/tmp/xvfb.log 2>&1 &
+          export DISPLAY=:99
+          for i in $(seq 1 20); do xdpyinfo >/dev/null 2>&1 && break; sleep 1; done
+
+      - name: Launch official installer with rendering-driver opengl3
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp12-installer /tmp/ui-artifact reports
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip"             -o /tmp/xp12-installer.zip
+          unzip -q /tmp/xp12-installer.zip -d /tmp/xp12-installer
+          BIN="$(find /tmp/xp12-installer -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          chmod +x "$BIN"
+
+          cat >/tmp/xp12.qa <<'QA'
+          echo "RAMPREADY_XP12_QA_STARTED"
+          dump buttons
+          wait 1
+          quit
+          QA
+
+          export DISPLAY=:99
+          export LIBGL_ALWAYS_SOFTWARE=1
+          "$BIN"             --rendering-driver opengl3             --force_run             --qa_script=/tmp/xp12.qa             --install_numeric=121212             --install_name="X-Plane 12.1.2-r4-0f2fea01"             --no_web_server             >/tmp/installer.out 2>/tmp/installer.err &
+          PID=$!
+          echo "$PID" >/tmp/installer.pid
+
+          sleep 12
+
+          {
+            echo "pid=$PID"
+            ps -fp "$PID" || true
+            echo
+            echo "=== xwininfo tree ==="
+            xwininfo -root -tree || true
+            echo
+            echo "=== visible windows ==="
+            xdotool search --onlyvisible --name '.*' 2>/dev/null | while read -r wid; do
+              echo "--- window $wid"
+              xdotool getwindowname "$wid" 2>/dev/null || true
+              xdotool getwindowgeometry --shell "$wid" 2>/dev/null || true
+            done
+            echo
+            echo "=== stdout ==="
+            cat /tmp/installer.out || true
+            echo
+            echo "=== stderr ==="
+            cat /tmp/installer.err || true
+          } > reports/kphx-xp12-opengl3-probe.txt
+
+          import -display :99 -window root /tmp/ui-artifact/xp12-opengl3-screen.png
+          cp reports/kphx-xp12-opengl3-probe.txt /tmp/ui-artifact/
+          kill "$PID" 2>/dev/null || true
+          wait "$PID" 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kphx-xp12-opengl3-probe
+          path: /tmp/ui-artifact/
+          if-no-files-found: error
+
+      - name: Commit probe evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-opengl3-probe.txt
+          git commit -m "Test XP12 installer OpenGL3 rendering driver"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
