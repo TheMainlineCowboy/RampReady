@@ -156,6 +156,71 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   expect(pageErrors).toEqual([]);
   expect(criticalFailedRequests).toEqual([]);
 
+  // Operator View must use the user-verified LEKTRO driver side and accept
+  // look input. The parent gyro path feeds the same pointer events, so this
+  // also protects against the old per-frame lookAt lock that disabled gyro
+  // specifically in Operator View.
+  const cameraSelect = page.locator('select[aria-label="Camera view"]');
+  await cameraSelect.selectOption('driver');
+  await page.waitForFunction(() => {
+    const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
+    return d.lektroOperatorLookUnlocked === 'true'
+      && Number(d.lektroOperatorEyeLocalX) < 0
+      && Number.isFinite(Number(d.lektroOperatorCameraX))
+      && Number.isFinite(Number(d.lektroOperatorEyeWorldX))
+      && Math.abs(Number(d.lektroOperatorCameraX) - Number(d.lektroOperatorEyeWorldX)) <= 0.001;
+  }, null, { timeout: 15000, polling: 100 });
+
+  const operatorBefore = await canvas.evaluate(element => ({
+    yaw: Number(element.dataset.lektroOperatorLookYaw),
+    pitch: Number(element.dataset.lektroOperatorLookPitch),
+    eyeLocalX: Number(element.dataset.lektroOperatorEyeLocalX),
+  }));
+  expect(operatorBefore.eyeLocalX).toBeLessThan(0);
+
+  await canvas.dispatchEvent('pointerdown', {
+    pointerId: 71,
+    pointerType: 'touch',
+    clientX: 720,
+    clientY: 650,
+    bubbles: true,
+  });
+  await page.evaluate(() => {
+    window.dispatchEvent(new PointerEvent('pointermove', {
+      pointerId: 71,
+      pointerType: 'touch',
+      clientX: 620,
+      clientY: 590,
+      bubbles: true,
+      cancelable: true,
+    }));
+    window.dispatchEvent(new PointerEvent('pointerup', {
+      pointerId: 71,
+      pointerType: 'touch',
+      clientX: 620,
+      clientY: 590,
+      bubbles: true,
+    }));
+  });
+  await page.waitForFunction(({ yaw, pitch }) => {
+    const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
+    return Math.abs(Number(d.lektroOperatorLookYaw) - yaw) > 0.05
+      || Math.abs(Number(d.lektroOperatorLookPitch) - pitch) > 0.05;
+  }, operatorBefore, { timeout: 10000, polling: 100 });
+  const operatorAfter = await canvas.evaluate(element => ({
+    yaw: Number(element.dataset.lektroOperatorLookYaw),
+    pitch: Number(element.dataset.lektroOperatorLookPitch),
+  }));
+  console.log('LEKTRO_OPERATOR_CAMERA_DATASET=' + JSON.stringify({
+    eyeLocalX: operatorBefore.eyeLocalX,
+    lookUnlocked: runtime.lektroOperatorLookUnlocked,
+    yawBefore: operatorBefore.yaw,
+    pitchBefore: operatorBefore.pitch,
+    yawAfter: operatorAfter.yaw,
+    pitchAfter: operatorAfter.pitch,
+  }));
+  await cameraSelect.selectOption('chase');
+
   let hideUiStyle = await page.addStyleTag({
     content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}',
   });
