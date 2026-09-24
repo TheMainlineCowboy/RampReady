@@ -91,7 +91,32 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
 
   await expect(page.locator('.rr-runtime-loading')).toHaveCount(0, { timeout: 30000 });
 
+  await page.waitForFunction(() => {
+    const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
+    const gap = Number(d.a1JetwayDoorContactGapMeters);
+    const lat = Number(d.a1XPlaneAutoGateLatMeters);
+    const vert = Number(d.a1XPlaneAutoGateVertMeters);
+    return d.a1AircraftDockingAuthority === 'a1-wed-104804-node-104811-plus-xplane-crj-acf-autogate-door-v1'
+      && d.a1AircraftSourceAcf === 'CRJ7NG/crj700NG.acf'
+      && d.a1JetwayAircraftSourceAcf === 'CRJ7NG/crj700NG.acf'
+      && d.a1JetwayCabinEndWedNodeId === '104811'
+      && d.a1JetwayDoorContactReady === 'true'
+      && Number.isFinite(gap)
+      && gap <= 0.08
+      && Number.isFinite(lat)
+      && Math.abs(lat - 6.1284) <= 0.001
+      && Number.isFinite(vert)
+      && Math.abs(vert - (-1.9188990485704)) <= 0.002;
+  }, null, { timeout: 60000, polling: 100 });
+
   const runtime = await canvas.evaluate(element => ({ ...element.dataset }));
+  expect(runtime.a1JetwayDoorContactReady).toBe('true');
+  expect(Number(runtime.a1JetwayDoorContactGapMeters)).toBeLessThanOrEqual(0.08);
+  expect(runtime.a1JetwayDoorContactHitObject).not.toBe('no-visible-cabin-hit');
+  expect(runtime.a1JetwayAircraftSourceAcf).toBe('CRJ7NG/crj700NG.acf');
+  expect(runtime.a1JetwayCabinEndWedNodeId).toBe('104811');
+  expect(Number(runtime.a1XPlaneAutoGateLatMeters)).toBeCloseTo(6.1284, 3);
+  expect(Number(runtime.a1XPlaneAutoGateVertMeters)).toBeCloseTo(-1.9188990485704, 3);
   const criticalErrors = consoleErrors.filter(message =>
     /PHX|KPHX|Terminal 4|GLTFLoader|WebGL|ReferenceError|TypeError|SyntaxError/i.test(message)
   );
