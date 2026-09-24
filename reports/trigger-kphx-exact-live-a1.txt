@@ -1,3 +1,4 @@
-Trigger exact live A1 verification after LEKTRO authored rear-steer fix cleanup.
-Expected authored binding: AP88_STEER_L_STEER|AP88_STEER_R_STEER
-Evidence report: reports/lektro-r187a-rear-steering-live.json
+Trigger exact live A1 verification after LEKTRO fixes.
+Rear steering evidence: reports/lektro-r187a-rear-steering-live.json
+Operator View evidence: reports/lektro-r187a-operator-view-live.json
+Expected driver eye: [0.45, 1.35, -2.15]
