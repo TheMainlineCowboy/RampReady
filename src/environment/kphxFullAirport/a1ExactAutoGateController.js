@@ -260,7 +260,11 @@ export function installA1ExactAutoGateController({
 
   function measureDoorContactGap(targetWorld, outwardWorldDirection) {
     if (!targetWorld?.isVector3 || !outwardWorldDirection?.isVector3) {
-      return { distance: Number.POSITIVE_INFINITY, objectName: "invalid-target" };
+      return {
+        distance: Number.POSITIVE_INFINITY,
+        signedDistance: Number.NaN,
+        objectName: "invalid-target",
+      };
     }
     root.updateMatrixWorld(true);
     const direction = outwardWorldDirection.clone().normalize();
@@ -274,14 +278,19 @@ export function installA1ExactAutoGateController({
       );
       const hits = raycaster.intersectObjects([cabinHalfA, cabinHalfB], true)
         .filter((hit) => Number.isFinite(hit.distance) && hit.distance >= 0);
-      if (hits.length) candidates.push(hits[0]);
+      if (hits.length) candidates.push({ ...hits[0], sign });
     }
     candidates.sort((a, b) => a.distance - b.distance);
     if (!candidates.length) {
-      return { distance: Number.POSITIVE_INFINITY, objectName: "no-visible-cabin-hit" };
+      return {
+        distance: Number.POSITIVE_INFINITY,
+        signedDistance: Number.NaN,
+        objectName: "no-visible-cabin-hit",
+      };
     }
     return {
       distance: candidates[0].distance,
+      signedDistance: candidates[0].distance * candidates[0].sign,
       objectName: candidates[0].object?.name
         || candidates[0].object?.parent?.name
         || "cabin-mesh",
@@ -308,6 +317,7 @@ export function installA1ExactAutoGateController({
       correctionMeters: connectedLatMeters - attachedLatMeters,
       verticalCorrectionMeters: connectedVertMeters,
       gapMeters: hit.distance,
+      signedGapMeters: hit.signedDistance,
       objectName: hit.objectName,
     };
   }
@@ -334,16 +344,52 @@ export function installA1ExactAutoGateController({
     }
 
     doorTargets = exactTargets;
-    const exact = evaluateConnectedPose(
+    let solved = evaluateConnectedPose(
       exactTargets.latMeters,
       exactTargets.vertMeters,
       targetWorld,
       outwardWorldDirection,
     );
-    connectedLatMeters = exact.connectedLatMeters;
-    connectedVertMeters = exact.connectedVertMeters;
-    dockingCorrectionMeters = exact.correctionMeters;
-    dockingVerticalCorrectionMeters = exact.verticalCorrectionMeters;
+
+    // The ACF gives AutoGate's exact aircraft-door dataref target. The XP11
+    // stock cabin, however, has a visible lip/hood offset from the WED path
+    // endpoint. Resolve only that source-geometry offset from the rendered
+    // cabin itself. AutoGate defines +1 m lat as +1 m entrance travel toward
+    // the aircraft, so the signed door-to-cabin ray gap is the correction.
+    // Keep the solve tightly bounded around the ACF value; never move the WED
+    // terminal anchor or aircraft stand to manufacture contact.
+    const maxVisibleContactCorrectionMeters = 0.45;
+    for (let iteration = 0; iteration < 4; iteration += 1) {
+      if (Number.isFinite(solved.gapMeters) && solved.gapMeters <= 0.08) break;
+      if (!Number.isFinite(solved.signedGapMeters)) break;
+
+      const minimumLat = exactTargets.latMeters - maxVisibleContactCorrectionMeters;
+      const maximumLat = exactTargets.latMeters + maxVisibleContactCorrectionMeters;
+      const nextLatMeters = clamp(
+        solved.connectedLatMeters + solved.signedGapMeters,
+        minimumLat,
+        maximumLat,
+      );
+      if (Math.abs(nextLatMeters - solved.connectedLatMeters) < 0.001) break;
+
+      const next = evaluateConnectedPose(
+        nextLatMeters,
+        exactTargets.vertMeters,
+        targetWorld,
+        outwardWorldDirection,
+      );
+      if (Number.isFinite(solved.gapMeters)
+        && Number.isFinite(next.gapMeters)
+        && next.gapMeters > solved.gapMeters + 0.01) {
+        break;
+      }
+      solved = next;
+    }
+
+    connectedLatMeters = solved.connectedLatMeters;
+    connectedVertMeters = solved.connectedVertMeters;
+    dockingCorrectionMeters = solved.correctionMeters;
+    dockingVerticalCorrectionMeters = solved.verticalCorrectionMeters;
     setDeployment(1);
 
     const finalHit = measureDoorContactGap(targetWorld, outwardWorldDirection);
@@ -359,11 +405,12 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateDockingCorrectionMeters = dockingCorrectionMeters;
     root.userData.a1AutoGateDockingVerticalCorrectionMeters = dockingVerticalCorrectionMeters;
     root.userData.a1AutoGateDoorContactGapMeters = doorContactGapMeters;
+    root.userData.a1AutoGateDoorContactSignedGapMeters = finalHit.signedDistance;
     root.userData.a1AutoGateDoorContactHitObject = doorContactHitObject;
     root.userData.a1AutoGateDoorContactReady = doorContactReady;
     root.userData.a1AutoGateVerticalResolved = doorContactReady;
     root.userData.a1AutoGateDoorContactAuthority =
-      "RobertSV-XPlane11-ACF-dock-port-plus-Marginal-AutoGate-lat-vert-to-XP11-stock-cabin-v1";
+      "RobertSV-XPlane11-ACF-dock-port-plus-Marginal-AutoGate-lat-vert-plus-visible-stock-cabin-contact-v2";
 
     return Object.freeze({
       aircraftType: profile.aircraftType,
