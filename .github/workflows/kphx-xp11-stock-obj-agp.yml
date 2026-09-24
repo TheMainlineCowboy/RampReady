@@ -118,16 +118,16 @@ jobs:
           sleep 0.2
           xdotool mouseup 1
 
-          for i in $(seq 1 30); do
-            if ! kill -0 "$PID" 2>/dev/null; then break; fi
-            sleep 0.5
+          for i in $(seq 1 20); do
+            VISIBLE="$(xdotool search --onlyvisible --name 'X-System' 2>/dev/null | head -1 || true)"
+            [ -z "$VISIBLE" ] && break
+            sleep 0.25
           done
-          if kill -0 "$PID" 2>/dev/null; then
-            echo "XP11 language initializer did not exit after Set Language" >&2
-            exit 1
-          fi
+          test -z "$(xdotool search --onlyvisible --name 'X-System' 2>/dev/null | head -1 || true)"
+          kill "$PID" 2>/dev/null || true
           wait "$PID" 2>/dev/null || true
-          echo "XP11 language preference initialized."
+          sleep 1
+          echo "XP11 language preference initialized and first-run process closed."
 
       - name: Install exact XP11.55r2 demo tree
         shell: bash
