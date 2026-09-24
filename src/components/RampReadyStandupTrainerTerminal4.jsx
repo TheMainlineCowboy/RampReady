@@ -19,6 +19,7 @@ import { buildKphxExactLiveEnvironment as buildTerminal4RampEnvironment, install
 import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
 import { KPHX_FULL_AIRPORT_SOURCE, kphxXPlaneHeadingToRampReadyYawRadians } from "../environment/kphxFullAirport/sourceAuthority.js";
 import { KPHX_T4_GATE_POSE_SOURCE, createKphxTerminal4GateScenarioPose } from "../environment/kphxFullAirport/terminal4GatePoseAuthority.js";
+import { getRampReadyAircraftDoorProfile, getRenderedAircraftDoorWorldMarker, getRenderedAircraftDoorOutwardWorldDirection } from "../environment/kphxFullAirport/aircraftDoorAuthority.js";
 import "./RampReadyTrainer.css";
 import "./procedure-gates.css";
 import "./mobile-runtime-recovery.css";
@@ -158,7 +159,7 @@ export default function RampReadyStandupTrainer({
     retractionRequested: false,
     transitionStartDeployment: 1,
     transitionStartedAt: 0,
-    transitionDurationMs: 4200,
+    transitionDurationMs: 15000,
   });
   const orbitRef = useRef({
     yaw: -0.64,
@@ -344,11 +345,16 @@ export default function RampReadyStandupTrainer({
     if (!sim || inspectionRef.current) return;
     if (stageRef.current === 0) {
       if (jetwayRef.current.retractionRequested) return;
+      const controller = jetwayRef.current.controller;
+      if (!controller?.isDoorContactReady?.()) {
+        setMessage("Waiting for the A1 jetway to make verified contact with the rendered CRJ L1 door.");
+        return;
+      }
       jetwayRef.current.transitionStartDeployment = jetwayRef.current.deployment;
       jetwayRef.current.transitionStartedAt = performance.now();
       jetwayRef.current.target = 0;
       jetwayRef.current.retractionRequested = true;
-      setMessage("Jetway departure sequence active: hood clear, telescope in, then rotate to park before tug approach.");
+      setMessage("Jetway departure active: AutoGate disengage is retracting the exact A1 tunnel and rotating the cabin to park.");
     } else if (stageRef.current === 3 && sim.connection.phase === CONNECTION_PHASES.SECURED) {
       stageRef.current = 4;
       setStage(4);
@@ -601,30 +607,62 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.terminal4JetwayInitialState = environment.userData.authoredTerminal4JetwayInitialState || "missing";
         renderer.domElement.dataset.terminal4JetwayPrePushSequence = environment.userData.authoredTerminal4JetwayRequiredPrePushSequence || "missing";
         const a1JetwayController = environment.userData.authoredTerminal4A1JetwayController || null;
-        const nativeA1RetractionActive = environment.userData.authoredTerminal4Jetways?.userData.uploadedJetwayA1RetractionAuthority === "aircraft-door-clearance-without-overtravel-v6";
-        if (a1JetwayController && !a1JetwayController.__rampReadyDoorClearanceWrapped) {
-          const sourceSetDeployment = a1JetwayController.setDeployment.bind(a1JetwayController);
-          let requestedDeployment = 1;
-          a1JetwayController.setDeployment = (value) => {
-            requestedDeployment = Math.max(0, Math.min(1, Number(value) || 0));
-            const visualDeployment = nativeA1RetractionActive
-              ? requestedDeployment
-              : 1 - (1 - requestedDeployment) * 0.330555555556;
-            sourceSetDeployment(visualDeployment);
-          };
-          a1JetwayController.getDeployment = () => requestedDeployment;
-          a1JetwayController.getState = () => requestedDeployment >= 0.995
-            ? "attached-to-aircraft-door"
-            : requestedDeployment <= 0.005
-              ? "parked-clear-of-aircraft"
-              : "retracting-from-aircraft";
-          a1JetwayController.__rampReadyDoorClearanceWrapped = true;
-          a1JetwayController.__rampReadyNativeRetractionActive = nativeA1RetractionActive;
-          a1JetwayController.__rampReadyRetractionAuthority = "aircraft-door-clearance-without-overtravel-v6";
-          a1JetwayController.__rampReadyRetractionClearanceMeters = 2.38;
-        }
         jetwayRef.current.controller = a1JetwayController;
-        a1JetwayController?.setDeployment(jetwayRef.current.target);
+
+        const registerRenderedA1DoorContact = () => {
+          if (!a1JetwayController?.registerAircraftDoorContact) return false;
+          const profile = getRampReadyAircraftDoorProfile("CRJ700");
+          const targetWorld = getRenderedAircraftDoorWorldMarker(THREE, aircraft, profile);
+          const outwardWorldDirection = getRenderedAircraftDoorOutwardWorldDirection(THREE, aircraft);
+          if (!targetWorld || !outwardWorldDirection) return false;
+          const contact = a1JetwayController.registerAircraftDoorContact({
+            targetWorld,
+            outwardWorldDirection,
+          });
+          renderer.domElement.dataset.a1JetwayDoorContactReady = String(contact.ready === true);
+          renderer.domElement.dataset.a1JetwayDoorContactGapMeters = Number.isFinite(contact.gapMeters)
+            ? contact.gapMeters.toFixed(4)
+            : "missing";
+          renderer.domElement.dataset.a1JetwayDockCorrectionMeters = Number.isFinite(contact.correctionMeters)
+            ? contact.correctionMeters.toFixed(4)
+            : "missing";
+          renderer.domElement.dataset.a1JetwayConnectedLatMeters = Number.isFinite(contact.connectedLatMeters)
+            ? contact.connectedLatMeters.toFixed(4)
+            : "missing";
+          renderer.domElement.dataset.a1JetwayConnectedVertMeters = Number.isFinite(contact.connectedVertMeters)
+            ? contact.connectedVertMeters.toFixed(4)
+            : "missing";
+          renderer.domElement.dataset.a1JetwayDockVerticalCorrectionMeters = Number.isFinite(contact.verticalCorrectionMeters)
+            ? contact.verticalCorrectionMeters.toFixed(4)
+            : "missing";
+          renderer.domElement.dataset.a1JetwayDoorContactHitObject = contact.hitObject || "missing";
+          renderer.domElement.dataset.a1RenderedL1DoorWorld =
+            [targetWorld.x, targetWorld.y, targetWorld.z].map((value) => value.toFixed(4)).join(",");
+          renderer.domElement.dataset.a1JetwayDoorRegistrationAuthority =
+            profile?.renderedDoorMarkerAuthority || "missing";
+          if (!contact.ready && !inspectionRef.current) {
+            setMessage("A1 jetway door registration is not yet within visible-contact tolerance. Ready is locked.");
+          }
+          return contact.ready === true;
+        };
+
+        if (!registerRenderedA1DoorContact()) {
+          const onAircraftReady = () => registerRenderedA1DoorContact();
+          aircraft.addEventListener("aircraft-model-ready", onAircraftReady, { once: true });
+        }
+        if (a1JetwayController?.getMotionDurationMs) {
+          jetwayRef.current.transitionDurationMs = a1JetwayController.getMotionDurationMs();
+        }
+        // Controller loading is async. Resolve its initial state from the live
+        // mode ref instead of a potentially stale pre-load target left behind
+        // by inspection/training toggles.
+        const initialJetwayDeployment = inspectionRef.current ? 0 : 1;
+        jetwayRef.current.target = initialJetwayDeployment;
+        jetwayRef.current.deployment = initialJetwayDeployment;
+        jetwayRef.current.transitionStartDeployment = initialJetwayDeployment;
+        jetwayRef.current.transitionStartedAt = 0;
+        jetwayRef.current.retractionRequested = false;
+        a1JetwayController?.setDeployment(initialJetwayDeployment);
         renderer.domElement.dataset.a1JetwayDeployment = jetwayRef.current.deployment.toFixed(3);
         renderer.domElement.dataset.a1JetwayState = a1JetwayController?.getState?.() || "missing";
         renderer.domElement.dataset.a1JetwayAnimationAuthority = environment.userData.authoredTerminal4A1JetwayAnimationAuthority || "missing";
@@ -899,7 +937,6 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.kphxT4BaseApronWidthMeters = apronWidth.toFixed(3);
         renderer.domElement.dataset.kphxT4BaseApronDepthMeters = apronDepth.toFixed(3);
 
-        const nativeA1RetractionActive = environment.userData.authoredTerminal4Jetways?.userData.uploadedJetwayA1RetractionAuthority === "aircraft-door-clearance-without-overtravel-v6";
         airportCollision.staticTargets = [
           environment.userData.authoredTerminal4,
           environment.userData.authoredTerminal4Jetways,
@@ -908,10 +945,17 @@ export default function RampReadyStandupTrainer({
         airportCollision.ready = airportCollision.staticTargets.length === 2;
         renderer.domElement.dataset.airportCollisionReady = airportCollision.ready ? "true" : "false";
         renderer.domElement.dataset.airportCollisionTargetCount = String(airportCollision.staticTargets.length);
-        renderer.domElement.dataset.terminal4A1RetractionAuthority = "aircraft-door-clearance-without-overtravel-v6";
-        renderer.domElement.dataset.terminal4A1RetractionClearanceMeters = "2.38";
-        renderer.domElement.dataset.terminal4A1RetractionRatio = nativeA1RetractionActive ? "1.000000" : "0.330556";
-        renderer.domElement.dataset.terminal4A1NativeRetractionActive = nativeA1RetractionActive ? "true" : "false";
+        renderer.domElement.dataset.terminal4A1RetractionAuthority =
+          environment.userData.authoredTerminal4A1JetwayAnimationAuthority || "missing";
+        renderer.domElement.dataset.terminal4A1RetractionClearanceMeters =
+          Number(environment.userData.authoredTerminal4A1JetwayAttachedLatMeters).toFixed(3);
+        renderer.domElement.dataset.terminal4A1RetractionRatio = "1.000000";
+        renderer.domElement.dataset.terminal4A1NativeRetractionActive =
+          environment.userData.authoredTerminal4A1JetwayController ? "true" : "false";
+        renderer.domElement.dataset.terminal4A1MotionDurationMs =
+          String(environment.userData.authoredTerminal4A1JetwayMotionDurationMs ?? "missing");
+        renderer.domElement.dataset.terminal4A1VerticalResolved =
+          String(environment.userData.authoredTerminal4A1JetwayVerticalResolved === true);
         renderer.domElement.dataset.environmentSource = environment.userData.environmentSource;
       })
       .catch(() => {
@@ -1057,9 +1101,9 @@ export default function RampReadyStandupTrainer({
           const transitionDistance = Math.max(0.001, Math.abs(jetway.target - jetway.transitionStartDeployment));
           const transitionDurationMs = Math.max(900, jetway.transitionDurationMs * transitionDistance);
           const transitionProgress = Math.min(1, transitionElapsedMs / transitionDurationMs);
-          const easedProgress = transitionProgress * transitionProgress * (3 - 2 * transitionProgress);
+          // Marginal AutoGate DISENGAGE uses a linear elapsed-time ratio over 15 seconds.
           jetway.deployment = jetway.transitionStartDeployment
-            + (jetway.target - jetway.transitionStartDeployment) * easedProgress;
+            + (jetway.target - jetway.transitionStartDeployment) * transitionProgress;
           if (transitionProgress >= 1) {
             jetway.deployment = jetway.target;
             jetway.transitionStartDeployment = jetway.target;
@@ -1071,6 +1115,17 @@ export default function RampReadyStandupTrainer({
         const currentA1JetwayState = jetway.controller.getState?.() || "unknown";
         renderer.domElement.dataset.a1JetwayState = currentA1JetwayState;
         renderer.domElement.dataset.a1JetwayStateHistory = jetway.controller.getStateHistory?.().join(",") || currentA1JetwayState;
+        renderer.domElement.dataset.a1JetwayLatMeters = Number(jetway.controller.getLatMeters?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayVertMeters = Number(jetway.controller.getVertMeters?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayBridgePitchDegrees = Number(jetway.controller.getBridgePitchDegrees?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayCabinVerticalDeltaMeters = Number(jetway.controller.getCabinVerticalDeltaMeters?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayRetractedMeters = Number(jetway.controller.getRetractedMeters?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayBridgeYawDeltaDegrees = Number(jetway.controller.getBridgeYawDeltaDegrees?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayCabinCounterYawDeltaDegrees = Number(jetway.controller.getCabinCounterYawDeltaDegrees?.() ?? Number.NaN).toFixed(3);
+        renderer.domElement.dataset.a1JetwayCabinJointGapMeters = Number(jetway.controller.getCabinJointGapMeters?.() ?? Number.NaN).toFixed(6);
+        renderer.domElement.dataset.a1JetwayCabinRelativeYawDriftRadians = Number(jetway.controller.getCabinRelativeYawDriftRadians?.() ?? Number.NaN).toFixed(9);
+        renderer.domElement.dataset.a1JetwayFixedWallMotionMaxMeters = Number(jetway.controller.getFixedWallMotionMaxMeters?.() ?? Number.NaN).toFixed(6);
+        renderer.domElement.dataset.a1JetwayFixedWallRotationMaxRadians = Number(jetway.controller.getFixedWallRotationMaxRadians?.() ?? Number.NaN).toFixed(9);
         if (!inspectionActive && jetway.retractionRequested && jetway.deployment <= 0.005 && stageRef.current === 0) {
           jetway.retractionRequested = false;
           stageRef.current = 1;
