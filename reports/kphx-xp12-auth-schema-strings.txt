@@ -1,0 +1,1421 @@
+===== https://clearancedelivery.x-planemobile.com/v1/authenticate =====
+Error getting AUTH expiration date! This should not happen!
+Unable to write user's TOKEN to disk at %s.
+Unable to write user's TOKEN file to disk at %s.
+Getting keystore from disk...
+Keystore not found on disk!
+Updating keystore cache from network...
+Keystore could not be fetched from network. Unable to verify AUTH JWT!
+Couldn't verify JWT signature. Trying new keystore.
+laminar
+https://ident.x-plane.com/.well-known/jwks.json
+JWKS Error Code is: %d
+ Response is: %.*s
+x509 Error Code is: %d
+ Response is: %.*s
+x509 certificate not found
+Unable to write auth JWKS to disk at %s.
+Unable to write auth JWKS file to disk at %s.
+nickname
+avatar
+Session Started
+X-Plane_drm_12.prf
+X-Plane_xdd_12.prf
+Unable to write user's XDD to disk at %s.
+ERROR: Digital download file cannot be written!
+Please report this message in the X-Plane bug reporter, available by clicking More Info button below.
+/_lookup_12_/bugreport.html
+/builds/x-plane/design/source_code/core/installer/UTL_drm.cpp
+GDPR 
+Unable to write user's XDD file to disk at %s.
+--xdd
+--gdpr
+GDPR
+Warning: the user's product key is on disk but cannot be decoded.  It is either from another computer or the DRM system is not working.
+00:FF
+UTL_drm: Linux failed to create a socket: %d
+UTL_drm: Linux failed to create a socket
+Failed to get if_nameindex: %d
+%02X:%02X:%02X:%02X:%02X:%02X
+UTL_drm: Linux failed with unknown error
+Could not get machine id
+N%s:A%s:C%s:L%s
+Unable to write user's DRM file to disk at %s.
+%d%s%s:%s:%s:%s
+%x:%x:%x:%x:%x:%x%n
+\\\\\\\\
+\\\\\\\\\\\\\\\\xdd_auth.log
+SERVERS
+BETA
+BETA_INSTALLER_LIN
+FINAL_INSTALLER_LIN
+SCENERY_BETA_VERSION
+SCENERY_FINAL_VERSION
+ENDOFLIST
+MANIFEST
+BRANCH
+BRANCH_BUILD_NUMBER
+BRANCH_NAME
+BRANCH_PATH
+--server
+--add_server
+--server_clone
+/etc/mtab
+fopen
+I could not open /etc/mtab!
+I cannot scan for CDs without knowing about /etc/mtab! I will try some predefined places, but I will not guarantee that I can find your DVD!
+Make sure I can read /etc/mtab next time!
+Contact linux@x-plane.com if you have further questions.
+/builds/x-plane/design/source_code/core/installer/UTL_installer.cpp
+/dev/
+/mnt/cdrom/
+/media/cdrom/
+/mnt/dvd/
+/media/dvd/
+/mnt/x-plane/
+/mnt/xplane/
+Error during DVD scan: The installer cannot extract a file. Please report this to X-Plane technical support via https://x-plane.com/support, and include the information below:
+Error: %1:message%.
+Compressed File: %1:file%.
+Destination Path: %1:file%.
+checksum_id
+https://clearancedelivery.x-planemobile.com/v1/authenticate
+Error contacting the authorization server: %s
+Server response: %s
+Authentication error: %s
+. Check your Internet connection and try again
+can_sign
+Got %d valid products.
+DRM server returned the unknown product ID %s
+expired_products
+Got %d expired products.
+Parsing error: %s
+Full response saved to %s
+Cannot save full response to %s
+Received empty auth response
+Unable to parse server JSON response.
+https://clearancedelivery.x-planemobile.com/v1/download
+https://tower.x-plane.com/v1/sim-download
+--no_known_installs
+WARNING: The installer was unable to register this copy of X-Plane; the X-Plane updater may not be able to find and update X-Plane! (The installer could not locate the user's preferences folder.)
+x-plane_install_12.txt
+Registration of X-Plane path skipped 
+ existing entry only differs in slash/case form (new: %s, old: %s)
+WARNING: The installer could not write to the file 
+ to register this copy of X-Plane for the X-Plane updater.
+WARNING: registration of this x-system folder failed!
+Found duplicated paths in the installer registry: %s, %s
+The installer could not write to the file %s to rewrite the list of X-Plane installations
+23456789ABCDEFGHJKLMNPQRSTUVWXYZ
+NSt3__120__shared_ptr_emplaceI24UTL_http_error_file_dumpNS_9allocatorIS1_EEEE
+0?INSTALLER
+DISK
+While reading the directory text file, X-Plane found a path that has no file.
+This cannot be used in the installer.
+Please report this to X-Plane customer support via https://x-plane.com/support, and include the path below:
+/builds/x-plane/design/source_code/core/installer/UTL_installer_directory.cpp
+PRODUCT_KEY
+--install_numeric
+Build number selected to %d by command line.
+Malloc failed to allocate %s
+333?333?333?
+?333?333?
+ !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+>font/tex_mem
+Error: unable to make font from file
+(We could not open the file and read its contents.)
+/builds/x-plane/design/source_code/core/OGL/OGL_font.cpp
+(Free-type could not process the .ttf file.)
+Error: unable to set char size for font
+Unable to initialize freetype.
+Font atlas
+font shader
+BORDER
+NSt3__110__function6__funcIZN8OGL_font9init_onceEP22UTL_continuation_groupE3$_0NS_9allocatorIS5_EEFv18offscreen_categoryRKN4llvm11SmallVectorIP15gfx_render_passLj8EEES4_EEE
+ZN8OGL_font9init_onceEP22UTL_continuation_groupE3$_0
+NSt3__110__function6__funcIZ29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_0NS_9allocatorIS5_EEFvP18gfx_command_bufferPK24OGL_graph_resource_tableEEE
+Z29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_0
+NSt3__110__function6__funcIZ29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_1NS_9allocatorIS5_EEFvP15gfx_render_passP22UTL_continuation_groupEEE
+Z29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_1
+NSt3__110__function6__baseIFvP15gfx_render_passP22UTL_continuation_groupEEE
+@gl->mv_stack_top < 40
+/builds/x-plane/design/source_code/core/OGL/OGL_transform.cpp
+gl->mv_stack_top > 0
+gl->proj_stack_top < 3
+gl->proj_stack_top > 0
+swap
+--pfx_domains
+misc
+xplm
+physics
+Frame Boundary
+frame_dag
+Garmin
+App Update
+Prep Frame
+Grab Panel
+Reflections
+Soundscape
+External Cubemap
+Internal Cubemap
+Globe
+DSF Terrain
+World Solid
+World Blended
+Cabin
+Scene Per Frame
+Reflection Water
+3D Scenery
+2D Instruments
+Terrain grid
+Airport
+Clutter
+Collector Sort
+Collector Draw
+OpenXR Wait For Frame
+OpenXR End Frame
+TEX_obj::do_load
+Upload
+TEX_make_mipmaps
+Release textures
+Grab textures
+Paging evaluate
+Paging collect
+Water update
+Water draw
+REN_water_prep_frame
+Defragment process
+Defragment execute
+Defragment retire
+Swapchain acquire
+Swapchain present
+Swapchain resize
+renderGaugeToFBO
+airport_manager::per_frame
+airport_manager::per_render
+gui begin per frame
+gui per frame
+gui end per frame
+atc per frame
+atc per frame UI
+sound per frame
+Terrain bucket
+
+===== https://clearancedelivery.x-planemobile.com/v1/download =====
+Unable to write auth JWKS to disk at %s.
+Unable to write auth JWKS file to disk at %s.
+nickname
+avatar
+Session Started
+X-Plane_drm_12.prf
+X-Plane_xdd_12.prf
+Unable to write user's XDD to disk at %s.
+ERROR: Digital download file cannot be written!
+Please report this message in the X-Plane bug reporter, available by clicking More Info button below.
+/_lookup_12_/bugreport.html
+/builds/x-plane/design/source_code/core/installer/UTL_drm.cpp
+GDPR 
+Unable to write user's XDD file to disk at %s.
+--xdd
+--gdpr
+GDPR
+Warning: the user's product key is on disk but cannot be decoded.  It is either from another computer or the DRM system is not working.
+00:FF
+UTL_drm: Linux failed to create a socket: %d
+UTL_drm: Linux failed to create a socket
+Failed to get if_nameindex: %d
+%02X:%02X:%02X:%02X:%02X:%02X
+UTL_drm: Linux failed with unknown error
+Could not get machine id
+N%s:A%s:C%s:L%s
+Unable to write user's DRM file to disk at %s.
+%d%s%s:%s:%s:%s
+%x:%x:%x:%x:%x:%x%n
+\\\\\\\\
+\\\\\\\\\\\\\\\\xdd_auth.log
+SERVERS
+BETA
+BETA_INSTALLER_LIN
+FINAL_INSTALLER_LIN
+SCENERY_BETA_VERSION
+SCENERY_FINAL_VERSION
+ENDOFLIST
+MANIFEST
+BRANCH
+BRANCH_BUILD_NUMBER
+BRANCH_NAME
+BRANCH_PATH
+--server
+--add_server
+--server_clone
+/etc/mtab
+fopen
+I could not open /etc/mtab!
+I cannot scan for CDs without knowing about /etc/mtab! I will try some predefined places, but I will not guarantee that I can find your DVD!
+Make sure I can read /etc/mtab next time!
+Contact linux@x-plane.com if you have further questions.
+/builds/x-plane/design/source_code/core/installer/UTL_installer.cpp
+/dev/
+/mnt/cdrom/
+/media/cdrom/
+/mnt/dvd/
+/media/dvd/
+/mnt/x-plane/
+/mnt/xplane/
+Error during DVD scan: The installer cannot extract a file. Please report this to X-Plane technical support via https://x-plane.com/support, and include the information below:
+Error: %1:message%.
+Compressed File: %1:file%.
+Destination Path: %1:file%.
+checksum_id
+https://clearancedelivery.x-planemobile.com/v1/authenticate
+Error contacting the authorization server: %s
+Server response: %s
+Authentication error: %s
+. Check your Internet connection and try again
+can_sign
+Got %d valid products.
+DRM server returned the unknown product ID %s
+expired_products
+Got %d expired products.
+Parsing error: %s
+Full response saved to %s
+Cannot save full response to %s
+Received empty auth response
+Unable to parse server JSON response.
+https://clearancedelivery.x-planemobile.com/v1/download
+https://tower.x-plane.com/v1/sim-download
+--no_known_installs
+WARNING: The installer was unable to register this copy of X-Plane; the X-Plane updater may not be able to find and update X-Plane! (The installer could not locate the user's preferences folder.)
+x-plane_install_12.txt
+Registration of X-Plane path skipped 
+ existing entry only differs in slash/case form (new: %s, old: %s)
+WARNING: The installer could not write to the file 
+ to register this copy of X-Plane for the X-Plane updater.
+WARNING: registration of this x-system folder failed!
+Found duplicated paths in the installer registry: %s, %s
+The installer could not write to the file %s to rewrite the list of X-Plane installations
+23456789ABCDEFGHJKLMNPQRSTUVWXYZ
+NSt3__120__shared_ptr_emplaceI24UTL_http_error_file_dumpNS_9allocatorIS1_EEEE
+0?INSTALLER
+DISK
+While reading the directory text file, X-Plane found a path that has no file.
+This cannot be used in the installer.
+Please report this to X-Plane customer support via https://x-plane.com/support, and include the path below:
+/builds/x-plane/design/source_code/core/installer/UTL_installer_directory.cpp
+PRODUCT_KEY
+--install_numeric
+Build number selected to %d by command line.
+Malloc failed to allocate %s
+333?333?333?
+?333?333?
+ !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+>font/tex_mem
+Error: unable to make font from file
+(We could not open the file and read its contents.)
+/builds/x-plane/design/source_code/core/OGL/OGL_font.cpp
+(Free-type could not process the .ttf file.)
+Error: unable to set char size for font
+Unable to initialize freetype.
+Font atlas
+font shader
+BORDER
+NSt3__110__function6__funcIZN8OGL_font9init_onceEP22UTL_continuation_groupE3$_0NS_9allocatorIS5_EEFv18offscreen_categoryRKN4llvm11SmallVectorIP15gfx_render_passLj8EEES4_EEE
+ZN8OGL_font9init_onceEP22UTL_continuation_groupE3$_0
+NSt3__110__function6__funcIZ29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_0NS_9allocatorIS5_EEFvP18gfx_command_bufferPK24OGL_graph_resource_tableEEE
+Z29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_0
+NSt3__110__function6__funcIZ29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_1NS_9allocatorIS5_EEFvP15gfx_render_passP22UTL_continuation_groupEEE
+Z29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_1
+NSt3__110__function6__baseIFvP15gfx_render_passP22UTL_continuation_groupEEE
+@gl->mv_stack_top < 40
+/builds/x-plane/design/source_code/core/OGL/OGL_transform.cpp
+gl->mv_stack_top > 0
+gl->proj_stack_top < 3
+gl->proj_stack_top > 0
+swap
+--pfx_domains
+misc
+xplm
+physics
+Frame Boundary
+frame_dag
+Garmin
+App Update
+Prep Frame
+Grab Panel
+Reflections
+Soundscape
+External Cubemap
+Internal Cubemap
+Globe
+DSF Terrain
+World Solid
+World Blended
+Cabin
+Scene Per Frame
+Reflection Water
+3D Scenery
+2D Instruments
+Terrain grid
+Airport
+Clutter
+Collector Sort
+Collector Draw
+OpenXR Wait For Frame
+OpenXR End Frame
+TEX_obj::do_load
+Upload
+TEX_make_mipmaps
+Release textures
+Grab textures
+Paging evaluate
+Paging collect
+Water update
+Water draw
+REN_water_prep_frame
+Defragment process
+Defragment execute
+Defragment retire
+Swapchain acquire
+Swapchain present
+Swapchain resize
+renderGaugeToFBO
+airport_manager::per_frame
+airport_manager::per_render
+gui begin per frame
+gui per frame
+gui end per frame
+atc per frame
+atc per frame UI
+sound per frame
+Terrain bucket
+Terrain plot layer
+init_world_rendering_all
+ATCInitialize
+REN_airport_load_lights
+REN_planet_init
+OGL_gbuffer_init
+weather_apply_init
+Init Flight
+Init Aircraft
+Region Preload
+OBJ Build
+OBJ IO
+obj_compute_command_geometry
+obj_probe_vector
+obj_draw_manipulator
+
+===== https://tower.x-plane.com/v1/sim-download =====
+Unable to write auth JWKS file to disk at %s.
+nickname
+avatar
+Session Started
+X-Plane_drm_12.prf
+X-Plane_xdd_12.prf
+Unable to write user's XDD to disk at %s.
+ERROR: Digital download file cannot be written!
+Please report this message in the X-Plane bug reporter, available by clicking More Info button below.
+/_lookup_12_/bugreport.html
+/builds/x-plane/design/source_code/core/installer/UTL_drm.cpp
+GDPR 
+Unable to write user's XDD file to disk at %s.
+--xdd
+--gdpr
+GDPR
+Warning: the user's product key is on disk but cannot be decoded.  It is either from another computer or the DRM system is not working.
+00:FF
+UTL_drm: Linux failed to create a socket: %d
+UTL_drm: Linux failed to create a socket
+Failed to get if_nameindex: %d
+%02X:%02X:%02X:%02X:%02X:%02X
+UTL_drm: Linux failed with unknown error
+Could not get machine id
+N%s:A%s:C%s:L%s
+Unable to write user's DRM file to disk at %s.
+%d%s%s:%s:%s:%s
+%x:%x:%x:%x:%x:%x%n
+\\\\\\\\
+\\\\\\\\\\\\\\\\xdd_auth.log
+SERVERS
+BETA
+BETA_INSTALLER_LIN
+FINAL_INSTALLER_LIN
+SCENERY_BETA_VERSION
+SCENERY_FINAL_VERSION
+ENDOFLIST
+MANIFEST
+BRANCH
+BRANCH_BUILD_NUMBER
+BRANCH_NAME
+BRANCH_PATH
+--server
+--add_server
+--server_clone
+/etc/mtab
+fopen
+I could not open /etc/mtab!
+I cannot scan for CDs without knowing about /etc/mtab! I will try some predefined places, but I will not guarantee that I can find your DVD!
+Make sure I can read /etc/mtab next time!
+Contact linux@x-plane.com if you have further questions.
+/builds/x-plane/design/source_code/core/installer/UTL_installer.cpp
+/dev/
+/mnt/cdrom/
+/media/cdrom/
+/mnt/dvd/
+/media/dvd/
+/mnt/x-plane/
+/mnt/xplane/
+Error during DVD scan: The installer cannot extract a file. Please report this to X-Plane technical support via https://x-plane.com/support, and include the information below:
+Error: %1:message%.
+Compressed File: %1:file%.
+Destination Path: %1:file%.
+checksum_id
+https://clearancedelivery.x-planemobile.com/v1/authenticate
+Error contacting the authorization server: %s
+Server response: %s
+Authentication error: %s
+. Check your Internet connection and try again
+can_sign
+Got %d valid products.
+DRM server returned the unknown product ID %s
+expired_products
+Got %d expired products.
+Parsing error: %s
+Full response saved to %s
+Cannot save full response to %s
+Received empty auth response
+Unable to parse server JSON response.
+https://clearancedelivery.x-planemobile.com/v1/download
+https://tower.x-plane.com/v1/sim-download
+--no_known_installs
+WARNING: The installer was unable to register this copy of X-Plane; the X-Plane updater may not be able to find and update X-Plane! (The installer could not locate the user's preferences folder.)
+x-plane_install_12.txt
+Registration of X-Plane path skipped 
+ existing entry only differs in slash/case form (new: %s, old: %s)
+WARNING: The installer could not write to the file 
+ to register this copy of X-Plane for the X-Plane updater.
+WARNING: registration of this x-system folder failed!
+Found duplicated paths in the installer registry: %s, %s
+The installer could not write to the file %s to rewrite the list of X-Plane installations
+23456789ABCDEFGHJKLMNPQRSTUVWXYZ
+NSt3__120__shared_ptr_emplaceI24UTL_http_error_file_dumpNS_9allocatorIS1_EEEE
+0?INSTALLER
+DISK
+While reading the directory text file, X-Plane found a path that has no file.
+This cannot be used in the installer.
+Please report this to X-Plane customer support via https://x-plane.com/support, and include the path below:
+/builds/x-plane/design/source_code/core/installer/UTL_installer_directory.cpp
+PRODUCT_KEY
+--install_numeric
+Build number selected to %d by command line.
+Malloc failed to allocate %s
+333?333?333?
+?333?333?
+ !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+>font/tex_mem
+Error: unable to make font from file
+(We could not open the file and read its contents.)
+/builds/x-plane/design/source_code/core/OGL/OGL_font.cpp
+(Free-type could not process the .ttf file.)
+Error: unable to set char size for font
+Unable to initialize freetype.
+Font atlas
+font shader
+BORDER
+NSt3__110__function6__funcIZN8OGL_font9init_onceEP22UTL_continuation_groupE3$_0NS_9allocatorIS5_EEFv18offscreen_categoryRKN4llvm11SmallVectorIP15gfx_render_passLj8EEES4_EEE
+ZN8OGL_font9init_onceEP22UTL_continuation_groupE3$_0
+NSt3__110__function6__funcIZ29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_0NS_9allocatorIS5_EEFvP18gfx_command_bufferPK24OGL_graph_resource_tableEEE
+Z29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_0
+NSt3__110__function6__funcIZ29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_1NS_9allocatorIS5_EEFvP15gfx_render_passP22UTL_continuation_groupEEE
+Z29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_1
+NSt3__110__function6__baseIFvP15gfx_render_passP22UTL_continuation_groupEEE
+@gl->mv_stack_top < 40
+/builds/x-plane/design/source_code/core/OGL/OGL_transform.cpp
+gl->mv_stack_top > 0
+gl->proj_stack_top < 3
+gl->proj_stack_top > 0
+swap
+--pfx_domains
+misc
+xplm
+physics
+Frame Boundary
+frame_dag
+Garmin
+App Update
+Prep Frame
+Grab Panel
+Reflections
+Soundscape
+External Cubemap
+Internal Cubemap
+Globe
+DSF Terrain
+World Solid
+World Blended
+Cabin
+Scene Per Frame
+Reflection Water
+3D Scenery
+2D Instruments
+Terrain grid
+Airport
+Clutter
+Collector Sort
+Collector Draw
+OpenXR Wait For Frame
+OpenXR End Frame
+TEX_obj::do_load
+Upload
+TEX_make_mipmaps
+Release textures
+Grab textures
+Paging evaluate
+Paging collect
+Water update
+Water draw
+REN_water_prep_frame
+Defragment process
+Defragment execute
+Defragment retire
+Swapchain acquire
+Swapchain present
+Swapchain resize
+renderGaugeToFBO
+airport_manager::per_frame
+airport_manager::per_render
+gui begin per frame
+gui per frame
+gui end per frame
+atc per frame
+atc per frame UI
+sound per frame
+Terrain bucket
+Terrain plot layer
+init_world_rendering_all
+ATCInitialize
+REN_airport_load_lights
+REN_planet_init
+OGL_gbuffer_init
+weather_apply_init
+Init Flight
+Init Aircraft
+Region Preload
+OBJ Build
+OBJ IO
+obj_compute_command_geometry
+obj_probe_vector
+obj_draw_manipulator
+read_DSF_file
+
+===== checksum_id =====
+ Response is: %.*s
+Error getting AUTH expiration date! This should not happen!
+Unable to write user's TOKEN to disk at %s.
+Unable to write user's TOKEN file to disk at %s.
+Getting keystore from disk...
+Keystore not found on disk!
+Updating keystore cache from network...
+Keystore could not be fetched from network. Unable to verify AUTH JWT!
+Couldn't verify JWT signature. Trying new keystore.
+laminar
+https://ident.x-plane.com/.well-known/jwks.json
+JWKS Error Code is: %d
+ Response is: %.*s
+x509 Error Code is: %d
+ Response is: %.*s
+x509 certificate not found
+Unable to write auth JWKS to disk at %s.
+Unable to write auth JWKS file to disk at %s.
+nickname
+avatar
+Session Started
+X-Plane_drm_12.prf
+X-Plane_xdd_12.prf
+Unable to write user's XDD to disk at %s.
+ERROR: Digital download file cannot be written!
+Please report this message in the X-Plane bug reporter, available by clicking More Info button below.
+/_lookup_12_/bugreport.html
+/builds/x-plane/design/source_code/core/installer/UTL_drm.cpp
+GDPR 
+Unable to write user's XDD file to disk at %s.
+--xdd
+--gdpr
+GDPR
+Warning: the user's product key is on disk but cannot be decoded.  It is either from another computer or the DRM system is not working.
+00:FF
+UTL_drm: Linux failed to create a socket: %d
+UTL_drm: Linux failed to create a socket
+Failed to get if_nameindex: %d
+%02X:%02X:%02X:%02X:%02X:%02X
+UTL_drm: Linux failed with unknown error
+Could not get machine id
+N%s:A%s:C%s:L%s
+Unable to write user's DRM file to disk at %s.
+%d%s%s:%s:%s:%s
+%x:%x:%x:%x:%x:%x%n
+\\\\\\\\
+\\\\\\\\\\\\\\\\xdd_auth.log
+SERVERS
+BETA
+BETA_INSTALLER_LIN
+FINAL_INSTALLER_LIN
+SCENERY_BETA_VERSION
+SCENERY_FINAL_VERSION
+ENDOFLIST
+MANIFEST
+BRANCH
+BRANCH_BUILD_NUMBER
+BRANCH_NAME
+BRANCH_PATH
+--server
+--add_server
+--server_clone
+/etc/mtab
+fopen
+I could not open /etc/mtab!
+I cannot scan for CDs without knowing about /etc/mtab! I will try some predefined places, but I will not guarantee that I can find your DVD!
+Make sure I can read /etc/mtab next time!
+Contact linux@x-plane.com if you have further questions.
+/builds/x-plane/design/source_code/core/installer/UTL_installer.cpp
+/dev/
+/mnt/cdrom/
+/media/cdrom/
+/mnt/dvd/
+/media/dvd/
+/mnt/x-plane/
+/mnt/xplane/
+Error during DVD scan: The installer cannot extract a file. Please report this to X-Plane technical support via https://x-plane.com/support, and include the information below:
+Error: %1:message%.
+Compressed File: %1:file%.
+Destination Path: %1:file%.
+checksum_id
+https://clearancedelivery.x-planemobile.com/v1/authenticate
+Error contacting the authorization server: %s
+Server response: %s
+Authentication error: %s
+. Check your Internet connection and try again
+can_sign
+Got %d valid products.
+DRM server returned the unknown product ID %s
+expired_products
+Got %d expired products.
+Parsing error: %s
+Full response saved to %s
+Cannot save full response to %s
+Received empty auth response
+Unable to parse server JSON response.
+https://clearancedelivery.x-planemobile.com/v1/download
+https://tower.x-plane.com/v1/sim-download
+--no_known_installs
+WARNING: The installer was unable to register this copy of X-Plane; the X-Plane updater may not be able to find and update X-Plane! (The installer could not locate the user's preferences folder.)
+x-plane_install_12.txt
+Registration of X-Plane path skipped 
+ existing entry only differs in slash/case form (new: %s, old: %s)
+WARNING: The installer could not write to the file 
+ to register this copy of X-Plane for the X-Plane updater.
+WARNING: registration of this x-system folder failed!
+Found duplicated paths in the installer registry: %s, %s
+The installer could not write to the file %s to rewrite the list of X-Plane installations
+23456789ABCDEFGHJKLMNPQRSTUVWXYZ
+NSt3__120__shared_ptr_emplaceI24UTL_http_error_file_dumpNS_9allocatorIS1_EEEE
+0?INSTALLER
+DISK
+While reading the directory text file, X-Plane found a path that has no file.
+This cannot be used in the installer.
+Please report this to X-Plane customer support via https://x-plane.com/support, and include the path below:
+/builds/x-plane/design/source_code/core/installer/UTL_installer_directory.cpp
+PRODUCT_KEY
+--install_numeric
+Build number selected to %d by command line.
+Malloc failed to allocate %s
+333?333?333?
+?333?333?
+ !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+>font/tex_mem
+Error: unable to make font from file
+(We could not open the file and read its contents.)
+/builds/x-plane/design/source_code/core/OGL/OGL_font.cpp
+(Free-type could not process the .ttf file.)
+Error: unable to set char size for font
+Unable to initialize freetype.
+Font atlas
+font shader
+BORDER
+NSt3__110__function6__funcIZN8OGL_font9init_onceEP22UTL_continuation_groupE3$_0NS_9allocatorIS5_EEFv18offscreen_categoryRKN4llvm11SmallVectorIP15gfx_render_passLj8EEES4_EEE
+ZN8OGL_font9init_onceEP22UTL_continuation_groupE3$_0
+NSt3__110__function6__funcIZ29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_0NS_9allocatorIS5_EEFvP18gfx_command_bufferPK24OGL_graph_resource_tableEEE
+Z29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_0
+NSt3__110__function6__funcIZ29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_1NS_9allocatorIS5_EEFvP15gfx_render_passP22UTL_continuation_groupEEE
+Z29OGL_build_pixel_transfer_nodeR17OGL_graph_builderjj12ogl_alB_modefE3$_1
+NSt3__110__function6__baseIFvP15gfx_render_passP22UTL_continuation_groupEEE
+@gl->mv_stack_top < 40
+/builds/x-plane/design/source_code/core/OGL/OGL_transform.cpp
+gl->mv_stack_top > 0
+gl->proj_stack_top < 3
+gl->proj_stack_top > 0
+swap
+--pfx_domains
+misc
+xplm
+physics
+Frame Boundary
+frame_dag
+Garmin
+App Update
+Prep Frame
+Grab Panel
+Reflections
+Soundscape
+External Cubemap
+Internal Cubemap
+Globe
+DSF Terrain
+World Solid
+World Blended
+Cabin
+Scene Per Frame
+Reflection Water
+3D Scenery
+2D Instruments
+Terrain grid
+Airport
+Clutter
+Collector Sort
+Collector Draw
+OpenXR Wait For Frame
+OpenXR End Frame
+TEX_obj::do_load
+Upload
+TEX_make_mipmaps
+Release textures
+Grab textures
+Paging evaluate
+Paging collect
+Water update
+Water draw
+REN_water_prep_frame
+Defragment process
+Defragment execute
+Defragment retire
+Swapchain acquire
+Swapchain present
+Swapchain resize
+renderGaugeToFBO
+airport_manager::per_frame
+airport_manager::per_render
+gui begin per frame
+gui per frame
+gui end per frame
+atc per frame
+atc per frame UI
+sound per frame
+
+===== Installer session key: =====
+9net_start
+13net_pick_dest
+14net_check_disk
+8net_done
+NSt3__110__function6__funcIZN17net_update_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEP11wizard_funcNS2_12install_typeENS2_11require_xddEE3$_0NS6_ISF_EEFv9auth_typeEEE
+ZN17net_update_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEP11wizard_funcNS_12install_typeENS_11require_xddEE3$_0
+NSt3__110__function6__funcIZN17net_update_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEP11wizard_funcNS2_12install_typeENS2_11require_xddEE3$_1NS6_ISF_EEFbvEEE
+ZN17net_update_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEP11wizard_funcNS_12install_typeENS_11require_xddEE3$_1
+NSt3__110__function6__funcIZN17net_update_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEP11wizard_funcNS2_12install_typeENS2_11require_xddEE3$_2NS6_ISF_EEFSC_vEEE
+ZN17net_update_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEP11wizard_funcNS_12install_typeENS_11require_xddEE3$_2
+NSt3__110__function6__funcIZN17net_update_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEP11wizard_funcNS2_12install_typeENS2_11require_xddEE3$_3NS6_ISF_EEF19install_method_typevEEE
+ZN17net_update_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEP11wizard_funcNS_12install_typeENS_11require_xddEE3$_3
+17net_update_wizard
+16ins_ui_net_start
+NSt3__110__function6__funcIZN21gui_widget_controller8bind_intEPiiiNS_8functionIFbvEEEEd_UlvE_NS_9allocatorIS7_EES5_EE
+ZN21gui_widget_controller8bind_intEPiiiNSt3__18functionIFbvEEEEd_UlvE_
+?dvd_version.txt
+os_dir_this_app       =
+os_dir_desktop        =
+os_dir_definstall     =
+os_dir_temp           =
+os_dir_prefs          =
+--os
+--beta
+--no-scenery
+--log
+--timeout
+--path
+preconditions failed; aborting before GUI init
+silent mode active: path=%s beta=%d timeout=%ds
+Resources/bitmaps/Earth Orbit Textures/
+Silent start as: sim update (--silent)
+Scripted start as: scenery update
+Scripted start as: scenery add/remove
+Scripted start as: sim update
+Unscripted start as: brand new install (no DVD, no installs
+Unscripted start as: add remove scenery to upgrade existing install - user probably has a product purchase
+Unscripted start as: update existing demo - user needs upgrade, no purchase
+Unscripted start as: existing install main menu
+Unscripted start as: full DVD install - user has DVD and no installs.
+Unscripted start as: add remove/scenery - user needs to upgrade has a DVD
+Unscripted start as: main menu for user with a DVD.
+--no_web_server
+Starting installer... opening wizard step "%s"
+-x86_64
+-i386
+NSt3__110__function6__funcIZ4mainE3$_0NS_9allocatorIS2_EEFvvEEE
+Z4mainE3$_0
+----------------
+12network_diag
+NSt3__119__async_assoc_stateIN12network_diag14command_resultENS_12__async_funcIZNS1_17run_command_asyncERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEE3$_1JEEEEE
+ANetwork diagnostics log for 
+Compiled on Jun 24 2026 07:10:40 for 
+Running network checks
+ (proxy server: 
+The command has failed
+URL: 
+, IP: 
+Server response:
+Error response:
+Request succeeded
+Cannot parse server list file! Server file contents:
+Couldn't open 
+Cannot parse CDN urls:
+Connecting to X-Plane auth server
+Getting server list
+Downloading from a random server
+Getting CDN URLs
+Downloading from a random CDN
+Running ping command
+Running traceroute command
+Re-running the checks without proxy
+Proxy not set, skipping no-proxy checks
+Contacting X-Plane server
+https://clearancedelivery.x-planemobile.com/
+Fetching server list
+Fetching from a CDN
+Fetching 
+Server list is empty due to earlier errors, skipping
+Fetching CDN urls
+Installer session key: 
+No XDD, skipping
+No CDN urls, skipping
+clearancedelivery.x-planemobile.com
+ping -c3 -t10 -n 
+ 2>&1
+traceroute -m15 
+Network diagnostics complete
+condition_variable timed_wait failed
+Cannot run command: 
+thread constructor failed
+NSt3__113__assoc_stateIN12network_diag14command_resultEEE
+@a newer installer is available at %s; aborting
+There is a newer version of the X-Plane installer/updater available.
+The installer will take you to the web page where you can download the new installer/updater.
+/builds/x-plane/design/source_code/app/Installer-f/utils.cpp
+this installer is too old to understand the current directory.txt; aborting
+This demo installer is too old; a newer one is available for download from X-Plane.com.
+This installer is too old; a newer one is available for download from X-Plane.com.
+Click the button below to get the newest installer.
+[ Download Now ]
+/_lookup_12_/new_full_installer_400.html
+The installer is unable to install or update X-Plane. An error occurred while creating new folders. Make sure the directory you are trying to install to is not set as read-only in your operating system.
+Install Location: 
+Install Path:
+Displaying alert:
+	User decided to %s.
+GONE
+File: 
+  sig_want=
+  sig_have=
+Deleting file %s: %s
+Could not delete a file that is no longer needed.
+Please ensure the directory you are trying to work with is not set to be read-only in the operating system.
+cdn.x-plane.com
+Start time: %f
+We will retry the core sim file %s after 5xx error (retry: %d)
+We will retry the optional file %s after 5xx error (retry: %d)
+Download of %s succeeded after %d retries of HTTP 5xx error
+We will retry the file to see if we can get a clean download.
+%d bad DLs out of %d total DLs.
+Halting on our %d bad DL of %d tickets.
+end time: %f
+Filesystem scan took %f seconds.
+Global Scenery/
+X-Plane 12 Demo Areas
+Global Airports
+/Earth nav data/
+%+03d%+04d/
+File modified dialog
+The installer is about to delete the file:
+because we no longer use this file, but it appears you have modified it.
+Delete the Old File
+The installer is about to install the file:
+but it appears you have modified this file.
+Overwrite the Old File
+FILE CHANGES DETECTED
+Keep the Old File
+Cancel the Installation
+File modified dialog inner container
+Do this for all files in this directory
+Text content
+Abort dialog
+Cancel installation inner container
+Buttons
+Btn container
+Msg frame
+&m_free
+&m_fill
+Error processing %s: %s (%s:%d)
+20file_modified_dialog
+33gui_synchronous_widget_controller
+12abort_dialog
+File Count
+Chunk Count
+Total MB
+DL Time
+DL Rate
+DL Rate Deviation
+Retry Count
+DL Source
+Global Beta
+Global
+Product Type
+DL Complete?
+Fatal Error Count
+New Install
+Add/Remove Scenery
+Installation Type
+file_count
+file_chunk_count
+total_download_size_mb
+download_time_mins
+download_rate_kbps
+download_rate_deviation_kbps
+retry_count
+data_source
+product_type
+download_complete
+fatal_error_count
+install_type
+18analytics_recorder
+%ld NaCl
+user_id
+start_timestamp
+product_version
+session_uuid
+cmd_args
+ram_class
+display_devices
+end_timestamp
+last_session.anl
+commentStyle
+indentation
+metadata
+is_fatal
+exceptions
+event_string
+NSt3__120__shared_ptr_pointerIPNS_23mersenne_twister_engineImLm32ELm624ELm397ELm31ELm2567483615ELm11ELm4294967295ELm7ELm2636928640ELm15ELm4022730752ELm18ELm1812433253EEEZN5uuids27basic_uuid_random_generatorIS2_EC1ERS2_EUlT_E_NS_9allocatorIS2_EEEE
+ZN5uuids27basic_uuid_random_generatorINSt3__123mersenne_twister_engineImLm32ELm624ELm397ELm31ELm2567483615ELm11ELm4294967295ELm7ELm2636928640ELm15ELm4022730752ELm18ELm1812433253EEEEC1ERS3_EUlT_E_
+00000000-0000-0000-0000-000000000000
+
+===== Authorization: Bearer %s =====
+pop_list_surface.png
+button_sort_descending.png
+button_sort_ascending.png
+13gui_drag_data
+NSt3__110__function6__baseIFifEEE
+NSt3__110__function6__baseIFviiPKiPfEEE
+NSt3__110__function6__baseIFNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEERK16pnl_cell_contentEEE
+NSt3__110__function6__baseIFvP16OGL_draw_contextEEE
+ }INww
+tower_receipt
+user_x509_certificates
+ident_token.prf
+ajuwtkhs.prf
+IDENT
+ %s(%d): error %d - %s
+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~
+m_session_running_EXTERNAL
+/builds/x-plane/design/source_code/core/installer/license_mgr.cpp
+--debug_license_mgr
+Calling for session START
+!session_was_running
+!m_session_running_INTERNAL
+Getting auth credentials from disk...
+No login credentials found
+Unexpected user error
+%s credentials for user %s found on disk
+Expired
+Good
+Attempting to refresh credentials
+async OAUTH2 token refresh succeeded
+async OAUTH2 token refresh cancelled
+async OAUTH2 token refresh failed: %s
+startup
+Successfully fetched receipt
+Receipt fetch failed: %s
+Receipt fetch cancelled
+Calling for session END
+Session Ended
+Scheduling %s AUTH refresh (%s) in %f seconds
+one-time
+Scheduled AUTH refresh (%s) was cancelled
+Periodic AUTH refresh (%s) beginning
+Scheduled AUTH refresh (%s) was cancelled while waiting for scheduled interval
+Periodic AUTH refresh (%s) succeeded
+Periodic AUTH refresh (%s) cancelled
+Scheduled AUTH refresh (%s) failed with: %s. Not asked to retry.
+Periodic AUTH refresh failed with: %s. Trying again in %f seconds
+Scheduling %s RECEIPT refresh (%s) in %f seconds
+Scheduled RECEIPT refresh (%s) was cancelled
+Periodic RECEIPT refresh (%s) beginning
+Scheduled RECEIPT refresh (%s) was cancelled while waiting for scheduled interval
+Periodic RECEIPT refresh (%s) succeeded
+Periodic RECEIPT refresh (%s) cancelled
+Scheduled RECEIPT refresh (%s) failed with: %s. Not asked to retry.
+Periodic RECEIPT refresh failed with: %s. Trying again in %f seconds
+Logging user out
+Getting receipt manifest from disk...
+Got valid receipt from disk
+Receipt not found on disk
+Expired receipt found on disk
+Unexpected receipt error. Removing from disk.
+Starting async receipt refresh
+Got valid receipt from network
+Unexpected receipt error trying to get one from the network.
+https://ident.x-plane.com/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+grant_type=authorization_code&client_id=%s&code_verifier=%s&redirect_uri=%s&code=%s
+reason_code
+Failed to get Access Token. Access Code is expired!
+Failed to get Access Token. Access Code is invalid!
+Failed to get Access Token. Http Code is: %d
+ Response is: %.*s
+access_token
+refresh_token
+Access or Refresh Token failed validity check!
+grant_type=refresh_token&client_id=%s&refresh_token=%s
+Refresh Error Code is: %d
+ Response is: %.*s
+%s?mid=%lld
+https://tower.x-plane.com/v1/inventory
+Authorization: Bearer %s
+Manifest Error Code is: %d
+ Response is: %.*s
+Manifest Token failed validity check!
+Could not retrieve product claim from addon manifest token
+Could not retrieve x5u from addon manifest token for product_id: %s
+Getting certificate from disk for product_id: %s...
+Certificate not found on disk for product_id: %s
+17be7e4f013a12b9c12efa2f03da2473fcbe130046867107cf1a8bdc5ab69511
+Disk cache certificates for product_id: %s are invalid.
+Updating certificate cache for product_id: %s from network...
+Certificate for product_id: %s could not be fetched from network. Unable to verify receipt!
+JWT signature verification failed for product_id: %s, attempting certificate refresh...
+Addon manifest token is invalid for product_id: %s
+JWT signature verification failed, attempting certificate refresh...
+Fresh certificate chain validation failed!
+JWT verification failed even with fresh certificate!
+JWT verification succeeded with fresh certificate
+Failed to retrieve fresh certificate from network
+Inventory JWT is missing x5u
+Getting certificate from disk...
+Certificate not found on disk!
+Disk cache certificates are invalid.
+Updating certificate cache from network...
+Certificate could not be fetched from network. Unable to verify receipt!
+Inventory is invalid!
+Accepting user
+long-term
+Accepting receipt
+Failed to parse receipt claims for delegate notification
+Starting an avatar fetch...
+No avatar URL set, skipping avatar fetch
+Avatar fetch cancelled
+Content-Type:
+image/jpeg
+image/png
+Loading JPG image type...
+Loading PNG image type...
+user_avatar.png
+Avatar fetch returned %s which is an unsupported type. Using a default image instead.
+Avatar image data failed to load. Maybe it's not a valid image
+Avatar fetch Error Code is: %d
+ Response is: %.*s
+Error getting AUTH expiration date! This should not happen!
+Unable to write user's TOKEN to disk at %s.
+Unable to write user's TOKEN file to disk at %s.
+Getting keystore from disk...
+Keystore not found on disk!
+Updating keystore cache from network...
+Keystore could not be fetched from network. Unable to verify AUTH JWT!
+Couldn't verify JWT signature. Trying new keystore.
+laminar
+https://ident.x-plane.com/.well-known/jwks.json
+JWKS Error Code is: %d
+ Response is: %.*s
+x509 Error Code is: %d
+ Response is: %.*s
+x509 certificate not found
+Unable to write auth JWKS to disk at %s.
+Unable to write auth JWKS file to disk at %s.
+nickname
+avatar
+Session Started
+X-Plane_drm_12.prf
+X-Plane_xdd_12.prf
+Unable to write user's XDD to disk at %s.
+ERROR: Digital download file cannot be written!
+Please report this message in the X-Plane bug reporter, available by clicking More Info button below.
+/_lookup_12_/bugreport.html
+/builds/x-plane/design/source_code/core/installer/UTL_drm.cpp
+GDPR 
+Unable to write user's XDD file to disk at %s.
+--xdd
+--gdpr
+GDPR
+Warning: the user's product key is on disk but cannot be decoded.  It is either from another computer or the DRM system is not working.
+00:FF
+UTL_drm: Linux failed to create a socket: %d
+UTL_drm: Linux failed to create a socket
+Failed to get if_nameindex: %d
+%02X:%02X:%02X:%02X:%02X:%02X
+UTL_drm: Linux failed with unknown error
+Could not get machine id
+N%s:A%s:C%s:L%s
+Unable to write user's DRM file to disk at %s.
+%d%s%s:%s:%s:%s
+%x:%x:%x:%x:%x:%x%n
+\\\\\\\\
+\\\\\\\\\\\\\\\\xdd_auth.log
+SERVERS
+BETA
+BETA_INSTALLER_LIN
+FINAL_INSTALLER_LIN
+SCENERY_BETA_VERSION
+SCENERY_FINAL_VERSION
+ENDOFLIST
+MANIFEST
+BRANCH
+BRANCH_BUILD_NUMBER
+BRANCH_NAME
+BRANCH_PATH
+--server
+--add_server
+--server_clone
+/etc/mtab
+fopen
+I could not open /etc/mtab!
+I cannot scan for CDs without knowing about /etc/mtab! I will try some predefined places, but I will not guarantee that I can find your DVD!
+Make sure I can read /etc/mtab next time!
+Contact linux@x-plane.com if you have further questions.
+/builds/x-plane/design/source_code/core/installer/UTL_installer.cpp
+/dev/
+/mnt/cdrom/
+/media/cdrom/
+/mnt/dvd/
+/media/dvd/
+/mnt/x-plane/
+/mnt/xplane/
+Error during DVD scan: The installer cannot extract a file. Please report this to X-Plane technical support via https://x-plane.com/support, and include the information below:
+Error: %1:message%.
+Compressed File: %1:file%.
+
+===== Content-Type: application/json =====
+Global Scenery/
+X-Plane 12 Demo Areas
+Global Airports
+/Earth nav data/
+%+03d%+04d/
+File modified dialog
+The installer is about to delete the file:
+because we no longer use this file, but it appears you have modified it.
+Delete the Old File
+The installer is about to install the file:
+but it appears you have modified this file.
+Overwrite the Old File
+FILE CHANGES DETECTED
+Keep the Old File
+Cancel the Installation
+File modified dialog inner container
+Do this for all files in this directory
+Text content
+Abort dialog
+Cancel installation inner container
+Buttons
+Btn container
+Msg frame
+&m_free
+&m_fill
+Error processing %s: %s (%s:%d)
+20file_modified_dialog
+33gui_synchronous_widget_controller
+12abort_dialog
+File Count
+Chunk Count
+Total MB
+DL Time
+DL Rate
+DL Rate Deviation
+Retry Count
+DL Source
+Global Beta
+Global
+Product Type
+DL Complete?
+Fatal Error Count
+New Install
+Add/Remove Scenery
+Installation Type
+file_count
+file_chunk_count
+total_download_size_mb
+download_time_mins
+download_rate_kbps
+download_rate_deviation_kbps
+retry_count
+data_source
+product_type
+download_complete
+fatal_error_count
+install_type
+18analytics_recorder
+%ld NaCl
+user_id
+start_timestamp
+product_version
+session_uuid
+cmd_args
+ram_class
+display_devices
+end_timestamp
+last_session.anl
+commentStyle
+indentation
+metadata
+is_fatal
+exceptions
+event_string
+NSt3__120__shared_ptr_pointerIPNS_23mersenne_twister_engineImLm32ELm624ELm397ELm31ELm2567483615ELm11ELm4294967295ELm7ELm2636928640ELm15ELm4022730752ELm18ELm1812433253EEEZN5uuids27basic_uuid_random_generatorIS2_EC1ERS2_EUlT_E_NS_9allocatorIS2_EEEE
+ZN5uuids27basic_uuid_random_generatorINSt3__123mersenne_twister_engineImLm32ELm624ELm397ELm31ELm2567483615ELm11ELm4294967295ELm7ELm2636928640ELm15ELm4022730752ELm18ELm1812433253EEEEC1ERS3_EUlT_E_
+00000000-0000-0000-0000-000000000000
+0123456789abcdef
+22ins_analytics_recorder
+/_lookup_12_/analytics.html
+Content-Type: application/json
+xplane: %s
+install_events
+12.4.3-b3-905b4972
+12.4.3-b3
+12.4.3
+e03fa36cea10a0075f8a4e67e7f5975c3c10c4c3
+Aircraft/
+Output/screenshots/
+Custom Data/
+Resources/sounds/
+Resources/default data/
+Resources/joystick configs/
+Resources/keyboard presets/
+Output/situations/
+Output/replays/
+Output/FDR files/
+Output/FMS plans/
+Output/logbooks/
+Output/preferences/
+Output/shadercache/
+Output/diagnostic reports/
+Output/store/
+Output/vr/
+Output/Log Archive/
+Output/interactions/
+Banner Overlay Window
+Outer packer
+28sim_banner_window_controller
+                kvs
+19xdd_text_box_widget
+Complete XDD is now: %s
+23popup_widget_controller
+29modal_popup_widget_controller
+36confirmation_popup_widget_controller
+Popup WC inner packer
+Top of popup window packer
+Popup window title frame
+Bottom of screen packer
+22identity_login_handler
+NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_0NS_9allocatorIS5_EEFvRKNS_8optionalINS_12basic_stringIcNS_11char_traitsIcEENS6_IcEEEEEEEEE
+ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_0
+NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_1NS_9allocatorIS5_EEFvRKNS_12basic_stringIcNS_11char_traitsIcEENS6_IcEEEERNS_8multimapISC_SC_NS_4lessISC_EENS6_INS_4pairISD_SC_EEEEEEEEE
+ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_1
+NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_2NS_9allocatorIS5_EEFvvEEE
+ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_2
+NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_3NS_9allocatorIS5_EEFvNS_12basic_stringIcNS_11char_traitsIcEENS6_IcEEEEEEE
+ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_3
+NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_4NS_9allocatorIS5_EEFvRKNS_12basic_stringIcNS_11char_traitsIcEENS6_IcEEEERNS_6vectorI19xp_js_inject_structNS6_ISG_EEEERNSF_I18xp_js_event_structNS6_ISK_EEEEEEE
+ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_4
+NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_5NS_9allocatorIS5_EEFvNS_8functionIFvRKNS_12basic_stringIcNS_11char_traitsIcEENS6_IcEEEENS8_IFN4Json5ValueERKSH_EEESF_EEEEEE
+NSt3__110__function6__funcIZZN22identity_login_handlerC1EO23identity_login_delegatebENK3$_5clENS_8functionIFvRKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEENS6_IFN4Json5ValueERKSG_EEESE_EEEEUlSI_E_NSA_ISN_EESJ_EE
+ZZN22identity_login_handlerC1EO23identity_login_delegatebENK3$_5clENSt3__18functionIFvRKNS3_12basic_stringIcNS3_11char_traitsIcEENS3_9allocatorIcEEEENS4_IFN4Json5ValueERKSE_EEESC_EEEEUlSG_E_
+NSt3__110__function6__funcIZZN22identity_login_handlerC1EO23identity_login_delegatebENK3$_5clENS_8functionIFvRKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEENS6_IFN4Json5ValueERKSG_EEESE_EEEEUlSI_E0_NSA_ISN_EESJ_EE
+ZZN22identity_login_handlerC1EO23identity_login_delegatebENK3$_5clENSt3__18functionIFvRKNS3_12basic_stringIcNS3_11char_traitsIcEENS3_9allocatorIcEEEENS4_IFN4Json5ValueERKSE_EEESC_EEEEUlSG_E0_
+ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_5
+NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_6NS_9allocatorIS5_EEFvNS_12basic_stringIcNS_11char_traitsIcEENS6_IcEEEEEEE
+ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_6
+NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_7NS_9allocatorIS5_EEFvvEEE
+ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_7
+%s?client_id=%s&scope=sim&response_type=code&code_challenge=%s&code_challenge_method=S256&redirect_uri=%s&state=%s&iap=%d
+https://ident.x-plane.com/oauth2/authorize
+df130867230b4fa4a71f27bf8e045b06
+http://127.0.0.1:%d/login/redirect
+X-Plane Identity Login
+Native browser could not be created!
+https://ident.x-plane.com/oauth2/login-complete
+Offering XDD for adoption
+X-Plane-XDD
+X-Plane-MID
+Authorization
+                    if (window.xplane && window.xplane.setBrowserSize) {
+                        window.xplane.set_browser_size = function(width, height) {
+                            return window.xplane.setBrowserSize({width: width, height: height});
+                        };
+                    }
+                
+setBrowserSize
+xddWasAdopted
+success
+Missing width or height parameters
+%s?title=%s
+X-Plane%2012%20Installer%2FUpdater
+23xp_oauth2_code_receiver
+NSt3__110__function6__baseIFvRKNS_8optionalINS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEEEE
+NSt3__110__function6__baseIFvRKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEERNS_8multimapIS7_S7_NS_4lessIS7_EENS5_INS_4pairIS8_S7_EEEEEEEEE
+NSt3__110__function6__baseIFvNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEE
+NSt3__110__function6__baseIFvRKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEERNS_6vectorI19xp_js_inject_structNS5_ISB_EEEERNSA_I18xp_js_event_structNS5_ISF_EEEEEEE
+NSt3__110__function6__baseIFvNS_8functionIFvRKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEENS2_IFN4Json5ValueERKSC_EEESA_EEEEEE
+NSt3__110__function6__baseIFN4Json5ValueERKS3_EEE
+X@Loading screen
+Top Layer with Content
+Bottom container
+Loading screen left/right split
+Loading screen bg image
+Loading screen bg black
+Loading message for pro use
+Please wait
+About section
+ABOUT THIS COPY
+Frame rate and controls tests will be done at conclusion of startup.
+Learn more at X-Plane.com.
+Home text
+This copy is not approved for commercial applications.
+For commercial use, see x-plane.com/pro/.
+Contact support@x-plane.com for all inquiries.
+Advertisement and tips
+DID YOU KNOW...
+Tips packer
+tips_lightbulb.png
+Tip frame
+Advertisement section
+17ui_screen_loading
+Abackgrounds/
+ins_loading_background.png
+slider_handle_tight.png
+slider_bg_h.png
+slider_bg_h_hover.png
+slider_fg_h.png
+focus_res_slider.png
+Progress bar container
+
