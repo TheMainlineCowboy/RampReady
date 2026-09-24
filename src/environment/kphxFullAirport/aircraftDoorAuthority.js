@@ -17,8 +17,14 @@ export const RAMPREADY_AIRCRAFT_DOOR_PROFILES = Object.freeze({
     aftOfNoseGearMeters: 7.32,
     leftOfCenterlineMeters: 1.34,
     doorHeightMeters: null,
-    horizontalAuthority: "measured-rendered-CRJ-forward-door-v5-7.32m-aft-1.34m-left",
-    verticalAuthority: "unresolved-do-not-invent-measure-live-rendered-door",
+    renderedDoorMarkerLocalMeters: Object.freeze([
+      -1.1492305397987366,
+      3.1021969318389893,
+      2.8091959953308105,
+    ]),
+    renderedDoorMarkerAuthority: "public/models/crj700-user.glb primitive-105 material426 exact bounds center; reports/crj700-door-geometry-inspection.json schema-2",
+    horizontalAuthority: "rendered-L1-marker-plus-exact-WED-A1-cabin-contact-runtime-registration-v1",
+    verticalAuthority: "rendered-L1-marker-y-from-exact-GLB; jetway vertical articulation remains source-limited",
   }),
 });
 
@@ -56,4 +62,27 @@ export function getAircraftDoorWorldHorizontalPoint(THREE, aircraft, profile) {
   return aircraft.position.clone()
     .addScaledVector(forward, -Number(profile.aftOfNoseGearMeters))
     .addScaledVector(left, Number(profile.leftOfCenterlineMeters));
+}
+
+
+export function getRenderedAircraftDoorWorldMarker(THREE, aircraft, profile) {
+  if (!THREE || !aircraft || !profile) throw new Error("THREE, aircraft, and door profile are required");
+  const local = profile.renderedDoorMarkerLocalMeters;
+  if (!Array.isArray(local) || local.length !== 3 || !local.every(Number.isFinite)) {
+    throw new Error(`Aircraft door profile ${profile.aircraftType} has no exact rendered door marker`);
+  }
+  const realModel = aircraft.userData?.realAircraftObject;
+  if (!realModel?.isObject3D) return null;
+  realModel.updateMatrixWorld(true);
+  return realModel.localToWorld(new THREE.Vector3(local[0], local[1], local[2]));
+}
+
+export function getRenderedAircraftDoorOutwardWorldDirection(THREE, aircraft) {
+  if (!THREE || !aircraft) throw new Error("THREE and aircraft are required");
+  const realModel = aircraft.userData?.realAircraftObject;
+  if (!realModel?.isObject3D) return null;
+  realModel.updateMatrixWorld(true);
+  const origin = realModel.localToWorld(new THREE.Vector3(0, 0, 0));
+  const outboard = realModel.localToWorld(new THREE.Vector3(-1, 0, 0));
+  return outboard.sub(origin).normalize();
 }
