@@ -344,6 +344,7 @@ export function installA1ExactAutoGateController({
     tunnelPositionY: tunnelWall.position.y,
     tunnelRotationX: tunnelWall.rotation.x,
     tunnelRotationY: tunnelWall.rotation.y,
+    tunnelRotationZ: tunnelWall.rotation.z,
     cabinPosition: cabinWall.position.clone(),
     cabinRotationY: cabinWall.rotation.y,
     aircraftTunnelSegmentZ: aircraftTunnelSegment.position.z,
@@ -423,8 +424,17 @@ export function installA1ExactAutoGateController({
     // origin. Segment 11's jw_tunnel_2_5b attachment is the aircraft-side
     // entrance reference at the same nominal 4.0 m height.
     tunnelWall.position.copy(originals.tunnelPosition);
-    tunnelWall.rotation.x = originals.tunnelRotationX;
-    tunnelWall.rotation.y = originals.tunnelRotationY + bridgeYawDelta;
+    // Compose yaw first, then pitch about the bridge's own cross-axis.
+    // Three.js's default XYZ Euler order makes local-X pitch lose vertical
+    // authority as bridge yaw increases, which was why a ~7.5° physical tilt
+    // produced only ~0.58 m of entrance movement. YXZ matches the jetway's
+    // real yaw-then-pitch mechanism.
+    tunnelWall.rotation.set(
+      originals.tunnelRotationX,
+      originals.tunnelRotationY + bridgeYawDelta,
+      originals.tunnelRotationZ,
+      "YXZ",
+    );
     root.updateMatrixWorld(true);
 
     const baselineEntranceWorld =
@@ -444,8 +454,12 @@ export function installA1ExactAutoGateController({
 
     const applyPitchAtFixedHinge = (pitchRadians) => {
       tunnelWall.position.copy(originals.tunnelPosition);
-      tunnelWall.rotation.x = pitchRadians;
-      tunnelWall.rotation.y = originals.tunnelRotationY + bridgeYawDelta;
+      tunnelWall.rotation.set(
+        pitchRadians,
+        originals.tunnelRotationY + bridgeYawDelta,
+        originals.tunnelRotationZ,
+        "YXZ",
+      );
       root.updateMatrixWorld(true);
 
       const pitchedHingeWorld =
