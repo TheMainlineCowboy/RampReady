@@ -1,0 +1,69 @@
+name: KPHX Source Dependency Notes
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-source-dependency-notes.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kphx-source-dependency-notes
+  cancel-in-progress: true
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      KPHX_RELEASE_TAG: kphx-source-1.75.1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - name: Install archive tool
+        run: sudo apt-get update && sudo apt-get install -y p7zip-full
+
+      - name: Download locked KPHX source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .kphx-source .kphx-extracted reports
+          gh release download "${KPHX_RELEASE_TAG}" --pattern '*.7z' --dir .kphx-source
+          ARCHIVE="$(find .kphx-source -type f -name '*.7z' -print -quit)"
+          test -n "$ARCHIVE"
+          7z x -y "$ARCHIVE" -o.kphx-extracted >/dev/null
+
+      - name: Extract source-authored dependency notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "KPHX 1.75.1 SOURCE DEPENDENCY NOTES"
+            echo "=================================="
+            echo
+            echo "Candidate text/readme files:"
+            find .kphx-extracted -type f \( -iname '*.txt' -o -iname '*.md' -o -iname '*readme*' \) -print | sort
+            echo
+            echo "Dependency mentions from source package:"
+            grep -RniE               'MisterX|ZDP|CDB|RA[_ -]?Library|Fruitstand|OpenSceneryX|opensceneryx|library|X-Plane 11|X-Plane 12|required|requirement|dependency|dependencies'               .kphx-extracted               --include='*.txt' --include='*.md' --include='*.xml'               | head -2000 || true
+          } > reports/kphx-source-dependency-notes.txt
+
+      - name: Commit dependency evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-source-dependency-notes.txt
+          git commit -m "Extract KPHX 1.75.1 source dependency notes"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
