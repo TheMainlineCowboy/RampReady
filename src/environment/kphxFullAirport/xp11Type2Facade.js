@@ -337,8 +337,15 @@ export async function buildXp11Type2Facade({
         const g = meshGeometry(t.meshes[mi], t.boundsZ, miFirst, miLast, spellingIndex === 0, spellingIndex === spelling.indices.length - 1);
         const mesh = new THREE.Mesh(g, wallMaterial);
         mesh.name = `FacadeMesh_${templateIndex}_${mi}`;
-        mesh.receiveShadow = true;
-        mesh.castShadow = true;
+        // The stock jetway facade's flat wall polygons are placement/control
+        // surfaces behind the attached 3D rotunda/tunnel/cabin objects. In the
+        // standalone browser renderer they appear edge-on as razor-thin slabs
+        // at every gate. Preserve them in the exact hierarchy for source
+        // evidence, but do not render or cast them.
+        mesh.visible = false;
+        mesh.userData.kphxStockJetwayFacadePlaneHidden = true;
+        mesh.receiveShadow = false;
+        mesh.castShadow = false;
         segmentGroup.add(mesh);
       });
 
