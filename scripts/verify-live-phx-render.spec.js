@@ -146,7 +146,7 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   expect(pageErrors).toEqual([]);
   expect(criticalFailedRequests).toEqual([]);
 
-  await page.addStyleTag({
+  let hideUiStyle = await page.addStyleTag({
     content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}',
   });
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -168,11 +168,16 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   const attachedBytes = await captureCanvasClip(page, bounds, attachedPath);
   expect(attachedBytes).toBeGreaterThan(100000);
 
-  await page.evaluate(() => {
-    const ready = [...document.querySelectorAll('button')]
-      .find(button => button.textContent?.trim() === 'Ready');
-    if (!(ready instanceof HTMLButtonElement)) throw new Error('A1 Ready button missing');
-    ready.click();
+  await hideUiStyle.evaluate((node) => node.remove());
+  await page.getByRole('button', { name: 'Ready', exact: true }).click();
+  await page.waitForFunction(() =>
+    document.querySelector('canvas.trainerCanvas')?.dataset?.a1JetwayState
+      === 'autogate-disengaging',
+    null,
+    { timeout: 5000, polling: 50 },
+  );
+  hideUiStyle = await page.addStyleTag({
+    content: '.rr-hud,.rr-metrics,.rr-score-float,.rr-guidance,.rr-diagnostics,.rr-steer,.rr-throttle{display:none!important}',
   });
 
   await page.waitForFunction(() => {
