@@ -1,0 +1,143 @@
+[
+  {
+    "url": "https://clearancedelivery.x-planemobile.com/v1/authenticate",
+    "method": "GET",
+    "status": 405,
+    "headers": {
+      "Date": "Thu, 24 Sep 2026 04:16:36 GMT",
+      "Content-Type": "text/html; charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Server": "nginx/1.31.6",
+      "Allow": "POST"
+    },
+    "body": ""
+  },
+  {
+    "url": "https://clearancedelivery.x-planemobile.com/v1/authenticate",
+    "method": "OPTIONS",
+    "status": 200,
+    "headers": {
+      "Date": "Thu, 24 Sep 2026 04:16:36 GMT",
+      "Content-Type": "text/html; charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Server": "nginx/1.31.6",
+      "Allow": "POST"
+    },
+    "body": ""
+  },
+  {
+    "url": "https://clearancedelivery.x-planemobile.com/v1/authenticate",
+    "method": "POST",
+    "status": 400,
+    "headers": {
+      "Date": "Thu, 24 Sep 2026 04:16:36 GMT",
+      "Content-Type": "application/json",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Server": "nginx/1.31.6"
+    },
+    "body": "{\"message\":\"The request was invalid\"}"
+  },
+  {
+    "url": "https://clearancedelivery.x-planemobile.com/v1/download",
+    "method": "GET",
+    "status": 405,
+    "headers": {
+      "Date": "Thu, 24 Sep 2026 04:16:36 GMT",
+      "Content-Type": "text/html; charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Server": "nginx/1.31.6",
+      "Allow": "POST"
+    },
+    "body": ""
+  },
+  {
+    "url": "https://clearancedelivery.x-planemobile.com/v1/download",
+    "method": "OPTIONS",
+    "status": 200,
+    "headers": {
+      "Date": "Thu, 24 Sep 2026 04:16:36 GMT",
+      "Content-Type": "text/html; charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Server": "nginx/1.31.6",
+      "Allow": "POST"
+    },
+    "body": ""
+  },
+  {
+    "url": "https://clearancedelivery.x-planemobile.com/v1/download",
+    "method": "POST",
+    "status": 400,
+    "headers": {
+      "Date": "Thu, 24 Sep 2026 04:16:36 GMT",
+      "Content-Type": "application/json",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Server": "nginx/1.31.6"
+    },
+    "body": "{\"message\":\"The request was invalid\"}"
+  },
+  {
+    "url": "https://tower.x-plane.com/v1/sim-download",
+    "method": "GET",
+    "status": 405,
+    "headers": {
+      "Content-Type": "text/html; charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Date": "Thu, 24 Sep 2026 04:16:37 GMT",
+      "Allow": "POST",
+      "Vary": "Origin",
+      "Server": "nginx/1.31.6",
+      "X-Cache": "Error from cloudfront",
+      "Via": "1.1 6438ce914e2e27f00688f919adc39548.cloudfront.net (CloudFront)",
+      "X-Amz-Cf-Pop": "DFW56-P2",
+      "Alt-Svc": "h3=\":443\"; ma=86400",
+      "X-Amz-Cf-Id": "qdqsYb2vGigv6nuKK0d50t2NSMM3_prUxOkfB09Tc8gCXVmR4O9BRw=="
+    },
+    "body": ""
+  },
+  {
+    "url": "https://tower.x-plane.com/v1/sim-download",
+    "method": "OPTIONS",
+    "status": 200,
+    "headers": {
+      "Content-Type": "text/html; charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Date": "Thu, 24 Sep 2026 04:16:37 GMT",
+      "Allow": "POST",
+      "Vary": "Origin",
+      "Server": "nginx/1.31.6",
+      "X-Cache": "Miss from cloudfront",
+      "Via": "1.1 0f44a07f05d21dc75e935a703360349c.cloudfront.net (CloudFront)",
+      "X-Amz-Cf-Pop": "DFW56-P2",
+      "Alt-Svc": "h3=\":443\"; ma=86400",
+      "X-Amz-Cf-Id": "Pc7T1EV5uzTjy2caclnU0rBOJ33zAbOjAvl4Ibd2nVF5ngEL_lstmQ=="
+    },
+    "body": ""
+  },
+  {
+    "url": "https://tower.x-plane.com/v1/sim-download",
+    "method": "POST",
+    "status": 401,
+    "headers": {
+      "Content-Type": "text/html; charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Date": "Thu, 24 Sep 2026 04:16:37 GMT",
+      "Server": "nginx/1.31.6",
+      "Vary": "Origin",
+      "X-Cache": "Error from cloudfront",
+      "Via": "1.1 cd3d2177e1f87e4e6b48f0974c918e86.cloudfront.net (CloudFront)",
+      "X-Amz-Cf-Pop": "DFW56-P2",
+      "Alt-Svc": "h3=\":443\"; ma=86400",
+      "X-Amz-Cf-Id": "WecKW7e5FAKYnAGcVEhTHbRXHFXIFhW42SzCUoIoyq7EkLxFx7P0bw=="
+    },
+    "body": ""
+  }
+]
