@@ -42,20 +42,66 @@ jobs:
           echo "$PID" >/tmp/xp12-ui.pid
           sleep 12
 
-          screencapture -x reports/kphx-xp12-macos-main-menu.png || true
-
-          swift - <<'SWIFT' > reports/kphx-xp12-macos-window-info.txt
+          swift - "$PID" <<'SWIFT' > /tmp/window-id.txt
+          import AppKit
           import CoreGraphics
           import Foundation
+
+          let pid = pid_t(Int(CommandLine.arguments[1])!)
+          NSRunningApplication(processIdentifier: pid)?.activate(options: [.activateIgnoringOtherApps])
+          usleep(1_000_000)
           let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
           if let info = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] {
               for w in info {
-                  let owner = w[kCGWindowOwnerName as String] as? String ?? ""
-                  let name = w[kCGWindowName as String] as? String ?? ""
-                  if owner.lowercased().contains("x-plane") || owner.lowercased().contains("x-system") || name.lowercased().contains("x-system") {
-                      print(w)
+                  let ownerPid = (w[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value ?? -1
+                  let layer = (w[kCGWindowLayer as String] as? NSNumber)?.intValue ?? -1
+                  if ownerPid == pid && layer == 0 {
+                      let number = (w[kCGWindowNumber as String] as? NSNumber)?.intValue ?? 0
+                      print(number)
+                      break
                   }
               }
+          }
+          SWIFT
+          WINID="$(tail -1 /tmp/window-id.txt | tr -d '[:space:]')"
+          test -n "$WINID"
+          test "$WINID" -gt 0
+          screencapture -x -l "$WINID" reports/kphx-xp12-macos-main-menu.png
+
+          swift - "$PID" "$WINID" <<'SWIFT' > reports/kphx-xp12-macos-window-info.txt
+          import CoreGraphics
+          import Foundation
+          let pid = pid_t(Int(CommandLine.arguments[1])!)
+          let win = Int(CommandLine.arguments[2])!
+          let options: CGWindowListOption = [.optionIncludingWindow]
+          if let info = CGWindowListCopyWindowInfo(options, CGWindowID(win)) as? [[String: Any]] {
+              for w in info { print(w) }
+          }
+          SWIFT
+
+          swift - reports/kphx-xp12-macos-main-menu.png <<'SWIFT' > reports/kphx-xp12-macos-menu-text.txt
+          import Foundation
+          import Vision
+          import AppKit
+          let url = URL(fileURLWithPath: CommandLine.arguments[1])
+          guard let image = NSImage(contentsOf: url),
+                let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { fatalError("image") }
+          let width=Double(cg.width), height=Double(cg.height)
+          let request=VNRecognizeTextRequest()
+          request.recognitionLevel = .accurate
+          request.recognitionLanguages = ["en-US"]
+          let handler=VNImageRequestHandler(cgImage: cg, options: [:])
+          try handler.perform([request])
+          print("image_width=\(Int(width))")
+          print("image_height=\(Int(height))")
+          for obs in request.results ?? [] {
+              guard let top=obs.topCandidates(1).first else { continue }
+              let b=obs.boundingBox
+              let x=b.origin.x*width
+              let y=(1.0-b.origin.y-b.size.height)*height
+              let w=b.size.width*width
+              let h=b.size.height*height
+              print(String(format:"TEXT|%.1f|%.1f|%.1f|%.1f|%.1f|%.1f|%@",x,y,w,h,x+w/2,y+h/2,top.string))
           }
           SWIFT
 
@@ -75,7 +121,10 @@ jobs:
 
           test -s reports/kphx-xp12-macos-main-menu.png
           test -s reports/kphx-xp12-macos-window-info.txt
+          test -s reports/kphx-xp12-macos-menu-text.txt
           cat reports/kphx-xp12-macos-window-info.txt
+          cat reports/kphx-xp12-macos-menu-text.txt
+          grep -Ei 'Install.*Free.*Demo|Free Demo|Install X-Plane|Update X-Plane|Add or Remove Scenery' reports/kphx-xp12-macos-menu-text.txt
 
       - name: Commit UI evidence
         shell: bash
