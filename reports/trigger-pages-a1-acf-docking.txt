@@ -1,2 +1,8 @@
 Trigger GitHub Pages build for current A1 X-Plane ACF docking integration.
-Authority: CRJ700/900 ACF boarding-door + KPHX WED 104804/104811 + AutoGate lat/vert.
+Authority: CRJ900 ACF boarding-door + KPHX WED 104804/104811 + AutoGate lat/vert.
+
+2026-09-24 bundled runtime correction:
+- keep exact stock A1 jetway ground supports planted during AutoGate vertical travel
+- align LEKTRO AP88 logical capture point to the authored cradle pivot
+- hide flat stock facade control planes that render as blade-thin gate walls
+- reuse exact KPHX surface documents and texture decodes during preload
