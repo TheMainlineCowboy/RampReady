@@ -436,8 +436,13 @@ export function installA1ExactAutoGateController({
     const entranceInTunnel =
       tunnelWall.worldToLocal(baselineEntranceWorld.clone());
     const solvedBridgePitch = solveFixedPivotPitchRadians({
-      localY: entranceInTunnel.y - hingeInTunnel.y,
-      localZ: entranceInTunnel.z - hingeInTunnel.z,
+      // Object3D applies scale before rotation. Use the scaled hinge-to-
+      // entrance vector so the pitch solve matches the exact WED edge length,
+      // not the unscaled 11 m facade template length.
+      localY:
+        (entranceInTunnel.y - hingeInTunnel.y) * tunnelWall.scale.y,
+      localZ:
+        (entranceInTunnel.z - hingeInTunnel.z) * tunnelWall.scale.z,
       baselinePitchRadians: originals.tunnelRotationX,
       verticalDeltaMeters: currentVertMeters,
     });
